@@ -55,8 +55,8 @@ public:
   MpForm& operator=(const MpForm&) = delete;
 
 protected:
-  virtual void Init(WorldState* parent_,
-                    uint32_t formId_); // See WorldState::AddForm
+  virtual void Init(WorldState* parent_, uint32_t formId_,
+                    bool hasChangeForm); // See WorldState::AddForm
   virtual void Update();
   virtual void SendPapyrusEvent(const char* eventName,
                                 const VarValue* arguments = nullptr,

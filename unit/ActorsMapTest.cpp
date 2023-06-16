@@ -4,8 +4,7 @@
 TEST_CASE("User changes", "[ActorsMap]")
 {
   ActorsMap map;
-  auto actor =
-    std::make_shared<MpActor>(LocationalData(), FormCallbacks(), std::nullopt);
+  auto actor = std::make_shared<MpActor>(LocationalData(), FormCallbacks());
   map.Set(0, actor.get());
   map.Set(1, actor.get());
 
@@ -17,10 +16,8 @@ TEST_CASE("User changes", "[ActorsMap]")
 TEST_CASE("Actor changes", "[ActorsMap]")
 {
   ActorsMap map;
-  auto actorA =
-    std::make_shared<MpActor>(LocationalData(), FormCallbacks(), std::nullopt);
-  auto actorB =
-    std::make_shared<MpActor>(LocationalData(), FormCallbacks(), std::nullopt);
+  auto actorA = std::make_shared<MpActor>(LocationalData(), FormCallbacks());
+  auto actorB = std::make_shared<MpActor>(LocationalData(), FormCallbacks());
   map.Set(0, actorA.get());
   map.Set(0, actorB.get());
 

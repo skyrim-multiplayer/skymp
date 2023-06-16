@@ -51,7 +51,6 @@ export class SweetPieGameModeListener implements GameModeListener {
 
   constructor(private controller: PlayerController, private maps: SweetPieMap[] = [], private minimumPlayersToStart: number = 5) {
     this.rounds = this.controller.getRoundsArray();
-    this.roundsLast = "";
     if (this.rounds.length === 0) {
       maps.forEach(map => this.rounds.push({ state: 'wait', map: map, hallPointName: this.hallSpawnPointName, secondsPassed: 0 }));
     } else {
@@ -298,10 +297,7 @@ export class SweetPieGameModeListener implements GameModeListener {
         }
       }
     }
-    if (JSON.stringify(this.rounds) !== this.roundsLast) {
-      this.controller.setRoundsArray(this.rounds);
-      this.roundsLast = JSON.stringify(this.rounds);
-    }
+    this.controller.setRoundsArray(this.rounds);
   }
 
   onPlayerDeath(targetActorId: number, killerActorId?: number | undefined) {
@@ -346,5 +342,4 @@ export class SweetPieGameModeListener implements GameModeListener {
   };
 
   private rounds: SweetPieRound[];
-  private roundsLast: string;
 }

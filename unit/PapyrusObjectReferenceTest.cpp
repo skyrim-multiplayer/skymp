@@ -20,7 +20,7 @@ public:
                 std::string baseType,
                 std::optional<NiPoint3> primitiveBoundsDiv2 = std::nullopt)
     : MpObjectReference(locationalData, callbacks, baseId, baseType,
-                        std::nullopt, primitiveBoundsDiv2)
+                        primitiveBoundsDiv2)
   {
   }
 

@@ -1,6 +1,5 @@
 #include "AsyncSaveStorage.h"
 #include <thread>
-#include <unordered_map>
 
 struct AsyncSaveStorage::Impl
 {
@@ -39,7 +38,6 @@ struct AsyncSaveStorage::Impl
   std::unique_ptr<std::thread> thr;
   std::atomic<bool> destroyed = false;
   uint32_t numFinishedUpserts = 0;
-  std::unordered_map<std::string, MpChangeForm> changeFormsForDeferredLoad;
 };
 
 AsyncSaveStorage::AsyncSaveStorage(const std::shared_ptr<IDatabase>& dbImpl,
@@ -102,13 +100,8 @@ void AsyncSaveStorage::SaverThreadMain(Impl* pImpl)
 
 void AsyncSaveStorage::IterateSync(const IterateSyncCallback& cb)
 {
-  IDatabase::IterateCallback cb2 = [cb, this](MpChangeForm ch) {
-    pImpl->changeFormsForDeferredLoad[ch.formDesc.ToString()] = ch;
-    return cb(ch);
-  };
-
   std::lock_guard l(pImpl->share.m);
-  pImpl->share.dbImpl->Iterate(cb2);
+  pImpl->share.dbImpl->Iterate(cb);
 }
 
 void AsyncSaveStorage::Upsert(const std::vector<MpChangeForm>& changeForms,
@@ -116,17 +109,6 @@ void AsyncSaveStorage::Upsert(const std::vector<MpChangeForm>& changeForms,
 {
   std::lock_guard l(pImpl->share3.m);
   pImpl->share3.upsertTasks.push_back({ changeForms, cb });
-}
-
-std::optional<MpChangeForm> AsyncSaveStorage::FindOneSync(
-  const FormDesc& formDesc)
-{
-  if (auto it = pImpl->changeFormsForDeferredLoad.find(formDesc.ToString());
-      it != pImpl->changeFormsForDeferredLoad.end()) {
-    return it->second;
-  }
-  std::lock_guard l(pImpl->share.m);
-  return pImpl->share.dbImpl->FindOne(formDesc);
 }
 
 uint32_t AsyncSaveStorage::GetNumFinishedUpserts() const

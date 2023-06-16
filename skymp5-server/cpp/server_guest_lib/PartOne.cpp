@@ -149,7 +149,7 @@ uint32_t PartOne::CreateActor(uint32_t formId, const NiPoint3& pos,
       new MpActor({ pos,
                     { 0, 0, angleZ },
                     FormDesc::FromFormId(cellOrWorld, worldState.espmFiles) },
-                  CreateFormCallbacks(), std::nullopt)),
+                  CreateFormCallbacks())),
     formId);
   if (profileId >= 0) {
     auto& ac = worldState.GetFormAt<MpActor>(formId);
@@ -288,7 +288,6 @@ void PartOne::AttachSaveStorage(std::shared_ptr<ISaveStorage> saveStorage)
   clock_t was = clock();
 
   int n = 0;
-  int nSkipped = 0;
   int numPlayerCharacters = 0;
   saveStorage->IterateSync([&](MpChangeForm changeForm) {
     // Do not let players become NPCs
@@ -296,22 +295,15 @@ void PartOne::AttachSaveStorage(std::shared_ptr<ISaveStorage> saveStorage)
       changeForm.isDisabled = true;
     }
 
-    bool isFormFF = changeForm.formDesc.file.empty();
-    if (!isFormFF) {
-      nSkipped++;
-      return;
-    }
-
     n++;
-    worldState.LoadFFChangeForm(changeForm, CreateFormCallbacks());
-    if (changeForm.profileId >= 0) {
+    worldState.LoadChangeForm(changeForm, CreateFormCallbacks());
+    if (changeForm.profileId >= 0)
       ++numPlayerCharacters;
-    }
   });
 
-  spdlog::info("AttachSaveStorage took {} ticks, loaded {} ChangeForms "
-               "(Including {} player characters). {} skipped for later",
-               clock() - was, n, numPlayerCharacters, nSkipped);
+  pImpl->logger->info("AttachSaveStorage took {} ticks, loaded {} ChangeForms "
+                      "(Including {} player characters)",
+                      clock() - was, n, numPlayerCharacters);
 }
 
 espm::Loader& PartOne::GetEspm() const

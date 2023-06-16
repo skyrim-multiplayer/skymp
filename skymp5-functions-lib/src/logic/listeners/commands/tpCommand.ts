@@ -1,17 +1,20 @@
 import { ChatMessage } from "../../../props/chatProperty";
 import { Mp, LocationalData, ServerSettings } from "../../../types/mp";
-import { PersistentStorage } from "../../../utils/persistentStorage";
 import { PlayerController } from "../../PlayerController";
 import { Command, HandlerInput } from "./command";
 
+interface TeleportData {
+    [key: string]: LocationalData;
+}
+
 export class TpCommand extends Command {
     private serverSettings: ServerSettings;
-    private persistentStorage: PersistentStorage;
+    private teleports: TeleportData;
 
     constructor(mp: Mp, controller: PlayerController) {
         super(mp, controller, "tp");
         this.serverSettings = this.mp.getServerSettings();
-        this.persistentStorage = PersistentStorage.getSingleton();
+        this.teleports = {};
     }
 
     handle(input: HandlerInput): void {
@@ -39,6 +42,7 @@ export class TpCommand extends Command {
                 this.teleportPlayer(actorId, command); // command here is the teleport name
         }
     }
+    
     printHelp(actorId: number): void {
         const helpMessage = [
             "/tp <teleport_name> - moves player to the saved location named teleport_name.",
@@ -49,36 +53,39 @@ export class TpCommand extends Command {
     
         this.controller.sendChatMessage(actorId, ChatMessage.system(helpMessage));
     }
+    
 
     createTeleport(actorId: number, teleportName: string): void {
         const locationalData = this.mp.get(actorId, 'locationalData') as LocationalData;
-        const teleports = this.persistentStorage.teleports;
-        teleports[teleportName] = locationalData;
-        this.persistentStorage.teleports = teleports;
+        this.teleports[teleportName] = locationalData;
         this.controller.sendChatMessage(actorId, ChatMessage.system(`Teleport location ${teleportName} has been created.`));
     }
 
     listTeleports(actorId: number): void {
-        const teleports = this.persistentStorage.teleports;
-        const teleportNames = Object.keys(teleports).join(', ');
+        const teleportNames = Object.keys(this.teleports).join(', ');
         this.controller.sendChatMessage(actorId, ChatMessage.system(`Teleports: ${teleportNames}`));
     }
 
     deleteTeleport(actorId: number, teleportName: string): void {
-        const teleports = this.persistentStorage.teleports;
-        delete teleports[teleportName];
-        this.persistentStorage.teleports = teleports;
+        delete this.teleports[teleportName];
         this.controller.sendChatMessage(actorId, ChatMessage.system(`Teleport location ${teleportName} has been deleted.`));
     }
 
     teleportPlayer(actorId: number, teleportName: string): void {
-        const teleports = this.persistentStorage.teleports;
-        const teleportData = teleports[teleportName];
+        const teleportData = this.teleports[teleportName];
         if (teleportData) {
             this.mp.set(actorId, 'locationalData', teleportData);
             this.controller.sendChatMessage(actorId, ChatMessage.system(`Teleported to ${teleportName}.`));
         } else {
             this.controller.sendChatMessage(actorId, ChatMessage.system(`No teleport location found with name ${teleportName}.`));
         }
+    }
+
+    getTeleports(): TeleportData {
+        return this.teleports;
+    }
+
+    setTeleports(data: TeleportData): void {
+        this.teleports = data;
     }
 }
