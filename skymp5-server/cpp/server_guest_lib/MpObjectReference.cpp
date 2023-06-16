@@ -97,7 +97,7 @@ std::pair<int16_t, int16_t> GetGridPos(const NiPoint3& pos) noexcept
 
 struct AnimGraphHolder
 {
-  std::set<std::string> animationVariablesBool;
+  std::set<CIString> animationVariablesBool;
 };
 
 struct ScriptState
