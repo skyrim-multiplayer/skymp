@@ -20,13 +20,13 @@ uint32_t LongToNormal(uint64_t longFormId)
 namespace JsonPointers {
 static const JsonPointer t("t"), idx("idx"), content("content"), data("data"),
   pos("pos"), rot("rot"), isInJumpState("isInJumpState"),
-  isWeapDrawn("isWeapDrawn"), isBlocking("isBlocking"), worldOrCell("worldOrCell"), inv("inv"),
-  caster("caster"), target("target"), snippetIdx("snippetIdx"),
-  returnValue("returnValue"), baseId("baseId"), commandName("commandName"),
-  args("args"), workbench("workbench"), resultObjectId("resultObjectId"),
-  craftInputObjects("craftInputObjects"), remoteId("remoteId"),
-  eventName("eventName"), health("health"), magicka("magicka"),
-  stamina("stamina");
+  isWeapDrawn("isWeapDrawn"), isBlocking("isBlocking"),
+  worldOrCell("worldOrCell"), inv("inv"), caster("caster"), target("target"),
+  snippetIdx("snippetIdx"), returnValue("returnValue"), baseId("baseId"),
+  commandName("commandName"), args("args"), workbench("workbench"),
+  resultObjectId("resultObjectId"), craftInputObjects("craftInputObjects"),
+  remoteId("remoteId"), eventName("eventName"), health("health"),
+  magicka("magicka"), stamina("stamina");
 }
 
 struct PacketParser::Impl
@@ -122,7 +122,8 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
 
       actionListener.OnUpdateMovement(
         rawMsgData, idx, { pos[0], pos[1], pos[2] },
-        { rot[0], rot[1], rot[2] }, isInJumpState, isWeapDrawn, isBlocking, worldOrCell);
+        { rot[0], rot[1], rot[2] }, isInJumpState, isWeapDrawn, isBlocking,
+        worldOrCell);
 
     } break;
     case MsgType::UpdateAnimation: {
