@@ -185,3 +185,50 @@ inline void ReadVector(const simdjson::dom::element& j, const JsonPointer& key,
 
   *out = res; // copying here for exception safity
 }
+
+// Specialization for std::string
+template <>
+inline void ReadEx<std::string>(const simdjson::dom::element& j,
+                                const JsonPointer& key, std::string* out)
+{
+  const char* v;
+  Read(j, key, &v);
+  *out = v;
+}
+
+template <>
+inline void ReadEx<std::string>(const simdjson::dom::element& j, size_t key,
+                                std::string* out)
+{
+  const char* v;
+  Read(j, key, &v);
+  *out = v;
+}
+
+template <>
+inline void ReadEx<uint8_t>(const simdjson::dom::element& j,
+                            const JsonPointer& key, uint8_t* out)
+{
+  uint64_t v;
+  Read(j, key, &v);
+
+  if (v > std::numeric_limits<uint8_t>::max())
+    throw std::runtime_error(std::to_string(v) +
+                             " doesn't match numeric limits of type uint8_t");
+
+  *out = static_cast<uint8_t>(v);
+}
+
+template <>
+inline void ReadEx<uint8_t>(const simdjson::dom::element& j, size_t key,
+                            uint8_t* out)
+{
+  uint64_t v;
+  Read(j, key, &v);
+
+  if (v > std::numeric_limits<uint8_t>::max())
+    throw std::runtime_error(std::to_string(v) +
+                             " doesn't match numeric limits of type uint8_t");
+
+  *out = static_cast<uint8_t>(v);
+}

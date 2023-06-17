@@ -18,8 +18,8 @@ void InventoryBinding::Set(Napi::Env env, ScampServer& scampServer,
   auto& refr = partOne->worldState.GetFormAt<MpObjectReference>(formId);
   if (newValue.IsObject()) {
     auto inventoryDump = NapiHelper::Stringify(env, newValue);
-    simdjson::dom::parser p;
-    auto inventory = Inventory::FromJson(p.parse(inventoryDump));
+    nlohmann::json j = nlohmann::json::parse(inventoryDump);
+    auto inventory = Inventory::FromJson(j);
     refr.SetInventory(inventory);
   } else {
     refr.SetInventory(Inventory());
