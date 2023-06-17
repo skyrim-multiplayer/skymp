@@ -56,11 +56,7 @@ public:
   // adding new Actor-related rows
 
   DynamicFields dynamicFields;
-};
 
-class MpChangeForm : public MpChangeFormREFR
-{
-public:
   auto ToTuple() const
   {
     return std::make_tuple(
@@ -71,21 +67,25 @@ public:
       actorValues.ToTuple(), spawnPoint, dynamicFields, spawnDelay);
   }
 
-  static nlohmann::json ToJson(const MpChangeForm& changeForm);
-  static MpChangeForm JsonToChangeForm(simdjson::dom::element& element);
+  static nlohmann::json ToJson(const MpChangeFormREFR& changeForm);
+  static MpChangeFormREFR JsonToChangeForm(simdjson::dom::element& element);
 };
 
-inline bool operator==(const MpChangeForm& lhs, const MpChangeForm& rhs)
+#define MpChangeForm MpChangeFormREFR
+
+inline bool operator==(const MpChangeFormREFR& lhs,
+                       const MpChangeFormREFR& rhs)
 {
   return lhs.ToTuple() == rhs.ToTuple();
 }
 
-inline bool operator!=(const MpChangeForm& lhs, const MpChangeForm& rhs)
+inline bool operator!=(const MpChangeFormREFR& lhs,
+                       const MpChangeFormREFR& rhs)
 {
   return !(lhs == rhs);
 }
 
-inline bool operator<(const MpChangeForm& lhs, const MpChangeForm& rhs)
+inline bool operator<(const MpChangeFormREFR& lhs, const MpChangeFormREFR& rhs)
 {
   return lhs.ToTuple() < rhs.ToTuple();
 }

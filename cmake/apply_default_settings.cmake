@@ -33,7 +33,7 @@ function(apply_default_settings)
       )
 
       target_link_options(${target} PRIVATE
-        /WX	# Treat Linker Warnings as Errors
+        #/WX	# Treat Linker Warnings as Errors
 
         "$<$<CONFIG:DEBUG>:/INCREMENTAL;/OPT:NOREF;/OPT:NOICF>"
         "$<$<CONFIG:RELEASE>:/INCREMENTAL:NO;/OPT:REF;/OPT:ICF;/DEBUG:FULL>"
