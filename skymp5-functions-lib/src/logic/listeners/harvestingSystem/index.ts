@@ -185,14 +185,9 @@ export class HarvestingSystem implements GameModeListener {
     }
 
     const additionalItemsNumber = maxLevel + (Math.random() > 0.5 ? 1 : 0);
-    setTimeout(() => {ids.forEach(id => 
-      mp.callPapyrusFunction(
-        'method',
-        'ObjectReference',
-        'AddItem',
-        { type: 'form', desc: mp.getDescFromId(casterActorId) },
-        [{ type: 'espm', desc: mp.getDescFromId(id) }, additionalItemsNumber, true]
-      ))}, 1000);
+    setTimeout(() => {ids.forEach(id =>
+      this.controller.addItem(casterActorId, id, additionalItemsNumber, true))
+    }, 1000);
 
     return 'blockActivation';
   }
