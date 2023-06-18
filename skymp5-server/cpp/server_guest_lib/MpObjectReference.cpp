@@ -833,7 +833,7 @@ void MpObjectReference::ApplyChangeForm(const MpChangeForm& changeForm)
   // See https://github.com/skyrim-multiplayer/issue-tracker/issues/42
   EditChangeForm(
     [&](MpChangeFormREFR& f) {
-      f = static_cast<const MpChangeFormREFR&>(changeForm);
+      f = changeForm;
 
       // Fix: RequestReloot doesn't work with non-zero 'nextRelootDatetime'
       f.nextRelootDatetime = 0;
