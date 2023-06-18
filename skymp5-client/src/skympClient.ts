@@ -270,7 +270,9 @@ export class SkympClient {
               .map((entry) => {
                 if (entry.count !== 0) {
                   const msg = JSON.parse(JSON.stringify(entry));
-                  delete msg["name"]; // Extra name works too strange
+                  if (Game.getFormEx(entry.baseId)?.getName() === msg["name"]) {
+                    delete msg["name"];
+                  }
                   msg["t"] = entry.count > 0 ? MsgType.PutItem : MsgType.TakeItem;
                   msg["count"] = Math.abs(msg["count"]);
                   msg["target"] =

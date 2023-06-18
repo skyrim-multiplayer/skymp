@@ -77,7 +77,8 @@ void ActionListener::OnCustomPacket(const RawMessageData& rawMsgData,
 void ActionListener::OnUpdateMovement(const RawMessageData& rawMsgData,
                                       uint32_t idx, const NiPoint3& pos,
                                       const NiPoint3& rot, bool isInJumpState,
-                                      bool isWeapDrawn, uint32_t worldOrCell)
+                                      bool isWeapDrawn, bool isBlocking,
+                                      uint32_t worldOrCell)
 {
   auto actor = SendToNeighbours(idx, rawMsgData);
   if (actor) {
@@ -109,6 +110,7 @@ void ActionListener::OnUpdateMovement(const RawMessageData& rawMsgData,
     actor->SetAngle(rot);
     actor->SetAnimationVariableBool("bInJumpState", isInJumpState);
     actor->SetAnimationVariableBool("_skymp_isWeapDrawn", isWeapDrawn);
+    actor->SetAnimationVariableBool("IsBlocking", isBlocking);
 
     if (partOne.worldState.lastMovUpdateByIdx.size() <= idx) {
       auto newSize = static_cast<size_t>(idx) + 1;
