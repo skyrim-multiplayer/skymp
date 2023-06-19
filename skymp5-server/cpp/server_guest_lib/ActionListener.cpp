@@ -106,7 +106,7 @@ void ActionListener::OnUpdateMovement(const RawMessageData& rawMsgData,
       return;
     }
 
-    if (!isBlockActive) {
+    if (!isBlocking) {
       actor->IncreaseBlockCount();
     } else {
       actor->ResetBlockCount();
