@@ -1,0 +1,80 @@
+name: Build & Push Vcpkg Deps (Docker)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+      with:
+        submodules: 'recursive' # ensures submodules are checked out
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v1
+
+    - name: Login to Docker Hub
+      uses: docker/login-action@v1
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    - name: Extract short SHA
+      shell: bash
+      run: echo "SHORT_SHA=$(git rev-parse --short $GITHUB_SHA)" >> $GITHUB_ENV
+
+    - name: Extract submodule details
+      shell: bash
+      run: |
+        cd vcpkg
+        echo "VCPKG_URL=$(git config --get remote.origin.url)" >> $GITHUB_ENV
+        echo "VCPKG_COMMIT=$(git rev-parse HEAD)" >> $GITHUB_ENV
+        cd ..
+
+    - name: Cache Docker layers
+      uses: actions/cache@v2
+      with:
+        path: /tmp/.buildx-cache
+        key: ${{ runner.os }}-buildx-vcpkg-${{ github.run_number }}
+        restore-keys: |
+          ${{ runner.os }}-buildx-vcpkg-
+
+    - name: Build and push skymp-vcpkg-deps
+      uses: docker/build-push-action@v2
+      with:
+        context: .
+        file: ./Dockerfile
+        target: skymp-vcpkg-deps
+        builder: ${{ steps.buildx.outputs.name }}
+        push: true
+        tags: skymp/skymp-vcpkg-deps:${{ env.SHORT_SHA }}
+        build-args: |
+          VCPKG_URL=${{ env.VCPKG_URL }}
+          VCPKG_COMMIT=${{ env.VCPKG_COMMIT }}
+        cache-from: type=local,src=/tmp/.buildx-cache
+        cache-to: type=local,dest=/tmp/.buildx-cache
+
+    - name: Cache Docker layers
+      uses: actions/cache@v2
+      with:
+        path: /tmp/.buildx-cache
+        key: ${{ runner.os }}-buildx-runtime-${{ github.run_number }}
+        restore-keys: |
+          ${{ runner.os }}-buildx-runtime-
+
+    - name: Build and push skymp-runtime-base
+      uses: docker/build-push-action@v2
+      with:
+        context: .
+        file: ./Dockerfile
+        target: skymp-runtime-base
+        builder: ${{ steps.buildx.outputs.name }}
+        push: true
+        tags: skymp/skymp-runtime-base:${{ env.SHORT_SHA }}
+        build-args: |
+          VCPKG_URL=${{ env.VCPKG_URL }}
+          VCPKG_COMMIT=${{ env.VCPKG_COMMIT }}
+        cache-from: type=local,src=/tmp/.buildx-cache
+        cache-to: type=local,dest=/tmp/.buildx-cache

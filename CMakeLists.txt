@@ -116,6 +116,9 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/modules)
 
 add_subdirectory(viet)
+add_subdirectory(savefile)
+add_subdirectory(papyrus-vm)
+add_subdirectory(libespm)
 add_subdirectory(skyrim-platform)
 
 
@@ -136,7 +139,7 @@ if(PREPARE_NEXUS_ARCHIVES)
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
   )
 
-  add_dependencies(prepare_nexus_archives skyrim-platform)
+  add_dependencies(prepare_nexus_archives skyrim-platform papyrus-vm)
   set(TARGETS_ADDITIONAL
     skymp5-client
     skymp5-front

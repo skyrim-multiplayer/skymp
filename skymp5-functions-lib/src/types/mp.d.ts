@@ -93,6 +93,15 @@ export interface LocationalData {
   rot: [number, number, number];
 }
 
+export interface PacketHistory {
+  buffer: Uint8Array;
+  packets: Array<{
+    offset: number;
+    size: number;
+    timeMs: number;
+  }>
+}
+
 export interface StartPoint {
   pos: [number, number, number];
   worldOrCell: string; // hex form id (like "0x3c", use parseInt)
@@ -123,6 +132,7 @@ export interface ServerSettings {
   };
   discordAuth?: {
     baseKitRoleId?: string;
+    adminRoleId?: string;
   }
 
   readonly [key: string]: unknown;
@@ -219,6 +229,11 @@ export interface Mp {
   ): PapyrusValue;
 
   getServerSettings(): ServerSettings;
+
+  setPacketHistoryRecording(userId: number, enabled: boolean): void;
+  getPacketHistory(userId: number): PacketHistory;
+  clearPacketHistory(userId: number): void;
+  requestPacketHistoryPlayback(userId: number, packetHistory: PacketHistory): void;
 
   [key: string]: unknown;
 }

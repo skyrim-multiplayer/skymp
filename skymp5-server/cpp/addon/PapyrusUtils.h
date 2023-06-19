@@ -3,8 +3,8 @@
 #include "FormDesc.h"
 #include "MpFormGameObject.h"
 #include "NapiHelper.h"
-#include "Structures.h"
 #include "WorldState.h"
+#include "papyrus-vm/Structures.h"
 #include <napi.h>
 #include <sstream>
 
@@ -53,35 +53,19 @@ public:
     const std::vector<std::string>& espmFilenames)
   {
     if (value.promise) {
-      auto promiseCallback = Napi::Function::New(
-        env, [value, espmFilenames](const Napi::CallbackInfo& info) {
-          auto resolve = info[0].As<Napi::Function>();
-          std::shared_ptr<Napi::Reference<Napi::Function>> resolveRef(
-            new Napi::Reference<Napi::Function>(
-              Napi::Persistent<Napi::Function>(resolve)));
+      Napi::Promise::Deferred deferred = Napi::Promise::Deferred::New(env);
 
-          value.promise->Then(
-            [env = info.Env(), resolveRef, espmFilenames](const VarValue& v) {
-              std::vector<Napi::Value> resolveArgs = {
-                GetJsValueFromPapyrusValue(env, v, espmFilenames)
-              };
-              resolveRef->Value().Call(resolveArgs);
-            });
+      value.promise->Then([deferred, espmFilenames](const VarValue& v) {
+        auto value =
+          GetJsValueFromPapyrusValue(deferred.Env(), v, espmFilenames);
+        deferred.Resolve(value);
+      });
 
-          auto reject = info[1].As<Napi::Function>();
-          std::shared_ptr<Napi::Reference<Napi::Function>> rejectRef(
-            new Napi::Reference<Napi::Function>(
-              Napi::Persistent<Napi::Function>(reject)));
-
-          value.promise->Catch([env = info.Env(), rejectRef,
-                                espmFilenames](const char* what) {
-            std::vector<Napi::Value> rejectArgs = { Napi::String::New(env,
-                                                                      what) };
-            rejectRef->Value().Call(rejectArgs);
-          });
-
-          return info.Env().Undefined();
-        });
+      value.promise->Catch([deferred, espmFilenames](const char* what) {
+        auto error = Napi::String::New(deferred.Env(), what);
+        deferred.Reject(error);
+      });
+      return deferred.Promise();
     }
     switch (value.GetType()) {
       case VarValue::kType_Object:

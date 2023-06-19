@@ -9,12 +9,12 @@
 #include "EventsApi.h"
 #include "ExceptionPrinter.h"
 #include "FileInfoApi.h"
+#include "FileUtils.h"
 #include "HttpClient.h"
 #include "HttpClientApi.h"
 #include "InventoryApi.h"
 #include "LoadGameApi.h"
 #include "MpClientPluginApi.h"
-#include "ReadFile.h"
 #include "SkyrimPlatformProxy.h"
 #include "TextApi.h"
 #include "ThreadPoolWrapper.h"
@@ -170,13 +170,13 @@ private:
     logger::info("Found settings file {} for plugin {}.", path.string(),
                  pluginName);
 
-    settingsByPluginName[pluginName] = ReadFile(path);
+    settingsByPluginName[pluginName] = Viet::ReadFileIntoString(path);
   }
 
   void LoadPluginFile(const std::filesystem::path& path)
   {
     auto engine = GetJsEngine();
-    auto scriptSrc = ReadFile(path);
+    auto scriptSrc = Viet::ReadFileIntoString(path);
 
     getSettings = [this](const JsFunctionArguments&) {
       auto result = JsValue::Object();
@@ -222,10 +222,10 @@ private:
     JsValue::GlobalObject().SetProperty(
       "log", consoleApi.GetProperty("printConsole"));
 
-    engine->RunScript(
-      ReadFile(std::filesystem::path("Data/Platform/Distribution") /
-               "___systemPolyfill.js"),
-      "___systemPolyfill.js");
+    engine->RunScript(Viet::ReadFileIntoString(
+                        std::filesystem::path("Data/Platform/Distribution") /
+                        "___systemPolyfill.js"),
+                      "___systemPolyfill.js");
     engine->RunScript(
       "skyrimPlatform = addNativeExports('skyrimPlatform', {})", "");
     engine->RunScript(scriptSrc, path.filename().string()).ToString();

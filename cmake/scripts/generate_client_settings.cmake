@@ -27,6 +27,7 @@ if(OFFLINE_MODE)
     
     string(JSON CLIENT_SETTINGS_JSON SET "${CLIENT_SETTINGS_JSON}" "gameData" "{ \"profileId\": ${profile_id} }")
     string(JSON CLIENT_SETTINGS_JSON SET "${CLIENT_SETTINGS_JSON}" "master" "\"\"")
+    string(JSON CLIENT_SETTINGS_JSON SET "${CLIENT_SETTINGS_JSON}" "server-master-key" "null")
 else()
     string(JSON CLIENT_SETTINGS_JSON REMOVE "${CLIENT_SETTINGS_JSON}" "gameData")
     string(JSON CLIENT_SETTINGS_JSON SET "${CLIENT_SETTINGS_JSON}" "master" "\"https://sweetpie.nic11.xyz\"")

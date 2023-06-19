@@ -6,7 +6,7 @@
 #include "SpSnippet.h"
 #include "SweetPieBoundWeapon.h"
 #include "WorldState.h"
-#include <espm.h>
+#include "libespm/espm.h"
 #include <iostream>
 #include <nlohmann/json.hpp>
 #include <random>
@@ -251,14 +251,8 @@ SweetPieScript::SweetPieScript(const std::vector<std::string>& espmFiles)
                     { 0x071746c7, { 0x070da797 } },
                     { 0x071746d1, { 0x070da799 } },
                     { 0x071746c3, { 0x070da796 } },
-                    { 0x07abe9f6, { 0x07a59508 } },
-                    { 0x07abe9f8, { 0x07a59506 } },
-                    { 0x07abe9fe, { 0x07a5950c } },
-                    { 0x07abea00, { 0x07a5950f } },
                     { 0x071746bf, { 0x07a5950e } },
                     { 0x071746c1, { 0x070da795 } },
-                    { 0x07abe9fa, { 0x07a59504 } },
-                    { 0x07abe9fc, { 0x07a5950a } },
                     { 0x071746c9, { 0x07fa85da } },
                     { 0x071746cf, { 0x07fa85d8 } },
                     { 0x071746cd, { 0x07fa85de } },
@@ -271,7 +265,7 @@ SweetPieScript::SweetPieScript(const std::vector<std::string>& espmFiles)
                     { 0x07267fe9, { 0x07267fdc } },
                     { 0x07267fe7, { 0x07267fdb } },
                     { 0x07267fef, { 0x07267fda } },
-                    { 0x07267fde, { 0x07267fde } } };
+                    { 0x07267fde, { 0x07267fdd } } };
 
   bookBoundWeapons = {
     { 0x0401ce07, { 0x07f42cb6, SweetPieBoundWeapon::SkillLevel::Novice } },

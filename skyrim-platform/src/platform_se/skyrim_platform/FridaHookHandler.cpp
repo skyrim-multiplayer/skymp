@@ -87,13 +87,15 @@ bool HookHandler::Attach(HookID id, uintptr_t address)
   auto status = gum_interceptor_attach(_interceptor, (void*)address, _listener,
                                        GSIZE_TO_POINTER(id));
   if (status != GUM_ATTACH_OK) {
+    uint64_t diff = address - Offsets::BaseAddress;
     logger::critical(
-      "Failed to attach hook: address {:X} id {} with status {}.",
-      address - Offsets::BaseAddress, id, status);
+      "Failed to attach hook: address {:X} id {} with status {}.", diff,
+      static_cast<uint64_t>(id), static_cast<uint64_t>(status));
     return false;
   } else {
-    logger::debug("Attached hook: address {:X} id {} with status {}.",
-                  address - Offsets::BaseAddress, id, status);
+    uint64_t diff = address - Offsets::BaseAddress;
+    logger::debug("Attached hook: address {:X} id {} with status {}.", diff,
+                  static_cast<uint64_t>(id), static_cast<uint64_t>(status));
     return true;
   }
 }
@@ -102,9 +104,10 @@ void HookHandler::Install(HookID id, uintptr_t address,
                           std::shared_ptr<Hook> hook)
 {
   if (hooks.contains(id)) {
+    uint64_t diff = address - Offsets::BaseAddress;
     logger::critical(
-      "Failed to install hook: address {:X} id {} already installed.",
-      address - Offsets::BaseAddress, id);
+      "Failed to install hook: address {:X} id {} already installed.", diff,
+      static_cast<uint64_t>(id));
     return;
   }
 

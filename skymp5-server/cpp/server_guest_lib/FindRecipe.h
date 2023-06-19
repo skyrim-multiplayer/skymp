@@ -1,6 +1,6 @@
 #pragma once
 #include "Inventory.h"
-#include "Loader.h"
+#include "libespm/Loader.h"
 #include <cstdint>
 
 bool RecipeMatches(const espm::IdMapping* mapping, const espm::COBJ* recipe,

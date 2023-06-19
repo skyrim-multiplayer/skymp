@@ -3,8 +3,8 @@
 #include "MpActor.h"
 #include "MpFormGameObject.h"
 
-#include "CIString.h"
 #include "SpSnippetFunctionGen.h"
+#include "papyrus-vm/CIString.h"
 
 namespace {
 espm::ActorValue ConvertToAV(CIString actorValueName)
@@ -100,12 +100,12 @@ VarValue PapyrusActor::IsEquipped(VarValue self,
   return VarValue(false);
 }
 
-VarValue PapyrusActor::GetActorValue(VarValue self,
-                                     const std::vector<VarValue>& arguments)
+VarValue PapyrusActor::GetActorValuePercentage(
+  VarValue self, const std::vector<VarValue>& arguments)
 {
   if (arguments.size() < 1) {
     throw std::runtime_error(
-      "Papyrus Actor.GetActorValue: wrong argument count");
+      "Papyrus Actor.GetActorValuePercentage: wrong argument count");
   }
 
   if (auto actor = GetFormPtr<MpActor>(self)) {

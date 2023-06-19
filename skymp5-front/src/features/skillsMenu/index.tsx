@@ -52,6 +52,7 @@ const SkillsMenu = ({ send }: { send: (message: string) => void }) => {
   };
 
   const init = () => {
+    setconfirmDiscard(false);
     send('/skill init');
   };
 
@@ -63,8 +64,8 @@ const SkillsMenu = ({ send }: { send: (message: string) => void }) => {
     // window.dispatchEvent(
     //   new CustomEvent('updateSkillMenu', {
     //     detail: {
-    //       exp: 3375,
-    //       mem: 2,
+    //       exp: 800,
+    //       mem: 1000,
     //       perks: {
     //         saltmaker: 1,
     //         weapon: 1,
@@ -92,7 +93,7 @@ const SkillsMenu = ({ send }: { send: (message: string) => void }) => {
     setpMem(playerData.mem);
     setscale(
       window.innerWidth >= 1920
-        ? window.innerWidth / 1920
+        ? 1
         : window.innerWidth / 2500
     );
   }, [playerData]);
@@ -129,7 +130,7 @@ const SkillsMenu = ({ send }: { send: (message: string) => void }) => {
       );
       return;
     }
-    if (playerLevel === 0 && pMem === 0) {
+    if (perk.levelsPrice[playerLevel] > pMem) {
       setcurrentDescription('не хватает памяти');
       return;
     }
@@ -143,9 +144,7 @@ const SkillsMenu = ({ send }: { send: (message: string) => void }) => {
     // 0 level for first level to craft
     send(`/skill ${selectedPerk.name} ${level}`);
     setpExp(pExp - price);
-    if (level === 0) {
-      setpMem(pMem - 1);
-    }
+    setpMem(pMem - price);
     playerData.perks[selectedPerk.name] = level + 1;
     const audio = document
       .getElementById('learnSound')
@@ -163,9 +162,9 @@ const SkillsMenu = ({ send }: { send: (message: string) => void }) => {
         .slice(0, playerData.perks[key])
         .reduce((a, b) => a + b, 0);
       returnExp += returnPrice;
-      memReturn += 1;
+      memReturn += returnPrice;
     });
-    const newExp = pExp + Math.round(returnExp / 2);
+    const newExp = Math.min(pExp, 500) + Math.round(returnExp / 2);
     const newMem = pMem + memReturn;
     setpExp(newExp);
     setpMem(newMem);

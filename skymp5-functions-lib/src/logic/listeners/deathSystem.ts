@@ -25,12 +25,30 @@ export class DeathSystem implements GameModeListener {
         }
     }
 
+    onPlayerActivateObject(casterActorId: number, targetObjectDesc: string, targetActorId: number): "continue" {
+        const formid = this.mp.getIdFromDesc(targetObjectDesc);
+        const isTeleportDoor = this.controller.isTeleportActivator(formid);
+        if (!isTeleportDoor) {
+            return "continue";
+        }
+
+        const locationalData = this.mp.get(casterActorId, "locationalData");
+        const newSpawnPoint = this.getNearestPoint(locationalData, this.startPoints);
+        if (newSpawnPoint !== undefined) {
+            this.mp.set(casterActorId, "private.spawnPointBackup", newSpawnPoint);
+        }
+
+        return "continue";
+    }
+
     onPlayerJoin(actorId: number) {
     }
 
     onPlayerDeath(targetActorId: number, killerActorId?: number | undefined) {
         const locationalData = this.mp.get(targetActorId, "locationalData");
-        const newSpawnPoint = this.getNearestPoint(locationalData, this.startPoints) || this.getRandomPoint(this.startPoints);
+        const newSpawnPoint = this.getNearestPoint(locationalData, this.startPoints) 
+            || this.mp.get(targetActorId, "private.spawnPointBackup") as LocationalData | undefined
+            || this.getRandomPoint(this.startPoints);
         if (newSpawnPoint !== undefined) {
             this.mp.set(targetActorId, "spawnPoint", newSpawnPoint);
         }

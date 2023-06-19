@@ -2,20 +2,20 @@
 #include "ChangeFormGuard.h"
 #include "EspmGameObject.h"
 #include "FormCallbacks.h"
-#include "GroupUtils.h"
 #include "LeveledListUtils.h"
 #include "MpActor.h"
 #include "MpChangeForms.h"
+#include "MsgType.h"
 #include "PapyrusGame.h"
 #include "PapyrusObjectReference.h"
 #include "Primitive.h"
-#include "Reader.h"
 #include "ScopedTask.h"
 #include "ScriptStorage.h"
 #include "ScriptVariablesHolder.h"
-#include "VirtualMachine.h"
 #include "WorldState.h"
-#include <MsgType.h>
+#include "libespm/GroupUtils.h"
+#include "papyrus-vm/Reader.h"
+#include "papyrus-vm/VirtualMachine.h"
 #include <map>
 #include <optional>
 
@@ -97,7 +97,7 @@ std::pair<int16_t, int16_t> GetGridPos(const NiPoint3& pos) noexcept
 
 struct AnimGraphHolder
 {
-  std::set<std::string> animationVariablesBool;
+  std::set<CIString> animationVariablesBool;
 };
 
 struct ScriptState
@@ -833,7 +833,7 @@ void MpObjectReference::ApplyChangeForm(const MpChangeForm& changeForm)
   // See https://github.com/skyrim-multiplayer/issue-tracker/issues/42
   EditChangeForm(
     [&](MpChangeFormREFR& f) {
-      f = static_cast<const MpChangeFormREFR&>(changeForm);
+      f = changeForm;
 
       // Fix: RequestReloot doesn't work with non-zero 'nextRelootDatetime'
       f.nextRelootDatetime = 0;
@@ -1162,7 +1162,8 @@ void MpObjectReference::InitScripts()
     std::vector<VirtualMachine::ScriptInfo> scriptInfo;
     for (auto& scriptName : scriptNames) {
       auto scriptVariablesHolder = std::make_shared<ScriptVariablesHolder>(
-        scriptName, base.rec, refr.rec, base.parent, &compressedFieldsCache);
+        scriptName, base, refr, base.parent, &compressedFieldsCache,
+        GetParent());
       scriptInfo.push_back({ scriptName, std::move(scriptVariablesHolder) });
     }
 
