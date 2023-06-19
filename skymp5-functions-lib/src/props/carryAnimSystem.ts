@@ -64,10 +64,9 @@ export class CarryAnimSystem {
                 }, playerId, playerId, restrictedAnim);
             }
 
-            ctx.sp.on("equip", (event) => {
-                if (event.actor.getFormID() == playerId && hasKeyword(event.baseObj)) {
-                    ctx.sp.Debug.sendAnimationEvent(ctx.sp.Game.getPlayer(), SWEET_CARRY_ANIM_NAME);
-                    ctx.sp.storage.sweetCarryEquippedFormId = event.baseObj?.getFormID() ?? null;
+            const startCarry = (baseObj?: Form) => {
+                ctx.sp.Debug.sendAnimationEvent(ctx.sp.Game.getPlayer(), SWEET_CARRY_ANIM_NAME);
+                    ctx.sp.storage.sweetCarryEquippedFormId = baseObj?.getFormID() ?? null;
                     ctx.sp.storage.sweetCarryAnimationActive = true;
                     (function () {
                         function sendAnimation() {
@@ -89,6 +88,32 @@ export class CarryAnimSystem {
                       
                         checkAnimation();
                     })();
+            };
+
+            // Restore carry animation on game reconnect
+            ctx.sp.once("update", () => {
+                let startCarry2 = startCarry;
+                for (let j = 1; j < 5; ++j) {
+                    ctx.sp.Utility.wait(j).then(() => {
+                        const pl = ctx.sp.Game.getPlayer();
+                        const n = pl?.getNumItems();
+                        if (n) {
+                            for (let i = 0; i < n; i++) {
+                                const form = pl?.getNthForm(i) || null;
+                                if (pl?.isEquipped(form) && form !== null && hasKeyword(form)) {
+                                    startCarry2(form);
+                                    startCarry2 = () => {};
+                                    return;
+                                }
+                            }
+                        }
+                    });
+                }
+            });
+
+            ctx.sp.on("equip", (event) => {
+                if (event.actor.getFormID() == playerId && hasKeyword(event.baseObj)) {
+                    startCarry(event.baseObj);
                 }
             });
 
