@@ -313,6 +313,47 @@ export class ChatProperty {
     return () => {
       const isInputHidden = !ctx.sp.browser.isFocused() || (ctx.get && ctx.get('dialog'));
 
+      // Add "Lost connection to the server" message
+      const isConnected = ctx.sp.mpClientPlugin.isConnected();
+      const wasConnected = ctx.state.isConnected;
+      if (isConnected !== wasConnected) {
+        ctx.state.isConnected = isConnected;
+        let messageToUser: ChatMessage | undefined;
+        if (isConnected === false) {
+          messageToUser = {
+            actorId: 0,
+            masterApiId: 0,
+            text: [{
+              type: ['plain'],
+              color: '#FFFFFF',
+              text: "Lost connection to the server"
+            }],
+            category: "system"
+          } as any;
+        }
+        else if (wasConnected === false && isConnected === true) {
+          messageToUser = {
+            actorId: 0,
+            masterApiId: 0,
+            text: [{
+              type: ['plain'],
+              color: '#FFFFFF',
+              text: "Reconnected"
+            }],
+            category: "system"
+          } as any;
+        }
+        if (messageToUser) {
+          const messageString = JSON.stringify(messageToUser)
+          let src = '';
+          src += `window.chatMessages = window.chatMessages.slice(-49) || [];`;
+          src += `window.chatMessages.push(${messageString});`;
+          src += refreshWidgets;
+          src += `if (window.scrollToLastMessage) { window.scrollToLastMessage(); }`;
+          ctx.sp.browser.executeJavaScript(src);
+        }
+      }
+
       if (ctx.value === ctx.state.chatPrevValue && isInputHidden === ctx.state.chatIsInputHidden) {
         return;
       }
