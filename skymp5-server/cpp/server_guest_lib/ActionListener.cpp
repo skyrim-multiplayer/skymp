@@ -106,11 +106,21 @@ void ActionListener::OnUpdateMovement(const RawMessageData& rawMsgData,
       return;
     }
 
+    if (!isBlocking) {
+      actor->IncreaseBlockCount();
+    } else {
+      actor->ResetBlockCount();
+    }
+
     actor->SetPos(pos);
     actor->SetAngle(rot);
     actor->SetAnimationVariableBool("bInJumpState", isInJumpState);
     actor->SetAnimationVariableBool("_skymp_isWeapDrawn", isWeapDrawn);
     actor->SetAnimationVariableBool("IsBlocking", isBlocking);
+    if (actor->GetBlockCount() == 5) {
+      actor->SetIsBlockActive(false);
+      actor->ResetBlockCount();
+    }
 
     if (partOne.worldState.lastMovUpdateByIdx.size() <= idx) {
       auto newSize = static_cast<size_t>(idx) + 1;

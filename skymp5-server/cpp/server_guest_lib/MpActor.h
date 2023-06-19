@@ -97,6 +97,9 @@ public:
   void SetIsBlockActive(bool isBlockActive);
   bool IsBlockActive() const;
   NiPoint3 GetViewDirection() const;
+  void IncreaseBlockCount() noexcept;
+  void ResetBlockCount() noexcept;
+  uint32_t GetBlockCount() const noexcept;
 
 private:
   struct Impl;

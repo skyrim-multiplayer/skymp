@@ -68,7 +68,6 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
       { movData.rot[0], movData.rot[1], movData.rot[2] },
       movData.isInJumpState, movData.isWeapDrawn, movData.isBlocking,
       movData.worldOrCell);
-
     return;
   }
 
