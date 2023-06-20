@@ -48,7 +48,7 @@ Returns id.
 
 - ```skyrimPlatform.setTextRotation(textId, rotation: float)``` - set text rotation.
 
-- ```skyrimPlatform.setTextFont(textId, name: string)``` - set text font from relative path "Data/Platform/Fonts/", by name — "Tavern".
+- ```skyrimPlatform.setTextFont(textId, name: string)``` - set text font from relative path "Data/Platform/Fonts/", by font name — "Tavern".
 
 - ```skyrimPlatform.setTextDepth(textId, depth: int)``` - set text z-index of the text.
 

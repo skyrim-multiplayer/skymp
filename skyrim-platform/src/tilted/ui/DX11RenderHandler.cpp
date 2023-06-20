@@ -13,7 +13,6 @@
 #include <iostream>
 #include <iterator>
 #include <string>
-
 #include <spdlog/spdlog.h>
 
 CMRC_DECLARE(skyrim_plugin_resources);
