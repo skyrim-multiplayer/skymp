@@ -92,17 +92,17 @@ TEST_CASE("UpdateMovement", "[PartOne]")
   REQUIRE(std::find_if(partOne.Messages().begin(), partOne.Messages().end(),
                        [&](auto m) {
                          return m.j["type"] == "createActor" &&
-                           m.j["idx"] == 1 && m.reliable && m.userId == 0;
+                           m.j["idx"] == 1 && m.reliability == Networking::Reliability::Reliable && m.userId == 0;
                        }) != partOne.Messages().end());
   REQUIRE(std::find_if(partOne.Messages().begin(), partOne.Messages().end(),
                        [&](auto m) {
                          return m.j["type"] == "createActor" &&
-                           m.j["idx"] == 0 && m.reliable && m.userId == 1;
+                           m.j["idx"] == 0 && m.reliability == Networking::Reliability::Reliable && m.userId == 1;
                        }) != partOne.Messages().end());
   REQUIRE(std::find_if(partOne.Messages().begin(), partOne.Messages().end(),
                        [&](auto m) {
                          return m.j["type"] == "createActor" &&
-                           m.j["idx"] == 1 && m.reliable && m.userId == 1;
+                           m.j["idx"] == 1 && m.reliability == Networking::Reliability::Reliable && m.userId == 1;
                        }) != partOne.Messages().end());
 
   // Appearance must be empty by default
@@ -125,11 +125,11 @@ TEST_CASE("UpdateMovement", "[PartOne]")
   REQUIRE(std::find_if(partOne.Messages().begin(), partOne.Messages().end(),
                        [&](auto m) {
                          return m.j["type"] == "destroyActor" &&
-                           m.j["idx"] == 1 && m.reliable && m.userId == 0;
+                           m.j["idx"] == 1 && m.reliability == Networking::Reliability::Reliable && m.userId == 0;
                        }) != partOne.Messages().end());
   REQUIRE(std::find_if(partOne.Messages().begin(), partOne.Messages().end(),
                        [&](auto m) {
                          return m.j["type"] == "destroyActor" &&
-                           m.j["idx"] == 0 && m.reliable && m.userId == 1;
+                           m.j["idx"] == 0 && m.reliability == Networking::Reliability::Reliable && m.userId == 1;
                        }) != partOne.Messages().end());
 }

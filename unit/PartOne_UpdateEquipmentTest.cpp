@@ -19,7 +19,7 @@ TEST_CASE("UpdateEquipment", "[PartOne]")
   REQUIRE(std::find_if(partOne.Messages().begin(), partOne.Messages().end(),
                        [&](auto m) {
                          return m.j["type"] == "createActor" &&
-                           m.j["idx"] == 0 && m.reliable && m.userId == 1 &&
+                           m.j["idx"] == 0 && m.reliability == Networking::Reliability::Reliable && m.userId == 1 &&
                            m.j["equipment"] == jEquipment["data"];
                        }) != partOne.Messages().end());
   partOne.Messages().clear();
@@ -30,13 +30,13 @@ TEST_CASE("UpdateEquipment", "[PartOne]")
   REQUIRE(std::find_if(partOne.Messages().begin(), partOne.Messages().end(),
                        [&](auto m) {
                          return m.j["t"] == MsgType::UpdateEquipment &&
-                           m.j["idx"] == 0 && m.reliable && m.userId == 1 &&
+                           m.j["idx"] == 0 && m.reliability == Networking::Reliability::Reliable && m.userId == 1 &&
                            m.j["data"] == jEquipment["data"];
                        }) != partOne.Messages().end());
   REQUIRE(std::find_if(partOne.Messages().begin(), partOne.Messages().end(),
                        [&](auto m) {
                          return m.j["t"] == MsgType::UpdateEquipment &&
-                           m.j["idx"] == 0 && m.reliable && m.userId == 0 &&
+                           m.j["idx"] == 0 && m.reliability == Networking::Reliability::Reliable && m.userId == 0 &&
                            m.j["data"] == jEquipment["data"];
                        }) != partOne.Messages().end());
 }

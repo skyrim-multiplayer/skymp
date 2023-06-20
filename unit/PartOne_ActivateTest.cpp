@@ -138,7 +138,7 @@ TEST_CASE("See harvested PurpleMountainFlower in Whiterun", "[PartOne][espm]")
 
   auto it = std::find_if(
     partOne.Messages().begin(), partOne.Messages().end(), [&](auto m) {
-      return m.reliable && m.userId == 0 && m.j["type"] == "createActor" &&
+      return m.reliability == Networking::Reliability::Reliable && m.userId == 0 && m.j["type"] == "createActor" &&
         m.j["refrId"] == refrId &&
         m.j["props"] == nlohmann::json{ { "isHarvested", true } };
     });
@@ -166,7 +166,7 @@ TEST_CASE("See open DisplayCaseSmFlat01 in Whiterun", "[PartOne][espm]")
 
   auto it = std::find_if(
     partOne.Messages().begin(), partOne.Messages().end(), [&](auto m) {
-      return m.reliable && m.userId == 0 && m.j["type"] == "createActor" &&
+      return m.reliability == Networking::Reliability::Reliable && m.userId == 0 && m.j["type"] == "createActor" &&
         m.j["refrId"] == refrId &&
         m.j["props"] == nlohmann::json{ { "isOpen", true } };
     });
@@ -194,7 +194,7 @@ TEST_CASE("Activate DisplayCaseSmFlat01 in Whiterun", "[PartOne][espm]")
 
   auto it = std::find_if(
     partOne.Messages().begin(), partOne.Messages().end(), [&](auto m) {
-      return m.reliable && m.userId == 0 && m.j["type"] == "createActor" &&
+      return m.reliability == Networking::Reliability::Reliable && m.userId == 0 && m.j["type"] == "createActor" &&
         m.j["refrId"] == refrId && m.j["props"] == nullptr;
     });
   REQUIRE(it != partOne.Messages().end());
@@ -294,7 +294,7 @@ TEST_CASE("Activate PurpleMountainFlower in Whiterun", "[PartOne][espm]")
 
   auto it = std::find_if(
     partOne.Messages().begin(), partOne.Messages().end(), [&](auto m) {
-      return m.reliable && m.userId == 0 && m.j["type"] == "createActor" &&
+      return m.reliability == Networking::Reliability::Reliable && m.userId == 0 && m.j["type"] == "createActor" &&
         m.j["refrId"] == refrId && m.j["props"] == nullptr;
     });
   REQUIRE(it != partOne.Messages().end());
@@ -464,7 +464,7 @@ TEST_CASE("Server creates and destroys an object for user correcly",
   auto refId = 0x01000f69;
   REQUIRE(std::find_if(partOne.Messages().begin(), partOne.Messages().end(),
                        [&](auto m) {
-                         return m.j["type"] == "createActor" && m.reliable &&
+                         return m.j["type"] == "createActor" && m.reliability == Networking::Reliability::Reliable &&
                            m.userId == 0 && m.j["refrId"] == 0x01000f69;
                        }) != partOne.Messages().end());
 
@@ -475,7 +475,7 @@ TEST_CASE("Server creates and destroys an object for user correcly",
 
   REQUIRE(std::find_if(partOne.Messages().begin(), partOne.Messages().end(),
                        [&](auto m) {
-                         return m.j["type"] == "destroyActor" && m.reliable &&
+                         return m.j["type"] == "destroyActor" && m.reliability == Networking::Reliability::Reliable &&
                            m.userId == 0 && m.j["idx"] == ref.GetIdx();
                        }) != partOne.Messages().end());
 

@@ -1,5 +1,6 @@
 #pragma once
 #include <functional>
+#include "NetworkingInterface.h"
 
 class MpObjectReference;
 class MpActor;
@@ -10,7 +11,7 @@ public:
   using SubscribeCallback = std::function<void(MpObjectReference* emitter,
                                                MpObjectReference* listener)>;
   using SendToUserFn = std::function<void(MpActor* actor, const void* data,
-                                          size_t size, bool reliable)>;
+                                          size_t size, Networking::Reliability reliability)>;
 
   SubscribeCallback subscribe, unsubscribe;
   SendToUserFn sendToUser;

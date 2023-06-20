@@ -15,12 +15,12 @@ class FakeSendTarget : public Networking::ISendTarget
 {
 public:
   void Send(Networking::UserId targetUserId, Networking::PacketData data,
-            size_t length, bool reliable) override
+            size_t length, Networking::Reliability reliability) override
   {
     std::string s(reinterpret_cast<const char*>(data + 1), length - 1);
     PartOne::Message m;
     try {
-      m = PartOne::Message{ nlohmann::json::parse(s), targetUserId, reliable };
+      m = PartOne::Message{ nlohmann::json::parse(s), targetUserId, reliability };
     } catch (std::exception& e) {
       std::stringstream ss;
       ss << e.what() << std::endl << "`" << s << "`";
@@ -426,7 +426,7 @@ void PartOne::NotifyGamemodeApiStateChanged(
     if (!serverState.IsConnected(i))
       continue;
     GetSendTarget().Send(i, reinterpret_cast<Networking::PacketData>(m.data()),
-                         m.size(), true);
+                         m.size(), Networking::Reliability::Reliable);
   }
 
   pImpl->gamemodeApiState = newState;
@@ -490,13 +490,13 @@ FormCallbacks PartOne::CreateFormCallbacks()
     };
 
   FormCallbacks::SendToUserFn sendToUser =
-    [this, st](MpActor* actor, const void* data, size_t size, bool reliable) {
+    [this, st](MpActor* actor, const void* data, size_t size, Networking::Reliability reliability) {
       auto targetuserId = st->UserByActor(actor);
       if (targetuserId != Networking::InvalidUserId &&
           st->disconnectingUserId != targetuserId)
         pImpl->sendTarget->Send(targetuserId,
                                 reinterpret_cast<Networking::PacketData>(data),
-                                size, reliable);
+                                size, reliability);
     };
 
   return { subscribe, unsubscribe, sendToUser };
@@ -681,7 +681,7 @@ void PartOne::AddUser(Networking::UserId userId, UserType type)
     GetSendTarget().Send(userId,
                          reinterpret_cast<Networking::PacketData>(
                            pImpl->updateGamemodeDataMsg.data()),
-                         pImpl->updateGamemodeDataMsg.size(), true);
+                         pImpl->updateGamemodeDataMsg.size(), Networking::Reliability::Reliable);
   }
 }
 

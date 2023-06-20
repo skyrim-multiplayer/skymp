@@ -121,16 +121,9 @@ TEST_CASE("createActor message contains Appearance", "[PartOne]")
   REQUIRE(std::find_if(partOne.Messages().begin(), partOne.Messages().end(),
                        [&](auto m) {
                          return m.j["type"] == "createActor" &&
-                           m.j["idx"] == 0 && m.reliable && m.userId == 1 &&
+                           m.j["idx"] == 0 && m.reliability == Networking::Reliability::Reliable && m.userId == 1 &&
                            m.j["appearance"] == jAppearance["data"];
                        }) != partOne.Messages().end());
-
-  /*REQUIRE_THROWS_WITH(
-    doAppearance(), ContainsSubstring("Unable to update appearance, RaceMenu is
-  not open"));
-
-  partOne.SetRaceMenuOpen(0xff000ABC, true);
-  doAppearance();*/
 }
 
 TEST_CASE("GetUserActor", "[PartOne]")

@@ -28,7 +28,7 @@ TEST_CASE("Notification", "[Papyrus][Debug]")
 
   REQUIRE(p.Messages().size() == 3);
   REQUIRE(p.Messages()[1].userId == 3);
-  REQUIRE(p.Messages()[1].reliable);
+  REQUIRE(p.Messages()[1].reliability == Networking::Reliability::Reliable);
   REQUIRE(p.Messages()[1].j ==
           nlohmann::json{ { "type", "spSnippet" },
                           { "snippetIdx", 0 },
@@ -37,7 +37,7 @@ TEST_CASE("Notification", "[Papyrus][Debug]")
                           { "function", "Notification" },
                           { "arguments", { "Hello, world!" } } });
   REQUIRE(p.Messages()[2].userId == 3);
-  REQUIRE(p.Messages()[2].reliable);
+  REQUIRE(p.Messages()[2].reliability == Networking::Reliability::Reliable);
   REQUIRE(p.Messages()[2].j ==
           nlohmann::json{ { "type", "spSnippet" },
                           { "snippetIdx", 1 },

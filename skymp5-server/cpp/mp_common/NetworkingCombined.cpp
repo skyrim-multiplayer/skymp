@@ -16,7 +16,7 @@ public:
   }
 
   void Send(Networking::UserId targetUserId, Networking::PacketData data,
-            size_t length, bool reliable) override
+            size_t length, Networking::Reliability reliability) override
   {
     if (realIdByCombined.size() <= targetUserId)
       throw std::runtime_error("User with id " + std::to_string(targetUserId) +
@@ -30,7 +30,7 @@ public:
       throw std::runtime_error("User with id " + std::to_string(targetUserId) +
                                " doesn't exist");
 
-    childs[serverIdx]->Send(userId, data, length, reliable);
+    childs[serverIdx]->Send(userId, data, length, reliability);
   }
 
   void Tick(OnPacket onPacket, void* state) override

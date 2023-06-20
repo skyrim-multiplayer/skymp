@@ -1195,7 +1195,7 @@ void MpObjectReference::SendInventoryUpdate()
       { "inventory", actor->GetInventory().ToJson() },
       { "type", "setInventory" }
     }.dump();
-    actor->SendToUser(msg.data(), msg.size(), true);
+    actor->SendToUser(msg.data(), msg.size(), Networking::Reliability::ReliableOrdered);
   }
 }
 

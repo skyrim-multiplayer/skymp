@@ -91,7 +91,7 @@ void MpClientPlugin::Send(State& state, const char* jsonContent, bool reliable)
     std::copy(stream.GetData(),
               stream.GetData() + stream.GetNumberOfBytesUsed(),
               buf.begin() + 2);
-    state.cl->Send(buf.data(), buf.size(), reliable);
+    state.cl->Send(buf.data(), buf.size(), reliable ? Networking::Reliability::Reliable : Networking::Reliability::Unreliable);
 
     return;
   }
@@ -101,5 +101,5 @@ void MpClientPlugin::Send(State& state, const char* jsonContent, bool reliable)
   buf[0] = Networking::MinPacketId;
   memcpy(buf.data() + 1, jsonContent, n);
 
-  state.cl->Send(buf.data(), buf.size(), reliable);
+  state.cl->Send(buf.data(), buf.size(), reliable ? Networking::Reliability::Reliable : Networking::Reliability::Unreliable);
 }

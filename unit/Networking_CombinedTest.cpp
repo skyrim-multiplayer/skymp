@@ -93,7 +93,7 @@ TEST_CASE("Combined: Messages from clients are received")
 
   DECLARE_CB;
 
-  s2->CreateClient()->Send((PacketData) "dd", 2, true);
+  s2->CreateClient()->Send((PacketData) "dd", 2, Networking::Reliability::Reliable);
 
   svr->Tick(tickCb, nullptr);
 
@@ -115,7 +115,7 @@ TEST_CASE("Combined: Messages are transferred to clients")
   DECLARE_CB;
 
   svr->Tick(tickCb, nullptr);
-  svr->Send(1, (PacketData) "df", 2, true);
+  svr->Send(1, (PacketData) "df", 2, Networking::Reliability::Reliable);
 
   static bool received = false;
   cl1->Tick(

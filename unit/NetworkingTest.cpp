@@ -69,7 +69,7 @@ TEST_CASE("Ctors", "[Networking]")
   }
 
   try {
-    server->Send(322, nullptr, 0, false);
+    server->Send(322, nullptr, 0, Networking::Reliability::Unreliable);
     REQUIRE(false);
   } catch (std::exception& e) {
     REQUIRE(e.what() == std::string("User with id 322 doesn't exist"));

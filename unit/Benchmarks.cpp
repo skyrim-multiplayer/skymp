@@ -8,7 +8,7 @@ class EmptySendTarget : public Networking::ISendTarget
 {
 public:
   void Send(Networking::UserId targetUserId, Networking::PacketData data,
-            size_t length, bool reliable) override
+            size_t length, Networking::Reliability reliability) override
   {
   }
 };

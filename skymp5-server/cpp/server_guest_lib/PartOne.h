@@ -29,7 +29,7 @@ public:
   {
     nlohmann::json j;
     Networking::UserId userId = Networking::InvalidUserId;
-    bool reliable = false;
+    Networking::Reliability reliability = Networking::Reliability::Unreliable;
   };
 
   using Listener = PartOneListener;

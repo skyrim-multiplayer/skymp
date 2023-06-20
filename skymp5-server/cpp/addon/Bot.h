@@ -15,7 +15,7 @@ public:
   {
     if (cl)
       cl->Send(reinterpret_cast<Networking::PacketData>(packet.data()),
-               packet.size(), true);
+               packet.size(), Networking::Reliability::Reliable);
   }
 
   void Tick()

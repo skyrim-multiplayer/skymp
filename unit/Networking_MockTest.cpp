@@ -14,7 +14,7 @@ TEST_CASE("MockServer - send message to server", "[Networking]")
 {
   MockServer mockServer;
   auto cl = mockServer.CreateClient();
-  cl->Send((uint8_t*)"abcd", 4, true);
+  cl->Send((uint8_t*)"abcd", 4, Networking::Reliability::Reliable);
 
   static bool received = false;
 
@@ -39,7 +39,7 @@ TEST_CASE("MockServer - send message to client", "[Networking]")
 
   auto cl = mockServer.CreateClient();
 
-  mockServer.Send(1, (uint8_t*)"abcd", 4, true);
+  mockServer.Send(1, (uint8_t*)"abcd", 4, Networking::Reliability::Reliable);
 
   static bool received = false;
 
@@ -56,7 +56,7 @@ TEST_CASE("MockServer - send message to client", "[Networking]")
 
 TEST_CASE("MockServer - send message to unexisting client", "[Networking]")
 {
-  REQUIRE_THROWS_WITH(MockServer().Send(0, nullptr, 9000, true),
+  REQUIRE_THROWS_WITH(MockServer().Send(0, nullptr, 9000, Networking::Reliability::Reliable),
                       Catch::Matchers::ContainsSubstring(
                         "No client with id 0 found on MockServer"));
 }

@@ -104,10 +104,17 @@ void MpActor::VisitProperties(const PropertiesVisitor& visitor,
 
 void MpActor::SendToUser(const void* data, size_t size, bool reliable)
 {
-  if (callbacks->sendToUser)
-    callbacks->sendToUser(this, data, size, reliable);
-  else
+  SendToUser(data, size, reliable ? Networking::Reliability::Reliable : Networking::Reliability::Unreliable);
+}
+
+void MpActor::SendToUser(const void* data, size_t size, Networking::Reliability reliability)
+{
+  if (callbacks->sendToUser) {
+    callbacks->sendToUser(this, data, size, reliability);
+  }
+  else {
     throw std::runtime_error("sendToUser is nullptr");
+  }
 }
 
 void MpActor::OnEquip(uint32_t baseId)

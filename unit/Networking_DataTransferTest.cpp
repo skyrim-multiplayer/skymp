@@ -28,7 +28,7 @@ TEST_CASE("Data transfer", "[Networking]")
         nullptr);
       if (client->IsConnected()) {
         client->Send(new uint8_t[4]{ Networking::MinPacketId, 1, 2, 3 }, 4,
-                     true);
+                     Networking::Reliability::Reliable);
       }
 
       try {
@@ -42,7 +42,7 @@ TEST_CASE("Data transfer", "[Networking]")
                 data, new uint8_t[4]{ Networking::MinPacketId, 1, 2, 3 }, 4));
               server->Send(0,
                            new uint8_t[4]{ Networking::MinPacketId, 3, 2, 1 },
-                           4, true);
+                           4, Networking::Reliability::Reliable);
             }
 
             static bool thrown = false;

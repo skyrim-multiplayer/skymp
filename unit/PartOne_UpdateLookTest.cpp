@@ -46,7 +46,7 @@ TEST_CASE("SetRaceMenuOpen", "[PartOne]")
   REQUIRE(partOne.Messages()[0].j ==
           nlohmann::json{ { "type", "setRaceMenuOpen" }, { "open", true } });
   REQUIRE(partOne.Messages()[0].userId == 1);
-  REQUIRE(partOne.Messages()[0].reliable);
+  REQUIRE(partOne.Messages()[0].reliability == Networking::Reliability::Reliable);
 
   for (int i = 0; i < 3; ++i)
     partOne.SetRaceMenuOpen(0xff000000, true);
@@ -57,7 +57,7 @@ TEST_CASE("SetRaceMenuOpen", "[PartOne]")
   REQUIRE(partOne.Messages()[1].j ==
           nlohmann::json{ { "type", "setRaceMenuOpen" }, { "open", false } });
   REQUIRE(partOne.Messages()[1].userId == 1);
-  REQUIRE(partOne.Messages()[1].reliable);
+  REQUIRE(partOne.Messages()[1].reliability == Networking::Reliability::Reliable);
 
   for (int i = 0; i < 3; ++i)
     partOne.SetRaceMenuOpen(0xff000000, false);
@@ -95,7 +95,7 @@ TEST_CASE("UpdateAppearance1", "[PartOne]")
   REQUIRE(std::find_if(partOne.Messages().begin(), partOne.Messages().end(),
                        [&](auto m) {
                          return m.j["t"] == MsgType::UpdateAppearance &&
-                           m.j["idx"] == 0 && m.reliable && m.userId == 1 &&
+                           m.j["idx"] == 0 && m.reliability == Networking::Reliability::Reliable && m.userId == 1 &&
                            m.j["data"] == jAppearance["data"];
                        }) != partOne.Messages().end());
 
@@ -128,7 +128,7 @@ TEST_CASE("UpdateAppearance2", "[PartOne]")
   REQUIRE(std::find_if(partOne.Messages().begin(), partOne.Messages().end(),
                        [&](auto m) {
                          return m.j["t"] == MsgType::UpdateAppearance &&
-                           m.j["idx"] == 0 && m.reliable && m.userId == 1 &&
+                           m.j["idx"] == 0 && m.reliability == Networking::Reliability::Reliable && m.userId == 1 &&
                            m.j["data"] == jAppearance["data"];
                        }) != partOne.Messages().end());
 

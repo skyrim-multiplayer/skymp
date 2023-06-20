@@ -19,7 +19,7 @@ class MockClient;
 typedef void (*SendFn)(Networking::MockServer*, Networking::UserId id,
                        Networking::PacketType type,
                        Networking::PacketData data, size_t length,
-                       bool reliable);
+                       Networking::Reliability);
 
 class MockClient : public Networking::IClient
 {
@@ -35,10 +35,10 @@ public:
     packets.push_back(std::move(p));
   }
 
-  void Send(Networking::PacketData data, size_t length, bool reliable) override
+  void Send(Networking::PacketData data, size_t length, Networking::Reliability reliability) override
   {
     return sendFn(parent, id, Networking::PacketType::Message, data, length,
-                  reliable);
+                  reliability);
   }
 
   void Tick(OnPacket onPacket, void* state) override
@@ -54,7 +54,7 @@ public:
   ~MockClient() override
   {
     sendFn(parent, id, Networking::PacketType::ServerSideUserDisconnect,
-           nullptr, 0, true);
+           nullptr, 0, Networking::Reliability::Reliable);
   }
 
   void SetId(Networking::UserId userId) { id = userId; }
@@ -85,7 +85,7 @@ std::shared_ptr<Networking::IClient> Networking::MockServer::CreateClient()
   NetworkingMock::SendFn sendFn =
     [](Networking::MockServer* parent, Networking::UserId id,
        Networking::PacketType type, Networking::PacketData data, size_t length,
-       bool reliable) {
+       Networking::Reliability) {
       parent->pImpl->packets.push_back(
         { id,
           std::unique_ptr<NetworkingMock::Packet>(new NetworkingMock::Packet(
@@ -126,7 +126,7 @@ std::shared_ptr<Networking::IClient> Networking::MockServer::CreateClient()
 }
 
 void Networking::MockServer::Send(UserId targetUserId, PacketData data,
-                                  size_t length, bool reliable)
+                                  size_t length, Networking::Reliability)
 {
   if (pImpl->clients.size() <= targetUserId ||
       pImpl->clients[targetUserId].expired() ||
