@@ -52,7 +52,7 @@ Returns id.
 
 - ```skyrimPlatform.setTextDepth(textId, depth: int)``` - set text z-index of the text.
 
-- ```skyrimPlatform.setTextEffect(textId, effect: skyrimPlatform.SpriteEffects)``` - set sprite effect [None = 0, FlipHorizontally = 1, FlipVertically = 2]
+- ```skyrimPlatform.setTextEffect(textId, effect: skyrimPlatform.SpriteEffects)``` - set sprite effect [None = 0, FlipHorizontally = 1, FlipVertically = 2].
 
 - ```skyrimPlatform.setTextOrigin(textId, origin [x,y])``` - set text pivot (center point).
 
