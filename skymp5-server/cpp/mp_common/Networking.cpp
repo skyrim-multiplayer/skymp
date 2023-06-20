@@ -44,7 +44,8 @@ const char* GetError(unsigned char packetType)
   }
 }
 
-PacketReliability GetPacketReliability(Networking::Reliability reliability) {
+PacketReliability GetPacketReliability(Networking::Reliability reliability)
+{
   switch (reliability) {
     case Networking::Reliability::Unreliable:
       return UNRELIABLE;
@@ -57,7 +58,8 @@ PacketReliability GetPacketReliability(Networking::Reliability reliability) {
   }
 }
 
-PacketPriority GetPacketPriority(Networking::Reliability reliability) {
+PacketPriority GetPacketPriority(Networking::Reliability reliability)
+{
   switch (reliability) {
     case Networking::Reliability::Unreliable:
       return IMMEDIATE_PRIORITY;
@@ -98,13 +100,16 @@ public:
     peer->Shutdown(0);
   }
 
-  void Send(Networking::PacketData data, size_t length, Networking::Reliability reliability) override
+  void Send(Networking::PacketData data, size_t length,
+            Networking::Reliability reliability) override
   {
-    PacketReliability raknetPacketReliability = GetPacketReliability(reliability);
+    PacketReliability raknetPacketReliability =
+      GetPacketReliability(reliability);
     PacketPriority raknetPacketPriority = GetPacketPriority(reliability);
 
-    peer->Send(reinterpret_cast<const char*>(data), length, raknetPacketPriority,
-               raknetPacketReliability, 0, serverGuid, false);
+    peer->Send(reinterpret_cast<const char*>(data), length,
+               raknetPacketPriority, raknetPacketReliability, 0, serverGuid,
+               false);
   }
 
   void Tick(OnPacket onPacket, void* state) override
@@ -185,14 +190,16 @@ public:
   {
     const auto guid = idManager->find(id);
     if (guid == RakNetGUID(-1)) {
-      throw std::runtime_error(fmt::format("User with id {} doesn't exist", id));
+      throw std::runtime_error(
+        fmt::format("User with id {} doesn't exist", id));
     }
 
-    PacketReliability raknetPacketReliability = GetPacketReliability(reliability);
+    PacketReliability raknetPacketReliability =
+      GetPacketReliability(reliability);
     PacketPriority raknetPacketPriority = GetPacketPriority(reliability);
 
-    peer->Send(reinterpret_cast<const char*>(data), length, raknetPacketPriority,
-               raknetPacketReliability, 0, guid, false);
+    peer->Send(reinterpret_cast<const char*>(data), length,
+               raknetPacketPriority, raknetPacketReliability, 0, guid, false);
   }
 
   void Tick(OnPacket onPacket, void* state) override

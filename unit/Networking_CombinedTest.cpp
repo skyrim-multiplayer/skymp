@@ -93,7 +93,8 @@ TEST_CASE("Combined: Messages from clients are received")
 
   DECLARE_CB;
 
-  s2->CreateClient()->Send((PacketData) "dd", 2, Networking::Reliability::Reliable);
+  s2->CreateClient()->Send((PacketData) "dd", 2,
+                           Networking::Reliability::Reliable);
 
   svr->Tick(tickCb, nullptr);
 

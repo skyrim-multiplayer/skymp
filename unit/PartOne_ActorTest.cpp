@@ -118,12 +118,12 @@ TEST_CASE("createActor message contains Appearance", "[PartOne]")
   partOne.CreateActor(0xff000FFF, { 100.f, 200.f, 300.f }, 180.f, 0x3c);
   partOne.SetUserActor(1, 0xff000FFF);
 
-  REQUIRE(std::find_if(partOne.Messages().begin(), partOne.Messages().end(),
-                       [&](auto m) {
-                         return m.j["type"] == "createActor" &&
-                           m.j["idx"] == 0 && m.reliability == Networking::Reliability::Reliable && m.userId == 1 &&
-                           m.j["appearance"] == jAppearance["data"];
-                       }) != partOne.Messages().end());
+  REQUIRE(std::find_if(
+            partOne.Messages().begin(), partOne.Messages().end(), [&](auto m) {
+              return m.j["type"] == "createActor" && m.j["idx"] == 0 &&
+                m.reliability == Networking::Reliability::Reliable &&
+                m.userId == 1 && m.j["appearance"] == jAppearance["data"];
+            }) != partOne.Messages().end());
 }
 
 TEST_CASE("GetUserActor", "[PartOne]")

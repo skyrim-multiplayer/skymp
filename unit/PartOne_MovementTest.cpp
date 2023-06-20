@@ -89,21 +89,24 @@ TEST_CASE("UpdateMovement", "[PartOne]")
   REQUIRE(partOne.Messages().size() == 3);
   // Create idx 1 for user 0, then idx 0 for 1, then idx 1 for 1 (self
   // streaming)
-  REQUIRE(std::find_if(partOne.Messages().begin(), partOne.Messages().end(),
-                       [&](auto m) {
-                         return m.j["type"] == "createActor" &&
-                           m.j["idx"] == 1 && m.reliability == Networking::Reliability::Reliable && m.userId == 0;
-                       }) != partOne.Messages().end());
-  REQUIRE(std::find_if(partOne.Messages().begin(), partOne.Messages().end(),
-                       [&](auto m) {
-                         return m.j["type"] == "createActor" &&
-                           m.j["idx"] == 0 && m.reliability == Networking::Reliability::Reliable && m.userId == 1;
-                       }) != partOne.Messages().end());
-  REQUIRE(std::find_if(partOne.Messages().begin(), partOne.Messages().end(),
-                       [&](auto m) {
-                         return m.j["type"] == "createActor" &&
-                           m.j["idx"] == 1 && m.reliability == Networking::Reliability::Reliable && m.userId == 1;
-                       }) != partOne.Messages().end());
+  REQUIRE(std::find_if(
+            partOne.Messages().begin(), partOne.Messages().end(), [&](auto m) {
+              return m.j["type"] == "createActor" && m.j["idx"] == 1 &&
+                m.reliability == Networking::Reliability::Reliable &&
+                m.userId == 0;
+            }) != partOne.Messages().end());
+  REQUIRE(std::find_if(
+            partOne.Messages().begin(), partOne.Messages().end(), [&](auto m) {
+              return m.j["type"] == "createActor" && m.j["idx"] == 0 &&
+                m.reliability == Networking::Reliability::Reliable &&
+                m.userId == 1;
+            }) != partOne.Messages().end());
+  REQUIRE(std::find_if(
+            partOne.Messages().begin(), partOne.Messages().end(), [&](auto m) {
+              return m.j["type"] == "createActor" && m.j["idx"] == 1 &&
+                m.reliability == Networking::Reliability::Reliable &&
+                m.userId == 1;
+            }) != partOne.Messages().end());
 
   // Appearance must be empty by default
   REQUIRE(std::find_if(partOne.Messages().begin(), partOne.Messages().end(),
@@ -122,14 +125,16 @@ TEST_CASE("UpdateMovement", "[PartOne]")
   partOne.Messages().clear();
   acAbcd->SetPos({ 100000, 0, 0 });
   REQUIRE(partOne.Messages().size() == 2);
-  REQUIRE(std::find_if(partOne.Messages().begin(), partOne.Messages().end(),
-                       [&](auto m) {
-                         return m.j["type"] == "destroyActor" &&
-                           m.j["idx"] == 1 && m.reliability == Networking::Reliability::Reliable && m.userId == 0;
-                       }) != partOne.Messages().end());
-  REQUIRE(std::find_if(partOne.Messages().begin(), partOne.Messages().end(),
-                       [&](auto m) {
-                         return m.j["type"] == "destroyActor" &&
-                           m.j["idx"] == 0 && m.reliability == Networking::Reliability::Reliable && m.userId == 1;
-                       }) != partOne.Messages().end());
+  REQUIRE(std::find_if(
+            partOne.Messages().begin(), partOne.Messages().end(), [&](auto m) {
+              return m.j["type"] == "destroyActor" && m.j["idx"] == 1 &&
+                m.reliability == Networking::Reliability::Reliable &&
+                m.userId == 0;
+            }) != partOne.Messages().end());
+  REQUIRE(std::find_if(
+            partOne.Messages().begin(), partOne.Messages().end(), [&](auto m) {
+              return m.j["type"] == "destroyActor" && m.j["idx"] == 0 &&
+                m.reliability == Networking::Reliability::Reliable &&
+                m.userId == 1;
+            }) != partOne.Messages().end());
 }

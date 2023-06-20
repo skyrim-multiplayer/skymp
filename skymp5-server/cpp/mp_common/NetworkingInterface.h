@@ -29,7 +29,8 @@ enum class PacketType
   ServerSideUserDisconnect
 };
 
-enum class Reliability {
+enum class Reliability
+{
   Unreliable,
   Reliable,
   ReliableOrdered
@@ -43,7 +44,8 @@ public:
 
   virtual ~IClient() = default;
 
-  virtual void Send(PacketData data, size_t length, Reliability reliability) = 0;
+  virtual void Send(PacketData data, size_t length,
+                    Reliability reliability) = 0;
   virtual void Tick(OnPacket onPacket, void* state) = 0;
   virtual bool IsConnected() const = 0;
 };
@@ -87,8 +89,11 @@ inline void SendFormatted(Networking::ISendTarget* sendTarget,
                           Networking::UserId userId, const char* format,
                           Ts... args)
 {
-  Format([&](Networking::PacketData data,
-             size_t length) { sendTarget->Send(userId, data, length, Networking::Reliability::Reliable); },
-         format, args...);
+  Format(
+    [&](Networking::PacketData data, size_t length) {
+      sendTarget->Send(userId, data, length,
+                       Networking::Reliability::Reliable);
+    },
+    format, args...);
 }
 }

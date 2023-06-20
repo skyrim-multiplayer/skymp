@@ -14,7 +14,9 @@ public:
 
   void Send(const uint8_t* data, size_t length, bool reliable) override
   {
-    sendTarget.Send(userId, data, length, reliable ? Networking::Reliability::Reliable : Networking::Reliability::Unreliable);
+    sendTarget.Send(userId, data, length,
+                    reliable ? Networking::Reliability::Reliable
+                             : Networking::Reliability::Unreliable);
   }
 
 private:

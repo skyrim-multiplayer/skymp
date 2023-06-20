@@ -56,9 +56,10 @@ TEST_CASE("MockServer - send message to client", "[Networking]")
 
 TEST_CASE("MockServer - send message to unexisting client", "[Networking]")
 {
-  REQUIRE_THROWS_WITH(MockServer().Send(0, nullptr, 9000, Networking::Reliability::Reliable),
-                      Catch::Matchers::ContainsSubstring(
-                        "No client with id 0 found on MockServer"));
+  REQUIRE_THROWS_WITH(
+    MockServer().Send(0, nullptr, 9000, Networking::Reliability::Reliable),
+    Catch::Matchers::ContainsSubstring(
+      "No client with id 0 found on MockServer"));
 }
 
 TEST_CASE("MockServer - connect/disconnect", "[Networking]")

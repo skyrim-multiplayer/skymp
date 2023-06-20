@@ -35,7 +35,8 @@ public:
     packets.push_back(std::move(p));
   }
 
-  void Send(Networking::PacketData data, size_t length, Networking::Reliability reliability) override
+  void Send(Networking::PacketData data, size_t length,
+            Networking::Reliability reliability) override
   {
     return sendFn(parent, id, Networking::PacketType::Message, data, length,
                   reliability);

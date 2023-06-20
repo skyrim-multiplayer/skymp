@@ -37,7 +37,8 @@ public:
                        VisitPropertiesMode mode) override;
 
   void SendToUser(const void* data, size_t size, bool reliable);
-  void SendToUser(const void* data, size_t size, Networking::Reliability reliability);
+  void SendToUser(const void* data, size_t size,
+                  Networking::Reliability reliability);
 
   void OnEquip(uint32_t baseId);
 

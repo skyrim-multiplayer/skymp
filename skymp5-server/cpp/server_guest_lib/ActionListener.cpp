@@ -50,7 +50,10 @@ MpActor* ActionListener::SendToNeighbours(
     if (listenerAsActor) {
       auto targetuserId = partOne.serverState.UserByActor(listenerAsActor);
       if (targetuserId != Networking::InvalidUserId) {
-        partOne.GetSendTarget().Send(targetuserId, data, length, reliable ? Networking::Reliability::Reliable : Networking::Reliability::Unreliable);
+        partOne.GetSendTarget().Send(targetuserId, data, length,
+                                     reliable
+                                       ? Networking::Reliability::Reliable
+                                       : Networking::Reliability::Unreliable);
       }
     }
   }

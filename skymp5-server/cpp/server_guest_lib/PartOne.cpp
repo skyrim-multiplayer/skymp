@@ -20,7 +20,8 @@ public:
     std::string s(reinterpret_cast<const char*>(data + 1), length - 1);
     PartOne::Message m;
     try {
-      m = PartOne::Message{ nlohmann::json::parse(s), targetUserId, reliability };
+      m = PartOne::Message{ nlohmann::json::parse(s), targetUserId,
+                            reliability };
     } catch (std::exception& e) {
       std::stringstream ss;
       ss << e.what() << std::endl << "`" << s << "`";
@@ -490,7 +491,8 @@ FormCallbacks PartOne::CreateFormCallbacks()
     };
 
   FormCallbacks::SendToUserFn sendToUser =
-    [this, st](MpActor* actor, const void* data, size_t size, Networking::Reliability reliability) {
+    [this, st](MpActor* actor, const void* data, size_t size,
+               Networking::Reliability reliability) {
       auto targetuserId = st->UserByActor(actor);
       if (targetuserId != Networking::InvalidUserId &&
           st->disconnectingUserId != targetuserId)
@@ -681,7 +683,8 @@ void PartOne::AddUser(Networking::UserId userId, UserType type)
     GetSendTarget().Send(userId,
                          reinterpret_cast<Networking::PacketData>(
                            pImpl->updateGamemodeDataMsg.data()),
-                         pImpl->updateGamemodeDataMsg.size(), Networking::Reliability::Reliable);
+                         pImpl->updateGamemodeDataMsg.size(),
+                         Networking::Reliability::Reliable);
   }
 }
 

@@ -46,7 +46,8 @@ TEST_CASE("SetRaceMenuOpen", "[PartOne]")
   REQUIRE(partOne.Messages()[0].j ==
           nlohmann::json{ { "type", "setRaceMenuOpen" }, { "open", true } });
   REQUIRE(partOne.Messages()[0].userId == 1);
-  REQUIRE(partOne.Messages()[0].reliability == Networking::Reliability::Reliable);
+  REQUIRE(partOne.Messages()[0].reliability ==
+          Networking::Reliability::Reliable);
 
   for (int i = 0; i < 3; ++i)
     partOne.SetRaceMenuOpen(0xff000000, true);
@@ -57,7 +58,8 @@ TEST_CASE("SetRaceMenuOpen", "[PartOne]")
   REQUIRE(partOne.Messages()[1].j ==
           nlohmann::json{ { "type", "setRaceMenuOpen" }, { "open", false } });
   REQUIRE(partOne.Messages()[1].userId == 1);
-  REQUIRE(partOne.Messages()[1].reliability == Networking::Reliability::Reliable);
+  REQUIRE(partOne.Messages()[1].reliability ==
+          Networking::Reliability::Reliable);
 
   for (int i = 0; i < 3; ++i)
     partOne.SetRaceMenuOpen(0xff000000, false);
@@ -92,12 +94,13 @@ TEST_CASE("UpdateAppearance1", "[PartOne]")
   doAppearance();
 
   REQUIRE(partOne.Messages().size() == 2);
-  REQUIRE(std::find_if(partOne.Messages().begin(), partOne.Messages().end(),
-                       [&](auto m) {
-                         return m.j["t"] == MsgType::UpdateAppearance &&
-                           m.j["idx"] == 0 && m.reliability == Networking::Reliability::Reliable && m.userId == 1 &&
-                           m.j["data"] == jAppearance["data"];
-                       }) != partOne.Messages().end());
+  REQUIRE(std::find_if(
+            partOne.Messages().begin(), partOne.Messages().end(), [&](auto m) {
+              return m.j["t"] == MsgType::UpdateAppearance &&
+                m.j["idx"] == 0 &&
+                m.reliability == Networking::Reliability::Reliable &&
+                m.userId == 1 && m.j["data"] == jAppearance["data"];
+            }) != partOne.Messages().end());
 
   auto& ac = partOne.worldState.GetFormAt<MpActor>(0xff000ABC);
   REQUIRE(ac.GetAppearance() != nullptr);
@@ -125,12 +128,13 @@ TEST_CASE("UpdateAppearance2", "[PartOne]")
   doAppearance();
 
   REQUIRE(partOne.Messages().size() == 2);
-  REQUIRE(std::find_if(partOne.Messages().begin(), partOne.Messages().end(),
-                       [&](auto m) {
-                         return m.j["t"] == MsgType::UpdateAppearance &&
-                           m.j["idx"] == 0 && m.reliability == Networking::Reliability::Reliable && m.userId == 1 &&
-                           m.j["data"] == jAppearance["data"];
-                       }) != partOne.Messages().end());
+  REQUIRE(std::find_if(
+            partOne.Messages().begin(), partOne.Messages().end(), [&](auto m) {
+              return m.j["t"] == MsgType::UpdateAppearance &&
+                m.j["idx"] == 0 &&
+                m.reliability == Networking::Reliability::Reliable &&
+                m.userId == 1 && m.j["data"] == jAppearance["data"];
+            }) != partOne.Messages().end());
 
   REQUIRE(partOne.worldState.GetFormAt<MpActor>(0xff000ABC).GetAppearance() !=
           nullptr);

@@ -122,5 +122,6 @@ TEST_CASE("Server custom packet", "[PartOne]")
                           { "content", { { "x", "y" } } } }
             .dump());
   REQUIRE(partOne.Messages()[0].userId == 1);
-  REQUIRE(partOne.Messages()[0].reliability == Networking::Reliability::Reliable);
+  REQUIRE(partOne.Messages()[0].reliability ==
+          Networking::Reliability::Reliable);
 }
