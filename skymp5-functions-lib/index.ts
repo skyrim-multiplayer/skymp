@@ -589,5 +589,5 @@ MpApiInteractor.setup([
   new SkillCommand(mp, controller),
   new SkillDiceCommand(mp, controller),
   new TpCommand(mp, controller),
-  new ChatSystem(controller), // Must be the last system
+  new ChatSystem(mp, controller), // Must be the last system
 ]);
