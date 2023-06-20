@@ -183,7 +183,7 @@ void DX11RenderHandler::Create()
     spdlog::info("Font has been added - " + entry.path().stem().string());
 
     std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
-    
+
     auto widestrFontPath =
       converter.from_bytes(static_cast<std::string>(path.string()));
 
@@ -307,3 +307,4 @@ void DX11RenderHandler::CreateRenderTexture()
     return;
 }
 }
+
