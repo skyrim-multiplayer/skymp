@@ -4,6 +4,7 @@
     "prettier": "^2.8.8"
   },
   "scripts": {
-    "format-prettier": "prettier --write ."
+    "prettier-format": "prettier --write .",
+    "prettier-check": "prettier --check ."
   }
 }
