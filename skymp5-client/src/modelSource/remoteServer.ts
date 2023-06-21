@@ -114,9 +114,7 @@ const showConnectionError = () => {
 2. You have been banned by server admins
 3. There is some technical issue. Try linking your Discord account again
 
-If you feel that something is wrong, please contact us on Discord.`,
-    [255, 255, 255, 1],
-  );
+If you feel that something is wrong, please contact us on Discord.`, [255, 255, 255, 1], "Tavern");
 };
 
 let loggingStartMoment = 0;
