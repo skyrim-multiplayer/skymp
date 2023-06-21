@@ -155,6 +155,8 @@ public:
   using Visitor = std::function<void(MpObjectReference*)>;
   void VisitNeighbours(const Visitor& visitor);
 
+  void SendInventoryUpdate();
+
 protected:
   void SendPapyrusEvent(const char* eventName,
                         const VarValue* arguments = nullptr,
@@ -174,7 +176,6 @@ private:
   void InitScripts();
   void MoveOnGrid(GridImpl<MpObjectReference*>& grid);
   void InitListenersAndEmitters();
-  void SendInventoryUpdate();
   void SendOpenContainer(uint32_t refId);
   void CheckInteractionAbility(MpObjectReference& ac);
   bool IsLocationSavingNeeded() const;
