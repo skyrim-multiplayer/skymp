@@ -8,8 +8,9 @@ You can convert a `*.ttf` to this format using MakeSpriteFont utility that is
 provided by DirectXTK. See [Compiling Font](#compiling-font) for details.
 
 ## Example
+
 ```typescript
-skyrimPlatform.createText(0, 0, "Hello", [1,1,0,1]); // 0,0 is top left. Non-ASCII character are not yet supported.
+skyrimPlatform.createText(0, 0, "Hello World!", [1, 1, 1, 1], "Tavern"),; // 0,0 is top left. Non-ASCII character are not yet supported.
 skyrimPlatform.browser.setVisible(true); // Texts API takes visibility flag from the browser
 ```
 
@@ -22,33 +23,60 @@ For example, SkyMP uses this API to draw nicknames  at `NPC Head [Head]` node
 ## Colors
 
 Colors are represented as RGBA arrays (from 0 to 1).
+
 ```typescript
 const white = [1,1,1,1];
 ```
 
 ## API methods
 
-1) ```skyrimPlatform.createText(xpos, ypos, "string", ["array of RGBA colors"])``` - create a text.
+- ```skyrimPlatform.createText(xpos, ypos, "string", ["array of RGBA colors"], fontName: string)``` - create a text.
 Returns id.
 
-2) ```skyrimPlatform.destroyText(textId)``` - delete text by id.
+- ```skyrimPlatform.destroyText(textId)``` - delete text by id.
+- ```skyrimPlatform.destroyAllTexts()``` - delete all texts.
 
-3) ```skyrimPlatform.setTextPos(textId, xpos, ypos)``` - set the position of the text by id.
+### Setters
 
-4) ```skyrimPlatform.setTextString(textId, "string")``` - set text by id.
+- ```skyrimPlatform.setTextPos(textId, xpos: float, ypos: float)``` - set the position of the text by id.
 
-5) ```skyrimPlatform.setTextColor(textId, ["array of RBGA colors"])``` - set text color.
+- ```skyrimPlatform.setTextString(textId, text: string)``` - set text by id.
 
-6) ```skyrimPlatform.destroyAllTexts()``` - delete all texts.
+- ```skyrimPlatform.setTextColor(textId, ["array of RBGA colors 0-1"])``` - set text color.
 
-7) ```skyrimPlatform.getTextPos(textId)``` - returns the coordinates(position) of the next as an array.
+- ```skyrimPlatform.setTextSize(textId: number, size: float)``` - set text (not font) size.
 
-8) ```skyrimPlatform.getTextString(textId)``` - returns a string.
+- ```skyrimPlatform.setTextRotation(textId, rotation: float)``` - set text rotation.
 
-9) ```skyrimPlatform.getTextColor(textId)``` - returns an array of colors in RGBA.
+- ```skyrimPlatform.setTextFont(textId, name: string)``` - set text font from relative path "Data/Platform/Fonts/", by font name — "Tavern".
 
-10) ```skyrimPlatform.getNumCreatedTexts()``` - returns the number of created texts.
+- ```skyrimPlatform.setTextDepth(textId, depth: int)``` - set text z-index of the text.
 
+- ```skyrimPlatform.setTextEffect(textId, effect: skyrimPlatform.SpriteEffects)``` - set sprite effect [None = 0, FlipHorizontally = 1, FlipVertically = 2].
+
+- ```skyrimPlatform.setTextOrigin(textId, origin [x,y])``` - set text pivot (center point).
+
+### Getters
+
+- ```skyrimPlatform.getTextPos(textId)``` - returns the coordinates(position) of the next as an array.
+
+- ```skyrimPlatform.getTextString(textId)``` - returns a string.
+
+- ```skyrimPlatform.getTextColor(textId)``` - returns an array of colors in RGBA.
+
+- ```skyrimPlatform.getTextSize(textId)``` - returns the size of the text
+
+- ```skyrimPlatform.getTextRotation(textId)``` - returns the rotation of the text
+
+- ```skyrimPlatform.getTextFont(textId)``` - returns the path to the font
+
+- ```skyrimPlatform.getTextDepth(textId)``` - returns z-index of the text
+
+- ```skyrimPlatform.getTextEffect(textId)``` - returns effect enum.
+
+- ```skyrimPlatform.getTextOrigin(textId)``` - returns pivot (center point) of the text
+
+- ```skyrimPlatform.getNumCreatedTexts()``` - returns the number of created texts.
 
 ## Compiling Font
 
@@ -59,14 +87,15 @@ and to have a `*.ttf` installed in your system.
 ./MakeSpriteFont.exe "Typey McTypeface" Tavern.spritefont /FontSize:20 /CharacterRegion:32-126 /CharacterRegion:1040-1103 /CharacterRegion:1025 /CharacterRegion:1105 /DefaultCharacter:63
 ```
 
-* `"Typey McTypeface"` is the internal name of `Tavern.ttf` (input font)
-* `Tavern.spritefont` is filename for output font
-* `/CharacterRegion:32-126 /DefaultCharacter:63` - default ASCII characters region with 63 (`?`) as a fallback character
-* `/CharacterRegion:1040-1103 /CharacterRegion:1025 /CharacterRegion:1105` - Russian alphabet
+- `"Typey McTypeface"` is the internal name of `Tavern.ttf` (input font)
+- `Tavern.spritefont` is filename for output font
+- `/CharacterRegion:32-126 /DefaultCharacter:63` - default ASCII characters region with 63 (`?`) as a fallback character
+- `/CharacterRegion:1040-1103 /CharacterRegion:1025 /CharacterRegion:1105` - Russian alphabet
 
 You can use Python (or whatever tool you like, including
 [web-services](https://onlineutf8tools.com/convert-utf8-to-code-points))
 to find out characters mapping:
+
 ```
 $ python3
 >>> ord('Ё')
@@ -76,5 +105,6 @@ $ python3
 ```
 
 More info and downloads:
-* [DirectXTK wiki](https://github.com/microsoft/DirectXTK/wiki/MakeSpriteFont)
-* [Download `MakeSpriteFont.exe` from DirectXTK releases page](https://github.com/microsoft/DirectXTK/releases)
+
+- [DirectXTK wiki](https://github.com/microsoft/DirectXTK/wiki/MakeSpriteFont)
+- [Download `MakeSpriteFont.exe` from DirectXTK releases page](https://github.com/microsoft/DirectXTK/releases)
