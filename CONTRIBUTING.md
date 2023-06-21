@@ -49,8 +49,8 @@ and it can be tricky to get Skyrim itself to work with non-ASCII text, for examp
   - The simpliest way to install fresh CMake is to download a `.tar.gz` from [CMake download page](https://cmake.org/download/),
     unpack it to your home directory and add it to path:
     `sh
-    echo 'export PATH="$HOME/apps/cmake-3.22.0-.../bin:$PATH"' >> ~/.bashrc
-    `
+echo 'export PATH="$HOME/apps/cmake-3.22.0-.../bin:$PATH"' >> ~/.bashrc
+`
     Also you can use containers to build and run server. More info can be found in the next section.
 
 ## Configuring and Building
