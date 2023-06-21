@@ -13,6 +13,7 @@ jobs:
           cmd: install
       - name: Check prettier errors
         uses: borales/actions-yarn@v4
+        id: prettier-run
         with:
           cmd: prettier-check
 
