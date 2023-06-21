@@ -2,4 +2,3 @@ node_modules
 vcpkg
 build
 .clang-format
-*.yml
