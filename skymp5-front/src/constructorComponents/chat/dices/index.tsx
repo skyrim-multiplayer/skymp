@@ -1,12 +1,13 @@
 import React, { useEffect, useRef } from 'react';
-import './styles.scss';
-import D100 from './icons/D100';
+
 import Coin from './icons/Coin';
 import D6 from './icons/D6';
 import D12 from './icons/D12';
 import D20 from './icons/D20';
+import D100 from './icons/D100';
 import Pouch from './icons/Pouch';
 import SkillDices from './skillDices';
+import './styles.scss';
 
 const Dices = (props: {
   send: (msg: string) => void;
@@ -48,7 +49,7 @@ const Dices = (props: {
     if (type === 'dice') {
       const rand = Math.floor(Math.random() * 3) + 1;
       const audio = new Audio(
-        require(`../../../sound/dice${rand}.mp3`).default
+        require(`../../../sound/dice${rand}.mp3`).default,
       );
       audio.play();
     }
@@ -56,7 +57,7 @@ const Dices = (props: {
       const audio = new Audio(
         require(`../../../sound/pouch_${
           props.isOpened ? 'close' : 'open'
-        }.mp3`).default
+        }.mp3`).default,
       );
       audio.play();
     }
@@ -96,11 +97,13 @@ const Dices = (props: {
           />
         </>
       )}
-      {props.isOpened === 2
-        ? (
-        <SkillDices onClose={() => props.setOpened(0)} send={diceSend} disableSound={props.disableSound}></SkillDices>
-          )
-        : (
+      {props.isOpened === 2 ? (
+        <SkillDices
+          onClose={() => props.setOpened(0)}
+          send={diceSend}
+          disableSound={props.disableSound}
+        ></SkillDices>
+      ) : (
         <Pouch
           isOpened={props.isOpened === 1}
           onClick={(state: number) => {
@@ -111,7 +114,7 @@ const Dices = (props: {
             props.inputRef.current.focus();
           }}
         />
-          )}
+      )}
       <span>dice</span>
     </div>
   );

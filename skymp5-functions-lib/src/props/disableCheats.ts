@@ -11,48 +11,48 @@ export class DisableCheats {
       return;
     }
     mp.makeEventSource('_onHacks', new FunctionInfo(this.clientsideInit()).getText());
-    mp['_onHacks'] = () => { };
+    mp['_onHacks'] = () => {};
   }
 
   private static clientsideInit() {
     return () => {
       // Disable Ctrl+PrintScreen
-      if (ctx.sp.storage["disableCtrlPrtScnHotkeyCalled"] !== true) {
-        ctx.sp.storage["disableCtrlPrtScnHotkeyCalled"] = true;
+      if (ctx.sp.storage['disableCtrlPrtScnHotkeyCalled'] !== true) {
+        ctx.sp.storage['disableCtrlPrtScnHotkeyCalled'] = true;
         ctx.sp.disableCtrlPrtScnHotkey();
       }
 
       const commandsToDisable: string[] = [
-        "modAV",
-        "forceAV",
-        "setAV",
-        "SetScale",
-        "ToggleCollision",
-        "ToggleControlsDriven",
-        "ToggleGodMode", // Disable unlimited carry weight
-        "tg",
-        "tmm",
-        "tfc",
-        "ToggleImmortalMode",
-        "ToggleMotionDriven",
-        "ToggleTrees",
-        "ToggleScripts",
-        "ToggleCellNode",
-        "ToggleSky",
-        "SetGlobalTimeMultiplier",
-        "ToggleWaterSystem",
-        "ForceWeather",
-        "SetWeather",
-        "SexChange",
-        "ToggleCombatAI",
-        "ToggleAI",
-        "SetGameSetting",
-        "SetPos",
-        "SetAngle",
-        "ToggleFogOfWar",
-        "SAQ",
-        "CAQS",
-        "openactorcontainer",
+        'modAV',
+        'forceAV',
+        'setAV',
+        'SetScale',
+        'ToggleCollision',
+        'ToggleControlsDriven',
+        'ToggleGodMode', // Disable unlimited carry weight
+        'tg',
+        'tmm',
+        'tfc',
+        'ToggleImmortalMode',
+        'ToggleMotionDriven',
+        'ToggleTrees',
+        'ToggleScripts',
+        'ToggleCellNode',
+        'ToggleSky',
+        'SetGlobalTimeMultiplier',
+        'ToggleWaterSystem',
+        'ForceWeather',
+        'SetWeather',
+        'SexChange',
+        'ToggleCombatAI',
+        'ToggleAI',
+        'SetGameSetting',
+        'SetPos',
+        'SetAngle',
+        'ToggleFogOfWar',
+        'SAQ',
+        'CAQS',
+        'openactorcontainer',
       ];
 
       // Disable commands from commandsToDisable
@@ -63,7 +63,7 @@ export class DisableCheats {
           return;
         }
         cmd.execute = () => false;
-      })
+      });
     };
   }
 }

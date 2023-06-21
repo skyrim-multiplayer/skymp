@@ -11,10 +11,10 @@ export abstract class Collection<T> implements Iterable<T> {
       next: () => {
         return {
           done: counter >= this.storage.length,
-          value: this.storage[counter++]
-        }
-      }
-    }
+          value: this.storage[counter++],
+        };
+      },
+    };
   }
 
   size(): number {

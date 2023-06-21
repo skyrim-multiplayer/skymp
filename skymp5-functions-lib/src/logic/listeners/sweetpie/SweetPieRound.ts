@@ -1,13 +1,13 @@
-import { PlayerController } from "../../PlayerController";
-import { SweetPieMap } from "./SweetPieMap";
+import { PlayerController } from '../../PlayerController';
+import { SweetPieMap } from './SweetPieMap';
 
 export type SweetPieRound = {
   state: 'running' | 'warmup' | 'wait' | 'finished';
-  players?: Map<number, { kills?: number, restored?: number }>;
+  players?: Map<number, { kills?: number; restored?: number }>;
   map?: SweetPieMap;
   hallPointName?: string;
   secondsPassed?: number;
-}
+};
 
 export const getAvailableRound = (rounds: SweetPieRound[], player?: number): SweetPieRound | undefined => {
   return rounds.find((x) => x.map?.enabled && x.state !== 'running');
@@ -17,11 +17,16 @@ export const getPlayerCurrentRound = (rounds: SweetPieRound[], player: number): 
   return rounds.find((x) => x.players && x.players.has(player));
 };
 
-export const forceJoinRound = (controller: PlayerController, rounds: SweetPieRound[], round: SweetPieRound, player: number): void => {
+export const forceJoinRound = (
+  controller: PlayerController,
+  rounds: SweetPieRound[],
+  round: SweetPieRound,
+  player: number
+): void => {
   if (round.map) {
     controller.setSpawnPoint(player, round.map.safePointName);
     controller.teleport(player, round.map.safePointName);
-    round.players = round.players || new Map;
+    round.players = round.players || new Map();
     round.players.set(player, {});
   }
 };
@@ -34,7 +39,7 @@ export const forceLeaveRound = (controller: PlayerController, rounds: SweetPieRo
     controller.teleport(player, newSpawnPointName);
   }
   round?.players?.delete(player);
-}
+};
 
 export const determineDeathMatchWinners = (round: SweetPieRound): number[] => {
   if (round.players) {
@@ -55,4 +60,4 @@ export const determineDeathMatchWinners = (round: SweetPieRound): number[] => {
     }
   }
   return [];
-}
+};

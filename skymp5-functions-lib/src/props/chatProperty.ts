@@ -1,12 +1,12 @@
 import { PlayerController } from '../logic/PlayerController';
+import { sqr } from '../mpApiInteractor';
 import { Ctx } from '../types/ctx';
 import { Mp } from '../types/mp';
+import { ChatSettings } from '../types/settings';
 import { FunctionInfo } from '../utils/functionInfo';
 import { parseChatMessage } from '../utils/parseChatMessage';
-import { sqr } from '../mpApiInteractor';
 import { EvalProperty } from './evalProperty';
 import { refreshWidgetsJs } from './refreshWidgets';
-import { ChatSettings } from '../types/settings';
 
 type ChatValue = { show: boolean };
 
@@ -167,7 +167,7 @@ export class ChatMessage {
     let texts: ChatText[] = this.text;
 
     if (['plain', 'nonrp', 'dice'].includes(this.category) && this.controller) {
-      const chatSettings = this.controller.getServerSetting('sweetpieChatSettings') as ChatSettings ?? {};
+      const chatSettings = (this.controller.getServerSetting('sweetpieChatSettings') as ChatSettings) ?? {};
       const hearingRadius =
         chatSettings['hearingRadiusNormal'] !== undefined ? sqr(chatSettings['hearingRadiusNormal']) : sqr(1900);
       const whisperDistanceCoeff =
@@ -323,28 +323,31 @@ export class ChatProperty {
           messageToUser = {
             actorId: 0,
             masterApiId: 0,
-            text: [{
-              type: ['plain'],
-              color: '#FFFFFF',
-              text: "Lost connection to the server"
-            }],
-            category: "system"
+            text: [
+              {
+                type: ['plain'],
+                color: '#FFFFFF',
+                text: 'Lost connection to the server',
+              },
+            ],
+            category: 'system',
           } as any;
-        }
-        else if (wasConnected === false && isConnected === true) {
+        } else if (wasConnected === false && isConnected === true) {
           messageToUser = {
             actorId: 0,
             masterApiId: 0,
-            text: [{
-              type: ['plain'],
-              color: '#FFFFFF',
-              text: "Reconnected"
-            }],
-            category: "system"
+            text: [
+              {
+                type: ['plain'],
+                color: '#FFFFFF',
+                text: 'Reconnected',
+              },
+            ],
+            category: 'system',
           } as any;
         }
         if (messageToUser) {
-          const messageString = JSON.stringify(messageToUser)
+          const messageString = JSON.stringify(messageToUser);
           let src = '';
           src += `window.chatMessages = window.chatMessages.slice(-49) || [];`;
           src += `window.chatMessages.push(${messageString});`;

@@ -1,7 +1,8 @@
 import React from 'react';
+
 import { IWeapon } from '../../../../../interfaces/skillDices';
-import IndexBox from './IndexBox';
 import { rollButtons, weapons } from '../skillDicesData';
+import IndexBox from './IndexBox';
 
 interface IWeaponsRows {
   index: number;
@@ -16,52 +17,48 @@ const WeaponsRows = ({
   buff,
   weaponEquipped,
   onRoll,
-  isWolf
+  isWolf,
 }: IWeaponsRows) => {
   return (
     <div className="chat-dices__row-container chat-dices__row-container--blue">
       <div
         onClick={onRoll}
         className="chat-dices__button chat-dices__button--blue"
-        dangerouslySetInnerHTML={{ __html: rollButtons.attack }}>
-      </div>
+        dangerouslySetInnerHTML={{ __html: rollButtons.attack }}
+      ></div>
       <IndexBox
         index={index}
         positiveColor="blue"
         negativeColor="blue"
       ></IndexBox>
-      {isWolf
-        ? (
+      {isWolf ? (
         <>
           <div
-            className='chat-dices__card--selected'
+            className="chat-dices__card--selected"
             dangerouslySetInnerHTML={{ __html: weapons.claw.icon }}
           ></div>
           <div className="chat-dices__card"></div>
         </>
-          )
-        : (
+      ) : (
         <>
           <div
-            className='chat-dices__card--selected'
+            className="chat-dices__card--selected"
             dangerouslySetInnerHTML={{
-              __html: weapons[weaponEquipped[0]].icon
+              __html: weapons[weaponEquipped[0]].icon,
             }}
           ></div>
-          {weaponEquipped.length === 2
-            ? (
+          {weaponEquipped.length === 2 ? (
             <div
-              className='chat-dices__card--selected'
+              className="chat-dices__card--selected"
               dangerouslySetInnerHTML={{
-                __html: weapons[weaponEquipped[1]].icon
+                __html: weapons[weaponEquipped[1]].icon,
               }}
             ></div>
-              )
-            : (
+          ) : (
             <div className="chat-dices__card"></div>
-              )}
-        </>
           )}
+        </>
+      )}
       <div className="chat-dices__card"></div>
       <div className="chat-dices__card"></div>
       <IndexBox index={buff}></IndexBox>

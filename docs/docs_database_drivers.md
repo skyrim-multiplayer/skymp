@@ -11,8 +11,8 @@ Skyrim Multiplayer uses `file` driver by default. Default `databaseName` is `wor
 ```json5
 {
   // ...
-  "databaseDriver": "file",
-  "databaseName": "world"
+  databaseDriver: 'file',
+  databaseName: 'world',
   // ...
 }
 ```
@@ -28,9 +28,9 @@ We recommend [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) as a cloud dat
 ```json5
 {
   // ...
-  "databaseDriver": "mongodb",
-  "databaseName": "db",
-  "databaseUri": "mongodb://<user>:<pass>@cluster0-shard-00-00.xxxxx.mongodb.net:27017,cluster0-shard-00-01.xxxxx.mongodb.net:27017,cluster0-shard-00-02.xxxxx.mongodb.net:27017/<dbname>?ssl=true&replicaSet=atlas-a16dc0-shard-0&authSource=admin&retryWrites=true&w=majority"
+  databaseDriver: 'mongodb',
+  databaseName: 'db',
+  databaseUri: 'mongodb://<user>:<pass>@cluster0-shard-00-00.xxxxx.mongodb.net:27017,cluster0-shard-00-01.xxxxx.mongodb.net:27017,cluster0-shard-00-02.xxxxx.mongodb.net:27017/<dbname>?ssl=true&replicaSet=atlas-a16dc0-shard-0&authSource=admin&retryWrites=true&w=majority',
   // ...
 }
 ```
@@ -42,15 +42,15 @@ A special database driver is used to move from one type of database to another o
 ```json5
 {
   // ...
-  "databaseDriver": "migration",
-  "databaseOld": {
-    "databaseDriver": "file",
-    "databaseName": "world"
+  databaseDriver: 'migration',
+  databaseOld: {
+    databaseDriver: 'file',
+    databaseName: 'world',
   },
-  "databaseNew": {
-    "databaseDriver": "mongodb"
+  databaseNew: {
+    databaseDriver: 'mongodb',
     // ...
-  }
+  },
   // ...
 }
 ```

@@ -2,8 +2,9 @@ export class FunctionInfo<F extends { toString: () => string }> {
   public constructor(private f: F) {}
 
   get text(): string {
-    return `try{${this.getTextWithoutErrorHandling()}}catch(e){` +
-        `ctx.sp.printConsole('[CTX ERROR]', e, '\\n', ${this.f})}`
+    return (
+      `try{${this.getTextWithoutErrorHandling()}}catch(e){` + `ctx.sp.printConsole('[CTX ERROR]', e, '\\n', ${this.f})}`
+    );
   }
 
   getText(args?: Record<string, unknown>): string {

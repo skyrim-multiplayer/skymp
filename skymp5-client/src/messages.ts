@@ -1,10 +1,10 @@
-import { Movement, Transform } from "./sync/movement";
-import { Appearance } from "./sync/appearance";
-import { Animation } from "./sync/animation";
-import { Equipment } from "./sync/equipment";
-import { Inventory } from "./sync/inventory";
-import * as spSnippet from "./spSnippet";
-import { ActorValues } from "./sync/actorvalues";
+import * as spSnippet from './spSnippet';
+import { ActorValues } from './sync/actorvalues';
+import { Animation } from './sync/animation';
+import { Appearance } from './sync/appearance';
+import { Equipment } from './sync/equipment';
+import { Inventory } from './sync/inventory';
+import { Movement, Transform } from './sync/movement';
 
 export enum MsgType {
   CustomPacket = 1,
@@ -29,27 +29,27 @@ export enum MsgType {
 }
 
 export interface SetInventory {
-  type: "setInventory";
+  type: 'setInventory';
   inventory: Inventory;
 }
 
 export interface OpenContainer {
-  type: "openContainer";
+  type: 'openContainer';
   target: number;
 }
 
 export interface Teleport {
-  type: "teleport";
+  type: 'teleport';
   pos: number[];
   rot: number[];
   worldOrCell: number;
 }
 
 export interface CreateActorMessage {
-  type: "createActor";
+  type: 'createActor';
   idx: number;
   refrId?: number;
-  baseRecordType: "DOOR" | undefined; // see PartOne.cpp
+  baseRecordType: 'DOOR' | undefined; // see PartOne.cpp
   transform: Transform;
   isMe: boolean;
   appearance?: Appearance;
@@ -60,7 +60,7 @@ export interface CreateActorMessage {
 }
 
 export interface DestroyActorMessage {
-  type: "destroyActor";
+  type: 'destroyActor';
   idx: number;
 }
 
@@ -104,39 +104,39 @@ export interface ChangeValuesMessage {
 
 export interface DeathStateContainerMessage {
   t: MsgType.DeathStateContainer;
-  tTeleport?: Teleport,
-  tChangeValues?: ChangeValuesMessage,
-  tIsDead: UpdatePropertyMessage,
+  tTeleport?: Teleport;
+  tChangeValues?: ChangeValuesMessage;
+  tIsDead: UpdatePropertyMessage;
 }
 
 export interface SetRaceMenuOpenMessage {
-  type: "setRaceMenuOpen";
+  type: 'setRaceMenuOpen';
   open: boolean;
 }
 
 export interface CustomPacket {
-  type: "customPacket";
+  type: 'customPacket';
   content: Record<string, unknown>;
 }
 
 interface SpSnippetMsgBase {
-  type: "spSnippet";
+  type: 'spSnippet';
 }
 
 export type SpSnippet = SpSnippetMsgBase & spSnippet.Snippet;
 
 export interface HostStartMessage {
-  type: "hostStart";
+  type: 'hostStart';
   target: number;
 }
 
 export interface HostStopMessage {
-  type: "hostStop";
+  type: 'hostStop';
   target: number;
 }
 
 export interface UpdateGamemodeDataMessage {
-  type: "updateGamemodeData";
+  type: 'updateGamemodeData';
   eventSources: Record<string, string>;
   updateOwnerFunctions: Record<string, string>;
   updateNeighborFunctions: Record<string, string>;

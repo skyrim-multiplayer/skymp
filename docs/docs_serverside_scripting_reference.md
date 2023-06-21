@@ -81,9 +81,9 @@ interface Mp {
 }
 
 /* Usage */
-mp.get(0xff000000, "type");
-mp.get(0xff000000, "pos");
-mp.get(0xff000000, "myAwesomeProperty");
+mp.get(0xff000000, 'type');
+mp.get(0xff000000, 'pos');
+mp.get(0xff000000, 'myAwesomeProperty');
 ```
 
 ## mp.set()
@@ -99,7 +99,7 @@ interface Mp {
 }
 
 /* Usage */
-mp.set(0xff000000, "pos", [0, 0, 0]);
+mp.set(0xff000000, 'pos', [0, 0, 0]);
 ```
 
 ## mp.clear()
