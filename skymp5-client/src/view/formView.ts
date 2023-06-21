@@ -1,20 +1,38 @@
-import { Actor, ActorBase, createText, destroyText, Form, FormType, Game,  NetImmerse, ObjectReference, once, printConsole, setTextPos, setTextString, TESModPlatform, Utility, worldPointToScreenPoint } from "skyrimPlatform";
-import { setDefaultAnimsDisabled, applyAnimation } from "../sync/animation";
-import { Appearance, applyAppearance } from "../sync/appearance";
-import { isBadMenuShown, applyEquipment } from "../sync/equipment";
-import { RespawnNeededError } from "../lib/errors";
-import { FormModel } from "../modelSource/model";
-import { applyMovement } from "../sync/movementApply";
-import { SpawnProcess } from "./spawnProcess";
-import { ObjectReferenceEx } from "../extensions/objectReferenceEx";
-import { View } from "./view";
-import { modWcProtection } from "../features/worldCleaner";
-import * as deathSystem from "../sync/deathSystem";
-import { GamemodeApiSupport } from "../gamemodeApi/gamemodeApiSupport";
-import { PlayerCharacterDataHolder } from "./playerCharacterDataHolder";
-import { getMovement } from "../sync/movementGet";
-import { lastTryHost, tryHost } from "./hostAttempts";
-import { ModelApplyUtils } from "./modelApplyUtils";
+import {
+  Actor,
+  ActorBase,
+  Form,
+  FormType,
+  Game,
+  NetImmerse,
+  ObjectReference,
+  TESModPlatform,
+  Utility,
+  createText,
+  destroyText,
+  once,
+  printConsole,
+  setTextPos,
+  setTextString,
+  worldPointToScreenPoint,
+} from 'skyrimPlatform';
+
+import * as deathSystem from '../sync/deathSystem';
+import { ObjectReferenceEx } from '../extensions/objectReferenceEx';
+import { modWcProtection } from '../features/worldCleaner';
+import { GamemodeApiSupport } from '../gamemodeApi/gamemodeApiSupport';
+import { RespawnNeededError } from '../lib/errors';
+import { FormModel } from '../modelSource/model';
+import { applyAnimation, setDefaultAnimsDisabled } from '../sync/animation';
+import { Appearance, applyAppearance } from '../sync/appearance';
+import { applyEquipment, isBadMenuShown } from '../sync/equipment';
+import { applyMovement } from '../sync/movementApply';
+import { getMovement } from '../sync/movementGet';
+import { lastTryHost, tryHost } from './hostAttempts';
+import { ModelApplyUtils } from './modelApplyUtils';
+import { PlayerCharacterDataHolder } from './playerCharacterDataHolder';
+import { SpawnProcess } from './spawnProcess';
+import { View } from './view';
 
 export interface ScreenResolution {
   width: number;
