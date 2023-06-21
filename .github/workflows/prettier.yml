@@ -13,14 +13,5 @@ jobs:
           cmd: install
       - name: Check prettier errors
         uses: borales/actions-yarn@v4
-        id: prettier-run
         with:
           cmd: prettier-check
-
-      # only runs if prettier finds errors
-      - name: Prettier errors
-        if: ${{ failure() }}
-        shell: bash
-        run: |
-          echo "The following files are not formatted:"
-          echo "${{steps.prettier-run.outputs.prettier_output}}"
