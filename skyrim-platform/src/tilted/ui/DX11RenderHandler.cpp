@@ -307,4 +307,3 @@ void DX11RenderHandler::CreateRenderTexture()
     return;
 }
 }
-
