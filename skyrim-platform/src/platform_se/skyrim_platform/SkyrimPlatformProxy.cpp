@@ -14,10 +14,10 @@ JsValue::JsFunctionArgumentsImpl ArgumentsImplCast(
   return JsValue::JsFunctionArgumentsImpl(args, n);
 }
 
-JsValue GetProxyForClass(const std::string& className,
-                         const JsValue& skyrimPlatformExports,
-                         std::function<CallNativeApi::NativeCallRequirements()>
-                           getNativeCallRequirements)
+JsValue GetProxyForClass(
+  const std::string& className, const JsValue& skyrimPlatformExports,
+  const std::function<CallNativeApi::NativeCallRequirements()>&
+    getNativeCallRequirements)
 {
   std::shared_ptr<std::unordered_map<std::string, JsValue>> functionsCache(
     new std::unordered_map<std::string, JsValue>);
@@ -113,7 +113,7 @@ JsValue GetProxyForClass(const std::string& className,
 
 JsValue SkyrimPlatformProxy::Attach(
   const JsValue& skyrimPlatformExports,
-  std::function<CallNativeApi::NativeCallRequirements()>
+  const std::function<CallNativeApi::NativeCallRequirements()>&
     getNativeCallRequirements)
 {
   thread_local std::unordered_map<std::string, JsValue> g_classProxies;
