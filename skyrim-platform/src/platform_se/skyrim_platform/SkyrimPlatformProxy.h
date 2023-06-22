@@ -5,5 +5,6 @@ class SkyrimPlatformProxy
 {
 public:
   static JsValue Attach(const JsValue& exports,
-    std::function<CallNativeApi::NativeCallRequirements()> getNativeCallRequirements);
+                        std::function<CallNativeApi::NativeCallRequirements()>
+                          getNativeCallRequirements);
 };

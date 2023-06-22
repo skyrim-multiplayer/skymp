@@ -479,6 +479,7 @@ public:
     const size_t n;
     std::unique_ptr<JsValue> undefined;
   };
+
 private:
   template <class F, class... A>
   static void SafeCall(F func, const char* funcName, A... args)

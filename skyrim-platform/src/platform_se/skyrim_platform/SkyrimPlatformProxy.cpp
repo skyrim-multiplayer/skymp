@@ -14,8 +14,10 @@ JsValue::JsFunctionArgumentsImpl ArgumentsImplCast(
   return JsValue::JsFunctionArgumentsImpl(args, n);
 }
 
-JsValue GetProxyForClass(const std::string& className, const JsValue& skyrimPlatformExports,
-    std::function<CallNativeApi::NativeCallRequirements()> getNativeCallRequirements)
+JsValue GetProxyForClass(const std::string& className,
+                         const JsValue& skyrimPlatformExports,
+                         std::function<CallNativeApi::NativeCallRequirements()>
+                           getNativeCallRequirements)
 {
   std::shared_ptr<std::unordered_map<std::string, JsValue>> functionsCache(
     new std::unordered_map<std::string, JsValue>);
@@ -90,15 +92,16 @@ JsValue GetProxyForClass(const std::string& className, const JsValue& skyrimPlat
               });
           }
         } else {
-          f = JsValue::Function([keyStr, className, callNativeArgs, getNativeCallRequirements](
-                                  const JsFunctionArguments& args) -> JsValue {
-            callNativeArgs->resize(args.GetSize() + 3);
-            for (size_t i = 1; i < args.GetSize(); ++i)
-              (*callNativeArgs)[i + 3] = args[i];
+          f = JsValue::Function(
+            [keyStr, className, callNativeArgs, getNativeCallRequirements](
+              const JsFunctionArguments& args) -> JsValue {
+              callNativeArgs->resize(args.GetSize() + 3);
+              for (size_t i = 1; i < args.GetSize(); ++i)
+                (*callNativeArgs)[i + 3] = args[i];
 
-            return CallNativeApi::CallNative(
+              return CallNativeApi::CallNative(
                 ArgumentsImplCast(*callNativeArgs), getNativeCallRequirements);
-          });
+            });
         }
       }
       return f;
@@ -108,8 +111,10 @@ JsValue GetProxyForClass(const std::string& className, const JsValue& skyrimPlat
 }
 }
 
-JsValue SkyrimPlatformProxy::Attach(const JsValue& skyrimPlatformExports,
-  std::function<CallNativeApi::NativeCallRequirements()> getNativeCallRequirements)
+JsValue SkyrimPlatformProxy::Attach(
+  const JsValue& skyrimPlatformExports,
+  std::function<CallNativeApi::NativeCallRequirements()>
+    getNativeCallRequirements)
 {
   thread_local std::unordered_map<std::string, JsValue> g_classProxies;
 
@@ -118,7 +123,8 @@ JsValue SkyrimPlatformProxy::Attach(const JsValue& skyrimPlatformExports,
     "get", ProxyGetter([=](const JsValue& origin, const JsValue& keyStr) {
       auto& proxy = g_classProxies[(std::string)keyStr];
       if (proxy.GetType() != JsValue::Type::Object)
-        proxy = GetProxyForClass((std::string)keyStr, skyrimPlatformExports, getNativeCallRequirements);
+        proxy = GetProxyForClass((std::string)keyStr, skyrimPlatformExports,
+                                 getNativeCallRequirements);
       return proxy;
     }));
   return JsValue::GlobalObject().GetProperty("Proxy").Constructor(
