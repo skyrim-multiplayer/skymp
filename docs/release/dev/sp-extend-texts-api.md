@@ -1,7 +1,7 @@
-# Improving the texts API
-## Let's use all the power of DirectXTK
+## Improving the texts API
 
-Now you can change the size, rotation, font, depth, effects and origin of the text.
+Let's use all the power of DirectXTK.
+Now you can change the text's size, rotation, font, depth, effects and origin.
 
 ### New added methods
 - `setTextSize(textId: number, size: float)` - set text (not font) size.
