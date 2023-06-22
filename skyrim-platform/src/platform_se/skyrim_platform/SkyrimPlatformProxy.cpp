@@ -1,14 +1,6 @@
 #include "SkyrimPlatformProxy.h"
 #include "JsUtils.h"
-#include "NativeValueCasts.h"
 #include "ProxyGetter.h"
-#include "VmProvider.h"
-#include "Override.h"
-#include "NullPointerException.h"
-#include "CallNativeApi.h"
-#include "CallNative.h"
-#include "CreatePromise.h"
-using namespace CallNativeApi;
 
 namespace {
 
@@ -23,7 +15,7 @@ JsValue::JsFunctionArgumentsImpl ArgumentsImplCast(
 }
 
 JsValue GetProxyForClass(const std::string& className, const JsValue& skyrimPlatformExports,
-    std::function<NativeCallRequirements()> getNativeCallRequirements)
+    std::function<CallNativeApi::NativeCallRequirements()> getNativeCallRequirements)
 {
   std::shared_ptr<std::unordered_map<std::string, JsValue>> functionsCache(
     new std::unordered_map<std::string, JsValue>);
