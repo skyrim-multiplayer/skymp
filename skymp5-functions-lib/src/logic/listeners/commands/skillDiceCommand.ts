@@ -55,7 +55,6 @@ export const skillDice = (
     case 'init':
       const { possessedSkills } = getPossessedSkills(actorId);
       const inventory = mp.get(actorId, 'inventory');
-      console.log(inventory);
       EvalProperty.eval(
         actorId,
         () => {

@@ -17,8 +17,8 @@ export type PlayerController = {
   quitGame(actorId: number): void;
   getName(actorId: number): string;
   getProfileId(playerActorId: number): number;
-  addItem(actorId: number, itemId: number, count: number): void;
-  removeItem(actorId: number, itemId: number, count: number, akOtherContainer: number | null): void;
+  addItem(actorId: number, itemId: number, count: number, silent?: boolean): void;
+  removeItem(actorId: number, itemId: number, count: number, akOtherContainer: number | null, silent?: boolean): void;
   getRoundsArray(): SweetPieRound[];
   setRoundsArray(rounds: SweetPieRound[]): void;
   getOnlinePlayers(): number[];
