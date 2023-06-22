@@ -454,6 +454,32 @@ public:
     return Call(arguments, true);
   }
 
+  class JsFunctionArgumentsImpl : public JsFunctionArguments
+  {
+  public:
+    JsFunctionArgumentsImpl(JsValueRef* arr_, size_t n_)
+      : arr(arr_)
+      , n(n_)
+    {
+      undefined = std::make_unique<JsValue>(JsValue::Undefined());
+    }
+
+    size_t GetSize() const noexcept override { return n; }
+
+    const JsValue& operator[](size_t i) const noexcept override
+    {
+      // A bit ugly reinterpret_cast, but it's a hot path.
+      // We do not want to modify the ref counter for each argument.
+      // This is also unit tested, so we would know if it breaks.
+      return i < n ? reinterpret_cast<const JsValue&>(arr[i]) : *undefined;
+    }
+
+  private:
+    JsValueRef* const arr;
+    const size_t n;
+    std::unique_ptr<JsValue> undefined;
+  };
+
 private:
   template <class F, class... A>
   static void SafeCall(F func, const char* funcName, A... args)
@@ -491,32 +517,6 @@ private:
     }
     return ss.str();
   }
-
-  class JsFunctionArgumentsImpl : public JsFunctionArguments
-  {
-  public:
-    JsFunctionArgumentsImpl(JsValueRef* arr_, size_t n_)
-      : arr(arr_)
-      , n(n_)
-    {
-      undefined = std::make_unique<JsValue>(JsValue::Undefined());
-    }
-
-    size_t GetSize() const noexcept override { return n; }
-
-    const JsValue& operator[](size_t i) const noexcept override
-    {
-      // A bit ugly reinterpret_cast, but it's a hot path.
-      // We do not want to modify the ref counter for each argument.
-      // This is also unit tested, so we would know if it breaks.
-      return i < n ? reinterpret_cast<const JsValue&>(arr[i]) : *undefined;
-    }
-
-  private:
-    JsValueRef* const arr;
-    const size_t n;
-    std::unique_ptr<JsValue> undefined;
-  };
 
   static void* NativeFunctionImpl(void* callee, bool isConstructorCall,
                                   void** arguments,
