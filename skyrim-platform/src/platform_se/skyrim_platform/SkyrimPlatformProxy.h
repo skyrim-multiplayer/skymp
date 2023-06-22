@@ -17,16 +17,18 @@ public:
     : arr(arr_)
     , n(arr_.size())
   {
+    undefined = std::make_unique<JsValue>(JsValue::Undefined());
   }
 
   size_t GetSize() const noexcept override { return n; }
 
   const JsValue& operator[](size_t i) const noexcept override
   {
-    return arr[i];
+    return i < n ? arr[i] : *undefined;
   }
 
 private:
   const std::vector<JsValue>& arr;
   const size_t n;
+  std::unique_ptr<JsValue> undefined;
 };
