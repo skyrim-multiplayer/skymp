@@ -1,4 +1,4 @@
-import { Actor, ActorBase, createText, destroyText, Form, FormType, Game, NetImmerse, ObjectReference, once, printConsole, setTextPos, setTextString, TESModPlatform, Utility, worldPointToScreenPoint } from "skyrimPlatform";
+import { Actor, ActorBase, createText, destroyText, Form, FormType, Game, getTextColor, getTextDepth, getTextEffect, getTextFont, getTextOrigin, getTextPos, getTextRotation, getTextSize, getTextString, NetImmerse, ObjectReference, once, printConsole, setTextColor, setTextDepth, setTextEffect, setTextFont, setTextOrigin, setTextPos, setTextRotation, setTextSize, setTextString, SpriteEffects, TESModPlatform, Utility, worldPointToScreenPoint } from "skyrimPlatform";
 import { setDefaultAnimsDisabled, applyAnimation } from "../sync/animation";
 import { Appearance, applyAppearance } from "../sync/appearance";
 import { isBadMenuShown, applyEquipment } from "../sync/equipment";
