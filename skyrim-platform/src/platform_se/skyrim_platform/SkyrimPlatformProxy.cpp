@@ -4,16 +4,6 @@
 
 namespace {
 
-JsValue::JsFunctionArgumentsImpl ArgumentsImplCast(
-  const std::vector<JsValue>& arguments)
-{
-  auto n = arguments.size();
-  JsValueRef* args = const_cast<JsValueRef*>(
-    reinterpret_cast<const JsValueRef*>(arguments.data()));
-
-  return JsValue::JsFunctionArgumentsImpl(args, n);
-}
-
 JsValue GetProxyForClass(
   const std::string& className, const JsValue& skyrimPlatformExports,
   const std::function<CallNativeApi::NativeCallRequirements()>&
@@ -98,9 +88,9 @@ JsValue GetProxyForClass(
               callNativeArgs->resize(args.GetSize() + 3);
               for (size_t i = 1; i < args.GetSize(); ++i)
                 (*callNativeArgs)[i + 3] = args[i];
-
               return CallNativeApi::CallNative(
-                ArgumentsImplCast(*callNativeArgs), getNativeCallRequirements);
+                JsFunctionArgumentsVectorImpl(*callNativeArgs),
+                getNativeCallRequirements);
             });
         }
       }
