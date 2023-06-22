@@ -518,18 +518,6 @@ private:
     std::unique_ptr<JsValue> undefined;
   };
 
-  static std::string GetJsExceptionMessage(const char* opName, JsErrorCode ec)
-  {
-    std::stringstream ss;
-    JsValueRef exception;
-    if (JsGetAndClearException(&exception) == JsNoError) {
-      ss << ConvertJsExceptionToString(exception);
-    } else {
-      ss << "'" << opName << "' returned error 0x" << std::hex << int(ec);
-    }
-    return ss.str();
-  }
-
   static void* NativeFunctionImpl(void* callee, bool isConstructorCall,
                                   void** arguments,
                                   unsigned short argumentsCount,
