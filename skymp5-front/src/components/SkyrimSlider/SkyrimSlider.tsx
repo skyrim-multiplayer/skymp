@@ -1,8 +1,8 @@
 import React from 'react';
-import ReactSlider from 'react-slider';
 
-import { SkyrimSliderProps } from '../../interfaces';
 import './SkyrimSlider.scss';
+import { SkyrimSliderProps } from '../../interfaces';
+import ReactSlider from 'react-slider';
 
 export const SkyrimSlider = ({
   setValue,
@@ -10,7 +10,7 @@ export const SkyrimSlider = ({
   sliderValue,
   min,
   max,
-  marks,
+  marks
 }: SkyrimSliderProps) => {
   return (
     <div className="skyrimSlider">

@@ -45,16 +45,7 @@ To downgrade your Skyrim SE installation use [this patch](https://www.nexusmods.
 
   // After
   armor.getSlotMask() === SlotMask.Jewelry;
-  NiOverride.AddSkinOverrideString(
-    a,
-    true,
-    false,
-    SlotMask.Body,
-    9,
-    0,
-    diffuseTex,
-    true,
-  );
+  NiOverride.AddSkinOverrideString(a, true, false, SlotMask.Body, 9, 0, diffuseTex, true);
   ```
 
 - `WeaponType`. Weapon types from [`Weapon.GetWeaponType()`][WeaponType].
@@ -84,14 +75,14 @@ Note: The message text can contain any characters, including `'` `"` `\`.
 Before sending the text to the browser using "browser.executeJavaScript", it should be escaped.
 
 ```typescript
-import { browser, on } from 'skyrimPlatform';
+import { on, browser } from "skyrimPlatform";
 
 const htmlEscapes: Record<string, string> = {
   '"': '\\"',
   "'": "\\'",
   '\\': '\\\\',
   '<': '\\<',
-  '>': '\\>',
+  '>': '\\>'
 };
 
 const htmlEscaper = /[&<>"'\\\/]/g;
@@ -110,9 +101,8 @@ This hotkey changes the game speed to be based on framerate rather than real tim
 [Source](https://www.thegamer.com/skyrim-tricks-work-banned/)
 
 Now SP has a method to disable this hotkey:
-
 ```ts
-import * as sp from 'skyrimPlatform';
+import * as sp from "skyrimPlatform";
 
 sp.disableCtrlPrtScnHotkey();
 ```

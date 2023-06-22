@@ -1,8 +1,7 @@
-import Axios from 'axios';
-
-import { getMyPublicIp } from '../publicIp';
-import { Settings } from '../settings';
-import { Content, Log, System, SystemContext } from './system';
+import { System, Log, Content, SystemContext } from "./system";
+import Axios from "axios";
+import { getMyPublicIp } from "../publicIp";
+import { Settings } from "../settings";
 
 interface UserProfile {
   id: number;
@@ -14,7 +13,7 @@ namespace DiscordErrors {
 }
 
 export class Login implements System {
-  systemName = 'Login';
+  systemName = "Login";
 
   constructor(
     private log: Log,
@@ -22,67 +21,64 @@ export class Login implements System {
     private masterUrl: string | null,
     private serverPort: number,
     private ip: string,
-    private offlineMode: boolean,
-  ) {}
+    private offlineMode: boolean
+  ) { }
 
   private async getUserProfile(session: string): Promise<UserProfile> {
     const response = await Axios.get(
-      `${this.masterUrl}/api/servers/${this.myAddr}/sessions/${session}`,
+      `${this.masterUrl}/api/servers/${this.myAddr}/sessions/${session}`
     );
     if (!response.data || !response.data.user || !response.data.user.id) {
-      throw new Error('getUserProfile: bad master-api response');
+      throw new Error("getUserProfile: bad master-api response");
     }
     return response.data.user as UserProfile;
   }
 
   async initAsync(ctx: SystemContext): Promise<void> {
-    if (this.ip && this.ip != 'null') {
-      this.myAddr = this.ip + ':' + this.serverPort;
+    if (this.ip && this.ip != "null") {
+      this.myAddr = this.ip + ":" + this.serverPort;
     } else {
-      this.myAddr = (await getMyPublicIp()) + ':' + this.serverPort;
+      this.myAddr = (await getMyPublicIp()) + ":" + this.serverPort;
     }
     this.log(
-      `Login system assumed that ${this.myAddr} is our address on master`,
+      `Login system assumed that ${this.myAddr} is our address on master`
     );
   }
 
-  disconnect(userId: number): void {}
+  disconnect(userId: number): void {
+  }
 
   customPacket(
     userId: number,
     type: string,
     content: Content,
-    ctx: SystemContext,
+    ctx: SystemContext
   ): void {
-    if (type !== 'loginWithSkympIo') return;
+    if (type !== "loginWithSkympIo") return;
 
-    const gameData = content['gameData'];
+    const gameData = content["gameData"];
     if (this.offlineMode === true && gameData && gameData.session) {
-      this.log('The server is in offline mode, the client is NOT');
+      this.log("The server is in offline mode, the client is NOT");
     } else if (this.offlineMode === false && gameData && gameData.session) {
       (async () => {
         let discordAuth = Settings.get().discordAuth;
         const profile = await this.getUserProfile(gameData.session);
-        console.log('getUserProfileId:', profile);
+        console.log("getUserProfileId:", profile);
 
         let roles = new Array<string>();
 
         if (discordAuth && !discordAuth.botToken) {
           discordAuth = undefined;
-          console.error(
-            'discordAuth.botToken is missing, skipping Discord server integration',
-          );
+          console.error("discordAuth.botToken is missing, skipping Discord server integration");
         }
         if (discordAuth && !discordAuth.guildId) {
           discordAuth = undefined;
-          console.error(
-            'discordAuth.guildId is missing, skipping Discord server integration',
-          );
+          console.error("discordAuth.guildId is missing, skipping Discord server integration");
         }
 
         if (discordAuth) {
           if (!profile.discordId) {
-            throw new Error('Not logged in via Discord');
+            throw new Error("Not logged in via Discord");
           }
           if (discordAuth.eventLogChannelId) {
             await Axios.post(
@@ -93,7 +89,7 @@ export class Login implements System {
               },
               {
                 headers: {
-                  Authorization: `${discordAuth.botToken}`,
+                  'Authorization': `${discordAuth.botToken}`,
                 },
               },
             );
@@ -102,54 +98,34 @@ export class Login implements System {
             `https://discord.com/api/guilds/${discordAuth.guildId}/members/${profile.discordId}`,
             {
               headers: {
-                Authorization: `${discordAuth.botToken}`,
+                'Authorization': `${discordAuth.botToken}`,
               },
               validateStatus: (status) => true,
             },
           );
-          console.log(
-            'Discord request:',
-            JSON.stringify({ status: response.status, data: response.data }),
-          );
-          if (
-            response.status === 404 &&
-            response.data?.code === DiscordErrors.unknownMember
-          ) {
-            throw new Error('Not on the Discord server');
+          console.log('Discord request:', JSON.stringify({ status: response.status, data: response.data }));
+          if (response.status === 404 && response.data?.code === DiscordErrors.unknownMember) {
+            throw new Error("Not on the Discord server");
           }
           if (response.status !== 200 || !response.data?.roles) {
-            throw new Error(
-              'Unexpected response status: ' +
-                JSON.stringify({
-                  status: response.status,
-                  data: response.data,
-                }),
-            );
+            throw new Error("Unexpected response status: " +
+                JSON.stringify({ status: response.status, data: response.data }));
           }
           if (response.data.roles.indexOf(discordAuth.banRoleId) !== -1) {
-            throw new Error('Banned');
+            throw new Error("Banned");
           }
           roles = response.data.roles;
         }
-        ctx.gm.emit('spawnAllowed', userId, profile.id, roles);
-        this.log('Logged as ' + profile.id);
-      })().catch((err) =>
-        console.error(
-          'Error logging in client:',
-          JSON.stringify(gameData),
-          err,
-        ),
-      );
-    } else if (
-      this.offlineMode === true &&
-      gameData &&
-      typeof gameData.profileId === 'number'
-    ) {
+        ctx.gm.emit("spawnAllowed", userId, profile.id, roles);
+        this.log("Logged as " + profile.id);
+      })()
+        .catch((err) => console.error("Error logging in client:", JSON.stringify(gameData), err));
+    } else if (this.offlineMode === true && gameData && typeof gameData.profileId === "number") {
       const profileId = gameData.profileId;
-      ctx.gm.emit('spawnAllowed', userId, profileId, []);
-      this.log(userId + ' logged as ' + profileId);
+      ctx.gm.emit("spawnAllowed", userId, profileId, []);
+      this.log(userId + " logged as " + profileId);
     } else {
-      this.log('No credentials found in gameData:', gameData);
+      this.log("No credentials found in gameData:", gameData);
     }
   }
 

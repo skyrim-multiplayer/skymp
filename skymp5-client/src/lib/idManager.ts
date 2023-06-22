@@ -14,7 +14,7 @@ export class IdManager {
     this.minimumUnusedId++;
     while (
       this.valueById.length > this.minimumUnusedId &&
-      typeof this.valueById[this.minimumUnusedId] === 'number'
+      typeof this.valueById[this.minimumUnusedId] === "number"
     ) {
       this.minimumUnusedId++;
     }
@@ -33,7 +33,7 @@ export class IdManager {
 
   getId(value: number): number {
     const r = this.idByValue[value];
-    return typeof r === 'number' ? r : -1;
+    return typeof r === "number" ? r : -1;
   }
 
   getValueById(id: number): number | undefined {

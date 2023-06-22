@@ -18,7 +18,6 @@ File category: `Main files`
 This is a new version of an existing file (optional): `❌`
 
 Description:
-
 ```
 THIS IS FOR ANNIVERSARY EDITION (1.6.x)!
 
@@ -42,7 +41,6 @@ File category: `Main files`
 This is a new version of an existing file (optional): `❌`
 
 Description:
-
 ```
 THIS IS FOR SPECIAL EDITION (1.5.x)!
 

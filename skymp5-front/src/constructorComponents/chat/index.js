@@ -1,16 +1,16 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Draggable from 'react-draggable';
 import { ResizableBox } from 'react-resizable';
-
-import ChatCorner from '../../img/chat_corner.svg';
-import { replaceIfMoreThan20 } from '../../utils/replaceIfMoreThan20';
 import ChatCheckbox from './checkbox';
 import Dices from './dices';
-import ChatInput from './input';
-import SendButton from './sendButton';
-import Settings from './settings';
-import './styles.scss';
 
+import ChatCorner from '../../img/chat_corner.svg';
+import Settings from './settings';
+import SendButton from './sendButton';
+import ChatInput from './input';
+import { replaceIfMoreThan20 } from '../../utils/replaceIfMoreThan20';
+
+import './styles.scss';
 const MAX_LENGTH = 2000; // Max message length
 const TIME_LIMIT = 1; // Seconds
 const SHOUT_LIMIT = 180; // Seconds
@@ -48,54 +48,35 @@ const Chat = (props) => {
 
   const handleScroll = () => {
     if (chatRef.current) {
-      window.needToScroll =
-        chatRef.current.scrollTop ===
-        chatRef.current.scrollHeight - chatRef.current.offsetHeight;
+      window.needToScroll = (chatRef.current.scrollTop === chatRef.current.scrollHeight - chatRef.current.offsetHeight);
     }
   };
-  const sendMessage = useCallback(
-    (text) => {
-      const shout = text.match(SHOUTREGEXP);
-      const shoutLen = shout
-        ? shout.reduce((acc, text) => {
-            acc += text.length;
-            return acc;
-          }, 0)
-        : 0;
-      if (
-        text !== '' &&
-        text.length <= MAX_LENGTH &&
-        isReset.current &&
-        shoutLen <= MAX_SHOUT_LENGTH &&
-        (shoutLen === 0 || shoutReset.current)
-      ) {
-        if (send !== undefined) {
-          send(replaceIfMoreThan20(text.trim(), '\n', '', MAX_LINES));
-        }
-        isReset.current = false;
-        updateInput('');
-        inputRef.current.innerHTML = '';
-        inputRef.current.focus();
-        if (shout) {
-          shoutReset.current = false;
-          setTimeout(() => {
-            shoutReset.current = true;
-          }, 1000 * SHOUT_LIMIT);
-          setIncludeShout(false);
-          setShoutLength(0);
-        }
+  const sendMessage = useCallback((text) => {
+    const shout = text.match(SHOUTREGEXP);
+    const shoutLen = shout
+      ? shout.reduce((acc, text) => {
+        acc += text.length;
+        return acc;
+      }, 0)
+      : 0;
+    if (text !== '' && text.length <= MAX_LENGTH && isReset.current && shoutLen <= MAX_SHOUT_LENGTH && (shoutLen === 0 || shoutReset.current)) {
+      if (send !== undefined) {
+        send(replaceIfMoreThan20(text.trim(), '\n', '', MAX_LINES));
       }
-    },
-    [
-      send,
-      updateInput,
-      input,
-      isReset.current,
-      shoutReset.current,
-      shoutLength,
-      doesIncludeShout,
-    ],
-  );
+      isReset.current = false;
+      updateInput('');
+      inputRef.current.innerHTML = '';
+      inputRef.current.focus();
+      if (shout) {
+        shoutReset.current = false;
+        setTimeout(() => {
+          shoutReset.current = true;
+        }, 1000 * SHOUT_LIMIT);
+        setIncludeShout(false);
+        setShoutLength(0);
+      }
+    }
+  }, [send, updateInput, input, isReset.current, shoutReset.current, shoutLength, doesIncludeShout]);
 
   useEffect(() => {
     window.needToScroll = true;
@@ -119,11 +100,7 @@ const Chat = (props) => {
   }, [inputRef.current, input]);
 
   useEffect(() => {
-    if (
-      inputRef !== undefined &&
-      inputRef.current !== undefined &&
-      !isInputHidden
-    ) {
+    if (inputRef !== undefined && inputRef.current !== undefined && !isInputHidden) {
       inputRef.current.focus();
     }
   }, [isInputHidden]);
@@ -140,12 +117,10 @@ const Chat = (props) => {
     const shout = value.match(SHOUTREGEXP);
     if (shout && shout[0] !== '') {
       setIncludeShout(true);
-      setShoutLength(
-        shout.reduce((acc, text) => {
-          acc += text.length;
-          return acc;
-        }, 0),
-      );
+      setShoutLength(shout.reduce((acc, text) => {
+        acc += text.length;
+        return acc;
+      }, 0));
     } else {
       setIncludeShout(false);
       setShoutLength(0);
@@ -156,17 +131,9 @@ const Chat = (props) => {
     let isNonRp = message.category === 'plain';
     const result = message.text.map(({ text, color, opacity, type }, i) => {
       if (i >= 1) {
-        isNonRp = type.includes('nonrp') && isNonRp;
+        isNonRp = (type.includes('nonrp') && isNonRp);
       }
-      return (
-        <span
-          key={`${text}_${i}`}
-          style={{ color: `${color}`, opacity: opacity }}
-          className={`${type.join(' ')}`}
-        >
-          {text}
-        </span>
-      );
+      return <span key={`${text}_${i}`} style={{ color: `${color}`, opacity: opacity }} className={`${type.join(' ')}`}>{text}</span>;
     });
     return [result, isNonRp];
   };
@@ -180,15 +147,17 @@ const Chat = (props) => {
           key={`msg-${index}`}
           style={{ marginLeft: '10px', opacity: msg.opacity }}
         >
-          {result[0]}
+          {
+            result[0]
+          }
         </div>
       );
     });
   };
   return (
-    <div className="fullPage">
-      <Draggable handle="#handle" disabled={!moveChat} bounds={'.fullPage'}>
-        <div id="chat">
+    <div className='fullPage'>
+      <Draggable handle='#handle' disabled={!moveChat} bounds={'.fullPage'}>
+        <div id='chat'>
           <div className="chat-main">
             <ResizableBox
               height={320}
@@ -196,57 +165,49 @@ const Chat = (props) => {
               minConstraints={[320, 320]}
               axis={'y'}
               handle={
-                !isInputHidden && (
-                  <div className="chat-corner">
-                    <img src={ChatCorner} />
-                  </div>
-                )
+                 !isInputHidden &&
+                 <div className='chat-corner'>
+                   <img src={ChatCorner} />
+                 </div>
               }
               resizeHandles={['nw']}
               className={`list ${hideNonRP ? 'hideNonRP' : ''}`}
-              id="handle"
+              id='handle'
             >
-              <div
-                className="chat-list"
-                style={{ fontSize }}
-                ref={chatRef}
-                onScroll={(e) => handleScroll()}
-              >
+              <div className='chat-list' style={{ fontSize }} ref={chatRef} onScroll={(e) => handleScroll()}>
                 {getList()}
               </div>
             </ResizableBox>
             <div
               style={{
                 height: '100px',
-                display: !isInputHidden ? 'none' : 'block',
+                display: !isInputHidden ? 'none' : 'block'
               }}
             />
             <div
-              className="input"
+              className='input'
               style={{
-                display: isInputHidden ? 'none' : 'block',
+                display: isInputHidden ? 'none' : 'block'
               }}
             >
-              <div className="chat-input">
+              <div className='chat-input'>
                 <ChatInput
                   id="chatInput"
                   className={'show'}
                   type="text"
                   placeholder={placeholder !== undefined ? placeholder : ''}
-                  onChange={(value) => {
-                    handleInput(value);
-                  }}
+                  onChange={(value) => { handleInput(value); }}
                   onFocus={(e) => changeInputFocus(true)}
                   onBlur={(e) => changeInputFocus(false)}
                   ref={inputRef}
                   fontSize={fontSize}
                   maxLines={MAX_LINES}
                 />
-                {showSendButton && (
-                  <SendButton onClick={() => sendMessage(input)} />
-                )}
+                {
+                  showSendButton && <SendButton onClick={() => sendMessage(input)} />
+                }
               </div>
-              <div className="chat-checkboxes">
+              <div className='chat-checkboxes'>
                 <ChatCheckbox
                   id={'nonrp'}
                   text={'non-rp'}
@@ -254,8 +215,7 @@ const Chat = (props) => {
                   onChange={(e) => {
                     inputRef.current.focus();
                     changeNonRPHide(e.target.checked);
-                  }}
-                />
+                  }} />
                 <ChatCheckbox
                   id={'settings'}
                   text={'settings'}
@@ -263,8 +223,7 @@ const Chat = (props) => {
                   onChange={(e) => {
                     inputRef.current.focus();
                     setSettingsOpened(e.target.checked);
-                  }}
-                />
+                  }} />
                 {/* Maybe we will need it later: <ChatCheckbox id={'diceColor'} text={'dice colors'} isChecked={!disableDiceColors} onChange={(e) => setDisableDiceColors(!e.target.checked)} /> */}
                 <ChatCheckbox
                   id={'moveChat'}
@@ -273,41 +232,29 @@ const Chat = (props) => {
                   onChange={(e) => {
                     inputRef.current.focus();
                     setMoveChat(e.target.checked);
-                  }}
-                />
-                {doesIncludeShout && (
-                  <span
-                    className={`chat-message-limit shout-limit ${
-                      shoutLength > MAX_SHOUT_LENGTH ? 'limit' : ''
-                    } text`}
-                  >
-                    {shoutLength}/{MAX_SHOUT_LENGTH}
-                  </span>
-                )}
-                <span
-                  className={`chat-message-limit ${
-                    input.length > MAX_LENGTH ? 'limit' : ''
-                  } text`}
-                >
-                  {input.length}/{MAX_LENGTH}
-                </span>
+                  }} />
+                { doesIncludeShout &&
+                  <span className={`chat-message-limit shout-limit ${shoutLength > MAX_SHOUT_LENGTH ? 'limit' : ''} text`}>{shoutLength}/{MAX_SHOUT_LENGTH}</span>
+                }
+                <span className={`chat-message-limit ${input.length > MAX_LENGTH ? 'limit' : ''} text`}>{input.length}/{MAX_LENGTH}</span>
               </div>
             </div>
           </div>
-          {isInputHidden ? (
-            <></>
-          ) : (
-            <Dices
-              isOpened={isPouchOpened}
-              setOpened={setPouchOpened}
-              send={props.send}
-              disableSound={disableDiceSounds}
-              inputRef={inputRef}
-            />
-          )}
+          {
+            isInputHidden
+              ? <></>
+              : <Dices
+                  isOpened={isPouchOpened}
+                  setOpened={setPouchOpened}
+                  send={props.send}
+                  disableSound={disableDiceSounds}
+                  inputRef={inputRef}
+              />
+          }
         </div>
       </Draggable>
-      {isSettingsOpened && !isInputHidden && (
+      {
+        (isSettingsOpened && !isInputHidden) &&
         <Settings
           fontSize={fontSize}
           setFontSize={setFontSize}
@@ -316,7 +263,7 @@ const Chat = (props) => {
           showSendButton={showSendButton}
           setShowSendButton={setSendButtonShow}
         />
-      )}
+      }
     </div>
   );
 };

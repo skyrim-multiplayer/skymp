@@ -1,20 +1,13 @@
-import * as sp from 'skyrimPlatform';
-import {
-  Game,
-  HttpClient,
-  Utility,
-  createText,
-  printConsole,
-} from 'skyrimPlatform';
-
-import { getServerIp, getServerUiPort } from '../skympClient';
-import { getScreenResolution } from '../view/formView';
+import { Game, Utility, HttpClient, printConsole, createText } from "skyrimPlatform";
+import * as sp from "skyrimPlatform";
+import { getServerIp, getServerUiPort } from "../skympClient";
+import { getScreenResolution } from "../view/formView";
 
 const STATE_KEY = 'loadOrderCheckState';
 
 interface State {
   statusTextId?: number;
-}
+};
 
 const getState = (): State => {
   if (typeof sp.storage[STATE_KEY] !== 'object') {
@@ -24,7 +17,7 @@ const getState = (): State => {
 };
 
 const setState = (replacement: State) => {
-  const oldState = (sp.storage[STATE_KEY] = getState());
+  const oldState = sp.storage[STATE_KEY] = getState();
   for (const [k, v] of Object.entries(replacement)) {
     (oldState as Record<string, any>)[k] = v;
   }
@@ -39,11 +32,7 @@ const resetText = () => {
   }
 };
 
-const updateText = (
-  text: string,
-  color: [number, number, number, number],
-  clearDelay?: number,
-) => {
+const updateText = (text: string, color: [number, number, number, number], clearDelay?: number) => {
   const { width, height } = getScreenResolution();
   resetText();
   const statusTextId = createText(width / 2, height / 2, text, color);
@@ -51,19 +40,19 @@ const updateText = (
   if (clearDelay) {
     Utility.wait(clearDelay).then(resetText);
   }
-};
+}
 
 interface Mod {
   filename: string;
   size: number;
   crc32: number;
-}
+};
 
 interface ServerManifest {
   versionMajor: number;
   mods: Mod[];
   loadOrder: string[];
-}
+};
 
 const getServerMods = (retriesLeft: number): Promise<Mod[]> => {
   const targetIp = getServerIp();
@@ -77,9 +66,7 @@ const getServerMods = (retriesLeft: number): Promise<Mod[]> => {
       }
       const manifest = JSON.parse(res.body) as ServerManifest;
       if (manifest.versionMajor !== 1) {
-        throw new Error(
-          `Server manifest version is ${manifest.versionMajor}, we expect 1`,
-        );
+        throw new Error(`Server manifest version is ${manifest.versionMajor}, we expect 1`);
       }
       return manifest.mods;
     })
@@ -87,18 +74,14 @@ const getServerMods = (retriesLeft: number): Promise<Mod[]> => {
       printConsole("Can't get server mods", err);
       if (retriesLeft > 0) {
         printConsole(`${retriesLeft} retries left...`);
-        return Utility.wait(0.1 + Math.random()).then(() =>
-          getServerMods(retriesLeft - 1),
-        );
+        return Utility.wait(0.1 + Math.random())
+          .then(() => getServerMods(retriesLeft - 1));
       }
       return [];
     });
 };
 
-const enumerateClientMods = (
-  getCount: () => number,
-  getAt: (idx: number) => string,
-) => {
+const enumerateClientMods = (getCount: (() => number), getAt: ((idx: number) => string)) => {
   const result = [];
   for (let i = 0; i < getCount(); ++i) {
     const filename = getAt(i);
@@ -106,7 +89,7 @@ const enumerateClientMods = (
     result.push({ filename, crc32, size });
   }
   return result;
-};
+}
 
 const getClientMods = () => {
   return enumerateClientMods(Game.getModCount, Game.getModName);
@@ -127,23 +110,19 @@ export const verifyLoadOrder = () => {
     .then((serverMods) => {
       printModOrder('Server load order:', serverMods);
       if (clientMods.length < serverMods.length) {
-        throw new Error(
-          `Missing some server mods. Server has ${serverMods.length}, we have ${clientMods.length}`,
-        );
+        throw new Error(`Missing some server mods. Server has ${serverMods.length}, we have ${clientMods.length}`);
       }
       if (clientMods.length > serverMods.length) {
         updateText(
           'LOAD ORDER WARNING: you have more mods than server!\n(or could not receive server mod list)\nCheck console for details.',
-          [255, 255, 0, 1],
-          5,
+          [255, 255, 0, 1], 5,
         );
       }
       let fail = [];
       for (let i = 0; i < serverMods.length; ++i) {
         // Need case-insensitive check for 1.6+
         if (
-          clientMods[i].filename.toLowerCase() !==
-            serverMods[i].filename.toLowerCase() ||
+          clientMods[i].filename.toLowerCase() !== serverMods[i].filename.toLowerCase() ||
           clientMods[i].size !== serverMods[i].size ||
           clientMods[i].crc32 !== serverMods[i].crc32
         ) {
@@ -154,9 +133,7 @@ export const verifyLoadOrder = () => {
         }
       }
       if (fail.length !== 0) {
-        throw new Error(
-          'Load order check failed! Indices: ' + JSON.stringify(fail),
-        );
+        throw new Error('Load order check failed! Indices: ' + JSON.stringify(fail));
       }
     })
     .catch((err) => {
@@ -164,16 +141,15 @@ export const verifyLoadOrder = () => {
       if (sp.settings['skymp5-client']['ignoreLoadOrderMismatch']) {
         updateText(
           'LOAD ORDER ERROR!\nHowever, ignoring it because of ignoreLoadOrderMismatch being set.' +
-            '\nExpect EVERYTHING BREAK, unless you know what you are doing.\nCheck console for details.' +
-            '\nThis message will disappear after 30 seconds.',
-          [255, 0, 0, 1],
-          30,
+          '\nExpect EVERYTHING BREAK, unless you know what you are doing.\nCheck console for details.' +
+          '\nThis message will disappear after 30 seconds.',
+          [255, 0, 0, 1], 30,
         );
         return;
       }
       updateText(
         'LOAD ORDER ERROR!\nCheck console for details.',
-        [255, 0, 0, 1],
+        [255, 0, 0, 1]
       );
       sp.browser.loadUrl('about:blank');
     });

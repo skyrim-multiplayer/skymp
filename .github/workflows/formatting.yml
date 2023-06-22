@@ -1,19 +1,19 @@
 name: Formatting check
 on: [push, pull_request]
 jobs:
-  formatting-check:
-    name: Formatting Check
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Ensure files terminated with one LF
-        uses: fernandrone/linelint@0.0.6
-        id: linelint
-      - name: Ensure files use LF line endings instead of CRLF
-        uses: erclu/check-crlf@v1
-      - name: Run clang-format style check for C/C++ programs.
-        uses: jidicula/clang-format-action@v4.9.0
-        with:
-          clang-format-version: '12'
-          exclude-regex: '.*third_party.*'
+    formatting-check:
+        name: Formatting Check
+        runs-on: ubuntu-latest
+        steps:
+          - name: Checkout
+            uses: actions/checkout@v2
+          - name: Ensure files terminated with one LF
+            uses: fernandrone/linelint@0.0.6
+            id: linelint
+          - name: Ensure files use LF line endings instead of CRLF
+            uses: erclu/check-crlf@v1
+          - name: Run clang-format style check for C/C++ programs.
+            uses: jidicula/clang-format-action@v4.9.0
+            with:
+              clang-format-version: '12'
+              exclude-regex: '.*third_party.*'

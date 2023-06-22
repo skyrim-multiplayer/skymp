@@ -1,16 +1,9 @@
 import { PlayerController } from './src/logic/PlayerController';
 import { ChatSystem } from './src/logic/listeners/chatSystem';
-import { KickCommand } from './src/logic/listeners/commands/kickCommand';
-import { KillCommand } from './src/logic/listeners/commands/killCommand';
-import { KitCommand } from './src/logic/listeners/commands/kitCommand';
-import { ListCommand } from './src/logic/listeners/commands/listCommand';
-import { RollCommand } from './src/logic/listeners/commands/rollCommand';
-import { SkillCommand } from './src/logic/listeners/commands/skillCommand';
-import { SkillDiceCommand } from './src/logic/listeners/commands/skillDiceCommand';
-import { TpCommand } from './src/logic/listeners/commands/tpCommand';
 import { DeathSystem } from './src/logic/listeners/deathSystem';
 import { DoorActivation } from './src/logic/listeners/doorActivation';
 import { HarvestingSystem } from './src/logic/listeners/harvestingSystem';
+import { KitCommand } from './src/logic/listeners/commands/kitCommand';
 import { SweetPieGameModeListener } from './src/logic/listeners/sweetpie/SweetPieGameModeListener';
 import { SweetPieMap } from './src/logic/listeners/sweetpie/SweetPieMap';
 import { SweetTaffyTimedRewards } from './src/logic/listeners/sweettaffyTimedRewards/SweetTaffyTimedRewards';
@@ -24,13 +17,16 @@ import { DisableCheats } from './src/props/disableCheats';
 import { EvalProperty } from './src/props/evalProperty';
 import { LocationalData, Mp, PapyrusObject, PapyrusValue } from './src/types/mp';
 import { Timer } from './src/utils/timer';
+import { KillCommand } from './src/logic/listeners/commands/killCommand';
+import { ListCommand } from './src/logic/listeners/commands/listCommand';
+import { RollCommand } from './src/logic/listeners/commands/rollCommand';
+import { SkillCommand } from './src/logic/listeners/commands/skillCommand';
+import { SkillDiceCommand } from './src/logic/listeners/commands/skillDiceCommand';
+import { KickCommand } from './src/logic/listeners/commands/kickCommand';
+import { TpCommand } from './src/logic/listeners/commands/tpCommand';
 
 const err = (index: number, x: unknown, expectedTypeName: string): never => {
-  throw new TypeError(
-    `The argument with index ${index} has value (${JSON.stringify(
-      x
-    )}) that doesn't meet the requirements of ${expectedTypeName}`
-  );
+  throw new TypeError(`The argument with index ${index} has value (${JSON.stringify(x)}) that doesn't meet the requirements of ${expectedTypeName}`);
 };
 
 const getArray = (args: PapyrusValue[], index: number, type: string): unknown[] => {
@@ -131,16 +127,16 @@ export const moveTo = (mp: Mp, self: PapyrusObject, args: PapyrusValue[]): Papyr
 
   const selfId = mp.getIdFromDesc(self.desc);
   if (selfId < 0xff000000) {
-    console.log("moveTo - Can't teleport forms with id < 0xff000000 (TODO)");
+    console.log("moveTo - Can't teleport forms with id < 0xff000000 (TODO)")
     return undefined;
   }
 
   const targetId = mp.getIdFromDesc(akTarget.desc);
 
-  const targetPos = mp.get(targetId, 'pos');
-  const targetAngle = mp.get(targetId, 'angle');
-  const targetCellOrWorldDesc = mp.get(targetId, 'worldOrCellDesc');
-  const selfAngle = mp.get(selfId, 'angle');
+  const targetPos = mp.get(targetId, "pos");
+  const targetAngle = mp.get(targetId, "angle");
+  const targetCellOrWorldDesc = mp.get(targetId, "worldOrCellDesc");
+  const selfAngle = mp.get(selfId, "angle");
 
   targetPos[0] += afXOffset;
   targetPos[1] += afYOffset;
@@ -149,59 +145,48 @@ export const moveTo = (mp: Mp, self: PapyrusObject, args: PapyrusValue[]): Papyr
   const newLocationalData: LocationalData = {
     cellOrWorldDesc: targetCellOrWorldDesc,
     pos: targetPos,
-    rot: abMatchRotation ? targetAngle : selfAngle,
+    rot: abMatchRotation ? targetAngle : selfAngle
   };
-  mp.set(selfId, 'locationalData', newLocationalData);
+  mp.set(selfId, "locationalData", newLocationalData);
 
   return undefined;
-};
+}
 
 export const isDead = (mp: Mp, self: PapyrusObject, args: PapyrusValue[]): boolean => {
   const selfId = mp.getIdFromDesc(self.desc);
   return mp.get(selfId, 'isDead');
-};
+}
 
 const printArgs = (args: PapyrusValue[]): string => {
   var out = '';
   for (const pVal of args) {
-    out += ' ' + (typeof pVal === 'object' || Array.isArray(pVal) ? JSON.stringify(pVal) : pVal) + ';';
+    out += ' ' + ((typeof pVal === 'object' || Array.isArray(pVal)) ? JSON.stringify(pVal) : pVal) + ';';
   }
   return out;
-};
+}
 
-export const placeholder = (
-  mp: Mp,
-  self: PapyrusObject | null,
-  args: PapyrusValue[],
-  name: string
-): PapyrusObject | undefined => {
+export const placeholder = (mp: Mp, self: PapyrusObject | null, args: PapyrusValue[], name: string): PapyrusObject | undefined => {
   var str = name + (self ? ':' + self.desc + ':' : ':') + printArgs(args);
   console.log(str);
   return undefined;
-};
+}
 
 // TODO: Move these types to a better place
 type SPExchangeRet = {
-  formId: number;
-  returnNumber: number;
-};
+  formId: number, returnNumber: number,
+}
 
 type SPExchangeReq = {
-  formId: number;
-  requiredCount: number;
-  returnSelect: 'random' | 'none';
-  returns: SPExchangeRet[];
-};
+  formId: number, requiredCount: number,
+  returnSelect: 'random' | 'none', returns: SPExchangeRet[],
+}
 
 type SPExchange = {
-  formId: number;
-  commissionItem: number;
-  commissionSize: number;
-  startMessage: number;
-  failMessage: number;
-  finishMessage: number;
-  reqs: SPExchangeReq[];
-};
+  formId: number, commissionItem: number,
+  commissionSize: number, startMessage: number,
+  failMessage: number, finishMessage: number,
+  reqs: SPExchangeReq[],
+}
 
 // TODO: Get these values from external config file
 const spExchanges: SPExchange[] = [
@@ -278,7 +263,7 @@ export const getLicenses = (mp: Mp, self: null, args: PapyrusValue[], exchanges:
     ret.push(l.formId);
   }
   return ret;
-};
+}
 
 export const getRequiredItems = (mp: Mp, self: null, args: PapyrusValue[], exchanges: SPExchange[]): number[] => {
   const ret: number[] = [];
@@ -289,15 +274,10 @@ export const getRequiredItems = (mp: Mp, self: null, args: PapyrusValue[], excha
     }
   }
   return ret;
-};
+}
 
-export const getSPExchangeNumberField = (
-  mp: Mp,
-  self: null,
-  args: PapyrusValue[],
-  exchanges: SPExchange[],
-  field: 'startMessage' | 'failMessage' | 'finishMessage' | 'commissionItem' | 'commissionSize'
-): number => {
+export const getSPExchangeNumberField = (mp: Mp, self: null, args: PapyrusValue[], exchanges: SPExchange[],
+  field: 'startMessage' | 'failMessage' | 'finishMessage' | 'commissionItem' | 'commissionSize'): number => {
   const ret: number = 0;
   const licenseIndex: number = getNumber(args, 0);
   if (exchanges[licenseIndex]) {
@@ -305,7 +285,7 @@ export const getSPExchangeNumberField = (
   }
   return ret;
   return ret;
-};
+}
 
 export const getRequiredItemCount = (mp: Mp, self: null, args: PapyrusValue[], exchanges: SPExchange[]): number => {
   const ret: number = 0;
@@ -315,7 +295,7 @@ export const getRequiredItemCount = (mp: Mp, self: null, args: PapyrusValue[], e
     return exchanges[licenseIndex].reqs[requiredItemIndex].requiredCount;
   }
   return ret;
-};
+}
 
 export const getReturnItemIndex = (mp: Mp, self: null, args: PapyrusValue[], exchanges: SPExchange[]): number => {
   const ret: number = 0;
@@ -324,11 +304,11 @@ export const getReturnItemIndex = (mp: Mp, self: null, args: PapyrusValue[], exc
   if (exchanges[licenseIndex].reqs[requiredItemIndex].returns.length) {
     if (exchanges[licenseIndex].reqs[requiredItemIndex].returnSelect === 'random') {
       const max = exchanges[licenseIndex].reqs[requiredItemIndex].returns.length - 1;
-      return randomInt(mp, self, [0, max]);
+      return randomInt(mp, self, [0,max]);
     }
   }
   return ret;
-};
+}
 
 export const getReturnItem = (mp: Mp, self: null, args: PapyrusValue[], exchanges: SPExchange[]): number => {
   const ret: number = 0;
@@ -339,7 +319,7 @@ export const getReturnItem = (mp: Mp, self: null, args: PapyrusValue[], exchange
     return exchanges[licenseIndex].reqs[requiredItemIndex].returns[returnItemIndex].formId;
   }
   return ret;
-};
+}
 
 export const getReturnItemCount = (mp: Mp, self: null, args: PapyrusValue[], exchanges: SPExchange[]): number => {
   const ret: number = 0;
@@ -350,7 +330,7 @@ export const getReturnItemCount = (mp: Mp, self: null, args: PapyrusValue[], exc
     return exchanges[licenseIndex].reqs[requiredItemIndex].returns[returnItemIndex].returnNumber;
   }
   return ret;
-};
+}
 
 DialogProperty.init();
 BrowserProperty.init();
@@ -368,42 +348,18 @@ mp.registerPapyrusFunction('global', 'Game', 'GetFormEx', (self, args) => getFor
 mp.registerPapyrusFunction('method', 'ObjectReference', 'MoveTo', (self, args) => moveTo(mp, self, args));
 mp.registerPapyrusFunction('method', 'Actor', 'IsDead', (self, args) => isDead(mp, self, args));
 mp.registerPapyrusFunction('global', 'SweetPie', 'SPLog', (self, args) => placeholder(mp, self, args, 'SPLog'));
-mp.registerPapyrusFunction('global', 'SweetPie', 'SPDumpActorArray', (self, args) =>
-  placeholder(mp, self, args, 'SPDumpActorArray')
-);
-mp.registerPapyrusFunction('global', 'SweetPie', 'GetBuyPieLicenses', (self, args) =>
-  getLicenses(mp, self, args, spExchanges)
-);
-mp.registerPapyrusFunction('global', 'SweetPie', 'GetBuyPieRequiredItems', (self, args) =>
-  getRequiredItems(mp, self, args, spExchanges)
-);
-mp.registerPapyrusFunction('global', 'SweetPie', 'GetBuyPieRequiredItemCount', (self, args) =>
-  getRequiredItemCount(mp, self, args, spExchanges)
-);
-mp.registerPapyrusFunction('global', 'SweetPie', 'GetBuyPieStartMessage', (self, args) =>
-  getSPExchangeNumberField(mp, self, args, spExchanges, 'startMessage')
-);
-mp.registerPapyrusFunction('global', 'SweetPie', 'GetBuyPieFailMessage', (self, args) =>
-  getSPExchangeNumberField(mp, self, args, spExchanges, 'failMessage')
-);
-mp.registerPapyrusFunction('global', 'SweetPie', 'GetBuyPieFinishMessage', (self, args) =>
-  getSPExchangeNumberField(mp, self, args, spExchanges, 'finishMessage')
-);
-mp.registerPapyrusFunction('global', 'SweetPie', 'GetBuyPieReturnItemIndex', (self, args) =>
-  getReturnItemIndex(mp, self, args, spExchanges)
-);
-mp.registerPapyrusFunction('global', 'SweetPie', 'GetBuyPieReturnItem', (self, args) =>
-  getReturnItem(mp, self, args, spExchanges)
-);
-mp.registerPapyrusFunction('global', 'SweetPie', 'GetBuyPieReturnItemCount', (self, args) =>
-  getReturnItemCount(mp, self, args, spExchanges)
-);
-mp.registerPapyrusFunction('global', 'SweetPie', 'GetBuyPieCommissionItem', (self, args) =>
-  getSPExchangeNumberField(mp, self, args, spExchanges, 'commissionItem')
-);
-mp.registerPapyrusFunction('global', 'SweetPie', 'GetBuyPieCommissionSize', (self, args) =>
-  getSPExchangeNumberField(mp, self, args, spExchanges, 'commissionSize')
-);
+mp.registerPapyrusFunction('global', 'SweetPie', 'SPDumpActorArray', (self, args) => placeholder(mp, self, args, 'SPDumpActorArray'));
+mp.registerPapyrusFunction('global', 'SweetPie', 'GetBuyPieLicenses', (self, args) => getLicenses(mp, self, args, spExchanges));
+mp.registerPapyrusFunction('global', 'SweetPie', 'GetBuyPieRequiredItems', (self, args) => getRequiredItems(mp, self, args, spExchanges));
+mp.registerPapyrusFunction('global', 'SweetPie', 'GetBuyPieRequiredItemCount', (self, args) => getRequiredItemCount(mp, self, args, spExchanges));
+mp.registerPapyrusFunction('global', 'SweetPie', 'GetBuyPieStartMessage', (self, args) => getSPExchangeNumberField(mp, self, args, spExchanges, 'startMessage'));
+mp.registerPapyrusFunction('global', 'SweetPie', 'GetBuyPieFailMessage', (self, args) => getSPExchangeNumberField(mp, self, args, spExchanges, 'failMessage'));
+mp.registerPapyrusFunction('global', 'SweetPie', 'GetBuyPieFinishMessage', (self, args) => getSPExchangeNumberField(mp, self, args, spExchanges, 'finishMessage'));
+mp.registerPapyrusFunction('global', 'SweetPie', 'GetBuyPieReturnItemIndex', (self, args) => getReturnItemIndex(mp, self, args, spExchanges));
+mp.registerPapyrusFunction('global', 'SweetPie', 'GetBuyPieReturnItem', (self, args) => getReturnItem(mp, self, args, spExchanges));
+mp.registerPapyrusFunction('global', 'SweetPie', 'GetBuyPieReturnItemCount', (self, args) => getReturnItemCount(mp, self, args, spExchanges));
+mp.registerPapyrusFunction('global', 'SweetPie', 'GetBuyPieCommissionItem', (self, args) => getSPExchangeNumberField(mp, self, args, spExchanges, 'commissionItem'));
+mp.registerPapyrusFunction('global', 'SweetPie', 'GetBuyPieCommissionSize', (self, args) => getSPExchangeNumberField(mp, self, args, spExchanges, 'commissionSize'));
 
 console.log('gamemode.js reloaded');
 
@@ -424,7 +380,7 @@ pointsByName.set('markarth:spawnPoint1', {
   rot: [0, 0, 166.6154],
 });
 pointsByName.set('markarth:spawnPoint2', {
-  pos: [-177508.5, 1116.4828, -2312.4185],
+  pos: [-177508.5000, 1116.4828, -2312.4185],
   cellOrWorldDesc: '16d71:Skyrim.esm',
   rot: [0, 0, 55.6242],
 });
@@ -439,7 +395,7 @@ pointsByName.set('markarth:spawnPoint4', {
   rot: [0, 0, 164.4858],
 });
 pointsByName.set('markarth:spawnPoint5', {
-  pos: [-174378.875, 4578.248, -1677.9618],
+  pos: [-174378.8750, 4578.2480, -1677.9618],
   cellOrWorldDesc: '16d71:Skyrim.esm',
   rot: [0, 0, -13.1307],
 });
@@ -449,7 +405,7 @@ pointsByName.set('markarth:spawnPoint6', {
   rot: [0, 0, 78.5424],
 });
 pointsByName.set('riften:safePlace', {
-  pos: [418.4863, -179.2634, 64.0],
+  pos: [418.4863, -179.2634, 64.0000],
   cellOrWorldDesc: '16bdf:Skyrim.esm',
   rot: [0, 0, -88.6934],
 });
@@ -479,7 +435,7 @@ pointsByName.set('riften:spawnPoint5', {
   rot: [0, 0, -70.4278],
 });
 pointsByName.set('riften:spawnPoint6', {
-  pos: [171816.8125, -96627.7891, 11136.0],
+  pos: [171816.8125, -96627.7891, 11136.0000],
   cellOrWorldDesc: '16bb4:Skyrim.esm',
   rot: [0, 0, 111.9557],
 });
@@ -509,14 +465,14 @@ pointsByName.set('whiterun:spawnPoint3', {
   rot: [0, 0, 32.7047],
 });
 pointsByName.set('whiterun:spawnPoint4', {
-  pos: [20287.375, -6478.4185, -3225.1785],
+  pos: [20287.3750, -6478.4185, -3225.1785],
   cellOrWorldDesc: '1a26f:Skyrim.esm',
   rot: [0, 0, 170.2144],
 });
 pointsByName.set('whiterun:spawnPoint5', {
   pos: [24443.8594, -11096.1328, -3292.7659],
   cellOrWorldDesc: '1a26f:Skyrim.esm',
-  rot: [0, 0, -1.673],
+  rot: [0, 0, -1.6730],
 });
 pointsByName.set('whiterun:spawnPoint6', {
   pos: [22855.9473, -6104.4355, -3092.7661],
@@ -539,7 +495,7 @@ pointsByName.set('windhelm:spawnPoint2', {
   rot: [0, 0, -143.9488],
 });
 pointsByName.set('windhelm:spawnPoint3', {
-  pos: [132020.875, 36545.2188, -12260.502],
+  pos: [132020.8750, 36545.2188, -12260.5020],
   cellOrWorldDesc: 'd45f0:Skyrim.esm',
   rot: [0, 0, -81.8858],
 });
@@ -559,89 +515,55 @@ pointsByName.set('windhelm:spawnPoint6', {
   rot: [0, 0, -155.4077],
 });
 
-const maps: Required<SweetPieMap>[] = [
-  {
-    safePointName: 'markarth:safePlace',
-    mainSpawnPointName: 'markarth:spawnPoint1',
-    safePlaceEnterDoors: ['16e3b:Skyrim.esm'],
-    safePlaceLeaveDoors: ['793a4:Skyrim.esm'],
-    leaveRoundDoors: ['1c38b:Skyrim.esm'],
-    playerRestoreActivators: [],
-    playerRestoreWaitTime: 30000,
-    spawnPointNames: [
-      'markarth:spawnPoint1',
-      'markarth:spawnPoint2',
-      'markarth:spawnPoint3',
-      'markarth:spawnPoint4',
-      'markarth:spawnPoint5',
-      'markarth:spawnPoint6',
-    ],
-    enabled: true,
-  },
-  {
-    // '2b46a7:SweetPie.esp' ActorAlpha and bridges activator
-    safePointName: 'riften:safePlace',
-    mainSpawnPointName: 'riften:spawnPoint1',
-    safePlaceEnterDoors: ['430a6:Skyrim.esm', '42279:Skyrim.esm'],
-    safePlaceLeaveDoors: ['16c3c:Skyrim.esm', '44bd7:Skyrim.esm'],
-    leaveRoundDoors: ['42285:Skyrim.esm', '42283:Skyrim.esm'],
-    playerRestoreActivators: [],
-    playerRestoreWaitTime: 30000,
-    spawnPointNames: [
-      'riften:spawnPoint1',
-      'riften:spawnPoint2',
-      'riften:spawnPoint3',
-      'riften:spawnPoint4',
-      'riften:spawnPoint5',
-      'riften:spawnPoint6',
-    ],
-    enabled: true,
-  },
-  {
-    safePointName: 'whiterun:safePlace',
-    mainSpawnPointName: 'whiterun:spawnPoint',
-    safePlaceEnterDoors: ['1a6f4:Skyrim.esm'],
-    safePlaceLeaveDoors: ['16072:Skyrim.esm'],
-    leaveRoundDoors: ['1b1f3:Skyrim.esm'],
-    playerRestoreActivators: ['3a99d6:SweetPie.esp'],
-    playerRestoreWaitTime: 30000,
-    spawnPointNames: [
-      'whiterun:spawnPoint1',
-      'whiterun:spawnPoint2',
-      'whiterun:spawnPoint3',
-      'whiterun:spawnPoint4',
-      'whiterun:spawnPoint5',
-      'whiterun:spawnPoint6',
-    ],
-    enabled: true,
-  },
-  {
-    //'3716f4:SweetPie.esp' - wind activator
-    safePointName: 'windhelm:safePlace',
-    mainSpawnPointName: 'windhelm:spawnPoint1',
-    safePlaceEnterDoors: ['d18b2:Skyrim.esm', 'd18b1:Skyrim.esm', '16964:Skyrim.esm'],
-    safePlaceLeaveDoors: ['d18b5:Skyrim.esm', 'd18b4:Skyrim.esm', '167be:Skyrim.esm'],
-    leaveRoundDoors: ['55fca:Skyrim.esm'],
-    playerRestoreActivators: [],
-    playerRestoreWaitTime: 30000,
-    spawnPointNames: [
-      'windhelm:spawnPoint1',
-      'windhelm:spawnPoint2',
-      'windhelm:spawnPoint3',
-      'windhelm:spawnPoint4',
-      'windhelm:spawnPoint5',
-      'windhelm:spawnPoint6',
-    ],
-    enabled: false,
-  },
-];
+const maps: Required<SweetPieMap>[] = [{
+  safePointName: 'markarth:safePlace',
+  mainSpawnPointName: 'markarth:spawnPoint1',
+  safePlaceEnterDoors: ['16e3b:Skyrim.esm'],
+  safePlaceLeaveDoors: ['793a4:Skyrim.esm'],
+  leaveRoundDoors: ['1c38b:Skyrim.esm'],
+  playerRestoreActivators: [],
+  playerRestoreWaitTime: 30000,
+  spawnPointNames: ['markarth:spawnPoint1', 'markarth:spawnPoint2', 'markarth:spawnPoint3', 'markarth:spawnPoint4', 'markarth:spawnPoint5', 'markarth:spawnPoint6'],
+  enabled: true,
+},
+{
+  // '2b46a7:SweetPie.esp' ActorAlpha and bridges activator
+  safePointName: 'riften:safePlace',
+  mainSpawnPointName: 'riften:spawnPoint1',
+  safePlaceEnterDoors: ['430a6:Skyrim.esm', '42279:Skyrim.esm'],
+  safePlaceLeaveDoors: ['16c3c:Skyrim.esm', '44bd7:Skyrim.esm'],
+  leaveRoundDoors: ['42285:Skyrim.esm', '42283:Skyrim.esm'],
+  playerRestoreActivators: [],
+  playerRestoreWaitTime: 30000,
+  spawnPointNames: ['riften:spawnPoint1', 'riften:spawnPoint2', 'riften:spawnPoint3', 'riften:spawnPoint4', 'riften:spawnPoint5', 'riften:spawnPoint6'],
+  enabled: true,
+},
+{
+  safePointName: 'whiterun:safePlace',
+  mainSpawnPointName: 'whiterun:spawnPoint',
+  safePlaceEnterDoors: ['1a6f4:Skyrim.esm'],
+  safePlaceLeaveDoors: ['16072:Skyrim.esm'],
+  leaveRoundDoors: ['1b1f3:Skyrim.esm'],
+  playerRestoreActivators: ['3a99d6:SweetPie.esp'],
+  playerRestoreWaitTime: 30000,
+  spawnPointNames: ['whiterun:spawnPoint1', 'whiterun:spawnPoint2', 'whiterun:spawnPoint3', 'whiterun:spawnPoint4', 'whiterun:spawnPoint5', 'whiterun:spawnPoint6'],
+  enabled: true,
+},
+{
+  //'3716f4:SweetPie.esp' - wind activator
+  safePointName: 'windhelm:safePlace',
+  mainSpawnPointName: 'windhelm:spawnPoint1',
+  safePlaceEnterDoors: ['d18b2:Skyrim.esm', 'd18b1:Skyrim.esm', '16964:Skyrim.esm'],
+  safePlaceLeaveDoors: ['d18b5:Skyrim.esm', 'd18b4:Skyrim.esm', '167be:Skyrim.esm'],
+  leaveRoundDoors: ['55fca:Skyrim.esm'],
+  playerRestoreActivators: [],
+  playerRestoreWaitTime: 30000,
+  spawnPointNames: ['windhelm:spawnPoint1', 'windhelm:spawnPoint2', 'windhelm:spawnPoint3', 'windhelm:spawnPoint4', 'windhelm:spawnPoint5', 'windhelm:spawnPoint6'],
+  enabled: false,
+}];
 
-const createGameModeListener = (
-  controller: PlayerController,
-  maps: SweetPieMap[],
-  playersToStart: unknown
-): SweetPieGameModeListener => {
-  if (typeof playersToStart === 'number') {
+const createGameModeListener = (controller: PlayerController, maps: SweetPieMap[], playersToStart: unknown): SweetPieGameModeListener => {
+  if (typeof playersToStart === "number") {
     return new SweetPieGameModeListener(controller, maps, playersToStart);
   } else {
     return new SweetPieGameModeListener(controller, maps);
@@ -650,8 +572,8 @@ const createGameModeListener = (
 
 const controller = MpApiInteractor.makeController(pointsByName);
 MpApiInteractor.setup([
-  createGameModeListener(controller, maps, mp.getServerSettings()['sweetPieMinimumPlayersToStart']),
-  new SweetTaffyTimedRewards(controller, /*enableDaily*/ true, /*enableHourly*/ true),
+  createGameModeListener(controller, maps, mp.getServerSettings()["sweetPieMinimumPlayersToStart"]),
+  new SweetTaffyTimedRewards(controller, /*enableDaily*/true, /*enableHourly*/true),
   new DeathSystem(mp, controller),
   new HarvestingSystem(mp, controller),
   new DoorActivation(mp, controller),
@@ -659,11 +581,11 @@ MpApiInteractor.setup([
   new KillCommand(mp, controller),
   new KickCommand(mp, controller),
   new ListCommand(mp, controller),
-  new RollCommand(mp, controller, '1d100'),
-  new RollCommand(mp, controller, '1d20'),
-  new RollCommand(mp, controller, '1d12'),
-  new RollCommand(mp, controller, '1d6'),
-  new RollCommand(mp, controller, '1d2'),
+  new RollCommand(mp, controller, "1d100"),
+  new RollCommand(mp, controller, "1d20"),
+  new RollCommand(mp, controller, "1d12"),
+  new RollCommand(mp, controller, "1d6"),
+  new RollCommand(mp, controller, "1d2"),
   new SkillCommand(mp, controller),
   new SkillDiceCommand(mp, controller),
   new TpCommand(mp, controller),

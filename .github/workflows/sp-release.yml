@@ -72,7 +72,7 @@ jobs:
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v3
         with:
-          commit-message: 'release(skyrim-platform): version ${{ env.SHORTVER }}'
-          title: 'release(skyrim-platform): version ${{ env.SHORTVER }}'
+          commit-message: "release(skyrim-platform): version ${{ env.SHORTVER }}"
+          title: "release(skyrim-platform): version ${{ env.SHORTVER }}"
           body: Bot put here this release PR, enjoy...
-          branch: 'release-sp${{ env.SHORTVER }}'
+          branch: "release-sp${{ env.SHORTVER }}"

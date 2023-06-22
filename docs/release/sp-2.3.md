@@ -17,7 +17,6 @@ const id = hooks.sendAnimationEvent.add({...});
 //later...
 hooks.sendAnimationEvent.remove(id);
 ```
-
 This makes it possible to add and remove hooks dynamically based on [new events](https://github.com/skyrim-multiplayer/skymp/blob/main/docs/skyrim_platform/new_events.md).
 
 For example, you could hook player animations under a spell:
@@ -29,7 +28,7 @@ export let main = () => {
   on('effectStart', () => {
     id = hooks.sendAnimationEvent.add({...});
   });
-
+  
   on('effectFinish', () => {
     if (id) hooks.sendAnimationEvent.remove(id);
   });
@@ -42,11 +41,10 @@ export let main = () => {
 Without the fix, we were able to write text files wherever we wanted in the host system:
 
 ```typescript
-writeLogs('../foo', '111');
+writeLogs("../foo", "111");
 // or even:
-writeLogs('../../foo', '111');
+writeLogs("../../foo", "111");
 ```
-
 Currently, SP doesn't allow writing/reading file system by plugins except for the Data folder. It's by design. However, PapyrusUtil/JContainers/other plugins can expose everything and that's ok.
 
 ## Other changes

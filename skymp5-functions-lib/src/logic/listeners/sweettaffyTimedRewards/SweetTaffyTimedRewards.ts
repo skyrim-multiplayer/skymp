@@ -1,5 +1,5 @@
-import { Counter } from '../../PlayerController';
-import { GameModeListener } from '../gameModeListener';
+import { GameModeListener } from "../gameModeListener";
+import { Counter } from "../../PlayerController";
 
 export type TimedRewardController = {
   getCurrentTime(): Date;
@@ -7,7 +7,7 @@ export type TimedRewardController = {
   addItem(actorId: number, itemId: number, count: number): void;
   setCounter(actorId: number, counter: Counter, to: number): void;
   getCounter(actorId: number, counter: Counter): number;
-};
+}
 
 export function dayStart(date: Date): Date {
   const utcOffset = 1000 * 60 * 60 * 3; // 00:00 UTC+3
@@ -17,10 +17,11 @@ export function dayStart(date: Date): Date {
 }
 
 export class SweetTaffyTimedRewards implements GameModeListener {
-  static rewardItemFormId = 0x07f33922;
+  static rewardItemFormId = 0x07F33922;
 
   // enableDaily, enablyHourly are here to simplify tests
-  constructor(private controller: TimedRewardController, private enableDaily: boolean, private enableHourly: boolean) {}
+  constructor(private controller: TimedRewardController, private enableDaily: boolean, private enableHourly: boolean) {
+  }
 
   everySecond() {
     const currentTime = this.controller.getCurrentTime();

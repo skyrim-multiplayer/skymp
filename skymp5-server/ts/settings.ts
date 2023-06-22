@@ -1,5 +1,5 @@
-import * as fs from 'fs';
 import { ArgumentParser } from 'argparse';
+import * as fs from 'fs';
 
 export interface DiscordAuthSettings {
   botToken: string;
@@ -12,7 +12,7 @@ export class Settings {
   ip: string | null = null;
   port = 7777;
   maxPlayers = 100;
-  master: string = 'https://sweetpie.nic11.xyz';
+  master: string = "https://sweetpie.nic11.xyz";
   name = 'Yet Another Server';
   gamemodePath = '...';
   loadOrder = new Array<string>();
@@ -35,9 +35,7 @@ export class Settings {
     }
 
     if (fs.existsSync('./server-settings.json')) {
-      const parsed = JSON.parse(
-        fs.readFileSync('./server-settings.json', 'utf-8'),
-      );
+      const parsed = JSON.parse(fs.readFileSync('./server-settings.json', 'utf-8'));
       [
         'ip',
         'port',
@@ -51,8 +49,7 @@ export class Settings {
         'offlineMode',
         'discordAuth',
       ].forEach((prop) => {
-        if (parsed[prop])
-          (this as Record<string, unknown>)[prop] = parsed[prop];
+        if (parsed[prop]) (this as Record<string, unknown>)[prop] = parsed[prop];
       });
     }
   }

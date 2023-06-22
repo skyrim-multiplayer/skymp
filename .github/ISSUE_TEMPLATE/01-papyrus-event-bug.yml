@@ -1,7 +1,7 @@
-name: '[SkyMP] Papyrus Event Bug'
+name: "[SkyMP] Papyrus Event Bug"
 description: One of events works incorrectly such as ObjectReference.OnHit, ObjectReference.OnActivate, etc
-title: 'Bug in <ClassName.OnEventName>'
-labels: ['category:papyrus-bug']
+title: "Bug in <ClassName.OnEventName>"
+labels: ["category:papyrus-bug"]
 body:
   - type: textarea
     attributes:

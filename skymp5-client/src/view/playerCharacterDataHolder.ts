@@ -1,13 +1,12 @@
-import { Game } from 'skyrimPlatform';
-
-import { ObjectReferenceEx } from '../extensions/objectReferenceEx';
+import { Game } from "skyrimPlatform";
+import { ObjectReferenceEx } from "../extensions/objectReferenceEx";
 
 export class PlayerCharacterDataHolder {
   static updateData() {
     const player = Game.getPlayer();
     if (!player) return;
-
-    this.inJumpState = player.getAnimationVariableBool('bInJumpState');
+    
+    this.inJumpState = player.getAnimationVariableBool("bInJumpState");
     this.worldOrCell = ObjectReferenceEx.getWorldOrCell(player);
     this.crosshairRefId = Game.getCurrentCrosshairRef()?.getFormID() || 0;
   }

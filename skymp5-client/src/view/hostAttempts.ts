@@ -1,13 +1,13 @@
-import { storage } from 'skyrimPlatform';
+import { storage } from "skyrimPlatform";
 
-storage['hostAttempts'] = [];
+storage["hostAttempts"] = [];
 
 export const tryHost = (targetRemoteId: number): void => {
-  (storage['hostAttempts'] as any).push(targetRemoteId);
+  (storage["hostAttempts"] as any).push(targetRemoteId);
 };
 
 export const nextHostAttempt = (): number | undefined => {
-  const arr = storage['hostAttempts'] as Array<number>;
+  const arr = storage["hostAttempts"] as Array<number>;
   if (arr.length === 0) return undefined;
   return arr.shift();
 };

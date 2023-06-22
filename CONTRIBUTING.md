@@ -18,18 +18,18 @@ You can find instructions on setting up the project locally below. To get a loca
 
 These tools required regardless of your system:
 
-- 64-bit [NodeJS](https://nodejs.org/en/download/) 17.x _(may also work for older versions)_
-- [Yarn](https://yarnpkg.com/getting-started/install): `npm install --global yarn`
-- [CMake 3.18.2](https://cmake.org/download/) or higher
+* 64-bit [NodeJS](https://nodejs.org/en/download/) 17.x *(may also work for older versions)*
+* [Yarn](https://yarnpkg.com/getting-started/install): `npm install --global yarn`
+* [CMake 3.18.2](https://cmake.org/download/) or higher
 
 ### Windows
 
 Before your start make sure that your system meets the conditions:
 
-- Windows 7 or higher _([Windows 10](https://www.microsoft.com/en-us/software-download/windows10) is recommended)_
-- [Visual Studio 2019/2022](https://visualstudio.microsoft.com/downloads/)
-- .NET Framework SDK at 4.6.0 or higher _(Visual Studio Installer -> .NET desktop development)_
-- Python 3.9.x 64bit or 32bit _(Visual Studio Installer -> Idividual components -> search for python)_
+* Windows 7 or higher *([Windows 10](https://www.microsoft.com/en-us/software-download/windows10) is recommended)*
+* [Visual Studio 2019/2022](https://visualstudio.microsoft.com/downloads/)
+* .NET Framework SDK at 4.6.0 or higher *(Visual Studio Installer -> .NET desktop development)*
+* Python 3.9.x 64bit or 32bit *(Visual Studio Installer -> Idividual components -> search for python)*
 
 ### Linux
 
@@ -38,27 +38,26 @@ As Skyrim has no native Linux version, client can only be built using MSVC,
 but then can be run with Proton (though some crashes can occur on SP startup
 and it can be tricky to get Skyrim itself to work with non-ASCII text, for example).
 
-- Ubuntu 18.04 or 20.04. Other distros are not tested or are expected to fail:
-  - Alpine Linux doesn't work
-  - Arch-based distros also [won't be able to run the server](https://github.com/chakra-core/ChakraCore/issues/6613)
-- Clang 12 _(GCC is not supported)_: `sudo apt install clang-12`
-- Python 2 (not 3.x! It is needed to build ChakraCore. Don't worry, it won't conflict with Python 3):
+* Ubuntu 18.04 or 20.04. Other distros are not tested or are expected to fail:
+  * Alpine Linux doesn't work
+  * Arch-based distros also [won't be able to run the server](https://github.com/chakra-core/ChakraCore/issues/6613)
+* Clang 12 *(GCC is not supported)*: `sudo apt install clang-12`
+* Python 2 (not 3.x! It is needed to build ChakraCore. Don't worry, it won't conflict with Python 3):
   `sudo apt install python2`
-- Make sure that your NodeJS and CMake are fresh enough:
-  - You can use [`nvm`](https://github.com/nvm-sh/nvm) or [Nodesource's apt repositories](https://github.com/nodesource/distributions) to install fresh Node
-  - The simpliest way to install fresh CMake is to download a `.tar.gz` from [CMake download page](https://cmake.org/download/),
+* Make sure that your NodeJS and CMake are fresh enough:
+  * You can use [`nvm`](https://github.com/nvm-sh/nvm) or [Nodesource's apt repositories](https://github.com/nodesource/distributions) to install fresh Node
+  * The simpliest way to install fresh CMake is to download a `.tar.gz` from [CMake download page](https://cmake.org/download/),
     unpack it to your home directory and add it to path:
-    `sh
-echo 'export PATH="$HOME/apps/cmake-3.22.0-.../bin:$PATH"' >> ~/.bashrc
-`
-    Also you can use containers to build and run server. More info can be found in the next section.
+    ```sh
+    echo 'export PATH="$HOME/apps/cmake-3.22.0-.../bin:$PATH"' >> ~/.bashrc
+    ```
+Also you can use containers to build and run server. More info can be found in the next section.
 
 ## Configuring and Building
 
 ### Common
 
 1. Clone the repo, including submodules
-
    ```sh
    git clone https://github.com/skyrim-multiplayer/skymp.git
    cd skymp
@@ -75,29 +74,23 @@ echo 'export PATH="$HOME/apps/cmake-3.22.0-.../bin:$PATH"' >> ~/.bashrc
    mkdir build
    ```
 2. Generate project files with CMake (replace path with your actual Skyrim SE folder)
-
    ```sh
    cd build
    cmake .. -DSKYRIM_DIR="C:/Program Files (x86)/Steam/steamapps/common/Skyrim Special Edition"
    ```
-
    For users who don't have Skyrim SE installed:
-
    ```sh
    cd build
    cmake ..
    ```
-
-   - Some tests would be skipped
-   - The server would require manual installation of Skyrim.esm and other master files
-   - Papyrus scripts that require Bethesda's compiler would not be compiled, prebuilts would be used
+   * Some tests would be skipped
+   * The server would require manual installation of Skyrim.esm and other master files
+   * Papyrus scripts that require Bethesda's compiler would not be compiled, prebuilts would be used
 
 3. Build with CMake:
-
    ```sh
    cmake --build . --config Debug
    ```
-
    On Windows you also can open `build/skymp.sln` with Visual Studio, then `Build -> Build Solution`.
 
    All build artifacts would be placed into `build/dist`.
@@ -119,25 +112,19 @@ you can use [a Docker image with preinstalled dependencies](https://hub.docker.c
     -e VCPKG_DEFAULT_BINARY_CACHE=/home/skymp/.cache/vcpkg/archives \
     $SKYMP_VCPKG_DEPS_IMAGE bash
 ```
-
 `--security-opt label=disable` is used for users who have SELinux enabled and source code is located somewhere inside home directory.
 Check `podman run` [documentation](https://docs.podman.io/en/latest/markdown/podman-run.1.html) for more information.
 
 1. Generate project files with CMake wrapper (replace path with your actual Skyrim SE folder)
-
    ```sh
    ./build.sh --configure -DCMAKE_BUILD_TYPE=Debug \
       -DSKYRIM_DIR="$HOME/.steam/debian-installation/steamapps/common/Skyrim Special Edition"
    ```
-
    For users who don't have Skyrim SE installed:
-
    ```sh
    ./build.sh --configure -DCMAKE_BUILD_TYPE=Debug
    ```
-
    If you're building for a production machine, change build type to Release:
-
    ```sh
    ./build.sh --configure -DCMAKE_BUILD_TYPE=Release
    ```
@@ -158,27 +145,22 @@ Check `podman run` [documentation](https://docs.podman.io/en/latest/markdown/pod
 ### Optional steps after build
 
 1. Run tests:
-
    ```sh
    ctest -C Debug --verbose
    ```
-
    Some tests ([ESPMTest](https://github.com/skyrim-multiplayer/skymp/blob/main/skymp5-server/cpp/unit/EspmTest.cpp)) require Skyrim SE data files and will be skipped if you didn't specify `-DSKYRIM_DIR`.
 
    In order to avoid potential errors, make sure:
-
    1. You have installed it using Steam and it's up to date (currently last update was on [Nov 20, 2019](https://steamdb.info/depot/489832/history/?changeid=M:8702665189575304780)). See SteamDB for [hashes](https://steamdb.info/depot/489832/?show_hashes) and [update history](https://steamdb.info/depot/489832/history/).
    2. You did not modify `Skyrim.esm`, `Update.esm`, `Dawnguard.esm`, `HearthFires.esm` and `Dragonborn.esm`. (Ideally, you should have pure Vanilla version installed.)
 
 2. Calculate test coverage (Windows-only):
-
+   
    Install [OpenCppCoverage](https://github.com/OpenCppCoverage/OpenCppCoverage/releases) and then:
-
    ```sh
    cmake .. -DCPPCOV_PATH="C:\Program Files\OpenCppCoverage"
    ctest -C Debug --verbose
    ```
-
    These commands would re-generate project files with coverage enabled and run tests. Coverage report would be in `build/__coverage`.
 
 ## Pull Requests

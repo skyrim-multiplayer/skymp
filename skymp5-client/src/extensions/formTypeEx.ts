@@ -1,9 +1,8 @@
-import { FormType } from 'skyrimPlatform';
+import { FormType } from "skyrimPlatform";
 
 export class FormTypeEx {
   static isItem(type: FormType) {
-    return (
-      type === FormType.Ammo ||
+    return type === FormType.Ammo ||
       type === FormType.Armor ||
       type === FormType.Book ||
       type === FormType.Ingredient ||
@@ -12,7 +11,6 @@ export class FormTypeEx {
       type === FormType.ScrollItem ||
       type === FormType.SoulGem ||
       type === FormType.Weapon ||
-      type === FormType.Misc
-    );
+      type === FormType.Misc;
   }
 }

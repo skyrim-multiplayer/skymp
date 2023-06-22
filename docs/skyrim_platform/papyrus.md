@@ -4,11 +4,11 @@ All types in SkyrimPlatform have the same name as in Papyrus, for example: `Game
 
 To use types from Papyrus, including calling methods and static functions that they have, they need to be imported:
 
-```typescript
-import { Actor, Game } from 'skyrimPlatform';
-```
+  ```typescript
+  import { Game, Actor } from "skyrimPlatform";
+  ```
 
-**_WARNING_**: Papyrus types and methods are only available inside [hooks][Hooks] or [new events][NewEvents] introduced by Skyrim Platform (except `tick`).
+***WARNING***: Papyrus types and methods are only available inside [hooks][Hooks] or [new events][NewEvents] introduced by Skyrim Platform (except `tick`).
 
 An exception will be thrown if you try to use them outside any of those contexts.
 
@@ -65,7 +65,6 @@ An exception will be thrown if you try to use them outside any of those contexts
   if (!actor) return;
   let isInCombat = actor.isInCombat();
   ```
-
 - It is guaranteed that `Game.getPlayer` never returns `null`.
 
 ## Compiler checks
@@ -74,7 +73,7 @@ An exception will be thrown if you try to use them outside any of those contexts
   Learn more here: https://www.typescriptlang.org/tsconfig#strict.
 - It's also possible to disable compiler checks on a per case basis.
 
-  You can disable compiler checkings for a whole \*.ts file if said file starts with the following comment:
+  You can disable compiler checkings for a whole *.ts file if said file starts with the following comment:
 
   ```typescript
   // @ts-nocheck
@@ -103,7 +102,7 @@ Types ported from Papyrus have limited support for a number of operations normal
 ```typescript
 Game.getPlayer().ToString(); // '[object Actor]'
 JSON.stringify(Game.getPlayer()); // `{}`
-```
+  ```
 
 [Hooks]: events.md
 [NewEvents]: new_events.md
