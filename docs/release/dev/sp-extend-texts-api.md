@@ -18,7 +18,7 @@ Now you can change the size, rotation, font, depth, effects and origin of the te
 
 >To use your own font, upload .sprite version to the "/Data/Platform/Fonts/" folder and call by name WITHOUT extension
 
-> How to convert any font to .sprite, you can find in the [Special docs page](https://github.com/VitaliyMubarakov/skymp/blob/cb65bfcd742a7bf8963ca35d30ca8c2d9dd3311b/docs/skyrim_platform/texts.md "Всплывающая подсказка")
+> How to convert any font to .sprite, you can find in the [Special docs page](../../skyrim_platform/texts.md "Всплывающая подсказка")
 
 ### JS Example
 ```js
