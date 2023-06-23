@@ -1,46 +1,49 @@
+import { printConsole } from "skyrimPlatform";
+import { nameof } from "./nameof";
+import { QueueCollection } from "../collections/queue";
+
 export class IdManager {
+  public static readonly CLASS_NAME = "IdManager";
+  public static readonly FREE_IDS_CAPACITY = 200;
+
   allocateIdFor(value: number): number {
-    if (this.idByValue.length <= value) {
-      this.idByValue.length = value + 1;
+    const id = this.idByValue.get(value);
+    if (id) {
+      printConsole(`WARNING: ${IdManager.CLASS_NAME}.${nameof<IdManager>("allocateIdFor")} found duplicate value = "${value}"`);
+      return id;
     }
-    this.idByValue[value] = this.minimumUnusedId;
 
-    if (this.valueById.length <= this.minimumUnusedId) {
-      this.valueById.length = this.minimumUnusedId + 1;
-    }
-    this.valueById[this.minimumUnusedId] = value;
-
-    const res = this.minimumUnusedId;
-    this.minimumUnusedId++;
-    while (
-      this.valueById.length > this.minimumUnusedId &&
-      typeof this.valueById[this.minimumUnusedId] === "number"
-    ) {
-      this.minimumUnusedId++;
-    }
-    return res;
+    let newId = this.freeIds.dequeue() ?? ++this.lastMaxId;
+    this.idByValue.set(value, newId);
+    this.valueById.set(newId, value);
+    return newId;
   }
 
   freeIdFor(value: number): void {
-    const id = this.idByValue[value] as number;
-    if (id < this.minimumUnusedId) {
-      this.minimumUnusedId = id;
+    const id = this.idByValue.get(value);
+    if (!id) {
+      printConsole(`WARNING: ${IdManager.CLASS_NAME}.${nameof<IdManager>("freeIdFor")} not found value = "${value}"`);
+      return;
     }
-    this.idByValue[value] = undefined;
-    this.valueById[id] = undefined;
-    return;
+
+    this.idByValue.delete(value);
+    this.valueById.delete(id);
+
+    if (!this.freeIds.isFull()) {
+      this.freeIds.enqueue(id);
+    }
   }
 
   getId(value: number): number {
-    const r = this.idByValue[value];
-    return typeof r === "number" ? r : -1;
+    return this.idByValue.get(value) ?? -1;
   }
 
   getValueById(id: number): number | undefined {
-    return this.valueById[id];
+    return this.valueById.get(id);
   }
 
-  private idByValue = new Array<number | undefined>();
-  private valueById = new Array<number | undefined>();
-  private minimumUnusedId = 0;
+  private idByValue = new Map<number, number>();
+  private valueById = new Map<number, number>();
+  private lastMaxId = 0;
+  private freeIds = new QueueCollection<number>(IdManager.FREE_IDS_CAPACITY);
 }
