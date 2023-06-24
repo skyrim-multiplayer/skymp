@@ -4,7 +4,7 @@ import { QueueCollection } from "../collections/queue";
 
 export class IdManager {
   public static readonly CLASS_NAME = "IdManager";
-  public static readonly FREE_IDS_CAPACITY = 200;
+  public static readonly FREE_IDS_CAPACITY = 2000;
 
   allocateIdFor(value: number): number {
     const id = this.idByValue.get(value);
