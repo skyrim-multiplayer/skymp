@@ -339,9 +339,7 @@ EventResult EventHandler::ProcessEvent(
 
       if ((oldContainerId == 0 || oldContainer) &&
           (newContainerId == 0 || newContainer) &&
-          (baseObjId == 0 || baseObj) &&
-          (referenceId == 0 || reference))
-      {
+          (baseObjId == 0 || baseObj) && (referenceId == 0 || reference)) {
         AddObjProperty(&obj, "oldContainer", oldContainer, "ObjectReference");
         AddObjProperty(&obj, "newContainer", newContainer, "ObjectReference");
         AddObjProperty(&obj, "reference", reference, "ObjectReference");
