@@ -469,10 +469,11 @@ EventResult EventHandler::ProcessEvent(const RE::TESEquipEvent* event,
   auto actorId = event->actor ? event->actor->GetFormID() : 0;
   auto baseObjectId = event->baseObject;
   auto originalRefrId = event->originalRefr;
-  bool equipped = event->equipped;
+  auto uniqueId = event->uniqueID;
+  auto equipped = event->equipped;
 
   SkyrimPlatform::GetSingleton()->AddUpdateTask(
-    [event, actorId, baseObjectId, originalRefrId, equipped] {
+    [actorId, baseObjectId, originalRefrId, uniqueId, equipped] {
       auto obj = JsValue::Object();
 
       auto actor = RE::TESForm::LookupByID<RE::Actor>(actorId);
@@ -490,7 +491,7 @@ EventResult EventHandler::ProcessEvent(const RE::TESEquipEvent* event,
         AddObjProperty(&obj, "originalRefr", originalRefrForm,
                        "ObjectReference");
       }
-      AddObjProperty(&obj, "uniqueId", event->uniqueID);
+      AddObjProperty(&obj, "uniqueId", uniqueId);
 
       if (actor && baseObjForm && originalRefrForm) {
         equipped ? SendEvent("equip", obj) : SendEvent("unequip", obj);
@@ -1813,9 +1814,10 @@ EventResult EventHandler::ProcessEvent(
 
   auto aggressorId = event->aggressor ? event->aggressor->GetFormID() : 0;
   auto weaponId = event->weapon ? event->weapon->GetFormID() : 0;
+  auto sneakHit = event->sneakHit;
 
   SkyrimPlatform::GetSingleton()->AddUpdateTask(
-    [event, aggressorId, weaponId] {
+    [aggressorId, weaponId, sneakHit] {
       auto obj = JsValue::Object();
 
       auto aggressor = RE::TESForm::LookupByID(aggressorId);
@@ -1823,7 +1825,7 @@ EventResult EventHandler::ProcessEvent(
 
       AddObjProperty(&obj, "aggressor", aggressor, "ObjectReference");
       AddObjProperty(&obj, "weapon", weapon, "Weapon");
-      AddObjProperty(&obj, "isSneakHit", event->sneakHit);
+      AddObjProperty(&obj, "isSneakHit", sneakHit);
 
       SendEvent("criticalHit", obj);
     });
@@ -1914,15 +1916,16 @@ EventResult EventHandler::ProcessEvent(
   }
 
   auto playerFormId = event->player ? event->player->GetFormID() : 0;
+  auto newLevel = event->newLevel;
 
-  SkyrimPlatform::GetSingleton()->AddUpdateTask([event, playerFormId] {
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([playerFormId, newLevel] {
     auto obj = JsValue::Object();
 
     auto player = RE::TESForm::LookupByID(playerFormId);
 
     if (player) {
       AddObjProperty(&obj, "player", player, "Actor");
-      AddObjProperty(&obj, "newLevel", event->newLevel);
+      AddObjProperty(&obj, "newLevel", newLevel);
       SendEvent("levelIncrease", obj);
     }
   });
