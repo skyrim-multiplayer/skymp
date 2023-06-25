@@ -320,7 +320,8 @@ EventResult EventHandler::ProcessEvent(
   auto oldContainerId = event->oldContainer;
   auto newContainerId = event->newContainer;
   auto baseObjId = event->baseObj;
-  auto referenceId = event->reference ? event->reference->GetFormID() : 0;
+  auto referenceId =
+    event->reference ? event->reference.get()->GetFormID() : 0;
   auto itemCount = event->itemCount;
   auto uniqueID = event->uniqueID;
 
@@ -463,7 +464,7 @@ EventResult EventHandler::ProcessEvent(const RE::TESEquipEvent* event,
   bool equipped = event->equipped;
 
   SkyrimPlatform::GetSingleton()->AddUpdateTask(
-    [actorId, baseObjectId, originalRefrId, equipped] {
+    [event, actorId, baseObjectId, originalRefrId, equipped] {
       auto obj = JsValue::Object();
 
       auto actor = RE::TESForm::LookupByID<RE::Actor>(actorId);
@@ -1240,18 +1241,16 @@ EventResult EventHandler::ProcessEvent(
     return EventResult::kContinue;
   }
 
-  auto statName = event->stat ? event->stat->data() : nullptr;
+  auto statName = event->stat;
+  auto value = event->value;
 
-  SkyrimPlatform::GetSingleton()->AddUpdateTask(
-    [statName, value = event->value] {
-      auto obj = JsValue::Object();
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([statName, value] {
+    auto obj = JsValue::Object();
 
-      if (statName) {
-        AddObjProperty(&obj, "statName", statName);
-        AddObjProperty(&obj, "newValue", value);
-        SendEvent("trackedStats", obj);
-      }
-    });
+    AddObjProperty(&obj, "statName", statName);
+    AddObjProperty(&obj, "newValue", value);
+    SendEvent("trackedStats", obj);
+  });
 
   return EventResult::kContinue;
 }
@@ -1807,18 +1806,19 @@ EventResult EventHandler::ProcessEvent(
   auto aggressorId = event->aggressor ? event->aggressor->GetFormID() : 0;
   auto weaponId = event->weapon ? event->weapon->GetFormID() : 0;
 
-  SkyrimPlatform::GetSingleton()->AddUpdateTask([aggressorId, weaponId] {
-    auto obj = JsValue::Object();
+  SkyrimPlatform::GetSingleton()->AddUpdateTask(
+    [event, aggressorId, weaponId] {
+      auto obj = JsValue::Object();
 
-    auto aggressor = RE::TESForm::LookupByID(aggressorId);
-    auto weapon = RE::TESForm::LookupByID(weaponId);
+      auto aggressor = RE::TESForm::LookupByID(aggressorId);
+      auto weapon = RE::TESForm::LookupByID(weaponId);
 
-    AddObjProperty(&obj, "aggressor", aggressor, "ObjectReference");
-    AddObjProperty(&obj, "weapon", weapon, "Weapon");
-    AddObjProperty(&obj, "isSneakHit", event->sneakHit);
+      AddObjProperty(&obj, "aggressor", aggressor, "ObjectReference");
+      AddObjProperty(&obj, "weapon", weapon, "Weapon");
+      AddObjProperty(&obj, "isSneakHit", event->sneakHit);
 
-    SendEvent("criticalHit", obj);
-  });
+      SendEvent("criticalHit", obj);
+    });
 
   return EventResult::kContinue;
 }
@@ -1907,7 +1907,7 @@ EventResult EventHandler::ProcessEvent(
 
   auto playerFormId = event->player ? event->player->GetFormID() : 0;
 
-  SkyrimPlatform::GetSingleton()->AddUpdateTask([playerFormId] {
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([event, playerFormId] {
     auto obj = JsValue::Object();
 
     auto player = RE::TESForm::LookupByID(playerFormId);
@@ -1931,24 +1931,25 @@ EventResult EventHandler::ProcessEvent(
   }
 
   auto worldspaceId = event->worldspaceID;
+  auto markerType = event->mapMarkerData->type.get();
+  auto markerFullName = event->mapMarkerData->locationName.fullName;
+  auto markerFlags = event->mapMarkerData->flags;
 
   SkyrimPlatform::GetSingleton()->AddUpdateTask(
-    [worldspaceId, markerData = *(event->mapMarkerData)] {
+    [worldspaceId, markerType, markerFullName, markerFlags] {
       auto obj = JsValue::Object();
 
-      auto type = to_underlying(markerData.type.get());
+      auto type = to_underlying(markerType);
 
       AddObjProperty(&obj, "worldSpaceId", worldspaceId);
-      AddObjProperty(&obj, "name", markerData.locationName.fullName);
+      AddObjProperty(&obj, "name", markerFullName);
       AddObjProperty(&obj, "markerType", type);
       AddObjProperty(&obj, "isVisible",
-                     markerData.flags.any(RE::MapMarkerData::Flag::kVisible));
-      AddObjProperty(
-        &obj, "canTravelTo",
-        markerData.flags.any(RE::MapMarkerData::Flag::kCanTravelTo));
-      AddObjProperty(
-        &obj, "isShowAllHidden",
-        markerData.flags.any(RE::MapMarkerData::Flag::kShowAllHidden));
+                     markerFlags.any(RE::MapMarkerData::Flag::kVisible));
+      AddObjProperty(&obj, "canTravelTo",
+                     markerFlags.any(RE::MapMarkerData::Flag::kCanTravelTo));
+      AddObjProperty(&obj, "isShowAllHidden",
+                     markerFlags.any(RE::MapMarkerData::Flag::kShowAllHidden));
 
       SendEvent("locationDiscovery", obj);
     });
