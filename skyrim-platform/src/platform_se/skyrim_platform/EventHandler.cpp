@@ -765,7 +765,7 @@ EventResult EventHandler::ProcessEvent(
     return EventResult::kContinue;
   }
 
-  auto formId = event->refr.get()->GetFormID();
+  auto formId = event->refr ? event->refr.get()->GetFormID() : 0;
   auto type = event->type;
 
   SkyrimPlatform::GetSingleton()->AddUpdateTask([formId, type] {
@@ -801,8 +801,8 @@ EventResult EventHandler::ProcessEvent(
     return EventResult::kContinue;
   }
 
-  auto activeRefFormId = event->activeRef.get()->GetFormID();
-  auto refFormId = event->ref.get()->GetFormID();
+  auto activeRefFormId = event->activeRef ? event->activeRef.get()->GetFormID() : 0;
+  auto refFormId = event->ref ? event->ref.get()->GetFormID() : 0;
   bool isOpened = event->opened;
 
   SkyrimPlatform::GetSingleton()->AddUpdateTask(
@@ -831,7 +831,7 @@ EventResult EventHandler::ProcessEvent(
     return EventResult::kContinue;
   }
 
-  auto actorFormId = event->actor.get()->GetFormID();
+  auto actorFormId = event->actor ? event->actor.get()->GetFormID() : 0;
   auto packageFormId = event->package;
   auto eventType = event->type;
 
@@ -872,8 +872,8 @@ EventResult EventHandler::ProcessEvent(
   }
 
   auto perkId = event->perkId;
-  auto causeFormId = event->cause.get()->GetFormID();
-  auto targetFormId = event->target.get()->GetFormID();
+  auto causeFormId = event->cause ? event->cause.get()->GetFormID() : 0;
+  auto targetFormId = event->target ? event->target.get()->GetFormID() : 0;
   auto flag = event->flag;
 
   SkyrimPlatform::GetSingleton()->AddUpdateTask(
@@ -1008,7 +1008,7 @@ EventResult EventHandler::ProcessEvent(const RE::TESResetEvent* event,
     return EventResult::kContinue;
   }
 
-  auto objectId = event->object->GetFormID();
+  auto objectId = event->object ? event->object.get()->GetFormID() : 0;
 
   SkyrimPlatform::GetSingleton()->AddUpdateTask([objectId] {
     auto obj = JsValue::Object();
@@ -1029,8 +1029,8 @@ EventResult EventHandler::ProcessEvent(const RE::TESSellEvent* event,
     return EventResult::kContinue;
   }
 
-  auto sellerId = event->seller->GetFormID();
-  auto targetId = event->target->GetFormID();
+  auto sellerId = event->seller ? event->seller.get()->GetFormID() : 0;
+  auto targetId = event->target ? event->target.get()->GetFormID() : 0;
 
   SkyrimPlatform::GetSingleton()->AddUpdateTask([sellerId, targetId] {
     auto obj = JsValue::Object();
@@ -1357,8 +1357,8 @@ EventResult EventHandler::ProcessEvent(const SKSE::ActionEvent* event,
 
   auto actorId = event->actor ? event->actor->GetFormID() : 0;
   auto sourceId = event->sourceForm ? event->sourceForm->GetFormID() : 0;
-  auto slot = to_underlying(event->slot.get());
-  auto type = to_underlying(event->type.get());
+  auto slot = event->slot ? to_underlying(event->slot.get()) : 0;
+  auto type = event->type ? to_underlying(event->type.get()) : 0;
 
   SkyrimPlatform::GetSingleton()->AddUpdateTask(
     [actorId, sourceId, slot, type] {
@@ -1674,7 +1674,7 @@ EventResult EventHandler::ProcessEvent(
     return EventResult::kContinue;
   }
 
-  auto type = to_underlying(event->type.get());
+  auto type = event->type ? to_underlying(event->type.get()) : 0;
 
   SkyrimPlatform::GetSingleton()->AddUpdateTask([type] {
     auto obj = JsValue::Object();
@@ -1875,7 +1875,7 @@ EventResult EventHandler::ProcessEvent(
   const RE::LocationDiscovery::Event* event,
   RE::BSTEventSource<RE::LocationDiscovery::Event>*)
 {
-  if (!event) {
+  if (!event || event->mapMarkerData == nullptr) {
     return EventResult::kContinue;
   }
 
