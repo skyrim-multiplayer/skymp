@@ -801,7 +801,8 @@ EventResult EventHandler::ProcessEvent(
     return EventResult::kContinue;
   }
 
-  auto activeRefFormId = event->activeRef ? event->activeRef.get()->GetFormID() : 0;
+  auto activeRefFormId =
+    event->activeRef ? event->activeRef.get()->GetFormID() : 0;
   auto refFormId = event->ref ? event->ref.get()->GetFormID() : 0;
   bool isOpened = event->opened;
 
