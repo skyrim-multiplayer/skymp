@@ -91,17 +91,13 @@ EventResult EventHandler::ProcessEvent(
     auto obj = JsValue::Object();
 
     auto target = RE::TESForm::LookupByID<RE::TESObjectREFR>(targetId);
-    if (target) {
-      AddObjProperty(&obj, "target", target, "ObjectReference");
-      AddObjProperty(&obj, "isCrimeToActivate", target->IsCrimeToActivate());
-    }
-
     auto caster = RE::TESForm::LookupByID<RE::TESObjectREFR>(casterId);
-    if (caster) {
-      AddObjProperty(&obj, "caster", caster, "ObjectReference");
-    }
 
     if (target && caster) {
+      AddObjProperty(&obj, "target", target, "ObjectReference");
+      AddObjProperty(&obj, "isCrimeToActivate", target->IsCrimeToActivate());
+      AddObjProperty(&obj, "caster", caster, "ObjectReference");
+
       SendEvent("activate", obj);
     }
   });
@@ -179,21 +175,14 @@ EventResult EventHandler::ProcessEvent(
     auto obj = JsValue::Object();
 
     auto actor = RE::TESForm::LookupByID<RE::Actor>(actorId);
-    if (actor) {
-      AddObjProperty(&obj, "actor", actor, "Actor");
-    }
-
     auto oldLoc = RE::TESForm::LookupByID<RE::BGSLocation>(oldLocId);
-    if (oldLoc) {
-      AddObjProperty(&obj, "oldLoc", oldLoc, "Location");
-    }
-
     auto newLoc = RE::TESForm::LookupByID<RE::BGSLocation>(newLocId);
-    if (newLoc) {
-      AddObjProperty(&obj, "newLoc", newLoc, "Location");
-    }
 
     if (actor && oldLoc && newLoc) {
+      AddObjProperty(&obj, "actor", actor, "Actor");
+      AddObjProperty(&obj, "oldLoc", oldLoc, "Location");
+      AddObjProperty(&obj, "newLoc", newLoc, "Location");
+
       SendEvent("locationChanged", obj);
     }
   });
@@ -260,9 +249,6 @@ EventResult EventHandler::ProcessEvent(
     auto cell = RE::TESForm::LookupByID<RE::TESObjectCELL>(cellId);
     if (cell) {
       AddObjProperty(&obj, "cell", cell, "Cell");
-    }
-
-    if (cell) {
       SendEvent("cellFullyLoaded", obj);
     }
   });
@@ -289,19 +275,14 @@ EventResult EventHandler::ProcessEvent(const RE::TESCombatEvent* event,
 
       auto targetActor =
         RE::TESForm::LookupByID<RE::TESObjectREFR>(targetActorId);
-      if (targetActor) {
-        AddObjProperty(&obj, "target", targetActor, "ObjectReference");
-      }
-
       auto actor = RE::TESForm::LookupByID<RE::TESObjectREFR>(actorId);
-      if (actor) {
-        AddObjProperty(&obj, "actor", actor, "ObjectReference");
-      }
-
-      AddObjProperty(&obj, "isCombat", isCombat);
-      AddObjProperty(&obj, "isSearching", isSearching);
 
       if (targetActor && actor) {
+        AddObjProperty(&obj, "target", targetActor, "ObjectReference");
+        AddObjProperty(&obj, "actor", actor, "ObjectReference");
+        AddObjProperty(&obj, "isCombat", isCombat);
+        AddObjProperty(&obj, "isSearching", isSearching);
+
         SendEvent("combatState", obj);
       }
     });
@@ -346,6 +327,7 @@ EventResult EventHandler::ProcessEvent(
         AddObjProperty(&obj, "baseObj", baseObj, "Form");
         AddObjProperty(&obj, "numItems", itemCount);
         AddObjProperty(&obj, "uniqueID", uniqueID);
+
         SendEvent("containerChanged", obj);
       }
     });
@@ -370,17 +352,13 @@ EventResult EventHandler::ProcessEvent(const RE::TESDeathEvent* event,
     auto obj = JsValue::Object();
 
     auto actorDying = RE::TESForm::LookupByID<RE::TESObjectREFR>(actorDyingId);
-    if (actorDying) {
-      AddObjProperty(&obj, "actorDying", actorDying, "ObjectReference");
-    }
-
     auto actorKiller =
       RE::TESForm::LookupByID<RE::TESObjectREFR>(actorKillerId);
-    if (actorKiller) {
-      AddObjProperty(&obj, "actorKiller", actorKiller, "ObjectReference");
-    }
 
     if (actorDying && actorKiller) {
+      AddObjProperty(&obj, "actorDying", actorDying, "ObjectReference");
+      AddObjProperty(&obj, "actorKiller", actorKiller, "ObjectReference");
+
       isDead ? SendEvent("deathEnd", obj) : SendEvent("deathStart", obj);
     }
   });
@@ -433,7 +411,6 @@ EventResult EventHandler::ProcessEvent(
     auto actor = RE::TESForm::LookupByID<RE::Actor>(actorId);
     if (actor) {
       AddObjProperty(&obj, "actor", actor, "Actor");
-
       SendEvent("enterBleedout", obj);
     }
   });
@@ -463,19 +440,12 @@ EventResult EventHandler::ProcessEvent(const RE::TESEquipEvent* event,
       auto originalRefrForm =
         RE::TESForm::LookupByID<RE::TESForm>(originalRefrId);
 
-      if (actor) {
+      if (actor && baseObjForm && originalRefrForm) {
         AddObjProperty(&obj, "actor", actor, "ObjectReference");
-      }
-      if (baseObjForm) {
         AddObjProperty(&obj, "baseObj", baseObjForm, "Form");
-      }
-      if (originalRefrForm) {
         AddObjProperty(&obj, "originalRefr", originalRefrForm,
                        "ObjectReference");
-      }
-      AddObjProperty(&obj, "uniqueId", uniqueId);
-
-      if (actor && baseObjForm && originalRefrForm) {
+        AddObjProperty(&obj, "uniqueId", uniqueId);
         equipped ? SendEvent("equip", obj) : SendEvent("unequip", obj);
       }
     });
@@ -521,17 +491,13 @@ EventResult EventHandler::ProcessEvent(
     auto obj = JsValue::Object();
 
     auto actor = RE::TESForm::LookupByID<RE::Actor>(actorId);
-    if (actor) {
-      AddObjProperty(&obj, "actor", actor, "ObjectReference");
-    }
-
     auto targetFurniture =
       RE::TESForm::LookupByID<RE::TESObjectREFR>(targetId);
-    if (targetFurniture) {
-      AddObjProperty(&obj, "target", targetFurniture, "ObjectReference");
-    }
 
     if (actor && targetFurniture) {
+      AddObjProperty(&obj, "actor", actor, "ObjectReference");
+      AddObjProperty(&obj, "target", targetFurniture, "ObjectReference");
+
       if (type == RE::TESFurnitureEvent::FurnitureEventType::kExit) {
         SendEvent("furnitureExit", obj);
       } else if (type == RE::TESFurnitureEvent::FurnitureEventType::kEnter) {
@@ -561,6 +527,7 @@ EventResult EventHandler::ProcessEvent(
     if (refr) {
       AddObjProperty(&obj, "refr", refr, "ObjectReference");
       AddObjProperty(&obj, "isGrabbed", isGrabbed);
+
       SendEvent("grabRelease", obj);
     }
   });
@@ -692,17 +659,11 @@ EventResult EventHandler::ProcessEvent(
       auto caster = RE::TESForm::LookupByID<RE::TESObjectREFR>(casterId);
       auto target = RE::TESForm::LookupByID<RE::TESObjectREFR>(targetId);
 
-      if (effect) {
-        AddObjProperty(&obj, "effect", effect, "MagicEffect");
-      }
-      if (caster) {
-        AddObjProperty(&obj, "caster", caster, "ObjectReference");
-      }
-      if (target) {
-        AddObjProperty(&obj, "target", target, "ObjectReference");
-      }
-
       if (effect && caster && target) {
+        AddObjProperty(&obj, "effect", effect, "MagicEffect");
+        AddObjProperty(&obj, "caster", caster, "ObjectReference");
+        AddObjProperty(&obj, "target", target, "ObjectReference");
+
         SendEvent("magicEffectApply", obj);
       }
     });
@@ -731,18 +692,12 @@ EventResult EventHandler::ProcessEvent(
       auto caster = RE::TESForm::LookupByID<RE::TESObjectREFR>(casterId);
       auto target = RE::TESForm::LookupByID<RE::TESObjectREFR>(targetId);
 
-      if (caster) {
-        AddObjProperty(&obj, "caster", caster, "ObjectReference");
-      }
-      if (target) {
-        AddObjProperty(&obj, "target", target, "ObjectReference");
-      }
-      if (spell) {
-        AddObjProperty(&obj, "spell", spell, "Spell");
-      }
-      AddObjProperty(&obj, "status", status);
-
       if (caster && target && spell) {
+        AddObjProperty(&obj, "caster", caster, "ObjectReference");
+        AddObjProperty(&obj, "target", target, "ObjectReference");
+        AddObjProperty(&obj, "spell", spell, "Spell");
+        AddObjProperty(&obj, "status", status);
+
         SendEvent("wardHit", obj);
       }
     });
@@ -768,10 +723,8 @@ EventResult EventHandler::ProcessEvent(
 
     if (movedRef) {
       AddObjProperty(&obj, "movedRef", movedRef, "ObjectReference");
-    }
-    AddObjProperty(&obj, "isCellAttached", isCellAttached);
+      AddObjProperty(&obj, "isCellAttached", isCellAttached);
 
-    if (movedRef) {
       SendEvent("moveAttachDetach", obj);
     }
   });
@@ -989,7 +942,6 @@ EventResult EventHandler::ProcessEvent(
     auto quest = RE::TESForm::LookupByID(questId);
 
     AddObjProperty(&obj, "quest", quest, "Quest");
-
     SendEvent("questInit", obj);
   });
 
@@ -1064,7 +1016,6 @@ EventResult EventHandler::ProcessEvent(const RE::TESResetEvent* event,
     auto object = RE::TESForm::LookupByID(objectId);
 
     AddObjProperty(&obj, "object", object, "ObjectReference");
-
     SendEvent("reset", obj);
   });
 
@@ -1163,7 +1114,6 @@ EventResult EventHandler::ProcessEvent(
     auto obj = JsValue::Object();
 
     AddObjProperty(&obj, "isInterrupted", isInterrupted);
-
     SendEvent("sleepStop", obj);
   });
 
@@ -1191,6 +1141,7 @@ EventResult EventHandler::ProcessEvent(
       if (caster) {
         AddObjProperty(&obj, "caster", caster, "ObjectReference");
         AddObjProperty(&obj, "spell", spell, "Spell");
+
         SendEvent("spellCast", obj);
       }
     }
@@ -1240,6 +1191,7 @@ EventResult EventHandler::ProcessEvent(
 
     AddObjProperty(&obj, "statName", statName);
     AddObjProperty(&obj, "newValue", value);
+
     SendEvent("trackedStats", obj);
   });
 
@@ -1266,6 +1218,7 @@ EventResult EventHandler::ProcessEvent(
     if (cause && target) {
       AddObjProperty(&obj, "cause", cause, "ObjectReference");
       AddObjProperty(&obj, "target", target, "ObjectReference");
+
       SendEvent("triggerEnter", obj);
     }
   });
@@ -1292,6 +1245,7 @@ EventResult EventHandler::ProcessEvent(
     if (cause && target) {
       AddObjProperty(&obj, "cause", cause, "ObjectReference");
       AddObjProperty(&obj, "target", target, "ObjectReference");
+
       SendEvent("trigger", obj);
     }
   });
@@ -1319,6 +1273,7 @@ EventResult EventHandler::ProcessEvent(
     if (cause && target) {
       AddObjProperty(&obj, "cause", cause, "ObjectReference");
       AddObjProperty(&obj, "target", target, "ObjectReference");
+
       SendEvent("triggerLeave", obj);
     }
   });
@@ -1908,6 +1863,7 @@ EventResult EventHandler::ProcessEvent(
     if (player) {
       AddObjProperty(&obj, "player", player, "Actor");
       AddObjProperty(&obj, "newLevel", newLevel);
+
       SendEvent("levelIncrease", obj);
     }
   });
@@ -1993,6 +1949,7 @@ EventResult EventHandler::ProcessEvent(
       if (player) {
         AddObjProperty(&obj, "player", player, "Actor");
         AddObjProperty(&obj, "actorValue", to_underlying(actorValue));
+
         SendEvent("skillIncrease", obj);
       }
     });
@@ -2020,6 +1977,7 @@ EventResult EventHandler::ProcessEvent(
     if (trapper && target) {
       AddObjProperty(&obj, "trapper", trapper, "Actor");
       AddObjProperty(&obj, "target", target, "Actor");
+
       SendEvent("soulsTrapped", obj);
     }
   });
