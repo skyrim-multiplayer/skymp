@@ -329,33 +329,41 @@ EventResult EventHandler::ProcessEvent(
     [oldContainerId, newContainerId, baseObjId, referenceId, itemCount,
      uniqueID] {
       auto obj = JsValue::Object();
+      auto success = true;
 
       auto oldContainer =
         RE::TESForm::LookupByID<RE::TESObjectREFR>(oldContainerId);
       if (oldContainer) {
         AddObjProperty(&obj, "oldContainer", oldContainer, "ObjectReference");
+      } else if (oldContainerId != 0 && success) {
+        success = false;
       }
 
       auto newContainer =
         RE::TESForm::LookupByID<RE::TESObjectREFR>(newContainerId);
       if (newContainer) {
         AddObjProperty(&obj, "newContainer", newContainer, "ObjectReference");
+      } else if (newContainerId != 0 && success) {
+        success = false;
       }
 
       auto baseObj = RE::TESForm::LookupByID(baseObjId);
       if (baseObj) {
         AddObjProperty(&obj, "baseObj", baseObj, "Form");
+      } else if (baseObjId != 0 && success) {
+        success = false;
       }
 
       auto reference = RE::TESForm::LookupByID<RE::TESObjectREFR>(referenceId);
       if (reference) {
         AddObjProperty(&obj, "reference", reference, "ObjectReference");
+      } else if (referenceId != 0 && success) {
+        success = false;
       }
 
-      AddObjProperty(&obj, "numItems", itemCount);
-      AddObjProperty(&obj, "uniqueID", uniqueID);
-
-      if (oldContainer && newContainer && baseObj && reference) {
+      if (success) {
+        AddObjProperty(&obj, "numItems", itemCount);
+        AddObjProperty(&obj, "uniqueID", uniqueID);
         SendEvent("containerChanged", obj);
       }
     });
