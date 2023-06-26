@@ -426,8 +426,15 @@ void MpActor::EatItem(uint32_t baseId, espm::Type t)
   for (const auto& effect : effects) {
     espm::ActorValue av =
       espm::GetData<espm::MGEF>(effect.effectId, espmProvider).data.primaryAV;
-    if (av == espm::ActorValue::Health || av == espm::ActorValue::Stamina ||
-        av == espm::ActorValue::Magicka) { // other types is unsupported
+    bool isPercentage = av == espm::ActorValue::Health ||
+      av == espm::ActorValue::Stamina || av == espm::ActorValue::Magicka;
+    bool isRateOrMult = av == espm::ActorValue::HealRate ||
+      av == espm::ActorValue::StaminaRate ||
+      av == espm::ActorValue::MagickaRate ||
+      av == espm::ActorValue::HealRateMult_or_CombatHealthRegenMultMod ||
+      av == espm::ActorValue::StaminaRateMult ||
+      av == espm::ActorValue::MagickaRateMult_or_CombatHealthRegenMultPowerMod;
+    if (isPercentage) { // other types is unsupported
       if (hasSweetpie) {
         if (CanActorValueBeRestored(av)) {
           // this coefficient (workaround) has been added for sake of game
@@ -439,6 +446,17 @@ void MpActor::EatItem(uint32_t baseId, espm::Type t)
       } else {
         RestoreActorValue(av, effect.magnitude);
       }
+    } else if (isRateOrMult) {
+      const ActorValues& actorValues = GetChangeForm().actorValues;
+      float previous = actorValues.GetValue(av);
+      uint32_t formId = GetFormId();
+      WorldState* worldState = GetParent();
+      SetActorValue(av, previous * effect.magnitude);
+      worldState->SetTimer(effect.duration)
+        .Then([formId, actorValue = av, previous, worldState](Viet::Void) {
+          auto& actor = worldState->GetFormAt<MpActor>(formId);
+          actor.SetActorValue(actorValue, previous);
+        });
     }
   }
 }
