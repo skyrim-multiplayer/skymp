@@ -455,7 +455,7 @@ void MpActor::EatItem(uint32_t baseId, espm::Type t)
       if (isRate) {
         SetActorValue(av, effect.magnitude);
       } else {
-        SetActorvalue(av, previous * effect.magnitude);
+        SetActorValue(av, previous * effect.magnitude);
       }
       worldState->SetTimer(effect.duration)
         .Then([formId, actorValue = av, previous, worldState](Viet::Void) {
