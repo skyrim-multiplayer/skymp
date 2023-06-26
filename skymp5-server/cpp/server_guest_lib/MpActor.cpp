@@ -453,7 +453,7 @@ void MpActor::EatItem(uint32_t baseId, espm::Type t)
       uint32_t formId = GetFormId();
       WorldState* worldState = GetParent();
       if (isRate) {
-        SetActorValue(av, effect.magnitude)
+        SetActorValue(av, effect.magnitude);
       } else {
         SetActorvalue(av, previous * effect.magnitude);
       }
