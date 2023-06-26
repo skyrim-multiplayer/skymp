@@ -1,1 +1,1 @@
-Fixed events handling, should be less errors.
+Fixed events handling, should be fewer crashes.
