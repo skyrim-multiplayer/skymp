@@ -44,7 +44,6 @@ export declare class ScampServer {
   getUserByActor(formId: number): number;
 
   executeJavaScriptOnChakra(src: string): void;
-  onUiEvent(formId: number, msg: Record<string, unknown>): void;
   clear(): void;
   writeLogs(logLevel: string, message: string): void;
 }

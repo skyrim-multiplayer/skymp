@@ -80,7 +80,7 @@ Networking::MockServer::MockServer()
   pImpl.reset(new Impl);
 }
 
-std::shared_ptr<Networking::IClient> Networking::MockServer::CreateClient()
+std::pair<std::shared_ptr<Networking::IClient>, Networking::UserId> Networking::MockServer::CreateClient()
 {
   NetworkingMock::SendFn sendFn =
     [](Networking::MockServer* parent, Networking::UserId id,
@@ -122,7 +122,7 @@ std::shared_ptr<Networking::IClient> Networking::MockServer::CreateClient()
     std::unique_ptr<NetworkingMock::Packet>(new NetworkingMock::Packet(
       { Networking::PacketType::ClientSideConnectionAccepted })));
 
-  return cl;
+  return { cl, myId };
 }
 
 void Networking::MockServer::Send(UserId targetUserId, PacketData data,
