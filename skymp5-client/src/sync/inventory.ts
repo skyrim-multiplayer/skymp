@@ -1,27 +1,28 @@
 import {
-  getExtraContainerChanges,
-  getContainer,
+  Actor,
+  ActorBase,
+  Ammo,
   BaseExtraList,
-  ExtraHealth,
-  ObjectReference,
-  TESModPlatform,
-  Game,
-  storage,
+  Enchantment,
+  ExtraCharge,
   ExtraCount,
   ExtraEnchantment,
+  ExtraHealth,
   ExtraPoison,
   ExtraSoul,
   ExtraTextDisplayData,
-  ExtraCharge,
-  Enchantment,
-  Potion,
-  Actor,
-  Ammo,
-  printConsole,
-  ActorBase,
   FormType,
-} from "skyrimPlatform";
-import * as taffyPerkSystem from "../sweetpie/taffyPerkSystem";
+  Game,
+  ObjectReference,
+  Potion,
+  TESModPlatform,
+  getContainer,
+  getExtraContainerChanges,
+  printConsole,
+  storage,
+} from 'skyrimPlatform';
+
+import * as taffyPerkSystem from '../sweetpie/taffyPerkSystem';
 
 export interface Extra {
   health?: number;
@@ -52,9 +53,9 @@ export interface Inventory {
 const getRealName = (s?: string): string => {
   if (!s) return s as string;
 
-  const arr = s.split(" ");
+  const arr = s.split(' ');
   if (arr.length && arr[arr.length - 1].match(/^\(.*\)$/)) arr.pop();
-  return arr.join(" ");
+  return arr.join(' ');
 };
 
 // 'aaaaaaaaaaaaaaaa' => 'aaa...'
@@ -64,17 +65,17 @@ const cropName = (s?: string): string => {
   const max = 128;
   return s.length >= max
     ? s
-      .split("")
-      .filter((x, i) => i < max)
-      .join("")
-      .concat("...")
+        .split('')
+        .filter((x, i) => i < max)
+        .join('')
+        .concat('...')
     : s;
 };
 
 const checkIfNameIsGeneratedByGame = (
   aStr: string,
   bStr: string,
-  formName: string
+  formName: string,
 ) => {
   if (!aStr.length && bStr.startsWith(formName)) {
     const bEnding = bStr.substr(formName.length);
@@ -86,8 +87,8 @@ const checkIfNameIsGeneratedByGame = (
 };
 
 const namesEqual = (a: Entry, b: Entry): boolean => {
-  const aStr = a.name || "";
-  const bStr = b.name || "";
+  const aStr = a.name || '';
+  const bStr = b.name || '';
   if (cropName(getRealName(aStr)) === cropName(getRealName(bStr))) return true;
 
   if (a.baseId === b.baseId) {
@@ -127,7 +128,7 @@ export const hasExtras = (e: Entry): boolean => {
 const extractExtraData = (
   refr: ObjectReference,
   extraList: BaseExtraList | null,
-  out: Entry
+  out: Entry,
 ): void => {
   // I see that ExtraWorn is not emitted for 0xFF actors when arrows are equipped. Fixing
   const item = Game.getFormEx(out.baseId);
@@ -140,7 +141,7 @@ const extractExtraData = (
 
   (extraList || []).forEach((extra) => {
     switch (extra.type) {
-      case "Health":
+      case 'Health':
         out.health = Math.round((extra as ExtraHealth).health * 10) / 10;
 
         // TESModPlatform::AddItemEx makes all items at least 1.01 health
@@ -148,31 +149,33 @@ const extractExtraData = (
           delete out.health;
         }
         break;
-      case "Count":
+      case 'Count':
         out.count = (extra as ExtraCount).count;
         break;
-      case "Enchantment":
+      case 'Enchantment':
         out.enchantmentId = (extra as ExtraEnchantment).enchantmentId;
         out.maxCharge = (extra as ExtraEnchantment).maxCharge;
-        out.removeEnchantmentOnUnequip = (extra as ExtraEnchantment).removeOnUnequip;
+        out.removeEnchantmentOnUnequip = (
+          extra as ExtraEnchantment
+        ).removeOnUnequip;
         break;
-      case "Charge":
+      case 'Charge':
         out.chargePercent = (extra as ExtraCharge).charge;
         break;
-      case "Poison":
+      case 'Poison':
         out.poisonId = (extra as ExtraPoison).poisonId;
         out.poisonCount = (extra as ExtraPoison).count;
         break;
-      case "Soul":
+      case 'Soul':
         out.soul = (extra as ExtraSoul).soul;
         break;
-      case "TextDisplayData":
+      case 'TextDisplayData':
         out.name = (extra as ExtraTextDisplayData).name;
         break;
-      case "Worn":
+      case 'Worn':
         out.worn = true;
         break;
-      case "WornLeft":
+      case 'WornLeft':
         out.wornLeft = true;
         break;
     }
@@ -193,7 +196,7 @@ const squash = (inv: Inventory): Inventory => {
 };
 
 const getExtraContainerChangesAsInventory = (
-  refr: ObjectReference
+  refr: ObjectReference,
 ): Inventory => {
   const extraContainerChanges = getExtraContainerChanges(refr.getFormID());
   const entries = new Array<Entry>();
@@ -223,7 +226,9 @@ const getExtraContainerChangesAsInventory = (
 };
 
 const getBaseContainerAsInventory = (refr: ObjectReference): Inventory => {
-  return { entries: getContainer((refr.getBaseObject() as ActorBase).getFormID()) };
+  return {
+    entries: getContainer((refr.getBaseObject() as ActorBase).getFormID()),
+  };
 };
 
 export const sumInventories = (lhs: Inventory, rhs: Inventory): Inventory => {
@@ -249,7 +254,11 @@ export const sumInventories = (lhs: Inventory, rhs: Inventory): Inventory => {
   };
 };
 
-export const removeSimpleItemsAsManyAsPossible = (inv: Inventory, baseId: number, count: number): Inventory => {
+export const removeSimpleItemsAsManyAsPossible = (
+  inv: Inventory,
+  baseId: number,
+  count: number,
+): Inventory => {
   const res: Inventory = { entries: [] };
   res.entries = JSON.parse(JSON.stringify(inv.entries));
 
@@ -260,19 +269,19 @@ export const removeSimpleItemsAsManyAsPossible = (inv: Inventory, baseId: number
 
   res.entries = res.entries.filter((e) => e.count > 0);
   return res;
-}
+};
 
 export const getDiff = (
   lhs: Inventory,
   rhs: Inventory,
-  ignoreWorn: boolean
+  ignoreWorn: boolean,
 ): Inventory => {
   const lhsCopy: Inventory = JSON.parse(JSON.stringify(lhs));
   const rhsCopy: Inventory = JSON.parse(JSON.stringify(rhs));
 
   rhsCopy.entries.forEach((e) => {
     const sameFromLeft = lhsCopy.entries.find(
-      (x) => x.baseId === e.baseId && extrasEqual(x, e, ignoreWorn)
+      (x) => x.baseId === e.baseId && extrasEqual(x, e, ignoreWorn),
     );
     if (sameFromLeft) {
       sameFromLeft.count -= e.count;
@@ -289,17 +298,17 @@ export const getInventory = (refr: ObjectReference): Inventory => {
   return squash(
     sumInventories(
       getBaseContainerAsInventory(refr),
-      getExtraContainerChangesAsInventory(refr)
-    )
+      getExtraContainerChangesAsInventory(refr),
+    ),
   );
 };
 
 const basesReset = (): Set<number> => {
-  if (storage["basesResetExists"] !== true) {
-    storage["basesResetExists"] = true;
-    storage["basesReset"] = new Set<number>();
+  if (storage['basesResetExists'] !== true) {
+    storage['basesResetExists'] = true;
+    storage['basesReset'] = new Set<number>();
   }
-  return storage["basesReset"] as Set<number>;
+  return storage['basesReset'] as Set<number>;
 };
 
 const resetBase = (refr: ObjectReference): void => {
@@ -317,7 +326,7 @@ export const applyInventory = (
   refr: ObjectReference,
   newInventory: Inventory,
   enableCrashProtection: boolean,
-  ignoreWorn = false
+  ignoreWorn = false,
 ): boolean => {
   resetBase(refr);
   const diff = getDiff(newInventory, getInventory(refr), ignoreWorn).entries;
@@ -348,12 +357,14 @@ export const applyInventory = (
     const type = f.getType();
     // For misc items, potions and ingredients we don't want to split them into multiple items
     // This was made to fix a performance issue with users having 10000+ of misc items (i.e. gold)
-    if (type === FormType.Misc || type === FormType.Potion || type === FormType.Ingredient) {
+    if (
+      type === FormType.Misc ||
+      type === FormType.Potion ||
+      type === FormType.Ingredient
+    ) {
       absCount = 1;
       oneStepCount = e.count;
-    }
-    else {
-
+    } else {
       if (absCount > 1000) {
         absCount = 1;
         oneStepCount = 1;
@@ -380,7 +391,11 @@ export const applyInventory = (
         queueNiNodeUpdateNeeded = true;
       }
 
-      printConsole(`Adding ${e.baseId} to ${refr.getFormID().toString(16)} with count ${oneStepCount}`);
+      printConsole(
+        `Adding ${e.baseId} to ${refr
+          .getFormID()
+          .toString(16)} with count ${oneStepCount}`,
+      );
       TESModPlatform.addItemEx(
         refr,
         f,
@@ -395,7 +410,7 @@ export const applyInventory = (
         e.name ? cropName(e.name) : f.getName(),
         e.soul ? e.soul : 0,
         e.poisonId ? Potion.from(Game.getFormEx(e.poisonId)) : null,
-        e.poisonCount ? e.poisonCount : 0
+        e.poisonCount ? e.poisonCount : 0,
       );
     }
 

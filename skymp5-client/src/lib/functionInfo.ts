@@ -10,11 +10,15 @@ export class FunctionInfo<F extends { toString: () => string }> {
     if (!args) {
       return this.text;
     }
-    return `(function(){const {${Object.keys(args).join(',')}} = ${JSON.stringify(args)};${this.text}})()`;
+    return `(function(){const {${Object.keys(args).join(
+      ',',
+    )}} = ${JSON.stringify(args)};${this.text}})()`;
   }
 
   private getTextWithoutErrorHandling(): string {
-    const funcString = this.f.toString().substring(0, this.f.toString().length - 1);
+    const funcString = this.f
+      .toString()
+      .substring(0, this.f.toString().length - 1);
     return funcString.replace(new RegExp('^.+?{', 'm'), '').trim();
   }
 }

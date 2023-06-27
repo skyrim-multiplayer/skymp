@@ -84,6 +84,7 @@ All plugins must have unique names.
 Configure the name of your plugin by opening the `package.json` file and changing the `"name"` field.
 
 For example:
+
 ```json
 {
   "name": "my-cool-plugin",
@@ -92,13 +93,14 @@ For example:
 
 > Please do not use spaces. Use only lowercase letters and dashes.
 
-## Compile Plugin 
+## Compile Plugin
 
 Now you are ready to compile and run your first Skyrim Platform plugin!
 
 In the file menu, select `Terminal` > `Run Build Task...` (_or press Ctrl+Shift+B_)
 
 This should automatically open a terminal which will:
+
 - Install all plugin dependencies from npm
 - Compile your plugin
 - Bundle your plugin for distribution
@@ -148,16 +150,21 @@ That's it! Now it's time to make changes to the plugin.
 In the example projects, the main plugin file can be found in the `src/` folder:
 
 ### `src/index.ts`
+
 ```ts
-import { Debug, once, printConsole } from 'skyrimPlatform'
+import { Debug, once, printConsole } from 'skyrimPlatform';
 
 once('tick', () => {
-    printConsole('Hello! You can view this in the Skyrim ~ console on the Main Menu when the game runs')
-})
+  printConsole(
+    'Hello! You can view this in the Skyrim ~ console on the Main Menu when the game runs',
+  );
+});
 
 once('update', () => {
-    Debug.messageBox('Hello! This will appear when a new game is started or an existing game is loaded')
-})
+  Debug.messageBox(
+    'Hello! This will appear when a new game is started or an existing game is loaded',
+  );
+});
 ```
 
 ## Make your own changes to the plugin
@@ -165,11 +172,11 @@ once('update', () => {
 Edit the above code with your own text. For example:
 
 ```ts
-import { Debug, once, printConsole } from 'skyrimPlatform'
+import { Debug, once, printConsole } from 'skyrimPlatform';
 
 once('update', () => {
-    Debug.messageBox('Hey look! I changed this! Yay!')
-})
+  Debug.messageBox('Hey look! I changed this! Yay!');
+});
 ```
 
 If you still have the development process running (via `Run Build Task...` or `npm run dev`), the changes should automatically recompile and you should be able to go into the game immediately to view the changes!
@@ -192,15 +199,15 @@ Next, try updating your `src/index.ts` to be the following:
 
 ```ts
 // Import the utility function from PapyrusUtil which can list folders in a file system path
-import { FoldersInFolder } from '@skyrim-platform/papyrus-util/MiscUtil'
-import { once, Debug } from '@skyrim-platform/skyrim-platform'
+import { FoldersInFolder } from '@skyrim-platform/papyrus-util/MiscUtil';
+import { Debug, once } from '@skyrim-platform/skyrim-platform';
 
 // When 'update' runs, show a messagebox listing all of the top-level folder names inside of the 'Data' folder
 once('update', () => {
-    const foldersInData = FoldersInFolder('.')
-    if (foldersInData)
-        Debug.messageBox(`Folders in Data directory: ${foldersInData.join("\n")}`)
-})
+  const foldersInData = FoldersInFolder('.');
+  if (foldersInData)
+    Debug.messageBox(`Folders in Data directory: ${foldersInData.join('\n')}`);
+});
 ```
 
 This is a simple demonstration of how to use one function from one common Skyrim library.
@@ -230,7 +237,7 @@ Structure of the zip archive for distribution:
 ```
 Platform\
   Plugins\
-    plugin-file-1.0.0.js    
+    plugin-file-1.0.0.js
 ```
 
 > Note: do not try to package your .ts TypeScript files -or- the .js JavaScript files in the dist/ folder. Instead, use the .js file in the build/ folder which is bundled for usage with Skyrim Platform

@@ -30,4 +30,4 @@ This feature allows you to use frontend live reload to test game systems.
 
 Actually, this is not a serverside port.
 You may need to know that the embedded browser exposes port 9000 for remote DevTools.
-Just type `localhost:9000` in your *real* browser to open Chromium DevTools for the in-game browser.
+Just type `localhost:9000` in your _real_ browser to open Chromium DevTools for the in-game browser.
