@@ -1,23 +1,22 @@
 import {
-  DxScanCode,
-  Input,
-  Menu,
-  MenuCloseEvent,
-  MenuOpenEvent,
   browser,
-  getPluginSourceCode,
   on,
   once,
+  Input,
   printConsole,
   settings,
+  Menu,
+  DxScanCode,
   writePlugin,
-} from 'skyrimPlatform';
-
-import { FormView } from '../view/formView';
-import { RemoteAuthGameData } from './authModel';
+  getPluginSourceCode,
+  MenuOpenEvent,
+  MenuCloseEvent,
+} from "skyrimPlatform";
+import { FormView } from "../view/formView";
+import { RemoteAuthGameData } from "./authModel";
 
 const pluginAuthDataName = `auth-data-no-load`;
-const onFrontLoadedEventKey = 'front-loaded';
+const onFrontLoadedEventKey = "front-loaded";
 
 export type onWindowLoadedEventCallback = () => void;
 const onWindowLoadListeners = new Array<onWindowLoadedEventCallback>();
@@ -45,25 +44,23 @@ const badMenus: Menu[] = [
 
 const IsBadMenu = (menu: string) => badMenus.includes(menu as Menu);
 
-on('browserMessage', (e) => {
+on("browserMessage", (e) => {
   if (e.arguments[0] === onFrontLoadedEventKey) {
-    onWindowLoadListeners.forEach((l) => l());
+    onWindowLoadListeners.forEach(l => l());
   }
 });
 
-export const addOnWindowLoadListener = (
-  listener: onWindowLoadedEventCallback,
-): void => {
+export const addOnWindowLoadListener = (listener: onWindowLoadedEventCallback): void => {
   onWindowLoadListeners.push(listener);
-};
+}
 
 export const main = (): void => {
   browser.setVisible(false);
-  once('update', () => browser.setVisible(true));
+  once("update", () => browser.setVisible(true));
 
   const badMenusOpen = new Set<string>();
 
-  on('menuOpen', (e: MenuOpenEvent) => {
+  on("menuOpen", (e: MenuOpenEvent) => {
     if (e.name === Menu.Cursor) {
       isCursorMenuOpened = true;
     }
@@ -75,7 +72,7 @@ export const main = (): void => {
     }
   });
 
-  on('menuClose', (e: MenuCloseEvent) => {
+  on("menuClose", (e: MenuCloseEvent) => {
     if (e.name === Menu.Cursor) {
       isCursorMenuOpened = false;
     }
@@ -89,20 +86,14 @@ export const main = (): void => {
   });
 
   const binding = new Map<BindingKey, BindingValue>([
-    [
-      [DxScanCode.F1],
-      () => (FormView.isDisplayingNicknames = !FormView.isDisplayingNicknames),
-    ],
+    [[DxScanCode.F1], () => FormView.isDisplayingNicknames = !FormView.isDisplayingNicknames],
     [[DxScanCode.F2], () => browser.setVisible(!browser.isVisible())],
     [[DxScanCode.F6], () => browser.setFocused(!browser.isFocused())],
-    [
-      [DxScanCode.Enter],
-      () => {
-        if (badMenusOpen.size === 0) {
-          browser.setFocused(true);
-        }
-      },
-    ],
+    [[DxScanCode.Enter], () => {
+      if (badMenusOpen.size === 0) {
+        browser.setFocused(true);
+      }
+    }],
     [
       [DxScanCode.Escape],
       () => browser.isFocused() && browser.setFocused(false),
@@ -110,7 +101,7 @@ export const main = (): void => {
   ]);
 
   let lastNumKeys = 0;
-  on('update', () => {
+  on("update", () => {
     const numKeys = Input.getNumKeysPressed();
 
     if (lastNumKeys === numKeys) return;
@@ -122,7 +113,7 @@ export const main = (): void => {
     });
   });
 
-  // "file:///Data/Platform/UI/index.html" is loaded by default so we need to call it manually
+  // "file:///Data/Platform/UI/index.html" is loaded by default so we need to call it manually 
 };
 
 export const getAuthData = (): RemoteAuthGameData | null => {
@@ -142,24 +133,22 @@ export const setAuthData = (data: RemoteAuthGameData | null): void => {
   printConsole(data);
   writePlugin(
     pluginAuthDataName,
-    '//' + (data ? JSON.stringify(data) : 'null'),
+    "//" + (data ? JSON.stringify(data) : "null")
   );
 };
 
 var isCursorMenuOpened = false;
 export const keepCursorMenuOpenedWhenBrowserFocused = (): void => {
-  once('update', () => {
+  once("update", () => {
     if (browser.isFocused() && !isCursorMenuOpened) {
-      printConsole(
-        `browser ${browser.isFocused()}, isCursorMenuOpened ${isCursorMenuOpened}`,
-      );
+      printConsole(`browser ${browser.isFocused()}, isCursorMenuOpened ${isCursorMenuOpened}`);
       browser.setFocused(false);
-      once('update', () => {
+      once("update", () => {
         browser.setFocused(true);
-        once('update', () => keepCursorMenuOpenedWhenBrowserFocused());
+        once("update", () => keepCursorMenuOpenedWhenBrowserFocused());
       });
     } else {
       keepCursorMenuOpenedWhenBrowserFocused();
     }
   });
-};
+}

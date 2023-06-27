@@ -1,8 +1,7 @@
-import * as crc32 from 'crc-32';
-import * as fs from 'fs';
-import * as path from 'path';
-
-import { Settings } from './settings';
+import { Settings } from "./settings";
+import * as crc32 from "crc-32";
+import * as path from "path";
+import * as fs from "fs";
 
 interface ManifestModEntry {
   filename: string;
@@ -17,9 +16,9 @@ interface Manifest {
 }
 
 const getBsaNameByEspmName = (espmName: string) => {
-  if (espmName.endsWith('.esp') || espmName.endsWith('.esm')) {
-    const nameNoExt = espmName.split('.').slice(0, -1).join('.');
-    return nameNoExt + '.bsa';
+  if (espmName.endsWith(".esp") || espmName.endsWith(".esm")) {
+    const nameNoExt = espmName.split(".").slice(0, -1).join(".");
+    return nameNoExt + ".bsa";
   }
   throw new Error(`'${espmName}' is not a valid esp or esm name`);
 };
@@ -28,7 +27,7 @@ export const generateManifest = (settings: Settings): void => {
   const manifest: Manifest = {
     mods: [],
     versionMajor: 1,
-    loadOrder: settings.loadOrder.map((x) => path.basename(x)),
+    loadOrder: settings.loadOrder.map(x => path.basename(x)),
   };
 
   settings.loadOrder.forEach((loadOrderElement) => {
@@ -59,6 +58,6 @@ export const generateManifest = (settings: Settings): void => {
     }
   });
 
-  const manifestPath = path.join(settings.dataDir, 'manifest.json');
+  const manifestPath = path.join(settings.dataDir, "manifest.json");
   fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 4));
 };

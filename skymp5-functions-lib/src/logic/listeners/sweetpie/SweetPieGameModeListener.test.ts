@@ -1,9 +1,9 @@
+import { sprintf } from 'sprintf-js';
 import { ChatMessage, createSystemMessage } from '../../../props/chatProperty';
-import { makePlayerController, resetMocks } from '../../TestUtils';
 import { SweetPieGameModeListener } from './SweetPieGameModeListener';
 import { SweetPieMap } from './SweetPieMap';
 import { getPlayerCurrentRound, forceJoinRound, forceLeaveRound, determineDeathMatchWinners } from './SweetPieRound';
-import { sprintf } from 'sprintf-js';
+import { makePlayerController, resetMocks } from '../../TestUtils';
 
 describe('SweetPieGameModeListener: Activation default', () => {
   test('Activators should continue by default', () => {
@@ -93,7 +93,9 @@ describe('SweetPieGameModeListener: Chat', () => {
   test('Chat messages are transferred to neighbors', () => {
     const controller = makePlayerController();
     const listener = new SweetPieGameModeListener(controller);
-    const neighbors = [1, 2, 3];
+    const neighbors = [
+      1, 2, 3
+    ];
 
     listener.onPlayerChatInput(1, 'hello!', neighbors, 1);
 
@@ -237,10 +239,7 @@ describe('SweetPieGameModeListener: Round clock', () => {
 
     forceLeaveRound(controller, listener.getRounds(), 1);
     listener.everySecond();
-    expect(controller.sendChatMessage).toBeCalledWith(
-      2,
-      createSystemMessage('Too few players, the warmup will start when 1 more join')
-    );
+    expect(controller.sendChatMessage).toBeCalledWith(2, createSystemMessage('Too few players, the warmup will start when 1 more join'));
     expect(listener.getRounds()[0].state).toBe('wait');
   });
 
@@ -301,7 +300,7 @@ describe('SweetPieGameModeListener: Round clock', () => {
     // 'Player1 wins with 10 points'
     const msg = sprintf(listener.determineWinnerMessage[0], controller.getName(1), 10);
     expect(controller.sendChatMessage).toBeCalledTimes(2);
-    expect(controller.sendChatMessage).toBeCalledWith(1, createSystemMessage(msg));
+    expect(controller.sendChatMessage).toBeCalledWith(1,createSystemMessage(msg));
     expect(controller.sendChatMessage).toBeCalledWith(2, createSystemMessage(msg));
 
     // Round win reward is 15 septims

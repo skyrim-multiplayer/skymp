@@ -1,8 +1,8 @@
-import { Animation } from '../sync/animation';
-import { Appearance } from '../sync/appearance';
-import { Equipment } from '../sync/equipment';
-import { Inventory } from '../sync/inventory';
-import { Movement } from '../sync/movement';
+import { Movement } from "../sync/movement";
+import { Animation } from "../sync/animation";
+import { Appearance } from "../sync/appearance";
+import { Equipment } from "../sync/equipment";
+import { Inventory } from "../sync/inventory";
 
 export interface FormModel {
   idx?: number;

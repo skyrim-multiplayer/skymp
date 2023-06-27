@@ -1,6 +1,6 @@
-import { SweetPieRound } from '../logic/listeners/sweetpie/SweetPieRound';
 import { Mp } from '../types/mp';
-import * as fs from 'fs';
+import { SweetPieRound } from "../logic/listeners/sweetpie/SweetPieRound";
+import * as fs from "fs";
 
 declare const mp: Mp;
 
@@ -13,21 +13,24 @@ export class PersistentStorage {
   }
 
   get rounds(): SweetPieRound[] {
-    const str = this.readFileSync('data/persistentStorage.json');
+    const str = this.readFileSync("data/persistentStorage.json");
     const obj = this.parse(str);
     if (Array.isArray(obj['rounds']) && !obj['rounds'].find((x) => typeof x !== 'object')) {
       const rounds: SweetPieRound[] = [];
       for (const round of obj['rounds']) {
         const players = new Map<number, { kills?: number }>();
         for (const obj of round['players']) {
-          players.set(Number.parseInt(obj['key']), typeof obj['val'] === 'object' ? obj['val'] : {});
+          players.set(
+            Number.parseInt(obj['key']),
+            typeof obj['val'] === 'object' ? obj['val'] : {}
+          );
         }
         rounds.push({
           state: round['state'],
           map: round['map'],
           hallPointName: round['hallPointName'],
           secondsPassed: round['secondsPassed'],
-          players: players,
+          players: players
         });
       }
       return rounds;
@@ -36,7 +39,7 @@ export class PersistentStorage {
   }
 
   set rounds(newValue: SweetPieRound[]) {
-    const str = this.readFileSync('data/persistentStorage.json');
+    const str = this.readFileSync("data/persistentStorage.json");
     const obj = this.parse(str);
     const rounds = new Array();
     for (const round of newValue) {
@@ -49,15 +52,15 @@ export class PersistentStorage {
         map: round.map,
         hallPointName: round.hallPointName,
         secondsPassed: round.secondsPassed,
-        players: players,
+        players: players
       });
     }
     obj['rounds'] = rounds;
-    fs.writeFileSync('data/persistentStorage.json', JSON.stringify(obj, null, 2));
+    fs.writeFileSync("data/persistentStorage.json", JSON.stringify(obj, null, 2));
   }
 
   get reloads(): number {
-    const str = this.readFileSync('data/persistentStorage.json');
+    const str = this.readFileSync("data/persistentStorage.json");
     const obj = this.parse(str);
     return typeof obj['reloads'] === 'number' ? obj['reloads'] : 0;
   }
@@ -66,7 +69,7 @@ export class PersistentStorage {
     const str = this.readFileSync('data/persistentStorage.json');
     const obj = this.parse(str);
     obj['reloads'] = newValue;
-    fs.writeFileSync('data/persistentStorage.json', JSON.stringify(obj, null, 2));
+    fs.writeFileSync("data/persistentStorage.json", JSON.stringify(obj, null, 2));
   }
 
   get onlinePlayers(): number[] {
@@ -84,7 +87,7 @@ export class PersistentStorage {
     const str = this.readFileSync('data/persistentStorage.json');
     const obj = this.parse(str);
     obj['onlinePlayers'] = newValue;
-    fs.writeFileSync('data/persistentStorage.json', JSON.stringify(obj, null, 2));
+    fs.writeFileSync("data/persistentStorage.json", JSON.stringify(obj, null, 2));
   }
 
   private constructor() {}
@@ -98,9 +101,10 @@ export class PersistentStorage {
 
   private readFileSync(filePath: string): string {
     try {
-      const s = fs.readFileSync(filePath, 'utf8');
+      const s = fs.readFileSync(filePath, "utf8");
       return s;
-    } catch (e: unknown) {
+    }
+    catch(e: unknown) {
       if ((e as Record<string, unknown>).code === 'ENOENT') {
         return '';
       }

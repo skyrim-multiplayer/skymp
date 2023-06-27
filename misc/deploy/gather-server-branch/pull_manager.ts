@@ -19,11 +19,7 @@ export async function getPullsWithLabel(octokit: Octokit) {
   });
   const result: Pull[] = [];
   for (const pull of pulls) {
-    if (
-      !pull.labels.find(
-        (label) => label.name == 'merge-to:' + process.env.DEPLOY_BRANCH,
-      )
-    ) {
+    if (!pull.labels.find((label) => label.name == 'merge-to:' + process.env.DEPLOY_BRANCH)) {
       continue;
     }
     result.push({

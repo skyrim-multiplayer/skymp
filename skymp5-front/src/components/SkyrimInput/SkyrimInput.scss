@@ -13,12 +13,12 @@
     font-weight: normal;
     font-size: 20px;
     line-height: 32px;
-    color: #9d9e9ebf;
+    color: #9D9E9EBF;
     padding: 10px;
   }
 }
-@media screen and (-webkit-min-device-pixel-ratio: 0) {
-  input[type='password'] {
+@media screen and (-webkit-min-device-pixel-ratio:0) {
+  input[type="password"] {
     font-family: icons;
     letter-spacing: 0.1em;
     font-size: 14px;

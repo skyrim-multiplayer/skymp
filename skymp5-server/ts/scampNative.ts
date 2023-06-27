@@ -1,4 +1,4 @@
-const scampNativeNode = require(process.cwd() + '/scam_native.node');
+const scampNativeNode = require(process.cwd() + "/scam_native.node");
 
 export declare interface Bot {
   destroy(): void;
@@ -7,17 +7,17 @@ export declare interface Bot {
 
 export type SendChatMessageFn = (
   formId: number,
-  message: Record<string, unknown>,
+  message: Record<string, unknown>
 ) => void;
 
 export declare class ScampServer {
   constructor(serverPort: number, maxPlayers: number);
 
-  on(event: 'connect', handler: (userId: number) => void): void;
-  on(event: 'disconnect', handler: (userId: number) => void): void;
+  on(event: "connect", handler: (userId: number) => void): void;
+  on(event: "disconnect", handler: (userId: number) => void): void;
   on(
-    event: 'customPacket',
-    handler: (userId: number, content: string) => void,
+    event: "customPacket",
+    handler: (userId: number, content: string) => void
   ): void;
   attachSaveStorage(): void;
   tick(): void;
@@ -27,7 +27,7 @@ export declare class ScampServer {
     pos: number[],
     angleZ: number,
     cellOrWorld: number,
-    userProfileId?: number,
+    userProfileId?: number
   ): number;
 
   destroyActor(formId: number): void;

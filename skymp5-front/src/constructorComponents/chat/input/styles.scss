@@ -1,5 +1,4 @@
-[contenteditable='true']:empty:before,
-.placeholder {
+[contenteditable=true]:empty:before, .placeholder{
   content: attr(placeholder);
   pointer-events: none;
   display: block;
@@ -40,13 +39,15 @@
   margin: auto;
   overflow-y: auto;
   display: block;
-  &::-webkit-scrollbar-track {
+  &::-webkit-scrollbar-track
+  {
     border-radius: 20px;
     cursor: pointer;
     border: solid 10px transparent;
   }
-
-  &::-webkit-scrollbar {
+  
+  &::-webkit-scrollbar
+  {
     width: 7px;
     padding: 10px 0;
     cursor: pointer;
@@ -55,8 +56,9 @@
     border-radius: 20px;
     border: solid 10px transparent;
   }
-
-  &::-webkit-scrollbar-thumb {
+  
+  &::-webkit-scrollbar-thumb
+  {
     background-color: #000000;
     border-radius: 25px;
     cursor: pointer;
@@ -66,12 +68,12 @@
   }
   &::-webkit-scrollbar-track-piece:end {
     background: transparent;
-    margin-bottom: 5px;
+    margin-bottom: 5px; 
   }
 
   &::-webkit-scrollbar-track-piece:start {
-    background: transparent;
-    margin-top: 5px;
+      background: transparent;
+      margin-top: 5px;
   }
   &.show {
     opacity: 1;

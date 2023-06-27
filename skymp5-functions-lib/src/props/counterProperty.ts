@@ -17,12 +17,12 @@ export class CounterProperty {
   }
 
   static get(actorId: number, counterName: Counter) {
-    const current = (mp.get(actorId, 'counter') as State) ?? {};
+    const current = mp.get(actorId, 'counter') as State ?? {};
     return current[counterName] ?? 0;
   }
 
   static set(actorId: number, counterName: Counter, newVal: number) {
-    const current = (mp.get(actorId, 'counter') as State) ?? {};
+    const current = mp.get(actorId, 'counter') as State ?? {};
     current[counterName] = newVal;
     mp.set(actorId, 'counter', current);
   }

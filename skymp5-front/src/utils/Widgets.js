@@ -1,24 +1,24 @@
 class Widgets {
-  constructor(widgets) {
+  constructor (widgets) {
     this.widgets = widgets || [];
     this.listeners = [];
   }
 
-  get() {
+  get () {
     return this.widgets;
   }
 
-  set(widgets) {
+  set (widgets) {
     this.widgets = widgets;
-    this.listeners.forEach((listener) => listener(widgets));
+    this.listeners.forEach(listener => listener(widgets));
   }
 
-  addListener(listener) {
+  addListener (listener) {
     this.listeners.push(listener);
   }
 
-  removeListener(listener) {
-    this.listeners = this.listeners.filter((el) => el != listener);
+  removeListener (listener) {
+    this.listeners = this.listeners.filter(el => el != listener);
   }
 }
 

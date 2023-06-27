@@ -99,7 +99,7 @@ export interface PacketHistory {
     offset: number;
     size: number;
     timeMs: number;
-  }>;
+  }>
 }
 
 export interface StartPoint {
@@ -128,12 +128,12 @@ export interface ServerSettings {
   sweetPieMinimumPlayersToStart?: number;
   sweetPieAllowCheats?: boolean;
   sweetPieChatSettings?: {
-    hearingRadiusNormal?: number;
+    hearingRadiusNormal?: number
   };
   discordAuth?: {
     baseKitRoleId?: string;
     adminRoleId?: string;
-  };
+  }
 
   readonly [key: string]: unknown;
 }
@@ -160,7 +160,7 @@ export interface Mp {
   get(formId: 0, propertyName: 'onlinePlayers'): number[];
   get(formId: number, propertyName: 'isDead'): boolean;
   get(formId: number, propertyName: 'worldOrCellDesc'): string;
-  get(formId: number, propertyName: 'percentages'): { health: number; magicka: number; stamina: number };
+  get(formId: number, propertyName: 'percentages'): { health: number, magicka: number, stamina: number };
   get(formId: number, propertyName: 'profileId'): number;
 
   /**
@@ -174,11 +174,7 @@ export interface Mp {
   set(formId: number, propertyName: 'locationalData', newValue: LocationalData): void;
   set(formId: number, propertyName: 'spawnPoint', newValue: LocationalData): void;
   set(formId: number, propertyName: 'isDead', newValue: boolean): void;
-  set(
-    formId: number,
-    propertyName: 'percentages',
-    newValue: { health: number; magicka: number; stamina: number }
-  ): void;
+  set(formId: number, propertyName: 'percentages', newValue: { health: number, magicka: number, stamina: number }): void;
 
   /**
    * Creates a new property that would be attached to all instances of

@@ -3,15 +3,15 @@
 Skyrim Platform is a modding tool for Skyrim allowing writing scripts with JavaScript/TypeScript.
 
 ```ts
-printConsole('Hello Platform');
+printConsole("Hello Platform");
 
-on('update', () => {
+on("update", () => {
   const gold = Game.getForm(0xf);
   const target = Game.getDialogueTarget();
   const player = Game.getPlayer();
   if (target && player && player.getItemCount(gold) >= 100) {
     player.removeItem(gold, 100, true, target);
-    Debug.notification('You have just paid to an NPC');
+    Debug.notification("You have just paid to an NPC");
   }
 });
 ```

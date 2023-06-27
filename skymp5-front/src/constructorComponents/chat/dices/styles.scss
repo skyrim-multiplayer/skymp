@@ -1,241 +1,258 @@
 $regular: 200ms;
-$keyLimePie: #c5d321;
-$geraldine: #f78c8c;
-$fern: #5dad60;
-$moodyBlue: #7175d6;
-$amethyst: #a062c9;
+$keyLimePie: #C5D321;
+$geraldine: #F78C8C;
+$fern: #5DAD60;
+$moodyBlue: #7175D6;
+$amethyst: #A062C9;
 $black: #000000;
 
-.chat-dices {
-  display: flex;
-  flex-direction: column;
-  min-width: 54px;
-  padding-left: 11px;
-  margin-bottom: 10px;
-  margin-top: auto;
-  > span {
-    font-family: Din-pro;
-    font-weight: bold;
-    margin: 7px 11px 0;
-    opacity: 0.68;
-    font-weight: bold;
-    letter-spacing: 1px;
-    text-shadow: -0 -2px 0 rgba(0, 0, 0, 0.63), 0 -2px 0 rgba(0, 0, 0, 0.63),
-      -0 2px 0 rgba(0, 0, 0, 0.63), 0 2px 0 rgba(0, 0, 0, 0.63),
-      -2px -0 0 rgba(0, 0, 0, 0.63), 2px -0 0 rgba(0, 0, 0, 0.63),
-      -2px 0 0 rgba(0, 0, 0, 0.63), 2px 0 0 rgba(0, 0, 0, 0.63),
-      -1px -2px 0 rgba(0, 0, 0, 0.63), 1px -2px 0 rgba(0, 0, 0, 0.63),
-      -1px 2px 0 rgba(0, 0, 0, 0.63), 1px 2px 0 rgba(0, 0, 0, 0.63),
-      -2px -1px 0 rgba(0, 0, 0, 0.63), 2px -1px 0 rgba(0, 0, 0, 0.63),
-      -2px 1px 0 rgba(0, 0, 0, 0.63), 2px 1px 0 rgba(0, 0, 0, 0.63),
-      -2px -2px 0 rgba(0, 0, 0, 0.63), 2px -2px 0 rgba(0, 0, 0, 0.63),
-      -2px 2px 0 rgba(0, 0, 0, 0.63), 2px 2px 0 rgba(0, 0, 0, 0.63),
-      -2px -2px 0 rgba(0, 0, 0, 0.63), 2px -2px 0 rgba(0, 0, 0, 0.63),
-      -2px 2px 0 rgba(0, 0, 0, 0.63), 2px 2px 0 rgba(0, 0, 0, 0.63);
-    color: #fafafa;
-  }
 
-  &__container {
+.chat-dices {
     display: flex;
     flex-direction: column;
-    gap: 6px;
-  }
+    min-width: 54px;
+    padding-left: 11px;
+    margin-bottom: 10px;
+    margin-top: auto;
+    > span {
+        font-family: Din-pro;
+        font-weight: bold;
+        margin: 7px 11px 0;
+        opacity: 0.68;
+        font-weight: bold;
+          letter-spacing: 1px;
+          text-shadow: 
+          -0   -2px 0   rgba( 0, 0, 0, 0.63 ),
+           0   -2px 0   rgba( 0, 0, 0, 0.63 ),
+          -0    2px 0   rgba( 0, 0, 0, 0.63 ),
+           0    2px 0   rgba( 0, 0, 0, 0.63 ),
+          -2px -0   0   rgba( 0, 0, 0, 0.63 ),
+           2px -0   0   rgba( 0, 0, 0, 0.63 ),
+          -2px  0   0   rgba( 0, 0, 0, 0.63 ),
+           2px  0   0   rgba( 0, 0, 0, 0.63 ),
+          -1px -2px 0   rgba( 0, 0, 0, 0.63 ),
+           1px -2px 0   rgba( 0, 0, 0, 0.63 ),
+          -1px  2px 0   rgba( 0, 0, 0, 0.63 ),
+           1px  2px 0   rgba( 0, 0, 0, 0.63 ),
+          -2px -1px 0   rgba( 0, 0, 0, 0.63 ),
+           2px -1px 0   rgba( 0, 0, 0, 0.63 ),
+          -2px  1px 0   rgba( 0, 0, 0, 0.63 ),
+           2px  1px 0   rgba( 0, 0, 0, 0.63 ),
+          -2px -2px 0   rgba( 0, 0, 0, 0.63 ),
+           2px -2px 0   rgba( 0, 0, 0, 0.63 ),
+          -2px  2px 0   rgba( 0, 0, 0, 0.63 ),
+           2px  2px 0   rgba( 0, 0, 0, 0.63 ),
+          -2px -2px 0   rgba( 0, 0, 0, 0.63 ),
+           2px -2px 0   rgba( 0, 0, 0, 0.63 ),
+          -2px  2px 0   rgba( 0, 0, 0, 0.63 ),
+           2px  2px 0   rgba( 0, 0, 0, 0.63 );
+          color: #FAFAFA;
 
-  &__number-container {
-    width: 48px;
-    height: 48px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    position: relative;
-  }
-
-  &__number-frame {
-    width: 28px;
-    height: 28px;
-
-    &--yellow [fill='#BDBD7D'] {
-      fill: $keyLimePie;
     }
 
-    &--blue [fill='#BDBD7D'] {
-      fill: $moodyBlue;
-    }
-
-    &--purple [fill='#BDBD7D'] {
-      fill: $amethyst;
-    }
-
-    &--red [fill='#BDBD7D'] {
-      fill: $geraldine;
-    }
-
-    &--green [fill='#BDBD7D'] {
-      fill: $fern;
-    }
-  }
-
-  &__number {
-    font-family: 'Bankir-Retro';
-    position: absolute;
-    color: $black;
-    font-weight: bold;
-    font-size: 21px;
-  }
-
-  &__row-container {
-    display: flex;
-    align-items: center;
-    gap: 9px;
-
-    &--yellow .chat-dices__card--selected [fill='white'] {
-      fill: $keyLimePie;
-    }
-
-    &--red .chat-dices__card--selected [fill='white'] {
-      fill: $geraldine;
-    }
-
-    &--green .chat-dices__card--selected [fill='white'] {
-      fill: $fern;
-    }
-
-    &--blue .chat-dices__card--selected [fill='white'] {
-      fill: $moodyBlue;
-    }
-
-    &--purple .chat-dices__card--selected [fill='white'] {
-      fill: $amethyst;
-    }
-  }
-
-  &__button {
-    display: flex;
-    opacity: 0.5;
-    transform: scale(1);
-    transition: opacity $regular, transform $regular, fill $regular;
-
-    &--yellow:hover [fill='white'] {
-      fill: $keyLimePie;
-    }
-    &--red:hover [fill='white'] {
-      fill: $geraldine;
-    }
-    &--green:hover [fill='white'] {
-      fill: $fern;
-    }
-    &--blue:hover [fill='white'],
-    &--blue.chat-dices__card--selected [fill='white'] {
-      fill: $moodyBlue;
-    }
-    &--purple:hover [fill='white'],
-    &--purple.chat-dices__card--selected [fill='white'] {
-      fill: $amethyst;
-    }
-
-    &--disabled {
-      pointer-events: none;
-    }
-  }
-
-  &__heart-button--hover {
-    display: none;
-  }
-
-  &__heart-button__container {
-    display: flex;
-    opacity: 0.8;
-    transform: scale(1);
-    transition: opacity $regular, transform $regular;
-    &:hover {
-      opacity: 0.5;
-      & .chat-dices__heart-button {
-        display: none;
-      }
-      & .chat-dices__heart-button--hover {
+    &__container {
         display: flex;
-      }
+        flex-direction: column;
+        gap: 6px;
     }
-    &:active {
-      transform: scale(0.88);
+
+    &__number-container {
+        width: 48px;
+        height: 48px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: relative;
     }
-  }
 
-  &__card {
-    opacity: 0.5;
-    width: 26px;
-    height: 41px;
-  }
+    &__number-frame {
+        width: 28px;
+        height: 28px;
 
-  &__button:hover,
-  &__card--selected {
-    opacity: 0.8;
-    transform: scale(1.125);
-  }
+        &--yellow [fill="#BDBD7D"] {
+            fill: $keyLimePie;
+        }
 
-  &__button:active {
-    transform: scale(0.88);
-  }
+        &--blue [fill="#BDBD7D"] {
+            fill: $moodyBlue;
+        }
+
+        &--purple [fill="#BDBD7D"] {
+            fill: $amethyst;
+        }
+
+        &--red [fill="#BDBD7D"] {
+            fill: $geraldine;
+        }
+
+        &--green [fill="#BDBD7D"] {
+            fill: $fern;
+        }
+    }
+
+    &__number {
+        font-family: 'Bankir-Retro';
+        position: absolute;
+        color: $black;
+        font-weight: bold;
+        font-size: 21px;
+    } 
+
+    &__row-container {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+
+        &--yellow .chat-dices__card--selected [fill='white']{
+            fill: $keyLimePie;
+        }
+
+        &--red .chat-dices__card--selected [fill='white']{
+            fill: $geraldine;
+        }
+
+        &--green .chat-dices__card--selected [fill='white']{
+            fill: $fern;
+        }
+
+        &--blue .chat-dices__card--selected [fill='white']{
+            fill: $moodyBlue;
+        }
+
+        &--purple .chat-dices__card--selected [fill='white']{
+            fill: $amethyst;
+        }
+    }
+
+    &__button {
+        display: flex;
+        opacity: 0.5;
+        transform: scale(1);
+        transition: opacity $regular, transform $regular, fill $regular;
+
+        &--yellow:hover [fill='white']{
+            fill: $keyLimePie;
+        }
+        &--red:hover [fill='white']{
+            fill: $geraldine;
+        }
+        &--green:hover [fill='white']{
+            fill: $fern;
+        }
+        &--blue:hover [fill='white'], &--blue.chat-dices__card--selected [fill='white']{
+            fill: $moodyBlue;
+        }
+        &--purple:hover [fill='white'], &--purple.chat-dices__card--selected [fill='white']{
+            fill: $amethyst;
+        }
+
+        &--disabled {
+            pointer-events: none;
+        }
+    }
+
+    &__heart-button--hover {
+        display: none;
+    }
+
+    &__heart-button__container {
+        display: flex;
+        opacity: 0.8;
+        transform: scale(1);
+        transition: opacity $regular, transform $regular;
+        &:hover {
+            opacity: 0.5;
+            & .chat-dices__heart-button {
+                display: none;
+            }
+            & .chat-dices__heart-button--hover {
+                display: flex;
+            }
+        }
+        &:active {
+            transform: scale(0.88);
+        }
+    }
+
+    &__card {
+        opacity: 0.5;
+        width: 26px;
+        height: 41px;
+    }
+
+    &__button:hover, &__card--selected  {
+        opacity: 0.8;
+        transform: scale(1.125);
+    }
+
+    &__button:active {
+        transform: scale(0.88);
+    }
+
 }
 
 .icon {
-  &-d100 {
-    &:hover {
-      .to-color {
-        fill: #a062c9;
-      }
+    &-d100 {
+        &:hover {
+            .to-color {
+                fill: #A062C9;
+                
+            }
+        }
     }
-  }
-  &-d12 {
-    &:hover {
-      .to-color {
-        fill: #5dad60;
-      }
+    &-d12 {
+        &:hover {
+            .to-color {
+                fill: #5DAD60;
+                
+            }
+        }
     }
-  }
-  &-d6 {
-    &:hover {
-      .to-color {
-        fill: #f78c8c;
-      }
+    &-d6 {
+        &:hover {
+            .to-color {
+                fill: #F78C8C;
+                
+            }
+        }
     }
-  }
-  &-d20 {
-    &:hover {
-      .to-color {
-        fill: #7175d6;
-      }
+    &-d20 {
+        &:hover {
+            .to-color {
+                fill: #7175D6;
+                
+            }
+        }
     }
-  }
-  &-coin {
-    &:hover {
-      .to-color {
-        fill: #bdbd7d;
-      }
+    &-coin {
+        &:hover {
+            .to-color {
+                fill: #BDBD7D; 
+            }
+        }
     }
-  }
 }
 
 .dice {
-  opacity: 0.5;
-  margin: auto;
-  .to-color {
-    fill: white;
-  }
-  &:hover {
-    width: 54px;
-    height: 54px;
-    cursor: pointer;
-    opacity: 0.8;
-  }
+    opacity: 0.5;
+    margin: auto;
+    .to-color {
+        fill: white;
+    }
+    &:hover {
+        width: 54px;
+        height: 54px;
+        cursor: pointer;
+        opacity: 0.80;
+    }
 }
 .dice-wrapper {
-  display: flex;
-  width: 54px;
-  height: 54px;
-  margin: auto auto 0 auto;
-  transition: all 0.1s ease;
-  &:active .dice {
-    width: 38px;
-  }
+    display: flex;
+    width: 54px;
+    height: 54px;
+    margin: auto auto 0 auto;
+    transition: all 0.1s ease;
+    &:active .dice {
+        width: 38px;
+    }
 }

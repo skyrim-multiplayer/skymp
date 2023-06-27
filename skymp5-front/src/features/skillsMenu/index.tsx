@@ -1,15 +1,14 @@
-import React, { useEffect, useState } from 'react';
-
-import { FrameButton } from '../../components/FrameButton/FrameButton';
+import React, { useState, useEffect } from 'react';
 import { SkyrimFrame } from '../../components/SkyrimFrame/SkyrimFrame';
-import { SkyrimHint } from '../../components/SkyrimHint/SkyrimHint';
-import { IPlayerData } from '../../interfaces/skillMenu';
-import selectSound from './assets/ButtonDown.wav';
-import learnSound from './assets/LearnSkill.wav';
-import hoverSound from './assets/OnCoursor.wav';
-import quitSound from './assets/Quit.wav';
+import { FrameButton } from '../../components/FrameButton/FrameButton';
 import content, { levels, mapper } from './content';
 import './styles.scss';
+import { SkyrimHint } from '../../components/SkyrimHint/SkyrimHint';
+import hoverSound from './assets/OnCoursor.wav';
+import quitSound from './assets/Quit.wav';
+import selectSound from './assets/ButtonDown.wav';
+import learnSound from './assets/LearnSkill.wav';
+import { IPlayerData } from '../../interfaces/skillMenu';
 
 const SkillsMenu = ({ send }: { send: (message: string) => void }) => {
   const [currentHeader, setcurrentHeader] = useState('способности');
@@ -29,9 +28,7 @@ const SkillsMenu = ({ send }: { send: (message: string) => void }) => {
     if (el) {
       el.style.display = 'none';
     }
-    const newPlayerData = JSON.parse(
-      (event as CustomEvent).detail,
-    ) as IPlayerData;
+    const newPlayerData = JSON.parse((event as CustomEvent).detail) as IPlayerData;
     setplayerData(newPlayerData);
   };
 
@@ -94,7 +91,11 @@ const SkillsMenu = ({ send }: { send: (message: string) => void }) => {
     if (!playerData) return;
     setpExp(playerData.exp);
     setpMem(playerData.mem);
-    setscale(window.innerWidth >= 1920 ? 1 : window.innerWidth / 2500);
+    setscale(
+      window.innerWidth >= 1920
+        ? 1
+        : window.innerWidth / 2500
+    );
   }, [playerData]);
 
   const hoverHandler = (perk) => {
@@ -125,7 +126,7 @@ const SkillsMenu = ({ send }: { send: (message: string) => void }) => {
     audio.play();
     if (perk.levelsPrice[playerLevel] > pExp) {
       setcurrentDescription(
-        `не хватает ${selectedPerk.levelsPrice[playerLevel] - pExp} опыта`,
+        `не хватает ${selectedPerk.levelsPrice[playerLevel] - pExp} опыта`
       );
       return;
     }
@@ -170,16 +171,14 @@ const SkillsMenu = ({ send }: { send: (message: string) => void }) => {
     setplayerData({
       mem: newMem,
       exp: newExp,
-      perks: {},
+      perks: {}
     });
   };
 
   const confirmHanlder = () => {
     setconfirmDiscard(true);
     setcurrentLevel('хотите сбросить все профессии?');
-    setcurrentDescription(
-      'нажимая “да” вы полностью сбросите все выученные профессии и получите обратно половину накопленного опыта. в первую очередь,  это стоит сделать если ваш персонаж умер.',
-    );
+    setcurrentDescription('нажимая “да” вы полностью сбросите все выученные профессии и получите обратно половину накопленного опыта. в первую очередь,  это стоит сделать если ваш персонаж умер.');
   };
 
   if (!playerData) return <></>;
@@ -297,7 +296,8 @@ const SkillsMenu = ({ send }: { send: (message: string) => void }) => {
                   }
                   onMouseDown={() => learnHandler()}
                 ></FrameButton>
-                {confirmDiscard ? (
+                {confirmDiscard
+                  ? (
                   <div className="perks__footer__buttons__confirm">
                     <FrameButton
                       text="да"
@@ -316,7 +316,8 @@ const SkillsMenu = ({ send }: { send: (message: string) => void }) => {
                       onMouseDown={() => setconfirmDiscard(false)}
                     ></FrameButton>
                   </div>
-                ) : (
+                    )
+                  : (
                   <FrameButton
                     text="сбросить"
                     name="discardBtn"
@@ -326,7 +327,7 @@ const SkillsMenu = ({ send }: { send: (message: string) => void }) => {
                     disabled={Object.keys(playerData.perks).length === 0}
                     onMouseDown={() => confirmHanlder()}
                   ></FrameButton>
-                )}
+                    )}
               </div>
               <div className="perks__footer__exit-button">
                 <FrameButton

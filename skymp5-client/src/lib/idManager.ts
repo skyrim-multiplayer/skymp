@@ -1,20 +1,15 @@
-import { printConsole } from 'skyrimPlatform';
-
-import { QueueCollection } from '../collections/queue';
-import { nameof } from './nameof';
+import { printConsole } from "skyrimPlatform";
+import { nameof } from "./nameof";
+import { QueueCollection } from "../collections/queue";
 
 export class IdManager {
-  public static readonly CLASS_NAME = 'IdManager';
+  public static readonly CLASS_NAME = "IdManager";
   public static readonly FREE_IDS_CAPACITY = 2000;
 
   allocateIdFor(value: number): number {
     const id = this.idByValue.get(value);
     if (id) {
-      printConsole(
-        `WARNING: ${IdManager.CLASS_NAME}.${nameof<IdManager>(
-          'allocateIdFor',
-        )} found duplicate value = "${value}"`,
-      );
+      printConsole(`WARNING: ${IdManager.CLASS_NAME}.${nameof<IdManager>("allocateIdFor")} found duplicate value = "${value}"`);
       return id;
     }
 
@@ -27,11 +22,7 @@ export class IdManager {
   freeIdFor(value: number): void {
     const id = this.idByValue.get(value);
     if (!id) {
-      printConsole(
-        `WARNING: ${IdManager.CLASS_NAME}.${nameof<IdManager>(
-          'freeIdFor',
-        )} not found value = "${value}"`,
-      );
+      printConsole(`WARNING: ${IdManager.CLASS_NAME}.${nameof<IdManager>("freeIdFor")} not found value = "${value}"`);
       return;
     }
 

@@ -8,4 +8,4 @@ export type SweetPieMap = {
   playerRestoreWaitTime?: number;
   spawnPointNames?: string[];
   enabled?: boolean;
-};
+}

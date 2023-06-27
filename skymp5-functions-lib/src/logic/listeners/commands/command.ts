@@ -1,6 +1,6 @@
-import { Mp } from '../../../types/mp';
-import { PlayerController } from '../../PlayerController';
-import { GameModeListener } from '../gameModeListener';
+import { Mp } from "../../../types/mp";
+import { PlayerController } from "../../PlayerController";
+import { GameModeListener } from "../gameModeListener";
 
 export interface HandlerInput {
   actorId: number;
@@ -15,19 +15,12 @@ export interface HandlerInput {
 
 // Base class for all chat commands
 export abstract class Command implements GameModeListener {
-  constructor(protected mp: Mp, protected controller: PlayerController, protected name: string) {}
+  constructor(protected mp: Mp, protected controller: PlayerController, protected name: string) {
+  }
 
   onPlayerChatInput(actorId: number, input: string, neighbors: number[], masterApiId: number) {
     if (input === '/' + this.name || input.startsWith(`/${this.name} `)) {
-      this.handle({
-        actorId,
-        mp: this.mp,
-        controller: this.controller,
-        neighbors,
-        masterApiId,
-        inputText: input,
-        argsRaw: input.substring(this.name.length + 2),
-      });
+      this.handle({ actorId, mp: this.mp, controller: this.controller, neighbors, masterApiId, inputText: input, argsRaw: input.substring(this.name.length + 2) });
       return 'eventBusStop';
     }
     return 'eventBusContinue';
