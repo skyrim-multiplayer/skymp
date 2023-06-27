@@ -1,10 +1,11 @@
-import * as sp from "skyrimPlatform";
-import { FormModel } from "../modelSource/model";
-import { localIdToRemoteId, remoteIdToLocalId } from "../view/worldViewMisc";
+import * as sp from 'skyrimPlatform';
+
+import { FormModel } from '../modelSource/model';
+import { localIdToRemoteId, remoteIdToLocalId } from '../view/worldViewMisc';
 
 export const setOwnerModel = (ownerModel: FormModel): void => {
-  sp.storage["ownerModel"] = ownerModel;
-  sp.storage["ownerModelSet"] = true;
+  sp.storage['ownerModel'] = ownerModel;
+  sp.storage['ownerModelSet'] = true;
 };
 
 export const setup = (): void => {
@@ -24,16 +25,16 @@ export const setup = (): void => {
     },
     state: {},
   };
-  sp.on("update", () => {
-    let keys = sp.storage["updateOwnerFunctions_keys"] as Array<string>;
+  sp.on('update', () => {
+    let keys = sp.storage['updateOwnerFunctions_keys'] as Array<string>;
     if (!keys || !Array.isArray(keys)) {
       keys = [];
     }
-    const funcs = sp.storage["updateOwnerFunctions"];
+    const funcs = sp.storage['updateOwnerFunctions'];
 
-    if (sp.storage["ownerModelSet"] !== true) return;
+    if (sp.storage['ownerModelSet'] !== true) return;
 
-    const ownerModel = sp.storage["ownerModel"] as FormModel;
+    const ownerModel = sp.storage['ownerModel'] as FormModel;
 
     for (const propName of keys) {
       const f = (funcs as Record<string, any>)[propName];
@@ -47,7 +48,7 @@ export const setup = (): void => {
       if (ctx.value === undefined) continue;
 
       ctx.refr = sp.ObjectReference.from(
-        sp.Game.getPlayer()
+        sp.Game.getPlayer(),
       ) as sp.ObjectReference;
       ctx._model = ownerModel;
       try {

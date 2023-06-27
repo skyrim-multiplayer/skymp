@@ -1,13 +1,8 @@
-import {
-  hooks,
-  Game,
-  Actor,
-  Debug,
-  once
-} from "skyrimPlatform";
-import { setLocalDamageMult, defaultLocalDamageMult } from "../index";
-import { AnimationEventName } from "./animation";
-import { RespawnNeededError } from "../lib/errors";
+import { Actor, Debug, Game, hooks, once } from 'skyrimPlatform';
+
+import { defaultLocalDamageMult, setLocalDamageMult } from '../index';
+import { RespawnNeededError } from '../lib/errors';
+import { AnimationEventName } from './animation';
 
 /**
  * Null for allow all animations. Empty array for disallow all
@@ -19,26 +14,26 @@ const gPlayerId: number = 0x14;
 hooks.sendAnimationEvent.add(
   {
     enter(ctx) {
-      ctx.animEventName = "";
+      ctx.animEventName = '';
     },
     leave() {},
   },
   0,
   0xffffffff,
-  "KillMove*"
+  'KillMove*',
 );
 
 // Turn off stagger animations
 hooks.sendAnimationEvent.add(
   {
     enter(ctx) {
-      ctx.animEventName = "";
+      ctx.animEventName = '';
     },
     leave() {},
   },
   0xff000000,
   0xffffffff,
-  "staggerStart"
+  'staggerStart',
 );
 
 hooks.sendAnimationEvent.add(
@@ -46,13 +41,13 @@ hooks.sendAnimationEvent.add(
     enter(ctx) {
       if (!gPlayerAllowAnimations) return;
       if (!gPlayerAllowAnimations.includes(ctx.animEventName)) {
-        ctx.animEventName = "";
+        ctx.animEventName = '';
       }
     },
     leave() {},
   },
   gPlayerId,
-  gPlayerId
+  gPlayerId,
 );
 
 const isPlayer = (actor: Actor): boolean => {
@@ -78,11 +73,11 @@ export const applyDeathState = (actor: Actor, isDead: boolean) => {
 
 export const safeRemoveRagdollFromWorld = (
   actor: Actor,
-  afterRemoveCallback: () => void
+  afterRemoveCallback: () => void,
 ) => {
   setLocalDamageMult(0);
   actor.forceRemoveRagdollFromWorld().then(() => {
-    once("update", () => {
+    once('update', () => {
       setLocalDamageMult(defaultLocalDamageMult);
       afterRemoveCallback();
     });
@@ -106,7 +101,7 @@ const resurrectActor = (act: Actor): void => {
     act.setDontMove(false);
     ressurectWithPushKill(act);
   } else {
-    throw new RespawnNeededError("needs to be respawned");
+    throw new RespawnNeededError('needs to be respawned');
   }
 };
 

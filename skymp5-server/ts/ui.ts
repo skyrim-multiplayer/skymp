@@ -1,20 +1,22 @@
-const Koa = require("koa");
-const serve = require("koa-static");
-const proxy = require("koa-proxy");
-const Router = require("koa-router");
-import * as http from "http";
-import { Settings } from "./settings";
-import Axios from "axios";
-import { AddressInfo } from "net";
+import * as http from 'http';
+import Axios from 'axios';
+import { AddressInfo } from 'net';
+
+import { Settings } from './settings';
+
+const Koa = require('koa');
+const serve = require('koa-static');
+const proxy = require('koa-proxy');
+const Router = require('koa-router');
 
 const createApp = (getOriginPort: () => number) => {
   const app = new Koa();
   const router = new Router();
-  router.get(new RegExp("/scripts/.*"), (ctx: any) => ctx.throw(403));
-  router.get(new RegExp("\.es[mpl]"), (ctx: any) => ctx.throw(403));
-  router.get(new RegExp("\.bsa"), (ctx: any) => ctx.throw(403));
+  router.get(new RegExp('/scripts/.*'), (ctx: any) => ctx.throw(403));
+  router.get(new RegExp('.es[mpl]'), (ctx: any) => ctx.throw(403));
+  router.get(new RegExp('.bsa'), (ctx: any) => ctx.throw(403));
   app.use(router.routes()).use(router.allowedMethods());
-  app.use(serve("data"));
+  app.use(serve('data'));
   return app;
 };
 
@@ -26,7 +28,7 @@ export const main = (): void => {
   const uiPort = settings.port === 7777 ? 3000 : settings.port + 1;
 
   Axios({
-    method: "get",
+    method: 'get',
     url: `http://localhost:${devServerPort}`,
   })
     .then(() => {
@@ -50,7 +52,7 @@ export const main = (): void => {
               console.log(`proxy ${path} => ${resultPath}`);
               return resultPath;
             },
-          })
+          }),
         );
         console.log(`Server resources folder is listening on ${uiPort}`);
         http.createServer(appProxy.callback()).listen(uiPort);
@@ -59,7 +61,7 @@ export const main = (): void => {
     .catch(() => {
       const app = createApp(() => uiPort);
       console.log(`Server resources folder is listening on ${uiPort}`);
-      const server = require("http").createServer(app.callback());
+      const server = require('http').createServer(app.callback());
       server.listen(uiPort);
     });
 };

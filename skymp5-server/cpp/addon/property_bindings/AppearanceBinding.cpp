@@ -24,8 +24,8 @@ void AppearanceBinding::Set(Napi::Env env, ScampServer& scampServer,
   auto& actor = partOne->worldState.GetFormAt<MpActor>(formId);
   if (newValue.IsObject()) {
     auto appearanceDump = NapiHelper::Stringify(env, newValue);
-    simdjson::dom::parser p;
-    auto appearance = Appearance::FromJson(p.parse(appearanceDump));
+    nlohmann::json j = nlohmann::json::parse(appearanceDump);
+    auto appearance = Appearance::FromJson(j);
     actor.SetAppearance(&appearance);
   } else {
     actor.SetAppearance(nullptr);

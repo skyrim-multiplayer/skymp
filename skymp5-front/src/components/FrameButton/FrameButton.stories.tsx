@@ -1,5 +1,6 @@
+import { ComponentMeta, ComponentStory } from '@storybook/react';
 import React from 'react';
-import { ComponentStory, ComponentMeta } from '@storybook/react';
+
 import { FrameButton } from './FrameButton';
 
 export default {
@@ -7,7 +8,9 @@ export default {
   component: FrameButton,
 } as ComponentMeta<typeof FrameButton>;
 
-const Template: ComponentStory<typeof FrameButton> = (args) => <FrameButton {...args} />;
+const Template: ComponentStory<typeof FrameButton> = (args) => (
+  <FrameButton {...args} />
+);
 
 export const Default = Template.bind({});
 Default.args = {
@@ -15,7 +18,7 @@ Default.args = {
   variant: 'DEFAULT',
   text: 'Test',
   width: 320,
-  height: 60
+  height: 60,
 };
 
 export const Left = Template.bind({});
@@ -24,7 +27,7 @@ Left.args = {
   variant: 'LEFT',
   text: 'Test',
   width: 320,
-  height: 60
+  height: 60,
 };
 
 export const Right = Template.bind({});
@@ -33,5 +36,5 @@ Right.args = {
   variant: 'RIGHT',
   text: 'Test',
   width: 320,
-  height: 60
+  height: 60,
 };

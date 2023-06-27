@@ -9,7 +9,7 @@ Server's name that will be published on a master server.
 ```json5
 {
   // ...
-  "name": "My Server"
+  name: 'My Server',
   // ...
 }
 ```
@@ -21,7 +21,7 @@ This IP-address would be used by player clients to connect to your server. Do no
 ```json5
 {
   // ...
-  "ip": "127.0.0.1"
+  ip: '127.0.0.1',
   // ...
 }
 ```
@@ -33,7 +33,7 @@ This port would be used by player clients to connect to your server. At the curr
 ```json5
 {
   // ...
-  "port": 7777
+  port: 7777,
   // ...
 }
 ```
@@ -45,7 +45,7 @@ Sets player limit of the server. Visible in launcher and on skymp.io.
 ```json5
 {
   // ...
-  "maxPlayers": 108
+  maxPlayers: 108,
   // ...
 }
 ```
@@ -53,20 +53,22 @@ Sets player limit of the server. Visible in launcher and on skymp.io.
 ## dataDir
 
 Contains relative or absolute path to a "data" directory which contains:
-* vanilla Skyrim master files (Skyrim.esm, Update.esm, etc)
-* plugin files (mods in .esp format)
-* compiled Papyrus scripts in .pex format
+
+- vanilla Skyrim master files (Skyrim.esm, Update.esm, etc)
+- plugin files (mods in .esp format)
+- compiled Papyrus scripts in .pex format
 
 This directory is exposed to `uiPort` and available via http.
 
 At this moment, the server uses this directory for non-vanilla needs too:
-* storing web-based GUI in `${dataDir}/ui`
-* storing auto-generated manifest describing .esm/.esp files used and CRC32 of them
+
+- storing web-based GUI in `${dataDir}/ui`
+- storing auto-generated manifest describing .esm/.esp files used and CRC32 of them
 
 ```json5
 {
   // ...
-  "dataDir": "data"
+  dataDir: 'data',
   // ...
 }
 ```
@@ -82,13 +84,13 @@ Absolute paths work but aren't accessible via `uiPort`. External tooling wouldn'
 ```json5
 {
   // ...
-  "loadOrder": [
-    "Skyrim.esm",
-    "Update.esm",
-    "Dawnguard.esm",
-    "HearthFires.esm",
-    "Dragonborn.esm"
-  ]
+  loadOrder: [
+    'Skyrim.esm',
+    'Update.esm',
+    'Dawnguard.esm',
+    'HearthFires.esm',
+    'Dragonborn.esm',
+  ],
   // ...
 }
 ```
@@ -100,7 +102,7 @@ The language, the translation of which will be obtained from the string files lo
 ```json5
 {
   // ...
-  "lang": "english"
+  lang: 'english',
   // ...
 }
 ```
@@ -113,7 +115,7 @@ Users need to specify `"profileId"` in their `skymp5-settings.txt`.
 ```json5
 {
   // ...
-  "offlineMode": true
+  offlineMode: true,
   // ...
 }
 ```
@@ -125,7 +127,7 @@ Name of a database driver which would be used to store server data. `file` by de
 ```json5
 {
   // ...
-  "databaseDriver": "file"
+  databaseDriver: 'file',
   // ...
 }
 ```
@@ -137,20 +139,20 @@ A time before a game object restores its original state in milliseconds. Unlike 
 ```json5
 {
   // ...
-  "reloot": {
-    "FLOR": 86400000,
-    "TREE": 86400000,
-    "AMMO": 86400000,
-    "ARMO": 86400000,
-    "BOOK": 86400000,
-    "INGR": 86400000,
-    "ALCH": 86400000,
-    "SCRL": 86400000,
-    "CONT": 86400000,
-    "SLGM": 86400000,
-    "WEAP": 86400000,
-    "MISC": 86400000
-  }
+  reloot: {
+    FLOR: 86400000,
+    TREE: 86400000,
+    AMMO: 86400000,
+    ARMO: 86400000,
+    BOOK: 86400000,
+    INGR: 86400000,
+    ALCH: 86400000,
+    SCRL: 86400000,
+    CONT: 86400000,
+    SLGM: 86400000,
+    WEAP: 86400000,
+    MISC: 86400000,
+  },
   // ...
 }
 ```
@@ -163,7 +165,7 @@ Searches for `index.js` if a directory specified.
 ```json5
 {
   // ...
-  "gamemodePath": "gamemode.js"
+  gamemodePath: 'gamemode.js',
   // ...
 }
 ```
@@ -175,13 +177,13 @@ Contains a list of spawn points, one of which will be chosen at random.
 ```json5
 {
   // ...
-  "startPoints": [
+  startPoints: [
     {
-      "pos": [22659, -8697, -3594],
-      "worldOrCell": "0x1a26f",
-      "angleZ": 268
-    }
-  ]
+      pos: [22659, -8697, -3594],
+      worldOrCell: '0x1a26f',
+      angleZ: 268,
+    },
+  ],
   // ...
 }
 ```
@@ -193,7 +195,7 @@ A boolean setting that enables to turn on or turn off hot reload for compiled Pa
 ```json5
 {
   // ...
-  "isPapyrusHotReloadEnabled": false
+  isPapyrusHotReloadEnabled: false,
   // ...
 }
 ```
@@ -205,7 +207,7 @@ The name of a localizaiton file in `data/localization` that would be used by `M.
 ```json5
 {
   // ...
-  "locale": "ru-RU"
+  locale: 'ru-RU',
   // ...
 }
 ```
@@ -217,7 +219,7 @@ The minimal amount of players to begin deathmatch. This setting is sweetpie only
 ```json5
 {
   // ...
-  "sweetPieMinimumPlayersToStart": 5
+  sweetPieMinimumPlayersToStart: 5,
   // ...
 }
 ```
@@ -229,7 +231,7 @@ Prevents the gamemode from disabling cheats. This setting is sweetpie only and d
 ```json5
 {
   // ...
-  "sweetPieAllowCheats": true
+  sweetPieAllowCheats: true,
   // ...
 }
 ```
@@ -241,9 +243,9 @@ Allows tuning settings related to in-game chat, such as message visibility radiu
 ```json5
 {
   // ...
-  "sweetPieChatSettings": {
+  sweetPieChatSettings: {
     // Hearing distance in units. If player A says something and player B is farther away, they won't see that message.
-    "hearingRadiusNormal": 123,
+    hearingRadiusNormal: 123,
   },
   // ...
 }

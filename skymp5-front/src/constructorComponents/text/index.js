@@ -5,11 +5,9 @@ import './styles.scss';
 const Text = (props) => {
   const text = props.text || '';
   return (
-        <div className = {'skyrimText'} >
-            <span>
-                {text}
-            </span>
-        </div>
+    <div className={'skyrimText'}>
+      <span>{text}</span>
+    </div>
   );
 };
 

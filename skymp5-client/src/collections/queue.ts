@@ -1,4 +1,4 @@
-import { Collection } from "./collection";
+import { Collection } from './collection';
 
 export interface IQueue<T> {
   enqueue(item: T): void;
@@ -13,7 +13,7 @@ export class QueueCollection<T> extends Collection<T> implements IQueue<T> {
 
   enqueue(item: T): void {
     if (this.isFull()) {
-      throw Error("Queue has reached max capacity, you cannot add more items");
+      throw Error('Queue has reached max capacity, you cannot add more items');
     }
     this.storage.push(item);
   }

@@ -1,13 +1,9 @@
 {
-    "name": "commonlibse",
-    "version-string": "1",
-    "description": "A reverse engineered resource for developing F4SE plugins for Skyrim Special Edition",
-    "homepage": "https://github.com/Ryan-rsm-McKenzie/CommonLibSSE",
-    "license": "MIT",
-    "supports": "windows & x64",
-    "dependencies": [
-        "boost-stl-interfaces",
-        "rsm-binary-io",
-        "spdlog"
-    ]
+  "name": "commonlibse",
+  "version-string": "1",
+  "description": "A reverse engineered resource for developing F4SE plugins for Skyrim Special Edition",
+  "homepage": "https://github.com/Ryan-rsm-McKenzie/CommonLibSSE",
+  "license": "MIT",
+  "supports": "windows & x64",
+  "dependencies": ["boost-stl-interfaces", "rsm-binary-io", "spdlog"]
 }
