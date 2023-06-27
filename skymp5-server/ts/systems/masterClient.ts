@@ -1,11 +1,12 @@
-import { System, Log } from "./system";
-import Axios from "axios";
-import { SystemContext } from "./system";
-import { getMyPublicIp } from "../publicIp";
-import { ScampServer } from "../scampNative";
+import Axios from 'axios';
+
+import { getMyPublicIp } from '../publicIp';
+import { ScampServer } from '../scampNative';
+import { Log, System } from './system';
+import { SystemContext } from './system';
 
 export class MasterClient implements System {
-  systemName = "MasterClient";
+  systemName = 'MasterClient';
 
   constructor(
     private log: Log,
@@ -15,17 +16,17 @@ export class MasterClient implements System {
     private name: string,
     private ip: string,
     private updateIntervalMs = 5000,
-    private offlineMode = false
-  ) { }
+    private offlineMode = false,
+  ) {}
 
   async initAsync(): Promise<void> {
-    if (!this.masterUrl) return this.log("No master server specified");
+    if (!this.masterUrl) return this.log('No master server specified');
 
     this.log(`Using master server on ${this.masterUrl}`);
 
     let myAddr: string;
-    if (this.ip && this.ip != "null") myAddr = this.ip + ":" + this.serverPort;
-    else myAddr = (await getMyPublicIp()) + ":" + this.serverPort;
+    if (this.ip && this.ip != 'null') myAddr = this.ip + ':' + this.serverPort;
+    else myAddr = (await getMyPublicIp()) + ':' + this.serverPort;
 
     this.endpoint = `${this.masterUrl}/api/servers/${myAddr}`;
     this.log(`Our endpoint on master is ${this.endpoint}`);

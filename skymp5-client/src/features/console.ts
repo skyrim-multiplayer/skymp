@@ -1,10 +1,11 @@
 import {
-  settings,
-  printConsole,
   findConsoleCommand,
+  printConsole,
+  settings,
   storage,
-} from "skyrimPlatform";
-import { MsgType } from "../messages";
+} from 'skyrimPlatform';
+
+import { MsgType } from '../messages';
 
 enum CmdArgument {
   ObjectReference,
@@ -13,7 +14,7 @@ enum CmdArgument {
   String,
 }
 
-type CmdName = "additem" | "placeatme" | "disable" | "mp";
+type CmdName = 'additem' | 'placeatme' | 'disable' | 'mp';
 
 const schemas = {
   additem: [CmdArgument.ObjectReference, CmdArgument.BaseForm, CmdArgument.Int],
@@ -22,13 +23,13 @@ const schemas = {
   mp: [CmdArgument.ObjectReference, CmdArgument.String],
 };
 
-const immuneSchema = ["mp"];
-const nonVanilaCommands = ["mp"];
+const immuneSchema = ['mp'];
+const nonVanilaCommands = ['mp'];
 
 const getCommandExecutor = (
   commandName: CmdName,
   send: (msg: Record<string, unknown>) => void,
-  localIdToRemoteId: (localId: number) => number
+  localIdToRemoteId: (localId: number) => number,
 ) => {
   return (...args: number[] | string[]) => {
     const schema = schemas[commandName];
@@ -43,7 +44,7 @@ const getCommandExecutor = (
           break;
       }
     }
-    printConsole("sent");
+    printConsole('sent');
     send({ t: MsgType.ConsoleCommand, data: { commandName, args } });
     return false;
   };
@@ -51,18 +52,24 @@ const getCommandExecutor = (
 
 export const setUpConsoleCommands = (
   send: (msg: Record<string, unknown>) => void,
-  localIdToRemoteId: (localId: number) => number
+  localIdToRemoteId: (localId: number) => number,
 ): void => {
   const command =
-    findConsoleCommand(" ConfigureUM") || findConsoleCommand("test");
+    findConsoleCommand(' ConfigureUM') || findConsoleCommand('test');
   if (command) {
-    command.shortName = "mp";
-    command.execute = getCommandExecutor("mp", send, localIdToRemoteId) as (...args: unknown[]) => boolean;
+    command.shortName = 'mp';
+    command.execute = getCommandExecutor('mp', send, localIdToRemoteId) as (
+      ...args: unknown[]
+    ) => boolean;
   }
 
   (Object.keys(schemas) as any[]).forEach((commandName: CmdName) => {
     const command = findConsoleCommand(commandName);
     if (!command || nonVanilaCommands.includes(commandName)) return;
-    command.execute = getCommandExecutor(commandName, send, localIdToRemoteId) as (...args: unknown[]) => boolean;
+    command.execute = getCommandExecutor(
+      commandName,
+      send,
+      localIdToRemoteId,
+    ) as (...args: unknown[]) => boolean;
   });
 };

@@ -1,15 +1,15 @@
-import { GameModeListener } from "./logic/listeners/gameModeListener";
-import { Counter, Percentages, PlayerController } from "./logic/PlayerController";
-import { SweetPieRound } from "./logic/listeners/sweetpie/SweetPieRound";
-import { ChatMessage, ChatNeighbor, ChatProperty } from "./props/chatProperty";
-import { CounterProperty } from "./props/counterProperty";
-import { DialogProperty } from "./props/dialogProperty";
-import { EvalProperty } from "./props/evalProperty";
-import { Ctx } from "./types/ctx";
-import { LocationalData, Mp, PapyrusObject } from "./types/mp";
-import { ChatSettings } from "./types/settings";
-import { PersistentStorage } from "./utils/persistentStorage";
-import { Timer } from "./utils/timer";
+import { Counter, Percentages, PlayerController } from './logic/PlayerController';
+import { GameModeListener } from './logic/listeners/gameModeListener';
+import { SweetPieRound } from './logic/listeners/sweetpie/SweetPieRound';
+import { ChatMessage, ChatNeighbor, ChatProperty } from './props/chatProperty';
+import { CounterProperty } from './props/counterProperty';
+import { DialogProperty } from './props/dialogProperty';
+import { EvalProperty } from './props/evalProperty';
+import { Ctx } from './types/ctx';
+import { LocationalData, Mp, PapyrusObject } from './types/mp';
+import { ChatSettings } from './types/settings';
+import { PersistentStorage } from './utils/persistentStorage';
+import { Timer } from './utils/timer';
 
 declare const mp: Mp;
 declare const ctx: Ctx;
@@ -26,13 +26,13 @@ const scriptName = (refrId: number) => {
       const strLength = vmadData[6] + (vmadData[7] << 8);
       var strData: string = '';
       for (var i = 0; i < strLength; i++) {
-        strData += String.fromCharCode(vmadData[8+i]).valueOf();
+        strData += String.fromCharCode(vmadData[8 + i]).valueOf();
       }
       return strData;
     }
   }
   return '';
-}
+};
 
 const isTeleportDoor = (refrId: number) => {
   const lookupRes = mp.lookupEspmRecordById(refrId);
@@ -255,7 +255,13 @@ export class MpApiInteractor {
           [{ type: 'espm', desc: mp.getDescFromId(itemId) }, count, silent]
         );
       },
-      removeItem(actorId: number, itemId: number, count: number, akOtherContainer: number | null, silent = false): void {
+      removeItem(
+        actorId: number,
+        itemId: number,
+        count: number,
+        akOtherContainer: number | null,
+        silent = false
+      ): void {
         mp.callPapyrusFunction(
           'method',
           'ObjectReference',
@@ -316,6 +322,6 @@ export class MpApiInteractor {
       getCurrentTime(): Date {
         return new Date();
       },
-    }
+    };
   }
 }

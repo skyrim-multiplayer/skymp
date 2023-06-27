@@ -1,10 +1,10 @@
-import { PlayerController } from '../../PlayerController';
-import { EspmLookupResult, Mp, ServerSettings } from '../../../types/mp';
-import { Ctx } from '../../../types/ctx';
 import { EvalProperty } from '../../../props/evalProperty';
+import { Ctx } from '../../../types/ctx';
+import { EspmLookupResult, Mp, ServerSettings } from '../../../types/mp';
 import { FunctionInfo } from '../../../utils/functionInfo';
-import { GameModeListener } from '../gameModeListener';
+import { PlayerController } from '../../PlayerController';
 import { getPossessedSkills } from '../commands/skillCommand';
+import { GameModeListener } from '../gameModeListener';
 
 declare const mp: Mp;
 declare const ctx: Ctx;
@@ -15,42 +15,46 @@ export class HarvestingSystem implements GameModeListener {
     mp.makeEventSource('_harvestAnimSystem', new FunctionInfo(HarvestingSystem.clientsideInitEvent()).getText());
 
     // doesn't really emit anything, just calls the function
-    mp['_harvestAnimSystem'] = () => { };
+    mp['_harvestAnimSystem'] = () => {};
   }
 
   private serverSettings: ServerSettings;
 
   private static clientsideInitEvent() {
     return () => {
-        if (ctx.sp.storage["harvestAnimSystemInstalled"] !== true) {
-            ctx.sp.storage["harvestAnimSystemInstalled"] = true;
-        }
-        else {
-            // Hot reload is not supported for now
-            // Just stop the loop here
-            ctx.sp.storage.sweetCarryAnimationActive = false;
-            return;
-        }
+      if (ctx.sp.storage['harvestAnimSystemInstalled'] !== true) {
+        ctx.sp.storage['harvestAnimSystemInstalled'] = true;
+      } else {
+        // Hot reload is not supported for now
+        // Just stop the loop here
+        ctx.sp.storage.sweetCarryAnimationActive = false;
+        return;
+      }
 
-        if (typeof ctx.sp.storage.harvestAnimationActive !== "boolean") {
-            ctx.sp.storage.harvestAnimationActive = false;
-        }
+      if (typeof ctx.sp.storage.harvestAnimationActive !== 'boolean') {
+        ctx.sp.storage.harvestAnimationActive = false;
+      }
 
-        const playerId: number = 0x14;
+      const playerId: number = 0x14;
 
-        const HARVEST_ANIM_RESTRICT = ['Jump*', 'SprintStart', 'WeapEquip'];
-        for (let restrictedAnim of HARVEST_ANIM_RESTRICT) {
-          ctx.sp.hooks.sendAnimationEvent.add({
-              enter: ((animationEventCtx) => {
-                  if (ctx.sp.storage.harvestAnimationActive) {
-                      animationEventCtx.animEventName = "";
-                  }
-              }),
-              leave: () => { },
-          }, playerId, playerId, restrictedAnim);
-        }
+      const HARVEST_ANIM_RESTRICT = ['Jump*', 'SprintStart', 'WeapEquip'];
+      for (let restrictedAnim of HARVEST_ANIM_RESTRICT) {
+        ctx.sp.hooks.sendAnimationEvent.add(
+          {
+            enter: (animationEventCtx) => {
+              if (ctx.sp.storage.harvestAnimationActive) {
+                animationEventCtx.animEventName = '';
+              }
+            },
+            leave: () => {},
+          },
+          playerId,
+          playerId,
+          restrictedAnim
+        );
+      }
     };
-}
+  }
 
   private static uint8ToUint32(data: Uint8Array): number[] {
     const uint8Arr = new Uint8Array(data);
@@ -64,19 +68,19 @@ export class HarvestingSystem implements GameModeListener {
     return lookup.toGlobalRecordId(HarvestingSystem.uint8ToUint32(lookup.record.fields[fieldIndex].data)[0]);
   }
 
-  private static checkIngredient(ingredientId: number): {skillType: string[], ids: number[]} | null {
+  private static checkIngredient(ingredientId: number): { skillType: string[]; ids: number[] } | null {
     const isJazbayGrapes = 0x0006ac4a === ingredientId;
     const isIngredientToFood = [0x4b0ba, 0x34d22].includes(ingredientId);
 
     const lookupResIngredient = mp.lookupEspmRecordById(ingredientId);
     if (!lookupResIngredient.record) return null;
 
-    const keywords:string[] = [];
-    const skillType:string[] = [];
-    const ids:number[] = [];
+    const keywords: string[] = [];
+    const skillType: string[] = [];
+    const ids: number[] = [];
 
     if (lookupResIngredient.record.type === 'LVLI') {
-      const LVLOs = lookupResIngredient.record.fields.filter((field) => field.type === 'LVLO')
+      const LVLOs = lookupResIngredient.record.fields.filter((field) => field.type === 'LVLO');
       LVLOs.forEach((ob) => {
         const obData = HarvestingSystem.uint8ToUint32(ob.data);
         if (!lookupResIngredient.toGlobalRecordId) return [];
@@ -86,22 +90,22 @@ export class HarvestingSystem implements GameModeListener {
         if (lookupResingredientLVLO.record.type === 'INGR') {
           ids.push(ingredientLVLOId);
           const res = HarvestingSystem.checkIngredient(ingredientLVLOId);
-          res && res.skillType.forEach(sT => skillType.includes(sT) || skillType.push(sT));
+          res && res.skillType.forEach((sT) => skillType.includes(sT) || skillType.push(sT));
         }
-      })
+      });
     } else {
       const kwdaIndex = lookupResIngredient.record.fields.findIndex((field) => field.type === 'KWDA');
       if (kwdaIndex === -1) return null;
       const keywordsArray = lookupResIngredient.record.fields[kwdaIndex].data;
       ids.push(ingredientId);
       const keywordIds = HarvestingSystem.uint8ToUint32(keywordsArray);
-      keywordIds.forEach(id => {
-        if (!lookupResIngredient.toGlobalRecordId) return []
+      keywordIds.forEach((id) => {
+        if (!lookupResIngredient.toGlobalRecordId) return [];
         const keywordId = lookupResIngredient.toGlobalRecordId(id);
         const keywordRecord = mp.lookupEspmRecordById(keywordId).record;
         if (!keywordRecord) return [];
         keywords.push(keywordRecord.editorId);
-      })
+      });
     }
 
     if (keywords.includes('VendorItemFood') || isJazbayGrapes || isIngredientToFood) {
@@ -114,7 +118,7 @@ export class HarvestingSystem implements GameModeListener {
       if (!skillType.includes('bee')) skillType.push('bee');
     }
 
-    return {skillType, ids};
+    return { skillType, ids };
   }
 
   onPlayerActivateObject(
@@ -122,12 +126,11 @@ export class HarvestingSystem implements GameModeListener {
     targetObjectDesc: string,
     targetId: number
   ): 'continue' | 'blockActivation' {
-
     const isHarvested = mp.callPapyrusFunction(
       'method',
       'ObjectReference',
       'IsHarvested',
-      {desc: targetObjectDesc, type: 'form'},
+      { desc: targetObjectDesc, type: 'form' },
       []
     );
 
@@ -149,7 +152,7 @@ export class HarvestingSystem implements GameModeListener {
       const animations = ['IdleActivatePickUpLow', 'IdleActivatePickUp'];
       ctx.sp.Debug.sendAnimationEvent(ctx.sp.Game.getPlayer(), animations[Math.random() > 0.5 ? 1 : 0]);
       ctx.sp.storage.harvestAnimationActive = true;
-      setTimeout(() => ctx.sp.storage.harvestAnimationActive = false, 2500);
+      setTimeout(() => (ctx.sp.storage.harvestAnimationActive = false), 2500);
     });
 
     const { possessedSkills } = getPossessedSkills(casterActorId);
@@ -168,25 +171,25 @@ export class HarvestingSystem implements GameModeListener {
       'method',
       'Actor',
       'IsWeaponDrawn',
-      {desc: mp.getDescFromId(casterActorId), type: 'form'},
+      { desc: mp.getDescFromId(casterActorId), type: 'form' },
       []
     );
 
     const equipment = mp.get(casterActorId, 'equipment').inv.entries;
 
     if (ingredientId === 0x4b0ba) {
-      const sickle = equipment.find(item => item.baseId === 0x70BAD73);
+      const sickle = equipment.find((item) => item.baseId === 0x70bad73);
       if (!(sickle && sickle.worn && isDrawn)) return 'blockActivation';
     }
 
-    if (ingredientId === 0x64B41) {
-      const shovel = equipment.find(item => item.baseId === 0x7E870FB);
+    if (ingredientId === 0x64b41) {
+      const shovel = equipment.find((item) => item.baseId === 0x7e870fb);
       if (!(shovel && shovel.worn && isDrawn)) return 'blockActivation';
     }
 
     const additionalItemsNumber = maxLevel + (Math.random() > 0.5 ? 1 : 0);
-    setTimeout(() => {ids.forEach(id =>
-      this.controller.addItem(casterActorId, id, additionalItemsNumber, true))
+    setTimeout(() => {
+      ids.forEach((id) => this.controller.addItem(casterActorId, id, additionalItemsNumber, true));
     }, 1000);
 
     return 'blockActivation';

@@ -1,5 +1,5 @@
-import { Counter } from "../../PlayerController";
-import { dayStart, SweetTaffyTimedRewards, TimedRewardController } from "./SweetTaffyTimedRewards";
+import { Counter } from '../../PlayerController';
+import { dayStart, SweetTaffyTimedRewards, TimedRewardController } from './SweetTaffyTimedRewards';
 
 export const mockController = () => {
   const counters = new Map<string, number>();
@@ -16,17 +16,19 @@ export const mockController = () => {
   };
 };
 
-describe("SweetTaffyTimedRewards", () => {
-  test("dayStart works correctly", () => {
-    expect(dayStart(new Date('2022-12-26T20:12:34.567+0300')).getTime())
-      .toEqual(new Date('2022-12-26T00:00:00.000+0300').getTime());
-    expect(dayStart(new Date('2022-12-26T00:00:00.000+0300')).getTime())
-      .toEqual(new Date('2022-12-26T00:00:00.000+0300').getTime());
+describe('SweetTaffyTimedRewards', () => {
+  test('dayStart works correctly', () => {
+    expect(dayStart(new Date('2022-12-26T20:12:34.567+0300')).getTime()).toEqual(
+      new Date('2022-12-26T00:00:00.000+0300').getTime()
+    );
+    expect(dayStart(new Date('2022-12-26T00:00:00.000+0300')).getTime()).toEqual(
+      new Date('2022-12-26T00:00:00.000+0300').getTime()
+    );
   });
 
-  test("daily rewards", () => {
+  test('daily rewards', () => {
     const controller = mockController();
-    const listener = new SweetTaffyTimedRewards(controller, /*enableDaily*/true, /*enableHourly*/false);
+    const listener = new SweetTaffyTimedRewards(controller, /*enableDaily*/ true, /*enableHourly*/ false);
 
     controller.setCounter(1, 'secondsToday', 1337);
     controller.setCounter(2, 'secondsToday', 1337);
@@ -37,7 +39,7 @@ describe("SweetTaffyTimedRewards", () => {
     listener.everySecond();
     expect(controller.getCounter(1, 'everydayStart')).toEqual(new Date('2022-12-26T00:00:00.000+0300').getTime());
     expect(controller.getCounter(1, 'lastExtraRewardDay')).toEqual(new Date('2022-12-26T00:00:00.000+0300').getTime());
-    expect(controller.getCounter(1, 'secondsToday')).toEqual(0);  // online time counter should have been reset
+    expect(controller.getCounter(1, 'secondsToday')).toEqual(0); // online time counter should have been reset
     expect(controller.getCounter(2, 'everydayStart')).toEqual(0);
     expect(controller.getCounter(2, 'lastExtraRewardDay')).toEqual(0);
     expect(controller.getCounter(2, 'secondsToday')).toEqual(1337);
@@ -47,13 +49,13 @@ describe("SweetTaffyTimedRewards", () => {
     controller.getCurrentTime.mockReturnValueOnce(new Date('2022-12-27T00:00:00.000+0300'));
     controller.getOnlinePlayers.mockReturnValue([1, 2]);
     controller.addItem.mockReset();
-  
+
     listener.everySecond();
     expect(controller.getCounter(1, 'everydayStart')).toEqual(new Date('2022-12-27T00:00:00.000+0300').getTime());
     expect(controller.getCounter(1, 'lastExtraRewardDay')).toEqual(new Date('2022-12-26T00:00:00.000+0300').getTime());
     expect(controller.getCounter(2, 'everydayStart')).toEqual(new Date('2022-12-27T00:00:00.000+0300').getTime());
     expect(controller.getCounter(2, 'lastExtraRewardDay')).toEqual(new Date('2022-12-27T00:00:00.000+0300').getTime());
-    expect(controller.getCounter(2, 'secondsToday')).toEqual(0);  // online time counter should have been reset
+    expect(controller.getCounter(2, 'secondsToday')).toEqual(0); // online time counter should have been reset
     expect(controller.addItem).toBeCalledTimes(2);
     expect(controller.addItem).toBeCalledWith(1, SweetTaffyTimedRewards.rewardItemFormId, 1);
     expect(controller.addItem).toBeCalledWith(2, SweetTaffyTimedRewards.rewardItemFormId, 150);
@@ -61,7 +63,7 @@ describe("SweetTaffyTimedRewards", () => {
     controller.getCurrentTime.mockReturnValueOnce(new Date('2022-12-31T00:00:00.000+0300'));
     controller.getOnlinePlayers.mockReturnValue([1, 2]);
     controller.addItem.mockReset();
-  
+
     listener.everySecond();
     expect(controller.getCounter(1, 'everydayStart')).toEqual(new Date('2022-12-31T00:00:00.000+0300').getTime());
     expect(controller.getCounter(1, 'lastExtraRewardDay')).toEqual(new Date('2022-12-26T00:00:00.000+0300').getTime());
@@ -82,9 +84,9 @@ describe("SweetTaffyTimedRewards", () => {
     expect(controller.addItem).toBeCalledTimes(0);
   });
 
-  test("hourly rewards", () => {
+  test('hourly rewards', () => {
     const controller = mockController();
-    const listener = new SweetTaffyTimedRewards(controller, /*enableDaily*/false, /*enableHourly*/true);
+    const listener = new SweetTaffyTimedRewards(controller, /*enableDaily*/ false, /*enableHourly*/ true);
 
     controller.getCurrentTime.mockReturnValue(new Date('2022-12-26T23:00:00.000+0300'));
     controller.getOnlinePlayers.mockReturnValue([1]);

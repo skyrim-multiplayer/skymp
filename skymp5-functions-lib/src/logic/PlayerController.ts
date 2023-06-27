@@ -1,11 +1,11 @@
-import { ChatMessage } from "../props/chatProperty";
-import { SweetPieRound } from "./listeners/sweetpie/SweetPieRound";
+import { ChatMessage } from '../props/chatProperty';
+import { SweetPieRound } from './listeners/sweetpie/SweetPieRound';
 
 export type Percentages = {
   health?: number;
   magicka?: number;
   stamina?: number;
-}
+};
 
 export type Counter = 'finishedDeathmatches' | 'everydayStart' | 'secondsToday' | 'lastExtraRewardDay';
 
@@ -30,4 +30,4 @@ export type PlayerController = {
   incrementCounter(actorId: number, counter: Counter, by?: number): number;
   getServerSetting(name: string): any;
   getActorDistanceSquared(actorId1: number, actorId2: number): number;
-}
+};

@@ -1,9 +1,10 @@
-import { storage } from "skyrimPlatform";
-import { WorldView } from "./worldView";
+import { storage } from 'skyrimPlatform';
+
+import { WorldView } from './worldView';
 
 export const getViewFromStorage = (): WorldView | undefined => {
   const res = storage.view as WorldView;
-  if (typeof res === "object") return res;
+  if (typeof res === 'object') return res;
   return undefined;
 };
 

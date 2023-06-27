@@ -1,22 +1,22 @@
-import { mpClientPlugin, PacketType } from "skyrimPlatform";
-import * as sp from "skyrimPlatform";
+import * as sp from 'skyrimPlatform';
+import { PacketType, mpClientPlugin } from 'skyrimPlatform';
 
 type Handler = (messageOrError: Record<string, unknown> | string) => void;
 const handlersMap = new Map<PacketType, Handler[]>();
-let lastHostname = "";
+let lastHostname = '';
 let lastPort = 0;
 
 const createClientSafe = (hostname: string, port: number): void => {
-  sp.printConsole("createClientSafe " + hostname + ":" + port);
+  sp.printConsole('createClientSafe ' + hostname + ':' + port);
   // Client sometimes call this function with bad parameters.
   // It causes assertion failure in Debug mode, but doesn't lead to anything on a regular player's machine.
   // It seems that this function will be called with the valid parameters later
-  if (hostname !== "" && lastPort !== 0) {
+  if (hostname !== '' && lastPort !== 0) {
     mpClientPlugin.createClient(hostname, port);
   }
 };
 
-sp.on("tick", () => {
+sp.on('tick', () => {
   mpClientPlugin.tick((packetType, jsonContent, error) => {
     const handlers = handlersMap.get(packetType) || [];
     handlers.forEach((handler) => {
@@ -55,6 +55,6 @@ export const send = (msg: Record<string, unknown>, reliable: boolean): void => {
 
 // Reconnect automatically
 export const reconnect = (): void => createClientSafe(lastHostname, lastPort);
-on("connectionFailed", reconnect);
-on("connectionDenied", reconnect);
-on("disconnect", reconnect);
+on('connectionFailed', reconnect);
+on('connectionDenied', reconnect);
+on('disconnect', reconnect);
