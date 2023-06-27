@@ -5,11 +5,11 @@ export class RemoteAuthGameData {
     public discordUsername: string | null,
     public discordDiscriminator: string | null,
     public discordAvatar: string | null,
-  ) { }
+  ) {}
 }
 
 export class AuthGameData {
-  public static readonly storageKey = "authGameData";
+  public static readonly storageKey = 'authGameData';
 
   public remote?: RemoteAuthGameData;
   public local?: { profileId: number };

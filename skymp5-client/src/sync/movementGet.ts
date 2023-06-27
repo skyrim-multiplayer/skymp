@@ -1,7 +1,8 @@
-import { FormModel } from '../modelSource/model';
-import { ObjectReference, Actor, TESModPlatform } from "skyrimPlatform";
-import { NiPoint3, Movement, RunMode } from "./movement";
+import { Actor, ObjectReference, TESModPlatform } from 'skyrimPlatform';
+
 import { ObjectReferenceEx } from '../extensions/objectReferenceEx';
+import { FormModel } from '../modelSource/model';
+import { Movement, NiPoint3, RunMode } from './movement';
 
 class PlayerCharacterSpeedCalculator {
   static savePosition(pos: NiPoint3, worldOrCell: number) {
@@ -27,14 +28,17 @@ class PlayerCharacterSpeedCalculator {
   private static lastPcWorldOrCell = 0;
 }
 
-export const getMovement = (refr: ObjectReference, form?: FormModel): Movement => {
+export const getMovement = (
+  refr: ObjectReference,
+  form?: FormModel,
+): Movement => {
   const ac = Actor.from(refr);
 
   // It is running for ObjectReferences because Standing
   // Doesn't lead to translateTo call
-  const runMode = ac ? getRunMode(ac) : "Running";
+  const runMode = ac ? getRunMode(ac) : 'Running';
 
-  let healthPercentage = ac && ac.getActorValuePercentage("health");
+  let healthPercentage = ac && ac.getActorValuePercentage('health');
   if (ac && ac.isDead()) {
     healthPercentage = 0;
   }
@@ -55,7 +59,7 @@ export const getMovement = (refr: ObjectReference, form?: FormModel): Movement =
 
   let speed;
   if (refr.getFormID() !== 0x14) {
-    speed = refr.getAnimationVariableFloat("SpeedSampled");
+    speed = refr.getAnimationVariableFloat('SpeedSampled');
   } else {
     // Real players often run into the wall.
     // We need to have zero speed in this case. SpeedSampled doesn't help
@@ -74,28 +78,29 @@ export const getMovement = (refr: ObjectReference, form?: FormModel): Movement =
     pos,
     rot: [refr.getAngleX(), refr.getAngleY(), refr.getAngleZ()],
     runMode: runMode,
-    direction: runMode !== "Standing"
-      ? 360 * refr.getAnimationVariableFloat("Direction")
-      : 0,
-    isInJumpState: !!(ac && ac.getAnimationVariableBool("bInJumpState")),
+    direction:
+      runMode !== 'Standing'
+        ? 360 * refr.getAnimationVariableFloat('Direction')
+        : 0,
+    isInJumpState: !!(ac && ac.getAnimationVariableBool('bInJumpState')),
     isSneaking: !!(ac && isSneaking(ac)),
-    isBlocking: !!(ac && ac.getAnimationVariableBool("IsBlocking")),
+    isBlocking: !!(ac && ac.getAnimationVariableBool('IsBlocking')),
     isWeapDrawn: !!(ac && ac.isWeaponDrawn()),
     isDead: form?.isDead ?? false,
     healthPercentage: healthPercentage || 0,
     lookAt,
-    speed
+    speed,
   };
-}
+};
 
 const isSneaking = (ac: Actor) =>
-  ac.isSneaking() || ac.getAnimationVariableBool("IsSneaking");
+  ac.isSneaking() || ac.getAnimationVariableBool('IsSneaking');
 
 const getRunMode = (ac: Actor): RunMode => {
-  if (ac.isSprinting()) return "Sprinting";
+  if (ac.isSprinting()) return 'Sprinting';
 
-  const speed = ac.getAnimationVariableFloat("SpeedSampled");
-  if (!speed) return "Standing";
+  const speed = ac.getAnimationVariableFloat('SpeedSampled');
+  if (!speed) return 'Standing';
 
   let isRunning = true;
   if (ac.getFormID() == 0x14) {
@@ -105,13 +110,13 @@ const getRunMode = (ac: Actor): RunMode => {
     if (!ac.isRunning() || speed < 150) isRunning = false;
   }
 
-  if (ac.getAnimationVariableFloat("IsBlocking")) {
+  if (ac.getAnimationVariableFloat('IsBlocking')) {
     isRunning = isSneaking(ac);
   }
 
-  const carryWeight = ac.getActorValue("CarryWeight");
+  const carryWeight = ac.getActorValue('CarryWeight');
   const totalItemWeight = ac.getTotalItemWeight();
   if (carryWeight < totalItemWeight) isRunning = false;
 
-  return isRunning ? "Running" : "Walking";
+  return isRunning ? 'Running' : 'Walking';
 };

@@ -1,14 +1,15 @@
-import { ObjectReference, on, printConsole, storage } from "skyrimPlatform";
-import * as sp from "skyrimPlatform";
-import { FormModel } from "../modelSource/model";
-import { FormViewArray } from "../view/formViewArray";
-import { localIdToRemoteId, remoteIdToLocalId } from "../view/worldViewMisc";
+import * as sp from 'skyrimPlatform';
+import { ObjectReference, on, printConsole, storage } from 'skyrimPlatform';
+
+import { FormModel } from '../modelSource/model';
+import { FormViewArray } from '../view/formViewArray';
+import { localIdToRemoteId, remoteIdToLocalId } from '../view/worldViewMisc';
 
 interface GamemodeApiCtx {
   refr: ObjectReference | undefined;
   value: unknown;
   _model: FormModel | undefined;
-  sp: typeof sp,
+  sp: typeof sp;
   state: Record<string, unknown> | undefined;
   _view: FormViewArray | undefined;
   i: number;
@@ -20,7 +21,7 @@ interface GamemodeApiCtx {
 
 export class GamemodeApiSupport {
   static tick() {
-    const keys = storage["updateNeighborFunctions_keys"] as Array<string>;
+    const keys = storage['updateNeighborFunctions_keys'] as Array<string>;
     if (keys && Array.isArray(keys)) {
       this.updateNeighborFunctionsKeys = keys;
     } else {
@@ -28,7 +29,7 @@ export class GamemodeApiSupport {
     }
 
     // TODO: Shouldn't we check storage value before assignment?
-    this.updateNeighborFunctions = storage["updateNeighborFunctions"] as Record<
+    this.updateNeighborFunctions = storage['updateNeighborFunctions'] as Record<
       string,
       any
     >;
@@ -42,7 +43,11 @@ export class GamemodeApiSupport {
     this.ctx.i = i;
   }
 
-  static updateNeighbor(refr: ObjectReference, model: FormModel, state: Record<string, unknown>) {
+  static updateNeighbor(
+    refr: ObjectReference,
+    model: FormModel,
+    state: Record<string, unknown>,
+  ) {
     for (const key of this.updateNeighborFunctionsKeys) {
       const v = (model as Record<string, unknown>)[key];
       // From docs:
@@ -85,8 +90,8 @@ export class GamemodeApiSupport {
       },
       respawn() {
         this._view!.destroyForm(this.i);
-      }
-    }
+      },
+    };
   }
 
   private static updateNeighborFunctionsKeys = new Array<string>();
@@ -94,4 +99,4 @@ export class GamemodeApiSupport {
   private static ctx = this.createContext();
 }
 
-on("tick", () => GamemodeApiSupport.tick());
+on('tick', () => GamemodeApiSupport.tick());

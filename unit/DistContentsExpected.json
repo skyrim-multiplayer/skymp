@@ -115,9 +115,7 @@
     ]
   },
   {
-    "configurationTags": [
-      "Win32"
-    ],
+    "configurationTags": ["Win32"],
     "expectedFiles": [
       "client/Data/Platform/UI/012ba60b5cafa40f9e478f978761f33d.svg",
       "client/Data/Platform/UI/05bc1c771a7f9d9fa958eab5889558f7.svg",
@@ -183,9 +181,7 @@
     ]
   },
   {
-    "configurationTags": [
-      "Unix"
-    ],
+    "configurationTags": ["Unix"],
     "expectedFiles": [
       "papyrus-vm/papyrus-vm",
       "client/Data/Platform/UI/08383611e86325b042d52c4c60d4f3c0.svg",
@@ -254,9 +250,7 @@
     ]
   },
   {
-    "configurationTags": [
-      "Win32"
-    ],
+    "configurationTags": ["Win32"],
     "expectedFiles": [
       "papyrus-vm/papyrus-vm.exe",
       "server/launch_server.bat",
@@ -264,10 +258,7 @@
     ]
   },
   {
-    "configurationTags": [
-      "SkyrimSE",
-      "Win32"
-    ],
+    "configurationTags": ["SkyrimSE", "Win32"],
     "expectedFiles": [
       "client/Data/SKSE/Plugins/version-1-5-16-0.bin",
       "client/Data/SKSE/Plugins/version-1-5-23-0.bin",
@@ -282,10 +273,7 @@
     ]
   },
   {
-    "configurationTags": [
-      "SkyrimAE",
-      "Win32"
-    ],
+    "configurationTags": ["SkyrimAE", "Win32"],
     "expectedFiles": [
       "client/Data/Interface/CombatAlertOverlayMenu.swf",
       "client/Data/Scripts/DLC2SummonDremoraMerchantScript.pex",
@@ -307,9 +295,7 @@
     ]
   },
   {
-    "configurationTags": [
-      "Win32"
-    ],
+    "configurationTags": ["Win32"],
     "expectedFiles": [
       "client/Data/Platform/Distribution/CEF/chrome_100_percent.pak",
       "client/Data/Platform/Distribution/CEF/chrome_200_percent.pak",

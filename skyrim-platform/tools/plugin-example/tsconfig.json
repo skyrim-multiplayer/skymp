@@ -12,7 +12,9 @@
     "allowSyntheticDefaultImports": true,
     "baseUrl": ".",
     "lib": ["esnext"],
-    "paths": { "skyrimPlatform": ["node_modules/@skyrim-platform/skyrim-platform"] },
+    "paths": {
+      "skyrimPlatform": ["node_modules/@skyrim-platform/skyrim-platform"]
+    },
     "outDir": "dist"
   },
   "include": ["src/**/*.ts"]

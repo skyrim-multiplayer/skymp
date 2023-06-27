@@ -1,4 +1,4 @@
-import * as msg from "../messages";
+import * as msg from '../messages';
 
 export interface MsgHandler {
   createActor(msg: msg.CreateActorMessage): void;

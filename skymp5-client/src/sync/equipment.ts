@@ -1,5 +1,6 @@
-import { Actor, Game, Ammo, Ui, setInventory } from "skyrimPlatform";
-import { Inventory, getInventory, applyInventory, Entry } from "./inventory";
+import { Actor, Ammo, Game, Ui, setInventory } from 'skyrimPlatform';
+
+import { Entry, Inventory, applyInventory, getInventory } from './inventory';
 
 export interface Equipment {
   inv: Inventory;
@@ -34,10 +35,10 @@ export const applyEquipment = (ac: Actor, eq: Equipment): boolean => {
 
 export const isBadMenuShown = (): boolean => {
   return (
-    Ui.isMenuOpen("InventoryMenu") ||
-    Ui.isMenuOpen("FavoritesMenu") ||
-    Ui.isMenuOpen("MagicMenu") ||
-    Ui.isMenuOpen("ContainerMenu") ||
-    Ui.isMenuOpen("Crafting Menu") // Actually I don't think it causes crashes
+    Ui.isMenuOpen('InventoryMenu') ||
+    Ui.isMenuOpen('FavoritesMenu') ||
+    Ui.isMenuOpen('MagicMenu') ||
+    Ui.isMenuOpen('ContainerMenu') ||
+    Ui.isMenuOpen('Crafting Menu') // Actually I don't think it causes crashes
   );
 };

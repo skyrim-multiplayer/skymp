@@ -1,12 +1,12 @@
-import React, { useMemo, useState, useEffect } from 'react';
-import heart5 from '../../../../img/dices/heart5.svg';
-import heart4 from '../../../../img/dices/heart4.svg';
-import heart3 from '../../../../img/dices/heart3.svg';
-import heart2 from '../../../../img/dices/heart2.svg';
-import heart1 from '../../../../img/dices/heart1.svg';
+import React, { useEffect, useMemo, useState } from 'react';
+
 import heart0 from '../../../../img/dices/heart0.svg';
+import heart1 from '../../../../img/dices/heart1.svg';
+import heart2 from '../../../../img/dices/heart2.svg';
+import heart3 from '../../../../img/dices/heart3.svg';
+import heart4 from '../../../../img/dices/heart4.svg';
+import heart5 from '../../../../img/dices/heart5.svg';
 import heartHover from '../../../../img/dices/heartHover.svg';
-import IndexBox from './elements/IndexBox';
 import {
   IDefence,
   IMagic,
@@ -14,10 +14,11 @@ import {
   IRollAction,
   ISkillDices,
   ISkillDicesData,
-  IWeapon
+  IWeapon,
 } from '../../../../interfaces/skillDices';
+import IndexBox from './elements/IndexBox';
 import WeaponsRows from './elements/WeaponsRows';
-import { defence, magic, weapons, rollButtons } from './skillDicesData';
+import { defence, magic, rollButtons, weapons } from './skillDicesData';
 
 const MAX_HEALTH = 5;
 const COMMAND_NAME = '/skill-dice';
@@ -49,7 +50,7 @@ const SkillDices = ({ onClose, send, disableSound }: ISkillDices) => {
       ({ 0: heart0, 1: heart1, 2: heart2, 3: heart3, 4: heart4, 5: heart5 }[
         hitPoints
       ]),
-    [hitPoints]
+    [hitPoints],
   );
 
   useEffect(() => {
@@ -77,7 +78,7 @@ const SkillDices = ({ onClose, send, disableSound }: ISkillDices) => {
         defenceArmorIndex +
         defenceBuff +
         shieldDefenceIndex +
-        vampusBuff
+        vampusBuff,
     );
   }, [
     defenceMastery,
@@ -85,7 +86,7 @@ const SkillDices = ({ onClose, send, disableSound }: ISkillDices) => {
     defenceBuff,
     shieldDefenceIndex,
     isWolf,
-    isVampus
+    isVampus,
   ]);
 
   useEffect(() => {
@@ -183,7 +184,9 @@ const SkillDices = ({ onClose, send, disableSound }: ISkillDices) => {
     };
   }, []);
 
-  const playSound = (action: IRollAction | 'heal' | 'self-attack' | 'wolf' | 'vampus') => {
+  const playSound = (
+    action: IRollAction | 'heal' | 'self-attack' | 'wolf' | 'vampus',
+  ) => {
     if (disableSound) return;
     const mapper = {
       initiative: 'Initiative',
@@ -193,10 +196,10 @@ const SkillDices = ({ onClose, send, disableSound }: ISkillDices) => {
       vampus: 'Vampire',
       wolf: 'Werewolf',
       heal: 'HP_plus',
-      'self-attack': 'HP_minus'
+      'self-attack': 'HP_minus',
     };
     const audio = new Audio(
-      require(`../../../../sound/${mapper[action]}.mp3`).default
+      require(`../../../../sound/${mapper[action]}.mp3`).default,
     );
     audio.play();
   };
@@ -206,7 +209,7 @@ const SkillDices = ({ onClose, send, disableSound }: ISkillDices) => {
     type?: string,
     value?: number,
     buff?: number,
-    hitPoints?: number
+    hitPoints?: number,
   ) => {
     playSound(action);
     if (action === 'weapon' && isWolf) {
@@ -222,7 +225,6 @@ const SkillDices = ({ onClose, send, disableSound }: ISkillDices) => {
       playSound('heal');
       sethitPoints(hitPoints + 1);
     }
-    ;
   };
 
   const handleSelfAttack = () => {
@@ -234,7 +236,6 @@ const SkillDices = ({ onClose, send, disableSound }: ISkillDices) => {
       playSound('self-attack');
       sethitPoints(hitPoints - 1);
     }
-    ;
   };
 
   const handleMagicSelect = (name: IMagic) => {
@@ -263,12 +264,12 @@ const SkillDices = ({ onClose, send, disableSound }: ISkillDices) => {
 
   const buffHandler = (
     name: 'magic' | 'attack' | 'defence',
-    newValue: number
+    newValue: number,
   ) => {
     const setter = {
       magic: setmagicBuff,
       attack: setattackBuff,
-      defence: setdefenceBuff
+      defence: setdefenceBuff,
     }[name];
     if (Math.abs(newValue) <= 6) {
       setter(newValue);
@@ -277,19 +278,21 @@ const SkillDices = ({ onClose, send, disableSound }: ISkillDices) => {
 
   return (
     <div className="chat-dices__container ">
-    <div className="chat-dices__row-container chat-dices__row-container--yellow">
-      <div
-        onClick={() => handleRoll('initiative')}
-        className="chat-dices__button chat-dices__button--yellow"
-        dangerouslySetInnerHTML={{ __html: rollButtons.initiative }}
-      ></div>
+      <div className="chat-dices__row-container chat-dices__row-container--yellow">
+        <div
+          onClick={() => handleRoll('initiative')}
+          className="chat-dices__button chat-dices__button--yellow"
+          dangerouslySetInnerHTML={{ __html: rollButtons.initiative }}
+        ></div>
       </div>
       <div className="chat-dices__row-container chat-dices__row-container--purple">
         <div
           onClick={() =>
             handleRoll('magic', magicSelected, magicIndex, magicBuff)
           }
-          className={`chat-dices__button chat-dices__button--purple ${magicSelected ? '' : 'chat-dices__button--disabled'}`}
+          className={`chat-dices__button chat-dices__button--purple ${
+            magicSelected ? '' : 'chat-dices__button--disabled'
+          }`}
           dangerouslySetInnerHTML={{ __html: rollButtons.magic }}
         ></div>
         <IndexBox
@@ -491,7 +494,7 @@ const SkillDices = ({ onClose, send, disableSound }: ISkillDices) => {
               defenceSelected,
               defenceIndex,
               defenceBuff,
-              hitPoints
+              hitPoints,
             )
           }
           className="chat-dices__button chat-dices__button--yellow"
