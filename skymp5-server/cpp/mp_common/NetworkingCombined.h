@@ -1,12 +1,12 @@
 #pragma once
 #include "NetworkingInterface.h"
-#include <memory>
-#include <vector>
 #include <MakeID.h-1.0.2>
+#include <fmt/format.h>
 #include <limits>
+#include <memory>
 #include <stdexcept>
 #include <string>
-#include <fmt/format.h>
+#include <vector>
 
 namespace Networking {
 using ServersVec = std::vector<std::shared_ptr<IServer>>;
@@ -50,16 +50,20 @@ public:
     }
   }
 
-  Networking::UserId GetCombinedUserId(size_t serverIdx, Networking::UserId realUserId) const {
+  Networking::UserId GetCombinedUserId(size_t serverIdx,
+                                       Networking::UserId realUserId) const
+  {
     if (serverIdx >= childData.size()) {
-        throw std::runtime_error(fmt::format("GetCombinedUserId: Bad server index {}, we only have {} servers", serverIdx, childData.size()));
+      throw std::runtime_error(fmt::format(
+        "GetCombinedUserId: Bad server index {}, we only have {} servers",
+        serverIdx, childData.size()));
     }
-    auto &data = childData[serverIdx];
+    auto& data = childData[serverIdx];
 
     if (realUserId >= data.combinedIdByReal.size()) {
-        return Networking::InvalidUserId; // not found
+      return Networking::InvalidUserId; // not found
     }
-    
+
     return data.combinedIdByReal[realUserId];
   }
 
