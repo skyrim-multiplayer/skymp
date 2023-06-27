@@ -3,3 +3,4 @@ node_modules
 vcpkg
 build
 .clang-format
+.github/workflows
