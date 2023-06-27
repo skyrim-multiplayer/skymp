@@ -1,41 +1,45 @@
-import * as sp from "skyrimPlatform";
+import * as sp from 'skyrimPlatform';
 
 export interface AnimTextOutput {
   isActive?: boolean;
   itemCount?: number;
-  startPos?: { x: number, y: number },
-  yPosDelta?: number,
+  startPos?: { x: number; y: number };
+  yPosDelta?: number;
 }
 
 export interface AnimDebugSettings {
   isActive?: boolean;
-  textOutput?: AnimTextOutput,
+  textOutput?: AnimTextOutput;
   animKeys?: { [index: number]: string };
 }
 
 type AnimListItem = {
-  name: string,
-  textId: number,
-  color: number[]
-}
+  name: string;
+  textId: number;
+  color: number[];
+};
 
 const playerId = 0x14;
 const animationSucceededTextColor = [255, 255, 255, 1];
 const animationNotSucceededTextColor = [255, 0, 0, 1];
 
 class AnimQueueCollection {
-  public static readonly Name = "AnimQueueCollection";
+  public static readonly Name = 'AnimQueueCollection';
 
   constructor(settings: AnimDebugSettings) {
     const arrayLength = settings?.textOutput?.itemCount ?? 5;
-    const startPos = settings?.textOutput?.startPos ?? { x: 650, y: 600 };;
+    const startPos = settings?.textOutput?.startPos ?? { x: 650, y: 600 };
     const yPosDelta = settings?.textOutput?.yPosDelta ?? 32;
 
     let y = startPos.y;
 
     this.list = new Array<AnimListItem>(arrayLength);
     for (let idx = 0; idx < arrayLength; ++idx) {
-      this.list[idx] = { name: "", textId: sp.createText(startPos.x, y, "", animationSucceededTextColor), color: animationSucceededTextColor };
+      this.list[idx] = {
+        name: '',
+        textId: sp.createText(startPos.x, y, '', animationSucceededTextColor),
+        color: animationSucceededTextColor,
+      };
       y += yPosDelta;
     }
   }
@@ -44,7 +48,7 @@ class AnimQueueCollection {
 
   public clearSPText(): void {
     if (this.list.length === 0) return;
-    this.list.forEach(item => sp.destroyText(item.textId));
+    this.list.forEach((item) => sp.destroyText(item.textId));
   }
 
   public push(animName: string, color: number[]): void {
@@ -64,30 +68,45 @@ class AnimQueueCollection {
   }
 }
 
-if (sp.storage[AnimQueueCollection.Name] && (sp.storage[AnimQueueCollection.Name] as AnimQueueCollection).clearSPText) {
+if (
+  sp.storage[AnimQueueCollection.Name] &&
+  (sp.storage[AnimQueueCollection.Name] as AnimQueueCollection).clearSPText
+) {
   (sp.storage[AnimQueueCollection.Name] as AnimQueueCollection).clearSPText();
 }
 
 export const init = (settings: AnimDebugSettings): void => {
   if (!settings || !settings.isActive) return;
-  
+
   if (settings.textOutput?.isActive) {
     var queue = new AnimQueueCollection(settings);
     sp.storage[AnimQueueCollection.name] = queue;
 
-    sp.hooks.sendAnimationEvent.add({
-      enter: (ctx) => { },
-      leave: (ctx) => {
-        queue.push(ctx.animEventName, ctx.animationSucceeded ? animationSucceededTextColor : animationNotSucceededTextColor);
-      }
-    }, playerId, playerId);
+    sp.hooks.sendAnimationEvent.add(
+      {
+        enter: (ctx) => {},
+        leave: (ctx) => {
+          queue.push(
+            ctx.animEventName,
+            ctx.animationSucceeded
+              ? animationSucceededTextColor
+              : animationNotSucceededTextColor,
+          );
+        },
+      },
+      playerId,
+      playerId,
+    );
   }
 
   if (settings.animKeys) {
-    sp.on("buttonEvent", (e) => {
+    sp.on('buttonEvent', (e) => {
       if (e.isUp && settings.animKeys![e.code]) {
-        sp.Debug.sendAnimationEvent(sp.Game.getPlayer()!, settings.animKeys![e.code]);
+        sp.Debug.sendAnimationEvent(
+          sp.Game.getPlayer()!,
+          settings.animKeys![e.code],
+        );
       }
     });
   }
-}
+};

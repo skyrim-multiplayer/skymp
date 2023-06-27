@@ -1,10 +1,10 @@
 {
-    "compilerOptions": {
-        "module": "System",
-        "target": "ES5",
-        "outDir": "dist",
-        "rootDir": "src",
-        "lib": ["ES2015"]
-    },
-    "exclude": ["dist"]
+  "compilerOptions": {
+    "module": "System",
+    "target": "ES5",
+    "outDir": "dist",
+    "rootDir": "src",
+    "lib": ["ES2015"]
+  },
+  "exclude": ["dist"]
 }

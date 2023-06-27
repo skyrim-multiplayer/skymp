@@ -1,8 +1,16 @@
-import { Utility, Debug, getPlatformVersion, on, Game, Ui } from 'skyrimPlatform';
+import {
+  Debug,
+  Game,
+  Ui,
+  Utility,
+  getPlatformVersion,
+  on,
+} from 'skyrimPlatform';
 
 const requiredVersion = '2.7.1';
 
-const realVersion = typeof getPlatformVersion === 'function' ? getPlatformVersion() : 'unknown';
+const realVersion =
+  typeof getPlatformVersion === 'function' ? getPlatformVersion() : 'unknown';
 
 export const verifyVersion = (): void => {
   if (!requiredVersion.includes(realVersion)) {
