@@ -80,7 +80,8 @@ Networking::MockServer::MockServer()
   pImpl.reset(new Impl);
 }
 
-std::pair<std::shared_ptr<Networking::IClient>, Networking::UserId> Networking::MockServer::CreateClient()
+std::pair<std::shared_ptr<Networking::IClient>, Networking::UserId>
+Networking::MockServer::CreateClient()
 {
   NetworkingMock::SendFn sendFn =
     [](Networking::MockServer* parent, Networking::UserId id,

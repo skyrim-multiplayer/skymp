@@ -422,9 +422,12 @@ Napi::Value ScampServer::CreateBot(const Napi::CallbackInfo& info)
   if (!this->serverMock) {
     throw Napi::Error::New(info.Env(), "Bad serverMock");
   }
-  auto serverCombined = std::dynamic_pointer_cast<Networking::ServerCombined>(this->server);
+  auto serverCombined =
+    std::dynamic_pointer_cast<Networking::ServerCombined>(this->server);
   if (!serverCombined) {
-    throw Napi::Error::New(info.Env(), "Expected server to be instance of Networking::ServerCombined");
+    throw Napi::Error::New(
+      info.Env(),
+      "Expected server to be instance of Networking::ServerCombined");
   }
 
   auto pair = this->serverMock->CreateClient();
@@ -434,15 +437,17 @@ Napi::Value ScampServer::CreateBot(const Napi::CallbackInfo& info)
 
   jBot.Set(
     "getUserId",
-    Napi::Function::New(info.Env(), [bot, pair, serverCombined](const Napi::CallbackInfo& info) {
-      try {
-        Networking::UserId realUserId = pair.second;
-        return Napi::Number::New(info.Env(), serverCombined->GetCombinedUserId(kMockServerIdx, realUserId));
-      } catch (std::exception& e) {
-        throw Napi::Error::New(info.Env(), std::string(e.what()));
-      }
-    })
-  );
+    Napi::Function::New(
+      info.Env(), [bot, pair, serverCombined](const Napi::CallbackInfo& info) {
+        try {
+          Networking::UserId realUserId = pair.second;
+          return Napi::Number::New(
+            info.Env(),
+            serverCombined->GetCombinedUserId(kMockServerIdx, realUserId));
+        } catch (std::exception& e) {
+          throw Napi::Error::New(info.Env(), std::string(e.what()));
+        }
+      }));
 
   jBot.Set(
     "destroy",
@@ -458,30 +463,30 @@ Napi::Value ScampServer::CreateBot(const Napi::CallbackInfo& info)
     "send",
     Napi::Function::New(info.Env(), [bot](const Napi::CallbackInfo& info) {
       try {
-      auto argument = info[0];
-      if (argument.IsTypedArray()) {
-        auto arr = argument.As<Napi::Uint8Array>();
-        size_t n = arr.ByteLength();
-        char *data = reinterpret_cast<char *>(arr.Data());
-        std::string s(data, n);
-        bot->Send(s);
-      }
-      else {
-        auto standardJson = info.Env().Global().Get("JSON").As<Napi::Object>();
-        auto stringify = standardJson.Get("stringify").As<Napi::Function>();
-        std::string s;
-        s += Networking::MinPacketId;
-        s += static_cast<std::string>(stringify.Call({ info[0] }).As<Napi::String>());
-        bot->Send(s);
-      }
+        auto argument = info[0];
+        if (argument.IsTypedArray()) {
+          auto arr = argument.As<Napi::Uint8Array>();
+          size_t n = arr.ByteLength();
+          char* data = reinterpret_cast<char*>(arr.Data());
+          std::string s(data, n);
+          bot->Send(s);
+        } else {
+          auto standardJson =
+            info.Env().Global().Get("JSON").As<Napi::Object>();
+          auto stringify = standardJson.Get("stringify").As<Napi::Function>();
+          std::string s;
+          s += Networking::MinPacketId;
+          s += static_cast<std::string>(
+            stringify.Call({ info[0] }).As<Napi::String>());
+          bot->Send(s);
+        }
 
-      // Memory leak fix
-      // TODO: Provide tick API
-      bot->Tick();
+        // Memory leak fix
+        // TODO: Provide tick API
+        bot->Tick();
 
-      return info.Env().Undefined();
-      }
-      catch (std::exception &e) {
+        return info.Env().Undefined();
+      } catch (std::exception& e) {
         throw Napi::Error::New(info.Env(), std::string(e.what()));
       }
     }));
