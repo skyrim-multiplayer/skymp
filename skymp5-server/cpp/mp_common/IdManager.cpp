@@ -11,13 +11,16 @@ IdManager::IdManager(userid maxConnections_)
 userid IdManager::allocateId(const RakNetGUID& guid) noexcept
 {
   auto& idByGuid = this->idByGuid[guid.g];
-  if (nextId >= maxConnections)
+  if (nextId >= maxConnections) {
     return Networking::InvalidUserId;
+  }
   const userid res = nextId++;
   if (nextId < maxConnections) {
-    while (guidById[nextId] != UNASSIGNED_RAKNET_GUID)
-      if (++nextId >= maxConnections)
+    while (guidById[nextId] != UNASSIGNED_RAKNET_GUID) {
+      if (++nextId >= maxConnections) {
         break;
+      }
+    }
   }
   guidById[res] = guid;
   idByGuid = res;
@@ -29,24 +32,24 @@ void IdManager::freeId(userid id) noexcept
   const auto guid = guidById[id];
   guidById[id] = UNASSIGNED_RAKNET_GUID;
   idByGuid.erase(guid.g);
-  if (id < nextId)
+  if (id < nextId) {
     nextId = id;
+  }
 }
 
 userid IdManager::find(const RakNetGUID& guid) const noexcept
 {
-  userid result;
-  try {
-    result = idByGuid.at(guid.g);
-  } catch (...) {
-    result = Networking::InvalidUserId;
+  auto it = idByGuid.find(guid.g);
+  if (it == idByGuid.end()) {
+    return Networking::InvalidUserId;
   }
-  return result;
+  return it->second;
 }
 
 RakNetGUID IdManager::find(userid id) const noexcept
 {
-  if (id < maxConnections)
+  if (id < maxConnections) {
     return guidById[id];
+  }
   return UNASSIGNED_RAKNET_GUID;
 }
