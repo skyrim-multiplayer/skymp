@@ -179,9 +179,6 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
         serverSettings["dataDir"], serverSettings["lang"]);
     }
 
-    auto scriptStorage = std::make_shared<DirectoryScriptStorage>(
-      (espm::fs::path(dataDir) / "scripts").string());
-
     auto espm = new espm::Loader(pluginPaths);
     std::string password = serverSettings.contains("password")
       ? static_cast<std::string>(serverSettings["password"])
@@ -204,7 +201,13 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
       partOne->SetDamageFormula(std::make_unique<TES5DamageFormula>());
     }
 
+    std::vector<std::shared_ptr<IScriptStorage>> scriptStorages;
+    scriptStorages.push_back(std::make_shared<DirectoryScriptStorage>(
+      (espm::fs::path(dataDir) / "scripts").string()));
+    scriptStorages.push_back(std::make_shared<AssetsScriptStorage>());
+    auto scriptStorage = std::make_shared<CombinedScriptStorage>(scriptStorages);
     partOne->worldState.AttachScriptStorage(scriptStorage);
+
     partOne->AttachEspm(espm);
     this->serverSettings = serverSettings;
     this->logger = logger;

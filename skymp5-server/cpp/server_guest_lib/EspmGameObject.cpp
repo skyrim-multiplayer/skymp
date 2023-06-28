@@ -28,7 +28,7 @@ const char* EspmGameObject::GetParentNativeScript()
     if (t == "MICN")
       return "menuicon";
     if (t == "GLOB")
-      return "global";
+      return "globalvariable";
     if (t == "CLAS")
       return "class";
     if (t == "FACT")
