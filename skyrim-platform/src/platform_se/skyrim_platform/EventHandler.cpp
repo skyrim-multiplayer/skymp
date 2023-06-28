@@ -301,9 +301,8 @@ EventResult EventHandler::ProcessEvent(
   auto oldContainerId = event->oldContainer;
   auto newContainerId = event->newContainer;
   auto baseObjId = event->baseObj;
-  auto referenceId = event->reference && event->reference.get()
-    ? event->reference.get()->GetFormID()
-    : 0;
+  auto referenceId =
+    event->reference ? event->reference.get()->GetFormID() : 0;
   auto itemCount = event->itemCount;
   auto uniqueID = event->uniqueID;
 
