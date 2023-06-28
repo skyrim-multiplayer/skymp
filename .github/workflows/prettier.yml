@@ -4,7 +4,6 @@ jobs:
   prettier:
     name: Prettier
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -16,3 +15,4 @@ jobs:
         uses: borales/actions-yarn@v4
         with:
           cmd: prettier-check
+        continue-on-error: true
