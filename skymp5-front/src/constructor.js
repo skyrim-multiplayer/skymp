@@ -1,15 +1,16 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+
+import './features/login/styles.scss';
+import './constructor.scss';
 
 import { SkyrimFrame } from './components/SkyrimFrame/SkyrimFrame';
-import { SkyrimHint } from './components/SkyrimHint/SkyrimHint';
 import { SkyrimInput } from './components/SkyrimInput/SkyrimInput';
-import './constructor.scss';
+import { SkyrimHint } from './components/SkyrimHint/SkyrimHint';
 import Button from './constructorComponents/button';
-import Chat from './constructorComponents/chat';
-import CheckBox from './constructorComponents/checkbox';
 import Icon from './constructorComponents/icon';
+import CheckBox from './constructorComponents/checkbox';
 import Text from './constructorComponents/text';
-import './features/login/styles.scss';
+import Chat from './constructorComponents/chat';
 import SkillsMenu from './features/skillsMenu';
 
 const styles = [
@@ -24,23 +25,15 @@ const styles = [
   'ICON_STYLE_SKYMP',
 ];
 
-const Constructor = (props) => {
+const Constructor = props => {
   const content_mainRef = useRef();
   useEffect(() => {
     if (props.dynamicSize) {
       switch (props.elem.type) {
         case 'form':
-          const isContentInitialized =
-            content_mainRef &&
-            content_mainRef.current &&
-            content_mainRef.current.clientHeight &&
-            content_mainRef.current.clientWidth;
+          const isContentInitialized = content_mainRef && content_mainRef.current && content_mainRef.current.clientHeight && content_mainRef.current.clientWidth;
           if (isContentInitialized) {
-            setFwidth(
-              content_mainRef.current.clientWidth + 60 < 257
-                ? 257
-                : content_mainRef.current.clientWidth + 60,
-            );
+            setFwidth(content_mainRef.current.clientWidth + 60 < 257 ? 257 : content_mainRef.current.clientWidth + 60);
             setFheight(content_mainRef.current.clientHeight + 96);
           }
           break;
@@ -57,7 +50,7 @@ const Constructor = (props) => {
     case 'form':
       const result = {
         header: rend.caption,
-        body: [],
+        body: []
       };
       const hintsArr = [];
       const bodyLines = [];
@@ -72,17 +65,17 @@ const Constructor = (props) => {
             for (let j = 0; j < allElems[i].tags.length; j++) {
               if (i === allElems.length - 1) {
                 style = {
-                  marginBottom: '35px',
+                  marginBottom: '35px'
                 };
               }
               if (allElems[i].tags[j] === 'ELEMENT_STYLE_MARGIN_EXTENDED') {
                 style = {
-                  marginTop: '30px',
+                  marginTop: '30px'
                 };
                 if (i === allElems.length - 1) {
                   style = {
                     marginTop: '48px',
-                    marginBottom: '48px',
+                    marginBottom: '48px'
                   };
                 }
               } else if (allElems[i].tags[j] === 'HINT_STYLE_LEFT') {
@@ -95,19 +88,14 @@ const Constructor = (props) => {
                 newline = false;
               }
             }
-            if (
-              i > 1 &&
-              allElems[i - 1].type.match(/(icon|checkBox)/) &&
-              allElems[i - 1].text &&
-              allElems[i].type.match(/(input|button)/)
-            ) {
+            if (i > 1 && allElems[i - 1].type.match(/(icon|checkBox)/) && allElems[i - 1].text && allElems[i].type.match(/(input|button)/)) {
               if (Object.keys(style).length !== 0) {
                 for (const k in style) {
                   style[k] = `${parseInt(style[k]) - 14}px`;
                 }
               } else {
                 style = {
-                  marginTop: '4px',
+                  marginTop: '4px'
                 };
               }
               console.log(style, allElems[i]);
@@ -115,18 +103,13 @@ const Constructor = (props) => {
           }
         }
         if (allElems[i].hint !== undefined) {
-          hintsArr.push({
-            id: i,
-            text: allElems[i].hint,
-            isOpened: false,
-            direction: hintIsLeft,
-          });
+          hintsArr.push({ id: i, text: allElems[i].hint, isOpened: false, direction: hintIsLeft });
         }
         const obj = {
           index: i,
           css: css,
           style: style,
-          element: allElems[i],
+          element: allElems[i]
         };
         if (newline) bodyLines.push([obj]);
         else bodyLines[bodyLines.length - 1].push(obj);
@@ -145,76 +128,28 @@ const Constructor = (props) => {
           }
           switch (obj.element.type) {
             case 'button':
-              curElem = (
-                <Button
-                  disabled={obj.element.isDisabled}
-                  css={obj.css}
-                  text={obj.element.text}
-                  onClick={obj.element.click}
-                  width={obj.element.width}
-                  height={obj.element.height}
-                />
-              );
+              curElem = <Button disabled={obj.element.isDisabled} css={obj.css} text={obj.element.text} onClick={obj.element.click} width={obj.element.width} height={obj.element.height} />;
               break;
             case 'text':
               curElem = <Text text={obj.element.text} />;
               break;
             case 'inputText':
-              curElem = (
-                <SkyrimInput
-                  disabled={obj.element.isDisabled}
-                  initialValue={obj.element.initialValue}
-                  text={obj.element.text}
-                  placeholder={obj.element.placeholder}
-                  type={'text'}
-                  name={obj.index}
-                  width={obj.element.width}
-                  height={obj.element.height}
-                  onInput={obj.element.onInput}
-                />
-              );
+              curElem = <SkyrimInput disabled={obj.element.isDisabled} initialValue={obj.element.initialValue} text={obj.element.text} placeholder={obj.element.placeholder} type={'text'} name={obj.index} width={obj.element.width} height={obj.element.height} onInput={obj.element.onInput} />;
               break;
             case 'inputPass':
-              curElem = (
-                <SkyrimInput
-                  disabled={obj.element.isDisabled}
-                  initialValue={obj.element.initialValue}
-                  text={obj.element.text}
-                  placeholder={obj.element.placeholder}
-                  type={'password'}
-                  name={obj.index}
-                  width={obj.element.width}
-                  height={obj.element.height}
-                  onInput={obj.element.onInput}
-                />
-              );
+              curElem = <SkyrimInput disabled={obj.element.isDisabled} initialValue={obj.element.initialValue} text={obj.element.text} placeholder={obj.element.placeholder} type={'password'} name={obj.index} width={obj.element.width} height={obj.element.height} onInput={obj.element.onInput} />;
               break;
             case 'checkBox':
-              curElem = (
-                <CheckBox
-                  disabled={obj.element.isDisabled}
-                  initialValue={obj.element.initialValue}
-                  text={obj.element.text}
-                  setChecked={obj.element.setChecked}
-                />
-              );
+              curElem = <CheckBox disabled={obj.element.isDisabled} initialValue={obj.element.initialValue} text={obj.element.text} setChecked={obj.element.setChecked} />;
               break;
             case 'icon':
-              curElem = (
-                <Icon
-                  disabled={obj.element.isDisabled}
-                  css={obj.css}
-                  text={obj.element.text}
-                  width={obj.element.width}
-                  height={obj.element.height}
-                />
-              );
+              curElem = (<Icon disabled={obj.element.isDisabled} css={obj.css} text={obj.element.text} width={obj.element.width} height={obj.element.height} />);
               break;
           }
           if (curElem !== undefined) {
             arr.push(
-              hasHint ? (
-                <div key={key}>
+              (hasHint)
+                ? (<div key={key}>
                   <SkyrimHint
                     text={hints[hintIndex].text}
                     isOpened={hints[hintIndex].isOpened}
@@ -227,48 +162,39 @@ const Constructor = (props) => {
                     {curElem}
                   </div>
                 </div>
-              ) : (
-                <div>{curElem}</div>
-              ),
+                  )
+                : (
+                    <div>
+                        {curElem}
+                    </div>
+                  )
             );
             if (hasHint) hintIndex++;
           }
         });
-        result.body.push(
-          <div
-            style={style || {}}
-            key={lineIndex + 'container'}
-            className={'container'}
-          >
-            {arr}
-          </div>,
-        );
+        result.body.push(<div style={style || {}} key={lineIndex + 'container'} className={'container'}>{arr}</div>);
       });
 
       const setHintState = (index, state) => {
         const newArr = [...hints];
         hints.forEach((hint, ind) => {
-          if (hint.id === index) {
-            newArr[ind].isOpened = state;
-          }
+          if (hint.id === index) { newArr[ind].isOpened = state; }
         });
         setHints(newArr);
       };
 
       return (
-        <div className={'login'}>
-          <div
-            className={'login-form'}
-            style={{ width: `${fwidth}px`, height: `${fheight}px` }}
-          >
+        <div className={'login'} >
+          <div className={'login-form'} style={{ width: `${fwidth}px`, height: `${fheight}px` }}>
             <div className={'login-form--content'}>
-              {result.header !== undefined ? (
-                <div className={'login-form--content_header'}>
-                  {result.header}
-                </div>
-              ) : (
-                ''
-              )}
+              {(result.header !== undefined)
+                ? (
+                  <div className={'login-form--content_header'}>
+                    {result.header}
+                  </div>
+                  )
+                : ''
+              }
               <div className={'login-form--content_main'} ref={content_mainRef}>
                 {result.body}
               </div>
@@ -280,13 +206,8 @@ const Constructor = (props) => {
     case 'chat':
       return (
         <>
-          <SkillsMenu send={rend.send} />
-          <Chat
-            messages={rend.messages}
-            send={rend.send}
-            placeholder={rend.placeholder}
-            isInputHidden={rend.isInputHidden}
-          />
+        <SkillsMenu send={rend.send}/>
+        <Chat messages={rend.messages} send={rend.send} placeholder={rend.placeholder} isInputHidden={rend.isInputHidden} />
         </>
       );
     default:

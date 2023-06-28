@@ -7,10 +7,10 @@ The project uses standard C++17.
 SkyrimPlatform and client code must be compilable with Microsoft Visual C++ 2019.
 Server code and unit tests must be also compilable with Clang 12.
 
+
 ## Code Style
 
 Code blocks require braces.
-
 ```c++
 // ok
 if (foo) {
@@ -24,6 +24,7 @@ if (foo) bar();
 if (boo)
   bar();
 ```
+
 
 ## Naming
 
@@ -59,9 +60,9 @@ Short names that are ok: `i`, `n`, `it` in loops; `lhs`/`rhs` in operator overlo
 
 ### Classes
 
-Class names must start with an upper case: `class SomeClass`.
+Class names must start with an upper case: `class SomeClass`. 
 
-No I-prefix is used to indicate abstract classes.
+No I-prefix is used to indicate abstract classes. 
 
 Class name should be a non-verb noun whenever possible.
 
@@ -76,6 +77,7 @@ Declare enums as `enum class`, unless you have a really good reason to make them
 Functions must start with an upper case: `void LaunchOpenBeta();`.
 
 Functions must start with a verb.
+
 
 ## Global-like variables
 
@@ -105,6 +107,7 @@ const WrappedRef kSomeWrappedRef{ kDefaultName };
 }
 ```
 
+
 ## Const Qualifier
 
 ### Variables
@@ -114,7 +117,6 @@ Use `constexpr` when possible.
 Declare class fields and methods as const when possible.
 
 Rule of thumb for function arguments:
-
 1. Do you want to change it outside of the function? `void Func(SomeType& outVar)`
 2. Is it a primitive (`enum`, `int64_t`, `char`, etc.)? Pass as non-const value: `void Func(int64_t var)`
 3. Do you want to use move semantics? Use `SomeType var` for copy+move and `SomeType&& var` for move-only
@@ -138,7 +140,6 @@ Prefer `int32_t` over `int`, `int16_t` over `short`, etc.
 ### Macros
 
 `#endif` must be followed by a comment:
-
 ```c++
 #ifdef _DEBUG
     auto debugFunctionJson = f.dump();
@@ -149,13 +150,13 @@ Refrain from defining your own macros, unless required logic can't be implemente
 (But, even so, please think twice.) If you have to define a macro, `#undef` it as soon as it's not needed anymore.
 
 Example:
-
 ```c++
 #define DO_MAGIC(a, b, c) ...
 DO_MAGIC(foo, bar, baz)
 DO_MAGIC(fizz, buzz, fizzbuzz)
 #undef DO_MAGIC
 ```
+
 
 ## Application to Existing Code
 

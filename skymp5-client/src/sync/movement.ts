@@ -1,10 +1,3 @@
-// // This doesn't work in SkyrimPlatform 0.5.0:
-// export * from './movementApply';
-// export * from './movementGet';
-// Temporary workaround:
-import * as movementApply from './movementApply';
-import * as movementGet from './movementGet';
-
 export type NiPoint3 = [number, number, number];
 
 export interface Transform {
@@ -13,7 +6,7 @@ export interface Transform {
   rot: NiPoint3;
 }
 
-export type RunMode = 'Standing' | 'Walking' | 'Running' | 'Sprinting';
+export type RunMode = "Standing" | "Walking" | "Running" | "Sprinting";
 
 export interface AnimationVariables {
   runMode: RunMode;
@@ -30,6 +23,12 @@ export interface AnimationVariables {
 
 export type Movement = Transform & AnimationVariables;
 
-export const applyMovement = movementApply.applyMovement;
+// // This doesn't work in SkyrimPlatform 0.5.0:
+// export * from './movementApply';
+// export * from './movementGet';
 
+// Temporary workaround:
+import * as movementApply from "./movementApply";
+export const applyMovement = movementApply.applyMovement;
+import * as movementGet from "./movementGet";
 export const getMovement = movementGet.getMovement;

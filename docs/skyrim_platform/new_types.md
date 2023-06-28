@@ -41,7 +41,7 @@ Here's a list of enum values declared in `skyrimPlatform.ts`.
 
   Please notice how Battleaxes and Warhammers have both the same value; this is the way vanilla Skyrim works.
 
-  **_WARNING_**: Don't confuse with `WeaponType` enum. Both appear to be similar, but values actually differ.
+  ***WARNING***: Don't confuse with `WeaponType` enum. Both appear to be similar, but values actually differ.
 
 - `FormType`. Form types from [`Form.GetType()`][FormType].
 
@@ -62,19 +62,10 @@ Here's a list of enum values declared in `skyrimPlatform.ts`.
 
   ```ts
   armor.getSlotMask() === SlotMask.Jewelry;
-  NiOverride.AddSkinOverrideString(
-    a,
-    true,
-    false,
-    SlotMask.Body,
-    9,
-    0,
-    diffuseTex,
-    true,
-  );
+  NiOverride.AddSkinOverrideString(a, true, false, SlotMask.Body, 9, 0, diffuseTex, true);
   ```
 
-  **_WARNING_**: Some slots were left unnamed by Bethesda, but this enum adheres to the [modders' consensus][Biped] on usage for those slots.\
+  ***WARNING***: Some slots were left unnamed by Bethesda, but this enum adheres to the [modders' consensus][Biped] on usage for those slots.\
   When making your plugin, be ware **some armor creators may not adhere to that consensus**.
 
   Some values in this enum are also synonyms, so you can use whichever name you think will best represent what you want to do.
@@ -83,9 +74,9 @@ Here's a list of enum values declared in `skyrimPlatform.ts`.
 
   ```ts
   // Consensus dictates slot 0x10000000 may be used for either...
-  SlotMask.ArmLeft; // Left arm
-  SlotMask.ArmUnder; // Arm undergarment
-  SlotMask.ArmSecondary; // Secondary arm
+  SlotMask.ArmLeft        // Left arm
+  SlotMask.ArmUnder       // Arm undergarment
+  SlotMask.ArmSecondary   // Secondary arm
   ```
 
 - `WeaponType`. Weapon types from [`Weapon.GetWeaponType()`][WeaponType].
@@ -97,7 +88,7 @@ Here's a list of enum values declared in `skyrimPlatform.ts`.
 
   Please notice how Battleaxes and Warhammers have both the same value; this is the way vanilla Skyrim works.
 
-  **_WARNING_**: Don't confuse with `EquippedItemType` enum. Both appear to be similar, but values actually differ.
+  ***WARNING***: Don't confuse with `EquippedItemType` enum. Both appear to be similar, but values actually differ.
 
 [Biped]: https://www.creationkit.com/index.php?title=Biped_Object
 [EquippedItemType]: https://www.creationkit.com/index.php?title=GetEquippedItemType_-_Actor

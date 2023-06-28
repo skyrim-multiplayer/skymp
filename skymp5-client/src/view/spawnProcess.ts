@@ -1,14 +1,13 @@
-import { Actor, Game, MotionType, ObjectReference } from 'skyrimPlatform';
-
-import { Appearance, applyTints } from '../sync/appearance';
-import { NiPoint3 } from '../sync/movement';
+import { ObjectReference, Game, Actor, MotionType } from "skyrimPlatform";
+import { Appearance, applyTints } from "../sync/appearance";
+import { NiPoint3 } from "../sync/movement";
 
 export class SpawnProcess {
   constructor(
     appearance: Appearance | null,
     pos: NiPoint3,
     refrId: number,
-    private callback: () => void,
+    private callback: () => void
   ) {
     const refr = ObjectReference.from(Game.getFormEx(refrId));
     if (!refr || refr.getFormID() !== refrId) return;

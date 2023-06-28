@@ -1,6 +1,5 @@
-import { Actor, FormType, Game, ObjectReference } from 'skyrimPlatform';
-
-import { Inventory, applyInventory } from '../sync/inventory';
+import { ObjectReference, Actor, Game, FormType } from "skyrimPlatform";
+import { Inventory, applyInventory } from "../sync/inventory";
 
 // For 0xff000000+ used from FormView
 // For objects from master files used directly from remoteServer.ts
@@ -8,11 +7,11 @@ export class ModelApplyUtils {
   static applyModelInventory(refr: ObjectReference, inventory: Inventory) {
     applyInventory(refr, inventory, false, true);
   }
-
+  
   static applyModelIsOpen(refr: ObjectReference, isOpen: boolean) {
     refr.setOpen(isOpen);
   }
-
+  
   static applyModelIsHarvested(refr: ObjectReference, isHarvested: boolean) {
     const base = refr.getBaseObject();
     if (base) {
@@ -27,7 +26,7 @@ export class ModelApplyUtils {
                 refr.getPositionX(),
                 refr.getPositionY(),
                 refr.getPositionZ(),
-                10000,
+                10000
               );
               if (ac && ac.getFormID() !== 0x14) {
                 break;

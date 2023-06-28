@@ -8,7 +8,7 @@ Refers to Skyrim Platform API. See [Skyrim Platform](docs_skyrim_platform.md) pa
 
 ```typescript
 // Print to console
-ctx.sp.printConsole('Hello Skyrim Platform!');
+ctx.sp.printConsole("Hello Skyrim Platform!");
 // Kill player character (locally)
 ctx.sp.Game.getPlayer().kill();
 ```
@@ -25,7 +25,7 @@ In `updateNeighbor` refers to neighbor synchronized `ObjectReference` or `Actor`
 const pos = [
   ctx.refr.getPositionX(),
   ctx.refr.getPositionY(),
-  ctx.refr.getPositionZ(),
+  ctx.refr.getPositionZ()
 ];
 ```
 
@@ -46,7 +46,7 @@ A writable object that is used to store data between `updateOwner`/`updateNeighb
 `state` is currently shared between properties.
 
 ```typescript
-ctx.state.x = 'y';
+ctx.state.x = "y";
 ```
 
 ## ctx.get()
@@ -54,7 +54,7 @@ ctx.state.x = 'y';
 Get the value of the specified property. Built-in properties are not supported properly, so attempts getting them are leading to the undefined behavior.
 
 ```typescript
-const v = ctx.get('myAwesomeProperty');
+const v = ctx.get("myAwesomeProperty");
 ```
 
 ## ctx.getFormIdInServerFormat()

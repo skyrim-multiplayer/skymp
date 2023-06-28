@@ -2,26 +2,26 @@ const defaultState = {
   show: true,
   list: [],
   showInput: 'auto',
-  input: '',
+  input: "",
 };
 
 export const chatReducer = (state = defaultState, action) => {
   switch (action.type) {
-    case 'UPDATE_CHAT_SHOW': {
+    case "UPDATE_CHAT_SHOW": {
       return {
         ...state,
         show: action.data,
       };
     }
 
-    case 'UPDATE_CHAT_LIST': {
+    case "UPDATE_CHAT_LIST": {
       return {
         ...state,
         list: action.data,
       };
     }
 
-    case 'ADD_CHAT_MSG': {
+    case "ADD_CHAT_MSG": {
       const list = [...state.list];
       if (Array.isArray(action.data)) {
         list.push([...action.data]);
@@ -36,14 +36,14 @@ export const chatReducer = (state = defaultState, action) => {
       };
     }
 
-    case 'UPDATE_CHAT_SHOWINPUT': {
+    case "UPDATE_CHAT_SHOWINPUT": {
       return {
         ...state,
         showInput: action.data,
       };
     }
 
-    case 'UPDATE_CHAT_INPUT': {
+    case "UPDATE_CHAT_INPUT": {
       return {
         ...state,
         input: action.data,
