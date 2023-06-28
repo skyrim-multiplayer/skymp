@@ -1,9 +1,9 @@
 #include "ScriptStorage.h"
+#include <cmrc/cmrc.hpp>
 #include <cstring>
 #include <filesystem>
-#include <sstream>
-#include <cmrc/cmrc.hpp>
 #include <spdlog/spdlog.h>
+#include <sstream>
 
 namespace {
 std::string GetFileName(const std::string& path)
@@ -58,7 +58,9 @@ std::vector<uint8_t> DirectoryScriptStorage::GetScriptPex(
     std::filesystem::path(pexDir) / (scriptName + std::string(".pex"));
 
   if (!std::filesystem::exists(path)) {
-    spdlog::trace("DirectoryScriptStorage::GetScriptPex - Not found {} (file doesn't exist)", scriptName);
+    spdlog::trace("DirectoryScriptStorage::GetScriptPex - Not found {} (file "
+                  "doesn't exist)",
+                  scriptName);
     return {};
   }
 
@@ -69,7 +71,9 @@ std::vector<uint8_t> DirectoryScriptStorage::GetScriptPex(
   std::vector<uint8_t> buffer(std::istreambuf_iterator<char>(f), {});
 
   if (buffer.empty()) {
-    spdlog::trace("DirectoryScriptStorage::GetScriptPex - Not found {} (file is empty)", scriptName);
+    spdlog::trace(
+      "DirectoryScriptStorage::GetScriptPex - Not found {} (file is empty)",
+      scriptName);
     return {};
   }
 
@@ -88,20 +92,24 @@ const std::set<CIString>& DirectoryScriptStorage::ListScripts(
 
 CMRC_DECLARE(server_standard_scripts);
 
-AssetsScriptStorage::AssetsScriptStorage() {
+AssetsScriptStorage::AssetsScriptStorage()
+{
   try {
     auto fileSystem = cmrc::server_standard_scripts::get_filesystem();
     for (auto&& entry : fileSystem.iterate_directory("standard_scripts")) {
-      cmrc::file file = fileSystem.open("standard_scripts/" + entry.filename());
-      const uint8_t *begin = reinterpret_cast<const uint8_t*>(file.begin());
-      const uint8_t *end = begin + file.size();
+      cmrc::file file =
+        fileSystem.open("standard_scripts/" + entry.filename());
+      const uint8_t* begin = reinterpret_cast<const uint8_t*>(file.begin());
+      const uint8_t* end = begin + file.size();
       std::vector<uint8_t> pex(begin, end);
-      auto nameWithoutExtension = std::filesystem::path(entry.filename()).stem().string();
-      scripts.insert({ nameWithoutExtension.begin(), nameWithoutExtension.end() });
-      scriptPex[{ nameWithoutExtension.begin(), nameWithoutExtension.end() }] = pex;
+      auto nameWithoutExtension =
+        std::filesystem::path(entry.filename()).stem().string();
+      scripts.insert(
+        { nameWithoutExtension.begin(), nameWithoutExtension.end() });
+      scriptPex[{ nameWithoutExtension.begin(), nameWithoutExtension.end() }] =
+        pex;
     }
-  }
-  catch(std::exception &e) {
+  } catch (std::exception& e) {
     auto dir =
       cmrc::server_standard_scripts::get_filesystem().iterate_directory("");
     std::stringstream ss;
@@ -114,26 +122,33 @@ AssetsScriptStorage::AssetsScriptStorage() {
   }
 }
 
-std::vector<uint8_t> AssetsScriptStorage::GetScriptPex(const char* scriptName) {
+std::vector<uint8_t> AssetsScriptStorage::GetScriptPex(const char* scriptName)
+{
   auto it = scriptPex.find(scriptName);
   if (it == scriptPex.end()) {
-    spdlog::trace("AssetsScriptStorage::GetScriptPex - Not found {}", scriptName);
+    spdlog::trace("AssetsScriptStorage::GetScriptPex - Not found {}",
+                  scriptName);
     return {};
   }
   spdlog::trace("AssetsScriptStorage::GetScriptPex - Found {}", scriptName);
   return it->second;
 }
 
-const std::set<CIString>& AssetsScriptStorage::ListScripts(bool) {
+const std::set<CIString>& AssetsScriptStorage::ListScripts(bool)
+{
   return scripts;
 }
 
-CombinedScriptStorage::CombinedScriptStorage(std::vector<std::shared_ptr<IScriptStorage>> scriptStorages) {
+CombinedScriptStorage::CombinedScriptStorage(
+  std::vector<std::shared_ptr<IScriptStorage>> scriptStorages)
+{
   this->scriptStorages = std::move(scriptStorages);
 }
 
-std::vector<uint8_t> CombinedScriptStorage::GetScriptPex(const char* scriptName) {
-  for (auto &storage : scriptStorages) {
+std::vector<uint8_t> CombinedScriptStorage::GetScriptPex(
+  const char* scriptName)
+{
+  for (auto& storage : scriptStorages) {
     auto result = storage->GetScriptPex(scriptName);
     if (!result.empty()) {
       return result;
@@ -142,10 +157,12 @@ std::vector<uint8_t> CombinedScriptStorage::GetScriptPex(const char* scriptName)
   return {};
 }
 
-const std::set<CIString>& CombinedScriptStorage::ListScripts(bool forceReloadScripts) {
+const std::set<CIString>& CombinedScriptStorage::ListScripts(
+  bool forceReloadScripts)
+{
   scripts.clear();
-  for (auto &storage : scriptStorages) {
-    auto &result = storage->ListScripts(forceReloadScripts);
+  for (auto& storage : scriptStorages) {
+    auto& result = storage->ListScripts(forceReloadScripts);
     scripts.insert(result.begin(), result.end());
   }
   return scripts;

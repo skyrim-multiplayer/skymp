@@ -205,7 +205,8 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
     scriptStorages.push_back(std::make_shared<DirectoryScriptStorage>(
       (espm::fs::path(dataDir) / "scripts").string()));
     scriptStorages.push_back(std::make_shared<AssetsScriptStorage>());
-    auto scriptStorage = std::make_shared<CombinedScriptStorage>(scriptStorages);
+    auto scriptStorage =
+      std::make_shared<CombinedScriptStorage>(scriptStorages);
     partOne->worldState.AttachScriptStorage(scriptStorage);
 
     partOne->AttachEspm(espm);

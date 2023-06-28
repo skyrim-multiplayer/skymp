@@ -2,10 +2,10 @@
 #include "papyrus-vm/CIString.h"
 #include <cstdint>
 #include <fstream>
+#include <memory>
 #include <regex>
 #include <set>
 #include <vector>
-#include <memory>
 
 class IScriptStorage
 {
@@ -31,7 +31,8 @@ private:
   std::set<CIString> scripts;
 };
 
-class AssetsScriptStorage : public IScriptStorage {
+class AssetsScriptStorage : public IScriptStorage
+{
 public:
   AssetsScriptStorage();
 
@@ -44,10 +45,13 @@ private:
   CIMap<std::vector<uint8_t>> scriptPex;
 };
 
-class CombinedScriptStorage : public IScriptStorage {
+class CombinedScriptStorage : public IScriptStorage
+{
 public:
-  // Load order matters. But unlike mods, scriptStorages.front() will be checked first
-  CombinedScriptStorage(std::vector<std::shared_ptr<IScriptStorage>> scriptStorages);
+  // Load order matters. But unlike mods, scriptStorages.front() will be
+  // checked first
+  CombinedScriptStorage(
+    std::vector<std::shared_ptr<IScriptStorage>> scriptStorages);
 
   std::vector<uint8_t> GetScriptPex(const char* scriptName) override;
 
