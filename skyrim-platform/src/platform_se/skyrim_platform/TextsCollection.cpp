@@ -16,15 +16,15 @@ int TextsCollection::CreateText(double xPos, double yPos, std::wstring str,
 {
   TextToDraw text{ name, xPos, yPos, str, color };
 
-  uint32_t value;
-  makeId->CreateID(value);
+  uint32_t id;
+  makeId->CreateID(id);
 
-  if (texts.size() < value) {
-    texts.resize(value);
+  if (texts.size() <= id) {
+    texts.resize(id);
   }
 
-  texts[value] = text;
-  return value;
+  texts[id] = text;
+  return id;
 }
 
 void TextsCollection::DestroyText(int textId)
