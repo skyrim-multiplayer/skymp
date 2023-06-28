@@ -2,13 +2,13 @@ const defaultState = {};
 
 export const commandReducer = (state = defaultState, action) => {
   switch (action.type) {
-    case 'COMMAND': {
+    case "COMMAND": {
       console.log(action.data.commandType, action.data.commandArgs);
       switch (action.data.commandType) {
-        case 'SHOW_ANIMLIST': {
+        case "SHOW_ANIMLIST": {
           return setTimeout(() => {
             window.storage.dispatch({
-              type: 'UPDATE_ANIMLIST_SHOW',
+              type: "UPDATE_ANIMLIST_SHOW",
               data: {
                 show: true,
                 list: action.data.commandArgs.anims,
@@ -23,7 +23,7 @@ export const commandReducer = (state = defaultState, action) => {
             }
             for (const msg of action.data.alter) {
               window.storage.dispatch({
-                type: 'ADD_CHAT_MSG',
+                type: "ADD_CHAT_MSG",
                 data: msg,
               });
             }

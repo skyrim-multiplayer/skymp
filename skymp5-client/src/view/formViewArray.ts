@@ -1,7 +1,7 @@
-import { GamemodeApiSupport } from '../gamemodeApi/gamemodeApiSupport';
-import { FormModel, WorldModel } from '../modelSource/model';
-import { Movement, NiPoint3 } from '../sync/movement';
-import { FormView } from './formView';
+import { FormView } from "./formView";
+import { GamemodeApiSupport } from "../gamemodeApi/gamemodeApiSupport";
+import { FormModel, WorldModel } from "../modelSource/model";
+import { Movement, NiPoint3 } from "../sync/movement";
 
 export class FormViewArray {
   updateForm(form: FormModel, i: number) {
@@ -69,7 +69,7 @@ export class FormViewArray {
     }
   }
 
-  syncFormView(model: WorldModel, showMe: boolean) {
+  syncFormView(model: WorldModel, showMe: boolean,) {
     for (let i = 0; i < model.forms.length; ++i) {
       if (!model.forms[i] || (model.playerCharacterFormIdx === i && !showMe)) {
         this.destroyForm(i);
@@ -80,7 +80,7 @@ export class FormViewArray {
 
   getRemoteRefrId(clientsideRefrId: number): number {
     if (clientsideRefrId < 0xff000000)
-      throw new Error('This function is only for 0xff forms');
+      throw new Error("This function is only for 0xff forms");
     const formView = this.formViews.find((formView: FormView) => {
       return formView && formView.getLocalRefrId() === clientsideRefrId;
     });
@@ -89,7 +89,7 @@ export class FormViewArray {
 
   getLocalRefrId(remoteRefrId: number): number {
     if (remoteRefrId < 0xff000000)
-      throw new Error('This function is only for 0xff forms');
+      throw new Error("This function is only for 0xff forms");
     const formView = this.formViews.find((formView: FormView) => {
       return formView && formView.getRemoteRefrId() === remoteRefrId;
     });

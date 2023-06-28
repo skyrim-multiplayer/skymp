@@ -12,7 +12,8 @@ module.exports = {
       if (!gameStillRunning) break;
       try {
         childProcess.execSync(`taskkill /im ${appName} /f`);
-      } catch (e) {
+      }
+      catch(e) {
         // ...
       }
     }
@@ -21,16 +22,14 @@ module.exports = {
   launch(folder) {
     return new Promise((resolve, reject) => {
       let tmpFile = path.join(
-        path.dirname(process.env.APPDATA),
-        'Local/Temp/launch_skse64.bat',
-      );
+        path.dirname(process.env.APPDATA), 'Local/Temp/launch_skse64.bat');
       fs.writeFileSync(tmpFile, 'cd ' + folder + ' && ' + 'skse64_loader.exe');
 
       const p = childProcess.spawn(tmpFile, []);
-      p.stderr.on('data', async (data) => {
+      p.stderr.on('data', async data => {
         reject(new Error(`skse64_loader failed, stderr: ${data}`));
       });
       p.stdout.on('data', () => resolve());
     });
-  },
+  }
 };

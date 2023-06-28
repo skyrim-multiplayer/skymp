@@ -1,54 +1,49 @@
+import { Transform } from './sync/movement';
 import {
-  ActorValue,
-  ActorValueInfo,
   Game,
-  GlobalVariable,
-  ObjectReference,
   Utility,
   on,
   once,
-  printConsole,
+  GlobalVariable,
+  ObjectReference,
   settings,
-  browser as spBrowser,
   storage,
-} from 'skyrimPlatform';
-
-import * as animDebugSystem from './debug/animDebugSystem';
-import * as NetInfo from './debug/netInfoSystem';
-import * as timers from './extensions/timers';
-import * as authSystem from './features/authSystem';
-import * as browser from './features/browser';
-import * as loadGameManager from './features/loadGameManager';
-import * as skillSystem from './features/skillMenu';
-import * as playerCombatSystem from './sweetpie/playerCombatSystem';
-import * as expSystem from './sync/expSystem';
-import { AuthGameData } from './features/authModel';
+  browser as spBrowser,
+  printConsole,
+  ActorValueInfo,
+  ActorValue,
+} from "skyrimPlatform";
+import * as timers from "./extensions/timers"; timers;
+import { connectWhenICallAndNotWhenIImport, SkympClient } from "./skympClient";
+import * as browser from "./features/browser";
+import * as loadGameManager from "./features/loadGameManager";
+import { verifyVersion } from "./version";
+import { updateWc } from "./features/worldCleaner";
+import * as authSystem from "./features/authSystem";
+import { AuthGameData } from "./features/authModel";
+import * as NetInfo from "./debug/netInfoSystem";
+import * as animDebugSystem from "./debug/animDebugSystem";
+import * as playerCombatSystem from "./sweetpie/playerCombatSystem";
 import { verifyLoadOrder } from './features/loadOrder';
-import { updateWc } from './features/worldCleaner';
-import { SkympClient, connectWhenICallAndNotWhenIImport } from './skympClient';
-import { Transform } from './sync/movement';
-import { verifyVersion } from './version';
-
-timers;
+import * as expSystem from "./sync/expSystem";
+import * as skillSystem from "./features/skillMenu";
 
 browser.main();
 
 export const defaultLocalDamageMult = 1;
 export const setLocalDamageMult = (damageMult: number): void => {
-  Game.setGameSettingFloat('fDiffMultHPToPCE', damageMult);
-  Game.setGameSettingFloat('fDiffMultHPToPCH', damageMult);
-  Game.setGameSettingFloat('fDiffMultHPToPCL', damageMult);
-  Game.setGameSettingFloat('fDiffMultHPToPCN', damageMult);
-  Game.setGameSettingFloat('fDiffMultHPToPCVE', damageMult);
-  Game.setGameSettingFloat('fDiffMultHPToPCVH', damageMult);
-};
+  Game.setGameSettingFloat("fDiffMultHPToPCE", damageMult);
+  Game.setGameSettingFloat("fDiffMultHPToPCH", damageMult);
+  Game.setGameSettingFloat("fDiffMultHPToPCL", damageMult);
+  Game.setGameSettingFloat("fDiffMultHPToPCN", damageMult);
+  Game.setGameSettingFloat("fDiffMultHPToPCVE", damageMult);
+  Game.setGameSettingFloat("fDiffMultHPToPCVH", damageMult);
+}
 
 const turnOffSkillLocalExp = (av: ActorValue): void => {
   const avi = ActorValueInfo.getActorValueInfoByID(av);
   if (!avi) {
-    once('update', () =>
-      printConsole(`Not found "${ActorValueInfo}" with value "${av}"`),
-    );
+    once("update", () => printConsole(`Not found "${ActorValueInfo}" with value "${av}"`));
     return;
   }
   avi.setSkillUseMult(0);
@@ -59,15 +54,15 @@ const enforceLimitations = () => {
   Game.setInChargen(true, true, false);
 };
 
-once('update', enforceLimitations);
+once("update", enforceLimitations);
 loadGameManager.addLoadGameListener(enforceLimitations);
 
-once('update', () => {
-  Utility.setINIBool('bAlwaysActive:General', true);
-  Game.setGameSettingInt('iDeathDropWeaponChance', 0);
+once("update", () => {
+  Utility.setINIBool("bAlwaysActive:General", true);
+  Game.setGameSettingInt("iDeathDropWeaponChance", 0);
 
   // turn off player level exp
-  Game.setGameSettingFloat('fXPPerSkillRank', 0);
+  Game.setGameSettingFloat("fXPPerSkillRank", 0);
   // turn off skill exp
   turnOffSkillLocalExp(ActorValue.Alteration);
   turnOffSkillLocalExp(ActorValue.Conjuration);
@@ -93,30 +88,28 @@ once('update', () => {
 
   setLocalDamageMult(defaultLocalDamageMult);
 });
-on('update', () => {
-  Utility.setINIInt('iDifficulty:GamePlay', 5);
+on("update", () => {
+  Utility.setINIInt("iDifficulty:GamePlay", 5);
   Game.enableFastTravel(false);
 });
 
-on('update', () => updateWc());
+on("update", () => updateWc());
 
-once('update', verifyLoadOrder);
+once("update", verifyLoadOrder);
 
 const startClient = (): void => {
   NetInfo.start();
-  animDebugSystem.init(
-    settings['skymp5-client']['animDebug'] as animDebugSystem.AnimDebugSettings,
-  );
+  animDebugSystem.init(settings["skymp5-client"]["animDebug"] as animDebugSystem.AnimDebugSettings);
 
   playerCombatSystem.start();
-  once('update', () => authSystem.setPlayerAuthMode(false));
+  once("update", () => authSystem.setPlayerAuthMode(false));
   connectWhenICallAndNotWhenIImport();
   new SkympClient();
 
-  once('update', verifyVersion);
+  once("update", verifyVersion);
 
   let lastTimeUpd = 0;
-  on('update', () => {
+  on("update", () => {
     if (Date.now() - lastTimeUpd <= 2000) return;
     lastTimeUpd = Date.now();
 
@@ -156,18 +149,16 @@ const startClient = (): void => {
   });
 
   let riftenUnlocked = false;
-  on('update', () => {
+  on("update", () => {
     if (riftenUnlocked) return;
     const refr = ObjectReference.from(Game.getFormEx(0x42284));
     if (!refr) return;
     refr.lock(false, false);
     riftenUnlocked = true;
   });
-};
+}
 
-const authGameData = storage[AuthGameData.storageKey] as
-  | AuthGameData
-  | undefined;
+const authGameData = storage[AuthGameData.storageKey] as AuthGameData | undefined;
 if (!(authGameData?.local || authGameData?.remote)) {
   authSystem.addAuthListener((data) => {
     if (data.remote) {
@@ -178,7 +169,7 @@ if (!(authGameData?.local || authGameData?.remote)) {
     startClient();
   });
 
-  authSystem.main(settings['skymp5-client']['lobbyLocation'] as Transform);
+  authSystem.main(settings["skymp5-client"]["lobbyLocation"] as Transform);
 } else {
   startClient();
 }

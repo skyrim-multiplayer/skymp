@@ -1,4 +1,4 @@
-import { Actor, Game } from 'skyrimPlatform';
+import { Game, Actor } from "skyrimPlatform";
 
 const protection = new Map<number, number>();
 
@@ -11,7 +11,7 @@ function processOneActor(): void {
     pc.getPositionX(),
     pc.getPositionY(),
     pc.getPositionZ(),
-    8192,
+    8192
   ) as Actor;
   const actorId = actor.getFormID();
 

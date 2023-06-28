@@ -1,6 +1,5 @@
-import * as sp from 'skyrimPlatform';
-
-export {};
+export { };
+import * as sp from "skyrimPlatform";
 
 //#region Timers declaration and implementation
 
@@ -14,11 +13,7 @@ interface Timer {
 let timersArr = new Array<Timer | null>();
 let intervalsArr = new Array<Timer | null>();
 
-globalThis.setTimeout = (
-  handler: TimerHandler,
-  timeout?: number,
-  ...args: any[]
-): number => {
+globalThis.setTimeout = (handler: TimerHandler, timeout?: number, ...args: any[]): number => {
   const timer: Timer = { handler, args, delayMs: timeout ?? 0, passedMs: 0 };
   for (let i = 0; i < timersArr.length; ++i) {
     if (!timersArr[i]) {
@@ -28,7 +23,7 @@ globalThis.setTimeout = (
   }
 
   return timersArr.push(timer);
-};
+}
 
 globalThis.clearTimeout = (id: number | undefined): void => {
   if (id === undefined) {
@@ -39,13 +34,9 @@ globalThis.clearTimeout = (id: number | undefined): void => {
   if (id <= 0 || id > timersArr.length) return;
   timersArr[id - 1] = null;
   return;
-};
+}
 
-globalThis.setInterval = (
-  handler: TimerHandler,
-  timeout?: number,
-  ...args: any[]
-): number => {
+globalThis.setInterval = (handler: TimerHandler, timeout?: number, ...args: any[]): number => {
   const timer: Timer = { handler, args, delayMs: timeout ?? 0, passedMs: 0 };
   for (let i = 0; i < intervalsArr.length; ++i) {
     if (!intervalsArr[i]) {
@@ -55,7 +46,7 @@ globalThis.setInterval = (
   }
 
   return intervalsArr.push(timer);
-};
+}
 
 globalThis.clearInterval = (id: number | undefined): void => {
   if (id === undefined) {
@@ -66,17 +57,17 @@ globalThis.clearInterval = (id: number | undefined): void => {
   if (id <= 0 || id > intervalsArr.length) return;
   intervalsArr[id - 1] = null;
   return;
-};
+}
 
 //#endregion
 
 //#region Timers processing
 
 enum ProcessMethodType {
-  update = 'update',
-  tick = 'tick',
+  update = "update",
+  tick = "tick"
 }
-let processMethodTypeStorageKey = 'updateTypeStorageKey';
+let processMethodTypeStorageKey = "updateTypeStorageKey";
 let updateEventHandle: sp.EventHandle | null;
 let lastCallTime: number = Date.now();
 
@@ -92,7 +83,7 @@ const processTimers = (): void => {
       timer.passedMs += dt;
       if (timer.passedMs >= timer.delayMs) {
         timersArr[i] = null;
-        if (typeof timer.handler === 'function') {
+        if (typeof timer.handler === "function") {
           timer.handler.call(this, timer.args);
         } else {
           eval(timer.handler);
@@ -111,7 +102,7 @@ const processTimers = (): void => {
       interval.passedMs += dt;
       if (interval.passedMs >= interval.delayMs) {
         interval.passedMs = 0;
-        if (typeof interval.handler === 'function') {
+        if (typeof interval.handler === "function") {
           interval.handler.call(this, interval.args);
         } else {
           eval(interval.handler);
@@ -122,7 +113,7 @@ const processTimers = (): void => {
       intervalsArr.length -= 1;
     }
   }
-};
+}
 
 const setProcessMethod = (method: ProcessMethodType): void => {
   switch (method) {
@@ -132,24 +123,21 @@ const setProcessMethod = (method: ProcessMethodType): void => {
       return;
     case ProcessMethodType.update:
       sp.storage[processMethodTypeStorageKey] = ProcessMethodType.update;
-      updateEventHandle = sp.on(ProcessMethodType.update, () =>
-        processTimers(),
-      );
+      updateEventHandle = sp.on(ProcessMethodType.update, () => processTimers());
       return;
     default:
       break;
   }
 
   try {
-    if (sp.Game.getPlayer()!) {
-    }
+    if (sp.Game.getPlayer()!) { };
     setProcessMethod(ProcessMethodType.update);
   } catch {
     setProcessMethod(ProcessMethodType.tick);
   }
-};
+}
 
-sp.on('menuOpen', (e) => {
+sp.on("menuOpen", (e) => {
   if (e.name === sp.Menu.Main) {
     if (updateEventHandle) {
       sp.unsubscribe(updateEventHandle);
@@ -159,7 +147,7 @@ sp.on('menuOpen', (e) => {
   }
 });
 
-sp.on('preLoadGame', () => {
+sp.on("preLoadGame", () => {
   if (updateEventHandle) {
     sp.unsubscribe(updateEventHandle);
   }
@@ -168,7 +156,7 @@ sp.on('preLoadGame', () => {
 });
 
 const storageProcessMethod = sp.storage[processMethodTypeStorageKey];
-if (typeof storageProcessMethod !== 'function') {
+if (typeof storageProcessMethod !== "function") {
   setProcessMethod(storageProcessMethod as ProcessMethodType);
 } else {
   setProcessMethod(ProcessMethodType.tick);

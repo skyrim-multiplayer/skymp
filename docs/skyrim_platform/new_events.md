@@ -11,9 +11,9 @@ Skyrim Platform does not attach scripts to objects, so these events are availabl
 With `on`, you can subscribe to an event forever.
 
 ```typescript
-import { on } from 'skyrimPlatform';
+import { on } from "skyrimPlatform";
 
-on('equip', (event) => {
+on("equip", (event) => {
   printConsole(`actor: ${event.actor.getBaseObject().getName()}`);
   printConsole(`object: ${event.baseObj.getName()}`);
 });
@@ -22,9 +22,9 @@ on('equip', (event) => {
 Using `once`, you can add a handler that will be called once the next time the event is fired.
 
 ```typescript
-import { once } from 'skyrimPlatform';
+import { once } from "skyrimPlatform";
 
-once('equip', (event) => {
+once("equip", (event) => {
   printConsole(`actor: ${event.actor.getBaseObject().getName()}`);
   printConsole(`object: ${event.baseObj.getName()}`);
 });
@@ -34,9 +34,9 @@ Both `on` and `once` return an `EventHandle` object, which contains unique subsc
 Using `EventHandle` is optional, but it is required if you want to unsubscribe from the event later in your code.
 
 ```typescript
-import { on, unsubscribe } from 'skyrimPlatform';
+import { on, unsubscribe } from "skyrimPlatform";
 
-const handle = on('equip', (event) => {
+const handle = on("equip", (event) => {
   printConsole(`actor: ${event.actor.getBaseObject().getName()}`);
   printConsole(`object: ${event.baseObj.getName()}`);
 });
@@ -44,35 +44,35 @@ const handle = on('equip', (event) => {
 unsubscribe(handle);
 ```
 
-The variable `event` contains variables related to the event (_if they exist_) to which you are subscribed.
+The variable `event` contains variables related to the event (*if they exist*) to which you are subscribed.
 
 # List of new events
 
-- [update](#update)
-- [tick](#tick)
-- [equip](#equip)
-- [unequip](#unequip)
-- [effectStart](#effectstart)
-- [effectFinish](#effectfinish)
-- [cellFullyLoaded](#cellFullyLoaded)
-- [consoleMessage](#consoleMessage)
-- [loadGame](#loadgame)
-- [Other events](#other-events)
+  - [update](#update)
+  - [tick](#tick)
+  - [equip](#equip)
+  - [unequip](#unequip)
+  - [effectStart](#effectstart)
+  - [effectFinish](#effectfinish)
+  - [cellFullyLoaded](#cellFullyLoaded)
+  - [consoleMessage](#consoleMessage)
+  - [loadGame](#loadgame)
+  - [Other events](#other-events)
 
-## update
+ ## update
 
-Called once for every frame in the game (60 times per second at 60 FPS) after you've loaded a save or started a new game.
+ Called once for every frame in the game (60 times per second at 60 FPS) after you've loaded a save or started a new game.
 
 ```typescript
-import { on } from 'skyrimPlatform';
+import { on } from "skyrimPlatform";
 
-on('update', () => {
+on("update", () => {
   // At this stage, the methods of all imported
   // types are already available.
 });
 ```
 
-**_NOTE_**: Executing code each single frame may be expensive depending on what you are doing.
+***NOTE***: Executing code each single frame may be expensive depending on what you are doing.
 
 For `update` and `tick` try to use `once` instead of `on`, if possible.
 
@@ -82,12 +82,12 @@ It's also a good idea to try to use any of the events below or even [Papyrus Hoo
 
 Called once for every frame in the game immediately after the game starts.
 
-**_WARNING_**: This event has no access to [game methods and objects][Papyrus].
+***WARNING***: This event has no access to [game methods and objects][Papyrus].
 
 ```typescript
-import { on } from 'skyrimPlatform';
+import { on } from "skyrimPlatform";
 
-on('tick', () => {
+on("tick", () => {
   // No access to game methods here.
 });
 ```
@@ -98,18 +98,16 @@ Called each time any `Actor` equips an item.\
 Analogous to [OnObjectEquipped][OnObjectEquipped].
 
 ```typescript
-import { on } from 'skyrimPlatform';
+import { on } from "skyrimPlatform";
 
-on('equip', (event) => {
+on("equip", (event) => {
   const b = event.actor.getBaseObject();
   const armor = Armor.from(event.baseObj);
 
   if (!armor || armor.getSlotMask() !== 0x4 || !b) return;
 
-  printConsole(
-    `ActorBase ${b.getName()} equipped this cuirass: ${armor.getName()}`,
-  );
-});
+  printConsole(`ActorBase ${b.getName()} equipped this cuirass: ${armor.getName()}`);
+})
 ```
 
 ## unequip
@@ -118,17 +116,17 @@ Called each time any `Actor` unequips an item.\
 Analogous to [OnObjectUnequipped][OnObjectUnequipped].
 
 ```typescript
-import { on } from 'skyrimPlatform';
+import { on } from "skyrimPlatform";
 
-on('unequip', (event) => {
+on("unequip", (event) => {
   if (event.actor.getFormID() !== Game.getPlayer()?.getFormID()) return;
 
   const w = Weapon.from(event.baseObj);
 
   if (w) {
-    printConsole('Player unequipped a weapon');
+    printConsole("Player unequipped a weapon");
   }
-});
+})
 ```
 
 ## effectStart
@@ -136,17 +134,17 @@ on('unequip', (event) => {
 Called when any Magic Effect starts.\
 Analogous to [OnEffectStart][OnEffectStart].
 
-**_HINT_**: If you are using cloaks to apply Magic Effects in your mod, you can drastically increase performance by applying a blank Magic Effect with [SPID][SPID] instead of cloaks and letting Skyrim Platform deal with the real code:
+***HINT***: If you are using cloaks to apply Magic Effects in your mod, you can drastically increase performance by applying a blank Magic Effect with [SPID][SPID] instead of cloaks and letting Skyrim Platform deal with the real code:
 
 ```typescript
-import { on } from 'skyrimPlatform';
+import { on } from "skyrimPlatform";
 
-on('effectStart', (event) => {
-  const fx = Game.getFormFromFile(0x800, 'my-mod.esp');
+on("effectStart", (event) => {
+  const fx = Game.getFormFromFile(0x800, "my-mod.esp");
   if (fx?.getFormID() !== event.effect.getFormID()) return;
 
   DoSomething(event.target);
-});
+})
 ```
 
 See the Cook Book [entry on this][Cloaks] for more details.
@@ -157,13 +155,11 @@ Called when any Magic Effect ends.\
 Analogous to [OnEffectFinish][OnEffectFinish].
 
 ```typescript
-import { on } from 'skyrimPlatform';
+import { on } from "skyrimPlatform";
 
-on('effectFinish', (event) => {
-  printConsole(
-    `${event.effect.getName()} finished on ${event.target.getName()}`,
-  );
-});
+on("effectFinish", (event) => {
+  printConsole(`${event.effect.getName()} finished on ${event.target.getName()}`);
+})
 ```
 
 ## cellFullyLoaded
@@ -171,11 +167,11 @@ on('effectFinish', (event) => {
 Called each time a game cell has finished loading.
 
 ```typescript
-import { on } from 'skyrimPlatform';
+import { on } from "skyrimPlatform";
 
-on('cellFullyLoaded', (event) => {
+on("cellFullyLoaded", (event) => {
   printConsole(`Cell "${event.cell.getName()}" was fully loaded`);
-});
+})
 ```
 
 Notice that due to the way Skyrim works this event may fire multiple times when roaming the wilderness, since many cells are usually loaded at the same time in this situation.
@@ -190,14 +186,14 @@ Note: The message text can contain any characters, including `'` `"` `\`.
 Before sending the text to the browser using "browser.executeJavaScript", it should be escaped.
 
 ```typescript
-import { browser, on } from 'skyrimPlatform';
+import { on, browser } from "skyrimPlatform";
 
 const htmlEscapes: Record<string, string> = {
   '"': '\\"',
   "'": "\\'",
   '\\': '\\\\',
   '<': '\\<',
-  '>': '\\>',
+  '>': '\\>'
 };
 
 const htmlEscaper = /[&<>"'\\\/]/g;
@@ -213,7 +209,7 @@ on('consoleMessage', (e) => {
 
 Called when a saved game is loaded.
 
-**_WARNING_**: This event won't fire when creating a new game. Use `newGame` for that.\
+***WARNING***: This event won't fire when creating a new game. Use `newGame` for that.\
 Or [read this recipe][PluginInit] to get some ideas on how you can deal with plugin initialization.
 
 ## Other events
