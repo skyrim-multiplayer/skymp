@@ -1,6 +1,7 @@
 #pragma once
 
 #include <DirectXTK/SpriteBatch.h>
+#include <MakeID.h-1.0.2>
 
 class TextsCollection
 {
@@ -33,17 +34,17 @@ public:
   TextsCollection& operator=(const TextsCollection&&) = delete;
 
 public:
-  const std::pair<double, double> GetTextPos(int textId) const;
-  const std::wstring& GetTextString(int textId) const;
-  const std::array<double, 4>& GetTextColor(int textId) const;
-  const std::wstring& GetTextFont(int textId) const;
-  const float& GetTextRotation(int textId) const;
-  const float& GetTextSize(int textId) const;
-  const int GetTextEffect(int textId) const;
-  const int& GetTextDepth(int textId) const;
-  const std::array<double, 2> GetTextOrigin(int textId) const;
+  const bool GetTextPos(int textId, std::pair<double, double>& result) const;
+  const bool GetTextString(int textId, std::wstring& result) const;
+  const bool GetTextColor(int textId, std::array<double, 4>& result) const;
+  const bool GetTextFont(int textId, std::wstring& result) const;
+  const bool GetTextRotation(int textId, float& result) const;
+  const bool GetTextSize(int textId, float& result) const;
+  const bool GetTextEffect(int textId, int& result) const;
+  const bool GetTextDepth(int textId, int& result) const;
+  const bool GetTextOrigin(int textId, std::array<double, 2>& result) const;
 
-  const std::unordered_map<int, TextToDraw>& GetCreatedTexts() const;
+  const std::vector<TextToDraw>& GetCreatedTexts() const;
 
   int GetNumCreatedTexts() const noexcept { return texts.size(); }
 
@@ -51,6 +52,6 @@ private:
   TextsCollection();
 
 private:
-  uint32_t textCount;
-  std::unordered_map<int, TextToDraw> texts;
+  std::unique_ptr<MakeID> makeId;
+  std::vector<TextToDraw> texts;
 };
