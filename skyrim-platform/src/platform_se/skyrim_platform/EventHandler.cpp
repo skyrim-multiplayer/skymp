@@ -441,7 +441,7 @@ EventResult EventHandler::ProcessEvent(const RE::TESEquipEvent* event,
       auto originalRefrForm =
         RE::TESForm::LookupByID<RE::TESForm>(originalRefrId);
 
-      if (actor && baseObjForm && originalRefrForm) {
+      if (actor && baseObjForm && (originalRefrId == 0 || originalRefrForm)) {
         AddObjProperty(&obj, "actor", actor, "ObjectReference");
         AddObjProperty(&obj, "baseObj", baseObjForm, "Form");
         AddObjProperty(&obj, "originalRefr", originalRefrForm,
