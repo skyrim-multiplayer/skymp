@@ -108,7 +108,7 @@ public:
   void ApplyMagicEffects(std::vector<espm::Effects::Effect>& effects,
                          const bool hasSweetpie = false,
                          const bool durationOverriden = false);
-  void RemoveMagicEffect(const espm::ActorValue actorValue);
+  void RemoveMagicEffect(const espm::ActorValue actorValue) noexcept;
   void RemoveAllMagicEffects() noexcept;
   void ReapplyMagicEffects();
 
