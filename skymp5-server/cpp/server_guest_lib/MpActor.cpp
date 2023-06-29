@@ -747,7 +747,7 @@ void MpActor::ApplyMagicEffects(std::vector<espm::Effects::Effect>& effects,
   }
 }
 
-void MpActor::RemoveMagicEffect(const espm::ActorValue actorValue)
+void MpActor::RemoveMagicEffect(const espm::ActorValue actorValue) noexcept
 {
   ActorValues baseActorValues =
     GetBaseActorValues(GetParent(), GetBaseId(), GetRaceId());

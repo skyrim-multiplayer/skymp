@@ -40,13 +40,13 @@ MagicEffectsMap MagicEffectsMap::FromJson(const simdjson::dom::array& effects)
     if (now > entry.endTime) {
       continue;
     }
-    espm::ActorValue av;
+    int32_t av;
     ReadEx(effect, actorValue, &av);
     ReadEx(effect, effectId, &entry.data.effectId);
     ReadEx(effect, duration, &entry.data.areaOfEffect);
     ReadEx(effect, magnitude, &entry.data.magnitude);
     ReadEx(effect, areaOfEffect, &entry.data.areaOfEffect);
-    res.Add(av, std::move(entry));
+    res.Add(static_cast<espm::ActorValue>(av), std::move(entry));
   }
   return res;
 }
@@ -61,7 +61,7 @@ nlohmann::json::array_t MagicEffectsMap::ToJson() const
     obj["magnitude"] = effectEntry.data.magnitude;
     obj["duration"] = effectEntry.data.duration;
     obj["areaOfEffect"] = effectEntry.data.areaOfEffect;
-    obj["actorValue"] = actorValue;
+    obj["actorValue"] = static_cast<int32_t>(actorValue);
     res.push_back(obj);
   }
   return res;
