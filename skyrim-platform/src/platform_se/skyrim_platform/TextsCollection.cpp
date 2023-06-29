@@ -19,7 +19,7 @@ int TextsCollection::CreateText(double xPos, double yPos, std::wstring str,
   uint32_t id;
   makeId->CreateID(id);
   if (texts.size() <= id) {
-    texts.resize(id);
+    texts.resize(id + 1);
   }
 
   texts[id] = text;
@@ -110,13 +110,10 @@ const std::pair<double, double>& TextsCollection::GetTextPos(int textId) const
   if (makeId->IsID(textId) == false) {
     throw std::runtime_error("GetTextPos - textId doesn't exist");
   }
-
-  std::pair<double, double> positions = {
+  return std::pair<double, double>{
     texts[textId].x,
     texts[textId].y,
   };
-
-  return positions;
 }
 const std::wstring& TextsCollection::GetTextString(int textId) const
 {
