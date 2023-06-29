@@ -43,7 +43,7 @@ void TextsCollection::DestroyAllTexts()
 void TextsCollection::SetTextPos(int& textId, double& xPos, double& yPos)
 {
   if (makeId->IsID(textId) == false) {
-    return;
+    throw std::runtime_error("SetTextPos - textId doesn't exist");
   }
   texts[textId].x = xPos;
   texts[textId].y = yPos;
@@ -51,56 +51,56 @@ void TextsCollection::SetTextPos(int& textId, double& xPos, double& yPos)
 void TextsCollection::SetTextString(int& textId, std::wstring& str)
 {
   if (makeId->IsID(textId) == false) {
-    return;
+    throw std::runtime_error("SetTextString - textId doesn't exist");
   }
   texts[textId].string = std::move(str);
 }
 void TextsCollection::SetTextColor(int& textId, std::array<double, 4>& color)
 {
   if (makeId->IsID(textId) == false) {
-    return;
+    throw std::runtime_error("SetTextColor - textId doesn't exist");
   }
   texts[textId].color = color;
 }
 void TextsCollection::SetTextFont(int& textId, std::wstring& name)
 {
   if (makeId->IsID(textId) == false) {
-    return;
+    throw std::runtime_error("SetTextFont - textId doesn't exist");
   }
   texts[textId].fontName = name;
 }
 void TextsCollection::SetTextRotation(int& textId, float& rotation)
 {
   if (makeId->IsID(textId) == false) {
-    return;
+    throw std::runtime_error("SetTextRotation - textId doesn't exist");
   }
   texts[textId].rotation = rotation;
 }
 void TextsCollection::SetTextSize(int& textId, float& size)
 {
   if (makeId->IsID(textId) == false) {
-    return;
+    throw std::runtime_error("SetTextSize - textId doesn't exist");
   }
   texts[textId].size = size;
 }
 void TextsCollection::SetTextEffect(int& textId, int& effect)
 {
   if (makeId->IsID(textId) == false) {
-    return;
+    throw std::runtime_error("SetTextEffect - textId doesn't exist");
   }
   texts[textId].effects = static_cast<DirectX::SpriteEffects>(effect);
 }
 void TextsCollection::SetTextDepth(int& textId, int& depth)
 {
   if (makeId->IsID(textId) == false) {
-    return;
+    throw std::runtime_error("SetTextDepth - textId doesn't exist");
   }
   texts[textId].layerDepth = depth;
 }
 void TextsCollection::SetTextOrigin(int& textId, std::array<double, 2>& origin)
 {
   if (makeId->IsID(textId) == false) {
-    return;
+    throw std::runtime_error("SetTextOrigin - textId doesn't exist");
   }
   texts[textId].origin = origin;
 }
