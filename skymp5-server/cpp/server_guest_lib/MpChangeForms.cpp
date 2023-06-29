@@ -1,5 +1,6 @@
 #include "MpChangeForms.h"
 #include "JsonUtils.h"
+#include "MagicEffectsMap.h"
 
 nlohmann::json MpChangeForm::ToJson(const MpChangeForm& changeForm)
 {
@@ -50,6 +51,7 @@ nlohmann::json MpChangeForm::ToJson(const MpChangeForm& changeForm)
     changeForm.spawnPoint.cellOrWorldDesc.ToString();
 
   res["spawnDelay"] = changeForm.spawnDelay;
+  res["effects"] = changeForm.activeMagicEffects.ToJson();
   return res;
 }
 
@@ -67,7 +69,7 @@ MpChangeForm MpChangeForm::JsonToChangeForm(simdjson::dom::element& element)
     staminaPercentage("staminaPercentage"), isDead("isDead"),
     spawnPointPos("spawnPoint_pos"), spawnPointRot("spawnPoint_rot"),
     spawnPointCellOrWorldDesc("spawnPoint_cellOrWorldDesc"),
-    spawnDelay("spawnDelay");
+    spawnDelay("spawnDelay"), effects("effects");
 
   MpChangeForm res;
   ReadEx(element, recType, &res.recType);
@@ -141,6 +143,10 @@ MpChangeForm MpChangeForm::JsonToChangeForm(simdjson::dom::element& element)
   res.spawnPoint.cellOrWorldDesc = FormDesc::FromString(tmp);
 
   ReadEx(element, spawnDelay, &res.spawnDelay);
+
+  simdjson::dom::array activeMagicEffects;
+  ReadEx(element, effects, &activeMagicEffects);
+  res.activeMagicEffects = MagicEffectsMap::FromJson(activeMagicEffects);
 
   return res;
 }

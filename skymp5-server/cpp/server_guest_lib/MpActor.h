@@ -2,6 +2,7 @@
 #include "Appearance.h"
 #include "GetBaseActorValues.h"
 #include "MpObjectReference.h"
+#include "libespm/espm.h"
 #include <memory>
 #include <optional>
 #include <set>
@@ -89,6 +90,7 @@ public:
   void RestoreActorValue(espm::ActorValue av, float value);
   void DamageActorValue(espm::ActorValue av, float value);
   void SetActorValue(espm::ActorValue actorValue, float value);
+  void SetActorValues(const ActorValues& actorValues);
 
   BaseActorValues GetBaseValues();
   BaseActorValues GetMaximumValues();
@@ -100,6 +102,15 @@ public:
   void IncreaseBlockCount() noexcept;
   void ResetBlockCount() noexcept;
   uint32_t GetBlockCount() const noexcept;
+  void ApplyMagicEffect(espm::Effects::Effect& effect,
+                        const bool hasSweetpie = false,
+                        const bool durationOverriden = false);
+  void ApplyMagicEffects(std::vector<espm::Effects::Effect>& effects,
+                         const bool hasSweetpie = false,
+                         const bool durationOverriden = false);
+  void RemoveMagicEffect(const espm::ActorValue actorValue);
+  void RemoveAllMagicEffects() noexcept;
+  void ReapplyMagicEffects();
 
 private:
   struct Impl;
