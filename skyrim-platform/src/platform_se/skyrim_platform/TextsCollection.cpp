@@ -29,7 +29,7 @@ int TextsCollection::CreateText(double xPos, double yPos, std::wstring str,
 void TextsCollection::DestroyText(int textId)
 {
   if (makeId->IsID(textId) == false) {
-    return;
+    throw std::runtime_error("DestroyText - textId doesn't exist");
   }
   texts.erase(texts.begin() + textId);
   makeId->DestroyID(textId);
