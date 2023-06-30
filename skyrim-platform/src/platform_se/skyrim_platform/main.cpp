@@ -98,8 +98,10 @@ void InitCMD()
   const int offsetTop = settings->GetInteger("Debug", "CmdOffsetTop", 720);
   const int width = settings->GetInteger("Debug", "CmdWidth", 1900);
   const int height = settings->GetInteger("Debug", "CmdHeight", 317);
+  const bool isAlwaysOnTop =
+    settings->GetBool("Debug", "CmdIsAlwaysOnTop", false);
 
-  ConsoleApi::InitCMD(offsetLeft, offsetTop, width, height);
+  ConsoleApi::InitCMD(offsetLeft, offsetTop, width, height, isAlwaysOnTop);
 }
 
 extern "C" {

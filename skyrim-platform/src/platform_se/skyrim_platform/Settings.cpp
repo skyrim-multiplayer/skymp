@@ -25,6 +25,9 @@ std::unique_ptr<Settings::File> Settings::GetPlatformSettings()
 
     file->SetInteger("Debug", "CmdHeight", 317, "; Set height for cmd");
 
+    file->SetBool("Debug", "CmdIsAlwaysOnTop", false,
+                  "; Set Cmd stay on top of others windows");
+
     file->Save();
   }
 

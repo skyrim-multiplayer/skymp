@@ -4,7 +4,8 @@
 
 WindowsConsolePrinter::WindowsConsolePrinter(const int offsetLeft,
                                              const int offsetTop,
-                                             const int width, const int height)
+                                             const int width, const int height,
+                                             const bool isAlwaysOnTop)
 {
   if (AllocConsole()) {
     freopen("CONOUT$", "w", stdout);
@@ -16,8 +17,8 @@ WindowsConsolePrinter::WindowsConsolePrinter(const int offsetLeft,
 
     HWND window_header = GetConsoleWindow();
 
-    SetWindowPos(window_header, HWND_TOPMOST, offsetLeft, offsetTop, width,
-                 height, 0x4000);
+    SetWindowPos(window_header, isAlwaysOnTop ? HWND_TOPMOST : HWND_TOP,
+                 offsetLeft, offsetTop, width, height, 0x4000);
   }
 }
 

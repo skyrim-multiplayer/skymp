@@ -22,6 +22,6 @@ inline void Register(JsValue& exports)
 }
 
 void InitCMD(const int offsetLeft, const int offsetTop, const int width,
-             const int height);
+             const int height, const bool isAlwaysOnTop);
 
 }
