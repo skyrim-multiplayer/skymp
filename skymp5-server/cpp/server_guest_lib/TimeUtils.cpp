@@ -1,4 +1,5 @@
 #include "TimeUtils.h"
+#include <iomanip>
 
 std::string TimeUtils::ToString(const TimeUtils::SystemTimePoint& timePoint)
 {
