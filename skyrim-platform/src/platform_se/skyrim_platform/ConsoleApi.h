@@ -20,4 +20,8 @@ inline void Register(JsValue& exports)
   exports.SetProperty("setPrintConsolePrefixesEnabled",
                       JsValue::Function(SetPrintConsolePrefixesEnabled));
 }
+
+void InitCMD(const int offsetLeft, const int offsetTop, const int width,
+             const int height);
+
 }

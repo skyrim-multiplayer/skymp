@@ -23,6 +23,7 @@ struct ConsoleCommand
 };
 static std::map<std::string, ConsoleCommand> replacedConsoleCmd;
 static bool printConsolePrefixesEnabled = true;
+static WindowsConsolePrinter* windowsConsolePrinter = NULL;
 
 bool IsNameEqual(const std::string& first, const std::string& second)
 {
@@ -35,6 +36,10 @@ bool IsNameEqual(const std::string& first, const std::string& second)
 JsValue ConsoleApi::PrintConsole(const JsFunctionArguments& args)
 {
   g_printer->Print(args);
+
+  if (windowsConsolePrinter)
+    windowsConsolePrinter->Print(args);
+
   return JsValue::Undefined();
 }
 
@@ -57,6 +62,13 @@ const char* ConsoleApi::GetScriptPrefix()
 const char* ConsoleApi::GetExceptionPrefix()
 {
   return printConsolePrefixesEnabled ? "[Exception] " : "";
+}
+
+void ConsoleApi::InitCMD(const int offsetLeft, const int offsetTop,
+                         const int width, const int height)
+{
+  windowsConsolePrinter =
+    new WindowsConsolePrinter(offsetLeft, offsetTop, width, height);
 }
 
 namespace {

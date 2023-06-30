@@ -1,4 +1,5 @@
 #include "CallNativeApi.h"
+#include "ConsoleApi.h"
 #include "DumpFunctions.h"
 #include "EventHandler.h"
 #include "EventManager.h"
@@ -85,6 +86,22 @@ void InitLog()
   logger::info(FMT_STRING("{} v{}"), Version::PROJECT, Version::NAME);
 }
 
+void InitCMD()
+{
+  auto settings = Settings::GetPlatformSettings();
+  const bool isCMD = settings->GetBool("Debug", "CMD", false);
+
+  if (!isCMD)
+    return;
+
+  const int offsetLeft = settings->GetInteger("Debug", "CmdOffsetLeft", 0);
+  const int offsetTop = settings->GetInteger("Debug", "CmdOffsetTop", 720);
+  const int width = settings->GetInteger("Debug", "CmdWidth", 1900);
+  const int height = settings->GetInteger("Debug", "CmdHeight", 317);
+
+  ConsoleApi::InitCMD(offsetLeft, offsetTop, width, height);
+}
+
 extern "C" {
 DLLEXPORT uint32_t SkyrimPlatform_IpcSubscribe_Impl(
   const char* systemName, IPC::MessageCallback callback, void* state)
@@ -107,6 +124,8 @@ DLLEXPORT void SkyrimPlatform_IpcSend_Impl(const char* systemName,
 DLLEXPORT bool SKSEAPI SKSEPlugin_Load_Impl(const SKSE::LoadInterface* skse)
 {
   InitLog();
+
+  InitCMD();
 
   logger::info("Loading plugin.");
 
