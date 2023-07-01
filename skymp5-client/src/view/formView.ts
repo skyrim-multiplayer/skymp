@@ -1,4 +1,4 @@
-import { Actor, ActorBase, createText, destroyText, Form, FormType, Game, NetImmerse, ObjectReference, once, printConsole, setTextPos, setTextString, TESModPlatform, Utility, worldPointToScreenPoint } from "skyrimPlatform";
+import { Actor, ActorBase, createText, destroyText, Form, FormType, Game, Keyword, NetImmerse, ObjectReference, once, printConsole, setTextPos, setTextString, TESModPlatform, Utility, worldPointToScreenPoint } from "skyrimPlatform";
 import { setDefaultAnimsDisabled, applyAnimation } from "../sync/animation";
 import { Appearance, applyAppearance } from "../sync/appearance";
 import { isBadMenuShown, applyEquipment } from "../sync/equipment";
@@ -359,7 +359,10 @@ export class FormView implements View<FormModel> {
       const headPart = "NPC Head [Head]";
       const maxNicknameDrawDistance = 1000;
       const playerActor = Game.getPlayer()!;
-      const isVisibleByPlayer = !model.movement?.isSneaking && playerActor.getDistance(refr) <= maxNicknameDrawDistance && playerActor.hasLOS(refr);
+      const isVisibleByPlayer = !model.movement?.isSneaking
+                                && playerActor.getDistance(refr) <= maxNicknameDrawDistance
+                                && playerActor.hasLOS(refr)
+                                && !this.isSweetHidePerson(refr);
       if (isVisibleByPlayer) {
         const headScreenPos = worldPointToScreenPoint([
           NetImmerse.getNodeWorldPositionX(refr, headPart, false),
@@ -382,6 +385,13 @@ export class FormView implements View<FormModel> {
     } else {
       this.removeNickname();
     }
+  }
+
+  private isSweetHidePerson(refr: ObjectReference): boolean {
+    const actor = Actor.from(refr)
+    if (!actor) return false;
+    const keyword = Keyword.getKeyword('SweetHidePerson');
+    return actor.wornHasKeyword(keyword);
   }
 
   private removeNickname() {
