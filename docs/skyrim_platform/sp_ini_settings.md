@@ -28,7 +28,7 @@ You can also get values from file fields
 - ```Bool GetBool(section, key, defaultValue)```
 - ```String GetString(section, key, defaultValue)```
 
-### example
+### Example
 ```c++
 auto settings = Settings::GetPlatformSettings();
 
