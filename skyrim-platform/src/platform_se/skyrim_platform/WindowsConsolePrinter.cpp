@@ -2,10 +2,9 @@
 
 #include <Windows.h>
 
-WindowsConsolePrinter::WindowsConsolePrinter(const int offsetLeft,
-                                             const int offsetTop,
-                                             const int width, const int height,
-                                             const bool isAlwaysOnTop)
+WindowsConsolePrinter::WindowsConsolePrinter(int offsetLeft, int offsetTop,
+                                             int width, int height,
+                                             bool isAlwaysOnTop)
 {
   if (AllocConsole()) {
     freopen("CONOUT$", "w", stdout);

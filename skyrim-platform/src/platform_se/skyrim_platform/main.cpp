@@ -86,22 +86,22 @@ void InitLog()
   logger::info(FMT_STRING("{} v{}"), Version::PROJECT, Version::NAME);
 }
 
-void InitCMD()
+void InitCmd()
 {
   auto settings = Settings::GetPlatformSettings();
-  const bool isCMD = settings->GetBool("Debug", "CMD", false);
+  bool isCmd = settings->GetBool("Debug", "CMD", false);
 
-  if (!isCMD)
+  if (!isCmd) {
     return;
+  }
 
-  const int offsetLeft = settings->GetInteger("Debug", "CmdOffsetLeft", 0);
-  const int offsetTop = settings->GetInteger("Debug", "CmdOffsetTop", 720);
-  const int width = settings->GetInteger("Debug", "CmdWidth", 1900);
-  const int height = settings->GetInteger("Debug", "CmdHeight", 317);
-  const bool isAlwaysOnTop =
-    settings->GetBool("Debug", "CmdIsAlwaysOnTop", false);
+  int offsetLeft = settings->GetInteger("Debug", "CmdOffsetLeft", 0);
+  int offsetTop = settings->GetInteger("Debug", "CmdOffsetTop", 720);
+  int width = settings->GetInteger("Debug", "CmdWidth", 1900);
+  int height = settings->GetInteger("Debug", "CmdHeight", 317);
+  bool isAlwaysOnTop = settings->GetBool("Debug", "CmdIsAlwaysOnTop", false);
 
-  ConsoleApi::InitCMD(offsetLeft, offsetTop, width, height, isAlwaysOnTop);
+  ConsoleApi::InitCmd(offsetLeft, offsetTop, width, height, isAlwaysOnTop);
 }
 
 extern "C" {
@@ -127,7 +127,7 @@ DLLEXPORT bool SKSEAPI SKSEPlugin_Load_Impl(const SKSE::LoadInterface* skse)
 {
   InitLog();
 
-  InitCMD();
+  InitCmd();
 
   logger::info("Loading plugin.");
 

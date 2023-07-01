@@ -21,7 +21,7 @@ inline void Register(JsValue& exports)
                       JsValue::Function(SetPrintConsolePrefixesEnabled));
 }
 
-void InitCMD(const int offsetLeft, const int offsetTop, const int width,
-             const int height, const bool isAlwaysOnTop);
+void InitCmd(int offsetLeft, int offsetTop, int width, int height,
+             bool isAlwaysOnTop);
 
 }

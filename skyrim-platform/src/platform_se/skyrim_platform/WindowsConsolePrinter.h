@@ -4,9 +4,8 @@
 class WindowsConsolePrinter : public IConsolePrinter
 {
 public:
-  WindowsConsolePrinter(const int offsetLeft, const int offsetTop,
-                        const int width, const int height,
-                        const bool isAlwaysOnTop);
+  WindowsConsolePrinter(int offsetLeft, int offsetTop, int width, int height,
+                        bool isAlwaysOnTop);
   ~WindowsConsolePrinter() override;
 
   void Print(const JsFunctionArguments& args) override;
