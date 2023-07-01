@@ -21,6 +21,7 @@ public:
                                     const std::vector<VarValue>& arguments);
   VarValue PlaceAtMe(VarValue self, const std::vector<VarValue>& arguments);
   VarValue SetAngle(VarValue self, const std::vector<VarValue>& arguments);
+  VarValue Enable(VarValue self, const std::vector<VarValue>& arguments);
   VarValue Disable(VarValue self, const std::vector<VarValue>& arguments);
   VarValue BlockActivation(VarValue self,
                            const std::vector<VarValue>& arguments);
@@ -53,6 +54,7 @@ public:
               &PapyrusObjectReference::GetAnimationVariableBool);
     AddMethod(vm, "PlaceAtMe", &PapyrusObjectReference::PlaceAtMe);
     AddMethod(vm, "SetAngle", &PapyrusObjectReference::SetAngle);
+    AddMethod(vm, "Enable", &PapyrusObjectReference::Enable);
     AddMethod(vm, "Disable", &PapyrusObjectReference::Disable);
     AddMethod(vm, "BlockActivation", &PapyrusObjectReference::BlockActivation);
     AddMethod(vm, "IsActivationBlocked",
