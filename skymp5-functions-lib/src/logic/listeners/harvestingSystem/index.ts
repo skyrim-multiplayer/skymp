@@ -131,7 +131,7 @@ export class HarvestingSystem implements GameModeListener {
       []
     );
 
-    if (isHarvested) return 'blockActivation';
+    if (isHarvested) return 'continue';
 
     const baseId = HarvestingSystem.getNumberField(mp.lookupEspmRecordById(targetId), 'NAME');
     if (!baseId) return 'continue';
@@ -160,9 +160,9 @@ export class HarvestingSystem implements GameModeListener {
         maxLevel = Math.max(possessedSkills[skillName].level, maxLevel);
       }
     });
-    if (maxLevel == -1) return 'blockActivation';
+    if (maxLevel == -1) return 'continue';
 
-    if (ingredientId === 0x00064b3f) return 'blockActivation';
+    if (ingredientId === 0x00064b3f) return 'continue';
 
     const isDrawn = mp.callPapyrusFunction(
       'method',
@@ -176,12 +176,12 @@ export class HarvestingSystem implements GameModeListener {
 
     if (ingredientId === 0x4b0ba) {
       const sickle = equipment.find(item => item.baseId === 0x70BAD73);
-      if (!(sickle && sickle.worn && isDrawn)) return 'blockActivation';
+      if (!(sickle && sickle.worn && isDrawn)) return 'continue';
     }
 
     if (ingredientId === 0x64B41) {
       const shovel = equipment.find(item => item.baseId === 0x7E870FB);
-      if (!(shovel && shovel.worn && isDrawn)) return 'blockActivation';
+      if (!(shovel && shovel.worn && isDrawn)) return 'continue';
     }
 
     const additionalItemsNumber = maxLevel + (Math.random() > 0.5 ? 1 : 0);
@@ -189,6 +189,6 @@ export class HarvestingSystem implements GameModeListener {
       this.controller.addItem(casterActorId, id, additionalItemsNumber, true))
     }, 1000);
 
-    return 'blockActivation';
+    return 'continue';
   }
 }
