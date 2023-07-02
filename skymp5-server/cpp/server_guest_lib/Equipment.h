@@ -7,7 +7,7 @@ struct Equipment
   Inventory inv;
 
   uint32_t leftSpell = 0;
-  uint32_t rightSpell= 0;
+  uint32_t rightSpell = 0;
   uint32_t voiceSpell = 0;
   uint32_t instantSpell = 0;
 
