@@ -14,7 +14,14 @@ import { getMovement } from "./sync/movement";
 import { getAppearance } from "./sync/appearance";
 import { AnimationSource, Animation, setupHooks } from "./sync/animation";
 import { getEquipment } from "./sync/equipment";
-import { getDiff, getInventory, hasExtras, Inventory, removeSimpleItemsAsManyAsPossible, sumInventories } from "./sync/inventory";
+import {
+  getDiff,
+  getInventory,
+  hasExtras,
+  Inventory,
+  removeSimpleItemsAsManyAsPossible,
+  sumInventories,
+} from "./sync/inventory";
 import { MsgType, HostStartMessage, HostStopMessage } from "./messages";
 import { MsgHandler } from "./modelSource/msgHandler";
 import { ModelSource } from "./modelSource/modelSource";
@@ -32,7 +39,11 @@ import { getHitData } from "./sync/hit";
 import { FormModel } from "./modelSource/model";
 import * as netInfo from "./debug/netInfoSystem";
 import { WorldView } from "./view/worldView";
-import { getViewFromStorage, localIdToRemoteId, remoteIdToLocalId } from "./view/worldViewMisc";
+import {
+  getViewFromStorage,
+  localIdToRemoteId,
+  remoteIdToLocalId,
+} from "./view/worldViewMisc";
 import { getScreenResolution } from "./view/formView";
 import * as taffyPerkSystem from "./sweetpie/taffyPerkSystem";
 
@@ -248,7 +259,10 @@ export class SkympClient {
           e.newContainer.getFormID() === 0x14
         ) {
           if (e.newContainer.getFormID() === 0x14 && e.numItems > 0) {
-            taffyPerkSystem.inventoryChanged(e.newContainer, { baseId: e.baseObj.getFormID(), count: e.numItems });
+            taffyPerkSystem.inventoryChanged(e.newContainer, {
+              baseId: e.baseObj.getFormID(),
+              count: e.numItems,
+            });
           }
           if (!lastInv) lastInv = getPcInventory();
           if (lastInv) {
@@ -266,14 +280,19 @@ export class SkympClient {
               printConsole(`[${i}] ${JSON.stringify(diff.entries[i])}`);
             }
             const msgs = diff.entries
-              .filter(entry => entry.count > 0 ? taffyPerkSystem.canDropOrPutItem(entry.baseId) : true)
+              .filter((entry) =>
+                entry.count > 0
+                  ? taffyPerkSystem.canDropOrPutItem(entry.baseId)
+                  : true
+              )
               .map((entry) => {
                 if (entry.count !== 0) {
                   const msg = JSON.parse(JSON.stringify(entry));
                   if (Game.getFormEx(entry.baseId)?.getName() === msg["name"]) {
                     delete msg["name"];
                   }
-                  msg["t"] = entry.count > 0 ? MsgType.PutItem : MsgType.TakeItem;
+                  msg["t"] =
+                    entry.count > 0 ? MsgType.PutItem : MsgType.TakeItem;
                   msg["count"] = Math.abs(msg["count"]);
                   msg["target"] =
                     e.oldContainer.getFormID() === 0x14
@@ -292,7 +311,11 @@ export class SkympClient {
                 const put = entry.count > 0;
                 const take = entry.count < 0;
                 if (put) {
-                  lastInv = removeSimpleItemsAsManyAsPossible(lastInv, entry.baseId, entry.count);
+                  lastInv = removeSimpleItemsAsManyAsPossible(
+                    lastInv,
+                    entry.baseId,
+                    entry.count
+                  );
                 } else if (take) {
                   const add = { entries: [entry] };
                   add.entries[0].count *= -1;
@@ -307,14 +330,28 @@ export class SkympClient {
 
     on("containerChanged", (e) => {
       const pl = Game.getPlayer() as Actor;
-      const isPlayer: boolean = pl && e.oldContainer && (pl.getFormID() === e.oldContainer.getFormID());
-      const noContainer: boolean = e.newContainer === null || e.newContainer === undefined;
+      const isPlayer: boolean =
+        pl && e.oldContainer && pl.getFormID() === e.oldContainer.getFormID();
+      const noContainer: boolean =
+        e.newContainer === null || e.newContainer === undefined;
       const isReference: boolean = e.reference !== null;
-      if (e.newContainer && e.newContainer.getFormID() === pl.getFormID()) return;
-      if (isPlayer && isReference && noContainer && taffyPerkSystem.canDropOrPutItem(e.baseObj.getFormID())) {
+      if (e.newContainer && e.newContainer.getFormID() === pl.getFormID())
+        return;
+      if (
+        isPlayer &&
+        isReference &&
+        noContainer &&
+        taffyPerkSystem.canDropOrPutItem(e.baseObj.getFormID())
+      ) {
         const radius: number = 200;
         const baseId: number = e.baseObj.getFormID();
-        const refrId = Game.findClosestReferenceOfType(e.baseObj, pl.getPositionX(), pl.getPositionY(), pl.getPositionZ(), radius)?.getFormID();
+        const refrId = Game.findClosestReferenceOfType(
+          e.baseObj,
+          pl.getPositionX(),
+          pl.getPositionY(),
+          pl.getPositionZ(),
+          radius
+        )?.getFormID();
         if (refrId) {
           const refr = ObjectReference.from(Game.getFormEx(refrId));
           if (refr) {
@@ -330,21 +367,30 @@ export class SkympClient {
 
     const playerFormId = 0x14;
     on("equip", (e) => {
-      if (!e.actor || !e.baseObj) return;
+      if (!e.actor || !e.baseObj) {
+        return;
+      }
+
       if (e.actor.getFormID() === playerFormId) {
         this.equipmentChanged = true;
+
         this.sendTarget.send(
           { t: MsgType.OnEquip, baseId: e.baseObj.getFormID() },
           false
         );
       }
     });
+
     on("unequip", (e) => {
-      if (!e.actor || !e.baseObj) return;
+      if (!e.actor || !e.baseObj) {
+        return;
+      }
+
       if (e.actor.getFormID() === playerFormId) {
         this.equipmentChanged = true;
       }
     });
+
     on("loadGame", () => {
       // Currently only armor is equipped after relogging (see remoteServer.ts)
       // This hack forces sending /equipment without weapons/ back to the server
@@ -373,9 +419,7 @@ export class SkympClient {
       if (e.target.getFormID() === playerFormId) return;
       if (e.aggressor.getFormID() !== playerFormId) return;
       if (sp.Weapon.from(e.source) && sp.Actor.from(e.target)) {
-        this.sendTarget.send(
-          { t: MsgType.OnHit, data: getHitData(e) }, true
-        );
+        this.sendTarget.send({ t: MsgType.OnHit, data: getHitData(e) }, true);
       }
     });
   }
@@ -524,7 +568,10 @@ export class SkympClient {
       this.sendAnimation(target);
       this.sendAppearance(target);
       this.sendEquipment(target);
-      this.sendActorValuePercentage(target, target ? this.getForm(target) : this.getForm());
+      this.sendActorValuePercentage(
+        target,
+        target ? this.getForm(target) : this.getForm()
+      );
     });
     this.sendHostAttempts();
   }
@@ -580,7 +627,9 @@ export class SkympClient {
 
   private getForm(refrId?: number): FormModel | undefined {
     const world = (this.modelSource as ModelSource).getWorldModel();
-    const form = refrId ? world?.forms.find(f => f?.refrId === refrId) : world.forms[world.playerCharacterFormIdx];
+    const form = refrId
+      ? world?.forms.find((f) => f?.refrId === refrId)
+      : world.forms[world.playerCharacterFormIdx];
     return form;
   }
 

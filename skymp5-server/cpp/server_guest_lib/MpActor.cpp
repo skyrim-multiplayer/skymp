@@ -110,30 +110,49 @@ void MpActor::SendToUser(const void* data, size_t size, bool reliable)
     throw std::runtime_error("sendToUser is nullptr");
 }
 
-void MpActor::OnEquip(uint32_t baseId)
+bool MpActor::OnEquip(uint32_t baseId)
 {
-  if (GetInventory().GetItemCount(baseId) == 0)
-    return;
-  auto& espm = GetParent()->GetEspm();
+  const auto& espm = GetParent()->GetEspm();
   auto lookupRes = espm.GetBrowser().LookupById(baseId);
-  if (!lookupRes.rec)
-    return;
-  auto t = lookupRes.rec->GetType();
-  if (t == "INGR" || t == "ALCH") {
-    EatItem(baseId, t);
-    RemoveItem(baseId, 1, nullptr);
 
-    VarValue args[] = { VarValue(std::make_shared<EspmGameObject>(lookupRes)),
-                        VarValue::None() };
-    SendPapyrusEvent("OnObjectEquipped", args, std::size(args));
+  if (!lookupRes.rec) {
+    return false;
   }
-  std::set<std::string> s = { GetParent()->espmFiles.begin(),
-                              GetParent()->espmFiles.end() };
-  bool hasSweetPie = s.count("SweetPie.esp");
-  if (hasSweetPie) {
-    SweetPieScript SweetPieScript(GetParent()->espmFiles);
+
+  const auto recordType = lookupRes.rec->GetType();
+
+  const bool isSpell = recordType == "SPEL";
+  const bool isIngredient = recordType == "INGR";
+  const bool isPotion = recordType == "ALCH";
+
+  if (!(isSpell || isIngredient || isPotion)) {
+    return false;
+  }
+
+  if (!isSpell && GetInventory().GetItemCount(baseId) == 0) {
+    return false;
+  }
+
+  if (isIngredient || isPotion) {
+    EatItem(baseId, recordType);
+    RemoveItem(baseId, 1, nullptr);
+  }
+
+  const VarValue args[] = {
+    VarValue(std::make_shared<EspmGameObject>(lookupRes)), VarValue::None()
+  };
+
+  SendPapyrusEvent("OnObjectEquipped", args, std::size(args));
+
+  const auto& espmFiles = GetParent()->espmFiles;
+
+  if (std::any_of(espmFiles.begin(), espmFiles.end(),
+                  [](auto&& element) { return element == "SweetPie.esp"; })) {
+    SweetPieScript SweetPieScript(espmFiles);
     SweetPieScript.Play(*this, *GetParent(), baseId);
   }
+
+  return true;
 }
 
 void MpActor::AddEventSink(std::shared_ptr<DestroyEventSink> sink)

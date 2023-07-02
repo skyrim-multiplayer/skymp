@@ -38,7 +38,7 @@ public:
 
   void SendToUser(const void* data, size_t size, bool reliable);
 
-  void OnEquip(uint32_t baseId);
+  [[nodiscard]] bool OnEquip(uint32_t baseId);
 
   class DestroyEventSink
   {

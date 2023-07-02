@@ -234,48 +234,65 @@ JsValue InventoryApi::SetInventory(const JsFunctionArguments& args)
   const JsValue& entries = args[2].GetProperty("entries");
   const int size = static_cast<int>(entries.GetProperty("length"));
   RE::Actor* pActor = RE::TESForm::LookupByID<RE::Actor>(formId);
+
   if (!pActor) {
     throw NullPointerException("pActor");
   }
+
   std::vector<BoundObject> objects;
+
   objects.reserve(size);
+
   for (int i = 0; i < size; ++i) {
     const JsValue& entry = entries.GetProperty(JsValue::Int(i));
     double baseId = static_cast<double>(entry.GetProperty("baseId"));
-    RE::TESBoundObject* pBoundObject =
+
+    const RE::TESBoundObject* pBoundObject =
       RE::TESForm::LookupByID<RE::TESBoundObject>(baseId);
+
     if (!pBoundObject) {
       continue;
     }
+
     int count = static_cast<int>(entry.GetProperty("count"));
+
     const bool worn =
       entry.GetProperty("worn").GetType() != JsValue::Type::Undefined
       ? static_cast<bool>(entry.GetProperty("worn"))
       : false;
+
     const bool wornLeft =
       entry.GetProperty("wornLeft").GetType() != JsValue::Type::Undefined
       ? static_cast<bool>(entry.GetProperty("wornLeft"))
       : false;
+
     RE::BGSEquipSlot* slot = nullptr;
+
     if (worn || wornLeft) {
       slot = worn ? static_cast<RE::BGSEquipSlot*>(
                       RE::TESForm::LookupByID(EquipSlot::RightHand))
                   : static_cast<RE::BGSEquipSlot*>(
                       RE::TESForm::LookupByID(EquipSlot::LeftHand));
     }
+
     objects.push_back({ baseId, count, slot });
   }
+
   g_nativeCallRequirements.gameThrQ->AddTask([formId, objects]() {
     RE::Actor* pActor = RE::TESForm::LookupByID<RE::Actor>(formId);
+
     if (!pActor) {
       return;
     }
+
     for (auto& object : objects) {
       RE::TESBoundObject* pBoundObject =
         RE::TESForm::LookupByID<RE::TESBoundObject>(object.baseId);
+
       if (!pBoundObject) {
         continue;
       }
+
       pActor->AddObjectToContainer(pBoundObject, nullptr, object.count,
                                    nullptr);
       if (object.slot) {

@@ -64,10 +64,10 @@ const cropName = (s?: string): string => {
   const max = 128;
   return s.length >= max
     ? s
-      .split("")
-      .filter((x, i) => i < max)
-      .join("")
-      .concat("...")
+        .split("")
+        .filter((x, i) => i < max)
+        .join("")
+        .concat("...")
     : s;
 };
 
@@ -154,7 +154,9 @@ const extractExtraData = (
       case "Enchantment":
         out.enchantmentId = (extra as ExtraEnchantment).enchantmentId;
         out.maxCharge = (extra as ExtraEnchantment).maxCharge;
-        out.removeEnchantmentOnUnequip = (extra as ExtraEnchantment).removeOnUnequip;
+        out.removeEnchantmentOnUnequip = (
+          extra as ExtraEnchantment
+        ).removeOnUnequip;
         break;
       case "Charge":
         out.chargePercent = (extra as ExtraCharge).charge;
@@ -223,7 +225,9 @@ const getExtraContainerChangesAsInventory = (
 };
 
 const getBaseContainerAsInventory = (refr: ObjectReference): Inventory => {
-  return { entries: getContainer((refr.getBaseObject() as ActorBase).getFormID()) };
+  return {
+    entries: getContainer((refr.getBaseObject() as ActorBase).getFormID()),
+  };
 };
 
 export const sumInventories = (lhs: Inventory, rhs: Inventory): Inventory => {
@@ -249,7 +253,11 @@ export const sumInventories = (lhs: Inventory, rhs: Inventory): Inventory => {
   };
 };
 
-export const removeSimpleItemsAsManyAsPossible = (inv: Inventory, baseId: number, count: number): Inventory => {
+export const removeSimpleItemsAsManyAsPossible = (
+  inv: Inventory,
+  baseId: number,
+  count: number
+): Inventory => {
   const res: Inventory = { entries: [] };
   res.entries = JSON.parse(JSON.stringify(inv.entries));
 
@@ -260,7 +268,7 @@ export const removeSimpleItemsAsManyAsPossible = (inv: Inventory, baseId: number
 
   res.entries = res.entries.filter((e) => e.count > 0);
   return res;
-}
+};
 
 export const getDiff = (
   lhs: Inventory,
@@ -348,12 +356,14 @@ export const applyInventory = (
     const type = f.getType();
     // For misc items, potions and ingredients we don't want to split them into multiple items
     // This was made to fix a performance issue with users having 10000+ of misc items (i.e. gold)
-    if (type === FormType.Misc || type === FormType.Potion || type === FormType.Ingredient) {
+    if (
+      type === FormType.Misc ||
+      type === FormType.Potion ||
+      type === FormType.Ingredient
+    ) {
       absCount = 1;
       oneStepCount = e.count;
-    }
-    else {
-
+    } else {
       if (absCount > 1000) {
         absCount = 1;
         oneStepCount = 1;
@@ -380,7 +390,11 @@ export const applyInventory = (
         queueNiNodeUpdateNeeded = true;
       }
 
-      printConsole(`Adding ${e.baseId} to ${refr.getFormID().toString(16)} with count ${oneStepCount}`);
+      printConsole(
+        `Adding ${e.baseId} to ${refr
+          .getFormID()
+          .toString(16)} with count ${oneStepCount}`
+      );
       TESModPlatform.addItemEx(
         refr,
         f,
