@@ -31,16 +31,18 @@ MpActor* ActionListener::SendToNeighbours(
   }
 
   MpActor* actor =
-      dynamic_cast<MpActor*>(partOne.worldState.LookupFormByIdx(idx));
-    if (!actor) {
-      spdlog::error("SendToNeighbours - Target actor doesn't exist");
-      return nullptr;
-    }
+    dynamic_cast<MpActor*>(partOne.worldState.LookupFormByIdx(idx));
+  if (!actor) {
+    spdlog::error("SendToNeighbours - Target actor doesn't exist");
+    return nullptr;
+  }
 
   if (idx != myActor->GetIdx()) {
     auto it = partOne.worldState.hosters.find(actor->GetFormId());
-    if (it == partOne.worldState.hosters.end() || it->second != myActor->GetFormId()) {
-      spdlog::error("SendToNeighbours - No permission to update actor {:x}", actor->GetFormId());
+    if (it == partOne.worldState.hosters.end() ||
+        it->second != myActor->GetFormId()) {
+      spdlog::error("SendToNeighbours - No permission to update actor {:x}",
+                    actor->GetFormId());
       return nullptr;
     }
   }
