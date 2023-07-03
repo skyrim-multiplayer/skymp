@@ -25,24 +25,26 @@ MpActor* ActionListener::SendToNeighbours(
 {
   MpActor* myActor = partOne.serverState.ActorByUser(userId);
   // The old behavior is doing nothing in that case. This is covered by tests
-  if (!myActor)
+  if (!myActor) {
+    spdlog::warn("SendToNeighbours - No actor assigned to user");
     return nullptr;
+  }
 
   MpActor* actor =
     dynamic_cast<MpActor*>(partOne.worldState.LookupFormByIdx(idx));
-  if (!actor)
-    throw std::runtime_error("SendToNeighbours - target actor doesn't exist");
+  if (!actor) {
+    spdlog::error("SendToNeighbours - Target actor doesn't exist");
+    return nullptr;
+  }
 
-  auto hosterIterator = partOne.worldState.hosters.find(actor->GetFormId());
-  uint32_t hosterId = hosterIterator != partOne.worldState.hosters.end()
-    ? hosterIterator->second
-    : 0;
-
-  if (idx != actor->GetIdx() && hosterId != myActor->GetFormId()) {
-    std::stringstream ss;
-    ss << std::hex << "You aren't able to update actor with idx " << idx
-       << " (your actor's idx is " << actor->GetIdx() << ')';
-    throw PublicError(ss.str());
+  if (idx != myActor->GetIdx()) {
+    auto it = partOne.worldState.hosters.find(actor->GetFormId());
+    if (it == partOne.worldState.hosters.end() ||
+        it->second != myActor->GetFormId()) {
+      spdlog::error("SendToNeighbours - No permission to update actor {:x}",
+                    actor->GetFormId());
+      return nullptr;
+    }
   }
 
   for (auto listener : actor->GetListeners()) {
