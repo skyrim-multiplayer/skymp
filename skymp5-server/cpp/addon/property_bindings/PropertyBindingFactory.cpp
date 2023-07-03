@@ -20,6 +20,7 @@
 #include "SpawnPointBinding.h"
 #include "TypeBinding.h"
 #include "WorldOrCellDescBinding.h"
+#include "IdxBinding.h"
 
 std::map<std::string, std::shared_ptr<PropertyBinding>>
 PropertyBindingFactory::CreateStandardPropertyBindings()
@@ -44,6 +45,7 @@ PropertyBindingFactory::CreateStandardPropertyBindings()
   result["spawnPoint"] = std::make_shared<SpawnPointBinding>();
   result["type"] = std::make_shared<TypeBinding>();
   result["worldOrCellDesc"] = std::make_shared<WorldOrCellDescBinding>();
+  result["idx"] = std::make_shared<IdxBinding>();
   return result;
 }
 
