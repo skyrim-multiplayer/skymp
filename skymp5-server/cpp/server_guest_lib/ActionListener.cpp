@@ -379,12 +379,13 @@ void ActionListener::OnFinishSpSnippet(const RawMessageData& rawMsgData,
 void ActionListener::OnEquip(const RawMessageData& rawMsgData, uint32_t baseId)
 {
   MpActor* actor = partOne.serverState.ActorByUser(rawMsgData.userId);
-  if (!actor)
+  if (!actor) {
     throw std::runtime_error(
       "Unable to finish SpSnippet: No Actor found for user " +
       std::to_string(rawMsgData.userId));
+  }
 
-  actor->OnEquip(baseId);
+  std::ignore = actor->OnEquip(baseId);
 }
 
 void ActionListener::OnConsoleCommand(
