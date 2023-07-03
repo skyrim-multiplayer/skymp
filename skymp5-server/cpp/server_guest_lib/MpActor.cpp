@@ -1,4 +1,5 @@
 #include "MpActor.h"
+#include "ActiveMagicEffectsMap.h"
 #include "ActorValues.h"
 #include "ChangeFormGuard.h"
 #include "CropRegeneration.h"
@@ -10,6 +11,7 @@
 #include "PapyrusObjectReference.h"
 #include "ServerState.h"
 #include "SweetPieScript.h"
+#include "TimeUtils.h"
 #include "WorldState.h"
 #include "libespm/espm.h"
 #include <NiPoint3.h>
@@ -512,7 +514,8 @@ void MpActor::RespawnWithDelay(bool shouldTeleport)
 
   uint32_t formId = GetFormId();
   if (auto worldState = GetParent()) {
-    worldState->SetTimer(GetRespawnTime())
+    float respawnTime = GetRespawnTime();
+    worldState->SetTimer(TimeUtils::ToMs(respawnTime))
       .Then([worldState, this, formId, shouldTeleport](Viet::Void) {
         if (worldState->LookupFormById(formId).get() == this) {
           this->Respawn(shouldTeleport);
@@ -700,7 +703,9 @@ void MpActor::ApplyMagicEffect(espm::Effects::Effect& effect,
       RestoreActorValue(av, effect.magnitude);
     }
   } else if (isRate || isMult) {
-    const ActorValues& actorValues = GetChangeForm().actorValues;
+    MpChangeForm changeForm = GetChangeForm();
+    const ActorValues& actorValues = changeForm.actorValues;
+    const ActiveMagicEffectsMap& activeEffects = changeForm.activeMagicEffects;
     float previous = actorValues.GetValue(av);
     uint32_t formId = GetFormId();
     WorldState* worldState = GetParent();
@@ -709,10 +714,9 @@ void MpActor::ApplyMagicEffect(espm::Effects::Effect& effect,
     } else {
       SetActorValue(av, previous * effect.magnitude);
     }
-    // question about application
     auto now = std::chrono::system_clock::now();
     std::chrono::system_clock::time_point endTime;
-    float duration = 0.f;
+    std::chrono::milliseconds duration;
     if (durationOverriden) {
       std::optional effect = GetChangeForm().activeMagicEffects.Get(av);
       if (!effect.has_value()) {
@@ -722,16 +726,23 @@ void MpActor::ApplyMagicEffect(espm::Effects::Effect& effect,
         return;
       }
       endTime = effect.value().get().endTime;
-      std::chrono::duration<float> d = endTime - now;
-      duration = d.count();
+      duration =
+        std::chrono::duration_cast<std::chrono::milliseconds>(endTime - now);
     } else {
-      endTime = now + std::chrono::seconds(effect.duration);
-      duration = effect.duration;
+      endTime = now + TimeUtils::ToMs(effect.duration);
+      duration = TimeUtils::ToMs(effect.duration);
     }
-    GetChangeForm().activeMagicEffects.Add(
-      av, MagicEffectsMap::Entry{ effect, endTime });
-    worldState->SetTimer(duration).Then(
-      [formId, actorValue = av, previous, worldState](Viet::Void) {
+    ActiveMagicEffectsMap::Entry entry{ effect, endTime };
+    if (activeEffects.Has(av)) {
+      const ActiveMagicEffectsMap::Entry& entry =
+        activeEffects.Get(av).value().get();
+      worldState->RemoveTimer(entry.endTime);
+    }
+    EditChangeForm([av, pEntry = &entry](MpChangeForm& changeForm) {
+      changeForm.activeMagicEffects.Add(av, *pEntry);
+    });
+    worldState->SetTimer(std::cref(endTime))
+      .Then([formId, actorValue = av, worldState](Viet::Void) {
         auto& actor = worldState->GetFormAt<MpActor>(formId);
         actor.RemoveMagicEffect(actorValue);
       });
@@ -753,7 +764,9 @@ void MpActor::RemoveMagicEffect(const espm::ActorValue actorValue) noexcept
     GetBaseActorValues(GetParent(), GetBaseId(), GetRaceId());
   float baseActorValue = baseActorValues.GetValue(actorValue);
   SetActorValue(actorValue, baseActorValue);
-  GetChangeForm().activeMagicEffects.Remove(actorValue);
+  EditChangeForm([actorValue](MpChangeForm& changeForm) {
+    changeForm.activeMagicEffects.Remove(actorValue);
+  });
 }
 
 void MpActor::RemoveAllMagicEffects() noexcept
@@ -761,7 +774,8 @@ void MpActor::RemoveAllMagicEffects() noexcept
   ActorValues baseActorValues =
     GetBaseActorValues(GetParent(), GetBaseId(), GetRaceId());
   SetActorValues(baseActorValues);
-  GetChangeForm().activeMagicEffects.Clear();
+  EditChangeForm(
+    [](MpChangeForm& changeForm) { changeForm.activeMagicEffects.Clear(); });
 }
 
 void MpActor::ReapplyMagicEffects()
@@ -772,8 +786,9 @@ void MpActor::ReapplyMagicEffects()
   if (activeEffects.empty()) {
     return;
   }
-  std::unordered_set<std::string> modFiles = { GetParent()->espmFiles.begin(),
-                                               GetParent()->espmFiles.end() };
-  const bool hasSweetpie = modFiles.count("SweetPie.esp");
+  const std::vector<std::string>& modFiles = GetParent()->espmFiles;
+  const bool hasSweetpie = std::any_of(
+    modFiles.begin(), modFiles.end(),
+    [](std::string_view fileName) { return fileName == "SweetPie.esp"; });
   ApplyMagicEffects(activeEffects, hasSweetpie, true);
 }

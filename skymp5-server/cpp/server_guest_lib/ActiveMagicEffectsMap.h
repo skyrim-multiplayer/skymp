@@ -6,7 +6,7 @@
 #include <simdjson.h>
 #include <unordered_map>
 
-class MagicEffectsMap
+class ActiveMagicEffectsMap
 {
 public:
   struct Entry
@@ -16,7 +16,7 @@ public:
   };
 
 public:
-  static MagicEffectsMap FromJson(const simdjson::dom::array& effects);
+  static ActiveMagicEffectsMap FromJson(const simdjson::dom::array& effects);
 
 public:
   template <typename T>
@@ -40,6 +40,7 @@ public:
     espm::ActorValue actorValue) const noexcept;
   void Remove(espm::ActorValue actorValue) noexcept;
   void Clear() noexcept;
+  bool Has(espm::ActorValue actorValue) const noexcept;
   nlohmann::json::array_t ToJson() const;
 
 private:

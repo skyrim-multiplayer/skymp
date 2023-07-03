@@ -1,18 +1,18 @@
-#include "MagicEffectsMap.h"
+#include "ActiveMagicEffectsMap.h"
 #include "JsonUtils.h"
 #include "LeveledListUtils.h"
 #include "TimeUtils.h"
 #include "libespm/espm.h"
 #include <utility>
 
-std::optional<std::reference_wrapper<const MagicEffectsMap::Entry>>
-MagicEffectsMap::Get(espm::ActorValue actorValue) const noexcept
+std::optional<std::reference_wrapper<const ActiveMagicEffectsMap::Entry>>
+ActiveMagicEffectsMap::Get(espm::ActorValue actorValue) const noexcept
 {
   auto it = effects.find(actorValue);
   return it != effects.end() ? std::make_optional(it->second) : std::nullopt;
 }
 
-void MagicEffectsMap::Remove(espm::ActorValue actorValue) noexcept
+void ActiveMagicEffectsMap::Remove(espm::ActorValue actorValue) noexcept
 {
   auto it = effects.find(actorValue);
   if (it != effects.end()) {
@@ -20,17 +20,18 @@ void MagicEffectsMap::Remove(espm::ActorValue actorValue) noexcept
   }
 }
 
-void MagicEffectsMap::Clear() noexcept
+void ActiveMagicEffectsMap::Clear() noexcept
 {
   effects.clear();
 }
 
-MagicEffectsMap MagicEffectsMap::FromJson(const simdjson::dom::array& effects)
+ActiveMagicEffectsMap ActiveMagicEffectsMap::FromJson(
+  const simdjson::dom::array& effects)
 {
   static const JsonPointer effectId("effectId"), endTime("endTime"),
     duration("duration"), magnitude("magnitude"), areaOfEffect("areaOfEffect"),
     actorValue("actorValue");
-  MagicEffectsMap res;
+  ActiveMagicEffectsMap res;
   for (const simdjson::dom::element& effect : effects) {
     Entry entry;
     std::string endTime;
@@ -51,7 +52,7 @@ MagicEffectsMap MagicEffectsMap::FromJson(const simdjson::dom::array& effects)
   return res;
 }
 
-nlohmann::json::array_t MagicEffectsMap::ToJson() const
+nlohmann::json::array_t ActiveMagicEffectsMap::ToJson() const
 {
   auto res = nlohmann::json::array();
   for (const auto& [actorValue, effectEntry] : effects) {
@@ -67,7 +68,8 @@ nlohmann::json::array_t MagicEffectsMap::ToJson() const
   return res;
 }
 
-std::vector<espm::Effects::Effect> MagicEffectsMap::GetActive() const noexcept
+std::vector<espm::Effects::Effect> ActiveMagicEffectsMap::GetActive()
+  const noexcept
 {
   std::vector<espm::Effects::Effect> activeEffects;
   activeEffects.reserve(effects.size());
@@ -75,4 +77,10 @@ std::vector<espm::Effects::Effect> MagicEffectsMap::GetActive() const noexcept
     activeEffects.push_back(effectEntry.data);
   }
   return activeEffects;
+}
+
+bool ActiveMagicEffectsMap::Has(espm::ActorValue actorValue) const noexcept
+{
+  auto it = effects.find(actorValue);
+  return it != effects.end() ? true : false;
 }

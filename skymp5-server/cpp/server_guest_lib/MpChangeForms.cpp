@@ -1,6 +1,5 @@
 #include "MpChangeForms.h"
 #include "JsonUtils.h"
-#include "MagicEffectsMap.h"
 
 nlohmann::json MpChangeForm::ToJson(const MpChangeForm& changeForm)
 {
@@ -146,7 +145,7 @@ MpChangeForm MpChangeForm::JsonToChangeForm(simdjson::dom::element& element)
 
   simdjson::dom::array activeMagicEffects;
   ReadEx(element, effects, &activeMagicEffects);
-  res.activeMagicEffects = MagicEffectsMap::FromJson(activeMagicEffects);
+  res.activeMagicEffects = ActiveMagicEffectsMap::FromJson(activeMagicEffects);
 
   return res;
 }

@@ -1,4 +1,5 @@
 #pragma once
+#include "ActiveMagicEffectsMap.h"
 #include "ActorValues.h"
 #include "Appearance.h"
 #include "DynamicFields.h"
@@ -6,7 +7,6 @@
 #include "FormDesc.h"
 #include "Inventory.h"
 #include "LocationalData.h"
-#include "MagicEffectsMap.h"
 #include "NiPoint3.h"
 #include <cstdint>
 #include <optional>
@@ -42,7 +42,7 @@ public:
 
   bool isRaceMenuOpen = false;
   bool isDead = false;
-  MagicEffectsMap activeMagicEffects;
+  ActiveMagicEffectsMap activeMagicEffects;
 
   // 'appearanceDump' and 'equipmentDump' can be empty. it means nullopt.
   // "unexisting" equipment and equipment with zero entries are different

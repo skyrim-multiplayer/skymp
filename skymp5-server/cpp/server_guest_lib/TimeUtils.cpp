@@ -1,4 +1,5 @@
 #include "TimeUtils.h"
+#include <chrono>
 #include <iomanip>
 
 std::string TimeUtils::ToString(const TimeUtils::SystemTimePoint& timePoint)
@@ -17,4 +18,11 @@ TimeUtils::SystemTimePoint TimeUtils::SystemTimeFrom(
   std::istringstream ss{ timestamp };
   ss >> std::get_time(&tm, "%c");
   return SystemClock::from_time_t(std::mktime(&tm));
+}
+
+std::chrono::milliseconds TimeUtils::ToMs(double seconds)
+{
+  constexpr uint32_t multiplier = 1e3;
+  return std::chrono::round<std::chrono::milliseconds>(
+    std::chrono::duration<double>{ seconds * multiplier });
 }

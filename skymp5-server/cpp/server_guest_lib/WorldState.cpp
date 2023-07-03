@@ -55,7 +55,6 @@ struct WorldState::Impl
   std::map<std::string, std::chrono::system_clock::duration>
     relootTimeForTypes;
   std::vector<std::unique_ptr<IPapyrusClassBase>> classes;
-  Viet::Timer timer;
 };
 
 WorldState::WorldState()
@@ -217,17 +216,10 @@ void WorldState::RequestSave(MpObjectReference& ref)
   }
 }
 
-void WorldState::RegisterForSingleUpdate(const VarValue& self, float seconds)
+Viet::Promise<Viet::Void> WorldState::SetTimer(
+  std::reference_wrapper<const std::chrono::system_clock::time_point> wrapper)
 {
-  SetTimer(seconds).Then([self](Viet::Void) {
-    if (auto form = GetFormPtr<MpForm>(self))
-      form->Update();
-  });
-}
-
-Viet::Promise<Viet::Void> WorldState::SetTimer(float seconds)
-{
-  return pImpl->timer.SetTimer(seconds);
+  return timer.SetTimer(wrapper.get());
 }
 
 const std::shared_ptr<MpForm>& WorldState::LookupFormById(uint32_t formId)
@@ -651,4 +643,10 @@ std::optional<std::chrono::system_clock::duration> WorldState::GetRelootTime(
     return std::nullopt;
   }
   return it->second;
+}
+
+bool WorldState::RemoveTimer(
+  const std::chrono::system_clock::time_point& endTime)
+{
+  timer.RemoveTimer(endTime);
 }

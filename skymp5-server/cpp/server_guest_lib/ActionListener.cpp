@@ -422,13 +422,14 @@ void UseCraftRecipe(MpActor* me, espm::COBJ::Data recipeData,
   // SendInventoryUpdate ordering in RemoveItems/AddItem)
   auto formId = me->GetFormId();
   if (auto worldState = me->GetParent()) {
-    worldState->SetTimer(1.f).Then([worldState, formId](Viet::Void) {
-      auto actor =
-        std::dynamic_pointer_cast<MpActor>(worldState->LookupFormById(formId));
-      if (actor) {
-        actor->SendInventoryUpdate();
-      }
-    });
+    worldState->SetTimer(std::chrono::seconds(1))
+      .Then([worldState, formId](Viet::Void) {
+        auto actor = std::dynamic_pointer_cast<MpActor>(
+          worldState->LookupFormById(formId));
+        if (actor) {
+          actor->SendInventoryUpdate();
+        }
+      });
   }
 }
 

@@ -2,6 +2,8 @@
 #include <algorithm>
 #include <chrono>
 #include <deque>
+#include <set>
+#include <utility>
 
 namespace {
 struct TimerEntry
@@ -13,34 +15,21 @@ struct TimerEntry
 
 struct Viet::Timer::Impl
 {
+  static uint32_t id;
   std::deque<TimerEntry> timers;
 };
+
+uint32_t Viet::Timer::Impl::id = 0;
 
 Viet::Timer::Timer()
 {
   pImpl = std::make_shared<Impl>();
 }
 
-Viet::Promise<Viet::Void> Viet::Timer::SetTimer(float seconds)
+Viet::Promise<Viet::Void> Viet::Timer::SetTimer(
+  const std::chrono::system_clock::time_point& endTime)
 {
-  Viet::Promise<Viet::Void> promise;
-
-  auto finish = std::chrono::system_clock::now() +
-    std::chrono::milliseconds(static_cast<int>(seconds * 1000));
-
-  bool sortRequired =
-    !pImpl->timers.empty() && finish > pImpl->timers.front().finish;
-
-  pImpl->timers.push_front({ promise, finish });
-
-  if (sortRequired) {
-    std::sort(pImpl->timers.begin(), pImpl->timers.end(),
-              [](const TimerEntry& lhs, const TimerEntry& rhs) {
-                return lhs.finish < rhs.finish;
-              });
-  }
-
-  return promise;
+  return Set(endTime);
 }
 
 void Viet::Timer::TickTimers()
@@ -53,4 +42,43 @@ void Viet::Timer::TickTimers()
     timers.pop_front();
     front.promise.Resolve(Viet::Void());
   }
+}
+
+bool Viet::Timer::RemoveTimer(
+  const std::chrono::system_clock::time_point& endTime)
+{
+  auto& timers = pImpl->timers;
+  std::sort(timers.begin(), timers.end(),
+            [](const TimerEntry& lhs, const TimerEntry& rhs) {
+              return lhs.finish < rhs.finish;
+            });
+  auto it =
+    std::lower_bound(timers.begin(), timers.end(), endTime,
+                     [](const TimerEntry& entry,
+                        const std::chrono::system_clock::time_point& target) {
+                       return entry.finish < target;
+                     });
+  if (it != timers.end()) {
+    timers.erase(it);
+    return true;
+  }
+  return false;
+}
+
+Viet::Promise<Viet::Void> Viet::Timer::Set(
+  const std::chrono::system_clock::time_point& endTime)
+{
+  Viet::Promise<Viet::Void> promise;
+  bool sortRequired =
+    !pImpl->timers.empty() && endTime > pImpl->timers.front().finish;
+
+  pImpl->timers.push_front({ promise, endTime });
+
+  if (sortRequired) {
+    std::sort(pImpl->timers.begin(), pImpl->timers.end(),
+              [](const TimerEntry& lhs, const TimerEntry& rhs) {
+                return lhs.finish < rhs.finish;
+              });
+  }
+  return promise;
 }

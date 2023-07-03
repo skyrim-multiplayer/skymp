@@ -4,6 +4,7 @@
 #include "MpActor.h"
 #include "NiPoint3.h"
 #include "SpSnippet.h"
+#include "TimeUtils.h"
 #include "SweetPieBoundWeapon.h"
 #include "WorldState.h"
 #include "libespm/espm.h"
@@ -484,7 +485,8 @@ void SweetPieScript::Play(MpActor& actor, WorldState& worldState,
       EquipItem(actor, boundWeaponBaseId);
       actor.RemoveItem(bookBaseId, 1, nullptr);
       uint32_t formId = actor.GetFormId();
-      worldState.SetTimer(it->second.GetCooldown())
+      float cooldown = it->second.GetCooldown();
+      worldState.SetTimer(TimeUtils::ToMs(cooldown))
         .Then(
           [&worldState, bookBaseId, boundWeaponBaseId, formId](Viet::Void) {
             MpActor& actor = worldState.GetFormAt<MpActor>(formId);

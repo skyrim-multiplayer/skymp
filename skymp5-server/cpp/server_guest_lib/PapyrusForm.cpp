@@ -1,6 +1,7 @@
 #include "PapyrusForm.h"
 
 #include "EspmGameObject.h"
+#include "TimeUtils.h"
 #include "MpActor.h"
 #include "MpFormGameObject.h"
 #include "WorldState.h"
@@ -19,7 +20,8 @@ VarValue PapyrusForm::RegisterForSingleUpdate(
   if (arguments.size() >= 1) {
     if (auto form = GetFormPtr<MpForm>(self)) {
       double seconds = static_cast<double>(arguments[0]);
-      form->GetParent()->RegisterForSingleUpdate(self, seconds);
+      form->GetParent()->RegisterForSingleUpdate(self,
+                                                 TimeUtils::ToMs(seconds));
     }
   }
 
