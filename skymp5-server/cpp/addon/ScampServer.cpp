@@ -96,7 +96,13 @@ Napi::Object ScampServer::Init(Napi::Env env, Napi::Object exports)
       InstanceMethod("callPapyrusFunction", &ScampServer::CallPapyrusFunction),
       InstanceMethod("registerPapyrusFunction",
                      &ScampServer::RegisterPapyrusFunction),
-      InstanceMethod("sendCustomPacket", &ScampServer::SendCustomPacket) });
+      InstanceMethod("sendCustomPacket", &ScampServer::SendCustomPacket),
+      InstanceMethod("setPacketHistoryRecording",
+                     &ScampServer::SetPacketHistoryRecording),
+      InstanceMethod("getPacketHistory", &ScampServer::GetPacketHistory),
+      InstanceMethod("clearPacketHistory", &ScampServer::ClearPacketHistory),
+      InstanceMethod("requestPacketHistoryPlayback",
+                     &ScampServer::RequestPacketHistoryPlayback) });
   constructor = Napi::Persistent(func);
   constructor.SuppressDestruct();
   exports.Set("ScampServer", func);
