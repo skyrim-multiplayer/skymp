@@ -96,7 +96,12 @@ Napi::Object ScampServer::Init(Napi::Env env, Napi::Object exports)
       InstanceMethod("callPapyrusFunction", &ScampServer::CallPapyrusFunction),
       InstanceMethod("registerPapyrusFunction",
                      &ScampServer::RegisterPapyrusFunction),
-      InstanceMethod("sendCustomPacket", &ScampServer::SendCustomPacket) });
+      InstanceMethod("sendCustomPacket", &ScampServer::SendCustomPacket),
+      InstanceMethod("setPacketHistoryRecording", &ScampServer::SetPacketHistoryRecording),
+      InstanceMethod("getPacketHistory", &ScampServer::GetPacketHistory),
+      InstanceMethod("clearPacketHistory", &ScampServer::ClearPacketHistory),
+      InstanceMethod("requestPacketHistoryPlayback", &ScampServer::RequestPacketHistoryPlayback)
+       });
   constructor = Napi::Persistent(func);
   constructor.SuppressDestruct();
   exports.Set("ScampServer", func);
@@ -1054,7 +1059,7 @@ Napi::Value ScampServer::RequestPacketHistoryPlayback(
         "packetHistory.packets." + std::to_string(i) + ".length";
       std::string tip3 =
         "packetHistory.packets." + std::to_string(i) + ".timeMs";
-
+      
       auto packet = NapiHelper::ExtractObject(packets.Get(i), tip.data());
 
       PacketHistoryElement element;
