@@ -400,7 +400,7 @@ void WorldState::TickSaveStorage(const std::chrono::system_clock::time_point&)
 
 void WorldState::TickTimers(const std::chrono::system_clock::time_point&)
 {
-  pImpl->timer.TickTimers();
+  timer.TickTimers();
 }
 
 void WorldState::SendPapyrusEvent(MpForm* form, const char* eventName,
