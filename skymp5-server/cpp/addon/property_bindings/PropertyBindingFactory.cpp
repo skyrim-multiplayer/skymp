@@ -6,6 +6,7 @@
 #include "BaseDescBinding.h"
 #include "CustomPropertyBinding.h"
 #include "EquipmentBinding.h"
+#include "IdxBinding.h"
 #include "InventoryBinding.h"
 #include "IsDeadBinding.h"
 #include "IsDisabledBinding.h"
@@ -20,7 +21,6 @@
 #include "SpawnPointBinding.h"
 #include "TypeBinding.h"
 #include "WorldOrCellDescBinding.h"
-#include "IdxBinding.h"
 
 std::map<std::string, std::shared_ptr<PropertyBinding>>
 PropertyBindingFactory::CreateStandardPropertyBindings()
