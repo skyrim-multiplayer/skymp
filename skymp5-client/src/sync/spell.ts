@@ -1,6 +1,4 @@
-
 import { Actor, Spell, Game , printConsole} from "skyrimPlatform";
-
 
 export const removeAllSpells = (actor: Actor) => {
     let spellToRemove = new Array<Spell>();
@@ -30,4 +28,3 @@ export const learnSpells = (actor: Actor, spellsIds: Array<number>) => {
         }
       }
 }
-
