@@ -648,5 +648,5 @@ std::optional<std::chrono::system_clock::duration> WorldState::GetRelootTime(
 bool WorldState::RemoveTimer(
   const std::chrono::system_clock::time_point& endTime)
 {
-  timer.RemoveTimer(endTime);
+  return timer.RemoveTimer(endTime);
 }
