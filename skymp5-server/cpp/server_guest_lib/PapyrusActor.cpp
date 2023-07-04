@@ -163,3 +163,18 @@ VarValue PapyrusActor::EquipItem(VarValue self,
   }
   return VarValue::None();
 }
+
+VarValue PapyrusActor::SetDontMove(VarValue self,
+                                   const std::vector<VarValue>& arguments)
+{
+  if (auto actor = GetFormPtr<MpActor>(self)) {
+    if (arguments.size() < 1) {
+      throw std::runtime_error("SetDontMove requires at least one argument");
+    }
+    SpSnippet(GetName(), "SetDontMove",
+              SpSnippetFunctionGen::SerializeArguments(arguments).data(),
+              actor->GetFormId())
+      .Execute(actor);
+  }
+  return VarValue::None();
+}
