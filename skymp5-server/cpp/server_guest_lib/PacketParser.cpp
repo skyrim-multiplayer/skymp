@@ -26,7 +26,9 @@ static const JsonPointer t("t"), idx("idx"), content("content"), data("data"),
   commandName("commandName"), args("args"), workbench("workbench"),
   resultObjectId("resultObjectId"), craftInputObjects("craftInputObjects"),
   remoteId("remoteId"), eventName("eventName"), health("health"),
-  magicka("magicka"), stamina("stamina");
+  magicka("magicka"), stamina("stamina"), leftSpell("leftSpell"),
+  rightSpell("rightSpell"), voiceSpell("voiceSpell"),
+  instantSpell("instantSpell");
 }
 
 struct PacketParser::Impl
@@ -150,8 +152,37 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
       simdjson::dom::element inv;
       ReadEx(data_, JsonPointers::inv, &inv);
 
+      uint32_t leftSpell = 0;
+
+      if (data_.at_pointer(JsonPointers::leftSpell.GetData()).error() ==
+          simdjson::error_code::SUCCESS) {
+        ReadEx(data_, JsonPointers::leftSpell, &leftSpell);
+      }
+
+      uint32_t rightSpell = 0;
+
+      if (data_.at_pointer(JsonPointers::rightSpell.GetData()).error() ==
+          simdjson::error_code::SUCCESS) {
+        ReadEx(data_, JsonPointers::rightSpell, &rightSpell);
+      }
+
+      uint32_t voiceSpell = 0;
+
+      if (data_.at_pointer(JsonPointers::voiceSpell.GetData()).error() ==
+          simdjson::error_code::SUCCESS) {
+        ReadEx(data_, JsonPointers::voiceSpell, &voiceSpell);
+      }
+
+      uint32_t instantSpell = 0;
+
+      if (data_.at_pointer(JsonPointers::instantSpell.GetData()).error() ==
+          simdjson::error_code::SUCCESS) {
+        ReadEx(data_, JsonPointers::instantSpell, &instantSpell);
+      }
+
       actionListener.OnUpdateEquipment(rawMsgData, idx, data_,
-                                       Inventory::FromJson(inv));
+                                       Inventory::FromJson(inv), leftSpell,
+                                       rightSpell, voiceSpell, instantSpell);
     } break;
     case MsgType::Activate: {
       simdjson::dom::element data_;

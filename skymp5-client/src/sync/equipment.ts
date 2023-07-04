@@ -91,7 +91,7 @@ export const syncSpellEquipment = (
   spellBaseId: number | undefined,
   spellType: SpellType
 ) => {
-  if (spellBaseId != undefined && spellBaseId > 0) {
+  if (spellBaseId && spellBaseId > 0) {
     ac.equipSpell(Spell.from(Game.getFormEx(spellBaseId)), spellType);
   } else {
     const equipedSpell = ac.getEquippedSpell(spellType);

@@ -175,27 +175,50 @@ void ActionListener::OnUpdateAppearance(const RawMessageData& rawMsgData,
   SendToNeighbours(idx, rawMsgData, true);
 }
 
-void ActionListener::OnUpdateEquipment(const RawMessageData& rawMsgData,
-                                       uint32_t idx,
-                                       simdjson::dom::element& data,
-                                       const Inventory& equipmentInv)
+void ActionListener::OnUpdateEquipment(
+  const RawMessageData& rawMsgData, const uint32_t idx,
+  const simdjson::dom::element& data, const Inventory& equipmentInv,
+  const uint32_t leftSpell, const uint32_t rightSpell,
+  const uint32_t voiceSpell, const uint32_t instantSpell)
 {
   MpActor* actor = partOne.serverState.ActorByUser(rawMsgData.userId);
-  if (!actor)
+
+  if (!actor) {
     return;
+  }
 
   bool badEq = false;
-  for (auto& e : equipmentInv.entries) {
-    if (!actor->GetInventory().HasItem(e.baseId)) {
-      badEq = true;
-      break;
-    }
+
+  if (leftSpell > 0) {
+    badEq |= !actor->IsSpellLearned(leftSpell);
   }
 
-  if (!badEq) {
-    SendToNeighbours(idx, rawMsgData, true);
-    actor->SetEquipment(simdjson::minify(data));
+  if (rightSpell > 0) {
+    badEq |= !actor->IsSpellLearned(rightSpell);
   }
+
+  if (voiceSpell > 0) {
+    badEq |= !actor->IsSpellLearned(voiceSpell);
+  }
+
+  if (instantSpell > 0) {
+    badEq |= !actor->IsSpellLearned(instantSpell);
+  }
+
+  const auto& inventory = actor->GetInventory();
+
+  for (auto& [baseId, count, _] : equipmentInv.entries) {
+
+    badEq |=
+      !(inventory.HasItem(baseId) && inventory.GetItemCount(baseId) == count);
+  }
+
+  if (badEq) {
+    return;
+  }
+
+  SendToNeighbours(idx, rawMsgData, true);
+  actor->SetEquipment(simdjson::minify(data));
 }
 
 void RecalculateWorn(MpObjectReference& refr)

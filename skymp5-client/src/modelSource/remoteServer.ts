@@ -1,4 +1,4 @@
-import { Actor, Form } from 'skyrimPlatform';
+import { Actor, Form } from "skyrimPlatform";
 /* eslint-disable @typescript-eslint/no-empty-function */
 import * as networking from "../networking";
 import { FormModel, WorldModel } from "./model";
@@ -6,6 +6,7 @@ import { MsgHandler } from "./msgHandler";
 import { ModelSource } from "./modelSource";
 import { SendTarget } from "./sendTarget";
 import * as messages from "../messages";
+import { removeAllSpells, learnSpells } from"../sync/spell";
 import {
   Game,
   once,
@@ -20,6 +21,7 @@ import {
   on,
   Ui,
   Armor,
+  Spell,
 } from "skyrimPlatform";
 import * as loadGameManager from "../features/loadGameManager";
 import { applyInventory, Inventory } from "../sync/inventory";
@@ -31,15 +33,26 @@ import * as spSnippet from "../spSnippet";
 import * as sp from "skyrimPlatform";
 import * as updateOwner from "../gamemodeApi/updateOwner";
 import { setActorValuePercentage } from "../sync/actorvalues";
-import { applyDeathState, safeRemoveRagdollFromWorld } from '../sync/deathSystem';
-import { AuthGameData } from '../features/authModel';
+import {
+  applyDeathState,
+  safeRemoveRagdollFromWorld,
+} from "../sync/deathSystem";
+import { AuthGameData } from "../features/authModel";
 import * as netInfo from "../debug/netInfoSystem";
-import { getViewFromStorage, localIdToRemoteId, remoteIdToLocalId } from '../view/worldViewMisc';
-import { nameof } from '../lib/nameof';
-import { ModelApplyUtils } from '../view/modelApplyUtils';
-import { ObjectReferenceEx } from '../extensions/objectReferenceEx';
+import {
+  getViewFromStorage,
+  localIdToRemoteId,
+  remoteIdToLocalId,
+} from "../view/worldViewMisc";
+import { nameof } from "../lib/nameof";
+import { ModelApplyUtils } from "../view/modelApplyUtils";
+import { ObjectReferenceEx } from "../extensions/objectReferenceEx";
 
-const onceLoad = (refrId: number, callback: (refr: ObjectReference) => void, maxAttempts: number = 120) => {
+const onceLoad = (
+  refrId: number,
+  callback: (refr: ObjectReference) => void,
+  maxAttempts: number = 120
+) => {
   once("update", () => {
     const refr = ObjectReference.from(Game.getFormEx(refrId));
     if (refr) {
@@ -55,7 +68,9 @@ const onceLoad = (refrId: number, callback: (refr: ObjectReference) => void, max
   });
 };
 
-const skipFormViewCreation = (msg: messages.UpdatePropertyMessage | messages.CreateActorMessage) => {
+const skipFormViewCreation = (
+  msg: messages.UpdatePropertyMessage | messages.CreateActorMessage
+) => {
   // Optimization added in #1186, however it doesn't work for doors for some reason
   return msg.refrId && msg.refrId < 0xff000000 && msg.baseRecordType !== "DOOR";
 };
@@ -91,12 +106,18 @@ if (Array.isArray(storage["eventSourceContexts"])) {
 
 const showConnectionError = () => {
   // TODO: unhardcode it or render via browser
-  sp.createText(1920 / 2, 1080 / 2, `Server connection failed. This may be caused by one of the following:
+  sp.createText(
+    1920 / 2,
+    1080 / 2,
+    `Server connection failed. This may be caused by one of the following:
 1. You are not present on the SkyMP Discord server
 2. You have been banned by server admins
 3. There is some technical issue. Try linking your Discord account again
 
-If you feel that something is wrong, please contact us on Discord.`, [255, 255, 255, 1]);
+If you feel that something is wrong, please contact us on Discord.`,
+    [255, 255, 255, 1],
+    "Tavern"
+  );
 };
 
 let loggingStartMoment = 0;
@@ -118,7 +139,9 @@ const loginWithSkympIoCredentials = () => {
   loggingStartMoment = Date.now();
   const authData = storage[AuthGameData.storageKey] as AuthGameData | undefined;
   if (authData?.local) {
-    printConsole(`Logging in offline mode, profileId = ${authData.local.profileId}`);
+    printConsole(
+      `Logging in offline mode, profileId = ${authData.local.profileId}`
+    );
     networking.send(
       {
         t: messages.MsgType.CustomPacket,
@@ -245,7 +268,11 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
           }
           if (msg.props) {
             ModelApplyUtils.applyModelIsOpen(refr, !!msg.props["isOpen"]);
-            ModelApplyUtils.applyModelIsHarvested(refr, !!msg.props["isHarvested"]);
+            ModelApplyUtils.applyModelIsHarvested(
+              refr,
+              !!msg.props["isHarvested"]
+            );
+
           }
         } else {
           printConsole("Failed to apply model to", refrId.toString(16));
@@ -273,7 +300,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
         isWeapDrawn: false,
         isDead: false,
         healthPercentage: 1.0,
-        speed: 0
+        speed: 0,
       };
     }
 
@@ -284,7 +311,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
       numAppearanceChanges: 0,
       baseId: msg.baseId,
       refrId: msg.refrId,
-      isMyClone: msg.isMe
+      isMyClone: msg.isMe,
     };
     if (msg.isMe) {
       updateOwner.setOwnerModel(this.worldModel.forms[i]);
@@ -321,10 +348,10 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
         Game.getPlayer() as Actor,
         msg.equipment
           ? {
-            entries: msg.equipment.inv.entries.filter(
-              (x) => !!Armor.from(Game.getFormEx(x.baseId))
-            ),
-          }
+              entries: msg.equipment.inv.entries.filter(
+                (x) => !!Armor.from(Game.getFormEx(x.baseId))
+              ),
+            }
           : { entries: [] },
         false
       );
@@ -334,6 +361,24 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
           inventory: (msg.props as any).inventory as Inventory,
         });
     };
+
+    if (msg.isMe && msg.props) {
+      const learnedSpells = msg.props["learnedSpells"] as Array<number>;
+    
+    once("update", ()=>{
+      Utility.wait(1).then(()=>{
+        const player = Game.getPlayer();
+        
+      if(player){
+        removeAllSpells(player);
+        learnSpells(player, learnedSpells);
+        printConsole(`player learnedSpells: ${JSON.stringify(learnedSpells)}`);
+        }
+      });
+      
+    });
+    
+    }
 
     if (msg.isMe) {
       const task = new SpawnTask();
@@ -358,9 +403,16 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
               await Utility.wait(1);
               const pl = Game.getPlayer();
               if (!pl) break;
-              const pos = [pl.getPositionX(), pl.getPositionY(), pl.getPositionZ()];
+              const pos = [
+                pl.getPositionX(),
+                pl.getPositionY(),
+                pl.getPositionZ(),
+              ];
               const sqr = (x: number) => x * x;
-              const distance = Math.sqrt(sqr(pos[0] - msg.transform.pos[0]) + sqr(pos[1] - msg.transform.pos[1]));
+              const distance = Math.sqrt(
+                sqr(pos[0] - msg.transform.pos[0]) +
+                  sqr(pos[1] - msg.transform.pos[1])
+              );
               if (distance < 256) {
                 break;
               }
@@ -427,16 +479,16 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
               msg.transform.worldOrCell,
               msg.appearance
                 ? {
-                  name: msg.appearance.name,
-                  raceId: msg.appearance.raceId,
-                  face: {
-                    hairColor: msg.appearance.hairColor,
-                    bodySkinColor: msg.appearance.skinColor,
-                    headTextureSetId: msg.appearance.headTextureSetId,
-                    headPartIds: msg.appearance.headpartIds,
-                    presets: msg.appearance.presets,
-                  },
-                }
+                    name: msg.appearance.name,
+                    raceId: msg.appearance.raceId,
+                    face: {
+                      hairColor: msg.appearance.hairColor,
+                      bodySkinColor: msg.appearance.skinColor,
+                      headTextureSetId: msg.appearance.headTextureSetId,
+                      headPartIds: msg.appearance.headpartIds,
+                      presets: msg.appearance.presets,
+                    },
+                  }
                 : undefined
             );
             once("update", () => {
@@ -528,13 +580,18 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
     }
     const i = this.getIdManager().getId(msg.idx);
     const form = this.worldModel.forms[i];
-    (form as Record<string, unknown>)[msg.propName] =
-      msg.data;
+    (form as Record<string, unknown>)[msg.propName] = msg.data;
   }
 
   DeathStateContainer(msg: messages.DeathStateContainerMessage): void {
-    once("update", () => printConsole(`Received death state: ${JSON.stringify(msg.tIsDead)}`));
-    if (msg.tIsDead.propName !== nameof<FormModel>("isDead") || typeof msg.tIsDead.data !== "boolean") return;
+    once("update", () =>
+      printConsole(`Received death state: ${JSON.stringify(msg.tIsDead)}`)
+    );
+    if (
+      msg.tIsDead.propName !== nameof<FormModel>("isDead") ||
+      typeof msg.tIsDead.data !== "boolean"
+    )
+      return;
 
     if (msg.tChangeValues) {
       this.ChangeValues(msg.tChangeValues);
@@ -548,9 +605,10 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
     const id = this.getIdManager().getId(msg.tIsDead.idx);
     const form = this.worldModel.forms[id];
     once("update", () => {
-      const actor = id === this.getWorldModel().playerCharacterFormIdx ?
-        Game.getPlayer()! :
-        Actor.from(Game.getFormEx(remoteIdToLocalId(form.refrId ?? 0)));
+      const actor =
+        id === this.getWorldModel().playerCharacterFormIdx
+          ? Game.getPlayer()!
+          : Actor.from(Game.getFormEx(remoteIdToLocalId(form.refrId ?? 0)));
       if (actor) {
         applyDeathState(actor, msg.tIsDead.data as boolean);
       }
@@ -564,7 +622,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
     loginWithSkympIoCredentials();
   }
 
-  handleDisconnect(): void { }
+  handleDisconnect(): void {}
 
   ChangeValues(msg: messages.ChangeValuesMessage): void {
     once("update", () => {
@@ -666,7 +724,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
       storage["eventSourceContexts"] = [];
     } else {
       storage["eventSourceContexts"].forEach((ctx: Record<string, unknown>) => {
-        ctx.sendEvent = () => { };
+        ctx.sendEvent = () => {};
         ctx._expired = true;
       });
     }

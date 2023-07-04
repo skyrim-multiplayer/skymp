@@ -81,8 +81,9 @@ void MpActor::SetEquipment(const std::string& jsonString)
 void MpActor::VisitProperties(const PropertiesVisitor& visitor,
                               VisitPropertiesMode mode)
 {
-  auto baseId = MpObjectReference::GetBaseId();
-  uint32_t raceId = GetAppearance() ? GetAppearance()->raceId : 0;
+  const auto baseId = GetBaseId();
+  const uint32_t raceId = GetAppearance() ? GetAppearance()->raceId : 0;
+
   BaseActorValues baseActorValues;
   WorldState* worldState = GetParent();
   // this "if" is needed for unit testing: tests can call VisitProperties
@@ -94,12 +95,19 @@ void MpActor::VisitProperties(const PropertiesVisitor& visitor,
   MpChangeForm changeForm = GetChangeForm();
 
   MpObjectReference::VisitProperties(visitor, mode);
-  if (mode == VisitPropertiesMode::All && IsRaceMenuOpen())
+
+  if (mode == VisitPropertiesMode::All && IsRaceMenuOpen()) {
     visitor("isRaceMenuOpen", "true");
+  }
 
   if (mode == VisitPropertiesMode::All) {
     baseActorValues.VisitBaseActorValues(baseActorValues, changeForm, visitor);
   }
+
+  visitor("learnedSpells",
+          nlohmann::json(changeForm.learnedSpells.GetLearnedSpells())
+            .dump()
+            .c_str());
 }
 
 void MpActor::SendToUser(const void* data, size_t size, bool reliable)
@@ -122,20 +130,30 @@ bool MpActor::OnEquip(uint32_t baseId)
   const auto recordType = lookupRes.rec->GetType();
 
   const bool isSpell = recordType == "SPEL";
+  const bool isBook = recordType == "BOOK";
   const bool isIngredient = recordType == "INGR";
   const bool isPotion = recordType == "ALCH";
 
-  if (!(isSpell || isIngredient || isPotion)) {
+  if (!(isSpell || isIngredient || isPotion || isBook)) {
     return false;
   }
 
-  if (!isSpell && GetInventory().GetItemCount(baseId) == 0) {
+  const bool hasItem = isSpell
+    ? GetChangeForm().learnedSpells.IsSpellLearned(baseId)
+    : GetInventory().GetItemCount(baseId) > 0;
+
+  if (!hasItem) {
     return false;
   }
 
   if (isIngredient || isPotion) {
     EatItem(baseId, recordType);
-    RemoveItem(baseId, 1, nullptr);
+  } else if (isBook) {
+    ReadBook(baseId);
+  }
+
+  if (!isSpell) {
+    RemoveItem(baseId, 1, this);
   }
 
   const VarValue args[] = {
@@ -296,6 +314,15 @@ const bool& MpActor::IsRespawning() const
   return pImpl->isRespawning;
 }
 
+bool MpActor::IsSpellLearned(const uint32_t baseId) const
+{
+  const auto npcData = espm::GetData<espm::NPC_>(GetBaseId(), GetParent());
+  const auto raceData = espm::GetData<espm::RACE>(npcData.race, GetParent());
+
+  return npcData.spells.contains(baseId) || raceData.spells.contains(baseId) ||
+    ChangeForm().learnedSpells.IsSpellLearned(baseId);
+}
+
 std::unique_ptr<const Appearance> MpActor::GetAppearance() const
 {
   auto& changeForm = ChangeForm();
@@ -322,21 +349,20 @@ const std::string& MpActor::GetEquipmentAsJson() const
 
 Equipment MpActor::GetEquipment() const
 {
-  std::string equipment = GetEquipmentAsJson();
   simdjson::dom::parser p;
-  auto parseResult = p.parse(equipment);
-  return Equipment::FromJson(parseResult.value());
+
+  return Equipment::FromJson(p.parse(GetEquipmentAsJson()).value());
 }
 
 uint32_t MpActor::GetRaceId() const
 {
-  auto appearance = GetAppearance();
+  const auto appearance = GetAppearance();
+
   if (appearance) {
     return appearance->raceId;
   }
-  WorldState* espmProvider = GetParent();
-  uint32_t baseId = GetBaseId();
-  return espm::GetData<espm::NPC_>(baseId, espmProvider).race;
+
+  return espm::GetData<espm::NPC_>(GetBaseId(), GetParent()).race;
 }
 
 bool MpActor::IsWeaponDrawn() const
@@ -459,6 +485,18 @@ void MpActor::EatItem(uint32_t baseId, espm::Type t)
         RestoreActorValue(av, effect.magnitude);
       }
     }
+  }
+}
+
+void MpActor::ReadBook(const uint32_t baseId)
+{
+  const auto bookData = espm::GetData<espm::BOOK>(baseId, GetParent());
+
+  if (bookData.IsFlagSet(espm::BOOK::Flags::TeachesSpell)) {
+
+    EditChangeForm([&](MpChangeForm& changeForm) {
+      changeForm.learnedSpells.LearnSpell(bookData.spellOrSkillFormID);
+    });
   }
 }
 
