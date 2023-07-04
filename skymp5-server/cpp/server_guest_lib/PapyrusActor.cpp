@@ -165,7 +165,7 @@ VarValue PapyrusActor::EquipItem(VarValue self,
 }
 
 VarValue PapyrusActor::SetDontMove(VarValue self,
-                                 const std::vector<VarValue>& arguments)
+                                   const std::vector<VarValue>& arguments)
 {
   if (auto actor = GetFormPtr<MpActor>(self)) {
     if (arguments.size() < 1) {
