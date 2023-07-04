@@ -42,6 +42,7 @@ You can get Skyrim Platform from Nexus: https://www.nexusmods.com/skyrimspeciale
   - [HTTP][]
   - [Texts][Texts]
   - [Win32][Win32]
+  - [Settings][Settings]
 - [Cook Book][Cookbook]
 
 [Browser]: skyrim_platform/browser.md
@@ -56,6 +57,7 @@ You can get Skyrim Platform from Nexus: https://www.nexusmods.com/skyrimspeciale
 [Papyrus]: skyrim_platform/papyrus.md
 [Texts]: skyrim_platform/texts.md
 [Win32]: skyrim_platform/win32.md
+[Settings]: skyrim_platform/ini_settings.md
 
 ## Versioning Notes
 
