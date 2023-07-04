@@ -210,7 +210,8 @@ private:
                              e, [this] { return nativeCallRequirements; });
                            e.SetProperty("settings", getSettings, nullptr);
 
-                           return SkyrimPlatformProxy::Attach(e);
+                           return SkyrimPlatformProxy::Attach(
+                             e, [this] { return nativeCallRequirements; });
                          } } },
                      GetFileDirs());
 
