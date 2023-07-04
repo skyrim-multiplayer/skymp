@@ -143,9 +143,8 @@ MpChangeForm MpChangeForm::JsonToChangeForm(simdjson::dom::element& element)
 
   ReadEx(element, spawnDelay, &res.spawnDelay);
 
-  simdjson::dom::array activeMagicEffects;
-  ReadEx(element, effects, &activeMagicEffects);
-  res.activeMagicEffects = ActiveMagicEffectsMap::FromJson(activeMagicEffects);
+  ReadEx(element, effects, &jTmp);
+  res.activeMagicEffects = ActiveMagicEffectsMap::FromJson(jTmp);
 
   return res;
 }

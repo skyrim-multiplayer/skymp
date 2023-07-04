@@ -515,8 +515,9 @@ void MpActor::RespawnWithDelay(bool shouldTeleport)
   uint32_t formId = GetFormId();
   if (auto worldState = GetParent()) {
     float respawnTime = GetRespawnTime();
-    worldState->SetTimer(TimeUtils::ToMs(respawnTime))
-      .Then([worldState, this, formId, shouldTeleport](Viet::Void) {
+    auto time = Viet::TimeUtils::To<std::chrono::milliseconds>(respawnTime);
+    worldState->SetTimer(time).Then(
+      [worldState, this, formId, shouldTeleport](Viet::Void) {
         if (worldState->LookupFormById(formId).get() == this) {
           this->Respawn(shouldTeleport);
         }
@@ -674,18 +675,17 @@ void MpActor::SetActorValues(const ActorValues& actorValues)
 }
 
 void MpActor::ApplyMagicEffect(espm::Effects::Effect& effect,
-                               const bool durationOverriden,
-                               const bool hasSweetpie)
+                               bool durationOverriden, bool hasSweetpie)
 {
-  WorldState* espmProvider = GetParent();
-  espm::ActorValue av =
-    espm::GetData<espm::MGEF>(effect.effectId, espmProvider).data.primaryAV;
+  WorldState* worldState = GetParent();
+  const espm::ActorValue av =
+    espm::GetData<espm::MGEF>(effect.effectId, worldState).data.primaryAV;
 
-  bool isValue = av == espm::ActorValue::Health ||
+  const bool isValue = av == espm::ActorValue::Health ||
     av == espm::ActorValue::Stamina || av == espm::ActorValue::Magicka;
-  bool isRate = av == espm::ActorValue::HealRate ||
+  const bool isRate = av == espm::ActorValue::HealRate ||
     av == espm::ActorValue::StaminaRate || av == espm::ActorValue::MagickaRate;
-  bool isMult =
+  const bool isMult =
     av == espm::ActorValue::HealRateMult_or_CombatHealthRegenMultMod ||
     av == espm::ActorValue::StaminaRateMult ||
     av == espm::ActorValue::MagickaRateMult_or_CombatHealthRegenMultPowerMod;
@@ -702,18 +702,14 @@ void MpActor::ApplyMagicEffect(espm::Effects::Effect& effect,
     } else {
       RestoreActorValue(av, effect.magnitude);
     }
-  } else if (isRate || isMult) {
+  }
+
+  if (isRate || isMult) {
     MpChangeForm changeForm = GetChangeForm();
     const ActorValues& actorValues = changeForm.actorValues;
     const ActiveMagicEffectsMap& activeEffects = changeForm.activeMagicEffects;
-    float previous = actorValues.GetValue(av);
-    uint32_t formId = GetFormId();
-    WorldState* worldState = GetParent();
-    if (isRate) {
-      SetActorValue(av, effect.magnitude);
-    } else {
-      SetActorValue(av, previous * effect.magnitude);
-    }
+    const float previousValue = actorValues.GetValue(av);
+    const uint32_t formId = GetFormId();
     auto now = std::chrono::system_clock::now();
     std::chrono::system_clock::time_point endTime;
     std::chrono::milliseconds duration;
@@ -729,8 +725,10 @@ void MpActor::ApplyMagicEffect(espm::Effects::Effect& effect,
       duration =
         std::chrono::duration_cast<std::chrono::milliseconds>(endTime - now);
     } else {
-      endTime = now + TimeUtils::ToMs(effect.duration);
-      duration = TimeUtils::ToMs(effect.duration);
+      endTime =
+        now + Viet::TimeUtils::To<std::chrono::milliseconds>(effect.duration);
+      duration =
+        Viet::TimeUtils::To<std::chrono::milliseconds>(effect.duration);
     }
     ActiveMagicEffectsMap::Entry entry{ effect, endTime };
     if (activeEffects.Has(av)) {
@@ -741,6 +739,11 @@ void MpActor::ApplyMagicEffect(espm::Effects::Effect& effect,
     EditChangeForm([av, pEntry = &entry](MpChangeForm& changeForm) {
       changeForm.activeMagicEffects.Add(av, *pEntry);
     });
+    if (isRate) {
+      SetActorValue(av, effect.magnitude);
+    } else {
+      SetActorValue(av, previousValue * effect.magnitude);
+    }
     worldState->SetTimer(std::cref(endTime))
       .Then([formId, actorValue = av, worldState](Viet::Void) {
         auto& actor = worldState->GetFormAt<MpActor>(formId);
@@ -750,8 +753,7 @@ void MpActor::ApplyMagicEffect(espm::Effects::Effect& effect,
 }
 
 void MpActor::ApplyMagicEffects(std::vector<espm::Effects::Effect>& effects,
-                                const bool hasSweetpie,
-                                const bool durationOverriden)
+                                bool hasSweetpie, bool durationOverriden)
 {
   for (auto& effect : effects) {
     ApplyMagicEffect(effect, hasSweetpie, durationOverriden);
@@ -760,9 +762,9 @@ void MpActor::ApplyMagicEffects(std::vector<espm::Effects::Effect>& effects,
 
 void MpActor::RemoveMagicEffect(const espm::ActorValue actorValue) noexcept
 {
-  ActorValues baseActorValues =
+  const ActorValues baseActorValues =
     GetBaseActorValues(GetParent(), GetBaseId(), GetRaceId());
-  float baseActorValue = baseActorValues.GetValue(actorValue);
+  const float baseActorValue = baseActorValues.GetValue(actorValue);
   SetActorValue(actorValue, baseActorValue);
   EditChangeForm([actorValue](MpChangeForm& changeForm) {
     changeForm.activeMagicEffects.Remove(actorValue);
@@ -771,7 +773,7 @@ void MpActor::RemoveMagicEffect(const espm::ActorValue actorValue) noexcept
 
 void MpActor::RemoveAllMagicEffects() noexcept
 {
-  ActorValues baseActorValues =
+  const ActorValues baseActorValues =
     GetBaseActorValues(GetParent(), GetBaseId(), GetRaceId());
   SetActorValues(baseActorValues);
   EditChangeForm(
@@ -782,7 +784,7 @@ void MpActor::ReapplyMagicEffects()
 {
   // TODO: Implement range-based for loop for MagicEffectsMap
   std::vector<espm::Effects::Effect> activeEffects =
-    GetChangeForm().activeMagicEffects.GetActive();
+    GetChangeForm().activeMagicEffects.GetAllEffects();
   if (activeEffects.empty()) {
     return;
   }

@@ -15,7 +15,8 @@ VarValue PapyrusUtility::Wait(VarValue self,
     throw std::runtime_error("worldState not found");
   }
 
-  auto timerPromise = worldState->SetTimer(TimeUtils::ToMs(seconds));
+  auto time = Viet::TimeUtils::To<std::chrono::milliseconds>(seconds);
+  auto timerPromise = worldState->SetTimer(time);
   auto resultPromise = Viet::Promise<VarValue>();
 
   timerPromise

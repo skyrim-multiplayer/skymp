@@ -103,11 +103,11 @@ public:
   void ResetBlockCount() noexcept;
   uint32_t GetBlockCount() const noexcept;
   void ApplyMagicEffect(espm::Effects::Effect& effect,
-                        const bool hasSweetpie = false,
-                        const bool durationOverriden = false);
+                        bool hasSweetpie = false,
+                        bool durationOverriden = false);
   void ApplyMagicEffects(std::vector<espm::Effects::Effect>& effects,
-                         const bool hasSweetpie = false,
-                         const bool durationOverriden = false);
+                         bool hasSweetpie = false,
+                         bool durationOverriden = false);
   void RemoveMagicEffect(const espm::ActorValue actorValue) noexcept;
   void RemoveAllMagicEffects() noexcept;
   void ReapplyMagicEffects();

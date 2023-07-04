@@ -16,7 +16,7 @@ public:
   };
 
 public:
-  static ActiveMagicEffectsMap FromJson(const simdjson::dom::array& effects);
+  static ActiveMagicEffectsMap FromJson(const simdjson::dom::element& effects);
 
 public:
   template <typename T>
@@ -32,9 +32,7 @@ public:
     effects[actorValue] = std::forward<T>(entry);
   }
 
-  // Think over this later. Probabbly, it'd be better to track them and then
-  // return ref; And the function name also.
-  std::vector<espm::Effects::Effect> GetActive() const noexcept;
+  std::vector<espm::Effects::Effect> GetAllEffects() const noexcept;
 
   std::optional<std::reference_wrapper<const Entry>> Get(
     espm::ActorValue actorValue) const noexcept;

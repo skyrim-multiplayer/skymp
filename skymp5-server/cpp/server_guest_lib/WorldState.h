@@ -67,6 +67,12 @@ public:
   void RequestSave(MpObjectReference& ref);
 
   template <typename T>
+  Viet::Promise<Viet::Void> SetTimer(T&& duration)
+  {
+    return timer.SetTimer(std::forward<T>(duration));
+  }
+
+  template <typename T>
   void RegisterForSingleUpdate(const VarValue& self, T&& duration)
   {
     SetTimer(std::forward<T>(duration)).Then([self](Viet::Void) {
@@ -74,11 +80,6 @@ public:
         form->Update();
       }
     });
-  }
-  template <typename T>
-  Viet::Promise<Viet::Void> SetTimer(T&& duration)
-  {
-    return timer.SetTimer(std::forward<T>(duration));
   }
 
   Viet::Promise<Viet::Void> SetTimer(

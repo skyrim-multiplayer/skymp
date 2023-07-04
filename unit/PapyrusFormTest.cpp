@@ -1,5 +1,6 @@
 #include "TestUtils.hpp"
 #include <catch2/catch_all.hpp>
+#include <iostream>
 
 #include "PapyrusForm.h"
 
@@ -10,7 +11,11 @@ TEST_CASE("RegisterForSingleUpdate", "[Papyrus][Form]")
   class CustomForm : public MpForm
   {
   public:
-    void Update() override { counter++; }
+    void Update() override
+    {
+      counter++;
+      std::cout << "Updated!\n";
+    }
 
     int counter = 0;
   };

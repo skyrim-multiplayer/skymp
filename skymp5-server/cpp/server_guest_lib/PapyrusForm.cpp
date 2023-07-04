@@ -1,11 +1,12 @@
 #include "PapyrusForm.h"
 
 #include "EspmGameObject.h"
-#include "TimeUtils.h"
 #include "MpActor.h"
 #include "MpFormGameObject.h"
+#include "TimeUtils.h"
 #include "WorldState.h"
 
+#include <ratio>
 #include <string>
 #include <unordered_map>
 
@@ -20,8 +21,8 @@ VarValue PapyrusForm::RegisterForSingleUpdate(
   if (arguments.size() >= 1) {
     if (auto form = GetFormPtr<MpForm>(self)) {
       double seconds = static_cast<double>(arguments[0]);
-      form->GetParent()->RegisterForSingleUpdate(self,
-                                                 TimeUtils::ToMs(seconds));
+      auto time = Viet::TimeUtils::To<std::chrono::milliseconds>(seconds);
+      form->GetParent()->RegisterForSingleUpdate(self, time);
     }
   }
 
