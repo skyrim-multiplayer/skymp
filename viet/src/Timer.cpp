@@ -5,6 +5,8 @@
 #include <set>
 #include <utility>
 
+#include <iostream>
+
 namespace {
 struct TimerEntry
 {
@@ -15,11 +17,8 @@ struct TimerEntry
 
 struct Viet::Timer::Impl
 {
-  static uint32_t id;
   std::deque<TimerEntry> timers;
 };
-
-uint32_t Viet::Timer::Impl::id = 0;
 
 Viet::Timer::Timer()
 {
@@ -48,10 +47,6 @@ bool Viet::Timer::RemoveTimer(
   const std::chrono::system_clock::time_point& endTime)
 {
   auto& timers = pImpl->timers;
-  std::sort(timers.begin(), timers.end(),
-            [](const TimerEntry& lhs, const TimerEntry& rhs) {
-              return lhs.finish < rhs.finish;
-            });
   auto it =
     std::lower_bound(timers.begin(), timers.end(), endTime,
                      [](const TimerEntry& entry,

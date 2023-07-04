@@ -17,7 +17,8 @@ public:
 
   Viet::Promise<Viet::Void> SetTimer(
     const std::chrono::system_clock::time_point& endTime);
-  bool RemoveTimer(const std::chrono::system_clock::time_point& endTime);
+  [[maybe_unused]] bool RemoveTimer(
+    const std::chrono::system_clock::time_point& endTime);
   void TickTimers();
 
 private:
