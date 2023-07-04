@@ -2,10 +2,7 @@
 #include <algorithm>
 #include <chrono>
 #include <deque>
-#include <set>
 #include <utility>
-
-#include <iostream>
 
 namespace {
 struct TimerEntry
