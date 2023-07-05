@@ -11,6 +11,7 @@
 #include "MpFormGameObject.h"
 #include "NapiHelper.h"
 #include "NetworkingCombined.h"
+#include "PacketHistoryWrapper.h"
 #include "PapyrusUtils.h"
 #include "ScampServerListener.h"
 #include "ScriptStorage.h"
@@ -23,7 +24,6 @@
 #include <memory>
 #include <napi.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
-#include "PacketHistoryWrapper.h"
 
 namespace {
 constexpr size_t kMockServerIdx = 1;
