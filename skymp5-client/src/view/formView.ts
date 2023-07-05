@@ -246,6 +246,7 @@ export class FormView implements View<FormModel> {
           const remoteId = this.remoteRefrId;
           if (ac && ac.is3DLoaded()) {
             this.tryHostIfNeed(ac, remoteId as number);
+            printConsole("tryHostIfNeed - reason: not seeing movement for long time");
           }
         }
       }
@@ -286,6 +287,7 @@ export class FormView implements View<FormModel> {
           const remoteId = this.remoteRefrId;
           if (ac && remoteId && ac.is3DLoaded()) {
             this.tryHostIfNeed(ac, remoteId);
+            printConsole("tryHostIfNeed - reason: not hosted by anyone OR never applied movement");
           }
         }
       }
