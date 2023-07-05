@@ -35,6 +35,8 @@ public:
 
   VarValue GetBaseObject(VarValue self,
                          const std::vector<VarValue>& arguments);
+  VarValue PlayAnimation(VarValue self, const std::vector<VarValue>& arguments);
+  VarValue PlayGamebryoAnimation(VarValue self, const std::vector<VarValue>& arguments);
 
   void Register(
     VirtualMachine& vm,
@@ -65,5 +67,7 @@ public:
     AddMethod(vm, "GetPositionZ", &PapyrusObjectReference::GetPositionZ);
     AddMethod(vm, "SetPosition", &PapyrusObjectReference::SetPosition);
     AddMethod(vm, "GetBaseObject", &PapyrusObjectReference::GetBaseObject);
+    AddMethod(vm, "PlayAnimation", &PapyrusObjectReference::PlayAnimation);
+    AddMethod(vm, "PlayGamebryoAnimation", &PapyrusObjectReference::PlayGamebryoAnimation);
   }
 };
