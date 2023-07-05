@@ -187,34 +187,47 @@ void ActionListener::OnUpdateEquipment(
     return;
   }
 
-  bool badEq = false;
-
-  if (leftSpell > 0) {
-    badEq |= !actor->IsSpellLearned(leftSpell);
+  if (leftSpell > 0 && !actor->IsSpellLearned(leftSpell)) {
+    spdlog::debug(
+      "OnUpdateEquipment result false. Spell with id ({}) not learned",
+      leftSpell);
+    return;
   }
 
-  if (rightSpell > 0) {
-    badEq |= !actor->IsSpellLearned(rightSpell);
+  if (rightSpell > 0 && !actor->IsSpellLearned(rightSpell)) {
+    spdlog::debug(
+      "OnUpdateEquipment result false. Spell with id ({}) not learned",
+      leftSpell);
+    return;
   }
 
-  if (voiceSpell > 0) {
-    badEq |= !actor->IsSpellLearned(voiceSpell);
+  if (voiceSpell > 0 && !actor->IsSpellLearned(voiceSpell)) {
+    spdlog::debug(
+      "OnUpdateEquipment result false. Spell with id ({}) not learned",
+      leftSpell);
+    return;
   }
 
-  if (instantSpell > 0) {
-    badEq |= !actor->IsSpellLearned(instantSpell);
+  if (instantSpell > 0 && !actor->IsSpellLearned(instantSpell)) {
+    spdlog::debug(
+      "OnUpdateEquipment result false. Spell with id ({}) not learned",
+      leftSpell);
+    return;
   }
 
   const auto& inventory = actor->GetInventory();
 
   for (auto& [baseId, count, _] : equipmentInv.entries) {
 
-    badEq |=
-      !(inventory.HasItem(baseId) && inventory.GetItemCount(baseId) == count);
-  }
+    if (!(inventory.HasItem(baseId) &&
+          inventory.GetItemCount(baseId) == count)) {
 
-  if (badEq) {
-    return;
+      spdlog::debug(
+        "OnUpdateEquipment result false. The inventory does not contain item "
+        "with id ({}) or contains not in the same quantity as the customer",
+        baseId);
+      return;
+    }
   }
 
   SendToNeighbours(idx, rawMsgData, true);

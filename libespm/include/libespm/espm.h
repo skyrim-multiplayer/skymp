@@ -670,7 +670,6 @@ public:
     uint32_t defaultOutfitId = 0;
     uint32_t sleepOutfitId = 0;
 
-    uint32_t spellCount = 0;
     std::set<uint32_t> spells = {};
 
     std::vector<CONT::ContainerObject> objects;
@@ -772,7 +771,6 @@ public:
     float unarmedDamage = 0.f;
     float unarmedReach = 0.f;
 
-    uint32_t spellCount = 0;
     std::set<uint32_t> spells = {};
   };
 
@@ -1072,7 +1070,7 @@ public:
     [[nodiscard]] bool IsFlagSet(Flags flag) const noexcept;
 
     Flags flags = Flags::None;
-    uint32_t spellOrSkillFormID = 0;
+    uint32_t spellOrSkillFormId = 0;
   };
 
   Data GetData(CompressedFieldsCache& compressedFieldsCache) const noexcept;

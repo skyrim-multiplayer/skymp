@@ -495,7 +495,7 @@ void MpActor::ReadBook(const uint32_t baseId)
   if (bookData.IsFlagSet(espm::BOOK::Flags::TeachesSpell)) {
 
     EditChangeForm([&](MpChangeForm& changeForm) {
-      changeForm.learnedSpells.LearnSpell(bookData.spellOrSkillFormID);
+      changeForm.learnedSpells.LearnSpell(bookData.spellOrSkillFormId);
     });
   }
 }

@@ -989,8 +989,6 @@ espm::NPC_::Data espm::NPC_::GetData(
               reinterpret_cast<const ObjectBounds*>(data)) {
           result.objectBounds = *objectBounds;
         }
-      } else if (!memcmp(type, "SPCT", 4)) {
-        result.spellCount = *reinterpret_cast<const uint32_t*>(data);
       } else if (!memcmp(type, "SPLO", 4)) {
         result.spells.emplace(*reinterpret_cast<const uint32_t*>(data));
       }
@@ -1060,8 +1058,6 @@ espm::RACE::Data espm::RACE::GetData(
         result.staminaRegen = *reinterpret_cast<const float*>(data + 92);
         result.unarmedDamage = *reinterpret_cast<const float*>(data + 96);
         result.unarmedReach = *reinterpret_cast<const float*>(data + 100);
-      } else if (!memcmp(type, "SPCT", 4)) {
-        result.spellCount = *reinterpret_cast<const uint32_t*>(data);
       } else if (!memcmp(type, "SPLO", 4)) {
         result.spells.emplace(*reinterpret_cast<const uint32_t*>(data));
       }
@@ -1188,7 +1184,7 @@ espm::BOOK::Data espm::BOOK::GetData(
         result.flags =
           static_cast<Flags>(*reinterpret_cast<const uint8_t*>(data));
 
-        result.spellOrSkillFormID =
+        result.spellOrSkillFormId =
           *reinterpret_cast<const uint32_t*>(data + 0x4);
       }
     },

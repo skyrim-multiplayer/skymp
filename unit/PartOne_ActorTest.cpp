@@ -49,6 +49,7 @@ TEST_CASE("SetUserActor", "[PartOne]")
                                             { "healRateMult", 100.f },
                                             { "health", 100.f },
                                             { "isHostedByOther", true },
+                                            { "learnedSpells",  nlohmann::json::array() },
                                             { "magicka", 100.f },
                                             { "magickaRate", 3.f },
                                             { "magickaRateMult", 100.f },
