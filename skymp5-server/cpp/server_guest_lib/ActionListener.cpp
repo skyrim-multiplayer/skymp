@@ -175,27 +175,63 @@ void ActionListener::OnUpdateAppearance(const RawMessageData& rawMsgData,
   SendToNeighbours(idx, rawMsgData, true);
 }
 
-void ActionListener::OnUpdateEquipment(const RawMessageData& rawMsgData,
-                                       uint32_t idx,
-                                       simdjson::dom::element& data,
-                                       const Inventory& equipmentInv)
+void ActionListener::OnUpdateEquipment(
+  const RawMessageData& rawMsgData, const uint32_t idx,
+  const simdjson::dom::element& data, const Inventory& equipmentInv,
+  const uint32_t leftSpell, const uint32_t rightSpell,
+  const uint32_t voiceSpell, const uint32_t instantSpell)
 {
   MpActor* actor = partOne.serverState.ActorByUser(rawMsgData.userId);
-  if (!actor)
-    return;
 
-  bool badEq = false;
-  for (auto& e : equipmentInv.entries) {
-    if (!actor->GetInventory().HasItem(e.baseId)) {
-      badEq = true;
-      break;
+  if (!actor) {
+    return;
+  }
+
+  if (leftSpell > 0 && !actor->IsSpellLearned(leftSpell)) {
+    spdlog::debug(
+      "OnUpdateEquipment result false. Spell with id ({}) not learned",
+      leftSpell);
+    return;
+  }
+
+  if (rightSpell > 0 && !actor->IsSpellLearned(rightSpell)) {
+    spdlog::debug(
+      "OnUpdateEquipment result false. Spell with id ({}) not learned",
+      leftSpell);
+    return;
+  }
+
+  if (voiceSpell > 0 && !actor->IsSpellLearned(voiceSpell)) {
+    spdlog::debug(
+      "OnUpdateEquipment result false. Spell with id ({}) not learned",
+      leftSpell);
+    return;
+  }
+
+  if (instantSpell > 0 && !actor->IsSpellLearned(instantSpell)) {
+    spdlog::debug(
+      "OnUpdateEquipment result false. Spell with id ({}) not learned",
+      leftSpell);
+    return;
+  }
+
+  const auto& inventory = actor->GetInventory();
+
+  for (auto& [baseId, count, _] : equipmentInv.entries) {
+
+    if (!(inventory.HasItem(baseId) &&
+          inventory.GetItemCount(baseId) == count)) {
+
+      spdlog::debug(
+        "OnUpdateEquipment result false. The inventory does not contain item "
+        "with id ({}) or contains not in the same quantity as the customer",
+        baseId);
+      return;
     }
   }
 
-  if (!badEq) {
-    SendToNeighbours(idx, rawMsgData, true);
-    actor->SetEquipment(simdjson::minify(data));
-  }
+  SendToNeighbours(idx, rawMsgData, true);
+  actor->SetEquipment(simdjson::minify(data));
 }
 
 void RecalculateWorn(MpObjectReference& refr)

@@ -1,51 +1,52 @@
+import * as sp from 'skyrimPlatform';
 import {
+  Actor,
+  Game,
+  ObjectReference,
+  Ui,
+  Utility,
   on,
   once,
   printConsole,
-  storage,
   settings,
-  Game,
-  Ui,
-  Utility,
-  Actor,
-  ObjectReference,
-} from "skyrimPlatform";
-import { getMovement } from "./sync/movement";
-import { getAppearance } from "./sync/appearance";
-import { AnimationSource, Animation, setupHooks } from "./sync/animation";
-import { getEquipment } from "./sync/equipment";
+  storage,
+} from 'skyrimPlatform';
+
+import * as netInfo from './debug/netInfoSystem';
+import * as loadGameManager from './features/loadGameManager';
+import * as updateOwner from './gamemodeApi/updateOwner';
+import * as networking from './networking';
+import * as taffyPerkSystem from './sweetpie/taffyPerkSystem';
+import * as deathSystem from './sync/deathSystem';
+import { setUpConsoleCommands } from './features/console';
+import { HostStartMessage, HostStopMessage, MsgType } from './messages';
+import { FormModel } from './modelSource/model';
+import { ModelSource } from './modelSource/modelSource';
+import { MsgHandler } from './modelSource/msgHandler';
+import { RemoteServer, getPcInventory } from './modelSource/remoteServer';
+import { SendTarget } from './modelSource/sendTarget';
+import { ActorValues, getActorValues } from './sync/actorvalues';
+import { Animation, AnimationSource, setupHooks } from './sync/animation';
+import { getAppearance } from './sync/appearance';
+import { getEquipment } from './sync/equipment';
+import { getHitData } from './sync/hit';
 import {
+  Inventory,
   getDiff,
   getInventory,
   hasExtras,
-  Inventory,
   removeSimpleItemsAsManyAsPossible,
   sumInventories,
-} from "./sync/inventory";
-import { MsgType, HostStartMessage, HostStopMessage } from "./messages";
-import { MsgHandler } from "./modelSource/msgHandler";
-import { ModelSource } from "./modelSource/modelSource";
-import { RemoteServer, getPcInventory } from "./modelSource/remoteServer";
-import { SendTarget } from "./modelSource/sendTarget";
-import * as networking from "./networking";
-import * as sp from "skyrimPlatform";
-import * as loadGameManager from "./features/loadGameManager";
-import * as deathSystem from "./sync/deathSystem";
-import { setUpConsoleCommands } from "./features/console";
-import { nextHostAttempt } from "./view/hostAttempts";
-import * as updateOwner from "./gamemodeApi/updateOwner";
-import { ActorValues, getActorValues } from "./sync/actorvalues";
-import { getHitData } from "./sync/hit";
-import { FormModel } from "./modelSource/model";
-import * as netInfo from "./debug/netInfoSystem";
-import { WorldView } from "./view/worldView";
+} from './sync/inventory';
+import { getMovement } from './sync/movement';
+import { getScreenResolution } from './view/formView';
+import { nextHostAttempt } from './view/hostAttempts';
+import { WorldView } from './view/worldView';
 import {
   getViewFromStorage,
   localIdToRemoteId,
   remoteIdToLocalId,
-} from "./view/worldViewMisc";
-import { getScreenResolution } from "./view/formView";
-import * as taffyPerkSystem from "./sweetpie/taffyPerkSystem";
+} from './view/worldViewMisc';
 
 interface AnyMessage {
   type?: string;
@@ -59,16 +60,16 @@ const handleMessage = (msgAny: AnyMessage, handler_: MsgHandler) => {
   >;
   const f = handler[msgType];
 
-  if (msgType === "hostStart") {
+  if (msgType === 'hostStart') {
     const msg = msgAny as HostStartMessage;
     const target = msg.target;
 
-    let hosted = storage["hosted"];
+    let hosted = storage['hosted'];
     if (typeof hosted !== typeof []) {
       // if you try to switch to Set checkout .concat usage.
       // concat compiles but doesn't work as expected
       hosted = new Array<number>();
-      storage["hosted"] = hosted;
+      storage['hosted'] = hosted;
     }
 
     if (!(hosted as Array<unknown>).includes(target)) {
@@ -76,25 +77,25 @@ const handleMessage = (msgAny: AnyMessage, handler_: MsgHandler) => {
     }
   }
 
-  if (msgType === "hostStop") {
+  if (msgType === 'hostStop') {
     const msg = msgAny as HostStopMessage;
     const target = msg.target;
-    printConsole("hostStop", target.toString(16));
+    printConsole('hostStop', target.toString(16));
 
-    const hosted = storage["hosted"] as Array<number>;
+    const hosted = storage['hosted'] as Array<number>;
     if (typeof hosted === typeof []) {
-      storage["hosted"] = hosted.filter((x) => x !== target);
+      storage['hosted'] = hosted.filter((x) => x !== target);
     }
   }
 
-  if (f && typeof f === "function") handler[msgType](msgAny);
+  if (f && typeof f === 'function') handler[msgType](msgAny);
 };
 
-printConsole("Hello Multiplayer");
-printConsole("settings:", settings["skymp5-client"]);
+printConsole('Hello Multiplayer');
+printConsole('settings:', settings['skymp5-client']);
 
-const targetIp = settings["skymp5-client"]["server-ip"] as string;
-const targetPort = settings["skymp5-client"]["server-port"] as number;
+const targetIp = settings['skymp5-client']['server-ip'] as string;
+const targetPort = settings['skymp5-client']['server-port'] as number;
 
 export const getServerIp = () => {
   return targetIp;
@@ -112,7 +113,7 @@ export const connectWhenICallAndNotWhenIImport = (): void => {
     printConsole(`Connecting to ${storage.targetIp}:${storage.targetPort}`);
     networking.connect(targetIp, targetPort);
   } else {
-    printConsole("Reconnect is not required");
+    printConsole('Reconnect is not required');
   }
 };
 
@@ -123,33 +124,33 @@ export class SkympClient {
     setupHooks();
     updateOwner.setup();
 
-    sp.printConsole("SkympClient ctor");
+    sp.printConsole('SkympClient ctor');
 
-    networking.on("connectionFailed", () => {
-      printConsole("Connection failed");
+    networking.on('connectionFailed', () => {
+      printConsole('Connection failed');
     });
 
-    networking.on("connectionDenied", (err: Record<string, any> | string) => {
-      printConsole("Connection denied: ", err);
+    networking.on('connectionDenied', (err: Record<string, any> | string) => {
+      printConsole('Connection denied: ', err);
     });
 
-    networking.on("connectionAccepted", () => {
+    networking.on('connectionAccepted', () => {
       this.msgHandler.handleConnectionAccepted();
     });
 
-    networking.on("disconnect", () => {
+    networking.on('disconnect', () => {
       this.msgHandler.handleDisconnect();
     });
 
-    networking.on("message", (msgAny: Record<string, unknown> | string) => {
+    networking.on('message', (msgAny: Record<string, unknown> | string) => {
       netInfo.NetInfo.addReceivedPacketCount(1);
       handleMessage(
         msgAny as Record<string, unknown>,
-        this.msgHandler as MsgHandler
+        this.msgHandler as MsgHandler,
       );
     });
 
-    on("update", () => {
+    on('update', () => {
       if (!this.singlePlayer) {
         this.sendInputs();
       }
@@ -157,7 +158,7 @@ export class SkympClient {
 
     let lastInv: Inventory | undefined;
 
-    once("update", () => {
+    once('update', () => {
       const send = (msg: Record<string, unknown>) => {
         this.sendTarget.send(msg, true);
       };
@@ -167,7 +168,7 @@ export class SkympClient {
       setUpConsoleCommands(send, localIdToRemoteId);
     });
 
-    on("activate", (e) => {
+    on('activate', (e) => {
       lastInv = getInventory(Game.getPlayer() as Actor);
       let caster = e.caster ? e.caster.getFormID() : 0;
       let target = e.target ? e.target.getFormID() : 0;
@@ -178,10 +179,10 @@ export class SkympClient {
       if (caster !== 0x14 && caster < 0xff000000) return;
 
       target = this.localIdToRemoteId(target);
-      if (!target) return printConsole("localIdToRemoteId returned 0 (target)");
+      if (!target) return printConsole('localIdToRemoteId returned 0 (target)');
 
       caster = this.localIdToRemoteId(caster);
-      if (!caster) return printConsole("localIdToRemoteId returned 0 (caster)");
+      if (!caster) return printConsole('localIdToRemoteId returned 0 (caster)');
 
       const openState = e.target.getOpenState();
       const enum OpenState {
@@ -196,15 +197,15 @@ export class SkympClient {
 
       this.sendTarget.send(
         { t: MsgType.Activate, data: { caster, target } },
-        true
+        true,
       );
-      printConsole("sendActi", { caster, target });
+      printConsole('sendActi', { caster, target });
     });
 
     type FurnitureId = number;
     const furnitureStreak = new Map<FurnitureId, Inventory>();
 
-    on("containerChanged", (e) => {
+    on('containerChanged', (e) => {
       const oldContainerId = e.oldContainer ? e.oldContainer.getFormID() : 0;
       const newContainerId = e.newContainer ? e.newContainer.getFormID() : 0;
       const baseObjId = e.baseObj ? e.baseObj.getFormID() : 0;
@@ -226,24 +227,24 @@ export class SkympClient {
         });
         furnitureStreak.set(furrnitureId, craftInputObjects);
         printConsole(
-          `Adding ${baseObjId.toString(16)} (${e.numItems}) to recipe`
+          `Adding ${baseObjId.toString(16)} (${e.numItems}) to recipe`,
         );
       } else if (oldContainerId === 0 && newContainerId === 0x14) {
-        printConsole("Flushing recipe");
+        printConsole('Flushing recipe');
         const craftInputObjects = furnitureStreak.get(furrnitureId);
         if (craftInputObjects && craftInputObjects.entries.length) {
           furnitureStreak.delete(furrnitureId);
           const workbench = this.localIdToRemoteId(furrnitureId);
-          if (!workbench) return printConsole("localIdToRemoteId returned 0");
+          if (!workbench) return printConsole('localIdToRemoteId returned 0');
 
           this.sendTarget.send(
             {
               t: MsgType.CraftItem,
               data: { workbench, craftInputObjects, resultObjectId: baseObjId },
             },
-            true
+            true,
           );
-          printConsole("sendCraft", {
+          printConsole('sendCraft', {
             workbench,
             craftInputObjects,
             resultObjectId: baseObjId,
@@ -252,7 +253,7 @@ export class SkympClient {
       }
     });
 
-    on("containerChanged", (e) => {
+    on('containerChanged', (e) => {
       if (e.oldContainer && e.newContainer) {
         if (
           e.oldContainer.getFormID() === 0x14 ||
@@ -275,7 +276,7 @@ export class SkympClient {
             const ignoreWorn = false;
             const diff = getDiff(lastInv, newInv, ignoreWorn);
 
-            printConsole("diff:");
+            printConsole('diff:');
             for (let i = 0; i < diff.entries.length; ++i) {
               printConsole(`[${i}] ${JSON.stringify(diff.entries[i])}`);
             }
@@ -283,18 +284,18 @@ export class SkympClient {
               .filter((entry) =>
                 entry.count > 0
                   ? taffyPerkSystem.canDropOrPutItem(entry.baseId)
-                  : true
+                  : true,
               )
               .map((entry) => {
                 if (entry.count !== 0) {
                   const msg = JSON.parse(JSON.stringify(entry));
-                  if (Game.getFormEx(entry.baseId)?.getName() === msg["name"]) {
-                    delete msg["name"];
+                  if (Game.getFormEx(entry.baseId)?.getName() === msg['name']) {
+                    delete msg['name'];
                   }
-                  msg["t"] =
+                  msg['t'] =
                     entry.count > 0 ? MsgType.PutItem : MsgType.TakeItem;
-                  msg["count"] = Math.abs(msg["count"]);
-                  msg["target"] =
+                  msg['count'] = Math.abs(msg['count']);
+                  msg['target'] =
                     e.oldContainer.getFormID() === 0x14
                       ? e.newContainer.getFormID()
                       : e.oldContainer.getFormID();
@@ -314,7 +315,7 @@ export class SkympClient {
                   lastInv = removeSimpleItemsAsManyAsPossible(
                     lastInv,
                     entry.baseId,
-                    entry.count
+                    entry.count,
                   );
                 } else if (take) {
                   const add = { entries: [entry] };
@@ -328,7 +329,7 @@ export class SkympClient {
       }
     });
 
-    on("containerChanged", (e) => {
+    on('containerChanged', (e) => {
       const pl = Game.getPlayer() as Actor;
       const isPlayer: boolean =
         pl && e.oldContainer && pl.getFormID() === e.oldContainer.getFormID();
@@ -350,7 +351,7 @@ export class SkympClient {
           pl.getPositionX(),
           pl.getPositionY(),
           pl.getPositionZ(),
-          radius
+          radius,
         )?.getFormID();
         if (refrId) {
           const refr = ObjectReference.from(Game.getFormEx(refrId));
@@ -366,7 +367,7 @@ export class SkympClient {
     });
 
     const playerFormId = 0x14;
-    on("equip", (e) => {
+    on('equip', (e) => {
       if (!e.actor || !e.baseObj) {
         return;
       }
@@ -376,12 +377,12 @@ export class SkympClient {
 
         this.sendTarget.send(
           { t: MsgType.OnEquip, baseId: e.baseObj.getFormID() },
-          false
+          false,
         );
       }
     });
 
-    on("unequip", (e) => {
+    on('unequip', (e) => {
       if (!e.actor || !e.baseObj) {
         return;
       }
@@ -391,7 +392,7 @@ export class SkympClient {
       }
     });
 
-    on("loadGame", () => {
+    on('loadGame', () => {
       // Currently only armor is equipped after relogging (see remoteServer.ts)
       // This hack forces sending /equipment without weapons/ back to the server
       Utility.wait(3).then(() => (this.equipmentChanged = true));
@@ -400,7 +401,7 @@ export class SkympClient {
     loadGameManager.addLoadGameListener((e: loadGameManager.GameLoadEvent) => {
       if (!e.isCausedBySkyrimPlatform && !this.singlePlayer) {
         sp.Debug.messageBox(
-          "Save has been loaded in multiplayer, switching to the single-player mode"
+          'Save has been loaded in multiplayer, switching to the single-player mode',
         );
         networking.close();
         this.singlePlayer = true;
@@ -408,14 +409,14 @@ export class SkympClient {
       }
     });
 
-    once("update", () => {
+    once('update', () => {
       const player = Game.getPlayer();
       if (player) {
         deathSystem.makeActorImmortal(player);
       }
     });
 
-    on("hit", (e) => {
+    on('hit', (e) => {
       if (e.target.getFormID() === playerFormId) return;
       if (e.aggressor.getFormID() !== playerFormId) return;
       if (sp.Weapon.from(e.source) && sp.Actor.from(e.target)) {
@@ -446,7 +447,7 @@ export class SkympClient {
           data: getMovement(owner, this.getForm(_refrId)),
           _refrId,
         },
-        false
+        false,
       );
       this.lastSendMovementMoment.set(refrIdStr, now);
     }
@@ -471,12 +472,12 @@ export class SkympClient {
       !lastAnimationSent ||
       anim.numChanges !== lastAnimationSent.numChanges
     ) {
-      if (anim.animEventName !== "") {
+      if (anim.animEventName !== '') {
         this.lastAnimationSent.set(refrIdStr, anim);
         this.updateActorValuesAfterAnimation(anim.animEventName);
         this.sendTarget.send(
           { t: MsgType.UpdateAnimation, data: anim, _refrId },
-          false
+          false,
         );
       }
     }
@@ -484,16 +485,16 @@ export class SkympClient {
 
   private sendAppearance(_refrId?: number) {
     if (_refrId) return;
-    const shown = Ui.isMenuOpen("RaceSex Menu");
+    const shown = Ui.isMenuOpen('RaceSex Menu');
     if (shown != this.isRaceSexMenuShown) {
       this.isRaceSexMenuShown = shown;
       if (!shown) {
-        printConsole("Exited from race menu");
+        printConsole('Exited from race menu');
 
         const appearance = getAppearance(Game.getPlayer() as Actor);
         this.sendTarget.send(
           { t: MsgType.UpdateAppearance, data: appearance, _refrId },
-          true
+          true,
         );
       }
     }
@@ -508,11 +509,11 @@ export class SkympClient {
 
       const eq = getEquipment(
         Game.getPlayer() as Actor,
-        this.numEquipmentChanges
+        this.numEquipmentChanges,
       );
       this.sendTarget.send(
         { t: MsgType.UpdateEquipment, data: eq, _refrId },
-        true
+        true,
       );
       printConsole({ eq });
     }
@@ -543,7 +544,7 @@ export class SkympClient {
       }
       this.sendTarget.send(
         { t: MsgType.ChangeValues, data: av, _refrId },
-        true
+        true,
       );
       this.actorValuesNeedUpdate = false;
       this.prevValues = av;
@@ -560,7 +561,7 @@ export class SkympClient {
 
   private sendInputs() {
     const hosted =
-      typeof storage["hosted"] === typeof [] ? storage["hosted"] : [];
+      typeof storage['hosted'] === typeof [] ? storage['hosted'] : [];
     const targets = [undefined].concat(hosted as any);
     //printConsole({ targets });
     targets.forEach((target) => {
@@ -570,7 +571,7 @@ export class SkympClient {
       this.sendEquipment(target);
       this.sendActorValuePercentage(
         target,
-        target ? this.getForm(target) : this.getForm()
+        target ? this.getForm(target) : this.getForm(),
       );
     });
     this.sendHostAttempts();
@@ -582,7 +583,7 @@ export class SkympClient {
 
     if (prevRemoteServer && (prevRemoteServer.getWorldModel as unknown)) {
       rs = prevRemoteServer;
-      printConsole("Restore previous RemoteServer");
+      printConsole('Restore previous RemoteServer');
 
       // Keep previous RemoteServer, but update func implementations
       const newObj: Record<string, unknown> =
@@ -592,11 +593,11 @@ export class SkympClient {
         unknown
       >;
       for (const key in newObj) {
-        if (typeof newObj[key] === "function") rsAny[key] = newObj[key];
+        if (typeof newObj[key] === 'function') rsAny[key] = newObj[key];
       }
     } else {
       rs = new RemoteServer();
-      printConsole("Creating RemoteServer");
+      printConsole('Creating RemoteServer');
     }
 
     this.sendTarget = rs;
@@ -608,14 +609,14 @@ export class SkympClient {
   private resetView() {
     const prevView: WorldView = storage.view as WorldView;
     const view = new WorldView();
-    once("update", () => {
+    once('update', () => {
       if (prevView && prevView.destroy) {
         prevView.destroy();
-        printConsole("Previous View destroyed");
+        printConsole('Previous View destroyed');
       }
       storage.view = view;
     });
-    on("update", () => {
+    on('update', () => {
       if (!this.singlePlayer)
         view.update((this.modelSource as ModelSource).getWorldModel());
     });
@@ -643,9 +644,9 @@ export class SkympClient {
 
   private updateActorValuesAfterAnimation(animName: string) {
     if (
-      animName === "JumpLand" ||
-      animName === "JumpLandDirectional" ||
-      animName === "DeathAnim"
+      animName === 'JumpLand' ||
+      animName === 'JumpLandDirectional' ||
+      animName === 'DeathAnim'
     ) {
       this.actorValuesNeedUpdate = true;
     }
@@ -666,7 +667,7 @@ export class SkympClient {
   private actorValuesNeedUpdate = false;
 }
 
-once("update", () => {
+once('update', () => {
   // TODO: It is racing with OnInit in Papyrus, fix it
   (sp.TESModPlatform as any).blockPapyrusEvents(true);
 });
