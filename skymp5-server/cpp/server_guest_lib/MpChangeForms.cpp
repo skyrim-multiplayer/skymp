@@ -143,8 +143,10 @@ MpChangeForm MpChangeForm::JsonToChangeForm(simdjson::dom::element& element)
 
   ReadEx(element, spawnDelay, &res.spawnDelay);
 
-  ReadEx(element, effects, &jTmp);
-  res.activeMagicEffects = ActiveMagicEffectsMap::FromJson(jTmp);
-
+  if (element.at_pointer(effects.GetData()).error() ==
+      simdjson::error_code::SUCCESS) {
+    ReadEx(element, effects, &jTmp);
+    res.activeMagicEffects = ActiveMagicEffectsMap::FromJson(jTmp);
+  }
   return res;
 }

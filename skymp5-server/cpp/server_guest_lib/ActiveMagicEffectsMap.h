@@ -26,6 +26,7 @@ public:
     if (it != effects.end()) {
       float magnitude = it->second.data.magnitude;
       if (entry.data.magnitude <= magnitude) {
+        effects[actorValue].endTime = entry.endTime;
         return;
       }
     }

@@ -44,30 +44,45 @@ float CropRegeneration(float newAttributeValue, float secondsAfterLastRegen,
 float CropHealthRegeneration(float newAttributeValue,
                              float secondsAfterLastRegen, MpActor* actor)
 {
-  BaseActorValues baseValues = GetValues(actor);
-  return CropRegeneration(newAttributeValue, secondsAfterLastRegen,
-                          baseValues.healRate, baseValues.healRateMult,
-                          actor->GetChangeForm().actorValues.healthPercentage);
+  BaseActorValues baseValues = GetBaseActorValues(
+    actor->GetParent(), actor->GetBaseId(), actor->GetRaceId());
+  ActorValues actorValues = actor->GetChangeForm().actorValues;
+  float rate = std::max(baseValues.healRate, actorValues.healRate);
+  float rateMult = std::max(baseValues.healRateMult, actorValues.healRateMult);
+  float percentage =
+    std::max(baseValues.healthPercentage, actorValues.healthPercentage);
+  return CropRegeneration(newAttributeValue, secondsAfterLastRegen, rate,
+                          rateMult, percentage);
 }
 
 float CropMagickaRegeneration(float newAttributeValue,
                               float secondsAfterLastRegen, MpActor* actor)
 {
-  BaseActorValues baseValues = GetValues(actor);
-  return CropRegeneration(
-    newAttributeValue, secondsAfterLastRegen, baseValues.magickaRate,
-    baseValues.magickaRateMult,
-    actor->GetChangeForm().actorValues.magickaPercentage);
+  BaseActorValues baseValues = GetBaseActorValues(
+    actor->GetParent(), actor->GetBaseId(), actor->GetRaceId());
+  ActorValues actorValues = actor->GetChangeForm().actorValues;
+  float rate = std::max(baseValues.magickaRate, actorValues.magickaRate);
+  float rateMult =
+    std::max(baseValues.magickaRateMult, actorValues.magickaRateMult);
+  float percentage =
+    std::max(baseValues.magickaPercentage, actorValues.magickaPercentage);
+  return CropRegeneration(newAttributeValue, secondsAfterLastRegen, rate,
+                          rateMult, percentage);
 }
 
 float CropStaminaRegeneration(float newAttributeValue,
                               float secondsAfterLastRegen, MpActor* actor)
 {
-  BaseActorValues baseValues = GetValues(actor);
-  return CropRegeneration(
-    newAttributeValue, secondsAfterLastRegen,
-    actor->GetChangeForm().actorValues.staminaRate, baseValues.staminaRateMult,
-    actor->GetChangeForm().actorValues.staminaPercentage);
+  BaseActorValues baseValues = GetBaseActorValues(
+    actor->GetParent(), actor->GetBaseId(), actor->GetRaceId());
+  ActorValues actorValues = actor->GetChangeForm().actorValues;
+  float rate = std::max(baseValues.staminaRate, actorValues.staminaRate);
+  float rateMult =
+    std::max(baseValues.staminaRateMult, actorValues.staminaRateMult);
+  float percentage =
+    std::max(baseValues.staminaPercentage, actorValues.staminaPercentage);
+  return CropRegeneration(newAttributeValue, secondsAfterLastRegen, rate,
+                          rateMult, percentage);
 }
 
 float CropPeriodAfterLastRegen(float secondsAfterLastRegen,
