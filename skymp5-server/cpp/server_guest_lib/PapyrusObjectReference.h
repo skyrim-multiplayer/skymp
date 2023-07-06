@@ -36,9 +36,9 @@ public:
   VarValue GetBaseObject(VarValue self,
                          const std::vector<VarValue>& arguments);
 
-  void Register(
-    VirtualMachine& vm,
-    std::shared_ptr<IPapyrusCompatibilityPolicy> compatibilityPolicy) override
+  void Register(VirtualMachine& vm,
+                std::shared_ptr<IPapyrusCompatibilityPolicy> policy,
+                const WorldState& world) override
   {
     AddMethod(vm, "IsHarvested", &PapyrusObjectReference::IsHarvested);
     AddMethod(vm, "IsDisabled", &PapyrusObjectReference::IsDisabled);
