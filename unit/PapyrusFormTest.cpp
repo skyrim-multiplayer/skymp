@@ -11,11 +11,7 @@ TEST_CASE("RegisterForSingleUpdate", "[Papyrus][Form]")
   class CustomForm : public MpForm
   {
   public:
-    void Update() override
-    {
-      counter++;
-      std::cout << "Updated!\n";
-    }
+    void Update() override { counter++; }
 
     int counter = 0;
   };
