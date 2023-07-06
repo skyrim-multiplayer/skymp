@@ -1,8 +1,8 @@
 #include "PapyrusUtility.h"
 
-#include "WorldState.h"
-#include "PapyrusKeyword.h"
 #include "EspmGameObject.h"
+#include "PapyrusKeyword.h"
+#include "WorldState.h"
 
 VarValue PapyrusKeyword::GetKeyword(VarValue self,
                                     const std::vector<VarValue>& arguments)

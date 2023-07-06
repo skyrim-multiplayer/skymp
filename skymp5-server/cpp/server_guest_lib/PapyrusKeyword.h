@@ -8,10 +8,9 @@ public:
 
   VarValue GetKeyword(VarValue self, const std::vector<VarValue>& arguments);
 
-  void Register(
-    VirtualMachine& vm,
-    std::shared_ptr<IPapyrusCompatibilityPolicy> policy,
-    const WorldState& world) override
+  void Register(VirtualMachine& vm,
+                std::shared_ptr<IPapyrusCompatibilityPolicy> policy,
+                const WorldState& world) override
   {
     compatibilityPolicy = policy;
     keywords = world.GetEspm().GetBrowser().GetRecordsByType("KYWD");
