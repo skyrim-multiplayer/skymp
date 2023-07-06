@@ -218,13 +218,10 @@ void ActionListener::OnUpdateEquipment(
   const auto& inventory = actor->GetInventory();
 
   for (auto& [baseId, count, _] : equipmentInv.entries) {
-
-    if (!(inventory.HasItem(baseId) &&
-          inventory.GetItemCount(baseId) == count)) {
-
+    if (!inventory.HasItem(baseId)) {
       spdlog::debug(
         "OnUpdateEquipment result false. The inventory does not contain item "
-        "with id ({}) or contains not in the same quantity as the customer",
+        "with id {:x}",
         baseId);
       return;
     }
