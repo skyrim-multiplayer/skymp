@@ -4,7 +4,7 @@ VarValue PapyrusKeyword::GetKeyword(VarValue self,
                                     const std::vector<VarValue>& arguments)
 {
   if (arguments.empty()) {
-    spdlog::error("Form.HasKeyword - at least one argument expected");
+    spdlog::error("Keyword.GetKeyword - at least one argument expected");
     return VarValue();
   }
 
