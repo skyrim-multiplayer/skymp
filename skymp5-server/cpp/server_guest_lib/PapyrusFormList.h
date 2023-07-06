@@ -12,7 +12,7 @@ public:
 
   void Register(VirtualMachine& vm,
                 std::shared_ptr<IPapyrusCompatibilityPolicy> policy,
-                const WorldState& world) override
+                WorldState* world) override
   {
     AddMethod(vm, "GetSize", &PapyrusFormList::GetSize);
     AddMethod(vm, "GetAt", &PapyrusFormList::GetAt);

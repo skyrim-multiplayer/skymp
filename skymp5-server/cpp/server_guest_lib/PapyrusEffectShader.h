@@ -11,7 +11,7 @@ public:
 
   void Register(VirtualMachine& vm,
                 std::shared_ptr<IPapyrusCompatibilityPolicy> policy,
-                const WorldState& world) override
+                WorldState* world) override
   {
     AddMethod(vm, "Play", &PapyrusEffectShader::Play);
     AddMethod(vm, "Stop", &PapyrusEffectShader::Stop);

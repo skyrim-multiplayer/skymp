@@ -612,7 +612,7 @@ VirtualMachine& WorldState::GetPapyrusVm()
       pImpl->classes.emplace_back(std::make_unique<PapyrusEffectShader>());
       pImpl->classes.emplace_back(std::make_unique<PapyrusKeyword>());
       for (auto& cl : pImpl->classes) {
-        cl->Register(*pImpl->vm, pImpl->policy, *this);
+        cl->Register(*pImpl->vm, pImpl->policy, this);
       }
     }
   }

@@ -38,7 +38,7 @@ public:
 
   void Register(VirtualMachine& vm,
                 std::shared_ptr<IPapyrusCompatibilityPolicy> policy,
-                const WorldState& world) override
+                WorldState* world) override
   {
     AddMethod(vm, "IsHarvested", &PapyrusObjectReference::IsHarvested);
     AddMethod(vm, "IsDisabled", &PapyrusObjectReference::IsDisabled);

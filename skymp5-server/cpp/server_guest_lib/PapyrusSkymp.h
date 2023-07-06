@@ -12,7 +12,7 @@ public:
   void Register(
     VirtualMachine& vm,
     std::shared_ptr<IPapyrusCompatibilityPolicy> compatibilityPolicy,
-    const WorldState& world) override
+    WorldState* world) override
   {
     policy = compatibilityPolicy;
 

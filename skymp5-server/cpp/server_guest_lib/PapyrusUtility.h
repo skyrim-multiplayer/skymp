@@ -10,7 +10,7 @@ public:
 
   void Register(VirtualMachine& vm,
                 std::shared_ptr<IPapyrusCompatibilityPolicy> policy,
-                const WorldState& world) override
+                WorldState* world) override
   {
     compatibilityPolicy = policy;
 

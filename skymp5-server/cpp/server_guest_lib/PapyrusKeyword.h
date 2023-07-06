@@ -1,5 +1,7 @@
 #pragma once
+#include "EspmGameObject.h"
 #include "IPapyrusClass.h"
+#include "WorldState.h"
 
 class PapyrusKeyword : public IPapyrusClass<PapyrusKeyword>
 {
@@ -10,14 +12,17 @@ public:
 
   void Register(VirtualMachine& vm,
                 std::shared_ptr<IPapyrusCompatibilityPolicy> policy,
-                const WorldState& world) override
+                WorldState* world) override
   {
     compatibilityPolicy = policy;
-    keywords = world.GetEspm().GetBrowser().GetRecordsByType("KYWD");
+    worldState = world;
+
+    keywords = (*world).GetEspm().GetBrowser().GetRecordsByType("KYWD");
 
     AddStatic(vm, "GetKeyword", &PapyrusKeyword::GetKeyword);
   }
 
   std::shared_ptr<IPapyrusCompatibilityPolicy> compatibilityPolicy;
+  WorldState* worldState;
   std::vector<const std::vector<espm::RecordHeader*>*> keywords;
 };
