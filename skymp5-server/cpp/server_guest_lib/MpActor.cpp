@@ -706,9 +706,10 @@ void MpActor::ApplyMagicEffect(espm::Effects::Effect& effect,
 
   if (isRate || isMult) {
     MpChangeForm changeForm = GetChangeForm();
-    const ActorValues& actorValues = changeForm.actorValues;
+    BaseActorValues baseValues =
+      GetBaseActorValues(GetParent(), GetBaseId(), GetRaceId());
     const ActiveMagicEffectsMap& activeEffects = changeForm.activeMagicEffects;
-    const float previousValue = actorValues.GetValue(av);
+    const float baseValue = baseValues.GetValue(av);
     const uint32_t formId = GetFormId();
     auto now = std::chrono::system_clock::now();
     std::chrono::system_clock::time_point endTime;
@@ -742,7 +743,7 @@ void MpActor::ApplyMagicEffect(espm::Effects::Effect& effect,
     if (isRate) {
       SetActorValue(av, effect.magnitude);
     } else {
-      SetActorValue(av, previousValue * effect.magnitude);
+      SetActorValue(av, baseValue * effect.magnitude);
     }
     worldState->SetTimer(std::cref(endTime))
       .Then([formId, actorValue = av, worldState](Viet::Void) {

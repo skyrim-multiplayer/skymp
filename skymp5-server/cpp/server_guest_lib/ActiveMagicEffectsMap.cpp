@@ -89,3 +89,7 @@ bool ActiveMagicEffectsMap::Has(espm::ActorValue actorValue) const noexcept
 {
   return effects.find(actorValue) != effects.end();
 }
+
+bool ActiveMagicEffectsMap::Empty() const noexcept {
+  return effects.empty();
+}

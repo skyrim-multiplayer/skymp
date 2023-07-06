@@ -8,6 +8,7 @@
 #include "FindRecipe.h"
 #include "GetBaseActorValues.h"
 #include "HitData.h"
+#include "MathUtils.h"
 #include "MovementValidation.h"
 #include "MpObjectReference.h"
 #include "MsgType.h"
@@ -330,6 +331,7 @@ void ActionListener::OnDropItem(const RawMessageData& rawMsgData,
 }
 
 namespace {
+
 VarValue VarValueFromJson(const simdjson::dom::element& parentMsg,
                           const simdjson::dom::element& element)
 {
@@ -357,10 +359,6 @@ VarValue VarValueFromJson(const simdjson::dom::element& parentMsg,
                            std::to_string(static_cast<int>(element.type())));
 }
 
-bool IsNearlyEqual(float value, float target, float margin = 1.0f / 1024.0f)
-{
-  return std::abs(target - value) < margin;
-}
 }
 void ActionListener::OnFinishSpSnippet(const RawMessageData& rawMsgData,
                                        uint32_t snippetIdx,
@@ -575,12 +573,12 @@ void ActionListener::OnChangeValues(const RawMessageData& rawMsgData,
       CropStaminaRegeneration(stamina, timeAfterRegeneration, actor);
   }
 
-  if (!IsNearlyEqual(currentActorValues.healthPercentage,
-                     newActorValues.healthPercentage) ||
-      !IsNearlyEqual(currentActorValues.magickaPercentage,
-                     newActorValues.magickaPercentage) ||
-      !IsNearlyEqual(currentActorValues.staminaPercentage,
-                     newActorValues.staminaPercentage)) {
+  if (!MathUtils::IsNearlyEqual(currentActorValues.healthPercentage,
+                           newActorValues.healthPercentage) ||
+      !MathUtils::IsNearlyEqual(currentActorValues.magickaPercentage,
+                           newActorValues.magickaPercentage) ||
+      !MathUtils::IsNearlyEqual(currentActorValues.staminaPercentage,
+                           newActorValues.staminaPercentage)) {
     actor->NetSendChangeValues(currentActorValues);
   }
   actor->SetPercentages(currentActorValues);
@@ -783,7 +781,8 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
   }
 
   if (IsDistanceValid(*aggressor, targetActor, hitData) == false) {
-    float distance = sqrtf(GetSqrDistanceToBounds(*aggressor, targetActor));
+    float distance =
+      std::sqrt(GetSqrDistanceToBounds(*aggressor, targetActor));
     float reach = GetReach(*aggressor, hitData.source);
     uint32_t aggressorId = aggressor->GetFormId();
     uint32_t targetId = targetActor.GetFormId();
