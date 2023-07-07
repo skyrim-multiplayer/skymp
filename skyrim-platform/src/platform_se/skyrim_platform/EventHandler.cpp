@@ -102,51 +102,74 @@ EventResult EventHandler::ProcessEvent(
 
 EventResult EventHandler::ProcessEvent(
   const RE::TESActiveEffectApplyRemoveEvent* event,
-  RE::BSTEventSource<RE::TESActiveEffectApplyRemoveEvent>*)
+  RE::BSTEventSource<RE::TESActiveEffectApplyRemoveEvent>*) 
 {
   if (!event) {
     return EventResult::kContinue;
   }
 
-  auto e = CopyEventPtr(event);
+  auto targetPtr = event->target.get();
+  if (!targetPtr) {
+    return EventResult::kContinue;
+  }
 
-  /**
-   * this is a workaround
-   * at the moment of writing if you try to create new instance of
-   * RE::ActiveEffect the game crashes either at instance construction or
-   * deconstruction, but since we really need copies of those classes here we
-   * have to manually manage memory to avoid leaks
-   */
-  auto effectList = std::make_shared<std::vector<std::unique_ptr<
-    RE::ActiveEffect, game_type_pointer_deleter<RE::ActiveEffect>>>>();
+  auto targetActorPtr = targetPtr->As<RE::Actor>();
+  if (!targetActorPtr) {
+    return EventResult::kContinue;
+  }
 
-  for (const auto& eff :
-       *event->target.get()->As<RE::Actor>()->GetActiveEffectList()) {
-    if (eff->usUniqueID != 0) {
-      auto activeEffect = RE::malloc<RE::ActiveEffect>();
-      std::memcpy(activeEffect, eff, sizeof(*eff));
-      effectList->emplace_back(activeEffect,
-                               game_type_pointer_deleter<RE::ActiveEffect>());
+  auto effectsListPtr = targetActorPtr->GetActiveEffectList();
+  if (!effectsListPtr) {
+    return EventResult::kContinue;
+  }
+
+  uint32_t baseId = 0;
+
+  for (auto effectPtr : *effectsListPtr) {
+    if (effectPtr && effectPtr->usUniqueID == event->activeEffectUniqueID) {
+      auto baseEffect = effectPtr->GetBaseObject();
+      if (baseEffect) {
+        baseId = baseEffect->GetFormID();
+        break;
+      }
     }
   }
 
-  SkyrimPlatform::GetSingleton()->AddUpdateTask([e, effectList] {
-    for (const auto& effect : *effectList.get()) {
-      if (effect->usUniqueID == e->activeEffectUniqueID) {
-        auto obj = JsValue::Object();
+  if (!baseId) {
+    return EventResult::kContinue;
+  }
 
-        AddObjProperty(&obj, "effect", effect->GetBaseObject(), "MagicEffect");
-        AddObjProperty(&obj, "caster", e->caster.get(), "ObjectReference");
-        AddObjProperty(&obj, "target", e->target.get(), "ObjectReference");
+  uint32_t casterId = event->caster.get() ? event->caster.get()->GetFormID() : 0;
+  uint32_t targetId = event->target.get() ? event->target.get()->GetFormID() : 0;
+  bool isApplied = event->isApplied;
 
-        if (e->isApplied) {
-          SendEvent("effectStart", obj);
-        } else {
-          SendEvent("effectFinish", obj);
-        }
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([casterId, targetId, baseId, isApplied] {
+    auto caster = RE::TESForm::LookupByID<RE::TESObjectREFR>(casterId);
+    auto target = RE::TESForm::LookupByID<RE::TESObjectREFR>(targetId);
+    auto base = RE::TESForm::LookupByID<RE::MagicEffect>(baseId);
 
-        return;
-      }
+    if (!base) {
+      return;
+    }
+
+    if (!caster && casterId != 0) {
+      return;
+    }
+
+    if (!target && targetId != 0) {
+      return;
+    }
+
+    auto obj = JsValue::Object();
+
+    AddObjProperty(&obj, "effect", base, "MagicEffect");
+    AddObjProperty(&obj, "caster", caster, "ObjectReference");
+    AddObjProperty(&obj, "target", target, "ObjectReference");
+
+    if (isApplied) {
+      SendEvent("effectStart", obj);
+    } else {
+      SendEvent("effectFinish", obj);
     }
   });
 
@@ -189,7 +212,7 @@ EventResult EventHandler::ProcessEvent(
     return EventResult::kContinue;
   }
   auto refrId = refr->GetFormID();
-
+\
   bool isAttach = event->action == 1;
   if (isAttach) {
     SkyrimPlatform::GetSingleton()->AddUpdateTask([refrId] {
