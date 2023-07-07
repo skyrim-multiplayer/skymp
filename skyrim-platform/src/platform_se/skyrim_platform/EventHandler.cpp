@@ -146,7 +146,7 @@ EventResult EventHandler::ProcessEvent(
   SkyrimPlatform::GetSingleton()->AddUpdateTask([casterId, targetId, baseId, isApplied] {
     auto caster = RE::TESForm::LookupByID<RE::TESObjectREFR>(casterId);
     auto target = RE::TESForm::LookupByID<RE::TESObjectREFR>(targetId);
-    auto base = RE::TESForm::LookupByID<RE::MagicEffect>(baseId);
+    auto base = RE::TESForm::LookupByID<RE::TESForm>(baseId);
 
     if (!base) {
       return;
