@@ -285,11 +285,6 @@ void MpObjectReference::VisitProperties(const PropertiesVisitor& visitor,
 void MpObjectReference::Activate(MpObjectReference& activationSource,
                                  bool defaultProcessingOnly)
 {
-  auto occupantId = this->occupant ? this->occupant->GetFormId() : 0;
-
-  spdlog::trace("MpObjectReference::Activate {:x} - occupantId = {:x}",
-                this->GetFormId(), occupantId);
-
   if (auto worldState = activationSource.GetParent(); worldState->HasEspm()) {
     CheckInteractionAbility(activationSource);
   }
@@ -297,17 +292,11 @@ void MpObjectReference::Activate(MpObjectReference& activationSource,
   bool activationBlockedByMpApi = MpApiOnActivate(activationSource);
 
   if (!activationBlockedByMpApi &&
-      (!activationBlocked || defaultProcessingOnly)) {
+      (!activationBlocked || defaultProcessingOnly))
     ProcessActivate(activationSource);
-  }
 
-  bool isSecondContainerActivation = occupantId > 0;
-
-  if (!defaultProcessingOnly && !isSecondContainerActivation) {
+  if (!defaultProcessingOnly) {
     auto arg = activationSource.ToVarValue();
-    spdlog::trace(
-      "MpObjectReference::Activate {:x} - send OnActivate Papyrus event",
-      this->GetFormId());
     SendPapyrusEvent("OnActivate", &arg, 1);
   }
 }
