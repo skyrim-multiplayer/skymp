@@ -11,11 +11,28 @@
 #include <cstdint>
 #include <optional>
 #include <ostream>
+#include <set>
 #include <string>
 #include <tuple>
 
 class MpObjectReference;
 class WorldState;
+
+struct LearnedSpells
+{
+  using Data = std::set<uint32_t>;
+
+  void LearnSpell(Data::key_type baseId);
+
+  [[nodiscard]] size_t Count() const noexcept;
+
+  [[nodiscard]] bool IsSpellLearned(Data::key_type baseId) const;
+
+  std::vector<Data::key_type> GetLearnedSpells() const;
+
+private:
+  Data _learnedSpellIds{};
+};
 
 class MpChangeFormREFR
 {
@@ -33,6 +50,8 @@ public:
   NiPoint3 angle = { 0, 0, 0 };
   FormDesc worldOrCellDesc;
   Inventory inv;
+  LearnedSpells learnedSpells;
+
   bool isHarvested = false;
   bool isOpen = false;
   bool baseContainerAdded = false;

@@ -971,23 +971,30 @@ espm::NPC_::Data espm::NPC_::GetData(
       } else if (!memcmp(type, "SNAM", 4)) {
         uint32_t formId = *reinterpret_cast<const uint32_t*>(data);
         int8_t rank = *reinterpret_cast<const int8_t*>(data);
+
         result.factions.push_back({ formId, rank });
       } else if (!memcmp(type, "ACBS", 4)) {
-        uint32_t flags = *reinterpret_cast<const uint32_t*>(data);
+        const uint32_t flags = *reinterpret_cast<const uint32_t*>(data);
+
         result.isEssential = !!(flags & 0x02);
         result.isProtected = !!(flags & 0x800);
         result.magickaOffset = *reinterpret_cast<const uint16_t*>(data + 4);
         result.staminaOffset = *reinterpret_cast<const uint16_t*>(data + 6);
         result.healthOffset = *reinterpret_cast<const uint16_t*>(data + 20);
+
       } else if (!memcmp(type, "RNAM", 4)) {
         result.race = *reinterpret_cast<const uint32_t*>(data);
       } else if (!memcmp(type, "OBND", 4)) {
-        if (auto objectBounds = reinterpret_cast<const ObjectBounds*>(data)) {
+        if (const auto objectBounds =
+              reinterpret_cast<const ObjectBounds*>(data)) {
           result.objectBounds = *objectBounds;
         }
+      } else if (!memcmp(type, "SPLO", 4)) {
+        result.spells.emplace(*reinterpret_cast<const uint32_t*>(data));
       }
     },
     compressedFieldsCache);
+
   result.objects = GetContainerObjects(this, compressedFieldsCache);
   return result;
 }
@@ -1051,6 +1058,8 @@ espm::RACE::Data espm::RACE::GetData(
         result.staminaRegen = *reinterpret_cast<const float*>(data + 92);
         result.unarmedDamage = *reinterpret_cast<const float*>(data + 96);
         result.unarmedReach = *reinterpret_cast<const float*>(data + 100);
+      } else if (!memcmp(type, "SPLO", 4)) {
+        result.spells.emplace(*reinterpret_cast<const uint32_t*>(data));
       }
     },
     compressedFieldsCache);
@@ -1161,6 +1170,32 @@ espm::INGR::Data espm::INGR::GetData(
 {
   Data result;
   result.effects = Effects(this).GetData(compressedFieldsCache).effects;
+  return result;
+}
+
+bool espm::BOOK::Data::IsFlagSet(const Flags flag) const noexcept
+{
+  return (flags & flag) == flag;
+}
+
+espm::BOOK::Data espm::BOOK::GetData(
+  CompressedFieldsCache& compressedFieldsCache) const noexcept
+{
+  Data result;
+
+  RecordHeaderAccess::IterateFields(
+    this,
+    [&](const char* type, uint32_t size, const char* data) {
+      if (!memcmp(type, "DATA", 4)) {
+        result.flags =
+          static_cast<Flags>(*reinterpret_cast<const uint8_t*>(data));
+
+        result.spellOrSkillFormId =
+          *reinterpret_cast<const uint32_t*>(data + 0x4);
+      }
+    },
+    compressedFieldsCache);
+
   return result;
 }
 

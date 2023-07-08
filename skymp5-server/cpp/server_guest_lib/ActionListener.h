@@ -42,8 +42,11 @@ public:
                                   uint32_t idx, const Appearance& appearance);
 
   virtual void OnUpdateEquipment(const RawMessageData& rawMsgData,
-                                 uint32_t idx, simdjson::dom::element& data,
-                                 const Inventory& equipmentInv);
+                                 uint32_t idx,
+                                 const simdjson::dom::element& data,
+                                 const Inventory& equipmentInv,
+                                 uint32_t leftSpell, uint32_t rightSpell,
+                                 uint32_t voiceSpell, uint32_t instantSpell);
 
   virtual void OnActivate(const RawMessageData& rawMsgData, uint32_t caster,
                           uint32_t target);
