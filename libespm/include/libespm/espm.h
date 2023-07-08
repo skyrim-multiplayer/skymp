@@ -1049,7 +1049,8 @@ public:
     GrabActor,
     VampireLord
   };
-  static_assert(static_cast<int32_t>(EffectType::VampireLord) == 46);
+  static_assert(static_cast<std::underlying_type_t<EffectType>>(
+                  EffectType::VampireLord) == 46);
 
   struct DATA
   {
