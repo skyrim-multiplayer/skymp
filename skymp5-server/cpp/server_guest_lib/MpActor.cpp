@@ -6,6 +6,7 @@
 #include "EspmGameObject.h"
 #include "FormCallbacks.h"
 #include "GetBaseActorValues.h"
+#include "MathUtils.h"
 #include "MpChangeForms.h"
 #include "MsgType.h"
 #include "PapyrusObjectReference.h"
@@ -37,6 +38,15 @@ struct MpActor::Impl
     { espm::ActorValue::Health, std::chrono::steady_clock::time_point{} },
     { espm::ActorValue::Stamina, std::chrono::steady_clock::time_point{} },
     { espm::ActorValue::Magicka, std::chrono::steady_clock::time_point{} },
+    { espm::ActorValue::HealRate, std::chrono::steady_clock::time_point{} },
+    { espm::ActorValue::MagickaRate, std::chrono::steady_clock::time_point{} },
+    { espm::ActorValue::StaminaRate, std::chrono::steady_clock::time_point{} },
+    { espm::ActorValue::HealRateMult_or_CombatHealthRegenMultMod,
+      std::chrono::steady_clock::time_point{} },
+    { espm::ActorValue::MagickaRateMult_or_CombatHealthRegenMultPowerMod,
+      std::chrono::steady_clock::time_point{} },
+    { espm::ActorValue::StaminaRateMult,
+      std::chrono::steady_clock::time_point{} },
   };
   uint32_t blockActiveCount = 0;
 };
@@ -446,7 +456,7 @@ bool MpActor::CanActorValueBeRestored(espm::ActorValue av)
 }
 
 std::chrono::steady_clock::time_point MpActor::GetLastRestorationTime(
-  espm::ActorValue av) const
+  espm::ActorValue av) const noexcept
 {
   return pImpl->restorationTimePoints[av];
 }
@@ -678,10 +688,11 @@ void MpActor::ApplyMagicEffect(espm::Effects::Effect& effect, bool hasSweetpie,
                                bool durationOverriden)
 {
   WorldState* worldState = GetParent();
-  const espm::ActorValue av =
-    espm::GetData<espm::MGEF>(effect.effectId, worldState).data.primaryAV;
+  auto data = espm::GetData<espm::MGEF>(effect.effectId, worldState).data;
+  const espm::ActorValue av = data.primaryAV;
+  const espm::MGEF::EffectType type = data.effectType;
   spdlog::trace("Actor value in ApplyMagicEffect(): {}",
-                static_cast<int32_t>(av));
+                static_cast<std::underlying_type_t<espm::ActorValue>>(av));
 
   const bool isValue = av == espm::ActorValue::Health ||
     av == espm::ActorValue::Stamina || av == espm::ActorValue::Magicka;
@@ -719,9 +730,11 @@ void MpActor::ApplyMagicEffect(espm::Effects::Effect& effect, bool hasSweetpie,
     if (durationOverriden) {
       std::optional effect = GetChangeForm().activeMagicEffects.Get(av);
       if (!effect.has_value()) {
-        spdlog::error("MpActor with formId {:x} has no magic effect affecting "
-                      "actor value {}",
-                      GetFormId(), static_cast<int32_t>(av));
+        spdlog::error(
+          "MpActor with formId {:x} has no magic effect affecting "
+          "actor value {}",
+          GetFormId(),
+          static_cast<std::underlying_type_t<espm::ActorValue>>(av));
         return;
       }
       endTime = effect.value().get().endTime;
@@ -745,7 +758,10 @@ void MpActor::ApplyMagicEffect(espm::Effects::Effect& effect, bool hasSweetpie,
     if (isRate) {
       SetActorValue(av, effect.magnitude);
     } else {
-      SetActorValue(av, baseValue * effect.magnitude);
+      const float mult = type == espm::MGEF::EffectType::PeakValueMod
+        ? MathUtils::PercentToMultPos(effect.magnitude)
+        : MathUtils::PercentToMultNeg(effect.magnitude);
+      SetActorValue(av, baseValue * mult);
     }
     worldState->SetTimer(std::cref(endTime))
       .Then([formId, actorValue = av, worldState](Viet::Void) {

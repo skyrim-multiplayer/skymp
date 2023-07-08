@@ -6,11 +6,6 @@
 
 namespace {
 
-float PercentToFloat(float percent)
-{
-  return percent / 100.0f;
-}
-
 BaseActorValues GetValues(MpActor* actor)
 {
   uint32_t baseId = actor->GetBaseId();
@@ -26,8 +21,9 @@ float CropRegeneration(float newAttributeValue, float secondsAfterLastRegen,
                        float attributeRate, float attributeRateMult,
                        float oldAttributeValue, bool hasActiveMagicEffects)
 {
-  float validRegenerationPercentage = PercentToFloat(attributeRate) *
-    PercentToFloat(attributeRateMult) * secondsAfterLastRegen;
+  float validRegenerationPercentage =
+    MathUtils::PercentToFloat(attributeRate) *
+    MathUtils::PercentToFloat(attributeRateMult) * secondsAfterLastRegen;
   validRegenerationPercentage =
     validRegenerationPercentage < 0.0f ? 0.0f : validRegenerationPercentage;
   float validAttributePercentage =

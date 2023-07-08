@@ -23,13 +23,6 @@ public:
   void Add(espm::ActorValue actorValue, T&& entry)
   {
     auto it = effects.find(actorValue);
-    if (it != effects.end()) {
-      float magnitude = it->second.data.magnitude;
-      if (entry.data.magnitude <= magnitude) {
-        effects[actorValue].endTime = entry.endTime;
-        return;
-      }
-    }
     effects[actorValue] = std::forward<T>(entry);
   }
 
@@ -40,7 +33,7 @@ public:
   void Remove(espm::ActorValue actorValue) noexcept;
   void Clear() noexcept;
   bool Has(espm::ActorValue actorValue) const noexcept;
-  [[ nodiscard ]] bool Empty() const noexcept;
+  [[nodiscard]] bool Empty() const noexcept;
   nlohmann::json::array_t ToJson() const;
 
 private:

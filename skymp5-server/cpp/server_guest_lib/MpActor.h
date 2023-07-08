@@ -124,7 +124,7 @@ private:
 
   void ModifyActorValuePercentage(espm::ActorValue av, float percentageDelta);
   std::chrono::steady_clock::time_point GetLastRestorationTime(
-    espm::ActorValue av) const;
+    espm::ActorValue av) const noexcept;
   void SetLastRestorationTime(espm::ActorValue av,
                               std::chrono::steady_clock::time_point timePoint);
   bool CanActorValueBeRestored(espm::ActorValue av);
