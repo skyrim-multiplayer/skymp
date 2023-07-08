@@ -674,8 +674,8 @@ void MpActor::SetActorValues(const ActorValues& actorValues)
     [&](MpChangeForm& changeForm) { changeForm.actorValues = actorValues; });
 }
 
-void MpActor::ApplyMagicEffect(espm::Effects::Effect& effect,
-                               bool durationOverriden, bool hasSweetpie)
+void MpActor::ApplyMagicEffect(espm::Effects::Effect& effect, bool hasSweetpie,
+                               bool durationOverriden)
 {
   WorldState* worldState = GetParent();
   const espm::ActorValue av =
