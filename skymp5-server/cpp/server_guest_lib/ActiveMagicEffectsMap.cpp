@@ -68,7 +68,8 @@ nlohmann::json::array_t ActiveMagicEffectsMap::ToJson() const
     obj["magnitude"] = effectEntry.data.magnitude;
     obj["duration"] = effectEntry.data.duration;
     obj["areaOfEffect"] = effectEntry.data.areaOfEffect;
-    obj["actorValue"] = static_cast<uint32_t>(actorValue);
+    obj["actorValue"] =
+      static_cast<std::underlying_type_t<espm::ActorValue>>(actorValue);
     res.push_back(obj);
   }
   return res;
@@ -90,6 +91,7 @@ bool ActiveMagicEffectsMap::Has(espm::ActorValue actorValue) const noexcept
   return effects.find(actorValue) != effects.end();
 }
 
-bool ActiveMagicEffectsMap::Empty() const noexcept {
+bool ActiveMagicEffectsMap::Empty() const noexcept
+{
   return effects.empty();
 }

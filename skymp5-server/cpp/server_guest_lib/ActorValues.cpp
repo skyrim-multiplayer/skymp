@@ -1,5 +1,7 @@
 #include "ActorValues.h"
+#include "libespm/espm.h"
 #include <fmt/format.h>
+#include <type_traits>
 
 float ActorValues::GetValue(espm::ActorValue actorValue) const
 {
@@ -23,7 +25,8 @@ float ActorValues::GetValue(espm::ActorValue actorValue) const
     case espm::ActorValue::StaminaRateMult:
       return staminaRateMult;
     default:
-      throw std::runtime_error(fmt::format("Unsupported actor value type {:}",
-                                           static_cast<int32_t>(actorValue)));
+      throw std::runtime_error(fmt::format(
+        "Unsupported actor value type {:}",
+        static_cast<std::underlying_type_t<espm::ActorValue>>(actorValue)));
   }
 }
