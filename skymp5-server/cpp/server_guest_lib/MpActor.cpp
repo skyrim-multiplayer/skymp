@@ -680,6 +680,8 @@ void MpActor::ApplyMagicEffect(espm::Effects::Effect& effect,
   WorldState* worldState = GetParent();
   const espm::ActorValue av =
     espm::GetData<espm::MGEF>(effect.effectId, worldState).data.primaryAV;
+  spdlog::trace("Actor value in ApplyMagicEffect(): {}",
+                static_cast<int32_t>(av));
 
   const bool isValue = av == espm::ActorValue::Health ||
     av == espm::ActorValue::Stamina || av == espm::ActorValue::Magicka;
