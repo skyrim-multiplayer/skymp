@@ -267,11 +267,13 @@ SweetPieScript::SweetPieScript(const std::vector<std::string>& espmFiles)
     { 0x07267fe7, { 0x07267fdb } },
     { 0x07267fef, { 0x07267fda } },
     { 0x07267fde, { 0x07267fdd } },
-    { 0x720f102, { 0x720f101 } },
-    { 0x720f103, { 0x720f100 } },
-    { 0x720f105, { 0x720f0ff } },
-    { 0x720f107, { 0x7019da3 } },
-    { 0x70d3b6a, { 0x001d4ec } },
+    { 0x0720f102, { 0x0720f101 } },
+    { 0x0720f103, { 0x0720f100 } },
+    { 0x0720f105, { 0x0720f0ff } },
+    { 0x0720f107, { 0x07019da3 } },
+    { 0x070d3b6a, { 0x0001d4ec } },
+    { 0x0720f10d, { 0x007b8484 } },
+    { 0x0720f110, { 0x0720f10e } },
   };
 
   bookBoundWeapons = {
