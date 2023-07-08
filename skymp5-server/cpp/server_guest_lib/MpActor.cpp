@@ -758,9 +758,19 @@ void MpActor::ApplyMagicEffect(espm::Effects::Effect& effect, bool hasSweetpie,
     if (isRate) {
       SetActorValue(av, effect.magnitude);
     } else {
-      const float mult = type == espm::MGEF::EffectType::PeakValueMod
-        ? MathUtils::PercentToMultPos(effect.magnitude)
-        : MathUtils::PercentToMultNeg(effect.magnitude);
+      float mult = 1.f;
+      if (type == espm::MGEF::EffectType::PeakValueMod) {
+        mult = MathUtils::PercentToMultPos(effect.magnitude);
+      }
+
+      if (type == espm::MGEF::EffectType::ValueMod) {
+        mult = MathUtils::PercentToMultNeg(effect.magnitude);
+      }
+      if (MathUtils::IsNearlyEqual(1.f, mult)) {
+        spdlog::error(
+          "Unknown espm::MGEF::EffectType: {}",
+          static_cast<std::underlying_type_t<espm::MGEF::EffectType>>(type));
+      }
       SetActorValue(av, baseValue * mult);
     }
     worldState->SetTimer(std::cref(endTime))
