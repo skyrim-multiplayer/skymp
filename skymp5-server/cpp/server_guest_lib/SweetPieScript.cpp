@@ -255,7 +255,7 @@ SweetPieScript::SweetPieScript(const std::vector<std::string>& espmFiles)
     { 0x071746bf, { 0x07a5950e } },
     { 0x071746c1, { 0x070da795 } },
     { 0x071746c9, { 0x07fa85da } },
-    { 0x071746cf, { 0x07fa85d8 } },
+    { 0x071746cf, { 0x07fa85db } },
     { 0x071746cd, { 0x07fa85de } },
     { 0x071746cb, { 0x07fa85df } },
     { 0x07183a13, { 0x07b84646 } },
