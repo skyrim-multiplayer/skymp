@@ -153,7 +153,7 @@ bool MpActor::OnEquip(uint32_t baseId)
   }
 
   if (!isSpell) {
-    RemoveItem(baseId, 1, this);
+    RemoveItem(baseId, 1, nullptr);
   }
 
   const VarValue args[] = {
