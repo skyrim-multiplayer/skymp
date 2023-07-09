@@ -242,6 +242,15 @@ VarValue PapyrusObjectReference::SetAngle(
   return VarValue::None();
 }
 
+VarValue PapyrusObjectReference::Enable(VarValue self,
+                                        const std::vector<VarValue>& arguments)
+{
+  auto selfRefr = GetFormPtr<MpObjectReference>(self);
+  if (selfRefr)
+    selfRefr->Enable();
+  return VarValue::None();
+}
+
 VarValue PapyrusObjectReference::Disable(
   VarValue self, const std::vector<VarValue>& arguments)
 {

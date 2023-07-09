@@ -20,13 +20,15 @@ uint32_t LongToNormal(uint64_t longFormId)
 namespace JsonPointers {
 static const JsonPointer t("t"), idx("idx"), content("content"), data("data"),
   pos("pos"), rot("rot"), isInJumpState("isInJumpState"),
-  isWeapDrawn("isWeapDrawn"), worldOrCell("worldOrCell"), inv("inv"),
-  caster("caster"), target("target"), snippetIdx("snippetIdx"),
-  returnValue("returnValue"), baseId("baseId"), commandName("commandName"),
-  args("args"), workbench("workbench"), resultObjectId("resultObjectId"),
-  craftInputObjects("craftInputObjects"), remoteId("remoteId"),
-  eventName("eventName"), health("health"), magicka("magicka"),
-  stamina("stamina");
+  isWeapDrawn("isWeapDrawn"), isBlocking("isBlocking"),
+  worldOrCell("worldOrCell"), inv("inv"), caster("caster"), target("target"),
+  snippetIdx("snippetIdx"), returnValue("returnValue"), baseId("baseId"),
+  commandName("commandName"), args("args"), workbench("workbench"),
+  resultObjectId("resultObjectId"), craftInputObjects("craftInputObjects"),
+  remoteId("remoteId"), eventName("eventName"), health("health"),
+  magicka("magicka"), stamina("stamina"), leftSpell("leftSpell"),
+  rightSpell("rightSpell"), voiceSpell("voiceSpell"),
+  instantSpell("instantSpell");
 }
 
 struct PacketParser::Impl
@@ -66,8 +68,8 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
       rawMsgData, movData.idx,
       { movData.pos[0], movData.pos[1], movData.pos[2] },
       { movData.rot[0], movData.rot[1], movData.rot[2] },
-      movData.isInJumpState, movData.isWeapDrawn, movData.worldOrCell);
-
+      movData.isInJumpState, movData.isWeapDrawn, movData.isBlocking,
+      movData.worldOrCell);
     return;
   }
 
@@ -113,12 +115,16 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
       bool isWeapDrawn = false;
       Read(data_, JsonPointers::isWeapDrawn, &isWeapDrawn);
 
+      bool isBlocking = false;
+      Read(data_, JsonPointers::isBlocking, &isBlocking);
+
       uint32_t worldOrCell = 0;
       ReadEx(data_, JsonPointers::worldOrCell, &worldOrCell);
 
       actionListener.OnUpdateMovement(
         rawMsgData, idx, { pos[0], pos[1], pos[2] },
-        { rot[0], rot[1], rot[2] }, isInJumpState, isWeapDrawn, worldOrCell);
+        { rot[0], rot[1], rot[2] }, isInJumpState, isWeapDrawn, isBlocking,
+        worldOrCell);
 
     } break;
     case MsgType::UpdateAnimation: {
@@ -146,8 +152,37 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
       simdjson::dom::element inv;
       ReadEx(data_, JsonPointers::inv, &inv);
 
+      uint32_t leftSpell = 0;
+
+      if (data_.at_pointer(JsonPointers::leftSpell.GetData()).error() ==
+          simdjson::error_code::SUCCESS) {
+        ReadEx(data_, JsonPointers::leftSpell, &leftSpell);
+      }
+
+      uint32_t rightSpell = 0;
+
+      if (data_.at_pointer(JsonPointers::rightSpell.GetData()).error() ==
+          simdjson::error_code::SUCCESS) {
+        ReadEx(data_, JsonPointers::rightSpell, &rightSpell);
+      }
+
+      uint32_t voiceSpell = 0;
+
+      if (data_.at_pointer(JsonPointers::voiceSpell.GetData()).error() ==
+          simdjson::error_code::SUCCESS) {
+        ReadEx(data_, JsonPointers::voiceSpell, &voiceSpell);
+      }
+
+      uint32_t instantSpell = 0;
+
+      if (data_.at_pointer(JsonPointers::instantSpell.GetData()).error() ==
+          simdjson::error_code::SUCCESS) {
+        ReadEx(data_, JsonPointers::instantSpell, &instantSpell);
+      }
+
       actionListener.OnUpdateEquipment(rawMsgData, idx, data_,
-                                       Inventory::FromJson(inv));
+                                       Inventory::FromJson(inv), leftSpell,
+                                       rightSpell, voiceSpell, instantSpell);
     } break;
     case MsgType::Activate: {
       simdjson::dom::element data_;

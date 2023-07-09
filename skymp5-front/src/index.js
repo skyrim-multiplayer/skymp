@@ -34,6 +34,10 @@ window.scrollToLastMessage = () => {
   if (_list != null && window.needToScroll) { _list.scrollTop = _list.offsetHeight * _list.offsetHeight; }
 };
 
+window.playSound = (name) => {
+  (new Audio(require('./sound/' + name).default)).play();
+};
+
 if (window.skyrimPlatform?.sendMessage) {
   window.skyrimPlatform.sendMessage('front-loaded');
 }

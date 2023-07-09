@@ -100,12 +100,12 @@ VarValue PapyrusActor::IsEquipped(VarValue self,
   return VarValue(false);
 }
 
-VarValue PapyrusActor::GetActorValue(VarValue self,
-                                     const std::vector<VarValue>& arguments)
+VarValue PapyrusActor::GetActorValuePercentage(
+  VarValue self, const std::vector<VarValue>& arguments)
 {
   if (arguments.size() < 1) {
     throw std::runtime_error(
-      "Papyrus Actor.GetActorValue: wrong argument count");
+      "Papyrus Actor.GetActorValuePercentage: wrong argument count");
   }
 
   if (auto actor = GetFormPtr<MpActor>(self)) {
@@ -157,6 +157,21 @@ VarValue PapyrusActor::EquipItem(VarValue self,
       throw std::runtime_error("EquipItem requires at least one argument");
     }
     SpSnippet(GetName(), "EquipItem",
+              SpSnippetFunctionGen::SerializeArguments(arguments).data(),
+              actor->GetFormId())
+      .Execute(actor);
+  }
+  return VarValue::None();
+}
+
+VarValue PapyrusActor::SetDontMove(VarValue self,
+                                   const std::vector<VarValue>& arguments)
+{
+  if (auto actor = GetFormPtr<MpActor>(self)) {
+    if (arguments.size() < 1) {
+      throw std::runtime_error("SetDontMove requires at least one argument");
+    }
+    SpSnippet(GetName(), "SetDontMove",
               SpSnippetFunctionGen::SerializeArguments(arguments).data(),
               actor->GetFormId())
       .Execute(actor);

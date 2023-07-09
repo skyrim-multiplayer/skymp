@@ -149,7 +149,7 @@ export const verifyLoadOrder = () => {
       }
       updateText(
         'LOAD ORDER ERROR!\nCheck console for details.',
-        [255, 0, 0, 1],
+        [255, 0, 0, 1]
       );
       sp.browser.loadUrl('about:blank');
     });

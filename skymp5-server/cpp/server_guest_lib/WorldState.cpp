@@ -355,8 +355,8 @@ bool WorldState::LoadForm(uint32_t formId)
     auto& refr = GetFormAt<MpObjectReference>(formId);
     auto it = pImpl->changeFormsForDeferredLoad.find(formId);
     if (it != pImpl->changeFormsForDeferredLoad.end()) {
-      refr.ApplyChangeForm(it->second);
-      pImpl->changeFormsForDeferredLoad.erase(it);
+      auto copy = it->second; // crashes without copying
+      refr.ApplyChangeForm(copy);
     }
 
     refr.ForceSubscriptionsUpdate();

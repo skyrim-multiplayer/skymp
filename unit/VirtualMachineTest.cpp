@@ -95,7 +95,7 @@ class MyScriptVariablesHolder : public ScriptVariablesHolder
 {
 public:
   MyScriptVariablesHolder(const char* scriptName)
-    : ScriptVariablesHolder(scriptName, {}, {}, nullptr, nullptr)
+    : ScriptVariablesHolder(scriptName, {}, {}, nullptr, nullptr, nullptr)
   {
     testObject.reset(new TestObject);
     var = VarValue(testObject.get());

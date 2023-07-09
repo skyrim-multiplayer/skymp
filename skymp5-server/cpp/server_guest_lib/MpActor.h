@@ -21,6 +21,9 @@ public:
   const bool& IsRaceMenuOpen() const;
   const bool& IsDead() const;
   const bool& IsRespawning() const;
+
+  [[nodiscard]] bool IsSpellLearned(uint32_t baseId) const;
+
   std::unique_ptr<const Appearance> GetAppearance() const;
   const std::string& GetAppearanceAsJson();
   const std::string& GetEquipmentAsJson() const;
@@ -38,7 +41,7 @@ public:
 
   void SendToUser(const void* data, size_t size, bool reliable);
 
-  void OnEquip(uint32_t baseId);
+  [[nodiscard]] bool OnEquip(uint32_t baseId);
 
   class DestroyEventSink
   {
@@ -97,20 +100,29 @@ public:
   void SetIsBlockActive(bool isBlockActive);
   bool IsBlockActive() const;
   NiPoint3 GetViewDirection() const;
+  void IncreaseBlockCount() noexcept;
+  void ResetBlockCount() noexcept;
+  uint32_t GetBlockCount() const noexcept;
 
 private:
   struct Impl;
   std::shared_ptr<Impl> pImpl;
 
   void SendAndSetDeathState(bool isDead, bool shouldTeleport);
+
   std::string GetDeathStateMsg(const LocationalData& position, bool isDead,
                                bool shouldTeleport);
+
   void MpApiDeath(MpActor* killer = nullptr);
   void EatItem(uint32_t baseId, espm::Type t);
 
+  void ReadBook(uint32_t baseId);
+
   void ModifyActorValuePercentage(espm::ActorValue av, float percentageDelta);
+
   std::chrono::steady_clock::time_point GetLastRestorationTime(
     espm::ActorValue av) const;
+
   void SetLastRestorationTime(espm::ActorValue av,
                               std::chrono::steady_clock::time_point timePoint);
   bool CanActorValueBeRestored(espm::ActorValue av);
