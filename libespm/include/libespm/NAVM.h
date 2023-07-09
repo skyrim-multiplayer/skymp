@@ -1,6 +1,7 @@
 #pragma once
-#include "RecordHeader.h"
 #include "CellOrGridPos.h"
+#include "RecordHeader.h"
+#include <array>
 #include <memory>
 
 #pragma pack(push, 1)

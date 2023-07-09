@@ -21,7 +21,7 @@ const std::array<float, 3>* NAVM::Vertices::begin() const noexcept
 
 const std::array<float, 3>* NAVM::Vertices::end() const noexcept
 {
-  return beginPtr + *numVerticesPtr;
+  return beginPtr + (*numVerticesPtr);
 }
 
 NAVM::Data NAVM::GetData(
