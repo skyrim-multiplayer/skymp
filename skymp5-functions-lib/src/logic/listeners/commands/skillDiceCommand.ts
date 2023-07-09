@@ -4,12 +4,12 @@ import { ChatText, ChatMessage } from "../../../props/chatProperty";
 import { EvalProperty } from "../../../props/evalProperty";
 import { Ctx } from "../../../types/ctx";
 import { Mp } from "../../../types/mp";
-import { PlayerController } from "../../PlayerController";
+import { CombinedController, PlayerController } from "../../PlayerController";
 import { Command, HandlerInput } from "./command";
 import { getPossessedSkills } from "./skillCommand";
 
 export class SkillDiceCommand extends Command {
-    constructor(mp: Mp, controller: PlayerController) {
+    constructor(mp: Mp, controller: CombinedController) {
         super(mp, controller, "skill-dice");
     }
 

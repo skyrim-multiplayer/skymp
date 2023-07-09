@@ -1,10 +1,10 @@
 import { ChatMessage, ChatText } from "../../../props/chatProperty";
 import { Mp } from "../../../types/mp";
-import { PlayerController } from "../../PlayerController";
+import { CombinedController, PlayerController } from "../../PlayerController";
 import { Command, HandlerInput } from "./command";
 
 export class RollCommand extends Command {
-    constructor(mp: Mp, controller: PlayerController, name: string) {
+    constructor(mp: Mp, controller: CombinedController, name: string) {
         super(mp, controller, name);
     }
 

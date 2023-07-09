@@ -1,10 +1,10 @@
 import { ChatMessage, createSystemMessage } from "../../../props/chatProperty";
 import { Mp, ServerSettings } from "../../../types/mp";
-import { PlayerController } from "../../PlayerController";
+import { CombinedController, PlayerController } from "../../PlayerController";
 import { Command, HandlerInput } from "./command";
 
 export class KickCommand extends Command {
-    constructor(mp: Mp, controller: PlayerController) {
+    constructor(mp: Mp, controller: CombinedController) {
         super(mp, controller, "kick");
         this.serverSettings = this.mp.getServerSettings();
     }

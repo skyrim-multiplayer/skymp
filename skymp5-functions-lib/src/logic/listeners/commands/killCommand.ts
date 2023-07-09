@@ -1,10 +1,10 @@
 import { createSystemMessage } from "../../../props/chatProperty";
 import { Mp } from "../../../types/mp";
-import { PlayerController } from "../../PlayerController";
+import { CombinedController, PlayerController } from "../../PlayerController";
 import { Command, HandlerInput } from "./command";
 
 export class KillCommand extends Command {
-    constructor(mp: Mp, controller: PlayerController) {
+    constructor(mp: Mp, controller: CombinedController) {
         super(mp, controller, "kill");
     }
 

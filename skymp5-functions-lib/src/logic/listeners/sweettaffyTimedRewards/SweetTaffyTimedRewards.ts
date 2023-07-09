@@ -1,6 +1,6 @@
 import { Inventory, LocationalData } from "../../../types/mp";
 import { Position, squareDist } from "../../../utils/locationUtils";
-import { GameModeListener } from "../GameModeListener";
+import { GameModeListener, ListenerLookupController } from "../GameModeListener";
 import { Counter } from "../../PlayerController";
 
 export type TimedRewardController = {
@@ -65,7 +65,8 @@ export function dayStart(date: Date): Date {
 export class SweetTaffyTimedRewards implements GameModeListener {
   static rewardItemFormId = 0x07F33922;
 
-  constructor(private controller: TimedRewardController, private config: TimedRewardConfig) {
+  constructor(private controller: ListenerLookupController & TimedRewardController, private config: TimedRewardConfig) {
+    controller.registerListenerForLookup('SweetTaffyTimedRewards', this);
   }
 
   everySecond() {

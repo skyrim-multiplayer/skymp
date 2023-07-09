@@ -1,5 +1,5 @@
 import { Mp } from "../../../types/mp";
-import { PlayerController } from "../../PlayerController";
+import { CombinedController, PlayerController } from "../../PlayerController";
 import { Command, HandlerInput } from "./command";
 import { EvalProperty } from "../../../props/evalProperty";
 import { Ctx } from "../../../types/ctx";
@@ -9,7 +9,7 @@ declare const ctx: Ctx;
 declare const frontData: string;
 
 export class SkillCommand extends Command {
-    constructor(mp: Mp, controller: PlayerController) {
+    constructor(mp: Mp, controller: CombinedController) {
         super(mp, controller, "skill");
     }
 
@@ -37,6 +37,7 @@ export const getPossessedSkills = (actorId: number, controller?: PlayerControlle
     const possessedSkills = {} as IPossessedSkills;
     let memCount = 1000;
     let expCount = 0;
+    // DJSIMAOHFUISDAGYFSHERDBGRYUFVRU*OIFRVUYGFHVYRS EYUOIWGBVF^WREUIGFVEW^& G^&TVYUGJ
     const inventory = mp.get(actorId, 'inventory').entries;
     for (const item of inventory) {
         if (item.baseId === expId) {

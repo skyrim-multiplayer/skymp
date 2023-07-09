@@ -1,7 +1,7 @@
-import { GameModeListener } from "./logic/listeners/gameModeListener";
-import { Counter, Percentages, PlayerController } from "./logic/PlayerController";
+import { GameModeListener } from "./logic/listeners/GameModeListener";
+import { CombinedController, Counter, Percentages } from "./logic/PlayerController";
 import { SweetPieRound } from "./logic/listeners/sweetpie/SweetPieRound";
-import { ChatMessage, ChatNeighbor, ChatProperty } from "./props/chatProperty";
+import { ChatMessage, ChatProperty } from "./props/chatProperty";
 import { CounterProperty } from "./props/counterProperty";
 import { DialogProperty } from "./props/dialogProperty";
 import { EvalProperty } from "./props/evalProperty";
@@ -50,6 +50,7 @@ export const getName = (actorId: number) => {
 };
 export class MpApiInteractor {
   private static customNames = new Map<number, string>();
+  private static listenersForLookupByName = new Map<string, GameModeListener>();
 
   static setup(listeners: GameModeListener[]) {
     MpApiInteractor.setupActivateHandler(listeners);
@@ -203,8 +204,21 @@ export class MpApiInteractor {
     ChatProperty.showChat(actorId, true);
   }
 
-  static makeController(pointsByName: Map<string, LocationalData>) { // указать, что должно удовлетворять всем полям
+  static makeController(pointsByName: Map<string, LocationalData>) : CombinedController {
     return {
+      registerListenerForLookup(listenerName: string, listener: GameModeListener): void {
+        if (MpApiInteractor.listenersForLookupByName.has(listenerName)) {
+          throw new Error(`listener re-registration for name '${listenerName}'`);
+        }
+        MpApiInteractor.listenersForLookupByName.set(listenerName, listener);
+      },
+      lookupListener(listenerName: string): GameModeListener {
+        const listener = MpApiInteractor.listenersForLookupByName.get(listenerName);
+        if (listener === undefined) {
+          throw new Error(`listener re-registration for name '${listenerName}'`);
+        }
+        return listener;
+      },
       setSpawnPoint(player: number, pointName: string) {
         const point = pointsByName.get(pointName);
         if (point) {
@@ -245,6 +259,7 @@ export class MpApiInteractor {
         return mp.get(playerActorId, 'profileId');
       },
       addItem(actorId: number, itemId: number, count: number, silent = false): void {
+        /*
         mp.callPapyrusFunction(
           'method',
           'ObjectReference',
@@ -252,6 +267,7 @@ export class MpApiInteractor {
           { type: 'form', desc: mp.getDescFromId(actorId) },
           [{ type: 'espm', desc: mp.getDescFromId(itemId) }, count, silent]
         );
+        */
       },
       removeItem(actorId: number, itemId: number, count: number, akOtherContainer: number | null, silent = false): void {
         mp.callPapyrusFunction(

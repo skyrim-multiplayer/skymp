@@ -1,10 +1,17 @@
 import { Inventory } from "../../../types/mp";
 import { Counter } from "../../PlayerController";
-import { dayStart, getRandomIntByWeights, RewardRule, SweetTaffyTimedRewards } from "./SweetTaffyTimedRewards";
+import { GameModeListener } from "../GameModeListener";
+import { dayStart, getRandomIntByWeights, RewardRule, SweetTaffyTimedRewards, TimedRewardController } from "./SweetTaffyTimedRewards";
 
 export const mockController = () => {
   const counters = new Map<string, number>();
   return {
+    lookupListener(listenerName: string): GameModeListener {
+      throw new Error('not expected to be called');
+    },
+    registerListenerForLookup(listenerName: string, listener: GameModeListener): void {
+      // noop
+    },
     addItem: jest.fn(),
     getOnlinePlayers: jest.fn(),
     getCurrentTime: jest.fn(),
