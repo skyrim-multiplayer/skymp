@@ -8,9 +8,7 @@ class CombineBrowser;
 struct BrowserInfo
 {
   BrowserInfo() = default;
-  BrowserInfo(const CombineBrowser* parent_, uint8_t fileIdx_)
-    : parent(parent_)
-    , fileIdx(fileIdx_){};
+  BrowserInfo(const CombineBrowser* parent_, uint8_t fileIdx_);
 
   // Returns 0 for empty (default constructed) LookupResult
   uint32_t ToGlobalId(uint32_t rawId) const noexcept;

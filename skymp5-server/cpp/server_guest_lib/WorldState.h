@@ -190,7 +190,7 @@ private:
   std::unique_ptr<espm::CompressedFieldsCache> espmCache;
 
   bool AttachEspmRecord(const espm::CombineBrowser& br,
-                        espm::RecordHeader* record,
+                        const espm::RecordHeader* record,
                         const espm::IdMapping& mapping);
 
   bool LoadForm(uint32_t formId);

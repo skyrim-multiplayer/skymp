@@ -13,19 +13,19 @@ RefrKey::operator uint64_t() const noexcept
   return value;
 }
 
-uint64_t InitValue(uint32_t cellOrWorld, int16_t x, int16_t y)
+uint64_t RefrKey::InitValue(uint32_t cellOrWorld, int16_t x, int16_t y)
 {
-    union
+  union
+  {
+    struct
     {
-      struct
-      {
-        int16_t x, y;
-      };
-      uint32_t unsignedInt;
-    } myUnion;
-    myUnion.x = x;
-    myUnion.y = y;
-    return utils::MakeUInt64(cellOrWorld, myUnion.unsignedInt);
+      int16_t x, y;
+    };
+    uint32_t unsignedInt;
+  } myUnion;
+  myUnion.x = x;
+  myUnion.y = y;
+  return utils::MakeUInt64(cellOrWorld, myUnion.unsignedInt);
 }
 
 }

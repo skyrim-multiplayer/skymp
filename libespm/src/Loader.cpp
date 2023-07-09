@@ -1,6 +1,7 @@
 #include "libespm/Loader.h"
 
 #include "libespm/AllocatedBuffer.h"
+#include "libespm/EspmUtils.h"
 #include "libespm/MappedBuffer.h"
 
 namespace espm {
@@ -30,7 +31,7 @@ Loader::Loader(const std::vector<fs::path>& filePaths_, OnProgress onProgress,
 
     const auto was1 = std::chrono::steady_clock::now();
     entry.browser.reset(
-      new espm::Browser(entry.buffer->GetData(), entry.buffer->GetLength()));
+      new Browser(entry.buffer->GetData(), entry.buffer->GetLength()));
     const auto end1 = std::chrono::steady_clock::now();
     const std::chrono::duration<float> elapsedTime1 = end1 - was1;
     entry.parseDuration = elapsedTime1.count();
@@ -39,7 +40,7 @@ Loader::Loader(const std::vector<fs::path>& filePaths_, OnProgress onProgress,
                  entry.parseDuration, entry.size);
     }
   }
-  combiner = std::make_unique<espm::Combiner>();
+  combiner = std::make_unique<Combiner>();
   for (auto& entry : entries) {
     const auto fileName = entry.fileName.string();
     combiner->AddSource(entry.browser.get(), fileName.c_str());
@@ -47,7 +48,7 @@ Loader::Loader(const std::vector<fs::path>& filePaths_, OnProgress onProgress,
   combineBrowser = combiner->Combine();
 }
 
-const espm::CombineBrowser& Loader::GetBrowser() const noexcept
+const CombineBrowser& Loader::GetBrowser() const noexcept
 {
   return *combineBrowser;
 }
@@ -67,8 +68,8 @@ std::map<std::string, Loader::FileInfo> Loader::GetFilesInfo() const
   std::map<std::string, FileInfo> res;
 
   for (const auto& entry : entries) {
-    auto hash =
-      CalculateHashcode(entry.buffer->GetData(), entry.buffer->GetLength());
+    auto hash = utils::CalculateHashcode(entry.buffer->GetData(),
+                                         entry.buffer->GetLength());
     res.emplace(entry.fileName.string(),
                 FileInfo{ hash, entry.buffer->GetLength() });
   }

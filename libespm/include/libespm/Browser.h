@@ -15,6 +15,7 @@ class Browser
 {
 public:
   Browser(const void* fileContent, size_t length);
+  ~Browser();
 
   const RecordHeader* LookupById(uint32_t formId) const noexcept;
   std::pair<const RecordHeader**, size_t> FindNavMeshes(

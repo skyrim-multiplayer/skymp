@@ -67,13 +67,14 @@ struct Browser::Impl
 Browser::Browser(const void* fileContent, size_t length)
   : pImpl(std::make_unique<Impl>())
 {
-  // TODO(#1244): buf should be const
   pImpl->buf = static_cast<const char*>(fileContent);
   pImpl->length = length;
   while (ReadAny(nullptr))
     ;
   pImpl->dummyCache.data.clear();
 }
+
+Browser::~Browser() = default;
 
 const RecordHeader* Browser::LookupById(uint32_t formId) const noexcept
 {
