@@ -1,6 +1,9 @@
 #pragma once
-
-#include "espm.h"
+#include "GroupHeader.h"
+#include "RecordHeader.h"
+#include <cstdint>
+#include <cstring>
+#include <functional>
 
 namespace espm {
 
@@ -51,17 +54,17 @@ uint32_t GetWorldOrCell(const TBrowser& browser, const RecordHeader* rec)
   return 0;
 }
 
-using RecordVisitor = std::function<bool(const espm::RecordHeader*)>;
+using RecordVisitor = std::function<bool(const RecordHeader*)>;
 
 template <class TBrowser>
 void ForEachChildRecord(const TBrowser& browser, const GroupHeader* group,
                         const RecordVisitor& f)
 {
   for (const void* sub : browser.GetSubsEnsured(group)) {
-    if (!memcmp(sub, "GRUP", 4)) {
+    if (!std::memcmp(sub, "GRUP", 4)) {
       continue; // It's group, skipping
     }
-    if (f(reinterpret_cast<const espm::RecordHeader*>(
+    if (f(reinterpret_cast<const RecordHeader*>(
           reinterpret_cast<const int8_t*>(sub) + 8))) {
       break;
     }

@@ -6,28 +6,17 @@
 #include <stdexcept>
 #include <string>
 
+#include "GroupStack.h"
 #include "GroupUtils.h"
 #include "espm.h"
+#include "IdMapping.h"
 
 namespace espm {
+
 class Browser;
 class RecordHeader;
 class Combiner;
 class CombineBrowser;
-
-struct BrowserInfo
-{
-  BrowserInfo() = default;
-  BrowserInfo(const CombineBrowser* parent_, uint8_t fileIdx_)
-    : parent(parent_)
-    , fileIdx(fileIdx_){};
-
-  // Returns 0 for empty (default constructed) LookupResult
-  uint32_t ToGlobalId(uint32_t rawId) const noexcept;
-
-  const CombineBrowser* const parent = nullptr;
-  const uint8_t fileIdx = 0;
-};
 
 struct LookupResult : public BrowserInfo
 {
