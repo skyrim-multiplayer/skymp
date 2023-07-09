@@ -610,11 +610,11 @@ void ActionListener::OnChangeValues(const RawMessageData& rawMsgData,
   }
 
   if (!MathUtils::IsNearlyEqual(currentActorValues.healthPercentage,
-                           newActorValues.healthPercentage) ||
+                                newActorValues.healthPercentage) ||
       !MathUtils::IsNearlyEqual(currentActorValues.magickaPercentage,
-                           newActorValues.magickaPercentage) ||
+                                newActorValues.magickaPercentage) ||
       !MathUtils::IsNearlyEqual(currentActorValues.staminaPercentage,
-                           newActorValues.staminaPercentage)) {
+                                newActorValues.staminaPercentage)) {
     actor->NetSendChangeValues(currentActorValues);
   }
   actor->SetPercentages(currentActorValues);

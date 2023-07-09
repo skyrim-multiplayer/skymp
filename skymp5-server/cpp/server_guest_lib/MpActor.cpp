@@ -775,6 +775,11 @@ void MpActor::ApplyMagicEffect(espm::Effects::Effect& effect, bool hasSweetpie,
   }
 
   if (isRate || isMult) {
+    if (hasSweetpie) {
+      if (!CanActorValueBeRestored(av)) {
+        return;
+      }
+    }
     MpChangeForm changeForm = GetChangeForm();
     BaseActorValues baseValues =
       GetBaseActorValues(GetParent(), GetBaseId(), GetRaceId());
