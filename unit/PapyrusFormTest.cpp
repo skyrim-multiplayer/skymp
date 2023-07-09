@@ -1,6 +1,5 @@
 #include "TestUtils.hpp"
 #include <catch2/catch_all.hpp>
-#include <iostream>
 
 #include "PapyrusForm.h"
 
