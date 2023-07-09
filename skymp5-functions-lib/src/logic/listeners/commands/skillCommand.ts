@@ -206,10 +206,10 @@ export const skillRecipes = {
         { id: 0x7f70770, price: 140 },
     ],
     cheif: [
-        { id: 0x7f70765, price: 50 },
-        { id: 0x7f70766, price: 80 },
-        { id: 0x7f70767, price: 110 },
-        { id: 0x7f70768, price: 140 },
+        { id: 0x7019d1f, price: 50 },
+        { id: 0x7019d20, price: 80 },
+        { id: 0x7019d21, price: 110 },
+        { id: 0x7019d22, price: 140 },
     ],
     daggers: [
         { id: 0x7f75871, price: 50 },
