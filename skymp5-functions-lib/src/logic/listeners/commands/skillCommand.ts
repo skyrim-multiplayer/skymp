@@ -35,7 +35,18 @@ const discardSkills = (actorId: number, controller: PlayerController, possessedS
 
 export const getPossessedSkills = (actorId: number, controller?: PlayerController) => {
     const possessedSkills = {} as IPossessedSkills;
+
+    const childrenRaceIds = [0x2C65C, 0x2C659, 0x2C65B, 0x2C65A];
+    const oldManRaceId = 0x67CD8;
+    const appearance = mp.get(actorId, 'appearance');
+    const raceId = appearance.raceId as number;
     let memCount = 1000;
+    if (childrenRaceIds.includes(raceId)) {
+      memCount = 200;
+    }
+    if (raceId == oldManRaceId) {
+      memCount = 1300;
+    }
     let expCount = 0;
     const inventory = mp.get(actorId, 'inventory').entries;
     for (const item of inventory) {
