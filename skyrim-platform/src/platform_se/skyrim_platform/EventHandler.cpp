@@ -247,17 +247,31 @@ EventResult EventHandler::ProcessEvent(const RE::TESCombatEvent* event,
     return EventResult::kContinue;
   }
 
-  auto e = CopyEventPtr(event);
+  auto target = event->targetActor.get();
+  auto actor = event->actor.get();
 
-  SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
+  if (!target || !actor) {
+    return EventResult::kContinue;
+  }
+
+  auto targetid = target->GetFormID();
+  auto actorid = actor->GetFormID();
+
+  auto isCombat = event->newState.any(RE::ACTOR_COMBAT_STATE::kCombat);
+  auto isSearching = event->newState.any(RE::ACTOR_COMBAT_STATE::kSearching);
+
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([targetid, actorid, isCombat, isSearching] {
     auto obj = JsValue::Object();
 
-    AddObjProperty(&obj, "target", e->targetActor.get(), "ObjectReference");
-    AddObjProperty(&obj, "actor", e->actor.get(), "ObjectReference");
+    auto target = RE::TESForm::LookupByID<RE::TESObjectREFR>(targetid);
+    auto actor = RE::TESForm::LookupByID<RE::TESObjectREFR>(actorid);
+
+    AddObjProperty(&obj, "target", target, "ObjectReference");
+    AddObjProperty(&obj, "actor", actor, "ObjectReference");
     AddObjProperty(&obj, "isCombat",
-                   e->newState.any(RE::ACTOR_COMBAT_STATE::kCombat));
+                   isCombat);
     AddObjProperty(&obj, "isSearching",
-                   e->newState.any(RE::ACTOR_COMBAT_STATE::kSearching));
+                   isSearching);
 
     SendEvent("combatState", obj);
   });
