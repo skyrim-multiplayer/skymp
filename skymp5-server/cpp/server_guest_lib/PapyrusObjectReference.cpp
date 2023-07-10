@@ -379,8 +379,7 @@ VarValue PapyrusObjectReference::PlayAnimation(
 {
   if (auto selfRefr = GetFormPtr<MpObjectReference>(self)) {
     if (arguments.size() < 1) {
-      throw std::runtime_error(
-        "PlayAnimation requires at least 1 argument");
+      throw std::runtime_error("PlayAnimation requires at least 1 argument");
     }
     auto funcName = "PlayAnimation";
     auto serializedArgs = SpSnippetFunctionGen::SerializeArguments(arguments);
