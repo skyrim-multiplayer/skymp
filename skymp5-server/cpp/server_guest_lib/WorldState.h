@@ -154,6 +154,7 @@ public:
                      std::chrono::system_clock::duration dur);
   std::optional<std::chrono::system_clock::duration> GetRelootTime(
     std::string recordType) const;
+  void AddLoadOrderElement(std::string fileName);
 
   std::vector<std::string> espmFiles;
   std::unordered_map<int32_t, std::set<uint32_t>> actorIdByProfileId;
@@ -168,6 +169,21 @@ public:
     lastMovUpdateByIdx;
 
   bool isPapyrusHotReloadEnabled = false;
+  bool npcEnabled;
+  bool spawnNpcInteriorOnly;
+  std::vector<std::string> npcEspmFiles;
+
+private:
+  bool AttachEspmRecord(const espm::CombineBrowser& br,
+                        espm::RecordHeader* record,
+                        const espm::IdMapping& mapping);
+
+  bool LoadForm(uint32_t formId);
+  void TickReloot(const std::chrono::system_clock::time_point& now);
+  void TickSaveStorage(const std::chrono::system_clock::time_point& now);
+  void TickTimers(const std::chrono::system_clock::time_point& now);
+  [[nodiscard]] bool NpcSourceFilesOverriden() const noexcept;
+  [[nodiscard]] bool IsNpcAllowed(uint32_t baseId) const noexcept;
 
 private:
   struct GridInfo
@@ -178,6 +194,7 @@ private:
   };
 
   spp::sparse_hash_map<uint32_t, std::shared_ptr<MpForm>> forms;
+  std::unordered_map<std::string, size_t> loadOrderMap;
   spp::sparse_hash_map<uint32_t, GridInfo> grids;
   std::unique_ptr<MakeID> formIdxManager;
   std::vector<MpForm*> formByIdxUnreliable;
@@ -188,16 +205,6 @@ private:
   espm::Loader* espm = nullptr;
   FormCallbacksFactory formCallbacksFactory;
   std::unique_ptr<espm::CompressedFieldsCache> espmCache;
-
-  bool AttachEspmRecord(const espm::CombineBrowser& br,
-                        espm::RecordHeader* record,
-                        const espm::IdMapping& mapping);
-
-  bool LoadForm(uint32_t formId);
-
-  void TickReloot(const std::chrono::system_clock::time_point& now);
-  void TickSaveStorage(const std::chrono::system_clock::time_point& now);
-  void TickTimers(const std::chrono::system_clock::time_point& now);
 
   struct Impl;
   std::shared_ptr<Impl> pImpl;

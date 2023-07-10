@@ -59,6 +59,7 @@ struct WorldState::Impl
 };
 
 WorldState::WorldState()
+  : npcEnabled(false)
 {
   logger.reset(new spdlog::logger("empty logger"));
 
@@ -252,11 +253,11 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
                                   const espm::IdMapping& mapping)
 {
   auto& cache = GetEspmCache();
-  auto refr = reinterpret_cast<espm::REFR*>(record);
+  auto* refr = espm::Convert<espm::REFR>(record);
   auto data = refr->GetData(cache);
 
-  auto baseId = espm::GetMappedId(data.baseId, mapping);
-  auto base = br.LookupById(baseId);
+  uint32_t baseId = espm::GetMappedId(data.baseId, mapping);
+  espm::LookupResult base = br.LookupById(baseId);
   if (!base.rec) {
     logger->info("baseId {} {}", baseId, static_cast<void*>(base.rec));
     return false;
@@ -266,9 +267,9 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
   if (t != "NPC_" && t != "FURN" && t != "ACTI" && !espm::IsItem(t) &&
       t != "DOOR" && t != "CONT" &&
       (t != "FLOR" ||
-       !reinterpret_cast<espm::FLOR*>(base.rec)->GetData(cache).resultItem) &&
+       !espm::Convert<espm::FLOR>(base.rec)->GetData(cache).resultItem) &&
       (t != "TREE" ||
-       !reinterpret_cast<espm::TREE*>(base.rec)->GetData(cache).resultItem))
+       !espm::Convert<espm::TREE>(base.rec)->GetData(cache).resultItem))
     return false;
 
   // TODO: Load disabled references
@@ -276,11 +277,44 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
   {
     InitiallyDisabled = 0x800
   };
-  if (refr->GetFlags() & InitiallyDisabled)
-    return false;
 
-  if (t == "NPC_") {
+  if (refr->GetFlags() & InitiallyDisabled) {
     return false;
+  }
+
+  if (npcEnabled && t == "NPC_") {
+    if (NpcSourceFilesOverriden() && !IsNpcAllowed(baseId)) {
+      return false;
+    }
+    auto npcData = espm::Convert<espm::NPC_>(base.rec)->GetData(cache);
+
+    if (npcData.isEssential || npcData.isProtected) {
+      return false;
+    }
+
+    enum class ListType : uint32_t
+    {
+      CrimeFactionsList = 0x26953
+    };
+
+    auto baseId = static_cast<std::underlying_type_t<ListType>>(
+      ListType::CrimeFactionsList);
+    espm::LookupResult res = br.LookupById(baseId);
+    std::vector<uint32_t> factionFormIds =
+      espm::Convert<espm::FLST>(res.rec)->GetData(cache).formIds;
+    for (auto& formId : factionFormIds) {
+      formId = res.ToGlobalId(formId);
+    }
+
+    for (auto fact : npcData.factions) {
+      auto it = std::find(factionFormIds.begin(), factionFormIds.end(),
+                          base.ToGlobalId(fact.formId));
+      if (it != factionFormIds.end()) {
+        logger->info("Skipping actor {:#x} because it's in faction {:#x}",
+                     record->GetId(), *it);
+        return false;
+      }
+    }
   }
 
   auto formId = espm::GetMappedId(record->GetId(), mapping);
@@ -651,4 +685,27 @@ std::optional<std::chrono::system_clock::duration> WorldState::GetRelootTime(
     return std::nullopt;
   }
   return it->second;
+}
+
+bool WorldState::NpcSourceFilesOverriden() const noexcept
+{
+  return !npcEspmFiles.empty();
+}
+
+void WorldState::AddLoadOrderElement(std::string fileName)
+{
+  size_t idx = loadOrderMap.size();
+  loadOrderMap[fileName] = idx;
+}
+
+bool WorldState::IsNpcAllowed(uint32_t baseId) const noexcept
+{
+  uint32_t npcFileIdx = baseId >> 24;
+  for (const auto& fileName : npcEspmFiles) {
+    size_t idx = loadOrderMap.at(fileName);
+    if (npcFileIdx == idx) {
+      return true;
+    }
+  }
+  return false;
 }

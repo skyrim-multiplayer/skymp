@@ -146,6 +146,15 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
                    spdlog::level::to_string_view(logger->level()));
     }
 
+    if (serverSettings.find("npcEnabled") != serverSettings.end()) {
+      partONe->worldState.npcEnabled =
+        serverSettings.at("npcEnabled").get<bool>();
+    }
+    if (serverSettings.find("spawnNpcInteriorOnly") != serverSettings.end()) {
+      partOne->worldState.spawnNpcInteriorOnly =
+        serverSettings.at("spawnNpcInteriorOnly").get<bool>();
+    }
+
     partOne->worldState.isPapyrusHotReloadEnabled =
       serverSettings.count("isPapyrusHotReloadEnabled") != 0 &&
       serverSettings.at("isPapyrusHotReloadEnabled").get<bool>();
@@ -177,7 +186,13 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
         } else {
           pluginPaths.push_back(dataDir / loadOrderElement);
         }
+        partOne->worldState.AddLoadOrderElement(loadOrderElement.filename());
       }
+    }
+
+    if (serverSettings.find("npcEspmFiles") != serverSettings.end()) {
+      partOne->worldState.npcEspmFiles =
+        serverSettings.at("npcEspmFiles").get<std::vector<std::string>>();
     }
 
     if (serverSettings["lang"] != nullptr) {
