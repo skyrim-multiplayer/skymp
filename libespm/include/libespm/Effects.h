@@ -12,7 +12,7 @@ class CompressedFieldsCache;
 struct Effects
 {
 public:
-  Effects(){};
+  Effects();
   Effects(const RecordHeader* parent);
   const espm::RecordHeader* parent = nullptr;
 

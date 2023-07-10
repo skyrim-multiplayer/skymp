@@ -17,7 +17,6 @@ Loader::Loader(const std::vector<fs::path>& filePaths_, OnProgress onProgress,
   : filePaths(filePaths_)
   , bufferType(bufferType_)
 {
-  int a = 0;
   for (const auto& p : filePaths) {
     entries.emplace_back();
     auto& entry = entries.back();

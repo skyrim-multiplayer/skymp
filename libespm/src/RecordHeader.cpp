@@ -4,9 +4,6 @@
 #include "libespm/ScriptData.h"
 #include <cstring>
 
-// debug
-#include <iostream>
-
 namespace espm {
 
 uint32_t RecordHeader::GetId() const noexcept

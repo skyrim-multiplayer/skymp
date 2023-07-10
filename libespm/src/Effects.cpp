@@ -5,6 +5,10 @@
 
 namespace espm {
 
+Effects::Effects()
+{
+}
+
 Effects::Effects(const RecordHeader* parent)
   : parent(parent)
 {
