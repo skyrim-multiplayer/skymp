@@ -3,13 +3,13 @@
 #include "Grid.h"
 #include "GridElement.h"
 #include "MpChangeForms.h"
+#include "MpForm.h"
 #include "MpObjectReference.h"
 #include "NiPoint3.h"
 #include "PartOneListener.h"
-#include "VirtualMachine.h"
-#include <Loader.h>
-#include <MakeID.h>
-#include <MpForm.h>
+#include "libespm/Loader.h"
+#include "papyrus-vm/VirtualMachine.h"
+#include <MakeID.h-1.0.2>
 #include <algorithm>
 #include <chrono>
 #include <functional>

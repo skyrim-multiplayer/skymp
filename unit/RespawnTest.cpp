@@ -1,5 +1,5 @@
 #include "TestUtils.hpp"
-#include <catch2/catch.hpp>
+#include <catch2/catch_all.hpp>
 
 PartOne& GetPartOne();
 extern espm::Loader l;
@@ -30,7 +30,7 @@ TEST_CASE("DeathState packed is correct if actor was killed", "[Respawn]")
   REQUIRE(changeValuesMsg.is_null());
 
   REQUIRE(ac.IsDead());
-  REQUIRE(ac.GetChangeForm().healthPercentage == 0.f);
+  REQUIRE(ac.GetChangeForm().actorValues.healthPercentage == 0.f);
 }
 
 TEST_CASE("DeathState packed is correct if actor is respawning", "[Respawn]")
@@ -65,5 +65,5 @@ TEST_CASE("DeathState packed is correct if actor is respawning", "[Respawn]")
   REQUIRE(changeValuesMsg["t"] == MsgType::ChangeValues);
 
   REQUIRE(ac.IsDead() == false);
-  REQUIRE(ac.GetChangeForm().healthPercentage == 1.f);
+  REQUIRE(ac.GetChangeForm().actorValues.healthPercentage == 1.f);
 }

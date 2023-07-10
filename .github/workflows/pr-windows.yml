@@ -13,7 +13,6 @@ env:
   BUILD_TYPE: Release
   VCPKG_BINARY_SOURCES: 'clear;nuget,GitHub,readwrite'
   VCPKG_FEATURE_FLAGS: 'manifests'
-  VCPKG_ROOT: 'C:/vcpkg'
 
 jobs:
   build:
@@ -29,17 +28,19 @@ jobs:
     - name: Install tools
       run: choco install opencppcoverage
 
-    - run: ./vcpkg/bootstrap-vcpkg.bat
-
     - name: Move vcpkg submodule to a larger drive
-      run: Move-Item -Path ./vcpkg C:/vcpkg
+      run: |
+        Remove-Item -Recurse -Force C:/vcpkg
+        Move-Item -Path ./vcpkg C:/vcpkg
+
+    - name: Bootstrap vcpkg
+      run: C:/vcpkg/bootstrap-vcpkg.bat
 
     - name: Debug - free space
       run: Get-PSDrive
 
     - name: 'Setup NuGet Credentials'
       shell: 'bash'
-      # Replace <OWNER> with your organization name
       run: >
         `C:/vcpkg/vcpkg.exe fetch nuget | tail -n 1`
         sources add
@@ -91,7 +92,7 @@ jobs:
         --profiling-output cmake-profiling-output
         --profiling-format google-trace
 
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v3
       with:
         name: cmake-profiling-output
         path: cmake-profiling-output
@@ -106,30 +107,42 @@ jobs:
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
       run: ctest -C ${{env.BUILD_TYPE}} --verbose # --output-on-failure
 
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v3
       with:
         name: dist
         path: ${{github.workspace}}/build/dist
 
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v3
       with:
         name: coverage
         path: ${{github.workspace}}/build/__coverage
       
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v3
       with:
-        name: SP-SE
+        name: SP-SE-nexus
         # Data folder is skipped for mod managers
         path: ${{github.workspace}}/build/nexus/sp/data/*
+    - uses: actions/upload-artifact@v3
+      with:
+        name: papyrus-vm-nexus
+        # Data folder is skipped for mod managers
+        path: ${{github.workspace}}/build/nexus/papyrus-vm/*
 
     - name: Debug - free space
       if: 'always()'
       run: Get-PSDrive
 
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v3
       if: 'always()'
       with:
         name: msbuild_files
         path: |
           ${{github.workspace}}/build/**/*.sln
           ${{github.workspace}}/build/**/*.vcxproj
+
+    - uses: actions/upload-artifact@v3
+      if: 'always()'
+      with:
+        name: vcpkg_include
+        path: |
+          ${{github.workspace}}/build/vcpkg_installed/*/include

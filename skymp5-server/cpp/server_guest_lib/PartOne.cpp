@@ -99,6 +99,41 @@ bool PartOne::IsConnected(Networking::UserId userId) const
 
 void PartOne::Tick()
 {
+  for (auto& [userId, playback] : serverState.requestedPlaybacks) {
+    serverState.activePlaybacks[userId] = std::move(playback);
+  }
+  serverState.requestedPlaybacks.clear();
+
+  for (auto& [userId, playback] : serverState.activePlaybacks) {
+    auto& packetHistory = playback.history;
+
+    while (
+      !packetHistory.packets.empty() &&
+      playback.startTime +
+          std::chrono::milliseconds(packetHistory.packets.front().timeMs) <=
+        std::chrono::steady_clock::now()) {
+      auto& packet = packetHistory.packets.front();
+
+      if (packetHistory.buffer.size() < packet.offset + packet.length) {
+        spdlog::error("Packet history buffer is corrupted");
+      } else {
+        pImpl->packetParser->TransformPacketIntoAction(
+          userId, &packetHistory.buffer[packet.offset], packet.length,
+          *pImpl->actionListener);
+      }
+      packetHistory.packets.pop_front();
+    }
+  }
+
+  // delete playback if packetHistory.packets is empty
+  for (auto it = serverState.activePlaybacks.begin();
+       it != serverState.activePlaybacks.end();) {
+    if (it->second.history.packets.empty()) {
+      it = serverState.activePlaybacks.erase(it);
+    } else {
+      ++it;
+    }
+  }
   worldState.Tick();
 }
 
@@ -289,6 +324,9 @@ void PartOne::AttachLogger(std::shared_ptr<spdlog::logger> logger)
 
 spdlog::logger& PartOne::GetLogger()
 {
+  if (!pImpl->logger) {
+    throw std::runtime_error("no logger attached");
+  }
   return *pImpl->logger;
 }
 
@@ -318,6 +356,11 @@ void PartOne::HandlePacket(void* partOneInstance, Networking::UserId userId,
       return this_->AddUser(userId, UserType::User);
     case Networking::PacketType::ServerSideUserDisconnect: {
       ScopedTask t([userId, this_] {
+        if (auto actor = this_->serverState.ActorByUser(userId)) {
+          if (this_->animationSystem) {
+            this_->animationSystem->ClearInfo(actor);
+          }
+        }
         this_->serverState.Disconnect(userId);
         this_->serverState.disconnectingUserId = Networking::InvalidUserId;
       });
@@ -387,6 +430,49 @@ void PartOne::NotifyGamemodeApiStateChanged(
   }
 
   pImpl->gamemodeApiState = newState;
+}
+
+void PartOne::SetPacketHistoryRecording(Networking::UserId userId, bool enable)
+{
+  if (userId < serverState.userInfo.size() && serverState.userInfo[userId]) {
+    if (!serverState.userInfo[userId]->packetHistoryStartTime) {
+      serverState.userInfo[userId]->packetHistoryStartTime =
+        std::chrono::steady_clock::now();
+    }
+    serverState.userInfo[userId]->isPacketHistoryRecording = enable;
+  } else {
+    throw std::runtime_error("Invalid user id " + std::to_string(userId));
+  }
+}
+
+PacketHistory PartOne::GetPacketHistory(Networking::UserId userId)
+{
+  if (userId < serverState.userInfo.size() && serverState.userInfo[userId]) {
+    return serverState.userInfo[userId]->packetHistory;
+  } else {
+    throw std::runtime_error("Invalid user id " + std::to_string(userId));
+  }
+}
+
+void PartOne::ClearPacketHistory(Networking::UserId userId)
+{
+  if (userId < serverState.userInfo.size() && serverState.userInfo[userId]) {
+    serverState.userInfo[userId]->packetHistory = std::move(PacketHistory{});
+    serverState.userInfo[userId]->packetHistoryStartTime = std::nullopt;
+  } else {
+    throw std::runtime_error("Invalid user id " + std::to_string(userId));
+  }
+}
+
+void PartOne::RequestPacketHistoryPlayback(Networking::UserId userId,
+                                           const PacketHistory& history)
+{
+  if (userId < serverState.userInfo.size() && serverState.userInfo[userId]) {
+    serverState.requestedPlaybacks[userId] =
+      Playback{ history, std::chrono::steady_clock::now() };
+  } else {
+    throw std::runtime_error("Invalid user id " + std::to_string(userId));
+  }
 }
 
 FormCallbacks PartOne::CreateFormCallbacks()
@@ -548,15 +634,25 @@ void PartOne::Init()
     uint32_t worldOrCell =
       emitter->GetCellOrWorld().ToFormId(worldState.espmFiles);
 
+    // See 'perf: improve game framerate #1186'
+    // Client needs to know if it is DOOR or not
+    const char* baseRecordTypePrefix = "";
+    std::string baseRecordType;
+    if (const std::string& baseType = emitter->GetBaseType();
+        baseType == "DOOR") {
+      baseRecordTypePrefix = R"(, "baseRecordType": )";
+      baseRecordType = '"' + baseType + '"';
+    }
+
     Networking::SendFormatted(
       sendTarget, listenerUserId,
       R"({"type": "%s", "idx": %u, "isMe": %s, "transform": {"pos":
-    [%f,%f,%f], "rot": [%f,%f,%f], "worldOrCell": %u}%s%s%s%s%s%s%s%s%s%s%s})",
+    [%f,%f,%f], "rot": [%f,%f,%f], "worldOrCell": %u}%s%s%s%s%s%s%s%s%s%s%s%s%s})",
       method, emitter->GetIdx(), isMe ? "true" : "false", emitterPos.x,
       emitterPos.y, emitterPos.z, emitterRot.x, emitterRot.y, emitterRot.z,
-      worldOrCell, appearancePrefix, appearance, equipmentPrefix, equipment,
-      refrIdPrefix, refrId, baseIdPrefix, baseId, propsPrefix, props.data(),
-      propsPostfix);
+      worldOrCell, baseRecordTypePrefix, baseRecordType.data(),
+      appearancePrefix, appearance, equipmentPrefix, equipment, refrIdPrefix,
+      refrId, baseIdPrefix, baseId, propsPrefix, props.data(), propsPostfix);
   };
 
   pImpl->onUnsubscribe = [this](Networking::ISendTarget* sendTarget,
@@ -592,13 +688,42 @@ void PartOne::AddUser(Networking::UserId userId, UserType type)
 void PartOne::HandleMessagePacket(Networking::UserId userId,
                                   Networking::PacketData data, size_t length)
 {
-  if (!serverState.IsConnected(userId))
+  if (!serverState.IsConnected(userId)) {
     throw std::runtime_error("User with id " + std::to_string(userId) +
                              " doesn't exist");
-  if (!pImpl->packetParser)
-    pImpl->packetParser.reset(new PacketParser);
+  }
+  if (!pImpl->packetParser) {
+    pImpl->packetParser = std::make_shared<PacketParser>();
+  }
 
   InitActionListener();
+
+  auto& userInfo = serverState.userInfo[userId];
+  if (userInfo && userInfo->isPacketHistoryRecording) {
+    if (!userInfo->packetHistoryStartTime) {
+      spdlog::error(
+        "Expected packetHistoryStartTime to present, probably incorrect code");
+    } else {
+      size_t offset = userInfo->packetHistory.buffer.size();
+
+      userInfo->packetHistory.buffer.resize(offset + length);
+      std::copy(data, data + length,
+                userInfo->packetHistory.buffer.data() + offset);
+
+      auto duration =
+        std::chrono::steady_clock::now() - *userInfo->packetHistoryStartTime;
+      auto milliseconds =
+        std::chrono::duration_cast<std::chrono::milliseconds>(duration);
+      auto timeMs = milliseconds.count();
+
+      userInfo->packetHistory.packets.push_back(
+        { offset, length, static_cast<uint64_t>(timeMs) });
+    }
+  }
+
+  if (serverState.activePlaybacks.count(userId) > 0) {
+    return;
+  }
 
   pImpl->packetParser->TransformPacketIntoAction(userId, data, length,
                                                  *pImpl->actionListener);

@@ -1,4 +1,5 @@
 #include "ActionListener.h"
+#include "AnimationSystem.h"
 #include "ConsoleCommands.h"
 #include "CropRegeneration.h"
 #include "DummyMessageOutput.h"
@@ -11,9 +12,10 @@
 #include "MpObjectReference.h"
 #include "MsgType.h"
 #include "UserMessageOutput.h"
-#include "Utils.h"
 #include "WorldState.h"
+#include "papyrus-vm/Utils.h"
 #include <fmt/format.h>
+#include <spdlog/spdlog.h>
 #include <unordered_set>
 
 MpActor* ActionListener::SendToNeighbours(
@@ -23,24 +25,26 @@ MpActor* ActionListener::SendToNeighbours(
 {
   MpActor* myActor = partOne.serverState.ActorByUser(userId);
   // The old behavior is doing nothing in that case. This is covered by tests
-  if (!myActor)
+  if (!myActor) {
+    spdlog::warn("SendToNeighbours - No actor assigned to user");
     return nullptr;
+  }
 
   MpActor* actor =
     dynamic_cast<MpActor*>(partOne.worldState.LookupFormByIdx(idx));
-  if (!actor)
-    throw std::runtime_error("SendToNeighbours - target actor doesn't exist");
+  if (!actor) {
+    spdlog::error("SendToNeighbours - Target actor doesn't exist");
+    return nullptr;
+  }
 
-  auto hosterIterator = partOne.worldState.hosters.find(actor->GetFormId());
-  uint32_t hosterId = hosterIterator != partOne.worldState.hosters.end()
-    ? hosterIterator->second
-    : 0;
-
-  if (idx != actor->GetIdx() && hosterId != myActor->GetFormId()) {
-    std::stringstream ss;
-    ss << std::hex << "You aren't able to update actor with idx " << idx
-       << " (your actor's idx is " << actor->GetIdx() << ')';
-    throw PublicError(ss.str());
+  if (idx != myActor->GetIdx()) {
+    auto it = partOne.worldState.hosters.find(actor->GetFormId());
+    if (it == partOne.worldState.hosters.end() ||
+        it->second != myActor->GetFormId()) {
+      spdlog::error("SendToNeighbours - No permission to update actor {:x}",
+                    actor->GetFormId());
+      return nullptr;
+    }
   }
 
   for (auto listener : actor->GetListeners()) {
@@ -75,7 +79,8 @@ void ActionListener::OnCustomPacket(const RawMessageData& rawMsgData,
 void ActionListener::OnUpdateMovement(const RawMessageData& rawMsgData,
                                       uint32_t idx, const NiPoint3& pos,
                                       const NiPoint3& rot, bool isInJumpState,
-                                      bool isWeapDrawn, uint32_t worldOrCell)
+                                      bool isWeapDrawn, bool isBlocking,
+                                      uint32_t worldOrCell)
 {
   auto actor = SendToNeighbours(idx, rawMsgData);
   if (actor) {
@@ -103,10 +108,21 @@ void ActionListener::OnUpdateMovement(const RawMessageData& rawMsgData,
       return;
     }
 
+    if (!isBlocking) {
+      actor->IncreaseBlockCount();
+    } else {
+      actor->ResetBlockCount();
+    }
+
     actor->SetPos(pos);
     actor->SetAngle(rot);
     actor->SetAnimationVariableBool("bInJumpState", isInJumpState);
     actor->SetAnimationVariableBool("_skymp_isWeapDrawn", isWeapDrawn);
+    actor->SetAnimationVariableBool("IsBlocking", isBlocking);
+    if (actor->GetBlockCount() == 5) {
+      actor->SetIsBlockActive(false);
+      actor->ResetBlockCount();
+    }
 
     if (partOne.worldState.lastMovUpdateByIdx.size() <= idx) {
       auto newSize = static_cast<size_t>(idx) + 1;
@@ -118,8 +134,30 @@ void ActionListener::OnUpdateMovement(const RawMessageData& rawMsgData,
 }
 
 void ActionListener::OnUpdateAnimation(const RawMessageData& rawMsgData,
-                                       uint32_t idx)
+                                       uint32_t idx,
+                                       const AnimationData& animationData)
 {
+  MpActor* actor = partOne.serverState.ActorByUser(rawMsgData.userId);
+  if (!actor) {
+    return;
+  }
+
+  WorldState* espmProvider = actor->GetParent();
+  if (!espmProvider) {
+    return;
+  }
+
+  if (!partOne.animationSystem) {
+    std::vector<std::string> espmFiles = espmProvider->espmFiles;
+
+    std::set<std::string> s;
+    s = { espmFiles.begin(), espmFiles.end() };
+    bool isSweetpie = s.count("SweetPie.esp") != 0;
+
+    partOne.animationSystem = std::make_unique<AnimationSystem>(isSweetpie);
+  }
+  partOne.animationSystem->Process(actor, animationData);
+
   SendToNeighbours(idx, rawMsgData);
 }
 
@@ -137,27 +175,60 @@ void ActionListener::OnUpdateAppearance(const RawMessageData& rawMsgData,
   SendToNeighbours(idx, rawMsgData, true);
 }
 
-void ActionListener::OnUpdateEquipment(const RawMessageData& rawMsgData,
-                                       uint32_t idx,
-                                       simdjson::dom::element& data,
-                                       const Inventory& equipmentInv)
+void ActionListener::OnUpdateEquipment(
+  const RawMessageData& rawMsgData, const uint32_t idx,
+  const simdjson::dom::element& data, const Inventory& equipmentInv,
+  const uint32_t leftSpell, const uint32_t rightSpell,
+  const uint32_t voiceSpell, const uint32_t instantSpell)
 {
   MpActor* actor = partOne.serverState.ActorByUser(rawMsgData.userId);
-  if (!actor)
-    return;
 
-  bool badEq = false;
-  for (auto& e : equipmentInv.entries) {
-    if (!actor->GetInventory().HasItem(e.baseId)) {
-      badEq = true;
-      break;
+  if (!actor) {
+    return;
+  }
+
+  if (leftSpell > 0 && !actor->IsSpellLearned(leftSpell)) {
+    spdlog::debug(
+      "OnUpdateEquipment result false. Spell with id ({}) not learned",
+      leftSpell);
+    return;
+  }
+
+  if (rightSpell > 0 && !actor->IsSpellLearned(rightSpell)) {
+    spdlog::debug(
+      "OnUpdateEquipment result false. Spell with id ({}) not learned",
+      leftSpell);
+    return;
+  }
+
+  if (voiceSpell > 0 && !actor->IsSpellLearned(voiceSpell)) {
+    spdlog::debug(
+      "OnUpdateEquipment result false. Spell with id ({}) not learned",
+      leftSpell);
+    return;
+  }
+
+  if (instantSpell > 0 && !actor->IsSpellLearned(instantSpell)) {
+    spdlog::debug(
+      "OnUpdateEquipment result false. Spell with id ({}) not learned",
+      leftSpell);
+    return;
+  }
+
+  const auto& inventory = actor->GetInventory();
+
+  for (auto& [baseId, count, _] : equipmentInv.entries) {
+    if (!inventory.HasItem(baseId)) {
+      spdlog::debug(
+        "OnUpdateEquipment result false. The inventory does not contain item "
+        "with id {:x}",
+        baseId);
+      return;
     }
   }
 
-  if (!badEq) {
-    SendToNeighbours(idx, rawMsgData, true);
-    actor->SetEquipment(simdjson::minify(data));
-  }
+  SendToNeighbours(idx, rawMsgData, true);
+  actor->SetEquipment(simdjson::minify(data));
 }
 
 void RecalculateWorn(MpObjectReference& refr)
@@ -343,12 +414,13 @@ void ActionListener::OnFinishSpSnippet(const RawMessageData& rawMsgData,
 void ActionListener::OnEquip(const RawMessageData& rawMsgData, uint32_t baseId)
 {
   MpActor* actor = partOne.serverState.ActorByUser(rawMsgData.userId);
-  if (!actor)
+  if (!actor) {
     throw std::runtime_error(
       "Unable to finish SpSnippet: No Actor found for user " +
       std::to_string(rawMsgData.userId));
+  }
 
-  actor->OnEquip(baseId);
+  std::ignore = actor->OnEquip(baseId);
 }
 
 void ActionListener::OnConsoleCommand(
@@ -369,9 +441,31 @@ void UseCraftRecipe(MpActor* me, espm::COBJ::Data recipeData,
     auto formId = espm::GetMappedId(entry.formId, *mapping);
     entries.push_back({ formId, entry.count });
   }
+  auto outputFormId =
+    espm::GetMappedId(recipeData.outputObjectFormId, *mapping);
+  if (spdlog::should_log(spdlog::level::debug)) {
+    std::string s = fmt::format("User formId={:#x} crafted", me->GetFormId());
+    for (const auto& entry : entries) {
+      s += fmt::format(" -{:#x} x{}", entry.baseId, entry.count);
+    }
+    s += fmt::format(" +{:#x} x{}", outputFormId, recipeData.outputCount);
+    spdlog::debug("{}", s);
+  }
   me->RemoveItems(entries);
-  me->AddItem(espm::GetMappedId(recipeData.outputObjectFormId, *mapping),
-              recipeData.outputCount);
+  me->AddItem(outputFormId, recipeData.outputCount);
+
+  // A hack to fix craft items do not appear (likely related to random
+  // SendInventoryUpdate ordering in RemoveItems/AddItem)
+  auto formId = me->GetFormId();
+  if (auto worldState = me->GetParent()) {
+    worldState->SetTimer(1.f).Then([worldState, formId](Viet::Void) {
+      auto actor =
+        std::dynamic_pointer_cast<MpActor>(worldState->LookupFormById(formId));
+      if (actor) {
+        actor->SendInventoryUpdate();
+      }
+    });
+  }
 }
 
 void ActionListener::OnCraftItem(const RawMessageData& rawMsgData,
@@ -385,7 +479,10 @@ void ActionListener::OnCraftItem(const RawMessageData& rawMsgData,
   auto& cache = partOne.worldState.GetEspmCache();
   auto base = br.LookupById(workbench.GetBaseId());
 
-  if (base.rec->GetType() != "FURN") {
+  spdlog::debug("User {} tries to craft {:#x} on workbench {:#x}",
+                rawMsgData.userId, resultObjectId, workbenchId);
+
+  if (base.rec->GetType() != "FURN" && base.rec->GetType() != "ACTI") {
     throw std::runtime_error("Unable to use " +
                              base.rec->GetType().ToString() + " as workbench");
   }
@@ -394,7 +491,10 @@ void ActionListener::OnCraftItem(const RawMessageData& rawMsgData,
   auto recipeUsed = FindRecipe(br, inputObjects, resultObjectId, &espmIdx);
 
   if (!recipeUsed) {
-    throw std::runtime_error("Recipe not found");
+    throw std::runtime_error(
+      fmt::format("Recipe not found: inputObjects={}, workbenchId={:#x}, "
+                  "resultObjectId={:#x}",
+                  inputObjects.ToJson().dump(), workbenchId, resultObjectId));
   }
 
   MpActor* me = partOne.serverState.ActorByUser(rawMsgData.userId);
@@ -479,9 +579,7 @@ void ActionListener::OnCustomEvent(const RawMessageData& rawMsgData,
 }
 
 void ActionListener::OnChangeValues(const RawMessageData& rawMsgData,
-                                    const float healthPercentage,
-                                    const float magickaPercentage,
-                                    const float staminaPercentage)
+                                    const ActorValues& newActorValues)
 {
   MpActor* actor = partOne.serverState.ActorByUser(rawMsgData.userId);
   if (!actor) {
@@ -492,38 +590,35 @@ void ActionListener::OnChangeValues(const RawMessageData& rawMsgData,
   float timeAfterRegeneration = CropPeriodAfterLastRegen(
     actor->GetDurationOfAttributesPercentagesUpdate(now).count());
 
-  MpChangeForm changeForm = actor->GetChangeForm();
-  float health = healthPercentage;
-  float magicka = magickaPercentage;
-  float stamina = staminaPercentage;
+  ActorValues currentActorValues = actor->GetChangeForm().actorValues;
+  float health = newActorValues.healthPercentage;
+  float magicka = newActorValues.magickaPercentage;
+  float stamina = newActorValues.staminaPercentage;
 
-  if (healthPercentage != changeForm.healthPercentage) {
-    health = CropHealthRegeneration(health, timeAfterRegeneration, actor);
+  if (newActorValues.healthPercentage != currentActorValues.healthPercentage) {
+    currentActorValues.healthPercentage =
+      CropHealthRegeneration(health, timeAfterRegeneration, actor);
   }
-  if (magickaPercentage != changeForm.magickaPercentage) {
-    magicka = CropMagickaRegeneration(magicka, timeAfterRegeneration, actor);
+  if (newActorValues.magickaPercentage !=
+      currentActorValues.magickaPercentage) {
+    currentActorValues.magickaPercentage =
+      CropMagickaRegeneration(magicka, timeAfterRegeneration, actor);
   }
-  if (staminaPercentage != changeForm.staminaPercentage) {
-    stamina = CropStaminaRegeneration(stamina, timeAfterRegeneration, actor);
-  }
-
-  if (IsNearlyEqual(health, healthPercentage) == false ||
-      IsNearlyEqual(magicka, magickaPercentage) == false ||
-      IsNearlyEqual(stamina, staminaPercentage) == false) {
-    std::string s;
-    s += Networking::MinPacketId;
-    s += nlohmann::json{
-      { "t", MsgType::ChangeValues },
-      { "data",
-        { { "health", health },
-          { "magicka", magicka },
-          { "stamina", stamina } } }
-    }.dump();
-    actor->SendToUser(s.data(), s.size(), true);
+  if (newActorValues.staminaPercentage !=
+      currentActorValues.staminaPercentage) {
+    currentActorValues.staminaPercentage =
+      CropStaminaRegeneration(stamina, timeAfterRegeneration, actor);
   }
 
-  actor->SetPercentages(health, magicka, stamina);
-  actor->SetLastAttributesPercentagesUpdate(now);
+  if (!IsNearlyEqual(currentActorValues.healthPercentage,
+                     newActorValues.healthPercentage) ||
+      !IsNearlyEqual(currentActorValues.magickaPercentage,
+                     newActorValues.magickaPercentage) ||
+      !IsNearlyEqual(currentActorValues.staminaPercentage,
+                     newActorValues.staminaPercentage)) {
+    actor->NetSendChangeValues(currentActorValues);
+  }
+  actor->SetPercentages(currentActorValues);
 }
 
 namespace {
@@ -614,6 +709,23 @@ bool IsDistanceValid(const MpActor& actor, const MpActor& targetActor,
 {
   float sqrDistance = GetSqrDistanceToBounds(actor, targetActor);
   float reach = GetReach(actor, hitData.source);
+
+  // For bow/crossbow shots we don't want to check melee radius
+  if (!hitData.isBashAttack) {
+    constexpr float kExteriorCellWidthUnits = 4096.f;
+    if (auto worldState = actor.GetParent()) {
+      if (worldState->HasEspm()) {
+        auto weapDNAM =
+          espm::GetData<espm::WEAP>(hitData.source, worldState).weapDNAM;
+        if (weapDNAM->animType == espm::WEAP::AnimType::Bow) {
+          reach = kExteriorCellWidthUnits;
+        } else if (weapDNAM->animType == espm::WEAP::AnimType::Crossbow) {
+          reach = kExteriorCellWidthUnits;
+        }
+      }
+    }
+  }
+
   return reach * reach > sqrDistance;
 }
 
@@ -631,6 +743,20 @@ bool IsAvailableForNextAttack(const MpActor& actor, const HitData& hitData,
     throw std::runtime_error(fmt::format(
       "Cannot get weapon speed from source: {0:x}", hitData.source));
   }
+}
+
+bool ShouldBeBlocked(const MpActor& aggressor, const MpActor& target)
+{
+  NiPoint3 targetViewDirection = target.GetViewDirection();
+  NiPoint3 aggressorViewDirection = aggressor.GetViewDirection();
+  if (targetViewDirection * aggressorViewDirection >= 0) {
+    return false;
+  }
+  NiPoint3 aggressorDirection = aggressor.GetPos() - target.GetPos();
+  float angle =
+    std::acos((targetViewDirection * aggressorDirection) /
+              (targetViewDirection.Length() * aggressorDirection.Length()));
+  return angle < 1;
 }
 }
 
@@ -703,29 +829,32 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
     return;
   }
 
-  MpChangeForm targetForm = targetActor.GetChangeForm();
+  ActorValues currentActorValues = targetActor.GetChangeForm().actorValues;
 
-  float healthPercentage = targetForm.healthPercentage;
-  float magickaPercentage = targetForm.magickaPercentage;
-  float staminaPercentage = targetForm.staminaPercentage;
+  float healthPercentage = currentActorValues.healthPercentage;
+  float magickaPercentage = currentActorValues.magickaPercentage;
+  float staminaPercentage = currentActorValues.staminaPercentage;
 
+  hitData.isHitBlocked = targetActor.IsBlockActive()
+    ? ShouldBeBlocked(*aggressor, targetActor)
+    : false;
   float damage = partOne.CalculateDamage(*aggressor, targetActor, hitData);
   damage = damage < 0.f ? 0.f : damage;
-  float currentHealthPercentage =
+  currentActorValues.healthPercentage =
     CalculateCurrentHealthPercentage(targetActor, damage, healthPercentage);
 
-  currentHealthPercentage =
-    currentHealthPercentage < 0.f ? 0.f : currentHealthPercentage;
+  currentActorValues.healthPercentage =
+    currentActorValues.healthPercentage < 0.f
+    ? 0.f
+    : currentActorValues.healthPercentage;
 
-  auto now = std::chrono::steady_clock::now();
-  targetActor.NetSetPercentages(currentHealthPercentage, magickaPercentage,
-                                staminaPercentage, now, aggressor);
-  targetActor.SetLastHitTime(now);
+  targetActor.NetSetPercentages(currentActorValues, aggressor);
+  targetActor.SetLastHitTime();
 
   spdlog::debug("Target {0:x} is hitted by {1} damage. Current health "
                 "percentage: {2}. Last "
                 "health percentage: {3}. (Last: {3} => Current: {2})",
-                hitData.target, damage, currentHealthPercentage,
+                hitData.target, damage, currentActorValues.healthPercentage,
                 healthPercentage);
 }
 

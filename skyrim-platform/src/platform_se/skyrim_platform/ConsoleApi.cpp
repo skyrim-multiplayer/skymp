@@ -21,8 +21,9 @@ struct ConsoleCommand
   RE::SCRIPT_FUNCTION* myIter;
   RE::SCRIPT_FUNCTION myOriginalData;
 };
-static std::map<std::string, ConsoleCommand> replacedConsoleCmd;
-static bool printConsolePrefixesEnabled = true;
+static std::map<std::string, ConsoleCommand> g_replacedConsoleCmd;
+static bool g_printConsolePrefixesEnabled = true;
+static std::unique_ptr<WindowsConsolePrinter> g_windowsConsolePrinter = NULL;
 
 bool IsNameEqual(const std::string& first, const std::string& second)
 {
@@ -35,28 +36,41 @@ bool IsNameEqual(const std::string& first, const std::string& second)
 JsValue ConsoleApi::PrintConsole(const JsFunctionArguments& args)
 {
   g_printer->Print(args);
+
+  if (g_windowsConsolePrinter) {
+    g_windowsConsolePrinter->Print(args);
+  }
+
   return JsValue::Undefined();
 }
 
 void ConsoleApi::Clear()
 {
-  for (auto& item : replacedConsoleCmd) {
+  for (auto& item : g_replacedConsoleCmd) {
     REL::safe_write((uintptr_t)item.second.myIter,
                     &(item.second.myOriginalData),
                     sizeof(item.second.myOriginalData));
   }
 
-  replacedConsoleCmd.clear();
+  g_replacedConsoleCmd.clear();
 }
 
 const char* ConsoleApi::GetScriptPrefix()
 {
-  return printConsolePrefixesEnabled ? "[Script] " : "";
+  return g_printConsolePrefixesEnabled ? "[Script] " : "";
 }
 
 const char* ConsoleApi::GetExceptionPrefix()
 {
-  return printConsolePrefixesEnabled ? "[Exception] " : "";
+  return g_printConsolePrefixesEnabled ? "[Exception] " : "";
+}
+
+void ConsoleApi::InitCmd(int offsetLeft, int offsetTop, int width, int height,
+                         bool isAlwaysOnTop)
+{
+
+  g_windowsConsolePrinter = std::make_unique<WindowsConsolePrinter>(
+    offsetLeft, offsetTop, width, height, isAlwaysOnTop);
 }
 
 namespace {
@@ -225,7 +239,7 @@ bool ConsoleComand_Execute(const RE::SCRIPT_PARAMETER* paramInfo,
 {
   std::pair<const std::string, ConsoleCommand>* iterator = nullptr;
 
-  auto func = [&](int) {
+  auto func = [&] {
     try {
       if (!scriptObj)
         throw NullPointerException("scriptObj");
@@ -233,7 +247,7 @@ bool ConsoleComand_Execute(const RE::SCRIPT_PARAMETER* paramInfo,
       std::string command = scriptObj->GetCommand();
       auto parseCommandResult = ParseCommand(command);
 
-      for (auto& item : replacedConsoleCmd) {
+      for (auto& item : g_replacedConsoleCmd) {
         if (IsNameEqual(item.second.longName,
                         parseCommandResult.commandName) ||
             IsNameEqual(item.second.shortName,
@@ -293,7 +307,7 @@ JsValue FindCommand(const std::string& commandName, RE::SCRIPT_FUNCTION* start,
         IsNameEqual(_iter->shortName, commandName)) {
       JsValue obj = JsValue::Object();
 
-      auto& replaced = replacedConsoleCmd[commandName];
+      auto& replaced = g_replacedConsoleCmd[commandName];
       replaced = FillCmdInfo(_iter);
 
       CreateLongNameProperty(obj, &replaced);
@@ -362,6 +376,6 @@ JsValue ConsoleApi::WriteLogs(const JsFunctionArguments& args)
 JsValue ConsoleApi::SetPrintConsolePrefixesEnabled(
   const JsFunctionArguments& args)
 {
-  printConsolePrefixesEnabled = static_cast<bool>(args[1]);
+  g_printConsolePrefixesEnabled = static_cast<bool>(args[1]);
   return JsValue::Undefined();
 }

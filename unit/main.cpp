@@ -1,8 +1,6 @@
-#define CATCH_CONFIG_RUNNER
-
-#include <Loader.h>
-#include <catch2/catch.hpp>
+#include <catch2/catch_all.hpp>
 #include <iostream>
+#include <libespm/Loader.h>
 
 #include "TestUtils.hpp"
 

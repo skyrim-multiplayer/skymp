@@ -1,5 +1,6 @@
 import { Settings } from "../settings";
 import { System, Log, SystemContext } from "./system";
+import { Mp } from "../../../skymp5-functions-lib/src/types/mp"
 
 function randomInteger(min: number, max: number) {
   const rand = min + Math.random() * (max + 1 - min);
@@ -11,7 +12,7 @@ export class Spawn implements System {
   constructor(private log: Log) {}
 
   async initAsync(ctx: SystemContext): Promise<void> {
-    ctx.gm.on("spawnAllowed", (userId: number, userProfileId: number) => {
+    ctx.gm.on("spawnAllowed", (userId: number, userProfileId: number, discordRoleIds: string[]) => {
       const { startPoints } = Settings.get();
       // TODO: Show race menu if character is not created after relogging
       let actorId = ctx.svr.getActorsByProfileId(userProfileId)[0];
@@ -32,6 +33,7 @@ export class Spawn implements System {
         ctx.svr.setUserActor(userId, actorId);
         ctx.svr.setRaceMenuOpen(actorId, true);
       }
+      (ctx.svr as unknown as Mp).set(actorId, "private.discordRoles", discordRoleIds);
     });
   }
 

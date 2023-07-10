@@ -1,10 +1,10 @@
 #include "TestUtils.hpp"
-#include <catch2/catch.hpp>
+#include <catch2/catch_all.hpp>
 #include <chrono>
 
 #include "CropRegeneration.h"
 #include "GetBaseActorValues.h"
-#include "Loader.h"
+#include "libespm/Loader.h"
 
 PartOne& GetPartOne();
 extern espm::Loader l;
@@ -106,7 +106,7 @@ TEST_CASE("CropHealthRegeneration, CropMagickaRegeneration and "
   BaseActorValues baseValues =
     GetBaseActorValues(&p.worldState, baseId, raceId);
 
-  ac.SetPercentages(0.0f, 0.0f, 0.0f);
+  ac.SetPercentages({ 0.0f, 0.0f, 0.0f });
 
   auto past = std::chrono::steady_clock::now();
   auto now = past + 1s;

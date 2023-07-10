@@ -1,9 +1,9 @@
 #include "TestUtils.hpp"
-#include <catch2/catch.hpp>
+#include <catch2/catch_all.hpp>
 
-#include "Reader.h"
 #include "ScriptVariablesHolder.h"
-#include "VirtualMachine.h"
+#include "papyrus-vm/Reader.h"
+#include "papyrus-vm/VirtualMachine.h"
 #include <cstdint>
 #include <ctime>
 #include <filesystem>
@@ -95,7 +95,7 @@ class MyScriptVariablesHolder : public ScriptVariablesHolder
 {
 public:
   MyScriptVariablesHolder(const char* scriptName)
-    : ScriptVariablesHolder(scriptName, nullptr, nullptr, nullptr, nullptr)
+    : ScriptVariablesHolder(scriptName, {}, {}, nullptr, nullptr, nullptr)
   {
     testObject.reset(new TestObject);
     var = VarValue(testObject.get());

@@ -1,0 +1,88 @@
+[contenteditable=true]:empty:before, .placeholder{
+  content: attr(placeholder);
+  pointer-events: none;
+  display: block;
+  color: #939393;
+}
+
+.chat-input {
+  position: relative;
+  width: 100%;
+  border-radius: 15px;
+  background-color: rgba(0, 0, 0, 0.75);
+  display: flex;
+  flex-direction: row;
+  min-height: 48px;
+  text-align: left;
+  justify-content: center;
+  max-height: 96px;
+  height: max-content;
+  .chat-send {
+    margin: auto 8px;
+    margin-left: 2px;
+  }
+  &--wrapper {
+    width: 100%;
+    display: flex;
+  }
+}
+#chatInput {
+  width: 98%;
+  height: 0;
+  margin-bottom: 0;
+  padding-left: 8px;
+  padding-right: 8px;
+  font-family: Din-pro;
+  font-size: 16px;
+  color: #fafafa;
+  opacity: 0;
+  margin: auto;
+  overflow-y: auto;
+  display: block;
+  &::-webkit-scrollbar-track
+  {
+    border-radius: 20px;
+    cursor: pointer;
+    border: solid 10px transparent;
+  }
+  
+  &::-webkit-scrollbar
+  {
+    width: 7px;
+    padding: 10px 0;
+    cursor: pointer;
+    pointer-events: none;
+    height: 40px;
+    border-radius: 20px;
+    border: solid 10px transparent;
+  }
+  
+  &::-webkit-scrollbar-thumb
+  {
+    background-color: #000000;
+    border-radius: 25px;
+    cursor: pointer;
+    border: solid 15px transparent;
+    background-clip: padding-box;
+    border: 1px solid #555555;
+  }
+  &::-webkit-scrollbar-track-piece:end {
+    background: transparent;
+    margin-bottom: 5px; 
+  }
+
+  &::-webkit-scrollbar-track-piece:start {
+      background: transparent;
+      margin-top: 5px;
+  }
+  &.show {
+    opacity: 1;
+    min-height: 20px;
+    height: max-content;
+    overflow-y: scroll;
+    max-height: 80px;
+    margin: auto;
+    padding-top: 5px;
+    padding-bottom: 5px;
+  }
+}

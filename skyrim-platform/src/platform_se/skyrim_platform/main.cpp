@@ -1,4 +1,5 @@
 #include "CallNativeApi.h"
+#include "ConsoleApi.h"
 #include "DumpFunctions.h"
 #include "EventHandler.h"
 #include "EventManager.h"
@@ -49,7 +50,7 @@ void OnUpdate(IVM* vm, StackID stackId)
   g_nativeCallRequirements.stackId = stackId;
   g_nativeCallRequirements.vm = vm;
   SkyrimPlatform::GetSingleton()->PrepareWorker();
-  SkyrimPlatform::GetSingleton()->Push([=](int) {
+  SkyrimPlatform::GetSingleton()->Push([=] {
     SkyrimPlatform::GetSingleton()->JsTick(true);
     SkyrimPlatform::GetSingleton()->StopWorker();
   });
@@ -85,6 +86,24 @@ void InitLog()
   logger::info(FMT_STRING("{} v{}"), Version::PROJECT, Version::NAME);
 }
 
+void InitCmd()
+{
+  auto settings = Settings::GetPlatformSettings();
+  bool isCmd = settings->GetBool("Debug", "CMD", false);
+
+  if (!isCmd) {
+    return;
+  }
+
+  int offsetLeft = settings->GetInteger("Debug", "CmdOffsetLeft", 0);
+  int offsetTop = settings->GetInteger("Debug", "CmdOffsetTop", 720);
+  int width = settings->GetInteger("Debug", "CmdWidth", 1900);
+  int height = settings->GetInteger("Debug", "CmdHeight", 317);
+  bool isAlwaysOnTop = settings->GetBool("Debug", "CmdIsAlwaysOnTop", false);
+
+  ConsoleApi::InitCmd(offsetLeft, offsetTop, width, height, isAlwaysOnTop);
+}
+
 extern "C" {
 DLLEXPORT uint32_t SkyrimPlatform_IpcSubscribe_Impl(
   const char* systemName, IPC::MessageCallback callback, void* state)
@@ -107,6 +126,8 @@ DLLEXPORT void SkyrimPlatform_IpcSend_Impl(const char* systemName,
 DLLEXPORT bool SKSEAPI SKSEPlugin_Load_Impl(const SKSE::LoadInterface* skse)
 {
   InitLog();
+
+  InitCmd();
 
   logger::info("Loading plugin.");
 
@@ -454,7 +475,7 @@ public:
           case VTYPE_DOUBLE:
             return JsValue::Double(cefValue->GetDouble());
           case VTYPE_STRING:
-            return JsValue::String(cefValue->GetString());
+            return JsValue::String(cefValue->GetString().ToString());
           case VTYPE_DICTIONARY: {
             auto dict = cefValue->GetDictionary();
             auto result = JsValue::Object();

@@ -1462,6 +1462,12 @@ export const enum SlotMask {
   FX01 = 0x80000000,
 }
 
+export const enum SpriteEffects {
+  None = 0,
+  FlipHorizontally = 1,
+  FlipVertically = 2
+}
+
 export declare namespace SendAnimationEventHook {
   class Context {
     readonly selfId: number
@@ -1525,15 +1531,57 @@ export declare class HttpClient {
     post(path: string, options: { body: string, contentType: string, headers?: HttpHeaders }): Promise<HttpResponse>;
 }
 
-export declare function createText(xPos: number, yPos: number, text: string, color: number[]): number;
+export declare function createText(xPos: number, yPos: number, text: string, color: number[], name?: string): number; //default name is Tavern
 export declare function destroyText(textId: number): void;
+export declare function destroyAllTexts(): void;
+
 export declare function setTextPos(textId: number, xPos: number, yPos: number): void;
 export declare function setTextString(textId: number, text: string): void;
 export declare function setTextColor(textId: number, color: number[]): void;
-export declare function destroyAllTexts(): void;
+export declare function setTextSize(textId: number, size: number): void;
+export declare function setTextRotation(textId: number, rotation: number): void;
+export declare function setTextFont(textId: number, name: string): void;
+export declare function setTextDepth(textId: number, depth: number): void;
+export declare function setTextEffect(textId: number, effect: number): void;
+export declare function setTextOrigin(textId: number, origin: number[]): void;
+
 export declare function getTextPos(textId: number): number[];
 export declare function getTextString(textId: number): string;
 export declare function getTextColor(textId: number): number[];
+export declare function getTextSize(textId: number): number;
+export declare function getTextRotation(textId: number): number;
+export declare function getTextFont(textId: number): string;
+export declare function getTextDepth(textId: number): number;
+export declare function getTextEffect(textId: number): number;
+export declare function getTextOrigin(textId: number): number[];
+
 export declare function getNumCreatedTexts(): number;
 
 export declare function getFileInfo(filename: string): { crc32: number, size: number };
+
+export interface Extra {
+  health?: number;
+  enchantmentId?: number;
+  maxCharge?: number;
+  removeEnchantmentOnUnequip?: boolean;
+  chargePercent?: number;
+  name?: string;
+  soul?: 0 | 1 | 2 | 3 | 4 | 5;
+  poisonId?: number;
+  poisonCount?: number;
+  worn?: boolean;
+  wornLeft?: boolean;
+}
+
+export interface BasicEntry {
+  baseId: number;
+  count: number;
+}
+
+export type Entry = BasicEntry & Extra;
+
+export interface Inventory {
+  entries: Entry[];
+}
+
+export declare function setInventory(formId: number, inventory: Inventory): void;

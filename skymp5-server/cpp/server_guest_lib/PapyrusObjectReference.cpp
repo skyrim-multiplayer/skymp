@@ -9,6 +9,13 @@
 #include "WorldState.h"
 #include <cstring>
 
+VarValue PapyrusObjectReference::IsHarvested(
+  VarValue self, const std::vector<VarValue>& arguments)
+{
+  auto selfRefr = GetFormPtr<MpObjectReference>(self);
+  return VarValue(selfRefr && selfRefr->IsHarvested());
+}
+
 VarValue PapyrusObjectReference::IsDisabled(
   VarValue self, const std::vector<VarValue>& arguments)
 {
@@ -138,10 +145,12 @@ VarValue PapyrusObjectReference::GetItemCount(
   if (arguments.size() >= 1) {
     auto selfRefr = GetFormPtr<MpObjectReference>(self);
     if (!selfRefr) {
+      spdlog::warn("GetItemCount: self is not a reference");
       return VarValue(0);
     }
     auto& form = GetRecordPtr(arguments[0]);
     if (!form.rec) {
+      spdlog::warn("GetItemCount: failed to extract form with GetRecordPtr");
       return VarValue(0);
     }
     std::vector<uint32_t> formIds;
@@ -203,9 +212,10 @@ VarValue PapyrusObjectReference::PlaceAtMe(
       if (akFormToPlace.rec->GetType() == "NPC_") {
         auto actor = new MpActor(locationalData, callbacks, baseId);
         newRefr.reset(actor);
-      } else
+      } else {
         newRefr.reset(
           new MpObjectReference(locationalData, callbacks, baseId, type));
+      }
 
       auto worldState = selfRefr->GetParent();
       auto newRefrId = worldState->GenerateFormId();
@@ -229,6 +239,15 @@ VarValue PapyrusObjectReference::SetAngle(
         (float)static_cast<double>(arguments[1].CastToFloat()),
         (float)static_cast<double>(arguments[2].CastToFloat()) });
   }
+  return VarValue::None();
+}
+
+VarValue PapyrusObjectReference::Enable(VarValue self,
+                                        const std::vector<VarValue>& arguments)
+{
+  auto selfRefr = GetFormPtr<MpObjectReference>(self);
+  if (selfRefr)
+    selfRefr->Enable();
   return VarValue::None();
 }
 
@@ -331,6 +350,24 @@ VarValue PapyrusObjectReference::SetPosition(
         SpSnippet(GetName(), funcName, serializedArgs.data(),
                   selfRefr->GetFormId())
           .Execute(targetRefr);
+      }
+    }
+  }
+  return VarValue::None();
+}
+
+VarValue PapyrusObjectReference::GetBaseObject(
+  VarValue self, const std::vector<VarValue>& arguments)
+{
+  if (auto selfRefr = GetFormPtr<MpObjectReference>(self)) {
+    auto baseId = selfRefr->GetBaseId();
+    if (baseId) {
+      if (auto worldState = selfRefr->GetParent()) {
+        auto& espm = worldState->GetEspm();
+        auto lookupRes = espm.GetBrowser().LookupById(baseId);
+        if (lookupRes.rec) {
+          return VarValue(std::make_shared<EspmGameObject>(lookupRes));
+        }
       }
     }
   }

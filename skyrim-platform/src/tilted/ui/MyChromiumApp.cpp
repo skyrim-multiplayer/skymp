@@ -102,9 +102,6 @@ void MyChromiumApp::Initialize() noexcept
 
   CefBrowserSettings browserSettings{};
 
-  browserSettings.file_access_from_file_urls = STATE_ENABLED;
-  browserSettings.universal_access_from_file_urls = STATE_ENABLED;
-  browserSettings.web_security = STATE_DISABLED;
   browserSettings.windowless_frame_rate = 60;
 
   CefWindowInfo info;
@@ -261,12 +258,14 @@ bool MyChromiumApp::LoadUrl(const char* url) noexcept
 
 void MyChromiumApp::RunTasks()
 {
-  bool isBrowserFocused = CEFUtils::DInputHook::ChromeFocus();
+  if (m_pGameClient && m_pGameClient->IsReady()) {
+    bool isBrowserFocused = CEFUtils::DInputHook::ChromeFocus();
 
-  int isFocusedInt = isBrowserFocused ? 1 : 0;
-  if (isFocusedInt != m_wasFocused) {
-    m_wasFocused = isFocusedInt;
-    m_pGameClient->GetBrowser()->GetHost()->SetFocus(isBrowserFocused);
+    int isFocusedInt = isBrowserFocused ? 1 : 0;
+    if (isFocusedInt != m_wasFocused) {
+      m_wasFocused = isFocusedInt;
+      m_pGameClient->GetBrowser()->GetHost()->SetFocus(isBrowserFocused);
+    }
   }
 }
 

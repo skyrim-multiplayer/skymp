@@ -12,6 +12,7 @@ import {
   MenuOpenEvent,
   MenuCloseEvent,
 } from "skyrimPlatform";
+import { FormView } from "../view/formView";
 import { RemoteAuthGameData } from "./authModel";
 
 const pluginAuthDataName = `auth-data-no-load`;
@@ -57,9 +58,7 @@ export const main = (): void => {
   browser.setVisible(false);
   once("update", () => browser.setVisible(true));
 
-  const openedMenus: string[] = [];
-
-  const badMenuOpen = () => !!openedMenus.length;
+  const badMenusOpen = new Set<string>();
 
   on("menuOpen", (e: MenuOpenEvent) => {
     if (e.name === Menu.Cursor) {
@@ -67,7 +66,7 @@ export const main = (): void => {
     }
     if (IsBadMenu(e.name)) {
       browser.setVisible(false);
-      openedMenus.push(e.name);
+      badMenusOpen.add(e.name);
     } else if (e.name === Menu.HUD) {
       browser.setVisible(true);
     }
@@ -77,19 +76,24 @@ export const main = (): void => {
     if (e.name === Menu.Cursor) {
       isCursorMenuOpened = false;
     }
-    const i = openedMenus.indexOf(e.name);
-    if (i !== -1) {
-      openedMenus.splice(i, 1);
-
-      if (openedMenus.length === 0) browser.setVisible(true);
+    if (badMenusOpen.delete(e.name)) {
+      if (badMenusOpen.size === 0) {
+        browser.setVisible(true);
+      }
     }
 
     if (e.name === Menu.HUD) browser.setVisible(false);
   });
 
   const binding = new Map<BindingKey, BindingValue>([
+    [[DxScanCode.F1], () => FormView.isDisplayingNicknames = !FormView.isDisplayingNicknames],
     [[DxScanCode.F2], () => browser.setVisible(!browser.isVisible())],
     [[DxScanCode.F6], () => browser.setFocused(!browser.isFocused())],
+    [[DxScanCode.Enter], () => {
+      if (badMenusOpen.size === 0) {
+        browser.setFocused(true);
+      }
+    }],
     [
       [DxScanCode.Escape],
       () => browser.isFocused() && browser.setFocused(false),
@@ -109,18 +113,7 @@ export const main = (): void => {
     });
   });
 
-  const cfg = {
-    ip: settings["skymp5-client"]["server-ip"],
-    port: settings["skymp5-client"]["server-port"],
-  };
-
-  printConsole({ cfg });
-
-  const uiPort = cfg.port === 7777 ? 3000 : (cfg.port as number) + 1;
-
-  const url = `http://${cfg.ip}:${uiPort}/ui/index.html`;
-  printConsole(`loading url ${url}`);
-  browser.loadUrl(url);
+  // "file:///Data/Platform/UI/index.html" is loaded by default so we need to call it manually 
 };
 
 export const getAuthData = (): RemoteAuthGameData | null => {

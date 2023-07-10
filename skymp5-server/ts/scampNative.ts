@@ -26,8 +26,9 @@ export declare class ScampServer {
     formId: number,
     pos: number[],
     angleZ: number,
-    cellOrWorld: number
-  ): void;
+    cellOrWorld: number,
+    userProfileId?: number
+  ): number;
 
   destroyActor(formId: number): void;
   setUserActor(userId: number, actorFormId: number): void;
@@ -43,8 +44,6 @@ export declare class ScampServer {
   getUserByActor(formId: number): number;
 
   executeJavaScriptOnChakra(src: string): void;
-  setSendUiMessageImplementation(fn: SendChatMessageFn): void;
-  onUiEvent(formId: number, msg: Record<string, unknown>): void;
   clear(): void;
   writeLogs(logLevel: string, message: string): void;
 }

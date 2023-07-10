@@ -22,14 +22,6 @@ if(WIN32)
 endif()
 
 #
-# lib_espm
-#
-
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/lib_espm)
-list(APPEND VCPKG_DEPENDENT espm)
-apply_default_settings(TARGETS espm)
-
-#
 # mp_common
 #
 
@@ -39,6 +31,7 @@ add_library(mp_common STATIC ${src})
 target_compile_definitions(mp_common PUBLIC MAX_PLAYERS=1000)
 target_include_directories(mp_common PUBLIC "${CMAKE_CURRENT_LIST_DIR}/mp_common")
 target_include_directories(mp_common PUBLIC "${CMAKE_CURRENT_LIST_DIR}/third_party")
+target_link_libraries(mp_common PUBLIC viet)
 apply_default_settings(TARGETS mp_common)
 list(APPEND VCPKG_DEPENDENT mp_common)
 if(WIN32)
@@ -67,22 +60,6 @@ target_include_directories(server_guest_lib PUBLIC "${CMAKE_CURRENT_LIST_DIR}/se
 apply_default_settings(TARGETS server_guest_lib)
 list(APPEND VCPKG_DEPENDENT server_guest_lib)
 target_link_libraries(server_guest_lib PUBLIC viet mp_common espm papyrus-vm-lib geo)
-target_include_directories(server_guest_lib PUBLIC "${CMAKE_SOURCE_DIR}/1js")
-
-#
-# papyrus-vm-lib
-#
-
-file(GLOB src "${CMAKE_CURRENT_SOURCE_DIR}/papyrus_vm_lib/*")
-list(APPEND src "${CMAKE_SOURCE_DIR}/.clang-format")
-add_library(papyrus-vm-lib STATIC ${src})
-apply_default_settings(TARGETS papyrus-vm-lib)
-target_include_directories(papyrus-vm-lib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/papyrus_vm_lib")
-target_include_directories(papyrus-vm-lib PUBLIC "${CMAKE_CURRENT_LIST_DIR}/third_party")
-if(UNIX)
-  target_link_libraries(papyrus-vm-lib PUBLIC stdc++fs)
-endif()
-target_link_libraries(papyrus-vm-lib PUBLIC viet)
 
 #
 # localization-provider
@@ -122,10 +99,6 @@ foreach(target ${VCPKG_DEPENDENT})
   find_package(slikenet CONFIG REQUIRED)
   target_link_libraries(${target} PUBLIC SLikeNet)
 
-  find_package(Boost REQUIRED)
-  target_include_directories(${target} PUBLIC ${Boost_INCLUDE_DIRS})
-  target_link_libraries(${target} PUBLIC ${Boost_LIBRARIES})
-
   find_package(ZLIB REQUIRED)
   target_link_libraries(${target} PUBLIC ZLIB::ZLIB)
 
@@ -142,10 +115,3 @@ foreach(target ${VCPKG_DEPENDENT})
     target_link_libraries(${target} PUBLIC Secur32.lib Crypt32.lib Dnsapi.lib Bcrypt.lib)
   endif()
 endforeach()
-
-find_path(ChakraCore_INCLUDE_DIR NAMES ChakraCore.h)
-find_library(ChakraCore_LIBRARY_Debug NAMES ChakraCore)
-string(REPLACE "/debug/lib/" "/lib/" ChakraCore_LIBRARY_Release "${ChakraCore_LIBRARY_Debug}")
-
-# don't want to link against MpClientPlugin for example..
-target_link_libraries(server_guest_lib PUBLIC "$<IF:$<CONFIG:Debug>,${ChakraCore_LIBRARY_Debug},${ChakraCore_LIBRARY_Release}>")

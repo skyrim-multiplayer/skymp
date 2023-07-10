@@ -55,7 +55,7 @@
 #include <cef_values.h>
 #include <cmrc/cmrc.hpp>
 #include <core_library/Meta.hpp>
-#include <frida/frida-gum.h>
+#include <frida-gum.h>
 #include <hooks/D3D11Hook.hpp>
 #include <hooks/DInputHook.hpp>
 #include <hooks/IInputListener.h>

@@ -51,16 +51,7 @@ and it can be tricky to get Skyrim itself to work with non-ASCII text, for examp
     ```sh
     echo 'export PATH="$HOME/apps/cmake-3.22.0-.../bin:$PATH"' >> ~/.bashrc
     ```
-
-If you don't wish to build all the dependencies by yourself, or have an unsupported distro,
-you can use [a Docker image with preinstalled dependencies](https://hub.docker.com/r/skymp/skymp-vcpkg-deps):
-
-```sh
-docker run -it --rm -v "$PWD:$PWD" -w "$PWD" -u "`id -u`:`id -g`" skymp/skymp-vcpkg-deps ./build.sh ...
-# ... or go rootless!
-podman run -it --rm -v "$PWD:$PWD" -w "$PWD" -e VCPKG_DEFAULT_BINARY_CACHE=/home/skymp/.cache/vcpkg/archives \
-    skymp/skymp-vcpkg-deps ./build.sh ...
-```
+Also you can use containers to build and run server. More info can be found in the next section.
 
 ## Configuring and Building
 
@@ -110,6 +101,20 @@ On Linux, there might be some tricky dependency issues. To work around them,
 we recommend you to use a wrapper script `build.sh`. It will create a temporary
 directory and add some aliases to `PATH`.
 
+If you don't wish to build all the dependencies by yourself, or have an unsupported distro,
+you can use [a Docker image with preinstalled dependencies](https://hub.docker.com/r/skymp/skymp-vcpkg-deps):
+
+```sh
+. misc/github_env_linux; docker run -it --rm -v "$PWD:$PWD" -w "$PWD" -u "`id -u`:`id -g`" \
+    $SKYMP_VCPKG_DEPS_IMAGE bash
+# ... or go rootless!
+. misc/github_env_linux; podman run -it --rm -v "$PWD:$PWD" --security-opt label=disable -w "$PWD" \
+    -e VCPKG_DEFAULT_BINARY_CACHE=/home/skymp/.cache/vcpkg/archives \
+    $SKYMP_VCPKG_DEPS_IMAGE bash
+```
+`--security-opt label=disable` is used for users who have SELinux enabled and source code is located somewhere inside home directory.
+Check `podman run` [documentation](https://docs.podman.io/en/latest/markdown/podman-run.1.html) for more information.
+
 1. Generate project files with CMake wrapper (replace path with your actual Skyrim SE folder)
    ```sh
    ./build.sh --configure -DCMAKE_BUILD_TYPE=Debug \
@@ -135,6 +140,7 @@ directory and add some aliases to `PATH`.
    ../build.sh --build --target=unit  # only build unit-tests and their dependencies
    # Will run cmake --build . --target=unit
    ```
+   Also you can add `--parallel $(nproc)` to use all available CPU threads for build system
 
 ### Optional steps after build
 

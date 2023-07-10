@@ -1,11 +1,11 @@
 #include "TestUtils.hpp"
-#include <catch2/catch.hpp>
+#include <catch2/catch_all.hpp>
 #include <chrono>
 
 #include "GetBaseActorValues.h"
 #include "HitData.h"
-#include "Loader.h"
 #include "PacketParser.h"
+#include "libespm/Loader.h"
 
 PartOne& GetPartOne();
 extern espm::Loader l;
@@ -47,9 +47,9 @@ TEST_CASE("OnHit damages target actor based on damage formula", "[Hit]")
 
   REQUIRE(p.Messages().size() == 1);
   auto changeForm = ac.GetChangeForm();
-  REQUIRE(changeForm.healthPercentage == 0.75f);
-  REQUIRE(changeForm.magickaPercentage == 1.f);
-  REQUIRE(changeForm.staminaPercentage == 1.f);
+  REQUIRE(changeForm.actorValues.healthPercentage == 0.75f);
+  REQUIRE(changeForm.actorValues.magickaPercentage == 1.f);
+  REQUIRE(changeForm.actorValues.staminaPercentage == 1.f);
 
   p.DestroyActor(0xff000000);
   DoDisconnect(p, 0);
@@ -135,7 +135,11 @@ TEST_CASE("OnHit doesn't damage character if it is out of range", "[Hit]")
   const float awaitedRange = 141.f * 0.7f + face + targetSide;
   acTarget.SetPos({ awaitedRange * 1.001f, 0, 0 });
   acTarget.SetAngle({ 0.f, 0.f, 180.f });
-  acTarget.SetPercentages(0.1f, 1, 1);
+  ActorValues actorValues;
+  actorValues.healthPercentage = 0.1f;
+  actorValues.magickaPercentage = 1.f;
+  actorValues.staminaPercentage = 1.f;
+  acTarget.SetPercentages(actorValues);
 
   auto past = std::chrono::steady_clock::now() - 2s;
   acTarget.SetLastHitTime(past);
@@ -143,7 +147,7 @@ TEST_CASE("OnHit doesn't damage character if it is out of range", "[Hit]")
   p.GetActionListener().OnHit(rawMsgData, hitData);
 
   auto changeForm = acTarget.GetChangeForm();
-  REQUIRE(changeForm.healthPercentage == 0.1f);
+  REQUIRE(changeForm.actorValues.healthPercentage == 0.1f);
 
   p.DestroyActor(aggressor);
   p.DestroyActor(target);
@@ -171,7 +175,11 @@ TEST_CASE("Dead actors can't attack", "[Hit]")
   hitData.source = 0x0001397E;
 
   auto& acTarget = p.worldState.GetFormAt<MpActor>(target);
-  acTarget.SetPercentages(0.2f, 1.f, 1.f);
+  ActorValues actorValues;
+  actorValues.healthPercentage = 0.2f;
+  actorValues.magickaPercentage = 1.f;
+  actorValues.staminaPercentage = 1.f;
+  acTarget.SetPercentages(actorValues);
 
   auto& acAggressor = p.worldState.GetFormAt<MpActor>(aggressor);
   acAggressor.Kill();
@@ -179,7 +187,7 @@ TEST_CASE("Dead actors can't attack", "[Hit]")
 
   p.GetActionListener().OnHit(rawMsgData, hitData);
 
-  REQUIRE(acTarget.GetChangeForm().healthPercentage == 0.2f);
+  REQUIRE(acTarget.GetChangeForm().actorValues.healthPercentage == 0.2f);
 
   p.DestroyActor(aggressor);
   p.DestroyActor(target);
@@ -195,7 +203,11 @@ TEST_CASE("checking weapon cooldown", "[Hit]")
 
   auto& ac = p.worldState.GetFormAt<MpActor>(0xff000000);
 
-  ac.SetPercentages(1.f, 1.f, 1.f);
+  ActorValues actorValues;
+  actorValues.healthPercentage = 1.f;
+  actorValues.magickaPercentage = 1.f;
+  actorValues.staminaPercentage = 1.f;
+  ac.SetPercentages(actorValues);
 
   ActionListener::RawMessageData msgData;
   msgData.userId = 0;

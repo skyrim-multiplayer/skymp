@@ -93,6 +93,51 @@ export interface LocationalData {
   rot: [number, number, number];
 }
 
+export interface PacketHistory {
+  buffer: Uint8Array;
+  packets: Array<{
+    offset: number;
+    size: number;
+    timeMs: number;
+  }>
+}
+
+export interface StartPoint {
+  pos: [number, number, number];
+  worldOrCell: string; // hex form id (like "0x3c", use parseInt)
+  angleZ: number;
+}
+
+export interface ServerSettings {
+  name?: string;
+  ip?: string;
+  port?: number;
+  maxPlayers?: number;
+  dataDir?: string;
+  loadOrder?: string[];
+  lang?: string;
+  offlineMode?: boolean;
+  databaseDriver?: string;
+  reloot?: Record<string, number | undefined>;
+  gamemodePath?: string;
+  startPoints?: StartPoint[];
+  isPapyrusHotReloadEnabled?: boolean;
+  locale?: string;
+
+  // TODO: add missing settings items here if any, sync with docs/docs_server_configuration_reference.md
+  sweetPieMinimumPlayersToStart?: number;
+  sweetPieAllowCheats?: boolean;
+  sweetPieChatSettings?: {
+    hearingRadiusNormal?: number
+  };
+  discordAuth?: {
+    baseKitRoleId?: string;
+    adminRoleId?: string;
+  }
+
+  readonly [key: string]: unknown;
+}
+
 export interface Mp {
   /**
    * Returns the actual value of a specified property. If there is no value, then
@@ -106,6 +151,8 @@ export interface Mp {
   get(formId: number, propertyName: 'type'): 'MpActor' | 'MpObjectReference';
   get(formId: number, propertyName: 'appearance'): Record<string, unknown>;
   get(formId: number, propertyName: 'pos'): [number, number, number];
+  get(formId: number, propertyName: 'locationalData'): LocationalData;
+  get(formId: number, propertyName: 'spawnPoint'): LocationalData;
   get(formId: number, propertyName: 'angle'): [number, number, number];
   get(formId: number, propertyName: 'inventory'): Inventory;
   get(formId: number, propertyName: 'equipment'): Equipment;
@@ -151,13 +198,6 @@ export interface Mp {
    */
   clear(): void;
 
-  /**
-   * Sends a message to the user's in-game browser using WebSocket.
-   * @param formId A number representing ID of MpActor or MpObjectReference.
-   * @param message JSON-serializable object representing a message.
-   */
-  sendUiMessage(formId: number, message: { [key: string]: JsonSerializable }): void;
-
   lookupEspmRecordById(globalRecordId: number): EspmLookupResult | Partial<EspmLookupResult>;
 
   getEspmLoadOrder(): string[];
@@ -188,10 +228,12 @@ export interface Mp {
     args: PapyrusValue[]
   ): PapyrusValue;
 
-  getServerSettings(): Record<string, unknown>;
-  readDataDirectory(): string[];
-  readDataFile(path: string): string;
-  writeDataFile(path: string, content: string): void;
+  getServerSettings(): ServerSettings;
+
+  setPacketHistoryRecording(userId: number, enabled: boolean): void;
+  getPacketHistory(userId: number): PacketHistory;
+  clearPacketHistory(userId: number): void;
+  requestPacketHistoryPlayback(userId: number, packetHistory: PacketHistory): void;
 
   [key: string]: unknown;
 }

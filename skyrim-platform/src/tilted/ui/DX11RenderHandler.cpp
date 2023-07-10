@@ -2,16 +2,17 @@
 #include "TextToDraw.h"
 #include <DX11RenderHandler.h>
 #include <DirectXColors.h>
-#include <DirectXTK/CommonStates.h>
 #include <DirectXTK/DDSTextureLoader.h>
 #include <DirectXTK/SimpleMath.h>
-#include <DirectXTK/SpriteBatch.h>
-#include <DirectXTK/SpriteFont.h>
 #include <DirectXTK/WICTextureLoader.h>
 #include <OverlayClient.h>
 #include <cmrc/cmrc.hpp>
+#include <codecvt>
+#include <filesystem>
 #include <functional>
 #include <iostream>
+#include <iterator>
+#include <spdlog/spdlog.h>
 #include <string>
 
 CMRC_DECLARE(skyrim_plugin_resources);
@@ -51,7 +52,6 @@ void DX11RenderHandler::Render(
       m_pImmediateContext->ExecuteCommandList(pCommandList.Get(), TRUE);
     }
   }
-
   GetRenderTargetSize();
 
   m_pSpriteBatch->Begin(DirectX::SpriteSortMode_Deferred,
@@ -72,17 +72,27 @@ void DX11RenderHandler::Render(
       static_assert(
         std::is_same_v<std::decay_t<decltype(textToDraw.string.c_str()[0])>,
                        wchar_t>);
-      auto origin = DirectX::SimpleMath::Vector2(m_pSpriteFont->MeasureString(
-                      textToDraw.string.c_str())) /
+
+      std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> conv;
+
+      auto& font = m_pFonts[conv.to_bytes(textToDraw.fontName)];
+
+      if (!font)
+        return;
+
+      auto origin = DirectX::SimpleMath::Vector2(
+                      font->MeasureString(textToDraw.string.c_str())) /
         2;
 
       DirectX::XMVECTORF32 color = { static_cast<float>(textToDraw.color[0]),
                                      static_cast<float>(textToDraw.color[1]),
                                      static_cast<float>(textToDraw.color[2]),
                                      static_cast<float>(textToDraw.color[3]) };
-      m_pSpriteFont->DrawString(
-        m_pSpriteBatch.get(), textToDraw.string.c_str(),
-        DirectX::XMFLOAT2(textToDraw.x, textToDraw.y), color, 0.f, origin);
+
+      font->DrawString(m_pSpriteBatch.get(), textToDraw.string.c_str(),
+                       DirectX::XMFLOAT2(textToDraw.x, textToDraw.y), color,
+                       textToDraw.rotation, origin, textToDraw.size,
+                       textToDraw.effects, textToDraw.layerDepth);
     });
   }
 
@@ -131,9 +141,6 @@ void DX11RenderHandler::Create()
 
   m_pStates = std::make_unique<DirectX::CommonStates>(m_pDevice.Get());
 
-  m_pSpriteFont = std::make_unique<DirectX::SpriteFont>(
-    m_pDevice.Get(), L"Data/Platform/Fonts/Tavern.spritefont");
-
   if (FAILED(DirectX::CreateWICTextureFromFile(
         m_pDevice.Get(), m_pParent->GetCursorPathPNG().c_str(), nullptr,
         m_pCursorTexture.ReleaseAndGetAddressOf()))) {
@@ -165,6 +172,26 @@ void DX11RenderHandler::Create()
 
   if (!m_pTexture)
     CreateRenderTexture();
+
+  for (const auto& entry :
+       std::filesystem::directory_iterator("Data/Platform/Fonts/")) {
+    std::filesystem::path path = entry.path();
+
+    if (path.extension().string() != ".spritefont")
+      continue;
+
+    spdlog::info("Font has been added - " + entry.path().stem().string());
+
+    std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
+
+    auto widestrFontPath =
+      converter.from_bytes(static_cast<std::string>(path.string()));
+
+    const wchar_t* fontPath = widestrFontPath.c_str();
+
+    m_pFonts[entry.path().stem().string()] =
+      std::make_unique<DirectX::SpriteFont>(m_pDevice.Get(), fontPath);
+  }
 }
 
 void DX11RenderHandler::GetViewRect(CefRefPtr<CefBrowser> browser,

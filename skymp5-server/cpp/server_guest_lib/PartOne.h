@@ -1,4 +1,5 @@
 #pragma once
+#include "AnimationSystem.h"
 #include "GamemodeApi.h"
 #include "ISaveStorage.h"
 #include "MpActor.h"
@@ -8,7 +9,7 @@
 #include "ServerState.h"
 #include "WorldState.h"
 #include "formulas/IDamageFormula.h"
-#include <Loader.h>
+#include "libespm/Loader.h"
 #include <memory>
 #include <nlohmann/json.hpp>
 #include <set>
@@ -39,7 +40,7 @@ public:
   ~PartOne();
 
   void SetSendTarget(Networking::ISendTarget* sendTarget);
-  void SetDamageFormula(std::unique_ptr<IDamageFormula> dmgFormulaFactory);
+  void SetDamageFormula(std::unique_ptr<IDamageFormula> dmgFormula);
   void AddListener(std::shared_ptr<Listener> listener);
   bool IsConnected(Networking::UserId userId) const;
   void Tick();
@@ -77,6 +78,7 @@ public:
 
   WorldState worldState;
   ServerState serverState;
+  std::shared_ptr<AnimationSystem> animationSystem;
 
   Networking::ISendTarget& GetSendTarget() const;
 
@@ -85,6 +87,12 @@ public:
 
   void NotifyGamemodeApiStateChanged(
     const GamemodeApi::State& newState) noexcept;
+
+  void SetPacketHistoryRecording(Networking::UserId userId, bool value);
+  PacketHistory GetPacketHistory(Networking::UserId userId);
+  void ClearPacketHistory(Networking::UserId userId);
+  void RequestPacketHistoryPlayback(Networking::UserId userId,
+                                    const PacketHistory& history);
 
 private:
   void Init();

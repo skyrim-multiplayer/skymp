@@ -35,9 +35,6 @@ export class Login implements System {
   }
 
   async initAsync(ctx: SystemContext): Promise<void> {
-    this.userProfileIds.length = this.maxPlayers;
-    this.userProfileIds.fill(undefined);
-
     if (this.ip && this.ip != "null") {
       this.myAddr = this.ip + ":" + this.serverPort;
     } else {
@@ -49,7 +46,6 @@ export class Login implements System {
   }
 
   disconnect(userId: number): void {
-    this.userProfileIds[userId] = undefined;
   }
 
   customPacket(
@@ -65,9 +61,21 @@ export class Login implements System {
       this.log("The server is in offline mode, the client is NOT");
     } else if (this.offlineMode === false && gameData && gameData.session) {
       (async () => {
-        const discordAuth = Settings.get().discordAuth;
+        let discordAuth = Settings.get().discordAuth;
         const profile = await this.getUserProfile(gameData.session);
         console.log("getUserProfileId:", profile);
+
+        let roles = new Array<string>();
+
+        if (discordAuth && !discordAuth.botToken) {
+          discordAuth = undefined;
+          console.error("discordAuth.botToken is missing, skipping Discord server integration");
+        }
+        if (discordAuth && !discordAuth.guildId) {
+          discordAuth = undefined;
+          console.error("discordAuth.guildId is missing, skipping Discord server integration");
+        }
+
         if (discordAuth) {
           if (!profile.discordId) {
             throw new Error("Not logged in via Discord");
@@ -103,24 +111,23 @@ export class Login implements System {
             throw new Error("Unexpected response status: " +
                 JSON.stringify({ status: response.status, data: response.data }));
           }
-          if (response.data.roles.indexOf(discordAuth.banRoleId) != -1) {
+          if (response.data.roles.indexOf(discordAuth.banRoleId) !== -1) {
             throw new Error("Banned");
           }
+          roles = response.data.roles;
         }
-        this.userProfileIds[userId] = profile.id;
-        ctx.gm.emit("spawnAllowed", userId, profile.id);
+        ctx.gm.emit("spawnAllowed", userId, profile.id, roles);
         this.log("Logged as " + profile.id);
       })()
         .catch((err) => console.error("Error logging in client:", JSON.stringify(gameData), err));
     } else if (this.offlineMode === true && gameData && typeof gameData.profileId === "number") {
       const profileId = gameData.profileId;
-      ctx.gm.emit("spawnAllowed", userId, profileId);
+      ctx.gm.emit("spawnAllowed", userId, profileId, []);
       this.log(userId + " logged as " + profileId);
     } else {
       this.log("No credentials found in gameData:", gameData);
     }
   }
 
-  private userProfileIds = new Array<undefined | number>();
   private myAddr: string;
 }

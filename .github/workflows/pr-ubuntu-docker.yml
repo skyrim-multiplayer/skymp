@@ -18,6 +18,10 @@ jobs:
             with:
                 submodules: recursive
 
+          - name: Get image to build upon
+            run: |
+                cat ${{github.workspace}}/misc/github_env_linux >> "$GITHUB_ENV"
+
           - name: Store SP types from commit
             run: |
               commit=$(< ${{github.workspace}}/skyrim-platform/src/platform_se/codegen/convert-files/skyrimPlatform.ts)
@@ -54,7 +58,7 @@ jobs:
           - name: Prepare
             uses: addnab/docker-run-action@v3
             with:
-                image: skymp/skymp-vcpkg-deps:latest
+                image: ${{ env.SKYMP_VCPKG_DEPS_IMAGE }}
                 options: |
                     -v ${{github.workspace}}:/src
                     -v ${{github.workspace}}/.cmake-js:/home/skymp/.cmake-js
@@ -64,7 +68,7 @@ jobs:
           - name: CMake Configure
             uses: addnab/docker-run-action@v3
             with:
-                image: skymp/skymp-vcpkg-deps:latest
+                image: ${{ env.SKYMP_VCPKG_DEPS_IMAGE }}
                 options: |
                     -v ${{github.workspace}}:/src
                     -v ${{github.workspace}}/.cmake-js:/home/skymp/.cmake-js
@@ -76,7 +80,7 @@ jobs:
                        -DUNIT_DATA_DIR="/src/skyrim_data_files"
 
           - name: Upload compile_commands.json
-            uses: actions/upload-artifact@v2
+            uses: actions/upload-artifact@v3
             with:
                 name: compile_commands.json
                 path: ${{github.workspace}}/build/compile_commands.json
@@ -84,7 +88,7 @@ jobs:
           - name: Build
             uses: addnab/docker-run-action@v3
             with:
-                image: skymp/skymp-vcpkg-deps:latest
+                image: ${{ env.SKYMP_VCPKG_DEPS_IMAGE }}
                 options: |
                     -v ${{github.workspace}}:/src
                     -v ${{github.workspace}}/.cmake-js:/home/skymp/.cmake-js
@@ -96,7 +100,7 @@ jobs:
           - name: Prepare dist.tar.gz
             uses: addnab/docker-run-action@v3
             with:
-                image: skymp/skymp-vcpkg-deps:latest
+                image: ${{ env.SKYMP_VCPKG_DEPS_IMAGE }}
                 options: |
                     -v ${{github.workspace}}:/src
                     -v ${{github.workspace}}/.cmake-js:/home/skymp/.cmake-js
@@ -106,7 +110,7 @@ jobs:
                     && tar czf dist.tar.gz dist
 
           - name: Upload dist.tar.gz
-            uses: actions/upload-artifact@v2
+            uses: actions/upload-artifact@v3
             with:
               name: dist.tar.gz
               path: ${{github.workspace}}/build/dist.tar.gz
@@ -129,7 +133,7 @@ jobs:
           - name: Test
             uses: addnab/docker-run-action@v3
             with:
-                image: skymp/skymp-vcpkg-deps:latest
+                image: ${{ env.SKYMP_VCPKG_DEPS_IMAGE }}
                 options: |
                     -v ${{github.workspace}}:/src
                     -v ${{github.workspace}}/.cmake-js:/home/skymp/.cmake-js

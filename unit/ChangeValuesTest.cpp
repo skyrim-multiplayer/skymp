@@ -1,13 +1,15 @@
 #include "TestUtils.hpp"
-#include <catch2/catch.hpp>
+#include <catch2/catch_all.hpp>
 #include <chrono>
 
 #include "GetBaseActorValues.h"
-#include "Loader.h"
 #include "PacketParser.h"
+#include "libespm/Loader.h"
 
 PartOne& GetPartOne();
 extern espm::Loader l;
+
+using namespace std::chrono_literals;
 
 TEST_CASE("ChangeValues packet is parsed correctly", "[ChangeValues]")
 {
@@ -20,20 +22,14 @@ TEST_CASE("ChangeValues packet is parsed correctly", "[ChangeValues]")
     }
 
     void OnChangeValues(const RawMessageData& rawMsgData_,
-                        const float healthPercentage_,
-                        const float magickaPercentage_,
-                        const float staminaPercentage_) override
+                        const ActorValues& actorValues_) override
     {
       rawMsgData = rawMsgData_;
-      healthPercentage = healthPercentage_;
-      magickaPercentage = magickaPercentage_;
-      staminaPercentage = staminaPercentage_;
+      actorValues = actorValues_;
     }
 
     RawMessageData rawMsgData;
-    float healthPercentage = 1;
-    float magickaPercentage = 1;
-    float staminaPercentage = 1;
+    ActorValues actorValues;
   };
 
   nlohmann::json j{
@@ -50,9 +46,9 @@ TEST_CASE("ChangeValues packet is parsed correctly", "[ChangeValues]")
     122, reinterpret_cast<Networking::PacketData>(msg.data()), msg.size(),
     listener);
 
-  REQUIRE(listener.healthPercentage == 0.5f);
-  REQUIRE(listener.magickaPercentage == 0.3f);
-  REQUIRE(listener.staminaPercentage == 0.0f);
+  REQUIRE(listener.actorValues.healthPercentage == 0.5f);
+  REQUIRE(listener.actorValues.magickaPercentage == 0.3f);
+  REQUIRE(listener.actorValues.staminaPercentage == 0.0f);
 }
 
 TEST_CASE("Player attribute percentages are changing correctly",
@@ -68,12 +64,16 @@ TEST_CASE("Player attribute percentages are changing correctly",
   ActionListener::RawMessageData msgData;
   msgData.userId = 0;
 
-  p.GetActionListener().OnChangeValues(msgData, 0.75f, 0.0f, 0.7f);
+  ActorValues actorValues;
+  actorValues.healthPercentage = 0.75f;
+  actorValues.magickaPercentage = 0.f;
+  actorValues.staminaPercentage = 0.7f;
+  p.GetActionListener().OnChangeValues(msgData, actorValues);
   auto changeForm = ac.GetChangeForm();
 
-  REQUIRE(changeForm.healthPercentage == 0.75f);
-  REQUIRE(changeForm.magickaPercentage == 0.0f);
-  REQUIRE(changeForm.staminaPercentage == 0.7f);
+  REQUIRE(changeForm.actorValues.healthPercentage == 0.75f);
+  REQUIRE(changeForm.actorValues.magickaPercentage == 0.0f);
+  REQUIRE(changeForm.actorValues.staminaPercentage == 0.7f);
 
   p.DestroyActor(0xff000000);
   DoDisconnect(p, 0);
@@ -82,8 +82,6 @@ TEST_CASE("Player attribute percentages are changing correctly",
 TEST_CASE("OnChangeValues call is cropping percentage values",
           "[ChangeValues]")
 {
-  using namespace std::chrono_literals;
-
   PartOne& p = GetPartOne();
   DoConnect(p, 0);
   p.CreateActor(0xff000000, { 0, 0, 0 }, 0, 0x3c);
@@ -99,30 +97,36 @@ TEST_CASE("OnChangeValues call is cropping percentage values",
   ActionListener::RawMessageData msgData;
   msgData.userId = 0;
 
-  ac.SetPercentages(0.1f, 0.0f, 0.0f);
+  ActorValues actorValues;
+  actorValues.healthPercentage = 0.1f;
+  actorValues.magickaPercentage = 0.f;
+  actorValues.staminaPercentage = 0.f;
+  ac.SetPercentages(actorValues);
   auto past = std::chrono::steady_clock::now() - 1s;
   ac.SetLastAttributesPercentagesUpdate(past);
-  p.GetActionListener().OnChangeValues(msgData, 1.0f, 1.0f, 1.0f);
+  actorValues.healthPercentage = 1.f;
+  actorValues.magickaPercentage = 1.f;
+  actorValues.staminaPercentage = 1.f;
+  p.GetActionListener().OnChangeValues(msgData, actorValues);
 
-  auto now = ac.GetLastAttributesPercentagesUpdate();
-  std::chrono::duration<float> timeDuration = now - past;
-  float time = timeDuration.count();
+  std::chrono::duration<float> elapsedTime =
+    std::chrono::steady_clock::now() - past;
 
-  float expectedHealth =
-    baseValues.healRate * baseValues.healRateMult * time / 10000.0f;
-  float expectedMagicka =
-    baseValues.magickaRate * baseValues.magickaRateMult * time / 10000.0f;
-  float expectedStamina =
-    baseValues.staminaRate * baseValues.staminaRateMult * time / 10000.0f;
+  float expectedHealth = baseValues.healRate * baseValues.healRateMult *
+    elapsedTime.count() / 10000.0f;
+  float expectedMagicka = baseValues.magickaRate * baseValues.magickaRateMult *
+    elapsedTime.count() / 10000.0f;
+  float expectedStamina = baseValues.staminaRate * baseValues.staminaRateMult *
+    elapsedTime.count() / 10000.0f;
 
   auto changeForm = ac.GetChangeForm();
 
-  REQUIRE_THAT(changeForm.healthPercentage,
-               Catch::Matchers::WithinAbs(expectedHealth + 0.1f, 0.000001f));
-  REQUIRE_THAT(changeForm.magickaPercentage,
-               Catch::Matchers::WithinAbs(expectedMagicka, 0.000001f));
-  REQUIRE_THAT(changeForm.staminaPercentage,
-               Catch::Matchers::WithinAbs(expectedStamina, 0.000001f));
+  REQUIRE_THAT(changeForm.actorValues.healthPercentage,
+               Catch::Matchers::WithinAbs(expectedHealth + 0.1f, 0.001f));
+  REQUIRE_THAT(changeForm.actorValues.staminaPercentage,
+               Catch::Matchers::WithinAbs(expectedStamina, 0.001f));
+  REQUIRE_THAT(changeForm.actorValues.magickaPercentage,
+               Catch::Matchers::WithinAbs(expectedMagicka, 0.001f));
 
   p.DestroyActor(0xff000000);
   DoDisconnect(p, 0);
@@ -138,11 +142,13 @@ TEST_CASE("ChangeValues message is being delivered to client",
   auto& ac = partOne.worldState.GetFormAt<MpActor>(0xff000000);
   partOne.Messages().clear();
 
-  nlohmann::json j = nlohmann::json{
-    { "t", MsgType::ChangeValues },
-    { "data",
-      { { "health", 1.0f }, { "magicka", 1.0f }, { "stamina", 1.0f } } }
-  };
+  nlohmann::json j = nlohmann::json{ { "t", MsgType::ChangeValues },
+                                     { "data",
+                                       {
+                                         { "health", 1.0f },
+                                         { "magicka", 1.0f },
+                                         { "stamina", 1.0f },
+                                       } } };
   std::string s = MakeMessage(j);
 
   ac.SendToUser(s.data(), s.size(), true);
@@ -174,7 +180,7 @@ TEST_CASE("OnChangeValues function sends ChangeValues message with new "
     { "data",
       { { "health", 1.0f }, { "magicka", 1.0f }, { "stamina", 1.0f } } }
   };
-  ac.SetPercentages(0.0f, 0.0f, 0.0f);
+  ac.SetPercentages({ 0.0f, 0.0f, 0.0f });
   auto past = std::chrono::steady_clock::now() - 1s;
   ac.SetLastAttributesPercentagesUpdate(past);
 
@@ -213,7 +219,7 @@ TEST_CASE("OnChangeValues function doesn't sends ChangeValues message if "
     { "data",
       { { "health", 1.0f }, { "magicka", 1.0f }, { "stamina", 1.0f } } }
   };
-  ac.SetPercentages(1.0f, 1.0f, 1.0f);
+  ac.SetPercentages({ 1.0f, 1.0f, 1.0f });
   auto past = std::chrono::steady_clock::now() - 1s;
   ac.SetLastAttributesPercentagesUpdate(past);
 

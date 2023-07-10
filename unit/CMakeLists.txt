@@ -4,18 +4,12 @@ include(${CMAKE_SOURCE_DIR}/cmake/add_papyrus_library_ck.cmake)
 # papyrus_test_files
 #
 
-if(NOT SKYRIM_DIR)
-  message(WARNING "SKYRIM_DIR is not specified, Papyrus sources will not be built")
-elseif(NOT EXISTS "${SKYRIM_DIR}/Papyrus compiler/PapyrusCompiler.exe")
-  message(WARNING "PapyrusCompiler.exe not found, Papyrus sources will not be built")
-else()
-  add_papyrus_library_ck(
-    NAME papyrus_test_files 
-    DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/papyrus_test_files
-    OUTPUT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/papyrus_test_files/pex
-    COMPILER_EXECUTABLE_PATH "${SKYRIM_DIR}/Papyrus compiler/PapyrusCompiler.exe"
-  )
-endif()
+add_papyrus_library_ck(
+  NAME papyrus_test_files 
+  DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/papyrus_test_files
+  OUTPUT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/papyrus_test_files/pex
+  COMPILER_EXECUTABLE_PATH "${SKYRIM_DIR}/Papyrus compiler/PapyrusCompiler.exe"
+)
 
 #
 # unit executable
@@ -23,8 +17,20 @@ endif()
 
 file(GLOB src "${CMAKE_CURRENT_SOURCE_DIR}/*")
 list(APPEND src "${CMAKE_SOURCE_DIR}/.clang-format")
+if(TARGET platform_lib)
+  file(GLOB src_windows "${CMAKE_CURRENT_SOURCE_DIR}/platform_lib_tests/*")
+  list(APPEND src ${src_windows})
+endif()
+
 add_executable(unit ${src})
-target_link_libraries(unit PUBLIC server_guest_lib platform_lib)
+
+find_package(Catch2 CONFIG REQUIRED)
+target_link_libraries(unit PRIVATE Catch2::Catch2)
+
+target_link_libraries(unit PUBLIC server_guest_lib espm)
+if(TARGET platform_lib)
+  target_link_libraries(unit PUBLIC platform_lib)
+endif()
 apply_default_settings(TARGETS unit)
 list(APPEND VCPKG_DEPENDENT unit)
 
@@ -44,8 +50,6 @@ if(WIN32)
   target_compile_options(unit PRIVATE "/bigobj")
   target_link_libraries(unit PUBLIC Dbghelp.lib)
 endif()
-
-target_link_libraries(unit PUBLIC espm)
 
 #
 # ctest tests

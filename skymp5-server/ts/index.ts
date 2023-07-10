@@ -6,7 +6,7 @@ sourceMapSupport.install({
     if (source.endsWith('skymp5-server.js')) {
       return {
         url: 'original.js',
-        map: fs.readFileSync('dist_back/skymp5-server.js.map', 'utf8')
+        map: require('fs').readFileSync('dist_back/skymp5-server.js.map', 'utf8')
       };
     }
     return null;
@@ -14,19 +14,17 @@ sourceMapSupport.install({
 });
 
 import * as scampNative from "./scampNative";
-import * as chat from "./chat";
 import { Settings } from "./settings";
 import { System } from "./systems/system";
 import { MasterClient } from "./systems/masterClient";
 import { Spawn } from "./systems/spawn";
 import { Login } from "./systems/login";
 import { EventEmitter } from "events";
-import { NativeGameServer } from "./nativeGameServer";
 import { pid } from "process";
 import * as fs from "fs";
 import * as chokidar from "chokidar";
 import * as path from "path";
-import * as libkey from "./libkey";
+import * as os from "os";
 
 import * as manifestGen from "./manifestGen";
 
@@ -42,28 +40,39 @@ const {
 
 const gamemodeCache = new Map<string, string>();
 
-// https://stackoverflow.com/questions/37521893/determine-if-a-path-is-subdirectory-of-another-in-node-js
-const isChildOf = (child: string, parent: string) => {
-  child = path.resolve(child);
-  parent = path.resolve(parent);
-  if (child === parent) return false;
-  const parentTokens = parent.split("/").filter((i) => i.length);
-  return parentTokens.every((t, i) => child.split("/")[i] === t);
-};
+function requireTemp(module: string) {
+  // https://blog.mastykarz.nl/create-temp-directory-app-node-js/
+  let tmpDir;
+  const appPrefix = 'skymp5-server';
+  try {
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), appPrefix));
 
-const runGamemodeWithVm = (
-  gamemodeContents: string,
-  server: scampNative.ScampServer
-) => {
-  server.executeJavaScriptOnChakra(gamemodeContents);
-};
+    const contents = fs.readFileSync(module, 'utf8');
+    const tempPath = path.join(tmpDir, Math.random() + '-' + Date.now() + '.js');
+    fs.writeFileSync(tempPath, contents);
+
+    require(tempPath);
+  }
+  catch(e) {
+    console.error(e.stack);
+  }
+  finally {
+    try {
+      if (tmpDir) {
+        fs.rmSync(tmpDir, { recursive: true });
+      }
+    }
+    catch (e) {
+      console.error(`An error has occurred while removing the temp folder at ${tmpDir}. Please remove it manually. Error: ${e}`);
+    }
+  }
+}
 
 function requireUncached(
   module: string,
   clear: () => void,
   server: scampNative.ScampServer
 ): void {
-  delete require.cache[require.resolve(module)];
   let gamemodeContents = fs.readFileSync(require.resolve(module), "utf8");
 
   // Reload gamemode.js only if there are real changes
@@ -74,7 +83,12 @@ function requireUncached(
     while (1) {
       try {
         clear();
-        runGamemodeWithVm(gamemodeContents, server);
+
+        // In native module we now register mp-api methods into the ScampServer class
+        // This workaround allows code that is bound to global 'mp' object to run
+        globalThis.mp = globalThis.mp || server;
+
+        requireTemp(module);
         return;
       } catch (e) {
         if (`${e}`.indexOf("'JsRun' returned error 0x30002") === -1) {
@@ -95,27 +109,6 @@ systems.push(
   new Spawn(log),
   new Login(log, maxPlayers, master, port, ip, offlineMode)
 );
-
-const handleLibkeyJs = () => {
-  fs.writeFileSync("data/_libkey.js", libkey.src);
-  setTimeout(async () => {
-    while (1) {
-      await new Promise((r) => setTimeout(r, 5000));
-
-      const data = await new Promise<string>((resolve) =>
-        fs.readFile("data/_libkey.js", { encoding: "utf-8" }, (err, data) => {
-          err ? resolve("") : resolve(data);
-        })
-      );
-
-      if (data !== libkey.src) {
-        await new Promise<void>((r) =>
-          fs.writeFile("data/_libkey.js", libkey.src, () => r())
-        );
-      }
-    }
-  }, 1);
-};
 
 const setupStreams = (server: scampNative.ScampServer) => {
   class LogsStream {
@@ -142,13 +135,11 @@ const setupStreams = (server: scampNative.ScampServer) => {
 };
 
 const main = async () => {
-  handleLibkeyJs();
-
   manifestGen.generateManifest(Settings.get());
   ui.main();
 
   const server = new scampNative.ScampServer(port, maxPlayers);
-  const ctx = { svr: new NativeGameServer(server), gm: new EventEmitter() };
+  const ctx = { svr: server, gm: new EventEmitter() };
 
   setupStreams(server);
   console.log(`Current process ID is ${pid}`);
@@ -218,28 +209,12 @@ const main = async () => {
     }
   });
 
-  chat.main(server);
-
   server.on("customPacket", (userId, content) => {
-    const contentObj = JSON.parse(content);
-
-    switch (contentObj.customPacketType) {
-      case "browserToken":
-        const newToken = `${contentObj.token}`;
-        console.log(`User ${userId} sets browser token to ${newToken}`);
-        chat.onBrowserTokenChange(userId, newToken);
-        break;
-    }
+    // At this moment we don't have any custom packets
   });
 
-  chat.attachMpApi((formId, msg) => server.onUiEvent(formId, msg));
-  const sendUiMessage = (formId: number, message: Record<string, unknown>) => {
-    if (typeof message !== "object") {
-      throw new TypeError("Messages must be objects");
-    }
-    chat.sendMsg(server, formId, message);
-  };
-  server.setSendUiMessageImplementation(sendUiMessage);
+  // It's important to call this before gamemode
+  server.attachSaveStorage();
 
   const clear = () => server.clear();
 
@@ -303,7 +278,6 @@ const main = async () => {
       console.error("Error happened in chokidar watch", error);
     });
   }
-  server.attachSaveStorage();
 };
 
 main();

@@ -1,10 +1,10 @@
 {
   "name": "skymp",
   "version-string": "",
-  "homepage": "https://skymp.io",
-  "description": "Online mod for Skyrim SE.",
+  "homepage": "https://github.com/skyrim-multiplayer/skymp",
+  "description": "Multiplayer Mod & TypeScript SDK for Skyrim Special Edition",
   "dependencies": [
-    "chakracore",
+    "cmakerc",
     "nlohmann-json",
     "cpp-httplib",
     "zlib",
@@ -16,7 +16,21 @@
     "simdjson",
     "robin-hood-hashing",
     "simpleini",
-    "boost-pfr",
+    "node-addon-api",
+    "bshoshany-thread-pool",
+    "makeid",
+    {
+      "name": "frida-gum",
+      "platform": "windows"
+    },
+    {
+      "name": "frida-gum",
+      "platform": "windows"
+    },
+    {
+      "name": "chakracore",
+      "platform": "windows"
+    },
     {
       "name": "directxtk",
       "platform": "windows"

@@ -9,12 +9,12 @@
 #include "EventsApi.h"
 #include "ExceptionPrinter.h"
 #include "FileInfoApi.h"
+#include "FileUtils.h"
 #include "HttpClient.h"
 #include "HttpClientApi.h"
 #include "InventoryApi.h"
 #include "LoadGameApi.h"
 #include "MpClientPluginApi.h"
-#include "ReadFile.h"
 #include "SkyrimPlatformProxy.h"
 #include "TextApi.h"
 #include "ThreadPoolWrapper.h"
@@ -141,11 +141,20 @@ private:
   void LoadFiles(const std::vector<std::filesystem::path>& pathsToLoad)
   {
     for (auto& path : pathsToLoad) {
+      // otherwise SkyrimPlatform tries to interpret
+      // skymp5-client-settings.txt.txt as a JavaScript code
+      if (EndsWith(path.wstring(), L".txt.txt")) {
+        logger::error("Found file with double extension: {}", path.string());
+        continue;
+      }
       if (EndsWith(path.wstring(), L"-settings.txt")) {
         LoadSettingsFile(path);
         continue;
       }
       if (EndsWith(path.wstring(), L"-logs.txt")) {
+        continue;
+      }
+      if (EndsWith(path.wstring(), L".DS_Store")) {
         continue;
       }
       LoadPluginFile(path);
@@ -161,13 +170,13 @@ private:
     logger::info("Found settings file {} for plugin {}.", path.string(),
                  pluginName);
 
-    settingsByPluginName[pluginName] = ReadFile(path);
+    settingsByPluginName[pluginName] = Viet::ReadFileIntoString(path);
   }
 
   void LoadPluginFile(const std::filesystem::path& path)
   {
     auto engine = GetJsEngine();
-    auto scriptSrc = ReadFile(path);
+    auto scriptSrc = Viet::ReadFileIntoString(path);
 
     getSettings = [this](const JsFunctionArguments&) {
       auto result = JsValue::Object();
@@ -201,7 +210,8 @@ private:
                              e, [this] { return nativeCallRequirements; });
                            e.SetProperty("settings", getSettings, nullptr);
 
-                           return SkyrimPlatformProxy::Attach(e);
+                           return SkyrimPlatformProxy::Attach(
+                             e, [this] { return nativeCallRequirements; });
                          } } },
                      GetFileDirs());
 
@@ -213,10 +223,10 @@ private:
     JsValue::GlobalObject().SetProperty(
       "log", consoleApi.GetProperty("printConsole"));
 
-    engine->RunScript(
-      ReadFile(std::filesystem::path("Data/Platform/Distribution") /
-               "___systemPolyfill.js"),
-      "___systemPolyfill.js");
+    engine->RunScript(Viet::ReadFileIntoString(
+                        std::filesystem::path("Data/Platform/Distribution") /
+                        "___systemPolyfill.js"),
+                      "___systemPolyfill.js");
     engine->RunScript(
       "skyrimPlatform = addNativeExports('skyrimPlatform', {})", "");
     engine->RunScript(scriptSrc, path.filename().string()).ToString();
@@ -341,12 +351,12 @@ void SkyrimPlatform::AddUpdateTask(const std::function<void()>& f)
   pImpl->updateTasks.AddTask(f);
 }
 
-void SkyrimPlatform::PushAndWait(const std::function<void(int)>& f)
+void SkyrimPlatform::PushAndWait(const std::function<void()>& f)
 {
   pImpl->pool.PushAndWait(f);
 }
 
-void SkyrimPlatform::Push(const std::function<void(int)>& f)
+void SkyrimPlatform::Push(const std::function<void()>& f)
 {
   pImpl->pool.Push(f);
 }

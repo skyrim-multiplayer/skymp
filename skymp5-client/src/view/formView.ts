@@ -1,9 +1,8 @@
-import { Actor, ActorBase, createText, destroyText, Form, FormType, Game, NetImmerse, ObjectReference, once, printConsole, setTextPos, setTextString, TESModPlatform, Utility, worldPointToScreenPoint } from "skyrimPlatform";
+import { Actor, ActorBase, createText, destroyText, Form, FormType, Game, Keyword, NetImmerse, ObjectReference, once, printConsole, setTextPos, setTextString, TESModPlatform, Utility, worldPointToScreenPoint } from "skyrimPlatform";
 import { setDefaultAnimsDisabled, applyAnimation } from "../sync/animation";
 import { Appearance, applyAppearance } from "../sync/appearance";
 import { isBadMenuShown, applyEquipment } from "../sync/equipment";
 import { RespawnNeededError } from "../lib/errors";
-import { applyInventory } from "../sync/inventory";
 import { FormModel } from "../modelSource/model";
 import { applyMovement } from "../sync/movementApply";
 import { SpawnProcess } from "./spawnProcess";
@@ -15,6 +14,7 @@ import { GamemodeApiSupport } from "../gamemodeApi/gamemodeApiSupport";
 import { PlayerCharacterDataHolder } from "./playerCharacterDataHolder";
 import { getMovement } from "../sync/movementGet";
 import { lastTryHost, tryHost } from "./hostAttempts";
+import { ModelApplyUtils } from "./modelApplyUtils";
 
 export interface ScreenResolution {
   width: number;
@@ -181,56 +181,6 @@ export class FormView implements View<FormModel> {
     this.removeNickname();
   }
 
-  private applyHarvested(refr: ObjectReference, isHarvested: boolean) {
-    const base = refr.getBaseObject();
-    if (base) {
-      const t = base.getType();
-      if (t == FormType.Tree || t == FormType.Flora) {
-        const wasHarvested = refr.isHarvested();
-        if (isHarvested != wasHarvested) {
-          let ac: Actor | null = null;
-          if (isHarvested) {
-            for (let i = 0; i < 20; ++i) {
-              ac = Game.findRandomActor(
-                refr.getPositionX(),
-                refr.getPositionY(),
-                refr.getPositionZ(),
-                10000
-              );
-              if (ac && ac.getFormID() !== 0x14) {
-                break;
-              }
-            }
-          }
-          if (isHarvested && ac && ac.getFormID() !== 0x14) {
-            refr.activate(ac, true);
-          } else {
-            refr.setHarvested(isHarvested);
-            const id = refr.getFormID();
-            refr.disable(false).then(() => {
-              const restoredRefr = ObjectReference.from(Game.getFormEx(id));
-              if (restoredRefr) restoredRefr.enable(false);
-            });
-          }
-        }
-      } else {
-        const wasHarvested = refr.isDisabled();
-        if (isHarvested != wasHarvested) {
-          if (isHarvested) {
-            const id = refr.getFormID();
-            refr.disable(false).then(() => {
-              const restoredRefr = ObjectReference.from(Game.getFormEx(id));
-              if (restoredRefr && !restoredRefr.isDisabled()) {
-                restoredRefr.delete();
-                // Deletion takes time, so in practice this would be called a lot of times
-              }
-            });
-          } else refr.enable(true);
-        }
-      }
-    }
-  }
-
   private lastHarvestedApply = 0;
   private lastOpenApply = 0;
 
@@ -244,11 +194,11 @@ export class FormView implements View<FormModel> {
     const now = Date.now();
     if (now - this.lastHarvestedApply > 666) {
       this.lastHarvestedApply = now;
-      this.applyHarvested(refr, !!model.isHarvested);
+      ModelApplyUtils.applyModelIsHarvested(refr, !!model.isHarvested);
     }
     if (now - this.lastOpenApply > 133) {
       this.lastOpenApply = now;
-      refr.setOpen(!!model.isOpen);
+      ModelApplyUtils.applyModelIsOpen(refr, !!model.isOpen);
     }
 
     if (
@@ -260,7 +210,7 @@ export class FormView implements View<FormModel> {
       // However, actually, actors do not have inventory in their models
       // Except your clone.
       if (!Actor.from(refr)) {
-        applyInventory(refr, model.inventory, false, true);
+        ModelApplyUtils.applyModelInventory(refr, model.inventory);
         model.inventory = undefined;
       }
     }
@@ -296,6 +246,7 @@ export class FormView implements View<FormModel> {
           const remoteId = this.remoteRefrId;
           if (ac && ac.is3DLoaded()) {
             this.tryHostIfNeed(ac, remoteId as number);
+            printConsole("tryHostIfNeed - reason: not seeing movement for long time");
           }
         }
       }
@@ -336,6 +287,7 @@ export class FormView implements View<FormModel> {
           const remoteId = this.remoteRefrId;
           if (ac && remoteId && ac.is3DLoaded()) {
             this.tryHostIfNeed(ac, remoteId);
+            printConsole("tryHostIfNeed - reason: not hosted by anyone OR never applied movement");
           }
         }
       }
@@ -380,11 +332,6 @@ export class FormView implements View<FormModel> {
     }
 
     if (model.equipment) {
-      const isShown = isBadMenuShown();
-      if (this.eqState.isBadMenuShown !== isShown) {
-        this.eqState.isBadMenuShown = isShown;
-        if (!isShown) this.eqState.lastNumChanges = -1;
-      }
       if (this.eqState.lastNumChanges !== model.equipment.numChanges) {
         const ac = Actor.from(refr);
         // If we do not block inventory here, we will be able to reproduce the bug:
@@ -410,16 +357,19 @@ export class FormView implements View<FormModel> {
       }
     }
 
-    if (this.refrId && model.appearance?.name) {
+    if (FormView.isDisplayingNicknames && this.refrId && model.appearance?.name) {
       const headPart = "NPC Head [Head]";
       const maxNicknameDrawDistance = 1000;
       const playerActor = Game.getPlayer()!;
-      const isVisibleByPlayer = !model.movement?.isSneaking && playerActor.getDistance(refr) <= maxNicknameDrawDistance && playerActor.hasLOS(refr);
+      const isVisibleByPlayer = !model.movement?.isSneaking
+                                && playerActor.getDistance(refr) <= maxNicknameDrawDistance
+                                && playerActor.hasLOS(refr)
+                                && !this.isSweetHidePerson(refr);
       if (isVisibleByPlayer) {
         const headScreenPos = worldPointToScreenPoint([
           NetImmerse.getNodeWorldPositionX(refr, headPart, false),
           NetImmerse.getNodeWorldPositionY(refr, headPart, false),
-          NetImmerse.getNodeWorldPositionZ(refr, headPart, false) + 22
+          NetImmerse.getNodeWorldPositionZ(refr, headPart, false) + 32
         ])[0];
         const resolution = getScreenResolution();
         const textXPos = Math.round(headScreenPos[0] * resolution.width);
@@ -439,6 +389,13 @@ export class FormView implements View<FormModel> {
     }
   }
 
+  private isSweetHidePerson(refr: ObjectReference): boolean {
+    const actor = Actor.from(refr)
+    if (!actor) return false;
+    const keyword = Keyword.getKeyword('SweetHidePerson');
+    return actor.wornHasKeyword(keyword);
+  }
+
   private removeNickname() {
     if (this.textNameId) {
       destroyText(this.textNameId);
@@ -455,7 +412,7 @@ export class FormView implements View<FormModel> {
   }
 
   private getDefaultEquipState() {
-    return { lastNumChanges: 0, isBadMenuShown: false, lastEqMoment: 0 };
+    return { lastNumChanges: 0, lastEqMoment: 0 };
   };
 
   private getDefaultAppearanceState() {
@@ -504,4 +461,6 @@ export class FormView implements View<FormModel> {
   private state = {};
   private localImmortal = false;
   private textNameId: number | undefined = undefined;
+
+  public static isDisplayingNicknames: boolean = true;
 }

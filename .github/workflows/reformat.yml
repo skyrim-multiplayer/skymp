@@ -1,0 +1,32 @@
+name: Reformat
+on: [push, pull_request]
+jobs:
+  reformat:
+    name: Reformat
+    runs-on: ubuntu-latest
+    if: contains(github.event.head_commit.message, '[reformat]')
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Format with clang-format
+        uses: DoozyX/clang-format-lint-action@v0.14
+        with:
+          source: '.'
+          exclude: './skyrim-platform/src/third_party ./skymp5-server/cpp/third_party/MakeID.h'
+          extensions: 'h,cpp,hpp'
+          clangFormatVersion: 12
+          inplace: True
+      # - name: Install yarn packages
+      #   uses: borales/actions-yarn@v4
+      #   with:
+      #     cmd: install
+      # - name: Format with prettier
+      #   uses: borales/actions-yarn@v4
+      #   with:
+      #     cmd: prettier-format
+      - uses: EndBug/add-and-commit@v9
+        with:
+          default_author: github_actor
+          message: 'Committing reformat changes'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

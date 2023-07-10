@@ -4,6 +4,7 @@ import { connect } from 'react-redux';
 import Chat from './constructorComponents/chat';
 import AnimList from './features/animList';
 import Constructor from './constructor';
+import SkillsMenu from './features/skillsMenu';
 
 class App extends React.Component {
   constructor (props) {
@@ -80,12 +81,12 @@ class App extends React.Component {
         <div className={`App ${!window.hasOwnProperty('skyrimPlatform') ? 'bg' : ''}`}>
           <AnimList />
           <Chat />
+          <SkillsMenu />
         </div>
       );
-    } else
-    if (this.state.widgets) {
+    } else if (this.state.widgets) {
       return (
-          <>
+          <div style={{ position: 'static' }}>
             {this.state.widgets.map((widget, index) =>
                <Constructor
                   key={index.toString() + widget.type + ((widget.type === 'form') ? widget.elements + widget.caption : 'chat')}
@@ -94,7 +95,7 @@ class App extends React.Component {
                   height={this.props.height || 704}
                   width={this.props.width || 512} />
             )}
-          </>
+          </div>
       );
     } else { return <></>; }
   }

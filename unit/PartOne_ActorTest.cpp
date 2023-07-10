@@ -1,6 +1,6 @@
 #include "TestUtils.hpp"
 
-using Catch::Matchers::Contains;
+using Catch::Matchers::ContainsSubstring;
 
 TEST_CASE("CreateActor/DestroyActor", "[PartOne]")
 {
@@ -40,28 +40,30 @@ TEST_CASE("SetUserActor", "[PartOne]")
   REQUIRE(partOne.GetUserActor(0) == 0xff000ABC);
   REQUIRE(partOne.Messages().size() == 1);
   REQUIRE(partOne.Messages().at(0).j.dump() ==
-          nlohmann::json{ { "type", "createActor" },
-                          { "refrId", 0xff000ABC },
-                          { "idx", 0 },
-                          { "isMe", true },
-                          { "props",
-                            nlohmann::json{ { "healRate", 0.7 },
-                                            { "healRateMult", 100.f },
-                                            { "health", 100.f },
-                                            { "isHostedByOther", true },
-                                            { "magicka", 100.f },
-                                            { "magickaRate", 3.f },
-                                            { "magickaRateMult", 100.f },
-                                            { "stamina", 100.f },
-                                            { "staminaRate", 5.f },
-                                            { "staminaRateMult", 100.f },
-                                            { "healthPercentage", 1.f },
-                                            { "staminaPercentage", 1.f },
-                                            { "magickaPercentage", 1.f } } },
-                          { "transform",
-                            nlohmann::json{ { "pos", { 1.f, 2.f, 3.f } },
-                                            { "rot", { 0.f, 0.f, 180.f } },
-                                            { "worldOrCell", 0x3c } } } }
+          nlohmann::json{
+            { "type", "createActor" },
+            { "refrId", 0xff000ABC },
+            { "idx", 0 },
+            { "isMe", true },
+            { "props",
+              nlohmann::json{ { "healRate", 0.7 },
+                              { "healRateMult", 100.f },
+                              { "health", 100.f },
+                              { "isHostedByOther", true },
+                              { "learnedSpells", nlohmann::json::array() },
+                              { "magicka", 100.f },
+                              { "magickaRate", 3.f },
+                              { "magickaRateMult", 100.f },
+                              { "stamina", 100.f },
+                              { "staminaRate", 5.f },
+                              { "staminaRateMult", 100.f },
+                              { "healthPercentage", 1.f },
+                              { "staminaPercentage", 1.f },
+                              { "magickaPercentage", 1.f } } },
+            { "transform",
+              nlohmann::json{ { "pos", { 1.f, 2.f, 3.f } },
+                              { "rot", { 0.f, 0.f, 180.f } },
+                              { "worldOrCell", 0x3c } } } }
             .dump());
 
   // Trying to destroy actor:
@@ -89,16 +91,18 @@ TEST_CASE("SetUserActor failures", "[PartOne]")
 {
   PartOne partOne;
   REQUIRE_THROWS_WITH(partOne.SetUserActor(9, 0xff000000),
-                      Contains("User with id 9 doesn't exist"));
+                      ContainsSubstring("User with id 9 doesn't exist"));
   DoConnect(partOne, 9);
 
-  REQUIRE_THROWS_WITH(partOne.SetUserActor(9, 0xff000000),
-                      Contains("Form with id 0xff000000 doesn't exist"));
+  REQUIRE_THROWS_WITH(
+    partOne.SetUserActor(9, 0xff000000),
+    ContainsSubstring("Form with id 0xff000000 doesn't exist"));
 
   partOne.worldState.AddForm(std::unique_ptr<MpForm>(new MpForm), 0xff000000);
 
-  REQUIRE_THROWS_WITH(partOne.SetUserActor(9, 0xff000000),
-                      Contains("Form with id 0xff000000 is not Actor"));
+  REQUIRE_THROWS_WITH(
+    partOne.SetUserActor(9, 0xff000000),
+    ContainsSubstring("Form with id 0xff000000 is not Actor"));
 }
 
 TEST_CASE("createActor message contains Appearance", "[PartOne]")
@@ -124,8 +128,8 @@ TEST_CASE("createActor message contains Appearance", "[PartOne]")
                        }) != partOne.Messages().end());
 
   /*REQUIRE_THROWS_WITH(
-    doAppearance(), Contains("Unable to update appearance, RaceMenu is not
-  open"));
+    doAppearance(), ContainsSubstring("Unable to update appearance, RaceMenu is
+  not open"));
 
   partOne.SetRaceMenuOpen(0xff000ABC, true);
   doAppearance();*/
@@ -151,7 +155,7 @@ TEST_CASE("GetUserActor", "[PartOne]")
   REQUIRE(partOne.serverState.ActorByUser(0) == nullptr);
   REQUIRE(partOne.serverState.UserByActor(&ac) == Networking::InvalidUserId);
   REQUIRE_THROWS_WITH(partOne.GetUserActor(0),
-                      Contains("User with id 0 doesn't exist"));
+                      ContainsSubstring("User with id 0 doesn't exist"));
 }
 
 TEST_CASE("Destroying actor in disconnect event handler", "[PartOne]")
@@ -217,10 +221,10 @@ TEST_CASE("SetUserActor doesn't work with disabled actors", "[PartOne]")
   PartOne partOne;
 
   REQUIRE_THROWS_WITH(partOne.GetUserActor(Networking::InvalidUserId),
-                      Contains("User with id 65535 doesn't exist"));
+                      ContainsSubstring("User with id 65535 doesn't exist"));
 
   REQUIRE_THROWS_WITH(partOne.SetUserActor(Networking::InvalidUserId, 0),
-                      Contains("User with id 65535 doesn't exist"));
+                      ContainsSubstring("User with id 65535 doesn't exist"));
 }
 
 TEST_CASE("Actor should see its inventory in 'createActor' message",

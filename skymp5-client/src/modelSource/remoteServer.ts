@@ -1,49 +1,88 @@
-import { Actor } from 'skyrimPlatform';
-/* eslint-disable @typescript-eslint/no-empty-function */
-import * as networking from "../networking";
-import { FormModel, WorldModel } from "./model";
-import { MsgHandler } from "./msgHandler";
-import { ModelSource } from "./modelSource";
-import { SendTarget } from "./sendTarget";
-import * as messages from "../messages";
+import * as sp from 'skyrimPlatform';
+import { Actor, Form } from 'skyrimPlatform';
 import {
-  Game,
-  once,
-  TESModPlatform,
-  Cell,
-  WorldSpace,
-  printConsole,
-  Utility,
-  storage,
-  browser,
-  ObjectReference,
-  on,
-  Ui,
   Armor,
-} from "skyrimPlatform";
-import * as loadGameManager from "../features/loadGameManager";
-import { applyInventory, Inventory } from "../sync/inventory";
-import { isBadMenuShown } from "../sync/equipment";
-import { Movement } from "../sync/movement";
-import { IdManager } from "../lib/idManager";
-import { applyAppearanceToPlayer } from "../sync/appearance";
-import * as spSnippet from "../spSnippet";
-import * as sp from "skyrimPlatform";
-import * as updateOwner from "../gamemodeApi/updateOwner";
-import { setActorValuePercentage } from "../sync/actorvalues";
-import { applyDeathState, safeRemoveRagdollFromWorld } from '../sync/deathSystem';
+  Cell,
+  Game,
+  ObjectReference,
+  Spell,
+  TESModPlatform,
+  Ui,
+  Utility,
+  WorldSpace,
+  browser,
+  on,
+  once,
+  printConsole,
+  storage,
+} from 'skyrimPlatform';
+
+import * as netInfo from '../debug/netInfoSystem';
+import * as loadGameManager from '../features/loadGameManager';
+import * as updateOwner from '../gamemodeApi/updateOwner';
+import * as messages from '../messages';
+
+/* eslint-disable @typescript-eslint/no-empty-function */
+import * as networking from '../networking';
+import * as spSnippet from '../spSnippet';
+import { ObjectReferenceEx } from '../extensions/objectReferenceEx';
 import { AuthGameData } from '../features/authModel';
-import * as netInfo from "../features/netInfoSystem";
-import { getViewFromStorage, localIdToRemoteId, remoteIdToLocalId } from '../view/worldViewMisc';
+import { IdManager } from '../lib/idManager';
 import { nameof } from '../lib/nameof';
-import { getScreenResolution } from '../view/formView';
+import { setActorValuePercentage } from '../sync/actorvalues';
+import { applyAppearanceToPlayer } from '../sync/appearance';
+import {
+  applyDeathState,
+  safeRemoveRagdollFromWorld,
+} from '../sync/deathSystem';
+import { isBadMenuShown } from '../sync/equipment';
+import { Inventory, applyInventory } from '../sync/inventory';
+import { Movement } from '../sync/movement';
+import { learnSpells, removeAllSpells } from '../sync/spell';
+import { ModelApplyUtils } from '../view/modelApplyUtils';
+import {
+  getViewFromStorage,
+  localIdToRemoteId,
+  remoteIdToLocalId,
+} from '../view/worldViewMisc';
+import { FormModel, WorldModel } from './model';
+import { ModelSource } from './modelSource';
+import { MsgHandler } from './msgHandler';
+import { SendTarget } from './sendTarget';
+
+const onceLoad = (
+  refrId: number,
+  callback: (refr: ObjectReference) => void,
+  maxAttempts: number = 120,
+) => {
+  once('update', () => {
+    const refr = ObjectReference.from(Game.getFormEx(refrId));
+    if (refr) {
+      callback(refr);
+    } else {
+      maxAttempts--;
+      if (maxAttempts > 0) {
+        once('update', () => onceLoad(refrId, callback, maxAttempts));
+      } else {
+        printConsole('Failed to load object reference ' + refrId.toString(16));
+      }
+    }
+  });
+};
+
+const skipFormViewCreation = (
+  msg: messages.UpdatePropertyMessage | messages.CreateActorMessage,
+) => {
+  // Optimization added in #1186, however it doesn't work for doors for some reason
+  return msg.refrId && msg.refrId < 0xff000000 && msg.baseRecordType !== 'DOOR';
+};
 
 //
 // eventSource system
 //
 
 const setupEventSource = (ctx: any) => {
-  once("update", () => {
+  once('update', () => {
     try {
       ctx._fn(ctx);
       printConsole(`'eventSources.${ctx._eventName}' - Added`);
@@ -54,11 +93,11 @@ const setupEventSource = (ctx: any) => {
 };
 
 // Handle hot reload for eventSoucres
-if (Array.isArray(storage["eventSourceContexts"])) {
-  storage["eventSourceContexts"] = storage["eventSourceContexts"].filter(
-    (ctx: Record<string, unknown>) => !ctx._expired
+if (Array.isArray(storage['eventSourceContexts'])) {
+  storage['eventSourceContexts'] = storage['eventSourceContexts'].filter(
+    (ctx: Record<string, unknown>) => !ctx._expired,
   );
-  (storage["eventSourceContexts"] as any).forEach((ctx: any) => {
+  (storage['eventSourceContexts'] as any).forEach((ctx: any) => {
     setupEventSource(ctx);
   });
 }
@@ -69,19 +108,25 @@ if (Array.isArray(storage["eventSourceContexts"])) {
 
 const showConnectionError = () => {
   // TODO: unhardcode it or render via browser
-  sp.createText(1920 / 2, 1080 / 2, `Server connection failed. This may be caused by one of the following:
+  sp.createText(
+    1920 / 2,
+    1080 / 2,
+    `Server connection failed. This may be caused by one of the following:
 1. You are not present on the SkyMP Discord server
 2. You have been banned by server admins
 3. There is some technical issue. Try linking your Discord account again
 
-If you feel that something is wrong, please contact us on Discord.`, [255, 255, 255, 1]);
+If you feel that something is wrong, please contact us on Discord.`,
+    [255, 255, 255, 1],
+    'Tavern',
+  );
 };
 
 let loggingStartMoment = 0;
-on("tick", () => {
+on('tick', () => {
   const maxLoggingDelay = 5000;
   if (loggingStartMoment && Date.now() - loggingStartMoment > maxLoggingDelay) {
-    printConsole("Logging in failed. Reconnecting.");
+    printConsole('Logging in failed. Reconnecting.');
     showConnectionError();
     networking.reconnect();
     loggingStartMoment = 0;
@@ -92,72 +137,61 @@ class SpawnTask {
   running = false;
 }
 
-const sendBrowserToken = () => {
-  networking.send(
-    {
-      t: messages.MsgType.CustomPacket,
-      content: {
-        customPacketType: "browserToken",
-        token: browser.getToken(),
-      },
-    },
-    true
-  );
-};
-
 const loginWithSkympIoCredentials = () => {
   loggingStartMoment = Date.now();
   const authData = storage[AuthGameData.storageKey] as AuthGameData | undefined;
   if (authData?.local) {
-    printConsole(`Logging in offline mode, profileId = ${authData.local.profileId}`);
+    printConsole(
+      `Logging in offline mode, profileId = ${authData.local.profileId}`,
+    );
     networking.send(
       {
         t: messages.MsgType.CustomPacket,
         content: {
-          customPacketType: "loginWithSkympIo",
+          customPacketType: 'loginWithSkympIo',
           gameData: {
             profileId: authData.local.profileId,
           },
         },
       },
-      true
+      true,
     );
     return;
   }
   if (authData?.remote) {
-    printConsole("Logging in as skymp.io user");
+    printConsole('Logging in as skymp.io user');
     networking.send(
       {
         t: messages.MsgType.CustomPacket,
         content: {
-          customPacketType: "loginWithSkympIo",
+          customPacketType: 'loginWithSkympIo',
           gameData: {
             session: authData.remote.session,
           },
         },
       },
-      true
+      true,
     );
     return;
   }
 
-  printConsole("Not found authentication method");
+  printConsole('Not found authentication method');
 };
 
 export const getPcInventory = (): Inventory => {
-  const res = storage["pcInv"];
-  if (typeof res === "object" && (res as any)["entries"]) {
+  const res = storage['pcInv'];
+  if (typeof res === 'object' && (res as any)['entries']) {
     return res as unknown as Inventory;
   }
   return null as unknown as Inventory;
 };
 
 const setPcInventory = (inv: Inventory): void => {
-  storage["pcInv"] = inv;
+  storage['pcInv'] = inv;
 };
 
 let pcInvLastApply = 0;
-on("update", () => {
+on('update', () => {
   if (isBadMenuShown()) return;
   if (Date.now() - pcInvLastApply > 5000) {
     pcInvLastApply = Date.now();
@@ -174,39 +208,39 @@ const unequipIronHelmet = () => {
 
 export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
   setInventory(msg: messages.SetInventory): void {
-    once("update", () => {
+    once('update', () => {
       setPcInventory(msg.inventory);
       pcInvLastApply = 0;
     });
   }
 
   openContainer(msg: messages.OpenContainer): void {
-    once("update", async () => {
+    once('update', async () => {
       await Utility.wait(0.1); // Give a chance to update inventory
       (
         ObjectReference.from(Game.getFormEx(msg.target)) as ObjectReference
       ).activate(Game.getPlayer(), true);
       (async () => {
-        while (!Ui.isMenuOpen("ContainerMenu")) await Utility.wait(0.1);
-        while (Ui.isMenuOpen("ContainerMenu")) await Utility.wait(0.1);
+        while (!Ui.isMenuOpen('ContainerMenu')) await Utility.wait(0.1);
+        while (Ui.isMenuOpen('ContainerMenu')) await Utility.wait(0.1);
         networking.send(
           {
             t: messages.MsgType.Activate,
             data: { caster: 0x14, target: msg.target },
           },
-          true
+          true,
         );
       })();
     });
   }
 
   teleport(msg: messages.Teleport): void {
-    once("update", () => {
+    once('update', () => {
       printConsole(
-        "Teleporting...",
+        'Teleporting...',
         msg.pos,
-        "cell/world is",
-        msg.worldOrCell.toString(16)
+        'cell/world is',
+        msg.worldOrCell.toString(16),
       );
       // todo: think about track ragdoll state of player
       safeRemoveRagdollFromWorld(Game.getPlayer()!, () => {
@@ -219,13 +253,35 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
           msg.pos[2],
           msg.rot[0],
           msg.rot[1],
-          msg.rot[2]
+          msg.rot[2],
         );
       });
     });
   }
 
   createActor(msg: messages.CreateActorMessage): void {
+    if (skipFormViewCreation(msg)) {
+      const refrId = msg.refrId!;
+      onceLoad(refrId, (refr: ObjectReference) => {
+        if (refr) {
+          ObjectReferenceEx.dealWithRef(refr, refr.getBaseObject() as Form);
+          if (msg.inventory) {
+            ModelApplyUtils.applyModelInventory(refr, msg.inventory);
+          }
+          if (msg.props) {
+            ModelApplyUtils.applyModelIsOpen(refr, !!msg.props['isOpen']);
+            ModelApplyUtils.applyModelIsHarvested(
+              refr,
+              !!msg.props['isHarvested'],
+            );
+          }
+        } else {
+          printConsole('Failed to apply model to', refrId.toString(16));
+        }
+      });
+      return;
+    }
+
     loggingStartMoment = 0;
 
     const i = this.getIdManager().allocateIdFor(msg.idx);
@@ -237,7 +293,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
         pos: msg.transform.pos,
         rot: msg.transform.rot,
         worldOrCell: msg.transform.worldOrCell,
-        runMode: "Standing",
+        runMode: 'Standing',
         direction: 0,
         isInJumpState: false,
         isSneaking: false,
@@ -245,7 +301,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
         isWeapDrawn: false,
         isDead: false,
         healthPercentage: 1.0,
-        speed: 0
+        speed: 0,
       };
     }
 
@@ -256,7 +312,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
       numAppearanceChanges: 0,
       baseId: msg.baseId,
       refrId: msg.refrId,
-      isMyClone: msg.isMe
+      isMyClone: msg.isMe,
     };
     if (msg.isMe) {
       updateOwner.setOwnerModel(this.worldModel.forms[i]);
@@ -286,36 +342,54 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
     }
 
     if (msg.props && msg.props.isRaceMenuOpen && msg.isMe)
-      this.setRaceMenuOpen({ type: "setRaceMenuOpen", open: true });
+      this.setRaceMenuOpen({ type: 'setRaceMenuOpen', open: true });
 
     const applyPcInv = () => {
       applyInventory(
         Game.getPlayer() as Actor,
         msg.equipment
           ? {
-            entries: msg.equipment.inv.entries.filter(
-              (x) => !!Armor.from(Game.getFormEx(x.baseId))
-            ),
-          }
+              entries: msg.equipment.inv.entries.filter(
+                (x) => !!Armor.from(Game.getFormEx(x.baseId)),
+              ),
+            }
           : { entries: [] },
-        false
+        false,
       );
       if (msg.props && msg.props.inventory)
         this.setInventory({
-          type: "setInventory",
+          type: 'setInventory',
           inventory: (msg.props as any).inventory as Inventory,
         });
     };
 
+    if (msg.isMe && msg.props) {
+      const learnedSpells = msg.props['learnedSpells'] as Array<number>;
+
+      once('update', () => {
+        Utility.wait(1).then(() => {
+          const player = Game.getPlayer();
+
+          if (player) {
+            removeAllSpells(player);
+            learnSpells(player, learnedSpells);
+            printConsole(
+              `player learnedSpells: ${JSON.stringify(learnedSpells)}`,
+            );
+          }
+        });
+      });
+    }
+
     if (msg.isMe) {
       const task = new SpawnTask();
-      once("update", () => {
+      once('update', () => {
         if (!task.running) {
           task.running = true;
-          printConsole("Using moveRefrToPosition to spawn player");
+          printConsole('Using moveRefrToPosition to spawn player');
           (async () => {
             while (true) {
-              printConsole("Spawning...");
+              printConsole('Spawning...');
               TESModPlatform.moveRefrToPosition(
                 Game.getPlayer(),
                 Cell.from(Game.getFormEx(msg.transform.worldOrCell)),
@@ -325,14 +399,21 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
                 msg.transform.pos[2],
                 msg.transform.rot[0],
                 msg.transform.rot[1],
-                msg.transform.rot[2]
+                msg.transform.rot[2],
               );
               await Utility.wait(1);
               const pl = Game.getPlayer();
               if (!pl) break;
-              const pos = [pl.getPositionX(), pl.getPositionY(), pl.getPositionZ()];
+              const pos = [
+                pl.getPositionX(),
+                pl.getPositionY(),
+                pl.getPositionZ(),
+              ];
               const sqr = (x: number) => x * x;
-              const distance = Math.sqrt(sqr(pos[0] - msg.transform.pos[0]) + sqr(pos[1] - msg.transform.pos[1]));
+              const distance = Math.sqrt(
+                sqr(pos[0] - msg.transform.pos[0]) +
+                  sqr(pos[1] - msg.transform.pos[1]),
+              );
               if (distance < 256) {
                 break;
               }
@@ -352,28 +433,28 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
 
         if (msg.props) {
           const baseActorValues = new Map<string, unknown>([
-            ["healRate", msg.props.healRate],
-            ["healRateMult", msg.props.healRateMult],
-            ["health", msg.props.health],
-            ["magickaRate", msg.props.magickaRate],
-            ["magickaRateMult", msg.props.magickaRateMult],
-            ["magicka", msg.props.magicka],
-            ["staminaRate", msg.props.staminaRate],
-            ["staminaRateMult", msg.props.staminaRateMult],
-            ["stamina", msg.props.stamina],
-            ["healthPercentage", msg.props.healthPercentage],
-            ["staminaPercentage", msg.props.staminaPercentage],
-            ["magickaPercentage", msg.props.magickaPercentage],
+            ['healRate', msg.props.healRate],
+            ['healRateMult', msg.props.healRateMult],
+            ['health', msg.props.health],
+            ['magickaRate', msg.props.magickaRate],
+            ['magickaRateMult', msg.props.magickaRateMult],
+            ['magicka', msg.props.magicka],
+            ['staminaRate', msg.props.staminaRate],
+            ['staminaRateMult', msg.props.staminaRateMult],
+            ['stamina', msg.props.stamina],
+            ['healthPercentage', msg.props.healthPercentage],
+            ['staminaPercentage', msg.props.staminaPercentage],
+            ['magickaPercentage', msg.props.magickaPercentage],
           ]);
 
           const player = Game.getPlayer();
           if (player) {
             baseActorValues.forEach((value, key) => {
-              if (typeof value === "number") {
-                if (key.includes("Percentage")) {
-                  const subKey = key.replace("Percentage", "");
+              if (typeof value === 'number') {
+                if (key.includes('Percentage')) {
+                  const subKey = key.replace('Percentage', '');
                   const subValue = baseActorValues.get(subKey);
-                  if (typeof subValue === "number") {
+                  if (typeof subValue === 'number') {
                     setActorValuePercentage(player, subKey, value);
                   }
                 } else {
@@ -384,14 +465,16 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
           }
         }
       });
-      once("tick", () => {
-        once("tick", () => {
+      once('tick', () => {
+        once('tick', () => {
           if (!task.running) {
             task.running = true;
-            printConsole("Using loadGame to spawn player");
+            printConsole('Using loadGame to spawn player');
             printConsole(
-              "skinColorFromServer:",
-              msg.appearance ? msg.appearance.skinColor.toString(16) : undefined
+              'skinColorFromServer:',
+              msg.appearance
+                ? msg.appearance.skinColor.toString(16)
+                : undefined,
             );
             loadGameManager.loadGame(
               msg.transform.pos,
@@ -399,19 +482,19 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
               msg.transform.worldOrCell,
               msg.appearance
                 ? {
-                  name: msg.appearance.name,
-                  raceId: msg.appearance.raceId,
-                  face: {
-                    hairColor: msg.appearance.hairColor,
-                    bodySkinColor: msg.appearance.skinColor,
-                    headTextureSetId: msg.appearance.headTextureSetId,
-                    headPartIds: msg.appearance.headpartIds,
-                    presets: msg.appearance.presets,
-                  },
-                }
-                : undefined
+                    name: msg.appearance.name,
+                    raceId: msg.appearance.raceId,
+                    face: {
+                      hairColor: msg.appearance.hairColor,
+                      bodySkinColor: msg.appearance.skinColor,
+                      headTextureSetId: msg.appearance.headTextureSetId,
+                      headPartIds: msg.appearance.headpartIds,
+                      presets: msg.appearance.presets,
+                    },
+                  }
+                : undefined,
             );
-            once("update", () => {
+            once('update', () => {
               applyPcInv();
               Utility.wait(0.3).then(applyPcInv);
               // Note: appearance part was copy-pasted
@@ -445,7 +528,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
       this.worldModel.playerCharacterFormIdx = -1;
 
       // TODO: move to a separate module
-      once("update", () => Game.quitToMainMenu());
+      once('update', () => Game.quitToMainMenu());
     }
 
     this.getIdManager().freeIdFor(msg.idx);
@@ -480,20 +563,43 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
   }
 
   UpdateProperty(msg: messages.UpdatePropertyMessage): void {
+    if (skipFormViewCreation(msg)) {
+      const refrId = msg.refrId;
+      once('update', () => {
+        const refr = ObjectReference.from(Game.getFormEx(refrId));
+        if (!refr) {
+          printConsole('UpdateProperty: refr not found');
+          return;
+        }
+        if (msg.propName === 'inventory') {
+          ModelApplyUtils.applyModelInventory(refr, msg.data as Inventory);
+        } else if (msg.propName === 'isOpen') {
+          ModelApplyUtils.applyModelIsOpen(refr, !!msg.data);
+        } else if (msg.propName === 'isHarvested') {
+          ModelApplyUtils.applyModelIsHarvested(refr, !!msg.data);
+        }
+      });
+      return;
+    }
     const i = this.getIdManager().getId(msg.idx);
     const form = this.worldModel.forms[i];
-    (form as Record<string, unknown>)[msg.propName] =
-      msg.data;
+    (form as Record<string, unknown>)[msg.propName] = msg.data;
   }
 
   DeathStateContainer(msg: messages.DeathStateContainerMessage): void {
-    once("update", () => printConsole(`Received death state: ${JSON.stringify(msg.tIsDead)}`));
-    if (msg.tIsDead.propName !== nameof<FormModel>("isDead") || typeof msg.tIsDead.data !== "boolean") return;
+    once('update', () =>
+      printConsole(`Received death state: ${JSON.stringify(msg.tIsDead)}`),
+    );
+    if (
+      msg.tIsDead.propName !== nameof<FormModel>('isDead') ||
+      typeof msg.tIsDead.data !== 'boolean'
+    )
+      return;
 
     if (msg.tChangeValues) {
       this.ChangeValues(msg.tChangeValues);
     }
-    once("update", () => this.UpdateProperty(msg.tIsDead));
+    once('update', () => this.UpdateProperty(msg.tIsDead));
 
     if (msg.tTeleport) {
       this.teleport(msg.tTeleport);
@@ -501,10 +607,11 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
 
     const id = this.getIdManager().getId(msg.tIsDead.idx);
     const form = this.worldModel.forms[id];
-    once("update", () => {
-      const actor = id === this.getWorldModel().playerCharacterFormIdx ?
-        Game.getPlayer()! :
-        Actor.from(Game.getFormEx(remoteIdToLocalId(form.refrId ?? 0)));
+    once('update', () => {
+      const actor =
+        id === this.getWorldModel().playerCharacterFormIdx
+          ? Game.getPlayer()!
+          : Actor.from(Game.getFormEx(remoteIdToLocalId(form.refrId ?? 0)));
       if (actor) {
         applyDeathState(actor, msg.tIsDead.data as boolean);
       }
@@ -516,18 +623,17 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
     this.worldModel.playerCharacterFormIdx = -1;
 
     loginWithSkympIoCredentials();
-    sendBrowserToken();
   }
 
-  handleDisconnect(): void { }
+  handleDisconnect(): void {}
 
   ChangeValues(msg: messages.ChangeValuesMessage): void {
-    once("update", () => {
+    once('update', () => {
       const ac = Game.getPlayer();
       if (!ac) return;
-      setActorValuePercentage(ac, "health", msg.data.health);
-      setActorValuePercentage(ac, "stamina", msg.data.stamina);
-      setActorValuePercentage(ac, "magicka", msg.data.magicka);
+      setActorValuePercentage(ac, 'health', msg.data.health);
+      setActorValuePercentage(ac, 'stamina', msg.data.stamina);
+      setActorValuePercentage(ac, 'magicka', msg.data.magicka);
     });
   }
 
@@ -535,11 +641,11 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
     if (msg.open) {
       // wait 0.3s cause we can see visual bugs when teleporting
       // and showing this menu at the same time in onConnect
-      once("update", () =>
+      once('update', () =>
         Utility.wait(0.3).then(() => {
           unequipIronHelmet();
           Game.showRaceMenu();
-        })
+        }),
       );
     } else {
       // TODO: Implement closeMenu in SkyrimPlatform
@@ -548,14 +654,14 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
 
   customPacket(msg: messages.CustomPacket): void {
     switch (msg.content.customPacketType) {
-      case "loginRequired":
+      case 'loginRequired':
         loginWithSkympIoCredentials();
         break;
     }
   }
 
   spSnippet(msg: messages.SpSnippet): void {
-    once("update", async () => {
+    once('update', async () => {
       spSnippet
         .run(msg)
         .then((res) => {
@@ -566,30 +672,30 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
               returnValue: res,
               snippetIdx: msg.snippetIdx,
             },
-            true
+            true,
           );
         })
-        .catch((e) => printConsole("!!! SpSnippet failed", e));
+        .catch((e) => printConsole('!!! SpSnippet failed', e));
     });
   }
 
   private updateGamemodeUpdateFunctions(
     storageVar: string,
-    functionSources: Record<string, string>
+    functionSources: Record<string, string>,
   ): void {
     storage[storageVar] = JSON.parse(JSON.stringify(functionSources));
     for (const propName of Object.keys(functionSources)) {
       try {
         (storage[storageVar] as any)[propName] = new Function(
-          "ctx",
-          (storage[storageVar] as any)[propName]
+          'ctx',
+          (storage[storageVar] as any)[propName],
         );
-        const emptyFunction = functionSources[propName] === "";
+        const emptyFunction = functionSources[propName] === '';
         if (emptyFunction) {
           delete (storage[storageVar] as any)[propName];
-          printConsole(`'${storageVar}.${propName}' -`, "Added empty");
+          printConsole(`'${storageVar}.${propName}' -`, 'Added empty');
         } else {
-          printConsole(`'${storageVar}.${propName}' -`, "Added");
+          printConsole(`'${storageVar}.${propName}' -`, 'Added');
         }
       } catch (e) {
         printConsole(`'${storageVar}.${propName}' -`, e);
@@ -602,33 +708,33 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
     //
     // updateOwnerFunctions/updateNeighborFunctions
     //
-    storage["updateNeighborFunctions"] = undefined;
-    storage["updateOwnerFunctions"] = undefined;
+    storage['updateNeighborFunctions'] = undefined;
+    storage['updateOwnerFunctions'] = undefined;
 
     this.updateGamemodeUpdateFunctions(
-      "updateNeighborFunctions",
-      msg.updateNeighborFunctions || {}
+      'updateNeighborFunctions',
+      msg.updateNeighborFunctions || {},
     );
     this.updateGamemodeUpdateFunctions(
-      "updateOwnerFunctions",
-      msg.updateOwnerFunctions || {}
+      'updateOwnerFunctions',
+      msg.updateOwnerFunctions || {},
     );
 
     //
     // EventSource
     //
-    if (!Array.isArray(storage["eventSourceContexts"])) {
-      storage["eventSourceContexts"] = [];
+    if (!Array.isArray(storage['eventSourceContexts'])) {
+      storage['eventSourceContexts'] = [];
     } else {
-      storage["eventSourceContexts"].forEach((ctx: Record<string, unknown>) => {
-        ctx.sendEvent = () => { };
+      storage['eventSourceContexts'].forEach((ctx: Record<string, unknown>) => {
+        ctx.sendEvent = () => {};
         ctx._expired = true;
       });
     }
     const eventNames = Object.keys(msg.eventSources);
     eventNames.forEach((eventName) => {
       try {
-        const fn = new Function("ctx", msg.eventSources[eventName]);
+        const fn = new Function('ctx', msg.eventSources[eventName]);
         const ctx = {
           sp,
           sendEvent: (...args: unknown[]) => {
@@ -638,7 +744,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
                 args,
                 eventName,
               },
-              true
+              true,
             );
           },
           getFormIdInServerFormat: (clientsideFormId: number) => {
@@ -651,7 +757,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
           _eventName: eventName,
           state: {},
         };
-        (storage["eventSourceContexts"] as Record<string, any>).push(ctx);
+        (storage['eventSourceContexts'] as Record<string, any>).push(ctx);
         setupEventSource(ctx);
       } catch (e) {
         printConsole(`'eventSources.${eventName}' -`, e);

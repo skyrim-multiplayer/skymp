@@ -1,12 +1,14 @@
 #pragma once
 #include "ActionListener.h"
+#include "AnimationData.h"
 #include "ConsoleCommands.h"
-#include "Loader.h"
 #include "MpActor.h"
 #include "PartOne.h"
+#include "libespm/Loader.h"
 
 class ServerState;
 class WorldState;
+struct ActorValues;
 
 class ActionListener
 {
@@ -30,17 +32,21 @@ public:
   virtual void OnUpdateMovement(const RawMessageData& rawMsgData, uint32_t idx,
                                 const NiPoint3& pos, const NiPoint3& rot,
                                 bool isInJumpState, bool isWeapDrawn,
-                                uint32_t worldOrCell);
+                                bool isBlocking, uint32_t worldOrCell);
 
   virtual void OnUpdateAnimation(const RawMessageData& rawMsgData,
-                                 uint32_t idx);
+                                 uint32_t idx,
+                                 const AnimationData& animationData);
 
   virtual void OnUpdateAppearance(const RawMessageData& rawMsgData,
                                   uint32_t idx, const Appearance& appearance);
 
   virtual void OnUpdateEquipment(const RawMessageData& rawMsgData,
-                                 uint32_t idx, simdjson::dom::element& data,
-                                 const Inventory& equipmentInv);
+                                 uint32_t idx,
+                                 const simdjson::dom::element& data,
+                                 const Inventory& equipmentInv,
+                                 uint32_t leftSpell, uint32_t rightSpell,
+                                 uint32_t voiceSpell, uint32_t instantSpell);
 
   virtual void OnActivate(const RawMessageData& rawMsgData, uint32_t caster,
                           uint32_t target);
@@ -75,9 +81,7 @@ public:
                              const char* eventName, simdjson::dom::element& e);
 
   virtual void OnChangeValues(const RawMessageData& rawMsgData,
-                              const float healthPercentage,
-                              const float magickaPercentage,
-                              const float staminaPercentage);
+                              const ActorValues& actorValues);
 
   virtual void OnHit(const RawMessageData& rawMsgData, const HitData& hitData);
 

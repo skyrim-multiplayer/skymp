@@ -2,6 +2,7 @@
 #include "EventsApi.h"
 #include "FridaHookHandler.h"
 #include "FridaHooksUtils.h"
+#include "Override.h"
 #include "PapyrusTESModPlatform.h"
 #include "StringHolder.h"
 
@@ -12,6 +13,9 @@
 // (VMHandle handle, const BSFixedString& eventName, IFunctionArguments* args)
 void OnSendEventEnter(GumInvocationContext* ic)
 {
+  if (Override::IsOverriden()) {
+    return;
+  }
   auto handle = (RE::VMHandle)gum_invocation_context_get_nth_argument(ic, 1);
   auto eventName = (char**)gum_invocation_context_get_nth_argument(ic, 2);
 
@@ -68,6 +72,9 @@ void OnSendEventEnter(GumInvocationContext* ic)
 
 void OnSendEventLeave(GumInvocationContext* ic)
 {
+  if (Override::IsOverriden()) {
+    return;
+  }
   EventsApi::SendPapyrusEventLeave();
 }
 
@@ -146,6 +153,9 @@ void InstallDrawSheatheWeaponActorHook()
  */
 void OnSendAnimationEventEnter(GumInvocationContext* ic)
 {
+  if (Override::IsOverriden()) {
+    return;
+  }
   auto refr = ic->cpu_context->rcx
     ? (RE::TESObjectREFR*)(ic->cpu_context->rcx - 0x38)
     : nullptr;
@@ -159,6 +169,11 @@ void OnSendAnimationEventEnter(GumInvocationContext* ic)
     return;
 
   std::string str = *animEventName;
+  if (str == "") {
+    return;
+  }
+  OutputDebugString(str.c_str());
+  OutputDebugStringA("\n");
   EventsApi::SendAnimationEventEnter(formId, str);
   if (str != *animEventName) {
     auto fs =
@@ -170,6 +185,9 @@ void OnSendAnimationEventEnter(GumInvocationContext* ic)
 
 void OnSendAnimationEventLeave(GumInvocationContext* ic)
 {
+  if (Override::IsOverriden()) {
+    return;
+  }
   bool res = !!gum_invocation_context_get_return_value(ic);
   EventsApi::SendAnimationEventLeave(res);
 }
@@ -233,31 +251,23 @@ void InstallApplyMasksToRenderTargetsHook()
  * Render Cursor Menu hook
  */
 bool g_allowHideCursorMenu = true;
-bool g_transparentCursor = false;
 
 void OnRenderCursorMenuEnter(GumInvocationContext* ic)
 {
   auto menu = FridaHooksUtils::GetMenuByName(RE::CursorMenu::MENU_NAME);
-  auto this_ = (int64_t*)ic->cpu_context->rcx;
-  if (!this_ || !g_allowHideCursorMenu || this_ != menu)
+  auto this_ = reinterpret_cast<int64_t*>(ic->cpu_context->rcx);
+  if (!this_ || !g_allowHideCursorMenu || this_ != menu) {
     return;
+  }
 
   auto& visibleFlag = CEFUtils::DX11RenderHandler::Visible();
   auto& focusFlag = CEFUtils::DInputHook::ChromeFocus();
   if (visibleFlag && focusFlag) {
-    if (!g_transparentCursor) {
-      if (FridaHooksUtils::SetMenuNumberVariable(
-            RE::CursorMenu::MENU_NAME, "_root.mc_Cursor._alpha", 0)) {
-        g_transparentCursor = true;
-      }
-    }
+    FridaHooksUtils::SetMenuNumberVariable(RE::CursorMenu::MENU_NAME,
+                                           "_root.mc_Cursor._alpha", 0);
   } else {
-    if (g_transparentCursor) {
-      if (FridaHooksUtils::SetMenuNumberVariable(
-            RE::CursorMenu::MENU_NAME, "_root.mc_Cursor._alpha", 100)) {
-        g_transparentCursor = false;
-      }
-    }
+    FridaHooksUtils::SetMenuNumberVariable(RE::CursorMenu::MENU_NAME,
+                                           "_root.mc_Cursor._alpha", 100);
   }
 }
 
@@ -277,6 +287,9 @@ void Frida::InstallHooks()
   InstallSendAnimationEventHook();
   InstallQueueNinodeUpdateHook();
   InstallRenderCursorMenuHook();
+#ifndef SKYRIMSE
+  InstallApplyMasksToRenderTargetsHook();
+#endif
 
   logger::info("Frida hooks installed.");
 }

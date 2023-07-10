@@ -1,0 +1,15 @@
+.chat-settings {
+  position: absolute;
+  width: 512px;
+  height: 360px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+  .content {
+    margin: 30px 50px;
+    height: 80%;
+    display: flex;
+    flex-direction: column;
+  }
+}

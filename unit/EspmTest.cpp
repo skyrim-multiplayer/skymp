@@ -1,7 +1,7 @@
 #include "TestUtils.hpp"
-#include <GroupUtils.h>
-#include <Loader.h>
-#include <catch2/catch.hpp>
+#include "libespm/GroupUtils.h"
+#include "libespm/Loader.h"
+#include <catch2/catch_all.hpp>
 
 extern espm::Loader l;
 
@@ -429,17 +429,18 @@ TEST_CASE("espm::GetData wrapper is able to get record data", "[espm]")
   constexpr uint32_t kArgonianRace = 0x00013740;
   constexpr uint32_t kIronSword = 0x00012eb7;
 
-  REQUIRE_THROWS_WITH(
-    espm::GetData<espm::RACE>(0xDEADBEEF,
-                              static_cast<MyEspmProvider*>(nullptr)),
-    Catch::Contains("Unable to find record without EspmProvider"));
-
-  REQUIRE_THROWS_WITH(espm::GetData<espm::RACE>(0xDEADBEEF, &provider),
-                      Catch::Contains("Record 0xdeadbeef doesn't exist"));
+  REQUIRE_THROWS_WITH(espm::GetData<espm::RACE>(
+                        0xDEADBEEF, static_cast<MyEspmProvider*>(nullptr)),
+                      Catch::Matchers::ContainsSubstring(
+                        "Unable to find record without EspmProvider"));
 
   REQUIRE_THROWS_WITH(
-    espm::GetData<espm::RACE>(kIronSword, &provider),
-    Catch::Contains("Expected record 0x12eb7 to be RACE, but found WEAP"));
+    espm::GetData<espm::RACE>(0xDEADBEEF, &provider),
+    Catch::Matchers::ContainsSubstring("Record 0xdeadbeef doesn't exist"));
+
+  REQUIRE_THROWS_WITH(espm::GetData<espm::RACE>(kIronSword, &provider),
+                      Catch::Matchers::ContainsSubstring(
+                        "Expected record 0x12eb7 to be RACE, but found WEAP"));
 
   // Verify that data wasn't default constructed
   auto data = espm::GetData<espm::RACE>(kArgonianRace, &provider);

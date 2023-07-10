@@ -1,6 +1,6 @@
 build
 .clang-tidy
-.editorconfig
-.prettierrc*
+node_modules
 .vscode
 .cache
+.vs

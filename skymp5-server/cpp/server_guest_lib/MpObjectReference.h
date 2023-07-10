@@ -8,7 +8,7 @@
 #include "LocationalData.h"
 #include "MpChangeForms.h"
 #include "MpForm.h"
-#include <Loader.h>
+#include "libespm/Loader.h"
 #include <chrono>
 #include <functional>
 #include <map>
@@ -37,7 +37,6 @@ struct GridPosInfo
 class MpActor;
 class WorldState;
 class OccupantDestroyEventSink;
-class JsValue;
 
 class FormCallbacks;
 
@@ -70,6 +69,7 @@ public:
   const NiPoint3& GetAngle() const override;
   const FormDesc& GetCellOrWorld() const override;
   const uint32_t& GetBaseId() const;
+  const std::string& GetBaseType() const;
   const Inventory& GetInventory() const;
   const bool& IsHarvested() const;
   const bool& IsOpen() const;
@@ -108,8 +108,7 @@ public:
   void SetPrimitive(const NiPoint3& boundsDiv2);
   void UpdateHoster(uint32_t newHosterId);
   void SetProperty(const std::string& propertyName,
-                   const nlohmann::json& newValue,
-                   const JsValue& newValueChakra, bool isVisibleByOwner,
+                   const nlohmann::json& newValue, bool isVisibleByOwner,
                    bool isVisibleByNeighbor);
   void SetTeleportFlag(bool value);
   void SetPosAndAngleSilent(const NiPoint3& pos, const NiPoint3& rot);
@@ -156,6 +155,8 @@ public:
   using Visitor = std::function<void(MpObjectReference*)>;
   void VisitNeighbours(const Visitor& visitor);
 
+  void SendInventoryUpdate();
+
 protected:
   void SendPapyrusEvent(const char* eventName,
                         const VarValue* arguments = nullptr,
@@ -175,12 +176,10 @@ private:
   void InitScripts();
   void MoveOnGrid(GridImpl<MpObjectReference*>& grid);
   void InitListenersAndEmitters();
-  void SendInventoryUpdate();
   void SendOpenContainer(uint32_t refId);
   void CheckInteractionAbility(MpObjectReference& ac);
   bool IsLocationSavingNeeded() const;
   void ProcessActivate(MpObjectReference& activationSource);
-  void MpApiOnInit();
   bool MpApiOnActivate(MpObjectReference& caster);
 
   bool everSubscribedOrListened = false;

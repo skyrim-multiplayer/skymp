@@ -1,6 +1,6 @@
 #include "NetworkingCombined.h"
 #include "NetworkingMock.h"
-#include <catch2/catch.hpp>
+#include <catch2/catch_all.hpp>
 #include <cstring>
 
 using namespace Networking;
@@ -28,8 +28,8 @@ TEST_CASE("Combined: connect/dsconnect", "[Networking]")
 
   DECLARE_CB;
 
-  auto cl1 = s1->CreateClient();
-  auto cl2 = s2->CreateClient();
+  auto cl1 = s1->CreateClient().first;
+  auto cl2 = s2->CreateClient().first;
   svr->Tick(tickCb, nullptr);
   REQUIRE(connected == std::vector<UserId>({ 0, 1 }));
   REQUIRE(disconnected == std::vector<UserId>());
@@ -48,10 +48,10 @@ TEST_CASE("Combined: order of disconnection", "[Networking]")
 
   DECLARE_CB;
 
-  auto c0 = s2->CreateClient();
-  auto c1 = s2->CreateClient();
-  auto c2 = s1->CreateClient();
-  auto c3 = s1->CreateClient();
+  auto c0 = s2->CreateClient().first;
+  auto c1 = s2->CreateClient().first;
+  auto c2 = s1->CreateClient().first;
+  auto c3 = s1->CreateClient().first;
   svr->Tick(tickCb, nullptr);
 
   REQUIRE(disconnected == std::vector<UserId>());
@@ -75,7 +75,7 @@ TEST_CASE("Combined: ids are freed", "[Networking]")
   std::shared_ptr<Networking::IClient> cl;
 
   for (int i = 0; i < 3; ++i) {
-    auto cl = s1->CreateClient();
+    auto cl = s1->CreateClient().first;
     svr->Tick(tickCb, nullptr);
     cl.reset();
     svr->Tick(tickCb, nullptr);
@@ -93,7 +93,7 @@ TEST_CASE("Combined: Messages from clients are received")
 
   DECLARE_CB;
 
-  s2->CreateClient()->Send((PacketData) "dd", 2, true);
+  s2->CreateClient().first->Send((PacketData) "dd", 2, true);
 
   svr->Tick(tickCb, nullptr);
 
@@ -109,8 +109,8 @@ TEST_CASE("Combined: Messages are transferred to clients")
   auto s2 = std::make_shared<MockServer>();
   auto svr = CreateCombinedServer({ s1, s2 });
 
-  auto cl0 = s1->CreateClient();
-  auto cl1 = s2->CreateClient();
+  auto cl0 = s1->CreateClient().first;
+  auto cl1 = s2->CreateClient().first;
 
   DECLARE_CB;
 

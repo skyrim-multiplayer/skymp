@@ -9,8 +9,11 @@ import {
   settings,
   storage,
   browser as spBrowser,
-  printConsole
+  printConsole,
+  ActorValueInfo,
+  ActorValue,
 } from "skyrimPlatform";
+import * as timers from "./extensions/timers"; timers;
 import { connectWhenICallAndNotWhenIImport, SkympClient } from "./skympClient";
 import * as browser from "./features/browser";
 import * as loadGameManager from "./features/loadGameManager";
@@ -18,9 +21,12 @@ import { verifyVersion } from "./version";
 import { updateWc } from "./features/worldCleaner";
 import * as authSystem from "./features/authSystem";
 import { AuthGameData } from "./features/authModel";
-import * as NetInfo from "./features/netInfoSystem";
+import * as NetInfo from "./debug/netInfoSystem";
+import * as animDebugSystem from "./debug/animDebugSystem";
 import * as playerCombatSystem from "./sweetpie/playerCombatSystem";
 import { verifyLoadOrder } from './features/loadOrder';
+import * as expSystem from "./sync/expSystem";
+import * as skillSystem from "./features/skillMenu";
 
 browser.main();
 
@@ -34,6 +40,16 @@ export const setLocalDamageMult = (damageMult: number): void => {
   Game.setGameSettingFloat("fDiffMultHPToPCVH", damageMult);
 }
 
+const turnOffSkillLocalExp = (av: ActorValue): void => {
+  const avi = ActorValueInfo.getActorValueInfoByID(av);
+  if (!avi) {
+    once("update", () => printConsole(`Not found "${ActorValueInfo}" with value "${av}"`));
+    return;
+  }
+  avi.setSkillUseMult(0);
+  avi.setSkillOffsetMult(0);
+};
+
 const enforceLimitations = () => {
   Game.setInChargen(true, true, false);
 };
@@ -44,6 +60,32 @@ loadGameManager.addLoadGameListener(enforceLimitations);
 once("update", () => {
   Utility.setINIBool("bAlwaysActive:General", true);
   Game.setGameSettingInt("iDeathDropWeaponChance", 0);
+
+  // turn off player level exp
+  Game.setGameSettingFloat("fXPPerSkillRank", 0);
+  // turn off skill exp
+  turnOffSkillLocalExp(ActorValue.Alteration);
+  turnOffSkillLocalExp(ActorValue.Conjuration);
+  turnOffSkillLocalExp(ActorValue.Destruction);
+  turnOffSkillLocalExp(ActorValue.Illusion);
+  turnOffSkillLocalExp(ActorValue.Restoration);
+  turnOffSkillLocalExp(ActorValue.Enchanting);
+  turnOffSkillLocalExp(ActorValue.OneHanded);
+  turnOffSkillLocalExp(ActorValue.TwoHanded);
+  turnOffSkillLocalExp(ActorValue.Archery);
+  turnOffSkillLocalExp(ActorValue.Block);
+  turnOffSkillLocalExp(ActorValue.Smithing);
+  turnOffSkillLocalExp(ActorValue.HeavyArmor);
+  turnOffSkillLocalExp(ActorValue.LightArmor);
+  turnOffSkillLocalExp(ActorValue.Pickpocket);
+  turnOffSkillLocalExp(ActorValue.Lockpicking);
+  turnOffSkillLocalExp(ActorValue.Sneak);
+  turnOffSkillLocalExp(ActorValue.Alchemy);
+  turnOffSkillLocalExp(ActorValue.Speech);
+
+  // Init exp system
+  expSystem.init();
+
   setLocalDamageMult(defaultLocalDamageMult);
 });
 on("update", () => {
@@ -57,6 +99,7 @@ once("update", verifyLoadOrder);
 
 const startClient = (): void => {
   NetInfo.start();
+  animDebugSystem.init(settings["skymp5-client"]["animDebug"] as animDebugSystem.AnimDebugSettings);
 
   playerCombatSystem.start();
   once("update", () => authSystem.setPlayerAuthMode(false));
@@ -113,26 +156,6 @@ const startClient = (): void => {
     refr.lock(false, false);
     riftenUnlocked = true;
   });
-
-  const n = 10;
-  let k = 0;
-  let zeroKMoment = 0;
-  let lastFps = 0;
-  on("update", () => {
-    ++k;
-    if (k == n) {
-      k = 0;
-      if (zeroKMoment) {
-        const timePassed = (Date.now() - zeroKMoment) * 0.001;
-        const fps = Math.round(n / timePassed);
-        if (lastFps != fps) {
-          lastFps = fps;
-          //printConsole(`Current FPS is ${fps}`);
-        }
-      }
-      zeroKMoment = Date.now();
-    }
-  });
 }
 
 const authGameData = storage[AuthGameData.storageKey] as AuthGameData | undefined;
@@ -150,3 +173,5 @@ if (!(authGameData?.local || authGameData?.remote)) {
 } else {
   startClient();
 }
+
+skillSystem.skillMenuInit();

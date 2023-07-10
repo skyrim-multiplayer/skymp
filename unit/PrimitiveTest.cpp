@@ -1,8 +1,8 @@
 #include "TestUtils.hpp"
-#include <catch2/catch.hpp>
+#include <catch2/catch_all.hpp>
 
-#include "Loader.h"
 #include "Primitive.h"
+#include "libespm/Loader.h"
 
 extern espm::Loader l;
 

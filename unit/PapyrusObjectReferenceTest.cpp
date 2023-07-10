@@ -1,12 +1,12 @@
 #include "TestUtils.hpp"
-#include <catch2/catch.hpp>
+#include <catch2/catch_all.hpp>
 
 #include "ActionListener.h"
 #include "EspmGameObject.h"
 #include "MpObjectReference.h"
 #include "PapyrusObjectReference.h"
 
-using Catch::Matchers::Contains;
+using Catch::Matchers::ContainsSubstring;
 
 extern espm::Loader l;
 
@@ -130,7 +130,8 @@ TEST_CASE("GetAnimationVariableBool", "[Papyrus][ObjectReference][espm]")
             ac.ToVarValue(), { VarValue("bInJumpState") }) == VarValue(false));
 
   p.GetActionListener().OnUpdateMovement(GetDummyMessageData(), 0, { 0, 0, 0 },
-                                         { 0, 0, 0 }, true, false, 0x3c);
+                                         { 0, 0, 0 }, true, false, false,
+                                         0x3c);
 
   REQUIRE(PapyrusObjectReference().GetAnimationVariableBool(
             ac.ToVarValue(), { VarValue("bInJumpState") }) == VarValue(true));
@@ -145,7 +146,8 @@ TEST_CASE("BlockActivation", "[Papyrus][ObjectReference][espm]")
   auto& refr = CreateMpObjectReference(p, 0xff000000);
 
   // Trying to perform activation and fails due to unattached espm
-  REQUIRE_THROWS_WITH(refr.Activate(ac), Contains("No espm attached"));
+  REQUIRE_THROWS_WITH(refr.Activate(ac),
+                      ContainsSubstring("No espm attached"));
 
   PapyrusObjectReference().BlockActivation(refr.ToVarValue(),
                                            { VarValue(true) });
@@ -158,5 +160,6 @@ TEST_CASE("BlockActivation", "[Papyrus][ObjectReference][espm]")
 
   PapyrusObjectReference().BlockActivation(refr.ToVarValue(),
                                            { VarValue(false) });
-  REQUIRE_THROWS_WITH(refr.Activate(ac), Contains("No espm attached"));
+  REQUIRE_THROWS_WITH(refr.Activate(ac),
+                      ContainsSubstring("No espm attached"));
 }

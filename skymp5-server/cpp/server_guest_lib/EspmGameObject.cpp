@@ -1,5 +1,8 @@
 #include "EspmGameObject.h"
 
+#include <spdlog/spdlog.h>
+#include <sstream>
+
 EspmGameObject::EspmGameObject(const espm::LookupResult& record_)
   : record(record_)
 {
@@ -25,7 +28,7 @@ const char* EspmGameObject::GetParentNativeScript()
     if (t == "MICN")
       return "menuicon";
     if (t == "GLOB")
-      return "global";
+      return "globalvariable";
     if (t == "CLAS")
       return "class";
     if (t == "FACT")
@@ -297,11 +300,39 @@ const espm::LookupResult& GetRecordPtr(const VarValue& papyrusObject)
 {
   static const espm::LookupResult emptyResult;
 
-  if (papyrusObject.GetType() != VarValue::kType_Object)
+  if (papyrusObject.GetType() != VarValue::kType_Object) {
+    std::stringstream papyrusObjectStr;
+    papyrusObjectStr << papyrusObject;
+    spdlog::warn("GetRecordPtr called with non-object ({})",
+                 papyrusObjectStr.str());
     return emptyResult;
+  }
   auto gameObject = static_cast<IGameObject*>(papyrusObject);
-  auto espmGameObject = dynamic_cast<EspmGameObject*>(gameObject);
-  if (!espmGameObject)
+  if (!gameObject) {
+    std::stringstream papyrusObjectStr;
+    papyrusObjectStr << papyrusObject;
+    spdlog::warn("GetRecordPtr called with null object ({})",
+                 papyrusObjectStr.str());
     return emptyResult;
+  }
+  auto espmGameObject = dynamic_cast<EspmGameObject*>(gameObject);
+  if (!espmGameObject) {
+    std::stringstream papyrusObjectStr;
+    papyrusObjectStr << papyrusObject;
+    spdlog::warn("GetRecordPtr called with non-espm object ({})",
+                 papyrusObjectStr.str());
+    return emptyResult;
+  }
   return espmGameObject->record;
+}
+
+const char* EspmGameObject::GetStringID()
+{
+  static std::map<uint32_t, std::shared_ptr<std::string>> g_strings;
+  auto formId = this->record.ToGlobalId(this->record.rec->GetId());
+  auto& v = g_strings[formId];
+  if (!v) {
+    v.reset(new std::string(fmt::format("espm {:x}", formId)));
+  }
+  return v->data();
 }

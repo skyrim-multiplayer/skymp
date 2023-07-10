@@ -1,7 +1,7 @@
 #include "DevApi.h"
+#include "FileUtils.h"
 #include "InvalidArgumentException.h"
 #include "NullPointerException.h"
-#include "ReadFile.h"
 #include "Validators.h"
 
 std::shared_ptr<JsEngine> DevApi::jsEngine = nullptr;
@@ -76,7 +76,7 @@ JsValue DevApi::GetPluginSourceCode(const JsFunctionArguments& args)
 {
   // TODO: Support multifile plugins?
   auto pluginName = args[1].ToString();
-  return ReadFile(GetPluginPath(pluginName));
+  return Viet::ReadFileIntoString(GetPluginPath(pluginName));
 }
 
 JsValue DevApi::WritePlugin(const JsFunctionArguments& args)
@@ -97,7 +97,7 @@ JsValue DevApi::WritePlugin(const JsFunctionArguments& args)
 
 JsValue DevApi::GetPlatformVersion(const JsFunctionArguments& args)
 {
-  return "2.6.0";
+  return "2.7.1";
 }
 
 JsValue DevApi::GetJsMemoryUsage(const JsFunctionArguments& args)

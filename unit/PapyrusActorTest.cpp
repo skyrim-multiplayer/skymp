@@ -1,5 +1,5 @@
 #include "TestUtils.hpp"
-#include <catch2/catch.hpp>
+#include <catch2/catch_all.hpp>
 
 #include "PapyrusActor.h"
 
@@ -15,7 +15,11 @@ TEST_CASE("RestoreActorValue", "[Papyrus][Actor][espm]")
   p.CreateActor(0xff000000, { 0, 0, 0 }, 0, 0x3c);
   p.SetUserActor(0, 0xff000000);
   auto& actor = p.worldState.GetFormAt<MpActor>(0xff000000);
-  actor.SetPercentages(.5f, .5f, .5f);
+  ActorValues actorValues;
+  actorValues.healthPercentage = .5f;
+  actorValues.magickaPercentage = .5f;
+  actorValues.staminaPercentage = .5f;
+  actor.SetPercentages(actorValues);
 
   papyrusActor.RestoreActorValue(actor.ToVarValue(),
                                  { VarValue("HeaLth"), VarValue(100.f) });
@@ -26,9 +30,9 @@ TEST_CASE("RestoreActorValue", "[Papyrus][Actor][espm]")
 
   MpChangeForm changeForm = actor.GetChangeForm();
 
-  REQUIRE(changeForm.healthPercentage == 1.f);
-  REQUIRE(changeForm.staminaPercentage == 1.f);
-  REQUIRE(changeForm.magickaPercentage == .75f);
+  REQUIRE(changeForm.actorValues.healthPercentage == 1.f);
+  REQUIRE(changeForm.actorValues.staminaPercentage == 1.f);
+  REQUIRE(changeForm.actorValues.magickaPercentage == .75f);
 
   p.DestroyActor(0xff000000);
   DoDisconnect(p, 0);
@@ -44,7 +48,11 @@ TEST_CASE("DamageActorValue", "[Papyrus][Actor][espm]")
   p.CreateActor(0xff000000, { 0, 0, 0 }, 0, 0x3c);
   p.SetUserActor(0, 0xff000000);
   auto& actor = p.worldState.GetFormAt<MpActor>(0xff000000);
-  actor.SetPercentages(.5f, .5f, .5f);
+  ActorValues actorValues;
+  actorValues.healthPercentage = .5f;
+  actorValues.magickaPercentage = .5f;
+  actorValues.staminaPercentage = .5f;
+  actor.SetPercentages(actorValues);
 
   papyrusActor.DamageActorValue(actor.ToVarValue(),
                                 { VarValue("HeaLth"), VarValue(-25.f) });
@@ -55,9 +63,9 @@ TEST_CASE("DamageActorValue", "[Papyrus][Actor][espm]")
 
   MpChangeForm changeForm = actor.GetChangeForm();
 
-  REQUIRE(changeForm.healthPercentage == .25f);
-  REQUIRE(changeForm.staminaPercentage == 0.f);
-  REQUIRE(changeForm.magickaPercentage == 0.f);
+  REQUIRE(changeForm.actorValues.healthPercentage == .25f);
+  REQUIRE(changeForm.actorValues.staminaPercentage == 0.f);
+  REQUIRE(changeForm.actorValues.magickaPercentage == 0.f);
 
   p.DestroyActor(0xff000000);
   DoDisconnect(p, 0);

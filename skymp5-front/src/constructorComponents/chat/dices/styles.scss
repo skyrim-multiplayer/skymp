@@ -1,14 +1,23 @@
+$regular: 200ms;
+$keyLimePie: #C5D321;
+$geraldine: #F78C8C;
+$fern: #5DAD60;
+$moodyBlue: #7175D6;
+$amethyst: #A062C9;
+$black: #000000;
+
+
 .chat-dices {
     display: flex;
     flex-direction: column;
     min-width: 54px;
-    min-height: 340px;
-    margin-bottom: 11px;
+    padding-left: 11px;
+    margin-bottom: 10px;
     margin-top: auto;
-    span {
+    > span {
         font-family: Din-pro;
         font-weight: bold;
-        margin: 5px auto 0 auto;
+        margin: 7px 11px 0;
         opacity: 0.68;
         font-weight: bold;
           letter-spacing: 1px;
@@ -40,6 +49,146 @@
           color: #FAFAFA;
 
     }
+
+    &__container {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    &__number-container {
+        width: 48px;
+        height: 48px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: relative;
+    }
+
+    &__number-frame {
+        width: 28px;
+        height: 28px;
+
+        &--yellow [fill="#BDBD7D"] {
+            fill: $keyLimePie;
+        }
+
+        &--blue [fill="#BDBD7D"] {
+            fill: $moodyBlue;
+        }
+
+        &--purple [fill="#BDBD7D"] {
+            fill: $amethyst;
+        }
+
+        &--red [fill="#BDBD7D"] {
+            fill: $geraldine;
+        }
+
+        &--green [fill="#BDBD7D"] {
+            fill: $fern;
+        }
+    }
+
+    &__number {
+        font-family: 'Bankir-Retro';
+        position: absolute;
+        color: $black;
+        font-weight: bold;
+        font-size: 21px;
+    } 
+
+    &__row-container {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+
+        &--yellow .chat-dices__card--selected [fill='white']{
+            fill: $keyLimePie;
+        }
+
+        &--red .chat-dices__card--selected [fill='white']{
+            fill: $geraldine;
+        }
+
+        &--green .chat-dices__card--selected [fill='white']{
+            fill: $fern;
+        }
+
+        &--blue .chat-dices__card--selected [fill='white']{
+            fill: $moodyBlue;
+        }
+
+        &--purple .chat-dices__card--selected [fill='white']{
+            fill: $amethyst;
+        }
+    }
+
+    &__button {
+        display: flex;
+        opacity: 0.5;
+        transform: scale(1);
+        transition: opacity $regular, transform $regular, fill $regular;
+
+        &--yellow:hover [fill='white']{
+            fill: $keyLimePie;
+        }
+        &--red:hover [fill='white']{
+            fill: $geraldine;
+        }
+        &--green:hover [fill='white']{
+            fill: $fern;
+        }
+        &--blue:hover [fill='white'], &--blue.chat-dices__card--selected [fill='white']{
+            fill: $moodyBlue;
+        }
+        &--purple:hover [fill='white'], &--purple.chat-dices__card--selected [fill='white']{
+            fill: $amethyst;
+        }
+
+        &--disabled {
+            pointer-events: none;
+        }
+    }
+
+    &__heart-button--hover {
+        display: none;
+    }
+
+    &__heart-button__container {
+        display: flex;
+        opacity: 0.8;
+        transform: scale(1);
+        transition: opacity $regular, transform $regular;
+        &:hover {
+            opacity: 0.5;
+            & .chat-dices__heart-button {
+                display: none;
+            }
+            & .chat-dices__heart-button--hover {
+                display: flex;
+            }
+        }
+        &:active {
+            transform: scale(0.88);
+        }
+    }
+
+    &__card {
+        opacity: 0.5;
+        width: 26px;
+        height: 41px;
+    }
+
+    &__button:hover, &__card--selected  {
+        opacity: 0.8;
+        transform: scale(1.125);
+    }
+
+    &__button:active {
+        transform: scale(0.88);
+    }
+
 }
 
 .icon {
@@ -103,7 +252,7 @@
     height: 54px;
     margin: auto auto 0 auto;
     transition: all 0.1s ease;
-    &:active {
+    &:active .dice {
         width: 38px;
     }
 }

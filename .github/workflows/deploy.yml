@@ -50,8 +50,8 @@ jobs:
                 echo "=== Base revision: $base_rev"
 
                 git checkout -b tmp
-                yarn --cwd="${{github.workspace}}/ci/deploy/gather-server-branch"
-                ./ci/deploy/gather_server_branch.sh
+                yarn --cwd="${{github.workspace}}/misc/deploy/gather-server-branch"
+                ./misc/deploy/gather_server_branch.sh
 
                 echo ""
                 echo "=== Changes since $base_rev:"
@@ -63,7 +63,7 @@ jobs:
 
           - name: Upload patches
             if: ${{env.DEPLOY_ACTION == 'deploy'}}
-            uses: actions/upload-artifact@v2
+            uses: actions/upload-artifact@v3
             with:
                 name: patches
                 path: |
@@ -76,15 +76,19 @@ jobs:
                 DEPLOY_STATUS_WEBHOOK: ${{secrets.DEPLOY_STATUS_WEBHOOK}}
             run: |
                 link="${{github.server_url}}/${{github.repository}}/actions/runs/${{github.run_id}}"
-                ./ci/deploy/call_webhook.sh "Started build. " \
+                ./misc/deploy/call_webhook.sh "Started build. " \
                     "You can follow the process at <$link>. " \
                     "Once build is finished, further progress will be reported here."
+
+          - name: Get image to build upon
+            run: |
+                cat ${{github.workspace}}/misc/github_env_linux >> "$GITHUB_ENV"
 
           - name: Prepare for build
             if: ${{env.DEPLOY_ACTION == 'deploy'}}
             uses: addnab/docker-run-action@v3
             with:
-                image: skymp/skymp-vcpkg-deps:latest
+                image: ${{ env.SKYMP_VCPKG_DEPS_IMAGE }}
                 options: |
                     -v ${{github.workspace}}:/src
                     -v ${{github.workspace}}/.cmake-js:/home/skymp/.cmake-js
@@ -95,7 +99,7 @@ jobs:
             if: ${{env.DEPLOY_ACTION == 'deploy'}}
             uses: addnab/docker-run-action@v3
             with:
-                image: skymp/skymp-vcpkg-deps:latest
+                image: ${{ env.SKYMP_VCPKG_DEPS_IMAGE }}
                 options: |
                     -v ${{github.workspace}}:/src
                     -v ${{github.workspace}}/.cmake-js:/home/skymp/.cmake-js
@@ -103,10 +107,13 @@ jobs:
                 run: |
                     cd /src \
                     && ./build.sh --configure \
+                       -DBUILD_UNIT_TESTS=OFF \
+                       -DBUILD_GAMEMODE=ON \
+                       -DOFFLINE_MODE=OFF \
                        -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
 
           - name: Upload compile_commands.json
-            uses: actions/upload-artifact@v2
+            uses: actions/upload-artifact@v3
             with:
                 name: compile_commands.json
                 path: ${{github.workspace}}/build/compile_commands.json
@@ -115,7 +122,7 @@ jobs:
             if: ${{env.DEPLOY_ACTION == 'deploy'}}
             uses: addnab/docker-run-action@v3
             with:
-                image: skymp/skymp-vcpkg-deps:latest
+                image: ${{ env.SKYMP_VCPKG_DEPS_IMAGE }}
                 options: |
                     -v ${{github.workspace}}:/src
                     -v ${{github.workspace}}/.cmake-js:/home/skymp/.cmake-js
@@ -132,7 +139,7 @@ jobs:
                 DEPLOY_SSH_PRIVATE_KEY: ${{secrets.DEPLOY_SSH_PRIVATE_KEY}}
                 DEPLOY_SSH_KNOWN_HOSTS: ${{secrets.DEPLOY_SSH_KNOWN_HOSTS}}
             run: |
-                ./ci/deploy/push_branch_to_server.sh
+                ./misc/deploy/push_branch_to_server.sh
 
           - name: Notify failure
             env:
@@ -140,6 +147,6 @@ jobs:
             if: '!success()'
             run: |
                 link="${{github.server_url}}/${{github.repository}}/actions/runs/${{github.run_id}}"
-                ./ci/deploy/call_webhook.sh \
+                ./misc/deploy/call_webhook.sh \
                     "Build or deploy failed or was cancelled. " \
                     "Check out the logs at <$link> to find out why."

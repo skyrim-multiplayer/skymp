@@ -1,4 +1,4 @@
-project(platform_se VERSION 2.6.0 LANGUAGES CXX)
+project(platform_se VERSION 2.7.1 LANGUAGES CXX)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Version.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/Version.h @ONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/version.rc.in ${CMAKE_CURRENT_BINARY_DIR}/version.rc @ONLY)
 
@@ -60,11 +60,11 @@ endif()
 
 if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
 
-  include(${CMAKE_SOURCE_DIR}/cmake/CMakeRC.cmake)
+  find_package(CMakeRC CONFIG REQUIRED)
 
   # assets
   set(ASSET_FILES
-    ${CMAKE_CURRENT_SOURCE_DIR}/skyrim_platform/savefile/template.ess
+    ${CMAKE_CURRENT_SOURCE_DIR}/skyrim_platform/assets/template.ess
     ${CMAKE_CURRENT_SOURCE_DIR}/skyrim_platform/assets/cursor.png
   )
   cmrc_add_resource_library(skyrim_plugin_resources ${ASSET_FILES}
@@ -73,21 +73,10 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
   apply_default_settings(TARGETS skyrim_plugin_resources)
 
   include(${CMAKE_SOURCE_DIR}/cmake/yarn.cmake)
-
-   set(wdir "${CMAKE_CURRENT_BINARY_DIR}/_codegen")
-   file(MAKE_DIRECTORY ${wdir})
-   yarn_execute_command(
-     WORKING_DIRECTORY ${wdir}
-     COMMAND init -y
-   )
-   yarn_execute_command(
-     WORKING_DIRECTORY ${wdir}
-     COMMAND add -D tsc-watch@4.2.3 typescript@3.8.3
-   )
-   yarn_execute_command(
-     WORKING_DIRECTORY "${SKYRIM_PLATFORM_SOURCE_DIR}/tools/dev_service"
-     COMMAND install
-   )
+  yarn_execute_command(
+    WORKING_DIRECTORY "${SKYRIM_PLATFORM_SOURCE_DIR}/tools/dev_service"
+    COMMAND install
+  )
 
   if(MSVC)
     if(SKYRIM_SE)
@@ -100,11 +89,16 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
     list(APPEND platform_src ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
     add_library(skyrim_platform SHARED ${platform_src})
     set_target_properties(skyrim_platform PROPERTIES OUTPUT_NAME "SkyrimPlatformImpl")
-    target_include_directories(skyrim_platform PRIVATE "${third_party}")
     target_include_directories(skyrim_platform PRIVATE "${tilted}")
     target_include_directories(skyrim_platform PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/include)
-    target_link_libraries(skyrim_platform PRIVATE skyrim_plugin_resources ui cef platform_lib)
-    target_link_libraries(skyrim_platform PRIVATE "${third_party}/frida/frida-gum.lib")
+    target_link_libraries(skyrim_platform PRIVATE papyrus-vm-lib savefile skyrim_plugin_resources ui cef platform_lib viet)
+    
+    find_path(FRIDA_GUM_INCLUDE_DIR NAMES frida-gum.h)
+    find_library(FRIDA_GUM_LIBRARY NAMES frida-gum.lib)
+
+    target_include_directories(skyrim_platform PRIVATE ${FRIDA_GUM_INCLUDE_DIR})
+    target_link_libraries(skyrim_platform PRIVATE ${FRIDA_GUM_LIBRARY})
+
     # suppress missing pdb warning for cef and frida
     target_link_options(skyrim_platform PRIVATE "LINKER:-ignore:4099")
     target_precompile_headers(skyrim_platform	PRIVATE	skyrim_platform/PCH.h)

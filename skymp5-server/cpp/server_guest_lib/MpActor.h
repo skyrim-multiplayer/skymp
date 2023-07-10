@@ -2,12 +2,12 @@
 #include "Appearance.h"
 #include "GetBaseActorValues.h"
 #include "MpObjectReference.h"
-#include "Structures.h"
 #include <memory>
 #include <optional>
 #include <set>
 
 class WorldState;
+struct ActorValues;
 
 class MpActor : public MpObjectReference
 {
@@ -21,6 +21,9 @@ public:
   const bool& IsRaceMenuOpen() const;
   const bool& IsDead() const;
   const bool& IsRespawning() const;
+
+  [[nodiscard]] bool IsSpellLearned(uint32_t baseId) const;
+
   std::unique_ptr<const Appearance> GetAppearance() const;
   const std::string& GetAppearanceAsJson();
   const std::string& GetEquipmentAsJson() const;
@@ -38,7 +41,7 @@ public:
 
   void SendToUser(const void* data, size_t size, bool reliable);
 
-  void OnEquip(uint32_t baseId);
+  [[nodiscard]] bool OnEquip(uint32_t baseId);
 
   class DestroyEventSink
   {
@@ -57,12 +60,10 @@ public:
     std::optional<Viet::Promise<VarValue>> promise = std::nullopt);
 
   void ResolveSnippet(uint32_t snippetIdx, VarValue v);
-  void SetPercentages(float healthPercentage, float magickaPercentage,
-                      float staminaPercentage, MpActor* aggressor = nullptr);
-  void NetSetPercentages(float healthPercentage, float magickaPercentage,
-                         float staminaPercentage,
-                         std::chrono::steady_clock::time_point timePoint =
-                           std::chrono::steady_clock::now(),
+  void SetPercentages(const ActorValues& actorValues,
+                      MpActor* aggressor = nullptr);
+  void NetSendChangeValues(const ActorValues& actorValues);
+  void NetSetPercentages(const ActorValues& actorValues,
                          MpActor* aggressor = nullptr);
 
   std::chrono::steady_clock::time_point GetLastAttributesPercentagesUpdate();
@@ -90,25 +91,41 @@ public:
 
   void RestoreActorValue(espm::ActorValue av, float value);
   void DamageActorValue(espm::ActorValue av, float value);
+  void SetActorValue(espm::ActorValue actorValue, float value);
 
   BaseActorValues GetBaseValues();
   BaseActorValues GetMaximumValues();
 
   void DropItem(const uint32_t baseId, const Inventory::Entry& entry);
+  void SetIsBlockActive(bool isBlockActive);
+  bool IsBlockActive() const;
+  NiPoint3 GetViewDirection() const;
+  void IncreaseBlockCount() noexcept;
+  void ResetBlockCount() noexcept;
+  uint32_t GetBlockCount() const noexcept;
 
 private:
-  std::set<std::shared_ptr<DestroyEventSink>> destroyEventSinks;
-
   struct Impl;
   std::shared_ptr<Impl> pImpl;
 
   void SendAndSetDeathState(bool isDead, bool shouldTeleport);
+
   std::string GetDeathStateMsg(const LocationalData& position, bool isDead,
                                bool shouldTeleport);
+
   void MpApiDeath(MpActor* killer = nullptr);
   void EatItem(uint32_t baseId, espm::Type t);
 
+  void ReadBook(uint32_t baseId);
+
   void ModifyActorValuePercentage(espm::ActorValue av, float percentageDelta);
+
+  std::chrono::steady_clock::time_point GetLastRestorationTime(
+    espm::ActorValue av) const;
+
+  void SetLastRestorationTime(espm::ActorValue av,
+                              std::chrono::steady_clock::time_point timePoint);
+  bool CanActorValueBeRestored(espm::ActorValue av);
 
 protected:
   void BeforeDestroy() override;

@@ -14,7 +14,7 @@ public:
 
   void Update()
   {
-    _threadPool->Push([=](int) { _taskInterface->AddTask(onTick); });
+    _threadPool->Push([=] { _taskInterface->AddTask(onTick); });
   }
 
 private:
@@ -26,7 +26,7 @@ private:
 
   const std::function<void()> onTick = [] {
     SkyrimPlatform::GetSingleton()->PushAndWait(
-      [=](int) { SkyrimPlatform::GetSingleton()->JsTick(false); });
+      [=] { SkyrimPlatform::GetSingleton()->JsTick(false); });
     TESModPlatform::Update();
     TickHandler::GetSingleton()->Update();
   };

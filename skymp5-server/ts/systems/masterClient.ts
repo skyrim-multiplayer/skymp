@@ -1,8 +1,8 @@
 import { System, Log } from "./system";
 import Axios from "axios";
 import { SystemContext } from "./system";
-import { ServerInterface } from "../serverInterface";
 import { getMyPublicIp } from "../publicIp";
+import { ScampServer } from "../scampNative";
 
 export class MasterClient implements System {
   systemName = "MasterClient";
@@ -49,8 +49,7 @@ export class MasterClient implements System {
         const hasHttpStatus = e.response !== undefined;
         if (hasHttpStatus) {
           throw new Error(`${e.response.status} - ${e.response.data}`);
-        }
-        else {
+        } else {
           throw e;
         }
       }
@@ -58,16 +57,16 @@ export class MasterClient implements System {
   }
 
   // connect/disconnect events are not reliable so we do full recalculate
-  private getCurrentOnline(serverInterface: ServerInterface): number {
+  private getCurrentOnline(svr: ScampServer): number {
     let online = 0;
     for (let i = 0; i < this.maxPlayers; ++i) {
       try {
-        if (serverInterface.getUserActor(i) != 0) {
+        if (svr.getUserActor(i) != 0) {
           ++online;
         }
       } catch (e) {
         const error: Error = e;
-        if (!error.message.includes("User with id " + i + " doesn't exist")) {
+        if (!error.message.includes(`User with id ${i} doesn't exist`)) {
           throw e;
         }
       }

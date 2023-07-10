@@ -19,7 +19,9 @@ import {
   Ammo,
   printConsole,
   ActorBase,
+  FormType,
 } from "skyrimPlatform";
+import * as taffyPerkSystem from "../sweetpie/taffyPerkSystem";
 
 export interface Extra {
   health?: number;
@@ -62,10 +64,10 @@ const cropName = (s?: string): string => {
   const max = 128;
   return s.length >= max
     ? s
-      .split("")
-      .filter((x, i) => i < max)
-      .join("")
-      .concat("...")
+        .split("")
+        .filter((x, i) => i < max)
+        .join("")
+        .concat("...")
     : s;
 };
 
@@ -152,7 +154,9 @@ const extractExtraData = (
       case "Enchantment":
         out.enchantmentId = (extra as ExtraEnchantment).enchantmentId;
         out.maxCharge = (extra as ExtraEnchantment).maxCharge;
-        out.removeEnchantmentOnUnequip = (extra as ExtraEnchantment).removeOnUnequip;
+        out.removeEnchantmentOnUnequip = (
+          extra as ExtraEnchantment
+        ).removeOnUnequip;
         break;
       case "Charge":
         out.chargePercent = (extra as ExtraCharge).charge;
@@ -221,7 +225,9 @@ const getExtraContainerChangesAsInventory = (
 };
 
 const getBaseContainerAsInventory = (refr: ObjectReference): Inventory => {
-  return { entries: getContainer((refr.getBaseObject() as ActorBase).getFormID()) };
+  return {
+    entries: getContainer((refr.getBaseObject() as ActorBase).getFormID()),
+  };
 };
 
 export const sumInventories = (lhs: Inventory, rhs: Inventory): Inventory => {
@@ -247,10 +253,14 @@ export const sumInventories = (lhs: Inventory, rhs: Inventory): Inventory => {
   };
 };
 
-export const removeSimpleItemsAsManyAsPossible = (inv: Inventory, baseId: number, count: number): Inventory => {
+export const removeSimpleItemsAsManyAsPossible = (
+  inv: Inventory,
+  baseId: number,
+  count: number
+): Inventory => {
   const res: Inventory = { entries: [] };
   res.entries = JSON.parse(JSON.stringify(inv.entries));
-  
+
   const entry = res.entries.find((e) => !hasExtras(e) && e.baseId === baseId);
   if (entry) {
     entry.count -= count;
@@ -258,7 +268,7 @@ export const removeSimpleItemsAsManyAsPossible = (inv: Inventory, baseId: number
 
   res.entries = res.entries.filter((e) => e.count > 0);
   return res;
-}
+};
 
 export const getDiff = (
   lhs: Inventory,
@@ -324,6 +334,8 @@ export const applyInventory = (
 
   diff.sort((a, b) => (a.count < b.count ? -1 : 1));
   diff.forEach((e, i) => {
+    taffyPerkSystem.inventoryChanged(refr, e);
+
     if (i > 0 && enableCrashProtection) {
       res = false;
       return;
@@ -337,21 +349,38 @@ export const applyInventory = (
 
     let oneStepCount = e.count / absCount;
 
-    // TODO: It looks like this part should be revised. For now removed gold from this logic.
-    if (absCount > 1000 && e.baseId != 0xf) {
-      absCount = 1;
-      oneStepCount = 1;
-
-      // Also for arrows with strange count
-      if (worn && e.count < 0) absCount = 0;
+    const f = Game.getFormEx(e.baseId);
+    if (!f) {
+      return printConsole(`Bad form ID ${e.baseId.toString(16)}`);
     }
-
-    if (e.count > 1 && Ammo.from(Game.getFormEx(e.baseId))) {
+    const type = f.getType();
+    // For misc items, potions and ingredients we don't want to split them into multiple items
+    // This was made to fix a performance issue with users having 10000+ of misc items (i.e. gold)
+    if (
+      type === FormType.Misc ||
+      type === FormType.Potion ||
+      type === FormType.Ingredient
+    ) {
       absCount = 1;
       oneStepCount = e.count;
-      if (e.count > 60000) {
-        // Why would actor have 60k arrows?
-        e.count = 1;
+    } else {
+      if (absCount > 1000) {
+        absCount = 1;
+        oneStepCount = 1;
+
+        // Also for arrows with strange count
+        if (worn && e.count < 0) {
+          absCount = 0;
+        }
+      }
+
+      if (e.count > 1 && Ammo.from(Game.getFormEx(e.baseId))) {
+        absCount = 1;
+        oneStepCount = e.count;
+        if (e.count > 60000) {
+          // Why would actor have 60k arrows?
+          e.count = 1;
+        }
       }
     }
 
@@ -361,26 +390,27 @@ export const applyInventory = (
         queueNiNodeUpdateNeeded = true;
       }
 
-      const f = Game.getFormEx(e.baseId);
-
-      if (!f) printConsole(`Bad form ID ${e.baseId.toString(16)}`);
-      else
-        TESModPlatform.addItemEx(
-          refr,
-          f,
-          oneStepCount,
-          e.health ? e.health : 1,
-          e.enchantmentId
-            ? Enchantment.from(Game.getFormEx(e.enchantmentId))
-            : null,
-          e.maxCharge ? e.maxCharge : 0,
-          !!e.removeEnchantmentOnUnequip,
-          e.chargePercent ? e.chargePercent : 0,
-          e.name ? cropName(e.name) : f.getName(),
-          e.soul ? e.soul : 0,
-          e.poisonId ? Potion.from(Game.getFormEx(e.poisonId)) : null,
-          e.poisonCount ? e.poisonCount : 0
-        );
+      printConsole(
+        `Adding ${e.baseId} to ${refr
+          .getFormID()
+          .toString(16)} with count ${oneStepCount}`
+      );
+      TESModPlatform.addItemEx(
+        refr,
+        f,
+        oneStepCount,
+        e.health ? e.health : 1,
+        e.enchantmentId
+          ? Enchantment.from(Game.getFormEx(e.enchantmentId))
+          : null,
+        e.maxCharge ? e.maxCharge : 0,
+        !!e.removeEnchantmentOnUnequip,
+        e.chargePercent ? e.chargePercent : 0,
+        e.name ? cropName(e.name) : f.getName(),
+        e.soul ? e.soul : 0,
+        e.poisonId ? Potion.from(Game.getFormEx(e.poisonId)) : null,
+        e.poisonCount ? e.poisonCount : 0
+      );
     }
 
     if (queueNiNodeUpdateNeeded) {
