@@ -11,6 +11,8 @@ VarValue PapyrusKeyword::GetKeyword(VarValue self,
   std::string keywordName = arguments[0].GetType() == VarValue::kType_String
     ? (const char*)arguments[0]
     : "";
+  std::transform(keywordName.begin(), keywordName.end(), keywordName.begin(),
+                 [](unsigned char c) { return std::tolower(c); });
 
   for (size_t i = 0; i < keywords.size(); ++i) {
     auto& espmLocalKeywords = keywords[i];
