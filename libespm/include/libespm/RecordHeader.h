@@ -23,7 +23,7 @@ public:
   std::vector<uint32_t> GetKeywordIds(
     CompressedFieldsCache& compressedFieldsCache) const noexcept;
 
-  Type GetType() const noexcept;
+  const Type GetType() const noexcept;
 
   // Please use for tests only
   // Do not rely on Skyrim record flags format

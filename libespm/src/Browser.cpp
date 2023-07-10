@@ -8,6 +8,7 @@
 #include "libespm/REFR.h"
 #include "libespm/RecordHeader.h"
 #include "libespm/RefrKey.h"
+#include <cstring>
 #include <optional>
 #include <sparsepp/spp.h>
 #include <vector>
@@ -196,7 +197,7 @@ bool Browser::ReadAny(const GroupStack* parentGrStack)
 
     pImpl->recById[recHeader->id] = recHeader;
 
-    auto t = recHeader->GetType();
+    Type t = recHeader->GetType();
     if (t == "REFR" || t == "ACHR") {
       pImpl->objectReferences.push_back(recHeader);
       const auto refr = reinterpret_cast<const REFR*>(recHeader);
@@ -213,8 +214,9 @@ bool Browser::ReadAny(const GroupStack* parentGrStack)
       }
     }
 
-    if (recHeader->GetType() == "COBJ")
+    if (recHeader->GetType() == "COBJ") {
       pImpl->constructibleObjects.push_back(recHeader);
+    }
 
     if (recHeader->GetType() == "NAVM") {
       auto nvnm = reinterpret_cast<const NAVM*>(recHeader);

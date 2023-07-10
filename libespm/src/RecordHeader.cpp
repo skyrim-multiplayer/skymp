@@ -4,6 +4,9 @@
 #include "libespm/ScriptData.h"
 #include <cstring>
 
+// debug
+#include <iostream>
+
 namespace espm {
 
 uint32_t RecordHeader::GetId() const noexcept
@@ -72,11 +75,9 @@ std::vector<uint32_t> RecordHeader::GetKeywordIds(
   return res;
 }
 
-Type RecordHeader::GetType() const noexcept
+const Type RecordHeader::GetType() const noexcept
 {
-  // have no idea if it is working
-  return *reinterpret_cast<Type*>(
-    const_cast<char*>(reinterpret_cast<const char*>(this) - 8));
+  return Type{ reinterpret_cast<const char*>(this) - 8 };
 }
 
 uint32_t RecordHeader::GetFlags() const noexcept
