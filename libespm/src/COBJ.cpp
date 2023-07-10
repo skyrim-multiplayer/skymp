@@ -1,5 +1,5 @@
-#include "libespm/RecordHeaderAccess.h"
 #include "libespm/COBJ.h"
+#include "libespm/RecordHeaderAccess.h"
 #include <cstring>
 
 namespace espm {

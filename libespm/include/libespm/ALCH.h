@@ -1,6 +1,6 @@
 #pragma once
-#include "RecordHeader.h"
 #include "Effects.h"
+#include "RecordHeader.h"
 
 #pragma pack(push, 1)
 
