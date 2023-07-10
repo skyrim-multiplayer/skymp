@@ -147,7 +147,7 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
     }
 
     if (serverSettings.find("npcEnabled") != serverSettings.end()) {
-      partONe->worldState.npcEnabled =
+      partOne->worldState.npcEnabled =
         serverSettings.at("npcEnabled").get<bool>();
     }
     if (serverSettings.find("spawnNpcInteriorOnly") != serverSettings.end()) {
