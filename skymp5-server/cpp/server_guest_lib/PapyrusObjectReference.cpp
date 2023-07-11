@@ -373,3 +373,46 @@ VarValue PapyrusObjectReference::GetBaseObject(
   }
   return VarValue::None();
 }
+
+VarValue PapyrusObjectReference::PlayAnimation(
+  VarValue self, const std::vector<VarValue>& arguments)
+{
+  if (auto selfRefr = GetFormPtr<MpObjectReference>(self)) {
+    if (arguments.size() < 1) {
+      throw std::runtime_error("PlayAnimation requires at least 1 argument");
+    }
+    auto funcName = "PlayAnimation";
+    auto serializedArgs = SpSnippetFunctionGen::SerializeArguments(arguments);
+    for (auto listener : selfRefr->GetListeners()) {
+      auto targetRefr = dynamic_cast<MpActor*>(listener);
+      if (targetRefr) {
+        SpSnippet(GetName(), funcName, serializedArgs.data(),
+                  selfRefr->GetFormId())
+          .Execute(targetRefr);
+      }
+    }
+  }
+  return VarValue::None();
+}
+
+VarValue PapyrusObjectReference::PlayGamebryoAnimation(
+  VarValue self, const std::vector<VarValue>& arguments)
+{
+  if (auto selfRefr = GetFormPtr<MpObjectReference>(self)) {
+    if (arguments.size() < 3) {
+      throw std::runtime_error(
+        "PlayGamebryoAnimation requires at least 3 arguments");
+    }
+    auto funcName = "PlayGamebryoAnimation";
+    auto serializedArgs = SpSnippetFunctionGen::SerializeArguments(arguments);
+    for (auto listener : selfRefr->GetListeners()) {
+      auto targetRefr = dynamic_cast<MpActor*>(listener);
+      if (targetRefr) {
+        SpSnippet(GetName(), funcName, serializedArgs.data(),
+                  selfRefr->GetFormId())
+          .Execute(targetRefr);
+      }
+    }
+  }
+  return VarValue::None();
+}
