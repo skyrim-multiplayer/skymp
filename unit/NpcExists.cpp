@@ -3,11 +3,13 @@
 
 PartOne& GetPartOne();
 
+static constexpr uint32_t cowId = 0x10ebaf;
+
 TEST_CASE("Whiterun cow 0x10ebaf exists", "[NpcExists][espm]")
 {
   auto& partOne = GetPartOne();
-
-  auto& cow = partOne.worldState.GetFormAt<MpActor>(0x10ebaf);
+  partOne.worldState.npcEnabled = true;
+  auto& cow = partOne.worldState.GetFormAt<MpActor>(cowId);
 }
 
 TEST_CASE("Whiterun cow 0x10ebaf is visible to players", "[NpcExists][espm]")
@@ -24,7 +26,7 @@ TEST_CASE("Whiterun cow 0x10ebaf is visible to players", "[NpcExists][espm]")
   {
     auto it = std::find_if(
       messages.begin(), messages.end(),
-      [&](PartOne::Message msg) { return msg.j["refrId"] == 0x10010ebaf; });
+      [&](PartOne::Message msg) { return msg.j["refrId"] == cowId; });
 
     REQUIRE(it != messages.end());
   }
@@ -32,7 +34,7 @@ TEST_CASE("Whiterun cow 0x10ebaf is visible to players", "[NpcExists][espm]")
   {
     auto it = std::find_if(messages.begin(), messages.end(),
                            [&](PartOne::Message msg) {
-                             return msg.j["refrId"] == 0x10010ebaf &&
+                             return msg.j["refrId"] == cowId &&
                                (msg.j["isHostedByOther"] == false ||
                                 msg.j["isHostedByOther"] == nullptr);
                            });

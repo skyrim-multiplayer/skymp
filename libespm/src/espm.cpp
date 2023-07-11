@@ -1222,3 +1222,18 @@ espm::CELL::Data espm::CELL::GetData(
     cache);
   return result;
 }
+
+espm::WRLD::Data espm::WRLD::GetData(
+  espm::CompressedFieldsCache& cache) const noexcept
+{
+  Data result;
+  espm::RecordHeaderAccess::IterateFields(
+    this,
+    [&](const char* type, uint32_t size, const char* data) {
+      if (!std::memcmp(type, "DATA", 4)) {
+        result.flags = *reinterpret_cast<const uint8_t*>(data);
+      }
+    },
+    cache);
+  return result;
+}
