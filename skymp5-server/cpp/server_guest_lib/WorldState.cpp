@@ -267,13 +267,20 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
   }
 
   espm::Type t = base.rec->GetType();
-  if (t != "NPC_" && t != "FURN" && t != "ACTI" && !espm::IsItem(t) &&
-      t != "DOOR" && t != "CONT" &&
-      (t != "FLOR" ||
-       !reinterpret_cast<espm::FLOR*>(base.rec)->GetData(cache).resultItem) &&
-      (t != "TREE" ||
-       !reinterpret_cast<espm::TREE*>(base.rec)->GetData(cache).resultItem))
+  bool isNpc = t == "NPC_";
+  bool isFurniture = t == "FURN";
+  bool isActivator = t == "ACTI";
+  bool isDoor = t == "DOOR";
+  bool isContainer = t == "CONT";
+  bool isFlor = t == "FLOR" &&
+    reinterpret_cast<espm::FLOR*>(base.rec)->GetData(cache).resultItem;
+  bool isTree = t == "TREE" &&
+    reinterpret_cast<espm::TREE*>(base.rec)->GetData(cache).resultItem;
+
+  if (!isNpc && !isFurniture && !isActivator && !espm::IsItem(t) && !isDoor &&
+      !isContainer && !isFlor && !isTree) {
     return false;
+  }
 
   // TODO: Load disabled references
   enum
@@ -285,8 +292,14 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
     return false;
   }
 
-  if (npcEnabled && t == "NPC_") {
+  if (!npcEnabled && isNpc) {
+    return false;
+  }
+
+  if (isNpc) {
     if (NpcSourceFilesOverriden() && !IsNpcAllowed(baseId)) {
+      spdlog::trace("Skip NPC loading, it is not allowed. baseId {:#x}",
+                    baseId);
       return false;
     }
     auto npcData = reinterpret_cast<espm::NPC_*>(base.rec)->GetData(cache);
@@ -330,18 +343,52 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
     return false;
   }
 
-  espm::LookupResult res = br.LookupById(worldOrCell);
-  uint16_t cellFlags =
-    reinterpret_cast<espm::CELL*>(res.rec)->GetData(cache).flags;
-  bool isInterior = cellFlags & espm::CELL::Flags::Interior;
-  bool isExterior = !isInterior;
-  const NpcSettingsEntry& entry = npcSettings[espmFiles[GetFileIdx(baseId)]];
-  bool spawnInInterior = entry.spawnInInterior,
-       spawnInExterior = entry.spawnInExterior;
+  if (isNpc) {
+    espm::LookupResult res = br.LookupById(worldOrCell);
+    uint16_t cellFlags =
+      reinterpret_cast<espm::CELL*>(res.rec)->GetData(cache).flags;
+    bool isInterior = cellFlags & espm::CELL::Flags::Interior;
+    bool isExterior = !isInterior;
+    const NpcSettingsEntry& entry = npcSettings[espmFiles[GetFileIdx(baseId)]];
+    uint32_t npcFileIdx = GetFileIdx(baseId);
+    if (npcFileIdx >= espmFiles.size()) {
+      spdlog::error("NPC's idx is greater than espmFiles.size(). NPC's baseId "
+                    "{:#x}, espmFiles size: {}",
+                    baseId, espmFiles.size());
+      return false;
+    }
+    auto it = npcSettings.find(espmFiles[npcFileIdx]);
+    bool spawnInInterior = false, spawnInExterior = false;
+    if (it != npcSettings.end()) {
+      spawnInInterior = it->second.spawnInInterior;
+      spawnInExterior = it->second.spawnInExterior;
+      spdlog::trace(
+        "found npc setting spawnInInterior: {}, spawnInExterior: {}",
+        spawnInInterior, spawnInExterior);
+    } else {
+      spawnInInterior = true;
+      spdlog::trace("npc setting has not been found. Use default "
+                    "spawnInInterior: {} and spawnInExterior: {}",
+                    spawnInInterior, spawnInExterior);
+    }
 
-  if (spawnInInterior && isExterior || spawnInExterior && isInterior) {
-    return false;
+    if (spawnInInterior && isExterior || spawnInExterior && isInterior) {
+      if (spawnInInterior && isExterior) {
+        spdlog::trace("Unable to spawn npc because of contradiction between "
+                      "npc location which is isExterior={} and settings' "
+                      "spawning rules which is spawnInInterior={}",
+                      isExterior, spawnInInterior);
+      }
+      if (spawnInExterior && isInterior) {
+        spdlog::trace("Unable to spawn npc because of contradiction between "
+                      "npc location which is isInterior={} and settings' "
+                      "spawning rules which is spawnInExterior={}",
+                      isInterior, spawnInExterior);
+      }
+      return false;
+    }
   }
+
   // This function dosen't use LookupFormById to prevent recursion
   auto existing = forms.find(formId);
 
@@ -363,9 +410,10 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
     }
 
     std::optional<NiPoint3> primitiveBoundsDiv2;
-    if (data.boundsDiv2)
+    if (data.boundsDiv2) {
       primitiveBoundsDiv2 =
         NiPoint3(data.boundsDiv2[0], data.boundsDiv2[1], data.boundsDiv2[2]);
+    }
 
     auto typeStr = t.ToString();
     std::unique_ptr<MpForm> form;
@@ -373,7 +421,7 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
       GetPos(locationalData), GetRot(locationalData),
       FormDesc::FromFormId(worldOrCell, espmFiles)
     };
-    if (t != "NPC_") {
+    if (isNpc) {
       form.reset(new MpObjectReference(formLocationalData,
                                        formCallbacksFactory(), baseId,
                                        typeStr.data(), primitiveBoundsDiv2));
@@ -712,6 +760,9 @@ bool WorldState::IsNpcAllowed(uint32_t baseId) const noexcept
   uint32_t npcFileIdx = GetFileIdx(baseId);
   for (const auto& [fileName, _] : npcSettings) {
     auto it = std::find(espmFiles.begin(), espmFiles.end(), fileName);
+    if (it == espmFiles.end()) {
+      return false;
+    }
     auto idx = std::distance(espmFiles.begin(), it);
     if (npcFileIdx == idx) {
       return true;

@@ -41,7 +41,7 @@ public:
 
   struct NpcSettingsEntry
   {
-    bool spawnInInterior = true;
+    bool spawnInInterior = false;
     bool spawnInExterior = false;
   };
 

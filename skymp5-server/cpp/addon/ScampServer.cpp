@@ -24,6 +24,7 @@
 #include <memory>
 #include <napi.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
+#include <sstream>
 
 namespace {
 
@@ -149,8 +150,17 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
     }
 
     if (serverSettings.find("npcEnabled") != serverSettings.end()) {
-      partOne->worldState.npcEnabled =
-        serverSettings.at("npcEnabled").get<bool>();
+      bool enabled = serverSettings.at("npcEnabled").get<bool>();
+      partOne->worldState.npcEnabled = enabled;
+      if (enabled) {
+        spdlog::info("NPCs are enabled");
+      } else {
+        spdlog::info("NPCs are disabled");
+      }
+    } else {
+      spdlog::info(
+        "npcEnabled option is not found in the server configuration file. "
+        "Disabling NPCs by default");
     }
 
     if (serverSettings.find("npcSettings") != serverSettings.end()) {
@@ -170,7 +180,17 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
           npcSettings[field.key()] = entry;
         }
         partOne->worldState.SetNpcSettings(std::move(npcSettings));
+        spdlog::info("NPCs' settings have been loaded susccessfully");
       }
+    } else {
+      std::stringstream msg;
+      msg << "\"npcSettings\" are not found in the server configuration "
+             "file.";
+      msg << (partOne->worldState.npcEnabled
+                ? "Allowing all npc by default"
+                : "NPCs are disabled due to \"npcEnabled\": ")
+          << std::boolalpha << partOne->worldState.npcEnabled;
+      spdlog::info(msg.str());
     }
 
     partOne->worldState.isPapyrusHotReloadEnabled =

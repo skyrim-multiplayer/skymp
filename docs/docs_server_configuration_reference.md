@@ -277,7 +277,7 @@ how they should be spawned: in interior or exterior. By default all the npcs are
     },
     "Dawnguard.esm": {
       "spawnInInterior": false,
-      "spawnInInterior": true
+      "spawnInExterior": true
     },
     "DragonBorn.esm": {
       "spawnInInterior": true,
