@@ -9,9 +9,9 @@ public:
   VarValue Play(VarValue self, const std::vector<VarValue>& arguments);
   VarValue Stop(VarValue self, const std::vector<VarValue>& arguments);
 
-  void Register(
-    VirtualMachine& vm,
-    std::shared_ptr<IPapyrusCompatibilityPolicy> compatibilityPolicy) override
+  void Register(VirtualMachine& vm,
+                std::shared_ptr<IPapyrusCompatibilityPolicy> policy,
+                WorldState* world) override
   {
     AddMethod(vm, "Play", &PapyrusEffectShader::Play);
     AddMethod(vm, "Stop", &PapyrusEffectShader::Stop);

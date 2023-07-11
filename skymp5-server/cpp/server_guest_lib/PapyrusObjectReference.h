@@ -40,9 +40,9 @@ public:
   VarValue PlayGamebryoAnimation(VarValue self,
                                  const std::vector<VarValue>& arguments);
 
-  void Register(
-    VirtualMachine& vm,
-    std::shared_ptr<IPapyrusCompatibilityPolicy> compatibilityPolicy) override
+  void Register(VirtualMachine& vm,
+                std::shared_ptr<IPapyrusCompatibilityPolicy> policy,
+                WorldState* world) override
   {
     AddMethod(vm, "IsHarvested", &PapyrusObjectReference::IsHarvested);
     AddMethod(vm, "IsDisabled", &PapyrusObjectReference::IsDisabled);
