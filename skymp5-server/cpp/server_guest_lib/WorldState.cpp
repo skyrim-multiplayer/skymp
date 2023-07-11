@@ -313,11 +313,11 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
       CrimeFactionsList = 0x26953
     };
 
-    auto baseId = static_cast<std::underlying_type_t<ListType>>(
+    auto factionBaseId = static_cast<std::underlying_type_t<ListType>>(
       ListType::CrimeFactionsList);
-    espm::LookupResult res = br.LookupById(baseId);
-    std::vector<uint32_t> factionFormIds =
-      reinterpret_cast<espm::FLST*>(res.rec)->GetData(cache).formIds;
+    espm::LookupResult res = br.LookupById(factionBaseId);
+    auto* formList = reinterpret_cast<espm::FLST*>(res.rec);
+    std::vector<uint32_t> factionFormIds = formList->GetData(cache).formIds;
     for (auto& formId : factionFormIds) {
       formId = res.ToGlobalId(formId);
     }
@@ -345,8 +345,8 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
 
   if (isNpc) {
     espm::LookupResult res = br.LookupById(worldOrCell);
-    uint16_t cellFlags =
-      reinterpret_cast<espm::CELL*>(res.rec)->GetData(cache).flags;
+    auto cellRecord = reinterpret_cast<espm::CELL*>(res.rec);
+    uint16_t cellFlags = cellRecord->GetData(cache).flags;
     bool isInterior = cellFlags & espm::CELL::Flags::Interior;
     bool isExterior = !isInterior;
     uint32_t npcFileIdx = GetFileIdx(baseId);
