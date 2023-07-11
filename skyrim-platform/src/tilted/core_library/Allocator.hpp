@@ -7,7 +7,10 @@
   {                                                                           \
     m_pAllocator = apAllocator;                                               \
   }                                                                           \
-  CEFUtils::AllocatorBase* GetAllocator() noexcept { return m_pAllocator; }   \
+  CEFUtils::AllocatorBase* GetAllocator() noexcept                            \
+  {                                                                           \
+    return m_pAllocator;                                                      \
+  }                                                                           \
                                                                               \
 private:                                                                      \
   CEFUtils::AllocatorBase* m_pAllocator{ CEFUtils::AllocatorBase::Get() };    \
@@ -23,7 +26,7 @@ template <typename T>
 using has_set_allocator_t = decltype(std::declval<T&>().SetAllocator(nullptr));
 
 template <typename T>
-constexpr bool has_allocator = is_detected_v<has_get_allocator_t, T>&&
+constexpr bool has_allocator = is_detected_v<has_get_allocator_t, T> &&
   is_detected_v<has_set_allocator_t, T>;
 }
 
