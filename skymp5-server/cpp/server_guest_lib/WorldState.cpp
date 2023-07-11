@@ -349,7 +349,6 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
       reinterpret_cast<espm::CELL*>(res.rec)->GetData(cache).flags;
     bool isInterior = cellFlags & espm::CELL::Flags::Interior;
     bool isExterior = !isInterior;
-    const NpcSettingsEntry& entry = npcSettings[espmFiles[GetFileIdx(baseId)]];
     uint32_t npcFileIdx = GetFileIdx(baseId);
     if (npcFileIdx >= espmFiles.size()) {
       spdlog::error("NPC's idx is greater than espmFiles.size(). NPC's baseId "
