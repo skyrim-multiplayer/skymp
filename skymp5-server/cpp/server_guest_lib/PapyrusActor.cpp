@@ -178,3 +178,26 @@ VarValue PapyrusActor::SetDontMove(VarValue self,
   }
   return VarValue::None();
 }
+
+VarValue PapyrusActor::WornHasKeyword(VarValue self,
+                                      const std::vector<VarValue>& arguments)
+{
+  if (auto actor = GetFormPtr<MpActor>(self)) {
+    if (arguments.size() < 1) {
+      throw std::runtime_error(
+        "WornHasKeyword requires at least one argument");
+    }
+
+    std::vector<Inventory::Entry> entries = actor->GetEquipment().inv.entries;
+    for (size_t i = 0; i < entries.size(); i++) {
+        const auto& keywordIds = worldState
+                                 ->GetEspm()
+                                 .GetBrowser()
+                                 .LookupById(entries[i].baseId)
+                                 .rec->GetKeywordIds(worldState->GetEspmCache());
+
+    }
+  }
+   
+  return VarValue(false);
+}
