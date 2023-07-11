@@ -56,6 +56,17 @@ uint32_t MpActor::GetBlockCount() const noexcept
   return pImpl->blockActiveCount;
 }
 
+bool MpActor::GetConsoleCommandsAllowedFlag() const
+{
+  return GetChangeForm().consoleCommandsAllowed;
+}
+
+void MpActor::SetConsoleCommandsAllowedFlag(bool newValue)
+{
+  EditChangeForm(
+    [&](MpChangeForm& changeForm) { changeForm.consoleCommandsAllowed = newValue; });
+}
+
 void MpActor::SetRaceMenuOpen(bool isOpen)
 {
   EditChangeForm(

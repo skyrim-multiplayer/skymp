@@ -24,6 +24,7 @@ import { SkillCommand } from './src/logic/listeners/commands/skillCommand';
 import { SkillDiceCommand } from './src/logic/listeners/commands/skillDiceCommand';
 import { KickCommand } from './src/logic/listeners/commands/kickCommand';
 import { TpCommand } from './src/logic/listeners/commands/tpCommand';
+import { ConsoleCommandsSystem } from './src/logic/listeners/consoleCommandsSystem';
 
 const err = (index: number, x: unknown, expectedTypeName: string): never => {
   throw new TypeError(`The argument with index ${index} has value (${JSON.stringify(x)}) that doesn't meet the requirements of ${expectedTypeName}`);
@@ -572,11 +573,12 @@ const createGameModeListener = (controller: PlayerController, maps: SweetPieMap[
 
 const controller = MpApiInteractor.makeController(pointsByName);
 MpApiInteractor.setup([
-  createGameModeListener(controller, maps, mp.getServerSettings()["sweetPieMinimumPlayersToStart"]),
+  // createGameModeListener(controller, maps, mp.getServerSettings()["sweetPieMinimumPlayersToStart"]),
   new SweetTaffyTimedRewards(controller, /*enableDaily*/true, /*enableHourly*/true),
   new DeathSystem(mp, controller),
   new HarvestingSystem(mp, controller),
   new DoorActivation(mp, controller),
+  new ConsoleCommandsSystem(mp, controller),
   new KitCommand(mp, controller),
   new KillCommand(mp, controller),
   new KickCommand(mp, controller),
