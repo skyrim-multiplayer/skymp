@@ -705,15 +705,19 @@ Napi::Value ScampServer::Get(const Napi::CallbackInfo& info)
     if (it != g_standardPropertyBindings.end()) {
       auto res = it->second->Get(info.Env(), *this, formId);
       if (spdlog::should_log(spdlog::level::trace)) {
-        spdlog::trace("ScampServer::Get {:x} - {}={} (native property)", formId, propertyName, static_cast<std::string>(res.ToString()));
+        spdlog::trace("ScampServer::Get {:x} - {}={} (native property)",
+                      formId, propertyName,
+                      static_cast<std::string>(res.ToString()));
       }
       return res;
     } else {
       auto res = PropertyBindingFactory()
-        .CreateCustomPropertyBinding(propertyName)
-        ->Get(info.Env(), *this, formId);
+                   .CreateCustomPropertyBinding(propertyName)
+                   ->Get(info.Env(), *this, formId);
       if (spdlog::should_log(spdlog::level::trace)) {
-        spdlog::trace("ScampServer::Get {:x} - {}={} (custom property)", formId, propertyName, static_cast<std::string>(res.ToString()));
+        spdlog::trace("ScampServer::Get {:x} - {}={} (custom property)",
+                      formId, propertyName,
+                      static_cast<std::string>(res.ToString()));
       }
       return res;
     }
@@ -736,12 +740,16 @@ Napi::Value ScampServer::Set(const Napi::CallbackInfo& info)
     auto it = g_standardPropertyBindings.find(propertyName);
     if (it != g_standardPropertyBindings.end()) {
       if (spdlog::should_log(spdlog::level::trace)) {
-        spdlog::trace("ScampServer::Set {:x} - {}={} (native property)", formId, propertyName, static_cast<std::string>(value.ToString()));
+        spdlog::trace("ScampServer::Set {:x} - {}={} (native property)",
+                      formId, propertyName,
+                      static_cast<std::string>(value.ToString()));
       }
       it->second->Set(info.Env(), *this, formId, value);
     } else {
       if (spdlog::should_log(spdlog::level::trace)) {
-        spdlog::trace("ScampServer::Set {:x} - {}={} (custom property)", formId, propertyName, static_cast<std::string>(value.ToString()));
+        spdlog::trace("ScampServer::Set {:x} - {}={} (custom property)",
+                      formId, propertyName,
+                      static_cast<std::string>(value.ToString()));
       }
       PropertyBindingFactory()
         .CreateCustomPropertyBinding(propertyName)

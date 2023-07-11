@@ -63,8 +63,9 @@ bool MpActor::GetConsoleCommandsAllowedFlag() const
 
 void MpActor::SetConsoleCommandsAllowedFlag(bool newValue)
 {
-  EditChangeForm(
-    [&](MpChangeForm& changeForm) { changeForm.consoleCommandsAllowed = newValue; });
+  EditChangeForm([&](MpChangeForm& changeForm) {
+    changeForm.consoleCommandsAllowed = newValue;
+  });
 }
 
 void MpActor::SetRaceMenuOpen(bool isOpen)

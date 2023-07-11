@@ -69,7 +69,8 @@ MpChangeForm MpChangeForm::JsonToChangeForm(simdjson::dom::element& element)
     learnedSpells("learnedSpells"), dynamicFields("dynamicFields"),
     healthPercentage("healthPercentage"),
     magickaPercentage("magickaPercentage"),
-    staminaPercentage("staminaPercentage"), isDead("isDead"), consoleCommandsAllowed("consoleCommandsAllowed"),
+    staminaPercentage("staminaPercentage"), isDead("isDead"),
+    consoleCommandsAllowed("consoleCommandsAllowed"),
     spawnPointPos("spawnPoint_pos"), spawnPointRot("spawnPoint_rot"),
     spawnPointCellOrWorldDesc("spawnPoint_cellOrWorldDesc"),
     spawnDelay("spawnDelay");

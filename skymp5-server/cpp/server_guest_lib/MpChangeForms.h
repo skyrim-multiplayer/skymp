@@ -82,8 +82,9 @@ public:
       recType, formDesc, baseDesc, position.x, position.y, position.z, angle.x,
       angle.y, angle.z, worldOrCellDesc, inv.ToJson(), isHarvested, isOpen,
       baseContainerAdded, nextRelootDatetime, isDisabled, profileId,
-      isRaceMenuOpen, isDead, consoleCommandsAllowed, appearanceDump, equipmentDump,
-      actorValues.ToTuple(), spawnPoint, dynamicFields, spawnDelay);
+      isRaceMenuOpen, isDead, consoleCommandsAllowed, appearanceDump,
+      equipmentDump, actorValues.ToTuple(), spawnPoint, dynamicFields,
+      spawnDelay);
   }
 
   static nlohmann::json ToJson(const MpChangeFormREFR& changeForm);
