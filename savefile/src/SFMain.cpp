@@ -5,6 +5,7 @@
 #include "savefile/SFStructure.h"
 #include "savefile/SFWriter.h"
 
+#include <algorithm>
 #include <filesystem>
 
 namespace fs = std::filesystem;
