@@ -60,7 +60,6 @@ struct WorldState::Impl
 };
 
 WorldState::WorldState()
-  : npcEnabled(false)
 {
   logger.reset(new spdlog::logger("empty logger"));
 
