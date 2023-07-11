@@ -17,7 +17,7 @@ public:
     compatibilityPolicy = policy;
     worldState = world;
 
-    keywords = (*world).GetEspm().GetBrowser().GetRecordsByType("KYWD");
+    keywords = world->GetEspm().GetBrowser().GetRecordsByType("KYWD");
 
     AddStatic(vm, "GetKeyword", &PapyrusKeyword::GetKeyword);
   }
