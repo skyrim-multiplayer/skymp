@@ -39,6 +39,13 @@ class WorldState
 public:
   using FormCallbacksFactory = std::function<FormCallbacks()>;
 
+  struct NpcSettingsEntry
+  {
+    bool spawnInInterior = true;
+    bool spawnInExterior = false;
+  };
+
+public:
   WorldState();
   WorldState(const WorldState&) = delete;
   WorldState& operator=(const WorldState&) = delete;
@@ -154,24 +161,24 @@ public:
                      std::chrono::system_clock::duration dur);
   std::optional<std::chrono::system_clock::duration> GetRelootTime(
     std::string recordType) const;
-  void AddLoadOrderElement(std::string fileName);
+  // Only for tests
+  auto& GetGrids() { return grids; }
+  void SetNpcSettings(
+    std::unordered_map<std::string, NpcSettingsEntry>&& settings);
 
+public:
   std::vector<std::string> espmFiles;
   std::unordered_map<int32_t, std::set<uint32_t>> actorIdByProfileId;
   std::shared_ptr<spdlog::logger> logger;
   std::vector<std::shared_ptr<PartOneListener>> listeners;
-
-  // Only for tests
-  auto& GetGrids() { return grids; }
-
   std::map<uint32_t, uint32_t> hosters;
   std::vector<std::optional<std::chrono::system_clock::time_point>>
     lastMovUpdateByIdx;
 
   bool isPapyrusHotReloadEnabled = false;
-  bool npcEnabled;
-  bool spawnNpcInteriorOnly;
-  std::vector<std::string> npcEspmFiles;
+
+  bool npcEnabled = false;
+  std::unordered_map<std::string, NpcSettingsEntry> npcSettings;
 
 private:
   bool AttachEspmRecord(const espm::CombineBrowser& br,
@@ -184,6 +191,7 @@ private:
   void TickTimers(const std::chrono::system_clock::time_point& now);
   [[nodiscard]] bool NpcSourceFilesOverriden() const noexcept;
   [[nodiscard]] bool IsNpcAllowed(uint32_t baseId) const noexcept;
+  [[nodiscard]] uint32_t GetFileIdx(uint32_t baseId) const noexcept;
 
 private:
   struct GridInfo

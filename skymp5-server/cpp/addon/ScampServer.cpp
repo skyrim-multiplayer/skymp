@@ -26,6 +26,7 @@
 #include <spdlog/sinks/stdout_color_sinks.h>
 
 namespace {
+
 constexpr size_t kMockServerIdx = 1;
 
 std::shared_ptr<spdlog::logger>& GetLogger()
@@ -55,6 +56,7 @@ std::string GetPropertyAlphabet()
   alphabet += '_';
   return alphabet;
 }
+
 }
 
 Napi::FunctionReference ScampServer::constructor;
@@ -150,9 +152,25 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
       partOne->worldState.npcEnabled =
         serverSettings.at("npcEnabled").get<bool>();
     }
-    if (serverSettings.find("spawnNpcInteriorOnly") != serverSettings.end()) {
-      partOne->worldState.spawnNpcInteriorOnly =
-        serverSettings.at("spawnNpcInteriorOnly").get<bool>();
+
+    if (serverSettings.find("npcSettings") != serverSettings.end()) {
+      if (serverSettings.at("npcSettings").is_object()) {
+        std::unordered_map<std::string, WorldState::NpcSettingsEntry>
+          npcSettings;
+        for (const auto& field : serverSettings["npcSettings"].items()) {
+          WorldState::NpcSettingsEntry entry;
+          if (field.value().find("spawnInInterior") != field.value().end()) {
+            entry.spawnInInterior =
+              field.value().at("spawnInINterior").get<bool>();
+          }
+          if (field.value().find("spawnInExterior") != field.value().end()) {
+            entry.spawnInExterior =
+              field.value().at("spawnInExterior").get<bool>();
+          }
+          npcSettings[field.key()] = entry;
+        }
+        partOne->worldState.SetNpcSettings(std::move(npcSettings));
+      }
     }
 
     partOne->worldState.isPapyrusHotReloadEnabled =
@@ -186,13 +204,7 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
         } else {
           pluginPaths.push_back(dataDir / loadOrderElement);
         }
-        partOne->worldState.AddLoadOrderElement(loadOrderElement.filename());
       }
-    }
-
-    if (serverSettings.find("npcEspmFiles") != serverSettings.end()) {
-      partOne->worldState.npcEspmFiles =
-        serverSettings.at("npcEspmFiles").get<std::vector<std::string>>();
     }
 
     if (serverSettings["lang"] != nullptr) {

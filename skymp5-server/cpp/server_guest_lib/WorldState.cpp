@@ -23,6 +23,7 @@
 #include "papyrus-vm/Reader.h"
 #include <algorithm>
 #include <deque>
+#include <iterator>
 #include <unordered_map>
 
 namespace {
@@ -253,7 +254,10 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
                                   const espm::IdMapping& mapping)
 {
   auto& cache = GetEspmCache();
-  auto* refr = espm::Convert<espm::REFR>(record);
+  // this place is a hotpath.
+  // we want to use reinterpret_cast<> instead of espm::Convert<>
+  // in order to reduce amount of generated assembly code
+  auto* refr = reinterpret_cast<espm::REFR*>(record);
   auto data = refr->GetData(cache);
 
   uint32_t baseId = espm::GetMappedId(data.baseId, mapping);
@@ -267,9 +271,9 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
   if (t != "NPC_" && t != "FURN" && t != "ACTI" && !espm::IsItem(t) &&
       t != "DOOR" && t != "CONT" &&
       (t != "FLOR" ||
-       !espm::Convert<espm::FLOR>(base.rec)->GetData(cache).resultItem) &&
+       !reinterpret_cast<espm::FLOR*>(base.rec)->GetData(cache).resultItem) &&
       (t != "TREE" ||
-       !espm::Convert<espm::TREE>(base.rec)->GetData(cache).resultItem))
+       !reinterpret_cast<espm::TREE*>(base.rec)->GetData(cache).resultItem))
     return false;
 
   // TODO: Load disabled references
@@ -286,7 +290,7 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
     if (NpcSourceFilesOverriden() && !IsNpcAllowed(baseId)) {
       return false;
     }
-    auto npcData = espm::Convert<espm::NPC_>(base.rec)->GetData(cache);
+    auto npcData = reinterpret_cast<espm::NPC_*>(base.rec)->GetData(cache);
 
     if (npcData.isEssential || npcData.isProtected) {
       return false;
@@ -301,7 +305,7 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
       ListType::CrimeFactionsList);
     espm::LookupResult res = br.LookupById(baseId);
     std::vector<uint32_t> factionFormIds =
-      espm::Convert<espm::FLST>(res.rec)->GetData(cache).formIds;
+      reinterpret_cast<espm::FLST*>(res.rec)->GetData(cache).formIds;
     for (auto& formId : factionFormIds) {
       formId = res.ToGlobalId(formId);
     }
@@ -317,7 +321,7 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
     }
   }
 
-  auto formId = espm::GetMappedId(record->GetId(), mapping);
+  uint32_t formId = espm::GetMappedId(record->GetId(), mapping);
   auto locationalData = data.loc;
 
   uint32_t worldOrCell =
@@ -327,6 +331,18 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
     return false;
   }
 
+  espm::LookupResult res = br.LookupById(worldOrCell);
+  uint16_t cellFlags =
+    reinterpret_cast<espm::CELL*>(res.rec)->GetData(cache).flags;
+  bool isInterior = cellFlags & espm::CELL::Flags::Interior;
+  bool isExterior = !isInterior;
+  const NpcSettingsEntry& entry = npcSettings[espmFiles[GetFileIdx(baseId)]];
+  bool spawnInInterior = entry.spawnInInterior,
+       spawnInExterior = entry.spawnInExterior;
+
+  if (spawnInInterior && isExterior || spawnInExterior && isInterior) {
+    return false;
+  }
   // This function dosen't use LookupFormById to prevent recursion
   auto existing = forms.find(formId);
 
@@ -689,23 +705,29 @@ std::optional<std::chrono::system_clock::duration> WorldState::GetRelootTime(
 
 bool WorldState::NpcSourceFilesOverriden() const noexcept
 {
-  return !npcEspmFiles.empty();
-}
-
-void WorldState::AddLoadOrderElement(std::string fileName)
-{
-  size_t idx = loadOrderMap.size();
-  loadOrderMap[fileName] = idx;
+  return !npcSettings.empty();
 }
 
 bool WorldState::IsNpcAllowed(uint32_t baseId) const noexcept
 {
-  uint32_t npcFileIdx = baseId >> 24;
-  for (const auto& fileName : npcEspmFiles) {
-    size_t idx = loadOrderMap.at(fileName);
+  uint32_t npcFileIdx = GetFileIdx(baseId);
+  for (const auto& [fileName, _] : npcSettings) {
+    auto it = std::find(espmFiles.begin(), espmFiles.end(), fileName);
+    auto idx = std::distance(espmFiles.begin(), it);
     if (npcFileIdx == idx) {
       return true;
     }
   }
   return false;
+}
+
+uint32_t WorldState::GetFileIdx(uint32_t baseId) const noexcept
+{
+  return baseId >> 24;
+}
+
+void WorldState::SetNpcSettings(
+  std::unordered_map<std::string, NpcSettingsEntry>&& settings)
+{
+  npcSettings = settings;
 }
