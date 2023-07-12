@@ -1,5 +1,7 @@
 #include "TestUtils.hpp"
 #include <catch2/catch_all.hpp>
+#include <catch2/catch_test_macros.hpp>
+#include <catch2/matchers/catch_matchers_string.hpp>
 
 PartOne& GetPartOne();
 
@@ -47,4 +49,50 @@ TEST_CASE("Whiterun cow 0x10ebaf is visible to players", "[NpcExists][espm]")
   partOne.DestroyActor(0xff000000);
   partOne.DestroyActor(cowId);
   DoDisconnect(partOne, 0);
+}
+
+TEST_CASE("Whiterun cow is disallowed to be loaded because of overriden npc "
+          "settings, provided enabled npcs",
+          "[NpcExists][espm]")
+{
+  PartOne& partOne = GetPartOne();
+  partOne.worldState.npcEnabled = true;
+  std::unordered_map<std::string, WorldState::NpcSettingsEntry> settings = {
+    { "DragonBorn.esm", { true, true } }
+  };
+  partOne.worldState.SetNpcSettings(std::move(settings));
+
+  REQUIRE_THROWS_WITH(partOne.worldState.GetFormAt<MpActor>(cowId),
+                      Catch::Matchers::ContainsSubstring("Form with id"));
+}
+
+TEST_CASE(
+  "Whiterun cow is not loaded because only npcs within interior are allowed",
+  "[NpcExists][espm]")
+{
+  PartOne& partOne = GetPartOne();
+  partOne.worldState.npcEnabled = true;
+  bool spawnInInterior = true, spawnInExterior = false;
+  std::unordered_map<std::string, WorldState::NpcSettingsEntry> settings = {
+    { "Skyrim.esm", { spawnInInterior, spawnInExterior } }
+  };
+  partOne.worldState.SetNpcSettings(std::move(settings));
+
+  REQUIRE_THROWS_WITH(partOne.worldState.GetFormAt<MpActor>(cowId),
+                      Catch::Matchers::ContainsSubstring("Form with id"));
+}
+
+TEST_CASE("Whiterun cow is successfully loaded, because only exterior npc "
+          "from Skyrim.esm are allowed",
+          "[NpcExists][espm]")
+{
+  PartOne& partOne = GetPartOne();
+  partOne.worldState.npcEnabled = true;
+  bool spawnInInterior = false, spawnInExterior = true;
+  std::unordered_map<std::string, WorldState::NpcSettingsEntry> settings = {
+    { "Skyrim.esm", { spawnInInterior, spawnInExterior } }
+  };
+  partOne.worldState.SetNpcSettings(std::move(settings));
+
+  REQUIRE_NOTHROW(partOne.worldState.GetFormAt<MpActor>(cowId));
 }
