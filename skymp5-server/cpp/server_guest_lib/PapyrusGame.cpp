@@ -110,3 +110,56 @@ void PapyrusGame::RaceMenuHelper(VarValue& self, const char* funcName,
     SpSnippet(GetName(), funcName, serializedArgs.data()).Execute(actor);
   }
 }
+
+VarValue PapyrusGame::GetForm(VarValue self,
+                              const std::vector<VarValue>& arguments)
+{
+  if (arguments.size() < 1) {
+    return VarValue::None();
+  }
+  auto formId = static_cast<int32_t>(arguments[0].CastToInt());
+  constexpr const uint32_t maxId = 0x80000000;
+  if (formId > maxId) {
+    return VarValue::None();
+  }
+  const std::shared_ptr<MpForm>& pForm = worldState->LookupFormById(formId);
+  if (!pForm) {
+    return VarValue::None();
+  }
+  return VarValue(reinterpret_cast<IGameObject*>(pForm.get()));
+}
+
+VarValue PapyrusGame::GetFormEx(VarValue self,
+                                const std::vector<VarValue>& arguments)
+{
+  if (arguments.size() < 1) {
+    return VarValue::None();
+  }
+  auto formId = static_cast<int32_t>(arguments[0].CastToInt());
+  const std::shared_ptr<MpForm>& pForm = worldState->LookupFormById(formId);
+  if (!pForm) {
+    return VarValue::None();
+  }
+  return VarValue(reinterpret_cast<IGameObject*>(pForm.get()));
+}
+
+void PapyrusGame::Register(VirtualMachine& vm,
+                           std::shared_ptr<IPapyrusCompatibilityPolicy> policy,
+                           WorldState* world)
+{
+  compatibilityPolicy = policy;
+  worldState = world;
+
+  AddStatic(vm, "IncrementStat", &PapyrusGame::IncrementStat);
+  AddStatic(vm, "ForceThirdPerson", &PapyrusGame::ForceThirdPerson);
+  AddStatic(vm, "DisablePlayerControls", &PapyrusGame::DisablePlayerControls);
+  AddStatic(vm, "EnablePlayerControls", &PapyrusGame::EnablePlayerControls);
+  AddStatic(vm, "FindClosestReferenceOfAnyTypeInListFromRef",
+            &PapyrusGame::FindClosestReferenceOfAnyTypeInListFromRef);
+  AddStatic(vm, "GetPlayer", &PapyrusGame::GetPlayer);
+  AddStatic(vm, "ShowRaceMenu", &PapyrusGame::ShowRaceMenu);
+  AddStatic(vm, "ShowLimitedRaceMenu", &PapyrusGame::ShowLimitedRaceMenu);
+  AddStatic(vm, "GetCameraState", &PapyrusGame::GetCameraState);
+  AddStatic(vm, "GetForm", &PapyrusGame::GetForm);
+  AddStatic(vm, "GetFormEx", &PapyrusGame::GetFormEx);
+}

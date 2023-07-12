@@ -7,6 +7,7 @@
 #include "MpObjectReference.h"
 #include "SpSnippetFunctionGen.h"
 #include "WorldState.h"
+#include "papyrus-vm/Structures.h"
 #include <cstring>
 
 VarValue PapyrusObjectReference::IsHarvested(
@@ -235,9 +236,9 @@ VarValue PapyrusObjectReference::SetAngle(
   auto selfRefr = GetFormPtr<MpObjectReference>(self);
   if (selfRefr && arguments.size() >= 3) {
     selfRefr->SetAngle(
-      { (float)static_cast<double>(arguments[0].CastToFloat()),
-        (float)static_cast<double>(arguments[1].CastToFloat()),
-        (float)static_cast<double>(arguments[2].CastToFloat()) });
+      { static_cast<float>(static_cast<double>(arguments[0].CastToFloat())),
+        static_cast<float>(static_cast<double>(arguments[1].CastToFloat())),
+        static_cast<float>(static_cast<double>(arguments[2].CastToFloat())) });
   }
   return VarValue::None();
 }
@@ -263,13 +264,15 @@ VarValue PapyrusObjectReference::Disable(
 VarValue PapyrusObjectReference::BlockActivation(
   VarValue self, const std::vector<VarValue>& arguments)
 {
-  if (arguments.size() < 1)
+  if (arguments.size() < 1) {
     throw std::runtime_error("BlockActivation requires at least one argument");
+  }
   bool block = static_cast<bool>(arguments[0].CastToBool());
 
   auto selfRefr = GetFormPtr<MpObjectReference>(self);
-  if (selfRefr)
+  if (selfRefr) {
     selfRefr->SetActivationBlocked(block);
+  }
   return VarValue::None();
 }
 
@@ -284,11 +287,13 @@ VarValue PapyrusObjectReference::Activate(
   VarValue self, const std::vector<VarValue>& arguments)
 {
   if (auto selfRefr = GetFormPtr<MpObjectReference>(self)) {
-    if (arguments.size() < 2)
+    if (arguments.size() < 2) {
       throw std::runtime_error("Activate requires at least two arguments");
+    }
     auto akActivator = GetFormPtr<MpObjectReference>(arguments[0]);
-    if (!akActivator)
+    if (!akActivator) {
       throw std::runtime_error("Activate didn't recognize akActivator");
+    }
     bool abDefaultProcessingOnly =
       static_cast<bool>(arguments[1].CastToBool());
     selfRefr->Activate(*akActivator, abDefaultProcessingOnly);
@@ -415,4 +420,70 @@ VarValue PapyrusObjectReference::PlayGamebryoAnimation(
     }
   }
   return VarValue::None();
+}
+
+VarValue PapyrusObjectReference::MoveTo(VarValue self,
+                                        const std::vector<VarValue>& arguments)
+{
+  if (auto _this = GetFormPtr<MpObjectReference>(self)) {
+    if (arguments.size() >= 1) {
+      auto objectReference = GetFormPtr<MpObjectReference>(arguments[0]);
+      if (!objectReference) {
+        return VarValue::None();
+      }
+      auto xOffset =
+        static_cast<float>(static_cast<double>(arguments[1].CastToFloat()));
+      auto yOffset =
+        static_cast<float>(static_cast<double>(arguments[2].CastToFloat()));
+      auto zOffset =
+        static_cast<float>(static_cast<double>(arguments[3].CastToFloat()));
+      auto matchRotation = static_cast<bool>(arguments[4].CastToBool());
+      NiPoint3 dest = objectReference->GetPos(),
+               rotation = objectReference->GetAngle();
+      dest.x += xOffset;
+      dest.y += yOffset;
+      dest.z += zOffset;
+      if (!matchRotation) {
+        rotation = _this->GetAngle();
+      }
+      _this->SetPos(dest);
+      _this->SetAngle(rotation);
+    }
+  }
+  return VarValue::None();
+}
+
+void PapyrusObjectReference::Register(
+  VirtualMachine& vm, std::shared_ptr<IPapyrusCompatibilityPolicy> policy,
+  WorldState* world)
+{
+  AddMethod(vm, "IsHarvested", &PapyrusObjectReference::IsHarvested);
+  AddMethod(vm, "IsDisabled", &PapyrusObjectReference::IsDisabled);
+  AddMethod(vm, "GetScale", &PapyrusObjectReference::GetScale);
+  AddMethod(vm, "SetScale", &PapyrusObjectReference::SetScale);
+  AddMethod(vm, "EnableNoWait", &PapyrusObjectReference::EnableNoWait);
+  AddMethod(vm, "DisableNoWait", &PapyrusObjectReference::DisableNoWait);
+  AddMethod(vm, "Delete", &PapyrusObjectReference::Delete);
+  AddMethod(vm, "AddItem", &PapyrusObjectReference::AddItem);
+  AddMethod(vm, "RemoveItem", &PapyrusObjectReference::RemoveItem);
+  AddMethod(vm, "GetItemCount", &PapyrusObjectReference::GetItemCount);
+  AddMethod(vm, "GetAnimationVariableBool",
+            &PapyrusObjectReference::GetAnimationVariableBool);
+  AddMethod(vm, "PlaceAtMe", &PapyrusObjectReference::PlaceAtMe);
+  AddMethod(vm, "SetAngle", &PapyrusObjectReference::SetAngle);
+  AddMethod(vm, "Enable", &PapyrusObjectReference::Enable);
+  AddMethod(vm, "Disable", &PapyrusObjectReference::Disable);
+  AddMethod(vm, "BlockActivation", &PapyrusObjectReference::BlockActivation);
+  AddMethod(vm, "IsActivationBlocked",
+            &PapyrusObjectReference::IsActivationBlocked);
+  AddMethod(vm, "Activate", &PapyrusObjectReference::Activate);
+  AddMethod(vm, "GetPositionX", &PapyrusObjectReference::GetPositionX);
+  AddMethod(vm, "GetPositionY", &PapyrusObjectReference::GetPositionY);
+  AddMethod(vm, "GetPositionZ", &PapyrusObjectReference::GetPositionZ);
+  AddMethod(vm, "SetPosition", &PapyrusObjectReference::SetPosition);
+  AddMethod(vm, "GetBaseObject", &PapyrusObjectReference::GetBaseObject);
+  AddMethod(vm, "PlayAnimation", &PapyrusObjectReference::PlayAnimation);
+  AddMethod(vm, "PlayGamebryoAnimation",
+            &PapyrusObjectReference::PlayGamebryoAnimation);
+  AddMethod(vm, "MoveTo", &PapyrusObjectReference::MoveTo);
 }

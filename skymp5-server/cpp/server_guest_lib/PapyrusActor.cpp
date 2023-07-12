@@ -178,3 +178,34 @@ VarValue PapyrusActor::SetDontMove(VarValue self,
   }
   return VarValue::None();
 }
+
+VarValue PapyrusActor::IsDead(VarValue self,
+                              const std::vector<VarValue>& arguments)
+{
+  if (auto _this = GetFormPtr<MpActor>(self)) {
+    return VarValue(_this->IsDead());
+  }
+  return VarValue(false);
+}
+
+void PapyrusActor::Register(
+  VirtualMachine& vm, std::shared_ptr<IPapyrusCompatibilityPolicy> policy,
+  WorldState* world)
+{
+  compatibilityPolicy = policy;
+
+  AddMethod(vm, "IsWeaponDrawn", &PapyrusActor::IsWeaponDrawn);
+  AddMethod(vm, "DrawWeapon", &PapyrusActor::DrawWeapon);
+  AddMethod(vm, "UnequipAll", &PapyrusActor::UnequipAll);
+  AddMethod(vm, "PlayIdle", &PapyrusActor::PlayIdle);
+  AddMethod(vm, "GetSitState", &PapyrusActor::GetSitState);
+  AddMethod(vm, "RestoreActorValue", &PapyrusActor::RestoreActorValue);
+  AddMethod(vm, "DamageActorValue", &PapyrusActor::DamageActorValue);
+  AddMethod(vm, "IsEquipped", &PapyrusActor::IsEquipped);
+  AddMethod(vm, "GetActorValuePercentage",
+            &PapyrusActor::GetActorValuePercentage);
+  AddMethod(vm, "SetAlpha", &PapyrusActor::SetAlpha);
+  AddMethod(vm, "EquipItem", &PapyrusActor::EquipItem);
+  AddMethod(vm, "SetDontMove", &PapyrusActor::SetDontMove);
+  AddMethod(vm, "IsDead", &PapyrusActor::IsDead);
+}

@@ -21,29 +21,18 @@ public:
                                const std::vector<VarValue>& arguments);
   VarValue GetCameraState(VarValue self,
                           const std::vector<VarValue>& arguments);
+  VarValue GetForm(VarValue self, const std::vector<VarValue>& arguments);
+  VarValue GetFormEx(VarValue self, const std::vector<VarValue>& arguments);
 
   void Register(VirtualMachine& vm,
                 std::shared_ptr<IPapyrusCompatibilityPolicy> policy,
-                WorldState* world) override
-  {
-    compatibilityPolicy = policy;
-
-    AddStatic(vm, "IncrementStat", &PapyrusGame::IncrementStat);
-    AddStatic(vm, "ForceThirdPerson", &PapyrusGame::ForceThirdPerson);
-    AddStatic(vm, "DisablePlayerControls",
-              &PapyrusGame::DisablePlayerControls);
-    AddStatic(vm, "EnablePlayerControls", &PapyrusGame::EnablePlayerControls);
-    AddStatic(vm, "FindClosestReferenceOfAnyTypeInListFromRef",
-              &PapyrusGame::FindClosestReferenceOfAnyTypeInListFromRef);
-    AddStatic(vm, "GetPlayer", &PapyrusGame::GetPlayer);
-    AddStatic(vm, "ShowRaceMenu", &PapyrusGame::ShowRaceMenu);
-    AddStatic(vm, "ShowLimitedRaceMenu", &PapyrusGame::ShowLimitedRaceMenu);
-    AddStatic(vm, "GetCameraState", &PapyrusGame::GetCameraState);
-  }
-
-  std::shared_ptr<IPapyrusCompatibilityPolicy> compatibilityPolicy;
+                WorldState* world) override;
 
 private:
   void RaceMenuHelper(VarValue& self, const char* funcName,
                       const std::vector<VarValue>& arguments);
+
+private:
+  std::shared_ptr<IPapyrusCompatibilityPolicy> compatibilityPolicy;
+  WorldState* worldState;
 };

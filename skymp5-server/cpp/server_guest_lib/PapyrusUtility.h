@@ -7,15 +7,12 @@ public:
   const char* GetName() override { return "utility"; }
 
   VarValue Wait(VarValue self, const std::vector<VarValue>& arguments);
+  VarValue RandomInt(VarValue slef, const std::vector<VarValue>& arguments);
 
   void Register(VirtualMachine& vm,
                 std::shared_ptr<IPapyrusCompatibilityPolicy> policy,
-                WorldState* world) override
-  {
-    compatibilityPolicy = policy;
+                WorldState* world) override;
 
-    AddStatic(vm, "Wait", &PapyrusUtility::Wait);
-  }
-
+private:
   std::shared_ptr<IPapyrusCompatibilityPolicy> compatibilityPolicy;
 };
