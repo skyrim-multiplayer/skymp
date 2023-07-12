@@ -262,7 +262,6 @@ export class MpApiInteractor {
         const debugMsg = `gave ${actorId.toString(16)} ${count} of ${itemId.toString(16)}`;
         console.log(debugMsg);
         this.sendChatMessage(actorId, createSystemMessage(debugMsg));
-        /*
         mp.callPapyrusFunction(
           'method',
           'ObjectReference',
@@ -270,7 +269,6 @@ export class MpApiInteractor {
           { type: 'form', desc: mp.getDescFromId(actorId) },
           [{ type: 'espm', desc: mp.getDescFromId(itemId) }, count, silent]
         );
-        */
       },
       removeItem(actorId: number, itemId: number, count: number, akOtherContainer: number | null, silent = false): void {
         mp.callPapyrusFunction(

@@ -23,6 +23,7 @@ import { RollCommand } from './src/logic/listeners/commands/rollCommand';
 import { SkillCommand } from './src/logic/listeners/commands/skillCommand';
 import { SkillDiceCommand } from './src/logic/listeners/commands/skillDiceCommand';
 import { KickCommand } from './src/logic/listeners/commands/kickCommand';
+import { TimedRewardCommand } from './src/logic/listeners/commands/timedRewardConfirmCommand';
 import { TpCommand } from './src/logic/listeners/commands/tpCommand';
 
 const err = (index: number, x: unknown, expectedTypeName: string): never => {
@@ -592,6 +593,7 @@ MpApiInteractor.setup([
   new RollCommand(mp, controller, "1d2"),
   new SkillCommand(mp, controller),
   new SkillDiceCommand(mp, controller),
+  new TimedRewardCommand(mp, controller),
   new TpCommand(mp, controller),
   new ChatSystem(mp, controller), // Must be the last system
 ]);
