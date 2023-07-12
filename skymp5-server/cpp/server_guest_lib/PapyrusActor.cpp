@@ -185,7 +185,13 @@ VarValue PapyrusActor::WornHasKeyword(VarValue self,
   if (auto actor = GetFormPtr<MpActor>(self)) {
     if (arguments.size() < 1) {
       throw std::runtime_error(
-        "WornHasKeyword requires at least one argument");
+        "Actor.WornHasKeyword requires at least one argument");
+    }
+
+    const auto& keywordRec = GetRecordPtr(arguments[0]);
+    if (!keywordRec.rec) {
+      spdlog::error("Actor.WornHasKeyword - invalid keyword form");
+      return VarValue(false);
     }
 
     std::vector<Inventory::Entry> entries = actor->GetEquipment().inv.entries;
@@ -195,6 +201,11 @@ VarValue PapyrusActor::WornHasKeyword(VarValue self,
           .GetBrowser()
           .LookupById(entries[i].baseId)
           .rec->GetKeywordIds(worldState->GetEspmCache());
+      for (auto rawId : keywordIds) {
+        if (rawId == keywordRec.rec->GetId()) {
+          return VarValue(true);
+        }
+      }
     }
   }
 
