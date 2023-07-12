@@ -128,10 +128,12 @@ export class SweetTaffyTimedRewards implements GameModeListener {
   getPlayerBiome(playerActorId: number): BiomeName {
     const biomes = this.config.biomes || [];
     if (biomes.length === 0) {
+      console.log(`getPlayerBiome(${playerActorId.toString(16)}): empty biome config`)
       return '';
     }
     const {cellOrWorldDesc: playerCell, pos: playerPos} = this.controller.getLocation(playerActorId);
     if (playerCell !== '3c:Skyrim.esm') {
+      console.log(`getPlayerBiome(${playerActorId.toString(16)}) @ ${playerCell} ${playerPos}: not main cell`)
       return '';
     }
     const getSquareDist = (biomePos: Position) => squareDist(playerPos, biomePos);
@@ -143,6 +145,7 @@ export class SweetTaffyTimedRewards implements GameModeListener {
         closestBiomeSquareDist = currentBiomeSquareDist;
       }
     }
+    console.log(`getPlayerBiome(${playerActorId.toString(16)}) @ ${playerCell} ${playerPos}: ${biomes[closestBiomeIdx].name}`)
     return biomes[closestBiomeIdx].name;
   }
 
