@@ -89,6 +89,8 @@ describe('SweetPieGameModeListener: DeathMatch', () => {
   });
 });
 
+// to be removed from herer
+/*
 describe('SweetPieGameModeListener: Chat', () => {
   test('Chat messages are transferred to neighbors', () => {
     const controller = makePlayerController();
@@ -103,6 +105,7 @@ describe('SweetPieGameModeListener: Chat', () => {
     expect(controller.sendChatMessage).toBeCalledWith(1, new ChatMessage(1, 1, 'hello!', 'plain', controller));
   });
 });
+*/
 
 describe('SweetPieGameModeListener: OnJoin', () => {
   test('SpawnPoint must be set to hall for joined players', () => {
