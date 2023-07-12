@@ -9,7 +9,8 @@ public:
 
   virtual void Register(
     VirtualMachine& vm,
-    std::shared_ptr<IPapyrusCompatibilityPolicy> compatibilityPolicy) = 0;
+    std::shared_ptr<IPapyrusCompatibilityPolicy> compatibilityPolicy,
+    WorldState* worldState) = 0;
 
   virtual ~IPapyrusClassBase() = default;
 };
