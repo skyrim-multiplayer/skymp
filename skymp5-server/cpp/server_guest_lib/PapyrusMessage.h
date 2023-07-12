@@ -10,7 +10,8 @@ public:
   DEFINE_METHOD_SPSNIPPET(Show);
 
   void Register(VirtualMachine& vm,
-                std::shared_ptr<IPapyrusCompatibilityPolicy> policy) override
+                std::shared_ptr<IPapyrusCompatibilityPolicy> policy,
+                WorldState* world) override
   {
     compatibilityPolicy = policy;
 

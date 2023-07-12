@@ -35,10 +35,14 @@ public:
 
   VarValue GetBaseObject(VarValue self,
                          const std::vector<VarValue>& arguments);
+  VarValue PlayAnimation(VarValue self,
+                         const std::vector<VarValue>& arguments);
+  VarValue PlayGamebryoAnimation(VarValue self,
+                                 const std::vector<VarValue>& arguments);
 
-  void Register(
-    VirtualMachine& vm,
-    std::shared_ptr<IPapyrusCompatibilityPolicy> compatibilityPolicy) override
+  void Register(VirtualMachine& vm,
+                std::shared_ptr<IPapyrusCompatibilityPolicy> policy,
+                WorldState* world) override
   {
     AddMethod(vm, "IsHarvested", &PapyrusObjectReference::IsHarvested);
     AddMethod(vm, "IsDisabled", &PapyrusObjectReference::IsDisabled);
@@ -65,5 +69,8 @@ public:
     AddMethod(vm, "GetPositionZ", &PapyrusObjectReference::GetPositionZ);
     AddMethod(vm, "SetPosition", &PapyrusObjectReference::SetPosition);
     AddMethod(vm, "GetBaseObject", &PapyrusObjectReference::GetBaseObject);
+    AddMethod(vm, "PlayAnimation", &PapyrusObjectReference::PlayAnimation);
+    AddMethod(vm, "PlayGamebryoAnimation",
+              &PapyrusObjectReference::PlayGamebryoAnimation);
   }
 };

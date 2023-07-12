@@ -21,6 +21,10 @@ export class EvalProperty {
   }
 
   static eval(actorId: number, f: (ctx: Ctx, ...args: any[]) => void, args?: Record<string, unknown>) {
+    const baseDesc = mp.get(actorId, "baseDesc");
+    const baseId = mp.getIdFromDesc(baseDesc);
+    if (baseId !== 0x7 && baseId !== 0) return;
+
     const code = new FunctionInfo(f).getText(args);
     const value: EvalValue = mp.get(actorId, 'eval') || { commands: [], nextId: 0 };
     value.commands.push({ code, id: value.nextId });
