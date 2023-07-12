@@ -93,13 +93,13 @@ public:
 
   auto ToTuple() const
   {
-    return std::make_tuple(recType, formDesc, baseDesc, position.x, position.y,
-                           position.z, angle.x, angle.y, angle.z,
-                           worldOrCellDesc, inv.ToJson(), isHarvested, isOpen,
-                           baseContainerAdded, nextRelootDatetime, isDisabled,
-                           profileId, isRaceMenuOpen, isDead, consoleCommandsAllowed, appearanceDump,
-                           equipmentDump, actorValues.ToTuple(), spawnPoint,
-                           dynamicFields, spawnDelay, learnedSpells);
+    return std::make_tuple(
+      recType, formDesc, baseDesc, position.x, position.y, position.z, angle.x,
+      angle.y, angle.z, worldOrCellDesc, inv.ToJson(), isHarvested, isOpen,
+      baseContainerAdded, nextRelootDatetime, isDisabled, profileId,
+      isRaceMenuOpen, isDead, consoleCommandsAllowed, appearanceDump,
+      equipmentDump, actorValues.ToTuple(), spawnPoint, dynamicFields,
+      spawnDelay, learnedSpells);
   }
 
   static nlohmann::json ToJson(const MpChangeFormREFR& changeForm);
