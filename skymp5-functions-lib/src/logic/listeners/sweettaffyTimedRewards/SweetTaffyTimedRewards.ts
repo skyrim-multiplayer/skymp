@@ -101,13 +101,15 @@ export class SweetTaffyTimedRewards implements GameModeListener {
     }
   }
 
-  private giveExtraHourOfGameplayReward(playerActorId: number) {
+  //private
+  giveExtraHourOfGameplayReward(playerActorId: number) {
     this.controller.addItem(playerActorId, SweetTaffyTimedRewards.rewardItemFormId, 9);
     const playerBiome = this.getPlayerBiome(playerActorId);
-    console.log(`player actorId=${playerActorId.toString(16)} biome=${playerBiome}`);
+    const debug = [];
     for (const rule of this.config.rules || []) {
-      this.giveRewardByRule(playerActorId, playerBiome, rule);
+      debug.push(this.giveRewardByRule(playerActorId, playerBiome, rule));
     }
+    console.log(`player actorId=${playerActorId.toString(16)} biome=${playerBiome} rule outcomes: ${debug}`);
   }
 
   /*
@@ -155,15 +157,16 @@ export class SweetTaffyTimedRewards implements GameModeListener {
 
   giveRewardByRule(playerActorId: number, playerBiome: BiomeName, rule: RewardRule) {
     if (rule.biome && rule.biome !== playerBiome) {
-      return;
+      return 'other_biome';
     }
     if (rule.requiredItemFormId && !this.playerHasItem(playerActorId, rule.requiredItemFormId)) {
-      return;
+      return 'no_required_item';
     }
     const itemCount = getRandomIntByWeights(rule.itemCountWeights);
     if (itemCount === 0) {
-      return;
+      return 'rolled_0';
     }
     this.controller.addItem(playerActorId, rule.itemFormId, itemCount);
+    return itemCount;
   }
 }

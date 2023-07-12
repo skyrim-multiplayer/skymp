@@ -1,7 +1,7 @@
 import { GameModeListener } from "./logic/listeners/GameModeListener";
 import { CombinedController, Counter, Percentages } from "./logic/PlayerController";
 import { SweetPieRound } from "./logic/listeners/sweetpie/SweetPieRound";
-import { ChatMessage, ChatProperty } from "./props/chatProperty";
+import { ChatMessage, ChatProperty, createSystemMessage } from "./props/chatProperty";
 import { CounterProperty } from "./props/counterProperty";
 import { DialogProperty } from "./props/dialogProperty";
 import { EvalProperty } from "./props/evalProperty";
@@ -259,6 +259,9 @@ export class MpApiInteractor {
         return mp.get(playerActorId, 'profileId');
       },
       addItem(actorId: number, itemId: number, count: number, silent = false): void {
+        const debugMsg = `gave ${actorId.toString(16)} ${count} of ${itemId.toString(16)}`;
+        console.log(debugMsg);
+        this.sendChatMessage(actorId, createSystemMessage(debugMsg));
         /*
         mp.callPapyrusFunction(
           'method',
