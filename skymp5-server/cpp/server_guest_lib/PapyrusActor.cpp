@@ -196,6 +196,7 @@ VarValue PapyrusActor::WornHasKeyword(VarValue self,
 
     std::vector<Inventory::Entry> entries = actor->GetEquipment().inv.entries;
     for (size_t i = 0; i < entries.size(); i++) {
+      WorldState* worldState = compatibilityPolicy->GetWorldState();
       const auto& keywordIds =
         worldState->GetEspm()
           .GetBrowser()

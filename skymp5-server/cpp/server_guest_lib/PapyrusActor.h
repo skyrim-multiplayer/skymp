@@ -37,7 +37,6 @@ public:
                 std::shared_ptr<IPapyrusCompatibilityPolicy> policy) override
   {
     compatibilityPolicy = policy;
-    worldState = world;
 
     AddMethod(vm, "IsWeaponDrawn", &PapyrusActor::IsWeaponDrawn);
     AddMethod(vm, "DrawWeapon", &PapyrusActor::DrawWeapon);
@@ -56,5 +55,4 @@ public:
   }
 
   std::shared_ptr<IPapyrusCompatibilityPolicy> compatibilityPolicy;
-  WorldState* worldState;
 };
