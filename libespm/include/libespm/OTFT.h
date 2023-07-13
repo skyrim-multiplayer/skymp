@@ -5,7 +5,7 @@
 
 namespace espm {
 
-class OTFT : public RecordHeader
+class OTFT final : public RecordHeader
 {
 public:
   static constexpr auto kType = "OTFT";

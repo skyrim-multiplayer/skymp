@@ -6,7 +6,7 @@
 
 namespace espm {
 
-class FLOR : public RecordHeader
+class FLOR final : public RecordHeader
 {
 public:
   static constexpr auto kType = "FLOR";

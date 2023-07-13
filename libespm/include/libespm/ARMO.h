@@ -5,7 +5,7 @@
 
 namespace espm {
 
-class ARMO : public RecordHeader
+class ARMO final : public RecordHeader
 {
 public:
   static constexpr auto kType = "ARMO";

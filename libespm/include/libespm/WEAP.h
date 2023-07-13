@@ -5,7 +5,7 @@
 
 namespace espm {
 
-class WEAP : public RecordHeader
+class WEAP final : public RecordHeader
 {
 public:
   static constexpr auto kType = "WEAP";

@@ -6,7 +6,7 @@
 
 namespace espm {
 
-class MGEF : public RecordHeader
+class MGEF final : public RecordHeader
 {
 public:
   static constexpr auto kType = "MGEF";

@@ -5,7 +5,7 @@
 
 namespace espm {
 
-class FLST : public RecordHeader
+class FLST final : public RecordHeader
 {
 public:
   static constexpr auto kType = "FLST";

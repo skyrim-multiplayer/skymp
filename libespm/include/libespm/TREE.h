@@ -7,7 +7,7 @@ namespace espm {
 
 struct ObjectBounds;
 
-class TREE : public RecordHeader
+class TREE final : public RecordHeader
 {
 public:
   static constexpr auto kType = "TREE";

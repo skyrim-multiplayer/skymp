@@ -5,7 +5,7 @@
 
 namespace espm {
 
-class LVLI : public RecordHeader
+class LVLI final : public RecordHeader
 {
 public:
   static constexpr auto kType = "LVLI";

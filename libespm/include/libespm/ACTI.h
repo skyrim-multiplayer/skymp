@@ -6,7 +6,7 @@
 
 namespace espm {
 
-class ACTI : public RecordHeader
+class ACTI final : public RecordHeader
 {
 public:
   static constexpr auto kType = "ACTI";

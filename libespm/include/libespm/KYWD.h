@@ -5,7 +5,7 @@
 
 namespace espm {
 
-class KYWD : public espm::RecordHeader
+class KYWD final : public espm::RecordHeader
 {
 public:
   static constexpr auto kType = "KYWD";

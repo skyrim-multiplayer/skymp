@@ -5,7 +5,7 @@
 
 namespace espm {
 
-class CONT : public RecordHeader
+class CONT final : public RecordHeader
 {
 public:
   static constexpr auto kType = "CONT";

@@ -5,7 +5,7 @@
 
 namespace espm {
 
-class ACHR : public RecordHeader
+class ACHR final : public RecordHeader
 {
 public:
   static constexpr auto kType = "ACHR";

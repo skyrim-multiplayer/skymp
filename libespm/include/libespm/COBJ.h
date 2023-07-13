@@ -5,7 +5,7 @@
 
 namespace espm {
 
-class COBJ : public RecordHeader
+class COBJ final : public RecordHeader
 {
 public:
   static constexpr auto kType = "COBJ";

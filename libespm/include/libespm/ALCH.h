@@ -6,7 +6,7 @@
 
 namespace espm {
 
-class ALCH : public RecordHeader
+class ALCH final : public RecordHeader
 {
 public:
   static constexpr auto kType = "ALCH";

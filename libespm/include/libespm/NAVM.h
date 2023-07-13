@@ -8,7 +8,7 @@
 
 namespace espm {
 
-class NAVM : public RecordHeader
+class NAVM final : public RecordHeader
 {
 public:
   static constexpr auto kType = "NVNM";

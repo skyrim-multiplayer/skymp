@@ -6,7 +6,7 @@
 
 namespace espm {
 
-class ENCH : public RecordHeader
+class ENCH final : public RecordHeader
 {
 public:
   static constexpr auto kType = "ENCH";

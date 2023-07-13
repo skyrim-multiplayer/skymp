@@ -6,7 +6,7 @@
 
 namespace espm {
 
-class RACE : public RecordHeader
+class RACE final : public RecordHeader
 {
 public:
   static constexpr auto kType = "RACE";

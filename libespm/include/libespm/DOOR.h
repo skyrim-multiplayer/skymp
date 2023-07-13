@@ -5,7 +5,7 @@
 
 namespace espm {
 
-class DOOR : public RecordHeader
+class DOOR final : public RecordHeader
 {
 public:
   static constexpr auto kType = "DOOR";

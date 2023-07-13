@@ -6,7 +6,7 @@
 namespace espm {
 
 // game settings
-class GMST : public RecordHeader
+class GMST final : public RecordHeader
 {
 public:
   static constexpr auto kType = "GMST";

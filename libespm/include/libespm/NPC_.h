@@ -8,7 +8,7 @@
 
 namespace espm {
 
-class NPC_ : public RecordHeader
+class NPC_ final : public RecordHeader
 {
 public:
   static constexpr auto kType = "NPC_";

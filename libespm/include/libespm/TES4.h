@@ -5,7 +5,7 @@
 
 namespace espm {
 
-class TES4 : public RecordHeader
+class TES4 final : public RecordHeader
 {
 public:
   static constexpr auto kType = "TES4";

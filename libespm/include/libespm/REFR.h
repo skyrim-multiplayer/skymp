@@ -5,7 +5,7 @@
 
 namespace espm {
 
-class REFR : public RecordHeader
+class REFR final : public RecordHeader
 {
 public:
   static constexpr auto kType = "REFR";

@@ -6,7 +6,7 @@
 
 namespace espm {
 
-class INGR : public RecordHeader
+class INGR final : public RecordHeader
 {
 public:
   static constexpr auto kType = "INGR";
