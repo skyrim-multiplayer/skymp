@@ -202,10 +202,7 @@ VarValue PapyrusActor::WornHasKeyword(VarValue self,
           .LookupById(entries[i].baseId)
           .rec->GetKeywordIds(worldState->GetEspmCache());
       for (auto rawId : keywordIds) {
-        espm::LookupResult keyword =
-          worldState->GetEspm().GetBrowser().LookupById(rawId);
-        if (keyword.ToGlobalId(keyword.rec->GetId()) ==
-            keywordRec.ToGlobalId(keywordRec.rec->GetId())) {
+        if (rawId == keywordRec.rec->GetId()) {
           return VarValue(true);
         }
       }
