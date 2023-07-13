@@ -207,13 +207,14 @@ std::chrono::system_clock::duration MpObjectReference::GetRelootTime() const
   if (auto time = GetParent()->GetRelootTime(baseType))
     return *time;
 
-  if (!strcmp(baseType.data(), "FLOR") || !strcmp(baseType.data(), "TREE")) {
+  if (!std::strcmp(baseType.data(), "FLOR") ||
+      !strcmp(baseType.data(), "TREE")) {
     return std::chrono::hours(1);
-  } else if (!strcmp(baseType.data(), "DOOR")) {
+  } else if (!std::strcmp(baseType.data(), "DOOR")) {
     return std::chrono::seconds(3);
-  } else if (espm::IsItem(baseType.data())) {
+  } else if (espm::utils::IsItem(espm::Type{ baseType.data() })) {
     return std::chrono::hours(1);
-  } else if (!strcmp(baseType.data(), "CONT")) {
+  } else if (!std::strcmp(baseType.data(), "CONT")) {
     return std::chrono::hours(1);
   }
 
@@ -969,7 +970,8 @@ void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
 
   auto t = base.rec->GetType();
 
-  if (t == espm::TREE::kType || t == espm::FLOR::kType || espm::IsItem(t)) {
+  if (t == espm::TREE::kType || t == espm::FLOR::kType ||
+      espm::utils::IsItem(t)) {
     if (!IsHarvested()) {
       auto mapping = loader.GetBrowser().GetCombMapping(base.fileIdx);
       uint32_t resultItem = 0;
@@ -977,14 +979,14 @@ void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
         espm::FLOR::Data data;
         data =
           espm::Convert<espm::TREE>(base.rec)->GetData(compressedFieldsCache);
-        resultItem = espm::GetMappedId(data.resultItem, *mapping);
+        resultItem = espm::utils::GetMappedId(data.resultItem, *mapping);
       } else if (t == espm::FLOR::kType) {
         espm::FLOR::Data data;
         data =
           espm::Convert<espm::FLOR>(base.rec)->GetData(compressedFieldsCache);
-        resultItem = espm::GetMappedId(data.resultItem, *mapping);
+        resultItem = espm::utils::GetMappedId(data.resultItem, *mapping);
       } else {
-        resultItem = espm::GetMappedId(base.rec->GetId(), *mapping);
+        resultItem = espm::utils::GetMappedId(base.rec->GetId(), *mapping);
       }
 
       auto resultItemLookupRes = loader.GetBrowser().LookupById(resultItem);

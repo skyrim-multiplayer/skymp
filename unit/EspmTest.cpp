@@ -14,7 +14,7 @@ TEST_CASE("Hash check", "[espm]")
   for (const auto& [filename, info] : hashes) {
     DYNAMIC_SECTION(filename << " checksum and size test")
     {
-      REQUIRE(espm::GetCorrectHashcode(filename) == info.crc32);
+      REQUIRE(espm::utils::GetCorrectHashcode(filename) == info.crc32);
     }
   }
 }
@@ -36,7 +36,8 @@ TEST_CASE("Loads Container", "[espm]")
   auto barrel = br.LookupById(0x10cd5b);
   REQUIRE(barrel.rec->GetType() == "CONT");
 
-  auto barrelData = reinterpret_cast<espm::CONT*>(barrel.rec)->GetData(cache);
+  auto barrelData =
+    reinterpret_cast<const espm::CONT*>(barrel.rec)->GetData(cache);
 
   REQUIRE(barrelData.editorId == std::string("BarrelFish01"));
   REQUIRE(barrelData.objects.size() == 2);
@@ -54,7 +55,7 @@ TEST_CASE("Loads Tree", "[espm]")
   auto form = br.LookupById(0xbcf3d);
   REQUIRE(form.rec->GetType() == "TREE");
 
-  auto data = reinterpret_cast<espm::TREE*>(form.rec)->GetData(cache);
+  auto data = reinterpret_cast<const espm::TREE*>(form.rec)->GetData(cache);
   REQUIRE(data.editorId == std::string("TreeFloraMountainFlower01Blue"));
   REQUIRE(data.resultItem == 0x77e1c);
   REQUIRE(data.useSound == 0x519d5);
@@ -68,7 +69,7 @@ TEST_CASE("Loads Flora", "[espm]")
   auto form = br.LookupById(0x7e8c9);
   REQUIRE(form.rec->GetType() == "FLOR");
 
-  auto data = reinterpret_cast<espm::FLOR*>(form.rec)->GetData(cache);
+  auto data = reinterpret_cast<const espm::FLOR*>(form.rec)->GetData(cache);
   REQUIRE(data.editorId == std::string("BirdsNest"));
   REQUIRE(data.resultItem == 0x7e8c8);
   REQUIRE(data.useSound == 0x100f88);
@@ -82,7 +83,7 @@ TEST_CASE("Loads LeveledItem", "[espm]")
   auto form = br.LookupById(0x10e992);
   REQUIRE(form.rec->GetType() == "LVLI");
 
-  auto data = reinterpret_cast<espm::LVLI*>(form.rec)->GetData(cache);
+  auto data = reinterpret_cast<const espm::LVLI*>(form.rec)->GetData(cache);
   REQUIRE(data.editorId == std::string("lItemGems10"));
   REQUIRE(data.leveledItemFlags == (espm::LVLI::AllLevels | espm::LVLI::Each));
   REQUIRE((int)data.numEntries == 48);
@@ -103,17 +104,16 @@ TEST_CASE("Loads script-related subrecords for SovngardeWatcherStatue2",
   auto form = br.LookupById(0x105d05);
   REQUIRE(form.rec->GetType() == "ACTI");
 
-  auto data = reinterpret_cast<espm::ACTI*>(form.rec)->GetData(cache);
+  auto data = reinterpret_cast<const espm::ACTI*>(form.rec)->GetData(cache);
   REQUIRE(data.scriptData.version == 5);
   REQUIRE(data.scriptData.objFormat == 2);
   REQUIRE(data.scriptData.scripts.size() == 1);
   REQUIRE(data.scriptData.scripts.front().scriptName ==
           "sovngardestatuescript");
   REQUIRE(data.scriptData.scripts.front().properties.size() == 1);
-  REQUIRE(data.scriptData.scripts.front().properties.begin()->propertyName ==
-          "MQ305");
-  REQUIRE(data.scriptData.scripts.front().properties.begin()->propertyType ==
-          espm::PropertyType::Object);
+  REQUIRE(data.scriptData.scripts.front().properties.begin()->name == "MQ305");
+  REQUIRE(data.scriptData.scripts.front().properties.begin()->type ==
+          espm::Property::Type::Object);
   REQUIRE(data.scriptData.scripts.front().properties.begin()->status == 1);
   REQUIRE(data.scriptData.scripts.front().properties.begin()->value.formId ==
           0x46ef2);
@@ -126,7 +126,7 @@ TEST_CASE("Loads script-related subrecords for BearTrap01", "[espm]")
   auto form = br.LookupById(0x7144d);
   REQUIRE(form.rec->GetType() == "ACTI");
 
-  auto data = reinterpret_cast<espm::ACTI*>(form.rec)->GetData(cache);
+  auto data = reinterpret_cast<const espm::ACTI*>(form.rec)->GetData(cache);
   REQUIRE(data.scriptData.version == 5);
   REQUIRE(data.scriptData.objFormat == 2);
 
@@ -176,7 +176,7 @@ TEST_CASE("Loads FormList", "[espm]")
   auto form = br.LookupById(0x21e81);
   REQUIRE(form.rec->GetType() == "FLST");
 
-  auto data = reinterpret_cast<espm::FLST*>(form.rec)->GetData(cache);
+  auto data = reinterpret_cast<const espm::FLST*>(form.rec)->GetData(cache);
   REQUIRE(data.formIds == std::vector<uint32_t>({ 0x3eab9, 0x4e4bb }));
 }
 
@@ -189,7 +189,7 @@ TEST_CASE("Loads refr with primitive", "[espm]")
   REQUIRE(refr.rec);
   REQUIRE(refr.rec->GetType() == "REFR");
 
-  auto data = reinterpret_cast<espm::REFR*>(refr.rec)->GetData(cache);
+  auto data = reinterpret_cast<const espm::REFR*>(refr.rec)->GetData(cache);
   REQUIRE(abs(data.boundsDiv2[0] - 334.1504f) < 0.1);
   REQUIRE(abs(data.boundsDiv2[1] - 262.88865f) < 0.1);
   REQUIRE(abs(data.boundsDiv2[2] - 221.2002f) < 0.1);
@@ -208,7 +208,7 @@ TEST_CASE("Loads ConstructibleObject", "[espm]")
   auto form = br.LookupById(0xdb89e);
   REQUIRE(form.rec->GetType() == "COBJ");
 
-  auto data = reinterpret_cast<espm::COBJ*>(form.rec)->GetData(cache);
+  auto data = reinterpret_cast<const espm::COBJ*>(form.rec)->GetData(cache);
   REQUIRE(data.benchKeywordId == CraftingSmithingForge);
   REQUIRE(data.outputObjectFormId == 0x1398a);
   REQUIRE(data.outputCount == 1);
@@ -357,7 +357,7 @@ TEST_CASE("Correctly parses tree structure", "[espm]")
   std::vector<std::string> parentGroupTypeLabels;
   for (const auto groupPtr : br.GetParentGroupsEnsured(form.rec)) {
     parentGroupTypeLabels.emplace_back(
-      ToString(groupPtr->GetGroupType()) + ":" +
+      espm::utils::ToString(groupPtr->GetGroupType()) + ":" +
       std::to_string(groupPtr->GetGroupLabelAsUint()));
   }
   REQUIRE(parentGroupTypeLabels ==

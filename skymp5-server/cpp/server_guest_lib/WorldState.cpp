@@ -249,27 +249,31 @@ const std::shared_ptr<MpForm>& WorldState::LookupFormById(uint32_t formId)
 }
 
 bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
-                                  espm::RecordHeader* record,
+                                  const espm::RecordHeader* record,
                                   const espm::IdMapping& mapping)
 {
   auto& cache = GetEspmCache();
-  auto refr = reinterpret_cast<espm::REFR*>(record);
+  auto refr = reinterpret_cast<const espm::REFR*>(record);
   auto data = refr->GetData(cache);
 
-  auto baseId = espm::GetMappedId(data.baseId, mapping);
+  auto baseId = espm::utils::GetMappedId(data.baseId, mapping);
   auto base = br.LookupById(baseId);
   if (!base.rec) {
-    logger->info("baseId {} {}", baseId, static_cast<void*>(base.rec));
+    logger->info("baseId {} {}", baseId, static_cast<const void*>(base.rec));
     return false;
   }
 
   espm::Type t = base.rec->GetType();
-  if (t != "NPC_" && t != "FURN" && t != "ACTI" && !espm::IsItem(t) &&
+  if (t != "NPC_" && t != "FURN" && t != "ACTI" && !espm::utils::IsItem(t) &&
       t != "DOOR" && t != "CONT" &&
       (t != "FLOR" ||
-       !reinterpret_cast<espm::FLOR*>(base.rec)->GetData(cache).resultItem) &&
+       !reinterpret_cast<const espm::FLOR*>(base.rec)
+          ->GetData(cache)
+          .resultItem) &&
       (t != "TREE" ||
-       !reinterpret_cast<espm::TREE*>(base.rec)->GetData(cache).resultItem))
+       !reinterpret_cast<const espm::TREE*>(base.rec)
+          ->GetData(cache)
+          .resultItem))
     return false;
 
   // TODO: Load disabled references
@@ -284,11 +288,11 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
     return false;
   }
 
-  auto formId = espm::GetMappedId(record->GetId(), mapping);
+  auto formId = espm::utils::GetMappedId(record->GetId(), mapping);
   auto locationalData = data.loc;
 
   uint32_t worldOrCell =
-    espm::GetMappedId(GetWorldOrCell(br, record), mapping);
+    espm::utils::GetMappedId(GetWorldOrCell(br, record), mapping);
   if (!worldOrCell) {
     logger->error("Anomally: refr without world/cell");
     return false;
@@ -442,10 +446,11 @@ const std::set<MpObjectReference*>& WorldState::GetReferencesAtPosition(
             auto combMapping = br.GetCombMapping(i);
             auto rawMapping = br.GetRawMapping(i);
             uint32_t mappedCellOrWorld =
-              espm::GetMappedId(cellOrWorld, *rawMapping);
+              espm::utils::GetMappedId(cellOrWorld, *rawMapping);
             auto records = br.GetRecordsAtPos(mappedCellOrWorld, x, y);
             for (auto rec : *records[i]) {
-              auto mappedId = espm::GetMappedId(rec->GetId(), *combMapping);
+              auto mappedId =
+                espm::utils::GetMappedId(rec->GetId(), *combMapping);
               assert(mappedId < 0xff000000);
               LoadForm(mappedId);
             }

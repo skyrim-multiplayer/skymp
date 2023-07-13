@@ -4,12 +4,14 @@
 #include <fstream>
 #include <functional>
 #include <map>
+#include <memory>
 #include <sstream>
 
 namespace espm {
 namespace fs = std::filesystem;
 }
 
+#include "Browser.h"
 #include "Combiner.h"
 #include "IBuffer.h"
 #include "espm.h"
@@ -36,7 +38,7 @@ public:
          OnProgress onProgress = nullptr,
          BufferType bufferType_ = BufferType::MappedBuffer);
 
-  const espm::CombineBrowser& GetBrowser() const noexcept;
+  const CombineBrowser& GetBrowser() const noexcept;
 
   std::vector<std::string> GetFileNames() const noexcept;
 
@@ -57,7 +59,7 @@ private:
   struct Entry
   {
     std::unique_ptr<IBuffer> buffer;
-    std::unique_ptr<espm::Browser> browser;
+    std::unique_ptr<Browser> browser;
 
     uintmax_t size = 0;
     fs::path fileName = "";
@@ -66,8 +68,8 @@ private:
   };
 
   std::vector<Entry> entries;
-  std::unique_ptr<espm::Combiner> combiner;
-  std::unique_ptr<espm::CombineBrowser> combineBrowser;
+  std::unique_ptr<Combiner> combiner;
+  std::unique_ptr<CombineBrowser> combineBrowser;
   std::vector<fs::path> filePaths;
   BufferType bufferType;
 };
@@ -81,8 +83,7 @@ Type GetRecordType(uint32_t formId, EspmProvider* espmProvider)
 
   auto& espmLoader = espmProvider->GetEspm();
 
-  const espm::LookupResult lookupResult =
-    espmLoader.GetBrowser().LookupById(formId);
+  const LookupResult lookupResult = espmLoader.GetBrowser().LookupById(formId);
 
   if (!lookupResult.rec) {
     throw std::runtime_error(
@@ -102,17 +103,16 @@ typename RecordT::Data GetData(uint32_t formId, EspmProvider* espmProvider)
   auto& espmLoader = espmProvider->GetEspm();
 
   // That's why espmProvider is non-const: cache is mutable
-  espm::CompressedFieldsCache& espmCache = espmProvider->GetEspmCache();
+  CompressedFieldsCache& espmCache = espmProvider->GetEspmCache();
 
-  const espm::LookupResult lookupResult =
-    espmLoader.GetBrowser().LookupById(formId);
+  const LookupResult lookupResult = espmLoader.GetBrowser().LookupById(formId);
 
   if (!lookupResult.rec) {
     throw std::runtime_error(
       fmt::format("Record {:#x} doesn't exist", formId));
   }
 
-  const RecordT* convertedRecord = espm::Convert<RecordT>(lookupResult.rec);
+  const RecordT* convertedRecord = Convert<RecordT>(lookupResult.rec);
   if (!convertedRecord) {
     throw std::runtime_error(
       fmt::format("Expected record {:#x} to be {}, but found {}", formId,
