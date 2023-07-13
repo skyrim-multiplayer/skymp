@@ -5,7 +5,7 @@ if(BUILD_GAMEMODE)
     message(FATAL_ERROR "GITHUB_TOKEN is not set. Please set it to your GitHub personal access token.")
   endif()
   # The URL to the raw gamemode.js file.
-  set(GAMEMODE_JS_URL "https://raw.githubusercontent.com/Pospelove/skymp5-gamemode/e566cfabfca79ca14851b8e372be1fea2c4b576a/build/gamemode.js")
+  set(GAMEMODE_JS_URL "https://raw.githubusercontent.com/skyrim-multiplayer/skymp5-gamemode/e566cfabfca79ca14851b8e372be1fea2c4b576a/build/gamemode.js")
 
   # The destination where the file will be saved.
   set(GAMEMODE_JS_DEST "${CMAKE_BINARY_DIR}/dist/server/gamemode.js")
