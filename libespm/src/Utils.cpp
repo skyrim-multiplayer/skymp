@@ -1,5 +1,5 @@
-#include "libespm/RecordHeaderAccess.h"
 #include "libespm/Utils.h"
+#include "libespm/RecordHeaderAccess.h"
 #include "libespm/ZlibUtils.h"
 #include <map>
 #include <stdexcept>
