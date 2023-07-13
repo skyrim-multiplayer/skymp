@@ -126,7 +126,7 @@ VarValue PapyrusGame::GetForm(VarValue self,
   if (!pForm) {
     return VarValue::None();
   }
-  return VarValue(reinterpret_cast<IGameObject*>(pForm.get()));
+  return VarValue(pForm->ToGameObject());
 }
 
 VarValue PapyrusGame::GetFormEx(VarValue self,
@@ -136,11 +136,12 @@ VarValue PapyrusGame::GetFormEx(VarValue self,
     return VarValue::None();
   }
   auto formId = static_cast<int32_t>(arguments[0].CastToInt());
-  const std::shared_ptr<MpForm>& pForm = worldState->LookupFormById(formId);
+  const std::shared_ptr<MpForm>& pForm =
+    compatibilityPolicy->GetWorldState()->LookupFormById(formId);
   if (!pForm) {
     return VarValue::None();
   }
-  return VarValue(reinterpret_cast<IGameObject*>(pForm.get()));
+  return VarValue(pForm->ToGameObject());
 }
 
 void PapyrusGame::Register(VirtualMachine& vm,

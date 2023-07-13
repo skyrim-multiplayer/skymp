@@ -426,18 +426,22 @@ VarValue PapyrusObjectReference::MoveTo(VarValue self,
                                         const std::vector<VarValue>& arguments)
 {
   if (auto _this = GetFormPtr<MpObjectReference>(self)) {
-    if (arguments.size() >= 1) {
+    if (arguments.size() > 0) {
       auto objectReference = GetFormPtr<MpObjectReference>(arguments[0]);
       if (!objectReference) {
         return VarValue::None();
       }
-      auto xOffset =
-        static_cast<float>(static_cast<double>(arguments[1].CastToFloat()));
-      auto yOffset =
-        static_cast<float>(static_cast<double>(arguments[2].CastToFloat()));
-      auto zOffset =
-        static_cast<float>(static_cast<double>(arguments[3].CastToFloat()));
-      auto matchRotation = static_cast<bool>(arguments[4].CastToBool());
+      float xOffset = 0.f, yOffset = 0.f, zOffset = 0.f;
+      bool matchRotation = true;
+      if (arguments.size() > 1) {
+        xOffset =
+          static_cast<float>(static_cast<double>(arguments[1].CastToFloat()));
+        yOffset =
+          static_cast<float>(static_cast<double>(arguments[2].CastToFloat()));
+        zOffset =
+          static_cast<float>(static_cast<double>(arguments[3].CastToFloat()));
+        matchRotation = static_cast<bool>(arguments[4].CastToBool());
+      }
       NiPoint3 dest = objectReference->GetPos(),
                rotation = objectReference->GetAngle();
       dest.x += xOffset;
@@ -446,8 +450,8 @@ VarValue PapyrusObjectReference::MoveTo(VarValue self,
       if (!matchRotation) {
         rotation = _this->GetAngle();
       }
-      _this->SetPos(dest);
       _this->SetAngle(rotation);
+      _this->SetPos(dest);
     }
   }
   return VarValue::None();

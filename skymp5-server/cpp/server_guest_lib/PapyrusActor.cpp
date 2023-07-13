@@ -48,9 +48,9 @@ VarValue PapyrusActor::DamageActorValue(VarValue self,
 {
   espm::ActorValue attributeName =
     ConvertToAV(static_cast<const char*>(arguments[0]));
-  float modifire = static_cast<double>(arguments[1]);
+  float modifier = static_cast<double>(arguments[1]);
   if (auto actor = GetFormPtr<MpActor>(self)) {
-    actor->DamageActorValue(attributeName, modifire);
+    actor->DamageActorValue(attributeName, modifier);
   }
   return VarValue();
 }

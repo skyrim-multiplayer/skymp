@@ -13,6 +13,5 @@ public:
                 std::shared_ptr<IPapyrusCompatibilityPolicy> policy,
                 WorldState* world) override;
 
-private:
   std::shared_ptr<IPapyrusCompatibilityPolicy> compatibilityPolicy;
 };

@@ -28,11 +28,11 @@ public:
                 std::shared_ptr<IPapyrusCompatibilityPolicy> policy,
                 WorldState* world) override;
 
+public:
+  std::shared_ptr<IPapyrusCompatibilityPolicy> compatibilityPolicy;
+  WorldState* worldState;
+
 private:
   void RaceMenuHelper(VarValue& self, const char* funcName,
                       const std::vector<VarValue>& arguments);
-
-private:
-  std::shared_ptr<IPapyrusCompatibilityPolicy> compatibilityPolicy;
-  WorldState* worldState;
 };

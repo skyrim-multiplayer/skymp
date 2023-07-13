@@ -176,6 +176,6 @@ TEST_CASE("MoveTo", "[Papyrus][ObjectReference]")
   auto& actor = partOne.worldState.GetFormAt<MpActor>(formId);
   auto& refr = CreateMpObjectReference(partOne, 0xff000001);
   REQUIRE(actor.GetPos() != refr.GetPos());
-  NiPoint3 pos = actor.GetPos();
-  NiPoint3 rotation = actor.GetAngle();
+  papyrusObjectReference.MoveTo(refr.ToVarValue(), { actor.ToVarValue() });
+  REQUIRE(actor.GetPos() == refr.GetPos());
 }
