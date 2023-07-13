@@ -197,13 +197,12 @@ VarValue PapyrusActor::WornHasKeyword(VarValue self,
     std::vector<Inventory::Entry> entries = actor->GetEquipment().inv.entries;
     for (size_t i = 0; i < entries.size(); i++) {
       WorldState* worldState = compatibilityPolicy->GetWorldState();
+      espm::LookupResult entry =
+        worldState->GetEspm().GetBrowser().LookupById(entries[i].baseId);
       const auto& keywordIds =
-        worldState->GetEspm()
-          .GetBrowser()
-          .LookupById(entries[i].baseId)
-          .rec->GetKeywordIds(worldState->GetEspmCache());
+        entry.rec->GetKeywordIds(worldState->GetEspmCache());
       for (auto rawId : keywordIds) {
-        if (keywordRec.ToGlobalId(rawId) ==
+        if (entry.ToGlobalId(rawId) ==
             keywordRec.ToGlobalId(keywordRec.rec->GetId())) {
           return VarValue(true);
         }
