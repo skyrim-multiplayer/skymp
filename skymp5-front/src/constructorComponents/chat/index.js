@@ -12,10 +12,11 @@ import { replaceIfMoreThan20 } from '../../utils/replaceIfMoreThan20';
 
 import './styles.scss';
 const MAX_LENGTH = 2000; // Max message length
-const TIME_LIMIT = 1; // Seconds
+const TIME_LIMIT = 5; // Seconds
 const SHOUT_LIMIT = 180; // Seconds
 const MAX_LINES = 10;
 const MAX_SHOUT_LENGTH = 100;
+const MAX_HISTORY_LENGTH = 20;
 
 const SHOUTREGEXP = /№(.*?)№/gi;
 
@@ -46,11 +47,33 @@ const Chat = (props) => {
 
   const shoutReset = useRef(true);
 
+  const messagesHistory = useRef([]);
+
+  const currentMessageInHistory = useRef(-1);
+
+  const writtenMessage = useRef('');
+
   const handleScroll = () => {
     if (chatRef.current) {
       window.needToScroll = (chatRef.current.scrollTop === chatRef.current.scrollHeight - chatRef.current.offsetHeight);
     }
   };
+
+  const setEndOfContenteditable = (elem) => {
+    const sel = window.getSelection();
+    sel.selectAllChildren(elem);
+    sel.collapseToEnd();
+  };
+
+  const addMessageToHistory = (message) => {
+    messagesHistory.current = [message, ...messagesHistory.current];
+    if (messagesHistory.length > MAX_HISTORY_LENGTH) {
+      messagesHistory.current = messagesHistory.current.slice(0, MAX_HISTORY_LENGTH);
+    }
+    currentMessageInHistory.current = -1;
+    writtenMessage.current = '';
+  };
+
   const sendMessage = useCallback((text) => {
     const shout = text.match(SHOUTREGEXP);
     const shoutLen = shout
@@ -61,7 +84,9 @@ const Chat = (props) => {
       : 0;
     if (text !== '' && text.length <= MAX_LENGTH && isReset.current && shoutLen <= MAX_SHOUT_LENGTH && (shoutLen === 0 || shoutReset.current)) {
       if (send !== undefined) {
-        send(replaceIfMoreThan20(text.trim(), '\n', '', MAX_LINES));
+        const message = replaceIfMoreThan20(text.trim(), '\n', '', MAX_LINES);
+        send(message);
+        addMessageToHistory(message);
       }
       isReset.current = false;
       updateInput('');
@@ -89,10 +114,37 @@ const Chat = (props) => {
   useEffect(() => {
     const node = inputRef.current;
     const listener = (event) => {
+      console.log(event.keyCode);
       // Imitate message sending on Enter press
       if (event.code === 'Enter' && !event.shiftKey && inputRef.current) {
         event.preventDefault();
         sendMessage(input);
+      }
+      if (event.key === 'ArrowRight') {
+        if (currentMessageInHistory.current === -1) {
+          writtenMessage.current = input;
+        }
+        if (currentMessageInHistory.current + 1 < messagesHistory.current.length) {
+          currentMessageInHistory.current = currentMessageInHistory.current + 1;
+          updateInput(messagesHistory.current[currentMessageInHistory.current]);
+          inputRef.current.innerHTML = messagesHistory.current[currentMessageInHistory.current];
+          setEndOfContenteditable(inputRef.current);
+        }
+      }
+      if (event.key === 'ArrowLeft') {
+        if (currentMessageInHistory.current >= 0) {
+          if (currentMessageInHistory.current === 0) {
+            updateInput(writtenMessage.current);
+            inputRef.current.innerHTML = writtenMessage.current;
+            setEndOfContenteditable(inputRef.current);
+            currentMessageInHistory.current = -1;
+          } else {
+            currentMessageInHistory.current = currentMessageInHistory.current - 1;
+            updateInput(messagesHistory.current[currentMessageInHistory.current]);
+            inputRef.current.innerHTML = messagesHistory.current[currentMessageInHistory.current];
+            setEndOfContenteditable(inputRef.current);
+          }
+        }
       }
     };
     node?.addEventListener('keydown', listener);
