@@ -36,7 +36,6 @@ TEST_CASE("Actor should load be able to load appearance, equipment, "
   changeForm.spawnPoint.pos = { 1, 2, 3 };
   changeForm.spawnPoint.rot = { 1, 2, 4 };
   changeForm.spawnDelay = 8.0f;
-  changeForm.consoleCommandsAllowed = true;
 
   MpActor actor(LocationalData(), FormCallbacks::DoNothing(), 0xff000000);
   actor.ApplyChangeForm(changeForm);
@@ -54,5 +53,4 @@ TEST_CASE("Actor should load be able to load appearance, equipment, "
   REQUIRE(actor.GetChangeForm().spawnPoint.pos == NiPoint3{ 1, 2, 3 });
   REQUIRE(actor.GetChangeForm().spawnPoint.rot == NiPoint3{ 1, 2, 4 });
   REQUIRE(actor.GetChangeForm().spawnDelay == 8.0f);
-  REQUIRE(actor.GetChangeForm().consoleCommandsAllowed == true);
 }

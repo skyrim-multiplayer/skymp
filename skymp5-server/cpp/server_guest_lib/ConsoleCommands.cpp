@@ -5,6 +5,10 @@
 #include "WorldState.h"
 #include "papyrus-vm/Utils.h"
 
+// There were hardcoded real profile ids
+// TODO(#1136): make it configurable
+const std::set<int> kAdmins{ 479, 485, 486, 487, 488, 489, 497 };
+
 ConsoleCommands::Argument::Argument()
 {
   data = 0;
@@ -50,8 +54,7 @@ namespace {
 
 void EnsureAdmin(const MpActor& me)
 {
-  bool isAdmin = me.GetConsoleCommandsAllowedFlag();
-  if (!isAdmin) {
+  if (kAdmins.find(me.GetChangeForm().profileId) == kAdmins.end()) {
     throw std::runtime_error("Not enough permissions to use this command");
   }
 }

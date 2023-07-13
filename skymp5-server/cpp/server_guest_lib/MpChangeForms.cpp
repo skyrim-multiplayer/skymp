@@ -42,8 +42,6 @@ nlohmann::json MpChangeForm::ToJson(const MpChangeForm& changeForm)
 
   res["isDead"] = changeForm.isDead;
 
-  res["consoleCommandsAllowed"] = changeForm.consoleCommandsAllowed;
-
   res["spawnPoint_pos"] = { changeForm.spawnPoint.pos[0],
                             changeForm.spawnPoint.pos[1],
                             changeForm.spawnPoint.pos[2] };
@@ -70,7 +68,6 @@ MpChangeForm MpChangeForm::JsonToChangeForm(simdjson::dom::element& element)
     healthPercentage("healthPercentage"),
     magickaPercentage("magickaPercentage"),
     staminaPercentage("staminaPercentage"), isDead("isDead"),
-    consoleCommandsAllowed("consoleCommandsAllowed"),
     spawnPointPos("spawnPoint_pos"), spawnPointRot("spawnPoint_rot"),
     spawnPointCellOrWorldDesc("spawnPoint_cellOrWorldDesc"),
     spawnDelay("spawnDelay");
@@ -138,13 +135,7 @@ MpChangeForm MpChangeForm::JsonToChangeForm(simdjson::dom::element& element)
   ReadEx(element, healthPercentage, &res.actorValues.healthPercentage);
   ReadEx(element, magickaPercentage, &res.actorValues.magickaPercentage);
   ReadEx(element, staminaPercentage, &res.actorValues.staminaPercentage);
-
   ReadEx(element, isDead, &res.isDead);
-
-  if (element.at_pointer(consoleCommandsAllowed.GetData()).error() ==
-      simdjson::error_code::SUCCESS) {
-    ReadEx(element, consoleCommandsAllowed, &res.consoleCommandsAllowed);
-  }
 
   simdjson::dom::element jDynamicFields;
   ReadEx(element, dynamicFields, &jDynamicFields);

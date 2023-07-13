@@ -4,7 +4,6 @@
 #include "AngleBinding.h"
 #include "AppearanceBinding.h"
 #include "BaseDescBinding.h"
-#include "ConsoleCommandsAllowedBinding.h"
 #include "CustomPropertyBinding.h"
 #include "EquipmentBinding.h"
 #include "IdxBinding.h"
@@ -47,8 +46,6 @@ PropertyBindingFactory::CreateStandardPropertyBindings()
   result["type"] = std::make_shared<TypeBinding>();
   result["worldOrCellDesc"] = std::make_shared<WorldOrCellDescBinding>();
   result["idx"] = std::make_shared<IdxBinding>();
-  result["consoleCommandsAllowed"] =
-    std::make_shared<ConsoleCommandsAllowedBinding>();
   return result;
 }
 
