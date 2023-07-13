@@ -1,8 +1,8 @@
 #include "libespm/Loader.h"
 
 #include "libespm/AllocatedBuffer.h"
-#include "libespm/EspmUtils.h"
 #include "libespm/MappedBuffer.h"
+#include "libespm/Utils.h"
 
 namespace espm {
 

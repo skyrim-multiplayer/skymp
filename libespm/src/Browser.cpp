@@ -1,8 +1,10 @@
 #include "libespm/Browser.h"
+#include "libespm/ACHR.h"
 #include "libespm/CellOrGridPos.h"
 #include "libespm/CompressedFieldsCache.h"
 #include "libespm/GroupDataInternal.h"
 #include "libespm/GroupUtils.h"
+#include "libespm/KYWD.h"
 #include "libespm/NAVM.h"
 #include "libespm/NavMeshKey.h"
 #include "libespm/REFR.h"
@@ -35,6 +37,7 @@ struct Browser::Impl
     groupStackByRecordPtr;
   std::vector<const RecordHeader*> objectReferences;
   std::vector<const RecordHeader*> constructibleObjects;
+  std::vector<const RecordHeader*> keywords;
 
   GroupStack grStack;
   std::vector<std::unique_ptr<GroupStack>> grStackCopies;
@@ -105,6 +108,9 @@ const std::vector<const RecordHeader*>& Browser::GetRecordsByType(
   }
   if (!std::strcmp(type, "COBJ")) {
     return pImpl->constructibleObjects;
+  }
+  if (!std::strcmp(type, "KYWD")) {
+    return pImpl->keywords;
   }
   throw std::runtime_error(
     "GetRecordsByType currently supports only REFR and COBJ records");
@@ -198,7 +204,7 @@ bool Browser::ReadAny(const GroupStack* parentGrStack)
     pImpl->recById[recHeader->id] = recHeader;
 
     Type t = recHeader->GetType();
-    if (t == "REFR" || t == "ACHR") {
+    if (utils::Is<espm::REFR>(t) || utils::Is<espm::ACHR>(t)) {
       pImpl->objectReferences.push_back(recHeader);
       const auto refr = reinterpret_cast<const REFR*>(recHeader);
 
@@ -214,11 +220,15 @@ bool Browser::ReadAny(const GroupStack* parentGrStack)
       }
     }
 
-    if (recHeader->GetType() == "COBJ") {
+    if (utils::Is<espm::CONT>(t)) {
       pImpl->constructibleObjects.push_back(recHeader);
     }
 
-    if (recHeader->GetType() == "NAVM") {
+    if (utils::Is<espm::KYWD>(t)) {
+      pImpl->keywords.push_back(recHeader);
+    }
+
+    if (utils::Is<espm::NAVM>(t)) {
       auto nvnm = reinterpret_cast<const NAVM*>(recHeader);
 
       auto& v = pImpl->navmeshes[NavMeshKey(

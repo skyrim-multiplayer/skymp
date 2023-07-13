@@ -1,6 +1,6 @@
 #include "libespm/CONT.h"
-#include "libespm/EspmUtils.h"
 #include "libespm/RecordHeaderAccess.h"
+#include "libespm/Utils.h"
 #include <cstring>
 
 namespace espm {

@@ -11,6 +11,12 @@
 
 namespace espm::utils {
 
+template <typename Record>
+bool Is(Type t) noexcept
+{
+  return Record::kType == t;
+}
+
 std::string ToString(GroupType type);
 bool IsItem(Type type) noexcept;
 uint32_t CalculateHashcode(const void* readBuffer, size_t length);

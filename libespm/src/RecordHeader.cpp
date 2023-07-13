@@ -1,7 +1,7 @@
 #include "libespm/RecordHeader.h"
-#include "libespm/EspmUtils.h"
 #include "libespm/RecordHeaderAccess.h"
 #include "libespm/ScriptData.h"
+#include "libespm/Utils.h"
 #include <cstring>
 
 namespace espm {

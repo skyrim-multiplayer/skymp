@@ -1,5 +1,5 @@
 #include "libespm/NavMeshKey.h"
-#include "libespm/EspmUtils.h"
+#include "libespm/Utils.h"
 
 namespace espm {
 NavMeshKey::NavMeshKey(uint32_t worldSpaceId, CellOrGridPos cellOrWorld)

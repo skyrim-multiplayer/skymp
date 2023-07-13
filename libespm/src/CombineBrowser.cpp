@@ -1,7 +1,7 @@
 #include "libespm/CombineBrowser.h"
 #include "libespm/Browser.h"
-#include "libespm/EspmUtils.h"
 #include "libespm/RecordHeader.h"
+#include "libespm/Utils.h"
 #include <array>
 #include <fmt/format.h>
 #include <memory>
