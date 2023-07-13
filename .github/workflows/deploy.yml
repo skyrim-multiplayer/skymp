@@ -96,6 +96,8 @@ jobs:
                     chown -R skymp:skymp /src /home/skymp/.cmake-js
 
           - name: CMake Configure
+            env:
+                GAMEMODE_GITHUB_TOKEN: ${{secrets.GAMEMODE_GITHUB_TOKEN}}
             if: ${{env.DEPLOY_ACTION == 'deploy'}}
             uses: addnab/docker-run-action@v3
             with:
@@ -109,6 +111,7 @@ jobs:
                     && ./build.sh --configure \
                        -DBUILD_UNIT_TESTS=OFF \
                        -DBUILD_GAMEMODE=ON \
+                       -DGITHUB_TOKEN=${{env.GAMEMODE_GITHUB_TOKEN}} \
                        -DOFFLINE_MODE=OFF \
                        -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
 
