@@ -1,7 +1,7 @@
 #pragma once
 #include "IPapyrusClass.h"
 
-class PapyrusForm final : public IPapyrusClass<PapyrusForm>
+class PapyrusForm : public IPapyrusClass<PapyrusForm>
 {
 public:
   const char* GetName() override { return "form"; }
@@ -14,7 +14,8 @@ public:
   VarValue HasKeyword(VarValue self, const std::vector<VarValue>& arguments);
 
   void Register(VirtualMachine& vm,
-                std::shared_ptr<IPapyrusCompatibilityPolicy> policy) override
+                std::shared_ptr<IPapyrusCompatibilityPolicy> policy,
+                WorldState* world) override
   {
     AddMethod(vm, "RegisterForSingleUpdate",
               &PapyrusForm::RegisterForSingleUpdate);

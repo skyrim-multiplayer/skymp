@@ -1,7 +1,7 @@
 #pragma once
 #include "IPapyrusClass.h"
 
-class PapyrusFormList final : public IPapyrusClass<PapyrusFormList>
+class PapyrusFormList : public IPapyrusClass<PapyrusFormList>
 {
 public:
   const char* GetName() override { return "formlist"; }
@@ -11,7 +11,8 @@ public:
   VarValue Find(VarValue self, const std::vector<VarValue>& arguments) const;
 
   void Register(VirtualMachine& vm,
-                std::shared_ptr<IPapyrusCompatibilityPolicy> policy) override
+                std::shared_ptr<IPapyrusCompatibilityPolicy> policy,
+                WorldState* world) override
   {
     AddMethod(vm, "GetSize", &PapyrusFormList::GetSize);
     AddMethod(vm, "GetAt", &PapyrusFormList::GetAt);

@@ -2,7 +2,7 @@
 #include "IPapyrusClass.h"
 #include "SpSnippetFunctionGen.h"
 
-class PapyrusGame final : public IPapyrusClass<PapyrusGame>
+class PapyrusGame : public IPapyrusClass<PapyrusGame>
 {
 public:
   const char* GetName() override { return "game"; }
@@ -23,7 +23,8 @@ public:
                           const std::vector<VarValue>& arguments);
 
   void Register(VirtualMachine& vm,
-                std::shared_ptr<IPapyrusCompatibilityPolicy> policy) override
+                std::shared_ptr<IPapyrusCompatibilityPolicy> policy,
+                WorldState* world) override
   {
     compatibilityPolicy = policy;
 

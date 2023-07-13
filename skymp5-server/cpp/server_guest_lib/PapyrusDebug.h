@@ -2,7 +2,7 @@
 #include "IPapyrusClass.h"
 #include "SpSnippetFunctionGen.h"
 
-class PapyrusDebug final : public IPapyrusClass<PapyrusDebug>
+class PapyrusDebug : public IPapyrusClass<PapyrusDebug>
 {
 public:
   const char* GetName() override { return "debug"; }
@@ -14,7 +14,8 @@ public:
                               const std::vector<VarValue>& arguments);
 
   void Register(VirtualMachine& vm,
-                std::shared_ptr<IPapyrusCompatibilityPolicy> policy) override
+                std::shared_ptr<IPapyrusCompatibilityPolicy> policy,
+                WorldState* world) override
   {
     compatibilityPolicy = policy;
 
