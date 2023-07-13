@@ -29,21 +29,6 @@ struct LearnedSpells
 
   std::vector<Data::key_type> GetLearnedSpells() const;
 
-  friend bool operator==(const LearnedSpells& lhs, const LearnedSpells& rhs)
-  {
-    return lhs._learnedSpellIds == rhs._learnedSpellIds;
-  }
-
-  friend bool operator!=(const LearnedSpells& lhs, const LearnedSpells& rhs)
-  {
-    return !(lhs == rhs);
-  }
-
-  friend bool operator<(const LearnedSpells& lhs, const LearnedSpells& rhs)
-  {
-    return lhs._learnedSpellIds < rhs._learnedSpellIds;
-  }
-
 private:
   Data _learnedSpellIds{};
 };
@@ -93,13 +78,12 @@ public:
 
   auto ToTuple() const
   {
-    return std::make_tuple(recType, formDesc, baseDesc, position.x, position.y,
-                           position.z, angle.x, angle.y, angle.z,
-                           worldOrCellDesc, inv.ToJson(), isHarvested, isOpen,
-                           baseContainerAdded, nextRelootDatetime, isDisabled,
-                           profileId, isRaceMenuOpen, isDead, appearanceDump,
-                           equipmentDump, actorValues.ToTuple(), spawnPoint,
-                           dynamicFields, spawnDelay, learnedSpells);
+    return std::make_tuple(
+      recType, formDesc, baseDesc, position.x, position.y, position.z, angle.x,
+      angle.y, angle.z, worldOrCellDesc, inv.ToJson(), isHarvested, isOpen,
+      baseContainerAdded, nextRelootDatetime, isDisabled, profileId,
+      isRaceMenuOpen, isDead, appearanceDump, equipmentDump,
+      actorValues.ToTuple(), spawnPoint, dynamicFields, spawnDelay);
   }
 
   static nlohmann::json ToJson(const MpChangeFormREFR& changeForm);
