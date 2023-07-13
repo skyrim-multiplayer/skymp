@@ -29,6 +29,21 @@ struct LearnedSpells
 
   std::vector<Data::key_type> GetLearnedSpells() const;
 
+  friend bool operator==(const LearnedSpells& lhs, const LearnedSpells& rhs)
+  {
+    return lhs._learnedSpellIds == rhs._learnedSpellIds;
+  }
+
+  friend bool operator!=(const LearnedSpells& lhs, const LearnedSpells& rhs)
+  {
+    return !(lhs == rhs);
+  }
+
+  friend bool operator<(const LearnedSpells& lhs, const LearnedSpells& rhs)
+  {
+    return lhs._learnedSpellIds < rhs._learnedSpellIds;
+  }
+
 private:
   Data _learnedSpellIds{};
 };
@@ -60,6 +75,7 @@ public:
 
   bool isRaceMenuOpen = false;
   bool isDead = false;
+  bool consoleCommandsAllowed = false;
 
   // 'appearanceDump' and 'equipmentDump' can be empty. it means nullopt.
   // "unexisting" equipment and equipment with zero entries are different
@@ -71,8 +87,7 @@ public:
                                 FormDesc::Tamriel() };
   float spawnDelay = 5.0f;
 
-  // Much attention to 'MpActor::GetChangeForm()' and 'ActorTest.cpp' when
-  // adding new Actor-related rows
+  // Please update 'ActorTest.cpp' when adding new Actor-related rows
 
   DynamicFields dynamicFields;
 
@@ -82,8 +97,9 @@ public:
       recType, formDesc, baseDesc, position.x, position.y, position.z, angle.x,
       angle.y, angle.z, worldOrCellDesc, inv.ToJson(), isHarvested, isOpen,
       baseContainerAdded, nextRelootDatetime, isDisabled, profileId,
-      isRaceMenuOpen, isDead, appearanceDump, equipmentDump,
-      actorValues.ToTuple(), spawnPoint, dynamicFields, spawnDelay);
+      isRaceMenuOpen, isDead, consoleCommandsAllowed, appearanceDump,
+      equipmentDump, actorValues.ToTuple(), spawnPoint, dynamicFields,
+      spawnDelay, learnedSpells);
   }
 
   static nlohmann::json ToJson(const MpChangeFormREFR& changeForm);

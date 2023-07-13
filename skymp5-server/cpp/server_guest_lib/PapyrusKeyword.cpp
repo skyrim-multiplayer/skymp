@@ -16,6 +16,7 @@ VarValue PapyrusKeyword::GetKeyword(VarValue self,
     for (auto itKeyword = (*it)->begin(); itKeyword != (*it)->end();
          ++itKeyword) {
       auto keyword = reinterpret_cast<espm::KYWD*>(*itKeyword);
+      WorldState* worldState = compatibilityPolicy->GetWorldState();
       CIString otherName =
         keyword->GetData(worldState->GetEspmCache()).editorId;
 
