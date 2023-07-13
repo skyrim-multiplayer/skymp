@@ -5,6 +5,7 @@
 #include "libespm/GroupDataInternal.h"
 #include "libespm/GroupUtils.h"
 #include "libespm/KYWD.h"
+#include "libespm/COBJ.h"
 #include "libespm/NAVM.h"
 #include "libespm/NavMeshKey.h"
 #include "libespm/REFR.h"
@@ -220,7 +221,7 @@ bool Browser::ReadAny(const GroupStack* parentGrStack)
       }
     }
 
-    if (utils::Is<espm::CONT>(t)) {
+    if (utils::Is<espm::COBJ>(t)) {
       pImpl->constructibleObjects.push_back(recHeader);
     }
 
