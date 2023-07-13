@@ -122,7 +122,8 @@ VarValue PapyrusGame::GetForm(VarValue self,
   if (formId > maxId) {
     return VarValue::None();
   }
-  const std::shared_ptr<MpForm>& pForm = worldState->LookupFormById(formId);
+  const std::shared_ptr<MpForm>& pForm =
+    compatibilityPolicy->GetWorldState()->LookupFormById(formId);
   if (!pForm) {
     return VarValue::None();
   }
