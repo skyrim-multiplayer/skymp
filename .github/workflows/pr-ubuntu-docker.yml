@@ -77,7 +77,9 @@ jobs:
                     cd /src \
                     && ./build.sh --configure \
                        -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
-                       -DUNIT_DATA_DIR="/src/skyrim_data_files"
+                       -DUNIT_DATA_DIR="/src/skyrim_data_files" \
+                       -DBUILD_GAMEMODE=ON \
+                       -DGITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}
 
           - name: Upload compile_commands.json
             uses: actions/upload-artifact@v3

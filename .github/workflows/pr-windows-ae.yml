@@ -97,6 +97,8 @@ jobs:
         -DUNIT_DATA_DIR="skyrim_data_files"
         -DPREPARE_NEXUS_ARCHIVES=ON
         -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+        -DBUILD_GAMEMODE=ON
+        -DGITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}
         --profiling-output cmake-profiling-output
         --profiling-format google-trace
 
