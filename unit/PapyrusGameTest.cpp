@@ -5,9 +5,11 @@
 #include "PapyrusGame.h"
 #include "papyrus-vm/Structures.h"
 
-TEST_CASE("GetForm", "[Papyrus][Game]")
+PartOne& GetPartOne();
+
+TEST_CASE("GetForm", "[Papyrus][Game][espm]")
 {
-  PartOne partOne;
+  PartOne& partOne = GetPartOne();
   PapyrusGame game;
   constexpr const uint32_t foodBarrel = 0x20570;
   const auto& refer =
@@ -20,9 +22,9 @@ TEST_CASE("GetForm", "[Papyrus][Game]")
   REQUIRE(pForm == pPapyrusForm);
 }
 
-TEST_CASE("GetFormEx", "[Papyrus][Game]")
+TEST_CASE("GetFormEx", "[Papyrus][Game][espm]")
 {
-  PartOne partOne;
+  PartOne& partOne = GetPartOne();
   PapyrusGame game;
   DoConnect(partOne, 0);
   const uint32_t formId =
