@@ -107,6 +107,7 @@ jobs:
                     -v ${{github.workspace}}/.cmake-js:/home/skymp/.cmake-js
                     -u skymp
                 run: |
+                    echo $GITHUB_TOKEN \
                     cd /src \
                     && ./build.sh --configure \
                        -DBUILD_UNIT_TESTS=OFF \
