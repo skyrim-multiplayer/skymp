@@ -179,13 +179,13 @@ VarValue PapyrusActor::SetDontMove(VarValue self,
   return VarValue::None();
 }
 
-VarValue PapyrusActor::IsDead(VarValue self,
-                              const std::vector<VarValue>& arguments)
+VarValue PapyrusActor::IsDead(
+  VarValue self, const std::vector<VarValue>& arguments) const noexcept
 {
   if (auto _this = GetFormPtr<MpActor>(self)) {
     return VarValue(_this->IsDead());
   }
-  return VarValue(false);
+  return VarValue::None();
 }
 
 void PapyrusActor::Register(

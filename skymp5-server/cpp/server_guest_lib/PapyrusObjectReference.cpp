@@ -422,38 +422,61 @@ VarValue PapyrusObjectReference::PlayGamebryoAnimation(
   return VarValue::None();
 }
 
-VarValue PapyrusObjectReference::MoveTo(VarValue self,
-                                        const std::vector<VarValue>& arguments)
+VarValue PapyrusObjectReference::MoveTo(
+  VarValue self, const std::vector<VarValue>& arguments) const noexcept
 {
-  if (auto _this = GetFormPtr<MpObjectReference>(self)) {
-    if (arguments.size() > 0) {
-      auto objectReference = GetFormPtr<MpObjectReference>(arguments[0]);
-      if (!objectReference) {
-        return VarValue::None();
-      }
-      float xOffset = 0.f, yOffset = 0.f, zOffset = 0.f;
-      bool matchRotation = true;
-      if (arguments.size() > 1) {
-        xOffset =
-          static_cast<float>(static_cast<double>(arguments[1].CastToFloat()));
-        yOffset =
-          static_cast<float>(static_cast<double>(arguments[2].CastToFloat()));
-        zOffset =
-          static_cast<float>(static_cast<double>(arguments[3].CastToFloat()));
-        matchRotation = static_cast<bool>(arguments[4].CastToBool());
-      }
-      NiPoint3 dest = objectReference->GetPos(),
-               rotation = objectReference->GetAngle();
-      dest.x += xOffset;
-      dest.y += yOffset;
-      dest.z += zOffset;
-      if (!matchRotation) {
-        rotation = _this->GetAngle();
-      }
-      _this->SetAngle(rotation);
-      _this->SetPos(dest);
-    }
+  auto _this = GetFormPtr<MpObjectReference>(self);
+  if (!_this || arguments.size() < 1) {
+    return VarValue::None();
   }
+  const MpObjectReference* objectReference;
+  float xOffset = 0.f, yOffset = 0.f, zOffset = 0.f;
+  bool matchRotation = true;
+  switch (arguments.size()) {
+    case 1:
+      objectReference = GetFormPtr<MpObjectReference>(arguments[0]);
+      break;
+    case 2:
+      xOffset =
+        static_cast<float>(static_cast<double>(arguments[1].CastToFloat()));
+      break;
+    case 3:
+      xOffset =
+        static_cast<float>(static_cast<double>(arguments[1].CastToFloat()));
+      yOffset =
+        static_cast<float>(static_cast<double>(arguments[2].CastToFloat()));
+      break;
+    case 4:
+      xOffset =
+        static_cast<float>(static_cast<double>(arguments[1].CastToFloat()));
+      yOffset =
+        static_cast<float>(static_cast<double>(arguments[2].CastToFloat()));
+      zOffset =
+        static_cast<float>(static_cast<double>(arguments[3].CastToFloat()));
+      break;
+    case 5:
+      xOffset =
+        static_cast<float>(static_cast<double>(arguments[1].CastToFloat()));
+      yOffset =
+        static_cast<float>(static_cast<double>(arguments[2].CastToFloat()));
+      zOffset =
+        static_cast<float>(static_cast<double>(arguments[3].CastToFloat()));
+      matchRotation = static_cast<bool>(arguments[4].CastToBool());
+      break;
+    default:
+      return VarValue::None();
+  }
+  if (!objectReference) {
+    return VarValue::None();
+  }
+  NiPoint3 dest = objectReference->GetPos(),
+           rotation = objectReference->GetAngle();
+  dest.x += xOffset;
+  dest.y += yOffset;
+  dest.z += zOffset;
+  rotation = matchRotation ? rotation : _this->GetAngle();
+  _this->SetAngle(rotation);
+  _this->SetPos(dest);
   return VarValue::None();
 }
 

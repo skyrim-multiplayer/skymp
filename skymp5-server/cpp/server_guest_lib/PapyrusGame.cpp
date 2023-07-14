@@ -111,13 +111,13 @@ void PapyrusGame::RaceMenuHelper(VarValue& self, const char* funcName,
   }
 }
 
-VarValue PapyrusGame::GetForm(VarValue self,
-                              const std::vector<VarValue>& arguments)
+VarValue PapyrusGame::GetForm(
+  VarValue self, const std::vector<VarValue>& arguments) const noexcept
 {
-  if (arguments.size() < 1) {
+  if (arguments.size() != 1) {
     return VarValue::None();
   }
-  auto formId = static_cast<int32_t>(arguments[0].CastToInt());
+  auto formId = static_cast<const int32_t>(arguments[0].CastToInt());
   constexpr const uint32_t maxId = 0x80000000;
   if (formId > maxId) {
     return VarValue::None();
@@ -130,13 +130,13 @@ VarValue PapyrusGame::GetForm(VarValue self,
   return VarValue(pForm->ToGameObject());
 }
 
-VarValue PapyrusGame::GetFormEx(VarValue self,
-                                const std::vector<VarValue>& arguments)
+VarValue PapyrusGame::GetFormEx(
+  VarValue self, const std::vector<VarValue>& arguments) const noexcept
 {
-  if (arguments.size() < 1) {
+  if (arguments.size() != 1) {
     return VarValue::None();
   }
-  auto formId = static_cast<int32_t>(arguments[0].CastToInt());
+  auto formId = static_cast<const int32_t>(arguments[0].CastToInt());
   const std::shared_ptr<MpForm>& pForm =
     compatibilityPolicy->GetWorldState()->LookupFormById(formId);
   if (!pForm) {

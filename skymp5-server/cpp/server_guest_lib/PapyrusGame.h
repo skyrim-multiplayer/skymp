@@ -21,8 +21,10 @@ public:
                                const std::vector<VarValue>& arguments);
   VarValue GetCameraState(VarValue self,
                           const std::vector<VarValue>& arguments);
-  VarValue GetForm(VarValue self, const std::vector<VarValue>& arguments);
-  VarValue GetFormEx(VarValue self, const std::vector<VarValue>& arguments);
+  VarValue GetForm(VarValue self,
+                   const std::vector<VarValue>& arguments) const noexcept;
+  VarValue GetFormEx(VarValue self,
+                     const std::vector<VarValue>& arguments) const noexcept;
 
   void Register(VirtualMachine& vm,
                 std::shared_ptr<IPapyrusCompatibilityPolicy> policy) override;

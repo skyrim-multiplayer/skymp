@@ -25,17 +25,27 @@ VarValue PapyrusUtility::Wait(VarValue self,
   return VarValue(resultPromise);
 }
 
-VarValue PapyrusUtility::RandomInt(VarValue self,
-                                   const std::vector<VarValue>& arguments)
+static const std::mt19937 kGenerator{ std::random_device{}() };
+
+VarValue PapyrusUtility::RandomInt(
+  VarValue self, const std::vector<VarValue>& arguments) const
 {
   int32_t min = 0, max = 100;
-  std::mt19937 generator{ std::random_device{}() };
-  if (arguments.size() > 0) {
-    min = static_cast<int32_t>(arguments[0].CastToInt());
-    max = static_cast<int32_t>(arguments[0].CastToInt());
+  switch (arguments.size()) {
+    case 0:
+      break;
+    case 1:
+      min = static_cast<int32_t>(arguments[0].CastToInt());
+      break;
+    case 2:
+      min = static_cast<int32_t>(arguments[0].CastToInt());
+      max = static_cast<int32_t>(arguments[1].CastToInt());
+      break;
+    default:
+      return VarValue::None();
   }
   std::uniform_int_distribution<> distribute{ min, max };
-  return VarValue(distribute(generator));
+  return VarValue(distribute(kGenerator));
 }
 
 void PapyrusUtility::Register(
