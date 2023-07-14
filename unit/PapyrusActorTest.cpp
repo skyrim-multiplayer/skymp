@@ -79,8 +79,8 @@ TEST_CASE("IsDead()", "[Papyrus][Actor]")
   uint32_t formId = partOne.CreateActor(0xff000000, { 0, 0, 0 }, 0, 0x3c);
   partOne.SetUserActor(0, 0xff000000);
   auto& actor = partOne.worldState.GetFormAt<MpActor>(formId);
-  bool worldActorDead = actor.IsDead();
-  bool papyrusActorDead = static_cast<bool>(
+  const bool worldActorDead = actor.IsDead();
+  auto papyrusActorDead = static_cast<const bool>(
     papyrusActor.IsDead(actor.ToVarValue(), {}).CastToBool());
   REQUIRE(worldActorDead == papyrusActorDead);
 
