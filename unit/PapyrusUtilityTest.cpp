@@ -32,15 +32,18 @@ TEST_CASE("RandomInt", "[Papyrus][Utility]")
   PapyrusUtility utility;
   int32_t low = 0, high = 100;
   int32_t res = static_cast<int32_t>(utility.RandomInt(VarValue::None(), {}));
-  REQUIRE(low <= res && res <= high);
+  bool good = low <= res && res <= high;
+  REQUIRE(good);
   low = 253;
   high = 666;
   res = static_cast<int32_t>(
     utility.RandomInt(VarValue::None(), { VarValue(low), VarValue(high) }));
-  REQUIRE(low <= res && res <= high);
+  good = low <= res && res <= high;
+  REQUIRE(good);
   low = 13;
   high = 100;
   res = static_cast<int32_t>(
     utility.RandomInt(VarValue::None(), { VarValue(low) }));
-  REQUIRE(low <= res && res <= high);
+  good = low <= res && res <= high;
+  REQUIRE(good);
 }

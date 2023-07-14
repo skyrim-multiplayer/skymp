@@ -25,7 +25,7 @@ VarValue PapyrusUtility::Wait(VarValue self,
   return VarValue(resultPromise);
 }
 
-static const std::mt19937 kGenerator{ std::random_device{}() };
+static std::mt19937 kGenerator{ std::random_device{}() };
 
 VarValue PapyrusUtility::RandomInt(
   VarValue self, const std::vector<VarValue>& arguments) const noexcept
