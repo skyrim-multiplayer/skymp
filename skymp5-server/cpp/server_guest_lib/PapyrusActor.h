@@ -30,6 +30,8 @@ public:
   VarValue SetAlpha(VarValue self, const std::vector<VarValue>& arguments);
   VarValue EquipItem(VarValue self, const std::vector<VarValue>& arguments);
   VarValue SetDontMove(VarValue self, const std::vector<VarValue>& arguments);
+  VarValue WornHasKeyword(VarValue self,
+                          const std::vector<VarValue>& arguments);
 
   void Register(VirtualMachine& vm,
                 std::shared_ptr<IPapyrusCompatibilityPolicy> policy) override
@@ -49,6 +51,7 @@ public:
     AddMethod(vm, "SetAlpha", &PapyrusActor::SetAlpha);
     AddMethod(vm, "EquipItem", &PapyrusActor::EquipItem);
     AddMethod(vm, "SetDontMove", &PapyrusActor::SetDontMove);
+    AddMethod(vm, "WornHasKeyword", &PapyrusActor::WornHasKeyword);
   }
 
   std::shared_ptr<IPapyrusCompatibilityPolicy> compatibilityPolicy;
