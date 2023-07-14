@@ -13,7 +13,6 @@ on:
 
 env:
     BUILD_TYPE: RelWithDebInfo
-    GAMEMODE_GITHUB_TOKEN: ${{secrets.GAMEMODE_GITHUB_TOKEN}}
 
 jobs:
     deploy:
