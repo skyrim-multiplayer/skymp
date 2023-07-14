@@ -1,7 +1,7 @@
 project(skymp5-functions-lib)
 
 set(GAMEMODE_REPO Pospelove/skymp5-gamemode)
-set(GAMEMODE_REVISION 9673b15be92e7819c6660b51bdf439ff5842a83c)
+set(GAMEMODE_REVISION e32408a98671d157132cc4634bea66eb858271fb)
 
 if(BUILD_GAMEMODE)
   if(NOT GITHUB_TOKEN)
