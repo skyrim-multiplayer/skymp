@@ -1,11 +1,14 @@
 project(skymp5-functions-lib)
 
+set(GAMEMODE_REPO Pospelove/skymp5-gamemode)
+set(GAMEMODE_REVISION b6f1398cd60ce3c581f5bdf96811f0d2548b3976)
+
 if(BUILD_GAMEMODE)
   if(NOT GITHUB_TOKEN)
     message(FATAL_ERROR "GITHUB_TOKEN is not set. Please set it to your GitHub personal access token.")
   endif()
   # The URL to the raw gamemode.js file.
-  set(GAMEMODE_JS_URL "https://raw.githubusercontent.com/Pospelove/skymp5-gamemode/e566cfabfca79ca14851b8e372be1fea2c4b576a/build/gamemode.js")
+  set(GAMEMODE_JS_URL "https://raw.githubusercontent.com/${GAMEMODE_REPO}/${GAMEMODE_REVISION}/build/gamemode.js")
 
   # The destination where the file will be saved.
   set(GAMEMODE_JS_DEST "${CMAKE_BINARY_DIR}/dist/server/gamemode.js")
