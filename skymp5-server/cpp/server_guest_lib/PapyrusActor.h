@@ -3,7 +3,7 @@
 #include "IPapyrusClass.h"
 #include "SpSnippetFunctionGen.h"
 
-class PapyrusActor : public IPapyrusClass<PapyrusActor>
+class PapyrusActor final : public IPapyrusClass<PapyrusActor>
 {
 public:
   const char* GetName() override { return "actor"; }
@@ -33,8 +33,7 @@ public:
   VarValue IsDead(VarValue self, const std::vector<VarValue>& arguments);
 
   void Register(VirtualMachine& vm,
-                std::shared_ptr<IPapyrusCompatibilityPolicy> policy,
-                WorldState* world) override;
+                std::shared_ptr<IPapyrusCompatibilityPolicy> policy) override;
 
   std::shared_ptr<IPapyrusCompatibilityPolicy> compatibilityPolicy;
 };

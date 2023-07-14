@@ -104,6 +104,9 @@ public:
   void ResetBlockCount() noexcept;
   uint32_t GetBlockCount() const noexcept;
 
+  bool GetConsoleCommandsAllowedFlag() const;
+  void SetConsoleCommandsAllowedFlag(bool newValue);
+
 private:
   struct Impl;
   std::shared_ptr<Impl> pImpl;
