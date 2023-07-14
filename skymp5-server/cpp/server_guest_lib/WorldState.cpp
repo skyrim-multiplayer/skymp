@@ -12,6 +12,7 @@
 #include "PapyrusForm.h"
 #include "PapyrusFormList.h"
 #include "PapyrusGame.h"
+#include "PapyrusKeyword.h"
 #include "PapyrusMessage.h"
 #include "PapyrusObjectReference.h"
 #include "PapyrusSkymp.h"
@@ -601,6 +602,7 @@ VirtualMachine& WorldState::GetPapyrusVm()
       pImpl->classes.emplace_back(std::make_unique<PapyrusSkymp>());
       pImpl->classes.emplace_back(std::make_unique<PapyrusUtility>());
       pImpl->classes.emplace_back(std::make_unique<PapyrusEffectShader>());
+      pImpl->classes.emplace_back(std::make_unique<PapyrusKeyword>());
       for (auto& cl : pImpl->classes) {
         cl->Register(*pImpl->vm, pImpl->policy);
       }

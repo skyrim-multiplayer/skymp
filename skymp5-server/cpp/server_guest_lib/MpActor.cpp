@@ -74,6 +74,18 @@ uint32_t MpActor::GetBlockCount() const noexcept
   return pImpl->blockActiveCount;
 }
 
+bool MpActor::GetConsoleCommandsAllowedFlag() const
+{
+  return GetChangeForm().consoleCommandsAllowed;
+}
+
+void MpActor::SetConsoleCommandsAllowedFlag(bool newValue)
+{
+  EditChangeForm([&](MpChangeForm& changeForm) {
+    changeForm.consoleCommandsAllowed = newValue;
+  });
+}
+
 void MpActor::SetRaceMenuOpen(bool isOpen)
 {
   EditChangeForm(
@@ -171,7 +183,7 @@ bool MpActor::OnEquip(uint32_t baseId)
   }
 
   if (!isSpell) {
-    RemoveItem(baseId, 1, this);
+    RemoveItem(baseId, 1, nullptr);
   }
 
   const VarValue args[] = {

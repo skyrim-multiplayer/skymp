@@ -7,8 +7,6 @@ using Catch::Matchers::ContainsSubstring;
 
 PartOne& GetPartOne();
 
-int kValidAdminUserId = 479;
-
 TEST_CASE("ConsoleCommand packet is parsed", "[ConsoleCommand]")
 {
   class MyActionListener : public ActionListener
@@ -84,7 +82,7 @@ TEST_CASE("AddItem executes", "[ConsoleCommand][espm]")
   p.CreateActor(0xff000000, { 0, 0, 0 }, 0, 0x3c);
   p.SetUserActor(0, 0xff000000);
   auto& ac = p.worldState.GetFormAt<MpActor>(0xff000000);
-  ac.RegisterProfileId(kValidAdminUserId);
+  ac.SetConsoleCommandsAllowedFlag(true);
   ac.RemoveAllItems();
 
   ActionListener::RawMessageData msgData;
@@ -122,7 +120,7 @@ TEST_CASE("PlaceAtMe executes", "[ConsoleCommand][espm]")
   p.CreateActor(0xff000000, { 0, 0, 0 }, 0, 0x3c);
   p.SetUserActor(0, 0xff000000);
   auto& ac = p.worldState.GetFormAt<MpActor>(0xff000000);
-  ac.RegisterProfileId(kValidAdminUserId);
+  ac.SetConsoleCommandsAllowedFlag(true);
 
   ActionListener::RawMessageData msgData;
   msgData.userId = 0;

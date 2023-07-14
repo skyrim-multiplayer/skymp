@@ -3,7 +3,7 @@
 #include "IPapyrusClass.h"
 #include "SpSnippetFunctionGen.h"
 
-class PapyrusActor : public IPapyrusClass<PapyrusActor>
+class PapyrusActor final : public IPapyrusClass<PapyrusActor>
 {
 public:
   const char* GetName() override { return "actor"; }

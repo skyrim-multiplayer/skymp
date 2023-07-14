@@ -115,6 +115,9 @@ public:
   void RemoveAllMagicEffects() noexcept;
   void ReapplyMagicEffects();
 
+  bool GetConsoleCommandsAllowedFlag() const;
+  void SetConsoleCommandsAllowedFlag(bool newValue);
+
 private:
   struct Impl;
   std::shared_ptr<Impl> pImpl;

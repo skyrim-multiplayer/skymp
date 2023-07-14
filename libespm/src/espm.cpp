@@ -497,6 +497,7 @@ struct espm::Browser::Impl
     groupStackByRecordPtr;
   std::vector<RecordHeader*> objectReferences;
   std::vector<RecordHeader*> constructibleObjects;
+  std::vector<RecordHeader*> keywords;
 
   GroupStack grStack;
   std::vector<std::unique_ptr<GroupStack>> grStackCopies;
@@ -568,6 +569,9 @@ const std::vector<espm::RecordHeader*>& espm::Browser::GetRecordsByType(
   }
   if (!strcmp(type, "COBJ")) {
     return pImpl->constructibleObjects;
+  }
+  if (!strcmp(type, "KYWD")) {
+    return pImpl->keywords;
   }
   throw std::runtime_error(
     "GetRecordsByType currently supports only REFR and COBJ records");
@@ -665,8 +669,8 @@ bool espm::Browser::ReadAny(const GroupStack* parentGrStack)
     pImpl->groupStackByRecordPtr.emplace(recHeader, parentGrStack);
 
     pImpl->recById[recHeader->id] = recHeader;
-
     auto t = recHeader->GetType();
+
     if (t == "REFR" || t == "ACHR") {
       pImpl->objectReferences.push_back(recHeader);
       const auto refr = reinterpret_cast<REFR*>(recHeader);
@@ -683,10 +687,13 @@ bool espm::Browser::ReadAny(const GroupStack* parentGrStack)
       }
     }
 
-    if (recHeader->GetType() == "COBJ")
+    if (t == "COBJ")
       pImpl->constructibleObjects.push_back(recHeader);
 
-    if (recHeader->GetType() == "NAVM") {
+    if (t == "KYWD")
+      pImpl->keywords.push_back(recHeader);
+
+    if (t == "NAVM") {
       auto nvnm = reinterpret_cast<NAVM*>(recHeader);
 
       auto& v = pImpl->navmeshes[NavMeshKey(
