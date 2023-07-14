@@ -105,13 +105,12 @@ jobs:
                     -v ${{github.workspace}}:/src
                     -v ${{github.workspace}}/.cmake-js:/home/skymp/.cmake-js
                     -u skymp
-                    -e GAMEMODE_GITHUB_TOKEN=${{env.GAMEMODE_GITHUB_TOKEN}}
                 run: |
                     cd /src \
                     && ./build.sh --configure \
                        -DBUILD_UNIT_TESTS=OFF \
                        -DBUILD_GAMEMODE=ON \
-                       -DGITHUB_TOKEN=$GAMEMODE_GITHUB_TOKEN \
+                       -DGITHUB_TOKEN=777 \
                        -DOFFLINE_MODE=OFF \
                        -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
 
