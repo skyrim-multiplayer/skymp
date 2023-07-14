@@ -39,8 +39,7 @@ VarValue PapyrusUtility::RandomInt(VarValue self,
 }
 
 void PapyrusUtility::Register(
-  VirtualMachine& vm, std::shared_ptr<IPapyrusCompatibilityPolicy> policy,
-  WorldState* world)
+  VirtualMachine& vm, std::shared_ptr<IPapyrusCompatibilityPolicy> policy)
 
 {
   compatibilityPolicy = policy;

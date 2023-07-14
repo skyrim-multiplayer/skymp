@@ -458,8 +458,7 @@ VarValue PapyrusObjectReference::MoveTo(VarValue self,
 }
 
 void PapyrusObjectReference::Register(
-  VirtualMachine& vm, std::shared_ptr<IPapyrusCompatibilityPolicy> policy,
-  WorldState* world)
+  VirtualMachine& vm, std::shared_ptr<IPapyrusCompatibilityPolicy> policy)
 {
   AddMethod(vm, "IsHarvested", &PapyrusObjectReference::IsHarvested);
   AddMethod(vm, "IsDisabled", &PapyrusObjectReference::IsDisabled);

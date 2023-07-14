@@ -146,11 +146,9 @@ VarValue PapyrusGame::GetFormEx(VarValue self,
 }
 
 void PapyrusGame::Register(VirtualMachine& vm,
-                           std::shared_ptr<IPapyrusCompatibilityPolicy> policy,
-                           WorldState* world)
+                           std::shared_ptr<IPapyrusCompatibilityPolicy> policy)
 {
   compatibilityPolicy = policy;
-  worldState = world;
 
   AddStatic(vm, "IncrementStat", &PapyrusGame::IncrementStat);
   AddStatic(vm, "ForceThirdPerson", &PapyrusGame::ForceThirdPerson);

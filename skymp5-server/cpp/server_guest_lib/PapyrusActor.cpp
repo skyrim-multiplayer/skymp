@@ -189,8 +189,7 @@ VarValue PapyrusActor::IsDead(VarValue self,
 }
 
 void PapyrusActor::Register(
-  VirtualMachine& vm, std::shared_ptr<IPapyrusCompatibilityPolicy> policy,
-  WorldState* world)
+  VirtualMachine& vm, std::shared_ptr<IPapyrusCompatibilityPolicy> policy)
 {
   compatibilityPolicy = policy;
 
