@@ -23,8 +23,8 @@ TEST_CASE("CropRegeneration function is working correctly",
   float newAttributeValue =
     oldAttributeValue + validAttributeValueRegeneration;
 
-  REQUIRE(CropRegeneration(newAttributeValue, 1.0f, 0.7f, 100.0f, 0.6f) ==
-          newAttributeValue);
+  REQUIRE(CropRegeneration(newAttributeValue, 1.0f, 0.7f, 100.0f, 0.6f,
+                           false) == newAttributeValue);
 }
 
 TEST_CASE(
@@ -36,28 +36,28 @@ TEST_CASE(
   float newAttributeValue = oldAttributeValue + 0.007f;
 
   REQUIRE(CropRegeneration(newAttributeValue, 1.0f, 0.7f, -100.0f,
-                           oldAttributeValue) == oldAttributeValue);
+                           oldAttributeValue, false) == oldAttributeValue);
 }
 
 TEST_CASE(
   "CropRegeneration returns 1 if regeneration is enough to restore attribute",
   "[CropRegeneration]")
 {
-  REQUIRE(CropRegeneration(1.0f, 1.0f, 5.0f, 100.0f, 0.97f) == 1.0f);
+  REQUIRE(CropRegeneration(1.0f, 1.0f, 5.0f, 100.0f, 0.97f, false) == 1.0f);
 }
 
 TEST_CASE("CropRegeneration returns 1 if newAttributeValue is more then 1 "
           "when oldAttributeValue = 1",
           "[CropRegeneration]")
 {
-  REQUIRE(CropRegeneration(1.05f, 1.0f, 5.0f, 100.0f, 1.0f) == 1.0f);
+  REQUIRE(CropRegeneration(1.05f, 1.0f, 5.0f, 100.0f, 1.0f, false) == 1.0f);
 }
 
 TEST_CASE("CropRegeneration returns the correct value if newAttributeValue is "
           "too large but oldAttributeValue is equal to zero",
           "[CropRegeneration]")
 {
-  REQUIRE(CropRegeneration(1.0f, 1.0f, 5.0f, 100.0f, 0.0f) == 0.05f);
+  REQUIRE(CropRegeneration(1.0f, 1.0f, 5.0f, 100.0f, 0.0f, false) == 0.05f);
 }
 
 TEST_CASE("CropPeriodAfterLastRegen returns 0 if period < 0",

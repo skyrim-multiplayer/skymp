@@ -1,4 +1,5 @@
 #pragma once
+#include "libespm/espm.h"
 #include <tuple>
 
 struct ActorValues
@@ -19,6 +20,7 @@ struct ActorValues
   float magickaRateMult = 100.f;
   float staminaRateMult = 100.f;
 
+  float GetValue(espm::ActorValue actorValue) const;
   auto ToTuple() const
   {
     return std::make_tuple(healthPercentage, magickaPercentage,

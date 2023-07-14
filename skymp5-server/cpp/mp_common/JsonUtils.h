@@ -183,7 +183,7 @@ inline void ReadVector(const simdjson::dom::element& j, const JsonPointer& key,
     ReadEx(arr, i, &res[i]);
   }
 
-  *out = res; // copying here for exception safity
+  *out = res; // copying here for exception safety
 }
 
 // Specialization for std::string

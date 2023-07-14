@@ -1,4 +1,5 @@
 #pragma once
+#include "ActiveMagicEffectsMap.h"
 #include "ActorValues.h"
 #include "Appearance.h"
 #include "DynamicFields.h"
@@ -75,6 +76,7 @@ public:
 
   bool isRaceMenuOpen = false;
   bool isDead = false;
+  ActiveMagicEffectsMap activeMagicEffects;
   bool consoleCommandsAllowed = false;
 
   // 'appearanceDump' and 'equipmentDump' can be empty. it means nullopt.

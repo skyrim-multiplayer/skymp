@@ -4,9 +4,11 @@
 #include "GridElement.h"
 #include "MpChangeForms.h"
 #include "MpForm.h"
+#include "MpFormGameObject.h"
 #include "MpObjectReference.h"
 #include "NiPoint3.h"
 #include "PartOneListener.h"
+#include "Timer.h"
 #include "libespm/Loader.h"
 #include "papyrus-vm/VirtualMachine.h"
 #include <MakeID.h-1.0.2>
@@ -64,9 +66,26 @@ public:
 
   void RequestSave(MpObjectReference& ref);
 
-  void RegisterForSingleUpdate(const VarValue& self, float seconds);
+  template <typename T>
+  Viet::Promise<Viet::Void> SetTimer(T&& duration)
+  {
+    return timer.SetTimer(std::forward<T>(duration));
+  }
 
-  Viet::Promise<Viet::Void> SetTimer(float seconds);
+  template <typename T>
+  void RegisterForSingleUpdate(const VarValue& self, T&& duration)
+  {
+    SetTimer(std::forward<T>(duration)).Then([self](Viet::Void) {
+      if (auto form = GetFormPtr<MpForm>(self)) {
+        form->Update();
+      }
+    });
+  }
+
+  Viet::Promise<Viet::Void> SetTimer(
+    std::reference_wrapper<const std::chrono::system_clock::time_point>
+      wrapper);
+  bool RemoveTimer(const std::chrono::system_clock::time_point& endTime);
 
   const std::shared_ptr<MpForm>& LookupFormById(uint32_t formId);
 
@@ -201,4 +220,5 @@ private:
 
   struct Impl;
   std::shared_ptr<Impl> pImpl;
+  Viet::Timer timer;
 };
