@@ -13,6 +13,7 @@ on:
 
 env:
     BUILD_TYPE: RelWithDebInfo
+    GAMEMODE_GITHUB_TOKEN: ${{secrets.GAMEMODE_GITHUB_TOKEN}}
 
 jobs:
     deploy:
@@ -96,8 +97,6 @@ jobs:
                     chown -R skymp:skymp /src /home/skymp/.cmake-js
 
           - name: CMake Configure
-            env:
-                GAMEMODE_GITHUB_TOKEN: ${{secrets.GAMEMODE_GITHUB_TOKEN}}
             if: ${{env.DEPLOY_ACTION == 'deploy'}}
             uses: addnab/docker-run-action@v3
             with:
@@ -107,7 +106,6 @@ jobs:
                     -v ${{github.workspace}}/.cmake-js:/home/skymp/.cmake-js
                     -u skymp
                 run: |
-                    echo $GITHUB_TOKEN \
                     cd /src \
                     && ./build.sh --configure \
                        -DBUILD_UNIT_TESTS=OFF \
