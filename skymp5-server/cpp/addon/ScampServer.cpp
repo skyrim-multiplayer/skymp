@@ -171,7 +171,7 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
           WorldState::NpcSettingsEntry entry;
           if (field.value().find("spawnInInterior") != field.value().end()) {
             entry.spawnInInterior =
-              field.value().at("spawnInINterior").get<bool>();
+              field.value().at("spawnInInterior").get<bool>();
           }
           if (field.value().find("spawnInExterior") != field.value().end()) {
             entry.spawnInExterior =
