@@ -29,7 +29,6 @@ public:
 
 public:
   std::shared_ptr<IPapyrusCompatibilityPolicy> compatibilityPolicy;
-  WorldState* worldState;
 
 private:
   void RaceMenuHelper(VarValue& self, const char* funcName,
