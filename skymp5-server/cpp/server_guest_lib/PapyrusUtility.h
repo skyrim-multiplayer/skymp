@@ -8,7 +8,7 @@ public:
 
   VarValue Wait(VarValue self, const std::vector<VarValue>& arguments);
   VarValue RandomInt(VarValue slef,
-                     const std::vector<VarValue>& arguments) const;
+                     const std::vector<VarValue>& arguments) const noexcept;
 
   void Register(VirtualMachine& vm,
                 std::shared_ptr<IPapyrusCompatibilityPolicy> policy) override;
