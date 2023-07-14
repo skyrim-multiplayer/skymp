@@ -1,7 +1,8 @@
 #pragma once
 #include "IPapyrusClass.h"
 
-class PapyrusObjectReference : public IPapyrusClass<PapyrusObjectReference>
+class PapyrusObjectReference final
+  : public IPapyrusClass<PapyrusObjectReference>
 {
 public:
   const char* GetName() override { return "objectreference"; }
@@ -41,8 +42,7 @@ public:
                                  const std::vector<VarValue>& arguments);
 
   void Register(VirtualMachine& vm,
-                std::shared_ptr<IPapyrusCompatibilityPolicy> policy,
-                WorldState* world) override
+                std::shared_ptr<IPapyrusCompatibilityPolicy> policy) override
   {
     AddMethod(vm, "IsHarvested", &PapyrusObjectReference::IsHarvested);
     AddMethod(vm, "IsDisabled", &PapyrusObjectReference::IsDisabled);

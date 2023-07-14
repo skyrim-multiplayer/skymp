@@ -178,3 +178,37 @@ VarValue PapyrusActor::SetDontMove(VarValue self,
   }
   return VarValue::None();
 }
+
+VarValue PapyrusActor::WornHasKeyword(VarValue self,
+                                      const std::vector<VarValue>& arguments)
+{
+  if (auto actor = GetFormPtr<MpActor>(self)) {
+    if (arguments.size() < 1) {
+      throw std::runtime_error(
+        "Actor.WornHasKeyword requires at least one argument");
+    }
+
+    const auto& keywordRec = GetRecordPtr(arguments[0]);
+    if (!keywordRec.rec) {
+      spdlog::error("Actor.WornHasKeyword - invalid keyword form");
+      return VarValue(false);
+    }
+
+    std::vector<Inventory::Entry> entries = actor->GetEquipment().inv.entries;
+    for (size_t i = 0; i < entries.size(); i++) {
+      WorldState* worldState = compatibilityPolicy->GetWorldState();
+      espm::LookupResult entry =
+        worldState->GetEspm().GetBrowser().LookupById(entries[i].baseId);
+      const auto& keywordIds =
+        entry.rec->GetKeywordIds(worldState->GetEspmCache());
+      for (auto rawId : keywordIds) {
+        if (entry.ToGlobalId(rawId) ==
+            keywordRec.ToGlobalId(keywordRec.rec->GetId())) {
+          return VarValue(true);
+        }
+      }
+    }
+  }
+
+  return VarValue(false);
+}
