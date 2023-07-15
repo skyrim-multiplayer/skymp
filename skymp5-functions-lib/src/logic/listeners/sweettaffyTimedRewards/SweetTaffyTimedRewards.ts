@@ -15,7 +15,6 @@ export type TimedRewardController = {
   sendChatMessage(actorId: number, message: ChatMessage): void;
 }
 
-// export type Biome = 'pineForest' | 'aspenForest' | 'aaltoValley' | 'plains' | 'mountains' | 'tundra' | 'seaside';
 export type BiomeName = string;
 
 export type BiomeInfo = {
@@ -31,14 +30,11 @@ export type RewardRule = {
   requiredItemFormId?: number;
 }
 
-// export type RewardRuleSet = Record<string, any[]/*RewardRuleSet*/> | {rule: RewardRule};
-
 export type TimedRewardConfig = {
   // enableDaily, enablyHourly are here to simplify tests
   enableDaily: boolean;
   enableHourly: boolean;
   rules?: RewardRule[];
-  // ruleSet?: RewardRuleSet;
   biomes?: BiomeInfo[];
 }
 
@@ -156,19 +152,6 @@ export class SweetTaffyTimedRewards implements GameModeListener {
     console.log(`player actorId=${playerActorId.toString(16)} biome=${playerBiome} rule outcomes: ${debug}`);
     return 0;
   }
-
-  /*
-  private giveExtraHourOfGameplayRewardWalk(playerActorId: number, ruleSet: RewardRuleSet) {
-    const rule = ruleSet.rule;
-    if (!Array.isArray(rule)) {
-      this.giveRewardByRule(playerActorId, rule);
-      return;
-    }
-    for (let [condition, subset] of rule) {
-      ;
-    }
-  }
-  */
 
   getPlayerBiome(playerActorId: number): BiomeName {
     const biomes = this.config.biomes || [];
