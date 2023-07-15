@@ -208,7 +208,7 @@ std::chrono::system_clock::duration MpObjectReference::GetRelootTime() const
     return *time;
 
   if (!std::strcmp(baseType.data(), "FLOR") ||
-      !strcmp(baseType.data(), "TREE")) {
+      !std::strcmp(baseType.data(), "TREE")) {
     return std::chrono::hours(1);
   } else if (!std::strcmp(baseType.data(), "DOOR")) {
     return std::chrono::seconds(3);
