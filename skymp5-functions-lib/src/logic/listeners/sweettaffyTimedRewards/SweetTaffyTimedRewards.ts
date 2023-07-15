@@ -15,7 +15,6 @@ export type TimedRewardController = {
   sendChatMessage(actorId: number, message: ChatMessage): void;
 }
 
-// export type Biome = 'pineForest' | 'aspenForest' | 'aaltoValley' | 'plains' | 'mountains' | 'tundra' | 'seaside';
 export type BiomeName = string;
 
 export type BiomeInfo = {
@@ -31,14 +30,11 @@ export type RewardRule = {
   requiredItemFormId?: number;
 }
 
-// export type RewardRuleSet = Record<string, any[]/*RewardRuleSet*/> | {rule: RewardRule};
-
 export type TimedRewardConfig = {
   // enableDaily, enablyHourly are here to simplify tests
   enableDaily: boolean;
   enableHourly: boolean;
   rules?: RewardRule[];
-  // ruleSet?: RewardRuleSet;
   biomes?: BiomeInfo[];
 }
 
@@ -109,7 +105,7 @@ export class SweetTaffyTimedRewards implements GameModeListener {
       if (!rule.requiredItemFormId || this.playerHasItem(playerActorId, rule.requiredItemFormId)) {
         this.controller.sendChatMessage(playerActorId, createSystemMessage([
           {text: `Чутьё охотника подсказывает вам, что самое время проверить ловушки. Быть может, сегодня удачный день?`, color: '#FFFFFF', type: ['plain']},
-          {text: '\nИспользуйте команду /huntreward', color: '#777777', type: ['plain']},
+          {text: '\nИспользуйте команду /huntreward', color: '#91916D', type: ['plain']},
         ]));
         break;
       }
@@ -130,9 +126,10 @@ export class SweetTaffyTimedRewards implements GameModeListener {
       // not available for claiming yet
       const secondsToday = this.controller.getCounter(playerActorId, 'secondsToday');
       const minutesLeft = Math.ceil((60 * 60 - secondsToday) / 60);
+      const minutesLeftRounded = Math.ceil(minutesLeft / 5) * 5;
       this.controller.sendChatMessage(playerActorId, createSystemMessage([
-        {text: 'Вы хотели проверить ловушки, но чутьё . Похоже, ещё не время собирать добычу.', color: '#FFFFFF', type: ['plain']},
-        {text: `\nПодождите ещё ${minutesLeft} минут.`, color: '#777777', type: ['plain']},
+        {text: 'Вы думаете что еще рано проверять ловушки. ', color: '#FFFFFF', type: ['plain']},
+        {text: `\nБыть может, подождать ещё хотя бы ${minutesLeftRounded} минут?`, color: '#91916D', type: ['plain']},
       ]));
       return minutesLeft;
     }
@@ -140,8 +137,8 @@ export class SweetTaffyTimedRewards implements GameModeListener {
     const playerBiome = this.getPlayerBiome(playerActorId);
     if (playerBiome === '') {
       this.controller.sendChatMessage(playerActorId, createSystemMessage([
-        {text: 'С удивлением вы не обнаружили своих ловушек в помещении. А попавшихся в них зверей - и того подавно. Вероятно, мёда вышло немного лишнего...', color: '#FFFFFF', type: ['plain']},
-        {text: '\nВыйдите в основной world space и попробуйте заново.', color: '#777777', type: ['plain']},
+        {text: 'Единственные ловушки, которые вы видите, расставленные повсюду - ночные горшки и швабры. Вероятно, мёд с прошлой попойки ещё не выветрился...', color: '#FFFFFF', type: ['plain']},
+        {text: '\nОхотиться можно только в Скайриме. Выйдите на улицу, если вы находитесь в закрытой локации.', color: '#91916D', type: ['plain']},
       ]));
       return 'wrong_cell';
     }
@@ -155,19 +152,6 @@ export class SweetTaffyTimedRewards implements GameModeListener {
     console.log(`player actorId=${playerActorId.toString(16)} biome=${playerBiome} rule outcomes: ${debug}`);
     return 0;
   }
-
-  /*
-  private giveExtraHourOfGameplayRewardWalk(playerActorId: number, ruleSet: RewardRuleSet) {
-    const rule = ruleSet.rule;
-    if (!Array.isArray(rule)) {
-      this.giveRewardByRule(playerActorId, rule);
-      return;
-    }
-    for (let [condition, subset] of rule) {
-      ;
-    }
-  }
-  */
 
   getPlayerBiome(playerActorId: number): BiomeName {
     const biomes = this.config.biomes || [];
