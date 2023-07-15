@@ -96,3 +96,15 @@ TEST_CASE("Whiterun cow is successfully loaded, because only exterior npc "
 
   REQUIRE_NOTHROW(partOne.worldState.GetFormAt<MpActor>(cowId));
 }
+
+TEST_CASE(
+  "Whiterun cow is loaded because all npc are allowed by default setting",
+  "[NpcExists][espm]")
+{
+  PartOne& partOne = GetPartOne();
+  partOne.worldState.npcEnabled = true;
+  partOne.worldState.defaultSetting.spawnInInterior = true;
+  partOne.worldState.defaultSetting.spawnInExterior = true;
+  partOne.worldState.defaultSetting.overriden = true;
+  REQUIRE_NOTHROW(partOne.worldState.GetFormAt<MpActor>(cowId));
+}
