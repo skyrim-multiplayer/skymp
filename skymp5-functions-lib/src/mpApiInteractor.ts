@@ -259,7 +259,7 @@ export class MpApiInteractor {
         return mp.get(playerActorId, 'profileId');
       },
       addItem(actorId: number, itemId: number, count: number, silent = false): void {
-        const debugMsg = `gave ${actorId.toString(16)} ${count} of ${itemId.toString(16)}`;
+        const debugMsg = `gave ${actorId.toString(16)} ${count} of ${itemId.toString(16)} silent=${silent}`;
         console.log(debugMsg);
         this.sendChatMessage(actorId, createSystemMessage(debugMsg));
         mp.callPapyrusFunction(
