@@ -167,6 +167,13 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
       if (serverSettings.at("npcSettings").is_object()) {
         std::unordered_map<std::string, WorldState::NpcSettingsEntry>
           npcSettings;
+        if (serverSettings.find("default") != serverSettings.end()) {
+          partOne->worldState.defaultSetting.spawnInInterior =
+            serverSettings.at("spawnInInterior").get<bool>();
+          partOne->worldState.defaultSetting.spawnInExterior =
+            serverSettings.at("spawnInExterior").get<bool>();
+          partOne->worldState.defaultSetting.overriden = true;
+        }
         for (const auto& field : serverSettings["npcSettings"].items()) {
           WorldState::NpcSettingsEntry entry;
           if (field.value().find("spawnInInterior") != field.value().end()) {

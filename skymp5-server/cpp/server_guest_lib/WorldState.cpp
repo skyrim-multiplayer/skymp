@@ -344,8 +344,9 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
   }
 
   if (isNpc && NpcSourceFilesOverriden()) {
-    bool isInterior = false, isExterior = false, spawnInInterior = false,
-         spawnInExterior = false;
+    bool isInterior = false, isExterior = false,
+         spawnInInterior = defaultSetting.spawnInInterior,
+         spawnInExterior = defaultSetting.spawnInExterior;
     espm::LookupResult res = br.LookupById(worldOrCell);
     auto* cellRecord = espm::Convert<espm::CELL>(res.rec);
     if (cellRecord) {
@@ -371,7 +372,6 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
         "found npc setting spawnInInterior: {}, spawnInExterior: {}",
         spawnInInterior, spawnInExterior);
     } else {
-      spawnInInterior = true;
       spdlog::trace("npc setting has not been found. Use default "
                     "spawnInInterior: {} and spawnInExterior: {}",
                     spawnInInterior, spawnInExterior);
@@ -757,7 +757,7 @@ std::optional<std::chrono::system_clock::duration> WorldState::GetRelootTime(
 
 bool WorldState::NpcSourceFilesOverriden() const noexcept
 {
-  return !npcSettings.empty();
+  return !npcSettings.empty() || defaultSetting.overriden;
 }
 
 bool WorldState::IsNpcAllowed(uint32_t baseId) const noexcept

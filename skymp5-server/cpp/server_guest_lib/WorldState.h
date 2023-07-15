@@ -43,6 +43,7 @@ public:
   {
     bool spawnInInterior = false;
     bool spawnInExterior = false;
+    bool overriden = false;
   };
 
 public:
@@ -179,6 +180,7 @@ public:
 
   bool npcEnabled = false;
   std::unordered_map<std::string, NpcSettingsEntry> npcSettings;
+  NpcSettingsEntry defaultSetting;
 
 private:
   bool AttachEspmRecord(const espm::CombineBrowser& br,
