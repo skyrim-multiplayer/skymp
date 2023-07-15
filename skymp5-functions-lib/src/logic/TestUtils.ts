@@ -43,6 +43,7 @@ export const makePlayerController = (): PlayerController => {
       };
       return settings[name];
     },
+    getInventory: jest.fn(),
   };
 };
 

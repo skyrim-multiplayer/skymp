@@ -1,6 +1,6 @@
 import { Mp } from "../../../types/mp";
-import { PlayerController } from "../../PlayerController";
-import { GameModeListener } from "../gameModeListener";
+import { CombinedController, PlayerController } from "../../PlayerController";
+import { GameModeListener } from "../GameModeListener";
 
 export interface HandlerInput {
   actorId: number;
@@ -15,7 +15,7 @@ export interface HandlerInput {
 
 // Base class for all chat commands
 export abstract class Command implements GameModeListener {
-  constructor(protected mp: Mp, protected controller: PlayerController, protected name: string) {
+  constructor(protected mp: Mp, protected controller: CombinedController, protected name: string) {
   }
 
   onPlayerChatInput(actorId: number, input: string, neighbors: number[], masterApiId: number) {

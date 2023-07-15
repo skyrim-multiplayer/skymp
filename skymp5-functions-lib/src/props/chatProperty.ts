@@ -3,10 +3,10 @@ import { Ctx } from '../types/ctx';
 import { Mp } from '../types/mp';
 import { FunctionInfo } from '../utils/functionInfo';
 import { parseChatMessage } from '../utils/parseChatMessage';
-import { sqr } from '../mpApiInteractor';
 import { EvalProperty } from './evalProperty';
 import { refreshWidgetsJs } from './refreshWidgets';
 import { ChatSettings } from '../types/settings';
+import { sqr } from '../utils/locationUtils';
 
 type ChatValue = { show: boolean };
 

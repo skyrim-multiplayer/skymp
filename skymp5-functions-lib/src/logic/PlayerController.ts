@@ -1,5 +1,8 @@
 import { ChatMessage } from "../props/chatProperty";
+import { Inventory } from "../types/mp";
+import { ListenerLookupController } from "./listeners/GameModeListener";
 import { SweetPieRound } from "./listeners/sweetpie/SweetPieRound";
+import { TimedRewardController } from "./listeners/sweettaffyTimedRewards/SweetTaffyTimedRewards";
 
 export type Percentages = {
   health?: number;
@@ -7,7 +10,7 @@ export type Percentages = {
   stamina?: number;
 }
 
-export type Counter = 'finishedDeathmatches' | 'everydayStart' | 'secondsToday' | 'lastExtraRewardDay';
+export type Counter = 'finishedDeathmatches' | 'everydayStart' | 'secondsToday' | 'lastExtraRewardDay' | 'lastClaimedExtraRewardDay';
 
 export type PlayerController = {
   setSpawnPoint(player: number, pointName: string): void;
@@ -30,4 +33,7 @@ export type PlayerController = {
   incrementCounter(actorId: number, counter: Counter, by?: number): number;
   getServerSetting(name: string): any;
   getActorDistanceSquared(actorId1: number, actorId2: number): number;
+  getInventory(actorId: number): Inventory;
 }
+
+export type CombinedController = ListenerLookupController & PlayerController & TimedRewardController;

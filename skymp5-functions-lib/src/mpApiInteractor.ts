@@ -1,21 +1,19 @@
-import { GameModeListener } from "./logic/listeners/gameModeListener";
-import { Counter, Percentages, PlayerController } from "./logic/PlayerController";
+import { GameModeListener } from "./logic/listeners/GameModeListener";
+import { CombinedController, Counter, Percentages } from "./logic/PlayerController";
 import { SweetPieRound } from "./logic/listeners/sweetpie/SweetPieRound";
-import { ChatMessage, ChatNeighbor, ChatProperty } from "./props/chatProperty";
+import { ChatMessage, ChatProperty, createSystemMessage } from "./props/chatProperty";
 import { CounterProperty } from "./props/counterProperty";
 import { DialogProperty } from "./props/dialogProperty";
 import { EvalProperty } from "./props/evalProperty";
 import { Ctx } from "./types/ctx";
-import { LocationalData, Mp, PapyrusObject } from "./types/mp";
-import { ChatSettings } from "./types/settings";
+import { LocationalData, Mp, Inventory } from "./types/mp";
+import { squareDist } from "./utils/locationUtils";
 import { PersistentStorage } from "./utils/persistentStorage";
 import { Timer } from "./utils/timer";
 
 declare const mp: Mp;
 declare const ctx: Ctx;
 declare const nameUpdatesClientSide: [number, string][];
-
-export const sqr = (x: number) => x * x;
 
 const scriptName = (refrId: number) => {
   const lookupRes = mp.lookupEspmRecordById(refrId);
@@ -52,6 +50,7 @@ export const getName = (actorId: number) => {
 };
 export class MpApiInteractor {
   private static customNames = new Map<number, string>();
+  private static listenersForLookupByName = new Map<string, GameModeListener>();
 
   static setup(listeners: GameModeListener[]) {
     MpApiInteractor.setupActivateHandler(listeners);
@@ -205,8 +204,21 @@ export class MpApiInteractor {
     ChatProperty.showChat(actorId, true);
   }
 
-  static makeController(pointsByName: Map<string, LocationalData>) {
+  static makeController(pointsByName: Map<string, LocationalData>) : CombinedController {
     return {
+      registerListenerForLookup(listenerName: string, listener: GameModeListener): void {
+        if (MpApiInteractor.listenersForLookupByName.has(listenerName)) {
+          throw new Error(`listener re-registration for name '${listenerName}'`);
+        }
+        MpApiInteractor.listenersForLookupByName.set(listenerName, listener);
+      },
+      lookupListener(listenerName: string): GameModeListener {
+        const listener = MpApiInteractor.listenersForLookupByName.get(listenerName);
+        if (listener === undefined) {
+          throw new Error(`listener re-registration for name '${listenerName}'`);
+        }
+        return listener;
+      },
       setSpawnPoint(player: number, pointName: string) {
         const point = pointsByName.get(pointName);
         if (point) {
@@ -247,6 +259,9 @@ export class MpApiInteractor {
         return mp.get(playerActorId, 'profileId');
       },
       addItem(actorId: number, itemId: number, count: number, silent = false): void {
+        const debugMsg = `gave ${actorId.toString(16)} ${count} of ${itemId.toString(16)} silent=${silent}`;
+        console.log(debugMsg);
+        this.sendChatMessage(actorId, createSystemMessage(debugMsg));
         mp.callPapyrusFunction(
           'method',
           'ObjectReference',
@@ -289,8 +304,7 @@ export class MpApiInteractor {
       getActorDistanceSquared(actorId1: number, actorId2: number): number {
         const pos1 = mp.get(actorId1, 'pos');
         const pos2 = mp.get(actorId2, 'pos');
-        const delta = [pos1[0] - pos2[0], pos1[1] - pos2[1], pos1[2] - pos2[2]];
-        return sqr(delta[0]) + sqr(delta[1]) + sqr(delta[2]);
+        return squareDist(pos1, pos2);
       },
       isTeleportActivator(refrId: number): boolean {
         return isTeleportDoor(refrId);
@@ -315,6 +329,16 @@ export class MpApiInteractor {
       },
       getCurrentTime(): Date {
         return new Date();
+      },
+      getInventory(actorId: number): Inventory {
+        return mp.get(actorId, 'inventory');
+      },
+      getLocation(actorId: number): LocationalData {
+        return {
+          cellOrWorldDesc: mp.get(actorId, 'worldOrCellDesc'),
+          pos: mp.get(actorId, 'pos'),
+          rot: mp.get(actorId, 'angle'),
+        };
       },
     }
   }

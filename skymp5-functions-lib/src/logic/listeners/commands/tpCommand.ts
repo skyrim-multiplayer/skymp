@@ -1,6 +1,6 @@
 import { ChatMessage } from "../../../props/chatProperty";
 import { Mp, LocationalData, ServerSettings } from "../../../types/mp";
-import { PlayerController } from "../../PlayerController";
+import { CombinedController, PlayerController } from "../../PlayerController";
 import { Command, HandlerInput } from "./command";
 
 interface TeleportData {
@@ -11,7 +11,7 @@ export class TpCommand extends Command {
     private serverSettings: ServerSettings;
     private teleports: TeleportData;
 
-    constructor(mp: Mp, controller: PlayerController) {
+    constructor(mp: Mp, controller: CombinedController) {
         super(mp, controller, "tp");
         this.serverSettings = this.mp.getServerSettings();
         this.teleports = {};

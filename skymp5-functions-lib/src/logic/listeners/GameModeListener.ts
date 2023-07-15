@@ -7,3 +7,8 @@ export interface GameModeListener {
   onPlayerDialogResponse?: (actorId: number, dialogId: number, buttonIndex: number) => void;
   onPlayerActivateObject?: (casterActorId: number, targetObjectDesc: string, targetActorId: number) => 'continue' | 'blockActivation';
 }
+
+export type ListenerLookupController = {
+  registerListenerForLookup(listenerName: string, listener: GameModeListener): void;
+  lookupListener(listenerName: string): GameModeListener;
+};
