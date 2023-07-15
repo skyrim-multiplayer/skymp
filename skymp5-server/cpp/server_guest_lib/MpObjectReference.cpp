@@ -334,22 +334,23 @@ void MpObjectReference::SetPos(const NiPoint3& newPos)
           auto wst = GetParent();
           auto id = emitterId;
           auto myId = GetFormId();
-          wst->SetTimer(0).Then([wst, id, inside, me, myId, this](Viet::Void) {
-            if (wst->LookupFormById(myId).get() != this) {
-              wst->logger->error("Refr pointer expired", id);
-              return;
-            }
+          wst->SetTimer(std::chrono::seconds(0))
+            .Then([wst, id, inside, me, myId, this](Viet::Void) {
+              if (wst->LookupFormById(myId).get() != this) {
+                wst->logger->error("Refr pointer expired", id);
+                return;
+              }
 
-            auto& emitter = wst->LookupFormById(id);
-            auto emitterRefr =
-              std::dynamic_pointer_cast<MpObjectReference>(emitter);
-            if (!emitterRefr) {
-              wst->logger->error("Emitter not found in timer ({0:x})", id);
-              return;
-            }
-            emitterRefr->SendPapyrusEvent(
-              inside ? "OnTriggerEnter" : "OnTriggerLeave", &me, 1);
-          });
+              auto& emitter = wst->LookupFormById(id);
+              auto emitterRefr =
+                std::dynamic_pointer_cast<MpObjectReference>(emitter);
+              if (!emitterRefr) {
+                wst->logger->error("Emitter not found in timer ({0:x})", id);
+                return;
+              }
+              emitterRefr->SendPapyrusEvent(
+                inside ? "OnTriggerEnter" : "OnTriggerLeave", &me, 1);
+            });
 
           if (inside)
             primitivesWeAreInside->insert(emitterId);

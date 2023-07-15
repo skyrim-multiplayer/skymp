@@ -1,7 +1,7 @@
 #pragma once
 #include "IPapyrusClass.h"
 
-class PapyrusSkymp : public IPapyrusClass<PapyrusSkymp>
+class PapyrusSkymp final : public IPapyrusClass<PapyrusSkymp>
 {
 public:
   const char* GetName() override { return "skymp"; }
@@ -11,8 +11,7 @@ public:
 
   void Register(
     VirtualMachine& vm,
-    std::shared_ptr<IPapyrusCompatibilityPolicy> compatibilityPolicy,
-    WorldState* world) override
+    std::shared_ptr<IPapyrusCompatibilityPolicy> compatibilityPolicy) override
   {
     policy = compatibilityPolicy;
 

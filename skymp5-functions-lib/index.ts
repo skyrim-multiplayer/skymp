@@ -25,6 +25,7 @@ import { SkillDiceCommand } from './src/logic/listeners/commands/skillDiceComman
 import { KickCommand } from './src/logic/listeners/commands/kickCommand';
 import { TimedRewardCommand } from './src/logic/listeners/commands/timedRewardConfirmCommand';
 import { TpCommand } from './src/logic/listeners/commands/tpCommand';
+import { ConsoleCommandsSystem } from './src/logic/listeners/consoleCommandsSystem';
 
 const err = (index: number, x: unknown, expectedTypeName: string): never => {
   throw new TypeError(`The argument with index ${index} has value (${JSON.stringify(x)}) that doesn't meet the requirements of ${expectedTypeName}`);
@@ -578,6 +579,7 @@ MpApiInteractor.setup([
   new DeathSystem(mp, controller),
   new HarvestingSystem(mp, controller),
   new DoorActivation(mp, controller),
+  new ConsoleCommandsSystem(mp, controller),
   new KitCommand(mp, controller),
   new KillCommand(mp, controller),
   new KickCommand(mp, controller),

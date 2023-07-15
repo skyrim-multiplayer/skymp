@@ -13,6 +13,7 @@ on:
 
 env:
     BUILD_TYPE: RelWithDebInfo
+    GAMEMODE_GITHUB_TOKEN: ${{secrets.GAMEMODE_GITHUB_TOKEN}}
 
 jobs:
     deploy:
@@ -110,7 +111,8 @@ jobs:
                        -DBUILD_UNIT_TESTS=OFF \
                        -DBUILD_GAMEMODE=ON \
                        -DOFFLINE_MODE=OFF \
-                       -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+                       -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
+                       -DGITHUB_TOKEN=${{env.GAMEMODE_GITHUB_TOKEN}}
 
           - name: Upload compile_commands.json
             uses: actions/upload-artifact@v3
