@@ -13,7 +13,7 @@ MGEF::Data MGEF::GetData(
     this,
     [&](const char* type, uint32_t size, const char* data) {
       if (!std::memcmp(type, "DATA", 4)) {
-        result.data.type = EffectType{
+        result.data.effectType = EffectType{
           *reinterpret_cast<const std::underlying_type_t<EffectType>*>(data +
                                                                        0x40)
         };

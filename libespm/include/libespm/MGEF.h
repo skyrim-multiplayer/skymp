@@ -65,7 +65,7 @@ public:
   {
     // primary actor value
     ActorValue primaryAV = espm::ActorValue::None;
-    EffectType type;
+    EffectType effectType;
   };
 
   struct Data
