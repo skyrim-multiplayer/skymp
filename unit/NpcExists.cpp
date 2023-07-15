@@ -106,5 +106,5 @@ TEST_CASE(
   partOne.worldState.defaultSetting.spawnInInterior = true;
   partOne.worldState.defaultSetting.spawnInExterior = true;
   partOne.worldState.defaultSetting.overriden = true;
-  partOne.worldState.GetFormAt<MpActor>(cowId);
+  REQUIRE_NOTHROW(partOne.worldState.GetFormAt<MpActor>(cowId));
 }
