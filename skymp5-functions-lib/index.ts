@@ -6,7 +6,7 @@ import { HarvestingSystem } from './src/logic/listeners/harvestingSystem';
 import { KitCommand } from './src/logic/listeners/commands/kitCommand';
 import { SweetPieGameModeListener } from './src/logic/listeners/sweetpie/SweetPieGameModeListener';
 import { SweetPieMap } from './src/logic/listeners/sweetpie/SweetPieMap';
-import { SweetTaffyTimedRewards } from './src/logic/listeners/sweettaffyTimedRewards/SweetTaffyTimedRewards';
+import { SweetTaffyTimedRewards, TimedRewardConfig } from './src/logic/listeners/sweettaffyTimedRewards/SweetTaffyTimedRewards';
 import { MpApiInteractor } from './src/mpApiInteractor';
 import { BrowserProperty } from './src/props/browserProperty';
 import { CarryAnimSystem } from './src/props/carryAnimSystem';

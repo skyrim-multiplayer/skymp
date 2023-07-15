@@ -5,7 +5,6 @@ import { GameModeListener } from "../GameModeListener";
 export interface HandlerInput {
   actorId: number;
   controller: PlayerController;
-  // dosaihusfgdyuasfhuuroegfhuiosfijosdfa
   mp: Mp;
   neighbors: number[];
   inputText: string;

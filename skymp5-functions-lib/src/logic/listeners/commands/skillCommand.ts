@@ -37,7 +37,6 @@ export const getPossessedSkills = (actorId: number, controller?: PlayerControlle
     const possessedSkills = {} as IPossessedSkills;
     let memCount = 1000;
     let expCount = 0;
-    // DJSIMAOHFUISDAGYFSHERDBGRYUFVRU*OIFRVUYGFHVYRS EYUOIWGBVF^WREUIGFVEW^& G^&TVYUGJ
     const inventory = mp.get(actorId, 'inventory').entries;
     for (const item of inventory) {
         if (item.baseId === expId) {
