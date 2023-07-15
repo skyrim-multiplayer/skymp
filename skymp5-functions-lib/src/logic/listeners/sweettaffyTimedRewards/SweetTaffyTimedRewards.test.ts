@@ -23,6 +23,7 @@ export const mockController = () => {
     },
     getInventory: jest.fn(),
     getLocation: jest.fn(),
+    sendChatMessage: jest.fn(),
   };
 };
 
@@ -117,6 +118,42 @@ describe("SweetTaffyTimedRewards", () => {
     expect(controller.addItem).toBeCalledTimes(0);
   });
 
+  test("notifyClaimableIfHasMatchingRules", () => {
+    const controller = mockController();
+    const listener = new SweetTaffyTimedRewards(controller, {
+      enableDaily: false,
+      enableHourly: true,
+      rules: [
+        { itemFormId: 0x1337, itemCountWeights: [ 1 ], requiredItemFormId: 0xbeef },
+        { itemFormId: 0x1337, itemCountWeights: [ 1 ], requiredItemFormId: 0xbeef },
+      ],
+    });
+
+    controller.getInventory.mockReturnValue({
+      entries: [
+        {
+          baseId: 0x1234,
+          count: 1,
+        },
+      ],
+    });
+
+    listener.notifyClaimableIfHasMatchingRules(1);
+    expect(controller.sendChatMessage).toBeCalledTimes(0);
+
+    controller.getInventory.mockReturnValue({
+      entries: [
+        {
+          baseId: 0xbeef,
+          count: 1,
+        },
+      ],
+    });
+
+    listener.notifyClaimableIfHasMatchingRules(1);
+    expect(controller.sendChatMessage).toBeCalledTimes(1);
+  });
+
   test("getRandomIntByWeights", () => {
     expect(getRandomIntByWeights([1337, 0])).toEqual(0);
     expect(getRandomIntByWeights([0, 1])).toEqual(1);
@@ -170,5 +207,36 @@ describe("SweetTaffyTimedRewards", () => {
     listener.giveRewardByRule(playerActorId, 'mountains', rule);
     expect(controller.addItem).toBeCalledTimes(1);
     expect(controller.addItem).toBeCalledWith(playerActorId, rule.itemFormId, 1);
+  });
+
+  test("claimReward", () => {
+    const controller = mockController();
+    const listener = new SweetTaffyTimedRewards(controller, {
+      enableDaily: false,
+      enableHourly: false,
+      biomes: [ { name: 'some_biome', pos: [ 0, 0, 0 ] } ],
+    });
+    const playerActorId = 1;
+
+    const startOfToday = new Date('2022-12-26T00:00:00.000+0300');
+
+    controller.getCurrentTime.mockReturnValue(startOfToday);
+    controller.setCounter(playerActorId, 'secondsToday', 60 * 2);
+    controller.getLocation.mockReturnValue({ cellOrWorldDesc: '3c:Skyrim.esm', pos: [ 0, 0, 0 ] });
+
+    // 58 minutes left
+    expect(listener.claimAdditionalExtraHourOfGameplayReward(playerActorId)).toEqual(58);
+
+    // set to claimable (secondsToday doesn't matter here), but wrong cell
+    controller.setCounter(playerActorId, 'lastExtraRewardDay', startOfToday.getTime());
+    controller.getLocation.mockReturnValue({ cellOrWorldDesc: '1337:Wrong.esp', pos: [ 0, 0, 0 ] });
+    expect(listener.claimAdditionalExtraHourOfGameplayReward(playerActorId)).toEqual('wrong_cell');
+
+    // claimed if we're in the right world
+    controller.getLocation.mockReturnValue({ cellOrWorldDesc: '3c:Skyrim.esm', pos: [ 0, 0, 0 ] });
+    expect(listener.claimAdditionalExtraHourOfGameplayReward(playerActorId)).toEqual(0);
+
+    // not claimed again
+    expect(listener.claimAdditionalExtraHourOfGameplayReward(playerActorId)).toEqual('already_claimed');
   });
 });

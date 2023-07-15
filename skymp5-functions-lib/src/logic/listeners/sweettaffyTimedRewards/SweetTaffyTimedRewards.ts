@@ -2,6 +2,7 @@ import { Inventory, LocationalData } from "../../../types/mp";
 import { Position, squareDist } from "../../../utils/locationUtils";
 import { GameModeListener, ListenerLookupController } from "../GameModeListener";
 import { Counter } from "../../PlayerController";
+import { ChatMessage, createSystemMessage } from "../../../props/chatProperty";
 
 export type TimedRewardController = {
   getCurrentTime(): Date;
@@ -11,6 +12,7 @@ export type TimedRewardController = {
   getCounter(actorId: number, counter: Counter): number;
   getInventory(actorId: number): Inventory;
   getLocation(actorId: number): LocationalData;
+  sendChatMessage(actorId: number, message: ChatMessage): void;
 }
 
 // export type Biome = 'pineForest' | 'aspenForest' | 'aaltoValley' | 'plains' | 'mountains' | 'tundra' | 'seaside';
@@ -95,21 +97,63 @@ export class SweetTaffyTimedRewards implements GameModeListener {
         this.controller.setCounter(playerActorId, 'secondsToday', secondsToday);
         if (secondsToday == 60 * 60 && this.controller.getCounter(playerActorId, 'lastExtraRewardDay') !== todayStart) {
           this.controller.setCounter(playerActorId, 'lastExtraRewardDay', todayStart);
-          this.giveExtraHourOfGameplayReward(playerActorId);
+          this.controller.addItem(playerActorId, SweetTaffyTimedRewards.rewardItemFormId, 9);
+          this.notifyClaimableIfHasMatchingRules(playerActorId);
         }
       }
     }
   }
 
-  //private
-  giveExtraHourOfGameplayReward(playerActorId: number) {
-    this.controller.addItem(playerActorId, SweetTaffyTimedRewards.rewardItemFormId, 9);
+  notifyClaimableIfHasMatchingRules(playerActorId: number) {
+    for (const rule of this.config.rules || []) {
+      if (!rule.requiredItemFormId || this.playerHasItem(playerActorId, rule.requiredItemFormId)) {
+        this.controller.sendChatMessage(playerActorId, createSystemMessage([
+          {text: `Чутьё охотника подсказывает вам, что самое время проверить ловушки. Быть может, сегодня удачный день?`, color: '#FFFFFF', type: ['plain']},
+          {text: '\nИспользуйте команду /huntreward', color: '#777777', type: ['plain']},
+        ]));
+        break;
+      }
+    }
+  }
+
+  claimAdditionalExtraHourOfGameplayReward(playerActorId: number) {
+    const currentTime = this.controller.getCurrentTime();
+    const todayStart = dayStart(currentTime).getTime();
+    const lastExtraRewardDay = this.controller.getCounter(playerActorId, 'lastExtraRewardDay');
+    const lastClaimedExtraRewardDay = this.controller.getCounter(playerActorId, 'lastClaimedExtraRewardDay');
+    if (todayStart === lastClaimedExtraRewardDay) {
+      this.controller.sendChatMessage(playerActorId, createSystemMessage(`То ли из отчаяния, то ли из любопытства вы решили вновь проверить свои ловушки. Но никто не пришёл.`));
+      return 'already_claimed';
+    }
+
+    if (lastExtraRewardDay !== todayStart) {
+      // not available for claiming yet
+      const secondsToday = this.controller.getCounter(playerActorId, 'secondsToday');
+      const minutesLeft = Math.ceil((60 * 60 - secondsToday) / 60);
+      this.controller.sendChatMessage(playerActorId, createSystemMessage([
+        {text: 'Вы хотели проверить ловушки, но чутьё . Похоже, ещё не время собирать добычу.', color: '#FFFFFF', type: ['plain']},
+        {text: `\nПодождите ещё ${minutesLeft} минут.`, color: '#777777', type: ['plain']},
+      ]));
+      return minutesLeft;
+    }
+
     const playerBiome = this.getPlayerBiome(playerActorId);
+    if (playerBiome === '') {
+      this.controller.sendChatMessage(playerActorId, createSystemMessage([
+        {text: 'С удивлением вы не обнаружили своих ловушек в помещении. А попавшихся в них зверей - и того подавно. Вероятно, мёда вышло немного лишнего...', color: '#FFFFFF', type: ['plain']},
+        {text: '\nВыйдите в основной world space и попробуйте заново.', color: '#777777', type: ['plain']},
+      ]));
+      return 'wrong_cell';
+    }
+
+    this.controller.setCounter(playerActorId, 'lastClaimedExtraRewardDay', todayStart);
+
     const debug = [];
     for (const rule of this.config.rules || []) {
       debug.push(this.giveRewardByRule(playerActorId, playerBiome, rule));
     }
     console.log(`player actorId=${playerActorId.toString(16)} biome=${playerBiome} rule outcomes: ${debug}`);
+    return 0;
   }
 
   /*
@@ -131,7 +175,8 @@ export class SweetTaffyTimedRewards implements GameModeListener {
       console.log(`getPlayerBiome(${playerActorId.toString(16)}): empty biome config`)
       return '';
     }
-    const {cellOrWorldDesc: playerCell, pos: playerPos} = this.controller.getLocation(playerActorId);
+    const { cellOrWorldDesc: playerCell, pos: playerPos } = this.controller.getLocation(playerActorId);
+    console.log(playerCell, playerPos);
     if (playerCell !== '3c:Skyrim.esm') {
       console.log(`getPlayerBiome(${playerActorId.toString(16)}) @ ${playerCell} ${playerPos}: not main cell`)
       return '';

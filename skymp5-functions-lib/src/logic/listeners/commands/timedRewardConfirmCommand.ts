@@ -10,6 +10,7 @@ export class TimedRewardCommand extends Command {
 
   handle({ actorId }: HandlerInput): void {
     const timedRewardsListener = this.controller.lookupListener('SweetTaffyTimedRewards') as SweetTaffyTimedRewards;
-    timedRewardsListener.giveExtraHourOfGameplayReward(actorId);
+    const debug = timedRewardsListener.claimAdditionalExtraHourOfGameplayReward(actorId);
+    console.log(`${actorId} tried to claim reward: ${debug}`);
   }
 }
