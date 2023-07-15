@@ -1,4 +1,5 @@
 #pragma once
+#include "ActiveMagicEffectsMap.h"
 #include "ActorValues.h"
 #include "Appearance.h"
 #include "DynamicFields.h"
@@ -75,6 +76,7 @@ public:
 
   bool isRaceMenuOpen = false;
   bool isDead = false;
+  ActiveMagicEffectsMap activeMagicEffects;
   bool consoleCommandsAllowed = false;
 
   // 'appearanceDump' and 'equipmentDump' can be empty. it means nullopt.
@@ -85,7 +87,7 @@ public:
   LocationalData spawnPoint = { { 133857, -61130, 14662 },
                                 { 0.f, 0.f, 72.f },
                                 FormDesc::Tamriel() };
-  float spawnDelay = 5.0f;
+  float spawnDelay = 25.0f;
 
   // Please update 'ActorTest.cpp' when adding new Actor-related rows
 
