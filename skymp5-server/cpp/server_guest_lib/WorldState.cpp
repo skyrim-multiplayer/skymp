@@ -756,6 +756,9 @@ bool WorldState::NpcSourceFilesOverriden() const noexcept
 
 bool WorldState::IsNpcAllowed(uint32_t baseId) const noexcept
 {
+  if (npcSettings.empty() && defaultSetting.overriden) {
+    return true;
+  }
   uint32_t npcFileIdx = GetFileIdx(baseId);
   for (const auto& [fileName, _] : npcSettings) {
     auto it = std::find(espmFiles.begin(), espmFiles.end(), fileName);
