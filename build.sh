@@ -37,7 +37,7 @@ fi
 
 if [ ! -d "$SKYMP_COMPAT_BIN" ]; then
   mkdir -pv "$SKYMP_COMPAT_BIN"
-  # ln -s "`which python2`" "$SKYMP_COMPAT_BIN/python"
+  ln -s "`which python2`" "$SKYMP_COMPAT_BIN/python"
   ln -s "$CC" "$SKYMP_COMPAT_BIN/clang" 
   ln -s "$CXX" "$SKYMP_COMPAT_BIN/clang++"
 
