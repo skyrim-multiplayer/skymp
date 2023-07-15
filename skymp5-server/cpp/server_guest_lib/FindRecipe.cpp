@@ -20,37 +20,38 @@ bool RecipeMatches(const espm::IdMapping* mapping, const espm::COBJ* recipe,
 
   auto thisInputObjects = recipeData.inputObjects;
   for (auto& entry : thisInputObjects) {
-    auto formId = espm::GetMappedId(entry.formId, *mapping);
+    auto formId = espm::utils::GetMappedId(entry.formId, *mapping);
     if (inputObjects.GetItemCount(formId) != entry.count) {
       return false;
     }
   }
-  auto formId = espm::GetMappedId(recipeData.outputObjectFormId, *mapping);
+  auto formId =
+    espm::utils::GetMappedId(recipeData.outputObjectFormId, *mapping);
   if (formId != resultObjectId) {
     return false;
   }
   return true;
 }
 
-espm::COBJ* FindRecipe(const espm::CombineBrowser& br,
-                       const Inventory& inputObjects, uint32_t resultObjectId,
-                       int* optionalOutEspmIdx)
+const espm::COBJ* FindRecipe(const espm::CombineBrowser& br,
+                             const Inventory& inputObjects,
+                             uint32_t resultObjectId, int* optionalOutEspmIdx)
 {
   auto allRecipes = br.GetRecordsByType("COBJ");
 
-  espm::COBJ* recipeUsed = nullptr;
+  const espm::COBJ* recipeUsed = nullptr;
 
   for (size_t i = 0; i < allRecipes.size(); ++i) {
     auto mapping = br.GetCombMapping(i);
     auto& espmLocalRecipes = allRecipes[i];
-    auto it = std::find_if(espmLocalRecipes->begin(), espmLocalRecipes->end(),
-                           [&](espm::RecordHeader* rec) {
-                             auto recipe = reinterpret_cast<espm::COBJ*>(rec);
-                             return RecipeMatches(
-                               mapping, recipe, inputObjects, resultObjectId);
-                           });
+    auto it = std::find_if(
+      espmLocalRecipes->begin(), espmLocalRecipes->end(),
+      [&](const espm::RecordHeader* rec) {
+        auto recipe = reinterpret_cast<const espm::COBJ*>(rec);
+        return RecipeMatches(mapping, recipe, inputObjects, resultObjectId);
+      });
     if (it != espmLocalRecipes->end()) {
-      recipeUsed = reinterpret_cast<espm::COBJ*>(*it);
+      recipeUsed = reinterpret_cast<const espm::COBJ*>(*it);
       if (optionalOutEspmIdx)
         *optionalOutEspmIdx = static_cast<int>(i);
       break;

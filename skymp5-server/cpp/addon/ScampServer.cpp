@@ -18,6 +18,7 @@
 #include "SettingsUtils.h"
 #include "formulas/SweetPieDamageFormula.h"
 #include "formulas/TES5DamageFormula.h"
+#include "libespm/IterateFields.h"
 #include "property_bindings/PropertyBindingFactory.h"
 #include <cassert>
 #include <cctype>
