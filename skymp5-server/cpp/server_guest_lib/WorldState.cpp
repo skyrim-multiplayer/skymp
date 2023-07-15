@@ -370,19 +370,16 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
                     spawnInInterior, spawnInExterior);
     }
 
-    if (spawnInInterior && isExterior || spawnInExterior && isInterior) {
-      if (spawnInInterior && isExterior) {
-        spdlog::trace("Unable to spawn npc because of contradiction between"
-                      "npc location which is isExterior={} and settings' "
-                      "spawning rules which is spawnInInterior={}",
-                      isExterior, spawnInInterior);
-      }
-      if (spawnInExterior && isInterior) {
-        spdlog::trace("Unable to spawn npc because of contradiction between"
-                      "npc location which is isInterior={} and settings' "
-                      "spawning rules which is spawnInExterior={}",
-                      isInterior, spawnInExterior);
-      }
+    if (spawnInInterior && isInterior || spawnInExterior && isExterior) {
+    }
+
+    if ((!spawnInInterior || !isInterior) &&
+        (!spawnInExterior || !isExterior)) {
+      spdlog::trace(
+        "Unable to spawn npc because of "
+        "rules applied in server settings: spanwInInterior={}, "
+        "spawnInExterior={}, NPC location: exterior={}, interior={}",
+        spawnInInterior, spawnInExterior, isExterior, isInterior);
       return false;
     }
   }
