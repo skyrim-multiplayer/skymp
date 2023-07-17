@@ -24,7 +24,6 @@ public:
 private:
   void AddItem(MpActor& actor, const WorldState& worldState,
                uint32_t itemBaseId, uint32_t count);
-  void AddPieItems(MpActor& actor, const WorldState& worldState);
   void Notify(MpActor& actor, const WorldState& worldState, uint32_t formId,
               uint32_t count, bool silent);
   void EquipItem(MpActor& actor, uint32_t formId, bool preventRemoval = false,

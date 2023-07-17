@@ -146,16 +146,15 @@ void SweetPieScript::Play(MpActor& actor, WorldState& worldState,
       actor.RemoveItem(bookBaseId, 1, nullptr);
       uint32_t formId = actor.GetFormId();
       float cooldown = it->second.GetCooldown();
-      worldState
-        .SetTimer(Viet::TimeUtils::To<std::chrono::milliseconds>(cooldown))
-        .Then(
-          [&worldState, bookBaseId, boundWeaponBaseId, formId](Viet::Void) {
-            MpActor& actor = worldState.GetFormAt<MpActor>(formId);
-            actor.AddItem(bookBaseId, 1);
-            uint32_t count =
-              actor.GetInventory().GetItemCount(boundWeaponBaseId);
-            actor.RemoveItem(boundWeaponBaseId, count, nullptr);
-          });
+      auto endTime = Viet::TimeUtils::To<std::chrono::milliseconds>(cooldown);
+      worldState.SetTimer(endTime).Then(
+        [&worldState, bookBaseId, boundWeaponBaseId, formId](Viet::Void) {
+          MpActor& actor = worldState.GetFormAt<MpActor>(formId);
+          actor.AddItem(bookBaseId, 1);
+          uint32_t count =
+            actor.GetInventory().GetItemCount(boundWeaponBaseId);
+          actor.RemoveItem(boundWeaponBaseId, count, nullptr);
+        });
     }
   }
 }
