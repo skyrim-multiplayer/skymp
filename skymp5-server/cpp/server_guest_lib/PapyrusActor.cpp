@@ -5,6 +5,7 @@
 
 #include "SpSnippetFunctionGen.h"
 #include "papyrus-vm/CIString.h"
+#include <algorithm>
 
 namespace {
 espm::ActorValue ConvertToAV(CIString actorValueName)
@@ -194,21 +195,27 @@ VarValue PapyrusActor::WornHasKeyword(VarValue self,
       return VarValue(false);
     }
 
-    std::vector<Inventory::Entry> entries = actor->GetEquipment().inv.entries;
-    for (size_t i = 0; i < entries.size(); i++) {
-      WorldState* worldState = compatibilityPolicy->GetWorldState();
-      espm::LookupResult entry =
-        worldState->GetEspm().GetBrowser().LookupById(entries[i].baseId);
-      const auto& keywordIds =
-        entry.rec->GetKeywordIds(worldState->GetEspmCache());
-      for (auto rawId : keywordIds) {
-        if (entry.ToGlobalId(rawId) ==
-            keywordRec.ToGlobalId(keywordRec.rec->GetId())) {
+    const std::vector<Inventory::Entry>& entries =
+      actor->GetEquipment().inv.entries;
+    WorldState* worldState = compatibilityPolicy->GetWorldState();
+    for (const auto& entry : entries) {
+      if (entry.extra.worn != Inventory::Worn::None) {
+        const espm::LookupResult res =
+          worldState->GetEspm().GetBrowser().LookupById(entry.baseId);
+        if (!res.rec) {
+          return VarValue::None();
+        }
+        const auto keywordIds =
+          res.rec->GetKeywordIds(worldState->GetEspmCache());
+        if (std::any_of(keywordIds.begin(), keywordIds.end(),
+                        [&](uint32_t keywordId) {
+                          return res.ToGlobalId(keywordId) ==
+                            keywordRec.ToGlobalId(keywordRec.rec->GetId());
+                        })) {
           return VarValue(true);
         }
       }
     }
   }
-
   return VarValue(false);
 }
