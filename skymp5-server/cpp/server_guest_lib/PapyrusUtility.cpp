@@ -30,20 +30,8 @@ static std::mt19937 kGenerator{ std::random_device{}() };
 VarValue PapyrusUtility::RandomInt(
   VarValue self, const std::vector<VarValue>& arguments) const noexcept
 {
-  int32_t min = 0, max = 100;
-  switch (arguments.size()) {
-    case 0:
-      break;
-    case 1:
-      min = static_cast<int32_t>(arguments[0].CastToInt());
-      break;
-    case 2:
-      min = static_cast<int32_t>(arguments[0].CastToInt());
-      max = static_cast<int32_t>(arguments[1].CastToInt());
-      break;
-    default:
-      return VarValue::None();
-  }
+  int32_t min = static_cast<int32_t>(arguments[0].CastToInt());
+  int32_t max = static_cast<int32_t>(arguments[1].CastToInt());
   std::uniform_int_distribution<> distribute{ min, max };
   return VarValue(distribute(kGenerator));
 }
