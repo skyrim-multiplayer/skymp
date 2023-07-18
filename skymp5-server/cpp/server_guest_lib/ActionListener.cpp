@@ -8,6 +8,7 @@
 #include "FindRecipe.h"
 #include "GetBaseActorValues.h"
 #include "HitData.h"
+#include "MathUtils.h"
 #include "MovementValidation.h"
 #include "MpObjectReference.h"
 #include "MsgType.h"
@@ -25,24 +26,26 @@ MpActor* ActionListener::SendToNeighbours(
 {
   MpActor* myActor = partOne.serverState.ActorByUser(userId);
   // The old behavior is doing nothing in that case. This is covered by tests
-  if (!myActor)
+  if (!myActor) {
+    spdlog::warn("SendToNeighbours - No actor assigned to user");
     return nullptr;
+  }
 
   MpActor* actor =
     dynamic_cast<MpActor*>(partOne.worldState.LookupFormByIdx(idx));
-  if (!actor)
-    throw std::runtime_error("SendToNeighbours - target actor doesn't exist");
+  if (!actor) {
+    spdlog::error("SendToNeighbours - Target actor doesn't exist");
+    return nullptr;
+  }
 
-  auto hosterIterator = partOne.worldState.hosters.find(actor->GetFormId());
-  uint32_t hosterId = hosterIterator != partOne.worldState.hosters.end()
-    ? hosterIterator->second
-    : 0;
-
-  if (idx != actor->GetIdx() && hosterId != myActor->GetFormId()) {
-    std::stringstream ss;
-    ss << std::hex << "You aren't able to update actor with idx " << idx
-       << " (your actor's idx is " << actor->GetIdx() << ')';
-    throw PublicError(ss.str());
+  if (idx != myActor->GetIdx()) {
+    auto it = partOne.worldState.hosters.find(actor->GetFormId());
+    if (it == partOne.worldState.hosters.end() ||
+        it->second != myActor->GetFormId()) {
+      spdlog::error("SendToNeighbours - No permission to update actor {:x}",
+                    actor->GetFormId());
+      return nullptr;
+    }
   }
 
   for (auto listener : actor->GetListeners()) {
@@ -173,27 +176,60 @@ void ActionListener::OnUpdateAppearance(const RawMessageData& rawMsgData,
   SendToNeighbours(idx, rawMsgData, true);
 }
 
-void ActionListener::OnUpdateEquipment(const RawMessageData& rawMsgData,
-                                       uint32_t idx,
-                                       simdjson::dom::element& data,
-                                       const Inventory& equipmentInv)
+void ActionListener::OnUpdateEquipment(
+  const RawMessageData& rawMsgData, const uint32_t idx,
+  const simdjson::dom::element& data, const Inventory& equipmentInv,
+  const uint32_t leftSpell, const uint32_t rightSpell,
+  const uint32_t voiceSpell, const uint32_t instantSpell)
 {
   MpActor* actor = partOne.serverState.ActorByUser(rawMsgData.userId);
-  if (!actor)
-    return;
 
-  bool badEq = false;
-  for (auto& e : equipmentInv.entries) {
-    if (!actor->GetInventory().HasItem(e.baseId)) {
-      badEq = true;
-      break;
+  if (!actor) {
+    return;
+  }
+
+  if (leftSpell > 0 && !actor->IsSpellLearned(leftSpell)) {
+    spdlog::debug(
+      "OnUpdateEquipment result false. Spell with id ({}) not learned",
+      leftSpell);
+    return;
+  }
+
+  if (rightSpell > 0 && !actor->IsSpellLearned(rightSpell)) {
+    spdlog::debug(
+      "OnUpdateEquipment result false. Spell with id ({}) not learned",
+      leftSpell);
+    return;
+  }
+
+  if (voiceSpell > 0 && !actor->IsSpellLearned(voiceSpell)) {
+    spdlog::debug(
+      "OnUpdateEquipment result false. Spell with id ({}) not learned",
+      leftSpell);
+    return;
+  }
+
+  if (instantSpell > 0 && !actor->IsSpellLearned(instantSpell)) {
+    spdlog::debug(
+      "OnUpdateEquipment result false. Spell with id ({}) not learned",
+      leftSpell);
+    return;
+  }
+
+  const auto& inventory = actor->GetInventory();
+
+  for (auto& [baseId, count, _] : equipmentInv.entries) {
+    if (!inventory.HasItem(baseId)) {
+      spdlog::debug(
+        "OnUpdateEquipment result false. The inventory does not contain item "
+        "with id {:x}",
+        baseId);
+      return;
     }
   }
 
-  if (!badEq) {
-    SendToNeighbours(idx, rawMsgData, true);
-    actor->SetEquipment(simdjson::minify(data));
-  }
+  SendToNeighbours(idx, rawMsgData, true);
+  actor->SetEquipment(simdjson::minify(data));
 }
 
 void RecalculateWorn(MpObjectReference& refr)
@@ -330,6 +366,7 @@ void ActionListener::OnDropItem(const RawMessageData& rawMsgData,
 }
 
 namespace {
+
 VarValue VarValueFromJson(const simdjson::dom::element& parentMsg,
                           const simdjson::dom::element& element)
 {
@@ -357,10 +394,6 @@ VarValue VarValueFromJson(const simdjson::dom::element& parentMsg,
                            std::to_string(static_cast<int>(element.type())));
 }
 
-bool IsNearlyEqual(float value, float target, float margin = 1.0f / 1024.0f)
-{
-  return std::abs(target - value) < margin;
-}
 }
 void ActionListener::OnFinishSpSnippet(const RawMessageData& rawMsgData,
                                        uint32_t snippetIdx,
@@ -379,12 +412,13 @@ void ActionListener::OnFinishSpSnippet(const RawMessageData& rawMsgData,
 void ActionListener::OnEquip(const RawMessageData& rawMsgData, uint32_t baseId)
 {
   MpActor* actor = partOne.serverState.ActorByUser(rawMsgData.userId);
-  if (!actor)
+  if (!actor) {
     throw std::runtime_error(
       "Unable to finish SpSnippet: No Actor found for user " +
       std::to_string(rawMsgData.userId));
+  }
 
-  actor->OnEquip(baseId);
+  std::ignore = actor->OnEquip(baseId);
 }
 
 void ActionListener::OnConsoleCommand(
@@ -422,13 +456,14 @@ void UseCraftRecipe(MpActor* me, espm::COBJ::Data recipeData,
   // SendInventoryUpdate ordering in RemoveItems/AddItem)
   auto formId = me->GetFormId();
   if (auto worldState = me->GetParent()) {
-    worldState->SetTimer(1.f).Then([worldState, formId](Viet::Void) {
-      auto actor =
-        std::dynamic_pointer_cast<MpActor>(worldState->LookupFormById(formId));
-      if (actor) {
-        actor->SendInventoryUpdate();
-      }
-    });
+    worldState->SetTimer(std::chrono::seconds(1))
+      .Then([worldState, formId](Viet::Void) {
+        auto actor = std::dynamic_pointer_cast<MpActor>(
+          worldState->LookupFormById(formId));
+        if (actor) {
+          actor->SendInventoryUpdate();
+        }
+      });
   }
 }
 
@@ -446,7 +481,7 @@ void ActionListener::OnCraftItem(const RawMessageData& rawMsgData,
   spdlog::debug("User {} tries to craft {:#x} on workbench {:#x}",
                 rawMsgData.userId, resultObjectId, workbenchId);
 
-  if (base.rec->GetType() != "FURN") {
+  if (base.rec->GetType() != "FURN" && base.rec->GetType() != "ACTI") {
     throw std::runtime_error("Unable to use " +
                              base.rec->GetType().ToString() + " as workbench");
   }
@@ -574,12 +609,12 @@ void ActionListener::OnChangeValues(const RawMessageData& rawMsgData,
       CropStaminaRegeneration(stamina, timeAfterRegeneration, actor);
   }
 
-  if (!IsNearlyEqual(currentActorValues.healthPercentage,
-                     newActorValues.healthPercentage) ||
-      !IsNearlyEqual(currentActorValues.magickaPercentage,
-                     newActorValues.magickaPercentage) ||
-      !IsNearlyEqual(currentActorValues.staminaPercentage,
-                     newActorValues.staminaPercentage)) {
+  if (!MathUtils::IsNearlyEqual(currentActorValues.healthPercentage,
+                                newActorValues.healthPercentage) ||
+      !MathUtils::IsNearlyEqual(currentActorValues.magickaPercentage,
+                                newActorValues.magickaPercentage) ||
+      !MathUtils::IsNearlyEqual(currentActorValues.staminaPercentage,
+                                newActorValues.staminaPercentage)) {
     actor->NetSendChangeValues(currentActorValues);
   }
   actor->SetPercentages(currentActorValues);
@@ -782,7 +817,8 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
   }
 
   if (IsDistanceValid(*aggressor, targetActor, hitData) == false) {
-    float distance = sqrtf(GetSqrDistanceToBounds(*aggressor, targetActor));
+    float distance =
+      std::sqrt(GetSqrDistanceToBounds(*aggressor, targetActor));
     float reach = GetReach(*aggressor, hitData.source);
     uint32_t aggressorId = aggressor->GetFormId();
     uint32_t targetId = targetActor.GetFormId();

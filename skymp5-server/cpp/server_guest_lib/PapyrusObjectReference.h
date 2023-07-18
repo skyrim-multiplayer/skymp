@@ -1,7 +1,8 @@
 #pragma once
 #include "IPapyrusClass.h"
 
-class PapyrusObjectReference : public IPapyrusClass<PapyrusObjectReference>
+class PapyrusObjectReference final
+  : public IPapyrusClass<PapyrusObjectReference>
 {
 public:
   const char* GetName() override { return "objectreference"; }
@@ -21,6 +22,7 @@ public:
                                     const std::vector<VarValue>& arguments);
   VarValue PlaceAtMe(VarValue self, const std::vector<VarValue>& arguments);
   VarValue SetAngle(VarValue self, const std::vector<VarValue>& arguments);
+  VarValue Enable(VarValue self, const std::vector<VarValue>& arguments);
   VarValue Disable(VarValue self, const std::vector<VarValue>& arguments);
   VarValue BlockActivation(VarValue self,
                            const std::vector<VarValue>& arguments);
@@ -34,10 +36,13 @@ public:
 
   VarValue GetBaseObject(VarValue self,
                          const std::vector<VarValue>& arguments);
+  VarValue PlayAnimation(VarValue self,
+                         const std::vector<VarValue>& arguments);
+  VarValue PlayGamebryoAnimation(VarValue self,
+                                 const std::vector<VarValue>& arguments);
 
-  void Register(
-    VirtualMachine& vm,
-    std::shared_ptr<IPapyrusCompatibilityPolicy> compatibilityPolicy) override
+  void Register(VirtualMachine& vm,
+                std::shared_ptr<IPapyrusCompatibilityPolicy> policy) override
   {
     AddMethod(vm, "IsHarvested", &PapyrusObjectReference::IsHarvested);
     AddMethod(vm, "IsDisabled", &PapyrusObjectReference::IsDisabled);
@@ -53,6 +58,7 @@ public:
               &PapyrusObjectReference::GetAnimationVariableBool);
     AddMethod(vm, "PlaceAtMe", &PapyrusObjectReference::PlaceAtMe);
     AddMethod(vm, "SetAngle", &PapyrusObjectReference::SetAngle);
+    AddMethod(vm, "Enable", &PapyrusObjectReference::Enable);
     AddMethod(vm, "Disable", &PapyrusObjectReference::Disable);
     AddMethod(vm, "BlockActivation", &PapyrusObjectReference::BlockActivation);
     AddMethod(vm, "IsActivationBlocked",
@@ -63,5 +69,8 @@ public:
     AddMethod(vm, "GetPositionZ", &PapyrusObjectReference::GetPositionZ);
     AddMethod(vm, "SetPosition", &PapyrusObjectReference::SetPosition);
     AddMethod(vm, "GetBaseObject", &PapyrusObjectReference::GetBaseObject);
+    AddMethod(vm, "PlayAnimation", &PapyrusObjectReference::PlayAnimation);
+    AddMethod(vm, "PlayGamebryoAnimation",
+              &PapyrusObjectReference::PlayGamebryoAnimation);
   }
 };

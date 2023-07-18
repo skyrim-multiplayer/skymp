@@ -669,10 +669,15 @@ public:
   {
     uint32_t defaultOutfitId = 0;
     uint32_t sleepOutfitId = 0;
+
+    std::set<uint32_t> spells = {};
+
     std::vector<CONT::ContainerObject> objects;
     std::vector<Faction> factions;
+
     bool isEssential = false;
     bool isProtected = false;
+
     uint32_t race = 0;
     uint16_t healthOffset = 0;
     uint16_t magickaOffset = 0;
@@ -765,6 +770,8 @@ public:
     float staminaRegen = 0.f;
     float unarmedDamage = 0.f;
     float unarmedReach = 0.f;
+
+    std::set<uint32_t> spells = {};
   };
 
   Data GetData(CompressedFieldsCache& compressedFieldsCache) const noexcept;
@@ -1001,10 +1008,62 @@ class MGEF : public RecordHeader
 public:
   static constexpr auto kType = "MGEF";
 
+  enum class EffectType : uint32_t
+  {
+    ValueMod = 0,
+    Script,
+    Dispel,
+    CureDisease,
+    Absorb,
+    Dual,
+    Calm,
+    Demoralize,
+    Frenzy,
+    Disarm,
+    CommandSummoned,
+    Invisibility,
+    Light,
+    Lock = 15,
+    Open,
+    BoundWeapon,
+    SummonCreature,
+    DetectLife,
+    Telekinesis,
+    Paralysis,
+    Reanimate,
+    SoulTrap,
+    TurnUndead,
+    Guide,
+    WerewolfFeed,
+    CureParalysis,
+    CureAddiction,
+    CurePoison,
+    Concussion,
+    ValueAndParts,
+    AccumulateMagnitude,
+    Stagger,
+    PeakValueMod,
+    Cloak,
+    Werewolf,
+    SlowTime,
+    Rally,
+    EnchanceWeapon,
+    SpawnHazard,
+    Etherealize,
+    Banish,
+    SpawnScriptedRef,
+    Disguise,
+    GrabActor,
+    VampireLord
+  };
+  static_assert(static_cast<std::underlying_type_t<EffectType>>(
+                  EffectType::VampireLord) == 46);
+
   struct DATA
   {
     // primary actor value
     ActorValue primaryAV = espm::ActorValue::None;
+    EffectType effectType;
   };
 
   struct Data
@@ -1048,6 +1107,25 @@ class BOOK : public RecordHeader
 {
 public:
   static constexpr auto kType = "BOOK";
+
+  enum Flags : uint8_t
+  {
+    None = 0,
+    TeachesSkill = 0x01,
+    CantbeTaken = 0x02,
+    TeachesSpell = 0x04,
+    AlreadyRead = 0x08,
+  };
+
+  struct Data
+  {
+    [[nodiscard]] bool IsFlagSet(Flags flag) const noexcept;
+
+    Flags flags = Flags::None;
+    uint32_t spellOrSkillFormId = 0;
+  };
+
+  Data GetData(CompressedFieldsCache& compressedFieldsCache) const noexcept;
 };
 
 static_assert(sizeof(BOOK) == sizeof(RecordHeader));

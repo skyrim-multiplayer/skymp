@@ -61,8 +61,8 @@ SaveFile_::ChangeFormACHR_::ToBinary() const noexcept
   const std::string bodyMorph = "bodyMorphWeight";
   const std::string bodyMuscular = "bodyMorphMuscular";
 
-  float newValueMorph = 0x333333f3;
-  float newValueMuscular = 0x9a999e30;
+  float newValueMorph = static_cast<float>(0x333333f3);
+  float newValueMuscular = static_cast<float>(0x9a999e30);
 
   KeyForValueChange(res.second, bodyMorph, newValueMorph);
   KeyForValueChange(res.second, bodyMuscular, newValueMuscular);
