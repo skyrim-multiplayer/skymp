@@ -98,13 +98,16 @@ jobs:
 
           - name: Wait for other runs to complete
             run: |
-              until [[ "$(gh api repos/Pospelove/skymp5-gamemode/actions/runs --jq '[.workflow_runs[] | select(.status == "in_progress" or .status == "queued") | select(.workflow_file.path == ".github/workflows/merge-to.yml")]' | jq length)" == "0" ]]; do
-                echo "Waiting for other runs to complete..."
+              attempt_counter=0
+              until [[ "$(gh api repos/Pospelove/skymp5-gamemode/actions/runs --jq '[.workflow_runs[] | select(.status == "in_progress" or .status == "queued") | select(.workflow_file.path == ".github/workflows/merge-to.yml")]' | jq length)" == "0" || "$attempt_counter" -ge "10" ]]; do
+                echo "Waiting for other runs to complete... Attempt: $attempt_counter"
                 sleep 10
+                attempt_counter=$((attempt_counter+1))
               done
             env:
-              GH_TOKEN: ${{ secrets.GH_TOKEN }}
+              GH_TOKEN: ${{ github.token }}
               shell: bash
+                  
 
           - name: CMake Configure
             if: ${{env.DEPLOY_ACTION == 'deploy'}}
