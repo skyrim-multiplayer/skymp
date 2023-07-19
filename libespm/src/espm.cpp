@@ -497,6 +497,7 @@ struct espm::Browser::Impl
     groupStackByRecordPtr;
   std::vector<RecordHeader*> objectReferences;
   std::vector<RecordHeader*> constructibleObjects;
+  std::vector<RecordHeader*> keywords;
 
   GroupStack grStack;
   std::vector<std::unique_ptr<GroupStack>> grStackCopies;
@@ -568,6 +569,9 @@ const std::vector<espm::RecordHeader*>& espm::Browser::GetRecordsByType(
   }
   if (!strcmp(type, "COBJ")) {
     return pImpl->constructibleObjects;
+  }
+  if (!strcmp(type, "KYWD")) {
+    return pImpl->keywords;
   }
   throw std::runtime_error(
     "GetRecordsByType currently supports only REFR and COBJ records");
@@ -665,8 +669,8 @@ bool espm::Browser::ReadAny(const GroupStack* parentGrStack)
     pImpl->groupStackByRecordPtr.emplace(recHeader, parentGrStack);
 
     pImpl->recById[recHeader->id] = recHeader;
-
     auto t = recHeader->GetType();
+
     if (t == "REFR" || t == "ACHR") {
       pImpl->objectReferences.push_back(recHeader);
       const auto refr = reinterpret_cast<REFR*>(recHeader);
@@ -683,10 +687,13 @@ bool espm::Browser::ReadAny(const GroupStack* parentGrStack)
       }
     }
 
-    if (recHeader->GetType() == "COBJ")
+    if (t == "COBJ")
       pImpl->constructibleObjects.push_back(recHeader);
 
-    if (recHeader->GetType() == "NAVM") {
+    if (t == "KYWD")
+      pImpl->keywords.push_back(recHeader);
+
+    if (t == "NAVM") {
       auto nvnm = reinterpret_cast<NAVM*>(recHeader);
 
       auto& v = pImpl->navmeshes[NavMeshKey(
@@ -1142,8 +1149,14 @@ espm::MGEF::Data espm::MGEF::GetData(
     this,
     [&](const char* type, uint32_t size, const char* data) {
       if (!memcmp(type, "DATA", 4)) {
-        result.data.primaryAV =
-          espm::ActorValue(*reinterpret_cast<const uint32_t*>(data + 0x44));
+        result.data.primaryAV = espm::ActorValue{
+          *reinterpret_cast<const std::underlying_type_t<espm::ActorValue>*>(
+            data + 0x44)
+        };
+        result.data.effectType = EffectType{
+          *reinterpret_cast<const std::underlying_type_t<EffectType>*>(data +
+                                                                       0x40)
+        };
       }
     },
     compressedFieldsCache);
