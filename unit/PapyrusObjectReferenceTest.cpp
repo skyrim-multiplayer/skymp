@@ -1,6 +1,8 @@
 #include "TestUtils.hpp"
 #include <catch2/catch_all.hpp>
 
+#include <iostream>
+
 #include "ActionListener.h"
 #include "EspmGameObject.h"
 #include "MpObjectReference.h"
@@ -177,9 +179,11 @@ TEST_CASE("MoveTo", "[Papyrus][ObjectReference]")
   auto& actor = partOne.worldState.GetFormAt<MpActor>(formId);
   auto& refr = CreateMpObjectReference(partOne, 0xff000001);
   REQUIRE(actor.GetPos() != refr.GetPos());
-  messages.clear();
-  papyrusObjectReference.MoveTo(refr.ToVarValue(), { actor.ToVarValue() });
+  papyrusObjectReference.MoveTo(actor.ToVarValue(),
+                                { refr.ToVarValue(), VarValue(0), VarValue(0),
+                                  VarValue(0), VarValue(true) });
   REQUIRE(actor.GetPos() == refr.GetPos());
+  REQUIRE(actor.GetCellOrWorld() == refr.GetCellOrWorld());
   {
     auto it = std::find_if(
       messages.begin(), messages.end(),

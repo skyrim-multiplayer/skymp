@@ -426,8 +426,9 @@ VarValue PapyrusObjectReference::PlayGamebryoAnimation(
 VarValue PapyrusObjectReference::MoveTo(
   VarValue self, const std::vector<VarValue>& arguments) const noexcept
 {
-  auto* _this = GetFormPtr<MpActor>(self);
+  auto* _this = GetFormPtr<MpObjectReference>(self);
   const auto* objectReference = GetFormPtr<MpObjectReference>(arguments[0]);
+  auto* _thisActor = reinterpret_cast<MpActor*>(_this);
   if (!_this || !objectReference) {
     return VarValue::None();
   }
@@ -444,8 +445,8 @@ VarValue PapyrusObjectReference::MoveTo(
   dest.z += zOffset;
   const NiPoint3 rotation =
     matchRotation ? objectReference->GetAngle() : _this->GetAngle();
-  LocationalData data{ dest, rotation };
-  _this->Teleport(data);
+  LocationalData data{ dest, rotation, objectReference->GetCellOrWorld() };
+  _thisActor->Teleport(data);
   return VarValue::None();
 }
 

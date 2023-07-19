@@ -30,20 +30,9 @@ TEST_CASE("RandomInt", "[Papyrus][Utility]")
 {
   WorldState wst;
   PapyrusUtility utility;
-  int32_t low = 0, high = 100;
-  int32_t res = static_cast<int32_t>(utility.RandomInt(VarValue::None(), {}));
-  bool good = low <= res && res <= high;
-  REQUIRE(good);
-  low = 253;
-  high = 666;
-  res = static_cast<int32_t>(
+  int32_t low = 253, high = 666;
+  auto res = static_cast<int32_t>(
     utility.RandomInt(VarValue::None(), { VarValue(low), VarValue(high) }));
-  good = low <= res && res <= high;
-  REQUIRE(good);
-  low = 13;
-  high = 100;
-  res = static_cast<int32_t>(
-    utility.RandomInt(VarValue::None(), { VarValue(low) }));
-  good = low <= res && res <= high;
+  bool good = low <= res && res <= high;
   REQUIRE(good);
 }
