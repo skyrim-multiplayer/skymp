@@ -1056,7 +1056,10 @@ void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
     }
   } else if (t == espm::CONT::kType && actorActivator) {
     EnsureBaseContainerAdded(loader);
-    if (!this->occupant) {
+    if (!this->occupant || this->occupant->IsDisabled()) {
+      if (this->occupant) {
+        this->occupant->RemoveEventSink(this->occupantDestroySink);
+      }
       SetOpen(true);
       SendPropertyTo("inventory", GetInventory().ToJson(), *actorActivator);
       activationSource.SendOpenContainer(GetFormId());
