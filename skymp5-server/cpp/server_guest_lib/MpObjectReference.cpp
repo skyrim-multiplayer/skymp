@@ -100,11 +100,6 @@ struct AnimGraphHolder
   std::set<CIString> animationVariablesBool;
 };
 
-struct ScriptState
-{
-  std::map<std::string, std::shared_ptr<ScriptVariablesHolder>> varHolders;
-};
-
 struct PrimitiveData
 {
   NiPoint3 boundsDiv2;
@@ -116,7 +111,6 @@ struct MpObjectReference::Impl
 public:
   bool onInitEventSent = false;
   bool scriptsInited = false;
-  std::unique_ptr<ScriptState> scriptState;
   std::unique_ptr<AnimGraphHolder> animGraphHolder;
   std::optional<PrimitiveData> primitive;
   bool teleportFlag = false;
@@ -1158,8 +1152,6 @@ void MpObjectReference::InitScripts()
   }
 
   if (!scriptNames.empty()) {
-    pImpl->scriptState.reset(new ScriptState);
-
     std::vector<VirtualMachine::ScriptInfo> scriptInfo;
     for (auto& scriptName : scriptNames) {
       auto scriptVariablesHolder = std::make_shared<ScriptVariablesHolder>(

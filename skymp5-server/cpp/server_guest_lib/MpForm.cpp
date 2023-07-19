@@ -31,7 +31,8 @@ VarValue MpForm::ToVarValue() const
 
 std::shared_ptr<IGameObject> MpForm::ToGameObject() const
 {
-  if (!gameObject)
+  if (!gameObject) {
     gameObject.reset(new MpFormGameObject(const_cast<MpForm*>(this)));
+  }
   return gameObject;
 }

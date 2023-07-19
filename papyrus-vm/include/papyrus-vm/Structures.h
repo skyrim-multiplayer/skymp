@@ -9,6 +9,7 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
+#include "CIString.h"
 
 class VirtualMachine;
 struct PexScript;
@@ -30,6 +31,9 @@ public:
   virtual bool EqualsByValue(const IGameObject& obj) const { return false; }
 
   bool HasScript(const char* name) const;
+
+  const std::vector<std::shared_ptr<ActivePexInstance>> &GetActivePexInstances() const;
+  std::vector<std::shared_ptr<ActivePexInstance>> &GetActivePexInstances();
 
 private:
   std::vector<std::shared_ptr<ActivePexInstance>> activePexInstances;
@@ -161,6 +165,8 @@ public:
   // Must guarantee that no exception would be thrown for '::State' variable
   virtual VarValue* GetVariableByName(const char* name,
                                       const PexScript& pex) = 0;
+
+  virtual const CIMap<VarValue> &ListVariables() const = 0;
 };
 
 struct FunctionCode
@@ -428,6 +434,9 @@ public:
 
   static uint8_t GetArrayElementType(uint8_t type);
   static uint8_t GetArrayTypeByElementType(uint8_t type);
+
+  const std::shared_ptr<IVariablesHolder> &GetVariablesHolder() const;
+  std::shared_ptr<IVariablesHolder> GetVariablesHolder();
 
 private:
   struct ExecutionContext;

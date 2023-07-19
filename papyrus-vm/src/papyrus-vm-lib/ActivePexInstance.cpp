@@ -802,6 +802,14 @@ uint8_t ActivePexInstance::GetArrayTypeByElementType(uint8_t type)
   return returnType;
 }
 
+const std::shared_ptr<IVariablesHolder> &ActivePexInstance::GetVariablesHolder() const {
+  return variables;
+}
+
+std::shared_ptr<IVariablesHolder> ActivePexInstance::GetVariablesHolder() {
+  return variables;
+}
+
 void ActivePexInstance::CastObjectToObject(VarValue* result,
                                            VarValue* scriptToCastOwner,
                                            std::vector<Local>& locals)
