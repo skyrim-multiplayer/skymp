@@ -4,6 +4,7 @@
 #include "EspmGameObject.h"
 #include "MpFormGameObject.h"
 #include "WorldState.h"
+#include "libespm/Combiner.h"
 
 VarValue PapyrusGame::IncrementStat(VarValue self,
                                     const std::vector<VarValue>& arguments)
@@ -111,38 +112,42 @@ void PapyrusGame::RaceMenuHelper(VarValue& self, const char* funcName,
   }
 }
 
-VarValue PapyrusGame::GetForm(
-  VarValue self, const std::vector<VarValue>& arguments) const noexcept
+VarValue PapyrusGame::GetFormInternal(VarValue self,
+                                      const std::vector<VarValue>& arguments,
+                                      bool extended) const noexcept
 {
   if (arguments.size() != 1) {
     return VarValue::None();
   }
   auto formId = static_cast<const int32_t>(arguments[0].CastToInt());
   constexpr const uint32_t maxId = 0x80000000;
-  if (formId > maxId) {
+
+  if (!extended && formId > maxId) {
     return VarValue::None();
   }
+
   const std::shared_ptr<MpForm>& pForm =
     compatibilityPolicy->GetWorldState()->LookupFormById(formId);
-  if (!pForm) {
+  espm::LookupResult res = GetRecordPtr(VarValue(formId));
+
+  if (!pForm && !res.rec) {
     return VarValue::None();
   }
-  return VarValue(pForm->ToGameObject());
+
+  return pForm ? VarValue(pForm->ToGameObject())
+               : VarValue(std::make_shared<EspmGameObject>(res));
+}
+
+VarValue PapyrusGame::GetForm(
+  VarValue self, const std::vector<VarValue>& arguments) const noexcept
+{
+  return GetFormInternal(self, arguments, false);
 }
 
 VarValue PapyrusGame::GetFormEx(
   VarValue self, const std::vector<VarValue>& arguments) const noexcept
 {
-  if (arguments.size() != 1) {
-    return VarValue::None();
-  }
-  auto formId = static_cast<const int32_t>(arguments[0].CastToInt());
-  const std::shared_ptr<MpForm>& pForm =
-    compatibilityPolicy->GetWorldState()->LookupFormById(formId);
-  if (!pForm) {
-    return VarValue::None();
-  }
-  return VarValue(pForm->ToGameObject());
+  return GetFormInternal(self, arguments, true);
 }
 
 void PapyrusGame::Register(VirtualMachine& vm,

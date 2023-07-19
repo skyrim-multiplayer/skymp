@@ -83,6 +83,10 @@ TEST_CASE("IsDead()", "[Papyrus][Actor]")
   auto papyrusActorDead = static_cast<const bool>(
     papyrusActor.IsDead(actor.ToVarValue(), {}).CastToBool());
   REQUIRE(worldActorDead == papyrusActorDead);
+  actor.Kill();
+  papyrusActorDead = static_cast<bool>(
+    papyrusActor.IsDead(actor.ToVarValue(), {}).CastToBool());
+  REQUIRE(papyrusActorDead == true);
 
   partOne.DestroyActor(formId);
   DoDisconnect(partOne, 0);

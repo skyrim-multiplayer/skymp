@@ -2,6 +2,7 @@
 
 #include "EspmGameObject.h"
 #include "FormCallbacks.h"
+#include "LocationalData.h"
 #include "MpActor.h"
 #include "MpFormGameObject.h"
 #include "MpObjectReference.h"
@@ -425,7 +426,7 @@ VarValue PapyrusObjectReference::PlayGamebryoAnimation(
 VarValue PapyrusObjectReference::MoveTo(
   VarValue self, const std::vector<VarValue>& arguments) const noexcept
 {
-  auto* _this = GetFormPtr<MpObjectReference>(self);
+  auto* _this = GetFormPtr<MpActor>(self);
   const auto* objectReference = GetFormPtr<MpObjectReference>(arguments[0]);
   if (!_this || !objectReference) {
     return VarValue::None();
@@ -443,8 +444,8 @@ VarValue PapyrusObjectReference::MoveTo(
   dest.z += zOffset;
   const NiPoint3 rotation =
     matchRotation ? objectReference->GetAngle() : _this->GetAngle();
-  _this->SetAngle(rotation);
-  _this->SetPos(dest);
+  LocationalData data{ dest, rotation };
+  _this->Teleport(data);
   return VarValue::None();
 }
 

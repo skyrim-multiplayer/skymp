@@ -35,4 +35,7 @@ public:
 private:
   void RaceMenuHelper(VarValue& self, const char* funcName,
                       const std::vector<VarValue>& arguments);
+  VarValue GetFormInternal(VarValue self,
+                           const std::vector<VarValue>& arguments,
+                           bool extended) const noexcept;
 };

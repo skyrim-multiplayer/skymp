@@ -173,9 +173,17 @@ TEST_CASE("MoveTo", "[Papyrus][ObjectReference]")
   uint32_t formId =
     partOne.CreateActor(0xff000000, { 666, 666, 666 }, 0, 0x3c);
   partOne.SetUserActor(0, 0xff000000);
+  auto& messages = partOne.Messages();
   auto& actor = partOne.worldState.GetFormAt<MpActor>(formId);
   auto& refr = CreateMpObjectReference(partOne, 0xff000001);
   REQUIRE(actor.GetPos() != refr.GetPos());
+  messages.clear();
   papyrusObjectReference.MoveTo(refr.ToVarValue(), { actor.ToVarValue() });
   REQUIRE(actor.GetPos() == refr.GetPos());
+  {
+    auto it = std::find_if(
+      messages.begin(), messages.end(),
+      [](PartOne::Message& msg) { return msg.j["type"] == "teleport"; });
+    REQUIRE(it != messages.end());
+  }
 }
