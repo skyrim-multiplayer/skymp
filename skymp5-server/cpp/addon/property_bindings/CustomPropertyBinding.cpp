@@ -3,16 +3,17 @@
 #include "PapyrusUtils.h"
 
 namespace {
-  std::vector<std::string> SplitByDot(const std::string &s) {
-    std::vector<std::string> result;
-    std::stringstream ss(s);
-    std::string item;
+std::vector<std::string> SplitByDot(const std::string& s)
+{
+  std::vector<std::string> result;
+  std::stringstream ss(s);
+  std::string item;
 
-    while (getline(ss, item, '.')) {
-        result.push_back(item);
-    }
+  while (getline(ss, item, '.')) {
+    result.push_back(item);
+  }
 
-    return result;
+  return result;
 }
 
 auto EnsurePropertyExists(const GamemodeApi::State& state,
@@ -38,8 +39,9 @@ CustomPropertyBinding::CustomPropertyBinding(const std::string& propertyName_)
 
   // "scriptVariables.<script name>.<variable name>"
   static const std::string kScriptVariablePrefix = "scriptVariables.";
-  this->isScriptVariable = 
-    this->propertyName.compare(0, kScriptVariablePrefix.size(), kScriptVariablePrefix) == 0;
+  this->isScriptVariable =
+    this->propertyName.compare(0, kScriptVariablePrefix.size(),
+                               kScriptVariablePrefix) == 0;
 }
 
 std::string CustomPropertyBinding::GetPropertyName() const
@@ -57,8 +59,9 @@ Napi::Value CustomPropertyBinding::Get(Napi::Env env, ScampServer& scampServer,
   if (isPrivate) {
     return NapiHelper::ParseJson(env,
                                  refr.GetDynamicFields().Get(propertyName));
-  } else if(isScriptVariable) {
-    throw std::runtime_error("Not implemented, use 'scriptVariables' property instead");
+  } else if (isScriptVariable) {
+    throw std::runtime_error(
+      "Not implemented, use 'scriptVariables' property instead");
   } else {
     EnsurePropertyExists(scampServer.GetGamemodeApiState(), propertyName);
     return NapiHelper::ParseJson(env,
@@ -80,43 +83,54 @@ void CustomPropertyBinding::Set(Napi::Env env, ScampServer& scampServer,
 
   if (isPrivate) {
     refr.SetProperty(propertyName, newValueJson, false, false);
-  }
-  else if (isScriptVariable) {
+  } else if (isScriptVariable) {
     auto gameObject = refr.ToGameObject();
     if (!gameObject) {
-      return spdlog::error("CustomPropertyBinding - ToGameObject() returned nullptr");
+      return spdlog::error(
+        "CustomPropertyBinding - ToGameObject() returned nullptr");
     }
 
     auto tokens = SplitByDot(propertyName);
     if (tokens.size() < 3) {
-      return spdlog::error("CustomPropertyBinding - Bad script variable property name: '{}'", propertyName);
+      return spdlog::error(
+        "CustomPropertyBinding - Bad script variable property name: '{}'",
+        propertyName);
     }
 
     std::string scriptName = tokens[1];
     std::string variableName = tokens[2];
 
-    auto &instances = gameObject->GetActivePexInstances();
-    auto it = std::find_if(instances.begin(), instances.end(), [&](const std::shared_ptr<ActivePexInstance> &instance) {
-      return instance->GetSourcePexName() == scriptName;
-    });
+    auto& instances = gameObject->GetActivePexInstances();
+    auto it =
+      std::find_if(instances.begin(), instances.end(),
+                   [&](const std::shared_ptr<ActivePexInstance>& instance) {
+                     return instance->GetSourcePexName() == scriptName;
+                   });
 
     if (it == instances.end()) {
-      return spdlog::error("CustomPropertyBinding - Object doesn't have such script: '{}'", propertyName);
+      return spdlog::error(
+        "CustomPropertyBinding - Object doesn't have such script: '{}'",
+        propertyName);
     }
 
-    auto &activeScript = *it;
+    auto& activeScript = *it;
     auto variablesHolder = activeScript->GetVariablesHolder();
     if (!variablesHolder) {
-      return spdlog::error("CustomPropertyBinding - GetVariablesHolder() returned nullptr");
+      return spdlog::error(
+        "CustomPropertyBinding - GetVariablesHolder() returned nullptr");
     }
 
-    if (!variablesHolder->ListVariables().count(CIString{variableName.data()})) {
-      return spdlog::error("CustomPropertyBinding - Script doesn't have such variable: '{}'", propertyName);
+    if (!variablesHolder->ListVariables().count(
+          CIString{ variableName.data() })) {
+      return spdlog::error(
+        "CustomPropertyBinding - Script doesn't have such variable: '{}'",
+        propertyName);
     }
 
-    activeScript->GetVariableValueByName(nullptr, variableName) = PapyrusUtils::GetPapyrusValueFromJsValue(newValue, false, partOne->worldState);
-  }
-  else {
+    activeScript->GetVariableValueByName(nullptr, variableName) =
+      PapyrusUtils::GetPapyrusValueFromJsValue(newValue, false,
+                                               partOne->worldState);
+  } else {
     auto it = EnsurePropertyExists(state, propertyName);
     refr.SetProperty(propertyName, newValueJson, it->second.isVisibleByOwner,
                      it->second.isVisibleByNeighbors);

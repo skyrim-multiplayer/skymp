@@ -12,10 +12,14 @@ bool IGameObject::HasScript(const char* scriptName) const
   return false;
 }
 
-const std::vector<std::shared_ptr<ActivePexInstance>> &IGameObject::GetActivePexInstances() const {
+const std::vector<std::shared_ptr<ActivePexInstance>>&
+IGameObject::GetActivePexInstances() const
+{
   return activePexInstances;
 }
 
-std::vector<std::shared_ptr<ActivePexInstance>> &IGameObject::GetActivePexInstances() {
+std::vector<std::shared_ptr<ActivePexInstance>>&
+IGameObject::GetActivePexInstances()
+{
   return activePexInstances;
 }

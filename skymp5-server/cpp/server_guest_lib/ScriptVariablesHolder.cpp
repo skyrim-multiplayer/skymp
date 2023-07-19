@@ -48,7 +48,7 @@ VarValue* ScriptVariablesHolder::GetVariableByName(const char* name,
   return nullptr;
 }
 
-const CIMap<VarValue> &ScriptVariablesHolder::ListVariables() const
+const CIMap<VarValue>& ScriptVariablesHolder::ListVariables() const
 {
   static const CIMap<VarValue> kEmptyMap;
   return vars ? *vars : kEmptyMap;

@@ -21,7 +21,7 @@ public:
 
   VarValue* GetVariableByName(const char* name, const PexScript& pex) override;
 
-  const CIMap<VarValue> &ListVariables() const override;
+  const CIMap<VarValue>& ListVariables() const override;
 
 private:
   void FillProperties();

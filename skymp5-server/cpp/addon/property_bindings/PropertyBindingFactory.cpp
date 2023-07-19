@@ -19,10 +19,10 @@
 #include "PercentagesBinding.h"
 #include "PosBinding.h"
 #include "ProfileIdBinding.h"
+#include "ScriptVariablesBinding.h"
 #include "SpawnPointBinding.h"
 #include "TypeBinding.h"
 #include "WorldOrCellDescBinding.h"
-#include "ScriptVariablesBinding.h"
 
 std::map<std::string, std::shared_ptr<PropertyBinding>>
 PropertyBindingFactory::CreateStandardPropertyBindings()
@@ -50,7 +50,8 @@ PropertyBindingFactory::CreateStandardPropertyBindings()
   result["idx"] = std::make_shared<IdxBinding>();
   result["consoleCommandsAllowed"] =
     std::make_shared<ConsoleCommandsAllowedBinding>();
-  result["scriptVariablesBinding"] = std::make_shared<ScriptVariablesBinding>();
+  result["scriptVariablesBinding"] =
+    std::make_shared<ScriptVariablesBinding>();
   return result;
 }
 
