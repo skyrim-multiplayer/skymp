@@ -50,7 +50,7 @@ ActiveMagicEffectsMap ActiveMagicEffectsMap::FromJson(
     int32_t av;
     ReadEx(effect, actorValue, &av);
     ReadEx(effect, effectId, &entry.data.effectId);
-    ReadEx(effect, duration, &entry.data.areaOfEffect);
+    ReadEx(effect, duration, &entry.data.duration);
     ReadEx(effect, magnitude, &entry.data.magnitude);
     ReadEx(effect, areaOfEffect, &entry.data.areaOfEffect);
     res.Add(static_cast<espm::ActorValue>(av), std::move(entry));
