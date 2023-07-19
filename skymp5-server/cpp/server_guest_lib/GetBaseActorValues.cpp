@@ -25,33 +25,6 @@ void BaseActorValues::VisitBaseActorValues(BaseActorValues& baseActorValues,
           std::to_string(changeForm.actorValues.magickaPercentage).c_str());
 }
 
-float BaseActorValues::GetValue(espm::ActorValue av)
-{
-  switch (av) {
-    case espm::ActorValue::Health:
-      return health;
-    case espm::ActorValue::Magicka:
-      return magicka;
-    case espm::ActorValue::Stamina:
-      return stamina;
-    case espm::ActorValue::HealRate:
-      return healRate;
-    case espm::ActorValue::MagickaRate:
-      return magickaRate;
-    case espm::ActorValue::StaminaRate:
-      return staminaRate;
-    case espm::ActorValue::HealRateMult_or_CombatHealthRegenMultMod:
-      return healRateMult;
-    case espm::ActorValue::MagickaRateMult_or_CombatHealthRegenMultPowerMod:
-      return magickaRateMult;
-    case espm::ActorValue::StaminaRateMult:
-      return staminaRateMult;
-    default:
-      throw std::runtime_error(
-        fmt::format("Unsupported actor value type {:}", (int32_t)av));
-  }
-}
-
 BaseActorValues GetBaseActorValues(WorldState* worldState, uint32_t baseId,
                                    uint32_t raceIdOverride)
 {

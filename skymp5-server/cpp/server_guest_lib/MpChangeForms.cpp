@@ -54,6 +54,7 @@ nlohmann::json MpChangeForm::ToJson(const MpChangeForm& changeForm)
     changeForm.spawnPoint.cellOrWorldDesc.ToString();
 
   res["spawnDelay"] = changeForm.spawnDelay;
+  res["effects"] = changeForm.activeMagicEffects.ToJson();
   return res;
 }
 
@@ -73,7 +74,7 @@ MpChangeForm MpChangeForm::JsonToChangeForm(simdjson::dom::element& element)
     consoleCommandsAllowed("consoleCommandsAllowed"),
     spawnPointPos("spawnPoint_pos"), spawnPointRot("spawnPoint_rot"),
     spawnPointCellOrWorldDesc("spawnPoint_cellOrWorldDesc"),
-    spawnDelay("spawnDelay");
+    spawnDelay("spawnDelay"), effects("effects");
 
   MpChangeForm res;
   ReadEx(element, recType, &res.recType);
@@ -166,6 +167,11 @@ MpChangeForm MpChangeForm::JsonToChangeForm(simdjson::dom::element& element)
 
   ReadEx(element, spawnDelay, &res.spawnDelay);
 
+  if (element.at_pointer(effects.GetData()).error() ==
+      simdjson::error_code::SUCCESS) {
+    ReadEx(element, effects, &jTmp);
+    res.activeMagicEffects = ActiveMagicEffectsMap::FromJson(jTmp);
+  }
   return res;
 }
 

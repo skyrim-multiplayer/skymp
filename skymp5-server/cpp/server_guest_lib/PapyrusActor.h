@@ -32,9 +32,11 @@ public:
   VarValue SetDontMove(VarValue self, const std::vector<VarValue>& arguments);
   VarValue IsDead(VarValue self,
                   const std::vector<VarValue>& arguments) const noexcept;
-
+  VarValue WornHasKeyword(VarValue self,
+                          const std::vector<VarValue>& arguments);
+                          
   void Register(VirtualMachine& vm,
                 std::shared_ptr<IPapyrusCompatibilityPolicy> policy) override;
-
+                
   std::shared_ptr<IPapyrusCompatibilityPolicy> compatibilityPolicy;
 };

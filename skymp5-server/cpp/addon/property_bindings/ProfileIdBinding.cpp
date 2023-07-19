@@ -1,4 +1,3 @@
-#pragma once
 #include "ProfileIdBinding.h"
 
 Napi::Value ProfileIdBinding::Get(Napi::Env env, ScampServer& scampServer,

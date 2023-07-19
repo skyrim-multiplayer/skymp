@@ -1,6 +1,8 @@
 #include "PapyrusUtility.h"
 
+#include "TimeUtils.h"
 #include "WorldState.h"
+#include <chrono>
 #include <random>
 
 VarValue PapyrusUtility::Wait(VarValue self,
@@ -10,11 +12,12 @@ VarValue PapyrusUtility::Wait(VarValue self,
     throw std::runtime_error("Wait requires at least 1 argument");
   double seconds = static_cast<double>(arguments[0].CastToFloat());
   auto worldState = compatibilityPolicy->GetWorldState();
-  if (!worldState)
+  if (!worldState) {
     throw std::runtime_error("worldState not found");
+  }
 
-  auto timerPromise = worldState->SetTimer(seconds);
-
+  auto time = Viet::TimeUtils::To<std::chrono::milliseconds>(seconds);
+  auto timerPromise = worldState->SetTimer(time);
   auto resultPromise = Viet::Promise<VarValue>();
 
   timerPromise

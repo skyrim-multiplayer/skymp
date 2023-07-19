@@ -6,7 +6,7 @@ import { HarvestingSystem } from './src/logic/listeners/harvestingSystem';
 import { KitCommand } from './src/logic/listeners/commands/kitCommand';
 import { SweetPieGameModeListener } from './src/logic/listeners/sweetpie/SweetPieGameModeListener';
 import { SweetPieMap } from './src/logic/listeners/sweetpie/SweetPieMap';
-import { SweetTaffyTimedRewards } from './src/logic/listeners/sweettaffyTimedRewards/SweetTaffyTimedRewards';
+import { SweetTaffyTimedRewards, TimedRewardConfig } from './src/logic/listeners/sweettaffyTimedRewards/SweetTaffyTimedRewards';
 import { MpApiInteractor } from './src/mpApiInteractor';
 import { BrowserProperty } from './src/props/browserProperty';
 import { CarryAnimSystem } from './src/props/carryAnimSystem';
@@ -23,6 +23,7 @@ import { RollCommand } from './src/logic/listeners/commands/rollCommand';
 import { SkillCommand } from './src/logic/listeners/commands/skillCommand';
 import { SkillDiceCommand } from './src/logic/listeners/commands/skillDiceCommand';
 import { KickCommand } from './src/logic/listeners/commands/kickCommand';
+import { TimedRewardCommand } from './src/logic/listeners/commands/timedRewardConfirmCommand';
 import { TpCommand } from './src/logic/listeners/commands/tpCommand';
 import { ConsoleCommandsSystem } from './src/logic/listeners/consoleCommandsSystem';
 
@@ -574,7 +575,7 @@ const createGameModeListener = (controller: PlayerController, maps: SweetPieMap[
 const controller = MpApiInteractor.makeController(pointsByName);
 MpApiInteractor.setup([
   createGameModeListener(controller, maps, mp.getServerSettings()["sweetPieMinimumPlayersToStart"]),
-  new SweetTaffyTimedRewards(controller, /*enableDaily*/true, /*enableHourly*/true),
+  new SweetTaffyTimedRewards(controller, mp.getServerSettings().sweetPieRewards as TimedRewardConfig),
   new DeathSystem(mp, controller),
   new HarvestingSystem(mp, controller),
   new DoorActivation(mp, controller),
@@ -590,6 +591,7 @@ MpApiInteractor.setup([
   new RollCommand(mp, controller, "1d2"),
   new SkillCommand(mp, controller),
   new SkillDiceCommand(mp, controller),
+  new TimedRewardCommand(mp, controller),
   new TpCommand(mp, controller),
   new ChatSystem(mp, controller), // Must be the last system
 ]);
