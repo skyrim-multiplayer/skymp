@@ -81,7 +81,7 @@ export class Login implements System {
             throw new Error("Not logged in via Discord");
           }
           if (discordAuth.eventLogChannelId) {
-            const actorIds = ctx.svr.getActorsByProfileId(profile.id);
+            const actorIds = ctx.svr.getActorsByProfileId(profile.id).map(actorId => actorId.toString(16));
             await Axios.post(
               `https://discord.com/api/channels/${discordAuth.eventLogChannelId}/messages`,
               {
