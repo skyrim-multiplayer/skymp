@@ -13,6 +13,8 @@ public:
 
   VarValue HasKeyword(VarValue self, const std::vector<VarValue>& arguments);
 
+  VarValue GetFormId(VarValue self, const std::vector<VarValue>& arguments);
+
   void Register(VirtualMachine& vm,
                 std::shared_ptr<IPapyrusCompatibilityPolicy> policy) override
   {
@@ -20,5 +22,6 @@ public:
               &PapyrusForm::RegisterForSingleUpdate);
     AddMethod(vm, "GetType", &PapyrusForm::GetType);
     AddMethod(vm, "HasKeyword", &PapyrusForm::HasKeyword);
+    AddMethod(vm, "GetFormID", &PapyrusForm::GetFormId);
   }
 };
