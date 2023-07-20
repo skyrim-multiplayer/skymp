@@ -1150,5 +1150,55 @@ static_assert(sizeof(KYWD) == sizeof(espm::RecordHeader));
 uint32_t CalculateHashcode(const void* readBuffer, size_t length);
 uint32_t GetCorrectHashcode(const std::string& fileName);
 
+class CELL final : public RecordHeader
+{
+public:
+  static constexpr auto kType = "CELL";
+
+  enum Flags
+  {
+    Interior = 0x0001,
+    HasWater = 0x0002,
+    NotCantTravelFromHere = 0x0004,
+    NoLODWater = 0x0008,
+    PublicArea = 0x0020,
+    HandChanged = 0x0040,
+    SnowSky = 0x0080,
+    UseSkyLighting = 0x0100
+  };
+
+  struct Data
+  {
+    uint16_t flags = 0;
+  };
+
+  Data GetData(CompressedFieldsCache& cache) const noexcept;
+};
+
+class WRLD final : public RecordHeader
+{
+public:
+  static constexpr auto kType = "WRLD";
+
+  enum Flags
+  {
+    SmallWorld = 0x01,
+    CantFastTravelFromHere = 0x02,
+    unknown = 0x04,
+    NoLODWater = 0x08,
+    NoLandscape = 0x10,
+    NoSky = 0x20,
+    FixedDimensions = 0x40,
+    NoGrass = 0x80
+  };
+
+  struct Data
+  {
+    uint8_t flags = 0;
+  };
+
+  Data GetData(CompressedFieldsCache& cache) const noexcept;
+};
+
 }
 #pragma pack(pop)
