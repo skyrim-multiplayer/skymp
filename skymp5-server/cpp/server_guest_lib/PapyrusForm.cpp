@@ -83,6 +83,20 @@ VarValue PapyrusForm::HasKeyword(VarValue self,
   return VarValue(false);
 }
 
+VarValue PapyrusForm::GetFormId(VarValue self, const std::vector<VarValue>&) {
+  if (auto selfRefr = GetFormPtr<MpObjectReference>(self)) {
+    auto formId = selfRefr->GetFormId();
+    spdlog::trace("GetFormId {:x} - MpFormGameObject", formId);
+    return VarValue(static_cast<int32_t>(formId));
+  }
+  if (auto lookupRes = GetRecordPtr(self); lookupRes.rec) {
+    auto formId = lookupRes.ToGlobalId(lookupRes.rec->GetId());
+    spdlog::trace("GetFormId {:x} - EspmGameObject", formId);
+    return VarValue(static_cast<int32_t>(formId));
+  }
+  return VarValue::None();
+}
+
 namespace {
 std::unordered_map<std::string, int> InitFormTypeMap()
 {
