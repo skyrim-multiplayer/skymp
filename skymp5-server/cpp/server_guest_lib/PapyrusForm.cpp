@@ -88,8 +88,9 @@ VarValue PapyrusForm::GetFormId(VarValue self, const std::vector<VarValue>&)
   if (auto selfRefr = GetFormPtr<MpObjectReference>(self)) {
     auto formId = selfRefr->GetFormId();
     spdlog::trace("GetFormId {:x} - MpFormGameObject", formId);
-    // Using float here is not the best idea. Values greater than 0xffffff00 may be converted to 0x100000000
-    // But on the other hand, we can't use uint32_t in Papyrus right now, only int32_t and float
+    // Using float here is not the best idea. Values greater than 0xffffff00
+    // may be converted to 0x100000000 But on the other hand, we can't use
+    // uint32_t in Papyrus right now, only int32_t and float
     return VarValue(static_cast<float>(formId));
   }
   if (auto lookupRes = GetRecordPtr(self); lookupRes.rec) {
