@@ -83,7 +83,8 @@ VarValue PapyrusForm::HasKeyword(VarValue self,
   return VarValue(false);
 }
 
-VarValue PapyrusForm::GetFormId(VarValue self, const std::vector<VarValue>&) {
+VarValue PapyrusForm::GetFormId(VarValue self, const std::vector<VarValue>&)
+{
   if (auto selfRefr = GetFormPtr<MpObjectReference>(self)) {
     auto formId = selfRefr->GetFormId();
     spdlog::trace("GetFormId {:x} - MpFormGameObject", formId);
