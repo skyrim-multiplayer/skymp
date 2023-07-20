@@ -106,9 +106,10 @@ if (Array.isArray(storage['eventSourceContexts'])) {
 //
 //
 
+let connectionErrorId: number = -1;
 const showConnectionError = () => {
   // TODO: unhardcode it or render via browser
-  sp.createText(
+  connectionErrorId = sp.createText(
     1920 / 2,
     1080 / 2,
     `Server connection failed. This may be caused by one of the following:
@@ -130,6 +131,11 @@ on('tick', () => {
     showConnectionError();
     networking.reconnect();
     loggingStartMoment = 0;
+  }
+
+  if (connectionErrorId != -1 && sp.mpClientPlugin.isConnected()) {
+    sp.destroyText(connectionErrorId);
+    connectionErrorId = -1;
   }
 });
 
@@ -349,10 +355,10 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
         Game.getPlayer() as Actor,
         msg.equipment
           ? {
-              entries: msg.equipment.inv.entries.filter(
-                (x) => !!Armor.from(Game.getFormEx(x.baseId)),
-              ),
-            }
+            entries: msg.equipment.inv.entries.filter(
+              (x) => !!Armor.from(Game.getFormEx(x.baseId)),
+            ),
+          }
           : { entries: [] },
         false,
       );
@@ -412,7 +418,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
               const sqr = (x: number) => x * x;
               const distance = Math.sqrt(
                 sqr(pos[0] - msg.transform.pos[0]) +
-                  sqr(pos[1] - msg.transform.pos[1]),
+                sqr(pos[1] - msg.transform.pos[1]),
               );
               if (distance < 256) {
                 break;
@@ -482,16 +488,16 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
               msg.transform.worldOrCell,
               msg.appearance
                 ? {
-                    name: msg.appearance.name,
-                    raceId: msg.appearance.raceId,
-                    face: {
-                      hairColor: msg.appearance.hairColor,
-                      bodySkinColor: msg.appearance.skinColor,
-                      headTextureSetId: msg.appearance.headTextureSetId,
-                      headPartIds: msg.appearance.headpartIds,
-                      presets: msg.appearance.presets,
-                    },
-                  }
+                  name: msg.appearance.name,
+                  raceId: msg.appearance.raceId,
+                  face: {
+                    hairColor: msg.appearance.hairColor,
+                    bodySkinColor: msg.appearance.skinColor,
+                    headTextureSetId: msg.appearance.headTextureSetId,
+                    headPartIds: msg.appearance.headpartIds,
+                    presets: msg.appearance.presets,
+                  },
+                }
                 : undefined,
             );
             once('update', () => {
@@ -625,7 +631,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
     loginWithSkympIoCredentials();
   }
 
-  handleDisconnect(): void {}
+  handleDisconnect(): void { }
 
   ChangeValues(msg: messages.ChangeValuesMessage): void {
     once('update', () => {
@@ -727,7 +733,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
       storage['eventSourceContexts'] = [];
     } else {
       storage['eventSourceContexts'].forEach((ctx: Record<string, unknown>) => {
-        ctx.sendEvent = () => {};
+        ctx.sendEvent = () => { };
         ctx._expired = true;
       });
     }
