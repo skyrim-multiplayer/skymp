@@ -176,13 +176,14 @@ bool MpActor::OnEquip(uint32_t baseId)
     return false;
   }
 
+  bool used = false;
   if (isIngredient || isPotion) {
     EatItem(baseId, recordType);
   } else if (isBook) {
-    ReadBook(baseId);
+    used = ReadBook(baseId);
   }
 
-  if (!isSpell) {
+  if (!isSpell && used) {
     RemoveItem(baseId, 1, nullptr);
   }
 
@@ -502,7 +503,7 @@ void MpActor::EatItem(uint32_t baseId, espm::Type t)
   ApplyMagicEffects(effects, hasSweetpie);
 }
 
-void MpActor::ReadBook(const uint32_t baseId)
+bool MpActor::ReadBook(const uint32_t baseId)
 {
   const auto bookData = espm::GetData<espm::BOOK>(baseId, GetParent());
 
@@ -511,7 +512,9 @@ void MpActor::ReadBook(const uint32_t baseId)
     EditChangeForm([&](MpChangeForm& changeForm) {
       changeForm.learnedSpells.LearnSpell(bookData.spellOrSkillFormId);
     });
+    return true;
   }
+  return false;
 }
 
 bool MpActor::CanActorValueBeRestored(espm::ActorValue av)
