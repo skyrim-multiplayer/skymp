@@ -17,8 +17,8 @@ Napi::Value ProfileIdBinding::Get(Napi::Env env, ScampServer& scampServer,
   return env.Undefined();
 }
 
-void ProfileIdBinding::Set(Napi::Env env, ScampServer& scampServer, uint32_t formId,
-           Napi::Value newValue)
+void ProfileIdBinding::Set(Napi::Env env, ScampServer& scampServer,
+                           uint32_t formId, Napi::Value newValue)
 {
   auto& partOne = scampServer.GetPartOne();
 

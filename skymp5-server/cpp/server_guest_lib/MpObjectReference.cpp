@@ -676,7 +676,8 @@ void MpObjectReference::RegisterProfileId(int32_t profileId)
   }
 
   if (profileId < 0) {
-    throw std::runtime_error("Negative profileId passed to RegisterProfileId, should be >= 0");
+    throw std::runtime_error(
+      "Negative profileId passed to RegisterProfileId, should be >= 0");
   }
 
   auto currentProfileId = ChangeForm().profileId;
