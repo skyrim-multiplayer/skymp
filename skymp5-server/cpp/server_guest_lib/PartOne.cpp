@@ -4,6 +4,7 @@
 #include "FormCallbacks.h"
 #include "IdManager.h"
 #include "JsonUtils.h"
+#include "MpObjectReference.h"
 #include "MsgType.h"
 #include "PacketParser.h"
 #include <array>
@@ -269,10 +270,21 @@ const std::set<uint32_t>& PartOne::GetActorsByProfileId(ProfileId profileId)
   return worldState.GetActorsByProfileId(profileId);
 }
 
-void PartOne::SetEnabled(uint32_t actorFormId, bool enabled)
+void PartOne::SetEnabled(uint32_t formId, bool enabled)
 {
-  auto& ac = worldState.GetFormAt<MpActor>(actorFormId);
-  enabled ? ac.Enable() : ac.Disable();
+  // this check is supposed to be true for espm forms
+  if (formId < 0xff000000) {
+    const std::shared_ptr<MpForm> pForm = worldState.LookupFormById(formId);
+    const auto objectReference =
+      std::dynamic_pointer_cast<MpObjectReference>(pForm);
+    if (!objectReference) {
+      return;
+    }
+    enabled ? objectReference->Enable() : objectReference->Disable();
+  } else {
+    auto& ac = worldState.GetFormAt<MpActor>(formId);
+    enabled ? ac.Enable() : ac.Disable();
+  }
 }
 
 void PartOne::AttachEspm(espm::Loader* espm)
