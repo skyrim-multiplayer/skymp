@@ -1058,12 +1058,15 @@ void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
     EnsureBaseContainerAdded(loader);
 
     auto occupantPos = this->occupant ? this->occupant->GetPos() : NiPoint3();
-    auto occupantCellOrWorld = this->occupant ? this->occupant->GetCellOrWorld() : FormDesc();
+    auto occupantCellOrWorld =
+      this->occupant ? this->occupant->GetCellOrWorld() : FormDesc();
 
     constexpr float kOccupationReach = 512.f;
     auto distanceToOccupant = (occupantPos - GetPos()).Length();
 
-    if (!this->occupant || this->occupant->IsDisabled() || distanceToOccupant > kOccupationReach || occupantCellOrWorld != GetCellOrWorld()) {
+    if (!this->occupant || this->occupant->IsDisabled() ||
+        distanceToOccupant > kOccupationReach ||
+        occupantCellOrWorld != GetCellOrWorld()) {
       if (this->occupant) {
         this->occupant->RemoveEventSink(this->occupantDestroySink);
       }
