@@ -615,11 +615,12 @@ VirtualMachine& WorldState::GetPapyrusVm()
 const std::set<uint32_t>& WorldState::GetActorsByProfileId(
   int32_t profileId) const
 {
-  static const std::set<uint32_t> g_emptySet;
+  static const std::set<uint32_t> kEmptySet;
 
   auto it = actorIdByProfileId.find(profileId);
-  if (it == actorIdByProfileId.end())
-    return g_emptySet;
+  if (it == actorIdByProfileId.end()) {
+    return kEmptySet;
+  }
   return it->second;
 }
 
