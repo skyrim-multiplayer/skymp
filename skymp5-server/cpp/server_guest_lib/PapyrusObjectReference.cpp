@@ -426,10 +426,13 @@ VarValue PapyrusObjectReference::PlayGamebryoAnimation(
 VarValue PapyrusObjectReference::MoveTo(
   VarValue self, const std::vector<VarValue>& arguments) const noexcept
 {
-  auto* _this = GetFormPtr<MpObjectReference>(self);
+  if (arguments.size() < 1) {
+    return VarValue::None();
+  }
+  auto* _thisObjectReference = GetFormPtr<MpObjectReference>(self);
   const auto* objectReference = GetFormPtr<MpObjectReference>(arguments[0]);
-  auto* _thisActor = reinterpret_cast<MpActor*>(_this);
-  if (!_this || !objectReference) {
+  auto* _thisActor = GetFormPtr<MpActor>(self);
+  if (!_thisObjectReference || !objectReference || !_thisActor) {
     return VarValue::None();
   }
   const float xOffset = static_cast<float>(
@@ -443,10 +446,15 @@ VarValue PapyrusObjectReference::MoveTo(
   dest.x += xOffset;
   dest.y += yOffset;
   dest.z += zOffset;
-  const NiPoint3 rotation =
-    matchRotation ? objectReference->GetAngle() : _this->GetAngle();
+  const NiPoint3 rotation = matchRotation ? objectReference->GetAngle()
+                                          : _thisObjectReference->GetAngle();
   LocationalData data{ dest, rotation, objectReference->GetCellOrWorld() };
-  _thisActor->Teleport(data);
+  if (_thisActor) {
+    _thisActor->Teleport(data);
+  } else {
+    _thisObjectReference->SetAngle(rotation);
+    _thisObjectReference->SetPos(dest);
+  }
   return VarValue::None();
 }
 
