@@ -8,6 +8,11 @@
 
 // Utilities for testing
 
+std::underlying_type_t<Constants> ToUnderlying(Constants constant)
+{
+  return static_cast<std::underlying_type_t<Constants>>(constant);
+}
+
 bool IsCmakeOptionSpecified(const std::string& optionValue)
 {
   return !optionValue.empty() && optionValue != "OFF";
