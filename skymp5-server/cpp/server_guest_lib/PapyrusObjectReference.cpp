@@ -432,7 +432,7 @@ VarValue PapyrusObjectReference::MoveTo(
   auto* _thisObjectReference = GetFormPtr<MpObjectReference>(self);
   const auto* objectReference = GetFormPtr<MpObjectReference>(arguments[0]);
   auto* _thisActor = GetFormPtr<MpActor>(self);
-  if (!_thisObjectReference || !objectReference || !_thisActor) {
+  if ((!_thisObjectReference && !_thisActor) || !_thisObjectReference) {
     return VarValue::None();
   }
   const float xOffset = static_cast<float>(
