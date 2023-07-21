@@ -24,5 +24,5 @@ public:
   }
 
   std::shared_ptr<IPapyrusCompatibilityPolicy> compatibilityPolicy;
-  std::vector<const std::vector<espm::RecordHeader*>*> keywords;
+  std::vector<const std::vector<const espm::RecordHeader*>*> keywords;
 };

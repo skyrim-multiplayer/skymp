@@ -43,7 +43,7 @@ private:
 
   static VarValue CastPrimitivePropertyValue(
     const espm::CombineBrowser& br, ScriptsCache& st,
-    const espm::Property::Value& propValue, espm::PropertyType type,
+    const espm::Property::Value& propValue, espm::Property::Type type,
     const std::function<uint32_t(uint32_t)>& toGlobalId,
     WorldState* worldState);
 
@@ -53,7 +53,7 @@ private:
                            const std::function<uint32_t(uint32_t)>& toGlobalId,
                            WorldState* worldState);
 
-  static espm::PropertyType GetElementType(espm::PropertyType arrayType);
+  static espm::Property::Type GetElementType(espm::Property::Type arrayType);
 
   espm::LookupResult baseRecordWithScripts;
   espm::LookupResult refrRecordWithScripts;

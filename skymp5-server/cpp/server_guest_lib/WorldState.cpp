@@ -242,20 +242,20 @@ const std::shared_ptr<MpForm>& WorldState::LookupFormById(uint32_t formId)
 }
 
 bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
-                                  espm::RecordHeader* record,
+                                  const espm::RecordHeader* record,
                                   const espm::IdMapping& mapping)
 {
   auto& cache = GetEspmCache();
   // this place is a hotpath.
   // we want to use reinterpret_cast<> instead of espm::Convert<>
   // in order to reduce amount of generated assembly code
-  auto* refr = reinterpret_cast<espm::REFR*>(record);
+  auto* refr = reinterpret_cast<const espm::REFR*>(record);
   auto data = refr->GetData(cache);
 
-  uint32_t baseId = espm::GetMappedId(data.baseId, mapping);
+  uint32_t baseId = espm::utils::GetMappedId(data.baseId, mapping);
   espm::LookupResult base = br.LookupById(baseId);
   if (!base.rec) {
-    logger->info("baseId {} {}", baseId, static_cast<void*>(base.rec));
+    logger->info("baseId {} {}", baseId, static_cast<const void*>(base.rec));
     return false;
   }
 
@@ -266,12 +266,12 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
   bool isDoor = t == "DOOR";
   bool isContainer = t == "CONT";
   bool isFlor = t == "FLOR" &&
-    reinterpret_cast<espm::FLOR*>(base.rec)->GetData(cache).resultItem;
+    reinterpret_cast<const espm::FLOR*>(base.rec)->GetData(cache).resultItem;
   bool isTree = t == "TREE" &&
-    reinterpret_cast<espm::TREE*>(base.rec)->GetData(cache).resultItem;
+    reinterpret_cast<const espm::TREE*>(base.rec)->GetData(cache).resultItem;
 
-  if (!isNpc && !isFurniture && !isActivator && !espm::IsItem(t) && !isDoor &&
-      !isContainer && !isFlor && !isTree) {
+  if (!isNpc && !isFurniture && !isActivator && !espm::utils::IsItem(t) &&
+      !isDoor && !isContainer && !isFlor && !isTree) {
     return false;
   }
 
@@ -295,7 +295,8 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
                     baseId);
       return false;
     }
-    auto npcData = reinterpret_cast<espm::NPC_*>(base.rec)->GetData(cache);
+    auto npcData =
+      reinterpret_cast<const espm::NPC_*>(base.rec)->GetData(cache);
 
     if (npcData.isEssential || npcData.isProtected) {
       return false;
@@ -309,7 +310,7 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
     auto factionBaseId = static_cast<std::underlying_type_t<ListType>>(
       ListType::CrimeFactionsList);
     espm::LookupResult res = br.LookupById(factionBaseId);
-    auto* formList = reinterpret_cast<espm::FLST*>(res.rec);
+    auto* formList = reinterpret_cast<const espm::FLST*>(res.rec);
     std::vector<uint32_t> factionFormIds = formList->GetData(cache).formIds;
     for (auto& formId : factionFormIds) {
       formId = res.ToGlobalId(formId);
@@ -326,11 +327,11 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
     }
   }
 
-  uint32_t formId = espm::GetMappedId(record->GetId(), mapping);
+  uint32_t formId = espm::utils::GetMappedId(record->GetId(), mapping);
   auto locationalData = data.loc;
 
   uint32_t worldOrCell =
-    espm::GetMappedId(GetWorldOrCell(br, record), mapping);
+    espm::utils::GetMappedId(GetWorldOrCell(br, record), mapping);
   if (!worldOrCell) {
     logger->error("Anomally: refr without world/cell");
     return false;
@@ -533,10 +534,11 @@ const std::set<MpObjectReference*>& WorldState::GetReferencesAtPosition(
             auto combMapping = br.GetCombMapping(i);
             auto rawMapping = br.GetRawMapping(i);
             uint32_t mappedCellOrWorld =
-              espm::GetMappedId(cellOrWorld, *rawMapping);
+              espm::utils::GetMappedId(cellOrWorld, *rawMapping);
             auto records = br.GetRecordsAtPos(mappedCellOrWorld, x, y);
             for (auto rec : *records[i]) {
-              auto mappedId = espm::GetMappedId(rec->GetId(), *combMapping);
+              auto mappedId =
+                espm::utils::GetMappedId(rec->GetId(), *combMapping);
               assert(mappedId < 0xff000000);
               LoadForm(mappedId);
             }
