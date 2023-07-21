@@ -1,1 +1,0 @@
-ScriptName MagicEffect extends Form

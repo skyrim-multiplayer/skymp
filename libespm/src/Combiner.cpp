@@ -100,6 +100,7 @@ uint32_t espm::BrowserInfo::ToGlobalId(uint32_t rawId) const noexcept
 {
   if (!parent)
     return 0;
+
   const auto mapping = parent->GetCombMapping(fileIdx);
   return espm::GetMappedId(rawId, *mapping);
 }
