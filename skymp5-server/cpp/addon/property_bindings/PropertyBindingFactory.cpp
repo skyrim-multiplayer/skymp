@@ -50,7 +50,7 @@ PropertyBindingFactory::CreateStandardPropertyBindings()
   result["idx"] = std::make_shared<IdxBinding>();
   result["consoleCommandsAllowed"] =
     std::make_shared<ConsoleCommandsAllowedBinding>();
-  result["scriptVariablesBinding"] =
+  result["scriptVariables"] =
     std::make_shared<ScriptVariablesBinding>();
   return result;
 }

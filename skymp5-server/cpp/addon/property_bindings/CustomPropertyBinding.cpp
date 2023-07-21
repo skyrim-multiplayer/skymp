@@ -110,7 +110,7 @@ void CustomPropertyBinding::Set(Napi::Env env, ScampServer& scampServer,
     if (it == instances.end()) {
       return spdlog::error(
         "CustomPropertyBinding - Object doesn't have such script: '{}'",
-        propertyName);
+        scriptName);
     }
 
     auto& activeScript = *it;
@@ -124,7 +124,7 @@ void CustomPropertyBinding::Set(Napi::Env env, ScampServer& scampServer,
           CIString{ variableName.data() })) {
       return spdlog::error(
         "CustomPropertyBinding - Script doesn't have such variable: '{}'",
-        propertyName);
+        variableName);
     }
 
     activeScript->GetVariableValueByName(nullptr, variableName) =

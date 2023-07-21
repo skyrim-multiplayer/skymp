@@ -22,9 +22,9 @@ Napi::Value ScriptVariablesBinding::Get(Napi::Env env,
                                         uint32_t formId)
 {
   auto& partOne = scampServer.GetPartOne();
-  auto& actor = partOne->worldState.GetFormAt<MpActor>(formId);
+  auto& refr = partOne->worldState.GetFormAt<MpObjectReference>(formId);
 
-  auto gameObject = actor.ToGameObject();
+  auto gameObject = refr.ToGameObject();
   if (!gameObject) {
     spdlog::error("ScriptVariablesBinding - ToGameObject() returned nullptr");
     return Napi::Array::New(env);
