@@ -1,8 +1,6 @@
 #include "TestUtils.hpp"
 #include <catch2/catch_all.hpp>
 
-#include <iostream>
-
 #include "ActionListener.h"
 #include "EspmGameObject.h"
 #include "MpObjectReference.h"
