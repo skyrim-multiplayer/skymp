@@ -96,6 +96,19 @@ jobs:
                 run: |
                     chown -R skymp:skymp /src /home/skymp/.cmake-js
 
+          - name: Wait for other runs to complete
+            run: |
+              attempt_counter=0
+              until [[ "$(gh api repos/Pospelove/skymp5-gamemode/actions/runs --jq '[.workflow_runs[] | select(.status == "in_progress" or .status == "queued") | select(.workflow_file.path == ".github/workflows/merge-to.yml")]' | jq length)" == "0" || "$attempt_counter" -ge "10" ]]; do
+                echo "Waiting for other runs to complete... Attempt: $attempt_counter"
+                sleep 10
+                attempt_counter=$((attempt_counter+1))
+              done
+            env:
+              GH_TOKEN: ${{env.GAMEMODE_GITHUB_TOKEN}}
+              shell: bash
+                  
+
           - name: CMake Configure
             if: ${{env.DEPLOY_ACTION == 'deploy'}}
             uses: addnab/docker-run-action@v3

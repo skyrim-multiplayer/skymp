@@ -25,8 +25,10 @@
 #include <memory>
 #include <napi.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
+#include <sstream>
 
 namespace {
+
 constexpr size_t kMockServerIdx = 1;
 
 std::shared_ptr<spdlog::logger>& GetLogger()
@@ -56,6 +58,7 @@ std::string GetPropertyAlphabet()
   alphabet += '_';
   return alphabet;
 }
+
 }
 
 Napi::FunctionReference ScampServer::constructor;
@@ -145,6 +148,57 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
       spdlog::set_level(level);
       logger->info("set log level to {}",
                    spdlog::level::to_string_view(logger->level()));
+    }
+
+    if (serverSettings.find("npcEnabled") != serverSettings.end()) {
+      bool enabled = serverSettings.at("npcEnabled").get<bool>();
+      partOne->worldState.npcEnabled = enabled;
+      if (enabled) {
+        spdlog::info("NPCs are enabled");
+      } else {
+        spdlog::info("NPCs are disabled");
+      }
+    } else {
+      spdlog::info(
+        "npcEnabled option is not found in the server configuration file. "
+        "Disabling NPCs by default");
+    }
+
+    if (serverSettings.find("npcSettings") != serverSettings.end()) {
+      if (serverSettings.at("npcSettings").is_object()) {
+        std::unordered_map<std::string, WorldState::NpcSettingsEntry>
+          npcSettings;
+        if (serverSettings.find("default") != serverSettings.end()) {
+          partOne->worldState.defaultSetting.spawnInInterior =
+            serverSettings.at("spawnInInterior").get<bool>();
+          partOne->worldState.defaultSetting.spawnInExterior =
+            serverSettings.at("spawnInExterior").get<bool>();
+          partOne->worldState.defaultSetting.overriden = true;
+        }
+        for (const auto& field : serverSettings["npcSettings"].items()) {
+          WorldState::NpcSettingsEntry entry;
+          if (field.value().find("spawnInInterior") != field.value().end()) {
+            entry.spawnInInterior =
+              field.value().at("spawnInInterior").get<bool>();
+          }
+          if (field.value().find("spawnInExterior") != field.value().end()) {
+            entry.spawnInExterior =
+              field.value().at("spawnInExterior").get<bool>();
+          }
+          npcSettings[field.key()] = entry;
+        }
+        partOne->worldState.SetNpcSettings(std::move(npcSettings));
+        spdlog::info("NPCs' settings have been loaded susccessfully");
+      }
+    } else {
+      std::stringstream msg;
+      msg << "\"npcSettings\" are not found in the server configuration "
+             "file.";
+      msg << (partOne->worldState.npcEnabled
+                ? "Allowing all npc by default"
+                : "NPCs are disabled due to \"npcEnabled\": ")
+          << std::boolalpha << partOne->worldState.npcEnabled;
+      spdlog::info(msg.str());
     }
 
     partOne->worldState.isPapyrusHotReloadEnabled =

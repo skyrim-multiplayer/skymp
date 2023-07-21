@@ -70,15 +70,6 @@ std::unique_ptr<espm::CombineBrowser> Combiner::Combine()
   return res;
 }
 
-uint32_t BrowserInfo::ToGlobalId(uint32_t rawId) const noexcept
-{
-  if (!parent) {
-    return 0;
-  }
-  const auto mapping = parent->GetCombMapping(fileIdx);
-  return utils::GetMappedId(rawId, *mapping);
-}
-
 Combiner::~Combiner() = default;
 
 }

@@ -4,6 +4,7 @@
 #include "ALCH.h"
 #include "ARMO.h"
 #include "BOOK.h"
+#include "CELL.h"
 #include "COBJ.h"
 #include "CONT.h"
 #include "DOOR.h"
@@ -23,3 +24,4 @@
 #include "TES4.h"
 #include "TREE.h"
 #include "WEAP.h"
+#include "WRLD.h"

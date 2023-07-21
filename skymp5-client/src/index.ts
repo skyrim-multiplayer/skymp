@@ -109,6 +109,8 @@ const startClient = (): void => {
   once("update", verifyVersion);
 
   let lastTimeUpd = 0;
+  const hoursOffset = -3;
+  const hoursOffsetMs = hoursOffset * 60 * 60 * 1000;
   on("update", () => {
     if (Date.now() - lastTimeUpd <= 2000) return;
     lastTimeUpd = Date.now();
@@ -128,7 +130,7 @@ const startClient = (): void => {
       return;
     }
 
-    const d = new Date();
+    const d = new Date(Date.now() + hoursOffsetMs);
 
     let newGameHourValue = 0;
     newGameHourValue += d.getUTCHours();
