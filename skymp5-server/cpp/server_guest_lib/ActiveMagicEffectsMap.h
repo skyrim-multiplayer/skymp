@@ -11,6 +11,7 @@ class ActiveMagicEffectsMap
 public:
   struct Entry
   {
+    uint32_t timerId;
     espm::Effects::Effect data;
     std::chrono::system_clock::time_point endTime;
   };

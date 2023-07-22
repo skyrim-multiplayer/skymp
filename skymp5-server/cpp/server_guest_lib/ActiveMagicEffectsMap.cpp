@@ -30,7 +30,7 @@ ActiveMagicEffectsMap ActiveMagicEffectsMap::FromJson(
 {
   static const JsonPointer effectId("effectId"), endTime("endTime"),
     duration("duration"), magnitude("magnitude"), areaOfEffect("areaOfEffect"),
-    actorValue("actorValue");
+    actorValue("actorValue"), timerId("timerId");
   ActiveMagicEffectsMap res;
   if (!effects.is_array()) {
     return ActiveMagicEffectsMap{};
@@ -53,6 +53,7 @@ ActiveMagicEffectsMap ActiveMagicEffectsMap::FromJson(
     ReadEx(effect, duration, &entry.data.duration);
     ReadEx(effect, magnitude, &entry.data.magnitude);
     ReadEx(effect, areaOfEffect, &entry.data.areaOfEffect);
+    ReadEx(effect, timerId, &entry.timerId);
     res.Add(static_cast<espm::ActorValue>(av), std::move(entry));
   }
   return res;
@@ -70,6 +71,7 @@ nlohmann::json::array_t ActiveMagicEffectsMap::ToJson() const
     obj["areaOfEffect"] = effectEntry.data.areaOfEffect;
     obj["actorValue"] =
       static_cast<std::underlying_type_t<espm::ActorValue>>(actorValue);
+    obj["timerId"] = effectEntry.timerId;
     res.push_back(obj);
   }
   return res;

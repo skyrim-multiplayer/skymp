@@ -75,9 +75,9 @@ public:
   void RequestSave(MpObjectReference& ref);
 
   template <typename T>
-  Viet::Promise<Viet::Void> SetTimer(T&& duration)
+  Viet::Promise<Viet::Void> SetTimer(T&& duration, uint32_t* timerId = nullptr)
   {
-    return timer.SetTimer(std::forward<T>(duration));
+    return timer.SetTimer(std::forward<T>(duration), timerId);
   }
 
   template <typename T>
@@ -93,7 +93,7 @@ public:
   Viet::Promise<Viet::Void> SetTimer(
     std::reference_wrapper<const std::chrono::system_clock::time_point>
       wrapper);
-  bool RemoveTimer(const std::chrono::system_clock::time_point& endTime);
+  bool RemoveTimer(uint32_t timerId);
 
   const std::shared_ptr<MpForm>& LookupFormById(uint32_t formId);
 

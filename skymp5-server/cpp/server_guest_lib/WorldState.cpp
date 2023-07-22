@@ -783,8 +783,7 @@ void WorldState::SetNpcSettings(
   npcSettings = settings;
 }
 
-bool WorldState::RemoveTimer(
-  const std::chrono::system_clock::time_point& endTime)
+bool WorldState::RemoveTimer(uint32_t timerId)
 {
-  return timer.RemoveTimer(endTime);
+  return timer.RemoveTimer(timerId);
 }
