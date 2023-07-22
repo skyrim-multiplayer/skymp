@@ -218,12 +218,6 @@ void WorldState::RequestSave(MpObjectReference& ref)
   }
 }
 
-Viet::Promise<Viet::Void> WorldState::SetTimer(
-  std::reference_wrapper<const std::chrono::system_clock::time_point> wrapper)
-{
-  return timer.SetTimer(wrapper.get());
-}
-
 const std::shared_ptr<MpForm>& WorldState::LookupFormById(uint32_t formId)
 {
   static const std::shared_ptr<MpForm> kNullForm;

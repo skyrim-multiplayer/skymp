@@ -90,9 +90,6 @@ public:
     });
   }
 
-  Viet::Promise<Viet::Void> SetTimer(
-    std::reference_wrapper<const std::chrono::system_clock::time_point>
-      wrapper);
   bool RemoveTimer(uint32_t timerId);
 
   const std::shared_ptr<MpForm>& LookupFormById(uint32_t formId);
