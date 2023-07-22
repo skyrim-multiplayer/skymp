@@ -5,6 +5,7 @@
 #include "EspmGameObject.h"
 #include "MpObjectReference.h"
 #include "PapyrusObjectReference.h"
+#include "papyrus-vm/Structures.h"
 
 using Catch::Matchers::ContainsSubstring;
 
@@ -162,4 +163,35 @@ TEST_CASE("BlockActivation", "[Papyrus][ObjectReference][espm]")
                                            { VarValue(false) });
   REQUIRE_THROWS_WITH(refr.Activate(ac),
                       ContainsSubstring("No espm attached"));
+}
+
+TEST_CASE("MoveTo", "[Papyrus][ObjectReference]")
+{
+  PapyrusObjectReference papyrusObjectReference;
+  PartOne partOne;
+  DoConnect(partOne, 0);
+  uint32_t formId =
+    partOne.CreateActor(0xff000000, { 666, 666, 666 }, 0, 0x3c);
+  partOne.SetUserActor(0, 0xff000000);
+  auto& messages = partOne.Messages();
+  auto& actor = partOne.worldState.GetFormAt<MpActor>(formId);
+  auto& refr = CreateMpObjectReference(partOne, 0xff000001);
+  REQUIRE(actor.GetPos() != refr.GetPos());
+  papyrusObjectReference.MoveTo(refr.ToVarValue(),
+                                { actor.ToVarValue(), VarValue(0), VarValue(0),
+                                  VarValue(0), VarValue(true) });
+  REQUIRE(refr.GetPos() == actor.GetPos());
+  REQUIRE(refr.GetCellOrWorld() == actor.GetCellOrWorld());
+  refr.SetPos({ 0, 0, 0 });
+  papyrusObjectReference.MoveTo(actor.ToVarValue(),
+                                { refr.ToVarValue(), VarValue(0), VarValue(0),
+                                  VarValue(0), VarValue(true) });
+  REQUIRE(refr.GetPos() == actor.GetPos());
+  REQUIRE(refr.GetCellOrWorld() == actor.GetCellOrWorld());
+  {
+    auto it = std::find_if(
+      messages.begin(), messages.end(),
+      [](PartOne::Message& msg) { return msg.j["type"] == "teleport"; });
+    REQUIRE(it != messages.end());
+  }
 }

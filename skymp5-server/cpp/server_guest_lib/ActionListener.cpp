@@ -436,11 +436,11 @@ void UseCraftRecipe(MpActor* me, espm::COBJ::Data recipeData,
   auto mapping = br.GetCombMapping(espmIdx);
   std::vector<Inventory::Entry> entries;
   for (auto& entry : recipeData.inputObjects) {
-    auto formId = espm::GetMappedId(entry.formId, *mapping);
+    auto formId = espm::utils::GetMappedId(entry.formId, *mapping);
     entries.push_back({ formId, entry.count });
   }
   auto outputFormId =
-    espm::GetMappedId(recipeData.outputObjectFormId, *mapping);
+    espm::utils::GetMappedId(recipeData.outputObjectFormId, *mapping);
   if (spdlog::should_log(spdlog::level::debug)) {
     std::string s = fmt::format("User formId={:#x} crafted", me->GetFormId());
     for (const auto& entry : entries) {

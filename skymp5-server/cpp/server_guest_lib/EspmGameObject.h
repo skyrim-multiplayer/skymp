@@ -5,7 +5,7 @@
 class EspmGameObject : public IGameObject
 {
 public:
-  EspmGameObject(const espm::LookupResult& record_);
+  explicit EspmGameObject(const espm::LookupResult& record_);
 
   const char* GetParentNativeScript() override;
   bool EqualsByValue(const IGameObject& obj) const override;

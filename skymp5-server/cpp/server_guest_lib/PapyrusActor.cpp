@@ -49,9 +49,9 @@ VarValue PapyrusActor::DamageActorValue(VarValue self,
 {
   espm::ActorValue attributeName =
     ConvertToAV(static_cast<const char*>(arguments[0]));
-  float modifire = static_cast<double>(arguments[1]);
+  float modifier = static_cast<double>(arguments[1]);
   if (auto actor = GetFormPtr<MpActor>(self)) {
-    actor->DamageActorValue(attributeName, modifire);
+    actor->DamageActorValue(attributeName, modifier);
   }
   return VarValue();
 }
@@ -180,6 +180,15 @@ VarValue PapyrusActor::SetDontMove(VarValue self,
   return VarValue::None();
 }
 
+VarValue PapyrusActor::IsDead(
+  VarValue self, const std::vector<VarValue>& arguments) const noexcept
+{
+  if (auto _this = GetFormPtr<MpActor>(self)) {
+    return VarValue(_this->IsDead());
+  }
+  return VarValue::None();
+}
+
 VarValue PapyrusActor::WornHasKeyword(VarValue self,
                                       const std::vector<VarValue>& arguments)
 {
@@ -218,4 +227,25 @@ VarValue PapyrusActor::WornHasKeyword(VarValue self,
     }
   }
   return VarValue(false);
+}
+
+void PapyrusActor::Register(
+  VirtualMachine& vm, std::shared_ptr<IPapyrusCompatibilityPolicy> policy)
+{
+  compatibilityPolicy = policy;
+
+  AddMethod(vm, "IsWeaponDrawn", &PapyrusActor::IsWeaponDrawn);
+  AddMethod(vm, "DrawWeapon", &PapyrusActor::DrawWeapon);
+  AddMethod(vm, "UnequipAll", &PapyrusActor::UnequipAll);
+  AddMethod(vm, "PlayIdle", &PapyrusActor::PlayIdle);
+  AddMethod(vm, "GetSitState", &PapyrusActor::GetSitState);
+  AddMethod(vm, "RestoreActorValue", &PapyrusActor::RestoreActorValue);
+  AddMethod(vm, "DamageActorValue", &PapyrusActor::DamageActorValue);
+  AddMethod(vm, "IsEquipped", &PapyrusActor::IsEquipped);
+  AddMethod(vm, "GetActorValuePercentage",
+            &PapyrusActor::GetActorValuePercentage);
+  AddMethod(vm, "SetAlpha", &PapyrusActor::SetAlpha);
+  AddMethod(vm, "EquipItem", &PapyrusActor::EquipItem);
+  AddMethod(vm, "SetDontMove", &PapyrusActor::SetDontMove);
+  AddMethod(vm, "IsDead", &PapyrusActor::IsDead);
 }

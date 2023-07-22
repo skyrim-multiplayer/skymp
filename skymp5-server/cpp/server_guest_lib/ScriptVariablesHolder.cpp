@@ -3,6 +3,7 @@
 #include "EspmGameObject.h"
 #include "MpFormGameObject.h"
 #include "WorldState.h"
+#include "libespm/Property.h"
 #include "papyrus-vm/Utils.h"
 
 #include <spdlog/spdlog.h>
@@ -67,7 +68,7 @@ void ScriptVariablesHolder::FillProperties()
                      script->toGlobalId, worldState);
         CIString fullVarName;
         fullVarName += "::";
-        fullVarName += prop.propertyName.data();
+        fullVarName += prop.name.data();
         fullVarName += "_var";
         (*vars)[fullVarName] = out;
 
@@ -130,11 +131,11 @@ std::optional<ScriptVariablesHolder::Script> ScriptVariablesHolder::GetScript(
 
 VarValue ScriptVariablesHolder::CastPrimitivePropertyValue(
   const espm::CombineBrowser& br, ScriptsCache& st,
-  const espm::Property::Value& propValue, espm::PropertyType type,
+  const espm::Property::Value& propValue, espm::Property::Type type,
   const std::function<uint32_t(uint32_t)>& toGlobalId, WorldState* worldState)
 {
   switch (type) {
-    case espm::PropertyType::Object: {
+    case espm::Property::Type::Object: {
       if (!propValue.formId) {
         return VarValue::None();
       }
@@ -182,15 +183,15 @@ VarValue ScriptVariablesHolder::CastPrimitivePropertyValue(
       }
       return VarValue(gameObject.get());
     }
-    case espm::PropertyType::String: {
+    case espm::Property::Type::String: {
       std::string str(propValue.str.data, propValue.str.length);
       return VarValue(str);
     }
-    case espm::PropertyType::Int:
+    case espm::Property::Type::Int:
       return VarValue(propValue.integer);
-    case espm::PropertyType::Float:
+    case espm::Property::Type::Float:
       return VarValue(propValue.floatingPoint);
-    case espm::PropertyType::Bool:
+    case espm::Property::Type::Bool:
       return VarValue(propValue.boolean);
     default:
       spdlog::error("Unexpected type in CastPrimitivePropertyValue ({})",
@@ -204,25 +205,26 @@ void ScriptVariablesHolder::CastProperty(
   ScriptsCache* scriptsCache,
   const std::function<uint32_t(uint32_t)>& toGlobalId, WorldState* worldState)
 {
-  if (prop.propertyType >= espm::PropertyType::ObjectArray &&
-      prop.propertyType <= espm::PropertyType::BoolArray) {
-    VarValue v(static_cast<uint8_t>(prop.propertyType));
+  if (prop.type >= espm::Property::Type::ObjectArray &&
+      prop.type <= espm::Property::Type::BoolArray) {
+    VarValue v(static_cast<uint8_t>(prop.type));
     v.pArray.reset(new std::vector<VarValue>);
     for (auto& entry : prop.array) {
-      v.pArray->push_back(CastPrimitivePropertyValue(
-        br, *scriptsCache, entry, GetElementType(prop.propertyType),
-        toGlobalId, worldState));
+      v.pArray->push_back(CastPrimitivePropertyValue(br, *scriptsCache, entry,
+                                                     GetElementType(prop.type),
+                                                     toGlobalId, worldState));
     }
     *out = v;
     return;
   }
 
-  *out = CastPrimitivePropertyValue(br, *scriptsCache, prop.value,
-                                    prop.propertyType, toGlobalId, worldState);
+  *out = CastPrimitivePropertyValue(br, *scriptsCache, prop.value, prop.type,
+                                    toGlobalId, worldState);
 }
 
-espm::PropertyType ScriptVariablesHolder::GetElementType(
-  espm::PropertyType arrayType)
+espm::Property::Type ScriptVariablesHolder::GetElementType(
+  espm::Property::Type arrayType)
 {
-  return static_cast<espm::PropertyType>(static_cast<int>(arrayType) - 10);
+  return static_cast<espm::Property::Type>(
+    static_cast<std::underlying_type_t<espm::Property::Type>>(arrayType) - 10);
 }
