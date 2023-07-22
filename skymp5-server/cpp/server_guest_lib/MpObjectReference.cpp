@@ -671,15 +671,29 @@ void MpObjectReference::RelootContainer()
 
 void MpObjectReference::RegisterProfileId(int32_t profileId)
 {
-  if (profileId < 0)
-    throw std::runtime_error("Invalid profileId passed to RegisterProfileId");
+  auto worldState = GetParent();
+  if (!worldState) {
+    throw std::runtime_error("Not attached to WorldState");
+  }
 
-  if (ChangeForm().profileId >= 0)
-    throw std::runtime_error("Already has a valid profileId");
+  if (profileId < 0) {
+    throw std::runtime_error(
+      "Negative profileId passed to RegisterProfileId, should be >= 0");
+  }
+
+  auto currentProfileId = ChangeForm().profileId;
+  auto formId = GetFormId();
+
+  if (currentProfileId > 0) {
+    worldState->actorIdByProfileId[currentProfileId].erase(formId);
+  }
 
   EditChangeForm(
     [&](MpChangeFormREFR& changeForm) { changeForm.profileId = profileId; });
-  GetParent()->actorIdByProfileId[profileId].insert(GetFormId());
+
+  if (profileId > 0) {
+    worldState->actorIdByProfileId[profileId].insert(formId);
+  }
 }
 
 void MpObjectReference::Subscribe(MpObjectReference* emitter,
