@@ -4,6 +4,7 @@
 #include <chrono>
 #include <deque>
 #include <limits>
+#include <memory>
 #include <utility>
 
 namespace Viet {
@@ -26,7 +27,7 @@ struct Timer::Impl
   void DestroyID(const TimerEntry& entry);
 };
 
-const auto Timer::Impl::s_idGenerator =
+const std::unique_ptr<MakeID> Timer::Impl::s_idGenerator =
   std::make_unique<MakeID>(std::numeric_limits<uint32_t>::max());
 
 void Timer::Impl::DestroyID(const TimerEntry& entry)
