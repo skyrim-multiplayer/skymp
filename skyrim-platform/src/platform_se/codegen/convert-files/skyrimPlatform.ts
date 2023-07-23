@@ -265,8 +265,11 @@ export interface ConsoleMessageEvent {
 }
 
 export interface SpellCastEvent {
-  caster: ObjectReference
+  caster: ObjectReference | null
+  target: ObjectReference | null
   spell: Spell
+  isDualCasting: boolean
+  castingSource: SpellType
 }
 
 export interface OpenCloseEvent {
@@ -830,6 +833,13 @@ declare class ConsoleCommand {
   execute: (...arguments: unknown[]) => boolean
 }
 export declare function findConsoleCommand(cmdName: string): ConsoleCommand | null
+
+export const enum SpellType {
+  Left,
+  Right,
+  Voise,
+  Instant,
+}
 
 export const enum MarkerType {
   None = 0,
@@ -1590,6 +1600,7 @@ export interface Inventory {
 }
 
 export declare function setInventory(formId: number, inventory: Inventory): void;
+export declare function castSpellImmediate(formId: number, castingSource : SpellType, formIdSpell: number, formIdTarget: number): void;
 
 // Based on Form.pex
 export declare class Form extends PapyrusObject {

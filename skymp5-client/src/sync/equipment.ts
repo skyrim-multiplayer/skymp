@@ -6,16 +6,10 @@ import {
   Spell,
   Ui,
   setInventory,
+  SpellType
 } from 'skyrimPlatform';
 
 import { Entry, Inventory, getInventory } from './inventory';
-
-export const enum SpellType {
-  Left,
-  Right,
-  Voise,
-  Instant,
-}
 
 export const getEquipedSpell = (
   refr: ObjectReference,

@@ -1,4 +1,5 @@
 #include "PapyrusTESModPlatform.h"
+#include "AutoPtrManager.hpp"
 #include "CallNativeApi.h"
 #include "ConsoleApi.h"
 #include "ExceptionPrinter.h"
@@ -157,12 +158,12 @@ void TESModPlatform::SetWeaponDrawnMode(IVM* vm, StackID stackId,
         return;
       }
 
-      if (!actor->IsWeaponDrawn() &&
+      if (!actor->AsActorState()->IsWeaponDrawn() &&
           weapDrawnMode == WEAP_DRAWN_MODE_ALWAYS_TRUE) {
         actor->DrawWeaponMagicHands(true);
       }
 
-      if (actor->IsWeaponDrawn() &&
+      if (actor->AsActorState()->IsWeaponDrawn() &&
           weapDrawnMode == WEAP_DRAWN_MODE_ALWAYS_FALSE) {
         actor->DrawWeaponMagicHands(false);
       }
@@ -190,7 +191,7 @@ int32_t TESModPlatform::GetNthVtableElement(IVM* vm, StackID stackId,
       return getNthVTableElement(reinterpret_cast<uint8_t*>(pointer) +
                                    pointerOffset,
                                  elementIndex) -
-        Offsets::BaseAddress;
+        CEFUtils::AutoPtrManager::GetInstance().GetBaseAddress();
     } __except (EXCEPTION_EXECUTE_HANDLER) {
     }
   }
@@ -348,14 +349,15 @@ void TESModPlatform::ResizeTintsArray(IVM* vm, StackID stackId,
     return;
   }
 
-  auto prevSize = pc->tintMasks.size();
+  const auto prevSize = pc->GetPlayerRuntimeData().tintMasks.size();
 
   if (newSize < 0 || newSize > 1024 || newSize == prevSize) {
     return;
   }
 
-  pc->tintMasks.resize(newSize);
-  for (auto& mask : pc->tintMasks) {
+  pc->GetPlayerRuntimeData().tintMasks.resize(newSize);
+
+  for (auto& mask : pc->GetPlayerRuntimeData().tintMasks) {
     mask = (RE::TintMask*)new ::TintMask;
   }
 }
@@ -375,7 +377,7 @@ void TESModPlatform::ClearTintMasks(IVM* vm, StackID stackId,
 {
   if (!targetActor) {
     auto pc = RE::PlayerCharacter::GetSingleton();
-    return pc->tintMasks.clear();
+    return pc->GetPlayerRuntimeData().tintMasks.clear();
   }
 
   if (targetActor->formID < 0xff000000) {
@@ -421,29 +423,39 @@ void TESModPlatform::PushTintMask(RE::BSScript::IVirtualMachine* vm,
   newTm->tintType = type;
 
   if (targetActor == nullptr) {
-    auto targetArray = &RE::PlayerCharacter::GetSingleton()->tintMasks;
+    const auto targetArray =
+      &RE::PlayerCharacter::GetSingleton()->GetPlayerRuntimeData().tintMasks;
+
     auto n = targetArray->size();
+
     targetArray->resize(1 + n);
+
     if (targetArray->size() == 1 + n) {
       targetArray->back() = (RE::TintMask*)newTm;
     }
+
     return;
   }
 
   if (targetActor->formID < 0xff000000)
     return;
 
-  size_t i = targetActor->formID - 0xff000000;
+  const size_t i = targetActor->formID - 0xff000000;
+
   std::lock_guard l(share2.m);
+
   share2.actorsTints.resize(std::max(i + 1, share2.actorsTints.size()));
 
-  std::shared_ptr<RE::BSTArray<RE::TintMask*>> tints(
+  const std::shared_ptr<RE::BSTArray<RE::TintMask*>> tints(
     new RE::BSTArray<RE::TintMask*>);
+
   if (share2.actorsTints[i]) {
     *tints = Clone(*share2.actorsTints[i]);
   }
-  auto n = tints->size();
+  const auto n = tints->size();
+
   tints->resize(1 + n);
+
   if (tints->size() == 1 + n) {
     tints->back() = (RE::TintMask*)newTm;
   }
@@ -485,25 +497,6 @@ public:
   uint32_t GetType() override { return static_cast<uint32_t>(t); }
 };
 
-namespace {
-RE::ExtraDataList* CreateExtraDataList()
-{
-  auto extraList = new RE::ExtraDataList;
-
-  auto p = reinterpret_cast<uint8_t*>(RE::malloc(0x18));
-  for (int i = 0; i < 0x18; ++i) {
-    p[i] = 0;
-  }
-#ifdef SKYRIMSE
-  reinterpret_cast<void*&>(extraList->_presence) = p;
-#else
-  reinterpret_cast<void*&>(extraList->_extraData.presence) = p;
-#endif
-
-  return extraList;
-}
-}
-
 void TESModPlatform::AddItemEx(
   IVM* vm, StackID stackId, RE::StaticFunctionTag*,
   RE::TESObjectREFR* containerRefr, RE::TESForm* item, int32_t countDelta,
@@ -512,62 +505,35 @@ void TESModPlatform::AddItemEx(
   FixedString textDisplayData, int32_t soul, RE::AlchemyItem* poison,
   int32_t poisonCount)
 {
-#ifdef SKYRIMSE
-  auto markType = [](RE::ExtraDataList::PresenceBitfield* presence,
-#else
-  auto markType = [](RE::BaseExtraList::PresenceBitfield* presence,
-#endif
-                     uint32_t type, bool bCleared) {
-    uint32_t index = (type >> 3);
-    uint8_t bitMask = 1 << (type % 8);
-    uint8_t& flag = presence->bits[index];
-    if (bCleared) {
-      flag &= ~bitMask;
-    } else {
-      flag |= bitMask;
-    }
-  };
+  auto addExtra = [](void* this__, const RE::ExtraDataType extraType,
+                     RE::BSExtraData* toAdd) {
+    const auto this_ = static_cast<RE::ExtraDataList*>(this__);
 
-  auto addExtra = [markType](void* this__, uint32_t extraType,
-                             RE::BSExtraData* toAdd) {
-    auto this_ = reinterpret_cast<RE::ExtraDataList*>(this__);
-
-    if (!toAdd || this_->HasType(static_cast<RE::ExtraDataType>(extraType))) {
+    if (!toAdd || this_->HasType(extraType)) {
       return false;
     }
 
-    RE::BSWriteLockGuard locker(this_->_lock);
-#ifdef SKYRIMSE
-    auto* next = this_->_data;
-    this_->_data = toAdd;
-#else
-    auto* next = this_->_extraData.data;
-    this_->_extraData.data = toAdd;
-#endif
-    toAdd->next = next;
-#ifdef SKYRIMSE
-    markType(this_->_presence, extraType, false);
-#else
-    markType(this_->_extraData.presence, extraType, false);
-#endif
+    this_->Add(toAdd);
+
     return true;
   };
 
-  auto ui = RE::UI::GetSingleton();
-  if (!containerRefr || !item || !ui || ui->GameIsPaused())
+  if (!containerRefr || !item || RE::UI::GetSingleton()->GameIsPaused()) {
     return;
+  }
 
-  const auto refrId = containerRefr->GetFormID();
+  const auto boundObject = item->As<RE::TESBoundObject>();
 
-  auto boundObject = item->As<RE::TESBoundObject>();
   if (!boundObject) {
     return;
   }
 
+  const auto refId = containerRefr->GetFormID();
+
   auto tuple = std::make_tuple(
-    containerRefr->formID, item, health, enchantment, maxCharge,
-    removeEnchantmentOnUnequip, chargePercent,
-    (std::string)textDisplayData.data(), soul, poison, poisonCount);
+    refId, item, health, enchantment, maxCharge, removeEnchantmentOnUnequip,
+    chargePercent, static_cast<std::string>(textDisplayData.data()), soul,
+    poison, poisonCount);
 
   using Tuple = decltype(tuple);
 
@@ -578,8 +544,6 @@ void TESModPlatform::AddItemEx(
   const bool isShieldLike =
     (item->formType == RE::FormType::Armor &&
      reinterpret_cast<RE::TESObjectARMO*>(item)->IsShield());
-
-  const bool isTorch = item->formType == RE::FormType::Light;
 
   const bool isClothes =
     (item->formType == RE::FormType::Armor && !isShieldLike) ||
@@ -593,69 +557,69 @@ void TESModPlatform::AddItemEx(
   if (health > 1 || enchantment || chargePercent > 0 ||
       strlen(textDisplayData.data()) > 0 || (soul > 0 && soul <= 5) ||
       poison || g_worn || g_wornLeft) {
-    extraList = CreateExtraDataList();
+    extraList = new RE::ExtraDataList;
 
-    auto extraList_ = reinterpret_cast<void*>(extraList);
+    const auto extraList_ = reinterpret_cast<void*>(extraList);
 
     if (g_worn) {
       if (isClothes) {
-        auto extra = reinterpret_cast<RE::BSExtraData*>(
+
+        const auto extra = reinterpret_cast<RE::BSExtraData*>(
           new MyExtra<RE::ExtraDataType::kWorn>);
-        addExtra(extraList_, static_cast<uint32_t>(RE::ExtraDataType::kWorn),
-                 extra);
+
+        addExtra(extraList_, RE::ExtraDataType::kWorn, extra);
       }
     }
 
     if (g_wornLeft) {
       if (isClothes) {
-        auto extra = reinterpret_cast<RE::BSExtraData*>(
+        const auto extra = reinterpret_cast<RE::BSExtraData*>(
           new MyExtra<RE::ExtraDataType::kWornLeft>);
-        addExtra(extraList_,
-                 static_cast<uint32_t>(RE::ExtraDataType::kWornLeft), extra);
+
+        addExtra(extraList_, RE::ExtraDataType::kWornLeft, extra);
       }
     }
 
     if (health > 1) {
-      addExtra(extraList_, static_cast<uint32_t>(RE::ExtraDataType::kHealth),
+      addExtra(extraList_, RE::ExtraDataType::kHealth,
                new RE::ExtraHealth(health));
     }
 
     if (enchantment) {
-      addExtra(extraList_,
-               static_cast<uint32_t>(RE::ExtraDataType::kEnchantment),
+      addExtra(extraList_, RE::ExtraDataType::kEnchantment,
                new RE::ExtraEnchantment(enchantment, maxCharge,
                                         removeEnchantmentOnUnequip));
     }
 
     if (chargePercent > 0) {
-      auto extraCharge = new RE::ExtraCharge;
+      const auto extraCharge = new RE::ExtraCharge;
+
       extraCharge->charge = chargePercent;
-      addExtra(extraList_, static_cast<uint32_t>(RE::ExtraDataType::kCharge),
-               extraCharge);
+
+      addExtra(extraList_, RE::ExtraDataType::kCharge, extraCharge);
     }
 
     if (strlen(textDisplayData.data()) > 0) {
-      addExtra(extraList_,
-               static_cast<uint32_t>(RE::ExtraDataType::kTextDisplayData),
+      addExtra(extraList_, RE::ExtraDataType::kTextDisplayData,
                new RE::ExtraTextDisplayData(textDisplayData.data()));
     }
 
     if (soul > 0 && soul <= 5) {
-      addExtra(extraList_, static_cast<uint32_t>(RE::ExtraDataType::kSoul),
+      addExtra(extraList_, RE::ExtraDataType::kSoul,
                new RE::ExtraSoul(static_cast<RE::SOUL_LEVEL>(soul)));
     }
 
     if (poison) {
-      addExtra(extraList_, static_cast<uint32_t>(RE::ExtraDataType::kPoison),
+      addExtra(extraList_, RE::ExtraDataType::kPoison,
                new RE::ExtraPoison(poison, poisonCount));
     }
   }
 
   g_nativeCallRequirements.gameThrQ->AddTask([=] {
-    if (containerRefr != RE::TESForm::LookupByID<RE::TESObjectREFR>(refrId))
+    if (containerRefr != RE::TESForm::LookupByID<RE::TESObjectREFR>(refId))
       return;
 
-    auto optExtraList =
+    const auto optExtraList =
       item->formType == RE::FormType::Ammo ? nullptr : extraList;
 
     if (countDelta > 0) {
@@ -705,16 +669,19 @@ void TESModPlatform::AddItemEx(
 
         if (countDelta > 0) {
           g_lastEquippedExtraList[g_worn ? false : true][tuple] = extraList;
+
           g_nativeCallRequirements.gameThrQ->AddTask([=] {
-            if (actor != (void*)RE::TESForm::LookupByID(refrId))
-              return;
-            s->EquipObject(actor, boundObject, extraList, 1, slot);
+            if (actor == RE::TESForm::LookupByID(refId)) {
+              s->EquipObject(actor, boundObject, extraList, 1, slot);
+            }
           });
+
         } else if (countDelta < 0)
+
           g_nativeCallRequirements.gameThrQ->AddTask([=] {
-            if (actor != (void*)RE::TESForm::LookupByID(refrId))
-              return;
-            s->UnequipObject(actor, boundObject, extraList, 1, slot);
+            if (actor == RE::TESForm::LookupByID(refId)) {
+              s->UnequipObject(actor, boundObject, extraList, 1, slot);
+            }
           });
       }
     }
@@ -729,11 +696,14 @@ void TESModPlatform::UpdateEquipment(IVM* vm, StackID stackId,
                                      RE::TESForm* item, bool leftHand)
 {
 
-  if (!actor || !actor->currentProcess) {
+  if (!actor || !actor->GetActorRuntimeData().currentProcess) {
     return;
   }
-  auto ref = leftHand ? actor->currentProcess->GetEquippedLeftHand()
-                      : actor->currentProcess->GetEquippedRightHand();
+
+  auto ref = leftHand
+    ? actor->GetActorRuntimeData().currentProcess->GetEquippedLeftHand()
+    : actor->GetActorRuntimeData().currentProcess->GetEquippedRightHand();
+
   const auto backup = ref;
 
   ref = item;
@@ -746,7 +716,8 @@ void TESModPlatform::ResetContainer(IVM* vm, StackID stackId,
     return;
   }
 
-  auto pContainer = form->As<RE::TESContainer>();
+  const auto pContainer = form->As<RE::TESContainer>();
+
   if (!pContainer) {
     return;
   }
@@ -788,12 +759,14 @@ public:
     std::vector<std::string> missing;
     std::istringstream stream(PAPYRUS_SOURCES);
     std::string tmp;
+
     while (std::getline(stream, tmp, ' ')) {
       tmp.replace(tmp.begin() + tmp.find(".psc"), tmp.end(), ".pex");
       std::filesystem::path path;
       path /= "Data";
       path /= "Scripts";
       path /= tmp;
+
       if (!std::filesystem::exists(path)) {
         // WorldSpace doesn't have any functions declared so isn't required
         if (tmp != "WorldSpace.pex") {
@@ -801,6 +774,7 @@ public:
         }
       }
     }
+
     std::sort(missing.begin(), missing.end());
     return missing;
   }
@@ -815,12 +789,12 @@ void TESModPlatform::Update()
 
   papyrusUpdateAllowed = true;
 
-  auto console = RE::ConsoleLog::GetSingleton();
+  const auto console = RE::ConsoleLog::GetSingleton();
   if (!console) {
     return;
   }
 
-  auto vm = RE::SkyrimVM::GetSingleton();
+  const auto vm = RE::SkyrimVM::GetSingleton();
   if (!vm || !vm->impl) {
     return console->Print("VM was nullptr");
   }
@@ -836,10 +810,12 @@ void TESModPlatform::Update()
 
     // DispatchStaticCall is gonna crash if TESModPlatform.pex or any of its
     // dependencies (like Actor.pex) is missing
-    FixedString className("TESModPlatform");
-    FixedString funcName("Add");
+    const FixedString className("TESModPlatform");
+    const FixedString funcName("Add");
+
     vm->impl->DispatchStaticCall(className, funcName, &args, functor);
   } catch (std::exception& e) {
+
     // We are not interested in crashing the game thread, so just printing
     static std::once_flag flag;
     std::call_once(flag, [&] { ExceptionPrinter::Print(e); });
@@ -859,10 +835,12 @@ std::shared_ptr<RE::BSTArray<RE::TintMask*>> TESModPlatform::GetTintsFor(
   }
 
   std::lock_guard l(share2.m);
-  auto i = actorId - 0xff000000;
+ const  auto i = actorId - 0xff000000;
+
   if (i >= share2.actorsTints.size()) {
     return nullptr;
   }
+
   return share2.actorsTints[i];
 }
 
@@ -873,8 +851,6 @@ bool TESModPlatform::GetPapyrusEventsBlocked()
 
 bool TESModPlatform::Register(IVM* vm)
 {
-  TESModPlatform::onPapyrusUpdate = onPapyrusUpdate;
-
   vm->BindNativeMethod(
     new RE::BSScript::NativeFunction<
       true, decltype(Add), int32_t, RE::StaticFunctionTag*, int32_t, int32_t,

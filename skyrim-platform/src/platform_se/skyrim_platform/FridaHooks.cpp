@@ -81,7 +81,7 @@ void OnSendEventLeave(GumInvocationContext* ic)
 void InstallSendEventHook()
 {
   Frida::HookHandler::GetSingleton()->Install(
-    Frida::HookID::SEND_EVENT, Offsets::Hooks::SendEvent.address(),
+    Frida::HookID::SEND_EVENT, RE::Offset::SkyrimVM::SendEvent.address(),
     std::make_shared<Frida::Hook>(OnSendEventEnter, OnSendEventLeave));
 }
 
@@ -117,7 +117,7 @@ void InstallDrawSheatheWeaponPcHook()
 {
   Frida::HookHandler::GetSingleton()->Install(
     Frida::HookID::DRAW_SHEATHE_WEAPON_PC,
-    Offsets::Hooks::DrawSheatheWeaponPC.address(),
+    RE::Offset::Actor::DrawSheatheWeaponPC.address(),
     std::make_shared<Frida::Hook>(OnDrawSheatheWeaponPcEnter, nullptr));
 }
 
@@ -144,7 +144,7 @@ void InstallDrawSheatheWeaponActorHook()
 {
   Frida::HookHandler::GetSingleton()->Install(
     Frida::HookID::DRAW_SHEATHE_WEAPON_ACTOR,
-    Offsets::Hooks::DrawSheatheWeaponActor.address(),
+    RE::Offset::Actor::DrawSheatheWeaponActor.address(),
     std::make_shared<Frida::Hook>(OnDrawSheatheWeaponActorEnter, nullptr));
 }
 
@@ -196,7 +196,7 @@ void InstallSendAnimationEventHook()
 {
   Frida::HookHandler::GetSingleton()->Install(
     Frida::HookID::HOOK_SEND_ANIMATION_EVENT,
-    Offsets::Hooks::SendAnimation.address(),
+    RE::Offset::SkyrimVM::SendAnimation.address(),
     std::make_shared<Frida::Hook>(OnSendAnimationEventEnter,
                                   OnSendAnimationEventLeave));
 }
@@ -220,7 +220,7 @@ void InstallQueueNinodeUpdateHook()
 {
   Frida::HookHandler::GetSingleton()->Install(
     Frida::HookID::QUEUE_NINODE_UPDATE,
-    Offsets::Hooks::QueueNinodeUpdate.address(),
+    RE::Offset::NiNode::QueueUpdate.address(),
     std::make_shared<Frida::Hook>(OnQueueNinodeUpdateEnter, nullptr));
 }
 
@@ -243,7 +243,7 @@ void InstallApplyMasksToRenderTargetsHook()
 {
   Frida::HookHandler::GetSingleton()->Install(
     Frida::HookID::APPLY_MASKS_TO_RENDER_TARGET,
-    Offsets::Hooks::ApplyMasksToRenderTargets.address(),
+    RE::Offset::Actor::ApplyMasksToRenderTargets.address(),
     std::make_shared<Frida::Hook>(OnApplyMasksToRenderTargetsEnter, nullptr));
 }
 
@@ -275,7 +275,7 @@ void InstallRenderCursorMenuHook()
 {
   Frida::HookHandler::GetSingleton()->Install(
     Frida::HookID::RENDER_CURSOR_MENU,
-    Offsets::Hooks::RenderCursorMenu.address(),
+    RE::Offset::UI::RenderCursorMenu.address(),
     std::make_shared<Frida::Hook>(OnRenderCursorMenuEnter, nullptr));
 }
 

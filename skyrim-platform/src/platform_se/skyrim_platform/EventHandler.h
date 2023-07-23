@@ -84,7 +84,7 @@ class EventHandler final
   , public RE::BSTEventSink<RE::CriticalHit::Event>
   , public RE::BSTEventSink<RE::DisarmedEvent::Event>
   , public RE::BSTEventSink<RE::DragonSoulsGained::Event>
-  , public RE::BSTEventSink<RE::ItemHarvested::Event>
+  , public RE::BSTEventSink<RE::TESHarvestedEvent::ItemHarvested>
   , public RE::BSTEventSink<RE::LevelIncrease::Event>
   , public RE::BSTEventSink<RE::LocationDiscovery::Event>
   , public RE::BSTEventSink<RE::ShoutAttack::Event>
@@ -161,6 +161,19 @@ public:
   }
 
   /**
+   * @brief Registers sink using specific class as event source.
+   */
+  template <class T, class E, RE::BSTEventSource<E>* (T::*Func)()>
+  void ActivateSink(const Sink* sink)
+  {
+    if (const auto source = (T::GetSingleton()->*Func)()) {
+      source->AddEventSink(GetSingleton());
+      logger::debug("Registered {} handler"sv, typeid(E).name());
+      activeSinks.emplace(sink);
+    }
+  }
+
+  /**
    * @brief Unregisters sink using script event source.
    */
   template <class E>
@@ -193,6 +206,19 @@ public:
   void DeactivateSink(const Sink* sink)
   {
     if (const auto source = ::GetEventSource<T, E>()) {
+      source->RemoveEventSink(GetSingleton());
+      logger::debug("Unregistered {} handler"sv, typeid(E).name());
+      activeSinks.erase(sink);
+    }
+  }
+
+  /**
+   * @brief Unregisters sink using specific class as event source.
+   */
+  template <class T, class E, RE::BSTEventSource<E>* (T::*Func)()>
+  void DeactivateSink(const Sink* sink)
+  {
+    if (const auto source = (T::GetSingleton()->*Func)()) {
       source->RemoveEventSink(GetSingleton());
       logger::debug("Unregistered {} handler"sv, typeid(E).name());
       activeSinks.erase(sink);
@@ -416,8 +442,8 @@ public:
     RE::BSTEventSource<RE::DragonSoulsGained::Event>*) override;
 
   EventResult ProcessEvent(
-    const RE::ItemHarvested::Event* event,
-    RE::BSTEventSource<RE::ItemHarvested::Event>*) override;
+    const RE::TESHarvestedEvent::ItemHarvested* event,
+    RE::BSTEventSource<RE::TESHarvestedEvent::ItemHarvested>*) override;
 
   EventResult ProcessEvent(
     const RE::LevelIncrease::Event* event,
@@ -514,145 +540,77 @@ private:
     // skse events
     // at the moment of writing, no way was found to standardize event source
     // aquisition for skse events, which means those must be done manually
-    if (const auto source = SKSE::GetActionEventSource()) {
-      auto events = std::vector(
-        { "actionWeaponSwing", "actionBeginDraw", "actionEndDraw",
-          "actionBowDraw", "actionBowRelease", "actionBeginSheathe",
-          "actionEndSheathe", "actionSpellCast", "actionSpellFire",
-          "actionVoiceCast", "actionVoiceFire" });
-      const auto sink = new Sink(
-        events,
-        [](const Sink* sink) {
-          const auto handler = EventHandler::GetSingleton();
-          auto source = SKSE::GetActionEventSource();
-          handler->ActivateSink(sink, source);
-        },
-        [](const Sink* sink) {
-          const auto handler = EventHandler::GetSingleton();
-          auto source = SKSE::GetActionEventSource();
-          handler->DeactivateSink(sink, source);
-        },
-        [](const Sink* sink) -> bool {
-          const auto handler = EventHandler::GetSingleton();
-          return handler->IsActiveSink(sink);
-        });
+    auto skseEvents =
+      std::vector({ "actionWeaponSwing", "actionBeginDraw", "actionEndDraw",
+                    "actionBowDraw", "actionBowRelease", "actionBeginSheathe",
+                    "actionEndSheathe", "actionSpellCast", "actionSpellFire",
+                    "actionVoiceCast", "actionVoiceFire" });
 
-      sinks.emplace(sink);
-    }
+    AppendSink<SKSE::ActionEvent>(skseEvents, SKSE::GetActionEventSource());
 
-    if (const auto source = SKSE::GetCameraEventSource()) {
-      auto events = std::vector({ "cameraStateChanged" });
-      const auto sink = new Sink(
-        events,
-        [](const Sink* sink) {
-          const auto handler = EventHandler::GetSingleton();
-          auto source = SKSE::GetCameraEventSource();
-          handler->ActivateSink(sink, source);
-        },
-        [](const Sink* sink) {
-          const auto handler = EventHandler::GetSingleton();
-          auto source = SKSE::GetCameraEventSource();
-          handler->DeactivateSink(sink, source);
-        },
-        [](const Sink* sink) -> bool {
-          const auto handler = EventHandler::GetSingleton();
-          return handler->IsActiveSink(sink);
-        });
+    AppendSink<SKSE::CameraEvent>(std::vector({ "cameraStateChanged" }),
+                                  SKSE::GetCameraEventSource());
 
-      sinks.emplace(sink);
-    }
+    AppendSink<SKSE::CrosshairRefEvent>(std::vector({ "crosshairRefChanged" }),
+                                        SKSE::GetCrosshairRefEventSource());
 
-    if (const auto source = SKSE::GetCrosshairRefEventSource()) {
-      auto events = std::vector({ "crosshairRefChanged" });
-      const auto sink = new Sink(
-        events,
-        [](const Sink* sink) {
-          const auto handler = EventHandler::GetSingleton();
-          auto source = SKSE::GetCrosshairRefEventSource();
-          handler->ActivateSink(sink, source);
-        },
-        [](const Sink* sink) {
-          const auto handler = EventHandler::GetSingleton();
-          auto source = SKSE::GetCrosshairRefEventSource();
-          handler->DeactivateSink(sink, source);
-        },
-        [](const Sink* sink) -> bool {
-          const auto handler = EventHandler::GetSingleton();
-          return handler->IsActiveSink(sink);
-        });
+    AppendSink<SKSE::ModCallbackEvent>(std::vector({ "modEvent" }),
+                                       SKSE::GetModCallbackEventSource());
 
-      sinks.emplace(sink);
-    }
-
-    if (const auto source = SKSE::GetModCallbackEventSource()) {
-      auto events = std::vector({ "modEvent" });
-      const auto sink = new Sink(
-        events,
-        [](const Sink* sink) {
-          const auto handler = EventHandler::GetSingleton();
-          auto source = SKSE::GetModCallbackEventSource();
-          handler->ActivateSink(sink, source);
-        },
-        [](const Sink* sink) {
-          const auto handler = EventHandler::GetSingleton();
-          auto source = SKSE::GetModCallbackEventSource();
-          handler->DeactivateSink(sink, source);
-        },
-        [](const Sink* sink) -> bool {
-          auto handler = EventHandler::GetSingleton();
-          return handler->IsActiveSink(sink);
-        });
-
-      sinks.emplace(sink);
-    }
-
-    if (const auto source = SKSE::GetNiNodeUpdateEventSource()) {
-      auto events = std::vector({ "niNodeUpdate" });
-      const auto sink = new Sink(
-        events,
-        [](const Sink* sink) {
-          const auto handler = EventHandler::GetSingleton();
-          auto source = SKSE::GetNiNodeUpdateEventSource();
-          handler->ActivateSink(sink, source);
-        },
-        [](const Sink* sink) {
-          const auto handler = EventHandler::GetSingleton();
-          auto source = SKSE::GetNiNodeUpdateEventSource();
-          handler->DeactivateSink(sink, source);
-        },
-        [](const Sink* sink) -> bool {
-          const auto handler = EventHandler::GetSingleton();
-          return handler->IsActiveSink(sink);
-        });
-
-      sinks.emplace(sink);
-    }
-
+    AppendSink<SKSE::NiNodeUpdateEvent>(std::vector({ "niNodeUpdate" }),
+                                        SKSE::GetNiNodeUpdateEventSource());
     // misc events
     AppendSink<RE::UI, RE::MenuOpenCloseEvent>(
       std::vector({ "menuOpen", "menuClose" }));
+
     AppendSink<RE::BSInputDeviceManager, RE::InputEvent*>(
       std::vector({ "buttonEvent", "mouseMove", "thumbstickEvent",
                     "kinectEvent", "deviceConnect" }));
+
     AppendSink<RE::BGSFootstepManager, RE::BGSFootstepEvent>(
       std::vector({ "footstep" }));
-    AppendSink<RE::PlayerCharacter, RE::PositionPlayerEvent>(
+
+    AppendSink<RE::PlayerCharacter, RE::PositionPlayerEvent,
+               &RE::PlayerCharacter::AsPositionPlayerEventSource>(
       std::vector({ "positionPlayer" }));
 
     // story events
     // TODO: implement these
-    AppendSink<RE::ActorKill>(std::vector({ "actorKill" }));
-    AppendSink<RE::BooksRead>(std::vector({ "bookRead" }));
-    AppendSink<RE::CriticalHit>(std::vector({ "criticalHit" }));
-    AppendSink<RE::DisarmedEvent>(std::vector({ "disarmedEvent" }));
-    AppendSink<RE::DragonSoulsGained>(std::vector({ "dragonSoulsGained" }));
-    AppendSink<RE::ItemHarvested>(std::vector({ "itemHarvested" }));
-    AppendSink<RE::LevelIncrease>(std::vector({ "levelIncrease" }));
-    AppendSink<RE::LocationDiscovery>(std::vector({ "locationDiscovery" }));
-    AppendSink<RE::ShoutAttack>(std::vector({ "shoutAttack" }));
-    AppendSink<RE::SkillIncrease>(std::vector({ "skillIncrease" }));
-    AppendSink<RE::SoulsTrapped>(std::vector({ "soulsTrapped" }));
-    AppendSink<RE::SpellsLearned>(std::vector({ "spellsLearned" }));
+    AppendSink<RE::ActorKill, RE::ActorKill::Event>(
+      std::vector({ "actorKill" }));
+
+    AppendSink<RE::BooksRead, RE::BooksRead::Event>(
+      std::vector({ "bookRead" }));
+
+    AppendSink<RE::CriticalHit, RE::CriticalHit::Event>(
+      std::vector({ "criticalHit" }));
+
+    AppendSink<RE::DisarmedEvent, RE::DisarmedEvent::Event>(
+      std::vector({ "disarmedEvent" }));
+
+    AppendSink<RE::DragonSoulsGained, RE::DragonSoulsGained::Event>(
+      std::vector({ "dragonSoulsGained" }));
+
+    AppendSink<RE::TESHarvestedEvent, RE::TESHarvestedEvent::ItemHarvested>(
+      std::vector({ "itemHarvested" }));
+
+    AppendSink<RE::LevelIncrease, RE::LevelIncrease::Event>(
+      std::vector({ "levelIncrease" }));
+
+    AppendSink<RE::LocationDiscovery, RE::LocationDiscovery::Event>(
+      std::vector({ "locationDiscovery" }));
+
+    AppendSink<RE::ShoutAttack, RE::ShoutAttack::Event>(
+      std::vector({ "shoutAttack" }));
+
+    AppendSink<RE::SkillIncrease, RE::SkillIncrease::Event>(
+      std::vector({ "skillIncrease" }));
+
+    AppendSink<RE::SoulsTrapped, RE::SoulsTrapped::Event>(
+      std::vector({ "soulsTrapped" }));
+
+    AppendSink<RE::SpellsLearned, RE::SpellsLearned::Event>(
+      std::vector({ "spellsLearned" }));
   }
 
   /**
@@ -670,19 +628,43 @@ private:
     auto sink = new Sink(
       eventNames,
       // Activate
-      [](const ::Sink* sink) {
-        const auto handler = EventHandler::GetSingleton();
-        handler->ActivateSink<E>(sink);
+      [](const ::Sink* sink) { GetSingleton()->ActivateSink<E>(sink); },
+      // Deactivate
+      [](const ::Sink* sink) { GetSingleton()->DeactivateSink<E>(sink); },
+      // IsActive
+      [](const ::Sink* sink) -> bool {
+        return GetSingleton()->IsActiveSink(sink);
+      });
+
+    sinks.emplace(sink);
+  }
+
+  /**
+   * @brief Create new sink instance and add it to sink set.
+   * Registration via script event source.
+   */
+  template <class E>
+  void AppendSink(std::vector<const char*> eventNames,
+                  RE::BSTEventSource<E>* source)
+  {
+    // should consider checking if sink exists
+    // but since we store sink pointers
+    // the only option it to loop through all sinks
+    // and check for event names, TODO?
+
+    auto sink = new Sink(
+      eventNames,
+      // Activate
+      [source](const ::Sink* sink) {
+        GetSingleton()->ActivateSink<E>(sink, source);
       },
       // Deactivate
-      [](const ::Sink* sink) {
-        const auto handler = EventHandler::GetSingleton();
-        handler->DeactivateSink<E>(sink);
+      [source](const ::Sink* sink) {
+        GetSingleton()->DeactivateSink<E>(sink, source);
       },
       // IsActive
       [](const ::Sink* sink) -> bool {
-        const auto handler = EventHandler::GetSingleton();
-        return handler->IsActiveSink(sink);
+        return GetSingleton()->IsActiveSink(sink);
       });
 
     sinks.emplace(sink);
@@ -703,19 +685,31 @@ private:
     auto sink = new Sink(
       eventNames,
       // Activate
-      [](const ::Sink* sink) {
-        const auto handler = EventHandler::GetSingleton();
-        handler->ActivateSink<T, E>(sink);
-      },
+      [](const ::Sink* sink) { GetSingleton()->ActivateSink<T, E>(sink); },
       // Deactivate
-      [](const ::Sink* sink) {
-        const auto handler = EventHandler::GetSingleton();
-        handler->DeactivateSink<T, E>(sink);
-      },
+      [](const ::Sink* sink) { GetSingleton()->DeactivateSink<T, E>(sink); },
       // IsActive
       [](const ::Sink* sink) -> bool {
-        const auto handler = EventHandler::GetSingleton();
-        return handler->IsActiveSink(sink);
+        return GetSingleton()->IsActiveSink(sink);
+      });
+
+    sinks.emplace(sink);
+  }
+
+  template <class T, class E, RE::BSTEventSource<E>* (T::*Func)()>
+  void AppendSink(std::vector<const char*> eventNames)
+  {
+    auto sink = new Sink(
+      eventNames,
+      // Activate
+      [](const Sink* sink) { GetSingleton()->ActivateSink<T, E, Func>(sink); },
+      // Deactivate
+      [](const Sink* sink) {
+        GetSingleton()->DeactivateSink<T, E, Func>(sink);
+      },
+      // IsActive
+      [](const Sink* sink) -> bool {
+        return GetSingleton()->IsActiveSink(sink);
       });
 
     sinks.emplace(sink);

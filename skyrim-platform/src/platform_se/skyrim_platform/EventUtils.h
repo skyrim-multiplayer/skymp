@@ -6,8 +6,8 @@ inline RE::BSTEventSource<E>* GetEventSource()
   return RE::ScriptEventSourceHolder::GetSingleton()->GetEventSource<E>();
 }
 
-template <class T, class E = T::Event>
-requires HasEvent<T>
+template <class T, class E>
+requires HasEvent<T, E>
 inline RE::BSTEventSource<E>* GetEventSource()
 {
   return T::GetEventSource();

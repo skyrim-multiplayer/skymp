@@ -158,6 +158,58 @@ export class SkympClient {
 
     let lastInv: Inventory | undefined;
 
+
+    
+    on('crosshairRefChanged', (e) => {
+      printConsole("crosshairRefChanged");
+
+      printConsole("e.reference = " + e.reference?.getFormID()?.toString(16));
+      
+    });
+
+    on('actionSpellCast', (e) => {
+      printConsole("actionSpellCast");
+
+      printConsole("e.actor = " + e.actor?.getFormID()?.toString(16));
+      printConsole("e.source = " + e.source?.getFormID()?.toString(16));
+      printConsole("e.slot = " + e.slot.toString());
+
+      printConsole("");
+
+      printConsole("bMLh_Ready: " + Game.getPlayer()?.getAnimationVariableBool('bMLh_Ready'));
+      printConsole("bWantCastLeft: " + Game.getPlayer()?.getAnimationVariableBool('bWantCastLeft'));
+      printConsole("IsCastingLeft: " + Game.getPlayer()?.getAnimationVariableBool('IsCastingLeft'));
+
+      printConsole("");
+
+      printConsole("bMRh_Ready: " + Game.getPlayer()?.getAnimationVariableBool('bMRh_Ready'));
+      printConsole("bWantCastRight: " + Game.getPlayer()?.getAnimationVariableBool('bWantCastRight'));
+      printConsole("IsCastingRight: " + Game.getPlayer()?.getAnimationVariableBool('IsCastingRight'));
+
+      printConsole("");
+
+      printConsole("iState_NPCMagic: " + Game.getPlayer()?.getAnimationVariableInt('iState_NPCMagic'));
+      printConsole("iState_NPCMagicCasting: " + Game.getPlayer()?.getAnimationVariableInt('iState_NPCMagicCasting'));
+    });
+    
+
+    on('spellCast', (e) => {
+      if(e.caster == undefined){
+        printConsole("e.caster == undefind");
+      }
+
+      printConsole(
+        `spellCast: caster: ${e.caster
+          ?.getFormID()
+          .toString(16)} spell: ${e.spell
+          .getFormID()
+          .toString(16)}, target: ${e.target
+          ?.getFormID()
+          .toString(16)}, isDualCasting: ${e.isDualCasting}, castingSource: ${e.castingSource}`
+      );
+      if (e.caster?.getFormID() !== playerFormId) return;
+    });
+
     once('update', () => {
       const send = (msg: Record<string, unknown>) => {
         this.sendTarget.send(msg, true);

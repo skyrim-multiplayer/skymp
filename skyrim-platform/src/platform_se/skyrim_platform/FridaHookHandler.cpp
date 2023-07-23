@@ -1,5 +1,7 @@
 #include "FridaHookHandler.h"
 
+#include "AutoPtrManager.hpp"
+
 namespace Frida {
 /**
  * Frida initialization block start
@@ -87,13 +89,13 @@ bool HookHandler::Attach(HookID id, uintptr_t address)
   auto status = gum_interceptor_attach(_interceptor, (void*)address, _listener,
                                        GSIZE_TO_POINTER(id));
   if (status != GUM_ATTACH_OK) {
-    uint64_t diff = address - Offsets::BaseAddress;
+    uint64_t diff = address - CEFUtils::AutoPtrManager::GetInstance().GetBaseAddress();
     logger::critical(
       "Failed to attach hook: address {:X} id {} with status {}.", diff,
       static_cast<uint64_t>(id), static_cast<uint64_t>(status));
     return false;
   } else {
-    uint64_t diff = address - Offsets::BaseAddress;
+    uint64_t diff = address - CEFUtils::AutoPtrManager::GetInstance().GetBaseAddress();
     logger::debug("Attached hook: address {:X} id {} with status {}.", diff,
                   static_cast<uint64_t>(id), static_cast<uint64_t>(status));
     return true;
@@ -104,7 +106,7 @@ void HookHandler::Install(HookID id, uintptr_t address,
                           std::shared_ptr<Hook> hook)
 {
   if (hooks.contains(id)) {
-    uint64_t diff = address - Offsets::BaseAddress;
+    uint64_t diff = address - CEFUtils::AutoPtrManager::GetInstance().GetBaseAddress();
     logger::critical(
       "Failed to install hook: address {:X} id {} already installed.", diff,
       static_cast<uint64_t>(id));

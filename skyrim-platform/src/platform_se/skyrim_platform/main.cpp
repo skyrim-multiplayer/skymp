@@ -125,6 +125,10 @@ DLLEXPORT void SkyrimPlatform_IpcSend_Impl(const char* systemName,
 
 DLLEXPORT bool SKSEAPI SKSEPlugin_Load_Impl(const SKSE::LoadInterface* skse)
 {
+  while (!IsDebuggerPresent()) {
+    Sleep(1);
+  }
+
   InitLog();
 
   InitCmd();

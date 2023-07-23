@@ -63,8 +63,8 @@ public:
 
   uint32_t ToARGB()
   {
-    return ((((uint32_t)(alpha * 255) & 0xFF) << 24) |
-            ((color.red & 0xFF) << 16) | ((color.green & 0xFF) << 8) |
-            ((color.blue & 0xFF) << 0));
+    return (static_cast<uint32_t>(alpha * 255) & 0xFF) << 24 |
+      (color.red & 0xFF) << 16 | (color.green & 0xFF) << 8 |
+      (color.blue & 0xFF) << 0;
   }
 };

@@ -120,8 +120,19 @@ EventResult EventHandler::ProcessEvent(
   auto effectList = std::make_shared<std::vector<std::unique_ptr<
     RE::ActiveEffect, game_type_pointer_deleter<RE::ActiveEffect>>>>();
 
-  for (const auto& eff :
-       *event->target.get()->As<RE::Actor>()->GetActiveEffectList()) {
+  const auto target = event->target.get();
+
+  if (!target) {
+    return EventResult ::kContinue;
+  }
+
+  const auto actor = target->As<RE::Actor>();
+
+  if (!actor) {
+    return EventResult ::kContinue;
+  }
+
+  for (const auto& eff : *actor->AsMagicTarget()->GetActiveEffectList()) {
     if (eff->usUniqueID != 0) {
       auto activeEffect = RE::malloc<RE::ActiveEffect>();
       std::memcpy(activeEffect, eff, sizeof(*eff));
@@ -184,14 +195,15 @@ EventResult EventHandler::ProcessEvent(
     return EventResult::kContinue;
   }
 
-  RE::TESObjectREFR* refr = event->reference.get();
+  const RE::TESObjectREFR* refr = event->reference.get();
+
   if (!refr) {
     return EventResult::kContinue;
   }
-  auto refrId = refr->GetFormID();
 
-  bool isAttach = event->action == 1;
-  if (isAttach) {
+  const auto refrId = refr->GetFormID();
+
+  if (event->attached) {
     SkyrimPlatform::GetSingleton()->AddUpdateTask([refrId] {
       auto obj = JsValue::Object();
       auto refr = RE::TESForm::LookupByID<RE::TESObjectREFR>(refrId);
@@ -203,18 +215,14 @@ EventResult EventHandler::ProcessEvent(
     return EventResult::kContinue;
   }
 
-  bool isDetach = event->action == 0;
-  if (isDetach) {
-    SkyrimPlatform::GetSingleton()->AddUpdateTask([refrId] {
-      auto obj = JsValue::Object();
-      auto refr = RE::TESForm::LookupByID<RE::TESObjectREFR>(refrId);
-      if (refr) {
-        AddObjProperty(&obj, "refr", refr, "ObjectReference");
-        SendEvent("cellDetach", obj);
-      }
-    });
-    return EventResult::kContinue;
-  }
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([refrId] {
+    auto obj = JsValue::Object();
+    auto refr = RE::TESForm::LookupByID<RE::TESObjectREFR>(refrId);
+    if (refr) {
+      AddObjProperty(&obj, "refr", refr, "ObjectReference");
+      SendEvent("cellDetach", obj);
+    }
+  });
 
   return EventResult::kContinue;
 }
@@ -401,7 +409,7 @@ EventResult EventHandler::ProcessEvent(
   SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
-    AddObjProperty(&obj, "travelTimeGameHours", e->travelTimeGameHours);
+    AddObjProperty(&obj, "travelTimeGameHours", e->fastTravelEndHours);
 
     SendEvent("fastTravelEnd", obj);
   });
@@ -781,12 +789,12 @@ EventResult EventHandler::ProcessEvent(
   SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
-    auto weapon = RE::TESForm::LookupByID(e->weaponId);
-    auto ammo = RE::TESForm::LookupByID(e->ammoId);
+    const auto weapon = RE::TESForm::LookupByID(e->weapon);
+    const auto ammo = RE::TESForm::LookupByID(e->ammo);
 
     AddObjProperty(&obj, "weapon", weapon, "Weapon");
     AddObjProperty(&obj, "ammo", ammo, "Ammo");
-    AddObjProperty(&obj, "power", e->power);
+    AddObjProperty(&obj, "power", e->shotPower);
     AddObjProperty(&obj, "target", e->isSunGazing);
 
     SendEvent("playerBowShot", obj);
@@ -831,7 +839,7 @@ EventResult EventHandler::ProcessEvent(
   SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
-    auto quest = RE::TESForm::LookupByID(e->questId);
+    const auto quest = RE::TESForm::LookupByID(e->formID);
 
     AddObjProperty(&obj, "quest", quest, "Quest");
     AddObjProperty(&obj, "stage", e->stage);
@@ -855,11 +863,11 @@ EventResult EventHandler::ProcessEvent(
   SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
-    auto quest = RE::TESForm::LookupByID(e->questId);
+    const auto quest = RE::TESForm::LookupByID(e->formID);
 
     AddObjProperty(&obj, "quest", quest, "Quest");
 
-    if (e->isStarted) {
+    if (e->started) {
       SendEvent("questStart", obj);
     } else {
       SendEvent("questStop", obj);
@@ -971,7 +979,7 @@ EventResult EventHandler::ProcessEvent(
   SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
-    AddObjProperty(&obj, "isInterrupted", e->isInterrupted);
+    AddObjProperty(&obj, "isInterrupted", e->interrupted);
 
     SendEvent("sleepStop", obj);
   });
@@ -992,10 +1000,79 @@ EventResult EventHandler::ProcessEvent(
   SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
-    auto spell = RE::TESForm::LookupByID(e->spell);
+    const auto spell = RE::TESForm::LookupByID(e->spell);
 
-    AddObjProperty(&obj, "caster", e->caster.get(), "ObjectReference");
+    if (!(spell && spell->IsMagicItem())) {
+      spdlog::error(
+        "ProcessEvent TESSpellCastEvent error! spell not a MagicItem");
+      return;
+    }
+
+    const auto caster = reinterpret_cast<RE::Actor*>(e->object.get());
+
+    if (!caster) {
+      spdlog::error(
+        "ProcessEvent TESSpellCastEvent error! caster == nullptr)");
+      return;
+    }
+
+    auto castingSource = RE::MagicSystem::CastingSource::kLeftHand;
+    bool isCasterValid = false;
+
+    for (const auto magicCaster : caster->GetActorRuntimeData().magicCasters) {
+
+      if (!magicCaster) {
+        continue;
+      }
+
+      if (magicCaster->currentSpell == spell) {
+        castingSource = magicCaster->GetCastingSource();
+        isCasterValid = true;
+        break;
+      }
+    }
+
+    if (!isCasterValid) {
+      return;
+    }
+
+    const auto magicCaster = caster->GetMagicCaster(castingSource);
+
+    const auto magicTarget = caster->GetMagicTarget();
+
+    const auto look = caster->GetLookingAtLocation();
+
+    RE::NiPoint3 a_origin{};
+    RE::NiPoint3 a_direction{};
+
+    caster->GetEyeVector(a_origin, a_direction, false);
+
+    const auto acPos = caster->GetPosition();
+
+    spdlog::info("Caster pos = x: {}, y: {}, z: {}", std::to_string(acPos.x),
+                 std::to_string(acPos.y), std::to_string(acPos.z));
+
+    spdlog::info("Caster a_origin = x: {}, y: {}, z: {}",
+                 std::to_string(a_origin.x), std::to_string(a_origin.y),
+                 std::to_string(a_origin.z));
+
+    spdlog::info("Caster a_direction = x: {}, y: {}, z: {}",
+                 std::to_string(a_direction.x), std::to_string(a_direction.y),
+                 std::to_string(a_direction.z));
+
+    RE::Actor* handleTarget = nullptr;
+
+    if (magicTarget->MagicTargetIsActor()) {
+      handleTarget =
+        reinterpret_cast<RE::Actor*>(magicTarget->GetTargetStatsObject());
+    }
+
+    AddObjProperty(&obj, "caster", e->object.get(), "ObjectReference");
+    AddObjProperty(&obj, "target", handleTarget, "ObjectReference");
     AddObjProperty(&obj, "spell", spell, "Spell");
+    AddObjProperty(&obj, "isDualCasting", magicCaster->GetIsDualCasting());
+    AddObjProperty(&obj, "castingSource",
+                   static_cast<uint32_t>(castingSource));
 
     SendEvent("spellCast", obj);
   });
@@ -1187,7 +1264,7 @@ EventResult EventHandler::ProcessEvent(const SKSE::ActionEvent* event,
   SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
-    auto slot = to_underlying(e->slot.get());
+    const auto slot = to_underlying(e->slot.get());
 
     AddObjProperty(&obj, "actor", e->actor, "Actor");
     AddObjProperty(&obj, "source", e->sourceForm, "Form");
@@ -1605,8 +1682,8 @@ EventResult EventHandler::ProcessEvent(
 }
 
 EventResult EventHandler::ProcessEvent(
-  const RE::ItemHarvested::Event* event,
-  RE::BSTEventSource<RE::ItemHarvested::Event>*)
+  const RE::TESHarvestedEvent::ItemHarvested* event,
+  RE::BSTEventSource<RE::TESHarvestedEvent::ItemHarvested>*)
 {
   if (!event) {
     return EventResult::kContinue;
