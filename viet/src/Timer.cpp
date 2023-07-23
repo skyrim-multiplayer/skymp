@@ -22,7 +22,6 @@ struct Timer::Impl
 {
   std::deque<TimerEntry> timers;
   static const std::unique_ptr<MakeID> s_idGenerator;
-  std::unordered_map<uint32_t, const TimerEntry*> timerEntriyById;
 
   void DestroyID(const TimerEntry& entry);
 };
@@ -32,7 +31,6 @@ const std::unique_ptr<MakeID> Timer::Impl::s_idGenerator =
 
 void Timer::Impl::DestroyID(const TimerEntry& entry)
 {
-  timerEntriyById.erase(entry.id);
   s_idGenerator->DestroyID(entry.id);
 }
 
@@ -57,18 +55,12 @@ void Timer::TickTimers()
 bool Timer::RemoveTimer(const uint32_t timerId)
 {
   auto& timers = pImpl->timers;
-  const TimerEntry* entry = pImpl->timerEntriyById[timerId];
-  auto it = std::lower_bound(
-    timers.begin(), timers.end(), entry->finish,
-    [timerId](const TimerEntry& entry,
-              const std::chrono::system_clock::time_point& target) {
-      return entry.finish < target && entry.id == timerId;
-    });
-
-  if (it != timers.end()) {
-    pImpl->DestroyID(*it);
-    timers.erase(it);
-    return true;
+  for (auto it = timers.begin(); it != timers.end(); ++it) {
+    uint32_t id = (*it).id;
+    if (id == timerId) {
+      timers.erase(it);
+      return true;
+    }
   }
   return false;
 }
@@ -83,7 +75,6 @@ Promise<Void> Timer::Set(const std::chrono::system_clock::time_point& endTime,
   uint32_t timerId;
   Impl::s_idGenerator->CreateID(timerId);
   pImpl->timers.push_front({ timerId, promise, endTime });
-  pImpl->timerEntriyById[timerId] = &pImpl->timers.front();
   if (outId) {
     *outId = timerId;
   }
