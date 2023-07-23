@@ -77,7 +77,7 @@ public:
   template <typename T>
   Viet::Promise<Viet::Void> SetTimer(T&& duration)
   {
-    return timer.SetTimer(std::forward<T>(duration));
+    return timerRegular.SetTimer(std::forward<T>(duration));
   }
 
   template <typename T>
