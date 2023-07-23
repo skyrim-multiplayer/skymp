@@ -3,4 +3,4 @@
 	url = https://github.com/microsoft/vcpkg.git
 [submodule "CommonLibSSE-NG"]
 	path = CommonLibSSE-NG
-	url = git@github.com:CharmedBaryon/CommonLibSSE-NG.git
+	url = git@github.com:skyrim-multiplayer/CommonLibSSE-NG.git
