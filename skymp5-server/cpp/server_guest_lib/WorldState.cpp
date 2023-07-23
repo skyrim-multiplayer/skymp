@@ -221,7 +221,13 @@ void WorldState::RequestSave(MpObjectReference& ref)
 Viet::Promise<Viet::Void> WorldState::SetTimer(
   std::reference_wrapper<const std::chrono::system_clock::time_point> wrapper)
 {
-  return timer.SetTimer(wrapper.get());
+  return timerRegular.SetTimer(wrapper.get());
+}
+
+Viet::Promise<Viet::Void> WorldState::SetEffectTimer(
+  std::reference_wrapper<const std::chrono::system_clock::time_point> wrapper)
+{
+  return timerEffects.SetTimer(wrapper.get());
 }
 
 const std::shared_ptr<MpForm>& WorldState::LookupFormById(uint32_t formId)
@@ -501,7 +507,8 @@ void WorldState::TickSaveStorage(const std::chrono::system_clock::time_point&)
 
 void WorldState::TickTimers(const std::chrono::system_clock::time_point&)
 {
-  timer.TickTimers();
+  timerEffects.TickTimers();
+  timerRegular.TickTimers();
 }
 
 void WorldState::SendPapyrusEvent(MpForm* form, const char* eventName,
@@ -783,8 +790,8 @@ void WorldState::SetNpcSettings(
   npcSettings = settings;
 }
 
-bool WorldState::RemoveTimer(
+bool WorldState::RemoveEffectTimer(
   const std::chrono::system_clock::time_point& endTime)
 {
-  return timer.RemoveTimer(endTime);
+  return timerEffects.RemoveTimer(endTime);
 }
