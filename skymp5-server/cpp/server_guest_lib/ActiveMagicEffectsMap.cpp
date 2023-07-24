@@ -30,7 +30,7 @@ ActiveMagicEffectsMap ActiveMagicEffectsMap::FromJson(
 {
   static const JsonPointer effectId("effectId"), endTime("endTime"),
     duration("duration"), magnitude("magnitude"), areaOfEffect("areaOfEffect"),
-    actorValue("actorValue"), timerId("timerId");
+    actorValue("actorValue");
   ActiveMagicEffectsMap res;
   if (!effects.is_array()) {
     return ActiveMagicEffectsMap{};
