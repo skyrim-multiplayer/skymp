@@ -10,6 +10,8 @@ on:
                 description: branch, meaning server instance (sweetpie/indev)
                 required: true
                 default: indev
+    schedule:
+      - cron: "30 0 * * *"
 
 env:
     BUILD_TYPE: RelWithDebInfo
@@ -21,8 +23,8 @@ jobs:
         steps:
           - name: Get action
             run: |
-                echo "DEPLOY_BRANCH=${{github.event.inputs.branch}}" >> "$GITHUB_ENV"
-                echo "DEPLOY_ACTION=${{github.event.inputs.action}}" >> "$GITHUB_ENV"
+                echo "DEPLOY_BRANCH=${{github.event.inputs.branch || 'sweetpie'}}" >> "$GITHUB_ENV"
+                echo "DEPLOY_ACTION=${{github.event.inputs.action || 'deploy'}}" >> "$GITHUB_ENV"
 
           - name: Checkout (full)
             if: ${{env.DEPLOY_ACTION == 'deploy'}}
