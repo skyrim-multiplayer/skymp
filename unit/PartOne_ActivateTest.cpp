@@ -519,3 +519,72 @@ TEST_CASE("Activate BarrelFood01 in Whiterun (open/close)", "[PartOne][espm]")
   // Actor destruction forces contaner close
   REQUIRE(!ref.IsOpen());
 }
+
+TEST_CASE("Activate torch", "[espm][PartOne]")
+{
+  auto& partOne = GetPartOne();
+  partOne.Messages().clear();
+  DoConnect(partOne, 0);
+  partOne.CreateActor(0xff000000, { 6507.0527, -5283.5664, -3263.1714 }, 0,
+                      0x56C1B);
+  partOne.SetUserActor(0, 0xff000000);
+  auto& ac = partOne.worldState.GetFormAt<MpActor>(0xff000000);
+  ac.RemoveAllItems();
+
+  const auto refrId = 0x671a8;
+  const auto torchBaseId = 0x1d4ec;
+
+  auto it = std::find_if(
+    partOne.Messages().begin(), partOne.Messages().end(), [&](auto m) {
+      return m.reliable && m.userId == 0 && m.j["type"] == "createActor" &&
+        m.j["refrId"] == refrId && m.j["props"] == nullptr;
+    });
+  REQUIRE(it != partOne.Messages().end());
+
+  partOne.Messages().clear();
+
+  auto& ref = partOne.worldState.GetFormAt<MpObjectReference>(refrId);
+  ref.SetRelootTime(std::chrono::milliseconds(25));
+
+  REQUIRE(!ref.IsHarvested());
+
+  DoMessage(partOne, 0,
+            nlohmann::json{
+              { "t", MsgType::Activate },
+              { "data", { { "caster", 0x14 }, { "target", refrId } } } });
+
+  REQUIRE(partOne.Messages().size() >= 2);
+  REQUIRE(partOne.Messages()[0].j["type"] == "setInventory");
+  REQUIRE(
+    partOne.Messages()[0].j["inventory"].dump() ==
+    nlohmann::json(
+      { { "entries", { { { "baseId", torchBaseId }, { "count", 1 } } } } })
+      .dump());
+  REQUIRE(partOne.Messages()[1].j["idx"] == ref.GetIdx());
+  REQUIRE(partOne.Messages()[1].j["t"] == MsgType::UpdateProperty);
+  REQUIRE(partOne.Messages()[1].j["data"] == true);
+  REQUIRE(partOne.Messages()[1].j["propName"] == "isHarvested");
+
+  REQUIRE(ref.IsHarvested());
+
+  // We should not be able to harvest already harvested items
+  REQUIRE(ac.GetInventory().GetTotalItemCount() == 1);
+  ref.Activate(ac);
+  REQUIRE(ac.GetInventory().GetTotalItemCount() == 1);
+
+  partOne.Tick();
+  REQUIRE(ref.IsHarvested());
+
+  partOne.Messages().clear();
+  std::this_thread::sleep_for(std::chrono::milliseconds(50));
+
+  partOne.Tick();
+  REQUIRE(!ref.IsHarvested());
+  REQUIRE(partOne.Messages().size() == 1);
+  REQUIRE(partOne.Messages()[0].j["t"] == MsgType::UpdateProperty);
+  REQUIRE(partOne.Messages()[0].j["data"] == false);
+  REQUIRE(partOne.Messages()[0].j["propName"] == "isHarvested");
+
+  DoDisconnect(partOne, 0);
+  partOne.DestroyActor(0xff000000);
+}
