@@ -75,9 +75,10 @@ public:
   void RequestSave(MpObjectReference& ref);
 
   template <typename T>
-  Viet::Promise<Viet::Void> SetTimer(T&& duration, uint32_t* timerId = nullptr)
+  Viet::Promise<Viet::Void> SetTimer(T&& duration,
+                                     uint32_t* outTimerId = nullptr)
   {
-    return timer.SetTimer(std::forward<T>(duration), timerId);
+    return timer.SetTimer(std::forward<T>(duration), outTimerId);
   }
 
   template <typename T>

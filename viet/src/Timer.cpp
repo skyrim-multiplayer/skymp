@@ -5,6 +5,7 @@
 #include <deque>
 #include <limits>
 #include <memory>
+#include <spdlog/spdlog.h>
 #include <utility>
 
 namespace Viet {
@@ -21,17 +22,15 @@ struct TimerEntry
 struct Timer::Impl
 {
   std::deque<TimerEntry> timers;
-  static const std::unique_ptr<MakeID> s_idGenerator;
+  const std::unique_ptr<MakeID> idGenerator =
+    std::make_unique<MakeID>(std::numeric_limits<uint32_t>::max());
 
   void DestroyID(const TimerEntry& entry);
 };
 
-const std::unique_ptr<MakeID> Timer::Impl::s_idGenerator =
-  std::make_unique<MakeID>(std::numeric_limits<uint32_t>::max());
-
 void Timer::Impl::DestroyID(const TimerEntry& entry)
 {
-  s_idGenerator->DestroyID(entry.id);
+  idGenerator->DestroyID(entry.id);
 }
 
 Timer::Timer()
@@ -55,28 +54,32 @@ void Timer::TickTimers()
 bool Timer::RemoveTimer(const uint32_t timerId)
 {
   auto& timers = pImpl->timers;
-  for (auto it = timers.begin(); it != timers.end(); ++it) {
-    uint32_t id = (*it).id;
-    if (id == timerId) {
-      timers.erase(it);
-      return true;
-    }
+  auto it = std::find_if(
+    timers.begin(), timers.end(),
+    [timerId](const TimerEntry& entry) { return entry.id == timerId; });
+  if (it != timers.end()) {
+    timers.erase(it);
+    return true;
   }
   return false;
 }
 
 Promise<Void> Timer::Set(const std::chrono::system_clock::time_point& endTime,
-                         uint32_t* outId)
+                         uint32_t* outTimerId)
 {
   Promise<Void> promise;
   bool sortRequired =
     !pImpl->timers.empty() && endTime > pImpl->timers.front().finish;
 
   uint32_t timerId;
-  Impl::s_idGenerator->CreateID(timerId);
+  bool created = pImpl->idGenerator->CreateID(timerId);
+  if (!created) {
+    spdlog::critical("MakeID was not able to Create Id for a timer");
+    std::terminate();
+  }
   pImpl->timers.push_front({ timerId, promise, endTime });
-  if (outId) {
-    *outId = timerId;
+  if (outTimerId) {
+    *outTimerId = timerId;
   }
 
   if (sortRequired) {

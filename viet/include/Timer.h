@@ -10,10 +10,10 @@ public:
   Timer();
 
   template <typename T>
-  Promise<Void> SetTimer(T&& duration, uint32_t* outId)
+  Promise<Void> SetTimer(T&& duration, uint32_t* outTimerId)
   {
     auto endTime = std::chrono::system_clock::now() + duration;
-    return Set(endTime, outId);
+    return Set(endTime, outTimerId);
   };
 
   [[maybe_unused]] bool RemoveTimer(uint32_t timerId);
@@ -21,7 +21,7 @@ public:
 
 private:
   Promise<Void> Set(const std::chrono::system_clock::time_point& endTime,
-                    uint32_t* outId);
+                    uint32_t* outTimerId);
 
 private:
   struct Impl;
