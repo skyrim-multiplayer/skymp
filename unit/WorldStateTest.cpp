@@ -139,7 +139,8 @@ TEST_CASE("Load ChangeForm of modified object with changed baseType",
 
   // REQUIRE_THROWS_WITH(
   //   worldState.LoadChangeForm(changeForm, FormCallbacks::DoNothing()),
-  //   ContainsSubstring("Anomally, baseId should never change (ded0 => abcd)"));
+  //   ContainsSubstring("Anomally, baseId should never change (ded0 =>
+  //   abcd)"));
 }
 
 extern PartOne& GetPartOne();
