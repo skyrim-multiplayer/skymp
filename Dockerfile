@@ -44,6 +44,7 @@ RUN \
     pkg-config \
     cmake \
     clang-12 \
+    linux-tools-common \
   && rm -rf /var/lib/apt/lists/*
 
 
