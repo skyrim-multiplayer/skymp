@@ -1006,7 +1006,7 @@ void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
     if (espm::utils::Is<espm::LIGH>(t)) {
       auto res =
         espm::Convert<espm::LIGH>(base.rec)->GetData(compressedFieldsCache);
-      bool isTorch = res.data.flags & espm::LIGH::Flags::CanBeCarired;
+      bool isTorch = res.data.flags & espm::LIGH::Flags::CanBeCarried;
       if (!isTorch) {
         return;
       }

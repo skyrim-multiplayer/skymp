@@ -14,7 +14,7 @@ public:
   enum Flags : uint32_t
   {
     Dynamic = 0x0001,
-    CanBeCarired = 0x0002,
+    CanBeCarried = 0x0002,
     EffectFlicker = 0x0008,
     OffByDefault = 0x00020,
     EffectFlickerSlow = 0x0040,
