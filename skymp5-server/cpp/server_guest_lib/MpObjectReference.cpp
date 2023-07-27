@@ -827,10 +827,8 @@ void MpObjectReference::ApplyChangeForm(const MpChangeForm& changeForm)
   const auto currentBaseId = GetBaseId();
   const auto newBaseId = changeForm.baseDesc.ToFormId(GetParent()->espmFiles);
   if (currentBaseId != newBaseId) {
-    std::stringstream ss;
-    ss << "Anomally, baseId should never change (";
-    ss << std::hex << currentBaseId << " => " << newBaseId << ")";
-    throw std::runtime_error(ss.str());
+    spdlog::error("Anomaly, baseId should never change ({:x} => {:x})",
+                  currentBaseId, newBaseId);
   }
 
   if (ChangeForm().formDesc != changeForm.formDesc) {
