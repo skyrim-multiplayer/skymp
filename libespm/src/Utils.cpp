@@ -42,7 +42,9 @@ bool IsItem(Type type) noexcept
 {
   return type == "AMMO" || type == "ARMO" || type == "BOOK" ||
     type == "INGR" || type == "ALCH" || type == "SCRL" || type == "SLGM" ||
-    type == "WEAP" || type == "MISC";
+    type == "WEAP" || type == "MISC" ||
+    type ==
+    "LIGH"; // LIGH is not always an item but here we suppose it is a torch
 }
 
 uint32_t CalculateHashcode(const void* readBuffer, size_t length)

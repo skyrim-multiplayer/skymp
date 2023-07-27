@@ -14,6 +14,7 @@
 #include "ScriptVariablesHolder.h"
 #include "WorldState.h"
 #include "libespm/GroupUtils.h"
+#include "libespm/Utils.h"
 #include "papyrus-vm/Reader.h"
 #include "papyrus-vm/VirtualMachine.h"
 #include <map>
@@ -985,45 +986,56 @@ void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
 
   auto t = base.rec->GetType();
 
-  if (t == espm::TREE::kType || t == espm::FLOR::kType ||
-      espm::utils::IsItem(t)) {
-    if (!IsHarvested()) {
-      auto mapping = loader.GetBrowser().GetCombMapping(base.fileIdx);
-      uint32_t resultItem = 0;
-      if (t == espm::TREE::kType) {
-        espm::FLOR::Data data;
-        data =
-          espm::Convert<espm::TREE>(base.rec)->GetData(compressedFieldsCache);
-        resultItem = espm::utils::GetMappedId(data.resultItem, *mapping);
-      } else if (t == espm::FLOR::kType) {
-        espm::FLOR::Data data;
-        data =
-          espm::Convert<espm::FLOR>(base.rec)->GetData(compressedFieldsCache);
-        resultItem = espm::utils::GetMappedId(data.resultItem, *mapping);
-      } else {
-        resultItem = espm::utils::GetMappedId(base.rec->GetId(), *mapping);
-      }
-
-      auto resultItemLookupRes = loader.GetBrowser().LookupById(resultItem);
-      auto leveledItem = espm::Convert<espm::LVLI>(resultItemLookupRes.rec);
-      if (leveledItem) {
-        const auto kCountMult = 1;
-        auto map = LeveledListUtils::EvaluateListRecurse(
-          loader.GetBrowser(), resultItemLookupRes, kCountMult,
-          kPlayerCharacterLevel, chanceNoneOverride.get());
-        for (auto& p : map) {
-          activationSource.AddItem(p.first, p.second);
-        }
-      } else {
-        auto refrRecord = espm::Convert<espm::REFR>(
-          loader.GetBrowser().LookupById(GetFormId()).rec);
-        uint32_t count =
-          refrRecord ? refrRecord->GetData(compressedFieldsCache).count : 1;
-        activationSource.AddItem(resultItem, count ? count : 1);
-      }
-      SetHarvested(true);
-      RequestReloot();
+  bool pickable = espm::utils::Is<espm::TREE>(t) ||
+    espm::utils::Is<espm::FLOR>(t) || espm::utils::IsItem(t);
+  if (pickable && !IsHarvested()) {
+    auto mapping = loader.GetBrowser().GetCombMapping(base.fileIdx);
+    uint32_t resultItem = 0;
+    if (espm::utils::Is<espm::TREE>(t)) {
+      auto data =
+        espm::Convert<espm::TREE>(base.rec)->GetData(compressedFieldsCache);
+      resultItem = espm::utils::GetMappedId(data.resultItem, *mapping);
     }
+
+    if (espm::utils::Is<espm::FLOR>(t)) {
+      auto data =
+        espm::Convert<espm::FLOR>(base.rec)->GetData(compressedFieldsCache);
+      resultItem = espm::utils::GetMappedId(data.resultItem, *mapping);
+    }
+
+    if (espm::utils::Is<espm::LIGH>(t)) {
+      auto res =
+        espm::Convert<espm::LIGH>(base.rec)->GetData(compressedFieldsCache);
+      bool isTorch = res.data.flags & espm::LIGH::Flags::CanBeCarried;
+      if (!isTorch) {
+        return;
+      }
+      resultItem = espm::utils::GetMappedId(base.rec->GetId(), *mapping);
+    }
+
+    if (resultItem == 0) {
+      resultItem = espm::utils::GetMappedId(base.rec->GetId(), *mapping);
+    }
+
+    auto resultItemLookupRes = loader.GetBrowser().LookupById(resultItem);
+    auto leveledItem = espm::Convert<espm::LVLI>(resultItemLookupRes.rec);
+    if (leveledItem) {
+      const auto kCountMult = 1;
+      auto map = LeveledListUtils::EvaluateListRecurse(
+        loader.GetBrowser(), resultItemLookupRes, kCountMult,
+        kPlayerCharacterLevel, chanceNoneOverride.get());
+      for (auto& p : map) {
+        activationSource.AddItem(p.first, p.second);
+      }
+    } else {
+      auto refrRecord = espm::Convert<espm::REFR>(
+        loader.GetBrowser().LookupById(GetFormId()).rec);
+      uint32_t count =
+        refrRecord ? refrRecord->GetData(compressedFieldsCache).count : 1;
+      activationSource.AddItem(resultItem, count ? count : 1);
+    }
+    SetHarvested(true);
+    RequestReloot();
   } else if (t == espm::DOOR::kType) {
     auto lookupRes = loader.GetBrowser().LookupById(GetFormId());
     auto refrRecord = espm::Convert<espm::REFR>(lookupRes.rec);
