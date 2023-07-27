@@ -7,6 +7,7 @@ FROM ubuntu:focal AS skymp-runtime-base
 # London is not always UTC+0:00
 ENV TZ=Etc/GMT
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
 RUN \
   apt-get update && apt-get install -y curl \
   && curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
