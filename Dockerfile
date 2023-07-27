@@ -7,7 +7,8 @@ FROM ubuntu:focal AS skymp-runtime-base
 # London is not always UTC+0:00
 ENV TZ=Etc/GMT
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
-RUN \ apt-get update && apt-get install -y curl \
+RUN \
+  apt-get update && apt-get install -y curl \
   && curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
   && apt-get update \
   && apt-get install -y nodejs yarn gdb \
@@ -21,7 +22,8 @@ RUN useradd -m skymp
 FROM skymp-runtime-base AS skymp-build-base
 
 # TODO: update clang
-RUN \ curl -fsSL https://dl.yarnpkg.com/debian/pubkey.gpg | gpg --dearmor > /usr/share/keyrings/yarnkey.gpg \
+RUN \
+  curl -fsSL https://dl.yarnpkg.com/debian/pubkey.gpg | gpg --dearmor > /usr/share/keyrings/yarnkey.gpg \
   && echo "deb [signed-by=/usr/share/keyrings/yarnkey.gpg] https://dl.yarnpkg.com/debian stable main" > /etc/apt/sources.list.d/yarn.list \
   && curl -fsSL https://apt.kitware.com/keys/kitware-archive-latest.asc | gpg --dearmor - > /usr/share/keyrings/kitware-archive-keyring.gpg \
   && echo 'deb [signed-by=/usr/share/keyrings/kitware-archive-keyring.gpg] https://apt.kitware.com/ubuntu/ focal main' > /etc/apt/sources.list.d/kitware.list \
