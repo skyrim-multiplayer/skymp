@@ -19,7 +19,7 @@ std::chrono::system_clock::time_point TimeUtils::SystemTimeFrom(
 {
   std::tm tm;
   std::istringstream ss{ timestamp };
-  ss >> std::get_time(&tm, "%FT%TZ");
+  ss >> std::get_time(&tm, "%Y-%m-%dT%TZ");
   return std::chrono::system_clock::from_time_t(std::mktime(&tm));
 }
 
