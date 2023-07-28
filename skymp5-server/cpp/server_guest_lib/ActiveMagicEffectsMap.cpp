@@ -40,9 +40,9 @@ ActiveMagicEffectsMap ActiveMagicEffectsMap::FromJson(
       return ActiveMagicEffectsMap{};
     }
     Entry entry;
-    std::string endTime;
-    ReadEx(effect, endTime, &endTime);
-    entry.endTime = Viet::TimeUtils::SystemTimeFrom(endTime);
+    std::string tmpEndTime;
+    ReadEx(effect, endTime, &tmpEndTime);
+    entry.endTime = Viet::TimeUtils::SystemTimeFrom(tmpEndTime);
     auto now = std::chrono::system_clock::now();
     if (now > entry.endTime) {
       continue;
