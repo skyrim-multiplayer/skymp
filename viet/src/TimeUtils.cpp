@@ -10,7 +10,7 @@ std::string TimeUtils::ToString(
   std::stringstream ss;
   std::time_t tp_c = std::chrono::system_clock::to_time_t(timePoint);
   std::tm now_tm = *std::localtime(&tp_c);
-  ss << std::put_time(&now_tm, "%c");
+  ss << std::put_time(&now_tm, "%FT%TZ");
   return ss.str();
 }
 
@@ -19,8 +19,9 @@ std::chrono::system_clock::time_point TimeUtils::SystemTimeFrom(
 {
   std::tm tm;
   std::istringstream ss{ timestamp };
-  ss >> std::get_time(&tm, "%c");
-  return std::chrono::system_clock::from_time_t(std::mktime(&tm));
+  ss >> std::get_time(&tm, "%Y-%m-%dT%TZ");
+  return ss.fail() ? std::chrono::system_clock::now() - std::chrono::seconds(1)
+                   : std::chrono::system_clock::from_time_t(std::mktime(&tm));
 }
 
 }
