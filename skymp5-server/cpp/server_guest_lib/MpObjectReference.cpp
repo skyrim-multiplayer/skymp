@@ -700,11 +700,15 @@ void MpObjectReference::RegisterProfileId(int32_t profileId)
 void MpObjectReference::Subscribe(MpObjectReference* emitter,
                                   MpObjectReference* listener)
 {
-  const bool emitterIsActor = !!dynamic_cast<MpActor*>(emitter);
-  const bool listenerIsActor = !!dynamic_cast<MpActor*>(listener);
-  if (!emitterIsActor && !listenerIsActor)
+  auto actorEmitter = dynamic_cast<MpActor*>(emitter);
+  auto actorListener = dynamic_cast<MpActor*>(listener);
+  if (!actorEmitter && !actorListener)
     return;
 
+  // I don't know how often Subscrbe is called but I suppose
+  // it is to be invoked quite frequently. In this case, each
+  // time if below is performed we are obtaining a copy of
+  // MpChangeForm which can be large. See what it consists of.
   if (!emitter->pImpl->onInitEventSent &&
       listener->GetChangeForm().profileId != -1) {
     emitter->pImpl->onInitEventSent = true;
@@ -716,6 +720,9 @@ void MpObjectReference::Subscribe(MpObjectReference* emitter,
   emitter->InitListenersAndEmitters();
   listener->InitListenersAndEmitters();
   emitter->listeners->insert(listener);
+  if (actorListener) {
+    emitter->actorListeners.insert(actorListener);
+  }
   listener->emitters->insert(emitter);
   if (!hasPrimitive)
     emitter->callbacks->subscribe(emitter, listener);
@@ -730,16 +737,21 @@ void MpObjectReference::Subscribe(MpObjectReference* emitter,
 void MpObjectReference::Unsubscribe(MpObjectReference* emitter,
                                     MpObjectReference* listener)
 {
-  bool bothNonActors =
-    !dynamic_cast<MpActor*>(emitter) && !dynamic_cast<MpActor*>(listener);
-  if (bothNonActors)
+  auto actorEmitter = dynamic_cast<MpActor*>(emitter);
+  auto actorListener = dynamic_cast<MpActor*>(listener);
+  bool bothNonActors = !actorEmitter && !actorListener;
+  if (bothNonActors) {
     return;
+  }
 
   const bool hasPrimitive = emitter->HasPrimitive();
 
   if (!hasPrimitive)
     emitter->callbacks->unsubscribe(emitter, listener);
   emitter->listeners->erase(listener);
+  if (actorListener) {
+    emitter->actorListeners.erase(actorListener);
+  }
   listener->emitters->erase(emitter);
 
   if (listener->emittersWithPrimitives && hasPrimitive) {
@@ -751,6 +763,11 @@ const std::set<MpObjectReference*>& MpObjectReference::GetListeners() const
 {
   static const std::set<MpObjectReference*> g_emptyListeners;
   return listeners ? *listeners : g_emptyListeners;
+}
+
+const std::set<MpActor*>& MpObjectReference::GetActorListeners() const noexcept
+{
+  return actorListeners;
 }
 
 const std::set<MpObjectReference*>& MpObjectReference::GetEmitters() const
@@ -1222,6 +1239,7 @@ void MpObjectReference::InitListenersAndEmitters()
   if (!listeners) {
     listeners.reset(new std::set<MpObjectReference*>);
     emitters.reset(new std::set<MpObjectReference*>);
+    actorListeners.clear();
   }
 }
 

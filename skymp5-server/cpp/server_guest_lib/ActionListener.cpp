@@ -48,13 +48,10 @@ MpActor* ActionListener::SendToNeighbours(
     }
   }
 
-  for (auto listener : actor->GetListeners()) {
-    auto listenerAsActor = dynamic_cast<MpActor*>(listener);
-    if (listenerAsActor) {
-      auto targetuserId = partOne.serverState.UserByActor(listenerAsActor);
-      if (targetuserId != Networking::InvalidUserId) {
-        partOne.GetSendTarget().Send(targetuserId, data, length, reliable);
-      }
+  for (auto listener : actor->GetActorListeners()) {
+    auto targetuserId = partOne.serverState.UserByActor(listener);
+    if (targetuserId != Networking::InvalidUserId) {
+      partOne.GetSendTarget().Send(targetuserId, data, length, reliable);
     }
   }
 
