@@ -73,6 +73,7 @@ private:
   std::shared_ptr<spdlog::logger> logger;
   nlohmann::json serverSettings;
   GamemodeApi::State gamemodeApiState;
+  Napi::Reference<Napi::Value> parsedServerSettings;
 
   std::shared_ptr<LocalizationProvider> localizationProvider;
 

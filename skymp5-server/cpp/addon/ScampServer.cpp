@@ -658,7 +658,11 @@ Napi::Value ScampServer::GetLocalizedString(const Napi::CallbackInfo& info)
 Napi::Value ScampServer::GetServerSettings(const Napi::CallbackInfo& info)
 {
   try {
-    return NapiHelper::ParseJson(info.Env(), serverSettings);
+    if (parsedServerSettings.IsEmpty()) {
+      parsedServerSettings =
+        Napi::Persistent(NapiHelper::ParseJson(info.Env(), serverSettings));
+    }
+    return parsedServerSettings.Value();
   } catch (std::exception& e) {
     throw Napi::Error::New(info.Env(), std::string(e.what()));
   }
