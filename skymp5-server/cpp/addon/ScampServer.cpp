@@ -272,10 +272,10 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
     partOne->worldState.AttachScriptStorage(scriptStorage);
 
     partOne->AttachEspm(espm);
-    this->serverSettings = serverSettings;
+    this->serverSettings = std::move(serverSettings);
     this->logger = logger;
 
-    auto reloot = serverSettings["reloot"];
+    auto reloot = this->serverSettings["reloot"];
     for (auto it = reloot.begin(); it != reloot.end(); ++it) {
       std::string recordType = it.key();
       auto timeMs = static_cast<uint64_t>(it.value());
@@ -658,7 +658,11 @@ Napi::Value ScampServer::GetLocalizedString(const Napi::CallbackInfo& info)
 Napi::Value ScampServer::GetServerSettings(const Napi::CallbackInfo& info)
 {
   try {
-    return NapiHelper::ParseJson(info.Env(), serverSettings);
+    if (parsedServerSettings.IsEmpty()) {
+      parsedServerSettings =
+        Napi::Persistent(NapiHelper::ParseJson(info.Env(), serverSettings));
+    }
+    return parsedServerSettings.Value();
   } catch (std::exception& e) {
     throw Napi::Error::New(info.Env(), std::string(e.what()));
   }
