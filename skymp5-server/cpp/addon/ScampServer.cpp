@@ -272,10 +272,10 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
     partOne->worldState.AttachScriptStorage(scriptStorage);
 
     partOne->AttachEspm(espm);
-    this->serverSettings = std::move(serverSettings);
+    this->serverSettings = serverSettings;
     this->logger = logger;
 
-    auto reloot = this->serverSettings["reloot"];
+    auto reloot = serverSettings["reloot"];
     for (auto it = reloot.begin(); it != reloot.end(); ++it) {
       std::string recordType = it.key();
       auto timeMs = static_cast<uint64_t>(it.value());
