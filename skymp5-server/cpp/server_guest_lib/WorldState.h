@@ -190,6 +190,7 @@ public:
   auto& GetGrids() { return grids; }
   void SetNpcSettings(
     std::unordered_map<std::string, NpcSettingsEntry>&& settings);
+  void SetForbiddenRelootTypes(const std::set<std::string>& types);
 
 public:
   std::vector<std::string> espmFiles;
@@ -220,6 +221,7 @@ private:
   [[nodiscard]] bool NpcSourceFilesOverriden() const noexcept;
   [[nodiscard]] bool IsNpcAllowed(uint32_t baseId) const noexcept;
   [[nodiscard]] uint32_t GetFileIdx(uint32_t baseId) const noexcept;
+  [[nodiscard]] bool IsRelootForbidden(std::string type) const noexcept;
 
 private:
   struct GridInfo
