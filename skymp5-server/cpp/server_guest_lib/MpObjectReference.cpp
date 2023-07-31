@@ -19,6 +19,7 @@
 #include "papyrus-vm/VirtualMachine.h"
 #include <map>
 #include <optional>
+#include "viet/include/StringUtils.h"
 
 constexpr uint32_t kPlayerCharacterLevel = 1;
 
@@ -697,6 +698,38 @@ void MpObjectReference::RegisterProfileId(int32_t profileId)
   }
 }
 
+void MpObjectReference::RegisterPrivateIndexedProperty(const std::string &propertyName, const std::string &propertyValueStringified) {
+  auto worldState = GetParent();
+  if (!worldState) {
+    throw std::runtime_error("Not attached to WorldState");
+  }
+
+  bool(*isNull)(const std::string &) = [](const std::string &s) {
+    return s == "null" || s == "undefined" || s == "" || s == "''" || s == "\"\"";
+  };
+
+  auto currentValueStringified = ChangeForm().dynamicFields.Get(propertyName).dump();
+  auto formId = GetFormId();
+  if (!isNull(currentValueStringified)) {
+    auto key = worldState->MakePrivateIndexedPropertyMapKey(propertyName, currentValueStringified);
+    worldState->actorIdByPrivateIndexedProperty[key].erase(formId);
+    spdlog::trace("MpObjectReference::RegisterPrivateIndexedProperty {:x} - unregister {}", formId, key);
+  }
+
+  EditChangeForm(
+    [&](MpChangeFormREFR& changeForm) { 
+      auto propertyValue = nlohmann::json::parse(propertyValueStringified);
+      changeForm.dynamicFields.Set(propertyName, propertyValue); 
+    }
+  );
+
+  if (!isNull(propertyValueStringified)) {
+    auto key = worldState->MakePrivateIndexedPropertyMapKey(propertyName, propertyValueStringified);
+    worldState->actorIdByPrivateIndexedProperty[key].insert(formId);
+    spdlog::trace("MpObjectReference::RegisterPrivateIndexedProperty {:x} - register {}", formId, key);
+  }
+}
+
 void MpObjectReference::Subscribe(MpObjectReference* emitter,
                                   MpObjectReference* listener)
 {
@@ -842,8 +875,15 @@ void MpObjectReference::ApplyChangeForm(const MpChangeForm& changeForm)
   SetCellOrWorldObsolete(changeForm.worldOrCellDesc);
   SetPos(changeForm.position);
 
-  if (changeForm.profileId >= 0)
+  if (changeForm.profileId >= 0) {
     RegisterProfileId(changeForm.profileId);
+  }
+
+  changeForm.dynamicFields.ForEach([&](const std::string &propertyName, const nlohmann::json &value) {
+    if (Viet::StartsWith(propertyName, GetPropertyPrefixPrivateIndexed())) {
+      RegisterPrivateIndexedProperty(propertyName, value.dump());
+    }
+  });
 
   // See https://github.com/skyrim-multiplayer/issue-tracker/issues/42
   EditChangeForm(

@@ -1,5 +1,6 @@
 #include "CustomPropertyBinding.h"
 #include "NapiHelper.h"
+#include "viet/include/StringUtils.h"
 
 namespace {
 auto EnsurePropertyExists(const GamemodeApi::State& state,
@@ -18,10 +19,8 @@ auto EnsurePropertyExists(const GamemodeApi::State& state,
 CustomPropertyBinding::CustomPropertyBinding(const std::string& propertyName_)
 {
   this->propertyName = propertyName_;
-
-  static const std::string kPrivatePrefix = "private.";
-  this->isPrivate =
-    this->propertyName.compare(0, kPrivatePrefix.size(), kPrivatePrefix) == 0;
+  this->isPrivate = Viet::StartsWith(propertyName_, MpObjectReference::GetPropertyPrefixPrivate());
+  this->isPrivateIndexed = Viet::StartsWith(propertyName_, MpObjectReference::GetPropertyPrefixPrivateIndexed());
 }
 
 std::string CustomPropertyBinding::GetPropertyName() const
@@ -60,6 +59,9 @@ void CustomPropertyBinding::Set(Napi::Env env, ScampServer& scampServer,
 
   if (isPrivate) {
     refr.SetProperty(propertyName, newValueJson, false, false);
+    if (isPrivateIndexed) {
+      refr.RegisterPrivateIndexedProperty(propertyName, newValueDump);
+    }
     return;
   }
   auto it = EnsurePropertyExists(state, propertyName);

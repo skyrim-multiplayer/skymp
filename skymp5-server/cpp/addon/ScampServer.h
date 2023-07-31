@@ -56,6 +56,8 @@ public:
   Napi::Value ClearPacketHistory(const Napi::CallbackInfo& info);
   Napi::Value RequestPacketHistoryPlayback(const Napi::CallbackInfo& info);
 
+  Napi::Value FindFormsByPropertyValue(const Napi::CallbackInfo& info);
+
   const std::shared_ptr<PartOne>& GetPartOne() const { return partOne; }
   const GamemodeApi::State& GetGamemodeApiState() const
   {

@@ -14,6 +14,7 @@
     "chokidar": "^3.5.3",
     "cmake-js": "^6.3.0",
     "crc-32": "^1.2.2",
+    "discord.js": "^14.11.0",
     "koa": "^2.13.4",
     "koa-proxy": "^1.0.0-alpha.3",
     "koa-router": "^10.1.1",

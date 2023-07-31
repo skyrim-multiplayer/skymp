@@ -27,6 +27,7 @@ import * as path from "path";
 import * as os from "os";
 
 import * as manifestGen from "./manifestGen";
+import { DiscordBanSystem } from "./systems/discordBanSystem";
 
 const {
   master,
@@ -107,7 +108,8 @@ const systems = new Array<System>();
 systems.push(
   new MasterClient(log, port, master, maxPlayers, name, ip, 5000, offlineMode),
   new Spawn(log),
-  new Login(log, maxPlayers, master, port, ip, offlineMode)
+  new Login(log, maxPlayers, master, port, ip, offlineMode),
+  new DiscordBanSystem()
 );
 
 const setupStreams = (server: scampNative.ScampServer) => {
