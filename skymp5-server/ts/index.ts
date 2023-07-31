@@ -1,5 +1,6 @@
 import * as ui from "./ui";
 
+// @ts-ignore
 import * as sourceMapSupport from "source-map-support";
 sourceMapSupport.install({
   retrieveSourceMap: function (source: string) {
@@ -28,6 +29,7 @@ import * as os from "os";
 
 import * as manifestGen from "./manifestGen";
 import { DiscordBanSystem } from "./systems/discordBanSystem";
+import { createScampServer } from "./scampNative";
 
 const {
   master,
@@ -87,6 +89,7 @@ function requireUncached(
 
         // In native module we now register mp-api methods into the ScampServer class
         // This workaround allows code that is bound to global 'mp' object to run
+        // @ts-ignore
         globalThis.mp = globalThis.mp || server;
 
         requireTemp(module);
@@ -118,6 +121,7 @@ const setupStreams = (server: scampNative.ScampServer) => {
     }
 
     write(chunk: Buffer, encoding: string, callback: () => void) {
+      // @ts-ignore
       const str = chunk.toString(encoding);
       if (str.trim().length > 0) {
         server.writeLogs(this.logLevel, str);
@@ -128,9 +132,11 @@ const setupStreams = (server: scampNative.ScampServer) => {
 
   const infoStream = new LogsStream('info');
   const errorStream = new LogsStream('error');
+  // @ts-ignore
   process.stdout.write = (chunk: Buffer, encoding: string, callback: () => void) => {
     infoStream.write(chunk, encoding, callback);
   };
+  // @ts-ignore
   process.stderr.write = (chunk: Buffer, encoding: string, callback: () => void) => {
     errorStream.write(chunk, encoding, callback);
   };
@@ -140,7 +146,7 @@ const main = async () => {
   manifestGen.generateManifest(Settings.get());
   ui.main();
 
-  const server = new scampNative.ScampServer(port, maxPlayers);
+  const server = createScampServer(port, maxPlayers);
   const ctx = { svr: server, gm: new EventEmitter() };
 
   setupStreams(server);
@@ -211,7 +217,7 @@ const main = async () => {
     }
   });
 
-  server.on("customPacket", (userId, content) => {
+  server.on("customPacket", (userId: number, content: string) => {
     // At this moment we don't have any custom packets
   });
 

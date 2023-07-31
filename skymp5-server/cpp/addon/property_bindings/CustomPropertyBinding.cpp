@@ -1,6 +1,5 @@
 #include "CustomPropertyBinding.h"
 #include "NapiHelper.h"
-#include "viet/include/StringUtils.h"
 
 namespace {
 auto EnsurePropertyExists(const GamemodeApi::State& state,
@@ -14,14 +13,20 @@ auto EnsurePropertyExists(const GamemodeApi::State& state,
   }
   return it;
 }
+
+bool StartsWith(const std::string& str, const char* prefix)
+{
+  return str.compare(0, strlen(prefix), prefix) == 0;
+}
+
 }
 
 CustomPropertyBinding::CustomPropertyBinding(const std::string& propertyName_)
 {
   this->propertyName = propertyName_;
-  this->isPrivate = Viet::StartsWith(
+  this->isPrivate = StartsWith(
     propertyName_, MpObjectReference::GetPropertyPrefixPrivate());
-  this->isPrivateIndexed = Viet::StartsWith(
+  this->isPrivateIndexed = StartsWith(
     propertyName_, MpObjectReference::GetPropertyPrefixPrivateIndexed());
 }
 

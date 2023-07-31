@@ -17,7 +17,6 @@
 #include "libespm/Utils.h"
 #include "papyrus-vm/Reader.h"
 #include "papyrus-vm/VirtualMachine.h"
-#include "viet/include/StringUtils.h"
 #include <map>
 #include <optional>
 
@@ -889,7 +888,9 @@ void MpObjectReference::ApplyChangeForm(const MpChangeForm& changeForm)
 
   changeForm.dynamicFields.ForEach(
     [&](const std::string& propertyName, const nlohmann::json& value) {
-      if (Viet::StartsWith(propertyName, GetPropertyPrefixPrivateIndexed())) {
+      static const std::string kPrefix = GetPropertyPrefixPrivateIndexed();
+      bool startsWith = propertyName.compare(0, kPrefix.size(), kPrefix) == 0;
+      if (startsWith) {
         RegisterPrivateIndexedProperty(propertyName, value.dump());
       }
     });

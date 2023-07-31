@@ -15,17 +15,27 @@ export class DiscordBanSystem implements System {
 
         if (discordAuth && !discordAuth.botToken) {
             discordAuth = undefined;
-            console.error("discordAuth.botToken is missing, skipping Discord server integration");
+            return console.error("discordAuth.botToken is missing, skipping Discord ban system");
         }
         if (discordAuth && !discordAuth.guildId) {
             discordAuth = undefined;
-            console.error("discordAuth.guildId is missing, skipping Discord server integration");
+            return console.error("discordAuth.guildId is missing, skipping Discord ban system");
         }
+        if (discordAuth && !discordAuth.banRoleId) {
+            discordAuth = undefined;
+            return console.error("discordAuth.banRoleId is missing, skipping Discord ban system");
+        } 
 
-        const client = new Client({ intents: [GatewayIntentBits.Guilds] });
-        const loginResult = await client.login(discordAuth.botToken);
+        const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers] });
+        await client.login(discordAuth.botToken);
 
-        console.log(`discord.js login returned ${loginResult}`);
+        client.on("error", (error) => {
+            console.error(error);
+        });
+
+        client.on("warn", (message) => {
+            console.warn(message);
+        })
 
         client.on("guildMemberUpdate", (oldMember, newMember) => {
             // Not sure if it is possible, but better to protect
@@ -43,6 +53,10 @@ export class DiscordBanSystem implements System {
             if (!newRole) {
                 // guildMemberUpdate is also fired on nickname update, role removal, etc
                 return;
+            }
+
+            if ([newRole.id].indexOf(discordAuth.banRoleId) === -1) {
+                return console.log("Detected role add, but not a ban");
             }
 
             const discordId = newMember.id;

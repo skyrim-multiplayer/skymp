@@ -20,7 +20,6 @@
 #include "formulas/TES5DamageFormula.h"
 #include "libespm/IterateFields.h"
 #include "property_bindings/PropertyBindingFactory.h"
-#include "viet/include/StringUtils.h"
 #include <cassert>
 #include <cctype>
 #include <memory>
@@ -58,6 +57,11 @@ std::string GetPropertyAlphabet()
   }
   alphabet += '_';
   return alphabet;
+}
+
+bool StartsWith(const std::string& str, const char* prefix)
+{
+  return str.compare(0, strlen(prefix), prefix) == 0;
 }
 
 }
@@ -1123,9 +1127,9 @@ Napi::Value ScampServer::FindFormsByPropertyValue(
 {
   try {
     auto propertyName = NapiHelper::ExtractString(info[0], "propertyName");
-    auto propertyValue = NapiHelper::ExtractObject(info[1], "propertyValue");
+    auto propertyValue = info[1];
 
-    if (!Viet::StartsWith(
+    if (!StartsWith(
           propertyName,
           MpObjectReference::GetPropertyPrefixPrivateIndexed())) {
       spdlog::error("FindFormsByPropertyValue - Attempt to search for "
