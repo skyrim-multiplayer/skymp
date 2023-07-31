@@ -176,6 +176,11 @@ public:
   IScriptStorage* GetScriptStorage() const;
   VirtualMachine& GetPapyrusVm();
   const std::set<uint32_t>& GetActorsByProfileId(int32_t profileId) const;
+  const std::set<uint32_t>& GetActorsByPrivateIndexedProperty(
+    const std::string& privateIndexedPropertyMapKey) const;
+  std::string MakePrivateIndexedPropertyMapKey(
+    const std::string& propertyName,
+    const std::string& propertyValueStringified);
   uint32_t GenerateFormId();
   void SetRelootTime(std::string recordType,
                      std::chrono::system_clock::duration dur);
@@ -189,6 +194,8 @@ public:
 public:
   std::vector<std::string> espmFiles;
   std::unordered_map<int32_t, std::set<uint32_t>> actorIdByProfileId;
+  std::unordered_map<std::string, std::set<uint32_t>>
+    actorIdByPrivateIndexedProperty;
   std::shared_ptr<spdlog::logger> logger;
   std::vector<std::shared_ptr<PartOneListener>> listeners;
   std::map<uint32_t, uint32_t> hosters;

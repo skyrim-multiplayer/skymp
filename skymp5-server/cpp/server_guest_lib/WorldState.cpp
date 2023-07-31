@@ -333,7 +333,7 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
   uint32_t worldOrCell =
     espm::utils::GetMappedId(GetWorldOrCell(br, record), mapping);
   if (!worldOrCell) {
-    logger->error("Anomally: refr without world/cell");
+    logger->error("Anomaly: refr without world/cell");
     return false;
   }
 
@@ -723,6 +723,24 @@ const std::set<uint32_t>& WorldState::GetActorsByProfileId(
     return kEmptySet;
   }
   return it->second;
+}
+
+const std::set<uint32_t>& WorldState::GetActorsByPrivateIndexedProperty(
+  const std::string& privateIndexedPropertyMapKey) const
+{
+  static const std::set<uint32_t> kEmptySet;
+
+  auto it = actorIdByPrivateIndexedProperty.find(privateIndexedPropertyMapKey);
+  if (it == actorIdByPrivateIndexedProperty.end()) {
+    return kEmptySet;
+  }
+  return it->second;
+}
+
+std::string WorldState::MakePrivateIndexedPropertyMapKey(
+  const std::string& propertyName, const std::string& propertyValueStringified)
+{
+  return propertyName + '=' + propertyValueStringified;
 }
 
 uint32_t WorldState::GenerateFormId()

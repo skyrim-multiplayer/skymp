@@ -128,6 +128,9 @@ public:
   void RemoveAllItems(MpObjectReference* target = nullptr);
   void RelootContainer();
   void RegisterProfileId(int32_t profileId);
+  void RegisterPrivateIndexedProperty(
+    const std::string& propertyName,
+    const std::string& propertyValueStringified);
 
   static void Subscribe(MpObjectReference* emitter,
                         MpObjectReference* listener);
@@ -157,6 +160,12 @@ public:
 
   void SendInventoryUpdate();
   const std::set<MpActor*>& GetActorListeners() const noexcept;
+
+  static const char* GetPropertyPrefixPrivate() noexcept { return "private."; }
+  static const char* GetPropertyPrefixPrivateIndexed() noexcept
+  {
+    return "private.indexed.";
+  }
 
 protected:
   void SendPapyrusEvent(const char* eventName,

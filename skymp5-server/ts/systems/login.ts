@@ -117,7 +117,7 @@ export class Login implements System {
           }
           roles = response.data.roles;
         }
-        ctx.gm.emit("spawnAllowed", userId, profile.id, roles);
+        ctx.gm.emit("spawnAllowed", userId, profile.id, roles, profile.discordId);
         this.log("Logged as " + profile.id);
       })()
         .catch((err) => console.error("Error logging in client:", JSON.stringify(gameData), err));

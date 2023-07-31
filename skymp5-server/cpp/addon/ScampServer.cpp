@@ -59,6 +59,11 @@ std::string GetPropertyAlphabet()
   return alphabet;
 }
 
+bool StartsWith(const std::string& str, const char* prefix)
+{
+  return str.compare(0, strlen(prefix), prefix) == 0;
+}
+
 }
 
 Napi::FunctionReference ScampServer::constructor;
@@ -107,7 +112,9 @@ Napi::Object ScampServer::Init(Napi::Env env, Napi::Object exports)
       InstanceMethod("getPacketHistory", &ScampServer::GetPacketHistory),
       InstanceMethod("clearPacketHistory", &ScampServer::ClearPacketHistory),
       InstanceMethod("requestPacketHistoryPlayback",
-                     &ScampServer::RequestPacketHistoryPlayback) });
+                     &ScampServer::RequestPacketHistoryPlayback),
+      InstanceMethod("findFormsByPropertyValue",
+                     &ScampServer::FindFormsByPropertyValue) });
   constructor = Napi::Persistent(func);
   constructor.SuppressDestruct();
   exports.Set("ScampServer", func);
@@ -1110,6 +1117,40 @@ Napi::Value ScampServer::RequestPacketHistoryPlayback(
 
     partOne->RequestPacketHistoryPlayback(userId, history);
     return info.Env().Undefined();
+  } catch (std::exception& e) {
+    throw Napi::Error::New(info.Env(), std::string(e.what()));
+  }
+}
+
+Napi::Value ScampServer::FindFormsByPropertyValue(
+  const Napi::CallbackInfo& info)
+{
+  try {
+    auto propertyName = NapiHelper::ExtractString(info[0], "propertyName");
+    auto propertyValue = info[1];
+
+    if (!StartsWith(propertyName,
+                    MpObjectReference::GetPropertyPrefixPrivateIndexed())) {
+      spdlog::error("FindFormsByPropertyValue - Attempt to search for "
+                    "non-indexed property '{}'",
+                    propertyName);
+    }
+
+    auto propertyValueStringified =
+      NapiHelper::Stringify(info.Env(), propertyValue);
+
+    auto mapKey = partOne->worldState.MakePrivateIndexedPropertyMapKey(
+      propertyName, propertyValueStringified);
+
+    auto& formIds =
+      partOne->worldState.GetActorsByPrivateIndexedProperty(mapKey);
+    auto result = Napi::Array::New(info.Env(), formIds.size());
+    uint32_t i = 0;
+    for (auto formId : formIds) {
+      result.Set(i, Napi::Number::New(info.Env(), formId));
+      ++i;
+    }
+    return result;
   } catch (std::exception& e) {
     throw Napi::Error::New(info.Env(), std::string(e.what()));
   }
