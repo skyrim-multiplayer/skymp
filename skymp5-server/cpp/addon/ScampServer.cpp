@@ -1129,9 +1129,8 @@ Napi::Value ScampServer::FindFormsByPropertyValue(
     auto propertyName = NapiHelper::ExtractString(info[0], "propertyName");
     auto propertyValue = info[1];
 
-    if (!StartsWith(
-          propertyName,
-          MpObjectReference::GetPropertyPrefixPrivateIndexed())) {
+    if (!StartsWith(propertyName,
+                    MpObjectReference::GetPropertyPrefixPrivateIndexed())) {
       spdlog::error("FindFormsByPropertyValue - Attempt to search for "
                     "non-indexed property '{}'",
                     propertyName);

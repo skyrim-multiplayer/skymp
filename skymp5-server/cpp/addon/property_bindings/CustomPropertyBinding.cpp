@@ -24,8 +24,8 @@ bool StartsWith(const std::string& str, const char* prefix)
 CustomPropertyBinding::CustomPropertyBinding(const std::string& propertyName_)
 {
   this->propertyName = propertyName_;
-  this->isPrivate = StartsWith(
-    propertyName_, MpObjectReference::GetPropertyPrefixPrivate());
+  this->isPrivate =
+    StartsWith(propertyName_, MpObjectReference::GetPropertyPrefixPrivate());
   this->isPrivateIndexed = StartsWith(
     propertyName_, MpObjectReference::GetPropertyPrefixPrivateIndexed());
 }
