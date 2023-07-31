@@ -19,8 +19,10 @@ auto EnsurePropertyExists(const GamemodeApi::State& state,
 CustomPropertyBinding::CustomPropertyBinding(const std::string& propertyName_)
 {
   this->propertyName = propertyName_;
-  this->isPrivate = Viet::StartsWith(propertyName_, MpObjectReference::GetPropertyPrefixPrivate());
-  this->isPrivateIndexed = Viet::StartsWith(propertyName_, MpObjectReference::GetPropertyPrefixPrivateIndexed());
+  this->isPrivate = Viet::StartsWith(
+    propertyName_, MpObjectReference::GetPropertyPrefixPrivate());
+  this->isPrivateIndexed = Viet::StartsWith(
+    propertyName_, MpObjectReference::GetPropertyPrefixPrivateIndexed());
 }
 
 std::string CustomPropertyBinding::GetPropertyName() const

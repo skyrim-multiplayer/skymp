@@ -725,7 +725,8 @@ const std::set<uint32_t>& WorldState::GetActorsByProfileId(
   return it->second;
 }
 
-const std::set<uint32_t>& WorldState::GetActorsByPrivateIndexedProperty(const std::string &privateIndexedPropertyMapKey) const
+const std::set<uint32_t>& WorldState::GetActorsByPrivateIndexedProperty(
+  const std::string& privateIndexedPropertyMapKey) const
 {
   static const std::set<uint32_t> kEmptySet;
 
@@ -736,7 +737,9 @@ const std::set<uint32_t>& WorldState::GetActorsByPrivateIndexedProperty(const st
   return it->second;
 }
 
-std::string WorldState::MakePrivateIndexedPropertyMapKey(const std::string &propertyName, const std::string &propertyValueStringified) {
+std::string WorldState::MakePrivateIndexedPropertyMapKey(
+  const std::string& propertyName, const std::string& propertyValueStringified)
+{
   return propertyName + '=' + propertyValueStringified;
 }
 

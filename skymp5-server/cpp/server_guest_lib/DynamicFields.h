@@ -15,7 +15,8 @@ public:
   static DynamicFields FromJson(const nlohmann::json& j);
 
   template <class F>
-  void ForEach(const F &f) const {
+  void ForEach(const F& f) const
+  {
     for (auto [propName, value] : props) {
       f(propName, value);
     }
