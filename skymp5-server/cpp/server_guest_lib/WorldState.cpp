@@ -401,7 +401,7 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
 
   } else {
     if (!locationalData) {
-      logger->error("Anomally: refr without locationalData");
+      logger->error("Anomaly: refr without locationalData");
       return false;
     }
 
