@@ -284,6 +284,12 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
       logger->info("'{}' will be relooted every {} ms", recordType, timeMs);
     }
 
+    auto it = serverSettings.find("forbiddenReloot");
+    if (it != serverSettings.end() && (*it).is_array()) {
+      partOne->worldState.SetForbiddenRelootTypes(
+        (*it).get<std::set<std::string>>());
+    }
+
     auto res =
       NapiHelper::RunScript(Env(),
                             "let require = global.require || "

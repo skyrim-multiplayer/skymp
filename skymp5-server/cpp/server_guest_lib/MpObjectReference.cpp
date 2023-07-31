@@ -762,6 +762,10 @@ const std::set<MpObjectReference*>& MpObjectReference::GetEmitters() const
 void MpObjectReference::RequestReloot(
   std::optional<std::chrono::system_clock::duration> time)
 {
+  if (GetParent()->IsRelootForbidden(baseType)) {
+    return;
+  }
+
   if (!time)
     time = GetRelootTime();
 

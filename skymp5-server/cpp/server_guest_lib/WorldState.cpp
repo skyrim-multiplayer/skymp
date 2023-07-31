@@ -56,6 +56,7 @@ struct WorldState::Impl
   bool formLoadingInProgress = false;
   std::map<std::string, std::chrono::system_clock::duration>
     relootTimeForTypes;
+  std::set<std::string> forbiddenRelootTypes;
   std::vector<std::unique_ptr<IPapyrusClassBase>> classes;
 };
 
@@ -788,4 +789,15 @@ bool WorldState::RemoveTimer(
   const std::chrono::system_clock::time_point& endTime)
 {
   return timer.RemoveTimer(endTime);
+}
+
+void WorldState::SetForbiddenRelootTypes(const std::set<std::string>& types)
+{
+  pImpl->forbiddenRelootTypes = types;
+}
+
+bool WorldState::IsRelootForbidden(std::string type) const noexcept
+{
+  return pImpl->forbiddenRelootTypes.find(type) !=
+    pImpl->forbiddenRelootTypes.end();
 }
