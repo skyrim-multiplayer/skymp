@@ -156,6 +156,7 @@ public:
   void VisitNeighbours(const Visitor& visitor);
 
   void SendInventoryUpdate();
+  const std::set<MpActor*>& GetActorListeners() const noexcept;
 
 protected:
   void SendPapyrusEvent(const char* eventName,
@@ -184,6 +185,7 @@ private:
 
   bool everSubscribedOrListened = false;
   std::unique_ptr<std::set<MpObjectReference*>> listeners;
+  std::set<MpActor*> actorListeners;
 
   // Should be empty for non-actor refs
   std::unique_ptr<std::set<MpObjectReference*>> emitters;
