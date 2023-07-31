@@ -294,8 +294,15 @@ void MpObjectReference::Activate(MpObjectReference& activationSource,
   bool activationBlockedByMpApi = MpApiOnActivate(activationSource);
 
   if (!activationBlockedByMpApi &&
-      (!activationBlocked || defaultProcessingOnly))
+      (!activationBlocked || defaultProcessingOnly)) {
     ProcessActivate(activationSource);
+  } else {
+    spdlog::trace(
+      "Activation of form {:#x} has been blocked. Reasons: "
+      "blocked by MpApi={}, form is blocked={}, defaultProcessingOnly={}",
+      GetFormId(), activationBlockedByMpApi, activationBlocked,
+      defaultProcessingOnly);
+  }
 
   if (!defaultProcessingOnly) {
     auto arg = activationSource.ToVarValue();
