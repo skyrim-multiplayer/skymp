@@ -241,7 +241,7 @@ void MpActor::ApplyChangeForm(const MpChangeForm& newChangeForm)
       // game files since new update
       // this check is added only for test as a workaround. It is to be redone
       // in the nearest future. TODO
-      if (!GetParent()->espmFiles.empty()) {
+      if (GetParent()->HasEspm()) {
         changeForm.actorValues =
           GetBaseActorValues(GetParent(), GetBaseId(), GetRaceId());
       }
