@@ -239,8 +239,12 @@ void MpActor::ApplyChangeForm(const MpChangeForm& newChangeForm)
       }
       // ActorValues does not refelect real base actor values set in esp/esm
       // game files since new update
-      changeForm.actorValues =
-        GetBaseActorValues(GetParent(), GetBaseId(), GetRaceId());
+      // this check is added only for test as a workaround. It is to be redone
+      // in the nearest future. TODO
+      if (!GetParent()->espmFiles.empty()) {
+        changeForm.actorValues =
+          GetBaseActorValues(GetParent(), GetBaseId(), GetRaceId());
+      }
     },
     Mode::NoRequestSave);
   ReapplyMagicEffects();
