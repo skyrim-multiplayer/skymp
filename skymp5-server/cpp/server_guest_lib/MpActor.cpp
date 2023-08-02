@@ -229,13 +229,22 @@ void MpActor::ApplyChangeForm(const MpChangeForm& newChangeForm)
   }
   MpObjectReference::ApplyChangeForm(newChangeForm);
   EditChangeForm(
-    [&](MpChangeForm& cf) {
-      cf = static_cast<const MpChangeForm&>(newChangeForm);
+    [&](MpChangeForm& changeForm) {
+      changeForm = static_cast<const MpChangeForm&>(newChangeForm);
 
       // Actor without appearance would not be visible so we force player to
       // choose appearance
-      if (cf.appearanceDump.empty())
-        cf.isRaceMenuOpen = true;
+      if (changeForm.appearanceDump.empty()) {
+        changeForm.isRaceMenuOpen = true;
+      }
+      // ActorValues does not refelect real base actor values set in esp/esm
+      // game files since new update
+      // this check is added only for test as a workaround. It is to be redone
+      // in the nearest future. TODO
+      if (GetParent() && GetParent()->HasEspm()) {
+        changeForm.actorValues =
+          GetBaseActorValues(GetParent(), GetBaseId(), GetRaceId());
+      }
     },
     Mode::NoRequestSave);
   ReapplyMagicEffects();
@@ -848,6 +857,9 @@ void MpActor::ApplyMagicEffect(espm::Effects::Effect& effect, bool hasSweetpie,
           "Unknown espm::MGEF::EffectType: {}",
           static_cast<std::underlying_type_t<espm::MGEF::EffectType>>(type));
       }
+      spdlog::trace("Final multiplicator is {}", mult);
+      spdlog::trace("The result of baseValue * mult is: {}*{}={}", baseValue,
+                    mult, baseValue * mult);
       SetActorValue(av, baseValue * mult);
     }
     worldState->SetTimer(std::cref(endTime))
