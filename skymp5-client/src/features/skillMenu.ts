@@ -5,7 +5,7 @@ export const skillMenuInit = () => {
         const altars =
             [
                 0x00100780, 0x000D9883, 0x000D987B, 0x000D9881, 0x000D9887, 0x000FB997,
-                0x000D9885, 0x000D987D, 0x000071854
+                0x000D9885, 0x000D987D, 0x000071854, 0x07187500, 0x0200c86b, 0x000d987f
             ];
         if (!altars.includes(event.target.getBaseObject()?.getFormID() ||
             -1)) return;
