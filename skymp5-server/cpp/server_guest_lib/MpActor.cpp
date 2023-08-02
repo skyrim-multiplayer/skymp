@@ -238,7 +238,7 @@ void MpActor::ApplyChangeForm(const MpChangeForm& newChangeForm)
         changeForm.isRaceMenuOpen = true;
       }
       // ActorValues does not refelect real base actor values set in esp/esm
-      // game files, since new update
+      // game files since new update
       changeForm.actorValues =
         GetBaseActorValues(GetParent(), GetBaseId(), GetRaceId());
     },
