@@ -1,4 +1,5 @@
 #include "AnimationSystem.h"
+#include "ActiveMagicEffectsMap.h"
 #include "AnimationData.h"
 #include "MpActor.h"
 #include "libespm/espm.h"
