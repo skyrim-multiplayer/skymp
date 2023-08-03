@@ -16,7 +16,7 @@ import {
 import * as timers from "./extensions/timers"; timers;
 import { connectWhenICallAndNotWhenIImport, SkympClient } from "./skympClient";
 import * as browser from "./features/browser";
-import * as loadGameManager from "./features/loadGameManager";
+// import * as loadGameManager from "./features/loadGameManager";
 import { verifyVersion } from "./version";
 import { updateWc } from "./features/worldCleaner";
 import * as authSystem from "./features/authSystem";
@@ -27,6 +27,15 @@ import * as playerCombatSystem from "./sweetpie/playerCombatSystem";
 import { verifyLoadOrder } from './features/loadOrder';
 import * as expSystem from "./sync/expSystem";
 import * as skillSystem from "./features/skillMenu";
+
+import * as sp from "skyrimPlatform";
+
+import { BlockPapyrusEventsService } from './services/blockPapyrusEventsService';
+import { EnforceLimitationsService } from './services/enforceLimitationsService';
+import { LoadGameService } from './services/loadGameService';
+import { SendInputsService } from './services/sendInputsService';
+import { SinglePlayerService } from './services/singlePlayerService';
+import { SpApiInteractor } from './services/spApiInteractor';
 
 browser.main();
 
@@ -50,12 +59,12 @@ const turnOffSkillLocalExp = (av: ActorValue): void => {
   avi.setSkillOffsetMult(0);
 };
 
-const enforceLimitations = () => {
-  Game.setInChargen(true, true, false);
-};
+// const enforceLimitations = () => {
+//   Game.setInChargen(true, true, false);
+// };
 
-once("update", enforceLimitations);
-loadGameManager.addLoadGameListener(enforceLimitations);
+// once("update", enforceLimitations);
+// loadGameManager.addLoadGameListener(enforceLimitations);
 
 once("update", () => {
   Utility.setINIBool("bAlwaysActive:General", true);
@@ -97,14 +106,14 @@ on("update", () => updateWc());
 
 once("update", verifyLoadOrder);
 
-const startClient = (): void => {
+const startClient = (singlePlayerService: SinglePlayerService): void => {
   NetInfo.start();
   animDebugSystem.init(settings["skymp5-client"]["animDebug"] as animDebugSystem.AnimDebugSettings);
 
   playerCombatSystem.start();
   once("update", () => authSystem.setPlayerAuthMode(false));
   connectWhenICallAndNotWhenIImport();
-  new SkympClient();
+  new SkympClient(singlePlayerService);
 
   once("update", verifyVersion);
 
@@ -160,6 +169,32 @@ const startClient = (): void => {
   });
 }
 
+skillSystem.skillMenuInit();
+
+const main = () => {
+  try {
+    const controller = SpApiInteractor.makeController();
+
+    // TODO: refactor this variable out
+    const singlePlayerService = new SinglePlayerService(sp, controller);
+
+    SpApiInteractor.setup([
+      new BlockPapyrusEventsService(sp, controller),
+      new LoadGameService(sp, controller),
+      singlePlayerService,
+      new EnforceLimitationsService(sp, controller),
+      new SendInputsService(sp, controller)
+    ]);
+
+    return singlePlayerService;
+  }
+  catch (e) {
+    // TODO: handle setup failure. will output to game console by default
+    throw e;
+  }
+};
+const service = main();
+
 const authGameData = storage[AuthGameData.storageKey] as AuthGameData | undefined;
 if (!(authGameData?.local || authGameData?.remote)) {
   authSystem.addAuthListener((data) => {
@@ -168,12 +203,10 @@ if (!(authGameData?.local || authGameData?.remote)) {
     }
     storage[AuthGameData.storageKey] = data;
     spBrowser.setFocused(false);
-    startClient();
+    startClient(service);
   });
 
   authSystem.main(settings["skymp5-client"]["lobbyLocation"] as Transform);
 } else {
-  startClient();
+  startClient(service);
 }
-
-skillSystem.skillMenuInit();
