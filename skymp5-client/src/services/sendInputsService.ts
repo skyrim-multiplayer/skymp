@@ -74,7 +74,7 @@ export class SendInputsService implements ClientListener {
         const hosted =
             typeof this.sp.storage['hosted'] === typeof [] ? this.sp.storage['hosted'] : [];
         const targets = [undefined].concat(hosted as any);
-        //printConsole({ targets });
+        
         targets.forEach((target) => {
             this.sendMovement(target);
             this.sendAnimation(target);

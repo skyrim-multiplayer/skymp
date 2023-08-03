@@ -16,7 +16,6 @@ import {
 import * as timers from "./extensions/timers"; timers;
 import { connectWhenICallAndNotWhenIImport, SkympClient } from "./skympClient";
 import * as browser from "./features/browser";
-// import * as loadGameManager from "./features/loadGameManager";
 import { verifyVersion } from "./version";
 import { updateWc } from "./features/worldCleaner";
 import * as authSystem from "./features/authSystem";
@@ -58,13 +57,6 @@ const turnOffSkillLocalExp = (av: ActorValue): void => {
   avi.setSkillUseMult(0);
   avi.setSkillOffsetMult(0);
 };
-
-// const enforceLimitations = () => {
-//   Game.setInChargen(true, true, false);
-// };
-
-// once("update", enforceLimitations);
-// loadGameManager.addLoadGameListener(enforceLimitations);
 
 once("update", () => {
   Utility.setINIBool("bAlwaysActive:General", true);

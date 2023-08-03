@@ -141,12 +141,6 @@ export class SkympClient {
       );
     });
 
-    // on('update', () => {
-    //   if (!this.singlePlayer) {
-    //     this.sendInputs();
-    //   }
-    // });
-
     let lastInv: Inventory | undefined;
 
     once('update', () => {
