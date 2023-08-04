@@ -1,4 +1,4 @@
-import EventEmitter from "eventemitter3";
+import { EventEmitter } from "eventemitter3";
 import { ClientListener, CombinedController, Sp } from "./clientListener";
 import { ChangeFormNpc } from "skyrimPlatform";
 
