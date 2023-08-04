@@ -1,5 +1,6 @@
 import EventEmitter from "eventemitter3";
 import { ClientListener, CombinedController, Sp } from "./clientListener";
+import { ChangeFormNpc } from "skyrimPlatform";
 
 export interface GameLoadEvent {
     isCausedBySkyrimPlatform: boolean;
@@ -13,6 +14,11 @@ export class LoadGameService implements ClientListener {
 
     get events() {
         return this._emitter;
+    }
+
+    public loadGame(pos: number[], rot: number[], worldOrCell: number, changeFormNpc?: ChangeFormNpc) {
+        this.sp.loadGame(pos, rot, worldOrCell, changeFormNpc);
+        this._isCausedBySkyrimPlatform = true;
     }
 
     private onLoadGame() {
@@ -33,5 +39,5 @@ export class LoadGameService implements ClientListener {
     }
 
     private _isCausedBySkyrimPlatform = false;
-    private _emitter = new EventEmitter<"gameLoad", GameLoadEvent>;
+    private _emitter = new EventEmitter<"gameLoad", GameLoadEvent>();
 }
