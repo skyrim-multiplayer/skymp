@@ -166,10 +166,7 @@ skillSystem.skillMenuInit();
 const main = () => {
   try {
     const controller = SpApiInteractor.makeController();
-
-    // TODO: refactor this variable out
-    const singlePlayerService = new SinglePlayerService(sp, controller);
-
+    
     SpApiInteractor.setup([
       new BlockPapyrusEventsService(sp, controller),
       new LoadGameService(sp, controller),
