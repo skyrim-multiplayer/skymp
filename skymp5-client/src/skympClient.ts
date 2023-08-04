@@ -34,6 +34,7 @@ import {
 import { WorldView } from './view/worldView';
 import { localIdToRemoteId } from './view/worldViewMisc';
 import { SinglePlayerService } from './services/singlePlayerService';
+import { SpApiInteractor } from './services/spApiInteractor';
 
 interface AnyMessage {
   type?: string;
@@ -107,8 +108,7 @@ export const connectWhenICallAndNotWhenIImport = (): void => {
 export let gSkympClient: SkympClient | null = null;
 
 export class SkympClient {
-  constructor(singlePlayerService: SinglePlayerService) {
-    this.singlePlayerService = singlePlayerService;
+  constructor() {
     gSkympClient = this;
     this.resetView();
     this.resetRemoteServer();
@@ -408,7 +408,8 @@ export class SkympClient {
       storage.view = view;
     });
     on('update', () => {
-      if (!this.singlePlayerService.isSinglePlayer)
+      const singlePlayerService = SpApiInteractor.makeController().lookupListener("SinglePlayerService") as SinglePlayerService;
+      if (!singlePlayerService.isSinglePlayer)
         view.update((this.modelSource as ModelSource).getWorldModel());
     });
   }
@@ -428,6 +429,4 @@ export class SkympClient {
   private msgHandler: MsgHandler = undefined as unknown as MsgHandler;
   private modelSource?: ModelSource;
   private sendTarget: SendTarget = undefined as unknown as SendTarget;
-
-  private singlePlayerService: SinglePlayerService;
 }

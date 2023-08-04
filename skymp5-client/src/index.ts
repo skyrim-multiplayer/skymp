@@ -98,14 +98,14 @@ on("update", () => updateWc());
 
 once("update", verifyLoadOrder);
 
-const startClient = (singlePlayerService: SinglePlayerService): void => {
+const startClient = (): void => {
   NetInfo.start();
   animDebugSystem.init(settings["skymp5-client"]["animDebug"] as animDebugSystem.AnimDebugSettings);
 
   playerCombatSystem.start();
   once("update", () => authSystem.setPlayerAuthMode(false));
   connectWhenICallAndNotWhenIImport();
-  new SkympClient(singlePlayerService);
+  new SkympClient();
 
   once("update", verifyVersion);
 
@@ -173,19 +173,17 @@ const main = () => {
     SpApiInteractor.setup([
       new BlockPapyrusEventsService(sp, controller),
       new LoadGameService(sp, controller),
-      singlePlayerService,
+      new SinglePlayerService(sp, controller),
       new EnforceLimitationsService(sp, controller),
       new SendInputsService(sp, controller)
     ]);
-
-    return singlePlayerService;
   }
   catch (e) {
     // TODO: handle setup failure. will output to game console by default
     throw e;
   }
 };
-const service = main();
+main();
 
 const authGameData = storage[AuthGameData.storageKey] as AuthGameData | undefined;
 if (!(authGameData?.local || authGameData?.remote)) {
@@ -195,10 +193,10 @@ if (!(authGameData?.local || authGameData?.remote)) {
     }
     storage[AuthGameData.storageKey] = data;
     spBrowser.setFocused(false);
-    startClient(service);
+    startClient();
   });
 
   authSystem.main(settings["skymp5-client"]["lobbyLocation"] as Transform);
 } else {
-  startClient(service);
+  startClient();
 }
