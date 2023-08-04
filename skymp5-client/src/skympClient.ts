@@ -23,6 +23,7 @@ import { RemoteServer, getPcInventory } from './modelSource/remoteServer';
 import { SendTarget } from './modelSource/sendTarget';
 import { setupHooks } from './sync/animation';
 import { getHitData } from './sync/hit';
+import * as animDebugSystem from './debug/animDebugSystem';
 import {
   Inventory,
   getDiff,
@@ -35,11 +36,19 @@ import { WorldView } from './view/worldView';
 import { localIdToRemoteId } from './view/worldViewMisc';
 import { SinglePlayerService } from './services/singlePlayerService';
 import { SpApiInteractor } from './services/spApiInteractor';
+import { verifyVersion } from './version';
+import * as authSystem from "./features/authSystem";
+import * as playerCombatSystem from "./sweetpie/playerCombatSystem";
+import { AuthGameData } from './features/authModel';
+import { Transform } from './sync/movement';
+import * as browser from "./features/browser";
+import { CombinedController, Sp } from './services/clientListener';
 
 interface AnyMessage {
   type?: string;
   t?: number;
 }
+
 const handleMessage = (msgAny: AnyMessage, handler_: MsgHandler) => {
   const msgType: string = msgAny.type || (MsgType as any)[msgAny.t as any];
   const handler = handler_ as unknown as Record<
@@ -79,7 +88,7 @@ const handleMessage = (msgAny: AnyMessage, handler_: MsgHandler) => {
   if (f && typeof f === 'function') handler[msgType](msgAny);
 };
 
-printConsole('Hello Multiplayer');
+printConsole('Hello Multiplayer!');
 printConsole('settings:', settings['skymp5-client']);
 
 const targetIp = settings['skymp5-client']['server-ip'] as string;
@@ -105,11 +114,93 @@ export const connectWhenICallAndNotWhenIImport = (): void => {
   }
 };
 
-export let gSkympClient: SkympClient | null = null;
-
 export class SkympClient {
-  constructor() {
-    gSkympClient = this;
+  constructor(private sp: Sp, private controller: CombinedController) {
+    controller.registerListenerForLookup("SkympClient", this);
+
+    const authGameData = storage[AuthGameData.storageKey] as AuthGameData | undefined;
+    if (!(authGameData?.local || authGameData?.remote)) {
+      authSystem.addAuthListener((data) => {
+        if (data.remote) {
+          browser.setAuthData(data.remote);
+        }
+        storage[AuthGameData.storageKey] = data;
+        this.sp.browser.setFocused(false);
+        this.startClient();
+      });
+
+      authSystem.main(settings["skymp5-client"]["lobbyLocation"] as Transform);
+    } else {
+      this.startClient();
+    }
+  }
+
+  private startClient() {
+    // TODO: subscribe to events in constructor, not here
+    netInfo.start();
+    animDebugSystem.init(settings["skymp5-client"]["animDebug"] as animDebugSystem.AnimDebugSettings);
+
+    playerCombatSystem.start();
+    once("update", () => authSystem.setPlayerAuthMode(false));
+    connectWhenICallAndNotWhenIImport();
+    this.ctor();
+
+    once("update", verifyVersion);
+
+    let lastTimeUpd = 0;
+    const hoursOffset = -3;
+    const hoursOffsetMs = hoursOffset * 60 * 60 * 1000;
+    on("update", () => {
+      if (Date.now() - lastTimeUpd <= 2000) return;
+      lastTimeUpd = Date.now();
+
+      const gameHourId = 0x38;
+      const gameMonthId = 0x36;
+      const gameDayId = 0x37;
+      const gameYearId = 0x35;
+      const timeScaleId = 0x3a;
+
+      const gameHour = sp.GlobalVariable.from(Game.getFormEx(gameHourId));
+      const gameDay = sp.GlobalVariable.from(Game.getFormEx(gameDayId));
+      const gameMonth = sp.GlobalVariable.from(Game.getFormEx(gameMonthId));
+      const gameYear = sp.GlobalVariable.from(Game.getFormEx(gameYearId));
+      const timeScale = sp.GlobalVariable.from(Game.getFormEx(timeScaleId));
+      if (!gameHour || !gameDay || !gameMonth || !gameYear || !timeScale) {
+        return;
+      }
+
+      const d = new Date(Date.now() + hoursOffsetMs);
+
+      let newGameHourValue = 0;
+      newGameHourValue += d.getUTCHours();
+      newGameHourValue += d.getUTCMinutes() / 60;
+      newGameHourValue += d.getUTCSeconds() / 60 / 60;
+      newGameHourValue += d.getUTCMilliseconds() / 60 / 60 / 1000;
+
+      const diff = Math.abs(gameHour.getValue() - newGameHourValue);
+
+      if (diff >= 1 / 60) {
+        gameHour.setValue(newGameHourValue);
+        gameDay.setValue(d.getUTCDate());
+        gameMonth.setValue(d.getUTCMonth());
+        gameYear.setValue(d.getUTCFullYear() - 2020 + 199);
+      }
+
+      timeScale.setValue(gameHour.getValue() > newGameHourValue ? 0.6 : 1.2);
+    });
+
+    let riftenUnlocked = false;
+    on("update", () => {
+      if (riftenUnlocked) return;
+      const refr = ObjectReference.from(Game.getFormEx(0x42284));
+      if (!refr) return;
+      refr.lock(false, false);
+      riftenUnlocked = true;
+    });
+  }
+
+  private ctor() {
+    // TODO: subscribe to events in constructor, not here
     this.resetView();
     this.resetRemoteServer();
     setupHooks();
@@ -408,7 +499,7 @@ export class SkympClient {
       storage.view = view;
     });
     on('update', () => {
-      const singlePlayerService = SpApiInteractor.makeController().lookupListener("SinglePlayerService") as SinglePlayerService;
+      const singlePlayerService = this.controller.lookupListener("SinglePlayerService") as SinglePlayerService;
       if (!singlePlayerService.isSinglePlayer)
         view.update((this.modelSource as ModelSource).getWorldModel());
     });

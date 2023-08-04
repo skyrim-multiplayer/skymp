@@ -220,6 +220,7 @@ const loadLobby = (location: Transform): void => {
     checkLoginState();
   });
 
+  // TODO: this.controller instead of SpApiInteractor.makeController()
   const loadGameService = SpApiInteractor.makeController().lookupListener("LoadGameService") as LoadGameService;
   loadGameService.loadGame(
     location.pos,

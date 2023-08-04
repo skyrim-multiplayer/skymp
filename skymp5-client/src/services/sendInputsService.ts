@@ -7,7 +7,6 @@ import { getMovement } from "../sync/movementGet";
 
 // TODO: refactor this out
 import * as worldViewMisc from "../view/worldViewMisc";
-import { SkympClient, gSkympClient } from "../skympClient";
 
 import { Animation, AnimationSource } from "../sync/animation";
 import { Actor, EquipEvent } from "skyrimPlatform";
@@ -15,6 +14,7 @@ import { getAppearance } from "../sync/appearance";
 import { ActorValues, getActorValues } from "../sync/actorvalues";
 import { getEquipment } from "../sync/equipment";
 import { nextHostAttempt } from "../view/hostAttempts";
+import { SkympClient } from "../skympClient";
 
 const playerFormId = 0x14;
 
@@ -34,11 +34,7 @@ export class SendInputsService implements ClientListener {
     }
 
     private onEquip(event: EquipEvent) {
-        let skympClient = gSkympClient;
-        if (!skympClient) {
-            this.sp.printConsole("skympClient is null");
-            return;
-        }
+        const skympClient = this.controller.lookupListener("SkympClient") as SkympClient;
 
         if (!event.actor || !event.baseObj) {
             return;
@@ -89,11 +85,7 @@ export class SendInputsService implements ClientListener {
     }
 
     private sendMovement(_refrId?: number) {
-        let skympClient = gSkympClient;
-        if (!skympClient) {
-            this.sp.printConsole("skympClient is null");
-            return;
-        }
+        const skympClient = this.controller.lookupListener("SkympClient") as SkympClient;
 
         const owner = this.getInputOwner(_refrId);
         if (!owner) return;
@@ -116,11 +108,7 @@ export class SendInputsService implements ClientListener {
     }
 
     private sendActorValuePercentage(_refrId?: number, form?: FormModel) {
-        let skympClient = gSkympClient;
-        if (!skympClient) {
-            this.sp.printConsole("skympClient is null");
-            return;
-        }
+        const skympClient = this.controller.lookupListener("SkympClient") as SkympClient;
 
         const canSend = form && (form.isDead ?? false) === false;
         if (!canSend) return;
@@ -155,11 +143,7 @@ export class SendInputsService implements ClientListener {
     }
 
     private sendAnimation(_refrId?: number) {
-        let skympClient = gSkympClient;
-        if (!skympClient) {
-            this.sp.printConsole("skympClient is null");
-            return;
-        }
+        const skympClient = this.controller.lookupListener("SkympClient") as SkympClient;
 
         const owner = this.getInputOwner(_refrId);
         if (!owner) return;
@@ -191,11 +175,7 @@ export class SendInputsService implements ClientListener {
     }
 
     private sendAppearance(_refrId?: number) {
-        let skympClient = gSkympClient;
-        if (!skympClient) {
-            this.sp.printConsole("skympClient is null");
-            return;
-        }
+        const skympClient = this.controller.lookupListener("SkympClient") as SkympClient;
 
         if (_refrId) return;
         const shown = this.sp.Ui.isMenuOpen('RaceSex Menu');
@@ -214,11 +194,7 @@ export class SendInputsService implements ClientListener {
     }
 
     private sendEquipment(_refrId?: number) {
-        let skympClient = gSkympClient;
-        if (!skympClient) {
-            this.sp.printConsole("skympClient is null");
-            return;
-        }
+        const skympClient = this.controller.lookupListener("SkympClient") as SkympClient;
 
         if (_refrId) return;
         if (this.equipmentChanged) {
@@ -238,11 +214,7 @@ export class SendInputsService implements ClientListener {
     }
 
     private sendHostAttempts() {
-        let skympClient = gSkympClient;
-        if (!skympClient) {
-            this.sp.printConsole("skympClient is null");
-            return;
-        }
+        const skympClient = this.controller.lookupListener("SkympClient") as SkympClient;
 
         const remoteId = nextHostAttempt();
         if (!remoteId) return;
@@ -257,11 +229,7 @@ export class SendInputsService implements ClientListener {
     }
 
     private getForm(refrId?: number): FormModel | undefined {
-        let skympClient = gSkympClient;
-        if (!skympClient) {
-            this.sp.printConsole("skympClient is null");
-            return undefined;
-        }
+        const skympClient = this.controller.lookupListener("SkympClient") as SkympClient;
 
         const world = (skympClient.getModelSource() as ModelSource).getWorldModel();
         const form = refrId
