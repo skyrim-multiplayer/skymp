@@ -3,8 +3,6 @@ import {
   Actor,
   Game,
   ObjectReference,
-  Ui,
-  Utility,
   on,
   once,
   printConsole,
@@ -13,23 +11,19 @@ import {
 } from 'skyrimPlatform';
 
 import * as netInfo from './debug/netInfoSystem';
-import * as loadGameManager from './features/loadGameManager';
 import * as updateOwner from './gamemodeApi/updateOwner';
 import * as networking from './networking';
 import * as taffyPerkSystem from './sweetpie/taffyPerkSystem';
 import * as deathSystem from './sync/deathSystem';
 import { setUpConsoleCommands } from './features/console';
 import { HostStartMessage, HostStopMessage, MsgType } from './messages';
-import { FormModel } from './modelSource/model';
 import { ModelSource } from './modelSource/modelSource';
 import { MsgHandler } from './modelSource/msgHandler';
 import { RemoteServer, getPcInventory } from './modelSource/remoteServer';
 import { SendTarget } from './modelSource/sendTarget';
-import { ActorValues, getActorValues } from './sync/actorvalues';
-import { Animation, AnimationSource, setupHooks } from './sync/animation';
-import { getAppearance } from './sync/appearance';
-import { getEquipment } from './sync/equipment';
+import { setupHooks } from './sync/animation';
 import { getHitData } from './sync/hit';
+import * as animDebugSystem from './debug/animDebugSystem';
 import {
   Inventory,
   getDiff,
@@ -38,20 +32,23 @@ import {
   removeSimpleItemsAsManyAsPossible,
   sumInventories,
 } from './sync/inventory';
-import { getMovement } from './sync/movement';
-import { getScreenResolution } from './view/formView';
-import { nextHostAttempt } from './view/hostAttempts';
 import { WorldView } from './view/worldView';
-import {
-  getViewFromStorage,
-  localIdToRemoteId,
-  remoteIdToLocalId,
-} from './view/worldViewMisc';
+import { localIdToRemoteId } from './view/worldViewMisc';
+import { SinglePlayerService } from './services/singlePlayerService';
+import { SpApiInteractor } from './services/spApiInteractor';
+import { verifyVersion } from './version';
+import * as authSystem from "./features/authSystem";
+import * as playerCombatSystem from "./sweetpie/playerCombatSystem";
+import { AuthGameData } from './features/authModel';
+import { Transform } from './sync/movement';
+import * as browser from "./features/browser";
+import { CombinedController, Sp } from './services/clientListener';
 
 interface AnyMessage {
   type?: string;
   t?: number;
 }
+
 const handleMessage = (msgAny: AnyMessage, handler_: MsgHandler) => {
   const msgType: string = msgAny.type || (MsgType as any)[msgAny.t as any];
   const handler = handler_ as unknown as Record<
@@ -91,7 +88,7 @@ const handleMessage = (msgAny: AnyMessage, handler_: MsgHandler) => {
   if (f && typeof f === 'function') handler[msgType](msgAny);
 };
 
-printConsole('Hello Multiplayer');
+printConsole('Hello Multiplayer!');
 printConsole('settings:', settings['skymp5-client']);
 
 const targetIp = settings['skymp5-client']['server-ip'] as string;
@@ -118,7 +115,92 @@ export const connectWhenICallAndNotWhenIImport = (): void => {
 };
 
 export class SkympClient {
-  constructor() {
+  constructor(private sp: Sp, private controller: CombinedController) {
+    controller.registerListenerForLookup("SkympClient", this);
+
+    const authGameData = storage[AuthGameData.storageKey] as AuthGameData | undefined;
+    if (!(authGameData?.local || authGameData?.remote)) {
+      authSystem.addAuthListener((data) => {
+        if (data.remote) {
+          browser.setAuthData(data.remote);
+        }
+        storage[AuthGameData.storageKey] = data;
+        this.sp.browser.setFocused(false);
+        this.startClient();
+      });
+
+      authSystem.main(settings["skymp5-client"]["lobbyLocation"] as Transform);
+    } else {
+      this.startClient();
+    }
+  }
+
+  private startClient() {
+    // TODO: subscribe to events in constructor, not here
+    netInfo.start();
+    animDebugSystem.init(settings["skymp5-client"]["animDebug"] as animDebugSystem.AnimDebugSettings);
+
+    playerCombatSystem.start();
+    once("update", () => authSystem.setPlayerAuthMode(false));
+    connectWhenICallAndNotWhenIImport();
+    this.ctor();
+
+    once("update", verifyVersion);
+
+    let lastTimeUpd = 0;
+    const hoursOffset = -3;
+    const hoursOffsetMs = hoursOffset * 60 * 60 * 1000;
+    on("update", () => {
+      if (Date.now() - lastTimeUpd <= 2000) return;
+      lastTimeUpd = Date.now();
+
+      const gameHourId = 0x38;
+      const gameMonthId = 0x36;
+      const gameDayId = 0x37;
+      const gameYearId = 0x35;
+      const timeScaleId = 0x3a;
+
+      const gameHour = sp.GlobalVariable.from(Game.getFormEx(gameHourId));
+      const gameDay = sp.GlobalVariable.from(Game.getFormEx(gameDayId));
+      const gameMonth = sp.GlobalVariable.from(Game.getFormEx(gameMonthId));
+      const gameYear = sp.GlobalVariable.from(Game.getFormEx(gameYearId));
+      const timeScale = sp.GlobalVariable.from(Game.getFormEx(timeScaleId));
+      if (!gameHour || !gameDay || !gameMonth || !gameYear || !timeScale) {
+        return;
+      }
+
+      const d = new Date(Date.now() + hoursOffsetMs);
+
+      let newGameHourValue = 0;
+      newGameHourValue += d.getUTCHours();
+      newGameHourValue += d.getUTCMinutes() / 60;
+      newGameHourValue += d.getUTCSeconds() / 60 / 60;
+      newGameHourValue += d.getUTCMilliseconds() / 60 / 60 / 1000;
+
+      const diff = Math.abs(gameHour.getValue() - newGameHourValue);
+
+      if (diff >= 1 / 60) {
+        gameHour.setValue(newGameHourValue);
+        gameDay.setValue(d.getUTCDate());
+        gameMonth.setValue(d.getUTCMonth());
+        gameYear.setValue(d.getUTCFullYear() - 2020 + 199);
+      }
+
+      timeScale.setValue(gameHour.getValue() > newGameHourValue ? 0.6 : 1.2);
+    });
+
+    let riftenUnlocked = false;
+    on("update", () => {
+      if (riftenUnlocked) return;
+      const refr = ObjectReference.from(Game.getFormEx(0x42284));
+      if (!refr) return;
+      refr.lock(false, false);
+      riftenUnlocked = true;
+    });
+  }
+
+  private ctor() {
+    // TODO: subscribe to events in constructor, not here
     this.resetView();
     this.resetRemoteServer();
     setupHooks();
@@ -148,12 +230,6 @@ export class SkympClient {
         msgAny as Record<string, unknown>,
         this.msgHandler as MsgHandler,
       );
-    });
-
-    on('update', () => {
-      if (!this.singlePlayer) {
-        this.sendInputs();
-      }
     });
 
     let lastInv: Inventory | undefined;
@@ -366,49 +442,6 @@ export class SkympClient {
       }
     });
 
-    const playerFormId = 0x14;
-    on('equip', (e) => {
-      if (!e.actor || !e.baseObj) {
-        return;
-      }
-
-      if (e.actor.getFormID() === playerFormId) {
-        this.equipmentChanged = true;
-
-        this.sendTarget.send(
-          { t: MsgType.OnEquip, baseId: e.baseObj.getFormID() },
-          false,
-        );
-      }
-    });
-
-    on('unequip', (e) => {
-      if (!e.actor || !e.baseObj) {
-        return;
-      }
-
-      if (e.actor.getFormID() === playerFormId) {
-        this.equipmentChanged = true;
-      }
-    });
-
-    on('loadGame', () => {
-      // Currently only armor is equipped after relogging (see remoteServer.ts)
-      // This hack forces sending /equipment without weapons/ back to the server
-      Utility.wait(3).then(() => (this.equipmentChanged = true));
-    });
-
-    loadGameManager.addLoadGameListener((e: loadGameManager.GameLoadEvent) => {
-      if (!e.isCausedBySkyrimPlatform && !this.singlePlayer) {
-        sp.Debug.messageBox(
-          'Save has been loaded in multiplayer, switching to the single-player mode',
-        );
-        networking.close();
-        this.singlePlayer = true;
-        Game.setInChargen(false, false, false);
-      }
-    });
-
     once('update', () => {
       const player = Game.getPlayer();
       if (player) {
@@ -417,164 +450,13 @@ export class SkympClient {
     });
 
     on('hit', (e) => {
+      const playerFormId = 0x14;
       if (e.target.getFormID() === playerFormId) return;
       if (e.aggressor.getFormID() !== playerFormId) return;
       if (sp.Weapon.from(e.source) && sp.Actor.from(e.target)) {
         this.sendTarget.send({ t: MsgType.OnHit, data: getHitData(e) }, true);
       }
     });
-  }
-
-  // May return null
-  private getInputOwner(_refrId?: number) {
-    return _refrId
-      ? Actor.from(Game.getFormEx(this.remoteIdToLocalId(_refrId)))
-      : Game.getPlayer();
-  }
-
-  private sendMovement(_refrId?: number) {
-    const owner = this.getInputOwner(_refrId);
-    if (!owner) return;
-
-    const refrIdStr = `${_refrId}`;
-    const sendMovementRateMs = 130;
-    const now = Date.now();
-    const last = this.lastSendMovementMoment.get(refrIdStr);
-    if (!last || now - last > sendMovementRateMs) {
-      this.sendTarget.send(
-        {
-          t: MsgType.UpdateMovement,
-          data: getMovement(owner, this.getForm(_refrId)),
-          _refrId,
-        },
-        false,
-      );
-      this.lastSendMovementMoment.set(refrIdStr, now);
-    }
-  }
-
-  private sendAnimation(_refrId?: number) {
-    const owner = this.getInputOwner(_refrId);
-    if (!owner) return;
-
-    // Extermly important that it's a local id since AnimationSource depends on it
-    const refrIdStr = owner.getFormID().toString(16);
-
-    let animSource = this.playerAnimSource.get(refrIdStr);
-    if (!animSource) {
-      animSource = new AnimationSource(owner);
-      this.playerAnimSource.set(refrIdStr, animSource);
-    }
-    const anim = animSource.getAnimation();
-
-    const lastAnimationSent = this.lastAnimationSent.get(refrIdStr);
-    if (
-      !lastAnimationSent ||
-      anim.numChanges !== lastAnimationSent.numChanges
-    ) {
-      if (anim.animEventName !== '') {
-        this.lastAnimationSent.set(refrIdStr, anim);
-        this.updateActorValuesAfterAnimation(anim.animEventName);
-        this.sendTarget.send(
-          { t: MsgType.UpdateAnimation, data: anim, _refrId },
-          false,
-        );
-      }
-    }
-  }
-
-  private sendAppearance(_refrId?: number) {
-    if (_refrId) return;
-    const shown = Ui.isMenuOpen('RaceSex Menu');
-    if (shown != this.isRaceSexMenuShown) {
-      this.isRaceSexMenuShown = shown;
-      if (!shown) {
-        printConsole('Exited from race menu');
-
-        const appearance = getAppearance(Game.getPlayer() as Actor);
-        this.sendTarget.send(
-          { t: MsgType.UpdateAppearance, data: appearance, _refrId },
-          true,
-        );
-      }
-    }
-  }
-
-  private sendEquipment(_refrId?: number) {
-    if (_refrId) return;
-    if (this.equipmentChanged) {
-      this.equipmentChanged = false;
-
-      ++this.numEquipmentChanges;
-
-      const eq = getEquipment(
-        Game.getPlayer() as Actor,
-        this.numEquipmentChanges,
-      );
-      this.sendTarget.send(
-        { t: MsgType.UpdateEquipment, data: eq, _refrId },
-        true,
-      );
-      printConsole({ eq });
-    }
-  }
-
-  private sendActorValuePercentage(_refrId?: number, form?: FormModel) {
-    const canSend = form && (form.isDead ?? false) === false;
-    if (!canSend) return;
-
-    const owner = this.getInputOwner(_refrId);
-    if (!owner) return;
-
-    const av = getActorValues(Game.getPlayer() as Actor);
-    const currentTime = Date.now();
-    if (
-      this.actorValuesNeedUpdate === false &&
-      this.prevValues.health === av.health &&
-      this.prevValues.stamina === av.stamina &&
-      this.prevValues.magicka === av.magicka
-    ) {
-      return;
-    } else {
-      if (
-        currentTime - this.prevActorValuesUpdateTime < 1000 &&
-        this.actorValuesNeedUpdate === false
-      ) {
-        return;
-      }
-      this.sendTarget.send(
-        { t: MsgType.ChangeValues, data: av, _refrId },
-        true,
-      );
-      this.actorValuesNeedUpdate = false;
-      this.prevValues = av;
-      this.prevActorValuesUpdateTime = currentTime;
-    }
-  }
-
-  private sendHostAttempts() {
-    const remoteId = nextHostAttempt();
-    if (!remoteId) return;
-
-    this.sendTarget.send({ t: MsgType.Host, remoteId }, false);
-  }
-
-  private sendInputs() {
-    const hosted =
-      typeof storage['hosted'] === typeof [] ? storage['hosted'] : [];
-    const targets = [undefined].concat(hosted as any);
-    //printConsole({ targets });
-    targets.forEach((target) => {
-      this.sendMovement(target);
-      this.sendAnimation(target);
-      this.sendAppearance(target);
-      this.sendEquipment(target);
-      this.sendActorValuePercentage(
-        target,
-        target ? this.getForm(target) : this.getForm(),
-      );
-    });
-    this.sendHostAttempts();
   }
 
   private resetRemoteServer() {
@@ -617,57 +499,25 @@ export class SkympClient {
       storage.view = view;
     });
     on('update', () => {
-      if (!this.singlePlayer)
+      const singlePlayerService = this.controller.lookupListener("SinglePlayerService") as SinglePlayerService;
+      if (!singlePlayerService.isSinglePlayer)
         view.update((this.modelSource as ModelSource).getWorldModel());
     });
-  }
-
-  private getView(): WorldView | undefined {
-    return getViewFromStorage();
-  }
-
-  private getForm(refrId?: number): FormModel | undefined {
-    const world = (this.modelSource as ModelSource).getWorldModel();
-    const form = refrId
-      ? world?.forms.find((f) => f?.refrId === refrId)
-      : world.forms[world.playerCharacterFormIdx];
-    return form;
   }
 
   private localIdToRemoteId(localFormId: number): number {
     return localIdToRemoteId(localFormId);
   }
 
-  private remoteIdToLocalId(remoteFormId: number): number {
-    return remoteIdToLocalId(remoteFormId);
+  public getModelSource() {
+    return this.modelSource;
   }
 
-  private updateActorValuesAfterAnimation(animName: string) {
-    if (
-      animName === 'JumpLand' ||
-      animName === 'JumpLandDirectional' ||
-      animName === 'DeathAnim'
-    ) {
-      this.actorValuesNeedUpdate = true;
-    }
+  public getSendTarget() {
+    return this.sendTarget;
   }
 
-  private playerAnimSource = new Map<string, AnimationSource>();
-  private lastSendMovementMoment = new Map<string, number>();
-  private lastAnimationSent = new Map<string, Animation>();
   private msgHandler: MsgHandler = undefined as unknown as MsgHandler;
   private modelSource?: ModelSource;
   private sendTarget: SendTarget = undefined as unknown as SendTarget;
-  private isRaceSexMenuShown = false;
-  private singlePlayer = false;
-  private equipmentChanged = false;
-  private numEquipmentChanges = 0;
-  private prevValues: ActorValues = { health: 0, stamina: 0, magicka: 0 };
-  private prevActorValuesUpdateTime = 0;
-  private actorValuesNeedUpdate = false;
 }
-
-once('update', () => {
-  // TODO: It is racing with OnInit in Papyrus, fix it
-  (sp.TESModPlatform as any).blockPapyrusEvents(true);
-});

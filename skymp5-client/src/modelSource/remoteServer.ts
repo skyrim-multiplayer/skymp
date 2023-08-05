@@ -18,7 +18,6 @@ import {
 } from 'skyrimPlatform';
 
 import * as netInfo from '../debug/netInfoSystem';
-import * as loadGameManager from '../features/loadGameManager';
 import * as updateOwner from '../gamemodeApi/updateOwner';
 import * as messages from '../messages';
 
@@ -49,6 +48,8 @@ import { FormModel, WorldModel } from './model';
 import { ModelSource } from './modelSource';
 import { MsgHandler } from './msgHandler';
 import { SendTarget } from './sendTarget';
+import { SpApiInteractor } from '../services/spApiInteractor';
+import { LoadGameService } from '../services/loadGameService';
 
 const onceLoad = (
   refrId: number,
@@ -469,7 +470,8 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
                 ? msg.appearance.skinColor.toString(16)
                 : undefined,
             );
-            loadGameManager.loadGame(
+            const loadGameService = SpApiInteractor.makeController().lookupListener("LoadGameService") as LoadGameService;
+            loadGameService.loadGame(
               msg.transform.pos,
               msg.transform.rot,
               msg.transform.worldOrCell,
