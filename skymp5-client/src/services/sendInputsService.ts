@@ -127,14 +127,14 @@ export class SendInputsService implements ClientListener {
             return;
         } else {
             if (
-                currentTime - this.prevActorValuesUpdateTime < 1000 &&
+                currentTime - this.prevActorValuesUpdateTime < 2000 &&
                 this.actorValuesNeedUpdate === false
             ) {
                 return;
             }
             skympClient.getSendTarget().send(
                 { t: MsgType.ChangeValues, data: av, _refrId },
-                true,
+                false,
             );
             this.actorValuesNeedUpdate = false;
             this.prevValues = av;
