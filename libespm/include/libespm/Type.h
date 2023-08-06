@@ -13,7 +13,6 @@ public:
   explicit Type(const char* type_) noexcept;
 
   bool operator==(const char* rhs) const noexcept;
-  bool operator!=(const char* rhs) const noexcept;
   std::string ToString() const noexcept;
   uint32_t ToUint32() const noexcept;
 
