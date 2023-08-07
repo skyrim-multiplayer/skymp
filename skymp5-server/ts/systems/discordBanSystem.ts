@@ -14,6 +14,10 @@ export class DiscordBanSystem implements System {
         let discordAuth = Settings.get().discordAuth;
 
         if (!discordAuth) {
+            if (Settings.get().offlineMode) {
+                // This is fine for offline mode
+                return;
+            }
             return console.error("discordAuth is missing, skipping Discord ban system");
         }
         if (!discordAuth.botToken) {
