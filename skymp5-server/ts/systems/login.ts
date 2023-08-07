@@ -56,12 +56,16 @@ export class Login implements System {
   ): void {
     if (type !== "loginWithSkympIo") return;
 
+    const ip = ctx.svr.getUserIp(userId);
+    console.log(`Connecting a user ${userId} with ip ${ip}`);
+
+    let discordAuth = Settings.get().discordAuth;
+
     const gameData = content["gameData"];
     if (this.offlineMode === true && gameData && gameData.session) {
       this.log("The server is in offline mode, the client is NOT");
     } else if (this.offlineMode === false && gameData && gameData.session) {
       (async () => {
-        let discordAuth = Settings.get().discordAuth;
         const profile = await this.getUserProfile(gameData.session);
         console.log("getUserProfileId:", profile);
 
@@ -80,21 +84,6 @@ export class Login implements System {
           if (!profile.discordId) {
             throw new Error("Not logged in via Discord");
           }
-          if (discordAuth.eventLogChannelId) {
-            const actorIds = ctx.svr.getActorsByProfileId(profile.id).map(actorId => actorId.toString(16));
-            await Axios.post(
-              `https://discord.com/api/channels/${discordAuth.eventLogChannelId}/messages`,
-              {
-                content: `Server Login: Actor ID ${actorIds}, Master API ${profile.id}, Discord ID ${profile.discordId} <@${profile.discordId}>`,
-                allowed_mentions: { parse: [] },
-              },
-              {
-                headers: {
-                  'Authorization': `${discordAuth.botToken}`,
-                },
-              },
-            );
-          }
           const response = await Axios.get(
             `https://discord.com/api/guilds/${discordAuth.guildId}/members/${profile.discordId}`,
             {
@@ -105,6 +94,31 @@ export class Login implements System {
             },
           );
           console.log('Discord request:', JSON.stringify({ status: response.status, data: response.data }));
+
+          if (discordAuth.eventLogChannelId) {
+            let ipToPrint = ip;
+
+            if (discordAuth && discordAuth.hideIpRoleId) {
+              if (response.data.roles.indexOf(discordAuth.hideIpRoleId) !== -1) {
+                ipToPrint = "hidden";
+              }
+            }
+
+            const actorIds = ctx.svr.getActorsByProfileId(profile.id).map(actorId => actorId.toString(16));
+            await Axios.post(
+              `https://discord.com/api/channels/${discordAuth.eventLogChannelId}/messages`,
+              {
+                content: `Server Login: IP ${ipToPrint}, Actor ID ${actorIds}, Master API ${profile.id}, Discord ID ${profile.discordId} <@${profile.discordId}>`,
+                allowed_mentions: { parse: [] },
+              },
+              {
+                headers: {
+                  'Authorization': `${discordAuth.botToken}`,
+                },
+              },
+            );
+          }
+
           if (response.status === 404 && response.data?.code === DiscordErrors.unknownMember) {
             throw new Error("Not on the Discord server");
           }
