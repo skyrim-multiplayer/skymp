@@ -40,6 +40,7 @@ export interface ScampServer {
   getActorsByProfileId(profileId: number): number[];
   createBot(): Bot;
   getUserByActor(formId: number): number;
+  getUserIp(userId: number): string;
 
   executeJavaScriptOnChakra(src: string): void;
   clear(): void;
