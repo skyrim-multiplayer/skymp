@@ -52,7 +52,8 @@ public:
     }
   }
 
-  std::string GetIp(UserId userId) const override {
+  std::string GetIp(UserId userId) const override
+  {
     if (realIdByCombined.size() <= userId) {
       throw std::runtime_error("User with id " + std::to_string(userId) +
                                " doesn't exist");

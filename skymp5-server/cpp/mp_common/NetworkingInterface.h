@@ -1,8 +1,8 @@
 #pragma once
 #include <cstddef>
 #include <cstdio>
-#include <vector>
 #include <string>
+#include <vector>
 
 namespace Networking {
 using UserId = unsigned short;

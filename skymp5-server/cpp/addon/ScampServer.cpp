@@ -609,7 +609,8 @@ Napi::Value ScampServer::WriteLogs(const Napi::CallbackInfo& info)
   return info.Env().Undefined();
 }
 
-Napi::Value ScampServer::GetUserIp(const Napi::CallbackInfo& info) {
+Napi::Value ScampServer::GetUserIp(const Napi::CallbackInfo& info)
+{
   try {
     auto userId = info[0].As<Napi::Number>().Uint32Value();
     return Napi::String::New(info.Env(), server->GetIp(userId));

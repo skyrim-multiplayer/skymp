@@ -187,7 +187,8 @@ public:
     }
   }
 
-  std::string GetIp(Networking::UserId userId) const override {
+  std::string GetIp(Networking::UserId userId) const override
+  {
     const auto guid = idManager->find(userId);
     if (guid == RakNetGUID(-1)) {
       throw std::runtime_error("User with id " + std::to_string(userId) +
