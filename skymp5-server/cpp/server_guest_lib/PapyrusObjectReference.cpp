@@ -423,8 +423,8 @@ VarValue PapyrusObjectReference::PlayGamebryoAnimation(
   return VarValue::None();
 }
 
-VarValue PapyrusObjectReference::MoveTo(
-  VarValue self, const std::vector<VarValue>& arguments)
+VarValue PapyrusObjectReference::MoveTo(VarValue self,
+                                        const std::vector<VarValue>& arguments)
 {
   if (arguments.size() < 1) {
     return VarValue::None();
@@ -475,8 +475,8 @@ VarValue PapyrusObjectReference::SetOpen(
   if (_thisObjectReference->GetBaseType() != "DOOR") {
     spdlog::error("SetOpen: self is not a door");
     return VarValue::None();
-  } 
-  
+  }
+
   _thisObjectReference->SetOpen(static_cast<bool>(arguments[0].CastToBool()));
   return VarValue::None();
 }
