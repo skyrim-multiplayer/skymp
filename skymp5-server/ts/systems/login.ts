@@ -105,7 +105,7 @@ export class Login implements System {
             }
 
             const actorIds = ctx.svr.getActorsByProfileId(profile.id).map(actorId => actorId.toString(16));
-            await Axios.post(
+            Axios.post(
               `https://discord.com/api/channels/${discordAuth.eventLogChannelId}/messages`,
               {
                 content: `Server Login: IP ${ipToPrint}, Actor ID ${actorIds}, Master API ${profile.id}, Discord ID ${profile.discordId} <@${profile.discordId}>`,
@@ -116,7 +116,7 @@ export class Login implements System {
                   'Authorization': `${discordAuth.botToken}`,
                 },
               },
-            );
+            ).catch((err) => console.error("Error sending message to Discord:", err));
           }
 
           if (response.status === 404 && response.data?.code === DiscordErrors.unknownMember) {
@@ -128,6 +128,9 @@ export class Login implements System {
           }
           if (response.data.roles.indexOf(discordAuth.banRoleId) !== -1) {
             throw new Error("Banned");
+          }
+          if (ip !== ctx.svr.getUserIp(userId)) {
+            throw new Error("IP mismatch");
           }
           roles = response.data.roles;
         }
