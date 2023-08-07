@@ -56,6 +56,9 @@ export class Login implements System {
   ): void {
     if (type !== "loginWithSkympIo") return;
 
+    const ip = ctx.svr.getUserIp(userId);
+    console.log(`Connecting a user ${userId} with ip ${ip}`);
+
     const gameData = content["gameData"];
     if (this.offlineMode === true && gameData && gameData.session) {
       this.log("The server is in offline mode, the client is NOT");

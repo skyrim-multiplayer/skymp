@@ -24,17 +24,19 @@ public:
   void Send(Networking::UserId targetUserId, Networking::PacketData data,
             size_t length, bool reliable) override
   {
-    if (realIdByCombined.size() <= targetUserId)
+    if (realIdByCombined.size() <= targetUserId) {
       throw std::runtime_error("User with id " + std::to_string(targetUserId) +
                                " doesn't exist");
+    }
 
     auto& p = realIdByCombined[targetUserId];
     auto serverIdx = p.first;
     auto userId = p.second;
 
-    if (userId == Networking::InvalidUserId)
+    if (userId == Networking::InvalidUserId) {
       throw std::runtime_error("User with id " + std::to_string(targetUserId) +
                                " doesn't exist");
+    }
 
     childs[serverIdx]->Send(userId, data, length, reliable);
   }
@@ -48,6 +50,24 @@ public:
       child->Tick(HandlePacket, this);
       ++st.serverIdx;
     }
+  }
+
+  std::string GetIp(UserId userId) const override {
+    if (realIdByCombined.size() <= userId) {
+      throw std::runtime_error("User with id " + std::to_string(userId) +
+                               " doesn't exist");
+    }
+
+    auto& p = realIdByCombined[userId];
+    auto serverIdx = p.first;
+    auto userId1 = p.second;
+
+    if (userId1 == Networking::InvalidUserId) {
+      throw std::runtime_error("User with id " + std::to_string(userId) +
+                               " doesn't exist");
+    }
+
+    return childs[serverIdx]->GetIp(userId1);
   }
 
   Networking::UserId GetCombinedUserId(size_t serverIdx,

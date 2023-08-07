@@ -151,3 +151,7 @@ void Networking::MockServer::Tick(OnPacket onPacket, void* state)
   }
   pImpl->packets.clear();
 }
+
+std::string Networking::MockServer::GetIp(UserId userId) const {
+  return "";
+}

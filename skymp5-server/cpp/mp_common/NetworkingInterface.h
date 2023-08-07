@@ -2,6 +2,7 @@
 #include <cstddef>
 #include <cstdio>
 #include <vector>
+#include <string>
 
 namespace Networking {
 using UserId = unsigned short;
@@ -60,6 +61,8 @@ public:
   virtual ~IServer() = default;
 
   virtual void Tick(OnPacket onPacket, void* state) = 0;
+
+  virtual std::string GetIp(UserId userId) const = 0;
 };
 
 template <class FormatCallback, class... Ts>

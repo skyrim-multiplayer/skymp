@@ -89,6 +89,7 @@ Napi::Object ScampServer::Init(Napi::Env env, Napi::Object exports)
       InstanceMethod("createBot", &ScampServer::CreateBot),
       InstanceMethod("getUserByActor", &ScampServer::GetUserByActor),
       InstanceMethod("writeLogs", &ScampServer::WriteLogs),
+      InstanceMethod("getUserIp", &ScampServer::GetUserIp),
 
       InstanceMethod("getLocalizedString", &ScampServer::GetLocalizedString),
       InstanceMethod("getServerSettings", &ScampServer::GetServerSettings),
@@ -606,6 +607,15 @@ Napi::Value ScampServer::WriteLogs(const Napi::CallbackInfo& info)
     GetLogger()->error("ScampServer::WriteLogs - {}", e.what());
   }
   return info.Env().Undefined();
+}
+
+Napi::Value ScampServer::GetUserIp(const Napi::CallbackInfo& info) {
+  try {
+    auto userId = info[0].As<Napi::Number>().Uint32Value();
+    return Napi::String::New(info.Env(), server->GetIp(userId));
+  } catch (std::exception& e) {
+    throw Napi::Error::New(info.Env(), std::string(e.what()));
+  }
 }
 
 Napi::Value ScampServer::GetLocalizedString(const Napi::CallbackInfo& info)
