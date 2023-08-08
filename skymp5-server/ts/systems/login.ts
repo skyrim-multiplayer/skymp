@@ -140,7 +140,7 @@ export class Login implements System {
         .catch((err) => console.error("Error logging in client:", JSON.stringify(gameData), err));
     } else if (this.offlineMode === true && gameData && typeof gameData.profileId === "number") {
       const profileId = gameData.profileId;
-      ctx.gm.emit("spawnAllowed", userId, profileId, []);
+      ctx.gm.emit("spawnAllowed", userId, profileId, [], undefined);
       this.log(userId + " logged as " + profileId);
     } else {
       this.log("No credentials found in gameData:", gameData);

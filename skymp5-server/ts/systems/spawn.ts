@@ -13,7 +13,7 @@ export class Spawn implements System {
   constructor(private log: Log) {}
 
   async initAsync(ctx: SystemContext): Promise<void> {
-    ctx.gm.on("spawnAllowed", (userId: number, userProfileId: number, discordRoleIds: string[], discordId: string) => {
+    ctx.gm.on("spawnAllowed", (userId: number, userProfileId: number, discordRoleIds: string[], discordId: string | undefined) => {
       const { startPoints } = Settings.get();
       // TODO: Show race menu if character is not created after relogging
       let actorId = ctx.svr.getActorsByProfileId(userProfileId)[0];
@@ -38,13 +38,15 @@ export class Spawn implements System {
       const mp = ctx.svr as unknown as Mp;
       mp.set(actorId, "private.discordRoles", discordRoleIds);
 
-      // This helps us to test if indexes registration works in LoadForm or not
-      if (mp.get(actorId, "private.indexed.discordId") !== discordId) {
-        mp.set(actorId, "private.indexed.discordId", discordId);
-      }
+      if (discordId !== undefined) {
+        // This helps us to test if indexes registration works in LoadForm or not
+        if (mp.get(actorId, "private.indexed.discordId") !== discordId) {
+          mp.set(actorId, "private.indexed.discordId", discordId);
+        }
 
-      const forms = mp.findFormsByPropertyValue("private.indexed.discordId", discordId) as number[];
-      console.log(`Found forms ${forms}`);
+        const forms = mp.findFormsByPropertyValue("private.indexed.discordId", discordId) as number[];
+        console.log(`Found forms ${forms}`);
+      }
     });
   }
 
