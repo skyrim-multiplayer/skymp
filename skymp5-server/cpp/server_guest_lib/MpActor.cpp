@@ -140,7 +140,8 @@ void MpActor::VisitProperties(const PropertiesVisitor& visitor,
             .c_str());
 }
 
-void MpActor::Disable() {
+void MpActor::Disable()
+{
   if (ChangeForm().isDisabled) {
     return;
   }
@@ -148,13 +149,14 @@ void MpActor::Disable() {
   MpObjectReference::Disable();
 
   for (auto [snippetIdx, promise] : pImpl->snippetPromises) {
-    spdlog::warn("Disabling actor {:x} with pending snippet promise", GetFormId());
+    spdlog::warn("Disabling actor {:x} with pending snippet promise",
+                 GetFormId());
     try {
       promise.Resolve(VarValue::None());
-    }
-    catch (std::exception &e) {
+    } catch (std::exception& e) {
       // Not sure if this is possible, but better safe than sorry
-      spdlog::error("Exception while resolving pending snippet promise: {}", e.what());
+      spdlog::error("Exception while resolving pending snippet promise: {}",
+                    e.what());
     }
   }
 
