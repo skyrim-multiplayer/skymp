@@ -143,8 +143,6 @@ export class SkympClient {
     once("update", () => authSystem.setPlayerAuthMode(false));
     connectWhenICallAndNotWhenIImport();
     this.ctor();
-
-    once("update", verifyVersion);
   }
 
   private ctor() {
