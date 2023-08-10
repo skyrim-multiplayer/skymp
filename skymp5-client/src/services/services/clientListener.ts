@@ -1,4 +1,5 @@
 import * as sp from "skyrimPlatform";
+import { EventEmitterType } from "../events/eventEmitterFactory";
 
 export interface ClientListenerEvents { 
     on: typeof sp.on, 
@@ -16,8 +17,9 @@ export type ListenerLookupController = {
 };
 
 export type EventsController = {
-    on: typeof sp.on, 
-    once: typeof sp.once 
+    readonly on: typeof sp.on, 
+    readonly once: typeof sp.once,
+    readonly emitter: EventEmitterType
 };
 
 export type CombinedController = EventsController & ListenerLookupController;

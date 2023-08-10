@@ -1,3 +1,4 @@
+import { EventEmitterFactory } from "./events/eventEmitterFactory";
 import { ClientListener, CombinedController } from "./services/clientListener";
 import * as sp from "skyrimPlatform";
 
@@ -10,6 +11,7 @@ export class SpApiInteractor {
             // TODO: handle errors in event handlers. will output to game console by default
             on: sp.on,
             once: sp.once,
+            emitter: EventEmitterFactory.makeEventEmitter(),
             registerListenerForLookup(listenerName: string, listener: ClientListener): void {
                 if (SpApiInteractor.listenersForLookupByName.has(listenerName)) {
                     throw new Error(`listener re-registration for name '${listenerName}'`);
