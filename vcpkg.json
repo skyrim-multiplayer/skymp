@@ -19,6 +19,8 @@
     "node-addon-api",
     "bshoshany-thread-pool",
     "makeid",
+	"rapidcsv",
+	"boost-stl-interfaces",
     {
       "name": "frida-gum",
       "platform": "windows"
@@ -51,21 +53,11 @@
   "features": {
     "skyrim-se": {
       "description": "Build platform for Skyrim Special Edition.",
-      "dependencies": [
-        {
-          "name": "commonlibse",
-          "platform": "windows"
-        }
-      ]
+      "dependencies": []
     },
     "skyrim-ae": {
       "description": "Build platform for Skyrim Anniversary Edition.",
-      "dependencies": [
-        {
-          "name": "commonlibae",
-          "platform": "windows"
-        }
-      ]
+      "dependencies": []
     },
     "skyrim-vr": {
       "description": "Build platform for Skyrim VR."

@@ -128,6 +128,15 @@ add_subdirectory(skymp5-front)
 add_subdirectory(skymp5-functions-lib)
 add_subdirectory(skymp5-scripts)
 add_subdirectory(skymp5-server)
+
+set(SKSE_SUPPORT_XBYAK OFF)
+set(ENABLE_SKYRIM_VR OFF)
+set(BUILD_TESTS OFF)
+
+add_subdirectory(CommonLibSSE-NG)
+
+apply_default_settings(TARGETS CommonLibSSE)
+
 if(BUILD_UNIT_TESTS)
   add_subdirectory(unit)
 endif()

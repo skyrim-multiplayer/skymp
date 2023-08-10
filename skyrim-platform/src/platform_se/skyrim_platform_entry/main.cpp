@@ -88,36 +88,26 @@ private:
   SkyrimPlatform_IpcUnsubscribe_Impl ipcUnsubscribe = nullptr;
 };
 
-extern "C" {
+SKSEPluginInfo(.Version = Version::ASINT, .Name = "SkyrimPlatform",
+               .Author = "SkyMP Team and Contributors",
+               .SupportEmail = "leonidpospelov.dev@gmail.com",
+               .StructCompatibility = SKSE::StructCompatibility::Independent,
+               .RuntimeCompatibility = { SKSE::RUNTIME_SSE_1_5_97,
+                                         SKSE::RUNTIME_SSE_1_6_640 },
+               .MinimumSKSEVersion = SKSE::PluginDeclaration::VersionNumber(
+                 SKSE::RUNTIME_SSE_1_5_97));
 
-#ifdef SKYRIMSE
-DLLEXPORT bool SKSEPlugin_Query(const SKSE::QueryInterface* skse,
-                                SKSE::PluginInfo* info)
+SKSEPluginLoad(void* skse)
 {
-  info->infoVersion = SKSE::PluginInfo::kVersion;
-  info->name = "SkyrimPlatform";
-  info->version = Version::ASINT;
-
-  if (skse->IsEditor()) {
-    //_FATALERROR("loaded in editor, marking as incompatible");
+  try {
+    return PlatformImplInterface::GetSingleton().Load(skse);
+  } catch (std::exception& e) {
+    MessageBoxA(0, e.what(), "Fatal", MB_ICONERROR);
     return false;
   }
-  return true;
 }
 
-#else
-DLLEXPORT constinit auto SKSEPlugin_Version = []() {
-  SKSE::PluginVersionData v;
-  v.PluginVersion(Version::ASINT);
-  v.PluginName("SkyrimPlatform");
-  v.AuthorName("SkyMP Team and Contributors");
-  v.UsesAddressLibrary(true);
-  v.CompatibleVersions({ SKSE::RUNTIME_LATEST });
-
-  return v;
-}();
-
-#endif
+extern "C" {
 
 DLLEXPORT uint32_t SkyrimPlatform_IpcSubscribe(const char* systemName,
                                                IpcMessageCallback callback,
@@ -137,15 +127,5 @@ DLLEXPORT void SkyrimPlatform_IpcSend(const char* systemName,
 {
   return PlatformImplInterface::GetSingleton().IpcSend(systemName, data,
                                                        length);
-}
-
-DLLEXPORT bool SKSEPlugin_Load(void* skse)
-{
-  try {
-    return PlatformImplInterface::GetSingleton().Load(skse);
-  } catch (std::exception& e) {
-    MessageBoxA(0, e.what(), "Fatal", MB_ICONERROR);
-    return false;
-  }
 }
 }

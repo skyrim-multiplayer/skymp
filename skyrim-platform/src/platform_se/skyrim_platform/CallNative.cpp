@@ -112,7 +112,7 @@ CallNative::ObjectPtr GetSingleObjectPtr(
   }
 
   if (objPtr) {
-    auto objectTypeInfo = r.varType.GetTypeInfo();
+    const auto objectTypeInfo = r.GetType().GetTypeInfo();
     if (!objectTypeInfo) {
       throw NullPointerException("objectTypeInfo");
     }
@@ -128,7 +128,7 @@ CallNative::AnySafe VariableToAnySafe(
 {
   using namespace CallNative;
 
-  switch (r.varType.GetUnmangledRawType()) {
+  switch (r.GetType().GetUnmangledRawType()) {
     case TypeInfo::RawType::kNone:
       return ObjectPtr();
     case TypeInfo::RawType::kObject:
@@ -425,6 +425,7 @@ CallNative::AnySafe CallNative::CallNativeSafe(Arguments& args_)
   }
 
   auto topArgs = stackIterator->second->top->args;
+  
   for (int i = 0; i < numArgs; i++) {
     FixedString unusedNameOut;
     TypeInfo typeOut;
@@ -443,15 +444,18 @@ CallNative::AnySafe CallNative::CallNativeSafe(Arguments& args_)
         return AnySafeToVariable(args_.args[i], typeOut.IsInt());
       },
       (void*)numArgs);
+
     auto fsClassName = AnySafeToVariable(className).GetString();
     auto fsClassFunc = AnySafeToVariable(classFunc).GetString();
+
     auto selfScriptObject = rawSelf
-      ? AnySafeToVariable(self).value.obj
+      ? AnySafeToVariable(self).GetObject()
       : RE::BSTSmartPointer<RE::BSScript::Object>();
 
     auto funcReturnType = funcInfo->GetReturnType().className;
     auto jsThrQPtr = &jsThrQ;
     auto cb = latentCallback;
+
     auto onResult = [cb, funcReturnType, jsThrQPtr](const Variable& result) {
       jsThrQPtr->AddTask([=] {
         if (!cb)

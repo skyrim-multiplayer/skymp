@@ -1,64 +1,21 @@
 #pragma once
 
-#include "events/ActorKill.h"
-#include "events/BooksRead.h"
-#include "events/CriticalHit.h"
-#include "events/DisarmedEvent.h"
-#include "events/DragonSoulsGained.h"
-#include "events/ItemHarvested.h"
-#include "events/LevelIncrease.h"
-#include "events/LocationDiscovery.h"
-#include "events/ShoutAttack.h"
-#include "events/SkillIncrease.h"
-#include "events/SoulsTrapped.h"
-#include "events/SpellsLearned.h"
+#include <CommonLibSSE-NG/include/RE/B/BSCoreTypes.h>
+#include <CommonLibSSE-NG/include/RE/N/NiSmartPointer.h>
+#include <CommonLibSSE-NG/include/RE/T/TESObjectREFR.h>
+#include <cstdint>
 
 namespace RE {
 
-struct TESSpellCastEvent
-{
-public:
-  TESSpellCastEvent()
-    : TESSpellCastEvent(nullptr, static_cast<RE::FormID>(0))
-  {
-  }
-
-  TESSpellCastEvent(RE::TESObjectREFR* caster, RE::FormID spell)
-    : caster(caster)
-    , spell(spell)
-  {
-  }
-  ~TESSpellCastEvent() = default;
-
-  RE::NiPointer<RE::TESObjectREFR> caster;
-  RE::FormID spell;
-};
-static_assert(sizeof(TESSpellCastEvent) == 0x10);
-
 struct TESQuestInitEvent
 {
-  RE::FormID questId;
-};
-
-struct TESQuestStartStopEvent
-{
-  RE::FormID questId;
-  bool isStarted;
-};
-
-struct TESQuestStageEvent
-{
-  void* finishedCallback;
-  RE::FormID questId;
-  uint16_t stage;
-  uint8_t unk;
-  uint8_t pad;
+  FormID questId{ 0 };
 };
 
 struct TESQuestStageItemDoneEvent // not finished
 {
   uint32_t stage;
-  RE::FormID questId;
+  FormID questId;
   void* one;     // ? pointer
   void* two;     // pointer?
   uint32_t flag; // 1, -1 ?
@@ -66,20 +23,20 @@ struct TESQuestStageItemDoneEvent // not finished
 
 struct TESTriggerEvent
 {
-  RE::NiPointer<RE::TESObjectREFR> target;
-  RE::NiPointer<RE::TESObjectREFR> caster;
+  NiPointer<TESObjectREFR> target;
+  NiPointer<TESObjectREFR> caster;
 };
 
 struct TESTriggerEnterEvent
 {
-  RE::NiPointer<RE::TESObjectREFR> target;
-  RE::NiPointer<RE::TESObjectREFR> caster;
+  NiPointer<TESObjectREFR> target;
+  NiPointer<TESObjectREFR> caster;
 };
 
 struct TESTriggerLeaveEvent
 {
-  RE::NiPointer<RE::TESObjectREFR> target;
-  RE::NiPointer<RE::TESObjectREFR> caster;
+  NiPointer<TESObjectREFR> target;
+  NiPointer<TESObjectREFR> caster;
 };
 
 struct TESSleepStartEvent
@@ -88,44 +45,26 @@ struct TESSleepStartEvent
   float desiredSleepEndTime;
 };
 
-struct TESSleepStopEvent
-{
-  bool isInterrupted;
-};
-
-struct TESCellAttachDetachEvent
-{
-  RE::NiPointer<RE::TESObjectREFR> reference;
-  uint8_t action;
-};
-
 struct TESWaitStartEvent
 {
   float waitStartTime;
   float desiredWaitEndTime;
 };
 
-struct TESActorLocationChangeEvent
-{
-  RE::NiPointer<RE::TESObjectREFR> actor;
-  RE::BGSLocation* oldLoc;
-  RE::BGSLocation* newLoc;
-};
-
 struct TESBookReadEvent
 {
-  RE::NiPointer<RE::TESObjectREFR> book;
+  NiPointer<TESObjectREFR> book;
 };
 
 struct TESSellEvent
 {
-  RE::NiPointer<RE::TESObjectREFR> target;
-  RE::NiPointer<RE::TESObjectREFR> seller;
+  NiPointer<TESObjectREFR> target;
+  NiPointer<TESObjectREFR> seller;
 };
 
 struct TESCellReadyToApplyDecalsEvent
 {
-  RE::NiPointer<RE::TESObjectCELL> cell;
+  NiPointer<TESObjectCELL> cell;
 };
 
 struct TESMagicWardHitEvent
@@ -136,9 +75,9 @@ struct TESMagicWardHitEvent
     kAbsorbed = 1,
     kBroken = 2
   };
-  RE::NiPointer<RE::TESObjectREFR> target;
-  RE::NiPointer<RE::TESObjectREFR> caster;
-  RE::FormID spell;
+  NiPointer<TESObjectREFR> target;
+  NiPointer<TESObjectREFR> caster;
+  FormID spell;
   Status status;
 };
 
@@ -150,19 +89,15 @@ struct TESPackageEvent
     kChange = 1,
     kEnd = 2
   };
-  RE::NiPointer<RE::TESObjectREFR> actor;
-  RE::FormID package;
-  EventType type;
-};
 
-struct TESEnterBleedoutEvent
-{
-  RE::NiPointer<RE::TESObjectREFR> actor;
+  NiPointer<TESObjectREFR> actor;
+  FormID package;
+  EventType type;
 };
 
 struct TESDestructionStageChangedEvent
 {
-  RE::NiPointer<RE::TESObjectREFR> target;
+  NiPointer<TESObjectREFR> target;
   uint32_t oldStage;
   uint32_t newStage;
 };
@@ -170,29 +105,16 @@ struct TESDestructionStageChangedEvent
 struct TESSceneActionEvent
 {
   void* reference;
-  RE::FormID sceneId;
+  FormID sceneId;
   uint32_t actionIndex;
-  RE::FormID questId;
+  FormID questId;
   uint32_t actorAliasId;
 };
 
 struct TESSceneEvent
 {
-  RE::TESForm* reference; // what ref?
-  RE::FormID sceneId;
-};
-
-struct TESPlayerBowShotEvent
-{
-  RE::FormID weaponId;
-  RE::FormID ammoId;
-  float power;
-  bool isSunGazing;
-};
-
-struct TESFastTravelEndEvent
-{
-  float travelTimeGameHours;
+  TESForm* reference; // what ref?
+  FormID sceneId;
 };
 
 struct TESObjectREFRTranslationEvent
@@ -203,14 +125,14 @@ struct TESObjectREFRTranslationEvent
     kCompleted = 1,
     kAlmostCompleted = 2
   };
-  RE::NiPointer<RE::TESObjectREFR> refr;
+  NiPointer<TESObjectREFR> refr;
   EventType type;
 };
 
 struct TESTrapHitEvent // not finished
 {
-  RE::NiPointer<RE::TESObjectREFR> trap;
-  RE::NiPointer<RE::TESObjectREFR> target;
+  NiPointer<TESObjectREFR> trap;
+  NiPointer<TESObjectREFR> target;
   uint32_t flag; // flag ? 0 - traphit, 1 - traphitend, 2 - traphitstart
   float f1;
   float f2;
@@ -230,9 +152,9 @@ struct TESTrapHitEvent // not finished
 
 struct TESPerkEntryRunEvent
 {
-  RE::NiPointer<RE::TESObjectREFR> cause;
-  RE::NiPointer<RE::TESObjectREFR> target;
-  RE::FormID perkId;
+  NiPointer<TESObjectREFR> cause;
+  NiPointer<TESObjectREFR> target;
+  FormID perkId;
   uint32_t flag;
 };
 
