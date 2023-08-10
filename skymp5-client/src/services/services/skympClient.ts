@@ -145,15 +145,6 @@ export class SkympClient {
     this.ctor();
 
     once("update", verifyVersion);
-
-    let riftenUnlocked = false;
-    on("update", () => {
-      if (riftenUnlocked) return;
-      const refr = ObjectReference.from(Game.getFormEx(0x42284));
-      if (!refr) return;
-      refr.lock(false, false);
-      riftenUnlocked = true;
-    });
   }
 
   private ctor() {
