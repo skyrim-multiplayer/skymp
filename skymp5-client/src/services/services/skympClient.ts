@@ -10,20 +10,20 @@ import {
   storage,
 } from 'skyrimPlatform';
 
-import * as netInfo from './debug/netInfoSystem';
-import * as updateOwner from './gamemodeApi/updateOwner';
-import * as networking from './networking';
-import * as taffyPerkSystem from './sweetpie/taffyPerkSystem';
-import * as deathSystem from './sync/deathSystem';
-import { setUpConsoleCommands } from './features/console';
-import { HostStartMessage, HostStopMessage, MsgType } from './messages';
-import { ModelSource } from './modelSource/modelSource';
-import { MsgHandler } from './modelSource/msgHandler';
-import { RemoteServer, getPcInventory } from './modelSource/remoteServer';
-import { SendTarget } from './modelSource/sendTarget';
-import { setupHooks } from './sync/animation';
-import { getHitData } from './sync/hit';
-import * as animDebugSystem from './debug/animDebugSystem';
+import * as netInfo from '../../debug/netInfoSystem';
+import * as updateOwner from '../../gamemodeApi/updateOwner';
+import * as networking from '../../networking';
+import * as taffyPerkSystem from '../../sweetpie/taffyPerkSystem';
+import * as deathSystem from '../../sync/deathSystem';
+import { setUpConsoleCommands } from '../../features/console';
+import { HostStartMessage, HostStopMessage, MsgType } from '../../messages';
+import { ModelSource } from '../../modelSource/modelSource';
+import { MsgHandler } from '../../modelSource/msgHandler';
+import { RemoteServer, getPcInventory } from '../../modelSource/remoteServer';
+import { SendTarget } from '../../modelSource/sendTarget';
+import { setupHooks } from '../../sync/animation';
+import { getHitData } from '../../sync/hit';
+import * as animDebugSystem from '../../debug/animDebugSystem';
 import {
   Inventory,
   getDiff,
@@ -31,18 +31,17 @@ import {
   hasExtras,
   removeSimpleItemsAsManyAsPossible,
   sumInventories,
-} from './sync/inventory';
-import { WorldView } from './view/worldView';
-import { localIdToRemoteId } from './view/worldViewMisc';
-import { SinglePlayerService } from './services/singlePlayerService';
-import { SpApiInteractor } from './services/spApiInteractor';
-import { verifyVersion } from './version';
-import * as authSystem from "./features/authSystem";
-import * as playerCombatSystem from "./sweetpie/playerCombatSystem";
-import { AuthGameData } from './features/authModel';
-import { Transform } from './sync/movement';
-import * as browser from "./features/browser";
-import { CombinedController, Sp } from './services/clientListener';
+} from '../../sync/inventory';
+import { WorldView } from '../../view/worldView';
+import { localIdToRemoteId } from '../../view/worldViewMisc';
+import { SinglePlayerService } from './singlePlayerService';
+import { verifyVersion } from '../../version';
+import * as authSystem from "../../features/authSystem";
+import * as playerCombatSystem from "../../sweetpie/playerCombatSystem";
+import { AuthGameData } from '../../features/authModel';
+import { Transform } from '../../sync/movement';
+import * as browser from "../../features/browser";
+import { CombinedController, Sp } from './clientListener';
 
 interface AnyMessage {
   type?: string;

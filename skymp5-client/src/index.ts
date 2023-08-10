@@ -1,39 +1,27 @@
-import { Transform } from './sync/movement';
 import {
   Game,
   Utility,
   on,
   once,
-  GlobalVariable,
-  ObjectReference,
-  settings,
-  storage,
-  browser as spBrowser,
   printConsole,
   ActorValueInfo,
   ActorValue,
 } from "skyrimPlatform";
 import * as timers from "./extensions/timers"; timers;
-import { connectWhenICallAndNotWhenIImport, SkympClient } from "./skympClient";
+import { SkympClient } from "./services/services/skympClient";
 import * as browser from "./features/browser";
-import { verifyVersion } from "./version";
 import { updateWc } from "./features/worldCleaner";
-import * as authSystem from "./features/authSystem";
-import { AuthGameData } from "./features/authModel";
-import * as NetInfo from "./debug/netInfoSystem";
-import * as animDebugSystem from "./debug/animDebugSystem";
-import * as playerCombatSystem from "./sweetpie/playerCombatSystem";
 import { verifyLoadOrder } from './features/loadOrder';
 import * as expSystem from "./sync/expSystem";
 import * as skillSystem from "./features/skillMenu";
 
 import * as sp from "skyrimPlatform";
 
-import { BlockPapyrusEventsService } from './services/blockPapyrusEventsService';
-import { EnforceLimitationsService } from './services/enforceLimitationsService';
-import { LoadGameService } from './services/loadGameService';
-import { SendInputsService } from './services/sendInputsService';
-import { SinglePlayerService } from './services/singlePlayerService';
+import { BlockPapyrusEventsService } from './services/services/blockPapyrusEventsService';
+import { EnforceLimitationsService } from './services/services/enforceLimitationsService';
+import { LoadGameService } from './services/services/loadGameService';
+import { SendInputsService } from './services/services/sendInputsService';
+import { SinglePlayerService } from './services/services/singlePlayerService';
 import { SpApiInteractor } from './services/spApiInteractor';
 
 browser.main();

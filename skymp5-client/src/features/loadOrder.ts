@@ -1,6 +1,6 @@
 import { Game, Utility, HttpClient, printConsole, createText } from "skyrimPlatform";
 import * as sp from "skyrimPlatform";
-import { getServerIp, getServerUiPort } from "../skympClient";
+import { getServerIp, getServerUiPort } from "../services/services/skympClient";
 import { getScreenResolution } from "../view/formView";
 
 const STATE_KEY = 'loadOrderCheckState';

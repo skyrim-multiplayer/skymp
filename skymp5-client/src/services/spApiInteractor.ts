@@ -1,4 +1,4 @@
-import { ClientListener, CombinedController } from "./clientListener";
+import { ClientListener, CombinedController } from "./services/clientListener";
 import * as sp from "skyrimPlatform";
 
 export class SpApiInteractor {
