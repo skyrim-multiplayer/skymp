@@ -94,7 +94,7 @@ const main = () => {
   try {
     const controller = SpApiInteractor.makeController();
     
-    SpApiInteractor.setup([
+    const listeners = [
       new BlockPapyrusEventsService(sp, controller),
       new LoadGameService(sp, controller),
       new SinglePlayerService(sp, controller),
@@ -103,7 +103,9 @@ const main = () => {
       new SkympClient(sp, controller),
       new TimeService(sp, controller),
       new SpVersionCheckService(sp, controller)
-    ]);
+    ];
+    SpApiInteractor.setup(listeners);
+    listeners.forEach(listener => SpApiInteractor.registerListenerForLookup(listener.constructor.name, listener));
   }
   catch (e) {
     // TODO: handle setup failure. will output to game console by default

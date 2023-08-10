@@ -115,8 +115,6 @@ export const connectWhenICallAndNotWhenIImport = (): void => {
 
 export class SkympClient {
   constructor(private sp: Sp, private controller: CombinedController) {
-    controller.registerListenerForLookup("SkympClient", this);
-
     const authGameData = storage[AuthGameData.storageKey] as AuthGameData | undefined;
     if (!(authGameData?.local || authGameData?.remote)) {
       authSystem.addAuthListener((data) => {

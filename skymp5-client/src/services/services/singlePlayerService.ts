@@ -4,7 +4,6 @@ import { GameLoadEvent } from "../events/gameLoadEvent";
 
 export class SinglePlayerService implements ClientListener {
     constructor(private sp: Sp, private controller: CombinedController) {
-        this.controller.registerListenerForLookup("SinglePlayerService", this);
         this.controller.emitter.on("gameLoad", (e) => this.onGameLoad(e));
     }
 

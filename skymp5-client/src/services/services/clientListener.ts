@@ -12,7 +12,6 @@ export interface ClientListener {
 }
 
 export type ListenerLookupController = {
-    registerListenerForLookup(listenerName: string, listener: ClientListener): void;
     lookupListener(listenerName: string): ClientListener;
 };
 

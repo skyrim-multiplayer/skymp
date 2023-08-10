@@ -12,12 +12,6 @@ export class SpApiInteractor {
             on: sp.on,
             once: sp.once,
             emitter: EventEmitterFactory.makeEventEmitter(),
-            registerListenerForLookup(listenerName: string, listener: ClientListener): void {
-                if (SpApiInteractor.listenersForLookupByName.has(listenerName)) {
-                    throw new Error(`listener re-registration for name '${listenerName}'`);
-                }
-                SpApiInteractor.listenersForLookupByName.set(listenerName, listener);
-            },
             lookupListener(listenerName: string): ClientListener {
                 const listener = SpApiInteractor.listenersForLookupByName.get(listenerName);
                 if (listener === undefined) {
@@ -26,6 +20,13 @@ export class SpApiInteractor {
                 return listener;
             },
         }
+    }
+
+    static registerListenerForLookup(listenerName: string, listener: ClientListener): void {
+        if (SpApiInteractor.listenersForLookupByName.has(listenerName)) {
+            throw new Error(`listener re-registration for name '${listenerName}'`);
+        }
+        SpApiInteractor.listenersForLookupByName.set(listenerName, listener);
     }
 
     private static listenersForLookupByName = new Map<string, ClientListener>();
