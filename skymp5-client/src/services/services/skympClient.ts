@@ -146,48 +146,6 @@ export class SkympClient {
 
     once("update", verifyVersion);
 
-    let lastTimeUpd = 0;
-    const hoursOffset = -3;
-    const hoursOffsetMs = hoursOffset * 60 * 60 * 1000;
-    on("update", () => {
-      if (Date.now() - lastTimeUpd <= 2000) return;
-      lastTimeUpd = Date.now();
-
-      const gameHourId = 0x38;
-      const gameMonthId = 0x36;
-      const gameDayId = 0x37;
-      const gameYearId = 0x35;
-      const timeScaleId = 0x3a;
-
-      const gameHour = sp.GlobalVariable.from(Game.getFormEx(gameHourId));
-      const gameDay = sp.GlobalVariable.from(Game.getFormEx(gameDayId));
-      const gameMonth = sp.GlobalVariable.from(Game.getFormEx(gameMonthId));
-      const gameYear = sp.GlobalVariable.from(Game.getFormEx(gameYearId));
-      const timeScale = sp.GlobalVariable.from(Game.getFormEx(timeScaleId));
-      if (!gameHour || !gameDay || !gameMonth || !gameYear || !timeScale) {
-        return;
-      }
-
-      const d = new Date(Date.now() + hoursOffsetMs);
-
-      let newGameHourValue = 0;
-      newGameHourValue += d.getUTCHours();
-      newGameHourValue += d.getUTCMinutes() / 60;
-      newGameHourValue += d.getUTCSeconds() / 60 / 60;
-      newGameHourValue += d.getUTCMilliseconds() / 60 / 60 / 1000;
-
-      const diff = Math.abs(gameHour.getValue() - newGameHourValue);
-
-      if (diff >= 1 / 60) {
-        gameHour.setValue(newGameHourValue);
-        gameDay.setValue(d.getUTCDate());
-        gameMonth.setValue(d.getUTCMonth());
-        gameYear.setValue(d.getUTCFullYear() - 2020 + 199);
-      }
-
-      timeScale.setValue(gameHour.getValue() > newGameHourValue ? 0.6 : 1.2);
-    });
-
     let riftenUnlocked = false;
     on("update", () => {
       if (riftenUnlocked) return;

@@ -23,6 +23,7 @@ import { LoadGameService } from './services/services/loadGameService';
 import { SendInputsService } from './services/services/sendInputsService';
 import { SinglePlayerService } from './services/services/singlePlayerService';
 import { SpApiInteractor } from './services/spApiInteractor';
+import { TimeService } from "./services/services/timeService";
 
 browser.main();
 
@@ -99,6 +100,7 @@ const main = () => {
       new EnforceLimitationsService(sp, controller),
       new SendInputsService(sp, controller),
       new SkympClient(sp, controller),
+      new TimeService(sp, controller)
     ]);
   }
   catch (e) {
