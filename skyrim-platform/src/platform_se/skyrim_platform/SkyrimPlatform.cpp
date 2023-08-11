@@ -190,31 +190,30 @@ private:
 
     // We will be able to use require()
     JsValue devApi = JsValue::Object();
-    DevApi::Register(
-      devApi, engine,
-      { { "skyrimPlatform",
-          [this, engine](JsValue e) {
-            EncodingApi::Register(e);
-            LoadGameApi::Register(e);
-            CameraApi::Register(e);
-            MpClientPluginApi::Register(e);
-            HttpClientApi::Register(e);
-            ConsoleApi::Register(e);
-            DevApi::Register(e, engine, {}, GetFileDirs());
-            EventsApi::Register(e);
-            BrowserApi::Register(e, browserApiState);
-            Win32Api::Register(e);
-            FileInfoApi::Register(e);
-            TextApi::Register(e);
-            InventoryApi::Register(e);
-            CallNativeApi::Register(e,
-                                    [this] { return nativeCallRequirements; });
-            e.SetProperty("settings", getSettings, nullptr);
+    DevApi::Register(devApi, engine,
+                     { { "skyrimPlatform",
+                         [this, engine](JsValue e) {
+                           EncodingApi::Register(e);
+                           LoadGameApi::Register(e);
+                           CameraApi::Register(e);
+                           MpClientPluginApi::Register(e);
+                           HttpClientApi::Register(e);
+                           ConsoleApi::Register(e);
+                           DevApi::Register(e, engine, {}, GetFileDirs());
+                           EventsApi::Register(e);
+                           BrowserApi::Register(e, browserApiState);
+                           Win32Api::Register(e);
+                           FileInfoApi::Register(e);
+                           TextApi::Register(e);
+                           InventoryApi::Register(e);
+                           CallNativeApi::Register(
+                             e, [this] { return nativeCallRequirements; });
+                           e.SetProperty("settings", getSettings, nullptr);
 
-            return SkyrimPlatformProxy::Attach(
-              e, [this] { return nativeCallRequirements; });
-          } } },
-      GetFileDirs());
+                           return SkyrimPlatformProxy::Attach(
+                             e, [this] { return nativeCallRequirements; });
+                         } } },
+                     GetFileDirs());
 
     JsValue consoleApi = JsValue::Object();
     ConsoleApi::Register(consoleApi);
