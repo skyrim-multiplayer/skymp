@@ -7,6 +7,9 @@ thread_local bool g_cursorIsOpenByFocus = false;
 inline CEFUtils::MyChromiumApp& GetApp(
   const std::shared_ptr<BrowserApi::State>& state)
 {
+  auto settings = Settings::GetPlatformSettings();
+  if (settings->GetBool("Debug", "ChromiumEnabled", true) == false)
+    throw NullPointerException("Chromium is disabled!");
   if (!state)
     throw NullPointerException("state");
   if (!state->overlayService)
@@ -20,6 +23,10 @@ inline CEFUtils::MyChromiumApp& GetApp(
 
 JsValue BrowserApi::SetVisible(const JsFunctionArguments& args)
 {
+  auto settings = Settings::GetPlatformSettings();
+  if (settings->GetBool("Debug", "ChromiumEnabled", true) == false)
+    throw std::runtime_error("Chromium is disabled!");
+
   bool& v = CEFUtils::DX11RenderHandler::Visible();
   v = (bool)args[1];
   return JsValue::Undefined();
@@ -27,11 +34,19 @@ JsValue BrowserApi::SetVisible(const JsFunctionArguments& args)
 
 JsValue BrowserApi::IsVisible(const JsFunctionArguments& args)
 {
+  auto settings = Settings::GetPlatformSettings();
+  if (settings->GetBool("Debug", "ChromiumEnabled", true) == false)
+    throw std::runtime_error("Chromium is disabled!");
+
   return JsValue::Bool(CEFUtils::DX11RenderHandler::Visible());
 }
 
 JsValue BrowserApi::SetFocused(const JsFunctionArguments& args)
 {
+  auto settings = Settings::GetPlatformSettings();
+  if (settings->GetBool("Debug", "ChromiumEnabled", true) == false)
+    throw std::runtime_error("Chromium is disabled!");
+
   bool& v = CEFUtils::DInputHook::ChromeFocus();
   bool newFocus = (bool)args[1];
   if (v != newFocus) {
@@ -64,24 +79,40 @@ JsValue BrowserApi::SetFocused(const JsFunctionArguments& args)
 
 JsValue BrowserApi::IsFocused(const JsFunctionArguments& args)
 {
+  auto settings = Settings::GetPlatformSettings();
+  if (settings->GetBool("Debug", "ChromiumEnabled", true) == false)
+    throw std::runtime_error("Chromium is disabled!");
+
   return JsValue::Bool(CEFUtils::DInputHook::ChromeFocus());
 }
 
 JsValue BrowserApi::LoadUrl(const JsFunctionArguments& args,
                             std::shared_ptr<State> state)
 {
+  auto settings = Settings::GetPlatformSettings();
+  if (settings->GetBool("Debug", "ChromiumEnabled", true) == false)
+    throw std::runtime_error("Chromium is disabled!");
+
   auto str = static_cast<std::string>(args[1]);
   return JsValue::Bool(GetApp(state).LoadUrl(str.data()));
 }
 
 JsValue BrowserApi::GetToken(const JsFunctionArguments& args)
 {
+  auto settings = Settings::GetPlatformSettings();
+  if (settings->GetBool("Debug", "ChromiumEnabled", true) == false)
+    throw std::runtime_error("Chromium is disabled!");
+
   return MyChromiumApp::GetCurrentSpToken();
 }
 
 JsValue BrowserApi::ExecuteJavaScript(const JsFunctionArguments& args,
                                       std::shared_ptr<State> state)
 {
+  auto settings = Settings::GetPlatformSettings();
+  if (settings->GetBool("Debug", "ChromiumEnabled", true) == false)
+    throw std::runtime_error("Chromium is disabled!");
+
   auto str = static_cast<std::string>(args[1]);
   GetApp(state).ExecuteJavaScript(str);
   return JsValue::Undefined();

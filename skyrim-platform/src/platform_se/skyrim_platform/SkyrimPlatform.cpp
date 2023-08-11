@@ -15,7 +15,6 @@
 #include "InventoryApi.h"
 #include "LoadGameApi.h"
 #include "MpClientPluginApi.h"
-#include "Settings.h"
 #include "SkyrimPlatformProxy.h"
 #include "TextApi.h"
 #include "ThreadPoolWrapper.h"
@@ -195,8 +194,6 @@ private:
       devApi, engine,
       { { "skyrimPlatform",
           [this, engine](JsValue e) {
-            auto settings = Settings::GetPlatformSettings();
-
             EncodingApi::Register(e);
             LoadGameApi::Register(e);
             CameraApi::Register(e);
@@ -205,10 +202,7 @@ private:
             ConsoleApi::Register(e);
             DevApi::Register(e, engine, {}, GetFileDirs());
             EventsApi::Register(e);
-
-            if (settings->GetBool("Debug", "ChromiumEnabled", true))
-              BrowserApi::Register(e, browserApiState);
-
+            BrowserApi::Register(e, browserApiState);
             Win32Api::Register(e);
             FileInfoApi::Register(e);
             TextApi::Register(e);
@@ -315,7 +309,10 @@ struct SkyrimPlatform::Impl
 SkyrimPlatform::SkyrimPlatform()
 {
   pImpl = std::make_shared<Impl>();
-  pImpl->browserApiState = std::make_shared<BrowserApi::State>();
+
+  auto settings = Settings::GetPlatformSettings();
+  if (settings->GetBool("Debug", "ChromiumEnabled", true))
+    pImpl->browserApiState = std::make_shared<BrowserApi::State>();
 
   pImpl->tickListeners.push_back(std::make_shared<HelloTickListener>());
   pImpl->tickListeners.push_back(
