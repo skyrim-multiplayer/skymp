@@ -24,7 +24,6 @@ export class SendInputsService implements ClientListener {
         this.controller.on("equip", (e) => this.onEquip(e));
         this.controller.on("unequip", (e) => this.onUnequip(e));
         this.controller.on("loadGame", () => this.onLoadGame());
-        this.singlePlayerService = this.controller.lookupListener("SinglePlayerService") as SinglePlayerService;
     }
 
     private onUpdate() {
@@ -248,7 +247,9 @@ export class SendInputsService implements ClientListener {
         }
     }
 
-    private singlePlayerService: SinglePlayerService;
+    private get singlePlayerService() {
+        return this.controller.lookupListener("SinglePlayerService") as SinglePlayerService;
+    }
 
     private lastSendMovementMoment = new Map<string, number>();
     private playerAnimSource = new Map<string, AnimationSource>(); // TODO: make service
