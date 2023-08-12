@@ -19,10 +19,6 @@ JsValue ExecuteJavaScript(const JsFunctionArguments& args,
 
 inline void Register(JsValue& exports, std::shared_ptr<State> state)
 {
-  auto settings = Settings::GetPlatformSettings();
-  if (settings->GetBool("Debug", "ChromiumEnabled", true) == false)
-    return;
-
   auto browser = JsValue::Object();
   browser.SetProperty("setVisible", JsValue::Function(SetVisible));
   browser.SetProperty("isVisible", JsValue::Function(IsVisible));
