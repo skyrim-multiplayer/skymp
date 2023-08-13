@@ -32,6 +32,12 @@ struct Playback
   std::chrono::time_point<std::chrono::steady_clock> startTime;
 };
 
+struct DeferredMessage {
+  std::vector<uint8_t> packetData;
+  bool packetReliable = false;
+  uint32_t actorIdExpected = 0;
+};
+
 struct UserInfo
 {
   bool isDisconnecting = false;
@@ -40,6 +46,8 @@ struct UserInfo
   PacketHistory packetHistory;
   std::optional<std::chrono::time_point<std::chrono::steady_clock>>
     packetHistoryStartTime;
+
+  std::vector<std::optional<DeferredMessage>> deferredChannels;
 };
 
 class ServerState
@@ -51,6 +59,7 @@ public:
   Networking::UserId maxConnectedId = 0;
   ActorsMap actorsMap;
   Networking::UserId disconnectingUserId = Networking::InvalidUserId;
+
   std::map<Networking::UserId, Playback>
     activePlaybacks; // do not modify directly, use requestedPlaybacks
   std::map<Networking::UserId, Playback> requestedPlaybacks;

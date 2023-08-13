@@ -1306,6 +1306,7 @@ void MpObjectReference::InitListenersAndEmitters()
 
 void MpObjectReference::SendInventoryUpdate()
 {
+  constexpr int kChannelSetInventory = 0;
   auto actor = dynamic_cast<MpActor*>(this);
   if (actor) {
     std::string msg;
@@ -1314,7 +1315,7 @@ void MpObjectReference::SendInventoryUpdate()
       { "inventory", actor->GetInventory().ToJson() },
       { "type", "setInventory" }
     }.dump();
-    actor->SendToUser(msg.data(), msg.size(), true);
+    actor->SendToUserDeferred(msg.data(), msg.size(), true, kChannelSetInventory);
   }
 }
 
