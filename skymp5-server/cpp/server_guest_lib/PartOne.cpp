@@ -37,8 +37,8 @@ struct PartOne::Impl
   simdjson::dom::parser parser;
   espm::Loader* espm = nullptr;
 
-  std::function<void(Networking::ISendTarget* sendTarget,
-                     MpObjectReference* emitter, MpObjectReference* listener)>
+  std::function<void(Networking::ISendTarget*sendTarget,
+                     MpObjectReference*emitter, MpObjectReference*listener)>
     onSubscribe, onUnsubscribe;
 
   espm::CompressedFieldsCache compressedFieldsCache;
@@ -448,11 +448,11 @@ FormCallbacks PartOne::CreateFormCallbacks()
 
   FormCallbacks::SubscribeCallback
     subscribe =
-      [this](MpObjectReference* emitter, MpObjectReference* listener) {
+      [this](MpObjectReference*emitter, MpObjectReference*listener) {
         return pImpl->onSubscribe(pImpl->sendTarget, emitter, listener);
       },
-    unsubscribe = [this](MpObjectReference* emitter,
-                         MpObjectReference* listener) {
+    unsubscribe = [this](MpObjectReference*emitter,
+                         MpObjectReference*listener) {
       return pImpl->onUnsubscribe(pImpl->sendTarget, emitter, listener);
     };
 
@@ -778,13 +778,15 @@ void PartOne::TickPacketHistoryPlaybacks()
   }
 }
 
-void PartOne::TickDeferredMessages() {
-  for (Networking::UserId userId = 0; userId < serverState.userInfo.size(); ++userId) {
-    auto &userInfo = serverState.userInfo[userId];
+void PartOne::TickDeferredMessages()
+{
+  for (Networking::UserId userId = 0; userId < serverState.userInfo.size();
+       ++userId) {
+    auto& userInfo = serverState.userInfo[userId];
     if (!userInfo) {
       continue;
     }
-    for (auto &deferredMessage : userInfo->deferredChannels) {
+    for (auto& deferredMessage : userInfo->deferredChannels) {
       if (deferredMessage != std::nullopt) {
         auto actor = serverState.ActorByUser(userId);
         if (!actor) {
@@ -796,8 +798,10 @@ void PartOne::TickDeferredMessages() {
         }
 
         pImpl->sendTarget->Send(userId,
-                                reinterpret_cast<Networking::PacketData>(deferredMessage->packetData.data()),
-                                deferredMessage->packetData.size(), deferredMessage->packetReliable);
+                                reinterpret_cast<Networking::PacketData>(
+                                  deferredMessage->packetData.data()),
+                                deferredMessage->packetData.size(),
+                                deferredMessage->packetReliable);
 
         deferredMessage = std::nullopt;
       }

@@ -1315,7 +1315,8 @@ void MpObjectReference::SendInventoryUpdate()
       { "inventory", actor->GetInventory().ToJson() },
       { "type", "setInventory" }
     }.dump();
-    actor->SendToUserDeferred(msg.data(), msg.size(), true, kChannelSetInventory);
+    actor->SendToUserDeferred(msg.data(), msg.size(), true,
+                              kChannelSetInventory);
   }
 }
 

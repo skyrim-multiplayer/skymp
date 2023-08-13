@@ -32,7 +32,8 @@ struct Playback
   std::chrono::time_point<std::chrono::steady_clock> startTime;
 };
 
-struct DeferredMessage {
+struct DeferredMessage
+{
   std::vector<uint8_t> packetData;
   bool packetReliable = false;
   uint32_t actorIdExpected = 0;

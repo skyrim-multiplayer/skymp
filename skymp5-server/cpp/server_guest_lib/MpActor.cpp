@@ -144,18 +144,18 @@ void MpActor::SendToUser(const void* data, size_t size, bool reliable)
 {
   if (callbacks->sendToUser) {
     callbacks->sendToUser(this, data, size, reliable);
-  }
-  else {
+  } else {
     throw std::runtime_error("sendToUser is nullptr");
   }
 }
 
-void MpActor::SendToUserDeferred(const void* data, size_t size, bool reliable, int deferredChannelId) 
+void MpActor::SendToUserDeferred(const void* data, size_t size, bool reliable,
+                                 int deferredChannelId)
 {
   if (callbacks->sendToUserDeferred) {
-    callbacks->sendToUserDeferred(this, data, size, reliable, deferredChannelId);
-  }
-  else {
+    callbacks->sendToUserDeferred(this, data, size, reliable,
+                                  deferredChannelId);
+  } else {
     throw std::runtime_error("sendToUserDeferred is nullptr");
   }
 }
