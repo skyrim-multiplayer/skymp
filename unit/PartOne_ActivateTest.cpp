@@ -431,6 +431,7 @@ TEST_CASE("BarrelFood01 PutItem/TakeItem", "[PartOne][espm]")
               { "baseId", 0x12eb7 },
               { "count", 1 },
               { "target", refrId } });
+  partOne.Tick(); // send deferred inventory update messages
   REQUIRE(partOne.Messages().size() == 1);
   REQUIRE(partOne.Messages()[0].j["type"] == "setInventory");
   REQUIRE(ref.GetInventory().GetItemCount(0x12eb7) == 1);
