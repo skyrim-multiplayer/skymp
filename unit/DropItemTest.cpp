@@ -24,8 +24,8 @@ TEST_CASE("Dropping an item", "[DropItemTest]")
   REQUIRE(ac.GetInventory().GetTotalItemCount() == 0);
   ac.AddItem(ironDagger, 1);
   REQUIRE(ac.GetInventory().GetTotalItemCount() == 1);
-  partOne.Messages().clear();
   partOne.Tick(); // send deferred inventory update messages
+  partOne.Messages().clear();
   REQUIRE(partOne.Messages().size() == 0);
   DoMessage(partOne, 0,
             nlohmann::json{ { "t", MsgType::DropItem },
