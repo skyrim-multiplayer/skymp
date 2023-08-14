@@ -559,16 +559,16 @@ TEST_CASE("Activate torch", "[espm][PartOne]")
   partOne.Tick(); // send deferred inventory update messages
 
   REQUIRE(partOne.Messages().size() >= 2);
-  REQUIRE(partOne.Messages()[0].j["type"] == "setInventory");
+  REQUIRE(partOne.Messages()[0].j["idx"] == ref.GetIdx());
+  REQUIRE(partOne.Messages()[0].j["t"] == MsgType::UpdateProperty);
+  REQUIRE(partOne.Messages()[0].j["data"] == true);
+  REQUIRE(partOne.Messages()[0].j["propName"] == "isHarvested");
+  REQUIRE(partOne.Messages()[1].j["type"] == "setInventory");
   REQUIRE(
-    partOne.Messages()[0].j["inventory"].dump() ==
+    partOne.Messages()[1].j["inventory"].dump() ==
     nlohmann::json(
       { { "entries", { { { "baseId", torchBaseId }, { "count", 1 } } } } })
       .dump());
-  REQUIRE(partOne.Messages()[1].j["idx"] == ref.GetIdx());
-  REQUIRE(partOne.Messages()[1].j["t"] == MsgType::UpdateProperty);
-  REQUIRE(partOne.Messages()[1].j["data"] == true);
-  REQUIRE(partOne.Messages()[1].j["propName"] == "isHarvested");
 
   REQUIRE(ref.IsHarvested());
 
