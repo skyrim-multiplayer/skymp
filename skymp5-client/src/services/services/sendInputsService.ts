@@ -1,20 +1,20 @@
 import { ClientListener, CombinedController, Sp } from "./clientListener";
 import { SinglePlayerService } from "./singlePlayerService";
-import { FormModel } from "../modelSource/model";
-import { MsgType } from "../messages";
-import { ModelSource } from "../modelSource/modelSource";
-import { getMovement } from "../sync/movementGet";
+import { FormModel } from "../../modelSource/model";
+import { MsgType } from "../../messages";
+import { ModelSource } from "../../modelSource/modelSource";
+import { getMovement } from "../../sync/movementGet";
 
 // TODO: refactor this out
-import * as worldViewMisc from "../view/worldViewMisc";
+import * as worldViewMisc from "../../view/worldViewMisc";
 
-import { Animation, AnimationSource } from "../sync/animation";
+import { Animation, AnimationSource } from "../../sync/animation";
 import { Actor, EquipEvent } from "skyrimPlatform";
-import { getAppearance } from "../sync/appearance";
-import { ActorValues, getActorValues } from "../sync/actorvalues";
-import { getEquipment } from "../sync/equipment";
-import { nextHostAttempt } from "../view/hostAttempts";
-import { SkympClient } from "../skympClient";
+import { getAppearance } from "../../sync/appearance";
+import { ActorValues, getActorValues } from "../../sync/actorvalues";
+import { getEquipment } from "../../sync/equipment";
+import { nextHostAttempt } from "../../view/hostAttempts";
+import { SkympClient } from "./skympClient";
 
 const playerFormId = 0x14;
 
@@ -24,7 +24,6 @@ export class SendInputsService implements ClientListener {
         this.controller.on("equip", (e) => this.onEquip(e));
         this.controller.on("unequip", (e) => this.onUnequip(e));
         this.controller.on("loadGame", () => this.onLoadGame());
-        this.singlePlayerService = this.controller.lookupListener("SinglePlayerService") as SinglePlayerService;
     }
 
     private onUpdate() {
@@ -248,7 +247,9 @@ export class SendInputsService implements ClientListener {
         }
     }
 
-    private singlePlayerService: SinglePlayerService;
+    private get singlePlayerService() {
+        return this.controller.lookupListener("SinglePlayerService") as SinglePlayerService;
+    }
 
     private lastSendMovementMoment = new Map<string, number>();
     private playerAnimSource = new Map<string, AnimationSource>(); // TODO: make service

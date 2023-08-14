@@ -1,13 +1,10 @@
 import { ClientListener, CombinedController, Sp } from "./clientListener";
-import { GameLoadEvent, LoadGameService } from "./loadGameService";
-import * as networking from "../networking";
+import * as networking from "../../networking";
+import { GameLoadEvent } from "../events/gameLoadEvent";
 
 export class SinglePlayerService implements ClientListener {
     constructor(private sp: Sp, private controller: CombinedController) {
-        this.controller.registerListenerForLookup("SinglePlayerService", this);
-
-        const loadGameService = this.controller.lookupListener("LoadGameService") as LoadGameService;
-        loadGameService.events.on("gameLoad", (e) => this.onGameLoad(e));
+        this.controller.emitter.on("gameLoad", (e) => this.onGameLoad(e));
     }
 
     get isSinglePlayer() {

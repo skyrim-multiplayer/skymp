@@ -49,7 +49,7 @@ import { ModelSource } from './modelSource';
 import { MsgHandler } from './msgHandler';
 import { SendTarget } from './sendTarget';
 import { SpApiInteractor } from '../services/spApiInteractor';
-import { LoadGameService } from '../services/loadGameService';
+import { LoadGameService } from '../services/services/loadGameService';
 
 const onceLoad = (
   refrId: number,

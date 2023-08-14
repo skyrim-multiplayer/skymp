@@ -1,4 +1,5 @@
-import { ClientListener, CombinedController } from "./clientListener";
+import { EventEmitterFactory } from "./events/eventEmitterFactory";
+import { ClientListener, CombinedController } from "./services/clientListener";
 import * as sp from "skyrimPlatform";
 
 export class SpApiInteractor {
@@ -10,12 +11,7 @@ export class SpApiInteractor {
             // TODO: handle errors in event handlers. will output to game console by default
             on: sp.on,
             once: sp.once,
-            registerListenerForLookup(listenerName: string, listener: ClientListener): void {
-                if (SpApiInteractor.listenersForLookupByName.has(listenerName)) {
-                    throw new Error(`listener re-registration for name '${listenerName}'`);
-                }
-                SpApiInteractor.listenersForLookupByName.set(listenerName, listener);
-            },
+            emitter: EventEmitterFactory.makeEventEmitter(),
             lookupListener(listenerName: string): ClientListener {
                 const listener = SpApiInteractor.listenersForLookupByName.get(listenerName);
                 if (listener === undefined) {
@@ -24,6 +20,13 @@ export class SpApiInteractor {
                 return listener;
             },
         }
+    }
+
+    static registerListenerForLookup(listenerName: string, listener: ClientListener): void {
+        if (SpApiInteractor.listenersForLookupByName.has(listenerName)) {
+            throw new Error(`listener re-registration for name '${listenerName}'`);
+        }
+        SpApiInteractor.listenersForLookupByName.set(listenerName, listener);
     }
 
     private static listenersForLookupByName = new Map<string, ClientListener>();
