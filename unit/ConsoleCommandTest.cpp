@@ -92,6 +92,8 @@ TEST_CASE("AddItem executes", "[ConsoleCommand][espm]")
   p.GetActionListener().OnConsoleCommand(msgData, "additem",
                                          { 0x14, 0x12eb7, 0x108 });
 
+  p.Tick(); // send deferred inventory update messages
+
   nlohmann::json expectedInv{
     { "entries", { { { "baseId", 0x12eb7 }, { "count", 0x108 } } } }
   };

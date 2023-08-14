@@ -311,6 +311,8 @@ TEST_CASE("Activate PurpleMountainFlower in Whiterun", "[PartOne][espm]")
               { "t", MsgType::Activate },
               { "data", { { "caster", 0x14 }, { "target", refrId } } } });
 
+  partOne.Tick(); // send deferred inventory update messages
+
   REQUIRE(partOne.Messages().size() >= 2);
   REQUIRE(partOne.Messages()[0].j["type"] == "setInventory");
   REQUIRE(partOne.Messages()[0].j["inventory"].dump() ==
@@ -411,6 +413,7 @@ TEST_CASE("BarrelFood01 PutItem/TakeItem", "[PartOne][espm]")
               { "count", 2 },
               { "worn", true },
               { "target", refrId } });
+  partOne.Tick(); // send deferred inventory update messages
   REQUIRE(partOne.Messages().size() == 1);
   REQUIRE(partOne.Messages()[0].j["type"] == "setInventory");
 
@@ -552,6 +555,8 @@ TEST_CASE("Activate torch", "[espm][PartOne]")
             nlohmann::json{
               { "t", MsgType::Activate },
               { "data", { { "caster", 0x14 }, { "target", refrId } } } });
+
+  partOne.Tick(); // send deferred inventory update messages
 
   REQUIRE(partOne.Messages().size() >= 2);
   REQUIRE(partOne.Messages()[0].j["type"] == "setInventory");
