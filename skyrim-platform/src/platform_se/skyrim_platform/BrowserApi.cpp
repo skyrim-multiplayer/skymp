@@ -7,9 +7,6 @@ thread_local bool g_cursorIsOpenByFocus = false;
 inline CEFUtils::MyChromiumApp& GetApp(
   const std::shared_ptr<BrowserApi::State>& state)
 {
-  auto settings = Settings::GetPlatformSettings();
-  if (settings->GetBool("Debug", "ChromiumEnabled", true) == false)
-    throw NullPointerException("Chromium is disabled!");
   if (!state)
     throw NullPointerException("state");
   if (!state->overlayService)

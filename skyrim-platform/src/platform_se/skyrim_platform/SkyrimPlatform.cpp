@@ -308,10 +308,7 @@ struct SkyrimPlatform::Impl
 SkyrimPlatform::SkyrimPlatform()
 {
   pImpl = std::make_shared<Impl>();
-
-  auto settings = Settings::GetPlatformSettings();
-  if (settings->GetBool("Debug", "ChromiumEnabled", true))
-    pImpl->browserApiState = std::make_shared<BrowserApi::State>();
+  pImpl->browserApiState = std::make_shared<BrowserApi::State>();
 
   pImpl->tickListeners.push_back(std::make_shared<HelloTickListener>());
   pImpl->tickListeners.push_back(
