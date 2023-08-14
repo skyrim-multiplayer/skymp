@@ -448,20 +448,6 @@ void UseCraftRecipe(MpActor* me, espm::COBJ::Data recipeData,
   }
   me->RemoveItems(entries);
   me->AddItem(outputFormId, recipeData.outputCount);
-
-  // A hack to fix craft items do not appear (likely related to random
-  // SendInventoryUpdate ordering in RemoveItems/AddItem)
-  auto formId = me->GetFormId();
-  if (auto worldState = me->GetParent()) {
-    worldState->SetTimer(std::chrono::seconds(1))
-      .Then([worldState, formId](Viet::Void) {
-        auto actor = std::dynamic_pointer_cast<MpActor>(
-          worldState->LookupFormById(formId));
-        if (actor) {
-          actor->SendInventoryUpdate();
-        }
-      });
-  }
 }
 
 void ActionListener::OnCraftItem(const RawMessageData& rawMsgData,
