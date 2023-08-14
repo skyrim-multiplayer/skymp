@@ -25,6 +25,12 @@ import { SinglePlayerService } from './services/services/singlePlayerService';
 import { SpApiInteractor } from './services/spApiInteractor';
 import { TimeService } from "./services/services/timeService";
 import { SpVersionCheckService } from "./services/services/spVersionCheckService";
+import { ConsoleCommandsService } from "./services/services/consoleCommandsService";
+import { LastInvService } from "./services/services/lastInvService";
+import { ActivationService } from "./services/services/activationService";
+import { CraftService } from "./services/services/craftService";
+import { DropItemService } from "./services/services/dropItemService";
+import { HitService } from "./services/services/hitService";
 
 browser.main();
 
@@ -102,7 +108,13 @@ const main = () => {
       new SendInputsService(sp, controller),
       new SkympClient(sp, controller),
       new TimeService(sp, controller),
-      new SpVersionCheckService(sp, controller)
+      new SpVersionCheckService(sp, controller),
+      new ConsoleCommandsService(sp, controller),
+      new LastInvService(sp, controller),
+      new ActivationService(sp, controller),
+      new CraftService(sp, controller),
+      new DropItemService(sp, controller),
+      new HitService(sp, controller)
     ];
     SpApiInteractor.setup(listeners);
     listeners.forEach(listener => SpApiInteractor.registerListenerForLookup(listener.constructor.name, listener));
