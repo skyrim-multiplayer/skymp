@@ -77,7 +77,13 @@ public:
   template <typename T>
   Viet::Promise<Viet::Void> SetTimer(T&& duration)
   {
-    return timer.SetTimer(std::forward<T>(duration));
+    return timerRegular.SetTimer(std::forward<T>(duration));
+  }
+
+  template <typename T>
+  Viet::Promise<Viet::Void> SetEffectTimer(T&& duration)
+  {
+    return timerEffects.SetTimer(std::forward<T>(duration));
   }
 
   template <typename T>
@@ -93,7 +99,10 @@ public:
   Viet::Promise<Viet::Void> SetTimer(
     std::reference_wrapper<const std::chrono::system_clock::time_point>
       wrapper);
-  bool RemoveTimer(const std::chrono::system_clock::time_point& endTime);
+  Viet::Promise<Viet::Void> SetEffectTimer(
+    std::reference_wrapper<const std::chrono::system_clock::time_point>
+      wrapper);
+  bool RemoveEffectTimer(const std::chrono::system_clock::time_point& endTime);
 
   const std::shared_ptr<MpForm>& LookupFormById(uint32_t formId);
 
@@ -246,5 +255,5 @@ private:
 
   struct Impl;
   std::shared_ptr<Impl> pImpl;
-  Viet::Timer timer;
+  Viet::Timer timerEffects, timerRegular;
 };

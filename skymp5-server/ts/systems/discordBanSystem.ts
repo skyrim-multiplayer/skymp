@@ -13,16 +13,20 @@ export class DiscordBanSystem implements System {
     async initAsync(ctx: SystemContext): Promise<void> {
         let discordAuth = Settings.get().discordAuth;
 
-        if (discordAuth && !discordAuth.botToken) {
-            discordAuth = undefined;
+        if (!discordAuth) {
+            if (Settings.get().offlineMode) {
+                // This is fine for offline mode
+                return;
+            }
+            return console.error("discordAuth is missing, skipping Discord ban system");
+        }
+        if (!discordAuth.botToken) {
             return console.error("discordAuth.botToken is missing, skipping Discord ban system");
         }
-        if (discordAuth && !discordAuth.guildId) {
-            discordAuth = undefined;
+        if (!discordAuth.guildId) {
             return console.error("discordAuth.guildId is missing, skipping Discord ban system");
         }
-        if (discordAuth && !discordAuth.banRoleId) {
-            discordAuth = undefined;
+        if (!discordAuth.banRoleId) {
             return console.error("discordAuth.banRoleId is missing, skipping Discord ban system");
         } 
 

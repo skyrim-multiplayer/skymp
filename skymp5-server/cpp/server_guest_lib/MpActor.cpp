@@ -836,7 +836,7 @@ void MpActor::ApplyMagicEffect(espm::Effects::Effect& effect, bool hasSweetpie,
     if (activeEffects.Has(av)) {
       const ActiveMagicEffectsMap::Entry& entry =
         activeEffects.Get(av).value().get();
-      worldState->RemoveTimer(entry.endTime);
+      worldState->RemoveEffectTimer(entry.endTime);
     }
     EditChangeForm([av, pEntry = &entry](MpChangeForm& changeForm) {
       changeForm.activeMagicEffects.Add(av, *pEntry);
@@ -862,7 +862,7 @@ void MpActor::ApplyMagicEffect(espm::Effects::Effect& effect, bool hasSweetpie,
                     mult, baseValue * mult);
       SetActorValue(av, baseValue * mult);
     }
-    worldState->SetTimer(std::cref(endTime))
+    worldState->SetEffectTimer(std::cref(endTime))
       .Then([formId, actorValue = av, worldState](Viet::Void) {
         auto& actor = worldState->GetFormAt<MpActor>(formId);
         actor.RemoveMagicEffect(actorValue);

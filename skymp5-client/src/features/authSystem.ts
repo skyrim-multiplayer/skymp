@@ -4,7 +4,7 @@ import { AuthGameData, RemoteAuthGameData } from "./authModel";
 import { Transform } from "../sync/movement";
 import { FunctionInfo } from "../lib/functionInfo";
 import { SpApiInteractor } from "../services/spApiInteractor";
-import { LoadGameService } from "../services/loadGameService";
+import { LoadGameService } from "../services/services/loadGameService";
 
 const normalizeUrl = (url: string) => {
   if (url.endsWith('/')) {

@@ -10,20 +10,20 @@ import {
   storage,
 } from 'skyrimPlatform';
 
-import * as netInfo from './debug/netInfoSystem';
-import * as updateOwner from './gamemodeApi/updateOwner';
-import * as networking from './networking';
-import * as taffyPerkSystem from './sweetpie/taffyPerkSystem';
-import * as deathSystem from './sync/deathSystem';
-import { setUpConsoleCommands } from './features/console';
-import { HostStartMessage, HostStopMessage, MsgType } from './messages';
-import { ModelSource } from './modelSource/modelSource';
-import { MsgHandler } from './modelSource/msgHandler';
-import { RemoteServer, getPcInventory } from './modelSource/remoteServer';
-import { SendTarget } from './modelSource/sendTarget';
-import { setupHooks } from './sync/animation';
-import { getHitData } from './sync/hit';
-import * as animDebugSystem from './debug/animDebugSystem';
+import * as netInfo from '../../debug/netInfoSystem';
+import * as updateOwner from '../../gamemodeApi/updateOwner';
+import * as networking from '../../networking';
+import * as taffyPerkSystem from '../../sweetpie/taffyPerkSystem';
+import * as deathSystem from '../../sync/deathSystem';
+import { setUpConsoleCommands } from '../../features/console';
+import { HostStartMessage, HostStopMessage, MsgType } from '../../messages';
+import { ModelSource } from '../../modelSource/modelSource';
+import { MsgHandler } from '../../modelSource/msgHandler';
+import { RemoteServer, getPcInventory } from '../../modelSource/remoteServer';
+import { SendTarget } from '../../modelSource/sendTarget';
+import { setupHooks } from '../../sync/animation';
+import { getHitData } from '../../sync/hit';
+import * as animDebugSystem from '../../debug/animDebugSystem';
 import {
   Inventory,
   getDiff,
@@ -31,18 +31,17 @@ import {
   hasExtras,
   removeSimpleItemsAsManyAsPossible,
   sumInventories,
-} from './sync/inventory';
-import { WorldView } from './view/worldView';
-import { localIdToRemoteId } from './view/worldViewMisc';
-import { SinglePlayerService } from './services/singlePlayerService';
-import { SpApiInteractor } from './services/spApiInteractor';
-import { verifyVersion } from './version';
-import * as authSystem from "./features/authSystem";
-import * as playerCombatSystem from "./sweetpie/playerCombatSystem";
-import { AuthGameData } from './features/authModel';
-import { Transform } from './sync/movement';
-import * as browser from "./features/browser";
-import { CombinedController, Sp } from './services/clientListener';
+} from '../../sync/inventory';
+import { WorldView } from '../../view/worldView';
+import { localIdToRemoteId } from '../../view/worldViewMisc';
+import { SinglePlayerService } from './singlePlayerService';
+import { verifyVersion } from '../../version';
+import * as authSystem from "../../features/authSystem";
+import * as playerCombatSystem from "../../sweetpie/playerCombatSystem";
+import { AuthGameData } from '../../features/authModel';
+import { Transform } from '../../sync/movement';
+import * as browser from "../../features/browser";
+import { CombinedController, Sp } from './clientListener';
 
 interface AnyMessage {
   type?: string;
@@ -116,8 +115,6 @@ export const connectWhenICallAndNotWhenIImport = (): void => {
 
 export class SkympClient {
   constructor(private sp: Sp, private controller: CombinedController) {
-    controller.registerListenerForLookup("SkympClient", this);
-
     const authGameData = storage[AuthGameData.storageKey] as AuthGameData | undefined;
     if (!(authGameData?.local || authGameData?.remote)) {
       authSystem.addAuthListener((data) => {
@@ -144,59 +141,6 @@ export class SkympClient {
     once("update", () => authSystem.setPlayerAuthMode(false));
     connectWhenICallAndNotWhenIImport();
     this.ctor();
-
-    once("update", verifyVersion);
-
-    let lastTimeUpd = 0;
-    const hoursOffset = -3;
-    const hoursOffsetMs = hoursOffset * 60 * 60 * 1000;
-    on("update", () => {
-      if (Date.now() - lastTimeUpd <= 2000) return;
-      lastTimeUpd = Date.now();
-
-      const gameHourId = 0x38;
-      const gameMonthId = 0x36;
-      const gameDayId = 0x37;
-      const gameYearId = 0x35;
-      const timeScaleId = 0x3a;
-
-      const gameHour = sp.GlobalVariable.from(Game.getFormEx(gameHourId));
-      const gameDay = sp.GlobalVariable.from(Game.getFormEx(gameDayId));
-      const gameMonth = sp.GlobalVariable.from(Game.getFormEx(gameMonthId));
-      const gameYear = sp.GlobalVariable.from(Game.getFormEx(gameYearId));
-      const timeScale = sp.GlobalVariable.from(Game.getFormEx(timeScaleId));
-      if (!gameHour || !gameDay || !gameMonth || !gameYear || !timeScale) {
-        return;
-      }
-
-      const d = new Date(Date.now() + hoursOffsetMs);
-
-      let newGameHourValue = 0;
-      newGameHourValue += d.getUTCHours();
-      newGameHourValue += d.getUTCMinutes() / 60;
-      newGameHourValue += d.getUTCSeconds() / 60 / 60;
-      newGameHourValue += d.getUTCMilliseconds() / 60 / 60 / 1000;
-
-      const diff = Math.abs(gameHour.getValue() - newGameHourValue);
-
-      if (diff >= 1 / 60) {
-        gameHour.setValue(newGameHourValue);
-        gameDay.setValue(d.getUTCDate());
-        gameMonth.setValue(d.getUTCMonth());
-        gameYear.setValue(d.getUTCFullYear() - 2020 + 199);
-      }
-
-      timeScale.setValue(gameHour.getValue() > newGameHourValue ? 0.6 : 1.2);
-    });
-
-    let riftenUnlocked = false;
-    on("update", () => {
-      if (riftenUnlocked) return;
-      const refr = ObjectReference.from(Game.getFormEx(0x42284));
-      if (!refr) return;
-      refr.lock(false, false);
-      riftenUnlocked = true;
-    });
   }
 
   private ctor() {
