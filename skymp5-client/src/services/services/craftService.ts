@@ -9,8 +9,9 @@ import { SkympClient } from "./skympClient";
 
 type FurnitureId = number;
 
-export class CraftService implements ClientListener {
+export class CraftService extends ClientListener {
     constructor(private sp: Sp, private controller: CombinedController) {
+        super();
         controller.on('containerChanged', (e) => this.onContainerChanged(e));
     }
 
@@ -67,16 +68,6 @@ export class CraftService implements ClientListener {
                 );
             }
         }
-    }
-
-    // TODO: redirect this to spdlog
-    private logError(error: string) {
-        this.sp.printConsole("Error in CraftService:", error);
-    }
-
-    // TODO: redirect this to spdlog
-    private logTrace(trace: string) {
-        this.sp.printConsole("Trace in CraftService:", trace);
     }
 
     private furnitureStreak = new Map<FurnitureId, Inventory>();

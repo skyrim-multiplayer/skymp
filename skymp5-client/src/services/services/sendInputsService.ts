@@ -19,8 +19,9 @@ import { SkympClient } from "./skympClient";
 const playerFormId = 0x14;
 
 // TODO: split this service
-export class SendInputsService implements ClientListener {
+export class SendInputsService extends ClientListener {
     constructor(private sp: Sp, private controller: CombinedController) {
+        super();
         this.controller.on("update", () => this.onUpdate());
         this.controller.on("equip", (e) => this.onEquip(e));
         this.controller.on("unequip", (e) => this.onUnequip(e));
@@ -278,16 +279,6 @@ export class SendInputsService implements ClientListener {
 
     private get singlePlayerService() {
         return this.controller.lookupListener("SinglePlayerService") as SinglePlayerService;
-    }
-
-    // TODO: redirect this to spdlog
-    private logError(error: string) {
-        this.sp.printConsole("Error in ConsoleCommandsService:", error);
-    }
-
-    // TODO: redirect this to spdlog
-    private logTrace(trace: string) {
-        this.sp.printConsole("Trace in ConsoleCommandsService:", trace);
     }
 
     private lastSendMovementMoment = new Map<string, number>();

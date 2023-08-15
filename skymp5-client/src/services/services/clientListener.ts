@@ -8,7 +8,16 @@ export interface ClientListenerEvents {
 
 export type Sp = Omit<typeof sp, "on" | "once">;
 
-export interface ClientListener {
+export abstract class ClientListener {
+    // TODO: redirect this to spdlog
+    protected logError(error: string) {
+        sp.printConsole(`Error in ${this.constructor.name}:`, error);
+    }
+
+    // TODO: redirect this to spdlog
+    protected logTrace(trace: string) {
+        sp.printConsole(`Trace in ${this.constructor.name}:`, trace);
+    }
 }
 
 export type ListenerLookupController = {

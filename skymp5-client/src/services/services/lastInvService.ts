@@ -1,8 +1,9 @@
 import { Inventory } from "../../sync/inventory";
 import { ClientListener, CombinedController, Sp } from "./clientListener";
 
-export class LastInvService implements ClientListener {
+export class LastInvService extends ClientListener {
     constructor(private sp: Sp, private controller: CombinedController) {
+        super();
     }
 
     get lastInv() {

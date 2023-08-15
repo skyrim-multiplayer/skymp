@@ -7,8 +7,9 @@ import * as taffyPerkSystem from '../../sweetpie/taffyPerkSystem';
 import { MsgType } from "../../messages";
 import { SkympClient } from "./skympClient";
 
-export class DropItemService implements ClientListener {
+export class DropItemService extends ClientListener {
     constructor(private sp: Sp, private controller: CombinedController) {
+        super();
         controller.on('containerChanged', (e) => this.onContainerChanged(e));
     }
 
@@ -55,15 +56,5 @@ export class DropItemService implements ClientListener {
                 }
             }
         }
-    }
-
-    // TODO: redirect this to spdlog
-    private logError(error: string) {
-        this.sp.printConsole("Error in DropItemService:", error);
-    }
-
-    // TODO: redirect this to spdlog
-    private logTrace(trace: string) {
-        this.sp.printConsole("Trace in DropItemService:", trace);
     }
 }

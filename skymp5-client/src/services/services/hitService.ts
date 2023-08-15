@@ -4,8 +4,9 @@ import { MsgType } from "../../messages";
 import { getHitData } from "../../sync/hit";
 import { SkympClient } from "./skympClient";
 
-export class HitService implements ClientListener {
+export class HitService extends ClientListener {
     constructor(private sp: Sp, private controller: CombinedController) {
+        super();
         controller.on('hit', (e) => this.onHit(e));
     }
 
@@ -26,15 +27,5 @@ export class HitService implements ClientListener {
             }
             sendTarget.send({ t: MsgType.OnHit, data: getHitData(e) }, true);
         }
-    }
-
-    // TODO: redirect this to spdlog
-    private logError(error: string) {
-        this.sp.printConsole("Error in HitService:", error);
-    }
-
-    // TODO: redirect this to spdlog
-    private logTrace(trace: string) {
-        this.sp.printConsole("Trace in HitService:", trace);
     }
 }

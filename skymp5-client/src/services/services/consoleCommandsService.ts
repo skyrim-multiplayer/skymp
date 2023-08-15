@@ -15,8 +15,9 @@ enum CmdArgument {
 
 type CmdName = "additem" | "placeatme" | "disable" | "mp";
 
-export class ConsoleCommandsService implements ClientListener {
+export class ConsoleCommandsService extends ClientListener {
     constructor(private sp: Sp, private controller: CombinedController) {
+        super();
         this.schemas = ConsoleCommandsService.createSchemas();
         this.setupMpCommand();
         this.setupVanilaCommands();
@@ -88,16 +89,6 @@ export class ConsoleCommandsService implements ClientListener {
             this.sp.printConsole("sent");
             return false;
         };
-    }
-
-    // TODO: redirect this to spdlog
-    private logError(error: string) {
-        this.sp.printConsole("Error in ConsoleCommandsService:", error);
-    }
-
-    // TODO: redirect this to spdlog
-    private logTrace(trace: string) {
-        this.sp.printConsole("Trace in ConsoleCommandsService:", trace);
     }
 
     private readonly schemas: Map<CmdName, CmdArgument[]>;

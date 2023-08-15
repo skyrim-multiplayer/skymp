@@ -9,8 +9,9 @@ import { localIdToRemoteId } from "../../view/worldViewMisc";
 import { SkympClient } from "./skympClient";
 import { LastInvService } from "./lastInvService";
 
-export class ActivationService implements ClientListener {
+export class ActivationService extends ClientListener {
     constructor(private sp: Sp, private controller: CombinedController) {
+        super();
         this.controller.on("activate", (e) => this.onActivate(e));
     }
 
@@ -46,7 +47,7 @@ export class ActivationService implements ClientListener {
             Closed,
             Closing,
         }
-        
+
         if (openState === OpenState.Opening || openState === OpenState.Closing) {
             return this.logTrace("Ignoring activation of door because it's already opening or closing");
         }
@@ -63,15 +64,5 @@ export class ActivationService implements ClientListener {
         );
 
         this.logTrace(`Sent activation for caster=${caster.toString(16)} and target=${target.toString(16)}`);
-    }
-
-    // TODO: redirect this to spdlog
-    private logError(error: string) {
-        this.sp.printConsole("Error in ActivationService:", error);
-    }
-
-    // TODO: redirect this to spdlog
-    private logTrace(trace: string) {
-        this.sp.printConsole("Trace in ActivationService:", trace);
     }
 };

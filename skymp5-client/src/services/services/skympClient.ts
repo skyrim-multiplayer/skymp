@@ -25,7 +25,7 @@ import * as playerCombatSystem from "../../sweetpie/playerCombatSystem";
 import { AuthGameData } from '../../features/authModel';
 import { Transform } from '../../sync/movement';
 import * as browser from "../../features/browser";
-import { CombinedController, Sp } from './clientListener';
+import { ClientListener, CombinedController, Sp } from './clientListener';
 
 interface AnyMessage {
   type?: string;
@@ -97,8 +97,10 @@ export const connectWhenICallAndNotWhenIImport = (): void => {
   }
 };
 
-export class SkympClient {
+export class SkympClient extends ClientListener {
   constructor(private sp: Sp, private controller: CombinedController) {
+    super();
+    
     const authGameData = storage[AuthGameData.storageKey] as AuthGameData | undefined;
     if (!(authGameData?.local || authGameData?.remote)) {
       authSystem.addAuthListener((data) => {
@@ -228,16 +230,6 @@ export class SkympClient {
       if (!singlePlayerService.isSinglePlayer)
         view.update((this.modelSource as ModelSource).getWorldModel());
     });
-  }
-
-  // TODO: redirect this to spdlog
-  private logError(error: string) {
-    this.sp.printConsole("Error in SkympClient:", error);
-  }
-
-  // TODO: redirect this to spdlog
-  private logTrace(trace: string) {
-    this.sp.printConsole("Trace in SkympClient:", trace);
   }
 
   private msgHandler?: MsgHandler;
