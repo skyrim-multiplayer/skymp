@@ -6,6 +6,7 @@ import { CraftItemMessage } from "./craftItemMessage";
 import { CustomEventMessage } from "./customEventMessage";
 import { CustomPacketMessage } from "./customPacketMessage";
 import { DropItemMessage } from "./dropItemMessage";
+import { FinishSpSnippetMessage } from "./finishSpSnippetMessage";
 import { HitMessage } from "./hitMessage";
 import { HostMessage } from "./hostMessage";
 import { OnEquipMessage } from "./onEquipMessage";
@@ -32,3 +33,4 @@ export type AnyMessage = ActivateMessage
     | HostMessage
     | CustomEventMessage
     | CustomPacketMessage
+    | FinishSpSnippetMessage

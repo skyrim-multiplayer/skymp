@@ -56,6 +56,7 @@ import { UpdateAnimationMessage } from '../services/messages/updateAnimationMess
 import { UpdateEquipmentMessage } from '../services/messages/updateEquipmentMessage';
 import { CustomPacketMessage } from '../services/messages/customPacketMessage';
 import { CustomEventMessage } from '../services/messages/customEventMessage';
+import { FinishSpSnippetMessage } from '../services/messages/finishSpSnippetMessage';
 
 const onceLoad = (
   refrId: number,
@@ -666,14 +667,13 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
         .run(msg)
         .then((res) => {
           if (res === undefined) res = null;
-          this.send(
-            {
-              t: messages.MsgType.FinishSpSnippet,
-              returnValue: res,
-              snippetIdx: msg.snippetIdx,
-            },
-            true,
-          );
+          const message: FinishSpSnippetMessage = {
+            t: messages.MsgType.FinishSpSnippet,
+            returnValue: res,
+            snippetIdx: msg.snippetIdx,
+          }
+          // TODO: emit event instead of sending directly to avoid type cast and dependency on network module
+          this.send(message as unknown as Record<string, unknown>, true);
         })
         .catch((e) => printConsole('!!! SpSnippet failed', e));
     });

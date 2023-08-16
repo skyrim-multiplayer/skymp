@@ -23,7 +23,7 @@ import { UpdateEquipmentMessage } from "../messages/updateEquipmentMessage";
 
 const playerFormId = 0x14;
 
-// TODO: split this service
+// TODO: split this service into EquipmentService, MovementService, AnimationService, ActorValueService, HostAttemptsService
 export class SendInputsService extends ClientListener {
     constructor(private sp: Sp, private controller: CombinedController) {
         super();
@@ -49,7 +49,7 @@ export class SendInputsService extends ClientListener {
 
             this.controller.emitter.emit("sendMessage", {
                 message: { t: MsgType.OnEquip, baseId: event.baseObj.getFormID() },
-                reliability: "unreliable"
+                reliability: "unreliable"   
             });
         }
     }
