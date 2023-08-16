@@ -48,13 +48,10 @@ MpActor* ActionListener::SendToNeighbours(
     }
   }
 
-  for (auto listener : actor->GetListeners()) {
-    auto listenerAsActor = dynamic_cast<MpActor*>(listener);
-    if (listenerAsActor) {
-      auto targetuserId = partOne.serverState.UserByActor(listenerAsActor);
-      if (targetuserId != Networking::InvalidUserId) {
-        partOne.GetSendTarget().Send(targetuserId, data, length, reliable);
-      }
+  for (auto listener : actor->GetActorListeners()) {
+    auto targetuserId = partOne.serverState.UserByActor(listener);
+    if (targetuserId != Networking::InvalidUserId) {
+      partOne.GetSendTarget().Send(targetuserId, data, length, reliable);
     }
   }
 
@@ -436,11 +433,11 @@ void UseCraftRecipe(MpActor* me, espm::COBJ::Data recipeData,
   auto mapping = br.GetCombMapping(espmIdx);
   std::vector<Inventory::Entry> entries;
   for (auto& entry : recipeData.inputObjects) {
-    auto formId = espm::GetMappedId(entry.formId, *mapping);
+    auto formId = espm::utils::GetMappedId(entry.formId, *mapping);
     entries.push_back({ formId, entry.count });
   }
   auto outputFormId =
-    espm::GetMappedId(recipeData.outputObjectFormId, *mapping);
+    espm::utils::GetMappedId(recipeData.outputObjectFormId, *mapping);
   if (spdlog::should_log(spdlog::level::debug)) {
     std::string s = fmt::format("User formId={:#x} crafted", me->GetFormId());
     for (const auto& entry : entries) {
@@ -451,20 +448,6 @@ void UseCraftRecipe(MpActor* me, espm::COBJ::Data recipeData,
   }
   me->RemoveItems(entries);
   me->AddItem(outputFormId, recipeData.outputCount);
-
-  // A hack to fix craft items do not appear (likely related to random
-  // SendInventoryUpdate ordering in RemoveItems/AddItem)
-  auto formId = me->GetFormId();
-  if (auto worldState = me->GetParent()) {
-    worldState->SetTimer(std::chrono::seconds(1))
-      .Then([worldState, formId](Viet::Void) {
-        auto actor = std::dynamic_pointer_cast<MpActor>(
-          worldState->LookupFormById(formId));
-        if (actor) {
-          actor->SendInventoryUpdate();
-        }
-      });
-  }
 }
 
 void ActionListener::OnCraftItem(const RawMessageData& rawMsgData,

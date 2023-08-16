@@ -142,10 +142,22 @@ void MpActor::VisitProperties(const PropertiesVisitor& visitor,
 
 void MpActor::SendToUser(const void* data, size_t size, bool reliable)
 {
-  if (callbacks->sendToUser)
+  if (callbacks->sendToUser) {
     callbacks->sendToUser(this, data, size, reliable);
-  else
+  } else {
     throw std::runtime_error("sendToUser is nullptr");
+  }
+}
+
+void MpActor::SendToUserDeferred(const void* data, size_t size, bool reliable,
+                                 int deferredChannelId)
+{
+  if (callbacks->sendToUserDeferred) {
+    callbacks->sendToUserDeferred(this, data, size, reliable,
+                                  deferredChannelId);
+  } else {
+    throw std::runtime_error("sendToUserDeferred is nullptr");
+  }
 }
 
 bool MpActor::OnEquip(uint32_t baseId)
@@ -176,13 +188,14 @@ bool MpActor::OnEquip(uint32_t baseId)
     return false;
   }
 
+  bool spellLearned = true;
   if (isIngredient || isPotion) {
     EatItem(baseId, recordType);
   } else if (isBook) {
-    ReadBook(baseId);
+    spellLearned = ReadBook(baseId);
   }
 
-  if (!isSpell) {
+  if (!isSpell && spellLearned) {
     RemoveItem(baseId, 1, nullptr);
   }
 
@@ -228,13 +241,22 @@ void MpActor::ApplyChangeForm(const MpChangeForm& newChangeForm)
   }
   MpObjectReference::ApplyChangeForm(newChangeForm);
   EditChangeForm(
-    [&](MpChangeForm& cf) {
-      cf = static_cast<const MpChangeForm&>(newChangeForm);
+    [&](MpChangeForm& changeForm) {
+      changeForm = static_cast<const MpChangeForm&>(newChangeForm);
 
       // Actor without appearance would not be visible so we force player to
       // choose appearance
-      if (cf.appearanceDump.empty())
-        cf.isRaceMenuOpen = true;
+      if (changeForm.appearanceDump.empty()) {
+        changeForm.isRaceMenuOpen = true;
+      }
+      // ActorValues does not refelect real base actor values set in esp/esm
+      // game files since new update
+      // this check is added only for test as a workaround. It is to be redone
+      // in the nearest future. TODO
+      if (GetParent() && GetParent()->HasEspm()) {
+        changeForm.actorValues =
+          GetBaseActorValues(GetParent(), GetBaseId(), GetRaceId());
+      }
     },
     Mode::NoRequestSave);
   ReapplyMagicEffects();
@@ -502,7 +524,7 @@ void MpActor::EatItem(uint32_t baseId, espm::Type t)
   ApplyMagicEffects(effects, hasSweetpie);
 }
 
-void MpActor::ReadBook(const uint32_t baseId)
+bool MpActor::ReadBook(const uint32_t baseId)
 {
   const auto bookData = espm::GetData<espm::BOOK>(baseId, GetParent());
 
@@ -511,7 +533,9 @@ void MpActor::ReadBook(const uint32_t baseId)
     EditChangeForm([&](MpChangeForm& changeForm) {
       changeForm.learnedSpells.LearnSpell(bookData.spellOrSkillFormId);
     });
+    return true;
   }
+  return false;
 }
 
 bool MpActor::CanActorValueBeRestored(espm::ActorValue av)
@@ -824,7 +848,7 @@ void MpActor::ApplyMagicEffect(espm::Effects::Effect& effect, bool hasSweetpie,
     if (activeEffects.Has(av)) {
       const ActiveMagicEffectsMap::Entry& entry =
         activeEffects.Get(av).value().get();
-      worldState->RemoveTimer(entry.endTime);
+      worldState->RemoveEffectTimer(entry.endTime);
     }
     EditChangeForm([av, pEntry = &entry](MpChangeForm& changeForm) {
       changeForm.activeMagicEffects.Add(av, *pEntry);
@@ -845,9 +869,12 @@ void MpActor::ApplyMagicEffect(espm::Effects::Effect& effect, bool hasSweetpie,
           "Unknown espm::MGEF::EffectType: {}",
           static_cast<std::underlying_type_t<espm::MGEF::EffectType>>(type));
       }
+      spdlog::trace("Final multiplicator is {}", mult);
+      spdlog::trace("The result of baseValue * mult is: {}*{}={}", baseValue,
+                    mult, baseValue * mult);
       SetActorValue(av, baseValue * mult);
     }
-    worldState->SetTimer(std::cref(endTime))
+    worldState->SetEffectTimer(std::cref(endTime))
       .Then([formId, actorValue = av, worldState](Viet::Void) {
         auto& actor = worldState->GetFormAt<MpActor>(formId);
         actor.RemoveMagicEffect(actorValue);

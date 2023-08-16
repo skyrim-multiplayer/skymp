@@ -24,6 +24,7 @@
 #include "papyrus-vm/Reader.h"
 #include <algorithm>
 #include <deque>
+#include <iterator>
 #include <unordered_map>
 
 namespace {
@@ -55,6 +56,7 @@ struct WorldState::Impl
   bool formLoadingInProgress = false;
   std::map<std::string, std::chrono::system_clock::duration>
     relootTimeForTypes;
+  std::set<std::string> forbiddenRelootTypes;
   std::vector<std::unique_ptr<IPapyrusClassBase>> classes;
 };
 
@@ -220,7 +222,13 @@ void WorldState::RequestSave(MpObjectReference& ref)
 Viet::Promise<Viet::Void> WorldState::SetTimer(
   std::reference_wrapper<const std::chrono::system_clock::time_point> wrapper)
 {
-  return timer.SetTimer(wrapper.get());
+  return timerRegular.SetTimer(wrapper.get());
+}
+
+Viet::Promise<Viet::Void> WorldState::SetEffectTimer(
+  std::reference_wrapper<const std::chrono::system_clock::time_point> wrapper)
+{
+  return timerEffects.SetTimer(wrapper.get());
 }
 
 const std::shared_ptr<MpForm>& WorldState::LookupFormById(uint32_t formId)
@@ -241,49 +249,147 @@ const std::shared_ptr<MpForm>& WorldState::LookupFormById(uint32_t formId)
 }
 
 bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
-                                  espm::RecordHeader* record,
+                                  const espm::RecordHeader* record,
                                   const espm::IdMapping& mapping)
 {
   auto& cache = GetEspmCache();
-  auto refr = reinterpret_cast<espm::REFR*>(record);
+  // this place is a hotpath.
+  // we want to use reinterpret_cast<> instead of espm::Convert<>
+  // in order to reduce amount of generated assembly code
+  auto* refr = reinterpret_cast<const espm::REFR*>(record);
   auto data = refr->GetData(cache);
 
-  auto baseId = espm::GetMappedId(data.baseId, mapping);
-  auto base = br.LookupById(baseId);
+  uint32_t baseId = espm::utils::GetMappedId(data.baseId, mapping);
+  espm::LookupResult base = br.LookupById(baseId);
   if (!base.rec) {
-    logger->info("baseId {} {}", baseId, static_cast<void*>(base.rec));
+    logger->info("baseId {} {}", baseId, static_cast<const void*>(base.rec));
     return false;
   }
 
   espm::Type t = base.rec->GetType();
-  if (t != "NPC_" && t != "FURN" && t != "ACTI" && !espm::IsItem(t) &&
-      t != "DOOR" && t != "CONT" &&
-      (t != "FLOR" ||
-       !reinterpret_cast<espm::FLOR*>(base.rec)->GetData(cache).resultItem) &&
-      (t != "TREE" ||
-       !reinterpret_cast<espm::TREE*>(base.rec)->GetData(cache).resultItem))
+  bool isNpc = t == "NPC_";
+  bool isFurniture = t == "FURN";
+  bool isActivator = t == "ACTI";
+  bool isDoor = t == "DOOR";
+  bool isContainer = t == "CONT";
+  bool isFlor = t == "FLOR" &&
+    reinterpret_cast<const espm::FLOR*>(base.rec)->GetData(cache).resultItem;
+  bool isTree = t == "TREE" &&
+    reinterpret_cast<const espm::TREE*>(base.rec)->GetData(cache).resultItem;
+
+  if (!isNpc && !isFurniture && !isActivator && !espm::utils::IsItem(t) &&
+      !isDoor && !isContainer && !isFlor && !isTree) {
     return false;
+  }
 
   // TODO: Load disabled references
   enum
   {
     InitiallyDisabled = 0x800
   };
-  if (refr->GetFlags() & InitiallyDisabled)
-    return false;
 
-  if (t == "NPC_") {
+  if (refr->GetFlags() & InitiallyDisabled) {
     return false;
   }
 
-  auto formId = espm::GetMappedId(record->GetId(), mapping);
+  if (!npcEnabled && isNpc) {
+    return false;
+  }
+
+  if (isNpc) {
+    if (NpcSourceFilesOverriden() && !IsNpcAllowed(baseId)) {
+      spdlog::trace("Skip NPC loading, it is not allowed. baseId {:#x}",
+                    baseId);
+      return false;
+    }
+    auto npcData =
+      reinterpret_cast<const espm::NPC_*>(base.rec)->GetData(cache);
+
+    if (npcData.isEssential || npcData.isProtected) {
+      return false;
+    }
+
+    enum class ListType : uint32_t
+    {
+      CrimeFactionsList = 0x26953
+    };
+
+    auto factionBaseId = static_cast<std::underlying_type_t<ListType>>(
+      ListType::CrimeFactionsList);
+    espm::LookupResult res = br.LookupById(factionBaseId);
+    auto* formList = reinterpret_cast<const espm::FLST*>(res.rec);
+    std::vector<uint32_t> factionFormIds = formList->GetData(cache).formIds;
+    for (auto& formId : factionFormIds) {
+      formId = res.ToGlobalId(formId);
+    }
+
+    for (auto fact : npcData.factions) {
+      auto it = std::find(factionFormIds.begin(), factionFormIds.end(),
+                          base.ToGlobalId(fact.formId));
+      if (it != factionFormIds.end()) {
+        logger->info("Skipping actor {:#x} because it's in faction {:#x}",
+                     record->GetId(), *it);
+        return false;
+      }
+    }
+  }
+
+  uint32_t formId = espm::utils::GetMappedId(record->GetId(), mapping);
   auto locationalData = data.loc;
 
   uint32_t worldOrCell =
-    espm::GetMappedId(GetWorldOrCell(br, record), mapping);
+    espm::utils::GetMappedId(GetWorldOrCell(br, record), mapping);
   if (!worldOrCell) {
-    logger->error("Anomally: refr without world/cell");
+    logger->error("Anomaly: refr without world/cell");
     return false;
+  }
+
+  if (isNpc && NpcSourceFilesOverriden()) {
+    bool isInterior = false, isExterior = false,
+         spawnInInterior = defaultSetting.spawnInInterior,
+         spawnInExterior = defaultSetting.spawnInExterior;
+    espm::LookupResult res = br.LookupById(worldOrCell);
+    auto* cellRecord = espm::Convert<espm::CELL>(res.rec);
+    if (cellRecord) {
+      isInterior = true;
+    }
+    auto* worldRecord = espm::Convert<espm::WRLD>(res.rec);
+    if (worldRecord) {
+      isExterior = true;
+    }
+    uint32_t npcFileIdx = GetFileIdx(baseId);
+    if (npcFileIdx >= espmFiles.size()) {
+      spdlog::error("NPC's idx is greater than espmFiles.size(). NPC's"
+                    "baseId "
+                    "{:#x}, espmFiles size: {}",
+                    baseId, espmFiles.size());
+      return false;
+    }
+    auto it = npcSettings.find(espmFiles[npcFileIdx]);
+    if (it != npcSettings.end()) {
+      spawnInInterior = it->second.spawnInInterior;
+      spawnInExterior = it->second.spawnInExterior;
+      spdlog::trace(
+        "found npc setting spawnInInterior: {}, spawnInExterior: {}",
+        spawnInInterior, spawnInExterior);
+    } else {
+      spdlog::trace("npc setting has not been found. Use default "
+                    "spawnInInterior: {} and spawnInExterior: {}",
+                    spawnInInterior, spawnInExterior);
+    }
+
+    if (spawnInInterior && isInterior || spawnInExterior && isExterior) {
+    }
+
+    if ((!spawnInInterior || !isInterior) &&
+        (!spawnInExterior || !isExterior)) {
+      spdlog::trace(
+        "Unable to spawn npc because of "
+        "rules applied in server settings: spanwInInterior={}, "
+        "spawnInExterior={}, NPC location: exterior={}, interior={}",
+        spawnInInterior, spawnInExterior, isExterior, isInterior);
+      return false;
+    }
   }
 
   // This function dosen't use LookupFormById to prevent recursion
@@ -302,14 +408,15 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
 
   } else {
     if (!locationalData) {
-      logger->error("Anomally: refr without locationalData");
+      logger->error("Anomaly: refr without locationalData");
       return false;
     }
 
     std::optional<NiPoint3> primitiveBoundsDiv2;
-    if (data.boundsDiv2)
+    if (data.boundsDiv2) {
       primitiveBoundsDiv2 =
         NiPoint3(data.boundsDiv2[0], data.boundsDiv2[1], data.boundsDiv2[2]);
+    }
 
     auto typeStr = t.ToString();
     std::unique_ptr<MpForm> form;
@@ -317,7 +424,7 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
       GetPos(locationalData), GetRot(locationalData),
       FormDesc::FromFormId(worldOrCell, espmFiles)
     };
-    if (t != "NPC_") {
+    if (!isNpc) {
       form.reset(new MpObjectReference(formLocationalData,
                                        formCallbacksFactory(), baseId,
                                        typeStr.data(), primitiveBoundsDiv2));
@@ -401,7 +508,8 @@ void WorldState::TickSaveStorage(const std::chrono::system_clock::time_point&)
 
 void WorldState::TickTimers(const std::chrono::system_clock::time_point&)
 {
-  timer.TickTimers();
+  timerEffects.TickTimers();
+  timerRegular.TickTimers();
 }
 
 void WorldState::SendPapyrusEvent(MpForm* form, const char* eventName,
@@ -434,10 +542,11 @@ const std::set<MpObjectReference*>& WorldState::GetReferencesAtPosition(
             auto combMapping = br.GetCombMapping(i);
             auto rawMapping = br.GetRawMapping(i);
             uint32_t mappedCellOrWorld =
-              espm::GetMappedId(cellOrWorld, *rawMapping);
+              espm::utils::GetMappedId(cellOrWorld, *rawMapping);
             auto records = br.GetRecordsAtPos(mappedCellOrWorld, x, y);
             for (auto rec : *records[i]) {
-              auto mappedId = espm::GetMappedId(rec->GetId(), *combMapping);
+              auto mappedId =
+                espm::utils::GetMappedId(rec->GetId(), *combMapping);
               assert(mappedId < 0xff000000);
               LoadForm(mappedId);
             }
@@ -615,12 +724,31 @@ VirtualMachine& WorldState::GetPapyrusVm()
 const std::set<uint32_t>& WorldState::GetActorsByProfileId(
   int32_t profileId) const
 {
-  static const std::set<uint32_t> g_emptySet;
+  static const std::set<uint32_t> kEmptySet;
 
   auto it = actorIdByProfileId.find(profileId);
-  if (it == actorIdByProfileId.end())
-    return g_emptySet;
+  if (it == actorIdByProfileId.end()) {
+    return kEmptySet;
+  }
   return it->second;
+}
+
+const std::set<uint32_t>& WorldState::GetActorsByPrivateIndexedProperty(
+  const std::string& privateIndexedPropertyMapKey) const
+{
+  static const std::set<uint32_t> kEmptySet;
+
+  auto it = actorIdByPrivateIndexedProperty.find(privateIndexedPropertyMapKey);
+  if (it == actorIdByPrivateIndexedProperty.end()) {
+    return kEmptySet;
+  }
+  return it->second;
+}
+
+std::string WorldState::MakePrivateIndexedPropertyMapKey(
+  const std::string& propertyName, const std::string& propertyValueStringified)
+{
+  return propertyName + '=' + propertyValueStringified;
 }
 
 uint32_t WorldState::GenerateFormId()
@@ -647,8 +775,54 @@ std::optional<std::chrono::system_clock::duration> WorldState::GetRelootTime(
   return it->second;
 }
 
-bool WorldState::RemoveTimer(
+bool WorldState::NpcSourceFilesOverriden() const noexcept
+{
+  return !npcSettings.empty() || defaultSetting.overriden;
+}
+
+bool WorldState::IsNpcAllowed(uint32_t baseId) const noexcept
+{
+  if (npcSettings.empty() && defaultSetting.overriden) {
+    return true;
+  }
+  uint32_t npcFileIdx = GetFileIdx(baseId);
+  for (const auto& [fileName, _] : npcSettings) {
+    auto it = std::find(espmFiles.begin(), espmFiles.end(), fileName);
+    if (it == espmFiles.end()) {
+      return false;
+    }
+    auto idx = std::distance(espmFiles.begin(), it);
+    if (npcFileIdx == idx) {
+      return true;
+    }
+  }
+  return false;
+}
+
+uint32_t WorldState::GetFileIdx(uint32_t baseId) const noexcept
+{
+  return baseId >> 24;
+}
+
+void WorldState::SetNpcSettings(
+  std::unordered_map<std::string, NpcSettingsEntry>&& settings)
+{
+  npcSettings = settings;
+}
+
+bool WorldState::RemoveEffectTimer(
   const std::chrono::system_clock::time_point& endTime)
 {
-  return timer.RemoveTimer(endTime);
+  return timerEffects.RemoveTimer(endTime);
+}
+
+void WorldState::SetForbiddenRelootTypes(const std::set<std::string>& types)
+{
+  pImpl->forbiddenRelootTypes = types;
+}
+
+bool WorldState::IsRelootForbidden(std::string type) const noexcept
+{
+  return pImpl->forbiddenRelootTypes.find(type) !=
+    pImpl->forbiddenRelootTypes.end();
 }

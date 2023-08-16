@@ -41,6 +41,14 @@ class WorldState
 public:
   using FormCallbacksFactory = std::function<FormCallbacks()>;
 
+  struct NpcSettingsEntry
+  {
+    bool spawnInInterior = false;
+    bool spawnInExterior = false;
+    bool overriden = false;
+  };
+
+public:
   WorldState();
   WorldState(const WorldState&) = delete;
   WorldState& operator=(const WorldState&) = delete;
@@ -69,7 +77,13 @@ public:
   template <typename T>
   Viet::Promise<Viet::Void> SetTimer(T&& duration)
   {
-    return timer.SetTimer(std::forward<T>(duration));
+    return timerRegular.SetTimer(std::forward<T>(duration));
+  }
+
+  template <typename T>
+  Viet::Promise<Viet::Void> SetEffectTimer(T&& duration)
+  {
+    return timerEffects.SetTimer(std::forward<T>(duration));
   }
 
   template <typename T>
@@ -85,7 +99,10 @@ public:
   Viet::Promise<Viet::Void> SetTimer(
     std::reference_wrapper<const std::chrono::system_clock::time_point>
       wrapper);
-  bool RemoveTimer(const std::chrono::system_clock::time_point& endTime);
+  Viet::Promise<Viet::Void> SetEffectTimer(
+    std::reference_wrapper<const std::chrono::system_clock::time_point>
+      wrapper);
+  bool RemoveEffectTimer(const std::chrono::system_clock::time_point& endTime);
 
   const std::shared_ptr<MpForm>& LookupFormById(uint32_t formId);
 
@@ -168,25 +185,52 @@ public:
   IScriptStorage* GetScriptStorage() const;
   VirtualMachine& GetPapyrusVm();
   const std::set<uint32_t>& GetActorsByProfileId(int32_t profileId) const;
+  const std::set<uint32_t>& GetActorsByPrivateIndexedProperty(
+    const std::string& privateIndexedPropertyMapKey) const;
+  std::string MakePrivateIndexedPropertyMapKey(
+    const std::string& propertyName,
+    const std::string& propertyValueStringified);
   uint32_t GenerateFormId();
   void SetRelootTime(std::string recordType,
                      std::chrono::system_clock::duration dur);
   std::optional<std::chrono::system_clock::duration> GetRelootTime(
     std::string recordType) const;
-
-  std::vector<std::string> espmFiles;
-  std::unordered_map<int32_t, std::set<uint32_t>> actorIdByProfileId;
-  std::shared_ptr<spdlog::logger> logger;
-  std::vector<std::shared_ptr<PartOneListener>> listeners;
-
   // Only for tests
   auto& GetGrids() { return grids; }
+  void SetNpcSettings(
+    std::unordered_map<std::string, NpcSettingsEntry>&& settings);
+  void SetForbiddenRelootTypes(const std::set<std::string>& types);
 
+public:
+  std::vector<std::string> espmFiles;
+  std::unordered_map<int32_t, std::set<uint32_t>> actorIdByProfileId;
+  std::unordered_map<std::string, std::set<uint32_t>>
+    actorIdByPrivateIndexedProperty;
+  std::shared_ptr<spdlog::logger> logger;
+  std::vector<std::shared_ptr<PartOneListener>> listeners;
   std::map<uint32_t, uint32_t> hosters;
   std::vector<std::optional<std::chrono::system_clock::time_point>>
     lastMovUpdateByIdx;
 
   bool isPapyrusHotReloadEnabled = false;
+
+  bool npcEnabled = false;
+  std::unordered_map<std::string, NpcSettingsEntry> npcSettings;
+  NpcSettingsEntry defaultSetting;
+
+private:
+  bool AttachEspmRecord(const espm::CombineBrowser& br,
+                        const espm::RecordHeader* record,
+                        const espm::IdMapping& mapping);
+
+  bool LoadForm(uint32_t formId);
+  void TickReloot(const std::chrono::system_clock::time_point& now);
+  void TickSaveStorage(const std::chrono::system_clock::time_point& now);
+  void TickTimers(const std::chrono::system_clock::time_point& now);
+  [[nodiscard]] bool NpcSourceFilesOverriden() const noexcept;
+  [[nodiscard]] bool IsNpcAllowed(uint32_t baseId) const noexcept;
+  [[nodiscard]] uint32_t GetFileIdx(uint32_t baseId) const noexcept;
+  [[nodiscard]] bool IsRelootForbidden(std::string type) const noexcept;
 
 private:
   struct GridInfo
@@ -197,6 +241,7 @@ private:
   };
 
   spp::sparse_hash_map<uint32_t, std::shared_ptr<MpForm>> forms;
+  std::unordered_map<std::string, size_t> loadOrderMap;
   spp::sparse_hash_map<uint32_t, GridInfo> grids;
   std::unique_ptr<MakeID> formIdxManager;
   std::vector<MpForm*> formByIdxUnreliable;
@@ -208,17 +253,7 @@ private:
   FormCallbacksFactory formCallbacksFactory;
   std::unique_ptr<espm::CompressedFieldsCache> espmCache;
 
-  bool AttachEspmRecord(const espm::CombineBrowser& br,
-                        espm::RecordHeader* record,
-                        const espm::IdMapping& mapping);
-
-  bool LoadForm(uint32_t formId);
-
-  void TickReloot(const std::chrono::system_clock::time_point& now);
-  void TickSaveStorage(const std::chrono::system_clock::time_point& now);
-  void TickTimers(const std::chrono::system_clock::time_point& now);
-
   struct Impl;
   std::shared_ptr<Impl> pImpl;
-  Viet::Timer timer;
+  Viet::Timer timerEffects, timerRegular;
 };

@@ -81,7 +81,9 @@ float CropStaminaRegeneration(float newAttributeValue,
   const MpChangeForm changeForm = actor->GetChangeForm();
   const BaseActorValues baseValues = GetValues(actor);
   const ActorValues& actorValues = changeForm.actorValues;
-  const float rate = std::max(baseValues.staminaRate, actorValues.staminaRate);
+  const float rate = actor->IsBlockActive()
+    ? actorValues.staminaRate
+    : std::max(baseValues.staminaRate, actorValues.staminaRate);
   const float rateMult =
     std::max(baseValues.staminaRateMult, actorValues.staminaRateMult);
   const float oldPercentage = actorValues.staminaPercentage;

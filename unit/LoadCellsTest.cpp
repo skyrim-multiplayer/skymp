@@ -9,7 +9,7 @@ TEST_CASE("Loading Cells from Solstheim.esm", "[LoadCells]")
 {
   auto& p = GetPartOne();
   auto& t = p.worldState.GetReferencesAtPosition(0x04000800, 7, 8);
-  REQUIRE(t.size());
+  REQUIRE(t.size() != 0);
 }
 
 TEST_CASE("Check number of messages if player spawned in Skyrim",

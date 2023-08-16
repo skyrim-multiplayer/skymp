@@ -262,12 +262,15 @@ public:
 
   int VscToVk(int code)
   {
-    int vk = MapVirtualKeyA(code, MAPVK_VSC_TO_VK);
+    if (code == 200)
+      return VK_UP;
     if (code == 203)
       return VK_LEFT;
     if (code == 205)
       return VK_RIGHT;
-    return vk;
+    if (code == 208)
+      return VK_DOWN;
+    return MapVirtualKeyA(code, MAPVK_VSC_TO_VK);
   }
 
   void OnKeyStateChange(uint8_t code, bool down) noexcept override

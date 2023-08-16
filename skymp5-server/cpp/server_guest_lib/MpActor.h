@@ -41,6 +41,8 @@ public:
                        VisitPropertiesMode mode) override;
 
   void SendToUser(const void* data, size_t size, bool reliable);
+  void SendToUserDeferred(const void* data, size_t size, bool reliable,
+                          int deferredChannelId);
 
   [[nodiscard]] bool OnEquip(uint32_t baseId);
 
@@ -130,7 +132,7 @@ private:
   void MpApiDeath(MpActor* killer = nullptr);
   void EatItem(uint32_t baseId, espm::Type t);
 
-  void ReadBook(uint32_t baseId);
+  bool ReadBook(uint32_t baseId);
 
   void ModifyActorValuePercentage(espm::ActorValue av, float percentageDelta);
 

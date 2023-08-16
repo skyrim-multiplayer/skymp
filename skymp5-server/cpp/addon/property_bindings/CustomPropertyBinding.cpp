@@ -13,15 +13,21 @@ auto EnsurePropertyExists(const GamemodeApi::State& state,
   }
   return it;
 }
+
+bool StartsWith(const std::string& str, const char* prefix)
+{
+  return str.compare(0, strlen(prefix), prefix) == 0;
+}
+
 }
 
 CustomPropertyBinding::CustomPropertyBinding(const std::string& propertyName_)
 {
   this->propertyName = propertyName_;
-
-  static const std::string kPrivatePrefix = "private.";
   this->isPrivate =
-    this->propertyName.compare(0, kPrivatePrefix.size(), kPrivatePrefix) == 0;
+    StartsWith(propertyName_, MpObjectReference::GetPropertyPrefixPrivate());
+  this->isPrivateIndexed = StartsWith(
+    propertyName_, MpObjectReference::GetPropertyPrefixPrivateIndexed());
 }
 
 std::string CustomPropertyBinding::GetPropertyName() const
@@ -60,6 +66,9 @@ void CustomPropertyBinding::Set(Napi::Env env, ScampServer& scampServer,
 
   if (isPrivate) {
     refr.SetProperty(propertyName, newValueJson, false, false);
+    if (isPrivateIndexed) {
+      refr.RegisterPrivateIndexedProperty(propertyName, newValueDump);
+    }
     return;
   }
   auto it = EnsurePropertyExists(state, propertyName);

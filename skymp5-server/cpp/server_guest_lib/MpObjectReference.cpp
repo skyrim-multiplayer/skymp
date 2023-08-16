@@ -14,6 +14,7 @@
 #include "ScriptVariablesHolder.h"
 #include "WorldState.h"
 #include "libespm/GroupUtils.h"
+#include "libespm/Utils.h"
 #include "papyrus-vm/Reader.h"
 #include "papyrus-vm/VirtualMachine.h"
 #include <map>
@@ -207,13 +208,14 @@ std::chrono::system_clock::duration MpObjectReference::GetRelootTime() const
   if (auto time = GetParent()->GetRelootTime(baseType))
     return *time;
 
-  if (!strcmp(baseType.data(), "FLOR") || !strcmp(baseType.data(), "TREE")) {
+  if (!std::strcmp(baseType.data(), "FLOR") ||
+      !std::strcmp(baseType.data(), "TREE")) {
     return std::chrono::hours(1);
-  } else if (!strcmp(baseType.data(), "DOOR")) {
+  } else if (!std::strcmp(baseType.data(), "DOOR")) {
     return std::chrono::seconds(3);
-  } else if (espm::IsItem(baseType.data())) {
+  } else if (espm::utils::IsItem(espm::Type{ baseType.data() })) {
     return std::chrono::hours(1);
-  } else if (!strcmp(baseType.data(), "CONT")) {
+  } else if (!std::strcmp(baseType.data(), "CONT")) {
     return std::chrono::hours(1);
   }
 
@@ -292,8 +294,15 @@ void MpObjectReference::Activate(MpObjectReference& activationSource,
   bool activationBlockedByMpApi = MpApiOnActivate(activationSource);
 
   if (!activationBlockedByMpApi &&
-      (!activationBlocked || defaultProcessingOnly))
+      (!activationBlocked || defaultProcessingOnly)) {
     ProcessActivate(activationSource);
+  } else {
+    spdlog::trace(
+      "Activation of form {:#x} has been blocked. Reasons: "
+      "blocked by MpApi={}, form is blocked={}, defaultProcessingOnly={}",
+      GetFormId(), activationBlockedByMpApi, activationBlocked,
+      defaultProcessingOnly);
+  }
 
   if (!defaultProcessingOnly) {
     auto arg = activationSource.ToVarValue();
@@ -670,25 +679,83 @@ void MpObjectReference::RelootContainer()
 
 void MpObjectReference::RegisterProfileId(int32_t profileId)
 {
-  if (profileId < 0)
-    throw std::runtime_error("Invalid profileId passed to RegisterProfileId");
+  auto worldState = GetParent();
+  if (!worldState) {
+    throw std::runtime_error("Not attached to WorldState");
+  }
 
-  if (ChangeForm().profileId >= 0)
-    throw std::runtime_error("Already has a valid profileId");
+  if (profileId < 0) {
+    throw std::runtime_error(
+      "Negative profileId passed to RegisterProfileId, should be >= 0");
+  }
+
+  auto currentProfileId = ChangeForm().profileId;
+  auto formId = GetFormId();
+
+  if (currentProfileId > 0) {
+    worldState->actorIdByProfileId[currentProfileId].erase(formId);
+  }
 
   EditChangeForm(
     [&](MpChangeFormREFR& changeForm) { changeForm.profileId = profileId; });
-  GetParent()->actorIdByProfileId[profileId].insert(GetFormId());
+
+  if (profileId > 0) {
+    worldState->actorIdByProfileId[profileId].insert(formId);
+  }
+}
+
+void MpObjectReference::RegisterPrivateIndexedProperty(
+  const std::string& propertyName, const std::string& propertyValueStringified)
+{
+  auto worldState = GetParent();
+  if (!worldState) {
+    throw std::runtime_error("Not attached to WorldState");
+  }
+
+  bool (*isNull)(const std::string&) = [](const std::string& s) {
+    return s == "null" || s == "undefined" || s == "" || s == "''" ||
+      s == "\"\"";
+  };
+
+  auto currentValueStringified =
+    ChangeForm().dynamicFields.Get(propertyName).dump();
+  auto formId = GetFormId();
+  if (!isNull(currentValueStringified)) {
+    auto key = worldState->MakePrivateIndexedPropertyMapKey(
+      propertyName, currentValueStringified);
+    worldState->actorIdByPrivateIndexedProperty[key].erase(formId);
+    spdlog::trace(
+      "MpObjectReference::RegisterPrivateIndexedProperty {:x} - unregister {}",
+      formId, key);
+  }
+
+  EditChangeForm([&](MpChangeFormREFR& changeForm) {
+    auto propertyValue = nlohmann::json::parse(propertyValueStringified);
+    changeForm.dynamicFields.Set(propertyName, propertyValue);
+  });
+
+  if (!isNull(propertyValueStringified)) {
+    auto key = worldState->MakePrivateIndexedPropertyMapKey(
+      propertyName, propertyValueStringified);
+    worldState->actorIdByPrivateIndexedProperty[key].insert(formId);
+    spdlog::trace(
+      "MpObjectReference::RegisterPrivateIndexedProperty {:x} - register {}",
+      formId, key);
+  }
 }
 
 void MpObjectReference::Subscribe(MpObjectReference* emitter,
                                   MpObjectReference* listener)
 {
-  const bool emitterIsActor = !!dynamic_cast<MpActor*>(emitter);
-  const bool listenerIsActor = !!dynamic_cast<MpActor*>(listener);
-  if (!emitterIsActor && !listenerIsActor)
+  auto actorEmitter = dynamic_cast<MpActor*>(emitter);
+  auto actorListener = dynamic_cast<MpActor*>(listener);
+  if (!actorEmitter && !actorListener)
     return;
 
+  // I don't know how often Subscrbe is called but I suppose
+  // it is to be invoked quite frequently. In this case, each
+  // time if below is performed we are obtaining a copy of
+  // MpChangeForm which can be large. See what it consists of.
   if (!emitter->pImpl->onInitEventSent &&
       listener->GetChangeForm().profileId != -1) {
     emitter->pImpl->onInitEventSent = true;
@@ -700,6 +767,9 @@ void MpObjectReference::Subscribe(MpObjectReference* emitter,
   emitter->InitListenersAndEmitters();
   listener->InitListenersAndEmitters();
   emitter->listeners->insert(listener);
+  if (actorListener) {
+    emitter->actorListeners.insert(actorListener);
+  }
   listener->emitters->insert(emitter);
   if (!hasPrimitive)
     emitter->callbacks->subscribe(emitter, listener);
@@ -714,16 +784,21 @@ void MpObjectReference::Subscribe(MpObjectReference* emitter,
 void MpObjectReference::Unsubscribe(MpObjectReference* emitter,
                                     MpObjectReference* listener)
 {
-  bool bothNonActors =
-    !dynamic_cast<MpActor*>(emitter) && !dynamic_cast<MpActor*>(listener);
-  if (bothNonActors)
+  auto actorEmitter = dynamic_cast<MpActor*>(emitter);
+  auto actorListener = dynamic_cast<MpActor*>(listener);
+  bool bothNonActors = !actorEmitter && !actorListener;
+  if (bothNonActors) {
     return;
+  }
 
   const bool hasPrimitive = emitter->HasPrimitive();
 
   if (!hasPrimitive)
     emitter->callbacks->unsubscribe(emitter, listener);
   emitter->listeners->erase(listener);
+  if (actorListener) {
+    emitter->actorListeners.erase(actorListener);
+  }
   listener->emitters->erase(emitter);
 
   if (listener->emittersWithPrimitives && hasPrimitive) {
@@ -737,6 +812,11 @@ const std::set<MpObjectReference*>& MpObjectReference::GetListeners() const
   return listeners ? *listeners : g_emptyListeners;
 }
 
+const std::set<MpActor*>& MpObjectReference::GetActorListeners() const noexcept
+{
+  return actorListeners;
+}
+
 const std::set<MpObjectReference*>& MpObjectReference::GetEmitters() const
 {
   static const std::set<MpObjectReference*> g_emptyEmitters;
@@ -746,6 +826,10 @@ const std::set<MpObjectReference*>& MpObjectReference::GetEmitters() const
 void MpObjectReference::RequestReloot(
   std::optional<std::chrono::system_clock::duration> time)
 {
+  if (GetParent()->IsRelootForbidden(baseType)) {
+    return;
+  }
+
   if (!time)
     time = GetRelootTime();
 
@@ -811,10 +895,8 @@ void MpObjectReference::ApplyChangeForm(const MpChangeForm& changeForm)
   const auto currentBaseId = GetBaseId();
   const auto newBaseId = changeForm.baseDesc.ToFormId(GetParent()->espmFiles);
   if (currentBaseId != newBaseId) {
-    std::stringstream ss;
-    ss << "Anomally, baseId should never change (";
-    ss << std::hex << currentBaseId << " => " << newBaseId << ")";
-    throw std::runtime_error(ss.str());
+    spdlog::error("Anomaly, baseId should never change ({:x} => {:x})",
+                  currentBaseId, newBaseId);
   }
 
   if (ChangeForm().formDesc != changeForm.formDesc) {
@@ -828,8 +910,18 @@ void MpObjectReference::ApplyChangeForm(const MpChangeForm& changeForm)
   SetCellOrWorldObsolete(changeForm.worldOrCellDesc);
   SetPos(changeForm.position);
 
-  if (changeForm.profileId >= 0)
+  if (changeForm.profileId >= 0) {
     RegisterProfileId(changeForm.profileId);
+  }
+
+  changeForm.dynamicFields.ForEach(
+    [&](const std::string& propertyName, const nlohmann::json& value) {
+      static const std::string kPrefix = GetPropertyPrefixPrivateIndexed();
+      bool startsWith = propertyName.compare(0, kPrefix.size(), kPrefix) == 0;
+      if (startsWith) {
+        RegisterPrivateIndexedProperty(propertyName, value.dump());
+      }
+    });
 
   // See https://github.com/skyrim-multiplayer/issue-tracker/issues/42
   EditChangeForm(
@@ -970,44 +1062,56 @@ void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
 
   auto t = base.rec->GetType();
 
-  if (t == espm::TREE::kType || t == espm::FLOR::kType || espm::IsItem(t)) {
-    if (!IsHarvested()) {
-      auto mapping = loader.GetBrowser().GetCombMapping(base.fileIdx);
-      uint32_t resultItem = 0;
-      if (t == espm::TREE::kType) {
-        espm::FLOR::Data data;
-        data =
-          espm::Convert<espm::TREE>(base.rec)->GetData(compressedFieldsCache);
-        resultItem = espm::GetMappedId(data.resultItem, *mapping);
-      } else if (t == espm::FLOR::kType) {
-        espm::FLOR::Data data;
-        data =
-          espm::Convert<espm::FLOR>(base.rec)->GetData(compressedFieldsCache);
-        resultItem = espm::GetMappedId(data.resultItem, *mapping);
-      } else {
-        resultItem = espm::GetMappedId(base.rec->GetId(), *mapping);
-      }
-
-      auto resultItemLookupRes = loader.GetBrowser().LookupById(resultItem);
-      auto leveledItem = espm::Convert<espm::LVLI>(resultItemLookupRes.rec);
-      if (leveledItem) {
-        const auto kCountMult = 1;
-        auto map = LeveledListUtils::EvaluateListRecurse(
-          loader.GetBrowser(), resultItemLookupRes, kCountMult,
-          kPlayerCharacterLevel, chanceNoneOverride.get());
-        for (auto& p : map) {
-          activationSource.AddItem(p.first, p.second);
-        }
-      } else {
-        auto refrRecord = espm::Convert<espm::REFR>(
-          loader.GetBrowser().LookupById(GetFormId()).rec);
-        uint32_t count =
-          refrRecord ? refrRecord->GetData(compressedFieldsCache).count : 1;
-        activationSource.AddItem(resultItem, count ? count : 1);
-      }
-      SetHarvested(true);
-      RequestReloot();
+  bool pickable = espm::utils::Is<espm::TREE>(t) ||
+    espm::utils::Is<espm::FLOR>(t) || espm::utils::IsItem(t);
+  if (pickable && !IsHarvested()) {
+    auto mapping = loader.GetBrowser().GetCombMapping(base.fileIdx);
+    uint32_t resultItem = 0;
+    if (espm::utils::Is<espm::TREE>(t)) {
+      auto data =
+        espm::Convert<espm::TREE>(base.rec)->GetData(compressedFieldsCache);
+      resultItem = espm::utils::GetMappedId(data.resultItem, *mapping);
     }
+
+    if (espm::utils::Is<espm::FLOR>(t)) {
+      auto data =
+        espm::Convert<espm::FLOR>(base.rec)->GetData(compressedFieldsCache);
+      resultItem = espm::utils::GetMappedId(data.resultItem, *mapping);
+    }
+
+    if (espm::utils::Is<espm::LIGH>(t)) {
+      auto res =
+        espm::Convert<espm::LIGH>(base.rec)->GetData(compressedFieldsCache);
+      bool isTorch = res.data.flags & espm::LIGH::Flags::CanBeCarried;
+      if (!isTorch) {
+        return;
+      }
+      resultItem = espm::utils::GetMappedId(base.rec->GetId(), *mapping);
+    }
+
+    if (resultItem == 0) {
+      resultItem = espm::utils::GetMappedId(base.rec->GetId(), *mapping);
+    }
+
+    auto resultItemLookupRes = loader.GetBrowser().LookupById(resultItem);
+    auto leveledItem = espm::Convert<espm::LVLI>(resultItemLookupRes.rec);
+    if (leveledItem) {
+      const auto kCountMult = 1;
+      auto map = LeveledListUtils::EvaluateListRecurse(
+        loader.GetBrowser(), resultItemLookupRes, kCountMult,
+        kPlayerCharacterLevel, chanceNoneOverride.get());
+      for (auto& p : map) {
+        activationSource.AddItem(p.first, p.second);
+      }
+    } else {
+      auto refrRecord = espm::Convert<espm::REFR>(
+        loader.GetBrowser().LookupById(GetFormId()).rec);
+      uint32_t count =
+        refrRecord ? refrRecord->GetData(compressedFieldsCache).count : 1;
+      activationSource.AddItem(resultItem, count ? count : 1);
+    }
+    SetHarvested(true);
+    RequestReloot();
   } else if (t == espm::DOOR::kType) {
     auto lookupRes = loader.GetBrowser().LookupById(GetFormId());
     auto refrRecord = espm::Convert<espm::REFR>(lookupRes.rec);
@@ -1056,7 +1160,20 @@ void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
     }
   } else if (t == espm::CONT::kType && actorActivator) {
     EnsureBaseContainerAdded(loader);
-    if (!this->occupant) {
+
+    auto occupantPos = this->occupant ? this->occupant->GetPos() : NiPoint3();
+    auto occupantCellOrWorld =
+      this->occupant ? this->occupant->GetCellOrWorld() : FormDesc();
+
+    constexpr float kOccupationReach = 512.f;
+    auto distanceToOccupant = (occupantPos - GetPos()).Length();
+
+    if (!this->occupant || this->occupant->IsDisabled() ||
+        distanceToOccupant > kOccupationReach ||
+        occupantCellOrWorld != GetCellOrWorld()) {
+      if (this->occupant) {
+        this->occupant->RemoveEventSink(this->occupantDestroySink);
+      }
       SetOpen(true);
       SendPropertyTo("inventory", GetInventory().ToJson(), *actorActivator);
       activationSource.SendOpenContainer(GetFormId());
@@ -1183,11 +1300,13 @@ void MpObjectReference::InitListenersAndEmitters()
   if (!listeners) {
     listeners.reset(new std::set<MpObjectReference*>);
     emitters.reset(new std::set<MpObjectReference*>);
+    actorListeners.clear();
   }
 }
 
 void MpObjectReference::SendInventoryUpdate()
 {
+  constexpr int kChannelSetInventory = 0;
   auto actor = dynamic_cast<MpActor*>(this);
   if (actor) {
     std::string msg;
@@ -1196,7 +1315,8 @@ void MpObjectReference::SendInventoryUpdate()
       { "inventory", actor->GetInventory().ToJson() },
       { "type", "setInventory" }
     }.dump();
-    actor->SendToUser(msg.data(), msg.size(), true);
+    actor->SendToUserDeferred(msg.data(), msg.size(), true,
+                              kChannelSetInventory);
   }
 }
 
