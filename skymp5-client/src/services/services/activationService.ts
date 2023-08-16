@@ -6,7 +6,6 @@ import { getInventory } from "../../sync/inventory";
 // TODO: refactor this out
 import { localIdToRemoteId } from "../../view/worldViewMisc";
 
-import { SkympClient } from "./skympClient";
 import { LastInvService } from "./lastInvService";
 
 export class ActivationService extends ClientListener {
@@ -52,16 +51,13 @@ export class ActivationService extends ClientListener {
             return this.logTrace("Ignoring activation of door because it's already opening or closing");
         }
 
-        const skympClient = this.controller.lookupListener("SkympClient") as SkympClient;
-        const sendTarget = skympClient.getSendTarget();
-        if (sendTarget === undefined) {
-            return this.logError("sendTarget was undefined in onActivate");
-        }
-
-        sendTarget.send(
-            { t: MsgType.Activate, data: { caster, target } },
-            true,
-        );
+        this.controller.emitter.emit("sendMessage", {
+            message: {
+                t: MsgType.Activate,
+                data: { caster, target }
+            },
+            reliability: "reliable"
+        });
 
         this.logTrace(`Sent activation for caster=${caster.toString(16)} and target=${target.toString(16)}`);
     }

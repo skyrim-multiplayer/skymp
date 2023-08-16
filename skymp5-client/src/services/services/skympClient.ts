@@ -100,7 +100,7 @@ export const connectWhenICallAndNotWhenIImport = (): void => {
 export class SkympClient extends ClientListener {
   constructor(private sp: Sp, private controller: CombinedController) {
     super();
-    
+
     const authGameData = storage[AuthGameData.storageKey] as AuthGameData | undefined;
     if (!(authGameData?.local || authGameData?.remote)) {
       authSystem.addAuthListener((data) => {
@@ -118,12 +118,16 @@ export class SkympClient extends ClientListener {
     }
   }
 
-  public getModelSource() {
-    return this.modelSource;
+  get sendTarget(): SendTarget | undefined {
+    return this.rs;
   }
 
-  public getSendTarget() {
-    return this.sendTarget;
+  get msgHandler(): MsgHandler | undefined {
+    return this.rs;
+  }
+
+  get modelSource(): ModelSource | undefined {
+    return this.rs;
   }
 
   private startClient() {
@@ -209,9 +213,7 @@ export class SkympClient extends ClientListener {
       printConsole('Creating RemoteServer');
     }
 
-    this.sendTarget = rs;
-    this.msgHandler = rs;
-    this.modelSource = rs;
+    this.rs = rs;
     storage.remoteServer = rs;
   }
 
@@ -232,7 +234,5 @@ export class SkympClient extends ClientListener {
     });
   }
 
-  private msgHandler?: MsgHandler;
-  private modelSource?: ModelSource;
-  private sendTarget?: SendTarget;
+  private rs?: RemoteServer;
 }

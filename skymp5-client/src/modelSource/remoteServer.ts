@@ -50,6 +50,10 @@ import { MsgHandler } from './msgHandler';
 import { SendTarget } from './sendTarget';
 import { SpApiInteractor } from '../services/spApiInteractor';
 import { LoadGameService } from '../services/services/loadGameService';
+import { UpdateMovementMessage } from '../services/messages/updateMovementMessage';
+import { ChangeValuesMessage } from '../services/messages/changeValues';
+import { UpdateAnimationMessage } from '../services/messages/updateAnimationMessage';
+import { UpdateEquipmentMessage } from '../services/messages/updateEquipmentMessage';
 
 const onceLoad = (
   refrId: number,
@@ -529,7 +533,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
     this.getIdManager().freeIdFor(msg.idx);
   }
 
-  UpdateMovement(msg: messages.UpdateMovementMessage): void {
+  UpdateMovement(msg: UpdateMovementMessage): void {
     const i = this.getIdManager().getId(msg.idx);
     this.worldModel.forms[i].movement = msg.data;
     if (!this.worldModel.forms[i].numMovementChanges) {
@@ -538,7 +542,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
     (this.worldModel.forms[i].numMovementChanges as number)++;
   }
 
-  UpdateAnimation(msg: messages.UpdateAnimationMessage): void {
+  UpdateAnimation(msg: UpdateAnimationMessage): void {
     const i = this.getIdManager().getId(msg.idx);
     this.worldModel.forms[i].animation = msg.data;
   }
@@ -552,7 +556,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
     (this.worldModel.forms[i].numAppearanceChanges as number)++;
   }
 
-  UpdateEquipment(msg: messages.UpdateEquipmentMessage): void {
+  UpdateEquipment(msg: UpdateEquipmentMessage): void {
     const i = this.getIdManager().getId(msg.idx);
     this.worldModel.forms[i].equipment = msg.data;
   }
@@ -622,7 +626,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
 
   handleDisconnect(): void {}
 
-  ChangeValues(msg: messages.ChangeValuesMessage): void {
+  ChangeValues(msg: ChangeValuesMessage): void {
     once('update', () => {
       const ac = Game.getPlayer();
       if (!ac) return;

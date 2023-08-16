@@ -1,8 +1,14 @@
 import { EventEmitter } from "eventemitter3";
 import { GameLoadEvent } from "./gameLoadEvent";
+import { SendMessageEvent } from "./sendMessageEvent";
+import { AnyMessage } from "../messages/messageTypes";
+import { SendMessageWithRefrIdEvent } from "./sendMessageWithRefrIdEvent";
 
 type EventTypes = {
-    'gameLoad': [GameLoadEvent]
+    'gameLoad': [GameLoadEvent],
+
+    'sendMessage': [SendMessageEvent<AnyMessage>],
+    'sendMessageWithRefrId': [SendMessageWithRefrIdEvent<AnyMessage>]
 }
 
 // https://blog.makerx.com.au/a-type-safe-event-emitter-in-node-js/

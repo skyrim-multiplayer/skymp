@@ -76,14 +76,16 @@ export class ConsoleCommandsService extends ClientListener {
                 }
             }
 
-            const skympClient = this.controller.lookupListener("SkympClient") as SkympClient;
-            const sendTarget = skympClient.getSendTarget();
-            if (sendTarget === undefined) {
-                this.logError("sendTarget was undefined in command executor");
-                return false;
-            }
-
-            sendTarget.send({ t: MsgType.ConsoleCommand, data: { commandName, args } }, true);
+            this.controller.emitter.emit("sendMessage", {
+                message: {
+                    t: MsgType.ConsoleCommand, 
+                    data: { 
+                        commandName,
+                        args
+                    }
+                },
+                reliability: "reliable"
+            });
 
             // Meant to be shown to user, not for logging
             this.sp.printConsole("sent");

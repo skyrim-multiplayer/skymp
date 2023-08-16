@@ -44,14 +44,12 @@ export class DropItemService extends ClientListener {
                         // TODO: handle possible exceptions in this function
                         const t = MsgType.DropItem;
                         const count = 1;
-
-                        const skympClient = this.controller.lookupListener("SkympClient") as SkympClient;
-
-                        const sendTarget = skympClient.getSendTarget();
-                        if (sendTarget === undefined) {
-                            return this.logError("sendTarget was undefined in on('containerChanged')");
-                        }
-                        sendTarget.send({ t, baseId, count }, true);
+                        this.controller.emitter.emit("sendMessage", {
+                            message: {
+                                t, baseId, count
+                            },
+                            reliability: "reliable"
+                        });
                     });
                 }
             }

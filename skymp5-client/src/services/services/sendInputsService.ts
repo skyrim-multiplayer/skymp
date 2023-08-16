@@ -1,7 +1,7 @@
 import { ClientListener, CombinedController, Sp } from "./clientListener";
 import { SinglePlayerService } from "./singlePlayerService";
 import { FormModel } from "../../modelSource/model";
-import { MsgType } from "../../messages";
+import { MsgType, UpdateAppearanceMessage } from "../../messages";
 import { ModelSource } from "../../modelSource/modelSource";
 import { getMovement } from "../../sync/movementGet";
 
@@ -15,6 +15,11 @@ import { ActorValues, getActorValues } from "../../sync/actorvalues";
 import { getEquipment } from "../../sync/equipment";
 import { nextHostAttempt } from "../../view/hostAttempts";
 import { SkympClient } from "./skympClient";
+import { MessageWithRefrId } from "../events/sendMessageWithRefrIdEvent";
+import { UpdateMovementMessage } from "../messages/updateMovementMessage";
+import { ChangeValuesMessage } from "../messages/changeValues";
+import { UpdateAnimationMessage } from "../messages/updateAnimationMessage";
+import { UpdateEquipmentMessage } from "../messages/updateEquipmentMessage";
 
 const playerFormId = 0x14;
 
@@ -35,12 +40,6 @@ export class SendInputsService extends ClientListener {
     }
 
     private onEquip(event: EquipEvent) {
-        const skympClient = this.controller.lookupListener("SkympClient") as SkympClient;
-        const sendTarget = skympClient.getSendTarget();
-        if (sendTarget === undefined) {
-            return this.logError("sendTarget was undefined in onEquip");
-        }
-
         if (!event.actor || !event.baseObj) {
             return;
         }
@@ -48,10 +47,10 @@ export class SendInputsService extends ClientListener {
         if (event.actor.getFormID() === playerFormId) {
             this.equipmentChanged = true;
 
-            sendTarget.send(
-                { t: MsgType.OnEquip, baseId: event.baseObj.getFormID() },
-                false,
-            );
+            this.controller.emitter.emit("sendMessage", {
+                message: { t: MsgType.OnEquip, baseId: event.baseObj.getFormID() },
+                reliability: "unreliable"
+            });
         }
     }
 
@@ -90,12 +89,6 @@ export class SendInputsService extends ClientListener {
     }
 
     private sendMovement(_refrId?: number) {
-        const skympClient = this.controller.lookupListener("SkympClient") as SkympClient;
-        const sendTarget = skympClient.getSendTarget();
-        if (sendTarget === undefined) {
-            return this.logError("sendTarget was undefined in sendMovement");
-        }
-
         const owner = this.getInputOwner(_refrId);
         if (!owner) return;
 
@@ -104,25 +97,20 @@ export class SendInputsService extends ClientListener {
         const now = Date.now();
         const last = this.lastSendMovementMoment.get(refrIdStr);
         if (!last || now - last > sendMovementRateMs) {
-            sendTarget.send(
-                {
-                    t: MsgType.UpdateMovement,
-                    data: getMovement(owner, this.getForm(_refrId)),
-                    _refrId,
-                },
-                false,
-            );
+            const message: MessageWithRefrId<UpdateMovementMessage> = {
+                t: MsgType.UpdateMovement,
+                data: getMovement(owner, this.getForm(_refrId)),
+                _refrId
+            };
+            this.controller.emitter.emit("sendMessageWithRefrId", {
+                message,
+                reliability: "unreliable"
+            });
             this.lastSendMovementMoment.set(refrIdStr, now);
         }
     }
 
     private sendActorValuePercentage(_refrId?: number, form?: FormModel) {
-        const skympClient = this.controller.lookupListener("SkympClient") as SkympClient;
-        const sendTarget = skympClient.getSendTarget();
-        if (sendTarget === undefined) {
-            return this.logError("sendTarget was undefined in sendActorValuePercentage");
-        }
-
         const canSend = form && (form.isDead ?? false) === false;
         if (!canSend) return;
 
@@ -145,10 +133,15 @@ export class SendInputsService extends ClientListener {
             ) {
                 return;
             }
-            sendTarget.send(
-                { t: MsgType.ChangeValues, data: av, _refrId },
-                false,
-            );
+            const message: MessageWithRefrId<ChangeValuesMessage> = {
+                t: MsgType.ChangeValues,
+                data: av,
+                _refrId
+            };
+            this.controller.emitter.emit("sendMessageWithRefrId", {
+                message,
+                reliability: "unreliable"
+            });
             this.actorValuesNeedUpdate = false;
             this.prevValues = av;
             this.prevActorValuesUpdateTime = currentTime;
@@ -156,12 +149,6 @@ export class SendInputsService extends ClientListener {
     }
 
     private sendAnimation(_refrId?: number) {
-        const skympClient = this.controller.lookupListener("SkympClient") as SkympClient;
-        const sendTarget = skympClient.getSendTarget();
-        if (sendTarget === undefined) {
-            return this.logError("sendTarget was undefined in sendAnimation");
-        }
-
         const owner = this.getInputOwner(_refrId);
         if (!owner) return;
 
@@ -183,21 +170,20 @@ export class SendInputsService extends ClientListener {
             if (anim.animEventName !== '') {
                 this.lastAnimationSent.set(refrIdStr, anim);
                 this.updateActorValuesAfterAnimation(anim.animEventName);
-                sendTarget.send(
-                    { t: MsgType.UpdateAnimation, data: anim, _refrId },
-                    false,
-                );
+                const message: MessageWithRefrId<UpdateAnimationMessage> = {
+                    t: MsgType.UpdateAnimation,
+                    data: anim,
+                    _refrId
+                };
+                this.controller.emitter.emit("sendMessageWithRefrId", {
+                    message,
+                    reliability: "unreliable"
+                });
             }
         }
     }
 
     private sendAppearance(_refrId?: number) {
-        const skympClient = this.controller.lookupListener("SkympClient") as SkympClient;
-        const sendTarget = skympClient.getSendTarget();
-        if (sendTarget === undefined) {
-            return this.logError("sendTarget was undefined in sendAppearance");
-        }
-
         if (_refrId) return;
         const shown = this.sp.Ui.isMenuOpen('RaceSex Menu');
         if (shown != this.isRaceSexMenuShown) {
@@ -206,21 +192,21 @@ export class SendInputsService extends ClientListener {
                 this.sp.printConsole('Exited from race menu');
 
                 const appearance = getAppearance(this.sp.Game.getPlayer() as Actor);
-                sendTarget.send(
-                    { t: MsgType.UpdateAppearance, data: appearance, _refrId },
-                    true,
-                );
+                // TODO: log appearance contents to debug appearance issues?
+                const message: MessageWithRefrId<UpdateAppearanceMessage> = {
+                    t: MsgType.UpdateAppearance,
+                    data: appearance,
+                    _refrId
+                };
+                this.controller.emitter.emit("sendMessageWithRefrId", {
+                    message,
+                    reliability: "reliable"
+                });
             }
         }
     }
 
     private sendEquipment(_refrId?: number) {
-        const skympClient = this.controller.lookupListener("SkympClient") as SkympClient;
-        const sendTarget = skympClient.getSendTarget();
-        if (sendTarget === undefined) {
-            return this.logError("sendTarget was undefined in sendEquipment");
-        }
-
         if (_refrId) return;
         if (this.equipmentChanged) {
             this.equipmentChanged = false;
@@ -231,24 +217,29 @@ export class SendInputsService extends ClientListener {
                 this.sp.Game.getPlayer() as Actor,
                 this.numEquipmentChanges,
             );
-            sendTarget.send(
-                { t: MsgType.UpdateEquipment, data: eq, _refrId },
-                true,
-            );
+            const message: MessageWithRefrId<UpdateEquipmentMessage> = {
+                t: MsgType.UpdateEquipment,
+                data: eq,
+                _refrId
+            };
+            this.controller.emitter.emit("sendMessageWithRefrId", {
+                message,
+                reliability: "reliable"
+            });
         }
     }
 
     private sendHostAttempts() {
-        const skympClient = this.controller.lookupListener("SkympClient") as SkympClient;
-        const sendTarget = skympClient.getSendTarget();
-        if (sendTarget === undefined) {
-            return this.logError("sendTarget was undefined in sendHostAttempts");
-        }
-
         const remoteId = nextHostAttempt();
         if (!remoteId) return;
 
-        sendTarget.send({ t: MsgType.Host, remoteId }, false);
+        this.controller.emitter.emit("sendMessage", {
+            message: {
+                t: MsgType.Host,
+                remoteId
+            },
+            reliability: "unreliable"
+        });
     }
 
     private getInputOwner(_refrId?: number) {
@@ -260,7 +251,7 @@ export class SendInputsService extends ClientListener {
     private getForm(refrId?: number): FormModel | undefined {
         const skympClient = this.controller.lookupListener("SkympClient") as SkympClient;
 
-        const world = (skympClient.getModelSource() as ModelSource).getWorldModel();
+        const world = (skympClient.modelSource as ModelSource).getWorldModel();
         const form = refrId
             ? world?.forms.find((f) => f?.refrId === refrId)
             : world.forms[world.playerCharacterFormIdx];

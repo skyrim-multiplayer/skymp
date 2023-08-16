@@ -49,23 +49,17 @@ export class CraftService extends ClientListener {
                     return this.logError(`localIdToRemoteId returned 0 for furnitureId=${furnitureId}`);
                 }
 
-                const skympClient = this.controller.lookupListener("SkympClient") as SkympClient;
-                const sendTarget = skympClient.getSendTarget();
-                if (sendTarget === undefined) {
-                    return this.logError("sendTarget was undefined in onActivate");
-                }
-
                 const resultObjectId = baseObjId;
 
                 this.logTrace(`Sending craft workbench=${workbench}, resultObjectId=${resultObjectId}, craftInputObjects=${JSON.stringify(craftInputObjects.entries)}`);
 
-                sendTarget.send(
-                    {
+                this.controller.emitter.emit("sendMessage", {
+                    message: {
                         t: MsgType.CraftItem,
                         data: { workbench, craftInputObjects, resultObjectId },
                     },
-                    true,
-                );
+                    reliability: "reliable"
+                });
             }
         }
     }

@@ -5,23 +5,24 @@ import { Equipment } from "./sync/equipment";
 import { Inventory } from "./sync/inventory";
 import * as spSnippet from "./spSnippet";
 import { ActorValues } from "./sync/actorvalues";
+import { ChangeValuesMessage } from "./services/messages/changeValues";
 
 export enum MsgType {
   CustomPacket = 1,
-  UpdateMovement = 2,
-  UpdateAnimation = 3,
-  UpdateAppearance = 4,
-  UpdateEquipment = 5,
-  Activate = 6,
-  UpdateProperty = 7,
-  PutItem = 8,
-  TakeItem = 9,
+  UpdateMovement = 2, //
+  UpdateAnimation = 3, //
+  UpdateAppearance = 4, //
+  UpdateEquipment = 5, //
+  Activate = 6, //
+  UpdateProperty = 7, // can be fired from client or not??
+  PutItem = 8, //
+  TakeItem = 9, //
   FinishSpSnippet = 10,
-  OnEquip = 11,
-  ConsoleCommand = 12,
-  CraftItem = 13,
-  Host = 14,
-  CustomEvent = 15,
+  OnEquip = 11, //
+  ConsoleCommand = 12, //
+  CraftItem = 13, //
+  Host = 14, // 
+  CustomEvent = 15, // seems to be never used
   ChangeValues = 16,
   OnHit = 17,
   DeathStateContainer = 18,
@@ -64,28 +65,10 @@ export interface DestroyActorMessage {
   idx: number;
 }
 
-export interface UpdateMovementMessage {
-  t: MsgType.UpdateMovement;
-  idx: number;
-  data: Movement;
-}
-
-export interface UpdateAnimationMessage {
-  t: MsgType.UpdateAnimation;
-  idx: number;
-  data: Animation;
-}
-
 export interface UpdateAppearanceMessage {
   t: MsgType.UpdateAppearance;
   idx: number;
   data: Appearance;
-}
-
-export interface UpdateEquipmentMessage {
-  t: MsgType.UpdateEquipment;
-  idx: number;
-  data: Equipment;
 }
 
 export interface UpdatePropertyMessage {
@@ -95,11 +78,6 @@ export interface UpdatePropertyMessage {
   baseRecordType: string; // DOOR, ACTI, etc
   data: unknown;
   propName: string;
-}
-
-export interface ChangeValuesMessage {
-  t: MsgType.ChangeValues;
-  data: ActorValues;
 }
 
 export interface DeathStateContainerMessage {

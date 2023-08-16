@@ -9,6 +9,8 @@ import { LastInvService } from "./lastInvService";
 import * as taffyPerkSystem from '../../sweetpie/taffyPerkSystem';
 
 import { SkympClient } from "./skympClient";
+import { PutItemMessage } from "../messages/putItemMessage";
+import { TakeItemMessage } from "../messages/takeItemMessage";
 
 export class ContainersService extends ClientListener {
     constructor(private sp: Sp, private controller: CombinedController) {
@@ -33,7 +35,7 @@ export class ContainersService extends ClientListener {
 
                 if (!lastInvService.lastInv) lastInvService.lastInv = getPcInventory();
                 if (lastInvService.lastInv) {
-                    const newInv = getInventory(Game.getPlayer() as Actor);
+                    const newInv = getInventory(this.sp.Game.getPlayer() as Actor);
 
                     // It seems that 'ignoreWorn = false' fixes this:
                     // https://github.com/skyrim-multiplayer/issue-tracker/issues/43
@@ -48,36 +50,32 @@ export class ContainersService extends ClientListener {
                     }
                     const msgs = diff.entries
                         .filter((entry) =>
+                            // TODO: review this condition, seems to be incorrect
                             entry.count > 0
                                 ? taffyPerkSystem.canDropOrPutItem(entry.baseId)
                                 : true,
                         )
+                        .filter((entry) => entry.count !== 0)
                         .map((entry) => {
-                            if (entry.count !== 0) {
-                                const msg = JSON.parse(JSON.stringify(entry));
-                                if (Game.getFormEx(entry.baseId)?.getName() === msg['name']) {
-                                    delete msg['name'];
-                                }
-                                msg['t'] =
-                                    entry.count > 0 ? MsgType.PutItem : MsgType.TakeItem;
-                                msg['count'] = Math.abs(msg['count']);
-                                msg['target'] =
-                                    e.oldContainer.getFormID() === 0x14
-                                        ? e.newContainer.getFormID()
-                                        : e.oldContainer.getFormID();
-                                return msg;
+                            const entryCopy = JSON.parse(JSON.stringify(entry)) as typeof entry;
+                            const msg: PutItemMessage | TakeItemMessage = {
+                                ...entryCopy,
+                                t: entry.count > 0 ? MsgType.PutItem : MsgType.TakeItem,
+                                target: e.oldContainer.getFormID() === 0x14
+                                    ? e.newContainer.getFormID()
+                                    : e.oldContainer.getFormID()
+                            };
+                            msg.count = Math.abs(msg.count);
+                            if (this.sp.Game.getFormEx(entry.baseId)?.getName() === msg.name) {
+                                delete msg.name;
                             }
+                            return msg;
                         });
 
-
-                    const skympClient = this.controller.lookupListener("SkympClient") as SkympClient;
-                    const sendTarget = skympClient.getSendTarget();
-                    if (sendTarget === undefined) {
-                        this.logError("sendTarget was undefined in on('containerChanged')");
-                    }
-                    else {
-                        msgs.forEach((msg) => sendTarget.send(msg, true));
-                    }
+                    msgs.forEach((msg) => this.controller.emitter.emit("sendMessage", {
+                        message: msg,
+                        reliability: "reliable"
+                    }));
 
                     // Prevent emitting 1,2,3,4,5 changes when taking/putting 5 potions one by one
                     // This code makes it 1,1,1,1,1 but works only for extra-less items
