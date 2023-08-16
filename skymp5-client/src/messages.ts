@@ -22,11 +22,11 @@ export enum MsgType {
   ConsoleCommand = 12, //
   CraftItem = 13, //
   Host = 14, // 
-  CustomEvent = 15, // seems to be never used
-  ChangeValues = 16,
-  OnHit = 17,
+  CustomEvent = 15,
+  ChangeValues = 16, //
+  OnHit = 17, //
   DeathStateContainer = 18,
-  DropItem = 19,
+  DropItem = 19, //
 }
 
 export interface SetInventory {

@@ -54,6 +54,8 @@ import { UpdateMovementMessage } from '../services/messages/updateMovementMessag
 import { ChangeValuesMessage } from '../services/messages/changeValues';
 import { UpdateAnimationMessage } from '../services/messages/updateAnimationMessage';
 import { UpdateEquipmentMessage } from '../services/messages/updateEquipmentMessage';
+import { CustomPacketMessage } from '../services/messages/customPacketMessage';
+import { CustomEventMessage } from '../services/messages/customEventMessage';
 
 const onceLoad = (
   refrId: number,
@@ -142,18 +144,17 @@ const loginWithSkympIoCredentials = () => {
     printConsole(
       `Logging in offline mode, profileId = ${authData.local.profileId}`,
     );
-    networking.send(
-      {
-        t: messages.MsgType.CustomPacket,
-        content: {
-          customPacketType: 'loginWithSkympIo',
-          gameData: {
-            profileId: authData.local.profileId,
-          },
+    const message: CustomPacketMessage = {
+      t: messages.MsgType.CustomPacket,
+      content: {
+        customPacketType: 'loginWithSkympIo',
+        gameData: {
+          profileId: authData.local.profileId,
         },
       },
-      true,
-    );
+    };
+    // TODO: emit event instead of sending directly to avoid type cast and dependency on network module
+    networking.send(message as unknown as Record<string, unknown>, true);
     return;
   }
   if (authData?.remote) {
@@ -737,14 +738,13 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
         const ctx = {
           sp,
           sendEvent: (...args: unknown[]) => {
-            this.send(
-              {
-                t: messages.MsgType.CustomEvent,
-                args,
-                eventName,
-              },
-              true,
-            );
+            const message: CustomEventMessage = {
+              t: messages.MsgType.CustomEvent,
+              args,
+              eventName
+            };
+            // TODO: emit event instead of sending directly to avoid type cast and dependency on network module
+            this.send(message as unknown as Record<string, unknown>, true);
           },
           getFormIdInServerFormat: (clientsideFormId: number) => {
             return localIdToRemoteId(clientsideFormId);

@@ -1,7 +1,7 @@
 import { EventEmitter } from "eventemitter3";
 import { GameLoadEvent } from "./gameLoadEvent";
 import { SendMessageEvent } from "./sendMessageEvent";
-import { AnyMessage } from "../messages/messageTypes";
+import { AnyMessage } from "../messages/anyMessage";
 import { SendMessageWithRefrIdEvent } from "./sendMessageWithRefrIdEvent";
 
 type EventTypes = {

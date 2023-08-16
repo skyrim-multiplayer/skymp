@@ -3,6 +3,8 @@ import { ActivateMessage } from "./activateMessage";
 import { ChangeValuesMessage } from "./changeValues";
 import { ConsoleCommandMessage } from "./consoleCommandMessage";
 import { CraftItemMessage } from "./craftItemMessage";
+import { CustomEventMessage } from "./customEventMessage";
+import { CustomPacketMessage } from "./customPacketMessage";
 import { DropItemMessage } from "./dropItemMessage";
 import { HitMessage } from "./hitMessage";
 import { HostMessage } from "./hostMessage";
@@ -28,3 +30,5 @@ export type AnyMessage = ActivateMessage
     | ChangeValuesMessage
     | UpdateAppearanceMessage
     | HostMessage
+    | CustomEventMessage
+    | CustomPacketMessage

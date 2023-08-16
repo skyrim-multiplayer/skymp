@@ -8,7 +8,6 @@ import { LastInvService } from "./lastInvService";
 // TODO: refactor this out
 import * as taffyPerkSystem from '../../sweetpie/taffyPerkSystem';
 
-import { SkympClient } from "./skympClient";
 import { PutItemMessage } from "../messages/putItemMessage";
 import { TakeItemMessage } from "../messages/takeItemMessage";
 

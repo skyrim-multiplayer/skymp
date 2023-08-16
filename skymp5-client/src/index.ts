@@ -31,6 +31,7 @@ import { ActivationService } from "./services/services/activationService";
 import { CraftService } from "./services/services/craftService";
 import { DropItemService } from "./services/services/dropItemService";
 import { HitService } from "./services/services/hitService";
+import { SendMessagesService } from "./services/services/sendMessagesService";
 
 browser.main();
 
@@ -114,7 +115,8 @@ const main = () => {
       new ActivationService(sp, controller),
       new CraftService(sp, controller),
       new DropItemService(sp, controller),
-      new HitService(sp, controller)
+      new HitService(sp, controller),
+      new SendMessagesService(sp, controller)
     ];
     SpApiInteractor.setup(listeners);
     listeners.forEach(listener => SpApiInteractor.registerListenerForLookup(listener.constructor.name, listener));
