@@ -781,7 +781,30 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
     return;
   };
 
-  auto& targetActor = partOne.worldState.GetFormAt<MpActor>(hitData.target);
+  auto refr = std::dynamic_pointer_cast<MpObjectReference>(partOne.worldState.LookupFormById(hitData.target));
+  if (!refr) {
+    spdlog::error("ActionListener::OnHit - MpObjectReference not found for hitData.target {:x}", hitData.target);
+    return;
+  }
+
+  auto &browser = partOne.worldState.GetEspm().GetBrowser();
+  std::array<VarValue, 7> args;
+  args[0] = VarValue(aggressor->ToGameObject()); // akAgressor
+  args[1] = VarValue(std::make_shared<EspmGameObject>(browser.LookupById(hitData.source))); // akSource
+  args[2] = VarValue::None(); // akProjectile
+  args[3] = VarValue(hitData.isPowerAttack); // abPowerAttack
+  args[4] = VarValue(hitData.isSneakAttack); // abSneakAttack
+  args[5] = VarValue(hitData.isBashAttack); // abBashAttack
+  args[6] = VarValue(hitData.isHitBlocked); // abHitBlocked
+  refr->SendPapyrusEvent("OnHit", args.data(), args.size());
+
+  auto targetActorPtr = dynamic_cast<MpActor *>(refr.get());
+  if (!targetActorPtr) {
+    return; // Not an actor, damage calculation is not needed
+  }
+
+  auto &targetActor = *targetActorPtr;
+
   auto lastHitTime = targetActor.GetLastHitTime();
   std::chrono::duration<float> timePassed = currentHitTime - lastHitTime;
 

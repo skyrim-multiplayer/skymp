@@ -516,12 +516,21 @@ void WorldState::SendPapyrusEvent(MpForm* form, const char* eventName,
                                   const VarValue* arguments,
                                   size_t argumentsCount)
 {
+  std::vector<VarValue> args = { arguments, arguments + argumentsCount };
+
+  if (spdlog::should_log(spdlog::level::trace)) {
+    std::vector<std::string> argsStrings(args.size());
+    for (size_t i = 0; i < args.size(); ++i) {
+      argsStrings[i] = args[i].ToString();
+    }
+    spdlog::trace("WorldState::SendPapyrusEvent {:x} - {} [{}]", form->GetFormId(), eventName, fmt::join(argsStrings, ", "));
+  }
+
   VirtualMachine::OnEnter onEnter = [&](const StackIdHolder& holder) {
     pImpl->policy->BeforeSendPapyrusEvent(form, eventName, arguments,
                                           argumentsCount, holder.GetStackId());
   };
   auto& vm = GetPapyrusVm();
-  std::vector<VarValue> args = { arguments, arguments + argumentsCount };
   return vm.SendEvent(form->ToGameObject(), eventName, args, onEnter);
 }
 

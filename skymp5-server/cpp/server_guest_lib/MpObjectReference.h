@@ -167,10 +167,11 @@ public:
     return "private.indexed.";
   }
 
-protected:
   void SendPapyrusEvent(const char* eventName,
                         const VarValue* arguments = nullptr,
                         size_t argumentsCount = 0) override;
+
+protected:
   void Init(WorldState* parent, uint32_t formId, bool hasChangeForm) override;
 
   void EnsureBaseContainerAdded(espm::Loader& espm);
