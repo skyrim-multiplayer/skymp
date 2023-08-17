@@ -523,7 +523,8 @@ void WorldState::SendPapyrusEvent(MpForm* form, const char* eventName,
     for (size_t i = 0; i < args.size(); ++i) {
       argsStrings[i] = args[i].ToString();
     }
-    spdlog::trace("WorldState::SendPapyrusEvent {:x} - {} [{}]", form->GetFormId(), eventName, fmt::join(argsStrings, ", "));
+    spdlog::trace("WorldState::SendPapyrusEvent {:x} - {} [{}]",
+                  form->GetFormId(), eventName, fmt::join(argsStrings, ", "));
   }
 
   VirtualMachine::OnEnter onEnter = [&](const StackIdHolder& holder) {
