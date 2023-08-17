@@ -1,6 +1,6 @@
 import { ClientListener, CombinedController, Sp } from "./clientListener";
 import { SinglePlayerService } from "./singlePlayerService";
-import { FormModel } from "../../modelSource/model";
+import { FormModel, WorldModel } from "../../modelSource/model";
 import { MsgType, UpdateAppearanceMessage } from "../../messages";
 import { ModelSource } from "../../modelSource/modelSource";
 import { getMovement } from "../../sync/movementGet";
@@ -75,20 +75,26 @@ export class SendInputsService extends ClientListener {
             typeof this.sp.storage['hosted'] === typeof [] ? this.sp.storage['hosted'] : [];
         const targets = [undefined].concat(hosted as any);
 
+        const skympClient = this.controller.lookupListener("SkympClient") as SkympClient;
+        const modelSource = skympClient.modelSource;
+        if (!modelSource) {
+            return;
+        }
+
+        const world = modelSource.getWorldModel();
+
         targets.forEach((target) => {
-            this.sendMovement(target);
+            const targetFormModel = target ? this.getForm(target, world) : this.getForm(undefined, world);
+            this.sendMovement(target, targetFormModel);
             this.sendAnimation(target);
             this.sendAppearance(target);
             this.sendEquipment(target);
-            this.sendActorValuePercentage(
-                target,
-                target ? this.getForm(target) : this.getForm(),
-            );
+            this.sendActorValuePercentage(target, targetFormModel);
         });
         this.sendHostAttempts();
     }
 
-    private sendMovement(_refrId?: number) {
+    private sendMovement(_refrId?: number, form?: FormModel) {
         const owner = this.getInputOwner(_refrId);
         if (!owner) return;
 
@@ -99,7 +105,7 @@ export class SendInputsService extends ClientListener {
         if (!last || now - last > sendMovementRateMs) {
             const message: MessageWithRefrId<UpdateMovementMessage> = {
                 t: MsgType.UpdateMovement,
-                data: getMovement(owner, this.getForm(_refrId)),
+                data: getMovement(owner, form),
                 _refrId
             };
             this.controller.emitter.emit("sendMessageWithRefrId", {
@@ -248,10 +254,7 @@ export class SendInputsService extends ClientListener {
             : this.sp.Game.getPlayer();
     }
 
-    private getForm(refrId?: number): FormModel | undefined {
-        const skympClient = this.controller.lookupListener("SkympClient") as SkympClient;
-
-        const world = (skympClient.modelSource as ModelSource).getWorldModel();
+    private getForm(refrId: number | undefined, world: WorldModel): FormModel | undefined {
         const form = refrId
             ? world?.forms.find((f) => f?.refrId === refrId)
             : world.forms[world.playerCharacterFormIdx];
