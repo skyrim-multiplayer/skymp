@@ -464,7 +464,9 @@ void ActionListener::OnCraftItem(const RawMessageData& rawMsgData,
   spdlog::debug("User {} tries to craft {:#x} on workbench {:#x}",
                 rawMsgData.userId, resultObjectId, workbenchId);
 
-  if (base.rec->GetType() != "FURN" && base.rec->GetType() != "ACTI") {
+  bool isFurnitureOrActivator =
+    base.rec->GetType() == "FURN" || base.rec->GetType() == "ACTI";
+  if (!isFurnitureOrActivator) {
     throw std::runtime_error("Unable to use " +
                              base.rec->GetType().ToString() + " as workbench");
   }
