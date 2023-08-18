@@ -228,9 +228,14 @@ export class SkympClient extends ClientListener {
       storage.view = view;
     });
     on('update', () => {
-      const singlePlayerService = this.controller.lookupListener("SinglePlayerService") as SinglePlayerService;
-      if (!singlePlayerService.isSinglePlayer)
-        view.update((this.modelSource as ModelSource).getWorldModel());
+      const singlePlayerService = this.controller.lookupListener(SinglePlayerService);
+      if (!singlePlayerService.isSinglePlayer) {
+        const modelSource = this.modelSource;
+        if (modelSource === undefined) {
+          return this.logError("modelSource was undefined");
+        }
+        view.update(modelSource.getWorldModel());
+      }
     });
   }
 

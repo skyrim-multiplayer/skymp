@@ -1,4 +1,4 @@
-import { Actor, ContainerChangedEvent, Game, printConsole } from "skyrimPlatform";
+import { Actor, ContainerChangedEvent, printConsole } from "skyrimPlatform";
 import { ClientListener, CombinedController, Sp } from "./clientListener";
 import { MsgType } from "../../messages";
 import { getPcInventory } from "../../modelSource/remoteServer";
@@ -30,7 +30,7 @@ export class ContainersService extends ClientListener {
                     });
                 }
 
-                const lastInvService = this.controller.lookupListener("LastInvService") as LastInvService;
+                const lastInvService = this.controller.lookupListener(LastInvService);
 
                 if (!lastInvService.lastInv) lastInvService.lastInv = getPcInventory();
                 if (lastInvService.lastInv) {

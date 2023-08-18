@@ -126,4 +126,9 @@ const main = () => {
     throw e;
   }
 };
-main();
+
+// [18.08.2023]
+// I saw "attempt to call hooks.add while in hook context" error
+// I'm not sure if it's a C++ bug in SkyrimPlatform or an artifact of webpack+hotreload
+// But let's for now ensure that "main" executes inside tick context
+once("tick", main);

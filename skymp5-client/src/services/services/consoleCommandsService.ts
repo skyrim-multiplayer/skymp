@@ -4,7 +4,6 @@ import { MsgType } from "../../messages";
 import { localIdToRemoteId } from "../../view/worldViewMisc";
 
 import { ClientListener, Sp, CombinedController } from "./clientListener";
-import { SkympClient } from "./skympClient";
 
 enum CmdArgument {
     ObjectReference,

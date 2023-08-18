@@ -15,7 +15,7 @@ export class ActivationService extends ClientListener {
     }
 
     private onActivate(e: ActivateEvent) {
-        const lastInvService = this.controller.lookupListener("LastInvService") as LastInvService;
+        const lastInvService = this.controller.lookupListener(LastInvService);
         lastInvService.lastInv = getInventory(this.sp.Game.getPlayer() as Actor);
 
         let caster = e.caster ? e.caster.getFormID() : 0;

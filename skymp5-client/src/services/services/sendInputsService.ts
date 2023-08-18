@@ -75,7 +75,7 @@ export class SendInputsService extends ClientListener {
             typeof this.sp.storage['hosted'] === typeof [] ? this.sp.storage['hosted'] : [];
         const targets = [undefined].concat(hosted as any);
 
-        const skympClient = this.controller.lookupListener("SkympClient") as SkympClient;
+        const skympClient = this.controller.lookupListener(SkympClient);
         const modelSource = skympClient.modelSource;
         if (!modelSource) {
             return;
@@ -272,7 +272,7 @@ export class SendInputsService extends ClientListener {
     }
 
     private get singlePlayerService() {
-        return this.controller.lookupListener("SinglePlayerService") as SinglePlayerService;
+        return this.controller.lookupListener(SinglePlayerService);
     }
 
     private lastSendMovementMoment = new Map<string, number>();

@@ -20,8 +20,13 @@ export abstract class ClientListener {
     }
 }
 
+export type ClientListenerConstructor<T> = {
+    new(...args: any[]): T;
+    readonly name: string;
+}
+
 export type ListenerLookupController = {
-    lookupListener(listenerName: string): ClientListener;
+    lookupListener<T extends ClientListener>(constructor: ClientListenerConstructor<T>): T;
 };
 
 export type EventsController = {

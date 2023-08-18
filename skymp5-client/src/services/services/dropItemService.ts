@@ -5,7 +5,6 @@ import { ClientListener, CombinedController, Sp } from "./clientListener";
 import * as taffyPerkSystem from '../../sweetpie/taffyPerkSystem';
 
 import { MsgType } from "../../messages";
-import { SkympClient } from "./skympClient";
 
 export class DropItemService extends ClientListener {
     constructor(private sp: Sp, private controller: CombinedController) {

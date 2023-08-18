@@ -13,14 +13,14 @@ export class SendMessagesService extends ClientListener{
     }
 
     private onSendMessage(e: SendMessageEvent<AnyMessage>) {
-        const skympClient = this.controller.lookupListener("SkympClient") as SkympClient;
+        const skympClient = this.controller.lookupListener(SkympClient);
         skympClient.sendTarget?.send(e.message as any, this.isReliable(e.reliability));
     }
 
     private onSendMessageWithRefrId(e: SendMessageWithRefrIdEvent<AnyMessage>) {
         // Right now sendTarget.send itself handles _refrId
         // So the code is the same as for onSendMessage
-        const skympClient = this.controller.lookupListener("SkympClient") as SkympClient;
+        const skympClient = this.controller.lookupListener(SkympClient);
         skympClient.sendTarget?.send(e.message as any, this.isReliable(e.reliability));
     }
 

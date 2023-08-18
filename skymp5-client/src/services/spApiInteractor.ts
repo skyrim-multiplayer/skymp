@@ -1,5 +1,5 @@
 import { EventEmitterFactory } from "./events/eventEmitterFactory";
-import { ClientListener, CombinedController } from "./services/clientListener";
+import { ClientListener, ClientListenerConstructor, CombinedController } from "./services/clientListener";
 import * as sp from "skyrimPlatform";
 
 export class SpApiInteractor {
@@ -12,10 +12,13 @@ export class SpApiInteractor {
             on: sp.on,
             once: sp.once,
             emitter: EventEmitterFactory.makeEventEmitter(),
-            lookupListener(listenerName: string): ClientListener {
-                const listener = SpApiInteractor.listenersForLookupByName.get(listenerName);
+            lookupListener<T extends ClientListener>(constructor: ClientListenerConstructor<T>): T {
+                const listener = SpApiInteractor.listenersForLookupByName.get(constructor.name);
                 if (listener === undefined) {
-                    throw new Error(`listener not found for name '${listenerName}'`);
+                    throw new Error(`listener not found for name '${constructor.name}'`);
+                }
+                if (!(listener instanceof constructor)) {
+                    throw new Error(`listener class mismatch for name '${constructor.name}'`);
                 }
                 return listener;
             },

@@ -5,7 +5,6 @@ import { Actor, ContainerChangedEvent } from "skyrimPlatform";
 import { ClientListener, CombinedController, Sp } from "./clientListener";
 import { Inventory } from "../../sync/inventory";
 import { MsgType } from "../../messages";
-import { SkympClient } from "./skympClient";
 
 type FurnitureId = number;
 
