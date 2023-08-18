@@ -30,10 +30,6 @@ import { IdManager } from '../lib/idManager';
 import { nameof } from '../lib/nameof';
 import { setActorValuePercentage } from '../sync/actorvalues';
 import { applyAppearanceToPlayer } from '../sync/appearance';
-import {
-  applyDeathState,
-  safeRemoveRagdollFromWorld,
-} from '../sync/deathSystem';
 import { isBadMenuShown } from '../sync/equipment';
 import { Inventory, applyInventory } from '../sync/inventory';
 import { Movement } from '../sync/movement';
@@ -57,6 +53,8 @@ import { UpdateEquipmentMessage } from '../services/messages/updateEquipmentMess
 import { CustomPacketMessage } from '../services/messages/customPacketMessage';
 import { CustomEventMessage } from '../services/messages/customEventMessage';
 import { FinishSpSnippetMessage } from '../services/messages/finishSpSnippetMessage';
+import { RagdollService } from '../services/services/ragdollService';
+import { UpdateAppearanceMessage } from '../services/messages/updateAppearanceMessage';
 
 const onceLoad = (
   refrId: number,
@@ -242,8 +240,8 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
         'cell/world is',
         msg.worldOrCell.toString(16),
       );
-      // todo: think about track ragdoll state of player
-      safeRemoveRagdollFromWorld(Game.getPlayer()!, () => {
+      const ragdollService = SpApiInteractor.makeController().lookupListener(RagdollService);
+      ragdollService.safeRemoveRagdollFromWorld(Game.getPlayer()!, () => {
         TESModPlatform.moveRefrToPosition(
           Game.getPlayer()!,
           Cell.from(Game.getFormEx(msg.worldOrCell)),
@@ -476,7 +474,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
                 ? msg.appearance.skinColor.toString(16)
                 : undefined,
             );
-            const loadGameService = SpApiInteractor.makeController().lookupListener("LoadGameService") as LoadGameService;
+            const loadGameService = SpApiInteractor.makeController().lookupListener(LoadGameService);
             loadGameService.loadGame(
               msg.transform.pos,
               msg.transform.rot,
@@ -549,7 +547,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
     this.worldModel.forms[i].animation = msg.data;
   }
 
-  UpdateAppearance(msg: messages.UpdateAppearanceMessage): void {
+  UpdateAppearance(msg: UpdateAppearanceMessage): void {
     const i = this.getIdManager().getId(msg.idx);
     this.worldModel.forms[i].appearance = msg.data;
     if (!this.worldModel.forms[i].numAppearanceChanges) {
@@ -614,7 +612,10 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
           ? Game.getPlayer()!
           : Actor.from(Game.getFormEx(remoteIdToLocalId(form.refrId ?? 0)));
       if (actor) {
-        applyDeathState(actor, msg.tIsDead.data as boolean);
+        SpApiInteractor.makeController().emitter.emit("applyDeathStateEvent", {
+          actor: Game.getPlayer()!,
+          isDead: msg.tIsDead.data as boolean
+        });
       }
     });
   }

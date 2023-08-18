@@ -7,7 +7,10 @@ export class SpApiInteractor {
     }
 
     static makeController(): CombinedController {
-        return {
+        if (SpApiInteractor.controller) {
+            return SpApiInteractor.controller;
+        }
+        SpApiInteractor.controller = {
             // TODO: handle errors in event handlers. will output to game console by default
             on: sp.on,
             once: sp.once,
@@ -23,6 +26,7 @@ export class SpApiInteractor {
                 return listener;
             },
         }
+        return SpApiInteractor.controller;
     }
 
     static registerListenerForLookup(listenerName: string, listener: ClientListener): void {
@@ -33,4 +37,6 @@ export class SpApiInteractor {
     }
 
     private static listenersForLookupByName = new Map<string, ClientListener>();
+
+    private static controller?: CombinedController;
 }

@@ -32,18 +32,9 @@ import { CraftService } from "./services/services/craftService";
 import { DropItemService } from "./services/services/dropItemService";
 import { HitService } from "./services/services/hitService";
 import { SendMessagesService } from "./services/services/sendMessagesService";
+import { RagdollService } from "./services/services/ragdollService";
 
 browser.main();
-
-export const defaultLocalDamageMult = 1;
-export const setLocalDamageMult = (damageMult: number): void => {
-  Game.setGameSettingFloat("fDiffMultHPToPCE", damageMult);
-  Game.setGameSettingFloat("fDiffMultHPToPCH", damageMult);
-  Game.setGameSettingFloat("fDiffMultHPToPCL", damageMult);
-  Game.setGameSettingFloat("fDiffMultHPToPCN", damageMult);
-  Game.setGameSettingFloat("fDiffMultHPToPCVE", damageMult);
-  Game.setGameSettingFloat("fDiffMultHPToPCVH", damageMult);
-}
 
 const turnOffSkillLocalExp = (av: ActorValue): void => {
   const avi = ActorValueInfo.getActorValueInfoByID(av);
@@ -83,8 +74,6 @@ once("update", () => {
 
   // Init exp system
   expSystem.init();
-
-  setLocalDamageMult(defaultLocalDamageMult);
 });
 on("update", () => {
   Utility.setINIInt("iDifficulty:GamePlay", 5);
@@ -116,7 +105,8 @@ const main = () => {
       new CraftService(sp, controller),
       new DropItemService(sp, controller),
       new HitService(sp, controller),
-      new SendMessagesService(sp, controller)
+      new SendMessagesService(sp, controller),
+      new RagdollService(sp, controller)
     ];
     SpApiInteractor.setup(listeners);
     listeners.forEach(listener => SpApiInteractor.registerListenerForLookup(listener.constructor.name, listener));

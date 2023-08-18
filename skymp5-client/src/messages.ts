@@ -65,12 +65,6 @@ export interface DestroyActorMessage {
   idx: number;
 }
 
-export interface UpdateAppearanceMessage {
-  t: MsgType.UpdateAppearance;
-  idx: number;
-  data: Appearance;
-}
-
 export interface UpdatePropertyMessage {
   t: MsgType.UpdateProperty;
   idx: number;

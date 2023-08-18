@@ -9,7 +9,7 @@ import { SpawnProcess } from "./spawnProcess";
 import { ObjectReferenceEx } from "../extensions/objectReferenceEx";
 import { View } from "./view";
 import { modWcProtection } from "../features/worldCleaner";
-import * as deathSystem from "../sync/deathSystem";
+import * as deathSystem from "../services/services/deathService";
 import { GamemodeApiSupport } from "../gamemodeApi/gamemodeApiSupport";
 import { PlayerCharacterDataHolder } from "./playerCharacterDataHolder";
 import { getMovement } from "../sync/movementGet";

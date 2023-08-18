@@ -1,6 +1,5 @@
 import * as sp from 'skyrimPlatform';
 import {
-  Game,
   on,
   once,
   printConsole,
@@ -10,7 +9,6 @@ import {
 import * as netInfo from '../../debug/netInfoSystem';
 import * as updateOwner from '../../gamemodeApi/updateOwner';
 import * as networking from '../../networking';
-import * as deathSystem from '../../sync/deathSystem';
 import { HostStartMessage, HostStopMessage, MsgType } from '../../messages';
 import { ModelSource } from '../../modelSource/modelSource';
 import { MsgHandler } from '../../modelSource/msgHandler';
@@ -180,13 +178,6 @@ export class SkympClient extends ClientListener {
         msgAny as Record<string, unknown>,
         this.msgHandler as MsgHandler,
       );
-    });
-
-    once('update', () => {
-      const player = Game.getPlayer();
-      if (player) {
-        deathSystem.makeActorImmortal(player);
-      }
     });
   }
 

@@ -1,8 +1,7 @@
 import { ClientListener, CombinedController, Sp } from "./clientListener";
 import { SinglePlayerService } from "./singlePlayerService";
 import { FormModel, WorldModel } from "../../modelSource/model";
-import { MsgType, UpdateAppearanceMessage } from "../../messages";
-import { ModelSource } from "../../modelSource/modelSource";
+import { MsgType } from "../../messages";
 import { getMovement } from "../../sync/movementGet";
 
 // TODO: refactor this out
@@ -20,6 +19,7 @@ import { UpdateMovementMessage } from "../messages/updateMovementMessage";
 import { ChangeValuesMessage } from "../messages/changeValues";
 import { UpdateAnimationMessage } from "../messages/updateAnimationMessage";
 import { UpdateEquipmentMessage } from "../messages/updateEquipmentMessage";
+import { UpdateAppearanceMessage } from "../messages/updateAppearanceMessage";
 
 const playerFormId = 0x14;
 
