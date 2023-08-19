@@ -3,7 +3,7 @@ file(DOWNLOAD ${GAMEMODE_JS_URL} ${GAMEMODE_JS_DEST}
      STATUS status
      LOG log
      TLS_VERIFY ON
-     HTTPHEADER "Authorization: token ${GITHUB_TOKEN}"
+     HTTPHEADER "Authorization: Bearer ${GITHUB_TOKEN}"
      )
 list(GET status 0 status_code)
 list(GET status 1 status_string)
