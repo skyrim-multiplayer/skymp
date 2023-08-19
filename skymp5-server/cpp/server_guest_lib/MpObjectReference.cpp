@@ -826,6 +826,10 @@ const std::set<MpObjectReference*>& MpObjectReference::GetEmitters() const
 void MpObjectReference::RequestReloot(
   std::optional<std::chrono::system_clock::duration> time)
 {
+  if (this->GetFormId() >= 0xff000000) {
+    return;
+  }
+  
   if (GetParent()->IsRelootForbidden(baseType)) {
     return;
   }
@@ -845,10 +849,6 @@ void MpObjectReference::RequestReloot(
 
 void MpObjectReference::DoReloot()
 {
-  if (this->GetFormId() >= 0xff000000) {
-    return;
-  }
-
   if (ChangeForm().nextRelootDatetime) {
     EditChangeForm([&](MpChangeFormREFR& changeForm) {
       changeForm.nextRelootDatetime = 0;
