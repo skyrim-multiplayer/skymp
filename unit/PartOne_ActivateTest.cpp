@@ -311,17 +311,19 @@ TEST_CASE("Activate PurpleMountainFlower in Whiterun", "[PartOne][espm]")
               { "t", MsgType::Activate },
               { "data", { { "caster", 0x14 }, { "target", refrId } } } });
 
+  partOne.Tick(); // send deferred inventory update messages
+
   REQUIRE(partOne.Messages().size() >= 2);
-  REQUIRE(partOne.Messages()[0].j["type"] == "setInventory");
-  REQUIRE(partOne.Messages()[0].j["inventory"].dump() ==
+  REQUIRE(partOne.Messages()[0].j["idx"] == ref.GetIdx());
+  REQUIRE(partOne.Messages()[0].j["t"] == MsgType::UpdateProperty);
+  REQUIRE(partOne.Messages()[0].j["data"] == true);
+  REQUIRE(partOne.Messages()[0].j["propName"] == "isHarvested");
+  REQUIRE(partOne.Messages()[1].j["type"] == "setInventory");
+  REQUIRE(partOne.Messages()[1].j["inventory"].dump() ==
           nlohmann::json({ { "entries",
                              { { { "baseId", MountainFlower01Purple },
                                  { "count", 1 } } } } })
             .dump());
-  REQUIRE(partOne.Messages()[1].j["idx"] == ref.GetIdx());
-  REQUIRE(partOne.Messages()[1].j["t"] == MsgType::UpdateProperty);
-  REQUIRE(partOne.Messages()[1].j["data"] == true);
-  REQUIRE(partOne.Messages()[1].j["propName"] == "isHarvested");
 
   REQUIRE(ref.IsHarvested());
 
@@ -411,6 +413,7 @@ TEST_CASE("BarrelFood01 PutItem/TakeItem", "[PartOne][espm]")
               { "count", 2 },
               { "worn", true },
               { "target", refrId } });
+  partOne.Tick(); // send deferred inventory update messages
   REQUIRE(partOne.Messages().size() == 1);
   REQUIRE(partOne.Messages()[0].j["type"] == "setInventory");
 
@@ -428,6 +431,7 @@ TEST_CASE("BarrelFood01 PutItem/TakeItem", "[PartOne][espm]")
               { "baseId", 0x12eb7 },
               { "count", 1 },
               { "target", refrId } });
+  partOne.Tick(); // send deferred inventory update messages
   REQUIRE(partOne.Messages().size() == 1);
   REQUIRE(partOne.Messages()[0].j["type"] == "setInventory");
   REQUIRE(ref.GetInventory().GetItemCount(0x12eb7) == 1);
@@ -553,17 +557,19 @@ TEST_CASE("Activate torch", "[espm][PartOne]")
               { "t", MsgType::Activate },
               { "data", { { "caster", 0x14 }, { "target", refrId } } } });
 
+  partOne.Tick(); // send deferred inventory update messages
+
   REQUIRE(partOne.Messages().size() >= 2);
-  REQUIRE(partOne.Messages()[0].j["type"] == "setInventory");
+  REQUIRE(partOne.Messages()[0].j["idx"] == ref.GetIdx());
+  REQUIRE(partOne.Messages()[0].j["t"] == MsgType::UpdateProperty);
+  REQUIRE(partOne.Messages()[0].j["data"] == true);
+  REQUIRE(partOne.Messages()[0].j["propName"] == "isHarvested");
+  REQUIRE(partOne.Messages()[1].j["type"] == "setInventory");
   REQUIRE(
-    partOne.Messages()[0].j["inventory"].dump() ==
+    partOne.Messages()[1].j["inventory"].dump() ==
     nlohmann::json(
       { { "entries", { { { "baseId", torchBaseId }, { "count", 1 } } } } })
       .dump());
-  REQUIRE(partOne.Messages()[1].j["idx"] == ref.GetIdx());
-  REQUIRE(partOne.Messages()[1].j["t"] == MsgType::UpdateProperty);
-  REQUIRE(partOne.Messages()[1].j["data"] == true);
-  REQUIRE(partOne.Messages()[1].j["propName"] == "isHarvested");
 
   REQUIRE(ref.IsHarvested());
 
