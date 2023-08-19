@@ -8,7 +8,7 @@
 #include "LocationalData.h"
 #include "MpChangeForms.h"
 #include "MpForm.h"
-#include <Loader.h>
+#include "libespm/Loader.h"
 #include <chrono>
 #include <functional>
 #include <map>
@@ -128,6 +128,9 @@ public:
   void RemoveAllItems(MpObjectReference* target = nullptr);
   void RelootContainer();
   void RegisterProfileId(int32_t profileId);
+  void RegisterPrivateIndexedProperty(
+    const std::string& propertyName,
+    const std::string& propertyValueStringified);
 
   static void Subscribe(MpObjectReference* emitter,
                         MpObjectReference* listener);
@@ -155,6 +158,15 @@ public:
   using Visitor = std::function<void(MpObjectReference*)>;
   void VisitNeighbours(const Visitor& visitor);
 
+  void SendInventoryUpdate();
+  const std::set<MpActor*>& GetActorListeners() const noexcept;
+
+  static const char* GetPropertyPrefixPrivate() noexcept { return "private."; }
+  static const char* GetPropertyPrefixPrivateIndexed() noexcept
+  {
+    return "private.indexed.";
+  }
+
 protected:
   void SendPapyrusEvent(const char* eventName,
                         const VarValue* arguments = nullptr,
@@ -174,7 +186,6 @@ private:
   void InitScripts();
   void MoveOnGrid(GridImpl<MpObjectReference*>& grid);
   void InitListenersAndEmitters();
-  void SendInventoryUpdate();
   void SendOpenContainer(uint32_t refId);
   void CheckInteractionAbility(MpObjectReference& ac);
   bool IsLocationSavingNeeded() const;
@@ -183,6 +194,7 @@ private:
 
   bool everSubscribedOrListened = false;
   std::unique_ptr<std::set<MpObjectReference*>> listeners;
+  std::set<MpActor*> actorListeners;
 
   // Should be empty for non-actor refs
   std::unique_ptr<std::set<MpObjectReference*>> emitters;

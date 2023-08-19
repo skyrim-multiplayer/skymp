@@ -2,12 +2,8 @@
 #include "EspmGameObject.h"
 #include "MpActor.h"
 #include "PapyrusObjectReference.h"
-#include "Utils.h"
 #include "WorldState.h"
-
-// There were hardcoded real profile ids
-// TODO(#1136): make it configurable
-const std::set<int> kAdmins{ 479, 485, 486, 487, 488, 489, 497 };
+#include "papyrus-vm/Utils.h"
 
 ConsoleCommands::Argument::Argument()
 {
@@ -54,7 +50,8 @@ namespace {
 
 void EnsureAdmin(const MpActor& me)
 {
-  if (kAdmins.find(me.GetChangeForm().profileId) == kAdmins.end()) {
+  bool isAdmin = me.GetConsoleCommandsAllowedFlag();
+  if (!isAdmin) {
     throw std::runtime_error("Not enough permissions to use this command");
   }
 }

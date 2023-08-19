@@ -184,19 +184,37 @@ EventResult EventHandler::ProcessEvent(
     return EventResult::kContinue;
   }
 
-  auto e = CopyEventPtr(event);
+  RE::TESObjectREFR* refr = event->reference.get();
+  if (!refr) {
+    return EventResult::kContinue;
+  }
+  auto refrId = refr->GetFormID();
 
-  SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
-    auto obj = JsValue::Object();
+  bool isAttach = event->action == 1;
+  if (isAttach) {
+    SkyrimPlatform::GetSingleton()->AddUpdateTask([refrId] {
+      auto obj = JsValue::Object();
+      auto refr = RE::TESForm::LookupByID<RE::TESObjectREFR>(refrId);
+      if (refr) {
+        AddObjProperty(&obj, "refr", refr, "ObjectReference");
+        SendEvent("cellAttach", obj);
+      }
+    });
+    return EventResult::kContinue;
+  }
 
-    AddObjProperty(&obj, "refr", e->reference.get(), "ObjectReference");
-
-    if (e->action == 1) {
-      SendEvent("cellAttach", obj);
-    } else if (e->action == 0) {
-      SendEvent("cellDetach", obj);
-    }
-  });
+  bool isDetach = event->action == 0;
+  if (isDetach) {
+    SkyrimPlatform::GetSingleton()->AddUpdateTask([refrId] {
+      auto obj = JsValue::Object();
+      auto refr = RE::TESForm::LookupByID<RE::TESObjectREFR>(refrId);
+      if (refr) {
+        AddObjProperty(&obj, "refr", refr, "ObjectReference");
+        SendEvent("cellDetach", obj);
+      }
+    });
+    return EventResult::kContinue;
+  }
 
   return EventResult::kContinue;
 }
@@ -229,20 +247,40 @@ EventResult EventHandler::ProcessEvent(const RE::TESCombatEvent* event,
     return EventResult::kContinue;
   }
 
-  auto e = CopyEventPtr(event);
+  auto target = event->targetActor.get();
+  auto actor = event->actor.get();
 
-  SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
-    auto obj = JsValue::Object();
+  if (!target || !actor) {
+    return EventResult::kContinue;
+  }
 
-    AddObjProperty(&obj, "target", e->targetActor.get(), "ObjectReference");
-    AddObjProperty(&obj, "actor", e->actor.get(), "ObjectReference");
-    AddObjProperty(&obj, "isCombat",
-                   e->newState.any(RE::ACTOR_COMBAT_STATE::kCombat));
-    AddObjProperty(&obj, "isSearching",
-                   e->newState.any(RE::ACTOR_COMBAT_STATE::kSearching));
+  auto targetid = target->GetFormID();
+  auto actorid = actor->GetFormID();
 
-    SendEvent("combatState", obj);
-  });
+  auto isCombat = event->newState.any(RE::ACTOR_COMBAT_STATE::kCombat);
+  auto isSearching = event->newState.any(RE::ACTOR_COMBAT_STATE::kSearching);
+
+  SkyrimPlatform::GetSingleton()->AddUpdateTask(
+    [targetid, actorid, isCombat, isSearching] {
+      auto obj = JsValue::Object();
+
+      auto target = RE::TESForm::LookupByID<RE::TESObjectREFR>(targetid);
+      if (!target && targetid != 0) {
+        return EventResult::kContinue;
+      }
+
+      auto actor = RE::TESForm::LookupByID<RE::TESObjectREFR>(actorid);
+      if (!actor && actorid != 0) {
+        return EventResult::kContinue;
+      }
+
+      AddObjProperty(&obj, "target", target, "ObjectReference");
+      AddObjProperty(&obj, "actor", actor, "ObjectReference");
+      AddObjProperty(&obj, "isCombat", isCombat);
+      AddObjProperty(&obj, "isSearching", isSearching);
+
+      SendEvent("combatState", obj);
+    });
 
   return EventResult::kContinue;
 }
@@ -447,32 +485,41 @@ EventResult EventHandler::ProcessEvent(const RE::TESHitEvent* event,
     return EventResult::kContinue;
   }
 
-  auto e = CopyEventPtr(event);
+  auto causeId = event->cause ? event->cause->GetFormID() : 0;
+  auto targetId = event->target ? event->target->GetFormID() : 0;
+  auto sourceId = event->source;
+  auto projectileId = event->projectile;
+  auto flags = event->flags;
 
-  SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
-    auto obj = JsValue::Object();
+  SkyrimPlatform::GetSingleton()->AddUpdateTask(
+    [causeId, targetId, sourceId, projectileId, flags] {
+      auto obj = JsValue::Object();
 
-    auto sourceForm = RE::TESForm::LookupByID(e->source);
-    auto projectileForm = RE::TESForm::LookupByID(e->projectile);
+      auto cause = RE::TESForm::LookupByID<RE::TESObjectREFR>(causeId);
+      auto target = RE::TESForm::LookupByID<RE::TESObjectREFR>(targetId);
+      auto sourceForm = RE::TESForm::LookupByID(sourceId);
+      auto projectileForm = RE::TESForm::LookupByID(projectileId);
 
-    // TODO(#336): drop old name "agressor" on next major release of SP
-    // Again: Until we release 3.0.0 we do not remove this line.
-    AddObjProperty(&obj, "agressor", e->cause.get(), "ObjectReference");
-    AddObjProperty(&obj, "aggressor", e->cause.get(), "ObjectReference");
-    AddObjProperty(&obj, "target", e->target.get(), "ObjectReference");
-    AddObjProperty(&obj, "source", sourceForm, "Form");
-    AddObjProperty(&obj, "projectile", projectileForm, "Form");
-    AddObjProperty(&obj, "isPowerAttack",
-                   e->flags.any(RE::TESHitEvent::Flag::kPowerAttack));
-    AddObjProperty(&obj, "isSneakAttack",
-                   e->flags.any(RE::TESHitEvent::Flag::kSneakAttack));
-    AddObjProperty(&obj, "isBashAttack",
-                   e->flags.any(RE::TESHitEvent::Flag::kBashAttack));
-    AddObjProperty(&obj, "isHitBlocked",
-                   e->flags.any(RE::TESHitEvent::Flag::kHitBlocked));
+      if (cause && target) {
+        // TODO(#336): drop old name "agressor" on next major release of SP
+        // Again: Until we release 3.0.0 we do not remove this line.
+        AddObjProperty(&obj, "agressor", cause, "ObjectReference");
+        AddObjProperty(&obj, "aggressor", cause, "ObjectReference");
+        AddObjProperty(&obj, "target", target, "ObjectReference");
+        AddObjProperty(&obj, "source", sourceForm, "Form");
+        AddObjProperty(&obj, "projectile", projectileForm, "Form");
+        AddObjProperty(&obj, "isPowerAttack",
+                       flags.any(RE::TESHitEvent::Flag::kPowerAttack));
+        AddObjProperty(&obj, "isSneakAttack",
+                       flags.any(RE::TESHitEvent::Flag::kSneakAttack));
+        AddObjProperty(&obj, "isBashAttack",
+                       flags.any(RE::TESHitEvent::Flag::kBashAttack));
+        AddObjProperty(&obj, "isHitBlocked",
+                       flags.any(RE::TESHitEvent::Flag::kHitBlocked));
 
-    SendEvent("hit", obj);
-  });
+        SendEvent("hit", obj);
+      }
+    });
 
   return EventResult::kContinue;
 }

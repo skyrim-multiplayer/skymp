@@ -1,7 +1,7 @@
 #pragma once
 #include "GeoPolygonProc.h"
 #include "NiPoint3.h"
-#include "espm.h"
+#include "libespm/espm.h"
 #include <vector>
 
 // Supports only Z-angle. Ignores X-angle and Y-angle

@@ -11,19 +11,26 @@
 #include "MpFormGameObject.h"
 #include "NapiHelper.h"
 #include "NetworkingCombined.h"
+#include "PacketHistoryWrapper.h"
 #include "PapyrusUtils.h"
 #include "ScampServerListener.h"
 #include "ScriptStorage.h"
 #include "SettingsUtils.h"
+#include "formulas/SweetPieDamageFormula.h"
 #include "formulas/TES5DamageFormula.h"
+#include "libespm/IterateFields.h"
 #include "property_bindings/PropertyBindingFactory.h"
 #include <cassert>
 #include <cctype>
 #include <memory>
 #include <napi.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
+#include <sstream>
 
 namespace {
+
+constexpr size_t kMockServerIdx = 1;
+
 std::shared_ptr<spdlog::logger>& GetLogger()
 {
   static auto g_logger = spdlog::stdout_color_mt("console");
@@ -51,6 +58,12 @@ std::string GetPropertyAlphabet()
   alphabet += '_';
   return alphabet;
 }
+
+bool StartsWith(const std::string& str, const char* prefix)
+{
+  return str.compare(0, strlen(prefix), prefix) == 0;
+}
+
 }
 
 Napi::FunctionReference ScampServer::constructor;
@@ -76,6 +89,7 @@ Napi::Object ScampServer::Init(Napi::Env env, Napi::Object exports)
       InstanceMethod("createBot", &ScampServer::CreateBot),
       InstanceMethod("getUserByActor", &ScampServer::GetUserByActor),
       InstanceMethod("writeLogs", &ScampServer::WriteLogs),
+      InstanceMethod("getUserIp", &ScampServer::GetUserIp),
 
       InstanceMethod("getLocalizedString", &ScampServer::GetLocalizedString),
       InstanceMethod("getServerSettings", &ScampServer::GetServerSettings),
@@ -93,7 +107,15 @@ Napi::Object ScampServer::Init(Napi::Env env, Napi::Object exports)
       InstanceMethod("callPapyrusFunction", &ScampServer::CallPapyrusFunction),
       InstanceMethod("registerPapyrusFunction",
                      &ScampServer::RegisterPapyrusFunction),
-      InstanceMethod("sendCustomPacket", &ScampServer::SendCustomPacket) });
+      InstanceMethod("sendCustomPacket", &ScampServer::SendCustomPacket),
+      InstanceMethod("setPacketHistoryRecording",
+                     &ScampServer::SetPacketHistoryRecording),
+      InstanceMethod("getPacketHistory", &ScampServer::GetPacketHistory),
+      InstanceMethod("clearPacketHistory", &ScampServer::ClearPacketHistory),
+      InstanceMethod("requestPacketHistoryPlayback",
+                     &ScampServer::RequestPacketHistoryPlayback),
+      InstanceMethod("findFormsByPropertyValue",
+                     &ScampServer::FindFormsByPropertyValue) });
   constructor = Napi::Persistent(func);
   constructor.SuppressDestruct();
   exports.Set("ScampServer", func);
@@ -136,6 +158,57 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
                    spdlog::level::to_string_view(logger->level()));
     }
 
+    if (serverSettings.find("npcEnabled") != serverSettings.end()) {
+      bool enabled = serverSettings.at("npcEnabled").get<bool>();
+      partOne->worldState.npcEnabled = enabled;
+      if (enabled) {
+        spdlog::info("NPCs are enabled");
+      } else {
+        spdlog::info("NPCs are disabled");
+      }
+    } else {
+      spdlog::info(
+        "npcEnabled option is not found in the server configuration file. "
+        "Disabling NPCs by default");
+    }
+
+    if (serverSettings.find("npcSettings") != serverSettings.end()) {
+      if (serverSettings.at("npcSettings").is_object()) {
+        std::unordered_map<std::string, WorldState::NpcSettingsEntry>
+          npcSettings;
+        if (serverSettings.find("default") != serverSettings.end()) {
+          partOne->worldState.defaultSetting.spawnInInterior =
+            serverSettings.at("spawnInInterior").get<bool>();
+          partOne->worldState.defaultSetting.spawnInExterior =
+            serverSettings.at("spawnInExterior").get<bool>();
+          partOne->worldState.defaultSetting.overriden = true;
+        }
+        for (const auto& field : serverSettings["npcSettings"].items()) {
+          WorldState::NpcSettingsEntry entry;
+          if (field.value().find("spawnInInterior") != field.value().end()) {
+            entry.spawnInInterior =
+              field.value().at("spawnInInterior").get<bool>();
+          }
+          if (field.value().find("spawnInExterior") != field.value().end()) {
+            entry.spawnInExterior =
+              field.value().at("spawnInExterior").get<bool>();
+          }
+          npcSettings[field.key()] = entry;
+        }
+        partOne->worldState.SetNpcSettings(std::move(npcSettings));
+        spdlog::info("NPCs' settings have been loaded susccessfully");
+      }
+    } else {
+      std::stringstream msg;
+      msg << "\"npcSettings\" are not found in the server configuration "
+             "file.";
+      msg << (partOne->worldState.npcEnabled
+                ? "Allowing all npc by default"
+                : "NPCs are disabled due to \"npcEnabled\": ")
+          << std::boolalpha << partOne->worldState.npcEnabled;
+      spdlog::info(msg.str());
+    }
+
     partOne->worldState.isPapyrusHotReloadEnabled =
       serverSettings.count("isPapyrusHotReloadEnabled") != 0 &&
       serverSettings.at("isPapyrusHotReloadEnabled").get<bool>();
@@ -176,16 +249,36 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
         serverSettings["dataDir"], serverSettings["lang"]);
     }
 
-    auto scriptStorage = std::make_shared<DirectoryScriptStorage>(
-      (espm::fs::path(dataDir) / "scripts").string());
-
     auto espm = new espm::Loader(pluginPaths);
+    std::string password = serverSettings.contains("password")
+      ? static_cast<std::string>(serverSettings["password"])
+      : std::string(kNetworkingPassword);
     auto realServer = Networking::CreateServer(
-      static_cast<uint32_t>(port), static_cast<uint32_t>(maxConnections));
+      static_cast<uint32_t>(port), static_cast<uint32_t>(maxConnections),
+      password.data());
+
+    static_assert(kMockServerIdx == 1);
     server = Networking::CreateCombinedServer({ realServer, serverMock });
+
     partOne->SetSendTarget(server.get());
-    partOne->SetDamageFormula(std::make_unique<TES5DamageFormula>());
+
+    const auto& sweetPieDamageFormulaSettings =
+      serverSettings["sweetPieDamageFormulaSettings"];
+    if (sweetPieDamageFormulaSettings.is_object()) {
+      partOne->SetDamageFormula(std::make_unique<SweetPieDamageFormula>(
+        std::make_unique<TES5DamageFormula>(), sweetPieDamageFormulaSettings));
+    } else {
+      partOne->SetDamageFormula(std::make_unique<TES5DamageFormula>());
+    }
+
+    std::vector<std::shared_ptr<IScriptStorage>> scriptStorages;
+    scriptStorages.push_back(std::make_shared<DirectoryScriptStorage>(
+      (espm::fs::path(dataDir) / "scripts").string()));
+    scriptStorages.push_back(std::make_shared<AssetsScriptStorage>());
+    auto scriptStorage =
+      std::make_shared<CombinedScriptStorage>(scriptStorages);
     partOne->worldState.AttachScriptStorage(scriptStorage);
+
     partOne->AttachEspm(espm);
     this->serverSettings = serverSettings;
     this->logger = logger;
@@ -197,6 +290,12 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
       auto time = std::chrono::milliseconds(1) * timeMs;
       partOne->worldState.SetRelootTime(recordType, time);
       logger->info("'{}' will be relooted every {} ms", recordType, timeMs);
+    }
+
+    auto it = serverSettings.find("forbiddenReloot");
+    if (it != serverSettings.end() && (*it).is_array()) {
+      partOne->worldState.SetForbiddenRelootTypes(
+        (*it).get<std::set<std::string>>());
     }
 
     auto res =
@@ -403,32 +502,73 @@ Napi::Value ScampServer::CreateBot(const Napi::CallbackInfo& info)
   if (!this->serverMock) {
     throw Napi::Error::New(info.Env(), "Bad serverMock");
   }
+  auto serverCombined =
+    std::dynamic_pointer_cast<Networking::ServerCombined>(this->server);
+  if (!serverCombined) {
+    throw Napi::Error::New(
+      info.Env(),
+      "Expected server to be instance of Networking::ServerCombined");
+  }
 
-  auto bot = std::make_shared<Bot>(this->serverMock->CreateClient());
+  auto pair = this->serverMock->CreateClient();
+  auto bot = std::make_shared<Bot>(pair.first);
 
   auto jBot = Napi::Object::New(info.Env());
 
   jBot.Set(
+    "getUserId",
+    Napi::Function::New(
+      info.Env(), [bot, pair, serverCombined](const Napi::CallbackInfo& info) {
+        try {
+          Networking::UserId realUserId = pair.second;
+          return Napi::Number::New(
+            info.Env(),
+            serverCombined->GetCombinedUserId(kMockServerIdx, realUserId));
+        } catch (std::exception& e) {
+          throw Napi::Error::New(info.Env(), std::string(e.what()));
+        }
+      }));
+
+  jBot.Set(
     "destroy",
     Napi::Function::New(info.Env(), [bot](const Napi::CallbackInfo& info) {
-      bot->Destroy();
-      return info.Env().Undefined();
+      try {
+        bot->Destroy();
+        return info.Env().Undefined();
+      } catch (std::exception& e) {
+        throw Napi::Error::New(info.Env(), std::string(e.what()));
+      }
     }));
   jBot.Set(
     "send",
     Napi::Function::New(info.Env(), [bot](const Napi::CallbackInfo& info) {
-      auto standardJson = info.Env().Global().Get("JSON").As<Napi::Object>();
-      auto stringify = standardJson.Get("stringify").As<Napi::Function>();
-      std::string s;
-      s += Networking::MinPacketId;
-      s += (std::string)stringify.Call({ info[0] }).As<Napi::String>();
-      bot->Send(s);
+      try {
+        auto argument = info[0];
+        if (argument.IsTypedArray()) {
+          auto arr = argument.As<Napi::Uint8Array>();
+          size_t n = arr.ByteLength();
+          char* data = reinterpret_cast<char*>(arr.Data());
+          std::string s(data, n);
+          bot->Send(s);
+        } else {
+          auto standardJson =
+            info.Env().Global().Get("JSON").As<Napi::Object>();
+          auto stringify = standardJson.Get("stringify").As<Napi::Function>();
+          std::string s;
+          s += Networking::MinPacketId;
+          s += static_cast<std::string>(
+            stringify.Call({ info[0] }).As<Napi::String>());
+          bot->Send(s);
+        }
 
-      // Memory leak fix
-      // TODO: Provide tick API
-      bot->Tick();
+        // Memory leak fix
+        // TODO: Provide tick API
+        bot->Tick();
 
-      return info.Env().Undefined();
+        return info.Env().Undefined();
+      } catch (std::exception& e) {
+        throw Napi::Error::New(info.Env(), std::string(e.what()));
+      }
     }));
 
   return jBot;
@@ -467,6 +607,16 @@ Napi::Value ScampServer::WriteLogs(const Napi::CallbackInfo& info)
     GetLogger()->error("ScampServer::WriteLogs - {}", e.what());
   }
   return info.Env().Undefined();
+}
+
+Napi::Value ScampServer::GetUserIp(const Napi::CallbackInfo& info)
+{
+  try {
+    auto userId = info[0].As<Napi::Number>().Uint32Value();
+    return Napi::String::New(info.Env(), server->GetIp(userId));
+  } catch (std::exception& e) {
+    throw Napi::Error::New(info.Env(), std::string(e.what()));
+  }
 }
 
 Napi::Value ScampServer::GetLocalizedString(const Napi::CallbackInfo& info)
@@ -532,7 +682,11 @@ Napi::Value ScampServer::GetLocalizedString(const Napi::CallbackInfo& info)
 Napi::Value ScampServer::GetServerSettings(const Napi::CallbackInfo& info)
 {
   try {
-    return NapiHelper::ParseJson(info.Env(), serverSettings);
+    if (parsedServerSettings.IsEmpty()) {
+      parsedServerSettings =
+        Napi::Persistent(NapiHelper::ParseJson(info.Env(), serverSettings));
+    }
+    return parsedServerSettings.Value();
   } catch (std::exception& e) {
     throw Napi::Error::New(info.Env(), std::string(e.what()));
   }
@@ -632,11 +786,23 @@ Napi::Value ScampServer::Get(const Napi::CallbackInfo& info)
 
     auto it = g_standardPropertyBindings.find(propertyName);
     if (it != g_standardPropertyBindings.end()) {
-      return it->second->Get(info.Env(), *this, formId);
+      auto res = it->second->Get(info.Env(), *this, formId);
+      if (spdlog::should_log(spdlog::level::trace)) {
+        spdlog::trace("ScampServer::Get {:x} - {}={} (native property)",
+                      formId, propertyName,
+                      static_cast<std::string>(res.ToString()));
+      }
+      return res;
     } else {
-      return PropertyBindingFactory()
-        .CreateCustomPropertyBinding(propertyName)
-        ->Get(info.Env(), *this, formId);
+      auto res = PropertyBindingFactory()
+                   .CreateCustomPropertyBinding(propertyName)
+                   ->Get(info.Env(), *this, formId);
+      if (spdlog::should_log(spdlog::level::trace)) {
+        spdlog::trace("ScampServer::Get {:x} - {}={} (custom property)",
+                      formId, propertyName,
+                      static_cast<std::string>(res.ToString()));
+      }
+      return res;
     }
 
   } catch (std::exception& e) {
@@ -656,8 +822,18 @@ Napi::Value ScampServer::Set(const Napi::CallbackInfo& info)
 
     auto it = g_standardPropertyBindings.find(propertyName);
     if (it != g_standardPropertyBindings.end()) {
+      if (spdlog::should_log(spdlog::level::trace)) {
+        spdlog::trace("ScampServer::Set {:x} - {}={} (native property)",
+                      formId, propertyName,
+                      static_cast<std::string>(value.ToString()));
+      }
       it->second->Set(info.Env(), *this, formId, value);
     } else {
+      if (spdlog::should_log(spdlog::level::trace)) {
+        spdlog::trace("ScampServer::Set {:x} - {}={} (custom property)",
+                      formId, propertyName,
+                      static_cast<std::string>(value.ToString()));
+      }
       PropertyBindingFactory()
         .CreateCustomPropertyBinding(propertyName)
         ->Set(info.Env(), *this, formId, value);
@@ -907,6 +1083,91 @@ Napi::Value ScampServer::RegisterPapyrusFunction(
       });
 
     return info.Env().Undefined();
+  } catch (std::exception& e) {
+    throw Napi::Error::New(info.Env(), std::string(e.what()));
+  }
+}
+
+Napi::Value ScampServer::SetPacketHistoryRecording(
+  const Napi::CallbackInfo& info)
+{
+  try {
+    auto userId = NapiHelper::ExtractUInt32(info[0], "userId");
+    bool isRecording = NapiHelper::ExtractBoolean(info[1], "isRecording");
+    partOne->SetPacketHistoryRecording(userId, isRecording);
+    return info.Env().Undefined();
+  } catch (std::exception& e) {
+    throw Napi::Error::New(info.Env(), std::string(e.what()));
+  }
+}
+
+Napi::Value ScampServer::GetPacketHistory(const Napi::CallbackInfo& info)
+{
+  try {
+    auto userId = NapiHelper::ExtractUInt32(info[0], "userId");
+    auto history = partOne->GetPacketHistory(userId);
+    return PacketHistoryWrapper::ToNapiValue(history, info.Env());
+  } catch (std::exception& e) {
+    throw Napi::Error::New(info.Env(), std::string(e.what()));
+  }
+}
+
+Napi::Value ScampServer::ClearPacketHistory(const Napi::CallbackInfo& info)
+{
+  try {
+    auto userId = NapiHelper::ExtractUInt32(info[0], "userId");
+    partOne->ClearPacketHistory(userId);
+    return info.Env().Undefined();
+  } catch (std::exception& e) {
+    throw Napi::Error::New(info.Env(), std::string(e.what()));
+  }
+}
+
+Napi::Value ScampServer::RequestPacketHistoryPlayback(
+  const Napi::CallbackInfo& info)
+{
+  try {
+    auto userId = NapiHelper::ExtractUInt32(info[0], "userId");
+    auto packetHistory = NapiHelper::ExtractObject(info[1], "packetHistory");
+
+    PacketHistory history = PacketHistoryWrapper::FromNapiValue(packetHistory);
+
+    partOne->RequestPacketHistoryPlayback(userId, history);
+    return info.Env().Undefined();
+  } catch (std::exception& e) {
+    throw Napi::Error::New(info.Env(), std::string(e.what()));
+  }
+}
+
+Napi::Value ScampServer::FindFormsByPropertyValue(
+  const Napi::CallbackInfo& info)
+{
+  try {
+    auto propertyName = NapiHelper::ExtractString(info[0], "propertyName");
+    auto propertyValue = info[1];
+
+    if (!StartsWith(propertyName,
+                    MpObjectReference::GetPropertyPrefixPrivateIndexed())) {
+      spdlog::error("FindFormsByPropertyValue - Attempt to search for "
+                    "non-indexed property '{}'",
+                    propertyName);
+    }
+
+    auto propertyValueStringified =
+      NapiHelper::Stringify(info.Env(), propertyValue);
+
+    auto mapKey = partOne->worldState.MakePrivateIndexedPropertyMapKey(
+      propertyName, propertyValueStringified);
+
+    auto& formIds =
+      partOne->worldState.GetActorsByPrivateIndexedProperty(mapKey);
+    auto result = Napi::Array::New(info.Env(), formIds.size());
+    uint32_t i = 0;
+    for (auto formId : formIds) {
+      result.Set(i, Napi::Number::New(info.Env(), formId));
+      ++i;
+    }
+    return result;
   } catch (std::exception& e) {
     throw Napi::Error::New(info.Env(), std::string(e.what()));
   }

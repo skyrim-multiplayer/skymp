@@ -1,33 +1,43 @@
-import { on, Game, Actor, Form, printConsole, once, Utility, settings } from "skyrimPlatform";
-import { FormViewArray } from "./formViewArray";
-import { WorldModel } from "../modelSource/model";
-import { PlayerCharacterDataHolder } from "./playerCharacterDataHolder";
-import { View } from "./view";
+import {
+  Actor,
+  Form,
+  Game,
+  Utility,
+  on,
+  once,
+  printConsole,
+  settings,
+} from 'skyrimPlatform';
+
+import { WorldModel } from '../modelSource/model';
+import { FormViewArray } from './formViewArray';
+import { PlayerCharacterDataHolder } from './playerCharacterDataHolder';
+import { View } from './view';
 
 export class WorldView implements View<WorldModel> {
   constructor() {
     // Work around showRaceMenu issue
     // Default nord in Race Menu will have very ugly face
     // If other players are spawning when we show this menu
-    on("update", () => {
+    on('update', () => {
       const pc = Game.getPlayer() as Actor;
       const pcWorldOrCell = (
         (pc.getWorldSpace() || pc.getParentCell()) as Form
       ).getFormID();
       if (this.pcWorldOrCell !== pcWorldOrCell) {
         if (this.pcWorldOrCell) {
-          printConsole("Reset all form views");
+          printConsole('Reset all form views');
           this.formViews.resize(0);
           this.cloneFormViews.resize(0);
         }
         this.pcWorldOrCell = pcWorldOrCell;
       }
     });
-    once("update", () => {
+    once('update', () => {
       // Wait 1s game time (time spent in Race Menu isn't counted)
       Utility.wait(1).then(() => {
         this.allowUpdate = true;
-        printConsole("Update is now allowed");
+        printConsole('Update is now allowed');
       });
     });
   }
@@ -43,7 +53,7 @@ export class WorldView implements View<WorldModel> {
   update(model: WorldModel): void {
     if (!this.allowUpdate) return;
 
-    const skipUpdates = settings["skymp5-client"]["skipUpdates"];
+    const skipUpdates = settings['skymp5-client']['skipUpdates'];
 
     // skip 50% of updated if said in the settings
     this.counter = !this.counter;
@@ -51,8 +61,8 @@ export class WorldView implements View<WorldModel> {
 
     this.formViews.resize(model.forms.length);
 
-    const showMe = settings["skymp5-client"]["show-me"];
-    const showClones = settings["skymp5-client"]["show-clones"];
+    const showMe = settings['skymp5-client']['show-me'];
+    const showClones = settings['skymp5-client']['show-clones'];
 
     PlayerCharacterDataHolder.updateData();
 
@@ -66,7 +76,7 @@ export class WorldView implements View<WorldModel> {
   }
 
   syncFormArray(model: WorldModel) {
-    const showMe = settings["skymp5-client"]["show-me"];
+    const showMe = settings['skymp5-client']['show-me'];
     this.formViews.syncFormView(model, !!showMe);
   }
 

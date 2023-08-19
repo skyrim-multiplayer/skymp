@@ -7,13 +7,13 @@ using namespace Networking;
 TEST_CASE("MockServer - IsConnected is always true for clients",
           "[Networking]")
 {
-  REQUIRE(MockServer().CreateClient()->IsConnected());
+  REQUIRE(MockServer().CreateClient().first->IsConnected());
 }
 
 TEST_CASE("MockServer - send message to server", "[Networking]")
 {
   MockServer mockServer;
-  auto cl = mockServer.CreateClient();
+  auto cl = mockServer.CreateClient().first;
   cl->Send((uint8_t*)"abcd", 4, true);
 
   static bool received = false;
@@ -32,12 +32,12 @@ TEST_CASE("MockServer - send message to server", "[Networking]")
 TEST_CASE("MockServer - send message to client", "[Networking]")
 {
   MockServer mockServer;
-  auto cl0 = mockServer.CreateClient();
-  auto cl1 = mockServer.CreateClient();
-  auto cl2 = mockServer.CreateClient();
+  auto cl0 = mockServer.CreateClient().first;
+  auto cl1 = mockServer.CreateClient().first;
+  auto cl2 = mockServer.CreateClient().first;
   cl1.reset();
 
-  auto cl = mockServer.CreateClient();
+  auto cl = mockServer.CreateClient().first;
 
   mockServer.Send(1, (uint8_t*)"abcd", 4, true);
 
@@ -65,7 +65,7 @@ TEST_CASE("MockServer - connect/disconnect", "[Networking]")
 {
   MockServer mockServer;
 
-  auto cl = mockServer.CreateClient();
+  auto cl = mockServer.CreateClient().first;
 
   {
     static bool serverTicked = false;

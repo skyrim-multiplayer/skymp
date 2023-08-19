@@ -7,6 +7,7 @@
 #include <DirectXTK/SpriteFont.h>
 #include <Signal.hpp>
 #include <functional>
+#include <map>
 #include <mutex>
 #include <wrl.h>
 
@@ -71,8 +72,9 @@ private:
   Microsoft::WRL::ComPtr<ID3D11DeviceContext> m_pImmediateContext;
 
   std::unique_ptr<::DirectX::SpriteBatch> m_pSpriteBatch;
-  std::unique_ptr<::DirectX::SpriteFont> m_pSpriteFont;
 
   std::unique_ptr<::DirectX::CommonStates> m_pStates;
+
+  std::map<std::string, std::unique_ptr<::DirectX::SpriteFont>> m_pFonts;
 };
 }

@@ -34,6 +34,7 @@ public:
   Napi::Value CreateBot(const Napi::CallbackInfo& info);
   Napi::Value GetUserByActor(const Napi::CallbackInfo& info);
   Napi::Value WriteLogs(const Napi::CallbackInfo& info);
+  Napi::Value GetUserIp(const Napi::CallbackInfo& info);
 
   Napi::Value GetLocalizedString(const Napi::CallbackInfo& info);
   Napi::Value GetServerSettings(const Napi::CallbackInfo& info);
@@ -50,6 +51,13 @@ public:
   Napi::Value CallPapyrusFunction(const Napi::CallbackInfo& info);
   Napi::Value RegisterPapyrusFunction(const Napi::CallbackInfo& info);
   Napi::Value SendCustomPacket(const Napi::CallbackInfo& info);
+
+  Napi::Value SetPacketHistoryRecording(const Napi::CallbackInfo& info);
+  Napi::Value GetPacketHistory(const Napi::CallbackInfo& info);
+  Napi::Value ClearPacketHistory(const Napi::CallbackInfo& info);
+  Napi::Value RequestPacketHistoryPlayback(const Napi::CallbackInfo& info);
+
+  Napi::Value FindFormsByPropertyValue(const Napi::CallbackInfo& info);
 
   const std::shared_ptr<PartOne>& GetPartOne() const { return partOne; }
   const GamemodeApi::State& GetGamemodeApiState() const
@@ -68,6 +76,7 @@ private:
   std::shared_ptr<spdlog::logger> logger;
   nlohmann::json serverSettings;
   GamemodeApi::State gamemodeApiState;
+  Napi::Reference<Napi::Value> parsedServerSettings;
 
   std::shared_ptr<LocalizationProvider> localizationProvider;
 

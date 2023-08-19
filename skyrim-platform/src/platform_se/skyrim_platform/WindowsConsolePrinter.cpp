@@ -1,6 +1,10 @@
 #include "WindowsConsolePrinter.h"
 
-WindowsConsolePrinter::WindowsConsolePrinter()
+#include <Windows.h>
+
+WindowsConsolePrinter::WindowsConsolePrinter(int offsetLeft, int offsetTop,
+                                             int width, int height,
+                                             bool isAlwaysOnTop)
 {
   if (AllocConsole()) {
     freopen("CONOUT$", "w", stdout);
@@ -9,6 +13,11 @@ WindowsConsolePrinter::WindowsConsolePrinter()
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
                             FOREGROUND_GREEN | FOREGROUND_BLUE |
                               FOREGROUND_RED);
+
+    HWND window_header = GetConsoleWindow();
+
+    SetWindowPos(window_header, isAlwaysOnTop ? HWND_TOPMOST : HWND_TOP,
+                 offsetLeft, offsetTop, width, height, 0x4000);
   }
 }
 
@@ -32,5 +41,5 @@ void WindowsConsolePrinter::Print(const JsFunctionArguments& args)
     s += str.ToString() + ' ';
   }
 
-  spdlog::info(s);
+  std::cout << s << std::endl;
 }

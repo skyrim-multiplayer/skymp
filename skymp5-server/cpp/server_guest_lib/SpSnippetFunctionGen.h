@@ -2,7 +2,7 @@
 #include "MpActor.h"
 #include "SpSnippet.h"
 #include "SpSnippetFunctionGen.h"
-#include "VirtualMachine.h"
+#include "papyrus-vm/VirtualMachine.h"
 #include <cstdio>
 
 class SpSnippetFunctionGen

@@ -2,7 +2,7 @@
 #include "IPapyrusClass.h"
 #include "SpSnippetFunctionGen.h"
 
-class PapyrusDebug : public IPapyrusClass<PapyrusDebug>
+class PapyrusDebug final : public IPapyrusClass<PapyrusDebug>
 {
 public:
   const char* GetName() override { return "debug"; }

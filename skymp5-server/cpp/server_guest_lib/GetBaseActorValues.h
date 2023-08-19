@@ -1,9 +1,9 @@
 #pragma once
 #include "ActorValues.h"
-#include <Loader.h>
+#include "libespm/Loader.h"
+#include "libespm/espm.h"
 #include <WorldState.h>
 #include <cstdint>
-#include <espm.h>
 #include <fmt/format.h>
 
 struct BaseActorValues : public ActorValues
@@ -14,8 +14,6 @@ struct BaseActorValues : public ActorValues
   void VisitBaseActorValues(BaseActorValues& baseActorValues,
                             MpChangeForm& changeForm,
                             const PropertiesVisitor& visitor);
-
-  float GetValue(espm::ActorValue av);
 };
 
 BaseActorValues GetBaseActorValues(WorldState* worldState, uint32_t baseId,

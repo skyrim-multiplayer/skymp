@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { SkyrimFrame } from '../../components/SkyrimFrame/SkyrimFrame';
 import { FrameButton } from '../../components/FrameButton/FrameButton';
-import content, { levels, mapper } from './content';
+import content, { levels } from './content';
 import './styles.scss';
 import { SkyrimHint } from '../../components/SkyrimHint/SkyrimHint';
 import hoverSound from './assets/OnCoursor.wav';
@@ -52,6 +52,7 @@ const SkillsMenu = ({ send }: { send: (message: string) => void }) => {
   };
 
   const init = () => {
+    setconfirmDiscard(false);
     send('/skill init');
   };
 
@@ -63,8 +64,8 @@ const SkillsMenu = ({ send }: { send: (message: string) => void }) => {
     // window.dispatchEvent(
     //   new CustomEvent('updateSkillMenu', {
     //     detail: {
-    //       exp: 3375,
-    //       mem: 2,
+    //       exp: 800,
+    //       mem: 1000,
     //       perks: {
     //         saltmaker: 1,
     //         weapon: 1,
@@ -92,7 +93,7 @@ const SkillsMenu = ({ send }: { send: (message: string) => void }) => {
     setpMem(playerData.mem);
     setscale(
       window.innerWidth >= 1920
-        ? window.innerWidth / 1920
+        ? 1
         : window.innerWidth / 2500
     );
   }, [playerData]);
@@ -129,7 +130,7 @@ const SkillsMenu = ({ send }: { send: (message: string) => void }) => {
       );
       return;
     }
-    if (playerLevel === 0 && pMem === 0) {
+    if (perk.levelsPrice[playerLevel] > pMem) {
       setcurrentDescription('не хватает памяти');
       return;
     }
@@ -143,9 +144,7 @@ const SkillsMenu = ({ send }: { send: (message: string) => void }) => {
     // 0 level for first level to craft
     send(`/skill ${selectedPerk.name} ${level}`);
     setpExp(pExp - price);
-    if (level === 0) {
-      setpMem(pMem - 1);
-    }
+    setpMem(pMem - price);
     playerData.perks[selectedPerk.name] = level + 1;
     const audio = document
       .getElementById('learnSound')
@@ -154,32 +153,32 @@ const SkillsMenu = ({ send }: { send: (message: string) => void }) => {
   };
 
   const discardHandler = () => {
-    let returnExp = 0;
-    let memReturn = 0;
+    // let returnExp = 0;
+    // let memReturn = 0;
     send('/skill discard');
-    Object.keys(playerData.perks).forEach((key) => {
-      const index = mapper[key];
-      const returnPrice = content[index[0]][index[1]].levelsPrice
-        .slice(0, playerData.perks[key])
-        .reduce((a, b) => a + b, 0);
-      returnExp += returnPrice;
-      memReturn += 1;
-    });
-    const newExp = pExp + Math.round(returnExp / 2);
-    const newMem = pMem + memReturn;
-    setpExp(newExp);
-    setpMem(newMem);
-    setplayerData({
-      mem: newMem,
-      exp: newExp,
-      perks: {}
-    });
+    // Object.keys(playerData.perks).forEach((key) => {
+    //   const index = mapper[key];
+    //   const returnPrice = content[index[0]][index[1]].levelsPrice
+    //     .slice(0, playerData.perks[key])
+    //     .reduce((a, b) => a + b, 0);
+    //   returnExp += returnPrice;
+    //   memReturn += returnPrice;
+    // });
+    // const newExp = Math.min(pExp, 500) + Math.round(returnExp / 2);
+    // const newMem = pMem + memReturn;
+    // setpExp(newExp);
+    // setpMem(newMem);
+    // setplayerData({
+    //   mem: newMem,
+    //   exp: newExp,
+    //   perks: {}
+    // });
   };
 
   const confirmHanlder = () => {
     setconfirmDiscard(true);
-    setcurrentLevel('хотите сбросить все профессии?');
-    setcurrentDescription('нажимая “да” вы полностью сбросите все выученные профессии и получите обратно половину накопленного опыта. в первую очередь,  это стоит сделать если ваш персонаж умер.');
+    setcurrentLevel('хотите удалить персонажа?');
+    setcurrentDescription('нажимая "да" вы полностью теряете все накопленные очки опыта, вкачанные навыки, имя персонажа, внешность и инвентарь. В первую очередь вы можете удалить данные персонажа, если он умер.');
   };
 
   if (!playerData) return <></>;
@@ -320,12 +319,12 @@ const SkillsMenu = ({ send }: { send: (message: string) => void }) => {
                     )
                   : (
                   <FrameButton
-                    text="сбросить"
+                    text="сбросить все"
                     name="discardBtn"
                     variant="DEFAULT"
                     width={242}
                     height={56}
-                    disabled={Object.keys(playerData.perks).length === 0}
+                    // disabled={Object.keys(playerData.perks).length === 0}
                     onMouseDown={() => confirmHanlder()}
                   ></FrameButton>
                     )}

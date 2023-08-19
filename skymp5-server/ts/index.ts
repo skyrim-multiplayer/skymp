@@ -1,5 +1,6 @@
 import * as ui from "./ui";
 
+// @ts-ignore
 import * as sourceMapSupport from "source-map-support";
 sourceMapSupport.install({
   retrieveSourceMap: function (source: string) {
@@ -27,6 +28,8 @@ import * as path from "path";
 import * as os from "os";
 
 import * as manifestGen from "./manifestGen";
+import { DiscordBanSystem } from "./systems/discordBanSystem";
+import { createScampServer } from "./scampNative";
 
 const {
   master,
@@ -86,21 +89,8 @@ function requireUncached(
 
         // In native module we now register mp-api methods into the ScampServer class
         // This workaround allows code that is bound to global 'mp' object to run
-        globalThis.mp = globalThis.mp || {};
-        globalThis.mp.getLocalizedString = (...args: unknown[]) => (server as any).getLocalizedString(...args);
-        globalThis.mp.getServerSettings = (...args: unknown[]) => (server as any).getServerSettings(...args);
-        globalThis.mp.clear = (...args: unknown[]) => (server as any).clear(...args);
-        globalThis.mp.makeProperty = (...args: unknown[]) => (server as any).makeProperty(...args);
-        globalThis.mp.makeEventSource = (...args: unknown[]) => (server as any).makeEventSource(...args);
-        globalThis.mp.get = (...args: unknown[]) => (server as any).get(...args);
-        globalThis.mp.set = (...args: unknown[]) => (server as any).set(...args);
-        globalThis.mp.place = (...args: unknown[]) => (server as any).place(...args);
-        globalThis.mp.lookupEspmRecordById = (...args: unknown[]) => (server as any).lookupEspmRecordById(...args);
-        globalThis.mp.getEspmLoadOrder = (...args: unknown[]) => (server as any).getEspmLoadOrder(...args);
-        globalThis.mp.getDescFromId = (...args: unknown[]) => (server as any).getDescFromId(...args);
-        globalThis.mp.getIdFromDesc = (...args: unknown[]) => (server as any).getIdFromDesc(...args);
-        globalThis.mp.callPapyrusFunction = (...args: unknown[]) => (server as any).callPapyrusFunction(...args);
-        globalThis.mp.registerPapyrusFunction = (...args: unknown[]) => (server as any).registerPapyrusFunction(...args);
+        // @ts-ignore
+        globalThis.mp = globalThis.mp || server;
 
         requireTemp(module);
         return;
@@ -121,7 +111,8 @@ const systems = new Array<System>();
 systems.push(
   new MasterClient(log, port, master, maxPlayers, name, ip, 5000, offlineMode),
   new Spawn(log),
-  new Login(log, maxPlayers, master, port, ip, offlineMode)
+  new Login(log, maxPlayers, master, port, ip, offlineMode),
+  new DiscordBanSystem()
 );
 
 const setupStreams = (server: scampNative.ScampServer) => {
@@ -130,6 +121,7 @@ const setupStreams = (server: scampNative.ScampServer) => {
     }
 
     write(chunk: Buffer, encoding: string, callback: () => void) {
+      // @ts-ignore
       const str = chunk.toString(encoding);
       if (str.trim().length > 0) {
         server.writeLogs(this.logLevel, str);
@@ -140,9 +132,11 @@ const setupStreams = (server: scampNative.ScampServer) => {
 
   const infoStream = new LogsStream('info');
   const errorStream = new LogsStream('error');
+  // @ts-ignore
   process.stdout.write = (chunk: Buffer, encoding: string, callback: () => void) => {
     infoStream.write(chunk, encoding, callback);
   };
+  // @ts-ignore
   process.stderr.write = (chunk: Buffer, encoding: string, callback: () => void) => {
     errorStream.write(chunk, encoding, callback);
   };
@@ -152,7 +146,7 @@ const main = async () => {
   manifestGen.generateManifest(Settings.get());
   ui.main();
 
-  const server = new scampNative.ScampServer(port, maxPlayers);
+  const server = createScampServer(port, maxPlayers);
   const ctx = { svr: server, gm: new EventEmitter() };
 
   setupStreams(server);
@@ -223,9 +217,12 @@ const main = async () => {
     }
   });
 
-  server.on("customPacket", (userId, content) => {
+  server.on("customPacket", (userId: number, content: string) => {
     // At this moment we don't have any custom packets
   });
+
+  // It's important to call this before gamemode
+  server.attachSaveStorage();
 
   const clear = () => server.clear();
 
@@ -289,7 +286,6 @@ const main = async () => {
       console.error("Error happened in chokidar watch", error);
     });
   }
-  server.attachSaveStorage();
 };
 
 main();

@@ -94,3 +94,12 @@ add_custom_command(
   TARGET ${PROJECT_NAME} POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy ${SKYMP5_SERVER_SOURCE_DIR}/yarn.lock ${CMAKE_BINARY_DIR}/dist/server/yarn.lock
 )
+
+file(GLOB_RECURSE standard_scripts
+  ${CMAKE_CURRENT_SOURCE_DIR}/standard_scripts/*
+)
+cmrc_add_resource_library(server_standard_scripts ${standard_scripts}
+  NAMESPACE server_standard_scripts
+)
+apply_default_settings(TARGETS server_standard_scripts)
+target_link_libraries(server_guest_lib PUBLIC server_standard_scripts)

@@ -99,6 +99,8 @@ bool PartOne::IsConnected(Networking::UserId userId) const
 
 void PartOne::Tick()
 {
+  TickPacketHistoryPlaybacks();
+  TickDeferredMessages();
   worldState.Tick();
 }
 
@@ -397,6 +399,49 @@ void PartOne::NotifyGamemodeApiStateChanged(
   pImpl->gamemodeApiState = newState;
 }
 
+void PartOne::SetPacketHistoryRecording(Networking::UserId userId, bool enable)
+{
+  if (userId < serverState.userInfo.size() && serverState.userInfo[userId]) {
+    if (!serverState.userInfo[userId]->packetHistoryStartTime) {
+      serverState.userInfo[userId]->packetHistoryStartTime =
+        std::chrono::steady_clock::now();
+    }
+    serverState.userInfo[userId]->isPacketHistoryRecording = enable;
+  } else {
+    throw std::runtime_error("Invalid user id " + std::to_string(userId));
+  }
+}
+
+PacketHistory PartOne::GetPacketHistory(Networking::UserId userId)
+{
+  if (userId < serverState.userInfo.size() && serverState.userInfo[userId]) {
+    return serverState.userInfo[userId]->packetHistory;
+  } else {
+    throw std::runtime_error("Invalid user id " + std::to_string(userId));
+  }
+}
+
+void PartOne::ClearPacketHistory(Networking::UserId userId)
+{
+  if (userId < serverState.userInfo.size() && serverState.userInfo[userId]) {
+    serverState.userInfo[userId]->packetHistory = std::move(PacketHistory{});
+    serverState.userInfo[userId]->packetHistoryStartTime = std::nullopt;
+  } else {
+    throw std::runtime_error("Invalid user id " + std::to_string(userId));
+  }
+}
+
+void PartOne::RequestPacketHistoryPlayback(Networking::UserId userId,
+                                           const PacketHistory& history)
+{
+  if (userId < serverState.userInfo.size() && serverState.userInfo[userId]) {
+    serverState.requestedPlaybacks[userId] =
+      Playback{ history, std::chrono::steady_clock::now() };
+  } else {
+    throw std::runtime_error("Invalid user id " + std::to_string(userId));
+  }
+}
+
 FormCallbacks PartOne::CreateFormCallbacks()
 {
   auto st = &serverState;
@@ -421,7 +466,43 @@ FormCallbacks PartOne::CreateFormCallbacks()
                                 size, reliable);
     };
 
-  return { subscribe, unsubscribe, sendToUser };
+  FormCallbacks::SendToUserDeferredFn sendToUserDeferred =
+    [this, st](MpActor* actor, const void* data, size_t size, bool reliable,
+               int deferredChannelId) {
+      if (deferredChannelId < 0 || deferredChannelId >= 100) {
+        return spdlog::error(
+          "sendToUserDeferred - invalid deferredChannelId {}",
+          deferredChannelId);
+      }
+
+      auto targetuserId = st->UserByActor(actor);
+      if (targetuserId == Networking::InvalidUserId ||
+          st->disconnectingUserId == targetuserId) {
+        // It's ok, it happens
+        return;
+      }
+
+      auto& userInfo = st->userInfo[targetuserId];
+      if (!userInfo) {
+        return spdlog::error("sendToUserDeferred - null userInfo for user {}",
+                             targetuserId);
+      }
+
+      DeferredMessage deferredMessage;
+      deferredMessage.packetData = { static_cast<const uint8_t*>(data),
+                                     static_cast<const uint8_t*>(data) +
+                                       size };
+      deferredMessage.packetReliable = reliable;
+      deferredMessage.actorIdExpected = actor->GetFormId();
+
+      if (userInfo->deferredChannels.size() <= deferredChannelId) {
+        userInfo->deferredChannels.resize(deferredChannelId + 1);
+      }
+
+      userInfo->deferredChannels[deferredChannelId] = deferredMessage;
+    };
+
+  return { subscribe, unsubscribe, sendToUser, sendToUserDeferred };
 }
 
 ActionListener& PartOne::GetActionListener()
@@ -610,13 +691,42 @@ void PartOne::AddUser(Networking::UserId userId, UserType type)
 void PartOne::HandleMessagePacket(Networking::UserId userId,
                                   Networking::PacketData data, size_t length)
 {
-  if (!serverState.IsConnected(userId))
+  if (!serverState.IsConnected(userId)) {
     throw std::runtime_error("User with id " + std::to_string(userId) +
                              " doesn't exist");
-  if (!pImpl->packetParser)
-    pImpl->packetParser.reset(new PacketParser);
+  }
+  if (!pImpl->packetParser) {
+    pImpl->packetParser = std::make_shared<PacketParser>();
+  }
 
   InitActionListener();
+
+  auto& userInfo = serverState.userInfo[userId];
+  if (userInfo && userInfo->isPacketHistoryRecording) {
+    if (!userInfo->packetHistoryStartTime) {
+      spdlog::error(
+        "Expected packetHistoryStartTime to present, probably incorrect code");
+    } else {
+      size_t offset = userInfo->packetHistory.buffer.size();
+
+      userInfo->packetHistory.buffer.resize(offset + length);
+      std::copy(data, data + length,
+                userInfo->packetHistory.buffer.data() + offset);
+
+      auto duration =
+        std::chrono::steady_clock::now() - *userInfo->packetHistoryStartTime;
+      auto milliseconds =
+        std::chrono::duration_cast<std::chrono::milliseconds>(duration);
+      auto timeMs = milliseconds.count();
+
+      userInfo->packetHistory.packets.push_back(
+        { offset, length, static_cast<uint64_t>(timeMs) });
+    }
+  }
+
+  if (serverState.activePlaybacks.count(userId) > 0) {
+    return;
+  }
 
   pImpl->packetParser->TransformPacketIntoAction(userId, data, length,
                                                  *pImpl->actionListener);
@@ -624,6 +734,77 @@ void PartOne::HandleMessagePacket(Networking::UserId userId,
 
 void PartOne::InitActionListener()
 {
-  if (!pImpl->actionListener)
-    pImpl->actionListener.reset(new ActionListener(*this));
+  if (!pImpl->actionListener) {
+    pImpl->actionListener = std::make_shared<ActionListener>(*this);
+  }
+}
+
+void PartOne::TickPacketHistoryPlaybacks()
+{
+  for (auto& [userId, playback] : serverState.requestedPlaybacks) {
+    serverState.activePlaybacks[userId] = std::move(playback);
+  }
+  serverState.requestedPlaybacks.clear();
+
+  for (auto& [userId, playback] : serverState.activePlaybacks) {
+    auto& packetHistory = playback.history;
+
+    while (
+      !packetHistory.packets.empty() &&
+      playback.startTime +
+          std::chrono::milliseconds(packetHistory.packets.front().timeMs) <=
+        std::chrono::steady_clock::now()) {
+      auto& packet = packetHistory.packets.front();
+
+      if (packetHistory.buffer.size() < packet.offset + packet.length) {
+        spdlog::error("Packet history buffer is corrupted");
+      } else {
+        pImpl->packetParser->TransformPacketIntoAction(
+          userId, &packetHistory.buffer[packet.offset], packet.length,
+          *pImpl->actionListener);
+      }
+      packetHistory.packets.pop_front();
+    }
+  }
+
+  // delete playback if packetHistory.packets is empty
+  for (auto it = serverState.activePlaybacks.begin();
+       it != serverState.activePlaybacks.end();) {
+    if (it->second.history.packets.empty()) {
+      it = serverState.activePlaybacks.erase(it);
+    } else {
+      ++it;
+    }
+  }
+}
+
+void PartOne::TickDeferredMessages()
+{
+  for (Networking::UserId userId = 0; userId < serverState.userInfo.size();
+       ++userId) {
+    auto& userInfo = serverState.userInfo[userId];
+    if (!userInfo) {
+      continue;
+    }
+    for (auto& deferredMessage : userInfo->deferredChannels) {
+      if (deferredMessage != std::nullopt) {
+        auto actor = serverState.ActorByUser(userId);
+        if (!actor) {
+          continue;
+        }
+
+        if (deferredMessage->actorIdExpected != actor->GetFormId()) {
+          continue;
+        }
+
+        pImpl->sendTarget->Send(userId,
+                                reinterpret_cast<Networking::PacketData>(
+                                  deferredMessage->packetData.data()),
+                                deferredMessage->packetData.size(),
+                                deferredMessage->packetReliable);
+
+        deferredMessage = std::nullopt;
+      }
+    }
+  }
 }

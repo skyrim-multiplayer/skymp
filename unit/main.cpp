@@ -1,10 +1,11 @@
-#include <Loader.h>
 #include <catch2/catch_all.hpp>
 #include <iostream>
+#include <libespm/Loader.h>
 
 #include "TestUtils.hpp"
 
 namespace {
+
 inline void OnProgress(const std::string& fileName, float readDuration,
                        float parseDuration, uintmax_t fileSize)
 {
@@ -20,17 +21,13 @@ inline espm::Loader CreateEspmLoader()
                                                  "Dawnguard.esm",
                                                  "HearthFires.esm",
                                                  "Dragonborn.esm" };
-
     std::filesystem::path dataDir = GetDataDir();
-
     std::filesystem::path skyrimEsm = dataDir / "Skyrim.esm";
     if (!std::filesystem::exists(skyrimEsm)) {
       files.clear();
       dataDir = std::filesystem::current_path();
-      std::cout << skyrimEsm << " doesn't exist" << std::endl;
       std::cout << "Skipping tests with [espm] tag" << std::endl;
     }
-
     return espm::Loader(dataDir, files, OnProgress);
   } catch (std::exception& e) {
     std::cout << "Exception in CreateEspmLoader:" << std::endl;
@@ -38,6 +35,7 @@ inline espm::Loader CreateEspmLoader()
     std::exit(1);
   }
 }
+
 }
 
 espm::Loader l = CreateEspmLoader();

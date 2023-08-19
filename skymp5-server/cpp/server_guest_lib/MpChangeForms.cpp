@@ -34,11 +34,15 @@ nlohmann::json MpChangeForm::ToJson(const MpChangeForm& changeForm)
     res["equipmentDump"] = nlohmann::json::parse(changeForm.equipmentDump);
   }
 
+  res["learnedSpells"] = changeForm.learnedSpells.GetLearnedSpells();
+
   res["healthPercentage"] = changeForm.actorValues.healthPercentage;
   res["magickaPercentage"] = changeForm.actorValues.magickaPercentage;
   res["staminaPercentage"] = changeForm.actorValues.staminaPercentage;
 
   res["isDead"] = changeForm.isDead;
+
+  res["consoleCommandsAllowed"] = changeForm.consoleCommandsAllowed;
 
   res["spawnPoint_pos"] = { changeForm.spawnPoint.pos[0],
                             changeForm.spawnPoint.pos[1],
@@ -50,6 +54,7 @@ nlohmann::json MpChangeForm::ToJson(const MpChangeForm& changeForm)
     changeForm.spawnPoint.cellOrWorldDesc.ToString();
 
   res["spawnDelay"] = changeForm.spawnDelay;
+  res["effects"] = changeForm.activeMagicEffects.ToJson();
   return res;
 }
 
@@ -62,12 +67,14 @@ MpChangeForm MpChangeForm::JsonToChangeForm(simdjson::dom::element& element)
     nextRelootDatetime("nextRelootDatetime"), isDisabled("isDisabled"),
     profileId("profileId"), isRaceMenuOpen("isRaceMenuOpen"),
     appearanceDump("appearanceDump"), equipmentDump("equipmentDump"),
-    dynamicFields("dynamicFields"), healthPercentage("healthPercentage"),
+    learnedSpells("learnedSpells"), dynamicFields("dynamicFields"),
+    healthPercentage("healthPercentage"),
     magickaPercentage("magickaPercentage"),
     staminaPercentage("staminaPercentage"), isDead("isDead"),
+    consoleCommandsAllowed("consoleCommandsAllowed"),
     spawnPointPos("spawnPoint_pos"), spawnPointRot("spawnPoint_rot"),
     spawnPointCellOrWorldDesc("spawnPoint_cellOrWorldDesc"),
-    spawnDelay("spawnDelay");
+    spawnDelay("spawnDelay"), effects("effects");
 
   MpChangeForm res;
   ReadEx(element, recType, &res.recType);
@@ -117,10 +124,28 @@ MpChangeForm MpChangeForm::JsonToChangeForm(simdjson::dom::element& element)
     res.equipmentDump.clear();
   }
 
+  if (element.at_pointer(learnedSpells.GetData()).error() ==
+      simdjson::error_code::SUCCESS) {
+
+    std::vector<LearnedSpells::Data::key_type> learnedSpellsData;
+
+    ReadVector(element, learnedSpells, &learnedSpellsData);
+
+    for (const auto spellId : learnedSpellsData) {
+      res.learnedSpells.LearnSpell(spellId);
+    }
+  }
+
   ReadEx(element, healthPercentage, &res.actorValues.healthPercentage);
   ReadEx(element, magickaPercentage, &res.actorValues.magickaPercentage);
   ReadEx(element, staminaPercentage, &res.actorValues.staminaPercentage);
+
   ReadEx(element, isDead, &res.isDead);
+
+  if (element.at_pointer(consoleCommandsAllowed.GetData()).error() ==
+      simdjson::error_code::SUCCESS) {
+    ReadEx(element, consoleCommandsAllowed, &res.consoleCommandsAllowed);
+  }
 
   simdjson::dom::element jDynamicFields;
   ReadEx(element, dynamicFields, &jDynamicFields);
@@ -142,5 +167,31 @@ MpChangeForm MpChangeForm::JsonToChangeForm(simdjson::dom::element& element)
 
   ReadEx(element, spawnDelay, &res.spawnDelay);
 
+  if (element.at_pointer(effects.GetData()).error() ==
+      simdjson::error_code::SUCCESS) {
+    ReadEx(element, effects, &jTmp);
+    res.activeMagicEffects = ActiveMagicEffectsMap::FromJson(jTmp);
+  }
   return res;
+}
+
+void LearnedSpells::LearnSpell(const Data::key_type baseId)
+{
+  _learnedSpellIds.emplace(baseId);
+}
+
+size_t LearnedSpells::Count() const noexcept
+{
+  return _learnedSpellIds.size();
+}
+
+bool LearnedSpells::IsSpellLearned(const Data::key_type baseId) const
+{
+  return _learnedSpellIds.contains(baseId);
+}
+
+std::vector<LearnedSpells::Data::key_type> LearnedSpells::GetLearnedSpells()
+  const
+{
+  return std::vector(_learnedSpellIds.begin(), _learnedSpellIds.end());
 }

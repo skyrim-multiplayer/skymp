@@ -4,6 +4,7 @@
 #include "EspmGameObject.h"
 #include "MpFormGameObject.h"
 #include "WorldState.h"
+#include "libespm/Combiner.h"
 
 VarValue PapyrusGame::IncrementStat(VarValue self,
                                     const std::vector<VarValue>& arguments)
@@ -86,6 +87,20 @@ VarValue PapyrusGame::ShowLimitedRaceMenu(
   return VarValue::None();
 }
 
+VarValue PapyrusGame::GetCameraState(VarValue self,
+                                     const std::vector<VarValue>& arguments)
+{
+  auto serializedArgs = SpSnippetFunctionGen::SerializeArguments(arguments);
+  if (auto actor = compatibilityPolicy->GetDefaultActor(
+        GetName(), "GetCameraState", self.GetMetaStackId())) {
+    Viet::Promise<VarValue> promise =
+      SpSnippet(GetName(), "GetCameraState", serializedArgs.data())
+        .Execute(actor);
+    return VarValue(Viet::Promise<VarValue>(promise));
+  }
+  return VarValue(-1);
+}
+
 void PapyrusGame::RaceMenuHelper(VarValue& self, const char* funcName,
                                  const std::vector<VarValue>& arguments)
 {
@@ -95,4 +110,61 @@ void PapyrusGame::RaceMenuHelper(VarValue& self, const char* funcName,
     actor->SetRaceMenuOpen(true);
     SpSnippet(GetName(), funcName, serializedArgs.data()).Execute(actor);
   }
+}
+
+VarValue PapyrusGame::GetFormInternal(VarValue self,
+                                      const std::vector<VarValue>& arguments,
+                                      bool extended) const noexcept
+{
+  if (arguments.size() != 1) {
+    return VarValue::None();
+  }
+  auto formId = static_cast<const int32_t>(arguments[0].CastToInt());
+  constexpr const uint32_t maxId = 0x80000000;
+
+  if (!extended && formId > maxId) {
+    return VarValue::None();
+  }
+
+  const std::shared_ptr<MpForm>& pForm =
+    compatibilityPolicy->GetWorldState()->LookupFormById(formId);
+  espm::LookupResult res = GetRecordPtr(VarValue(formId));
+
+  if (!pForm && !res.rec) {
+    return VarValue::None();
+  }
+
+  return pForm ? VarValue(pForm->ToGameObject())
+               : VarValue(std::make_shared<EspmGameObject>(res));
+}
+
+VarValue PapyrusGame::GetForm(
+  VarValue self, const std::vector<VarValue>& arguments) const noexcept
+{
+  return GetFormInternal(self, arguments, false);
+}
+
+VarValue PapyrusGame::GetFormEx(
+  VarValue self, const std::vector<VarValue>& arguments) const noexcept
+{
+  return GetFormInternal(self, arguments, true);
+}
+
+void PapyrusGame::Register(VirtualMachine& vm,
+                           std::shared_ptr<IPapyrusCompatibilityPolicy> policy)
+{
+  compatibilityPolicy = policy;
+
+  AddStatic(vm, "IncrementStat", &PapyrusGame::IncrementStat);
+  AddStatic(vm, "ForceThirdPerson", &PapyrusGame::ForceThirdPerson);
+  AddStatic(vm, "DisablePlayerControls", &PapyrusGame::DisablePlayerControls);
+  AddStatic(vm, "EnablePlayerControls", &PapyrusGame::EnablePlayerControls);
+  AddStatic(vm, "FindClosestReferenceOfAnyTypeInListFromRef",
+            &PapyrusGame::FindClosestReferenceOfAnyTypeInListFromRef);
+  AddStatic(vm, "GetPlayer", &PapyrusGame::GetPlayer);
+  AddStatic(vm, "ShowRaceMenu", &PapyrusGame::ShowRaceMenu);
+  AddStatic(vm, "ShowLimitedRaceMenu", &PapyrusGame::ShowLimitedRaceMenu);
+  AddStatic(vm, "GetCameraState", &PapyrusGame::GetCameraState);
+  AddStatic(vm, "GetForm", &PapyrusGame::GetForm);
+  AddStatic(vm, "GetFormEx", &PapyrusGame::GetFormEx);
 }

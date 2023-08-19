@@ -40,28 +40,30 @@ TEST_CASE("SetUserActor", "[PartOne]")
   REQUIRE(partOne.GetUserActor(0) == 0xff000ABC);
   REQUIRE(partOne.Messages().size() == 1);
   REQUIRE(partOne.Messages().at(0).j.dump() ==
-          nlohmann::json{ { "type", "createActor" },
-                          { "refrId", 0xff000ABC },
-                          { "idx", 0 },
-                          { "isMe", true },
-                          { "props",
-                            nlohmann::json{ { "healRate", 0.7 },
-                                            { "healRateMult", 100.f },
-                                            { "health", 100.f },
-                                            { "isHostedByOther", true },
-                                            { "magicka", 100.f },
-                                            { "magickaRate", 3.f },
-                                            { "magickaRateMult", 100.f },
-                                            { "stamina", 100.f },
-                                            { "staminaRate", 5.f },
-                                            { "staminaRateMult", 100.f },
-                                            { "healthPercentage", 1.f },
-                                            { "staminaPercentage", 1.f },
-                                            { "magickaPercentage", 1.f } } },
-                          { "transform",
-                            nlohmann::json{ { "pos", { 1.f, 2.f, 3.f } },
-                                            { "rot", { 0.f, 0.f, 180.f } },
-                                            { "worldOrCell", 0x3c } } } }
+          nlohmann::json{
+            { "type", "createActor" },
+            { "refrId", 0xff000ABC },
+            { "idx", 0 },
+            { "isMe", true },
+            { "props",
+              nlohmann::json{ { "healRate", 0.7 },
+                              { "healRateMult", 100.f },
+                              { "health", 100.f },
+                              { "isHostedByOther", true },
+                              { "learnedSpells", nlohmann::json::array() },
+                              { "magicka", 100.f },
+                              { "magickaRate", 3.f },
+                              { "magickaRateMult", 100.f },
+                              { "stamina", 100.f },
+                              { "staminaRate", 5.f },
+                              { "staminaRateMult", 100.f },
+                              { "healthPercentage", 1.f },
+                              { "staminaPercentage", 1.f },
+                              { "magickaPercentage", 1.f } } },
+            { "transform",
+              nlohmann::json{ { "pos", { 1.f, 2.f, 3.f } },
+                              { "rot", { 0.f, 0.f, 180.f } },
+                              { "worldOrCell", 0x3c } } } }
             .dump());
 
   // Trying to destroy actor:

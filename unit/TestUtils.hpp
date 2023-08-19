@@ -10,6 +10,15 @@
 
 // Utilities for testing
 
+enum class Constants : uint32_t
+{
+  kWhiterunCell = 0x1a26f,
+  kBarrelInWhiterun = 0x4cc2d,
+  kTamriel = 0x3c
+};
+
+std::underlying_type_t<Constants> ToUnderlying(Constants constant);
+
 bool IsCmakeOptionSpecified(const std::string& optionValue);
 
 const char* GetDataDir();

@@ -2,11 +2,13 @@
 
 #include "EspmGameObject.h"
 #include "FormCallbacks.h"
+#include "LocationalData.h"
 #include "MpActor.h"
 #include "MpFormGameObject.h"
 #include "MpObjectReference.h"
 #include "SpSnippetFunctionGen.h"
 #include "WorldState.h"
+#include "papyrus-vm/Structures.h"
 #include <cstring>
 
 VarValue PapyrusObjectReference::IsHarvested(
@@ -145,10 +147,12 @@ VarValue PapyrusObjectReference::GetItemCount(
   if (arguments.size() >= 1) {
     auto selfRefr = GetFormPtr<MpObjectReference>(self);
     if (!selfRefr) {
+      spdlog::warn("GetItemCount: self is not a reference");
       return VarValue(0);
     }
     auto& form = GetRecordPtr(arguments[0]);
     if (!form.rec) {
+      spdlog::warn("GetItemCount: failed to extract form with GetRecordPtr");
       return VarValue(0);
     }
     std::vector<uint32_t> formIds;
@@ -233,10 +237,19 @@ VarValue PapyrusObjectReference::SetAngle(
   auto selfRefr = GetFormPtr<MpObjectReference>(self);
   if (selfRefr && arguments.size() >= 3) {
     selfRefr->SetAngle(
-      { (float)static_cast<double>(arguments[0].CastToFloat()),
-        (float)static_cast<double>(arguments[1].CastToFloat()),
-        (float)static_cast<double>(arguments[2].CastToFloat()) });
+      { static_cast<float>(static_cast<double>(arguments[0].CastToFloat())),
+        static_cast<float>(static_cast<double>(arguments[1].CastToFloat())),
+        static_cast<float>(static_cast<double>(arguments[2].CastToFloat())) });
   }
+  return VarValue::None();
+}
+
+VarValue PapyrusObjectReference::Enable(VarValue self,
+                                        const std::vector<VarValue>& arguments)
+{
+  auto selfRefr = GetFormPtr<MpObjectReference>(self);
+  if (selfRefr)
+    selfRefr->Enable();
   return VarValue::None();
 }
 
@@ -252,13 +265,15 @@ VarValue PapyrusObjectReference::Disable(
 VarValue PapyrusObjectReference::BlockActivation(
   VarValue self, const std::vector<VarValue>& arguments)
 {
-  if (arguments.size() < 1)
+  if (arguments.size() < 1) {
     throw std::runtime_error("BlockActivation requires at least one argument");
+  }
   bool block = static_cast<bool>(arguments[0].CastToBool());
 
   auto selfRefr = GetFormPtr<MpObjectReference>(self);
-  if (selfRefr)
+  if (selfRefr) {
     selfRefr->SetActivationBlocked(block);
+  }
   return VarValue::None();
 }
 
@@ -273,11 +288,13 @@ VarValue PapyrusObjectReference::Activate(
   VarValue self, const std::vector<VarValue>& arguments)
 {
   if (auto selfRefr = GetFormPtr<MpObjectReference>(self)) {
-    if (arguments.size() < 2)
+    if (arguments.size() < 2) {
       throw std::runtime_error("Activate requires at least two arguments");
+    }
     auto akActivator = GetFormPtr<MpObjectReference>(arguments[0]);
-    if (!akActivator)
+    if (!akActivator) {
       throw std::runtime_error("Activate didn't recognize akActivator");
+    }
     bool abDefaultProcessingOnly =
       static_cast<bool>(arguments[1].CastToBool());
     selfRefr->Activate(*akActivator, abDefaultProcessingOnly);
@@ -343,4 +360,158 @@ VarValue PapyrusObjectReference::SetPosition(
     }
   }
   return VarValue::None();
+}
+
+VarValue PapyrusObjectReference::GetBaseObject(
+  VarValue self, const std::vector<VarValue>& arguments)
+{
+  if (auto selfRefr = GetFormPtr<MpObjectReference>(self)) {
+    auto baseId = selfRefr->GetBaseId();
+    if (baseId) {
+      if (auto worldState = selfRefr->GetParent()) {
+        auto& espm = worldState->GetEspm();
+        auto lookupRes = espm.GetBrowser().LookupById(baseId);
+        if (lookupRes.rec) {
+          return VarValue(std::make_shared<EspmGameObject>(lookupRes));
+        }
+      }
+    }
+  }
+  return VarValue::None();
+}
+
+VarValue PapyrusObjectReference::PlayAnimation(
+  VarValue self, const std::vector<VarValue>& arguments)
+{
+  if (auto selfRefr = GetFormPtr<MpObjectReference>(self)) {
+    if (arguments.size() < 1) {
+      throw std::runtime_error("PlayAnimation requires at least 1 argument");
+    }
+    auto funcName = "PlayAnimation";
+    auto serializedArgs = SpSnippetFunctionGen::SerializeArguments(arguments);
+    for (auto listener : selfRefr->GetListeners()) {
+      auto targetRefr = dynamic_cast<MpActor*>(listener);
+      if (targetRefr) {
+        SpSnippet(GetName(), funcName, serializedArgs.data(),
+                  selfRefr->GetFormId())
+          .Execute(targetRefr);
+      }
+    }
+  }
+  return VarValue::None();
+}
+
+VarValue PapyrusObjectReference::PlayGamebryoAnimation(
+  VarValue self, const std::vector<VarValue>& arguments)
+{
+  if (auto selfRefr = GetFormPtr<MpObjectReference>(self)) {
+    if (arguments.size() < 3) {
+      throw std::runtime_error(
+        "PlayGamebryoAnimation requires at least 3 arguments");
+    }
+    auto funcName = "PlayGamebryoAnimation";
+    auto serializedArgs = SpSnippetFunctionGen::SerializeArguments(arguments);
+    for (auto listener : selfRefr->GetListeners()) {
+      auto targetRefr = dynamic_cast<MpActor*>(listener);
+      if (targetRefr) {
+        SpSnippet(GetName(), funcName, serializedArgs.data(),
+                  selfRefr->GetFormId())
+          .Execute(targetRefr);
+      }
+    }
+  }
+  return VarValue::None();
+}
+
+VarValue PapyrusObjectReference::MoveTo(VarValue self,
+                                        const std::vector<VarValue>& arguments)
+{
+  if (arguments.size() < 1) {
+    return VarValue::None();
+  }
+  auto* _thisObjectReference = GetFormPtr<MpObjectReference>(self);
+  const auto* objectReference = GetFormPtr<MpObjectReference>(arguments[0]);
+  auto* _thisActor = GetFormPtr<MpActor>(self);
+  if ((!_thisObjectReference && !_thisActor) || !_thisObjectReference) {
+    return VarValue::None();
+  }
+  const float xOffset = static_cast<float>(
+                static_cast<double>(arguments[1].CastToFloat())),
+              yOffset = static_cast<float>(
+                static_cast<double>(arguments[2].CastToFloat())),
+              zOffset = static_cast<float>(
+                static_cast<double>(arguments[3].CastToFloat()));
+  const bool matchRotation = static_cast<bool>(arguments[4].CastToBool());
+  NiPoint3 dest = objectReference->GetPos();
+  dest.x += xOffset;
+  dest.y += yOffset;
+  dest.z += zOffset;
+  const NiPoint3 rotation = matchRotation ? objectReference->GetAngle()
+                                          : _thisObjectReference->GetAngle();
+  LocationalData data{ dest, rotation, objectReference->GetCellOrWorld() };
+  if (_thisActor) {
+    _thisActor->Teleport(data);
+  } else {
+    _thisObjectReference->SetCellOrWorld(objectReference->GetCellOrWorld());
+    _thisObjectReference->SetAngle(rotation);
+    _thisObjectReference->SetPos(dest);
+  }
+  return VarValue::None();
+}
+
+VarValue PapyrusObjectReference::SetOpen(
+  VarValue self, const std::vector<VarValue>& arguments)
+{
+  if (arguments.size() < 1) {
+    spdlog::error("SetOpen: not enough arguments");
+    return VarValue::None();
+  }
+  auto* _thisObjectReference = GetFormPtr<MpObjectReference>(self);
+  if (!_thisObjectReference) {
+    spdlog::error("SetOpen: self is not a reference");
+    return VarValue::None();
+  }
+
+  if (_thisObjectReference->GetBaseType() != "DOOR") {
+    spdlog::error("SetOpen: self is not a door");
+    return VarValue::None();
+  }
+
+  _thisObjectReference->SetOpen(static_cast<bool>(arguments[0].CastToBool()));
+  return VarValue::None();
+}
+
+void PapyrusObjectReference::Register(
+  VirtualMachine& vm, std::shared_ptr<IPapyrusCompatibilityPolicy> policy)
+{
+  AddMethod(vm, "IsHarvested", &PapyrusObjectReference::IsHarvested);
+  AddMethod(vm, "IsDisabled", &PapyrusObjectReference::IsDisabled);
+  AddMethod(vm, "GetScale", &PapyrusObjectReference::GetScale);
+  AddMethod(vm, "SetScale", &PapyrusObjectReference::SetScale);
+  AddMethod(vm, "EnableNoWait", &PapyrusObjectReference::EnableNoWait);
+  AddMethod(vm, "DisableNoWait", &PapyrusObjectReference::DisableNoWait);
+  AddMethod(vm, "Delete", &PapyrusObjectReference::Delete);
+  AddMethod(vm, "AddItem", &PapyrusObjectReference::AddItem);
+  AddMethod(vm, "RemoveItem", &PapyrusObjectReference::RemoveItem);
+  AddMethod(vm, "GetItemCount", &PapyrusObjectReference::GetItemCount);
+  AddMethod(vm, "GetAnimationVariableBool",
+            &PapyrusObjectReference::GetAnimationVariableBool);
+  AddMethod(vm, "PlaceAtMe", &PapyrusObjectReference::PlaceAtMe);
+  AddMethod(vm, "SetAngle", &PapyrusObjectReference::SetAngle);
+  AddMethod(vm, "Enable", &PapyrusObjectReference::Enable);
+  AddMethod(vm, "Disable", &PapyrusObjectReference::Disable);
+  AddMethod(vm, "BlockActivation", &PapyrusObjectReference::BlockActivation);
+  AddMethod(vm, "IsActivationBlocked",
+            &PapyrusObjectReference::IsActivationBlocked);
+  AddMethod(vm, "Activate", &PapyrusObjectReference::Activate);
+  AddMethod(vm, "GetPositionX", &PapyrusObjectReference::GetPositionX);
+  AddMethod(vm, "GetPositionY", &PapyrusObjectReference::GetPositionY);
+  AddMethod(vm, "GetPositionZ", &PapyrusObjectReference::GetPositionZ);
+  AddMethod(vm, "SetPosition", &PapyrusObjectReference::SetPosition);
+  AddMethod(vm, "GetBaseObject", &PapyrusObjectReference::GetBaseObject);
+  AddMethod(vm, "PlayAnimation", &PapyrusObjectReference::PlayAnimation);
+  AddMethod(vm, "PlayGamebryoAnimation",
+            &PapyrusObjectReference::PlayGamebryoAnimation);
+  AddMethod(vm, "MoveTo", &PapyrusObjectReference::MoveTo);
+  AddMethod(vm, "SetOpen", &PapyrusObjectReference::SetOpen);
 }

@@ -127,6 +127,29 @@ public:
     return v.As<Napi::Object>();
   }
 
+  static Napi::Uint8Array ExtractUInt8Array(const Napi::Value& v,
+                                            const char* argName)
+  {
+    if (!v.IsTypedArray()) {
+      std::stringstream ss;
+      ss << "Expected '" << argName << "' to be typed array, but got '";
+      ss << v.ToString();
+      ss << "'";
+      throw std::runtime_error(ss.str());
+    }
+
+    auto typedArray = v.As<Napi::TypedArray>();
+    if (typedArray.TypedArrayType() != napi_uint8_array) {
+      std::stringstream ss;
+      ss << "Expected '" << argName << "' to be Uint8Array, but got '";
+      ss << v.ToString();
+      ss << "'";
+      throw std::runtime_error(ss.str());
+    }
+
+    return typedArray.As<Napi::Uint8Array>();
+  }
+
   static Napi::Array ExtractArray(const Napi::Value& v, const char* argName)
   {
     if (!v.IsArray()) {

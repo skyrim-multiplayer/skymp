@@ -2,7 +2,7 @@
 #include "IPapyrusClass.h"
 #include "SpSnippetFunctionGen.h"
 
-class PapyrusGame : public IPapyrusClass<PapyrusGame>
+class PapyrusGame final : public IPapyrusClass<PapyrusGame>
 {
 public:
   const char* GetName() override { return "game"; }
@@ -19,27 +19,23 @@ public:
   VarValue ShowRaceMenu(VarValue self, const std::vector<VarValue>& arguments);
   VarValue ShowLimitedRaceMenu(VarValue self,
                                const std::vector<VarValue>& arguments);
+  VarValue GetCameraState(VarValue self,
+                          const std::vector<VarValue>& arguments);
+  VarValue GetForm(VarValue self,
+                   const std::vector<VarValue>& arguments) const noexcept;
+  VarValue GetFormEx(VarValue self,
+                     const std::vector<VarValue>& arguments) const noexcept;
 
   void Register(VirtualMachine& vm,
-                std::shared_ptr<IPapyrusCompatibilityPolicy> policy) override
-  {
-    compatibilityPolicy = policy;
+                std::shared_ptr<IPapyrusCompatibilityPolicy> policy) override;
 
-    AddStatic(vm, "IncrementStat", &PapyrusGame::IncrementStat);
-    AddStatic(vm, "ForceThirdPerson", &PapyrusGame::ForceThirdPerson);
-    AddStatic(vm, "DisablePlayerControls",
-              &PapyrusGame::DisablePlayerControls);
-    AddStatic(vm, "EnablePlayerControls", &PapyrusGame::EnablePlayerControls);
-    AddStatic(vm, "FindClosestReferenceOfAnyTypeInListFromRef",
-              &PapyrusGame::FindClosestReferenceOfAnyTypeInListFromRef);
-    AddStatic(vm, "GetPlayer", &PapyrusGame::GetPlayer);
-    AddStatic(vm, "ShowRaceMenu", &PapyrusGame::ShowRaceMenu);
-    AddStatic(vm, "ShowLimitedRaceMenu", &PapyrusGame::ShowLimitedRaceMenu);
-  }
-
+public:
   std::shared_ptr<IPapyrusCompatibilityPolicy> compatibilityPolicy;
 
 private:
   void RaceMenuHelper(VarValue& self, const char* funcName,
                       const std::vector<VarValue>& arguments);
+  VarValue GetFormInternal(VarValue self,
+                           const std::vector<VarValue>& arguments,
+                           bool extended) const noexcept;
 };

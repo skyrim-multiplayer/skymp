@@ -3,8 +3,9 @@
 #include "MpActor.h"
 #include "MpFormGameObject.h"
 
-#include "CIString.h"
 #include "SpSnippetFunctionGen.h"
+#include "papyrus-vm/CIString.h"
+#include <algorithm>
 
 namespace {
 espm::ActorValue ConvertToAV(CIString actorValueName)
@@ -48,9 +49,9 @@ VarValue PapyrusActor::DamageActorValue(VarValue self,
 {
   espm::ActorValue attributeName =
     ConvertToAV(static_cast<const char*>(arguments[0]));
-  float modifire = static_cast<double>(arguments[1]);
+  float modifier = static_cast<double>(arguments[1]);
   if (auto actor = GetFormPtr<MpActor>(self)) {
-    actor->DamageActorValue(attributeName, modifire);
+    actor->DamageActorValue(attributeName, modifier);
   }
   return VarValue();
 }
@@ -80,22 +81,32 @@ VarValue PapyrusActor::IsEquipped(VarValue self,
     formIds.emplace_back(form.ToGlobalId(form.rec->GetId()));
   }
 
-  auto equipment =
-    actor->GetEquipment().inv.GetEquippedItem(Inventory::Worn::Right);
-  for (const auto& formId : formIds) {
-    if (equipment == formId) {
-      return VarValue(true);
+  auto equipment = actor->GetEquipment().inv;
+  // Enum entries of equipment
+  for (auto& entry : equipment.entries) {
+    // Filter out non-worn (in current implementation it is possible)
+    if (entry.extra.worn == Inventory::Worn::Right ||
+        entry.extra.worn == Inventory::Worn::Left) {
+      // Enum entries of form list
+      for (const auto& formId : formIds) {
+        // If one of equipment entries matches one of formlist entries, then
+        // return true
+        if (entry.baseId == formId) {
+          return VarValue(true);
+        }
+      }
     }
   }
+
   return VarValue(false);
 }
 
-VarValue PapyrusActor::GetActorValue(VarValue self,
-                                     const std::vector<VarValue>& arguments)
+VarValue PapyrusActor::GetActorValuePercentage(
+  VarValue self, const std::vector<VarValue>& arguments)
 {
   if (arguments.size() < 1) {
     throw std::runtime_error(
-      "Papyrus Actor.GetActorValue: wrong argument count");
+      "Papyrus Actor.GetActorValuePercentage: wrong argument count");
   }
 
   if (auto actor = GetFormPtr<MpActor>(self)) {
@@ -152,4 +163,89 @@ VarValue PapyrusActor::EquipItem(VarValue self,
       .Execute(actor);
   }
   return VarValue::None();
+}
+
+VarValue PapyrusActor::SetDontMove(VarValue self,
+                                   const std::vector<VarValue>& arguments)
+{
+  if (auto actor = GetFormPtr<MpActor>(self)) {
+    if (arguments.size() < 1) {
+      throw std::runtime_error("SetDontMove requires at least one argument");
+    }
+    SpSnippet(GetName(), "SetDontMove",
+              SpSnippetFunctionGen::SerializeArguments(arguments).data(),
+              actor->GetFormId())
+      .Execute(actor);
+  }
+  return VarValue::None();
+}
+
+VarValue PapyrusActor::IsDead(
+  VarValue self, const std::vector<VarValue>& arguments) const noexcept
+{
+  if (auto _this = GetFormPtr<MpActor>(self)) {
+    return VarValue(_this->IsDead());
+  }
+  return VarValue::None();
+}
+
+VarValue PapyrusActor::WornHasKeyword(VarValue self,
+                                      const std::vector<VarValue>& arguments)
+{
+  if (auto actor = GetFormPtr<MpActor>(self)) {
+    if (arguments.size() < 1) {
+      throw std::runtime_error(
+        "Actor.WornHasKeyword requires at least one argument");
+    }
+
+    const auto& keywordRec = GetRecordPtr(arguments[0]);
+    if (!keywordRec.rec) {
+      spdlog::error("Actor.WornHasKeyword - invalid keyword form");
+      return VarValue(false);
+    }
+
+    const std::vector<Inventory::Entry>& entries =
+      actor->GetEquipment().inv.entries;
+    WorldState* worldState = compatibilityPolicy->GetWorldState();
+    for (const auto& entry : entries) {
+      if (entry.extra.worn != Inventory::Worn::None) {
+        const espm::LookupResult res =
+          worldState->GetEspm().GetBrowser().LookupById(entry.baseId);
+        if (!res.rec) {
+          return VarValue::None();
+        }
+        const auto keywordIds =
+          res.rec->GetKeywordIds(worldState->GetEspmCache());
+        if (std::any_of(keywordIds.begin(), keywordIds.end(),
+                        [&](uint32_t keywordId) {
+                          return res.ToGlobalId(keywordId) ==
+                            keywordRec.ToGlobalId(keywordRec.rec->GetId());
+                        })) {
+          return VarValue(true);
+        }
+      }
+    }
+  }
+  return VarValue(false);
+}
+
+void PapyrusActor::Register(
+  VirtualMachine& vm, std::shared_ptr<IPapyrusCompatibilityPolicy> policy)
+{
+  compatibilityPolicy = policy;
+
+  AddMethod(vm, "IsWeaponDrawn", &PapyrusActor::IsWeaponDrawn);
+  AddMethod(vm, "DrawWeapon", &PapyrusActor::DrawWeapon);
+  AddMethod(vm, "UnequipAll", &PapyrusActor::UnequipAll);
+  AddMethod(vm, "PlayIdle", &PapyrusActor::PlayIdle);
+  AddMethod(vm, "GetSitState", &PapyrusActor::GetSitState);
+  AddMethod(vm, "RestoreActorValue", &PapyrusActor::RestoreActorValue);
+  AddMethod(vm, "DamageActorValue", &PapyrusActor::DamageActorValue);
+  AddMethod(vm, "IsEquipped", &PapyrusActor::IsEquipped);
+  AddMethod(vm, "GetActorValuePercentage",
+            &PapyrusActor::GetActorValuePercentage);
+  AddMethod(vm, "SetAlpha", &PapyrusActor::SetAlpha);
+  AddMethod(vm, "EquipItem", &PapyrusActor::EquipItem);
+  AddMethod(vm, "SetDontMove", &PapyrusActor::SetDontMove);
+  AddMethod(vm, "IsDead", &PapyrusActor::IsDead);
 }

@@ -187,6 +187,19 @@ public:
     }
   }
 
+  std::string GetIp(Networking::UserId userId) const override
+  {
+    const auto guid = idManager->find(userId);
+    if (guid == RakNetGUID(-1)) {
+      throw std::runtime_error("User with id " + std::to_string(userId) +
+                               " doesn't exist");
+    }
+
+    auto address = peer->GetSystemAddressFromGuid(guid);
+    std::string ip = address.ToString(false);
+    return ip;
+  }
+
 private:
   const std::string password;
   std::unique_ptr<RakPeerInterface> peer;

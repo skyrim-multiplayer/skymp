@@ -1,6 +1,6 @@
 import { Game, Utility, HttpClient, printConsole, createText } from "skyrimPlatform";
 import * as sp from "skyrimPlatform";
-import { getServerIp, getServerUiPort } from "../skympClient";
+import { getServerIp, getServerUiPort } from "../services/services/skympClient";
 import { getScreenResolution } from "../view/formView";
 
 const STATE_KEY = 'loadOrderCheckState';
@@ -149,7 +149,7 @@ export const verifyLoadOrder = () => {
       }
       updateText(
         'LOAD ORDER ERROR!\nCheck console for details.',
-        [255, 0, 0, 1],
+        [255, 0, 0, 1]
       );
       sp.browser.loadUrl('about:blank');
     });

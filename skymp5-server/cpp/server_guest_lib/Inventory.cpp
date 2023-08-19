@@ -103,16 +103,6 @@ uint32_t Inventory::GetTotalItemCount() const
   return sum;
 }
 
-uint32_t Inventory::GetEquippedItem(Inventory::Worn slot) const
-{
-  for (auto& entry : entries) {
-    if (entry.extra.worn == slot) {
-      return entry.baseId;
-    }
-  }
-  return 0;
-}
-
 bool Inventory::IsEmpty() const
 {
   return entries.empty();
@@ -131,17 +121,17 @@ nlohmann::json Inventory::Entry::ToJson() const
     obj["removeEnchantmentOnUnequip"] = extra.ench.removeOnUnequip;
   }
   if (extra.chargePercent != emptyExtras.chargePercent) {
-    obj["chargePercent"] = emptyExtras.chargePercent;
+    obj["chargePercent"] = extra.chargePercent;
   }
   if (extra.name != emptyExtras.name) {
-    obj["name"] = emptyExtras.name;
+    obj["name"] = extra.name;
   }
   if (extra.soul != emptyExtras.soul) {
-    obj["soul"] = emptyExtras.soul;
+    obj["soul"] = extra.soul;
   }
   if (extra.poison.id != emptyExtras.poison.id) {
-    obj["poisonId"] = emptyExtras.poison.id;
-    obj["poisonCount"] = emptyExtras.poison.count;
+    obj["poisonId"] = extra.poison.id;
+    obj["poisonCount"] = extra.poison.count;
   }
   if (extra.worn == Worn::Left) {
     obj["wornLeft"] = true;
@@ -156,11 +146,53 @@ Inventory::Entry Inventory::Entry::FromJson(
   const simdjson::dom::element& jEntry)
 {
   static JsonPointer baseId("baseId"), count("count"), worn("worn"),
-    wornLeft("wornLeft");
+    wornLeft("wornLeft"), health("health"), enchantmentId("enchantmentId"),
+    maxCharge("maxCharge"),
+    removeEnchantmentOnUnequip("removeEnchantmentOnUnequip"),
+    chargePercent("chargePercent"), name("name"), soul("soul"),
+    poisonId("poisonId"), poisonCount("poisonCount");
 
   Entry e;
+
   ReadEx(jEntry, baseId, &e.baseId);
   ReadEx(jEntry, count, &e.count);
+
+  if (jEntry.at_pointer(health.GetData()).error() ==
+      simdjson::error_code::SUCCESS) {
+    ReadEx(jEntry, health, &e.extra.health);
+  }
+  if (jEntry.at_pointer(enchantmentId.GetData()).error() ==
+      simdjson::error_code::SUCCESS) {
+    ReadEx(jEntry, enchantmentId, &e.extra.ench.id);
+  }
+  if (jEntry.at_pointer(maxCharge.GetData()).error() ==
+      simdjson::error_code::SUCCESS) {
+    ReadEx(jEntry, maxCharge, &e.extra.ench.maxCharge);
+  }
+  if (jEntry.at_pointer(removeEnchantmentOnUnequip.GetData()).error() ==
+      simdjson::error_code::SUCCESS) {
+    ReadEx(jEntry, removeEnchantmentOnUnequip, &e.extra.ench.removeOnUnequip);
+  }
+  if (jEntry.at_pointer(chargePercent.GetData()).error() ==
+      simdjson::error_code::SUCCESS) {
+    ReadEx(jEntry, chargePercent, &e.extra.chargePercent);
+  }
+  if (jEntry.at_pointer(name.GetData()).error() ==
+      simdjson::error_code::SUCCESS) {
+    ReadEx(jEntry, name, &e.extra.name);
+  }
+  if (jEntry.at_pointer(soul.GetData()).error() ==
+      simdjson::error_code::SUCCESS) {
+    ReadEx(jEntry, soul, &e.extra.soul);
+  }
+  if (jEntry.at_pointer(poisonId.GetData()).error() ==
+      simdjson::error_code::SUCCESS) {
+    ReadEx(jEntry, poisonId, &e.extra.poison.id);
+  }
+  if (jEntry.at_pointer(poisonCount.GetData()).error() ==
+      simdjson::error_code::SUCCESS) {
+    ReadEx(jEntry, poisonCount, &e.extra.poison.count);
+  }
 
   bool wornValue;
   if (jEntry.at_pointer(worn.GetData()).error() ==
@@ -182,8 +214,6 @@ Inventory::Entry Inventory::Entry::FromJson(
     e.extra.worn = Inventory::Worn::Left;
   else if (wornValue)
     e.extra.worn = Inventory::Worn::Right;
-
-  // TODO: Other extras
 
   return e;
 }

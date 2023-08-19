@@ -4,8 +4,10 @@
 #include "AngleBinding.h"
 #include "AppearanceBinding.h"
 #include "BaseDescBinding.h"
+#include "ConsoleCommandsAllowedBinding.h"
 #include "CustomPropertyBinding.h"
 #include "EquipmentBinding.h"
+#include "IdxBinding.h"
 #include "InventoryBinding.h"
 #include "IsDeadBinding.h"
 #include "IsDisabledBinding.h"
@@ -44,6 +46,9 @@ PropertyBindingFactory::CreateStandardPropertyBindings()
   result["spawnPoint"] = std::make_shared<SpawnPointBinding>();
   result["type"] = std::make_shared<TypeBinding>();
   result["worldOrCellDesc"] = std::make_shared<WorldOrCellDescBinding>();
+  result["idx"] = std::make_shared<IdxBinding>();
+  result["consoleCommandsAllowed"] =
+    std::make_shared<ConsoleCommandsAllowedBinding>();
   return result;
 }
 

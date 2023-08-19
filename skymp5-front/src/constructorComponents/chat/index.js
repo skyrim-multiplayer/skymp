@@ -12,7 +12,7 @@ import { replaceIfMoreThan20 } from '../../utils/replaceIfMoreThan20';
 
 import './styles.scss';
 const MAX_LENGTH = 2000; // Max message length
-const TIME_LIMIT = 5; // Seconds
+const TIME_LIMIT = 1; // Seconds
 const SHOUT_LIMIT = 180; // Seconds
 const MAX_LINES = 10;
 const MAX_SHOUT_LENGTH = 100;

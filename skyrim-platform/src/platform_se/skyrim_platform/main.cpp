@@ -1,4 +1,5 @@
 #include "CallNativeApi.h"
+#include "ConsoleApi.h"
 #include "DumpFunctions.h"
 #include "EventHandler.h"
 #include "EventManager.h"
@@ -23,7 +24,7 @@ void GetTextsToDraw(TextToDrawCallback callback)
   auto text = &TextsCollection::GetSingleton();
 
   for (const auto& a : TextsCollection::GetSingleton().GetCreatedTexts()) {
-    callback(a.second);
+    callback(a);
   }
 }
 
@@ -85,6 +86,24 @@ void InitLog()
   logger::info(FMT_STRING("{} v{}"), Version::PROJECT, Version::NAME);
 }
 
+void InitCmd()
+{
+  auto settings = Settings::GetPlatformSettings();
+  bool isCmd = settings->GetBool("Debug", "CMD", false);
+
+  if (!isCmd) {
+    return;
+  }
+
+  int offsetLeft = settings->GetInteger("Debug", "CmdOffsetLeft", 0);
+  int offsetTop = settings->GetInteger("Debug", "CmdOffsetTop", 720);
+  int width = settings->GetInteger("Debug", "CmdWidth", 1900);
+  int height = settings->GetInteger("Debug", "CmdHeight", 317);
+  bool isAlwaysOnTop = settings->GetBool("Debug", "CmdIsAlwaysOnTop", false);
+
+  ConsoleApi::InitCmd(offsetLeft, offsetTop, width, height, isAlwaysOnTop);
+}
+
 extern "C" {
 DLLEXPORT uint32_t SkyrimPlatform_IpcSubscribe_Impl(
   const char* systemName, IPC::MessageCallback callback, void* state)
@@ -107,6 +126,8 @@ DLLEXPORT void SkyrimPlatform_IpcSend_Impl(const char* systemName,
 DLLEXPORT bool SKSEAPI SKSEPlugin_Load_Impl(const SKSE::LoadInterface* skse)
 {
   InitLog();
+
+  InitCmd();
 
   logger::info("Loading plugin.");
 
@@ -241,12 +262,15 @@ public:
 
   int VscToVk(int code)
   {
-    int vk = MapVirtualKeyA(code, MAPVK_VSC_TO_VK);
+    if (code == 200)
+      return VK_UP;
     if (code == 203)
       return VK_LEFT;
     if (code == 205)
       return VK_RIGHT;
-    return vk;
+    if (code == 208)
+      return VK_DOWN;
+    return MapVirtualKeyA(code, MAPVK_VSC_TO_VK);
   }
 
   void OnKeyStateChange(uint8_t code, bool down) noexcept override

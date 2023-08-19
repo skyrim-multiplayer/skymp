@@ -1,7 +1,7 @@
 #pragma once
 #include "IPapyrusClass.h"
 
-class PapyrusSkymp : public IPapyrusClass<PapyrusSkymp>
+class PapyrusSkymp final : public IPapyrusClass<PapyrusSkymp>
 {
 public:
   const char* GetName() override { return "skymp"; }

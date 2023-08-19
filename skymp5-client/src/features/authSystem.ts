@@ -1,9 +1,10 @@
 import * as sp from "skyrimPlatform";
 import * as browser from "./browser";
-import * as loadGameManager from "./loadGameManager";
 import { AuthGameData, RemoteAuthGameData } from "./authModel";
 import { Transform } from "../sync/movement";
 import { FunctionInfo } from "../lib/functionInfo";
+import { SpApiInteractor } from "../services/spApiInteractor";
+import { LoadGameService } from "../services/services/loadGameService";
 
 const normalizeUrl = (url: string) => {
   if (url.endsWith('/')) {
@@ -219,7 +220,9 @@ const loadLobby = (location: Transform): void => {
     checkLoginState();
   });
 
-  loadGameManager.loadGame(
+  // TODO: this.controller instead of SpApiInteractor.makeController()
+  const loadGameService = SpApiInteractor.makeController().lookupListener("LoadGameService") as LoadGameService;
+  loadGameService.loadGame(
     location.pos,
     location.rot,
     location.worldOrCell

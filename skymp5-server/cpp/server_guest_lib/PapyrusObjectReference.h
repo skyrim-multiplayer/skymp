@@ -1,7 +1,8 @@
 #pragma once
 #include "IPapyrusClass.h"
 
-class PapyrusObjectReference : public IPapyrusClass<PapyrusObjectReference>
+class PapyrusObjectReference final
+  : public IPapyrusClass<PapyrusObjectReference>
 {
 public:
   const char* GetName() override { return "objectreference"; }
@@ -21,6 +22,7 @@ public:
                                     const std::vector<VarValue>& arguments);
   VarValue PlaceAtMe(VarValue self, const std::vector<VarValue>& arguments);
   VarValue SetAngle(VarValue self, const std::vector<VarValue>& arguments);
+  VarValue Enable(VarValue self, const std::vector<VarValue>& arguments);
   VarValue Disable(VarValue self, const std::vector<VarValue>& arguments);
   VarValue BlockActivation(VarValue self,
                            const std::vector<VarValue>& arguments);
@@ -32,32 +34,16 @@ public:
   VarValue GetPositionZ(VarValue self, const std::vector<VarValue>& arguments);
   VarValue SetPosition(VarValue self, const std::vector<VarValue>& arguments);
 
-  void Register(
-    VirtualMachine& vm,
-    std::shared_ptr<IPapyrusCompatibilityPolicy> compatibilityPolicy) override
-  {
-    AddMethod(vm, "IsHarvested", &PapyrusObjectReference::IsHarvested);
-    AddMethod(vm, "IsDisabled", &PapyrusObjectReference::IsDisabled);
-    AddMethod(vm, "GetScale", &PapyrusObjectReference::GetScale);
-    AddMethod(vm, "SetScale", &PapyrusObjectReference::SetScale);
-    AddMethod(vm, "EnableNoWait", &PapyrusObjectReference::EnableNoWait);
-    AddMethod(vm, "DisableNoWait", &PapyrusObjectReference::DisableNoWait);
-    AddMethod(vm, "Delete", &PapyrusObjectReference::Delete);
-    AddMethod(vm, "AddItem", &PapyrusObjectReference::AddItem);
-    AddMethod(vm, "RemoveItem", &PapyrusObjectReference::RemoveItem);
-    AddMethod(vm, "GetItemCount", &PapyrusObjectReference::GetItemCount);
-    AddMethod(vm, "GetAnimationVariableBool",
-              &PapyrusObjectReference::GetAnimationVariableBool);
-    AddMethod(vm, "PlaceAtMe", &PapyrusObjectReference::PlaceAtMe);
-    AddMethod(vm, "SetAngle", &PapyrusObjectReference::SetAngle);
-    AddMethod(vm, "Disable", &PapyrusObjectReference::Disable);
-    AddMethod(vm, "BlockActivation", &PapyrusObjectReference::BlockActivation);
-    AddMethod(vm, "IsActivationBlocked",
-              &PapyrusObjectReference::IsActivationBlocked);
-    AddMethod(vm, "Activate", &PapyrusObjectReference::Activate);
-    AddMethod(vm, "GetPositionX", &PapyrusObjectReference::GetPositionX);
-    AddMethod(vm, "GetPositionY", &PapyrusObjectReference::GetPositionY);
-    AddMethod(vm, "GetPositionZ", &PapyrusObjectReference::GetPositionZ);
-    AddMethod(vm, "SetPosition", &PapyrusObjectReference::SetPosition);
-  }
+  VarValue GetBaseObject(VarValue self,
+                         const std::vector<VarValue>& arguments);
+  VarValue PlayAnimation(VarValue self,
+                         const std::vector<VarValue>& arguments);
+  VarValue PlayGamebryoAnimation(VarValue self,
+                                 const std::vector<VarValue>& arguments);
+  VarValue MoveTo(VarValue self, const std::vector<VarValue>& arguments);
+
+  VarValue SetOpen(VarValue self, const std::vector<VarValue>& arguments);
+
+  void Register(VirtualMachine& vm,
+                std::shared_ptr<IPapyrusCompatibilityPolicy> policy) override;
 };

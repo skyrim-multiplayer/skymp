@@ -1,6 +1,7 @@
 #pragma once
 #include "NetworkingInterface.h"
 #include <memory>
+#include <utility>
 
 namespace Networking {
 class MockServer : public IServer
@@ -8,12 +9,14 @@ class MockServer : public IServer
 public:
   MockServer();
 
-  std::shared_ptr<IClient> CreateClient();
+  std::pair<std::shared_ptr<IClient>, Networking::UserId> CreateClient();
 
   void Send(UserId targetUserId, PacketData data, size_t length,
             bool reliable) override;
 
   void Tick(OnPacket onPacket, void* state) override;
+
+  std::string GetIp(UserId userId) const override;
 
 private:
   struct Impl;

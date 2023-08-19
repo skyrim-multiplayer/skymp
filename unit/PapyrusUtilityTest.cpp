@@ -25,3 +25,14 @@ TEST_CASE("Wait", "[Papyrus][Utility]")
   wst.Tick();
   REQUIRE(waitFinished);
 }
+
+TEST_CASE("RandomInt", "[Papyrus][Utility]")
+{
+  WorldState wst;
+  PapyrusUtility utility;
+  int32_t low = 253, high = 666;
+  auto res = static_cast<int32_t>(
+    utility.RandomInt(VarValue::None(), { VarValue(low), VarValue(high) }));
+  bool good = low <= res && res <= high;
+  REQUIRE(good);
+}
