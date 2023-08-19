@@ -829,7 +829,7 @@ void MpObjectReference::RequestReloot(
   if (this->GetFormId() >= 0xff000000) {
     return;
   }
-  
+
   if (GetParent()->IsRelootForbidden(baseType)) {
     return;
   }
