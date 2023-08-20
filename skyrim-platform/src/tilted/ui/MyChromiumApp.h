@@ -34,7 +34,7 @@ struct MyChromiumApp : CefApp
 
   TP_NOCOPYMOVE(MyChromiumApp);
 
-  void Initialize() noexcept;
+  void Initialize(bool initChromium) noexcept;
   void ExecuteAsync(
     const std::string& acFunction,
     const CefRefPtr<CefListValue>& apArguments = nullptr) const noexcept;

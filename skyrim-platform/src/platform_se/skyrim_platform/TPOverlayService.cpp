@@ -1,5 +1,6 @@
 #include "TPOverlayService.h"
 #include "TPRenderSystemD3D11.h"
+#include "Settings.h"
 
 using CEFUtils::DX11RenderHandler;
 using CEFUtils::MyRenderHandler;
@@ -45,7 +46,9 @@ void OverlayService::Create(RenderSystemD3D11* apRenderSystem)
 {
   auto renderProvider = std::make_unique<D3D11RenderProvider>(apRenderSystem);
   overlay = new MyChromiumApp(std::move(renderProvider), onProcessMessage);
-  overlay->Initialize();
+
+  auto settings = Settings::GetPlatformSettings();
+  overlay->Initialize(settings->GetBool("Debug", "ChromiumEnabled", true));
   overlay->GetClient()->Create();
 }
 

@@ -48,7 +48,7 @@ MyChromiumApp::MyChromiumApp(
 {
 }
 
-void MyChromiumApp::Initialize() noexcept
+void MyChromiumApp::Initialize(bool initChromium) noexcept
 {
   if (m_pGameClient)
     return;
@@ -106,6 +106,9 @@ void MyChromiumApp::Initialize() noexcept
 
   CefWindowInfo info;
   info.SetAsWindowless(m_pRenderProvider->GetWindow());
+
+  if (initChromium == false)
+    return;
 
   if (!CefBrowserHost::CreateBrowser(info, m_pGameClient.get(),
                                      L"file:///Data/Platform/UI/index.html",
