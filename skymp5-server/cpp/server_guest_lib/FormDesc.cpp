@@ -5,9 +5,9 @@ std::string FormDesc::ToString(char delimiter) const
 {
   char buffer[32];
   if (!file.empty()) {
-    std::sprintf(buffer, "%0X%c%s", shortFormId, delimiter, file.c_str());
+    std::sprintf(buffer, "%0x%c%s", shortFormId, delimiter, file.c_str());
   } else {
-    std::sprintf(buffer, "%0X", shortFormId);
+    std::sprintf(buffer, "%0x", shortFormId);
   }
   return buffer;
 }
@@ -22,7 +22,7 @@ FormDesc FormDesc::FromString(std::string str, char delimiter)
 
   FormDesc res;
   char buffer[16];
-  std::sscanf(str.c_str(), "%X %s", &res.shortFormId, buffer);
+  std::sscanf(str.c_str(), "%x %s", &res.shortFormId, buffer);
   res.file = std::move(buffer);
   return res;
 }
