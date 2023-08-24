@@ -9,6 +9,7 @@ AnimationSystem::AnimationSystem(bool isSweetpie, WorldState& worldState_)
   : worldState(worldState_)
 {
   InitAnimationCallbacks(isSweetpie);
+  // make it be obtained from server-settings.json
   weaponStaminaModifiers = {
     { "WeapTypeDagger", 4.f },       { "WeapTypeShortSword", 5.f },
     { "WeapTypeSword", 6.f },        { "WeapTypeScimitar", 6.f },
