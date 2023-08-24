@@ -29,6 +29,8 @@ public:
   const std::string& GetAppearanceAsJson();
   const std::string& GetEquipmentAsJson() const;
   Equipment GetEquipment() const;
+  std::pair<std::optional<uint32_t>, std::optional<uint32_t>>
+  GetEquippedWeapon() const;
   uint32_t GetRaceId() const;
   bool IsWeaponDrawn() const;
   espm::ObjectBounds GetBounds() const;

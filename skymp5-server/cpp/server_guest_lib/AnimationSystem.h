@@ -6,12 +6,13 @@
 #include <unordered_map>
 
 class MpActor;
+class WorldState;
 struct AnimationData;
 
 class AnimationSystem
 {
 public:
-  AnimationSystem(bool isSweetpie);
+  AnimationSystem(bool isSweetpie, WorldState& worldState);
   void Process(MpActor* actor, const AnimationData& animData);
   void ClearInfo(MpActor* actor);
 
@@ -28,7 +29,14 @@ private:
     MpActor* actor,
     std::chrono::steady_clock::time_point timePoint =
       std::chrono::steady_clock::now());
+  std::vector<uint32_t> GetWeaponKeywordFormIds(uint32_t baseId) const;
+  std::vector<std::string_view> GetWeaponKeywords(uint32_t baseId) const;
+  float ComputeWeaponStaminaModifier(uint32_t baseId) const;
+  void HandleAttackAnim(MpActor* actor, float defaultModifier = 0.f) const;
 
+private:
   AnimationCallbacks animationCallbacks;
   AnimationTimePoints lastAttackReleaseAnimationTimePoints;
+  std::unordered_map<std::string_view, float> weaponStaminaModifiers;
+  WorldState& worldState;
 };

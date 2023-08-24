@@ -924,3 +924,28 @@ void MpActor::ReapplyMagicEffects()
     [](std::string_view fileName) { return fileName == "SweetPie.esp"; });
   ApplyMagicEffects(activeEffects, hasSweetpie, true);
 }
+
+std::pair<std::optional<uint32_t>, std::optional<uint32_t>>
+MpActor::GetEquippedWeapon() const
+{
+  // the first element of this pair is a weapon in left hand, and the second
+  // element is a weapon in right hand. Mnemonic rule is that it is like a
+  // regular reading rule; from left to right.
+  std::pair<std::optional<uint32_t>, std::optional<uint32_t>> wornWeapons;
+  auto& espmBrowser = GetParent()->GetEspm().GetBrowser();
+  for (const auto& entry : GetInventory().entries) {
+    if (entry.extra.worn != Inventory::Worn::None) {
+      espm::LookupResult res = espmBrowser.LookupById(entry.baseId);
+      auto* weaponRecord = espm::Convert<espm::WEAP>(res.rec);
+      if (weaponRecord) {
+        if (entry.extra.worn == Inventory::Worn::Left) {
+          wornWeapons.first = entry.baseId;
+        }
+        if (entry.extra.worn == Inventory::Worn::Right) {
+          wornWeapons.second = entry.baseId;
+        }
+      }
+    }
+  }
+  return wornWeapons;
+}

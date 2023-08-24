@@ -152,7 +152,8 @@ void ActionListener::OnUpdateAnimation(const RawMessageData& rawMsgData,
     s = { espmFiles.begin(), espmFiles.end() };
     bool isSweetpie = s.count("SweetPie.esp") != 0;
 
-    partOne.animationSystem = std::make_unique<AnimationSystem>(isSweetpie);
+    partOne.animationSystem =
+      std::make_unique<AnimationSystem>(isSweetpie, partOne.worldState);
   }
   partOne.animationSystem->Process(actor, animationData);
 
