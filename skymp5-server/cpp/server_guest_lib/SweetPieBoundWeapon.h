@@ -6,18 +6,18 @@
 class SweetPieBoundWeapon
 {
 public:
-  enum SkillLevel : uint8_t
+  enum class SkillLevel : uint8_t
   {
-    Novice = 0,
+    Novice,
     Adept,
     Expert,
     Master
   };
   SweetPieBoundWeapon(uint32_t baseId_, SkillLevel skillLevel_);
-  float GetCooldown() const;
-  float GetManacost() const;
-  float GetManacostPercentage() const;
-  uint32_t GetBaseId() const;
+  float GetCooldown() const noexcept;
+  float GetManacost() const noexcept;
+  float GetManacostPercentage() const noexcept;
+  uint32_t GetBaseId() const noexcept;
 
 private:
   uint32_t baseId;

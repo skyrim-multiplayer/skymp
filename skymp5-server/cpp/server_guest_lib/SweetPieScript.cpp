@@ -76,14 +76,33 @@ SweetPieScript::SweetPieScript(const std::vector<std::string>& espmFiles)
   };
 
   bookBoundWeapons = {
-    { 0x0401ce07, { 0x07f42cb6, SweetPieBoundWeapon::SkillLevel::Novice } },
-    { 0x07f42cc2, { 0x7a30b931, SweetPieBoundWeapon::SkillLevel::Novice } },
-    { 0x07f5c2ad, { 0x07f42cb5, SweetPieBoundWeapon::SkillLevel::Adept } },
-    { 0x000a26f1, { 0x07a4a191, SweetPieBoundWeapon::SkillLevel::Adept } },
-    { 0x07f42cc1, { 0x07f42cb4, SweetPieBoundWeapon::SkillLevel::Expert } },
-    { 0x000a26ed, { 0x00058f5e, SweetPieBoundWeapon::SkillLevel::Expert } },
-    { 0x07f38aab, { 0x07f42caf, SweetPieBoundWeapon::SkillLevel::Master } },
-    { 0x0009e2a9, { 0x00058f5f, SweetPieBoundWeapon::SkillLevel::Master } },
+    { 0x0401ce07,
+      { { 0x07f42cb6, SweetPieBoundWeapon::SkillLevel::Novice } } },
+    { 0x07f42cc2,
+      { { 0x7a30b931, SweetPieBoundWeapon::SkillLevel::Novice } } },
+    { 0x07f5c2ad, { { 0x07f42cb5, SweetPieBoundWeapon::SkillLevel::Adept } } },
+    { 0x000a26f1, { { 0x07a4a191, SweetPieBoundWeapon::SkillLevel::Adept } } },
+    { 0x07f42cc1,
+      { { 0x07f42cb4, SweetPieBoundWeapon::SkillLevel::Expert } } },
+    { 0x000a26ed,
+      { { 0x00058f5e, SweetPieBoundWeapon::SkillLevel::Expert } } },
+    { 0x07f38aab,
+      { { 0x07f42caf, SweetPieBoundWeapon::SkillLevel::Master } } },
+    { 0x0009e2a9,
+      { { 0x00058f5f, SweetPieBoundWeapon::SkillLevel::Master } } },
+    { 0x7276E2A, { { 0x7A30B91, SweetPieBoundWeapon::SkillLevel::Novice } } },
+    { 0x7276E39,
+      { { 0x7A4A191, SweetPieBoundWeapon::SkillLevel::Novice },
+        { 0x10B0A7, SweetPieBoundWeapon::SkillLevel::Novice } } },
+    { 0x7276E3B, { { 0x7A30B93, SweetPieBoundWeapon::SkillLevel::Novice } } },
+    { 0x7276E37, { { 0x7F42CAF, SweetPieBoundWeapon::SkillLevel::Novice } } },
+    { 0x7276E35, { { 0x7F42CB5, SweetPieBoundWeapon::SkillLevel::Novice } } },
+    { 0x7276E33, { { 0x7F42CB4, SweetPieBoundWeapon::SkillLevel::Novice } } },
+    { 0x7276E2d, { { 0x7F42CB6, SweetPieBoundWeapon::SkillLevel::Novice } } },
+    { 0x7276E2f,
+      { { 0x7A30B92, SweetPieBoundWeapon::SkillLevel::Novice },
+        { 0x7F47DC9, SweetPieBoundWeapon::SkillLevel::Novice } } },
+    { 0x72BDE4A, { { 0x72B8D47, SweetPieBoundWeapon::SkillLevel::Novice } } },
   };
 }
 
@@ -149,25 +168,31 @@ void SweetPieScript::Play(MpActor& actor, WorldState& worldState,
       it != bookBoundWeapons.end()) {
     float currentMagickaPercentage =
       actor.GetChangeForm().actorValues.magickaPercentage;
-    if (currentMagickaPercentage >= it->second.GetManacostPercentage()) {
-      actor.DamageActorValue(espm::ActorValue::Magicka,
-                             it->second.GetManacost());
-      uint32_t boundWeaponBaseId = it->second.GetBaseId(),
-               bookBaseId = it->first;
-      actor.AddItem(boundWeaponBaseId, 1);
-      EquipItem(actor, boundWeaponBaseId);
-      actor.RemoveItem(bookBaseId, 1, nullptr);
-      uint32_t formId = actor.GetFormId();
-      float cooldown = it->second.GetCooldown();
-      auto endTime = Viet::TimeUtils::To<std::chrono::milliseconds>(cooldown);
-      worldState.SetTimer(endTime).Then(
-        [&worldState, bookBaseId, boundWeaponBaseId, formId](Viet::Void) {
-          MpActor& actor = worldState.GetFormAt<MpActor>(formId);
-          actor.AddItem(bookBaseId, 1);
-          uint32_t count =
-            actor.GetInventory().GetItemCount(boundWeaponBaseId);
-          actor.RemoveItem(boundWeaponBaseId, count, nullptr);
-        });
+    for (const auto& boundItem : it->second) {
+      bool isArrow = boundItem.GetBaseId() == 0x10B0A7;
+      if (currentMagickaPercentage >= boundItem.GetManacostPercentage()) {
+        if (!isArrow) {
+          actor.DamageActorValue(espm::ActorValue::Magicka,
+                                 boundItem.GetManacost());
+        }
+        uint32_t boundWeaponBaseId = boundItem.GetBaseId(),
+                 bookBaseId = it->first;
+        actor.AddItem(boundWeaponBaseId, isArrow ? 10 : 1);
+        EquipItem(actor, boundWeaponBaseId);
+        actor.RemoveItem(bookBaseId, 1, nullptr);
+        uint32_t formId = actor.GetFormId();
+        float cooldown = boundItem.GetCooldown();
+        auto endTime =
+          Viet::TimeUtils::To<std::chrono::milliseconds>(cooldown);
+        worldState.SetTimer(endTime).Then(
+          [&worldState, bookBaseId, boundWeaponBaseId, formId](Viet::Void) {
+            MpActor& actor = worldState.GetFormAt<MpActor>(formId);
+            actor.AddItem(bookBaseId, 1);
+            uint32_t count =
+              actor.GetInventory().GetItemCount(boundWeaponBaseId);
+            actor.RemoveItem(boundWeaponBaseId, count, nullptr);
+          });
+      }
     }
   }
 }
