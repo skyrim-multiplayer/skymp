@@ -15,6 +15,8 @@ public:
   AnimationSystem(bool isSweetpie, WorldState& worldState);
   void Process(MpActor* actor, const AnimationData& animData);
   void ClearInfo(MpActor* actor);
+  static void SetWeaponStaminaModifiers(
+    std::unordered_map<std::string_view, float>&& modifiers);
 
 private:
   using AnimationCallback = std::function<void(MpActor*)>;
@@ -35,8 +37,9 @@ private:
   void HandleAttackAnim(MpActor* actor, float defaultModifier = 0.f) const;
 
 private:
+  static std::unordered_map<std::string_view, float> s_weaponStaminaModifiers;
+
   AnimationCallbacks animationCallbacks;
   AnimationTimePoints lastAttackReleaseAnimationTimePoints;
-  std::unordered_map<std::string_view, float> weaponStaminaModifiers;
   WorldState& worldState;
 };

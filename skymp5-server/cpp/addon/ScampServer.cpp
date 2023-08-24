@@ -150,6 +150,16 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
 
     auto serverSettings = nlohmann::json::parse(buffer.str());
 
+    if (serverSettings.find("weaponStaminaModifiers") !=
+        serverSettings.end()) {
+      if (serverSettings.at("weaponStaminaModifiers").is_object()) {
+        auto modifiers = serverSettings.at("weaponStaminaModifiers")
+                           .get<std::unordered_map<std::string_view, float>>();
+        partOne->animationSystem->SetWeaponStaminaModifiers(
+          std::move(modifiers));
+      }
+    }
+
     if (serverSettings["logLevel"].is_string()) {
       const auto level = spdlog::level::from_str(serverSettings["logLevel"]);
       logger->set_level(level);

@@ -9,18 +9,6 @@ AnimationSystem::AnimationSystem(bool isSweetpie, WorldState& worldState_)
   : worldState(worldState_)
 {
   InitAnimationCallbacks(isSweetpie);
-  // make it be obtained from server-settings.json
-  weaponStaminaModifiers = {
-    { "WeapTypeDagger", 4.f },       { "WeapTypeShortSword", 5.f },
-    { "WeapTypeSword", 6.f },        { "WeapTypeScimitar", 6.f },
-    { "WeapTypeKatana", 6.f },       { "WeapTypeClub", 6.f },
-    { "WeapTypeHammer", 7.f },       { "WeapTypeBattleStaff", 7.f },
-    { "WeapTypeWarAxe", 8.f },       { "WeapTypeMace", 8.f },
-    { "WeapTypeGlaive", 8.f },       { "WeapTypeGreatSword", 10.f },
-    { "WeapTypeGreatKatana", 10.f }, { "WeapTypePike", 10.f },
-    { "WeapTypeTrident", 10.f },     { "WeapTypeBattleAxe", 12.f },
-    { "WeapTypeHalberd", 14.f },     { "WeapTypeWarHammer", 14.f },
-  };
 }
 
 void AnimationSystem::Process(MpActor* actor, const AnimationData& animData)
@@ -132,7 +120,7 @@ void AnimationSystem::InitAnimationCallbacks(bool isSweetpie)
           GetLastAttackReleaseAnimationTime(actor);
         if (elapsedTime > std::chrono::seconds(2)) {
           constexpr float defaultModifier = 20.f;
-          actor->DamageActorValue(espm::ActorValue::Stamina, defaultModifier);
+          HandleAttackAnim(actor, defaultModifier);
         } else {
           constexpr float defaultModifier = 60.f;
           actor->DamageActorValue(espm::ActorValue::Stamina, defaultModifier);
@@ -141,9 +129,9 @@ void AnimationSystem::InitAnimationCallbacks(bool isSweetpie)
     },
     {
       "crossbowAttackStart",
-      [](MpActor* actor) {
+      [this](MpActor* actor) {
         constexpr float defaultModifier = 10.f;
-        actor->DamageActorValue(espm::ActorValue::Stamina, defaultModifier);
+        HandleAttackAnim(actor, defaultModifier);
       },
     },
     {
@@ -155,9 +143,9 @@ void AnimationSystem::InitAnimationCallbacks(bool isSweetpie)
     },
     {
       "attackStartDualWield",
-      [](MpActor* actor) {
+      [this](MpActor* actor) {
         constexpr float defaultModifier = 14.f;
-        actor->DamageActorValue(espm::ActorValue::Stamina, defaultModifier);
+        HandleAttackAnim(actor, defaultModifier);
       },
     },
     {
@@ -263,8 +251,8 @@ std::vector<std::string_view> AnimationSystem::GetWeaponKeywords(
 float AnimationSystem::ComputeWeaponStaminaModifier(uint32_t baseId) const
 {
   for (auto keyword : GetWeaponKeywords(baseId)) {
-    if (auto it = weaponStaminaModifiers.find(keyword);
-        it != weaponStaminaModifiers.end()) {
+    if (auto it = s_weaponStaminaModifiers.find(keyword);
+        it != s_weaponStaminaModifiers.end()) {
       return it->second;
     }
   }
@@ -286,4 +274,10 @@ void AnimationSystem::HandleAttackAnim(MpActor* actor,
   modifier =
     MathUtils::IsNearlyEqual(0.f, modifier) ? defaultModifier : modifier;
   actor->DamageActorValue(espm::ActorValue::Stamina, modifier);
+}
+
+void AnimationSystem::SetWeaponStaminaModifiers(
+  std::unordered_map<std::string_view, float>&& modifiers)
+{
+  s_weaponStaminaModifiers = modifiers;
 }
