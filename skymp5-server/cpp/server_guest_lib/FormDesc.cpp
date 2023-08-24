@@ -21,7 +21,7 @@ FormDesc FormDesc::FromString(std::string str, char delimiter)
   }
 
   FormDesc res;
-  char buffer[16];
+  char buffer[32];
   std::sscanf(str.c_str(), "%x %s", &res.shortFormId, buffer);
   res.file = std::move(buffer);
   return res;
