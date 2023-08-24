@@ -314,7 +314,7 @@ In case this field is not provided, some default, yet hardcoded, values are in u
 ```json5
 {
   // ...
-  "weaponStaminaModifier": {
+  "weaponStaminaModifiers": {
     "WeapTypeDagger": 4.0,
     "WeapTypeShortSword": 5.0,
     "WeapTypeSwort": 6.0,
