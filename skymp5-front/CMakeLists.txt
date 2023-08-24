@@ -20,7 +20,7 @@ module.exports = {
 
 ]=])
 
-file(GENERATE ${FRONT_CFG_PATH} ${FRONT_CFG_CONTENT})
+file(GENERATE OUTPUT ${FRONT_CFG_PATH} CONTENT ${FRONT_CFG_CONTENT})
 
 # TODO: consider fetching list of outputs from ExpectedDistContents.json instead of hardcoding
 set(out
