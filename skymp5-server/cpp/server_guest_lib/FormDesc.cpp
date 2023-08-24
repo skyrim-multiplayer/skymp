@@ -1,24 +1,29 @@
 #include "FormDesc.h"
-#include <sstream>
+#include <cstdio>
 
 std::string FormDesc::ToString(char delimiter) const
 {
-  std::stringstream ss;
-  ss << std::hex << shortFormId;
-  if (!file.empty())
-    ss << delimiter << file;
-  return ss.str();
+  char buffer[32];
+  if (!file.empty()) {
+    std::sprintf(buffer, "%0X%c%s", shortFormId, delimiter, file.c_str());
+  } else {
+    std::sprintf(buffer, "%0X", shortFormId);
+  }
+  return buffer;
 }
 
 FormDesc FormDesc::FromString(std::string str, char delimiter)
 {
-  for (auto& ch : str)
-    if (ch == delimiter)
+  for (auto& ch : str) {
+    if (ch == delimiter) {
       ch = ' ';
+    }
+  }
 
-  std::istringstream ss(str);
   FormDesc res;
-  ss >> std::hex >> res.shortFormId >> res.file;
+  char buffer[16];
+  std::sscanf(str.c_str(), "%X %s", &res.shortFormId, buffer);
+  res.file = std::move(buffer);
   return res;
 }
 
@@ -74,4 +79,11 @@ FormDesc FormDesc::FromFormId(uint32_t formId,
     res.shortFormId = formId - 0xff000000;
   }
   return res;
+}
+
+static const FormDesc s_tamriel = FormDesc::FromString("3c:Skyrim.esm");
+
+FormDesc FormDesc::Tamriel()
+{
+  return s_tamriel;
 }

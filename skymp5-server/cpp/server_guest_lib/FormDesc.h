@@ -39,7 +39,7 @@ public:
       std::make_tuple(right.shortFormId, right.file);
   }
 
-  static FormDesc Tamriel() { return FromString("3c:Skyrim.esm"); }
+  static FormDesc Tamriel();
 
   uint32_t shortFormId = 0;
   std::string file;
