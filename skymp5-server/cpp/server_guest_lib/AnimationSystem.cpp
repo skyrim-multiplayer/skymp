@@ -4,12 +4,16 @@
 #include "MathUtils.h"
 #include "MpActor.h"
 #include "libespm/espm.h"
+#include <unordered_map>
 
 AnimationSystem::AnimationSystem(bool isSweetpie, WorldState& worldState_)
   : worldState(worldState_)
 {
   InitAnimationCallbacks(isSweetpie);
 }
+
+std::unordered_map<std::string_view, float>
+  AnimationSystem::s_weaponStaminaModifiers;
 
 void AnimationSystem::Process(MpActor* actor, const AnimationData& animData)
 {
