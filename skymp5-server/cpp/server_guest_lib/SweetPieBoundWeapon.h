@@ -8,7 +8,7 @@ class SweetPieBoundWeapon
 public:
   enum class SkillLevel : uint8_t
   {
-    Novice,
+    Novice = 0,
     Adept,
     Expert,
     Master
