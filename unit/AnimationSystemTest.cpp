@@ -17,7 +17,7 @@ TEST_CASE("Animations system processes animation events correctly",
   AnimationData data;
 
   // No Sweetpie
-  p.animationSystem = std::make_unique<AnimationSystem>(false);
+  p.animationSystem = std::make_unique<AnimationSystem>(false, p.worldState);
 
   // Normally stamina is not consumed when playing animations
   data.animEventName = "attackStart";
@@ -30,7 +30,7 @@ TEST_CASE("Animations system processes animation events correctly",
   REQUIRE(actor.GetChangeForm().actorValues.staminaPercentage == 1.f);
 
   // Sweetpie
-  p.animationSystem = std::make_unique<AnimationSystem>(true);
+  p.animationSystem = std::make_unique<AnimationSystem>(true, p.worldState);
 
   data.animEventName = "attackStart";
   REQUIRE(actor.GetChangeForm().actorValues.staminaPercentage == 1.f);
