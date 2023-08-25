@@ -48,7 +48,7 @@ inline size_t ZlibCompress(const void* in, size_t inSize, void* out,
   if (res < Z_OK)
     throw std::runtime_error("deflate() failed with code " +
                              std::to_string(res));
-  const auto outputSize = defstream.next_out - (uint8_t*)out;
+  const auto outputSize = defstream.next_out - static_cast<uint8_t*>(out);
   res = deflateEnd(&defstream);
   if (res < Z_OK)
     throw std::runtime_error("deflateEnd() failed with code " +

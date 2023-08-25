@@ -10,9 +10,7 @@ export type SendChatMessageFn = (
   message: Record<string, unknown>
 ) => void;
 
-export declare class ScampServer {
-  constructor(serverPort: number, maxPlayers: number);
-
+export interface ScampServer {
   on(event: "connect", handler: (userId: number) => void): void;
   on(event: "disconnect", handler: (userId: number) => void): void;
   on(
@@ -42,10 +40,13 @@ export declare class ScampServer {
   getActorsByProfileId(profileId: number): number[];
   createBot(): Bot;
   getUserByActor(formId: number): number;
+  getUserIp(userId: number): string;
 
   executeJavaScriptOnChakra(src: string): void;
   clear(): void;
   writeLogs(logLevel: string, message: string): void;
 }
 
-module.exports.ScampServer = scampNativeNode.ScampServer;
+export const createScampServer = (serverPort: number, maxPlayers: number) => {
+  return new scampNativeNode.ScampServer(serverPort, maxPlayers);
+}

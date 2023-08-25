@@ -1,15 +1,24 @@
 #include "MpActor.h"
+#include "ActiveMagicEffectsMap.h"
+#include "ActorValues.h"
 #include "ChangeFormGuard.h"
 #include "CropRegeneration.h"
 #include "EspmGameObject.h"
 #include "FormCallbacks.h"
+#include "GetBaseActorValues.h"
+#include "MathUtils.h"
 #include "MpChangeForms.h"
 #include "MsgType.h"
 #include "PapyrusObjectReference.h"
 #include "ServerState.h"
 #include "SweetPieScript.h"
+#include "TimeUtils.h"
 #include "WorldState.h"
+#include "libespm/espm.h"
 #include <NiPoint3.h>
+#include <chrono>
+#include <functional>
+#include <optional>
 #include <random>
 #include <string>
 
@@ -29,6 +38,15 @@ struct MpActor::Impl
     { espm::ActorValue::Health, std::chrono::steady_clock::time_point{} },
     { espm::ActorValue::Stamina, std::chrono::steady_clock::time_point{} },
     { espm::ActorValue::Magicka, std::chrono::steady_clock::time_point{} },
+    { espm::ActorValue::HealRate, std::chrono::steady_clock::time_point{} },
+    { espm::ActorValue::MagickaRate, std::chrono::steady_clock::time_point{} },
+    { espm::ActorValue::StaminaRate, std::chrono::steady_clock::time_point{} },
+    { espm::ActorValue::HealRateMult_or_CombatHealthRegenMultMod,
+      std::chrono::steady_clock::time_point{} },
+    { espm::ActorValue::MagickaRateMult_or_CombatHealthRegenMultPowerMod,
+      std::chrono::steady_clock::time_point{} },
+    { espm::ActorValue::StaminaRateMult,
+      std::chrono::steady_clock::time_point{} },
   };
   uint32_t blockActiveCount = 0;
 };
@@ -54,6 +72,18 @@ void MpActor::ResetBlockCount() noexcept
 uint32_t MpActor::GetBlockCount() const noexcept
 {
   return pImpl->blockActiveCount;
+}
+
+bool MpActor::GetConsoleCommandsAllowedFlag() const
+{
+  return GetChangeForm().consoleCommandsAllowed;
+}
+
+void MpActor::SetConsoleCommandsAllowedFlag(bool newValue)
+{
+  EditChangeForm([&](MpChangeForm& changeForm) {
+    changeForm.consoleCommandsAllowed = newValue;
+  });
 }
 
 void MpActor::SetRaceMenuOpen(bool isOpen)
@@ -112,10 +142,22 @@ void MpActor::VisitProperties(const PropertiesVisitor& visitor,
 
 void MpActor::SendToUser(const void* data, size_t size, bool reliable)
 {
-  if (callbacks->sendToUser)
+  if (callbacks->sendToUser) {
     callbacks->sendToUser(this, data, size, reliable);
-  else
+  } else {
     throw std::runtime_error("sendToUser is nullptr");
+  }
+}
+
+void MpActor::SendToUserDeferred(const void* data, size_t size, bool reliable,
+                                 int deferredChannelId)
+{
+  if (callbacks->sendToUserDeferred) {
+    callbacks->sendToUserDeferred(this, data, size, reliable,
+                                  deferredChannelId);
+  } else {
+    throw std::runtime_error("sendToUserDeferred is nullptr");
+  }
 }
 
 bool MpActor::OnEquip(uint32_t baseId)
@@ -146,13 +188,14 @@ bool MpActor::OnEquip(uint32_t baseId)
     return false;
   }
 
+  bool spellLearned = true;
   if (isIngredient || isPotion) {
     EatItem(baseId, recordType);
   } else if (isBook) {
-    ReadBook(baseId);
+    spellLearned = ReadBook(baseId);
   }
 
-  if (!isSpell) {
+  if (!isSpell && spellLearned) {
     RemoveItem(baseId, 1, nullptr);
   }
 
@@ -198,15 +241,25 @@ void MpActor::ApplyChangeForm(const MpChangeForm& newChangeForm)
   }
   MpObjectReference::ApplyChangeForm(newChangeForm);
   EditChangeForm(
-    [&](MpChangeForm& cf) {
-      cf = static_cast<const MpChangeForm&>(newChangeForm);
+    [&](MpChangeForm& changeForm) {
+      changeForm = static_cast<const MpChangeForm&>(newChangeForm);
 
       // Actor without appearance would not be visible so we force player to
       // choose appearance
-      if (cf.appearanceDump.empty())
-        cf.isRaceMenuOpen = true;
+      if (changeForm.appearanceDump.empty()) {
+        changeForm.isRaceMenuOpen = true;
+      }
+      // ActorValues does not refelect real base actor values set in esp/esm
+      // game files since new update
+      // this check is added only for test as a workaround. It is to be redone
+      // in the nearest future. TODO
+      if (GetParent() && GetParent()->HasEspm()) {
+        changeForm.actorValues =
+          GetBaseActorValues(GetParent(), GetBaseId(), GetRaceId());
+      }
     },
     Mode::NoRequestSave);
+  ReapplyMagicEffects();
 }
 
 uint32_t MpActor::NextSnippetIndex(
@@ -468,27 +521,10 @@ void MpActor::EatItem(uint32_t baseId, espm::Type t)
   std::unordered_set<std::string> modFiles = { GetParent()->espmFiles.begin(),
                                                GetParent()->espmFiles.end() };
   bool hasSweetpie = modFiles.count("SweetPie.esp");
-  for (const auto& effect : effects) {
-    espm::ActorValue av =
-      espm::GetData<espm::MGEF>(effect.effectId, espmProvider).data.primaryAV;
-    if (av == espm::ActorValue::Health || av == espm::ActorValue::Stamina ||
-        av == espm::ActorValue::Magicka) { // other types is unsupported
-      if (hasSweetpie) {
-        if (CanActorValueBeRestored(av)) {
-          // this coefficient (workaround) has been added for sake of game
-          // balance and because of disability to restrict players use potions
-          // often on client side
-          constexpr float kMagnitudeCoeff = 100.f;
-          RestoreActorValue(av, effect.magnitude * kMagnitudeCoeff);
-        }
-      } else {
-        RestoreActorValue(av, effect.magnitude);
-      }
-    }
-  }
+  ApplyMagicEffects(effects, hasSweetpie);
 }
 
-void MpActor::ReadBook(const uint32_t baseId)
+bool MpActor::ReadBook(const uint32_t baseId)
 {
   const auto bookData = espm::GetData<espm::BOOK>(baseId, GetParent());
 
@@ -497,7 +533,9 @@ void MpActor::ReadBook(const uint32_t baseId)
     EditChangeForm([&](MpChangeForm& changeForm) {
       changeForm.learnedSpells.LearnSpell(bookData.spellOrSkillFormId);
     });
+    return true;
   }
+  return false;
 }
 
 bool MpActor::CanActorValueBeRestored(espm::ActorValue av)
@@ -511,7 +549,7 @@ bool MpActor::CanActorValueBeRestored(espm::ActorValue av)
 }
 
 std::chrono::steady_clock::time_point MpActor::GetLastRestorationTime(
-  espm::ActorValue av) const
+  espm::ActorValue av) const noexcept
 {
   return pImpl->restorationTimePoints[av];
 }
@@ -579,8 +617,10 @@ void MpActor::RespawnWithDelay(bool shouldTeleport)
 
   uint32_t formId = GetFormId();
   if (auto worldState = GetParent()) {
-    worldState->SetTimer(GetRespawnTime())
-      .Then([worldState, this, formId, shouldTeleport](Viet::Void) {
+    float respawnTime = GetRespawnTime();
+    auto time = Viet::TimeUtils::To<std::chrono::milliseconds>(respawnTime);
+    worldState->SetTimer(time).Then(
+      [worldState, this, formId, shouldTeleport](Viet::Void) {
         if (worldState->LookupFormById(formId).get() == this) {
           this->Respawn(shouldTeleport);
         }
@@ -703,13 +743,184 @@ void MpActor::SetActorValue(espm::ActorValue actorValue, float value)
     case espm::ActorValue::StaminaRate:
       currentActorValues.staminaRate = value;
       break;
+    case espm::ActorValue::Health:
+      currentActorValues.health = value;
+      break;
+    case espm::ActorValue::Magicka:
+      currentActorValues.magicka = value;
+      break;
+    case espm::ActorValue::Stamina:
+      currentActorValues.stamina = value;
+      break;
+    case espm::ActorValue::HealRateMult_or_CombatHealthRegenMultMod:
+      currentActorValues.healRateMult = value;
+      break;
+    case espm::ActorValue::StaminaRateMult:
+      currentActorValues.staminaRateMult = value;
+      break;
+    case espm::ActorValue::MagickaRateMult_or_CombatHealthRegenMultPowerMod:
+      currentActorValues.magickaRateMult = value;
+      break;
     default:
       break;
   }
   NetSendChangeValues(currentActorValues);
   EditChangeForm([&](MpChangeForm& changeForm) {
-    changeForm.actorValues.healRate = currentActorValues.healRate;
-    changeForm.actorValues.magickaRate = currentActorValues.magickaRate;
-    changeForm.actorValues.staminaRate = currentActorValues.staminaRate;
+    changeForm.actorValues = currentActorValues;
   });
+}
+
+void MpActor::SetActorValues(const ActorValues& actorValues)
+{
+  NetSendChangeValues(actorValues);
+  EditChangeForm(
+    [&](MpChangeForm& changeForm) { changeForm.actorValues = actorValues; });
+}
+
+void MpActor::ApplyMagicEffect(espm::Effects::Effect& effect, bool hasSweetpie,
+                               bool durationOverriden)
+{
+  WorldState* worldState = GetParent();
+  auto data = espm::GetData<espm::MGEF>(effect.effectId, worldState).data;
+  const espm::ActorValue av = data.primaryAV;
+  const espm::MGEF::EffectType type = data.effectType;
+  spdlog::trace("Actor value in ApplyMagicEffect(): {}",
+                static_cast<std::underlying_type_t<espm::ActorValue>>(av));
+
+  const bool isValue = av == espm::ActorValue::Health ||
+    av == espm::ActorValue::Stamina || av == espm::ActorValue::Magicka;
+  const bool isRate = av == espm::ActorValue::HealRate ||
+    av == espm::ActorValue::StaminaRate || av == espm::ActorValue::MagickaRate;
+  const bool isMult =
+    av == espm::ActorValue::HealRateMult_or_CombatHealthRegenMultMod ||
+    av == espm::ActorValue::StaminaRateMult ||
+    av == espm::ActorValue::MagickaRateMult_or_CombatHealthRegenMultPowerMod;
+
+  if (isValue) { // other types are unsupported
+    if (hasSweetpie) {
+      if (CanActorValueBeRestored(av)) {
+        // this coefficient (workaround) has been added for sake of game
+        // balance and because of disability to restrict players use potions
+        // often on client side
+        constexpr float kMagnitudeCoeff = 100.f;
+        RestoreActorValue(av, effect.magnitude * kMagnitudeCoeff);
+      }
+    } else {
+      RestoreActorValue(av, effect.magnitude);
+    }
+  }
+
+  if (isRate || isMult) {
+    if (hasSweetpie) {
+      if (!CanActorValueBeRestored(av)) {
+        return;
+      }
+    }
+    MpChangeForm changeForm = GetChangeForm();
+    BaseActorValues baseValues =
+      GetBaseActorValues(GetParent(), GetBaseId(), GetRaceId());
+    const ActiveMagicEffectsMap& activeEffects = changeForm.activeMagicEffects;
+    const float baseValue = baseValues.GetValue(av);
+    const uint32_t formId = GetFormId();
+    auto now = std::chrono::system_clock::now();
+    std::chrono::system_clock::time_point endTime;
+    std::chrono::milliseconds duration;
+    if (durationOverriden) {
+      std::optional effect = GetChangeForm().activeMagicEffects.Get(av);
+      if (!effect.has_value()) {
+        spdlog::error(
+          "MpActor with formId {:x} has no magic effect affecting "
+          "actor value {}",
+          GetFormId(),
+          static_cast<std::underlying_type_t<espm::ActorValue>>(av));
+        return;
+      }
+      endTime = effect.value().get().endTime;
+      duration =
+        std::chrono::duration_cast<std::chrono::milliseconds>(endTime - now);
+    } else {
+      endTime =
+        now + Viet::TimeUtils::To<std::chrono::milliseconds>(effect.duration);
+      duration =
+        Viet::TimeUtils::To<std::chrono::milliseconds>(effect.duration);
+    }
+    ActiveMagicEffectsMap::Entry entry{ effect, endTime };
+    if (activeEffects.Has(av)) {
+      const ActiveMagicEffectsMap::Entry& entry =
+        activeEffects.Get(av).value().get();
+      worldState->RemoveEffectTimer(entry.endTime);
+    }
+    EditChangeForm([av, pEntry = &entry](MpChangeForm& changeForm) {
+      changeForm.activeMagicEffects.Add(av, *pEntry);
+    });
+    if (isRate) {
+      SetActorValue(av, effect.magnitude);
+    } else {
+      float mult = 1.f;
+      if (type == espm::MGEF::EffectType::PeakValueMod) {
+        mult = MathUtils::PercentToMultPos(effect.magnitude);
+      }
+
+      if (type == espm::MGEF::EffectType::ValueMod) {
+        mult = MathUtils::PercentToMultNeg(effect.magnitude);
+      }
+      if (MathUtils::IsNearlyEqual(1.f, mult)) {
+        spdlog::error(
+          "Unknown espm::MGEF::EffectType: {}",
+          static_cast<std::underlying_type_t<espm::MGEF::EffectType>>(type));
+      }
+      spdlog::trace("Final multiplicator is {}", mult);
+      spdlog::trace("The result of baseValue * mult is: {}*{}={}", baseValue,
+                    mult, baseValue * mult);
+      SetActorValue(av, baseValue * mult);
+    }
+    worldState->SetEffectTimer(std::cref(endTime))
+      .Then([formId, actorValue = av, worldState](Viet::Void) {
+        auto& actor = worldState->GetFormAt<MpActor>(formId);
+        actor.RemoveMagicEffect(actorValue);
+      });
+  }
+}
+
+void MpActor::ApplyMagicEffects(std::vector<espm::Effects::Effect>& effects,
+                                bool hasSweetpie, bool durationOverriden)
+{
+  for (auto& effect : effects) {
+    ApplyMagicEffect(effect, hasSweetpie, durationOverriden);
+  }
+}
+
+void MpActor::RemoveMagicEffect(const espm::ActorValue actorValue) noexcept
+{
+  const ActorValues baseActorValues =
+    GetBaseActorValues(GetParent(), GetBaseId(), GetRaceId());
+  const float baseActorValue = baseActorValues.GetValue(actorValue);
+  SetActorValue(actorValue, baseActorValue);
+  EditChangeForm([actorValue](MpChangeForm& changeForm) {
+    changeForm.activeMagicEffects.Remove(actorValue);
+  });
+}
+
+void MpActor::RemoveAllMagicEffects() noexcept
+{
+  const ActorValues baseActorValues =
+    GetBaseActorValues(GetParent(), GetBaseId(), GetRaceId());
+  SetActorValues(baseActorValues);
+  EditChangeForm(
+    [](MpChangeForm& changeForm) { changeForm.activeMagicEffects.Clear(); });
+}
+
+void MpActor::ReapplyMagicEffects()
+{
+  // TODO: Implement range-based for loop for MagicEffectsMap
+  std::vector<espm::Effects::Effect> activeEffects =
+    GetChangeForm().activeMagicEffects.GetAllEffects();
+  if (activeEffects.empty()) {
+    return;
+  }
+  const std::vector<std::string>& modFiles = GetParent()->espmFiles;
+  const bool hasSweetpie = std::any_of(
+    modFiles.begin(), modFiles.end(),
+    [](std::string_view fileName) { return fileName == "SweetPie.esp"; });
+  ApplyMagicEffects(activeEffects, hasSweetpie, true);
 }

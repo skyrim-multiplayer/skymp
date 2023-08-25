@@ -70,3 +70,24 @@ TEST_CASE("DamageActorValue", "[Papyrus][Actor][espm]")
   p.DestroyActor(0xff000000);
   DoDisconnect(p, 0);
 }
+
+TEST_CASE("IsDead()", "[Papyrus][Actor]")
+{
+  PapyrusActor papyrusActor;
+  PartOne& partOne = GetPartOne();
+  DoConnect(partOne, 0);
+  uint32_t formId = partOne.CreateActor(0xff000000, { 0, 0, 0 }, 0, 0x3c);
+  partOne.SetUserActor(0, 0xff000000);
+  auto& actor = partOne.worldState.GetFormAt<MpActor>(formId);
+  const bool worldActorDead = actor.IsDead();
+  auto papyrusActorDead = static_cast<const bool>(
+    papyrusActor.IsDead(actor.ToVarValue(), {}).CastToBool());
+  REQUIRE(worldActorDead == papyrusActorDead);
+  actor.Kill();
+  papyrusActorDead = static_cast<bool>(
+    papyrusActor.IsDead(actor.ToVarValue(), {}).CastToBool());
+  REQUIRE(papyrusActorDead == true);
+
+  partOne.DestroyActor(formId);
+  DoDisconnect(partOne, 0);
+}

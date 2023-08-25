@@ -8,6 +8,7 @@
 #include "FindRecipe.h"
 #include "GetBaseActorValues.h"
 #include "HitData.h"
+#include "MathUtils.h"
 #include "MovementValidation.h"
 #include "MpObjectReference.h"
 #include "MsgType.h"
@@ -47,13 +48,10 @@ MpActor* ActionListener::SendToNeighbours(
     }
   }
 
-  for (auto listener : actor->GetListeners()) {
-    auto listenerAsActor = dynamic_cast<MpActor*>(listener);
-    if (listenerAsActor) {
-      auto targetuserId = partOne.serverState.UserByActor(listenerAsActor);
-      if (targetuserId != Networking::InvalidUserId) {
-        partOne.GetSendTarget().Send(targetuserId, data, length, reliable);
-      }
+  for (auto listener : actor->GetActorListeners()) {
+    auto targetuserId = partOne.serverState.UserByActor(listener);
+    if (targetuserId != Networking::InvalidUserId) {
+      partOne.GetSendTarget().Send(targetuserId, data, length, reliable);
     }
   }
 
@@ -365,6 +363,7 @@ void ActionListener::OnDropItem(const RawMessageData& rawMsgData,
 }
 
 namespace {
+
 VarValue VarValueFromJson(const simdjson::dom::element& parentMsg,
                           const simdjson::dom::element& element)
 {
@@ -392,10 +391,6 @@ VarValue VarValueFromJson(const simdjson::dom::element& parentMsg,
                            std::to_string(static_cast<int>(element.type())));
 }
 
-bool IsNearlyEqual(float value, float target, float margin = 1.0f / 1024.0f)
-{
-  return std::abs(target - value) < margin;
-}
 }
 void ActionListener::OnFinishSpSnippet(const RawMessageData& rawMsgData,
                                        uint32_t snippetIdx,
@@ -438,11 +433,11 @@ void UseCraftRecipe(MpActor* me, espm::COBJ::Data recipeData,
   auto mapping = br.GetCombMapping(espmIdx);
   std::vector<Inventory::Entry> entries;
   for (auto& entry : recipeData.inputObjects) {
-    auto formId = espm::GetMappedId(entry.formId, *mapping);
+    auto formId = espm::utils::GetMappedId(entry.formId, *mapping);
     entries.push_back({ formId, entry.count });
   }
   auto outputFormId =
-    espm::GetMappedId(recipeData.outputObjectFormId, *mapping);
+    espm::utils::GetMappedId(recipeData.outputObjectFormId, *mapping);
   if (spdlog::should_log(spdlog::level::debug)) {
     std::string s = fmt::format("User formId={:#x} crafted", me->GetFormId());
     for (const auto& entry : entries) {
@@ -453,19 +448,6 @@ void UseCraftRecipe(MpActor* me, espm::COBJ::Data recipeData,
   }
   me->RemoveItems(entries);
   me->AddItem(outputFormId, recipeData.outputCount);
-
-  // A hack to fix craft items do not appear (likely related to random
-  // SendInventoryUpdate ordering in RemoveItems/AddItem)
-  auto formId = me->GetFormId();
-  if (auto worldState = me->GetParent()) {
-    worldState->SetTimer(1.f).Then([worldState, formId](Viet::Void) {
-      auto actor =
-        std::dynamic_pointer_cast<MpActor>(worldState->LookupFormById(formId));
-      if (actor) {
-        actor->SendInventoryUpdate();
-      }
-    });
-  }
 }
 
 void ActionListener::OnCraftItem(const RawMessageData& rawMsgData,
@@ -482,7 +464,9 @@ void ActionListener::OnCraftItem(const RawMessageData& rawMsgData,
   spdlog::debug("User {} tries to craft {:#x} on workbench {:#x}",
                 rawMsgData.userId, resultObjectId, workbenchId);
 
-  if (base.rec->GetType() != "FURN" && base.rec->GetType() != "ACTI") {
+  bool isFurnitureOrActivator =
+    base.rec->GetType() == "FURN" || base.rec->GetType() == "ACTI";
+  if (!isFurnitureOrActivator) {
     throw std::runtime_error("Unable to use " +
                              base.rec->GetType().ToString() + " as workbench");
   }
@@ -610,12 +594,12 @@ void ActionListener::OnChangeValues(const RawMessageData& rawMsgData,
       CropStaminaRegeneration(stamina, timeAfterRegeneration, actor);
   }
 
-  if (!IsNearlyEqual(currentActorValues.healthPercentage,
-                     newActorValues.healthPercentage) ||
-      !IsNearlyEqual(currentActorValues.magickaPercentage,
-                     newActorValues.magickaPercentage) ||
-      !IsNearlyEqual(currentActorValues.staminaPercentage,
-                     newActorValues.staminaPercentage)) {
+  if (!MathUtils::IsNearlyEqual(currentActorValues.healthPercentage,
+                                newActorValues.healthPercentage) ||
+      !MathUtils::IsNearlyEqual(currentActorValues.magickaPercentage,
+                                newActorValues.magickaPercentage) ||
+      !MathUtils::IsNearlyEqual(currentActorValues.staminaPercentage,
+                                newActorValues.staminaPercentage)) {
     actor->NetSendChangeValues(currentActorValues);
   }
   actor->SetPercentages(currentActorValues);
@@ -818,7 +802,8 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
   }
 
   if (IsDistanceValid(*aggressor, targetActor, hitData) == false) {
-    float distance = sqrtf(GetSqrDistanceToBounds(*aggressor, targetActor));
+    float distance =
+      std::sqrt(GetSqrDistanceToBounds(*aggressor, targetActor));
     float reach = GetReach(*aggressor, hitData.source);
     uint32_t aggressorId = aggressor->GetFormId();
     uint32_t targetId = targetActor.GetFormId();

@@ -16,6 +16,8 @@ public:
 
   void Tick(OnPacket onPacket, void* state) override;
 
+  std::string GetIp(UserId userId) const override;
+
 private:
   struct Impl;
   std::shared_ptr<Impl> pImpl;

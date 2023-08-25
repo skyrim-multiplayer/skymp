@@ -3,7 +3,7 @@
 #include "IPapyrusClass.h"
 #include "SpSnippetFunctionGen.h"
 
-class PapyrusActor : public IPapyrusClass<PapyrusActor>
+class PapyrusActor final : public IPapyrusClass<PapyrusActor>
 {
 public:
   const char* GetName() override { return "actor"; }
@@ -30,26 +30,13 @@ public:
   VarValue SetAlpha(VarValue self, const std::vector<VarValue>& arguments);
   VarValue EquipItem(VarValue self, const std::vector<VarValue>& arguments);
   VarValue SetDontMove(VarValue self, const std::vector<VarValue>& arguments);
+  VarValue IsDead(VarValue self,
+                  const std::vector<VarValue>& arguments) const noexcept;
+  VarValue WornHasKeyword(VarValue self,
+                          const std::vector<VarValue>& arguments);
 
   void Register(VirtualMachine& vm,
-                std::shared_ptr<IPapyrusCompatibilityPolicy> policy) override
-  {
-    compatibilityPolicy = policy;
-
-    AddMethod(vm, "IsWeaponDrawn", &PapyrusActor::IsWeaponDrawn);
-    AddMethod(vm, "DrawWeapon", &PapyrusActor::DrawWeapon);
-    AddMethod(vm, "UnequipAll", &PapyrusActor::UnequipAll);
-    AddMethod(vm, "PlayIdle", &PapyrusActor::PlayIdle);
-    AddMethod(vm, "GetSitState", &PapyrusActor::GetSitState);
-    AddMethod(vm, "RestoreActorValue", &PapyrusActor::RestoreActorValue);
-    AddMethod(vm, "DamageActorValue", &PapyrusActor::DamageActorValue);
-    AddMethod(vm, "IsEquipped", &PapyrusActor::IsEquipped);
-    AddMethod(vm, "GetActorValuePercentage",
-              &PapyrusActor::GetActorValuePercentage);
-    AddMethod(vm, "SetAlpha", &PapyrusActor::SetAlpha);
-    AddMethod(vm, "EquipItem", &PapyrusActor::EquipItem);
-    AddMethod(vm, "SetDontMove", &PapyrusActor::SetDontMove);
-  }
+                std::shared_ptr<IPapyrusCompatibilityPolicy> policy) override;
 
   std::shared_ptr<IPapyrusCompatibilityPolicy> compatibilityPolicy;
 };

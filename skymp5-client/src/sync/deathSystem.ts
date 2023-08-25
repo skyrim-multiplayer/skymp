@@ -10,7 +10,7 @@ import { AnimationEventName } from "./animation";
 import { RespawnNeededError } from "../lib/errors";
 
 /**
- * Null for allow all animations. Empty array for disallow all
+ * Null to allow all animations. Empty array to disallow all
  */
 let gPlayerAllowAnimations: string[] | null = null;
 const gPlayerId: number = 0x14;
@@ -120,6 +120,7 @@ const ressurectWithPushKill = (act: Actor): void => {
   safeRemoveRagdollFromWorld(act, () => {
     const actor = Actor.from(Game.getFormEx(formId));
     if (!actor) return;
+    Game.getPlayer()!.setAnimationVariableInt("iGetUpType", 1);
     Debug.sendAnimationEvent(actor, AnimationEventName.GetUpBegin);
   });
 };

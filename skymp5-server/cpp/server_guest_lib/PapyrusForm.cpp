@@ -3,8 +3,10 @@
 #include "EspmGameObject.h"
 #include "MpActor.h"
 #include "MpFormGameObject.h"
+#include "TimeUtils.h"
 #include "WorldState.h"
 
+#include <ratio>
 #include <string>
 #include <unordered_map>
 
@@ -19,7 +21,8 @@ VarValue PapyrusForm::RegisterForSingleUpdate(
   if (arguments.size() >= 1) {
     if (auto form = GetFormPtr<MpForm>(self)) {
       double seconds = static_cast<double>(arguments[0]);
-      form->GetParent()->RegisterForSingleUpdate(self, seconds);
+      auto time = Viet::TimeUtils::To<std::chrono::milliseconds>(seconds);
+      form->GetParent()->RegisterForSingleUpdate(self, time);
     }
   }
 
@@ -78,6 +81,24 @@ VarValue PapyrusForm::HasKeyword(VarValue self,
   }
 
   return VarValue(false);
+}
+
+VarValue PapyrusForm::GetFormId(VarValue self, const std::vector<VarValue>&)
+{
+  if (auto selfRefr = GetFormPtr<MpObjectReference>(self)) {
+    auto formId = selfRefr->GetFormId();
+    spdlog::trace("GetFormId {:x} - MpFormGameObject", formId);
+    // Using float here is not the best idea. Values greater than 0xffffff00
+    // may be converted to 0x100000000 But on the other hand, we can't use
+    // uint32_t in Papyrus right now, only int32_t and float
+    return VarValue(static_cast<float>(formId));
+  }
+  if (auto lookupRes = GetRecordPtr(self); lookupRes.rec) {
+    auto formId = lookupRes.ToGlobalId(lookupRes.rec->GetId());
+    spdlog::trace("GetFormId {:x} - EspmGameObject", formId);
+    return VarValue(static_cast<int32_t>(formId));
+  }
+  return VarValue::None();
 }
 
 namespace {

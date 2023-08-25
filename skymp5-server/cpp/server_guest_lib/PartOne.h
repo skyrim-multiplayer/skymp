@@ -110,6 +110,9 @@ private:
 
   void InitActionListener();
 
+  void TickPacketHistoryPlaybacks();
+  void TickDeferredMessages();
+
   struct Impl;
   std::shared_ptr<Impl> pImpl;
 };

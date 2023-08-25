@@ -1,4 +1,5 @@
 #include "AnimationSystem.h"
+#include "ActiveMagicEffectsMap.h"
 #include "AnimationData.h"
 #include "MpActor.h"
 #include "libespm/espm.h"
@@ -144,7 +145,78 @@ void AnimationSystem::InitAnimationCallbacks(bool isSweetpie)
         constexpr float modifier = 14.f;
         actor->DamageActorValue(espm::ActorValue::Stamina, modifier);
       },
-    }
+    },
+    {
+      "attackPowerStartInPlace",
+      [](MpActor* actor) {
+        constexpr float modifier = 30.f;
+        actor->DamageActorValue(espm::ActorValue::Stamina, modifier);
+      },
+    },
+    {
+      "attackPowerStartBackward",
+      [](MpActor* actor) {
+        constexpr float modifier = 30.f;
+        actor->DamageActorValue(espm::ActorValue::Stamina, modifier);
+      },
+    },
+    {
+      "attackPowerStartLeft",
+      [](MpActor* actor) {
+        constexpr float modifier = 30.f;
+        actor->DamageActorValue(espm::ActorValue::Stamina, modifier);
+      },
+    },
+    {
+      "attackPowerStartRight",
+      [](MpActor* actor) {
+        constexpr float modifier = 30.f;
+        actor->DamageActorValue(espm::ActorValue::Stamina, modifier);
+      },
+    },
+    {
+      "attackPowerStartDualWield",
+      [](MpActor* actor) {
+        constexpr float modifier = 30.f;
+        actor->DamageActorValue(espm::ActorValue::Stamina, modifier);
+      },
+    },
+    {
+      "attackPowerStartForward",
+      [](MpActor* actor) {
+        constexpr float modifier = 30.f;
+        actor->DamageActorValue(espm::ActorValue::Stamina, modifier);
+      },
+    },
+    {
+      "attackPowerStart_2HWSprint",
+      [](MpActor* actor) {
+        constexpr float modifier = 30.f;
+        actor->DamageActorValue(espm::ActorValue::Stamina, modifier);
+      },
+    },
+    {
+      "attackPowerStart_2HWSprint",
+      [](MpActor* actor) {
+        constexpr float modifier = 30.f;
+        actor->DamageActorValue(espm::ActorValue::Stamina, modifier);
+      },
+    },
+    {
+      "attackStartSprint",
+      [](MpActor* actor) {
+        constexpr float modifier = 15.f;
+        actor->DamageActorValue(espm::ActorValue::Stamina, modifier);
+      },
+    },
+    {
+      "attackPowerStart_2HMSprint",
+      [](MpActor* actor) {
+        constexpr float modifier = 30.f;
+        actor->DamageActorValue(espm::ActorValue::Stamina, modifier);
+      },
+    },
+
   };
 
   if (isSweetpie) {

@@ -155,6 +155,19 @@ A time before a game object restores its original state in milliseconds. Unlike 
 }
 ```
 
+## forbiddenReloot
+The option that allows you to forbid reloot for a specific item or a group of items based on its/their espm record type. Take a look at [UESP](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format).
+
+
+```json5
+{
+  // ...
+  // here your record types go
+  "forbiddenReloot": ["FLOR", "TREE", "BOOK", ... ]
+  // ...
+}
+```
+
 ## gamemodePath
 
 Contains a relative or an absolute path to a file or directory with a gamemode.
@@ -244,6 +257,50 @@ Allows tuning settings related to in-game chat, such as message visibility radiu
   "sweetPieChatSettings": {
     // Hearing distance in units. If player A says something and player B is farther away, they won't see that message.
     "hearingRadiusNormal": 123,
+  },
+  // ...
+}
+```
+
+## npcEnabled
+
+Enables npc loading. By default is set to `false`.
+
+```json5
+{
+  // ...
+  "npcEnabled": false,
+  // ...
+}
+```
+
+## npcSettings
+
+Optional npcs configuration. May not be present or can be an empty object which means all npcs are allowed to be loaded, provided `"npcEnabled"` is set to `true`.
+`"NpcSettings"` consists of fields, each of which describes from what game file it is permitted to load an npc and additional restrictions of
+how they should be spawned: in interior or exterior. By default all the npcs are allowed (`"npcSettings": {}`).
+`"default":{}` field specifies `"spawnInInterior"` and `"spawnInExterior"` for all non-mentioned game files.
+
+```json5
+{
+  // ...
+  "npcSettings": {
+    "default": {
+      "spawnInInterior": true,
+      "spawnInExterior": false
+    },
+    "Skyrim.esm": {
+      "spawnInInterior": true,
+      "spawnInExterior": false
+    },
+    "Dawnguard.esm": {
+      "spawnInInterior": false,
+      "spawnInExterior": true
+    },
+    "DragonBorn.esm": {
+      "spawnInInterior": true,
+      "spawnInExterior": true
+    },
   },
   // ...
 }

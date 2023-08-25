@@ -18,14 +18,17 @@
 #include "SettingsUtils.h"
 #include "formulas/SweetPieDamageFormula.h"
 #include "formulas/TES5DamageFormula.h"
+#include "libespm/IterateFields.h"
 #include "property_bindings/PropertyBindingFactory.h"
 #include <cassert>
 #include <cctype>
 #include <memory>
 #include <napi.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
+#include <sstream>
 
 namespace {
+
 constexpr size_t kMockServerIdx = 1;
 
 std::shared_ptr<spdlog::logger>& GetLogger()
@@ -55,6 +58,12 @@ std::string GetPropertyAlphabet()
   alphabet += '_';
   return alphabet;
 }
+
+bool StartsWith(const std::string& str, const char* prefix)
+{
+  return str.compare(0, strlen(prefix), prefix) == 0;
+}
+
 }
 
 Napi::FunctionReference ScampServer::constructor;
@@ -80,6 +89,7 @@ Napi::Object ScampServer::Init(Napi::Env env, Napi::Object exports)
       InstanceMethod("createBot", &ScampServer::CreateBot),
       InstanceMethod("getUserByActor", &ScampServer::GetUserByActor),
       InstanceMethod("writeLogs", &ScampServer::WriteLogs),
+      InstanceMethod("getUserIp", &ScampServer::GetUserIp),
 
       InstanceMethod("getLocalizedString", &ScampServer::GetLocalizedString),
       InstanceMethod("getServerSettings", &ScampServer::GetServerSettings),
@@ -103,7 +113,9 @@ Napi::Object ScampServer::Init(Napi::Env env, Napi::Object exports)
       InstanceMethod("getPacketHistory", &ScampServer::GetPacketHistory),
       InstanceMethod("clearPacketHistory", &ScampServer::ClearPacketHistory),
       InstanceMethod("requestPacketHistoryPlayback",
-                     &ScampServer::RequestPacketHistoryPlayback) });
+                     &ScampServer::RequestPacketHistoryPlayback),
+      InstanceMethod("findFormsByPropertyValue",
+                     &ScampServer::FindFormsByPropertyValue) });
   constructor = Napi::Persistent(func);
   constructor.SuppressDestruct();
   exports.Set("ScampServer", func);
@@ -144,6 +156,57 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
       spdlog::set_level(level);
       logger->info("set log level to {}",
                    spdlog::level::to_string_view(logger->level()));
+    }
+
+    if (serverSettings.find("npcEnabled") != serverSettings.end()) {
+      bool enabled = serverSettings.at("npcEnabled").get<bool>();
+      partOne->worldState.npcEnabled = enabled;
+      if (enabled) {
+        spdlog::info("NPCs are enabled");
+      } else {
+        spdlog::info("NPCs are disabled");
+      }
+    } else {
+      spdlog::info(
+        "npcEnabled option is not found in the server configuration file. "
+        "Disabling NPCs by default");
+    }
+
+    if (serverSettings.find("npcSettings") != serverSettings.end()) {
+      if (serverSettings.at("npcSettings").is_object()) {
+        std::unordered_map<std::string, WorldState::NpcSettingsEntry>
+          npcSettings;
+        if (serverSettings.find("default") != serverSettings.end()) {
+          partOne->worldState.defaultSetting.spawnInInterior =
+            serverSettings.at("spawnInInterior").get<bool>();
+          partOne->worldState.defaultSetting.spawnInExterior =
+            serverSettings.at("spawnInExterior").get<bool>();
+          partOne->worldState.defaultSetting.overriden = true;
+        }
+        for (const auto& field : serverSettings["npcSettings"].items()) {
+          WorldState::NpcSettingsEntry entry;
+          if (field.value().find("spawnInInterior") != field.value().end()) {
+            entry.spawnInInterior =
+              field.value().at("spawnInInterior").get<bool>();
+          }
+          if (field.value().find("spawnInExterior") != field.value().end()) {
+            entry.spawnInExterior =
+              field.value().at("spawnInExterior").get<bool>();
+          }
+          npcSettings[field.key()] = entry;
+        }
+        partOne->worldState.SetNpcSettings(std::move(npcSettings));
+        spdlog::info("NPCs' settings have been loaded susccessfully");
+      }
+    } else {
+      std::stringstream msg;
+      msg << "\"npcSettings\" are not found in the server configuration "
+             "file.";
+      msg << (partOne->worldState.npcEnabled
+                ? "Allowing all npc by default"
+                : "NPCs are disabled due to \"npcEnabled\": ")
+          << std::boolalpha << partOne->worldState.npcEnabled;
+      spdlog::info(msg.str());
     }
 
     partOne->worldState.isPapyrusHotReloadEnabled =
@@ -227,6 +290,12 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
       auto time = std::chrono::milliseconds(1) * timeMs;
       partOne->worldState.SetRelootTime(recordType, time);
       logger->info("'{}' will be relooted every {} ms", recordType, timeMs);
+    }
+
+    auto it = serverSettings.find("forbiddenReloot");
+    if (it != serverSettings.end() && (*it).is_array()) {
+      partOne->worldState.SetForbiddenRelootTypes(
+        (*it).get<std::set<std::string>>());
     }
 
     auto res =
@@ -540,6 +609,16 @@ Napi::Value ScampServer::WriteLogs(const Napi::CallbackInfo& info)
   return info.Env().Undefined();
 }
 
+Napi::Value ScampServer::GetUserIp(const Napi::CallbackInfo& info)
+{
+  try {
+    auto userId = info[0].As<Napi::Number>().Uint32Value();
+    return Napi::String::New(info.Env(), server->GetIp(userId));
+  } catch (std::exception& e) {
+    throw Napi::Error::New(info.Env(), std::string(e.what()));
+  }
+}
+
 Napi::Value ScampServer::GetLocalizedString(const Napi::CallbackInfo& info)
 {
   try {
@@ -603,7 +682,11 @@ Napi::Value ScampServer::GetLocalizedString(const Napi::CallbackInfo& info)
 Napi::Value ScampServer::GetServerSettings(const Napi::CallbackInfo& info)
 {
   try {
-    return NapiHelper::ParseJson(info.Env(), serverSettings);
+    if (parsedServerSettings.IsEmpty()) {
+      parsedServerSettings =
+        Napi::Persistent(NapiHelper::ParseJson(info.Env(), serverSettings));
+    }
+    return parsedServerSettings.Value();
   } catch (std::exception& e) {
     throw Napi::Error::New(info.Env(), std::string(e.what()));
   }
@@ -703,11 +786,23 @@ Napi::Value ScampServer::Get(const Napi::CallbackInfo& info)
 
     auto it = g_standardPropertyBindings.find(propertyName);
     if (it != g_standardPropertyBindings.end()) {
-      return it->second->Get(info.Env(), *this, formId);
+      auto res = it->second->Get(info.Env(), *this, formId);
+      if (spdlog::should_log(spdlog::level::trace)) {
+        spdlog::trace("ScampServer::Get {:x} - {}={} (native property)",
+                      formId, propertyName,
+                      static_cast<std::string>(res.ToString()));
+      }
+      return res;
     } else {
-      return PropertyBindingFactory()
-        .CreateCustomPropertyBinding(propertyName)
-        ->Get(info.Env(), *this, formId);
+      auto res = PropertyBindingFactory()
+                   .CreateCustomPropertyBinding(propertyName)
+                   ->Get(info.Env(), *this, formId);
+      if (spdlog::should_log(spdlog::level::trace)) {
+        spdlog::trace("ScampServer::Get {:x} - {}={} (custom property)",
+                      formId, propertyName,
+                      static_cast<std::string>(res.ToString()));
+      }
+      return res;
     }
 
   } catch (std::exception& e) {
@@ -727,8 +822,18 @@ Napi::Value ScampServer::Set(const Napi::CallbackInfo& info)
 
     auto it = g_standardPropertyBindings.find(propertyName);
     if (it != g_standardPropertyBindings.end()) {
+      if (spdlog::should_log(spdlog::level::trace)) {
+        spdlog::trace("ScampServer::Set {:x} - {}={} (native property)",
+                      formId, propertyName,
+                      static_cast<std::string>(value.ToString()));
+      }
       it->second->Set(info.Env(), *this, formId, value);
     } else {
+      if (spdlog::should_log(spdlog::level::trace)) {
+        spdlog::trace("ScampServer::Set {:x} - {}={} (custom property)",
+                      formId, propertyName,
+                      static_cast<std::string>(value.ToString()));
+      }
       PropertyBindingFactory()
         .CreateCustomPropertyBinding(propertyName)
         ->Set(info.Env(), *this, formId, value);
@@ -1029,6 +1134,40 @@ Napi::Value ScampServer::RequestPacketHistoryPlayback(
 
     partOne->RequestPacketHistoryPlayback(userId, history);
     return info.Env().Undefined();
+  } catch (std::exception& e) {
+    throw Napi::Error::New(info.Env(), std::string(e.what()));
+  }
+}
+
+Napi::Value ScampServer::FindFormsByPropertyValue(
+  const Napi::CallbackInfo& info)
+{
+  try {
+    auto propertyName = NapiHelper::ExtractString(info[0], "propertyName");
+    auto propertyValue = info[1];
+
+    if (!StartsWith(propertyName,
+                    MpObjectReference::GetPropertyPrefixPrivateIndexed())) {
+      spdlog::error("FindFormsByPropertyValue - Attempt to search for "
+                    "non-indexed property '{}'",
+                    propertyName);
+    }
+
+    auto propertyValueStringified =
+      NapiHelper::Stringify(info.Env(), propertyValue);
+
+    auto mapKey = partOne->worldState.MakePrivateIndexedPropertyMapKey(
+      propertyName, propertyValueStringified);
+
+    auto& formIds =
+      partOne->worldState.GetActorsByPrivateIndexedProperty(mapKey);
+    auto result = Napi::Array::New(info.Env(), formIds.size());
+    uint32_t i = 0;
+    for (auto formId : formIds) {
+      result.Set(i, Napi::Number::New(info.Env(), formId));
+      ++i;
+    }
+    return result;
   } catch (std::exception& e) {
     throw Napi::Error::New(info.Env(), std::string(e.what()));
   }
