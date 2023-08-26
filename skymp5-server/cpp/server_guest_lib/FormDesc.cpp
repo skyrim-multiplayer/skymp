@@ -3,27 +3,33 @@
 
 std::string FormDesc::ToString(char delimiter) const
 {
-  char buffer[32];
+  auto fmt = "%0x%c%s";
+  size_t size =
+    std::snprintf(nullptr, 0, fmt, shortFormId, delimiter, file.c_str());
+  std::string buffer;
+  buffer.reserve(size);
   if (!file.empty()) {
-    std::sprintf(buffer, "%0x%c%s", shortFormId, delimiter, file.c_str());
+    std::sprintf(buffer.data(), fmt, shortFormId, delimiter, file.c_str());
   } else {
-    std::sprintf(buffer, "%0x", shortFormId);
+    std::sprintf(buffer.data(), "%0x", shortFormId);
   }
   return buffer;
 }
 
 FormDesc FormDesc::FromString(std::string str, char delimiter)
 {
-  for (auto& ch : str) {
-    if (ch == delimiter) {
-      ch = ' ';
+  FormDesc res;
+  std::string id, file;
+
+  for (auto it = str.begin(); it != str.end(); ++it) {
+    if (*it == delimiter) {
+      id = { str.begin(), it };
+      res.file = { it + 1, str.end() };
+      break;
     }
   }
 
-  FormDesc res;
-  char buffer[32];
-  std::sscanf(str.c_str(), "%x %s", &res.shortFormId, buffer);
-  res.file = std::move(buffer);
+  std::sscanf(id.c_str(), "%x", &res.shortFormId);
   return res;
 }
 
