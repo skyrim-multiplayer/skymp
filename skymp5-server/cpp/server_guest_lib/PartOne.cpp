@@ -37,8 +37,8 @@ struct PartOne::Impl
   simdjson::dom::parser parser;
   espm::Loader* espm = nullptr;
 
-  std::function<void(Networking::ISendTarget* sendTarget,
-                     MpObjectReference* emitter, MpObjectReference* listener)>
+  std::function<void(Networking::ISendTarget*sendTarget,
+                     MpObjectReference*emitter, MpObjectReference*listener)>
     onSubscribe, onUnsubscribe;
 
   espm::CompressedFieldsCache compressedFieldsCache;
@@ -446,11 +446,11 @@ FormCallbacks PartOne::CreateFormCallbacks()
 
   FormCallbacks::SubscribeCallback
     subscribe =
-      [this](MpObjectReference* emitter, MpObjectReference* listener) {
+      [this](MpObjectReference* emitter, MpObjectReference*listener) {
         return pImpl->onSubscribe(pImpl->sendTarget, emitter, listener);
       },
-    unsubscribe = [this](MpObjectReference* emitter,
-                         MpObjectReference* listener) {
+    unsubscribe = [this](MpObjectReference*emitter,
+                         MpObjectReference*listener) {
       return pImpl->onUnsubscribe(pImpl->sendTarget, emitter, listener);
     };
 
