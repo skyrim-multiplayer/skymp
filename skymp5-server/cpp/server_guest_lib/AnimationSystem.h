@@ -34,7 +34,7 @@ private:
   std::vector<uint32_t> GetWeaponKeywordFormIds(uint32_t baseId) const;
   std::vector<std::string_view> GetWeaponKeywords(uint32_t baseId) const;
   float ComputeWeaponStaminaModifier(uint32_t baseId) const;
-  void HandleAttackAnim(MpActor* actor, float defaultModifier = 0.f) const;
+  void HandleAttackAnim(MpActor* actor, float defaultModifier) const;
   bool IsWorldStateAttached() const noexcept;
 
 private:
