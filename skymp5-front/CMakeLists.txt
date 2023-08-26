@@ -12,15 +12,9 @@ file(GLOB_RECURSE sources ${CMAKE_CURRENT_LIST_DIR}/src/*)
 set(FRONT_OUTPUT_PATH "../build/dist/client/Data/Platform/UI")
 string(REPLACE "\\" "\\\\" FRONT_OUTPUT_PATH ${FRONT_OUTPUT_PATH})
 set(FRONT_CFG_PATH "${CMAKE_CURRENT_LIST_DIR}/config.js")
-set(FRONT_CFG_CONTENT [=[
-module.exports = {
-  outputPath:
-    ]=] ${FRONT_OUTPUT_PATH} [=[,
-}
+set(FRONT_CFG_CONTENT "mdule.exports = {\n\toutputPath:\n\t\t${FRONT_OUTPUT_PATH},\n}\n")
 
-]=])
-
-file(GENERATE OUTPUT ${FRONT_CFG_PATH} CONTENT ${FRONT_CFG_CONTENT})
+file(CONFIGURE OUTPUT "${FRONT_CFG_PATH}" CONTENT "${FRONT_CFG_CONTENT}")
 
 # TODO: consider fetching list of outputs from ExpectedDistContents.json instead of hardcoding
 set(out
