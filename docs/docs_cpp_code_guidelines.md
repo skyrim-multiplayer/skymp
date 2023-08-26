@@ -5,7 +5,7 @@
 The project uses standard C++17.
 
 SkyrimPlatform and client code must be compilable with Microsoft Visual C++ 2019.
-Server code and unit tests must be also compilable with Clang 12.
+Server code and unit tests must be also compilable with Clang 15.
 
 
 ## Code Style
@@ -60,9 +60,9 @@ Short names that are ok: `i`, `n`, `it` in loops; `lhs`/`rhs` in operator overlo
 
 ### Classes
 
-Class names must start with an upper case: `class SomeClass`. 
+Class names must start with an upper case: `class SomeClass`.
 
-No I-prefix is used to indicate abstract classes. 
+No I-prefix is used to indicate abstract classes.
 
 Class name should be a non-verb noun whenever possible.
 

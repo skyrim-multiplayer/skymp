@@ -38,10 +38,10 @@ As Skyrim has no native Linux version, client can only be built using MSVC,
 but then can be run with Proton (though some crashes can occur on SP startup
 and it can be tricky to get Skyrim itself to work with non-ASCII text, for example).
 
-* Ubuntu 18.04 or 20.04. Other distros are not tested or are expected to fail:
+* Ubuntu 22.04. Other distros are not tested or are expected to fail:
   * Alpine Linux doesn't work
   * Arch-based distros also [won't be able to run the server](https://github.com/chakra-core/ChakraCore/issues/6613)
-* Clang 12 *(GCC is not supported)*: `sudo apt install clang-12`
+* Clang 15 *(GCC is not supported)*: `sudo apt install clang-15`
 * Python 2 (not 3.x! It is needed to build ChakraCore. Don't worry, it won't conflict with Python 3):
   `sudo apt install python2`
 * Make sure that your NodeJS and CMake are fresh enough:
@@ -155,7 +155,7 @@ Check `podman run` [documentation](https://docs.podman.io/en/latest/markdown/pod
    2. You did not modify `Skyrim.esm`, `Update.esm`, `Dawnguard.esm`, `HearthFires.esm` and `Dragonborn.esm`. (Ideally, you should have pure Vanilla version installed.)
 
 2. Calculate test coverage (Windows-only):
-   
+
    Install [OpenCppCoverage](https://github.com/OpenCppCoverage/OpenCppCoverage/releases) and then:
    ```sh
    cmake .. -DCPPCOV_PATH="C:\Program Files\OpenCppCoverage"

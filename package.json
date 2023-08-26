@@ -1,7 +1,7 @@
 {
   "devDependencies": {
-    "@trivago/prettier-plugin-sort-imports": "^4.1.1",
-    "prettier": "^2.8.8"
+    "@trivago/prettier-plugin-sort-imports": "^4.2.0",
+    "prettier": "^3.0.2"
   },
   "scripts": {
     "prettier-format": "prettier --write .",
