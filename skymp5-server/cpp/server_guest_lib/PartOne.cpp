@@ -446,7 +446,7 @@ FormCallbacks PartOne::CreateFormCallbacks()
 
   FormCallbacks::SubscribeCallback
     subscribe =
-      [this](MpObjectReference* emitter, MpObjectReference*listener) {
+      [this](MpObjectReference*emitter, MpObjectReference*listener) {
         return pImpl->onSubscribe(pImpl->sendTarget, emitter, listener);
       },
     unsubscribe = [this](MpObjectReference*emitter,
