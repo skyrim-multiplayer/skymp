@@ -187,11 +187,22 @@ void SweetPieScript::Play(MpActor& actor, WorldState& worldState,
         worldState.SetTimer(endTime).Then(
           [&worldState, bookBaseId, boundWeaponBaseId, formId](Viet::Void) {
             MpActor& actor = worldState.GetFormAt<MpActor>(formId);
+            // removing book before adding it to a player, because there exists
+            // books that add more than one item. In this case we'll be adding
+            // the same book n times. This is a workaround. TODO: refactor this
+            // class somewhen
+            actor.RemoveItem(bookBaseId,
+                             actor.GetInventory().GetItemCount(bookBaseId),
+                             nullptr);
             actor.AddItem(bookBaseId, 1);
             uint32_t count =
               actor.GetInventory().GetItemCount(boundWeaponBaseId);
             actor.RemoveItem(boundWeaponBaseId, count, nullptr);
           });
+      } else {
+        // adding book back if there is insufficient mana. Perhaps, this case
+        // should be validated on the client side
+        actor.AddItem(it->first, 1);
       }
     }
   }
