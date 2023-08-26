@@ -42,6 +42,6 @@ private:
 
   AnimationCallbacks animationCallbacks;
   AnimationTimePoints lastAttackReleaseAnimationTimePoints;
-  WorldState* worldState;
+  WorldState* worldState = nullptr;
   bool hasSweetpie = false;
 };

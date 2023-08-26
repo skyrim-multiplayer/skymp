@@ -9,13 +9,14 @@
 
 void AnimationSystem::Init(WorldState* pWorldState)
 {
+  InitAnimationCallbacks();
   if (!pWorldState) {
     spdlog::error("No worldState attached to animation system. Using default "
                   "values for stamina forfeits");
+    return;
   }
-  hasSweetpie = pWorldState ? pWorldState->HasEspmFile("SweetPie.esp") : false;
+  hasSweetpie = pWorldState->HasEspmFile("SweetPie.esp");
   worldState = pWorldState;
-  InitAnimationCallbacks();
 }
 
 void AnimationSystem::Process(MpActor* actor, const AnimationData& animData)
