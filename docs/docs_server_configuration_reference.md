@@ -308,6 +308,7 @@ how they should be spawned: in interior or exterior. By default all the npcs are
 
 ## weaponStaminaModifiers
 
+This setting is only available with game mod file "SweetPie.esp".
 This option allows you to flexibly adjust stamina forfeits of players' attacks using keywords set in the Creation Kit.
 In case this field is not provided, some default, yet hardcoded, values are in use.
 
