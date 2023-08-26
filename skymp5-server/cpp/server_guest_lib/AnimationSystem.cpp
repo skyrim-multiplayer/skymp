@@ -13,7 +13,7 @@ void AnimationSystem::Init(WorldState* pWorldState)
     spdlog::error("No worldState attached to animation system. Using default "
                   "values for stamina forfeits");
   }
-  hasSweetpie = pWorldState->HasEspmFile("SweetPie.esp");
+  hasSweetpie = pWorldState ? pWorldState->HasEspmFile("SweetPie.esp") : false;
   worldState = pWorldState;
   InitAnimationCallbacks();
 }

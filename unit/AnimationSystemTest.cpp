@@ -30,6 +30,7 @@ TEST_CASE("Animations system processes animation events correctly",
 
   // Sweetpie
   p.worldState.espmFiles.push_back("SweetPie.esp");
+  p.animationSystem.Init(&p.worldState);
 
   data.animEventName = "attackStart";
   REQUIRE(actor.GetChangeForm().actorValues.staminaPercentage == 1.f);
