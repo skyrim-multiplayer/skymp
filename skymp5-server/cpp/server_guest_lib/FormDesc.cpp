@@ -4,16 +4,19 @@
 std::string FormDesc::ToString(char delimiter) const
 {
   auto fmt = "%0x%c%s";
-  size_t size =
-    std::snprintf(nullptr, 0, fmt, shortFormId, delimiter, file.c_str());
+  size_t size = !file.empty()
+    ? std::snprintf(nullptr, 0, fmt, shortFormId, delimiter, file.c_str()) + 1
+    : std::snprintf(nullptr, 0, fmt, shortFormId) + 1;
+
   std::string buffer;
-  buffer.reserve(size);
+  buffer.resize(size);
+
   if (!file.empty()) {
     std::sprintf(buffer.data(), fmt, shortFormId, delimiter, file.c_str());
   } else {
     std::sprintf(buffer.data(), "%0x", shortFormId);
   }
-  return buffer;
+  return std::string{ buffer.begin(), buffer.end() };
 }
 
 FormDesc FormDesc::FromString(std::string str, char delimiter)
