@@ -56,3 +56,48 @@ TEST_CASE("Actor should load be able to load appearance, equipment, "
   REQUIRE(actor.GetChangeForm().spawnDelay == 8.0f);
   REQUIRE(actor.GetChangeForm().consoleCommandsAllowed == true);
 }
+
+PartOne& GetPartOne();
+
+TEST_CASE("Obtaining equipped weapons is working correct. [espm][MpActor]")
+{
+  PartOne& p = GetPartOne();
+  DoConnect(p, 0);
+  p.CreateActor(0xff000000, { 0, 0, 0 }, 0, 0x3c);
+  p.SetUserActor(0, 0xff000000);
+
+  auto& actor = p.worldState.GetFormAt<MpActor>(0xff000000);
+  std::array<std::optional<Inventory::Entry>, 2> wornWeapons =
+    actor.GetEquippedWeapon();
+
+  bool condition = !wornWeapons[0].has_value() && !wornWeapons[1].has_value();
+  REQUIRE(condition);
+
+  constexpr uint32_t ironDagger = 0x0001397e, warhammer = 0x000d2afe,
+                     ironSword = 0x00012eb7;
+  bool result = actor.OnEquip(ironDagger);
+  wornWeapons = actor.GetEquippedWeapon();
+
+  condition = (wornWeapons[0].has_value() &&
+               wornWeapons[0].value().baseId == ironDagger) ||
+    (wornWeapons[1].has_value() &&
+     wornWeapons[1].value().baseId == ironDagger);
+  REQUIRE(condition);
+
+  result = actor.OnEquip(warhammer);
+  wornWeapons = actor.GetEquippedWeapon();
+
+  condition = (wornWeapons[0].has_value() &&
+               wornWeapons[0].value().baseId == warhammer) ||
+    (wornWeapons[1].has_value() && wornWeapons[1].value().baseId == warhammer);
+  REQUIRE(condition);
+
+  result = actor.OnEquip(ironDagger);
+  result = actor.OnEquip(ironSword);
+  wornWeapons = actor.GetEquippedWeapon();
+
+  condition = (wornWeapons[0].has_value() &&
+               wornWeapons[0].value().baseId == ironDagger) &&
+    (wornWeapons[1].has_value() && wornWeapons[1].value().baseId == ironSword);
+  REQUIRE(condition);
+}

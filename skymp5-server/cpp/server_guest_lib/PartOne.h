@@ -78,7 +78,7 @@ public:
 
   WorldState worldState;
   ServerState serverState;
-  std::shared_ptr<AnimationSystem> animationSystem;
+  AnimationSystem animationSystem;
 
   Networking::ISendTarget& GetSendTarget() const;
 

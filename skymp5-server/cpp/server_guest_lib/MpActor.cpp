@@ -925,27 +925,25 @@ void MpActor::ReapplyMagicEffects()
   ApplyMagicEffects(activeEffects, hasSweetpie, true);
 }
 
-std::pair<std::optional<uint32_t>, std::optional<uint32_t>>
-MpActor::GetEquippedWeapon() const
+std::array<std::optional<Inventory::Entry>, 2> MpActor::GetEquippedWeapon()
+  const
 {
-  // the first element of this pair is a weapon in left hand, and the second
-  // element is a weapon in right hand. Mnemonic rule is that it is like a
-  // regular reading rule; from left to right.
-  std::pair<std::optional<uint32_t>, std::optional<uint32_t>> wornWeapons;
+  std::array<std::optional<Inventory::Entry>, 2> wornWeaponEntries;
+  // 0 -> left hand, 1 -> right hand
   auto& espmBrowser = GetParent()->GetEspm().GetBrowser();
-  for (const auto& entry : GetInventory().entries) {
+  for (const auto& entry : GetEquipment().inv.entries) {
     if (entry.extra.worn != Inventory::Worn::None) {
       espm::LookupResult res = espmBrowser.LookupById(entry.baseId);
       auto* weaponRecord = espm::Convert<espm::WEAP>(res.rec);
       if (weaponRecord) {
         if (entry.extra.worn == Inventory::Worn::Left) {
-          wornWeapons.first = entry.baseId;
+          wornWeaponEntries[0] = std::move(entry);
         }
         if (entry.extra.worn == Inventory::Worn::Right) {
-          wornWeapons.second = entry.baseId;
+          wornWeaponEntries[1] = std::move(entry);
         }
       }
     }
   }
-  return wornWeapons;
+  return wornWeaponEntries;
 }

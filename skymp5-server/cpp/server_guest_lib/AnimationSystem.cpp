@@ -3,17 +3,20 @@
 #include "AnimationData.h"
 #include "MathUtils.h"
 #include "MpActor.h"
+#include "WorldState.h"
 #include "libespm/espm.h"
 #include <unordered_map>
 
-AnimationSystem::AnimationSystem(bool isSweetpie, WorldState& worldState_)
-  : worldState(worldState_)
+void AnimationSystem::Init(WorldState* pWorldState)
 {
-  InitAnimationCallbacks(isSweetpie);
+  if (!pWorldState) {
+    spdlog::error("No worldState attached to animation system. Using default "
+                  "values for stamina forfeits");
+  }
+  hasSweetpie = pWorldState->HasEspmFile("SweetPie.esp");
+  worldState = pWorldState;
+  InitAnimationCallbacks();
 }
-
-std::unordered_map<std::string_view, float>
-  AnimationSystem::s_weaponStaminaModifiers;
 
 void AnimationSystem::Process(MpActor* actor, const AnimationData& animData)
 {
@@ -45,24 +48,24 @@ void AnimationSystem::SetLastAttackReleaseAnimationTime(
   lastAttackReleaseAnimationTimePoints[actor->GetFormId()] = timePoint;
 }
 
-void AnimationSystem::InitAnimationCallbacks(bool isSweetpie)
+void AnimationSystem::InitAnimationCallbacks()
 {
   animationCallbacks = {
     {
       "blockStart",
-      [isSweetpie](MpActor* actor) {
+      [this](MpActor* actor) {
         constexpr float newRate = 0.f;
         actor->SetIsBlockActive(true);
-        if (isSweetpie) {
+        if (hasSweetpie) {
           actor->SetActorValue(espm::ActorValue::StaminaRate, newRate);
         }
       },
     },
     {
       "blockStop",
-      [isSweetpie](MpActor* actor) {
+      [this](MpActor* actor) {
         actor->SetIsBlockActive(false);
-        if (isSweetpie) {
+        if (hasSweetpie) {
           actor->SetActorValue(espm::ActorValue::StaminaRate,
                                actor->GetBaseValues().staminaRate);
         }
@@ -225,7 +228,7 @@ void AnimationSystem::InitAnimationCallbacks(bool isSweetpie)
 
   };
 
-  if (isSweetpie) {
+  if (hasSweetpie) {
     animationCallbacks.insert(additionalCallbacks.begin(),
                               additionalCallbacks.end());
   }
@@ -234,9 +237,13 @@ void AnimationSystem::InitAnimationCallbacks(bool isSweetpie)
 std::vector<uint32_t> AnimationSystem::GetWeaponKeywordFormIds(
   uint32_t baseId) const
 {
-  auto& espmBrowser = worldState.GetEspm().GetBrowser();
-  return espmBrowser.LookupById(baseId).rec->GetKeywordIds(
-    worldState.GetEspmCache());
+  auto& espmBrowser = worldState->GetEspm().GetBrowser();
+  const espm::RecordHeader* record = espmBrowser.LookupById(baseId).rec;
+  if (!record) {
+    spdlog::error("espm record not found. baseId {:#x}", baseId);
+    return {};
+  }
+  return record->GetKeywordIds(worldState->GetEspmCache());
 }
 
 std::vector<std::string_view> AnimationSystem::GetWeaponKeywords(
@@ -246,7 +253,7 @@ std::vector<std::string_view> AnimationSystem::GetWeaponKeywords(
   std::vector<uint32_t> keywordFormIds = GetWeaponKeywordFormIds(baseId);
   keywords.reserve(keywordFormIds.size());
   for (auto formId : keywordFormIds) {
-    auto data = espm::GetData<espm::KYWD>(formId, &worldState);
+    auto data = espm::GetData<espm::KYWD>(formId, worldState);
     keywords.push_back(std::move(data.editorId));
   }
   return keywords;
@@ -254,34 +261,43 @@ std::vector<std::string_view> AnimationSystem::GetWeaponKeywords(
 
 float AnimationSystem::ComputeWeaponStaminaModifier(uint32_t baseId) const
 {
+  if (!IsWorldStateAttached()) {
+    return 0.f;
+  }
+
+  std::vector<float> keywordModifiers;
   for (auto keyword : GetWeaponKeywords(baseId)) {
-    if (auto it = s_weaponStaminaModifiers.find(keyword);
-        it != s_weaponStaminaModifiers.end()) {
-      return it->second;
+    if (auto it = weaponStaminaModifiers.find(std::string{ keyword });
+        it != weaponStaminaModifiers.end()) {
+      keywordModifiers.push_back(it->second);
     }
   }
-  return 0.f;
+  return keywordModifiers.empty()
+    ? 0.f
+    : *std::max(keywordModifiers.begin(), keywordModifiers.end());
 }
 
 void AnimationSystem::HandleAttackAnim(MpActor* actor,
                                        float defaultModifier) const
 {
   float modifier = 0.f;
-  std::apply(
-    [&](const auto&... element) {
-      ((modifier += element.has_value()
-          ? ComputeWeaponStaminaModifier(element.value())
-          : 0.f),
-       ...);
-    },
-    actor->GetEquippedWeapon());
+  for (const auto& weaponEntry : actor->GetEquippedWeapon()) {
+    modifier += weaponEntry.has_value()
+      ? ComputeWeaponStaminaModifier(weaponEntry.value().baseId)
+      : 0.f;
+  }
   modifier =
     MathUtils::IsNearlyEqual(0.f, modifier) ? defaultModifier : modifier;
   actor->DamageActorValue(espm::ActorValue::Stamina, modifier);
 }
 
 void AnimationSystem::SetWeaponStaminaModifiers(
-  std::unordered_map<std::string_view, float>&& modifiers)
+  std::unordered_map<std::string, float>&& modifiers)
 {
-  s_weaponStaminaModifiers = modifiers;
+  weaponStaminaModifiers = std::move(modifiers);
+}
+
+bool AnimationSystem::IsWorldStateAttached() const noexcept
+{
+  return worldState != nullptr;
 }
