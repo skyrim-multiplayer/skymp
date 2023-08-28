@@ -318,7 +318,7 @@ In case this field is not provided, some default, yet hardcoded, values are in u
   "weaponStaminaModifiers": {
     "WeapTypeDagger": 4.0,
     "WeapTypeShortSword": 5.0,
-    "WeapTypeSwort": 6.0,
+    "WeapTypeSword": 6.0,
     ...
   }
   // ...
