@@ -12,6 +12,7 @@ struct AnimationData;
 class AnimationSystem
 {
 public:
+  AnimationSystem();
   void Init(WorldState* worldState);
   void Process(MpActor* actor, const AnimationData& animData);
   void ClearInfo(MpActor* actor);
@@ -24,7 +25,7 @@ private:
   using AnimationTimePoints =
     std::unordered_map<uint32_t, std::chrono::steady_clock::time_point>;
 
-  void InitAnimationCallbacks();
+  void InitAdditionalCallbacks();
   std::chrono::steady_clock::time_point GetLastAttackReleaseAnimationTime(
     MpActor* actor) const;
   void SetLastAttackReleaseAnimationTime(

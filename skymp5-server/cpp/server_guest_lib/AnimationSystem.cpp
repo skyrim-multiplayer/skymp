@@ -7,9 +7,34 @@
 #include "libespm/espm.h"
 #include <unordered_map>
 
+AnimationSystem::AnimationSystem()
+{
+  animationCallbacks = {
+    {
+      "blockStart",
+      [this](MpActor* actor) {
+        constexpr float newRate = 0.f;
+        actor->SetIsBlockActive(true);
+        if (hasSweetpie) {
+          actor->SetActorValue(espm::ActorValue::StaminaRate, newRate);
+        }
+      },
+    },
+    {
+      "blockStop",
+      [this](MpActor* actor) {
+        actor->SetIsBlockActive(false);
+        if (hasSweetpie) {
+          actor->SetActorValue(espm::ActorValue::StaminaRate,
+                               actor->GetBaseValues().staminaRate);
+        }
+      },
+    }
+  };
+}
+
 void AnimationSystem::Init(WorldState* pWorldState)
 {
-  InitAnimationCallbacks();
   if (!pWorldState) {
     spdlog::error("No worldState attached to animation system. Using default "
                   "values for stamina forfeits");
@@ -17,6 +42,7 @@ void AnimationSystem::Init(WorldState* pWorldState)
   }
   hasSweetpie = pWorldState->HasEspmFile("SweetPie.esp");
   worldState = pWorldState;
+  InitAdditionalCallbacks();
 }
 
 void AnimationSystem::Process(MpActor* actor, const AnimationData& animData)
@@ -49,30 +75,8 @@ void AnimationSystem::SetLastAttackReleaseAnimationTime(
   lastAttackReleaseAnimationTimePoints[actor->GetFormId()] = timePoint;
 }
 
-void AnimationSystem::InitAnimationCallbacks()
+void AnimationSystem::InitAdditionalCallbacks()
 {
-  animationCallbacks = {
-    {
-      "blockStart",
-      [this](MpActor* actor) {
-        constexpr float newRate = 0.f;
-        actor->SetIsBlockActive(true);
-        if (hasSweetpie) {
-          actor->SetActorValue(espm::ActorValue::StaminaRate, newRate);
-        }
-      },
-    },
-    {
-      "blockStop",
-      [this](MpActor* actor) {
-        actor->SetIsBlockActive(false);
-        if (hasSweetpie) {
-          actor->SetActorValue(espm::ActorValue::StaminaRate,
-                               actor->GetBaseValues().staminaRate);
-        }
-      },
-    }
-  };
   const AnimationCallbacks additionalCallbacks = {
     {
       "attackStart",
