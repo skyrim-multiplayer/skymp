@@ -14,6 +14,8 @@ public:
   AnimationSystem(bool isSweetpie);
   void Process(MpActor* actor, const AnimationData& animData);
   void ClearInfo(MpActor* actor);
+  float GetSprintStaminaConsumption() const noexcept;
+  void SetSprintStaminaConsumption(float modifier) noexcept;
 
 private:
   using AnimationCallback = std::function<void(MpActor*)>;
@@ -29,6 +31,8 @@ private:
     std::chrono::steady_clock::time_point timePoint =
       std::chrono::steady_clock::now());
 
+private:
   AnimationCallbacks animationCallbacks;
   AnimationTimePoints lastAttackReleaseAnimationTimePoints;
+  float sprintStaminaModifier = 0.f;
 };

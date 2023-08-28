@@ -103,6 +103,8 @@ public:
   void DropItem(const uint32_t baseId, const Inventory::Entry& entry);
   void SetIsBlockActive(bool isBlockActive);
   bool IsBlockActive() const;
+  bool IsSprintActive() const noexcept;
+  void SetSprintActive(bool active) noexcept;
   NiPoint3 GetViewDirection() const;
   void IncreaseBlockCount() noexcept;
   void ResetBlockCount() noexcept;

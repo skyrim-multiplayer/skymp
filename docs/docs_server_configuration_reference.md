@@ -305,3 +305,15 @@ how they should be spawned: in interior or exterior. By default all the npcs are
   // ...
 }
 ```
+## sprintStaminaConsumption
+
+This option specifies how much stamina is to be consumed while player is in sprint.
+If this field is not provided, default value, which is equal to 1.f, is used.
+
+```json5
+{
+  // ...
+  "sprintStaminaConsumption": 5.f
+  // ...
+}
+```

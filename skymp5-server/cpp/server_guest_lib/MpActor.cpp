@@ -49,6 +49,7 @@ struct MpActor::Impl
       std::chrono::steady_clock::time_point{} },
   };
   uint32_t blockActiveCount = 0;
+  bool isSprintActive = false;
 };
 
 MpActor::MpActor(const LocationalData& locationalData_,
@@ -923,4 +924,14 @@ void MpActor::ReapplyMagicEffects()
     modFiles.begin(), modFiles.end(),
     [](std::string_view fileName) { return fileName == "SweetPie.esp"; });
   ApplyMagicEffects(activeEffects, hasSweetpie, true);
+}
+
+bool MpActor::IsSprintActive() const noexcept
+{
+  return pImpl->isSprintActive;
+}
+
+void MpActor::SetSprintActive(bool active) noexcept
+{
+  pImpl->isSprintActive = active;
 }

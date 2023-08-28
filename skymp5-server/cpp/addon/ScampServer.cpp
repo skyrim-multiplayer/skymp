@@ -280,6 +280,12 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
     partOne->worldState.AttachScriptStorage(scriptStorage);
 
     partOne->AttachEspm(espm);
+    if (serverSettings.find("sprintStaminaConsumption") !=
+        serverSettings.end()) {
+      // TODO: make -> to be . for animationSystem
+      partOne->animationSystem->SetSprintStaminaConsumption(
+        serverSettings.at("sprintStaminaConsumption").get<float>());
+    }
     this->serverSettings = serverSettings;
     this->logger = logger;
 

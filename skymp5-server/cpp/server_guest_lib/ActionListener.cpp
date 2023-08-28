@@ -81,53 +81,64 @@ void ActionListener::OnUpdateMovement(const RawMessageData& rawMsgData,
                                       uint32_t worldOrCell)
 {
   auto actor = SendToNeighbours(idx, rawMsgData);
-  if (actor) {
-    DummyMessageOutput msgOutputDummy;
-    UserMessageOutput msgOutput(partOne.GetSendTarget(), rawMsgData.userId);
+  if (!actor) {
+    return;
+  }
+  DummyMessageOutput msgOutputDummy;
+  UserMessageOutput msgOutput(partOne.GetSendTarget(), rawMsgData.userId);
 
-    bool isMe = partOne.serverState.ActorByUser(rawMsgData.userId) == actor;
+  bool isMe = partOne.serverState.ActorByUser(rawMsgData.userId) == actor;
 
-    bool teleportFlag = actor->GetTeleportFlag();
-    actor->SetTeleportFlag(false);
+  bool teleportFlag = actor->GetTeleportFlag();
+  actor->SetTeleportFlag(false);
 
-    static const NiPoint3 reallyWrongPos = {
-      std::numeric_limits<float>::infinity(),
-      std::numeric_limits<float>::infinity(),
-      std::numeric_limits<float>::infinity()
-    };
+  static const NiPoint3 reallyWrongPos = {
+    std::numeric_limits<float>::infinity(),
+    std::numeric_limits<float>::infinity(),
+    std::numeric_limits<float>::infinity()
+  };
 
-    auto& espmFiles = actor->GetParent()->espmFiles;
-    if (!MovementValidation::Validate(
-          *actor, teleportFlag ? reallyWrongPos : pos,
-          FormDesc::FromFormId(worldOrCell, espmFiles),
-          isMe ? static_cast<IMessageOutput&>(msgOutput)
-               : static_cast<IMessageOutput&>(msgOutputDummy),
-          espmFiles)) {
-      return;
-    }
+  auto& espmFiles = actor->GetParent()->espmFiles;
+  if (!MovementValidation::Validate(
+        *actor, teleportFlag ? reallyWrongPos : pos,
+        FormDesc::FromFormId(worldOrCell, espmFiles),
+        isMe ? static_cast<IMessageOutput&>(msgOutput)
+             : static_cast<IMessageOutput&>(msgOutputDummy),
+        espmFiles)) {
+    return;
+  }
 
-    if (!isBlocking) {
-      actor->IncreaseBlockCount();
-    } else {
-      actor->ResetBlockCount();
-    }
+  if (!isBlocking) {
+    actor->IncreaseBlockCount();
+  } else {
+    actor->ResetBlockCount();
+  }
 
-    actor->SetPos(pos);
-    actor->SetAngle(rot);
-    actor->SetAnimationVariableBool("bInJumpState", isInJumpState);
-    actor->SetAnimationVariableBool("_skymp_isWeapDrawn", isWeapDrawn);
-    actor->SetAnimationVariableBool("IsBlocking", isBlocking);
-    if (actor->GetBlockCount() == 5) {
-      actor->SetIsBlockActive(false);
-      actor->ResetBlockCount();
-    }
+  if (actor->GetBlockCount() == 5) {
+    actor->SetIsBlockActive(false);
+    actor->ResetBlockCount();
+  }
 
-    if (partOne.worldState.lastMovUpdateByIdx.size() <= idx) {
-      auto newSize = static_cast<size_t>(idx) + 1;
-      partOne.worldState.lastMovUpdateByIdx.resize(newSize);
-    }
-    partOne.worldState.lastMovUpdateByIdx[idx] =
-      std::chrono::system_clock::now();
+  actor->SetPos(pos);
+  actor->SetAngle(rot);
+  actor->SetAnimationVariableBool("bInJumpState", isInJumpState);
+  actor->SetAnimationVariableBool("_skymp_isWeapDrawn", isWeapDrawn);
+  actor->SetAnimationVariableBool("IsBlocking", isBlocking);
+
+  if (partOne.worldState.lastMovUpdateByIdx.size() <= idx) {
+    auto newSize = static_cast<size_t>(idx) + 1;
+    partOne.worldState.lastMovUpdateByIdx.resize(newSize);
+  }
+
+  partOne.worldState.lastMovUpdateByIdx[idx] =
+    std::chrono::system_clock::now();
+
+  // TODO: make -> to be . after this PR:
+  // https://github.com/skyrim-multiplayer/skymp/pull/1671
+  if (actor->IsSprintActive()) {
+    actor->DamageActorValue(
+      espm::ActorValue::Stamina,
+      partOne.animationSystem->GetSprintStaminaConsumption());
   }
 }
 

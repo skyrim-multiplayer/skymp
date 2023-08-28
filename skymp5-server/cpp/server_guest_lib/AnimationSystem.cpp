@@ -61,7 +61,15 @@ void AnimationSystem::InitAnimationCallbacks(bool isSweetpie)
                                actor->GetBaseValues().staminaRate);
         }
       },
-    }
+    },
+    {
+      "sprintStart",
+      [](MpActor* actor) { actor->SetSprintActive(true); },
+    },
+    {
+      "sprintStop",
+      [](MpActor* actor) { actor->SetSprintActive(false); },
+    },
   };
   const AnimationCallbacks additionalCallbacks = {
     {
@@ -223,4 +231,14 @@ void AnimationSystem::InitAnimationCallbacks(bool isSweetpie)
     animationCallbacks.insert(additionalCallbacks.begin(),
                               additionalCallbacks.end());
   }
+}
+
+float AnimationSystem::GetSprintStaminaConsumption() const noexcept
+{
+  return sprintStaminaModifier;
+}
+
+void AnimationSystem::SetSprintStaminaConsumption(float modifier) noexcept
+{
+  sprintStaminaModifier = modifier;
 }
