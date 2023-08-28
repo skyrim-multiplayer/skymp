@@ -3,18 +3,19 @@
 
 std::string FormDesc::ToString(char delimiter) const
 {
-  auto fmt = "%0x%c%s";
+  auto fullFmt = "%0x%c%s";
+  auto idFmt = "%0x";
   size_t size = !file.empty()
-    ? std::snprintf(nullptr, 0, fmt, shortFormId, delimiter, file.c_str())
-    : std::snprintf(nullptr, 0, "%0x", shortFormId);
+    ? std::snprintf(nullptr, 0, fullFmt, shortFormId, delimiter, file.c_str())
+    : std::snprintf(nullptr, 0, idFmt, shortFormId);
 
   std::string buffer;
   buffer.resize(size);
 
   if (!file.empty()) {
-    std::sprintf(buffer.data(), fmt, shortFormId, delimiter, file.c_str());
+    std::sprintf(buffer.data(), fullFmt, shortFormId, delimiter, file.c_str());
   } else {
-    std::sprintf(buffer.data(), "%0x", shortFormId);
+    std::sprintf(buffer.data(), idFmt, shortFormId);
   }
   return buffer;
 }
@@ -24,6 +25,11 @@ FormDesc FormDesc::FromString(std::string str, char delimiter)
   FormDesc res;
   std::string id, file;
 
+  if (str.find(delimiter) == std::string::npos) {
+    std::sscanf(str.data(), "%x", &res.shortFormId);
+    return res;
+  }
+
   for (auto it = str.begin(); it != str.end(); ++it) {
     if (*it == delimiter) {
       id = { str.begin(), it };
@@ -32,7 +38,7 @@ FormDesc FormDesc::FromString(std::string str, char delimiter)
     }
   }
 
-  std::sscanf(id.c_str(), "%x", &res.shortFormId);
+  std::sscanf(id.data(), "%x", &res.shortFormId);
   return res;
 }
 
