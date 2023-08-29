@@ -96,9 +96,9 @@ FormDesc FormDesc::FromFormId(uint32_t formId,
   return res;
 }
 
-static const FormDesc s_tamriel = FormDesc::FromString("3c:Skyrim.esm");
+static const FormDesc kTamriel = FormDesc::FromString("3c:Skyrim.esm");
 
 FormDesc FormDesc::Tamriel()
 {
-  return s_tamriel;
+  return kTamriel;
 }
