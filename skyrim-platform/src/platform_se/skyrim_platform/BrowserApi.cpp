@@ -20,10 +20,6 @@ inline CEFUtils::MyChromiumApp& GetApp(
 
 JsValue BrowserApi::SetVisible(const JsFunctionArguments& args)
 {
-  auto settings = Settings::GetPlatformSettings();
-  if (settings->GetBool("Debug", "ChromiumEnabled", true) == false)
-    throw std::runtime_error("Chromium is disabled!");
-
   bool& v = CEFUtils::DX11RenderHandler::Visible();
   v = (bool)args[1];
   return JsValue::Undefined();
@@ -31,10 +27,6 @@ JsValue BrowserApi::SetVisible(const JsFunctionArguments& args)
 
 JsValue BrowserApi::IsVisible(const JsFunctionArguments& args)
 {
-  auto settings = Settings::GetPlatformSettings();
-  if (settings->GetBool("Debug", "ChromiumEnabled", true) == false)
-    throw std::runtime_error("Chromium is disabled!");
-
   return JsValue::Bool(CEFUtils::DX11RenderHandler::Visible());
 }
 
