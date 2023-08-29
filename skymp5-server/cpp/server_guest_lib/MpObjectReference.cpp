@@ -826,6 +826,10 @@ const std::set<MpObjectReference*>& MpObjectReference::GetEmitters() const
 void MpObjectReference::RequestReloot(
   std::optional<std::chrono::system_clock::duration> time)
 {
+  if (this->GetFormId() >= 0xff000000) {
+    return;
+  }
+
   if (GetParent()->IsRelootForbidden(baseType)) {
     return;
   }
@@ -1306,6 +1310,7 @@ void MpObjectReference::InitListenersAndEmitters()
 
 void MpObjectReference::SendInventoryUpdate()
 {
+  constexpr int kChannelSetInventory = 0;
   auto actor = dynamic_cast<MpActor*>(this);
   if (actor) {
     std::string msg;
@@ -1314,7 +1319,8 @@ void MpObjectReference::SendInventoryUpdate()
       { "inventory", actor->GetInventory().ToJson() },
       { "type", "setInventory" }
     }.dump();
-    actor->SendToUser(msg.data(), msg.size(), true);
+    actor->SendToUserDeferred(msg.data(), msg.size(), true,
+                              kChannelSetInventory);
   }
 }
 
