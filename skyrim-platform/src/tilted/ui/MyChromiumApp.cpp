@@ -53,6 +53,12 @@ void MyChromiumApp::Initialize(bool initChromium) noexcept
   if (m_pGameClient)
     return;
 
+  m_pGameClient =
+    new OverlayClient(m_pRenderProvider->Create(), onProcessMessage);
+
+  if (initChromium == false)
+    return;
+
   CefMainArgs args(GetModuleHandleA(nullptr));
 
   const auto currentPath = std::filesystem::current_path();
@@ -97,18 +103,12 @@ void MyChromiumApp::Initialize(bool initChromium) noexcept
                 "Error", MB_ICONERROR);
   }
 
-  m_pGameClient =
-    new OverlayClient(m_pRenderProvider->Create(), onProcessMessage);
-
   CefBrowserSettings browserSettings{};
 
   browserSettings.windowless_frame_rate = 60;
 
   CefWindowInfo info;
   info.SetAsWindowless(m_pRenderProvider->GetWindow());
-
-  if (initChromium == false)
-    return;
 
   if (!CefBrowserHost::CreateBrowser(info, m_pGameClient.get(),
                                      L"file:///Data/Platform/UI/index.html",
