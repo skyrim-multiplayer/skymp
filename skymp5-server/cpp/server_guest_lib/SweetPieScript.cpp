@@ -93,7 +93,7 @@ SweetPieScript::SweetPieScript(const std::vector<std::string>& espmFiles)
     { 0x7276E2A, { { 0x7A30B91, SweetPieBoundWeapon::SkillLevel::Novice } } },
     { 0x7276E39,
       { { 0x7A4A191, SweetPieBoundWeapon::SkillLevel::Novice },
-        { 0x10B0A7, SweetPieBoundWeapon::SkillLevel::Novice } } },
+        { 0x010B0A7, SweetPieBoundWeapon::SkillLevel::Novice } } },
     { 0x7276E3B, { { 0x7A30B93, SweetPieBoundWeapon::SkillLevel::Novice } } },
     { 0x7276E37, { { 0x7F42CAF, SweetPieBoundWeapon::SkillLevel::Novice } } },
     { 0x7276E35, { { 0x7F42CB5, SweetPieBoundWeapon::SkillLevel::Novice } } },
@@ -191,9 +191,11 @@ void SweetPieScript::Play(MpActor& actor, WorldState& worldState,
             // books that add more than one item. In this case we'll be adding
             // the same book n times. This is a workaround. TODO: refactor this
             // class somewhen
-            actor.RemoveItem(bookBaseId,
-                             actor.GetInventory().GetItemCount(bookBaseId),
-                             nullptr);
+            if (actor.GetInventory().HasItem(bookBaseId)) {
+              actor.RemoveItem(bookBaseId,
+                               actor.GetInventory().GetItemCount(bookBaseId),
+                               nullptr);
+            }
             actor.AddItem(bookBaseId, 1);
             uint32_t count =
               actor.GetInventory().GetItemCount(boundWeaponBaseId);
@@ -217,8 +219,11 @@ void SweetPieScript::EquipItem(MpActor& actor, uint32_t baseId,
      << ", " << (preventRemoval ? "true" : "false") << ", "
      << (silent ? "true" : "false") << "]";
   std::string args = ss.str();
-  spdlog::info(args);
+  spdlog::info("Equipping item: {}", args);
   SpSnippet("Actor", "EquipItem", args.data(), actor.GetFormId())
     .Execute(&actor);
+  if (baseId == 0x7F47DC9 || baseId == 0x010B0A7) {
+    return;
+  }
   SpSnippet("Actor", "DrawWeapon", "[]", actor.GetFormId()).Execute(&actor);
 }
