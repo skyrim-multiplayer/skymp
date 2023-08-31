@@ -945,15 +945,5 @@ std::array<std::optional<Inventory::Entry>, 2> MpActor::GetEquippedWeapon()
       }
     }
   }
-  spdlog::info("Has left weapon: {}", wornWeaponEntries[0].has_value());
-  spdlog::info("Has lright weapon: {}", wornWeaponEntries[1].has_value());
-  if (wornWeaponEntries[0].has_value()) {
-    spdlog::info("Left weapon baseId: {:#x}",
-                 wornWeaponEntries[0].value().baseId);
-  }
-  if (wornWeaponEntries[1].has_value()) {
-    spdlog::info("Right weapon baseId: {:#x}",
-                 wornWeaponEntries[1].value().baseId);
-  }
   return wornWeaponEntries;
 }

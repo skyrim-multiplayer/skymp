@@ -256,15 +256,10 @@ std::vector<std::string_view> AnimationSystem::GetWeaponKeywords(
 {
   std::vector<std::string_view> keywords;
   std::vector<uint32_t> keywordFormIds = GetWeaponKeywordFormIds(baseId);
-  spdlog::info("Weapon {:#x} has {} keywords", baseId, keywordFormIds.size());
   keywords.reserve(keywordFormIds.size());
   for (auto formId : keywordFormIds) {
     auto data = espm::GetData<espm::KYWD>(formId, worldState);
     keywords.push_back(std::move(data.editorId));
-  }
-  spdlog::info("WeaponKeywords:");
-  for (const auto& keyword : keywords) {
-    spdlog::info("{}", keyword);
   }
   return keywords;
 }
@@ -274,7 +269,6 @@ float AnimationSystem::ComputeWeaponStaminaModifier(uint32_t baseId) const
   if (!IsWorldStateAttached()) {
     return 0.f;
   }
-  spdlog::info("WorldStateAttached() -> true");
 
   std::vector<float> keywordModifiers;
   for (auto keyword : GetWeaponKeywords(baseId)) {
@@ -297,10 +291,8 @@ void AnimationSystem::HandleAttackAnim(MpActor* actor,
       ? ComputeWeaponStaminaModifier(weaponEntry.value().baseId)
       : 0.f;
   }
-  spdlog::info("MODIFIER BEFORE CHECK: {}", modifier);
   modifier =
     MathUtils::IsNearlyEqual(0.f, modifier) ? defaultModifier : modifier;
-  spdlog::info("MODIFIER AFTER CHECK: {}, modifier");
   actor->DamageActorValue(espm::ActorValue::Stamina, modifier);
 }
 
@@ -308,7 +300,6 @@ void AnimationSystem::SetWeaponStaminaModifiers(
   std::unordered_map<std::string, float>&& modifiers)
 {
   weaponStaminaModifiers = std::move(modifiers);
-  spdlog::info("STAMINA MODIFIERS HAS BEEN SET. COUNT: {}", modifiers.size());
 }
 
 bool AnimationSystem::IsWorldStateAttached() const noexcept
