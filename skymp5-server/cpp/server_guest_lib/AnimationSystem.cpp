@@ -285,7 +285,7 @@ float AnimationSystem::ComputeWeaponStaminaModifier(uint32_t baseId) const
   }
   return keywordModifiers.empty()
     ? 0.f
-    : *std::max(keywordModifiers.begin(), keywordModifiers.end());
+    : *std::max_element(keywordModifiers.begin(), keywordModifiers.end());
 }
 
 void AnimationSystem::HandleAttackAnim(MpActor* actor,
