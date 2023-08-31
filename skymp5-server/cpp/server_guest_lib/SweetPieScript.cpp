@@ -212,17 +212,24 @@ void SweetPieScript::Play(MpActor& actor, WorldState& worldState,
 void SweetPieScript::EquipItem(MpActor& actor, uint32_t baseId,
                                bool preventRemoval, bool silent)
 {
+  bool isShield = baseId == 0x7F47DC9;
+  bool isArrow = baseId == 0x010B0A7;
+  std::string type = "weapon";
+  if (isShield) {
+    type = "armor";
+  }
+  if (isArrow) {
+    type = "ammo";
+  }
   std::stringstream ss;
-  ss << "["
-     << nlohmann::json{ { "formId", baseId }, { "type", "weapon" } }.dump()
+  ss << "[" << nlohmann::json{ { "formId", baseId }, { "type", type } }.dump()
      << ", " << (preventRemoval ? "true" : "false") << ", "
      << (silent ? "true" : "false") << "]";
   std::string args = ss.str();
   spdlog::info("Equipping item: {}", args);
   SpSnippet("Actor", "EquipItem", args.data(), actor.GetFormId())
     .Execute(&actor);
-  if (baseId == 0x7F47DC9 || baseId == 0x010B0A7) {
-    return;
+  if (!isShield && !isArrow) {
+    SpSnippet("Actor", "DrawWeapon", "[]", actor.GetFormId()).Execute(&actor);
   }
-  SpSnippet("Actor", "DrawWeapon", "[]", actor.GetFormId()).Execute(&actor);
 }
