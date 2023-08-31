@@ -256,10 +256,15 @@ std::vector<std::string_view> AnimationSystem::GetWeaponKeywords(
 {
   std::vector<std::string_view> keywords;
   std::vector<uint32_t> keywordFormIds = GetWeaponKeywordFormIds(baseId);
+  spdlog::info("Weapon {:#x} has {} keywords", baseId, keywordFormIds.size());
   keywords.reserve(keywordFormIds.size());
   for (auto formId : keywordFormIds) {
     auto data = espm::GetData<espm::KYWD>(formId, worldState);
     keywords.push_back(std::move(data.editorId));
+  }
+  spdlog::info("WeaponKeywords:");
+  for (const auto& keyword : keywords) {
+    spdlog::info("{}", keyword);
   }
   return keywords;
 }
