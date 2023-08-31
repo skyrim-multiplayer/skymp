@@ -179,7 +179,6 @@ void SweetPieScript::Play(MpActor& actor, WorldState& worldState,
                  bookBaseId = it->first;
         actor.AddItem(boundWeaponBaseId, isArrow ? 10 : 1);
         EquipItem(actor, boundWeaponBaseId);
-        actor.RemoveItem(bookBaseId, 1, nullptr);
         uint32_t formId = actor.GetFormId();
         float cooldown = boundItem.GetCooldown();
         auto endTime =
