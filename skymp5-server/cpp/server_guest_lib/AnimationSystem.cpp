@@ -274,6 +274,7 @@ float AnimationSystem::ComputeWeaponStaminaModifier(uint32_t baseId) const
   if (!IsWorldStateAttached()) {
     return 0.f;
   }
+  spdlog::info("WorldStateAttached() -> true");
 
   std::vector<float> keywordModifiers;
   for (auto keyword : GetWeaponKeywords(baseId)) {
@@ -296,8 +297,10 @@ void AnimationSystem::HandleAttackAnim(MpActor* actor,
       ? ComputeWeaponStaminaModifier(weaponEntry.value().baseId)
       : 0.f;
   }
+  spdlog::info("MODIFIER BEFORE CHECK: {}", modifier);
   modifier =
     MathUtils::IsNearlyEqual(0.f, modifier) ? defaultModifier : modifier;
+  spdlog::info("MODIFIER AFTER CHECK: {}, modifier");
   actor->DamageActorValue(espm::ActorValue::Stamina, modifier);
 }
 
@@ -305,6 +308,7 @@ void AnimationSystem::SetWeaponStaminaModifiers(
   std::unordered_map<std::string, float>&& modifiers)
 {
   weaponStaminaModifiers = std::move(modifiers);
+  spdlog::info("STAMINA MODIFIERS HAS BEEN SET. COUNT: {}", modifiers.size());
 }
 
 bool AnimationSystem::IsWorldStateAttached() const noexcept
