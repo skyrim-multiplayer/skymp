@@ -73,6 +73,7 @@ public:
                      std::chrono::system_clock::duration time);
 
   void RequestSave(MpObjectReference& ref);
+  bool HasEspmFile(std::string_view filename) const noexcept;
 
   template <typename T>
   Viet::Promise<Viet::Void> SetTimer(T&& duration)

@@ -150,3 +150,12 @@ TEST_CASE("Loads VirtualMachine with all scripts", "[WorldState]")
   auto& p = GetPartOne();
   p.worldState.GetPapyrusVm();
 }
+
+TEST_CASE("HasEspmFile is working correctly", "[WorldState]")
+{
+  WorldState worldState;
+  worldState.espmFiles = { "file1", "file2" };
+  REQUIRE(worldState.HasEspmFile("file1"));
+  REQUIRE(worldState.HasEspmFile("file2"));
+  REQUIRE_FALSE(worldState.HasEspmFile("BlowSkyrimModIndustry.exe"));
+}

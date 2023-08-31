@@ -924,3 +924,26 @@ void MpActor::ReapplyMagicEffects()
     [](std::string_view fileName) { return fileName == "SweetPie.esp"; });
   ApplyMagicEffects(activeEffects, hasSweetpie, true);
 }
+
+std::array<std::optional<Inventory::Entry>, 2> MpActor::GetEquippedWeapon()
+  const
+{
+  std::array<std::optional<Inventory::Entry>, 2> wornWeaponEntries;
+  // 0 -> left hand, 1 -> right hand
+  auto& espmBrowser = GetParent()->GetEspm().GetBrowser();
+  for (const auto& entry : GetEquipment().inv.entries) {
+    if (entry.extra.worn != Inventory::Worn::None) {
+      espm::LookupResult res = espmBrowser.LookupById(entry.baseId);
+      auto* weaponRecord = espm::Convert<espm::WEAP>(res.rec);
+      if (weaponRecord) {
+        if (entry.extra.worn == Inventory::Worn::Left) {
+          wornWeaponEntries[0] = std::move(entry);
+        }
+        if (entry.extra.worn == Inventory::Worn::Right) {
+          wornWeaponEntries[1] = std::move(entry);
+        }
+      }
+    }
+  }
+  return wornWeaponEntries;
+}

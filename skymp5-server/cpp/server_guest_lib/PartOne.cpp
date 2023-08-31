@@ -324,9 +324,7 @@ void PartOne::HandlePacket(void* partOneInstance, Networking::UserId userId,
     case Networking::PacketType::ServerSideUserDisconnect: {
       ScopedTask t([userId, this_] {
         if (auto actor = this_->serverState.ActorByUser(userId)) {
-          if (this_->animationSystem) {
-            this_->animationSystem->ClearInfo(actor);
-          }
+          this_->animationSystem.ClearInfo(actor);
         }
         this_->serverState.Disconnect(userId);
         this_->serverState.disconnectingUserId = Networking::InvalidUserId;
