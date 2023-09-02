@@ -103,6 +103,8 @@ SweetPieScript::SweetPieScript(const std::vector<std::string>& espmFiles)
       { { 0x7A30B92, SweetPieBoundWeapon::SkillLevel::Novice },
         { 0x7F47DC9, SweetPieBoundWeapon::SkillLevel::Novice } } },
     { 0x72BDE4A, { { 0x72B8D47, SweetPieBoundWeapon::SkillLevel::Novice } } },
+    { 0x70A696C, { { 0x70782C9, SweetPieBoundWeapon::SkillLevel::Novice } } },
+    { 0x70A696D, { { 0x70782C8, SweetPieBoundWeapon::SkillLevel::Novice } } },
   };
 }
 
