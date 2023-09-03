@@ -24,7 +24,7 @@ This guide shows how to set it up.
 
 ## Server prereqeusties
 
-* Ubuntu 20.04 (other distros should also work, but not tested)
+* Ubuntu 22.04 (other distros should also work, but not tested)
 * Accessible from the Internet with open ports
 * Docker installed and a user set up as a member of `docker` group. \
   **Note:** this effectively means root access, so be careful with users you
@@ -154,7 +154,7 @@ How to check that everything is working fine:
 1. Get server's PID using something like that:
    ```
    $ ps aux | grep 'node dist_back' | grep -v grep
-   ubuntu   1532646  5.8  3.7 35411280 609416 ?     SLl  Jan28   2:21 node dist_back/skymp5-server.js  
+   ubuntu   1532646  5.8  3.7 35411280 609416 ?     SLl  Jan28   2:21 node dist_back/skymp5-server.js
             ^~~~~~~ PID you're looking for
    ```
 2. Force abnormal termination by killing it with `SIGABRT`:
