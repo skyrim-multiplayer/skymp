@@ -42,7 +42,7 @@ RUN \
     zip \
     pkg-config \
     cmake \
-    clang-12 \
+    clang-15 \
   && rm -rf /var/lib/apt/lists/*
 
 

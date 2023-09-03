@@ -14,7 +14,7 @@ jobs:
           source: '.'
           exclude: './skyrim-platform/src/third_party ./skymp5-server/cpp/third_party/MakeID.h'
           extensions: 'h,cpp,hpp'
-          clangFormatVersion: 12
+          clangFormatVersion: 15
           inplace: True
       # - name: Install yarn packages
       #   uses: borales/actions-yarn@v4
