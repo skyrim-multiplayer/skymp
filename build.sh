@@ -15,14 +15,10 @@ fi
 
 export VCPKG_DISABLE_METRICS=1
 
-# export CC=/usr/bin/clang-15
-# export CPP=/usr/bin/clang-cpp-15
-# export CXX=/usr/bin/clang++-15
-# export LD=/usr/bin/ld.lld-15
-export CC=/usr/lib/llvm15/bin/clang
-export CPP=/usr/lib/llvm15/bin/clang-cpp
-export CXX=/usr/lib/llvm15/bin/clang++
-export LD=/usr/lib/llvm15/bin/ld.lld
+export CC=/usr/bin/clang-15
+export CPP=/usr/bin/clang-cpp-15
+export CXX=/usr/bin/clang++-15
+export LD=/usr/bin/ld.lld-15
 
 export CMAKE_C_COMPILER="$CC"
 export CMAKE_CXX_COMPILER="$CXX"
