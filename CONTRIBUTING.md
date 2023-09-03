@@ -89,7 +89,7 @@ Also you can use containers to build and run server. More info can be found in t
 
 3. Build with CMake:
    ```sh
-   cmake --build . --config Debug
+   cmake --build . --config Release
    ```
    On Windows you also can open `build/skymp.sln` with Visual Studio, then `Build -> Build Solution`.
 
