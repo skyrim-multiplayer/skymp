@@ -140,6 +140,29 @@ void MpActor::VisitProperties(const PropertiesVisitor& visitor,
             .c_str());
 }
 
+void MpActor::Disable()
+{
+  if (ChangeForm().isDisabled) {
+    return;
+  }
+
+  MpObjectReference::Disable();
+
+  for (auto [snippetIdx, promise] : pImpl->snippetPromises) {
+    spdlog::warn("Disabling actor {:x} with pending snippet promise",
+                 GetFormId());
+    try {
+      promise.Resolve(VarValue::None());
+    } catch (std::exception& e) {
+      // Not sure if this is possible, but better safe than sorry
+      spdlog::error("Exception while resolving pending snippet promise: {}",
+                    e.what());
+    }
+  }
+
+  pImpl->snippetPromises.clear();
+}
+
 void MpActor::SendToUser(const void* data, size_t size, bool reliable)
 {
   if (callbacks->sendToUser) {
@@ -266,8 +289,9 @@ uint32_t MpActor::NextSnippetIndex(
   std::optional<Viet::Promise<VarValue>> promise)
 {
   auto res = pImpl->snippetIndex++;
-  if (promise)
+  if (promise) {
     pImpl->snippetPromises[res] = *promise;
+  }
   return res;
 }
 

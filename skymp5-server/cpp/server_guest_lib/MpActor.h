@@ -40,6 +40,7 @@ public:
 
   void VisitProperties(const PropertiesVisitor& visitor,
                        VisitPropertiesMode mode) override;
+  void Disable() override;
 
   void SendToUser(const void* data, size_t size, bool reliable);
   void SendToUserDeferred(const void* data, size_t size, bool reliable,
