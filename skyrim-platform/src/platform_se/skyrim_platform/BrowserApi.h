@@ -1,4 +1,5 @@
 #pragma once
+#include "Settings.h"
 #include "TPOverlayService.h"
 
 namespace BrowserApi {
