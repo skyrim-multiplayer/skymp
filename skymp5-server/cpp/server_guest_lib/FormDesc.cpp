@@ -1,24 +1,44 @@
 #include "FormDesc.h"
-#include <sstream>
+#include <cstdio>
 
 std::string FormDesc::ToString(char delimiter) const
 {
-  std::stringstream ss;
-  ss << std::hex << shortFormId;
-  if (!file.empty())
-    ss << delimiter << file;
-  return ss.str();
+  auto fullFmt = "%0x%c%s";
+  auto idFmt = "%0x";
+  size_t size = !file.empty()
+    ? std::snprintf(nullptr, 0, fullFmt, shortFormId, delimiter, file.c_str())
+    : std::snprintf(nullptr, 0, idFmt, shortFormId);
+
+  std::string buffer;
+  buffer.resize(size);
+
+  if (!file.empty()) {
+    std::sprintf(buffer.data(), fullFmt, shortFormId, delimiter, file.c_str());
+  } else {
+    std::sprintf(buffer.data(), idFmt, shortFormId);
+  }
+  return buffer;
 }
 
 FormDesc FormDesc::FromString(std::string str, char delimiter)
 {
-  for (auto& ch : str)
-    if (ch == delimiter)
-      ch = ' ';
-
-  std::istringstream ss(str);
   FormDesc res;
-  ss >> std::hex >> res.shortFormId >> res.file;
+  std::string id, file;
+
+  if (str.find(delimiter) == std::string::npos) {
+    std::sscanf(str.data(), "%x", &res.shortFormId);
+    return res;
+  }
+
+  for (auto it = str.begin(); it != str.end(); ++it) {
+    if (*it == delimiter) {
+      id = { str.begin(), it };
+      res.file = { it + 1, str.end() };
+      break;
+    }
+  }
+
+  std::sscanf(id.data(), "%x", &res.shortFormId);
   return res;
 }
 
@@ -74,4 +94,11 @@ FormDesc FormDesc::FromFormId(uint32_t formId,
     res.shortFormId = formId - 0xff000000;
   }
   return res;
+}
+
+static const FormDesc kTamriel = FormDesc::FromString("3c:Skyrim.esm");
+
+FormDesc FormDesc::Tamriel()
+{
+  return kTamriel;
 }
