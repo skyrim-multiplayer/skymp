@@ -1,4 +1,4 @@
-project(platform_se VERSION 2.7.1 LANGUAGES CXX)
+project(platform_se VERSION 2.8.1 LANGUAGES CXX)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Version.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/Version.h @ONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/version.rc.in ${CMAKE_CURRENT_BINARY_DIR}/version.rc @ONLY)
 
