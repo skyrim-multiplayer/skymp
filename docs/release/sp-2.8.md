@@ -1,4 +1,4 @@
-# SP 2.8.1 Release Notes
+# SP 2.8.0 Release Notes
 
 
 This document includes changes made since SP 2.7.1
@@ -8,6 +8,10 @@ WARNING: SP may break your saves. For now, please backup your saves before insta
 
 
 SP supports both Steam version of Skyrim SE (1.6.640) and legacy 1.5.97.
+
+## Added option to enable/disable chromium.
+
+- ```ChromiumEnabled = true``` - This parameter controls whether the chromium is enabled.
 
 ## Improving the Texts API
 
@@ -93,11 +97,6 @@ Now you can enable cmd and get all the information from the game console in a se
 
 
 - Fixed crash in combatState event. See [#1544 (comment)](https://github.com/skyrim-multiplayer/skymp/issues/1544#issuecomment-1628261524)
-
-
-- Added option to enable/disable chromium.
-
-- ```ChromiumEnabled = true``` - This parameter controls whether the chromium is enabled.
 
 
 - Improved script functions call speed. Benchmark: https://github.com/skyrim-multiplayer/skymp/issues/508#issuecomment-1602846718
