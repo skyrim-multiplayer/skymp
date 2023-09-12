@@ -826,3 +826,9 @@ bool WorldState::IsRelootForbidden(std::string type) const noexcept
   return pImpl->forbiddenRelootTypes.find(type) !=
     pImpl->forbiddenRelootTypes.end();
 }
+
+bool WorldState::HasEspmFile(std::string_view filename) const noexcept
+{
+  return std::find(espmFiles.begin(), espmFiles.end(), filename) !=
+    espmFiles.end();
+}

@@ -48,9 +48,15 @@ MyChromiumApp::MyChromiumApp(
 {
 }
 
-void MyChromiumApp::Initialize() noexcept
+void MyChromiumApp::Initialize(bool initChromium) noexcept
 {
   if (m_pGameClient)
+    return;
+
+  m_pGameClient =
+    new OverlayClient(m_pRenderProvider->Create(), onProcessMessage);
+
+  if (initChromium == false)
     return;
 
   CefMainArgs args(GetModuleHandleA(nullptr));
@@ -96,9 +102,6 @@ void MyChromiumApp::Initialize() noexcept
                 "installed, SP isn't compatible with it)",
                 "Error", MB_ICONERROR);
   }
-
-  m_pGameClient =
-    new OverlayClient(m_pRenderProvider->Create(), onProcessMessage);
 
   CefBrowserSettings browserSettings{};
 
