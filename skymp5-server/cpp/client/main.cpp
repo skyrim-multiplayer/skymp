@@ -41,21 +41,4 @@ __declspec(dllexport) void Send(const char* jsonContent, bool reliable)
 {
   return MpClientPlugin::Send(GetState(), jsonContent, reliable);
 }
-
-__declspec(dllexport) bool SKSEPlugin_Query(void* skse, void* info)
-{
-  struct PluginInfo
-  {
-    uint32_t infoVersion = 1;
-    const char* name = "MpClientPlugin";
-    uint32_t version = 1;
-  };
-  new (info) PluginInfo;
-  return true;
-}
-
-__declspec(dllexport) bool SKSEPlugin_Load(void* skse)
-{
-  return true;
-}
 }
