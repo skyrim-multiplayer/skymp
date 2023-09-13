@@ -2,7 +2,6 @@
 
 #include <nlohmann/json.hpp>
 #include <slikenet/BitStream.h>
-
 #include "MsgType.h"
 #include "SerializationUtil/BitStreamUtil.h"
 

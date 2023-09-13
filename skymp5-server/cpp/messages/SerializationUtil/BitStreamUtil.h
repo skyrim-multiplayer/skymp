@@ -40,6 +40,10 @@ void WriteToBitStream(SLNet::BitStream& stream, const std::array<T, N>& arr);
 template <class T, size_t N>
 void ReadFromBitStream(SLNet::BitStream& stream, std::array<T, N>& arr);
 
+void WriteToBitStream(SLNet::BitStream& stream, const std::string& str);
+
+void ReadFromBitStream(SLNet::BitStream& stream, std::string& str);
+
 template <class T>
 T ReadFromBitStream(SLNet::BitStream& stream);
 
