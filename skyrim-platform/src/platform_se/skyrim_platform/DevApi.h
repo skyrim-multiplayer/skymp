@@ -13,6 +13,8 @@ JsValue GetPlatformVersion(const JsFunctionArguments& args);
 
 JsValue GetJsMemoryUsage(const JsFunctionArguments& args);
 
+JsValue BlockPapyrusEvents(const JsFunctionArguments& args);
+
 void DisableCtrlPrtScnHotkey();
 
 using NativeExportsMap =
@@ -47,5 +49,6 @@ inline void Register(JsValue& exports, std::shared_ptr<JsEngine> jsEngine,
                         DisableCtrlPrtScnHotkey();
                         return JsValue::Undefined();
                       }));
+  exports.SetProperty("blockPapyrusEvents", JsValue::Function(BlockPapyrusEvents));
 }
 }
