@@ -130,6 +130,8 @@ export class Login implements System {
             throw new Error("Banned");
           }
           if (ip !== ctx.svr.getUserIp(userId)) {
+            // It's a quick and dirty way to check if it's the same user
+            // During async http call the user could free userId and someone else could connect with the same userId
             throw new Error("IP mismatch");
           }
           roles = response.data.roles;
