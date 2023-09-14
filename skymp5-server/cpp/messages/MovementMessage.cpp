@@ -1,10 +1,116 @@
 #include "MovementMessage.h"
+#include "SerializationUtil/BitStreamUtil.h"
+#include <nlohmann/json.hpp>
+#include <slikenet/BitStream.h>
 
 namespace {
 const inline std::string kStanding = "Standing";
 const inline std::string kWalking = "Walking";
 const inline std::string kRunning = "Running";
 const inline std::string kSprinting = "Sprinting";
+}
+
+void MovementMessage::WriteBinary(SLNet::BitStream& stream) const
+{
+  using SerializationUtil::WriteToBitStream;
+
+  WriteToBitStream(stream, idx);
+  WriteToBitStream(stream, worldOrCell);
+  WriteToBitStream(stream, pos);
+  WriteToBitStream(stream, rot);
+  WriteToBitStream(stream, direction);
+  WriteToBitStream(stream, healthPercentage);
+  WriteToBitStream(stream, speed);
+
+  WriteToBitStream(
+    stream, static_cast<bool>(static_cast<uint8_t>(runMode) & 2));
+  WriteToBitStream(
+    stream, static_cast<bool>(static_cast<uint8_t>(runMode) & 1));
+
+  WriteToBitStream(stream, isInJumpState);
+  WriteToBitStream(stream, isSneaking);
+  WriteToBitStream(stream, isBlocking);
+  WriteToBitStream(stream, isWeapDrawn);
+  WriteToBitStream(stream, isDead);
+  WriteToBitStream(stream, lookAt);
+}
+
+void MovementMessage::ReadBinary(SLNet::BitStream& stream)
+{
+  using SerializationUtil::ReadFromBitStream;
+
+  ReadFromBitStream(stream, idx);
+  ReadFromBitStream(stream, worldOrCell);
+  ReadFromBitStream(stream, pos);
+  ReadFromBitStream(stream, rot);
+  ReadFromBitStream(stream, direction);
+  ReadFromBitStream(stream, healthPercentage);
+  ReadFromBitStream(stream, speed);
+
+  uint8_t tmp = 0;
+  tmp |= static_cast<uint8_t>(ReadFromBitStream<bool>(stream));
+  tmp <<= 1;
+  tmp |= static_cast<uint8_t>(ReadFromBitStream<bool>(stream));
+  runMode = static_cast<RunMode>(tmp);
+
+  ReadFromBitStream(stream, isInJumpState);
+  ReadFromBitStream(stream, isSneaking);
+  ReadFromBitStream(stream, isBlocking);
+  ReadFromBitStream(stream, isWeapDrawn);
+  ReadFromBitStream(stream, isDead);
+  ReadFromBitStream(stream, lookAt);
+}
+
+void MovementMessage::WriteJson(nlohmann::json &json) const
+{
+  auto result = nlohmann::json{
+    { "t", MsgType::UpdateMovement },
+    { "idx", idx },
+    {
+      "data",
+      {
+        { "worldOrCell", worldOrCell },
+        { "pos", pos },
+        { "rot", rot },
+        { "runMode", ToString(runMode) },
+        { "direction", direction },
+        { "healthPercentage", healthPercentage },
+        { "speed", speed },
+        { "isInJumpState", isInJumpState },
+        { "isSneaking", isSneaking },
+        { "isBlocking", isBlocking },
+        { "isWeapDrawn", isWeapDrawn },
+        { "isDead", isDead },
+      },
+    },
+  };
+  if (lookAt) {
+    result["data"]["lookAt"] = *lookAt;
+  }
+  json = std::move(result);
+}
+
+void MovementMessage::ReadJson(const nlohmann::json &json)
+{
+  idx = json.at("idx").get<uint32_t>();
+
+  const auto& data = json.at("data");
+  worldOrCell = data.at("worldOrCell").get<uint32_t>();
+  pos = data.at("pos").get<std::array<float, 3>>();
+  rot = data.at("rot").get<std::array<float, 3>>();
+  direction = data.at("direction").get<float>();
+  healthPercentage = data.at("healthPercentage").get<float>();
+  speed = data.at("speed").get<float>();
+  runMode = RunModeFromString(data.at("runMode").get<std::string_view>());
+  isInJumpState = data.at("isInJumpState").get<bool>();
+  isSneaking = data.at("isSneaking").get<bool>();
+  isBlocking = data.at("isBlocking").get<bool>();
+  isWeapDrawn = data.at("isWeapDrawn").get<bool>();
+  isDead = data.at("isDead").get<bool>();
+  const auto lookAtIt = data.find("lookAt");
+  if (lookAtIt != data.end()) {
+    lookAt = lookAtIt->get<std::array<float, 3>>();
+  }
 }
 
 const std::string& ToString(RunMode runMode)

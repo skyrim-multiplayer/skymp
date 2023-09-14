@@ -1,4 +1,5 @@
 #include "MpClientPlugin.h"
+#include "messages/Serialization.h"
 #include <cstdint>
 
 namespace {
@@ -39,6 +40,6 @@ __declspec(dllexport) void Tick(MpClientPlugin::OnPacket onPacket, void* state)
 
 __declspec(dllexport) void Send(const char* jsonContent, bool reliable)
 {
-  return MpClientPlugin::Send(GetState(), jsonContent, reliable);
+  return MpClientPlugin::Send(GetState(), jsonContent, reliable, Serialization::SerializeMessage);
 }
 }

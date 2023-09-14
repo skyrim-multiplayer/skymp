@@ -71,35 +71,14 @@ void MpClientPlugin::Tick(State& state, OnPacket onPacket, void* state_)
     &packetAndState);
 }
 
-void MpClientPlugin::Send(State& state, const char* jsonContent, bool reliable)
+void MpClientPlugin::Send(State& state, const char* jsonContent, bool reliable, SerializeMessage serializeMessageFn)
 {
   if (!state.cl) {
     // TODO(#263): we probably should log something here
     return;
   }
 
-  const auto parsedJson = nlohmann::json::parse(jsonContent);
-  if (static_cast<MsgType>(parsedJson.at("t").get<int>()) ==
-      MsgType::UpdateMovement) {
-    const auto movData = serialization::MovementMessageFromJson(parsedJson);
-    SLNet::BitStream stream;
-    serialization::WriteToBitStream(stream, movData);
-
-    std::vector<uint8_t> buf(stream.GetNumberOfBytesUsed() + 2);
-    buf[0] = Networking::MinPacketId;
-    buf[1] = MovementMessage::kHeaderByte;
-    std::copy(stream.GetData(),
-              stream.GetData() + stream.GetNumberOfBytesUsed(),
-              buf.begin() + 2);
-    state.cl->Send(buf.data(), buf.size(), reliable);
-
-    return;
-  }
-
-  auto n = strlen(jsonContent);
-  std::vector<uint8_t> buf(n + 1);
-  buf[0] = Networking::MinPacketId;
-  memcpy(buf.data() + 1, jsonContent, n);
-
+  std::vector<uint8_t> buf;
+  serializeMessageFn(jsonContent, buf);
   state.cl->Send(buf.data(), buf.size(), reliable);
 }

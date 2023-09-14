@@ -11,7 +11,6 @@ void serialization::WriteToBitStream(SLNet::BitStream& stream, const UpdateAnima
     SerializationUtil::WriteToBitStream(stream, message.numChanges);
     SerializationUtil::WriteToBitStream(stream, message.animEventName);
 }
-                      
 
 void serialization::ReadFromBitStream(SLNet::BitStream& stream, UpdateAnimationMessage& message)
 {
@@ -22,10 +21,28 @@ void serialization::ReadFromBitStream(SLNet::BitStream& stream, UpdateAnimationM
 
 UpdateAnimationMessage serialization::UpdateAnimationMessageFromJson(const nlohmann::json& json)
 {
-    
+    UpdateAnimationMessage result;
+    result.idx = json.at("idx").get<uint32_t>();
+
+    const auto& data = json.at("data");
+    result.numChanges = data.at("numChanges");
+    result.animEventName = data.at("animEventName");
+
+    return result;
 }
 
 nlohmann::json serialization::UpdateAnimationMessageToJson(const UpdateAnimationMessage& message)
 {
-
+    auto result = nlohmann::json{
+    { "t", MsgType::UpdateAnimation },
+    { "idx", message.idx },
+    {
+      "data",
+      {
+        { "animEventName", message.animEventName },
+        { "numChanges", message.numChanges },
+      },
+    },
+  };
+  return result;
 }

@@ -1,7 +1,7 @@
 #pragma once
 #include <cstdint>
 
-enum class MsgType : int64_t
+enum class MsgType : uint8_t
 {
   Invalid = 0,
   CustomPacket = 1,
