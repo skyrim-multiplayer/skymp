@@ -1,4 +1,4 @@
-name: PR Windows AE
+name: PR Windows - Anniversary Edition 1.6 (New, used by SkyMP)
 
 on:
   push:
