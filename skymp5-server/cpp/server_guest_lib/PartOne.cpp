@@ -37,8 +37,8 @@ struct PartOne::Impl
   simdjson::dom::parser parser;
   espm::Loader* espm = nullptr;
 
-  std::function<void(Networking::ISendTarget*sendTarget,
-                     MpObjectReference*emitter, MpObjectReference*listener)>
+  std::function<void(Networking::ISendTarget* sendTarget,
+                     MpObjectReference* emitter, MpObjectReference* listener)>
     onSubscribe, onUnsubscribe;
 
   espm::CompressedFieldsCache compressedFieldsCache;
@@ -99,41 +99,8 @@ bool PartOne::IsConnected(Networking::UserId userId) const
 
 void PartOne::Tick()
 {
-  for (auto& [userId, playback] : serverState.requestedPlaybacks) {
-    serverState.activePlaybacks[userId] = std::move(playback);
-  }
-  serverState.requestedPlaybacks.clear();
-
-  for (auto& [userId, playback] : serverState.activePlaybacks) {
-    auto& packetHistory = playback.history;
-
-    while (
-      !packetHistory.packets.empty() &&
-      playback.startTime +
-          std::chrono::milliseconds(packetHistory.packets.front().timeMs) <=
-        std::chrono::steady_clock::now()) {
-      auto& packet = packetHistory.packets.front();
-
-      if (packetHistory.buffer.size() < packet.offset + packet.length) {
-        spdlog::error("Packet history buffer is corrupted");
-      } else {
-        pImpl->packetParser->TransformPacketIntoAction(
-          userId, &packetHistory.buffer[packet.offset], packet.length,
-          *pImpl->actionListener);
-      }
-      packetHistory.packets.pop_front();
-    }
-  }
-
-  // delete playback if packetHistory.packets is empty
-  for (auto it = serverState.activePlaybacks.begin();
-       it != serverState.activePlaybacks.end();) {
-    if (it->second.history.packets.empty()) {
-      it = serverState.activePlaybacks.erase(it);
-    } else {
-      ++it;
-    }
-  }
+  TickPacketHistoryPlaybacks();
+  TickDeferredMessages();
   worldState.Tick();
 }
 
@@ -357,9 +324,7 @@ void PartOne::HandlePacket(void* partOneInstance, Networking::UserId userId,
     case Networking::PacketType::ServerSideUserDisconnect: {
       ScopedTask t([userId, this_] {
         if (auto actor = this_->serverState.ActorByUser(userId)) {
-          if (this_->animationSystem) {
-            this_->animationSystem->ClearInfo(actor);
-          }
+          this_->animationSystem.ClearInfo(actor);
         }
         this_->serverState.Disconnect(userId);
         this_->serverState.disconnectingUserId = Networking::InvalidUserId;
@@ -481,11 +446,11 @@ FormCallbacks PartOne::CreateFormCallbacks()
 
   FormCallbacks::SubscribeCallback
     subscribe =
-      [this](MpObjectReference*emitter, MpObjectReference*listener) {
+      [this](MpObjectReference* emitter, MpObjectReference* listener) {
         return pImpl->onSubscribe(pImpl->sendTarget, emitter, listener);
       },
-    unsubscribe = [this](MpObjectReference*emitter,
-                         MpObjectReference*listener) {
+    unsubscribe = [this](MpObjectReference* emitter,
+                         MpObjectReference* listener) {
       return pImpl->onUnsubscribe(pImpl->sendTarget, emitter, listener);
     };
 
@@ -499,7 +464,43 @@ FormCallbacks PartOne::CreateFormCallbacks()
                                 size, reliable);
     };
 
-  return { subscribe, unsubscribe, sendToUser };
+  FormCallbacks::SendToUserDeferredFn sendToUserDeferred =
+    [this, st](MpActor* actor, const void* data, size_t size, bool reliable,
+               int deferredChannelId) {
+      if (deferredChannelId < 0 || deferredChannelId >= 100) {
+        return spdlog::error(
+          "sendToUserDeferred - invalid deferredChannelId {}",
+          deferredChannelId);
+      }
+
+      auto targetuserId = st->UserByActor(actor);
+      if (targetuserId == Networking::InvalidUserId ||
+          st->disconnectingUserId == targetuserId) {
+        // It's ok, it happens
+        return;
+      }
+
+      auto& userInfo = st->userInfo[targetuserId];
+      if (!userInfo) {
+        return spdlog::error("sendToUserDeferred - null userInfo for user {}",
+                             targetuserId);
+      }
+
+      DeferredMessage deferredMessage;
+      deferredMessage.packetData = { static_cast<const uint8_t*>(data),
+                                     static_cast<const uint8_t*>(data) +
+                                       size };
+      deferredMessage.packetReliable = reliable;
+      deferredMessage.actorIdExpected = actor->GetFormId();
+
+      if (userInfo->deferredChannels.size() <= deferredChannelId) {
+        userInfo->deferredChannels.resize(deferredChannelId + 1);
+      }
+
+      userInfo->deferredChannels[deferredChannelId] = deferredMessage;
+    };
+
+  return { subscribe, unsubscribe, sendToUser, sendToUserDeferred };
 }
 
 ActionListener& PartOne::GetActionListener()
@@ -731,6 +732,77 @@ void PartOne::HandleMessagePacket(Networking::UserId userId,
 
 void PartOne::InitActionListener()
 {
-  if (!pImpl->actionListener)
-    pImpl->actionListener.reset(new ActionListener(*this));
+  if (!pImpl->actionListener) {
+    pImpl->actionListener = std::make_shared<ActionListener>(*this);
+  }
+}
+
+void PartOne::TickPacketHistoryPlaybacks()
+{
+  for (auto& [userId, playback] : serverState.requestedPlaybacks) {
+    serverState.activePlaybacks[userId] = std::move(playback);
+  }
+  serverState.requestedPlaybacks.clear();
+
+  for (auto& [userId, playback] : serverState.activePlaybacks) {
+    auto& packetHistory = playback.history;
+
+    while (
+      !packetHistory.packets.empty() &&
+      playback.startTime +
+          std::chrono::milliseconds(packetHistory.packets.front().timeMs) <=
+        std::chrono::steady_clock::now()) {
+      auto& packet = packetHistory.packets.front();
+
+      if (packetHistory.buffer.size() < packet.offset + packet.length) {
+        spdlog::error("Packet history buffer is corrupted");
+      } else {
+        pImpl->packetParser->TransformPacketIntoAction(
+          userId, &packetHistory.buffer[packet.offset], packet.length,
+          *pImpl->actionListener);
+      }
+      packetHistory.packets.pop_front();
+    }
+  }
+
+  // delete playback if packetHistory.packets is empty
+  for (auto it = serverState.activePlaybacks.begin();
+       it != serverState.activePlaybacks.end();) {
+    if (it->second.history.packets.empty()) {
+      it = serverState.activePlaybacks.erase(it);
+    } else {
+      ++it;
+    }
+  }
+}
+
+void PartOne::TickDeferredMessages()
+{
+  for (Networking::UserId userId = 0; userId < serverState.userInfo.size();
+       ++userId) {
+    auto& userInfo = serverState.userInfo[userId];
+    if (!userInfo) {
+      continue;
+    }
+    for (auto& deferredMessage : userInfo->deferredChannels) {
+      if (deferredMessage != std::nullopt) {
+        auto actor = serverState.ActorByUser(userId);
+        if (!actor) {
+          continue;
+        }
+
+        if (deferredMessage->actorIdExpected != actor->GetFormId()) {
+          continue;
+        }
+
+        pImpl->sendTarget->Send(userId,
+                                reinterpret_cast<Networking::PacketData>(
+                                  deferredMessage->packetData.data()),
+                                deferredMessage->packetData.size(),
+                                deferredMessage->packetReliable);
+
+        deferredMessage = std::nullopt;
+      }
+    }
+  }
 }

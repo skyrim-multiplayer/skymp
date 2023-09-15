@@ -1,6 +1,7 @@
 #pragma once
 #include <cstddef>
 #include <cstdio>
+#include <string>
 #include <vector>
 
 namespace Networking {
@@ -60,6 +61,8 @@ public:
   virtual ~IServer() = default;
 
   virtual void Tick(OnPacket onPacket, void* state) = 0;
+
+  virtual std::string GetIp(UserId userId) const = 0;
 };
 
 template <class FormatCallback, class... Ts>

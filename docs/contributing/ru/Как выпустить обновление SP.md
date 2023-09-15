@@ -4,7 +4,7 @@
 4. Запустить экшон SP Types Update https://github.com/skyrim-multiplayer/skymp/actions/workflows/trigger-sp-types-update.yml. Он обычно выполняется не более минуты.
 5. Убедиться, что сюда прилетел коммит в main ветку https://github.com/skyrim-platform/skyrim-platform.
 6. Ждать, пока соберётся PR Windows, PR Windows AE экшоны в мейн ветке.
-7. Скачать SP-AE.zip и SP-SE.zip из артефактов. Переименовать их в `Skyrim Platform 2.X.0 (Anniversary Edition)` и `Skyrim Platform 2.X.0 (Special Edition)`.
+7. Скачать SP-AE-nexus.zip и SP-SE-nexus.zip из артефактов. Переименовать их в `Skyrim Platform 2.X.0 (Anniversary Edition)` и `Skyrim Platform 2.X.0 (Special Edition)`.
 8. Зайти в управление файлами на Nexus https://www.nexusmods.com/skyrimspecialedition/mods/edit/?id=54909&game_id=1704&step=files, пролистать до "Add a new file" и заполнить все пункты:
 
 File name: `Skyrim Platform 2.X.0 (Anniversary Edition)`

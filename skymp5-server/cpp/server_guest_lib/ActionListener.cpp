@@ -48,13 +48,10 @@ MpActor* ActionListener::SendToNeighbours(
     }
   }
 
-  for (auto listener : actor->GetListeners()) {
-    auto listenerAsActor = dynamic_cast<MpActor*>(listener);
-    if (listenerAsActor) {
-      auto targetuserId = partOne.serverState.UserByActor(listenerAsActor);
-      if (targetuserId != Networking::InvalidUserId) {
-        partOne.GetSendTarget().Send(targetuserId, data, length, reliable);
-      }
+  for (auto listener : actor->GetActorListeners()) {
+    auto targetuserId = partOne.serverState.UserByActor(listener);
+    if (targetuserId != Networking::InvalidUserId) {
+      partOne.GetSendTarget().Send(targetuserId, data, length, reliable);
     }
   }
 
@@ -148,16 +145,7 @@ void ActionListener::OnUpdateAnimation(const RawMessageData& rawMsgData,
     return;
   }
 
-  if (!partOne.animationSystem) {
-    std::vector<std::string> espmFiles = espmProvider->espmFiles;
-
-    std::set<std::string> s;
-    s = { espmFiles.begin(), espmFiles.end() };
-    bool isSweetpie = s.count("SweetPie.esp") != 0;
-
-    partOne.animationSystem = std::make_unique<AnimationSystem>(isSweetpie);
-  }
-  partOne.animationSystem->Process(actor, animationData);
+  partOne.animationSystem.Process(actor, animationData);
 
   SendToNeighbours(idx, rawMsgData);
 }
@@ -451,20 +439,6 @@ void UseCraftRecipe(MpActor* me, espm::COBJ::Data recipeData,
   }
   me->RemoveItems(entries);
   me->AddItem(outputFormId, recipeData.outputCount);
-
-  // A hack to fix craft items do not appear (likely related to random
-  // SendInventoryUpdate ordering in RemoveItems/AddItem)
-  auto formId = me->GetFormId();
-  if (auto worldState = me->GetParent()) {
-    worldState->SetTimer(std::chrono::seconds(1))
-      .Then([worldState, formId](Viet::Void) {
-        auto actor = std::dynamic_pointer_cast<MpActor>(
-          worldState->LookupFormById(formId));
-        if (actor) {
-          actor->SendInventoryUpdate();
-        }
-      });
-  }
 }
 
 void ActionListener::OnCraftItem(const RawMessageData& rawMsgData,
@@ -481,7 +455,9 @@ void ActionListener::OnCraftItem(const RawMessageData& rawMsgData,
   spdlog::debug("User {} tries to craft {:#x} on workbench {:#x}",
                 rawMsgData.userId, resultObjectId, workbenchId);
 
-  if (base.rec->GetType() != "FURN" && base.rec->GetType() != "ACTI") {
+  bool isFurnitureOrActivator =
+    base.rec->GetType() == "FURN" || base.rec->GetType() == "ACTI";
+  if (!isFurnitureOrActivator) {
     throw std::runtime_error("Unable to use " +
                              base.rec->GetType().ToString() + " as workbench");
   }

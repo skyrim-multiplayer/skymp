@@ -1,6 +1,7 @@
 import { Settings } from "../settings";
 import { System, Log, SystemContext } from "./system";
-import { Mp } from "../../../skymp5-functions-lib/src/types/mp"
+
+type Mp = any; // TODO
 
 function randomInteger(min: number, max: number) {
   const rand = min + Math.random() * (max + 1 - min);
@@ -12,7 +13,7 @@ export class Spawn implements System {
   constructor(private log: Log) {}
 
   async initAsync(ctx: SystemContext): Promise<void> {
-    ctx.gm.on("spawnAllowed", (userId: number, userProfileId: number, discordRoleIds: string[]) => {
+    ctx.gm.on("spawnAllowed", (userId: number, userProfileId: number, discordRoleIds: string[], discordId: string | undefined) => {
       const { startPoints } = Settings.get();
       // TODO: Show race menu if character is not created after relogging
       let actorId = ctx.svr.getActorsByProfileId(userProfileId)[0];
@@ -33,7 +34,19 @@ export class Spawn implements System {
         ctx.svr.setUserActor(userId, actorId);
         ctx.svr.setRaceMenuOpen(actorId, true);
       }
-      (ctx.svr as unknown as Mp).set(actorId, "private.discordRoles", discordRoleIds);
+
+      const mp = ctx.svr as unknown as Mp;
+      mp.set(actorId, "private.discordRoles", discordRoleIds);
+
+      if (discordId !== undefined) {
+        // This helps us to test if indexes registration works in LoadForm or not
+        if (mp.get(actorId, "private.indexed.discordId") !== discordId) {
+          mp.set(actorId, "private.indexed.discordId", discordId);
+        }
+
+        const forms = mp.findFormsByPropertyValue("private.indexed.discordId", discordId) as number[];
+        console.log(`Found forms ${forms}`);
+      }
     });
   }
 

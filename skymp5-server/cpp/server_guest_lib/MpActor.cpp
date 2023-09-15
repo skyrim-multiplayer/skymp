@@ -140,12 +140,47 @@ void MpActor::VisitProperties(const PropertiesVisitor& visitor,
             .c_str());
 }
 
+void MpActor::Disable()
+{
+  if (ChangeForm().isDisabled) {
+    return;
+  }
+
+  MpObjectReference::Disable();
+
+  for (auto [snippetIdx, promise] : pImpl->snippetPromises) {
+    spdlog::warn("Disabling actor {:x} with pending snippet promise",
+                 GetFormId());
+    try {
+      promise.Resolve(VarValue::None());
+    } catch (std::exception& e) {
+      // Not sure if this is possible, but better safe than sorry
+      spdlog::error("Exception while resolving pending snippet promise: {}",
+                    e.what());
+    }
+  }
+
+  pImpl->snippetPromises.clear();
+}
+
 void MpActor::SendToUser(const void* data, size_t size, bool reliable)
 {
-  if (callbacks->sendToUser)
+  if (callbacks->sendToUser) {
     callbacks->sendToUser(this, data, size, reliable);
-  else
+  } else {
     throw std::runtime_error("sendToUser is nullptr");
+  }
+}
+
+void MpActor::SendToUserDeferred(const void* data, size_t size, bool reliable,
+                                 int deferredChannelId)
+{
+  if (callbacks->sendToUserDeferred) {
+    callbacks->sendToUserDeferred(this, data, size, reliable,
+                                  deferredChannelId);
+  } else {
+    throw std::runtime_error("sendToUserDeferred is nullptr");
+  }
 }
 
 bool MpActor::OnEquip(uint32_t baseId)
@@ -229,13 +264,22 @@ void MpActor::ApplyChangeForm(const MpChangeForm& newChangeForm)
   }
   MpObjectReference::ApplyChangeForm(newChangeForm);
   EditChangeForm(
-    [&](MpChangeForm& cf) {
-      cf = static_cast<const MpChangeForm&>(newChangeForm);
+    [&](MpChangeForm& changeForm) {
+      changeForm = static_cast<const MpChangeForm&>(newChangeForm);
 
       // Actor without appearance would not be visible so we force player to
       // choose appearance
-      if (cf.appearanceDump.empty())
-        cf.isRaceMenuOpen = true;
+      if (changeForm.appearanceDump.empty()) {
+        changeForm.isRaceMenuOpen = true;
+      }
+      // ActorValues does not refelect real base actor values set in esp/esm
+      // game files since new update
+      // this check is added only for test as a workaround. It is to be redone
+      // in the nearest future. TODO
+      if (GetParent() && GetParent()->HasEspm()) {
+        changeForm.actorValues =
+          GetBaseActorValues(GetParent(), GetBaseId(), GetRaceId());
+      }
     },
     Mode::NoRequestSave);
   ReapplyMagicEffects();
@@ -245,8 +289,9 @@ uint32_t MpActor::NextSnippetIndex(
   std::optional<Viet::Promise<VarValue>> promise)
 {
   auto res = pImpl->snippetIndex++;
-  if (promise)
+  if (promise) {
     pImpl->snippetPromises[res] = *promise;
+  }
   return res;
 }
 
@@ -822,7 +867,7 @@ void MpActor::ApplyMagicEffect(espm::Effects::Effect& effect, bool hasSweetpie,
         Viet::TimeUtils::To<std::chrono::milliseconds>(effect.duration);
     }
     uint32_t timerId;
-    worldState->SetTimer(duration, &timerId)
+    worldState->SetEffectTimer(duration, &timerId)
       .Then([formId, actorValue = av, worldState](Viet::Void) {
         auto& actor = worldState->GetFormAt<MpActor>(formId);
         actor.RemoveMagicEffect(actorValue);
@@ -832,7 +877,7 @@ void MpActor::ApplyMagicEffect(espm::Effects::Effect& effect, bool hasSweetpie,
     if (activeEffects.Has(av)) {
       const ActiveMagicEffectsMap::Entry& entry =
         activeEffects.Get(av).value().get();
-      worldState->RemoveTimer(entry.timerId);
+      worldState->RemoveEffectTimer(entry.timerId);
     }
     EditChangeForm([av, pEntry = &entry](MpChangeForm& changeForm) {
       changeForm.activeMagicEffects.Add(av, *pEntry);
@@ -853,6 +898,9 @@ void MpActor::ApplyMagicEffect(espm::Effects::Effect& effect, bool hasSweetpie,
           "Unknown espm::MGEF::EffectType: {}",
           static_cast<std::underlying_type_t<espm::MGEF::EffectType>>(type));
       }
+      spdlog::trace("Final multiplicator is {}", mult);
+      spdlog::trace("The result of baseValue * mult is: {}*{}={}", baseValue,
+                    mult, baseValue * mult);
       SetActorValue(av, baseValue * mult);
     }
   }
@@ -899,4 +947,27 @@ void MpActor::ReapplyMagicEffects()
     modFiles.begin(), modFiles.end(),
     [](std::string_view fileName) { return fileName == "SweetPie.esp"; });
   ApplyMagicEffects(activeEffects, hasSweetpie, true);
+}
+
+std::array<std::optional<Inventory::Entry>, 2> MpActor::GetEquippedWeapon()
+  const
+{
+  std::array<std::optional<Inventory::Entry>, 2> wornWeaponEntries;
+  // 0 -> left hand, 1 -> right hand
+  auto& espmBrowser = GetParent()->GetEspm().GetBrowser();
+  for (const auto& entry : GetEquipment().inv.entries) {
+    if (entry.extra.worn != Inventory::Worn::None) {
+      espm::LookupResult res = espmBrowser.LookupById(entry.baseId);
+      auto* weaponRecord = espm::Convert<espm::WEAP>(res.rec);
+      if (weaponRecord) {
+        if (entry.extra.worn == Inventory::Worn::Left) {
+          wornWeaponEntries[0] = std::move(entry);
+        }
+        if (entry.extra.worn == Inventory::Worn::Right) {
+          wornWeaponEntries[1] = std::move(entry);
+        }
+      }
+    }
+  }
+  return wornWeaponEntries;
 }

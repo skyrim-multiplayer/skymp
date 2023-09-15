@@ -92,16 +92,18 @@ TEST_CASE("AddItem executes", "[ConsoleCommand][espm]")
   p.GetActionListener().OnConsoleCommand(msgData, "additem",
                                          { 0x14, 0x12eb7, 0x108 });
 
+  p.Tick(); // send deferred inventory update messages
+
   nlohmann::json expectedInv{
     { "entries", { { { "baseId", 0x12eb7 }, { "count", 0x108 } } } }
   };
   REQUIRE(p.Messages().size() == 2);
   REQUIRE(
     p.Messages()[0].j.dump() ==
-    R"({"inventory":{"entries":[{"baseId":77495,"count":264}]},"type":"setInventory"})");
+    R"({"arguments":[{"formId":77495,"type":"weapon"},264,false],"class":"SkympHacks","function":"AddItem","selfId":0,"snippetIdx":0,"type":"spSnippet"})");
   REQUIRE(
     p.Messages()[1].j.dump() ==
-    R"({"arguments":[{"formId":77495,"type":"weapon"},264,false],"class":"SkympHacks","function":"AddItem","selfId":0,"snippetIdx":0,"type":"spSnippet"})");
+    R"({"inventory":{"entries":[{"baseId":77495,"count":264}]},"type":"setInventory"})");
 
   p.DestroyActor(0xff000000);
   DoDisconnect(p, 0);

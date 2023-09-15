@@ -14,6 +14,14 @@ public:
   const nlohmann::json& GetAsJson() const;
   static DynamicFields FromJson(const nlohmann::json& j);
 
+  template <class F>
+  void ForEach(const F& f) const
+  {
+    for (auto [propName, value] : props) {
+      f(propName, value);
+    }
+  }
+
   friend bool operator<(const DynamicFields& r, const DynamicFields& l);
   friend bool operator==(const DynamicFields& r, const DynamicFields& l);
   friend bool operator!=(const DynamicFields& r, const DynamicFields& l);

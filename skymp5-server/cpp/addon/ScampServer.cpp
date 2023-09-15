@@ -59,6 +59,11 @@ std::string GetPropertyAlphabet()
   return alphabet;
 }
 
+bool StartsWith(const std::string& str, const char* prefix)
+{
+  return str.compare(0, strlen(prefix), prefix) == 0;
+}
+
 }
 
 Napi::FunctionReference ScampServer::constructor;
@@ -84,6 +89,7 @@ Napi::Object ScampServer::Init(Napi::Env env, Napi::Object exports)
       InstanceMethod("createBot", &ScampServer::CreateBot),
       InstanceMethod("getUserByActor", &ScampServer::GetUserByActor),
       InstanceMethod("writeLogs", &ScampServer::WriteLogs),
+      InstanceMethod("getUserIp", &ScampServer::GetUserIp),
 
       InstanceMethod("getLocalizedString", &ScampServer::GetLocalizedString),
       InstanceMethod("getServerSettings", &ScampServer::GetServerSettings),
@@ -107,7 +113,9 @@ Napi::Object ScampServer::Init(Napi::Env env, Napi::Object exports)
       InstanceMethod("getPacketHistory", &ScampServer::GetPacketHistory),
       InstanceMethod("clearPacketHistory", &ScampServer::ClearPacketHistory),
       InstanceMethod("requestPacketHistoryPlayback",
-                     &ScampServer::RequestPacketHistoryPlayback) });
+                     &ScampServer::RequestPacketHistoryPlayback),
+      InstanceMethod("findFormsByPropertyValue",
+                     &ScampServer::FindFormsByPropertyValue) });
   constructor = Napi::Persistent(func);
   constructor.SuppressDestruct();
   exports.Set("ScampServer", func);
@@ -141,6 +149,26 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
     buffer << f.rdbuf();
 
     auto serverSettings = nlohmann::json::parse(buffer.str());
+
+    if (serverSettings.find("weaponStaminaModifiers") !=
+        serverSettings.end()) {
+      if (serverSettings.at("weaponStaminaModifiers").is_object()) {
+        auto modifiers = serverSettings.at("weaponStaminaModifiers")
+                           .get<std::unordered_map<std::string, float>>();
+        if (modifiers.empty()) {
+          logger->info("\"weaponStaminaModifiers field is empty. Using "
+                       "default values for stamina managment instead.\"");
+        } else {
+          logger->info(
+            "Using keywords based stamina forfeits for players attacks");
+        }
+        partOne->animationSystem.SetWeaponStaminaModifiers(
+          std::move(modifiers));
+      }
+    } else {
+      logger->info("\"weaponStaminaModifiers field is missing. Using "
+                   "default values for stamina managment instead.\"");
+    }
 
     if (serverSettings["logLevel"].is_string()) {
       const auto level = spdlog::level::from_str(serverSettings["logLevel"]);
@@ -272,6 +300,8 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
     partOne->worldState.AttachScriptStorage(scriptStorage);
 
     partOne->AttachEspm(espm);
+    partOne->animationSystem.Init(&partOne->worldState);
+
     this->serverSettings = serverSettings;
     this->logger = logger;
 
@@ -282,6 +312,12 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
       auto time = std::chrono::milliseconds(1) * timeMs;
       partOne->worldState.SetRelootTime(recordType, time);
       logger->info("'{}' will be relooted every {} ms", recordType, timeMs);
+    }
+
+    auto it = serverSettings.find("forbiddenReloot");
+    if (it != serverSettings.end() && (*it).is_array()) {
+      partOne->worldState.SetForbiddenRelootTypes(
+        (*it).get<std::set<std::string>>());
     }
 
     auto res =
@@ -595,6 +631,16 @@ Napi::Value ScampServer::WriteLogs(const Napi::CallbackInfo& info)
   return info.Env().Undefined();
 }
 
+Napi::Value ScampServer::GetUserIp(const Napi::CallbackInfo& info)
+{
+  try {
+    auto userId = info[0].As<Napi::Number>().Uint32Value();
+    return Napi::String::New(info.Env(), server->GetIp(userId));
+  } catch (std::exception& e) {
+    throw Napi::Error::New(info.Env(), std::string(e.what()));
+  }
+}
+
 Napi::Value ScampServer::GetLocalizedString(const Napi::CallbackInfo& info)
 {
   try {
@@ -658,7 +704,11 @@ Napi::Value ScampServer::GetLocalizedString(const Napi::CallbackInfo& info)
 Napi::Value ScampServer::GetServerSettings(const Napi::CallbackInfo& info)
 {
   try {
-    return NapiHelper::ParseJson(info.Env(), serverSettings);
+    if (parsedServerSettings.IsEmpty()) {
+      parsedServerSettings =
+        Napi::Persistent(NapiHelper::ParseJson(info.Env(), serverSettings));
+    }
+    return parsedServerSettings.Value();
   } catch (std::exception& e) {
     throw Napi::Error::New(info.Env(), std::string(e.what()));
   }
@@ -1106,6 +1156,40 @@ Napi::Value ScampServer::RequestPacketHistoryPlayback(
 
     partOne->RequestPacketHistoryPlayback(userId, history);
     return info.Env().Undefined();
+  } catch (std::exception& e) {
+    throw Napi::Error::New(info.Env(), std::string(e.what()));
+  }
+}
+
+Napi::Value ScampServer::FindFormsByPropertyValue(
+  const Napi::CallbackInfo& info)
+{
+  try {
+    auto propertyName = NapiHelper::ExtractString(info[0], "propertyName");
+    auto propertyValue = info[1];
+
+    if (!StartsWith(propertyName,
+                    MpObjectReference::GetPropertyPrefixPrivateIndexed())) {
+      spdlog::error("FindFormsByPropertyValue - Attempt to search for "
+                    "non-indexed property '{}'",
+                    propertyName);
+    }
+
+    auto propertyValueStringified =
+      NapiHelper::Stringify(info.Env(), propertyValue);
+
+    auto mapKey = partOne->worldState.MakePrivateIndexedPropertyMapKey(
+      propertyName, propertyValueStringified);
+
+    auto& formIds =
+      partOne->worldState.GetActorsByPrivateIndexedProperty(mapKey);
+    auto result = Napi::Array::New(info.Env(), formIds.size());
+    uint32_t i = 0;
+    for (auto formId : formIds) {
+      result.Set(i, Napi::Number::New(info.Env(), formId));
+      ++i;
+    }
+    return result;
   } catch (std::exception& e) {
     throw Napi::Error::New(info.Env(), std::string(e.what()));
   }

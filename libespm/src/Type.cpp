@@ -13,11 +13,6 @@ bool Type::operator==(const char* rhs) const noexcept
   return !std::memcmp(type, rhs, 4);
 }
 
-bool Type::operator!=(const char* rhs) const noexcept
-{
-  return !(*this == rhs);
-}
-
 std::string Type::ToString() const noexcept
 {
   return std::string{ type, 4 };

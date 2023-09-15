@@ -29,6 +29,7 @@ public:
   const std::string& GetAppearanceAsJson();
   const std::string& GetEquipmentAsJson() const;
   Equipment GetEquipment() const;
+  std::array<std::optional<Inventory::Entry>, 2> GetEquippedWeapon() const;
   uint32_t GetRaceId() const;
   bool IsWeaponDrawn() const;
   espm::ObjectBounds GetBounds() const;
@@ -39,8 +40,11 @@ public:
 
   void VisitProperties(const PropertiesVisitor& visitor,
                        VisitPropertiesMode mode) override;
+  void Disable() override;
 
   void SendToUser(const void* data, size_t size, bool reliable);
+  void SendToUserDeferred(const void* data, size_t size, bool reliable,
+                          int deferredChannelId);
 
   [[nodiscard]] bool OnEquip(uint32_t baseId);
 

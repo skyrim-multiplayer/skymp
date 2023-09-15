@@ -5,7 +5,7 @@
 The project uses standard C++17.
 
 SkyrimPlatform and client code must be compilable with Microsoft Visual C++ 2019.
-Server code and unit tests must be also compilable with Clang 12.
+Server code and unit tests must be also compilable with Clang 15.
 
 
 ## Code Style

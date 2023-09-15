@@ -78,7 +78,7 @@ public:
 
   WorldState worldState;
   ServerState serverState;
-  std::shared_ptr<AnimationSystem> animationSystem;
+  AnimationSystem animationSystem;
 
   Networking::ISendTarget& GetSendTarget() const;
 
@@ -109,6 +109,9 @@ private:
                            Networking::PacketData data, size_t length);
 
   void InitActionListener();
+
+  void TickPacketHistoryPlaybacks();
+  void TickDeferredMessages();
 
   struct Impl;
   std::shared_ptr<Impl> pImpl;

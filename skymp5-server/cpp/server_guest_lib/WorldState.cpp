@@ -56,6 +56,7 @@ struct WorldState::Impl
   bool formLoadingInProgress = false;
   std::map<std::string, std::chrono::system_clock::duration>
     relootTimeForTypes;
+  std::set<std::string> forbiddenRelootTypes;
   std::vector<std::unique_ptr<IPapyrusClassBase>> classes;
 };
 
@@ -327,7 +328,7 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
   uint32_t worldOrCell =
     espm::utils::GetMappedId(GetWorldOrCell(br, record), mapping);
   if (!worldOrCell) {
-    logger->error("Anomally: refr without world/cell");
+    logger->error("Anomaly: refr without world/cell");
     return false;
   }
 
@@ -395,7 +396,7 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
 
   } else {
     if (!locationalData) {
-      logger->error("Anomally: refr without locationalData");
+      logger->error("Anomaly: refr without locationalData");
       return false;
     }
 
@@ -495,7 +496,8 @@ void WorldState::TickSaveStorage(const std::chrono::system_clock::time_point&)
 
 void WorldState::TickTimers(const std::chrono::system_clock::time_point&)
 {
-  timer.TickTimers();
+  timerEffects.TickTimers();
+  timerRegular.TickTimers();
 }
 
 void WorldState::SendPapyrusEvent(MpForm* form, const char* eventName,
@@ -710,12 +712,31 @@ VirtualMachine& WorldState::GetPapyrusVm()
 const std::set<uint32_t>& WorldState::GetActorsByProfileId(
   int32_t profileId) const
 {
-  static const std::set<uint32_t> g_emptySet;
+  static const std::set<uint32_t> kEmptySet;
 
   auto it = actorIdByProfileId.find(profileId);
-  if (it == actorIdByProfileId.end())
-    return g_emptySet;
+  if (it == actorIdByProfileId.end()) {
+    return kEmptySet;
+  }
   return it->second;
+}
+
+const std::set<uint32_t>& WorldState::GetActorsByPrivateIndexedProperty(
+  const std::string& privateIndexedPropertyMapKey) const
+{
+  static const std::set<uint32_t> kEmptySet;
+
+  auto it = actorIdByPrivateIndexedProperty.find(privateIndexedPropertyMapKey);
+  if (it == actorIdByPrivateIndexedProperty.end()) {
+    return kEmptySet;
+  }
+  return it->second;
+}
+
+std::string WorldState::MakePrivateIndexedPropertyMapKey(
+  const std::string& propertyName, const std::string& propertyValueStringified)
+{
+  return propertyName + '=' + propertyValueStringified;
 }
 
 uint32_t WorldState::GenerateFormId()
@@ -779,5 +800,27 @@ void WorldState::SetNpcSettings(
 
 bool WorldState::RemoveTimer(uint32_t timerId)
 {
-  return timer.RemoveTimer(timerId);
+  return timerRegular.RemoveTimer(timerId);
+}
+
+bool WorldState::RemoveEffectTimer(uint32_t timerId)
+{
+  return timerEffects.RemoveTimer(timerId);
+}
+
+void WorldState::SetForbiddenRelootTypes(const std::set<std::string>& types)
+{
+  pImpl->forbiddenRelootTypes = types;
+}
+
+bool WorldState::IsRelootForbidden(std::string type) const noexcept
+{
+  return pImpl->forbiddenRelootTypes.find(type) !=
+    pImpl->forbiddenRelootTypes.end();
+}
+
+bool WorldState::HasEspmFile(std::string_view filename) const noexcept
+{
+  return std::find(espmFiles.begin(), espmFiles.end(), filename) !=
+    espmFiles.end();
 }

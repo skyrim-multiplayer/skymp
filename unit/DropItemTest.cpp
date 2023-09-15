@@ -24,6 +24,7 @@ TEST_CASE("Dropping an item", "[DropItemTest]")
   REQUIRE(ac.GetInventory().GetTotalItemCount() == 0);
   ac.AddItem(ironDagger, 1);
   REQUIRE(ac.GetInventory().GetTotalItemCount() == 1);
+  partOne.Tick(); // send deferred inventory update messages
   partOne.Messages().clear();
   REQUIRE(partOne.Messages().size() == 0);
   DoMessage(partOne, 0,
@@ -31,6 +32,7 @@ TEST_CASE("Dropping an item", "[DropItemTest]")
                             { "baseId", ironDagger },
                             { "count", 1 } });
   // 1 message from here and another 1 is comming from actionListener
+  partOne.Tick(); // send deferred inventory update messages
   REQUIRE(partOne.Messages().size() == 1);
   REQUIRE(ac.GetInventory().GetItemCount(ironDagger) == 0);
   // TODO(#1141): reimplement spawning items
@@ -41,6 +43,7 @@ TEST_CASE("Dropping an item", "[DropItemTest]")
             nlohmann::json{ { "t", MsgType::DropItem },
                             { "baseId", healingPotion },
                             { "count", 5 } });
+  partOne.Tick(); // send deferred inventory update messages
   REQUIRE(partOne.Messages().size() == 1);
   REQUIRE(ac.GetInventory().GetItemCount(healingPotion) == 0);
 }

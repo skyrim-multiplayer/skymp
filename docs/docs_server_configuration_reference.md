@@ -155,6 +155,19 @@ A time before a game object restores its original state in milliseconds. Unlike 
 }
 ```
 
+## forbiddenReloot
+The option that allows you to forbid reloot for a specific item or a group of items based on its/their espm record type. Take a look at [UESP](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format).
+
+
+```json5
+{
+  // ...
+  // here your record types go
+  "forbiddenReloot": ["FLOR", "TREE", "BOOK", ... ]
+  // ...
+}
+```
+
 ## gamemodePath
 
 Contains a relative or an absolute path to a file or directory with a gamemode.
@@ -289,6 +302,25 @@ how they should be spawned: in interior or exterior. By default all the npcs are
       "spawnInExterior": true
     },
   },
+  // ...
+}
+```
+
+## weaponStaminaModifiers
+
+This setting is only available with game mod file "SweetPie.esp".
+This option allows you to flexibly adjust stamina forfeits of players' attacks using keywords set in the Creation Kit.
+In case this field is not provided, some default, yet hardcoded, values are in use.
+
+```json5
+{
+  // ...
+  "weaponStaminaModifiers": {
+    "WeapTypeDagger": 4.0,
+    "WeapTypeShortSword": 5.0,
+    "WeapTypeSword": 6.0,
+    ...
+  }
   // ...
 }
 ```

@@ -71,7 +71,7 @@ auto GetExpectedPaths(const nlohmann::json& j)
 TEST_CASE("Distribution folder must contain all requested files",
           "[DistContents]")
 {
-  auto distDir = std::filesystem::u8path(DIST_DIR);
+  auto distDir = std::filesystem::path(DIST_DIR);
   auto begin = std::filesystem::recursive_directory_iterator(distDir);
   auto end = std::filesystem::recursive_directory_iterator();
 
@@ -85,7 +85,7 @@ TEST_CASE("Distribution folder must contain all requested files",
   }
 
   nlohmann::json j;
-  std::ifstream f(std::filesystem::u8path(__FILE__).parent_path() /
+  std::ifstream f(std::filesystem::path(__FILE__).parent_path() /
                   "DistContentsExpected.json");
   f >> j;
 

@@ -14,6 +14,7 @@
 #include "GMST.h"
 #include "INGR.h"
 #include "KYWD.h"
+#include "LIGH.h"
 #include "LVLI.h"
 #include "MGEF.h"
 #include "NAVM.h"

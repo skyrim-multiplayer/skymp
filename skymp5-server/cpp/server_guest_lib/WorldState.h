@@ -73,12 +73,20 @@ public:
                      std::chrono::system_clock::duration time);
 
   void RequestSave(MpObjectReference& ref);
+  bool HasEspmFile(std::string_view filename) const noexcept;
 
   template <typename T>
   Viet::Promise<Viet::Void> SetTimer(T&& duration,
                                      uint32_t* outTimerId = nullptr)
   {
-    return timer.SetTimer(std::forward<T>(duration), outTimerId);
+    return timerRegular.SetTimer(std::forward<T>(duration), outTimerId);
+  }
+
+  template <typename T>
+  Viet::Promise<Viet::Void> SetEffectTimer(T&& duration,
+                                           uint32_t* outTimerId = nullptr)
+  {
+    return timerEffects.SetTimer(std::forward<T>(duration), outTimerId);
   }
 
   template <typename T>
@@ -92,6 +100,13 @@ public:
   }
 
   bool RemoveTimer(uint32_t timerId);
+  Viet::Promise<Viet::Void> SetTimer(
+    std::reference_wrapper<const std::chrono::system_clock::time_point>
+      wrapper);
+  Viet::Promise<Viet::Void> SetEffectTimer(
+    std::reference_wrapper<const std::chrono::system_clock::time_point>
+      wrapper);
+  bool RemoveEffectTimer(uint32_t timerId);
 
   const std::shared_ptr<MpForm>& LookupFormById(uint32_t formId);
 
@@ -174,6 +189,11 @@ public:
   IScriptStorage* GetScriptStorage() const;
   VirtualMachine& GetPapyrusVm();
   const std::set<uint32_t>& GetActorsByProfileId(int32_t profileId) const;
+  const std::set<uint32_t>& GetActorsByPrivateIndexedProperty(
+    const std::string& privateIndexedPropertyMapKey) const;
+  std::string MakePrivateIndexedPropertyMapKey(
+    const std::string& propertyName,
+    const std::string& propertyValueStringified);
   uint32_t GenerateFormId();
   void SetRelootTime(std::string recordType,
                      std::chrono::system_clock::duration dur);
@@ -183,10 +203,13 @@ public:
   auto& GetGrids() { return grids; }
   void SetNpcSettings(
     std::unordered_map<std::string, NpcSettingsEntry>&& settings);
+  void SetForbiddenRelootTypes(const std::set<std::string>& types);
 
 public:
   std::vector<std::string> espmFiles;
   std::unordered_map<int32_t, std::set<uint32_t>> actorIdByProfileId;
+  std::unordered_map<std::string, std::set<uint32_t>>
+    actorIdByPrivateIndexedProperty;
   std::shared_ptr<spdlog::logger> logger;
   std::vector<std::shared_ptr<PartOneListener>> listeners;
   std::map<uint32_t, uint32_t> hosters;
@@ -211,6 +234,7 @@ private:
   [[nodiscard]] bool NpcSourceFilesOverriden() const noexcept;
   [[nodiscard]] bool IsNpcAllowed(uint32_t baseId) const noexcept;
   [[nodiscard]] uint32_t GetFileIdx(uint32_t baseId) const noexcept;
+  [[nodiscard]] bool IsRelootForbidden(std::string type) const noexcept;
 
 private:
   struct GridInfo
@@ -235,5 +259,5 @@ private:
 
   struct Impl;
   std::shared_ptr<Impl> pImpl;
-  Viet::Timer timer;
+  Viet::Timer timerEffects, timerRegular;
 };

@@ -423,8 +423,8 @@ VarValue PapyrusObjectReference::PlayGamebryoAnimation(
   return VarValue::None();
 }
 
-VarValue PapyrusObjectReference::MoveTo(
-  VarValue self, const std::vector<VarValue>& arguments) const noexcept
+VarValue PapyrusObjectReference::MoveTo(VarValue self,
+                                        const std::vector<VarValue>& arguments)
 {
   if (arguments.size() < 1) {
     return VarValue::None();
@@ -456,6 +456,28 @@ VarValue PapyrusObjectReference::MoveTo(
     _thisObjectReference->SetAngle(rotation);
     _thisObjectReference->SetPos(dest);
   }
+  return VarValue::None();
+}
+
+VarValue PapyrusObjectReference::SetOpen(
+  VarValue self, const std::vector<VarValue>& arguments)
+{
+  if (arguments.size() < 1) {
+    spdlog::error("SetOpen: not enough arguments");
+    return VarValue::None();
+  }
+  auto* _thisObjectReference = GetFormPtr<MpObjectReference>(self);
+  if (!_thisObjectReference) {
+    spdlog::error("SetOpen: self is not a reference");
+    return VarValue::None();
+  }
+
+  if (_thisObjectReference->GetBaseType() != "DOOR") {
+    spdlog::error("SetOpen: self is not a door");
+    return VarValue::None();
+  }
+
+  _thisObjectReference->SetOpen(static_cast<bool>(arguments[0].CastToBool()));
   return VarValue::None();
 }
 
@@ -491,4 +513,5 @@ void PapyrusObjectReference::Register(
   AddMethod(vm, "PlayGamebryoAnimation",
             &PapyrusObjectReference::PlayGamebryoAnimation);
   AddMethod(vm, "MoveTo", &PapyrusObjectReference::MoveTo);
+  AddMethod(vm, "SetOpen", &PapyrusObjectReference::SetOpen);
 }
