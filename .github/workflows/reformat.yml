@@ -19,11 +19,11 @@ jobs:
       # - name: Install yarn packages
       #   uses: borales/actions-yarn@v4
       #   with:
-      #     cmd: install
+      #     cmd: --cwd=./misc/prettier install
       # - name: Format with prettier
       #   uses: borales/actions-yarn@v4
       #   with:
-      #     cmd: prettier-format
+      #     cmd: --cwd=./misc/prettier prettier-format
       - uses: EndBug/add-and-commit@v9
         with:
           default_author: github_actor
