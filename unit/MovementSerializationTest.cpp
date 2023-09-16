@@ -4,28 +4,27 @@
 #include <slikenet/BitStream.h>
 
 #include "MovementMessage.h"
-#include "MovementMessageSerialization.h"
 
 namespace {
 
 MovementMessage MakeTestMovementMessage(RunMode runMode, bool hasLookAt)
 {
-  MovementMessage result{
-    1337,              // idx
-    0x2077,            // worldOrCell
-    { 0.25, -100, 0 }, // pos
-    { 123, 0, 45 },    // rot
-    270,               // direction
-    0.5,               // healthPercentage
-    400,               // speed
-    RunMode::Running,
-    true,            // isInJumpState
-    true,            // isSneaking
-    false,           // isBlocking
-    true,            // isWeapDrawn
-    false,           // isDead
-    { { 1, 2, 3 } }, // lookAt
-  };
+  MovementMessage result;
+  result.idx = 1337;
+  result.worldOrCell = 0x2077;
+  result.pos = { 0.25, -100, 0 };
+  result.rot = { 123, 0, 45 };
+  result.direction = 270;
+  result.healthPercentage = 0.5;
+  result.speed = 400;
+  result.runMode = RunMode::Running;
+  result.isInJumpState = true;
+  result.isSneaking = true;
+  result.isBlocking = false;
+  result.isWeapDrawn = true;
+  result.isDead = false;
+  result.lookAt = {{1,2,3}};
+
   result.runMode = runMode;
   if (!hasLookAt) {
     result.lookAt = std::nullopt;
@@ -54,10 +53,17 @@ TEST_CASE("MovementMessage correctly encoded and decoded to JSON",
   for (const auto& [name, movData] : MakeTestMovementMessageCases()) {
     SECTION(name)
     {
-      const auto json = serialization::MovementMessageToJson(movData);
-      const auto movData2 = serialization::MovementMessageFromJson(json);
+      nlohmann::json json;
+      movData.WriteJson(json);
+
+      MovementMessage movData2;
+      movData2.ReadJson(json);
+
+      nlohmann::json json2;
+      movData2.WriteJson(json2);
+
       INFO(json.dump());
-      REQUIRE(movData == movData2);
+      REQUIRE(json == json2);
     }
   }
 }
@@ -69,12 +75,16 @@ TEST_CASE("MovementMessage correctly encoded and decoded to BitStream",
     SECTION(name)
     {
       SLNet::BitStream stream;
-      serialization::WriteToBitStream(stream, movData);
+      movData.WriteBinary(stream);
 
       MovementMessage movData2;
-      serialization::ReadFromBitStream(stream, movData2);
+      movData2.ReadBinary(stream);
 
-      REQUIRE(movData == movData2);
+      SLNet::BitStream stream2;
+      movData2.WriteBinary(stream2);
+
+      REQUIRE(stream.GetNumberOfBytesUsed() == stream2.GetNumberOfBytesUsed());
+      REQUIRE(memcmp(stream.GetData(), stream2.GetData(), stream.GetNumberOfBytesUsed()) == 0);
     }
   }
 }

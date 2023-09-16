@@ -1,6 +1,6 @@
 #include "MessageSerializerFactory.h"
-#include "NetworkingInterface.h"
 #include "MsgType.h"
+#include "MinPacketId.h"
 #include <nlohmann/json.hpp>
 #include <slikenet/BitStream.h>
 
@@ -14,28 +14,28 @@ void Serialize(const nlohmann::json &inputJson, SLNet::BitStream &outputStream)
     Message message;
     message.ReadJson(inputJson); // may throw. we shouldn't pollute outputStream in this case
 
-    stream.Write(static_cast<uint8_t>(Networking::MinPacketId));
-    stream.Write(static_cast<uint8_t>(Message::kHeaderByte));
-    message.WriteBinary(stream);
+    outputStream.Write(static_cast<uint8_t>(Networking::MinPacketId));
+    outputStream.Write(static_cast<uint8_t>(Message::kHeaderByte));
+    message.WriteBinary(outputStream);
 }
 
 template <class Message>
 std::optional<DeserializeResult> Deserialize(const uint8_t* rawMessageJsonOrBinary, size_t length)
 {
-    if (length >= 2 && data[1] == Message::kHeaderByte) {
+    if (length >= 2 && rawMessageJsonOrBinary[1] == Message::kHeaderByte) {
         // BitStream requires non-const ref even though it doesn't modify it
-        SLNet::BitStream stream(const_cast<unsigned char*>(data) + 2, length - 2, /*copyData*/ false);
+        SLNet::BitStream stream(const_cast<unsigned char*>(rawMessageJsonOrBinary) + 2, length - 2, /*copyData*/ false);
 
         Message message;
         message.ReadBinary(stream);
 
         DeserializeResult result;
-        result.msgType = Message::kMsgType;
+        result.msgType = static_cast<MsgType>(Message::kMsgType);
         result.message = std::make_unique<Message>(std::move(message));
         result.format = DeserializeInputFormat::Binary;
     }
 
-    // TODO: parse json here instead of falling back to PacketParser.cpp
+    // TODO: parse json here as well instead of falling back to PacketParser.cpp
 
     return std::nullopt;
 }
@@ -59,7 +59,8 @@ std::shared_ptr<MessageSerializer> MessageSerializerFactory::CreateMessageSerial
     REGISTER_MESSAGE(MovementMessage)
     REGISTER_MESSAGE(UpdateAnimationMessage)
 
-    return std::make_shared<MessageSerializer>(serializeFns);
+    // make_shared isn't working for private constructors
+    return std::shared_ptr<MessageSerializer>(new MessageSerializer(serializeFns, deserializeFns));
 }
 
 MessageSerializer::MessageSerializer(std::vector<SerializeFn> serializerFns_, std::vector<DeserializeFn> deserializerFns_) : serializerFns(serializerFns_), deserializerFns(deserializerFns_)

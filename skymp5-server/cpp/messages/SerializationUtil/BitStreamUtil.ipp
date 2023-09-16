@@ -42,31 +42,6 @@ void ReadFromBitStream(SLNet::BitStream& stream, std::array<T, N>& arr)
   }
 }
 
-void WriteToBitStream(SLNet::BitStream& stream, const std::string& str)
-{
-  WriteToBitStream(stream, static_cast<uint32_t>(str.size()));
-  // TODO: write whole memory at once
-  for (char ch : str) {
-    WriteToBitStream(stream, static_cast<uint8_t>(ch));
-  }
-}
-
-void ReadFromBitStream(SLNet::BitStream& stream, std::string& str)
-{
-  str.clear();
-
-  uint32_t size = 0;
-  if (stream.Read(size)) {
-    str.reserve(size);
-    // TODO: read all memory at once
-    for (uint32_t i = 0; i < size; ++i) {
-      uint8_t ch = 0;
-      ReadFromBitStream(stream, ch);
-      str.push_back(ch);
-    }
-  }
-}
-
 template <class T>
 T ReadFromBitStream(SLNet::BitStream& stream)
 {

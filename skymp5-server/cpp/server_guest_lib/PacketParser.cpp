@@ -83,11 +83,10 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
 
   const auto& jMessage = rawMsgData.parsed;
 
-  using TypeInt = std::underlying_type<MsgType>::type;
-  auto type = MsgType::Invalid;
-  Read(jMessage, JsonPointers::t, reinterpret_cast<TypeInt*>(&type));
+  int64_t type = static_cast<int64_t>(MsgType::Invalid);
+  Read(jMessage, JsonPointers::t, &type);
 
-  switch (type) {
+  switch (static_cast<MsgType>(type)) {
     case MsgType::Invalid:
       break;
     case MsgType::CustomPacket: {
@@ -205,7 +204,7 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
       uint32_t target;
       ReadEx(jMessage, JsonPointers::target, &target);
       auto e = Inventory::Entry::FromJson(jMessage);
-      if (type == MsgType::PutItem) {
+      if (static_cast<MsgType>(type) == MsgType::PutItem) {
         e.extra.worn = Inventory::Worn::None;
         actionListener.OnPutItem(rawMsgData, target, e);
       } else {

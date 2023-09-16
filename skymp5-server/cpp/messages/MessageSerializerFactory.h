@@ -8,6 +8,7 @@
 #include <utility>
 #include <optional>
 #include "MessageBase.h"
+#include "MsgType.h"
 
 class MessageSerializer;
 

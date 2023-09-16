@@ -3,18 +3,14 @@
 #include <cstdio>
 #include <string>
 #include <vector>
+#include "MinPacketId.h"
 
 namespace Networking {
-using UserId = unsigned short;
-enum : UserId
-{
-  InvalidUserId = (UserId)~0
-};
 
-enum : unsigned char
-{
-  MinPacketId = 134
-};
+using UserId = unsigned short;
+
+constexpr UserId InvalidUserId = static_cast<UserId>(~0);
+
 // First byte must represent id of the packet (>= MinPacketId)
 using PacketData = const unsigned char*;
 

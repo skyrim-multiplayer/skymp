@@ -2,11 +2,13 @@
 
 #include "FileUtils.h"
 #include "MovementMessage.h"
-#include "MovementMessageSerialization.h"
+#include "MessageSerializerFactory.h"
 #include "MsgType.h"
 #include <nlohmann/json.hpp>
 #include <spdlog/spdlog.h>
 #include <vector>
+#include <tuple>
+#include <slikenet/BitStream.h>
 
 void MpClientPlugin::CreateClient(State& state, const char* targetHostname,
                                   uint16_t targetPort)
@@ -36,39 +38,33 @@ bool MpClientPlugin::IsConnected(State& state)
   return state.cl && state.cl->IsConnected();
 }
 
-void MpClientPlugin::Tick(State& state, OnPacket onPacket, void* state_)
+void MpClientPlugin::Tick(State& state, OnPacket onPacket, DeserializeMessage deserializeMessageFn, void* state_)
 {
   if (!state.cl)
     return;
 
-  std::pair<OnPacket, void*> packetAndState(onPacket, state_);
+  std::tuple<OnPacket, DeserializeMessage, void*> locals(onPacket, deserializeMessageFn, state_);
 
   state.cl->Tick(
     [](void* rawState, Networking::PacketType packetType,
        Networking::PacketData data, size_t length, const char* error) {
-      const auto& [onPacket, state] =
-        *reinterpret_cast<std::pair<OnPacket, void*>*>(rawState);
+      const auto& [onPacket, deserializeMessageFn, state] =
+        *reinterpret_cast<std::tuple<OnPacket, DeserializeMessage, void*>*>(rawState);
 
-      std::string jsonContent;
-
-      if (packetType == Networking::PacketType::Message && length > 1) {
-        if (data[1] == MovementMessage::kHeaderByte) {
-          MovementMessage movData;
-          // BitStream requires non-const ref even though it doesn't modify it
-          SLNet::BitStream stream(const_cast<unsigned char*>(data) + 2,
-                                  length - 2, /*copyData*/ false);
-          serialization::ReadFromBitStream(stream, movData);
-          jsonContent = serialization::MovementMessageToJson(movData).dump();
-        } else {
-          jsonContent =
-            std::string(reinterpret_cast<const char*>(data) + 1, length - 1);
-        }
+      if (packetType != Networking::PacketType::Message) {
+        return onPacket(static_cast<int32_t>(packetType), "", error, state);
       }
 
+      std::string deserializedJsonContent;
+      if (deserializeMessageFn(data, length, deserializedJsonContent)) {
+        return onPacket(static_cast<int32_t>(packetType), deserializedJsonContent.data(), error, state);
+      }
+
+      std::string jsonContent = std::string(reinterpret_cast<const char*>(data) + 1, length - 1);
       onPacket(static_cast<int32_t>(packetType), jsonContent.data(), error,
                state);
     },
-    &packetAndState);
+    &locals);
 }
 
 void MpClientPlugin::Send(State& state, const char* jsonContent, bool reliable, SerializeMessage serializeMessageFn)
@@ -78,7 +74,7 @@ void MpClientPlugin::Send(State& state, const char* jsonContent, bool reliable, 
     return;
   }
 
-  std::vector<uint8_t> buf;
-  serializeMessageFn(jsonContent, buf);
-  state.cl->Send(buf.data(), buf.size(), reliable);
+  SLNet::BitStream stream;
+  serializeMessageFn(jsonContent, stream);
+  state.cl->Send(stream.GetData(), stream.GetNumberOfBytesUsed(), reliable);
 }

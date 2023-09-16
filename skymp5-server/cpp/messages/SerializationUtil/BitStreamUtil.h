@@ -1,6 +1,7 @@
+#pragma once
 #include <array>
 #include <optional>
-
+#include <string>
 #include <slikenet/BitStream.h>
 
 namespace SerializationUtil {
