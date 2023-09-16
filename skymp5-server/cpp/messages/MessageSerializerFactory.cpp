@@ -3,9 +3,8 @@
 #include "MsgType.h"
 #include <nlohmann/json.hpp>
 #include <slikenet/BitStream.h>
-
-#include "MovementMessage.h"
-#include "UpdateAnimationMessage.h"
+#include <spdlog/spdlog.h>
+#include "Messages.h"
 
 namespace {
 template <class Message>
@@ -37,10 +36,12 @@ std::optional<DeserializeResult> Deserialize(
     result.msgType = static_cast<MsgType>(Message::kMsgType);
     result.message = std::make_unique<Message>(std::move(message));
     result.format = DeserializeInputFormat::Binary;
+    return result;
   }
 
   // TODO: parse json here as well instead of falling back to PacketParser.cpp
 
+  spdlog::trace("Deserialize - Failure: length={}, rawMessageJsonOrBinary[1]={}, kHeaderByte={}", length, length >= 2 ? rawMessageJsonOrBinary[1] : 0, Message::kHeaderByte);
   return std::nullopt;
 }
 } // namespace
@@ -115,16 +116,32 @@ void MessageSerializer::Serialize(const char* jsonContent,
 std::optional<DeserializeResult> MessageSerializer::Deserialize(
   const uint8_t* rawMessageJsonOrBinary, size_t length)
 {
-  // TODO: logging
-  if (length >= 2) {
-    auto headerByte = rawMessageJsonOrBinary[1];
-    if (headerByte < deserializerFns.size()) {
-      auto deserializerFn = deserializerFns[headerByte];
-      if (deserializerFn) {
-        return deserializerFn(rawMessageJsonOrBinary, length);
-      }
-    }
+  if (length < 2) {
+    spdlog::trace("MessageSerializer::Deserialize - Length < 2");
+    return std::nullopt;
   }
 
-  return std::nullopt;
+  auto headerByte = rawMessageJsonOrBinary[1];
+  if (headerByte == '{') {
+    return std::nullopt; // Print nothing, should parse JSON as usual
+  }
+
+  if (headerByte >= deserializerFns.size()) {
+    spdlog::trace("MessageSerializer::Deserialize - {} >= deserializerFns.size() ", static_cast<int>(headerByte));
+    return std::nullopt;
+  }
+
+  auto deserializerFn = deserializerFns[headerByte];
+  if (!deserializerFn) {
+    spdlog::trace("MessageSerializer::Deserialize - deserializerFn not found for headerByte {}", static_cast<int>(headerByte));
+    return std::nullopt;
+  }
+
+  auto result = deserializerFn(rawMessageJsonOrBinary, length);
+  if (result == std::nullopt) {
+    spdlog::trace("MessageSerializer::Deserialize - deserializerFn returned nullopt for headerByte {}", static_cast<int>(headerByte));
+    return std::nullopt;
+  }
+
+  return result;
 }

@@ -84,6 +84,7 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
         break;
       }
     }
+    return;
   }
 
   rawMsgData.parsed =

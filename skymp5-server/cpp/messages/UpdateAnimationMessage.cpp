@@ -40,4 +40,6 @@ void UpdateAnimationMessage::ReadJson(const nlohmann::json& json)
   const auto& data = json.at("data");
   result.numChanges = data.at("numChanges");
   result.animEventName = data.at("animEventName");
+
+  *this = result;
 }
