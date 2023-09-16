@@ -837,8 +837,7 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
                 healthPercentage);
 }
 
-void ActionListener::OnUnknown(const RawMessageData& rawMsgData,
-                               simdjson::dom::element data)
+void ActionListener::OnUnknown(const RawMessageData& rawMsgData)
 {
-  spdlog::debug("Got unhandled message: {}", simdjson::minify(data));
+  spdlog::error("Got unhandled message: {}", simdjson::minify(rawMsgData.parsed));
 }

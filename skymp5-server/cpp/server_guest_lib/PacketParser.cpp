@@ -35,6 +35,7 @@ struct PacketParser::Impl
 {
   simdjson::dom::parser simdjsonParser;
   std::shared_ptr<MessageSerializer> serializer;
+  std::once_flag jsonWarning;
 };
 
 PacketParser::PacketParser()
@@ -61,6 +62,11 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
 
   auto result = pImpl->serializer->Deserialize(data, length);
   if (result != std::nullopt) {
+    if (result->format == DeserializeInputFormat::Json) {
+      std::call_once(pImpl->jsonWarning, [&] {
+        spdlog::warn("PacketParser::TransformPacketIntoAction - 1-st time encountered a JSON packet, userId={}, msgType={}", userId, static_cast<int64_t>(result->msgType));
+      });
+    }
     switch (result->msgType) {
       case MsgType::UpdateMovement: {
         auto message =
@@ -83,6 +89,10 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
                                          animationData);
         break;
       }
+      default: {
+        spdlog::error("Unhandled MsgType {} after Deserialize", static_cast<int64_t>(result->msgType));
+        break;
+      }
     }
     return;
   }
@@ -102,51 +112,6 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
       simdjson::dom::element content;
       Read(jMessage, JsonPointers::content, &content);
       actionListener.OnCustomPacket(rawMsgData, content);
-    } break;
-    case MsgType::UpdateMovement: {
-      uint32_t idx;
-      ReadEx(jMessage, JsonPointers::idx, &idx);
-
-      simdjson::dom::element data_;
-      Read(jMessage, JsonPointers::data, &data_);
-
-      simdjson::dom::element jPos;
-      Read(data_, JsonPointers::pos, &jPos);
-      float pos[3];
-      for (int i = 0; i < 3; ++i)
-        ReadEx(jPos, i, &pos[i]);
-
-      simdjson::dom::element jRot;
-      Read(data_, JsonPointers::rot, &jRot);
-      float rot[3];
-      for (int i = 0; i < 3; ++i)
-        ReadEx(jRot, i, &rot[i]);
-
-      bool isInJumpState = false;
-      Read(data_, JsonPointers::isInJumpState, &isInJumpState);
-
-      bool isWeapDrawn = false;
-      Read(data_, JsonPointers::isWeapDrawn, &isWeapDrawn);
-
-      bool isBlocking = false;
-      Read(data_, JsonPointers::isBlocking, &isBlocking);
-
-      uint32_t worldOrCell = 0;
-      ReadEx(data_, JsonPointers::worldOrCell, &worldOrCell);
-
-      actionListener.OnUpdateMovement(
-        rawMsgData, idx, { pos[0], pos[1], pos[2] },
-        { rot[0], rot[1], rot[2] }, isInJumpState, isWeapDrawn, isBlocking,
-        worldOrCell);
-
-    } break;
-    case MsgType::UpdateAnimation: {
-      uint32_t idx;
-      ReadEx(jMessage, JsonPointers::idx, &idx);
-      simdjson::dom::element jData;
-      ReadEx(jMessage, JsonPointers::data, &jData);
-      actionListener.OnUpdateAnimation(rawMsgData, idx,
-                                       AnimationData::FromJson(jData));
     } break;
     case MsgType::UpdateAppearance: {
       uint32_t idx;
@@ -321,9 +286,7 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
       break;
     }
     default:
-      simdjson::dom::element data_;
-      ReadEx(jMessage, JsonPointers::data, &data_);
-      actionListener.OnUnknown(rawMsgData, data_);
+      actionListener.OnUnknown(rawMsgData);
       break;
   }
 }

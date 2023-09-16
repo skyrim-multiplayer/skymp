@@ -39,10 +39,30 @@ std::optional<DeserializeResult> Deserialize(
     return result;
   }
 
-  // TODO: parse json here as well instead of falling back to PacketParser.cpp
+  std::string str(reinterpret_cast<const char*>(rawMessageJsonOrBinary + 1), length - 1);
+  nlohmann::json json = nlohmann::json::parse(str);
 
-  spdlog::trace("Deserialize - Failure: length={}, rawMessageJsonOrBinary[1]={}, kHeaderByte={}", length, length >= 2 ? rawMessageJsonOrBinary[1] : 0, Message::kHeaderByte);
-  return std::nullopt;
+  auto msgTypeIt = json.find("t");
+  if (msgTypeIt == json.end()) {
+    // Messages produced by the server use string "type" instead of integer "t"
+    // We will refactor them out at some point
+    return std::nullopt;
+  }
+  int msgType = msgTypeIt->get<int>();
+
+  if (msgType != Message::kMsgType) {
+    // In case of JSON we keep searching in deserializers array
+    return std::nullopt;
+  }
+
+  Message message;
+  message.ReadJson(json);
+
+  DeserializeResult result;
+  result.msgType = static_cast<MsgType>(msgType);
+  result.message = std::make_unique<Message>(std::move(message));
+  result.format = DeserializeInputFormat::Json;
+  return result;
 }
 } // namespace
 
@@ -123,7 +143,18 @@ std::optional<DeserializeResult> MessageSerializer::Deserialize(
 
   auto headerByte = rawMessageJsonOrBinary[1];
   if (headerByte == '{') {
-    return std::nullopt; // Print nothing, should parse JSON as usual
+    spdlog::trace("MessageSerializer::Deserialize - Encountered JSON message");
+    for (auto fn : deserializerFns) {
+      if (fn) {
+        auto result = fn(rawMessageJsonOrBinary, length);
+        if (result) {
+          spdlog::trace("MessageSerializer::Deserialize - Deserialized");
+          return result;
+        }
+      }
+    }
+    spdlog::trace("MessageSerializer::Deserialize - Failed to deserialize, falling back to PacketParser.cpp");
+    return std::nullopt;
   }
 
   if (headerByte >= deserializerFns.size()) {

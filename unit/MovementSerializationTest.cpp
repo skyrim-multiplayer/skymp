@@ -64,6 +64,8 @@ TEST_CASE("MovementMessage correctly encoded and decoded to JSON",
 
       INFO(json.dump());
       REQUIRE(json == json2);
+      REQUIRE(json["t"].get<int>() == static_cast<int>(MovementMessage::kMsgType));
+      REQUIRE(json2["t"].get<int>() == static_cast<int>(MovementMessage::kMsgType));
     }
   }
 }
