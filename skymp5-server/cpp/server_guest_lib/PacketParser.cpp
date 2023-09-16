@@ -3,12 +3,12 @@
 #include "Exceptions.h"
 #include "HitData.h"
 #include "JsonUtils.h"
-#include "MovementMessage.h"
-#include "MovementMessageSerialization.h"
+#include "MessageSerializerFactory.h"
 #include "MpActor.h"
-#include <MsgType.h>
+#include "MsgType.h"
 #include <simdjson.h>
 #include <slikenet/BitStream.h>
+#include "Messages.h"
 
 namespace FormIdCasts {
 uint32_t LongToNormal(uint64_t longFormId)
@@ -34,11 +34,13 @@ static const JsonPointer t("t"), idx("idx"), content("content"), data("data"),
 struct PacketParser::Impl
 {
   simdjson::dom::parser simdjsonParser;
+  std::shared_ptr<MessageSerializer> serializer;
 };
 
 PacketParser::PacketParser()
 {
   pImpl.reset(new Impl);
+  pImpl->serializer = MessageSerializerFactory::CreateMessageSerializer();
 }
 
 void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
@@ -57,20 +59,23 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
     userId,
   };
 
-  if (length > 1 && data[1] == MovementMessage::kHeaderByte) {
-    MovementMessage movData;
-    // BitStream requires non-const ref even though it doesn't modify it
-    SLNet::BitStream stream(const_cast<unsigned char*>(data) + 2, length - 2,
-                            /*copyData*/ false);
-    serialization::ReadFromBitStream(stream, movData);
-
-    actionListener.OnUpdateMovement(
-      rawMsgData, movData.idx,
-      { movData.pos[0], movData.pos[1], movData.pos[2] },
-      { movData.rot[0], movData.rot[1], movData.rot[2] },
-      movData.isInJumpState, movData.isWeapDrawn, movData.isBlocking,
-      movData.worldOrCell);
-    return;
+  auto result = pImpl->serializer->Deserialize(data, length);
+  if (result != std::nullopt) {
+    switch (result->msgType) {
+      case MsgType::UpdateMovement: {
+        auto message = reinterpret_cast<MovementMessage *>(result->message.get());
+        actionListener.OnUpdateMovement(rawMsgData, message->idx, { message->pos[0], message->pos[1], message->pos[2] }, { message->rot[0], message->rot[1], message->rot[2] }, message->isInJumpState, message->isWeapDrawn, message->isBlocking, message->worldOrCell);
+        break;
+      }
+      case MsgType::UpdateAnimation: {
+        auto message = reinterpret_cast<UpdateAnimationMessage *>(result->message.get());
+        AnimationData animationData;
+        animationData.animEventName = message->animEventName.data();
+        animationData.numChanges = message->numChanges;
+        actionListener.OnUpdateAnimation(rawMsgData, message->idx, animationData);
+        break;
+      }
+    }
   }
 
   rawMsgData.parsed =

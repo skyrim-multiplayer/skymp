@@ -92,25 +92,29 @@ void MovementMessage::WriteJson(nlohmann::json &json) const
 
 void MovementMessage::ReadJson(const nlohmann::json &json)
 {
-  idx = json.at("idx").get<uint32_t>();
+  MovementMessage result;
+
+  result.idx = json.at("idx").get<uint32_t>();
 
   const auto& data = json.at("data");
-  worldOrCell = data.at("worldOrCell").get<uint32_t>();
-  pos = data.at("pos").get<std::array<float, 3>>();
-  rot = data.at("rot").get<std::array<float, 3>>();
-  direction = data.at("direction").get<float>();
-  healthPercentage = data.at("healthPercentage").get<float>();
-  speed = data.at("speed").get<float>();
-  runMode = RunModeFromString(data.at("runMode").get<std::string_view>());
-  isInJumpState = data.at("isInJumpState").get<bool>();
-  isSneaking = data.at("isSneaking").get<bool>();
-  isBlocking = data.at("isBlocking").get<bool>();
-  isWeapDrawn = data.at("isWeapDrawn").get<bool>();
-  isDead = data.at("isDead").get<bool>();
+  result.worldOrCell = data.at("worldOrCell").get<uint32_t>();
+  result.pos = data.at("pos").get<std::array<float, 3>>();
+  result.rot = data.at("rot").get<std::array<float, 3>>();
+  result.direction = data.at("direction").get<float>();
+  result.healthPercentage = data.at("healthPercentage").get<float>();
+  result.speed = data.at("speed").get<float>();
+  result.runMode = RunModeFromString(data.at("runMode").get<std::string_view>());
+  result.isInJumpState = data.at("isInJumpState").get<bool>();
+  result.isSneaking = data.at("isSneaking").get<bool>();
+  result.isBlocking = data.at("isBlocking").get<bool>();
+  result.isWeapDrawn = data.at("isWeapDrawn").get<bool>();
+  result.isDead = data.at("isDead").get<bool>();
   const auto lookAtIt = data.find("lookAt");
   if (lookAtIt != data.end()) {
-    lookAt = lookAtIt->get<std::array<float, 3>>();
+    result.lookAt = lookAtIt->get<std::array<float, 3>>();
   }
+
+  *this = std::move(result);
 }
 
 const std::string& ToString(RunMode runMode)
