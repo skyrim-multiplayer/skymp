@@ -266,12 +266,12 @@ EventResult EventHandler::ProcessEvent(const RE::TESCombatEvent* event,
 
       auto target = RE::TESForm::LookupByID<RE::TESObjectREFR>(targetid);
       if (!target && targetid != 0) {
-        return EventResult::kContinue;
+        return;
       }
 
       auto actor = RE::TESForm::LookupByID<RE::TESObjectREFR>(actorid);
       if (!actor && actorid != 0) {
-        return EventResult::kContinue;
+        return;
       }
 
       AddObjProperty(&obj, "target", target, "ObjectReference");
