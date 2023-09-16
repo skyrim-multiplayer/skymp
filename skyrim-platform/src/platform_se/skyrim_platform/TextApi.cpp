@@ -35,7 +35,6 @@ JsValue TextApi::DestroyText(const JsFunctionArguments& args)
   TextsCollection::GetSingleton().DestroyText(static_cast<int>(args[1]));
   return JsValue::Undefined();
 }
-
 JsValue TextApi::DestroyAllTexts(const JsFunctionArguments&)
 {
   TextsCollection::GetSingleton().DestroyAllTexts();
@@ -51,7 +50,6 @@ JsValue TextApi::SetTextPos(const JsFunctionArguments& args)
   TextsCollection::GetSingleton().SetTextPos(textNameId, argPosX, argPosY);
   return JsValue::Undefined();
 }
-
 JsValue TextApi::SetTextString(const JsFunctionArguments& args)
 {
   auto textId = static_cast<int>(args[1]);
@@ -63,7 +61,6 @@ JsValue TextApi::SetTextString(const JsFunctionArguments& args)
   TextsCollection::GetSingleton().SetTextString(textId, moveArgString);
   return JsValue::Undefined();
 }
-
 JsValue TextApi::SetTextColor(const JsFunctionArguments& args)
 {
   std::array<double, 4> argColor;
@@ -79,7 +76,6 @@ JsValue TextApi::SetTextColor(const JsFunctionArguments& args)
   TextsCollection::GetSingleton().SetTextColor(textNameId, moveArgColor);
   return JsValue::Undefined();
 }
-
 JsValue TextApi::SetTextSize(const JsFunctionArguments& args)
 {
   auto textId = static_cast<int>(args[1]);
@@ -89,7 +85,6 @@ JsValue TextApi::SetTextSize(const JsFunctionArguments& args)
   TextsCollection::GetSingleton().SetTextSize(textId, size);
   return JsValue::Undefined();
 }
-
 JsValue TextApi::SetTextRotation(const JsFunctionArguments& args)
 {
   auto textId = static_cast<int>(args[1]);
@@ -99,7 +94,6 @@ JsValue TextApi::SetTextRotation(const JsFunctionArguments& args)
   TextsCollection::GetSingleton().SetTextRotation(textId, rot);
   return JsValue::Undefined();
 }
-
 JsValue TextApi::SetTextFont(const JsFunctionArguments& args)
 {
   auto textId = static_cast<int>(args[1]);
@@ -111,7 +105,6 @@ JsValue TextApi::SetTextFont(const JsFunctionArguments& args)
 
   return JsValue::Undefined();
 }
-
 JsValue TextApi::SetTextDepth(const JsFunctionArguments& args)
 {
   auto textId = static_cast<int>(args[1]);
@@ -121,7 +114,6 @@ JsValue TextApi::SetTextDepth(const JsFunctionArguments& args)
   TextsCollection::GetSingleton().SetTextDepth(textId, depth);
   return JsValue::Undefined();
 }
-
 JsValue TextApi::SetTextEffect(const JsFunctionArguments& args)
 {
   auto textId = static_cast<int>(args[1]);
@@ -131,7 +123,6 @@ JsValue TextApi::SetTextEffect(const JsFunctionArguments& args)
   TextsCollection::GetSingleton().SetTextEffect(textId, eff);
   return JsValue::Undefined();
 }
-
 JsValue TextApi::SetTextOrigin(const JsFunctionArguments& args)
 {
   std::array<double, 2> argOrigin;
@@ -149,7 +140,7 @@ JsValue TextApi::SetTextOrigin(const JsFunctionArguments& args)
 
 JsValue TextApi::GetTextPos(const JsFunctionArguments& args)
 {
-  auto postions =
+  auto& postions =
     TextsCollection::GetSingleton().GetTextPos(static_cast<int>(args[1]));
   auto jsArray = JsValue::Array(2);
 
@@ -158,7 +149,6 @@ JsValue TextApi::GetTextPos(const JsFunctionArguments& args)
 
   return jsArray;
 }
-
 JsValue TextApi::GetTextString(const JsFunctionArguments& args)
 {
   const auto& str =
@@ -167,7 +157,6 @@ JsValue TextApi::GetTextString(const JsFunctionArguments& args)
   std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
   return JsValue(converter.to_bytes(str));
 }
-
 JsValue TextApi::GetTextColor(const JsFunctionArguments& args)
 {
   const auto& argArray =
@@ -180,7 +169,6 @@ JsValue TextApi::GetTextColor(const JsFunctionArguments& args)
 
   return jsArray;
 }
-
 JsValue TextApi::GetTextSize(const JsFunctionArguments& args)
 {
   const auto& size =
@@ -188,7 +176,6 @@ JsValue TextApi::GetTextSize(const JsFunctionArguments& args)
 
   return JsValue(size);
 }
-
 JsValue TextApi::GetTextRotation(const JsFunctionArguments& args)
 {
   const auto& rot = TextsCollection::GetSingleton().GetTextRotation(
@@ -196,7 +183,6 @@ JsValue TextApi::GetTextRotation(const JsFunctionArguments& args)
 
   return JsValue(rot);
 }
-
 JsValue TextApi::GetTextFont(const JsFunctionArguments& args)
 {
   const auto& font =
@@ -205,7 +191,6 @@ JsValue TextApi::GetTextFont(const JsFunctionArguments& args)
   std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
   return JsValue(converter.to_bytes(font));
 }
-
 JsValue TextApi::GetTextDepth(const JsFunctionArguments& args)
 {
   const auto& depth =
@@ -213,7 +198,6 @@ JsValue TextApi::GetTextDepth(const JsFunctionArguments& args)
 
   return JsValue(depth);
 }
-
 JsValue TextApi::GetTextEffect(const JsFunctionArguments& args)
 {
   const auto& effect =
@@ -221,7 +205,6 @@ JsValue TextApi::GetTextEffect(const JsFunctionArguments& args)
 
   return JsValue(effect);
 }
-
 JsValue TextApi::GetTextOrigin(const JsFunctionArguments& args)
 {
   auto argArray =
