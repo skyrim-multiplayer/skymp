@@ -22,10 +22,10 @@ void MovementMessage::WriteBinary(SLNet::BitStream& stream) const
   WriteToBitStream(stream, healthPercentage);
   WriteToBitStream(stream, speed);
 
-  WriteToBitStream(
-    stream, static_cast<bool>(static_cast<uint8_t>(runMode) & 2));
-  WriteToBitStream(
-    stream, static_cast<bool>(static_cast<uint8_t>(runMode) & 1));
+  WriteToBitStream(stream,
+                   static_cast<bool>(static_cast<uint8_t>(runMode) & 2));
+  WriteToBitStream(stream,
+                   static_cast<bool>(static_cast<uint8_t>(runMode) & 1));
 
   WriteToBitStream(stream, isInJumpState);
   WriteToBitStream(stream, isSneaking);
@@ -61,7 +61,7 @@ void MovementMessage::ReadBinary(SLNet::BitStream& stream)
   ReadFromBitStream(stream, lookAt);
 }
 
-void MovementMessage::WriteJson(nlohmann::json &json) const
+void MovementMessage::WriteJson(nlohmann::json& json) const
 {
   auto result = nlohmann::json{
     { "t", MsgType::UpdateMovement },
@@ -90,7 +90,7 @@ void MovementMessage::WriteJson(nlohmann::json &json) const
   json = std::move(result);
 }
 
-void MovementMessage::ReadJson(const nlohmann::json &json)
+void MovementMessage::ReadJson(const nlohmann::json& json)
 {
   MovementMessage result;
 
@@ -103,7 +103,8 @@ void MovementMessage::ReadJson(const nlohmann::json &json)
   result.direction = data.at("direction").get<float>();
   result.healthPercentage = data.at("healthPercentage").get<float>();
   result.speed = data.at("speed").get<float>();
-  result.runMode = RunModeFromString(data.at("runMode").get<std::string_view>());
+  result.runMode =
+    RunModeFromString(data.at("runMode").get<std::string_view>());
   result.isInJumpState = data.at("isInJumpState").get<bool>();
   result.isSneaking = data.at("isSneaking").get<bool>();
   result.isBlocking = data.at("isBlocking").get<bool>();

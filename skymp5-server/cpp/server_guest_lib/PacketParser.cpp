@@ -4,11 +4,11 @@
 #include "HitData.h"
 #include "JsonUtils.h"
 #include "MessageSerializerFactory.h"
+#include "Messages.h"
 #include "MpActor.h"
 #include "MsgType.h"
 #include <simdjson.h>
 #include <slikenet/BitStream.h>
-#include "Messages.h"
 
 namespace FormIdCasts {
 uint32_t LongToNormal(uint64_t longFormId)
@@ -63,16 +63,24 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
   if (result != std::nullopt) {
     switch (result->msgType) {
       case MsgType::UpdateMovement: {
-        auto message = reinterpret_cast<MovementMessage *>(result->message.get());
-        actionListener.OnUpdateMovement(rawMsgData, message->idx, { message->pos[0], message->pos[1], message->pos[2] }, { message->rot[0], message->rot[1], message->rot[2] }, message->isInJumpState, message->isWeapDrawn, message->isBlocking, message->worldOrCell);
+        auto message =
+          reinterpret_cast<MovementMessage*>(result->message.get());
+        actionListener.OnUpdateMovement(
+          rawMsgData, message->idx,
+          { message->pos[0], message->pos[1], message->pos[2] },
+          { message->rot[0], message->rot[1], message->rot[2] },
+          message->isInJumpState, message->isWeapDrawn, message->isBlocking,
+          message->worldOrCell);
         break;
       }
       case MsgType::UpdateAnimation: {
-        auto message = reinterpret_cast<UpdateAnimationMessage *>(result->message.get());
+        auto message =
+          reinterpret_cast<UpdateAnimationMessage*>(result->message.get());
         AnimationData animationData;
         animationData.animEventName = message->animEventName.data();
         animationData.numChanges = message->numChanges;
-        actionListener.OnUpdateAnimation(rawMsgData, message->idx, animationData);
+        actionListener.OnUpdateAnimation(rawMsgData, message->idx,
+                                         animationData);
         break;
       }
     }

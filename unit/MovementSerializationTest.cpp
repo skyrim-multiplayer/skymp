@@ -23,7 +23,7 @@ MovementMessage MakeTestMovementMessage(RunMode runMode, bool hasLookAt)
   result.isBlocking = false;
   result.isWeapDrawn = true;
   result.isDead = false;
-  result.lookAt = {{1,2,3}};
+  result.lookAt = { { 1, 2, 3 } };
 
   result.runMode = runMode;
   if (!hasLookAt) {
@@ -84,7 +84,8 @@ TEST_CASE("MovementMessage correctly encoded and decoded to BitStream",
       movData2.WriteBinary(stream2);
 
       REQUIRE(stream.GetNumberOfBytesUsed() == stream2.GetNumberOfBytesUsed());
-      REQUIRE(memcmp(stream.GetData(), stream2.GetData(), stream.GetNumberOfBytesUsed()) == 0);
+      REQUIRE(memcmp(stream.GetData(), stream2.GetData(),
+                     stream.GetNumberOfBytesUsed()) == 0);
     }
   }
 }

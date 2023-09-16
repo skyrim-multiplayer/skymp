@@ -1,5 +1,7 @@
 #pragma once
 
+#include "MessageBase.h"
+#include "MsgType.h"
 #include <array>
 #include <cstdint>
 #include <optional>
@@ -7,8 +9,6 @@
 #include <string>
 #include <string_view>
 #include <tuple>
-#include "MsgType.h"
-#include "MessageBase.h"
 
 enum class RunMode
 {
@@ -29,8 +29,8 @@ struct MovementMessage : public MessageBase
 
   void WriteBinary(SLNet::BitStream& stream) const override;
   void ReadBinary(SLNet::BitStream& stream) override;
-  void WriteJson(nlohmann::json &json) const override;
-  void ReadJson(const nlohmann::json &json) override;
+  void WriteJson(nlohmann::json& json) const override;
+  void ReadJson(const nlohmann::json& json) override;
 
   uint32_t idx = 0;
   uint32_t worldOrCell = 0;

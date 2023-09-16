@@ -1,5 +1,5 @@
-#include "MpClientPlugin.h"
 #include "MessageSerializerFactory.h"
+#include "MpClientPlugin.h"
 #include <cstdint>
 #include <nlohmann/json.hpp>
 
@@ -10,25 +10,30 @@ MpClientPlugin::State& GetState()
   return g_state;
 }
 
-MessageSerializer &GetMessageSerializer()
+MessageSerializer& GetMessageSerializer()
 {
-  static std::shared_ptr<MessageSerializer> g_serializer = MessageSerializerFactory::CreateMessageSerializer();
+  static std::shared_ptr<MessageSerializer> g_serializer =
+    MessageSerializerFactory::CreateMessageSerializer();
   return *g_serializer;
 }
 
-void MySerializeMessage(const char *jsonContent, SLNet::BitStream &outputStream)
+void MySerializeMessage(const char* jsonContent,
+                        SLNet::BitStream& outputStream)
 {
   GetMessageSerializer().Serialize(jsonContent, outputStream);
 }
 
-bool MyDeserializeMessage(const uint8_t *data, size_t length, std::string &outJsonContent)
+bool MyDeserializeMessage(const uint8_t* data, size_t length,
+                          std::string& outJsonContent)
 {
-  std::optional<DeserializeResult> result = GetMessageSerializer().Deserialize(data, length);
+  std::optional<DeserializeResult> result =
+    GetMessageSerializer().Deserialize(data, length);
   if (!result) {
     return false;
   }
 
-  // TODO(perf): there should be a faster way to get JS object from binary (without extra json building)
+  // TODO(perf): there should be a faster way to get JS object from binary
+  // (without extra json building)
   nlohmann::json outJson;
   result->message->WriteJson(outJson);
   outJsonContent = outJson.dump();
@@ -61,11 +66,13 @@ __declspec(dllexport) bool IsConnected()
 __declspec(dllexport) void Tick(MpClientPlugin::OnPacket onPacket, void* state)
 {
 
-  return MpClientPlugin::Tick(GetState(), onPacket, MyDeserializeMessage, state);
+  return MpClientPlugin::Tick(GetState(), onPacket, MyDeserializeMessage,
+                              state);
 }
 
 __declspec(dllexport) void Send(const char* jsonContent, bool reliable)
 {
-  return MpClientPlugin::Send(GetState(), jsonContent, reliable, MySerializeMessage);
+  return MpClientPlugin::Send(GetState(), jsonContent, reliable,
+                              MySerializeMessage);
 }
 }

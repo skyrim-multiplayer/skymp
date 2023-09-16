@@ -1,9 +1,9 @@
 #pragma once
+#include "MinPacketId.h"
 #include <cstddef>
 #include <cstdio>
 #include <string>
 #include <vector>
-#include "MinPacketId.h"
 
 namespace Networking {
 

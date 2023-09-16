@@ -1,4 +1,3 @@
-namespace Networking 
-{
-    constexpr unsigned char MinPacketId = 134;
+namespace Networking {
+constexpr unsigned char MinPacketId = 134;
 }
