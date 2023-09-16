@@ -1,10 +1,10 @@
 #include "MessageSerializerFactory.h"
+#include "Messages.h"
 #include "MinPacketId.h"
 #include "MsgType.h"
 #include <nlohmann/json.hpp>
 #include <slikenet/BitStream.h>
 #include <spdlog/spdlog.h>
-#include "Messages.h"
 
 namespace {
 template <class Message>
@@ -39,7 +39,8 @@ std::optional<DeserializeResult> Deserialize(
     return result;
   }
 
-  std::string str(reinterpret_cast<const char*>(rawMessageJsonOrBinary + 1), length - 1);
+  std::string str(reinterpret_cast<const char*>(rawMessageJsonOrBinary + 1),
+                  length - 1);
   nlohmann::json json = nlohmann::json::parse(str);
 
   auto msgTypeIt = json.find("t");
@@ -153,24 +154,31 @@ std::optional<DeserializeResult> MessageSerializer::Deserialize(
         }
       }
     }
-    spdlog::trace("MessageSerializer::Deserialize - Failed to deserialize, falling back to PacketParser.cpp");
+    spdlog::trace("MessageSerializer::Deserialize - Failed to deserialize, "
+                  "falling back to PacketParser.cpp");
     return std::nullopt;
   }
 
   if (headerByte >= deserializerFns.size()) {
-    spdlog::trace("MessageSerializer::Deserialize - {} >= deserializerFns.size() ", static_cast<int>(headerByte));
+    spdlog::trace(
+      "MessageSerializer::Deserialize - {} >= deserializerFns.size() ",
+      static_cast<int>(headerByte));
     return std::nullopt;
   }
 
   auto deserializerFn = deserializerFns[headerByte];
   if (!deserializerFn) {
-    spdlog::trace("MessageSerializer::Deserialize - deserializerFn not found for headerByte {}", static_cast<int>(headerByte));
+    spdlog::trace("MessageSerializer::Deserialize - deserializerFn not found "
+                  "for headerByte {}",
+                  static_cast<int>(headerByte));
     return std::nullopt;
   }
 
   auto result = deserializerFn(rawMessageJsonOrBinary, length);
   if (result == std::nullopt) {
-    spdlog::trace("MessageSerializer::Deserialize - deserializerFn returned nullopt for headerByte {}", static_cast<int>(headerByte));
+    spdlog::trace("MessageSerializer::Deserialize - deserializerFn returned "
+                  "nullopt for headerByte {}",
+                  static_cast<int>(headerByte));
     return std::nullopt;
   }
 

@@ -64,7 +64,9 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
   if (result != std::nullopt) {
     if (result->format == DeserializeInputFormat::Json) {
       std::call_once(pImpl->jsonWarning, [&] {
-        spdlog::warn("PacketParser::TransformPacketIntoAction - 1-st time encountered a JSON packet, userId={}, msgType={}", userId, static_cast<int64_t>(result->msgType));
+        spdlog::warn("PacketParser::TransformPacketIntoAction - 1-st time "
+                     "encountered a JSON packet, userId={}, msgType={}",
+                     userId, static_cast<int64_t>(result->msgType));
       });
     }
     switch (result->msgType) {
@@ -90,7 +92,8 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
         break;
       }
       default: {
-        spdlog::error("Unhandled MsgType {} after Deserialize", static_cast<int64_t>(result->msgType));
+        spdlog::error("Unhandled MsgType {} after Deserialize",
+                      static_cast<int64_t>(result->msgType));
         break;
       }
     }
