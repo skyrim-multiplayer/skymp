@@ -1280,23 +1280,23 @@ EventResult EventHandler::ProcessEvent(const SKSE::CameraEvent* event,
     return EventResult::kContinue;
   }
 
-  uint32_t oldStateId = (event && event->oldState) ? to_underlying(event->oldState->id) : ~0;
-  uint32_t newStateId = (event && event->newState) ? to_underlying(event->newState->id) : ~0;
+  uint32_t oldStateId =
+    (event && event->oldState) ? to_underlying(event->oldState->id) : ~0;
+  uint32_t newStateId =
+    (event && event->newState) ? to_underlying(event->newState->id) : ~0;
 
   SkyrimPlatform::GetSingleton()->AddUpdateTask([oldStateId, newStateId] {
     auto obj = JsValue::Object();
 
     if (oldStateId == ~0) {
       obj.SetProperty("oldStateId", JsValue::Null());
-    }
-    else {
+    } else {
       AddObjProperty(&obj, "oldStateId", oldStateId);
     }
 
     if (newStateId == ~0) {
       obj.SetProperty("newStateId", JsValue::Null());
-    }
-    else {
+    } else {
       AddObjProperty(&obj, "newStateId", newStateId);
     }
 
