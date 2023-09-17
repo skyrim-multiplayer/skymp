@@ -45,9 +45,11 @@ static const auto jMovement =
                       { "runMode", "Standing" },
                       { "direction", 0 },
                       { "healthPercentage", 1 },
+                      { "speed", 0 },
                       { "isInJumpState", false },
                       { "isSneaking", false },
                       { "isBlocking", false },
+                      { "isDead", false },
                       { "isWeapDrawn", false } } } };
 
 static const auto jAppearance = nlohmann::json{
