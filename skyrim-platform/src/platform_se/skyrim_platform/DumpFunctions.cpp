@@ -182,13 +182,13 @@ void DumpFunctions::Run()
     std::map<std::string, RE::BSScript::ObjectTypeInfo*> types;
     vm->GetScriptObjectsWithATypeID(g_typeNames);
 
-    for (auto& papirusCalss : g_typeNames) {
+    for (auto& papyrusClass : g_typeNames) {
       RE::VMTypeID typeID;
       RE::BSTSmartPointer<RE::BSScript::ObjectTypeInfo> obj;
 
-      vm->GetTypeIDForScriptObject(papirusCalss.data(), typeID);
+      vm->GetTypeIDForScriptObject(papyrusClass.data(), typeID);
       vm->GetScriptObjectType(typeID, obj);
-      types[papirusCalss.data()] = obj.get();
+      types[papyrusClass] = obj.get();
     }
 
     for (auto& [name, type] : types) {
