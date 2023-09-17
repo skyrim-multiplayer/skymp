@@ -44,6 +44,7 @@ static const auto jMovement =
                       { "rot", { 0, 0, 179 } },
                       { "runMode", "Standing" },
                       { "direction", 0 },
+                      { "healthPercentage", 1 },
                       { "isInJumpState", false },
                       { "isSneaking", false },
                       { "isBlocking", false },
