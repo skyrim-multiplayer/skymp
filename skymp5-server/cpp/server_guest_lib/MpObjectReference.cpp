@@ -662,7 +662,8 @@ void MpObjectReference::RemoveItems(
 
   if (GetBaseType() == "CONT") {
     if (GetInventory().IsEmpty()) {
-      spdlog::info("MpObjectReference::RemoveItems - {:x} requesting reloot", this->GetFormId());
+      spdlog::info("MpObjectReference::RemoveItems - {:x} requesting reloot",
+                   this->GetFormId());
       RequestReloot();
     }
   }
