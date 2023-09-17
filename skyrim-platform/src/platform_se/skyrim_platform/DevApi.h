@@ -49,6 +49,7 @@ inline void Register(JsValue& exports, std::shared_ptr<JsEngine> jsEngine,
                         DisableCtrlPrtScnHotkey();
                         return JsValue::Undefined();
                       }));
-  exports.SetProperty("blockPapyrusEvents", JsValue::Function(BlockPapyrusEvents));
+  exports.SetProperty("blockPapyrusEvents",
+                      JsValue::Function(BlockPapyrusEvents));
 }
 }

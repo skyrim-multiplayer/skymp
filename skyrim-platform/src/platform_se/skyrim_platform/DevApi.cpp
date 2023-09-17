@@ -2,8 +2,8 @@
 #include "FileUtils.h"
 #include "InvalidArgumentException.h"
 #include "NullPointerException.h"
-#include "Validators.h"
 #include "PapyrusTESModPlatform.h"
+#include "Validators.h"
 
 std::shared_ptr<JsEngine> DevApi::jsEngine = nullptr;
 DevApi::NativeExportsMap DevApi::nativeExportsMap;
