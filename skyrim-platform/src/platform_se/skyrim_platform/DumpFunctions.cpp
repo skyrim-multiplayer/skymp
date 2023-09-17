@@ -188,7 +188,7 @@ void DumpFunctions::Run()
 
       vm->GetTypeIDForScriptObject(papyrusClass.data(), typeID);
       vm->GetScriptObjectType(typeID, obj);
-      types[papyrusClass] = obj.get();
+      types[papyrusClass.data()] = obj.get();
     }
 
     for (auto& [name, type] : types) {
