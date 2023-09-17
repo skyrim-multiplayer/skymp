@@ -37,8 +37,8 @@ struct PartOne::Impl
   simdjson::dom::parser parser;
   espm::Loader* espm = nullptr;
 
-  std::function<void(Networking::ISendTarget*sendTarget,
-                     MpObjectReference*emitter, MpObjectReference*listener)>
+  std::function<void(Networking::ISendTarget* sendTarget,
+                     MpObjectReference* emitter, MpObjectReference* listener)>
     onSubscribe, onUnsubscribe;
 
   espm::CompressedFieldsCache compressedFieldsCache;
@@ -324,9 +324,7 @@ void PartOne::HandlePacket(void* partOneInstance, Networking::UserId userId,
     case Networking::PacketType::ServerSideUserDisconnect: {
       ScopedTask t([userId, this_] {
         if (auto actor = this_->serverState.ActorByUser(userId)) {
-          if (this_->animationSystem) {
-            this_->animationSystem->ClearInfo(actor);
-          }
+          this_->animationSystem.ClearInfo(actor);
         }
         this_->serverState.Disconnect(userId);
         this_->serverState.disconnectingUserId = Networking::InvalidUserId;
@@ -448,11 +446,11 @@ FormCallbacks PartOne::CreateFormCallbacks()
 
   FormCallbacks::SubscribeCallback
     subscribe =
-      [this](MpObjectReference*emitter, MpObjectReference*listener) {
+      [this](MpObjectReference* emitter, MpObjectReference* listener) {
         return pImpl->onSubscribe(pImpl->sendTarget, emitter, listener);
       },
-    unsubscribe = [this](MpObjectReference*emitter,
-                         MpObjectReference*listener) {
+    unsubscribe = [this](MpObjectReference* emitter,
+                         MpObjectReference* listener) {
       return pImpl->onUnsubscribe(pImpl->sendTarget, emitter, listener);
     };
 

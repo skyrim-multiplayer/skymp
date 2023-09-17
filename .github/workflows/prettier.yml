@@ -10,9 +10,9 @@ jobs:
       - name: Install yarn packages
         uses: borales/actions-yarn@v4
         with:
-          cmd: install
+          cmd: --cwd=./misc/prettier install
       - name: Check prettier errors
         uses: borales/actions-yarn@v4
         with:
-          cmd: prettier-check
+          cmd: --cwd=./misc/prettier prettier-check
         continue-on-error: true

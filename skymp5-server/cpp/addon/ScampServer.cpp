@@ -150,6 +150,26 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
 
     auto serverSettings = nlohmann::json::parse(buffer.str());
 
+    if (serverSettings.find("weaponStaminaModifiers") !=
+        serverSettings.end()) {
+      if (serverSettings.at("weaponStaminaModifiers").is_object()) {
+        auto modifiers = serverSettings.at("weaponStaminaModifiers")
+                           .get<std::unordered_map<std::string, float>>();
+        if (modifiers.empty()) {
+          logger->info("\"weaponStaminaModifiers field is empty. Using "
+                       "default values for stamina managment instead.\"");
+        } else {
+          logger->info(
+            "Using keywords based stamina forfeits for players attacks");
+        }
+        partOne->animationSystem.SetWeaponStaminaModifiers(
+          std::move(modifiers));
+      }
+    } else {
+      logger->info("\"weaponStaminaModifiers field is missing. Using "
+                   "default values for stamina managment instead.\"");
+    }
+
     if (serverSettings["logLevel"].is_string()) {
       const auto level = spdlog::level::from_str(serverSettings["logLevel"]);
       logger->set_level(level);
@@ -280,6 +300,8 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
     partOne->worldState.AttachScriptStorage(scriptStorage);
 
     partOne->AttachEspm(espm);
+    partOne->animationSystem.Init(&partOne->worldState);
+
     this->serverSettings = serverSettings;
     this->logger = logger;
 

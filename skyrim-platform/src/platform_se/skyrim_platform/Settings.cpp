@@ -28,6 +28,9 @@ std::unique_ptr<Settings::File> Settings::GetPlatformSettings()
     file->SetBool("Debug", "CmdIsAlwaysOnTop", false,
                   "; Set Cmd stay on top of others windows");
 
+    file->SetBool("Debug", "ChromiumEnabled", true,
+                  "; Enables Chromium functionality");
+
     file->Save();
   }
 
