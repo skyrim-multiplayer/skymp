@@ -30,6 +30,7 @@ list(APPEND src "${CMAKE_SOURCE_DIR}/.clang-format")
 add_library(messages STATIC ${src})
 target_include_directories(messages PUBLIC "${CMAKE_CURRENT_LIST_DIR}/messages")
 target_link_libraries(messages PUBLIC viet)
+target_link_libraries(messages PUBLIC papyrus-vm-lib) # Utils.h: stricmp
 apply_default_settings(TARGETS messages)
 list(APPEND VCPKG_DEPENDENT messages)
 
