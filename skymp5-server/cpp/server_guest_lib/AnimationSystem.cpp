@@ -210,13 +210,6 @@ void AnimationSystem::InitAdditionalCallbacks()
       },
     },
     {
-      "attackPowerStart_2HWSprint",
-      [](MpActor* actor) {
-        constexpr float defaultModifier = 30.f;
-        actor->DamageActorValue(espm::ActorValue::Stamina, defaultModifier);
-      },
-    },
-    {
       "attackStartSprint",
       [](MpActor* actor) {
         constexpr float defaultModifier = 15.f;
