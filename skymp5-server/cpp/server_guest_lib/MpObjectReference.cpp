@@ -275,6 +275,8 @@ void MpObjectReference::VisitProperties(const PropertiesVisitor& visitor,
     visitor("inventory", inventoryDump.data());
   }
 
+  visitor("disabled", IsDisabled() ? "true" : "false");
+
   // Property flags (isVisibleByOwner, isVisibleByNeighbor) should be checked
   // by a visitor
   auto& dynamicFields = ChangeForm().dynamicFields.GetAsJson();

@@ -268,6 +268,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
               refr,
               !!msg.props['isHarvested'],
             );
+            ModelApplyUtils.applyModelIsDisabled(refr, !!msg.props['disabled']);
           }
         } else {
           printConsole('Failed to apply model to', refrId.toString(16));
@@ -572,6 +573,8 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
           ModelApplyUtils.applyModelIsOpen(refr, !!msg.data);
         } else if (msg.propName === 'isHarvested') {
           ModelApplyUtils.applyModelIsHarvested(refr, !!msg.data);
+        } else if (msg.propName === 'disabled') {
+          ModelApplyUtils.applyModelIsDisabled(refr, !!msg.data);
         }
       });
       return;

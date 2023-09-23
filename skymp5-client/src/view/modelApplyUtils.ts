@@ -11,6 +11,17 @@ export class ModelApplyUtils {
   static applyModelIsOpen(refr: ObjectReference, isOpen: boolean) {
     refr.setOpen(isOpen);
   }
+
+  static applyModelIsDisabled(refr: ObjectReference, disabled: boolean): void {
+    const wasDisabled: boolean = refr.isDisabled();
+    if (wasDisabled == disabled) return;
+
+    if (disabled) {
+      refr.disable(false);
+    } else {
+      refr.enable(true);
+    }
+  }
   
   static applyModelIsHarvested(refr: ObjectReference, isHarvested: boolean) {
     const base = refr.getBaseObject();
