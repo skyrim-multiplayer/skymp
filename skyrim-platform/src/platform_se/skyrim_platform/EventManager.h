@@ -80,34 +80,14 @@ public:
 
   void Unsubscribe(uintptr_t uid, const std::string_view& eventName);
 
-  void ClearCallbacks()
-  {
-    for (const auto& event : events) {
-      event.second->callbacks.clear();
-    }
+  void ClearCallbacks();
 
-    auto handler = EventHandler::GetSingleton();
-    handler->DeactivateAllSinks();
-  }
-
-  CallbackObjMap* GetCallbackObjMap(const char* eventName)
-  {
-    auto event = events[eventName];
-
-    if (!event) {
-      return nullptr;
-    }
-
-    return &event->callbacks;
-  }
+  CallbackObjMap* GetCallbackObjMap(const char* eventName);
 
   void EmplaceEvent(const std::string_view& name,
-                    EventState* state = new EventState(nullptr))
-  {
-    events.emplace(name, state);
-  }
+                    EventState* state = new EventState(nullptr));
 
-  EventMap* GetEventMap() { return &events; }
+  EventMap* GetEventMap();
 
 private:
   // last i checked we had ~97 events
