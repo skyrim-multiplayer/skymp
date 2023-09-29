@@ -219,18 +219,6 @@ void WorldState::RequestSave(MpObjectReference& ref)
   }
 }
 
-Viet::Promise<Viet::Void> WorldState::SetTimer(
-  std::reference_wrapper<const std::chrono::system_clock::time_point> wrapper)
-{
-  return timerRegular.SetTimer(wrapper.get());
-}
-
-Viet::Promise<Viet::Void> WorldState::SetEffectTimer(
-  std::reference_wrapper<const std::chrono::system_clock::time_point> wrapper)
-{
-  return timerEffects.SetTimer(wrapper.get());
-}
-
 const std::shared_ptr<MpForm>& WorldState::LookupFormById(uint32_t formId)
 {
   static const std::shared_ptr<MpForm> kNullForm;
@@ -810,10 +798,14 @@ void WorldState::SetNpcSettings(
   npcSettings = settings;
 }
 
-bool WorldState::RemoveEffectTimer(
-  const std::chrono::system_clock::time_point& endTime)
+bool WorldState::RemoveTimer(uint32_t timerId)
 {
-  return timerEffects.RemoveTimer(endTime);
+  return timerRegular.RemoveTimer(timerId);
+}
+
+bool WorldState::RemoveEffectTimer(uint32_t timerId)
+{
+  return timerEffects.RemoveTimer(timerId);
 }
 
 void WorldState::SetForbiddenRelootTypes(const std::set<std::string>& types)
