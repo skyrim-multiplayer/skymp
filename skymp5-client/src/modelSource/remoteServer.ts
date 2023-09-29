@@ -30,10 +30,6 @@ import { IdManager } from '../lib/idManager';
 import { nameof } from '../lib/nameof';
 import { setActorValuePercentage } from '../sync/actorvalues';
 import { applyAppearanceToPlayer } from '../sync/appearance';
-import {
-  applyDeathState,
-  safeRemoveRagdollFromWorld,
-} from '../sync/deathSystem';
 import { isBadMenuShown } from '../sync/equipment';
 import { Inventory, applyInventory } from '../sync/inventory';
 import { Movement } from '../sync/movement';
@@ -50,6 +46,15 @@ import { MsgHandler } from './msgHandler';
 import { SendTarget } from './sendTarget';
 import { SpApiInteractor } from '../services/spApiInteractor';
 import { LoadGameService } from '../services/services/loadGameService';
+import { UpdateMovementMessage } from '../services/messages/updateMovementMessage';
+import { ChangeValuesMessage } from '../services/messages/changeValues';
+import { UpdateAnimationMessage } from '../services/messages/updateAnimationMessage';
+import { UpdateEquipmentMessage } from '../services/messages/updateEquipmentMessage';
+import { CustomPacketMessage } from '../services/messages/customPacketMessage';
+import { CustomEventMessage } from '../services/messages/customEventMessage';
+import { FinishSpSnippetMessage } from '../services/messages/finishSpSnippetMessage';
+import { RagdollService } from '../services/services/ragdollService';
+import { UpdateAppearanceMessage } from '../services/messages/updateAppearanceMessage';
 
 const onceLoad = (
   refrId: number,
@@ -138,18 +143,17 @@ const loginWithSkympIoCredentials = () => {
     printConsole(
       `Logging in offline mode, profileId = ${authData.local.profileId}`,
     );
-    networking.send(
-      {
-        t: messages.MsgType.CustomPacket,
-        content: {
-          customPacketType: 'loginWithSkympIo',
-          gameData: {
-            profileId: authData.local.profileId,
-          },
+    const message: CustomPacketMessage = {
+      t: messages.MsgType.CustomPacket,
+      content: {
+        customPacketType: 'loginWithSkympIo',
+        gameData: {
+          profileId: authData.local.profileId,
         },
       },
-      true,
-    );
+    };
+    // TODO: emit event instead of sending directly to avoid type cast and dependency on network module
+    networking.send(message as unknown as Record<string, unknown>, true);
     return;
   }
   if (authData?.remote) {
@@ -236,8 +240,8 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
         'cell/world is',
         msg.worldOrCell.toString(16),
       );
-      // todo: think about track ragdoll state of player
-      safeRemoveRagdollFromWorld(Game.getPlayer()!, () => {
+      const ragdollService = SpApiInteractor.makeController().lookupListener(RagdollService);
+      ragdollService.safeRemoveRagdollFromWorld(Game.getPlayer()!, () => {
         TESModPlatform.moveRefrToPosition(
           Game.getPlayer()!,
           Cell.from(Game.getFormEx(msg.worldOrCell)),
@@ -470,7 +474,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
                 ? msg.appearance.skinColor.toString(16)
                 : undefined,
             );
-            const loadGameService = SpApiInteractor.makeController().lookupListener("LoadGameService") as LoadGameService;
+            const loadGameService = SpApiInteractor.makeController().lookupListener(LoadGameService);
             loadGameService.loadGame(
               msg.transform.pos,
               msg.transform.rot,
@@ -529,7 +533,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
     this.getIdManager().freeIdFor(msg.idx);
   }
 
-  UpdateMovement(msg: messages.UpdateMovementMessage): void {
+  UpdateMovement(msg: UpdateMovementMessage): void {
     const i = this.getIdManager().getId(msg.idx);
     this.worldModel.forms[i].movement = msg.data;
     if (!this.worldModel.forms[i].numMovementChanges) {
@@ -538,12 +542,12 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
     (this.worldModel.forms[i].numMovementChanges as number)++;
   }
 
-  UpdateAnimation(msg: messages.UpdateAnimationMessage): void {
+  UpdateAnimation(msg: UpdateAnimationMessage): void {
     const i = this.getIdManager().getId(msg.idx);
     this.worldModel.forms[i].animation = msg.data;
   }
 
-  UpdateAppearance(msg: messages.UpdateAppearanceMessage): void {
+  UpdateAppearance(msg: UpdateAppearanceMessage): void {
     const i = this.getIdManager().getId(msg.idx);
     this.worldModel.forms[i].appearance = msg.data;
     if (!this.worldModel.forms[i].numAppearanceChanges) {
@@ -552,7 +556,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
     (this.worldModel.forms[i].numAppearanceChanges as number)++;
   }
 
-  UpdateEquipment(msg: messages.UpdateEquipmentMessage): void {
+  UpdateEquipment(msg: UpdateEquipmentMessage): void {
     const i = this.getIdManager().getId(msg.idx);
     this.worldModel.forms[i].equipment = msg.data;
   }
@@ -608,7 +612,10 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
           ? Game.getPlayer()!
           : Actor.from(Game.getFormEx(remoteIdToLocalId(form.refrId ?? 0)));
       if (actor) {
-        applyDeathState(actor, msg.tIsDead.data as boolean);
+        SpApiInteractor.makeController().emitter.emit("applyDeathStateEvent", {
+          actor: Game.getPlayer()!,
+          isDead: msg.tIsDead.data as boolean
+        });
       }
     });
   }
@@ -622,7 +629,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
 
   handleDisconnect(): void {}
 
-  ChangeValues(msg: messages.ChangeValuesMessage): void {
+  ChangeValues(msg: ChangeValuesMessage): void {
     once('update', () => {
       const ac = Game.getPlayer();
       if (!ac) return;
@@ -661,14 +668,13 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
         .run(msg)
         .then((res) => {
           if (res === undefined) res = null;
-          this.send(
-            {
-              t: messages.MsgType.FinishSpSnippet,
-              returnValue: res,
-              snippetIdx: msg.snippetIdx,
-            },
-            true,
-          );
+          const message: FinishSpSnippetMessage = {
+            t: messages.MsgType.FinishSpSnippet,
+            returnValue: res,
+            snippetIdx: msg.snippetIdx,
+          }
+          // TODO: emit event instead of sending directly to avoid type cast and dependency on network module
+          this.send(message as unknown as Record<string, unknown>, true);
         })
         .catch((e) => printConsole('!!! SpSnippet failed', e));
     });
@@ -733,14 +739,13 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
         const ctx = {
           sp,
           sendEvent: (...args: unknown[]) => {
-            this.send(
-              {
-                t: messages.MsgType.CustomEvent,
-                args,
-                eventName,
-              },
-              true,
-            );
+            const message: CustomEventMessage = {
+              t: messages.MsgType.CustomEvent,
+              args,
+              eventName
+            };
+            // TODO: emit event instead of sending directly to avoid type cast and dependency on network module
+            this.send(message as unknown as Record<string, unknown>, true);
           },
           getFormIdInServerFormat: (clientsideFormId: number) => {
             return localIdToRemoteId(clientsideFormId);

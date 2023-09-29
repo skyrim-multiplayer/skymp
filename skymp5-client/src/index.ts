@@ -25,18 +25,18 @@ import { SinglePlayerService } from './services/services/singlePlayerService';
 import { SpApiInteractor } from './services/spApiInteractor';
 import { TimeService } from "./services/services/timeService";
 import { SpVersionCheckService } from "./services/services/spVersionCheckService";
+import { ConsoleCommandsService } from "./services/services/consoleCommandsService";
+import { LastInvService } from "./services/services/lastInvService";
+import { ActivationService } from "./services/services/activationService";
+import { CraftService } from "./services/services/craftService";
+import { DropItemService } from "./services/services/dropItemService";
+import { HitService } from "./services/services/hitService";
+import { SendMessagesService } from "./services/services/sendMessagesService";
+import { RagdollService } from "./services/services/ragdollService";
+import { DeathService } from "./services/services/deathService";
+import { ContainersService } from "./services/services/containersService";
 
 browser.main();
-
-export const defaultLocalDamageMult = 1;
-export const setLocalDamageMult = (damageMult: number): void => {
-  Game.setGameSettingFloat("fDiffMultHPToPCE", damageMult);
-  Game.setGameSettingFloat("fDiffMultHPToPCH", damageMult);
-  Game.setGameSettingFloat("fDiffMultHPToPCL", damageMult);
-  Game.setGameSettingFloat("fDiffMultHPToPCN", damageMult);
-  Game.setGameSettingFloat("fDiffMultHPToPCVE", damageMult);
-  Game.setGameSettingFloat("fDiffMultHPToPCVH", damageMult);
-}
 
 const turnOffSkillLocalExp = (av: ActorValue): void => {
   const avi = ActorValueInfo.getActorValueInfoByID(av);
@@ -76,8 +76,6 @@ once("update", () => {
 
   // Init exp system
   expSystem.init();
-
-  setLocalDamageMult(defaultLocalDamageMult);
 });
 on("update", () => {
   Utility.setINIInt("iDifficulty:GamePlay", 5);
@@ -102,7 +100,17 @@ const main = () => {
       new SendInputsService(sp, controller),
       new SkympClient(sp, controller),
       new TimeService(sp, controller),
-      new SpVersionCheckService(sp, controller)
+      new SpVersionCheckService(sp, controller),
+      new ConsoleCommandsService(sp, controller),
+      new LastInvService(sp, controller),
+      new ActivationService(sp, controller),
+      new CraftService(sp, controller),
+      new DropItemService(sp, controller),
+      new HitService(sp, controller),
+      new SendMessagesService(sp, controller),
+      new RagdollService(sp, controller),
+      new DeathService(sp, controller),
+      new ContainersService(sp, controller)
     ];
     SpApiInteractor.setup(listeners);
     listeners.forEach(listener => SpApiInteractor.registerListenerForLookup(listener.constructor.name, listener));
@@ -112,4 +120,9 @@ const main = () => {
     throw e;
   }
 };
-main();
+
+// [18.08.2023]
+// I saw "attempt to call hooks.add while in hook context" error
+// I'm not sure if it's a C++ bug in SkyrimPlatform or an artifact of webpack+hotreload
+// But let's for now ensure that "main" executes inside tick context
+once("tick", main);

@@ -2,8 +2,9 @@ import { ClientListener, CombinedController, Sp } from "./clientListener";
 import * as networking from "../../networking";
 import { GameLoadEvent } from "../events/gameLoadEvent";
 
-export class SinglePlayerService implements ClientListener {
+export class SinglePlayerService extends ClientListener {
     constructor(private sp: Sp, private controller: CombinedController) {
+        super();
         this.controller.emitter.on("gameLoad", (e) => this.onGameLoad(e));
     }
 

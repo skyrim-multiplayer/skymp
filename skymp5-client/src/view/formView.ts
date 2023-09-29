@@ -9,7 +9,6 @@ import { SpawnProcess } from "./spawnProcess";
 import { ObjectReferenceEx } from "../extensions/objectReferenceEx";
 import { View } from "./view";
 import { modWcProtection } from "../features/worldCleaner";
-import * as deathSystem from "../sync/deathSystem";
 import { GamemodeApiSupport } from "../gamemodeApi/gamemodeApiSupport";
 import { PlayerCharacterDataHolder } from "./playerCharacterDataHolder";
 import { getMovement } from "../sync/movementGet";
@@ -152,7 +151,7 @@ export class FormView implements View<FormModel> {
     if (refr) {
       const actor = Actor.from(refr);
       if (actor && !this.localImmortal) {
-        deathSystem.makeActorImmortal(actor);
+        actor.startDeferredKill();
         actor.setActorValue("health", 1000000);
         this.localImmortal = true;
       }

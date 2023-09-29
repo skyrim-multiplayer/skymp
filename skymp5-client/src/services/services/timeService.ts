@@ -1,7 +1,8 @@
 import { ClientListener, CombinedController, Sp } from "./clientListener";
 
-export class TimeService implements ClientListener {
+export class TimeService extends ClientListener {
     constructor(private sp: Sp, private controller: CombinedController) {
+        super();
         controller.on("update", () => this.onUpdate());
     }
 

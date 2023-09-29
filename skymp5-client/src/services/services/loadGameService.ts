@@ -1,10 +1,9 @@
-import { EventEmitter } from "eventemitter3";
 import { ClientListener, CombinedController, Sp } from "./clientListener";
 import { ChangeFormNpc } from "skyrimPlatform";
-import { GameLoadEvent } from "../events/gameLoadEvent";
 
-export class LoadGameService implements ClientListener {
+export class LoadGameService extends ClientListener {
     constructor(private sp: Sp, private controller: CombinedController) {
+        super();
         this.controller.on("loadGame", () => this.onLoadGame());
     }
 
