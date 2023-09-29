@@ -1,7 +1,7 @@
 // TODO: refactor this out
 import { localIdToRemoteId } from "../../view/worldViewMisc";
 
-import { HitEvent } from "skyrimPlatform";
+import { FormType, HitEvent, printConsole } from "skyrimPlatform";
 import { ClientListener, CombinedController, Sp } from "./clientListener";
 import { MsgType } from "../../messages";
 import { SkympClient } from "./skympClient";
@@ -15,13 +15,19 @@ export class HitService extends ClientListener {
 
     private onHit(e: HitEvent) {
         // TODO: add more logging in case of 'return'
-        // TODO: allow npcs to attack
         // TODO: allow non-weapon sources
-        // TODO: allow non-actor targets
         const playerFormId = 0x14;
-        if (e.target.getFormID() === playerFormId) return;
-        if (e.aggressor.getFormID() !== playerFormId) return;
-        if (this.sp.Weapon.from(e.source) && this.sp.Actor.from(e.target)) {
+        const aggressor = e.aggressor.getFormID();
+        if (aggressor < 0xff000000 && aggressor !== 0x14) return; // all skymp npcs are FF+
+
+        const base = e.target.getBaseObject();
+        const type = base?.getType();
+
+        if (type === FormType.Static || type === FormType.MovableStatic) {
+            return;
+        }
+
+        if (this.sp.Weapon.from(e.source)) {
             this.controller.emitter.emit("sendMessage", {
                 message: { t: MsgType.OnHit, data: this.getHitData(e) },
                 reliability: "reliable"

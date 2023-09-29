@@ -220,13 +220,24 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
       }
     } else {
       std::stringstream msg;
-      msg << "\"npcSettings\" are not found in the server configuration "
+      msg << "\"npcSettings\" weren't found in the server configuration "
              "file.";
       msg << (partOne->worldState.npcEnabled
                 ? "Allowing all npc by default"
                 : "NPCs are disabled due to \"npcEnabled\": ")
           << std::boolalpha << partOne->worldState.npcEnabled;
       spdlog::info(msg.str());
+    }
+
+    if (serverSettings.find("enableConsoleCommandsForAll") != serverSettings.end()) {
+      if (serverSettings.at("enableConsoleCommandsForAll").is_boolean()) {
+        bool enableConsoleCommandsForAll = serverSettings["enableConsoleCommandsForAll"].get<bool>();
+        spdlog::info("enableConsoleCommandsForAll is explicitly set to {}", enableConsoleCommandsForAll);
+        partOne->worldState.SetEnableConsoleCommandsForAllSetting(enableConsoleCommandsForAll);
+      }
+      else {
+        spdlog::error("Unexpected value of enableConsoleCommandsForAll setting, should be true or false");
+      }
     }
 
     partOne->worldState.isPapyrusHotReloadEnabled =

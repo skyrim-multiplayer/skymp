@@ -739,26 +739,37 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
                            const HitData& hitData_)
 {
   auto currentHitTime = std::chrono::steady_clock::now();
-  MpActor* aggressor = partOne.serverState.ActorByUser(rawMsgData_.userId);
-  if (!aggressor) {
+  MpActor* myActor = partOne.serverState.ActorByUser(rawMsgData_.userId);
+  if (!myActor) {
     throw std::runtime_error("Unable to change values without Actor attached");
+  }
+
+  MpActor* aggressor = nullptr;
+
+  HitData hitData = hitData_;
+  if (hitData.aggressor == 0x14) {
+    aggressor = myActor;
+    hitData.aggressor = aggressor->GetFormId();
+  }
+  else {
+    aggressor = &partOne.worldState.GetFormAt<MpActor>(hitData.aggressor);
+    auto it = partOne.worldState.hosters.find(hitData.aggressor);
+    if (it == partOne.worldState.hosters.end() ||
+        it->second != myActor->GetFormId()) {
+      spdlog::error("SendToNeighbours - No permission to send OnHit with aggressor actor {:x}",
+                    aggressor->GetFormId());
+      return;
+    }
+  }
+
+  if (hitData.target == 0x14) {
+    hitData.target = myActor->GetFormId();
   }
 
   if (aggressor->IsDead()) {
     spdlog::debug(fmt::format("{:x} actor is dead and can't attack",
                               aggressor->GetFormId()));
     return;
-  }
-
-  HitData hitData = hitData_;
-
-  if (hitData.aggressor == 0x14) {
-    hitData.aggressor = aggressor->GetFormId();
-  } else {
-    throw std::runtime_error("Events from non aggressor is not supported yet");
-  }
-  if (hitData.target == 0x14) {
-    hitData.target = aggressor->GetFormId();
   }
 
   if (aggressor->GetEquipment().inv.HasItem(hitData.source) == false &&

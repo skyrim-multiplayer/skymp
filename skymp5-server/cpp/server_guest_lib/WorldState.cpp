@@ -831,6 +831,11 @@ void WorldState::SetForbiddenRelootTypes(const std::set<std::string>& types)
   pImpl->forbiddenRelootTypes = types;
 }
 
+void WorldState::SetEnableConsoleCommandsForAllSetting(bool enable)
+{
+  enableConsoleCommandsForAll = enable;
+}
+
 bool WorldState::IsRelootForbidden(std::string type) const noexcept
 {
   return pImpl->forbiddenRelootTypes.find(type) !=

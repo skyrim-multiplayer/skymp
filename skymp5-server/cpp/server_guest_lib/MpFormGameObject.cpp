@@ -2,6 +2,9 @@
 
 #include "WorldState.h"
 
+#include <fmt/format.h>
+#include <unordered_map>
+
 MpFormGameObject::MpFormGameObject(MpForm* form_)
   : form(form_)
   , parent(form_ ? form_->GetParent() : nullptr)
@@ -32,4 +35,15 @@ bool MpFormGameObject::EqualsByValue(const IGameObject& obj) const
     return form->formId == formId;
   }
   return false;
+}
+
+const char* MpFormGameObject::GetStringID()
+{
+  static std::unordered_map<uint32_t, std::shared_ptr<std::string>> g_strings;
+  auto formId = form->GetFormId();
+  auto& v = g_strings[formId];
+  if (!v) {
+    v.reset(new std::string(fmt::format("form {:x}", formId)));
+  }
+  return v->data();
 }

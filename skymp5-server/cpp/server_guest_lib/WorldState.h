@@ -196,11 +196,14 @@ public:
                      std::chrono::system_clock::duration dur);
   std::optional<std::chrono::system_clock::duration> GetRelootTime(
     std::string recordType) const;
+
   // Only for tests
   auto& GetGrids() { return grids; }
+
   void SetNpcSettings(
     std::unordered_map<std::string, NpcSettingsEntry>&& settings);
   void SetForbiddenRelootTypes(const std::set<std::string>& types);
+  void SetEnableConsoleCommandsForAllSetting(bool enable);
 
 public:
   std::vector<std::string> espmFiles;
@@ -218,6 +221,7 @@ public:
   bool npcEnabled = false;
   std::unordered_map<std::string, NpcSettingsEntry> npcSettings;
   NpcSettingsEntry defaultSetting;
+  bool enableConsoleCommandsForAll = false;
 
 private:
   bool AttachEspmRecord(const espm::CombineBrowser& br,
