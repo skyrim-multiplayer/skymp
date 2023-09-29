@@ -90,6 +90,8 @@ public:
                                VisitPropertiesMode mode);
   virtual void Activate(MpObjectReference& activationSource,
                         bool defaultProcessingOnly = false);
+  virtual void Disable();
+  virtual void Enable();
 
   void SetPos(const NiPoint3& newPos);
   void SetAngle(const NiPoint3& newAngle);
@@ -101,8 +103,6 @@ public:
   void SetChanceNoneOverride(uint8_t chanceNone);
   void SetCellOrWorld(const FormDesc& worldOrCell);
   void SetAnimationVariableBool(const char* name, bool value);
-  void Disable();
-  void Enable();
   void SetActivationBlocked(bool blocked);
   void ForceSubscriptionsUpdate();
   void SetPrimitive(const NiPoint3& boundsDiv2);

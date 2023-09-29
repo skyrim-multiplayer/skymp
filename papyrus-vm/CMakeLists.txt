@@ -11,9 +11,6 @@ target_include_directories(papyrus-vm-lib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/sr
 # TODO: fetch this via vcpkg
 target_include_directories(papyrus-vm-lib PUBLIC "${CMAKE_SOURCE_DIR}/skymp5-server/cpp/third_party")
 
-if(UNIX)
-  target_link_libraries(papyrus-vm-lib PUBLIC stdc++fs)
-endif()
 target_link_libraries(papyrus-vm-lib PUBLIC viet)
 link_vcpkg_dependencies(TARGETS papyrus-vm-lib)
 

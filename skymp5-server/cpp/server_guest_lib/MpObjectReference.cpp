@@ -310,6 +310,28 @@ void MpObjectReference::Activate(MpObjectReference& activationSource,
   }
 }
 
+void MpObjectReference::Disable()
+{
+  if (ChangeForm().isDisabled) {
+    return;
+  }
+
+  EditChangeForm(
+    [&](MpChangeFormREFR& changeForm) { changeForm.isDisabled = true; });
+  RemoveFromGrid();
+}
+
+void MpObjectReference::Enable()
+{
+  if (!ChangeForm().isDisabled) {
+    return;
+  }
+
+  EditChangeForm(
+    [&](MpChangeFormREFR& changeForm) { changeForm.isDisabled = false; });
+  ForceSubscriptionsUpdate();
+}
+
 void MpObjectReference::SetPos(const NiPoint3& newPos)
 {
   auto oldGridPos = GetGridPos(ChangeForm().position);
@@ -459,26 +481,6 @@ void MpObjectReference::SetChanceNoneOverride(uint8_t newChanceNone)
 void MpObjectReference::SetCellOrWorld(const FormDesc& newWorldOrCell)
 {
   SetCellOrWorldObsolete(newWorldOrCell);
-  ForceSubscriptionsUpdate();
-}
-
-void MpObjectReference::Disable()
-{
-  if (ChangeForm().isDisabled)
-    return;
-
-  EditChangeForm(
-    [&](MpChangeFormREFR& changeForm) { changeForm.isDisabled = true; });
-  RemoveFromGrid();
-}
-
-void MpObjectReference::Enable()
-{
-  if (!ChangeForm().isDisabled)
-    return;
-
-  EditChangeForm(
-    [&](MpChangeFormREFR& changeForm) { changeForm.isDisabled = false; });
   ForceSubscriptionsUpdate();
 }
 
@@ -826,6 +828,10 @@ const std::set<MpObjectReference*>& MpObjectReference::GetEmitters() const
 void MpObjectReference::RequestReloot(
   std::optional<std::chrono::system_clock::duration> time)
 {
+  if (this->GetFormId() >= 0xff000000) {
+    return;
+  }
+
   if (GetParent()->IsRelootForbidden(baseType)) {
     return;
   }

@@ -9,23 +9,22 @@
   "author": "Leonid Pospelov <pospelovlm@yandex.ru>",
   "dependencies": {
     "argparse": "^2.0.1",
-    "axios": "^0.26.1",
+    "axios": "^1.4.0",
     "chokidar": "^3.5.3",
-    "cmake-js": "^6.3.0",
+    "cmake-js": "^7.2.1",
     "crc-32": "^1.2.2",
-    "discord.js": "^14.11.0",
-    "koa": "^2.13.4",
+    "discord.js": "^14.13.0",
+    "koa": "^2.14.2",
     "koa-proxy": "^1.0.0-alpha.3",
-    "koa-router": "^10.1.1",
+    "koa-router": "^12.0.0",
     "koa-static": "^5.0.0",
-    "parcel-bundler": "^1.12.5",
     "source-map-support": "^0.5.21",
-    "ws": "^8.5.0"
+    "ws": "^8.13.0"
   },
   "devDependencies": {
     "@types/argparse": "^2.0.10",
-    "esbuild": "^0.18.17",
+    "esbuild": "^0.19.2",
     "glob": "^10.3.3",
-    "typescript": "^4.6.3"
+    "typescript": "^5.2.2"
   }
 }

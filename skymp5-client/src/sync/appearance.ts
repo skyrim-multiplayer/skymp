@@ -11,7 +11,6 @@ import {
   once,
   Utility,
 } from "skyrimPlatform";
-import * as deathSystem from "./deathSystem";
 
 export interface Tint {
   texturePath: string;
@@ -161,7 +160,7 @@ export const applyAppearanceToPlayer = (appearance: Appearance): void => {
   (Game.getPlayer() as Actor).queueNiNodeUpdate();
   Utility.wait(0.0625).then(() => {
     once("update", () => {
-      deathSystem.makeActorImmortal(Game.getPlayer() as Actor);
+      Game.getPlayer()?.startDeferredKill();
     });
   });
 };

@@ -16,6 +16,7 @@ export declare function getPluginSourceCode(pluginName: string): string
 export declare function writePlugin(pluginName: string, newSources: string): string
 export declare function getPlatformVersion(): string
 export declare function disableCtrlPrtScnHotkey(): void
+export declare function blockPapyrusEvents(block: boolean): void
 export declare function sendIpcMessage(targetSystemName: string, message: ArrayBuffer): void
 export declare function encodeUtf8(text: string): ArrayBuffer
 export declare function decodeUtf8(buffer: ArrayBuffer): string

@@ -1,12 +1,19 @@
 import { ClientListener, CombinedController, Sp } from "./clientListener";
 
-export class BlockPapyrusEventsService implements ClientListener {
+export class BlockPapyrusEventsService extends ClientListener {
     constructor(private sp: Sp, private controller: CombinedController) {
+        super();
+        this.controller.once("tick", () => this.onceTick());
         this.controller.once("update", () => this.onceUpdate());
     }
 
+    private onceTick() {
+        if (typeof this.sp.blockPapyrusEvents === "function") {
+            this.sp.blockPapyrusEvents(true);
+        }
+    }
+
     private onceUpdate() {
-        // TODO: It is racing with OnInit in Papyrus, fix it
         (this.sp.TESModPlatform as any).blockPapyrusEvents(true);
     }
 };

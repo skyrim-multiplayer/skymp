@@ -1,4 +1,4 @@
-name: PR Windows
+name: PR Windows - Special Edition 1.5 (Old)
 
 on:
   push:
@@ -111,6 +111,10 @@ jobs:
       with:
         name: dist
         path: ${{github.workspace}}/build/dist
+    - uses: actions/upload-artifact@v3
+      with:
+        name: skymp5-client-js
+        path: ${{github.workspace}}/build/dist/client/Data/Platform/Plugins/skymp5-client.js
 
     - uses: actions/upload-artifact@v3
       with:

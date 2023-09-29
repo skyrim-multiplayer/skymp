@@ -140,6 +140,29 @@ void MpActor::VisitProperties(const PropertiesVisitor& visitor,
             .c_str());
 }
 
+void MpActor::Disable()
+{
+  if (ChangeForm().isDisabled) {
+    return;
+  }
+
+  MpObjectReference::Disable();
+
+  for (auto [snippetIdx, promise] : pImpl->snippetPromises) {
+    spdlog::warn("Disabling actor {:x} with pending snippet promise",
+                 GetFormId());
+    try {
+      promise.Resolve(VarValue::None());
+    } catch (std::exception& e) {
+      // Not sure if this is possible, but better safe than sorry
+      spdlog::error("Exception while resolving pending snippet promise: {}",
+                    e.what());
+    }
+  }
+
+  pImpl->snippetPromises.clear();
+}
+
 void MpActor::SendToUser(const void* data, size_t size, bool reliable)
 {
   if (callbacks->sendToUser) {
@@ -266,8 +289,9 @@ uint32_t MpActor::NextSnippetIndex(
   std::optional<Viet::Promise<VarValue>> promise)
 {
   auto res = pImpl->snippetIndex++;
-  if (promise)
+  if (promise) {
     pImpl->snippetPromises[res] = *promise;
+  }
   return res;
 }
 
@@ -923,4 +947,27 @@ void MpActor::ReapplyMagicEffects()
     modFiles.begin(), modFiles.end(),
     [](std::string_view fileName) { return fileName == "SweetPie.esp"; });
   ApplyMagicEffects(activeEffects, hasSweetpie, true);
+}
+
+std::array<std::optional<Inventory::Entry>, 2> MpActor::GetEquippedWeapon()
+  const
+{
+  std::array<std::optional<Inventory::Entry>, 2> wornWeaponEntries;
+  // 0 -> left hand, 1 -> right hand
+  auto& espmBrowser = GetParent()->GetEspm().GetBrowser();
+  for (const auto& entry : GetEquipment().inv.entries) {
+    if (entry.extra.worn != Inventory::Worn::None) {
+      espm::LookupResult res = espmBrowser.LookupById(entry.baseId);
+      auto* weaponRecord = espm::Convert<espm::WEAP>(res.rec);
+      if (weaponRecord) {
+        if (entry.extra.worn == Inventory::Worn::Left) {
+          wornWeaponEntries[0] = std::move(entry);
+        }
+        if (entry.extra.worn == Inventory::Worn::Right) {
+          wornWeaponEntries[1] = std::move(entry);
+        }
+      }
+    }
+  }
+  return wornWeaponEntries;
 }

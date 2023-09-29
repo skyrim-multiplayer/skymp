@@ -3,15 +3,13 @@ import {
   Actor,
   Game,
   TESModPlatform,
-  Debug,
-  Form,
-  printConsole,
+  Debug
 } from "skyrimPlatform";
-import { applyDeathState } from "./deathSystem";
 import { RespawnNeededError } from "../lib/errors";
 import { Movement, RunMode, AnimationVariables, Transform, NiPoint3 } from "./movement";
 import { NetInfo } from "../debug/netInfoSystem";
 import { ObjectReferenceEx } from "../extensions/objectReferenceEx";
+import { SpApiInteractor } from "../services/spApiInteractor";
 
 const sqr = (x: number) => x * x;
 
@@ -63,7 +61,8 @@ export const applyMovement = (refr: ObjectReference, m: Movement, isMyClone?: bo
   applySneaking(ac, m.isSneaking);
   applyWeapDrawn(ac, m.isWeapDrawn);
   applyHealthPercentage(ac, m.healthPercentage);
-  applyDeathState(ac, m.isDead);
+
+  SpApiInteractor.makeController().emitter.emit("applyDeathStateEvent", { actor: ac, isDead: m.isDead });
 };
 
 const keepOffsetFromActor = (ac: Actor, m: Movement) => {

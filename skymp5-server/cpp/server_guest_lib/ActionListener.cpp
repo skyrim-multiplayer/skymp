@@ -145,16 +145,7 @@ void ActionListener::OnUpdateAnimation(const RawMessageData& rawMsgData,
     return;
   }
 
-  if (!partOne.animationSystem) {
-    std::vector<std::string> espmFiles = espmProvider->espmFiles;
-
-    std::set<std::string> s;
-    s = { espmFiles.begin(), espmFiles.end() };
-    bool isSweetpie = s.count("SweetPie.esp") != 0;
-
-    partOne.animationSystem = std::make_unique<AnimationSystem>(isSweetpie);
-  }
-  partOne.animationSystem->Process(actor, animationData);
+  partOne.animationSystem.Process(actor, animationData);
 
   SendToNeighbours(idx, rawMsgData);
 }
@@ -464,7 +455,9 @@ void ActionListener::OnCraftItem(const RawMessageData& rawMsgData,
   spdlog::debug("User {} tries to craft {:#x} on workbench {:#x}",
                 rawMsgData.userId, resultObjectId, workbenchId);
 
-  if (base.rec->GetType() != "FURN" && base.rec->GetType() != "ACTI") {
+  bool isFurnitureOrActivator =
+    base.rec->GetType() == "FURN" || base.rec->GetType() == "ACTI";
+  if (!isFurnitureOrActivator) {
     throw std::runtime_error("Unable to use " +
                              base.rec->GetType().ToString() + " as workbench");
   }

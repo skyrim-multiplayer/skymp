@@ -1,6 +1,6 @@
 {
+  "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
   "name": "skymp",
-  "version-string": "",
   "homepage": "https://github.com/skyrim-multiplayer/skymp",
   "description": "Multiplayer Mod & TypeScript SDK for Skyrim Special Edition",
   "dependencies": [
@@ -19,10 +19,6 @@
     "node-addon-api",
     "bshoshany-thread-pool",
     "makeid",
-    {
-      "name": "frida-gum",
-      "platform": "windows"
-    },
     {
       "name": "frida-gum",
       "platform": "windows"
@@ -70,5 +66,13 @@
     "skyrim-vr": {
       "description": "Build platform for Skyrim VR."
     }
-  }
+  },
+  "overrides": [
+    {
+      "name": "chakracore",
+      "version-date": "2022-11-09",
+      "port-version": 3
+    }
+  ],
+  "builtin-baseline": "4a8d11802f0a9ffbe5c68f6143d61d469d800a7d"
 }

@@ -1,4 +1,5 @@
 #include "SweetPieBoundWeapon.h"
+#include <type_traits>
 
 const std::array<float, 4> SweetPieBoundWeapon::kCooldowns = {
   180.f,
@@ -21,22 +22,26 @@ SweetPieBoundWeapon::SweetPieBoundWeapon(uint32_t baseId_,
 {
 }
 
-float SweetPieBoundWeapon::GetCooldown() const
+float SweetPieBoundWeapon::GetCooldown() const noexcept
 {
-  return kCooldowns[skillLevel];
+  return kCooldowns[static_cast<std::underlying_type_t<SkillLevel>>(
+    skillLevel)];
 }
 
-float SweetPieBoundWeapon::GetManacost() const
+float SweetPieBoundWeapon::GetManacost() const noexcept
 {
-  return kManacostPercentages[skillLevel] * 100;
+  return kManacostPercentages[static_cast<std::underlying_type_t<SkillLevel>>(
+           skillLevel)] *
+    100;
 }
 
-float SweetPieBoundWeapon::GetManacostPercentage() const
+float SweetPieBoundWeapon::GetManacostPercentage() const noexcept
 {
-  return kManacostPercentages[skillLevel];
+  return kManacostPercentages[static_cast<std::underlying_type_t<SkillLevel>>(
+    skillLevel)];
 }
 
-uint32_t SweetPieBoundWeapon::GetBaseId() const
+uint32_t SweetPieBoundWeapon::GetBaseId() const noexcept
 {
   return baseId;
 }

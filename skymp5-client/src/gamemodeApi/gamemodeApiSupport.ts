@@ -45,7 +45,7 @@ export class GamemodeApiSupport {
   static updateNeighbor(refr: ObjectReference, model: FormModel, state: Record<string, unknown>) {
     for (const key of this.updateNeighborFunctionsKeys) {
       const v = (model as Record<string, unknown>)[key];
-      // From docs:
+      // According to docs:
       // In `updateOwner`/`updateNeighbor` equals to a value of a currently processed property.
       // Can't be `undefined` here, since updates are not received for `undefined` property values.
       // In other contexts is always `undefined`.
