@@ -290,7 +290,6 @@ export class FormView implements View<FormModel> {
             if (Array.isArray(hosted)) {
               const remoteId = localIdToRemoteId(ac.getFormID());
               if (hosted.includes(remoteId)) {
-                printConsole("already hosted");
                 alreadyHosted = true;
               }
             }
