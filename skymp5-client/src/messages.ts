@@ -17,16 +17,16 @@ export enum MsgType {
   UpdateProperty = 7,
   PutItem = 8,
   TakeItem = 9,
-  FinishSpSnippet = 10, // ???
-  OnEquip = 11, //
-  ConsoleCommand = 12, //
-  CraftItem = 13, //
-  Host = 14, // 
-  CustomEvent = 15, //
-  ChangeValues = 16, //
-  OnHit = 17, //
+  FinishSpSnippet = 10,
+  OnEquip = 11,
+  ConsoleCommand = 12,
+  CraftItem = 13,
+  Host = 14,
+  CustomEvent = 15,
+  ChangeValues = 16,
+  OnHit = 17,
   DeathStateContainer = 18,
-  DropItem = 19, //
+  DropItem = 19,
 }
 
 export interface SetInventory {
