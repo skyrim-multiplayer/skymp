@@ -33,6 +33,8 @@ import { DropItemService } from "./services/services/dropItemService";
 import { HitService } from "./services/services/hitService";
 import { SendMessagesService } from "./services/services/sendMessagesService";
 import { RagdollService } from "./services/services/ragdollService";
+import { DeathService } from "./services/services/deathService";
+import { ContainersService } from "./services/services/containersService";
 
 browser.main();
 
@@ -106,7 +108,9 @@ const main = () => {
       new DropItemService(sp, controller),
       new HitService(sp, controller),
       new SendMessagesService(sp, controller),
-      new RagdollService(sp, controller)
+      new RagdollService(sp, controller),
+      new DeathService(sp, controller),
+      new ContainersService(sp, controller)
     ];
     SpApiInteractor.setup(listeners);
     listeners.forEach(listener => SpApiInteractor.registerListenerForLookup(listener.constructor.name, listener));
