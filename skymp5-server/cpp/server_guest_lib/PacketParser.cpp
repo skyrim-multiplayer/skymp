@@ -3,10 +3,10 @@
 #include "Exceptions.h"
 #include "HitData.h"
 #include "JsonUtils.h"
-#include "MovementMessage.h"
-#include "MovementMessageSerialization.h"
+#include "MessageSerializerFactory.h"
+#include "Messages.h"
 #include "MpActor.h"
-#include <MsgType.h>
+#include "MsgType.h"
 #include <simdjson.h>
 #include <slikenet/BitStream.h>
 
@@ -34,11 +34,14 @@ static const JsonPointer t("t"), idx("idx"), content("content"), data("data"),
 struct PacketParser::Impl
 {
   simdjson::dom::parser simdjsonParser;
+  std::shared_ptr<MessageSerializer> serializer;
+  std::once_flag jsonWarning;
 };
 
 PacketParser::PacketParser()
 {
   pImpl.reset(new Impl);
+  pImpl->serializer = MessageSerializerFactory::CreateMessageSerializer();
 }
 
 void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
@@ -57,19 +60,43 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
     userId,
   };
 
-  if (length > 1 && data[1] == MovementMessage::kHeaderByte) {
-    MovementMessage movData;
-    // BitStream requires non-const ref even though it doesn't modify it
-    SLNet::BitStream stream(const_cast<unsigned char*>(data) + 2, length - 2,
-                            /*copyData*/ false);
-    serialization::ReadFromBitStream(stream, movData);
-
-    actionListener.OnUpdateMovement(
-      rawMsgData, movData.idx,
-      { movData.pos[0], movData.pos[1], movData.pos[2] },
-      { movData.rot[0], movData.rot[1], movData.rot[2] },
-      movData.isInJumpState, movData.isWeapDrawn, movData.isBlocking,
-      movData.worldOrCell);
+  auto result = pImpl->serializer->Deserialize(data, length);
+  if (result != std::nullopt) {
+    if (result->format == DeserializeInputFormat::Json) {
+      std::call_once(pImpl->jsonWarning, [&] {
+        spdlog::warn("PacketParser::TransformPacketIntoAction - 1-st time "
+                     "encountered a JSON packet, userId={}, msgType={}",
+                     userId, static_cast<int64_t>(result->msgType));
+      });
+    }
+    switch (result->msgType) {
+      case MsgType::UpdateMovement: {
+        auto message =
+          reinterpret_cast<MovementMessage*>(result->message.get());
+        actionListener.OnUpdateMovement(
+          rawMsgData, message->idx,
+          { message->pos[0], message->pos[1], message->pos[2] },
+          { message->rot[0], message->rot[1], message->rot[2] },
+          message->isInJumpState, message->isWeapDrawn, message->isBlocking,
+          message->worldOrCell);
+        break;
+      }
+      case MsgType::UpdateAnimation: {
+        auto message =
+          reinterpret_cast<UpdateAnimationMessage*>(result->message.get());
+        AnimationData animationData;
+        animationData.animEventName = message->animEventName.data();
+        animationData.numChanges = message->numChanges;
+        actionListener.OnUpdateAnimation(rawMsgData, message->idx,
+                                         animationData);
+        break;
+      }
+      default: {
+        spdlog::error("Unhandled MsgType {} after Deserialize",
+                      static_cast<int64_t>(result->msgType));
+        break;
+      }
+    }
     return;
   }
 
@@ -78,62 +105,16 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
 
   const auto& jMessage = rawMsgData.parsed;
 
-  using TypeInt = std::underlying_type<MsgType>::type;
-  auto type = MsgType::Invalid;
-  Read(jMessage, JsonPointers::t, reinterpret_cast<TypeInt*>(&type));
+  int64_t type = static_cast<int64_t>(MsgType::Invalid);
+  Read(jMessage, JsonPointers::t, &type);
 
-  switch (type) {
+  switch (static_cast<MsgType>(type)) {
     case MsgType::Invalid:
       break;
     case MsgType::CustomPacket: {
       simdjson::dom::element content;
       Read(jMessage, JsonPointers::content, &content);
       actionListener.OnCustomPacket(rawMsgData, content);
-    } break;
-    case MsgType::UpdateMovement: {
-      uint32_t idx;
-      ReadEx(jMessage, JsonPointers::idx, &idx);
-
-      simdjson::dom::element data_;
-      Read(jMessage, JsonPointers::data, &data_);
-
-      simdjson::dom::element jPos;
-      Read(data_, JsonPointers::pos, &jPos);
-      float pos[3];
-      for (int i = 0; i < 3; ++i)
-        ReadEx(jPos, i, &pos[i]);
-
-      simdjson::dom::element jRot;
-      Read(data_, JsonPointers::rot, &jRot);
-      float rot[3];
-      for (int i = 0; i < 3; ++i)
-        ReadEx(jRot, i, &rot[i]);
-
-      bool isInJumpState = false;
-      Read(data_, JsonPointers::isInJumpState, &isInJumpState);
-
-      bool isWeapDrawn = false;
-      Read(data_, JsonPointers::isWeapDrawn, &isWeapDrawn);
-
-      bool isBlocking = false;
-      Read(data_, JsonPointers::isBlocking, &isBlocking);
-
-      uint32_t worldOrCell = 0;
-      ReadEx(data_, JsonPointers::worldOrCell, &worldOrCell);
-
-      actionListener.OnUpdateMovement(
-        rawMsgData, idx, { pos[0], pos[1], pos[2] },
-        { rot[0], rot[1], rot[2] }, isInJumpState, isWeapDrawn, isBlocking,
-        worldOrCell);
-
-    } break;
-    case MsgType::UpdateAnimation: {
-      uint32_t idx;
-      ReadEx(jMessage, JsonPointers::idx, &idx);
-      simdjson::dom::element jData;
-      ReadEx(jMessage, JsonPointers::data, &jData);
-      actionListener.OnUpdateAnimation(rawMsgData, idx,
-                                       AnimationData::FromJson(jData));
     } break;
     case MsgType::UpdateAppearance: {
       uint32_t idx;
@@ -200,7 +181,7 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
       uint32_t target;
       ReadEx(jMessage, JsonPointers::target, &target);
       auto e = Inventory::Entry::FromJson(jMessage);
-      if (type == MsgType::PutItem) {
+      if (static_cast<MsgType>(type) == MsgType::PutItem) {
         e.extra.worn = Inventory::Worn::None;
         actionListener.OnPutItem(rawMsgData, target, e);
       } else {
@@ -308,9 +289,7 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
       break;
     }
     default:
-      simdjson::dom::element data_;
-      ReadEx(jMessage, JsonPointers::data, &data_);
-      actionListener.OnUnknown(rawMsgData, data_);
+      actionListener.OnUnknown(rawMsgData);
       break;
   }
 }

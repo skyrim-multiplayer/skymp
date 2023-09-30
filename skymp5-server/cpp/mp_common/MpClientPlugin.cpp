@@ -1,11 +1,13 @@
 #include "MpClientPlugin.h"
 
 #include "FileUtils.h"
+#include "MessageSerializerFactory.h"
 #include "MovementMessage.h"
-#include "MovementMessageSerialization.h"
 #include "MsgType.h"
 #include <nlohmann/json.hpp>
+#include <slikenet/BitStream.h>
 #include <spdlog/spdlog.h>
+#include <tuple>
 #include <vector>
 
 void MpClientPlugin::CreateClient(State& state, const char* targetHostname,
@@ -36,70 +38,50 @@ bool MpClientPlugin::IsConnected(State& state)
   return state.cl && state.cl->IsConnected();
 }
 
-void MpClientPlugin::Tick(State& state, OnPacket onPacket, void* state_)
+void MpClientPlugin::Tick(State& state, OnPacket onPacket,
+                          DeserializeMessage deserializeMessageFn,
+                          void* state_)
 {
   if (!state.cl)
     return;
 
-  std::pair<OnPacket, void*> packetAndState(onPacket, state_);
+  std::tuple<OnPacket, DeserializeMessage, void*> locals(
+    onPacket, deserializeMessageFn, state_);
 
   state.cl->Tick(
     [](void* rawState, Networking::PacketType packetType,
        Networking::PacketData data, size_t length, const char* error) {
-      const auto& [onPacket, state] =
-        *reinterpret_cast<std::pair<OnPacket, void*>*>(rawState);
+      const auto& [onPacket, deserializeMessageFn, state] =
+        *reinterpret_cast<std::tuple<OnPacket, DeserializeMessage, void*>*>(
+          rawState);
 
-      std::string jsonContent;
-
-      if (packetType == Networking::PacketType::Message && length > 1) {
-        if (data[1] == MovementMessage::kHeaderByte) {
-          MovementMessage movData;
-          // BitStream requires non-const ref even though it doesn't modify it
-          SLNet::BitStream stream(const_cast<unsigned char*>(data) + 2,
-                                  length - 2, /*copyData*/ false);
-          serialization::ReadFromBitStream(stream, movData);
-          jsonContent = serialization::MovementMessageToJson(movData).dump();
-        } else {
-          jsonContent =
-            std::string(reinterpret_cast<const char*>(data) + 1, length - 1);
-        }
+      if (packetType != Networking::PacketType::Message) {
+        return onPacket(static_cast<int32_t>(packetType), "", error, state);
       }
 
+      std::string deserializedJsonContent;
+      if (deserializeMessageFn(data, length, deserializedJsonContent)) {
+        return onPacket(static_cast<int32_t>(packetType),
+                        deserializedJsonContent.data(), error, state);
+      }
+
+      std::string jsonContent =
+        std::string(reinterpret_cast<const char*>(data) + 1, length - 1);
       onPacket(static_cast<int32_t>(packetType), jsonContent.data(), error,
                state);
     },
-    &packetAndState);
+    &locals);
 }
 
-void MpClientPlugin::Send(State& state, const char* jsonContent, bool reliable)
+void MpClientPlugin::Send(State& state, const char* jsonContent, bool reliable,
+                          SerializeMessage serializeMessageFn)
 {
   if (!state.cl) {
     // TODO(#263): we probably should log something here
     return;
   }
 
-  const auto parsedJson = nlohmann::json::parse(jsonContent);
-  if (static_cast<MsgType>(parsedJson.at("t").get<int>()) ==
-      MsgType::UpdateMovement) {
-    const auto movData = serialization::MovementMessageFromJson(parsedJson);
-    SLNet::BitStream stream;
-    serialization::WriteToBitStream(stream, movData);
-
-    std::vector<uint8_t> buf(stream.GetNumberOfBytesUsed() + 2);
-    buf[0] = Networking::MinPacketId;
-    buf[1] = MovementMessage::kHeaderByte;
-    std::copy(stream.GetData(),
-              stream.GetData() + stream.GetNumberOfBytesUsed(),
-              buf.begin() + 2);
-    state.cl->Send(buf.data(), buf.size(), reliable);
-
-    return;
-  }
-
-  auto n = strlen(jsonContent);
-  std::vector<uint8_t> buf(n + 1);
-  buf[0] = Networking::MinPacketId;
-  memcpy(buf.data() + 1, jsonContent, n);
-
-  state.cl->Send(buf.data(), buf.size(), reliable);
+  SLNet::BitStream stream;
+  serializeMessageFn(jsonContent, stream);
+  state.cl->Send(stream.GetData(), stream.GetNumberOfBytesUsed(), reliable);
 }
