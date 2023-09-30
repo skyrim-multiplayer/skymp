@@ -33,9 +33,9 @@ public:
     bool isProtected = false;
 
     uint32_t race = 0;
-    uint16_t healthOffset = 0;
-    uint16_t magickaOffset = 0;
-    uint16_t staminaOffset = 0;
+    int16_t healthOffset = 0;
+    int16_t magickaOffset = 0;
+    int16_t staminaOffset = 0;
     ObjectBounds objectBounds = {};
   };
 

@@ -18,17 +18,19 @@ export class HitService extends ClientListener {
         const aggressor = e.aggressor.getFormID();
         if (aggressor < 0xff000000 && aggressor !== 0x14) return; // all skymp npcs are FF+
 
-        // TODO: make host service
-        const hosted = storage['hosted'];
-        let alreadyHosted = false;
-        if (Array.isArray(hosted)) {
-          const remoteId = localIdToRemoteId(aggressor);
-          if (hosted.includes(remoteId)) {
-            alreadyHosted = true;
-          }
-        }
+        if (aggressor >= 0xff000000) {
+            // TODO: make host service
+            const hosted = storage['hosted'];
+            let alreadyHosted = false;
+            if (Array.isArray(hosted)) {
+                const remoteId = localIdToRemoteId(aggressor);
+                if (hosted.includes(remoteId)) {
+                    alreadyHosted = true;
+                }
+            }
 
-        if (!alreadyHosted) return;
+            if (!alreadyHosted) return;
+        }
 
         const base = e.target.getBaseObject();
         const type = base?.getType();

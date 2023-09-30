@@ -604,12 +604,17 @@ bool IsUnarmedAttack(const uint32_t sourceFormId)
 }
 
 float CalculateCurrentHealthPercentage(const MpActor& actor, float damage,
-                                       float healthPercentage)
+                                       float healthPercentage,
+                                       float* outBaseHealth)
 {
   uint32_t baseId = actor.GetBaseId();
   uint32_t raceId = actor.GetRaceId();
   WorldState* espmProvider = actor.GetParent();
   float baseHealth = GetBaseActorValues(espmProvider, baseId, raceId).health;
+
+  if (outBaseHealth) {
+    *outBaseHealth = baseHealth;
+  }
 
   float damagePercentage = damage / baseHealth;
   float currentHealthPercentage = healthPercentage - damagePercentage;
@@ -618,17 +623,19 @@ float CalculateCurrentHealthPercentage(const MpActor& actor, float damage,
 
 float GetReach(const MpActor& actor, const uint32_t source)
 {
+  float kReachHotfixMult = 1.5; // I guess GetSqrDistanceToBounds is incorrect
+
   auto espmProvider = actor.GetParent();
   if (IsUnarmedAttack(source)) {
     uint32_t raceId = actor.GetRaceId();
-    return espm::GetData<espm::RACE>(raceId, espmProvider).unarmedReach;
+    return kReachHotfixMult * espm::GetData<espm::RACE>(raceId, espmProvider).unarmedReach;
   }
   auto weapDNAM = espm::GetData<espm::WEAP>(source, espmProvider).weapDNAM;
   float fCombatDistance =
     espm::GetData<espm::GMST>(espm::GMST::kFCombatDistance, espmProvider)
       .value;
   float weaponReach = weapDNAM ? weapDNAM->reach : 0;
-  return weaponReach * fCombatDistance;
+  return kReachHotfixMult * weaponReach * fCombatDistance;
 }
 
 NiPoint3 RotateZ(const NiPoint3& point, float angle)
@@ -846,16 +853,15 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
   ActorValues currentActorValues = targetActor.GetChangeForm().actorValues;
 
   float healthPercentage = currentActorValues.healthPercentage;
-  float magickaPercentage = currentActorValues.magickaPercentage;
-  float staminaPercentage = currentActorValues.staminaPercentage;
 
   hitData.isHitBlocked = targetActor.IsBlockActive()
     ? ShouldBeBlocked(*aggressor, targetActor)
     : false;
   float damage = partOne.CalculateDamage(*aggressor, targetActor, hitData);
   damage = damage < 0.f ? 0.f : damage;
-  currentActorValues.healthPercentage =
-    CalculateCurrentHealthPercentage(targetActor, damage, healthPercentage);
+  float outBaseHealth = 0.f;
+  currentActorValues.healthPercentage = CalculateCurrentHealthPercentage(
+    targetActor, damage, healthPercentage, &outBaseHealth);
 
   currentActorValues.healthPercentage =
     currentActorValues.healthPercentage < 0.f
@@ -865,11 +871,10 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
   targetActor.NetSetPercentages(currentActorValues, aggressor);
   targetActor.SetLastHitTime();
 
-  spdlog::debug("Target {0:x} is hitted by {1} damage. Current health "
-                "percentage: {2}. Last "
-                "health percentage: {3}. (Last: {3} => Current: {2})",
+  spdlog::debug("Target {0:x} is hitted by {1} damage. Percentage was: {3}, "
+                "percentage now: {2}, base health: {4})",
                 hitData.target, damage, currentActorValues.healthPercentage,
-                healthPercentage);
+                healthPercentage, outBaseHealth);
 }
 
 void ActionListener::OnUnknown(const RawMessageData& rawMsgData,

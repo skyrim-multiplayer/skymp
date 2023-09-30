@@ -523,8 +523,22 @@ void WorldState::SendPapyrusEvent(MpForm* form, const char* eventName,
     for (size_t i = 0; i < args.size(); ++i) {
       argsStrings[i] = args[i].ToString();
     }
-    spdlog::trace("WorldState::SendPapyrusEvent {:x} - {} [{}]",
-                  form->GetFormId(), eventName, fmt::join(argsStrings, ", "));
+
+    if (!strcmp(eventName, "OnTrigger")) {
+      static std::once_flag g_once;
+      std::call_once(g_once, [&] {
+        spdlog::trace("WorldState::SendPapyrusEvent {:x} - {} [{}]",
+                      form->GetFormId(), eventName,
+                      fmt::join(argsStrings, ", "));
+        spdlog::trace("WorldState::SendPapyrusEvent {:x} - Muting {} globally "
+                      "to keep logs clear",
+                      form->GetFormId(), eventName);
+      });
+    } else {
+      spdlog::trace("WorldState::SendPapyrusEvent {:x} - {} [{}]",
+                    form->GetFormId(), eventName,
+                    fmt::join(argsStrings, ", "));
+    }
   }
 
   VirtualMachine::OnEnter onEnter = [&](const StackIdHolder& holder) {

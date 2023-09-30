@@ -26,9 +26,9 @@ NPC_::Data NPC_::GetData(
 
         result.isEssential = !!(flags & 0x02);
         result.isProtected = !!(flags & 0x800);
-        result.magickaOffset = *reinterpret_cast<const uint16_t*>(data + 4);
-        result.staminaOffset = *reinterpret_cast<const uint16_t*>(data + 6);
-        result.healthOffset = *reinterpret_cast<const uint16_t*>(data + 20);
+        result.magickaOffset = *reinterpret_cast<const int16_t*>(data + 4);
+        result.staminaOffset = *reinterpret_cast<const int16_t*>(data + 6);
+        result.healthOffset = *reinterpret_cast<const int16_t*>(data + 20);
 
       } else if (!std::memcmp(type, "RNAM", 4)) {
         result.race = *reinterpret_cast<const uint32_t*>(data);
