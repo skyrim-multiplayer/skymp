@@ -1148,7 +1148,7 @@ void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
                              teleport->rotRadians[2] / g_pi * 180 };
 
       TeleportMessage msg;
-      msg.idx = GetIdx();
+      msg.idx = activationSource.GetIdx();
       std::copy(std::begin(pos), std::end(pos), msg.pos.begin());
       std::copy(std::begin(rot), std::end(rot), msg.rot.begin());
       msg.worldOrCell = teleportWorldOrCell;

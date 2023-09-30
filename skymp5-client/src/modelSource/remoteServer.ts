@@ -58,6 +58,8 @@ import { RagdollService } from '../services/services/ragdollService';
 import { UpdateAppearanceMessage } from '../services/messages/updateAppearanceMessage';
 import { TeleportMessage } from '../services/messages/teleportMessage';
 import { DeathStateContainerMessage } from '../services/messages/deathStateContainerMessage';
+import { RespawnNeededError } from '../lib/errors';
+import { OpenContainer } from '../services/messages/openContainer';
 
 const onceLoad = (
   refrId: number,
@@ -215,7 +217,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
     });
   }
 
-  openContainer(msg: messages.OpenContainer): void {
+  OpenContainer(msg: OpenContainer): void {
     once('update', async () => {
       await Utility.wait(0.1); // Give a chance to update inventory
       (
@@ -627,10 +629,19 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
           ? Game.getPlayer()!
           : Actor.from(Game.getFormEx(remoteIdToLocalId(form.refrId ?? 0)));
       if (actor) {
-        SpApiInteractor.makeController().emitter.emit("applyDeathStateEvent", {
-          actor: actor,
-          isDead: msg.tIsDead.data as boolean
-        });
+        try {
+          SpApiInteractor.makeController().emitter.emit("applyDeathStateEvent", {
+            actor: actor,
+            isDead: msg.tIsDead.data as boolean
+          });
+        } catch (e) {
+          if (e instanceof RespawnNeededError) {
+            actor.disableNoWait(false);
+            actor.delete();
+          } else {
+            throw e;
+          }
+        }
       }
     });
   }

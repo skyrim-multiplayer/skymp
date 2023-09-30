@@ -10,6 +10,7 @@ import { FinishSpSnippetMessage } from "./finishSpSnippetMessage";
 import { HitMessage } from "./hitMessage";
 import { HostMessage } from "./hostMessage";
 import { OnEquipMessage } from "./onEquipMessage";
+import { OpenContainer } from "./openContainer";
 import { PutItemMessage } from "./putItemMessage";
 import { TakeItemMessage } from "./takeItemMessage";
 import { TeleportMessage } from "./teleportMessage";
@@ -36,3 +37,4 @@ export type AnyMessage = ActivateMessage
     | CustomPacketMessage
     | FinishSpSnippetMessage
     | TeleportMessage
+    | OpenContainer

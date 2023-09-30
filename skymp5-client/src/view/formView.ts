@@ -162,10 +162,6 @@ export class FormView implements View<FormModel> {
   }
 
   destroy(): void {
-    this.lastWorldOrCell = 0;
-    this.refrId = 0;
-    this.appearanceBasedBaseId = 0;
-
     this.isOnScreen = false;
     this.spawnMoment = 0;
     const refrId = this.refrId;
@@ -274,6 +270,8 @@ export class FormView implements View<FormModel> {
             if (e instanceof RespawnNeededError) {
               this.lastWorldOrCell = model.movement.worldOrCell;
               this.destroy();
+              this.refrId = 0;
+              this.appearanceBasedBaseId = 0;
               return;
             } else {
               throw e;

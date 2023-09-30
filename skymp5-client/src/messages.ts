@@ -36,11 +36,6 @@ export interface SetInventory {
   inventory: Inventory;
 }
 
-export interface OpenContainer {
-  type: "openContainer";
-  target: number;
-}
-
 export interface CreateActorMessage {
   type: "createActor";
   idx: number;
