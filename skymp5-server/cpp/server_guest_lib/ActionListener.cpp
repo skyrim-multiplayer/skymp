@@ -750,13 +750,13 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
   if (hitData.aggressor == 0x14) {
     aggressor = myActor;
     hitData.aggressor = aggressor->GetFormId();
-  }
-  else {
+  } else {
     aggressor = &partOne.worldState.GetFormAt<MpActor>(hitData.aggressor);
     auto it = partOne.worldState.hosters.find(hitData.aggressor);
     if (it == partOne.worldState.hosters.end() ||
         it->second != myActor->GetFormId()) {
-      spdlog::error("SendToNeighbours - No permission to send OnHit with aggressor actor {:x}",
+      spdlog::error("SendToNeighbours - No permission to send OnHit with "
+                    "aggressor actor {:x}",
                     aggressor->GetFormId());
       return;
     }

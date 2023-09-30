@@ -229,14 +229,18 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
       spdlog::info(msg.str());
     }
 
-    if (serverSettings.find("enableConsoleCommandsForAll") != serverSettings.end()) {
+    if (serverSettings.find("enableConsoleCommandsForAll") !=
+        serverSettings.end()) {
       if (serverSettings.at("enableConsoleCommandsForAll").is_boolean()) {
-        bool enableConsoleCommandsForAll = serverSettings["enableConsoleCommandsForAll"].get<bool>();
-        spdlog::info("enableConsoleCommandsForAll is explicitly set to {}", enableConsoleCommandsForAll);
-        partOne->worldState.SetEnableConsoleCommandsForAllSetting(enableConsoleCommandsForAll);
-      }
-      else {
-        spdlog::error("Unexpected value of enableConsoleCommandsForAll setting, should be true or false");
+        bool enableConsoleCommandsForAll =
+          serverSettings["enableConsoleCommandsForAll"].get<bool>();
+        spdlog::info("enableConsoleCommandsForAll is explicitly set to {}",
+                     enableConsoleCommandsForAll);
+        partOne->worldState.SetEnableConsoleCommandsForAllSetting(
+          enableConsoleCommandsForAll);
+      } else {
+        spdlog::error("Unexpected value of enableConsoleCommandsForAll "
+                      "setting, should be true or false");
       }
     }
 
