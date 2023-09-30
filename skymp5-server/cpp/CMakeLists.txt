@@ -22,6 +22,19 @@ if(WIN32)
 endif()
 
 #
+# messages
+#
+
+file(GLOB_RECURSE src "${CMAKE_CURRENT_SOURCE_DIR}/messages/*")
+list(APPEND src "${CMAKE_SOURCE_DIR}/.clang-format")
+add_library(messages STATIC ${src})
+target_include_directories(messages PUBLIC "${CMAKE_CURRENT_LIST_DIR}/messages")
+target_link_libraries(messages PUBLIC viet)
+target_link_libraries(messages PUBLIC papyrus-vm-lib) # Utils.h: stricmp
+apply_default_settings(TARGETS messages)
+list(APPEND VCPKG_DEPENDENT messages)
+
+#
 # mp_common
 #
 
@@ -30,8 +43,7 @@ list(APPEND src "${CMAKE_SOURCE_DIR}/.clang-format")
 add_library(mp_common STATIC ${src})
 target_compile_definitions(mp_common PUBLIC MAX_PLAYERS=1000)
 target_include_directories(mp_common PUBLIC "${CMAKE_CURRENT_LIST_DIR}/mp_common")
-target_include_directories(mp_common PUBLIC "${CMAKE_CURRENT_LIST_DIR}/third_party")
-target_link_libraries(mp_common PUBLIC viet)
+target_link_libraries(mp_common PUBLIC messages viet)
 apply_default_settings(TARGETS mp_common)
 list(APPEND VCPKG_DEPENDENT mp_common)
 if(WIN32)

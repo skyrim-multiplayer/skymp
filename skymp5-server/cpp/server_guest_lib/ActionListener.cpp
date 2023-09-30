@@ -42,6 +42,10 @@ MpActor* ActionListener::SendToNeighbours(
     auto it = partOne.worldState.hosters.find(actor->GetFormId());
     if (it == partOne.worldState.hosters.end() ||
         it->second != myActor->GetFormId()) {
+      if (idx == 0) {
+        spdlog::warn("SendToNeighbours - idx=0, <Message>::ReadJson or "
+                     "similar is probably incorrect");
+      }
       spdlog::error("SendToNeighbours - No permission to update actor {:x}",
                     actor->GetFormId());
       return nullptr;
@@ -877,8 +881,8 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
                 healthPercentage, outBaseHealth);
 }
 
-void ActionListener::OnUnknown(const RawMessageData& rawMsgData,
-                               simdjson::dom::element data)
+void ActionListener::OnUnknown(const RawMessageData& rawMsgData)
 {
-  spdlog::debug("Got unhandled message: {}", simdjson::minify(data));
+  spdlog::error("Got unhandled message: {}",
+                simdjson::minify(rawMsgData.parsed));
 }

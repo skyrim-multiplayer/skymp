@@ -1,5 +1,7 @@
 #pragma once
 
+#include "MessageBase.h"
+#include "MsgType.h"
 #include <array>
 #include <cstdint>
 #include <optional>
@@ -20,9 +22,15 @@ const std::string& ToString(RunMode runMode);
 
 RunMode RunModeFromString(std::string_view str);
 
-struct MovementMessage
+struct MovementMessage : public MessageBase
 {
+  const static char kMsgType = static_cast<char>(MsgType::UpdateMovement);
   const static char kHeaderByte = 'M';
+
+  void WriteBinary(SLNet::BitStream& stream) const override;
+  void ReadBinary(SLNet::BitStream& stream) override;
+  void WriteJson(nlohmann::json& json) const override;
+  void ReadJson(const nlohmann::json& json) override;
 
   uint32_t idx = 0;
   uint32_t worldOrCell = 0;
@@ -40,16 +48,4 @@ struct MovementMessage
   bool isWeapDrawn = false;
   bool isDead = false;
   std::optional<std::array<float, 3>> lookAt = std::nullopt;
-
-  auto Tie() const
-  {
-    return std::tie(idx, worldOrCell, pos, rot, direction, healthPercentage,
-                    speed, runMode, isInJumpState, isSneaking, isBlocking,
-                    isWeapDrawn, isDead, lookAt);
-  }
-
-  bool operator==(const MovementMessage& rhs) const
-  {
-    return Tie() == rhs.Tie();
-  }
 };
