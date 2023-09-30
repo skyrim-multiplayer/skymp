@@ -1,4 +1,4 @@
-import { storage } from "skyrimPlatform";
+import { Game, ObjectReference, storage } from "skyrimPlatform";
 import { WorldView } from "./worldView";
 
 export const getViewFromStorage = (): WorldView | undefined => {
@@ -29,4 +29,21 @@ export const remoteIdToLocalId = (remoteFormId: number): number => {
     if (!remoteFormId) return 0;
   }
   return remoteFormId;
+};
+
+export const getObjectReference = (i: number): ObjectReference | null => {
+  const view = getViewFromStorage();
+  if (view) {
+    const formView = view.getFormViews().getNthFormView(i);
+    if (formView) {
+      const refrId = formView.getLocalRefrId();
+      if (refrId > 0) {
+        const refr = ObjectReference.from(Game.getFormEx(refrId));
+        if (refr !== null) {
+          return refr;
+        }
+      }
+    }
+  }
+  return null;
 };

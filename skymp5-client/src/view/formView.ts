@@ -162,6 +162,10 @@ export class FormView implements View<FormModel> {
   }
 
   destroy(): void {
+    this.lastWorldOrCell = 0;
+    this.refrId = 0;
+    this.appearanceBasedBaseId = 0;
+
     this.isOnScreen = false;
     this.spawnMoment = 0;
     const refrId = this.refrId;
@@ -223,20 +227,22 @@ export class FormView implements View<FormModel> {
       }
     }
 
-    if (model.movement) {
-      const ac = Actor.from(refr);
-      if (ac) {
-        if (model.isHostedByOther !== this.wasHostedByOther) {
-          this.wasHostedByOther = model.isHostedByOther;
-          this.movState.lastApply = 0;
-          if (model.isHostedByOther) {
-            setDefaultAnimsDisabled(ac.getFormID(), true);
-          } else {
-            setDefaultAnimsDisabled(ac.getFormID(), false);
-          }
-        }
+    // TODO: make host service
+    const hosted = storage['hosted'];
+    let alreadyHosted = false;
+    if (Array.isArray(hosted)) {
+      const remoteId = localIdToRemoteId(this.refrId);
+      if (hosted.includes(remoteId)) {
+        alreadyHosted = true;
       }
+    }
+    setDefaultAnimsDisabled(this.refrId, alreadyHosted ? false : true);
+    if (alreadyHosted) {
+      Actor.from(refr)?.clearKeepOffsetFromActor();
+    }
 
+    if (model.movement) {
+      let ac = Actor.from(refr);
       if (
         this.movState.lastApply &&
         Date.now() - this.movState.lastApply > 1500
@@ -268,8 +274,6 @@ export class FormView implements View<FormModel> {
             if (e instanceof RespawnNeededError) {
               this.lastWorldOrCell = model.movement.worldOrCell;
               this.destroy();
-              this.refrId = 0;
-              this.appearanceBasedBaseId = 0;
               return;
             } else {
               throw e;

@@ -25,7 +25,10 @@ Viet::Promise<VarValue> SpSnippet::Execute(MpActor* actor)
 
   Networking::Format(
     [&](Networking::PacketData data, size_t len) {
-      actor->SendToUser(data, len, true);
+      // The only reason for deferred here is that it still supports raw binary data send
+      // TODO: change to SendToUser
+      constexpr int kChannelSpSnippet = 1;
+      actor->SendToUserDeferred(data, len, true, kChannelSpSnippet);
     },
     R"({"type": "spSnippet", "class": "%s", "function": "%s", "arguments": %s, "selfId": %u, "snippetIdx": %u})",
     cl, func, args, targetSelfId, snippetIdx);

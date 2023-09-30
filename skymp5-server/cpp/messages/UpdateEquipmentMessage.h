@@ -4,11 +4,14 @@
 #include "MsgType.h"
 #include <cstdint>
 #include <string>
+#include <nlohmann/json.hpp>
+#include <optional>
+#include <string>
 
-struct UpdateAnimationMessage : public MessageBase<UpdateAnimationMessage>
+struct UpdateEquipmentMessage : public MessageBase<UpdateEquipmentMessage>
 {
-  const static char kMsgType = static_cast<char>(MsgType::UpdateAnimation);
-  const static char kHeaderByte = static_cast<char>(MsgType::UpdateAnimation);
+  const static char kMsgType = static_cast<char>(MsgType::UpdateEquipment);
+  const static char kHeaderByte = static_cast<char>(MsgType::UpdateEquipment);
 
   void WriteBinary(SLNet::BitStream& stream) const override;
   void ReadBinary(SLNet::BitStream& stream) override;
@@ -16,6 +19,5 @@ struct UpdateAnimationMessage : public MessageBase<UpdateAnimationMessage>
   void ReadJson(const nlohmann::json& json) override;
 
   uint32_t idx = 0;
-  uint32_t numChanges = 0;
-  std::string animEventName;
+  nlohmann::json data; // TODO: static typing
 };

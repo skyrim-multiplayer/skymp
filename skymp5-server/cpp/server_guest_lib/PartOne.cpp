@@ -4,6 +4,7 @@
 #include "FormCallbacks.h"
 #include "IdManager.h"
 #include "JsonUtils.h"
+#include "MessageSerializerFactory.h"
 #include "MsgType.h"
 #include "PacketParser.h"
 #include <array>
@@ -442,6 +443,9 @@ void PartOne::RequestPacketHistoryPlayback(Networking::UserId userId,
 
 FormCallbacks PartOne::CreateFormCallbacks()
 {
+  static auto g_serializer =
+    MessageSerializerFactory::CreateMessageSerializer();
+
   auto st = &serverState;
 
   FormCallbacks::SubscribeCallback
@@ -455,13 +459,26 @@ FormCallbacks PartOne::CreateFormCallbacks()
     };
 
   FormCallbacks::SendToUserFn sendToUser =
-    [this, st](MpActor* actor, const void* data, size_t size, bool reliable) {
+    [this, st](MpActor* actor, const IMessageBase& message, bool reliable) {
+      SLNet::BitStream stream;
+      g_serializer->Serialize(message, stream);
+
+      auto hosterIterator = worldState.hosters.find(actor->GetFormId());
+      if (hosterIterator != worldState.hosters.end()) {
+        auto& hosterActor =
+          worldState.GetFormAt<MpActor>(hosterIterator->second);
+        actor = &hosterActor;
+        // Direct messages such as Teleport, ChangeValues to our host
+      }
+
       auto targetuserId = st->UserByActor(actor);
       if (targetuserId != Networking::InvalidUserId &&
-          st->disconnectingUserId != targetuserId)
-        pImpl->sendTarget->Send(targetuserId,
-                                reinterpret_cast<Networking::PacketData>(data),
-                                size, reliable);
+          st->disconnectingUserId != targetuserId) {
+        pImpl->sendTarget->Send(
+          targetuserId,
+          reinterpret_cast<Networking::PacketData>(stream.GetData()),
+          stream.GetNumberOfBytesUsed(), reliable);
+      }
     };
 
   FormCallbacks::SendToUserDeferredFn sendToUserDeferred =

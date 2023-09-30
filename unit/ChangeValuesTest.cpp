@@ -6,6 +6,8 @@
 #include "PacketParser.h"
 #include "libespm/Loader.h"
 
+#include "ChangeValuesMessage.h"
+
 PartOne& GetPartOne();
 extern espm::Loader l;
 
@@ -142,16 +144,13 @@ TEST_CASE("ChangeValues message is being delivered to client",
   auto& ac = partOne.worldState.GetFormAt<MpActor>(0xff000000);
   partOne.Messages().clear();
 
-  nlohmann::json j = nlohmann::json{ { "t", MsgType::ChangeValues },
-                                     { "data",
-                                       {
-                                         { "health", 1.0f },
-                                         { "magicka", 1.0f },
-                                         { "stamina", 1.0f },
-                                       } } };
-  std::string s = MakeMessage(j);
+  ChangeValuesMessage msg;
+  msg.idx = ac.GetIdx();
+  msg.health = 1.f;
+  msg.magicka = 1.f;
+  msg.stamina = 1.f;
 
-  ac.SendToUser(s.data(), s.size(), true);
+  ac.SendToUser(msg, true);
 
   REQUIRE(partOne.Messages().size() == 1);
   nlohmann::json message = partOne.Messages()[0].j;

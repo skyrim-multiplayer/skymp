@@ -1,3 +1,3 @@
 #include "MessageBase.h"
 
-MessageBase::~MessageBase() = default;
+IMessageBase::~IMessageBase() = default;

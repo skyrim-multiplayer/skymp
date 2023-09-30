@@ -21,6 +21,8 @@
 #include <tuple>
 #include <vector>
 
+#include "UpdatePropertyMessage.h"
+
 struct GridPosInfo
 {
   uint32_t worldOrCell = 0;
@@ -179,7 +181,7 @@ protected:
   void SendPropertyToListeners(const char* name, const nlohmann::json& value);
   void SendPropertyTo(const char* name, const nlohmann::json& value,
                       MpActor& target);
-  void SendPropertyTo(const std::string& preparedPropMsg, MpActor& target);
+  void SendPropertyTo(const IMessageBase& preparedPropMsg, MpActor& target);
 
 private:
   void AddContainerObject(const espm::CONT::ContainerObject& containerObject,
@@ -215,9 +217,9 @@ private:
 
 protected:
   void BeforeDestroy() override;
-  std::string CreatePropertyMessage(MpObjectReference* self, const char* name,
+  UpdatePropertyMessage CreatePropertyMessage(MpObjectReference* self, const char* name,
                                     const nlohmann::json& value);
-  nlohmann::json PreparePropertyMessage(MpObjectReference* self,
+  UpdatePropertyMessage PreparePropertyMessage(MpObjectReference* self,
                                         const char* name,
                                         const nlohmann::json& value);
 

@@ -1,5 +1,6 @@
 import * as msg from "../messages";
 import { ChangeValuesMessage } from "../services/messages/changeValues";
+import { DeathStateContainerMessage } from "../services/messages/deathStateContainerMessage";
 import { UpdateAnimationMessage } from "../services/messages/updateAnimationMessage";
 import { UpdateAppearanceMessage } from "../services/messages/updateAppearanceMessage";
 import { UpdateEquipmentMessage } from "../services/messages/updateEquipmentMessage";
@@ -15,7 +16,7 @@ export interface MsgHandler {
   ChangeValues(msg: ChangeValuesMessage): void;
   setRaceMenuOpen(msg: msg.SetRaceMenuOpenMessage): void;
   customPacket(msg: msg.CustomPacket): void;
-  DeathStateContainer(msg: msg.DeathStateContainerMessage): void;
+  DeathStateContainer(msg: DeathStateContainerMessage): void;
 
   handleConnectionAccepted(): void;
   handleDisconnect(): void;

@@ -19,6 +19,8 @@
 #include <spdlog/spdlog.h>
 #include <unordered_set>
 
+#include "UpdateEquipmentMessage.h"
+
 MpActor* ActionListener::SendToNeighbours(
   uint32_t idx, const simdjson::dom::element& jMessage,
   Networking::UserId userId, Networking::PacketData data, size_t length,
@@ -278,14 +280,10 @@ void RecalculateWorn(MpObjectReference& refr)
     if (!actor) {
       continue;
     }
-    std::string s;
-    s += Networking::MinPacketId;
-    s += nlohmann::json{
-      { "t", MsgType::UpdateEquipment },
-      { "idx", ac->GetIdx() },
-      { "data", newEq.ToJson() }
-    }.dump();
-    actor->SendToUser(s.data(), s.size(), true);
+    UpdateEquipmentMessage msg;
+    msg.data = newEq.ToJson();
+    msg.idx = ac->GetIdx();
+    actor->SendToUser(msg, true);
   }
 }
 
@@ -625,21 +623,21 @@ float CalculateCurrentHealthPercentage(const MpActor& actor, float damage,
   return currentHealthPercentage;
 }
 
-float GetReach(const MpActor& actor, const uint32_t source)
+float GetReach(const MpActor& actor, const uint32_t source,
+               float reachHotfixMult)
 {
-  float kReachHotfixMult = 1.5; // I guess GetSqrDistanceToBounds is incorrect
-
   auto espmProvider = actor.GetParent();
   if (IsUnarmedAttack(source)) {
     uint32_t raceId = actor.GetRaceId();
-    return kReachHotfixMult * espm::GetData<espm::RACE>(raceId, espmProvider).unarmedReach;
+    return reachHotfixMult *
+      espm::GetData<espm::RACE>(raceId, espmProvider).unarmedReach;
   }
   auto weapDNAM = espm::GetData<espm::WEAP>(source, espmProvider).weapDNAM;
   float fCombatDistance =
     espm::GetData<espm::GMST>(espm::GMST::kFCombatDistance, espmProvider)
       .value;
   float weaponReach = weapDNAM ? weapDNAM->reach : 0;
-  return kReachHotfixMult * weaponReach * fCombatDistance;
+  return reachHotfixMult * weaponReach * fCombatDistance;
 }
 
 NiPoint3 RotateZ(const NiPoint3& point, float angle)
@@ -694,7 +692,14 @@ bool IsDistanceValid(const MpActor& actor, const MpActor& targetActor,
                      const HitData& hitData)
 {
   float sqrDistance = GetSqrDistanceToBounds(actor, targetActor);
-  float reach = GetReach(actor, hitData.source);
+
+  // TODO: fix bounding boxes for creatures such as chicken, mudcrab, etc
+  float reachPveHotfixMult =
+    (actor.GetBaseId() <= 0x7 && targetActor.GetBaseId() <= 0x7)
+    ? 1.f
+    : std::numeric_limits<float>::infinity();
+
+  float reach = GetReach(actor, hitData.source, reachPveHotfixMult);
 
   // For bow/crossbow shots we don't want to check melee radius
   if (!hitData.isBashAttack) {
@@ -778,8 +783,10 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
   }
 
   if (aggressor->IsDead()) {
-    spdlog::debug(fmt::format("{:x} actor is dead and can't attack",
+    spdlog::debug(fmt::format("{:x} actor is dead and can't attack. "
+                              "requesting respawn in order to fix death state",
                               aggressor->GetFormId()));
+    aggressor->RespawnWithDelay(true);
     return;
   }
 
@@ -844,7 +851,14 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
   if (IsDistanceValid(*aggressor, targetActor, hitData) == false) {
     float distance =
       std::sqrt(GetSqrDistanceToBounds(*aggressor, targetActor));
-    float reach = GetReach(*aggressor, hitData.source);
+
+    // TODO: fix bounding boxes for creatures such as chicken, mudcrab, etc
+    float reachPveHotfixMult =
+      (aggressor->GetBaseId() <= 0x7 && targetActor.GetBaseId() <= 0x7)
+      ? 1.f
+      : std::numeric_limits<float>::infinity();
+
+    float reach = GetReach(*aggressor, hitData.source, reachPveHotfixMult);
     uint32_t aggressorId = aggressor->GetFormId();
     uint32_t targetId = targetActor.GetFormId();
     spdlog::debug(

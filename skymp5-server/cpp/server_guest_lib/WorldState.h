@@ -22,6 +22,7 @@
 #include <sparsepp/spp.h>
 #include <spdlog/spdlog.h>
 #include <sstream>
+#include <unordered_map>
 
 #ifdef AddForm
 #  undef AddForm
@@ -212,7 +213,7 @@ public:
     actorIdByPrivateIndexedProperty;
   std::shared_ptr<spdlog::logger> logger;
   std::vector<std::shared_ptr<PartOneListener>> listeners;
-  std::map<uint32_t, uint32_t> hosters;
+  std::unordered_map<uint32_t, uint32_t> hosters;
   std::vector<std::optional<std::chrono::system_clock::time_point>>
     lastMovUpdateByIdx;
 

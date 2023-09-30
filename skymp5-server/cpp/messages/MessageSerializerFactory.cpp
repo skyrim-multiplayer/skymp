@@ -7,6 +7,13 @@
 #include <spdlog/spdlog.h>
 
 namespace {
+void Serialize(const IMessageBase& message, SLNet::BitStream& outputStream)
+{
+  outputStream.Write(static_cast<uint8_t>(Networking::MinPacketId));
+  outputStream.Write(static_cast<uint8_t>(message.GetHeaderByte()));
+  message.WriteBinary(outputStream);
+}
+
 template <class Message>
 void Serialize(const nlohmann::json& inputJson, SLNet::BitStream& outputStream)
 {
@@ -14,9 +21,7 @@ void Serialize(const nlohmann::json& inputJson, SLNet::BitStream& outputStream)
   message.ReadJson(
     inputJson); // may throw. we shouldn't pollute outputStream in this case
 
-  outputStream.Write(static_cast<uint8_t>(Networking::MinPacketId));
-  outputStream.Write(static_cast<uint8_t>(Message::kHeaderByte));
-  message.WriteBinary(outputStream);
+  Serialize(message, outputStream);
 }
 
 template <class Message>
@@ -87,8 +92,7 @@ MessageSerializerFactory::CreateMessageSerializer()
   std::vector<MessageSerializer::DeserializeFn> deserializeFns(
     kDeserializeFnMax);
 
-  REGISTER_MESSAGE(MovementMessage)
-  REGISTER_MESSAGE(UpdateAnimationMessage)
+  REGISTER_MESSAGES
 
   // make_shared isn't working for private constructors
   return std::shared_ptr<MessageSerializer>(
@@ -134,6 +138,12 @@ void MessageSerializer::Serialize(const char* jsonContent,
   serializerFn(parsedJson, outputStream);
 }
 
+void MessageSerializer::Serialize(const IMessageBase& message,
+                                  SLNet::BitStream& outputStream)
+{
+  ::Serialize(message, outputStream);
+}
+
 std::optional<DeserializeResult> MessageSerializer::Deserialize(
   const uint8_t* rawMessageJsonOrBinary, size_t length)
 {
@@ -144,7 +154,10 @@ std::optional<DeserializeResult> MessageSerializer::Deserialize(
 
   auto headerByte = rawMessageJsonOrBinary[1];
   if (headerByte == '{') {
-    spdlog::trace("MessageSerializer::Deserialize - Encountered JSON message");
+    std::string s(reinterpret_cast<const char*>(rawMessageJsonOrBinary) + 1,
+                  length - 1);
+    spdlog::trace(
+      "MessageSerializer::Deserialize - Encountered JSON message {}", s);
     for (auto fn : deserializerFns) {
       if (fn) {
         auto result = fn(rawMessageJsonOrBinary, length);

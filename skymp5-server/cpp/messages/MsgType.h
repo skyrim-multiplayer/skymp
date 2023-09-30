@@ -23,6 +23,8 @@ enum class MsgType : uint8_t
   OnHit = 17,
   DeathStateContainer = 18,
   DropItem = 19,
+  Teleport = 20,
+  OpenContainer = 21,
 
   Max
 };

@@ -3,6 +3,7 @@
 #include <optional>
 #include <slikenet/BitStream.h>
 #include <string>
+#include <nlohmann/json_fwd.hpp>
 
 namespace SerializationUtil {
 
@@ -44,6 +45,10 @@ void ReadFromBitStream(SLNet::BitStream& stream, std::array<T, N>& arr);
 void WriteToBitStream(SLNet::BitStream& stream, const std::string& str);
 
 void ReadFromBitStream(SLNet::BitStream& stream, std::string& str);
+
+void WriteToBitStream(SLNet::BitStream& stream, const nlohmann::json& json);
+
+void ReadFromBitStream(SLNet::BitStream& stream, nlohmann::json& json);
 
 template <class T>
 T ReadFromBitStream(SLNet::BitStream& stream);
