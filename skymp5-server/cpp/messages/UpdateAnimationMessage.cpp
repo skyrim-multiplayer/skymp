@@ -1,9 +1,9 @@
 #include "UpdateAnimationMessage.h"
 #include "SerializationUtil/BitStreamUtil.h"
-#include <nlohmann/json.hpp>
 #include "papyrus-vm/Utils.h" // stricmp
+#include <nlohmann/json.hpp>
 
-static const char*const kAnimEventNameDictionary[] = {
+static const char* const kAnimEventNameDictionary[] = {
   "jumpStandingStart",
   "jumpDirectionalStart",
   "JumpFall",
@@ -40,15 +40,17 @@ void UpdateAnimationMessage::WriteBinary(SLNet::BitStream& stream) const
   SerializationUtil::WriteToBitStream(stream, idx);
   SerializationUtil::WriteToBitStream(stream, numChanges);
 
-  auto it = std::find_if(std::begin(kAnimEventNameDictionary), std::end(kAnimEventNameDictionary), [&](const char* name) {
-    return Utils::stricmp(name, animEventName.c_str()) == 0;
-  });
+  auto it =
+    std::find_if(std::begin(kAnimEventNameDictionary),
+                 std::end(kAnimEventNameDictionary), [&](const char* name) {
+                   return Utils::stricmp(name, animEventName.c_str()) == 0;
+                 });
 
   if (it == std::end(kAnimEventNameDictionary)) {
     SerializationUtil::WriteToBitStream(stream, animEventName);
-  }
-  else {
-    SerializationUtil::WriteToBitStream(stream, static_cast<uint8_t>(it - std::begin(kAnimEventNameDictionary)));
+  } else {
+    SerializationUtil::WriteToBitStream(
+      stream, static_cast<uint8_t>(it - std::begin(kAnimEventNameDictionary)));
   }
 }
 
@@ -60,11 +62,11 @@ void UpdateAnimationMessage::ReadBinary(SLNet::BitStream& stream)
   if (stream.GetNumberOfUnreadBits() == 8) {
     uint8_t animEventNameIdx;
     SerializationUtil::ReadFromBitStream(stream, animEventNameIdx);
-    constexpr auto size = sizeof(kAnimEventNameDictionary) / sizeof(kAnimEventNameDictionary[0]);
+    constexpr auto size =
+      sizeof(kAnimEventNameDictionary) / sizeof(kAnimEventNameDictionary[0]);
     if (animEventNameIdx >= size) {
       animEventName = "";
-    }
-    else {
+    } else {
       animEventName = kAnimEventNameDictionary[animEventNameIdx];
     }
   } else {
