@@ -181,8 +181,7 @@ void MpActor::SendToUserDeferred(const void* data, size_t size, bool reliable,
 {
   if (callbacks->sendToUserDeferred) {
     callbacks->sendToUserDeferred(this, data, size, reliable,
-                                  deferredChannelId,
-                                  overwritePreviousChannelMessages);
+                                  deferredChannelId, overwritePreviousChannelMessages);
   } else {
     throw std::runtime_error("sendToUserDeferred is nullptr");
   }
@@ -656,6 +655,7 @@ void MpActor::Respawn(bool shouldTeleport)
 void MpActor::Teleport(const LocationalData& position)
 {
   TeleportMessage msg;
+  msg.idx = GetIdx();
   std::copy(&position.pos[0], &position.pos[0] + 3, std::begin(msg.pos));
   std::copy(&position.rot[0], &position.rot[0] + 3, std::begin(msg.rot));
   msg.worldOrCell = position.cellOrWorldDesc.ToFormId(GetParent()->espmFiles);
