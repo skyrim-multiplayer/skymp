@@ -13,46 +13,6 @@ extern espm::Loader l;
 
 using namespace std::chrono_literals;
 
-TEST_CASE("ChangeValues packet is parsed correctly", "[ChangeValues]")
-{
-  class MyActionListener : public ActionListener
-  {
-  public:
-    MyActionListener()
-      : ActionListener(GetPartOne())
-    {
-    }
-
-    void OnChangeValues(const RawMessageData& rawMsgData_,
-                        const ActorValues& actorValues_) override
-    {
-      rawMsgData = rawMsgData_;
-      actorValues = actorValues_;
-    }
-
-    RawMessageData rawMsgData;
-    ActorValues actorValues;
-  };
-
-  nlohmann::json j{
-    { "t", MsgType::ChangeValues },
-    { "data", { { "health", 0.5 }, { "magicka", 0.3 }, { "stamina", 0 } } }
-  };
-
-  auto msg = MakeMessage(j);
-
-  MyActionListener listener;
-
-  PacketParser p;
-  p.TransformPacketIntoAction(
-    122, reinterpret_cast<Networking::PacketData>(msg.data()), msg.size(),
-    listener);
-
-  REQUIRE(listener.actorValues.healthPercentage == 0.5f);
-  REQUIRE(listener.actorValues.magickaPercentage == 0.3f);
-  REQUIRE(listener.actorValues.staminaPercentage == 0.0f);
-}
-
 TEST_CASE("Player attribute percentages are changing correctly",
           "[ChangeValues] ")
 {

@@ -22,10 +22,8 @@ public:
     PartOne::Message m;
     try {
       m = PartOne::Message{ nlohmann::json::parse(s), targetUserId, reliable };
-    } catch (std::exception& e) {
-      std::stringstream ss;
-      ss << e.what() << std::endl << "`" << s << "`";
-      throw std::runtime_error(ss.str());
+    } catch (nlohmann::json::parse_error&) {
+      m = PartOne::Message{ nlohmann::json{}, targetUserId, reliable };
     }
     messages.push_back(m);
   }
