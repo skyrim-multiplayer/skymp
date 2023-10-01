@@ -44,7 +44,7 @@ public:
                        VisitPropertiesMode mode) override;
   void Disable() override;
 
-  void SendToUser(const IMessageBase &message, bool reliable);
+  void SendToUser(const IMessageBase& message, bool reliable);
   void SendToUserDeferred(const void* data, size_t size, bool reliable,
                           int deferredChannelId);
 
@@ -130,8 +130,9 @@ private:
 
   void SendAndSetDeathState(bool isDead, bool shouldTeleport);
 
-  DeathStateContainerMessage GetDeathStateMsg(const LocationalData& position, bool isDead,
-                               bool shouldTeleport);
+  DeathStateContainerMessage GetDeathStateMsg(const LocationalData& position,
+                                              bool isDead,
+                                              bool shouldTeleport);
 
   void MpApiDeath(MpActor* killer = nullptr);
   void EatItem(uint32_t baseId, espm::Type t);

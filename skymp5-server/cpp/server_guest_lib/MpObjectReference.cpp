@@ -20,8 +20,8 @@
 #include <map>
 #include <optional>
 
-#include "TeleportMessage.h"
 #include "OpenContainerMessage.h"
+#include "TeleportMessage.h"
 
 constexpr uint32_t kPlayerCharacterLevel = 1;
 
@@ -1142,10 +1142,10 @@ void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
         GetWorldOrCell(loader.GetBrowser(), destinationRecord));
 
       static const auto g_pi = std::acos(-1.f);
-      const auto &pos = teleport->pos;
+      const auto& pos = teleport->pos;
       const float rot[] = { teleport->rotRadians[0] / g_pi * 180,
-                             teleport->rotRadians[1] / g_pi * 180,
-                             teleport->rotRadians[2] / g_pi * 180 };
+                            teleport->rotRadians[1] / g_pi * 180,
+                            teleport->rotRadians[2] / g_pi * 180 };
 
       TeleportMessage msg;
       msg.idx = activationSource.GetIdx();
@@ -1159,8 +1159,7 @@ void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
 
       activationSource.SetCellOrWorldObsolete(
         FormDesc::FromFormId(teleportWorldOrCell, worldState->espmFiles));
-      activationSource.SetPos(
-        { pos[0], pos[1], pos[2] });
+      activationSource.SetPos({ pos[0], pos[1], pos[2] });
       activationSource.SetAngle({ rot[0], rot[1], rot[2] });
 
     } else {

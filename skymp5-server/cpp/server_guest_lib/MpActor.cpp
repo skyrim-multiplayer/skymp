@@ -166,7 +166,7 @@ void MpActor::Disable()
   pImpl->snippetPromises.clear();
 }
 
-void MpActor::SendToUser(const IMessageBase &message, bool reliable)
+void MpActor::SendToUser(const IMessageBase& message, bool reliable)
 {
   if (callbacks->sendToUser) {
     callbacks->sendToUser(this, message, reliable);
@@ -470,18 +470,21 @@ void MpActor::SendAndSetDeathState(bool isDead, bool shouldTeleport)
   }
 }
 
-DeathStateContainerMessage MpActor::GetDeathStateMsg(const LocationalData& position,
-                                      bool isDead, bool shouldTeleport)
+DeathStateContainerMessage MpActor::GetDeathStateMsg(
+  const LocationalData& position, bool isDead, bool shouldTeleport)
 {
   DeathStateContainerMessage res;
   res.tIsDead = PreparePropertyMessage(this, "isDead", isDead);
-  
+
   if (shouldTeleport) {
     res.tTeleport = TeleportMessage();
     res.tTeleport->idx = GetIdx();
-    std::copy(&position.pos[0], &position.pos[0] + 3, std::begin(res.tTeleport->pos));
-    std::copy(&position.rot[0], &position.rot[0] + 3, std::begin(res.tTeleport->rot));
-    res.tTeleport->worldOrCell = position.cellOrWorldDesc.ToFormId(GetParent()->espmFiles);
+    std::copy(&position.pos[0], &position.pos[0] + 3,
+              std::begin(res.tTeleport->pos));
+    std::copy(&position.rot[0], &position.rot[0] + 3,
+              std::begin(res.tTeleport->rot));
+    res.tTeleport->worldOrCell =
+      position.cellOrWorldDesc.ToFormId(GetParent()->espmFiles);
   }
 
   if (!isDead) {

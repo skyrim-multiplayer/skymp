@@ -38,7 +38,7 @@ class MessageSerializer
 public:
   void Serialize(const char* jsonContent, SLNet::BitStream& outputStream);
 
-  void Serialize(const IMessageBase &message, SLNet::BitStream& outputStream);
+  void Serialize(const IMessageBase& message, SLNet::BitStream& outputStream);
 
   std::optional<DeserializeResult> Deserialize(
     const uint8_t* rawMessageJsonOrBinary, size_t length);

@@ -2,13 +2,14 @@
 #include "MessageBase.h"
 #include "MsgType.h"
 
-#include "TeleportMessage.h"
 #include "ChangeValuesMessage.h"
+#include "TeleportMessage.h"
 #include "UpdatePropertyMessage.h"
 
 #include <optional>
 
-struct DeathStateContainerMessage : public MessageBase<DeathStateContainerMessage>
+struct DeathStateContainerMessage
+  : public MessageBase<DeathStateContainerMessage>
 {
   const static char kMsgType = static_cast<char>(MsgType::DeathStateContainer);
   const static char kHeaderByte =

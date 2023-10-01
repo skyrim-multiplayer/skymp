@@ -77,25 +77,25 @@ void DeathStateContainerMessage::WriteJson(nlohmann::json& json) const
 
 void DeathStateContainerMessage::ReadJson(const nlohmann::json& json)
 {
-    DeathStateContainerMessage res;
+  DeathStateContainerMessage res;
 
-    auto it = json.find("tTeleport");
-    if (it != json.end() && it->is_object()) {
-        res.tTeleport = TeleportMessage();
-        res.tTeleport->ReadJson(*it);
-    }
+  auto it = json.find("tTeleport");
+  if (it != json.end() && it->is_object()) {
+    res.tTeleport = TeleportMessage();
+    res.tTeleport->ReadJson(*it);
+  }
 
-    it = json.find("tChangeValues");
-    if (it != json.end() && it->is_object()) {
-        res.tChangeValues = ChangeValuesMessage();
-        res.tChangeValues->ReadJson(*it);
-    }
+  it = json.find("tChangeValues");
+  if (it != json.end() && it->is_object()) {
+    res.tChangeValues = ChangeValuesMessage();
+    res.tChangeValues->ReadJson(*it);
+  }
 
-    it = json.find("tIsDead");
-    if (it != json.end() && it->is_object()) {
-        res.tIsDead = UpdatePropertyMessage();
-        res.tIsDead->ReadJson(*it);
-    }
+  it = json.find("tIsDead");
+  if (it != json.end() && it->is_object()) {
+    res.tIsDead = UpdatePropertyMessage();
+    res.tIsDead->ReadJson(*it);
+  }
 
-    *this = std::move(res);
+  *this = std::move(res);
 }

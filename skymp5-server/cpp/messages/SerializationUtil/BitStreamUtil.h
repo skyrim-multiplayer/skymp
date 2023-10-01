@@ -1,9 +1,9 @@
 #pragma once
 #include <array>
+#include <nlohmann/json_fwd.hpp>
 #include <optional>
 #include <slikenet/BitStream.h>
 #include <string>
-#include <nlohmann/json_fwd.hpp>
 
 namespace SerializationUtil {
 

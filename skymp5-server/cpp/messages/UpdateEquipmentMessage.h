@@ -3,7 +3,6 @@
 #include "MessageBase.h"
 #include "MsgType.h"
 #include <cstdint>
-#include <string>
 #include <nlohmann/json.hpp>
 #include <optional>
 #include <string>

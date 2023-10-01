@@ -487,14 +487,16 @@ void ActionListener::OnHostAttempt(const RawMessageData& rawMsgData,
                                    uint32_t remoteId)
 {
   MpActor* me = partOne.serverState.ActorByUser(rawMsgData.userId);
-  if (!me)
+  if (!me) {
     throw std::runtime_error("Unable to host without actor attached");
+  }
 
   auto& remote = partOne.worldState.GetFormAt<MpObjectReference>(remoteId);
 
   auto user = partOne.serverState.UserByActor(dynamic_cast<MpActor*>(&remote));
-  if (user != Networking::InvalidUserId)
+  if (user != Networking::InvalidUserId) {
     return;
+  }
 
   auto& hoster = partOne.worldState.hosters[remoteId];
   const uint32_t prevHoster = hoster;
@@ -562,11 +564,13 @@ void ActionListener::OnCustomEvent(const RawMessageData& rawMsgData,
                                    simdjson::dom::element& args)
 {
   auto ac = partOne.serverState.ActorByUser(rawMsgData.userId);
-  if (!ac)
+  if (!ac) {
     return;
+  }
 
-  if (eventName[0] != '_')
+  if (eventName[0] != '_') {
     return;
+  }
 
   for (auto& listener : partOne.GetListeners()) {
     listener->OnMpApiEvent(eventName, args, ac->GetFormId());

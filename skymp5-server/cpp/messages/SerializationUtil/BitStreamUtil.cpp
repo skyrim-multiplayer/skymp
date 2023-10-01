@@ -35,8 +35,7 @@ void SerializationUtil::ReadFromBitStream(SLNet::BitStream& stream,
   ReadFromBitStream(stream, s);
   try {
     json = nlohmann::json::parse(s);
-  }
-  catch (nlohmann::json::parse_error &e) {
+  } catch (nlohmann::json::parse_error& e) {
     json = nlohmann::json{};
   }
 }
