@@ -526,6 +526,23 @@ void ActionListener::OnHostAttempt(const RawMessageData& rawMsgData,
                               R"({ "type": "hostStart", "target": %llu })",
                               longFormId);
 
+    // Otherwise, health percentage would remain unsynced until someone hits npc
+    auto formId = remote.GetFormId();
+    partOne.worldState.SetTimer(std::chrono::seconds(1))
+      .Then([this, formId](Viet::Void) {
+        // Check if form is still here
+        auto& remote = partOne.worldState.GetFormAt<MpActor>(formId);
+
+        auto changeForm = remote.GetChangeForm();
+
+        ChangeValuesMessage msg;
+        msg.idx = remote.GetIdx();
+        msg.health = changeForm.actorValues.healthPercentage;
+        msg.magicka = changeForm.actorValues.magickaPercentage;
+        msg.stamina = changeForm.actorValues.staminaPercentage;
+        remote.SendToUser(msg, true); // in fact sends to hoster
+      });
+
     if (MpActor* prevHosterActor = dynamic_cast<MpActor*>(
           partOne.worldState.LookupFormById(prevHoster).get())) {
       auto prevHosterUser = partOne.serverState.UserByActor(prevHosterActor);
