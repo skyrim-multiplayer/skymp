@@ -74,5 +74,11 @@
       "port-version": 3
     }
   ],
-  "builtin-baseline": "4a8d11802f0a9ffbe5c68f6143d61d469d800a7d"
+  "vcpkg-configuration": {
+    "default-registry": {
+      "kind": "git",
+      "repository": "https://github.com/microsoft/vcpkg",
+      "baseline": "4a8d11802f0a9ffbe5c68f6143d61d469d800a7d"
+    }
+  }
 }

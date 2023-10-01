@@ -77,15 +77,17 @@ public:
   bool HasEspmFile(std::string_view filename) const noexcept;
 
   template <typename T>
-  Viet::Promise<Viet::Void> SetTimer(T&& duration)
+  Viet::Promise<Viet::Void> SetTimer(T&& duration,
+                                     uint32_t* outTimerId = nullptr)
   {
-    return timerRegular.SetTimer(std::forward<T>(duration));
+    return timerRegular.SetTimer(std::forward<T>(duration), outTimerId);
   }
 
   template <typename T>
-  Viet::Promise<Viet::Void> SetEffectTimer(T&& duration)
+  Viet::Promise<Viet::Void> SetEffectTimer(T&& duration,
+                                           uint32_t* outTimerId = nullptr)
   {
-    return timerEffects.SetTimer(std::forward<T>(duration));
+    return timerEffects.SetTimer(std::forward<T>(duration), outTimerId);
   }
 
   template <typename T>
@@ -98,13 +100,14 @@ public:
     });
   }
 
+  bool RemoveTimer(uint32_t timerId);
   Viet::Promise<Viet::Void> SetTimer(
     std::reference_wrapper<const std::chrono::system_clock::time_point>
       wrapper);
   Viet::Promise<Viet::Void> SetEffectTimer(
     std::reference_wrapper<const std::chrono::system_clock::time_point>
       wrapper);
-  bool RemoveEffectTimer(const std::chrono::system_clock::time_point& endTime);
+  bool RemoveEffectTimer(uint32_t timerId);
 
   const std::shared_ptr<MpForm>& LookupFormById(uint32_t formId);
 
