@@ -217,11 +217,12 @@ private:
 
 protected:
   void BeforeDestroy() override;
-  UpdatePropertyMessage CreatePropertyMessage(MpObjectReference* self, const char* name,
-                                    const nlohmann::json& value);
+  UpdatePropertyMessage CreatePropertyMessage(MpObjectReference* self,
+                                              const char* name,
+                                              const nlohmann::json& value);
   UpdatePropertyMessage PreparePropertyMessage(MpObjectReference* self,
-                                        const char* name,
-                                        const nlohmann::json& value);
+                                               const char* name,
+                                               const nlohmann::json& value);
 
   const std::shared_ptr<FormCallbacks> callbacks;
 };

@@ -42,8 +42,8 @@ void TeleportMessage::ReadJson(const nlohmann::json& json)
   TeleportMessage res;
   res.idx = json.at("idx").get<uint32_t>();
 
-  res.pos = json.at("pos").get<std::array<float,3>>();
-  res.rot = json.at("rot").get<std::array<float,3>>();
+  res.pos = json.at("pos").get<std::array<float, 3>>();
+  res.rot = json.at("rot").get<std::array<float, 3>>();
   res.worldOrCell = json.at("worldOrCell").get<uint32_t>();
 
   *this = std::move(res);
