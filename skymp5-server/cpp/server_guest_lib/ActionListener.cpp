@@ -526,7 +526,8 @@ void ActionListener::OnHostAttempt(const RawMessageData& rawMsgData,
                               R"({ "type": "hostStart", "target": %llu })",
                               longFormId);
 
-    // Otherwise, health percentage would remain unsynced until someone hits npc
+    // Otherwise, health percentage would remain unsynced until someone hits
+    // npc
     auto formId = remote.GetFormId();
     partOne.worldState.SetTimer(std::chrono::seconds(1))
       .Then([this, formId](Viet::Void) {
