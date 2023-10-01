@@ -61,7 +61,7 @@ TEST_CASE("DeathState packed is correct if actor is respawning", "[Respawn]")
   REQUIRE(updateProperyMsg["data"] == false);
   REQUIRE(updateProperyMsg["idx"] == ac.GetIdx());
 
-  REQUIRE(teleportMsg["type"] == "teleport");
+  REQUIRE(teleportMsg["t"] == MsgType::Teleport);
   REQUIRE(changeValuesMsg["t"] == MsgType::ChangeValues);
 
   REQUIRE(ac.IsDead() == false);

@@ -46,7 +46,8 @@ public:
 
   void SendToUser(const IMessageBase& message, bool reliable);
   void SendToUserDeferred(const void* data, size_t size, bool reliable,
-                          int deferredChannelId);
+                          int deferredChannelId,
+                          bool overwritePreviousChannelMessages);
 
   [[nodiscard]] bool OnEquip(uint32_t baseId);
 

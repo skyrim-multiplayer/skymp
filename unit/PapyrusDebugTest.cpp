@@ -26,6 +26,8 @@ TEST_CASE("Notification", "[Papyrus][Debug]")
   debug.Notification(VarValue::AttachTestStackId(),
                      { VarValue("Hello, \"world!\"") });
 
+  p.Tick(); // Tick deferred messages
+
   REQUIRE(p.Messages().size() == 3);
   REQUIRE(p.Messages()[1].userId == 3);
   REQUIRE(p.Messages()[1].reliable);

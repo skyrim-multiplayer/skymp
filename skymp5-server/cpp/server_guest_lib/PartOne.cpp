@@ -18,14 +18,18 @@ public:
   void Send(Networking::UserId targetUserId, Networking::PacketData data,
             size_t length, bool reliable) override
   {
-    std::string s(reinterpret_cast<const char*>(data + 1), length - 1);
-    PartOne::Message m;
-    try {
-      m = PartOne::Message{ nlohmann::json::parse(s), targetUserId, reliable };
-    } catch (nlohmann::json::parse_error&) {
-      m = PartOne::Message{ nlohmann::json{}, targetUserId, reliable };
+    static auto g_serializer =
+      MessageSerializerFactory::CreateMessageSerializer();
+    auto deserializeResult = g_serializer->Deserialize(data, length);
+    nlohmann::json j;
+    if (deserializeResult) {
+      deserializeResult->message->WriteJson(j);
+    } else {
+      std::string s(reinterpret_cast<const char*>(data + 1), length - 1);
+      j = nlohmann::json::parse(s);
     }
-    messages.push_back(m);
+
+    messages.push_back(PartOne::Message{ j, targetUserId, reliable });
   }
 
   std::vector<PartOne::Message> messages;
@@ -481,7 +485,7 @@ FormCallbacks PartOne::CreateFormCallbacks()
 
   FormCallbacks::SendToUserDeferredFn sendToUserDeferred =
     [this, st](MpActor* actor, const void* data, size_t size, bool reliable,
-               int deferredChannelId) {
+               int deferredChannelId, bool overwritePreviousChannelMessages) {
       if (deferredChannelId < 0 || deferredChannelId >= 100) {
         return spdlog::error(
           "sendToUserDeferred - invalid deferredChannelId {}",
@@ -512,7 +516,12 @@ FormCallbacks PartOne::CreateFormCallbacks()
         userInfo->deferredChannels.resize(deferredChannelId + 1);
       }
 
-      userInfo->deferredChannels[deferredChannelId] = deferredMessage;
+      if (overwritePreviousChannelMessages) {
+        userInfo->deferredChannels[deferredChannelId] = { deferredMessage };
+      } else {
+        userInfo->deferredChannels[deferredChannelId].push_back(
+          deferredMessage);
+      }
     };
 
   return { subscribe, unsubscribe, sendToUser, sendToUserDeferred };
@@ -799,25 +808,23 @@ void PartOne::TickDeferredMessages()
     if (!userInfo) {
       continue;
     }
-    for (auto& deferredMessage : userInfo->deferredChannels) {
-      if (deferredMessage != std::nullopt) {
+    for (auto& channel : userInfo->deferredChannels) {
+      for (auto& message : channel) {
         auto actor = serverState.ActorByUser(userId);
         if (!actor) {
           continue;
         }
 
-        if (deferredMessage->actorIdExpected != actor->GetFormId()) {
+        if (message.actorIdExpected != actor->GetFormId()) {
           continue;
         }
 
-        pImpl->sendTarget->Send(userId,
-                                reinterpret_cast<Networking::PacketData>(
-                                  deferredMessage->packetData.data()),
-                                deferredMessage->packetData.size(),
-                                deferredMessage->packetReliable);
-
-        deferredMessage = std::nullopt;
+        pImpl->sendTarget->Send(
+          userId,
+          reinterpret_cast<Networking::PacketData>(message.packetData.data()),
+          message.packetData.size(), message.packetReliable);
       }
+      channel.clear();
     }
   }
 }

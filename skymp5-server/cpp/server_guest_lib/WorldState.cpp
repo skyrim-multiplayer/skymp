@@ -270,6 +270,15 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
     return false;
   }
 
+  bool startsDead = false;
+  if (isNpc) {
+    auto* achr = reinterpret_cast<const espm::ACHR*>(record);
+    startsDead = achr->StartsDead();
+    if (startsDead) {
+      spdlog::info("Found Actor that starts dead {:x}", achr->GetId());
+    }
+  }
+
   // TODO: Load disabled references
   enum
   {
@@ -419,6 +428,7 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
     } else {
       form.reset(
         new MpActor(formLocationalData, formCallbacksFactory(), baseId));
+      
     }
     AddForm(std::move(form), formId, true);
     // Do not TriggerFormInitEvent here, doing it later after changeForm apply

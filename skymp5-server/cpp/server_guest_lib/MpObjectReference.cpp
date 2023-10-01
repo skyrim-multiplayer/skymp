@@ -1323,7 +1323,7 @@ void MpObjectReference::SendInventoryUpdate()
       { "type", "setInventory" }
     }.dump();
     actor->SendToUserDeferred(msg.data(), msg.size(), true,
-                              kChannelSetInventory);
+                              kChannelSetInventory, true);
   }
 }
 

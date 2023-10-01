@@ -1,6 +1,7 @@
 #pragma once
 #include "MessageBase.h"
 #include "MsgType.h"
+#include <optional>
 
 struct ChangeValuesMessage : public MessageBase<ChangeValuesMessage>
 {
@@ -12,7 +13,7 @@ struct ChangeValuesMessage : public MessageBase<ChangeValuesMessage>
   void WriteJson(nlohmann::json& json) const override;
   void ReadJson(const nlohmann::json& json) override;
 
-  uint32_t idx = 0;
+  std::optional<uint32_t> idx;
 
   // percentages
   float health = 0;

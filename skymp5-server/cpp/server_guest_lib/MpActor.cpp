@@ -176,11 +176,13 @@ void MpActor::SendToUser(const IMessageBase& message, bool reliable)
 }
 
 void MpActor::SendToUserDeferred(const void* data, size_t size, bool reliable,
-                                 int deferredChannelId)
+                                 int deferredChannelId,
+                                 bool overwritePreviousChannelMessages)
 {
   if (callbacks->sendToUserDeferred) {
     callbacks->sendToUserDeferred(this, data, size, reliable,
-                                  deferredChannelId);
+                                  deferredChannelId,
+                                  overwritePreviousChannelMessages);
   } else {
     throw std::runtime_error("sendToUserDeferred is nullptr");
   }

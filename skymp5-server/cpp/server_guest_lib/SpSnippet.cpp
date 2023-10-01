@@ -28,7 +28,7 @@ Viet::Promise<VarValue> SpSnippet::Execute(MpActor* actor)
       // The only reason for deferred here is that it still supports raw binary data send
       // TODO: change to SendToUser
       constexpr int kChannelSpSnippet = 1;
-      actor->SendToUserDeferred(data, len, true, kChannelSpSnippet);
+      actor->SendToUserDeferred(data, len, true, kChannelSpSnippet, false);
     },
     R"({"type": "spSnippet", "class": "%s", "function": "%s", "arguments": %s, "selfId": %u, "snippetIdx": %u})",
     cl, func, args, targetSelfId, snippetIdx);
