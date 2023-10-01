@@ -1,8 +1,5 @@
 #include "BitStreamUtil.h"
-<<<<<<< HEAD
 #include <nlohmann/json.hpp>
-=======
->>>>>>> main
 
 void SerializationUtil::WriteToBitStream(SLNet::BitStream& stream,
                                          const std::string& str)
