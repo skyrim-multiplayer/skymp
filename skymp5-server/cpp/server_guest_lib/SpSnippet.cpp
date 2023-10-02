@@ -25,7 +25,8 @@ Viet::Promise<VarValue> SpSnippet::Execute(MpActor* actor)
 
   Networking::Format(
     [&](Networking::PacketData data, size_t len) {
-      // The only reason for deferred here is that it still supports raw binary data send
+      // The only reason for deferred here is that it still supports raw binary
+      // data send
       // TODO: change to SendToUser
       constexpr int kChannelSpSnippet = 1;
       actor->SendToUserDeferred(data, len, true, kChannelSpSnippet, false);
