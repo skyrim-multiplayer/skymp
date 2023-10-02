@@ -282,10 +282,15 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
   // TODO: Load disabled references
   enum
   {
-    InitiallyDisabled = 0x800
+    InitiallyDisabled = 0x800,
+    DeletedRecord = 0x20
   };
 
   if (refr->GetFlags() & InitiallyDisabled) {
+    return false;
+  }
+
+  if (refr->GetFlags() & DeletedRecord) {
     return false;
   }
 
