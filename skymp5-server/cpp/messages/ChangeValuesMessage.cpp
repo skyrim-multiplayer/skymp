@@ -1,7 +1,7 @@
 #include "ChangeValuesMessage.h"
+#include "SerializationUtil/BitStreamUtil.h"
 #include <nlohmann/json.hpp>
 #include <slikenet/BitStream.h>
-#include "SerializationUtil/BitStreamUtil.h"
 
 void ChangeValuesMessage::WriteBinary(SLNet::BitStream& stream) const
 {

@@ -181,7 +181,8 @@ void MpActor::SendToUserDeferred(const void* data, size_t size, bool reliable,
 {
   if (callbacks->sendToUserDeferred) {
     callbacks->sendToUserDeferred(this, data, size, reliable,
-                                  deferredChannelId, overwritePreviousChannelMessages);
+                                  deferredChannelId,
+                                  overwritePreviousChannelMessages);
   } else {
     throw std::runtime_error("sendToUserDeferred is nullptr");
   }
