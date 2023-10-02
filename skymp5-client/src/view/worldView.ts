@@ -55,7 +55,7 @@ export class WorldView implements View<WorldModel> {
 
     const skipUpdates = settings['skymp5-client']['skipUpdates'];
 
-    // skip 50% of updated if said in the settings
+    // skip 50% of updates if specified in the settings
     this.counter = !this.counter;
     if (this.counter && skipUpdates) return;
 
@@ -82,6 +82,10 @@ export class WorldView implements View<WorldModel> {
 
   destroy(): void {
     this.formViews.resize(0);
+  }
+
+  getFormViews() {
+    return this.formViews;
   }
 
   private formViews = new FormViewArray();

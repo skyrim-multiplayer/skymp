@@ -20,20 +20,22 @@
 #include <map>
 #include <optional>
 
+#include "OpenContainerMessage.h"
+#include "TeleportMessage.h"
+
 constexpr uint32_t kPlayerCharacterLevel = 1;
 
-std::string MpObjectReference::CreatePropertyMessage(
+UpdatePropertyMessage MpObjectReference::CreatePropertyMessage(
   MpObjectReference* self, const char* name, const nlohmann::json& value)
 {
-  std::string str;
-  str += Networking::MinPacketId;
-  str += PreparePropertyMessage(self, name, value).dump();
-  return str;
+  return PreparePropertyMessage(self, name, value);
 }
 
-nlohmann::json MpObjectReference::PreparePropertyMessage(
+UpdatePropertyMessage MpObjectReference::PreparePropertyMessage(
   MpObjectReference* self, const char* name, const nlohmann::json& value)
 {
+  UpdatePropertyMessage res;
+
   std::string baseRecordType;
 
   auto& loader = self->GetParent()->GetEspm();
@@ -42,19 +44,18 @@ nlohmann::json MpObjectReference::PreparePropertyMessage(
     baseRecordType = base.rec->GetType().ToString();
   }
 
-  auto object = nlohmann::json{ { "idx", self->GetIdx() },
-                                { "t", MsgType::UpdateProperty },
-                                { "propName", name },
-                                { "refrId", self->GetFormId() },
-                                { "data", value } };
+  res.idx = self->GetIdx();
+  res.propName = name;
+  res.refrId = self->GetFormId();
+  res.data = value;
 
   // See 'perf: improve game framerate #1186'
   // Client needs to know if it is DOOR or not
   if (baseRecordType == "DOOR") {
-    object["baseRecordType"] = baseRecordType;
+    res.baseRecordType = baseRecordType;
   }
 
-  return object;
+  return res;
 }
 
 class OccupantDestroyEventSink : public MpActor::DestroyEventSink
@@ -546,12 +547,13 @@ void MpObjectReference::UpdateHoster(uint32_t newHosterId)
   auto notHostedMsg = CreatePropertyMessage(this, "isHostedByOther", false);
   for (auto listener : this->GetListeners()) {
     auto listenerAsActor = dynamic_cast<MpActor*>(listener);
-    if (listenerAsActor)
+    if (listenerAsActor) {
       this->SendPropertyTo(newHosterId != 0 &&
                                newHosterId != listener->GetFormId()
                              ? hostedMsg
                              : notHostedMsg,
                            *listenerAsActor);
+    }
   }
 }
 
@@ -1140,26 +1142,25 @@ void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
         GetWorldOrCell(loader.GetBrowser(), destinationRecord));
 
       static const auto g_pi = std::acos(-1.f);
-      const NiPoint3 rot = { teleport->rotRadians[0] / g_pi * 180,
-                             teleport->rotRadians[1] / g_pi * 180,
-                             teleport->rotRadians[2] / g_pi * 180 };
+      const auto& pos = teleport->pos;
+      const float rot[] = { teleport->rotRadians[0] / g_pi * 180,
+                            teleport->rotRadians[1] / g_pi * 180,
+                            teleport->rotRadians[2] / g_pi * 180 };
 
-      std::string msg;
-      msg += Networking::MinPacketId;
-      msg += nlohmann::json{
-        { "pos", { teleport->pos[0], teleport->pos[1], teleport->pos[2] } },
-        { "rot", { rot[0], rot[1], rot[2] } },
-        { "worldOrCell", teleportWorldOrCell },
-        { "type", "teleport" }
-      }.dump();
-      if (actorActivator)
-        actorActivator->SendToUser(msg.data(), msg.size(), true);
+      TeleportMessage msg;
+      msg.idx = activationSource.GetIdx();
+      std::copy(std::begin(pos), std::end(pos), msg.pos.begin());
+      std::copy(std::begin(rot), std::end(rot), msg.rot.begin());
+      msg.worldOrCell = teleportWorldOrCell;
+
+      if (actorActivator) {
+        actorActivator->SendToUser(msg, true);
+      }
 
       activationSource.SetCellOrWorldObsolete(
         FormDesc::FromFormId(teleportWorldOrCell, worldState->espmFiles));
-      activationSource.SetPos(
-        { teleport->pos[0], teleport->pos[1], teleport->pos[2] });
-      activationSource.SetAngle(rot);
+      activationSource.SetPos({ pos[0], pos[1], pos[2] });
+      activationSource.SetAngle({ rot[0], rot[1], rot[2] });
 
     } else {
       SetOpen(!IsOpen());
@@ -1322,7 +1323,7 @@ void MpObjectReference::SendInventoryUpdate()
       { "type", "setInventory" }
     }.dump();
     actor->SendToUserDeferred(msg.data(), msg.size(), true,
-                              kChannelSetInventory);
+                              kChannelSetInventory, true);
   }
 }
 
@@ -1330,12 +1331,9 @@ void MpObjectReference::SendOpenContainer(uint32_t targetId)
 {
   auto actor = dynamic_cast<MpActor*>(this);
   if (actor) {
-    std::string msg;
-    msg += Networking::MinPacketId;
-    msg += nlohmann::json{
-      { "target", targetId }, { "type", "openContainer" }
-    }.dump();
-    actor->SendToUser(msg.data(), msg.size(), true);
+    OpenContainerMessage msg;
+    msg.target = targetId;
+    actor->SendToUser(msg, true);
   }
 }
 
@@ -1473,11 +1471,12 @@ void MpObjectReference::CheckInteractionAbility(MpObjectReference& refr)
 void MpObjectReference::SendPropertyToListeners(const char* name,
                                                 const nlohmann::json& value)
 {
-  auto str = CreatePropertyMessage(this, name, value);
+  auto msg = CreatePropertyMessage(this, name, value);
   for (auto listener : GetListeners()) {
     auto listenerAsActor = dynamic_cast<MpActor*>(listener);
-    if (listenerAsActor)
-      listenerAsActor->SendToUser(str.data(), str.size(), true);
+    if (listenerAsActor) {
+      listenerAsActor->SendToUser(msg, true);
+    }
   }
 }
 
@@ -1485,14 +1484,14 @@ void MpObjectReference::SendPropertyTo(const char* name,
                                        const nlohmann::json& value,
                                        MpActor& target)
 {
-  auto str = CreatePropertyMessage(this, name, value);
-  SendPropertyTo(str, target);
+  auto msg = CreatePropertyMessage(this, name, value);
+  SendPropertyTo(msg, target);
 }
 
-void MpObjectReference::SendPropertyTo(const std::string& preparedPropMsg,
+void MpObjectReference::SendPropertyTo(const IMessageBase& preparedPropMsg,
                                        MpActor& target)
 {
-  target.SendToUser(preparedPropMsg.data(), preparedPropMsg.size(), true);
+  target.SendToUser(preparedPropMsg, true);
 }
 
 void MpObjectReference::BeforeDestroy()

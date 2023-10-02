@@ -270,13 +270,27 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
     return false;
   }
 
+  bool startsDead = false;
+  if (isNpc) {
+    auto* achr = reinterpret_cast<const espm::ACHR*>(record);
+    startsDead = achr->StartsDead();
+    if (startsDead) {
+      return false; // TODO: Load dead references
+    }
+  }
+
   // TODO: Load disabled references
   enum
   {
-    InitiallyDisabled = 0x800
+    InitiallyDisabled = 0x800,
+    DeletedRecord = 0x20
   };
 
   if (refr->GetFlags() & InitiallyDisabled) {
+    return false;
+  }
+
+  if (refr->GetFlags() & DeletedRecord) {
     return false;
   }
 
@@ -504,12 +518,36 @@ void WorldState::SendPapyrusEvent(MpForm* form, const char* eventName,
                                   const VarValue* arguments,
                                   size_t argumentsCount)
 {
+  std::vector<VarValue> args = { arguments, arguments + argumentsCount };
+
+  if (spdlog::should_log(spdlog::level::trace)) {
+    std::vector<std::string> argsStrings(args.size());
+    for (size_t i = 0; i < args.size(); ++i) {
+      argsStrings[i] = args[i].ToString();
+    }
+
+    if (!strcmp(eventName, "OnTrigger")) {
+      static std::once_flag g_once;
+      std::call_once(g_once, [&] {
+        spdlog::trace("WorldState::SendPapyrusEvent {:x} - {} [{}]",
+                      form->GetFormId(), eventName,
+                      fmt::join(argsStrings, ", "));
+        spdlog::trace("WorldState::SendPapyrusEvent {:x} - Muting {} globally "
+                      "to keep logs clear",
+                      form->GetFormId(), eventName);
+      });
+    } else {
+      spdlog::trace("WorldState::SendPapyrusEvent {:x} - {} [{}]",
+                    form->GetFormId(), eventName,
+                    fmt::join(argsStrings, ", "));
+    }
+  }
+
   VirtualMachine::OnEnter onEnter = [&](const StackIdHolder& holder) {
     pImpl->policy->BeforeSendPapyrusEvent(form, eventName, arguments,
                                           argumentsCount, holder.GetStackId());
   };
   auto& vm = GetPapyrusVm();
-  std::vector<VarValue> args = { arguments, arguments + argumentsCount };
   return vm.SendEvent(form->ToGameObject(), eventName, args, onEnter);
 }
 
@@ -811,6 +849,11 @@ bool WorldState::RemoveEffectTimer(uint32_t timerId)
 void WorldState::SetForbiddenRelootTypes(const std::set<std::string>& types)
 {
   pImpl->forbiddenRelootTypes = types;
+}
+
+void WorldState::SetEnableConsoleCommandsForAllSetting(bool enable)
+{
+  enableConsoleCommandsForAll = enable;
 }
 
 bool WorldState::IsRelootForbidden(std::string type) const noexcept

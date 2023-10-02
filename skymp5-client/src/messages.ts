@@ -27,23 +27,13 @@ export enum MsgType {
   OnHit = 17,
   DeathStateContainer = 18,
   DropItem = 19,
+  Teleport = 20,
+  OpenContainer = 21,
 }
 
 export interface SetInventory {
   type: "setInventory";
   inventory: Inventory;
-}
-
-export interface OpenContainer {
-  type: "openContainer";
-  target: number;
-}
-
-export interface Teleport {
-  type: "teleport";
-  pos: number[];
-  rot: number[];
-  worldOrCell: number;
 }
 
 export interface CreateActorMessage {
@@ -72,13 +62,6 @@ export interface UpdatePropertyMessage {
   baseRecordType: string; // DOOR, ACTI, etc
   data: unknown;
   propName: string;
-}
-
-export interface DeathStateContainerMessage {
-  t: MsgType.DeathStateContainer;
-  tTeleport?: Teleport,
-  tChangeValues?: ChangeValuesMessage,
-  tIsDead: UpdatePropertyMessage,
 }
 
 export interface SetRaceMenuOpenMessage {

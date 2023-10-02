@@ -28,6 +28,12 @@ function processOneActor(): void {
     actor.disableNoWait(true); // Seems to not crash
     return;
   }
+  
+  if (actor.isDead()) {
+    actor.blockActivation(true);
+    return;
+  }
+
   actor.disable(false).then(() => {
     const ac = Actor.from(Game.getFormEx(actorId));
     if (!ac || isInDialogue(ac)) return;

@@ -79,7 +79,7 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
           { message->rot[0], message->rot[1], message->rot[2] },
           message->isInJumpState, message->isWeapDrawn, message->isBlocking,
           message->worldOrCell);
-        break;
+        return;
       }
       case MsgType::UpdateAnimation: {
         auto message =
@@ -89,15 +89,48 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
         animationData.numChanges = message->numChanges;
         actionListener.OnUpdateAnimation(rawMsgData, message->idx,
                                          animationData);
-        break;
+        return;
+      }
+      case MsgType::UpdateEquipment: {
+        auto message =
+          reinterpret_cast<UpdateEquipmentMessage*>(result->message.get());
+        auto idx = message->idx;
+        auto data = pImpl->simdjsonParser.parse(message->data.dump()).value();
+        auto inv = Inventory::FromJson(message->data.at("inv"));
+        auto leftSpell = message->data.contains("leftSpell")
+          ? message->data.at("leftSpell").get<uint32_t>()
+          : 0;
+        auto rightSpell = message->data.contains("rightSpell")
+          ? message->data.at("rightSpell").get<uint32_t>()
+          : 0;
+        auto voiceSpell = message->data.contains("voiceSpell")
+          ? message->data.at("voiceSpell").get<uint32_t>()
+          : 0;
+        auto instantSpell = message->data.contains("instantSpell")
+          ? message->data.at("instantSpell").get<uint32_t>()
+          : 0;
+
+        actionListener.OnUpdateEquipment(rawMsgData, idx, data, inv, leftSpell,
+                                         rightSpell, voiceSpell, instantSpell);
+        return;
+      }
+      case MsgType::ChangeValues: {
+        auto message =
+          reinterpret_cast<ChangeValuesMessage*>(result->message.get());
+        ActorValues actorValues;
+        actorValues.healthPercentage = message->health;
+        actorValues.magickaPercentage = message->magicka;
+        actorValues.staminaPercentage = message->stamina;
+        actionListener.OnChangeValues(rawMsgData, actorValues);
+        return;
       }
       default: {
-        spdlog::error("Unhandled MsgType {} after Deserialize",
+        // likel a binary packet, can't just fall back to simdjson parsing
+        spdlog::error("PacketParser.cpp doesn't implement MsgType {}",
                       static_cast<int64_t>(result->msgType));
-        break;
+        return;
       }
     }
-    return;
   }
 
   rawMsgData.parsed =
@@ -124,46 +157,6 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
 
       actionListener.OnUpdateAppearance(rawMsgData, idx,
                                         Appearance::FromJson(jData));
-    } break;
-    case MsgType::UpdateEquipment: {
-      uint32_t idx;
-      ReadEx(jMessage, JsonPointers::idx, &idx);
-      simdjson::dom::element data_;
-      ReadEx(jMessage, JsonPointers::data, &data_);
-      simdjson::dom::element inv;
-      ReadEx(data_, JsonPointers::inv, &inv);
-
-      uint32_t leftSpell = 0;
-
-      if (data_.at_pointer(JsonPointers::leftSpell.GetData()).error() ==
-          simdjson::error_code::SUCCESS) {
-        ReadEx(data_, JsonPointers::leftSpell, &leftSpell);
-      }
-
-      uint32_t rightSpell = 0;
-
-      if (data_.at_pointer(JsonPointers::rightSpell.GetData()).error() ==
-          simdjson::error_code::SUCCESS) {
-        ReadEx(data_, JsonPointers::rightSpell, &rightSpell);
-      }
-
-      uint32_t voiceSpell = 0;
-
-      if (data_.at_pointer(JsonPointers::voiceSpell.GetData()).error() ==
-          simdjson::error_code::SUCCESS) {
-        ReadEx(data_, JsonPointers::voiceSpell, &voiceSpell);
-      }
-
-      uint32_t instantSpell = 0;
-
-      if (data_.at_pointer(JsonPointers::instantSpell.GetData()).error() ==
-          simdjson::error_code::SUCCESS) {
-        ReadEx(data_, JsonPointers::instantSpell, &instantSpell);
-      }
-
-      actionListener.OnUpdateEquipment(rawMsgData, idx, data_,
-                                       Inventory::FromJson(inv), leftSpell,
-                                       rightSpell, voiceSpell, instantSpell);
     } break;
     case MsgType::Activate: {
       simdjson::dom::element data_;
@@ -262,16 +255,6 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
       const char* eventName;
       ReadEx(jMessage, JsonPointers::eventName, &eventName);
       actionListener.OnCustomEvent(rawMsgData, eventName, args);
-      break;
-    }
-    case MsgType::ChangeValues: {
-      simdjson::dom::element data_;
-      ReadEx(jMessage, JsonPointers::data, &data_);
-      ActorValues actorValues;
-      ReadEx(data_, JsonPointers::health, &actorValues.healthPercentage);
-      ReadEx(data_, JsonPointers::magicka, &actorValues.magickaPercentage);
-      ReadEx(data_, JsonPointers::stamina, &actorValues.staminaPercentage);
-      actionListener.OnChangeValues(rawMsgData, actorValues);
       break;
     }
     case MsgType::OnHit: {

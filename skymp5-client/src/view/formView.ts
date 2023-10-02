@@ -1,4 +1,4 @@
-import { Actor, ActorBase, createText, destroyText, Form, FormType, Game, Keyword, NetImmerse, ObjectReference, once, printConsole, setTextPos, setTextString, TESModPlatform, Utility, worldPointToScreenPoint } from "skyrimPlatform";
+import { Actor, ActorBase, createText, destroyText, Form, FormType, Game, Keyword, NetImmerse, ObjectReference, once, printConsole, setTextPos, setTextString, storage, TESModPlatform, Utility, worldPointToScreenPoint } from "skyrimPlatform";
 import { setDefaultAnimsDisabled, applyAnimation } from "../sync/animation";
 import { Appearance, applyAppearance } from "../sync/appearance";
 import { isBadMenuShown, applyEquipment } from "../sync/equipment";
@@ -14,6 +14,7 @@ import { PlayerCharacterDataHolder } from "./playerCharacterDataHolder";
 import { getMovement } from "../sync/movementGet";
 import { lastTryHost, tryHost } from "./hostAttempts";
 import { ModelApplyUtils } from "./modelApplyUtils";
+import { localIdToRemoteId } from "./worldViewMisc";
 
 export interface ScreenResolution {
   width: number;
@@ -222,20 +223,31 @@ export class FormView implements View<FormModel> {
       }
     }
 
-    if (model.movement) {
-      const ac = Actor.from(refr);
-      if (ac) {
-        if (model.isHostedByOther !== this.wasHostedByOther) {
-          this.wasHostedByOther = model.isHostedByOther;
-          this.movState.lastApply = 0;
-          if (model.isHostedByOther) {
-            setDefaultAnimsDisabled(ac.getFormID(), true);
-          } else {
-            setDefaultAnimsDisabled(ac.getFormID(), false);
-          }
-        }
+    // TODO: make host service
+    const hosted = storage['hosted'];
+    let alreadyHosted = false;
+    if (Array.isArray(hosted)) {
+      const remoteId = localIdToRemoteId(this.refrId);
+      
+      if (hosted.includes(remoteId) || hosted.includes(remoteId + 0x100000000))  {
+        alreadyHosted = true;
       }
+      // printConsole("remoteId=", remoteId.toString(16), "hosted=", hosted.map(x => x.toString(16)));
+    }
+    setDefaultAnimsDisabled(this.refrId, alreadyHosted ? false : true);
 
+    // if (model.baseId === 0x7 || !model.baseId) {
+    //   setDefaultAnimsDisabled(this.refrId, true);
+    // }
+    // else {
+    //   setDefaultAnimsDisabled(this.refrId, false);
+    // }
+    if (alreadyHosted) {
+      Actor.from(refr)?.clearKeepOffsetFromActor();
+    }
+
+    if (model.movement) {
+      let ac = Actor.from(refr);
       if (
         this.movState.lastApply &&
         Date.now() - this.movState.lastApply > 1500
@@ -279,14 +291,28 @@ export class FormView implements View<FormModel> {
           this.movState.lastNumChanges = +(model.numMovementChanges as number);
           this.movState.everApplied = true;
         } else {
-          if (ac) {
-            ac.clearKeepOffsetFromActor();
-            TESModPlatform.setWeaponDrawnMode(ac, -1);
-          }
           const remoteId = this.remoteRefrId;
           if (ac && remoteId && ac.is3DLoaded()) {
-            this.tryHostIfNeed(ac, remoteId);
-            printConsole("tryHostIfNeed - reason: not hosted by anyone OR never applied movement");
+            ac.clearKeepOffsetFromActor();
+
+            // TODO: make host service
+            const hosted = storage['hosted'];
+            let alreadyHosted = false;
+            if (Array.isArray(hosted)) {
+              const remoteId = localIdToRemoteId(ac.getFormID());
+              if (hosted.includes(remoteId)) {
+                alreadyHosted = true;
+              }
+            }
+
+            if (!alreadyHosted) {
+              if (this.tryHostIfNeed(ac, remoteId)) {
+
+                // previously, we did this cleanup on each update
+                // but I guess it's too expensive and can possibly hurt FPS
+                TESModPlatform.setWeaponDrawnMode(ac, -1);
+              }
+            }
           }
         }
       }
@@ -361,9 +387,9 @@ export class FormView implements View<FormModel> {
       const maxNicknameDrawDistance = 1000;
       const playerActor = Game.getPlayer()!;
       const isVisibleByPlayer = !model.movement?.isSneaking
-                                && playerActor.getDistance(refr) <= maxNicknameDrawDistance
-                                && playerActor.hasLOS(refr)
-                                && !this.isSweetHidePerson(refr);
+        && playerActor.getDistance(refr) <= maxNicknameDrawDistance
+        && playerActor.hasLOS(refr)
+        && !this.isSweetHidePerson(refr);
       if (isVisibleByPlayer) {
         const headScreenPos = worldPointToScreenPoint([
           NetImmerse.getNodeWorldPositionX(refr, headPart, false),
@@ -427,9 +453,11 @@ export class FormView implements View<FormModel> {
         getMovement(ac).worldOrCell ===
         getMovement(Game.getPlayer() as Actor).worldOrCell
       ) {
-        return tryHost(remoteId);
+        tryHost(remoteId);
+        return true;
       }
     }
+    return false;
   };
 
   getLocalRefrId(): number {

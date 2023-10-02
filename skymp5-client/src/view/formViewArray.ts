@@ -96,5 +96,9 @@ export class FormViewArray {
     return formView ? formView.getLocalRefrId() : 0;
   }
 
+  getNthFormView(i: number): FormView | undefined {
+    return this.formViews[i];
+  }
+
   private formViews = new Array<FormView>();
 }

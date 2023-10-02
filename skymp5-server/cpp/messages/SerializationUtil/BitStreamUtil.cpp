@@ -1,4 +1,5 @@
 #include "BitStreamUtil.h"
+#include <nlohmann/json.hpp>
 
 void SerializationUtil::WriteToBitStream(SLNet::BitStream& stream,
                                          const std::string& str)
@@ -18,5 +19,23 @@ void SerializationUtil::ReadFromBitStream(SLNet::BitStream& stream,
     str = std::move(tmp);
   } else {
     str.clear();
+  }
+}
+
+void SerializationUtil::WriteToBitStream(SLNet::BitStream& stream,
+                                         const nlohmann::json& json)
+{
+  WriteToBitStream(stream, json.dump());
+}
+
+void SerializationUtil::ReadFromBitStream(SLNet::BitStream& stream,
+                                          nlohmann::json& json)
+{
+  std::string s;
+  ReadFromBitStream(stream, s);
+  try {
+    json = nlohmann::json::parse(s);
+  } catch (nlohmann::json::parse_error& e) {
+    json = nlohmann::json{};
   }
 }

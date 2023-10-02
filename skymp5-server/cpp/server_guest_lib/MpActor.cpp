@@ -22,6 +22,9 @@
 #include <random>
 #include <string>
 
+#include "ChangeValuesMessage.h"
+#include "TeleportMessage.h"
+
 struct MpActor::Impl
 {
   std::map<uint32_t, Viet::Promise<VarValue>> snippetPromises;
@@ -163,21 +166,22 @@ void MpActor::Disable()
   pImpl->snippetPromises.clear();
 }
 
-void MpActor::SendToUser(const void* data, size_t size, bool reliable)
+void MpActor::SendToUser(const IMessageBase& message, bool reliable)
 {
   if (callbacks->sendToUser) {
-    callbacks->sendToUser(this, data, size, reliable);
+    callbacks->sendToUser(this, message, reliable);
   } else {
     throw std::runtime_error("sendToUser is nullptr");
   }
 }
 
 void MpActor::SendToUserDeferred(const void* data, size_t size, bool reliable,
-                                 int deferredChannelId)
+                                 int deferredChannelId,
+                                 bool overwritePreviousChannelMessages)
 {
   if (callbacks->sendToUserDeferred) {
     callbacks->sendToUserDeferred(this, data, size, reliable,
-                                  deferredChannelId);
+                                  deferredChannelId, overwritePreviousChannelMessages);
   } else {
     throw std::runtime_error("sendToUserDeferred is nullptr");
   }
@@ -325,18 +329,12 @@ void MpActor::SetPercentages(const ActorValues& actorValues,
 
 void MpActor::NetSendChangeValues(const ActorValues& actorValues)
 {
-  std::string s;
-  s += Networking::MinPacketId;
-  s += nlohmann::json{
-    { "t", MsgType::ChangeValues },
-    { "data",
-      {
-        { "health", actorValues.healthPercentage },
-        { "magicka", actorValues.magickaPercentage },
-        { "stamina", actorValues.staminaPercentage },
-      } }
-  }.dump();
-  SendToUser(s.data(), s.size(), true);
+  ChangeValuesMessage message;
+  message.idx = GetIdx();
+  message.health = actorValues.healthPercentage;
+  message.magicka = actorValues.magickaPercentage;
+  message.stamina = actorValues.staminaPercentage;
+  SendToUser(message, true);
 }
 
 void MpActor::NetSetPercentages(const ActorValues& actorValues,
@@ -396,7 +394,7 @@ bool MpActor::IsSpellLearned(const uint32_t baseId) const
   const auto npcData = espm::GetData<espm::NPC_>(GetBaseId(), GetParent());
   const auto raceData = espm::GetData<espm::RACE>(npcData.race, GetParent());
 
-  return npcData.spells.contains(baseId) || raceData.spells.contains(baseId) ||
+  return npcData.spells.count(baseId) || raceData.spells.count(baseId) ||
     ChangeForm().learnedSpells.IsSpellLearned(baseId);
 }
 
@@ -457,8 +455,8 @@ void MpActor::SendAndSetDeathState(bool isDead, bool shouldTeleport)
   float attribute = isDead ? 0.f : 1.f;
   auto position = GetSpawnPoint();
 
-  std::string respawnMsg = GetDeathStateMsg(position, isDead, shouldTeleport);
-  SendToUser(respawnMsg.data(), respawnMsg.size(), true);
+  auto respawnMsg = GetDeathStateMsg(position, isDead, shouldTeleport);
+  SendToUser(respawnMsg, true);
 
   EditChangeForm([&](MpChangeForm& changeForm) {
     changeForm.isDead = isDead;
@@ -473,40 +471,33 @@ void MpActor::SendAndSetDeathState(bool isDead, bool shouldTeleport)
   }
 }
 
-std::string MpActor::GetDeathStateMsg(const LocationalData& position,
-                                      bool isDead, bool shouldTeleport)
+DeathStateContainerMessage MpActor::GetDeathStateMsg(
+  const LocationalData& position, bool isDead, bool shouldTeleport)
 {
-  nlohmann::json tTeleport = nlohmann::json{};
-  nlohmann::json tChangeValues = nlohmann::json{};
-  nlohmann::json tIsDead = PreparePropertyMessage(this, "isDead", isDead);
+  DeathStateContainerMessage res;
+  res.tIsDead = PreparePropertyMessage(this, "isDead", isDead);
 
   if (shouldTeleport) {
-    tTeleport = nlohmann::json{
-      { "pos", { position.pos[0], position.pos[1], position.pos[2] } },
-      { "rot", { position.rot[0], position.rot[1], position.rot[2] } },
-      { "worldOrCell",
-        position.cellOrWorldDesc.ToFormId(GetParent()->espmFiles) },
-      { "type", "teleport" }
-    };
-  }
-  if (isDead == false) {
-    const float attribute = 1.f;
-    tChangeValues = nlohmann::json{ { "t", MsgType::ChangeValues },
-                                    { "data",
-                                      { { "health", attribute },
-                                        { "magicka", attribute },
-                                        { "stamina", attribute } } } };
+    res.tTeleport = TeleportMessage();
+    res.tTeleport->idx = GetIdx();
+    std::copy(&position.pos[0], &position.pos[0] + 3,
+              std::begin(res.tTeleport->pos));
+    std::copy(&position.rot[0], &position.rot[0] + 3,
+              std::begin(res.tTeleport->rot));
+    res.tTeleport->worldOrCell =
+      position.cellOrWorldDesc.ToFormId(GetParent()->espmFiles);
   }
 
-  std::string DeathStateMsg;
-  DeathStateMsg += Networking::MinPacketId;
-  DeathStateMsg += nlohmann::json{
-    { "t", MsgType::DeathStateContainer },
-    { "tTeleport", tTeleport },
-    { "tChangeValues", tChangeValues },
-    { "tIsDead", tIsDead }
-  }.dump();
-  return DeathStateMsg;
+  if (!isDead) {
+    constexpr float kAttributePercentageFull = 1.f;
+    res.tChangeValues = ChangeValuesMessage();
+    res.tChangeValues->idx = GetIdx();
+    res.tChangeValues->health = kAttributePercentageFull;
+    res.tChangeValues->magicka = kAttributePercentageFull;
+    res.tChangeValues->stamina = kAttributePercentageFull;
+  }
+
+  return res;
 }
 
 void MpActor::MpApiDeath(MpActor* killer)
@@ -663,16 +654,12 @@ void MpActor::Respawn(bool shouldTeleport)
 
 void MpActor::Teleport(const LocationalData& position)
 {
-  std::string teleportMsg;
-  teleportMsg += Networking::MinPacketId;
-  teleportMsg += nlohmann::json{
-    { "pos", { position.pos[0], position.pos[1], position.pos[2] } },
-    { "rot", { position.rot[0], position.rot[1], position.rot[2] } },
-    { "worldOrCell",
-      position.cellOrWorldDesc.ToFormId(GetParent()->espmFiles) },
-    { "type", "teleport" }
-  }.dump();
-  SendToUser(teleportMsg.data(), teleportMsg.size(), true);
+  TeleportMessage msg;
+  msg.idx = GetIdx();
+  std::copy(&position.pos[0], &position.pos[0] + 3, std::begin(msg.pos));
+  std::copy(&position.rot[0], &position.rot[0] + 3, std::begin(msg.rot));
+  msg.worldOrCell = position.cellOrWorldDesc.ToFormId(GetParent()->espmFiles);
+  SendToUser(msg, true);
 
   SetCellOrWorldObsolete(position.cellOrWorldDesc);
   SetPos(position.pos);

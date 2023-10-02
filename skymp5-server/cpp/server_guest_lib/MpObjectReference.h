@@ -21,6 +21,8 @@
 #include <tuple>
 #include <vector>
 
+#include "UpdatePropertyMessage.h"
+
 struct GridPosInfo
 {
   uint32_t worldOrCell = 0;
@@ -167,10 +169,11 @@ public:
     return "private.indexed.";
   }
 
-protected:
   void SendPapyrusEvent(const char* eventName,
                         const VarValue* arguments = nullptr,
                         size_t argumentsCount = 0) override;
+
+protected:
   void Init(WorldState* parent, uint32_t formId, bool hasChangeForm) override;
 
   void EnsureBaseContainerAdded(espm::Loader& espm);
@@ -178,7 +181,7 @@ protected:
   void SendPropertyToListeners(const char* name, const nlohmann::json& value);
   void SendPropertyTo(const char* name, const nlohmann::json& value,
                       MpActor& target);
-  void SendPropertyTo(const std::string& preparedPropMsg, MpActor& target);
+  void SendPropertyTo(const IMessageBase& preparedPropMsg, MpActor& target);
 
 private:
   void AddContainerObject(const espm::CONT::ContainerObject& containerObject,
@@ -214,11 +217,12 @@ private:
 
 protected:
   void BeforeDestroy() override;
-  std::string CreatePropertyMessage(MpObjectReference* self, const char* name,
-                                    const nlohmann::json& value);
-  nlohmann::json PreparePropertyMessage(MpObjectReference* self,
-                                        const char* name,
-                                        const nlohmann::json& value);
+  UpdatePropertyMessage CreatePropertyMessage(MpObjectReference* self,
+                                              const char* name,
+                                              const nlohmann::json& value);
+  UpdatePropertyMessage PreparePropertyMessage(MpObjectReference* self,
+                                               const char* name,
+                                               const nlohmann::json& value);
 
   const std::shared_ptr<FormCallbacks> callbacks;
 };

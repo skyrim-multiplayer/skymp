@@ -50,6 +50,14 @@ namespace {
 
 void EnsureAdmin(const MpActor& me)
 {
+  if (auto worldState = me.GetParent()) {
+    if (worldState->enableConsoleCommandsForAll) {
+      spdlog::trace("Bypassing EnsureAdmin check: enableConsoleCommandsForAll "
+                    "set to true");
+      return;
+    }
+  }
+
   bool isAdmin = me.GetConsoleCommandsAllowedFlag();
   if (!isAdmin) {
     throw std::runtime_error("Not enough permissions to use this command");

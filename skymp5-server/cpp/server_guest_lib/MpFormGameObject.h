@@ -11,6 +11,8 @@ public:
   const char* GetParentNativeScript() override;
   bool EqualsByValue(const IGameObject& obj) const override;
 
+  const char* GetStringID() override;
+
 private:
   WorldState* const parent;
   MpForm* const form;

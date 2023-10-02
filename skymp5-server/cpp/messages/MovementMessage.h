@@ -22,7 +22,7 @@ const std::string& ToString(RunMode runMode);
 
 RunMode RunModeFromString(std::string_view str);
 
-struct MovementMessage : public MessageBase
+struct MovementMessage : public MessageBase<MovementMessage>
 {
   const static char kMsgType = static_cast<char>(MsgType::UpdateMovement);
   const static char kHeaderByte = 'M';

@@ -223,6 +223,18 @@ The name of a localizaiton file in `data/localization` that would be used by `M.
 }
 ```
 
+## enableConsoleCommandsForAll
+
+Enable console commands for all, useful for testing.
+
+```json5
+{
+  // ...
+  "enableConsoleCommandsForAll": true
+  // ...
+}
+```
+
 ## sweetPieMinimumPlayersToStart
 
 The minimal amount of players to begin deathmatch. This setting is sweetpie only and does not affect vanilla server. By default is 5.

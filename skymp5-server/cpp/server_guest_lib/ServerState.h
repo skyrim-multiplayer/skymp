@@ -48,7 +48,7 @@ struct UserInfo
   std::optional<std::chrono::time_point<std::chrono::steady_clock>>
     packetHistoryStartTime;
 
-  std::vector<std::optional<DeferredMessage>> deferredChannels;
+  std::vector<std::vector<DeferredMessage>> deferredChannels;
 };
 
 class ServerState

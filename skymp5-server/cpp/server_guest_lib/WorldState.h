@@ -22,6 +22,7 @@
 #include <sparsepp/spp.h>
 #include <spdlog/spdlog.h>
 #include <sstream>
+#include <unordered_map>
 
 #ifdef AddForm
 #  undef AddForm
@@ -199,11 +200,14 @@ public:
                      std::chrono::system_clock::duration dur);
   std::optional<std::chrono::system_clock::duration> GetRelootTime(
     std::string recordType) const;
+
   // Only for tests
   auto& GetGrids() { return grids; }
+
   void SetNpcSettings(
     std::unordered_map<std::string, NpcSettingsEntry>&& settings);
   void SetForbiddenRelootTypes(const std::set<std::string>& types);
+  void SetEnableConsoleCommandsForAllSetting(bool enable);
 
 public:
   std::vector<std::string> espmFiles;
@@ -212,7 +216,7 @@ public:
     actorIdByPrivateIndexedProperty;
   std::shared_ptr<spdlog::logger> logger;
   std::vector<std::shared_ptr<PartOneListener>> listeners;
-  std::map<uint32_t, uint32_t> hosters;
+  std::unordered_map<uint32_t, uint32_t> hosters;
   std::vector<std::optional<std::chrono::system_clock::time_point>>
     lastMovUpdateByIdx;
 
@@ -221,6 +225,7 @@ public:
   bool npcEnabled = false;
   std::unordered_map<std::string, NpcSettingsEntry> npcSettings;
   NpcSettingsEntry defaultSetting;
+  bool enableConsoleCommandsForAll = false;
 
 private:
   bool AttachEspmRecord(const espm::CombineBrowser& br,

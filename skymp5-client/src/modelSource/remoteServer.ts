@@ -36,6 +36,7 @@ import { Movement } from '../sync/movement';
 import { learnSpells, removeAllSpells } from '../sync/spell';
 import { ModelApplyUtils } from '../view/modelApplyUtils';
 import {
+  getObjectReference,
   getViewFromStorage,
   localIdToRemoteId,
   remoteIdToLocalId,
@@ -55,6 +56,10 @@ import { CustomEventMessage } from '../services/messages/customEventMessage';
 import { FinishSpSnippetMessage } from '../services/messages/finishSpSnippetMessage';
 import { RagdollService } from '../services/services/ragdollService';
 import { UpdateAppearanceMessage } from '../services/messages/updateAppearanceMessage';
+import { TeleportMessage } from '../services/messages/teleportMessage';
+import { DeathStateContainerMessage } from '../services/messages/deathStateContainerMessage';
+import { RespawnNeededError } from '../lib/errors';
+import { OpenContainer } from '../services/messages/openContainer';
 
 const onceLoad = (
   refrId: number,
@@ -212,7 +217,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
     });
   }
 
-  openContainer(msg: messages.OpenContainer): void {
+  OpenContainer(msg: OpenContainer): void {
     once('update', async () => {
       await Utility.wait(0.1); // Give a chance to update inventory
       (
@@ -232,18 +237,23 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
     });
   }
 
-  teleport(msg: messages.Teleport): void {
+  Teleport(msg: TeleportMessage): void {
     once('update', () => {
+      const id = this.getIdManager().getId(msg.idx);
+      const refr = id === this.getMyActorIndex() ? Game.getPlayer() : getObjectReference(id);
       printConsole(
-        'Teleporting...',
+        `Teleporting (idx=${msg.idx}) ${refr?.getFormID().toString(16)}...`,
         msg.pos,
         'cell/world is',
         msg.worldOrCell.toString(16),
       );
       const ragdollService = SpApiInteractor.makeController().lookupListener(RagdollService);
-      ragdollService.safeRemoveRagdollFromWorld(Game.getPlayer()!, () => {
+
+      const refrId = refr?.getFormID();
+
+      const removeRagdollCallback = () => {
         TESModPlatform.moveRefrToPosition(
-          Game.getPlayer()!,
+          ObjectReference.from(Game.getFormEx(refrId || 0)),
           Cell.from(Game.getFormEx(msg.worldOrCell)),
           WorldSpace.from(Game.getFormEx(msg.worldOrCell)),
           msg.pos[0],
@@ -253,7 +263,14 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
           msg.rot[1],
           msg.rot[2],
         );
-      });
+      };
+      const actor = Actor.from(refr);
+      if (actor /*&& actor.getFormID() === 0x14*/) {
+        ragdollService.safeRemoveRagdollFromWorld(actor, removeRagdollCallback);
+      }
+      else {
+        removeRagdollCallback();
+      }
     });
   }
 
@@ -347,10 +364,10 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
         Game.getPlayer() as Actor,
         msg.equipment
           ? {
-              entries: msg.equipment.inv.entries.filter(
-                (x) => !!Armor.from(Game.getFormEx(x.baseId)),
-              ),
-            }
+            entries: msg.equipment.inv.entries.filter(
+              (x) => !!Armor.from(Game.getFormEx(x.baseId)),
+            ),
+          }
           : { entries: [] },
         false,
       );
@@ -410,7 +427,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
               const sqr = (x: number) => x * x;
               const distance = Math.sqrt(
                 sqr(pos[0] - msg.transform.pos[0]) +
-                  sqr(pos[1] - msg.transform.pos[1]),
+                sqr(pos[1] - msg.transform.pos[1]),
               );
               if (distance < 256) {
                 break;
@@ -481,16 +498,16 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
               msg.transform.worldOrCell,
               msg.appearance
                 ? {
-                    name: msg.appearance.name,
-                    raceId: msg.appearance.raceId,
-                    face: {
-                      hairColor: msg.appearance.hairColor,
-                      bodySkinColor: msg.appearance.skinColor,
-                      headTextureSetId: msg.appearance.headTextureSetId,
-                      headPartIds: msg.appearance.headpartIds,
-                      presets: msg.appearance.presets,
-                    },
-                  }
+                  name: msg.appearance.name,
+                  raceId: msg.appearance.raceId,
+                  face: {
+                    hairColor: msg.appearance.hairColor,
+                    bodySkinColor: msg.appearance.skinColor,
+                    headTextureSetId: msg.appearance.headTextureSetId,
+                    headPartIds: msg.appearance.headpartIds,
+                    presets: msg.appearance.presets,
+                  },
+                }
                 : undefined,
             );
             once('update', () => {
@@ -585,7 +602,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
     (form as Record<string, unknown>)[msg.propName] = msg.data;
   }
 
-  DeathStateContainer(msg: messages.DeathStateContainerMessage): void {
+  DeathStateContainer(msg: DeathStateContainerMessage): void {
     once('update', () =>
       printConsole(`Received death state: ${JSON.stringify(msg.tIsDead)}`),
     );
@@ -601,7 +618,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
     once('update', () => this.UpdateProperty(msg.tIsDead));
 
     if (msg.tTeleport) {
-      this.teleport(msg.tTeleport);
+      this.Teleport(msg.tTeleport);
     }
 
     const id = this.getIdManager().getId(msg.tIsDead.idx);
@@ -612,10 +629,19 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
           ? Game.getPlayer()!
           : Actor.from(Game.getFormEx(remoteIdToLocalId(form.refrId ?? 0)));
       if (actor) {
-        SpApiInteractor.makeController().emitter.emit("applyDeathStateEvent", {
-          actor: Game.getPlayer()!,
-          isDead: msg.tIsDead.data as boolean
-        });
+        try {
+          SpApiInteractor.makeController().emitter.emit("applyDeathStateEvent", {
+            actor: actor,
+            isDead: msg.tIsDead.data as boolean
+          });
+        } catch (e) {
+          if (e instanceof RespawnNeededError) {
+            actor.disableNoWait(false);
+            actor.delete();
+          } else {
+            throw e;
+          }
+        }
       }
     });
   }
@@ -627,11 +653,13 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
     loginWithSkympIoCredentials();
   }
 
-  handleDisconnect(): void {}
+  handleDisconnect(): void { }
 
   ChangeValues(msg: ChangeValuesMessage): void {
     once('update', () => {
-      const ac = Game.getPlayer();
+      const id = this.getIdManager().getId(msg.idx);
+      const refr = id === this.getMyActorIndex() ? Game.getPlayer() : getObjectReference(id);
+      const ac = Actor.from(refr);
       if (!ac) return;
       setActorValuePercentage(ac, 'health', msg.data.health);
       setActorValuePercentage(ac, 'stamina', msg.data.stamina);
@@ -728,7 +756,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
       storage['eventSourceContexts'] = [];
     } else {
       storage['eventSourceContexts'].forEach((ctx: Record<string, unknown>) => {
-        ctx.sendEvent = () => {};
+        ctx.sendEvent = () => { };
         ctx._expired = true;
       });
     }

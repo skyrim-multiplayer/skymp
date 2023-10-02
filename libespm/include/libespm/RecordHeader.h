@@ -36,7 +36,7 @@ private:
 
   uint32_t GetFieldsSizeSum() const noexcept;
 
-private:
+protected:
   uint32_t flags;
   uint32_t id;
   uint32_t revision;

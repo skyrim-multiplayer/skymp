@@ -1,5 +1,6 @@
 #include "TestUtils.hpp"
 #include <catch2/catch_all.hpp>
+#include <spdlog/spdlog.h>
 
 namespace {
 size_t PrintMissing(const std::set<std::filesystem::path>& whatIsMissing,
@@ -71,6 +72,11 @@ auto GetExpectedPaths(const nlohmann::json& j)
 TEST_CASE("Distribution folder must contain all requested files",
           "[DistContents]")
 {
+  auto ci = getenv("CI");
+  if (!ci || strcmp(ci, "true") != 0) {
+    return spdlog::info("Skipping DistContentsTest - CI env not detected");
+  }
+
   auto distDir = std::filesystem::path(DIST_DIR);
   auto begin = std::filesystem::recursive_directory_iterator(distDir);
   auto end = std::filesystem::recursive_directory_iterator();

@@ -19,6 +19,8 @@
 #include <spdlog/spdlog.h>
 #include <unordered_set>
 
+#include "UpdateEquipmentMessage.h"
+
 MpActor* ActionListener::SendToNeighbours(
   uint32_t idx, const simdjson::dom::element& jMessage,
   Networking::UserId userId, Networking::PacketData data, size_t length,
@@ -278,14 +280,10 @@ void RecalculateWorn(MpObjectReference& refr)
     if (!actor) {
       continue;
     }
-    std::string s;
-    s += Networking::MinPacketId;
-    s += nlohmann::json{
-      { "t", MsgType::UpdateEquipment },
-      { "idx", ac->GetIdx() },
-      { "data", newEq.ToJson() }
-    }.dump();
-    actor->SendToUser(s.data(), s.size(), true);
+    UpdateEquipmentMessage msg;
+    msg.data = newEq.ToJson();
+    msg.idx = ac->GetIdx();
+    actor->SendToUser(msg, true);
   }
 }
 
@@ -489,14 +487,16 @@ void ActionListener::OnHostAttempt(const RawMessageData& rawMsgData,
                                    uint32_t remoteId)
 {
   MpActor* me = partOne.serverState.ActorByUser(rawMsgData.userId);
-  if (!me)
+  if (!me) {
     throw std::runtime_error("Unable to host without actor attached");
+  }
 
   auto& remote = partOne.worldState.GetFormAt<MpObjectReference>(remoteId);
 
   auto user = partOne.serverState.UserByActor(dynamic_cast<MpActor*>(&remote));
-  if (user != Networking::InvalidUserId)
+  if (user != Networking::InvalidUserId) {
     return;
+  }
 
   auto& hoster = partOne.worldState.hosters[remoteId];
   const uint32_t prevHoster = hoster;
@@ -528,6 +528,24 @@ void ActionListener::OnHostAttempt(const RawMessageData& rawMsgData,
                               R"({ "type": "hostStart", "target": %llu })",
                               longFormId);
 
+    // Otherwise, health percentage would remain unsynced until someone hits
+    // npc
+    auto formId = remote.GetFormId();
+    partOne.worldState.SetTimer(std::chrono::seconds(1))
+      .Then([this, formId](Viet::Void) {
+        // Check if form is still here
+        auto& remote = partOne.worldState.GetFormAt<MpActor>(formId);
+
+        auto changeForm = remote.GetChangeForm();
+
+        ChangeValuesMessage msg;
+        msg.idx = remote.GetIdx();
+        msg.health = changeForm.actorValues.healthPercentage;
+        msg.magicka = changeForm.actorValues.magickaPercentage;
+        msg.stamina = changeForm.actorValues.staminaPercentage;
+        remote.SendToUser(msg, true); // in fact sends to hoster
+      });
+
     if (MpActor* prevHosterActor = dynamic_cast<MpActor*>(
           partOne.worldState.LookupFormById(prevHoster).get())) {
       auto prevHosterUser = partOne.serverState.UserByActor(prevHosterActor);
@@ -546,11 +564,13 @@ void ActionListener::OnCustomEvent(const RawMessageData& rawMsgData,
                                    simdjson::dom::element& args)
 {
   auto ac = partOne.serverState.ActorByUser(rawMsgData.userId);
-  if (!ac)
+  if (!ac) {
     return;
+  }
 
-  if (eventName[0] != '_')
+  if (eventName[0] != '_') {
     return;
+  }
 
   for (auto& listener : partOne.GetListeners()) {
     listener->OnMpApiEvent(eventName, args, ac->GetFormId());
@@ -608,31 +628,38 @@ bool IsUnarmedAttack(const uint32_t sourceFormId)
 }
 
 float CalculateCurrentHealthPercentage(const MpActor& actor, float damage,
-                                       float healthPercentage)
+                                       float healthPercentage,
+                                       float* outBaseHealth)
 {
   uint32_t baseId = actor.GetBaseId();
   uint32_t raceId = actor.GetRaceId();
   WorldState* espmProvider = actor.GetParent();
   float baseHealth = GetBaseActorValues(espmProvider, baseId, raceId).health;
 
+  if (outBaseHealth) {
+    *outBaseHealth = baseHealth;
+  }
+
   float damagePercentage = damage / baseHealth;
   float currentHealthPercentage = healthPercentage - damagePercentage;
   return currentHealthPercentage;
 }
 
-float GetReach(const MpActor& actor, const uint32_t source)
+float GetReach(const MpActor& actor, const uint32_t source,
+               float reachHotfixMult)
 {
   auto espmProvider = actor.GetParent();
   if (IsUnarmedAttack(source)) {
     uint32_t raceId = actor.GetRaceId();
-    return espm::GetData<espm::RACE>(raceId, espmProvider).unarmedReach;
+    return reachHotfixMult *
+      espm::GetData<espm::RACE>(raceId, espmProvider).unarmedReach;
   }
   auto weapDNAM = espm::GetData<espm::WEAP>(source, espmProvider).weapDNAM;
   float fCombatDistance =
     espm::GetData<espm::GMST>(espm::GMST::kFCombatDistance, espmProvider)
       .value;
   float weaponReach = weapDNAM ? weapDNAM->reach : 0;
-  return weaponReach * fCombatDistance;
+  return reachHotfixMult * weaponReach * fCombatDistance;
 }
 
 NiPoint3 RotateZ(const NiPoint3& point, float angle)
@@ -687,7 +714,14 @@ bool IsDistanceValid(const MpActor& actor, const MpActor& targetActor,
                      const HitData& hitData)
 {
   float sqrDistance = GetSqrDistanceToBounds(actor, targetActor);
-  float reach = GetReach(actor, hitData.source);
+
+  // TODO: fix bounding boxes for creatures such as chicken, mudcrab, etc
+  float reachPveHotfixMult =
+    (actor.GetBaseId() <= 0x7 && targetActor.GetBaseId() <= 0x7)
+    ? 1.f
+    : std::numeric_limits<float>::infinity();
+
+  float reach = GetReach(actor, hitData.source, reachPveHotfixMult);
 
   // For bow/crossbow shots we don't want to check melee radius
   if (!hitData.isBashAttack) {
@@ -743,26 +777,39 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
                            const HitData& hitData_)
 {
   auto currentHitTime = std::chrono::steady_clock::now();
-  MpActor* aggressor = partOne.serverState.ActorByUser(rawMsgData_.userId);
-  if (!aggressor) {
+  MpActor* myActor = partOne.serverState.ActorByUser(rawMsgData_.userId);
+  if (!myActor) {
     throw std::runtime_error("Unable to change values without Actor attached");
   }
 
-  if (aggressor->IsDead()) {
-    spdlog::debug(fmt::format("{:x} actor is dead and can't attack",
-                              aggressor->GetFormId()));
-    return;
-  }
+  MpActor* aggressor = nullptr;
 
   HitData hitData = hitData_;
-
   if (hitData.aggressor == 0x14) {
+    aggressor = myActor;
     hitData.aggressor = aggressor->GetFormId();
   } else {
-    throw std::runtime_error("Events from non aggressor is not supported yet");
+    aggressor = &partOne.worldState.GetFormAt<MpActor>(hitData.aggressor);
+    auto it = partOne.worldState.hosters.find(hitData.aggressor);
+    if (it == partOne.worldState.hosters.end() ||
+        it->second != myActor->GetFormId()) {
+      spdlog::error("SendToNeighbours - No permission to send OnHit with "
+                    "aggressor actor {:x}",
+                    aggressor->GetFormId());
+      return;
+    }
   }
+
   if (hitData.target == 0x14) {
-    hitData.target = aggressor->GetFormId();
+    hitData.target = myActor->GetFormId();
+  }
+
+  if (aggressor->IsDead()) {
+    spdlog::debug(fmt::format("{:x} actor is dead and can't attack. "
+                              "requesting respawn in order to fix death state",
+                              aggressor->GetFormId()));
+    aggressor->RespawnWithDelay(true);
+    return;
   }
 
   if (aggressor->GetEquipment().inv.HasItem(hitData.source) == false &&
@@ -778,7 +825,34 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
     return;
   };
 
-  auto& targetActor = partOne.worldState.GetFormAt<MpActor>(hitData.target);
+  auto refr = std::dynamic_pointer_cast<MpObjectReference>(
+    partOne.worldState.LookupFormById(hitData.target));
+  if (!refr) {
+    spdlog::error("ActionListener::OnHit - MpObjectReference not found for "
+                  "hitData.target {:x}",
+                  hitData.target);
+    return;
+  }
+
+  auto& browser = partOne.worldState.GetEspm().GetBrowser();
+  std::array<VarValue, 7> args;
+  args[0] = VarValue(aggressor->ToGameObject()); // akAgressor
+  args[1] = VarValue(std::make_shared<EspmGameObject>(
+    browser.LookupById(hitData.source)));    // akSource
+  args[2] = VarValue::None();                // akProjectile
+  args[3] = VarValue(hitData.isPowerAttack); // abPowerAttack
+  args[4] = VarValue(hitData.isSneakAttack); // abSneakAttack
+  args[5] = VarValue(hitData.isBashAttack);  // abBashAttack
+  args[6] = VarValue(hitData.isHitBlocked);  // abHitBlocked
+  refr->SendPapyrusEvent("OnHit", args.data(), args.size());
+
+  auto targetActorPtr = dynamic_cast<MpActor*>(refr.get());
+  if (!targetActorPtr) {
+    return; // Not an actor, damage calculation is not needed
+  }
+
+  auto& targetActor = *targetActorPtr;
+
   auto lastHitTime = targetActor.GetLastHitTime();
   std::chrono::duration<float> timePassed = currentHitTime - lastHitTime;
 
@@ -799,7 +873,14 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
   if (IsDistanceValid(*aggressor, targetActor, hitData) == false) {
     float distance =
       std::sqrt(GetSqrDistanceToBounds(*aggressor, targetActor));
-    float reach = GetReach(*aggressor, hitData.source);
+
+    // TODO: fix bounding boxes for creatures such as chicken, mudcrab, etc
+    float reachPveHotfixMult =
+      (aggressor->GetBaseId() <= 0x7 && targetActor.GetBaseId() <= 0x7)
+      ? 1.f
+      : std::numeric_limits<float>::infinity();
+
+    float reach = GetReach(*aggressor, hitData.source, reachPveHotfixMult);
     uint32_t aggressorId = aggressor->GetFormId();
     uint32_t targetId = targetActor.GetFormId();
     spdlog::debug(
@@ -812,16 +893,15 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
   ActorValues currentActorValues = targetActor.GetChangeForm().actorValues;
 
   float healthPercentage = currentActorValues.healthPercentage;
-  float magickaPercentage = currentActorValues.magickaPercentage;
-  float staminaPercentage = currentActorValues.staminaPercentage;
 
   hitData.isHitBlocked = targetActor.IsBlockActive()
     ? ShouldBeBlocked(*aggressor, targetActor)
     : false;
   float damage = partOne.CalculateDamage(*aggressor, targetActor, hitData);
   damage = damage < 0.f ? 0.f : damage;
-  currentActorValues.healthPercentage =
-    CalculateCurrentHealthPercentage(targetActor, damage, healthPercentage);
+  float outBaseHealth = 0.f;
+  currentActorValues.healthPercentage = CalculateCurrentHealthPercentage(
+    targetActor, damage, healthPercentage, &outBaseHealth);
 
   currentActorValues.healthPercentage =
     currentActorValues.healthPercentage < 0.f
@@ -831,11 +911,10 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
   targetActor.NetSetPercentages(currentActorValues, aggressor);
   targetActor.SetLastHitTime();
 
-  spdlog::debug("Target {0:x} is hitted by {1} damage. Current health "
-                "percentage: {2}. Last "
-                "health percentage: {3}. (Last: {3} => Current: {2})",
+  spdlog::debug("Target {0:x} is hitted by {1} damage. Percentage was: {3}, "
+                "percentage now: {2}, base health: {4})",
                 hitData.target, damage, currentActorValues.healthPercentage,
-                healthPercentage);
+                healthPercentage, outBaseHealth);
 }
 
 void ActionListener::OnUnknown(const RawMessageData& rawMsgData)
