@@ -228,11 +228,20 @@ export class FormView implements View<FormModel> {
     let alreadyHosted = false;
     if (Array.isArray(hosted)) {
       const remoteId = localIdToRemoteId(this.refrId);
-      if (hosted.includes(remoteId)) {
+      
+      if (hosted.includes(remoteId) || hosted.includes(remoteId + 0x100000000))  {
         alreadyHosted = true;
       }
+      // printConsole("remoteId=", remoteId.toString(16), "hosted=", hosted.map(x => x.toString(16)));
     }
     setDefaultAnimsDisabled(this.refrId, alreadyHosted ? false : true);
+
+    // if (model.baseId === 0x7 || !model.baseId) {
+    //   setDefaultAnimsDisabled(this.refrId, true);
+    // }
+    // else {
+    //   setDefaultAnimsDisabled(this.refrId, false);
+    // }
     if (alreadyHosted) {
       Actor.from(refr)?.clearKeepOffsetFromActor();
     }

@@ -265,7 +265,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
         );
       };
       const actor = Actor.from(refr);
-      if (actor && actor.getFormID() === 0x14) {
+      if (actor /*&& actor.getFormID() === 0x14*/) {
         ragdollService.safeRemoveRagdollFromWorld(actor, removeRagdollCallback);
       }
       else {

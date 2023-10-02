@@ -24,7 +24,7 @@ export class HitService extends ClientListener {
             let alreadyHosted = false;
             if (Array.isArray(hosted)) {
                 const remoteId = localIdToRemoteId(aggressor);
-                if (hosted.includes(remoteId)) {
+                if (hosted.includes(remoteId) || hosted.includes(remoteId + 0x100000000)) {
                     alreadyHosted = true;
                 }
             }

@@ -29,7 +29,10 @@ function processOneActor(): void {
     return;
   }
   
-  if (actor.isDead()) return;
+  if (actor.isDead()) {
+    actor.blockActivation(true);
+    return;
+  }
 
   actor.disable(false).then(() => {
     const ac = Actor.from(Game.getFormEx(actorId));
