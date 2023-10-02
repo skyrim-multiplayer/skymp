@@ -1,10 +1,10 @@
-#include "libespm/LVLI.h"
+#include "libespm/LeveledListBase.h"
 #include "libespm/RecordHeaderAccess.h"
 #include <cstring>
 
 namespace espm {
 
-LVLI::Data LVLI::GetData(
+LeveledListBase::Data LeveledListBase::GetData(
   CompressedFieldsCache& compressedFieldsCache) const noexcept
 {
   Data result;

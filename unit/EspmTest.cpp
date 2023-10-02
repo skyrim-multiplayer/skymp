@@ -278,6 +278,7 @@ TEST_CASE("Loads Npc", "[espm]")
   REQUIRE(npc->GetData(compressedFieldsCache).defaultOutfitId == 0x1697c);
   REQUIRE(npc->GetData(compressedFieldsCache).sleepOutfitId == 0x0);
   REQUIRE(npc->GetData(compressedFieldsCache).objects.size() == 16);
+  REQUIRE(npc->GetData(compressedFieldsCache).templateDataFlags == 0);
 }
 
 TEST_CASE("Loads Weapon", "[espm]")

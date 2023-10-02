@@ -5,6 +5,7 @@
 #include <atomic>
 #include <catch2/catch_all.hpp>
 #include <numeric>
+#include <spdlog/spdlog.h>
 #include <thread>
 
 extern espm::Loader l;
@@ -160,4 +161,89 @@ TEST_CASE("Evaluate LItemWeaponDaggerTown", "[espm]")
   res = EvaluateListRecurse(br, leveledList, 1000, 1);
   REQUIRE(res.size() == 1);
   REQUIRE(res[0x1397e] == 1000);
+}
+
+TEST_CASE("Evaluate LCharHorse", "[espm]")
+{
+  auto LCharHorse = 0x68d6f;
+  auto& br = l.GetBrowser();
+  auto leveledList = br.LookupById(LCharHorse);
+
+  std::map<uint32_t, uint32_t> results;
+
+  for (int i = 0; i < 1000000; ++i) {
+    auto res = EvaluateListRecurse(br, leveledList, 1);
+    REQUIRE(res.size() == 1);
+
+    auto pair = *res.begin();
+    results[pair.first] += pair.second;
+    if (results.size() == 5) {
+      break;
+    }
+  }
+
+  REQUIRE(results.size() == 5);
+  REQUIRE(results[0x68d6e] > 0);
+  REQUIRE(results[0x68d6d] > 0);
+  REQUIRE(results[0x68d6b] > 0);
+  REQUIRE(results[0x68d5b] > 0);
+  REQUIRE(results[0x68d07] > 0);
+}
+
+TEST_CASE("Evaluate LvlHorse template", "[espm]")
+{
+  auto LvlHorse = 0x68d71;
+  auto& br = l.GetBrowser();
+  auto horse = br.LookupById(LvlHorse);
+
+  std::map<uint32_t, uint32_t> results;
+
+  for (int i = 0; i < 1000000; ++i) {
+    auto res = EvaluateTemplateChain(br, horse, 1);
+    REQUIRE(res.size() == 2);
+    REQUIRE(res[0] == LvlHorse);
+
+    results[res[1]] += 1;
+    if (results.size() == 5) {
+      break;
+    }
+  }
+
+  REQUIRE(results.size() == 5);
+  REQUIRE(results[0x68d6e] > 0);
+  REQUIRE(results[0x68d6d] > 0);
+  REQUIRE(results[0x68d6b] > 0);
+  REQUIRE(results[0x68d5b] > 0);
+  REQUIRE(results[0x68d07] > 0);
+}
+
+TEST_CASE("Evaluate LvlMudcrab template", "[espm]")
+{
+  auto LvlMudcrab = 0x8cacc;
+  auto& br = l.GetBrowser();
+  auto mudcrab = br.LookupById(LvlMudcrab);
+
+  std::map<uint32_t, uint32_t> countByFormId;
+
+  for (int i = 0; i < 100'000; i++) {
+    constexpr int kPcLevel = 5;
+    auto chain = EvaluateTemplateChain(br, mudcrab, kPcLevel);
+    REQUIRE(chain.size() == 2);
+    REQUIRE(chain[0] == 0x8cacc);
+    ++countByFormId[chain[1]];
+  }
+
+  // formId e4010 level 1
+  // formId e4010 level 1
+  // formId e4011 level 1
+  // formId e4011 level 5
+  // So with level 5 should be 50/50
+
+  REQUIRE(countByFormId.size() == 2);
+
+  int64_t countA = static_cast<int64_t>(countByFormId.begin()->second);
+  int64_t countB = static_cast<int64_t>((--countByFormId.end())->second);
+
+  // usually diff is less than 100, but we don't want to fail tests randomly
+  REQUIRE(std::abs(countA - countB) < 2000);
 }
