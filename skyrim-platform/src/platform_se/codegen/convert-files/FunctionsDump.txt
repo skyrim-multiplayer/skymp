@@ -21452,6 +21452,25 @@
                     "useLongSignature": true
                 },
                 {
+                    "$comment": "hand-crafted entry",
+                    "arguments": [
+                        {
+                            "name": "commaSeparatedListOfIds",
+                            "type": {
+                                "rawType": "String"
+                            }
+                        }
+                    ],
+                    "isLatent": false,
+                    "name": "EvaluateLeveledNpc",
+                    "offset": "25744236640",
+                    "returnType": {
+                        "objectTypeName": "ActorBase",
+                        "rawType": "Object"
+                    },
+                    "useLongSignature": true
+                },
+                {
                     "arguments": [
                         {
                             "name": "pointer",

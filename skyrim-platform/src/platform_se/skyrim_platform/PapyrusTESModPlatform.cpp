@@ -217,22 +217,20 @@ RE::BGSColorForm* TESModPlatform::GetSkinColor(IVM* vm, StackID stackId,
   return col;
 }
 
-RE::TESNPC* TESModPlatform::CreateNpc(IVM* vm, StackID stackId,
-                                      RE::StaticFunctionTag*)
+enum class AiPackagesMode
 {
-  auto npc = CreateForm<RE::TESNPC>();
+  KeepOriginal,
+  ReplaceWithDoNothing
+};
+
+static RE::TESNPC* CloneNpc(uint32_t npcId, AiPackagesMode aiPackagesMode)
+{
+  auto npc = TESModPlatform::CreateForm<RE::TESNPC>();
   if (!npc) {
     return nullptr;
   }
 
-  enum
-  {
-    AADeleteWhenDoneTestJeremyRegular = 0x0010D13E
-  };
-  const auto srcNpc =
-    RE::TESForm::LookupByID<RE::TESNPC>(AADeleteWhenDoneTestJeremyRegular);
-  assert(srcNpc);
-  assert(srcNpc->formType.get() == RE::FormType::NPC);
+  const auto srcNpc = RE::TESForm::LookupByID<RE::TESNPC>(npcId);
   if (!srcNpc || srcNpc->formType != RE::FormType::NPC) {
     return nullptr;
   }
@@ -249,21 +247,29 @@ RE::TESNPC* TESModPlatform::CreateNpc(IVM* vm, StackID stackId,
   npc_->actorData.actorBaseFlags.set(RE::ACTOR_BASE_DATA::Flag::kUnique);
   npc_->actorData.actorBaseFlags.set(RE::ACTOR_BASE_DATA::Flag::kSimpleActor);
 
-  // Clear AI Packages to prevent idle animations with Furniture
-  enum
-  {
-    DoNothing = 0x654e2,
-    DefaultMoveToCustom02IgnoreCombat = 0x6af62
-  };
-  // ignore combat && no
-  auto doNothing = RE::TESForm::LookupByID<RE::TESPackage>(DoNothing);
-  // combat alert
-  auto flagsSource =
-    RE::TESForm::LookupByID<RE::TESPackage>(DefaultMoveToCustom02IgnoreCombat);
+  switch (aiPackagesMode) {
+    case AiPackagesMode::ReplaceWithDoNothing: {
+      // Clear AI Packages to prevent idle animations with Furniture
+      enum
+      {
+        DoNothing = 0x654e2,
+        DefaultMoveToCustom02IgnoreCombat = 0x6af62
+      };
+      // ignore combat && no combat alert
+      auto doNothing = RE::TESForm::LookupByID<RE::TESPackage>(DoNothing);
+      auto flagsSource = RE::TESForm::LookupByID<RE::TESPackage>(
+        DefaultMoveToCustom02IgnoreCombat);
 
-  doNothing->packData = flagsSource->packData;
-  npc_->aiPackages.packages.clear();
-  npc_->aiPackages.packages.push_front(doNothing);
+      doNothing->packData = flagsSource->packData;
+      npc_->aiPackages.packages.clear();
+      npc_->aiPackages.packages.push_front(doNothing);
+      break;
+    }
+    case AiPackagesMode::KeepOriginal:
+      break;
+    default:
+      break;
+  }
 
   auto sourceFaceData = npc_->faceData;
   npc_->faceData = new RE::TESNPC::FaceData;
@@ -273,6 +279,72 @@ RE::TESNPC* TESModPlatform::CreateNpc(IVM* vm, StackID stackId,
   *npc_->faceData = *sourceFaceData;
 
   return npc;
+}
+
+static void FillFormsArray(std::vector<RE::TESForm*>& leak,
+                           std::vector<RE::TESNPC*> cursorStack)
+{
+  leak.reserve(cursorStack.size());
+  for (auto it = cursorStack.rbegin(); it != cursorStack.rend(); ++it) {
+    leak.push_back(*it);
+  }
+}
+
+RE::TESNPC* TESModPlatform::CreateNpc(IVM* vm, StackID stackId,
+                                      RE::StaticFunctionTag*)
+{
+  constexpr uint32_t kAADeleteWhenDoneTestJeremyRegular = 0x0010D13E;
+  return CloneNpc(kAADeleteWhenDoneTestJeremyRegular,
+                  AiPackagesMode::ReplaceWithDoNothing);
+}
+
+RE::TESNPC* TESModPlatform::EvaluateLeveledNpc(
+  IVM* vm, StackID stackId, RE::StaticFunctionTag*,
+  FixedString commaSeparatedListOfIds)
+{
+  auto str = std::string(commaSeparatedListOfIds.data());
+
+  std::vector<uint32_t> formIds;
+  formIds.reserve(10);
+
+  std::istringstream iss(str);
+  std::string id;
+  while (std::getline(iss, id, ',')) {
+    auto formId = static_cast<uint32_t>(atoll(id.data()));
+    const auto srcNpc = RE::TESForm::LookupByID<RE::TESNPC>(formId);
+    if (!srcNpc || srcNpc->formType != RE::FormType::NPC) {
+      return nullptr;
+    }
+    formIds.push_back(formId);
+  }
+
+  std::vector<RE::TESNPC*> cursorStack;
+  cursorStack.reserve(10);
+
+  for (auto it = formIds.rbegin(); it != formIds.rend(); ++it) {
+    uint32_t formId = *it;
+    // TODO: replace with DoNothing for humanoids? and how to determine
+    // humanoids in case of leveled?
+    auto copiedNpc = CloneNpc(formId, AiPackagesMode::KeepOriginal);
+    if (!copiedNpc) {
+      return nullptr;
+    }
+
+    if (cursorStack.size() > 0) {
+      cursorStack.back()->baseTemplateForm = copiedNpc;
+      auto leak = new std::vector<RE::TESForm*>();
+      leak->reserve(10);
+      FillFormsArray(*leak, cursorStack);
+      cursorStack.back()->templateForms = leak->data();
+    }
+    cursorStack.push_back(copiedNpc);
+  }
+
+  if (cursorStack.empty()) {
+    return nullptr;
+  }
+
+  return cursorStack.back();
 }
 
 void TESModPlatform::SetNpcSex(IVM* vm, StackID stackId,
@@ -913,6 +985,12 @@ bool TESModPlatform::Register(IVM* vm)
     new RE::BSScript::NativeFunction<true, decltype(CreateNpc), RE::TESNPC*,
                                      RE::StaticFunctionTag*>(
       "CreateNpc", "TESModPlatform", CreateNpc));
+
+  vm->BindNativeMethod(
+    new RE::BSScript::NativeFunction<true, decltype(EvaluateLeveledNpc),
+                                     RE::TESNPC*, RE::StaticFunctionTag*,
+                                     FixedString>(
+      "EvaluateLeveledNpc", "TESModPlatform", EvaluateLeveledNpc));
 
   vm->BindNativeMethod(
     new RE::BSScript::NativeFunction<true, decltype(SetNpcSex), void,

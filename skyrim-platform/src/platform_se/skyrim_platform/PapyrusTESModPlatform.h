@@ -40,6 +40,10 @@ RE::BGSColorForm* GetSkinColor(IVM* vm, StackID stackId,
 
 RE::TESNPC* CreateNpc(IVM* vm, StackID stackId, RE::StaticFunctionTag*);
 
+RE::TESNPC* EvaluateLeveledNpc(IVM* vm, StackID stackId,
+                               RE::StaticFunctionTag*,
+                               FixedString commaSeparatedListOfIds);
+
 void SetNpcSex(IVM* vm, StackID stackId, RE::StaticFunctionTag*,
                RE::TESNPC* npc, int32_t sex);
 

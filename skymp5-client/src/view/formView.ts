@@ -93,16 +93,42 @@ export class FormView implements View<FormModel> {
         }
       }
     } else {
+      // @ts-ignore
+      const templateChain: number[] | undefined = model.templateChain;
+
+      let baselvl = Game.getFormEx(this.getLeveledBase(templateChain));
+      let baseNormal = Game.getFormEx(+(model.baseId as number));
+      //let baseNormal = null;
+      let baseAppearance = Game.getFormEx(this.getAppearanceBasedBase());
+
+      // printConsole(baselvl, baseNormal,baseAppearance )
+
       const base =
-        Game.getFormEx(+(model.baseId as number)) ||
-        Game.getFormEx(this.getAppearanceBasedBase());
+        baselvl ||
+        baseNormal ||
+        baseAppearance;
       if (!base) return;
 
       let refr = ObjectReference.from(Game.getFormEx(this.refrId));
-      const respawnRequired =
-        !refr ||
-        !refr.getBaseObject() ||
-        (refr.getBaseObject() as Form).getFormID() !== base.getFormID();
+
+      let respawnRequired = false;
+
+      if (!refr) {
+        respawnRequired = true;
+        printConsole("1");
+      }
+      else if (!refr.getBaseObject()) {
+        respawnRequired = true;
+        printConsole("2");
+      }
+      else if ((refr.getBaseObject() as Form).getFormID() !== base.getFormID()) {
+        respawnRequired = true;
+        printConsole(`${(refr.getBaseObject() as Form).getFormID().toString(16)} ${base.getFormID().toString(16)}`);
+      }
+
+
+      // @ts-ignore
+      // printConsole(`${!refr} ${!refr || !refr.getBaseObject()} ${!refr || (refr.getBaseObject() as Form).getFormID() !== base.getFormID()}`);
 
       if (respawnRequired) {
         this.destroy();
@@ -239,12 +265,6 @@ export class FormView implements View<FormModel> {
     }
     setDefaultAnimsDisabled(this.refrId, alreadyHosted ? false : true);
 
-    // if (model.baseId === 0x7 || !model.baseId) {
-    //   setDefaultAnimsDisabled(this.refrId, true);
-    // }
-    // else {
-    //   setDefaultAnimsDisabled(this.refrId, false);
-    // }
     if (alreadyHosted) {
       Actor.from(refr)?.clearKeepOffsetFromActor();
     }
@@ -439,6 +459,24 @@ export class FormView implements View<FormModel> {
     return this.appearanceBasedBaseId;
   }
 
+  private getLeveledBase(templateChain: number[] | undefined): number {
+    if (templateChain === undefined) return 0;
+
+    const str = templateChain.join(',');
+
+    if (this.leveledBaseId === 0) {
+      const leveledBase = TESModPlatform.evaluateLeveledNpc(str);
+      if (!leveledBase) {
+        printConsole("Failed to evaluate leveled npc", str);
+      }
+      this.leveledBaseId = leveledBase?.getFormID() || 0;
+      printConsole(this.leveledBaseId.toString(16))
+    }
+
+     printConsole(this.leveledBaseId.toString(16));
+    return this.leveledBaseId;
+  }
+
   private getDefaultEquipState() {
     return { lastNumChanges: 0, lastEqMoment: 0 };
   };
@@ -484,6 +522,7 @@ export class FormView implements View<FormModel> {
   private appearanceState = this.getDefaultAppearanceState();
   private eqState = this.getDefaultEquipState();
   private appearanceBasedBaseId = 0;
+  private leveledBaseId = 0;
   private isOnScreen = false;
   private lastPcWorldOrCell = 0;
   private lastWorldOrCell = 0;

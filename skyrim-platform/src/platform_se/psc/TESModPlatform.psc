@@ -14,6 +14,8 @@ ColorForm Function GetSkinColor(ActorBase base) global native
 
 ActorBase Function CreateNpc() global native
 
+ActorBase Function EvaluateLeveledNpc(String commaSeparatedListOfIds) global native
+
 Function SetNpcSex(ActorBase npc, Int sex) global native
 
 Function SetNpcRace(ActorBase npc, Race race) global native
