@@ -10,7 +10,6 @@
 
 extern espm::Loader l;
 
-using namespace LeveledListUtils;
 using namespace std::chrono_literals;
 
 TEST_CASE("Bug", "[espm]")
@@ -48,8 +47,8 @@ TEST_CASE("Bug", "[espm]")
   for (auto lvli : leveled) {
     for (int i = 0; i < 100; ++i) {
       const int pcLevel = 1, count = 1;
-      auto result =
-        EvaluateListRecurse(l.GetBrowser(), lvli, count, pcLevel, nullptr);
+      auto result = LeveledListUtils::EvaluateListRecurse(
+        l.GetBrowser(), lvli, count, pcLevel, nullptr);
     }
   }
   finished = true;
@@ -65,7 +64,7 @@ TEST_CASE("Evaluate LItemFoodCabbage75", "[espm]")
   int totalItems = 0;
 
   for (int i = 0; i < 100000; ++i) {
-    auto res = EvaluateList(br, leveledList);
+    auto res = LeveledListUtils::EvaluateList(br, leveledList);
     if (res.size() > 0) {
       REQUIRE(res.size() == 1);
       REQUIRE(res[0].formId == FoodCabbage);
@@ -86,14 +85,14 @@ TEST_CASE("Evaluate recurse LItemFoodCabbage", "[espm]")
   auto leveledList = br.LookupById(LItemFoodCabbage);
 
   for (int i = 0; i < 100; i++) {
-    auto res = EvaluateListRecurse(br, leveledList);
+    auto res = LeveledListUtils::EvaluateListRecurse(br, leveledList);
     REQUIRE(res.size() == 1);
     REQUIRE(res[FoodCabbage] >= 1);
     REQUIRE(res[FoodCabbage] <= 5);
   }
 
   // "Calculate for each" flag is not set
-  auto r = EvaluateListRecurse(br, leveledList, 10);
+  auto r = LeveledListUtils::EvaluateListRecurse(br, leveledList, 10);
   REQUIRE(r.size() == 1);
   REQUIRE(r[FoodCabbage] % 10 == 0);
 }
@@ -108,7 +107,7 @@ TEST_CASE("Evaluate LootGoldChange25", "[espm]")
   int n[10] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
   for (int i = 0; i < 100000; ++i) {
-    auto res = EvaluateList(br, leveledList);
+    auto res = LeveledListUtils::EvaluateList(br, leveledList);
     if (res.size() == 0) {
       n[0]++;
     }
@@ -132,7 +131,7 @@ TEST_CASE("Evaluate DeathItemDraugr", "[espm]")
   auto& br = l.GetBrowser();
   auto leveledList = br.LookupById(DeathItemDraugr);
 
-  auto res = EvaluateList(br, leveledList);
+  auto res = LeveledListUtils::EvaluateList(br, leveledList);
   REQUIRE(res.size() == 5);
 }
 
@@ -143,12 +142,12 @@ TEST_CASE("Evaluate LItemWeaponDaggerTown", "[espm]")
   auto leveledList = br.LookupById(LItemWeaponDaggerTown);
 
   // Normally this leveled list returns one of daggers (iron, steel, etc)
-  auto res = EvaluateListRecurse(br, leveledList, 1);
+  auto res = LeveledListUtils::EvaluateListRecurse(br, leveledList, 1);
   REQUIRE(res.size() == 1);
 
   // But if we increase count, we will get a lot of different daggers
   // The reason is "Each" flag is set
-  res = EvaluateListRecurse(br, leveledList, 1000);
+  res = LeveledListUtils::EvaluateListRecurse(br, leveledList, 1000);
 
   REQUIRE(res.size() == 5);
   REQUIRE(res[0x1397e] > 100);
@@ -158,7 +157,7 @@ TEST_CASE("Evaluate LItemWeaponDaggerTown", "[espm]")
   REQUIRE(res[0x1399e] > 30);
 
   // PlayerCharacter's level is 1. Only IronDagger should be generated
-  res = EvaluateListRecurse(br, leveledList, 1000, 1);
+  res = LeveledListUtils::EvaluateListRecurse(br, leveledList, 1000, 1);
   REQUIRE(res.size() == 1);
   REQUIRE(res[0x1397e] == 1000);
 }
@@ -172,7 +171,7 @@ TEST_CASE("Evaluate LCharHorse", "[espm]")
   std::map<uint32_t, uint32_t> results;
 
   for (int i = 0; i < 1000000; ++i) {
-    auto res = EvaluateListRecurse(br, leveledList, 1);
+    auto res = LeveledListUtils::EvaluateListRecurse(br, leveledList, 1);
     REQUIRE(res.size() == 1);
 
     auto pair = *res.begin();
@@ -199,7 +198,7 @@ TEST_CASE("Evaluate LvlHorse template", "[espm]")
   std::map<uint32_t, uint32_t> results;
 
   for (int i = 0; i < 1000000; ++i) {
-    auto res = EvaluateTemplateChain(br, horse, 1);
+    auto res = LeveledListUtils::EvaluateTemplateChain(br, horse, 1);
     REQUIRE(res.size() == 2);
     REQUIRE(res[0] == LvlHorse);
 
@@ -227,7 +226,8 @@ TEST_CASE("Evaluate LvlMudcrab template", "[espm]")
 
   for (int i = 0; i < 100'000; i++) {
     constexpr int kPcLevel = 5;
-    auto chain = EvaluateTemplateChain(br, mudcrab, kPcLevel);
+    auto chain =
+      LeveledListUtils::EvaluateTemplateChain(br, mudcrab, kPcLevel);
     REQUIRE(chain.size() == 2);
     REQUIRE(chain[0] == 0x8cacc);
     ++countByFormId[chain[1]];

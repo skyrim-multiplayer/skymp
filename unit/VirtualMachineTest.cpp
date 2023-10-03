@@ -9,6 +9,7 @@
 #include <filesystem>
 #include <iterator>
 #include <list>
+#include <sstream>
 #include <stdexcept>
 
 namespace fs = std::filesystem;
@@ -45,16 +46,20 @@ std::shared_ptr<VirtualMachine> CreateVirtualMachine()
 
   auto vm = std::make_shared<VirtualMachine>(vector);
 
-  std::shared_ptr<int> assertId(new int(1));
+  std::shared_ptr<int> assertId = std::make_shared<int>(1);
+  std::shared_ptr<std::stringstream> ss =
+    std::make_shared<std::stringstream>();
+
   vm->RegisterFunction("", "Print", FunctionType::GlobalFunction,
                        [=](VarValue self, const std::vector<VarValue> args) {
                          if (args.size() >= 1) {
-                           std::string showString = (const char*)args[0];
-                           std::cout << std::endl
-                                     << "[!] Papyrus says: " << showString
-                                     << std::endl
-                                     << std::endl;
-                           (*assertId) = 1;
+                           std::string showString =
+                             static_cast<const char*>(args[0]);
+                           *ss << std::endl
+                               << "[!] Papyrus says: " << showString
+                               << std::endl
+                               << std::endl;
+                           *assertId = 1;
                          }
                          return VarValue::None();
                        });
@@ -62,15 +67,16 @@ std::shared_ptr<VirtualMachine> CreateVirtualMachine()
   vm->RegisterFunction("", "Assert", FunctionType::GlobalFunction,
                        [=](VarValue self, std::vector<VarValue> args) {
                          if (args.size() >= 1) {
-                           bool success = (bool)args[0];
+                           bool success = static_cast<bool>(args[0]);
                            std::string message = "\t Assertion " +
                              std::string(success ? "succeed" : "failed") +
                              " (" + std::to_string(*assertId) + ")";
-                           (*assertId)++;
+                           ++*assertId;
                            if (!success) {
+                             std::cout << ss->str();
                              throw std::runtime_error(message);
                            }
-                           std::cout << message << std::endl;
+                           *ss << message << std::endl;
                          }
                          return VarValue::None();
                        });
