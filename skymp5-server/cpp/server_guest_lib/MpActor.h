@@ -149,6 +149,8 @@ private:
                               std::chrono::steady_clock::time_point timePoint);
   bool CanActorValueBeRestored(espm::ActorValue av);
 
+  void EnsureTemplateChainEvaluated(espm::Loader& loader);
+
 protected:
   void BeforeDestroy() override;
   void Init(WorldState* parent, uint32_t formId, bool hasChangeForm) override;

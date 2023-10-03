@@ -88,6 +88,7 @@ public:
                                 { 0.f, 0.f, 72.f },
                                 FormDesc::Tamriel() };
   float spawnDelay = 25.0f;
+  std::vector<FormDesc> templateChain;
 
   // Please update 'ActorTest.cpp' when adding new Actor-related rows
 
@@ -101,7 +102,7 @@ public:
       baseContainerAdded, nextRelootDatetime, isDisabled, profileId,
       isRaceMenuOpen, isDead, consoleCommandsAllowed, appearanceDump,
       equipmentDump, actorValues.ToTuple(), spawnPoint, dynamicFields,
-      spawnDelay, learnedSpells);
+      spawnDelay, learnedSpells, templateChain);
   }
 
   static nlohmann::json ToJson(const MpChangeFormREFR& changeForm);

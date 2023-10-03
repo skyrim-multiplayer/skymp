@@ -6,6 +6,7 @@
 #include "EspmGameObject.h"
 #include "FormCallbacks.h"
 #include "GetBaseActorValues.h"
+#include "LeveledListUtils.h"
 #include "MathUtils.h"
 #include "MpChangeForms.h"
 #include "MsgType.h"
@@ -141,6 +142,18 @@ void MpActor::VisitProperties(const PropertiesVisitor& visitor,
           nlohmann::json(changeForm.learnedSpells.GetLearnedSpells())
             .dump()
             .c_str());
+
+  if (!changeForm.templateChain.empty()) {
+    // should be faster than nlohmann::json
+    std::string jsonDump = "[";
+    for (auto& element : changeForm.templateChain) {
+      jsonDump += std::to_string(element.ToFormId(GetParent()->espmFiles));
+      jsonDump += ',';
+    }
+    jsonDump.pop_back(); // comma
+    jsonDump += "]";
+    visitor("templateChain", jsonDump.data());
+  }
 }
 
 void MpActor::Disable()
@@ -564,6 +577,37 @@ bool MpActor::CanActorValueBeRestored(espm::ActorValue av)
   return true;
 }
 
+void MpActor::EnsureTemplateChainEvaluated(espm::Loader& loader)
+{
+  constexpr auto kPcLevel = 0;
+
+  auto worldState = GetParent();
+  if (!worldState) {
+    return;
+  }
+
+  auto baseId = GetBaseId();
+  if (baseId == 0x7 || baseId == 0) {
+    return;
+  }
+
+  if (!ChangeForm().templateChain.empty()) {
+    return;
+  }
+
+  EditChangeForm([&](MpChangeFormREFR& changeForm) {
+    auto headNpc = loader.GetBrowser().LookupById(baseId);
+    std::vector<uint32_t> res = LeveledListUtils::EvaluateTemplateChain(
+      loader.GetBrowser(), headNpc, kPcLevel);
+    std::vector<FormDesc> templateChain(res.size());
+    std::transform(
+      res.begin(), res.end(), templateChain.begin(), [&](uint32_t formId) {
+        return FormDesc::FromFormId(formId, worldState->espmFiles);
+      });
+    changeForm.templateChain = std::move(templateChain);
+  });
+}
+
 std::chrono::steady_clock::time_point MpActor::GetLastRestorationTime(
   espm::ActorValue av) const noexcept
 {
@@ -615,6 +659,7 @@ void MpActor::Init(WorldState* worldState, uint32_t formId, bool hasChangeForm)
 
   if (worldState->HasEspm()) {
     EnsureBaseContainerAdded(GetParent()->GetEspm());
+    EnsureTemplateChainEvaluated(GetParent()->GetEspm());
   }
 }
 

@@ -187,6 +187,9 @@ export class FormView implements View<FormModel> {
   private applyAll(refr: ObjectReference, model: FormModel) {
     let forcedWeapDrawn: boolean | null = null;
 
+    // @ts-ignore
+    // printConsole(model.templateChain);
+
     if (PlayerCharacterDataHolder.getCrosshairRefId() === this.refrId) {
       this.lastHarvestedApply = 0;
       this.lastOpenApply = 0;
@@ -228,8 +231,8 @@ export class FormView implements View<FormModel> {
     let alreadyHosted = false;
     if (Array.isArray(hosted)) {
       const remoteId = localIdToRemoteId(this.refrId);
-      
-      if (hosted.includes(remoteId) || hosted.includes(remoteId + 0x100000000))  {
+
+      if (hosted.includes(remoteId) || hosted.includes(remoteId + 0x100000000)) {
         alreadyHosted = true;
       }
       // printConsole("remoteId=", remoteId.toString(16), "hosted=", hosted.map(x => x.toString(16)));
@@ -300,7 +303,7 @@ export class FormView implements View<FormModel> {
             let alreadyHosted = false;
             if (Array.isArray(hosted)) {
               const remoteId = localIdToRemoteId(ac.getFormID());
-              if (hosted.includes(remoteId)) {
+              if (hosted.includes(remoteId) || hosted.includes(remoteId + 0x100000000)) {
                 alreadyHosted = true;
               }
             }
@@ -454,6 +457,7 @@ export class FormView implements View<FormModel> {
         getMovement(Game.getPlayer() as Actor).worldOrCell
       ) {
         tryHost(remoteId);
+        printConsole(remoteId.toString(16))
         return true;
       }
     }
