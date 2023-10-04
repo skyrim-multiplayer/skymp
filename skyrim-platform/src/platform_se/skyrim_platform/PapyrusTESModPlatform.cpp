@@ -344,7 +344,7 @@ RE::TESNPC* TESModPlatform::EvaluateLeveledNpc(
       OutputDebugStringA(str.data());
       for (auto v : cursorStack) {
         std::stringstream ss;
-        ss << " - " << v;
+        ss << " - " << v << std::endl;
         str = ss.str();
         OutputDebugStringA(str.data());
       }

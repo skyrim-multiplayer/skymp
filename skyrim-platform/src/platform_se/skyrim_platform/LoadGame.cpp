@@ -359,7 +359,8 @@ void LoadGame::WriteChangeForm(std::shared_ptr<SaveFile_::SaveFile> save,
   std::copy(compressed.begin(), compressed.end(), changeForm.data.begin());
 
   // fix offsets
-  const auto diff = (int64_t)previousSize - (int64_t)compressed.size();
+  const auto diff = static_cast<int64_t>(previousSize) -
+    static_cast<int64_t>(compressed.size());
   save->fileLocationTable.formIDArrayCountOffset -= diff;
   save->fileLocationTable.unknownTable3Offset -= diff;
   save->fileLocationTable.globalDataTable3Offset -= diff;
