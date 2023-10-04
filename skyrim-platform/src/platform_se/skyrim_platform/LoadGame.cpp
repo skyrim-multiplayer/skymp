@@ -147,9 +147,9 @@ void LoadGame::ModifyPluginInfo(std::shared_ptr<SaveFile_::SaveFile>& save)
     throw NullPointerException("dataHandler");
   }
 
-  for (auto it = dataHandler->files.begin(); it != dataHandler->files.end();
-       ++it)
-    newPlugins.push_back(std::string((*it)->fileName));
+  for (auto& file : dataHandler->files) {
+    newPlugins.push_back(std::string(file->fileName));
+  }
 
   save->OverwritePluginInfo(newPlugins);
 }
@@ -366,7 +366,7 @@ void LoadGame::WriteChangeForm(std::shared_ptr<SaveFile_::SaveFile> save,
   save->fileLocationTable.globalDataTable3Offset -= diff;
 }
 
-std::wstring LoadGame::StringToWstring(std::string s)
+std::wstring LoadGame::StringToWstring(const std::string& s)
 {
   std::wstring ws(s.size(), L' ');
   auto n = std::mbstowcs(&ws[0], s.c_str(), s.size());
@@ -381,7 +381,7 @@ std::string LoadGame::GenerateGuid()
     throw std::runtime_error("CoCreateGuid failed");
   }
 
-  char name[MAX_PATH] = { 0 };
+  char name[37] = { 0 }; // Size adjusted for GUID string
   sprintf_s(
     name,
     "%08lX-%04hX-%04hX-%02hhX%02hhX-%02hhX%02hhX%02hhX%02hhX%02hhX%02hhX",
