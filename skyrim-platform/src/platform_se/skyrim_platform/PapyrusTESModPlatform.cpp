@@ -281,7 +281,8 @@ static RE::TESNPC* CloneNpc(uint32_t npcId, AiPackagesMode aiPackagesMode)
   return npc;
 }
 
-static void FillFormsArray(std::vector<RE::TESActorBase*>& leak,
+template <class VectorT>
+static void FillFormsArray(VectorT& leak,
                            std::vector<RE::TESNPC*> cursorStack)
 {
   leak.reserve(cursorStack.size());
@@ -330,14 +331,40 @@ RE::TESNPC* TESModPlatform::EvaluateLeveledNpc(
       return nullptr;
     }
 
+    {
+      std::stringstream ss;
+      ss << std::hex << "working on " << formId << "\n";
+      auto str = ss.str();
+      OutputDebugStringA(str.data());
+    }
+
     if (cursorStack.size() > 0) {
+      OutputDebugStringA("cursorStack.size() > 0\n");
+      str = "cursorStack.size() is " + std::to_string(cursorStack.size()) + "\n";
+      OutputDebugStringA(str.data());
+      for (auto v : cursorStack) {
+        std::stringstream ss;
+        ss << " - " << v;
+        str = ss.str();
+        OutputDebugStringA(str.data());
+      }
       copiedNpc->baseTemplateForm = cursorStack.back();
 
-      auto leak = new std::vector<RE::TESActorBase*>();
-      leak->reserve(10);
+      // auto leak = new std::vector<RE::TESActorBase *>();
+      // leak->reserve(10);
+      auto leak = new RE::BSTArray<RE::TESActorBase *>();
       FillFormsArray(*leak, cursorStack);
 
-      copiedNpc->CopyFromTemplateForms(leak->data());
+      // copiedNpc->CopyFromTemplateForms(leak->data());
+
+      auto leak2 = new RE::BSTArray<RE::TESActorBase*>();
+      leak2->resize(100, 0);
+
+      copiedNpc->templateForms = reinterpret_cast<RE::TESForm**>(leak2);
+      copiedNpc->CopyFromTemplateForms(reinterpret_cast<RE::TESActorBase **>(leak));
+    }
+    else {
+      OutputDebugStringA("cursorStack.size() == 0\n");
     }
     cursorStack.push_back(copiedNpc);
   }
