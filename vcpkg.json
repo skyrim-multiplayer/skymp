@@ -4,6 +4,7 @@
   "homepage": "https://github.com/skyrim-multiplayer/skymp",
   "description": "Multiplayer Mod & TypeScript SDK for Skyrim Special Edition",
   "dependencies": [
+    "libffi",
     "cmakerc",
     "nlohmann-json",
     "cpp-httplib",
