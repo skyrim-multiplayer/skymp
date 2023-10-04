@@ -293,10 +293,10 @@ SaveFile_::PlayerLocation LoadGame::CreatePlayerLocation(
   const std::array<float, 3>& pos, const SaveFile_::RefID& world)
 {
   SaveFile_::PlayerLocation r;
-  r.nextObjectId = 4278195454;
+  r.nextObjectId = 0xFF0014FE;
   r.worldspace1 = world;
-  r.coorX = (int)pos[0] / 4096;
-  r.coorY = (int)pos[1] / 4096;
+  r.coorX = static_cast<int>(pos[0]) / 4096;
+  r.coorY = static_cast<int>(pos[1]) / 4096;
   r.worldspace2 = world;
   r.posX = pos[0];
   r.posY = pos[1];
