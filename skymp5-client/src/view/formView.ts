@@ -94,7 +94,13 @@ export class FormView implements View<FormModel> {
       }
     } else {
       // @ts-ignore
-      const templateChain: number[] | undefined = model.templateChain;
+      let templateChain: number[] | undefined = model.templateChain;
+
+      // There is no place for random/leveling in 1-sized chain
+      // Just spawn an NPC, do not generate a temporary TESNPC form
+      if (templateChain?.length === 1) {
+        templateChain = undefined;
+      }
 
       let baselvl = Game.getFormEx(this.getLeveledBase(templateChain));
       let baseNormal = Game.getFormEx(+(model.baseId as number));
@@ -115,15 +121,15 @@ export class FormView implements View<FormModel> {
 
       if (!refr) {
         respawnRequired = true;
-        printConsole("1");
+        // printConsole("1");
       }
       else if (!refr.getBaseObject()) {
         respawnRequired = true;
-        printConsole("2");
+        // printConsole("2");
       }
       else if ((refr.getBaseObject() as Form).getFormID() !== base.getFormID()) {
         respawnRequired = true;
-        printConsole(`${(refr.getBaseObject() as Form).getFormID().toString(16)} ${base.getFormID().toString(16)}`);
+        // printConsole(`${(refr.getBaseObject() as Form).getFormID().toString(16)} ${base.getFormID().toString(16)}`);
       }
 
 

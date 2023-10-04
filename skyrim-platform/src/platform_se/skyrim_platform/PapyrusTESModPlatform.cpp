@@ -281,11 +281,11 @@ static RE::TESNPC* CloneNpc(uint32_t npcId, AiPackagesMode aiPackagesMode)
   return npc;
 }
 
-static void FillFormsArray(std::vector<RE::TESForm*>& leak,
+static void FillFormsArray(std::vector<RE::TESActorBase*>& leak,
                            std::vector<RE::TESNPC*> cursorStack)
 {
   leak.reserve(cursorStack.size());
-  for (auto it = cursorStack.rbegin(); it != cursorStack.rend(); ++it) {
+  for (auto it = cursorStack.begin(); it != cursorStack.end(); ++it) {
     leak.push_back(*it);
   }
 }
@@ -331,11 +331,13 @@ RE::TESNPC* TESModPlatform::EvaluateLeveledNpc(
     }
 
     if (cursorStack.size() > 0) {
-      cursorStack.back()->baseTemplateForm = copiedNpc;
-      auto leak = new std::vector<RE::TESForm*>();
+      copiedNpc->baseTemplateForm = cursorStack.back();
+
+      auto leak = new std::vector<RE::TESActorBase*>();
       leak->reserve(10);
       FillFormsArray(*leak, cursorStack);
-      cursorStack.back()->templateForms = leak->data();
+
+      copiedNpc->CopyFromTemplateForms(leak->data());
     }
     cursorStack.push_back(copiedNpc);
   }
