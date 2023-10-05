@@ -1,0 +1,28 @@
+name: PR skymp5-client Only
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    - cron: '0 0 * * *'
+
+jobs:
+  build:
+    # VS 2019 is still supported, but GitHub windows-2019 runners have unsupported WinSDK version
+    runs-on: windows-2022
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 1
+        submodules: 'false'
+
+    - name: Build
+      run: cd skymp5-client && yarn && yarn build
+
+    - uses: actions/upload-artifact@v3
+      with:
+        name: skymp5-client-js
+        path: ${{github.workspace}}/build/dist/client/Data/Platform/Plugins/skymp5-client.js
