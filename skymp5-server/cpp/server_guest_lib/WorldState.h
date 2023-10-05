@@ -11,7 +11,7 @@
 #include "Timer.h"
 #include "libespm/Loader.h"
 #include "papyrus-vm/VirtualMachine.h"
-#include <MakeID.h-1.0.2>
+#include <MakeID.h>
 #include <algorithm>
 #include <chrono>
 #include <functional>
