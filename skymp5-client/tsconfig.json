@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "baseUrl": "../build/dist/client/Data/Platform/Modules",
+    "baseUrl": "../skyrim-platform/src/platform_se/codegen/convert-files/skyrimPlatform.ts",
     "noImplicitAny": true,
     "lib": [
       "DOM",
