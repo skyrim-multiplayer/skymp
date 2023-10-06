@@ -775,12 +775,14 @@ void MpObjectReference::Subscribe(MpObjectReference* emitter,
     emitter->actorListeners.insert(actorListener);
   }
   listener->emitters->insert(emitter);
-  if (!hasPrimitive)
+  if (!hasPrimitive) {
     emitter->callbacks->subscribe(emitter, listener);
+  }
 
   if (hasPrimitive) {
-    if (!listener->emittersWithPrimitives)
+    if (!listener->emittersWithPrimitives) {
       listener->emittersWithPrimitives.reset(new std::map<uint32_t, bool>);
+    }
     listener->emittersWithPrimitives->insert({ emitter->GetFormId(), false });
   }
 }
