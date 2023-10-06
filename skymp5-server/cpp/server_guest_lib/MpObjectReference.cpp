@@ -812,8 +812,8 @@ void MpObjectReference::Unsubscribe(MpObjectReference* emitter,
 
 const std::set<MpObjectReference*>& MpObjectReference::GetListeners() const
 {
-  static const std::set<MpObjectReference*> g_emptyListeners;
-  return listeners ? *listeners : g_emptyListeners;
+  static const std::set<MpObjectReference*> kEmptyListeners;
+  return listeners ? *listeners : kEmptyListeners;
 }
 
 const std::set<MpActor*>& MpObjectReference::GetActorListeners() const noexcept
@@ -823,8 +823,8 @@ const std::set<MpActor*>& MpObjectReference::GetActorListeners() const noexcept
 
 const std::set<MpObjectReference*>& MpObjectReference::GetEmitters() const
 {
-  static const std::set<MpObjectReference*> g_emptyEmitters;
-  return emitters ? *emitters : g_emptyEmitters;
+  static const std::set<MpObjectReference*> kEmptyEmitters;
+  return emitters ? *emitters : kEmptyEmitters;
 }
 
 void MpObjectReference::RequestReloot(
@@ -867,10 +867,11 @@ std::shared_ptr<std::chrono::time_point<std::chrono::system_clock>>
 MpObjectReference::GetNextRelootMoment() const
 {
   std::shared_ptr<std::chrono::time_point<std::chrono::system_clock>> res;
-  if (ChangeForm().nextRelootDatetime)
+  if (ChangeForm().nextRelootDatetime) {
     res.reset(new std::chrono::time_point<std::chrono::system_clock>(
       std::chrono::system_clock::from_time_t(
         ChangeForm().nextRelootDatetime)));
+  }
   return res;
 }
 
