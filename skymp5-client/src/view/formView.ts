@@ -93,8 +93,7 @@ export class FormView implements View<FormModel> {
         }
       }
     } else {
-      // @ts-ignore
-      let templateChain: number[] | undefined = model.templateChain;
+      let templateChain = model.templateChain;
 
       // There is no place for random/leveling in 1-sized chain
       // Just spawn an NPC, do not generate a temporary TESNPC form
@@ -102,39 +101,24 @@ export class FormView implements View<FormModel> {
         templateChain = undefined;
       }
 
-      let baselvl = Game.getFormEx(this.getLeveledBase(templateChain));
-      let baseNormal = Game.getFormEx(+(model.baseId as number));
-      //let baseNormal = null;
-      let baseAppearance = Game.getFormEx(this.getAppearanceBasedBase());
-
-      // printConsole(baselvl, baseNormal,baseAppearance )
-
-      const base =
-        baselvl ||
-        baseNormal ||
-        baseAppearance;
-      if (!base) return;
+      // TODO: getLeveledBase crashes too often ATM
+      let base = null; //Game.getFormEx(this.getLeveledBase(templateChain));
+      if (base === null) base = Game.getFormEx(model.baseId || NaN);
+      if (base === null) base = Game.getFormEx(this.getAppearanceBasedBase());
+      if (base === null) return;
 
       let refr = ObjectReference.from(Game.getFormEx(this.refrId));
 
       let respawnRequired = false;
-
       if (!refr) {
         respawnRequired = true;
-        // printConsole("1");
       }
       else if (!refr.getBaseObject()) {
         respawnRequired = true;
-        // printConsole("2");
       }
       else if ((refr.getBaseObject() as Form).getFormID() !== base.getFormID()) {
         respawnRequired = true;
-        // printConsole(`${(refr.getBaseObject() as Form).getFormID().toString(16)} ${base.getFormID().toString(16)}`);
       }
-
-
-      // @ts-ignore
-      // printConsole(`${!refr} ${!refr || !refr.getBaseObject()} ${!refr || (refr.getBaseObject() as Form).getFormID() !== base.getFormID()}`);
 
       if (respawnRequired) {
         this.destroy();
@@ -219,9 +203,6 @@ export class FormView implements View<FormModel> {
   private applyAll(refr: ObjectReference, model: FormModel) {
     let forcedWeapDrawn: boolean | null = null;
 
-    // @ts-ignore
-    // printConsole(model.templateChain);
-
     if (PlayerCharacterDataHolder.getCrosshairRefId() === this.refrId) {
       this.lastHarvestedApply = 0;
       this.lastOpenApply = 0;
@@ -267,7 +248,6 @@ export class FormView implements View<FormModel> {
       if (hosted.includes(remoteId) || hosted.includes(remoteId + 0x100000000)) {
         alreadyHosted = true;
       }
-      // printConsole("remoteId=", remoteId.toString(16), "hosted=", hosted.map(x => x.toString(16)));
     }
     setDefaultAnimsDisabled(this.refrId, alreadyHosted ? false : true);
 
@@ -476,10 +456,8 @@ export class FormView implements View<FormModel> {
         printConsole("Failed to evaluate leveled npc", str);
       }
       this.leveledBaseId = leveledBase?.getFormID() || 0;
-      printConsole(this.leveledBaseId.toString(16))
     }
 
-     printConsole(this.leveledBaseId.toString(16));
     return this.leveledBaseId;
   }
 
@@ -501,7 +479,6 @@ export class FormView implements View<FormModel> {
         getMovement(Game.getPlayer() as Actor).worldOrCell
       ) {
         tryHost(remoteId);
-        printConsole(remoteId.toString(16))
         return true;
       }
     }

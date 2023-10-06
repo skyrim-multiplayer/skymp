@@ -305,6 +305,12 @@ RE::TESNPC* TESModPlatform::EvaluateLeveledNpc(
 {
   auto str = std::string(commaSeparatedListOfIds.data());
 
+  thread_local std::unordered_map<std::string, RE::TESNPC *> g_cache;
+  auto &cachedNpc = g_cache[str];
+  if (cachedNpc) {
+    return cachedNpc;
+  }
+
   std::vector<uint32_t> formIds;
   formIds.reserve(10);
 
@@ -349,6 +355,7 @@ RE::TESNPC* TESModPlatform::EvaluateLeveledNpc(
         OutputDebugStringA(str.data());
       }
       copiedNpc->baseTemplateForm = cursorStack.back();
+      //copiedNpc->baseTemplateForm = nullptr;
 
       // auto leak = new std::vector<RE::TESActorBase *>();
       // leak->reserve(10);
@@ -360,8 +367,9 @@ RE::TESNPC* TESModPlatform::EvaluateLeveledNpc(
       auto leak2 = new RE::BSTArray<RE::TESActorBase*>();
       leak2->resize(100, 0);
 
-      copiedNpc->templateForms = reinterpret_cast<RE::TESForm**>(leak2);
-      copiedNpc->CopyFromTemplateForms(reinterpret_cast<RE::TESActorBase **>(leak));
+      //copiedNpc->templateForms = reinterpret_cast<RE::TESForm**>(leak2);
+
+      copiedNpc->CopyFromTemplateForms(reinterpret_cast<RE::TESActorBase**>(leak));
     }
     else {
       OutputDebugStringA("cursorStack.size() == 0\n");
@@ -373,7 +381,8 @@ RE::TESNPC* TESModPlatform::EvaluateLeveledNpc(
     return nullptr;
   }
 
-  return cursorStack.back();
+  cachedNpc = cursorStack.back();
+  return cachedNpc;
 }
 
 void TESModPlatform::SetNpcSex(IVM* vm, StackID stackId,
