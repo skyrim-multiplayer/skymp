@@ -1436,8 +1436,9 @@ void MpObjectReference::EnsureBaseContainerAdded(espm::Loader& espm)
   }
 
   std::vector<Inventory::Entry> entries;
-  for (auto& p : itemsToAdd)
+  for (auto& p : itemsToAdd) {
     entries.push_back({ p.first, p.second });
+  }
   AddItems(entries);
 
   if (!ChangeForm().baseContainerAdded) {
@@ -1500,8 +1501,9 @@ void MpObjectReference::SendPropertyTo(const IMessageBase& preparedPropMsg,
 
 void MpObjectReference::BeforeDestroy()
 {
-  if (this->occupant && this->occupantDestroySink)
+  if (this->occupant && this->occupantDestroySink) {
     this->occupant->RemoveEventSink(this->occupantDestroySink);
+  }
 
   // Move far far away calling OnTriggerExit, unsubscribing, etc
   SetPos({ -1'000'000'000, 0, 0 });
