@@ -1025,14 +1025,6 @@ void MpObjectReference::Init(WorldState* parent, uint32_t formId,
 {
   MpForm::Init(parent, formId, hasChangeForm);
 
-  // It crashed during sparsepp hashmap indexing.
-  // Not sure why. And not sure why this code actually been here.
-  // It seems that MoveOnGrid will be caled later.
-  /*if (!IsDisabled()) {
-    auto& gridInfo = GetParent()->grids[ChangeForm().worldOrCell];
-    MoveOnGrid(*gridInfo.grid);
-  }*/
-
   // We should queue created form for saving as soon as it is initialized
   const auto mode = (!hasChangeForm && formId >= 0xff000000)
     ? Mode::RequestSave
