@@ -753,8 +753,9 @@ void MpObjectReference::Subscribe(MpObjectReference* emitter,
 {
   auto actorEmitter = dynamic_cast<MpActor*>(emitter);
   auto actorListener = dynamic_cast<MpActor*>(listener);
-  if (!actorEmitter && !actorListener)
+  if (!actorEmitter && !actorListener) {
     return;
+  }
 
   // I don't know how often Subscrbe is called but I suppose
   // it is to be invoked quite frequently. In this case, each
