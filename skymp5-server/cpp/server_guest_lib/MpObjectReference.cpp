@@ -797,8 +797,9 @@ void MpObjectReference::Unsubscribe(MpObjectReference* emitter,
 
   const bool hasPrimitive = emitter->HasPrimitive();
 
-  if (!hasPrimitive)
+  if (!hasPrimitive) {
     emitter->callbacks->unsubscribe(emitter, listener);
+  }
   emitter->listeners->erase(listener);
   if (actorListener) {
     emitter->actorListeners.erase(actorListener);
