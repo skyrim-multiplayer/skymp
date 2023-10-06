@@ -1364,8 +1364,9 @@ std::vector<espm::CONT::ContainerObject> GetInventoryObjects(
   espm::CompressedFieldsCache& compressedFieldsCache)
 {
   auto baseContainer = espm::Convert<espm::CONT>(lookupRes.rec);
-  if (baseContainer)
+  if (baseContainer) {
     return baseContainer->GetData(compressedFieldsCache).objects;
+  }
 
   auto baseNpc = espm::Convert<espm::NPC_>(lookupRes.rec);
   if (baseNpc) {
@@ -1387,8 +1388,9 @@ void MpObjectReference::AddContainerObject(
     auto map = LeveledListUtils::EvaluateListRecurse(
       espm.GetBrowser(), formLookupRes, kCountMult, kPlayerCharacterLevel,
       chanceNoneOverride.get());
-    for (auto& p : map)
+    for (auto& p : map) {
       (*itemsToAdd)[p.first] += p.second;
+    }
   } else {
     (*itemsToAdd)[entry.formId] += entry.count;
   }
@@ -1396,12 +1398,14 @@ void MpObjectReference::AddContainerObject(
 
 void MpObjectReference::EnsureBaseContainerAdded(espm::Loader& espm)
 {
-  if (ChangeForm().baseContainerAdded)
+  if (ChangeForm().baseContainerAdded) {
     return;
+  }
 
   auto worldState = GetParent();
-  if (!worldState)
+  if (!worldState) {
     return;
+  }
 
   auto lookupRes = espm.GetBrowser().LookupById(GetBaseId());
 
