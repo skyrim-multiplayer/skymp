@@ -1141,11 +1141,11 @@ void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
       auto teleportWorldOrCell = destination.ToGlobalId(
         GetWorldOrCell(loader.GetBrowser(), destinationRecord));
 
-      static const auto g_pi = std::acos(-1.f);
+      static const auto kPi = std::acos(-1.f);
       const auto& pos = teleport->pos;
-      const float rot[] = { teleport->rotRadians[0] / g_pi * 180,
-                            teleport->rotRadians[1] / g_pi * 180,
-                            teleport->rotRadians[2] / g_pi * 180 };
+      const float rot[] = { teleport->rotRadians[0] / kPi * 180,
+                            teleport->rotRadians[1] / kPi * 180,
+                            teleport->rotRadians[2] / kPi * 180 };
 
       TeleportMessage msg;
       msg.idx = activationSource.GetIdx();
