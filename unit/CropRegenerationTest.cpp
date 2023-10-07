@@ -104,7 +104,7 @@ TEST_CASE("CropHealthRegeneration, CropMagickaRegeneration and "
   auto appearance = ac.GetAppearance();
   uint32_t raceId = appearance ? appearance->raceId : 0;
   BaseActorValues baseValues =
-    GetBaseActorValues(&p.worldState, baseId, raceId);
+    GetBaseActorValues(&p.worldState, baseId, raceId, {});
 
   ac.SetPercentages({ 0.0f, 0.0f, 0.0f });
 

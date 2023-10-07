@@ -12,7 +12,8 @@ BaseActorValues GetValues(MpActor* actor)
   auto appearance = actor->GetAppearance();
   uint32_t raceId = appearance ? appearance->raceId : 0;
   auto worldState = actor->GetParent();
-  return GetBaseActorValues(worldState, baseId, raceId);
+  return GetBaseActorValues(worldState, baseId, raceId,
+                            actor->GetTemplateChain());
 }
 
 }

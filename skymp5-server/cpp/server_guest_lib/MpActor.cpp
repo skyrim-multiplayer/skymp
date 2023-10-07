@@ -123,7 +123,8 @@ void MpActor::VisitProperties(const PropertiesVisitor& visitor,
   // this "if" is needed for unit testing: tests can call VisitProperties
   // without espm attached, which will cause tests to fail
   if (worldState && worldState->HasEspm()) {
-    baseActorValues = GetBaseActorValues(worldState, baseId, raceId);
+    baseActorValues = GetBaseActorValues(worldState, baseId, raceId,
+                                         ChangeForm().templateChain);
   }
 
   MpChangeForm changeForm = GetChangeForm();
@@ -295,8 +296,8 @@ void MpActor::ApplyChangeForm(const MpChangeForm& newChangeForm)
       // this check is added only for test as a workaround. It is to be redone
       // in the nearest future. TODO
       if (GetParent() && GetParent()->HasEspm()) {
-        changeForm.actorValues =
-          GetBaseActorValues(GetParent(), GetBaseId(), GetRaceId());
+        changeForm.actorValues = GetBaseActorValues(
+          GetParent(), GetBaseId(), GetRaceId(), changeForm.templateChain);
       }
     },
     Mode::NoRequestSave);
@@ -462,6 +463,10 @@ bool MpActor::IsWeaponDrawn() const
 espm::ObjectBounds MpActor::GetBounds() const
 {
   return espm::GetData<espm::NPC_>(GetBaseId(), GetParent()).objectBounds;
+}
+
+const std::vector<FormDesc> &MpActor::GetTemplateChain() const {
+  return ChangeForm().templateChain;
 }
 
 void MpActor::SendAndSetDeathState(bool isDead, bool shouldTeleport)
@@ -753,7 +758,8 @@ void MpActor::DamageActorValue(espm::ActorValue av, float value)
 
 BaseActorValues MpActor::GetBaseValues()
 {
-  return GetBaseActorValues(GetParent(), GetBaseId(), GetRaceId());
+  return GetBaseActorValues(GetParent(), GetBaseId(), GetRaceId(),
+                            ChangeForm().templateChain);
 }
 
 BaseActorValues MpActor::GetMaximumValues()
@@ -872,8 +878,8 @@ void MpActor::ApplyMagicEffect(espm::Effects::Effect& effect, bool hasSweetpie,
       return;
     }
     MpChangeForm changeForm = GetChangeForm();
-    BaseActorValues baseValues =
-      GetBaseActorValues(GetParent(), GetBaseId(), GetRaceId());
+    BaseActorValues baseValues = GetBaseActorValues(
+      GetParent(), GetBaseId(), GetRaceId(), changeForm.templateChain);
     const ActiveMagicEffectsMap& activeEffects = changeForm.activeMagicEffects;
     const float baseValue = baseValues.GetValue(av);
     const uint32_t formId = GetFormId();
@@ -949,8 +955,8 @@ void MpActor::ApplyMagicEffects(std::vector<espm::Effects::Effect>& effects,
 
 void MpActor::RemoveMagicEffect(const espm::ActorValue actorValue) noexcept
 {
-  const ActorValues baseActorValues =
-    GetBaseActorValues(GetParent(), GetBaseId(), GetRaceId());
+  const ActorValues baseActorValues = GetBaseActorValues(
+    GetParent(), GetBaseId(), GetRaceId(), ChangeForm().templateChain);
   const float baseActorValue = baseActorValues.GetValue(actorValue);
   SetActorValue(actorValue, baseActorValue);
   EditChangeForm([actorValue](MpChangeForm& changeForm) {
@@ -960,8 +966,8 @@ void MpActor::RemoveMagicEffect(const espm::ActorValue actorValue) noexcept
 
 void MpActor::RemoveAllMagicEffects() noexcept
 {
-  const ActorValues baseActorValues =
-    GetBaseActorValues(GetParent(), GetBaseId(), GetRaceId());
+  const ActorValues baseActorValues = GetBaseActorValues(
+    GetParent(), GetBaseId(), GetRaceId(), ChangeForm().templateChain);
   SetActorValues(baseActorValues);
   EditChangeForm(
     [](MpChangeForm& changeForm) { changeForm.activeMagicEffects.Clear(); });

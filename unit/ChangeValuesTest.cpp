@@ -54,7 +54,7 @@ TEST_CASE("OnChangeValues call is cropping percentage values",
   auto appearance = ac.GetAppearance();
   uint32_t raceId = appearance ? appearance->raceId : 0;
   BaseActorValues baseValues =
-    GetBaseActorValues(&p.worldState, baseId, raceId);
+    GetBaseActorValues(&p.worldState, baseId, raceId, {});
 
   ActionListener::RawMessageData msgData;
   msgData.userId = 0;

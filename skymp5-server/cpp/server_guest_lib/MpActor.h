@@ -35,6 +35,7 @@ public:
   uint32_t GetRaceId() const;
   bool IsWeaponDrawn() const;
   espm::ObjectBounds GetBounds() const;
+  const std::vector<FormDesc> &GetTemplateChain() const;
 
   void SetRaceMenuOpen(bool isOpen);
   void SetAppearance(const Appearance* newAppearance);

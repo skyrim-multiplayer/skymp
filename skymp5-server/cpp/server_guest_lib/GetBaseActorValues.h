@@ -17,4 +17,5 @@ struct BaseActorValues : public ActorValues
 };
 
 BaseActorValues GetBaseActorValues(WorldState* worldState, uint32_t baseId,
-                                   uint32_t raceIdOverride);
+                                   uint32_t raceIdOverride,
+                                   const std::vector<FormDesc>& templateChain);
