@@ -193,6 +193,7 @@ private:
   void CheckInteractionAbility(MpObjectReference& ac);
   bool IsLocationSavingNeeded() const;
   void ProcessActivate(MpObjectReference& activationSource);
+  void ActivateChilds();
   bool MpApiOnActivate(MpObjectReference& caster);
 
   bool everSubscribedOrListened = false;

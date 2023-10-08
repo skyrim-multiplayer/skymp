@@ -13,6 +13,7 @@
 #include "ScopedTask.h"
 #include "ScriptStorage.h"
 #include "ScriptVariablesHolder.h"
+#include "TimeUtils.h"
 #include "WorldState.h"
 #include "libespm/GroupUtils.h"
 #include "libespm/Utils.h"
@@ -292,13 +293,16 @@ void MpObjectReference::Activate(MpObjectReference& activationSource,
   if (auto worldState = activationSource.GetParent(); worldState->HasEspm()) {
     CheckInteractionAbility(activationSource);
 
+    // Block if only activation parents can activate this
     auto refrId = GetFormId();
-    if (refrId < 0xff000000) {
+    if (refrId < 0xff000000 && !dynamic_cast<MpActor*>(this)) {
+      auto lookupRes = worldState->GetEspm().GetBrowser().LookupById(refrId);
       auto data = espm::GetData<espm::REFR>(refrId, worldState);
       auto it = std::find_if(
         data.activationParents.begin(), data.activationParents.end(),
         [&](const espm::REFR::ActivationParentInfo& info) {
-          return info.refrId == activationSource.GetFormId();
+          return lookupRes.ToGlobalId(info.refrId) ==
+            activationSource.GetFormId();
         });
       if (it == data.activationParents.end()) {
         if (data.isParentActivationOnly) {
@@ -314,6 +318,7 @@ void MpObjectReference::Activate(MpObjectReference& activationSource,
   if (!activationBlockedByMpApi &&
       (!activationBlocked || defaultProcessingOnly)) {
     ProcessActivate(activationSource);
+    ActivateChilds();
   } else {
     spdlog::trace(
       "Activation of form {:#x} has been blocked. Reasons: "
@@ -1057,6 +1062,21 @@ void MpObjectReference::Init(WorldState* parent, uint32_t formId,
         FormDesc::FromFormId(formId, GetParent()->espmFiles);
     },
     mode);
+
+  auto refrId = GetFormId();
+  if (parent->HasEspm() && refrId < 0xff000000 &&
+      !dynamic_cast<MpActor*>(this)) {
+    auto lookupRes = parent->GetEspm().GetBrowser().LookupById(refrId);
+    auto data = espm::GetData<espm::REFR>(refrId, parent);
+    for (auto& info : data.activationParents) {
+      auto activationParent = lookupRes.ToGlobalId(info.refrId);
+
+      // Using WorldState for that, because we don't want search (potentially
+      // load) other references during OnInit
+      parent->activationChildsByActivationParent[activationParent].insert(
+        { refrId, info.delay });
+    }
+  }
 }
 
 bool MpObjectReference::IsLocationSavingNeeded() const
@@ -1208,6 +1228,38 @@ void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
       this->occupant->RemoveEventSink(this->occupantDestroySink);
       this->occupant = nullptr;
     }
+  }
+}
+
+void MpObjectReference::ActivateChilds()
+{
+  auto worldState = GetParent();
+  if (!worldState) {
+    return;
+  }
+
+  auto myFormId = GetFormId();
+
+  for (auto& pair : worldState->activationChildsByActivationParent[myFormId]) {
+    auto childRefrId = pair.first;
+    auto delay = pair.second;
+
+    auto delayMs = Viet::TimeUtils::To<std::chrono::milliseconds>(delay);
+    worldState->SetTimer(delayMs).Then([worldState, childRefrId,
+                                        myFormId](Viet::Void) {
+      auto childRefr = std::dynamic_pointer_cast<MpObjectReference>(
+        worldState->LookupFormById(childRefrId));
+      if (!childRefr) {
+        spdlog::warn("MpObjectReference::ActivateChilds {:x} - Bad/missing "
+                     "activation child {:x}",
+                     myFormId, childRefrId);
+        return;
+      }
+
+      // Not sure about activationSource and defaultProcessingOnly in this
+      // case I'll try to keep vanilla scripts working
+      childRefr->Activate(worldState->GetFormAt<MpObjectReference>(myFormId));
+    });
   }
 }
 
