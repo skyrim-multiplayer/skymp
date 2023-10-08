@@ -150,22 +150,6 @@ VarValue VirtualMachine::CallMethod(
     return VarValue::None();
   }
 
-  const char* nativeClass = selfObj->GetParentNativeScript();
-  const char* base = nativeClass;
-  while (1) {
-    if (auto f = nativeFunctions[ToLower(base)][ToLower(methodName)]) {
-      auto self = VarValue(selfObj);
-      self.SetMetaStackIdHolder(stackIdHolder);
-      return f(self, arguments);
-    }
-    auto it = allLoadedScripts.find(base);
-    if (it == allLoadedScripts.end())
-      break;
-    base = it->second.fn()->objectTable[0].parentClassName.data();
-    if (!base[0])
-      break;
-  }
-
   for (auto& activeScript : selfObj->activePexInstances) {
     FunctionInfo functionInfo;
 
@@ -183,6 +167,23 @@ VarValue VirtualMachine::CallMethod(
       return activeScript->StartFunction(functionInfo, arguments,
                                          stackIdHolder);
     }
+  }
+
+  // natives have to be after non-natives (Bethesda overrides native functions in some scripts)
+  const char* nativeClass = selfObj->GetParentNativeScript();
+  const char* base = nativeClass;
+  while (1) {
+    if (auto f = nativeFunctions[ToLower(base)][ToLower(methodName)]) {
+      auto self = VarValue(selfObj);
+      self.SetMetaStackIdHolder(stackIdHolder);
+      return f(self, arguments);
+    }
+    auto it = allLoadedScripts.find(base);
+    if (it == allLoadedScripts.end())
+      break;
+    base = it->second.fn()->objectTable[0].parentClassName.data();
+    if (!base[0])
+      break;
   }
 
   std::string e = "Method not found - '";
