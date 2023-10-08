@@ -18,6 +18,9 @@ public:
 
   VarValue RestoreActorValue(VarValue self,
                              const std::vector<VarValue>& arguments);
+                             
+  VarValue SetActorValue(VarValue self,
+                         const std::vector<VarValue>& arguments);
 
   VarValue DamageActorValue(VarValue self,
                             const std::vector<VarValue>& arguments);

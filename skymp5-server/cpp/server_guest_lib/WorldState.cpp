@@ -7,6 +7,7 @@
 #include "MpFormGameObject.h"
 #include "MpObjectReference.h"
 #include "PapyrusActor.h"
+#include "PapyrusCell.h"
 #include "PapyrusDebug.h"
 #include "PapyrusEffectShader.h"
 #include "PapyrusForm.h"
@@ -738,6 +739,7 @@ VirtualMachine& WorldState::GetPapyrusVm()
       pImpl->classes.emplace_back(std::make_unique<PapyrusUtility>());
       pImpl->classes.emplace_back(std::make_unique<PapyrusEffectShader>());
       pImpl->classes.emplace_back(std::make_unique<PapyrusKeyword>());
+      pImpl->classes.emplace_back(std::make_unique<PapyrusCell>());
       for (auto& cl : pImpl->classes) {
         cl->Register(*pImpl->vm, pImpl->policy);
       }

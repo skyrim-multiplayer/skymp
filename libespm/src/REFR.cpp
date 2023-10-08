@@ -29,6 +29,13 @@ REFR::Data REFR::GetData(
         ActivationParentInfo info;
         info = *reinterpret_cast<const ActivationParentInfo*>(data);
         result.activationParents.push_back(info);
+      } else if (!std::memcmp(type, "XLKR", 4)) {
+        [[likely]] if (dataSize == 8) {
+          result.linkedRefKeywordId = *reinterpret_cast<const uint32_t*>(data);
+          result.linkedRefId = *reinterpret_cast<const uint32_t*>(data + 4);
+        } else if (dataSize == 4) {
+          result.linkedRefId = *reinterpret_cast<const uint32_t*>(data);
+        }
       }
     },
     compressedFieldsCache);

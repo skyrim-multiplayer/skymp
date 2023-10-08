@@ -37,9 +37,35 @@ VarValue PapyrusActor::RestoreActorValue(
 {
   espm::ActorValue attributeName =
     ConvertToAV(static_cast<const char*>(arguments[0]));
-  float modifire = static_cast<double>(arguments[1]);
+  float modifier = static_cast<double>(arguments[1]);
   if (auto actor = GetFormPtr<MpActor>(self)) {
-    actor->RestoreActorValue(attributeName, modifire);
+    actor->RestoreActorValue(attributeName, modifier);
+  }
+  return VarValue();
+}
+
+VarValue PapyrusActor::SetActorValue(VarValue self,
+                                     const std::vector<VarValue>& arguments)
+{
+  if (auto actor = GetFormPtr<MpActor>(self)) {
+
+    // TODO: fix that at least for important AVs like attributes
+    // SpSnippet impl helps scripted draugrs attack, nothing more (Aggression
+    // var)
+    spdlog::warn("SetActorValue executes locally at this moment. Results will "
+                 "not affect server calculations");
+
+    auto it = actor->GetParent()->hosters.find(actor->GetFormId());
+
+    auto serializedArgs = SpSnippetFunctionGen::SerializeArguments(arguments);
+
+    // spsnippet don't support auto sending to host. so determining current
+    // hoster explicitly
+    SpSnippet(GetName(), "SetActorValue", serializedArgs.data(),
+              actor->GetFormId())
+      .Execute(it == actor->GetParent()->hosters.end()
+                 ? actor
+                 : &actor->GetParent()->GetFormAt<MpActor>(it->second));
   }
   return VarValue();
 }
@@ -240,6 +266,7 @@ void PapyrusActor::Register(
   AddMethod(vm, "PlayIdle", &PapyrusActor::PlayIdle);
   AddMethod(vm, "GetSitState", &PapyrusActor::GetSitState);
   AddMethod(vm, "RestoreActorValue", &PapyrusActor::RestoreActorValue);
+  AddMethod(vm, "SetActorValue", &PapyrusActor::SetActorValue);
   AddMethod(vm, "DamageActorValue", &PapyrusActor::DamageActorValue);
   AddMethod(vm, "IsEquipped", &PapyrusActor::IsEquipped);
   AddMethod(vm, "GetActorValuePercentage",

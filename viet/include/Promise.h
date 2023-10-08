@@ -99,6 +99,18 @@ public:
     return res;
   }
 
+  static Promise<T> Any(const std::vector<Promise<T>>& promises)
+  {
+    Promise<T> res;
+
+    for (const auto& promise : promises) {
+      promise.Then([res](const T& val) { res.Resolve(val); })
+        .Catch([res](const char* err) { res.Reject(err); });
+    }
+
+    return res;
+  }
+
   operator AnyPromise() { return AnyPromise(*this); }
 
 private:

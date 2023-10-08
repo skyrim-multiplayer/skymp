@@ -38,11 +38,21 @@ public:
                          const std::vector<VarValue>& arguments);
   VarValue PlayAnimation(VarValue self,
                          const std::vector<VarValue>& arguments);
+  VarValue PlayAnimationAndWait(VarValue self,
+                         const std::vector<VarValue>& arguments);
   VarValue PlayGamebryoAnimation(VarValue self,
                                  const std::vector<VarValue>& arguments);
   VarValue MoveTo(VarValue self, const std::vector<VarValue>& arguments);
 
   VarValue SetOpen(VarValue self, const std::vector<VarValue>& arguments);
+
+  VarValue Is3DLoaded(VarValue self, const std::vector<VarValue>& arguments);
+
+  VarValue GetLinkedRef(VarValue self, const std::vector<VarValue>& arguments);
+  
+  VarValue GetNthLinkedRef(VarValue self, const std::vector<VarValue>& arguments);
+  
+  VarValue GetParentCell(VarValue self, const std::vector<VarValue>& arguments);
 
   void Register(VirtualMachine& vm,
                 std::shared_ptr<IPapyrusCompatibilityPolicy> policy) override;

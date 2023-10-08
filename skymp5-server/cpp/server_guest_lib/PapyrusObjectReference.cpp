@@ -7,6 +7,7 @@
 #include "MpFormGameObject.h"
 #include "MpObjectReference.h"
 #include "SpSnippetFunctionGen.h"
+#include "TimeUtils.h"
 #include "WorldState.h"
 #include "papyrus-vm/Structures.h"
 #include <cstring>
@@ -401,6 +402,51 @@ VarValue PapyrusObjectReference::PlayAnimation(
   return VarValue::None();
 }
 
+VarValue PapyrusObjectReference::PlayAnimationAndWait(
+  VarValue self, const std::vector<VarValue>& arguments)
+{
+  if (auto selfRefr = GetFormPtr<MpObjectReference>(self)) {
+    if (arguments.size() < 1) {
+      throw std::runtime_error("PlayAnimation requires at least 2 arguments");
+    }
+
+    auto funcName = "PlayAnimationAndWait";
+    auto serializedArgs = SpSnippetFunctionGen::SerializeArguments(arguments);
+
+    std::vector<Viet::Promise<VarValue>> promises;
+
+    for (auto listener : selfRefr->GetListeners()) {
+      auto targetRefr = dynamic_cast<MpActor*>(listener);
+      if (targetRefr) {
+        auto promise = SpSnippet(GetName(), funcName, serializedArgs.data(),
+                                 selfRefr->GetFormId())
+                         .Execute(targetRefr);
+        promises.push_back(promise);
+      }
+    }
+
+    if (promises.empty()) {
+      // No listeners found
+      return VarValue::None();
+    }
+
+    // Add 15 seconds timeout (protection against script freeze by user)
+    // Code based on PapyrusUtility::Wait implementation
+    auto time = Viet::TimeUtils::To<std::chrono::milliseconds>(15.f);
+    auto timerPromise = selfRefr->GetParent()->SetTimer(time);
+    auto resultPromise = Viet::Promise<VarValue>();
+    timerPromise
+      .Then([resultPromise](Viet::Void) {
+        resultPromise.Resolve(VarValue::None());
+      })
+      .Catch([resultPromise](const char* e) { resultPromise.Reject(e); });
+    promises.push_back(resultPromise);
+
+    return VarValue(Viet::Promise<VarValue>::Any(promises));
+  }
+  return VarValue::None();
+}
+
 VarValue PapyrusObjectReference::PlayGamebryoAnimation(
   VarValue self, const std::vector<VarValue>& arguments)
 {
@@ -481,6 +527,88 @@ VarValue PapyrusObjectReference::SetOpen(
   return VarValue::None();
 }
 
+VarValue PapyrusObjectReference::Is3DLoaded(VarValue,
+                                            const std::vector<VarValue>&)
+{
+  // stub
+  return VarValue(true);
+}
+
+namespace LinkedRefUtils {
+static VarValue GetLinkedRef(VarValue self)
+{
+  if (auto selfRefr = GetFormPtr<MpObjectReference>(self)) {
+    auto lookupRes = selfRefr->GetParent()->GetEspm().GetBrowser().LookupById(
+      selfRefr->GetFormId());
+    auto data =
+      espm::GetData<espm::REFR>(selfRefr->GetFormId(), selfRefr->GetParent());
+    if (data.linkedRefId) {
+      auto& linkedRef = selfRefr->GetParent()->GetFormAt<MpObjectReference>(
+        lookupRes.ToGlobalId(data.linkedRefId));
+      return VarValue(std::make_shared<MpFormGameObject>(&linkedRef));
+    }
+  }
+
+  return VarValue::None();
+}
+}
+
+VarValue PapyrusObjectReference::GetLinkedRef(
+  VarValue self, const std::vector<VarValue>& arguments)
+{
+  // TODO: implement keyword argument
+  // https://ck.uesp.net/wiki/GetLinkedRef_-_ObjectReference
+  if (arguments.size() > 0 && arguments[0] != VarValue::None()) {
+    spdlog::warn(
+      "GetLinkedRef doesn't support Keyword argument at this moment");
+  }
+
+  return LinkedRefUtils::GetLinkedRef(self);
+}
+
+VarValue PapyrusObjectReference::GetNthLinkedRef(
+  VarValue self, const std::vector<VarValue>& arguments)
+{
+  if (arguments.empty()) {
+    spdlog::error("GetNthLinkedRef - expected at least 1 argument");
+    return VarValue::None();
+  }
+  int n = static_cast<int>(arguments[0]);
+  if (n < 0) {
+    return VarValue::None();
+  }
+
+  VarValue cursor = self;
+  for (int i = 0; i < n; ++i) {
+    cursor = LinkedRefUtils::GetLinkedRef(cursor);
+  }
+  return cursor;
+}
+
+VarValue PapyrusObjectReference::GetParentCell(VarValue self,
+                                               const std::vector<VarValue>&)
+{
+  if (auto selfRefr = GetFormPtr<MpObjectReference>(self)) {
+    auto cellOrWorld =
+      selfRefr->GetCellOrWorld().ToFormId(selfRefr->GetParent()->espmFiles);
+    auto lookupRes =
+      selfRefr->GetParent()->GetEspm().GetBrowser().LookupById(cellOrWorld);
+    if (lookupRes.rec == nullptr) {
+      spdlog::warn("GetParentCell - nullptr cell/world found");
+    } else if (lookupRes.rec->GetType() == espm::WRLD::kType) {
+      // TODO: support. at least you can use WRLD + x/y to find exterior cell
+      spdlog::warn(
+        "GetParentCell - exterior cells are not supported at this moment");
+    } else if (lookupRes.rec->GetType() == espm::CELL::kType) {
+      return VarValue(std::make_shared<EspmGameObject>(lookupRes));
+    } else {
+      spdlog::warn("GetParentCell - bad record type {}",
+                   lookupRes.rec->GetType().ToString());
+    }
+  }
+  return VarValue::None();
+}
+
 void PapyrusObjectReference::Register(
   VirtualMachine& vm, std::shared_ptr<IPapyrusCompatibilityPolicy> policy)
 {
@@ -510,8 +638,14 @@ void PapyrusObjectReference::Register(
   AddMethod(vm, "SetPosition", &PapyrusObjectReference::SetPosition);
   AddMethod(vm, "GetBaseObject", &PapyrusObjectReference::GetBaseObject);
   AddMethod(vm, "PlayAnimation", &PapyrusObjectReference::PlayAnimation);
+  AddMethod(vm, "PlayAnimationAndWait",
+            &PapyrusObjectReference::PlayAnimationAndWait);
   AddMethod(vm, "PlayGamebryoAnimation",
             &PapyrusObjectReference::PlayGamebryoAnimation);
   AddMethod(vm, "MoveTo", &PapyrusObjectReference::MoveTo);
   AddMethod(vm, "SetOpen", &PapyrusObjectReference::SetOpen);
+  AddMethod(vm, "Is3DLoaded", &PapyrusObjectReference::Is3DLoaded);
+  AddMethod(vm, "GetLinkedRef", &PapyrusObjectReference::GetLinkedRef);
+  AddMethod(vm, "GetNthLinkedRef", &PapyrusObjectReference::GetNthLinkedRef);
+  AddMethod(vm, "GetParentCell", &PapyrusObjectReference::GetParentCell);
 }

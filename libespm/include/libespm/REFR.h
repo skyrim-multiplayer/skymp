@@ -39,6 +39,8 @@ public:
     uint32_t count = 0;
     uint8_t isParentActivationOnly = 0;
     std::vector<ActivationParentInfo> activationParents;
+    uint32_t linkedRefKeywordId = 0;
+    uint32_t linkedRefId = 0;
   };
 
   Data GetData(CompressedFieldsCache& compressedFieldsCache) const noexcept;
