@@ -465,7 +465,8 @@ espm::ObjectBounds MpActor::GetBounds() const
   return espm::GetData<espm::NPC_>(GetBaseId(), GetParent()).objectBounds;
 }
 
-const std::vector<FormDesc> &MpActor::GetTemplateChain() const {
+const std::vector<FormDesc>& MpActor::GetTemplateChain() const
+{
   return ChangeForm().templateChain;
 }
 
@@ -658,13 +659,20 @@ void MpActor::BeforeDestroy()
   UnsubscribeFromAll();
 }
 
+// ActionListener.cpp
+void RecalculateWorn(MpObjectReference& refr);
+
 void MpActor::Init(WorldState* worldState, uint32_t formId, bool hasChangeForm)
 {
   MpObjectReference::Init(worldState, formId, hasChangeForm);
 
   if (worldState->HasEspm()) {
-    EnsureBaseContainerAdded(GetParent()->GetEspm());
-    EnsureTemplateChainEvaluated(GetParent()->GetEspm());
+    auto& espm = worldState->GetEspm();
+    EnsureTemplateChainEvaluated(espm);
+    EnsureBaseContainerAdded(espm); // template chain needed here
+
+    // equip best weapon (TODO: implement "gearedUpWeapons" flag)
+    RecalculateWorn(*this);
   }
 }
 

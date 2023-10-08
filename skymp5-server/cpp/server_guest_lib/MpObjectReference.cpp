@@ -1,6 +1,7 @@
 #include "MpObjectReference.h"
 #include "ChangeFormGuard.h"
 #include "EspmGameObject.h"
+#include "EvaluateTemplate.h"
 #include "FormCallbacks.h"
 #include "LeveledListUtils.h"
 #include "MpActor.h"
@@ -881,8 +882,7 @@ MpObjectReference::GetNextRelootMoment() const
 
 MpChangeForm MpObjectReference::GetChangeForm() const
 {
-  MpChangeForm res;
-  static_cast<MpChangeFormREFR&>(res) = ChangeForm();
+  MpChangeForm res = ChangeForm();
 
   if (GetParent() && !GetParent()->espmFiles.empty()) {
     res.formDesc = FormDesc::FromFormId(GetFormId(), GetParent()->espmFiles);
@@ -1335,16 +1335,22 @@ void MpObjectReference::SendOpenContainer(uint32_t targetId)
 }
 
 std::vector<espm::CONT::ContainerObject> GetOutfitObjects(
-  const espm::CombineBrowser& br, const espm::LookupResult& lookupRes,
-  espm::CompressedFieldsCache& compressedFieldsCache)
+  WorldState* worldState, const std::vector<FormDesc>& templateChain,
+  const espm::LookupResult& lookupRes)
 {
+  auto& compressedFieldsCache = worldState->GetEspmCache();
+
   std::vector<espm::CONT::ContainerObject> res;
 
   if (auto baseNpc = espm::Convert<espm::NPC_>(lookupRes.rec)) {
-    auto data = baseNpc->GetData(compressedFieldsCache);
-
-    auto outfitId = lookupRes.ToGlobalId(data.defaultOutfitId);
-    auto outfit = espm::Convert<espm::OTFT>(br.LookupById(outfitId).rec);
+    auto baseId = lookupRes.ToGlobalId(lookupRes.rec->GetId());
+    auto outfitId = EvaluateTemplate<espm::NPC_::UseInventory>(
+      worldState, baseId, templateChain,
+      [](const auto& npcLookupRes, const auto& npcData) {
+        return npcLookupRes.ToGlobalId(npcData.defaultOutfitId);
+      });
+    auto outfit = espm::Convert<espm::OTFT>(
+      worldState->GetEspm().GetBrowser().LookupById(outfitId).rec);
     auto outfitData =
       outfit ? outfit->GetData(compressedFieldsCache) : espm::OTFT::Data();
 
@@ -1357,9 +1363,11 @@ std::vector<espm::CONT::ContainerObject> GetOutfitObjects(
 }
 
 std::vector<espm::CONT::ContainerObject> GetInventoryObjects(
-  const espm::CombineBrowser& br, const espm::LookupResult& lookupRes,
-  espm::CompressedFieldsCache& compressedFieldsCache)
+  WorldState* worldState, const std::vector<FormDesc>& templateChain,
+  const espm::LookupResult& lookupRes)
 {
+  auto& compressedFieldsCache = worldState->GetEspmCache();
+
   auto baseContainer = espm::Convert<espm::CONT>(lookupRes.rec);
   if (baseContainer) {
     return baseContainer->GetData(compressedFieldsCache).objects;
@@ -1367,7 +1375,10 @@ std::vector<espm::CONT::ContainerObject> GetInventoryObjects(
 
   auto baseNpc = espm::Convert<espm::NPC_>(lookupRes.rec);
   if (baseNpc) {
-    return baseNpc->GetData(compressedFieldsCache).objects;
+    auto baseId = lookupRes.ToGlobalId(lookupRes.rec->GetId());
+    return EvaluateTemplate<espm::NPC_::UseInventory>(
+      worldState, baseId, templateChain,
+      [](const auto&, const auto& npcData) { return npcData.objects; });
   }
 
   return {};
@@ -1404,25 +1415,29 @@ void MpObjectReference::EnsureBaseContainerAdded(espm::Loader& espm)
     return;
   }
 
+  auto actor = dynamic_cast<MpActor*>(this);
+  const std::vector<FormDesc> kEmptyTemplateChain;
+  const std::vector<FormDesc>& templateChain =
+    actor ? actor->GetTemplateChain() : kEmptyTemplateChain;
+
   auto lookupRes = espm.GetBrowser().LookupById(GetBaseId());
 
   std::map<uint32_t, uint32_t> itemsToAdd, itemsToEquip;
 
-  auto inventoryObjects = GetInventoryObjects(espm.GetBrowser(), lookupRes,
-                                              worldState->GetEspmCache());
+  auto inventoryObjects =
+    GetInventoryObjects(GetParent(), templateChain, lookupRes);
   for (auto& entry : inventoryObjects) {
     AddContainerObject(entry, &itemsToAdd);
   }
 
-  auto outfitObjects =
-    GetOutfitObjects(espm.GetBrowser(), lookupRes, worldState->GetEspmCache());
+  auto outfitObjects = GetOutfitObjects(GetParent(), templateChain, lookupRes);
   for (auto& entry : outfitObjects) {
     AddContainerObject(entry, &itemsToAdd);
     AddContainerObject(entry, &itemsToEquip);
   }
-  if (auto actor = dynamic_cast<MpActor*>(this)) {
+  if (actor) {
     Equipment eq;
-    for (auto p : itemsToEquip) {
+    for (auto& p : itemsToEquip) {
       Inventory::Entry e;
       e.baseId = p.first;
       e.count = p.second;

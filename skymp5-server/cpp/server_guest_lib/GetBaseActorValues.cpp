@@ -1,6 +1,6 @@
 #include "GetBaseActorValues.h"
+#include "EvaluateTemplate.h"
 #include "WorldState.h"
-
 #include <spdlog/spdlog.h>
 
 void BaseActorValues::VisitBaseActorValues(BaseActorValues& baseActorValues,
@@ -27,50 +27,7 @@ void BaseActorValues::VisitBaseActorValues(BaseActorValues& baseActorValues,
           std::to_string(changeForm.actorValues.magickaPercentage).c_str());
 }
 
-namespace {
-template <uint16_t TemplateFlag, class Callback>
-auto EvaluateTemplate(WorldState* worldState, uint32_t baseId,
-                      const std::vector<FormDesc>& templateChain,
-                      const Callback& callback)
-{
-  const std::vector<FormDesc> chainDefault = { FormDesc::FromFormId(
-    baseId, worldState->espmFiles) };
-  const std::vector<FormDesc>& chain =
-    templateChain.size() > 0 ? templateChain : chainDefault;
-
-  for (auto it = chain.begin(); it != chain.end(); it++) {
-    auto templateChainElement = it->ToFormId(worldState->espmFiles);
-    auto npcLookupResult =
-      worldState->GetEspm().GetBrowser().LookupById(templateChainElement);
-    auto npc = espm::Convert<espm::NPC_>(npcLookupResult.rec);
-    auto npcData = npc->GetData(worldState->GetEspmCache());
-
-    if (npcData.baseTemplate == 0) {
-      return callback(npcLookupResult, npcData);
-    }
-
-    if (!(npcData.templateDataFlags & TemplateFlag)) {
-      return callback(npcLookupResult, npcData);
-    }
-  }
-
-  std::stringstream ss;
-  ss << "EvaluateTemplate failed: baseId=" << std::hex << baseId
-     << ", templateChain=";
-
-  for (size_t i = 0; i < templateChain.size(); ++i) {
-    ss << templateChain[i].ToString();
-    if (i != templateChain.size() - 1) {
-      ss << ",";
-    }
-  }
-
-  ss << ", templateFlag=" << TemplateFlag;
-
-  throw std::runtime_error(ss.str());
-}
-}
-
+// TODO: implement auto-calc flag
 BaseActorValues GetBaseActorValues(WorldState* worldState, uint32_t baseId,
                                    uint32_t raceIdOverride,
                                    const std::vector<FormDesc>& templateChain)
@@ -105,7 +62,7 @@ BaseActorValues GetBaseActorValues(WorldState* worldState, uint32_t baseId,
 
   actorValues.magicka =
     raceData.startingMagicka + attributesNpcData.magickaOffset;
-  if (actorValues.magicka <= 0) {
+  if (actorValues.magicka < 0) { // zero magicka is ok, negative isn't
     spdlog::warn("GetBaseActorValues {:x} {:x} - Negative Magicka found: "
                  "startingMagicka={}, magickaOffset={}, defaulting to 100",
                  baseId, raceIdOverride, raceData.startingMagicka,
