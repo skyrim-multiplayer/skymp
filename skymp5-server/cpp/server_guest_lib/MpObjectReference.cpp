@@ -291,6 +291,22 @@ void MpObjectReference::Activate(MpObjectReference& activationSource,
 {
   if (auto worldState = activationSource.GetParent(); worldState->HasEspm()) {
     CheckInteractionAbility(activationSource);
+
+    auto refrId = GetFormId();
+    if (refrId < 0xff000000) {
+      auto data = espm::GetData<espm::REFR>(refrId, worldState);
+      auto it = std::find_if(
+        data.activationParents.begin(), data.activationParents.end(),
+        [&](const espm::REFR::ActivationParentInfo& info) {
+          return info.refrId == activationSource.GetFormId();
+        });
+      if (it == data.activationParents.end()) {
+        if (data.isParentActivationOnly) {
+          throw std::runtime_error(
+            "Only activation parents can activate this object");
+        }
+      }
+    }
   }
 
   bool activationBlockedByMpApi = MpApiOnActivate(activationSource);

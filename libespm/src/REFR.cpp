@@ -22,6 +22,13 @@ REFR::Data REFR::GetData(
         result.boundsDiv2 = reinterpret_cast<const float*>(data);
       } else if (!std::memcmp(type, "XCNT", 4)) {
         result.count = *reinterpret_cast<const uint32_t*>(data);
+      } else if (!std::memcmp(type, "XAPD", 4)) {
+        result.isParentActivationOnly =
+          *reinterpret_cast<const uint8_t*>(data);
+      } else if (!std::memcmp(type, "XAPR", 4)) {
+        ActivationParentInfo info;
+        info = *reinterpret_cast<const ActivationParentInfo*>(data);
+        result.activationParents.push_back(info);
       }
     },
     compressedFieldsCache);
