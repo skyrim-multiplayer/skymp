@@ -46,7 +46,7 @@ public:
   static std::wstring GetPathToMyDocuments();
 
 private:
-  static std::wstring StringToWstring(const std::string &s);
+  static std::wstring StringToWstring(const std::string& s);
 
   static std::string GenerateGuid();
 
