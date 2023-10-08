@@ -1242,12 +1242,14 @@ void MpObjectReference::UnsubscribeFromAll()
 void MpObjectReference::InitScripts()
 {
   auto baseId = GetBaseId();
-  if (!baseId || !GetParent()->espm)
+  if (!baseId || !GetParent()->espm) {
     return;
+  }
 
   auto scriptStorage = GetParent()->GetScriptStorage();
-  if (!scriptStorage)
+  if (!scriptStorage) {
     return;
+  }
 
   auto& compressedFieldsCache = GetParent()->GetEspmCache();
 
@@ -1257,14 +1259,36 @@ void MpObjectReference::InitScripts()
   auto base = br.LookupById(baseId);
   auto refr = br.LookupById(GetFormId());
   for (auto record : { base.rec, refr.rec }) {
-    if (!record)
+    if (!record) {
       continue;
-    espm::ScriptData scriptData;
-    record->GetScriptData(&scriptData, compressedFieldsCache);
+    }
+
+    std::optional<espm::ScriptData> scriptData;
+
+    if (record == base.rec && record->GetType() == "NPC_") {
+      auto baseId = base.ToGlobalId(base.rec->GetId());
+      if (auto actor = dynamic_cast<MpActor*>(this)) {
+        auto& templateChain = actor->GetTemplateChain();
+        scriptData = EvaluateTemplate<espm::NPC_::UseScript>(
+          GetParent(), baseId, templateChain,
+          [&compressedFieldsCache](const auto& npcLookupRes,
+                                   const auto& npcData) {
+            espm::ScriptData scriptData;
+            npcLookupRes.rec->GetScriptData(&scriptData,
+                                            compressedFieldsCache);
+            return scriptData;
+          });
+      }
+    }
+
+    if (!scriptData) {
+      scriptData = espm::ScriptData();
+      record->GetScriptData(&*scriptData, compressedFieldsCache);
+    }
 
     auto& scriptsInStorage =
       GetParent()->GetScriptStorage()->ListScripts(false);
-    for (auto& script : scriptData.scripts) {
+    for (auto& script : scriptData->scripts) {
       if (scriptsInStorage.count(
             { script.scriptName.begin(), script.scriptName.end() })) {
 
@@ -1279,7 +1303,7 @@ void MpObjectReference::InitScripts()
   }
 
   if (!scriptNames.empty()) {
-    pImpl->scriptState.reset(new ScriptState);
+    pImpl->scriptState = std::make_unique<ScriptState>();
 
     std::vector<VirtualMachine::ScriptInfo> scriptInfo;
     for (auto& scriptName : scriptNames) {
