@@ -787,6 +787,7 @@ void MpObjectReference::Subscribe(MpObjectReference* emitter,
       listener->GetChangeForm().profileId != -1) {
     emitter->pImpl->onInitEventSent = true;
     emitter->SendPapyrusEvent("OnInit");
+    emitter->SendPapyrusEvent("OnCellLoad");
   }
 
   const bool hasPrimitive = emitter->HasPrimitive();
