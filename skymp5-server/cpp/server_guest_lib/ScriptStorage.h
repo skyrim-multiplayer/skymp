@@ -1,5 +1,6 @@
 #pragma once
 #include "papyrus-vm/CIString.h"
+#include <bsa/tes4.hpp>
 #include <cstdint>
 #include <fstream>
 #include <memory>
@@ -43,6 +44,21 @@ public:
 private:
   std::set<CIString> scripts;
   CIMap<std::vector<uint8_t>> scriptPex;
+};
+
+class BsaArchiveScriptStorage : public IScriptStorage
+{
+public:
+  BsaArchiveScriptStorage(const char* pathToBsa);
+
+  std::vector<uint8_t> GetScriptPex(const char* scriptName) override;
+
+  const std::set<CIString>& ListScripts(bool forceReloadScripts) override;
+
+private:
+  std::set<CIString> scripts;
+  CIMap<std::vector<uint8_t>> scriptPex;
+  bsa::tes4::archive bsa;
 };
 
 class CombinedScriptStorage : public IScriptStorage
