@@ -2,6 +2,7 @@
 
 #include <spdlog/spdlog.h>
 #include <sstream>
+#include <stdexcept>
 
 EspmGameObject::EspmGameObject(const espm::LookupResult& record_)
   : record(record_)
@@ -335,4 +336,19 @@ const char* EspmGameObject::GetStringID()
     v.reset(new std::string(fmt::format("espm {:x}", formId)));
   }
   return v->data();
+}
+
+const std::vector<std::shared_ptr<ActivePexInstance>>&
+EspmGameObject::ListActivePexInstances() const
+{
+  static const std::vector<std::shared_ptr<ActivePexInstance>>
+    kEmptyScriptsArray;
+  return kEmptyScriptsArray;
+}
+
+void EspmGameObject::AddScript(
+  std::shared_ptr<ActivePexInstance> sctipt) noexcept
+{
+  spdlog::critical("EspmGameObject::AddScript is not supported");
+  std::terminate();
 }

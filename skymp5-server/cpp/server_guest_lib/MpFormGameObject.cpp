@@ -16,8 +16,9 @@ MpForm* MpFormGameObject::GetFormPtr() const noexcept
 {
   if (parent) {
     bool formStillValid = parent->LookupFormById(formId).get() == form;
-    if (!formStillValid)
+    if (!formStillValid) {
       return nullptr;
+    }
   }
   return form;
 }
@@ -46,4 +47,28 @@ const char* MpFormGameObject::GetStringID()
     v.reset(new std::string(fmt::format("form {:x}", formId)));
   }
   return v->data();
+}
+
+const std::vector<std::shared_ptr<ActivePexInstance>>&
+MpFormGameObject::ListActivePexInstances() const
+{
+  static const std::vector<std::shared_ptr<ActivePexInstance>>
+    kEmptyScriptsArray;
+
+  auto form = GetFormPtr();
+  if (!form) {
+    return kEmptyScriptsArray;
+  }
+  return form->ListActivePexInstances();
+}
+
+void MpFormGameObject::AddScript(
+  std::shared_ptr<ActivePexInstance> script) noexcept
+{
+  auto form = GetFormPtr();
+  if (!form) {
+    spdlog::critical("MpFormGameObject::AddScript - Invalid form");
+    std::terminate();
+  }
+  return form->AddScript(script);
 }

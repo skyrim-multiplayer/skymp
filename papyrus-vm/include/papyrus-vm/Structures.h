@@ -31,8 +31,12 @@ public:
 
   bool HasScript(const char* name) const;
 
-private:
-  std::vector<std::shared_ptr<ActivePexInstance>> activePexInstances;
+protected:
+  virtual const std::vector<std::shared_ptr<ActivePexInstance>>&
+  ListActivePexInstances() const = 0;
+
+  virtual void AddScript(
+    std::shared_ptr<ActivePexInstance> sctipt) noexcept = 0;
 };
 
 enum class FunctionType
@@ -461,6 +465,16 @@ private:
   std::shared_ptr<ActivePexInstance> FillParentInstance(
     std::string nameNeedScript, VarValue activeInstanceOwner,
     const std::shared_ptr<IVariablesHolder>& mapForFillProperties);
+
+  static VarValue TryCastToBaseClass(
+    VirtualMachine& vm, const std::string& resultTypeName,
+    VarValue* scriptToCastOwner, std::vector<ActivePexInstance::Local>& locals,
+    std::vector<std::string>& outClassesStack);
+
+  static VarValue TryCastMultipleInheritance(
+    VirtualMachine& vm, const std::string& resultTypeName,
+    VarValue* scriptToCastOwner,
+    std::vector<ActivePexInstance::Local>& locals);
 
   bool _IsValid = false;
 

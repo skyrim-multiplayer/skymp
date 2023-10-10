@@ -93,8 +93,20 @@ class TestObject : public IGameObject
 {
 public:
   std::string myId = "0x006AFF2E";
+  std::vector<std::shared_ptr<ActivePexInstance>> scripts;
 
   const char* GetStringID() override { return myId.c_str(); };
+
+  const std::vector<std::shared_ptr<ActivePexInstance>>&
+  ListActivePexInstances() const override
+  {
+    return scripts;
+  }
+
+  void AddScript(std::shared_ptr<ActivePexInstance> sctipt) noexcept override
+  {
+    scripts.push_back(sctipt);
+  }
 };
 
 class MyScriptVariablesHolder : public ScriptVariablesHolder

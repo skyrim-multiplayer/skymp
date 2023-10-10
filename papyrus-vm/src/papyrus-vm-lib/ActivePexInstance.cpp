@@ -447,14 +447,39 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
           IsSelfStr(*args[1]) ? activeInstanceOwner : *args[1]);
         if (!object)
           object = static_cast<IGameObject*>(activeInstanceOwner);
-        if (object && object->activePexInstances.size() > 0) {
-          auto inst = object->activePexInstances.back();
+        if (object && object->ListActivePexInstances().size() > 0) {
+          auto inst = object->ListActivePexInstances().back();
           Object::PropInfo* runProperty =
             GetProperty(*inst, nameProperty, Object::PropInfo::kFlags_Read);
           if (runProperty != nullptr) {
             *args[2] = inst->StartFunction(runProperty->readHandler,
                                            argsForCall, ctx->stackIdHolder);
+            spdlog::trace("propget function called");
+          } else {
+            auto& instProps = inst->sourcePex.fn()->objectTable[0].properties;
+            auto it =
+              std::find_if(instProps.begin(), instProps.end(),
+                           [&](const Object::PropInfo& propInfo) {
+                             return !Utils::stricmp(propInfo.name.data(),
+                                                    nameProperty.data());
+                           });
+            if (it == instProps.end()) {
+              spdlog::trace("propget do nothing: prop {} not found",
+                            nameProperty);
+            } else {
+              VarValue* var = inst->variables->GetVariableByName(
+                it->autoVarName.data(), *inst->sourcePex.fn());
+              if (var) {
+                *args[2] = *var;
+              } else {
+                spdlog::trace("propget do nothing: variable {} not found",
+                              it->autoVarName);
+              }
+            }
           }
+          spdlog::trace("propget propName={} object={} result={}",
+                        args[0]->ToString(), args[1]->ToString(),
+                        args[2]->ToString());
         }
       } else {
         throw std::runtime_error(
@@ -469,14 +494,39 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
           IsSelfStr(*args[1]) ? activeInstanceOwner : *args[1]);
         if (!object)
           object = static_cast<IGameObject*>(activeInstanceOwner);
-        if (object && object->activePexInstances.size() > 0) {
-          auto inst = object->activePexInstances.back();
+        if (object && object->ListActivePexInstances().size() > 0) {
+          auto inst = object->ListActivePexInstances().back();
           Object::PropInfo* runProperty =
             GetProperty(*inst, nameProperty, Object::PropInfo::kFlags_Write);
           if (runProperty != nullptr) {
             inst->StartFunction(runProperty->writeHandler, argsForCall,
                                 ctx->stackIdHolder);
+            spdlog::trace("propset function called");
+          } else {
+            auto& instProps = inst->sourcePex.fn()->objectTable[0].properties;
+            auto it =
+              std::find_if(instProps.begin(), instProps.end(),
+                           [&](const Object::PropInfo& propInfo) {
+                             return !Utils::stricmp(propInfo.name.data(),
+                                                    nameProperty.data());
+                           });
+            if (it == instProps.end()) {
+              spdlog::trace("propset do nothing: prop {} not found",
+                            nameProperty);
+            } else {
+              VarValue* var = inst->variables->GetVariableByName(
+                it->autoVarName.data(), *inst->sourcePex.fn());
+              if (var) {
+                *var = *args[2];
+              } else {
+                spdlog::trace("propset do nothing: variable {} not found",
+                              it->autoVarName);
+              }
+            }
           }
+          spdlog::trace("propset propName={} object={} result={}",
+                        args[0]->ToString(), args[1]->ToString(),
+                        args[2]->ToString());
         }
       } else {
         throw std::runtime_error(
@@ -802,67 +852,120 @@ uint8_t ActivePexInstance::GetArrayTypeByElementType(uint8_t type)
   return returnType;
 }
 
+VarValue ActivePexInstance::TryCastToBaseClass(
+  VirtualMachine& vm, const std::string& resultTypeName,
+  VarValue* scriptToCastOwner, std::vector<ActivePexInstance::Local>& locals,
+  std::vector<std::string>& outClassesStack)
+{
+  auto object = static_cast<IGameObject*>(*scriptToCastOwner);
+  if (!object) {
+    return VarValue::None();
+  }
+
+  std::string scriptName = object->GetParentNativeScript();
+  outClassesStack.push_back(scriptName);
+  while (true) {
+    if (scriptName.empty()) {
+      break;
+    }
+
+    if (!Utils::stricmp(resultTypeName.data(), scriptName.data())) {
+      return *scriptToCastOwner;
+    }
+
+    // TODO: Test this with attention
+    // Here is the case when i.e. variable with type 'Form' casts to
+    // 'ObjectReference' while it's actually an Actor
+
+    auto myScriptPex = vm.GetPexByName(scriptName);
+
+    if (!myScriptPex.fn) {
+      spdlog::error("Script not found: {}", scriptName);
+      break;
+    }
+
+    scriptName = myScriptPex.fn()->objectTable[0].parentClassName;
+    outClassesStack.push_back(scriptName);
+  }
+
+  return VarValue::None();
+}
+
+VarValue ActivePexInstance::TryCastMultipleInheritance(
+  VirtualMachine& vm, const std::string& resultTypeName,
+  VarValue* scriptToCastOwner, std::vector<ActivePexInstance::Local>& locals)
+{
+  auto object = static_cast<IGameObject*>(*scriptToCastOwner);
+  if (!object) {
+    return VarValue::None();
+  }
+
+  // TODO: support cast to base class in parallel inheritance chain
+  // i.e. X extends Y, in script Z we cast smth to X while it is Y
+  // Current code would fail in this case. I guess it'd be better to find such
+  // cases in game, then implement.
+  for (auto& script : object->ListActivePexInstances()) {
+    if (Utils::stricmp(script->GetSourcePexName().data(),
+                       resultTypeName.data()) == 0) {
+      return script->activeInstanceOwner;
+    }
+  }
+
+  return VarValue::None();
+}
+
 void ActivePexInstance::CastObjectToObject(VarValue* result,
                                            VarValue* scriptToCastOwner,
                                            std::vector<Local>& locals)
 {
-  std::string objectToCastTypeName = scriptToCastOwner->objectType;
+  static const VarValue kNone = VarValue::None();
+
+  if (scriptToCastOwner->GetType() != VarValue::kType_Object) {
+    *result = kNone;
+    return spdlog::trace(
+      "CastObjectToObject {} -> {} (object is not an object)",
+      scriptToCastOwner->ToString(), result->ToString());
+  }
+
+  if (*scriptToCastOwner == kNone) {
+    *result = kNone;
+    return spdlog::trace("CastObjectToObject {} -> {} (object is None)",
+                         scriptToCastOwner->ToString(), result->ToString());
+  }
+
   const std::string& resultTypeName = result->objectType;
 
-  if (scriptToCastOwner->GetType() != VarValue::kType_Object ||
-      *scriptToCastOwner == VarValue::None()) {
-    *result = VarValue::None();
-    if (spdlog::should_log(spdlog::level::trace)) {
-      spdlog::trace("CastObjectToObject {} -> {} (object is null)",
-                    scriptToCastOwner->ToString(), result->ToString());
-    }
-    return;
-  }
+  VarValue tmp;
+  std::vector<std::string> outClassesStack;
 
-  std::vector<std::string> classesStack;
-
-  auto object = static_cast<IGameObject*>(*scriptToCastOwner);
-  if (object) {
-    std::string scriptName = object->GetParentNativeScript();
-    classesStack.push_back(scriptName);
-    while (1) {
-      if (scriptName.empty()) {
-        break;
-      }
-
-      if (!Utils::stricmp(resultTypeName.data(), scriptName.data())) {
-        *result = *scriptToCastOwner;
-        if (spdlog::should_log(spdlog::level::trace)) {
-          spdlog::trace("CastObjectToObject {} -> {} (match found: {})",
-                        scriptToCastOwner->ToString(), result->ToString(),
-                        resultTypeName);
-        }
-        return;
-      }
-
-      // TODO: Test this with attention
-      // Here is the case when i.e. variable with type 'Form' casts to
-      // 'ObjectReference' while it's actually an Actor
-
-      auto myScriptPex = parentVM->GetPexByName(scriptName);
-
-      if (!myScriptPex.fn) {
-        spdlog::error("Script not found: {}", scriptName);
-        break;
-      }
-
-      scriptName = myScriptPex.fn()->objectTable[0].parentClassName;
-      classesStack.push_back(scriptName);
+  if (tmp == kNone) {
+    tmp = TryCastToBaseClass(*parentVM, resultTypeName, scriptToCastOwner,
+                             locals, outClassesStack);
+    if (tmp != kNone) {
+      spdlog::trace("CastObjectToObject {} -> {} (base class found: {})",
+                    scriptToCastOwner->ToString(), tmp.ToString(),
+                    resultTypeName);
     }
   }
 
-  *result = VarValue::None();
-  if (spdlog::should_log(spdlog::level::trace)) {
+  if (tmp == kNone) {
+    tmp = TryCastMultipleInheritance(*parentVM, resultTypeName,
+                                     scriptToCastOwner, locals);
+    if (tmp != kNone) {
+      spdlog::trace(
+        "CastObjectToObject {} -> {} (multiple inheritance found: {})",
+        scriptToCastOwner->ToString(), tmp.ToString(), resultTypeName);
+    }
+  }
+
+  if (tmp == kNone) {
     spdlog::trace(
       "CastObjectToObject {} -> {} (match not found, wanted {}, stack is {})",
-      scriptToCastOwner->ToString(), result->ToString(), resultTypeName,
-      fmt::join(classesStack, ", "));
+      scriptToCastOwner->ToString(), tmp.ToString(), resultTypeName,
+      fmt::join(outClassesStack, ", "));
   }
+
+  *result = tmp;
 }
 
 bool ActivePexInstance::HasParent(ActivePexInstance* script,

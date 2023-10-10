@@ -12,6 +12,12 @@ public:
   const char* GetStringID() override;
 
   const espm::LookupResult record;
+
+protected:
+  const std::vector<std::shared_ptr<ActivePexInstance>>&
+  ListActivePexInstances() const override;
+
+  void AddScript(std::shared_ptr<ActivePexInstance> sctipt) noexcept override;
 };
 
 const espm::LookupResult& GetRecordPtr(const VarValue& papyrusObject);

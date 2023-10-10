@@ -293,9 +293,13 @@ void MpObjectReference::Activate(MpObjectReference& activationSource,
   if (auto worldState = activationSource.GetParent(); worldState->HasEspm()) {
     CheckInteractionAbility(activationSource);
 
+    // Pillars puzzle Bleak Falls Barrow
+    bool workaroundBypassParentsCheck = &activationSource == this;
+
     // Block if only activation parents can activate this
     auto refrId = GetFormId();
-    if (refrId < 0xff000000 && !dynamic_cast<MpActor*>(this)) {
+    if (!workaroundBypassParentsCheck && refrId < 0xff000000 &&
+        !dynamic_cast<MpActor*>(this)) {
       auto lookupRes = worldState->GetEspm().GetBrowser().LookupById(refrId);
       auto data = espm::GetData<espm::REFR>(refrId, worldState);
       auto it = std::find_if(
@@ -640,12 +644,14 @@ void MpObjectReference::AddItem(uint32_t baseId, uint32_t count)
   });
   SendInventoryUpdate();
 
-  auto baseItem = VarValue(static_cast<int32_t>(baseId));
-  auto itemCount = VarValue(static_cast<int32_t>(count));
-  auto itemReference = VarValue((IGameObject*)nullptr);
-  auto sourceContainer = VarValue((IGameObject*)nullptr);
-  VarValue args[4] = { baseItem, itemCount, itemReference, sourceContainer };
-  SendPapyrusEvent("OnItemAdded", args, 4);
+  //  TODO: No one used it due to incorrect baseItem which should be object,
+  //  not id. Needs to be revised. Seems to also be buggy
+  // auto baseItem = VarValue(static_cast<int32_t>(baseId));
+  // auto itemCount = VarValue(static_cast<int32_t>(count));
+  // auto itemReference = VarValue((IGameObject*)nullptr);
+  // auto sourceContainer = VarValue((IGameObject*)nullptr);
+  // VarValue args[4] = { baseItem, itemCount, itemReference, sourceContainer
+  // }; SendPapyrusEvent("OnItemAdded", args, 4);
 }
 
 void MpObjectReference::AddItems(const std::vector<Inventory::Entry>& entries)
@@ -658,14 +664,14 @@ void MpObjectReference::AddItems(const std::vector<Inventory::Entry>& entries)
     SendInventoryUpdate();
   }
 
-  for (const auto& entri : entries) {
-    auto baseItem = VarValue(static_cast<int32_t>(entri.baseId));
-    auto itemCount = VarValue(static_cast<int32_t>(entri.count));
-    auto itemReference = VarValue((IGameObject*)nullptr);
-    auto sourceContainer = VarValue((IGameObject*)nullptr);
-    VarValue args[4] = { baseItem, itemCount, itemReference, sourceContainer };
-    SendPapyrusEvent("OnItemAdded", args, 4);
-  }
+  // for (const auto& entri : entries) {
+  //   auto baseItem = VarValue(static_cast<int32_t>(entri.baseId));
+  //   auto itemCount = VarValue(static_cast<int32_t>(entri.count));
+  //   auto itemReference = VarValue((IGameObject*)nullptr);
+  //   auto sourceContainer = VarValue((IGameObject*)nullptr);
+  //   VarValue args[4] = { baseItem, itemCount, itemReference, sourceContainer
+  //   }; SendPapyrusEvent("OnItemAdded", args, 4);
+  // }
 }
 
 void MpObjectReference::RemoveItem(uint32_t baseId, uint32_t count,

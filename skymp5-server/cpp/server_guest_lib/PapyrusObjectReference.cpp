@@ -294,7 +294,9 @@ VarValue PapyrusObjectReference::Activate(
     }
     auto akActivator = GetFormPtr<MpObjectReference>(arguments[0]);
     if (!akActivator) {
-      throw std::runtime_error("Activate didn't recognize akActivator");
+      spdlog::warn("Activate didn't recognize akActivator");
+      // workaround for defaultPillarPuzzlelever script
+      akActivator = selfRefr;
     }
     bool abDefaultProcessingOnly =
       static_cast<bool>(arguments[1].CastToBool());
@@ -609,6 +611,17 @@ VarValue PapyrusObjectReference::GetParentCell(VarValue self,
   return VarValue::None();
 }
 
+VarValue PapyrusObjectReference::GetOpenState(VarValue self,
+                                              const std::vector<VarValue>&)
+{
+  if (auto selfRefr = GetFormPtr<MpObjectReference>(self)) {
+    if (selfRefr->GetBaseType() == "DOOR") {
+      return selfRefr->IsOpen() ? VarValue(1) : VarValue(3);
+    }
+  }
+  return VarValue(0);
+}
+
 void PapyrusObjectReference::Register(
   VirtualMachine& vm, std::shared_ptr<IPapyrusCompatibilityPolicy> policy)
 {
@@ -648,4 +661,5 @@ void PapyrusObjectReference::Register(
   AddMethod(vm, "GetLinkedRef", &PapyrusObjectReference::GetLinkedRef);
   AddMethod(vm, "GetNthLinkedRef", &PapyrusObjectReference::GetNthLinkedRef);
   AddMethod(vm, "GetParentCell", &PapyrusObjectReference::GetParentCell);
+  AddMethod(vm, "GetOpenState", &PapyrusObjectReference::GetOpenState);
 }
