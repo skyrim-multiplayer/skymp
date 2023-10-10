@@ -398,6 +398,8 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
       try {
         if (functionName == nameOnBeginState ||
             functionName == nameOnEndState) {
+          // TODO: consider using CallMethod here. I'm afraid that this event
+          // will pollute other scripts attached to an object
           parentVM->SendEvent(this, functionName.c_str(), argsForCall);
           break;
         } else {
@@ -405,8 +407,11 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
           auto res =
             parentVM->CallMethod(nullableGameObject, functionName.c_str(),
                                  argsForCall, ctx->stackIdHolder);
-          if (EnsureCallResultIsSynchronous(res, ctx))
+          spdlog::trace("callmethod object={} funcName={} result={}",
+                        object->ToString(), functionName, res.ToString());
+          if (EnsureCallResultIsSynchronous(res, ctx)) {
             *args[2] = res;
+          }
         }
       } catch (std::exception& e) {
         if (auto handler = parentVM->GetExceptionHandler())
@@ -724,20 +729,20 @@ VarValue& ActivePexInstance::GetIndentifierValue(
     if (treatStringsAsIdentifiers &&
         value.GetType() == VarValue::kType_String) {
       auto& res = GetVariableValueByName(&locals, valueAsString);
-      if (spdlog::should_log(spdlog::level::trace)) {
-        spdlog::trace("GetIndentifierValue {}: {} = {}",
-                      this->sourcePex.fn()->source, valueAsString,
-                      res.ToString());
-      }
+      // if (spdlog::should_log(spdlog::level::trace)) {
+      //   spdlog::trace("GetIndentifierValue {}: {} = {}",
+      //                 this->sourcePex.fn()->source, valueAsString,
+      //                 res.ToString());
+      // }
       return res;
     }
     if (value.GetType() == VarValue::kType_Identifier) {
       auto& res = GetVariableValueByName(&locals, valueAsString);
-      if (spdlog::should_log(spdlog::level::trace)) {
-        spdlog::trace("GetIndentifierValue {}: {} = {}",
-                      this->sourcePex.fn()->source, valueAsString,
-                      res.ToString());
-      }
+      // if (spdlog::should_log(spdlog::level::trace)) {
+      //   spdlog::trace("GetIndentifierValue {}: {} = {}",
+      //                 this->sourcePex.fn()->source, valueAsString,
+      //                 res.ToString());
+      // }
       return res;
     }
   }

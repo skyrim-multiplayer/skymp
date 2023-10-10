@@ -637,7 +637,13 @@ void PapyrusObjectReference::Register(
   AddMethod(vm, "GetItemCount", &PapyrusObjectReference::GetItemCount);
   AddMethod(vm, "GetAnimationVariableBool",
             &PapyrusObjectReference::GetAnimationVariableBool);
-  AddMethod(vm, "PlaceAtMe", &PapyrusObjectReference::PlaceAtMe);
+
+  // Temporary disabled. Original scripts in dungeons pollute the server with
+  // uncountable placed forms. and the server has no idea how to recycle all
+  // that
+
+  // AddMethod(vm, "PlaceAtMe", &PapyrusObjectReference::PlaceAtMe);
+
   AddMethod(vm, "SetAngle", &PapyrusObjectReference::SetAngle);
   AddMethod(vm, "Enable", &PapyrusObjectReference::Enable);
   AddMethod(vm, "Disable", &PapyrusObjectReference::Disable);
