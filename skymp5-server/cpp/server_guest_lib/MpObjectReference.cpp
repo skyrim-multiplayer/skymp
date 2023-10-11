@@ -1378,6 +1378,25 @@ void MpObjectReference::InitScripts()
     }
   }
 
+  // A hardcoded hack to remove all scripts except SweetPie scripts from
+  // exterior objects
+  if (GetFormId() < 0x05000000) {
+    auto cellOrWorld = GetCellOrWorld().ToFormId(GetParent()->espmFiles);
+    auto lookupRes =
+      GetParent()->GetEspm().GetBrowser().LookupById(cellOrWorld);
+    if (lookupRes.rec && lookupRes.rec->GetType() == "WRLD") {
+      spdlog::info("Skipping non-Sweet scripts for exterior form {:x}");
+      scriptNames.erase(std::remove_if(scriptNames.begin(), scriptNames.end(),
+                                       [](const std::string& val) {
+                                         auto kPrefix = "Sweet";
+                                         bool startsWith = val.size() >= 5 &&
+                                           !memcmp(kPrefix, val.data(), 5);
+                                         return !startsWith;
+                                       }),
+                        scriptNames.end());
+    }
+  }
+
   if (!scriptNames.empty()) {
     pImpl->scriptState = std::make_unique<ScriptState>();
 
