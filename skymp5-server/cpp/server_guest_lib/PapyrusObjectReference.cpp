@@ -225,7 +225,10 @@ VarValue PapyrusObjectReference::PlaceAtMe(
 
   bool isExplosion = akFormToPlace.rec->GetType() == "EXPL";
   if (isExplosion) {
-    PlaceAtMeSpSnippet(selfRefr, arguments);
+    // Well sp snippet fails ATM. and I don't want to overpollute clients and
+    // network with those placeatme s for now
+
+    // PlaceAtMeSpSnippet(selfRefr, arguments);
 
     // TODO: return pseudo-reference or even create real server-side form?
     return VarValue::None();
@@ -423,6 +426,9 @@ VarValue PapyrusObjectReference::PlayAnimation(
     if (arguments.size() < 1) {
       throw std::runtime_error("PlayAnimation requires at least 1 argument");
     }
+    const char* animation = static_cast<const char*>(arguments[0]);
+    selfRefr->SetLastAnimation(animation);
+
     auto funcName = "PlayAnimation";
     auto serializedArgs = SpSnippetFunctionGen::SerializeArguments(arguments);
     for (auto listener : selfRefr->GetListeners()) {
@@ -444,6 +450,9 @@ VarValue PapyrusObjectReference::PlayAnimationAndWait(
     if (arguments.size() < 1) {
       throw std::runtime_error("PlayAnimation requires at least 2 arguments");
     }
+
+    const char* animation = static_cast<const char*>(arguments[0]);
+    selfRefr->SetLastAnimation(animation);
 
     auto funcName = "PlayAnimationAndWait";
     auto serializedArgs = SpSnippetFunctionGen::SerializeArguments(arguments);

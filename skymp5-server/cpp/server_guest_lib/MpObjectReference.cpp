@@ -269,13 +269,21 @@ bool MpObjectReference::GetTeleportFlag() const
 void MpObjectReference::VisitProperties(const PropertiesVisitor& visitor,
                                         VisitPropertiesMode mode)
 {
-  if (IsHarvested())
+  if (IsHarvested()) {
     visitor("isHarvested", "true");
-  if (IsOpen())
+  }
+  if (IsOpen()) {
     visitor("isOpen", "true");
+  }
   if (mode == VisitPropertiesMode::All && !GetInventory().IsEmpty()) {
     auto inventoryDump = GetInventory().ToJson().dump();
     visitor("inventory", inventoryDump.data());
+  }
+
+  if (ChangeForm().lastAnimation.has_value()) {
+    std::string lastAnimationAsJson = "\"" + *ChangeForm().lastAnimation +
+                                        "\"";
+    visitor("lastAnimation", lastAnimationAsJson.data());
   }
 
   // Property flags (isVisibleByOwner, isVisibleByNeighbor) should be checked
@@ -849,6 +857,13 @@ void MpObjectReference::Unsubscribe(MpObjectReference* emitter,
   if (listener->emittersWithPrimitives && hasPrimitive) {
     listener->emittersWithPrimitives->erase(emitter->GetFormId());
   }
+}
+
+void MpObjectReference::SetLastAnimation(const std::string& lastAnimation)
+{
+  EditChangeForm([&](MpChangeForm& changeForm) {
+    changeForm.lastAnimation = lastAnimation;
+  });
 }
 
 const std::set<MpObjectReference*>& MpObjectReference::GetListeners() const

@@ -90,6 +90,9 @@ public:
   float spawnDelay = 25.0f;
   std::vector<FormDesc> templateChain;
 
+  // Used for PlayAnimation (object reference)
+  std::optional<std::string> lastAnimation;
+
   // Please update 'ActorTest.cpp' when adding new Actor-related rows
 
   DynamicFields dynamicFields;
@@ -102,7 +105,7 @@ public:
       baseContainerAdded, nextRelootDatetime, isDisabled, profileId,
       isRaceMenuOpen, isDead, consoleCommandsAllowed, appearanceDump,
       equipmentDump, actorValues.ToTuple(), spawnPoint, dynamicFields,
-      spawnDelay, learnedSpells, templateChain);
+      spawnDelay, learnedSpells, templateChain, lastAnimation);
   }
 
   static nlohmann::json ToJson(const MpChangeFormREFR& changeForm);

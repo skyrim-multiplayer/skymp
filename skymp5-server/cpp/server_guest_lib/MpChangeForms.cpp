@@ -76,6 +76,12 @@ nlohmann::json MpChangeForm::ToJson(const MpChangeForm& changeForm)
   if (!changeForm.templateChain.empty()) {
     res["templateChain"] = ToStringArray(changeForm.templateChain);
   }
+
+  // TODO: uncomment when add script vars save feature
+  // if (changeForm.lastAnimation.has_value()) {
+  //   res["lastAnimation"] = *changeForm.lastAnimation;
+  // }
+
   return res;
 }
 
@@ -96,7 +102,7 @@ MpChangeForm MpChangeForm::JsonToChangeForm(simdjson::dom::element& element)
     spawnPointPos("spawnPoint_pos"), spawnPointRot("spawnPoint_rot"),
     spawnPointCellOrWorldDesc("spawnPoint_cellOrWorldDesc"),
     spawnDelay("spawnDelay"), effects("effects"),
-    templateChain("templateChain");
+    templateChain("templateChain"), lastAnimation("lastAnimation");
 
   MpChangeForm res;
   ReadEx(element, recType, &res.recType);
@@ -201,6 +207,14 @@ MpChangeForm MpChangeForm::JsonToChangeForm(simdjson::dom::element& element)
     ReadVector(element, templateChain, &data);
     res.templateChain = ToFormDescsArray(data);
   }
+
+  if (element.at_pointer(lastAnimation.GetData()).error() ==
+      simdjson::error_code::SUCCESS) {
+    const char* tmp;
+    ReadEx(element, lastAnimation, &tmp);
+    res.lastAnimation = tmp;
+  }
+
   return res;
 }
 

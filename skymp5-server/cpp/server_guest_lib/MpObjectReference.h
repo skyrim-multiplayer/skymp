@@ -139,6 +139,8 @@ public:
   static void Unsubscribe(MpObjectReference* emitter,
                           MpObjectReference* listener);
 
+  void SetLastAnimation(const std::string& lastAnimation);
+
   const std::set<MpObjectReference*>& GetListeners() const;
   const std::set<MpObjectReference*>& GetEmitters() const;
 

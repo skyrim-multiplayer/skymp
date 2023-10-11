@@ -20,6 +20,7 @@ export interface FormModel {
   isHostedByOther?: boolean;
   isDead?: boolean;
   templateChain?: number[];
+  lastAnimation?: string;
 
   // Assigned locally
   isMyClone?: boolean;
