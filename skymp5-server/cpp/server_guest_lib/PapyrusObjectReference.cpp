@@ -188,48 +188,81 @@ VarValue PapyrusObjectReference::GetAnimationVariableBool(
   return VarValue(false);
 }
 
+namespace {
+void PlaceAtMeSpSnippet(MpObjectReference* self,
+                        const std::vector<VarValue>& arguments)
+{
+  auto funcName = "PlaceAtMe";
+  auto serializedArgs = SpSnippetFunctionGen::SerializeArguments(arguments);
+  for (auto listener : self->GetListeners()) {
+    auto targetRefr = dynamic_cast<MpActor*>(listener);
+    if (targetRefr) {
+      SpSnippet("ObjectReference", funcName, serializedArgs.data(),
+                self->GetFormId())
+        .Execute(targetRefr);
+    }
+  }
+}
+}
+
 VarValue PapyrusObjectReference::PlaceAtMe(
   VarValue self, const std::vector<VarValue>& arguments)
 {
   auto selfRefr = GetFormPtr<MpObjectReference>(self);
 
-  if (selfRefr && arguments.size() >= 4) {
-    auto akFormToPlace = GetRecordPtr(arguments[0]);
-    int aiCount = static_cast<int>(arguments[1].CastToInt());
-    bool abForcePersist = static_cast<bool>(arguments[2].CastToBool());
-    bool abInitiallyDisabled = static_cast<bool>(arguments[3].CastToBool());
-
-    if (akFormToPlace.rec) {
-      auto baseId = akFormToPlace.ToGlobalId(akFormToPlace.rec->GetId());
-
-      LocationalData locationalData = {
-        selfRefr->GetPos(),
-        { 0, 0, selfRefr->GetAngle().z }, // TODO: fix Degrees/radians mismatch
-        selfRefr->GetCellOrWorld()
-      };
-      FormCallbacks callbacks = selfRefr->GetCallbacks();
-      std::string type = akFormToPlace.rec->GetType().ToString();
-
-      std::unique_ptr<MpObjectReference> newRefr;
-
-      if (akFormToPlace.rec->GetType() == "NPC_") {
-        auto actor = new MpActor(locationalData, callbacks, baseId);
-        newRefr.reset(actor);
-      } else {
-        newRefr.reset(
-          new MpObjectReference(locationalData, callbacks, baseId, type));
-      }
-
-      auto worldState = selfRefr->GetParent();
-      auto newRefrId = worldState->GenerateFormId();
-      worldState->AddForm(std::move(newRefr), newRefrId);
-
-      auto& refr = worldState->GetFormAt<MpObjectReference>(newRefrId);
-      refr.ForceSubscriptionsUpdate();
-      return VarValue(std::make_shared<MpFormGameObject>(&refr));
-    }
+  if (!selfRefr || arguments.size() < 4) {
+    return VarValue::None();
   }
-  return VarValue::None();
+
+  auto akFormToPlace = GetRecordPtr(arguments[0]);
+  int aiCount = static_cast<int>(arguments[1].CastToInt());
+  bool abForcePersist = static_cast<bool>(arguments[2].CastToBool());
+  bool abInitiallyDisabled = static_cast<bool>(arguments[3].CastToBool());
+
+  if (!akFormToPlace.rec) {
+    return VarValue::None();
+  }
+
+  bool isExplosion = akFormToPlace.rec->GetType() == "EXPL";
+  if (isExplosion) {
+    PlaceAtMeSpSnippet(selfRefr, arguments);
+
+    // TODO: return pseudo-reference or even create real server-side form?
+    return VarValue::None();
+  }
+
+  auto baseId = akFormToPlace.ToGlobalId(akFormToPlace.rec->GetId());
+
+  float angleZDegrees = selfRefr->GetAngle().z;
+  float angleZRadians = angleZDegrees; // TODO: fix Degrees/radians mismatch
+  // TODO: support angleX, angleY
+  LocationalData locationalData = { selfRefr->GetPos(),
+                                    { 0, 0, angleZRadians },
+                                    selfRefr->GetCellOrWorld() };
+  FormCallbacks callbacks = selfRefr->GetCallbacks();
+  std::string type = akFormToPlace.rec->GetType().ToString();
+
+  std::unique_ptr<MpObjectReference> newRefr;
+
+  if (akFormToPlace.rec->GetType() == "NPC_") {
+    auto actor = new MpActor(locationalData, callbacks, baseId);
+    newRefr.reset(actor);
+  } else {
+    newRefr.reset(
+      new MpObjectReference(locationalData, callbacks, baseId, type));
+  }
+
+  auto worldState = selfRefr->GetParent();
+  auto newRefrId = worldState->GenerateFormId();
+  worldState->AddForm(std::move(newRefr), newRefrId);
+
+  auto& refr = worldState->GetFormAt<MpObjectReference>(newRefrId);
+  refr.ForceSubscriptionsUpdate();
+
+  if (abInitiallyDisabled) {
+    refr.Disable();
+  }
+  return VarValue(std::make_shared<MpFormGameObject>(&refr));
 }
 
 VarValue PapyrusObjectReference::SetAngle(
@@ -637,13 +670,7 @@ void PapyrusObjectReference::Register(
   AddMethod(vm, "GetItemCount", &PapyrusObjectReference::GetItemCount);
   AddMethod(vm, "GetAnimationVariableBool",
             &PapyrusObjectReference::GetAnimationVariableBool);
-
-  // Temporary disabled. Original scripts in dungeons pollute the server with
-  // uncountable placed forms. and the server has no idea how to recycle all
-  // that
-
-  // AddMethod(vm, "PlaceAtMe", &PapyrusObjectReference::PlaceAtMe);
-
+  AddMethod(vm, "PlaceAtMe", &PapyrusObjectReference::PlaceAtMe);
   AddMethod(vm, "SetAngle", &PapyrusObjectReference::SetAngle);
   AddMethod(vm, "Enable", &PapyrusObjectReference::Enable);
   AddMethod(vm, "Disable", &PapyrusObjectReference::Disable);

@@ -290,6 +290,13 @@ void MpObjectReference::VisitProperties(const PropertiesVisitor& visitor,
 void MpObjectReference::Activate(MpObjectReference& activationSource,
                                  bool defaultProcessingOnly)
 {
+  if (spdlog::should_log(spdlog::level::trace)) {
+    for (auto& script : ListActivePexInstances()) {
+      spdlog::trace("MpObjectReference::Activate {:x} - found script {}",
+                    GetFormId(), script->GetSourcePexName());
+    }
+  }
+
   if (auto worldState = activationSource.GetParent(); worldState->HasEspm()) {
     CheckInteractionAbility(activationSource);
 

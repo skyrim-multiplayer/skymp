@@ -17,6 +17,7 @@
 #include "PapyrusMessage.h"
 #include "PapyrusObjectReference.h"
 #include "PapyrusSkymp.h"
+#include "PapyrusSound.h"
 #include "PapyrusUtility.h"
 #include "ScopedTask.h"
 #include "ScriptStorage.h"
@@ -740,6 +741,7 @@ VirtualMachine& WorldState::GetPapyrusVm()
       pImpl->classes.emplace_back(std::make_unique<PapyrusEffectShader>());
       pImpl->classes.emplace_back(std::make_unique<PapyrusKeyword>());
       pImpl->classes.emplace_back(std::make_unique<PapyrusCell>());
+      pImpl->classes.emplace_back(std::make_unique<PapyrusSound>());
       for (auto& cl : pImpl->classes) {
         cl->Register(*pImpl->vm, pImpl->policy);
       }
