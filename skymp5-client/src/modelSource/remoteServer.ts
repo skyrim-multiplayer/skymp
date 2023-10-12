@@ -291,16 +291,12 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
             );
             const animation = msg.props.lastAnimation;
             if (typeof animation === "string") {
-              // let res1 = refr.playAnimation(animation);
-              // printConsole("res1", res1);
               const refrid = refr.getFormID();
 
               (async () => {
                 for (let i = 0; i < 5; i ++) {
-                  
                   // retry. pillars in bleakfalls are not reliable for some reason
                   let res2 = ObjectReference.from(Game.getFormEx(refrid))?.playAnimation(animation);
-                  printConsole("res2", res2);
                   if (res2) break;
                   await Utility.wait(2);
                 }

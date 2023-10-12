@@ -49,7 +49,7 @@ export class SendInputsService extends ClientListener {
 
             this.controller.emitter.emit("sendMessage", {
                 message: { t: MsgType.OnEquip, baseId: event.baseObj.getFormID() },
-                reliability: "unreliable"   
+                reliability: "unreliable"
             });
         }
     }
@@ -108,6 +108,9 @@ export class SendInputsService extends ClientListener {
                 data: getMovement(owner, form),
                 _refrId
             };
+            if (_refrId) /*not a player character*/{
+                this.sp.printConsole("isDead", message.data.isDead);
+            }
             this.controller.emitter.emit("sendMessageWithRefrId", {
                 message,
                 reliability: "unreliable"
