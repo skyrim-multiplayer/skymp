@@ -68,6 +68,7 @@ public:
     std::vector<Faction> factions;
 
     bool isEssential = false;
+    bool isUnique = false;
     bool isProtected = false;
 
     uint32_t race = 0;

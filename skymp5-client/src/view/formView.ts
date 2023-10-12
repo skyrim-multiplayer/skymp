@@ -137,6 +137,19 @@ export class FormView implements View<FormModel> {
             model.movement?.rot[2] || 0
           );
         }
+        else {
+          const race = Actor.from(refr)?.getRace()?.getFormID();
+          const draugrRace = 0xd53;
+          const falmerRace = 0x131f4;
+          const chaurusRace = 0x131eb;
+          const frostbiteSpiderRaceGiant = 0x4e507;
+          const frostbiteSpiderRaceLarge = 0x53477;
+
+          // potential masterambushscript
+          if (race === draugrRace || race === falmerRace || race === chaurusRace || race === frostbiteSpiderRaceGiant || race === frostbiteSpiderRaceLarge) {
+            Actor.from(refr)?.setActorValue("Aggression", 2);
+          }
+        }
         modWcProtection(refr.getFormID(), 1);
 
         // TODO: reset all states?

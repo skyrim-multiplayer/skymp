@@ -24,7 +24,8 @@ NPC_::Data NPC_::GetData(
       } else if (!std::memcmp(type, "ACBS", 4)) {
         const uint32_t flags = *reinterpret_cast<const uint32_t*>(data);
 
-        result.isEssential = !!(flags & 0x02);
+        result.isEssential = !!(flags & 0x2);
+        result.isUnique = !!(flags & 0x20);
         result.isProtected = !!(flags & 0x800);
         result.magickaOffset = *reinterpret_cast<const int16_t*>(data + 4);
         result.staminaOffset = *reinterpret_cast<const int16_t*>(data + 6);
