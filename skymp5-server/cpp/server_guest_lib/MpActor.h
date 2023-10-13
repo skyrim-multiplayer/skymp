@@ -35,7 +35,7 @@ public:
   uint32_t GetRaceId() const;
   bool IsWeaponDrawn() const;
   espm::ObjectBounds GetBounds() const;
-  const std::vector<FormDesc> &GetTemplateChain() const;
+  const std::vector<FormDesc>& GetTemplateChain() const;
 
   void SetRaceMenuOpen(bool isOpen);
   void SetAppearance(const Appearance* newAppearance);
@@ -94,7 +94,7 @@ public:
   void SetSpawnPoint(const LocationalData& position);
   LocationalData GetSpawnPoint() const;
   const float GetRespawnTime() const;
-  void SetRespawnTime(float time);
+  void SetRespawnTime(float time, bool save = true);
 
   void SetIsDead(bool isDead);
 

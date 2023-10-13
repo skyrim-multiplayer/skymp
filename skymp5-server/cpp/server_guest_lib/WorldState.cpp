@@ -29,19 +29,26 @@
 #include <iterator>
 #include <unordered_map>
 
-namespace {
-inline const NiPoint3& GetPos(const espm::REFR::LocationalData* locationalData)
+const NiPoint3& GetPos(const espm::REFR::LocationalData* locationalData)
 {
   return *reinterpret_cast<const NiPoint3*>(locationalData->pos);
 }
 
-inline NiPoint3 GetRot(const espm::REFR::LocationalData* locationalData)
+NiPoint3 GetRot(const espm::REFR::LocationalData* locationalData)
 {
   static const auto g_pi = std::acos(-1.f);
   return { locationalData->rotRadians[0] / g_pi * 180.f,
            locationalData->rotRadians[1] / g_pi * 180.f,
            locationalData->rotRadians[2] / g_pi * 180.f };
 }
+
+uint32_t GetWorldOrCell(const espm::CombineBrowser& br,
+                        const espm::LookupResult& refrLookupRes)
+{
+  auto mapping = br.GetCombMapping(refrLookupRes.fileIdx);
+  uint32_t worldOrCell =
+    espm::utils::GetMappedId(GetWorldOrCell(br, refrLookupRes.rec), *mapping);
+  return worldOrCell;
 }
 
 struct WorldState::Impl
@@ -437,6 +444,7 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
         new MpActor(formLocationalData, formCallbacksFactory(), baseId));
     }
     AddForm(std::move(form), formId, true);
+
     // Do not TriggerFormInitEvent here, doing it later after changeForm apply
   }
 

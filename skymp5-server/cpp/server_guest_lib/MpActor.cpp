@@ -731,20 +731,52 @@ void MpActor::SetSpawnPoint(const LocationalData& position)
     [&](MpChangeForm& changeForm) { changeForm.spawnPoint = position; });
 }
 
+// WorldState.cpp
+const NiPoint3& GetPos(const espm::REFR::LocationalData* locationalData);
+NiPoint3 GetRot(const espm::REFR::LocationalData* locationalData);
+uint32_t GetWorldOrCell(const espm::CombineBrowser& br,
+                        const espm::LookupResult& refrLookupRes);
+
 LocationalData MpActor::GetSpawnPoint() const
 {
+  auto formId = GetFormId();
+
+  bool createdAsPlayer = formId >= 0xff000000 && GetBaseId() <= 0x7;
+  if (!createdAsPlayer) {
+    if (auto worldState = GetParent(); worldState && worldState->HasEspm()) {
+      auto data = espm::GetData<espm::ACHR>(formId, worldState);
+      auto lookupRes = worldState->GetEspm().GetBrowser().LookupById(formId);
+      const NiPoint3& pos = ::GetPos(data.loc);
+      NiPoint3 rot = ::GetRot(data.loc);
+      uint32_t worldOrCell =
+        ::GetWorldOrCell(worldState->GetEspm().GetBrowser(), lookupRes);
+      return LocationalData{
+        pos, rot, FormDesc::FromFormId(worldOrCell, worldState->espmFiles)
+      };
+    }
+  }
   return ChangeForm().spawnPoint;
 }
 
 const float MpActor::GetRespawnTime() const
 {
+  bool createdAsPlayer = GetFormId() >= 0xff000000 && GetBaseId() <= 0x7;
+  if (!createdAsPlayer) {
+
+    // todo: comment it out
+    return 5;
+    
+    static const auto kOneHour = 60.f * 60.f;
+    return kOneHour;
+  }
   return ChangeForm().spawnDelay;
 }
 
-void MpActor::SetRespawnTime(float time)
+void MpActor::SetRespawnTime(float time, bool save)
 {
   EditChangeForm(
-    [&](MpChangeForm& changeForm) { changeForm.spawnDelay = time; });
+    [&](MpChangeForm& changeForm) { changeForm.spawnDelay = time; },
+    save ? Mode::RequestSave : Mode::NoRequestSave);
 }
 
 void MpActor::SetIsDead(bool isDead)

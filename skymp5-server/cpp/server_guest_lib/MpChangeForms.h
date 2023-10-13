@@ -84,10 +84,15 @@ public:
   // values in skymp due to poor design
   std::string appearanceDump, equipmentDump;
   ActorValues actorValues;
+
+  // Used only for player characters. See GetSpawnPoint
   LocationalData spawnPoint = { { 133857, -61130, 14662 },
                                 { 0.f, 0.f, 72.f },
                                 FormDesc::Tamriel() };
+
+  // Used only for player characters. See GetSpawnDelay
   float spawnDelay = 25.0f;
+
   std::vector<FormDesc> templateChain;
 
   // Used for PlayAnimation (object reference)
