@@ -124,8 +124,10 @@ void ExecuteDisable(MpActor& caller,
     ? caller
     : caller.GetParent()->GetFormAt<MpObjectReference>(targetId);
 
-  if (target.GetFormId() >= 0xff000000)
+  if (target.GetFormId() >= 0xff000000 ||
+      dynamic_cast<MpActor*>(&target) != nullptr) {
     target.Disable();
+  }
 }
 
 void ExecuteMp(MpActor& caller,
