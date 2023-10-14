@@ -72,7 +72,7 @@ jobs:
                 options: |
                     -v ${{github.workspace}}:/src
                     -v ${{github.workspace}}/.cmake-js:/home/skymp/.cmake-js
-                    -v /src/vcpkg/buildtrees:/src/vcpkg/buildtrees
+                    -v /src/vcpkg/buildtrees/rsm-bsa:/src/vcpkg/buildtrees/rsm-bsa
                     -u skymp
                 run: |
                     cd /src \
