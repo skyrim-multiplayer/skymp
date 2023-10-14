@@ -96,6 +96,14 @@ jobs:
                 run: |
                     cd /src \
                     && ./build.sh --build
+            continue-on-error: true
+          
+          - name: Upload vcpkg failure logs
+            if: failure()
+            uses: actions/upload-artifact@v2
+            with:
+              name: install-x64-linux-dbg-out.log
+              path: /src/vcpkg/buildtrees/rsm-bsa/install-x64-linux-dbg-out.log
 
           - name: Prepare dist.tar.gz
             uses: addnab/docker-run-action@v3
