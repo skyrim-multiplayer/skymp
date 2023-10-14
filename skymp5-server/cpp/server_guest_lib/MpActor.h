@@ -126,6 +126,8 @@ public:
   bool GetConsoleCommandsAllowedFlag() const;
   void SetConsoleCommandsAllowedFlag(bool newValue);
 
+  void EquipBestWeapon();
+
 private:
   struct Impl;
   std::shared_ptr<Impl> pImpl;

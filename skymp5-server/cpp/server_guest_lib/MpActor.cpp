@@ -25,6 +25,7 @@
 
 #include "ChangeValuesMessage.h"
 #include "TeleportMessage.h"
+#include "UpdateEquipmentMessage.h"
 
 struct MpActor::Impl
 {
@@ -88,6 +89,63 @@ void MpActor::SetConsoleCommandsAllowedFlag(bool newValue)
   EditChangeForm([&](MpChangeForm& changeForm) {
     changeForm.consoleCommandsAllowed = newValue;
   });
+}
+
+void MpActor::EquipBestWeapon()
+{
+  if (!GetParent()->HasEspm()) {
+    return;
+  }
+
+  auto& loader = GetParent()->GetEspm();
+  auto& cache = GetParent()->GetEspmCache();
+
+  const Equipment eq = GetEquipment();
+
+  Equipment newEq;
+  newEq.numChanges = eq.numChanges + 1;
+  for (auto& entry : eq.inv.entries) {
+    bool isEquipped = entry.extra.worn != Inventory::Worn::None;
+    bool isWeap =
+      espm::GetRecordType(entry.baseId, GetParent()) == espm::WEAP::kType;
+    if (isEquipped && isWeap) {
+      continue;
+    }
+    newEq.inv.AddItems({ entry });
+  }
+
+  const Inventory& inv = GetInventory();
+  Inventory::Entry bestEntry;
+  int16_t bestDamage = -1;
+  for (auto& entry : inv.entries) {
+    if (entry.baseId) {
+      auto lookupRes = loader.GetBrowser().LookupById(entry.baseId);
+      if (auto weap = espm::Convert<espm::WEAP>(lookupRes.rec)) {
+        if (!bestEntry.count ||
+            weap->GetData(cache).weapData->damage > bestDamage) {
+          bestEntry = entry;
+          bestDamage = weap->GetData(cache).weapData->damage;
+        }
+      }
+    }
+  }
+
+  if (bestEntry.count > 0) {
+    bestEntry.extra.worn = Inventory::Worn::Right;
+    newEq.inv.AddItems({ bestEntry });
+  }
+
+  SetEquipment(newEq.ToJson().dump());
+  for (auto listener : GetListeners()) {
+    auto actor = dynamic_cast<MpActor*>(listener);
+    if (!actor) {
+      continue;
+    }
+    UpdateEquipmentMessage msg;
+    msg.data = newEq.ToJson();
+    msg.idx = GetIdx();
+    actor->SendToUser(msg, true);
+  }
 }
 
 void MpActor::SetRaceMenuOpen(bool isOpen)
@@ -659,9 +717,6 @@ void MpActor::BeforeDestroy()
   UnsubscribeFromAll();
 }
 
-// ActionListener.cpp
-void RecalculateWorn(MpObjectReference& refr);
-
 void MpActor::Init(WorldState* worldState, uint32_t formId, bool hasChangeForm)
 {
   MpObjectReference::Init(worldState, formId, hasChangeForm);
@@ -671,8 +726,8 @@ void MpActor::Init(WorldState* worldState, uint32_t formId, bool hasChangeForm)
     EnsureTemplateChainEvaluated(espm);
     EnsureBaseContainerAdded(espm); // template chain needed here
 
-    // equip best weapon (TODO: implement "gearedUpWeapons" flag)
-    RecalculateWorn(*this);
+    // TODO: implement "gearedUpWeapons" flag
+    EquipBestWeapon();
   }
 }
 
@@ -765,7 +820,7 @@ const float MpActor::GetRespawnTime() const
 
     // todo: comment it out
     return 5;
-    
+
     static const auto kOneHour = 60.f * 60.f;
     return kOneHour;
   }
