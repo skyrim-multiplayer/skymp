@@ -72,6 +72,7 @@ jobs:
                 options: |
                     -v ${{github.workspace}}:/src
                     -v ${{github.workspace}}/.cmake-js:/home/skymp/.cmake-js
+                    -v /src/vcpkg/buildtrees:/src/vcpkg/buildtrees
                     -u skymp
                 run: |
                     cd /src \
@@ -96,7 +97,6 @@ jobs:
                 run: |
                     cd /src \
                     && ./build.sh --build
-            continue-on-error: true
           
           - name: Upload vcpkg failure logs
             if: failure()
