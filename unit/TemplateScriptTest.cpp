@@ -1,7 +1,7 @@
 #include "MsgType.h"
-#include "ScriptStorage.h"
 #include "ServerState.h"
 #include "TestUtils.hpp"
+#include "script_storages/IScriptStorage.h"
 #include <catch2/catch_all.hpp>
 #include <nlohmann/json.hpp>
 
