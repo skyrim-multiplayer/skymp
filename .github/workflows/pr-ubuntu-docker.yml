@@ -84,8 +84,7 @@ jobs:
           - name: Copy log file from container to workspace
             if: failure()
             run: |
-              docker exec configure_container chmod +r /src/vcpkg/buildtrees/rsm-bsa/install-x64-linux-dbg-out.log
-              docker cp configure_container:/src/vcpkg/buildtrees/rsm-bsa/install-x64-linux-dbg-out.log ${{github.workspace}}/install-x64-linux-dbg-out.log
+              sudo docker cp configure_container:/src/vcpkg/buildtrees/rsm-bsa/install-x64-linux-dbg-out.log ${{github.workspace}}/install-x64-linux-dbg-out.log
 
           - name: Upload vcpkg failure logs
             if: failure()
