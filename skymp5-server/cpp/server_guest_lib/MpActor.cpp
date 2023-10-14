@@ -815,8 +815,8 @@ LocationalData MpActor::GetSpawnPoint() const
 const float MpActor::GetRespawnTime() const
 {
   if (!IsCreatedAsPlayer()) {
-    static const auto kOneHour = 60.f * 60.f;
-    return kOneHour;
+    static const auto kNpcSpawnDelay = 6 * 60.f * 60.f;
+    return kNpcSpawnDelay;
   }
   return ChangeForm().spawnDelay;
 }
