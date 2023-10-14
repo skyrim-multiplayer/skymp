@@ -20,3 +20,4 @@ index 8998d38..66e449f 100644
  			} else {
  				if (a_in.deep_copy()) {
  					_name.emplace<name_owner>(a_name);
+ 
