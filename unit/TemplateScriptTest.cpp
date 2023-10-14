@@ -47,6 +47,4 @@ TEST_CASE("MS13FrostbiteSpiderREF in BleakFalls should have scripts "
   }
 
   REQUIRE(what == "OK");
-
-  //   REQUIRE(spider.HasScript("masterambushscript"));
 }

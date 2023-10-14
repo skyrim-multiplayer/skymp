@@ -95,7 +95,7 @@ public:
   void SetSpawnPoint(const LocationalData& position);
   LocationalData GetSpawnPoint() const;
   const float GetRespawnTime() const;
-  void SetRespawnTime(float time, bool save = true);
+  void SetRespawnTime(float time);
 
   void SetIsDead(bool isDead);
 

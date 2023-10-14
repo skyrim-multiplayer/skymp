@@ -821,11 +821,10 @@ const float MpActor::GetRespawnTime() const
   return ChangeForm().spawnDelay;
 }
 
-void MpActor::SetRespawnTime(float time, bool save)
+void MpActor::SetRespawnTime(float time)
 {
   EditChangeForm(
-    [&](MpChangeForm& changeForm) { changeForm.spawnDelay = time; },
-    save ? Mode::RequestSave : Mode::NoRequestSave);
+    [&](MpChangeForm& changeForm) { changeForm.spawnDelay = time; });
 }
 
 void MpActor::SetIsDead(bool isDead)
