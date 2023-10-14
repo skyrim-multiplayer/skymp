@@ -14,12 +14,12 @@
 #include "PacketHistoryWrapper.h"
 #include "PapyrusUtils.h"
 #include "ScampServerListener.h"
-#include "ScriptStorage.h"
 #include "SettingsUtils.h"
 #include "formulas/SweetPieDamageFormula.h"
 #include "formulas/TES5DamageFormula.h"
 #include "libespm/IterateFields.h"
 #include "property_bindings/PropertyBindingFactory.h"
+#include "script_storages/ScriptStorageFactory.h"
 #include <cassert>
 #include <cctype>
 #include <memory>
@@ -278,15 +278,6 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
       }
     }
 
-    std::vector<std::shared_ptr<IScriptStorage>> bsaScriptStorages;
-    if (serverSettings["archives"].is_array()) {
-      for (auto archive : serverSettings["archives"]) {
-        std::string archivePath = archive.get<std::string>();
-        bsaScriptStorages.push_back(
-          std::make_shared<BsaArchiveScriptStorage>(archivePath.data()));
-      }
-    }
-
     if (serverSettings["lang"] != nullptr) {
       logger->info("Run localization provider");
       localizationProvider = std::make_shared<LocalizationProvider>(
@@ -315,16 +306,8 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
       partOne->SetDamageFormula(std::make_unique<TES5DamageFormula>());
     }
 
-    std::vector<std::shared_ptr<IScriptStorage>> scriptStorages;
-    scriptStorages.push_back(std::make_shared<DirectoryScriptStorage>(
-      (espm::fs::path(dataDir) / "scripts").string()));
-    for (auto scriptStorage : bsaScriptStorages) {
-      scriptStorages.push_back(scriptStorage);
-    }
-    scriptStorages.push_back(std::make_shared<AssetsScriptStorage>());
-    auto scriptStorage =
-      std::make_shared<CombinedScriptStorage>(scriptStorages);
-    partOne->worldState.AttachScriptStorage(scriptStorage);
+    partOne->worldState.AttachScriptStorage(
+      ScriptStorageFactory::Create(serverSettings));
 
     partOne->AttachEspm(espm);
     partOne->animationSystem.Init(&partOne->worldState);

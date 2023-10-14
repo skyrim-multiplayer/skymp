@@ -1,5 +1,5 @@
-#include "ScriptStorage.h"
 #include "TestUtils.hpp"
+#include "script_storages/DirectoryScriptStorage.h"
 
 using Catch::Matchers::ContainsSubstring;
 
