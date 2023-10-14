@@ -91,7 +91,7 @@ jobs:
             uses: actions/upload-artifact@v2
             with:
               name: install-x64-linux-dbg-out.log
-              path: /src/vcpkg/buildtrees/rsm-bsa/install-x64-linux-dbg-out.log
+              path: ${{github.workspace}}/install-x64-linux-dbg-out.log
 
           - name: Upload compile_commands.json
             uses: actions/upload-artifact@v3
