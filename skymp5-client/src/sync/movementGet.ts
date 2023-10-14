@@ -1,5 +1,5 @@
 import { FormModel } from '../modelSource/model';
-import { ObjectReference, Actor, TESModPlatform, printConsole } from "skyrimPlatform";
+import { ObjectReference, Actor, TESModPlatform } from "skyrimPlatform";
 import { NiPoint3, Movement, RunMode } from "./movement";
 import { ObjectReferenceEx } from '../extensions/objectReferenceEx';
 
@@ -69,8 +69,6 @@ export const getMovement = (refr: ObjectReference, form?: FormModel): Movement =
 
   const worldOrCell = refr.getWorldSpace() || refr.getParentCell();
 
-  const isDead = form?.isDead ?? false;
-
   return {
     worldOrCell: worldOrCell?.getFormID() || 0,
     pos,
@@ -83,7 +81,7 @@ export const getMovement = (refr: ObjectReference, form?: FormModel): Movement =
     isSneaking: !!(ac && isSneaking(ac)),
     isBlocking: !!(ac && ac.getAnimationVariableBool("IsBlocking")),
     isWeapDrawn: !!(ac && ac.isWeaponDrawn()),
-    isDead: isDead,
+    isDead: form?.isDead ?? false,
     healthPercentage: healthPercentage || 0,
     lookAt,
     speed

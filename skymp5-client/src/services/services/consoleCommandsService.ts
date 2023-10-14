@@ -86,8 +86,6 @@ export class ConsoleCommandsService extends ClientListener {
                 reliability: "reliable"
             });
 
-            this.sp.printConsole(args);
-
             // Meant to be shown to user, not for logging
             this.sp.printConsole("sent");
             return false;

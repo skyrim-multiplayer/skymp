@@ -729,20 +729,10 @@ VarValue& ActivePexInstance::GetIndentifierValue(
     if (treatStringsAsIdentifiers &&
         value.GetType() == VarValue::kType_String) {
       auto& res = GetVariableValueByName(&locals, valueAsString);
-      // if (spdlog::should_log(spdlog::level::trace)) {
-      //   spdlog::trace("GetIndentifierValue {}: {} = {}",
-      //                 this->sourcePex.fn()->source, valueAsString,
-      //                 res.ToString());
-      // }
       return res;
     }
     if (value.GetType() == VarValue::kType_Identifier) {
       auto& res = GetVariableValueByName(&locals, valueAsString);
-      // if (spdlog::should_log(spdlog::level::trace)) {
-      //   spdlog::trace("GetIndentifierValue {}: {} = {}",
-      //                 this->sourcePex.fn()->source, valueAsString,
-      //                 res.ToString());
-      // }
       return res;
     }
   }

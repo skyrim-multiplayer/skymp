@@ -78,14 +78,6 @@ Inventory& Inventory::RemoveItems(const std::vector<Entry>& entries)
   return *this;
 }
 
-Inventory& Inventory::WornAll() noexcept
-{
-  for (auto& entry : entries) {
-    entry.extra.worn = Inventory::Worn::Right;
-  }
-  return *this;
-}
-
 bool Inventory::HasItem(uint32_t baseId) const
 {
   for (auto& entry : entries) {

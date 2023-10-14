@@ -108,9 +108,6 @@ export class SendInputsService extends ClientListener {
                 data: getMovement(owner, form),
                 _refrId
             };
-            // if (_refrId) /*not a player character*/{
-            //     this.sp.printConsole("isDead", message.data.isDead);
-            // }
             this.controller.emitter.emit("sendMessageWithRefrId", {
                 message,
                 reliability: "unreliable"

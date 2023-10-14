@@ -4,6 +4,15 @@
 #include <spdlog/spdlog.h>
 #include <stdexcept>
 
+namespace {
+bool IsLeveledType(const espm::LookupResult& lookupRes) noexcept
+{
+  espm::Type type = lookupRes.rec->GetType();
+  return type == espm::LVLI::kType || type == espm::LVLN::kType ||
+    type == "LVSP" /* for the future leveled spell implementation */;
+}
+}
+
 std::vector<LeveledListUtils::Entry> LeveledListUtils::EvaluateList(
   const espm::CombineBrowser& br, const espm::LookupResult& lookupRes,
   uint32_t pcLevel, uint8_t* chanceNoneOverride)
@@ -11,10 +20,7 @@ std::vector<LeveledListUtils::Entry> LeveledListUtils::EvaluateList(
   espm::CompressedFieldsCache dummyCache;
 
   const espm::LeveledListBase* leveledList = nullptr;
-  if (lookupRes.rec->GetType() == espm::LVLI::kType ||
-      lookupRes.rec->GetType() == espm::LVLN::kType ||
-      lookupRes.rec->GetType() ==
-        "LVSP") /* for the future leveled spell implementation */ {
+  if (IsLeveledType(lookupRes)) {
     leveledList =
       reinterpret_cast<const espm::LeveledListBase*>(lookupRes.rec);
   }
@@ -68,10 +74,7 @@ std::map<uint32_t, uint32_t> LeveledListUtils::EvaluateListRecurse(
   espm::CompressedFieldsCache dummyCache;
 
   const espm::LeveledListBase* leveledList = nullptr;
-  if (lookupRes.rec->GetType() == espm::LVLI::kType ||
-      lookupRes.rec->GetType() == espm::LVLN::kType ||
-      lookupRes.rec->GetType() ==
-        "LVSP") /* for the future leveled spell implementation */ {
+  if (IsLeveledType(lookupRes)) {
     leveledList =
       reinterpret_cast<const espm::LeveledListBase*>(lookupRes.rec);
   }
@@ -98,10 +101,7 @@ std::map<uint32_t, uint32_t> LeveledListUtils::EvaluateListRecurse(
     if (!eLookupRes.rec) {
       continue;
     }
-    if (eLookupRes.rec->GetType() == espm::LVLI::kType ||
-        eLookupRes.rec->GetType() == espm::LVLN::kType ||
-        eLookupRes.rec->GetType() ==
-          "LVSP") /* for the future leveled spell implementation */ {
+    if (IsLeveledType(eLookupRes)) {
       auto childRes = EvaluateListRecurse(br, eLookupRes, 1, pcLevel);
       for (auto& p : childRes) {
         res[p.first] += p.second;
