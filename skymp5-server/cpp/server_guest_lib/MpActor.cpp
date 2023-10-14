@@ -529,6 +529,11 @@ const std::vector<FormDesc>& MpActor::GetTemplateChain() const
   return ChangeForm().templateChain;
 }
 
+bool MpActor::IsCreatedAsPlayer() const
+{
+  return GetFormId() >= 0xff000000 && GetBaseId() <= 0x7;
+}
+
 void MpActor::SendAndSetDeathState(bool isDead, bool shouldTeleport)
 {
   float attribute = isDead ? 0.f : 1.f;
@@ -791,8 +796,7 @@ LocationalData MpActor::GetSpawnPoint() const
 {
   auto formId = GetFormId();
 
-  bool createdAsPlayer = formId >= 0xff000000 && GetBaseId() <= 0x7;
-  if (!createdAsPlayer) {
+  if (!IsCreatedAsPlayer()) {
     if (auto worldState = GetParent(); worldState && worldState->HasEspm()) {
       auto data = espm::GetData<espm::ACHR>(formId, worldState);
       auto lookupRes = worldState->GetEspm().GetBrowser().LookupById(formId);
@@ -810,12 +814,7 @@ LocationalData MpActor::GetSpawnPoint() const
 
 const float MpActor::GetRespawnTime() const
 {
-  bool createdAsPlayer = GetFormId() >= 0xff000000 && GetBaseId() <= 0x7;
-  if (!createdAsPlayer) {
-
-    // todo: comment it out
-    return 5;
-
+  if (!IsCreatedAsPlayer()) {
     static const auto kOneHour = 60.f * 60.f;
     return kOneHour;
   }

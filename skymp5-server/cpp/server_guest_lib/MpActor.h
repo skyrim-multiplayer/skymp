@@ -36,6 +36,7 @@ public:
   bool IsWeaponDrawn() const;
   espm::ObjectBounds GetBounds() const;
   const std::vector<FormDesc>& GetTemplateChain() const;
+  bool IsCreatedAsPlayer() const;
 
   void SetRaceMenuOpen(bool isOpen);
   void SetAppearance(const Appearance* newAppearance);
