@@ -16,7 +16,7 @@ index 8998d38..66e449f 100644
  		{
  			if (a_in.has_file() && a_in.shallow_copy()) {
 -				_name.emplace<name_proxied>(a_name, a_in.file());
-+				_name = name_proxied{ a_name, a_in.file() };
++				_name = name_proxy{ a_name, a_in.file() };
  			} else {
  				if (a_in.deep_copy()) {
  					_name.emplace<name_owner>(a_name);
