@@ -2,7 +2,6 @@
 #include "FormCallbacks.h"
 #include "HeuristicPolicy.h"
 #include "ISaveStorage.h"
-#include "IScriptStorage.h"
 #include "LocationalDataUtils.h"
 #include "MpActor.h"
 #include "MpChangeForms.h"
@@ -25,6 +24,7 @@
 #include "Timer.h"
 #include "libespm/GroupUtils.h"
 #include "papyrus-vm/Reader.h"
+#include "script_storages/IScriptStorage.h"
 #include <algorithm>
 #include <deque>
 #include <iterator>

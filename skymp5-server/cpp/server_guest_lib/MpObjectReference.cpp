@@ -11,7 +11,6 @@
 #include "PapyrusObjectReference.h"
 #include "Primitive.h"
 #include "ScopedTask.h"
-#include "ScriptStorage.h"
 #include "ScriptVariablesHolder.h"
 #include "TimeUtils.h"
 #include "WorldState.h"
@@ -19,6 +18,7 @@
 #include "libespm/Utils.h"
 #include "papyrus-vm/Reader.h"
 #include "papyrus-vm/VirtualMachine.h"
+#include "script_storages/IScriptStorage.h"
 #include <map>
 #include <optional>
 
@@ -281,8 +281,8 @@ void MpObjectReference::VisitProperties(const PropertiesVisitor& visitor,
   }
 
   if (ChangeForm().lastAnimation.has_value()) {
-    std::string lastAnimationAsJson = "\"" + *ChangeForm().lastAnimation +
-                                        "\"";
+    std::string lastAnimationAsJson =
+      "\"" + *ChangeForm().lastAnimation + "\"";
     visitor("lastAnimation", lastAnimationAsJson.data());
   }
 
