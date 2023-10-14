@@ -2,6 +2,8 @@
 #include "FormCallbacks.h"
 #include "HeuristicPolicy.h"
 #include "ISaveStorage.h"
+#include "IScriptStorage.h"
+#include "LocationalDataUtils.h"
 #include "MpActor.h"
 #include "MpChangeForms.h"
 #include "MpFormGameObject.h"
@@ -20,7 +22,6 @@
 #include "PapyrusSound.h"
 #include "PapyrusUtility.h"
 #include "ScopedTask.h"
-#include "ScriptStorage.h"
 #include "Timer.h"
 #include "libespm/GroupUtils.h"
 #include "papyrus-vm/Reader.h"
@@ -28,28 +29,6 @@
 #include <deque>
 #include <iterator>
 #include <unordered_map>
-
-const NiPoint3& GetPos(const espm::REFR::LocationalData* locationalData)
-{
-  return *reinterpret_cast<const NiPoint3*>(locationalData->pos);
-}
-
-NiPoint3 GetRot(const espm::REFR::LocationalData* locationalData)
-{
-  static const auto g_pi = std::acos(-1.f);
-  return { locationalData->rotRadians[0] / g_pi * 180.f,
-           locationalData->rotRadians[1] / g_pi * 180.f,
-           locationalData->rotRadians[2] / g_pi * 180.f };
-}
-
-uint32_t GetWorldOrCell(const espm::CombineBrowser& br,
-                        const espm::LookupResult& refrLookupRes)
-{
-  auto mapping = br.GetCombMapping(refrLookupRes.fileIdx);
-  uint32_t worldOrCell =
-    espm::utils::GetMappedId(GetWorldOrCell(br, refrLookupRes.rec), *mapping);
-  return worldOrCell;
-}
 
 struct WorldState::Impl
 {
@@ -411,10 +390,12 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
       reinterpret_cast<MpObjectReference*>(existing->second.get());
 
     if (locationalData) {
-      existingAsRefr->SetPosAndAngleSilent(GetPos(locationalData),
-                                           GetRot(locationalData));
+      existingAsRefr->SetPosAndAngleSilent(
+        LocationalDataUtils::GetPos(locationalData),
+        LocationalDataUtils::GetRot(locationalData));
 
-      assert(existingAsRefr->GetPos() == NiPoint3(GetPos(locationalData)));
+      assert(existingAsRefr->GetPos() ==
+             NiPoint3(LocationalDataUtils::GetPos(locationalData)));
     }
 
   } else {
@@ -432,7 +413,8 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
     auto typeStr = t.ToString();
     std::unique_ptr<MpForm> form;
     LocationalData formLocationalData = {
-      GetPos(locationalData), GetRot(locationalData),
+      LocationalDataUtils::GetPos(locationalData),
+      LocationalDataUtils::GetRot(locationalData),
       FormDesc::FromFormId(worldOrCell, espmFiles)
     };
     if (!isNpc) {

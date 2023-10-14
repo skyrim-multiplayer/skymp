@@ -7,6 +7,7 @@
 #include "FormCallbacks.h"
 #include "GetBaseActorValues.h"
 #include "LeveledListUtils.h"
+#include "LocationalDataUtils.h"
 #include "MathUtils.h"
 #include "MpChangeForms.h"
 #include "MsgType.h"
@@ -786,12 +787,6 @@ void MpActor::SetSpawnPoint(const LocationalData& position)
     [&](MpChangeForm& changeForm) { changeForm.spawnPoint = position; });
 }
 
-// WorldState.cpp
-const NiPoint3& GetPos(const espm::REFR::LocationalData* locationalData);
-NiPoint3 GetRot(const espm::REFR::LocationalData* locationalData);
-uint32_t GetWorldOrCell(const espm::CombineBrowser& br,
-                        const espm::LookupResult& refrLookupRes);
-
 LocationalData MpActor::GetSpawnPoint() const
 {
   auto formId = GetFormId();
@@ -801,10 +796,10 @@ LocationalData MpActor::GetSpawnPoint() const
     if (auto worldState = GetParent(); worldState && worldState->HasEspm()) {
       auto data = espm::GetData<espm::ACHR>(formId, worldState);
       auto lookupRes = worldState->GetEspm().GetBrowser().LookupById(formId);
-      const NiPoint3& pos = ::GetPos(data.loc);
-      NiPoint3 rot = ::GetRot(data.loc);
-      uint32_t worldOrCell =
-        ::GetWorldOrCell(worldState->GetEspm().GetBrowser(), lookupRes);
+      const NiPoint3& pos = LocationalDataUtils::GetPos(data.loc);
+      NiPoint3 rot = LocationalDataUtils::GetRot(data.loc);
+      uint32_t worldOrCell = LocationalDataUtils::GetWorldOrCell(
+        worldState->GetEspm().GetBrowser(), lookupRes);
       return LocationalData{
         pos, rot, FormDesc::FromFormId(worldOrCell, worldState->espmFiles)
       };
