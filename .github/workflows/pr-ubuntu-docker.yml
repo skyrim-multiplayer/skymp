@@ -82,12 +82,12 @@ jobs:
                        -DUNIT_DATA_DIR="/src/skyrim_data_files"
 
           - name: Copy log file from container to workspace
-            if: steps.cmake_configure.outcome == 'failure'
+            if: failure()
             run: |
               docker cp configure_container:/src/vcpkg/buildtrees/rsm-bsa/install-x64-linux-dbg-out.log ${{github.workspace}}/install-x64-linux-dbg-out.log
 
           - name: Upload vcpkg failure logs
-            if: steps.cmake_configure.outcome == 'failure'
+            if: failure()
             uses: actions/upload-artifact@v2
             with:
               name: install-x64-linux-dbg-out.log
