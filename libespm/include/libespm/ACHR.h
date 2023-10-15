@@ -1,6 +1,6 @@
 #pragma once
-#include "RecordHeader.h"
 #include "REFR.h"
+#include "RecordHeader.h"
 
 #pragma pack(push, 1)
 
@@ -13,7 +13,9 @@ public:
 
   bool StartsDead() const noexcept;
 
-  struct Data : public REFR::Data {};
+  struct Data : public REFR::Data
+  {
+  };
 
   Data GetData(CompressedFieldsCache& compressedFieldsCache) const noexcept;
 };

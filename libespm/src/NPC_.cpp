@@ -30,7 +30,8 @@ NPC_::Data NPC_::GetData(
         result.magickaOffset = *reinterpret_cast<const int16_t*>(data + 4);
         result.staminaOffset = *reinterpret_cast<const int16_t*>(data + 6);
         result.healthOffset = *reinterpret_cast<const int16_t*>(data + 20);
-        result.templateDataFlags = *reinterpret_cast<const uint16_t*>(data + 18);
+        result.templateDataFlags =
+          *reinterpret_cast<const uint16_t*>(data + 18);
 
       } else if (!std::memcmp(type, "RNAM", 4)) {
         result.race = *reinterpret_cast<const uint32_t*>(data);

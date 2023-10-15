@@ -79,5 +79,5 @@ protected:
   const std::vector<std::shared_ptr<ActivePexInstance>>&
   ListActivePexInstances() const;
 
-  void AddScript(const std::shared_ptr<ActivePexInstance> &script) noexcept;
+  void AddScript(const std::shared_ptr<ActivePexInstance>& script) noexcept;
 };

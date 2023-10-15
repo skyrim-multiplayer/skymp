@@ -39,7 +39,7 @@ public:
   VarValue PlayAnimation(VarValue self,
                          const std::vector<VarValue>& arguments);
   VarValue PlayAnimationAndWait(VarValue self,
-                         const std::vector<VarValue>& arguments);
+                                const std::vector<VarValue>& arguments);
   VarValue PlayGamebryoAnimation(VarValue self,
                                  const std::vector<VarValue>& arguments);
   VarValue MoveTo(VarValue self, const std::vector<VarValue>& arguments);
@@ -49,10 +49,12 @@ public:
   VarValue Is3DLoaded(VarValue self, const std::vector<VarValue>& arguments);
 
   VarValue GetLinkedRef(VarValue self, const std::vector<VarValue>& arguments);
-  
-  VarValue GetNthLinkedRef(VarValue self, const std::vector<VarValue>& arguments);
-  
-  VarValue GetParentCell(VarValue self, const std::vector<VarValue>& arguments);
+
+  VarValue GetNthLinkedRef(VarValue self,
+                           const std::vector<VarValue>& arguments);
+
+  VarValue GetParentCell(VarValue self,
+                         const std::vector<VarValue>& arguments);
 
   VarValue GetOpenState(VarValue self, const std::vector<VarValue>& arguments);
 
