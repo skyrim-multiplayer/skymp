@@ -229,6 +229,8 @@ public:
   NpcSettingsEntry defaultSetting;
   bool enableConsoleCommandsForAll = false;
 
+  bool disableVanillaScriptsInExterior = true;
+
 private:
   bool AttachEspmRecord(const espm::CombineBrowser& br,
                         const espm::RecordHeader* record,

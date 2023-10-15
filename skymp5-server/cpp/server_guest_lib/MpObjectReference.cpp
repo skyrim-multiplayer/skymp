@@ -1402,7 +1402,8 @@ void MpObjectReference::InitScripts()
 
   // A hardcoded hack to remove all scripts except SweetPie scripts from
   // exterior objects
-  if (GetFormId() < 0x05000000) {
+  if (GetParent() && GetParent()->disableVanillaScriptsInExterior &&
+      GetFormId() < 0x05000000) {
     auto cellOrWorld = GetCellOrWorld().ToFormId(GetParent()->espmFiles);
     auto lookupRes =
       GetParent()->GetEspm().GetBrowser().LookupById(cellOrWorld);
