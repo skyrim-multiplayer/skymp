@@ -13,10 +13,10 @@ endif()
 set(VCPKG_OVERLAY_TRIPLETS "${CMAKE_CURRENT_LIST_DIR}/overlay_triplets")
 set(VCPKG_OVERLAY_PORTS "${CMAKE_CURRENT_LIST_DIR}/overlay_ports")
 
-if(WIN32)
-  set(VCPKG_INSTALL_OPTIONS --no-print-usage --clean-after-build)
+if("$ENV{CI}" STREQUAL "true")
+  set(VCPKG_INSTALL_OPTIONS --no-print-usage)
 else()
-  set(VCPKG_INSTALL_OPTIONS --no-print-usage) # no clean-after-build to retrieve vcpkg failure logs in Ubuntu CI
+  set(VCPKG_INSTALL_OPTIONS --no-print-usage --clean-after-build)
 endif()
 
 if("$ENV{CI}" STREQUAL "true" AND WIN32)
