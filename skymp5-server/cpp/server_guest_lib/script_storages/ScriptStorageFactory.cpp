@@ -2,6 +2,20 @@
 
 #include <filesystem>
 
+namespace {
+std::string ResolveArchivePath(const std::string& pathFromConfigStr,
+                               const std::string& dataDir)
+{
+  std::filesystem::path pathFromConfig = pathFromConfigStr;
+
+  if (pathFromConfig.is_absolute()) {
+    return pathFromConfig.string();
+  } else {
+    return (dataDir / pathFromConfig).string();
+  }
+}
+}
+
 std::shared_ptr<IScriptStorage> ScriptStorageFactory::Create(
   nlohmann::json serverSettings)
 {
@@ -11,7 +25,8 @@ std::shared_ptr<IScriptStorage> ScriptStorageFactory::Create(
   if (serverSettings.contains("archives") &&
       serverSettings.at("archives").is_array()) {
     for (auto archive : serverSettings.at("archives")) {
-      std::string archivePath = archive.get<std::string>();
+      std::string archivePath =
+        ResolveArchivePath(archive.get<std::string>(), dataDir);
       bsaScriptStorages.push_back(
         std::make_shared<BsaArchiveScriptStorage>(archivePath.data()));
     }

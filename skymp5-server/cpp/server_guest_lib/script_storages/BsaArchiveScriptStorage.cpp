@@ -1,11 +1,17 @@
 #include "BsaArchiveScriptStorage.h"
 
 #include <bsa/tes4.hpp>
+#include <filesystem>
 #include <spdlog/spdlog.h>
+#include <stdexcept>
 
 BsaArchiveScriptStorage::BsaArchiveScriptStorage(const char* bsaPath_)
 {
   this->bsaPath = bsaPath_;
+  if (!std::filesystem::exists(bsaPath_)) {
+    throw std::runtime_error(
+      fmt::format("BSA Archive '{}' doesn't exist", bsaPath_));
+  }
 }
 
 std::vector<uint8_t> BsaArchiveScriptStorage::GetScriptPex(
