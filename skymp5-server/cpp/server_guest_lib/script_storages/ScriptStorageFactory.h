@@ -18,9 +18,9 @@ private:
 
   static void AddDirectory(
     std::vector<std::shared_ptr<IScriptStorage>>& storages,
-    nlohmann::json &serverSettings);
+    nlohmann::json& serverSettings);
   static void AddAssets(std::vector<std::shared_ptr<IScriptStorage>>& storages,
-                        nlohmann::json &serverSettings);
+                        nlohmann::json& serverSettings);
   static void AddBsa(std::vector<std::shared_ptr<IScriptStorage>>& storages,
-                     nlohmann::json &serverSettings);
+                     nlohmann::json& serverSettings);
 };
