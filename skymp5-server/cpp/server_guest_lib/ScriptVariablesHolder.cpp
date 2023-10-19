@@ -135,43 +135,49 @@ VarValue ScriptVariablesHolder::CastPrimitivePropertyValue(
       }
       auto propValueFormIdGlobal = toGlobalId(propValue.formId);
       spdlog::trace(
-        "CastPrimitivePropertyValue - Prop to global id {:x} -> {:x}",
-        propValue.formId, propValueFormIdGlobal);
+        "CastPrimitivePropertyValue {} - Prop to global id {:x} -> {:x}",
+        myScriptName, propValue.formId, propValueFormIdGlobal);
       auto& gameObject = st.objectsHolder[propValueFormIdGlobal];
       if (!gameObject) {
         auto lookupResult = br.LookupById(propValueFormIdGlobal);
         if (!lookupResult.rec) {
           spdlog::error(
-            "CastPrimitivePropertyValue - Record with id {:x} not found",
-            propValueFormIdGlobal);
+            "CastPrimitivePropertyValue {} - Record with id {:x} not found",
+            myScriptName, propValueFormIdGlobal);
         } else {
           auto type = lookupResult.rec->GetType();
           if (type == espm::REFR::kType || type == espm::ACHR::kType) {
             if (worldState) {
-              auto& form = worldState->LookupFormById(propValueFormIdGlobal);
+              std::stringstream traceStream;
+              auto& form = worldState->LookupFormById(propValueFormIdGlobal,
+                                                      &traceStream);
               if (form != nullptr) {
                 gameObject = std::make_shared<MpFormGameObject>(form.get());
-                spdlog::trace("CastPrimitivePropertyValue - Created {} "
+                spdlog::trace("CastPrimitivePropertyValue {} - Created {} "
                               "(MpFormGameObject) property with id {:x}",
-                              type.ToString(), propValueFormIdGlobal);
+                              myScriptName, type.ToString(),
+                              propValueFormIdGlobal);
               } else {
                 spdlog::warn(
-                  "CastPrimitivePropertyValue - Unable to create {} "
+                  "CastPrimitivePropertyValue {} - Unable to create {} "
                   "(MpFormGameObject) property with id {:x}, form "
-                  "not found in the world",
-                  type.ToString(), propValueFormIdGlobal);
+                  "not found in the world. LookupFormById trace:\n{}",
+                  myScriptName, type.ToString(), propValueFormIdGlobal,
+                  traceStream.str());
               }
             } else {
-              spdlog::error("CastPrimitivePropertyValue - Unable to create {} "
-                            "(MpFormGameObject) property with id {:x}, null "
-                            "WorldState",
-                            type.ToString(), propValueFormIdGlobal);
+              spdlog::error(
+                "CastPrimitivePropertyValue {} - Unable to create {} "
+                "(MpFormGameObject) property with id {:x}, null "
+                "WorldState",
+                myScriptName, type.ToString(), propValueFormIdGlobal);
             }
           } else {
             gameObject = std::make_shared<EspmGameObject>(lookupResult);
-            spdlog::trace("CastPrimitivePropertyValue - Created {} "
+            spdlog::trace("CastPrimitivePropertyValue {} - Created {} "
                           "(EspmGameObject) property with id {:x}",
-                          type.ToString(), propValueFormIdGlobal);
+                          myScriptName, type.ToString(),
+                          propValueFormIdGlobal);
           }
         }
       }

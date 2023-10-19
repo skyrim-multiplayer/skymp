@@ -109,7 +109,8 @@ public:
       wrapper);
   bool RemoveEffectTimer(uint32_t timerId);
 
-  const std::shared_ptr<MpForm>& LookupFormById(uint32_t formId);
+  const std::shared_ptr<MpForm>& LookupFormById(
+    uint32_t formId, std::stringstream* optionalOutTrace = nullptr);
 
   MpForm* LookupFormByIdx(int idx);
 
@@ -234,9 +235,11 @@ public:
 private:
   bool AttachEspmRecord(const espm::CombineBrowser& br,
                         const espm::RecordHeader* record,
-                        const espm::IdMapping& mapping);
+                        const espm::IdMapping& mapping,
+                        std::stringstream* optionalOutTrace = nullptr);
 
-  bool LoadForm(uint32_t formId);
+  bool LoadForm(uint32_t formId,
+                std::stringstream* optionalOutTrace = nullptr);
   void TickReloot(const std::chrono::system_clock::time_point& now);
   void TickSaveStorage(const std::chrono::system_clock::time_point& now);
   void TickTimers(const std::chrono::system_clock::time_point& now);
