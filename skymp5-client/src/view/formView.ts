@@ -144,9 +144,19 @@ export class FormView implements View<FormModel> {
           const chaurusRace = 0x131eb;
           const frostbiteSpiderRaceGiant = 0x4e507;
           const frostbiteSpiderRaceLarge = 0x53477;
+          const dwarvenCenturionRace = 0x131f1;
+          const dwarvenSphereRace = 0x131f2;
+          const dwarvenSpiderRace = 0x131f3;
 
           // potential masterambushscript
-          if (race === draugrRace || race === falmerRace || race === chaurusRace || race === frostbiteSpiderRaceGiant || race === frostbiteSpiderRaceLarge) {
+          if (race === draugrRace
+            || race === falmerRace
+            || race === chaurusRace
+            || race === frostbiteSpiderRaceGiant
+            || race === frostbiteSpiderRaceLarge
+            || race === dwarvenCenturionRace
+            || race === dwarvenSphereRace
+            || race === dwarvenSpiderRace) {
             Actor.from(refr)?.setActorValue("Aggression", 2);
           }
         }
@@ -156,11 +166,19 @@ export class FormView implements View<FormModel> {
         this.eqState = this.getDefaultEquipState();
 
         this.ready = false;
+
+        let spawnPos;
+        if (model.movement) {
+          spawnPos = model.movement.pos;
+          // printConsole("Spawn NPC at movement.pos");
+        }
+        else {
+          spawnPos = ObjectReferenceEx.getPos(Game.getPlayer() as Actor);
+          printConsole("Spawn NPC at player pos");
+        }
         new SpawnProcess(
           this.appearanceState.appearance,
-          model.movement
-            ? model.movement.pos
-            : ObjectReferenceEx.getPos(Game.getPlayer() as Actor),
+          spawnPos,
           refr.getFormID(),
           () => {
             this.ready = true;
