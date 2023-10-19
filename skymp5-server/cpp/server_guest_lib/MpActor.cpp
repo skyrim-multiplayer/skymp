@@ -797,19 +797,32 @@ LocationalData MpActor::GetSpawnPoint() const
   auto formId = GetFormId();
 
   if (!IsCreatedAsPlayer()) {
-    if (auto worldState = GetParent(); worldState && worldState->HasEspm()) {
-      auto data = espm::GetData<espm::ACHR>(formId, worldState);
-      auto lookupRes = worldState->GetEspm().GetBrowser().LookupById(formId);
-      const NiPoint3& pos = LocationalDataUtils::GetPos(data.loc);
-      NiPoint3 rot = LocationalDataUtils::GetRot(data.loc);
-      uint32_t worldOrCell = LocationalDataUtils::GetWorldOrCell(
-        worldState->GetEspm().GetBrowser(), lookupRes);
-      return LocationalData{
-        pos, rot, FormDesc::FromFormId(worldOrCell, worldState->espmFiles)
-      };
-    }
+    return GetEditorLocationalData();
   }
   return ChangeForm().spawnPoint;
+}
+
+LocationalData MpActor::GetEditorLocationalData() const
+{
+  auto formId = GetFormId();
+  auto worldState = GetParent();
+
+  if (!worldState || !worldState->HasEspm()) {
+    throw std::runtime_error("MpActor::GetEditorLocation can only be used "
+                             "with actors attached to a valid world state");
+  }
+
+  auto data = espm::GetData<espm::ACHR>(formId, worldState);
+  auto lookupRes = worldState->GetEspm().GetBrowser().LookupById(formId);
+
+  const NiPoint3& pos = LocationalDataUtils::GetPos(data.loc);
+  NiPoint3 rot = LocationalDataUtils::GetRot(data.loc);
+  uint32_t worldOrCell = LocationalDataUtils::GetWorldOrCell(
+    worldState->GetEspm().GetBrowser(), lookupRes);
+
+  return LocationalData{
+    pos, rot, FormDesc::FromFormId(worldOrCell, worldState->espmFiles)
+  };
 }
 
 const float MpActor::GetRespawnTime() const
