@@ -1,7 +1,7 @@
 #include "MpForm.h"
 
-#include "MpFormGameObject.h"
 #include "WorldState.h"
+#include "script_objects/MpFormGameObject.h"
 
 MpForm::MpForm()
 {
