@@ -54,6 +54,13 @@ export class FormView implements View<FormModel> {
       }
     }
 
+    // Don't spawn dead actors if not already
+    if (model.isDead) {
+      if (this.refrId === 0) {
+        return;
+      }
+    }
+
     // Players with different worldOrCell should be invisible
     if (model.movement) {
       const worldOrCell = ObjectReferenceEx.getWorldOrCell(Game.getPlayer() as Actor);
@@ -128,6 +135,7 @@ export class FormView implements View<FormModel> {
           true,
           true
         ) as ObjectReference;
+
         this.state = {};
         delete this.wasHostedByOther;
         if (base.getType() !== FormType.NPC) {

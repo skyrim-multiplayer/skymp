@@ -270,9 +270,15 @@ void MpObjectReference::VisitProperties(const PropertiesVisitor& visitor,
   if (IsHarvested()) {
     visitor("isHarvested", "true");
   }
+
   if (IsOpen()) {
     visitor("isOpen", "true");
   }
+
+  if (auto actor = dynamic_cast<MpActor*>(this); actor && actor->IsDead()) {
+    visitor("isDead", "true");
+  }
+
   if (mode == VisitPropertiesMode::All && !GetInventory().IsEmpty()) {
     auto inventoryDump = GetInventory().ToJson().dump();
     visitor("inventory", inventoryDump.data());
