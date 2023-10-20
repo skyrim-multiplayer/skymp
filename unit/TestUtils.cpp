@@ -1,6 +1,5 @@
 #include "TestUtils.hpp"
 #include "FormCallbacks.h"
-#include "IPapyrusCompatibilityPolicy.h"
 #include "MpActor.h"
 #include "MsgType.h"
 #include "PartOne.h"
@@ -103,15 +102,4 @@ std::string FakeListener::str()
 void FakeListener::clear()
 {
   ss = std::stringstream();
-}
-
-PapyrusCompatibilityPolicy::PapyrusCompatibilityPolicy(MpActor* ac_)
-  : ac(ac_)
-{
-}
-
-MpActor* PapyrusCompatibilityPolicy::GetDefaultActor(const char*, const char*,
-                                                     int32_t) const
-{
-  return ac;
 }

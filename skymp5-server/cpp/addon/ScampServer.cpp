@@ -1,23 +1,19 @@
 #include "ScampServer.h"
 
-#include "AsyncSaveStorage.h"
 #include "Bot.h"
-#include "FileDatabase.h"
 #include "FormCallbacks.h"
 #include "GamemodeApi.h"
-#include "MigrationDatabase.h"
-#include "MongoDatabase.h"
-#include "MpFormGameObject.h"
 #include "NapiHelper.h"
 #include "NetworkingCombined.h"
 #include "PacketHistoryWrapper.h"
 #include "PapyrusUtils.h"
 #include "ScampServerListener.h"
-#include "SettingsUtils.h"
+#include "database_drivers/DatabaseFactory.h"
 #include "formulas/SweetPieDamageFormula.h"
 #include "formulas/TES5DamageFormula.h"
 #include "libespm/IterateFields.h"
 #include "property_bindings/PropertyBindingFactory.h"
+#include "save_storages/SaveStorageFactory.h"
 #include "script_objects/EspmGameObject.h"
 #include "script_storages/ScriptStorageFactory.h"
 #include <cassert>
@@ -35,12 +31,6 @@ std::shared_ptr<spdlog::logger>& GetLogger()
 {
   static auto g_logger = spdlog::stdout_color_mt("console");
   return g_logger;
-}
-
-std::shared_ptr<ISaveStorage> CreateSaveStorage(
-  std::shared_ptr<IDatabase> db, std::shared_ptr<spdlog::logger> logger)
-{
-  return std::make_shared<AsyncSaveStorage>(db, logger);
 }
 
 std::string GetPropertyAlphabet()
@@ -346,8 +336,9 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
 Napi::Value ScampServer::AttachSaveStorage(const Napi::CallbackInfo& info)
 {
   try {
-    partOne->AttachSaveStorage(CreateSaveStorage(
-      SettingsUtils::CreateDatabase(serverSettings, logger), logger));
+    auto db = DatabaseFactory::Create(serverSettings, logger);
+    auto saveStorage = SaveStorageFactory::Create(db, logger);
+    partOne->AttachSaveStorage(saveStorage);
   } catch (std::exception& e) {
     throw Napi::Error::New(info.Env(), (std::string)e.what());
   }

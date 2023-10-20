@@ -106,19 +106,13 @@ public:
 
   explicit operator bool() const { return CastToBool().data.b; }
 
-  explicit operator IGameObject*() const
-  {
-    return GetType() == kType_Object ? data.id : nullptr;
-  }
+  explicit operator IGameObject*() const { return data.id; }
 
   explicit operator int() const { return CastToInt().data.i; }
 
   explicit operator double() const { return CastToFloat().data.f; }
 
-  explicit operator const char*() const
-  {
-    return GetType() == kType_String ? data.string : "";
-  }
+  explicit operator const char*() const { return data.string; }
 
   std::shared_ptr<std::vector<VarValue>> pArray;
 

@@ -1,10 +1,10 @@
 #include "ScriptVariablesHolder.h"
 
-#include "EspmGameObject.h"
-#include "MpFormGameObject.h"
 #include "WorldState.h"
 #include "libespm/Property.h"
 #include "papyrus-vm/Utils.h"
+#include "script_objects/EspmGameObject.h"
+#include "script_objects/MpFormGameObject.h"
 
 #include <spdlog/spdlog.h>
 

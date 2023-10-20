@@ -1,15 +1,15 @@
 #include "TestUtils.hpp"
 #include <catch2/catch_all.hpp>
 
-#include "HeuristicPolicy.h"
 #include "MpActor.h"
-#include "MpFormGameObject.h"
+#include "script_compatibility_policies/HeuristicPolicy.h"
+#include "script_objects/MpFormGameObject.h"
 
 TEST_CASE("HeuristicPolicy", "[HeuristicPolicy]")
 {
   auto logger = std::make_shared<spdlog::logger>("empty logger");
   WorldState wst;
-  HeuristicPolicy policy(logger, &wst);
+  HeuristicPolicy policy(&wst);
 
   MpActor actor(LocationalData(), FormCallbacks::DoNothing());
   MpFormGameObject actorGameObject(&actor);

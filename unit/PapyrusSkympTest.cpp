@@ -1,8 +1,8 @@
 #include "TestUtils.hpp"
 #include <catch2/catch_all.hpp>
 
-#include "HeuristicPolicy.h"
-#include "PapyrusSkymp.h"
+#include "script_classes/PapyrusSkymp.h"
+#include "script_compatibility_policies/HeuristicPolicy.h"
 
 TEST_CASE("SetDefaultActor should store actor per stack", "[Papyrus][Skymp]")
 {
@@ -12,7 +12,7 @@ TEST_CASE("SetDefaultActor should store actor per stack", "[Papyrus][Skymp]")
 
   auto logger = std::make_shared<spdlog::logger>("empty logger");
   PapyrusSkymp skymp;
-  skymp.policy = std::make_shared<HeuristicPolicy>(logger, &p.worldState);
+  skymp.policy = std::make_shared<HeuristicPolicy>(&p.worldState);
 
   skymp.SetDefaultActor(VarValue::AttachTestStackId(VarValue::None(), 0),
                         { ac.ToVarValue() });
