@@ -1,8 +1,8 @@
 #include "PapyrusEffectShader.h"
 
-#include "EspmGameObject.h"
-#include "MpFormGameObject.h"
 #include "WorldState.h"
+#include "script_objects/EspmGameObject.h"
+#include "script_objects/MpFormGameObject.h"
 
 VarValue PapyrusEffectShader::Play(VarValue self,
                                    const std::vector<VarValue>& arguments)

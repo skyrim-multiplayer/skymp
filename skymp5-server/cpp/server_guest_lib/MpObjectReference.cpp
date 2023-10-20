@@ -1,14 +1,11 @@
 #include "MpObjectReference.h"
 #include "ChangeFormGuard.h"
-#include "EspmGameObject.h"
 #include "EvaluateTemplate.h"
 #include "FormCallbacks.h"
 #include "LeveledListUtils.h"
 #include "MpActor.h"
 #include "MpChangeForms.h"
 #include "MsgType.h"
-#include "PapyrusGame.h"
-#include "PapyrusObjectReference.h"
 #include "Primitive.h"
 #include "ScopedTask.h"
 #include "ScriptVariablesHolder.h"
@@ -18,6 +15,7 @@
 #include "libespm/Utils.h"
 #include "papyrus-vm/Reader.h"
 #include "papyrus-vm/VirtualMachine.h"
+#include "script_objects/EspmGameObject.h"
 #include "script_storages/IScriptStorage.h"
 #include <map>
 #include <optional>

@@ -3,7 +3,6 @@
 #include "ConsoleCommands.h"
 #include "CropRegeneration.h"
 #include "DummyMessageOutput.h"
-#include "EspmGameObject.h"
 #include "Exceptions.h"
 #include "FindRecipe.h"
 #include "GetBaseActorValues.h"
@@ -15,6 +14,7 @@
 #include "UserMessageOutput.h"
 #include "WorldState.h"
 #include "papyrus-vm/Utils.h"
+#include "script_objects/EspmGameObject.h"
 #include <fmt/format.h>
 #include <spdlog/spdlog.h>
 #include <unordered_set>

@@ -1,15 +1,15 @@
 #include "PapyrusObjectReference.h"
 
-#include "EspmGameObject.h"
 #include "FormCallbacks.h"
 #include "LocationalData.h"
 #include "MpActor.h"
-#include "MpFormGameObject.h"
 #include "MpObjectReference.h"
 #include "SpSnippetFunctionGen.h"
 #include "TimeUtils.h"
 #include "WorldState.h"
 #include "papyrus-vm/Structures.h"
+#include "script_objects/EspmGameObject.h"
+#include "script_objects/MpFormGameObject.h"
 #include <cstring>
 
 VarValue PapyrusObjectReference::IsHarvested(

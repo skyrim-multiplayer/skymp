@@ -1,10 +1,10 @@
 #include "PapyrusForm.h"
 
-#include "EspmGameObject.h"
 #include "MpActor.h"
-#include "MpFormGameObject.h"
 #include "TimeUtils.h"
 #include "WorldState.h"
+#include "script_objects/EspmGameObject.h"
+#include "script_objects/MpFormGameObject.h"
 
 #include <ratio>
 #include <string>

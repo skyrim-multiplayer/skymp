@@ -2,28 +2,26 @@
 #include "IPapyrusCompatibilityPolicy.h"
 
 #include "MpActor.h"
-#include "MpFormGameObject.h"
 #include "papyrus-vm/Utils.h"
 #include "papyrus-vm/VirtualMachine.h"
-#include <spdlog/logger.h>
+#include "script_objects/MpFormGameObject.h"
 #include <vector>
 
 class HeuristicPolicy : public IPapyrusCompatibilityPolicy
 {
 public:
-  explicit HeuristicPolicy(const std::shared_ptr<spdlog::logger>& logger,
-                           WorldState* worldState_);
+  explicit HeuristicPolicy(WorldState* worldState_);
 
   MpActor* GetDefaultActor(const char* className, const char* funcName,
                            int32_t stackId) const override;
 
   WorldState* GetWorldState() const override;
 
-  void SetDefaultActor(int32_t stackId, MpActor* actor);
+  void SetDefaultActor(int32_t stackId, MpActor* actor) override;
 
   void BeforeSendPapyrusEvent(MpForm* form, const char* eventName,
                               const VarValue* arguments, size_t argumentsCount,
-                              int32_t stackId);
+                              int32_t stackId) override;
 
 private:
   struct StackInfo
@@ -32,6 +30,5 @@ private:
     const char* currentEventName = "";
   };
   std::vector<StackInfo> stackInfo;
-  const std::shared_ptr<spdlog::logger>& logger;
   WorldState* const worldState;
 };

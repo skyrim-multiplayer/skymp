@@ -1,9 +1,9 @@
 #include "PapyrusSound.h"
 
-#include "EspmGameObject.h"
-#include "MpFormGameObject.h"
 #include "MpObjectReference.h"
 #include "SpSnippetFunctionGen.h"
+#include "script_objects/EspmGameObject.h"
+#include "script_objects/MpFormGameObject.h"
 
 VarValue PapyrusSound::Play(VarValue self,
                             const std::vector<VarValue>& arguments)

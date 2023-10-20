@@ -1,21 +1,21 @@
 #include "HeuristicPolicy.h"
 
-#include "MpFormGameObject.h"
+#include "script_objects/MpFormGameObject.h"
 
-HeuristicPolicy::HeuristicPolicy(
-  const std::shared_ptr<spdlog::logger>& logger_, WorldState* worldState_)
-  : logger(logger_)
-  , worldState(worldState_)
+HeuristicPolicy::HeuristicPolicy(WorldState* worldState_)
+  : worldState(worldState_)
 {
 }
 
 void HeuristicPolicy::SetDefaultActor(int32_t stackId, MpActor* newActor)
 {
-  if (stackId < 0)
+  if (stackId < 0) {
     throw std::runtime_error("Invalid stackId was passed to SetDefaultActor");
+  }
 
-  if (stackInfo.size() <= stackId)
+  if (stackInfo.size() <= stackId) {
     stackInfo.resize(stackId + 1);
+  }
   stackInfo[stackId].ac = newActor;
 }
 
@@ -23,19 +23,21 @@ MpActor* HeuristicPolicy::GetDefaultActor(const char* className,
                                           const char* funcName,
                                           int32_t stackId) const
 {
-  if (stackId < 0 || stackId >= stackInfo.size())
+  if (stackId < 0 || stackId >= stackInfo.size()) {
     throw std::runtime_error(
       "Invalid stackId was passed to GetDefaultActor (" +
       std::to_string(stackId) + ")");
+  }
 
   auto& info = stackInfo[stackId];
 
   MpActor* actor = stackId < stackInfo.size() ? stackInfo[stackId].ac
                                               : static_cast<MpActor*>(nullptr);
 
-  if (!actor && logger)
-    logger->warn("Unable to determine Actor for '{}.{}' in '{}'", className,
+  if (!actor) {
+    spdlog::warn("Unable to determine Actor for '{}.{}' in '{}'", className,
                  funcName, info.currentEventName);
+  }
   return actor;
 }
 
@@ -65,7 +67,8 @@ void HeuristicPolicy::BeforeSendPapyrusEvent(MpForm* form,
     actor = GetFormPtr<MpActor>(arguments[0]);
   }
 
-  if (stackInfo.size() <= stackId)
+  if (stackInfo.size() <= stackId) {
     stackInfo.resize(stackId + 1);
+  }
   stackInfo[stackId] = { actor, eventName };
 }

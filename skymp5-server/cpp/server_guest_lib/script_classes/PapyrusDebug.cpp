@@ -1,7 +1,7 @@
 #include "PapyrusDebug.h"
 
 #include "MpActor.h"
-#include "MpFormGameObject.h"
+#include "script_objects/MpFormGameObject.h"
 
 VarValue PapyrusDebug::SendAnimationEvent(
   VarValue self, const std::vector<VarValue>& arguments)

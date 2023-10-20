@@ -1,6 +1,6 @@
 #include "PapyrusFormList.h"
 
-#include "EspmGameObject.h"
+#include "script_objects/EspmGameObject.h"
 
 VarValue PapyrusFormList::GetSize(VarValue self,
                                   const std::vector<VarValue>& arguments)

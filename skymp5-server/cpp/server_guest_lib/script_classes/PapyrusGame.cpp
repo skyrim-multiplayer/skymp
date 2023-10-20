@@ -1,10 +1,10 @@
 #include "PapyrusGame.h"
 #include "PapyrusFormList.h"
 
-#include "EspmGameObject.h"
-#include "MpFormGameObject.h"
 #include "WorldState.h"
 #include "libespm/Combiner.h"
+#include "script_objects/EspmGameObject.h"
+#include "script_objects/MpFormGameObject.h"
 
 VarValue PapyrusGame::IncrementStat(VarValue self,
                                     const std::vector<VarValue>& arguments)

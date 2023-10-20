@@ -1,9 +1,9 @@
 #include "ConsoleCommands.h"
-#include "EspmGameObject.h"
+#include "script_objects/EspmGameObject.h"
 #include "MpActor.h"
-#include "PapyrusObjectReference.h"
 #include "WorldState.h"
 #include "papyrus-vm/Utils.h"
+#include "script_classes/PapyrusObjectReference.h"
 
 ConsoleCommands::Argument::Argument()
 {

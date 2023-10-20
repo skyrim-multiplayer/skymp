@@ -2,7 +2,6 @@
 
 #include "AsyncSaveStorage.h"
 #include "Bot.h"
-#include "EspmGameObject.h"
 #include "FileDatabase.h"
 #include "FormCallbacks.h"
 #include "GamemodeApi.h"
@@ -19,6 +18,7 @@
 #include "formulas/TES5DamageFormula.h"
 #include "libespm/IterateFields.h"
 #include "property_bindings/PropertyBindingFactory.h"
+#include "script_objects/EspmGameObject.h"
 #include "script_storages/ScriptStorageFactory.h"
 #include <cassert>
 #include <cctype>

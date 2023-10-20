@@ -1,7 +1,7 @@
 #pragma once
-#include "EspmGameObject.h"
 #include "IPapyrusClass.h"
 #include "SpSnippetFunctionGen.h"
+#include "script_objects/EspmGameObject.h"
 
 class PapyrusActor final : public IPapyrusClass<PapyrusActor>
 {

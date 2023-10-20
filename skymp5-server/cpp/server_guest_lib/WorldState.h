@@ -4,13 +4,13 @@
 #include "GridElement.h"
 #include "MpChangeForms.h"
 #include "MpForm.h"
-#include "MpFormGameObject.h"
 #include "MpObjectReference.h"
 #include "NiPoint3.h"
 #include "PartOneListener.h"
 #include "Timer.h"
 #include "libespm/Loader.h"
 #include "papyrus-vm/VirtualMachine.h"
+#include "script_objects/MpFormGameObject.h"
 #include <MakeID.h>
 #include <algorithm>
 #include <chrono>

@@ -1,14 +1,13 @@
 #pragma once
-#include "EspmGameObject.h"
 #include "IPapyrusClass.h"
 #include "SpSnippetFunctionGen.h"
 
-class PapyrusCell final : public IPapyrusClass<PapyrusCell>
+class PapyrusMessage final : public IPapyrusClass<PapyrusMessage>
 {
 public:
-  const char* GetName() override { return "cell"; }
+  const char* GetName() override { return "message"; }
 
-  VarValue IsAttached(VarValue self, const std::vector<VarValue>& arguments);
+  DEFINE_METHOD_SPSNIPPET(Show);
 
   void Register(VirtualMachine& vm,
                 std::shared_ptr<IPapyrusCompatibilityPolicy> policy) override;

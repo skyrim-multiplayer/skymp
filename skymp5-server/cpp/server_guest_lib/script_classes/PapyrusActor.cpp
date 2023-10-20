@@ -1,7 +1,7 @@
 #include "PapyrusActor.h"
 
 #include "MpActor.h"
-#include "MpFormGameObject.h"
+#include "script_objects/MpFormGameObject.h"
 
 #include "SpSnippetFunctionGen.h"
 #include "papyrus-vm/CIString.h"

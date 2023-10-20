@@ -25,7 +25,7 @@ private:
 };
 
 template <class T>
-inline T* GetFormPtr(const VarValue& papyrusObject)
+T* GetFormPtr(const VarValue& papyrusObject)
 {
   if (papyrusObject.GetType() != VarValue::kType_Object) {
     return nullptr;

@@ -1,29 +1,16 @@
 #include "WorldState.h"
 #include "FormCallbacks.h"
-#include "HeuristicPolicy.h"
 #include "ISaveStorage.h"
 #include "LocationalDataUtils.h"
 #include "MpActor.h"
 #include "MpChangeForms.h"
-#include "MpFormGameObject.h"
 #include "MpObjectReference.h"
-#include "PapyrusActor.h"
-#include "PapyrusCell.h"
-#include "PapyrusDebug.h"
-#include "PapyrusEffectShader.h"
-#include "PapyrusForm.h"
-#include "PapyrusFormList.h"
-#include "PapyrusGame.h"
-#include "PapyrusKeyword.h"
-#include "PapyrusMessage.h"
-#include "PapyrusObjectReference.h"
-#include "PapyrusSkymp.h"
-#include "PapyrusSound.h"
-#include "PapyrusUtility.h"
 #include "ScopedTask.h"
 #include "Timer.h"
 #include "libespm/GroupUtils.h"
 #include "papyrus-vm/Reader.h"
+#include "script_classes/PapyrusClassesFactory.h"
+#include "script_compatibility_policies/PapyrusCompatibilityPolicyFactory.h"
 #include "script_storages/IScriptStorage.h"
 #include <algorithm>
 #include <deque>
@@ -38,7 +25,7 @@ struct WorldState::Impl
   bool saveStorageBusy = false;
   std::shared_ptr<VirtualMachine> vm;
   uint32_t nextId = 0xff000000;
-  std::shared_ptr<HeuristicPolicy> policy;
+  std::shared_ptr<IPapyrusCompatibilityPolicy> policy;
   std::unordered_map<uint32_t, MpChangeForm> changeFormsForDeferredLoad;
   bool chunkLoadingInProgress = false;
   bool formLoadingInProgress = false;
@@ -53,7 +40,7 @@ WorldState::WorldState()
   logger.reset(new spdlog::logger("empty logger"));
 
   pImpl.reset(new Impl);
-  pImpl->policy.reset(new HeuristicPolicy(logger, this));
+  pImpl->policy = PapyrusCompatibilityPolicyFactory::Create(this);
 }
 
 void WorldState::Clear()
@@ -822,22 +809,8 @@ VirtualMachine& WorldState::GetPapyrusVm()
         }
       });
 
-      pImpl->classes.emplace_back(std::make_unique<PapyrusObjectReference>());
-      pImpl->classes.emplace_back(std::make_unique<PapyrusGame>());
-      pImpl->classes.emplace_back(std::make_unique<PapyrusForm>());
-      pImpl->classes.emplace_back(std::make_unique<PapyrusMessage>());
-      pImpl->classes.emplace_back(std::make_unique<PapyrusFormList>());
-      pImpl->classes.emplace_back(std::make_unique<PapyrusDebug>());
-      pImpl->classes.emplace_back(std::make_unique<PapyrusActor>());
-      pImpl->classes.emplace_back(std::make_unique<PapyrusSkymp>());
-      pImpl->classes.emplace_back(std::make_unique<PapyrusUtility>());
-      pImpl->classes.emplace_back(std::make_unique<PapyrusEffectShader>());
-      pImpl->classes.emplace_back(std::make_unique<PapyrusKeyword>());
-      pImpl->classes.emplace_back(std::make_unique<PapyrusCell>());
-      pImpl->classes.emplace_back(std::make_unique<PapyrusSound>());
-      for (auto& cl : pImpl->classes) {
-        cl->Register(*pImpl->vm, pImpl->policy);
-      }
+      pImpl->classes =
+        PapyrusClassesFactory::CreateAndRegister(*pImpl->vm, pImpl->policy);
     }
   }
 

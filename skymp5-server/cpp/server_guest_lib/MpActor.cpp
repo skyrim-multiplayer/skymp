@@ -3,7 +3,6 @@
 #include "ActorValues.h"
 #include "ChangeFormGuard.h"
 #include "CropRegeneration.h"
-#include "EspmGameObject.h"
 #include "FormCallbacks.h"
 #include "GetBaseActorValues.h"
 #include "LeveledListUtils.h"
@@ -11,12 +10,12 @@
 #include "MathUtils.h"
 #include "MpChangeForms.h"
 #include "MsgType.h"
-#include "PapyrusObjectReference.h"
 #include "ServerState.h"
 #include "SweetPieScript.h"
 #include "TimeUtils.h"
 #include "WorldState.h"
 #include "libespm/espm.h"
+#include "script_objects/EspmGameObject.h"
 #include <NiPoint3.h>
 #include <chrono>
 #include <functional>

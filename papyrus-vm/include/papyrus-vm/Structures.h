@@ -104,15 +104,21 @@ public:
 
   static VarValue None() { return VarValue(); }
 
-  explicit operator bool() const { return this->CastToBool().data.b; }
+  explicit operator bool() const { return CastToBool().data.b; }
 
-  explicit operator IGameObject*() const { return this->data.id; }
+  explicit operator IGameObject*() const
+  {
+    return GetType() == kType_Object ? data.id : nullptr;
+  }
 
-  explicit operator int() const { return this->CastToInt().data.i; }
+  explicit operator int() const { return CastToInt().data.i; }
 
-  explicit operator double() const { return this->CastToFloat().data.f; }
+  explicit operator double() const { return CastToFloat().data.f; }
 
-  explicit operator const char*() const { return this->data.string; }
+  explicit operator const char*() const
+  {
+    return GetType() == kType_String ? data.string : "";
+  }
 
   std::shared_ptr<std::vector<VarValue>> pArray;
 

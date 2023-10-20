@@ -1,7 +1,7 @@
 #pragma once
-#include "EspmGameObject.h"
 #include "IPapyrusClass.h"
 #include "WorldState.h"
+#include "script_objects/EspmGameObject.h"
 
 class PapyrusKeyword final : public IPapyrusClass<PapyrusKeyword>
 {

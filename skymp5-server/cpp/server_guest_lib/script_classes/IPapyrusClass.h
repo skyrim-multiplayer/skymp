@@ -1,6 +1,6 @@
 #pragma once
-#include "IPapyrusCompatibilityPolicy.h"
 #include "papyrus-vm/VirtualMachine.h"
+#include "script_compatibility_policies/IPapyrusCompatibilityPolicy.h"
 
 class IPapyrusClassBase
 {

@@ -1,8 +1,10 @@
 #pragma once
 #include <cstdint>
 
+class MpForm;
 class MpActor;
 class WorldState;
+struct VarValue;
 
 class IPapyrusCompatibilityPolicy
 {
@@ -16,4 +18,11 @@ public:
                                    int32_t stackId) const = 0;
 
   virtual WorldState* GetWorldState() const { return nullptr; }
+
+  virtual void SetDefaultActor(int32_t stackId, MpActor* actor) = 0;
+
+  virtual void BeforeSendPapyrusEvent(MpForm* form, const char* eventName,
+                                      const VarValue* arguments,
+                                      size_t argumentsCount,
+                                      int32_t stackId) = 0;
 };
