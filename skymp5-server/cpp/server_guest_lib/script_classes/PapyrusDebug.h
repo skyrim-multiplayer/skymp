@@ -13,15 +13,10 @@ public:
   VarValue SendAnimationEvent(VarValue self,
                               const std::vector<VarValue>& arguments);
 
-  void Register(VirtualMachine& vm,
-                std::shared_ptr<IPapyrusCompatibilityPolicy> policy) override
-  {
-    compatibilityPolicy = policy;
+  VarValue Trace(VarValue self, const std::vector<VarValue>& arguments);
 
-    AddStatic(vm, "Notification", &PapyrusDebug::Notification);
-    AddStatic(vm, "MessageBox", &PapyrusDebug::MessageBox);
-    AddStatic(vm, "SendAnimationEvent", &PapyrusDebug::SendAnimationEvent);
-  }
+  void Register(VirtualMachine& vm,
+                std::shared_ptr<IPapyrusCompatibilityPolicy> policy) override;
 
   std::shared_ptr<IPapyrusCompatibilityPolicy> compatibilityPolicy;
 };
