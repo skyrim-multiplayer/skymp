@@ -2,7 +2,7 @@
 #include "NapiHelper.h"
 
 Napi::Value SpawnDelayBinding::Get(Napi::Env env, ScampServer& scampServer,
-                                    uint32_t formId)
+                                   uint32_t formId)
 {
   auto& partOne = scampServer.GetPartOne();
 
@@ -11,12 +11,12 @@ Napi::Value SpawnDelayBinding::Get(Napi::Env env, ScampServer& scampServer,
 }
 
 void SpawnDelayBinding::Set(Napi::Env env, ScampServer& scampServer,
-                             uint32_t formId, Napi::Value newValue)
+                            uint32_t formId, Napi::Value newValue)
 {
   auto& partOne = scampServer.GetPartOne();
 
   auto newSpawnDelay = NapiHelper::ExtractFloat(newValue, "newSpawnDelay");
-  
+
   auto& actor = partOne->worldState.GetFormAt<MpActor>(formId);
   actor.SetRespawnTime(newSpawnDelay);
 }
