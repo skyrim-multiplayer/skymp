@@ -303,19 +303,19 @@ namespace {
 VarValue VarValueFromJson(const simdjson::dom::element& parentMsg,
                           const simdjson::dom::element& element)
 {
-  static const auto key = JsonPointer("returnValue");
+  static const auto kKey = JsonPointer("returnValue");
 
   // TODO: DOUBLE, STRING ...
   switch (element.type()) {
     case simdjson::dom::element_type::INT64:
     case simdjson::dom::element_type::UINT64: {
       int32_t v;
-      ReadEx(parentMsg, key, &v);
+      ReadEx(parentMsg, kKey, &v);
       return VarValue(v);
     }
     case simdjson::dom::element_type::BOOL: {
       bool v;
-      ReadEx(parentMsg, key, &v);
+      ReadEx(parentMsg, kKey, &v);
       return VarValue(v);
     }
     case simdjson::dom::element_type::NULL_VALUE:
