@@ -1,3 +1,12 @@
+#include <SKSE/SKSE.h>
+
+#include <Windows.h>
+#include <cassert>
+#include <filesystem>
+#include <span>
+
+#include "Version.h"
+
 typedef void (*IpcMessageCallback)(const uint8_t* data, uint32_t length,
                                    void* state);
 
@@ -87,7 +96,7 @@ private:
     if (!p.is_absolute()) {
       throw std::logic_error("An absolute path expected: " + p.string());
     }
-    
+
     if (!std::filesystem::is_directory(p)) {
       throw std::logic_error("Expected path to be a directory: " + p.string());
     }
@@ -115,7 +124,7 @@ private:
 extern "C" {
 
 #ifdef SKYRIMSE
-DLLEXPORT bool SKSEPlugin_Query(const SKSE::QueryInterface* skse,
+__declspec(dllexport) bool SKSEPlugin_Query(const SKSE::QueryInterface* skse,
                                 SKSE::PluginInfo* info)
 {
   info->infoVersion = SKSE::PluginInfo::kVersion;
@@ -130,7 +139,7 @@ DLLEXPORT bool SKSEPlugin_Query(const SKSE::QueryInterface* skse,
 }
 
 #else
-DLLEXPORT constinit auto SKSEPlugin_Version = []() {
+__declspec(dllexport) constinit auto SKSEPlugin_Version = []() {
   SKSE::PluginVersionData v;
   v.PluginVersion(Version::ASINT);
   v.PluginName("SkyrimPlatform");
@@ -143,7 +152,7 @@ DLLEXPORT constinit auto SKSEPlugin_Version = []() {
 
 #endif
 
-DLLEXPORT uint32_t SkyrimPlatform_IpcSubscribe(const char* systemName,
+__declspec(dllexport) uint32_t SkyrimPlatform_IpcSubscribe(const char* systemName,
                                                IpcMessageCallback callback,
                                                void* state)
 {
@@ -151,19 +160,19 @@ DLLEXPORT uint32_t SkyrimPlatform_IpcSubscribe(const char* systemName,
                                                             callback, state);
 }
 
-DLLEXPORT void SkyrimPlatform_IpcUnsubscribe(uint32_t subscriptionId)
+__declspec(dllexport) void SkyrimPlatform_IpcUnsubscribe(uint32_t subscriptionId)
 {
   return PlatformImplInterface::GetSingleton().IpcUnsubscribe(subscriptionId);
 }
 
-DLLEXPORT void SkyrimPlatform_IpcSend(const char* systemName,
+__declspec(dllexport) void SkyrimPlatform_IpcSend(const char* systemName,
                                       const uint8_t* data, uint32_t length)
 {
   return PlatformImplInterface::GetSingleton().IpcSend(systemName, data,
                                                        length);
 }
 
-DLLEXPORT bool SKSEPlugin_Load(void* skse)
+__declspec(dllexport) bool SKSEPlugin_Load(void* skse)
 {
   try {
     return PlatformImplInterface::GetSingleton().Load(skse);

@@ -114,7 +114,6 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
     target_include_directories(skyrim_platform_entry PRIVATE "${third_party}")
     target_include_directories(skyrim_platform_entry PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/include)
     target_link_libraries(skyrim_platform_entry PRIVATE CommonLibSSE::CommonLibSSE)
-    target_precompile_headers(skyrim_platform_entry	PRIVATE	skyrim_platform_entry/PCH.h)
     apply_default_settings(TARGETS skyrim_platform_entry)
 
     set_target_properties(skyrim_platform SkyrimPlatformCEF skyrim_platform_entry PROPERTIES
