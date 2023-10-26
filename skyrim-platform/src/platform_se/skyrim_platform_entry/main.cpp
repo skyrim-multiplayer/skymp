@@ -125,7 +125,7 @@ extern "C" {
 
 #ifdef SKYRIMSE
 __declspec(dllexport) bool SKSEPlugin_Query(const SKSE::QueryInterface* skse,
-                                SKSE::PluginInfo* info)
+                                            SKSE::PluginInfo* info)
 {
   info->infoVersion = SKSE::PluginInfo::kVersion;
   info->name = "SkyrimPlatform";
@@ -152,21 +152,23 @@ __declspec(dllexport) constinit auto SKSEPlugin_Version = []() {
 
 #endif
 
-__declspec(dllexport) uint32_t SkyrimPlatform_IpcSubscribe(const char* systemName,
-                                               IpcMessageCallback callback,
-                                               void* state)
+__declspec(dllexport) uint32_t
+  SkyrimPlatform_IpcSubscribe(const char* systemName,
+                              IpcMessageCallback callback, void* state)
 {
   return PlatformImplInterface::GetSingleton().IpcSubscribe(systemName,
                                                             callback, state);
 }
 
-__declspec(dllexport) void SkyrimPlatform_IpcUnsubscribe(uint32_t subscriptionId)
+__declspec(dllexport) void SkyrimPlatform_IpcUnsubscribe(
+  uint32_t subscriptionId)
 {
   return PlatformImplInterface::GetSingleton().IpcUnsubscribe(subscriptionId);
 }
 
 __declspec(dllexport) void SkyrimPlatform_IpcSend(const char* systemName,
-                                      const uint8_t* data, uint32_t length)
+                                                  const uint8_t* data,
+                                                  uint32_t length)
 {
   return PlatformImplInterface::GetSingleton().IpcSend(systemName, data,
                                                        length);
