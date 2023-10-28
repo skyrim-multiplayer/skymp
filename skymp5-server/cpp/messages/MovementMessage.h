@@ -1,6 +1,5 @@
 #pragma once
 
-#include "MessageBase.h"
 #include "MsgType.h"
 #include <array>
 #include <cstdint>
@@ -9,43 +8,59 @@
 #include <string>
 #include <string_view>
 #include <tuple>
+#include <type_traits>
 
-enum class RunMode
+struct MovementMessage
 {
-  Standing,
-  Walking,
-  Running,
-  Sprinting,
-};
+  // TODO
+  // const static char kMsgType = static_cast<char>(MsgType::UpdateMovement);
+  // const static char kHeaderByte = 'M';
 
-const std::string& ToString(RunMode runMode);
+  struct Data
+  {
+    template <class Archive>
+    void Serialize(Archive& archive)
+    {
+      archive.Serialize("worldOrCell", worldOrCell)
+        .Serialize("pos", pos)
+        .Serialize("rot", rot)
+        .Serialize("direction", direction)
+        .Serialize("healthPercentage", healthPercentage)
+        .Serialize("speed", speed)
+        .Serialize("runMode", runMode)
+        .Serialize("isInJumpState", isInJumpState)
+        .Serialize("isSneaking", isSneaking)
+        .Serialize("isBlocking", isBlocking)
+        .Serialize("isWeapDrawn", isWeapDrawn)
+        .Serialize("isDead", isDead)
+        .Serialize("lookAt", lookAt);
+    }
 
-RunMode RunModeFromString(std::string_view str);
+    uint32_t worldOrCell = 0;
+    std::array<float, 3> pos{ 0, 0, 0 };
+    std::array<float, 3> rot{ 0, 0, 0 };
+    float direction = 0;
+    float healthPercentage = 0;
+    float speed = 0;
 
-struct MovementMessage : public MessageBase<MovementMessage>
-{
-  const static char kMsgType = static_cast<char>(MsgType::UpdateMovement);
-  const static char kHeaderByte = 'M';
+    // flags & optionals
+    std::string runMode = "Standing";
+    bool isInJumpState = false;
+    bool isSneaking = false;
+    bool isBlocking = false;
+    bool isWeapDrawn = false;
+    bool isDead = false;
+    std::optional<std::array<float, 3>> lookAt = std::nullopt;
+  };
 
-  void WriteBinary(SLNet::BitStream& stream) const override;
-  void ReadBinary(SLNet::BitStream& stream) override;
-  void WriteJson(nlohmann::json& json) const override;
-  void ReadJson(const nlohmann::json& json) override;
+  template <class Archive>
+  void Serialize(Archive& archive)
+  {
+    archive.Serialize("t", kMsgType)
+      .Serialize("idx", idx)
+      .Serialize("data", data);
+  }
 
   uint32_t idx = 0;
-  uint32_t worldOrCell = 0;
-  std::array<float, 3> pos{ 0, 0, 0 };
-  std::array<float, 3> rot{ 0, 0, 0 };
-  float direction = 0;
-  float healthPercentage = 0;
-  float speed = 0;
-
-  // flags & optionals
-  RunMode runMode = RunMode::Standing;
-  bool isInJumpState = false;
-  bool isSneaking = false;
-  bool isBlocking = false;
-  bool isWeapDrawn = false;
-  bool isDead = false;
-  std::optional<std::array<float, 3>> lookAt = std::nullopt;
+  Data data;
 };

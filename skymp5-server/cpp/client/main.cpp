@@ -1,4 +1,4 @@
-#include "MessageSerializerFactory.h"
+#include "MessagePointer.h"
 #include "MpClientPlugin.h"
 #include <cstdint>
 #include <nlohmann/json.hpp>
@@ -10,13 +10,6 @@ MpClientPlugin::State& GetState()
   return g_state;
 }
 
-MessageSerializer& GetMessageSerializer()
-{
-  static std::shared_ptr<MessageSerializer> g_serializer =
-    MessageSerializerFactory::CreateMessageSerializer();
-  return *g_serializer;
-}
-
 void MySerializeMessage(const char* jsonContent,
                         SLNet::BitStream& outputStream)
 {
@@ -26,16 +19,11 @@ void MySerializeMessage(const char* jsonContent,
 bool MyDeserializeMessage(const uint8_t* data, size_t length,
                           std::string& outJsonContent)
 {
-  std::optional<DeserializeResult> result =
-    GetMessageSerializer().Deserialize(data, length);
-  if (!result) {
-    return false;
-  }
+  MessagePointer messagePointer(data, length);
 
   // TODO(perf): there should be a faster way to get JS object from binary
   // (without extra json building)
-  nlohmann::json outJson;
-  result->message->WriteJson(outJson);
+  nlohmann::json outJson = messagePointer.ToJson();
   outJsonContent = outJson.dump();
   return true;
 }

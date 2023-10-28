@@ -1,5 +1,4 @@
 #pragma once
-#include "MessageBase.h"
 #include "MsgType.h"
 
 #include "ChangeValuesMessage.h"
@@ -7,18 +6,22 @@
 #include "UpdatePropertyMessage.h"
 
 #include <optional>
+#include <type_traits>
 
 struct DeathStateContainerMessage
-  : public MessageBase<DeathStateContainerMessage>
 {
-  const static char kMsgType = static_cast<char>(MsgType::DeathStateContainer);
-  const static char kHeaderByte =
-    static_cast<char>(MsgType::DeathStateContainer);
+  static constexpr auto kMsgType =
+    std::integral_constant<char,
+                           static_cast<char>(MsgType::DeathStateContainer)>{};
 
-  void WriteBinary(SLNet::BitStream& stream) const override;
-  void ReadBinary(SLNet::BitStream& stream) override;
-  void WriteJson(nlohmann::json& json) const override;
-  void ReadJson(const nlohmann::json& json) override;
+  template <class Archive>
+  void Serialize(Archive& archive)
+  {
+    archive.Serialize("t", kMsgType)
+      .Serialize("tTeleport", tTeleport)
+      .Serialize("tChangeValues", tChangeValues)
+      .Serialize("tIsDead", tIsDead);
+  }
 
   std::optional<TeleportMessage> tTeleport;
   std::optional<ChangeValuesMessage> tChangeValues;
