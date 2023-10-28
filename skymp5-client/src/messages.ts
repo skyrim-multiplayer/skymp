@@ -55,15 +55,6 @@ export interface DestroyActorMessage {
   idx: number;
 }
 
-export interface UpdatePropertyMessage {
-  t: MsgType.UpdateProperty;
-  idx: number;
-  refrId: number;
-  baseRecordType: string; // DOOR, ACTI, etc
-  data: unknown;
-  propName: string;
-}
-
 export interface SetRaceMenuOpenMessage {
   type: "setRaceMenuOpen";
   open: boolean;
