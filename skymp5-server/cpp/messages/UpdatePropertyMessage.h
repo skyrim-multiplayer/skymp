@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MessageBase.h"
 #include "MsgType.h"
 #include <cstdint>
 #include <nlohmann/json.hpp>
@@ -7,7 +8,7 @@
 #include <string>
 #include <type_traits>
 
-struct UpdatePropertyMessage
+struct UpdatePropertyMessage : public MessageBase<UpdatePropertyMessage>
 {
   static constexpr auto kMsgType =
     std::integral_constant<char, static_cast<char>(MsgType::UpdateProperty)>{};

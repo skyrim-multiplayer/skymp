@@ -1,7 +1,7 @@
 #include "MessageSerializerFactory.h"
 #include "MpClientPlugin.h"
 #include <cstdint>
-#include <nlohmann/json.hpp>z
+#include <nlohmann/json.hpp>
 
 namespace {
 MpClientPlugin::State& GetState()

@@ -3,10 +3,9 @@
 #include <nlohmann/json.hpp>
 #include <vector>
 
-struct JsonOutputArchive
+class JsonOutputArchive
 {
-  nlohmann::json j = nlohmann::json::object();
-
+public:
   template <IntegralConstant T>
   JsonOutputArchive& Serialize(const char* key, const T& value)
   {
@@ -52,15 +51,17 @@ struct JsonOutputArchive
     return *this;
   }
 
-  template <SerializableStruct T>
+  template <NoneOfTheAbove T>
   JsonOutputArchive& Serialize(const char* key, const T& value)
   {
     nlohmann::json arr = nlohmann::json::object();
 
     JsonOutputArchive childArchive;
-    value.Serialize(childArchive);
+    const_cast<T&>(value).Serialize(childArchive);
 
     j[key] = childArchive.j;
     return *this;
   }
+
+  nlohmann::json j = nlohmann::json::object();
 };

@@ -488,9 +488,9 @@ void ActionListener::OnHostAttempt(const RawMessageData& rawMsgData,
 
         ChangeValuesMessage msg;
         msg.idx = remote.GetIdx();
-        msg.health = changeForm.actorValues.healthPercentage;
-        msg.magicka = changeForm.actorValues.magickaPercentage;
-        msg.stamina = changeForm.actorValues.staminaPercentage;
+        msg.data.health = changeForm.actorValues.healthPercentage;
+        msg.data.magicka = changeForm.actorValues.magickaPercentage;
+        msg.data.stamina = changeForm.actorValues.staminaPercentage;
         remote.SendToUser(msg, true); // in fact sends to hoster
       });
 

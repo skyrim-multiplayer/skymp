@@ -1,9 +1,10 @@
 #pragma once
+#include "MessageBase.h"
 #include "MsgType.h"
 #include <array>
 #include <type_traits>
 
-struct TeleportMessage
+struct TeleportMessage : public MessageBase<TeleportMessage>
 {
   static constexpr auto kMsgType =
     std::integral_constant<char, static_cast<char>(MsgType::Teleport)>{};

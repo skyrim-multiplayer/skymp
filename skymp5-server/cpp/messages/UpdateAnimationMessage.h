@@ -1,10 +1,11 @@
 #pragma once
+#include "MessageBase.h"
 #include "MsgType.h"
 #include <cstdint>
 #include <string>
 #include <type_traits>
 
-struct UpdateAnimationMessage
+struct UpdateAnimationMessage : public MessageBase<UpdateAnimationMessage>
 {
   static constexpr auto kMsgType =
     std::integral_constant<char,

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MessageBase.h"
 #include "MsgType.h"
 #include <array>
 #include <cstdint>
@@ -10,11 +11,10 @@
 #include <tuple>
 #include <type_traits>
 
-struct MovementMessage
+struct UpdateMovementMessage : public MessageBase<UpdateMovementMessage>
 {
-  // TODO
-  // const static char kMsgType = static_cast<char>(MsgType::UpdateMovement);
-  // const static char kHeaderByte = 'M';
+  static constexpr auto kMsgType =
+    std::integral_constant<char, static_cast<char>(MsgType::UpdateMovement)>{};
 
   struct Data
   {

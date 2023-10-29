@@ -1,9 +1,10 @@
 #pragma once
+#include "MessageBase.h"
 #include "MsgType.h"
 #include <optional>
 #include <type_traits>
 
-struct ChangeValuesMessage
+struct ChangeValuesMessage : public MessageBase<ChangeValuesMessage>
 {
   static constexpr auto kMsgType =
     std::integral_constant<char, static_cast<char>(MsgType::ChangeValues)>{};

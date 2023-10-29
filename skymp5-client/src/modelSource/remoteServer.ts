@@ -60,6 +60,7 @@ import { TeleportMessage } from '../services/messages/teleportMessage';
 import { DeathStateContainerMessage } from '../services/messages/deathStateContainerMessage';
 import { RespawnNeededError } from '../lib/errors';
 import { OpenContainer } from '../services/messages/openContainer';
+import { UpdatePropertyMessage } from '../services/messages/updatePropertyMessage';
 
 const onceLoad = (
   refrId: number,
@@ -82,7 +83,7 @@ const onceLoad = (
 };
 
 const skipFormViewCreation = (
-  msg: messages.UpdatePropertyMessage | messages.CreateActorMessage,
+  msg: UpdatePropertyMessage | messages.CreateActorMessage,
 ) => {
   // Optimization added in #1186, however it doesn't work for doors for some reason
   return msg.refrId && msg.refrId < 0xff000000 && msg.baseRecordType !== 'DOOR';
@@ -294,7 +295,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
               const refrid = refr.getFormID();
 
               (async () => {
-                for (let i = 0; i < 5; i ++) {
+                for (let i = 0; i < 5; i++) {
                   // retry. pillars in bleakfalls are not reliable for some reason
                   let res2 = ObjectReference.from(Game.getFormEx(refrid))?.playAnimation(animation);
                   if (res2) break;
@@ -592,7 +593,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
     this.worldModel.forms[i].equipment = msg.data;
   }
 
-  UpdateProperty(msg: messages.UpdatePropertyMessage): void {
+  UpdateProperty(msg: UpdatePropertyMessage): void {
     if (skipFormViewCreation(msg)) {
       const refrId = msg.refrId;
       once('update', () => {

@@ -72,21 +72,21 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
     switch (result->msgType) {
       case MsgType::UpdateMovement: {
         auto message =
-          reinterpret_cast<MovementMessage*>(result->message.get());
+          reinterpret_cast<UpdateMovementMessage*>(result->message.get());
         actionListener.OnUpdateMovement(
           rawMsgData, message->idx,
-          { message->pos[0], message->pos[1], message->pos[2] },
-          { message->rot[0], message->rot[1], message->rot[2] },
-          message->isInJumpState, message->isWeapDrawn, message->isBlocking,
-          message->worldOrCell);
+          { message->data.pos[0], message->data.pos[1], message->data.pos[2] },
+          { message->data.rot[0], message->data.rot[1], message->data.rot[2] },
+          message->data.isInJumpState, message->data.isWeapDrawn,
+          message->data.isBlocking, message->data.worldOrCell);
         return;
       }
       case MsgType::UpdateAnimation: {
         auto message =
           reinterpret_cast<UpdateAnimationMessage*>(result->message.get());
         AnimationData animationData;
-        animationData.animEventName = message->animEventName.data();
-        animationData.numChanges = message->numChanges;
+        animationData.animEventName = message->data.animEventName.data();
+        animationData.numChanges = message->data.numChanges;
         actionListener.OnUpdateAnimation(rawMsgData, message->idx,
                                          animationData);
         return;
@@ -118,9 +118,9 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
         auto message =
           reinterpret_cast<ChangeValuesMessage*>(result->message.get());
         ActorValues actorValues;
-        actorValues.healthPercentage = message->health;
-        actorValues.magickaPercentage = message->magicka;
-        actorValues.staminaPercentage = message->stamina;
+        actorValues.healthPercentage = message->data.health;
+        actorValues.magickaPercentage = message->data.magicka;
+        actorValues.staminaPercentage = message->data.stamina;
         actionListener.OnChangeValues(rawMsgData, actorValues);
         return;
       }

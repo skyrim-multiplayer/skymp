@@ -1,4 +1,5 @@
 #pragma once
+#include "MessageBase.h"
 #include "MsgType.h"
 
 #include "ChangeValuesMessage.h"
@@ -9,6 +10,7 @@
 #include <type_traits>
 
 struct DeathStateContainerMessage
+  : public MessageBase<DeathStateContainerMessage>
 {
   static constexpr auto kMsgType =
     std::integral_constant<char,

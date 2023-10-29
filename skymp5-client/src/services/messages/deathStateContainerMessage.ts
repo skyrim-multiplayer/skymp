@@ -1,6 +1,7 @@
-import { MsgType, UpdatePropertyMessage } from "../../messages";
+import { MsgType } from "../../messages";
 import { ChangeValuesMessage } from "./changeValues";
 import { TeleportMessage } from "./teleportMessage";
+import { UpdatePropertyMessage } from "./updatePropertyMessage";
 
 export interface DeathStateContainerMessage {
     t: MsgType.DeathStateContainer;
