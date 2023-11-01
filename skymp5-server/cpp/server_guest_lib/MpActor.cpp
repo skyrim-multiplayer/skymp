@@ -691,7 +691,16 @@ void MpActor::SetRespawnTime(float time)
 
 void MpActor::SetIsDead(bool isDead)
 {
-  SendAndSetDeathState(isDead, false);
+  constexpr bool kShouldTeleport = false;
+
+  if (isDead) {
+    if (IsDead() == false) {
+      SendAndSetDeathState(isDead, kShouldTeleport);
+    }
+  } else {
+    // same as SendAndSetDeathState but resets isRespawning flag
+    Respawn(kShouldTeleport);
+  }
 }
 
 void MpActor::RestoreActorValue(espm::ActorValue av, float value)
