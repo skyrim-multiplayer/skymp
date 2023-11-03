@@ -1,5 +1,11 @@
 #pragma once
 
+template <>
+inline RE::BSTEventSource<RE::ActorKill::Event>* GetEventSource()
+{
+  return RE::ActorKill::GetEventSource();
+}
+
 template <class E>
 inline RE::BSTEventSource<E>* GetEventSource()
 {
