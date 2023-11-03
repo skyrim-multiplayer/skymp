@@ -452,64 +452,83 @@ private:
     activeSinks.reserve(20);
 
     // script events
-    AppendSink<RE::TESActivateEvent>(std::vector({ "activate" }));
-    AppendSink<RE::TESActiveEffectApplyRemoveEvent>(
+    AppendSinkScriptEvent<RE::TESActivateEvent>(std::vector({ "activate" }));
+    AppendSinkScriptEvent<RE::TESActiveEffectApplyRemoveEvent>(
       std::vector({ "effectStart", "effectFinish" }));
-    AppendSink<RE::TESActorLocationChangeEvent>(
+    AppendSinkScriptEvent<RE::TESActorLocationChangeEvent>(
       std::vector({ "locationChanged" }));
-    AppendSink<RE::TESCellAttachDetachEvent>(
+    AppendSinkScriptEvent<RE::TESCellAttachDetachEvent>(
       std::vector({ "cellAttach", "cellDetach" }));
-    AppendSink<RE::TESCellFullyLoadedEvent>(
+    AppendSinkScriptEvent<RE::TESCellFullyLoadedEvent>(
       std::vector({ "cellFullyLoaded" }));
-    AppendSink<RE::TESCombatEvent>(std::vector({ "combatState" }));
-    AppendSink<RE::TESContainerChangedEvent>(
+    AppendSinkScriptEvent<RE::TESCombatEvent>(std::vector({ "combatState" }));
+    AppendSinkScriptEvent<RE::TESContainerChangedEvent>(
       std::vector({ "containerChanged" }));
-    AppendSink<RE::TESDeathEvent>(std::vector({ "deathEnd", "deathStart" }));
-    AppendSink<RE::TESDestructionStageChangedEvent>(
+    AppendSinkScriptEvent<RE::TESDeathEvent>(
+      std::vector({ "deathEnd", "deathStart" }));
+    AppendSinkScriptEvent<RE::TESDestructionStageChangedEvent>(
       std::vector({ "destructionStageChanged" }));
-    AppendSink<RE::TESEnterBleedoutEvent>(std::vector({ "enterBleedout" }));
-    AppendSink<RE::TESEquipEvent>(std::vector({ "equip", "unequip" }));
-    AppendSink<RE::TESFastTravelEndEvent>(std::vector({ "fastTravelEnd" }));
-    AppendSink<RE::TESFurnitureEvent>(
+    AppendSinkScriptEvent<RE::TESEnterBleedoutEvent>(
+      std::vector({ "enterBleedout" }));
+    AppendSinkScriptEvent<RE::TESEquipEvent>(
+      std::vector({ "equip", "unequip" }));
+    AppendSinkScriptEvent<RE::TESFastTravelEndEvent>(
+      std::vector({ "fastTravelEnd" }));
+    AppendSinkScriptEvent<RE::TESFurnitureEvent>(
       std::vector({ "furnitureExit", "furnitureEnter" }));
-    AppendSink<RE::TESGrabReleaseEvent>(std::vector({ "grabRelease" }));
-    AppendSink<RE::TESHitEvent>(std::vector({ "hit" }));
-    AppendSink<RE::TESInitScriptEvent>(std::vector({ "scriptInit" }));
-    AppendSink<RE::TESLoadGameEvent>(std::vector({ "loadGame" }));
-    AppendSink<RE::TESLockChangedEvent>(std::vector({ "lockChanged" }));
-    AppendSink<RE::TESMagicEffectApplyEvent>(
+    AppendSinkScriptEvent<RE::TESGrabReleaseEvent>(
+      std::vector({ "grabRelease" }));
+    AppendSinkScriptEvent<RE::TESHitEvent>(std::vector({ "hit" }));
+    AppendSinkScriptEvent<RE::TESInitScriptEvent>(
+      std::vector({ "scriptInit" }));
+    AppendSinkScriptEvent<RE::TESLoadGameEvent>(std::vector({ "loadGame" }));
+    AppendSinkScriptEvent<RE::TESLockChangedEvent>(
+      std::vector({ "lockChanged" }));
+    AppendSinkScriptEvent<RE::TESMagicEffectApplyEvent>(
       std::vector({ "magicEffectApply" }));
-    AppendSink<RE::TESMagicWardHitEvent>(std::vector({ "wardHit" }));
-    AppendSink<RE::TESMoveAttachDetachEvent>(
+    AppendSinkScriptEvent<RE::TESMagicWardHitEvent>(
+      std::vector({ "wardHit" }));
+    AppendSinkScriptEvent<RE::TESMoveAttachDetachEvent>(
       std::vector({ "moveAttachDetach" }));
-    AppendSink<RE::TESObjectLoadedEvent>(std::vector({ "objectLoaded" }));
-    AppendSink<RE::TESObjectREFRTranslationEvent>(
+    AppendSinkScriptEvent<RE::TESObjectLoadedEvent>(
+      std::vector({ "objectLoaded" }));
+    AppendSinkScriptEvent<RE::TESObjectREFRTranslationEvent>(
       std::vector({ "translationFailed", "translationAlmostCompleted",
                     "translationCompleted" }));
-    AppendSink<RE::TESOpenCloseEvent>(std::vector({ "open", "close" }));
-    AppendSink<RE::TESPackageEvent>(
+    AppendSinkScriptEvent<RE::TESOpenCloseEvent>(
+      std::vector({ "open", "close" }));
+    AppendSinkScriptEvent<RE::TESPackageEvent>(
       std::vector({ "packageStart", "packageChange", "packageEnd" }));
-    AppendSink<RE::TESPerkEntryRunEvent>(std::vector({ "perkEntryRun" }));
-    AppendSink<RE::TESPlayerBowShotEvent>(std::vector({ "playerBowShot" }));
-    AppendSink<RE::TESQuestInitEvent>(std::vector({ "questInit" }));
-    AppendSink<RE::TESQuestStageEvent>(std::vector({ "questStage" }));
-    AppendSink<RE::TESQuestStartStopEvent>(
+    AppendSinkScriptEvent<RE::TESPerkEntryRunEvent>(
+      std::vector({ "perkEntryRun" }));
+    AppendSinkScriptEvent<RE::TESPlayerBowShotEvent>(
+      std::vector({ "playerBowShot" }));
+    AppendSinkScriptEvent<RE::TESQuestInitEvent>(std::vector({ "questInit" }));
+    AppendSinkScriptEvent<RE::TESQuestStageEvent>(
+      std::vector({ "questStage" }));
+    AppendSinkScriptEvent<RE::TESQuestStartStopEvent>(
       std::vector({ "questStart", "questStop" }));
-    AppendSink<RE::TESResetEvent>(std::vector({ "reset" }));
-    AppendSink<RE::TESSceneActionEvent>(std::vector({ "sceneAction" }));
-    AppendSink<RE::TESSellEvent>(std::vector({ "sell" }));
-    AppendSink<RE::TESSleepStartEvent>(std::vector({ "sleepStart" }));
-    AppendSink<RE::TESSleepStopEvent>(std::vector({ "sleepStop" }));
-    AppendSink<RE::TESSpellCastEvent>(std::vector({ "spellCast" }));
-    AppendSink<RE::TESSwitchRaceCompleteEvent>(
+    AppendSinkScriptEvent<RE::TESResetEvent>(std::vector({ "reset" }));
+    AppendSinkScriptEvent<RE::TESSceneActionEvent>(
+      std::vector({ "sceneAction" }));
+    AppendSinkScriptEvent<RE::TESSellEvent>(std::vector({ "sell" }));
+    AppendSinkScriptEvent<RE::TESSleepStartEvent>(
+      std::vector({ "sleepStart" }));
+    AppendSinkScriptEvent<RE::TESSleepStopEvent>(std::vector({ "sleepStop" }));
+    AppendSinkScriptEvent<RE::TESSpellCastEvent>(std::vector({ "spellCast" }));
+    AppendSinkScriptEvent<RE::TESSwitchRaceCompleteEvent>(
       std::vector({ "switchRaceComplete" }));
-    AppendSink<RE::TESTrackedStatsEvent>(std::vector({ "trackedStats" }));
-    AppendSink<RE::TESTriggerEnterEvent>(std::vector({ "triggerEnter" }));
-    AppendSink<RE::TESTriggerEvent>(std::vector({ "trigger" }));
-    AppendSink<RE::TESTriggerLeaveEvent>(std::vector({ "triggerLeave" }));
-    AppendSink<RE::TESUniqueIDChangeEvent>(std::vector({ "uniqueIdChange" }));
-    AppendSink<RE::TESWaitStartEvent>(std::vector({ "waitStart" }));
-    AppendSink<RE::TESWaitStopEvent>(std::vector({ "waitStop" }));
+    AppendSinkScriptEvent<RE::TESTrackedStatsEvent>(
+      std::vector({ "trackedStats" }));
+    AppendSinkScriptEvent<RE::TESTriggerEnterEvent>(
+      std::vector({ "triggerEnter" }));
+    AppendSinkScriptEvent<RE::TESTriggerEvent>(std::vector({ "trigger" }));
+    AppendSinkScriptEvent<RE::TESTriggerLeaveEvent>(
+      std::vector({ "triggerLeave" }));
+    AppendSinkScriptEvent<RE::TESUniqueIDChangeEvent>(
+      std::vector({ "uniqueIdChange" }));
+    AppendSinkScriptEvent<RE::TESWaitStartEvent>(std::vector({ "waitStart" }));
+    AppendSinkScriptEvent<RE::TESWaitStopEvent>(std::vector({ "waitStop" }));
 
     // skse events
     // at the moment of writing, no way was found to standardize event source
@@ -653,6 +672,35 @@ private:
     AppendSink<RE::SkillIncrease>(std::vector({ "skillIncrease" }));
     AppendSink<RE::SoulsTrapped>(std::vector({ "soulsTrapped" }));
     AppendSink<RE::SpellsLearned>(std::vector({ "spellsLearned" }));
+  }
+
+  template <class E>
+  void AppendSinkScriptEvent(std::vector<const char*> eventNames)
+  {
+    // should consider checking if sink exists
+    // but since we store sink pointers
+    // the only option it to loop through all sinks
+    // and check for event names, TODO?
+
+    auto sink = new Sink(
+      eventNames,
+      // Activate
+      [](const ::Sink* sink) {
+        const auto handler = EventHandler::GetSingleton();
+        handler->ActivateSink<E>(sink, GetEventSourceScriptEvent<E>());
+      },
+      // Deactivate
+      [](const ::Sink* sink) {
+        const auto handler = EventHandler::GetSingleton();
+        handler->DeactivateSink<E>(sink, GetEventSourceScriptEvent<E>());
+      },
+      // IsActive
+      [](const ::Sink* sink) -> bool {
+        const auto handler = EventHandler::GetSingleton();
+        return handler->IsActiveSink(sink);
+      });
+
+    sinks.emplace(sink);
   }
 
   /**
