@@ -6,12 +6,6 @@ inline RE::BSTEventSource<E>* GetEventSource()
   return RE::ScriptEventSourceHolder::GetSingleton()->GetEventSource<E>();
 }
 
-template <>
-inline RE::BSTEventSource<RE::ActorKill::Event>* GetEventSource()
-{
-  return RE::ActorKill::GetEventSource();
-}
-
 template <class T, class E = T::Event>
   requires HasEvent<T>
 inline RE::BSTEventSource<E>* GetEventSource()
