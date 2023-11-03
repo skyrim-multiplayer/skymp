@@ -660,7 +660,7 @@ private:
 
     // story events
     // TODO: implement these
-    // AppendSink<RE::ActorKill>(std::vector({ "actorKill" }));
+    AppendSink<RE::ActorKill>(std::vector({ "actorKill" }));
     AppendSink<RE::BooksRead>(std::vector({ "bookRead" }));
     AppendSink<RE::CriticalHit>(std::vector({ "criticalHit" }));
     AppendSink<RE::DisarmedEvent>(std::vector({ "disarmedEvent" }));
