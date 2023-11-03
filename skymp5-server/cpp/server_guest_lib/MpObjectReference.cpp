@@ -203,11 +203,13 @@ const bool& MpObjectReference::IsDisabled() const
 
 std::chrono::system_clock::duration MpObjectReference::GetRelootTime() const
 {
-  if (relootTimeOverride)
+  if (relootTimeOverride) {
     return *relootTimeOverride;
+  }
 
-  if (auto time = GetParent()->GetRelootTime(baseType))
+  if (auto time = GetParent()->GetRelootTime(baseType)) {
     return *time;
+  }
 
   if (!std::strcmp(baseType.data(), "FLOR") ||
       !std::strcmp(baseType.data(), "TREE")) {
@@ -462,10 +464,6 @@ void MpObjectReference::TakeItem(MpActor& ac, const Inventory::Entry& e)
     throw std::runtime_error(err.str());
   }
   RemoveItems({ e }, &ac);
-
-  if (GetInventory().IsEmpty()) {
-    RequestReloot();
-  }
 }
 
 void MpObjectReference::SetRelootTime(
@@ -663,6 +661,14 @@ void MpObjectReference::RemoveItems(
     target->AddItems(entries);
 
   SendInventoryUpdate();
+
+  if (GetBaseType() == "CONT") {
+    if (GetInventory().IsEmpty()) {
+      spdlog::info("MpObjectReference::RemoveItems - {:x} requesting reloot",
+                   this->GetFormId());
+      RequestReloot();
+    }
+  }
 }
 
 void MpObjectReference::RemoveAllItems(MpObjectReference* target)
