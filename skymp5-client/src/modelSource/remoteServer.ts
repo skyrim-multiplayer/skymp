@@ -289,6 +289,19 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
               refr,
               !!msg.props['isHarvested'],
             );
+            const animation = msg.props.lastAnimation;
+            if (typeof animation === "string") {
+              const refrid = refr.getFormID();
+
+              (async () => {
+                for (let i = 0; i < 5; i ++) {
+                  // retry. pillars in bleakfalls are not reliable for some reason
+                  let res2 = ObjectReference.from(Game.getFormEx(refrid))?.playAnimation(animation);
+                  if (res2) break;
+                  await Utility.wait(2);
+                }
+              })();
+            }
           }
         } else {
           printConsole('Failed to apply model to', refrId.toString(16));
@@ -303,6 +316,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
     if (this.worldModel.forms.length <= i) this.worldModel.forms.length = i + 1;
 
     let movement: Movement = null as unknown as Movement;
+    // TODO: better check if it is an npc (not an object reference)
     if ((msg.refrId as number) >= 0xff000000) {
       movement = {
         pos: msg.transform.pos,
@@ -704,7 +718,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
           // TODO: emit event instead of sending directly to avoid type cast and dependency on network module
           this.send(message as unknown as Record<string, unknown>, true);
         })
-        .catch((e) => printConsole('!!! SpSnippet failed', e));
+        .catch((e) => printConsole('!!! SpSnippet ' + msg.class + ' ' + msg.function + ' failed', e));
     });
   }
 

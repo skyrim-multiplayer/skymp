@@ -54,6 +54,13 @@ export class FormView implements View<FormModel> {
       }
     }
 
+    // Don't spawn dead actors if not already
+    if (model.isDead) {
+      if (this.refrId === 0) {
+        return;
+      }
+    }
+
     // Players with different worldOrCell should be invisible
     if (model.movement) {
       const worldOrCell = ObjectReferenceEx.getWorldOrCell(Game.getPlayer() as Actor);
@@ -93,16 +100,32 @@ export class FormView implements View<FormModel> {
         }
       }
     } else {
-      const base =
-        Game.getFormEx(+(model.baseId as number)) ||
-        Game.getFormEx(this.getAppearanceBasedBase());
-      if (!base) return;
+      let templateChain = model.templateChain;
+
+      // There is no place for random/leveling in 1-sized chain
+      // Just spawn an NPC, do not generate a temporary TESNPC form
+      if (templateChain?.length === 1) {
+        templateChain = undefined;
+      }
+
+      // TODO: getLeveledBase crashes too often ATM
+      let base = null; //Game.getFormEx(this.getLeveledBase(templateChain));
+      if (base === null) base = Game.getFormEx(model.baseId || NaN);
+      if (base === null) base = Game.getFormEx(this.getAppearanceBasedBase());
+      if (base === null) return;
 
       let refr = ObjectReference.from(Game.getFormEx(this.refrId));
-      const respawnRequired =
-        !refr ||
-        !refr.getBaseObject() ||
-        (refr.getBaseObject() as Form).getFormID() !== base.getFormID();
+
+      let respawnRequired = false;
+      if (!refr) {
+        respawnRequired = true;
+      }
+      else if (!refr.getBaseObject()) {
+        respawnRequired = true;
+      }
+      else if ((refr.getBaseObject() as Form).getFormID() !== base.getFormID()) {
+        respawnRequired = true;
+      }
 
       if (respawnRequired) {
         this.destroy();
@@ -112,6 +135,7 @@ export class FormView implements View<FormModel> {
           true,
           true
         ) as ObjectReference;
+
         this.state = {};
         delete this.wasHostedByOther;
         if (base.getType() !== FormType.NPC) {
@@ -121,17 +145,48 @@ export class FormView implements View<FormModel> {
             model.movement?.rot[2] || 0
           );
         }
+        else {
+          const race = Actor.from(refr)?.getRace()?.getFormID();
+          const draugrRace = 0xd53;
+          const falmerRace = 0x131f4;
+          const chaurusRace = 0x131eb;
+          const frostbiteSpiderRaceGiant = 0x4e507;
+          const frostbiteSpiderRaceLarge = 0x53477;
+          const dwarvenCenturionRace = 0x131f1;
+          const dwarvenSphereRace = 0x131f2;
+          const dwarvenSpiderRace = 0x131f3;
+
+          // potential masterambushscript
+          if (race === draugrRace
+            || race === falmerRace
+            || race === chaurusRace
+            || race === frostbiteSpiderRaceGiant
+            || race === frostbiteSpiderRaceLarge
+            || race === dwarvenCenturionRace
+            || race === dwarvenSphereRace
+            || race === dwarvenSpiderRace) {
+            Actor.from(refr)?.setActorValue("Aggression", 2);
+          }
+        }
         modWcProtection(refr.getFormID(), 1);
 
         // TODO: reset all states?
         this.eqState = this.getDefaultEquipState();
 
         this.ready = false;
+
+        let spawnPos;
+        if (model.movement) {
+          spawnPos = model.movement.pos;
+          // printConsole("Spawn NPC at movement.pos");
+        }
+        else {
+          spawnPos = ObjectReferenceEx.getPos(Game.getPlayer() as Actor);
+          printConsole("Spawn NPC at player pos");
+        }
         new SpawnProcess(
           this.appearanceState.appearance,
-          model.movement
-            ? model.movement.pos
-            : ObjectReferenceEx.getPos(Game.getPlayer() as Actor),
+          spawnPos,
           refr.getFormID(),
           () => {
             this.ready = true;
@@ -228,20 +283,13 @@ export class FormView implements View<FormModel> {
     let alreadyHosted = false;
     if (Array.isArray(hosted)) {
       const remoteId = localIdToRemoteId(this.refrId);
-      
-      if (hosted.includes(remoteId) || hosted.includes(remoteId + 0x100000000))  {
+
+      if (hosted.includes(remoteId) || hosted.includes(remoteId + 0x100000000)) {
         alreadyHosted = true;
       }
-      // printConsole("remoteId=", remoteId.toString(16), "hosted=", hosted.map(x => x.toString(16)));
     }
     setDefaultAnimsDisabled(this.refrId, alreadyHosted ? false : true);
 
-    // if (model.baseId === 0x7 || !model.baseId) {
-    //   setDefaultAnimsDisabled(this.refrId, true);
-    // }
-    // else {
-    //   setDefaultAnimsDisabled(this.refrId, false);
-    // }
     if (alreadyHosted) {
       Actor.from(refr)?.clearKeepOffsetFromActor();
     }
@@ -300,7 +348,7 @@ export class FormView implements View<FormModel> {
             let alreadyHosted = false;
             if (Array.isArray(hosted)) {
               const remoteId = localIdToRemoteId(ac.getFormID());
-              if (hosted.includes(remoteId)) {
+              if (hosted.includes(remoteId) || hosted.includes(remoteId + 0x100000000)) {
                 alreadyHosted = true;
               }
             }
@@ -436,6 +484,22 @@ export class FormView implements View<FormModel> {
     return this.appearanceBasedBaseId;
   }
 
+  private getLeveledBase(templateChain: number[] | undefined): number {
+    if (templateChain === undefined) return 0;
+
+    const str = templateChain.join(',');
+
+    if (this.leveledBaseId === 0) {
+      const leveledBase = TESModPlatform.evaluateLeveledNpc(str);
+      if (!leveledBase) {
+        printConsole("Failed to evaluate leveled npc", str);
+      }
+      this.leveledBaseId = leveledBase?.getFormID() || 0;
+    }
+
+    return this.leveledBaseId;
+  }
+
   private getDefaultEquipState() {
     return { lastNumChanges: 0, lastEqMoment: 0 };
   };
@@ -480,6 +544,7 @@ export class FormView implements View<FormModel> {
   private appearanceState = this.getDefaultAppearanceState();
   private eqState = this.getDefaultEquipState();
   private appearanceBasedBaseId = 0;
+  private leveledBaseId = 0;
   private isOnScreen = false;
   private lastPcWorldOrCell = 0;
   private lastWorldOrCell = 0;

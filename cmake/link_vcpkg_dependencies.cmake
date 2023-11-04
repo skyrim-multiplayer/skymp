@@ -57,5 +57,8 @@ function(link_vcpkg_dependencies)
 
     find_package(OpenSSL REQUIRED)
     target_link_libraries(${target} PUBLIC OpenSSL::SSL OpenSSL::Crypto)
+
+    find_package(bsa CONFIG REQUIRED)
+    target_link_libraries(${target} PUBLIC bsa::bsa)
   endforeach()
 endfunction()

@@ -1,6 +1,6 @@
-#include "MigrationDatabase.h"
-#include "FileDatabase.h"
+#include "database_drivers/MigrationDatabase.h"
 #include "TestUtils.hpp"
+#include "database_drivers/FileDatabase.h"
 #include <catch2/catch_all.hpp>
 
 inline std::shared_ptr<IDatabase> MakeDatabase(const char* directory)

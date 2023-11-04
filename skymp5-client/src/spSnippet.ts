@@ -32,7 +32,7 @@ const runMethod = async (snippet: Snippet): Promise<any> => {
   const selfCasted = spAny[snippet.class].from(self);
   if (!selfCasted)
     throw new Error(
-      `Form ${selfId.toString(16)} is not instance of ${snippet.class}`
+      `Form ${selfId.toString(16)} is not instance of ${snippet.class}, form type is ${self.getType()}`
     );
   const f = selfCasted[snippet.function];
   return await f.apply(

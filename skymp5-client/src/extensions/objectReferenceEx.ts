@@ -34,8 +34,13 @@ export class ObjectReferenceEx {
     const t = base.getType();
     const isItem = FormTypeEx.isItem(t);
 
+    // BlackFallsBarrow02, door isn't opening via SetOpen so we're hacking it.
+    // Not blocking activation & asking parent to activate until will be in the correct state
+    // See also modelApplyUtils.ts
+    const caveGSecretDoor01 = 0x6f703;
+
     // You can also block for t === FormType.Flora || t === FormType.Tree, but I don't think it's necessary.
-    if (t === FormType.Container || isItem || t === FormType.NPC || t === FormType.Door) {
+    if (t === FormType.Container || isItem || t === FormType.NPC || (t === FormType.Door && self.getBaseObject()?.getFormID() !== caveGSecretDoor01)) {
       self.blockActivation(true);
     } else {
       self.blockActivation(false);

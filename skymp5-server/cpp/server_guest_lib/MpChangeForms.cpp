@@ -1,6 +1,23 @@
 #include "MpChangeForms.h"
 #include "JsonUtils.h"
 
+namespace {
+std::vector<std::string> ToStringArray(const std::vector<FormDesc>& formDescs)
+{
+  std::vector<std::string> res(formDescs.size());
+  std::transform(formDescs.begin(), formDescs.end(), res.begin(),
+                 [](const FormDesc& v) { return v.ToString(); });
+  return res;
+}
+std::vector<FormDesc> ToFormDescsArray(const std::vector<std::string>& strings)
+{
+  std::vector<FormDesc> res(strings.size());
+  std::transform(strings.begin(), strings.end(), res.begin(),
+                 [](const std::string& v) { return FormDesc::FromString(v); });
+  return res;
+}
+}
+
 nlohmann::json MpChangeForm::ToJson(const MpChangeForm& changeForm)
 {
   auto res = nlohmann::json::object();
@@ -55,6 +72,16 @@ nlohmann::json MpChangeForm::ToJson(const MpChangeForm& changeForm)
 
   res["spawnDelay"] = changeForm.spawnDelay;
   res["effects"] = changeForm.activeMagicEffects.ToJson();
+
+  if (!changeForm.templateChain.empty()) {
+    res["templateChain"] = ToStringArray(changeForm.templateChain);
+  }
+
+  // TODO: uncomment when add script vars save feature
+  // if (changeForm.lastAnimation.has_value()) {
+  //   res["lastAnimation"] = *changeForm.lastAnimation;
+  // }
+
   return res;
 }
 
@@ -74,7 +101,8 @@ MpChangeForm MpChangeForm::JsonToChangeForm(simdjson::dom::element& element)
     consoleCommandsAllowed("consoleCommandsAllowed"),
     spawnPointPos("spawnPoint_pos"), spawnPointRot("spawnPoint_rot"),
     spawnPointCellOrWorldDesc("spawnPoint_cellOrWorldDesc"),
-    spawnDelay("spawnDelay"), effects("effects");
+    spawnDelay("spawnDelay"), effects("effects"),
+    templateChain("templateChain"), lastAnimation("lastAnimation");
 
   MpChangeForm res;
   ReadEx(element, recType, &res.recType);
@@ -172,6 +200,21 @@ MpChangeForm MpChangeForm::JsonToChangeForm(simdjson::dom::element& element)
     ReadEx(element, effects, &jTmp);
     res.activeMagicEffects = ActiveMagicEffectsMap::FromJson(jTmp);
   }
+
+  if (element.at_pointer(templateChain.GetData()).error() ==
+      simdjson::error_code::SUCCESS) {
+    std::vector<std::string> data;
+    ReadVector(element, templateChain, &data);
+    res.templateChain = ToFormDescsArray(data);
+  }
+
+  if (element.at_pointer(lastAnimation.GetData()).error() ==
+      simdjson::error_code::SUCCESS) {
+    const char* tmp;
+    ReadEx(element, lastAnimation, &tmp);
+    res.lastAnimation = tmp;
+  }
+
   return res;
 }
 
@@ -187,7 +230,7 @@ size_t LearnedSpells::Count() const noexcept
 
 bool LearnedSpells::IsSpellLearned(const Data::key_type baseId) const
 {
-  return _learnedSpellIds.contains(baseId);
+  return _learnedSpellIds.count(baseId) != 0;
 }
 
 std::vector<LearnedSpells::Data::key_type> LearnedSpells::GetLearnedSpells()

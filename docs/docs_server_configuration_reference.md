@@ -93,6 +93,24 @@ Absolute paths work but aren't accessible via `uiPort`. External tooling wouldn'
 }
 ```
 
+## archives
+
+Specify BSA archives that will be loaded by the server.
+
+At this moment, used only for compiled Papyrus scripts.
+
+Relative/absolute paths work similar to esp/esm.
+
+```json5
+{
+  // ...
+  "archives": [
+    "Skyrim - Misc.bsa"
+  ]
+  // ...
+}
+```
+
 ## lang
 
 The language, the translation of which will be obtained from the string files located in Data/strings

@@ -8,6 +8,8 @@ PartOne& GetPartOne();
 TEST_CASE("Should be able to harvest a Nirnroot", "[Papyrus][espm]")
 {
   auto& partOne = GetPartOne();
+  partOne.worldState.disableVanillaScriptsInExterior = false;
+
   auto& nirnrootRef = partOne.worldState.GetFormAt<MpObjectReference>(0xa4de9);
 
   partOne.worldState.AddForm(
@@ -33,6 +35,8 @@ TEST_CASE("Should be able to harvest a Nirnroot", "[Papyrus][espm]")
 TEST_CASE("Server crash in CallMethod", "[Papyrus][espm]")
 {
   auto& partOne = GetPartOne();
+  partOne.worldState.disableVanillaScriptsInExterior = false;
+
   auto& ref = partOne.worldState.GetFormAt<MpObjectReference>(0xd8995);
   partOne.worldState.AddForm(
     std::make_unique<MpActor>(
@@ -50,6 +54,8 @@ TEST_CASE("Server crash in CallMethod", "[Papyrus][espm]")
 TEST_CASE("Server crash in PropGet", "[Papyrus][espm]")
 {
   auto& partOne = GetPartOne();
+  partOne.worldState.disableVanillaScriptsInExterior = false;
+
   auto& ref = partOne.worldState.GetFormAt<MpObjectReference>(0xabb6f);
   partOne.worldState.AddForm(
     std::make_unique<MpActor>(
@@ -68,6 +74,8 @@ TEST_CASE("Server crash in PropGet", "[Papyrus][espm]")
 TEST_CASE("Activate auto load door in BrokenOarGrotto01", "[PartOne][espm]")
 {
   auto& partOne = GetPartOne();
+  partOne.worldState.disableVanillaScriptsInExterior = false;
+
   auto& ref = partOne.worldState.GetFormAt<MpObjectReference>(87048);
 
   partOne.worldState.AddForm(
@@ -89,6 +97,8 @@ TEST_CASE("Activate auto load door in BrokenOarGrotto01", "[PartOne][espm]")
 TEST_CASE("OnTriggerEnter crash in MovarthsLairExterior01", "[PartOne][espm]")
 {
   auto& partOne = GetPartOne();
+  partOne.worldState.disableVanillaScriptsInExterior = false;
+
   auto& ref = partOne.worldState.GetFormAt<MpObjectReference>(464472);
 
   partOne.worldState.AddForm(

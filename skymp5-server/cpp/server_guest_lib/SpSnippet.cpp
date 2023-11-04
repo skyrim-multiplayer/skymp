@@ -14,6 +14,14 @@ SpSnippet::SpSnippet(const char* cl_, const char* func_, const char* args_,
 
 Viet::Promise<VarValue> SpSnippet::Execute(MpActor* actor)
 {
+  auto worldState = actor->GetParent();
+  if (!actor->IsCreatedAsPlayer()) {
+    // Return promise that never resolves in this case
+    // TODO: somehow detect user instead as this breaks potential feature of
+    // transferring user into an npc actor
+    return Viet::Promise<VarValue>();
+  }
+
   Viet::Promise<VarValue> promise;
 
   auto snippetIdx = actor->NextSnippetIndex(promise);

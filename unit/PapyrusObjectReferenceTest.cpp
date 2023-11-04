@@ -2,10 +2,10 @@
 #include <catch2/catch_all.hpp>
 
 #include "ActionListener.h"
-#include "EspmGameObject.h"
 #include "MpObjectReference.h"
-#include "PapyrusObjectReference.h"
 #include "papyrus-vm/Structures.h"
+#include "script_classes/PapyrusObjectReference.h"
+#include "script_objects/EspmGameObject.h"
 
 using Catch::Matchers::ContainsSubstring;
 

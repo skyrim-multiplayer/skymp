@@ -147,9 +147,9 @@ void LoadGame::ModifyPluginInfo(std::shared_ptr<SaveFile_::SaveFile>& save)
     throw NullPointerException("dataHandler");
   }
 
-  for (auto it = dataHandler->files.begin(); it != dataHandler->files.end();
-       ++it)
-    newPlugins.push_back(std::string((*it)->fileName));
+  for (auto& file : dataHandler->files) {
+    newPlugins.push_back(std::string(file->fileName));
+  }
 
   save->OverwritePluginInfo(newPlugins);
 }
@@ -293,10 +293,10 @@ SaveFile_::PlayerLocation LoadGame::CreatePlayerLocation(
   const std::array<float, 3>& pos, const SaveFile_::RefID& world)
 {
   SaveFile_::PlayerLocation r;
-  r.nextObjectId = 4278195454;
+  r.nextObjectId = 0xFF0014FE;
   r.worldspace1 = world;
-  r.coorX = (int)pos[0] / 4096;
-  r.coorY = (int)pos[1] / 4096;
+  r.coorX = static_cast<int>(pos[0]) / 4096;
+  r.coorY = static_cast<int>(pos[1]) / 4096;
   r.worldspace2 = world;
   r.posX = pos[0];
   r.posY = pos[1];
@@ -359,13 +359,14 @@ void LoadGame::WriteChangeForm(std::shared_ptr<SaveFile_::SaveFile> save,
   std::copy(compressed.begin(), compressed.end(), changeForm.data.begin());
 
   // fix offsets
-  const auto diff = (int64_t)previousSize - (int64_t)compressed.size();
+  const auto diff = static_cast<int64_t>(previousSize) -
+    static_cast<int64_t>(compressed.size());
   save->fileLocationTable.formIDArrayCountOffset -= diff;
   save->fileLocationTable.unknownTable3Offset -= diff;
   save->fileLocationTable.globalDataTable3Offset -= diff;
 }
 
-std::wstring LoadGame::StringToWstring(std::string s)
+std::wstring LoadGame::StringToWstring(const std::string& s)
 {
   std::wstring ws(s.size(), L' ');
   auto n = std::mbstowcs(&ws[0], s.c_str(), s.size());
@@ -380,7 +381,7 @@ std::string LoadGame::GenerateGuid()
     throw std::runtime_error("CoCreateGuid failed");
   }
 
-  char name[MAX_PATH] = { 0 };
+  char name[37] = { 0 }; // Size adjusted for GUID string
   sprintf_s(
     name,
     "%08lX-%04hX-%04hX-%02hhX%02hhX-%02hhX%02hhX%02hhX%02hhX%02hhX%02hhX",

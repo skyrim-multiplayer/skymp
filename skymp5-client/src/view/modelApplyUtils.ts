@@ -7,11 +7,31 @@ export class ModelApplyUtils {
   static applyModelInventory(refr: ObjectReference, inventory: Inventory) {
     applyInventory(refr, inventory, false, true);
   }
-  
+
   static applyModelIsOpen(refr: ObjectReference, isOpen: boolean) {
     refr.setOpen(isOpen);
+
+    // See also objectReferenceEx.ts
+    const caveGSecretDoor01 = 0x6f703;
+
+    // TODO: add more activators to support more cells
+    const parentActivatorId = 0x460ca;
+
+    if (refr.getBaseObject()?.getFormID() === caveGSecretDoor01) {
+      const openOrOpening = [1, 2].includes(refr.getOpenState());
+      if (openOrOpening) {
+        if (!isOpen) {
+          refr.activate(ObjectReference.from(Game.getForm(parentActivatorId)), false);
+        }
+      }
+      if (!openOrOpening) {
+        if (isOpen) {
+          refr.activate(ObjectReference.from(Game.getForm(parentActivatorId)), false);
+        }
+      }
+    }
   }
-  
+
   static applyModelIsHarvested(refr: ObjectReference, isHarvested: boolean) {
     const base = refr.getBaseObject();
     if (base) {

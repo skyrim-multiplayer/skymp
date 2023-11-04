@@ -139,6 +139,8 @@ public:
   static void Unsubscribe(MpObjectReference* emitter,
                           MpObjectReference* listener);
 
+  void SetLastAnimation(const std::string& lastAnimation);
+
   const std::set<MpObjectReference*>& GetListeners() const;
   const std::set<MpObjectReference*>& GetEmitters() const;
 
@@ -193,6 +195,7 @@ private:
   void CheckInteractionAbility(MpObjectReference& ac);
   bool IsLocationSavingNeeded() const;
   void ProcessActivate(MpObjectReference& activationSource);
+  void ActivateChilds();
   bool MpApiOnActivate(MpObjectReference& caster);
 
   bool everSubscribedOrListened = false;

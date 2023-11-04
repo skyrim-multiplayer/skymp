@@ -16,6 +16,7 @@
 #include "KYWD.h"
 #include "LIGH.h"
 #include "LVLI.h"
+#include "LVLN.h"
 #include "MGEF.h"
 #include "NAVM.h"
 #include "NPC_.h"

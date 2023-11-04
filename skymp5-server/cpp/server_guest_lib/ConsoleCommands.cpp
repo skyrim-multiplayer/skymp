@@ -1,9 +1,9 @@
 #include "ConsoleCommands.h"
-#include "EspmGameObject.h"
 #include "MpActor.h"
-#include "PapyrusObjectReference.h"
 #include "WorldState.h"
 #include "papyrus-vm/Utils.h"
+#include "script_classes/PapyrusObjectReference.h"
+#include "script_objects/EspmGameObject.h"
 
 ConsoleCommands::Argument::Argument()
 {
@@ -124,8 +124,10 @@ void ExecuteDisable(MpActor& caller,
     ? caller
     : caller.GetParent()->GetFormAt<MpObjectReference>(targetId);
 
-  if (target.GetFormId() >= 0xff000000)
+  if (target.GetFormId() >= 0xff000000 ||
+      dynamic_cast<MpActor*>(&target) != nullptr) {
     target.Disable();
+  }
 }
 
 void ExecuteMp(MpActor& caller,

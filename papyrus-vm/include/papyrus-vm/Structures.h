@@ -31,8 +31,12 @@ public:
 
   bool HasScript(const char* name) const;
 
-private:
-  std::vector<std::shared_ptr<ActivePexInstance>> activePexInstances;
+protected:
+  virtual const std::vector<std::shared_ptr<ActivePexInstance>>&
+  ListActivePexInstances() const = 0;
+
+  virtual void AddScript(
+    std::shared_ptr<ActivePexInstance> sctipt) noexcept = 0;
 };
 
 enum class FunctionType
@@ -100,15 +104,15 @@ public:
 
   static VarValue None() { return VarValue(); }
 
-  explicit operator bool() const { return this->CastToBool().data.b; }
+  explicit operator bool() const { return CastToBool().data.b; }
 
-  explicit operator IGameObject*() const { return this->data.id; }
+  explicit operator IGameObject*() const { return data.id; }
 
-  explicit operator int() const { return this->CastToInt().data.i; }
+  explicit operator int() const { return CastToInt().data.i; }
 
-  explicit operator double() const { return this->CastToFloat().data.f; }
+  explicit operator double() const { return CastToFloat().data.f; }
 
-  explicit operator const char*() const { return this->data.string; }
+  explicit operator const char*() const { return data.string; }
 
   std::shared_ptr<std::vector<VarValue>> pArray;
 
@@ -461,6 +465,16 @@ private:
   std::shared_ptr<ActivePexInstance> FillParentInstance(
     std::string nameNeedScript, VarValue activeInstanceOwner,
     const std::shared_ptr<IVariablesHolder>& mapForFillProperties);
+
+  static VarValue TryCastToBaseClass(
+    VirtualMachine& vm, const std::string& resultTypeName,
+    VarValue* scriptToCastOwner, std::vector<ActivePexInstance::Local>& locals,
+    std::vector<std::string>& outClassesStack);
+
+  static VarValue TryCastMultipleInheritance(
+    VirtualMachine& vm, const std::string& resultTypeName,
+    VarValue* scriptToCastOwner,
+    std::vector<ActivePexInstance::Local>& locals);
 
   bool _IsValid = false;
 

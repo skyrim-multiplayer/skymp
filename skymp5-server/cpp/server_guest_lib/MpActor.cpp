@@ -3,18 +3,19 @@
 #include "ActorValues.h"
 #include "ChangeFormGuard.h"
 #include "CropRegeneration.h"
-#include "EspmGameObject.h"
 #include "FormCallbacks.h"
 #include "GetBaseActorValues.h"
+#include "LeveledListUtils.h"
+#include "LocationalDataUtils.h"
 #include "MathUtils.h"
 #include "MpChangeForms.h"
 #include "MsgType.h"
-#include "PapyrusObjectReference.h"
 #include "ServerState.h"
 #include "SweetPieScript.h"
 #include "TimeUtils.h"
 #include "WorldState.h"
 #include "libespm/espm.h"
+#include "script_objects/EspmGameObject.h"
 #include <NiPoint3.h>
 #include <chrono>
 #include <functional>
@@ -24,6 +25,7 @@
 
 #include "ChangeValuesMessage.h"
 #include "TeleportMessage.h"
+#include "UpdateEquipmentMessage.h"
 
 struct MpActor::Impl
 {
@@ -89,6 +91,63 @@ void MpActor::SetConsoleCommandsAllowedFlag(bool newValue)
   });
 }
 
+void MpActor::EquipBestWeapon()
+{
+  if (!GetParent()->HasEspm()) {
+    return;
+  }
+
+  auto& loader = GetParent()->GetEspm();
+  auto& cache = GetParent()->GetEspmCache();
+
+  const Equipment eq = GetEquipment();
+
+  Equipment newEq;
+  newEq.numChanges = eq.numChanges + 1;
+  for (auto& entry : eq.inv.entries) {
+    bool isEquipped = entry.extra.worn != Inventory::Worn::None;
+    bool isWeap =
+      espm::GetRecordType(entry.baseId, GetParent()) == espm::WEAP::kType;
+    if (isEquipped && isWeap) {
+      continue;
+    }
+    newEq.inv.AddItems({ entry });
+  }
+
+  const Inventory& inv = GetInventory();
+  Inventory::Entry bestEntry;
+  int16_t bestDamage = -1;
+  for (auto& entry : inv.entries) {
+    if (entry.baseId) {
+      auto lookupRes = loader.GetBrowser().LookupById(entry.baseId);
+      if (auto weap = espm::Convert<espm::WEAP>(lookupRes.rec)) {
+        if (!bestEntry.count ||
+            weap->GetData(cache).weapData->damage > bestDamage) {
+          bestEntry = entry;
+          bestDamage = weap->GetData(cache).weapData->damage;
+        }
+      }
+    }
+  }
+
+  if (bestEntry.count > 0) {
+    bestEntry.extra.worn = Inventory::Worn::Right;
+    newEq.inv.AddItems({ bestEntry });
+  }
+
+  SetEquipment(newEq.ToJson().dump());
+  for (auto listener : GetListeners()) {
+    auto actor = dynamic_cast<MpActor*>(listener);
+    if (!actor) {
+      continue;
+    }
+    UpdateEquipmentMessage msg;
+    msg.data = newEq.ToJson();
+    msg.idx = GetIdx();
+    actor->SendToUser(msg, true);
+  }
+}
+
 void MpActor::SetRaceMenuOpen(bool isOpen)
 {
   EditChangeForm(
@@ -122,7 +181,8 @@ void MpActor::VisitProperties(const PropertiesVisitor& visitor,
   // this "if" is needed for unit testing: tests can call VisitProperties
   // without espm attached, which will cause tests to fail
   if (worldState && worldState->HasEspm()) {
-    baseActorValues = GetBaseActorValues(worldState, baseId, raceId);
+    baseActorValues = GetBaseActorValues(worldState, baseId, raceId,
+                                         ChangeForm().templateChain);
   }
 
   MpChangeForm changeForm = GetChangeForm();
@@ -141,6 +201,18 @@ void MpActor::VisitProperties(const PropertiesVisitor& visitor,
           nlohmann::json(changeForm.learnedSpells.GetLearnedSpells())
             .dump()
             .c_str());
+
+  if (!changeForm.templateChain.empty()) {
+    // should be faster than nlohmann::json
+    std::string jsonDump = "[";
+    for (auto& element : changeForm.templateChain) {
+      jsonDump += std::to_string(element.ToFormId(GetParent()->espmFiles));
+      jsonDump += ',';
+    }
+    jsonDump.pop_back(); // comma
+    jsonDump += "]";
+    visitor("templateChain", jsonDump.data());
+  }
 }
 
 void MpActor::Disable()
@@ -282,8 +354,8 @@ void MpActor::ApplyChangeForm(const MpChangeForm& newChangeForm)
       // this check is added only for test as a workaround. It is to be redone
       // in the nearest future. TODO
       if (GetParent() && GetParent()->HasEspm()) {
-        changeForm.actorValues =
-          GetBaseActorValues(GetParent(), GetBaseId(), GetRaceId());
+        changeForm.actorValues = GetBaseActorValues(
+          GetParent(), GetBaseId(), GetRaceId(), changeForm.templateChain);
       }
     },
     Mode::NoRequestSave);
@@ -451,6 +523,16 @@ espm::ObjectBounds MpActor::GetBounds() const
   return espm::GetData<espm::NPC_>(GetBaseId(), GetParent()).objectBounds;
 }
 
+const std::vector<FormDesc>& MpActor::GetTemplateChain() const
+{
+  return ChangeForm().templateChain;
+}
+
+bool MpActor::IsCreatedAsPlayer() const
+{
+  return GetFormId() >= 0xff000000 && GetBaseId() <= 0x7;
+}
+
 void MpActor::SendAndSetDeathState(bool isDead, bool shouldTeleport)
 {
   float attribute = isDead ? 0.f : 1.f;
@@ -564,6 +646,37 @@ bool MpActor::CanActorValueBeRestored(espm::ActorValue av)
   return true;
 }
 
+void MpActor::EnsureTemplateChainEvaluated(espm::Loader& loader)
+{
+  constexpr auto kPcLevel = 0;
+
+  auto worldState = GetParent();
+  if (!worldState) {
+    return;
+  }
+
+  auto baseId = GetBaseId();
+  if (baseId == 0x7 || baseId == 0) {
+    return;
+  }
+
+  if (!ChangeForm().templateChain.empty()) {
+    return;
+  }
+
+  EditChangeForm([&](MpChangeFormREFR& changeForm) {
+    auto headNpc = loader.GetBrowser().LookupById(baseId);
+    std::vector<uint32_t> res = LeveledListUtils::EvaluateTemplateChain(
+      loader.GetBrowser(), headNpc, kPcLevel);
+    std::vector<FormDesc> templateChain(res.size());
+    std::transform(
+      res.begin(), res.end(), templateChain.begin(), [&](uint32_t formId) {
+        return FormDesc::FromFormId(formId, worldState->espmFiles);
+      });
+    changeForm.templateChain = std::move(templateChain);
+  });
+}
+
 std::chrono::steady_clock::time_point MpActor::GetLastRestorationTime(
   espm::ActorValue av) const noexcept
 {
@@ -614,7 +727,12 @@ void MpActor::Init(WorldState* worldState, uint32_t formId, bool hasChangeForm)
   MpObjectReference::Init(worldState, formId, hasChangeForm);
 
   if (worldState->HasEspm()) {
-    EnsureBaseContainerAdded(GetParent()->GetEspm());
+    auto& espm = worldState->GetEspm();
+    EnsureTemplateChainEvaluated(espm);
+    EnsureBaseContainerAdded(espm); // template chain needed here
+
+    // TODO: implement "gearedUpWeapons" flag
+    EquipBestWeapon();
   }
 }
 
@@ -675,11 +793,43 @@ void MpActor::SetSpawnPoint(const LocationalData& position)
 
 LocationalData MpActor::GetSpawnPoint() const
 {
+  auto formId = GetFormId();
+
+  if (!IsCreatedAsPlayer()) {
+    return GetEditorLocationalData();
+  }
   return ChangeForm().spawnPoint;
+}
+
+LocationalData MpActor::GetEditorLocationalData() const
+{
+  auto formId = GetFormId();
+  auto worldState = GetParent();
+
+  if (!worldState || !worldState->HasEspm()) {
+    throw std::runtime_error("MpActor::GetEditorLocation can only be used "
+                             "with actors attached to a valid world state");
+  }
+
+  auto data = espm::GetData<espm::ACHR>(formId, worldState);
+  auto lookupRes = worldState->GetEspm().GetBrowser().LookupById(formId);
+
+  const NiPoint3& pos = LocationalDataUtils::GetPos(data.loc);
+  NiPoint3 rot = LocationalDataUtils::GetRot(data.loc);
+  uint32_t worldOrCell = LocationalDataUtils::GetWorldOrCell(
+    worldState->GetEspm().GetBrowser(), lookupRes);
+
+  return LocationalData{
+    pos, rot, FormDesc::FromFormId(worldOrCell, worldState->espmFiles)
+  };
 }
 
 const float MpActor::GetRespawnTime() const
 {
+  if (!IsCreatedAsPlayer()) {
+    static const auto kNpcSpawnDelay = 6 * 60.f * 60.f;
+    return kNpcSpawnDelay;
+  }
   return ChangeForm().spawnDelay;
 }
 
@@ -717,7 +867,8 @@ void MpActor::DamageActorValue(espm::ActorValue av, float value)
 
 BaseActorValues MpActor::GetBaseValues()
 {
-  return GetBaseActorValues(GetParent(), GetBaseId(), GetRaceId());
+  return GetBaseActorValues(GetParent(), GetBaseId(), GetRaceId(),
+                            ChangeForm().templateChain);
 }
 
 BaseActorValues MpActor::GetMaximumValues()
@@ -836,8 +987,8 @@ void MpActor::ApplyMagicEffect(espm::Effects::Effect& effect, bool hasSweetpie,
       return;
     }
     MpChangeForm changeForm = GetChangeForm();
-    BaseActorValues baseValues =
-      GetBaseActorValues(GetParent(), GetBaseId(), GetRaceId());
+    BaseActorValues baseValues = GetBaseActorValues(
+      GetParent(), GetBaseId(), GetRaceId(), changeForm.templateChain);
     const ActiveMagicEffectsMap& activeEffects = changeForm.activeMagicEffects;
     const float baseValue = baseValues.GetValue(av);
     const uint32_t formId = GetFormId();
@@ -913,8 +1064,8 @@ void MpActor::ApplyMagicEffects(std::vector<espm::Effects::Effect>& effects,
 
 void MpActor::RemoveMagicEffect(const espm::ActorValue actorValue) noexcept
 {
-  const ActorValues baseActorValues =
-    GetBaseActorValues(GetParent(), GetBaseId(), GetRaceId());
+  const ActorValues baseActorValues = GetBaseActorValues(
+    GetParent(), GetBaseId(), GetRaceId(), ChangeForm().templateChain);
   const float baseActorValue = baseActorValues.GetValue(actorValue);
   SetActorValue(actorValue, baseActorValue);
   EditChangeForm([actorValue](MpChangeForm& changeForm) {
@@ -924,8 +1075,8 @@ void MpActor::RemoveMagicEffect(const espm::ActorValue actorValue) noexcept
 
 void MpActor::RemoveAllMagicEffects() noexcept
 {
-  const ActorValues baseActorValues =
-    GetBaseActorValues(GetParent(), GetBaseId(), GetRaceId());
+  const ActorValues baseActorValues = GetBaseActorValues(
+    GetParent(), GetBaseId(), GetRaceId(), ChangeForm().templateChain);
   SetActorValues(baseActorValues);
   EditChangeForm(
     [](MpChangeForm& changeForm) { changeForm.activeMagicEffects.Clear(); });

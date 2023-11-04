@@ -20,6 +20,19 @@ TEST_CASE("operator= for owning objects", "[VarValue]")
 {
   class MyObject : public IGameObject
   {
+    const std::vector<std::shared_ptr<ActivePexInstance>>&
+    ListActivePexInstances() const override
+    {
+      static const std::vector<std::shared_ptr<ActivePexInstance>>
+        kEmptyScripts;
+      return kEmptyScripts;
+    }
+
+    void AddScript(std::shared_ptr<ActivePexInstance> sctipt) noexcept override
+    {
+      spdlog::critical("VarValueTest.cpp: AddScript not implemented");
+      std::terminate();
+    }
   };
 
   VarValue var;
@@ -40,6 +53,20 @@ TEST_CASE("operator== for objects", "[VarValue]")
       if (auto rhsMy = dynamic_cast<const MyObject*>(&rhs))
         return i == rhsMy->i;
       return false;
+    }
+
+    const std::vector<std::shared_ptr<ActivePexInstance>>&
+    ListActivePexInstances() const override
+    {
+      static const std::vector<std::shared_ptr<ActivePexInstance>>
+        kEmptyScripts;
+      return kEmptyScripts;
+    }
+
+    void AddScript(std::shared_ptr<ActivePexInstance> sctipt) noexcept override
+    {
+      spdlog::critical("VarValueTest.cpp: AddScript not implemented");
+      std::terminate();
     }
 
   private:

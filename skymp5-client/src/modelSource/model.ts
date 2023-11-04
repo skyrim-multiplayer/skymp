@@ -19,6 +19,8 @@ export interface FormModel {
   inventory?: Inventory;
   isHostedByOther?: boolean;
   isDead?: boolean;
+  templateChain?: number[];
+  lastAnimation?: string;
 
   // Assigned locally
   isMyClone?: boolean;

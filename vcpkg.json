@@ -19,6 +19,7 @@
     "node-addon-api",
     "bshoshany-thread-pool",
     "makeid",
+    "rsm-bsa",
     {
       "name": "frida-gum",
       "platform": "windows"

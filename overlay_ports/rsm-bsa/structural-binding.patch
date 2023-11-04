@@ -1,0 +1,43 @@
+From 9efa9f4853b84c0b9f56c57dcb18df5e71c9ac9b Mon Sep 17 00:00:00 2001
+From: Leonid Pospelov <leonidpospelov.dev@gmail.com>
+Date: Sun, 15 Oct 2023 03:32:09 +0600
+Subject: [PATCH] Update tes4.cpp
+
+---
+ src/bsa/tes4.cpp | 8 ++++++--
+ 1 file changed, 6 insertions(+), 2 deletions(-)
+
+diff --git a/src/bsa/tes4.cpp b/src/bsa/tes4.cpp
+index 0e98dce..70330d5 100644
+--- a/src/bsa/tes4.cpp
++++ b/src/bsa/tes4.cpp
+@@ -486,7 +486,7 @@ namespace bsa::tes4
+ 			}
+ 			const std::string_view pview{ a_path };
+ 
+-			const auto [stem, extension] = [&]() noexcept
++			const auto p = [&]() noexcept
+ 				-> std::pair<std::string_view, std::string_view> {
+ 				const auto split = pview.find_last_of('.');
+ 				if (split != std::string_view::npos) {
+@@ -501,6 +501,8 @@ namespace bsa::tes4
+ 					};
+ 				}
+ 			}();
++			std::string_view stem = p.first;
++			std::string_view extension = p.second;
+ 
+ 			if (!stem.empty() &&
+ 				stem.length() < 260 &&
+@@ -1074,7 +1076,9 @@ namespace bsa::tes4
+ 			hashing::hash hash;
+ 			hash.read(a_in, a_header.endian());
+ 
+-			auto [size, offset] = a_in->read<std::uint32_t, std::uint32_t>();
++			auto [size_, offset_] = a_in->read<std::uint32_t, std::uint32_t>();
++			auto size = size_;
++			auto offset = offset_;
+ 
+ 			const detail::restore_point _{ a_in };
+ 			a_in->seek_absolute(offset & ~file::isecondary_archive);
+ 

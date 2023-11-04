@@ -1,10 +1,10 @@
 #pragma once
-#include "EspmGameObject.h"
 #include "FormDesc.h"
-#include "MpFormGameObject.h"
 #include "NapiHelper.h"
 #include "WorldState.h"
 #include "papyrus-vm/Structures.h"
+#include "script_objects/EspmGameObject.h"
+#include "script_objects/MpFormGameObject.h"
 #include <napi.h>
 #include <sstream>
 

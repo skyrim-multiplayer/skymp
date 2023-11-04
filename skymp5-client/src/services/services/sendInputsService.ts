@@ -49,7 +49,7 @@ export class SendInputsService extends ClientListener {
 
             this.controller.emitter.emit("sendMessage", {
                 message: { t: MsgType.OnEquip, baseId: event.baseObj.getFormID() },
-                reliability: "unreliable"   
+                reliability: "unreliable"
             });
         }
     }

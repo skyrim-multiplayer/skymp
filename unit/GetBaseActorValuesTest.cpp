@@ -23,7 +23,7 @@ TEST_CASE("GetBaseActorValues works correctly", "[GetBaseActorValues]")
   auto appearance = ac.GetAppearance();
   uint32_t raceId = appearance ? appearance->raceId : 0;
   BaseActorValues baseValues =
-    GetBaseActorValues(&p.worldState, baseId, raceId);
+    GetBaseActorValues(&p.worldState, baseId, raceId, {});
 
   REQUIRE(baseValues.health == 100.f);
   REQUIRE(baseValues.stamina == 100.f);

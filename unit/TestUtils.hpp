@@ -1,9 +1,9 @@
 #pragma once
 #include "FormCallbacks.h"
-#include "IPapyrusCompatibilityPolicy.h"
 #include "MpActor.h"
 #include "MsgType.h"
 #include "PartOne.h"
+#include "script_compatibility_policies/IPapyrusCompatibilityPolicy.h"
 #include <catch2/catch_all.hpp>
 #include <nlohmann/json.hpp>
 #include <thread>
@@ -99,15 +99,4 @@ public:
 
 private:
   std::stringstream ss;
-};
-
-class PapyrusCompatibilityPolicy : public IPapyrusCompatibilityPolicy
-{
-public:
-  PapyrusCompatibilityPolicy(MpActor* ac_);
-
-  MpActor* GetDefaultActor(const char*, const char*, int32_t) const override;
-
-private:
-  MpActor* const ac;
 };

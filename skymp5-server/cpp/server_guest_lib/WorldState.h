@@ -4,13 +4,13 @@
 #include "GridElement.h"
 #include "MpChangeForms.h"
 #include "MpForm.h"
-#include "MpFormGameObject.h"
 #include "MpObjectReference.h"
 #include "NiPoint3.h"
 #include "PartOneListener.h"
 #include "Timer.h"
 #include "libespm/Loader.h"
 #include "papyrus-vm/VirtualMachine.h"
+#include "script_objects/MpFormGameObject.h"
 #include <MakeID.h>
 #include <algorithm>
 #include <chrono>
@@ -109,7 +109,8 @@ public:
       wrapper);
   bool RemoveEffectTimer(uint32_t timerId);
 
-  const std::shared_ptr<MpForm>& LookupFormById(uint32_t formId);
+  const std::shared_ptr<MpForm>& LookupFormById(
+    uint32_t formId, std::stringstream* optionalOutTrace = nullptr);
 
   MpForm* LookupFormByIdx(int idx);
 
@@ -217,6 +218,8 @@ public:
   std::shared_ptr<spdlog::logger> logger;
   std::vector<std::shared_ptr<PartOneListener>> listeners;
   std::unordered_map<uint32_t, uint32_t> hosters;
+  std::unordered_map<uint32_t, std::map<uint32_t, float>>
+    activationChildsByActivationParent;
   std::vector<std::optional<std::chrono::system_clock::time_point>>
     lastMovUpdateByIdx;
 
@@ -227,12 +230,16 @@ public:
   NpcSettingsEntry defaultSetting;
   bool enableConsoleCommandsForAll = false;
 
+  bool disableVanillaScriptsInExterior = true;
+
 private:
   bool AttachEspmRecord(const espm::CombineBrowser& br,
                         const espm::RecordHeader* record,
-                        const espm::IdMapping& mapping);
+                        const espm::IdMapping& mapping,
+                        std::stringstream* optionalOutTrace = nullptr);
 
-  bool LoadForm(uint32_t formId);
+  bool LoadForm(uint32_t formId,
+                std::stringstream* optionalOutTrace = nullptr);
   void TickReloot(const std::chrono::system_clock::time_point& now);
   void TickSaveStorage(const std::chrono::system_clock::time_point& now);
   void TickTimers(const std::chrono::system_clock::time_point& now);

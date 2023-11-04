@@ -1,4 +1,5 @@
 #pragma once
+#include "REFR.h"
 #include "RecordHeader.h"
 
 #pragma pack(push, 1)
@@ -11,6 +12,12 @@ public:
   static constexpr auto kType = "ACHR";
 
   bool StartsDead() const noexcept;
+
+  struct Data : public REFR::Data
+  {
+  };
+
+  Data GetData(CompressedFieldsCache& compressedFieldsCache) const noexcept;
 };
 
 static_assert(sizeof(ACHR) == sizeof(RecordHeader));

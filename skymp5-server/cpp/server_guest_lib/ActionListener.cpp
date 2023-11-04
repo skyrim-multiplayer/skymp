@@ -3,7 +3,6 @@
 #include "ConsoleCommands.h"
 #include "CropRegeneration.h"
 #include "DummyMessageOutput.h"
-#include "EspmGameObject.h"
 #include "Exceptions.h"
 #include "FindRecipe.h"
 #include "GetBaseActorValues.h"
@@ -15,6 +14,7 @@
 #include "UserMessageOutput.h"
 #include "WorldState.h"
 #include "papyrus-vm/Utils.h"
+#include "script_objects/EspmGameObject.h"
 #include <fmt/format.h>
 #include <spdlog/spdlog.h>
 #include <unordered_set>
@@ -226,67 +226,6 @@ void ActionListener::OnUpdateEquipment(
   actor->SetEquipment(simdjson::minify(data));
 }
 
-void RecalculateWorn(MpObjectReference& refr)
-{
-  if (!refr.GetParent()->HasEspm()) {
-    return;
-  }
-  auto& loader = refr.GetParent()->GetEspm();
-  auto& cache = refr.GetParent()->GetEspmCache();
-
-  auto ac = dynamic_cast<MpActor*>(&refr);
-  if (!ac) {
-    return;
-  }
-
-  const Equipment eq = ac->GetEquipment();
-
-  Equipment newEq;
-  newEq.numChanges = eq.numChanges + 1;
-  for (auto& entry : eq.inv.entries) {
-    bool isEquipped = entry.extra.worn != Inventory::Worn::None;
-    bool isWeap =
-      espm::GetRecordType(entry.baseId, refr.GetParent()) == espm::WEAP::kType;
-    if (isEquipped && isWeap) {
-      continue;
-    }
-    newEq.inv.AddItems({ entry });
-  }
-
-  const Inventory inv = ac->GetInventory();
-  Inventory::Entry bestEntry;
-  int16_t bestDamage = -1;
-  for (auto& entry : inv.entries) {
-    if (entry.baseId) {
-      auto lookupRes = loader.GetBrowser().LookupById(entry.baseId);
-      if (auto weap = espm::Convert<espm::WEAP>(lookupRes.rec)) {
-        if (!bestEntry.count ||
-            weap->GetData(cache).weapData->damage > bestDamage) {
-          bestEntry = entry;
-          bestDamage = weap->GetData(cache).weapData->damage;
-        }
-      }
-    }
-  }
-
-  if (bestEntry.count > 0) {
-    bestEntry.extra.worn = Inventory::Worn::Right;
-    newEq.inv.AddItems({ bestEntry });
-  }
-
-  ac->SetEquipment(newEq.ToJson().dump());
-  for (auto listener : ac->GetListeners()) {
-    auto actor = dynamic_cast<MpActor*>(listener);
-    if (!actor) {
-      continue;
-    }
-    UpdateEquipmentMessage msg;
-    msg.data = newEq.ToJson();
-    msg.idx = ac->GetIdx();
-    actor->SendToUser(msg, true);
-  }
-}
-
 void ActionListener::OnActivate(const RawMessageData& rawMsgData,
                                 uint32_t caster, uint32_t target)
 {
@@ -318,7 +257,11 @@ void ActionListener::OnActivate(const RawMessageData& rawMsgData,
     caster == 0x14 ? *ac
                    : partOne.worldState.GetFormAt<MpObjectReference>(caster));
   if (hosterId) {
-    RecalculateWorn(partOne.worldState.GetFormAt<MpObjectReference>(caster));
+    auto actor = std::dynamic_pointer_cast<MpActor>(
+      partOne.worldState.LookupFormById(caster));
+    if (actor) {
+      actor->EquipBestWeapon();
+    }
   }
 }
 
@@ -360,19 +303,19 @@ namespace {
 VarValue VarValueFromJson(const simdjson::dom::element& parentMsg,
                           const simdjson::dom::element& element)
 {
-  static const auto key = JsonPointer("returnValue");
+  static const auto kKey = JsonPointer("returnValue");
 
   // TODO: DOUBLE, STRING ...
   switch (element.type()) {
     case simdjson::dom::element_type::INT64:
     case simdjson::dom::element_type::UINT64: {
       int32_t v;
-      ReadEx(parentMsg, key, &v);
+      ReadEx(parentMsg, kKey, &v);
       return VarValue(v);
     }
     case simdjson::dom::element_type::BOOL: {
       bool v;
-      ReadEx(parentMsg, key, &v);
+      ReadEx(parentMsg, kKey, &v);
       return VarValue(v);
     }
     case simdjson::dom::element_type::NULL_VALUE:
@@ -517,10 +460,15 @@ void ActionListener::OnHostAttempt(const RawMessageData& rawMsgData,
                              me->GetFormId());
     hoster = me->GetFormId();
     remote.UpdateHoster(hoster);
-    RecalculateWorn(remote);
+
+    auto remoteAsActor = dynamic_cast<MpActor*>(&remote);
+
+    if (remoteAsActor) {
+      remoteAsActor->EquipBestWeapon();
+    }
 
     uint64_t longFormId = remote.GetFormId();
-    if (dynamic_cast<MpActor*>(&remote) && longFormId < 0xff000000) {
+    if (remoteAsActor && longFormId < 0xff000000) {
       longFormId += 0x100000000;
     }
 
@@ -634,7 +582,9 @@ float CalculateCurrentHealthPercentage(const MpActor& actor, float damage,
   uint32_t baseId = actor.GetBaseId();
   uint32_t raceId = actor.GetRaceId();
   WorldState* espmProvider = actor.GetParent();
-  float baseHealth = GetBaseActorValues(espmProvider, baseId, raceId).health;
+  float baseHealth =
+    GetBaseActorValues(espmProvider, baseId, raceId, actor.GetTemplateChain())
+      .health;
 
   if (outBaseHealth) {
     *outBaseHealth = baseHealth;

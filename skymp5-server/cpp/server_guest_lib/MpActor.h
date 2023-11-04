@@ -35,6 +35,8 @@ public:
   uint32_t GetRaceId() const;
   bool IsWeaponDrawn() const;
   espm::ObjectBounds GetBounds() const;
+  const std::vector<FormDesc>& GetTemplateChain() const;
+  bool IsCreatedAsPlayer() const;
 
   void SetRaceMenuOpen(bool isOpen);
   void SetAppearance(const Appearance* newAppearance);
@@ -92,6 +94,7 @@ public:
   void Teleport(const LocationalData& position);
   void SetSpawnPoint(const LocationalData& position);
   LocationalData GetSpawnPoint() const;
+  LocationalData GetEditorLocationalData() const;
   const float GetRespawnTime() const;
   void SetRespawnTime(float time);
 
@@ -125,6 +128,8 @@ public:
   bool GetConsoleCommandsAllowedFlag() const;
   void SetConsoleCommandsAllowedFlag(bool newValue);
 
+  void EquipBestWeapon();
+
 private:
   struct Impl;
   std::shared_ptr<Impl> pImpl;
@@ -148,6 +153,8 @@ private:
   void SetLastRestorationTime(espm::ActorValue av,
                               std::chrono::steady_clock::time_point timePoint);
   bool CanActorValueBeRestored(espm::ActorValue av);
+
+  void EnsureTemplateChainEvaluated(espm::Loader& loader);
 
 protected:
   void BeforeDestroy() override;

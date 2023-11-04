@@ -1,46 +1,21 @@
 #include "WorldState.h"
 #include "FormCallbacks.h"
-#include "HeuristicPolicy.h"
-#include "ISaveStorage.h"
+#include "LocationalDataUtils.h"
 #include "MpActor.h"
 #include "MpChangeForms.h"
-#include "MpFormGameObject.h"
 #include "MpObjectReference.h"
-#include "PapyrusActor.h"
-#include "PapyrusDebug.h"
-#include "PapyrusEffectShader.h"
-#include "PapyrusForm.h"
-#include "PapyrusFormList.h"
-#include "PapyrusGame.h"
-#include "PapyrusKeyword.h"
-#include "PapyrusMessage.h"
-#include "PapyrusObjectReference.h"
-#include "PapyrusSkymp.h"
-#include "PapyrusUtility.h"
 #include "ScopedTask.h"
-#include "ScriptStorage.h"
 #include "Timer.h"
 #include "libespm/GroupUtils.h"
 #include "papyrus-vm/Reader.h"
+#include "save_storages/ISaveStorage.h"
+#include "script_classes/PapyrusClassesFactory.h"
+#include "script_compatibility_policies/PapyrusCompatibilityPolicyFactory.h"
+#include "script_storages/IScriptStorage.h"
 #include <algorithm>
 #include <deque>
 #include <iterator>
 #include <unordered_map>
-
-namespace {
-inline const NiPoint3& GetPos(const espm::REFR::LocationalData* locationalData)
-{
-  return *reinterpret_cast<const NiPoint3*>(locationalData->pos);
-}
-
-inline NiPoint3 GetRot(const espm::REFR::LocationalData* locationalData)
-{
-  static const auto g_pi = std::acos(-1.f);
-  return { locationalData->rotRadians[0] / g_pi * 180.f,
-           locationalData->rotRadians[1] / g_pi * 180.f,
-           locationalData->rotRadians[2] / g_pi * 180.f };
-}
-}
 
 struct WorldState::Impl
 {
@@ -50,7 +25,7 @@ struct WorldState::Impl
   bool saveStorageBusy = false;
   std::shared_ptr<VirtualMachine> vm;
   uint32_t nextId = 0xff000000;
-  std::shared_ptr<HeuristicPolicy> policy;
+  std::shared_ptr<IPapyrusCompatibilityPolicy> policy;
   std::unordered_map<uint32_t, MpChangeForm> changeFormsForDeferredLoad;
   bool chunkLoadingInProgress = false;
   bool formLoadingInProgress = false;
@@ -65,7 +40,7 @@ WorldState::WorldState()
   logger.reset(new spdlog::logger("empty logger"));
 
   pImpl.reset(new Impl);
-  pImpl->policy.reset(new HeuristicPolicy(logger, this));
+  pImpl->policy = PapyrusCompatibilityPolicyFactory::Create(this);
 }
 
 void WorldState::Clear()
@@ -219,26 +194,55 @@ void WorldState::RequestSave(MpObjectReference& ref)
   }
 }
 
-const std::shared_ptr<MpForm>& WorldState::LookupFormById(uint32_t formId)
+const std::shared_ptr<MpForm>& WorldState::LookupFormById(
+  uint32_t formId, std::stringstream* optionalOutTrace)
 {
   static const std::shared_ptr<MpForm> kNullForm;
+
+  if (optionalOutTrace) {
+    *optionalOutTrace << "searching for " << std::hex << formId << std::endl;
+  }
 
   auto it = forms.find(formId);
   if (it == forms.end()) {
     if (formId < 0xff000000) {
-      if (LoadForm(formId)) {
+      if (LoadForm(formId, optionalOutTrace)) {
         it = forms.find(formId);
-        return it == forms.end() ? kNullForm : it->second;
+        if (it != forms.end()) {
+          if (optionalOutTrace) {
+            *optionalOutTrace << "found after successful LoadForm" << std::hex
+                              << formId << std::endl;
+          }
+          return it->second;
+        }
+        if (optionalOutTrace) {
+          *optionalOutTrace << "not found after successful LoadForm"
+                            << std::hex << formId << std::endl;
+        }
+        return kNullForm;
+      } else {
+        if (optionalOutTrace) {
+          *optionalOutTrace << "LoadForm returned false " << std::hex << formId
+                            << std::endl;
+        }
       }
     }
+    if (optionalOutTrace) {
+      *optionalOutTrace << "not found " << std::hex << formId << std::endl;
+    }
     return kNullForm;
+  }
+
+  if (optionalOutTrace) {
+    *optionalOutTrace << "found " << std::hex << formId << std::endl;
   }
   return it->second;
 }
 
 bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
                                   const espm::RecordHeader* record,
-                                  const espm::IdMapping& mapping)
+                                  const espm::IdMapping& mapping,
+                                  std::stringstream* optionalOutTrace)
 {
   auto& cache = GetEspmCache();
   // this place is a hotpath.
@@ -251,6 +255,10 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
   espm::LookupResult base = br.LookupById(baseId);
   if (!base.rec) {
     logger->info("baseId {} {}", baseId, static_cast<const void*>(base.rec));
+    if (optionalOutTrace) {
+      *optionalOutTrace << fmt::format(
+        "AttachEspmRecord - base record not found {:x} \n", baseId);
+    }
     return false;
   }
 
@@ -267,6 +275,10 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
 
   if (!isNpc && !isFurniture && !isActivator && !espm::utils::IsItem(t) &&
       !isDoor && !isContainer && !isFlor && !isTree) {
+    if (optionalOutTrace) {
+      *optionalOutTrace << fmt::format(
+        "AttachEspmRecord - the server skips base type {} \n", t.ToString());
+    }
     return false;
   }
 
@@ -275,6 +287,10 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
     auto* achr = reinterpret_cast<const espm::ACHR*>(record);
     startsDead = achr->StartsDead();
     if (startsDead) {
+      if (optionalOutTrace) {
+        *optionalOutTrace << fmt::format(
+          "AttachEspmRecord - the server skips dead actors\n");
+      }
       return false; // TODO: Load dead references
     }
   }
@@ -287,14 +303,26 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
   };
 
   if (refr->GetFlags() & InitiallyDisabled) {
+    if (optionalOutTrace) {
+      *optionalOutTrace << fmt::format(
+        "AttachEspmRecord - the server skips initially disabled references\n");
+    }
     return false;
   }
 
   if (refr->GetFlags() & DeletedRecord) {
+    if (optionalOutTrace) {
+      *optionalOutTrace << fmt::format(
+        "AttachEspmRecord - the server skips deleted references\n");
+    }
     return false;
   }
 
   if (!npcEnabled && isNpc) {
+    if (optionalOutTrace) {
+      *optionalOutTrace << fmt::format(
+        "AttachEspmRecord - the server skips npcs: npcEnabled = false\n");
+    }
     return false;
   }
 
@@ -302,12 +330,22 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
     if (NpcSourceFilesOverriden() && !IsNpcAllowed(baseId)) {
       spdlog::trace("Skip NPC loading, it is not allowed. baseId {:#x}",
                     baseId);
+      if (optionalOutTrace) {
+        *optionalOutTrace
+          << fmt::format("Skip NPC loading, it is not allowed. baseId {:#x}",
+                         baseId)
+          << std::endl;
+      }
       return false;
     }
     auto npcData =
       reinterpret_cast<const espm::NPC_*>(base.rec)->GetData(cache);
 
-    if (npcData.isEssential || npcData.isProtected) {
+    if (npcData.isEssential || npcData.isProtected || npcData.isUnique) {
+      if (optionalOutTrace) {
+        *optionalOutTrace << fmt::format("Skip NPC due to its flags")
+                          << std::endl;
+      }
       return false;
     }
 
@@ -331,6 +369,10 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
       if (it != factionFormIds.end()) {
         logger->info("Skipping actor {:#x} because it's in faction {:#x}",
                      record->GetId(), *it);
+        if (optionalOutTrace) {
+          *optionalOutTrace << fmt::format("Skip NPC due to faction")
+                            << std::endl;
+        }
         return false;
       }
     }
@@ -343,6 +385,10 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
     espm::utils::GetMappedId(GetWorldOrCell(br, record), mapping);
   if (!worldOrCell) {
     logger->error("Anomaly: refr without world/cell");
+    if (optionalOutTrace) {
+      *optionalOutTrace << fmt::format("Anomaly: refr without world/cell")
+                        << std::endl;
+    }
     return false;
   }
 
@@ -365,6 +411,14 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
                     "baseId "
                     "{:#x}, espmFiles size: {}",
                     baseId, espmFiles.size());
+      if (optionalOutTrace) {
+        *optionalOutTrace
+          << fmt::format("NPC's idx is greater than espmFiles.size(). NPC's"
+                         "baseId "
+                         "{:#x}, espmFiles size: {}",
+                         baseId, espmFiles.size())
+          << std::endl;
+      }
       return false;
     }
     auto it = npcSettings.find(espmFiles[npcFileIdx]);
@@ -390,6 +444,15 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
         "rules applied in server settings: spanwInInterior={}, "
         "spawnInExterior={}, NPC location: exterior={}, interior={}",
         spawnInInterior, spawnInExterior, isExterior, isInterior);
+      if (optionalOutTrace) {
+        *optionalOutTrace
+          << fmt::format(
+               "Unable to spawn npc because of "
+               "rules applied in server settings: spanwInInterior={}, "
+               "spawnInExterior={}, NPC location: exterior={}, interior={}",
+               spawnInInterior, spawnInExterior, isExterior, isInterior)
+          << std::endl;
+      }
       return false;
     }
   }
@@ -402,15 +465,22 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
       reinterpret_cast<MpObjectReference*>(existing->second.get());
 
     if (locationalData) {
-      existingAsRefr->SetPosAndAngleSilent(GetPos(locationalData),
-                                           GetRot(locationalData));
+      existingAsRefr->SetPosAndAngleSilent(
+        LocationalDataUtils::GetPos(locationalData),
+        LocationalDataUtils::GetRot(locationalData));
 
-      assert(existingAsRefr->GetPos() == NiPoint3(GetPos(locationalData)));
+      assert(existingAsRefr->GetPos() ==
+             NiPoint3(LocationalDataUtils::GetPos(locationalData)));
     }
 
   } else {
     if (!locationalData) {
       logger->error("Anomaly: refr without locationalData");
+      if (optionalOutTrace) {
+        *optionalOutTrace << fmt::format(
+                               "Anomaly: refr without locationalData")
+                          << std::endl;
+      }
       return false;
     }
 
@@ -423,7 +493,8 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
     auto typeStr = t.ToString();
     std::unique_ptr<MpForm> form;
     LocationalData formLocationalData = {
-      GetPos(locationalData), GetRot(locationalData),
+      LocationalDataUtils::GetPos(locationalData),
+      LocationalDataUtils::GetRot(locationalData),
       FormDesc::FromFormId(worldOrCell, espmFiles)
     };
     if (!isNpc) {
@@ -435,21 +506,32 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
         new MpActor(formLocationalData, formCallbacksFactory(), baseId));
     }
     AddForm(std::move(form), formId, true);
+
     // Do not TriggerFormInitEvent here, doing it later after changeForm apply
   }
 
+  if (optionalOutTrace) {
+    *optionalOutTrace << fmt::format("AttachEspmRecord returned true")
+                      << std::endl;
+  }
   return true;
 }
 
-bool WorldState::LoadForm(uint32_t formId)
+bool WorldState::LoadForm(uint32_t formId, std::stringstream* optionalOutTrace)
 {
   bool atLeastOneLoaded = false;
   auto& br = GetEspm().GetBrowser();
   auto lookupResults = br.LookupByIdAll(formId);
   for (auto& lookupRes : lookupResults) {
     auto mapping = br.GetCombMapping(lookupRes.fileIdx);
-    if (AttachEspmRecord(br, lookupRes.rec, *mapping)) {
+    bool attached =
+      AttachEspmRecord(br, lookupRes.rec, *mapping, optionalOutTrace);
+    if (attached) {
       atLeastOneLoaded = true;
+    }
+    if (optionalOutTrace) {
+      *optionalOutTrace << "AttachEspmRecord " << (attached ? "true" : "false")
+                        << std::endl;
     }
   }
 
@@ -727,20 +809,8 @@ VirtualMachine& WorldState::GetPapyrusVm()
         }
       });
 
-      pImpl->classes.emplace_back(std::make_unique<PapyrusObjectReference>());
-      pImpl->classes.emplace_back(std::make_unique<PapyrusGame>());
-      pImpl->classes.emplace_back(std::make_unique<PapyrusForm>());
-      pImpl->classes.emplace_back(std::make_unique<PapyrusMessage>());
-      pImpl->classes.emplace_back(std::make_unique<PapyrusFormList>());
-      pImpl->classes.emplace_back(std::make_unique<PapyrusDebug>());
-      pImpl->classes.emplace_back(std::make_unique<PapyrusActor>());
-      pImpl->classes.emplace_back(std::make_unique<PapyrusSkymp>());
-      pImpl->classes.emplace_back(std::make_unique<PapyrusUtility>());
-      pImpl->classes.emplace_back(std::make_unique<PapyrusEffectShader>());
-      pImpl->classes.emplace_back(std::make_unique<PapyrusKeyword>());
-      for (auto& cl : pImpl->classes) {
-        cl->Register(*pImpl->vm, pImpl->policy);
-      }
+      pImpl->classes =
+        PapyrusClassesFactory::CreateAndRegister(*pImpl->vm, pImpl->policy);
     }
   }
 

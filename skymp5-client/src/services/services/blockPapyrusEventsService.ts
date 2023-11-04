@@ -8,9 +8,7 @@ export class BlockPapyrusEventsService extends ClientListener {
     }
 
     private onceTick() {
-        if (typeof this.sp.blockPapyrusEvents === "function") {
-            this.sp.blockPapyrusEvents(true);
-        }
+        this.sp.blockPapyrusEvents(true);
     }
 
     private onceUpdate() {

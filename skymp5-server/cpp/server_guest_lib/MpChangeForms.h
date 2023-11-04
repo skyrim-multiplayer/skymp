@@ -84,10 +84,19 @@ public:
   // values in skymp due to poor design
   std::string appearanceDump, equipmentDump;
   ActorValues actorValues;
+
+  // Used only for player characters. See GetSpawnPoint
   LocationalData spawnPoint = { { 133857, -61130, 14662 },
                                 { 0.f, 0.f, 72.f },
                                 FormDesc::Tamriel() };
+
+  // Used only for player characters. See GetSpawnDelay
   float spawnDelay = 25.0f;
+
+  std::vector<FormDesc> templateChain;
+
+  // Used for PlayAnimation (object reference)
+  std::optional<std::string> lastAnimation;
 
   // Please update 'ActorTest.cpp' when adding new Actor-related rows
 
@@ -101,7 +110,7 @@ public:
       baseContainerAdded, nextRelootDatetime, isDisabled, profileId,
       isRaceMenuOpen, isDead, consoleCommandsAllowed, appearanceDump,
       equipmentDump, actorValues.ToTuple(), spawnPoint, dynamicFields,
-      spawnDelay, learnedSpells);
+      spawnDelay, learnedSpells, templateChain, lastAnimation);
   }
 
   static nlohmann::json ToJson(const MpChangeFormREFR& changeForm);
