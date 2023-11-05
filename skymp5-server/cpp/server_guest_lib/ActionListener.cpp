@@ -894,9 +894,10 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
 
   float healthPercentage = currentActorValues.healthPercentage;
 
-  hitData.isHitBlocked = targetActor.IsBlockActive()
-    ? ShouldBeBlocked(*aggressor, targetActor)
-    : false;
+  hitData.isHitBlocked = hitData.isHitBlocked ||
+    (targetActor.IsBlockActive() ? ShouldBeBlocked(*aggressor, targetActor)
+                                 : false);
+
   float damage = partOne.CalculateDamage(*aggressor, targetActor, hitData);
   damage = damage < 0.f ? 0.f : damage;
   float outBaseHealth = 0.f;
