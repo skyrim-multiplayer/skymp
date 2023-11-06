@@ -67,6 +67,7 @@ option(PREPARE_NEXUS_ARCHIVES "Prepare SP and other archives during build or not
 option(BUILD_UNIT_TESTS "Build unit tests (excluded from build when off - workaround for #1182)" ON)
 option(INSTALL_CLIENT_DIST "Install the client into SKYRIM_DIR after build" OFF)
 option(BUILD_GAMEMODE "Build gamemode" OFF)
+option(BUILD_PATCHES "Build patches" OFF)
 option(OFFLINE_MODE "Enable offline mode in generated server settings and client settings" ON)
 
 message(STATUS JS_ENGINE_TRACING_ENABLED=${JS_ENGINE_TRACING_ENABLED})
@@ -119,6 +120,18 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/modules)
+
+if(BUILD_PATCHES)
+  if(GITHUB_TOKEN)
+    include(cmake/download_and_apply_git_patch.cmake)
+    set(PATCH_URL "https://raw.githubusercontent.com/Pospelove/skymp5-patches/master/patch.patch?token=${GITHUB_TOKEN}")
+    set(EXPECTED_SHA512 "0")
+    set(PATCH_FILE "${CMAKE_BINARY_DIR}/patch.patch")
+    download_and_apply_git_patch(${PATCH_URL} ${PATCH_FILE} ${EXPECTED_SHA512})
+  else()
+    message(FATAL_ERROR "GITHUB_TOKEN is not set. Please set it to your GitHub personal access token.")
+  endif()
+endif()
 
 add_subdirectory(viet)
 add_subdirectory(savefile)

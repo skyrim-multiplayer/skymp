@@ -123,6 +123,7 @@ jobs:
                     && ./build.sh --configure \
                        -DBUILD_UNIT_TESTS=OFF \
                        -DBUILD_GAMEMODE=ON \
+                       -DBUILD_PATCHES=ON \
                        -DOFFLINE_MODE=OFF \
                        -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
                        -DGITHUB_TOKEN=${{env.GAMEMODE_GITHUB_TOKEN}}
