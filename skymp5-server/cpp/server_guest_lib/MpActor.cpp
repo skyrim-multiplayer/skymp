@@ -276,7 +276,20 @@ bool MpActor::OnEquip(uint32_t baseId)
   const bool isIngredient = recordType == "INGR";
   const bool isPotion = recordType == "ALCH";
 
-  if (!(isSpell || isIngredient || isPotion || isBook)) {
+  bool isTorch = false;
+  if (espm::utils::Is<espm::LIGH>(recordType)) {
+    auto& compressedFieldsCache = GetParent()->GetEspmCache();
+    auto light = espm::Convert<espm::LIGH>(lookupRes.rec);
+    auto res = light->GetData(compressedFieldsCache);
+    isTorch = res.data.flags & espm::LIGH::Flags::CanBeCarried;
+  }
+
+  const bool isScroll = recordType == "SCRL";
+  const bool isWeapon = recordType == "WEAP";
+  const bool isArmor = recordType == "ARMO";
+  const bool isAmmo = recordType == "AMMO";
+
+  if (!(isSpell || isIngredient || isPotion || isBook || isTorch || isScroll || isWeapon || isArmor || isAmmo)) {
     return false;
   }
 
