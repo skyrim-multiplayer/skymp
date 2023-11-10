@@ -289,7 +289,8 @@ bool MpActor::OnEquip(uint32_t baseId)
   const bool isArmor = recordType == "ARMO";
   const bool isAmmo = recordType == "AMMO";
 
-  if (!(isSpell || isIngredient || isPotion || isBook || isTorch || isScroll || isWeapon || isArmor || isAmmo)) {
+  if (!(isSpell || isIngredient || isPotion || isBook || isTorch || isScroll ||
+        isWeapon || isArmor || isAmmo)) {
     return false;
   }
 
