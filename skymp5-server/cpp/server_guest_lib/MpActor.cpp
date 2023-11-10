@@ -796,10 +796,7 @@ LocationalData MpActor::GetSpawnPoint() const
   auto formId = GetFormId();
 
   if (!IsCreatedAsPlayer()) {
-    // FF do not have espm record, so they don't have editor location
-    if (formId < 0xff000000) {
-      return GetEditorLocationalData();
-    }
+    return GetEditorLocationalData();
   }
   return ChangeForm().spawnPoint;
 }
