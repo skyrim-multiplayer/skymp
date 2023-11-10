@@ -382,8 +382,14 @@ void UseCraftRecipe(MpActor* me, espm::COBJ::Data recipeData,
     s += fmt::format(" +{:#x} x{}", outputFormId, recipeData.outputCount);
     spdlog::debug("{}", s);
   }
-  me->RemoveItems(entries);
-  me->AddItem(outputFormId, recipeData.outputCount);
+
+  if (me->MpApiCraft(outputFormId, recipeData.outputCount)) {
+    spdlog::trace("onCraft - not blocked by gamemode");
+    me->RemoveItems(entries);
+    me->AddItem(outputFormId, recipeData.outputCount);
+  } else {
+    spdlog::trace("onCraft - blocked by gamemode");
+  }
 }
 
 void ActionListener::OnCraftItem(const RawMessageData& rawMsgData,

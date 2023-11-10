@@ -588,8 +588,7 @@ void MpActor::MpApiDeath(MpActor* killer)
   simdjson::dom::parser parser;
   bool isRespawnBlocked = false;
 
-  std::string s =
-    "[" + std::to_string(killer ? killer->GetFormId() : 0) + " ]";
+  std::string s = "[" + std::to_string(killer ? killer->GetFormId() : 0) + "]";
   auto args = parser.parse(s).value();
 
   if (auto wst = GetParent()) {
@@ -600,9 +599,31 @@ void MpActor::MpApiDeath(MpActor* killer)
       };
     }
   }
+
   if (!isRespawnBlocked) {
     RespawnWithDelay();
   }
+}
+
+bool MpActor::MpApiCraft(uint32_t craftedItemBaseId, uint32_t count)
+{
+  simdjson::dom::parser parser;
+  bool isCraftBlocked = false;
+
+  std::string s = "[" + std::to_string(craftedItemBaseId) + "," +
+    std::to_string(count) + "]";
+  auto args = parser.parse(s).value();
+
+  if (auto wst = GetParent()) {
+    const auto id = GetFormId();
+    for (auto& listener : wst->listeners) {
+      if (listener->OnMpApiEvent("onCraft", args, id) == false) {
+        isCraftBlocked = true;
+      };
+    }
+  }
+
+  return !isCraftBlocked;
 }
 
 void MpActor::EatItem(uint32_t baseId, espm::Type t)
