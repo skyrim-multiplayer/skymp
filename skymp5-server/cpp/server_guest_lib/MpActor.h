@@ -130,6 +130,9 @@ public:
 
   void EquipBestWeapon();
 
+  bool MpApiCraft(uint32_t craftedItemBaseId, uint32_t count,
+                  uint32_t recipeId);
+
 private:
   struct Impl;
   std::shared_ptr<Impl> pImpl;
