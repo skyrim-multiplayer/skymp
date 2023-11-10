@@ -301,14 +301,14 @@ bool MpActor::OnEquip(uint32_t baseId)
     return false;
   }
 
-  bool spellLearned = true;
+  bool spellLearned = false;
   if (isIngredient || isPotion) {
     EatItem(baseId, recordType);
   } else if (isBook) {
     spellLearned = ReadBook(baseId);
   }
 
-  if (!isSpell && spellLearned) {
+  if (isIngredient || isPotion || spellLearned) {
     RemoveItem(baseId, 1, nullptr);
   }
 
