@@ -363,17 +363,22 @@ void ActionListener::OnConsoleCommand(
     ConsoleCommands::Execute(*me, consoleCommandName, args);
 }
 
-void UseCraftRecipe(MpActor* me, espm::COBJ::Data recipeData,
+void UseCraftRecipe(MpActor* me, const espm::COBJ* recipeUsed,
+                    espm::CompressedFieldsCache& cache,
                     const espm::CombineBrowser& br, int espmIdx)
 {
+  auto recipeData = recipeUsed->GetData(cache);
   auto mapping = br.GetCombMapping(espmIdx);
+
   std::vector<Inventory::Entry> entries;
   for (auto& entry : recipeData.inputObjects) {
     auto formId = espm::utils::GetMappedId(entry.formId, *mapping);
     entries.push_back({ formId, entry.count });
   }
+
   auto outputFormId =
     espm::utils::GetMappedId(recipeData.outputObjectFormId, *mapping);
+
   if (spdlog::should_log(spdlog::level::debug)) {
     std::string s = fmt::format("User formId={:#x} crafted", me->GetFormId());
     for (const auto& entry : entries) {
@@ -383,7 +388,9 @@ void UseCraftRecipe(MpActor* me, espm::COBJ::Data recipeData,
     spdlog::debug("{}", s);
   }
 
-  if (me->MpApiCraft(outputFormId, recipeData.outputCount)) {
+  auto recipeId = espm::utils::GetMappedId(recipeUsed->GetId(), *mapping);
+
+  if (me->MpApiCraft(outputFormId, recipeData.outputCount, recipeId)) {
     spdlog::trace("onCraft - not blocked by gamemode");
     me->RemoveItems(entries);
     me->AddItem(outputFormId, recipeData.outputCount);
@@ -428,8 +435,7 @@ void ActionListener::OnCraftItem(const RawMessageData& rawMsgData,
     throw std::runtime_error("Unable to craft without Actor attached");
   }
 
-  auto recipeData = recipeUsed->GetData(cache);
-  UseCraftRecipe(me, recipeData, br, espmIdx);
+  UseCraftRecipe(me, recipeUsed, cache, br, espmIdx);
 }
 
 void ActionListener::OnHostAttempt(const RawMessageData& rawMsgData,

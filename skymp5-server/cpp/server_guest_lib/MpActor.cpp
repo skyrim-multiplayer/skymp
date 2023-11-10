@@ -605,13 +605,14 @@ void MpActor::MpApiDeath(MpActor* killer)
   }
 }
 
-bool MpActor::MpApiCraft(uint32_t craftedItemBaseId, uint32_t count)
+bool MpActor::MpApiCraft(uint32_t craftedItemBaseId, uint32_t count,
+                         uint32_t recipeId)
 {
   simdjson::dom::parser parser;
   bool isCraftBlocked = false;
 
   std::string s = "[" + std::to_string(craftedItemBaseId) + "," +
-    std::to_string(count) + "]";
+    std::to_string(count) + "," + std::to_string(recipeId) + "]";
   auto args = parser.parse(s).value();
 
   if (auto wst = GetParent()) {
