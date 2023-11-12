@@ -134,7 +134,7 @@ public:
   bool MpApiCraft(uint32_t craftedItemBaseId, uint32_t count,
                   uint32_t recipeId);
 
-  void AddSpell(uint32_t spellId, bool verbose);
+  void AddSpell(uint32_t spellId);
   void RemoveSpell(uint32_t spellId);
 
 private:

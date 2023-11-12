@@ -27,9 +27,6 @@
 #include "TeleportMessage.h"
 #include "UpdateEquipmentMessage.h"
 
-#include "SpSnippet.h"
-#include "SpSnippetFunctionGen.h"
-
 struct MpActor::Impl
 {
   std::map<uint32_t, Viet::Promise<VarValue>> snippetPromises;
@@ -151,22 +148,11 @@ void MpActor::EquipBestWeapon()
   }
 }
 
-void MpActor::AddSpell(const uint32_t spellId, const bool verbose)
+void MpActor::AddSpell(const uint32_t spellId)
 {
   EditChangeForm([&](MpChangeForm& changeForm) {
     changeForm.learnedSpells.LearnSpell(spellId);
   });
-
-  auto spell = GetParent()->GetEspm().GetBrowser().LookupById(spellId);
-
-  std::vector<VarValue> arguments(2);
-  arguments[0] = VarValue(std::make_shared<EspmGameObject>(spell));
-  arguments[1] = VarValue(verbose);
-
-  SpSnippet spSnippet(
-    "Actor", "AddSpell",
-    SpSnippetFunctionGen::SerializeArguments(arguments).data(), GetFormId());
-  spSnippet.Execute(this);
 }
 
 void MpActor::RemoveSpell(const uint32_t spellId)
@@ -174,16 +160,6 @@ void MpActor::RemoveSpell(const uint32_t spellId)
   EditChangeForm([&](MpChangeForm& changeForm) {
     changeForm.learnedSpells.ForgetSpell(spellId);
   });
-
-  auto spell = GetParent()->GetEspm().GetBrowser().LookupById(spellId);
-
-  std::vector<VarValue> arguments(1);
-  arguments[0] = VarValue(std::make_shared<EspmGameObject>(spell));
-
-  SpSnippet spSnippet(
-    "Actor", "RemoveSpell",
-    SpSnippetFunctionGen::SerializeArguments(arguments).data(), GetFormId());
-  spSnippet.Execute(this);
 }
 
 void MpActor::SetRaceMenuOpen(bool isOpen)
