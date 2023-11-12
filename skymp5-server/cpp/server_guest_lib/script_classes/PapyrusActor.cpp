@@ -267,6 +267,8 @@ VarValue PapyrusActor::AddSpell(VarValue self,
         "Actor.AddSpell requires at least two arguments");
     }
 
+    const bool verbose = static_cast<bool>(arguments[1]);
+
     const auto& spell = GetRecordPtr(arguments[0]);
     if (!spell.rec) {
       spdlog::error("Actor.AddSpell - invalid spell form");
@@ -282,13 +284,7 @@ VarValue PapyrusActor::AddSpell(VarValue self,
     uint32_t spellId = spell.ToGlobalId(spell.rec->GetId());
 
     if (!actor->IsSpellLearned(spellId)) {
-      actor->AddSpell(spellId);
-
-      SpSnippet(GetName(), "AddSpell",
-                SpSnippetFunctionGen::SerializeArguments(arguments).data(),
-                actor->GetFormId())
-        .Execute(actor);
-
+      actor->AddSpell(spellId, verbose);
       return VarValue(true);
     }
   }
@@ -327,12 +323,6 @@ VarValue PapyrusActor::RemoveSpell(VarValue self,
       spdlog::warn("Actor.RemoveSpell - spell already removed/not learned");
     } else {
       actor->RemoveSpell(spellId);
-
-      SpSnippet(GetName(), "RemoveSpell",
-                SpSnippetFunctionGen::SerializeArguments(arguments).data(),
-                actor->GetFormId())
-        .Execute(actor);
-
       return VarValue(true);
     }
   }
