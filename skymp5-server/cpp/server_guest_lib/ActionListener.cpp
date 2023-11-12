@@ -856,9 +856,31 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
 
   float healthPercentage = currentActorValues.healthPercentage;
 
-  hitData.isHitBlocked = hitData.isHitBlocked ||
-    (targetActor.IsBlockActive() ? ShouldBeBlocked(*aggressor, targetActor)
-                                 : false);
+  bool isRemoteBowAttack = false;
+
+  auto sourceLookupResult =
+    targetActor.GetParent()->GetEspm().GetBrowser().LookupById(hitData.source);
+  if (sourceLookupResult.rec &&
+      sourceLookupResult.rec->GetType() == espm::WEAP::kType) {
+    auto weapData =
+      espm::GetData<espm::WEAP>(hitData.source, targetActor.GetParent());
+    if (weapData.weapDNAM) {
+      if (weapData.weapDNAM->animType == espm::WEAP::AnimType::Bow ||
+          weapData.weapDNAM->animType == espm::WEAP::AnimType::Crossbow) {
+        if (!hitData.isBashAttack) {
+          isRemoteBowAttack = true;
+        }
+      }
+    }
+  }
+
+  if (!isRemoteBowAttack) {
+    if (targetActor.IsBlockActive()) {
+      if (ShouldBeBlocked(*aggressor, targetActor)) {
+        hitData.isHitBlocked = true;
+      }
+    }
+  }
 
   float damage = partOne.CalculateDamage(*aggressor, targetActor, hitData);
   damage = damage < 0.f ? 0.f : damage;
