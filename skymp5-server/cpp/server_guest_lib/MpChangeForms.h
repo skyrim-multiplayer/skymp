@@ -24,6 +24,8 @@ struct LearnedSpells
 
   void LearnSpell(Data::key_type baseId);
 
+  void ForgetSpell(Data::key_type baseId);
+
   [[nodiscard]] size_t Count() const noexcept;
 
   [[nodiscard]] bool IsSpellLearned(Data::key_type baseId) const;

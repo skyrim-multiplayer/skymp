@@ -31,12 +31,20 @@ public:
                                    const std::vector<VarValue>& arguments);
 
   VarValue SetAlpha(VarValue self, const std::vector<VarValue>& arguments);
+
   VarValue EquipItem(VarValue self, const std::vector<VarValue>& arguments);
+
   VarValue SetDontMove(VarValue self, const std::vector<VarValue>& arguments);
+
   VarValue IsDead(VarValue self,
                   const std::vector<VarValue>& arguments) const noexcept;
+
   VarValue WornHasKeyword(VarValue self,
                           const std::vector<VarValue>& arguments);
+
+  VarValue AddSpell(VarValue self, const std::vector<VarValue>& arguments);
+
+  VarValue RemoveSpell(VarValue self, const std::vector<VarValue>& arguments);
 
   void Register(VirtualMachine& vm,
                 std::shared_ptr<IPapyrusCompatibilityPolicy> policy) override;

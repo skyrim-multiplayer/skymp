@@ -148,6 +148,20 @@ void MpActor::EquipBestWeapon()
   }
 }
 
+void MpActor::AddSpell(const uint32_t spellId)
+{
+  EditChangeForm([&](MpChangeForm& changeForm) {
+    changeForm.learnedSpells.LearnSpell(spellId);
+  });
+}
+
+void MpActor::RemoveSpell(const uint32_t spellId)
+{
+  EditChangeForm([&](MpChangeForm& changeForm) {
+    changeForm.learnedSpells.ForgetSpell(spellId);
+  });
+}
+
 void MpActor::SetRaceMenuOpen(bool isOpen)
 {
   EditChangeForm(
@@ -476,13 +490,37 @@ const bool& MpActor::IsRespawning() const
   return pImpl->isRespawning;
 }
 
-bool MpActor::IsSpellLearned(const uint32_t baseId) const
+bool MpActor::IsSpellLearned(const uint32_t spellId) const
+{
+  return ChangeForm().learnedSpells.IsSpellLearned(spellId) ||
+    IsSpellLearnedFromBase(spellId);
+}
+
+bool MpActor::IsSpellLearnedFromBase(const uint32_t spellId) const
 {
   const auto npcData = espm::GetData<espm::NPC_>(GetBaseId(), GetParent());
-  const auto raceData = espm::GetData<espm::RACE>(npcData.race, GetParent());
+  const auto npc = GetParent()->GetEspm().GetBrowser().LookupById(GetBaseId());
 
-  return npcData.spells.count(baseId) || raceData.spells.count(baseId) ||
-    ChangeForm().learnedSpells.IsSpellLearned(baseId);
+  const uint32_t raceId = npc.ToGlobalId(npcData.race);
+
+  const auto raceData = espm::GetData<espm::RACE>(raceId, GetParent());
+  const auto race = GetParent()->GetEspm().GetBrowser().LookupById(raceId);
+
+  for (auto npcSpellRaw : npcData.spells) {
+    const auto npcSpell = npc.ToGlobalId(npcSpellRaw);
+    if (npcSpell == spellId) {
+      return true;
+    }
+  }
+
+  for (auto raceSpellRaw : raceData.spells) {
+    const auto raceSpell = race.ToGlobalId(raceSpellRaw);
+    if (raceSpell == spellId) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 std::unique_ptr<const Appearance> MpActor::GetAppearance() const
