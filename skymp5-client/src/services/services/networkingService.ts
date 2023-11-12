@@ -6,7 +6,6 @@ import { SendMessageWithRefrIdEvent } from "../events/sendMessageWithRefrIdEvent
 import { AnyMessage } from "../messages/anyMessage";
 import { ClientListener, CombinedController, Sp } from "./clientListener";
 import { RemoteServer } from "./remoteServer";
-import { SkympClient } from "./skympClient";
 
 export class NetworkingService extends ClientListener {
   constructor(private sp: Sp, private controller: CombinedController) {
@@ -115,35 +114,40 @@ export class NetworkingService extends ClientListener {
             else if (msgAny.type === "updateGamemodeData") {
               this.controller.emitter.emit("updateGamemodeDataMessage", { message: msgAny });
             }
-          }
-          else {
-            if (msgAny.t === MsgType.Activate) {
-              
+            else {
+              throw new NeverError(msgAny);
             }
           }
-
-          this.controller.emitter.on("hostStartMessage", (e) => this.onHostStartMessage(e));
-          this.controller.emitter.on("hostStopMessage", (e) => this.onHostStopMessage(e));
-          this.controller.emitter.on("setInventoryMessage", (e) => this.onSetInventoryMessage(e));
-          this.controller.emitter.on("openContainerMessage", (e) => this.onOpenContainerMessage(e));
-          this.controller.emitter.on("updateMovementMessage", (e) => this.onUpdateMovementMessage(e));
-          this.controller.emitter.on("updateAnimationMessage", (e) => this.onUpdateAnimationMessage(e));
-          this.controller.emitter.on("updateEquipmentMessage", (e) => this.onUpdateEquipmentMessage(e));
-          this.controller.emitter.on("changeValuesMessage", (e) => this.onChangeValuesMessage(e));
-          this.controller.emitter.on("updateAppearanceMessage", (e) => this.onUpdateAppearanceMessage(e));
-          this.controller.emitter.on("teleportMessage", (e) => this.onTeleportMessage(e));
-          this.controller.emitter.on("hostStartMessage", (e) => this.onHostStartMessage(e));
-          this.controller.emitter.on("hostStopMessage", (e) => this.onHostStopMessage(e));
-          this.controller.emitter.on("setInventoryMessage", (e) => this.onSetInventoryMessage(e));
-          this.controller.emitter.on("createActorMessage", (e) => this.onCreateActorMessage(e));
-          this.controller.emitter.on("customPacketMessage2", (e) => this.onCustomPacketMessage2(e));
-          this.controller.emitter.on("destroyActorMessage", (e) => this.onDestroyActorMessage(e));
-          this.controller.emitter.on("setRaceMenuOpenMessage", (e) => this.onSetRaceMenuOpenMessage(e));
-          this.controller.emitter.on("spSnippetMessage", (e) => this.onSpSnippetMessage(e));
-          this.controller.emitter.on("updateGamemodeDataMessage", (e) => this.onUpdateGamemodeDataMessage(e));
-          this.controller.emitter.on("updatePropertyMessage", (e) => this.onUpdatePropertyMessage(e));
-          this.controller.emitter.on("deathStateContainerMessage", (e) => this.onDeathStateContainerMessage(e));
-
+          else {
+            if (msgAny.t === MsgType.OpenContainer) {
+              this.controller.emitter.emit("openContainerMessage", { message: msgAny });
+            }
+            else if (msgAny.t === MsgType.UpdateMovement) {
+              this.controller.emitter.emit("updateMovementMessage", { message: msgAny })
+            }
+            else if (msgAny.t === MsgType.UpdateAnimation) {
+              this.controller.emitter.emit("updateAnimationMessage", { message: msgAny });
+            }
+            else if (msgAny.t === MsgType.UpdateEquipment) {
+              this.controller.emitter.emit("updateEquipmentMessage", { message: msgAny });
+            }
+            else if (msgAny.t === MsgType.ChangeValues) {
+              this.controller.emitter.emit("changeValuesMessage", { message: msgAny });
+            }
+            else if (msgAny.t === MsgType.UpdateAppearance) {
+              this.controller.emitter.emit("updateAppearanceMessage", { message: msgAny });
+            }
+            else if (msgAny.t === MsgType.Teleport) {
+              this.controller.emitter.emit("teleportMessage", { message: msgAny });
+            }
+            else if (msgAny.t === MsgType.UpdateProperty) {
+              this.controller.emitter.emit("updatePropertyMessage", { message: msgAny });
+            }
+            else if (msgAny.t === MsgType.DeathStateContainer) {
+              this.controller.emitter.emit("deathStateContainerMessage", { message: msgAny });
+            }
+            // todo: never error
+          }
           break;
       }
     });

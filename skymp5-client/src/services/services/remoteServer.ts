@@ -235,8 +235,6 @@ export class RemoteServer extends ClientListener implements ModelSource {
     this.controller.emitter.on("changeValuesMessage", (e) => this.onChangeValuesMessage(e));
     this.controller.emitter.on("updateAppearanceMessage", (e) => this.onUpdateAppearanceMessage(e));
     this.controller.emitter.on("teleportMessage", (e) => this.onTeleportMessage(e));
-    this.controller.emitter.on("hostStartMessage", (e) => this.onHostStartMessage(e));
-    this.controller.emitter.on("hostStopMessage", (e) => this.onHostStopMessage(e));
     this.controller.emitter.on("setInventoryMessage", (e) => this.onSetInventoryMessage(e));
     this.controller.emitter.on("createActorMessage", (e) => this.onCreateActorMessage(e));
     this.controller.emitter.on("customPacketMessage2", (e) => this.onCustomPacketMessage2(e));

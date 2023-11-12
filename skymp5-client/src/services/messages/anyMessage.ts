@@ -7,6 +7,7 @@ import { CreateActorMessage } from "./createActorMessage";
 import { CustomEventMessage } from "./customEventMessage";
 import { CustomPacketMessage } from "./customPacketMessage";
 import { CustomPacketMessage2 } from "./customPacketMessage2";
+import { DeathStateContainerMessage } from "./deathStateContainerMessage";
 import { DestroyActorMessage } from "./destroyActorMessage";
 import { DropItemMessage } from "./dropItemMessage";
 import { FinishSpSnippetMessage } from "./finishSpSnippetMessage";
@@ -58,4 +59,5 @@ export type AnyMessage = ActivateMessage
     | SpSnippetMessage
     | UpdateGamemodeDataMessage
     | UpdatePropertyMessage
+    | DeathStateContainerMessage
 
