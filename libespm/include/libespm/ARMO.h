@@ -16,6 +16,7 @@ public:
     uint32_t baseValue = 0;
     float weight = 0;
     uint32_t enchantmentFormId = 0;
+    uint32_t equipSlotId = 0; // only for shields
   };
 
   Data GetData(CompressedFieldsCache& compressedFieldsCache) const;

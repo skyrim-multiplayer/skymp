@@ -874,7 +874,28 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
     }
   }
 
-  if (!isRemoteBowAttack) {
+  bool isBlockingByShield = false;
+
+  auto& targetActorEquipmentEntries = targetActor.GetEquipment().inv.entries;
+  for (auto& entry : targetActorEquipmentEntries) {
+    if (entry.extra.worn != Inventory::Worn::None) {
+      auto res = targetActor.GetParent()->GetEspm().GetBrowser().LookupById(
+        entry.baseId);
+      if (res.rec && res.rec->GetType() == espm::ARMO::kType) {
+        auto data =
+          espm::GetData<espm::ARMO>(entry.baseId, targetActor.GetParent());
+        bool isShield = data.equipSlotId > 0;
+        if (isShield) {
+          isBlockingByShield = isShield;
+        }
+      }
+    }
+  }
+
+  spdlog::trace("isRemoteBowAttack={}, isBlockingByShield={}",
+                isRemoteBowAttack, isBlockingByShield);
+
+  if (!isRemoteBowAttack || isBlockingByShield) {
     if (targetActor.IsBlockActive()) {
       if (ShouldBeBlocked(*aggressor, targetActor)) {
         hitData.isHitBlocked = true;
