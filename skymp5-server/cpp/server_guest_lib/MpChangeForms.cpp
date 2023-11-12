@@ -218,9 +218,14 @@ MpChangeForm MpChangeForm::JsonToChangeForm(simdjson::dom::element& element)
   return res;
 }
 
-void LearnedSpells::LearnSpell(const Data::key_type baseId)
+void LearnedSpells::LearnSpell(const Data::key_type spellId)
 {
-  _learnedSpellIds.emplace(baseId);
+  _learnedSpellIds.emplace(spellId);
+}
+
+void LearnedSpells::ForgetSpell(const Data::key_type spellId)
+{
+  _learnedSpellIds.erase(spellId);
 }
 
 size_t LearnedSpells::Count() const noexcept
@@ -228,9 +233,9 @@ size_t LearnedSpells::Count() const noexcept
   return _learnedSpellIds.size();
 }
 
-bool LearnedSpells::IsSpellLearned(const Data::key_type baseId) const
+bool LearnedSpells::IsSpellLearned(const Data::key_type spellId) const
 {
-  return _learnedSpellIds.count(baseId) != 0;
+  return _learnedSpellIds.count(spellId) != 0;
 }
 
 std::vector<LearnedSpells::Data::key_type> LearnedSpells::GetLearnedSpells()

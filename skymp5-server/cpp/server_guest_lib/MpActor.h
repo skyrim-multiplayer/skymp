@@ -25,7 +25,8 @@ public:
   const bool& IsDead() const;
   const bool& IsRespawning() const;
 
-  [[nodiscard]] bool IsSpellLearned(uint32_t baseId) const;
+  bool IsSpellLearned(uint32_t spellId) const; // including from base
+  bool IsSpellLearnedFromBase(uint32_t spellId) const;
 
   std::unique_ptr<const Appearance> GetAppearance() const;
   const std::string& GetAppearanceAsJson();
@@ -132,6 +133,9 @@ public:
 
   bool MpApiCraft(uint32_t craftedItemBaseId, uint32_t count,
                   uint32_t recipeId);
+
+  void AddSpell(uint32_t spellId);
+  void RemoveSpell(uint32_t spellId);
 
 private:
   struct Impl;
