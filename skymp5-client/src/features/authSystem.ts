@@ -146,7 +146,7 @@ const checkLoginState = () => {
   if (!isListenBrowserMessage) {
     return;
   }
-  
+
   new sp.HttpClient(authUrl)
     .get("/api/users/login-discord/status?state=" + discordAuthState)
     .then(response => {
@@ -201,31 +201,31 @@ const checkLoginState = () => {
 };
 
 const loadLobby = (location: Transform): void => {
-  sp.once("update", () => {
-    defaultAutoVanityModeDelay = sp.Utility.getINIFloat("fAutoVanityModeDelay:Camera");
-    setPlayerAuthMode(true);
-    authData = browser.getAuthData();
-    refreshWidgets();
-    sp.browser.setVisible(true);
-  });
+  // sp.once("tick", () => {
+  //   defaultAutoVanityModeDelay = sp.Utility.getINIFloat("fAutoVanityModeDelay:Camera");
+  //   // setPlayerAuthMode(true);
+  //   authData = browser.getAuthData();
+  //   refreshWidgets();
+  //   sp.browser.setVisible(true);
+  // });
 
-  sp.once("loadGame", () => {
-    // In non-offline mode we still want to see our face in RaceMenu
-    const ironHelment = sp.Armor.from(sp.Game.getFormEx(0x00012e4d));
-    const pl = sp.Game.getPlayer();
-    if (pl) pl.unequipItem(ironHelment, false, true);
+  // sp.once("tick", () => {
+  //   sp.browser.setFocused(true);
+  //   // browser.keepCursorMenuOpenedWhenBrowserFocused();
+  //   checkLoginState();
+  // });
 
-    sp.browser.setFocused(true);
-    browser.keepCursorMenuOpenedWhenBrowserFocused();
-    checkLoginState();
-  });
+  // const loadGameService = SpApiInteractor.makeController().lookupListener(LoadGameService);
+  // loadGameService.loadGame(
+  //   location.pos,
+  //   location.rot,
+  //   location.worldOrCell
+  // );
 
-  const loadGameService = SpApiInteractor.makeController().lookupListener(LoadGameService);
-  loadGameService.loadGame(
-    location.pos,
-    location.rot,
-    location.worldOrCell
-  );
+  authData = browser.getAuthData();
+  refreshWidgets();
+  sp.browser.setVisible(true);
+  sp.browser.setFocused(true);
 }
 
 declare const window: any;

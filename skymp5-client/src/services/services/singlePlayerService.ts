@@ -1,5 +1,5 @@
 import { ClientListener, CombinedController, Sp } from "./clientListener";
-import * as networking from "../../networking";
+import * as networking from "./networkingService";
 import { GameLoadEvent } from "../events/gameLoadEvent";
 
 export class SinglePlayerService extends ClientListener {

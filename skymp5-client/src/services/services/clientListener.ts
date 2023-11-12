@@ -1,5 +1,5 @@
 import * as sp from "skyrimPlatform";
-import { EventEmitterType } from "../events/eventEmitterFactory";
+import { EventEmitterType } from "../events/events";
 
 export interface ClientListenerEvents { 
     on: typeof sp.on, 

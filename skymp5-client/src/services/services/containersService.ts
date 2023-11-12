@@ -1,7 +1,7 @@
 import { Actor, ContainerChangedEvent, printConsole } from "skyrimPlatform";
 import { ClientListener, CombinedController, Sp } from "./clientListener";
 import { MsgType } from "../../messages";
-import { getPcInventory } from "../../modelSource/remoteServer";
+import { getPcInventory } from "./remoteServer";
 import { getInventory, getDiff, hasExtras, removeSimpleItemsAsManyAsPossible, sumInventories } from "../../sync/inventory";
 import { LastInvService } from "./lastInvService";
 
