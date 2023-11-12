@@ -1028,6 +1028,20 @@ void MpActor::ApplyMagicEffect(espm::Effects::Effect& effect, bool hasSweetpie,
 {
   WorldState* worldState = GetParent();
   auto data = espm::GetData<espm::MGEF>(effect.effectId, worldState).data;
+
+  if (data.effectType == espm::MGEF::EffectType::CureDisease) {
+    spdlog::trace("Curing all diseases");
+    auto spells = ChangeForm().learnedSpells.GetLearnedSpells();
+    for (auto spellId : spells) {
+      auto spellData = espm::GetData<espm::SPEL>(spellId, worldState);
+      if (spellData.type == espm::SPEL::SpellType::Disease) {
+        spdlog::trace("Curing disease {:x}", spellId);
+        RemoveSpell(spellId);
+      }
+    }
+    return;
+  }
+
   const espm::ActorValue av = data.primaryAV;
   const espm::MGEF::EffectType type = data.effectType;
   spdlog::trace("Actor value in ApplyMagicEffect(): {}",

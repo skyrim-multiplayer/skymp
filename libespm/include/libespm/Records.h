@@ -23,6 +23,7 @@
 #include "OTFT.h"
 #include "RACE.h"
 #include "REFR.h"
+#include "SPEL.h"
 #include "TES4.h"
 #include "TREE.h"
 #include "WEAP.h"
