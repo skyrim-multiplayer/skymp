@@ -15,4 +15,8 @@ if(WIN32)
   )
 
   add_dependencies(client-deps skyrim-platform)
+else()
+  add_custom_target(client-deps ALL SOURCES ${sources} 
+    COMMAND ${CMAKE_COMMAND} -E echo "Building client-deps is disabled on non-Windows setups."
+  )
 endif()
