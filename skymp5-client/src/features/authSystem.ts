@@ -78,7 +78,7 @@ export const setPlayerAuthMode = (frozen: boolean): void => {
   sp.Game.forceFirstPerson();
 }
 
-function createPlaySession(token: string) {
+function createPlaySession(token: string, callback: (res: string, err: string) => void) {
   const client = new sp.HttpClient(authUrl);
   let masterKey = sp.settings["skymp5-client"]["server-master-key"];
   if (!masterKey) {
@@ -88,17 +88,21 @@ function createPlaySession(token: string) {
     masterKey = sp.settings["skymp5-client"]["server-ip"] + ":" + sp.settings["skymp5-client"]["server-port"];
   }
   sp.printConsole({ masterKey });
-  return client.post(`/api/users/me/play/${masterKey}`, {
+
+  client.post(`/api/users/me/play/${masterKey}`, {
     body: '{}',
     contentType: 'application/json',
     headers: {
       'authorization': token,
     },
-  }).then((res) => {
+  }, (res: sp.HttpResponse) => {
     if (res.status != 200) {
-      throw Error('status code ' + res.status);
+      callback('', 'status code ' + res.status);
     }
-    return JSON.parse(res.body).session;
+    else {
+      // TODO: handle JSON.parse failure?
+      callback(JSON.parse(res.body).session, '');
+    }
   });
 }
 
@@ -148,56 +152,63 @@ const checkLoginState = () => {
   }
 
   new sp.HttpClient(authUrl)
-    .get("/api/users/login-discord/status?state=" + discordAuthState)
-    .then(response => {
-      switch (response.status) {
-        case 200:
-          const {
-            token,
-            masterApiId,
-            discordUsername,
-            discordDiscriminator,
-            discordAvatar,
-          } = JSON.parse(response.body) as AuthStatus;
-          browserState.failCount = 0;
-          createPlaySession(token).then((playSession) => {
-            authData = {
-              session: playSession,
+    .get("/api/users/login-discord/status?state=" + discordAuthState, undefined,
+      (response) => {
+        switch (response.status) {
+          case 200:
+            const {
+              token,
               masterApiId,
               discordUsername,
               discordDiscriminator,
               discordAvatar,
-            };
-            refreshWidgets();
-          });
-          break;
-        case 401: // Unauthorized
-          browserState.failCount = 0;
-          browserState.comment = (`Still waiting...`);
-          setTimeout(() => checkLoginState(), 1.5 + Math.random() * 2);
-          break;
-        case 403: // Forbidden
-        case 404: // Not found
-          browserState.failCount = 9000;
-          browserState.comment = (`Fail: ${response.body}`);
-          break;
-        default:
-          ++browserState.failCount;
-          browserState.comment = `Server returned ${response.status.toString() || "???"} "${response.body || response.error}"`;
-          setTimeout(() => checkLoginState(), 1.5 + Math.random() * 2);
-      }
-    })
-    .catch(reason => {
-      ++browserState.failCount;
-      if (typeof reason === "string") {
-        browserState.comment = (`Skyrim platform error (http): ${reason}`)
-      } else {
-        browserState.comment = (`Skyrim platform error (http): request rejected`);
-      }
-    })
-    .finally(() => {
-      refreshWidgets();
-    });
+            } = JSON.parse(response.body) as AuthStatus;
+            browserState.failCount = 0;
+            createPlaySession(token, (playSession, error) => {
+              if (error) {
+                browserState.failCount = 0;
+                browserState.comment = (error);
+                setTimeout(() => checkLoginState(), 1.5 + Math.random() * 2);
+                refreshWidgets();
+                return;
+              }
+              authData = {
+                session: playSession,
+                masterApiId,
+                discordUsername,
+                discordDiscriminator,
+                discordAvatar,
+              };
+              refreshWidgets();
+            });
+            break;
+          case 401: // Unauthorized
+            browserState.failCount = 0;
+            browserState.comment = (`Still waiting...`);
+            setTimeout(() => checkLoginState(), 1.5 + Math.random() * 2);
+            break;
+          case 403: // Forbidden
+          case 404: // Not found
+            browserState.failCount = 9000;
+            browserState.comment = (`Fail: ${response.body}`);
+            break;
+          default:
+            ++browserState.failCount;
+            browserState.comment = `Server returned ${response.status.toString() || "???"} "${response.body || response.error}"`;
+            setTimeout(() => checkLoginState(), 1.5 + Math.random() * 2);
+        }
+      })
+  // .catch(reason => {
+  //   ++browserState.failCount;
+  //   if (typeof reason === "string") {
+  //     browserState.comment = (`Skyrim platform error (http): ${reason}`)
+  //   } else {
+  //     browserState.comment = (`Skyrim platform error (http): request rejected`);
+  //   }
+  // })
+  // .finally(() => {
+  //   refreshWidgets();
+  // });
 };
 
 const loadLobby = (location: Transform): void => {
@@ -226,6 +237,18 @@ const loadLobby = (location: Transform): void => {
   refreshWidgets();
   sp.browser.setVisible(true);
   sp.browser.setFocused(true);
+
+  // Launch checkLoginState loop
+  checkLoginState();
+
+  // sp.printConsole("TEST1")
+  // new sp.HttpClient(authUrl).post("/", {body: "", contentType: ""}, (result) => {
+  //   sp.printConsole("TEST", result)
+  // });
+  // sp.printConsole("TEST1")
+  // setTimeout(() => {
+  //   sp.printConsole("TEST")
+  // }, 1);
 }
 
 declare const window: any;

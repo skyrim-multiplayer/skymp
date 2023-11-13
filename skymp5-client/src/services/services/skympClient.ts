@@ -71,10 +71,6 @@ export class SkympClient extends ClientListener {
     }
   }
 
-  get modelSource(): ModelSource | undefined {
-    return this.rs;
-  }
-
   private onConnectionFailed(e: ConnectionFailed) {
     this.logTrace("Connection failed");
   }
@@ -130,14 +126,9 @@ export class SkympClient extends ClientListener {
     on('update', () => {
       const singlePlayerService = this.controller.lookupListener(SinglePlayerService);
       if (!singlePlayerService.isSinglePlayer) {
-        const modelSource = this.modelSource;
-        if (modelSource === undefined) {
-          return this.logError("modelSource was undefined");
-        }
+        const modelSource = this.controller.lookupListener(RemoteServer);
         view.update(modelSource.getWorldModel());
       }
     });
   }
-
-  private rs?: RemoteServer;
 }

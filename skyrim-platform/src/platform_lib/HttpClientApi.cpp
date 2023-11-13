@@ -53,11 +53,10 @@ JsValue HttpClientApi::Constructor(const JsFunctionArguments& args)
 
 JsValue HttpClientApi::Get(const JsFunctionArguments& args)
 {
-  JsValue path = args[1], options = args[2],
+  JsValue path = args[1], options = args[2], callback = args[3],
           host = args[0].GetProperty("host");
 
-  JsValue resolverFn = JsValue::Function([=](const JsFunctionArguments& args) {
-    auto resolve = std::make_shared<JsValue>(args[1]);
+  auto handleGetRequest = [&](const std::shared_ptr<JsValue>& resolver) {
     auto pathStr = static_cast<std::string>(path);
     auto hostStr = static_cast<std::string>(host);
     g_httpClient.Get(
@@ -69,24 +68,31 @@ JsValue HttpClientApi::Get(const JsFunctionArguments& args)
           JsValue::String(std::string{ res.body.begin(), res.body.end() }));
         result.SetProperty("status", res.status);
         result.SetProperty("error", res.error);
-        resolve->Call({ JsValue::Undefined(), result });
+        resolver->Call({ JsValue::Undefined(), result });
       });
+  };
 
+  if (callback.GetType() == JsValue::Type::Function) {
+    auto resolve = std::make_shared<JsValue>(callback);
+    handleGetRequest(resolve);
+    return JsValue::Undefined();
+  }
+
+  JsValue resolverFn = JsValue::Function([=](const JsFunctionArguments& args) {
+    auto resolve = std::make_shared<JsValue>(args[1]);
+    handleGetRequest(resolve);
     return JsValue::Undefined();
   });
 
-  auto promise = CreatePromise(resolverFn);
-
-  return promise;
+  return CreatePromise(resolverFn);
 }
 
 JsValue HttpClientApi::Post(const JsFunctionArguments& args)
 {
-  JsValue path = args[1], options = args[2],
+  JsValue path = args[1], options = args[2], callback = args[3],
           host = args[0].GetProperty("host");
 
-  auto resolverFn = JsValue::Function([=](const JsFunctionArguments& args) {
-    auto resolve = std::make_shared<JsValue>(args[1]);
+  auto handlePostRequest = [&](const std::shared_ptr<JsValue>& resolver) {
     auto pathStr = static_cast<std::string>(path);
     auto hostStr = static_cast<std::string>(host);
     auto bodyStr = static_cast<std::string>(options.GetProperty("body"));
@@ -100,9 +106,19 @@ JsValue HttpClientApi::Post(const JsFunctionArguments& args)
           JsValue::String(std::string{ res.body.begin(), res.body.end() }));
         result.SetProperty("status", res.status);
         result.SetProperty("error", res.error);
-        resolve->Call({ JsValue::Undefined(), result });
+        resolver->Call({ JsValue::Undefined(), result });
       });
+  };
 
+  if (callback.GetType() == JsValue::Type::Function) {
+    auto resolve = std::make_shared<JsValue>(callback);
+    handlePostRequest(resolve);
+    return JsValue::Undefined();
+  }
+
+  auto resolverFn = JsValue::Function([=](const JsFunctionArguments& args) {
+    auto resolve = std::make_shared<JsValue>(args[1]);
+    handlePostRequest(resolve);
     return JsValue::Undefined();
   });
 

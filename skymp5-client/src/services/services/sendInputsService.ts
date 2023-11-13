@@ -20,6 +20,7 @@ import { ChangeValuesMessage } from "../messages/changeValues";
 import { UpdateAnimationMessage } from "../messages/updateAnimationMessage";
 import { UpdateEquipmentMessage } from "../messages/updateEquipmentMessage";
 import { UpdateAppearanceMessage } from "../messages/updateAppearanceMessage";
+import { RemoteServer } from "./remoteServer";
 
 const playerFormId = 0x14;
 
@@ -75,11 +76,7 @@ export class SendInputsService extends ClientListener {
             typeof this.sp.storage['hosted'] === typeof [] ? this.sp.storage['hosted'] : [];
         const targets = [undefined].concat(hosted as any);
 
-        const skympClient = this.controller.lookupListener(SkympClient);
-        const modelSource = skympClient.modelSource;
-        if (!modelSource) {
-            return;
-        }
+        const modelSource = this.controller.lookupListener(RemoteServer);
 
         const world = modelSource.getWorldModel();
 
