@@ -97,7 +97,7 @@ export class SkympClient extends ClientListener {
       storage.targetPort = targetPort;
 
       this.logTrace(`Connecting to ${storage.targetIp}:${storage.targetPort}`);
-      SpApiInteractor.makeController().lookupListener(networking.NetworkingService).connect(targetIp, targetPort);
+      this.controller.lookupListener(networking.NetworkingService).connect(targetIp, targetPort);
     } else {
       this.logTrace('Reconnect is not required');
     }
