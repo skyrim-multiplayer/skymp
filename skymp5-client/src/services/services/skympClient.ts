@@ -18,7 +18,6 @@ import * as playerCombatSystem from "../../sweetpie/playerCombatSystem";
 import { AuthGameData } from '../../features/authModel';
 import * as browser from "../../features/browser";
 import { ClientListener, CombinedController, Sp } from './clientListener';
-import { SpApiInteractor } from '../spApiInteractor';
 import { ConnectionFailed } from '../events/connectionFailed';
 import { ConnectionDenied } from '../events/connectionDenied';
 
@@ -83,9 +82,13 @@ export class SkympClient extends ClientListener {
   }
 
   private ctor() {
-    // TODO: subscribe to events in constructor, not here
+    // TODO: refactor WorldView into service
     this.resetView();
+
+    // TODO: refactor into service
     setupHooks();
+
+    // TODO: refactor updateOwner into service
     updateOwner.setup();
 
     this.sp.printConsole('SkympClient ctor');
