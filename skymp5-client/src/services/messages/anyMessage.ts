@@ -23,6 +23,7 @@ import { SetRaceMenuOpenMessage } from "./setRaceMenuOpenMessage";
 import { SpSnippetMessage } from "./spSnippetMessage";
 import { TakeItemMessage } from "./takeItemMessage";
 import { TeleportMessage } from "./teleportMessage";
+import { TeleportMessage2 } from "./teleportMessage2";
 import { UpdateAnimationMessage } from "./updateAnimationMessage";
 import { UpdateAppearanceMessage } from "./updateAppearanceMessage";
 import { UpdateEquipmentMessage } from "./updateEquipmentMessage";
@@ -60,3 +61,4 @@ export type AnyMessage = ActivateMessage
     | UpdateGamemodeDataMessage
     | UpdatePropertyMessage
     | DeathStateContainerMessage
+    | TeleportMessage2

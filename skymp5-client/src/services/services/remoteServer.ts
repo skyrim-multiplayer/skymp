@@ -69,6 +69,7 @@ import { CustomPacketMessage2 } from '../messages/customPacketMessage2';
 import { DestroyActorMessage } from '../messages/destroyActorMessage';
 import { SetRaceMenuOpenMessage } from '../messages/setRaceMenuOpenMessage';
 import { UpdatePropertyMessage } from '../messages/updatePropertyMessage';
+import { TeleportMessage2 } from '../messages/teleportMessage2';
 
 const onceLoad = (
   refrId: number,
@@ -235,6 +236,7 @@ export class RemoteServer extends ClientListener implements ModelSource {
     this.controller.emitter.on("changeValuesMessage", (e) => this.onChangeValuesMessage(e));
     this.controller.emitter.on("updateAppearanceMessage", (e) => this.onUpdateAppearanceMessage(e));
     this.controller.emitter.on("teleportMessage", (e) => this.onTeleportMessage(e));
+    this.controller.emitter.on("teleportMessage2", (e) => this.onTeleportMessage(e));
     this.controller.emitter.on("setInventoryMessage", (e) => this.onSetInventoryMessage(e));
     this.controller.emitter.on("createActorMessage", (e) => this.onCreateActorMessage(e));
     this.controller.emitter.on("customPacketMessage2", (e) => this.onCustomPacketMessage2(e));
@@ -309,13 +311,13 @@ export class RemoteServer extends ClientListener implements ModelSource {
     });
   }
 
-  private onTeleportMessage(event: ConnectionMessage<TeleportMessage>): void {
+  private onTeleportMessage(event: ConnectionMessage<TeleportMessage> | ConnectionMessage<TeleportMessage2>): void {
     const msg = event.message;
     once('update', () => {
-      const id = this.getIdManager().getId(msg.idx);
+      const id = ("idx" in msg && typeof msg.idx === "number") ? this.getIdManager().getId(msg.idx) : this.getMyActorIndex();
       const refr = id === this.getMyActorIndex() ? Game.getPlayer() : getObjectReference(id);
       printConsole(
-        `Teleporting (idx=${msg.idx}) ${refr?.getFormID().toString(16)}...`,
+        `Teleporting (id=${id}) ${refr?.getFormID().toString(16)}...`,
         msg.pos,
         'cell/world is',
         msg.worldOrCell.toString(16),

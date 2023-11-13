@@ -114,6 +114,9 @@ export class NetworkingService extends ClientListener {
             else if (msgAny.type === "updateGamemodeData") {
               this.controller.emitter.emit("updateGamemodeDataMessage", { message: msgAny });
             }
+            else if (msgAny.type === "teleport") {
+              this.controller.emitter.emit("teleportMessage2", { message: msgAny });
+            }
             else {
               throw new NeverError(msgAny);
             }

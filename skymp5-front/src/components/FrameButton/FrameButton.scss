@@ -7,10 +7,17 @@
   cursor: pointer;
   text-overflow: ellipsis;
   font-family: 'Bankir-Retro', serif;
+  transition: transform 0.15s ease; /* Transition for the transform */
 }
+
+.skymp-button:hover {
+  transform: scale(1.05); /* Scale the button on hover */
+}
+
 .skymp-button.disabled {
   cursor: default;
 }
+
 .button-middle {
   display: flex;
   text-transform: uppercase;
@@ -24,12 +31,15 @@
     color: rgba(157, 158, 158, 0.75);
   }
 }
+
 .button-middle--left {
   padding-left: 40px;
 }
+
 .button-middle--right {
   padding-right: 40px;
 }
+
 .button-middle.disabled {
   * {
     color: rgba(157, 158, 158, 0.33);

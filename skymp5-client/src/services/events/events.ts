@@ -13,24 +13,12 @@ import { HostStartMessage } from "../messages/hostStartMessage";
 import { HostStopMessage } from "../messages/hostStopMessage";
 import { SetInventoryMessage } from "../messages/setInventoryMessage";
 import { OpenContainerMessage } from "../messages/openContainerMessage";
-import { ActivateMessage } from "../messages/activateMessage";
 import { ChangeValuesMessage } from "../messages/changeValues";
-import { ConsoleCommandMessage } from "../messages/consoleCommandMessage";
-import { CraftItemMessage } from "../messages/craftItemMessage";
 import { CreateActorMessage } from "../messages/createActorMessage";
-import { CustomEventMessage } from "../messages/customEventMessage";
-import { CustomPacketMessage } from "../messages/customPacketMessage";
 import { CustomPacketMessage2 } from "../messages/customPacketMessage2";
 import { DestroyActorMessage } from "../messages/destroyActorMessage";
-import { DropItemMessage } from "../messages/dropItemMessage";
-import { FinishSpSnippetMessage } from "../messages/finishSpSnippetMessage";
-import { HitMessage } from "../messages/hitMessage";
-import { HostMessage } from "../messages/hostMessage";
-import { OnEquipMessage } from "../messages/onEquipMessage";
-import { PutItemMessage } from "../messages/putItemMessage";
 import { SetRaceMenuOpenMessage } from "../messages/setRaceMenuOpenMessage";
 import { SpSnippetMessage } from "../messages/spSnippetMessage";
-import { TakeItemMessage } from "../messages/takeItemMessage";
 import { TeleportMessage } from "../messages/teleportMessage";
 import { UpdateAnimationMessage } from "../messages/updateAnimationMessage";
 import { UpdateAppearanceMessage } from "../messages/updateAppearanceMessage";
@@ -39,6 +27,7 @@ import { UpdateGamemodeDataMessage } from "../messages/updateGameModeDataMessage
 import { UpdateMovementMessage } from "../messages/updateMovementMessage";
 import { UpdatePropertyMessage } from "../messages/updatePropertyMessage";
 import { DeathStateContainerMessage } from "../messages/deathStateContainerMessage";
+import { TeleportMessage2 } from "../messages/teleportMessage2";
 
 type EventTypes = {
     'gameLoad': [GameLoadEvent],
@@ -70,7 +59,8 @@ type EventTypes = {
     'spSnippetMessage': [ConnectionMessage<SpSnippetMessage>],
     'updateGamemodeDataMessage': [ConnectionMessage<UpdateGamemodeDataMessage>],
     'updatePropertyMessage': [ConnectionMessage<UpdatePropertyMessage>],
-    'deathStateContainerMessage': [ConnectionMessage<DeathStateContainerMessage>]
+    'deathStateContainerMessage': [ConnectionMessage<DeathStateContainerMessage>],
+    'teleportMessage2': [ConnectionMessage<TeleportMessage2>]
 }
 
 // https://blog.makerx.com.au/a-type-safe-event-emitter-in-node-js/

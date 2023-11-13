@@ -6,6 +6,8 @@
 #include "PapyrusTESModPlatform.h"
 #include "StringHolder.h"
 
+#include <fmt/format.h>
+
 /**
  * Send Event hook
  */
@@ -268,6 +270,22 @@ void OnRenderCursorMenuEnter(GumInvocationContext* ic)
   } else {
     FridaHooksUtils::SetMenuNumberVariable(RE::CursorMenu::MENU_NAME,
                                            "_root.mc_Cursor._alpha", 100);
+  }
+
+  auto strings = {
+    R"(_root.MenuHolder.Menu_mc.MainListHolder.List_mc._alpha)"
+  };
+
+  if (visibleFlag && focusFlag) {
+    for (auto string : strings) {
+      FridaHooksUtils::SetMenuNumberVariable(RE::MainMenu::MENU_NAME, string,
+                                             0);
+    }
+  } else {
+    for (auto string : strings) {
+      FridaHooksUtils::SetMenuNumberVariable(RE::MainMenu::MENU_NAME, string,
+                                             100);
+    }
   }
 }
 

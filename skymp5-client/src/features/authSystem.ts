@@ -216,54 +216,54 @@ const browsersideWidgetSetter = () => {
   const loginWidget = {
     type: "form",
     id: 1,
-    caption: "authorization",
+    caption: "Авторизация",
     elements: [
-      {
-        type: "button",
-        tags: ["BUTTON_STYLE_GITHUB"],
-        hint: "get a colored nickname and mention in news",
-        click: () => window.skyrimPlatform.sendMessage(events.openGithub),
-      },
-      {
-        type: "button",
-        tags: ["BUTTON_STYLE_PATREON", "ELEMENT_SAME_LINE", "HINT_STYLE_RIGHT"],
-        hint: "get a colored nickname and other bonuses for patrons",
-        click: () => window.skyrimPlatform.sendMessage(events.openPatreon),
-      },
-      {
-        type: "icon",
-        text: "username",
-        tags: ["ICON_STYLE_SKYMP"],
-      },
+      // {
+      //   type: "button",
+      //   tags: ["BUTTON_STYLE_GITHUB"],
+      //   hint: "get a colored nickname and mention in news",
+      //   click: () => window.skyrimPlatform.sendMessage(events.openGithub),
+      // },
+      // {
+      //   type: "button",
+      //   tags: ["BUTTON_STYLE_PATREON", "ELEMENT_SAME_LINE", "HINT_STYLE_RIGHT"],
+      //   hint: "get a colored nickname and other bonuses for patrons",
+      //   click: () => window.skyrimPlatform.sendMessage(events.openPatreon),
+      // },
+      // {
+      //   type: "icon",
+      //   text: "username",
+      //   tags: ["ICON_STYLE_SKYMP"],
+      // },
       {
         type: "text",
         text: (
           authData ? (
             authData.discordUsername
-              ? `${authData.discordUsername}`
+              ? `Добро пожаловать, ${authData.discordUsername}`
               : `id: ${authData.masterApiId}`
-          ) : "Please log in"
+          ) : "Не авторизирован"
         ),
-        tags: ["ELEMENT_SAME_LINE", "ELEMENT_STYLE_MARGIN_EXTENDED"],
+        tags: [/*"ELEMENT_SAME_LINE", */"ELEMENT_STYLE_MARGIN_EXTENDED"],
       },
-      {
-        type: "icon",
-        text: "discord",
-        tags: ["ICON_STYLE_DISCORD"],
-      },
+      // {
+      //   type: "icon",
+      //   text: "discord",
+      //   tags: ["ICON_STYLE_DISCORD"],
+      // },
       {
         type: "button",
-        text: authData ? "change account" : "login or register",
-        tags: ["ELEMENT_SAME_LINE"],
+        text: authData ? "Сменить аккаунт" : "Войти через Discord",
+        tags: [/*"ELEMENT_SAME_LINE"*/],
         click: () => window.skyrimPlatform.sendMessage(events.openDiscordOauth),
-        hint: "You can log in or change account at any time",
+        hint: "Вы можете войти или поменять аккаунт",
       },
       {
         type: "button",
-        text: "travel to skyrim",
+        text: "Играть",
         tags: ["BUTTON_STYLE_FRAME", "ELEMENT_STYLE_MARGIN_EXTENDED"],
         click: () => window.skyrimPlatform.sendMessage(events.login),
-        hint: "Connect to the game server",
+        hint: "Подключиться к игровому серверу",
       },
       {
         type: "text",
