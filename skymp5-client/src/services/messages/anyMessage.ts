@@ -31,9 +31,9 @@ import { UpdateMovementMessage } from "./updateMovementMessage";
 import { UpdatePropertyMessage } from "./updatePropertyMessage";
 
 export type AnyMessage = ActivateMessage
-    | ConsoleCommandMessage 
-    | PutItemMessage 
-    | TakeItemMessage 
+    | ConsoleCommandMessage
+    | PutItemMessage
+    | TakeItemMessage
     | CraftItemMessage
     | DropItemMessage
     | HitMessage
@@ -60,4 +60,3 @@ export type AnyMessage = ActivateMessage
     | UpdateGamemodeDataMessage
     | UpdatePropertyMessage
     | DeathStateContainerMessage
-
