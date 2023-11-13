@@ -876,7 +876,7 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
 
   bool isBlockingByShield = false;
 
-  auto& targetActorEquipmentEntries = targetActor.GetEquipment().inv.entries;
+  auto targetActorEquipmentEntries = targetActor.GetEquipment().inv.entries;
   for (auto& entry : targetActorEquipmentEntries) {
     if (entry.extra.worn != Inventory::Worn::None) {
       auto res = targetActor.GetParent()->GetEspm().GetBrowser().LookupById(
