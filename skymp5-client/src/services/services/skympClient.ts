@@ -49,7 +49,12 @@ export class SkympClient extends ClientListener {
           browser.setAuthData(data.remote);
         }
         storage[AuthGameData.storageKey] = data;
-        this.sp.browser.setFocused(false);
+
+        // Don't let the user use Main Menu buttons
+        setTimeout(() => {
+          this.sp.browser.setFocused(false);
+        }, 3000);
+
         this.startClient();
       });
 
