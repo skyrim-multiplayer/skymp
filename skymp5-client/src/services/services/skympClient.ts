@@ -1,4 +1,3 @@
-import * as sp from 'skyrimPlatform';
 import {
   on,
   once,
@@ -9,7 +8,6 @@ import {
 import * as netInfo from '../../debug/netInfoSystem';
 import * as updateOwner from '../../gamemodeApi/updateOwner';
 import * as networking from './networkingService';
-import { ModelSource } from '../../modelSource/modelSource';
 import { RemoteServer } from './remoteServer';
 import { setupHooks } from '../../sync/animation';
 import * as animDebugSystem from '../../debug/animDebugSystem';
@@ -18,20 +16,11 @@ import { SinglePlayerService } from './singlePlayerService';
 import * as authSystem from "../../features/authSystem";
 import * as playerCombatSystem from "../../sweetpie/playerCombatSystem";
 import { AuthGameData } from '../../features/authModel';
-import { Transform } from '../../sync/movement';
 import * as browser from "../../features/browser";
 import { ClientListener, CombinedController, Sp } from './clientListener';
 import { SpApiInteractor } from '../spApiInteractor';
 import { ConnectionFailed } from '../events/connectionFailed';
 import { ConnectionDenied } from '../events/connectionDenied';
-import { ConnectionAccepted } from '../events/connectionAccepted';
-import { ConnectionDisconnect } from '../events/connectionDisconnect';
-import { ConnectionMessage } from '../events/connectionMessage';
-
-interface AnyMessage {
-  type?: string;
-  t?: number;
-}
 
 printConsole('Hello Multiplayer!');
 printConsole('settings:', settings['skymp5-client']);
@@ -65,7 +54,7 @@ export class SkympClient extends ClientListener {
         this.startClient();
       });
 
-      authSystem.main(settings["skymp5-client"]["lobbyLocation"] as Transform);
+      authSystem.main();
     } else {
       this.startClient();
     }
@@ -80,19 +69,20 @@ export class SkympClient extends ClientListener {
   }
 
   private startClient() {
-    // TODO: subscribe to events in constructor, not here
+    // TODO: refactor netInfo into service
     netInfo.start();
+
+    // TODO: refactor animDebugSystem into service
     animDebugSystem.init(settings["skymp5-client"]["animDebug"] as animDebugSystem.AnimDebugSettings);
 
+    // TODO: refactor playerCombatSystem into service
     playerCombatSystem.start();
-    // once("update", () => authSystem.setPlayerAuthMode(false));
+
     this.establishConnectionConditional();
     this.ctor();
   }
 
   private ctor() {
-    printConsole("CTOR")
-
     // TODO: subscribe to events in constructor, not here
     this.resetView();
     setupHooks();

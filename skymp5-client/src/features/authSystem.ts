@@ -53,7 +53,7 @@ export const addAuthListener = (callback: AuthCallback): void => {
   authListeners.push(callback);
 }
 
-export const main = (lobbyLocation: Transform): void => {
+export const main = (): void => {
   const settingsGameData = sp.settings["skymp5-client"]["gameData"] as any;
   const isOfflineMode = Number.isInteger(settingsGameData?.profileId);
   if (isOfflineMode) {
@@ -61,7 +61,7 @@ export const main = (lobbyLocation: Transform): void => {
   } else {
     startListenBrowserMessage();
     browser.addOnWindowLoadListener(() => {
-      if (isListenBrowserMessage) loadLobby(lobbyLocation);
+      if (isListenBrowserMessage) loadLobby();
     });
   }
 }
@@ -197,42 +197,10 @@ const checkLoginState = () => {
             browserState.comment = `Server returned ${response.status.toString() || "???"} "${response.body || response.error}"`;
             setTimeout(() => checkLoginState(), 1.5 + Math.random() * 2);
         }
-      })
-  // .catch(reason => {
-  //   ++browserState.failCount;
-  //   if (typeof reason === "string") {
-  //     browserState.comment = (`Skyrim platform error (http): ${reason}`)
-  //   } else {
-  //     browserState.comment = (`Skyrim platform error (http): request rejected`);
-  //   }
-  // })
-  // .finally(() => {
-  //   refreshWidgets();
-  // });
+      });
 };
 
-const loadLobby = (location: Transform): void => {
-  // sp.once("tick", () => {
-  //   defaultAutoVanityModeDelay = sp.Utility.getINIFloat("fAutoVanityModeDelay:Camera");
-  //   // setPlayerAuthMode(true);
-  //   authData = browser.getAuthData();
-  //   refreshWidgets();
-  //   sp.browser.setVisible(true);
-  // });
-
-  // sp.once("tick", () => {
-  //   sp.browser.setFocused(true);
-  //   // browser.keepCursorMenuOpenedWhenBrowserFocused();
-  //   checkLoginState();
-  // });
-
-  // const loadGameService = SpApiInteractor.makeController().lookupListener(LoadGameService);
-  // loadGameService.loadGame(
-  //   location.pos,
-  //   location.rot,
-  //   location.worldOrCell
-  // );
-
+const loadLobby = (): void => {
   authData = browser.getAuthData();
   refreshWidgets();
   sp.browser.setVisible(true);
@@ -240,15 +208,6 @@ const loadLobby = (location: Transform): void => {
 
   // Launch checkLoginState loop
   checkLoginState();
-
-  // sp.printConsole("TEST1")
-  // new sp.HttpClient(authUrl).post("/", {body: "", contentType: ""}, (result) => {
-  //   sp.printConsole("TEST", result)
-  // });
-  // sp.printConsole("TEST1")
-  // setTimeout(() => {
-  //   sp.printConsole("TEST")
-  // }, 1);
 }
 
 declare const window: any;
