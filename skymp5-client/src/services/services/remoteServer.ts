@@ -581,20 +581,13 @@ export class RemoteServer extends ClientListener implements ModelSource {
           if (!task.running) {
             task.running = true;
 
-            // TODO: unhardcode loadorder
-            const loadOrder = ["Skyrim.esm",
-              "Update.esm",
-              "Dawnguard.esm",
-              "HearthFires.esm",
-              "Dragonborn.esm",
-              "ccBGSSSE001-Fish.esm",
-              "ccBGSSSE025-AdvDSGS.esm",
-              "CombatSettings.esp",
-              "SweetPie.esp"
-            ];
+            let loadOrder = new Array<string>();
+            for (let i = 0; i < this.sp.Game.getModCount(); ++i) {
+              loadOrder.push(this.sp.Game.getModName(i));
+            }
 
             this.logTrace(`loading game in world/cell ${msg.transform.worldOrCell.toString(16)}`);
-            const loadGameService = SpApiInteractor.makeController().lookupListener(LoadGameService);
+            const loadGameService = this.controller.lookupListener(LoadGameService);
             loadGameService.loadGame(
               msg.transform.pos,
               msg.transform.rot,
