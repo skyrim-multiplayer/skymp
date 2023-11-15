@@ -856,9 +856,52 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
 
   float healthPercentage = currentActorValues.healthPercentage;
 
-  hitData.isHitBlocked = hitData.isHitBlocked ||
-    (targetActor.IsBlockActive() ? ShouldBeBlocked(*aggressor, targetActor)
-                                 : false);
+  if (targetActor.IsBlockActive()) {
+    if (ShouldBeBlocked(*aggressor, targetActor)) {
+      bool isRemoteBowAttack = false;
+
+      auto sourceLookupResult =
+        targetActor.GetParent()->GetEspm().GetBrowser().LookupById(
+          hitData.source);
+      if (sourceLookupResult.rec &&
+          sourceLookupResult.rec->GetType() == espm::WEAP::kType) {
+        auto weapData =
+          espm::GetData<espm::WEAP>(hitData.source, targetActor.GetParent());
+        if (weapData.weapDNAM) {
+          if (weapData.weapDNAM->animType == espm::WEAP::AnimType::Bow ||
+              weapData.weapDNAM->animType == espm::WEAP::AnimType::Crossbow) {
+            if (!hitData.isBashAttack) {
+              isRemoteBowAttack = true;
+            }
+          }
+        }
+      }
+
+      bool isBlockingByShield = false;
+
+      auto targetActorEquipmentEntries =
+        targetActor.GetEquipment().inv.entries;
+      for (auto& entry : targetActorEquipmentEntries) {
+        if (entry.extra.worn != Inventory::Worn::None) {
+          auto res =
+            targetActor.GetParent()->GetEspm().GetBrowser().LookupById(
+              entry.baseId);
+          if (res.rec && res.rec->GetType() == espm::ARMO::kType) {
+            auto data =
+              espm::GetData<espm::ARMO>(entry.baseId, targetActor.GetParent());
+            bool isShield = data.equipSlotId > 0;
+            if (isShield) {
+              isBlockingByShield = isShield;
+            }
+          }
+        }
+      }
+
+      if (!isRemoteBowAttack || isBlockingByShield) {
+        hitData.isHitBlocked = true;
+      }
+    }
+  }
 
   float damage = partOne.CalculateDamage(*aggressor, targetActor, hitData);
   damage = damage < 0.f ? 0.f : damage;
