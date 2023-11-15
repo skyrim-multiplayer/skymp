@@ -19,6 +19,8 @@ ARMO::Data ARMO::GetData(CompressedFieldsCache& compressedFieldsCache) const
       } else if (!std::memcmp(type, "DNAM", 4)) {
         hasDNAM = true;
         result.baseRatingX100 = *reinterpret_cast<const uint32_t*>(data);
+      } else if (!std::memcmp(type, "ETYP", 4)) {
+        result.equipSlotId = *reinterpret_cast<const uint32_t*>(data);
       }
     },
     compressedFieldsCache);
