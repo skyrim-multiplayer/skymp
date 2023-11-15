@@ -7,8 +7,8 @@ export class LoadGameService extends ClientListener {
         this.controller.on("loadGame", () => this.onLoadGame());
     }
 
-    public loadGame(pos: number[], rot: number[], worldOrCell: number, changeFormNpc?: ChangeFormNpc) {
-        this.sp.loadGame(pos, rot, worldOrCell, changeFormNpc);
+    public loadGame(pos: number[], rot: number[], worldOrCell: number, changeFormNpc?: ChangeFormNpc, loadOrder?: string[], time?: { seconds: number, minutes: number, hours: number }) {
+        this.sp.loadGame(pos, rot, worldOrCell, changeFormNpc, loadOrder, time);
         this._isCausedBySkyrimPlatform = true;
     }
 

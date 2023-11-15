@@ -580,13 +580,19 @@ export class RemoteServer extends ClientListener implements ModelSource {
         once('tick', () => {
           if (!task.running) {
             task.running = true;
-            // printConsole('Using loadGame to spawn player');
-            // printConsole(
-            //   'skinColorFromServer:',
-            //   msg.appearance
-            //     ? msg.appearance.skinColor.toString(16)
-            //     : undefined,
-            // );
+
+            // TODO: unhardcode loadorder
+            const loadOrder = ["Skyrim.esm",
+              "Update.esm",
+              "Dawnguard.esm",
+              "HearthFires.esm",
+              "Dragonborn.esm",
+              "ccBGSSSE001-Fish.esm",
+              "ccBGSSSE025-AdvDSGS.esm",
+              "CombatSettings.esp",
+              "SweetPie.esp"
+            ];
+
             this.logTrace(`loading game in world/cell ${msg.transform.worldOrCell.toString(16)}`);
             const loadGameService = SpApiInteractor.makeController().lookupListener(LoadGameService);
             loadGameService.loadGame(
@@ -606,6 +612,9 @@ export class RemoteServer extends ClientListener implements ModelSource {
                   },
                 }
                 : undefined,
+              loadOrder,
+              // TODO: unhardcode time
+              { minutes: 0, seconds: 0, hours: 12 }
             );
             once('update', () => {
               applyPcInv();

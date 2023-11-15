@@ -107,6 +107,41 @@ std::unique_ptr<SaveFile_::ChangeFormNPC_> CreateChangeFormNpc(
   return changeFormNpc;
 }
 
+std::unique_ptr<LoadGame::Time> CreateTime(
+  std::shared_ptr<SaveFile_::SaveFile>, JsValue time_)
+{
+  if (time_.GetType() != JsValue::Type::Object) {
+    return nullptr;
+  }
+
+  auto hours = static_cast<int>(time_.GetProperty("hours"));
+  auto minutes = static_cast<int>(time_.GetProperty("minutes"));
+  auto seconds = static_cast<int>(time_.GetProperty("seconds"));
+
+  std::unique_ptr<LoadGame::Time> time;
+  time.reset(new LoadGame::Time);
+  time->Set(seconds, minutes, hours);
+  return time;
+}
+
+std::unique_ptr<std::vector<std::string>> CreateLoadOrder(
+  std::shared_ptr<SaveFile_::SaveFile>, JsValue loadOrder_)
+{
+  if (loadOrder_.GetType() != JsValue::Type::Array) {
+    return nullptr;
+  }
+
+  std::unique_ptr<std::vector<std::string>> loadOrder;
+  loadOrder.reset(new std::vector<std::string>);
+  int n = static_cast<int>(loadOrder_.GetProperty("length"));
+  for (int i = 0; i < n; ++i) {
+    auto jValue = loadOrder_.GetProperty(i);
+    auto value = static_cast<std::string>(jValue);
+    loadOrder->push_back(value);
+  }
+  return loadOrder;
+}
+
 }
 
 JsValue LoadGameApi::LoadGame(const JsFunctionArguments& args)
@@ -115,6 +150,8 @@ JsValue LoadGameApi::LoadGame(const JsFunctionArguments& args)
                        angle = JsExtractPoint(args[2]);
   uint32_t cellOrWorld = static_cast<uint32_t>(static_cast<double>(args[3]));
   auto npcData = args[4];
+  auto loadOrder = args[5];
+  auto time = args[6];
 
   auto save = LoadGame::PrepareSaveFile();
   if (!save) {
@@ -124,7 +161,21 @@ JsValue LoadGameApi::LoadGame(const JsFunctionArguments& args)
   std::unique_ptr<SaveFile_::ChangeFormNPC_> changeFormNpc =
     CreateChangeFormNpc(save, npcData);
 
-  LoadGame::Run(save, pos, angle, cellOrWorld, nullptr, nullptr,
-                changeFormNpc.get());
+  std::unique_ptr<std::vector<std::string>> saveLoadOrder =
+    CreateLoadOrder(save, loadOrder);
+
+  std::unique_ptr<LoadGame::Time> saveFileTime = CreateTime(save, time);
+
+  const auto& _baseSavefile = save;
+  const auto& _pos = pos;
+  const auto& _angle = angle;
+  const auto& _cellOrWorld = cellOrWorld;
+  const auto& _time = saveFileTime.get();
+  SaveFile_::Weather* _weather = nullptr;
+  SaveFile_::ChangeFormNPC_* _changeFormNPC = changeFormNpc.get();
+  std::vector<std::string>* _loadOrder = saveLoadOrder.get();
+  LoadGame::Run(_baseSavefile, _pos, _angle, _cellOrWorld, _time, _weather,
+                _changeFormNPC, _loadOrder);
+
   return JsValue::Undefined();
 }

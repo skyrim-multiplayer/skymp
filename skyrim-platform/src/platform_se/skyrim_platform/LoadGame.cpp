@@ -92,16 +92,19 @@ void LoadGame::Run(std::shared_ptr<SaveFile_::SaveFile> save,
                    const std::array<float, 3>& pos,
                    const std::array<float, 3>& angle, uint32_t cellOrWorld,
                    Time* time, SaveFile_::Weather* _weather,
-                   SaveFile_::ChangeFormNPC_* changeFormNPC)
+                   SaveFile_::ChangeFormNPC_* changeFormNPC,
+                   std::vector<std::string>* loadOrder)
 {
   if (!save) {
     throw std::runtime_error("Bad SaveFile");
   }
+  
+  ModifyPluginInfo(save);
 
   ModifySaveTime(save, time);
   ModifySaveWeather(save, _weather);
-  ModifyPluginInfo(save);
   ModifyPlayerFormNPC(save, changeFormNPC);
+  ModifyLoadOrder(save, loadOrder);
   ModifyEssStructure(save, pos, angle, cellOrWorld);
 
   auto name = g_saveFilePrefix + GenerateGuid();
@@ -222,6 +225,14 @@ void LoadGame::ModifyPlayerFormNPC(std::shared_ptr<SaveFile_::SaveFile> save,
   if (form) {
     auto newForm = changeFormNPC->ToBinary();
     FillChangeForm(save, form, newForm);
+  }
+}
+
+void LoadGame::ModifyLoadOrder(std::shared_ptr<SaveFile_::SaveFile> save,
+                               std::vector<std::string>* loadOrder)
+{
+  if (loadOrder) {
+    save->OverwritePluginInfo(*loadOrder);
   }
 }
 
