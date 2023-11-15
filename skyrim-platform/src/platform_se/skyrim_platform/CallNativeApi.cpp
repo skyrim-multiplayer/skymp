@@ -45,17 +45,14 @@ JsValue CallNativeApi::CallNative(
           return JsValue("");
         }
         std::string s =
-          dataHandler->compiledFileCollection.smallFiles[adjusted]
-            ->GetFilename()
-            .data();
+          dataHandler->compiledFileCollection.smallFiles[adjusted]->fileName;
         return JsValue(s);
       } else {
         if (index >= dataHandler->compiledFileCollection.files.size()) {
           return JsValue("");
         }
-        std::string s = dataHandler->compiledFileCollection.files[index]
-                          ->GetFilename()
-                          .data();
+        std::string s =
+          dataHandler->compiledFileCollection.files[index]->fileName;
         return JsValue(s);
       }
     }
