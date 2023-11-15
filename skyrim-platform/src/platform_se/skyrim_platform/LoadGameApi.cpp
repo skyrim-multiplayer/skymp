@@ -113,12 +113,13 @@ JsValue LoadGameApi::LoadGame(const JsFunctionArguments& args)
 {
   std::array<float, 3> pos = JsExtractPoint(args[1]),
                        angle = JsExtractPoint(args[2]);
-  uint32_t cellOrWorld = (uint32_t)(double)args[3];
+  uint32_t cellOrWorld = static_cast<uint32_t>(static_cast<double>(args[3]));
   auto npcData = args[4];
 
   auto save = LoadGame::PrepareSaveFile();
-  if (!save)
+  if (!save) {
     throw NullPointerException("save");
+  }
 
   std::unique_ptr<SaveFile_::ChangeFormNPC_> changeFormNpc =
     CreateChangeFormNpc(save, npcData);
