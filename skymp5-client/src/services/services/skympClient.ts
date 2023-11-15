@@ -20,6 +20,8 @@ import * as browser from "../../features/browser";
 import { ClientListener, CombinedController, Sp } from './clientListener';
 import { ConnectionFailed } from '../events/connectionFailed';
 import { ConnectionDenied } from '../events/connectionDenied';
+import { ConnectionMessage } from '../events/connectionMessage';
+import { CreateActorMessage } from '../messages/createActorMessage';
 
 printConsole('Hello Multiplayer!');
 printConsole('settings:', settings['skymp5-client']);
@@ -42,6 +44,8 @@ export class SkympClient extends ClientListener {
     this.controller.emitter.on("connectionFailed", (e) => this.onConnectionFailed(e));
     this.controller.emitter.on("connectionDenied", (e) => this.onConnectionDenied(e));
 
+    this.controller.emitter.on("createActorMessage", (e) => this.onActorCreateMessage(e));
+
     const authGameData = storage[AuthGameData.storageKey] as AuthGameData | undefined;
     if (!(authGameData?.local || authGameData?.remote)) {
       authSystem.addAuthListener((data) => {
@@ -51,9 +55,13 @@ export class SkympClient extends ClientListener {
         storage[AuthGameData.storageKey] = data;
 
         // Don't let the user use Main Menu buttons
-        setTimeout(() => {
-          this.sp.browser.setFocused(false);
-        }, 3000);
+        // setTimeout(() => {
+        //   this.sp.browser.setFocused(false);
+        // }, 3000);
+        // once("update", () => {
+        //   this.sp.browser.setFocused(false);
+        // });
+        // this.sp.browser.setFocused(false);
 
         this.startClient();
       });
@@ -61,6 +69,12 @@ export class SkympClient extends ClientListener {
       authSystem.main();
     } else {
       this.startClient();
+    }
+  }
+
+  private onActorCreateMessage(e: ConnectionMessage<CreateActorMessage>) {
+    if (e.message.isMe) {
+      this.sp.browser.setFocused(false);
     }
   }
 
