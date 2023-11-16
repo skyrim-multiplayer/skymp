@@ -98,7 +98,7 @@ void LoadGame::Run(std::shared_ptr<SaveFile_::SaveFile> save,
   if (!save) {
     throw std::runtime_error("Bad SaveFile");
   }
-  
+
   ModifyPluginInfo(save);
 
   ModifySaveTime(save, time);
