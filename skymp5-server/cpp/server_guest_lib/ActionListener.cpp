@@ -832,25 +832,25 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
     return;
   }
 
-  if (IsDistanceValid(*aggressor, targetActor, hitData) == false) {
-    float distance =
-      std::sqrt(GetSqrDistanceToBounds(*aggressor, targetActor));
+  // if (IsDistanceValid(*aggressor, targetActor, hitData) == false) {
+  //   float distance =
+  //     std::sqrt(GetSqrDistanceToBounds(*aggressor, targetActor));
 
-    // TODO: fix bounding boxes for creatures such as chicken, mudcrab, etc
-    float reachPveHotfixMult =
-      (aggressor->GetBaseId() <= 0x7 && targetActor.GetBaseId() <= 0x7)
-      ? 1.f
-      : std::numeric_limits<float>::infinity();
+  //   // TODO: fix bounding boxes for creatures such as chicken, mudcrab, etc
+  //   float reachPveHotfixMult =
+  //     (aggressor->GetBaseId() <= 0x7 && targetActor.GetBaseId() <= 0x7)
+  //     ? 1.f
+  //     : std::numeric_limits<float>::infinity();
 
-    float reach = GetReach(*aggressor, hitData.source, reachPveHotfixMult);
-    uint32_t aggressorId = aggressor->GetFormId();
-    uint32_t targetId = targetActor.GetFormId();
-    spdlog::debug(
-      fmt::format("{:x} actor can't reach {:x} target because distance {} is "
-                  "greater then first actor attack radius {}",
-                  aggressorId, targetId, distance, reach));
-    return;
-  }
+  //   float reach = GetReach(*aggressor, hitData.source, reachPveHotfixMult);
+  //   uint32_t aggressorId = aggressor->GetFormId();
+  //   uint32_t targetId = targetActor.GetFormId();
+  //   spdlog::debug(
+  //     fmt::format("{:x} actor can't reach {:x} target because distance {} is "
+  //                 "greater then first actor attack radius {}",
+  //                 aggressorId, targetId, distance, reach));
+  //   return;
+  // }
 
   ActorValues currentActorValues = targetActor.GetChangeForm().actorValues;
 
