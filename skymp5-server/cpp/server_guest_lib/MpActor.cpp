@@ -148,6 +148,20 @@ void MpActor::EquipBestWeapon()
   }
 }
 
+void MpActor::AddSpell(const uint32_t spellId)
+{
+  EditChangeForm([&](MpChangeForm& changeForm) {
+    changeForm.learnedSpells.LearnSpell(spellId);
+  });
+}
+
+void MpActor::RemoveSpell(const uint32_t spellId)
+{
+  EditChangeForm([&](MpChangeForm& changeForm) {
+    changeForm.learnedSpells.ForgetSpell(spellId);
+  });
+}
+
 void MpActor::SetRaceMenuOpen(bool isOpen)
 {
   EditChangeForm(
@@ -276,7 +290,21 @@ bool MpActor::OnEquip(uint32_t baseId)
   const bool isIngredient = recordType == "INGR";
   const bool isPotion = recordType == "ALCH";
 
-  if (!(isSpell || isIngredient || isPotion || isBook)) {
+  bool isTorch = false;
+  if (espm::utils::Is<espm::LIGH>(recordType)) {
+    auto& compressedFieldsCache = GetParent()->GetEspmCache();
+    auto light = espm::Convert<espm::LIGH>(lookupRes.rec);
+    auto res = light->GetData(compressedFieldsCache);
+    isTorch = res.data.flags & espm::LIGH::Flags::CanBeCarried;
+  }
+
+  const bool isScroll = recordType == "SCRL";
+  const bool isWeapon = recordType == "WEAP";
+  const bool isArmor = recordType == "ARMO";
+  const bool isAmmo = recordType == "AMMO";
+
+  if (!(isSpell || isIngredient || isPotion || isBook || isTorch || isScroll ||
+        isWeapon || isArmor || isAmmo)) {
     return false;
   }
 
@@ -288,14 +316,14 @@ bool MpActor::OnEquip(uint32_t baseId)
     return false;
   }
 
-  bool spellLearned = true;
+  bool spellLearned = false;
   if (isIngredient || isPotion) {
     EatItem(baseId, recordType);
   } else if (isBook) {
     spellLearned = ReadBook(baseId);
   }
 
-  if (!isSpell && spellLearned) {
+  if (isIngredient || isPotion || spellLearned) {
     RemoveItem(baseId, 1, nullptr);
   }
 
@@ -462,13 +490,37 @@ const bool& MpActor::IsRespawning() const
   return pImpl->isRespawning;
 }
 
-bool MpActor::IsSpellLearned(const uint32_t baseId) const
+bool MpActor::IsSpellLearned(const uint32_t spellId) const
+{
+  return ChangeForm().learnedSpells.IsSpellLearned(spellId) ||
+    IsSpellLearnedFromBase(spellId);
+}
+
+bool MpActor::IsSpellLearnedFromBase(const uint32_t spellId) const
 {
   const auto npcData = espm::GetData<espm::NPC_>(GetBaseId(), GetParent());
-  const auto raceData = espm::GetData<espm::RACE>(npcData.race, GetParent());
+  const auto npc = GetParent()->GetEspm().GetBrowser().LookupById(GetBaseId());
 
-  return npcData.spells.count(baseId) || raceData.spells.count(baseId) ||
-    ChangeForm().learnedSpells.IsSpellLearned(baseId);
+  const uint32_t raceId = npc.ToGlobalId(npcData.race);
+
+  const auto raceData = espm::GetData<espm::RACE>(raceId, GetParent());
+  const auto race = GetParent()->GetEspm().GetBrowser().LookupById(raceId);
+
+  for (auto npcSpellRaw : npcData.spells) {
+    const auto npcSpell = npc.ToGlobalId(npcSpellRaw);
+    if (npcSpell == spellId) {
+      return true;
+    }
+  }
+
+  for (auto raceSpellRaw : raceData.spells) {
+    const auto raceSpell = race.ToGlobalId(raceSpellRaw);
+    if (raceSpell == spellId) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 std::unique_ptr<const Appearance> MpActor::GetAppearance() const
@@ -588,8 +640,7 @@ void MpActor::MpApiDeath(MpActor* killer)
   simdjson::dom::parser parser;
   bool isRespawnBlocked = false;
 
-  std::string s =
-    "[" + std::to_string(killer ? killer->GetFormId() : 0) + " ]";
+  std::string s = "[" + std::to_string(killer ? killer->GetFormId() : 0) + "]";
   auto args = parser.parse(s).value();
 
   if (auto wst = GetParent()) {
@@ -600,9 +651,32 @@ void MpActor::MpApiDeath(MpActor* killer)
       };
     }
   }
+
   if (!isRespawnBlocked) {
     RespawnWithDelay();
   }
+}
+
+bool MpActor::MpApiCraft(uint32_t craftedItemBaseId, uint32_t count,
+                         uint32_t recipeId)
+{
+  simdjson::dom::parser parser;
+  bool isCraftBlocked = false;
+
+  std::string s = "[" + std::to_string(craftedItemBaseId) + "," +
+    std::to_string(count) + "," + std::to_string(recipeId) + "]";
+  auto args = parser.parse(s).value();
+
+  if (auto wst = GetParent()) {
+    const auto id = GetFormId();
+    for (auto& listener : wst->listeners) {
+      if (listener->OnMpApiEvent("onCraft", args, id) == false) {
+        isCraftBlocked = true;
+      };
+    }
+  }
+
+  return !isCraftBlocked;
 }
 
 void MpActor::EatItem(uint32_t baseId, espm::Type t)
@@ -841,7 +915,16 @@ void MpActor::SetRespawnTime(float time)
 
 void MpActor::SetIsDead(bool isDead)
 {
-  SendAndSetDeathState(isDead, false);
+  constexpr bool kShouldTeleport = false;
+
+  if (isDead) {
+    if (IsDead() == false) {
+      SendAndSetDeathState(isDead, kShouldTeleport);
+    }
+  } else {
+    // same as SendAndSetDeathState but resets isRespawning flag
+    Respawn(kShouldTeleport);
+  }
 }
 
 void MpActor::RestoreActorValue(espm::ActorValue av, float value)
@@ -945,6 +1028,20 @@ void MpActor::ApplyMagicEffect(espm::Effects::Effect& effect, bool hasSweetpie,
 {
   WorldState* worldState = GetParent();
   auto data = espm::GetData<espm::MGEF>(effect.effectId, worldState).data;
+
+  if (data.effectType == espm::MGEF::EffectType::CureDisease) {
+    spdlog::trace("Curing all diseases");
+    auto spells = ChangeForm().learnedSpells.GetLearnedSpells();
+    for (auto spellId : spells) {
+      auto spellData = espm::GetData<espm::SPEL>(spellId, worldState);
+      if (spellData.type == espm::SPEL::SpellType::Disease) {
+        spdlog::trace("Curing disease {:x}", spellId);
+        RemoveSpell(spellId);
+      }
+    }
+    return;
+  }
+
   const espm::ActorValue av = data.primaryAV;
   const espm::MGEF::EffectType type = data.effectType;
   spdlog::trace("Actor value in ApplyMagicEffect(): {}",

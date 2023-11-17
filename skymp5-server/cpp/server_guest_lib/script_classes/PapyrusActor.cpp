@@ -255,6 +255,90 @@ VarValue PapyrusActor::WornHasKeyword(VarValue self,
   return VarValue(false);
 }
 
+VarValue PapyrusActor::AddSpell(VarValue self,
+                                const std::vector<VarValue>& arguments)
+{
+  // TODO: should we sync spell list in general? should we show spell add for
+  // actor neighbors?
+
+  if (auto actor = GetFormPtr<MpActor>(self)) {
+    if (arguments.size() < 2) {
+      throw std::runtime_error(
+        "Actor.AddSpell requires at least two arguments");
+    }
+
+    const auto& spell = GetRecordPtr(arguments[0]);
+    if (!spell.rec) {
+      spdlog::error("Actor.AddSpell - invalid spell form");
+      return VarValue(false);
+    }
+
+    if (spell.rec->GetType().ToString() != "SPEL") {
+      spdlog::error("Actor.AddSpell - type expected to be SPEL, but it is {}",
+                    spell.rec->GetType().ToString());
+      return VarValue(false);
+    }
+
+    uint32_t spellId = spell.ToGlobalId(spell.rec->GetId());
+
+    if (!actor->IsSpellLearned(spellId)) {
+      actor->AddSpell(spellId);
+
+      SpSnippet(GetName(), "AddSpell",
+                SpSnippetFunctionGen::SerializeArguments(arguments).data(),
+                actor->GetFormId())
+        .Execute(actor);
+
+      return VarValue(true);
+    }
+  }
+
+  return VarValue(false);
+}
+
+VarValue PapyrusActor::RemoveSpell(VarValue self,
+                                   const std::vector<VarValue>& arguments)
+{
+  if (auto actor = GetFormPtr<MpActor>(self)) {
+    if (arguments.size() < 1) {
+      throw std::runtime_error(
+        "Actor.RemoveSpell requires at least one argument");
+    }
+
+    const auto& spell = GetRecordPtr(arguments[0]);
+    if (!spell.rec) {
+      spdlog::error("Actor.RemoveSpell - invalid spell form");
+      return VarValue(false);
+    }
+
+    if (spell.rec->GetType().ToString() != "SPEL") {
+      spdlog::error(
+        "Actor.RemoveSpell - type expected to be SPEL, but it is {}",
+        spell.rec->GetType().ToString());
+      return VarValue(false);
+    }
+
+    uint32_t spellId = spell.ToGlobalId(spell.rec->GetId());
+
+    if (actor->IsSpellLearnedFromBase(spellId)) {
+      spdlog::warn("Actor.RemoveSpell - can't remove spells inherited from "
+                   "RACE/NPC_ records");
+    } else if (!actor->IsSpellLearned(spellId)) {
+      spdlog::warn("Actor.RemoveSpell - spell already removed/not learned");
+    } else {
+      actor->RemoveSpell(spellId);
+
+      SpSnippet(GetName(), "RemoveSpell",
+                SpSnippetFunctionGen::SerializeArguments(arguments).data(),
+                actor->GetFormId())
+        .Execute(actor);
+
+      return VarValue(true);
+    }
+  }
+  return VarValue(false);
+}
+
 void PapyrusActor::Register(
   VirtualMachine& vm, std::shared_ptr<IPapyrusCompatibilityPolicy> policy)
 {
@@ -275,4 +359,7 @@ void PapyrusActor::Register(
   AddMethod(vm, "EquipItem", &PapyrusActor::EquipItem);
   AddMethod(vm, "SetDontMove", &PapyrusActor::SetDontMove);
   AddMethod(vm, "IsDead", &PapyrusActor::IsDead);
+  AddMethod(vm, "WornHasKeyword", &PapyrusActor::WornHasKeyword);
+  AddMethod(vm, "AddSpell", &PapyrusActor::AddSpell);
+  AddMethod(vm, "RemoveSpell", &PapyrusActor::RemoveSpell);
 }

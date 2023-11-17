@@ -1,28 +1,31 @@
 project(skymp5-functions-lib)
 
-set(GAMEMODE_REPO Pospelove/skymp5-gamemode)
-set(GAMEMODE_REVISION master)
+set(GAMEMODE_REPO_OWNER Pospelove)
+set(GAMEMODE_REPO_NAME skymp5-gamemode)
+set(GAMEMODE_REPO ${GAMEMODE_REPO_OWNER}/${GAMEMODE_REPO_NAME})
+set(GAMEMODE_BRANCH master)
 
 if(BUILD_GAMEMODE)
   if(NOT GITHUB_TOKEN)
     message(FATAL_ERROR "GITHUB_TOKEN is not set. Please set it to your GitHub personal access token.")
   endif()
-  # The URL to the raw gamemode.js file.
-  set(GAMEMODE_JS_URL "https://raw.githubusercontent.com/${GAMEMODE_REPO}/${GAMEMODE_REVISION}/build/gamemode.js")
-
-  # The destination where the file will be saved.
-  set(GAMEMODE_JS_DEST "${CMAKE_BINARY_DIR}/dist/server/gamemode.js")
+  
+  set(GAMEMODE_ZIP_URL "https://github.com/${GAMEMODE_REPO}/archive/refs/heads/${GAMEMODE_BRANCH}.zip")
+  set(GAMEMODE_ZIP_DEST "${CMAKE_BINARY_DIR}/gamemode.zip")
+  set(GAMEMODE_ZIP_EXTRACT_DIR "${CMAKE_BINARY_DIR}/gamemode-zip")
+  set(GAMEMODE_JS_DEST_DIR "${CMAKE_BINARY_DIR}/dist/server")
 
   # Pass variables to the download script.
-  set(SCRIPT_PATH "${CMAKE_CURRENT_LIST_DIR}/download.cmake")
-  configure_file(${SCRIPT_PATH} ${CMAKE_BINARY_DIR}/download.cmake)
+  set(SCRIPT_PATH "${CMAKE_CURRENT_LIST_DIR}/download-and-build.cmake")
+  configure_file(${SCRIPT_PATH} ${CMAKE_BINARY_DIR}/download-and-build.cmake)
 
   add_custom_target(skymp5-functions-lib ALL
     SOURCES ${sources}
     COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/dist/server
+    COMMAND ${CMAKE_COMMAND} -E remove_directory ${CMAKE_CURRENT_BINARY_DIR}/${GAMEMODE_REPO_NAME}-${GAMEMODE_BRANCH}
     COMMAND ${CMAKE_COMMAND} -E env DOWNLOAD_NO_PROGRESS=1
-            ${CMAKE_COMMAND} -P ${CMAKE_BINARY_DIR}/download.cmake
-    COMMENT "Downloading gamemode.js file..."
+            ${CMAKE_COMMAND} -P ${CMAKE_BINARY_DIR}/download-and-build.cmake
+    COMMENT "Downloading & building gamemode repo..."
   )
 else()
   add_custom_target(skymp5-functions-lib ALL

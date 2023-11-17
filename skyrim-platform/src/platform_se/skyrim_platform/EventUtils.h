@@ -1,7 +1,7 @@
 #pragma once
 
 template <class E>
-inline RE::BSTEventSource<E>* GetEventSource()
+inline RE::BSTEventSource<E>* GetEventSourceScriptEvent()
 {
   return RE::ScriptEventSourceHolder::GetSingleton()->GetEventSource<E>();
 }
