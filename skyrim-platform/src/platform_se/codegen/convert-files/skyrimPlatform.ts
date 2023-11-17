@@ -51,7 +51,7 @@ export interface ChangeFormNpc {
   face?: Face
 }
 
-export declare function loadGame(pos: number[], angle: number[], worldOrCell: number, changeFormNpc?: ChangeFormNpc): void
+export declare function loadGame(pos: number[], angle: number[], worldOrCell: number, changeFormNpc?: ChangeFormNpc, loadOrder?: string[], time?: { seconds: number, minutes: number, hours: number }): void
 
 export declare function worldPointToScreenPoint(...args: number[][]): number[][]
 
@@ -1533,8 +1533,8 @@ export type HttpHeaders = Record<string, string>
 
 export declare class HttpClient {
     constructor(url: string);
-    get(path: string, options?: { headers?: HttpHeaders }): Promise<HttpResponse>;
-    post(path: string, options: { body: string, contentType: string, headers?: HttpHeaders }): Promise<HttpResponse>;
+    get(path: string, options?: { headers?: HttpHeaders }, callback?: (result: HttpResponse) => void): Promise<HttpResponse>;
+    post(path: string, options: { body: string, contentType: string, headers?: HttpHeaders }, callback?: (result: HttpResponse) => void): Promise<HttpResponse>;
 }
 
 export declare function createText(xPos: number, yPos: number, text: string, color: number[], name?: string): number; //default name is Tavern

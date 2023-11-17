@@ -41,7 +41,8 @@ public:
                   const std::array<float, 3>& pos,
                   const std::array<float, 3>& angle, uint32_t cellOrWorld,
                   Time* time = nullptr, SaveFile_::Weather* _weather = nullptr,
-                  SaveFile_::ChangeFormNPC_* changeFormNPC = nullptr);
+                  SaveFile_::ChangeFormNPC_* changeFormNPC = nullptr,
+                  std::vector<std::string>* loadOrder = nullptr);
 
   static std::wstring GetPathToMyDocuments();
 
@@ -89,6 +90,9 @@ private:
 
   static void ModifyPlayerFormNPC(std::shared_ptr<SaveFile_::SaveFile> save,
                                   SaveFile_::ChangeFormNPC_* changeFormNPC);
+
+  static void ModifyLoadOrder(std::shared_ptr<SaveFile_::SaveFile> save,
+                              std::vector<std::string>* loadOrder);
 
   static void FillChangeForm(
     std::shared_ptr<SaveFile_::SaveFile> save, SaveFile_::ChangeForm* form,

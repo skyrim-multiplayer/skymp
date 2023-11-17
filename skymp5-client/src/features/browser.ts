@@ -4,7 +4,6 @@ import {
   once,
   Input,
   printConsole,
-  settings,
   Menu,
   DxScanCode,
   writePlugin,

@@ -1,10 +1,7 @@
 import * as sp from "skyrimPlatform";
 import * as browser from "./browser";
 import { AuthGameData, RemoteAuthGameData } from "./authModel";
-import { Transform } from "../sync/movement";
 import { FunctionInfo } from "../lib/functionInfo";
-import { SpApiInteractor } from "../services/spApiInteractor";
-import { LoadGameService } from "../services/services/loadGameService";
 
 const normalizeUrl = (url: string) => {
   if (url.endsWith('/')) {
@@ -53,7 +50,7 @@ export const addAuthListener = (callback: AuthCallback): void => {
   authListeners.push(callback);
 }
 
-export const main = (lobbyLocation: Transform): void => {
+export const main = (): void => {
   const settingsGameData = sp.settings["skymp5-client"]["gameData"] as any;
   const isOfflineMode = Number.isInteger(settingsGameData?.profileId);
   if (isOfflineMode) {
@@ -61,7 +58,7 @@ export const main = (lobbyLocation: Transform): void => {
   } else {
     startListenBrowserMessage();
     browser.addOnWindowLoadListener(() => {
-      if (isListenBrowserMessage) loadLobby(lobbyLocation);
+      if (isListenBrowserMessage) loadLobby();
     });
   }
 }
@@ -78,7 +75,7 @@ export const setPlayerAuthMode = (frozen: boolean): void => {
   sp.Game.forceFirstPerson();
 }
 
-function createPlaySession(token: string) {
+function createPlaySession(token: string, callback: (res: string, err: string) => void) {
   const client = new sp.HttpClient(authUrl);
   let masterKey = sp.settings["skymp5-client"]["server-master-key"];
   if (!masterKey) {
@@ -88,17 +85,21 @@ function createPlaySession(token: string) {
     masterKey = sp.settings["skymp5-client"]["server-ip"] + ":" + sp.settings["skymp5-client"]["server-port"];
   }
   sp.printConsole({ masterKey });
-  return client.post(`/api/users/me/play/${masterKey}`, {
+
+  client.post(`/api/users/me/play/${masterKey}`, {
     body: '{}',
     contentType: 'application/json',
     headers: {
       'authorization': token,
     },
-  }).then((res) => {
+  }, (res: sp.HttpResponse) => {
     if (res.status != 200) {
-      throw Error('status code ' + res.status);
+      callback('', 'status code ' + res.status);
     }
-    return JSON.parse(res.body).session;
+    else {
+      // TODO: handle JSON.parse failure?
+      callback(JSON.parse(res.body).session, '');
+    }
   });
 }
 
@@ -146,86 +147,64 @@ const checkLoginState = () => {
   if (!isListenBrowserMessage) {
     return;
   }
-  
+
   new sp.HttpClient(authUrl)
-    .get("/api/users/login-discord/status?state=" + discordAuthState)
-    .then(response => {
-      switch (response.status) {
-        case 200:
-          const {
-            token,
-            masterApiId,
-            discordUsername,
-            discordDiscriminator,
-            discordAvatar,
-          } = JSON.parse(response.body) as AuthStatus;
-          browserState.failCount = 0;
-          createPlaySession(token).then((playSession) => {
-            authData = {
-              session: playSession,
+    .get("/api/users/login-discord/status?state=" + discordAuthState, undefined,
+      (response) => {
+        switch (response.status) {
+          case 200:
+            const {
+              token,
               masterApiId,
               discordUsername,
               discordDiscriminator,
               discordAvatar,
-            };
-            refreshWidgets();
-          });
-          break;
-        case 401: // Unauthorized
-          browserState.failCount = 0;
-          browserState.comment = (`Still waiting...`);
-          setTimeout(() => checkLoginState(), 1.5 + Math.random() * 2);
-          break;
-        case 403: // Forbidden
-        case 404: // Not found
-          browserState.failCount = 9000;
-          browserState.comment = (`Fail: ${response.body}`);
-          break;
-        default:
-          ++browserState.failCount;
-          browserState.comment = `Server returned ${response.status.toString() || "???"} "${response.body || response.error}"`;
-          setTimeout(() => checkLoginState(), 1.5 + Math.random() * 2);
-      }
-    })
-    .catch(reason => {
-      ++browserState.failCount;
-      if (typeof reason === "string") {
-        browserState.comment = (`Skyrim platform error (http): ${reason}`)
-      } else {
-        browserState.comment = (`Skyrim platform error (http): request rejected`);
-      }
-    })
-    .finally(() => {
-      refreshWidgets();
-    });
+            } = JSON.parse(response.body) as AuthStatus;
+            browserState.failCount = 0;
+            createPlaySession(token, (playSession, error) => {
+              if (error) {
+                browserState.failCount = 0;
+                browserState.comment = (error);
+                setTimeout(() => checkLoginState(), 1.5 + Math.random() * 2);
+                refreshWidgets();
+                return;
+              }
+              authData = {
+                session: playSession,
+                masterApiId,
+                discordUsername,
+                discordDiscriminator,
+                discordAvatar,
+              };
+              refreshWidgets();
+            });
+            break;
+          case 401: // Unauthorized
+            browserState.failCount = 0;
+            browserState.comment = (`Still waiting...`);
+            setTimeout(() => checkLoginState(), 1.5 + Math.random() * 2);
+            break;
+          case 403: // Forbidden
+          case 404: // Not found
+            browserState.failCount = 9000;
+            browserState.comment = (`Fail: ${response.body}`);
+            break;
+          default:
+            ++browserState.failCount;
+            browserState.comment = `Server returned ${response.status.toString() || "???"} "${response.body || response.error}"`;
+            setTimeout(() => checkLoginState(), 1.5 + Math.random() * 2);
+        }
+      });
 };
 
-const loadLobby = (location: Transform): void => {
-  sp.once("update", () => {
-    defaultAutoVanityModeDelay = sp.Utility.getINIFloat("fAutoVanityModeDelay:Camera");
-    setPlayerAuthMode(true);
-    authData = browser.getAuthData();
-    refreshWidgets();
-    sp.browser.setVisible(true);
-  });
+const loadLobby = (): void => {
+  authData = browser.getAuthData();
+  refreshWidgets();
+  sp.browser.setVisible(true);
+  sp.browser.setFocused(true);
 
-  sp.once("loadGame", () => {
-    // In non-offline mode we still want to see our face in RaceMenu
-    const ironHelment = sp.Armor.from(sp.Game.getFormEx(0x00012e4d));
-    const pl = sp.Game.getPlayer();
-    if (pl) pl.unequipItem(ironHelment, false, true);
-
-    sp.browser.setFocused(true);
-    browser.keepCursorMenuOpenedWhenBrowserFocused();
-    checkLoginState();
-  });
-
-  const loadGameService = SpApiInteractor.makeController().lookupListener(LoadGameService);
-  loadGameService.loadGame(
-    location.pos,
-    location.rot,
-    location.worldOrCell
-  );
+  // Launch checkLoginState loop
+  checkLoginState();
 }
 
 declare const window: any;
@@ -234,54 +213,54 @@ const browsersideWidgetSetter = () => {
   const loginWidget = {
     type: "form",
     id: 1,
-    caption: "authorization",
+    caption: "Авторизация",
     elements: [
-      {
-        type: "button",
-        tags: ["BUTTON_STYLE_GITHUB"],
-        hint: "get a colored nickname and mention in news",
-        click: () => window.skyrimPlatform.sendMessage(events.openGithub),
-      },
-      {
-        type: "button",
-        tags: ["BUTTON_STYLE_PATREON", "ELEMENT_SAME_LINE", "HINT_STYLE_RIGHT"],
-        hint: "get a colored nickname and other bonuses for patrons",
-        click: () => window.skyrimPlatform.sendMessage(events.openPatreon),
-      },
-      {
-        type: "icon",
-        text: "username",
-        tags: ["ICON_STYLE_SKYMP"],
-      },
+      // {
+      //   type: "button",
+      //   tags: ["BUTTON_STYLE_GITHUB"],
+      //   hint: "get a colored nickname and mention in news",
+      //   click: () => window.skyrimPlatform.sendMessage(events.openGithub),
+      // },
+      // {
+      //   type: "button",
+      //   tags: ["BUTTON_STYLE_PATREON", "ELEMENT_SAME_LINE", "HINT_STYLE_RIGHT"],
+      //   hint: "get a colored nickname and other bonuses for patrons",
+      //   click: () => window.skyrimPlatform.sendMessage(events.openPatreon),
+      // },
+      // {
+      //   type: "icon",
+      //   text: "username",
+      //   tags: ["ICON_STYLE_SKYMP"],
+      // },
       {
         type: "text",
         text: (
           authData ? (
             authData.discordUsername
-              ? `${authData.discordUsername}`
+              ? `Добро пожаловать, ${authData.discordUsername}`
               : `id: ${authData.masterApiId}`
-          ) : "Please log in"
+          ) : "Не авторизирован"
         ),
-        tags: ["ELEMENT_SAME_LINE", "ELEMENT_STYLE_MARGIN_EXTENDED"],
+        tags: [/*"ELEMENT_SAME_LINE", */"ELEMENT_STYLE_MARGIN_EXTENDED"],
       },
-      {
-        type: "icon",
-        text: "discord",
-        tags: ["ICON_STYLE_DISCORD"],
-      },
+      // {
+      //   type: "icon",
+      //   text: "discord",
+      //   tags: ["ICON_STYLE_DISCORD"],
+      // },
       {
         type: "button",
-        text: authData ? "change account" : "login or register",
-        tags: ["ELEMENT_SAME_LINE"],
+        text: authData ? "Сменить аккаунт" : "Войти через Discord",
+        tags: [/*"ELEMENT_SAME_LINE"*/],
         click: () => window.skyrimPlatform.sendMessage(events.openDiscordOauth),
-        hint: "You can log in or change account at any time",
+        hint: "Вы можете войти или поменять аккаунт",
       },
       {
         type: "button",
-        text: "travel to skyrim",
+        text: "Играть",
         tags: ["BUTTON_STYLE_FRAME", "ELEMENT_STYLE_MARGIN_EXTENDED"],
         click: () => window.skyrimPlatform.sendMessage(events.login),
-        hint: "Connect to the game server",
+        hint: "Подключиться к игровому серверу",
       },
       {
         type: "text",

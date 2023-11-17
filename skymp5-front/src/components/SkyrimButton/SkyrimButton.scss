@@ -3,26 +3,36 @@
   border-radius: 10px;
   width: 320px;
   height: 48px;
-    text-align: center;
-    align-items: center;
-    display: flex;
-    margin-bottom: 0;
-    cursor: pointer;
-    &.disabled {
+  text-align: center;
+  align-items: center;
+  display: flex;
+  margin-bottom: 0;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+
+  /* Smooth transition for transform */
+  &.disabled {
+    opacity: 0.33;
+
+    * {
       opacity: 0.33;
-      * {
-        opacity: 0.33;
-      }
     }
+  }
+
   .skymp-input-button_text {
-      overflow: hidden;
-      text-overflow: ellipsis;
-      font-family: 'Bankir-Retro', serif;
-      font-style: normal;
-      font-weight: normal;
-      font-size: 30px;
-      line-height: 32px;
-      color: #9D9E9EBF;
-      margin: auto;
-    }
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-family: 'Bankir-Retro', serif;
+    font-style: normal;
+    font-weight: normal;
+    font-size: 30px;
+    line-height: 32px;
+    color: #9D9E9EBF;
+    margin: auto;
+  }
+
+  &:hover {
+    transform: scale(1.05);
+    /* Enlarge button on hover */
+  }
 }

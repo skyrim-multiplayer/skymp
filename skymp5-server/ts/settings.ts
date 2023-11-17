@@ -21,9 +21,9 @@ export class Settings {
   offlineMode = false;
   startPoints = [
     {
-      pos: [22659, -8697, -3594],
-      worldOrCell: '0x1a26f',
-      angleZ: 268,
+      pos: [133857, -61130, 14662],
+      worldOrCell: '0x3c',
+      angleZ: 72,
     },
   ];
   discordAuth: DiscordAuthSettings | null = null;

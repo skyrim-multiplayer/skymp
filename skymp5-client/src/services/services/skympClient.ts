@@ -1,4 +1,3 @@
-import * as sp from 'skyrimPlatform';
 import {
   on,
   once,
@@ -8,12 +7,8 @@ import {
 } from 'skyrimPlatform';
 import * as netInfo from '../../debug/netInfoSystem';
 import * as updateOwner from '../../gamemodeApi/updateOwner';
-import * as networking from '../../networking';
-import { HostStartMessage, HostStopMessage, MsgType } from '../../messages';
-import { ModelSource } from '../../modelSource/modelSource';
-import { MsgHandler } from '../../modelSource/msgHandler';
-import { RemoteServer } from '../../modelSource/remoteServer';
-import { SendTarget } from '../../modelSource/sendTarget';
+import * as networking from './networkingService';
+import { RemoteServer } from './remoteServer';
 import { setupHooks } from '../../sync/animation';
 import * as animDebugSystem from '../../debug/animDebugSystem';
 import { WorldView } from '../../view/worldView';
@@ -21,53 +16,12 @@ import { SinglePlayerService } from './singlePlayerService';
 import * as authSystem from "../../features/authSystem";
 import * as playerCombatSystem from "../../sweetpie/playerCombatSystem";
 import { AuthGameData } from '../../features/authModel';
-import { Transform } from '../../sync/movement';
 import * as browser from "../../features/browser";
 import { ClientListener, CombinedController, Sp } from './clientListener';
-
-interface AnyMessage {
-  type?: string;
-  t?: number;
-}
-
-const handleMessage = (msgAny: AnyMessage, handler_: MsgHandler) => {
-  const msgType: string = msgAny.type || (MsgType as any)[msgAny.t as any];
-  const handler = handler_ as unknown as Record<
-    string,
-    (m: AnyMessage) => void
-  >;
-  const f = handler[msgType];
-
-  if (msgType === 'hostStart') {
-    const msg = msgAny as HostStartMessage;
-    const target = msg.target;
-
-    let hosted = storage['hosted'];
-    if (typeof hosted !== typeof []) {
-      // if you try to switch to Set checkout .concat usage.
-      // concat compiles but doesn't work as expected
-      hosted = new Array<number>();
-      storage['hosted'] = hosted;
-    }
-
-    if (!(hosted as Array<unknown>).includes(target)) {
-      (hosted as Array<unknown>).push(target);
-    }
-  }
-
-  if (msgType === 'hostStop') {
-    const msg = msgAny as HostStopMessage;
-    const target = msg.target;
-    printConsole('hostStop', target.toString(16));
-
-    const hosted = storage['hosted'] as Array<number>;
-    if (typeof hosted === typeof []) {
-      storage['hosted'] = hosted.filter((x) => x !== target);
-    }
-  }
-
-  if (f && typeof f === 'function') handler[msgType](msgAny);
-};
+import { ConnectionFailed } from '../events/connectionFailed';
+import { ConnectionDenied } from '../events/connectionDenied';
+import { ConnectionMessage } from '../events/connectionMessage';
+import { CreateActorMessage } from '../messages/createActorMessage';
 
 printConsole('Hello Multiplayer!');
 printConsole('settings:', settings['skymp5-client']);
@@ -83,21 +37,14 @@ export const getServerUiPort = () => {
   return targetPort === 7777 ? 3000 : (targetPort as number) + 1;
 };
 
-export const connectWhenICallAndNotWhenIImport = (): void => {
-  if (storage.targetIp !== targetIp || storage.targetPort !== targetPort) {
-    storage.targetIp = targetIp;
-    storage.targetPort = targetPort;
-
-    printConsole(`Connecting to ${storage.targetIp}:${storage.targetPort}`);
-    networking.connect(targetIp, targetPort);
-  } else {
-    printConsole('Reconnect is not required');
-  }
-};
-
 export class SkympClient extends ClientListener {
   constructor(private sp: Sp, private controller: CombinedController) {
     super();
+
+    this.controller.emitter.on("connectionFailed", (e) => this.onConnectionFailed(e));
+    this.controller.emitter.on("connectionDenied", (e) => this.onConnectionDenied(e));
+
+    this.controller.emitter.on("createActorMessage", (e) => this.onActorCreateMessage(e));
 
     const authGameData = storage[AuthGameData.storageKey] as AuthGameData | undefined;
     if (!(authGameData?.local || authGameData?.remote)) {
@@ -106,106 +53,76 @@ export class SkympClient extends ClientListener {
           browser.setAuthData(data.remote);
         }
         storage[AuthGameData.storageKey] = data;
-        this.sp.browser.setFocused(false);
+
+        // Don't let the user use Main Menu buttons
+        // setTimeout(() => {
+        //   this.sp.browser.setFocused(false);
+        // }, 3000);
+        // once("update", () => {
+        //   this.sp.browser.setFocused(false);
+        // });
+        // this.sp.browser.setFocused(false);
+
         this.startClient();
       });
 
-      authSystem.main(settings["skymp5-client"]["lobbyLocation"] as Transform);
+      authSystem.main();
     } else {
       this.startClient();
     }
   }
 
-  get sendTarget(): SendTarget | undefined {
-    return this.rs;
+  private onActorCreateMessage(e: ConnectionMessage<CreateActorMessage>) {
+    if (e.message.isMe) {
+      this.sp.browser.setFocused(false);
+    }
   }
 
-  get msgHandler(): MsgHandler | undefined {
-    return this.rs;
+  private onConnectionFailed(e: ConnectionFailed) {
+    this.logTrace("Connection failed");
   }
 
-  get modelSource(): ModelSource | undefined {
-    return this.rs;
+  private onConnectionDenied(e: ConnectionDenied) {
+    this.logTrace("Connection denied: " + e.error);
   }
 
   private startClient() {
-    // TODO: subscribe to events in constructor, not here
+    // TODO: refactor netInfo into service
     netInfo.start();
+
+    // TODO: refactor animDebugSystem into service
     animDebugSystem.init(settings["skymp5-client"]["animDebug"] as animDebugSystem.AnimDebugSettings);
 
+    // TODO: refactor playerCombatSystem into service
     playerCombatSystem.start();
-    once("update", () => authSystem.setPlayerAuthMode(false));
-    connectWhenICallAndNotWhenIImport();
+
+    this.establishConnectionConditional();
     this.ctor();
   }
 
   private ctor() {
-    // TODO: subscribe to events in constructor, not here
+    // TODO: refactor WorldView into service
     this.resetView();
-    this.resetRemoteServer();
+
+    // TODO: refactor into service
     setupHooks();
+
+    // TODO: refactor updateOwner into service
     updateOwner.setup();
 
-    sp.printConsole('SkympClient ctor');
-
-    networking.on('connectionFailed', () => {
-      printConsole('Connection failed');
-    });
-
-    networking.on('connectionDenied', (err: Record<string, any> | string) => {
-      printConsole('Connection denied: ', err);
-    });
-
-    networking.on('connectionAccepted', () => {
-      const msgHandler = this.msgHandler;
-      if (msgHandler === undefined) {
-        return this.logError("this.msgHandler was undefined in networking.on('connectionAccepted')");
-      }
-      msgHandler.handleConnectionAccepted();
-    });
-
-    networking.on('disconnect', () => {
-      const msgHandler = this.msgHandler;
-      if (msgHandler === undefined) {
-        return this.logError("this.msgHandler was undefined in networking.on('disconnect')");
-      }
-      msgHandler.handleDisconnect();
-    });
-
-    networking.on('message', (msgAny: Record<string, unknown> | string) => {
-      netInfo.NetInfo.addReceivedPacketCount(1);
-      handleMessage(
-        msgAny as Record<string, unknown>,
-        this.msgHandler as MsgHandler,
-      );
-    });
+    this.sp.printConsole('SkympClient ctor');
   }
 
-  private resetRemoteServer() {
-    const prevRemoteServer: RemoteServer = storage.remoteServer as RemoteServer;
-    let rs: RemoteServer;
+  private establishConnectionConditional() {
+    if (storage.targetIp !== targetIp || storage.targetPort !== targetPort) {
+      storage.targetIp = targetIp;
+      storage.targetPort = targetPort;
 
-    if (prevRemoteServer && (prevRemoteServer.getWorldModel as unknown)) {
-      rs = prevRemoteServer;
-      printConsole('Restore previous RemoteServer');
-
-      // Keep previous RemoteServer, but update func implementations
-      const newObj: Record<string, unknown> =
-        new RemoteServer() as unknown as Record<string, unknown>;
-      const rsAny: Record<string, unknown> = rs as unknown as Record<
-        string,
-        unknown
-      >;
-      for (const key in newObj) {
-        if (typeof newObj[key] === 'function') rsAny[key] = newObj[key];
-      }
+      this.logTrace(`Connecting to ${storage.targetIp}:${storage.targetPort}`);
+      this.controller.lookupListener(networking.NetworkingService).connect(targetIp, targetPort);
     } else {
-      rs = new RemoteServer();
-      printConsole('Creating RemoteServer');
+      this.logTrace('Reconnect is not required');
     }
-
-    this.rs = rs;
-    storage.remoteServer = rs;
   }
 
   private resetView() {
@@ -221,14 +138,9 @@ export class SkympClient extends ClientListener {
     on('update', () => {
       const singlePlayerService = this.controller.lookupListener(SinglePlayerService);
       if (!singlePlayerService.isSinglePlayer) {
-        const modelSource = this.modelSource;
-        if (modelSource === undefined) {
-          return this.logError("modelSource was undefined");
-        }
+        const modelSource = this.controller.lookupListener(RemoteServer);
         view.update(modelSource.getWorldModel());
       }
     });
   }
-
-  private rs?: RemoteServer;
 }
