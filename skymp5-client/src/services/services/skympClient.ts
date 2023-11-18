@@ -64,6 +64,9 @@ export class SkympClient extends ClientListener {
         // this.sp.browser.setFocused(false);
 
         this.startClient();
+
+        // TODO: remove this when you will be able to see errors without console
+        this.sp.browser.setFocused(false);
       });
 
       authSystem.main();

@@ -21,6 +21,7 @@ import { UpdateAnimationMessage } from "../messages/updateAnimationMessage";
 import { UpdateEquipmentMessage } from "../messages/updateEquipmentMessage";
 import { UpdateAppearanceMessage } from "../messages/updateAppearanceMessage";
 import { RemoteServer } from "./remoteServer";
+import { DeathService } from "./deathService";
 
 const playerFormId = 0x14;
 
@@ -129,26 +130,35 @@ export class SendInputsService extends ClientListener {
             this.prevValues.magicka === av.magicka
         ) {
             return;
-        } else {
-            if (
-                currentTime - this.prevActorValuesUpdateTime < 2000 &&
-                this.actorValuesNeedUpdate === false
-            ) {
-                return;
-            }
-            const message: MessageWithRefrId<ChangeValuesMessage> = {
-                t: MsgType.ChangeValues,
-                data: av,
-                _refrId
-            };
-            this.controller.emitter.emit("sendMessageWithRefrId", {
-                message,
-                reliability: "unreliable"
-            });
-            this.actorValuesNeedUpdate = false;
-            this.prevValues = av;
-            this.prevActorValuesUpdateTime = currentTime;
         }
+
+
+        if (
+            currentTime - this.prevActorValuesUpdateTime < 2000 &&
+            this.actorValuesNeedUpdate === false
+        ) {
+            return;
+        }
+
+        const deathService = this.controller.lookupListener(DeathService);
+        if (deathService.isBusy()) {
+            this.logTrace("Not sending actor values, death service is busy");
+            return;
+        }
+
+        const message: MessageWithRefrId<ChangeValuesMessage> = {
+            t: MsgType.ChangeValues,
+            data: av,
+            _refrId
+        };
+        this.controller.emitter.emit("sendMessageWithRefrId", {
+            message,
+            reliability: "unreliable"
+        });
+        this.actorValuesNeedUpdate = false;
+        this.prevValues = av;
+        this.prevActorValuesUpdateTime = currentTime;
+
     }
 
     private sendAnimation(_refrId?: number) {
