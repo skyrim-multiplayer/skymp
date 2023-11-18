@@ -953,6 +953,11 @@ BaseActorValues MpActor::GetMaximumValues()
 void MpActor::DropItem(const uint32_t baseId, const Inventory::Entry& entry)
 {
   // TODO: Take count into account
+  constexpr uint32_t kGold001 = 0x0000000f;
+  if (baseId == kGold001) {
+    spdlog::warn("Attempt to drop Gold001 by actor {:x}", GetFormId());
+    return;
+  }
   int count = entry.count;
   RemoveItems({ entry });
   // TODO(#1141): reimplement spawning items
