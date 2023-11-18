@@ -15,6 +15,10 @@ export class DeathService extends ClientListener {
     this.hookDisableBlockedAnims();
   }
 
+  public isBusy() {
+    return this.playerDead || this.busyForOtherReasonsCounter > 0;
+  }
+
   private onceUpdate() {
     const player = this.sp.Game.getPlayer();
     player?.startDeferredKill();
@@ -79,6 +83,9 @@ export class DeathService extends ClientListener {
 
   private killActor = (actor: Actor, killer: Actor | null = null): void => {
     if (this.isPlayer(actor) === true) {
+      this.playerDead = true;
+      this.busyForOtherReasonsCounter++;
+      this.sp.Utility.wait(7.5).then(() => this.busyForOtherReasonsCounter--);
       this.allowedPlayerAnimations = [];
       actor.setDontMove(true);
       this.killWithPush(actor);
@@ -87,9 +94,12 @@ export class DeathService extends ClientListener {
       actor.kill(killer);
     }
   };
-  
+
   private resurrectActor = (actor: Actor): void => {
     if (this.isPlayer(actor) === true) {
+      this.playerDead = false;
+      this.busyForOtherReasonsCounter++;
+      this.sp.Utility.wait(7.5).then(() => this.busyForOtherReasonsCounter--);
       this.allowedPlayerAnimations = null;
       actor.setDontMove(false);
       this.ressurectWithPushKill(actor);
@@ -97,12 +107,12 @@ export class DeathService extends ClientListener {
       throw new RespawnNeededError("needs to be respawned");
     }
   };
-  
+
   private killWithPush = (actor: Actor): void => {
     this.allowedPlayerAnimations?.push(AnimationEventName.Ragdoll);
     actor.pushActorAway(actor, 0);
   };
-  
+
   private ressurectWithPushKill = (act: Actor): void => {
     const formId = act.getFormID();
     const ragdollService = this.controller.lookupListener(RagdollService);
@@ -114,7 +124,7 @@ export class DeathService extends ClientListener {
       this.sp.Game.getPlayer()!.setAnimationVariableInt("iGetUpType", 1);
       this.sp.Debug.sendAnimationEvent(actor, AnimationEventName.GetUpBegin);
     });
-  };  
+  };
 
   private isPlayer = (actor: Actor): boolean => {
     return actor.getFormID() === this.playerActorId;
@@ -124,4 +134,8 @@ export class DeathService extends ClientListener {
   private allowedPlayerAnimations: string[] | null = null;
 
   private readonly playerActorId = 0x14;
+
+  private playerDead = false;
+
+  private busyForOtherReasonsCounter = 0;
 }
