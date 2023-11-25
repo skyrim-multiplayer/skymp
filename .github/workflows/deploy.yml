@@ -1,17 +1,27 @@
 name: Deploy
+
 on:    
     repository_dispatch:
-        [deploy]
+        types: [deploy]
     workflow_dispatch:
         inputs:
             action:
-                description: action (deploy/restart/stop)
+                description: 'Action'
                 required: true
-                default: restart
+                type: choice
+                options:
+                    - 'deploy'
+                    - 'restart'
+                    - 'stop'
+                default: 'restart'
             branch:
-                description: branch, meaning server instance (sweetpie/indev)
+                description: 'Branch, meaning server instance'
                 required: true
-                default: indev
+                type: choice
+                options:
+                    - 'sweetpie'
+                    - 'indev'
+                default: 'indev'
 
 env:
     BUILD_TYPE: RelWithDebInfo
