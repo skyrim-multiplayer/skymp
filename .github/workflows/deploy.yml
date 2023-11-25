@@ -1,27 +1,27 @@
 name: Deploy
 
 on:    
-  repository_dispatch:
-    types: [deploy]
-  workflow_dispatch:
-    inputs:
-      action:
-        description: 'Action'
-        required: true
-        type: choice
-        options:
-          - 'deploy'
-          - 'restart'
-          - 'stop'
-        default: 'restart'
-      branch:
-        description: 'Branch, meaning server instance'
-        required: true
-        type: choice
-        options:
-          - 'sweetpie'
-          - 'indev'
-        default: 'indev'
+    repository_dispatch:
+        types: [deploy]
+    workflow_dispatch:
+        inputs:
+            action:
+                description: 'Action'
+                required: true
+                type: choice
+                options:
+                    - 'deploy'
+                    - 'restart'
+                    - 'stop'
+                default: 'restart'
+            branch:
+                description: 'Branch, meaning server instance'
+                required: true
+                type: choice
+                options:
+                    - 'sweetpie'
+                    - 'indev'
+                default: 'indev'
 
 env:
     BUILD_TYPE: RelWithDebInfo
