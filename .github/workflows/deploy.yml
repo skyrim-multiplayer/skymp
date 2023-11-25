@@ -41,7 +41,8 @@ jobs:
             if: github.event_name == 'repository_dispatch'
             run: |
               echo "Received Payload:"
-              echo "${{ toJson(github.event.client_payload) }}"
+              echo "${{ github.event.client_payload.inputs.branch }}"
+              echo "${{ github.event.client_payload.inputs.action }}"
 
               echo "DEPLOY_BRANCH=${{ github.event.client_payload.inputs.branch }}" >> $GITHUB_ENV
               echo "DEPLOY_ACTION=${{ github.event.client_payload.inputs.action }}" >> $GITHUB_ENV
