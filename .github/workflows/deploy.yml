@@ -40,10 +40,11 @@ jobs:
           - name: Set up repository_dispatch inputs
             if: github.event_name == 'repository_dispatch'
             run: |
-              DEPLOY_BRANCH=$(echo '${{ fromJson(github.event.client_payload.inputs).branch }}')
-              DEPLOY_ACTION=$(echo '${{ fromJson(github.event.client_payload.inputs).action }}')
-              echo "DEPLOY_BRANCH=$DEPLOY_BRANCH" >> $GITHUB_ENV
-              echo "DEPLOY_ACTION=$DEPLOY_ACTION" >> $GITHUB_ENV
+              echo "Received Payload:"
+              echo "${{ toJson(github.event.client_payload) }}"
+
+              echo "DEPLOY_BRANCH=${{ fromJson(github.event.client_payload.inputs).branch }}" >> $GITHUB_ENV
+              echo "DEPLOY_ACTION=${{ fromJson(github.event.client_payload.inputs).action }}" >> $GITHUB_ENV
 
           - name: Checkout (full)
             if: ${{env.DEPLOY_ACTION == 'deploy'}}
