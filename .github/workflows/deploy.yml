@@ -43,8 +43,8 @@ jobs:
               echo "Received Payload:"
               echo "${{ toJson(github.event.client_payload) }}"
 
-              echo "DEPLOY_BRANCH=${{ fromJson(github.event.client_payload.inputs).branch }}" >> $GITHUB_ENV
-              echo "DEPLOY_ACTION=${{ fromJson(github.event.client_payload.inputs).action }}" >> $GITHUB_ENV
+              echo "DEPLOY_BRANCH=${{ github.event.client_payload.inputs.branch }}" >> $GITHUB_ENV
+              echo "DEPLOY_ACTION=${{ github.event.client_payload.inputs.action }}" >> $GITHUB_ENV
 
           - name: Checkout (full)
             if: ${{env.DEPLOY_ACTION == 'deploy'}}
