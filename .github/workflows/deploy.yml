@@ -1,5 +1,7 @@
 name: Deploy
-on:
+on:    
+    repository_dispatch:
+        [deploy]
     workflow_dispatch:
         inputs:
             action:
@@ -19,10 +21,19 @@ jobs:
     deploy:
         runs-on: ubuntu-latest
         steps:
-          - name: Get action
+          - name: Set up workflow_dispatch inputs
+            if: github.event_name == 'workflow_dispatch'
             run: |
-                echo "DEPLOY_BRANCH=${{github.event.inputs.branch}}" >> "$GITHUB_ENV"
-                echo "DEPLOY_ACTION=${{github.event.inputs.action}}" >> "$GITHUB_ENV"
+              echo "DEPLOY_BRANCH=${{ github.event.inputs.branch }}" >> $GITHUB_ENV
+              echo "DEPLOY_ACTION=${{ github.event.inputs.action }}" >> $GITHUB_ENV
+
+          - name: Set up repository_dispatch inputs
+            if: github.event_name == 'repository_dispatch'
+            run: |
+              DEPLOY_BRANCH=$(echo '${{ fromJson(github.event.client_payload.inputs).branch }}')
+              DEPLOY_ACTION=$(echo '${{ fromJson(github.event.client_payload.inputs).action }}')
+              echo "DEPLOY_BRANCH=$DEPLOY_BRANCH" >> $GITHUB_ENV
+              echo "DEPLOY_ACTION=$DEPLOY_ACTION" >> $GITHUB_ENV
 
           - name: Checkout (full)
             if: ${{env.DEPLOY_ACTION == 'deploy'}}
