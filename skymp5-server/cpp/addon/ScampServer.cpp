@@ -1040,8 +1040,14 @@ Napi::Value ScampServer::CallPapyrusFunction(const Napi::CallbackInfo& info)
 
     auto& vm = partOne->worldState.GetPapyrusVm();
     if (callType == "method") {
-      res = vm.CallMethod(static_cast<IGameObject*>(self), functionName.data(),
-                          args);
+      if (self.GetType() == VarValue::Type::kType_Object) {
+        res = vm.CallMethod(static_cast<IGameObject*>(self),
+                            functionName.data(), args);
+      } else {
+        throw std::runtime_error(
+          "Can't call Papyrus method on non-object self '" + self.ToString() +
+          "'");
+      }
     } else if (callType == "global") {
       res = vm.CallStatic(className, functionName, args);
     } else {
