@@ -20,6 +20,17 @@ void MpClientPlugin::CreateClient(State& state, const char* targetHostname,
   static const int kTimeoutMs = 4000;
   try {
     password = Viet::ReadFileIntoString(kPasswordPath);
+
+    // Remove trailing Windows-style newlines (\r\n)
+    while (password.size() >= 2 && password[password.length() - 2] == '\r' &&
+           password[password.length() - 1] == '\n') {
+      password.erase(password.length() - 2);
+    }
+
+    // Remove trailing Unix-style newlines (\n)
+    while (!password.empty() && password.back() == '\n') {
+      password.pop_back();
+    }
   } catch (std::exception& e) {
     spdlog::warn("Unable to read password from '{}', will use standard '{}'",
                  kPasswordPath, kNetworkingPassword);

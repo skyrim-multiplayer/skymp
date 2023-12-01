@@ -81,7 +81,7 @@ export const getMovement = (refr: ObjectReference, form?: FormModel): Movement =
     isSneaking: !!(ac && isSneaking(ac)),
     isBlocking: !!(ac && ac.getAnimationVariableBool("IsBlocking")),
     isWeapDrawn: !!(ac && ac.isWeaponDrawn()),
-    isDead: form?.isDead ?? false,
+    isDead: (form?.isDead ?? false) || !!(ac && ac.isDead()),
     healthPercentage: healthPercentage || 0,
     lookAt,
     speed

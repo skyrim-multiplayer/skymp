@@ -138,7 +138,8 @@ const showConnectionError = () => {
 
 let loggingStartMoment = 0;
 on('tick', () => {
-  const maxLoggingDelay = 5000;
+  // TODO: Should be no hardcoded/magic-number limit
+  const maxLoggingDelay = 15000;
   if (loggingStartMoment && Date.now() - loggingStartMoment > maxLoggingDelay) {
     printConsole('Logging in failed. Reconnecting.');
     showConnectionError();
