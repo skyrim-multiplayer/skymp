@@ -114,7 +114,6 @@ const Chat = (props) => {
   useEffect(() => {
     const node = inputRef.current;
     const listener = (event) => {
-      console.log(event.keyCode);
       // Imitate message sending on Enter press
       if (event.code === 'Enter' && !event.shiftKey && inputRef.current) {
         event.preventDefault();
