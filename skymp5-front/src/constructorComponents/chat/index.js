@@ -12,7 +12,7 @@ import { replaceIfMoreThan20 } from '../../utils/replaceIfMoreThan20';
 
 import './styles.scss';
 const MAX_LENGTH = 2000; // Max message length
-const TIME_LIMIT = 5; // Seconds
+const TIME_LIMIT = 1; // Seconds
 const SHOUT_LIMIT = 180; // Seconds
 const MAX_LINES = 10;
 const MAX_SHOUT_LENGTH = 100;
@@ -120,7 +120,7 @@ const Chat = (props) => {
         event.preventDefault();
         sendMessage(input);
       }
-      if (event.key === 'ArrowRight') {
+      if (event.key === 'ArrowUp') {
         if (currentMessageInHistory.current === -1) {
           writtenMessage.current = input;
         }
@@ -131,7 +131,7 @@ const Chat = (props) => {
           setEndOfContenteditable(inputRef.current);
         }
       }
-      if (event.key === 'ArrowLeft') {
+      if (event.key === 'ArrowDown') {
         if (currentMessageInHistory.current >= 0) {
           if (currentMessageInHistory.current === 0) {
             updateInput(writtenMessage.current);
