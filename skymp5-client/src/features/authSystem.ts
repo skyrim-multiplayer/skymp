@@ -232,16 +232,21 @@ const browsersideWidgetSetter = () => {
       //   text: "username",
       //   tags: ["ICON_STYLE_SKYMP"],
       // },
+      // {
+      //   type: "icon",
+      //   text: "",
+      //   tags: ["ICON_STYLE_DISCORD"],
+      // },
       {
         type: "text",
         text: (
           authData ? (
             authData.discordUsername
-              ? `Добро пожаловать, ${authData.discordUsername}`
+              ? `${authData.discordUsername}`
               : `id: ${authData.masterApiId}`
-          ) : "Не авторизирован"
+          ) : "не авторизирован"
         ),
-        tags: [/*"ELEMENT_SAME_LINE", */"ELEMENT_STYLE_MARGIN_EXTENDED"],
+        tags: [/*"ELEMENT_SAME_LINE", "ELEMENT_STYLE_MARGIN_EXTENDED"*/],
       },
       // {
       //   type: "icon",
@@ -250,7 +255,7 @@ const browsersideWidgetSetter = () => {
       // },
       {
         type: "button",
-        text: authData ? "Сменить аккаунт" : "Войти через Discord",
+        text: authData ? "сменить аккаунт" : "войти через discord",
         tags: [/*"ELEMENT_SAME_LINE"*/],
         click: () => window.skyrimPlatform.sendMessage(events.openDiscordOauth),
         hint: "Вы можете войти или поменять аккаунт",
