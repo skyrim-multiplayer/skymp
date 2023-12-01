@@ -846,7 +846,8 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
   //   uint32_t aggressorId = aggressor->GetFormId();
   //   uint32_t targetId = targetActor.GetFormId();
   //   spdlog::debug(
-  //     fmt::format("{:x} actor can't reach {:x} target because distance {} is "
+  //     fmt::format("{:x} actor can't reach {:x} target because distance {} is
+  //     "
   //                 "greater then first actor attack radius {}",
   //                 aggressorId, targetId, distance, reach));
   //   return;
