@@ -180,7 +180,8 @@ export class SendInputsService extends ClientListener {
             !lastAnimationSent ||
             anim.numChanges !== lastAnimationSent.numChanges
         ) {
-            if (anim.animEventName !== '') {
+            // Drink potion anim from this mod https://www.nexusmods.com/skyrimspecialedition/mods/97660
+            if (anim.animEventName !== '' && !anim.animEventName.startsWith("DrinkPotion_")) {
                 this.lastAnimationSent.set(refrIdStr, anim);
                 this.updateActorValuesAfterAnimation(anim.animEventName);
                 const message: MessageWithRefrId<UpdateAnimationMessage> = {
