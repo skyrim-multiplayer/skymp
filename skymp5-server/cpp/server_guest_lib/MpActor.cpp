@@ -11,6 +11,8 @@
 #include "MpChangeForms.h"
 #include "MsgType.h"
 #include "ServerState.h"
+#include "SpSnippet.h"
+#include "SpSnippetFunctionGen.h"
 #include "SweetPieScript.h"
 #include "TimeUtils.h"
 #include "WorldState.h"
@@ -319,6 +321,22 @@ bool MpActor::OnEquip(uint32_t baseId)
   bool spellLearned = false;
   if (isIngredient || isPotion) {
     EatItem(baseId, recordType);
+
+    nlohmann::json j = nlohmann::json::array();
+    j.push_back(
+      nlohmann::json({ { "formId", baseId },
+                       { "type", isIngredient ? "Ingredient" : "Potion" } }));
+    j.push_back(false);
+    j.push_back(false);
+
+    std::string serializedArgs = j.dump();
+    for (auto listener : GetListeners()) {
+      auto targetRefr = dynamic_cast<MpActor*>(listener);
+      if (targetRefr && targetRefr != this) {
+        SpSnippet("Actor", "EquipItem", serializedArgs.data(), GetFormId())
+          .Execute(targetRefr);
+      }
+    }
   } else if (isBook) {
     spellLearned = ReadBook(baseId);
   }
