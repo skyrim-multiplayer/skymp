@@ -842,6 +842,18 @@ void MpActor::Respawn(bool shouldTeleport)
     return;
   }
   pImpl->isRespawning = false;
+
+  simdjson::dom::parser parser;
+  std::string s = "[]";
+  auto args = parser.parse(s).value();
+
+  if (auto wst = GetParent()) {
+    const auto id = GetFormId();
+    for (auto& listener : wst->listeners) {
+      listener->OnMpApiEvent("onRespawn", args, id);
+    }
+  }
+
   SendAndSetDeathState(false, shouldTeleport);
 }
 
