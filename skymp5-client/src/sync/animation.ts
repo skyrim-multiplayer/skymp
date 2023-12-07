@@ -59,8 +59,8 @@ export const applyAnimation = (
   } else if (anim.animEventName === "Ragdoll") {
     const ac = Actor.from(refr);
     if (ac) {
-      ac.pushActorAway(ac, 0);
-      ac.setActorValue("Variable10", -1000);
+      ac.endDeferredKill();
+      ac.kill(null);
     }
   } else {
     if (refsWithDefaultAnimsDisabled.has(refr.getFormID())) {

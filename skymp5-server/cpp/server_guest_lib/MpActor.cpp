@@ -17,6 +17,8 @@
 #include "libespm/espm.h"
 #include "script_objects/EspmGameObject.h"
 #include <NiPoint3.h>
+#include <algorithm>
+#include <atomic>
 #include <chrono>
 #include <functional>
 #include <optional>
@@ -26,6 +28,10 @@
 #include "ChangeValuesMessage.h"
 #include "TeleportMessage.h"
 #include "UpdateEquipmentMessage.h"
+
+// for PlaceAtMe used in MpActor::DropItem
+#include "script_classes/PapyrusObjectReference.h"
+#include "script_objects/MpFormGameObject.h"
 
 struct MpActor::Impl
 {
@@ -54,6 +60,7 @@ struct MpActor::Impl
       std::chrono::steady_clock::time_point{} },
   };
   uint32_t blockActiveCount = 0;
+  std::vector<std::pair<uint32_t, MpObjectReference*>> droppedItemsQueue;
 };
 
 MpActor::MpActor(const LocationalData& locationalData_,
@@ -950,25 +957,107 @@ BaseActorValues MpActor::GetMaximumValues()
   return GetBaseValues();
 }
 
+// TODO: Take count into account
 void MpActor::DropItem(const uint32_t baseId, const Inventory::Entry& entry)
 {
-  // TODO: Take count into account
+  constexpr float kDeletionTimeSeconds = 2 * 60;
+  constexpr size_t kDroppedItemsQueueMax = 10;
+
+  auto worldState = GetParent();
+
+  static std::atomic<bool> g_dropItemDisabledGlobally = false;
+
+  if (g_dropItemDisabledGlobally) {
+    return;
+  }
+
   constexpr uint32_t kGold001 = 0x0000000f;
   if (baseId == kGold001) {
     spdlog::warn("Attempt to drop Gold001 by actor {:x}", GetFormId());
     return;
   }
+
   int count = entry.count;
   RemoveItems({ entry });
+
+  espm::LookupResult lookupRes =
+    worldState->GetEspm().GetBrowser().LookupById(baseId);
+  lookupRes.rec->GetId();
+
+  std::string editorId =
+    lookupRes.rec->GetEditorId(worldState->GetEspmCache());
+
+  spdlog::trace("MpActor::DropItem - dropping {}", editorId);
+
   PapyrusObjectReference papyrusObjectReference;
-  auto baseForm = VarValue(std::make_shared<EspmGameObject>(
-    GetParent()->GetEspm().GetBrowser().LookupById(baseId)));
+  auto baseForm = VarValue(std::make_shared<EspmGameObject>(lookupRes));
   auto aCount = VarValue(count);
   auto aForcePersist = VarValue(false);
   auto aInitiallyDisabled = VarValue(false);
-  (void)papyrusObjectReference.PlaceAtMe(
+
+  VarValue placedObjectWrap = papyrusObjectReference.PlaceAtMe(
     this->ToVarValue(),
     { baseForm, aCount, aForcePersist, aInitiallyDisabled });
+  MpObjectReference* placedObject =
+    GetFormPtr<MpObjectReference>(placedObjectWrap);
+
+  if (!placedObject) {
+    spdlog::error("MpActor::DropItem - placedObject was null, disabling "
+                  "DropItem for all players");
+    g_dropItemDisabledGlobally = true;
+    return;
+  }
+
+  uint32_t droppedItemFormId = placedObject->GetFormId();
+
+  pImpl->droppedItemsQueue.push_back(
+    std::make_pair(droppedItemFormId, placedObject));
+  while (!pImpl->droppedItemsQueue.empty() &&
+         pImpl->droppedItemsQueue.size() >= kDroppedItemsQueueMax) {
+    auto [referenceFormId, reference] = pImpl->droppedItemsQueue.front();
+    bool referenceAlive =
+      reference == worldState->LookupFormById(referenceFormId).get();
+    if (referenceAlive && !reference->IsDeleted()) {
+      spdlog::trace("MpActor::DropItem - deleting previously dropped {}",
+                    editorId);
+    }
+    pImpl->droppedItemsQueue.erase(pImpl->droppedItemsQueue.begin());
+  }
+
+  auto time =
+    Viet::TimeUtils::To<std::chrono::milliseconds>(kDeletionTimeSeconds);
+
+  uint32_t formId = GetFormId();
+
+  // TODO: make timer group for better performance
+  worldState->SetTimer(time).Then([placedObject, worldState, droppedItemFormId,
+                                   editorId, this, formId](Viet::Void) {
+    bool actorStillAlive = this == worldState->LookupFormById(formId).get();
+    if (!actorStillAlive) {
+      return;
+    }
+    bool formStillAlive =
+      placedObject == worldState->LookupFormById(droppedItemFormId).get();
+    if (!formStillAlive) {
+      return;
+    }
+
+    if (placedObject->IsDeleted()) {
+      return;
+    }
+
+    spdlog::trace("MpActor::DropItem - deleting previously dropped {}",
+                  editorId);
+
+    // Item deleted, not in queue anymore
+    auto it = std::remove(this->pImpl->droppedItemsQueue.begin(),
+                          this->pImpl->droppedItemsQueue.end(),
+                          std::make_pair(droppedItemFormId, placedObject));
+    this->pImpl->droppedItemsQueue.erase(it,
+                                         this->pImpl->droppedItemsQueue.end());
+
+    placedObject->Delete();
+  });
 }
 
 void MpActor::SetIsBlockActive(bool active)

@@ -24,7 +24,6 @@ TEST_CASE("Dropping an item", "[DropItemTest]")
   REQUIRE(ac.GetInventory().GetTotalItemCount() == 0);
   ac.AddItem(ironDagger, 1);
   REQUIRE(ac.GetInventory().GetTotalItemCount() == 1);
-  partOne.Tick(); // send deferred inventory update messages
   partOne.Messages().clear();
   REQUIRE(partOne.Messages().size() == 0);
   DoMessage(partOne, 0,
@@ -32,12 +31,7 @@ TEST_CASE("Dropping an item", "[DropItemTest]")
                             { "baseId", ironDagger },
                             { "count", 1 } });
   // 1 message from here and another 1 is comming from actionListener
-<<<<<<< HEAD
-  partOne.Tick(); // send deferred inventory update messages
-  REQUIRE(partOne.Messages().size() == 1);
-=======
   REQUIRE(partOne.Messages().size() == 2);
->>>>>>> parent of dc97aa08 (feat(skymp5-server): disable spawning dropped items for now (#1128))
   REQUIRE(ac.GetInventory().GetItemCount(ironDagger) == 0);
   MpObjectReference& refr =
     partOne.worldState.GetFormAt<MpObjectReference>(0xff000001);
@@ -52,11 +46,6 @@ TEST_CASE("Dropping an item", "[DropItemTest]")
             nlohmann::json{ { "t", MsgType::DropItem },
                             { "baseId", healingPotion },
                             { "count", 5 } });
-<<<<<<< HEAD
-  partOne.Tick(); // send deferred inventory update messages
-  REQUIRE(partOne.Messages().size() == 1);
-=======
   REQUIRE(partOne.Messages().size() == 2);
->>>>>>> parent of dc97aa08 (feat(skymp5-server): disable spawning dropped items for now (#1128))
   REQUIRE(ac.GetInventory().GetItemCount(healingPotion) == 0);
 }

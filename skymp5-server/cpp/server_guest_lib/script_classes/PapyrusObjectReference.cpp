@@ -22,7 +22,15 @@ VarValue PapyrusObjectReference::IsHarvested(
 VarValue PapyrusObjectReference::IsDisabled(
   VarValue self, const std::vector<VarValue>& arguments)
 {
-  return VarValue(false);
+  auto selfRefr = GetFormPtr<MpObjectReference>(self);
+  return VarValue(selfRefr && selfRefr->IsDisabled());
+}
+
+VarValue PapyrusObjectReference::IsDeleted(
+  VarValue self, const std::vector<VarValue>& arguments)
+{
+  auto selfRefr = GetFormPtr<MpObjectReference>(self);
+  return VarValue(selfRefr && selfRefr->IsDeleted());
 }
 
 VarValue PapyrusObjectReference::GetScale(
@@ -45,12 +53,6 @@ VarValue PapyrusObjectReference::EnableNoWait(
 
 VarValue PapyrusObjectReference::DisableNoWait(
   VarValue self, const std::vector<VarValue>& arguments)
-{
-  return VarValue::None();
-}
-
-VarValue PapyrusObjectReference::Delete(VarValue self,
-                                        const std::vector<VarValue>& arguments)
 {
   return VarValue::None();
 }
@@ -285,8 +287,9 @@ VarValue PapyrusObjectReference::Enable(VarValue self,
                                         const std::vector<VarValue>& arguments)
 {
   auto selfRefr = GetFormPtr<MpObjectReference>(self);
-  if (selfRefr)
+  if (selfRefr) {
     selfRefr->Enable();
+  }
   return VarValue::None();
 }
 
@@ -294,8 +297,19 @@ VarValue PapyrusObjectReference::Disable(
   VarValue self, const std::vector<VarValue>& arguments)
 {
   auto selfRefr = GetFormPtr<MpObjectReference>(self);
-  if (selfRefr)
+  if (selfRefr) {
     selfRefr->Disable();
+  }
+  return VarValue::None();
+}
+
+VarValue PapyrusObjectReference::Delete(VarValue self,
+                                        const std::vector<VarValue>& arguments)
+{
+  auto selfRefr = GetFormPtr<MpObjectReference>(self);
+  if (selfRefr) {
+    selfRefr->Delete();
+  }
   return VarValue::None();
 }
 
@@ -669,11 +683,11 @@ void PapyrusObjectReference::Register(
 {
   AddMethod(vm, "IsHarvested", &PapyrusObjectReference::IsHarvested);
   AddMethod(vm, "IsDisabled", &PapyrusObjectReference::IsDisabled);
+  AddMethod(vm, "IsDeleted", &PapyrusObjectReference::IsDeleted);
   AddMethod(vm, "GetScale", &PapyrusObjectReference::GetScale);
   AddMethod(vm, "SetScale", &PapyrusObjectReference::SetScale);
   AddMethod(vm, "EnableNoWait", &PapyrusObjectReference::EnableNoWait);
   AddMethod(vm, "DisableNoWait", &PapyrusObjectReference::DisableNoWait);
-  AddMethod(vm, "Delete", &PapyrusObjectReference::Delete);
   AddMethod(vm, "AddItem", &PapyrusObjectReference::AddItem);
   AddMethod(vm, "RemoveItem", &PapyrusObjectReference::RemoveItem);
   AddMethod(vm, "GetItemCount", &PapyrusObjectReference::GetItemCount);
@@ -683,6 +697,7 @@ void PapyrusObjectReference::Register(
   AddMethod(vm, "SetAngle", &PapyrusObjectReference::SetAngle);
   AddMethod(vm, "Enable", &PapyrusObjectReference::Enable);
   AddMethod(vm, "Disable", &PapyrusObjectReference::Disable);
+  AddMethod(vm, "Delete", &PapyrusObjectReference::Delete);
   AddMethod(vm, "BlockActivation", &PapyrusObjectReference::BlockActivation);
   AddMethod(vm, "IsActivationBlocked",
             &PapyrusObjectReference::IsActivationBlocked);
