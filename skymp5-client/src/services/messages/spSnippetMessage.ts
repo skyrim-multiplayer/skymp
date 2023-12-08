@@ -1,5 +1,8 @@
-import { Snippet } from "../../spSnippet";
-
 export type SpSnippetMessage = {
     type: "spSnippet";
-} & Snippet;
+    class: string;
+    function: string;
+    arguments: any[];
+    selfId: number;
+    snippetIdx: number;
+};

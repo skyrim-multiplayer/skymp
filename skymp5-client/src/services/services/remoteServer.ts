@@ -19,8 +19,6 @@ import * as updateOwner from '../../gamemodeApi/updateOwner';
 import * as messages from '../../messages';
 
 /* eslint-disable @typescript-eslint/no-empty-function */
-import * as networking from './networkingService';
-import * as spSnippet from '../../spSnippet';
 import { ObjectReferenceEx } from '../../extensions/objectReferenceEx';
 import { AuthGameData } from '../../features/authModel';
 import { IdManager } from '../../lib/idManager';
@@ -32,12 +30,6 @@ import { Inventory, applyInventory } from '../../sync/inventory';
 import { Movement } from '../../sync/movement';
 import { learnSpells, removeAllSpells } from '../../sync/spell';
 import { ModelApplyUtils } from '../../view/modelApplyUtils';
-import {
-  getObjectReference,
-  getViewFromStorage,
-  localIdToRemoteId,
-  remoteIdToLocalId,
-} from '../../view/worldViewMisc';
 import { FormModel, WorldModel } from '../../modelSource/model';
 import { ModelSource } from '../../modelSource/modelSource';
 import { SpApiInteractor } from '../spApiInteractor';
@@ -48,7 +40,6 @@ import { UpdateAnimationMessage } from '../messages/updateAnimationMessage';
 import { UpdateEquipmentMessage } from '../messages/updateEquipmentMessage';
 import { CustomPacketMessage } from '../messages/customPacketMessage';
 import { CustomEventMessage } from '../messages/customEventMessage';
-import { FinishSpSnippetMessage } from '../messages/finishSpSnippetMessage';
 import { RagdollService } from './ragdollService';
 import { UpdateAppearanceMessage } from '../messages/updateAppearanceMessage';
 import { TeleportMessage } from '../messages/teleportMessage';
@@ -64,12 +55,19 @@ import { ConnectionMessage } from '../events/connectionMessage';
 import { SetInventoryMessage } from '../messages/setInventoryMessage';
 import { CreateActorMessage } from '../messages/createActorMessage';
 import { UpdateGamemodeDataMessage } from '../messages/updateGameModeDataMessage';
-import { SpSnippetMessage } from '../messages/spSnippetMessage';
 import { CustomPacketMessage2 } from '../messages/customPacketMessage2';
 import { DestroyActorMessage } from '../messages/destroyActorMessage';
 import { SetRaceMenuOpenMessage } from '../messages/setRaceMenuOpenMessage';
 import { UpdatePropertyMessage } from '../messages/updatePropertyMessage';
 import { TeleportMessage2 } from '../messages/teleportMessage2';
+
+// TODO: refactor worldViewMisc into service
+import {
+  getObjectReference,
+  getViewFromStorage,
+  localIdToRemoteId,
+  remoteIdToLocalId,
+} from '../../view/worldViewMisc';
 
 const onceLoad = (
   refrId: number,
@@ -243,7 +241,6 @@ export class RemoteServer extends ClientListener implements ModelSource {
     this.controller.emitter.on("customPacketMessage2", (e) => this.onCustomPacketMessage2(e));
     this.controller.emitter.on("destroyActorMessage", (e) => this.onDestroyActorMessage(e));
     this.controller.emitter.on("setRaceMenuOpenMessage", (e) => this.onSetRaceMenuOpenMessage(e));
-    this.controller.emitter.on("spSnippetMessage", (e) => this.onSpSnippetMessage(e));
     this.controller.emitter.on("updateGamemodeDataMessage", (e) => this.onUpdateGamemodeDataMessage(e));
     this.controller.emitter.on("updatePropertyMessage", (e) => this.onUpdatePropertyMessage(e));
     this.controller.emitter.on("deathStateContainerMessage", (e) => this.onDeathStateContainerMessage(e));
@@ -809,29 +806,6 @@ export class RemoteServer extends ClientListener implements ModelSource {
         loginWithSkympIoCredentials();
         break;
     }
-  }
-
-  private onSpSnippetMessage(event: ConnectionMessage<SpSnippetMessage>): void {
-    const msg = event.message;
-
-    once('update', async () => {
-      spSnippet
-        .run(msg)
-        .then((res) => {
-          if (res === undefined) res = null;
-          const message: FinishSpSnippetMessage = {
-            t: messages.MsgType.FinishSpSnippet,
-            returnValue: res,
-            snippetIdx: msg.snippetIdx,
-          }
-
-          SpApiInteractor.makeController().emitter.emit("sendMessage", {
-            message: message,
-            reliability: "reliable"
-          });
-        })
-        .catch((e) => printConsole('!!! SpSnippet ' + msg.class + ' ' + msg.function + ' failed', e));
-    });
   }
 
   private updateGamemodeUpdateFunctions(
