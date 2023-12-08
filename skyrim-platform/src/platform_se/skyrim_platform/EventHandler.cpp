@@ -293,22 +293,29 @@ EventResult EventHandler::ProcessEvent(
     return EventResult::kContinue;
   }
 
+  auto refr = event->reference.get().get();
+  auto refrId = refr ? refr->GetFormID() : 0;
+
   auto e = CopyEventPtr(event);
 
-  SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([e, refrId] {
     auto obj = JsValue::Object();
 
     auto contFormOld = RE::TESForm::LookupByID(e->oldContainer);
     auto contFormNew = RE::TESForm::LookupByID(e->newContainer);
     auto baseObjForm = RE::TESForm::LookupByID(e->baseObj);
+    auto reference = RE::TESForm::LookupByID<RE::TESObjectREFR>(refrId);
+
+    if (!reference && refrId != 0) {
+      return;
+    }
 
     AddObjProperty(&obj, "oldContainer", contFormOld, "ObjectReference");
     AddObjProperty(&obj, "newContainer", contFormNew, "ObjectReference");
     AddObjProperty(&obj, "baseObj", baseObjForm, "Form");
     AddObjProperty(&obj, "numItems", e->itemCount);
     AddObjProperty(&obj, "uniqueID", e->uniqueID);
-    AddObjProperty(&obj, "reference", e->reference.get().get(),
-                   "ObjectReference");
+    AddObjProperty(&obj, "reference", reference, "ObjectReference");
 
     SendEvent("containerChanged", obj);
   });

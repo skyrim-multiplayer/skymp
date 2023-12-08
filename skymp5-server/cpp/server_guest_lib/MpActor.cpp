@@ -960,8 +960,8 @@ BaseActorValues MpActor::GetMaximumValues()
 // TODO: Take count into account
 void MpActor::DropItem(const uint32_t baseId, const Inventory::Entry& entry)
 {
-  constexpr float kDeletionTimeSeconds = 2 * 60;
-  constexpr size_t kDroppedItemsQueueMax = 10;
+  constexpr float kDeletionTimeSeconds = 3 * 60;
+  constexpr size_t kDroppedItemsQueueMax = 2;
 
   auto worldState = GetParent();
 
@@ -1008,21 +1008,31 @@ void MpActor::DropItem(const uint32_t baseId, const Inventory::Entry& entry)
     return;
   }
 
+  placedObject->SetCount(count);
+
   uint32_t droppedItemFormId = placedObject->GetFormId();
 
-  pImpl->droppedItemsQueue.push_back(
-    std::make_pair(droppedItemFormId, placedObject));
   while (!pImpl->droppedItemsQueue.empty() &&
          pImpl->droppedItemsQueue.size() >= kDroppedItemsQueueMax) {
     auto [referenceFormId, reference] = pImpl->droppedItemsQueue.front();
     bool referenceAlive =
       reference == worldState->LookupFormById(referenceFormId).get();
-    if (referenceAlive && !reference->IsDeleted()) {
-      spdlog::trace("MpActor::DropItem - deleting previously dropped {}",
-                    editorId);
+    if (referenceAlive) {
+      if (!reference->IsDeleted()) {
+        spdlog::trace("MpActor::DropItem - deleting previously dropped {}",
+                      editorId);
+        reference->Delete();
+      } else {
+        spdlog::warn("MpActor::DropItem - reference in queue was deleted");
+      }
+    } else {
+      spdlog::warn("MpActor::DropItem - reference in queue was invalidated");
     }
     pImpl->droppedItemsQueue.erase(pImpl->droppedItemsQueue.begin());
   }
+
+  pImpl->droppedItemsQueue.push_back(
+    std::make_pair(droppedItemFormId, placedObject));
 
   auto time =
     Viet::TimeUtils::To<std::chrono::milliseconds>(kDeletionTimeSeconds);

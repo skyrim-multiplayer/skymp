@@ -1,10 +1,11 @@
-import { Actor, ContainerChangedEvent } from "skyrimPlatform";
+import { Actor, ContainerChangedEvent, printConsole } from "skyrimPlatform";
 import { ClientListener, CombinedController, Sp } from "./clientListener";
 
 // TODO: refactor this out
 import * as taffyPerkSystem from '../../sweetpie/taffyPerkSystem';
 
 import { MsgType } from "../../messages";
+import { getWcProtection } from "../../features/worldCleaner";
 
 export class DropItemService extends ClientListener {
     constructor(private sp: Sp, private controller: CombinedController) {
@@ -21,37 +22,54 @@ export class DropItemService extends ClientListener {
         const isReference: boolean = e.reference !== null;
         if (e.newContainer && e.newContainer.getFormID() === pl.getFormID())
             return;
+        if (!this.sp.Ui.isMenuOpen("InventoryMenu"))
+            return;
         if (
             isPlayer &&
             isReference &&
             noContainer &&
             taffyPerkSystem.canDropOrPutItem(e.baseObj.getFormID())
         ) {
-            const radius: number = 200;
-            const baseId: number = e.baseObj.getFormID();
-            const refrId = this.sp.Game.findClosestReferenceOfType(
-                e.baseObj,
-                pl.getPositionX(),
-                pl.getPositionY(),
-                pl.getPositionZ(),
-                radius,
-            )?.getFormID();
-            if (refrId) {
-                const refr = this.sp.ObjectReference.from(this.sp.Game.getFormEx(refrId));
-                if (refr) {
-                    refr.delete().then(() => {
-                        // TODO: handle possible exceptions in this function
-                        const t = MsgType.DropItem;
-                        const count = 1;
-                        this.controller.emitter.emit("sendMessage", {
-                            message: {
-                                t, baseId, count
-                            },
-                            reliability: "reliable"
-                        });
-                    });
+            const radius: number = 2000;
+            const baseId = e.baseObj.getFormID();
+
+            const player = this.sp.Game.getPlayer() as Actor;
+
+            let set = new Set<number>();
+            for (let i = 0; i < 200; i++) {
+                const refrId = this.sp.Game.findRandomReferenceOfType(
+                    this.sp.Game.getFormEx(baseId),
+                    player.getPositionX(),
+                    player.getPositionY(),
+                    player.getPositionZ(),
+                    radius
+                )?.getFormID();
+                if (refrId) {
+                    set.add(refrId);
                 }
             }
+
+            set.forEach((refrId) => {
+                const ref = this.sp.ObjectReference.from(this.sp.Game.getFormEx(refrId));
+                if (ref !== null) {
+                    const refrId = ref.getFormID();
+                    if (getWcProtection(refrId) === 0) {
+                        ref.delete();
+                        this.logTrace("Found and deleted reference " + refrId.toString(16));
+                    }
+                    else
+                        this.logTrace("Found reference " + refrId.toString(16) + " but it's protected");
+                }
+            });
+
+            const t = MsgType.DropItem;
+            const count = e.numItems;
+            this.controller.emitter.emit("sendMessage", {
+                message: {
+                    t, baseId, count
+                },
+                reliability: "reliable"
+            });
         }
     }
 }
