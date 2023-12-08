@@ -1,4 +1,4 @@
-import { Actor, ContainerChangedEvent, printConsole } from "skyrimPlatform";
+import { Actor, ContainerChangedEvent } from "skyrimPlatform";
 import { ClientListener, CombinedController, Sp } from "./clientListener";
 
 // TODO: refactor this out
