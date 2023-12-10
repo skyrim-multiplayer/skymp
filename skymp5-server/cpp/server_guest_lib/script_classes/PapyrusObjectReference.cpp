@@ -678,6 +678,25 @@ VarValue PapyrusObjectReference::GetOpenState(VarValue self,
   return VarValue(0);
 }
 
+VarValue PapyrusObjectReference::GetAllItemsCount(
+  VarValue self, const std::vector<VarValue>& arguments)
+{
+  if (auto selfRefr = GetFormPtr<MpObjectReference>(self)) {
+    int total = static_cast<int>(selfRefr->GetInventory().GetTotalItemCount());
+    return VarValue(total);
+  }
+  return VarValue(0);
+}
+
+VarValue PapyrusObjectReference::IsContainerEmpty(
+  VarValue self, const std::vector<VarValue>& arguments)
+{
+  if (auto selfRefr = GetFormPtr<MpObjectReference>(self)) {
+    return VarValue(selfRefr->GetInventory().IsEmpty());
+  }
+  return VarValue(0);
+}
+
 void PapyrusObjectReference::Register(
   VirtualMachine& vm, std::shared_ptr<IPapyrusCompatibilityPolicy> policy)
 {
@@ -719,4 +738,6 @@ void PapyrusObjectReference::Register(
   AddMethod(vm, "GetNthLinkedRef", &PapyrusObjectReference::GetNthLinkedRef);
   AddMethod(vm, "GetParentCell", &PapyrusObjectReference::GetParentCell);
   AddMethod(vm, "GetOpenState", &PapyrusObjectReference::GetOpenState);
+  AddMethod(vm, "GetAllItemsCount", &PapyrusObjectReference::GetAllItemsCount);
+  AddMethod(vm, "IsContainerEmpty", &PapyrusObjectReference::IsContainerEmpty);
 }

@@ -59,6 +59,12 @@ public:
 
   VarValue GetOpenState(VarValue self, const std::vector<VarValue>& arguments);
 
+  VarValue GetAllItemsCount(VarValue self,
+                            const std::vector<VarValue>& arguments);
+
+  VarValue IsContainerEmpty(VarValue self,
+                            const std::vector<VarValue>& arguments);
+
   void Register(VirtualMachine& vm,
                 std::shared_ptr<IPapyrusCompatibilityPolicy> policy) override;
 };
