@@ -987,27 +987,34 @@ BaseActorValues MpActor::GetMaximumValues()
   return GetBaseValues();
 }
 
-// TODO: Take count into account
 void MpActor::DropItem(const uint32_t baseId, const Inventory::Entry& entry)
 {
-  constexpr float kDeletionTimeSeconds = 3 * 60;
-  constexpr size_t kDroppedItemsQueueMax = 2;
-
-  auto worldState = GetParent();
+  constexpr float kDeletionTimeSeconds = 2 * 60;
+  constexpr size_t kDroppedItemsQueueMax = 10;
 
   static std::atomic<bool> g_dropItemDisabledGlobally = false;
+  static std::atomic<int> g_numDrops = 0;
 
   if (g_dropItemDisabledGlobally) {
     return;
   }
 
+  if (g_numDrops > 1'000'000) {
+    spdlog::warn(
+      "MpActor::DropItem - Too many item drops, server restart needed");
+    return;
+  }
+
   constexpr uint32_t kGold001 = 0x0000000f;
   if (baseId == kGold001) {
-    spdlog::warn("Attempt to drop Gold001 by actor {:x}", GetFormId());
+    spdlog::warn("MpActor::DropItem - Attempt to drop Gold001 by actor {:x}",
+                 GetFormId());
     return;
   }
 
   int count = entry.count;
+
+  auto worldState = GetParent();
 
   espm::LookupResult lookupRes =
     worldState->GetEspm().GetBrowser().LookupById(baseId);
@@ -1041,6 +1048,24 @@ void MpActor::DropItem(const uint32_t baseId, const Inventory::Entry& entry)
   placedObject->SetCount(count);
 
   uint32_t droppedItemFormId = placedObject->GetFormId();
+
+  // Filter our dropped items queue
+  pImpl->droppedItemsQueue.erase(
+    std::remove_if(
+      pImpl->droppedItemsQueue.begin(), pImpl->droppedItemsQueue.end(),
+      [worldState](const std::pair<uint32_t, MpObjectReference*>& pair) {
+        auto [referenceFormId, reference] = pair;
+        bool referenceAlive =
+          reference == worldState->LookupFormById(referenceFormId).get();
+        if (!referenceAlive) {
+          return true;
+        }
+        if (reference->IsDeleted() || reference->IsHarvested()) {
+          return true;
+        }
+        return false;
+      }),
+    pImpl->droppedItemsQueue.end());
 
   while (!pImpl->droppedItemsQueue.empty() &&
          pImpl->droppedItemsQueue.size() >= kDroppedItemsQueueMax) {
@@ -1097,6 +1122,7 @@ void MpActor::DropItem(const uint32_t baseId, const Inventory::Entry& entry)
                                          this->pImpl->droppedItemsQueue.end());
 
     placedObject->Delete();
+    ++g_numDrops;
   });
 }
 
