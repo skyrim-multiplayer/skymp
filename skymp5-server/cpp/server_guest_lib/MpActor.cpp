@@ -978,7 +978,6 @@ void MpActor::DropItem(const uint32_t baseId, const Inventory::Entry& entry)
   }
 
   int count = entry.count;
-  RemoveItems({ entry });
 
   espm::LookupResult lookupRes =
     worldState->GetEspm().GetBrowser().LookupById(baseId);
@@ -988,6 +987,7 @@ void MpActor::DropItem(const uint32_t baseId, const Inventory::Entry& entry)
     lookupRes.rec->GetEditorId(worldState->GetEspmCache());
 
   spdlog::trace("MpActor::DropItem - dropping {}", editorId);
+  RemoveItems({ entry });
 
   PapyrusObjectReference papyrusObjectReference;
   auto baseForm = VarValue(std::make_shared<EspmGameObject>(lookupRes));
