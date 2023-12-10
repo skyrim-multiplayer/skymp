@@ -9,12 +9,12 @@ public:
 
   VarValue IsHarvested(VarValue self, const std::vector<VarValue>& arguments);
   VarValue IsDisabled(VarValue self, const std::vector<VarValue>& arguments);
+  VarValue IsDeleted(VarValue self, const std::vector<VarValue>& arguments);
   VarValue GetScale(VarValue self, const std::vector<VarValue>& arguments);
   VarValue SetScale(VarValue self, const std::vector<VarValue>& arguments);
   VarValue EnableNoWait(VarValue self, const std::vector<VarValue>& arguments);
   VarValue DisableNoWait(VarValue self,
                          const std::vector<VarValue>& arguments);
-  VarValue Delete(VarValue self, const std::vector<VarValue>& arguments);
   VarValue AddItem(VarValue self, const std::vector<VarValue>& arguments);
   VarValue RemoveItem(VarValue self, const std::vector<VarValue>& arguments);
   VarValue GetItemCount(VarValue self, const std::vector<VarValue>& arguments);
@@ -24,6 +24,7 @@ public:
   VarValue SetAngle(VarValue self, const std::vector<VarValue>& arguments);
   VarValue Enable(VarValue self, const std::vector<VarValue>& arguments);
   VarValue Disable(VarValue self, const std::vector<VarValue>& arguments);
+  VarValue Delete(VarValue self, const std::vector<VarValue>& arguments);
   VarValue BlockActivation(VarValue self,
                            const std::vector<VarValue>& arguments);
   VarValue IsActivationBlocked(VarValue self,

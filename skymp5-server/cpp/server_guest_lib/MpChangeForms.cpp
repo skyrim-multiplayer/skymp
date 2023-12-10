@@ -36,6 +36,8 @@ nlohmann::json MpChangeForm::ToJson(const MpChangeForm& changeForm)
   res["nextRelootDatetime"] = changeForm.nextRelootDatetime;
   res["isDisabled"] = changeForm.isDisabled;
   res["profileId"] = changeForm.profileId;
+  res["isDeleted"] = changeForm.isDeleted;
+  res["count"] = changeForm.count;
   res["isRaceMenuOpen"] = changeForm.isRaceMenuOpen;
   res["dynamicFields"] = changeForm.dynamicFields.GetAsJson();
 
@@ -92,10 +94,10 @@ MpChangeForm MpChangeForm::JsonToChangeForm(simdjson::dom::element& element)
     worldOrCellDesc("worldOrCellDesc"), inv("inv"), isHarvested("isHarvested"),
     isOpen("isOpen"), baseContainerAdded("baseContainerAdded"),
     nextRelootDatetime("nextRelootDatetime"), isDisabled("isDisabled"),
-    profileId("profileId"), isRaceMenuOpen("isRaceMenuOpen"),
-    appearanceDump("appearanceDump"), equipmentDump("equipmentDump"),
-    learnedSpells("learnedSpells"), dynamicFields("dynamicFields"),
-    healthPercentage("healthPercentage"),
+    profileId("profileId"), isDeleted("isDeleted"), count("count"),
+    isRaceMenuOpen("isRaceMenuOpen"), appearanceDump("appearanceDump"),
+    equipmentDump("equipmentDump"), learnedSpells("learnedSpells"),
+    dynamicFields("dynamicFields"), healthPercentage("healthPercentage"),
     magickaPercentage("magickaPercentage"),
     staminaPercentage("staminaPercentage"), isDead("isDead"),
     consoleCommandsAllowed("consoleCommandsAllowed"),
@@ -138,6 +140,17 @@ MpChangeForm MpChangeForm::JsonToChangeForm(simdjson::dom::element& element)
   ReadEx(element, nextRelootDatetime, &res.nextRelootDatetime);
   ReadEx(element, isDisabled, &res.isDisabled);
   ReadEx(element, profileId, &res.profileId);
+
+  if (element.at_pointer(isDeleted.GetData()).error() ==
+      simdjson::error_code::SUCCESS) {
+    ReadEx(element, isDeleted, &res.isDeleted);
+  }
+
+  if (element.at_pointer(count.GetData()).error() ==
+      simdjson::error_code::SUCCESS) {
+    ReadEx(element, count, &res.count);
+  }
+
   ReadEx(element, isRaceMenuOpen, &res.isRaceMenuOpen);
 
   ReadEx(element, appearanceDump, &jTmp);

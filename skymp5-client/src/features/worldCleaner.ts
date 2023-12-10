@@ -49,3 +49,7 @@ export function modWcProtection(actorId: number, mod: number): void {
   const currentProtection = protection.get(actorId);
   protection.set(actorId, currentProtection ? currentProtection + mod : mod);
 }
+
+export function getWcProtection(actorId: number) : number {
+  return protection.get(actorId) || 0;
+}
