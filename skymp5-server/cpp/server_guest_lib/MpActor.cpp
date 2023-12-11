@@ -907,7 +907,9 @@ LocationalData MpActor::GetSpawnPoint() const
   auto formId = GetFormId();
 
   if (!IsCreatedAsPlayer()) {
-    return GetEditorLocationalData();
+    if (formId < 0xff000000) {
+      return GetEditorLocationalData();
+    }
   }
   return ChangeForm().spawnPoint;
 }
@@ -1022,6 +1024,27 @@ void MpActor::DropItem(const uint32_t baseId, const Inventory::Entry& entry)
 
   std::string editorId =
     lookupRes.rec->GetEditorId(worldState->GetEspmCache());
+
+  // TODO: remove this when we will be sure that none of armors crashes clients
+  if (lookupRes.rec->GetType().ToString() == "ARMO") {
+    spdlog::warn("MpActor::DropItem - Attempt to drop ARMO by actor {:x}",
+                 GetFormId());
+    return;
+  }
+
+  // TODO: remove this with the next client update
+  if (lookupRes.rec->GetType().ToString() == "INGR") {
+    spdlog::warn("MpActor::DropItem - Attempt to drop INGR by actor {:x}",
+                 GetFormId());
+    return;
+  }
+
+  // TODO: remove this with the next client update
+  if (lookupRes.rec->GetType().ToString() == "ALCH") {
+    spdlog::warn("MpActor::DropItem - Attempt to drop ALCH by actor {:x}",
+                 GetFormId());
+    return;
+  }
 
   spdlog::trace("MpActor::DropItem - dropping {}", editorId);
   RemoveItems({ entry });

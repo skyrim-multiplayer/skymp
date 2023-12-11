@@ -12,7 +12,7 @@ TEST_CASE("Dropping an item", "[DropItemTest]")
   auto& partOne = GetPartOne();
   // an iron dagger
   constexpr uint32_t ironDagger = 0x0001397E;
-  constexpr uint32_t healingPotion = 0x0003EADD;
+  constexpr uint32_t ironSword = 0x00012EB7;
   DoConnect(partOne, 0);
 
   partOne.CreateActor(0xff000000, { 1, 2, 3 }, 0, 0x3c);
@@ -40,14 +40,14 @@ TEST_CASE("Dropping an item", "[DropItemTest]")
   REQUIRE(refr.GetPos().x == 1.f);
   REQUIRE(refr.GetPos().y == 2.f);
   REQUIRE(refr.GetPos().z == 3.f);
-  ac.AddItem(healingPotion, 5);
+  ac.AddItem(ironSword, 5);
   partOne.Messages().clear();
   REQUIRE(partOne.Messages().size() == 0);
   DoMessage(partOne, 0,
             nlohmann::json{ { "t", MsgType::DropItem },
-                            { "baseId", healingPotion },
+                            { "baseId", ironSword },
                             { "count", 5 } });
   partOne.Tick();
   REQUIRE(partOne.Messages().size() == 2);
-  REQUIRE(ac.GetInventory().GetItemCount(healingPotion) == 0);
+  REQUIRE(ac.GetInventory().GetItemCount(ironSword) == 0);
 }
