@@ -239,7 +239,7 @@ MpChangeForm MpChangeForm::JsonToChangeForm(simdjson::dom::element& element)
     ReadEx(element, setNodeTextureSet, &data);
 
     if (res.setNodeTextureSet == std::nullopt) {
-      res.setNodeTextureSet = std::unordered_map<std::string, std::string>();
+      res.setNodeTextureSet = std::map<std::string, std::string>();
     }
 
     for (auto [key, value] : data.get_object()) {

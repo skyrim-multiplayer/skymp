@@ -9,12 +9,12 @@
 #include "LocationalData.h"
 #include "NiPoint3.h"
 #include <cstdint>
+#include <map>
 #include <optional>
 #include <ostream>
 #include <set>
 #include <string>
 #include <tuple>
-#include <unordered_map>
 
 class MpObjectReference;
 class WorldState;
@@ -104,8 +104,7 @@ public:
   std::optional<std::string> lastAnimation;
 
   // Used for SetNodeTextureSet (node, texture set desc)
-  std::optional<std::unordered_map<std::string, std::string>>
-    setNodeTextureSet;
+  std::optional<std::map<std::string, std::string>> setNodeTextureSet;
 
   // Please update 'ActorTest.cpp' when adding new Actor-related rows
 

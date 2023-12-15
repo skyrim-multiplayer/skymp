@@ -922,8 +922,7 @@ void MpObjectReference::SetNodeTextureSet(const std::string& node,
 {
   EditChangeForm([&](MpChangeForm& changeForm) {
     if (changeForm.setNodeTextureSet == std::nullopt) {
-      changeForm.setNodeTextureSet =
-        std::unordered_map<std::string, std::string>();
+      changeForm.setNodeTextureSet = std::map<std::string, std::string>();
     }
 
     uint32_t textureSetId = textureSet.ToGlobalId(textureSet.rec->GetId());
