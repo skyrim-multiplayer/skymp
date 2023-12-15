@@ -1032,20 +1032,6 @@ void MpActor::DropItem(const uint32_t baseId, const Inventory::Entry& entry)
     return;
   }
 
-  // TODO: remove this with the next client update
-  if (lookupRes.rec->GetType().ToString() == "INGR") {
-    spdlog::warn("MpActor::DropItem - Attempt to drop INGR by actor {:x}",
-                 GetFormId());
-    return;
-  }
-
-  // TODO: remove this with the next client update
-  if (lookupRes.rec->GetType().ToString() == "ALCH") {
-    spdlog::warn("MpActor::DropItem - Attempt to drop ALCH by actor {:x}",
-                 GetFormId());
-    return;
-  }
-
   spdlog::trace("MpActor::DropItem - dropping {}", editorId);
   RemoveItems({ entry });
 
