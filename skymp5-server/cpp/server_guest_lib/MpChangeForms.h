@@ -14,6 +14,7 @@
 #include <set>
 #include <string>
 #include <tuple>
+#include <unordered_map>
 
 class MpObjectReference;
 class WorldState;
@@ -102,6 +103,10 @@ public:
   // Used for PlayAnimation (object reference)
   std::optional<std::string> lastAnimation;
 
+  // Used for SetNodeTextureSet (node, texture set desc)
+  std::optional<std::unordered_map<std::string, std::string>>
+    setNodeTextureSet;
+
   // Please update 'ActorTest.cpp' when adding new Actor-related rows
 
   DynamicFields dynamicFields;
@@ -114,7 +119,8 @@ public:
       baseContainerAdded, nextRelootDatetime, isDisabled, profileId, isDeleted,
       count, isRaceMenuOpen, isDead, consoleCommandsAllowed, appearanceDump,
       equipmentDump, actorValues.ToTuple(), spawnPoint, dynamicFields,
-      spawnDelay, learnedSpells, templateChain, lastAnimation);
+      spawnDelay, learnedSpells, templateChain, lastAnimation,
+      setNodeTextureSet);
   }
 
   static nlohmann::json ToJson(const MpChangeFormREFR& changeForm);

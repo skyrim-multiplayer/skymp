@@ -17,16 +17,27 @@ VarValue PapyrusNetImmerse::SetNodeTextureSet(
 
   std::ignore = firstPerson;
 
-  //   for (auto listener : selfRefr->GetListeners()) {
-  //     auto targetRefr = dynamic_cast<MpActor*>(listener);
-  //     if (targetRefr) {
-  //       SpSnippet(GetName(), funcName, serializedArgs.data(),
-  //                 selfRefr->GetFormId())
-  //         .Execute(targetRefr);
-  //     }
-  //   }
+  if (!ref) {
+    throw std::runtime_error(
+      "PapyrusNetImmerse::SetNodeTextureSet - ref is nullptr");
+  }
 
-  // TODO
+  if (!tSet.rec) {
+    throw std::runtime_error(
+      "PapyrusNetImmerse::SetNodeTextureSet - tSet.rec is nullptr");
+  }
+
+  ref->SetNodeTextureSet(node, tSet, firstPerson);
+
+  auto funcName = "SetNodeTextureSet";
+  auto serializedArgs = SpSnippetFunctionGen::SerializeArguments(arguments);
+  for (auto listener : ref->GetListeners()) {
+    auto targetRefr = dynamic_cast<MpActor*>(listener);
+    if (targetRefr) {
+      SpSnippet(GetName(), funcName, serializedArgs.data())
+        .Execute(targetRefr);
+    }
+  }
 
   return VarValue::None();
 }

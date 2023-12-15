@@ -363,6 +363,24 @@ export class RemoteServer extends ClientListener implements ModelSource {
               refr,
               !!msg.props['isHarvested'],
             );
+
+            if (msg.props.setNodeTextureSet) {
+              const setNodeTextureSet = msg.props.setNodeTextureSet as Record<string, number>;
+              for (const key in setNodeTextureSet) {
+                const textureSetId = setNodeTextureSet[key];
+                const firstPerson = false;
+
+                const textureSet = sp.TextureSet.from(Game.getFormEx(textureSetId));
+                if (textureSet !== null) {
+                  sp.NetImmerse.setNodeTextureSet(refr, key, textureSet, firstPerson);
+                  this.logTrace(`Applied texture set ${textureSetId.toString(16)} to ${key}`);
+                } else {
+                  this.logError(`Failed to apply texture set ${textureSetId.toString(16)} to ${key}`);
+                }
+              }
+            }
+
+            // TODO: move to a separate module
             const animation = msg.props.lastAnimation;
             if (typeof animation === "string") {
               const refrid = refr.getFormID();
