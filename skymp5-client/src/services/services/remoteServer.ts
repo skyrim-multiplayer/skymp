@@ -364,6 +364,7 @@ export class RemoteServer extends ClientListener implements ModelSource {
               !!msg.props['isHarvested'],
             );
 
+            // TODO: move to a separate module
             if (msg.props.setNodeTextureSet) {
               const setNodeTextureSet = msg.props.setNodeTextureSet as Record<string, number>;
               for (const key in setNodeTextureSet) {
