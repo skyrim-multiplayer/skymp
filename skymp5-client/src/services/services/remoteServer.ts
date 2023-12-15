@@ -371,7 +371,7 @@ export class RemoteServer extends ClientListener implements ModelSource {
                 const textureSetId = setNodeTextureSet[key];
                 const firstPerson = false;
 
-                const textureSet = sp.TextureSet.from(Game.getFormEx(textureSetId));
+                const textureSet = this.sp.TextureSet.from(Game.getFormEx(textureSetId));
                 if (textureSet !== null) {
                   sp.NetImmerse.setNodeTextureSet(refr, key, textureSet, firstPerson);
                   this.logTrace(`Applied texture set ${textureSetId.toString(16)} to ${key}`);
