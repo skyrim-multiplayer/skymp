@@ -243,7 +243,9 @@ MpChangeForm MpChangeForm::JsonToChangeForm(simdjson::dom::element& element)
     }
 
     for (auto [key, value] : data.get_object()) {
-      res.setNodeTextureSet->emplace(key, value.get_string());
+      std::string keyStr = key.data();
+      std::string valueStr = value.get_string().value().data();
+      res.setNodeTextureSet->emplace(keyStr, valueStr);
     }
   }
 
