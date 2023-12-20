@@ -20,16 +20,22 @@ FileDatabase::FileDatabase(std::string directory_,
 
 size_t FileDatabase::Upsert(const std::vector<MpChangeForm>& changeForms)
 {
-  auto p = pImpl->changeFormsDirectory;
+  std::filesystem::path p = pImpl->changeFormsDirectory;
   size_t nUpserted = 0;
 
   for (auto& changeForm : changeForms) {
     std::string fileName = changeForm.formDesc.ToString('_') + ".json";
-    auto filePath = p / fileName;
-    std::ofstream f(filePath);
+    auto tempFilePath = p / fileName / ".tmp", filePath = p / fileName;
+
+    std::ofstream f(tempFilePath);
     if (f) {
       f << MpChangeForm::ToJson(changeForm).dump(2);
     }
+
+    if (!f.fail()) {
+      std::filesystem::rename(tempFilePath, filePath);
+    }
+
     if (!f.is_open()) {
       pImpl->logger->error("Unable to open file {}", filePath.string());
     } else if (!f) {
