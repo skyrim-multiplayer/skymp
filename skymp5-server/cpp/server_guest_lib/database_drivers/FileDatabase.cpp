@@ -33,6 +33,7 @@ size_t FileDatabase::Upsert(const std::vector<MpChangeForm>& changeForms)
     }
 
     if (!f.fail()) {
+      f.close(); // otherwise rename fails on Windows
       std::filesystem::rename(tempFilePath, filePath);
     }
 
