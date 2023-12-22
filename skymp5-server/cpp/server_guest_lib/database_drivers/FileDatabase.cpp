@@ -34,7 +34,14 @@ size_t FileDatabase::Upsert(const std::vector<MpChangeForm>& changeForms)
 
     if (!f.fail()) {
       f.close(); // otherwise rename fails on Windows
-      std::filesystem::rename(tempFilePath, filePath);
+
+      std::error_code errorCode;
+      std::filesystem::rename(tempFilePath, filePath, errorCode);
+      if (errorCode) {
+        pImpl->logger->error("Unable to rename {} to {}: {}",
+                             tempFilePath.string(), filePath.string(),
+                             errorCode.message());
+      }
     }
 
     if (!f.is_open()) {
@@ -65,7 +72,7 @@ void FileDatabase::Iterate(const IterateCallback& iterateCallback)
       if (entry.path().extension() == ".tmp") {
         continue;
       }
-      
+
       std::ifstream t(entry.path());
       std::string jsonDump((std::istreambuf_iterator<char>(t)),
                            std::istreambuf_iterator<char>());
