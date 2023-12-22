@@ -62,6 +62,10 @@ void FileDatabase::Iterate(const IterateCallback& iterateCallback)
 
   for (auto& entry : std::filesystem::directory_iterator(p)) {
     try {
+      if (entry.path().extension() == ".tmp") {
+        continue;
+      }
+      
       std::ifstream t(entry.path());
       std::string jsonDump((std::istreambuf_iterator<char>(t)),
                            std::istreambuf_iterator<char>());
