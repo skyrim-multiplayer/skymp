@@ -25,7 +25,7 @@ size_t FileDatabase::Upsert(const std::vector<MpChangeForm>& changeForms)
 
   for (auto& changeForm : changeForms) {
     std::string fileName = changeForm.formDesc.ToString('_') + ".json";
-    auto tempFilePath = p / fileName / ".tmp", filePath = p / fileName;
+    auto tempFilePath = p / (fileName + ".tmp"), filePath = p / fileName;
 
     std::ofstream f(tempFilePath);
     if (f) {
