@@ -1133,6 +1133,7 @@ void MpObjectReference::Init(WorldState* parent, uint32_t formId,
     },
     mode);
 
+  // Process activation parents
   auto refrId = GetFormId();
   if (parent->HasEspm() && refrId < 0xff000000 &&
       !dynamic_cast<MpActor*>(this)) {
@@ -1142,7 +1143,7 @@ void MpObjectReference::Init(WorldState* parent, uint32_t formId,
       auto activationParent = lookupRes.ToGlobalId(info.refrId);
 
       // Using WorldState for that, because we don't want search (potentially
-      // load) other references during OnInit
+      // load) other references during Init
       parent->activationChildsByActivationParent[activationParent].insert(
         { refrId, info.delay });
     }

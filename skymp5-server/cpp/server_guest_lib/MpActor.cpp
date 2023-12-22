@@ -413,6 +413,17 @@ void MpActor::ApplyChangeForm(const MpChangeForm& newChangeForm)
     },
     Mode::NoRequestSave);
   ReapplyMagicEffects();
+
+  auto worldState = GetParent();
+  if (!worldState) {
+    return;
+  }
+
+  // Keep in sync with Init
+  auto& espm = worldState->GetEspm();
+  EnsureTemplateChainEvaluated(espm);
+  EnsureBaseContainerAdded(espm); // template chain needed here
+  EquipBestWeapon();              // TODO: implement "gearedUpWeapons" flag
 }
 
 uint32_t MpActor::NextSnippetIndex(
@@ -826,12 +837,13 @@ void MpActor::Init(WorldState* worldState, uint32_t formId, bool hasChangeForm)
   MpObjectReference::Init(worldState, formId, hasChangeForm);
 
   if (worldState->HasEspm()) {
-    auto& espm = worldState->GetEspm();
-    EnsureTemplateChainEvaluated(espm);
-    EnsureBaseContainerAdded(espm); // template chain needed here
-
-    // TODO: implement "gearedUpWeapons" flag
-    EquipBestWeapon();
+    if (!hasChangeForm) {
+      // Keep in sync with ApplyChangeForm
+      auto& espm = worldState->GetEspm();
+      EnsureTemplateChainEvaluated(espm);
+      EnsureBaseContainerAdded(espm); // template chain needed here
+      EquipBestWeapon();              // TODO: implement "gearedUpWeapons" flag
+    }
   }
 }
 
