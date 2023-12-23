@@ -29,7 +29,7 @@ SaveFile_::RefID FormIdToRefId(uint32_t formId)
 {
   // Note: Tested only with normal Skyrim.esm ids
 
-  std::string binType = formId >= 0x01000000 ? "02" : "01";
+  std::string binType = formId >= 0x01000000 ? "10" : "01";
   std::string binId = std::bitset<22>(formId).to_string();
 
   std::string binSum = binType + binId;
