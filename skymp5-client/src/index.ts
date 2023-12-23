@@ -39,12 +39,13 @@ import { SweetTaffyStaticPerksService } from "./services/services/sweetTaffyStat
 import { DisableSkillAdvanceService } from "./services/services/disableSkillAdvanceService";
 import { DisableFastTravelService } from "./services/services/disableFastTravelService";
 import { DisableDifficultySelectionService } from "./services/services/disableDifficultySelectionService";
+import { SweetTaffyPlayerCombatService } from "./services/services/sweetTaffyPlayerCombatService";
 
 browser.main();
 
 once("update", () => {
   Utility.setINIBool("bAlwaysActive:General", true);
-  Game.setGameSettingInt("iDeathDropWeaponChance", 0);  
+  Game.setGameSettingInt("iDeathDropWeaponChance", 0);
 });
 
 on("update", () => updateWc());
@@ -83,7 +84,8 @@ const main = () => {
       new SweetTaffySweetCantDropService(sp, controller),
       new DisableSkillAdvanceService(sp, controller),
       new DisableFastTravelService(sp, controller),
-      new DisableDifficultySelectionService(sp, controller)
+      new DisableDifficultySelectionService(sp, controller),
+      new SweetTaffyPlayerCombatService(sp, controller)
     ];
     SpApiInteractor.setup(listeners);
     listeners.forEach(listener => SpApiInteractor.registerListenerForLookup(listener.constructor.name, listener));

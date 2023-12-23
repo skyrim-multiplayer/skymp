@@ -14,7 +14,7 @@ import * as animDebugSystem from '../../debug/animDebugSystem';
 import { WorldView } from '../../view/worldView';
 import { SinglePlayerService } from './singlePlayerService';
 import * as authSystem from "../../features/authSystem";
-import * as playerCombatSystem from "../../sweetpie/playerCombatSystem";
+import * as playerCombatSystem from "./sweetTaffyPlayerCombatService";
 import { AuthGameData } from '../../features/authModel';
 import * as browser from "../../features/browser";
 import { ClientListener, CombinedController, Sp } from './clientListener';
@@ -95,9 +95,6 @@ export class SkympClient extends ClientListener {
 
     // TODO: refactor animDebugSystem into service
     animDebugSystem.init(settings["skymp5-client"]["animDebug"] as animDebugSystem.AnimDebugSettings);
-
-    // TODO: refactor playerCombatSystem into service
-    playerCombatSystem.start();
 
     this.establishConnectionConditional();
     this.ctor();
