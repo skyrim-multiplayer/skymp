@@ -8,13 +8,14 @@ import { applyMovement } from "../sync/movementApply";
 import { SpawnProcess } from "./spawnProcess";
 import { ObjectReferenceEx } from "../extensions/objectReferenceEx";
 import { View } from "./view";
-import { modWcProtection } from "../features/worldCleaner";
 import { GamemodeApiSupport } from "../gamemodeApi/gamemodeApiSupport";
 import { PlayerCharacterDataHolder } from "./playerCharacterDataHolder";
 import { getMovement } from "../sync/movementGet";
 import { lastTryHost, tryHost } from "./hostAttempts";
 import { ModelApplyUtils } from "./modelApplyUtils";
 import { localIdToRemoteId } from "./worldViewMisc";
+import { SpApiInteractor } from "../services/spApiInteractor";
+import { WorldCleanerService } from "../services/services/worldCleanerService";
 
 export interface ScreenResolution {
   width: number;
@@ -168,7 +169,7 @@ export class FormView implements View<FormModel> {
             Actor.from(refr)?.setActorValue("Aggression", 2);
           }
         }
-        modWcProtection(refr.getFormID(), 1);
+        SpApiInteractor.makeController().lookupListener(WorldCleanerService).modWcProtection(refr.getFormID(), 1);
 
         // TODO: reset all states?
         this.eqState = this.getDefaultEquipState();
@@ -224,7 +225,7 @@ export class FormView implements View<FormModel> {
       if (refrId >= 0xff000000) {
         const refr = ObjectReference.from(Game.getFormEx(refrId));
         if (refr) refr.delete();
-        modWcProtection(refrId, -1);
+        SpApiInteractor.makeController().lookupListener(WorldCleanerService).modWcProtection(refrId, -1);
         const ac = Actor.from(refr);
         if (ac) {
           TESModPlatform.setWeaponDrawnMode(ac, -1);
