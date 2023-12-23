@@ -1,11 +1,9 @@
 import { Actor, ContainerChangedEvent } from "skyrimPlatform";
 import { ClientListener, CombinedController, Sp } from "./clientListener";
 
-// TODO: refactor this out
-import * as taffyPerkSystem from '../../sweetpie/taffyPerkSystem';
-
 import { MsgType } from "../../messages";
 import { getWcProtection } from "../../features/worldCleaner";
+import { SweetTaffySweetCantDropService } from "./sweetTaffySweetCantDropService";
 
 export class DropItemService extends ClientListener {
     constructor(private sp: Sp, private controller: CombinedController) {
@@ -14,6 +12,8 @@ export class DropItemService extends ClientListener {
     }
 
     private onContainerChanged(e: ContainerChangedEvent) {
+        const sweetCantDropService = this.controller.lookupListener(SweetTaffySweetCantDropService);
+
         const pl = this.sp.Game.getPlayer() as Actor;
         const isPlayer: boolean =
             pl && e.oldContainer && pl.getFormID() === e.oldContainer.getFormID();
@@ -28,7 +28,7 @@ export class DropItemService extends ClientListener {
             isPlayer &&
             isReference &&
             noContainer &&
-            taffyPerkSystem.canDropOrPutItem(e.baseObj.getFormID())
+            sweetCantDropService.canDropOrPutItem(e.baseObj.getFormID())
         ) {
             const radius: number = 2000;
             const baseId = e.baseObj.getFormID();
