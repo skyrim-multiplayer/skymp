@@ -31,7 +31,6 @@ import { Movement } from '../../sync/movement';
 import { learnSpells, removeAllSpells } from '../../sync/spell';
 import { ModelApplyUtils } from '../../view/modelApplyUtils';
 import { FormModel, WorldModel } from '../../modelSource/model';
-import { ModelSource } from '../../modelSource/modelSource';
 import { SpApiInteractor } from '../spApiInteractor';
 import { LoadGameService } from './loadGameService';
 import { UpdateMovementMessage } from '../messages/updateMovementMessage';
@@ -222,7 +221,7 @@ const unequipIronHelmet = () => {
   if (pl) pl.unequipItem(ironHelment, false, true);
 };
 
-export class RemoteServer extends ClientListener implements ModelSource {
+export class RemoteServer extends ClientListener {
   constructor(private sp: Sp, private controller: CombinedController) {
     super();
 
