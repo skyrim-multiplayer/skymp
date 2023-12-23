@@ -1,14 +1,11 @@
 import {
   Game,
   Utility,
-  on,
   once
 } from "skyrimPlatform";
-import * as timers from "./extensions/timers"; timers;
 import { SkympClient } from "./services/services/skympClient";
 import * as browser from "./features/browser";
 import { verifyLoadOrder } from './features/loadOrder';
-import * as skillSystem from "./services/services/sweetTaffySkillMenuService";
 
 import * as sp from "skyrimPlatform";
 
