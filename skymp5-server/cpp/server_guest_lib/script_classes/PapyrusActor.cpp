@@ -185,8 +185,16 @@ VarValue PapyrusActor::EquipItem(VarValue self,
       throw std::runtime_error("EquipItem requires at least one argument");
     }
 
-    // If no such item in inventory, add one (this is standard behavior)
     auto lookupRes = GetRecordPtr(arguments[0]);
+    if (!lookupRes.rec) {
+      throw std::runtime_error("EquipItem - invalid form");
+    }
+
+    if (!espm::utils::IsItem(lookupRes.rec->GetType())) {
+      throw std::runtime_error("EquipItem - form is not an item");
+    }
+
+    // If no such item in inventory, add one (this is standard behavior)
     auto baseId = lookupRes.ToGlobalId(lookupRes.rec->GetId());
     if (actor->GetInventory().GetItemCount(baseId) == 0) {
       actor->AddItem(baseId, 1);
