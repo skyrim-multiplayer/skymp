@@ -8,7 +8,7 @@ import * as timers from "./extensions/timers"; timers;
 import { SkympClient } from "./services/services/skympClient";
 import * as browser from "./features/browser";
 import { verifyLoadOrder } from './features/loadOrder';
-import * as skillSystem from "./features/skillMenu";
+import * as skillSystem from "./services/services/sweetTaffySkillMenuService";
 
 import * as sp from "skyrimPlatform";
 
@@ -40,6 +40,7 @@ import { DisableFastTravelService } from "./services/services/disableFastTravelS
 import { DisableDifficultySelectionService } from "./services/services/disableDifficultySelectionService";
 import { SweetTaffyPlayerCombatService } from "./services/services/sweetTaffyPlayerCombatService";
 import { WorldCleanerService } from "./services/services/worldCleanerService";
+import { SweetTaffySkillMenuService } from "./services/services/sweetTaffySkillMenuService";
 
 browser.main();
 
@@ -49,8 +50,6 @@ once("update", () => {
 });
 
 once("update", verifyLoadOrder);
-
-skillSystem.skillMenuInit();
 
 const main = () => {
   try {
@@ -80,10 +79,11 @@ const main = () => {
       new SweetTaffyDynamicPerksService(sp, controller),
       new SweetTaffyStaticPerksService(sp, controller),
       new SweetTaffySweetCantDropService(sp, controller),
+      new SweetTaffyPlayerCombatService(sp, controller),
+      new SweetTaffySkillMenuService(sp, controller),
       new DisableSkillAdvanceService(sp, controller),
       new DisableFastTravelService(sp, controller),
       new DisableDifficultySelectionService(sp, controller),
-      new SweetTaffyPlayerCombatService(sp, controller),
       new WorldCleanerService(sp, controller)
     ];
     SpApiInteractor.setup(listeners);
