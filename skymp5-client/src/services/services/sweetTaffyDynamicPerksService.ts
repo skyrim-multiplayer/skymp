@@ -14,6 +14,8 @@ export class SweetTaffyDynamicPerksService extends ClientListener {
   }
 
   private onContainerChanged(e: ContainerChangedEvent) {
+    if (!this.hasSweetPie()) return;
+
     if (e.oldContainer && e.newContainer) {
       if (e.newContainer.getFormID() === 0x14 && e.numItems > 0) {
         this.handlePlayerInventoryChanged({
@@ -25,6 +27,8 @@ export class SweetTaffyDynamicPerksService extends ClientListener {
   }
 
   private onSetInventoryMessage(e: ConnectionMessage<SetInventoryMessage>) {
+    if (!this.hasSweetPie()) return;
+
     const entries = e.message.inventory.entries;
 
     if (entries.length === 0) {
@@ -35,6 +39,8 @@ export class SweetTaffyDynamicPerksService extends ClientListener {
   }
 
   private onCreateActorMessage(e: ConnectionMessage<CreateActorMessage>) {
+    if (!this.hasSweetPie()) return;
+
     if (!e.message.isMe) return;
 
     const entries = e.message.inventory?.entries;
@@ -50,6 +56,8 @@ export class SweetTaffyDynamicPerksService extends ClientListener {
   }
 
   private handlePlayerInventoryChanged(entry: BasicEntry): void {
+    if (!this.hasSweetPie()) return;
+
     const item = this.sp.Game.getFormEx(entry.baseId);
     if (!item) return;
     if (entry.count <= 0) return;
@@ -120,5 +128,15 @@ export class SweetTaffyDynamicPerksService extends ClientListener {
       ["SweetPerk1Hand3", 0x106256],
       ["SweetPerk1Hand4", 0x52D50],
     ]);
+  }
+
+  private hasSweetPie(): boolean {
+    const modCount = this.sp.Game.getModCount();
+    for (let i = 0; i < modCount; ++i) {
+      if (this.sp.Game.getModName(i).toLowerCase().includes('sweetpie')) {
+        return true;
+      }
+    }
+    return false;
   }
 }

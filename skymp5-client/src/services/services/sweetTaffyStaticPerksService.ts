@@ -7,6 +7,8 @@ export class SweetTaffyStaticPerksService extends ClientListener {
     }
 
     private onceUpdate() {
+        if (!this.hasSweetPie()) return;
+
         this.addStaticPerksToThePlayer();
     }
 
@@ -18,6 +20,16 @@ export class SweetTaffyStaticPerksService extends ClientListener {
         allStaticPerkIds.forEach(perkId => {
             player.addPerk(this.sp.Perk.from(this.sp.Game.getFormEx(perkId)));
         });
+    }
+
+    private hasSweetPie(): boolean {
+        const modCount = this.sp.Game.getModCount();
+        for (let i = 0; i < modCount; ++i) {
+            if (this.sp.Game.getModName(i).toLowerCase().includes('sweetpie')) {
+                return true;
+            }
+        }
+        return false;
     }
 
     // TODO: move this to config
