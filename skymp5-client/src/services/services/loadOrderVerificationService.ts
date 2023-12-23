@@ -1,5 +1,4 @@
 import { Game, Utility, HttpClient, printConsole, createText } from "skyrimPlatform";
-import * as sp from "skyrimPlatform";
 import { getServerIp, getServerUiPort } from "./skympClient";
 import { getScreenResolution } from "../../view/formView";
 import { ClientListener, CombinedController, Sp } from "./clientListener";
@@ -68,7 +67,7 @@ export class LoadOrderVerificationService extends ClientListener {
       })
       .catch((err) => {
         printConsole(err);
-        if (sp.settings['skymp5-client']['ignoreLoadOrderMismatch']) {
+        if (this.sp.settings['skymp5-client']['ignoreLoadOrderMismatch']) {
           this.updateText(
             'LOAD ORDER ERROR!\nHowever, ignoring it because of ignoreLoadOrderMismatch being set.' +
             '\nExpect EVERYTHING BREAK, unless you know what you are doing.\nCheck console for details.' +
@@ -81,19 +80,19 @@ export class LoadOrderVerificationService extends ClientListener {
           'LOAD ORDER ERROR!\nCheck console for details.',
           [255, 0, 0, 1]
         );
-        sp.browser.loadUrl('about:blank');
+        this.sp.browser.loadUrl('about:blank');
       });
   };
 
   private getState(): State {
-    if (typeof sp.storage[STATE_KEY] !== 'object') {
+    if (typeof this.sp.storage[STATE_KEY] !== 'object') {
       return {};
     }
-    return sp.storage[STATE_KEY] as State;
+    return this.sp.storage[STATE_KEY] as State;
   };
 
   private setState(replacement: State) {
-    const oldState = sp.storage[STATE_KEY] = this.getState();
+    const oldState = this.sp.storage[STATE_KEY] = this.getState();
     for (const [k, v] of Object.entries(replacement)) {
       (oldState as Record<string, any>)[k] = v;
     }
@@ -102,7 +101,7 @@ export class LoadOrderVerificationService extends ClientListener {
   private resetText() {
     let { statusTextId } = this.getState();
     if (statusTextId) {
-      sp.destroyText(statusTextId);
+      this.sp.destroyText(statusTextId);
       statusTextId = undefined;
       this.setState({ statusTextId });
     }
@@ -149,7 +148,7 @@ export class LoadOrderVerificationService extends ClientListener {
     const result = [];
     for (let i = 0; i < getCount(); ++i) {
       const filename = getAt(i);
-      const { crc32, size } = sp.getFileInfo(filename);
+      const { crc32, size } = this.sp.getFileInfo(filename);
       result.push({ filename, crc32, size });
     }
     return result;
