@@ -4,6 +4,10 @@
 #include "ExceptionPrinter.h"
 #include "NullPointerException.h"
 
+#include <RE/B/BSPointerHandle.h>
+#include <RE/N/NiPoint3.h>
+#include <REL/Relocation.h>
+
 extern CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
 
 namespace TESModPlatform {
@@ -871,6 +875,33 @@ void TESModPlatform::BlockPapyrusEvents(IVM* vm, StackID stackId,
   papyrusEventsBlocked = blocked;
 }
 
+RE::TESObjectREFR* TESModPlatform::CreateReferenceAtLocation(
+  IVM* vm, StackID stackId, RE::StaticFunctionTag*, RE::TESForm* baseForm,
+  RE::TESObjectCELL* cell, RE::TESWorldSpace* world, float posX, float posY,
+  float posZ, float rotX, float rotY, float rotZ, bool persist)
+{
+  if (!baseForm || (!cell && !world)) {
+    return nullptr;
+  }
+
+  auto dataHandler = reinterpret_cast<TESDataHandlerExtension*>(
+    RE::TESDataHandler::GetSingleton());
+  if (!dataHandler) {
+    return nullptr;
+  }
+
+  constexpr bool kUnknownBool = true;
+
+  RE::ObjectRefHandle objectRefHandle =
+    dataHandler->CreateReferenceAtLocationImpl(
+      reinterpret_cast<RE::TESBoundObject*>(baseForm),
+      RE::NiPoint3{ posX, posY, posZ }, RE::NiPoint3{ rotX, rotY, rotZ }, cell,
+      world, nullptr, nullptr, RE::ObjectRefHandle(), persist, kUnknownBool);
+
+  RE::TESObjectREFR* result = objectRefHandle.get().get();
+  return result;
+}
+
 int TESModPlatform::GetWeapDrawnMode(uint32_t actorId)
 {
   std::lock_guard l(share.m);
@@ -1109,6 +1140,14 @@ bool TESModPlatform::Register(IVM* vm)
     new RE::BSScript::NativeFunction<true, decltype(BlockPapyrusEvents), void,
                                      RE::StaticFunctionTag*, bool>(
       "BlockPapyrusEvents", "TESModPlatform", BlockPapyrusEvents));
+
+  vm->BindNativeMethod(
+    new RE::BSScript::NativeFunction<
+      true, decltype(CreateReferenceAtLocation), RE::TESObjectREFR*,
+      RE::StaticFunctionTag*, RE::TESForm*, RE::TESObjectCELL*,
+      RE::TESWorldSpace*, float, float, float, float, float, float, bool>(
+      "CreateReferenceAtLocation", "TESModPlatform",
+      CreateReferenceAtLocation));
 
   static LoadGameEvent loadGameEvent;
 

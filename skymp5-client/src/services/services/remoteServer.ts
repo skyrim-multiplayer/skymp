@@ -68,6 +68,7 @@ import {
   localIdToRemoteId,
   remoteIdToLocalId,
 } from '../../view/worldViewMisc';
+import { TimeService } from './timeService';
 
 const onceLoad = (
   refrId: number,
@@ -604,8 +605,7 @@ export class RemoteServer extends ClientListener implements ModelSource {
                 }
                 : undefined,
               loadOrder,
-              // TODO: unhardcode time
-              { minutes: 0, seconds: 0, hours: 12 }
+              { minutes: 0, seconds: 0, hours: this.controller.lookupListener(TimeService).getTime().newGameHourValue }
             );
             once('update', () => {
               applyPcInv();

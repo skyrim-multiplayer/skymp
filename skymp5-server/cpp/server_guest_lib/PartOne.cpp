@@ -488,12 +488,18 @@ FormCallbacks PartOne::CreateFormCallbacks()
       SLNet::BitStream stream;
       g_serializer->Serialize(message, stream);
 
-      auto hosterIterator = worldState.hosters.find(actor->GetFormId());
-      if (hosterIterator != worldState.hosters.end()) {
-        auto& hosterActor =
-          worldState.GetFormAt<MpActor>(hosterIterator->second);
-        actor = &hosterActor;
-        // Direct messages such as Teleport, ChangeValues to our host
+      bool isOffline = st->UserByActor(actor) == Networking::InvalidUserId;
+
+      // Only send to hoster if actor is offline (no active user)
+      // This fixes December 2023 Update "invisible chat" bug
+      if (isOffline) {
+        auto hosterIterator = worldState.hosters.find(actor->GetFormId());
+        if (hosterIterator != worldState.hosters.end()) {
+          auto& hosterActor =
+            worldState.GetFormAt<MpActor>(hosterIterator->second);
+          actor = &hosterActor;
+          // Send messages such as Teleport, ChangeValues to our host
+        }
       }
 
       auto targetuserId = st->UserByActor(actor);
