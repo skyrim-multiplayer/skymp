@@ -1,4 +1,4 @@
-import { ActivateEvent, browser, on } from 'skyrimPlatform'
+import { ActivateEvent, browser } from 'skyrimPlatform'
 import { ClientListener, CombinedController, Sp } from './clientListener';
 
 // TODO: move to server/gamemode
