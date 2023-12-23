@@ -1,6 +1,7 @@
 import { ActivateEvent, browser, on } from 'skyrimPlatform'
 import { ClientListener, CombinedController, Sp } from './clientListener';
 
+// TODO: move to server/gamemode
 export class SweetTaffySkillMenuService extends ClientListener {
     constructor(private sp: Sp, private controller: CombinedController) {
         super();
