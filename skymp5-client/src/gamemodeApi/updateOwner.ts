@@ -1,5 +1,5 @@
 import * as sp from "skyrimPlatform";
-import { FormModel } from "../modelSource/model";
+import { FormModel } from "../view/model";
 import { localIdToRemoteId, remoteIdToLocalId } from "../view/worldViewMisc";
 
 export const setOwnerModel = (ownerModel: FormModel): void => {

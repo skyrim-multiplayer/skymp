@@ -30,7 +30,7 @@ import { Inventory, applyInventory } from '../../sync/inventory';
 import { Movement } from '../../sync/movement';
 import { learnSpells, removeAllSpells } from '../../sync/spell';
 import { ModelApplyUtils } from '../../view/modelApplyUtils';
-import { FormModel, WorldModel } from '../../modelSource/model';
+import { FormModel, WorldModel } from '../../view/model';
 import { SpApiInteractor } from '../spApiInteractor';
 import { LoadGameService } from './loadGameService';
 import { UpdateMovementMessage } from '../messages/updateMovementMessage';
