@@ -7,7 +7,6 @@ import {
 import * as timers from "./extensions/timers"; timers;
 import { SkympClient } from "./services/services/skympClient";
 import * as browser from "./features/browser";
-import { updateWc } from "./features/worldCleaner";
 import { verifyLoadOrder } from './features/loadOrder';
 import * as skillSystem from "./features/skillMenu";
 
@@ -40,6 +39,7 @@ import { DisableSkillAdvanceService } from "./services/services/disableSkillAdva
 import { DisableFastTravelService } from "./services/services/disableFastTravelService";
 import { DisableDifficultySelectionService } from "./services/services/disableDifficultySelectionService";
 import { SweetTaffyPlayerCombatService } from "./services/services/sweetTaffyPlayerCombatService";
+import { WorldCleanerService } from "./services/services/worldCleanerService";
 
 browser.main();
 
@@ -47,8 +47,6 @@ once("update", () => {
   Utility.setINIBool("bAlwaysActive:General", true);
   Game.setGameSettingInt("iDeathDropWeaponChance", 0);
 });
-
-on("update", () => updateWc());
 
 once("update", verifyLoadOrder);
 
@@ -85,7 +83,8 @@ const main = () => {
       new DisableSkillAdvanceService(sp, controller),
       new DisableFastTravelService(sp, controller),
       new DisableDifficultySelectionService(sp, controller),
-      new SweetTaffyPlayerCombatService(sp, controller)
+      new SweetTaffyPlayerCombatService(sp, controller),
+      new WorldCleanerService(sp, controller)
     ];
     SpApiInteractor.setup(listeners);
     listeners.forEach(listener => SpApiInteractor.registerListenerForLookup(listener.constructor.name, listener));
