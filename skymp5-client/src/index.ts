@@ -2,10 +2,7 @@ import {
   Game,
   Utility,
   on,
-  once,
-  printConsole,
-  ActorValueInfo,
-  ActorValue,
+  once
 } from "skyrimPlatform";
 import * as timers from "./extensions/timers"; timers;
 import { SkympClient } from "./services/services/skympClient";
