@@ -5,7 +5,6 @@ import {
 } from "skyrimPlatform";
 import { SkympClient } from "./services/services/skympClient";
 import * as browser from "./features/browser";
-import { verifyLoadOrder } from './features/loadOrder';
 
 import * as sp from "skyrimPlatform";
 
@@ -38,6 +37,7 @@ import { DisableDifficultySelectionService } from "./services/services/disableDi
 import { SweetTaffyPlayerCombatService } from "./services/services/sweetTaffyPlayerCombatService";
 import { WorldCleanerService } from "./services/services/worldCleanerService";
 import { SweetTaffySkillMenuService } from "./services/services/sweetTaffySkillMenuService";
+import { LoadOrderVerificationService } from "./services/services/loadOrderVerificationService";
 
 browser.main();
 
@@ -45,8 +45,6 @@ once("update", () => {
   Utility.setINIBool("bAlwaysActive:General", true);
   Game.setGameSettingInt("iDeathDropWeaponChance", 0);
 });
-
-once("update", verifyLoadOrder);
 
 const main = () => {
   try {
@@ -81,7 +79,8 @@ const main = () => {
       new DisableSkillAdvanceService(sp, controller),
       new DisableFastTravelService(sp, controller),
       new DisableDifficultySelectionService(sp, controller),
-      new WorldCleanerService(sp, controller)
+      new WorldCleanerService(sp, controller),
+      new LoadOrderVerificationService(sp, controller)
     ];
     SpApiInteractor.setup(listeners);
     listeners.forEach(listener => SpApiInteractor.registerListenerForLookup(listener.constructor.name, listener));
