@@ -15,12 +15,14 @@ struct MigrationDatabase::Impl
 {
   std::shared_ptr<IDatabase> newDatabase;
   std::shared_ptr<IDatabase> oldDatabase;
+  std::function<void()> terminate;
 };
 
 MigrationDatabase::MigrationDatabase(std::shared_ptr<IDatabase> newDatabase,
-                                     std::shared_ptr<IDatabase> oldDatabase)
+                                     std::shared_ptr<IDatabase> oldDatabase,
+                                     std::function<void()> terminate)
 {
-  pImpl.reset(new Impl{ newDatabase, oldDatabase });
+  pImpl.reset(new Impl{ newDatabase, oldDatabase, terminate });
 
   spdlog::info("MigrationDatabase: verifying newDatabase emptiness");
 
@@ -30,7 +32,7 @@ MigrationDatabase::MigrationDatabase(std::shared_ptr<IDatabase> newDatabase,
     spdlog::error(
       "MigrationDatabase: newDatabase is not empty, skipping migration");
     spdlog::info("The server will be terminated");
-    std::terminate();
+    pImpl->terminate();
     return;
   }
 
@@ -40,7 +42,7 @@ MigrationDatabase::MigrationDatabase(std::shared_ptr<IDatabase> newDatabase,
     spdlog::error(
       "MigrationDatabase: oldDatabase is empty, skipping migration");
     spdlog::info("The server will be terminated");
-    std::terminate();
+    pImpl->terminate();
     return;
   }
 
@@ -77,17 +79,17 @@ MigrationDatabase::MigrationDatabase(std::shared_ptr<IDatabase> newDatabase,
   spdlog::info("MigrationDatabase: {} changeForms migrated successfully",
                numUpserted);
   spdlog::info("The server will be terminated");
-  std::terminate();
+  pImpl->terminate();
 }
 
 size_t MigrationDatabase::Upsert(const std::vector<MpChangeForm>& changeForms)
 {
   spdlog::error("MigrationDatabase::Upsert - should never be reached");
-  std::terminate();
+  pImpl->terminate();
 }
 
 void MigrationDatabase::Iterate(const IterateCallback& iterateCallback)
 {
   spdlog::error("MigrationDatabase::Iterate - should never be reached");
-  std::terminate();
+  pImpl->terminate();
 }

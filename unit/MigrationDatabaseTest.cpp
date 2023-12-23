@@ -28,25 +28,62 @@ inline std::set<MpChangeForm> GetAllChangeForms(std::shared_ptr<IDatabase> db)
   return res;
 }
 
-TEST_CASE("Moves data from one database from another", "[MigrationDatabase]")
+TEST_CASE("Successful Migration", "[MigrationDatabase]")
 {
-  auto oldDatabase = MakeDatabase("unit/data/a");
-  oldDatabase->Upsert({ CreateChangeForm_("0") });
+  std::atomic<bool> terminated{ false };
+  auto customTerminate = [&terminated]() { terminated = true; };
+
+  auto oldDatabase = MakeDatabase("unit/data/old");
   oldDatabase->Upsert({ CreateChangeForm_("1") });
   oldDatabase->Upsert({ CreateChangeForm_("2") });
 
-  auto newDatabase = MakeDatabase("unit/data/b");
-  std::vector<MpChangeForm> initialNewDatabase = {
-    CreateChangeForm_("3"), CreateChangeForm_("4"),
-    CreateChangeForm_("0", { 1, 2, 3 })
-  };
-  newDatabase->Upsert(initialNewDatabase);
+  auto newDatabase = MakeDatabase("unit/data/new");
 
-  auto db = std::make_shared<MigrationDatabase>(newDatabase, oldDatabase);
+  auto db = std::make_shared<MigrationDatabase>(newDatabase, oldDatabase,
+                                                customTerminate);
+  REQUIRE(GetAllChangeForms(newDatabase) == GetAllChangeForms(oldDatabase));
+  REQUIRE(terminated == true); // Check if the custom terminate was called
+}
 
-  REQUIRE(GetAllChangeForms(db) ==
-          std::set<MpChangeForm>(
-            { CreateChangeForm_("0", { 1, 2, 3 }), CreateChangeForm_("1"),
-              CreateChangeForm_("2"), CreateChangeForm_("3"),
-              CreateChangeForm_("4") }));
+TEST_CASE("Migration Termination on Non-Empty New Database",
+          "[MigrationDatabase]")
+{
+  std::atomic<bool> terminated{ false };
+  auto customTerminate = [&terminated]() { terminated = true; };
+
+  auto oldDatabase = MakeDatabase("unit/data/old");
+  oldDatabase->Upsert({ CreateChangeForm_("1") });
+
+  auto newDatabase = MakeDatabase("unit/data/new");
+  newDatabase->Upsert({ CreateChangeForm_("3") });
+
+  auto db = std::make_shared<MigrationDatabase>(newDatabase, oldDatabase,
+                                                customTerminate);
+
+  // Nothing changed
+  REQUIRE(GetAllChangeForms(oldDatabase) ==
+          std::set<MpChangeForm>{ CreateChangeForm_("1") });
+  REQUIRE(GetAllChangeForms(newDatabase) ==
+          std::set<MpChangeForm>{ CreateChangeForm_("3") });
+  REQUIRE(terminated == true); // Check if the custom terminate was called
+}
+
+TEST_CASE("Migration Termination on Empty Old Database", "[MigrationDatabase]")
+{
+  std::atomic<bool> terminated{ false };
+  auto customTerminate = [&terminated]() { terminated = true; };
+
+  auto oldDatabase = MakeDatabase("unit/data/old");
+  oldDatabase->Upsert({});
+
+  auto newDatabase = MakeDatabase("unit/data/new");
+  newDatabase->Upsert({});
+
+  auto db = std::make_shared<MigrationDatabase>(newDatabase, oldDatabase,
+                                                customTerminate);
+
+  // Nothing changed
+  REQUIRE(GetAllChangeForms(oldDatabase) == std::set<MpChangeForm>{});
+  REQUIRE(GetAllChangeForms(newDatabase) == std::set<MpChangeForm>{});
+  REQUIRE(terminated == true); // Check if the custom terminate was called
 }
