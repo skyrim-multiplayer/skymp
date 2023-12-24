@@ -13,15 +13,16 @@ import { setupHooks } from '../../sync/animation';
 import * as animDebugSystem from '../../debug/animDebugSystem';
 import { WorldView } from '../../view/worldView';
 import { SinglePlayerService } from './singlePlayerService';
-import * as authSystem from "../../features/authSystem";
+import * as authSystem from "./authService";
 import * as playerCombatSystem from "./sweetTaffyPlayerCombatService";
 import { AuthGameData } from '../../features/authModel';
-import * as browser from "../../features/browser";
+import * as browser from "./browserService";
 import { ClientListener, CombinedController, Sp } from './clientListener';
 import { ConnectionFailed } from '../events/connectionFailed';
 import { ConnectionDenied } from '../events/connectionDenied';
 import { ConnectionMessage } from '../events/connectionMessage';
 import { CreateActorMessage } from '../messages/createActorMessage';
+import { AuthEvent } from '../events/authEvent';
 
 printConsole('Hello Multiplayer!');
 printConsole('settings:', settings['skymp5-client']);
@@ -47,32 +48,32 @@ export class SkympClient extends ClientListener {
     this.controller.emitter.on("createActorMessage", (e) => this.onActorCreateMessage(e));
 
     const authGameData = storage[AuthGameData.storageKey] as AuthGameData | undefined;
-    if (!(authGameData?.local || authGameData?.remote)) {
-      authSystem.addAuthListener((data) => {
-        if (data.remote) {
-          browser.setAuthData(data.remote);
-        }
-        storage[AuthGameData.storageKey] = data;
 
-        // Don't let the user use Main Menu buttons
-        // setTimeout(() => {
-        //   this.sp.browser.setFocused(false);
-        // }, 3000);
-        // once("update", () => {
-        //   this.sp.browser.setFocused(false);
-        // });
-        // this.sp.browser.setFocused(false);
+    const storageHasValidAuthGameData = authGameData?.local || authGameData?.remote;
 
-        this.startClient();
-
-        // TODO: remove this when you will be able to see errors without console
-        this.sp.browser.setFocused(false);
-      });
-
-      authSystem.main();
-    } else {
+    if (storageHasValidAuthGameData) {
+      this.logTrace(`Recovered AuthGameData from storage, starting client`);
       this.startClient();
+    } else {
+      this.logTrace(`Unable to recover AuthGameData from storage, requesting auth`);
+
+      // Next tick because we're in constructor of the service, AuthService may not be listening events yet
+      this.controller.once("tick", () => {
+        this.controller.emitter.emit("authNeeded", {});
+      });
+      this.controller.emitter.on("auth", (e) => this.onAuth(e));
     }
+  }
+
+  private onAuth(e: AuthEvent) {
+    this.logTrace(`Caught auth event`);
+
+    storage[AuthGameData.storageKey] = e.authGameData;
+
+    this.startClient();
+
+    // TODO: remove this when you will be able to see errors without console
+    this.sp.browser.setFocused(false);
   }
 
   private onActorCreateMessage(e: ConnectionMessage<CreateActorMessage>) {

@@ -4,7 +4,6 @@ import {
   once
 } from "skyrimPlatform";
 import { SkympClient } from "./services/services/skympClient";
-import * as browser from "./features/browser";
 
 import * as sp from "skyrimPlatform";
 
@@ -38,8 +37,8 @@ import { SweetTaffyPlayerCombatService } from "./services/services/sweetTaffyPla
 import { WorldCleanerService } from "./services/services/worldCleanerService";
 import { SweetTaffySkillMenuService } from "./services/services/sweetTaffySkillMenuService";
 import { LoadOrderVerificationService } from "./services/services/loadOrderVerificationService";
-
-browser.main();
+import { BrowserService } from "./services/services/browserService";
+import { AuthService } from "./services/services/authService";
 
 once("update", () => {
   Utility.setINIBool("bAlwaysActive:General", true);
@@ -80,7 +79,9 @@ const main = () => {
       new DisableFastTravelService(sp, controller),
       new DisableDifficultySelectionService(sp, controller),
       new WorldCleanerService(sp, controller),
-      new LoadOrderVerificationService(sp, controller)
+      new LoadOrderVerificationService(sp, controller),
+      new BrowserService(sp, controller),
+      new AuthService(sp, controller)
     ];
     SpApiInteractor.setup(listeners);
     listeners.forEach(listener => SpApiInteractor.registerListenerForLookup(listener.constructor.name, listener));
