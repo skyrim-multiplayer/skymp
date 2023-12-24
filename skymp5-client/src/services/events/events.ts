@@ -31,6 +31,7 @@ import { TeleportMessage2 } from "../messages/teleportMessage2";
 import { BrowserWindowLoadedEvent } from "./browserWindowLoadedEvent";
 import { AuthEvent } from "./authEvent";
 import { AuthNeededEvent } from "./authNeededEvent";
+import { NewLocalLagValueCalculatedEvent } from "./NewLocalLagValueCalculatedEvent";
 
 type EventTypes = {
     'gameLoad': [GameLoadEvent],
@@ -68,7 +69,8 @@ type EventTypes = {
     'browserWindowLoaded': [BrowserWindowLoadedEvent],
     'auth': [AuthEvent],
     'authNeeded': [AuthNeededEvent],
-    'anyMessage': [ConnectionMessage<AnyMessage>]
+    'anyMessage': [ConnectionMessage<AnyMessage>],
+    'newLocalLagValueCalculated': [NewLocalLagValueCalculatedEvent]
 }
 
 // https://blog.makerx.com.au/a-type-safe-event-emitter-in-node-js/

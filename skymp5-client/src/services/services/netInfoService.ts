@@ -1,8 +1,9 @@
-import { ConnectionMessage } from "../services/events/connectionMessage";
-import { SendMessageEvent } from "../services/events/sendMessageEvent";
-import { SendMessageWithRefrIdEvent } from "../services/events/sendMessageWithRefrIdEvent";
-import { AnyMessage } from "../services/messages/anyMessage";
-import { ClientListener, CombinedController, Sp } from "../services/services/clientListener";
+import { NewLocalLagValueCalculatedEvent } from "../events/NewLocalLagValueCalculatedEvent";
+import { ConnectionMessage } from "../events/connectionMessage";
+import { SendMessageEvent } from "../events/sendMessageEvent";
+import { SendMessageWithRefrIdEvent } from "../events/sendMessageWithRefrIdEvent";
+import { AnyMessage } from "../messages/anyMessage";
+import { ClientListener, CombinedController, Sp } from "./clientListener";
 
 export class NetInfoService extends ClientListener {
   constructor(private sp: Sp, private controller: CombinedController) {
@@ -28,6 +29,7 @@ export class NetInfoService extends ClientListener {
     this.controller.emitter.on("sendMessage", (e) => this.onSendMessage(e));
     this.controller.emitter.on("sendMessageWithRefrId", (e) => this.onSendMessageWithRefrId(e));
     this.controller.emitter.on("anyMessage", (e) => this.onAnyMessage(e));
+    this.controller.emitter.on("newLocalLagValueCalculated", (e) => this.onNewLocalLagValueCalculated(e));
     this.controller.on("update", () => this.onUpdate());
   }
 
@@ -41,6 +43,10 @@ export class NetInfoService extends ClientListener {
 
   private onAnyMessage(e: ConnectionMessage<AnyMessage>) {
     this.addReceivedPacketCount(1);
+  }
+
+  private onNewLocalLagValueCalculated(e: NewLocalLagValueCalculatedEvent) {
+    this.setLocalLagUnits(e.lagUnitsNoZ);
   }
 
   private onUpdate() {

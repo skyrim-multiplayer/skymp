@@ -39,7 +39,7 @@ import { SweetTaffySkillMenuService } from "./services/services/sweetTaffySkillM
 import { LoadOrderVerificationService } from "./services/services/loadOrderVerificationService";
 import { BrowserService } from "./services/services/browserService";
 import { AuthService } from "./services/services/authService";
-import { NetInfoService } from "./debug/netInfoSystem";
+import { NetInfoService } from "./services/services/netInfoService";
 
 once("update", () => {
   Utility.setINIBool("bAlwaysActive:General", true);
