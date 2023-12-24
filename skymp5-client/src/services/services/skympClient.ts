@@ -5,12 +5,10 @@ import {
   settings,
   storage,
 } from 'skyrimPlatform';
-import * as netInfo from './netInfoService';
 import * as updateOwner from '../../gamemodeApi/updateOwner';
 import * as networking from './networkingService';
 import { RemoteServer } from './remoteServer';
 import { setupHooks } from '../../sync/animation';
-import * as animDebugSystem from '../../debug/animDebugSystem';
 import { WorldView } from '../../view/worldView';
 import { SinglePlayerService } from './singlePlayerService';
 import { AuthGameData } from '../../features/authModel';
@@ -88,9 +86,6 @@ export class SkympClient extends ClientListener {
   }
 
   private startClient() {
-    // TODO: refactor animDebugSystem into service
-    animDebugSystem.init(settings["skymp5-client"]["animDebug"] as animDebugSystem.AnimDebugSettings);
-
     this.establishConnectionConditional();
     this.ctor();
   }
