@@ -31,7 +31,7 @@ import { TeleportMessage2 } from "../messages/teleportMessage2";
 import { BrowserWindowLoadedEvent } from "./browserWindowLoadedEvent";
 import { AuthEvent } from "./authEvent";
 import { AuthNeededEvent } from "./authNeededEvent";
-import { NewLocalLagValueCalculatedEvent } from "./NewLocalLagValueCalculatedEvent";
+import { NewLocalLagValueCalculatedEvent } from "./newLocalLagValueCalculatedEvent";
 
 type EventTypes = {
     'gameLoad': [GameLoadEvent],

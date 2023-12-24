@@ -7,7 +7,6 @@ import {
 } from "skyrimPlatform";
 import { RespawnNeededError } from "../lib/errors";
 import { Movement, RunMode, AnimationVariables, Transform, NiPoint3 } from "./movement";
-import { NetInfo } from "../debug/netInfoSystem";
 import { ObjectReferenceEx } from "../extensions/objectReferenceEx";
 import { SpApiInteractor } from "../services/spApiInteractor";
 
@@ -21,8 +20,8 @@ export const applyMovement = (refr: ObjectReference, m: Movement, isMyClone?: bo
   const acY = refr.getPositionY();
   const lagUnitsNoZ = Math.round(Math.sqrt(sqr(m.pos[0] - acX) + sqr(m.pos[1] - acY)));
 
-  if (isMyClone === true && NetInfo.isEnabled()) {
-    NetInfo.setLocalLagUnits(lagUnitsNoZ);
+  if (isMyClone === true) {
+    SpApiInteractor.makeController().emitter.emit("newLocalLagValueCalculated", { lagUnitsNoZ });
   }
 
   translateTo(refr, m);

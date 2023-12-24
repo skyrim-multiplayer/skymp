@@ -1,4 +1,4 @@
-import { NewLocalLagValueCalculatedEvent } from "../events/NewLocalLagValueCalculatedEvent";
+import { NewLocalLagValueCalculatedEvent } from "../events/newLocalLagValueCalculatedEvent";
 import { ConnectionMessage } from "../events/connectionMessage";
 import { SendMessageEvent } from "../events/sendMessageEvent";
 import { SendMessageWithRefrIdEvent } from "../events/sendMessageWithRefrIdEvent";
