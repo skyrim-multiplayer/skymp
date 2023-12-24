@@ -1,6 +1,6 @@
 import { BasicEntry } from "../../sync/inventory";
 import { ClientListener, CombinedController, Sp } from "./clientListener";
-import { Actor, ContainerChangedEvent, Form } from "skyrimPlatform";
+import { ContainerChangedEvent, Form } from "skyrimPlatform";
 import { CreateActorMessage } from "../messages/createActorMessage";
 import { ConnectionMessage } from "../events/connectionMessage";
 import { SetInventoryMessage } from "../messages/setInventoryMessage";
