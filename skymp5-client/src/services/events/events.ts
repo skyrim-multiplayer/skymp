@@ -67,7 +67,8 @@ type EventTypes = {
 
     'browserWindowLoaded': [BrowserWindowLoadedEvent],
     'auth': [AuthEvent],
-    'authNeeded': [AuthNeededEvent]
+    'authNeeded': [AuthNeededEvent],
+    'anyMessage': [ConnectionMessage<AnyMessage>]
 }
 
 // https://blog.makerx.com.au/a-type-safe-event-emitter-in-node-js/

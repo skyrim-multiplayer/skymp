@@ -39,6 +39,7 @@ import { SweetTaffySkillMenuService } from "./services/services/sweetTaffySkillM
 import { LoadOrderVerificationService } from "./services/services/loadOrderVerificationService";
 import { BrowserService } from "./services/services/browserService";
 import { AuthService } from "./services/services/authService";
+import { NetInfoService } from "./debug/netInfoSystem";
 
 once("update", () => {
   Utility.setINIBool("bAlwaysActive:General", true);
@@ -81,7 +82,8 @@ const main = () => {
       new WorldCleanerService(sp, controller),
       new LoadOrderVerificationService(sp, controller),
       new BrowserService(sp, controller),
-      new AuthService(sp, controller)
+      new AuthService(sp, controller),
+      new NetInfoService(sp, controller)
     ];
     SpApiInteractor.setup(listeners);
     listeners.forEach(listener => SpApiInteractor.registerListenerForLookup(listener.constructor.name, listener));
