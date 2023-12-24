@@ -30,8 +30,8 @@ import { DeathStateContainerMessage } from "../messages/deathStateContainerMessa
 import { TeleportMessage2 } from "../messages/teleportMessage2";
 import { BrowserWindowLoadedEvent } from "./browserWindowLoadedEvent";
 import { AuthEvent } from "./authEvent";
-import { AuthNeededEvent } from "./authNeededEvent";
 import { NewLocalLagValueCalculatedEvent } from "./newLocalLagValueCalculatedEvent";
+import { AuthNeededEvent } from "./authNeededEvent";
 
 type EventTypes = {
     'gameLoad': [GameLoadEvent],
