@@ -35,7 +35,9 @@ export class SweetTaffyDynamicPerksService extends ClientListener {
       return this.logTrace("Received SetInventoryMessage with empty inventory")
     }
 
-    entries.forEach(entry => this.handlePlayerInventoryChanged(entry));
+    this.controller.once("update", () => {
+      entries.forEach(entry => this.handlePlayerInventoryChanged(entry));
+    });
   }
 
   private onCreateActorMessage(e: ConnectionMessage<CreateActorMessage>) {
@@ -52,7 +54,9 @@ export class SweetTaffyDynamicPerksService extends ClientListener {
       return this.logTrace("Received CreateActorMessage with empty inventory")
     }
 
-    entries.forEach(entry => this.handlePlayerInventoryChanged(entry));
+    this.controller.once("update", () => {
+      entries.forEach(entry => this.handlePlayerInventoryChanged(entry));
+    });
   }
 
   private handlePlayerInventoryChanged(entry: BasicEntry): void {
