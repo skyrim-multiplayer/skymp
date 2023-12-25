@@ -292,6 +292,16 @@ Allows tuning settings related to in-game chat, such as message visibility radiu
 }
 ```
 
+## sweetPieCommandEnabled
+
+Enables or disables `/sweetpie` command that teleports player to SweetPie hall.
+
+```json5
+  // ...
+  "sweetPieCommandEnabled": true
+  // ...
+```
+
 ## npcEnabled
 
 Enables npc loading. By default is set to `false`.

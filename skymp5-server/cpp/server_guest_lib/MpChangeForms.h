@@ -102,6 +102,9 @@ public:
   // Used for PlayAnimation (object reference)
   std::optional<std::string> lastAnimation;
 
+  // Used for SetDisplayName (object reference)
+  std::optional<std::string> displayName;
+
   // Please update 'ActorTest.cpp' when adding new Actor-related rows
 
   DynamicFields dynamicFields;
@@ -114,7 +117,7 @@ public:
       baseContainerAdded, nextRelootDatetime, isDisabled, profileId, isDeleted,
       count, isRaceMenuOpen, isDead, consoleCommandsAllowed, appearanceDump,
       equipmentDump, actorValues.ToTuple(), spawnPoint, dynamicFields,
-      spawnDelay, learnedSpells, templateChain, lastAnimation);
+      spawnDelay, learnedSpells, templateChain, lastAnimation, displayName);
   }
 
   static nlohmann::json ToJson(const MpChangeFormREFR& changeForm);

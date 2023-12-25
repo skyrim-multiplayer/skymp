@@ -297,9 +297,17 @@ void MpObjectReference::VisitProperties(const PropertiesVisitor& visitor,
   }
 
   if (ChangeForm().lastAnimation.has_value()) {
-    std::string lastAnimationAsJson =
-      "\"" + *ChangeForm().lastAnimation + "\"";
+    std::string raw = *ChangeForm().lastAnimation;
+    nlohmann::json j = raw;
+    std::string lastAnimationAsJson = j.dump();
     visitor("lastAnimation", lastAnimationAsJson.data());
+  }
+
+  if (ChangeForm().displayName.has_value()) {
+    std::string raw = *ChangeForm().displayName;
+    nlohmann::json j = raw;
+    std::string displayNameAsJson = j.dump();
+    visitor("displayName", displayNameAsJson.data());
   }
 
   // Property flags (isVisibleByOwner, isVisibleByNeighbor) should be checked
@@ -904,6 +912,12 @@ void MpObjectReference::SetLastAnimation(const std::string& lastAnimation)
   EditChangeForm([&](MpChangeForm& changeForm) {
     changeForm.lastAnimation = lastAnimation;
   });
+}
+
+void MpObjectReference::SetDisplayName(const std::string& newName)
+{
+  EditChangeForm(
+    [&](MpChangeForm& changeForm) { changeForm.displayName = newName; });
 }
 
 const std::set<MpObjectReference*>& MpObjectReference::GetListeners() const
