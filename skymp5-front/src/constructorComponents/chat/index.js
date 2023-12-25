@@ -119,7 +119,7 @@ const Chat = (props) => {
         event.preventDefault();
         sendMessage(input);
       }
-      if (event.key === 'ArrowUp') {
+      if (event.key === 'ArrowUp' && event.ctrlKey) {
         if (currentMessageInHistory.current === -1) {
           writtenMessage.current = input;
         }
@@ -130,7 +130,7 @@ const Chat = (props) => {
           setEndOfContenteditable(inputRef.current);
         }
       }
-      if (event.key === 'ArrowDown') {
+      if (event.key === 'ArrowDown' && event.ctrlKey) {
         if (currentMessageInHistory.current >= 0) {
           if (currentMessageInHistory.current === 0) {
             updateInput(writtenMessage.current);
