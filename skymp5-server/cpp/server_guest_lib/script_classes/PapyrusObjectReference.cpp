@@ -697,6 +697,33 @@ VarValue PapyrusObjectReference::IsContainerEmpty(
   return VarValue(0);
 }
 
+VarValue PapyrusObjectReference::SetDisplayName(
+  VarValue self, const std::vector<VarValue>& arguments)
+{
+  if (auto selfRefr = GetFormPtr<MpObjectReference>(self)) {
+    if (arguments.size() < 2) {
+      throw std::runtime_error("SetDisplayName requires at least 2 arguments");
+    }
+    const char* displayName = static_cast<const char*>(arguments[0]);
+    selfRefr->SetDisplayName(displayName);
+
+    bool force = static_cast<bool>(arguments[1]);
+    std::ignore = force;
+
+    auto funcName = "SetDisplayName";
+    auto serializedArgs = SpSnippetFunctionGen::SerializeArguments(arguments);
+    for (auto listener : selfRefr->GetListeners()) {
+      auto targetRefr = dynamic_cast<MpActor*>(listener);
+      if (targetRefr) {
+        SpSnippet(GetName(), funcName, serializedArgs.data(),
+                  selfRefr->GetFormId())
+          .Execute(targetRefr);
+      }
+    }
+  }
+  return VarValue::None();
+}
+
 void PapyrusObjectReference::Register(
   VirtualMachine& vm, std::shared_ptr<IPapyrusCompatibilityPolicy> policy)
 {
@@ -740,4 +767,5 @@ void PapyrusObjectReference::Register(
   AddMethod(vm, "GetOpenState", &PapyrusObjectReference::GetOpenState);
   AddMethod(vm, "GetAllItemsCount", &PapyrusObjectReference::GetAllItemsCount);
   AddMethod(vm, "IsContainerEmpty", &PapyrusObjectReference::IsContainerEmpty);
+  AddMethod(vm, "SetDisplayName", &PapyrusObjectReference::SetDisplayName);
 }
