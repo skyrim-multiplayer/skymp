@@ -15,14 +15,14 @@ struct MigrationDatabase::Impl
 {
   std::shared_ptr<IDatabase> newDatabase;
   std::shared_ptr<IDatabase> oldDatabase;
-  std::function<void()> terminate;
+  std::function<void()> exit;
 };
 
 MigrationDatabase::MigrationDatabase(std::shared_ptr<IDatabase> newDatabase,
                                      std::shared_ptr<IDatabase> oldDatabase,
-                                     std::function<void()> terminate)
+                                     std::function<void()> exit)
 {
-  pImpl.reset(new Impl{ newDatabase, oldDatabase, terminate });
+  pImpl.reset(new Impl{ newDatabase, oldDatabase, exit });
 
   spdlog::info("MigrationDatabase: verifying newDatabase emptiness");
 
@@ -31,8 +31,8 @@ MigrationDatabase::MigrationDatabase(std::shared_ptr<IDatabase> newDatabase,
   if (newDatabaseCount > 0) {
     spdlog::error(
       "MigrationDatabase: newDatabase is not empty, skipping migration");
-    spdlog::info("The server will be terminated");
-    pImpl->terminate();
+    spdlog::info("The server will be exitd");
+    pImpl->exit();
     return;
   }
 
@@ -41,8 +41,8 @@ MigrationDatabase::MigrationDatabase(std::shared_ptr<IDatabase> newDatabase,
   if (CountChangeForms(oldDatabase) == 0) {
     spdlog::error(
       "MigrationDatabase: oldDatabase is empty, skipping migration");
-    spdlog::info("The server will be terminated");
-    pImpl->terminate();
+    spdlog::info("The server will be exitd");
+    pImpl->exit();
     return;
   }
 
@@ -78,18 +78,18 @@ MigrationDatabase::MigrationDatabase(std::shared_ptr<IDatabase> newDatabase,
 
   spdlog::info("MigrationDatabase: {} changeForms migrated successfully",
                numUpserted);
-  spdlog::info("The server will be terminated");
-  pImpl->terminate();
+  spdlog::info("The server will be exitd");
+  pImpl->exit();
 }
 
 size_t MigrationDatabase::Upsert(const std::vector<MpChangeForm>& changeForms)
 {
   spdlog::error("MigrationDatabase::Upsert - should never be reached");
-  pImpl->terminate();
+  pImpl->exit();
 }
 
 void MigrationDatabase::Iterate(const IterateCallback& iterateCallback)
 {
   spdlog::error("MigrationDatabase::Iterate - should never be reached");
-  pImpl->terminate();
+  pImpl->exit();
 }
