@@ -294,7 +294,7 @@ Allows tuning settings related to in-game chat, such as message visibility radiu
 
 ## sweetPieCommandEnabled
 
-Enables or disables `/sweetpie` command that teleports player to SweetPie hall.
+Enables or disables `/new2024` command that teleports player to SweetPie hall.
 
 ```json5
   // ...
