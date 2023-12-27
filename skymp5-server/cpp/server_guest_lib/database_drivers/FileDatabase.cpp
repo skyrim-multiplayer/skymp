@@ -33,7 +33,7 @@ size_t FileDatabase::Upsert(const std::vector<MpChangeForm>& changeForms)
     }
 
     if (!f.fail()) {
-      f.close(); // otherwise rename fails on Windows
+      f.close();
 
       std::error_code errorCode;
       std::filesystem::rename(tempFilePath, filePath, errorCode);
@@ -69,7 +69,7 @@ void FileDatabase::Iterate(const IterateCallback& iterateCallback)
 
   for (auto& entry : std::filesystem::directory_iterator(p)) {
     try {
-      if (entry.path().extension() == ".tmp") {
+      if (entry.path().extension() != ".json") {
         continue;
       }
 
