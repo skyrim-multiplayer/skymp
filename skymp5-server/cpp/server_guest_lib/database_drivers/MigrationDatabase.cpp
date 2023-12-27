@@ -1,4 +1,6 @@
 #include "MigrationDatabase.h"
+#include <algorithm>
+#include <iterator>
 #include <set>
 #include <spdlog/spdlog.h>
 
@@ -15,14 +17,16 @@ struct MigrationDatabase::Impl
 {
   std::shared_ptr<IDatabase> newDatabase;
   std::shared_ptr<IDatabase> oldDatabase;
+  std::function<void()> exit;
   std::function<void()> terminate;
 };
 
 MigrationDatabase::MigrationDatabase(std::shared_ptr<IDatabase> newDatabase,
                                      std::shared_ptr<IDatabase> oldDatabase,
+                                     std::function<void()> exit,
                                      std::function<void()> terminate)
 {
-  pImpl.reset(new Impl{ newDatabase, oldDatabase, terminate });
+  pImpl.reset(new Impl{ newDatabase, oldDatabase, exit });
 
   spdlog::info("MigrationDatabase: verifying newDatabase emptiness");
 
@@ -31,8 +35,8 @@ MigrationDatabase::MigrationDatabase(std::shared_ptr<IDatabase> newDatabase,
   if (newDatabaseCount > 0) {
     spdlog::error(
       "MigrationDatabase: newDatabase is not empty, skipping migration");
-    spdlog::info("The server will be terminated");
-    pImpl->terminate();
+    spdlog::info("The server will exit");
+    pImpl->exit();
     return;
   }
 
@@ -41,8 +45,8 @@ MigrationDatabase::MigrationDatabase(std::shared_ptr<IDatabase> newDatabase,
   if (CountChangeForms(oldDatabase) == 0) {
     spdlog::error(
       "MigrationDatabase: oldDatabase is empty, skipping migration");
-    spdlog::info("The server will be terminated");
-    pImpl->terminate();
+    spdlog::info("The server will exit");
+    pImpl->exit();
     return;
   }
 
@@ -74,12 +78,36 @@ MigrationDatabase::MigrationDatabase(std::shared_ptr<IDatabase> newDatabase,
                "database, this may take time",
                changeForms.size());
 
-  size_t numUpserted = newDatabase->Upsert(changeForms);
+  // Instead of upserting all changeForms at once, split them into chunks of 1k
+  // and upsert each chunk
+  size_t chunkSize = 1000;
+  size_t totalUpserted = 0;
 
-  spdlog::info("MigrationDatabase: {} changeForms migrated successfully",
-               numUpserted);
-  spdlog::info("The server will be terminated");
-  pImpl->terminate();
+  for (size_t i = 0; i < changeForms.size(); i += chunkSize) {
+    std::vector<MpChangeForm> chunk;
+
+    // Calculate the end of the current chunk
+    size_t end = std::min(i + chunkSize, changeForms.size());
+
+    // Copy the elements for the current chunk
+    std::copy(changeForms.begin() + i, changeForms.begin() + end,
+              std::back_inserter(chunk));
+
+    // Upsert the current chunk
+    size_t numUpserted = newDatabase->Upsert(chunk);
+    totalUpserted += numUpserted;
+
+    spdlog::info("MigrationDatabase: upserted chunk {}/{} ({} changeForms)",
+                 (i / chunkSize) + 1,
+                 (changeForms.size() + chunkSize - 1) / chunkSize,
+                 numUpserted);
+  }
+
+  spdlog::info("MigrationDatabase: {} total changeForms migrated successfully",
+               totalUpserted);
+
+  spdlog::info("The server will exit");
+  pImpl->exit();
 }
 
 size_t MigrationDatabase::Upsert(const std::vector<MpChangeForm>& changeForms)
