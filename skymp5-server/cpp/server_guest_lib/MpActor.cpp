@@ -403,11 +403,14 @@ void MpActor::ApplyChangeForm(const MpChangeForm& newChangeForm)
       if (changeForm.appearanceDump.empty()) {
         changeForm.isRaceMenuOpen = true;
       }
+
       // ActorValues does not refelect real base actor values set in esp/esm
       // game files since new update
       // this check is added only for test as a workaround. It is to be redone
       // in the nearest future. TODO
       if (GetParent() && GetParent()->HasEspm()) {
+        EnsureTemplateChainEvaluated(GetParent()->GetEspm(),
+                                     Mode::NoRequestSave);
         changeForm.actorValues = GetBaseActorValues(
           GetParent(), GetBaseId(), GetRaceId(), changeForm.templateChain);
       }
@@ -746,7 +749,8 @@ bool MpActor::CanActorValueBeRestored(espm::ActorValue av)
   return true;
 }
 
-void MpActor::EnsureTemplateChainEvaluated(espm::Loader& loader)
+void MpActor::EnsureTemplateChainEvaluated(espm::Loader& loader,
+                                           ChangeFormGuard::Mode mode)
 {
   constexpr auto kPcLevel = 0;
 
@@ -764,17 +768,19 @@ void MpActor::EnsureTemplateChainEvaluated(espm::Loader& loader)
     return;
   }
 
-  EditChangeForm([&](MpChangeFormREFR& changeForm) {
-    auto headNpc = loader.GetBrowser().LookupById(baseId);
-    std::vector<uint32_t> res = LeveledListUtils::EvaluateTemplateChain(
-      loader.GetBrowser(), headNpc, kPcLevel);
-    std::vector<FormDesc> templateChain(res.size());
-    std::transform(
-      res.begin(), res.end(), templateChain.begin(), [&](uint32_t formId) {
-        return FormDesc::FromFormId(formId, worldState->espmFiles);
-      });
-    changeForm.templateChain = std::move(templateChain);
-  });
+  EditChangeForm(
+    [&](MpChangeFormREFR& changeForm) {
+      auto headNpc = loader.GetBrowser().LookupById(baseId);
+      std::vector<uint32_t> res = LeveledListUtils::EvaluateTemplateChain(
+        loader.GetBrowser(), headNpc, kPcLevel);
+      std::vector<FormDesc> templateChain(res.size());
+      std::transform(
+        res.begin(), res.end(), templateChain.begin(), [&](uint32_t formId) {
+          return FormDesc::FromFormId(formId, worldState->espmFiles);
+        });
+      changeForm.templateChain = std::move(templateChain);
+    },
+    mode);
 }
 
 std::chrono::steady_clock::time_point MpActor::GetLastRestorationTime(
