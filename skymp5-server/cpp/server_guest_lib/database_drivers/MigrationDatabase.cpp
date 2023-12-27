@@ -16,11 +16,13 @@ struct MigrationDatabase::Impl
   std::shared_ptr<IDatabase> newDatabase;
   std::shared_ptr<IDatabase> oldDatabase;
   std::function<void()> exit;
+  std::function<void()> terminate;
 };
 
 MigrationDatabase::MigrationDatabase(std::shared_ptr<IDatabase> newDatabase,
                                      std::shared_ptr<IDatabase> oldDatabase,
-                                     std::function<void()> exit)
+                                     std::function<void()> exit,
+                                     std::function<void()> terminate)
 {
   pImpl.reset(new Impl{ newDatabase, oldDatabase, exit });
 
@@ -85,11 +87,11 @@ MigrationDatabase::MigrationDatabase(std::shared_ptr<IDatabase> newDatabase,
 size_t MigrationDatabase::Upsert(const std::vector<MpChangeForm>& changeForms)
 {
   spdlog::error("MigrationDatabase::Upsert - should never be reached");
-  pImpl->exit();
+  pImpl->terminate();
 }
 
 void MigrationDatabase::Iterate(const IterateCallback& iterateCallback)
 {
   spdlog::error("MigrationDatabase::Iterate - should never be reached");
-  pImpl->exit();
+  pImpl->terminate();
 }
