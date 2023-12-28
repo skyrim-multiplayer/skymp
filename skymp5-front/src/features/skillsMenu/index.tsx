@@ -156,7 +156,7 @@ const SkillsMenu = ({ send }: { send: (message: string) => void }) => {
     // let returnExp = 0;
     // let memReturn = 0;
     send('/skill discard');
-    setconfirmDiscard(false)}
+    setconfirmDiscard(false);
     // Object.keys(playerData.perks).forEach((key) => {
     //   const index = mapper[key];
     //   const returnPrice = content[index[0]][index[1]].levelsPrice
