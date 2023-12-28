@@ -1025,6 +1025,13 @@ void MpActor::DropItem(const uint32_t baseId, const Inventory::Entry& entry)
   std::string editorId =
     lookupRes.rec->GetEditorId(worldState->GetEspmCache());
 
+  // TODO: remove this when we will be sure that none of armors crashes clients
+  if (lookupRes.rec->GetType().ToString() == "ARMO") {
+    spdlog::warn("MpActor::DropItem - Attempt to drop ARMO by actor {:x}",
+                 GetFormId());
+    return;
+  }
+
   spdlog::trace("MpActor::DropItem - dropping {}", editorId);
   RemoveItems({ entry });
 
