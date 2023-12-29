@@ -70,6 +70,10 @@ VarValue PapyrusObjectReference::AddItem(
   if (!selfRefr || !item.rec || count <= 0)
     return VarValue::None();
 
+  if (!espm::utils::IsItem(item.rec->GetType())) {
+    throw std::runtime_error("AddItem - form is not an item");
+  }
+
   std::vector<uint32_t> formIds;
   bool runSkympHacks = false;
 
@@ -112,6 +116,10 @@ VarValue PapyrusObjectReference::RemoveItem(
 
   if (!selfRefr || !item.rec)
     return VarValue::None();
+
+  if (!espm::utils::IsItem(item.rec->GetType())) {
+    throw std::runtime_error("RemoveItem - form is not an item");
+  }
 
   std::vector<uint32_t> formIds;
   bool runSkympHacks = false;
