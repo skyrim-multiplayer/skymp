@@ -30,7 +30,7 @@ export class SpApiInteractor {
         return SpApiInteractor.controller;
     }
 
-    static registerListenerForLookup(listenerName: string, listener: ClientListener): void {
+    private static registerListenerForLookup(listenerName: string, listener: ClientListener): void {
         if (SpApiInteractor.listenersForLookupByName.has(listenerName)) {
             throw new Error(`listener re-registration for name '${listenerName}'`);
         }
