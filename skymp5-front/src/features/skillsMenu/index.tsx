@@ -179,7 +179,7 @@ const SkillsMenu = ({ send }: { send: (message: string) => void }) => {
   const confirmHanlder = () => {
     setconfirmDiscard(true);
     setcurrentLevel('хотите удалить персонажа?');
-    setcurrentDescription('нажимая “да” вы полностью сбросите все выученные профессии и получите обратно половину накопленного опыта.');
+    setcurrentDescription('нажимая “да” вы полностью сбросите все выученные профессии и получите обратно половину потраченного опыта.');
   };
 
   if (!playerData) return <></>;
