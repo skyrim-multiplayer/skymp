@@ -67,32 +67,8 @@ import {
   getViewFromStorage,
   localIdToRemoteId,
   remoteIdToLocalId,
-<<<<<<< HEAD:skymp5-client/src/modelSource/remoteServer.ts
-} from '../view/worldViewMisc';
-import { FormModel, WorldModel } from './model';
-import { ModelSource } from './modelSource';
-import { MsgHandler } from './msgHandler';
-import { SendTarget } from './sendTarget';
-import { SpApiInteractor } from '../services/spApiInteractor';
-import { LoadGameService } from '../services/services/loadGameService';
-import { UpdateMovementMessage } from '../services/messages/updateMovementMessage';
-import { ChangeValuesMessage } from '../services/messages/changeValues';
-import { UpdateAnimationMessage } from '../services/messages/updateAnimationMessage';
-import { UpdateEquipmentMessage } from '../services/messages/updateEquipmentMessage';
-import { CustomPacketMessage } from '../services/messages/customPacketMessage';
-import { CustomEventMessage } from '../services/messages/customEventMessage';
-import { FinishSpSnippetMessage } from '../services/messages/finishSpSnippetMessage';
-import { RagdollService } from '../services/services/ragdollService';
-import { UpdateAppearanceMessage } from '../services/messages/updateAppearanceMessage';
-import { TeleportMessage } from '../services/messages/teleportMessage';
-import { DeathStateContainerMessage } from '../services/messages/deathStateContainerMessage';
-import { RespawnNeededError } from '../lib/errors';
-import { OpenContainer } from '../services/messages/openContainer';
-import { UpdatePropertyMessage } from '../services/messages/updatePropertyMessage';
-=======
 } from '../../view/worldViewMisc';
 import { TimeService } from './timeService';
->>>>>>> main:skymp5-client/src/services/services/remoteServer.ts
 
 const onceLoad = (
   refrId: number,
@@ -115,11 +91,7 @@ const onceLoad = (
 };
 
 const skipFormViewCreation = (
-<<<<<<< HEAD:skymp5-client/src/modelSource/remoteServer.ts
-  msg: UpdatePropertyMessage | messages.CreateActorMessage,
-=======
   msg: UpdatePropertyMessage | CreateActorMessage,
->>>>>>> main:skymp5-client/src/services/services/remoteServer.ts
 ) => {
   // Optimization added in #1186, however it doesn't work for doors for some reason
   return msg.refrId && msg.refrId < 0xff000000 && msg.baseRecordType !== 'DOOR';
@@ -720,13 +692,9 @@ export class RemoteServer extends ClientListener implements ModelSource {
     this.worldModel.forms[i].equipment = msg.data;
   }
 
-<<<<<<< HEAD:skymp5-client/src/modelSource/remoteServer.ts
-  UpdateProperty(msg: UpdatePropertyMessage): void {
-=======
   private onUpdatePropertyMessage(event: ConnectionMessage<UpdatePropertyMessage>): void {
     const msg = event.message;
 
->>>>>>> main:skymp5-client/src/services/services/remoteServer.ts
     if (skipFormViewCreation(msg)) {
       const refrId = msg.refrId;
       once('update', () => {
