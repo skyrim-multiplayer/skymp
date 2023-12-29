@@ -67,11 +67,26 @@ VarValue PapyrusObjectReference::AddItem(
   bool silent = static_cast<bool>(arguments[2].CastToBool());
   auto selfRefr = GetFormPtr<MpObjectReference>(self);
 
+  auto worldState = selfRefr->GetParent();
+  if (!worldState) {
+    throw std::runtime_error("AddItem - no WorldState attached");
+  }
+
   if (!selfRefr || !item.rec || count <= 0)
     return VarValue::None();
 
   if (!espm::utils::IsItem(item.rec->GetType())) {
     throw std::runtime_error("AddItem - form is not an item");
+  }
+
+  if (espm::utils::Is<espm::LIGH>(item.rec->GetType())) {
+    auto res =
+      espm::Convert<espm::LIGH>(item.rec)->GetData(worldState->GetEspmCache());
+    bool isTorch = res.data.flags & espm::LIGH::Flags::CanBeCarried;
+    if (!isTorch) {
+      throw std::runtime_error(
+        "AddItem - form is LIGH without CanBeCarried flag");
+    }
   }
 
   std::vector<uint32_t> formIds;
@@ -114,11 +129,26 @@ VarValue PapyrusObjectReference::RemoveItem(
   bool silent = static_cast<bool>(arguments[2].CastToBool());
   auto refrToAdd = GetFormPtr<MpObjectReference>(arguments[3]);
 
+  auto worldState = selfRefr->GetParent();
+  if (!worldState) {
+    throw std::runtime_error("AddItem - no WorldState attached");
+  }
+
   if (!selfRefr || !item.rec)
     return VarValue::None();
 
   if (!espm::utils::IsItem(item.rec->GetType())) {
     throw std::runtime_error("RemoveItem - form is not an item");
+  }
+
+  if (espm::utils::Is<espm::LIGH>(item.rec->GetType())) {
+    auto res =
+      espm::Convert<espm::LIGH>(item.rec)->GetData(worldState->GetEspmCache());
+    bool isTorch = res.data.flags & espm::LIGH::Flags::CanBeCarried;
+    if (!isTorch) {
+      throw std::runtime_error(
+        "RemoveItem - form is LIGH without CanBeCarried flag");
+    }
   }
 
   std::vector<uint32_t> formIds;
