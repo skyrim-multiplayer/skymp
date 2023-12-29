@@ -59,9 +59,7 @@ void OnSendEventEnter(GumInvocationContext* ic)
             name[3] == skyui_name[3]) {
           blockEvents = false;
           break;
-        }
-
-        if (!stricmp(name, "defaultDisableHavokOnLoad")) {
+        } else if (!stricmp(name, "defaultDisableHavokOnLoad")) {
           // Maybe worth unblocking events only for this script, not for all
           blockEvents = false;
           break;
