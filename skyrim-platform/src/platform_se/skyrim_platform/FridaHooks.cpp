@@ -8,8 +8,6 @@
 
 #include <fmt/format.h>
 
-#include <debugapi.h>
-
 /**
  * Send Event hook
  */
