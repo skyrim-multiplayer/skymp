@@ -4,6 +4,7 @@ import * as sp from "skyrimPlatform";
 
 export class SpApiInteractor {
     static setup(listeners: ClientListener[]) {
+        listeners.forEach(listener => SpApiInteractor.registerListenerForLookup(listener.constructor.name, listener));
     }
 
     static makeController(): CombinedController {

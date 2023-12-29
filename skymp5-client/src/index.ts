@@ -88,7 +88,6 @@ const main = () => {
       new AnimDebugService(sp, controller)
     ];
     SpApiInteractor.setup(listeners);
-    listeners.forEach(listener => SpApiInteractor.registerListenerForLookup(listener.constructor.name, listener));
   }
   catch (e) {
     // TODO: handle setup failure. will output to game console by default
