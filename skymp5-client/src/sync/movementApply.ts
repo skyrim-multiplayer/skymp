@@ -21,7 +21,7 @@ export const applyMovement = (refr: ObjectReference, m: Movement, isMyClone?: bo
   const lagUnitsNoZ = Math.round(Math.sqrt(sqr(m.pos[0] - acX) + sqr(m.pos[1] - acY)));
 
   if (isMyClone === true) {
-    SpApiInteractor.makeController().emitter.emit("newLocalLagValueCalculated", { lagUnitsNoZ });
+    SpApiInteractor.getControllerInstance().emitter.emit("newLocalLagValueCalculated", { lagUnitsNoZ });
   }
 
   translateTo(refr, m);
@@ -61,7 +61,7 @@ export const applyMovement = (refr: ObjectReference, m: Movement, isMyClone?: bo
   applyWeapDrawn(ac, m.isWeapDrawn);
   applyHealthPercentage(ac, m.healthPercentage);
 
-  SpApiInteractor.makeController().emitter.emit("applyDeathStateEvent", { actor: ac, isDead: m.isDead });
+  SpApiInteractor.getControllerInstance().emitter.emit("applyDeathStateEvent", { actor: ac, isDead: m.isDead });
 };
 
 const keepOffsetFromActor = (ac: Actor, m: Movement) => {

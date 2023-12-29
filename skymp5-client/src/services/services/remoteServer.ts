@@ -141,7 +141,7 @@ on('tick', () => {
   if (loggingStartMoment && Date.now() - loggingStartMoment > maxLoggingDelay) {
     printConsole('Logging in failed. Reconnecting.');
     showConnectionError();
-    SpApiInteractor.makeController().lookupListener(NetworkingService).reconnect();
+    SpApiInteractor.getControllerInstance().lookupListener(NetworkingService).reconnect();
     loggingStartMoment = 0;
   }
 });
@@ -166,7 +166,7 @@ const loginWithSkympIoCredentials = () => {
         },
       },
     };
-    SpApiInteractor.makeController().emitter.emit("sendMessage", {
+    SpApiInteractor.getControllerInstance().emitter.emit("sendMessage", {
       message: message,
       reliability: "reliable"
     });
@@ -183,7 +183,7 @@ const loginWithSkympIoCredentials = () => {
         },
       },
     };
-    SpApiInteractor.makeController().emitter.emit("sendMessage", {
+    SpApiInteractor.getControllerInstance().emitter.emit("sendMessage", {
       message: message,
       reliability: "reliable"
     });
@@ -300,7 +300,7 @@ export class RemoteServer extends ClientListener {
           }
         };
 
-        SpApiInteractor.makeController().emitter.emit("sendMessage", {
+        SpApiInteractor.getControllerInstance().emitter.emit("sendMessage", {
           message: message,
           reliability: "reliable"
         });
@@ -319,7 +319,7 @@ export class RemoteServer extends ClientListener {
         'cell/world is',
         msg.worldOrCell.toString(16),
       );
-      const ragdollService = SpApiInteractor.makeController().lookupListener(RagdollService);
+      const ragdollService = SpApiInteractor.getControllerInstance().lookupListener(RagdollService);
 
       const refrId = refr?.getFormID();
 
@@ -739,7 +739,7 @@ export class RemoteServer extends ClientListener {
           : Actor.from(Game.getFormEx(remoteIdToLocalId(form.refrId ?? 0)));
       if (actor) {
         try {
-          SpApiInteractor.makeController().emitter.emit("applyDeathStateEvent", {
+          SpApiInteractor.getControllerInstance().emitter.emit("applyDeathStateEvent", {
             actor: actor,
             isDead: msg.tIsDead.data as boolean
           });
@@ -872,7 +872,7 @@ export class RemoteServer extends ClientListener {
               args,
               eventName
             };
-            SpApiInteractor.makeController().emitter.emit("sendMessage", {
+            SpApiInteractor.getControllerInstance().emitter.emit("sendMessage", {
               message: message,
               reliability: "reliable"
             });

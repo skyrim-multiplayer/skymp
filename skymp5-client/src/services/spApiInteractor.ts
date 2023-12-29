@@ -7,7 +7,7 @@ export class SpApiInteractor {
         listeners.forEach(listener => SpApiInteractor.registerListenerForLookup(listener.constructor.name, listener));
     }
 
-    static makeController(): CombinedController {
+    static getControllerInstance(): CombinedController {
         if (SpApiInteractor.controller) {
             return SpApiInteractor.controller;
         }

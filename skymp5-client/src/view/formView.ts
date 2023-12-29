@@ -169,7 +169,7 @@ export class FormView implements View<FormModel> {
             Actor.from(refr)?.setActorValue("Aggression", 2);
           }
         }
-        SpApiInteractor.makeController().lookupListener(WorldCleanerService).modWcProtection(refr.getFormID(), 1);
+        SpApiInteractor.getControllerInstance().lookupListener(WorldCleanerService).modWcProtection(refr.getFormID(), 1);
 
         // TODO: reset all states?
         this.eqState = this.getDefaultEquipState();
@@ -225,7 +225,7 @@ export class FormView implements View<FormModel> {
       if (refrId >= 0xff000000) {
         const refr = ObjectReference.from(Game.getFormEx(refrId));
         if (refr) refr.delete();
-        SpApiInteractor.makeController().lookupListener(WorldCleanerService).modWcProtection(refrId, -1);
+        SpApiInteractor.getControllerInstance().lookupListener(WorldCleanerService).modWcProtection(refrId, -1);
         const ac = Actor.from(refr);
         if (ac) {
           TESModPlatform.setWeaponDrawnMode(ac, -1);

@@ -49,7 +49,7 @@ once("update", () => {
 
 const main = () => {
   try {
-    const controller = SpApiInteractor.makeController();
+    const controller = SpApiInteractor.getControllerInstance();
 
     const listeners = [
       new BlockPapyrusEventsService(sp, controller),
