@@ -65,6 +65,8 @@ void HeuristicPolicy::BeforeSendPapyrusEvent(MpForm* form,
               !Utils::stricmp(eventName, "OnTrigger")) &&
              argumentsCount >= 1) {
     actor = GetFormPtr<MpActor>(arguments[0]);
+  } else if (!Utils::stricmp(eventName, "OnHit") && argumentsCount >= 1) {
+    actor = GetFormPtr<MpActor>(arguments[0]);
   }
 
   if (stackInfo.size() <= stackId) {

@@ -75,6 +75,8 @@ public:
   uint64_t nextRelootDatetime = 0;
   bool isDisabled = false;
   int32_t profileId = -1;
+  bool isDeleted = false;
+  uint32_t count = 0;
 
   bool isRaceMenuOpen = false;
   bool isDead = false;
@@ -100,6 +102,9 @@ public:
   // Used for PlayAnimation (object reference)
   std::optional<std::string> lastAnimation;
 
+  // Used for SetDisplayName (object reference)
+  std::optional<std::string> displayName;
+
   // Please update 'ActorTest.cpp' when adding new Actor-related rows
 
   DynamicFields dynamicFields;
@@ -109,10 +114,10 @@ public:
     return std::make_tuple(
       recType, formDesc, baseDesc, position.x, position.y, position.z, angle.x,
       angle.y, angle.z, worldOrCellDesc, inv.ToJson(), isHarvested, isOpen,
-      baseContainerAdded, nextRelootDatetime, isDisabled, profileId,
-      isRaceMenuOpen, isDead, consoleCommandsAllowed, appearanceDump,
+      baseContainerAdded, nextRelootDatetime, isDisabled, profileId, isDeleted,
+      count, isRaceMenuOpen, isDead, consoleCommandsAllowed, appearanceDump,
       equipmentDump, actorValues.ToTuple(), spawnPoint, dynamicFields,
-      spawnDelay, learnedSpells, templateChain, lastAnimation);
+      spawnDelay, learnedSpells, templateChain, lastAnimation, displayName);
   }
 
   static nlohmann::json ToJson(const MpChangeFormREFR& changeForm);

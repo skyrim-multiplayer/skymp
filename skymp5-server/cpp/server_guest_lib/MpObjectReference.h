@@ -76,6 +76,8 @@ public:
   const bool& IsHarvested() const;
   const bool& IsOpen() const;
   const bool& IsDisabled() const;
+  const bool& IsDeleted() const;
+  const uint32_t& GetCount() const;
   std::chrono::system_clock::duration GetRelootTime() const;
   bool GetAnimationVariableBool(const char* name) const;
   bool IsPointInsidePrimitive(const NiPoint3& point) const;
@@ -114,12 +116,15 @@ public:
                    bool isVisibleByNeighbor);
   void SetTeleportFlag(bool value);
   void SetPosAndAngleSilent(const NiPoint3& pos, const NiPoint3& rot);
+  void Delete();
+  void SetCount(uint32_t count);
 
   // If you want to completely remove ObjectReference from the grid you need
-  // toUnsubscribeFromAll and then RemoveFromGrid. Do not use any of these
-  // functions without another in new code if you have no good reason for this.
+  // toUnsubscribeFromAll and then RemoveFromGridAndUnsubscribeAll. Do not use
+  // any of these functions without another in new code if you have no good
+  // reason for this.
   void UnsubscribeFromAll();
-  void RemoveFromGrid();
+  void RemoveFromGridAndUnsubscribeAll();
 
   void SetInventory(const Inventory& inv);
   void AddItem(uint32_t baseId, uint32_t count);
@@ -140,6 +145,7 @@ public:
                           MpObjectReference* listener);
 
   void SetLastAnimation(const std::string& lastAnimation);
+  void SetDisplayName(const std::string& newName);
 
   const std::set<MpObjectReference*>& GetListeners() const;
   const std::set<MpObjectReference*>& GetEmitters() const;

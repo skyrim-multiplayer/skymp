@@ -156,6 +156,7 @@ const SkillsMenu = ({ send }: { send: (message: string) => void }) => {
     // let returnExp = 0;
     // let memReturn = 0;
     send('/skill discard');
+    setconfirmDiscard(false);
     // Object.keys(playerData.perks).forEach((key) => {
     //   const index = mapper[key];
     //   const returnPrice = content[index[0]][index[1]].levelsPrice
@@ -178,7 +179,7 @@ const SkillsMenu = ({ send }: { send: (message: string) => void }) => {
   const confirmHanlder = () => {
     setconfirmDiscard(true);
     setcurrentLevel('хотите удалить персонажа?');
-    setcurrentDescription('нажимая "да" вы полностью теряете все накопленные очки опыта, вкачанные навыки, имя персонажа, внешность и инвентарь. В первую очередь вы можете удалить данные персонажа, если он умер.');
+    setcurrentDescription('нажимая “да” вы полностью сбросите все выученные профессии и получите обратно половину потраченного опыта.');
   };
 
   if (!playerData) return <></>;

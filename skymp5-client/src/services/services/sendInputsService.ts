@@ -20,6 +20,8 @@ import { ChangeValuesMessage } from "../messages/changeValues";
 import { UpdateAnimationMessage } from "../messages/updateAnimationMessage";
 import { UpdateEquipmentMessage } from "../messages/updateEquipmentMessage";
 import { UpdateAppearanceMessage } from "../messages/updateAppearanceMessage";
+import { RemoteServer } from "./remoteServer";
+import { DeathService } from "./deathService";
 
 const playerFormId = 0x14;
 
@@ -75,11 +77,7 @@ export class SendInputsService extends ClientListener {
             typeof this.sp.storage['hosted'] === typeof [] ? this.sp.storage['hosted'] : [];
         const targets = [undefined].concat(hosted as any);
 
-        const skympClient = this.controller.lookupListener(SkympClient);
-        const modelSource = skympClient.modelSource;
-        if (!modelSource) {
-            return;
-        }
+        const modelSource = this.controller.lookupListener(RemoteServer);
 
         const world = modelSource.getWorldModel();
 
@@ -132,26 +130,35 @@ export class SendInputsService extends ClientListener {
             this.prevValues.magicka === av.magicka
         ) {
             return;
-        } else {
-            if (
-                currentTime - this.prevActorValuesUpdateTime < 2000 &&
-                this.actorValuesNeedUpdate === false
-            ) {
-                return;
-            }
-            const message: MessageWithRefrId<ChangeValuesMessage> = {
-                t: MsgType.ChangeValues,
-                data: av,
-                _refrId
-            };
-            this.controller.emitter.emit("sendMessageWithRefrId", {
-                message,
-                reliability: "unreliable"
-            });
-            this.actorValuesNeedUpdate = false;
-            this.prevValues = av;
-            this.prevActorValuesUpdateTime = currentTime;
         }
+
+
+        if (
+            currentTime - this.prevActorValuesUpdateTime < 2000 &&
+            this.actorValuesNeedUpdate === false
+        ) {
+            return;
+        }
+
+        const deathService = this.controller.lookupListener(DeathService);
+        if (deathService.isBusy()) {
+            this.logTrace("Not sending actor values, death service is busy");
+            return;
+        }
+
+        const message: MessageWithRefrId<ChangeValuesMessage> = {
+            t: MsgType.ChangeValues,
+            data: av,
+            _refrId
+        };
+        this.controller.emitter.emit("sendMessageWithRefrId", {
+            message,
+            reliability: "unreliable"
+        });
+        this.actorValuesNeedUpdate = false;
+        this.prevValues = av;
+        this.prevActorValuesUpdateTime = currentTime;
+
     }
 
     private sendAnimation(_refrId?: number) {
@@ -173,7 +180,8 @@ export class SendInputsService extends ClientListener {
             !lastAnimationSent ||
             anim.numChanges !== lastAnimationSent.numChanges
         ) {
-            if (anim.animEventName !== '') {
+            // Drink potion anim from this mod https://www.nexusmods.com/skyrimspecialedition/mods/97660
+            if (anim.animEventName !== '' && !anim.animEventName.startsWith("DrinkPotion_")) {
                 this.lastAnimationSent.set(refrIdStr, anim);
                 this.updateActorValuesAfterAnimation(anim.animEventName);
                 const message: MessageWithRefrId<UpdateAnimationMessage> = {

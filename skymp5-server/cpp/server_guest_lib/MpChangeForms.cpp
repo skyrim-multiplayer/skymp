@@ -36,6 +36,8 @@ nlohmann::json MpChangeForm::ToJson(const MpChangeForm& changeForm)
   res["nextRelootDatetime"] = changeForm.nextRelootDatetime;
   res["isDisabled"] = changeForm.isDisabled;
   res["profileId"] = changeForm.profileId;
+  res["isDeleted"] = changeForm.isDeleted;
+  res["count"] = changeForm.count;
   res["isRaceMenuOpen"] = changeForm.isRaceMenuOpen;
   res["dynamicFields"] = changeForm.dynamicFields.GetAsJson();
 
@@ -82,6 +84,10 @@ nlohmann::json MpChangeForm::ToJson(const MpChangeForm& changeForm)
   //   res["lastAnimation"] = *changeForm.lastAnimation;
   // }
 
+  if (changeForm.displayName.has_value()) {
+    res["displayName"] = *changeForm.displayName;
+  }
+
   return res;
 }
 
@@ -92,17 +98,18 @@ MpChangeForm MpChangeForm::JsonToChangeForm(simdjson::dom::element& element)
     worldOrCellDesc("worldOrCellDesc"), inv("inv"), isHarvested("isHarvested"),
     isOpen("isOpen"), baseContainerAdded("baseContainerAdded"),
     nextRelootDatetime("nextRelootDatetime"), isDisabled("isDisabled"),
-    profileId("profileId"), isRaceMenuOpen("isRaceMenuOpen"),
-    appearanceDump("appearanceDump"), equipmentDump("equipmentDump"),
-    learnedSpells("learnedSpells"), dynamicFields("dynamicFields"),
-    healthPercentage("healthPercentage"),
+    profileId("profileId"), isDeleted("isDeleted"), count("count"),
+    isRaceMenuOpen("isRaceMenuOpen"), appearanceDump("appearanceDump"),
+    equipmentDump("equipmentDump"), learnedSpells("learnedSpells"),
+    dynamicFields("dynamicFields"), healthPercentage("healthPercentage"),
     magickaPercentage("magickaPercentage"),
     staminaPercentage("staminaPercentage"), isDead("isDead"),
     consoleCommandsAllowed("consoleCommandsAllowed"),
     spawnPointPos("spawnPoint_pos"), spawnPointRot("spawnPoint_rot"),
     spawnPointCellOrWorldDesc("spawnPoint_cellOrWorldDesc"),
     spawnDelay("spawnDelay"), effects("effects"),
-    templateChain("templateChain"), lastAnimation("lastAnimation");
+    templateChain("templateChain"), lastAnimation("lastAnimation"),
+    displayName("displayName");
 
   MpChangeForm res;
   ReadEx(element, recType, &res.recType);
@@ -138,6 +145,17 @@ MpChangeForm MpChangeForm::JsonToChangeForm(simdjson::dom::element& element)
   ReadEx(element, nextRelootDatetime, &res.nextRelootDatetime);
   ReadEx(element, isDisabled, &res.isDisabled);
   ReadEx(element, profileId, &res.profileId);
+
+  if (element.at_pointer(isDeleted.GetData()).error() ==
+      simdjson::error_code::SUCCESS) {
+    ReadEx(element, isDeleted, &res.isDeleted);
+  }
+
+  if (element.at_pointer(count.GetData()).error() ==
+      simdjson::error_code::SUCCESS) {
+    ReadEx(element, count, &res.count);
+  }
+
   ReadEx(element, isRaceMenuOpen, &res.isRaceMenuOpen);
 
   ReadEx(element, appearanceDump, &jTmp);
@@ -213,6 +231,13 @@ MpChangeForm MpChangeForm::JsonToChangeForm(simdjson::dom::element& element)
     const char* tmp;
     ReadEx(element, lastAnimation, &tmp);
     res.lastAnimation = tmp;
+  }
+
+  if (element.at_pointer(displayName.GetData()).error() ==
+      simdjson::error_code::SUCCESS) {
+    const char* tmp;
+    ReadEx(element, displayName, &tmp);
+    res.displayName = tmp;
   }
 
   return res;

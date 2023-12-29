@@ -146,7 +146,7 @@ void PartOne::SetUserActor(Networking::UserId userId, uint32_t actorFormId)
     // properly. If you do something wrong here, players would not be able to
     // interact with items in the same cell after reconnecting.
     actor.UnsubscribeFromAll();
-    actor.RemoveFromGrid();
+    actor.RemoveFromGridAndUnsubscribeAll();
 
     serverState.actorsMap.Set(userId, &actor);
 
@@ -265,10 +265,33 @@ void PartOne::AttachSaveStorage(std::shared_ptr<ISaveStorage> saveStorage)
       changeForm.isDisabled = true;
     }
 
+    if (changeForm.isDeleted) {
+      pImpl->logger->info(
+        "Skipping deleted form {}, will likely overwrite at some point",
+        changeForm.formDesc.ToString());
+      return;
+    }
+
+    bool isFF = changeForm.formDesc.file.empty();
+
+    if (isFF) {
+      auto baseId = changeForm.baseDesc.ToFormId(worldState.espmFiles);
+      auto lookupRes = GetEspm().GetBrowser().LookupById(baseId);
+
+      if (lookupRes.rec && espm::utils::IsItem(lookupRes.rec->GetType())) {
+        pImpl->logger->info("Skipping FF item {} (type is {}), will likely "
+                            "overwrite at some point",
+                            changeForm.formDesc.ToString(),
+                            lookupRes.rec->GetType().ToString());
+        return;
+      }
+    }
+
     n++;
     worldState.LoadChangeForm(changeForm, CreateFormCallbacks());
-    if (changeForm.profileId >= 0)
+    if (changeForm.profileId >= 0) {
       ++numPlayerCharacters;
+    }
   });
 
   pImpl->logger->info("AttachSaveStorage took {} ticks, loaded {} ChangeForms "
@@ -465,12 +488,18 @@ FormCallbacks PartOne::CreateFormCallbacks()
       SLNet::BitStream stream;
       g_serializer->Serialize(message, stream);
 
-      auto hosterIterator = worldState.hosters.find(actor->GetFormId());
-      if (hosterIterator != worldState.hosters.end()) {
-        auto& hosterActor =
-          worldState.GetFormAt<MpActor>(hosterIterator->second);
-        actor = &hosterActor;
-        // Direct messages such as Teleport, ChangeValues to our host
+      bool isOffline = st->UserByActor(actor) == Networking::InvalidUserId;
+
+      // Only send to hoster if actor is offline (no active user)
+      // This fixes December 2023 Update "invisible chat" bug
+      if (isOffline) {
+        auto hosterIterator = worldState.hosters.find(actor->GetFormId());
+        if (hosterIterator != worldState.hosters.end()) {
+          auto& hosterActor =
+            worldState.GetFormAt<MpActor>(hosterIterator->second);
+          actor = &hosterActor;
+          // Send messages such as Teleport, ChangeValues to our host
+        }
       }
 
       auto targetuserId = st->UserByActor(actor);

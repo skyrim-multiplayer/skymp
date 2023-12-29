@@ -1,15 +1,27 @@
 name: Deploy
-on:
+
+on:    
+    repository_dispatch:
+        types: [deploy]
     workflow_dispatch:
         inputs:
             action:
-                description: action (deploy/restart/stop)
+                description: 'Action'
                 required: true
-                default: restart
+                type: choice
+                options:
+                    - 'deploy'
+                    - 'restart'
+                    - 'stop'
+                default: 'restart'
             branch:
-                description: branch, meaning server instance (sweetpie/indev)
+                description: 'Branch, meaning server instance'
                 required: true
-                default: indev
+                type: choice
+                options:
+                    - 'sweetpie'
+                    - 'indev'
+                default: 'indev'
 
 env:
     BUILD_TYPE: RelWithDebInfo
@@ -19,10 +31,21 @@ jobs:
     deploy:
         runs-on: ubuntu-latest
         steps:
-          - name: Get action
+          - name: Set up workflow_dispatch inputs
+            if: github.event_name == 'workflow_dispatch'
             run: |
-                echo "DEPLOY_BRANCH=${{github.event.inputs.branch}}" >> "$GITHUB_ENV"
-                echo "DEPLOY_ACTION=${{github.event.inputs.action}}" >> "$GITHUB_ENV"
+              echo "DEPLOY_BRANCH=${{ github.event.inputs.branch }}" >> $GITHUB_ENV
+              echo "DEPLOY_ACTION=${{ github.event.inputs.action }}" >> $GITHUB_ENV
+
+          - name: Set up repository_dispatch inputs
+            if: github.event_name == 'repository_dispatch'
+            run: |
+              echo "Received Payload:"
+              echo "${{ github.event.client_payload.inputs.branch }}"
+              echo "${{ github.event.client_payload.inputs.action }}"
+
+              echo "DEPLOY_BRANCH=${{ github.event.client_payload.inputs.branch }}" >> $GITHUB_ENV
+              echo "DEPLOY_ACTION=${{ github.event.client_payload.inputs.action }}" >> $GITHUB_ENV
 
           - name: Checkout (full)
             if: ${{env.DEPLOY_ACTION == 'deploy'}}

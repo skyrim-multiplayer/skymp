@@ -5,41 +5,69 @@ import {
   Cell,
   Game,
   ObjectReference,
-  Spell,
   TESModPlatform,
   Ui,
   Utility,
   WorldSpace,
-  browser,
   on,
   once,
   printConsole,
   storage,
 } from 'skyrimPlatform';
 
-import * as netInfo from '../debug/netInfoSystem';
-import * as updateOwner from '../gamemodeApi/updateOwner';
-import * as messages from '../messages';
+import * as updateOwner from '../../gamemodeApi/updateOwner';
+import * as messages from '../../messages';
 
 /* eslint-disable @typescript-eslint/no-empty-function */
-import * as networking from '../networking';
-import * as spSnippet from '../spSnippet';
-import { ObjectReferenceEx } from '../extensions/objectReferenceEx';
-import { AuthGameData } from '../features/authModel';
-import { IdManager } from '../lib/idManager';
-import { nameof } from '../lib/nameof';
-import { setActorValuePercentage } from '../sync/actorvalues';
-import { applyAppearanceToPlayer } from '../sync/appearance';
-import { isBadMenuShown } from '../sync/equipment';
-import { Inventory, applyInventory } from '../sync/inventory';
-import { Movement } from '../sync/movement';
-import { learnSpells, removeAllSpells } from '../sync/spell';
-import { ModelApplyUtils } from '../view/modelApplyUtils';
+import { ObjectReferenceEx } from '../../extensions/objectReferenceEx';
+import { AuthGameData } from '../../features/authModel';
+import { IdManager } from '../../lib/idManager';
+import { nameof } from '../../lib/nameof';
+import { setActorValuePercentage } from '../../sync/actorvalues';
+import { applyAppearanceToPlayer } from '../../sync/appearance';
+import { isBadMenuShown } from '../../sync/equipment';
+import { Inventory, applyInventory } from '../../sync/inventory';
+import { Movement } from '../../sync/movement';
+import { learnSpells, removeAllSpells } from '../../sync/spell';
+import { ModelApplyUtils } from '../../view/modelApplyUtils';
+import { FormModel, WorldModel } from '../../modelSource/model';
+import { ModelSource } from '../../modelSource/modelSource';
+import { SpApiInteractor } from '../spApiInteractor';
+import { LoadGameService } from './loadGameService';
+import { UpdateMovementMessage } from '../messages/updateMovementMessage';
+import { ChangeValuesMessage } from '../messages/changeValues';
+import { UpdateAnimationMessage } from '../messages/updateAnimationMessage';
+import { UpdateEquipmentMessage } from '../messages/updateEquipmentMessage';
+import { CustomPacketMessage } from '../messages/customPacketMessage';
+import { CustomEventMessage } from '../messages/customEventMessage';
+import { RagdollService } from './ragdollService';
+import { UpdateAppearanceMessage } from '../messages/updateAppearanceMessage';
+import { TeleportMessage } from '../messages/teleportMessage';
+import { DeathStateContainerMessage } from '../messages/deathStateContainerMessage';
+import { RespawnNeededError } from '../../lib/errors';
+import { OpenContainerMessage } from '../messages/openContainerMessage';
+import { NetworkingService } from './networkingService';
+import { ActivateMessage } from '../messages/activateMessage';
+import { ClientListener, CombinedController, Sp } from './clientListener';
+import { HostStartMessage } from '../messages/hostStartMessage';
+import { HostStopMessage } from '../messages/hostStopMessage';
+import { ConnectionMessage } from '../events/connectionMessage';
+import { SetInventoryMessage } from '../messages/setInventoryMessage';
+import { CreateActorMessage } from '../messages/createActorMessage';
+import { UpdateGamemodeDataMessage } from '../messages/updateGameModeDataMessage';
+import { CustomPacketMessage2 } from '../messages/customPacketMessage2';
+import { DestroyActorMessage } from '../messages/destroyActorMessage';
+import { SetRaceMenuOpenMessage } from '../messages/setRaceMenuOpenMessage';
+import { UpdatePropertyMessage } from '../messages/updatePropertyMessage';
+import { TeleportMessage2 } from '../messages/teleportMessage2';
+
+// TODO: refactor worldViewMisc into service
 import {
   getObjectReference,
   getViewFromStorage,
   localIdToRemoteId,
   remoteIdToLocalId,
+<<<<<<< HEAD:skymp5-client/src/modelSource/remoteServer.ts
 } from '../view/worldViewMisc';
 import { FormModel, WorldModel } from './model';
 import { ModelSource } from './modelSource';
@@ -61,6 +89,10 @@ import { DeathStateContainerMessage } from '../services/messages/deathStateConta
 import { RespawnNeededError } from '../lib/errors';
 import { OpenContainer } from '../services/messages/openContainer';
 import { UpdatePropertyMessage } from '../services/messages/updatePropertyMessage';
+=======
+} from '../../view/worldViewMisc';
+import { TimeService } from './timeService';
+>>>>>>> main:skymp5-client/src/services/services/remoteServer.ts
 
 const onceLoad = (
   refrId: number,
@@ -83,7 +115,11 @@ const onceLoad = (
 };
 
 const skipFormViewCreation = (
+<<<<<<< HEAD:skymp5-client/src/modelSource/remoteServer.ts
   msg: UpdatePropertyMessage | messages.CreateActorMessage,
+=======
+  msg: UpdatePropertyMessage | CreateActorMessage,
+>>>>>>> main:skymp5-client/src/services/services/remoteServer.ts
 ) => {
   // Optimization added in #1186, however it doesn't work for doors for some reason
   return msg.refrId && msg.refrId < 0xff000000 && msg.baseRecordType !== 'DOOR';
@@ -129,11 +165,12 @@ const showConnectionError = () => {
 
 let loggingStartMoment = 0;
 on('tick', () => {
-  const maxLoggingDelay = 5000;
+  // TODO: Should be no hardcoded/magic-number limit
+  const maxLoggingDelay = 15000;
   if (loggingStartMoment && Date.now() - loggingStartMoment > maxLoggingDelay) {
     printConsole('Logging in failed. Reconnecting.');
     showConnectionError();
-    networking.reconnect();
+    SpApiInteractor.makeController().lookupListener(NetworkingService).reconnect();
     loggingStartMoment = 0;
   }
 });
@@ -158,24 +195,27 @@ const loginWithSkympIoCredentials = () => {
         },
       },
     };
-    // TODO: emit event instead of sending directly to avoid type cast and dependency on network module
-    networking.send(message as unknown as Record<string, unknown>, true);
+    SpApiInteractor.makeController().emitter.emit("sendMessage", {
+      message: message,
+      reliability: "reliable"
+    });
     return;
   }
   if (authData?.remote) {
     printConsole('Logging in as skymp.io user');
-    networking.send(
-      {
-        t: messages.MsgType.CustomPacket,
-        content: {
-          customPacketType: 'loginWithSkympIo',
-          gameData: {
-            session: authData.remote.session,
-          },
+    const message: CustomPacketMessage = {
+      t: messages.MsgType.CustomPacket,
+      content: {
+        customPacketType: 'loginWithSkympIo',
+        gameData: {
+          session: authData.remote.session,
         },
       },
-      true,
-    );
+    };
+    SpApiInteractor.makeController().emitter.emit("sendMessage", {
+      message: message,
+      reliability: "reliable"
+    });
     return;
   }
 
@@ -210,40 +250,101 @@ const unequipIronHelmet = () => {
   if (pl) pl.unequipItem(ironHelment, false, true);
 };
 
-export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
-  setInventory(msg: messages.SetInventory): void {
+export class RemoteServer extends ClientListener implements ModelSource {
+  constructor(private sp: Sp, private controller: CombinedController) {
+    super();
+
+    this.controller.emitter.on("hostStartMessage", (e) => this.onHostStartMessage(e));
+    this.controller.emitter.on("hostStopMessage", (e) => this.onHostStopMessage(e));
+    this.controller.emitter.on("setInventoryMessage", (e) => this.onSetInventoryMessage(e));
+    this.controller.emitter.on("openContainerMessage", (e) => this.onOpenContainerMessage(e));
+    this.controller.emitter.on("updateMovementMessage", (e) => this.onUpdateMovementMessage(e));
+    this.controller.emitter.on("updateAnimationMessage", (e) => this.onUpdateAnimationMessage(e));
+    this.controller.emitter.on("updateEquipmentMessage", (e) => this.onUpdateEquipmentMessage(e));
+    this.controller.emitter.on("changeValuesMessage", (e) => this.onChangeValuesMessage(e));
+    this.controller.emitter.on("updateAppearanceMessage", (e) => this.onUpdateAppearanceMessage(e));
+    this.controller.emitter.on("teleportMessage", (e) => this.onTeleportMessage(e));
+    this.controller.emitter.on("teleportMessage2", (e) => this.onTeleportMessage(e));
+    this.controller.emitter.on("setInventoryMessage", (e) => this.onSetInventoryMessage(e));
+    this.controller.emitter.on("createActorMessage", (e) => this.onCreateActorMessage(e));
+    this.controller.emitter.on("customPacketMessage2", (e) => this.onCustomPacketMessage2(e));
+    this.controller.emitter.on("destroyActorMessage", (e) => this.onDestroyActorMessage(e));
+    this.controller.emitter.on("setRaceMenuOpenMessage", (e) => this.onSetRaceMenuOpenMessage(e));
+    this.controller.emitter.on("updateGamemodeDataMessage", (e) => this.onUpdateGamemodeDataMessage(e));
+    this.controller.emitter.on("updatePropertyMessage", (e) => this.onUpdatePropertyMessage(e));
+    this.controller.emitter.on("deathStateContainerMessage", (e) => this.onDeathStateContainerMessage(e));
+
+    this.controller.emitter.on("connectionAccepted", () => this.handleConnectionAccepted());
+  }
+
+  private onHostStartMessage(event: ConnectionMessage<HostStartMessage>) {
+    const msg = event.message;
+    const target = msg.target;
+
+    let hosted = storage['hosted'];
+    if (typeof hosted !== typeof []) {
+      // if you try to switch to Set please checkout .concat usage.
+      // concat compiles but doesn't work as expected
+      hosted = new Array<number>();
+      storage['hosted'] = hosted;
+    }
+
+    if (!(hosted as Array<unknown>).includes(target)) {
+      (hosted as Array<unknown>).push(target);
+    }
+  }
+
+  private onHostStopMessage(event: ConnectionMessage<HostStopMessage>) {
+    const msg = event.message;
+    const target = msg.target;
+    this.logTrace('hostStop ' + target.toString(16));
+
+    const hosted = storage['hosted'] as Array<number>;
+    if (typeof hosted === typeof []) {
+      storage['hosted'] = hosted.filter((x) => x !== target);
+    }
+  }
+
+  private onSetInventoryMessage(event: ConnectionMessage<SetInventoryMessage>): void {
+    const msg = event.message;
     once('update', () => {
       setPcInventory(msg.inventory);
       pcInvLastApply = 0;
     });
   }
 
-  OpenContainer(msg: OpenContainer): void {
+  private onOpenContainerMessage(event: ConnectionMessage<OpenContainerMessage>): void {
     once('update', async () => {
       await Utility.wait(0.1); // Give a chance to update inventory
       (
-        ObjectReference.from(Game.getFormEx(msg.target)) as ObjectReference
+        ObjectReference.from(Game.getFormEx(event.message.target)) as ObjectReference
       ).activate(Game.getPlayer(), true);
       (async () => {
         while (!Ui.isMenuOpen('ContainerMenu')) await Utility.wait(0.1);
         while (Ui.isMenuOpen('ContainerMenu')) await Utility.wait(0.1);
-        networking.send(
-          {
-            t: messages.MsgType.Activate,
-            data: { caster: 0x14, target: msg.target },
-          },
-          true,
-        );
+
+        const message: ActivateMessage = {
+          t: messages.MsgType.Activate,
+          data: {
+            caster: 0x14, target: event.message.target
+          }
+        };
+
+        SpApiInteractor.makeController().emitter.emit("sendMessage", {
+          message: message,
+          reliability: "reliable"
+        });
       })();
     });
   }
 
-  Teleport(msg: TeleportMessage): void {
+  private onTeleportMessage(event: ConnectionMessage<TeleportMessage> | ConnectionMessage<TeleportMessage2>): void {
+    const msg = event.message;
     once('update', () => {
-      const id = this.getIdManager().getId(msg.idx);
+      const id = ("idx" in msg && typeof msg.idx === "number") ? this.getIdManager().getId(msg.idx) : this.getMyActorIndex();
       const refr = id === this.getMyActorIndex() ? Game.getPlayer() : getObjectReference(id);
       printConsole(
-        `Teleporting (idx=${msg.idx}) ${refr?.getFormID().toString(16)}...`,
+        `Teleporting (id=${id}) ${refr?.getFormID().toString(16)}...`,
         msg.pos,
         'cell/world is',
         msg.worldOrCell.toString(16),
@@ -275,7 +376,8 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
     });
   }
 
-  createActor(msg: messages.CreateActorMessage): void {
+  private onCreateActorMessage(event: ConnectionMessage<CreateActorMessage>): void {
+    const msg = event.message;
     if (skipFormViewCreation(msg)) {
       const refrId = msg.refrId!;
       onceLoad(refrId, (refr: ObjectReference) => {
@@ -303,6 +405,13 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
                 }
               })();
             }
+
+
+            const displayName = msg.props.displayName;
+            if (typeof displayName === "string") {
+              refr.setDisplayName(displayName, true);
+              this.logTrace(`calling setDisplayName "${displayName}" for ${refr.getFormID().toString(16)}`);
+            }
           }
         } else {
           printConsole('Failed to apply model to', refrId.toString(16));
@@ -310,6 +419,8 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
       });
       return;
     }
+
+    printConsole("Create actor")
 
     loggingStartMoment = 0;
 
@@ -372,7 +483,7 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
     }
 
     if (msg.props && msg.props.isRaceMenuOpen && msg.isMe)
-      this.setRaceMenuOpen({ type: 'setRaceMenuOpen', open: true });
+      this.onSetRaceMenuOpenMessage({ message: { type: 'setRaceMenuOpen', open: true } });
 
     const applyPcInv = () => {
       applyInventory(
@@ -387,9 +498,11 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
         false,
       );
       if (msg.props && msg.props.inventory)
-        this.setInventory({
-          type: 'setInventory',
-          inventory: (msg.props as any).inventory as Inventory,
+        this.onSetInventoryMessage({
+          message: {
+            type: 'setInventory',
+            inventory: (msg.props as any).inventory as Inventory,
+          }
         });
     };
 
@@ -414,6 +527,8 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
     if (msg.isMe) {
       const task = new SpawnTask();
       once('update', () => {
+        // Use MoveRefrToPosition to spawn if possible (not in main menu)
+        // In case of connection lost this is essential
         if (!task.running) {
           task.running = true;
           printConsole('Using moveRefrToPosition to spawn player');
@@ -499,14 +614,14 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
         once('tick', () => {
           if (!task.running) {
             task.running = true;
-            printConsole('Using loadGame to spawn player');
-            printConsole(
-              'skinColorFromServer:',
-              msg.appearance
-                ? msg.appearance.skinColor.toString(16)
-                : undefined,
-            );
-            const loadGameService = SpApiInteractor.makeController().lookupListener(LoadGameService);
+
+            let loadOrder = new Array<string>();
+            for (let i = 0; i < this.sp.Game.getModCount(); ++i) {
+              loadOrder.push(this.sp.Game.getModName(i));
+            }
+
+            this.logTrace(`loading game in world/cell ${msg.transform.worldOrCell.toString(16)}`);
+            const loadGameService = this.controller.lookupListener(LoadGameService);
             loadGameService.loadGame(
               msg.transform.pos,
               msg.transform.rot,
@@ -524,6 +639,8 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
                   },
                 }
                 : undefined,
+              loadOrder,
+              { minutes: 0, seconds: 0, hours: this.controller.lookupListener(TimeService).getTime().newGameHourValue }
             );
             once('update', () => {
               applyPcInv();
@@ -542,7 +659,9 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
     }
   }
 
-  destroyActor(msg: messages.DestroyActorMessage): void {
+  private onDestroyActorMessage(event: ConnectionMessage<DestroyActorMessage>): void {
+    const msg = event.message;
+
     const i = this.getIdManager().getId(msg.idx);
     this.worldModel.forms[i] = null as unknown as FormModel;
     getViewFromStorage()?.syncFormArray(this.worldModel);
@@ -565,7 +684,9 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
     this.getIdManager().freeIdFor(msg.idx);
   }
 
-  UpdateMovement(msg: UpdateMovementMessage): void {
+  private onUpdateMovementMessage(event: ConnectionMessage<UpdateMovementMessage>): void {
+    const msg = event.message;
+
     const i = this.getIdManager().getId(msg.idx);
     this.worldModel.forms[i].movement = msg.data;
     if (!this.worldModel.forms[i].numMovementChanges) {
@@ -574,12 +695,16 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
     (this.worldModel.forms[i].numMovementChanges as number)++;
   }
 
-  UpdateAnimation(msg: UpdateAnimationMessage): void {
+  private onUpdateAnimationMessage(event: ConnectionMessage<UpdateAnimationMessage>): void {
+    const msg = event.message;
+
     const i = this.getIdManager().getId(msg.idx);
     this.worldModel.forms[i].animation = msg.data;
   }
 
-  UpdateAppearance(msg: UpdateAppearanceMessage): void {
+  private onUpdateAppearanceMessage(event: ConnectionMessage<UpdateAppearanceMessage>): void {
+    const msg = event.message;
+
     const i = this.getIdManager().getId(msg.idx);
     this.worldModel.forms[i].appearance = msg.data;
     if (!this.worldModel.forms[i].numAppearanceChanges) {
@@ -588,12 +713,20 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
     (this.worldModel.forms[i].numAppearanceChanges as number)++;
   }
 
-  UpdateEquipment(msg: UpdateEquipmentMessage): void {
+  private onUpdateEquipmentMessage(event: ConnectionMessage<UpdateEquipmentMessage>): void {
+    const msg = event.message;
+
     const i = this.getIdManager().getId(msg.idx);
     this.worldModel.forms[i].equipment = msg.data;
   }
 
+<<<<<<< HEAD:skymp5-client/src/modelSource/remoteServer.ts
   UpdateProperty(msg: UpdatePropertyMessage): void {
+=======
+  private onUpdatePropertyMessage(event: ConnectionMessage<UpdatePropertyMessage>): void {
+    const msg = event.message;
+
+>>>>>>> main:skymp5-client/src/services/services/remoteServer.ts
     if (skipFormViewCreation(msg)) {
       const refrId = msg.refrId;
       once('update', () => {
@@ -617,7 +750,9 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
     (form as Record<string, unknown>)[msg.propName] = msg.data;
   }
 
-  DeathStateContainer(msg: DeathStateContainerMessage): void {
+  private onDeathStateContainerMessage(event: ConnectionMessage<DeathStateContainerMessage>): void {
+    const msg = event.message;
+
     once('update', () =>
       printConsole(`Received death state: ${JSON.stringify(msg.tIsDead)}`),
     );
@@ -628,12 +763,12 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
       return;
 
     if (msg.tChangeValues) {
-      this.ChangeValues(msg.tChangeValues);
+      this.onChangeValuesMessage({ message: msg.tChangeValues });
     }
-    once('update', () => this.UpdateProperty(msg.tIsDead));
+    once('update', () => this.onUpdatePropertyMessage({ message: msg.tIsDead }));
 
     if (msg.tTeleport) {
-      this.Teleport(msg.tTeleport);
+      this.onTeleportMessage({ message: msg.tTeleport });
     }
 
     const id = this.getIdManager().getId(msg.tIsDead.idx);
@@ -661,16 +796,18 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
     });
   }
 
-  handleConnectionAccepted(): void {
+  private handleConnectionAccepted(): void {
     this.worldModel.forms = [];
     this.worldModel.playerCharacterFormIdx = -1;
+
+    this.logTrace("Handle connection accepted");
 
     loginWithSkympIoCredentials();
   }
 
-  handleDisconnect(): void { }
+  private onChangeValuesMessage(event: ConnectionMessage<ChangeValuesMessage>): void {
+    const msg = event.message;
 
-  ChangeValues(msg: ChangeValuesMessage): void {
     once('update', () => {
       const id = this.getIdManager().getId(msg.idx);
       const refr = id === this.getMyActorIndex() ? Game.getPlayer() : getObjectReference(id);
@@ -682,7 +819,9 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
     });
   }
 
-  setRaceMenuOpen(msg: messages.SetRaceMenuOpenMessage): void {
+  private onSetRaceMenuOpenMessage(event: ConnectionMessage<SetRaceMenuOpenMessage>): void {
+    const msg = event.message;
+
     if (msg.open) {
       // wait 0.3s cause we can see visual bugs when teleporting
       // and showing this menu at the same time in onConnect
@@ -697,30 +836,15 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
     }
   }
 
-  customPacket(msg: messages.CustomPacket): void {
+  private onCustomPacketMessage2(event: ConnectionMessage<CustomPacketMessage2>): void {
+    const msg = event.message;
+
+    printConsole("LOGIN REQUIRED");
     switch (msg.content.customPacketType) {
       case 'loginRequired':
         loginWithSkympIoCredentials();
         break;
     }
-  }
-
-  spSnippet(msg: messages.SpSnippet): void {
-    once('update', async () => {
-      spSnippet
-        .run(msg)
-        .then((res) => {
-          if (res === undefined) res = null;
-          const message: FinishSpSnippetMessage = {
-            t: messages.MsgType.FinishSpSnippet,
-            returnValue: res,
-            snippetIdx: msg.snippetIdx,
-          }
-          // TODO: emit event instead of sending directly to avoid type cast and dependency on network module
-          this.send(message as unknown as Record<string, unknown>, true);
-        })
-        .catch((e) => printConsole('!!! SpSnippet ' + msg.class + ' ' + msg.function + ' failed', e));
-    });
   }
 
   private updateGamemodeUpdateFunctions(
@@ -748,7 +872,9 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
     storage[`${storageVar}_keys`] = Object.keys(storage[storageVar] as any);
   }
 
-  updateGamemodeData(msg: messages.UpdateGamemodeDataMessage): void {
+  private onUpdateGamemodeDataMessage(event: ConnectionMessage<UpdateGamemodeDataMessage>): void {
+    const msg = event.message;
+
     //
     // updateOwnerFunctions/updateNeighborFunctions
     //
@@ -787,8 +913,10 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
               args,
               eventName
             };
-            // TODO: emit event instead of sending directly to avoid type cast and dependency on network module
-            this.send(message as unknown as Record<string, unknown>, true);
+            SpApiInteractor.makeController().emitter.emit("sendMessage", {
+              message: message,
+              reliability: "reliable"
+            });
           },
           getFormIdInServerFormat: (clientsideFormId: number) => {
             return localIdToRemoteId(clientsideFormId);
@@ -818,28 +946,22 @@ export class RemoteServer implements MsgHandler, ModelSource, SendTarget {
     return this.worldModel.playerCharacterFormIdx;
   }
 
-  send(msg: Record<string, unknown>, reliable: boolean): void {
-    if (this.worldModel.playerCharacterFormIdx === -1) return;
-
-    const refrId = msg._refrId as number | undefined;
-
-    const idxInModel = refrId
-      ? this.worldModel.forms.findIndex((f) => f && f.refrId === refrId)
-      : this.worldModel.playerCharacterFormIdx;
-    // fixes "can't get property idx of null or undefined"
-    if (!this.worldModel.forms[idxInModel]) return;
-    msg.idx = this.worldModel.forms[idxInModel].idx;
-
-    delete msg._refrId;
-    netInfo.NetInfo.addSentPacketCount(1);
-    networking.send(msg, reliable);
-  }
-
   private getIdManager() {
-    if (!this.idManager_) this.idManager_ = new IdManager();
     return this.idManager_;
   }
 
-  private worldModel: WorldModel = { forms: [], playerCharacterFormIdx: -1 };
-  private idManager_ = new IdManager();
+  private get worldModel(): WorldModel {
+    if (typeof storage["worldModel"] === "function") {
+      storage["worldModel"] = { forms: [], playerCharacterFormIdx: -1 };
+    }
+    return storage["worldModel"] as WorldModel;
+  }
+
+  private get idManager_(): IdManager {
+    if (typeof storage["idManager"] === "function") {
+      // Note: full IdManager object preserved across hot-reloads, including methods.
+      storage["idManager"] = new IdManager();
+    }
+    return storage["idManager"] as IdManager;
+  }
 }

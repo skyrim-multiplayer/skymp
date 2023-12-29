@@ -93,6 +93,11 @@ void ResetContainer(IVM* vm, StackID stackId, RE::StaticFunctionTag*,
 void BlockPapyrusEvents(IVM* vm, StackID stackId, RE::StaticFunctionTag*,
                         bool blocked);
 
+RE::TESObjectREFR* CreateReferenceAtLocation(
+  IVM* vm, StackID stackId, RE::StaticFunctionTag*, RE::TESForm* baseForm,
+  RE::TESObjectCELL* cell, RE::TESWorldSpace* world, float posX, float posY,
+  float posZ, float rotX, float rotY, float rotZ, bool persist);
+
 // Threadsafe
 void BlockMoveRefrToPosition(bool blocked);
 int GetWeapDrawnMode(uint32_t actorId);

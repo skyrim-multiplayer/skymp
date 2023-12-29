@@ -1,4 +1,4 @@
-import { EventEmitterFactory } from "./events/eventEmitterFactory";
+import { EventEmitterFactory } from "./events/events";
 import { ClientListener, ClientListenerConstructor, CombinedController } from "./services/clientListener";
 import * as sp from "skyrimPlatform";
 

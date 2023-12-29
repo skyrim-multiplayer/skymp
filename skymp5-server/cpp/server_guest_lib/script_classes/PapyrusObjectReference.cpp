@@ -22,7 +22,15 @@ VarValue PapyrusObjectReference::IsHarvested(
 VarValue PapyrusObjectReference::IsDisabled(
   VarValue self, const std::vector<VarValue>& arguments)
 {
-  return VarValue(false);
+  auto selfRefr = GetFormPtr<MpObjectReference>(self);
+  return VarValue(selfRefr && selfRefr->IsDisabled());
+}
+
+VarValue PapyrusObjectReference::IsDeleted(
+  VarValue self, const std::vector<VarValue>& arguments)
+{
+  auto selfRefr = GetFormPtr<MpObjectReference>(self);
+  return VarValue(selfRefr && selfRefr->IsDeleted());
 }
 
 VarValue PapyrusObjectReference::GetScale(
@@ -45,12 +53,6 @@ VarValue PapyrusObjectReference::EnableNoWait(
 
 VarValue PapyrusObjectReference::DisableNoWait(
   VarValue self, const std::vector<VarValue>& arguments)
-{
-  return VarValue::None();
-}
-
-VarValue PapyrusObjectReference::Delete(VarValue self,
-                                        const std::vector<VarValue>& arguments)
 {
   return VarValue::None();
 }
@@ -285,8 +287,9 @@ VarValue PapyrusObjectReference::Enable(VarValue self,
                                         const std::vector<VarValue>& arguments)
 {
   auto selfRefr = GetFormPtr<MpObjectReference>(self);
-  if (selfRefr)
+  if (selfRefr) {
     selfRefr->Enable();
+  }
   return VarValue::None();
 }
 
@@ -294,8 +297,19 @@ VarValue PapyrusObjectReference::Disable(
   VarValue self, const std::vector<VarValue>& arguments)
 {
   auto selfRefr = GetFormPtr<MpObjectReference>(self);
-  if (selfRefr)
+  if (selfRefr) {
     selfRefr->Disable();
+  }
+  return VarValue::None();
+}
+
+VarValue PapyrusObjectReference::Delete(VarValue self,
+                                        const std::vector<VarValue>& arguments)
+{
+  auto selfRefr = GetFormPtr<MpObjectReference>(self);
+  if (selfRefr) {
+    selfRefr->Delete();
+  }
   return VarValue::None();
 }
 
@@ -664,16 +678,62 @@ VarValue PapyrusObjectReference::GetOpenState(VarValue self,
   return VarValue(0);
 }
 
+VarValue PapyrusObjectReference::GetAllItemsCount(
+  VarValue self, const std::vector<VarValue>& arguments)
+{
+  if (auto selfRefr = GetFormPtr<MpObjectReference>(self)) {
+    int total = static_cast<int>(selfRefr->GetInventory().GetTotalItemCount());
+    return VarValue(total);
+  }
+  return VarValue(0);
+}
+
+VarValue PapyrusObjectReference::IsContainerEmpty(
+  VarValue self, const std::vector<VarValue>& arguments)
+{
+  if (auto selfRefr = GetFormPtr<MpObjectReference>(self)) {
+    return VarValue(selfRefr->GetInventory().IsEmpty());
+  }
+  return VarValue(0);
+}
+
+VarValue PapyrusObjectReference::SetDisplayName(
+  VarValue self, const std::vector<VarValue>& arguments)
+{
+  if (auto selfRefr = GetFormPtr<MpObjectReference>(self)) {
+    if (arguments.size() < 2) {
+      throw std::runtime_error("SetDisplayName requires at least 2 arguments");
+    }
+    const char* displayName = static_cast<const char*>(arguments[0]);
+    selfRefr->SetDisplayName(displayName);
+
+    bool force = static_cast<bool>(arguments[1]);
+    std::ignore = force;
+
+    auto funcName = "SetDisplayName";
+    auto serializedArgs = SpSnippetFunctionGen::SerializeArguments(arguments);
+    for (auto listener : selfRefr->GetListeners()) {
+      auto targetRefr = dynamic_cast<MpActor*>(listener);
+      if (targetRefr) {
+        SpSnippet(GetName(), funcName, serializedArgs.data(),
+                  selfRefr->GetFormId())
+          .Execute(targetRefr);
+      }
+    }
+  }
+  return VarValue::None();
+}
+
 void PapyrusObjectReference::Register(
   VirtualMachine& vm, std::shared_ptr<IPapyrusCompatibilityPolicy> policy)
 {
   AddMethod(vm, "IsHarvested", &PapyrusObjectReference::IsHarvested);
   AddMethod(vm, "IsDisabled", &PapyrusObjectReference::IsDisabled);
+  AddMethod(vm, "IsDeleted", &PapyrusObjectReference::IsDeleted);
   AddMethod(vm, "GetScale", &PapyrusObjectReference::GetScale);
   AddMethod(vm, "SetScale", &PapyrusObjectReference::SetScale);
   AddMethod(vm, "EnableNoWait", &PapyrusObjectReference::EnableNoWait);
   AddMethod(vm, "DisableNoWait", &PapyrusObjectReference::DisableNoWait);
-  AddMethod(vm, "Delete", &PapyrusObjectReference::Delete);
   AddMethod(vm, "AddItem", &PapyrusObjectReference::AddItem);
   AddMethod(vm, "RemoveItem", &PapyrusObjectReference::RemoveItem);
   AddMethod(vm, "GetItemCount", &PapyrusObjectReference::GetItemCount);
@@ -683,6 +743,7 @@ void PapyrusObjectReference::Register(
   AddMethod(vm, "SetAngle", &PapyrusObjectReference::SetAngle);
   AddMethod(vm, "Enable", &PapyrusObjectReference::Enable);
   AddMethod(vm, "Disable", &PapyrusObjectReference::Disable);
+  AddMethod(vm, "Delete", &PapyrusObjectReference::Delete);
   AddMethod(vm, "BlockActivation", &PapyrusObjectReference::BlockActivation);
   AddMethod(vm, "IsActivationBlocked",
             &PapyrusObjectReference::IsActivationBlocked);
@@ -704,4 +765,7 @@ void PapyrusObjectReference::Register(
   AddMethod(vm, "GetNthLinkedRef", &PapyrusObjectReference::GetNthLinkedRef);
   AddMethod(vm, "GetParentCell", &PapyrusObjectReference::GetParentCell);
   AddMethod(vm, "GetOpenState", &PapyrusObjectReference::GetOpenState);
+  AddMethod(vm, "GetAllItemsCount", &PapyrusObjectReference::GetAllItemsCount);
+  AddMethod(vm, "IsContainerEmpty", &PapyrusObjectReference::IsContainerEmpty);
+  AddMethod(vm, "SetDisplayName", &PapyrusObjectReference::SetDisplayName);
 }

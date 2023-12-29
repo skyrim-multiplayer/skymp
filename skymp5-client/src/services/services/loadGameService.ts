@@ -7,8 +7,15 @@ export class LoadGameService extends ClientListener {
         this.controller.on("loadGame", () => this.onLoadGame());
     }
 
-    public loadGame(pos: number[], rot: number[], worldOrCell: number, changeFormNpc?: ChangeFormNpc) {
-        this.sp.loadGame(pos, rot, worldOrCell, changeFormNpc);
+    public loadGame(pos: number[], rot: number[], worldOrCell: number, changeFormNpc?: ChangeFormNpc, loadOrder?: string[], time?: { seconds: number, minutes: number, hours: number }) {
+
+        try {
+            this.sp.loadGame(pos, rot, worldOrCell, changeFormNpc, loadOrder, time);
+        }
+        catch (e) {
+            // Hotfix non-vanilla headparts bug
+            this.sp.loadGame(pos, rot, worldOrCell, undefined, loadOrder, time);
+        }
         this._isCausedBySkyrimPlatform = true;
     }
 

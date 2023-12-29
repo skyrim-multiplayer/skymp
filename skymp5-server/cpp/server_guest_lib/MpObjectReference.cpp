@@ -201,6 +201,16 @@ const bool& MpObjectReference::IsDisabled() const
   return ChangeForm().isDisabled;
 }
 
+const bool& MpObjectReference::IsDeleted() const
+{
+  return ChangeForm().isDeleted;
+}
+
+const uint32_t& MpObjectReference::GetCount() const
+{
+  return ChangeForm().count;
+}
+
 std::chrono::system_clock::duration MpObjectReference::GetRelootTime() const
 {
   if (relootTimeOverride) {
@@ -287,9 +297,17 @@ void MpObjectReference::VisitProperties(const PropertiesVisitor& visitor,
   }
 
   if (ChangeForm().lastAnimation.has_value()) {
-    std::string lastAnimationAsJson =
-      "\"" + *ChangeForm().lastAnimation + "\"";
+    std::string raw = *ChangeForm().lastAnimation;
+    nlohmann::json j = raw;
+    std::string lastAnimationAsJson = j.dump();
     visitor("lastAnimation", lastAnimationAsJson.data());
+  }
+
+  if (ChangeForm().displayName.has_value()) {
+    std::string raw = *ChangeForm().displayName;
+    nlohmann::json j = raw;
+    std::string displayNameAsJson = j.dump();
+    visitor("displayName", displayNameAsJson.data());
   }
 
   // Property flags (isVisibleByOwner, isVisibleByNeighbor) should be checked
@@ -366,7 +384,7 @@ void MpObjectReference::Disable()
 
   EditChangeForm(
     [&](MpChangeFormREFR& changeForm) { changeForm.isDisabled = true; });
-  RemoveFromGrid();
+  RemoveFromGridAndUnsubscribeAll();
 }
 
 void MpObjectReference::Enable()
@@ -634,6 +652,26 @@ void MpObjectReference::SetPosAndAngleSilent(const NiPoint3& pos,
     Mode::NoRequestSave);
 }
 
+void MpObjectReference::Delete()
+{
+  if (GetFormId() < 0xff000000) {
+    spdlog::warn("MpObjectReference::Delete {:x} - Attempt to delete non-FF "
+                 "object, ignoring",
+                 GetFormId());
+    return;
+  }
+
+  EditChangeForm(
+    [&](MpChangeFormREFR& changeForm) { changeForm.isDeleted = true; });
+  RemoveFromGridAndUnsubscribeAll();
+}
+
+void MpObjectReference::SetCount(uint32_t newCount)
+{
+  EditChangeForm(
+    [&](MpChangeFormREFR& changeForm) { changeForm.count = newCount; });
+}
+
 void MpObjectReference::SetAnimationVariableBool(const char* name, bool value)
 {
   if (!pImpl->animGraphHolder)
@@ -874,6 +912,12 @@ void MpObjectReference::SetLastAnimation(const std::string& lastAnimation)
   EditChangeForm([&](MpChangeForm& changeForm) {
     changeForm.lastAnimation = lastAnimation;
   });
+}
+
+void MpObjectReference::SetDisplayName(const std::string& newName)
+{
+  EditChangeForm(
+    [&](MpChangeForm& changeForm) { changeForm.displayName = newName; });
 }
 
 const std::set<MpObjectReference*>& MpObjectReference::GetListeners() const
@@ -1187,12 +1231,26 @@ void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
     } else {
       auto refrRecord = espm::Convert<espm::REFR>(
         loader.GetBrowser().LookupById(GetFormId()).rec);
-      uint32_t count =
+
+      uint32_t countRecord =
         refrRecord ? refrRecord->GetData(compressedFieldsCache).count : 1;
-      activationSource.AddItem(resultItem, count ? count : 1);
+
+      uint32_t countChangeForm = ChangeForm().count;
+
+      constexpr uint32_t kCountDefault = 1;
+
+      uint32_t resultingCount =
+        std::max(kCountDefault, std::max(countRecord, countChangeForm));
+
+      activationSource.AddItem(resultItem, resultingCount);
     }
     SetHarvested(true);
     RequestReloot();
+
+    if (espm::utils::IsItem(t) && GetFormId() >= 0xff000000) {
+      spdlog::info("MpObjectReference::ProcessActivate - Deleting 0xff item");
+      Delete();
+    }
   } else if (t == espm::DOOR::kType) {
     auto lookupRes = loader.GetBrowser().LookupById(GetFormId());
     auto refrRecord = espm::Convert<espm::REFR>(lookupRes.rec);
@@ -1324,7 +1382,7 @@ bool MpObjectReference::MpApiOnActivate(MpObjectReference& caster)
   return activationBlocked;
 }
 
-void MpObjectReference::RemoveFromGrid()
+void MpObjectReference::RemoveFromGridAndUnsubscribeAll()
 {
   auto worldOrCell = GetCellOrWorld().ToFormId(GetParent()->espmFiles);
   auto gridIterator = GetParent()->grids.find(worldOrCell);
@@ -1674,5 +1732,5 @@ void MpObjectReference::BeforeDestroy()
 
   MpForm::BeforeDestroy();
 
-  RemoveFromGrid();
+  RemoveFromGridAndUnsubscribeAll();
 }

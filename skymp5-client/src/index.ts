@@ -31,10 +31,12 @@ import { ActivationService } from "./services/services/activationService";
 import { CraftService } from "./services/services/craftService";
 import { DropItemService } from "./services/services/dropItemService";
 import { HitService } from "./services/services/hitService";
-import { SendMessagesService } from "./services/services/sendMessagesService";
 import { RagdollService } from "./services/services/ragdollService";
 import { DeathService } from "./services/services/deathService";
 import { ContainersService } from "./services/services/containersService";
+import { NetworkingService } from "./services/services/networkingService";
+import { RemoteServer } from "./services/services/remoteServer";
+import { SpSnippetService } from "./services/services/spSnippetService";
 
 browser.main();
 
@@ -107,10 +109,12 @@ const main = () => {
       new CraftService(sp, controller),
       new DropItemService(sp, controller),
       new HitService(sp, controller),
-      new SendMessagesService(sp, controller),
       new RagdollService(sp, controller),
       new DeathService(sp, controller),
-      new ContainersService(sp, controller)
+      new ContainersService(sp, controller),
+      new NetworkingService(sp, controller),
+      new RemoteServer(sp, controller),
+      new SpSnippetService(sp, controller)
     ];
     SpApiInteractor.setup(listeners);
     listeners.forEach(listener => SpApiInteractor.registerListenerForLookup(listener.constructor.name, listener));

@@ -81,7 +81,7 @@ int64_t SaveFile_::SaveFile::FindIndexInFormIdArray(uint32_t refID)
 }
 
 void SaveFile_::SaveFile::OverwritePluginInfo(
-  std::vector<std::string>& newPlaginNames)
+  std::vector<std::string>& newPluginNames)
 {
   uint32_t oldSize = this->pluginInfoSize;
 
@@ -89,9 +89,9 @@ void SaveFile_::SaveFile::OverwritePluginInfo(
   this->pluginInfo.numPlugins = 0;
   this->pluginInfo.pluginsName.clear();
 
-  this->pluginInfo.numPlugins = uint8_t(newPlaginNames.size());
+  this->pluginInfo.numPlugins = static_cast<uint8_t>(newPluginNames.size());
 
-  for (auto& plugin : newPlaginNames) {
+  for (auto& plugin : newPluginNames) {
     this->pluginInfo.pluginsName.push_back(plugin);
     this->pluginInfoSize += uint32_t(2 + plugin.size());
   }
