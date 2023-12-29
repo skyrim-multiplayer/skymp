@@ -8,6 +8,8 @@
 
 #include <fmt/format.h>
 
+#include <debugapi.h>
+
 /**
  * Send Event hook
  */
@@ -57,6 +59,12 @@ void OnSendEventEnter(GumInvocationContext* ic)
         if (strlen(name) >= 4 && name[0] == skyui_name[0] &&
             name[1] == skyui_name[1] && name[2] == skyui_name[2] &&
             name[3] == skyui_name[3]) {
+          blockEvents = false;
+          break;
+        }
+
+        if (!stricmp(name, "defaultDisableHavokOnLoad")) {
+          // Maybe worth unblocking events only for this script, not for all
           blockEvents = false;
           break;
         }
