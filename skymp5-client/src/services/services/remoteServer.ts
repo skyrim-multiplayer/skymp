@@ -133,12 +133,12 @@ const showConnectionError = () => {
   printConsole("If you feel that something is wrong, please contact us on Discord.");
 };
 
-export const getPcInventory = (): Inventory => {
+export const getPcInventory = (): Inventory | undefined => {
   const res = storage['pcInv'];
   if (typeof res === 'object' && (res as any)['entries']) {
-    return res as unknown as Inventory;
+    return res as Inventory;
   }
-  return null as unknown as Inventory;
+  return undefined;
 };
 
 const setPcInventory = (inv: Inventory): void => {
