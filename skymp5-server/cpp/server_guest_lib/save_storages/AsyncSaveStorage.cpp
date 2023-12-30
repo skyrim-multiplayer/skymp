@@ -1,4 +1,5 @@
 #include "AsyncSaveStorage.h"
+#include <chrono>
 #include <thread>
 
 struct AsyncSaveStorage::Impl
@@ -74,15 +75,18 @@ void AsyncSaveStorage::SaverThreadMain(Impl* pImpl)
 
       {
         std::lock_guard l(pImpl->share.m);
-        auto was = clock();
+        auto start = std::chrono::high_resolution_clock::now();
         size_t numChangeForms = 0;
         for (auto& t : tasks) {
           numChangeForms += pImpl->share.dbImpl->Upsert(t.changeForms);
           callbacksToFire.push_back(t.callback);
         }
-        if (numChangeForms > 0 && pImpl->logger)
-          pImpl->logger->trace("Saved {} ChangeForms in {} ticks",
-                               numChangeForms, clock() - was);
+        if (numChangeForms > 0 && pImpl->logger) {
+          auto end = std::chrono::high_resolution_clock::now();
+          std::chrono::duration<double, std::milli> elapsed = end - start;
+          pImpl->logger->trace("Saved {} ChangeForms in {} ms", numChangeForms,
+                               elapsed.count());
+        }
       }
 
       {
