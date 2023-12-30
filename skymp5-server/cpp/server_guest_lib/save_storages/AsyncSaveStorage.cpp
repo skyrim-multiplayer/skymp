@@ -74,7 +74,7 @@ void AsyncSaveStorage::SaverThreadMain(Impl* pImpl)
       std::vector<std::function<void()>> callbacksToFire;
 
       {
-        std::lock_guard<std::mutex> l(pImpl->share.m);
+        std::lock_guard l(pImpl->share.m);
         auto start = std::chrono::high_resolution_clock::now();
         size_t numChangeForms = 0;
         for (auto& t : tasks) {
