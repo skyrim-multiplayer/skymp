@@ -12,6 +12,7 @@
 #include <iostream>
 #include <nlohmann/json.hpp>
 #include <random>
+#include <spdlog/spdlog.h>
 #include <sstream>
 #include <stdexcept>
 #include <unordered_map>
@@ -121,6 +122,12 @@ void SweetPieScript::Notify(MpActor& actor, const WorldState& worldState,
   std::string type;
   std::stringstream ss;
   auto lookupRes = worldState.GetEspm().GetBrowser().LookupById(formId);
+
+  if (!lookupRes.rec) {
+    return spdlog::error(
+      "SweetPieScript::Notify - formId {:x} not found in espm");
+  }
+
   auto recType = lookupRes.rec->GetType();
 
   if (recType == "WEAP") {
@@ -137,6 +144,9 @@ void SweetPieScript::Notify(MpActor& actor, const WorldState& worldState,
     type = "potion";
   } else {
     throw std::runtime_error(fmt::format("Unexpected type {}", type));
+    return spdlog::error(
+      "SweetPieScript::Notify - Unexpected type {} in formId {:x}", type,
+      formId);
   }
 
   ss << "[";
