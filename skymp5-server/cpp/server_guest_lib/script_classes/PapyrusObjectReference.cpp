@@ -98,6 +98,8 @@ VarValue PapyrusObjectReference::AddItem(
     formIds =
       espm::GetData<espm::FLST>(formlist->GetId(), selfRefr->GetParent())
         .formIds;
+    // TODO: call toGlobalId on formIds!
+    // TODO: check if formId is an item, not magic, etc
   } else {
     formIds.emplace_back(item.ToGlobalId(item.rec->GetId()));
     runSkympHacks = true;
@@ -162,6 +164,8 @@ VarValue PapyrusObjectReference::RemoveItem(
     formIds =
       espm::GetData<espm::FLST>(formlist->GetId(), selfRefr->GetParent())
         .formIds;
+    // TODO: call toGlobalId on formIds!
+    // TODO: check if formId is an item, not magic, etc
   } else {
     formIds.emplace_back(item.ToGlobalId(item.rec->GetId()));
     runSkympHacks = true;
