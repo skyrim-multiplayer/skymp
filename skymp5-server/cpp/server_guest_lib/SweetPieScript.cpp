@@ -34,6 +34,7 @@ uint32_t GenerateRandomNumber(uint32_t leftBound, uint32_t rightBound)
 
 SweetPieScript::SweetPieScript(const std::vector<std::string>& espmFiles)
 {
+  // TODO: check other ids
   miscLootTable = {
     { 0x07A45089, { 0x07A30B91 } },
     { 0x07A4508b, { 0x07A4A191, 0x0010B0A7 } },
@@ -58,7 +59,9 @@ SweetPieScript::SweetPieScript(const std::vector<std::string>& espmFiles)
     { 0x071746be, { 0x070df89c } },
     { 0x07267fe5, { 0x07267fd9 } },
     { 0x07267fe3, { 0x07267fd8 } },
-    { 0x07267fe1, { 0x0726f5a8 } },
+
+    { 0x07267fe1, { 0x0716f5a8 } },
+
     { 0x07267fe9, { 0x07267fdc } },
     { 0x07267fe7, { 0x07267fdb } },
     { 0x07267fef, { 0x07267fda } },
