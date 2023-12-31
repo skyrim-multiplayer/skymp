@@ -143,7 +143,6 @@ void SweetPieScript::Notify(MpActor& actor, const WorldState& worldState,
   } else if (recType == "ALCH") {
     type = "potion";
   } else {
-    throw std::runtime_error(fmt::format("Unexpected type {}", type));
     return spdlog::error(
       "SweetPieScript::Notify - Unexpected type {} in formId {:x}", type,
       formId);
