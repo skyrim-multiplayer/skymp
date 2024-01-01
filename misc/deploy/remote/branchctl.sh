@@ -32,6 +32,11 @@ for ((t = 0; t < 150; t += 5)); do
         echo health check success
         exit 0
     fi
+    if docker logs "skymp-server-$branch" \
+            |& grep -q 'Loaded 25 ChangeForms'; then
+        echo health check success
+        exit 0
+    fi
     sleep 5
 done
 
