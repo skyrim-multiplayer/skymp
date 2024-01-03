@@ -133,11 +133,41 @@ void WorldState::LoadChangeForm(const MpChangeForm& changeForm,
     const auto rec = espm->GetBrowser().LookupById(baseId).rec;
 
     if (!rec) {
-      std::stringstream ss;
-      ss << std::hex << "Unable to find record " << baseId;
-      throw std::runtime_error(ss.str());
+      spdlog::warn("Skipping ChangeForm {:x}: unable to find base record {:x}",
+                   formId, baseId);
+      return;
     }
     baseType = rec->GetType().ToString();
+  }
+
+  if (espm) {
+    if (!changeForm.appearanceDump.empty()) {
+      simdjson::dom::parser p;
+      auto res = p.parse(changeForm.appearanceDump);
+      if (res.error()) {
+        spdlog::warn(
+          "Skipping ChangeForm {:x}: unable to parse appearanceDump", formId);
+        return;
+      }
+
+      Appearance appearance;
+      try {
+        appearance = Appearance::FromJson(res.value());
+      } catch (std::exception& e) {
+        spdlog::warn("Skipping ChangeForm {:x}: Appearance::FromJson failed "
+                     "on appearanceDump: {}",
+                     formId, e.what());
+        return;
+      }
+
+      const auto rec = espm->GetBrowser().LookupById(appearance.raceId).rec;
+
+      if (!rec || rec->GetType().ToString() != "RACE") {
+        spdlog::warn("Skipping ChangeForm {:x}: bad raceId in appearanceDump",
+                     formId);
+        return;
+      }
+    }
   }
 
   if (formId < 0xff000000) {

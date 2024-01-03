@@ -106,6 +106,9 @@ public:
   // Used for SetNodeTextureSet (node, texture set desc)
   std::optional<std::map<std::string, std::string>> setNodeTextureSet;
 
+  // Used for SetDisplayName (object reference)
+  std::optional<std::string> displayName;
+
   // Please update 'ActorTest.cpp' when adding new Actor-related rows
 
   DynamicFields dynamicFields;
@@ -119,7 +122,7 @@ public:
       count, isRaceMenuOpen, isDead, consoleCommandsAllowed, appearanceDump,
       equipmentDump, actorValues.ToTuple(), spawnPoint, dynamicFields,
       spawnDelay, learnedSpells, templateChain, lastAnimation,
-      setNodeTextureSet);
+      setNodeTextureSet, displayName);
   }
 
   static nlohmann::json ToJson(const MpChangeFormREFR& changeForm);

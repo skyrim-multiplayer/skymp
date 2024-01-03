@@ -1,6 +1,7 @@
 #include "PapyrusActor.h"
 
 #include "MpActor.h"
+#include "script_objects/EspmGameObject.h"
 #include "script_objects/MpFormGameObject.h"
 
 #include "SpSnippetFunctionGen.h"
@@ -180,9 +181,40 @@ VarValue PapyrusActor::EquipItem(VarValue self,
                                  const std::vector<VarValue>& arguments)
 {
   if (auto actor = GetFormPtr<MpActor>(self)) {
+    auto worldState = actor->GetParent();
+    if (!worldState) {
+      throw std::runtime_error("AddItem - no WorldState attached");
+    }
+
     if (arguments.size() < 1) {
       throw std::runtime_error("EquipItem requires at least one argument");
     }
+
+    auto lookupRes = GetRecordPtr(arguments[0]);
+    if (!lookupRes.rec) {
+      throw std::runtime_error("EquipItem - invalid form");
+    }
+
+    if (!espm::utils::IsItem(lookupRes.rec->GetType())) {
+      throw std::runtime_error("EquipItem - form is not an item");
+    }
+
+    if (espm::utils::Is<espm::LIGH>(lookupRes.rec->GetType())) {
+      auto res = espm::Convert<espm::LIGH>(lookupRes.rec)
+                   ->GetData(worldState->GetEspmCache());
+      bool isTorch = res.data.flags & espm::LIGH::Flags::CanBeCarried;
+      if (!isTorch) {
+        throw std::runtime_error(
+          "EquipItem - form is LIGH without CanBeCarried flag");
+      }
+    }
+
+    // If no such item in inventory, add one (this is standard behavior)
+    auto baseId = lookupRes.ToGlobalId(lookupRes.rec->GetId());
+    if (actor->GetInventory().GetItemCount(baseId) == 0) {
+      actor->AddItem(baseId, 1);
+    }
+
     SpSnippet(GetName(), "EquipItem",
               SpSnippetFunctionGen::SerializeArguments(arguments).data(),
               actor->GetFormId())

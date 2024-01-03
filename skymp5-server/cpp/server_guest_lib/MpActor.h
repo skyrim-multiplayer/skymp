@@ -161,7 +161,9 @@ private:
                               std::chrono::steady_clock::time_point timePoint);
   bool CanActorValueBeRestored(espm::ActorValue av);
 
-  void EnsureTemplateChainEvaluated(espm::Loader& loader);
+  void EnsureTemplateChainEvaluated(
+    espm::Loader& loader,
+    ChangeFormGuard::Mode mode = ChangeFormGuard::Mode::RequestSave);
 
 protected:
   void BeforeDestroy() override;

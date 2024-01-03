@@ -297,8 +297,9 @@ void MpObjectReference::VisitProperties(const PropertiesVisitor& visitor,
   }
 
   if (ChangeForm().lastAnimation.has_value()) {
-    std::string lastAnimationAsJson =
-      "\"" + *ChangeForm().lastAnimation + "\"";
+    std::string raw = *ChangeForm().lastAnimation;
+    nlohmann::json j = raw;
+    std::string lastAnimationAsJson = j.dump();
     visitor("lastAnimation", lastAnimationAsJson.data());
   }
 
@@ -310,6 +311,13 @@ void MpObjectReference::VisitProperties(const PropertiesVisitor& visitor,
         FormDesc::FromString(value).ToFormId(GetParent()->espmFiles);
     }
     visitor("setNodeTextureSet", setNodeTextureSetAsJson.dump().data());
+  }
+
+  if (ChangeForm().displayName.has_value()) {
+    std::string raw = *ChangeForm().displayName;
+    nlohmann::json j = raw;
+    std::string displayNameAsJson = j.dump();
+    visitor("displayName", displayNameAsJson.data());
   }
 
   // Property flags (isVisibleByOwner, isVisibleByNeighbor) should be checked
@@ -933,6 +941,12 @@ void MpObjectReference::SetNodeTextureSet(const std::string& node,
     changeForm.setNodeTextureSet->insert_or_assign(
       node, textureSetFormDesc.ToString());
   });
+}
+
+void MpObjectReference::SetDisplayName(const std::string& newName)
+{
+  EditChangeForm(
+    [&](MpChangeForm& changeForm) { changeForm.displayName = newName; });
 }
 
 const std::set<MpObjectReference*>& MpObjectReference::GetListeners() const
