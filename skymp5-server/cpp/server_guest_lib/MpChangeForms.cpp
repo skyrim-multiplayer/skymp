@@ -252,7 +252,7 @@ MpChangeForm MpChangeForm::JsonToChangeForm(simdjson::dom::element& element)
       res.setNodeTextureSet->emplace(keyStr, valueStr);
     }
   }
-    
+
   if (element.at_pointer(displayName.GetData()).error() ==
       simdjson::error_code::SUCCESS) {
     const char* tmp;
