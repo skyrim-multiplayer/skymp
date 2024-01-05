@@ -329,6 +329,13 @@ export class RemoteServer extends ClientListener {
                 }
               })();
             }
+
+
+            const displayName = msg.props.displayName;
+            if (typeof displayName === "string") {
+              refr.setDisplayName(displayName, true);
+              this.logTrace(`calling setDisplayName "${displayName}" for ${refr.getFormID().toString(16)}`);
+            }
           }
         } else {
           printConsole('Failed to apply model to', refrId.toString(16));
