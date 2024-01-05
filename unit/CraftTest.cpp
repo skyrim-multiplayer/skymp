@@ -133,10 +133,15 @@ TEST_CASE(
   ActionListener::RawMessageData msgData;
   msgData.userId = 0;
 
-  REQUIRE_THROWS_WITH(p.GetActionListener().OnCraftItem(msgData, requiredItems,
-                                                        workbenchId,
-                                                        wrongResultObject),
-                      ContainsSubstring("Recipe not found"));
+  Inventory previousInventory = ac.GetInventory();
+
+  // Must result in "Recipe not found" in logs
+  p.GetActionListener().OnCraftItem(msgData, requiredItems, workbenchId,
+                                    wrongResultObject);
+
+  Inventory newInventory = ac.GetInventory();
+
+  REQUIRE(previousInventory == newInventory);
 }
 
 TEST_CASE("DLC Dragonborn recipes are working", "[Craft][espm]")
