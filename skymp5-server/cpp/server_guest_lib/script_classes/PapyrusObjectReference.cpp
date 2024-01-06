@@ -574,9 +574,16 @@ VarValue PapyrusObjectReference::MoveTo(VarValue self,
   auto* _thisObjectReference = GetFormPtr<MpObjectReference>(self);
   const auto* objectReference = GetFormPtr<MpObjectReference>(arguments[0]);
   auto* _thisActor = GetFormPtr<MpActor>(self);
-  if ((!_thisObjectReference && !_thisActor) || !_thisObjectReference) {
+
+  if (!_thisObjectReference) {
     return VarValue::None();
   }
+
+  if (!objectReference) {
+    spdlog::error("MoveTo - target object reference was nullptr");
+    return VarValue::None();
+  }
+
   const float xOffset = static_cast<float>(
                 static_cast<double>(arguments[1].CastToFloat())),
               yOffset = static_cast<float>(
