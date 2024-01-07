@@ -678,7 +678,7 @@ export class RemoteServer extends ClientListener implements ModelSource {
     const msg = event.message;
 
     const i = this.getIdManager().getId(msg.idx);
-    this.worldModel.forms[i].appearance = msg.data;
+    this.worldModel.forms[i].appearance = msg.data || undefined;
     if (!this.worldModel.forms[i].numAppearanceChanges) {
       this.worldModel.forms[i].numAppearanceChanges = 0;
     }

@@ -75,14 +75,41 @@ export class FormView implements View<FormModel> {
     }
 
     // Apply appearance before base form selection to prevent double-spawn
-    if (model.appearance) {
+    if (model.appearance || (!model.appearance && this.appearanceState.appearance)) {
       if (
         !this.appearanceState.appearance ||
         model.numAppearanceChanges !== this.appearanceState.lastNumChanges
       ) {
-        this.appearanceState.appearance = model.appearance;
+
+        // Both non-null
+        if (model.appearance && this.appearanceState.appearance) {
+          const modelAppearanceCopy: Appearance = JSON.parse(JSON.stringify(model.appearance));
+          const stateAppearanceCopy: Appearance = JSON.parse(JSON.stringify(this.appearanceState.appearance));
+          modelAppearanceCopy.name = "";
+          stateAppearanceCopy.name = "";
+          const equalWithoutNames = JSON.stringify(modelAppearanceCopy) === JSON.stringify(stateAppearanceCopy);
+
+          if (equalWithoutNames) {
+            // Change name inplace
+            const refr = ObjectReference.from(Game.getFormEx(this.refrId));
+            refr?.getBaseObject()?.setName(model.appearance.name);
+            refr?.setDisplayName(model.appearance.name, true);
+            printConsole("Appearance updated, changing name inplace");
+          }
+          else {
+            // Force re-apply appearance on the next getAppearanceBasedBase call
+            this.appearanceBasedBaseId = 0;
+            printConsole("Appearance updated");
+          }
+        }
+        else {
+          // Force re-apply appearance on the next getAppearanceBasedBase call
+          this.appearanceBasedBaseId = 0;
+          printConsole("Appearance updated");
+        }
+
+        this.appearanceState.appearance = model.appearance || null;
         this.appearanceState.lastNumChanges = model.numAppearanceChanges as number;
-        this.appearanceBasedBaseId = 0;
       }
     }
 

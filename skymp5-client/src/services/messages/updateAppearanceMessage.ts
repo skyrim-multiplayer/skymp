@@ -4,5 +4,5 @@ import { Appearance } from "../../sync/appearance";
 export interface UpdateAppearanceMessage {
     t: MsgType.UpdateAppearance;
     idx: number;
-    data: Appearance;
+    data: Appearance | null;
 }
