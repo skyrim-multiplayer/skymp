@@ -183,7 +183,7 @@ VarValue PapyrusActor::EquipItem(VarValue self,
   if (auto actor = GetFormPtr<MpActor>(self)) {
     auto worldState = actor->GetParent();
     if (!worldState) {
-      throw std::runtime_error("AddItem - no WorldState attached");
+      throw std::runtime_error("EquipItem - no WorldState attached");
     }
 
     if (arguments.size() < 1) {

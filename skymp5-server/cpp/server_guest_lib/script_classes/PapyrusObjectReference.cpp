@@ -75,8 +75,10 @@ VarValue PapyrusObjectReference::AddItem(
   if (!selfRefr || !item.rec || count <= 0)
     return VarValue::None();
 
-  if (!espm::utils::IsItem(item.rec->GetType())) {
-    throw std::runtime_error("AddItem - form is not an item");
+  if (!espm::utils::Is<espm::FLST>(item.rec->GetType())) {
+    if (!espm::utils::IsItem(item.rec->GetType())) {
+      throw std::runtime_error("AddItem - form is not an item");
+    }
   }
 
   if (espm::utils::Is<espm::LIGH>(item.rec->GetType())) {
@@ -96,6 +98,8 @@ VarValue PapyrusObjectReference::AddItem(
     formIds =
       espm::GetData<espm::FLST>(formlist->GetId(), selfRefr->GetParent())
         .formIds;
+    // TODO: call toGlobalId on formIds!
+    // TODO: check if formId is an item, not magic, etc
   } else {
     formIds.emplace_back(item.ToGlobalId(item.rec->GetId()));
     runSkympHacks = true;
@@ -131,14 +135,16 @@ VarValue PapyrusObjectReference::RemoveItem(
 
   auto worldState = selfRefr->GetParent();
   if (!worldState) {
-    throw std::runtime_error("AddItem - no WorldState attached");
+    throw std::runtime_error("RemoveItem - no WorldState attached");
   }
 
   if (!selfRefr || !item.rec)
     return VarValue::None();
 
-  if (!espm::utils::IsItem(item.rec->GetType())) {
-    throw std::runtime_error("RemoveItem - form is not an item");
+  if (!espm::utils::Is<espm::FLST>(item.rec->GetType())) {
+    if (!espm::utils::IsItem(item.rec->GetType())) {
+      throw std::runtime_error("RemoveItem - form is not an item");
+    }
   }
 
   if (espm::utils::Is<espm::LIGH>(item.rec->GetType())) {
@@ -158,6 +164,8 @@ VarValue PapyrusObjectReference::RemoveItem(
     formIds =
       espm::GetData<espm::FLST>(formlist->GetId(), selfRefr->GetParent())
         .formIds;
+    // TODO: call toGlobalId on formIds!
+    // TODO: check if formId is an item, not magic, etc
   } else {
     formIds.emplace_back(item.ToGlobalId(item.rec->GetId()));
     runSkympHacks = true;
