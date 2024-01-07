@@ -684,9 +684,13 @@ export class RemoteServer extends ClientListener implements ModelSource {
     }
     (this.worldModel.forms[i].numAppearanceChanges as number)++;
 
-    if (i === this.getMyActorIndex() && event.message.data) {
-      applyAppearanceToPlayer(event.message.data);
-      this.logTrace("Applied appearance to the player");
+    const newAppearance = msg.data;
+
+    if (i === this.getMyActorIndex() && newAppearance) {
+      this.controller.once("update", () => {
+        applyAppearanceToPlayer(newAppearance);
+        this.logTrace("Applied appearance to the player");
+      });
     }
   }
 
