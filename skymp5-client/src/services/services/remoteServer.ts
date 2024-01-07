@@ -683,6 +683,11 @@ export class RemoteServer extends ClientListener implements ModelSource {
       this.worldModel.forms[i].numAppearanceChanges = 0;
     }
     (this.worldModel.forms[i].numAppearanceChanges as number)++;
+
+    if (i === this.getMyActorIndex() && event.message.data) {
+      applyAppearanceToPlayer(event.message.data);
+      this.logTrace("Applied appearance to the player");
+    }
   }
 
   private onUpdateEquipmentMessage(event: ConnectionMessage<UpdateEquipmentMessage>): void {
