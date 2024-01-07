@@ -114,6 +114,14 @@ VarValue PapyrusForm::GetName_(VarValue self, const std::vector<VarValue>&)
   }
 
   if (auto lookupRes = GetRecordPtr(self); lookupRes.rec) {
+    if (lookupRes.rec->GetType() == "REFR" ||
+        lookupRes.rec->GetType() == "ACHR") {
+      spdlog::error("GetName_ {:x} - Unexpected self type {}",
+                    lookupRes.ToGlobalId(lookupRes.rec->GetId()),
+                    lookupRes.rec->GetType().ToString());
+      return VarValue("");
+    }
+
     if (auto worldState = compatibilityPolicy->GetWorldState()) {
       // TODO: use FULL (localized) instead of EDID
       const char* editorId =
