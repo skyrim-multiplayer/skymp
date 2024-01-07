@@ -18,7 +18,6 @@ Napi::Value AppearanceBinding::Get(Napi::Env env, ScampServer& scampServer,
 void AppearanceBinding::Set(Napi::Env env, ScampServer& scampServer,
                             uint32_t formId, Napi::Value newValue)
 {
-  // TODO: Live update of appearance
   // TODO: Validation
   auto& partOne = scampServer.GetPartOne();
   auto& actor = partOne->worldState.GetFormAt<MpActor>(formId);
@@ -29,5 +28,28 @@ void AppearanceBinding::Set(Napi::Env env, ScampServer& scampServer,
     actor.SetAppearance(&appearance);
   } else {
     actor.SetAppearance(nullptr);
+  }
+
+  constexpr int kChannelAppearance = 2;
+
+  auto appearance = actor.GetAppearance();
+
+  std::string msg;
+  msg += Networking::MinPacketId;
+  msg += nlohmann::json{
+    { "data",
+      appearance ? nlohmann::json::parse(appearance->ToJson())
+                 : nlohmann::json{} },
+    { "idx", actor.GetIdx() },
+    { "t", MsgType::UpdateAppearance }
+  }.dump();
+
+  for (auto listener : actor.GetListeners()) {
+    auto listenerActor = dynamic_cast<MpActor*>(listener);
+    if (listenerActor) {
+      // TODO: change to SendToUser
+      listenerActor->SendToUserDeferred(msg.data(), msg.size(), true,
+                                        kChannelAppearance, false);
+    }
   }
 }
