@@ -30,9 +30,7 @@ import { Inventory, applyInventory } from '../../sync/inventory';
 import { Movement } from '../../sync/movement';
 import { learnSpells, removeAllSpells } from '../../sync/spell';
 import { ModelApplyUtils } from '../../view/modelApplyUtils';
-import { FormModel, WorldModel } from '../../modelSource/model';
-import { ModelSource } from '../../modelSource/modelSource';
-import { SpApiInteractor } from '../spApiInteractor';
+import { FormModel, WorldModel } from '../../view/model';
 import { LoadGameService } from './loadGameService';
 import { UpdateMovementMessage } from '../messages/updateMovementMessage';
 import { ChangeValuesMessage } from '../messages/changeValues';
@@ -135,71 +133,12 @@ const showConnectionError = () => {
   printConsole("If you feel that something is wrong, please contact us on Discord.");
 };
 
-let loggingStartMoment = 0;
-on('tick', () => {
-  // TODO: Should be no hardcoded/magic-number limit
-  const maxLoggingDelay = 15000;
-  if (loggingStartMoment && Date.now() - loggingStartMoment > maxLoggingDelay) {
-    printConsole('Logging in failed. Reconnecting.');
-    showConnectionError();
-    SpApiInteractor.makeController().lookupListener(NetworkingService).reconnect();
-    loggingStartMoment = 0;
-  }
-});
-
-class SpawnTask {
-  running = false;
-}
-
-const loginWithSkympIoCredentials = () => {
-  loggingStartMoment = Date.now();
-  const authData = storage[AuthGameData.storageKey] as AuthGameData | undefined;
-  if (authData?.local) {
-    printConsole(
-      `Logging in offline mode, profileId = ${authData.local.profileId}`,
-    );
-    const message: CustomPacketMessage = {
-      t: messages.MsgType.CustomPacket,
-      content: {
-        customPacketType: 'loginWithSkympIo',
-        gameData: {
-          profileId: authData.local.profileId,
-        },
-      },
-    };
-    SpApiInteractor.makeController().emitter.emit("sendMessage", {
-      message: message,
-      reliability: "reliable"
-    });
-    return;
-  }
-  if (authData?.remote) {
-    printConsole('Logging in as skymp.io user');
-    const message: CustomPacketMessage = {
-      t: messages.MsgType.CustomPacket,
-      content: {
-        customPacketType: 'loginWithSkympIo',
-        gameData: {
-          session: authData.remote.session,
-        },
-      },
-    };
-    SpApiInteractor.makeController().emitter.emit("sendMessage", {
-      message: message,
-      reliability: "reliable"
-    });
-    return;
-  }
-
-  printConsole('Not found authentication method');
-};
-
-export const getPcInventory = (): Inventory => {
+export const getPcInventory = (): Inventory | undefined => {
   const res = storage['pcInv'];
   if (typeof res === 'object' && (res as any)['entries']) {
-    return res as unknown as Inventory;
+    return res as Inventory;
   }
-  return null as unknown as Inventory;
+  return undefined;
 };
 
 const setPcInventory = (inv: Inventory): void => {
@@ -222,9 +161,11 @@ const unequipIronHelmet = () => {
   if (pl) pl.unequipItem(ironHelment, false, true);
 };
 
-export class RemoteServer extends ClientListener implements ModelSource {
+export class RemoteServer extends ClientListener {
   constructor(private sp: Sp, private controller: CombinedController) {
     super();
+
+    this.controller.on("tick", () => this.onTick());
 
     this.controller.emitter.on("hostStartMessage", (e) => this.onHostStartMessage(e));
     this.controller.emitter.on("hostStopMessage", (e) => this.onHostStopMessage(e));
@@ -237,7 +178,6 @@ export class RemoteServer extends ClientListener implements ModelSource {
     this.controller.emitter.on("updateAppearanceMessage", (e) => this.onUpdateAppearanceMessage(e));
     this.controller.emitter.on("teleportMessage", (e) => this.onTeleportMessage(e));
     this.controller.emitter.on("teleportMessage2", (e) => this.onTeleportMessage(e));
-    this.controller.emitter.on("setInventoryMessage", (e) => this.onSetInventoryMessage(e));
     this.controller.emitter.on("createActorMessage", (e) => this.onCreateActorMessage(e));
     this.controller.emitter.on("customPacketMessage2", (e) => this.onCustomPacketMessage2(e));
     this.controller.emitter.on("destroyActorMessage", (e) => this.onDestroyActorMessage(e));
@@ -247,6 +187,18 @@ export class RemoteServer extends ClientListener implements ModelSource {
     this.controller.emitter.on("deathStateContainerMessage", (e) => this.onDeathStateContainerMessage(e));
 
     this.controller.emitter.on("connectionAccepted", () => this.handleConnectionAccepted());
+  }
+
+  private onTick() {
+    // TODO: Should be no hardcoded/magic-number limit
+    // TODO: Busy waiting is bad. Should be replaced with some kind of event
+    const maxLoggingDelay = 15000;
+    if (this.loggingStartMoment && Date.now() - this.loggingStartMoment > maxLoggingDelay) {
+      printConsole('Logging in failed. Reconnecting.');
+      showConnectionError();
+      this.controller.lookupListener(NetworkingService).reconnect();
+      this.loggingStartMoment = 0;
+    }
   }
 
   private onHostStartMessage(event: ConnectionMessage<HostStartMessage>) {
@@ -302,7 +254,7 @@ export class RemoteServer extends ClientListener implements ModelSource {
           }
         };
 
-        SpApiInteractor.makeController().emitter.emit("sendMessage", {
+        this.controller.emitter.emit("sendMessage", {
           message: message,
           reliability: "reliable"
         });
@@ -321,7 +273,7 @@ export class RemoteServer extends ClientListener implements ModelSource {
         'cell/world is',
         msg.worldOrCell.toString(16),
       );
-      const ragdollService = SpApiInteractor.makeController().lookupListener(RagdollService);
+      const ragdollService = this.controller.lookupListener(RagdollService);
 
       const refrId = refr?.getFormID();
 
@@ -394,7 +346,7 @@ export class RemoteServer extends ClientListener implements ModelSource {
 
     printConsole("Create actor")
 
-    loggingStartMoment = 0;
+    this.loggingStartMoment = 0;
 
     const i = this.getIdManager().allocateIdFor(msg.idx);
     if (this.worldModel.forms.length <= i) this.worldModel.forms.length = i + 1;
@@ -497,12 +449,12 @@ export class RemoteServer extends ClientListener implements ModelSource {
     }
 
     if (msg.isMe) {
-      const task = new SpawnTask();
+      const spawnTask = { running: false };
       once('update', () => {
         // Use MoveRefrToPosition to spawn if possible (not in main menu)
         // In case of connection lost this is essential
-        if (!task.running) {
-          task.running = true;
+        if (!spawnTask.running) {
+          spawnTask.running = true;
           printConsole('Using moveRefrToPosition to spawn player');
           (async () => {
             while (true) {
@@ -584,8 +536,8 @@ export class RemoteServer extends ClientListener implements ModelSource {
       });
       once('tick', () => {
         once('tick', () => {
-          if (!task.running) {
-            task.running = true;
+          if (!spawnTask.running) {
+            spawnTask.running = true;
 
             let loadOrder = new Array<string>();
             for (let i = 0; i < this.sp.Game.getModCount(); ++i) {
@@ -757,7 +709,7 @@ export class RemoteServer extends ClientListener implements ModelSource {
           : Actor.from(Game.getFormEx(remoteIdToLocalId(form.refrId ?? 0)));
       if (actor) {
         try {
-          SpApiInteractor.makeController().emitter.emit("applyDeathStateEvent", {
+          this.controller.emitter.emit("applyDeathStateEvent", {
             actor: actor,
             isDead: msg.tIsDead.data as boolean
           });
@@ -779,7 +731,7 @@ export class RemoteServer extends ClientListener implements ModelSource {
 
     this.logTrace("Handle connection accepted");
 
-    loginWithSkympIoCredentials();
+    this.loginWithSkympIoCredentials();
   }
 
   private onChangeValuesMessage(event: ConnectionMessage<ChangeValuesMessage>): void {
@@ -816,10 +768,10 @@ export class RemoteServer extends ClientListener implements ModelSource {
   private onCustomPacketMessage2(event: ConnectionMessage<CustomPacketMessage2>): void {
     const msg = event.message;
 
-    printConsole("LOGIN REQUIRED");
     switch (msg.content.customPacketType) {
       case 'loginRequired':
-        loginWithSkympIoCredentials();
+        this.logTrace('loginRequired received');
+        this.loginWithSkympIoCredentials();
         break;
     }
   }
@@ -890,7 +842,7 @@ export class RemoteServer extends ClientListener implements ModelSource {
               args,
               eventName
             };
-            SpApiInteractor.makeController().emitter.emit("sendMessage", {
+            this.controller.emitter.emit("sendMessage", {
               message: message,
               reliability: "reliable"
             });
@@ -941,4 +893,51 @@ export class RemoteServer extends ClientListener implements ModelSource {
     }
     return storage["idManager"] as IdManager;
   }
+
+  private loginWithSkympIoCredentials() {
+    this.loggingStartMoment = Date.now();
+
+    const authData = storage[AuthGameData.storageKey] as AuthGameData | undefined;
+    if (authData?.local) {
+      this.logTrace(
+        `Logging in offline mode, profileId = ${authData.local.profileId}`,
+      );
+      const message: CustomPacketMessage = {
+        t: messages.MsgType.CustomPacket,
+        content: {
+          customPacketType: 'loginWithSkympIo',
+          gameData: {
+            profileId: authData.local.profileId,
+          },
+        },
+      };
+      this.controller.emitter.emit("sendMessage", {
+        message: message,
+        reliability: "reliable"
+      });
+      return;
+    }
+
+    if (authData?.remote) {
+      this.logTrace('Logging in as a master API user');
+      const message: CustomPacketMessage = {
+        t: messages.MsgType.CustomPacket,
+        content: {
+          customPacketType: 'loginWithSkympIo',
+          gameData: {
+            session: authData.remote.session,
+          },
+        },
+      };
+      this.controller.emitter.emit("sendMessage", {
+        message: message,
+        reliability: "reliable"
+      });
+      return;
+    }
+  
+    this.logError('Not found authentication method');
+  };
+
+  private loggingStartMoment = 0;
 }
