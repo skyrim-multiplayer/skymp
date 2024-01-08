@@ -132,7 +132,7 @@ VarValue PapyrusObjectReference::AddItem(
       tempFormIds.begin(), tempFormIds.end(), [&](uint32_t formId) {
         auto lookupRes = worldState->GetEspm().GetBrowser().LookupById(formId);
         return !GetIsItemWithLightCarryableFlagChecked(worldState, lookupRes);
-      }));
+      }), tempFormIds.end());
 
     formIds = std::move(tempFormIds);
   } else {
@@ -212,7 +212,7 @@ VarValue PapyrusObjectReference::RemoveItem(
     auto data =
       espm::GetData<espm::FLST>(formlist->GetId(), selfRefr->GetParent());
 
-    std::vector<uint32_t> tempFormIds = std::move(data.formIds);
+    std::vector<uint32_t> tempFormIds = data.formIds;
 
     // Transform raw formIds into global formIds
     std::transform(
@@ -224,9 +224,9 @@ VarValue PapyrusObjectReference::RemoveItem(
       tempFormIds.begin(), tempFormIds.end(), [&](uint32_t formId) {
         auto lookupRes = worldState->GetEspm().GetBrowser().LookupById(formId);
         return !GetIsItemWithLightCarryableFlagChecked(worldState, lookupRes);
-      }));
+      }), tempFormIds.end());
 
-    formIds = std::move(tempFormIds);
+    formIds = tempFormIds;
   } else {
     formIds.emplace_back(item.ToGlobalId(item.rec->GetId()));
     runSkympHacks = true;
