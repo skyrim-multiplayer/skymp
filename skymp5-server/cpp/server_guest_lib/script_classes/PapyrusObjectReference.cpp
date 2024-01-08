@@ -128,11 +128,15 @@ VarValue PapyrusObjectReference::AddItem(
       [&](uint32_t rawFormId) { return item.ToGlobalId(rawFormId); });
 
     // Remove ids that belong to non-item records
-    tempFormIds.erase(std::remove_if(
-      tempFormIds.begin(), tempFormIds.end(), [&](uint32_t formId) {
-        auto lookupRes = worldState->GetEspm().GetBrowser().LookupById(formId);
-        return !GetIsItemWithLightCarryableFlagChecked(worldState, lookupRes);
-      }), tempFormIds.end());
+    tempFormIds.erase(
+      std::remove_if(tempFormIds.begin(), tempFormIds.end(),
+                     [&](uint32_t formId) {
+                       auto lookupRes =
+                         worldState->GetEspm().GetBrowser().LookupById(formId);
+                       return !GetIsItemWithLightCarryableFlagChecked(
+                         worldState, lookupRes);
+                     }),
+      tempFormIds.end());
 
     formIds = std::move(tempFormIds);
   } else {
@@ -220,11 +224,15 @@ VarValue PapyrusObjectReference::RemoveItem(
       [&](uint32_t rawFormId) { return item.ToGlobalId(rawFormId); });
 
     // Remove ids that belong to non-item records
-    tempFormIds.erase(std::remove_if(
-      tempFormIds.begin(), tempFormIds.end(), [&](uint32_t formId) {
-        auto lookupRes = worldState->GetEspm().GetBrowser().LookupById(formId);
-        return !GetIsItemWithLightCarryableFlagChecked(worldState, lookupRes);
-      }), tempFormIds.end());
+    tempFormIds.erase(
+      std::remove_if(tempFormIds.begin(), tempFormIds.end(),
+                     [&](uint32_t formId) {
+                       auto lookupRes =
+                         worldState->GetEspm().GetBrowser().LookupById(formId);
+                       return !GetIsItemWithLightCarryableFlagChecked(
+                         worldState, lookupRes);
+                     }),
+      tempFormIds.end());
 
     formIds = tempFormIds;
   } else {
