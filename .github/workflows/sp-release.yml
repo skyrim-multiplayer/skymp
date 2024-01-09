@@ -25,14 +25,17 @@ jobs:
           chmod 777 ${{github.workspace}}/skyrim-platform/src/platform_se/CMakeLists.txt
           chmod 777 ${{github.workspace}}/skyrim-platform/src/platform_se/skyrim_platform/DevApi.cpp
           chmod 777 ${{github.workspace}}/skyrim-platform/package.json
+          chmod 777 ${{github.workspace}}/skyrim-platform/tools/plugin-example/package.json
           chmod 777 ${{github.workspace}}/skymp5-client/src/version.ts
           sed -i "s/${{ env.OLDVER }}/${{ env.NEWVER }}/g" ${{github.workspace}}/skyrim-platform/src/platform_se/CMakeLists.txt
           sed -i "s/${{ env.OLDVER }}/${{ env.NEWVER }}/g" ${{github.workspace}}/skyrim-platform/src/platform_se/skyrim_platform/DevApi.cpp
           sed -i "s/${{ env.OLDVER }}/${{ env.NEWVER }}/g" ${{github.workspace}}/skyrim-platform/package.json
+          sed -i "s/${{ env.OLDVER }}/${{ env.NEWVER }}/g" ${{github.workspace}}/skyrim-platform/tools/plugin-example/package.json
           sed -i "s/${{ env.OLDVER }}/${{ env.NEWVER }}/g" ${{github.workspace}}/skymp5-client/src/version.ts
           chmod 644 ${{github.workspace}}/skyrim-platform/src/platform_se/CMakeLists.txt
           chmod 644 ${{github.workspace}}/skyrim-platform/src/platform_se/skyrim_platform/DevApi.cpp
           chmod 644 ${{github.workspace}}/skyrim-platform/package.json
+          chmod 644 ${{github.workspace}}/skyrim-platform/tools/plugin-example/package.json
           chmod 644 ${{github.workspace}}/skymp5-client/src/version.ts
 
       - name: Generate Changelog
