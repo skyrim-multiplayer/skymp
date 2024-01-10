@@ -26,9 +26,6 @@ float DamageMultFormula::CalculateDamage(const MpActor& aggressor,
     return baseDamage;
   }
 
-  float fCombatDistance =
-    espm::GetData<espm::GMST>(espm::GMST::kFCombatDistance, worldState).value;
-
   if (IsNonPlayerBaseId(aggressor) && !IsNonPlayerBaseId(target)) {
     baseDamage *= 2.0f;
   }
