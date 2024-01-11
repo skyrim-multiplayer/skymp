@@ -80,26 +80,31 @@ Inventory& Inventory::RemoveItems(const std::vector<Entry>& entries)
 
 bool Inventory::HasItem(uint32_t baseId) const
 {
-  for (auto& entry : entries)
-    if (entry.baseId == baseId)
+  for (auto& entry : entries) {
+    if (entry.baseId == baseId) {
       return true;
+    }
+  }
   return false;
 }
 
 uint32_t Inventory::GetItemCount(uint32_t baseId) const
 {
   uint32_t sum = 0;
-  for (auto& entry : entries)
-    if (entry.baseId == baseId)
+  for (auto& entry : entries) {
+    if (entry.baseId == baseId) {
       sum += entry.count;
+    }
+  }
   return sum;
 }
 
 uint32_t Inventory::GetTotalItemCount() const
 {
   uint32_t sum = 0;
-  for (auto& entry : entries)
+  for (auto& entry : entries) {
     sum += entry.count;
+  }
   return sum;
 }
 

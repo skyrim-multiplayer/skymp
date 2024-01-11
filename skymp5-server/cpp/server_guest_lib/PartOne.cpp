@@ -4,6 +4,7 @@
 #include "FormCallbacks.h"
 #include "IdManager.h"
 #include "JsonUtils.h"
+#include "MessageSerializerFactory.h"
 #include "MsgType.h"
 #include "PacketParser.h"
 #include <array>
@@ -17,16 +18,18 @@ public:
   void Send(Networking::UserId targetUserId, Networking::PacketData data,
             size_t length, bool reliable) override
   {
-    std::string s(reinterpret_cast<const char*>(data + 1), length - 1);
-    PartOne::Message m;
-    try {
-      m = PartOne::Message{ nlohmann::json::parse(s), targetUserId, reliable };
-    } catch (std::exception& e) {
-      std::stringstream ss;
-      ss << e.what() << std::endl << "`" << s << "`";
-      throw std::runtime_error(ss.str());
+    static auto g_serializer =
+      MessageSerializerFactory::CreateMessageSerializer();
+    auto deserializeResult = g_serializer->Deserialize(data, length);
+    nlohmann::json j;
+    if (deserializeResult) {
+      deserializeResult->message->WriteJson(j);
+    } else {
+      std::string s(reinterpret_cast<const char*>(data + 1), length - 1);
+      j = nlohmann::json::parse(s);
     }
-    messages.push_back(m);
+
+    messages.push_back(PartOne::Message{ j, targetUserId, reliable });
   }
 
   std::vector<PartOne::Message> messages;
@@ -143,7 +146,7 @@ void PartOne::SetUserActor(Networking::UserId userId, uint32_t actorFormId)
     // properly. If you do something wrong here, players would not be able to
     // interact with items in the same cell after reconnecting.
     actor.UnsubscribeFromAll();
-    actor.RemoveFromGrid();
+    actor.RemoveFromGridAndUnsubscribeAll();
 
     serverState.actorsMap.Set(userId, &actor);
 
@@ -262,10 +265,37 @@ void PartOne::AttachSaveStorage(std::shared_ptr<ISaveStorage> saveStorage)
       changeForm.isDisabled = true;
     }
 
+    if (changeForm.isDeleted) {
+      pImpl->logger->info(
+        "Skipping deleted form {}, will likely overwrite at some point",
+        changeForm.formDesc.ToString());
+      return;
+    }
+
+    bool isFF = changeForm.formDesc.file.empty();
+
+    if (isFF) {
+      auto baseId = changeForm.baseDesc.ToFormId(worldState.espmFiles);
+      auto lookupRes = GetEspm().GetBrowser().LookupById(baseId);
+
+      if (lookupRes.rec && espm::utils::IsItem(lookupRes.rec->GetType())) {
+        pImpl->logger->info("Skipping FF item {} (type is {}), will likely "
+                            "overwrite at some point",
+                            changeForm.formDesc.ToString(),
+                            lookupRes.rec->GetType().ToString());
+        return;
+      }
+    }
+
     n++;
     worldState.LoadChangeForm(changeForm, CreateFormCallbacks());
-    if (changeForm.profileId >= 0)
+    if (changeForm.profileId >= 0) {
       ++numPlayerCharacters;
+    }
+
+    if (n % 25 == 0) {
+      pImpl->logger->info("Loaded {} ChangeForms", n);
+    }
   });
 
   pImpl->logger->info("AttachSaveStorage took {} ticks, loaded {} ChangeForms "
@@ -442,6 +472,9 @@ void PartOne::RequestPacketHistoryPlayback(Networking::UserId userId,
 
 FormCallbacks PartOne::CreateFormCallbacks()
 {
+  static auto g_serializer =
+    MessageSerializerFactory::CreateMessageSerializer();
+
   auto st = &serverState;
 
   FormCallbacks::SubscribeCallback
@@ -455,18 +488,37 @@ FormCallbacks PartOne::CreateFormCallbacks()
     };
 
   FormCallbacks::SendToUserFn sendToUser =
-    [this, st](MpActor* actor, const void* data, size_t size, bool reliable) {
+    [this, st](MpActor* actor, const IMessageBase& message, bool reliable) {
+      SLNet::BitStream stream;
+      g_serializer->Serialize(message, stream);
+
+      bool isOffline = st->UserByActor(actor) == Networking::InvalidUserId;
+
+      // Only send to hoster if actor is offline (no active user)
+      // This fixes December 2023 Update "invisible chat" bug
+      if (isOffline) {
+        auto hosterIterator = worldState.hosters.find(actor->GetFormId());
+        if (hosterIterator != worldState.hosters.end()) {
+          auto& hosterActor =
+            worldState.GetFormAt<MpActor>(hosterIterator->second);
+          actor = &hosterActor;
+          // Send messages such as Teleport, ChangeValues to our host
+        }
+      }
+
       auto targetuserId = st->UserByActor(actor);
       if (targetuserId != Networking::InvalidUserId &&
-          st->disconnectingUserId != targetuserId)
-        pImpl->sendTarget->Send(targetuserId,
-                                reinterpret_cast<Networking::PacketData>(data),
-                                size, reliable);
+          st->disconnectingUserId != targetuserId) {
+        pImpl->sendTarget->Send(
+          targetuserId,
+          reinterpret_cast<Networking::PacketData>(stream.GetData()),
+          stream.GetNumberOfBytesUsed(), reliable);
+      }
     };
 
   FormCallbacks::SendToUserDeferredFn sendToUserDeferred =
     [this, st](MpActor* actor, const void* data, size_t size, bool reliable,
-               int deferredChannelId) {
+               int deferredChannelId, bool overwritePreviousChannelMessages) {
       if (deferredChannelId < 0 || deferredChannelId >= 100) {
         return spdlog::error(
           "sendToUserDeferred - invalid deferredChannelId {}",
@@ -497,7 +549,12 @@ FormCallbacks PartOne::CreateFormCallbacks()
         userInfo->deferredChannels.resize(deferredChannelId + 1);
       }
 
-      userInfo->deferredChannels[deferredChannelId] = deferredMessage;
+      if (overwritePreviousChannelMessages) {
+        userInfo->deferredChannels[deferredChannelId] = { deferredMessage };
+      } else {
+        userInfo->deferredChannels[deferredChannelId].push_back(
+          deferredMessage);
+      }
     };
 
   return { subscribe, unsubscribe, sendToUser, sendToUserDeferred };
@@ -784,25 +841,23 @@ void PartOne::TickDeferredMessages()
     if (!userInfo) {
       continue;
     }
-    for (auto& deferredMessage : userInfo->deferredChannels) {
-      if (deferredMessage != std::nullopt) {
+    for (auto& channel : userInfo->deferredChannels) {
+      for (auto& message : channel) {
         auto actor = serverState.ActorByUser(userId);
         if (!actor) {
           continue;
         }
 
-        if (deferredMessage->actorIdExpected != actor->GetFormId()) {
+        if (message.actorIdExpected != actor->GetFormId()) {
           continue;
         }
 
-        pImpl->sendTarget->Send(userId,
-                                reinterpret_cast<Networking::PacketData>(
-                                  deferredMessage->packetData.data()),
-                                deferredMessage->packetData.size(),
-                                deferredMessage->packetReliable);
-
-        deferredMessage = std::nullopt;
+        pImpl->sendTarget->Send(
+          userId,
+          reinterpret_cast<Networking::PacketData>(message.packetData.data()),
+          message.packetData.size(), message.packetReliable);
       }
+      channel.clear();
     }
   }
 }

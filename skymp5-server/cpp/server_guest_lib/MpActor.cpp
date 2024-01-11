@@ -3,30 +3,44 @@
 #include "ActorValues.h"
 #include "ChangeFormGuard.h"
 #include "CropRegeneration.h"
-#include "EspmGameObject.h"
 #include "FormCallbacks.h"
 #include "GetBaseActorValues.h"
+#include "LeveledListUtils.h"
+#include "LocationalDataUtils.h"
 #include "MathUtils.h"
 #include "MpChangeForms.h"
 #include "MsgType.h"
-#include "PapyrusObjectReference.h"
 #include "ServerState.h"
+#include "SpSnippet.h"
+#include "SpSnippetFunctionGen.h"
 #include "SweetPieScript.h"
 #include "TimeUtils.h"
 #include "WorldState.h"
 #include "libespm/espm.h"
+#include "script_objects/EspmGameObject.h"
 #include <NiPoint3.h>
+#include <algorithm>
+#include <atomic>
 #include <chrono>
 #include <functional>
 #include <optional>
 #include <random>
 #include <string>
 
+#include "ChangeValuesMessage.h"
+#include "TeleportMessage.h"
+#include "UpdateEquipmentMessage.h"
+
+// for PlaceAtMe used in MpActor::DropItem
+#include "script_classes/PapyrusObjectReference.h"
+#include "script_objects/MpFormGameObject.h"
+
 struct MpActor::Impl
 {
   std::map<uint32_t, Viet::Promise<VarValue>> snippetPromises;
   std::set<std::shared_ptr<DestroyEventSink>> destroyEventSinks;
   uint32_t snippetIndex = 0;
+  uint32_t respawnTimerIndex = 0;
   bool isRespawning = false;
   bool isBlockActive = false;
   std::chrono::steady_clock::time_point lastAttributesUpdateTimePoint,
@@ -49,6 +63,7 @@ struct MpActor::Impl
       std::chrono::steady_clock::time_point{} },
   };
   uint32_t blockActiveCount = 0;
+  std::vector<std::pair<uint32_t, MpObjectReference*>> droppedItemsQueue;
 };
 
 MpActor::MpActor(const LocationalData& locationalData_,
@@ -86,6 +101,77 @@ void MpActor::SetConsoleCommandsAllowedFlag(bool newValue)
   });
 }
 
+void MpActor::EquipBestWeapon()
+{
+  if (!GetParent()->HasEspm()) {
+    return;
+  }
+
+  auto& loader = GetParent()->GetEspm();
+  auto& cache = GetParent()->GetEspmCache();
+
+  const Equipment eq = GetEquipment();
+
+  Equipment newEq;
+  newEq.numChanges = eq.numChanges + 1;
+  for (auto& entry : eq.inv.entries) {
+    bool isEquipped = entry.extra.worn != Inventory::Worn::None;
+    bool isWeap =
+      espm::GetRecordType(entry.baseId, GetParent()) == espm::WEAP::kType;
+    if (isEquipped && isWeap) {
+      continue;
+    }
+    newEq.inv.AddItems({ entry });
+  }
+
+  const Inventory& inv = GetInventory();
+  Inventory::Entry bestEntry;
+  int16_t bestDamage = -1;
+  for (auto& entry : inv.entries) {
+    if (entry.baseId) {
+      auto lookupRes = loader.GetBrowser().LookupById(entry.baseId);
+      if (auto weap = espm::Convert<espm::WEAP>(lookupRes.rec)) {
+        if (!bestEntry.count ||
+            weap->GetData(cache).weapData->damage > bestDamage) {
+          bestEntry = entry;
+          bestDamage = weap->GetData(cache).weapData->damage;
+        }
+      }
+    }
+  }
+
+  if (bestEntry.count > 0) {
+    bestEntry.extra.worn = Inventory::Worn::Right;
+    newEq.inv.AddItems({ bestEntry });
+  }
+
+  SetEquipment(newEq.ToJson().dump());
+  for (auto listener : GetListeners()) {
+    auto actor = dynamic_cast<MpActor*>(listener);
+    if (!actor) {
+      continue;
+    }
+    UpdateEquipmentMessage msg;
+    msg.data = newEq.ToJson();
+    msg.idx = GetIdx();
+    actor->SendToUser(msg, true);
+  }
+}
+
+void MpActor::AddSpell(const uint32_t spellId)
+{
+  EditChangeForm([&](MpChangeForm& changeForm) {
+    changeForm.learnedSpells.LearnSpell(spellId);
+  });
+}
+
+void MpActor::RemoveSpell(const uint32_t spellId)
+{
+  EditChangeForm([&](MpChangeForm& changeForm) {
+    changeForm.learnedSpells.ForgetSpell(spellId);
+  });
+}
+
 void MpActor::SetRaceMenuOpen(bool isOpen)
 {
   EditChangeForm(
@@ -119,7 +205,8 @@ void MpActor::VisitProperties(const PropertiesVisitor& visitor,
   // this "if" is needed for unit testing: tests can call VisitProperties
   // without espm attached, which will cause tests to fail
   if (worldState && worldState->HasEspm()) {
-    baseActorValues = GetBaseActorValues(worldState, baseId, raceId);
+    baseActorValues = GetBaseActorValues(worldState, baseId, raceId,
+                                         ChangeForm().templateChain);
   }
 
   MpChangeForm changeForm = GetChangeForm();
@@ -138,6 +225,18 @@ void MpActor::VisitProperties(const PropertiesVisitor& visitor,
           nlohmann::json(changeForm.learnedSpells.GetLearnedSpells())
             .dump()
             .c_str());
+
+  if (!changeForm.templateChain.empty()) {
+    // should be faster than nlohmann::json
+    std::string jsonDump = "[";
+    for (auto& element : changeForm.templateChain) {
+      jsonDump += std::to_string(element.ToFormId(GetParent()->espmFiles));
+      jsonDump += ',';
+    }
+    jsonDump.pop_back(); // comma
+    jsonDump += "]";
+    visitor("templateChain", jsonDump.data());
+  }
 }
 
 void MpActor::Disable()
@@ -163,21 +262,23 @@ void MpActor::Disable()
   pImpl->snippetPromises.clear();
 }
 
-void MpActor::SendToUser(const void* data, size_t size, bool reliable)
+void MpActor::SendToUser(const IMessageBase& message, bool reliable)
 {
   if (callbacks->sendToUser) {
-    callbacks->sendToUser(this, data, size, reliable);
+    callbacks->sendToUser(this, message, reliable);
   } else {
     throw std::runtime_error("sendToUser is nullptr");
   }
 }
 
 void MpActor::SendToUserDeferred(const void* data, size_t size, bool reliable,
-                                 int deferredChannelId)
+                                 int deferredChannelId,
+                                 bool overwritePreviousChannelMessages)
 {
   if (callbacks->sendToUserDeferred) {
     callbacks->sendToUserDeferred(this, data, size, reliable,
-                                  deferredChannelId);
+                                  deferredChannelId,
+                                  overwritePreviousChannelMessages);
   } else {
     throw std::runtime_error("sendToUserDeferred is nullptr");
   }
@@ -199,7 +300,21 @@ bool MpActor::OnEquip(uint32_t baseId)
   const bool isIngredient = recordType == "INGR";
   const bool isPotion = recordType == "ALCH";
 
-  if (!(isSpell || isIngredient || isPotion || isBook)) {
+  bool isTorch = false;
+  if (espm::utils::Is<espm::LIGH>(recordType)) {
+    auto& compressedFieldsCache = GetParent()->GetEspmCache();
+    auto light = espm::Convert<espm::LIGH>(lookupRes.rec);
+    auto res = light->GetData(compressedFieldsCache);
+    isTorch = res.data.flags & espm::LIGH::Flags::CanBeCarried;
+  }
+
+  const bool isScroll = recordType == "SCRL";
+  const bool isWeapon = recordType == "WEAP";
+  const bool isArmor = recordType == "ARMO";
+  const bool isAmmo = recordType == "AMMO";
+
+  if (!(isSpell || isIngredient || isPotion || isBook || isTorch || isScroll ||
+        isWeapon || isArmor || isAmmo)) {
     return false;
   }
 
@@ -211,14 +326,30 @@ bool MpActor::OnEquip(uint32_t baseId)
     return false;
   }
 
-  bool spellLearned = true;
+  bool spellLearned = false;
   if (isIngredient || isPotion) {
     EatItem(baseId, recordType);
+
+    nlohmann::json j = nlohmann::json::array();
+    j.push_back(
+      nlohmann::json({ { "formId", baseId },
+                       { "type", isIngredient ? "Ingredient" : "Potion" } }));
+    j.push_back(false);
+    j.push_back(false);
+
+    std::string serializedArgs = j.dump();
+    for (auto listener : GetListeners()) {
+      auto targetRefr = dynamic_cast<MpActor*>(listener);
+      if (targetRefr && targetRefr != this) {
+        SpSnippet("Actor", "EquipItem", serializedArgs.data(), GetFormId())
+          .Execute(targetRefr);
+      }
+    }
   } else if (isBook) {
     spellLearned = ReadBook(baseId);
   }
 
-  if (!isSpell && spellLearned) {
+  if (isIngredient || isPotion || spellLearned) {
     RemoveItem(baseId, 1, nullptr);
   }
 
@@ -272,13 +403,16 @@ void MpActor::ApplyChangeForm(const MpChangeForm& newChangeForm)
       if (changeForm.appearanceDump.empty()) {
         changeForm.isRaceMenuOpen = true;
       }
+
       // ActorValues does not refelect real base actor values set in esp/esm
       // game files since new update
       // this check is added only for test as a workaround. It is to be redone
       // in the nearest future. TODO
       if (GetParent() && GetParent()->HasEspm()) {
-        changeForm.actorValues =
-          GetBaseActorValues(GetParent(), GetBaseId(), GetRaceId());
+        EnsureTemplateChainEvaluated(GetParent()->GetEspm(),
+                                     Mode::NoRequestSave);
+        changeForm.actorValues = GetBaseActorValues(
+          GetParent(), GetBaseId(), GetRaceId(), changeForm.templateChain);
       }
     },
     Mode::NoRequestSave);
@@ -325,18 +459,12 @@ void MpActor::SetPercentages(const ActorValues& actorValues,
 
 void MpActor::NetSendChangeValues(const ActorValues& actorValues)
 {
-  std::string s;
-  s += Networking::MinPacketId;
-  s += nlohmann::json{
-    { "t", MsgType::ChangeValues },
-    { "data",
-      {
-        { "health", actorValues.healthPercentage },
-        { "magicka", actorValues.magickaPercentage },
-        { "stamina", actorValues.staminaPercentage },
-      } }
-  }.dump();
-  SendToUser(s.data(), s.size(), true);
+  ChangeValuesMessage message;
+  message.idx = GetIdx();
+  message.health = actorValues.healthPercentage;
+  message.magicka = actorValues.magickaPercentage;
+  message.stamina = actorValues.staminaPercentage;
+  SendToUser(message, true);
 }
 
 void MpActor::NetSetPercentages(const ActorValues& actorValues,
@@ -391,13 +519,37 @@ const bool& MpActor::IsRespawning() const
   return pImpl->isRespawning;
 }
 
-bool MpActor::IsSpellLearned(const uint32_t baseId) const
+bool MpActor::IsSpellLearned(const uint32_t spellId) const
+{
+  return ChangeForm().learnedSpells.IsSpellLearned(spellId) ||
+    IsSpellLearnedFromBase(spellId);
+}
+
+bool MpActor::IsSpellLearnedFromBase(const uint32_t spellId) const
 {
   const auto npcData = espm::GetData<espm::NPC_>(GetBaseId(), GetParent());
-  const auto raceData = espm::GetData<espm::RACE>(npcData.race, GetParent());
+  const auto npc = GetParent()->GetEspm().GetBrowser().LookupById(GetBaseId());
 
-  return npcData.spells.contains(baseId) || raceData.spells.contains(baseId) ||
-    ChangeForm().learnedSpells.IsSpellLearned(baseId);
+  const uint32_t raceId = npc.ToGlobalId(npcData.race);
+
+  const auto raceData = espm::GetData<espm::RACE>(raceId, GetParent());
+  const auto race = GetParent()->GetEspm().GetBrowser().LookupById(raceId);
+
+  for (auto npcSpellRaw : npcData.spells) {
+    const auto npcSpell = npc.ToGlobalId(npcSpellRaw);
+    if (npcSpell == spellId) {
+      return true;
+    }
+  }
+
+  for (auto raceSpellRaw : raceData.spells) {
+    const auto raceSpell = race.ToGlobalId(raceSpellRaw);
+    if (raceSpell == spellId) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 std::unique_ptr<const Appearance> MpActor::GetAppearance() const
@@ -452,13 +604,23 @@ espm::ObjectBounds MpActor::GetBounds() const
   return espm::GetData<espm::NPC_>(GetBaseId(), GetParent()).objectBounds;
 }
 
+const std::vector<FormDesc>& MpActor::GetTemplateChain() const
+{
+  return ChangeForm().templateChain;
+}
+
+bool MpActor::IsCreatedAsPlayer() const
+{
+  return GetFormId() >= 0xff000000 && GetBaseId() <= 0x7;
+}
+
 void MpActor::SendAndSetDeathState(bool isDead, bool shouldTeleport)
 {
   float attribute = isDead ? 0.f : 1.f;
   auto position = GetSpawnPoint();
 
-  std::string respawnMsg = GetDeathStateMsg(position, isDead, shouldTeleport);
-  SendToUser(respawnMsg.data(), respawnMsg.size(), true);
+  auto respawnMsg = GetDeathStateMsg(position, isDead, shouldTeleport);
+  SendToUser(respawnMsg, true);
 
   EditChangeForm([&](MpChangeForm& changeForm) {
     changeForm.isDead = isDead;
@@ -473,40 +635,33 @@ void MpActor::SendAndSetDeathState(bool isDead, bool shouldTeleport)
   }
 }
 
-std::string MpActor::GetDeathStateMsg(const LocationalData& position,
-                                      bool isDead, bool shouldTeleport)
+DeathStateContainerMessage MpActor::GetDeathStateMsg(
+  const LocationalData& position, bool isDead, bool shouldTeleport)
 {
-  nlohmann::json tTeleport = nlohmann::json{};
-  nlohmann::json tChangeValues = nlohmann::json{};
-  nlohmann::json tIsDead = PreparePropertyMessage(this, "isDead", isDead);
+  DeathStateContainerMessage res;
+  res.tIsDead = PreparePropertyMessage(this, "isDead", isDead);
 
   if (shouldTeleport) {
-    tTeleport = nlohmann::json{
-      { "pos", { position.pos[0], position.pos[1], position.pos[2] } },
-      { "rot", { position.rot[0], position.rot[1], position.rot[2] } },
-      { "worldOrCell",
-        position.cellOrWorldDesc.ToFormId(GetParent()->espmFiles) },
-      { "type", "teleport" }
-    };
-  }
-  if (isDead == false) {
-    const float attribute = 1.f;
-    tChangeValues = nlohmann::json{ { "t", MsgType::ChangeValues },
-                                    { "data",
-                                      { { "health", attribute },
-                                        { "magicka", attribute },
-                                        { "stamina", attribute } } } };
+    res.tTeleport = TeleportMessage();
+    res.tTeleport->idx = GetIdx();
+    std::copy(&position.pos[0], &position.pos[0] + 3,
+              std::begin(res.tTeleport->pos));
+    std::copy(&position.rot[0], &position.rot[0] + 3,
+              std::begin(res.tTeleport->rot));
+    res.tTeleport->worldOrCell =
+      position.cellOrWorldDesc.ToFormId(GetParent()->espmFiles);
   }
 
-  std::string DeathStateMsg;
-  DeathStateMsg += Networking::MinPacketId;
-  DeathStateMsg += nlohmann::json{
-    { "t", MsgType::DeathStateContainer },
-    { "tTeleport", tTeleport },
-    { "tChangeValues", tChangeValues },
-    { "tIsDead", tIsDead }
-  }.dump();
-  return DeathStateMsg;
+  if (!isDead) {
+    constexpr float kAttributePercentageFull = 1.f;
+    res.tChangeValues = ChangeValuesMessage();
+    res.tChangeValues->idx = GetIdx();
+    res.tChangeValues->health = kAttributePercentageFull;
+    res.tChangeValues->magicka = kAttributePercentageFull;
+    res.tChangeValues->stamina = kAttributePercentageFull;
+  }
+
+  return res;
 }
 
 void MpActor::MpApiDeath(MpActor* killer)
@@ -514,8 +669,7 @@ void MpActor::MpApiDeath(MpActor* killer)
   simdjson::dom::parser parser;
   bool isRespawnBlocked = false;
 
-  std::string s =
-    "[" + std::to_string(killer ? killer->GetFormId() : 0) + " ]";
+  std::string s = "[" + std::to_string(killer ? killer->GetFormId() : 0) + "]";
   auto args = parser.parse(s).value();
 
   if (auto wst = GetParent()) {
@@ -526,9 +680,32 @@ void MpActor::MpApiDeath(MpActor* killer)
       };
     }
   }
+
   if (!isRespawnBlocked) {
     RespawnWithDelay();
   }
+}
+
+bool MpActor::MpApiCraft(uint32_t craftedItemBaseId, uint32_t count,
+                         uint32_t recipeId)
+{
+  simdjson::dom::parser parser;
+  bool isCraftBlocked = false;
+
+  std::string s = "[" + std::to_string(craftedItemBaseId) + "," +
+    std::to_string(count) + "," + std::to_string(recipeId) + "]";
+  auto args = parser.parse(s).value();
+
+  if (auto wst = GetParent()) {
+    const auto id = GetFormId();
+    for (auto& listener : wst->listeners) {
+      if (listener->OnMpApiEvent("onCraft", args, id) == false) {
+        isCraftBlocked = true;
+      };
+    }
+  }
+
+  return !isCraftBlocked;
 }
 
 void MpActor::EatItem(uint32_t baseId, espm::Type t)
@@ -570,6 +747,40 @@ bool MpActor::CanActorValueBeRestored(espm::ActorValue av)
   }
   SetLastRestorationTime(av, std::chrono::steady_clock::now());
   return true;
+}
+
+void MpActor::EnsureTemplateChainEvaluated(espm::Loader& loader,
+                                           ChangeFormGuard::Mode mode)
+{
+  constexpr auto kPcLevel = 0;
+
+  auto worldState = GetParent();
+  if (!worldState) {
+    return;
+  }
+
+  auto baseId = GetBaseId();
+  if (baseId == 0x7 || baseId == 0) {
+    return;
+  }
+
+  if (!ChangeForm().templateChain.empty()) {
+    return;
+  }
+
+  EditChangeForm(
+    [&](MpChangeFormREFR& changeForm) {
+      auto headNpc = loader.GetBrowser().LookupById(baseId);
+      std::vector<uint32_t> res = LeveledListUtils::EvaluateTemplateChain(
+        loader.GetBrowser(), headNpc, kPcLevel);
+      std::vector<FormDesc> templateChain(res.size());
+      std::transform(
+        res.begin(), res.end(), templateChain.begin(), [&](uint32_t formId) {
+          return FormDesc::FromFormId(formId, worldState->espmFiles);
+        });
+      changeForm.templateChain = std::move(templateChain);
+    },
+    mode);
 }
 
 std::chrono::steady_clock::time_point MpActor::GetLastRestorationTime(
@@ -622,7 +833,12 @@ void MpActor::Init(WorldState* worldState, uint32_t formId, bool hasChangeForm)
   MpObjectReference::Init(worldState, formId, hasChangeForm);
 
   if (worldState->HasEspm()) {
-    EnsureBaseContainerAdded(GetParent()->GetEspm());
+    auto& espm = worldState->GetEspm();
+    EnsureTemplateChainEvaluated(espm);
+    EnsureBaseContainerAdded(espm); // template chain needed here
+
+    // TODO: implement "gearedUpWeapons" flag
+    EquipBestWeapon();
   }
 }
 
@@ -639,16 +855,22 @@ void MpActor::RespawnWithDelay(bool shouldTeleport)
   }
   pImpl->isRespawning = true;
 
+  ++pImpl->respawnTimerIndex;
+  auto respawnTimerIndex = pImpl->respawnTimerIndex;
+
   uint32_t formId = GetFormId();
   if (auto worldState = GetParent()) {
     float respawnTime = GetRespawnTime();
     auto time = Viet::TimeUtils::To<std::chrono::milliseconds>(respawnTime);
-    worldState->SetTimer(time).Then(
-      [worldState, this, formId, shouldTeleport](Viet::Void) {
-        if (worldState->LookupFormById(formId).get() == this) {
+    worldState->SetTimer(time).Then([worldState, this, formId, shouldTeleport,
+                                     respawnTimerIndex](Viet::Void) {
+      if (worldState->LookupFormById(formId).get() == this) {
+        bool isLatestRespawn = respawnTimerIndex == pImpl->respawnTimerIndex;
+        if (isLatestRespawn) {
           this->Respawn(shouldTeleport);
         }
-      });
+      }
+    });
   }
 }
 
@@ -658,21 +880,29 @@ void MpActor::Respawn(bool shouldTeleport)
     return;
   }
   pImpl->isRespawning = false;
+
+  simdjson::dom::parser parser;
+  std::string s = "[]";
+  auto args = parser.parse(s).value();
+
+  if (auto wst = GetParent()) {
+    const auto id = GetFormId();
+    for (auto& listener : wst->listeners) {
+      listener->OnMpApiEvent("onRespawn", args, id);
+    }
+  }
+
   SendAndSetDeathState(false, shouldTeleport);
 }
 
 void MpActor::Teleport(const LocationalData& position)
 {
-  std::string teleportMsg;
-  teleportMsg += Networking::MinPacketId;
-  teleportMsg += nlohmann::json{
-    { "pos", { position.pos[0], position.pos[1], position.pos[2] } },
-    { "rot", { position.rot[0], position.rot[1], position.rot[2] } },
-    { "worldOrCell",
-      position.cellOrWorldDesc.ToFormId(GetParent()->espmFiles) },
-    { "type", "teleport" }
-  }.dump();
-  SendToUser(teleportMsg.data(), teleportMsg.size(), true);
+  TeleportMessage msg;
+  msg.idx = GetIdx();
+  std::copy(&position.pos[0], &position.pos[0] + 3, std::begin(msg.pos));
+  std::copy(&position.rot[0], &position.rot[0] + 3, std::begin(msg.rot));
+  msg.worldOrCell = position.cellOrWorldDesc.ToFormId(GetParent()->espmFiles);
+  SendToUser(msg, true);
 
   SetCellOrWorldObsolete(position.cellOrWorldDesc);
   SetPos(position.pos);
@@ -687,11 +917,45 @@ void MpActor::SetSpawnPoint(const LocationalData& position)
 
 LocationalData MpActor::GetSpawnPoint() const
 {
+  auto formId = GetFormId();
+
+  if (!IsCreatedAsPlayer()) {
+    if (formId < 0xff000000) {
+      return GetEditorLocationalData();
+    }
+  }
   return ChangeForm().spawnPoint;
+}
+
+LocationalData MpActor::GetEditorLocationalData() const
+{
+  auto formId = GetFormId();
+  auto worldState = GetParent();
+
+  if (!worldState || !worldState->HasEspm()) {
+    throw std::runtime_error("MpActor::GetEditorLocation can only be used "
+                             "with actors attached to a valid world state");
+  }
+
+  auto data = espm::GetData<espm::ACHR>(formId, worldState);
+  auto lookupRes = worldState->GetEspm().GetBrowser().LookupById(formId);
+
+  const NiPoint3& pos = LocationalDataUtils::GetPos(data.loc);
+  NiPoint3 rot = LocationalDataUtils::GetRot(data.loc);
+  uint32_t worldOrCell = LocationalDataUtils::GetWorldOrCell(
+    worldState->GetEspm().GetBrowser(), lookupRes);
+
+  return LocationalData{
+    pos, rot, FormDesc::FromFormId(worldOrCell, worldState->espmFiles)
+  };
 }
 
 const float MpActor::GetRespawnTime() const
 {
+  if (!IsCreatedAsPlayer()) {
+    static const auto kNpcSpawnDelay = 6 * 60.f * 60.f;
+    return kNpcSpawnDelay;
+  }
   return ChangeForm().spawnDelay;
 }
 
@@ -703,7 +967,16 @@ void MpActor::SetRespawnTime(float time)
 
 void MpActor::SetIsDead(bool isDead)
 {
-  SendAndSetDeathState(isDead, false);
+  constexpr bool kShouldTeleport = false;
+
+  if (isDead) {
+    if (IsDead() == false) {
+      SendAndSetDeathState(isDead, kShouldTeleport);
+    }
+  } else {
+    // same as SendAndSetDeathState but resets isRespawning flag
+    Respawn(kShouldTeleport);
+  }
 }
 
 void MpActor::RestoreActorValue(espm::ActorValue av, float value)
@@ -720,7 +993,8 @@ void MpActor::DamageActorValue(espm::ActorValue av, float value)
 
 BaseActorValues MpActor::GetBaseValues()
 {
-  return GetBaseActorValues(GetParent(), GetBaseId(), GetRaceId());
+  return GetBaseActorValues(GetParent(), GetBaseId(), GetRaceId(),
+                            ChangeForm().templateChain);
 }
 
 BaseActorValues MpActor::GetMaximumValues()
@@ -730,10 +1004,148 @@ BaseActorValues MpActor::GetMaximumValues()
 
 void MpActor::DropItem(const uint32_t baseId, const Inventory::Entry& entry)
 {
-  // TODO: Take count into account
+  constexpr float kDeletionTimeSeconds = 2 * 60;
+  constexpr size_t kDroppedItemsQueueMax = 10;
+
+  static std::atomic<bool> g_dropItemDisabledGlobally = false;
+  static std::atomic<int> g_numDrops = 0;
+
+  if (g_dropItemDisabledGlobally) {
+    return;
+  }
+
+  if (g_numDrops > 1'000'000) {
+    spdlog::warn(
+      "MpActor::DropItem - Too many item drops, server restart needed");
+    return;
+  }
+
+  constexpr uint32_t kGold001 = 0x0000000f;
+  if (baseId == kGold001) {
+    spdlog::warn("MpActor::DropItem - Attempt to drop Gold001 by actor {:x}",
+                 GetFormId());
+    return;
+  }
+
   int count = entry.count;
+
+  auto worldState = GetParent();
+
+  espm::LookupResult lookupRes =
+    worldState->GetEspm().GetBrowser().LookupById(baseId);
+  lookupRes.rec->GetId();
+
+  std::string editorId =
+    lookupRes.rec->GetEditorId(worldState->GetEspmCache());
+
+  // TODO: remove this when we will be sure that none of armors crashes clients
+  if (lookupRes.rec->GetType().ToString() == "ARMO") {
+    spdlog::warn("MpActor::DropItem - Attempt to drop ARMO by actor {:x}",
+                 GetFormId());
+    return;
+  }
+
+  spdlog::trace("MpActor::DropItem - dropping {}", editorId);
   RemoveItems({ entry });
-  // TODO(#1141): reimplement spawning items
+
+  PapyrusObjectReference papyrusObjectReference;
+  auto baseForm = VarValue(std::make_shared<EspmGameObject>(lookupRes));
+  auto aCount = VarValue(count);
+  auto aForcePersist = VarValue(false);
+  auto aInitiallyDisabled = VarValue(false);
+
+  VarValue placedObjectWrap = papyrusObjectReference.PlaceAtMe(
+    this->ToVarValue(),
+    { baseForm, aCount, aForcePersist, aInitiallyDisabled });
+  MpObjectReference* placedObject =
+    GetFormPtr<MpObjectReference>(placedObjectWrap);
+
+  if (!placedObject) {
+    spdlog::error("MpActor::DropItem - placedObject was null, disabling "
+                  "DropItem for all players");
+    g_dropItemDisabledGlobally = true;
+    return;
+  }
+
+  placedObject->SetCount(count);
+
+  uint32_t droppedItemFormId = placedObject->GetFormId();
+
+  // Filter our dropped items queue
+  pImpl->droppedItemsQueue.erase(
+    std::remove_if(
+      pImpl->droppedItemsQueue.begin(), pImpl->droppedItemsQueue.end(),
+      [worldState](const std::pair<uint32_t, MpObjectReference*>& pair) {
+        auto [referenceFormId, reference] = pair;
+        bool referenceAlive =
+          reference == worldState->LookupFormById(referenceFormId).get();
+        if (!referenceAlive) {
+          return true;
+        }
+        if (reference->IsDeleted() || reference->IsHarvested()) {
+          return true;
+        }
+        return false;
+      }),
+    pImpl->droppedItemsQueue.end());
+
+  while (!pImpl->droppedItemsQueue.empty() &&
+         pImpl->droppedItemsQueue.size() >= kDroppedItemsQueueMax) {
+    auto [referenceFormId, reference] = pImpl->droppedItemsQueue.front();
+    bool referenceAlive =
+      reference == worldState->LookupFormById(referenceFormId).get();
+    if (referenceAlive) {
+      if (!reference->IsDeleted()) {
+        spdlog::trace("MpActor::DropItem - deleting previously dropped {}",
+                      editorId);
+        reference->Delete();
+      } else {
+        spdlog::warn("MpActor::DropItem - reference in queue was deleted");
+      }
+    } else {
+      spdlog::warn("MpActor::DropItem - reference in queue was invalidated");
+    }
+    pImpl->droppedItemsQueue.erase(pImpl->droppedItemsQueue.begin());
+  }
+
+  pImpl->droppedItemsQueue.push_back(
+    std::make_pair(droppedItemFormId, placedObject));
+
+  auto time =
+    Viet::TimeUtils::To<std::chrono::milliseconds>(kDeletionTimeSeconds);
+
+  uint32_t formId = GetFormId();
+
+  // TODO: make timer group for better performance
+  worldState->SetTimer(time).Then([placedObject, worldState, droppedItemFormId,
+                                   editorId, this, formId](Viet::Void) {
+    bool actorStillAlive = this == worldState->LookupFormById(formId).get();
+    if (!actorStillAlive) {
+      return;
+    }
+    bool formStillAlive =
+      placedObject == worldState->LookupFormById(droppedItemFormId).get();
+    if (!formStillAlive) {
+      return;
+    }
+
+    if (placedObject->IsDeleted()) {
+      return;
+    }
+
+    spdlog::trace("MpActor::DropItem - deleting previously dropped {}",
+                  editorId);
+
+    // Item deleted, not in queue anymore
+    auto it = std::remove(this->pImpl->droppedItemsQueue.begin(),
+                          this->pImpl->droppedItemsQueue.end(),
+                          std::make_pair(droppedItemFormId, placedObject));
+    this->pImpl->droppedItemsQueue.erase(it,
+                                         this->pImpl->droppedItemsQueue.end());
+
+    placedObject->Delete();
+    ++g_numDrops;
+  });
 }
 
 void MpActor::SetIsBlockActive(bool active)
@@ -806,6 +1218,20 @@ void MpActor::ApplyMagicEffect(espm::Effects::Effect& effect, bool hasSweetpie,
 {
   WorldState* worldState = GetParent();
   auto data = espm::GetData<espm::MGEF>(effect.effectId, worldState).data;
+
+  if (data.effectType == espm::MGEF::EffectType::CureDisease) {
+    spdlog::trace("Curing all diseases");
+    auto spells = ChangeForm().learnedSpells.GetLearnedSpells();
+    for (auto spellId : spells) {
+      auto spellData = espm::GetData<espm::SPEL>(spellId, worldState);
+      if (spellData.type == espm::SPEL::SpellType::Disease) {
+        spdlog::trace("Curing disease {:x}", spellId);
+        RemoveSpell(spellId);
+      }
+    }
+    return;
+  }
+
   const espm::ActorValue av = data.primaryAV;
   const espm::MGEF::EffectType type = data.effectType;
   spdlog::trace("Actor value in ApplyMagicEffect(): {}",
@@ -835,14 +1261,12 @@ void MpActor::ApplyMagicEffect(espm::Effects::Effect& effect, bool hasSweetpie,
   }
 
   if (isRate || isMult) {
-    if (hasSweetpie) {
-      if (!CanActorValueBeRestored(av)) {
-        return;
-      }
+    if (hasSweetpie && !CanActorValueBeRestored(av)) {
+      return;
     }
     MpChangeForm changeForm = GetChangeForm();
-    BaseActorValues baseValues =
-      GetBaseActorValues(GetParent(), GetBaseId(), GetRaceId());
+    BaseActorValues baseValues = GetBaseActorValues(
+      GetParent(), GetBaseId(), GetRaceId(), changeForm.templateChain);
     const ActiveMagicEffectsMap& activeEffects = changeForm.activeMagicEffects;
     const float baseValue = baseValues.GetValue(av);
     const uint32_t formId = GetFormId();
@@ -868,11 +1292,18 @@ void MpActor::ApplyMagicEffect(espm::Effects::Effect& effect, bool hasSweetpie,
       duration =
         Viet::TimeUtils::To<std::chrono::milliseconds>(effect.duration);
     }
-    ActiveMagicEffectsMap::Entry entry{ effect, endTime };
+    uint32_t timerId;
+    worldState->SetEffectTimer(duration, &timerId)
+      .Then([formId, actorValue = av, worldState](Viet::Void) {
+        auto& actor = worldState->GetFormAt<MpActor>(formId);
+        actor.RemoveMagicEffect(actorValue);
+      });
+
+    ActiveMagicEffectsMap::Entry entry{ timerId, effect, endTime };
     if (activeEffects.Has(av)) {
       const ActiveMagicEffectsMap::Entry& entry =
         activeEffects.Get(av).value().get();
-      worldState->RemoveEffectTimer(entry.endTime);
+      worldState->RemoveEffectTimer(entry.timerId);
     }
     EditChangeForm([av, pEntry = &entry](MpChangeForm& changeForm) {
       changeForm.activeMagicEffects.Add(av, *pEntry);
@@ -898,11 +1329,6 @@ void MpActor::ApplyMagicEffect(espm::Effects::Effect& effect, bool hasSweetpie,
                     mult, baseValue * mult);
       SetActorValue(av, baseValue * mult);
     }
-    worldState->SetEffectTimer(std::cref(endTime))
-      .Then([formId, actorValue = av, worldState](Viet::Void) {
-        auto& actor = worldState->GetFormAt<MpActor>(formId);
-        actor.RemoveMagicEffect(actorValue);
-      });
   }
 }
 
@@ -916,8 +1342,8 @@ void MpActor::ApplyMagicEffects(std::vector<espm::Effects::Effect>& effects,
 
 void MpActor::RemoveMagicEffect(const espm::ActorValue actorValue) noexcept
 {
-  const ActorValues baseActorValues =
-    GetBaseActorValues(GetParent(), GetBaseId(), GetRaceId());
+  const ActorValues baseActorValues = GetBaseActorValues(
+    GetParent(), GetBaseId(), GetRaceId(), ChangeForm().templateChain);
   const float baseActorValue = baseActorValues.GetValue(actorValue);
   SetActorValue(actorValue, baseActorValue);
   EditChangeForm([actorValue](MpChangeForm& changeForm) {
@@ -927,8 +1353,8 @@ void MpActor::RemoveMagicEffect(const espm::ActorValue actorValue) noexcept
 
 void MpActor::RemoveAllMagicEffects() noexcept
 {
-  const ActorValues baseActorValues =
-    GetBaseActorValues(GetParent(), GetBaseId(), GetRaceId());
+  const ActorValues baseActorValues = GetBaseActorValues(
+    GetParent(), GetBaseId(), GetRaceId(), ChangeForm().templateChain);
   SetActorValues(baseActorValues);
   EditChangeForm(
     [](MpChangeForm& changeForm) { changeForm.activeMagicEffects.Clear(); });

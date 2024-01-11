@@ -14,6 +14,14 @@ SpSnippet::SpSnippet(const char* cl_, const char* func_, const char* args_,
 
 Viet::Promise<VarValue> SpSnippet::Execute(MpActor* actor)
 {
+  auto worldState = actor->GetParent();
+  if (!actor->IsCreatedAsPlayer()) {
+    // Return promise that never resolves in this case
+    // TODO: somehow detect user instead as this breaks potential feature of
+    // transferring user into an npc actor
+    return Viet::Promise<VarValue>();
+  }
+
   Viet::Promise<VarValue> promise;
 
   auto snippetIdx = actor->NextSnippetIndex(promise);
@@ -25,7 +33,11 @@ Viet::Promise<VarValue> SpSnippet::Execute(MpActor* actor)
 
   Networking::Format(
     [&](Networking::PacketData data, size_t len) {
-      actor->SendToUser(data, len, true);
+      // The only reason for deferred here is that it still supports raw binary
+      // data send
+      // TODO: change to SendToUser
+      constexpr int kChannelSpSnippet = 1;
+      actor->SendToUserDeferred(data, len, true, kChannelSpSnippet, false);
     },
     R"({"type": "spSnippet", "class": "%s", "function": "%s", "arguments": %s, "selfId": %u, "snippetIdx": %u})",
     cl, func, args, targetSelfId, snippetIdx);

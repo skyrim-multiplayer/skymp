@@ -12,7 +12,12 @@ endif()
 
 set(VCPKG_OVERLAY_TRIPLETS "${CMAKE_CURRENT_LIST_DIR}/overlay_triplets")
 set(VCPKG_OVERLAY_PORTS "${CMAKE_CURRENT_LIST_DIR}/overlay_ports")
-set(VCPKG_INSTALL_OPTIONS --no-print-usage --clean-after-build)
+
+if("$ENV{CI}" STREQUAL "true")
+  set(VCPKG_INSTALL_OPTIONS --no-print-usage)
+else()
+  set(VCPKG_INSTALL_OPTIONS --no-print-usage --clean-after-build)
+endif()
 
 if("$ENV{CI}" STREQUAL "true" AND WIN32)
   # The same submodule but moved to a larger disk in Windows CI. See action files:
@@ -62,6 +67,7 @@ option(PREPARE_NEXUS_ARCHIVES "Prepare SP and other archives during build or not
 option(BUILD_UNIT_TESTS "Build unit tests (excluded from build when off - workaround for #1182)" ON)
 option(INSTALL_CLIENT_DIST "Install the client into SKYRIM_DIR after build" OFF)
 option(BUILD_GAMEMODE "Build gamemode" OFF)
+option(BUILD_PATCHES "Build patches" OFF)
 option(OFFLINE_MODE "Enable offline mode in generated server settings and client settings" ON)
 
 message(STATUS JS_ENGINE_TRACING_ENABLED=${JS_ENGINE_TRACING_ENABLED})
@@ -70,6 +76,7 @@ message(STATUS SKYRIM_SE=${SKYRIM_SE})
 message(STATUS BUILD_UNIT_TESTS=${BUILD_UNIT_TESTS})
 message(STATUS INSTALL_CLIENT_DIST=${INSTALL_CLIENT_DIST})
 message(STATUS BUILD_GAMEMODE=${BUILD_GAMEMODE})
+message(STATUS BUILD_PATCHES=${BUILD_PATCHES})
 message(STATUS OFFLINE_MODE=${OFFLINE_MODE})
 
 # Note that SkyrimPlatform performance drops significantly with JS_ENGINE_TRACING_ENABLED set to true.
@@ -115,6 +122,8 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/modules)
 
+add_subdirectory(skymp5-patches)
+
 add_subdirectory(viet)
 add_subdirectory(savefile)
 add_subdirectory(papyrus-vm)
@@ -128,6 +137,21 @@ add_subdirectory(skymp5-front)
 add_subdirectory(skymp5-functions-lib)
 add_subdirectory(skymp5-scripts)
 add_subdirectory(skymp5-server)
+add_subdirectory(skymp5-downloader)
+
+add_dependencies(viet skymp5-patches)
+add_dependencies(savefile skymp5-patches)
+add_dependencies(papyrus-vm skymp5-patches)
+add_dependencies(espm skymp5-patches)
+add_dependencies(skyrim-platform skymp5-patches)
+add_dependencies(client-deps skymp5-patches)
+add_dependencies(skymp5-client skymp5-patches)
+add_dependencies(skymp5-front skymp5-patches)
+add_dependencies(skymp5-functions-lib skymp5-patches)
+add_dependencies(skymp5-scripts skymp5-patches)
+add_dependencies(skymp5-server skymp5-patches)
+add_dependencies(skymp5-downloader skymp5-patches)
+
 if(BUILD_UNIT_TESTS)
   add_subdirectory(unit)
 endif()

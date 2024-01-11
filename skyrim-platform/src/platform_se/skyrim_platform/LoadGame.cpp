@@ -92,16 +92,19 @@ void LoadGame::Run(std::shared_ptr<SaveFile_::SaveFile> save,
                    const std::array<float, 3>& pos,
                    const std::array<float, 3>& angle, uint32_t cellOrWorld,
                    Time* time, SaveFile_::Weather* _weather,
-                   SaveFile_::ChangeFormNPC_* changeFormNPC)
+                   SaveFile_::ChangeFormNPC_* changeFormNPC,
+                   std::vector<std::string>* loadOrder)
 {
   if (!save) {
     throw std::runtime_error("Bad SaveFile");
   }
 
+  ModifyPluginInfo(save);
+
   ModifySaveTime(save, time);
   ModifySaveWeather(save, _weather);
-  ModifyPluginInfo(save);
   ModifyPlayerFormNPC(save, changeFormNPC);
+  ModifyLoadOrder(save, loadOrder);
   ModifyEssStructure(save, pos, angle, cellOrWorld);
 
   auto name = g_saveFilePrefix + GenerateGuid();
@@ -147,9 +150,9 @@ void LoadGame::ModifyPluginInfo(std::shared_ptr<SaveFile_::SaveFile>& save)
     throw NullPointerException("dataHandler");
   }
 
-  for (auto it = dataHandler->files.begin(); it != dataHandler->files.end();
-       ++it)
-    newPlugins.push_back(std::string((*it)->fileName));
+  for (auto& file : dataHandler->files) {
+    newPlugins.push_back(std::string(file->fileName));
+  }
 
   save->OverwritePluginInfo(newPlugins);
 }
@@ -225,6 +228,14 @@ void LoadGame::ModifyPlayerFormNPC(std::shared_ptr<SaveFile_::SaveFile> save,
   }
 }
 
+void LoadGame::ModifyLoadOrder(std::shared_ptr<SaveFile_::SaveFile> save,
+                               std::vector<std::string>* loadOrder)
+{
+  if (loadOrder) {
+    save->OverwritePluginInfo(*loadOrder);
+  }
+}
+
 void LoadGame::FillChangeForm(
   std::shared_ptr<SaveFile_::SaveFile> save, SaveFile_::ChangeForm* form,
   std::pair<uint32_t, std::vector<uint8_t>>& newValues)
@@ -293,10 +304,10 @@ SaveFile_::PlayerLocation LoadGame::CreatePlayerLocation(
   const std::array<float, 3>& pos, const SaveFile_::RefID& world)
 {
   SaveFile_::PlayerLocation r;
-  r.nextObjectId = 4278195454;
+  r.nextObjectId = 0xFF0014FE;
   r.worldspace1 = world;
-  r.coorX = (int)pos[0] / 4096;
-  r.coorY = (int)pos[1] / 4096;
+  r.coorX = static_cast<int>(pos[0]) / 4096;
+  r.coorY = static_cast<int>(pos[1]) / 4096;
   r.worldspace2 = world;
   r.posX = pos[0];
   r.posY = pos[1];
@@ -359,13 +370,14 @@ void LoadGame::WriteChangeForm(std::shared_ptr<SaveFile_::SaveFile> save,
   std::copy(compressed.begin(), compressed.end(), changeForm.data.begin());
 
   // fix offsets
-  const auto diff = (int64_t)previousSize - (int64_t)compressed.size();
+  const auto diff = static_cast<int64_t>(previousSize) -
+    static_cast<int64_t>(compressed.size());
   save->fileLocationTable.formIDArrayCountOffset -= diff;
   save->fileLocationTable.unknownTable3Offset -= diff;
   save->fileLocationTable.globalDataTable3Offset -= diff;
 }
 
-std::wstring LoadGame::StringToWstring(std::string s)
+std::wstring LoadGame::StringToWstring(const std::string& s)
 {
   std::wstring ws(s.size(), L' ');
   auto n = std::mbstowcs(&ws[0], s.c_str(), s.size());
@@ -380,7 +392,7 @@ std::string LoadGame::GenerateGuid()
     throw std::runtime_error("CoCreateGuid failed");
   }
 
-  char name[MAX_PATH] = { 0 };
+  char name[37] = { 0 }; // Size adjusted for GUID string
   sprintf_s(
     name,
     "%08lX-%04hX-%04hX-%02hhX%02hhX-%02hhX%02hhX%02hhX%02hhX%02hhX%02hhX",

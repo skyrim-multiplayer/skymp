@@ -1,7 +1,7 @@
 #include "TestUtils.hpp"
 #include <catch2/catch_all.hpp>
 
-#include "PapyrusForm.h"
+#include "script_classes/PapyrusForm.h"
 
 using namespace std::chrono_literals;
 

@@ -1,9 +1,9 @@
 #include "SpSnippetFunctionGen.h"
 
-#include "EspmGameObject.h"
-#include "MpFormGameObject.h"
 #include "SpSnippet.h"
 #include "WorldState.h"
+#include "script_objects/EspmGameObject.h"
+#include "script_objects/MpFormGameObject.h"
 #include <nlohmann/json.hpp>
 #include <sstream>
 

@@ -5,7 +5,7 @@
 
 namespace espm {
 
-class REFR final : public RecordHeader
+class REFR : public RecordHeader
 {
 public:
   static constexpr auto kType = "REFR";
@@ -23,6 +23,12 @@ public:
     float rotRadians[3];
   };
 
+  struct ActivationParentInfo
+  {
+    uint32_t refrId = 0;
+    float delay = 0.f;
+  };
+
   struct Data
   {
     uint32_t baseId = 0;
@@ -31,6 +37,10 @@ public:
     const DoorTeleport* teleport = nullptr;
     const float* boundsDiv2 = nullptr;
     uint32_t count = 0;
+    uint8_t isParentActivationOnly = 0;
+    std::vector<ActivationParentInfo> activationParents;
+    uint32_t linkedRefKeywordId = 0;
+    uint32_t linkedRefId = 0;
   };
 
   Data GetData(CompressedFieldsCache& compressedFieldsCache) const noexcept;

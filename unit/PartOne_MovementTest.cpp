@@ -71,7 +71,7 @@ TEST_CASE("UpdateMovement", "[PartOne]")
   partOne.Messages().clear();
   doMovement();
   REQUIRE(partOne.Messages().size() == 1);
-  REQUIRE(partOne.Messages().at(0).j.dump() == jMovement.dump());
+  REQUIRE(partOne.Messages().at(0).j == jMovement);
 
   // UpdateMovement actually changes position and rotation
   REQUIRE(
@@ -113,8 +113,8 @@ TEST_CASE("UpdateMovement", "[PartOne]")
   partOne.Messages().clear();
   doMovement();
   REQUIRE(partOne.Messages().size() == 2);
-  REQUIRE(partOne.Messages().at(0).j.dump() == jMovement.dump());
-  REQUIRE(partOne.Messages().at(1).j.dump() == jMovement.dump());
+  REQUIRE(partOne.Messages().at(0).j == jMovement);
+  REQUIRE(partOne.Messages().at(1).j == jMovement);
 
   // Another player is being moved away and now doesn't see our movement
   auto acAbcd = dynamic_cast<MpActor*>(

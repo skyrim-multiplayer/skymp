@@ -1,6 +1,6 @@
 import { FormView } from "./formView";
 import { GamemodeApiSupport } from "../gamemodeApi/gamemodeApiSupport";
-import { FormModel, WorldModel } from "../modelSource/model";
+import { FormModel, WorldModel } from "./model";
 import { Movement, NiPoint3 } from "../sync/movement";
 
 export class FormViewArray {
@@ -94,6 +94,10 @@ export class FormViewArray {
       return formView && formView.getRemoteRefrId() === remoteRefrId;
     });
     return formView ? formView.getLocalRefrId() : 0;
+  }
+
+  getNthFormView(i: number): FormView | undefined {
+    return this.formViews[i];
   }
 
   private formViews = new Array<FormView>();

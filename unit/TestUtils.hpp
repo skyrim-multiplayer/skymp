@@ -1,9 +1,9 @@
 #pragma once
 #include "FormCallbacks.h"
-#include "IPapyrusCompatibilityPolicy.h"
 #include "MpActor.h"
 #include "MsgType.h"
 #include "PartOne.h"
+#include "script_compatibility_policies/IPapyrusCompatibilityPolicy.h"
 #include <catch2/catch_all.hpp>
 #include <nlohmann/json.hpp>
 #include <thread>
@@ -44,9 +44,12 @@ static const auto jMovement =
                       { "rot", { 0, 0, 179 } },
                       { "runMode", "Standing" },
                       { "direction", 0 },
+                      { "healthPercentage", 1 },
+                      { "speed", 0 },
                       { "isInJumpState", false },
                       { "isSneaking", false },
                       { "isBlocking", false },
+                      { "isDead", false },
                       { "isWeapDrawn", false } } } };
 
 static const auto jAppearance = nlohmann::json{
@@ -96,15 +99,4 @@ public:
 
 private:
   std::stringstream ss;
-};
-
-class PapyrusCompatibilityPolicy : public IPapyrusCompatibilityPolicy
-{
-public:
-  PapyrusCompatibilityPolicy(MpActor* ac_);
-
-  MpActor* GetDefaultActor(const char*, const char*, int32_t) const override;
-
-private:
-  MpActor* const ac;
 };

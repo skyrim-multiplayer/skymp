@@ -1,15 +1,21 @@
-import { EventEmitter } from "eventemitter3";
 import { ClientListener, CombinedController, Sp } from "./clientListener";
 import { ChangeFormNpc } from "skyrimPlatform";
-import { GameLoadEvent } from "../events/gameLoadEvent";
 
-export class LoadGameService implements ClientListener {
+export class LoadGameService extends ClientListener {
     constructor(private sp: Sp, private controller: CombinedController) {
+        super();
         this.controller.on("loadGame", () => this.onLoadGame());
     }
 
-    public loadGame(pos: number[], rot: number[], worldOrCell: number, changeFormNpc?: ChangeFormNpc) {
-        this.sp.loadGame(pos, rot, worldOrCell, changeFormNpc);
+    public loadGame(pos: number[], rot: number[], worldOrCell: number, changeFormNpc?: ChangeFormNpc, loadOrder?: string[], time?: { seconds: number, minutes: number, hours: number }) {
+
+        try {
+            this.sp.loadGame(pos, rot, worldOrCell, changeFormNpc, loadOrder, time);
+        }
+        catch (e) {
+            // Hotfix non-vanilla headparts bug
+            this.sp.loadGame(pos, rot, worldOrCell, undefined, loadOrder, time);
+        }
         this._isCausedBySkyrimPlatform = true;
     }
 

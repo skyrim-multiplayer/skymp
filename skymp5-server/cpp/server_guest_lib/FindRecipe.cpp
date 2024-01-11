@@ -37,11 +37,15 @@ const espm::COBJ* FindRecipe(const espm::CombineBrowser& br,
                              const Inventory& inputObjects,
                              uint32_t resultObjectId, int* optionalOutEspmIdx)
 {
-  auto allRecipes = br.GetRecordsByType("COBJ");
+  // 1-st index is espm file index
+  std::vector<const std::vector<const espm::RecordHeader*>*> allRecipes =
+    br.GetRecordsByType("COBJ");
 
   const espm::COBJ* recipeUsed = nullptr;
 
-  for (size_t i = 0; i < allRecipes.size(); ++i) {
+  // multiple espm files can modify COBJ record. reverse order to find latest
+  // record version first
+  for (size_t i = allRecipes.size() - 1; i != static_cast<size_t>(-1); --i) {
     auto mapping = br.GetCombMapping(i);
     auto& espmLocalRecipes = allRecipes[i];
     auto it = std::find_if(

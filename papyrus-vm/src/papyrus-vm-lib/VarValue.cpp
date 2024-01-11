@@ -574,6 +574,7 @@ VarValue& VarValue::operator=(const VarValue& arg2)
     data.string = stringHolder->data();
   } else {
     stringHolder.reset();
+    // data.string ptr is copied by 'data = arg2.data;' line in this case
   }
 
   return *this;

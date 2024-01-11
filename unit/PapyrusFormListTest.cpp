@@ -1,8 +1,8 @@
 #include "TestUtils.hpp"
 #include <catch2/catch_all.hpp>
 
-#include "EspmGameObject.h"
-#include "PapyrusFormList.h"
+#include "script_classes/PapyrusFormList.h"
+#include "script_objects/EspmGameObject.h"
 
 extern espm::Loader l;
 

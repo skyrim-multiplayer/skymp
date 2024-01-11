@@ -21,6 +21,8 @@
 #include <tuple>
 #include <vector>
 
+#include "UpdatePropertyMessage.h"
+
 struct GridPosInfo
 {
   uint32_t worldOrCell = 0;
@@ -74,6 +76,8 @@ public:
   const bool& IsHarvested() const;
   const bool& IsOpen() const;
   const bool& IsDisabled() const;
+  const bool& IsDeleted() const;
+  const uint32_t& GetCount() const;
   std::chrono::system_clock::duration GetRelootTime() const;
   bool GetAnimationVariableBool(const char* name) const;
   bool IsPointInsidePrimitive(const NiPoint3& point) const;
@@ -112,12 +116,15 @@ public:
                    bool isVisibleByNeighbor);
   void SetTeleportFlag(bool value);
   void SetPosAndAngleSilent(const NiPoint3& pos, const NiPoint3& rot);
+  void Delete();
+  void SetCount(uint32_t count);
 
   // If you want to completely remove ObjectReference from the grid you need
-  // toUnsubscribeFromAll and then RemoveFromGrid. Do not use any of these
-  // functions without another in new code if you have no good reason for this.
+  // toUnsubscribeFromAll and then RemoveFromGridAndUnsubscribeAll. Do not use
+  // any of these functions without another in new code if you have no good
+  // reason for this.
   void UnsubscribeFromAll();
-  void RemoveFromGrid();
+  void RemoveFromGridAndUnsubscribeAll();
 
   void SetInventory(const Inventory& inv);
   void AddItem(uint32_t baseId, uint32_t count);
@@ -136,6 +143,9 @@ public:
                         MpObjectReference* listener);
   static void Unsubscribe(MpObjectReference* emitter,
                           MpObjectReference* listener);
+
+  void SetLastAnimation(const std::string& lastAnimation);
+  void SetDisplayName(const std::string& newName);
 
   const std::set<MpObjectReference*>& GetListeners() const;
   const std::set<MpObjectReference*>& GetEmitters() const;
@@ -167,10 +177,11 @@ public:
     return "private.indexed.";
   }
 
-protected:
   void SendPapyrusEvent(const char* eventName,
                         const VarValue* arguments = nullptr,
                         size_t argumentsCount = 0) override;
+
+protected:
   void Init(WorldState* parent, uint32_t formId, bool hasChangeForm) override;
 
   void EnsureBaseContainerAdded(espm::Loader& espm);
@@ -178,7 +189,7 @@ protected:
   void SendPropertyToListeners(const char* name, const nlohmann::json& value);
   void SendPropertyTo(const char* name, const nlohmann::json& value,
                       MpActor& target);
-  void SendPropertyTo(const std::string& preparedPropMsg, MpActor& target);
+  void SendPropertyTo(const IMessageBase& preparedPropMsg, MpActor& target);
 
 private:
   void AddContainerObject(const espm::CONT::ContainerObject& containerObject,
@@ -190,6 +201,7 @@ private:
   void CheckInteractionAbility(MpObjectReference& ac);
   bool IsLocationSavingNeeded() const;
   void ProcessActivate(MpObjectReference& activationSource);
+  void ActivateChilds();
   bool MpApiOnActivate(MpObjectReference& caster);
 
   bool everSubscribedOrListened = false;
@@ -214,11 +226,12 @@ private:
 
 protected:
   void BeforeDestroy() override;
-  std::string CreatePropertyMessage(MpObjectReference* self, const char* name,
-                                    const nlohmann::json& value);
-  nlohmann::json PreparePropertyMessage(MpObjectReference* self,
-                                        const char* name,
-                                        const nlohmann::json& value);
+  UpdatePropertyMessage CreatePropertyMessage(MpObjectReference* self,
+                                              const char* name,
+                                              const nlohmann::json& value);
+  UpdatePropertyMessage PreparePropertyMessage(MpObjectReference* self,
+                                               const char* name,
+                                               const nlohmann::json& value);
 
   const std::shared_ptr<FormCallbacks> callbacks;
 };

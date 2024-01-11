@@ -41,23 +41,22 @@ private:
     std::unordered_map<uint32_t, std::shared_ptr<IGameObject>> objectsHolder;
   };
 
-  static VarValue CastPrimitivePropertyValue(
+  VarValue CastPrimitivePropertyValue(
     const espm::CombineBrowser& br, ScriptsCache& st,
     const espm::Property::Value& propValue, espm::Property::Type type,
     const std::function<uint32_t(uint32_t)>& toGlobalId,
     WorldState* worldState);
 
-  static void CastProperty(const espm::CombineBrowser& br,
-                           const espm::Property& prop, VarValue* out,
-                           ScriptsCache* scriptsCache,
-                           const std::function<uint32_t(uint32_t)>& toGlobalId,
-                           WorldState* worldState);
+  void CastProperty(const espm::CombineBrowser& br, const espm::Property& prop,
+                    VarValue* out, ScriptsCache* scriptsCache,
+                    const std::function<uint32_t(uint32_t)>& toGlobalId,
+                    WorldState* worldState);
 
   static espm::Property::Type GetElementType(espm::Property::Type arrayType);
 
   espm::LookupResult baseRecordWithScripts;
   espm::LookupResult refrRecordWithScripts;
-  const std::string myScriptName;
+  std::string myScriptName;
   const espm::CombineBrowser* const browser;
   std::unique_ptr<CIMap<VarValue>> vars;
   VarValue state;

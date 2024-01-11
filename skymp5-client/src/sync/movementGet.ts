@@ -1,4 +1,4 @@
-import { FormModel } from '../modelSource/model';
+import { FormModel } from '../view/model';
 import { ObjectReference, Actor, TESModPlatform } from "skyrimPlatform";
 import { NiPoint3, Movement, RunMode } from "./movement";
 import { ObjectReferenceEx } from '../extensions/objectReferenceEx';
@@ -81,7 +81,7 @@ export const getMovement = (refr: ObjectReference, form?: FormModel): Movement =
     isSneaking: !!(ac && isSneaking(ac)),
     isBlocking: !!(ac && ac.getAnimationVariableBool("IsBlocking")),
     isWeapDrawn: !!(ac && ac.isWeaponDrawn()),
-    isDead: form?.isDead ?? false,
+    isDead: (form?.isDead ?? false) || !!(ac && ac.isDead()),
     healthPercentage: healthPercentage || 0,
     lookAt,
     speed

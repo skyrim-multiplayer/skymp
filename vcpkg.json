@@ -1,6 +1,6 @@
 {
+  "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
   "name": "skymp",
-  "version-string": "",
   "homepage": "https://github.com/skyrim-multiplayer/skymp",
   "description": "Multiplayer Mod & TypeScript SDK for Skyrim Special Edition",
   "dependencies": [
@@ -19,10 +19,7 @@
     "node-addon-api",
     "bshoshany-thread-pool",
     "makeid",
-    {
-      "name": "frida-gum",
-      "platform": "windows"
-    },
+    "rsm-bsa",
     {
       "name": "frida-gum",
       "platform": "windows"

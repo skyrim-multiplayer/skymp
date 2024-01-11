@@ -1,39 +1,41 @@
 #include "MpObjectReference.h"
 #include "ChangeFormGuard.h"
-#include "EspmGameObject.h"
+#include "EvaluateTemplate.h"
 #include "FormCallbacks.h"
 #include "LeveledListUtils.h"
 #include "MpActor.h"
 #include "MpChangeForms.h"
 #include "MsgType.h"
-#include "PapyrusGame.h"
-#include "PapyrusObjectReference.h"
 #include "Primitive.h"
 #include "ScopedTask.h"
-#include "ScriptStorage.h"
 #include "ScriptVariablesHolder.h"
+#include "TimeUtils.h"
 #include "WorldState.h"
 #include "libespm/GroupUtils.h"
 #include "libespm/Utils.h"
 #include "papyrus-vm/Reader.h"
 #include "papyrus-vm/VirtualMachine.h"
+#include "script_objects/EspmGameObject.h"
+#include "script_storages/IScriptStorage.h"
 #include <map>
 #include <optional>
 
+#include "OpenContainerMessage.h"
+#include "TeleportMessage.h"
+
 constexpr uint32_t kPlayerCharacterLevel = 1;
 
-std::string MpObjectReference::CreatePropertyMessage(
+UpdatePropertyMessage MpObjectReference::CreatePropertyMessage(
   MpObjectReference* self, const char* name, const nlohmann::json& value)
 {
-  std::string str;
-  str += Networking::MinPacketId;
-  str += PreparePropertyMessage(self, name, value).dump();
-  return str;
+  return PreparePropertyMessage(self, name, value);
 }
 
-nlohmann::json MpObjectReference::PreparePropertyMessage(
+UpdatePropertyMessage MpObjectReference::PreparePropertyMessage(
   MpObjectReference* self, const char* name, const nlohmann::json& value)
 {
+  UpdatePropertyMessage res;
+
   std::string baseRecordType;
 
   auto& loader = self->GetParent()->GetEspm();
@@ -42,19 +44,18 @@ nlohmann::json MpObjectReference::PreparePropertyMessage(
     baseRecordType = base.rec->GetType().ToString();
   }
 
-  auto object = nlohmann::json{ { "idx", self->GetIdx() },
-                                { "t", MsgType::UpdateProperty },
-                                { "propName", name },
-                                { "refrId", self->GetFormId() },
-                                { "data", value } };
+  res.idx = self->GetIdx();
+  res.propName = name;
+  res.refrId = self->GetFormId();
+  res.data = value;
 
   // See 'perf: improve game framerate #1186'
   // Client needs to know if it is DOOR or not
   if (baseRecordType == "DOOR") {
-    object["baseRecordType"] = baseRecordType;
+    res.baseRecordType = baseRecordType;
   }
 
-  return object;
+  return res;
 }
 
 class OccupantDestroyEventSink : public MpActor::DestroyEventSink
@@ -200,13 +201,25 @@ const bool& MpObjectReference::IsDisabled() const
   return ChangeForm().isDisabled;
 }
 
+const bool& MpObjectReference::IsDeleted() const
+{
+  return ChangeForm().isDeleted;
+}
+
+const uint32_t& MpObjectReference::GetCount() const
+{
+  return ChangeForm().count;
+}
+
 std::chrono::system_clock::duration MpObjectReference::GetRelootTime() const
 {
-  if (relootTimeOverride)
+  if (relootTimeOverride) {
     return *relootTimeOverride;
+  }
 
-  if (auto time = GetParent()->GetRelootTime(baseType))
+  if (auto time = GetParent()->GetRelootTime(baseType)) {
     return *time;
+  }
 
   if (!std::strcmp(baseType.data(), "FLOR") ||
       !std::strcmp(baseType.data(), "TREE")) {
@@ -266,16 +279,40 @@ bool MpObjectReference::GetTeleportFlag() const
 void MpObjectReference::VisitProperties(const PropertiesVisitor& visitor,
                                         VisitPropertiesMode mode)
 {
-  if (IsHarvested())
+  if (IsHarvested()) {
     visitor("isHarvested", "true");
-  if (IsOpen())
+  }
+
+  if (IsOpen()) {
     visitor("isOpen", "true");
+  }
+
+  if (auto actor = dynamic_cast<MpActor*>(this); actor && actor->IsDead()) {
+    visitor("isDead", "true");
+  }
+
   if (mode == VisitPropertiesMode::All && !GetInventory().IsEmpty()) {
     auto inventoryDump = GetInventory().ToJson().dump();
     visitor("inventory", inventoryDump.data());
   }
 
-  visitor("disabled", IsDisabled() ? "true" : "false");
+  if (mode == VisitPropertiesMode::All && !GetInventory().IsEmpty()) {
+    visitor("disabled", IsDisabled() ? "true" : "false");
+  }
+
+  if (ChangeForm().lastAnimation.has_value()) {
+    std::string raw = *ChangeForm().lastAnimation;
+    nlohmann::json j = raw;
+    std::string lastAnimationAsJson = j.dump();
+    visitor("lastAnimation", lastAnimationAsJson.data());
+  }
+
+  if (ChangeForm().displayName.has_value()) {
+    std::string raw = *ChangeForm().displayName;
+    nlohmann::json j = raw;
+    std::string displayNameAsJson = j.dump();
+    visitor("displayName", displayNameAsJson.data());
+  }
 
   // Property flags (isVisibleByOwner, isVisibleByNeighbor) should be checked
   // by a visitor
@@ -289,8 +326,38 @@ void MpObjectReference::VisitProperties(const PropertiesVisitor& visitor,
 void MpObjectReference::Activate(MpObjectReference& activationSource,
                                  bool defaultProcessingOnly)
 {
+  if (spdlog::should_log(spdlog::level::trace)) {
+    for (auto& script : ListActivePexInstances()) {
+      spdlog::trace("MpObjectReference::Activate {:x} - found script {}",
+                    GetFormId(), script->GetSourcePexName());
+    }
+  }
+
   if (auto worldState = activationSource.GetParent(); worldState->HasEspm()) {
     CheckInteractionAbility(activationSource);
+
+    // Pillars puzzle Bleak Falls Barrow
+    bool workaroundBypassParentsCheck = &activationSource == this;
+
+    // Block if only activation parents can activate this
+    auto refrId = GetFormId();
+    if (!workaroundBypassParentsCheck && refrId < 0xff000000 &&
+        !dynamic_cast<MpActor*>(this)) {
+      auto lookupRes = worldState->GetEspm().GetBrowser().LookupById(refrId);
+      auto data = espm::GetData<espm::REFR>(refrId, worldState);
+      auto it = std::find_if(
+        data.activationParents.begin(), data.activationParents.end(),
+        [&](const espm::REFR::ActivationParentInfo& info) {
+          return lookupRes.ToGlobalId(info.refrId) ==
+            activationSource.GetFormId();
+        });
+      if (it == data.activationParents.end()) {
+        if (data.isParentActivationOnly) {
+          throw std::runtime_error(
+            "Only activation parents can activate this object");
+        }
+      }
+    }
   }
 
   bool activationBlockedByMpApi = MpApiOnActivate(activationSource);
@@ -298,6 +365,7 @@ void MpObjectReference::Activate(MpObjectReference& activationSource,
   if (!activationBlockedByMpApi &&
       (!activationBlocked || defaultProcessingOnly)) {
     ProcessActivate(activationSource);
+    ActivateChilds();
   } else {
     spdlog::trace(
       "Activation of form {:#x} has been blocked. Reasons: "
@@ -320,7 +388,7 @@ void MpObjectReference::Disable()
 
   EditChangeForm(
     [&](MpChangeFormREFR& changeForm) { changeForm.isDisabled = true; });
-  RemoveFromGrid();
+  RemoveFromGridAndUnsubscribeAll();
 }
 
 void MpObjectReference::Enable()
@@ -463,10 +531,6 @@ void MpObjectReference::TakeItem(MpActor& ac, const Inventory::Entry& e)
     throw std::runtime_error(err.str());
   }
   RemoveItems({ e }, &ac);
-
-  if (GetInventory().IsEmpty()) {
-    RequestReloot();
-  }
 }
 
 void MpObjectReference::SetRelootTime(
@@ -548,12 +612,13 @@ void MpObjectReference::UpdateHoster(uint32_t newHosterId)
   auto notHostedMsg = CreatePropertyMessage(this, "isHostedByOther", false);
   for (auto listener : this->GetListeners()) {
     auto listenerAsActor = dynamic_cast<MpActor*>(listener);
-    if (listenerAsActor)
+    if (listenerAsActor) {
       this->SendPropertyTo(newHosterId != 0 &&
                                newHosterId != listener->GetFormId()
                              ? hostedMsg
                              : notHostedMsg,
                            *listenerAsActor);
+    }
   }
 }
 
@@ -591,6 +656,26 @@ void MpObjectReference::SetPosAndAngleSilent(const NiPoint3& pos,
     Mode::NoRequestSave);
 }
 
+void MpObjectReference::Delete()
+{
+  if (GetFormId() < 0xff000000) {
+    spdlog::warn("MpObjectReference::Delete {:x} - Attempt to delete non-FF "
+                 "object, ignoring",
+                 GetFormId());
+    return;
+  }
+
+  EditChangeForm(
+    [&](MpChangeFormREFR& changeForm) { changeForm.isDeleted = true; });
+  RemoveFromGridAndUnsubscribeAll();
+}
+
+void MpObjectReference::SetCount(uint32_t newCount)
+{
+  EditChangeForm(
+    [&](MpChangeFormREFR& changeForm) { changeForm.count = newCount; });
+}
+
 void MpObjectReference::SetAnimationVariableBool(const char* name, bool value)
 {
   if (!pImpl->animGraphHolder)
@@ -618,12 +703,14 @@ void MpObjectReference::AddItem(uint32_t baseId, uint32_t count)
   });
   SendInventoryUpdate();
 
-  auto baseItem = VarValue(static_cast<int32_t>(baseId));
-  auto itemCount = VarValue(static_cast<int32_t>(count));
-  auto itemReference = VarValue((IGameObject*)nullptr);
-  auto sourceContainer = VarValue((IGameObject*)nullptr);
-  VarValue args[4] = { baseItem, itemCount, itemReference, sourceContainer };
-  SendPapyrusEvent("OnItemAdded", args, 4);
+  //  TODO: No one used it due to incorrect baseItem which should be object,
+  //  not id. Needs to be revised. Seems to also be buggy
+  // auto baseItem = VarValue(static_cast<int32_t>(baseId));
+  // auto itemCount = VarValue(static_cast<int32_t>(count));
+  // auto itemReference = VarValue((IGameObject*)nullptr);
+  // auto sourceContainer = VarValue((IGameObject*)nullptr);
+  // VarValue args[4] = { baseItem, itemCount, itemReference, sourceContainer
+  // }; SendPapyrusEvent("OnItemAdded", args, 4);
 }
 
 void MpObjectReference::AddItems(const std::vector<Inventory::Entry>& entries)
@@ -636,14 +723,14 @@ void MpObjectReference::AddItems(const std::vector<Inventory::Entry>& entries)
     SendInventoryUpdate();
   }
 
-  for (const auto& entri : entries) {
-    auto baseItem = VarValue(static_cast<int32_t>(entri.baseId));
-    auto itemCount = VarValue(static_cast<int32_t>(entri.count));
-    auto itemReference = VarValue((IGameObject*)nullptr);
-    auto sourceContainer = VarValue((IGameObject*)nullptr);
-    VarValue args[4] = { baseItem, itemCount, itemReference, sourceContainer };
-    SendPapyrusEvent("OnItemAdded", args, 4);
-  }
+  // for (const auto& entri : entries) {
+  //   auto baseItem = VarValue(static_cast<int32_t>(entri.baseId));
+  //   auto itemCount = VarValue(static_cast<int32_t>(entri.count));
+  //   auto itemReference = VarValue((IGameObject*)nullptr);
+  //   auto sourceContainer = VarValue((IGameObject*)nullptr);
+  //   VarValue args[4] = { baseItem, itemCount, itemReference, sourceContainer
+  //   }; SendPapyrusEvent("OnItemAdded", args, 4);
+  // }
 }
 
 void MpObjectReference::RemoveItem(uint32_t baseId, uint32_t count,
@@ -663,6 +750,14 @@ void MpObjectReference::RemoveItems(
     target->AddItems(entries);
 
   SendInventoryUpdate();
+
+  if (GetBaseType() == "CONT") {
+    if (GetInventory().IsEmpty()) {
+      spdlog::info("MpObjectReference::RemoveItems - {:x} requesting reloot",
+                   this->GetFormId());
+      RequestReloot();
+    }
+  }
 }
 
 void MpObjectReference::RemoveAllItems(MpObjectReference* target)
@@ -753,8 +848,9 @@ void MpObjectReference::Subscribe(MpObjectReference* emitter,
 {
   auto actorEmitter = dynamic_cast<MpActor*>(emitter);
   auto actorListener = dynamic_cast<MpActor*>(listener);
-  if (!actorEmitter && !actorListener)
+  if (!actorEmitter && !actorListener) {
     return;
+  }
 
   // I don't know how often Subscrbe is called but I suppose
   // it is to be invoked quite frequently. In this case, each
@@ -764,6 +860,8 @@ void MpObjectReference::Subscribe(MpObjectReference* emitter,
       listener->GetChangeForm().profileId != -1) {
     emitter->pImpl->onInitEventSent = true;
     emitter->SendPapyrusEvent("OnInit");
+    emitter->SendPapyrusEvent("OnCellLoad");
+    emitter->SendPapyrusEvent("OnLoad");
   }
 
   const bool hasPrimitive = emitter->HasPrimitive();
@@ -775,12 +873,14 @@ void MpObjectReference::Subscribe(MpObjectReference* emitter,
     emitter->actorListeners.insert(actorListener);
   }
   listener->emitters->insert(emitter);
-  if (!hasPrimitive)
+  if (!hasPrimitive) {
     emitter->callbacks->subscribe(emitter, listener);
+  }
 
   if (hasPrimitive) {
-    if (!listener->emittersWithPrimitives)
+    if (!listener->emittersWithPrimitives) {
       listener->emittersWithPrimitives.reset(new std::map<uint32_t, bool>);
+    }
     listener->emittersWithPrimitives->insert({ emitter->GetFormId(), false });
   }
 }
@@ -797,8 +897,9 @@ void MpObjectReference::Unsubscribe(MpObjectReference* emitter,
 
   const bool hasPrimitive = emitter->HasPrimitive();
 
-  if (!hasPrimitive)
+  if (!hasPrimitive) {
     emitter->callbacks->unsubscribe(emitter, listener);
+  }
   emitter->listeners->erase(listener);
   if (actorListener) {
     emitter->actorListeners.erase(actorListener);
@@ -810,10 +911,23 @@ void MpObjectReference::Unsubscribe(MpObjectReference* emitter,
   }
 }
 
+void MpObjectReference::SetLastAnimation(const std::string& lastAnimation)
+{
+  EditChangeForm([&](MpChangeForm& changeForm) {
+    changeForm.lastAnimation = lastAnimation;
+  });
+}
+
+void MpObjectReference::SetDisplayName(const std::string& newName)
+{
+  EditChangeForm(
+    [&](MpChangeForm& changeForm) { changeForm.displayName = newName; });
+}
+
 const std::set<MpObjectReference*>& MpObjectReference::GetListeners() const
 {
-  static const std::set<MpObjectReference*> g_emptyListeners;
-  return listeners ? *listeners : g_emptyListeners;
+  static const std::set<MpObjectReference*> kEmptyListeners;
+  return listeners ? *listeners : kEmptyListeners;
 }
 
 const std::set<MpActor*>& MpObjectReference::GetActorListeners() const noexcept
@@ -823,8 +937,8 @@ const std::set<MpActor*>& MpObjectReference::GetActorListeners() const noexcept
 
 const std::set<MpObjectReference*>& MpObjectReference::GetEmitters() const
 {
-  static const std::set<MpObjectReference*> g_emptyEmitters;
-  return emitters ? *emitters : g_emptyEmitters;
+  static const std::set<MpObjectReference*> kEmptyEmitters;
+  return emitters ? *emitters : kEmptyEmitters;
 }
 
 void MpObjectReference::RequestReloot(
@@ -867,17 +981,17 @@ std::shared_ptr<std::chrono::time_point<std::chrono::system_clock>>
 MpObjectReference::GetNextRelootMoment() const
 {
   std::shared_ptr<std::chrono::time_point<std::chrono::system_clock>> res;
-  if (ChangeForm().nextRelootDatetime)
+  if (ChangeForm().nextRelootDatetime) {
     res.reset(new std::chrono::time_point<std::chrono::system_clock>(
       std::chrono::system_clock::from_time_t(
         ChangeForm().nextRelootDatetime)));
+  }
   return res;
 }
 
 MpChangeForm MpObjectReference::GetChangeForm() const
 {
-  MpChangeForm res;
-  static_cast<MpChangeFormREFR&>(res) = ChangeForm();
+  MpChangeForm res = ChangeForm();
 
   if (GetParent() && !GetParent()->espmFiles.empty()) {
     res.formDesc = FormDesc::FromFormId(GetFormId(), GetParent()->espmFiles);
@@ -1025,14 +1139,6 @@ void MpObjectReference::Init(WorldState* parent, uint32_t formId,
 {
   MpForm::Init(parent, formId, hasChangeForm);
 
-  // It crashed during sparsepp hashmap indexing.
-  // Not sure why. And not sure why this code actually been here.
-  // It seems that MoveOnGrid will be caled later.
-  /*if (!IsDisabled()) {
-    auto& gridInfo = GetParent()->grids[ChangeForm().worldOrCell];
-    MoveOnGrid(*gridInfo.grid);
-  }*/
-
   // We should queue created form for saving as soon as it is initialized
   const auto mode = (!hasChangeForm && formId >= 0xff000000)
     ? Mode::RequestSave
@@ -1044,6 +1150,21 @@ void MpObjectReference::Init(WorldState* parent, uint32_t formId,
         FormDesc::FromFormId(formId, GetParent()->espmFiles);
     },
     mode);
+
+  auto refrId = GetFormId();
+  if (parent->HasEspm() && refrId < 0xff000000 &&
+      !dynamic_cast<MpActor*>(this)) {
+    auto lookupRes = parent->GetEspm().GetBrowser().LookupById(refrId);
+    auto data = espm::GetData<espm::REFR>(refrId, parent);
+    for (auto& info : data.activationParents) {
+      auto activationParent = lookupRes.ToGlobalId(info.refrId);
+
+      // Using WorldState for that, because we don't want search (potentially
+      // load) other references during OnInit
+      parent->activationChildsByActivationParent[activationParent].insert(
+        { refrId, info.delay });
+    }
+  }
 }
 
 bool MpObjectReference::IsLocationSavingNeeded() const
@@ -1114,12 +1235,26 @@ void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
     } else {
       auto refrRecord = espm::Convert<espm::REFR>(
         loader.GetBrowser().LookupById(GetFormId()).rec);
-      uint32_t count =
+
+      uint32_t countRecord =
         refrRecord ? refrRecord->GetData(compressedFieldsCache).count : 1;
-      activationSource.AddItem(resultItem, count ? count : 1);
+
+      uint32_t countChangeForm = ChangeForm().count;
+
+      constexpr uint32_t kCountDefault = 1;
+
+      uint32_t resultingCount =
+        std::max(kCountDefault, std::max(countRecord, countChangeForm));
+
+      activationSource.AddItem(resultItem, resultingCount);
     }
     SetHarvested(true);
     RequestReloot();
+
+    if (espm::utils::IsItem(t) && GetFormId() >= 0xff000000) {
+      spdlog::info("MpObjectReference::ProcessActivate - Deleting 0xff item");
+      Delete();
+    }
   } else if (t == espm::DOOR::kType) {
     auto lookupRes = loader.GetBrowser().LookupById(GetFormId());
     auto refrRecord = espm::Convert<espm::REFR>(lookupRes.rec);
@@ -1141,27 +1276,26 @@ void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
       auto teleportWorldOrCell = destination.ToGlobalId(
         GetWorldOrCell(loader.GetBrowser(), destinationRecord));
 
-      static const auto g_pi = std::acos(-1.f);
-      const NiPoint3 rot = { teleport->rotRadians[0] / g_pi * 180,
-                             teleport->rotRadians[1] / g_pi * 180,
-                             teleport->rotRadians[2] / g_pi * 180 };
+      static const auto kPi = std::acos(-1.f);
+      const auto& pos = teleport->pos;
+      const float rot[] = { teleport->rotRadians[0] / kPi * 180,
+                            teleport->rotRadians[1] / kPi * 180,
+                            teleport->rotRadians[2] / kPi * 180 };
 
-      std::string msg;
-      msg += Networking::MinPacketId;
-      msg += nlohmann::json{
-        { "pos", { teleport->pos[0], teleport->pos[1], teleport->pos[2] } },
-        { "rot", { rot[0], rot[1], rot[2] } },
-        { "worldOrCell", teleportWorldOrCell },
-        { "type", "teleport" }
-      }.dump();
-      if (actorActivator)
-        actorActivator->SendToUser(msg.data(), msg.size(), true);
+      TeleportMessage msg;
+      msg.idx = activationSource.GetIdx();
+      std::copy(std::begin(pos), std::end(pos), msg.pos.begin());
+      std::copy(std::begin(rot), std::end(rot), msg.rot.begin());
+      msg.worldOrCell = teleportWorldOrCell;
+
+      if (actorActivator) {
+        actorActivator->SendToUser(msg, true);
+      }
 
       activationSource.SetCellOrWorldObsolete(
         FormDesc::FromFormId(teleportWorldOrCell, worldState->espmFiles));
-      activationSource.SetPos(
-        { teleport->pos[0], teleport->pos[1], teleport->pos[2] });
-      activationSource.SetAngle(rot);
+      activationSource.SetPos({ pos[0], pos[1], pos[2] });
+      activationSource.SetAngle({ rot[0], rot[1], rot[2] });
 
     } else {
       SetOpen(!IsOpen());
@@ -1199,6 +1333,38 @@ void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
   }
 }
 
+void MpObjectReference::ActivateChilds()
+{
+  auto worldState = GetParent();
+  if (!worldState) {
+    return;
+  }
+
+  auto myFormId = GetFormId();
+
+  for (auto& pair : worldState->activationChildsByActivationParent[myFormId]) {
+    auto childRefrId = pair.first;
+    auto delay = pair.second;
+
+    auto delayMs = Viet::TimeUtils::To<std::chrono::milliseconds>(delay);
+    worldState->SetTimer(delayMs).Then([worldState, childRefrId,
+                                        myFormId](Viet::Void) {
+      auto childRefr = std::dynamic_pointer_cast<MpObjectReference>(
+        worldState->LookupFormById(childRefrId));
+      if (!childRefr) {
+        spdlog::warn("MpObjectReference::ActivateChilds {:x} - Bad/missing "
+                     "activation child {:x}",
+                     myFormId, childRefrId);
+        return;
+      }
+
+      // Not sure about activationSource and defaultProcessingOnly in this
+      // case I'll try to keep vanilla scripts working
+      childRefr->Activate(worldState->GetFormAt<MpObjectReference>(myFormId));
+    });
+  }
+}
+
 bool MpObjectReference::MpApiOnActivate(MpObjectReference& caster)
 {
   simdjson::dom::parser parser;
@@ -1220,7 +1386,7 @@ bool MpObjectReference::MpApiOnActivate(MpObjectReference& caster)
   return activationBlocked;
 }
 
-void MpObjectReference::RemoveFromGrid()
+void MpObjectReference::RemoveFromGridAndUnsubscribeAll()
 {
   auto worldOrCell = GetCellOrWorld().ToFormId(GetParent()->espmFiles);
   auto gridIterator = GetParent()->grids.find(worldOrCell);
@@ -1246,12 +1412,14 @@ void MpObjectReference::UnsubscribeFromAll()
 void MpObjectReference::InitScripts()
 {
   auto baseId = GetBaseId();
-  if (!baseId || !GetParent()->espm)
+  if (!baseId || !GetParent()->espm) {
     return;
+  }
 
   auto scriptStorage = GetParent()->GetScriptStorage();
-  if (!scriptStorage)
+  if (!scriptStorage) {
     return;
+  }
 
   auto& compressedFieldsCache = GetParent()->GetEspmCache();
 
@@ -1261,14 +1429,36 @@ void MpObjectReference::InitScripts()
   auto base = br.LookupById(baseId);
   auto refr = br.LookupById(GetFormId());
   for (auto record : { base.rec, refr.rec }) {
-    if (!record)
+    if (!record) {
       continue;
-    espm::ScriptData scriptData;
-    record->GetScriptData(&scriptData, compressedFieldsCache);
+    }
+
+    std::optional<espm::ScriptData> scriptData;
+
+    if (record == base.rec && record->GetType() == "NPC_") {
+      auto baseId = base.ToGlobalId(base.rec->GetId());
+      if (auto actor = dynamic_cast<MpActor*>(this)) {
+        auto& templateChain = actor->GetTemplateChain();
+        scriptData = EvaluateTemplate<espm::NPC_::UseScript>(
+          GetParent(), baseId, templateChain,
+          [&compressedFieldsCache](const auto& npcLookupRes,
+                                   const auto& npcData) {
+            espm::ScriptData scriptData;
+            npcLookupRes.rec->GetScriptData(&scriptData,
+                                            compressedFieldsCache);
+            return scriptData;
+          });
+      }
+    }
+
+    if (!scriptData) {
+      scriptData = espm::ScriptData();
+      record->GetScriptData(&*scriptData, compressedFieldsCache);
+    }
 
     auto& scriptsInStorage =
       GetParent()->GetScriptStorage()->ListScripts(false);
-    for (auto& script : scriptData.scripts) {
+    for (auto& script : scriptData->scripts) {
       if (scriptsInStorage.count(
             { script.scriptName.begin(), script.scriptName.end() })) {
 
@@ -1282,8 +1472,28 @@ void MpObjectReference::InitScripts()
     }
   }
 
+  // A hardcoded hack to remove all scripts except SweetPie scripts from
+  // exterior objects
+  if (GetParent() && GetParent()->disableVanillaScriptsInExterior &&
+      GetFormId() < 0x05000000) {
+    auto cellOrWorld = GetCellOrWorld().ToFormId(GetParent()->espmFiles);
+    auto lookupRes =
+      GetParent()->GetEspm().GetBrowser().LookupById(cellOrWorld);
+    if (lookupRes.rec && lookupRes.rec->GetType() == "WRLD") {
+      spdlog::info("Skipping non-Sweet scripts for exterior form {:x}");
+      scriptNames.erase(std::remove_if(scriptNames.begin(), scriptNames.end(),
+                                       [](const std::string& val) {
+                                         auto kPrefix = "Sweet";
+                                         bool startsWith = val.size() >= 5 &&
+                                           !memcmp(kPrefix, val.data(), 5);
+                                         return !startsWith;
+                                       }),
+                        scriptNames.end());
+    }
+  }
+
   if (!scriptNames.empty()) {
-    pImpl->scriptState.reset(new ScriptState);
+    pImpl->scriptState = std::make_unique<ScriptState>();
 
     std::vector<VirtualMachine::ScriptInfo> scriptInfo;
     for (auto& scriptName : scriptNames) {
@@ -1324,7 +1534,7 @@ void MpObjectReference::SendInventoryUpdate()
       { "type", "setInventory" }
     }.dump();
     actor->SendToUserDeferred(msg.data(), msg.size(), true,
-                              kChannelSetInventory);
+                              kChannelSetInventory, true);
   }
 }
 
@@ -1332,26 +1542,29 @@ void MpObjectReference::SendOpenContainer(uint32_t targetId)
 {
   auto actor = dynamic_cast<MpActor*>(this);
   if (actor) {
-    std::string msg;
-    msg += Networking::MinPacketId;
-    msg += nlohmann::json{
-      { "target", targetId }, { "type", "openContainer" }
-    }.dump();
-    actor->SendToUser(msg.data(), msg.size(), true);
+    OpenContainerMessage msg;
+    msg.target = targetId;
+    actor->SendToUser(msg, true);
   }
 }
 
 std::vector<espm::CONT::ContainerObject> GetOutfitObjects(
-  const espm::CombineBrowser& br, const espm::LookupResult& lookupRes,
-  espm::CompressedFieldsCache& compressedFieldsCache)
+  WorldState* worldState, const std::vector<FormDesc>& templateChain,
+  const espm::LookupResult& lookupRes)
 {
+  auto& compressedFieldsCache = worldState->GetEspmCache();
+
   std::vector<espm::CONT::ContainerObject> res;
 
   if (auto baseNpc = espm::Convert<espm::NPC_>(lookupRes.rec)) {
-    auto data = baseNpc->GetData(compressedFieldsCache);
-
-    auto outfitId = lookupRes.ToGlobalId(data.defaultOutfitId);
-    auto outfit = espm::Convert<espm::OTFT>(br.LookupById(outfitId).rec);
+    auto baseId = lookupRes.ToGlobalId(lookupRes.rec->GetId());
+    auto outfitId = EvaluateTemplate<espm::NPC_::UseInventory>(
+      worldState, baseId, templateChain,
+      [](const auto& npcLookupRes, const auto& npcData) {
+        return npcLookupRes.ToGlobalId(npcData.defaultOutfitId);
+      });
+    auto outfit = espm::Convert<espm::OTFT>(
+      worldState->GetEspm().GetBrowser().LookupById(outfitId).rec);
     auto outfitData =
       outfit ? outfit->GetData(compressedFieldsCache) : espm::OTFT::Data();
 
@@ -1364,16 +1577,22 @@ std::vector<espm::CONT::ContainerObject> GetOutfitObjects(
 }
 
 std::vector<espm::CONT::ContainerObject> GetInventoryObjects(
-  const espm::CombineBrowser& br, const espm::LookupResult& lookupRes,
-  espm::CompressedFieldsCache& compressedFieldsCache)
+  WorldState* worldState, const std::vector<FormDesc>& templateChain,
+  const espm::LookupResult& lookupRes)
 {
+  auto& compressedFieldsCache = worldState->GetEspmCache();
+
   auto baseContainer = espm::Convert<espm::CONT>(lookupRes.rec);
-  if (baseContainer)
+  if (baseContainer) {
     return baseContainer->GetData(compressedFieldsCache).objects;
+  }
 
   auto baseNpc = espm::Convert<espm::NPC_>(lookupRes.rec);
   if (baseNpc) {
-    return baseNpc->GetData(compressedFieldsCache).objects;
+    auto baseId = lookupRes.ToGlobalId(lookupRes.rec->GetId());
+    return EvaluateTemplate<espm::NPC_::UseInventory>(
+      worldState, baseId, templateChain,
+      [](const auto&, const auto& npcData) { return npcData.objects; });
   }
 
   return {};
@@ -1391,8 +1610,9 @@ void MpObjectReference::AddContainerObject(
     auto map = LeveledListUtils::EvaluateListRecurse(
       espm.GetBrowser(), formLookupRes, kCountMult, kPlayerCharacterLevel,
       chanceNoneOverride.get());
-    for (auto& p : map)
+    for (auto& p : map) {
       (*itemsToAdd)[p.first] += p.second;
+    }
   } else {
     (*itemsToAdd)[entry.formId] += entry.count;
   }
@@ -1400,32 +1620,38 @@ void MpObjectReference::AddContainerObject(
 
 void MpObjectReference::EnsureBaseContainerAdded(espm::Loader& espm)
 {
-  if (ChangeForm().baseContainerAdded)
+  if (ChangeForm().baseContainerAdded) {
     return;
+  }
 
   auto worldState = GetParent();
-  if (!worldState)
+  if (!worldState) {
     return;
+  }
+
+  auto actor = dynamic_cast<MpActor*>(this);
+  const std::vector<FormDesc> kEmptyTemplateChain;
+  const std::vector<FormDesc>& templateChain =
+    actor ? actor->GetTemplateChain() : kEmptyTemplateChain;
 
   auto lookupRes = espm.GetBrowser().LookupById(GetBaseId());
 
   std::map<uint32_t, uint32_t> itemsToAdd, itemsToEquip;
 
-  auto inventoryObjects = GetInventoryObjects(espm.GetBrowser(), lookupRes,
-                                              worldState->GetEspmCache());
+  auto inventoryObjects =
+    GetInventoryObjects(GetParent(), templateChain, lookupRes);
   for (auto& entry : inventoryObjects) {
     AddContainerObject(entry, &itemsToAdd);
   }
 
-  auto outfitObjects =
-    GetOutfitObjects(espm.GetBrowser(), lookupRes, worldState->GetEspmCache());
+  auto outfitObjects = GetOutfitObjects(GetParent(), templateChain, lookupRes);
   for (auto& entry : outfitObjects) {
     AddContainerObject(entry, &itemsToAdd);
     AddContainerObject(entry, &itemsToEquip);
   }
-  if (auto actor = dynamic_cast<MpActor*>(this)) {
+  if (actor) {
     Equipment eq;
-    for (auto p : itemsToEquip) {
+    for (auto& p : itemsToEquip) {
       Inventory::Entry e;
       e.baseId = p.first;
       e.count = p.second;
@@ -1436,8 +1662,9 @@ void MpObjectReference::EnsureBaseContainerAdded(espm::Loader& espm)
   }
 
   std::vector<Inventory::Entry> entries;
-  for (auto& p : itemsToAdd)
+  for (auto& p : itemsToAdd) {
     entries.push_back({ p.first, p.second });
+  }
   AddItems(entries);
 
   if (!ChangeForm().baseContainerAdded) {
@@ -1475,11 +1702,12 @@ void MpObjectReference::CheckInteractionAbility(MpObjectReference& refr)
 void MpObjectReference::SendPropertyToListeners(const char* name,
                                                 const nlohmann::json& value)
 {
-  auto str = CreatePropertyMessage(this, name, value);
+  auto msg = CreatePropertyMessage(this, name, value);
   for (auto listener : GetListeners()) {
     auto listenerAsActor = dynamic_cast<MpActor*>(listener);
-    if (listenerAsActor)
-      listenerAsActor->SendToUser(str.data(), str.size(), true);
+    if (listenerAsActor) {
+      listenerAsActor->SendToUser(msg, true);
+    }
   }
 }
 
@@ -1487,25 +1715,26 @@ void MpObjectReference::SendPropertyTo(const char* name,
                                        const nlohmann::json& value,
                                        MpActor& target)
 {
-  auto str = CreatePropertyMessage(this, name, value);
-  SendPropertyTo(str, target);
+  auto msg = CreatePropertyMessage(this, name, value);
+  SendPropertyTo(msg, target);
 }
 
-void MpObjectReference::SendPropertyTo(const std::string& preparedPropMsg,
+void MpObjectReference::SendPropertyTo(const IMessageBase& preparedPropMsg,
                                        MpActor& target)
 {
-  target.SendToUser(preparedPropMsg.data(), preparedPropMsg.size(), true);
+  target.SendToUser(preparedPropMsg, true);
 }
 
 void MpObjectReference::BeforeDestroy()
 {
-  if (this->occupant && this->occupantDestroySink)
+  if (this->occupant && this->occupantDestroySink) {
     this->occupant->RemoveEventSink(this->occupantDestroySink);
+  }
 
   // Move far far away calling OnTriggerExit, unsubscribing, etc
   SetPos({ -1'000'000'000, 0, 0 });
 
   MpForm::BeforeDestroy();
 
-  RemoveFromGrid();
+  RemoveFromGridAndUnsubscribeAll();
 }

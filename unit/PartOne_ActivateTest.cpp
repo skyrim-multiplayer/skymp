@@ -1,5 +1,5 @@
-#include "ScriptStorage.h"
 #include "TestUtils.hpp"
+#include "script_storages/DirectoryScriptStorage.h"
 
 using Catch::Matchers::ContainsSubstring;
 
@@ -251,7 +251,7 @@ TEST_CASE("Activate WRDoorMainGate01 in Whiterun", "[PartOne][espm]")
   REQUIRE(partOne.Messages()[0].j["t"] == MsgType::UpdateProperty);
 
   REQUIRE(partOne.Messages().size() >= 2);
-  REQUIRE(partOne.Messages()[1].j["type"] == "teleport");
+  REQUIRE(partOne.Messages()[1].j["t"] == MsgType::Teleport);
   REQUIRE(partOne.Messages()[1].j["pos"].dump() ==
           nlohmann::json{ 19243.53515625, -7427.3427734375, -3595.4052734375 }
             .dump());
@@ -387,7 +387,7 @@ TEST_CASE("BarrelFood01 PutItem/TakeItem", "[PartOne][espm]")
   REQUIRE(partOne.Messages()[1].j["propName"] == "inventory");
   REQUIRE(partOne.Messages()[1].j["idx"] == ref.GetIdx());
   REQUIRE(partOne.Messages().size() == 3);
-  REQUIRE(partOne.Messages()[2].j["type"] == "openContainer");
+  REQUIRE(partOne.Messages()[2].j["t"] == MsgType::OpenContainer);
   REQUIRE(partOne.Messages()[2].j["target"] == ref.GetFormId());
 
   REQUIRE_THROWS_WITH(

@@ -7,6 +7,7 @@ export class RespawnNeededError extends Error {
 
 export class NeverError extends Error {
   constructor(message: never) {
-    super(`Unreachable statement: ${message}`);
+    super(`NeverError: ${JSON.stringify(message)}`);
+    Object.setPrototypeOf(this, NeverError.prototype);
   }
 }

@@ -152,3 +152,37 @@ void EventManager::Unsubscribe(uintptr_t uid,
     }
   }
 }
+
+void EventManager::ClearCallbacks()
+{
+  for (const auto& event : events) {
+    if (event.second) {
+      event.second->callbacks.clear();
+    }
+  }
+
+  auto handler = EventHandler::GetSingleton();
+  handler->DeactivateAllSinks();
+}
+
+CallbackObjMap* EventManager::GetCallbackObjMap(const char* eventName)
+{
+  auto event = events[eventName];
+
+  if (!event) {
+    return nullptr;
+  }
+
+  return &event->callbacks;
+}
+
+void EventManager::EmplaceEvent(const std::string_view& name,
+                                EventState* state)
+{
+  events.emplace(name, state);
+}
+
+EventMap* EventManager::GetEventMap()
+{
+  return &events;
+}

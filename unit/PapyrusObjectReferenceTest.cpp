@@ -2,10 +2,10 @@
 #include <catch2/catch_all.hpp>
 
 #include "ActionListener.h"
-#include "EspmGameObject.h"
 #include "MpObjectReference.h"
-#include "PapyrusObjectReference.h"
 #include "papyrus-vm/Structures.h"
+#include "script_classes/PapyrusObjectReference.h"
+#include "script_objects/EspmGameObject.h"
 
 using Catch::Matchers::ContainsSubstring;
 
@@ -191,7 +191,7 @@ TEST_CASE("MoveTo", "[Papyrus][ObjectReference]")
   {
     auto it = std::find_if(
       messages.begin(), messages.end(),
-      [](PartOne::Message& msg) { return msg.j["type"] == "teleport"; });
+      [](PartOne::Message& msg) { return msg.j["t"] == MsgType::Teleport; });
     REQUIRE(it != messages.end());
   }
 }

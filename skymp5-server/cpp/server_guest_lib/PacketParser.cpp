@@ -3,10 +3,10 @@
 #include "Exceptions.h"
 #include "HitData.h"
 #include "JsonUtils.h"
-#include "MovementMessage.h"
-#include "MovementMessageSerialization.h"
+#include "MessageSerializerFactory.h"
+#include "Messages.h"
 #include "MpActor.h"
-#include <MsgType.h>
+#include "MsgType.h"
 #include <simdjson.h>
 #include <slikenet/BitStream.h>
 
@@ -34,11 +34,14 @@ static const JsonPointer t("t"), idx("idx"), content("content"), data("data"),
 struct PacketParser::Impl
 {
   simdjson::dom::parser simdjsonParser;
+  std::shared_ptr<MessageSerializer> serializer;
+  std::once_flag jsonWarning;
 };
 
 PacketParser::PacketParser()
 {
   pImpl.reset(new Impl);
+  pImpl->serializer = MessageSerializerFactory::CreateMessageSerializer();
 }
 
 void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
@@ -57,20 +60,77 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
     userId,
   };
 
-  if (length > 1 && data[1] == MovementMessage::kHeaderByte) {
-    MovementMessage movData;
-    // BitStream requires non-const ref even though it doesn't modify it
-    SLNet::BitStream stream(const_cast<unsigned char*>(data) + 2, length - 2,
-                            /*copyData*/ false);
-    serialization::ReadFromBitStream(stream, movData);
+  auto result = pImpl->serializer->Deserialize(data, length);
+  if (result != std::nullopt) {
+    if (result->format == DeserializeInputFormat::Json) {
+      std::call_once(pImpl->jsonWarning, [&] {
+        spdlog::warn("PacketParser::TransformPacketIntoAction - 1-st time "
+                     "encountered a JSON packet, userId={}, msgType={}",
+                     userId, static_cast<int64_t>(result->msgType));
+      });
+    }
+    switch (result->msgType) {
+      case MsgType::UpdateMovement: {
+        auto message =
+          reinterpret_cast<MovementMessage*>(result->message.get());
+        actionListener.OnUpdateMovement(
+          rawMsgData, message->idx,
+          { message->pos[0], message->pos[1], message->pos[2] },
+          { message->rot[0], message->rot[1], message->rot[2] },
+          message->isInJumpState, message->isWeapDrawn, message->isBlocking,
+          message->worldOrCell);
+        return;
+      }
+      case MsgType::UpdateAnimation: {
+        auto message =
+          reinterpret_cast<UpdateAnimationMessage*>(result->message.get());
+        AnimationData animationData;
+        animationData.animEventName = message->animEventName.data();
+        animationData.numChanges = message->numChanges;
+        actionListener.OnUpdateAnimation(rawMsgData, message->idx,
+                                         animationData);
+        return;
+      }
+      case MsgType::UpdateEquipment: {
+        auto message =
+          reinterpret_cast<UpdateEquipmentMessage*>(result->message.get());
+        auto idx = message->idx;
+        auto data = pImpl->simdjsonParser.parse(message->data.dump()).value();
+        auto inv = Inventory::FromJson(message->data.at("inv"));
+        auto leftSpell = message->data.contains("leftSpell")
+          ? message->data.at("leftSpell").get<uint32_t>()
+          : 0;
+        auto rightSpell = message->data.contains("rightSpell")
+          ? message->data.at("rightSpell").get<uint32_t>()
+          : 0;
+        auto voiceSpell = message->data.contains("voiceSpell")
+          ? message->data.at("voiceSpell").get<uint32_t>()
+          : 0;
+        auto instantSpell = message->data.contains("instantSpell")
+          ? message->data.at("instantSpell").get<uint32_t>()
+          : 0;
 
-    actionListener.OnUpdateMovement(
-      rawMsgData, movData.idx,
-      { movData.pos[0], movData.pos[1], movData.pos[2] },
-      { movData.rot[0], movData.rot[1], movData.rot[2] },
-      movData.isInJumpState, movData.isWeapDrawn, movData.isBlocking,
-      movData.worldOrCell);
-    return;
+        actionListener.OnUpdateEquipment(rawMsgData, idx, data, inv, leftSpell,
+                                         rightSpell, voiceSpell, instantSpell);
+        return;
+      }
+      case MsgType::ChangeValues: {
+        auto message =
+          reinterpret_cast<ChangeValuesMessage*>(result->message.get());
+        ActorValues actorValues;
+        actorValues.healthPercentage = message->health;
+        actorValues.magickaPercentage = message->magicka;
+        actorValues.staminaPercentage = message->stamina;
+        actionListener.OnChangeValues(rawMsgData, actorValues);
+        return;
+      }
+      default: {
+        // likel a binary packet, can't just fall back to simdjson parsing
+        spdlog::error("PacketParser.cpp doesn't implement MsgType {}",
+                      static_cast<int64_t>(result->msgType));
+        return;
+      }
+    }
   }
 
   rawMsgData.parsed =
@@ -78,62 +138,16 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
 
   const auto& jMessage = rawMsgData.parsed;
 
-  using TypeInt = std::underlying_type<MsgType>::type;
-  auto type = MsgType::Invalid;
-  Read(jMessage, JsonPointers::t, reinterpret_cast<TypeInt*>(&type));
+  int64_t type = static_cast<int64_t>(MsgType::Invalid);
+  Read(jMessage, JsonPointers::t, &type);
 
-  switch (type) {
+  switch (static_cast<MsgType>(type)) {
     case MsgType::Invalid:
       break;
     case MsgType::CustomPacket: {
       simdjson::dom::element content;
       Read(jMessage, JsonPointers::content, &content);
       actionListener.OnCustomPacket(rawMsgData, content);
-    } break;
-    case MsgType::UpdateMovement: {
-      uint32_t idx;
-      ReadEx(jMessage, JsonPointers::idx, &idx);
-
-      simdjson::dom::element data_;
-      Read(jMessage, JsonPointers::data, &data_);
-
-      simdjson::dom::element jPos;
-      Read(data_, JsonPointers::pos, &jPos);
-      float pos[3];
-      for (int i = 0; i < 3; ++i)
-        ReadEx(jPos, i, &pos[i]);
-
-      simdjson::dom::element jRot;
-      Read(data_, JsonPointers::rot, &jRot);
-      float rot[3];
-      for (int i = 0; i < 3; ++i)
-        ReadEx(jRot, i, &rot[i]);
-
-      bool isInJumpState = false;
-      Read(data_, JsonPointers::isInJumpState, &isInJumpState);
-
-      bool isWeapDrawn = false;
-      Read(data_, JsonPointers::isWeapDrawn, &isWeapDrawn);
-
-      bool isBlocking = false;
-      Read(data_, JsonPointers::isBlocking, &isBlocking);
-
-      uint32_t worldOrCell = 0;
-      ReadEx(data_, JsonPointers::worldOrCell, &worldOrCell);
-
-      actionListener.OnUpdateMovement(
-        rawMsgData, idx, { pos[0], pos[1], pos[2] },
-        { rot[0], rot[1], rot[2] }, isInJumpState, isWeapDrawn, isBlocking,
-        worldOrCell);
-
-    } break;
-    case MsgType::UpdateAnimation: {
-      uint32_t idx;
-      ReadEx(jMessage, JsonPointers::idx, &idx);
-      simdjson::dom::element jData;
-      ReadEx(jMessage, JsonPointers::data, &jData);
-      actionListener.OnUpdateAnimation(rawMsgData, idx,
-                                       AnimationData::FromJson(jData));
     } break;
     case MsgType::UpdateAppearance: {
       uint32_t idx;
@@ -143,46 +157,6 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
 
       actionListener.OnUpdateAppearance(rawMsgData, idx,
                                         Appearance::FromJson(jData));
-    } break;
-    case MsgType::UpdateEquipment: {
-      uint32_t idx;
-      ReadEx(jMessage, JsonPointers::idx, &idx);
-      simdjson::dom::element data_;
-      ReadEx(jMessage, JsonPointers::data, &data_);
-      simdjson::dom::element inv;
-      ReadEx(data_, JsonPointers::inv, &inv);
-
-      uint32_t leftSpell = 0;
-
-      if (data_.at_pointer(JsonPointers::leftSpell.GetData()).error() ==
-          simdjson::error_code::SUCCESS) {
-        ReadEx(data_, JsonPointers::leftSpell, &leftSpell);
-      }
-
-      uint32_t rightSpell = 0;
-
-      if (data_.at_pointer(JsonPointers::rightSpell.GetData()).error() ==
-          simdjson::error_code::SUCCESS) {
-        ReadEx(data_, JsonPointers::rightSpell, &rightSpell);
-      }
-
-      uint32_t voiceSpell = 0;
-
-      if (data_.at_pointer(JsonPointers::voiceSpell.GetData()).error() ==
-          simdjson::error_code::SUCCESS) {
-        ReadEx(data_, JsonPointers::voiceSpell, &voiceSpell);
-      }
-
-      uint32_t instantSpell = 0;
-
-      if (data_.at_pointer(JsonPointers::instantSpell.GetData()).error() ==
-          simdjson::error_code::SUCCESS) {
-        ReadEx(data_, JsonPointers::instantSpell, &instantSpell);
-      }
-
-      actionListener.OnUpdateEquipment(rawMsgData, idx, data_,
-                                       Inventory::FromJson(inv), leftSpell,
-                                       rightSpell, voiceSpell, instantSpell);
     } break;
     case MsgType::Activate: {
       simdjson::dom::element data_;
@@ -200,7 +174,7 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
       uint32_t target;
       ReadEx(jMessage, JsonPointers::target, &target);
       auto e = Inventory::Entry::FromJson(jMessage);
-      if (type == MsgType::PutItem) {
+      if (static_cast<MsgType>(type) == MsgType::PutItem) {
         e.extra.worn = Inventory::Worn::None;
         actionListener.OnPutItem(rawMsgData, target, e);
       } else {
@@ -283,16 +257,6 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
       actionListener.OnCustomEvent(rawMsgData, eventName, args);
       break;
     }
-    case MsgType::ChangeValues: {
-      simdjson::dom::element data_;
-      ReadEx(jMessage, JsonPointers::data, &data_);
-      ActorValues actorValues;
-      ReadEx(data_, JsonPointers::health, &actorValues.healthPercentage);
-      ReadEx(data_, JsonPointers::magicka, &actorValues.magickaPercentage);
-      ReadEx(data_, JsonPointers::stamina, &actorValues.staminaPercentage);
-      actionListener.OnChangeValues(rawMsgData, actorValues);
-      break;
-    }
     case MsgType::OnHit: {
       simdjson::dom::element data_;
       ReadEx(jMessage, JsonPointers::data, &data_);
@@ -308,9 +272,7 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
       break;
     }
     default:
-      simdjson::dom::element data_;
-      ReadEx(jMessage, JsonPointers::data, &data_);
-      actionListener.OnUnknown(rawMsgData, data_);
+      actionListener.OnUnknown(rawMsgData);
       break;
   }
 }

@@ -93,6 +93,24 @@ Absolute paths work but aren't accessible via `uiPort`. External tooling wouldn'
 }
 ```
 
+## archives
+
+Specify BSA archives that will be loaded by the server.
+
+At this moment, used only for compiled Papyrus scripts.
+
+Relative/absolute paths work similar to esp/esm.
+
+```json5
+{
+  // ...
+  "archives": [
+    "Skyrim - Misc.bsa"
+  ]
+  // ...
+}
+```
+
 ## lang
 
 The language, the translation of which will be obtained from the string files located in Data/strings
@@ -223,9 +241,21 @@ The name of a localizaiton file in `data/localization` that would be used by `M.
 }
 ```
 
+## enableConsoleCommandsForAll
+
+Enable console commands for all, useful for testing.
+
+```json5
+{
+  // ...
+  "enableConsoleCommandsForAll": true
+  // ...
+}
+```
+
 ## sweetPieMinimumPlayersToStart
 
-The minimal amount of players to begin deathmatch. This setting is sweetpie only and does not affect vanilla server. By default is 5.
+The minimal amount of players to begin deathmatch. This setting is sweetpie only and does not affect vanilla server. Default is 5.
 
 ```json5
 {
@@ -262,9 +292,19 @@ Allows tuning settings related to in-game chat, such as message visibility radiu
 }
 ```
 
+## sweetPieCommandEnabled
+
+Enables or disables `/new2024` command that teleports player to SweetPie hall.
+
+```json5
+  // ...
+  "sweetPieCommandEnabled": true
+  // ...
+```
+
 ## npcEnabled
 
-Enables npc loading. By default is set to `false`.
+Enables npc loading. Default is false.
 
 ```json5
 {

@@ -9,6 +9,8 @@ module.exports = {
   entry: [
     "./src/index.ts"
   ],
+  // SkyrimPlatform ignores embedded source maps at this moment
+  // devtool: "inline-source-map",
   devtool: false,
   output: {
     path: outDirPath,

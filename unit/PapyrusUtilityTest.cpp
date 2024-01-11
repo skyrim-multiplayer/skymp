@@ -1,15 +1,15 @@
 #include "TestUtils.hpp"
 #include <catch2/catch_all.hpp>
 
-#include "HeuristicPolicy.h"
-#include "PapyrusUtility.h"
+#include "script_classes/PapyrusUtility.h"
+#include "script_compatibility_policies/HeuristicPolicy.h"
 
 TEST_CASE("Wait", "[Papyrus][Utility]")
 {
   WorldState wst;
   PapyrusUtility utility;
   std::shared_ptr<spdlog::logger> logger;
-  utility.compatibilityPolicy.reset(new HeuristicPolicy(logger, &wst));
+  utility.compatibilityPolicy.reset(new HeuristicPolicy(&wst));
 
   bool waitFinished = false;
 

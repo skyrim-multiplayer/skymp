@@ -1,9 +1,10 @@
 import { ClientListener, CombinedController, Sp } from "./clientListener";
-import * as networking from "../../networking";
 import { GameLoadEvent } from "../events/gameLoadEvent";
+import { NetworkingService } from "./networkingService";
 
-export class SinglePlayerService implements ClientListener {
+export class SinglePlayerService extends ClientListener {
     constructor(private sp: Sp, private controller: CombinedController) {
+        super();
         this.controller.emitter.on("gameLoad", (e) => this.onGameLoad(e));
     }
 
@@ -16,7 +17,7 @@ export class SinglePlayerService implements ClientListener {
             this.sp.Debug.messageBox(
                 'Save has been loaded in multiplayer, switching to the single-player mode',
             );
-            networking.close();
+            this.controller.lookupListener(NetworkingService).close();
             this._isSinglePlayer = true;
             this.sp.Game.setInChargen(false, false, false);
         }

@@ -2,6 +2,7 @@ ignore:
   - .git/
   - '**/third_party'
   - 'skymp5-scripts/'
+  - 'overlay_ports/rsm-bsa/*.patch'
 
 rules:
   end-of-file:
