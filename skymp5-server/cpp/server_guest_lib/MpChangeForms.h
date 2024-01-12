@@ -7,8 +7,8 @@
 #include "FormDesc.h"
 #include "Inventory.h"
 #include "LocationalData.h"
-#include "Quest.h"
 #include "NiPoint3.h"
+#include "Quest.h"
 #include <cstdint>
 #include <optional>
 #include <ostream>
