@@ -7,6 +7,7 @@
 #include "FormDesc.h"
 #include "Inventory.h"
 #include "LocationalData.h"
+#include "Quest.h"
 #include "NiPoint3.h"
 #include <cstdint>
 #include <optional>
@@ -104,6 +105,9 @@ public:
 
   // Used for SetDisplayName (object reference)
   std::optional<std::string> displayName;
+
+  // Used for Quest (QUST) synchronization
+  std::optional<std::vector<Quest>> quests;
 
   // Please update 'ActorTest.cpp' when adding new Actor-related rows
 
