@@ -1046,22 +1046,6 @@ void MpActor::DropItem(const uint32_t baseId, const Inventory::Entry& entry)
     return;
   }
 
-  std::vector<uint32_t> keywordIds =
-    lookupRes.rec->GetKeywordIds(worldState->GetEspmCache());
-  for (auto& keywordId : keywordIds) {
-    auto rec = worldState->GetEspm().GetBrowser().LookupById(keywordId).rec;
-    auto keywordRecord = espm::Convert<espm::KYWD>(rec);
-    auto editorId =
-      keywordRecord->GetData(worldState->GetEspmCache()).editorId;
-    if (!Utils::stricmp(editorId, "SweetCantDrop")) {
-      spdlog::warn(
-        "MpActor::DropItem - Attempt to drop SweetCantDrop by actor "
-        "{:x}",
-        GetFormId());
-      return;
-    }
-  }
-
   spdlog::trace("MpActor::DropItem - dropping {}", editorId);
   RemoveItems({ entry });
 

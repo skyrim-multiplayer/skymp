@@ -265,6 +265,28 @@ void ActionListener::OnActivate(const RawMessageData& rawMsgData,
   }
 }
 
+namespace {
+bool IsCantDrop(WorldState* worldState, uint32_t baseId)
+{
+  auto lookupRes = worldState->GetEspm().GetBrowser().LookupById(baseId);
+
+  std::vector<uint32_t> keywordIds =
+    lookupRes.rec->GetKeywordIds(worldState->GetEspmCache());
+
+  for (auto& keywordId : keywordIds) {
+    auto rec = worldState->GetEspm().GetBrowser().LookupById(keywordId).rec;
+    auto keywordRecord = espm::Convert<espm::KYWD>(rec);
+    auto editorId =
+      keywordRecord->GetData(worldState->GetEspmCache()).editorId;
+    if (!Utils::stricmp(editorId, "SweetCantDrop")) {
+      return true;
+    }
+  }
+
+  return false;
+}
+}
+
 void ActionListener::OnPutItem(const RawMessageData& rawMsgData,
                                uint32_t target, const Inventory::Entry& entry)
 {
@@ -272,7 +294,18 @@ void ActionListener::OnPutItem(const RawMessageData& rawMsgData,
   auto& ref = partOne.worldState.GetFormAt<MpObjectReference>(target);
 
   if (!actor)
-    return; // TODO: Throw error instead
+    return;
+
+  auto worldState = actor->GetParent();
+  if (!worldState) {
+    return spdlog::error("No WorldState attached");
+  }
+
+  if (IsCantDrop(worldState, entry.baseId)) {
+    return spdlog::error("Attempt to put SweetCantDrop item {:x}",
+                         actor->GetFormId());
+  }
+
   ref.PutItem(*actor, entry);
 }
 
@@ -283,7 +316,18 @@ void ActionListener::OnTakeItem(const RawMessageData& rawMsgData,
   auto& ref = partOne.worldState.GetFormAt<MpObjectReference>(target);
 
   if (!actor)
-    return; // TODO: Throw error instead
+    return;
+
+  auto worldState = actor->GetParent();
+  if (!worldState) {
+    return spdlog::error("No WorldState attached");
+  }
+
+  if (IsCantDrop(worldState, entry.baseId)) {
+    return spdlog::error("Attempt to take SweetCantDrop item {:x}",
+                         actor->GetFormId());
+  }
+
   ref.TakeItem(*actor, entry);
 }
 
@@ -292,9 +336,20 @@ void ActionListener::OnDropItem(const RawMessageData& rawMsgData,
 {
   MpActor* ac = partOne.serverState.ActorByUser(rawMsgData.userId);
   if (!ac) {
-    throw std::runtime_error(fmt::format(
-      "Unable to drop an item from user with id: {:x}.", rawMsgData.userId));
+    return spdlog::error("Unable to drop an item from user with id: {}.",
+                         rawMsgData.userId);
   }
+
+  auto worldState = ac->GetParent();
+  if (!worldState) {
+    return spdlog::error("No WorldState attached");
+  }
+
+  if (IsCantDrop(worldState, entry.baseId)) {
+    return spdlog::error("Attempt to drop SweetCantDrop item {:x}",
+                         ac->GetFormId());
+  }
+
   ac->DropItem(baseId, entry);
 }
 
