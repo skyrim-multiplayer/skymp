@@ -6,7 +6,7 @@
 class Quest
 {
 public:
-  bool SetCurrentStageID(uint32_t stageID) const;
+  bool SetStage(uint32_t stageID) const;
   void SetActive(bool active);
   uint32_t GetStage() const;
   bool GetStageDone(uint32_t stageID) const;
@@ -26,9 +26,11 @@ public:
   // public due we need to assign this values initially
   std::string editorID;
   uint32_t priority;
+
 private:
   std::vector<uint32_t> unlockedStages;
   std::vector<uint32_t> unlockedObjectives;
 
   uint32_t displayedObjective;
+  bool completed;
 };
