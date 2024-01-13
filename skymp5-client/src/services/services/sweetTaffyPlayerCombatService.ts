@@ -28,11 +28,11 @@ type AttackType = "Std" | "Power" | "Jump" | "Bow" | "Crossbow";
 
 // TODO: move to config
 const staminaAttackMap = new Map<AttackType, number>([
-  ["Std", 7],
-  ["Power", 35],
-  ["Jump", 15],
-  ["Bow", 25],
-  ["Crossbow", 30],
+  ["Std", 0],
+  ["Power", 0],
+  ["Jump", 0],
+  ["Bow", 0],
+  ["Crossbow", 0],
 ]);
 
 // TODO: consider splitting this service (separate stamina and timer management)
