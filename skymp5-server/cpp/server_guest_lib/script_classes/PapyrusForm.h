@@ -15,6 +15,8 @@ public:
 
   VarValue GetFormId(VarValue self, const std::vector<VarValue>& arguments);
 
+  VarValue GetName_(VarValue self, const std::vector<VarValue>& arguments);
+
   void Register(VirtualMachine& vm,
                 std::shared_ptr<IPapyrusCompatibilityPolicy> policy) override
   {
@@ -23,5 +25,11 @@ public:
     AddMethod(vm, "GetType", &PapyrusForm::GetType);
     AddMethod(vm, "HasKeyword", &PapyrusForm::HasKeyword);
     AddMethod(vm, "GetFormID", &PapyrusForm::GetFormId);
+    AddMethod(vm, "GetName", &PapyrusForm::GetName_);
+
+    this->compatibilityPolicy = policy;
   }
+
+private:
+  std::shared_ptr<IPapyrusCompatibilityPolicy> compatibilityPolicy;
 };
