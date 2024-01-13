@@ -296,8 +296,9 @@ void MpObjectReference::VisitProperties(const PropertiesVisitor& visitor,
     visitor("inventory", inventoryDump.data());
   }
 
-  if (mode == VisitPropertiesMode::All && !GetInventory().IsEmpty()) {
-    visitor("disabled", IsDisabled() ? "true" : "false");
+  const bool isEspmForm = GetFormId() < 0xff;
+  if (mode == VisitPropertiesMode::All && isEspmForm && IsDisabled()) {
+    visitor("disabled", "true");
   }
 
   if (ChangeForm().lastAnimation.has_value()) {

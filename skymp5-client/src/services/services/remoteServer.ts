@@ -315,8 +315,8 @@ export class RemoteServer extends ClientListener {
             ModelApplyUtils.applyModelIsHarvested(
               refr,
               !!msg.props['isHarvested'],
-            );
             ModelApplyUtils.applyModelIsDisabled(refr, !!msg.props['disabled']);
+            );
             const animation = msg.props.lastAnimation;
             if (typeof animation === "string") {
               const refrid = refr.getFormID();
