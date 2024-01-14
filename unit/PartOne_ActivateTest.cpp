@@ -595,7 +595,8 @@ TEST_CASE("Activate torch", "[espm][PartOne]")
   partOne.DestroyActor(0xff000000);
 }
 
-TEST_CASE("Regress test for 'Record ff00b5de doesn't exist'", "[PartOne][espm]")
+TEST_CASE("Regress test for 'Record ff00b5de doesn't exist'",
+          "[PartOne][espm]")
 {
   auto& partOne = GetPartOne();
   partOne.worldState.npcEnabled = true;
@@ -608,4 +609,9 @@ TEST_CASE("Regress test for 'Record ff00b5de doesn't exist'", "[PartOne][espm]")
   // 1:   Record ff00b5de doesn't exist
 
   auto& actor = partOne.worldState.GetFormAt<MpActor>(refrId);
+
+  // REQUIRE(actor.GetInventory().ToJson().dump() == "");
+
+  // TODO: Why 0???
+  // REQUIRE(actor.GetInventory().GetItemCount(0x0000B5DE) == 1);
 }
