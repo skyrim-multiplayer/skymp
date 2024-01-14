@@ -17,6 +17,7 @@
 #include "TimeUtils.h"
 #include "WorldState.h"
 #include "libespm/espm.h"
+#include "papyrus-vm/Utils.h"
 #include "script_objects/EspmGameObject.h"
 #include <NiPoint3.h>
 #include <algorithm>
