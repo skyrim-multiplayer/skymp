@@ -594,3 +594,18 @@ TEST_CASE("Activate torch", "[espm][PartOne]")
   DoDisconnect(partOne, 0);
   partOne.DestroyActor(0xff000000);
 }
+
+TEST_CASE("Regress test for 'Record ff00b5de doesn't exist'", "[PartOne][espm]")
+{
+  auto& partOne = GetPartOne();
+  partOne.worldState.npcEnabled = true;
+  partOne.Messages().clear();
+
+  const auto refrId = 0x000524f2;
+
+  // 1: C:\skymp\unit\PartOne_ActivateTest.cpp(598): FAILED:
+  // 1: due to unexpected exception with message:
+  // 1:   Record ff00b5de doesn't exist
+
+  auto& actor = partOne.worldState.GetFormAt<MpActor>(refrId);
+}
