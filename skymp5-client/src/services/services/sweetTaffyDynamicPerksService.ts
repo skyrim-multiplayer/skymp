@@ -8,6 +8,14 @@ import { SetInventoryMessage } from "../messages/setInventoryMessage";
 export class SweetTaffyDynamicPerksService extends ClientListener {
   constructor(private sp: Sp, private controller: CombinedController) {
     super();
+
+    if (!this.hasSweetPie()) {
+      this.logTrace("SweetTaffy features disabled");
+    }
+    else {
+      this.logTrace("SweetTaffy features enabled");
+    }
+
     controller.on('containerChanged', (e) => this.onContainerChanged(e));
     controller.emitter.on("setInventoryMessage", (e) => this.onSetInventoryMessage(e));
     controller.emitter.on("createActorMessage", (e) => this.onCreateActorMessage(e));

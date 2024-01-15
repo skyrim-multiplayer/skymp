@@ -4,6 +4,7 @@ import { ClientListener, CombinedController, Sp } from "./clientListener";
 import { BrowserMessageEvent } from "skyrimPlatform";
 import { AuthNeededEvent } from "../events/authNeededEvent";
 import { BrowserWindowLoadedEvent } from "../events/browserWindowLoadedEvent";
+import { TimersService } from "./timersService";
 
 interface MasterApiAuthStatus {
   token: string;
@@ -82,13 +83,25 @@ export class AuthService extends ClientListener {
     this.sp.browser.setVisible(true);
     this.sp.browser.setFocused(true);
 
+    const timersService = this.controller.lookupListener(TimersService);
+
+    this.logTrace("Calling setTimeout for testing");
+    try {
+      timersService.setTimeout(() => {
+        this.logTrace("Test timeout fired");
+      }, 1);
+    }
+    catch (e) {
+      this.logError("Failed to call setTimeout");
+    }
+
     // Launch checkLoginState loop
     this.checkLoginState();
   }
 
   private onBrowserMessage(e: BrowserMessageEvent) {
     if (!this.isListenBrowserMessage) {
-      this.logTrace(`onBrowserMessage: isListenBrowserMessage was false, ignoring message`);
+      this.logTrace(`onBrowserMessage: isListenBrowserMessage was false, ignoring message ${JSON.stringify(e.arguments)}`);
       return;
     }
 
@@ -159,6 +172,8 @@ export class AuthService extends ClientListener {
       return;
     }
 
+    const timersService = this.controller.lookupListener(TimersService);
+
     new this.sp.HttpClient(this.getMasterUrl())
       .get("/api/users/login-discord/status?state=" + this.discordAuthState, undefined,
         (response) => {
@@ -176,7 +191,7 @@ export class AuthService extends ClientListener {
                 if (error) {
                   browserState.failCount = 0;
                   browserState.comment = (error);
-                  setTimeout(() => this.checkLoginState(), 1.5 + Math.random() * 2);
+                  timersService.setTimeout(() => this.checkLoginState(), 1.5 + Math.random() * 2);
                   this.refreshWidgets();
                   return;
                 }
@@ -193,7 +208,7 @@ export class AuthService extends ClientListener {
             case 401: // Unauthorized
               browserState.failCount = 0;
               browserState.comment = (`Still waiting...`);
-              setTimeout(() => this.checkLoginState(), 1.5 + Math.random() * 2);
+              timersService.setTimeout(() => this.checkLoginState(), 1.5 + Math.random() * 2);
               break;
             case 403: // Forbidden
             case 404: // Not found
@@ -203,7 +218,7 @@ export class AuthService extends ClientListener {
             default:
               ++browserState.failCount;
               browserState.comment = `Server returned ${response.status.toString() || "???"} "${response.body || response.error}"`;
-              setTimeout(() => this.checkLoginState(), 1.5 + Math.random() * 2);
+              timersService.setTimeout(() => this.checkLoginState(), 1.5 + Math.random() * 2);
           }
         });
   };

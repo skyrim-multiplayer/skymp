@@ -292,6 +292,10 @@ void PartOne::AttachSaveStorage(std::shared_ptr<ISaveStorage> saveStorage)
     if (changeForm.profileId >= 0) {
       ++numPlayerCharacters;
     }
+
+    if (n % 25 == 0) {
+      pImpl->logger->info("Loaded {} ChangeForms", n);
+    }
   });
 
   pImpl->logger->info("AttachSaveStorage took {} ticks, loaded {} ChangeForms "

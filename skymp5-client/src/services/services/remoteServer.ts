@@ -329,6 +329,13 @@ export class RemoteServer extends ClientListener {
                 }
               })();
             }
+
+
+            const displayName = msg.props.displayName;
+            if (typeof displayName === "string") {
+              refr.setDisplayName(displayName, true);
+              this.logTrace(`calling setDisplayName "${displayName}" for ${refr.getFormID().toString(16)}`);
+            }
           }
         } else {
           printConsole('Failed to apply model to', refrId.toString(16));
@@ -623,11 +630,20 @@ export class RemoteServer extends ClientListener {
     const msg = event.message;
 
     const i = this.getIdManager().getId(msg.idx);
-    this.worldModel.forms[i].appearance = msg.data;
+    this.worldModel.forms[i].appearance = msg.data || undefined;
     if (!this.worldModel.forms[i].numAppearanceChanges) {
       this.worldModel.forms[i].numAppearanceChanges = 0;
     }
     (this.worldModel.forms[i].numAppearanceChanges as number)++;
+
+    const newAppearance = msg.data;
+
+    if (i === this.getMyActorIndex() && newAppearance) {
+      this.controller.once("update", () => {
+        applyAppearanceToPlayer(newAppearance);
+        this.logTrace("Applied appearance to the player");
+      });
+    }
   }
 
   private onUpdateEquipmentMessage(event: ConnectionMessage<UpdateEquipmentMessage>): void {

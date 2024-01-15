@@ -17,6 +17,7 @@
 #include "TimeUtils.h"
 #include "WorldState.h"
 #include "libespm/espm.h"
+#include "papyrus-vm/Utils.h"
 #include "script_objects/EspmGameObject.h"
 #include <NiPoint3.h>
 #include <algorithm>
@@ -40,6 +41,7 @@ struct MpActor::Impl
   std::map<uint32_t, Viet::Promise<VarValue>> snippetPromises;
   std::set<std::shared_ptr<DestroyEventSink>> destroyEventSinks;
   uint32_t snippetIndex = 0;
+  uint32_t respawnTimerIndex = 0;
   bool isRespawning = false;
   bool isBlockActive = false;
   std::chrono::steady_clock::time_point lastAttributesUpdateTimePoint,
@@ -402,11 +404,14 @@ void MpActor::ApplyChangeForm(const MpChangeForm& newChangeForm)
       if (changeForm.appearanceDump.empty()) {
         changeForm.isRaceMenuOpen = true;
       }
+
       // ActorValues does not refelect real base actor values set in esp/esm
       // game files since new update
       // this check is added only for test as a workaround. It is to be redone
       // in the nearest future. TODO
       if (GetParent() && GetParent()->HasEspm()) {
+        EnsureTemplateChainEvaluated(GetParent()->GetEspm(),
+                                     Mode::NoRequestSave);
         changeForm.actorValues = GetBaseActorValues(
           GetParent(), GetBaseId(), GetRaceId(), changeForm.templateChain);
       }
@@ -745,7 +750,8 @@ bool MpActor::CanActorValueBeRestored(espm::ActorValue av)
   return true;
 }
 
-void MpActor::EnsureTemplateChainEvaluated(espm::Loader& loader)
+void MpActor::EnsureTemplateChainEvaluated(espm::Loader& loader,
+                                           ChangeFormGuard::Mode mode)
 {
   constexpr auto kPcLevel = 0;
 
@@ -763,17 +769,19 @@ void MpActor::EnsureTemplateChainEvaluated(espm::Loader& loader)
     return;
   }
 
-  EditChangeForm([&](MpChangeFormREFR& changeForm) {
-    auto headNpc = loader.GetBrowser().LookupById(baseId);
-    std::vector<uint32_t> res = LeveledListUtils::EvaluateTemplateChain(
-      loader.GetBrowser(), headNpc, kPcLevel);
-    std::vector<FormDesc> templateChain(res.size());
-    std::transform(
-      res.begin(), res.end(), templateChain.begin(), [&](uint32_t formId) {
-        return FormDesc::FromFormId(formId, worldState->espmFiles);
-      });
-    changeForm.templateChain = std::move(templateChain);
-  });
+  EditChangeForm(
+    [&](MpChangeFormREFR& changeForm) {
+      auto headNpc = loader.GetBrowser().LookupById(baseId);
+      std::vector<uint32_t> res = LeveledListUtils::EvaluateTemplateChain(
+        loader.GetBrowser(), headNpc, kPcLevel);
+      std::vector<FormDesc> templateChain(res.size());
+      std::transform(
+        res.begin(), res.end(), templateChain.begin(), [&](uint32_t formId) {
+          return FormDesc::FromFormId(formId, worldState->espmFiles);
+        });
+      changeForm.templateChain = std::move(templateChain);
+    },
+    mode);
 }
 
 std::chrono::steady_clock::time_point MpActor::GetLastRestorationTime(
@@ -848,16 +856,22 @@ void MpActor::RespawnWithDelay(bool shouldTeleport)
   }
   pImpl->isRespawning = true;
 
+  ++pImpl->respawnTimerIndex;
+  auto respawnTimerIndex = pImpl->respawnTimerIndex;
+
   uint32_t formId = GetFormId();
   if (auto worldState = GetParent()) {
     float respawnTime = GetRespawnTime();
     auto time = Viet::TimeUtils::To<std::chrono::milliseconds>(respawnTime);
-    worldState->SetTimer(time).Then(
-      [worldState, this, formId, shouldTeleport](Viet::Void) {
-        if (worldState->LookupFormById(formId).get() == this) {
+    worldState->SetTimer(time).Then([worldState, this, formId, shouldTeleport,
+                                     respawnTimerIndex](Viet::Void) {
+      if (worldState->LookupFormById(formId).get() == this) {
+        bool isLatestRespawn = respawnTimerIndex == pImpl->respawnTimerIndex;
+        if (isLatestRespawn) {
           this->Respawn(shouldTeleport);
         }
-      });
+      }
+    });
   }
 }
 
@@ -1028,20 +1042,6 @@ void MpActor::DropItem(const uint32_t baseId, const Inventory::Entry& entry)
   // TODO: remove this when we will be sure that none of armors crashes clients
   if (lookupRes.rec->GetType().ToString() == "ARMO") {
     spdlog::warn("MpActor::DropItem - Attempt to drop ARMO by actor {:x}",
-                 GetFormId());
-    return;
-  }
-
-  // TODO: remove this with the next client update
-  if (lookupRes.rec->GetType().ToString() == "INGR") {
-    spdlog::warn("MpActor::DropItem - Attempt to drop INGR by actor {:x}",
-                 GetFormId());
-    return;
-  }
-
-  // TODO: remove this with the next client update
-  if (lookupRes.rec->GetType().ToString() == "ALCH") {
-    spdlog::warn("MpActor::DropItem - Attempt to drop ALCH by actor {:x}",
                  GetFormId());
     return;
   }

@@ -67,8 +67,29 @@ VarValue PapyrusObjectReference::AddItem(
   bool silent = static_cast<bool>(arguments[2].CastToBool());
   auto selfRefr = GetFormPtr<MpObjectReference>(self);
 
+  auto worldState = selfRefr->GetParent();
+  if (!worldState) {
+    throw std::runtime_error("AddItem - no WorldState attached");
+  }
+
   if (!selfRefr || !item.rec || count <= 0)
     return VarValue::None();
+
+  if (!espm::utils::Is<espm::FLST>(item.rec->GetType())) {
+    if (!espm::utils::IsItem(item.rec->GetType())) {
+      throw std::runtime_error("AddItem - form is not an item");
+    }
+  }
+
+  if (espm::utils::Is<espm::LIGH>(item.rec->GetType())) {
+    auto res =
+      espm::Convert<espm::LIGH>(item.rec)->GetData(worldState->GetEspmCache());
+    bool isTorch = res.data.flags & espm::LIGH::Flags::CanBeCarried;
+    if (!isTorch) {
+      throw std::runtime_error(
+        "AddItem - form is LIGH without CanBeCarried flag");
+    }
+  }
 
   std::vector<uint32_t> formIds;
   bool runSkympHacks = false;
@@ -77,6 +98,8 @@ VarValue PapyrusObjectReference::AddItem(
     formIds =
       espm::GetData<espm::FLST>(formlist->GetId(), selfRefr->GetParent())
         .formIds;
+    // TODO: call toGlobalId on formIds!
+    // TODO: check if formId is an item, not magic, etc
   } else {
     formIds.emplace_back(item.ToGlobalId(item.rec->GetId()));
     runSkympHacks = true;
@@ -110,8 +133,29 @@ VarValue PapyrusObjectReference::RemoveItem(
   bool silent = static_cast<bool>(arguments[2].CastToBool());
   auto refrToAdd = GetFormPtr<MpObjectReference>(arguments[3]);
 
+  auto worldState = selfRefr->GetParent();
+  if (!worldState) {
+    throw std::runtime_error("RemoveItem - no WorldState attached");
+  }
+
   if (!selfRefr || !item.rec)
     return VarValue::None();
+
+  if (!espm::utils::Is<espm::FLST>(item.rec->GetType())) {
+    if (!espm::utils::IsItem(item.rec->GetType())) {
+      throw std::runtime_error("RemoveItem - form is not an item");
+    }
+  }
+
+  if (espm::utils::Is<espm::LIGH>(item.rec->GetType())) {
+    auto res =
+      espm::Convert<espm::LIGH>(item.rec)->GetData(worldState->GetEspmCache());
+    bool isTorch = res.data.flags & espm::LIGH::Flags::CanBeCarried;
+    if (!isTorch) {
+      throw std::runtime_error(
+        "RemoveItem - form is LIGH without CanBeCarried flag");
+    }
+  }
 
   std::vector<uint32_t> formIds;
   bool runSkympHacks = false;
@@ -120,6 +164,8 @@ VarValue PapyrusObjectReference::RemoveItem(
     formIds =
       espm::GetData<espm::FLST>(formlist->GetId(), selfRefr->GetParent())
         .formIds;
+    // TODO: call toGlobalId on formIds!
+    // TODO: check if formId is an item, not magic, etc
   } else {
     formIds.emplace_back(item.ToGlobalId(item.rec->GetId()));
     runSkympHacks = true;
@@ -536,9 +582,16 @@ VarValue PapyrusObjectReference::MoveTo(VarValue self,
   auto* _thisObjectReference = GetFormPtr<MpObjectReference>(self);
   const auto* objectReference = GetFormPtr<MpObjectReference>(arguments[0]);
   auto* _thisActor = GetFormPtr<MpActor>(self);
-  if ((!_thisObjectReference && !_thisActor) || !_thisObjectReference) {
+
+  if (!_thisObjectReference) {
     return VarValue::None();
   }
+
+  if (!objectReference) {
+    spdlog::error("MoveTo - target object reference was nullptr");
+    return VarValue::None();
+  }
+
   const float xOffset = static_cast<float>(
                 static_cast<double>(arguments[1].CastToFloat())),
               yOffset = static_cast<float>(
@@ -697,6 +750,33 @@ VarValue PapyrusObjectReference::IsContainerEmpty(
   return VarValue(0);
 }
 
+VarValue PapyrusObjectReference::SetDisplayName(
+  VarValue self, const std::vector<VarValue>& arguments)
+{
+  if (auto selfRefr = GetFormPtr<MpObjectReference>(self)) {
+    if (arguments.size() < 2) {
+      throw std::runtime_error("SetDisplayName requires at least 2 arguments");
+    }
+    const char* displayName = static_cast<const char*>(arguments[0]);
+    selfRefr->SetDisplayName(displayName);
+
+    bool force = static_cast<bool>(arguments[1]);
+    std::ignore = force;
+
+    auto funcName = "SetDisplayName";
+    auto serializedArgs = SpSnippetFunctionGen::SerializeArguments(arguments);
+    for (auto listener : selfRefr->GetListeners()) {
+      auto targetRefr = dynamic_cast<MpActor*>(listener);
+      if (targetRefr) {
+        SpSnippet(GetName(), funcName, serializedArgs.data(),
+                  selfRefr->GetFormId())
+          .Execute(targetRefr);
+      }
+    }
+  }
+  return VarValue::None();
+}
+
 void PapyrusObjectReference::Register(
   VirtualMachine& vm, std::shared_ptr<IPapyrusCompatibilityPolicy> policy)
 {
@@ -740,4 +820,5 @@ void PapyrusObjectReference::Register(
   AddMethod(vm, "GetOpenState", &PapyrusObjectReference::GetOpenState);
   AddMethod(vm, "GetAllItemsCount", &PapyrusObjectReference::GetAllItemsCount);
   AddMethod(vm, "IsContainerEmpty", &PapyrusObjectReference::IsContainerEmpty);
+  AddMethod(vm, "SetDisplayName", &PapyrusObjectReference::SetDisplayName);
 }

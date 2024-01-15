@@ -145,6 +145,7 @@ public:
                           MpObjectReference* listener);
 
   void SetLastAnimation(const std::string& lastAnimation);
+  void SetDisplayName(const std::string& newName);
 
   const std::set<MpObjectReference*>& GetListeners() const;
   const std::set<MpObjectReference*>& GetEmitters() const;
