@@ -39,10 +39,10 @@ float CropRegeneration(float newAttributeValue, float secondsAfterLastRegen,
   if (newAttributeValue < 0.0f) {
     return 0.0f;
   }
-  if (hasActiveMagicEffects &&
-      !MathUtils::IsNearlyEqual(oldAttributeValue, kMaxOldPercentage)) {
-    return validAttributePercentage;
-  }
+  // if (hasActiveMagicEffects &&
+  //    !MathUtils::IsNearlyEqual(oldAttributeValue, kMaxOldPercentage)) {
+  //  return validAttributePercentage;
+  // }
   return newAttributeValue;
 }
 
