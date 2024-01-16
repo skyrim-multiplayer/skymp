@@ -297,7 +297,7 @@ void MpObjectReference::VisitProperties(const PropertiesVisitor& visitor,
   }
 
   const bool isEspmForm = GetFormId() < 0xff;
-  if (mode == VisitPropertiesMode::All && isEspmForm && IsDisabled()) {
+  if (isEspmForm && IsDisabled()) {
     visitor("disabled", "true");
   }
 
