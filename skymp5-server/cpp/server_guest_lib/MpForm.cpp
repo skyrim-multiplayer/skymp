@@ -59,3 +59,8 @@ void MpForm::AddScript(
   }
   activePexInstances.push_back(script);
 }
+
+bool MpForm::IsEspmForm() const noexcept
+{
+  return id < 0xff000000;
+}

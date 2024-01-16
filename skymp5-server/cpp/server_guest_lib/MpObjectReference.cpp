@@ -296,8 +296,7 @@ void MpObjectReference::VisitProperties(const PropertiesVisitor& visitor,
     visitor("inventory", inventoryDump.data());
   }
 
-  const bool isEspmForm = GetFormId() < 0xff;
-  if (isEspmForm && IsDisabled()) {
+  if (IsEspmForm() && IsDisabled()) {
     visitor("disabled", "true");
   }
 
@@ -342,7 +341,7 @@ void MpObjectReference::Activate(MpObjectReference& activationSource,
 
     // Block if only activation parents can activate this
     auto refrId = GetFormId();
-    if (!workaroundBypassParentsCheck && refrId < 0xff000000 &&
+    if (!workaroundBypassParentsCheck && IsEspmForm() &&
         !dynamic_cast<MpActor*>(this)) {
       auto lookupRes = worldState->GetEspm().GetBrowser().LookupById(refrId);
       auto data = espm::GetData<espm::REFR>(refrId, worldState);
@@ -389,7 +388,10 @@ void MpObjectReference::Disable()
 
   EditChangeForm(
     [&](MpChangeFormREFR& changeForm) { changeForm.isDisabled = true; });
-  RemoveFromGridAndUnsubscribeAll();
+
+  if (!IsEspmForm()) {
+    RemoveFromGridAndUnsubscribeAll();
+  }
 }
 
 void MpObjectReference::Enable()
@@ -400,7 +402,10 @@ void MpObjectReference::Enable()
 
   EditChangeForm(
     [&](MpChangeFormREFR& changeForm) { changeForm.isDisabled = false; });
-  ForceSubscriptionsUpdate();
+
+  if (!IsEspmForm()) {
+    ForceSubscriptionsUpdate();
+  }
 }
 
 void MpObjectReference::SetPos(const NiPoint3& newPos)
@@ -659,7 +664,7 @@ void MpObjectReference::SetPosAndAngleSilent(const NiPoint3& pos,
 
 void MpObjectReference::Delete()
 {
-  if (GetFormId() < 0xff000000) {
+  if (IsEspmForm()) {
     spdlog::warn("MpObjectReference::Delete {:x} - Attempt to delete non-FF "
                  "object, ignoring",
                  GetFormId());
@@ -945,7 +950,7 @@ const std::set<MpObjectReference*>& MpObjectReference::GetEmitters() const
 void MpObjectReference::RequestReloot(
   std::optional<std::chrono::system_clock::duration> time)
 {
-  if (this->GetFormId() >= 0xff000000) {
+  if (!IsEspmForm()) {
     return;
   }
 
@@ -1141,9 +1146,8 @@ void MpObjectReference::Init(WorldState* parent, uint32_t formId,
   MpForm::Init(parent, formId, hasChangeForm);
 
   // We should queue created form for saving as soon as it is initialized
-  const auto mode = (!hasChangeForm && formId >= 0xff000000)
-    ? Mode::RequestSave
-    : Mode::NoRequestSave;
+  const auto mode = (!hasChangeForm && !IsEspmForm()) ? Mode::RequestSave
+                                                      : Mode::NoRequestSave;
 
   EditChangeForm(
     [&](MpChangeFormREFR& changeForm) {
@@ -1153,8 +1157,7 @@ void MpObjectReference::Init(WorldState* parent, uint32_t formId,
     mode);
 
   auto refrId = GetFormId();
-  if (parent->HasEspm() && refrId < 0xff000000 &&
-      !dynamic_cast<MpActor*>(this)) {
+  if (parent->HasEspm() && IsEspmForm() && !dynamic_cast<MpActor*>(this)) {
     auto lookupRes = parent->GetEspm().GetBrowser().LookupById(refrId);
     auto data = espm::GetData<espm::REFR>(refrId, parent);
     for (auto& info : data.activationParents) {
@@ -1252,7 +1255,7 @@ void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
     SetHarvested(true);
     RequestReloot();
 
-    if (espm::utils::IsItem(t) && GetFormId() >= 0xff000000) {
+    if (espm::utils::IsItem(t) && !IsEspmForm()) {
       spdlog::info("MpObjectReference::ProcessActivate - Deleting 0xff item");
       Delete();
     }

@@ -20,6 +20,7 @@ public:
   MpForm();
 
   static const char* Type() { return "Form"; }
+  bool IsEspmForm() const noexcept;
   virtual const char* GetFormType() const { return "Form"; }
 
   auto GetParent() const { return parent; }
