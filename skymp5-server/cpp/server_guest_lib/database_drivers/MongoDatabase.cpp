@@ -7,11 +7,40 @@
 #include <bsoncxx/document/view.hpp>
 #include <bsoncxx/document/view_or_value.hpp>
 #include <bsoncxx/json.hpp>
+#include <fstream>
 #include <mongocxx/client.hpp>
 #include <mongocxx/instance.hpp>
 #include <mongocxx/stdx.hpp>
 #include <mongocxx/uri.hpp>
 #include <nlohmann/json.hpp>
+#include <spdlog/spdlog.h>
+#include <sstream>
+
+// namespace {
+// void CloseServer()
+// {
+//   std::ifstream f("server-settings.json");
+//   if (!f.good()) {
+//     return spdlog::error("server-settings.json is missing");
+//   }
+
+//   std::stringstream buffer;
+//   buffer << f.rdbuf();
+
+//   nlohmann::json serverSettings;
+//   try {
+//     serverSettings = nlohmann::json::parse(buffer.str());
+//   } catch (std::exception& e) {
+//     return spdlog::error("error parsing settings: {}", e.what());
+//   }
+
+//   f.close();
+
+//   std::ofstream f("server-settings.json");
+//   f << serverSettings.dump();
+//   // NONONO DANGEROUS
+// }
+// }
 
 struct MongoDatabase::Impl
 {
@@ -55,7 +84,27 @@ size_t MongoDatabase::Upsert(const std::vector<MpChangeForm>& changeForms)
                   .upsert(true));
   }
 
-  (void)bulk.execute();
+  std::optional<mongocxx::v_noabi::result::bulk_write> bulkResult =
+    bulk.execute();
+
+  if (!bulkResult) {
+    spdlog::critical("Upsert - empty bulk result");
+    // CloseServer();
+    std::terminate();
+  }
+
+  int insertedCount = bulkResult->inserted_count();
+  int upsertedCount = bulkResult->upserted_count();
+  int total = insertedCount + upsertedCount;
+
+  if (changeForms.size() != total) {
+    spdlog::critical("Upsert - insertedCount {}, upsertedCount {}, total = "
+                     "{}, but bulk contained {}",
+                     insertedCount, upsertedCount, total, changeForms.size());
+    // CloseServer();
+    std::terminate();
+  }
+
   return changeForms.size(); // Should take data from mongo instead?
 }
 
