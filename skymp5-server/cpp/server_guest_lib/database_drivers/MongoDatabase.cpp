@@ -7,6 +7,7 @@
 #include <bsoncxx/document/view.hpp>
 #include <bsoncxx/document/view_or_value.hpp>
 #include <bsoncxx/json.hpp>
+#include <ctime>
 #include <fstream>
 #include <mongocxx/client.hpp>
 #include <mongocxx/instance.hpp>
@@ -68,6 +69,8 @@ MongoDatabase::MongoDatabase(std::string uri_, std::string name_)
 
 size_t MongoDatabase::Upsert(const std::vector<MpChangeForm>& changeForms)
 {
+  spdlog::trace("Upsert - 1");
+
   auto bulk = pImpl->changeFormsCollection->create_bulk_write();
   for (auto& changeForm : changeForms) {
     auto jChangeForm = MpChangeForm::ToJson(changeForm);
@@ -84,8 +87,15 @@ size_t MongoDatabase::Upsert(const std::vector<MpChangeForm>& changeForms)
                   .upsert(true));
   }
 
+  spdlog::trace("Upsert - 2");
+
+  auto was = clock();
+
   std::optional<mongocxx::v_noabi::result::bulk_write> bulkResult =
     bulk.execute();
+
+  spdlog::trace("Upsert - 3, took {} seconds",
+                float(clock() - was) / CLOCKS_PER_SEC);
 
   if (!bulkResult) {
     spdlog::error("Upsert - empty bulk result");
@@ -113,6 +123,8 @@ size_t MongoDatabase::Upsert(const std::vector<MpChangeForm>& changeForms)
   //   // CloseServer();
   //   // std::terminate();
   // }
+
+  spdlog::trace("Upsert - 4");
 
   return changeForms.size(); // Should take data from mongo instead?
 }
