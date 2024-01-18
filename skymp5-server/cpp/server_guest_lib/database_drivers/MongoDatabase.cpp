@@ -69,7 +69,7 @@ MongoDatabase::MongoDatabase(std::string uri_, std::string name_)
 
 size_t MongoDatabase::Upsert(const std::vector<MpChangeForm>& changeForms)
 {
-  spdlog::trace("Upsert - 1");
+  spdlog::info("Upsert - 1");
 
   auto bulk = pImpl->changeFormsCollection->create_bulk_write();
   for (auto& changeForm : changeForms) {
@@ -87,15 +87,15 @@ size_t MongoDatabase::Upsert(const std::vector<MpChangeForm>& changeForms)
                   .upsert(true));
   }
 
-  spdlog::trace("Upsert - 2");
+  spdlog::info("Upsert - 2");
 
   auto was = clock();
 
   std::optional<mongocxx::v_noabi::result::bulk_write> bulkResult =
     bulk.execute();
 
-  spdlog::trace("Upsert - 3, took {} seconds",
-                float(clock() - was) / CLOCKS_PER_SEC);
+  spdlog::info("Upsert - 3, took {} seconds",
+               float(clock() - was) / CLOCKS_PER_SEC);
 
   if (!bulkResult) {
     spdlog::error("Upsert - empty bulk result");
@@ -124,7 +124,7 @@ size_t MongoDatabase::Upsert(const std::vector<MpChangeForm>& changeForms)
   //   // std::terminate();
   // }
 
-  spdlog::trace("Upsert - 4");
+  spdlog::info("Upsert - 4");
 
   return changeForms.size(); // Should take data from mongo instead?
 }
