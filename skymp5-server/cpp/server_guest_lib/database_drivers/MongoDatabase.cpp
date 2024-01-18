@@ -88,9 +88,9 @@ size_t MongoDatabase::Upsert(const std::vector<MpChangeForm>& changeForms)
     bulk.execute();
 
   if (!bulkResult) {
-    spdlog::critical("Upsert - empty bulk result");
+    spdlog::error("Upsert - empty bulk result");
     // CloseServer();
-    std::terminate();
+    // std::terminate();
   }
 
   int insertedCount = bulkResult->inserted_count();
@@ -98,11 +98,11 @@ size_t MongoDatabase::Upsert(const std::vector<MpChangeForm>& changeForms)
   int total = insertedCount + upsertedCount;
 
   if (changeForms.size() != total) {
-    spdlog::critical("Upsert - insertedCount {}, upsertedCount {}, total = "
+    spdlog::error("Upsert - insertedCount {}, upsertedCount {}, total = "
                      "{}, but bulk contained {}",
                      insertedCount, upsertedCount, total, changeForms.size());
     // CloseServer();
-    std::terminate();
+    // std::terminate();
   }
 
   return changeForms.size(); // Should take data from mongo instead?
