@@ -189,7 +189,8 @@ public:
   {
     const char* editorId = "";
     ScriptData scriptData;
-    QuestData questData;
+    const char* questName = "";
+    const QuestData* questData;
     const char* eventName = "";
     uint32_t displayGlobals = 0;
     const char* objectWindowFilter;
