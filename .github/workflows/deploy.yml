@@ -58,6 +58,7 @@ jobs:
             if: ${{env.DEPLOY_ACTION == 'deploy'}}
             uses: actions/checkout@v2
             with:
+                repository: Pospelove/skymp5-patches
                 submodules: recursive
                 fetch-depth: 0
                 token: ${{ secrets.SKYMP5_PATCHES_PAT }}
