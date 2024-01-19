@@ -54,6 +54,16 @@ jobs:
                 submodules: recursive
                 fetch-depth: 0
 
+          - name: Checkout skymp5-patches (full)
+            if: ${{env.DEPLOY_ACTION == 'deploy'}}
+            uses: actions/checkout@v2
+            with:
+                repository: skyrim-multiplayer/skymp5-patches
+                submodules: recursive
+                fetch-depth: 0
+                token: ${{ secrets.SKYMP5_PATCHES_PAT }}
+                path: ${{github.workspace}}/skymp5-patches
+
           - name: Checkout (last commit)
             if: ${{env.DEPLOY_ACTION != 'deploy'}}
             uses: actions/checkout@v2
@@ -73,9 +83,7 @@ jobs:
 
                 export GITHUB_TOKEN_PATCHES=$SKYMP5_PATCHES_PAT
 
-
-                git remote add patches https://skyrim-multiplayer:$SKYMP5_PATCHES_PAT@github.com/skyrim-multiplayer/skymp5-patches.git
-                git fetch patches
+                echo "Token length: ${#GITHUB_TOKEN_PATCHES}"
 
                 base_rev="`git rev-parse HEAD`"
                 echo "=== Base revision: $base_rev"
