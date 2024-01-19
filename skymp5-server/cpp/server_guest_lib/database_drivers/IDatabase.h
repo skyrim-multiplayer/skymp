@@ -2,6 +2,28 @@
 #include "MpChangeForms.h"
 #include <functional>
 #include <optional>
+#include <stdexcept>
+#include <vector>
+
+class UpsertFailedException : public std::runtime_error
+{
+public:
+  UpsertFailedException(
+    std::vector<std::optional<MpChangeForm>> &&affectedForms_, std::string what)
+    : runtime_error(what)
+    , affectedForms(affectedForms_)
+  {
+  }
+
+  const std::vector<std::optional<MpChangeForm>>& GetAffectedForms()
+    const noexcept
+  {
+    return affectedForms;
+  }
+
+private:
+  const std::vector<std::optional<MpChangeForm>> affectedForms;
+};
 
 class IDatabase
 {

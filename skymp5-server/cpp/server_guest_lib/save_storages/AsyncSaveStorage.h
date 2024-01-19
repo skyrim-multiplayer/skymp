@@ -13,7 +13,7 @@ public:
 
   void IterateSync(const IterateSyncCallback& cb) override;
   void Upsert(std::vector<std::optional<MpChangeForm>>&& changeForms,
-              const UpsertCallback& cb, const ErrorCallback& cbError) override;
+              const UpsertCallback& cb) override;
   uint32_t GetNumFinishedUpserts() const override;
   void Tick() override;
 

@@ -6,6 +6,7 @@
 #include "MpObjectReference.h"
 #include "ScopedTask.h"
 #include "Timer.h"
+#include "database_drivers/IDatabase.h" // UpsertFailedException
 #include "libespm/GroupUtils.h"
 #include "papyrus-vm/Reader.h"
 #include "save_storages/ISaveStorage.h"
@@ -228,18 +229,22 @@ void WorldState::RequestReloot(MpObjectReference& ref,
 
 void WorldState::RequestSave(MpObjectReference& ref)
 {
-  if (!pImpl->formLoadingInProgress) {
-    auto idx = ref.GetIdx();
-    if (idx == FormIndex::g_invalidIdx) {
-      return spdlog::error("RequestSave {:x} - Invalid index",
-                           ref.GetFormId());
-    }
-    if (pImpl->changesByIdx.size() <= idx) {
-      pImpl->changesByIdx.resize(idx + 1);
-    }
-    pImpl->changesByIdx[idx] = ref.GetChangeForm();
-    pImpl->changesPresent = true;
+  if (pImpl->formLoadingInProgress) {
+    return;
   }
+
+  auto idx = ref.GetIdx();
+
+  [[unlikely]] if (idx == FormIndex::g_invalidIdx) {
+    return spdlog::error("RequestSave {:x} - Invalid index", ref.GetFormId());
+  }
+
+  if (pImpl->changesByIdx.size() <= idx) {
+    pImpl->changesByIdx.resize(idx + 1);
+  }
+
+  pImpl->changesByIdx[idx] = ref.GetChangeForm();
+  pImpl->changesPresent = true;
 }
 
 const std::shared_ptr<MpForm>& WorldState::LookupFormById(
@@ -284,6 +289,19 @@ const std::shared_ptr<MpForm>& WorldState::LookupFormById(
   if (optionalOutTrace) {
     *optionalOutTrace << "found " << std::hex << formId << std::endl;
   }
+  return it->second;
+}
+
+const std::shared_ptr<MpForm>& WorldState::LookupFormByIdNoLoad(
+  uint32_t formId)
+{
+  static const std::shared_ptr<MpForm> kNullForm;
+
+  auto it = forms.find(formId);
+  if (it == forms.end()) {
+    return kNullForm;
+  }
+
   return it->second;
 }
 
@@ -622,9 +640,48 @@ void WorldState::TickSaveStorage(const std::chrono::system_clock::time_point&)
 
   try {
     pImpl->saveStorage->Tick();
-  } catch (...) {
+  } catch (UpsertFailedException& e) {
+    spdlog::error(
+      "TickSaveStorage - received UpsertFailedException {}, re-saving",
+      e.what());
     pImpl->saveStorageBusy = false;
-    throw;
+
+    auto& forms = e.GetAffectedForms();
+    size_t numRequested = 0;
+
+    for (size_t i = 0; i < forms.size(); ++i) {
+      auto& changeForm = forms[i];
+      if (changeForm == std::nullopt) {
+        continue;
+      }
+
+      // TODO: remove reinterpret_cast
+      MpObjectReference* form = reinterpret_cast<MpObjectReference*>(
+        LookupFormByIdx(static_cast<int>(i)));
+      if (!form) {
+        continue;
+      }
+
+      auto formId = changeForm->formDesc.ToFormId(espmFiles);
+
+      if (form->GetFormId() != formId) {
+        spdlog::error("TickSaveStorage - formIds not matching {:x} <=> {:x}",
+                      form->GetFormId(), formId);
+        continue;
+      }
+
+      RequestSave(*form);
+    }
+
+    spdlog::info(
+      "TickSaveStorage - requested re-save for {} forms of {} affected",
+      numRequested, forms.size());
+
+  } catch (std::exception& e) {
+    spdlog::error(
+      "TickSaveStorage - received std::exception {}, can't request re-save",
+      e.what());
+    pImpl->saveStorageBusy = false;
   }
 
   if (pImpl->saveStorageBusy) {
@@ -777,9 +834,9 @@ struct LazyState
   std::shared_ptr<PexScript> pex;
   std::vector<uint8_t> pexBin;
 
-  // With Papyrus hotreload enabled, this variable hold references to previous
-  // versions of pex files. This prevents the invalidation of string/identifier
-  // types of VarValue
+  // With Papyrus hotreload enabled, this variable hold references to
+  // previous versions of pex files. This prevents the invalidation of
+  // string/identifier types of VarValue
   std::vector<std::shared_ptr<PexScript>> oldPexHolder;
 };
 

@@ -8,7 +8,6 @@ struct AsyncSaveStorage::Impl
   {
     std::vector<std::optional<MpChangeForm>>&& changeForms;
     std::function<void()> callback;
-    std::function<void(std::string)> callbackError;
   };
 
   std::shared_ptr<spdlog::logger> logger;
@@ -79,7 +78,9 @@ void AsyncSaveStorage::SaverThreadMain(Impl* pImpl)
         auto start = std::chrono::high_resolution_clock::now();
         size_t numChangeForms = 0;
         for (auto& t : tasks) {
-          numChangeForms += pImpl->share.dbImpl->Upsert(t.changeForms);
+          numChangeForms +=
+            pImpl->share.dbImpl->Upsert(std::move(t.changeForms));
+          t.changeForms.clear();
           callbacksToFire.push_back(t.callback);
         }
         if (numChangeForms > 0 && pImpl->logger) {
@@ -111,10 +112,10 @@ void AsyncSaveStorage::IterateSync(const IterateSyncCallback& cb)
 
 void AsyncSaveStorage::Upsert(
   std::vector<std::optional<MpChangeForm>>&& changeForms,
-  const UpsertCallback& cb, const ErrorCallback& cbError)
+  const UpsertCallback& cb)
 {
   std::lock_guard l(pImpl->share3.m);
-  pImpl->share3.upsertTasks.push_back({ std::move(changeForms), cb, cbError });
+  pImpl->share3.upsertTasks.push_back({ std::move(changeForms), cb });
 }
 
 uint32_t AsyncSaveStorage::GetNumFinishedUpserts() const
