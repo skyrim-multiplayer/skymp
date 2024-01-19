@@ -16,10 +16,10 @@ public:
     enum MainFlags : uint8_t
     {
       StartGameEnabled = 0x01,
-      Unused = 0x02,
+      UnusedM = 0x02,
       WildernessEncounter = 0x04,
       AllowRepeatedStages = 0x08,
-      Unknown = 0x10
+      UnknownM = 0x10
     };
 
     enum PrimaryFlags : uint8_t
@@ -27,8 +27,8 @@ public:
       RunOnce = 0x01,
       ExcludeFromDialogueExport = 0x02,
       WarnOnAliasFillFailure = 0x04,
-      Unused = 0x08,
-      Unknown = 0x10
+      UnusedP = 0x08,
+      UnknownP = 0x10
     };
 
     enum QuestType : uint32_t
@@ -47,8 +47,8 @@ public:
       DLC02Dragonborn
     };
 
-    MainFlags mainFlags = MainFlags::Unknown;
-    PrimaryFlags primaryFlags = PrimaryFlags::Unknown;
+    MainFlags mainFlags = UnknownM;
+    PrimaryFlags primaryFlags = UnknownP;
     uint8_t priority = 0;
     uint8_t unknown = 0;
     uint32_t unknown2 = 0;
@@ -62,7 +62,7 @@ public:
     {
       struct QuestLogEntry
       {
-        enum LogFlags : Byte
+        enum LogFlags : unsigned char
         {
           CompleteQuest = 0x01,
           FailQuest = 0x02
