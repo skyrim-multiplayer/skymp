@@ -1,10 +1,5 @@
 import { Octokit } from '@octokit/rest';
 
-const REPO = {
-  owner: 'skyrim-multiplayer',
-  repo: 'skymp',
-};
-
 export interface Pull {
   number: number;
   headLabel: string;
@@ -12,14 +7,14 @@ export interface Pull {
   title: string;
 }
 
-export async function getPullsWithLabel(octokit: Octokit) {
+export async function getPullsWithLabel(repo: { owner: string, repo: string }, requestedLabel: string, octokit: Octokit) {
   const { data: pulls } = await octokit.pulls.list({
-    ...REPO,
+    ...repo,
     state: 'open',
   });
   const result: Pull[] = [];
   for (const pull of pulls) {
-    if (!pull.labels.find((label) => label.name == 'merge-to:' + process.env.DEPLOY_BRANCH)) {
+    if (!pull.labels.find((label) => label.name == requestedLabel)) {
       continue;
     }
     result.push({

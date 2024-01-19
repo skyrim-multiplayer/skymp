@@ -65,10 +65,15 @@ jobs:
             if: ${{env.DEPLOY_ACTION == 'deploy'}}
             env:
                 DEPLOY_STATUS_WEBHOOK: ${{secrets.DEPLOY_STATUS_WEBHOOK}}
+                SKYMP5_PATCHES_PAT: ${{secrets.SKYMP5_PATCHES_PAT}}
             run: |
                 git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
                 git config --local user.name "github-actions[bot]"
                 git config pull.rebase false
+
+                export GITHUB_TOKEN_PATCHES=$SKYMP5_PATCHES_PAT
+
+                git remote add patches https://${{ secrets.SKYMP5_PATCHES_PAT }}@github.com/Pospelove/skymp5-patches.git
 
                 base_rev="`git rev-parse HEAD`"
                 echo "=== Base revision: $base_rev"
