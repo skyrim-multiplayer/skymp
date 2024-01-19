@@ -88,7 +88,8 @@ public:
       std::vector<QuestLogEntry> logEntries;
     };
 
-    // Multiple sections can appear in a single record, and 1 or more log entries can appear within each INDX field. 
+    // Multiple sections can appear in a single record, and 1 or more log
+    // entries can appear within each INDX field.
     std::vector<JournalIndex> journalIndexes;
   };
 
