@@ -2,15 +2,13 @@ const path = require('path');
 
 const outDirPath = path.resolve(__dirname, "../build/dist/client/Data/Platform/Plugins");
 const outFileName = "skymp5-client.js";
-const spFilePath = path.resolve(__dirname, '../build/dist/client/Data/Platform/Modules/skyrimPlatform.ts');
+const spFilePath = path.resolve(__dirname, './node_modules/@skyrim-platform/skyrim-platform/index.d.ts');
 
 module.exports = {
   mode: "development",
   entry: [
     "./src/index.ts"
   ],
-  // SkyrimPlatform ignores embedded source maps at this moment
-  // devtool: "inline-source-map",
   devtool: false,
   output: {
     path: outDirPath,
@@ -27,12 +25,20 @@ module.exports = {
     minimize: false
   },
   module: {
-    rules: [{
-      test: /.*skyrimPlatform.ts$/,
-      use: path.resolve('loaders/skyrimPlatformLoader.js'),
-    }, {
-      test: /\.tsx?$/,
-      use: "ts-loader"
-    }]
-  }
+    rules: [
+      {
+        test: /\.tsx?$/,
+        use: "ts-loader",
+        exclude: /node_modules/,
+      },
+      {
+		test: /.*skyrimPlatform.ts$/,
+		use: path.resolve('loaders/skyrimPlatformLoader.js'),
+	  },	
+      {
+        test: /\.d\.ts$/,
+        use: "ignore-loader",
+      },
+    ],
+  },
 };

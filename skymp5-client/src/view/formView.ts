@@ -565,6 +565,7 @@ export class FormView implements View<FormModel> {
     const str = templateChain.join(',');
 
     if (this.leveledBaseId === 0) {
+      // @ts-ignore
       const leveledBase = TESModPlatform.evaluateLeveledNpc(str);
       if (!leveledBase) {
         printConsole("Failed to evaluate leveled npc", str);

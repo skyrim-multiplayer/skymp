@@ -15,5 +15,8 @@
     "module": "CommonJS",
     "target": "ES5",
     "types": [],
-  }
+    "paths": {
+      "skyrimPlatform": ["../../../../../../skymp5-client/node_modules/@skyrim-platform/skyrim-platform"]
+    },
+  },
 }
