@@ -20,16 +20,30 @@ FileDatabase::FileDatabase(std::string directory_,
 
 size_t FileDatabase::Upsert(const std::vector<MpChangeForm>& changeForms)
 {
-  auto p = pImpl->changeFormsDirectory;
+  std::filesystem::path p = pImpl->changeFormsDirectory;
   size_t nUpserted = 0;
 
   for (auto& changeForm : changeForms) {
     std::string fileName = changeForm.formDesc.ToString('_') + ".json";
-    auto filePath = p / fileName;
-    std::ofstream f(filePath);
+    auto tempFilePath = p / (fileName + ".tmp"), filePath = p / fileName;
+
+    std::ofstream f(tempFilePath);
     if (f) {
       f << MpChangeForm::ToJson(changeForm).dump(2);
     }
+
+    if (!f.fail()) {
+      f.close(); // otherwise rename fails on Windows
+
+      std::error_code errorCode;
+      std::filesystem::rename(tempFilePath, filePath, errorCode);
+      if (errorCode) {
+        pImpl->logger->error("Unable to rename {} to {}: {}",
+                             tempFilePath.string(), filePath.string(),
+                             errorCode.message());
+      }
+    }
+
     if (!f.is_open()) {
       pImpl->logger->error("Unable to open file {}", filePath.string());
     } else if (!f) {
@@ -55,6 +69,10 @@ void FileDatabase::Iterate(const IterateCallback& iterateCallback)
 
   for (auto& entry : std::filesystem::directory_iterator(p)) {
     try {
+      if (entry.path().extension() == ".tmp") {
+        continue;
+      }
+
       std::ifstream t(entry.path());
       std::string jsonDump((std::istreambuf_iterator<char>(t)),
                            std::istreambuf_iterator<char>());
