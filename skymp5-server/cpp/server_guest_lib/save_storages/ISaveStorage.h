@@ -11,10 +11,12 @@ class ISaveStorage
 public:
   using IterateSyncCallback = std::function<void(const MpChangeForm&)>;
   using UpsertCallback = std::function<void()>;
+  using ErrorCallback = std::function<void(std::string)>;
 
   virtual void IterateSync(const IterateSyncCallback& cb) = 0;
-  virtual void Upsert(const std::vector<MpChangeForm>& changeForms,
-                      const UpsertCallback& cb) = 0;
+  virtual void Upsert(std::vector<std::optional<MpChangeForm>>&& changeForms,
+                      const UpsertCallback& cb,
+                      const ErrorCallback& cbError) = 0;
   virtual uint32_t GetNumFinishedUpserts() const = 0;
   virtual void Tick() = 0;
 };

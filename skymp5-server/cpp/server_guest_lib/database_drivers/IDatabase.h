@@ -1,6 +1,7 @@
 #pragma once
 #include "MpChangeForms.h"
 #include <functional>
+#include <optional>
 
 class IDatabase
 {
@@ -12,7 +13,8 @@ public:
   // Returns numbers of change forms inserted or updated successfully (Suitable
   // for logging). In practice, it should be equal to `changeForms.size()` when
   // saving succeed.
-  virtual size_t Upsert(const std::vector<MpChangeForm>& changeForms) = 0;
+  virtual size_t Upsert(
+    std::vector<std::optional<MpChangeForm>>&& changeForms) = 0;
 
   virtual void Iterate(const IterateCallback& iterateCallback) = 0;
 };

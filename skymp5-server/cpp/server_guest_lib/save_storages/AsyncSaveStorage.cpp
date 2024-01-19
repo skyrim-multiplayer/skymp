@@ -6,8 +6,9 @@ struct AsyncSaveStorage::Impl
 {
   struct UpsertTask
   {
-    std::vector<MpChangeForm> changeForms;
+    std::vector<std::optional<MpChangeForm>>&& changeForms;
     std::function<void()> callback;
+    std::function<void(std::string)> callbackError;
   };
 
   std::shared_ptr<spdlog::logger> logger;
@@ -108,11 +109,12 @@ void AsyncSaveStorage::IterateSync(const IterateSyncCallback& cb)
   pImpl->share.dbImpl->Iterate(cb);
 }
 
-void AsyncSaveStorage::Upsert(const std::vector<MpChangeForm>& changeForms,
-                              const UpsertCallback& cb)
+void AsyncSaveStorage::Upsert(
+  std::vector<std::optional<MpChangeForm>>&& changeForms,
+  const UpsertCallback& cb, const ErrorCallback& cbError)
 {
   std::lock_guard l(pImpl->share3.m);
-  pImpl->share3.upsertTasks.push_back({ changeForms, cb });
+  pImpl->share3.upsertTasks.push_back({ std::move(changeForms), cb, cbError });
 }
 
 uint32_t AsyncSaveStorage::GetNumFinishedUpserts() const

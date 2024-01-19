@@ -15,11 +15,14 @@
 #include <algorithm>
 #include <deque>
 #include <iterator>
+#include <optional>
 #include <unordered_map>
 
 struct WorldState::Impl
 {
-  std::unordered_map<uint32_t, MpChangeForm> changes;
+  std::vector<std::optional<MpChangeForm>> changesByIdx;
+  bool changesPresent = false;
+
   std::shared_ptr<ISaveStorage> saveStorage;
   std::shared_ptr<IScriptStorage> scriptStorage;
   bool saveStorageBusy = false;
@@ -196,7 +199,9 @@ void WorldState::LoadChangeForm(const MpChangeForm& changeForm,
                                std::to_string(changeForm.recType));
   }
 
+  auto formRawPtr = reinterpret_cast<MpObjectReference*>(form.get());
   AddForm(std::move(form), formId, false, &changeForm);
+  auto idx = formRawPtr->GetIdx();
 
   // EnsureBaseContainerAdded forces saving here.
   // We do not want characters to save when they are load partially
@@ -204,10 +209,14 @@ void WorldState::LoadChangeForm(const MpChangeForm& changeForm,
   // https://github.com/skyrim-multiplayer/issue-tracker/issues/64
 
   // So we expect that RequestSave does nothing in this case:
-  assert(pImpl->changes.count(formId) == 0);
 
-  // For Release configuration we just manually remove formId from changes
-  pImpl->changes.erase(formId);
+  if (pImpl->changesByIdx.size() > idx &&
+      pImpl->changesByIdx[idx] != std::nullopt) {
+    assert(false);
+
+    // For Release configuration we just manually remove formId from changes
+    pImpl->changesByIdx[idx] = std::nullopt;
+  }
 }
 
 void WorldState::RequestReloot(MpObjectReference& ref,
@@ -220,7 +229,16 @@ void WorldState::RequestReloot(MpObjectReference& ref,
 void WorldState::RequestSave(MpObjectReference& ref)
 {
   if (!pImpl->formLoadingInProgress) {
-    pImpl->changes[ref.GetFormId()] = ref.GetChangeForm();
+    auto idx = ref.GetIdx();
+    if (idx == FormIndex::g_invalidIdx) {
+      return spdlog::error("RequestSave {:x} - Invalid index",
+                           ref.GetFormId());
+    }
+    if (pImpl->changesByIdx.size() <= idx) {
+      pImpl->changesByIdx.resize(idx + 1);
+    }
+    pImpl->changesByIdx[idx] = ref.GetChangeForm();
+    pImpl->changesPresent = true;
   }
 }
 
@@ -602,22 +620,34 @@ void WorldState::TickSaveStorage(const std::chrono::system_clock::time_point&)
     return;
   }
 
-  pImpl->saveStorage->Tick();
-
-  auto& changes = pImpl->changes;
-  if (!pImpl->saveStorageBusy && !changes.empty()) {
-    pImpl->saveStorageBusy = true;
-    std::vector<MpChangeForm> changeForms;
-    changeForms.reserve(changes.size());
-    for (auto [formId, changeForm] : changes) {
-      changeForms.push_back(changeForm);
-    }
-    changes.clear();
-
-    auto pImpl_ = pImpl;
-    pImpl->saveStorage->Upsert(changeForms,
-                               [pImpl_] { pImpl_->saveStorageBusy = false; });
+  try {
+    pImpl->saveStorage->Tick();
+  } catch (...) {
+    pImpl->saveStorageBusy = false;
+    throw;
   }
+
+  if (pImpl->saveStorageBusy) {
+    return;
+  }
+
+  if (!pImpl->changesPresent) {
+    return;
+  }
+
+  pImpl->saveStorageBusy = true;
+
+  auto pImpl_ = pImpl;
+
+  try {
+    pImpl->saveStorage->Upsert(std::move(pImpl->changesByIdx),
+                               [pImpl_] { pImpl_->saveStorageBusy = false; });
+  } catch (std::exception& e) {
+    pImpl->saveStorageBusy = false;
+    spdlog::error("TickSaveStorage - Upsert failed with {}", e.what());
+  }
+
+  pImpl->changesByIdx.clear();
 }
 
 void WorldState::TickTimers(const std::chrono::system_clock::time_point&)
