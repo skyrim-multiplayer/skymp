@@ -73,7 +73,7 @@ jobs:
 
                 export GITHUB_TOKEN_PATCHES=$SKYMP5_PATCHES_PAT
 
-                git remote add patches https://$SKYMP5_PATCHES_PAT@github.com/Pospelove/skymp5-patches.git
+                git remote add patches https://Pospelove:$SKYMP5_PATCHES_PAT@github.com/Pospelove/skymp5-patches.git
                 git fetch patches
 
                 base_rev="`git rev-parse HEAD`"
