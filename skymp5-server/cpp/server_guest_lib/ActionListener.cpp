@@ -153,7 +153,10 @@ void ActionListener::OnUpdateAnimation(const RawMessageData& rawMsgData,
 
   partOne.animationSystem.Process(actor, animationData);
 
-  SendToNeighbours(idx, rawMsgData);
+  auto actor = SendToNeighbours(idx, rawMsgData);
+  if (actor) {
+    actor->SetLastAnimEvent(animationData);
+  }
 }
 
 void ActionListener::OnUpdateAppearance(const RawMessageData& rawMsgData,
