@@ -153,9 +153,8 @@ void ActionListener::OnUpdateAnimation(const RawMessageData& rawMsgData,
 
   auto targetActor = SendToNeighbours(idx, rawMsgData);
 
-  partOne.animationSystem.Process(targetActor, animationData);
-
   if (targetActor) {
+    partOne.animationSystem.Process(targetActor, animationData);
     targetActor->SetLastAnimEvent(animationData);
   }
 }
