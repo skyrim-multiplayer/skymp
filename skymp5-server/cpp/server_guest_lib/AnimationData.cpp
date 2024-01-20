@@ -13,7 +13,7 @@ AnimationData AnimationData::FromJson(const simdjson::dom::element& data)
   const char* animEventNameStr = "";
 
   AnimationData result;
-  ReadEx(data, animEventName, &animEventName);
+  ReadEx(data, animEventName, &animEventNameStr);
   ReadEx(data, numChanges, &result.numChanges);
 
   result.animEventName = animEventNameStr;
