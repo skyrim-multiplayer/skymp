@@ -609,8 +609,8 @@ std::string MpActor::GetLastAnimEventAsJson() const
     return "";
   }
 
-  std::string res = R"({"animEventName":")";
-  res += anim->animEventName;
+  std::string res = R"({"animEventName":)";
+  res += '"' + anim->animEventName + '"';
   res += R"(,"numChanges":)";
   res += std::to_string(anim->numChanges);
   res += "}";
