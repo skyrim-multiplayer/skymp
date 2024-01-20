@@ -37,37 +37,26 @@ MongoDatabase::MongoDatabase(std::string uri_, std::string name_)
     new mongocxx::collection((*pImpl->db)[pImpl->collectionName]));
 }
 
-size_t MongoDatabase::Upsert(
-  std::vector<std::optional<MpChangeForm>>&& changeForms)
+size_t MongoDatabase::Upsert(const std::vector<MpChangeForm>& changeForms)
 {
-  try {
-    auto bulk = pImpl->changeFormsCollection->create_bulk_write();
-    for (auto& changeForm : changeForms) {
-      if (changeForm == std::nullopt) {
-        continue;
-      }
+  auto bulk = pImpl->changeFormsCollection->create_bulk_write();
+  for (auto& changeForm : changeForms) {
+    auto jChangeForm = MpChangeForm::ToJson(changeForm);
 
-      auto jChangeForm = MpChangeForm::ToJson(*changeForm);
+    auto filter = nlohmann::json::object();
+    filter["formDesc"] = changeForm.formDesc.ToString();
 
-      auto filter = nlohmann::json::object();
-      filter["formDesc"] = changeForm->formDesc.ToString();
+    auto upd = nlohmann::json::object();
+    upd["$set"] = jChangeForm;
 
-      auto upd = nlohmann::json::object();
-      upd["$set"] = jChangeForm;
-
-      bulk.append(mongocxx::model::update_one(
-                    { std::move(bsoncxx::from_json(filter.dump())),
-                      std::move(bsoncxx::from_json(upd.dump())) })
-                    .upsert(true));
-    }
-
-    (void)bulk.execute();
-
-    // TODO: Should take data from bulk.execute result instead?
-    return changeForms.size();
-  } catch (std::exception& e) {
-    throw UpsertFailedException(std::move(changeForms), e.what());
+    bulk.append(mongocxx::model::update_one(
+                  { std::move(bsoncxx::from_json(filter.dump())),
+                    std::move(bsoncxx::from_json(upd.dump())) })
+                  .upsert(true));
   }
+
+  (void)bulk.execute();
+  return changeForms.size(); // Should take data from mongo instead?
 }
 
 void MongoDatabase::Iterate(const IterateCallback& iterateCallback)

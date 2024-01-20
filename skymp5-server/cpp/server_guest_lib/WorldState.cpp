@@ -6,7 +6,6 @@
 #include "MpObjectReference.h"
 #include "ScopedTask.h"
 #include "Timer.h"
-#include "database_drivers/IDatabase.h" // UpsertFailedException
 #include "libespm/GroupUtils.h"
 #include "papyrus-vm/Reader.h"
 #include "save_storages/ISaveStorage.h"
@@ -16,14 +15,11 @@
 #include <algorithm>
 #include <deque>
 #include <iterator>
-#include <optional>
 #include <unordered_map>
 
 struct WorldState::Impl
 {
-  std::vector<std::optional<MpChangeForm>> changesByIdx;
-  bool changesPresent = false;
-
+  std::unordered_map<uint32_t, MpChangeForm> changes;
   std::shared_ptr<ISaveStorage> saveStorage;
   std::shared_ptr<IScriptStorage> scriptStorage;
   bool saveStorageBusy = false;
@@ -200,9 +196,7 @@ void WorldState::LoadChangeForm(const MpChangeForm& changeForm,
                                std::to_string(changeForm.recType));
   }
 
-  auto formRawPtr = reinterpret_cast<MpObjectReference*>(form.get());
   AddForm(std::move(form), formId, false, &changeForm);
-  auto idx = formRawPtr->GetIdx();
 
   // EnsureBaseContainerAdded forces saving here.
   // We do not want characters to save when they are load partially
@@ -210,14 +204,10 @@ void WorldState::LoadChangeForm(const MpChangeForm& changeForm,
   // https://github.com/skyrim-multiplayer/issue-tracker/issues/64
 
   // So we expect that RequestSave does nothing in this case:
+  assert(pImpl->changes.count(formId) == 0);
 
-  if (pImpl->changesByIdx.size() > idx &&
-      pImpl->changesByIdx[idx] != std::nullopt) {
-    assert(false);
-
-    // For Release configuration we just manually remove formId from changes
-    pImpl->changesByIdx[idx] = std::nullopt;
-  }
+  // For Release configuration we just manually remove formId from changes
+  pImpl->changes.erase(formId);
 }
 
 void WorldState::RequestReloot(MpObjectReference& ref,
@@ -229,22 +219,9 @@ void WorldState::RequestReloot(MpObjectReference& ref,
 
 void WorldState::RequestSave(MpObjectReference& ref)
 {
-  if (pImpl->formLoadingInProgress) {
-    return;
+  if (!pImpl->formLoadingInProgress) {
+    pImpl->changes[ref.GetFormId()] = ref.GetChangeForm();
   }
-
-  auto idx = ref.GetIdx();
-
-  [[unlikely]] if (idx == FormIndex::g_invalidIdx) {
-    return spdlog::error("RequestSave {:x} - Invalid index", ref.GetFormId());
-  }
-
-  if (pImpl->changesByIdx.size() <= idx) {
-    pImpl->changesByIdx.resize(idx + 1);
-  }
-
-  pImpl->changesByIdx[idx] = ref.GetChangeForm();
-  pImpl->changesPresent = true;
 }
 
 const std::shared_ptr<MpForm>& WorldState::LookupFormById(
@@ -289,19 +266,6 @@ const std::shared_ptr<MpForm>& WorldState::LookupFormById(
   if (optionalOutTrace) {
     *optionalOutTrace << "found " << std::hex << formId << std::endl;
   }
-  return it->second;
-}
-
-const std::shared_ptr<MpForm>& WorldState::LookupFormByIdNoLoad(
-  uint32_t formId)
-{
-  static const std::shared_ptr<MpForm> kNullForm;
-
-  auto it = forms.find(formId);
-  if (it == forms.end()) {
-    return kNullForm;
-  }
-
   return it->second;
 }
 
@@ -638,73 +602,22 @@ void WorldState::TickSaveStorage(const std::chrono::system_clock::time_point&)
     return;
   }
 
-  try {
-    pImpl->saveStorage->Tick();
-  } catch (UpsertFailedException& e) {
-    spdlog::error(
-      "TickSaveStorage - received UpsertFailedException {}, re-saving",
-      e.what());
-    pImpl->saveStorageBusy = false;
+  pImpl->saveStorage->Tick();
 
-    auto& forms = e.GetAffectedForms();
-    size_t numRequested = 0;
-
-    for (size_t i = 0; i < forms.size(); ++i) {
-      auto& changeForm = forms[i];
-      if (changeForm == std::nullopt) {
-        continue;
-      }
-
-      // TODO: remove reinterpret_cast
-      MpObjectReference* form = reinterpret_cast<MpObjectReference*>(
-        LookupFormByIdx(static_cast<int>(i)));
-      if (!form) {
-        continue;
-      }
-
-      auto formId = changeForm->formDesc.ToFormId(espmFiles);
-
-      if (form->GetFormId() != formId) {
-        spdlog::error("TickSaveStorage - formIds not matching {:x} <=> {:x}",
-                      form->GetFormId(), formId);
-        continue;
-      }
-
-      RequestSave(*form);
+  auto& changes = pImpl->changes;
+  if (!pImpl->saveStorageBusy && !changes.empty()) {
+    pImpl->saveStorageBusy = true;
+    std::vector<MpChangeForm> changeForms;
+    changeForms.reserve(changes.size());
+    for (auto [formId, changeForm] : changes) {
+      changeForms.push_back(changeForm);
     }
+    changes.clear();
 
-    spdlog::info(
-      "TickSaveStorage - requested re-save for {} forms of {} affected",
-      numRequested, forms.size());
-
-  } catch (std::exception& e) {
-    spdlog::error(
-      "TickSaveStorage - received std::exception {}, can't request re-save",
-      e.what());
-    pImpl->saveStorageBusy = false;
-  }
-
-  if (pImpl->saveStorageBusy) {
-    return;
-  }
-
-  if (!pImpl->changesPresent) {
-    return;
-  }
-
-  pImpl->saveStorageBusy = true;
-
-  auto pImpl_ = pImpl;
-
-  try {
-    pImpl->saveStorage->Upsert(std::move(pImpl->changesByIdx),
+    auto pImpl_ = pImpl;
+    pImpl->saveStorage->Upsert(changeForms,
                                [pImpl_] { pImpl_->saveStorageBusy = false; });
-  } catch (std::exception& e) {
-    pImpl->saveStorageBusy = false;
-    spdlog::error("TickSaveStorage - Upsert failed with {}", e.what());
   }
-
-  pImpl->changesByIdx.clear();
 }
 
 void WorldState::TickTimers(const std::chrono::system_clock::time_point&)
@@ -834,9 +747,9 @@ struct LazyState
   std::shared_ptr<PexScript> pex;
   std::vector<uint8_t> pexBin;
 
-  // With Papyrus hotreload enabled, this variable hold references to
-  // previous versions of pex files. This prevents the invalidation of
-  // string/identifier types of VarValue
+  // With Papyrus hotreload enabled, this variable hold references to previous
+  // versions of pex files. This prevents the invalidation of string/identifier
+  // types of VarValue
   std::vector<std::shared_ptr<PexScript>> oldPexHolder;
 };
 

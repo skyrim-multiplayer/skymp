@@ -6,8 +6,7 @@ class MongoDatabase : public IDatabase
 {
 public:
   MongoDatabase(std::string uri_, std::string name_);
-  size_t Upsert(
-    std::vector<std::optional<MpChangeForm>>&& changeForms) override;
+  size_t Upsert(const std::vector<MpChangeForm>& changeForms) override;
   void Iterate(const IterateCallback& iterateCallback) override;
 
 private:
