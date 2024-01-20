@@ -47,9 +47,6 @@ export class DropItemService extends ClientListener {
                 if (refrId) {
                     set.add(refrId);
                 }
-                else {
-                    break;
-                }
             }
 
             let numFound = 0;

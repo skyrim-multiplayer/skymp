@@ -38,7 +38,7 @@ fi
 if [ ! -d "$SKYMP_COMPAT_BIN" ]; then
   mkdir -pv "$SKYMP_COMPAT_BIN"
   ln -s "`which python2`" "$SKYMP_COMPAT_BIN/python"
-  ln -s "$CC" "$SKYMP_COMPAT_BIN/clang"
+  ln -s "$CC" "$SKYMP_COMPAT_BIN/clang" 
   ln -s "$CXX" "$SKYMP_COMPAT_BIN/clang++"
 
   echo "Set up compatibility path for build."
@@ -47,7 +47,7 @@ fi
 if [ "$1" = "--configure" ]; then
   shift && \
     cd build && \
-    exec cmake -G "Ninja" .. -DCMAKE_EXPORT_COMPILE_COMMANDS=ON "$@"
+    exec cmake .. -DCMAKE_EXPORT_COMPILE_COMMANDS=ON "$@"
 elif [ "$1" = "--build" ]; then
   shift && \
     cd build && \

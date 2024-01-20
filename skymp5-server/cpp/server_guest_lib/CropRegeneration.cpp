@@ -22,35 +22,16 @@ float CropRegeneration(float newAttributeValue, float secondsAfterLastRegen,
                        float attributeRate, float attributeRateMult,
                        float oldAttributeValue, bool hasActiveMagicEffects)
 {
-  spdlog::trace(
-    "[crop]: args=(newAttributeValue={}, secondsAfterLastRegen={}, "
-    "attributerate={}, attributeRateMult={}, oldAttributeValue={}, "
-    "hasActiveMagicEffects={})",
-    newAttributeValue, secondsAfterLastRegen, attributeRate, attributeRateMult,
-    oldAttributeValue, hasActiveMagicEffects);
-
   float validRegenerationPercentage =
     MathUtils::PercentToFloat(attributeRate) *
     MathUtils::PercentToFloat(attributeRateMult) * secondsAfterLastRegen;
-
-  spdlog::trace("[crop]: validRegenerationPercentage={}",
-                validRegenerationPercentage);
-
   validRegenerationPercentage =
     validRegenerationPercentage < 0.0f ? 0.0f : validRegenerationPercentage;
   float validAttributePercentage =
     oldAttributeValue + validRegenerationPercentage;
-
-  spdlog::trace("[crop]: validAttributePercentage={}",
-                validAttributePercentage);
-
   validAttributePercentage =
     validAttributePercentage > 1.0f ? 1.0f : validAttributePercentage;
   constexpr float kMaxOldPercentage = 1.f;
-
-  spdlog::trace("[crop]: comparing received attribute value and valid one: "
-                "newAttributeValue={}, validAttributePercentage={}",
-                newAttributeValue, validAttributePercentage);
 
   if (newAttributeValue > validAttributePercentage) {
     return validAttributePercentage;
