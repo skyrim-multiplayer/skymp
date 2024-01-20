@@ -141,21 +141,22 @@ void ActionListener::OnUpdateAnimation(const RawMessageData& rawMsgData,
                                        uint32_t idx,
                                        const AnimationData& animationData)
 {
-  MpActor* actor = partOne.serverState.ActorByUser(rawMsgData.userId);
-  if (!actor) {
+  MpActor* myActor = partOne.serverState.ActorByUser(rawMsgData.userId);
+  if (!myActor) {
     return;
   }
 
-  WorldState* espmProvider = actor->GetParent();
+  WorldState* espmProvider = myActor->GetParent();
   if (!espmProvider) {
     return;
   }
 
-  partOne.animationSystem.Process(actor, animationData);
+  auto targetActor = SendToNeighbours(idx, rawMsgData);
 
-  auto actor = SendToNeighbours(idx, rawMsgData);
-  if (actor) {
-    actor->SetLastAnimEvent(animationData);
+  partOne.animationSystem.Process(targetActor, animationData);
+
+  if (targetActor) {
+    targetActor->SetLastAnimEvent(animationData);
   }
 }
 
