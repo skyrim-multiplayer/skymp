@@ -111,10 +111,7 @@ float TES5DamageFormulaImpl::CalculateDamage() const
 {
   if (IsUnarmedAttack(hitData.source)) {
     uint32_t raceId = aggressor.GetRaceId();
-
-    float unarmedDamage =
-      espm::GetData<espm::RACE>(raceId, espmProvider).unarmedDamage;
-    return hitData.isHitBlocked ? unarmedDamage * 0.1f : unarmedDamage;
+    return espm::GetData<espm::RACE>(raceId, espmProvider).unarmedDamage;
   }
 
   // TODO(#457): weapon rating is probably not only component of incomingDamage
