@@ -22,7 +22,6 @@
 struct WorldState::Impl
 {
   std::vector<std::optional<MpChangeForm>> changesByIdx;
-  bool changesPresent = false;
 
   std::shared_ptr<ISaveStorage> saveStorage;
   std::shared_ptr<IScriptStorage> scriptStorage;
@@ -65,6 +64,8 @@ void WorldState::AttachEspm(espm::Loader* espm_,
 
 void WorldState::AttachSaveStorage(std::shared_ptr<ISaveStorage> saveStorage)
 {
+  spdlog::info("AttachSaveStorage - db fixes installed");
+
   pImpl->saveStorage = saveStorage;
 }
 
@@ -244,7 +245,6 @@ void WorldState::RequestSave(MpObjectReference& ref)
   }
 
   pImpl->changesByIdx[idx] = ref.GetChangeForm();
-  pImpl->changesPresent = true;
 }
 
 const std::shared_ptr<MpForm>& WorldState::LookupFormById(
@@ -644,6 +644,9 @@ void WorldState::TickSaveStorage(const std::chrono::system_clock::time_point&)
     spdlog::error(
       "TickSaveStorage - received UpsertFailedException {}, re-saving",
       e.what());
+
+    // No SetTimer here because timers may also break in theory. we faced such
+    // problems earlier
     pImpl->saveStorageBusy = false;
 
     auto& forms = e.GetAffectedForms();
@@ -671,11 +674,12 @@ void WorldState::TickSaveStorage(const std::chrono::system_clock::time_point&)
       }
 
       RequestSave(*form);
+      numRequested++;
     }
 
-    spdlog::info(
-      "TickSaveStorage - requested re-save for {} forms of {} affected",
-      numRequested, forms.size());
+    spdlog::info("TickSaveStorage - requested re-save for {} forms in buffer "
+                 "with size {}",
+                 numRequested, forms.size());
 
   } catch (std::exception& e) {
     spdlog::error(
@@ -688,7 +692,7 @@ void WorldState::TickSaveStorage(const std::chrono::system_clock::time_point&)
     return;
   }
 
-  if (!pImpl->changesPresent) {
+  if (pImpl->changesByIdx.empty()) {
     return;
   }
 

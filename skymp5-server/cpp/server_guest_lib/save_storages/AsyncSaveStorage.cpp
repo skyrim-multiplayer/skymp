@@ -1,13 +1,13 @@
 #include "AsyncSaveStorage.h"
 #include <chrono>
-#include <thread>
 #include <list>
+#include <thread>
 
 struct AsyncSaveStorage::Impl
 {
   struct UpsertTask
   {
-    std::vector<std::optional<MpChangeForm>>&& changeForms;
+    std::vector<std::optional<MpChangeForm>> changeForms;
     std::function<void()> callback;
   };
 
@@ -116,7 +116,7 @@ void AsyncSaveStorage::Upsert(
   const UpsertCallback& cb)
 {
   std::lock_guard l(pImpl->share3.m);
-  pImpl->share3.upsertTasks.push_back({ std::move(changeForms), cb });
+  pImpl->share3.upsertTasks.push_back({ changeForms, cb });
 }
 
 uint32_t AsyncSaveStorage::GetNumFinishedUpserts() const
