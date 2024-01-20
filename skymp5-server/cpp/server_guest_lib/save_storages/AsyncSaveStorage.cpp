@@ -1,6 +1,7 @@
 #include "AsyncSaveStorage.h"
 #include <chrono>
 #include <thread>
+#include <list>
 
 struct AsyncSaveStorage::Impl
 {
