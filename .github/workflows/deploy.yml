@@ -56,7 +56,8 @@ jobs:
 
           - name: Checkout skymp5-patches (full)
             if: ${{env.DEPLOY_ACTION == 'deploy'}}
-            uses: actions/checkout@v2
+            # # https://github.com/actions/checkout/issues/197#issuecomment-971545044
+            uses: Pospelove/checkout@main
             with:
                 repository: skyrim-multiplayer/skymp5-patches
                 submodules: recursive
