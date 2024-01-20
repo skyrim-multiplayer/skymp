@@ -62,7 +62,7 @@ jobs:
                 submodules: recursive
                 fetch-depth: 0
                 token: ${{ secrets.SKYMP5_PATCHES_PAT }}
-                path: ${{github.workspace}}/skymp5-patches
+                path: /skymp5-patches
 
           - name: Checkout (last commit)
             if: ${{env.DEPLOY_ACTION != 'deploy'}}
@@ -87,7 +87,7 @@ jobs:
                 yarn --cwd="${{github.workspace}}/misc/deploy/gather-server-branch"
                 ./misc/deploy/gather_server_branch.sh
 
-                git remote add patches ${{github.workspace}}/skymp5-patches
+                git remote add patches /skymp5-patches
                 git fetch patches
                 git merge patches/main --no-edit
 
