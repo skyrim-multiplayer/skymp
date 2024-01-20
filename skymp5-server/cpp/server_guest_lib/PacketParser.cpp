@@ -85,7 +85,7 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
         auto message =
           reinterpret_cast<UpdateAnimationMessage*>(result->message.get());
         AnimationData animationData;
-        animationData.animEventName = message->animEventName.data();
+        animationData.animEventName = message->animEventName;
         animationData.numChanges = message->numChanges;
         actionListener.OnUpdateAnimation(rawMsgData, message->idx,
                                          animationData);

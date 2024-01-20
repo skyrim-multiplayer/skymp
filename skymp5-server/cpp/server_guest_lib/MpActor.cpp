@@ -609,8 +609,13 @@ std::string MpActor::GetLastAnimEventAsJson() const
     return "";
   }
 
-  return fmt::format(R"({"animEventName":"{}","numChanges":{}})",
-                     anim->animEventName, anim->numChanges);
+  auto fmt = R"({"animEventName":"%s","numChanges":%u})";
+
+  std::string res;
+  Networking::Format([&](std::string s) { res = s; }, fmt,
+                     anim->animEventName.data(), anim->numChanges);
+
+  return { res.begin() + 1, res.end() }; // omit MinPacketId byte
 }
 
 Equipment MpActor::GetEquipment() const
