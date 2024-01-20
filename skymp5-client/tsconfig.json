@@ -1,22 +1,19 @@
 {
+  "verbose": true,
   "compilerOptions": {
-    "baseUrl": "../build/dist/client/Data/Platform/Modules",
-    "noImplicitAny": true,
-    "lib": [
-      "DOM",
-      "ES2015",
-      "es2017",
-      "es2018"
-    ],
-    "removeComments": true,
+    "target": "es5",
+    "module": "es2015",
     "strict": true,
-    "sourceMap": false,
+    "alwaysStrict": true,
+    "noImplicitAny": true,
+    "noImplicitThis": true,
     "moduleResolution": "node",
-    "module": "CommonJS",
-    "target": "ES5",
-    "types": [],
-    "paths": {
-      "skyrimPlatform": ["../../../../../../skymp5-client/node_modules/@skyrim-platform/skyrim-platform"]
-    },
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "baseUrl": ".",
+    "lib": ["esnext"],
+    "paths": { "skyrimPlatform": ["node_modules/@skyrim-platform/skyrim-platform"] },
+    "outDir": "dist"
   },
+  "include": ["src/**/*.ts"]
 }
