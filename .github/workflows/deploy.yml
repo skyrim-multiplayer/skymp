@@ -54,6 +54,17 @@ jobs:
                 submodules: recursive
                 fetch-depth: 0
 
+          - name: Checkout skymp5-patches (full)
+            if: ${{env.DEPLOY_ACTION == 'deploy'}}
+            # # https://github.com/actions/checkout/issues/197#issuecomment-971545044
+            uses: Pospelove/checkout@main
+            with:
+                repository: skyrim-multiplayer/skymp5-patches
+                submodules: recursive
+                fetch-depth: 0
+                token: ${{ secrets.SKYMP5_PATCHES_PAT }}
+                path: /home/runner/work/skymp5-patches
+
           - name: Checkout (last commit)
             if: ${{env.DEPLOY_ACTION != 'deploy'}}
             uses: actions/checkout@v2
@@ -76,6 +87,10 @@ jobs:
                 git checkout -b tmp
                 yarn --cwd="${{github.workspace}}/misc/deploy/gather-server-branch"
                 ./misc/deploy/gather_server_branch.sh
+
+                git remote add patches /home/runner/work/skymp5-patches
+                git fetch patches
+                git merge patches/main --no-edit
 
                 echo ""
                 echo "=== Changes since $base_rev:"
@@ -118,19 +133,6 @@ jobs:
                     -v ${{github.workspace}}/.cmake-js:/home/skymp/.cmake-js
                 run: |
                     chown -R skymp:skymp /src /home/skymp/.cmake-js
-
-          - name: Wait for other runs to complete
-            run: |
-              attempt_counter=0
-              until [[ "$(gh api repos/Pospelove/skymp5-gamemode/actions/runs --jq '[.workflow_runs[] | select(.status == "in_progress" or .status == "queued") | select(.workflow_file.path == ".github/workflows/merge-to.yml")]' | jq length)" == "0" || "$attempt_counter" -ge "10" ]]; do
-                echo "Waiting for other runs to complete... Attempt: $attempt_counter"
-                sleep 10
-                attempt_counter=$((attempt_counter+1))
-              done
-            env:
-              GH_TOKEN: ${{env.GAMEMODE_GITHUB_TOKEN}}
-              shell: bash
-                  
 
           - name: CMake Configure
             if: ${{env.DEPLOY_ACTION == 'deploy'}}
