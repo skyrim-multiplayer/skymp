@@ -418,6 +418,12 @@ void MpActor::ApplyChangeForm(const MpChangeForm& newChangeForm)
     },
     Mode::NoRequestSave);
   ReapplyMagicEffects();
+
+  // Mirrors MpObjectReference impl
+  // Perform all required grid operations
+  newChangeForm.isDisabled ? Disable() : Enable();
+  SetCellOrWorldObsolete(newChangeForm.worldOrCellDesc);
+  SetPos(newChangeForm.position);
 }
 
 uint32_t MpActor::NextSnippetIndex(
