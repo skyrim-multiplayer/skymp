@@ -391,6 +391,10 @@ export class RemoteServer extends ClientListener {
       this.worldModel.forms[i].equipment = msg.equipment;
     }
 
+    if (msg.isDead) {
+      this.worldModel.forms[i].isDead = msg.isDead;
+    }
+
     if (msg.props) {
       for (const propName in msg.props) {
         const i = this.getIdManager().getId(msg.idx);
@@ -935,7 +939,7 @@ export class RemoteServer extends ClientListener {
       });
       return;
     }
-  
+
     this.logError('Not found authentication method');
   };
 
