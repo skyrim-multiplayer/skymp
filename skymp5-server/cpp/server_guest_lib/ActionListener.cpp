@@ -781,11 +781,10 @@ bool IsAvailableForNextAttack(const MpActor& actor, const HitData& hitData,
 bool ShouldBeBlocked(const MpActor& aggressor, const MpActor& target)
 {
   NiPoint3 targetViewDirection = target.GetViewDirection();
-  NiPoint3 aggressorViewDirection = aggressor.GetViewDirection();
-  if (targetViewDirection * aggressorViewDirection >= 0) {
+  NiPoint3 aggressorDirection = aggressor.GetPos() - target.GetPos();
+  if (targetViewDirection * aggressorDirection <= 0) {
     return false;
   }
-  NiPoint3 aggressorDirection = aggressor.GetPos() - target.GetPos();
   float angle =
     std::acos((targetViewDirection * aggressorDirection) /
               (targetViewDirection.Length() * aggressorDirection.Length()));
