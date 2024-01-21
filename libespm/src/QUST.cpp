@@ -5,7 +5,8 @@
 
 namespace espm {
 
-std::vector<QUST::QuestStage> QUST::GetQuestStages(CompressedFieldsCache& compressedFieldsCache) const noexcept
+std::vector<QUST::QuestStage> QUST::GetQuestStages(
+  CompressedFieldsCache& compressedFieldsCache) const noexcept
 {
   std::vector<QuestStage> result;
 
@@ -23,14 +24,11 @@ std::vector<QUST::QuestStage> QUST::GetQuestStages(CompressedFieldsCache& compre
           reinterpret_cast<const QuestStage::JournalIndex*>(data);
       } else if (!std::memcmp(type, "QSDT", 4)) {
         questLogEntryID += 1;
-        result[questStageID].logEntries.push_back(
-          QuestStage::QuestLogEntry());
+        result[questStageID].logEntries.push_back(QuestStage::QuestLogEntry());
         result[questStageID].logEntries[questLogEntryID].logFlags =
           *reinterpret_cast<const QuestStage::QuestLogEntry::LogFlags*>(data);
       } else if (!std::memcmp(type, "CNAM", 4)) {
-        result[questStageID]
-          .logEntries[questLogEntryID]
-          .journalEntry = data;
+        result[questStageID].logEntries[questLogEntryID].journalEntry = data;
       }
     },
     compressedFieldsCache);
