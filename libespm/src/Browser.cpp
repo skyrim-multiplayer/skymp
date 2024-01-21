@@ -242,7 +242,6 @@ bool Browser::ReadAny(const GroupStack* parentGrStack)
 
     if (utils::Is<espm::QUST>(t)) {
       auto quest = reinterpret_cast<const QUST*>(recHeader);
-      QUST::Data questData = quest->GetData(pImpl->dummyCache);
       pImpl->quests.push_back(recHeader);
     }
 

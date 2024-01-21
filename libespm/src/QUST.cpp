@@ -16,11 +16,11 @@ std::vector<QUST::QuestObjective> QUST::GetQuestObjectives(
       if (!std::memcmp(type, "QOBJ", 4)) {
         result.push_back(QuestObjective());
         result.back().index = *reinterpret_cast<const int16_t*>(data);
-      } else if (!std::memcmp(type, "FNAM", 4)) {
+      } else if (!std::memcmp(type, "FNAM", 4) && result.size() != 0) {
         result.back().flags = *reinterpret_cast<const int32_t*>(data);
-      } else if (!std::memcmp(type, "NNAM", 4)) {
+      } else if (!std::memcmp(type, "NNAM", 4) && result.size() != 0) {
         result.back().nodeName = data;
-      } else if (!std::memcmp(type, "QSTA", 4)) {
+      } else if (!std::memcmp(type, "QSTA", 4) && result.size() != 0) {
         result.back().questTargets.push_back(
           *reinterpret_cast<const QuestObjective::QuestTarget*>(data));
       }
