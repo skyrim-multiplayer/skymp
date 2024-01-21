@@ -60,21 +60,6 @@ public:
   {
     struct JournalIndex
     {
-      struct QuestLogEntry
-      {
-        enum LogFlags : unsigned char
-        {
-          CompleteQuest = 0x01,
-          FailQuest = 0x02
-        };
-
-        LogFlags logFlags;
-        // skip vector<CTDA>
-        const char* journalEntry;
-        uint32_t unknown;
-        // skip SCHR
-      };
-
       enum IndexFlags : uint8_t
       {
         StartUpStage = 0x02,
@@ -85,12 +70,26 @@ public:
       int16_t index;
       IndexFlags flags;
       uint8_t unknown;
-      std::vector<QuestLogEntry> logEntries;
+    };
+
+    struct QuestLogEntry
+    {
+      enum LogFlags : unsigned char
+      {
+        CompleteQuest = 0x01,
+        FailQuest = 0x02
+      };
+
+      LogFlags logFlags;
+      // skip vector<CTDA>
+      const char* journalEntry;
+      // skip SCHR
     };
 
     // Multiple sections can appear in a single record, and 1 or more log
     // entries can appear within each INDX field.
-    std::vector<JournalIndex> journalIndexes;
+    const JournalIndex* journalIndex;
+    std::vector<QuestLogEntry> logEntries;
   };
 
   struct QuestObjective
