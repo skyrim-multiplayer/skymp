@@ -5,30 +5,48 @@
 
 namespace espm {
 
+std::vector<QUST::QuestObjective> QUST::GetQuestObjectives(
+  CompressedFieldsCache& compressedFieldsCache) const noexcept
+{
+  std::vector<QuestObjective> result;
+
+  RecordHeaderAccess::IterateFields(
+    this,
+    [&](const char* type, uint32_t dataSize, const char* data) {
+      if (!std::memcmp(type, "QOBJ", 4)) {
+        result.push_back(QuestObjective());
+        result.back().index = *reinterpret_cast<const int16_t*>(data);
+      } else if (!std::memcmp(type, "FNAM", 4)) {
+        result.back().flags = *reinterpret_cast<const int32_t*>(data);
+      } else if (!std::memcmp(type, "NNAM", 4)) {
+        result.back().nodeName = data;
+      } else if (!std::memcmp(type, "QSTA", 4)) {
+        result.back().questTargets.push_back(
+          *reinterpret_cast<const QuestObjective::QuestTarget*>(data));
+      }
+    },
+    compressedFieldsCache);
+  return result;
+}
+
 std::vector<QUST::QuestStage> QUST::GetQuestStages(
   CompressedFieldsCache& compressedFieldsCache) const noexcept
 {
   std::vector<QuestStage> result;
 
-  int questStageID = -1;
-  int questLogEntryID = -1;
-
   RecordHeaderAccess::IterateFields(
     this,
     [&](const char* type, uint32_t dataSize, const char* data) {
       if (!std::memcmp(type, "INDX", 4)) {
-        questLogEntryID = -1;
-        questStageID += 1;
         result.push_back(QuestStage());
-        result[questStageID].journalIndex =
+        result.back().journalIndex =
           reinterpret_cast<const QuestStage::JournalIndex*>(data);
       } else if (!std::memcmp(type, "QSDT", 4)) {
-        questLogEntryID += 1;
-        result[questStageID].logEntries.push_back(QuestStage::QuestLogEntry());
-        result[questStageID].logEntries[questLogEntryID].logFlags =
+        result.back().logEntries.push_back(QuestStage::QuestLogEntry());
+        result.back().logEntries.back().logFlags =
           *reinterpret_cast<const QuestStage::QuestLogEntry::LogFlags*>(data);
       } else if (!std::memcmp(type, "CNAM", 4)) {
-        result[questStageID].logEntries[questLogEntryID].journalEntry = data;
+        result.back().logEntries.back().journalEntry = data;
       }
     },
     compressedFieldsCache);
@@ -71,6 +89,7 @@ QUST::Data QUST::GetData(
     compressedFieldsCache);
 
   result.questStages = GetQuestStages(compressedFieldsCache);
+  result.questObjectives = GetQuestObjectives(compressedFieldsCache);
 
   return result;
 }

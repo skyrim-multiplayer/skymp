@@ -104,7 +104,7 @@ public:
     int16_t index;
     int32_t flags;
     const char* nodeName;
-    std::vector<QuestTarget> questTarets;
+    std::vector<QuestTarget> questTargets;
   };
 
   struct Alias
@@ -200,6 +200,9 @@ public:
     int32_t nextAliasId = 0;
     std::vector<Alias> aliases;
   };
+
+  std::vector<QuestObjective> GetQuestObjectives(
+    CompressedFieldsCache& compressedFieldsCache) const noexcept;
 
   std::vector<QuestStage> GetQuestStages(
     CompressedFieldsCache& compressedFieldsCache) const noexcept;
