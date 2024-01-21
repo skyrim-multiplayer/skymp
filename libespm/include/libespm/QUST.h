@@ -193,13 +193,16 @@ public:
     const QuestData* questData;
     const char* eventName = "";
     uint32_t displayGlobals = 0;
-    const char* objectWindowFilter;
+    const char* objectWindowFilter = "";
     // skip vector<CTDA>
     std::vector<QuestStage> questStages;
     std::vector<QuestObjective> questObjectives;
     int32_t nextAliasId = 0;
     std::vector<Alias> aliases;
   };
+
+  std::vector<QuestStage> GetQuestStages(
+    CompressedFieldsCache& compressedFieldsCache) const noexcept;
 
   Data GetData(CompressedFieldsCache& compressedFieldsCache) const noexcept;
 };

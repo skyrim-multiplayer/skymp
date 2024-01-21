@@ -5,6 +5,38 @@
 
 namespace espm {
 
+std::vector<QUST::QuestStage> QUST::GetQuestStages(CompressedFieldsCache& compressedFieldsCache) const noexcept
+{
+  std::vector<QuestStage> result;
+
+  int questStageID = -1;
+  int questLogEntryID = -1;
+
+  RecordHeaderAccess::IterateFields(
+    this,
+    [&](const char* type, uint32_t dataSize, const char* data) {
+      if (!std::memcmp(type, "INDX", 4)) {
+        questLogEntryID = -1;
+        questStageID += 1;
+        result.push_back(QuestStage());
+        result[questStageID].journalIndex =
+          reinterpret_cast<const QuestStage::JournalIndex*>(data);
+      } else if (!std::memcmp(type, "QSDT", 4)) {
+        questLogEntryID += 1;
+        result[questStageID].logEntries.push_back(
+          QuestStage::QuestLogEntry());
+        result[questStageID].logEntries[questLogEntryID].logFlags =
+          *reinterpret_cast<const QuestStage::QuestLogEntry::LogFlags*>(data);
+      } else if (!std::memcmp(type, "CNAM", 4)) {
+        result[questStageID]
+          .logEntries[questLogEntryID]
+          .journalEntry = data;
+      }
+    },
+    compressedFieldsCache);
+  return result;
+}
+
 QUST::Data QUST::GetData(
   CompressedFieldsCache& compressedFieldsCache) const noexcept
 {
@@ -30,22 +62,6 @@ QUST::Data QUST::GetData(
         result.displayGlobals = *reinterpret_cast<const uint32_t*>(data);
       } else if (!std::memcmp(type, "FLTR", 4)) {
         result.objectWindowFilter = data;
-      } else if (!std::memcmp(type, "INDX", 4)) {
-        questLogEntryID = -1;
-        questStageID += 1;
-        result.questStages.push_back(QuestStage());
-        result.questStages[questStageID].journalIndex =
-          reinterpret_cast<const QuestStage::JournalIndex*>(data);
-      } else if (!std::memcmp(type, "QSDT", 4)) {
-        questLogEntryID += 1;
-        result.questStages[questStageID].logEntries.push_back(
-          QuestStage::QuestLogEntry());
-        result.questStages[questStageID].logEntries[questLogEntryID].logFlags =
-          *reinterpret_cast<const QuestStage::QuestLogEntry::LogFlags*>(data);
-      } else if (!std::memcmp(type, "CNAM", 4)) {
-        result.questStages[questStageID]
-          .logEntries[questLogEntryID]
-          .journalEntry = data;
       } else if (!std::memcmp(type, "QuestObjectives", 4)) {
         result.nextAliasId = *reinterpret_cast<const uint32_t*>(data);
       } else if (!std::memcmp(type, "ANAM", 4)) {
@@ -55,6 +71,9 @@ QUST::Data QUST::GetData(
       }
     },
     compressedFieldsCache);
+
+  result.questStages = GetQuestStages(compressedFieldsCache);
+
   return result;
 }
 
