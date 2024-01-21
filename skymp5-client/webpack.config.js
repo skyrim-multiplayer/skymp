@@ -5,7 +5,7 @@ const WebpackShellPluginNext = require('webpack-shell-plugin-next');
 const { getFips } = require('crypto');
 
 // Configure webpack output file folder and file name
-const outputFolder = path.resolve(__dirname, './build')
+const outputFolder = path.resolve(__dirname, "../build/dist/client/Data/Platform/Plugins")
 const outputFilename = `${packageInfo.name}.js`
 
 // Configure entry point of application.

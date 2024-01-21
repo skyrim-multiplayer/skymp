@@ -1,15 +1,10 @@
 {
   "name": "skymp5-client",
   "version": "1.0.0",
-  "private": true,
+  "license": "GPL-3.0",
   "main": "dist/index.js",
   "scripts": {
-    "webpack": "webpack",
-    "webpack:deploy": "set DEPLOY_PLUGIN=true && npm run webpack",
-    "webpack:deploy:watch": "set DEPLOY_PLUGIN=true && npm run webpack -- --watch",
-    "zip": "set ZIP_PLUGIN=true && npm run webpack",
-    "zip:cli": "bestzip",
-    "dev": "npm i && npm run webpack:deploy:watch",
+    "build": "webpack",
     "watch": "webpack -w"
   },
   "devDependencies": {

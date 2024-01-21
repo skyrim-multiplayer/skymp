@@ -440,7 +440,15 @@ export class FormView implements View<FormModel> {
         }
       }
     }
-    if (model.animation) applyAnimation(refr, model.animation, this.animState);
+    
+    if (refr.is3DLoaded() !== undefined && refr.is3DLoaded() == true){
+      if (model.animation){
+        //printConsole(`${model.animation?.animEventName}`);
+        applyAnimation(refr, model.animation, this.animState);
+      } 
+      
+    }
+    
 
     if (model.appearance) {
       const actor = Actor.from(refr);
@@ -629,6 +637,7 @@ export class FormView implements View<FormModel> {
   private state = {};
   private localImmortal = false;
   private textNameId: number | undefined = undefined;
+
 
   public static isDisplayingNicknames: boolean = true;
 }
