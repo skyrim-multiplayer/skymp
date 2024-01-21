@@ -941,10 +941,34 @@ LocationalData MpActor::GetEditorLocationalData() const
   auto data = espm::GetData<espm::ACHR>(formId, worldState);
   auto lookupRes = worldState->GetEspm().GetBrowser().LookupById(formId);
 
-  const NiPoint3& pos = LocationalDataUtils::GetPos(data.loc);
-  NiPoint3 rot = LocationalDataUtils::GetRot(data.loc);
-  uint32_t worldOrCell = LocationalDataUtils::GetWorldOrCell(
-    worldState->GetEspm().GetBrowser(), lookupRes);
+  // TODO: Angles are probably messed up here (radians/degrees)
+
+  NiPoint3 pos;
+  NiPoint3 rot;
+  uint32_t worldOrCell = 0x0000003c;
+
+  if (!lookupRes.rec) {
+    spdlog::error("MpActor::GetEditorLocationalData {:x} - lookupRes.rec was "
+                  "nullptr, using current location as spawn point",
+                  formId);
+
+    pos = this->GetPos();
+    rot = this->GetAngle();
+    worldOrCell = this->GetCellOrWorld().ToFormId(worldState->espmFiles);
+  } else if (!data.loc) {
+    spdlog::error("MpActor::GetEditorLocationalData {:x} - data.loc was "
+                  "nullptr, using current location as spawn point",
+                  formId);
+
+    pos = this->GetPos();
+    rot = this->GetAngle();
+    worldOrCell = this->GetCellOrWorld().ToFormId(worldState->espmFiles);
+  } else {
+    pos = LocationalDataUtils::GetPos(data.loc);
+    rot = LocationalDataUtils::GetRot(data.loc);
+    worldOrCell = LocationalDataUtils::GetWorldOrCell(
+      worldState->GetEspm().GetBrowser(), lookupRes);
+  }
 
   return LocationalData{
     pos, rot, FormDesc::FromFormId(worldOrCell, worldState->espmFiles)
