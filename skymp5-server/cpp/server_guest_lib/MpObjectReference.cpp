@@ -1023,11 +1023,6 @@ void MpObjectReference::ApplyChangeForm(const MpChangeForm& changeForm)
                              ", but found " + changeForm.formDesc.ToString());
   }
 
-  // Perform all required grid operations
-  changeForm.isDisabled ? Disable() : Enable();
-  SetCellOrWorldObsolete(changeForm.worldOrCellDesc);
-  SetPos(changeForm.position);
-
   if (changeForm.profileId >= 0) {
     RegisterProfileId(changeForm.profileId);
   }
@@ -1062,6 +1057,15 @@ void MpObjectReference::ApplyChangeForm(const MpChangeForm& changeForm)
     auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
       tp - std::chrono::system_clock::now());
     RequestReloot(ms);
+  }
+
+  // Perform all required grid operations
+  // Mirrors MpActor impl
+  // TODO: get rid of dynamic_cast
+  if (!dynamic_cast<MpActor*>(this)) {
+    changeForm.isDisabled ? Disable() : Enable();
+    SetCellOrWorldObsolete(changeForm.worldOrCellDesc);
+    SetPos(changeForm.position);
   }
 }
 
