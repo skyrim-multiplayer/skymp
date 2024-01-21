@@ -47,7 +47,8 @@ void AnimationSystem::Init(WorldState* pWorldState)
 
 void AnimationSystem::Process(MpActor* actor, const AnimationData& animData)
 {
-  auto it = animationCallbacks.find(animData.animEventName);
+  CIString s = animData.animEventName.data();
+  auto it = animationCallbacks.find(s);
   if (it == animationCallbacks.end()) {
     return;
   }

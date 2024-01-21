@@ -6,7 +6,7 @@ struct AnimationData
 {
   AnimationData();
 
-  const char* animEventName;
+  std::string animEventName;
   uint32_t numChanges;
 
   static AnimationData FromJson(const simdjson::dom::element& data);
