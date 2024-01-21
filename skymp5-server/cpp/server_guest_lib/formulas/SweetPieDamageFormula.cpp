@@ -15,17 +15,22 @@
 SweetPieDamageFormula::SweetPieDamageFormula(
   std::unique_ptr<IDamageFormula> baseFormula_, const nlohmann::json& config)
   : baseFormula(std::move(baseFormula_))
-  , settings(ParseConfig(config))
+  , settings(std::nullopt)
 {
+  if (config.is_object()) {
+    settings = ParseConfig(config);
+  }
 }
 
 SweetPieDamageFormulaSettings SweetPieDamageFormula::ParseConfig(
   const nlohmann::json& config) const
 {
   SweetPieDamageFormulaSettings result{};
+
   for (const auto& level : config["damageMultByLevel"]) {
     result.damageMultByLevel.push_back(level.get<float>());
   }
+
   if (result.damageMultByLevel.size() != 5) {
     throw std::runtime_error("error parsing damage formula config: "
                              "damageMultByLevel must have 5 elements");
@@ -64,6 +69,10 @@ float SweetPieDamageFormula::CalculateDamage(const MpActor& aggressor,
 {
   float baseDamage = baseFormula->CalculateDamage(aggressor, target, hitData);
 
+  if (!settings) {
+    return baseDamage;
+  }
+
   uint32_t weaponFormId = hitData.source;
   auto& espmCache = aggressor.GetParent()->GetEspmCache();
 
@@ -84,17 +93,17 @@ float SweetPieDamageFormula::CalculateDamage(const MpActor& aggressor,
 
   for (const auto& keyword : keywordNames) {
     const auto it =
-      settings.weaponKeywords.find(keyword); // TODO: rename weaponKeywords?
-    if (it == settings.weaponKeywords.end()) {
+      settings->weaponKeywords.find(keyword); // TODO: rename weaponKeywords?
+    if (it == settings->weaponKeywords.end()) {
       continue;
     }
     const auto& levelItemsFormIds = it->second;
     for (int lvl = 4; lvl >= 1; --lvl) {
       if (aggressor.GetInventory().HasItem(levelItemsFormIds[lvl - 1])) {
-        return baseDamage * settings.damageMultByLevel[lvl];
+        return baseDamage * settings->damageMultByLevel[lvl];
       }
     }
-    return baseDamage * settings.damageMultByLevel[0];
+    return baseDamage * settings->damageMultByLevel[0];
   }
 
   return baseDamage;

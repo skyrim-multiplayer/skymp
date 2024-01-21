@@ -4,6 +4,7 @@
 #include "MpActor.h"
 
 #include <memory>
+#include <optional>
 #include <unordered_map>
 
 #include <nlohmann/json_fwd.hpp>
@@ -31,5 +32,5 @@ private:
 
 private:
   std::unique_ptr<IDamageFormula> baseFormula;
-  SweetPieDamageFormulaSettings settings;
+  std::optional<SweetPieDamageFormulaSettings> settings;
 };

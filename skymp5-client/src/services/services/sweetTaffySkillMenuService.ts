@@ -5,6 +5,14 @@ import { ClientListener, CombinedController, Sp } from './clientListener';
 export class SweetTaffySkillMenuService extends ClientListener {
     constructor(private sp: Sp, private controller: CombinedController) {
         super();
+
+        if (!this.hasSweetPie()) {
+            this.logTrace("SweetTaffy features disabled");
+        }
+        else {
+            this.logTrace("SweetTaffy features enabled");
+        }
+
         this.controller.once("activate", (e) => this.onActivate(e));
     }
 

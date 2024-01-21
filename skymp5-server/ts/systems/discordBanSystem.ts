@@ -27,10 +27,16 @@ export class DiscordBanSystem implements System {
         }
         if (!discordAuth.banRoleId) {
             return console.error("discordAuth.banRoleId is missing, skipping Discord ban system");
-        } 
+        }
 
         const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers] });
-        await client.login(discordAuth.botToken);
+
+        try {
+            await client.login(discordAuth.botToken);
+        }
+        catch (e) {
+            return console.error(`Error logging in Discord client: ${e}`);
+        }
 
         client.on("error", (error) => {
             console.error(error);
