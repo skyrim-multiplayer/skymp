@@ -419,6 +419,11 @@ void MpActor::ApplyChangeForm(const MpChangeForm& newChangeForm)
     Mode::NoRequestSave);
   ReapplyMagicEffects();
 
+  // We do the same in PartOne::SetUserActor for player characters
+  if (IsDead() && !IsRespawning()) {
+    RespawnWithDelay();
+  }
+
   // Mirrors MpObjectReference impl
   // Perform all required grid operations
   newChangeForm.isDisabled ? Disable() : Enable();

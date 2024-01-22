@@ -301,10 +301,10 @@ void ActionListener::OnPutItem(const RawMessageData& rawMsgData,
     return spdlog::error("No WorldState attached");
   }
 
-  if (IsCantDrop(worldState, entry.baseId)) {
-    return spdlog::error("Attempt to put SweetCantDrop item {:x}",
-                         actor->GetFormId());
-  }
+  // if (IsCantDrop(worldState, entry.baseId)) {
+  //   return spdlog::error("Attempt to put SweetCantDrop item {:x}",
+  //                        actor->GetFormId());
+  // }
 
   ref.PutItem(*actor, entry);
 }
@@ -323,10 +323,10 @@ void ActionListener::OnTakeItem(const RawMessageData& rawMsgData,
     return spdlog::error("No WorldState attached");
   }
 
-  if (IsCantDrop(worldState, entry.baseId)) {
-    return spdlog::error("Attempt to take SweetCantDrop item {:x}",
-                         actor->GetFormId());
-  }
+  // if (IsCantDrop(worldState, entry.baseId)) {
+  //   return spdlog::error("Attempt to take SweetCantDrop item {:x}",
+  //                        actor->GetFormId());
+  // }
 
   ref.TakeItem(*actor, entry);
 }
@@ -345,10 +345,10 @@ void ActionListener::OnDropItem(const RawMessageData& rawMsgData,
     return spdlog::error("No WorldState attached");
   }
 
-  if (IsCantDrop(worldState, entry.baseId)) {
-    return spdlog::error("Attempt to drop SweetCantDrop item {:x}",
-                         ac->GetFormId());
-  }
+  // if (IsCantDrop(worldState, entry.baseId)) {
+  //   return spdlog::error("Attempt to drop SweetCantDrop item {:x}",
+  //                        ac->GetFormId());
+  // }
 
   ac->DropItem(baseId, entry);
 }
