@@ -9,7 +9,8 @@ public:
     std::shared_ptr<IDatabase> oldDatabase,
     std::function<void()> exit = [] { std::exit(0); },
     std::function<void()> terminate = [] { std::terminate(); });
-  size_t Upsert(std::vector<std::optional<MpChangeForm>>&& changeForms) override;
+  size_t Upsert(
+    std::vector<std::optional<MpChangeForm>>&& changeForms) override;
   void Iterate(const IterateCallback& iterateCallback) override;
 
 private:

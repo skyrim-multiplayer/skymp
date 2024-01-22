@@ -9,7 +9,8 @@ class UpsertFailedException : public std::runtime_error
 {
 public:
   UpsertFailedException(
-    std::vector<std::optional<MpChangeForm>> &&affectedForms_, std::string what)
+    std::vector<std::optional<MpChangeForm>>&& affectedForms_,
+    std::string what)
     : runtime_error(what)
     , affectedForms(affectedForms_)
   {
