@@ -115,8 +115,11 @@ const std::vector<const RecordHeader*>& Browser::GetRecordsByType(
   if (!std::strcmp(type, "KYWD")) {
     return pImpl->keywords;
   }
+  if (!std::strcmp(type, "QUST")) {
+    return pImpl->quests;
+  }
   throw std::runtime_error(
-    "GetRecordsByType currently supports only REFR and COBJ records");
+    "GetRecordsByType currently supports only REFR, COBJ, KYWD and QUST records");
 }
 
 const std::vector<const RecordHeader*>& Browser::GetRecordsAtPos(
@@ -241,7 +244,6 @@ bool Browser::ReadAny(const GroupStack* parentGrStack)
     }
 
     if (utils::Is<espm::QUST>(t)) {
-      auto quest = reinterpret_cast<const QUST*>(recHeader);
       pImpl->quests.push_back(recHeader);
     }
 

@@ -201,6 +201,9 @@ public:
     std::vector<Alias> aliases;
   };
 
+  std::vector<Alias> GetQuestAliases(
+    CompressedFieldsCache& compressedFieldsCache) const noexcept;
+
   std::vector<QuestObjective> GetQuestObjectives(
     CompressedFieldsCache& compressedFieldsCache) const noexcept;
 
