@@ -118,8 +118,8 @@ const std::vector<const RecordHeader*>& Browser::GetRecordsByType(
   if (!std::strcmp(type, "QUST")) {
     return pImpl->quests;
   }
-  throw std::runtime_error(
-    "GetRecordsByType currently supports only REFR, COBJ, KYWD and QUST records");
+  throw std::runtime_error("GetRecordsByType currently supports only REFR, "
+                           "COBJ, KYWD and QUST records");
 }
 
 const std::vector<const RecordHeader*>& Browser::GetRecordsAtPos(
