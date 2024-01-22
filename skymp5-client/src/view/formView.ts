@@ -55,6 +55,8 @@ export class FormView implements View<FormModel> {
       }
     }
 
+    
+
     // Don't spawn dead actors if not already
     if (model.isDead) {
       if (this.refrId === 0) {
@@ -225,6 +227,12 @@ export class FormView implements View<FormModel> {
           const dwarvenCenturionRace = 0x131f1;
           const dwarvenSphereRace = 0x131f2;
           const dwarvenSpiderRace = 0x131f3;
+          const sprigganRace = 0x2013b77;
+          const sprigganRace2 = 0xf3903;
+          const sprigganRace3 = 0x13204;
+          const sprigganRace4 = 0x401b644;
+          const sprigganRace5 = 0x9aa44;
+          const wolfRace = 0x1320a;
 
           // potential masterambushscript
           if (race === draugrRace
@@ -234,7 +242,13 @@ export class FormView implements View<FormModel> {
             || race === frostbiteSpiderRaceLarge
             || race === dwarvenCenturionRace
             || race === dwarvenSphereRace
-            || race === dwarvenSpiderRace) {
+            || race === dwarvenSpiderRace
+            || race === sprigganRace
+            || race === sprigganRace2
+            || race === sprigganRace3
+            || race === sprigganRace4
+            || race === sprigganRace5
+            || race === wolfRace) {
             Actor.from(refr)?.setActorValue("Aggression", 2);
           }
         }
