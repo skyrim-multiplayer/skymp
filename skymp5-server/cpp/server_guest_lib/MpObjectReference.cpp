@@ -857,7 +857,7 @@ void MpObjectReference::Subscribe(MpObjectReference* emitter,
     emitter->pImpl->onInitEventSent = true;
     emitter->SendPapyrusEvent("OnInit");
     emitter->SendPapyrusEvent("OnCellLoad");
-    emitter->SendPapyrusEvent("OnLoad");
+    //emitter->SendPapyrusEvent("OnLoad");
   }
 
   const bool hasPrimitive = emitter->HasPrimitive();
