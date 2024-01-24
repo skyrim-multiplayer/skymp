@@ -8,6 +8,7 @@
 #include "libespm/KYWD.h"
 #include "libespm/NAVM.h"
 #include "libespm/NavMeshKey.h"
+#include "libespm/QUST.h"
 #include "libespm/REFR.h"
 #include "libespm/RecordHeader.h"
 #include "libespm/RefrKey.h"
@@ -39,6 +40,7 @@ struct Browser::Impl
   std::vector<const RecordHeader*> objectReferences;
   std::vector<const RecordHeader*> constructibleObjects;
   std::vector<const RecordHeader*> keywords;
+  std::vector<const RecordHeader*> quests;
 
   GroupStack grStack;
   std::vector<std::unique_ptr<GroupStack>> grStackCopies;
@@ -113,8 +115,11 @@ const std::vector<const RecordHeader*>& Browser::GetRecordsByType(
   if (!std::strcmp(type, "KYWD")) {
     return pImpl->keywords;
   }
-  throw std::runtime_error(
-    "GetRecordsByType currently supports only REFR and COBJ records");
+  if (!std::strcmp(type, "QUST")) {
+    return pImpl->quests;
+  }
+  throw std::runtime_error("GetRecordsByType currently supports only REFR, "
+                           "COBJ, KYWD and QUST records");
 }
 
 const std::vector<const RecordHeader*>& Browser::GetRecordsAtPos(
@@ -236,6 +241,10 @@ bool Browser::ReadAny(const GroupStack* parentGrStack)
         nvnm->GetData(pImpl->dummyCache).worldSpaceId,
         nvnm->GetData(pImpl->dummyCache).cellOrGridPos)];
       v.push_back(nvnm);
+    }
+
+    if (utils::Is<espm::QUST>(t)) {
+      pImpl->quests.push_back(recHeader);
     }
 
     pImpl->pos += sizeof(RecordHeader) + *pDataSize;
