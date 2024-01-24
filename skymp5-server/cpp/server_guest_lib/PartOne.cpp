@@ -154,6 +154,8 @@ void PartOne::SetUserActor(Networking::UserId userId, uint32_t actorFormId)
 
     // We do the same in MpActor::ApplyChangeForm for non-player characters
     if (actor.IsDead() && !actor.IsRespawning()) {
+      spdlog::info("PartOne::SetUserActor {} {:x} - respawning dead actor",
+                   userId, actorFormId);
       actor.RespawnWithDelay();
     }
 

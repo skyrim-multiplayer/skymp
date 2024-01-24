@@ -68,6 +68,11 @@ VarValue PapyrusGame::GetPlayer(VarValue self,
 {
   auto actor = compatibilityPolicy->GetDefaultActor("Game", "GetPlayer",
                                                     self.GetMetaStackId());
+
+  if (!actor) {
+    return VarValue::None();
+  }
+
   return VarValue(std::make_shared<MpFormGameObject>(actor));
 }
 
@@ -150,6 +155,20 @@ VarValue PapyrusGame::GetFormEx(
   return GetFormInternal(self, arguments, true);
 }
 
+VarValue PapyrusGame::ShakeController(VarValue self,
+                                      const std::vector<VarValue>& arguments)
+{
+  auto funcName = "ShakeController";
+
+  auto serializedArgs = SpSnippetFunctionGen::SerializeArguments(arguments);
+  if (auto actor = compatibilityPolicy->GetDefaultActor(
+        GetName(), funcName, self.GetMetaStackId())) {
+    SpSnippet(GetName(), funcName, serializedArgs.data()).Execute(actor);
+  }
+
+  return VarValue::None();
+}
+
 void PapyrusGame::Register(VirtualMachine& vm,
                            std::shared_ptr<IPapyrusCompatibilityPolicy> policy)
 {
@@ -167,4 +186,5 @@ void PapyrusGame::Register(VirtualMachine& vm,
   AddStatic(vm, "GetCameraState", &PapyrusGame::GetCameraState);
   AddStatic(vm, "GetForm", &PapyrusGame::GetForm);
   AddStatic(vm, "GetFormEx", &PapyrusGame::GetFormEx);
+  AddStatic(vm, "ShakeController", &PapyrusGame::ShakeController);
 }
