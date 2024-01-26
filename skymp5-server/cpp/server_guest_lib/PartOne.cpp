@@ -152,7 +152,6 @@ void PartOne::SetUserActor(Networking::UserId userId, uint32_t actorFormId)
 
     actor.ForceSubscriptionsUpdate();
 
-    // We do the same in MpActor::ApplyChangeForm for non-player characters
     if (actor.IsDead() && !actor.IsRespawning()) {
       actor.RespawnWithDelay();
     }
