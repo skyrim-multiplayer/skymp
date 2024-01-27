@@ -1023,11 +1023,6 @@ void MpObjectReference::ApplyChangeForm(const MpChangeForm& changeForm)
                              ", but found " + changeForm.formDesc.ToString());
   }
 
-  // Perform all required grid operations
-  changeForm.isDisabled ? Disable() : Enable();
-  SetCellOrWorldObsolete(changeForm.worldOrCellDesc);
-  SetPos(changeForm.position);
-
   if (changeForm.profileId >= 0) {
     RegisterProfileId(changeForm.profileId);
   }
@@ -1062,6 +1057,15 @@ void MpObjectReference::ApplyChangeForm(const MpChangeForm& changeForm)
     auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
       tp - std::chrono::system_clock::now());
     RequestReloot(ms);
+  }
+
+  // Perform all required grid operations
+  // Mirrors MpActor impl
+  // TODO: get rid of dynamic_cast
+  if (!dynamic_cast<MpActor*>(this)) {
+    changeForm.isDisabled ? Disable() : Enable();
+    SetCellOrWorldObsolete(changeForm.worldOrCellDesc);
+    SetPos(changeForm.position);
   }
 }
 
@@ -1559,13 +1563,15 @@ std::vector<espm::CONT::ContainerObject> GetOutfitObjects(
       [](const auto& npcLookupRes, const auto& npcData) {
         return npcLookupRes.ToGlobalId(npcData.defaultOutfitId);
       });
-    auto outfit = espm::Convert<espm::OTFT>(
-      worldState->GetEspm().GetBrowser().LookupById(outfitId).rec);
+
+    auto outfitLookupRes =
+      worldState->GetEspm().GetBrowser().LookupById(outfitId);
+    auto outfit = espm::Convert<espm::OTFT>(outfitLookupRes.rec);
     auto outfitData =
       outfit ? outfit->GetData(compressedFieldsCache) : espm::OTFT::Data();
 
     for (uint32_t i = 0; i != outfitData.count; ++i) {
-      auto outfitElementId = lookupRes.ToGlobalId(outfitData.formIds[i]);
+      auto outfitElementId = outfitLookupRes.ToGlobalId(outfitData.formIds[i]);
       res.push_back({ outfitElementId, 1 });
     }
   }

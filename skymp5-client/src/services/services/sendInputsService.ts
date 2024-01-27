@@ -1,6 +1,6 @@
 import { ClientListener, CombinedController, Sp } from "./clientListener";
 import { SinglePlayerService } from "./singlePlayerService";
-import { FormModel, WorldModel } from "../../modelSource/model";
+import { FormModel, WorldModel } from "../../view/model";
 import { MsgType } from "../../messages";
 import { getMovement } from "../../sync/movementGet";
 

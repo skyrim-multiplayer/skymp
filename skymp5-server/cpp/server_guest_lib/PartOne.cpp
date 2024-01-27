@@ -152,7 +152,10 @@ void PartOne::SetUserActor(Networking::UserId userId, uint32_t actorFormId)
 
     actor.ForceSubscriptionsUpdate();
 
+    // We do the same in MpActor::ApplyChangeForm for non-player characters
     if (actor.IsDead() && !actor.IsRespawning()) {
+      spdlog::info("PartOne::SetUserActor {} {:x} - respawning dead actor",
+                   userId, actorFormId);
       actor.RespawnWithDelay();
     }
 
@@ -291,6 +294,10 @@ void PartOne::AttachSaveStorage(std::shared_ptr<ISaveStorage> saveStorage)
     worldState.LoadChangeForm(changeForm, CreateFormCallbacks());
     if (changeForm.profileId >= 0) {
       ++numPlayerCharacters;
+    }
+
+    if (n % 25 == 0) {
+      pImpl->logger->info("Loaded {} ChangeForms", n);
     }
   });
 
@@ -635,6 +642,13 @@ void PartOne::Init()
       sprintf(baseId, "%u", emitter->GetBaseId());
     }
 
+    const char* isDeadPrefix = "";
+    const char* isDead = "";
+    if (emitterAsActor && emitterAsActor->IsDead()) {
+      isDeadPrefix = R"(, "isDead": )";
+      isDead = "\"true\"";
+    }
+
     const bool isOwner = emitter == listener;
 
     std::string props;
@@ -701,12 +715,13 @@ void PartOne::Init()
     Networking::SendFormatted(
       sendTarget, listenerUserId,
       R"({"type": "%s", "idx": %u, "isMe": %s, "transform": {"pos":
-    [%f,%f,%f], "rot": [%f,%f,%f], "worldOrCell": %u}%s%s%s%s%s%s%s%s%s%s%s%s%s})",
+    [%f,%f,%f], "rot": [%f,%f,%f], "worldOrCell": %u}%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s})",
       method, emitter->GetIdx(), isMe ? "true" : "false", emitterPos.x,
       emitterPos.y, emitterPos.z, emitterRot.x, emitterRot.y, emitterRot.z,
       worldOrCell, baseRecordTypePrefix, baseRecordType.data(),
       appearancePrefix, appearance, equipmentPrefix, equipment, refrIdPrefix,
-      refrId, baseIdPrefix, baseId, propsPrefix, props.data(), propsPostfix);
+      refrId, baseIdPrefix, baseId, isDeadPrefix, isDead, propsPrefix,
+      props.data(), propsPostfix);
   };
 
   pImpl->onUnsubscribe = [this](Networking::ISendTarget* sendTarget,

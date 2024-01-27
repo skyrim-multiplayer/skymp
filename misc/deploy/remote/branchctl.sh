@@ -21,7 +21,7 @@ docker run -d --restart=always --name="skymp-server-$branch" --network=host \
     -u "`id -u`:`id -g`" \
     --cpu-period=50000 --cpu-quota=25000 \
     --cap-add=SYS_PTRACE \
-    skymp/skymp-runtime-base:3824bae ./run.sh
+    skymp/skymp-runtime-base:49fcc69 ./run.sh
 # ^ limited to 50% of CPU: https://stackoverflow.com/a/41552172
 
 # This looks a bit ugly, but apparently is more fault-tolerant than older version:
@@ -29,6 +29,11 @@ docker run -d --restart=always --name="skymp-server-$branch" --network=host \
 for ((t = 0; t < 150; t += 5)); do
     if docker logs "skymp-server-$branch" \
             |& grep -q 'AttachSaveStorage took'; then
+        echo health check success
+        exit 0
+    fi
+    if docker logs "skymp-server-$branch" \
+            |& grep -q 'Loaded 25 ChangeForms'; then
         echo health check success
         exit 0
     fi

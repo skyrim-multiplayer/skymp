@@ -17,6 +17,7 @@
 #include "TimeUtils.h"
 #include "WorldState.h"
 #include "libespm/espm.h"
+#include "papyrus-vm/Utils.h"
 #include "script_objects/EspmGameObject.h"
 #include <NiPoint3.h>
 #include <algorithm>
@@ -417,6 +418,19 @@ void MpActor::ApplyChangeForm(const MpChangeForm& newChangeForm)
     },
     Mode::NoRequestSave);
   ReapplyMagicEffects();
+
+  // We do the same in PartOne::SetUserActor for player characters
+  if (IsDead() && !IsRespawning()) {
+    spdlog::info("MpActor::ApplyChangeForm {:x} - respawning dead actor",
+                 GetFormId());
+    RespawnWithDelay();
+  }
+
+  // Mirrors MpObjectReference impl
+  // Perform all required grid operations
+  newChangeForm.isDisabled ? Disable() : Enable();
+  SetCellOrWorldObsolete(newChangeForm.worldOrCellDesc);
+  SetPos(newChangeForm.position);
 }
 
 uint32_t MpActor::NextSnippetIndex(
@@ -863,10 +877,14 @@ void MpActor::RespawnWithDelay(bool shouldTeleport)
     float respawnTime = GetRespawnTime();
     auto time = Viet::TimeUtils::To<std::chrono::milliseconds>(respawnTime);
     worldState->SetTimer(time).Then([worldState, this, formId, shouldTeleport,
-                                     respawnTimerIndex](Viet::Void) {
+                                     respawnTimerIndex,
+                                     respawnTime](Viet::Void) {
       if (worldState->LookupFormById(formId).get() == this) {
         bool isLatestRespawn = respawnTimerIndex == pImpl->respawnTimerIndex;
         if (isLatestRespawn) {
+          spdlog::info("MpActor::RespawnWithDelay {:x} - finally, respawn "
+                       "after {} seconds",
+                       GetFormId(), respawnTime);
           this->Respawn(shouldTeleport);
         }
       }
@@ -940,10 +958,34 @@ LocationalData MpActor::GetEditorLocationalData() const
   auto data = espm::GetData<espm::ACHR>(formId, worldState);
   auto lookupRes = worldState->GetEspm().GetBrowser().LookupById(formId);
 
-  const NiPoint3& pos = LocationalDataUtils::GetPos(data.loc);
-  NiPoint3 rot = LocationalDataUtils::GetRot(data.loc);
-  uint32_t worldOrCell = LocationalDataUtils::GetWorldOrCell(
-    worldState->GetEspm().GetBrowser(), lookupRes);
+  // TODO: Angles are probably messed up here (radians/degrees)
+
+  NiPoint3 pos;
+  NiPoint3 rot;
+  uint32_t worldOrCell = 0x0000003c;
+
+  if (!lookupRes.rec) {
+    spdlog::error("MpActor::GetEditorLocationalData {:x} - lookupRes.rec was "
+                  "nullptr, using current location as spawn point",
+                  formId);
+
+    pos = this->GetPos();
+    rot = this->GetAngle();
+    worldOrCell = this->GetCellOrWorld().ToFormId(worldState->espmFiles);
+  } else if (!data.loc) {
+    spdlog::error("MpActor::GetEditorLocationalData {:x} - data.loc was "
+                  "nullptr, using current location as spawn point",
+                  formId);
+
+    pos = this->GetPos();
+    rot = this->GetAngle();
+    worldOrCell = this->GetCellOrWorld().ToFormId(worldState->espmFiles);
+  } else {
+    pos = LocationalDataUtils::GetPos(data.loc);
+    rot = LocationalDataUtils::GetRot(data.loc);
+    worldOrCell = LocationalDataUtils::GetWorldOrCell(
+      worldState->GetEspm().GetBrowser(), lookupRes);
+  }
 
   return LocationalData{
     pos, rot, FormDesc::FromFormId(worldOrCell, worldState->espmFiles)
@@ -953,7 +995,7 @@ LocationalData MpActor::GetEditorLocationalData() const
 const float MpActor::GetRespawnTime() const
 {
   if (!IsCreatedAsPlayer()) {
-    static const auto kNpcSpawnDelay = 6 * 60.f * 60.f;
+    static const auto kNpcSpawnDelay = 100 /*6 * 60.f *  60.f*/;
     return kNpcSpawnDelay;
   }
   return ChangeForm().spawnDelay;
@@ -1041,20 +1083,6 @@ void MpActor::DropItem(const uint32_t baseId, const Inventory::Entry& entry)
   // TODO: remove this when we will be sure that none of armors crashes clients
   if (lookupRes.rec->GetType().ToString() == "ARMO") {
     spdlog::warn("MpActor::DropItem - Attempt to drop ARMO by actor {:x}",
-                 GetFormId());
-    return;
-  }
-
-  // TODO: remove this with the next client update
-  if (lookupRes.rec->GetType().ToString() == "INGR") {
-    spdlog::warn("MpActor::DropItem - Attempt to drop INGR by actor {:x}",
-                 GetFormId());
-    return;
-  }
-
-  // TODO: remove this with the next client update
-  if (lookupRes.rec->GetType().ToString() == "ALCH") {
-    spdlog::warn("MpActor::DropItem - Attempt to drop ALCH by actor {:x}",
                  GetFormId());
     return;
   }

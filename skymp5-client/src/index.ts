@@ -1,19 +1,9 @@
 import {
   Game,
   Utility,
-  on,
-  once,
-  printConsole,
-  ActorValueInfo,
-  ActorValue,
+  once
 } from "skyrimPlatform";
-import * as timers from "./extensions/timers"; timers;
 import { SkympClient } from "./services/services/skympClient";
-import * as browser from "./features/browser";
-import { updateWc } from "./features/worldCleaner";
-import { verifyLoadOrder } from './features/loadOrder';
-import * as expSystem from "./sync/expSystem";
-import * as skillSystem from "./features/skillMenu";
 
 import * as sp from "skyrimPlatform";
 
@@ -37,63 +27,31 @@ import { ContainersService } from "./services/services/containersService";
 import { NetworkingService } from "./services/services/networkingService";
 import { RemoteServer } from "./services/services/remoteServer";
 import { SpSnippetService } from "./services/services/spSnippetService";
-
-browser.main();
-
-const turnOffSkillLocalExp = (av: ActorValue): void => {
-  const avi = ActorValueInfo.getActorValueInfoByID(av);
-  if (!avi) {
-    once("update", () => printConsole(`Not found "${ActorValueInfo}" with value "${av}"`));
-    return;
-  }
-  avi.setSkillUseMult(0);
-  avi.setSkillOffsetMult(0);
-};
+import { SweetTaffyDynamicPerksService } from "./services/services/sweetTaffyDynamicPerksService";
+import { SweetTaffySweetCantDropService } from "./services/services/sweetTaffySweetCantDropService";
+import { SweetTaffyStaticPerksService } from "./services/services/sweetTaffyStaticPerksService";
+import { DisableSkillAdvanceService } from "./services/services/disableSkillAdvanceService";
+import { DisableFastTravelService } from "./services/services/disableFastTravelService";
+import { DisableDifficultySelectionService } from "./services/services/disableDifficultySelectionService";
+import { SweetTaffyPlayerCombatService } from "./services/services/sweetTaffyPlayerCombatService";
+import { WorldCleanerService } from "./services/services/worldCleanerService";
+import { SweetTaffySkillMenuService } from "./services/services/sweetTaffySkillMenuService";
+import { LoadOrderVerificationService } from "./services/services/loadOrderVerificationService";
+import { BrowserService } from "./services/services/browserService";
+import { AuthService } from "./services/services/authService";
+import { NetInfoService } from "./services/services/netInfoService";
+import { AnimDebugService } from "./services/services/animDebugService";
+import { TimersService } from "./services/services/timersService";
 
 once("update", () => {
   Utility.setINIBool("bAlwaysActive:General", true);
   Game.setGameSettingInt("iDeathDropWeaponChance", 0);
-
-  // turn off player level exp
-  Game.setGameSettingFloat("fXPPerSkillRank", 0);
-  // turn off skill exp
-  turnOffSkillLocalExp(ActorValue.Alteration);
-  turnOffSkillLocalExp(ActorValue.Conjuration);
-  turnOffSkillLocalExp(ActorValue.Destruction);
-  turnOffSkillLocalExp(ActorValue.Illusion);
-  turnOffSkillLocalExp(ActorValue.Restoration);
-  turnOffSkillLocalExp(ActorValue.Enchanting);
-  turnOffSkillLocalExp(ActorValue.OneHanded);
-  turnOffSkillLocalExp(ActorValue.TwoHanded);
-  turnOffSkillLocalExp(ActorValue.Archery);
-  turnOffSkillLocalExp(ActorValue.Block);
-  turnOffSkillLocalExp(ActorValue.Smithing);
-  turnOffSkillLocalExp(ActorValue.HeavyArmor);
-  turnOffSkillLocalExp(ActorValue.LightArmor);
-  turnOffSkillLocalExp(ActorValue.Pickpocket);
-  turnOffSkillLocalExp(ActorValue.Lockpicking);
-  turnOffSkillLocalExp(ActorValue.Sneak);
-  turnOffSkillLocalExp(ActorValue.Alchemy);
-  turnOffSkillLocalExp(ActorValue.Speech);
-
-  // Init exp system
-  expSystem.init();
 });
-on("update", () => {
-  Utility.setINIInt("iDifficulty:GamePlay", 5);
-  Game.enableFastTravel(false);
-});
-
-on("update", () => updateWc());
-
-once("update", verifyLoadOrder);
-
-skillSystem.skillMenuInit();
 
 const main = () => {
   try {
-    const controller = SpApiInteractor.makeController();
-    
+    const controller = SpApiInteractor.getControllerInstance();
+
     const listeners = [
       new BlockPapyrusEventsService(sp, controller),
       new LoadGameService(sp, controller),
@@ -114,10 +72,24 @@ const main = () => {
       new ContainersService(sp, controller),
       new NetworkingService(sp, controller),
       new RemoteServer(sp, controller),
-      new SpSnippetService(sp, controller)
+      new SpSnippetService(sp, controller),
+      new SweetTaffyDynamicPerksService(sp, controller),
+      new SweetTaffyStaticPerksService(sp, controller),
+      new SweetTaffySweetCantDropService(sp, controller),
+      new SweetTaffyPlayerCombatService(sp, controller),
+      new SweetTaffySkillMenuService(sp, controller),
+      new DisableSkillAdvanceService(sp, controller),
+      new DisableFastTravelService(sp, controller),
+      new DisableDifficultySelectionService(sp, controller),
+      new WorldCleanerService(sp, controller),
+      new LoadOrderVerificationService(sp, controller),
+      new BrowserService(sp, controller),
+      new AuthService(sp, controller),
+      new NetInfoService(sp, controller),
+      new AnimDebugService(sp, controller),
+      new TimersService(sp, controller)
     ];
     SpApiInteractor.setup(listeners);
-    listeners.forEach(listener => SpApiInteractor.registerListenerForLookup(listener.constructor.name, listener));
   }
   catch (e) {
     // TODO: handle setup failure. will output to game console by default

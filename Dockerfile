@@ -43,6 +43,7 @@ RUN \
     pkg-config \
     cmake \
     clang-15 \
+    ninja-build \
   && rm -rf /var/lib/apt/lists/*
 
 
