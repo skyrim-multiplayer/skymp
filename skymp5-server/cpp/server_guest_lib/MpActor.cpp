@@ -419,6 +419,13 @@ void MpActor::ApplyChangeForm(const MpChangeForm& newChangeForm)
     Mode::NoRequestSave);
   ReapplyMagicEffects();
 
+  // We do the same in PartOne::SetUserActor for player characters
+  if (IsDead() && !IsRespawning()) {
+    spdlog::info("MpActor::ApplyChangeForm {:x} - respawning dead actor",
+                 GetFormId());
+    RespawnWithDelay();
+  }
+
   // Mirrors MpObjectReference impl
   // Perform all required grid operations
   newChangeForm.isDisabled ? Disable() : Enable();
@@ -870,10 +877,14 @@ void MpActor::RespawnWithDelay(bool shouldTeleport)
     float respawnTime = GetRespawnTime();
     auto time = Viet::TimeUtils::To<std::chrono::milliseconds>(respawnTime);
     worldState->SetTimer(time).Then([worldState, this, formId, shouldTeleport,
-                                     respawnTimerIndex](Viet::Void) {
+                                     respawnTimerIndex,
+                                     respawnTime](Viet::Void) {
       if (worldState->LookupFormById(formId).get() == this) {
         bool isLatestRespawn = respawnTimerIndex == pImpl->respawnTimerIndex;
         if (isLatestRespawn) {
+          spdlog::info("MpActor::RespawnWithDelay {:x} - finally, respawn "
+                       "after {} seconds",
+                       GetFormId(), respawnTime);
           this->Respawn(shouldTeleport);
         }
       }
@@ -984,7 +995,7 @@ LocationalData MpActor::GetEditorLocationalData() const
 const float MpActor::GetRespawnTime() const
 {
   if (!IsCreatedAsPlayer()) {
-    static const auto kNpcSpawnDelay = 6 * 60.f * 60.f;
+    static const auto kNpcSpawnDelay = 100 /*6 * 60.f *  60.f*/;
     return kNpcSpawnDelay;
   }
   return ChangeForm().spawnDelay;

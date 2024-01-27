@@ -25,6 +25,8 @@ public:
                    const std::vector<VarValue>& arguments) const noexcept;
   VarValue GetFormEx(VarValue self,
                      const std::vector<VarValue>& arguments) const noexcept;
+  VarValue ShakeController(VarValue self,
+                           const std::vector<VarValue>& arguments);
 
   void Register(VirtualMachine& vm,
                 std::shared_ptr<IPapyrusCompatibilityPolicy> policy) override;

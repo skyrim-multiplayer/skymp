@@ -10,6 +10,10 @@ MpFormGameObject::MpFormGameObject(MpForm* form_)
   , parent(form_ ? form_->GetParent() : nullptr)
   , formId(form_ ? form_->GetFormId() : 0)
 {
+  if (!form_) {
+    spdlog::error("MpFormGameObject::MpFormGameObject - created with nullptr "
+                  "form, this should never happen");
+  }
 }
 
 MpForm* MpFormGameObject::GetFormPtr() const noexcept
@@ -25,15 +29,16 @@ MpForm* MpFormGameObject::GetFormPtr() const noexcept
 
 const char* MpFormGameObject::GetParentNativeScript()
 {
-  if (auto form = GetFormPtr())
+  if (auto form = GetFormPtr()) {
     return form->GetFormType();
+  }
   return "";
 }
 
 bool MpFormGameObject::EqualsByValue(const IGameObject& obj) const
 {
-  if (auto form = dynamic_cast<const MpFormGameObject*>(&obj)) {
-    return form->formId == formId;
+  if (auto mpFormGameObject = dynamic_cast<const MpFormGameObject*>(&obj)) {
+    return mpFormGameObject->formId == formId;
   }
   return false;
 }
@@ -41,7 +46,6 @@ bool MpFormGameObject::EqualsByValue(const IGameObject& obj) const
 const char* MpFormGameObject::GetStringID()
 {
   static std::unordered_map<uint32_t, std::shared_ptr<std::string>> g_strings;
-  auto formId = form->GetFormId();
   auto& v = g_strings[formId];
   if (!v) {
     v.reset(new std::string(fmt::format("form {:x}", formId)));
