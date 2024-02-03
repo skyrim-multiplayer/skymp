@@ -9,7 +9,7 @@ import {
   settings,
 } from 'skyrimPlatform';
 
-import { WorldModel } from '../modelSource/model';
+import { WorldModel } from './model';
 import { FormViewArray } from './formViewArray';
 import { PlayerCharacterDataHolder } from './playerCharacterDataHolder';
 import { View } from './view';

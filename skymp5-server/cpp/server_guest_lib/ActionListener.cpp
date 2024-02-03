@@ -265,6 +265,33 @@ void ActionListener::OnActivate(const RawMessageData& rawMsgData,
   }
 }
 
+namespace {
+bool IsCantDrop(WorldState* worldState, uint32_t baseId)
+{
+  auto lookupRes = worldState->GetEspm().GetBrowser().LookupById(baseId);
+
+  if (!lookupRes.rec) {
+    return false;
+  }
+
+  const auto keywordIds =
+    lookupRes.rec->GetKeywordIds(worldState->GetEspmCache());
+
+  for (auto keywordId : keywordIds) {
+    auto keywordIdGlobal = lookupRes.ToGlobalId(keywordId);
+    auto rec =
+      worldState->GetEspm().GetBrowser().LookupById(keywordIdGlobal).rec;
+    if (rec &&
+        !Utils::stricmp(rec->GetEditorId(worldState->GetEspmCache()),
+                        "SweetCantDrop")) {
+      return true;
+    }
+  }
+
+  return false;
+}
+}
+
 void ActionListener::OnPutItem(const RawMessageData& rawMsgData,
                                uint32_t target, const Inventory::Entry& entry)
 {
@@ -272,7 +299,18 @@ void ActionListener::OnPutItem(const RawMessageData& rawMsgData,
   auto& ref = partOne.worldState.GetFormAt<MpObjectReference>(target);
 
   if (!actor)
-    return; // TODO: Throw error instead
+    return;
+
+  auto worldState = actor->GetParent();
+  if (!worldState) {
+    return spdlog::error("No WorldState attached");
+  }
+
+  if (IsCantDrop(worldState, entry.baseId)) {
+    return spdlog::error("Attempt to put SweetCantDrop item {:x}",
+                         actor->GetFormId());
+  }
+
   ref.PutItem(*actor, entry);
 }
 
@@ -283,7 +321,18 @@ void ActionListener::OnTakeItem(const RawMessageData& rawMsgData,
   auto& ref = partOne.worldState.GetFormAt<MpObjectReference>(target);
 
   if (!actor)
-    return; // TODO: Throw error instead
+    return;
+
+  auto worldState = actor->GetParent();
+  if (!worldState) {
+    return spdlog::error("No WorldState attached");
+  }
+
+  if (IsCantDrop(worldState, entry.baseId)) {
+    return spdlog::error("Attempt to take SweetCantDrop item {:x}",
+                         actor->GetFormId());
+  }
+
   ref.TakeItem(*actor, entry);
 }
 
@@ -292,9 +341,20 @@ void ActionListener::OnDropItem(const RawMessageData& rawMsgData,
 {
   MpActor* ac = partOne.serverState.ActorByUser(rawMsgData.userId);
   if (!ac) {
-    throw std::runtime_error(fmt::format(
-      "Unable to drop an item from user with id: {:x}.", rawMsgData.userId));
+    return spdlog::error("Unable to drop an item from user with id: {}.",
+                         rawMsgData.userId);
   }
+
+  auto worldState = ac->GetParent();
+  if (!worldState) {
+    return spdlog::error("No WorldState attached");
+  }
+
+  if (IsCantDrop(worldState, entry.baseId)) {
+    return spdlog::error("Attempt to drop SweetCantDrop item {:x}",
+                         ac->GetFormId());
+  }
+
   ac->DropItem(baseId, entry);
 }
 
@@ -370,6 +430,9 @@ void UseCraftRecipe(MpActor* me, const espm::COBJ* recipeUsed,
   auto recipeData = recipeUsed->GetData(cache);
   auto mapping = br.GetCombMapping(espmIdx);
 
+  spdlog::info("Using craft recipe with EDID {} from espm file with index {}",
+               recipeUsed->GetEditorId(cache), espmIdx);
+
   std::vector<Inventory::Entry> entries;
   for (auto& entry : recipeData.inputObjects) {
     auto formId = espm::utils::GetMappedId(entry.formId, *mapping);
@@ -379,13 +442,13 @@ void UseCraftRecipe(MpActor* me, const espm::COBJ* recipeUsed,
   auto outputFormId =
     espm::utils::GetMappedId(recipeData.outputObjectFormId, *mapping);
 
-  if (spdlog::should_log(spdlog::level::debug)) {
+  if (spdlog::should_log(spdlog::level::info)) {
     std::string s = fmt::format("User formId={:#x} crafted", me->GetFormId());
     for (const auto& entry : entries) {
       s += fmt::format(" -{:#x} x{}", entry.baseId, entry.count);
     }
     s += fmt::format(" +{:#x} x{}", outputFormId, recipeData.outputCount);
-    spdlog::debug("{}", s);
+    spdlog::info("{}", s);
   }
 
   auto recipeId = espm::utils::GetMappedId(recipeUsed->GetId(), *mapping);
@@ -410,29 +473,29 @@ void ActionListener::OnCraftItem(const RawMessageData& rawMsgData,
   auto& cache = partOne.worldState.GetEspmCache();
   auto base = br.LookupById(workbench.GetBaseId());
 
-  spdlog::debug("User {} tries to craft {:#x} on workbench {:#x}",
-                rawMsgData.userId, resultObjectId, workbenchId);
+  spdlog::info("User {} tries to craft {:#x} on workbench {:#x}",
+               rawMsgData.userId, resultObjectId, workbenchId);
 
   bool isFurnitureOrActivator =
     base.rec->GetType() == "FURN" || base.rec->GetType() == "ACTI";
   if (!isFurnitureOrActivator) {
-    throw std::runtime_error("Unable to use " +
-                             base.rec->GetType().ToString() + " as workbench");
+    return spdlog::error("Unable to use {} as workbench",
+                         base.rec->GetType().ToString());
   }
 
   int espmIdx = 0;
   auto recipeUsed = FindRecipe(br, inputObjects, resultObjectId, &espmIdx);
 
   if (!recipeUsed) {
-    throw std::runtime_error(
-      fmt::format("Recipe not found: inputObjects={}, workbenchId={:#x}, "
-                  "resultObjectId={:#x}",
-                  inputObjects.ToJson().dump(), workbenchId, resultObjectId));
+    return spdlog::error(
+      "Recipe not found: inputObjects={}, workbenchId={:#x}, "
+      "resultObjectId={:#x}",
+      inputObjects.ToJson().dump(), workbenchId, resultObjectId);
   }
 
   MpActor* me = partOne.serverState.ActorByUser(rawMsgData.userId);
   if (!me) {
-    throw std::runtime_error("Unable to craft without Actor attached");
+    return spdlog::error("Unable to craft without Actor attached");
   }
 
   UseCraftRecipe(me, recipeUsed, cache, br, espmIdx);
@@ -723,11 +786,10 @@ bool IsAvailableForNextAttack(const MpActor& actor, const HitData& hitData,
 bool ShouldBeBlocked(const MpActor& aggressor, const MpActor& target)
 {
   NiPoint3 targetViewDirection = target.GetViewDirection();
-  NiPoint3 aggressorViewDirection = aggressor.GetViewDirection();
-  if (targetViewDirection * aggressorViewDirection >= 0) {
+  NiPoint3 aggressorDirection = aggressor.GetPos() - target.GetPos();
+  if (targetViewDirection * aggressorDirection <= 0) {
     return false;
   }
-  NiPoint3 aggressorDirection = aggressor.GetPos() - target.GetPos();
   float angle =
     std::acos((targetViewDirection * aggressorDirection) /
               (targetViewDirection.Length() * aggressorDirection.Length()));

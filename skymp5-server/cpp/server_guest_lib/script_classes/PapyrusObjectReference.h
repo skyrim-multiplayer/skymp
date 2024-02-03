@@ -68,6 +68,8 @@ public:
   VarValue SetDisplayName(VarValue self,
                           const std::vector<VarValue>& arguments);
 
+  VarValue GetDistance(VarValue self, const std::vector<VarValue>& arguments);
+
   void Register(VirtualMachine& vm,
                 std::shared_ptr<IPapyrusCompatibilityPolicy> policy) override;
 };

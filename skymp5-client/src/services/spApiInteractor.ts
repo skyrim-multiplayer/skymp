@@ -4,9 +4,10 @@ import * as sp from "skyrimPlatform";
 
 export class SpApiInteractor {
     static setup(listeners: ClientListener[]) {
+        listeners.forEach(listener => SpApiInteractor.registerListenerForLookup(listener.constructor.name, listener));
     }
 
-    static makeController(): CombinedController {
+    static getControllerInstance(): CombinedController {
         if (SpApiInteractor.controller) {
             return SpApiInteractor.controller;
         }
@@ -29,7 +30,7 @@ export class SpApiInteractor {
         return SpApiInteractor.controller;
     }
 
-    static registerListenerForLookup(listenerName: string, listener: ClientListener): void {
+    private static registerListenerForLookup(listenerName: string, listener: ClientListener): void {
         if (SpApiInteractor.listenersForLookupByName.has(listenerName)) {
             throw new Error(`listener re-registration for name '${listenerName}'`);
         }

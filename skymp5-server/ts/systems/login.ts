@@ -3,6 +3,8 @@ import Axios from "axios";
 import { getMyPublicIp } from "../publicIp";
 import { Settings } from "../settings";
 
+type Mp = any; // TODO
+
 interface UserProfile {
   id: number;
   discordId: string | null;
@@ -69,8 +71,6 @@ export class Login implements System {
         const profile = await this.getUserProfile(gameData.session);
         console.log("getUserProfileId:", profile);
 
-        let roles = new Array<string>();
-
         if (discordAuth && !discordAuth.botToken) {
           discordAuth = undefined;
           console.error("discordAuth.botToken is missing, skipping Discord server integration");
@@ -79,6 +79,8 @@ export class Login implements System {
           discordAuth = undefined;
           console.error("discordAuth.guildId is missing, skipping Discord server integration");
         }
+
+        let roles = new Array<string>();
 
         if (discordAuth) {
           if (!profile.discordId) {
@@ -93,13 +95,23 @@ export class Login implements System {
               validateStatus: (status) => true,
             },
           );
+
+          const mp = ctx.svr as unknown as Mp;
+
+          // TODO: what if more characters
+          const actorId = ctx.svr.getActorsByProfileId(profile.id)[0];
+
+          const receivedRoles: string[] | null = (response.data && Array.isArray(response.data.roles)) ? response.data.roles : null;
+          const currentRoles: string[] | null = actorId ? mp.get(actorId, "private.discordRoles") : null;
+          roles = receivedRoles || currentRoles || [];
+
           console.log('Discord request:', JSON.stringify({ status: response.status, data: response.data }));
 
           if (discordAuth.eventLogChannelId) {
             let ipToPrint = ip;
 
             if (discordAuth && discordAuth.hideIpRoleId) {
-              if (response.data.roles.indexOf(discordAuth.hideIpRoleId) !== -1) {
+              if (roles.indexOf(discordAuth.hideIpRoleId) !== -1) {
                 ipToPrint = "hidden";
               }
             }
@@ -122,11 +134,12 @@ export class Login implements System {
           if (response.status === 404 && response.data?.code === DiscordErrors.unknownMember) {
             throw new Error("Not on the Discord server");
           }
-          if (response.status !== 200 || !response.data?.roles) {
-            throw new Error("Unexpected response status: " +
-                JSON.stringify({ status: response.status, data: response.data }));
-          }
-          if (response.data.roles.indexOf(discordAuth.banRoleId) !== -1) {
+          // Disabled this check to be able bypassing ratelimit
+          // if (response.status !== 200) {
+          //   throw new Error("Unexpected response status: " +
+          //     JSON.stringify({ status: response.status, data: response.data }));
+          // }
+          if (roles.indexOf(discordAuth.banRoleId) !== -1) {
             throw new Error("Banned");
           }
           if (ip !== ctx.svr.getUserIp(userId)) {
@@ -134,7 +147,6 @@ export class Login implements System {
             // During async http call the user could free userId and someone else could connect with the same userId
             throw new Error("IP mismatch");
           }
-          roles = response.data.roles;
         }
         ctx.gm.emit("spawnAllowed", userId, profile.id, roles, profile.discordId);
         this.log("Logged as " + profile.id);

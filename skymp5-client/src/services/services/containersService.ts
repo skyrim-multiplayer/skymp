@@ -5,11 +5,9 @@ import { getPcInventory } from "./remoteServer";
 import { getInventory, getDiff, hasExtras, removeSimpleItemsAsManyAsPossible, sumInventories } from "../../sync/inventory";
 import { LastInvService } from "./lastInvService";
 
-// TODO: refactor this out
-import * as taffyPerkSystem from '../../sweetpie/taffyPerkSystem';
-
 import { PutItemMessage } from "../messages/putItemMessage";
 import { TakeItemMessage } from "../messages/takeItemMessage";
+import { SweetTaffySweetCantDropService } from "./sweetTaffySweetCantDropService";
 
 export class ContainersService extends ClientListener {
     constructor(private sp: Sp, private controller: CombinedController) {
@@ -18,18 +16,13 @@ export class ContainersService extends ClientListener {
     }
 
     private onContainerChanged(e: ContainerChangedEvent) {
+        const sweetCantDropService = this.controller.lookupListener(SweetTaffySweetCantDropService);
+
         if (e.oldContainer && e.newContainer) {
             if (
                 e.oldContainer.getFormID() === 0x14 ||
                 e.newContainer.getFormID() === 0x14
             ) {
-                if (e.newContainer.getFormID() === 0x14 && e.numItems > 0) {
-                    taffyPerkSystem.inventoryChanged(e.newContainer, {
-                        baseId: e.baseObj.getFormID(),
-                        count: e.numItems,
-                    });
-                }
-
                 const lastInvService = this.controller.lookupListener(LastInvService);
 
                 if (!lastInvService.lastInv) lastInvService.lastInv = getPcInventory();
@@ -51,7 +44,7 @@ export class ContainersService extends ClientListener {
                         .filter((entry) =>
                             // TODO: review this condition, seems to be incorrect
                             entry.count > 0
-                                ? taffyPerkSystem.canDropOrPutItem(entry.baseId)
+                                ? sweetCantDropService.canDropOrPutItem(entry.baseId)
                                 : true,
                         )
                         .filter((entry) => entry.count !== 0)
