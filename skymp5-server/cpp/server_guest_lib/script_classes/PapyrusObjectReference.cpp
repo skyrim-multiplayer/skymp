@@ -1,6 +1,7 @@
 #include "PapyrusObjectReference.h"
 
 #include "FormCallbacks.h"
+#include "LeveledListUtils.h"
 #include "LocationalData.h"
 #include "MpActor.h"
 #include "MpObjectReference.h"
@@ -10,7 +11,12 @@
 #include "papyrus-vm/Structures.h"
 #include "script_objects/EspmGameObject.h"
 #include "script_objects/MpFormGameObject.h"
+#include <algorithm>
 #include <cstring>
+
+namespace {
+constexpr uint32_t kPlayerCharacterLevel = 1;
+}
 
 VarValue PapyrusObjectReference::IsHarvested(
   VarValue self, const std::vector<VarValue>& arguments)
@@ -57,6 +63,31 @@ VarValue PapyrusObjectReference::DisableNoWait(
   return VarValue::None();
 }
 
+namespace {
+bool GetIsItemWithLightCarryableFlagChecked(
+  WorldState* worldState, const espm::LookupResult& lookupRes)
+{
+  if (!lookupRes.rec) {
+    return false;
+  }
+
+  if (!espm::utils::IsItem(lookupRes.rec->GetType())) {
+    return false;
+  }
+
+  if (espm::utils::Is<espm::LIGH>(lookupRes.rec->GetType())) {
+    auto res = espm::Convert<espm::LIGH>(lookupRes.rec)
+                 ->GetData(worldState->GetEspmCache());
+    bool isTorch = res.data.flags & espm::LIGH::Flags::CanBeCarried;
+    if (!isTorch) {
+      return false;
+    }
+  }
+
+  return true;
+}
+}
+
 VarValue PapyrusObjectReference::AddItem(
   VarValue self, const std::vector<VarValue>& arguments)
 {
@@ -75,19 +106,10 @@ VarValue PapyrusObjectReference::AddItem(
   if (!selfRefr || !item.rec || count <= 0)
     return VarValue::None();
 
-  if (!espm::utils::Is<espm::FLST>(item.rec->GetType())) {
-    if (!espm::utils::IsItem(item.rec->GetType())) {
+  if (!espm::utils::Is<espm::FLST>(item.rec->GetType()) &&
+      !espm::utils::Is<espm::LVLI>(item.rec->GetType())) {
+    if (!GetIsItemWithLightCarryableFlagChecked(worldState, item)) {
       throw std::runtime_error("AddItem - form is not an item");
-    }
-  }
-
-  if (espm::utils::Is<espm::LIGH>(item.rec->GetType())) {
-    auto res =
-      espm::Convert<espm::LIGH>(item.rec)->GetData(worldState->GetEspmCache());
-    bool isTorch = res.data.flags & espm::LIGH::Flags::CanBeCarried;
-    if (!isTorch) {
-      throw std::runtime_error(
-        "AddItem - form is LIGH without CanBeCarried flag");
     }
   }
 
@@ -95,18 +117,48 @@ VarValue PapyrusObjectReference::AddItem(
   bool runSkympHacks = false;
 
   if (auto formlist = espm::Convert<espm::FLST>(item.rec)) {
-    formIds =
-      espm::GetData<espm::FLST>(formlist->GetId(), selfRefr->GetParent())
-        .formIds;
-    // TODO: call toGlobalId on formIds!
-    // TODO: check if formId is an item, not magic, etc
+    auto data =
+      espm::GetData<espm::FLST>(formlist->GetId(), selfRefr->GetParent());
+
+    std::vector<uint32_t> tempFormIds = std::move(data.formIds);
+
+    // Transform raw formIds into global formIds
+    std::transform(
+      tempFormIds.begin(), tempFormIds.end(), tempFormIds.begin(),
+      [&](uint32_t rawFormId) { return item.ToGlobalId(rawFormId); });
+
+    // Remove ids that belong to non-item records
+    tempFormIds.erase(
+      std::remove_if(tempFormIds.begin(), tempFormIds.end(),
+                     [&](uint32_t formId) {
+                       auto lookupRes =
+                         worldState->GetEspm().GetBrowser().LookupById(formId);
+                       return !GetIsItemWithLightCarryableFlagChecked(
+                         worldState, lookupRes);
+                     }),
+      tempFormIds.end());
+
+    formIds = std::move(tempFormIds);
   } else {
     formIds.emplace_back(item.ToGlobalId(item.rec->GetId()));
     runSkympHacks = true;
   }
 
   for (auto itemId : formIds) {
-    selfRefr->AddItem(itemId, count);
+    auto resultItemLookupRes =
+      worldState->GetEspm().GetBrowser().LookupById(itemId);
+    auto leveledItem = espm::Convert<espm::LVLI>(resultItemLookupRes.rec);
+    if (leveledItem) {
+      const auto kCountMult = 1;
+      auto map = LeveledListUtils::EvaluateListRecurse(
+        worldState->GetEspm().GetBrowser(), resultItemLookupRes, kCountMult,
+        kPlayerCharacterLevel);
+      for (auto& p : map) {
+        selfRefr->AddItem(p.first, p.second);
+      }
+    } else {
+      selfRefr->AddItem(itemId, count);
+    }
   }
 
   if (runSkympHacks) {
@@ -161,11 +213,28 @@ VarValue PapyrusObjectReference::RemoveItem(
   bool runSkympHacks = false;
 
   if (auto formlist = espm::Convert<espm::FLST>(item.rec)) {
-    formIds =
-      espm::GetData<espm::FLST>(formlist->GetId(), selfRefr->GetParent())
-        .formIds;
-    // TODO: call toGlobalId on formIds!
-    // TODO: check if formId is an item, not magic, etc
+    auto data =
+      espm::GetData<espm::FLST>(formlist->GetId(), selfRefr->GetParent());
+
+    std::vector<uint32_t> tempFormIds = data.formIds;
+
+    // Transform raw formIds into global formIds
+    std::transform(
+      tempFormIds.begin(), tempFormIds.end(), tempFormIds.begin(),
+      [&](uint32_t rawFormId) { return item.ToGlobalId(rawFormId); });
+
+    // Remove ids that belong to non-item records
+    tempFormIds.erase(
+      std::remove_if(tempFormIds.begin(), tempFormIds.end(),
+                     [&](uint32_t formId) {
+                       auto lookupRes =
+                         worldState->GetEspm().GetBrowser().LookupById(formId);
+                       return !GetIsItemWithLightCarryableFlagChecked(
+                         worldState, lookupRes);
+                     }),
+      tempFormIds.end());
+
+    formIds = tempFormIds;
   } else {
     formIds.emplace_back(item.ToGlobalId(item.rec->GetId()));
     runSkympHacks = true;
@@ -777,6 +846,29 @@ VarValue PapyrusObjectReference::SetDisplayName(
   return VarValue::None();
 }
 
+VarValue PapyrusObjectReference::GetDistance(
+  VarValue self, const std::vector<VarValue>& arguments)
+{
+  if (auto selfRefr = GetFormPtr<MpObjectReference>(self)) {
+
+    if (arguments.size() < 1) {
+      spdlog::error("GetDistance requires at least 1 argument");
+      return VarValue(0.f);
+    }
+
+    if (auto other = GetFormPtr<MpObjectReference>(arguments[0])) {
+      if (selfRefr->GetCellOrWorld() == other->GetCellOrWorld()) {
+        return VarValue((other->GetPos() - selfRefr->GetPos()).Length());
+      } else {
+        // There must be "very large number" according to wiki
+        return VarValue(1'000'000'000.f);
+      }
+    }
+  }
+
+  return VarValue(0.f);
+}
+
 void PapyrusObjectReference::Register(
   VirtualMachine& vm, std::shared_ptr<IPapyrusCompatibilityPolicy> policy)
 {
@@ -821,4 +913,5 @@ void PapyrusObjectReference::Register(
   AddMethod(vm, "GetAllItemsCount", &PapyrusObjectReference::GetAllItemsCount);
   AddMethod(vm, "IsContainerEmpty", &PapyrusObjectReference::IsContainerEmpty);
   AddMethod(vm, "SetDisplayName", &PapyrusObjectReference::SetDisplayName);
+  AddMethod(vm, "GetDistance", &PapyrusObjectReference::GetDistance);
 }

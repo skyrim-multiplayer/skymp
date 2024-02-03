@@ -14,5 +14,6 @@ export interface CreateActorMessage {
     equipment?: Equipment;
     inventory?: Inventory;
     baseId?: number;
+    isDead?: boolean;
     props?: Record<string, unknown>;
 }

@@ -55,6 +55,8 @@ export class FormView implements View<FormModel> {
       }
     }
 
+    
+
     // Don't spawn dead actors if not already
     if (model.isDead) {
       if (this.refrId === 0) {
@@ -157,17 +159,59 @@ export class FormView implements View<FormModel> {
 
       if (respawnRequired) {
         this.destroy();
-        refr = (Game.getPlayer() as Actor).placeAtMe(
-          base,
-          1,
-          true,
-          true
-        ) as ObjectReference;
+
+        const player = Game.getPlayer() as Actor;
+
+        const spawnMethodOriginal = {
+          spawn(baseForm: Form, _spawnPosition: [number, number, number], _spawnRotation: [number, number, number]): ObjectReference {
+            return player.placeAtMe(
+              baseForm,
+              1,
+              true,
+              true
+            ) as ObjectReference;
+          },
+
+          triggerSpawnProcess(spawningRefr: ObjectReference, spawnPosition: [number, number, number], appearance: Appearance | null, callback: () => void) {
+            new SpawnProcess(
+              appearance,
+              spawnPosition,
+              spawningRefr.getFormID(),
+              callback
+            );
+          }
+        };
+
+        const spawnMethodStub = {
+          spawn(baseForm: Form, spawnPosition: [number, number, number], spawnRotation: [number, number, number]): ObjectReference {
+            const f = storage["formViewFunc1"] as Function;
+            const ref: ObjectReference = f(baseForm, spawnPosition, spawnRotation);
+            return ref;
+          },
+
+          triggerSpawnProcess(spawningRefr: ObjectReference, spawnPosition: [number, number, number], appearance: Appearance | null, callback: () => void) {
+            const f = storage["formViewFunc2"] as Function;
+            f(spawningRefr, spawnPosition, appearance, callback);
+          }
+        };
+
+        const spawnUsingStubMethod = base.getType() === FormType.NPC
+          && !this.appearanceState.appearance
+          && storage["formViewFunc1Set"] === true
+          && storage["formViewFunc2Set"] === true;
+        const spawnMethod = spawnUsingStubMethod ? spawnMethodStub : spawnMethodOriginal;
+
+        if (model.movement) {
+          refr = spawnMethod.spawn(base, model.movement.pos, model.movement.rot);
+        }
+        else {
+          printConsole("model.movement was " + model.movement);
+        }
 
         this.state = {};
         delete this.wasHostedByOther;
         if (base.getType() !== FormType.NPC) {
-          refr.setAngle(
+          refr?.setAngle(
             model.movement?.rot[0] || 0,
             model.movement?.rot[1] || 0,
             model.movement?.rot[2] || 0
@@ -183,6 +227,12 @@ export class FormView implements View<FormModel> {
           const dwarvenCenturionRace = 0x131f1;
           const dwarvenSphereRace = 0x131f2;
           const dwarvenSpiderRace = 0x131f3;
+          const sprigganRace = 0x2013b77;
+          const sprigganRace2 = 0xf3903;
+          const sprigganRace3 = 0x13204;
+          const sprigganRace4 = 0x401b644;
+          const sprigganRace5 = 0x9aa44;
+          const wolfRace = 0x1320a;
 
           // potential masterambushscript
           if (race === draugrRace
@@ -192,11 +242,20 @@ export class FormView implements View<FormModel> {
             || race === frostbiteSpiderRaceLarge
             || race === dwarvenCenturionRace
             || race === dwarvenSphereRace
-            || race === dwarvenSpiderRace) {
+            || race === dwarvenSpiderRace
+            || race === sprigganRace
+            || race === sprigganRace2
+            || race === sprigganRace3
+            || race === sprigganRace4
+            || race === sprigganRace5
+            || race === wolfRace) {
             Actor.from(refr)?.setActorValue("Aggression", 2);
           }
         }
-        SpApiInteractor.getControllerInstance().lookupListener(WorldCleanerService).modWcProtection(refr.getFormID(), 1);
+
+        if (refr !== null) {
+          SpApiInteractor.getControllerInstance().lookupListener(WorldCleanerService).modWcProtection(refr.getFormID(), 1);
+        }
 
         // TODO: reset all states?
         this.eqState = this.getDefaultEquipState();
@@ -212,17 +271,19 @@ export class FormView implements View<FormModel> {
           spawnPos = ObjectReferenceEx.getPos(Game.getPlayer() as Actor);
           printConsole("Spawn NPC at player pos");
         }
-        new SpawnProcess(
-          this.appearanceState.appearance,
-          spawnPos,
-          refr.getFormID(),
-          () => {
+
+        if (refr) {
+          spawnMethod.triggerSpawnProcess(refr, spawnPos, model.appearance || null, () => {
             this.ready = true;
             this.spawnMoment = Date.now();
-          }
-        );
+          });
+        }
+        else {
+          printConsole("Unable to triggerSpawnProcess for null refr");
+        }
+
         if (model.appearance && model.appearance.name) {
-          refr.setDisplayName("" + model.appearance.name, true);
+          refr?.setDisplayName("" + model.appearance.name, true);
         }
         Actor.from(refr)?.setActorValue("attackDamageMult", 0);
       }

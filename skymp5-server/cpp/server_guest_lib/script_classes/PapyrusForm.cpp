@@ -93,12 +93,44 @@ VarValue PapyrusForm::GetFormId(VarValue self, const std::vector<VarValue>&)
     // uint32_t in Papyrus right now, only int32_t and float
     return VarValue(static_cast<float>(formId));
   }
+
   if (auto lookupRes = GetRecordPtr(self); lookupRes.rec) {
     auto formId = lookupRes.ToGlobalId(lookupRes.rec->GetId());
     spdlog::trace("GetFormId {:x} - EspmGameObject", formId);
     return VarValue(static_cast<int32_t>(formId));
   }
+
   return VarValue::None();
+}
+
+VarValue PapyrusForm::GetName_(VarValue self, const std::vector<VarValue>&)
+{
+  if (auto selfRefr = GetFormPtr<MpObjectReference>(self)) {
+    auto formId = selfRefr->GetFormId();
+    spdlog::warn("GetName_ {:x} - Shouldn't be called on references. Use "
+                 "GetBaseObject and only then GetName",
+                 formId);
+    return VarValue("");
+  }
+
+  if (auto lookupRes = GetRecordPtr(self); lookupRes.rec) {
+    if (lookupRes.rec->GetType() == "REFR" ||
+        lookupRes.rec->GetType() == "ACHR") {
+      spdlog::error("GetName_ {:x} - Unexpected self type {}",
+                    lookupRes.ToGlobalId(lookupRes.rec->GetId()),
+                    lookupRes.rec->GetType().ToString());
+      return VarValue("");
+    }
+
+    if (auto worldState = compatibilityPolicy->GetWorldState()) {
+      // TODO: use FULL (localized) instead of EDID
+      const char* editorId =
+        lookupRes.rec->GetEditorId(worldState->GetEspmCache());
+      return VarValue(editorId);
+    }
+  }
+
+  return VarValue("");
 }
 
 namespace {
