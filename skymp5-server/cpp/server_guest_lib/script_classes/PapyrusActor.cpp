@@ -4,6 +4,7 @@
 #include "script_objects/EspmGameObject.h"
 #include "script_objects/MpFormGameObject.h"
 
+#include "EvaluateTemplate.h"
 #include "SpSnippetFunctionGen.h"
 #include "papyrus-vm/CIString.h"
 #include <algorithm>
@@ -371,6 +372,45 @@ VarValue PapyrusActor::RemoveSpell(VarValue self,
   return VarValue(false);
 }
 
+VarValue PapyrusActor::GetRace(VarValue self,
+                               const std::vector<VarValue>& arguments)
+{
+  auto actor = GetFormPtr<MpActor>(self);
+  if (!actor) {
+    return VarValue::None();
+  }
+
+  uint32_t raceId = 0;
+
+  if (auto appearance = actor->GetAppearance()) {
+    raceId = appearance->raceId;
+  } else {
+    raceId = EvaluateTemplate<espm::NPC_::UseTraits>(
+      actor->GetParent(), actor->GetBaseId(), actor->GetTemplateChain(),
+      [](const auto& npcLookupResult, const auto& npcData) {
+        return npcLookupResult.ToGlobalId(npcData.race);
+      });
+  }
+
+  auto lookupRes =
+    actor->GetParent()->GetEspm().GetBrowser().LookupById(raceId);
+
+  if (!lookupRes.rec) {
+    spdlog::error("Actor.GetRace - Race with id {:x} not found in espm",
+                  raceId);
+    return VarValue::None();
+  }
+
+  if (!(lookupRes.rec->GetType() == espm::RACE::kType)) {
+    spdlog::error(
+      "Actor.GetRace - Expected record {:x} to be RACE, but it is {}", raceId,
+      lookupRes.rec->GetType());
+    return VarValue::None();
+  }
+
+  return VarValue(std::make_shared<EspmGameObject>(lookupRes));
+}
+
 void PapyrusActor::Register(
   VirtualMachine& vm, std::shared_ptr<IPapyrusCompatibilityPolicy> policy)
 {
@@ -394,4 +434,5 @@ void PapyrusActor::Register(
   AddMethod(vm, "WornHasKeyword", &PapyrusActor::WornHasKeyword);
   AddMethod(vm, "AddSpell", &PapyrusActor::AddSpell);
   AddMethod(vm, "RemoveSpell", &PapyrusActor::RemoveSpell);
+  AddMethod(vm, "GetRace", &PapyrusActor::GetRace);
 }
