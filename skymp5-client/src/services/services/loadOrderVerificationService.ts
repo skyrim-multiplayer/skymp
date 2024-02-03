@@ -80,7 +80,6 @@ export class LoadOrderVerificationService extends ClientListener {
           'LOAD ORDER ERROR!\nCheck console for details.',
           [255, 0, 0, 1]
         );
-        this.sp.browser.loadUrl('about:blank');
       });
   };
 
