@@ -404,7 +404,7 @@ VarValue PapyrusActor::GetRace(VarValue self,
   if (!(lookupRes.rec->GetType() == espm::RACE::kType)) {
     spdlog::error(
       "Actor.GetRace - Expected record {:x} to be RACE, but it is {}", raceId,
-      lookupRes.rec->GetType());
+      lookupRes.rec->GetType().ToString());
     return VarValue::None();
   }
 
