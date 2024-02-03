@@ -662,9 +662,9 @@ void PartOne::Init()
       auto it = pImpl->gamemodeApiState.createdProperties.find(propName);
       if (it != pImpl->gamemodeApiState.createdProperties.end()) {
         if (!it->second.isVisibleByOwner) {
-          //  From docs: isVisibleByNeighbors considered to be always false for
-          //  properties with `isVisibleByOwner == false`, in that case, actual
-          //  flag value is ignored.
+          //  From docs: isVisibleByNeighbors is considered to be always false
+          //  for properties with `isVisibleByOwner == false`, in that case,
+          //  actual flag value is ignored.
           return;
         }
 
