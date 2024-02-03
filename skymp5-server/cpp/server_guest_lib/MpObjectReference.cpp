@@ -389,7 +389,7 @@ void MpObjectReference::Disable()
   EditChangeForm(
     [&](MpChangeFormREFR& changeForm) { changeForm.isDisabled = true; });
 
-  if (!IsEspmForm()) {
+  if (!IsEspmForm() || dynamic_cast<MpActor*>(this)) {
     RemoveFromGridAndUnsubscribeAll();
   }
 }
@@ -403,7 +403,7 @@ void MpObjectReference::Enable()
   EditChangeForm(
     [&](MpChangeFormREFR& changeForm) { changeForm.isDisabled = false; });
 
-  if (!IsEspmForm()) {
+  if (!IsEspmForm() || dynamic_cast<MpActor*>(this)) {
     ForceSubscriptionsUpdate();
   }
 }
