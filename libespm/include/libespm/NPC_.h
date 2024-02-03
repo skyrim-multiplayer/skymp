@@ -78,6 +78,7 @@ public:
     ObjectBounds objectBounds = {};
     uint32_t baseTemplate = 0;
     uint16_t templateDataFlags = 0;
+    uint32_t deathItem = 0;
   };
 
   Data GetData(CompressedFieldsCache& compressedFieldsCache) const noexcept;
