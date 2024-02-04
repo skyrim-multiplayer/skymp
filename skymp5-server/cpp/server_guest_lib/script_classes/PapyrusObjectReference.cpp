@@ -405,6 +405,20 @@ VarValue PapyrusObjectReference::Enable(VarValue self,
   if (selfRefr) {
     selfRefr->Enable();
   }
+
+  if (selfRefr->IsEspmForm() && !dynamic_cast<MpActor*>(selfRefr)) {
+    auto funcName = "Enable";
+    auto serializedArgs = SpSnippetFunctionGen::SerializeArguments(arguments);
+    for (auto listener : selfRefr->GetListeners()) {
+      auto targetRefr = dynamic_cast<MpActor*>(listener);
+      if (targetRefr) {
+        SpSnippet(GetName(), funcName, serializedArgs.data(),
+                  selfRefr->GetFormId())
+          .Execute(targetRefr);
+      }
+    }
+  }
+
   return VarValue::None();
 }
 
@@ -415,6 +429,20 @@ VarValue PapyrusObjectReference::Disable(
   if (selfRefr) {
     selfRefr->Disable();
   }
+
+  if (selfRefr->IsEspmForm() && !dynamic_cast<MpActor*>(selfRefr)) {
+    auto funcName = "Disable";
+    auto serializedArgs = SpSnippetFunctionGen::SerializeArguments(arguments);
+    for (auto listener : selfRefr->GetListeners()) {
+      auto targetRefr = dynamic_cast<MpActor*>(listener);
+      if (targetRefr) {
+        SpSnippet(GetName(), funcName, serializedArgs.data(),
+                  selfRefr->GetFormId())
+          .Execute(targetRefr);
+      }
+    }
+  }
+
   return VarValue::None();
 }
 
@@ -846,6 +874,29 @@ VarValue PapyrusObjectReference::SetDisplayName(
   return VarValue::None();
 }
 
+VarValue PapyrusObjectReference::GetDistance(
+  VarValue self, const std::vector<VarValue>& arguments)
+{
+  if (auto selfRefr = GetFormPtr<MpObjectReference>(self)) {
+
+    if (arguments.size() < 1) {
+      spdlog::error("GetDistance requires at least 1 argument");
+      return VarValue(0.f);
+    }
+
+    if (auto other = GetFormPtr<MpObjectReference>(arguments[0])) {
+      if (selfRefr->GetCellOrWorld() == other->GetCellOrWorld()) {
+        return VarValue((other->GetPos() - selfRefr->GetPos()).Length());
+      } else {
+        // There must be "very large number" according to wiki
+        return VarValue(1'000'000'000.f);
+      }
+    }
+  }
+
+  return VarValue(0.f);
+}
+
 void PapyrusObjectReference::Register(
   VirtualMachine& vm, std::shared_ptr<IPapyrusCompatibilityPolicy> policy)
 {
@@ -890,4 +941,5 @@ void PapyrusObjectReference::Register(
   AddMethod(vm, "GetAllItemsCount", &PapyrusObjectReference::GetAllItemsCount);
   AddMethod(vm, "IsContainerEmpty", &PapyrusObjectReference::IsContainerEmpty);
   AddMethod(vm, "SetDisplayName", &PapyrusObjectReference::SetDisplayName);
+  AddMethod(vm, "GetDistance", &PapyrusObjectReference::GetDistance);
 }

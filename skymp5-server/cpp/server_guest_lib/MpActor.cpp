@@ -3,6 +3,7 @@
 #include "ActorValues.h"
 #include "ChangeFormGuard.h"
 #include "CropRegeneration.h"
+#include "EvaluateTemplate.h"
 #include "FormCallbacks.h"
 #include "GetBaseActorValues.h"
 #include "LeveledListUtils.h"
@@ -419,6 +420,13 @@ void MpActor::ApplyChangeForm(const MpChangeForm& newChangeForm)
     Mode::NoRequestSave);
   ReapplyMagicEffects();
 
+  // We do the same in PartOne::SetUserActor for player characters
+  if (IsDead() && !IsRespawning()) {
+    spdlog::info("MpActor::ApplyChangeForm {:x} - respawning dead actor",
+                 GetFormId());
+    RespawnWithDelay();
+  }
+
   // Mirrors MpObjectReference impl
   // Perform all required grid operations
   newChangeForm.isDisabled ? Disable() : Enable();
@@ -790,6 +798,67 @@ void MpActor::EnsureTemplateChainEvaluated(espm::Loader& loader,
     mode);
 }
 
+void MpActor::AddDeathItem()
+{
+  auto worldState = GetParent();
+  if (!worldState) {
+    return;
+  }
+
+  constexpr int kPlayerCharacterLevel = 1;
+
+  auto& loader = worldState->GetEspm();
+
+  auto base = loader.GetBrowser().LookupById(GetBaseId());
+  if (!base.rec) {
+    return spdlog::error("AddDeathItem {:x} - No base form", GetFormId());
+  }
+
+  auto npc = espm::Convert<espm::NPC_>(base.rec);
+  if (!npc) {
+    return spdlog::error(
+      "AddDeathItem {:x} - Expected base type to be NPC_, but got {}",
+      GetFormId(), base.rec->GetType().ToString());
+  }
+
+  uint32_t baseId = base.ToGlobalId(base.rec->GetId());
+  auto& templateChain = ChangeForm().templateChain;
+
+  uint32_t deathItemId = EvaluateTemplate<espm::NPC_::UseInventory>(
+    worldState, baseId, templateChain,
+    [](const auto& npcLookupResult, const auto& npcData) {
+      return npcLookupResult.ToGlobalId(npcData.deathItem);
+    });
+
+  if (deathItemId == 0) {
+    return spdlog::info(
+      "AddDeathItem {:x} - No death item found, skipping add", GetFormId());
+  }
+
+  espm::LookupResult deathItemLookupRes =
+    loader.GetBrowser().LookupById(deathItemId);
+  if (!deathItemLookupRes.rec) {
+    return spdlog::error(
+      "AddDeathItem {:x} - Death item {:x} not found in espm", GetFormId(),
+      deathItemId);
+  }
+
+  auto deathItemLvli = espm::Convert<espm::LVLI>(deathItemLookupRes.rec);
+  if (!deathItemLvli) {
+    return spdlog::error(
+      "AddDeathItem {:x} - Expected death item type to be LVLI, but got {}",
+      GetFormId(), deathItemLookupRes.rec->GetType().ToString());
+  }
+
+  const auto kCountMult = 1;
+  auto map = LeveledListUtils::EvaluateListRecurse(
+    loader.GetBrowser(), deathItemLookupRes, kCountMult,
+    kPlayerCharacterLevel);
+  for (auto& p : map) {
+    AddItem(p.first, p.second);
+  }
+}
+
 std::chrono::steady_clock::time_point MpActor::GetLastRestorationTime(
   espm::ActorValue av) const noexcept
 {
@@ -853,6 +922,7 @@ void MpActor::Kill(MpActor* killer, bool shouldTeleport)
 {
   SendAndSetDeathState(true, shouldTeleport);
   MpApiDeath(killer);
+  AddDeathItem();
 }
 
 void MpActor::RespawnWithDelay(bool shouldTeleport)
@@ -870,10 +940,14 @@ void MpActor::RespawnWithDelay(bool shouldTeleport)
     float respawnTime = GetRespawnTime();
     auto time = Viet::TimeUtils::To<std::chrono::milliseconds>(respawnTime);
     worldState->SetTimer(time).Then([worldState, this, formId, shouldTeleport,
-                                     respawnTimerIndex](Viet::Void) {
+                                     respawnTimerIndex,
+                                     respawnTime](Viet::Void) {
       if (worldState->LookupFormById(formId).get() == this) {
         bool isLatestRespawn = respawnTimerIndex == pImpl->respawnTimerIndex;
         if (isLatestRespawn) {
+          spdlog::info("MpActor::RespawnWithDelay {:x} - finally, respawn "
+                       "after {} seconds",
+                       GetFormId(), respawnTime);
           this->Respawn(shouldTeleport);
         }
       }
@@ -984,7 +1058,7 @@ LocationalData MpActor::GetEditorLocationalData() const
 const float MpActor::GetRespawnTime() const
 {
   if (!IsCreatedAsPlayer()) {
-    static const auto kNpcSpawnDelay = 6 * 60.f * 60.f;
+    static const auto kNpcSpawnDelay = 100 /*6 * 60.f *  60.f*/;
     return kNpcSpawnDelay;
   }
   return ChangeForm().spawnDelay;

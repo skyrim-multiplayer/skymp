@@ -270,15 +270,20 @@ bool IsCantDrop(WorldState* worldState, uint32_t baseId)
 {
   auto lookupRes = worldState->GetEspm().GetBrowser().LookupById(baseId);
 
-  std::vector<uint32_t> keywordIds =
+  if (!lookupRes.rec) {
+    return false;
+  }
+
+  const auto keywordIds =
     lookupRes.rec->GetKeywordIds(worldState->GetEspmCache());
 
-  for (auto& keywordId : keywordIds) {
-    auto rec = worldState->GetEspm().GetBrowser().LookupById(keywordId).rec;
-    auto keywordRecord = espm::Convert<espm::KYWD>(rec);
-    auto editorId =
-      keywordRecord->GetData(worldState->GetEspmCache()).editorId;
-    if (!Utils::stricmp(editorId, "SweetCantDrop")) {
+  for (auto keywordId : keywordIds) {
+    auto keywordIdGlobal = lookupRes.ToGlobalId(keywordId);
+    auto rec =
+      worldState->GetEspm().GetBrowser().LookupById(keywordIdGlobal).rec;
+    if (rec &&
+        !Utils::stricmp(rec->GetEditorId(worldState->GetEspmCache()),
+                        "SweetCantDrop")) {
       return true;
     }
   }

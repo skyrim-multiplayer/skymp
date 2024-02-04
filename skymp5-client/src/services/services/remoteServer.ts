@@ -316,6 +316,7 @@ export class RemoteServer extends ClientListener {
               refr,
               !!msg.props['isHarvested'],
             );
+            ModelApplyUtils.applyModelIsDisabled(refr, !!msg.props['disabled']);
             const animation = msg.props.lastAnimation;
             if (typeof animation === "string") {
               const refrid = refr.getFormID();
@@ -674,6 +675,8 @@ export class RemoteServer extends ClientListener {
           ModelApplyUtils.applyModelIsOpen(refr, !!msg.data);
         } else if (msg.propName === 'isHarvested') {
           ModelApplyUtils.applyModelIsHarvested(refr, !!msg.data);
+        } else if (msg.propName === 'disabled') {
+          ModelApplyUtils.applyModelIsDisabled(refr, !!msg.data);
         }
       });
       return;
