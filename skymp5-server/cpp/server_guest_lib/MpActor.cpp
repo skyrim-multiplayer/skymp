@@ -174,6 +174,38 @@ void MpActor::RemoveSpell(const uint32_t spellId)
   });
 }
 
+espm::LookupResult MpActor::GetRace() const
+{
+  uint32_t raceId = 0;
+
+  if (auto appearance = GetAppearance()) {
+    raceId = appearance->raceId;
+  } else {
+    raceId = EvaluateTemplate<espm::NPC_::UseTraits>(
+      GetParent(), GetBaseId(), GetTemplateChain(),
+      [](const auto& npcLookupResult, const auto& npcData) {
+        return npcLookupResult.ToGlobalId(npcData.race);
+      });
+  }
+
+  auto lookupRes = GetParent()->GetEspm().GetBrowser().LookupById(raceId);
+
+  if (!lookupRes.rec) {
+    spdlog::error("MpActor::GetRace - Race with id {:x} not found in espm",
+                  raceId);
+    return {};
+  }
+
+  if (!(lookupRes.rec->GetType() == espm::RACE::kType)) {
+    spdlog::error(
+      "MpActor::GetRace - Expected record {:x} to be RACE, but it is {}",
+      raceId, lookupRes.rec->GetType().ToString());
+    return {};
+  }
+
+  return lookupRes;
+}
+
 void MpActor::SetRaceMenuOpen(bool isOpen)
 {
   EditChangeForm(

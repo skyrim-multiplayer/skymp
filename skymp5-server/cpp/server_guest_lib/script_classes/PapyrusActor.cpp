@@ -380,31 +380,9 @@ VarValue PapyrusActor::GetRace(VarValue self,
     return VarValue::None();
   }
 
-  uint32_t raceId = 0;
-
-  if (auto appearance = actor->GetAppearance()) {
-    raceId = appearance->raceId;
-  } else {
-    raceId = EvaluateTemplate<espm::NPC_::UseTraits>(
-      actor->GetParent(), actor->GetBaseId(), actor->GetTemplateChain(),
-      [](const auto& npcLookupResult, const auto& npcData) {
-        return npcLookupResult.ToGlobalId(npcData.race);
-      });
-  }
-
-  auto lookupRes =
-    actor->GetParent()->GetEspm().GetBrowser().LookupById(raceId);
+  auto lookupRes = actor->GetRace();
 
   if (!lookupRes.rec) {
-    spdlog::error("Actor.GetRace - Race with id {:x} not found in espm",
-                  raceId);
-    return VarValue::None();
-  }
-
-  if (!(lookupRes.rec->GetType() == espm::RACE::kType)) {
-    spdlog::error(
-      "Actor.GetRace - Expected record {:x} to be RACE, but it is {}", raceId,
-      lookupRes.rec->GetType().ToString());
     return VarValue::None();
   }
 
