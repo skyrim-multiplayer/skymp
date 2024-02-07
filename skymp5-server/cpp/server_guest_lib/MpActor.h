@@ -40,7 +40,7 @@ public:
   bool IsCreatedAsPlayer() const;
 
   bool ShouldSkipRestoration() const noexcept;
-  void SetSkipRestoration(bool value) noexcept;
+  void UpdateNextRestorationTime(std::chrono::seconds duration) noexcept;
 
   void SetRaceMenuOpen(bool isOpen);
   void SetAppearance(const Appearance* newAppearance);
