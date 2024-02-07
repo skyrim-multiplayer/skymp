@@ -607,6 +607,11 @@ void ActionListener::OnChangeValues(const RawMessageData& rawMsgData,
   if (!actor) {
     throw std::runtime_error("Unable to change values without Actor attached");
   }
+
+  if (actor->ShouldSkipRestoration()) {
+    return;
+  }
+
   auto now = std::chrono::steady_clock::now();
 
   float timeAfterRegeneration = CropPeriodAfterLastRegen(
