@@ -89,7 +89,7 @@ void MpActor::UpdateNextRestorationTime(std::chrono::seconds duration) noexcept
 
 bool MpActor::ShouldSkipRestoration() const noexcept
 {
-  return pImpl->nextRestorationTime < std::chrono::system_clock::now();
+  return pImpl->nextRestorationTime > std::chrono::system_clock::now();
 }
 
 MpActor::MpActor(const LocationalData& locationalData_,
