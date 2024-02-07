@@ -39,6 +39,9 @@ public:
   const std::vector<FormDesc>& GetTemplateChain() const;
   bool IsCreatedAsPlayer() const;
 
+  bool ShouldSkipRestoration() const noexcept;
+  void SetSkipRestoration(bool value) noexcept;
+
   void SetRaceMenuOpen(bool isOpen);
   void SetAppearance(const Appearance* newAppearance);
   void SetEquipment(const std::string& jsonString);
