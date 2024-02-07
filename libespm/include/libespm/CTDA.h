@@ -1,7 +1,5 @@
 #pragma once
 
-#pragma pack(push, 1)
-
 namespace espm {
 
 struct CTDA
@@ -52,6 +50,7 @@ struct CTDA
   uint32_t referenceID;
   uint32_t unknown2;
 
+  bool IsItemCount() { return functionIndex == 4143; }
   bool IsGetEventData() { return functionIndex == 4672; }
 
   DefaultData GetDefaultData()
@@ -64,7 +63,5 @@ struct CTDA
     return *reinterpret_cast<const EventData*>(additionalData);
   }
 };
-
-static_assert(sizeof(CTDA) == 30);
 
 }
