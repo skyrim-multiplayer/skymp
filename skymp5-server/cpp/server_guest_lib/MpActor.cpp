@@ -66,7 +66,31 @@ struct MpActor::Impl
   };
   uint32_t blockActiveCount = 0;
   std::vector<std::pair<uint32_t, MpObjectReference*>> droppedItemsQueue;
+
+  // this is a hot fix attempt to make permanent restoration potions work
+  std::chrono::system_clock::time_point nextRestorationTime{};
 };
+
+namespace {
+
+void RestoreActorValuePatched(MpActor* actor, espm::ActorValue actorValue,
+                              float value)
+{
+  actor->RestoreActorValue(actorValue, value);
+  actor->UpdateNextRestorationTime(std::chrono::seconds{ 5 });
+}
+
+}
+
+void MpActor::UpdateNextRestorationTime(std::chrono::seconds duration) noexcept
+{
+  pImpl->nextRestorationTime = std::chrono::system_clock::now() + duration;
+}
+
+bool MpActor::ShouldSkipRestoration() const noexcept
+{
+  return pImpl->nextRestorationTime > std::chrono::system_clock::now();
+}
 
 MpActor::MpActor(const LocationalData& locationalData_,
                  const FormCallbacks& callbacks_, uint32_t optBaseId)
@@ -1358,10 +1382,10 @@ void MpActor::ApplyMagicEffect(espm::Effects::Effect& effect, bool hasSweetpie,
         // balance and because of disability to restrict players use potions
         // often on client side
         constexpr float kMagnitudeCoeff = 100.f;
-        RestoreActorValue(av, effect.magnitude * kMagnitudeCoeff);
+        RestoreActorValuePatched(this, av, effect.magnitude * kMagnitudeCoeff);
       }
     } else {
-      RestoreActorValue(av, effect.magnitude);
+      RestoreActorValuePatched(this, av, effect.magnitude);
     }
   }
 
