@@ -36,8 +36,7 @@ private:
   float CalcOpponentArmorRating() const;
   float CalcMagicEffects(const Effects& effects) const;
   float DetermineDamageFromSource(uint32_t source) const;
-  float GetUnarmedDamage() const;
-  float GetArmorPenalty() const;
+  float CalcUnarmedDamage() const;
   float CalcArmorDamagePenalty() const;
 };
 
@@ -111,7 +110,7 @@ float TES5DamageFormulaImpl::CalcOpponentArmorRating() const
   return combinedArmorRating;
 }
 
-float TES5DamageFormulaImpl::GetUnarmedDamage() const
+float TES5DamageFormulaImpl::CalcUnarmedDamage() const
 {
   uint32_t raceId = aggressor.GetRaceId();
   return espm::GetData<espm::RACE>(raceId, espmProvider).unarmedDamage;
@@ -119,7 +118,7 @@ float TES5DamageFormulaImpl::GetUnarmedDamage() const
 
 float TES5DamageFormulaImpl::DetermineDamageFromSource(uint32_t source) const
 {
-  return IsUnarmedAttack(source) ? GetUnarmedDamage() : CalcWeaponRating();
+  return IsUnarmedAttack(source) ? CalcUnarmedDamage() : CalcWeaponRating();
 }
 
 float TES5DamageFormulaImpl::CalcArmorDamagePenalty() const
