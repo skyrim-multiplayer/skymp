@@ -13,7 +13,6 @@
 #include "MsgType.h"
 #include "UserMessageOutput.h"
 #include "WorldState.h"
-#include "papyrus-vm/Utils.h"
 #include "script_objects/EspmGameObject.h"
 #include <fmt/format.h>
 #include <spdlog/spdlog.h>
@@ -265,33 +264,6 @@ void ActionListener::OnActivate(const RawMessageData& rawMsgData,
   }
 }
 
-namespace {
-bool IsCantDrop(WorldState* worldState, uint32_t baseId)
-{
-  auto lookupRes = worldState->GetEspm().GetBrowser().LookupById(baseId);
-
-  if (!lookupRes.rec) {
-    return false;
-  }
-
-  const auto keywordIds =
-    lookupRes.rec->GetKeywordIds(worldState->GetEspmCache());
-
-  for (auto keywordId : keywordIds) {
-    auto keywordIdGlobal = lookupRes.ToGlobalId(keywordId);
-    auto rec =
-      worldState->GetEspm().GetBrowser().LookupById(keywordIdGlobal).rec;
-    if (rec &&
-        !Utils::stricmp(rec->GetEditorId(worldState->GetEspmCache()),
-                        "SweetCantDrop")) {
-      return true;
-    }
-  }
-
-  return false;
-}
-}
-
 void ActionListener::OnPutItem(const RawMessageData& rawMsgData,
                                uint32_t target, const Inventory::Entry& entry)
 {
@@ -306,7 +278,7 @@ void ActionListener::OnPutItem(const RawMessageData& rawMsgData,
     return spdlog::error("No WorldState attached");
   }
 
-  if (IsCantDrop(worldState, entry.baseId)) {
+  if (worldState->HasKeyword(entry.baseId, "SweetCantDrop")) {
     return spdlog::error("Attempt to put SweetCantDrop item {:x}",
                          actor->GetFormId());
   }
@@ -328,7 +300,7 @@ void ActionListener::OnTakeItem(const RawMessageData& rawMsgData,
     return spdlog::error("No WorldState attached");
   }
 
-  if (IsCantDrop(worldState, entry.baseId)) {
+  if (worldState->HasKeyword(entry.baseId, "SweetCantDrop")) {
     return spdlog::error("Attempt to take SweetCantDrop item {:x}",
                          actor->GetFormId());
   }
@@ -350,7 +322,7 @@ void ActionListener::OnDropItem(const RawMessageData& rawMsgData,
     return spdlog::error("No WorldState attached");
   }
 
-  if (IsCantDrop(worldState, entry.baseId)) {
+  if (worldState->HasKeyword(entry.baseId, "SweetCantDrop")) {
     return spdlog::error("Attempt to drop SweetCantDrop item {:x}",
                          ac->GetFormId());
   }

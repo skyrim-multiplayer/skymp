@@ -999,13 +999,23 @@ void MpActor::RespawnWithDelay(bool shouldTeleport)
                 "MpActor::RespawnWithDelay {:x} - no espm attached",
                 GetFormId());
             } else {
+              Inventory inventory = GetInventory();
+              Inventory inventoryToKeep;
+              for (auto& entry : inventory.entries) {
+                if (worldState->HasKeyword(entry.baseId, "SweetCantDrop")) {
+                  inventoryToKeep.entries.push_back(entry);
+                }
+              }
               EditChangeForm(
                 [&](MpChangeForm& changeForm) {
-                  changeForm.inv = Inventory();
+                  changeForm.inv = inventoryToKeep;
                   changeForm.baseContainerAdded = false;
                 },
                 Mode::NoRequestSave);
               EnsureBaseContainerAdded(worldState->GetEspm());
+              spdlog::info("MpActor::RespawnWithDelay {:x} - {} inventory "
+                           "entries with keyword kept",
+                           GetFormId(), inventoryToKeep.entries.size());
             }
           }
 

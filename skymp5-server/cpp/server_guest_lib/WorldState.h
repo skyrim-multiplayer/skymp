@@ -202,6 +202,9 @@ public:
   std::optional<std::chrono::system_clock::duration> GetRelootTime(
     std::string recordType) const;
 
+  // Utility function to check if the provided baseId has the certain keyword
+  bool HasKeyword(uint32_t baseId, const char* keyword);
+
   // Only for tests
   auto& GetGrids() { return grids; }
 
