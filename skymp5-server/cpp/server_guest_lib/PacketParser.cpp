@@ -283,6 +283,7 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
       ReadEx(jMessage, JsonPointers::isSunGazing, &isSunGazing);
       actionListener.OnPlayerBowShot(rawMsgData, weaponId, ammoId, power,
                                      isSunGazing);
+      break;
     }
     default:
       actionListener.OnUnknown(rawMsgData);

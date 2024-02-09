@@ -15,7 +15,7 @@ export class PlayerBowShotService extends ClientListener {
                 weaponId: e.weapon.getFormID(),
                 ammoId: e.ammo.getFormID(),
                 power: e.power,
-                isSunGazing: e.isSunGazing
+                isSunGazing: e.isSunGazing || false
             },
             reliability: "unreliable"
         });

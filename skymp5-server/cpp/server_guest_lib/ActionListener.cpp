@@ -389,9 +389,6 @@ void ActionListener::OnPlayerBowShot(const RawMessageData& rawMsgData,
   }
 
   ac->RemoveItem(ammoId, 1, nullptr);
-
-  spdlog::info("ActionListener::OnPlayerBowShot {:x} - removed 1 of {:x}",
-               ac->GetFormId(), ammoId);
 }
 
 namespace {
