@@ -6,6 +6,7 @@
 #include <memory>
 #include <optional>
 #include <set>
+#include <map>
 
 #include "DeathStateContainerMessage.h"
 
@@ -168,6 +169,7 @@ private:
     espm::Loader& loader,
     ChangeFormGuard::Mode mode = ChangeFormGuard::Mode::RequestSave);
 
+  std::map<uint32_t, uint32_t> EvaluateDeathItem();
   void AddDeathItem();
 
 protected:
