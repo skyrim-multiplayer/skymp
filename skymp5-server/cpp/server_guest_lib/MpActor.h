@@ -3,10 +3,10 @@
 #include "GetBaseActorValues.h"
 #include "MpObjectReference.h"
 #include "libespm/espm.h"
+#include <map>
 #include <memory>
 #include <optional>
 #include <set>
-#include <map>
 
 #include "DeathStateContainerMessage.h"
 
