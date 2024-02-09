@@ -20,4 +20,5 @@ export enum MsgType {
   DropItem = 19,
   Teleport = 20,
   OpenContainer = 21,
+  PlayerBowShot = 22,
 }

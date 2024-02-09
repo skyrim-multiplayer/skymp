@@ -28,7 +28,8 @@ static const JsonPointer t("t"), idx("idx"), content("content"), data("data"),
   remoteId("remoteId"), eventName("eventName"), health("health"),
   magicka("magicka"), stamina("stamina"), leftSpell("leftSpell"),
   rightSpell("rightSpell"), voiceSpell("voiceSpell"),
-  instantSpell("instantSpell");
+  instantSpell("instantSpell"), weaponId("weaponId"), ammoId("ammoId"),
+  power("power"), isSunGazing("isSunGazing");
 }
 
 struct PacketParser::Impl
@@ -270,6 +271,18 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
       actionListener.OnDropItem(rawMsgData, FormIdCasts::LongToNormal(baseId),
                                 entry);
       break;
+    }
+    case MsgType::PlayerBowShot: {
+      uint32_t weaponId;
+      ReadEx(jMessage, JsonPointers::weaponId, &weaponId);
+      uint32_t ammoId;
+      ReadEx(jMessage, JsonPointers::ammoId, &ammoId);
+      float power;
+      ReadEx(jMessage, JsonPointers::power, &power);
+      bool isSunGazing;
+      ReadEx(jMessage, JsonPointers::isSunGazing, &isSunGazing);
+      actionListener.OnPlayerBowShot(rawMsgData, weaponId, ammoId, power,
+                                     isSunGazing);
     }
     default:
       actionListener.OnUnknown(rawMsgData);
