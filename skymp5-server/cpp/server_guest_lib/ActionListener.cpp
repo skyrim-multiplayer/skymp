@@ -330,6 +330,39 @@ void ActionListener::OnDropItem(const RawMessageData& rawMsgData,
   ac->DropItem(baseId, entry);
 }
 
+void ActionListener::OnPlayerBowShot(const RawMessageData& rawMsgData,
+                                     uint32_t weaponId, uint32_t ammoId,
+                                     float power, bool isSunGazing)
+{
+  MpActor* ac = partOne.serverState.ActorByUser(rawMsgData.userId);
+  if (!ac) {
+    return spdlog::error("Unable to shot from user with id: {}.",
+                         rawMsgData.userId);
+  }
+
+  auto worldState = ac->GetParent();
+
+  if (!worldState) {
+    return;
+  }
+
+  auto ammoLookupRes = worldState->GetEspm().GetBrowser().LookupById(ammoId);
+
+  if (!ammoLookupRes.rec) {
+    return spdlog::error("ActionListener::OnPlayerBowShot {:x} - unable to "
+                         "find espm record for {:x}",
+                         ac->GetFormId(), ammoId);
+  }
+
+  if (ammoLookupRes.rec->GetType().ToString() != "AMMO") {
+    return spdlog::error(
+      "ActionListener::OnPlayerBowShot {:x} - unable to shot not an ammo {:x}",
+      ac->GetFormId(), ammoId);
+  }
+
+  ac->RemoveItem(ammoId, 1, nullptr);
+}
+
 namespace {
 
 VarValue VarValueFromJson(const simdjson::dom::element& parentMsg,
