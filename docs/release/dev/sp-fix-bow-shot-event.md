@@ -1,1 +1,1 @@
-Fixed `playerBowShot` event was lacking `isSunGazing` value.
+Fixed `playerBowShot` event lacking `isSunGazing` value.
