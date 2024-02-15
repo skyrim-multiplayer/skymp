@@ -1,0 +1,1 @@
+Fixed `playerBowShot` event was lacking `isSunGazing` value.
