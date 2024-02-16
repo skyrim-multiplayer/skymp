@@ -3,6 +3,7 @@
 #include "GetBaseActorValues.h"
 #include "MpObjectReference.h"
 #include "libespm/espm.h"
+#include <map>
 #include <memory>
 #include <optional>
 #include <set>
@@ -38,6 +39,9 @@ public:
   espm::ObjectBounds GetBounds() const;
   const std::vector<FormDesc>& GetTemplateChain() const;
   bool IsCreatedAsPlayer() const;
+
+  bool ShouldSkipRestoration() const noexcept;
+  void UpdateNextRestorationTime(std::chrono::seconds duration) noexcept;
 
   void SetRaceMenuOpen(bool isOpen);
   void SetAppearance(const Appearance* newAppearance);
@@ -165,6 +169,7 @@ private:
     espm::Loader& loader,
     ChangeFormGuard::Mode mode = ChangeFormGuard::Mode::RequestSave);
 
+  std::map<uint32_t, uint32_t> EvaluateDeathItem();
   void AddDeathItem();
 
 protected:

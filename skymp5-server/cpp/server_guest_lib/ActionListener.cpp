@@ -13,7 +13,6 @@
 #include "MsgType.h"
 #include "UserMessageOutput.h"
 #include "WorldState.h"
-#include "papyrus-vm/Utils.h"
 #include "script_objects/EspmGameObject.h"
 #include <fmt/format.h>
 #include <spdlog/spdlog.h>
@@ -265,33 +264,6 @@ void ActionListener::OnActivate(const RawMessageData& rawMsgData,
   }
 }
 
-namespace {
-bool IsCantDrop(WorldState* worldState, uint32_t baseId)
-{
-  auto lookupRes = worldState->GetEspm().GetBrowser().LookupById(baseId);
-
-  if (!lookupRes.rec) {
-    return false;
-  }
-
-  const auto keywordIds =
-    lookupRes.rec->GetKeywordIds(worldState->GetEspmCache());
-
-  for (auto keywordId : keywordIds) {
-    auto keywordIdGlobal = lookupRes.ToGlobalId(keywordId);
-    auto rec =
-      worldState->GetEspm().GetBrowser().LookupById(keywordIdGlobal).rec;
-    if (rec &&
-        !Utils::stricmp(rec->GetEditorId(worldState->GetEspmCache()),
-                        "SweetCantDrop")) {
-      return true;
-    }
-  }
-
-  return false;
-}
-}
-
 void ActionListener::OnPutItem(const RawMessageData& rawMsgData,
                                uint32_t target, const Inventory::Entry& entry)
 {
@@ -306,7 +278,7 @@ void ActionListener::OnPutItem(const RawMessageData& rawMsgData,
     return spdlog::error("No WorldState attached");
   }
 
-  if (IsCantDrop(worldState, entry.baseId)) {
+  if (worldState->HasKeyword(entry.baseId, "SweetCantDrop")) {
     return spdlog::error("Attempt to put SweetCantDrop item {:x}",
                          actor->GetFormId());
   }
@@ -328,7 +300,7 @@ void ActionListener::OnTakeItem(const RawMessageData& rawMsgData,
     return spdlog::error("No WorldState attached");
   }
 
-  if (IsCantDrop(worldState, entry.baseId)) {
+  if (worldState->HasKeyword(entry.baseId, "SweetCantDrop")) {
     return spdlog::error("Attempt to take SweetCantDrop item {:x}",
                          actor->GetFormId());
   }
@@ -350,12 +322,45 @@ void ActionListener::OnDropItem(const RawMessageData& rawMsgData,
     return spdlog::error("No WorldState attached");
   }
 
-  if (IsCantDrop(worldState, entry.baseId)) {
+  if (worldState->HasKeyword(entry.baseId, "SweetCantDrop")) {
     return spdlog::error("Attempt to drop SweetCantDrop item {:x}",
                          ac->GetFormId());
   }
 
   ac->DropItem(baseId, entry);
+}
+
+void ActionListener::OnPlayerBowShot(const RawMessageData& rawMsgData,
+                                     uint32_t weaponId, uint32_t ammoId,
+                                     float power, bool isSunGazing)
+{
+  MpActor* ac = partOne.serverState.ActorByUser(rawMsgData.userId);
+  if (!ac) {
+    return spdlog::error("Unable to shot from user with id: {}.",
+                         rawMsgData.userId);
+  }
+
+  auto worldState = ac->GetParent();
+
+  if (!worldState) {
+    return;
+  }
+
+  auto ammoLookupRes = worldState->GetEspm().GetBrowser().LookupById(ammoId);
+
+  if (!ammoLookupRes.rec) {
+    return spdlog::error("ActionListener::OnPlayerBowShot {:x} - unable to "
+                         "find espm record for {:x}",
+                         ac->GetFormId(), ammoId);
+  }
+
+  if (ammoLookupRes.rec->GetType().ToString() != "AMMO") {
+    return spdlog::error(
+      "ActionListener::OnPlayerBowShot {:x} - unable to shot not an ammo {:x}",
+      ac->GetFormId(), ammoId);
+  }
+
+  ac->RemoveItem(ammoId, 1, nullptr);
 }
 
 namespace {
@@ -607,6 +612,11 @@ void ActionListener::OnChangeValues(const RawMessageData& rawMsgData,
   if (!actor) {
     throw std::runtime_error("Unable to change values without Actor attached");
   }
+
+  if (actor->ShouldSkipRestoration()) {
+    return;
+  }
+
   auto now = std::chrono::steady_clock::now();
 
   float timeAfterRegeneration = CropPeriodAfterLastRegen(
