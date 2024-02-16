@@ -3,7 +3,7 @@
 #include "ConstEnumApi.h"
 
 void ConstEnumApi::Register(JsValue& exports,
-                            std::shared_ptr<JsEngine>& jsEngine)
+                            std::shared_ptr<JsEngine> jsEngine)
 {
   auto MarkerType = JsValue::Object();
   MarkerType.SetProperty(0, "None");
