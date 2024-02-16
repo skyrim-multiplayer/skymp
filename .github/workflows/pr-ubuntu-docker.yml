@@ -147,7 +147,8 @@ jobs:
           - name: SP Const Enums Check
             run: |
               cd skyrim-platform/tools/const_enum_extractor
-              yarn install
+              ls -la
+              sudo yarn install
               node ./index.js
               # Checking if ConstEnumApi.cpp has changed
               git diff --exit-code skyrim-platform/src/platform_se/skyrim_platform/ConstEnumApi.cpp
