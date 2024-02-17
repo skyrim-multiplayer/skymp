@@ -3,6 +3,7 @@
 #include "CallNativeApi.h" // CallNativeApi::NativeCallRequirements
 #include "CameraApi.h"
 #include "ConsoleApi.h" // CommonExecutionListener
+#include "ConstEnumApi.h"
 #include "DevApi.h"
 #include "DirectoryMonitor.h"
 #include "EncodingApi.h"
@@ -206,6 +207,7 @@ private:
                            FileInfoApi::Register(e);
                            TextApi::Register(e);
                            InventoryApi::Register(e);
+                           ConstEnumApi::Register(e, engine);
                            CallNativeApi::Register(
                              e, [this] { return nativeCallRequirements; });
                            e.SetProperty("settings", getSettings, nullptr);
