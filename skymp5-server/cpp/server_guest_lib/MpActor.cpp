@@ -1506,8 +1506,8 @@ void MpActor::ApplyMagicEffect(espm::Effects::Effect& effect, bool hasSweetpie,
       }
       spdlog::trace("Final multiplicator is {}", mult);
       spdlog::trace("The result of baseValue * mult is: {}*{}={}", baseValue,
-                    mult, baseValue * (2 + mult));
-      SetActorValue(av, baseValue * (2 + mult));
+                    mult, baseValue * (mult * 2));
+      SetActorValue(av, baseValue * (mult * 2));
     }
   }
 }
