@@ -616,7 +616,7 @@ TEST_CASE("Regress test for 'Record ff00b5de doesn't exist'",
   // REQUIRE(actor.GetInventory().GetItemCount(0x0000B5DE) == 1);
 }
 
-TEST_CASE("Regress: LvlGiant mustn't have Fox race health'", "[PartOne][espm]")
+TEST_CASE("Regress: LvlGiant mustn't have Fox race health", "[PartOne][espm]")
 {
   auto& partOne = GetPartOne();
   partOne.worldState.npcEnabled = true;
