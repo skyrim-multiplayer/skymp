@@ -196,40 +196,78 @@ async function fetchServerSettings(): Promise<any> {
       path: '', // Adjust if you're targeting a specific directory
     });
 
-    if (Array.isArray(data)) {
-      for (const file of data) {
-        if ('name' in file && file.name.endsWith('.json')) {
-          if (regex.test(file.name)) {
-            // Fetch individual file content if it matches the regex
-            const fileData = await octokit.repos.getContent({
-              owner,
-              repo: repoName,
-              ref,
-              path: file.path,
-            });
+    const onFile = async (file: { path: string, name: string }) => {
+      if (file.name.endsWith('.json')) {
+        if (regex.test(file.path)) {
+          // Fetch individual file content if it matches the regex
+          const fileData = await octokit.repos.getContent({
+            owner,
+            repo: repoName,
+            ref,
+            path: file.path,
+          });
 
-            if ('content' in fileData.data && typeof fileData.data.content === 'string') {
-              // Decode Base64 content and parse JSON
-              const content = Buffer.from(fileData.data.content, 'base64').toString('utf-8');
-              const jsonContent = JSON.parse(content);
-              //console.log(jsonContent);
-              // Merge or handle the JSON content as needed
-              console.log(`Merging "${file.name}"`);
+          if ('content' in fileData.data && typeof fileData.data.content === 'string') {
+            // Decode Base64 content and parse JSON
+            const content = Buffer.from(fileData.data.content, 'base64').toString('utf-8');
+            const jsonContent = JSON.parse(content);
+            //console.log(jsonContent);
+            // Merge or handle the JSON content as needed
+            console.log(`Merging "${file.path}"`);
 
-              serverSettings = lodash.merge(serverSettings, jsonContent);
-            }
-            else {
-              throw new Error(`Expected content to be an array (${file.name})`);
-            }
+            serverSettings = lodash.merge(serverSettings, jsonContent);
           }
           else {
-            console.log(`Ignoring "${file.name}"`);
+            throw new Error(`Expected content to be an array (${file.path})`);
           }
+        }
+        else {
+          console.log(`Ignoring "${file.path}"`);
+        }
+      }
+    }
+
+    const onDir = async (file: { path: string, name: string }) => {
+      const { data } = await octokit.repos.getContent({
+        owner,
+        repo: repoName,
+        ref,
+        path: file.path,
+      });
+
+      if (Array.isArray(data)) {
+        for (const item of data) {
+          if (item.type === "file") {
+            await onFile(item);
+          }
+          else if (item.type === "dir") {
+            await onDir(item);
+          }
+          else {
+            console.warn(`Skipping unsupported item type ${item.type} (${item.path})`);
+          }
+        }
+      }
+      else {
+        throw new Error(`Expected data to be an array (${file.path})`);
+      }
+    }
+
+    if (Array.isArray(data)) {
+      for (const item of data) {
+        if (item.type === "file") {
+          await onFile(item);
+        }
+        else if (item.type === "dir") {
+          await onDir(item);
+        }
+        else {
+          console.warn(`Skipping unsupported item type ${item.type} (${item.path})`);
         }
       }
     }
     else {
-      throw new Error(`Expected data to be an array`);
+      throw new Error(`Expected data to be an array (root)`);
     }
   }
 
