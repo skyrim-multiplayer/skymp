@@ -117,7 +117,7 @@ systems.push(
   new DiscordBanSystem()
 );
 
-const setupStreams = (server: scampNative.ScampServer) => {
+const setupStreams = (scampNative: any) => {
   class LogsStream {
     constructor(private logLevel: string) {
     }
@@ -126,7 +126,7 @@ const setupStreams = (server: scampNative.ScampServer) => {
       // @ts-ignore
       const str = chunk.toString(encoding);
       if (str.trim().length > 0) {
-        server.writeLogs(this.logLevel, str);
+        scampNative.writeLogs(this.logLevel, str);
       }
       callback();
     }
@@ -148,15 +148,17 @@ async function fetchServerSettings(): Promise<any> {
   // Load server-settings.json
   const settingsPath = 'server-settings.json';
   const rawSettings = fs.readFileSync(settingsPath, 'utf8');
-  let serverSettings = JSON.parse(rawSettings);
+  let serverSettingsFile = JSON.parse(rawSettings);
 
-  const additionalServerSettings = serverSettings.additionalServerSettings || [];
+  let serverSettings = {};
+
+  const additionalServerSettings = serverSettingsFile.additionalServerSettings || [];
 
   for (let i = 0; i < additionalServerSettings.length; ++i) {
 
     console.log(`Fetching additional server settings ${i + 1} / ${additionalServerSettings.length}`);
 
-    const { type, repo, ref, token, pathRegex } = serverSettings.additionalServerSettings[i];
+    const { type, repo, ref, token, pathRegex } = serverSettingsFile.additionalServerSettings[i];
 
     if (typeof type !== "string") {
       throw new Error(`Expected additionalServerSettings[${i}].type to be string`);
@@ -211,7 +213,6 @@ async function fetchServerSettings(): Promise<any> {
             // Decode Base64 content and parse JSON
             const content = Buffer.from(fileData.data.content, 'base64').toString('utf-8');
             const jsonContent = JSON.parse(content);
-            //console.log(jsonContent);
             // Merge or handle the JSON content as needed
             console.log(`Merging "${file.path}"`);
 
@@ -271,15 +272,20 @@ async function fetchServerSettings(): Promise<any> {
     }
   }
 
+  console.log(`Merging "server-settings.json" (original settings file)`);
+  serverSettings = lodash.merge(serverSettings, serverSettingsFile);
 
   if (JSON.stringify(serverSettings) !== JSON.stringify(JSON.parse(rawSettings))) {
     console.log("Dumping server-settings-dump.json for debugging");
     fs.writeFileSync("server-settings-dump.json", JSON.stringify(serverSettings, null, 2));
   }
+
   return serverSettings;
 }
 
 const main = async () => {
+  setupStreams(scampNative.getScampNative());
+
   manifestGen.generateManifest(Settings.get());
   ui.main();
 
@@ -296,7 +302,6 @@ const main = async () => {
   }
   const ctx = { svr: server, gm: new EventEmitter() };
 
-  setupStreams(server);
   console.log(`Current process ID is ${pid}`);
 
   (async () => {

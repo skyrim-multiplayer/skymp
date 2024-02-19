@@ -79,7 +79,6 @@ Napi::Object ScampServer::Init(Napi::Env env, Napi::Object exports)
       InstanceMethod("setEnabled", &ScampServer::SetEnabled),
       InstanceMethod("createBot", &ScampServer::CreateBot),
       InstanceMethod("getUserByActor", &ScampServer::GetUserByActor),
-      InstanceMethod("writeLogs", &ScampServer::WriteLogs),
       InstanceMethod("getUserIp", &ScampServer::GetUserIp),
 
       InstanceMethod("getLocalizedString", &ScampServer::GetLocalizedString),
@@ -110,7 +109,33 @@ Napi::Object ScampServer::Init(Napi::Env env, Napi::Object exports)
   constructor = Napi::Persistent(func);
   constructor.SuppressDestruct();
   exports.Set("ScampServer", func);
+
+  exports.Set("writeLogs", Napi::Function::New(env, WriteLogs));
   return exports;
+}
+
+Napi::Value ScampServer::WriteLogs(const Napi::CallbackInfo& info)
+{
+  try {
+    Napi::String logLevel = info[0].As<Napi::String>();
+    Napi::String message = info[1].As<Napi::String>();
+
+    auto messageStr = static_cast<std::string>(message);
+    while (!messageStr.empty() && messageStr.back() == '\n') {
+      messageStr.pop_back();
+    }
+
+    if (static_cast<std::string>(logLevel) == "info") {
+      GetLogger()->info(messageStr);
+    } else if (static_cast<std::string>(logLevel) == "error") {
+      GetLogger()->error(messageStr);
+    }
+  } catch (std::exception& e) {
+    // No sense to rethrow, NodeJS will unlikely be able to print this
+    // exception
+    GetLogger()->error("ScampServer::WriteLogs - {}", e.what());
+  }
+  return info.Env().Undefined();
 }
 
 ScampServer::ScampServer(const Napi::CallbackInfo& info)
@@ -601,30 +626,6 @@ Napi::Value ScampServer::GetUserByActor(const Napi::CallbackInfo& info)
     return Napi::Number::New(info.Env(), partOne->GetUserByActor(formId));
   } catch (std::exception& e) {
     throw Napi::Error::New(info.Env(), (std::string)e.what());
-  }
-  return info.Env().Undefined();
-}
-
-Napi::Value ScampServer::WriteLogs(const Napi::CallbackInfo& info)
-{
-  try {
-    Napi::String logLevel = info[0].As<Napi::String>();
-    Napi::String message = info[1].As<Napi::String>();
-
-    auto messageStr = static_cast<std::string>(message);
-    while (!messageStr.empty() && messageStr.back() == '\n') {
-      messageStr.pop_back();
-    }
-
-    if (static_cast<std::string>(logLevel) == "info") {
-      GetLogger()->info(messageStr);
-    } else if (static_cast<std::string>(logLevel) == "error") {
-      GetLogger()->error(messageStr);
-    }
-  } catch (std::exception& e) {
-    // No sense to rethrow, NodeJS will unlikely be able to print this
-    // exception
-    GetLogger()->error("ScampServer::WriteLogs - {}", e.what());
   }
   return info.Env().Undefined();
 }
