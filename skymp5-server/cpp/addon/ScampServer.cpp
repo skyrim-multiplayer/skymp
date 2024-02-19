@@ -124,6 +124,9 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
     Napi::Number port = info[0].As<Napi::Number>(),
                  maxConnections = info[1].As<Napi::Number>();
 
+    std::string serverSettingsJson =
+      static_cast<std::string>(info[2].As<Napi::String>());
+
     serverMock = std::make_shared<Networking::MockServer>();
 
     std::string dataDir;
@@ -131,15 +134,7 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
     const auto& logger = GetLogger();
     partOne->AttachLogger(logger);
 
-    std::ifstream f("server-settings.json");
-    if (!f.good()) {
-      throw std::runtime_error("server-settings.json is missing");
-    }
-
-    std::stringstream buffer;
-    buffer << f.rdbuf();
-
-    auto serverSettings = nlohmann::json::parse(buffer.str());
+    auto serverSettings = nlohmann::json::parse(serverSettingsJson);
 
     if (serverSettings.find("weaponStaminaModifiers") !=
         serverSettings.end()) {

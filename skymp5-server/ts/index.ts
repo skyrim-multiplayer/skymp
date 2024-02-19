@@ -30,6 +30,8 @@ import * as os from "os";
 import * as manifestGen from "./manifestGen";
 import { DiscordBanSystem } from "./systems/discordBanSystem";
 import { createScampServer } from "./scampNative";
+import { Octokit } from "@octokit/rest";
+import * as lodash from "lodash";
 
 const {
   master,
@@ -142,6 +144,103 @@ const setupStreams = (server: scampNative.ScampServer) => {
   };
 };
 
+async function fetchServerSettings(): Promise<any> {
+  // Load server-settings.json
+  const settingsPath = 'server-settings.json';
+  const rawSettings = fs.readFileSync(settingsPath, 'utf8');
+  let serverSettings = JSON.parse(rawSettings);
+
+  const additionalServerSettings = serverSettings.additionalServerSettings || [];
+
+  for (let i = 0; i < additionalServerSettings.length; ++i) {
+
+    console.log(`Fetching additional server settings ${i + 1} / ${additionalServerSettings.length}`);
+
+    const { type, repo, ref, token, pathRegex } = serverSettings.additionalServerSettings[i];
+
+    if (typeof type !== "string") {
+      throw new Error(`Expected additionalServerSettings[${i}].type to be string`);
+    }
+
+    if (type !== "github") {
+      throw new Error(`Expected additionalServerSettings[${i}].type to be one of ["github"], but got ${type}`);
+    }
+
+    if (typeof repo !== "string") {
+      throw new Error(`Expected additionalServerSettings[${i}].repo to be string`);
+    }
+    if (typeof ref !== "string") {
+      throw new Error(`Expected additionalServerSettings[${i}].ref to be string`);
+    }
+    if (typeof token !== "string") {
+      throw new Error(`Expected additionalServerSettings[${i}].token to be string`);
+    }
+    if (typeof pathRegex !== "string") {
+      throw new Error(`Expected additionalServerSettings[${i}].pathRegex to be string`);
+    }
+
+    console.log(`Fetching settings from "${repo}" at ref "${ref}" with path regex ${pathRegex}`);
+
+    const regex = new RegExp(pathRegex);
+
+    const octokit = new Octokit({ auth: token });
+
+    // Split the repo string to extract owner and repo name
+    const [owner, repoName] = repo.split('/');
+
+    // List repository contents at specified ref
+    const { data } = await octokit.repos.getContent({
+      owner,
+      repo: repoName,
+      ref,
+      path: '', // Adjust if you're targeting a specific directory
+    });
+
+    if (Array.isArray(data)) {
+      for (const file of data) {
+        if ('name' in file && file.name.endsWith('.json')) {
+          if (regex.test(file.name)) {
+            // Fetch individual file content if it matches the regex
+            const fileData = await octokit.repos.getContent({
+              owner,
+              repo: repoName,
+              ref,
+              path: file.path,
+            });
+
+            if ('content' in fileData.data && typeof fileData.data.content === 'string') {
+              // Decode Base64 content and parse JSON
+              const content = Buffer.from(fileData.data.content, 'base64').toString('utf-8');
+              const jsonContent = JSON.parse(content);
+              //console.log(jsonContent);
+              // Merge or handle the JSON content as needed
+              console.log(`Merging "${file.name}"`);
+
+              serverSettings = lodash.merge(serverSettings, jsonContent);
+            }
+            else {
+              throw new Error(`Expected content to be an array (${file.name})`);
+            }
+          }
+          else {
+            console.log(`Ignoring "${file.name}"`);
+          }
+        }
+      }
+    }
+    else {
+      throw new Error(`Expected data to be an array`);
+    }
+  }
+
+
+  if (JSON.stringify(serverSettings) !== JSON.stringify(JSON.parse(rawSettings))) {
+    console.log("Dumping server-settings-dump.json for debugging");
+    fs.writeFileSync("server-settings-dump.json", JSON.stringify(serverSettings, null, 2));
+  }
+  return serverSettings;
+}
+
 const main = async () => {
   manifestGen.generateManifest(Settings.get());
   ui.main();
@@ -149,7 +248,8 @@ const main = async () => {
   let server: any;
 
   try {
-    server = createScampServer(port, maxPlayers);
+    const serverSettings = await fetchServerSettings();
+    server = createScampServer(port, maxPlayers, serverSettings);
   }
   catch (e) {
     console.error(e);
