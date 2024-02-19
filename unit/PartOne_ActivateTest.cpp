@@ -615,3 +615,22 @@ TEST_CASE("Regress test for 'Record ff00b5de doesn't exist'",
   // TODO: Why 0???
   // REQUIRE(actor.GetInventory().GetItemCount(0x0000B5DE) == 1);
 }
+
+TEST_CASE("Regress: LvlGiant mustn't have Fox race health'", "[PartOne][espm]")
+{
+  auto& partOne = GetPartOne();
+  partOne.worldState.npcEnabled = true;
+  partOne.Messages().clear();
+
+  const auto refrId = 0x000ecf8a;
+
+  auto& actor = partOne.worldState.GetFormAt<MpActor>(refrId);
+
+  uint32_t baseId = actor.GetBaseId();
+  uint32_t raceId = actor.GetRaceId();
+
+  auto baseActorValues = GetBaseActorValues(&partOne.worldState, baseId,
+                                            raceId, actor.GetTemplateChain());
+
+  REQUIRE(baseActorValues.health == 250.f);
+}
