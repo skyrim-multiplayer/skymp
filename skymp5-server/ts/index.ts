@@ -146,7 +146,16 @@ const main = async () => {
   manifestGen.generateManifest(Settings.get());
   ui.main();
 
-  const server = createScampServer(port, maxPlayers);
+  let server: any;
+
+  try {
+    server = createScampServer(port, maxPlayers);
+  }
+  catch (e) {
+    console.error(e);
+    console.error(`Stopping the server due to the previous error`);
+    process.exit(-1);
+  }
   const ctx = { svr: server, gm: new EventEmitter() };
 
   setupStreams(server);
