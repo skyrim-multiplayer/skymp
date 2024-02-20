@@ -1,7 +1,8 @@
 import { FormView } from "./formView";
-import { GamemodeApiSupport } from "../gamemodeApi/gamemodeApiSupport";
 import { FormModel, WorldModel } from "./model";
 import { Movement, NiPoint3 } from "../sync/movement";
+import { SpApiInteractor } from "../services/spApiInteractor";
+import { GamemodeUpdateService } from "../services/services/gamemodeUpdateService";
 
 export class FormViewArray {
   updateForm(form: FormModel, i: number) {
@@ -27,7 +28,9 @@ export class FormViewArray {
   }
 
   updateAll(model: WorldModel, showMe: boolean, isCloneView: boolean) {
-    GamemodeApiSupport.setFormViewArray(this);
+    const gamemodeUpdateService = SpApiInteractor.getControllerInstance().lookupListener(GamemodeUpdateService);
+    gamemodeUpdateService.setFormViewArray(this);
+
     const forms = model.forms;
     const n = forms.length;
     for (let i = 0; i < n; ++i) {
@@ -59,7 +62,7 @@ export class FormViewArray {
           form.isHostedByOther = backup;
         }
       } else {
-        GamemodeApiSupport.setI(i);
+        gamemodeUpdateService.setI(i);
         this.updateForm(form, i);
       }
 

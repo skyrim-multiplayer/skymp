@@ -5,7 +5,6 @@ import {
   settings,
   storage,
 } from 'skyrimPlatform';
-import * as updateOwner from '../../gamemodeApi/updateOwner';
 import * as networking from './networkingService';
 import { RemoteServer } from './remoteServer';
 import { setupHooks } from '../../sync/animation';
@@ -96,9 +95,6 @@ export class SkympClient extends ClientListener {
 
     // TODO: refactor into service
     setupHooks();
-
-    // TODO: refactor updateOwner into service
-    updateOwner.setup();
 
     this.sp.printConsole('SkympClient ctor');
   }
