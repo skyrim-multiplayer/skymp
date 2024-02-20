@@ -376,7 +376,7 @@ To automate the fetching of the latest server settings from GitHub, configure th
       "type": "github",
       "repo": "your-org/server-settings-repo",
       "ref": "main", // Specify the branch, tag, or commit hash here
-      "pathRegex": ".*\\.json$", // Regex to match .json files
+      "pathRegex": "^(common|indev)/.*", // No need to check for .json extension
       "token": "YOUR_GITHUB_PERSONAL_ACCESS_TOKEN"
     }
   ]
