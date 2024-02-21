@@ -34,10 +34,10 @@ DamageMultFormula::Settings ParseConfig(const nlohmann::json& config)
 }
 
 DamageMultFormula::DamageMultFormula(
-  std::unique_ptr<IDamageFormula> baseFormula_, const nlohmann::json& config)
+  std::unique_ptr<IDamageFormula> baseFormula_, const nlohmann::json& config_)
   : baseFormula(std::move(baseFormula_))
 {
-  settings = ParseConfig(config);
+  settings = ParseConfig(config_);
 }
 
 float DamageMultFormula::CalculateDamage(const MpActor& aggressor,
