@@ -739,6 +739,11 @@ ActivePexInstance::TransformInstructions(
         // TODO?
         dereferenceStart = 0;
         break;
+      case OpcodesImplementation::Opcodes::op_PropGet:
+      case OpcodesImplementation::Opcodes::op_PropSet:
+        // Do not dereference property name
+        dereferenceStart = 1;
+        break;
       default:
         dereferenceStart = 0;
         break;
