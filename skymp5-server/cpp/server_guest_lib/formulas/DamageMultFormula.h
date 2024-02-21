@@ -16,7 +16,7 @@ public:
 public:
   struct Settings
   {
-    float multiplier = 1.f;
+    float multiplier = 2.f;
   };
 
 private:
