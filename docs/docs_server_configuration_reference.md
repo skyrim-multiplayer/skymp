@@ -365,7 +365,7 @@ In case this field is not provided, some default, yet hardcoded, values are in u
 }
 ```
 ## damageMultFormula
-This setting allows to control server damage mult formula through its variables.
+This setting allows you to control server damage mult formula through its variables.
 If "damageMultFormula" is not present, the server will use some default values.
 
 ```json5
