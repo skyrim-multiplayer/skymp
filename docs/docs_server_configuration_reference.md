@@ -364,14 +364,14 @@ In case this field is not provided, some default, yet hardcoded, values are in u
   // ...
 }
 ```
-## damageMultFormula
+## damageMultFormulaSettings
 This setting allows you to control server damage mult formula through its variables.
-If "damageMultFormula" is not present, the server will use some default values.
+If "damageMultFormulaSettings" is not present, the server will use some default values.
 
 ```json5
 {
   // ...
-  "damageMultFormula": {
+  "damageMultFormulaSettings": {
     "multiplier": 1.0
   }
   // ...

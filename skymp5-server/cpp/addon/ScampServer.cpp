@@ -292,7 +292,7 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
       serverSettings["sweetPieDamageFormulaSettings"];
 
     auto damageMultFormulaSettings =
-      serverSettings.at("damageMultFormulaSettings").get<nlohmann::json>();
+      serverSettings["damageMultFormulaSettings"];
 
     std::unique_ptr<IDamageFormula> formula;
     formula = std::make_unique<TES5DamageFormula>();
