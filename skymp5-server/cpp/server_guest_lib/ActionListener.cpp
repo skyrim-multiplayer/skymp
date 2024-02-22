@@ -20,6 +20,23 @@
 
 #include "UpdateEquipmentMessage.h"
 
+namespace {
+void SendHostStop(PartOne& partOne, Networking::UserId badHosterUserId,
+                  MpObjectReference& remote)
+{
+  auto remoteAsActor = dynamic_cast<MpActor*>(&remote);
+
+  uint64_t longFormId = remote.GetFormId();
+  if (remoteAsActor && longFormId < 0xff000000) {
+    longFormId += 0x100000000;
+  }
+
+  Networking::SendFormatted(&partOne.GetSendTarget(), badHosterUserId,
+                            R"({ "type": "hostStop", "target": %llu })",
+                            longFormId);
+}
+}
+
 MpActor* ActionListener::SendToNeighbours(
   uint32_t idx, const simdjson::dom::element& jMessage,
   Networking::UserId userId, Networking::PacketData data, size_t length,
@@ -49,6 +66,7 @@ MpActor* ActionListener::SendToNeighbours(
       }
       spdlog::error("SendToNeighbours - No permission to update actor {:x}",
                     actor->GetFormId());
+      SendHostStop(partOne, userId, *actor);
       return nullptr;
     }
   }
@@ -540,6 +558,10 @@ void ActionListener::OnHostAttempt(const RawMessageData& rawMsgData,
                              me->GetFormId());
     hoster = me->GetFormId();
     remote.UpdateHoster(hoster);
+
+    // Prevents too fast host switch
+    partOne.worldState.lastMovUpdateByIdx[remoteIdx] =
+      std::chrono::system_clock::now();
 
     auto remoteAsActor = dynamic_cast<MpActor*>(&remote);
 
