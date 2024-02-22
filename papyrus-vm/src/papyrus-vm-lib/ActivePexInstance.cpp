@@ -521,9 +521,9 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
               }
             }
           }
-          // spdlog::trace("propget propName={} object={} result={}",
-          //               args[0]->ToString(), args[1]->ToString(),
-          //               args[2]->ToString());
+          spdlog::trace("propget propName={} object={} result={}",
+                        args[0]->ToString(), args[1]->ToString(),
+                        args[2]->ToString());
         }
       }
       break;
@@ -607,9 +607,9 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
               }
             }
           }
-          // spdlog::trace("propset propName={} object={} result={}",
-          //               args[0]->ToString(), args[1]->ToString(),
-          //               args[2]->ToString());
+          spdlog::trace("propset propName={} object={} result={}",
+                        args[0]->ToString(), args[1]->ToString(),
+                        args[2]->ToString());
         }
       }
       break;
