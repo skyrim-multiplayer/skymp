@@ -291,9 +291,13 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
     auto sweetPieDamageFormulaSettings =
       serverSettings["sweetPieDamageFormulaSettings"];
 
+    auto damageMultFormulaSettings =
+      serverSettings["damageMultFormulaSettings"];
+
     std::unique_ptr<IDamageFormula> formula;
     formula = std::make_unique<TES5DamageFormula>();
-    formula = std::make_unique<DamageMultFormula>(std::move(formula));
+    formula = std::make_unique<DamageMultFormula>(std::move(formula),
+                                                  damageMultFormulaSettings);
     formula = std::make_unique<SweetPieDamageFormula>(
       std::move(formula), sweetPieDamageFormulaSettings);
     partOne->SetDamageFormula(std::move(formula));
