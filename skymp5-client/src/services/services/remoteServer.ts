@@ -155,10 +155,6 @@ on('update', () => {
   }
 });
 
-export function setPcInvLastApply(value: number) {
-  pcInvLastApply = value;
-}
-
 const unequipIronHelmet = () => {
   const ironHelment = Armor.from(Game.getFormEx(0x00012e4d));
   const pl = Game.getPlayer();

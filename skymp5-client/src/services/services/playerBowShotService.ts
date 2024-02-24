@@ -2,7 +2,6 @@ import { Ammo, Game, PlayerBowShotEvent, WeaponType } from "skyrimPlatform";
 import { ClientListener, CombinedController, Sp } from "./clientListener";
 import { MsgType } from "../../messages";
 import { getEquipment } from "../../sync/equipment";
-import { setPcInvLastApply } from "./remoteServer";
 import { QueryBlockSetInventoryEvent } from "../events/queryBlockSetInventoryEvent";
 
 export class PlayerBowShotService extends ClientListener {
