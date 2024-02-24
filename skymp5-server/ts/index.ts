@@ -26,6 +26,7 @@ import * as fs from "fs";
 import * as chokidar from "chokidar";
 import * as path from "path";
 import * as os from "os";
+import * as crypto from "crypto";
 
 import * as manifestGen from "./manifestGen";
 import { DiscordBanSystem } from "./systems/discordBanSystem";
@@ -182,7 +183,7 @@ async function fetchServerSettings(): Promise<any> {
   const rawSettings = fs.readFileSync(settingsPath, 'utf8');
   let serverSettingsFile = JSON.parse(rawSettings);
 
-  let serverSettings = {};
+  let serverSettings: Record<string, unknown> = {};
 
   const additionalServerSettings = serverSettingsFile.additionalServerSettings || [];
 
@@ -222,9 +223,16 @@ async function fetchServerSettings(): Promise<any> {
     dumpFileNameSuffix += `-${commitHash}`;
   }
 
-  const dumpFileName = `server-settings-dump${dumpFileNameSuffix}.json`;
+  const dumpFileName = `server-settings-dump.json`;
 
-  if (fs.existsSync(dumpFileName)) {
+  const readDump: Record<string, unknown> | undefined = fs.existsSync(dumpFileName) ? JSON.parse(fs.readFileSync(dumpFileName, 'utf-8')) : undefined;
+
+  let readDumpNoSha512 = structuredClone(readDump);
+  delete readDumpNoSha512['_sha512_'];
+
+  const expectedSha512 = crypto.createHash('sha512').update(JSON.stringify(readDumpNoSha512)).digest('hex');
+
+  if (readDump && readDump["_meta_"] === dumpFileNameSuffix && readDump["_sha512_"] === expectedSha512) {
     console.log(`Loading settings dump from ${dumpFileName}`);
     serverSettings = JSON.parse(fs.readFileSync(dumpFileName, 'utf-8'));
   }
@@ -348,6 +356,8 @@ async function fetchServerSettings(): Promise<any> {
 
     if (JSON.stringify(serverSettings) !== JSON.stringify(JSON.parse(rawSettings))) {
       console.log(`Dumping ${dumpFileName} for cache and debugging`);
+      serverSettings["_meta_"] = dumpFileNameSuffix;
+      serverSettings["_sha512_"] = crypto.createHash('sha512').update(JSON.stringify(serverSettings)).digest('hex');
       fs.writeFileSync(dumpFileName, JSON.stringify(serverSettings, null, 2));
     }
   }
