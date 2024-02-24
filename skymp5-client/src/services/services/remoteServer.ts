@@ -155,6 +155,10 @@ on('update', () => {
   }
 });
 
+export function setPcInvLastApply(value: number) {
+  pcInvLastApply = value;
+}
+
 const unequipIronHelmet = () => {
   const ironHelment = Armor.from(Game.getFormEx(0x00012e4d));
   const pl = Game.getPlayer();
@@ -233,7 +237,16 @@ export class RemoteServer extends ClientListener {
     const msg = event.message;
     once('update', () => {
       setPcInventory(msg.inventory);
-      pcInvLastApply = 0;
+
+      let blocked = false;
+
+      this.controller.emitter.emit('queryBlockSetInventoryEvent', {
+        block: () => blocked = true
+      });
+
+      if (!blocked) {
+        pcInvLastApply = 0;
+      }
     });
   }
 
