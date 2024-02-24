@@ -144,6 +144,38 @@ const setupStreams = (scampNative: any) => {
   };
 };
 
+/**
+ * Resolves a Git ref to a commit hash if it's not already a commit hash.
+ */
+async function resolveRefToCommitHash(octokit: Octokit, owner: string, repo: string, ref: string): Promise<string> {
+  // Check if `ref` is already a 40-character hexadecimal string (commit hash).
+  if (/^[a-f0-9]{40}$/i.test(ref)) {
+    return ref; // It's already a commit hash.
+  }
+
+  // Attempt to resolve the ref as both a branch and a tag.
+  try {
+    // First, try to resolve it as a branch.
+    return await getCommitHashFromRef(octokit, owner, repo, `heads/${ref}`);
+  } catch (error) {
+    try {
+      // If the branch resolution fails, try to resolve it as a tag.
+      return await getCommitHashFromRef(octokit, owner, repo, `tags/${ref}`);
+    } catch (tagError) {
+      throw new Error('Could not resolve ref to commit hash.');
+    }
+  }
+}
+
+async function getCommitHashFromRef(octokit: Octokit, owner: string, repo: string, ref: string): Promise<string> {
+  const { data } = await octokit.git.getRef({
+    owner,
+    repo,
+    ref,
+  });
+  return data.object.sha;
+}
+
 async function fetchServerSettings(): Promise<any> {
   // Load server-settings.json
   const settingsPath = 'server-settings.json';
@@ -154,9 +186,10 @@ async function fetchServerSettings(): Promise<any> {
 
   const additionalServerSettings = serverSettingsFile.additionalServerSettings || [];
 
-  for (let i = 0; i < additionalServerSettings.length; ++i) {
+  let dumpFileNameSuffix = '';
 
-    console.log(`Fetching additional server settings ${i + 1} / ${additionalServerSettings.length}`);
+  for (let i = 0; i < additionalServerSettings.length; ++i) {
+    console.log(`Verifying additional server settings source ${i + 1} / ${additionalServerSettings.length}`);
 
     const { type, repo, ref, token, pathRegex } = serverSettingsFile.additionalServerSettings[i];
 
@@ -181,60 +214,103 @@ async function fetchServerSettings(): Promise<any> {
       throw new Error(`Expected additionalServerSettings[${i}].pathRegex to be string`);
     }
 
-    console.log(`Fetching settings from "${repo}" at ref "${ref}" with path regex ${pathRegex}`);
-
-    const regex = new RegExp(pathRegex);
-
     const octokit = new Octokit({ auth: token });
 
-    // Split the repo string to extract owner and repo name
     const [owner, repoName] = repo.split('/');
 
-    // List repository contents at specified ref
-    const { data } = await octokit.repos.getContent({
-      owner,
-      repo: repoName,
-      ref,
-      path: '', // Adjust if you're targeting a specific directory
-    });
+    const commitHash = await resolveRefToCommitHash(octokit, owner, repoName, ref);
+    dumpFileNameSuffix += `-${commitHash}`;
+  }
 
-    const onFile = async (file: { path: string, name: string }) => {
-      if (file.name.endsWith('.json')) {
-        if (regex.test(file.path)) {
-          // Fetch individual file content if it matches the regex
-          const fileData = await octokit.repos.getContent({
-            owner,
-            repo: repoName,
-            ref,
-            path: file.path,
-          });
+  const dumpFileName = `server-settings-dump${dumpFileNameSuffix}.json`;
 
-          if ('content' in fileData.data && typeof fileData.data.content === 'string') {
-            // Decode Base64 content and parse JSON
-            const content = Buffer.from(fileData.data.content, 'base64').toString('utf-8');
-            const jsonContent = JSON.parse(content);
-            // Merge or handle the JSON content as needed
-            console.log(`Merging "${file.path}"`);
+  if (fs.existsSync(dumpFileName)) {
+    console.log(`Loading settings dump from ${dumpFileName}`);
+    serverSettings = JSON.parse(fs.readFileSync(dumpFileName, 'utf-8'));
+  }
+  else {
+    for (let i = 0; i < additionalServerSettings.length; ++i) {
 
-            serverSettings = lodash.merge(serverSettings, jsonContent);
-          }
-          else {
-            throw new Error(`Expected content to be an array (${file.path})`);
-          }
-        }
-        else {
-          console.log(`Ignoring "${file.path}"`);
-        }
-      }
-    }
+      const { repo, ref, token, pathRegex } = serverSettingsFile.additionalServerSettings[i];
 
-    const onDir = async (file: { path: string, name: string }) => {
-      const { data } = await octokit.repos.getContent({
+      console.log(`Fetching settings from "${repo}" at ref "${ref}" with path regex ${pathRegex}`);
+
+      const regex = new RegExp(pathRegex);
+
+      const octokit = new Octokit({ auth: token });
+
+      const [owner, repoName] = repo.split('/');
+
+      // List repository contents at specified ref
+      const rootContent = await octokit.repos.getContent({
         owner,
         repo: repoName,
         ref,
-        path: file.path,
+        path: '',
       });
+
+      const { data } = rootContent;
+
+      const rateLimitRemainingInitial = parseInt(rootContent.headers["x-ratelimit-remaining"]) + 1;
+      let rateLimitRemaining = 0;
+
+      const onFile = async (file: { path: string, name: string }) => {
+        if (file.name.endsWith('.json')) {
+          if (regex.test(file.path)) {
+            // Fetch individual file content if it matches the regex
+            const fileData = await octokit.repos.getContent({
+              owner,
+              repo: repoName,
+              ref,
+              path: file.path,
+            });
+            rateLimitRemaining = parseInt(fileData.headers["x-ratelimit-remaining"]);
+
+            if ('content' in fileData.data && typeof fileData.data.content === 'string') {
+              // Decode Base64 content and parse JSON
+              const content = Buffer.from(fileData.data.content, 'base64').toString('utf-8');
+              const jsonContent = JSON.parse(content);
+              // Merge or handle the JSON content as needed
+              console.log(`Merging "${file.path}"`);
+
+              serverSettings = lodash.merge(serverSettings, jsonContent);
+            }
+            else {
+              throw new Error(`Expected content to be an array (${file.path})`);
+            }
+          }
+          else {
+            console.log(`Ignoring "${file.path}"`);
+          }
+        }
+      }
+
+      const onDir = async (file: { path: string, name: string }) => {
+        const fileData = await octokit.repos.getContent({
+          owner,
+          repo: repoName,
+          ref,
+          path: file.path,
+        });
+        rateLimitRemaining = parseInt(fileData.headers["x-ratelimit-remaining"]);
+
+        if (Array.isArray(fileData.data)) {
+          for (const item of fileData.data) {
+            if (item.type === "file") {
+              await onFile(item);
+            }
+            else if (item.type === "dir") {
+              await onDir(item);
+            }
+            else {
+              console.warn(`Skipping unsupported item type ${item.type} (${item.path})`);
+            }
+          }
+        }
+        else {
+          throw new Error(`Expected data to be an array (${file.path})`);
+        }
+      }
 
       if (Array.isArray(data)) {
         for (const item of data) {
@@ -250,34 +326,30 @@ async function fetchServerSettings(): Promise<any> {
         }
       }
       else {
-        throw new Error(`Expected data to be an array (${file.path})`);
+        throw new Error(`Expected data to be an array (root)`);
+      }
+
+      console.log(`Rate limit spent: ${rateLimitRemainingInitial - rateLimitRemaining}, remaining: ${rateLimitRemaining}`);
+
+      const xRateLimitReset = rootContent.headers["x-ratelimit-reset"];
+      const resetDate = new Date(parseInt(xRateLimitReset, 10) * 1000);
+      const currentDate = new Date();
+      if (resetDate > currentDate) {
+        console.log("The rate limit will reset in the future");
+        const secondsUntilReset = (resetDate.getTime() - currentDate.getTime()) / 1000;
+        console.log(`Seconds until reset: ${secondsUntilReset}`);
+      } else {
+        console.log("The rate limit has already been reset");
       }
     }
 
-    if (Array.isArray(data)) {
-      for (const item of data) {
-        if (item.type === "file") {
-          await onFile(item);
-        }
-        else if (item.type === "dir") {
-          await onDir(item);
-        }
-        else {
-          console.warn(`Skipping unsupported item type ${item.type} (${item.path})`);
-        }
-      }
-    }
-    else {
-      throw new Error(`Expected data to be an array (root)`);
-    }
-  }
+    console.log(`Merging "server-settings.json" (original settings file)`);
+    serverSettings = lodash.merge(serverSettings, serverSettingsFile);
 
-  console.log(`Merging "server-settings.json" (original settings file)`);
-  serverSettings = lodash.merge(serverSettings, serverSettingsFile);
-
-  if (JSON.stringify(serverSettings) !== JSON.stringify(JSON.parse(rawSettings))) {
-    console.log("Dumping server-settings-dump.json for debugging");
-    fs.writeFileSync("server-settings-dump.json", JSON.stringify(serverSettings, null, 2));
+    if (JSON.stringify(serverSettings) !== JSON.stringify(JSON.parse(rawSettings))) {
+      console.log(`Dumping ${dumpFileName} for cache and debugging`);
+      fs.writeFileSync(dumpFileName, JSON.stringify(serverSettings, null, 2));
+    }
   }
 
   return serverSettings;
