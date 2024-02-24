@@ -233,7 +233,16 @@ export class RemoteServer extends ClientListener {
     const msg = event.message;
     once('update', () => {
       setPcInventory(msg.inventory);
-      pcInvLastApply = 0;
+
+      let blocked = false;
+
+      this.controller.emitter.emit('queryBlockSetInventoryEvent', {
+        block: () => blocked = true
+      });
+
+      if (!blocked) {
+        pcInvLastApply = 0;
+      }
     });
   }
 

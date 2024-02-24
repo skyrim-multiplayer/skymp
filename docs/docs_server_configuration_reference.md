@@ -371,6 +371,7 @@ To automate the fetching of the latest server settings from GitHub, configure th
 
 ```json5
 {
+  // ...
   "additionalServerSettings": [
     {
       "type": "github",
@@ -380,5 +381,20 @@ To automate the fetching of the latest server settings from GitHub, configure th
       "token": "YOUR_GITHUB_PERSONAL_ACCESS_TOKEN"
     }
   ]
+  // ...
+}
+```
+
+## damageMultFormulaSettings
+This setting allows you to control server damage mult formula through its variables.
+If "damageMultFormulaSettings" is not present, the server will use some default values.
+
+```json5
+{
+  // ...
+  "damageMultFormulaSettings": {
+    "multiplier": 1.0
+  }
+  // ...
 }
 ```
