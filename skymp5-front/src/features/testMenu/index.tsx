@@ -4,10 +4,10 @@ import { FrameButton } from '../../components/FrameButton/FrameButton';
 import content, { levels } from './content';
 import './styles.scss';
 import { SkyrimHint } from '../../components/SkyrimHint/SkyrimHint';
-import hoverSound from './assets/OnCoursor.wav';
-import quitSound from './assets/Quit.wav';
-import selectSound from './assets/ButtonDown.wav';
-import learnSound from './assets/LearnSkill.wav';
+//import hoverSound from './assets/OnCoursor.wav';
+//import quitSound from './assets/Quit.wav';
+//import selectSound from './assets/ButtonDown.wav';
+//import learnSound from './assets/LearnSkill.wav';
 import { IPlayerData } from '../../interfaces/skillMenu';
 
 const TestMenu = ({ send }: { send: (message: string) => void }) => {
@@ -38,10 +38,6 @@ const TestMenu = ({ send }: { send: (message: string) => void }) => {
     if (el) {
       el.style.display = 'flex';
     }
-    const audio = document
-      .getElementById('quitSound')
-      .cloneNode(true) as HTMLAudioElement;
-    audio.play();
     setplayerData(undefined);
     send('/skill quit');
   };
@@ -206,18 +202,6 @@ const TestMenu = ({ send }: { send: (message: string) => void }) => {
           </div>
         </div>
         <SkyrimFrame width={1720} height={1004} name="perkSystem" />
-        <audio id="hoverSound">
-          <source src={hoverSound}></source>
-        </audio>
-        <audio id="learnSound">
-          <source src={learnSound}></source>
-        </audio>
-        <audio id="selectSound">
-          <source src={selectSound}></source>
-        </audio>
-        <audio id="quitSound">
-          <source src={quitSound}></source>
-        </audio>
       </div>
     </div>
   );
