@@ -42,6 +42,7 @@ export class SkympClient extends ClientListener {
 
     this.controller.emitter.on("createActorMessage", (e) => this.onActorCreateMessage(e));
 
+    // TODO: refactor out very similar code in frontHotReloadService.ts
     const authGameData = storage[AuthGameData.storageKey] as AuthGameData | undefined;
 
     const storageHasValidAuthGameData = authGameData?.local || authGameData?.remote;
