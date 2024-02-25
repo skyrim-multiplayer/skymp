@@ -463,6 +463,17 @@ export class RemoteServer extends ClientListener {
     }
 
     if (msg.isMe) {
+      if (msg.props?.isDead) {
+        once("update", () => {
+          this.controller.emitter.emit("applyDeathStateEvent", {
+            actor: Game.getPlayer()!,
+            isDead: true
+          });
+        });
+      }
+    }
+
+    if (msg.isMe) {
       const spawnTask = { running: false };
       once('update', () => {
         // Use MoveRefrToPosition to spawn if possible (not in main menu)
