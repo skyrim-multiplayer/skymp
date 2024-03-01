@@ -228,9 +228,11 @@ async function fetchServerSettings(): Promise<any> {
   const readDump: Record<string, unknown> | undefined = fs.existsSync(dumpFileName) ? JSON.parse(fs.readFileSync(dumpFileName, 'utf-8')) : undefined;
 
   let readDumpNoSha512 = structuredClone(readDump);
-  delete readDumpNoSha512['_sha512_'];
+  if (readDumpNoSha512) {
+    delete readDumpNoSha512['_sha512_'];
+  }
 
-  const expectedSha512 = crypto.createHash('sha512').update(JSON.stringify(readDumpNoSha512)).digest('hex');
+  const expectedSha512 = readDumpNoSha512 ? crypto.createHash('sha512').update(JSON.stringify(readDumpNoSha512)).digest('hex') : '';
 
   if (readDump && readDump["_meta_"] === dumpFileNameSuffix && readDump["_sha512_"] === expectedSha512) {
     console.log(`Loading settings dump from ${dumpFileName}`);
@@ -351,9 +353,6 @@ async function fetchServerSettings(): Promise<any> {
       }
     }
 
-    console.log(`Merging "server-settings.json" (original settings file)`);
-    serverSettings = lodash.merge(serverSettings, serverSettingsFile);
-
     if (JSON.stringify(serverSettings) !== JSON.stringify(JSON.parse(rawSettings))) {
       console.log(`Dumping ${dumpFileName} for cache and debugging`);
       serverSettings["_meta_"] = dumpFileNameSuffix;
@@ -361,6 +360,9 @@ async function fetchServerSettings(): Promise<any> {
       fs.writeFileSync(dumpFileName, JSON.stringify(serverSettings, null, 2));
     }
   }
+
+  console.log(`Merging "server-settings.json" (original settings file)`);
+  serverSettings = lodash.merge(serverSettings, serverSettingsFile);
 
   return serverSettings;
 }
