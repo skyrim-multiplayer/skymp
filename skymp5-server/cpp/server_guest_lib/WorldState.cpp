@@ -437,18 +437,18 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
     if (worldRecord) {
       isExterior = true;
     }
-    uint32_t npcFileIdx = GetFileIdx(baseId);
+    uint32_t npcFileIdx = GetFileIdx(formId);
     if (npcFileIdx >= espmFiles.size()) {
       spdlog::error("NPC's idx is greater than espmFiles.size(). NPC's"
-                    "baseId "
+                    "formId "
                     "{:#x}, espmFiles size: {}",
-                    baseId, espmFiles.size());
+                    formId, espmFiles.size());
       if (optionalOutTrace) {
         *optionalOutTrace
           << fmt::format("NPC's idx is greater than espmFiles.size(). NPC's"
-                         "baseId "
+                         "formId "
                          "{:#x}, espmFiles size: {}",
-                         baseId, espmFiles.size())
+                         formId, espmFiles.size())
           << std::endl;
       }
       return false;
@@ -473,14 +473,14 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
         (!spawnInExterior || !isExterior)) {
       spdlog::trace(
         "Unable to spawn npc because of "
-        "rules applied in server settings: spanwInInterior={}, "
+        "rules applied in server settings: spawnInInterior={}, "
         "spawnInExterior={}, NPC location: exterior={}, interior={}",
         spawnInInterior, spawnInExterior, isExterior, isInterior);
       if (optionalOutTrace) {
         *optionalOutTrace
           << fmt::format(
                "Unable to spawn npc because of "
-               "rules applied in server settings: spanwInInterior={}, "
+               "rules applied in server settings: spawnInInterior={}, "
                "spawnInExterior={}, NPC location: exterior={}, interior={}",
                spawnInInterior, spawnInExterior, isExterior, isInterior)
           << std::endl;
