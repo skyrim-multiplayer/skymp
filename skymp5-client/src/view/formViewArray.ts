@@ -31,18 +31,19 @@ export class FormViewArray {
     const forms = model.forms;
     const n = forms.length;
     for (let i = 0; i < n; ++i) {
-      if (!forms[i] || (model.playerCharacterFormIdx === i && !showMe)) {
+      const form = forms[i];
+
+      if (!form || (model.playerCharacterFormIdx === i && !showMe)) {
         this.destroyForm(i);
         continue;
       }
-      const form = forms[i];
 
-      let realPos: NiPoint3 = undefined as unknown as NiPoint3;
-      const offset =
-        form.movement && (model.playerCharacterFormIdx === i || isCloneView);
-      if (offset) {
-        realPos = (form.movement as Movement).pos;
-        (form.movement as Movement).pos = [
+      let realPos: NiPoint3 | undefined = undefined;
+      const offset = model.playerCharacterFormIdx === i || isCloneView;
+
+      if (offset && form.movement) {
+        realPos = form.movement.pos;
+        form.movement.pos = [
           realPos[0] + 128,
           realPos[1] + 128,
           realPos[2],
@@ -63,8 +64,8 @@ export class FormViewArray {
         this.updateForm(form, i);
       }
 
-      if (offset) {
-        (form.movement as Movement).pos = realPos as NiPoint3;
+      if (offset && form.movement && realPos) {
+        form.movement.pos = realPos;
       }
     }
   }
