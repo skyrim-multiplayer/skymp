@@ -24,7 +24,6 @@ std::pair<std::wstring, std::wstring> GetHashAndHostnameFromFileName(
     }
     return { hash, hostname };
   } else {
-    // Если не удалось извлечь хеш, возвращаем пустую строку
     return { L"", L"" };
   }
 }
@@ -40,7 +39,6 @@ std::pair<std::wstring, std::wstring> GetHashAndHostname()
 
   std::wstring fullPath({ std::begin(filePath), std::end(filePath) });
 
-  // Ищем последний бэкслеш в пути, чтобы отделить имя файла
   size_t lastBackslashIndex = fullPath.find_last_of(L"\\");
   std::wstring fileName = fullPath.substr(lastBackslashIndex + 1);
 
