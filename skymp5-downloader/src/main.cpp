@@ -1,28 +1,73 @@
 #include <fstream>
 #include <httplib.h>
+#include <regex>
 #include <sstream>
 #include <thread>
 #include <windows.h>
 
 #include <commctrl.h>
 
-constexpr auto HOSTNAME = "sweettaffy.b-cdn.net";
+constexpr auto HOSTNAME_DEFAULT = L"sweettaffy.b-cdn.net";
 
-// Constants for file URLs and paths
-const char* URLS[] = {
-  "https://sweettaffy.b-cdn.net/InstallSkyMP-0d0b740.exe",
-  "https://sweettaffy.b-cdn.net/InstallSkyMP-0d0b740-1.bin",
-  "https://sweettaffy.b-cdn.net/InstallSkyMP-0d0b740-2.bin"
-};
+std::pair<std::wstring, std::wstring> GetHashAndHostnameFromFileName(
+  const std::wstring& fileName)
+{
+  // Install SkyMP [ffff12fff-indev].exe
+  std::wregex re(L".* \\[([0-9a-fA-F]+)(-[0-9a-zA-Z]*|)\\].*\\.exe");
+  std::wsmatch matches;
 
-const char* FILES[] = { "InstallSkyMP-0d0b740.exe",
-                        "InstallSkyMP-0d0b740-1.bin",
-                        "InstallSkyMP-0d0b740-2.bin" };
+  if (std::regex_search(fileName, matches, re)) {
+    std::wstring hash = matches[1].str();
+    std::wstring hostname = matches[2].str();
+    if (hostname.size() > 0) {
+      hostname = { hostname.begin() + 1, hostname.end() };
+    }
+    return { hash, hostname };
+  } else {
+    // Если не удалось извлечь хеш, возвращаем пустую строку
+    return { L"", L"" };
+  }
+}
+
+std::pair<std::wstring, std::wstring> GetHashAndHostname()
+{
+  char filePath[MAX_PATH];
+  if (GetModuleFileName(NULL, filePath, MAX_PATH) == 0) {
+    MessageBoxA(0, "Failed to get module file name.", "Error",
+                MB_OK | MB_ICONERROR);
+    std::exit(0);
+  }
+
+  std::wstring fullPath({ std::begin(filePath), std::end(filePath) });
+
+  // Ищем последний бэкслеш в пути, чтобы отделить имя файла
+  size_t lastBackslashIndex = fullPath.find_last_of(L"\\");
+  std::wstring fileName = fullPath.substr(lastBackslashIndex + 1);
+
+  auto [hash, hostname] = GetHashAndHostnameFromFileName(fileName);
+
+  if (hash == L"" && hostname == L"") {
+    MessageBoxA(0, "Failed to extract hash and hostname from file name.",
+                "Error", MB_OK | MB_ICONERROR);
+    std::exit(0);
+  }
+
+  if (hostname == L"") {
+    hostname = HOSTNAME_DEFAULT;
+  }
+
+  if (hostname == L"indev") {
+    hostname = L"sweettaffy-indev.b-cdn.net";
+  }
+
+  return { hash, hostname };
+}
 
 // Function Declarations
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
-void DownloadFile(const std::string& url, const std::string& path,
-                  HWND hwndProgressBar, int fileIndex, int numFiles);
+void DownloadFile(const std::string& hostname, const std::string& url,
+                  const std::string& path, HWND hwndProgressBar, int fileIndex,
+                  int numFiles);
 
 // Global variables for window handles, etc.
 HWND hwndProgressBar;
@@ -40,10 +85,33 @@ void CreateMainWindow(HINSTANCE hInstance);
 void CreateProgressBar(HWND hwndParent);
 DiskSpaceCheckResult CheckDiskSpace(const std::string& directoryPath);
 
+void SwitchCurrentDirectoryToExeParentFolder()
+{
+  wchar_t exePath[MAX_PATH] = { 0 };
+
+  if (GetModuleFileNameW(NULL, exePath, MAX_PATH) == 0) {
+    MessageBoxA(0, "GetModuleFileNameW failed", "Error", MB_OK | MB_ICONERROR);
+    std::exit(0);
+  }
+
+  wchar_t* lastBackslash = wcsrchr(exePath, L'\\');
+  if (lastBackslash != NULL) {
+    *lastBackslash = 0;
+  }
+
+  if (!SetCurrentDirectoryW(exePath)) {
+    MessageBoxA(0, "Error setting current directory", "Error",
+                MB_OK | MB_ICONERROR);
+    std::exit(0);
+  }
+}
+
 // Main function
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
                    PSTR szCmdLine, int iCmdShow)
 {
+  SwitchCurrentDirectoryToExeParentFolder();
+
   // Initialize common controls
   INITCOMMONCONTROLSEX icc;
   icc.dwSize = sizeof(INITCOMMONCONTROLSEX);
@@ -80,13 +148,49 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
         break;
     }
 
-    for (int i = 0; i < std::size(URLS); ++i) {
-      DownloadFile(URLS[i], FILES[i], hwndProgressBar, i, std::size(URLS));
+    auto [hash, hostname] = GetHashAndHostname();
+
+    // Download exe
+    std::string exeUrl = "https://" +
+      std::string(hostname.begin(), hostname.end()) + "/" + "InstallSkyMP-" +
+      std::string(hash.begin(), hash.end()) + ".exe";
+    std::string exePath =
+      "InstallSkyMP-" + std::string(hash.begin(), hash.end()) + ".exe";
+    DownloadFile(std::string(hostname.begin(), hostname.end()), exeUrl,
+                 exePath, hwndProgressBar, 1, 1);
+
+    // Download bins till 404 error
+    int binIndex = 1;
+    while (true) {
+      std::string binUrl = "https://" +
+        std::string(hostname.begin(), hostname.end()) + "/" + "InstallSkyMP-" +
+        std::string(hash.begin(), hash.end()) + "-" +
+        std::to_string(binIndex) + ".bin";
+      std::string binPath = "InstallSkyMP-" +
+        std::string(hash.begin(), hash.end()) + "-" +
+        std::to_string(binIndex) + ".bin";
+
+      httplib::Client cli(std::string(hostname.begin(), hostname.end()));
+      auto res = cli.Head(binUrl.c_str());
+
+      if (res) {
+        if (res->status == 404) {
+          break;
+        }
+      } else {
+        MessageBoxA(0, "Failed to download file. No response from server.",
+                    "Error", MB_OK | MB_ICONERROR);
+        break;
+      }
+
+      DownloadFile(std::string(hostname.begin(), hostname.end()), binUrl,
+                   binPath, hwndProgressBar, binIndex, 1);
+      binIndex++;
     }
 
     // Execute the downloaded file
     HINSTANCE hInst =
-      ShellExecuteA(NULL, "open", FILES[0], NULL, NULL, SW_SHOWNORMAL);
+      ShellExecuteA(NULL, "open", exePath.data(), NULL, NULL, SW_SHOWNORMAL);
 
     // Cast to an error code
     int errorCode = (int)(uintptr_t)hInst;
@@ -212,10 +316,11 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
   return 0;
 }
 
-void DownloadFile(const std::string& url, const std::string& path,
-                  HWND hwndProgressBar, int fileIndex, int numFiles)
+void DownloadFile(const std::string& hostname, const std::string& url,
+                  const std::string& path, HWND hwndProgressBar, int fileIndex,
+                  int numFiles)
 {
-  httplib::Client cli(HOSTNAME);
+  httplib::Client cli(hostname);
   std::ofstream outFile(path, std::ios::binary);
 
   if (!outFile) {
@@ -224,10 +329,13 @@ void DownloadFile(const std::string& url, const std::string& path,
     return;
   }
 
+  size_t totalLen = 0;
+
   auto res = cli.Get(
     url.c_str(),
     [&](const char* data, size_t len) {
       outFile.write(data, len);
+      totalLen += len;
 
       if (!outFile.good()) {
         MessageBoxA(0, "Failed to write data to file.", "Error",
@@ -265,6 +373,8 @@ void DownloadFile(const std::string& url, const std::string& path,
         "Failed to download file. Server responded with status code: " +
         std::to_string(res->status);
       MessageBoxA(0, errorMessage.c_str(), "Error", MB_OK | MB_ICONERROR);
+
+      remove(path.c_str());
     }
     // Additional checks for other HTTP statuses can be handled here
   } else {
