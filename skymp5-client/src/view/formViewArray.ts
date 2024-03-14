@@ -1,7 +1,7 @@
 import { FormView } from "./formView";
 import { GamemodeApiSupport } from "../gamemodeApi/gamemodeApiSupport";
 import { FormModel, WorldModel } from "./model";
-import { Movement, NiPoint3 } from "../sync/movement";
+import { NiPoint3 } from "../sync/movement";
 
 export class FormViewArray {
   updateForm(form: FormModel, i: number) {
@@ -14,9 +14,11 @@ export class FormViewArray {
   }
 
   destroyForm(i: number) {
-    if (!this.formViews[i]) return;
-    this.formViews[i].destroy();
-    this.formViews[i] = undefined as unknown as FormView;
+    const formView = this.formViews[i];
+    if (formView === undefined) return;
+
+    formView.destroy();
+    this.formViews[i] = undefined;
   }
 
   resize(newSize: number) {
@@ -82,7 +84,7 @@ export class FormViewArray {
   getRemoteRefrId(clientsideRefrId: number): number {
     if (clientsideRefrId < 0xff000000)
       throw new Error("This function is only for 0xff forms");
-    const formView = this.formViews.find((formView: FormView) => {
+    const formView = this.formViews.find((formView?: FormView) => {
       return formView && formView.getLocalRefrId() === clientsideRefrId;
     });
     return formView ? formView.getRemoteRefrId() : 0;
@@ -91,7 +93,7 @@ export class FormViewArray {
   getLocalRefrId(remoteRefrId: number): number {
     if (remoteRefrId < 0xff000000)
       throw new Error("This function is only for 0xff forms");
-    const formView = this.formViews.find((formView: FormView) => {
+    const formView = this.formViews.find((formView?: FormView) => {
       return formView && formView.getRemoteRefrId() === remoteRefrId;
     });
     return formView ? formView.getLocalRefrId() : 0;
@@ -101,5 +103,5 @@ export class FormViewArray {
     return this.formViews[i];
   }
 
-  private formViews = new Array<FormView>();
+  private formViews = new Array<FormView | undefined>();
 }
