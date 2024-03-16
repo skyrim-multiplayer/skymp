@@ -43,6 +43,7 @@ import { NetInfoService } from "./services/services/netInfoService";
 import { AnimDebugService } from "./services/services/animDebugService";
 import { TimersService } from "./services/services/timersService";
 import { PlayerBowShotService } from "./services/services/playerBowShotService";
+import { FrontHotReloadService } from "./services/services/frontHotReloadService";
 
 once("update", () => {
   Utility.setINIBool("bAlwaysActive:General", true);
@@ -89,7 +90,8 @@ const main = () => {
       new NetInfoService(sp, controller),
       new AnimDebugService(sp, controller),
       new TimersService(sp, controller),
-      new PlayerBowShotService(sp, controller)
+      new PlayerBowShotService(sp, controller),
+      new FrontHotReloadService(sp, controller)
     ];
     SpApiInteractor.setup(listeners);
   }

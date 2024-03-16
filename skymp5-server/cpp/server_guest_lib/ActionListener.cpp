@@ -20,6 +20,23 @@
 
 #include "UpdateEquipmentMessage.h"
 
+namespace {
+void SendHostStop(PartOne& partOne, Networking::UserId badHosterUserId,
+                  MpObjectReference& remote)
+{
+  auto remoteAsActor = dynamic_cast<MpActor*>(&remote);
+
+  uint64_t longFormId = remote.GetFormId();
+  if (remoteAsActor && longFormId < 0xff000000) {
+    longFormId += 0x100000000;
+  }
+
+  Networking::SendFormatted(&partOne.GetSendTarget(), badHosterUserId,
+                            R"({ "type": "hostStop", "target": %llu })",
+                            longFormId);
+}
+}
+
 MpActor* ActionListener::SendToNeighbours(
   uint32_t idx, const simdjson::dom::element& jMessage,
   Networking::UserId userId, Networking::PacketData data, size_t length,
@@ -49,6 +66,7 @@ MpActor* ActionListener::SendToNeighbours(
       }
       spdlog::error("SendToNeighbours - No permission to update actor {:x}",
                     actor->GetFormId());
+      SendHostStop(partOne, userId, *actor);
       return nullptr;
     }
   }
@@ -541,6 +559,10 @@ void ActionListener::OnHostAttempt(const RawMessageData& rawMsgData,
     hoster = me->GetFormId();
     remote.UpdateHoster(hoster);
 
+    // Prevents too fast host switch
+    partOne.worldState.lastMovUpdateByIdx[remoteIdx] =
+      std::chrono::system_clock::now();
+
     auto remoteAsActor = dynamic_cast<MpActor*>(&remote);
 
     if (remoteAsActor) {
@@ -777,8 +799,8 @@ bool IsDistanceValid(const MpActor& actor, const MpActor& targetActor,
   return reach * reach > sqrDistance;
 }
 
-bool IsAvailableForNextAttack(const MpActor& actor, const HitData& hitData,
-                              const std::chrono::duration<float>& timePassed)
+bool CanHit(const MpActor& actor, const HitData& hitData,
+            const std::chrono::duration<float>& timePassed)
 {
   WorldState* espmProvider = actor.GetParent();
   auto weapDNAM =
@@ -887,10 +909,10 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
 
   auto& targetActor = *targetActorPtr;
 
-  auto lastHitTime = targetActor.GetLastHitTime();
+  auto lastHitTime = aggressor->GetLastHitTime();
   std::chrono::duration<float> timePassed = currentHitTime - lastHitTime;
 
-  if (!IsAvailableForNextAttack(targetActor, hitData, timePassed)) {
+  if (!CanHit(*aggressor, hitData, timePassed)) {
     WorldState* espmProvider = targetActor.GetParent();
     auto weapDNAM =
       espm::GetData<espm::WEAP>(hitData.source, espmProvider).weapDNAM;
@@ -988,7 +1010,7 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
     : currentActorValues.healthPercentage;
 
   targetActor.NetSetPercentages(currentActorValues, aggressor);
-  targetActor.SetLastHitTime();
+  aggressor->SetLastHitTime();
 
   spdlog::debug("Target {0:x} is hitted by {1} damage. Percentage was: {3}, "
                 "percentage now: {2}, base health: {4})",

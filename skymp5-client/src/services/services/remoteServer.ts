@@ -233,7 +233,16 @@ export class RemoteServer extends ClientListener {
     const msg = event.message;
     once('update', () => {
       setPcInventory(msg.inventory);
-      pcInvLastApply = 0;
+
+      let blocked = false;
+
+      this.controller.emitter.emit('queryBlockSetInventoryEvent', {
+        block: () => blocked = true
+      });
+
+      if (!blocked) {
+        pcInvLastApply = 0;
+      }
     });
   }
 
@@ -371,7 +380,7 @@ export class RemoteServer extends ClientListener {
       };
     }
 
-    this.worldModel.forms[i] = {
+    const form: FormModel = {
       idx: msg.idx,
       movement,
       numMovementChanges: 0,
@@ -380,27 +389,28 @@ export class RemoteServer extends ClientListener {
       refrId: msg.refrId,
       isMyClone: msg.isMe,
     };
+    this.worldModel.forms[i] = form;
+
     if (msg.isMe) {
-      updateOwner.setOwnerModel(this.worldModel.forms[i]);
+      updateOwner.setOwnerModel(form);
     }
 
     if (msg.appearance) {
-      this.worldModel.forms[i].appearance = msg.appearance;
+      form.appearance = msg.appearance;
     }
 
     if (msg.equipment) {
-      this.worldModel.forms[i].equipment = msg.equipment;
+      form.equipment = msg.equipment;
     }
 
     if (msg.isDead) {
-      this.worldModel.forms[i].isDead = msg.isDead;
+      form.isDead = msg.isDead;
     }
 
     if (msg.props) {
       for (const propName in msg.props) {
         const i = this.getIdManager().getId(msg.idx);
-        (this.worldModel.forms[i] as Record<string, unknown>)[propName] =
-          msg.props[propName];
+        (form as Record<string, unknown>)[propName] = msg.props[propName];
       }
     }
 
@@ -451,6 +461,17 @@ export class RemoteServer extends ClientListener {
           }
         });
       });
+    }
+
+    if (msg.isMe) {
+      if (msg.props?.isDead) {
+        once("update", () => {
+          this.controller.emitter.emit("applyDeathStateEvent", {
+            actor: Game.getPlayer()!,
+            isDead: true
+          });
+        });
+      }
     }
 
     if (msg.isMe) {
@@ -592,7 +613,7 @@ export class RemoteServer extends ClientListener {
     const msg = event.message;
 
     const i = this.getIdManager().getId(msg.idx);
-    this.worldModel.forms[i] = null as unknown as FormModel;
+    this.worldModel.forms[i] = undefined;
     getViewFromStorage()?.syncFormArray(this.worldModel);
 
     // Shrink to fit
@@ -617,29 +638,50 @@ export class RemoteServer extends ClientListener {
     const msg = event.message;
 
     const i = this.getIdManager().getId(msg.idx);
-    this.worldModel.forms[i].movement = msg.data;
-    if (!this.worldModel.forms[i].numMovementChanges) {
-      this.worldModel.forms[i].numMovementChanges = 0;
+
+    const form = this.worldModel.forms[i];
+
+    if (form === undefined) {
+      return this.logError(`onUpdateMovementMessage - Form with idx ${msg.idx} not found`);
     }
-    (this.worldModel.forms[i].numMovementChanges as number)++;
+
+    form.movement = msg.data;
+    if (!form.numMovementChanges) {
+      form.numMovementChanges = 0;
+    }
+    form.numMovementChanges++;
   }
 
   private onUpdateAnimationMessage(event: ConnectionMessage<UpdateAnimationMessage>): void {
     const msg = event.message;
 
     const i = this.getIdManager().getId(msg.idx);
-    this.worldModel.forms[i].animation = msg.data;
+
+    const form = this.worldModel.forms[i];
+
+    if (form === undefined) {
+      return this.logError(`onUpdateAnimationMessage - Form with idx ${msg.idx} not found`);
+    }
+
+    form.animation = msg.data;
   }
 
   private onUpdateAppearanceMessage(event: ConnectionMessage<UpdateAppearanceMessage>): void {
     const msg = event.message;
 
     const i = this.getIdManager().getId(msg.idx);
-    this.worldModel.forms[i].appearance = msg.data || undefined;
-    if (!this.worldModel.forms[i].numAppearanceChanges) {
-      this.worldModel.forms[i].numAppearanceChanges = 0;
+
+    const form = this.worldModel.forms[i];
+
+    if (form === undefined) {
+      return this.logError(`onUpdateAppearanceMessage - Form with idx ${msg.idx} not found`);
     }
-    (this.worldModel.forms[i].numAppearanceChanges as number)++;
+
+    form.appearance = msg.data || undefined;
+    if (!form.numAppearanceChanges) {
+      form.numAppearanceChanges = 0;
+    }
+    form.numAppearanceChanges++;
 
     const newAppearance = msg.data;
 
@@ -655,7 +697,14 @@ export class RemoteServer extends ClientListener {
     const msg = event.message;
 
     const i = this.getIdManager().getId(msg.idx);
-    this.worldModel.forms[i].equipment = msg.data;
+
+    const form = this.worldModel.forms[i];
+
+    if (form === undefined) {
+      return this.logError(`onUpdateEquipmentMessage - Form with idx ${msg.idx} not found`);
+    }
+
+    form.equipment = msg.data;
   }
 
   private onUpdatePropertyMessage(event: ConnectionMessage<UpdatePropertyMessage>): void {
@@ -689,9 +738,15 @@ export class RemoteServer extends ClientListener {
   private onDeathStateContainerMessage(event: ConnectionMessage<DeathStateContainerMessage>): void {
     const msg = event.message;
 
-    once('update', () =>
-      printConsole(`Received death state: ${JSON.stringify(msg.tIsDead)}`),
-    );
+    this.logTrace(`Received death state: ${JSON.stringify(msg.tIsDead)}`);
+
+    const id = this.getIdManager().getId(msg.tIsDead.idx);
+    const form = this.worldModel.forms[id];
+
+    if (form === undefined) {
+      return this.logError(`onDeathStateContainerMessage - Form with idx ${msg.tIsDead.idx} not found`);
+    }
+
     if (
       msg.tIsDead.propName !== nameof<FormModel>('isDead') ||
       typeof msg.tIsDead.data !== 'boolean'
@@ -707,8 +762,6 @@ export class RemoteServer extends ClientListener {
       this.onTeleportMessage({ message: msg.tTeleport });
     }
 
-    const id = this.getIdManager().getId(msg.tIsDead.idx);
-    const form = this.worldModel.forms[id];
     once('update', () => {
       const actor =
         id === this.getWorldModel().playerCharacterFormIdx
