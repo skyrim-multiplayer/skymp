@@ -90,7 +90,7 @@ jobs:
 
                 git remote add patches /home/runner/work/skymp5-patches
                 git fetch patches
-                git merge patches/main --no-edit
+                git merge patches/main2 --no-edit
 
                 echo ""
                 echo "=== Changes since $base_rev:"
