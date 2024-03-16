@@ -453,7 +453,11 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
       return false;
     }
 
-    if (race == 0x000e7713 || race == 0x00012e82 || race == 0x001052a3 || race == 0x00088884 || race == 0x0008883a || race == 0x00088846 || race == 0x00108272 || race == 0x000a82b9 || race == 0x0008883c || race == 0x00088794 || race == 0x00088845 || race == 0x0008883d || race == 0x00088844 || race == 0x00088840 || race == 0x000a82ba) {
+    if (race == 0x000e7713 || race == 0x00012e82 || race == 0x001052a3 ||
+        race == 0x00088884 || race == 0x0008883a || race == 0x00088846 ||
+        race == 0x00108272 || race == 0x000a82b9 || race == 0x0008883c ||
+        race == 0x00088794 || race == 0x00088845 || race == 0x0008883d ||
+        race == 0x00088844 || race == 0x00088840 || race == 0x000a82ba) {
       logger->info("Skipping actor {:#x} because it has banned race {:#x}",
                    record->GetId(), race);
       if (optionalOutTrace) {
