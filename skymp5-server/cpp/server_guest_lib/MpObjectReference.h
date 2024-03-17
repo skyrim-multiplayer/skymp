@@ -203,6 +203,8 @@ private:
   void ProcessActivate(MpObjectReference& activationSource);
   void ActivateChilds();
   bool MpApiOnActivate(MpObjectReference& caster);
+  bool MpApiOnPutItem(MpActor& source, const Inventory::Entry& entry);
+  bool MpApiOnTakeItem(MpActor& source, const Inventory::Entry& entry);
 
   bool everSubscribedOrListened = false;
   std::unique_ptr<std::set<MpObjectReference*>> listeners;

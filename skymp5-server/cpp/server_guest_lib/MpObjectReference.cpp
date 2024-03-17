@@ -1748,3 +1748,43 @@ void MpObjectReference::BeforeDestroy()
 
   RemoveFromGridAndUnsubscribeAll();
 }
+
+bool MpObjectReference::MpApiOnPutItem(MpActor& source,
+                                       const Inventory::Entry& entry)
+{
+  simdjson::dom::parser parser;
+  std::string rawArgs = "[" + std::to_string(source.GetFormId()) + "," +
+    std::to_string(entry.baseId) + "," + std::to_string(entry.count) + "]";
+  auto args = parser.parse(rawArgs).value();
+  bool blockedByMpApi = false;
+
+  if (auto wst = GetParent()) {
+    const auto id = GetFormId();
+    for (auto& listener : wst->listeners) {
+      bool res = listener->OnMpApiEvent("onPutItem", args, id);
+      blockedByMpApi = res ? false : true;
+    }
+  }
+
+  return blockedByMpApi;
+}
+
+bool MpObjectReference::MpApiOnTakeItem(MpActor& source,
+                                        const Inventory::Entry& entry)
+{
+  simdjson::dom::parser parser;
+  std::string rawArgs = "[" + std::to_string(source.GetFormId()) + "," +
+    std::to_string(entry.baseId) + "," + std::to_string(entry.count) + "]";
+  auto args = parser.parse(rawArgs).value();
+  bool blockedByMpApi = false;
+
+  if (auto wst = GetParent()) {
+    const auto id = GetFormId();
+    for (auto& listener : wst->listeners) {
+      bool res = listener->OnMpApiEvent("onTakeItem", args, id);
+      blockedByMpApi = res ? false : true;
+    }
+  }
+
+  return blockedByMpApi;
+}
