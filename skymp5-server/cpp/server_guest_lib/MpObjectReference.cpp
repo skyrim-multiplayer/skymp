@@ -2,7 +2,9 @@
 #include "ChangeFormGuard.h"
 #include "EvaluateTemplate.h"
 #include "FormCallbacks.h"
+#include "Inventory.h"
 #include "LeveledListUtils.h"
+#include "MathUtils.h"
 #include "MpActor.h"
 #include "MpChangeForms.h"
 #include "MsgType.h"
@@ -11,6 +13,8 @@
 #include "ScriptVariablesHolder.h"
 #include "TimeUtils.h"
 #include "WorldState.h"
+#include "libespm/CompressedFieldsCache.h"
+#include "libespm/Convert.h"
 #include "libespm/GroupUtils.h"
 #include "libespm/Utils.h"
 #include "papyrus-vm/Reader.h"
@@ -18,6 +22,7 @@
 #include "script_objects/EspmGameObject.h"
 #include "script_storages/IScriptStorage.h"
 #include <map>
+#include <numeric>
 #include <optional>
 
 #include "OpenContainerMessage.h"
@@ -1787,4 +1792,58 @@ bool MpObjectReference::MpApiOnTakeItem(MpActor& source,
   }
 
   return blockedByMpApi;
+}
+
+namespace {
+
+float GetWeightFromRecord(const espm::RecordHeader* record,
+                          espm::CompressedFieldsCache& cache)
+{
+  if (auto* weap = espm::Convert<espm::WEAP>(record)) {
+    auto data = weap->GetData(cache);
+    return data.weapData->weight;
+  }
+
+  if (auto* ligh = espm::Convert<espm::LIGH>(record)) {
+    auto data = ligh->GetData(cache);
+    return data.data.weight;
+  }
+
+  if (auto* armo = espm::Convert<espm::ARMO>(record)) {
+    auto data = armo->GetData(cache);
+    return data.weight;
+  }
+
+  if (auto* ingr = espm::Convert<espm::INGR>(record)) {
+    auto data = ingr->GetData(cache);
+    return data.itemData.weight;
+  }
+  return 0.f;
+}
+
+}
+
+float MpObjectReference::GetTotalItemWeight() const
+{
+  const auto& entries = GetInventory().entries;
+  const auto calculateWeight = [this](float sum,
+                                      const Inventory::Entry& entry) {
+    const auto& espm = GetParent()->GetEspm();
+    const auto* record = espm.GetBrowser().LookupById(entry.baseId).rec;
+    if (!record) {
+      return 0.f;
+    }
+    float weight = GetWeightFromRecord(record, GetParent()->GetEspmCache());
+    if (MathUtils::IsNearlyEqual(weight, 0.f)) {
+      spdlog::warn("Unsupported espm type {} has been detected, when "
+                   "calculating overall weight.",
+                   record->GetType().ToString());
+    } else {
+      spdlog::trace("Weight: {} for record of type {}", weight,
+                    record->GetType().ToString());
+    }
+    return sum + entry.count * weight;
+  };
+
+  return std::accumulate(entries.begin(), entries.end(), 0.f, calculateWeight);
 }
