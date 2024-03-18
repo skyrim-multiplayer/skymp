@@ -2,6 +2,7 @@
 #include "ChangeFormGuard.h"
 #include "EvaluateTemplate.h"
 #include "FormCallbacks.h"
+#include "GetWeightFromRecord.h"
 #include "Inventory.h"
 #include "LeveledListUtils.h"
 #include "MathUtils.h"
@@ -1807,35 +1808,6 @@ bool MpObjectReference::MpApiOnTakeItem(MpActor& source,
   return blockedByMpApi;
 }
 
-namespace {
-
-float GetWeightFromRecord(const espm::RecordHeader* record,
-                          espm::CompressedFieldsCache& cache)
-{
-  if (auto* weap = espm::Convert<espm::WEAP>(record)) {
-    auto data = weap->GetData(cache);
-    return data.weapData->weight;
-  }
-
-  if (auto* ligh = espm::Convert<espm::LIGH>(record)) {
-    auto data = ligh->GetData(cache);
-    return data.data.weight;
-  }
-
-  if (auto* armo = espm::Convert<espm::ARMO>(record)) {
-    auto data = armo->GetData(cache);
-    return data.weight;
-  }
-
-  if (auto* ingr = espm::Convert<espm::INGR>(record)) {
-    auto data = ingr->GetData(cache);
-    return data.itemData.weight;
-  }
-  return 0.f;
-}
-
-}
-
 float MpObjectReference::GetTotalItemWeight() const
 {
   const auto& entries = GetInventory().entries;
@@ -1844,6 +1816,7 @@ float MpObjectReference::GetTotalItemWeight() const
     const auto& espm = GetParent()->GetEspm();
     const auto* record = espm.GetBrowser().LookupById(entry.baseId).rec;
     if (!record) {
+      spdlog::trace("Record of form ({}) is nullptr", entry.baseId);
       return 0.f;
     }
     float weight = GetWeightFromRecord(record, GetParent()->GetEspmCache());
