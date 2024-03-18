@@ -529,6 +529,12 @@ void MpObjectReference::PutItem(MpActor& ac, const Inventory::Entry& e)
         << GetFormId();
     throw std::runtime_error(err.str());
   }
+
+  if (!MpApiOnPutItem(ac, e)) {
+    return spdlog::trace("onPutItem - blocked by gamemode");
+  }
+
+  spdlog::trace("onPutItem - not blocked by gamemode");
   ac.RemoveItems({ e }, this);
 }
 
@@ -541,6 +547,12 @@ void MpObjectReference::TakeItem(MpActor& ac, const Inventory::Entry& e)
         << GetFormId();
     throw std::runtime_error(err.str());
   }
+
+  if (!MpApiOnTakeItem(ac, e)) {
+    return spdlog::trace("onTakeItem - blocked by gamemode");
+  }
+
+  spdlog::trace("onPutItem - not blocked by gamemode");
   RemoveItems({ e }, &ac);
 }
 
@@ -601,8 +613,8 @@ void MpObjectReference::ForceSubscriptionsUpdate()
   for (auto listener : toAdd) {
     Subscribe(this, listener);
     // Note: Self-subscription is OK this check is performed as we don't want
-    // to self-subscribe twice! We have already been subscribed to self in the
-    // last line of code
+    // to self-subscribe twice! We have already been subscribed to self in
+    // the last line of code
     if (this != listener)
       Subscribe(listener, this);
   }
@@ -739,7 +751,8 @@ void MpObjectReference::AddItems(const std::vector<Inventory::Entry>& entries)
   //   auto itemCount = VarValue(static_cast<int32_t>(entri.count));
   //   auto itemReference = VarValue((IGameObject*)nullptr);
   //   auto sourceContainer = VarValue((IGameObject*)nullptr);
-  //   VarValue args[4] = { baseItem, itemCount, itemReference, sourceContainer
+  //   VarValue args[4] = { baseItem, itemCount, itemReference,
+  //   sourceContainer
   //   }; SendPapyrusEvent("OnItemAdded", args, 4);
   // }
 }
@@ -834,9 +847,9 @@ void MpObjectReference::RegisterPrivateIndexedProperty(
     auto key = worldState->MakePrivateIndexedPropertyMapKey(
       propertyName, currentValueStringified);
     worldState->actorIdByPrivateIndexedProperty[key].erase(formId);
-    spdlog::trace(
-      "MpObjectReference::RegisterPrivateIndexedProperty {:x} - unregister {}",
-      formId, key);
+    spdlog::trace("MpObjectReference::RegisterPrivateIndexedProperty {:x} - "
+                  "unregister {}",
+                  formId, key);
   }
 
   EditChangeForm([&](MpChangeFormREFR& changeForm) {

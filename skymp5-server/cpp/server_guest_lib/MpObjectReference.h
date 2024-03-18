@@ -181,8 +181,6 @@ public:
   void SendPapyrusEvent(const char* eventName,
                         const VarValue* arguments = nullptr,
                         size_t argumentsCount = 0) override;
-  bool MpApiOnPutItem(MpActor& source, const Inventory::Entry& entry);
-  bool MpApiOnTakeItem(MpActor& source, const Inventory::Entry& entry);
 
 protected:
   void Init(WorldState* parent, uint32_t formId, bool hasChangeForm) override;
@@ -206,6 +204,8 @@ private:
   void ProcessActivate(MpObjectReference& activationSource);
   void ActivateChilds();
   bool MpApiOnActivate(MpObjectReference& caster);
+  bool MpApiOnPutItem(MpActor& source, const Inventory::Entry& entry);
+  bool MpApiOnTakeItem(MpActor& source, const Inventory::Entry& entry);
 
   bool everSubscribedOrListened = false;
   std::unique_ptr<std::set<MpObjectReference*>> listeners;

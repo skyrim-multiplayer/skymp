@@ -301,12 +301,7 @@ void ActionListener::OnPutItem(const RawMessageData& rawMsgData,
                          actor->GetFormId());
   }
 
-  if (ref.MpApiOnPutItem(*actor, entry)) {
-    spdlog::trace("onPutItem - not blocked by gamemode");
-    ref.PutItem(*actor, entry);
-  } else {
-    spdlog::trace("onPutItem - blocked by gamemode");
-  }
+  ref.PutItem(*actor, entry);
 }
 
 void ActionListener::OnTakeItem(const RawMessageData& rawMsgData,
@@ -328,12 +323,7 @@ void ActionListener::OnTakeItem(const RawMessageData& rawMsgData,
                          actor->GetFormId());
   }
 
-  if (ref.MpApiOnTakeItem(*actor, entry)) {
-    spdlog::trace("onTakeItem - not blocked by gamemode");
-    ref.TakeItem(*actor, entry);
-  } else {
-    spdlog::trace("onTakeItem - blocked by gamemode");
-  }
+  ref.TakeItem(*actor, entry);
 }
 
 void ActionListener::OnDropItem(const RawMessageData& rawMsgData,
