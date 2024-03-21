@@ -1064,6 +1064,13 @@ void MpActor::Teleport(const LocationalData& position)
   msg.worldOrCell = position.cellOrWorldDesc.ToFormId(GetParent()->espmFiles);
   SendToUser(msg, true);
 
+  // Fixes bug when actor being visually duplicated in case of MoveTo into a
+  // different world. In theory this should be part of SetCellOrWorldObsolete,
+  // but this change can be potentially harmful
+  if (position.cellOrWorldDesc != GetCellOrWorld()) {
+    RemoveFromGridAndUnsubscribeAll();
+  }
+
   SetCellOrWorldObsolete(position.cellOrWorldDesc);
   SetPos(position.pos);
   SetAngle(position.rot);
