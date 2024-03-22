@@ -1012,6 +1012,13 @@ bool TESModPlatform::GetPapyrusEventsBlocked()
   return papyrusEventsBlocked;
 }
 
+void TESModPlatform::CloseMenu(IVM* vm, StackID stackId,
+                               RE::StaticFunctionTag*, std::string_view name)
+{
+  RE::UIMessageQueue::GetSingleton()->AddMessage(
+    name, RE::UI_MESSAGE_TYPE::kHide, nullptr);
+}
+
 bool TESModPlatform::Register(IVM* vm)
 {
   TESModPlatform::onPapyrusUpdate = onPapyrusUpdate;
@@ -1148,6 +1155,11 @@ bool TESModPlatform::Register(IVM* vm)
       RE::TESWorldSpace*, float, float, float, float, float, float, bool>(
       "CreateReferenceAtLocation", "TESModPlatform",
       CreateReferenceAtLocation));
+
+  vm->BindNativeMethod(
+    new RE::BSScript::NativeFunction<true, decltype(CloseMenu), void,
+                                     RE::StaticFunctionTag*, std::string_view>(
+      "CloseInventoryMenu", "TESModPlatform", CloseMenu));
 
   static LoadGameEvent loadGameEvent;
 

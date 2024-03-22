@@ -163,3 +163,9 @@ void DevApi::DisableCtrlPrtScnHotkey()
   mc->RemoveHandler(originalHandler);
   mc->AddHandler(handler);
 }
+
+JsValue CloseMenu(const JsFunctionArguments& args)
+{
+  std::string_view name = args[1].ToString();
+  TESModPlatform::CloseMenu(nullptr, -1, nullptr, name);
+}
