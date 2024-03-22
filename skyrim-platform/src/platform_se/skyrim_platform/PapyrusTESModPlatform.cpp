@@ -1159,7 +1159,7 @@ bool TESModPlatform::Register(IVM* vm)
   vm->BindNativeMethod(
     new RE::BSScript::NativeFunction<true, decltype(CloseMenu), void,
                                      RE::StaticFunctionTag*, std::string_view>(
-      "CloseInventoryMenu", "TESModPlatform", CloseMenu));
+      "CloseMenu", "TESModPlatform", CloseMenu));
 
   static LoadGameEvent loadGameEvent;
 
