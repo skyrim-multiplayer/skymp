@@ -1,7 +1,10 @@
 #pragma once
+#include <cstdint>
 
 namespace espm {
 
+// Not a record type, but a field type commonly used across different record
+// types
 struct CTDA
 {
   enum OperatorFlags : uint8_t
