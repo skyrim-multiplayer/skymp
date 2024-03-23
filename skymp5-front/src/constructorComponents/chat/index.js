@@ -34,6 +34,7 @@ const Chat = (props) => {
   const placeholder = props.placeholder;
   const isInputHidden = props.isInputHidden;
   const send = props.send;
+  const [lastSendInputText, setLastSendInputText] = useState(0);
 
   const [doesIncludeShout, setIncludeShout] = useState(false);
 
@@ -247,7 +248,13 @@ const Chat = (props) => {
                   className={'show'}
                   type="text"
                   placeholder={placeholder !== undefined ? placeholder : ''}
-                  onChange={(value) => { handleInput(value); }}
+                  onChange={(value) => {
+                    handleInput(value);
+                    if (lastSendInputText + 1000 < Date.now()) {
+                      window.skyrimPlatform.sendMessage('onInput');
+                      setLastSendInputText(Date.now());
+                    }
+                  }}
                   onFocus={(e) => changeInputFocus(true)}
                   onBlur={(e) => changeInputFocus(false)}
                   ref={inputRef}

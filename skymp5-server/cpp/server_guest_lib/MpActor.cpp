@@ -66,7 +66,31 @@ struct MpActor::Impl
   };
   uint32_t blockActiveCount = 0;
   std::vector<std::pair<uint32_t, MpObjectReference*>> droppedItemsQueue;
+
+  // this is a hot fix attempt to make permanent restoration potions work
+  std::chrono::system_clock::time_point nextRestorationTime{};
 };
+
+namespace {
+
+void RestoreActorValuePatched(MpActor* actor, espm::ActorValue actorValue,
+                              float value)
+{
+  actor->RestoreActorValue(actorValue, value);
+  actor->UpdateNextRestorationTime(std::chrono::seconds{ 5 });
+}
+
+}
+
+void MpActor::UpdateNextRestorationTime(std::chrono::seconds duration) noexcept
+{
+  pImpl->nextRestorationTime = std::chrono::system_clock::now() + duration;
+}
+
+bool MpActor::ShouldSkipRestoration() const noexcept
+{
+  return pImpl->nextRestorationTime > std::chrono::system_clock::now();
+}
 
 MpActor::MpActor(const LocationalData& locationalData_,
                  const FormCallbacks& callbacks_, uint32_t optBaseId)
@@ -606,7 +630,11 @@ uint32_t MpActor::GetRaceId() const
     return appearance->raceId;
   }
 
-  return espm::GetData<espm::NPC_>(GetBaseId(), GetParent()).race;
+  return EvaluateTemplate<espm::NPC_::UseTraits>(
+    GetParent(), GetBaseId(), GetTemplateChain(),
+    [](const auto& npcLookupResult, const auto& npcData) {
+      return npcLookupResult.ToGlobalId(npcData.race);
+    });
 }
 
 bool MpActor::IsWeaponDrawn() const
@@ -800,9 +828,17 @@ void MpActor::EnsureTemplateChainEvaluated(espm::Loader& loader,
 
 void MpActor::AddDeathItem()
 {
+  auto map = EvaluateDeathItem();
+  for (auto& p : map) {
+    AddItem(p.first, p.second);
+  }
+}
+
+std::map<uint32_t, uint32_t> MpActor::EvaluateDeathItem()
+{
   auto worldState = GetParent();
   if (!worldState) {
-    return;
+    return {};
   }
 
   constexpr int kPlayerCharacterLevel = 1;
@@ -811,14 +847,16 @@ void MpActor::AddDeathItem()
 
   auto base = loader.GetBrowser().LookupById(GetBaseId());
   if (!base.rec) {
-    return spdlog::error("AddDeathItem {:x} - No base form", GetFormId());
+    spdlog::error("EvaluateDeathItem {:x} - No base form", GetFormId());
+    return {};
   }
 
   auto npc = espm::Convert<espm::NPC_>(base.rec);
   if (!npc) {
-    return spdlog::error(
-      "AddDeathItem {:x} - Expected base type to be NPC_, but got {}",
+    spdlog::error(
+      "EvaluateDeathItem {:x} - Expected base type to be NPC_, but got {}",
       GetFormId(), base.rec->GetType().ToString());
+    return {};
   }
 
   uint32_t baseId = base.ToGlobalId(base.rec->GetId());
@@ -831,32 +869,32 @@ void MpActor::AddDeathItem()
     });
 
   if (deathItemId == 0) {
-    return spdlog::info(
-      "AddDeathItem {:x} - No death item found, skipping add", GetFormId());
+    spdlog::info("EvaluateDeathItem {:x} - No death item found, skipping add",
+                 GetFormId());
+    return {};
   }
 
   espm::LookupResult deathItemLookupRes =
     loader.GetBrowser().LookupById(deathItemId);
   if (!deathItemLookupRes.rec) {
-    return spdlog::error(
-      "AddDeathItem {:x} - Death item {:x} not found in espm", GetFormId(),
-      deathItemId);
+    spdlog::error("EvaluateDeathItem {:x} - Death item {:x} not found in espm",
+                  GetFormId(), deathItemId);
+    return {};
   }
 
   auto deathItemLvli = espm::Convert<espm::LVLI>(deathItemLookupRes.rec);
   if (!deathItemLvli) {
-    return spdlog::error(
-      "AddDeathItem {:x} - Expected death item type to be LVLI, but got {}",
-      GetFormId(), deathItemLookupRes.rec->GetType().ToString());
+    spdlog::error("EvaluateDeathItem {:x} - Expected death item type to be "
+                  "LVLI, but got {}",
+                  GetFormId(), deathItemLookupRes.rec->GetType().ToString());
+    return {};
   }
 
   const auto kCountMult = 1;
   auto map = LeveledListUtils::EvaluateListRecurse(
     loader.GetBrowser(), deathItemLookupRes, kCountMult,
     kPlayerCharacterLevel);
-  for (auto& p : map) {
-    AddItem(p.first, p.second);
-  }
+  return map;
 }
 
 std::chrono::steady_clock::time_point MpActor::GetLastRestorationTime(
@@ -945,10 +983,51 @@ void MpActor::RespawnWithDelay(bool shouldTeleport)
       if (worldState->LookupFormById(formId).get() == this) {
         bool isLatestRespawn = respawnTimerIndex == pImpl->respawnTimerIndex;
         if (isLatestRespawn) {
+          // This is implemented here, not in MpActor::Respawn because we don't
+          // want inventory to be re-added in case of artificial resurrect from
+          // the gamemode
+
+          // This will do nothing if death item resolved to no items
+          auto deathItem = EvaluateDeathItem();
+          if (deathItem.empty()) {
+            spdlog::info("MpActor::RespawnWithDelay {:x} - death item "
+                         "resolved to no items, keeping inventory",
+                         GetFormId());
+          } else {
+            spdlog::info("MpActor::RespawnWithDelay {:x} - death item "
+                         "resolved to {} items, re-adding base inventory",
+                         GetFormId(), deathItem.size());
+
+            if (!worldState->HasEspm()) {
+              spdlog::error(
+                "MpActor::RespawnWithDelay {:x} - no espm attached",
+                GetFormId());
+            } else {
+              Inventory inventory = GetInventory();
+              Inventory inventoryToKeep;
+              for (auto& entry : inventory.entries) {
+                if (worldState->HasKeyword(entry.baseId, "SweetCantDrop")) {
+                  inventoryToKeep.entries.push_back(entry);
+                }
+              }
+              EditChangeForm(
+                [&](MpChangeForm& changeForm) {
+                  changeForm.inv = inventoryToKeep;
+                  changeForm.baseContainerAdded = false;
+                },
+                Mode::NoRequestSave);
+              EnsureBaseContainerAdded(worldState->GetEspm());
+              spdlog::info("MpActor::RespawnWithDelay {:x} - {} inventory "
+                           "entries with keyword kept",
+                           GetFormId(), inventoryToKeep.entries.size());
+            }
+          }
+
+          // Do actual respawn
           spdlog::info("MpActor::RespawnWithDelay {:x} - finally, respawn "
                        "after {} seconds",
                        GetFormId(), respawnTime);
-          this->Respawn(shouldTeleport);
+          Respawn(shouldTeleport);
         }
       }
     });
@@ -1358,10 +1437,10 @@ void MpActor::ApplyMagicEffect(espm::Effects::Effect& effect, bool hasSweetpie,
         // balance and because of disability to restrict players use potions
         // often on client side
         constexpr float kMagnitudeCoeff = 100.f;
-        RestoreActorValue(av, effect.magnitude * kMagnitudeCoeff);
+        RestoreActorValuePatched(this, av, effect.magnitude * kMagnitudeCoeff);
       }
     } else {
-      RestoreActorValue(av, effect.magnitude);
+      RestoreActorValuePatched(this, av, effect.magnitude);
     }
   }
 

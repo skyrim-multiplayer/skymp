@@ -12,6 +12,7 @@ import CheckBox from './constructorComponents/checkbox';
 import Text from './constructorComponents/text';
 import Chat from './constructorComponents/chat';
 import SkillsMenu from './features/skillsMenu';
+import TestMenu from './features/testMenu';
 
 const styles = [
   'BUTTON_STYLE_GITHUB',
@@ -208,6 +209,7 @@ const Constructor = props => {
         <>
         <SkillsMenu send={rend.send}/>
         <Chat messages={rend.messages} send={rend.send} placeholder={rend.placeholder} isInputHidden={rend.isInputHidden} />
+        <TestMenu send={rend.send}/>
         </>
       );
     default:

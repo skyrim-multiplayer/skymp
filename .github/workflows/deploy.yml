@@ -64,6 +64,7 @@ jobs:
                 fetch-depth: 0
                 token: ${{ secrets.SKYMP5_PATCHES_PAT }}
                 path: /home/runner/work/skymp5-patches
+                ref: main
 
           - name: Checkout (last commit)
             if: ${{env.DEPLOY_ACTION != 'deploy'}}

@@ -823,7 +823,7 @@ EventResult EventHandler::ProcessEvent(
     AddObjProperty(&obj, "weapon", weapon, "Weapon");
     AddObjProperty(&obj, "ammo", ammo, "Ammo");
     AddObjProperty(&obj, "power", e->power);
-    AddObjProperty(&obj, "target", e->isSunGazing);
+    AddObjProperty(&obj, "isSunGazing", e->isSunGazing);
 
     SendEvent("playerBowShot", obj);
   });

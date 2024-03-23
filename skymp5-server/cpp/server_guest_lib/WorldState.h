@@ -202,6 +202,9 @@ public:
   std::optional<std::chrono::system_clock::duration> GetRelootTime(
     std::string recordType) const;
 
+  // Utility function to check if the provided baseId has the certain keyword
+  bool HasKeyword(uint32_t baseId, const char* keyword);
+
   // Only for tests
   auto& GetGrids() { return grids; }
 
@@ -244,8 +247,8 @@ private:
   void TickSaveStorage(const std::chrono::system_clock::time_point& now);
   void TickTimers(const std::chrono::system_clock::time_point& now);
   [[nodiscard]] bool NpcSourceFilesOverriden() const noexcept;
-  [[nodiscard]] bool IsNpcAllowed(uint32_t baseId) const noexcept;
-  [[nodiscard]] uint32_t GetFileIdx(uint32_t baseId) const noexcept;
+  [[nodiscard]] bool IsNpcAllowed(uint32_t refrId) const noexcept;
+  [[nodiscard]] uint32_t GetFileIdx(uint32_t formId) const noexcept;
   [[nodiscard]] bool IsRelootForbidden(std::string type) const noexcept;
 
 private:

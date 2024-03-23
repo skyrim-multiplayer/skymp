@@ -27,6 +27,6 @@ export interface FormModel {
 }
 
 export interface WorldModel {
-  forms: FormModel[];
+  forms: Array<FormModel | undefined>;
   playerCharacterFormIdx: number;
 }

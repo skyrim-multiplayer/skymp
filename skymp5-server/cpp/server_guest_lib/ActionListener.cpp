@@ -13,13 +13,29 @@
 #include "MsgType.h"
 #include "UserMessageOutput.h"
 #include "WorldState.h"
-#include "papyrus-vm/Utils.h"
 #include "script_objects/EspmGameObject.h"
 #include <fmt/format.h>
 #include <spdlog/spdlog.h>
 #include <unordered_set>
 
 #include "UpdateEquipmentMessage.h"
+
+namespace {
+void SendHostStop(PartOne& partOne, Networking::UserId badHosterUserId,
+                  MpObjectReference& remote)
+{
+  auto remoteAsActor = dynamic_cast<MpActor*>(&remote);
+
+  uint64_t longFormId = remote.GetFormId();
+  if (remoteAsActor && longFormId < 0xff000000) {
+    longFormId += 0x100000000;
+  }
+
+  Networking::SendFormatted(&partOne.GetSendTarget(), badHosterUserId,
+                            R"({ "type": "hostStop", "target": %llu })",
+                            longFormId);
+}
+}
 
 MpActor* ActionListener::SendToNeighbours(
   uint32_t idx, const simdjson::dom::element& jMessage,
@@ -50,6 +66,7 @@ MpActor* ActionListener::SendToNeighbours(
       }
       spdlog::error("SendToNeighbours - No permission to update actor {:x}",
                     actor->GetFormId());
+      SendHostStop(partOne, userId, *actor);
       return nullptr;
     }
   }
@@ -265,33 +282,6 @@ void ActionListener::OnActivate(const RawMessageData& rawMsgData,
   }
 }
 
-namespace {
-bool IsCantDrop(WorldState* worldState, uint32_t baseId)
-{
-  auto lookupRes = worldState->GetEspm().GetBrowser().LookupById(baseId);
-
-  if (!lookupRes.rec) {
-    return false;
-  }
-
-  const auto keywordIds =
-    lookupRes.rec->GetKeywordIds(worldState->GetEspmCache());
-
-  for (auto keywordId : keywordIds) {
-    auto keywordIdGlobal = lookupRes.ToGlobalId(keywordId);
-    auto rec =
-      worldState->GetEspm().GetBrowser().LookupById(keywordIdGlobal).rec;
-    if (rec &&
-        !Utils::stricmp(rec->GetEditorId(worldState->GetEspmCache()),
-                        "SweetCantDrop")) {
-      return true;
-    }
-  }
-
-  return false;
-}
-}
-
 void ActionListener::OnPutItem(const RawMessageData& rawMsgData,
                                uint32_t target, const Inventory::Entry& entry)
 {
@@ -306,7 +296,7 @@ void ActionListener::OnPutItem(const RawMessageData& rawMsgData,
     return spdlog::error("No WorldState attached");
   }
 
-  if (IsCantDrop(worldState, entry.baseId)) {
+  if (worldState->HasKeyword(entry.baseId, "SweetCantDrop")) {
     return spdlog::error("Attempt to put SweetCantDrop item {:x}",
                          actor->GetFormId());
   }
@@ -328,7 +318,7 @@ void ActionListener::OnTakeItem(const RawMessageData& rawMsgData,
     return spdlog::error("No WorldState attached");
   }
 
-  if (IsCantDrop(worldState, entry.baseId)) {
+  if (worldState->HasKeyword(entry.baseId, "SweetCantDrop")) {
     return spdlog::error("Attempt to take SweetCantDrop item {:x}",
                          actor->GetFormId());
   }
@@ -350,12 +340,45 @@ void ActionListener::OnDropItem(const RawMessageData& rawMsgData,
     return spdlog::error("No WorldState attached");
   }
 
-  if (IsCantDrop(worldState, entry.baseId)) {
+  if (worldState->HasKeyword(entry.baseId, "SweetCantDrop")) {
     return spdlog::error("Attempt to drop SweetCantDrop item {:x}",
                          ac->GetFormId());
   }
 
   ac->DropItem(baseId, entry);
+}
+
+void ActionListener::OnPlayerBowShot(const RawMessageData& rawMsgData,
+                                     uint32_t weaponId, uint32_t ammoId,
+                                     float power, bool isSunGazing)
+{
+  MpActor* ac = partOne.serverState.ActorByUser(rawMsgData.userId);
+  if (!ac) {
+    return spdlog::error("Unable to shot from user with id: {}.",
+                         rawMsgData.userId);
+  }
+
+  auto worldState = ac->GetParent();
+
+  if (!worldState) {
+    return;
+  }
+
+  auto ammoLookupRes = worldState->GetEspm().GetBrowser().LookupById(ammoId);
+
+  if (!ammoLookupRes.rec) {
+    return spdlog::error("ActionListener::OnPlayerBowShot {:x} - unable to "
+                         "find espm record for {:x}",
+                         ac->GetFormId(), ammoId);
+  }
+
+  if (ammoLookupRes.rec->GetType().ToString() != "AMMO") {
+    return spdlog::error(
+      "ActionListener::OnPlayerBowShot {:x} - unable to shot not an ammo {:x}",
+      ac->GetFormId(), ammoId);
+  }
+
+  ac->RemoveItem(ammoId, 1, nullptr);
 }
 
 namespace {
@@ -545,6 +568,10 @@ void ActionListener::OnHostAttempt(const RawMessageData& rawMsgData,
     hoster = me->GetFormId();
     remote.UpdateHoster(hoster);
 
+    // Prevents too fast host switch
+    partOne.worldState.lastMovUpdateByIdx[remoteIdx] =
+      std::chrono::system_clock::now();
+
     auto remoteAsActor = dynamic_cast<MpActor*>(&remote);
 
     if (remoteAsActor) {
@@ -616,6 +643,11 @@ void ActionListener::OnChangeValues(const RawMessageData& rawMsgData,
   if (!actor) {
     throw std::runtime_error("Unable to change values without Actor attached");
   }
+
+  if (actor->ShouldSkipRestoration()) {
+    return;
+  }
+
   auto now = std::chrono::steady_clock::now();
 
   float timeAfterRegeneration = CropPeriodAfterLastRegen(
@@ -776,8 +808,8 @@ bool IsDistanceValid(const MpActor& actor, const MpActor& targetActor,
   return reach * reach > sqrDistance;
 }
 
-bool IsAvailableForNextAttack(const MpActor& actor, const HitData& hitData,
-                              const std::chrono::duration<float>& timePassed)
+bool CanHit(const MpActor& actor, const HitData& hitData,
+            const std::chrono::duration<float>& timePassed)
 {
   WorldState* espmProvider = actor.GetParent();
   auto weapDNAM =
@@ -886,10 +918,10 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
 
   auto& targetActor = *targetActorPtr;
 
-  auto lastHitTime = targetActor.GetLastHitTime();
+  auto lastHitTime = aggressor->GetLastHitTime();
   std::chrono::duration<float> timePassed = currentHitTime - lastHitTime;
 
-  if (!IsAvailableForNextAttack(targetActor, hitData, timePassed)) {
+  if (!CanHit(*aggressor, hitData, timePassed)) {
     WorldState* espmProvider = targetActor.GetParent();
     auto weapDNAM =
       espm::GetData<espm::WEAP>(hitData.source, espmProvider).weapDNAM;
@@ -987,7 +1019,7 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
     : currentActorValues.healthPercentage;
 
   targetActor.NetSetPercentages(currentActorValues, aggressor);
-  targetActor.SetLastHitTime();
+  aggressor->SetLastHitTime();
 
   spdlog::debug("Target {0:x} is hitted by {1} damage. Percentage was: {3}, "
                 "percentage now: {2}, base health: {4})",
