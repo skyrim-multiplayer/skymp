@@ -535,6 +535,11 @@ bool WorldState::LoadForm(uint32_t formId, std::stringstream* optionalOutTrace)
   auto& br = GetEspm().GetBrowser();
 
   auto lookupRes = br.LookupById(formId);
+
+  if (!lookupRes.rec) {
+    return false;
+  }
+
   auto mapping = br.GetCombMapping(lookupRes.fileIdx);
 
   bool attached =
