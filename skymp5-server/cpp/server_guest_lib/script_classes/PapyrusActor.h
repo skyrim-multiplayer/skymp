@@ -33,7 +33,7 @@ public:
   VarValue SetAlpha(VarValue self, const std::vector<VarValue>& arguments);
 
   VarValue EquipItem(VarValue self, const std::vector<VarValue>& arguments);
-  
+
   VarValue UnequipItem(VarValue self, const std::vector<VarValue>& arguments);
 
   VarValue SetDontMove(VarValue self, const std::vector<VarValue>& arguments);
