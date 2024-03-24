@@ -25,7 +25,7 @@ import { IdManager } from '../../lib/idManager';
 import { nameof } from '../../lib/nameof';
 import { setActorValuePercentage } from '../../sync/actorvalues';
 import { applyAppearanceToPlayer } from '../../sync/appearance';
-import { isBadMenuShown } from '../../sync/equipment';
+import { applyEquipment, isBadMenuShown } from '../../sync/equipment';
 import { Inventory, applyInventory } from '../../sync/inventory';
 import { Movement } from '../../sync/movement';
 import { learnSpells, removeAllSpells } from '../../sync/spell';
@@ -425,17 +425,10 @@ export class RemoteServer extends ClientListener {
       this.onSetRaceMenuOpenMessage({ message: { type: 'setRaceMenuOpen', open: true } });
 
     const applyPcInv = () => {
-      applyInventory(
-        Game.getPlayer() as Actor,
-        msg.equipment
-          ? {
-            entries: msg.equipment.inv.entries.filter(
-              (x) => !!Armor.from(Game.getFormEx(x.baseId)),
-            ),
-          }
-          : { entries: [] },
-        false,
-      );
+      if (msg.equipment) {
+        applyEquipment(Game.getPlayer() as Actor, msg.equipment)
+      }
+
       if (msg.props && msg.props.inventory)
         this.onSetInventoryMessage({
           message: {
