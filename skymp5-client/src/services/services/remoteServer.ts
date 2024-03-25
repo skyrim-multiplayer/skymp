@@ -408,7 +408,7 @@ export class RemoteServer extends ClientListener {
     }
 
     if (msg.animation) {
-      this.worldModel.forms[i].animation = msg.animation;
+      form.animation = msg.animation;
     }
 
     if (msg.props) {
