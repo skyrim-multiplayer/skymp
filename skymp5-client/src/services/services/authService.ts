@@ -155,6 +155,7 @@ export class AuthService extends ClientListener {
       headers: {
         'authorization': token,
       },
+      // @ts-ignore
     }, (res) => {
       if (res.status != 200) {
         callback('', 'status code ' + res.status);
@@ -176,6 +177,7 @@ export class AuthService extends ClientListener {
 
     new this.sp.HttpClient(this.getMasterUrl())
       .get("/api/users/login-discord/status?state=" + this.discordAuthState, undefined,
+        // @ts-ignore
         (response) => {
           switch (response.status) {
             case 200:

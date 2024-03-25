@@ -1,5 +1,5 @@
 import { ObjectReference, on, printConsole, storage } from "skyrimPlatform";
-import * as sp from "skyrimPlatform";
+import * as sp from 'skyrimPlatform';
 import { FormModel } from "../view/model";
 import { FormViewArray } from "../view/formViewArray";
 import { localIdToRemoteId, remoteIdToLocalId } from "../view/worldViewMisc";

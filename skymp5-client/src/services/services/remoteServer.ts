@@ -407,6 +407,10 @@ export class RemoteServer extends ClientListener {
       form.isDead = msg.isDead;
     }
 
+    if (msg.animation) {
+      this.worldModel.forms[i].animation = msg.animation;
+    }
+
     if (msg.props) {
       for (const propName in msg.props) {
         const i = this.getIdManager().getId(msg.idx);
