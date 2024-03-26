@@ -9,6 +9,7 @@
 #include "Primitive.h"
 #include "ScopedTask.h"
 #include "ScriptVariablesHolder.h"
+#include "SpSnippet.h"
 #include "TimeUtils.h"
 #include "WorldState.h"
 #include "libespm/GroupUtils.h"
@@ -287,8 +288,15 @@ void MpObjectReference::VisitProperties(const PropertiesVisitor& visitor,
     visitor("isOpen", "true");
   }
 
-  if (auto actor = dynamic_cast<MpActor*>(this); actor && actor->IsDead()) {
-    visitor("isDead", "true");
+  if (auto actor = dynamic_cast<MpActor*>(this)) {
+    if (actor->IsDead()) {
+      visitor("isDead", "true");
+    }
+
+    if (this->occupant) {
+      auto occupantFormIdStr = std::to_string(this->occupant->GetFormId());
+      visitor("occupant", occupantFormIdStr.data());
+    }
   }
 
   if (mode == VisitPropertiesMode::All && !GetInventory().IsEmpty()) {
@@ -1337,6 +1345,106 @@ void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
       SetOpen(false);
       this->occupant->RemoveEventSink(this->occupantDestroySink);
       this->occupant = nullptr;
+    }
+  } else if (t == espm::NPC_::kType && actorActivator) {
+    if (auto thisActor = dynamic_cast<MpActor*>(this)) {
+      if (auto race = thisActor->GetRace(); race.rec) {
+        bool spSnippetSendActivate = false;
+
+        auto raceId = race.ToGlobalId(race.rec->GetId());
+        if (raceId == 0x000131fd) {
+          auto occupantPos =
+            this->occupant ? this->occupant->GetPos() : NiPoint3();
+          auto occupantCellOrWorld =
+            this->occupant ? this->occupant->GetCellOrWorld() : FormDesc();
+
+          constexpr float kOccupationReach = 512.f;
+          auto distanceToOccupant = (occupantPos - GetPos()).Length();
+
+          if (!this->occupant || this->occupant->IsDisabled() ||
+              distanceToOccupant > kOccupationReach ||
+              occupantCellOrWorld != GetCellOrWorld()) {
+            if (this->occupant) {
+              this->occupant->RemoveEventSink(this->occupantDestroySink);
+            }
+            spSnippetSendActivate = true;
+          } else if (this->occupant == &activationSource) {
+            this->occupant->RemoveEventSink(this->occupantDestroySink);
+            this->occupant = nullptr;
+            spSnippetSendActivate = true;
+          }
+        }
+
+        if (spSnippetSendActivate) {
+          auto j = nlohmann::json::array();
+          // akActivator
+          j.push_back(
+            nlohmann::json({ { "formId", actorActivator->GetFormId() },
+                             { "type", "ObjectReference" } }));
+          // abDefaultProcessingOnly
+          j.push_back(true);
+
+          std::string dump = j.dump();
+          SpSnippet("ObjectReference", "Activate", dump.data(),
+                    this->GetFormId())
+            .Execute(actorActivator);
+
+          SendPropertyToListeners(
+            "occupant", this->occupant ? this->occupant->GetFormId() : 0);
+
+          // Prepare variables
+          auto& remote = *this;
+          auto remoteId = GetFormId();
+          auto me = actorActivator;
+          auto remoteAsActor = dynamic_cast<MpActor*>(&remote);
+
+          // Implementation based on ActionListener::OnHostAttempt
+          auto& hoster = GetParent()->hosters[remoteId];
+          const uint32_t prevHoster = hoster;
+          hoster = me->GetFormId();
+          remote.UpdateHoster(hoster);
+
+          uint64_t longFormId = remote.GetFormId();
+          if (remoteAsActor && longFormId < 0xff000000) {
+            longFormId += 0x100000000;
+          }
+
+          Networking::Format(
+            [&](Networking::PacketData data, size_t len) {
+              // The only reason for deferred here is that it still supports
+              // raw binary data send
+              // TODO: change to SendToUser
+              constexpr int kChannelHost = 2;
+              me->SendToUserDeferred(data, len, true, kChannelHost, false);
+            },
+            R"({ "type": "hostStart", "target": %llu })", longFormId);
+
+          if (MpActor* prevHosterActor = dynamic_cast<MpActor*>(
+                GetParent()->LookupFormById(prevHoster).get())) {
+            if (prevHosterActor != me) {
+              Networking::Format(
+                [&](Networking::PacketData data, size_t len) {
+                  // The only reason for deferred here is that it still
+                  // supports raw binary data send
+                  // TODO: change to SendToUser
+                  constexpr int kChannelHost = 2;
+                  prevHosterActor->SendToUserDeferred(data, len, true,
+                                                      kChannelHost, false);
+                },
+                R"({ "type": "hostStop", "target": %llu })", longFormId);
+            }
+          }
+        }
+      } else {
+        spdlog::error(
+          "MpObjectReference::ProcessActivate {:x} - Unable to find race",
+          GetFormId());
+      }
+    } else {
+      spdlog::error(
+        "MpObjectReference::ProcessActivate {:x} - NPC_ base type, but "
+        "not an MpActor",
+        GetFormId());
     }
   }
 }
