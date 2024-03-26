@@ -1,5 +1,6 @@
 #pragma once
 #include "RecordHeader.h"
+#include "libespm/CTDA.h"
 
 #pragma pack(push, 1)
 
@@ -22,6 +23,7 @@ public:
     std::vector<InputObject> inputObjects;
     uint32_t outputObjectFormId = 0;
     uint32_t benchKeywordId = 0;
+    std::vector<CTDA> conditions;
     uint32_t outputCount = 0;
   };
 
