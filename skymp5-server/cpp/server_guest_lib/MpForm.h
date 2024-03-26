@@ -19,6 +19,10 @@ class MpForm
 public:
   MpForm();
 
+  virtual void SendPapyrusEvent(const char* eventName,
+                                const VarValue* arguments = nullptr,
+                                size_t argumentsCount = 0);
+
   static const char* Type() { return "Form"; }
   bool IsEspmForm() const noexcept;
   virtual const char* GetFormType() const { return "Form"; }
@@ -62,9 +66,6 @@ protected:
   virtual void Init(WorldState* parent_, uint32_t formId_,
                     bool hasChangeForm); // See WorldState::AddForm
   virtual void Update();
-  virtual void SendPapyrusEvent(const char* eventName,
-                                const VarValue* arguments = nullptr,
-                                size_t argumentsCount = 0);
 
 private:
   using GameObjectPtr = std::shared_ptr<IGameObject>;
