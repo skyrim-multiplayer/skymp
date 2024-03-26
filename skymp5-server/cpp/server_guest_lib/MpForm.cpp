@@ -1,5 +1,7 @@
 #include "MpForm.h"
 
+#include "GetWeightFromRecord.h"
+#include "MpObjectReference.h"
 #include "WorldState.h"
 #include "script_objects/MpFormGameObject.h"
 
@@ -63,4 +65,22 @@ void MpForm::AddScript(
 bool MpForm::IsEspmForm() const noexcept
 {
   return id < 0xff000000;
+}
+
+float MpForm::GetWeight() const
+{
+  const auto* objectReference = dynamic_cast<const MpObjectReference*>(this);
+  if (!objectReference) {
+    return 0.f;
+  }
+
+  const uint32_t baseId = objectReference->GetBaseId();
+  const auto& espm = GetParent()->GetEspm();
+  const auto* record = espm.GetBrowser().LookupById(baseId).rec;
+  if (!record) {
+    spdlog::trace("Record of form ({}) is nullptr", baseId);
+    return 0.f;
+  }
+
+  return GetWeightFromRecord(record, GetParent()->GetEspmCache());
 }

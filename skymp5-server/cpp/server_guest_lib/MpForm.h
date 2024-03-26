@@ -54,6 +54,7 @@ public:
   virtual ~MpForm() = default;
 
   auto GetFormId() const noexcept { return id; }
+  float GetWeight() const;
 
   MpForm(const MpForm&) = delete;
   MpForm& operator=(const MpForm&) = delete;
