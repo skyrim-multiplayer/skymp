@@ -531,7 +531,7 @@ void MpObjectReference::PutItem(MpActor& ac, const Inventory::Entry& e)
     throw std::runtime_error(err.str());
   }
 
-  if (!MpApiOnPutItem(ac, e)) {
+  if (MpApiOnPutItem(ac, e)) {
     return spdlog::trace("onPutItem - blocked by gamemode");
   }
 
@@ -549,7 +549,7 @@ void MpObjectReference::TakeItem(MpActor& ac, const Inventory::Entry& e)
     throw std::runtime_error(err.str());
   }
 
-  if (!MpApiOnTakeItem(ac, e)) {
+  if (MpApiOnTakeItem(ac, e)) {
     return spdlog::trace("onTakeItem - blocked by gamemode");
   }
 
@@ -1780,8 +1780,8 @@ bool MpObjectReference::MpApiOnPutItem(MpActor& source,
   if (auto wst = GetParent()) {
     const auto id = GetFormId();
     for (auto& listener : wst->listeners) {
-      bool res = listener->OnMpApiEvent("onPutItem", args, id);
-      blockedByMpApi = res ? false : true;
+      bool notBlocked = listener->OnMpApiEvent("onPutItem", args, id);
+      blockedByMpApi = !notBlocked;
     }
   }
 
@@ -1800,8 +1800,8 @@ bool MpObjectReference::MpApiOnTakeItem(MpActor& source,
   if (auto wst = GetParent()) {
     const auto id = GetFormId();
     for (auto& listener : wst->listeners) {
-      bool res = listener->OnMpApiEvent("onTakeItem", args, id);
-      blockedByMpApi = res ? false : true;
+      bool notBlocked = listener->OnMpApiEvent("onTakeItem", args, id);
+      blockedByMpApi = !notBlocked;
     }
   }
 
