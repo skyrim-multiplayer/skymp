@@ -26,10 +26,13 @@ import * as fs from "fs";
 import * as chokidar from "chokidar";
 import * as path from "path";
 import * as os from "os";
+import * as crypto from "crypto";
 
 import * as manifestGen from "./manifestGen";
 import { DiscordBanSystem } from "./systems/discordBanSystem";
 import { createScampServer } from "./scampNative";
+import { Octokit } from "@octokit/rest";
+import * as lodash from "lodash";
 
 const {
   master,
@@ -115,7 +118,7 @@ systems.push(
   new DiscordBanSystem()
 );
 
-const setupStreams = (server: scampNative.ScampServer) => {
+const setupStreams = (scampNative: any) => {
   class LogsStream {
     constructor(private logLevel: string) {
     }
@@ -124,7 +127,7 @@ const setupStreams = (server: scampNative.ScampServer) => {
       // @ts-ignore
       const str = chunk.toString(encoding);
       if (str.trim().length > 0) {
-        server.writeLogs(this.logLevel, str);
+        scampNative.writeLogs(this.logLevel, str);
       }
       callback();
     }
@@ -142,14 +145,247 @@ const setupStreams = (server: scampNative.ScampServer) => {
   };
 };
 
+/**
+ * Resolves a Git ref to a commit hash if it's not already a commit hash.
+ */
+async function resolveRefToCommitHash(octokit: Octokit, owner: string, repo: string, ref: string): Promise<string> {
+  // Check if `ref` is already a 40-character hexadecimal string (commit hash).
+  if (/^[a-f0-9]{40}$/i.test(ref)) {
+    return ref; // It's already a commit hash.
+  }
+
+  // Attempt to resolve the ref as both a branch and a tag.
+  try {
+    // First, try to resolve it as a branch.
+    return await getCommitHashFromRef(octokit, owner, repo, `heads/${ref}`);
+  } catch (error) {
+    try {
+      // If the branch resolution fails, try to resolve it as a tag.
+      return await getCommitHashFromRef(octokit, owner, repo, `tags/${ref}`);
+    } catch (tagError) {
+      throw new Error('Could not resolve ref to commit hash.');
+    }
+  }
+}
+
+async function getCommitHashFromRef(octokit: Octokit, owner: string, repo: string, ref: string): Promise<string> {
+  const { data } = await octokit.git.getRef({
+    owner,
+    repo,
+    ref,
+  });
+  return data.object.sha;
+}
+
+async function fetchServerSettings(): Promise<any> {
+  // Load server-settings.json
+  const settingsPath = 'server-settings.json';
+  const rawSettings = fs.readFileSync(settingsPath, 'utf8');
+  let serverSettingsFile = JSON.parse(rawSettings);
+
+  let serverSettings: Record<string, unknown> = {};
+
+  const additionalServerSettings = serverSettingsFile.additionalServerSettings || [];
+
+  let dumpFileNameSuffix = '';
+
+  for (let i = 0; i < additionalServerSettings.length; ++i) {
+    console.log(`Verifying additional server settings source ${i + 1} / ${additionalServerSettings.length}`);
+
+    const { type, repo, ref, token, pathRegex } = serverSettingsFile.additionalServerSettings[i];
+
+    if (typeof type !== "string") {
+      throw new Error(`Expected additionalServerSettings[${i}].type to be string`);
+    }
+
+    if (type !== "github") {
+      throw new Error(`Expected additionalServerSettings[${i}].type to be one of ["github"], but got ${type}`);
+    }
+
+    if (typeof repo !== "string") {
+      throw new Error(`Expected additionalServerSettings[${i}].repo to be string`);
+    }
+    if (typeof ref !== "string") {
+      throw new Error(`Expected additionalServerSettings[${i}].ref to be string`);
+    }
+    if (typeof token !== "string") {
+      throw new Error(`Expected additionalServerSettings[${i}].token to be string`);
+    }
+    if (typeof pathRegex !== "string") {
+      throw new Error(`Expected additionalServerSettings[${i}].pathRegex to be string`);
+    }
+
+    const octokit = new Octokit({ auth: token });
+
+    const [owner, repoName] = repo.split('/');
+
+    const commitHash = await resolveRefToCommitHash(octokit, owner, repoName, ref);
+    dumpFileNameSuffix += `-${commitHash}`;
+  }
+
+  const dumpFileName = `server-settings-dump.json`;
+
+  const readDump: Record<string, unknown> | undefined = fs.existsSync(dumpFileName) ? JSON.parse(fs.readFileSync(dumpFileName, 'utf-8')) : undefined;
+
+  let readDumpNoSha512 = structuredClone(readDump);
+  if (readDumpNoSha512) {
+    delete readDumpNoSha512['_sha512_'];
+  }
+
+  const expectedSha512 = readDumpNoSha512 ? crypto.createHash('sha512').update(JSON.stringify(readDumpNoSha512)).digest('hex') : '';
+
+  if (readDump && readDump["_meta_"] === dumpFileNameSuffix && readDump["_sha512_"] === expectedSha512) {
+    console.log(`Loading settings dump from ${dumpFileName}`);
+    serverSettings = JSON.parse(fs.readFileSync(dumpFileName, 'utf-8'));
+  }
+  else {
+    for (let i = 0; i < additionalServerSettings.length; ++i) {
+
+      const { repo, ref, token, pathRegex } = serverSettingsFile.additionalServerSettings[i];
+
+      console.log(`Fetching settings from "${repo}" at ref "${ref}" with path regex ${pathRegex}`);
+
+      const regex = new RegExp(pathRegex);
+
+      const octokit = new Octokit({ auth: token });
+
+      const [owner, repoName] = repo.split('/');
+
+      // List repository contents at specified ref
+      const rootContent = await octokit.repos.getContent({
+        owner,
+        repo: repoName,
+        ref,
+        path: '',
+      });
+
+      const { data } = rootContent;
+
+      const rateLimitRemainingInitial = parseInt(rootContent.headers["x-ratelimit-remaining"]) + 1;
+      let rateLimitRemaining = 0;
+
+      const onFile = async (file: { path: string, name: string }) => {
+        if (file.name.endsWith('.json')) {
+          if (regex.test(file.path)) {
+            // Fetch individual file content if it matches the regex
+            const fileData = await octokit.repos.getContent({
+              owner,
+              repo: repoName,
+              ref,
+              path: file.path,
+            });
+            rateLimitRemaining = parseInt(fileData.headers["x-ratelimit-remaining"]);
+
+            if ('content' in fileData.data && typeof fileData.data.content === 'string') {
+              // Decode Base64 content and parse JSON
+              const content = Buffer.from(fileData.data.content, 'base64').toString('utf-8');
+              const jsonContent = JSON.parse(content);
+              // Merge or handle the JSON content as needed
+              console.log(`Merging "${file.path}"`);
+
+              serverSettings = lodash.merge(serverSettings, jsonContent);
+            }
+            else {
+              throw new Error(`Expected content to be an array (${file.path})`);
+            }
+          }
+          else {
+            console.log(`Ignoring "${file.path}"`);
+          }
+        }
+      }
+
+      const onDir = async (file: { path: string, name: string }) => {
+        const fileData = await octokit.repos.getContent({
+          owner,
+          repo: repoName,
+          ref,
+          path: file.path,
+        });
+        rateLimitRemaining = parseInt(fileData.headers["x-ratelimit-remaining"]);
+
+        if (Array.isArray(fileData.data)) {
+          for (const item of fileData.data) {
+            if (item.type === "file") {
+              await onFile(item);
+            }
+            else if (item.type === "dir") {
+              await onDir(item);
+            }
+            else {
+              console.warn(`Skipping unsupported item type ${item.type} (${item.path})`);
+            }
+          }
+        }
+        else {
+          throw new Error(`Expected data to be an array (${file.path})`);
+        }
+      }
+
+      if (Array.isArray(data)) {
+        for (const item of data) {
+          if (item.type === "file") {
+            await onFile(item);
+          }
+          else if (item.type === "dir") {
+            await onDir(item);
+          }
+          else {
+            console.warn(`Skipping unsupported item type ${item.type} (${item.path})`);
+          }
+        }
+      }
+      else {
+        throw new Error(`Expected data to be an array (root)`);
+      }
+
+      console.log(`Rate limit spent: ${rateLimitRemainingInitial - rateLimitRemaining}, remaining: ${rateLimitRemaining}`);
+
+      const xRateLimitReset = rootContent.headers["x-ratelimit-reset"];
+      const resetDate = new Date(parseInt(xRateLimitReset, 10) * 1000);
+      const currentDate = new Date();
+      if (resetDate > currentDate) {
+        console.log("The rate limit will reset in the future");
+        const secondsUntilReset = (resetDate.getTime() - currentDate.getTime()) / 1000;
+        console.log(`Seconds until reset: ${secondsUntilReset}`);
+      } else {
+        console.log("The rate limit has already been reset");
+      }
+    }
+
+    if (JSON.stringify(serverSettings) !== JSON.stringify(JSON.parse(rawSettings))) {
+      console.log(`Dumping ${dumpFileName} for cache and debugging`);
+      serverSettings["_meta_"] = dumpFileNameSuffix;
+      serverSettings["_sha512_"] = crypto.createHash('sha512').update(JSON.stringify(serverSettings)).digest('hex');
+      fs.writeFileSync(dumpFileName, JSON.stringify(serverSettings, null, 2));
+    }
+  }
+
+  console.log(`Merging "server-settings.json" (original settings file)`);
+  serverSettings = lodash.merge(serverSettings, serverSettingsFile);
+
+  return serverSettings;
+}
+
 const main = async () => {
+  setupStreams(scampNative.getScampNative());
+
   manifestGen.generateManifest(Settings.get());
   ui.main();
 
-  const server = createScampServer(port, maxPlayers);
+  let server: any;
+
+  try {
+    const serverSettings = await fetchServerSettings();
+    server = createScampServer(port, maxPlayers, serverSettings);
+  }
+  catch (e) {
+    console.error(e);
+    console.error(`Stopping the server due to the previous error`);
+    process.exit(-1);
+  }
   const ctx = { svr: server, gm: new EventEmitter() };
 
-  setupStreams(server);
   console.log(`Current process ID is ${pid}`);
 
   (async () => {
