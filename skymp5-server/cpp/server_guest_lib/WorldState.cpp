@@ -1,5 +1,7 @@
 #include "WorldState.h"
+#include "EvaluateTemplate.h"
 #include "FormCallbacks.h"
+#include "LeveledListUtils.h"
 #include "LocationalDataUtils.h"
 #include "MpActor.h"
 #include "MpChangeForms.h"
@@ -408,6 +410,64 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
         }
         return false;
       }
+    }
+
+    const int kPcLevel = 0; // Shouldn't mean much to races
+
+    // May be not exact the same template chain as it would be in MpActor
+    // but it's ok for this check
+    std::vector<uint32_t> evaluateChainResult =
+      LeveledListUtils::EvaluateTemplateChain(br, base, kPcLevel);
+    std::vector<FormDesc> templateChain(evaluateChainResult.size());
+    std::transform(evaluateChainResult.begin(), evaluateChainResult.end(),
+                   templateChain.begin(), [&](uint32_t formId) {
+                     return FormDesc::FromFormId(formId, this->espmFiles);
+                   });
+
+    uint32_t race = EvaluateTemplate<espm::NPC_::UseTraits>(
+      this, baseId, templateChain,
+      [&](const auto&, const auto& npcData) { return npcData.race; });
+
+    enum class PlayableRace : uint32_t
+    {
+      ArgonianRace = 0x00013740,
+      BretonRace,
+      DarkElfRace,
+      HighElfRace,
+      ImperialRace,
+      KhajiitRace,
+      NordRace,
+      OrcRace,
+      RedguardRace,
+      WoodElfRace,
+
+      RaceMIN = ArgonianRace,
+      RaceMAX = WoodElfRace
+    };
+
+    if (race >= static_cast<uint32_t>(PlayableRace::RaceMIN) &&
+        race <= static_cast<uint32_t>(PlayableRace::RaceMAX)) {
+      logger->info("Skipping actor {:#x} because it has playable race {:#x}",
+                   record->GetId(), race);
+      if (optionalOutTrace) {
+        *optionalOutTrace << fmt::format("Skip NPC due to playable race")
+                          << std::endl;
+      }
+      return false;
+    }
+
+    if (race == 0x000e7713 || race == 0x00012e82 || race == 0x001052a3 ||
+        race == 0x00088884 || race == 0x0008883a || race == 0x00088846 ||
+        race == 0x00108272 || race == 0x000a82b9 || race == 0x0008883c ||
+        race == 0x00088794 || race == 0x00088845 || race == 0x0008883d ||
+        race == 0x00088844 || race == 0x00088840 || race == 0x000a82ba) {
+      logger->info("Skipping actor {:#x} because it has banned race {:#x}",
+                   record->GetId(), race);
+      if (optionalOutTrace) {
+        *optionalOutTrace << fmt::format("Skip NPC due to banned race")
+                          << std::endl;
+      }
+      return false;
     }
   }
 
