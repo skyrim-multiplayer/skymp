@@ -89,6 +89,8 @@ void UpdateEquipment(IVM* vm, StackID stackId, RE::StaticFunctionTag*,
 
 void ResetContainer(IVM* vm, StackID stackId, RE::StaticFunctionTag*,
                     RE::TESForm* container);
+void CloseMenu(IVM* vm, StackID stackId, RE::StaticFunctionTag*,
+               std::string_view name);
 
 void BlockPapyrusEvents(IVM* vm, StackID stackId, RE::StaticFunctionTag*,
                         bool blocked);
