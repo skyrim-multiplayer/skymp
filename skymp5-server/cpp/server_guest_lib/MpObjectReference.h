@@ -145,6 +145,9 @@ public:
                           MpObjectReference* listener);
 
   void SetLastAnimation(const std::string& lastAnimation);
+  void SetNodeTextureSet(const std::string& node,
+                         const espm::LookupResult& textureSet,
+                         bool firstPerson);
   void SetDisplayName(const std::string& newName);
 
   const std::set<MpObjectReference*>& GetListeners() const;
