@@ -29,12 +29,12 @@ function(yarn_execute_command)
     WORKING_DIRECTORY ${A_WORKING_DIRECTORY}
     RESULT_VARIABLE yarn_result
     OUTPUT_VARIABLE yarn_output
-    # TODO: ERROR_VARIABLE
+    ERROR_VARIABLE yarn_error
   )
 
   if("${A_RESULT_VARIABLE}" STREQUAL "")
     if(NOT "${yarn_result}" STREQUAL "0")
-      message(FATAL_ERROR "yarn ${A_COMMAND} exited with ${yarn_result}:\n${yarn_output}")
+      message(FATAL_ERROR "yarn ${A_COMMAND} exited with ${yarn_result}:\n${yarn_output}\n${yarn_error}")
     endif()
   else()
     set("${A_RESULT_VARIABLE}" "${yarn_result}" PARENT_SCOPE)
