@@ -43,3 +43,8 @@ void WindowsConsolePrinter::Print(const JsFunctionArguments& args)
 
   std::cout << s << std::endl;
 }
+
+void WindowsConsolePrinter::PrintRaw(const char* str)
+{
+  std::cout << str << std::endl;
+}
