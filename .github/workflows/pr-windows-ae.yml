@@ -8,6 +8,10 @@ on:
   schedule:
     - cron: '0 0 * * *'
 
+permissions:
+  contents: read
+  packages: write
+
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   BUILD_TYPE: Release
