@@ -8,10 +8,6 @@ on:
   schedule:
     - cron: '0 0 * * *'
 
-permissions:
-  contents: read
-  packages: write
-
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   BUILD_TYPE: Release
@@ -50,17 +46,6 @@ jobs:
         script: |
           core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
           core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
-
-    # - name: 'Setup NuGet Credentials'
-    #   shell: 'bash'
-    #   run: >
-    #     `C:/vcpkg/vcpkg.exe fetch nuget | tail -n 1`
-    #     sources add
-    #     -source "https://nuget.pkg.github.com/skyrim-multiplayer/index.json"
-    #     -storepasswordincleartext
-    #     -name "GitHub"
-    #     -username "skyrim-multiplayer"
-    #     -password "${{ secrets.GITHUB_TOKEN }}"
 
     # Download Skyrim SE data files
     - uses: suisei-cn/actions-download-file@v1
