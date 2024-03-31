@@ -307,6 +307,16 @@ void MpObjectReference::VisitProperties(const PropertiesVisitor& visitor,
     visitor("lastAnimation", lastAnimationAsJson.data());
   }
 
+  if (ChangeForm().setNodeTextureSet.has_value()) {
+    // worse performance than building json string manually but proper escaping
+    nlohmann::json setNodeTextureSetAsJson;
+    for (auto& [key, value] : *ChangeForm().setNodeTextureSet) {
+      setNodeTextureSetAsJson[key] =
+        FormDesc::FromString(value).ToFormId(GetParent()->espmFiles);
+    }
+    visitor("setNodeTextureSet", setNodeTextureSetAsJson.dump().data());
+  }
+
   if (ChangeForm().displayName.has_value()) {
     std::string raw = *ChangeForm().displayName;
     nlohmann::json j = raw;
@@ -921,6 +931,25 @@ void MpObjectReference::SetLastAnimation(const std::string& lastAnimation)
 {
   EditChangeForm([&](MpChangeForm& changeForm) {
     changeForm.lastAnimation = lastAnimation;
+  });
+}
+
+void MpObjectReference::SetNodeTextureSet(const std::string& node,
+                                          const espm::LookupResult& textureSet,
+                                          bool firstPerson)
+{
+  EditChangeForm([&](MpChangeForm& changeForm) {
+    if (changeForm.setNodeTextureSet == std::nullopt) {
+      changeForm.setNodeTextureSet = std::map<std::string, std::string>();
+    }
+
+    uint32_t textureSetId = textureSet.ToGlobalId(textureSet.rec->GetId());
+
+    FormDesc textureSetFormDesc =
+      FormDesc::FromFormId(textureSetId, GetParent()->espmFiles);
+
+    changeForm.setNodeTextureSet->insert_or_assign(
+      node, textureSetFormDesc.ToString());
   });
 }
 
