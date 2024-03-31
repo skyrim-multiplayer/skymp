@@ -6,6 +6,7 @@ import { ClientListener, CombinedController, Sp } from "./clientListener";
 
 // TODO: refactor worldViewMisc into service
 import { remoteIdToLocalId } from '../../view/worldViewMisc';
+import { logError, logTrace } from "../../logging";
 
 export class SpSnippetService extends ClientListener {
     constructor(private sp: Sp, private controller: CombinedController) {
@@ -35,7 +36,7 @@ export class SpSnippetService extends ClientListener {
                         reliability: "reliable"
                     });
                 })
-                .catch((e) => this.logError('SpSnippet ' + msg.class + ' ' + msg.function + ' failed ' + e));
+                .catch((e) => logError(this, 'SpSnippet ' + msg.class + ' ' + msg.function + ' failed ' + e));
         });
     }
 
@@ -44,7 +45,7 @@ export class SpSnippetService extends ClientListener {
             if (snippet.function === "AddItem" || snippet.function === "RemoveItem") {
                 const form = this.sp.Form.from(this.deserializeArg(snippet.arguments[0]));
                 if (form === null) {
-                    return this.logError("Unable to find form with id " + snippet.arguments[0].formId.toString(16));
+                    return logError(this, "Unable to find form with id " + snippet.arguments[0].formId.toString(16));
                 }
 
                 const sign = snippet.function === "AddItem" ? "+" : "-";
@@ -59,28 +60,28 @@ export class SpSnippetService extends ClientListener {
                 if (sound !== null) {
                     const name = form.getName();
                     if (name.trim() === "") {
-                        this.logTrace("Sound will not be played because item has no name")
+                        logTrace(this, "Sound will not be played because item has no name")
                     }
                     else {
                         sound.play(this.sp.Game.getPlayer());
                     }
                 }
                 else {
-                    this.logError("Unable to find sound with id " + soundId.toString(16));
+                    logError(this, "Unable to find sound with id " + soundId.toString(16));
                 }
 
                 if (count <= 0) {
-                    this.logError("Positive count expected, got " + count.toString());
+                    logError(this, "Positive count expected, got " + count.toString());
                 }
                 else {
                     const name = form.getName();
                     if (name.trim() === "") {
-                        this.logTrace("Notification will not be shown because item has no name")
+                        logTrace(this, "Notification will not be shown because item has no name")
                     }
                     else {
                         this.sp.Debug.notification(sign + " " + name + " (" + count + ")");
                     }
-                    this.logTrace(sign + " " + name + " (" + count + ")");
+                    logTrace(this, sign + " " + name + " (" + count + ")");
                 }
             } else throw new Error("Unknown SkympHack - " + snippet.function);
             return;

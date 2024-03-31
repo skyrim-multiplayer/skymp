@@ -6,6 +6,7 @@ import { AuthNeededEvent } from "../events/authNeededEvent";
 import { BrowserWindowLoadedEvent } from "../events/browserWindowLoadedEvent";
 import { TimersService } from "./timersService";
 import { MasterApiAuthStatus } from "../messages_http/masterApiAuthStatus";
+import { logTrace, logError } from "../../logging";
 
 // for browsersideWidgetSetter
 declare const window: any;
@@ -36,15 +37,15 @@ export class AuthService extends ClientListener {
   }
 
   private onAuthNeeded(e: AuthNeededEvent) {
-    this.logTrace(`Received authNeeded event`);
+    logTrace(this, `Received authNeeded event`);
 
     const settingsGameData = this.sp.settings["skymp5-client"]["gameData"] as any;
     const isOfflineMode = Number.isInteger(settingsGameData?.profileId);
     if (isOfflineMode) {
-      this.logTrace(`Offline mode detected in settings, emitting auth event with authGameData.local`);
+      logTrace(this, `Offline mode detected in settings, emitting auth event with authGameData.local`);
       this.controller.emitter.emit("auth", { authGameData: { local: { profileId: settingsGameData.profileId } } });
     } else {
-      this.logTrace(`No offline mode detectted in settings, regular auth needed`);
+      logTrace(this, `No offline mode detectted in settings, regular auth needed`);
       this.isListenBrowserMessage = true;
 
       this.trigger.authNeededFired = true;
@@ -55,7 +56,7 @@ export class AuthService extends ClientListener {
   }
 
   private onBrowserWindowLoaded(e: BrowserWindowLoadedEvent) {
-    this.logTrace(`Received browserWindowLoaded event`);
+    logTrace(this, `Received browserWindowLoaded event`);
 
     this.trigger.browserWindowLoadedFired = true;
     if (this.trigger.conditionMet) {
@@ -65,11 +66,11 @@ export class AuthService extends ClientListener {
 
   private onBrowserWindowLoadedAndOnlineAuthNeeded() {
     if (!this.isListenBrowserMessage) {
-      this.logError(`isListenBrowserMessage was false for some reason, aborting auth`);
+      logError(this, `isListenBrowserMessage was false for some reason, aborting auth`);
       return;
     }
 
-    this.logTrace(`Showing widgets and starting loop`);
+    logTrace(this, `Showing widgets and starting loop`);
 
     authData = this.readAuthDataFromDisk();
     this.refreshWidgets();
@@ -78,14 +79,14 @@ export class AuthService extends ClientListener {
 
     const timersService = this.controller.lookupListener(TimersService);
 
-    this.logTrace("Calling setTimeout for testing");
+    logTrace(this, "Calling setTimeout for testing");
     try {
       timersService.setTimeout(() => {
-        this.logTrace("Test timeout fired");
+        logTrace(this, "Test timeout fired");
       }, 1);
     }
     catch (e) {
-      this.logError("Failed to call setTimeout");
+      logError(this, "Failed to call setTimeout");
     }
 
     // Launch checkLoginState loop
@@ -94,11 +95,11 @@ export class AuthService extends ClientListener {
 
   private onBrowserMessage(e: BrowserMessageEvent) {
     if (!this.isListenBrowserMessage) {
-      this.logTrace(`onBrowserMessage: isListenBrowserMessage was false, ignoring message ${JSON.stringify(e.arguments)}`);
+      logTrace(this, `onBrowserMessage: isListenBrowserMessage was false, ignoring message`, JSON.stringify(e.arguments));
       return;
     }
 
-    this.logTrace(`onBrowserMessage: ${JSON.stringify(e.arguments)}`);
+    logTrace(this, `onBrowserMessage:`, JSON.stringify(e.arguments));
 
     const eventKey = e.arguments[0];
     switch (eventKey) {
@@ -140,7 +141,7 @@ export class AuthService extends ClientListener {
 
     const route = `/api/users/me/play/${masterKey}`;
 
-    this.logTrace(`Creating play session ${route}`);
+    logTrace(this, `Creating play session ${route}`);
 
     client.post(route, {
       body: '{}',
@@ -162,7 +163,7 @@ export class AuthService extends ClientListener {
 
   private checkLoginState() {
     if (!this.isListenBrowserMessage) {
-      this.logTrace(`checkLoginState: isListenBrowserMessage was false, aborting check`);
+      logTrace(this, `checkLoginState: isListenBrowserMessage was false, aborting check`);
       return;
     }
 
@@ -220,25 +221,25 @@ export class AuthService extends ClientListener {
 
   private refreshWidgets() {
     if (browserState.failCount) {
-      this.logError(`Auth check fail: ${browserState.comment}`);
+      logError(this, `Auth check fail:`, browserState.comment);
     }
     this.sp.browser.executeJavaScript(new FunctionInfo(this.browsersideWidgetSetter).getText({ events, browserState, authData: authData }));
   };
 
   private readAuthDataFromDisk(): RemoteAuthGameData | null {
-    this.logTrace(`Reading ${this.pluginAuthDataName} from disk`);
+    logTrace(this, `Reading`, this.pluginAuthDataName, `from disk`);
 
     try {
       const data = this.sp.getPluginSourceCode(this.pluginAuthDataName);
 
       if (!data) {
-        this.logTrace(`Read empty ${this.pluginAuthDataName}, returning null`);
+        logTrace(this, `Read empty`, this.pluginAuthDataName, `returning null`);
         return null;
       }
 
       return JSON.parse(data.slice(2)) || null;
     } catch (e) {
-      this.logError(`Error reading ${this.pluginAuthDataName} from disk: ${e}, falling back to null`);
+      logError(this, `Error reading`, this.pluginAuthDataName, `from disk:`, e, `, falling back to null`);
       return null;
     }
   }
@@ -246,7 +247,7 @@ export class AuthService extends ClientListener {
   private writeAuthDataToDisk(data: RemoteAuthGameData | null) {
     const content = "//" + (data ? JSON.stringify(data) : "null");
 
-    this.logTrace(`Writing ${this.pluginAuthDataName} to disk: ${content}`);
+    logTrace(this, `Writing`, this.pluginAuthDataName, `to disk:`, content);
 
     try {
       this.sp.writePlugin(
@@ -255,7 +256,7 @@ export class AuthService extends ClientListener {
       );
     }
     catch (e) {
-      this.logError(`Error writing ${this.pluginAuthDataName} to disk: ${e}, will not remember user`);
+      logError(this, `Error writing`, this.pluginAuthDataName, `to disk:`, e, `, will not remember user`);
     }
   };
 

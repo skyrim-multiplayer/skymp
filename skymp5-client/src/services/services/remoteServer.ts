@@ -10,7 +10,6 @@ import {
   WorldSpace,
   on, // TODO: use this.controller.on instead
   once, // TODO: use this.controller.once instead
-  printConsole, // TODO: use this.sp.printConsole instead
   storage, // TODO: use this.sp.storage instead
 } from 'skyrimPlatform';
 
@@ -64,42 +63,7 @@ import {
   remoteIdToLocalId,
 } from '../../view/worldViewMisc';
 import { TimeService } from './timeService';
-
-const onceLoad = (
-  refrId: number,
-  callback: (refr: ObjectReference) => void,
-  maxAttempts: number = 120,
-) => {
-  once('update', () => {
-    const refr = ObjectReference.from(Game.getFormEx(refrId));
-    if (refr) {
-      callback(refr);
-    } else {
-      maxAttempts--;
-      if (maxAttempts > 0) {
-        once('update', () => onceLoad(refrId, callback, maxAttempts));
-      } else {
-        printConsole('Failed to load object reference ' + refrId.toString(16));
-      }
-    }
-  });
-};
-
-const skipFormViewCreation = (
-  msg: UpdatePropertyMessage | CreateActorMessage,
-) => {
-  // Optimization added in #1186, however it doesn't work for doors for some reason
-  return msg.refrId && msg.refrId < 0xff000000 && msg.baseRecordType !== 'DOOR';
-};
-
-const showConnectionError = () => {
-  // TODO: unhardcode it or render via browser
-  printConsole("Server connection failed. This may be caused by one of the following:");
-  printConsole("1. You are not present on the SkyMP Discord server");
-  printConsole("2. You have been banned by server admins");
-  printConsole("3. There is some technical issue. Try linking your Discord account again");
-  printConsole("If you feel that something is wrong, please contact us on Discord.");
-};
+import { logTrace, logError } from '../../logging';
 
 export const getPcInventory = (): Inventory | undefined => {
   const res = storage['pcInv'];
@@ -161,8 +125,8 @@ export class RemoteServer extends ClientListener {
     // TODO: Busy waiting is bad. Should be replaced with some kind of event
     const maxLoggingDelay = 15000;
     if (this.loggingStartMoment && Date.now() - this.loggingStartMoment > maxLoggingDelay) {
-      printConsole('Logging in failed. Reconnecting.');
-      showConnectionError();
+      logError(this, 'Logging in failed. Reconnecting.');
+      this.showConnectionError();
       this.controller.lookupListener(NetworkingService).reconnect();
       this.loggingStartMoment = 0;
     }
@@ -188,7 +152,7 @@ export class RemoteServer extends ClientListener {
   private onHostStopMessage(event: ConnectionMessage<HostStopMessage>) {
     const msg = event.message;
     const target = msg.target;
-    this.logTrace('hostStop ' + target.toString(16));
+    logTrace(this, 'hostStop ' + target.toString(16));
 
     const hosted = storage['hosted'] as Array<number>;
     if (typeof hosted === typeof []) {
@@ -243,8 +207,8 @@ export class RemoteServer extends ClientListener {
     once('update', () => {
       const id = ("idx" in msg && typeof msg.idx === "number") ? this.getIdManager().getId(msg.idx) : this.getMyActorIndex();
       const refr = id === this.getMyActorIndex() ? Game.getPlayer() : getObjectReference(id);
-      printConsole(
-        `Teleporting (id=${id}) ${refr?.getFormID().toString(16)}...`,
+      logTrace(this,
+        `Teleporting id`, id, `refrId`, refr?.getFormID().toString(16), `...`,
         msg.pos,
         'cell/world is',
         msg.worldOrCell.toString(16),
@@ -278,9 +242,9 @@ export class RemoteServer extends ClientListener {
 
   private onCreateActorMessage(event: ConnectionMessage<CreateActorMessage>): void {
     const msg = event.message;
-    if (skipFormViewCreation(msg)) {
+    if (this.skipFormViewCreation(msg)) {
       const refrId = msg.refrId!;
-      onceLoad(refrId, (refr: ObjectReference) => {
+      this.onceLoad(refrId, (refr: ObjectReference) => {
         if (refr) {
           ObjectReferenceEx.dealWithRef(refr, refr.getBaseObject() as Form);
           if (msg.inventory) {
@@ -303,9 +267,9 @@ export class RemoteServer extends ClientListener {
                 const textureSet = this.sp.TextureSet.from(Game.getFormEx(textureSetId));
                 if (textureSet !== null) {
                   this.sp.NetImmerse.setNodeTextureSet(refr, key, textureSet, firstPerson);
-                  this.logTrace(`Applied texture set ${textureSetId.toString(16)} to ${key}`);
+                  logTrace(this, `Applied texture set`, textureSetId.toString(16), `to`, key);
                 } else {
-                  this.logError(`Failed to apply texture set ${textureSetId.toString(16)} to ${key}`);
+                  logError(this, `Failed to apply texture set`, textureSetId.toString(16), `to`, key);
                 }
               }
             }
@@ -331,22 +295,24 @@ export class RemoteServer extends ClientListener {
             const displayName = msg.props.displayName;
             if (typeof displayName === "string") {
               refr.setDisplayName(displayName, true);
-              this.logTrace(`calling setDisplayName "${displayName}" for ${refr.getFormID().toString(16)}`);
+              logTrace(this, `calling setDisplayName`, displayName, `for`, refr.getFormID().toString(16));
             }
           }
         } else {
-          printConsole('Failed to apply model to', refrId.toString(16));
+          logError(this, 'Failed to apply model to', refrId.toString(16));
         }
       });
       return;
     }
 
-    printConsole("Create actor")
+    logTrace(this, "Create actor");
 
     this.loggingStartMoment = 0;
 
     const i = this.getIdManager().allocateIdFor(msg.idx);
-    if (this.worldModel.forms.length <= i) this.worldModel.forms.length = i + 1;
+    if (this.worldModel.forms.length <= i) {
+      this.worldModel.forms.length = i + 1;
+    }
 
     let movement: Movement | undefined = undefined;
     // TODO: better check if it is an npc (not an object reference)
@@ -435,8 +401,8 @@ export class RemoteServer extends ClientListener {
           if (player) {
             removeAllSpells(player);
             learnSpells(player, learnedSpells);
-            printConsole(
-              `player learnedSpells: ${JSON.stringify(learnedSpells)}`,
+            logTrace(this,
+              `player learnedSpells:`, JSON.stringify(learnedSpells),
             );
           }
         });
@@ -461,10 +427,10 @@ export class RemoteServer extends ClientListener {
         // In case of connection lost this is essential
         if (!spawnTask.running) {
           spawnTask.running = true;
-          printConsole('Using moveRefrToPosition to spawn player');
+          logTrace(this, 'Using moveRefrToPosition to spawn player');
           (async () => {
             while (true) {
-              printConsole('Spawning...');
+              logTrace(this, 'Spawning...');
               TESModPlatform.moveRefrToPosition(
                 Game.getPlayer(),
                 Cell.from(Game.getFormEx(msg.transform.worldOrCell)),
@@ -550,7 +516,7 @@ export class RemoteServer extends ClientListener {
               loadOrder.push(this.sp.Game.getModName(i));
             }
 
-            this.logTrace(`loading game in world/cell ${msg.transform.worldOrCell.toString(16)}`);
+            logTrace(this, `loading game in world/cell`, msg.transform.worldOrCell.toString(16));
             const loadGameService = this.controller.lookupListener(LoadGameService);
             loadGameService.loadGame(
               msg.transform.pos,
@@ -622,7 +588,8 @@ export class RemoteServer extends ClientListener {
     const form = this.worldModel.forms[i];
 
     if (form === undefined) {
-      return this.logError(`onUpdateMovementMessage - Form with idx ${msg.idx} not found`);
+      logError(this, `onUpdateMovementMessage - Form with idx`, msg.idx, `not found`);
+      return;
     }
 
     form.movement = msg.data;
@@ -640,7 +607,8 @@ export class RemoteServer extends ClientListener {
     const form = this.worldModel.forms[i];
 
     if (form === undefined) {
-      return this.logError(`onUpdateAnimationMessage - Form with idx ${msg.idx} not found`);
+      logError(this, `onUpdateAnimationMessage - Form with idx`, msg.idx, `not found`);
+      return;
     }
 
     form.animation = msg.data;
@@ -654,7 +622,8 @@ export class RemoteServer extends ClientListener {
     const form = this.worldModel.forms[i];
 
     if (form === undefined) {
-      return this.logError(`onUpdateAppearanceMessage - Form with idx ${msg.idx} not found`);
+      logError(this, `onUpdateAppearanceMessage - Form with idx`, msg.idx, `not found`);
+      return;
     }
 
     form.appearance = msg.data || undefined;
@@ -668,7 +637,7 @@ export class RemoteServer extends ClientListener {
     if (i === this.getMyActorIndex() && newAppearance) {
       this.controller.once("update", () => {
         applyAppearanceToPlayer(newAppearance);
-        this.logTrace("Applied appearance to the player");
+        logTrace(this, "Applied appearance to the player");
       });
     }
   }
@@ -681,7 +650,8 @@ export class RemoteServer extends ClientListener {
     const form = this.worldModel.forms[i];
 
     if (form === undefined) {
-      return this.logError(`onUpdateEquipmentMessage - Form with idx ${msg.idx} not found`);
+      logError(this, `onUpdateEquipmentMessage - Form with idx`, msg.idx, `not found`);
+      return;
     }
 
     form.equipment = msg.data;
@@ -690,12 +660,12 @@ export class RemoteServer extends ClientListener {
   private onUpdatePropertyMessage(event: ConnectionMessage<UpdatePropertyMessage>): void {
     const msg = event.message;
 
-    if (skipFormViewCreation(msg)) {
+    if (this.skipFormViewCreation(msg)) {
       const refrId = msg.refrId;
       once('update', () => {
         const refr = ObjectReference.from(Game.getFormEx(refrId));
         if (!refr) {
-          printConsole('UpdateProperty: refr not found');
+          logError(this, 'UpdateProperty: refr not found');
           return;
         }
         if (msg.propName === 'inventory') {
@@ -718,13 +688,14 @@ export class RemoteServer extends ClientListener {
   private onDeathStateContainerMessage(event: ConnectionMessage<DeathStateContainerMessage>): void {
     const msg = event.message;
 
-    this.logTrace(`Received death state: ${JSON.stringify(msg.tIsDead)}`);
+    logTrace(this, `Received death state:`, JSON.stringify(msg.tIsDead));
 
     const id = this.getIdManager().getId(msg.tIsDead.idx);
     const form = this.worldModel.forms[id];
 
     if (form === undefined) {
-      return this.logError(`onDeathStateContainerMessage - Form with idx ${msg.tIsDead.idx} not found`);
+      logError(this, `onDeathStateContainerMessage - Form with idx`, msg.tIsDead.idx, `not found`);
+      return;
     }
 
     if (
@@ -769,7 +740,7 @@ export class RemoteServer extends ClientListener {
     this.worldModel.forms = [];
     this.worldModel.playerCharacterFormIdx = -1;
 
-    this.logTrace("Handle connection accepted");
+    logTrace(this, "Handle connection accepted");
 
     this.loginWithSkympIoCredentials();
   }
@@ -810,7 +781,7 @@ export class RemoteServer extends ClientListener {
 
     switch (msg.content.customPacketType) {
       case 'loginRequired':
-        this.logTrace('loginRequired received');
+        logTrace(this, 'loginRequired received');
         this.loginWithSkympIoCredentials();
         break;
     }
@@ -850,8 +821,8 @@ export class RemoteServer extends ClientListener {
 
     const authData = storage[authGameDataStorageKey] as AuthGameData | undefined;
     if (authData?.local) {
-      this.logTrace(
-        `Logging in offline mode, profileId = ${authData.local.profileId}`,
+      logTrace(this,
+        `Logging in offline mode, profileId =`, authData.local.profileId
       );
       const message: CustomPacketMessage = {
         t: messages.MsgType.CustomPacket,
@@ -870,7 +841,7 @@ export class RemoteServer extends ClientListener {
     }
 
     if (authData?.remote) {
-      this.logTrace('Logging in as a master API user');
+      logTrace(this, 'Logging in as a master API user');
       const message: CustomPacketMessage = {
         t: messages.MsgType.CustomPacket,
         content: {
@@ -887,7 +858,43 @@ export class RemoteServer extends ClientListener {
       return;
     }
 
-    this.logError('Not found authentication method');
+    logError(this, 'Not found authentication method');
+  };
+
+  private onceLoad(
+    refrId: number,
+    callback: (refr: ObjectReference) => void,
+    maxAttempts: number = 120,
+  ) {
+    once('update', () => {
+      const refr = ObjectReference.from(Game.getFormEx(refrId));
+      if (refr) {
+        callback(refr);
+      } else {
+        maxAttempts--;
+        if (maxAttempts > 0) {
+          once('update', () => this.onceLoad(refrId, callback, maxAttempts));
+        } else {
+          logError(this, 'Failed to load object reference ' + refrId.toString(16));
+        }
+      }
+    });
+  };
+
+  private skipFormViewCreation(
+    msg: UpdatePropertyMessage | CreateActorMessage,
+  ) {
+    // Optimization added in #1186, however it doesn't work for doors for some reason
+    return msg.refrId && msg.refrId < 0xff000000 && msg.baseRecordType !== 'DOOR';
+  };
+
+  private showConnectionError() {
+    // TODO: unhardcode it or render via browser
+    this.sp.printConsole("Server connection failed. This may be caused by one of the following:");
+    this.sp.printConsole("1. You are not present on the SkyMP Discord server");
+    this.sp.printConsole("2. You have been banned by server admins");
+    this.sp.printConsole("3. There is some technical issue. Try linking your Discord account again");
+    this.sp.printConsole("If you feel that something is wrong, please contact us on Discord.");
   };
 
   private loggingStartMoment = 0;

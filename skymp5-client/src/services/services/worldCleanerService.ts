@@ -2,6 +2,7 @@ import { ClientListener, CombinedController, Sp } from "./clientListener";
 import { NiPoint3 } from "../../sync/movement";
 import { ObjectReferenceEx } from "../../extensions/objectReferenceEx";
 import { Actor } from "skyrimPlatform";
+import { logTrace } from "../../logging";
 
 export class WorldCleanerService extends ClientListener {
   constructor(private sp: Sp, private controller: CombinedController) {
@@ -75,7 +76,7 @@ export class WorldCleanerService extends ClientListener {
       if (this.initialPos && ObjectReferenceEx.getDistanceNoZ(pos, this.initialPos) < 4096) {
         if (cellOrWorld === this.initialCellOrWorld) {
           if (this.isActorInDialogue(actor)) return;
-          this.logTrace(`Deleting chicken anomaly ${actorId.toString(16)}`);
+          logTrace(this, `Deleting chicken anomaly`, actorId.toString(16));
           actor.killSilent(null);
           actor.blockActivation(true);
           actor.disableNoWait(false);

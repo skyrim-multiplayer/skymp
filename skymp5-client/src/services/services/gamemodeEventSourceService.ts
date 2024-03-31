@@ -9,6 +9,7 @@ import { GamemodeApiEventSourceCtx } from "../messages_gamemode/gamemodeApiEvent
 // The reason we use global skyrimPlatform is that this.sp may be limited, and gamemode api needs unlimited access to skyrimPlatform
 // Sligthly different types
 import * as skyrimPlatform from "skyrimPlatform";
+import { logError, logTrace } from "../../logging";
 
 export class GamemodeEventSourceService extends ClientListener {
     constructor(private sp: Sp, private controller: CombinedController) {
@@ -77,7 +78,7 @@ export class GamemodeEventSourceService extends ClientListener {
                 (this.sp.storage['eventSourceContexts'] as Record<string, any>).push(ctx);
                 this.setupEventSource(ctx);
             } catch (e) {
-                this.sp.printConsole(`'eventSources.${eventName}' -`, e);
+                logError(this, `'eventSources`, eventName, `-`, e);
             }
         });
     }
@@ -86,9 +87,9 @@ export class GamemodeEventSourceService extends ClientListener {
         this.controller.once('update', () => {
             try {
                 ctx._fn(ctx);
-                this.sp.printConsole(`'eventSources.${ctx._eventName}' - Added`);
+                logTrace(this, `'eventSources`, ctx._eventName, `- Added`);
             } catch (e) {
-                this.sp.printConsole(`'eventSources.${ctx._eventName}' -`, e);
+                logError(this, `'eventSources`, ctx._eventName, `-`, e);
             }
         });
     };
