@@ -5,14 +5,7 @@ import { BrowserMessageEvent } from "skyrimPlatform";
 import { AuthNeededEvent } from "../events/authNeededEvent";
 import { BrowserWindowLoadedEvent } from "../events/browserWindowLoadedEvent";
 import { TimersService } from "./timersService";
-
-interface MasterApiAuthStatus {
-  token: string;
-  masterApiId: number;
-  discordUsername: string | null;
-  discordDiscriminator: string | null;
-  discordAvatar: string | null;
-}
+import { MasterApiAuthStatus } from "../messages_http/masterApiAuthStatus";
 
 // for browsersideWidgetSetter
 declare const window: any;

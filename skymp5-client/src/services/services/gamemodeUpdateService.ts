@@ -9,23 +9,11 @@ import { FormViewArray } from "../../view/formViewArray";
 
 // TODO: refactor
 import { localIdToRemoteId, remoteIdToLocalId } from "../../view/worldViewMisc";
+import { GamemodeApiCtx } from "../messages_gamemode/gamemodeApiCtx";
 
-// TODO: use this.sp instead
+// The reason we use global skyrimPlatform is that this.sp may be limited, and gamemode api needs unlimited access to skyrimPlatform
+// Sligthly different types
 import * as skyrimPlatform from "skyrimPlatform";
-
-export interface GamemodeApiCtx {
-    refr: ObjectReference | undefined;
-    value: unknown;
-    _model: FormModel | undefined;
-    sp: typeof skyrimPlatform,
-    state: Record<string, unknown> | undefined;
-    _view: FormViewArray | undefined;
-    i: number;
-    getFormIdInServerFormat: (clientsideFormId: number) => number;
-    getFormIdInClientFormat: (serversideFormId: number) => number;
-    get: (propName: string) => unknown;
-    respawn: () => void;
-}
 
 export class GamemodeUpdateService extends ClientListener {
     constructor(private sp: Sp, private controller: CombinedController) {
