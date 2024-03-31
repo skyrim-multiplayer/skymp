@@ -1,4 +1,3 @@
-import * as sp from 'skyrimPlatform';
 import { Actor, Form } from 'skyrimPlatform';
 import {
   Armor,
@@ -9,13 +8,12 @@ import {
   Ui,
   Utility,
   WorldSpace,
-  on,
-  once,
-  printConsole,
-  storage,
+  on, // TODO: use this.controller.on instead
+  once, // TODO: use this.controller.once instead
+  printConsole, // TODO: use this.sp.printConsole instead
+  storage, // TODO: use this.sp.storage instead
 } from 'skyrimPlatform';
 
-import * as updateOwner from '../../gamemodeApi/updateOwner';
 import * as messages from '../../messages';
 
 /* eslint-disable @typescript-eslint/no-empty-function */
@@ -95,35 +93,6 @@ const skipFormViewCreation = (
   return msg.refrId && msg.refrId < 0xff000000 && msg.baseRecordType !== 'DOOR';
 };
 
-//
-// eventSource system
-//
-
-const setupEventSource = (ctx: any) => {
-  once('update', () => {
-    try {
-      ctx._fn(ctx);
-      printConsole(`'eventSources.${ctx._eventName}' - Added`);
-    } catch (e) {
-      printConsole(`'eventSources.${ctx._eventName}' -`, e);
-    }
-  });
-};
-
-// Handle hot reload for eventSoucres
-if (Array.isArray(storage['eventSourceContexts'])) {
-  storage['eventSourceContexts'] = storage['eventSourceContexts'].filter(
-    (ctx: Record<string, unknown>) => !ctx._expired,
-  );
-  (storage['eventSourceContexts'] as any).forEach((ctx: any) => {
-    setupEventSource(ctx);
-  });
-}
-
-//
-//
-//
-
 const showConnectionError = () => {
   // TODO: unhardcode it or render via browser
   printConsole("Server connection failed. This may be caused by one of the following:");
@@ -182,7 +151,6 @@ export class RemoteServer extends ClientListener {
     this.controller.emitter.on("customPacketMessage2", (e) => this.onCustomPacketMessage2(e));
     this.controller.emitter.on("destroyActorMessage", (e) => this.onDestroyActorMessage(e));
     this.controller.emitter.on("setRaceMenuOpenMessage", (e) => this.onSetRaceMenuOpenMessage(e));
-    this.controller.emitter.on("updateGamemodeDataMessage", (e) => this.onUpdateGamemodeDataMessage(e));
     this.controller.emitter.on("updatePropertyMessage", (e) => this.onUpdatePropertyMessage(e));
     this.controller.emitter.on("deathStateContainerMessage", (e) => this.onDeathStateContainerMessage(e));
 
@@ -390,10 +358,6 @@ export class RemoteServer extends ClientListener {
       isMyClone: msg.isMe,
     };
     this.worldModel.forms[i] = form;
-
-    if (msg.isMe) {
-      updateOwner.setOwnerModel(form);
-    }
 
     if (msg.appearance) {
       form.appearance = msg.appearance;
@@ -831,95 +795,6 @@ export class RemoteServer extends ClientListener {
         this.loginWithSkympIoCredentials();
         break;
     }
-  }
-
-  private updateGamemodeUpdateFunctions(
-    storageVar: string,
-    functionSources: Record<string, string>,
-  ): void {
-    storage[storageVar] = JSON.parse(JSON.stringify(functionSources));
-    for (const propName of Object.keys(functionSources)) {
-      try {
-        (storage[storageVar] as any)[propName] = new Function(
-          'ctx',
-          (storage[storageVar] as any)[propName],
-        );
-        const emptyFunction = functionSources[propName] === '';
-        if (emptyFunction) {
-          delete (storage[storageVar] as any)[propName];
-          printConsole(`'${storageVar}.${propName}' -`, 'Added empty');
-        } else {
-          printConsole(`'${storageVar}.${propName}' -`, 'Added');
-        }
-      } catch (e) {
-        printConsole(`'${storageVar}.${propName}' -`, e);
-      }
-    }
-    storage[`${storageVar}_keys`] = Object.keys(storage[storageVar] as any);
-  }
-
-  private onUpdateGamemodeDataMessage(event: ConnectionMessage<UpdateGamemodeDataMessage>): void {
-    const msg = event.message;
-
-    //
-    // updateOwnerFunctions/updateNeighborFunctions
-    //
-    storage['updateNeighborFunctions'] = undefined;
-    storage['updateOwnerFunctions'] = undefined;
-
-    this.updateGamemodeUpdateFunctions(
-      'updateNeighborFunctions',
-      msg.updateNeighborFunctions || {},
-    );
-    this.updateGamemodeUpdateFunctions(
-      'updateOwnerFunctions',
-      msg.updateOwnerFunctions || {},
-    );
-
-    //
-    // EventSource
-    //
-    if (!Array.isArray(storage['eventSourceContexts'])) {
-      storage['eventSourceContexts'] = [];
-    } else {
-      storage['eventSourceContexts'].forEach((ctx: Record<string, unknown>) => {
-        ctx.sendEvent = () => { };
-        ctx._expired = true;
-      });
-    }
-    const eventNames = Object.keys(msg.eventSources);
-    eventNames.forEach((eventName) => {
-      try {
-        const fn = new Function('ctx', msg.eventSources[eventName]);
-        const ctx = {
-          sp,
-          sendEvent: (...args: unknown[]) => {
-            const message: CustomEventMessage = {
-              t: messages.MsgType.CustomEvent,
-              args,
-              eventName
-            };
-            this.controller.emitter.emit("sendMessage", {
-              message: message,
-              reliability: "reliable"
-            });
-          },
-          getFormIdInServerFormat: (clientsideFormId: number) => {
-            return localIdToRemoteId(clientsideFormId);
-          },
-          getFormIdInClientFormat: (serversideFormId: number) => {
-            return remoteIdToLocalId(serversideFormId);
-          },
-          _fn: fn,
-          _eventName: eventName,
-          state: {},
-        };
-        (storage['eventSourceContexts'] as Record<string, any>).push(ctx);
-        setupEventSource(ctx);
-      } catch (e) {
-        printConsole(`'eventSources.${eventName}' -`, e);
-      }
-    });
   }
 
   /** Packet handlers end **/
