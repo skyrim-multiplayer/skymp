@@ -134,7 +134,7 @@ export class GamemodeUpdateService extends ClientListener {
         }
 
         // Otherwise worldModel.playerCharacterFormIdx may be unassigned
-        this.controller.once("update", () => {
+        this.controller.once("tick", () => {
 
             const remoteServer = this.controller.lookupListener(RemoteServer);
 

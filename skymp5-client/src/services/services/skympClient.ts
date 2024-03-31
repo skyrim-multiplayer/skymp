@@ -10,7 +10,7 @@ import { RemoteServer } from './remoteServer';
 import { setupHooks } from '../../sync/animation';
 import { WorldView } from '../../view/worldView';
 import { SinglePlayerService } from './singlePlayerService';
-import { AuthGameData } from '../../features/authModel';
+import { AuthGameData, authGameDataStorageKey } from '../../features/authModel';
 import { ClientListener, CombinedController, Sp } from './clientListener';
 import { ConnectionFailed } from '../events/connectionFailed';
 import { ConnectionDenied } from '../events/connectionDenied';
@@ -41,7 +41,8 @@ export class SkympClient extends ClientListener {
 
     this.controller.emitter.on("createActorMessage", (e) => this.onActorCreateMessage(e));
 
-    const authGameData = storage[AuthGameData.storageKey] as AuthGameData | undefined;
+    // TODO: refactor out very similar code in frontHotReloadService.ts
+    const authGameData = storage[authGameDataStorageKey] as AuthGameData | undefined;
 
     const storageHasValidAuthGameData = authGameData?.local || authGameData?.remote;
 
@@ -62,7 +63,7 @@ export class SkympClient extends ClientListener {
   private onAuth(e: AuthEvent) {
     this.logTrace(`Caught auth event`);
 
-    storage[AuthGameData.storageKey] = e.authGameData;
+    storage[authGameDataStorageKey] = e.authGameData;
 
     this.startClient();
 

@@ -45,6 +45,7 @@ import { TimersService } from "./services/services/timersService";
 import { PlayerBowShotService } from "./services/services/playerBowShotService";
 import { GamemodeEventSourceService } from "./services/services/gamemodeEventSourceService";
 import { GamemodeUpdateService } from "./services/services/gamemodeUpdateService";
+import { FrontHotReloadService } from "./services/services/frontHotReloadService";
 
 once("update", () => {
   Utility.setINIBool("bAlwaysActive:General", true);
@@ -93,7 +94,8 @@ const main = () => {
       new TimersService(sp, controller),
       new PlayerBowShotService(sp, controller),
       new GamemodeEventSourceService(sp, controller),
-      new GamemodeUpdateService(sp, controller)
+      new GamemodeUpdateService(sp, controller),
+      new FrontHotReloadService(sp, controller)
     ];
     SpApiInteractor.setup(listeners);
   }

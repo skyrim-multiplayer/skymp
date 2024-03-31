@@ -2,6 +2,7 @@ import { Appearance } from "../../sync/appearance";
 import { Equipment } from "../../sync/equipment";
 import { Inventory } from "../../sync/inventory";
 import { Transform } from "../../sync/movement";
+import { Animation } from "../../sync/animation";
 
 export interface CreateActorMessage {
     type: "createActor";
@@ -16,4 +17,5 @@ export interface CreateActorMessage {
     baseId?: number;
     isDead?: boolean;
     props?: Record<string, unknown>;
+    animation?: Animation;
 }
