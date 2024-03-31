@@ -36,8 +36,17 @@ inline HttpClient::Headers GetHeaders(const JsValue& options)
 
   HttpClient::Headers res;
   IterateKeys(headers, [&](const JsValue& key) {
-    res.push_back({ static_cast<std::string>(key),
-                    static_cast<std::string>(headers.GetProperty(key)) });
+    auto value = headers.GetProperty(key);
+
+    if (value.GetType() != JsValue::Type::String) {
+      std::stringstream ss;
+      ss << "Expected HTTP header value be a string but got "
+         << value.ToString() << ", header key: " << key.ToString();
+      throw std::runtime_error(ss.str());
+    }
+
+    res.push_back(
+      { static_cast<std::string>(key), static_cast<std::string>(value) });
   });
   return res;
 }
