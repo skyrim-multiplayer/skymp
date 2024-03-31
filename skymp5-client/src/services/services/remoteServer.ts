@@ -49,8 +49,7 @@ import { HostStartMessage } from '../messages/hostStartMessage';
 import { HostStopMessage } from '../messages/hostStopMessage';
 import { ConnectionMessage } from '../events/connectionMessage';
 import { SetInventoryMessage } from '../messages/setInventoryMessage';
-import { CreateActorMessage } from '../messages/createActorMessage';
-import { UpdateGamemodeDataMessage } from '../messages/updateGameModeDataMessage';
+import { CreateActorMessage, CreateActorMessageAdditionalProps } from '../messages/createActorMessage';
 import { CustomPacketMessage2 } from '../messages/customPacketMessage2';
 import { DestroyActorMessage } from '../messages/destroyActorMessage';
 import { SetRaceMenuOpenMessage } from '../messages/setRaceMenuOpenMessage';
@@ -120,7 +119,7 @@ on('update', () => {
   if (Date.now() - pcInvLastApply > 5000) {
     pcInvLastApply = Date.now();
     const pcInv = getPcInventory();
-    if (pcInv) applyInventory(Game.getPlayer() as Actor, pcInv, false, true);
+    if (pcInv) applyInventory(Game.getPlayer()!, pcInv, false, true);
   }
 });
 
@@ -296,14 +295,14 @@ export class RemoteServer extends ClientListener {
 
             // TODO: move to a separate module
             if (msg.props.setNodeTextureSet) {
-              const setNodeTextureSet = msg.props.setNodeTextureSet as Record<string, number>;
+              const setNodeTextureSet = msg.props.setNodeTextureSet;
               for (const key in setNodeTextureSet) {
                 const textureSetId = setNodeTextureSet[key];
                 const firstPerson = false;
 
                 const textureSet = this.sp.TextureSet.from(Game.getFormEx(textureSetId));
                 if (textureSet !== null) {
-                  sp.NetImmerse.setNodeTextureSet(refr, key, textureSet, firstPerson);
+                  this.sp.NetImmerse.setNodeTextureSet(refr, key, textureSet, firstPerson);
                   this.logTrace(`Applied texture set ${textureSetId.toString(16)} to ${key}`);
                 } else {
                   this.logError(`Failed to apply texture set ${textureSetId.toString(16)} to ${key}`);
@@ -349,9 +348,9 @@ export class RemoteServer extends ClientListener {
     const i = this.getIdManager().allocateIdFor(msg.idx);
     if (this.worldModel.forms.length <= i) this.worldModel.forms.length = i + 1;
 
-    let movement: Movement = null as unknown as Movement;
+    let movement: Movement | undefined = undefined;
     // TODO: better check if it is an npc (not an object reference)
-    if ((msg.refrId as number) >= 0xff000000) {
+    if (msg.refrId !== undefined && msg.refrId >= 0xff000000) {
       movement = {
         pos: msg.transform.pos,
         rot: msg.transform.rot,
@@ -398,7 +397,7 @@ export class RemoteServer extends ClientListener {
     if (msg.props) {
       for (const propName in msg.props) {
         const i = this.getIdManager().getId(msg.idx);
-        (form as Record<string, unknown>)[propName] = msg.props[propName];
+        (form as Record<string, unknown>)[propName] = msg.props[propName as keyof CreateActorMessageAdditionalProps];
       }
     }
 
@@ -414,20 +413,20 @@ export class RemoteServer extends ClientListener {
 
     const applyPcInv = () => {
       if (msg.equipment) {
-        applyEquipment(Game.getPlayer() as Actor, msg.equipment)
+        applyEquipment(Game.getPlayer()!, msg.equipment)
       }
 
       if (msg.props && msg.props.inventory)
         this.onSetInventoryMessage({
           message: {
             type: 'setInventory',
-            inventory: (msg.props as any).inventory as Inventory,
+            inventory: msg.props.inventory
           }
         });
     };
 
-    if (msg.isMe && msg.props) {
-      const learnedSpells = msg.props['learnedSpells'] as Array<number>;
+    if (msg.isMe && msg.props && msg.props.learnedSpells) {
+      const learnedSpells = msg.props.learnedSpells;
 
       once('update', () => {
         Utility.wait(1).then(() => {
@@ -503,7 +502,7 @@ export class RemoteServer extends ClientListener {
             applyAppearanceToPlayer(msg.appearance);
             if (msg.appearance.isFemale)
               // Fix gender-specific walking anim
-              (Game.getPlayer() as Actor).resurrect();
+              (Game.getPlayer()!).resurrect();
           }
         }
 
@@ -581,7 +580,7 @@ export class RemoteServer extends ClientListener {
                 applyAppearanceToPlayer(msg.appearance);
                 if (msg.appearance.isFemale)
                   // Fix gender-specific walking anim
-                  (Game.getPlayer() as Actor).resurrect();
+                  (Game.getPlayer()!).resurrect();
               }
             });
           }
