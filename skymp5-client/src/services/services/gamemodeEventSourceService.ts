@@ -4,6 +4,11 @@ import { CustomEventMessage } from "../messages/customEventMessage";
 import { UpdateGamemodeDataMessage } from "../messages/updateGameModeDataMessage";
 import { ClientListener, CombinedController, Sp } from "./clientListener";
 import { MsgType } from "../../messages";
+import { GamemodeApiEventSourceCtx } from "../messages_gamemode/gamemodeApiEventSourceCtx";
+
+// The reason we use global skyrimPlatform is that this.sp may be limited, and gamemode api needs unlimited access to skyrimPlatform
+// Sligthly different types
+import * as skyrimPlatform from "skyrimPlatform";
 
 export class GamemodeEventSourceService extends ClientListener {
     constructor(private sp: Sp, private controller: CombinedController) {
@@ -34,8 +39,20 @@ export class GamemodeEventSourceService extends ClientListener {
         eventNames.forEach((eventName) => {
             try {
                 const fn = new Function('ctx', event.message.eventSources[eventName]);
-                const ctx = {
-                    sp: this.sp,
+                const ctx: GamemodeApiEventSourceCtx = {
+                    refr: undefined,
+                    value: undefined,
+                    _model: undefined,
+                    _view: undefined,
+                    i: -1,
+                    get: (_propName: string) => {
+                        throw new Error("ctx.get can't be used in event source");
+                    },
+                    respawn() {
+                        throw new Error("ctx.respawn can't be used in event source");
+                    },
+
+                    sp: skyrimPlatform,
                     sendEvent: (...args: unknown[]) => {
                         const message: CustomEventMessage = {
                             t: MsgType.CustomEvent,
