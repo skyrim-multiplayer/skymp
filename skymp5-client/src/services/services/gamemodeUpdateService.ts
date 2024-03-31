@@ -14,6 +14,7 @@ import { GamemodeApiCtx } from "../messages_gamemode/gamemodeApiCtx";
 // The reason we use global skyrimPlatform is that this.sp may be limited, and gamemode api needs unlimited access to skyrimPlatform
 // Sligthly different types
 import * as skyrimPlatform from "skyrimPlatform";
+import { logError, logTrace } from "../../logging";
 
 export class GamemodeUpdateService extends ClientListener {
     constructor(private sp: Sp, private controller: CombinedController) {
@@ -96,7 +97,7 @@ export class GamemodeUpdateService extends ClientListener {
                 try {
                     if (f) f(this.updateNeighborCtx);
                 } catch (e) {
-                    this.sp.printConsole(`'updateNeighbor.${key}' - `, e);
+                    logTrace(this, `updateNeighbor`, key, '-', e);
                 }
             }
         }
@@ -131,7 +132,8 @@ export class GamemodeUpdateService extends ClientListener {
             const myFormModel: FormModel | undefined = worldModel.forms[worldModel.playerCharacterFormIdx];
 
             if (!myFormModel) {
-                return this.logError(`Unable to find formModel with index ${worldModel.playerCharacterFormIdx}`);
+                logError(this, `Unable to find formModel with index`, worldModel.playerCharacterFormIdx);
+                return;
             }
 
             this.setOwnerModel(myFormModel);
@@ -182,7 +184,7 @@ export class GamemodeUpdateService extends ClientListener {
             try {
                 if (f) f(this.updateOwnerCtx);
             } catch (e) {
-                this.sp.printConsole(`'updateOwner.${propName}' - `, e);
+                logTrace(this, `updateOwner`, propName, '-', e);
             }
         }
     }
@@ -206,12 +208,12 @@ export class GamemodeUpdateService extends ClientListener {
                 const emptyFunction = functionSources[propName] === '';
                 if (emptyFunction) {
                     delete (this.sp.storage[storageVar] as any)[propName];
-                    this.sp.printConsole(`'${storageVar}.${propName}' -`, 'Added empty');
+                    logTrace(this, storageVar, propName, 'Added empty');
                 } else {
-                    this.sp.printConsole(`'${storageVar}.${propName}' -`, 'Added');
+                    logTrace(this, storageVar, propName, 'Added');
                 }
             } catch (e) {
-                this.sp.printConsole(`'${storageVar}.${propName}' -`, e);
+                logTrace(this, storageVar, propName, e);
             }
         }
         this.sp.storage[`${storageVar}_keys`] = Object.keys(this.sp.storage[storageVar] as any);
