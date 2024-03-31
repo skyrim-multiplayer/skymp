@@ -1,4 +1,4 @@
-import { AuthGameData } from "../../features/authModel";
+import { AuthGameData, authGameDataStorageKey } from "../../features/authModel";
 import { AuthEvent } from "../events/authEvent";
 import { ClientListener, Sp, CombinedController } from "./clientListener";
 
@@ -15,7 +15,7 @@ export class FrontHotReloadService extends ClientListener {
         }
 
         // TODO: refactor out very similar code in skympClient.ts
-        const authGameData = this.sp.storage[AuthGameData.storageKey] as AuthGameData | undefined;
+        const authGameData = this.sp.storage[authGameDataStorageKey] as AuthGameData | undefined;
 
         const storageHasValidAuthGameData = authGameData?.local || authGameData?.remote;
 

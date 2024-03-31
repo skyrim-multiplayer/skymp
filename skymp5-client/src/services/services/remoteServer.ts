@@ -20,7 +20,7 @@ import * as messages from '../../messages';
 
 /* eslint-disable @typescript-eslint/no-empty-function */
 import { ObjectReferenceEx } from '../../extensions/objectReferenceEx';
-import { AuthGameData } from '../../features/authModel';
+import { AuthGameData, authGameDataStorageKey } from '../../features/authModel';
 import { IdManager } from '../../lib/idManager';
 import { nameof } from '../../lib/nameof';
 import { setActorValuePercentage } from '../../sync/actorvalues';
@@ -954,7 +954,7 @@ export class RemoteServer extends ClientListener {
   private loginWithSkympIoCredentials() {
     this.loggingStartMoment = Date.now();
 
-    const authData = storage[AuthGameData.storageKey] as AuthGameData | undefined;
+    const authData = storage[authGameDataStorageKey] as AuthGameData | undefined;
     if (authData?.local) {
       this.logTrace(
         `Logging in offline mode, profileId = ${authData.local.profileId}`,
