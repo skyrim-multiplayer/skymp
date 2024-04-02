@@ -29,12 +29,14 @@ export class ActivationService extends ClientListener {
 
         target = localIdToRemoteId(target);
         if (!target) {
-            return logError(this, 'localIdToRemoteId returned 0 (target) in on(\'activate\')');
+            logError(this, 'localIdToRemoteId returned 0 (target) in on(\'activate\')');
+            return;
         }
 
         caster = localIdToRemoteId(caster);
         if (!caster) {
-            return logError(this, 'localIdToRemoteId returned 0 (caster) in on(\'activate\')');
+            logError(this, 'localIdToRemoteId returned 0 (caster) in on(\'activate\')');
+            return;
         }
 
         const openState = e.target.getOpenState();
@@ -49,7 +51,8 @@ export class ActivationService extends ClientListener {
         }
 
         if (openState === OpenState.Opening || openState === OpenState.Closing) {
-            return logTrace(this, "Ignoring activation of door because it's already opening or closing");
+            logTrace(this, "Ignoring activation of door because it's already opening or closing");
+            return;
         }
 
         this.controller.emitter.emit("sendMessage", {

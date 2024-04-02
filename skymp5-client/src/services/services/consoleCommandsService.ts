@@ -35,7 +35,8 @@ export class ConsoleCommandsService extends ClientListener {
     private setupMpCommand() {
         const command = this.sp.findConsoleCommand(" ConfigureUM") || this.sp.findConsoleCommand("test");
         if (command === null) {
-            return logError(this, "command was null in setupMpCommand");
+            logError(this, "command was null in setupMpCommand");
+            return;
         }
 
         command.shortName = "mp";
@@ -46,10 +47,12 @@ export class ConsoleCommandsService extends ClientListener {
         this.schemas.forEach((_, commandName) => {
             const command = this.sp.findConsoleCommand(commandName);
             if (command === null) {
-                return logError(this, `command`, commandName, `was null in setupVanilaCommands`);
+                logError(this, `command`, commandName, `was null in setupVanilaCommands`);
+                return;
             }
             if (this.nonVanilaCommands.includes(commandName)) {
-                return logTrace(this, `command`, commandName, ` is non-vanila command`);
+                logTrace(this, `command`, commandName, ` is non-vanila command`);
+                return;
             }
             command.execute = this.getCommandExecutor(commandName);
         });

@@ -36,7 +36,9 @@ export class SpSnippetService extends ClientListener {
                         reliability: "reliable"
                     });
                 })
-                .catch((e) => logError(this, 'SpSnippet ' + msg.class + ' ' + msg.function + ' failed ' + e));
+                .catch((e) => {
+                    logError(this, 'SpSnippet ' + msg.class + ' ' + msg.function + ' failed ' + e);
+                });
         });
     }
 
@@ -45,7 +47,8 @@ export class SpSnippetService extends ClientListener {
             if (snippet.function === "AddItem" || snippet.function === "RemoveItem") {
                 const form = this.sp.Form.from(this.deserializeArg(snippet.arguments[0]));
                 if (form === null) {
-                    return logError(this, "Unable to find form with id " + snippet.arguments[0].formId.toString(16));
+                    logError(this, "Unable to find form with id " + snippet.arguments[0].formId.toString(16));
+                    return;
                 }
 
                 const sign = snippet.function === "AddItem" ? "+" : "-";

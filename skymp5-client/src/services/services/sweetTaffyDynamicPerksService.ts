@@ -41,7 +41,8 @@ export class SweetTaffyDynamicPerksService extends ClientListener {
     const entries = e.message.inventory.entries;
 
     if (entries.length === 0) {
-      return logTrace(this, "Received SetInventoryMessage with empty inventory")
+      logTrace(this, "Received SetInventoryMessage with empty inventory");
+      return;
     }
 
     this.controller.once("update", () => {
@@ -56,11 +57,13 @@ export class SweetTaffyDynamicPerksService extends ClientListener {
 
     const entries = e.message.inventory?.entries;
     if (entries === undefined) {
-      return logTrace(this, "Received CreateActorMessage without inventory");
+      logTrace(this, "Received CreateActorMessage without inventory");
+      return;
     }
 
     if (entries.length === 0) {
-      return logTrace(this, "Received CreateActorMessage with empty inventory")
+      logTrace(this, "Received CreateActorMessage with empty inventory");
+      return;
     }
 
     this.controller.once("update", () => {
