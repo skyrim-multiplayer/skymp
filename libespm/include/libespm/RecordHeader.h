@@ -14,7 +14,13 @@ class RecordHeader
   friend class RecordHeaderAccess;
 
 public:
+  const Type GetType() const noexcept;
+  // Please use for tests only
+  // Do not rely on Skyrim record flags format
+  uint32_t GetFlags() const noexcept;
   uint32_t GetId() const noexcept;
+  uint16_t GetVersion() const noexcept;
+
   const char* GetEditorId(
     CompressedFieldsCache& compressedFieldsCache) const noexcept;
   void GetScriptData(
@@ -22,12 +28,6 @@ public:
     CompressedFieldsCache& compressedFieldsCache) const noexcept;
   std::vector<uint32_t> GetKeywordIds(
     CompressedFieldsCache& compressedFieldsCache) const noexcept;
-
-  const Type GetType() const noexcept;
-
-  // Please use for tests only
-  // Do not rely on Skyrim record flags format
-  uint32_t GetFlags() const noexcept;
 
 private:
   RecordHeader() = delete;
