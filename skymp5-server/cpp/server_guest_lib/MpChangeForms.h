@@ -107,6 +107,9 @@ public:
   // Used for SetNodeTextureSet (node, texture set desc)
   std::optional<std::map<std::string, std::string>> setNodeTextureSet;
 
+  // Used for SetNodeScale (node, scale value)
+  std::optional<std::map<std::string, float>> setNodeScale;
+
   // Used for SetDisplayName (object reference)
   std::optional<std::string> displayName;
 
@@ -126,7 +129,7 @@ public:
       count, isRaceMenuOpen, isDead, consoleCommandsAllowed, appearanceDump,
       equipmentDump, actorValues.ToTuple(), spawnPoint, dynamicFields,
       spawnDelay, learnedSpells, templateChain, lastAnimation,
-      setNodeTextureSet, displayName);
+      setNodeTextureSet, setNodeScale, displayName);
   }
 
   static nlohmann::json ToJson(const MpChangeFormREFR& changeForm);

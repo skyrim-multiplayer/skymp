@@ -148,6 +148,7 @@ public:
   void SetNodeTextureSet(const std::string& node,
                          const espm::LookupResult& textureSet,
                          bool firstPerson);
+  void SetNodeScale(const std::string& node, float scale, bool firstPerson);
   void SetDisplayName(const std::string& newName);
 
   const std::set<MpObjectReference*>& GetListeners() const;

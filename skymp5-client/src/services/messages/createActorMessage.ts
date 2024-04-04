@@ -28,6 +28,7 @@ export interface CreateActorMessageAdditionalProps {
     isOpen?: boolean;
     isHarvested?: boolean;
     setNodeTextureSet?: Record<string, number>;
+    setNodeScale?: Record<string, number>;
     disabled?: boolean;
     lastAnimation?: string;
     displayName?: string;
