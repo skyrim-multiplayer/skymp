@@ -1816,11 +1816,14 @@ float MpObjectReference::GetTotalItemWeight() const
     const auto& espm = GetParent()->GetEspm();
     const auto* record = espm.GetBrowser().LookupById(entry.baseId).rec;
     if (!record) {
-      spdlog::trace("Record of form ({}) is nullptr", entry.baseId);
+      spdlog::warn(
+        "MpObjectReference::GetTotalItemWeight of ({:x}): Record of form "
+        "({}) is nullptr",
+        GetFormId(), entry.baseId);
       return 0.f;
     }
     float weight = GetWeightFromRecord(record, GetParent()->GetEspmCache());
-    if (MathUtils::IsNearlyEqual(weight, 0.f)) {
+    if (!espm::utils::IsItem(record->GetType())) {
       spdlog::warn("Unsupported espm type {} has been detected, when "
                    "calculating overall weight.",
                    record->GetType().ToString());

@@ -1,5 +1,6 @@
 #include "PapyrusForm.h"
 
+#include "GetWeightFromRecord.h"
 #include "MpActor.h"
 #include "TimeUtils.h"
 #include "WorldState.h"
@@ -137,11 +138,16 @@ VarValue PapyrusForm::GetName_(VarValue self, const std::vector<VarValue>&)
 VarValue PapyrusForm::GetWeight(VarValue self,
                                 const std::vector<VarValue>& arguments)
 {
-  const auto* form = GetFormPtr<MpForm>(self);
-  if (!form) {
-    return VarValue::None();
+  if (const auto* form = GetFormPtr<MpForm>(self)) {
+    return VarValue(form->GetWeight());
   }
-  return VarValue(form->GetWeight());
+
+  if (const auto record = GetRecordPtr(self).rec) {
+    auto& cache = compatibilityPolicy->GetWorldState()->GetEspmCache();
+    return VarValue(GetWeightFromRecord(record, cache));
+  }
+
+  return VarValue::None();
 }
 
 void PapyrusForm::Register(VirtualMachine& vm,
