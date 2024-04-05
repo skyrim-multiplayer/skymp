@@ -8,7 +8,7 @@ namespace espm {
 
 const Type RecordHeader::GetType() const noexcept
 {
-  return Type{reinterpret_cast<const char*>(this) - 8};
+  return Type{ reinterpret_cast<const char*>(this) - 8 };
 }
 
 uint32_t RecordHeader::GetFlags() const noexcept

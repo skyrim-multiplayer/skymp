@@ -252,7 +252,7 @@ bool Browser::ReadAny(const GroupStack* parentGrStack)
       pImpl->quests.push_back(recHeader);
     }
 
-    if (utils::Is<espm::WRLD>(t)){
+    if (utils::Is<espm::WRLD>(t)) {
       pImpl->worlds.push_back(recHeader);
     }
 
