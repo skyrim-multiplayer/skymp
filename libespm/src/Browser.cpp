@@ -9,10 +9,10 @@
 #include "libespm/NAVM.h"
 #include "libespm/NavMeshKey.h"
 #include "libespm/QUST.h"
-#include "libespm/WRLD.h"
 #include "libespm/REFR.h"
 #include "libespm/RecordHeader.h"
 #include "libespm/RefrKey.h"
+#include "libespm/WRLD.h"
 #include <cstring>
 #include <optional>
 #include <sparsepp/spp.h>
