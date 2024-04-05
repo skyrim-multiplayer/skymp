@@ -10,12 +10,12 @@ INGR::Data INGR::GetData(
 {
   Data result;
   result.effects = Effects(this).GetData(compressedFieldsCache).effects;
-  espm::IterateFields_(
+  RecordHeaderAccess::IterateFields(
     this,
-    [&](const char* type, uint32_t dataSize, const char* data) {
+    [&](const char* type, uint32_t size, const char* data) {
       if (!std::memcmp(type, "DATA", 4)) {
         result.itemData.value = *reinterpret_cast<const uint32_t*>(data);
-        result.itemData.weight = *reinterpret_cast<const float*>(data + 4);
+        result.itemData.weight = *reinterpret_cast<const float*>(data + 0x4);
       }
     },
     compressedFieldsCache);
