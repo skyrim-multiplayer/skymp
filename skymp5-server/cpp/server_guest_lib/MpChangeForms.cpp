@@ -88,6 +88,10 @@ nlohmann::json MpChangeForm::ToJson(const MpChangeForm& changeForm)
     res["setNodeTextureSet"] = *changeForm.setNodeTextureSet;
   }
 
+  if (changeForm.setNodeScale.has_value()) {
+    res["setNodeScale"] = *changeForm.setNodeScale;
+  }
+
   if (changeForm.displayName.has_value()) {
     res["displayName"] = *changeForm.displayName;
   }
@@ -113,7 +117,8 @@ MpChangeForm MpChangeForm::JsonToChangeForm(simdjson::dom::element& element)
     spawnPointCellOrWorldDesc("spawnPoint_cellOrWorldDesc"),
     spawnDelay("spawnDelay"), effects("effects"),
     templateChain("templateChain"), lastAnimation("lastAnimation"),
-    setNodeTextureSet("setNodeTextureSet"), displayName("displayName");
+    setNodeTextureSet("setNodeTextureSet"), setNodeScale("setNodeScale"),
+    displayName("displayName");
 
   MpChangeForm res;
   ReadEx(element, recType, &res.recType);
@@ -250,6 +255,22 @@ MpChangeForm MpChangeForm::JsonToChangeForm(simdjson::dom::element& element)
       std::string keyStr = key.data();
       std::string valueStr = value.get_string().value().data();
       res.setNodeTextureSet->emplace(keyStr, valueStr);
+    }
+  }
+
+  if (element.at_pointer(setNodeScale.GetData()).error() ==
+      simdjson::error_code::SUCCESS) {
+    simdjson::dom::element data;
+    ReadEx(element, setNodeScale, &data);
+
+    if (res.setNodeScale == std::nullopt) {
+      res.setNodeScale = std::map<std::string, float>();
+    }
+
+    for (auto [key, value] : data.get_object()) {
+      std::string keyStr = key.data();
+      float valueFloat = static_cast<float>(value.get_double().value());
+      res.setNodeScale->emplace(keyStr, valueFloat);
     }
   }
 

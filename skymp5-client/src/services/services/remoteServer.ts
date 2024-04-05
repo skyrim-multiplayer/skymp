@@ -258,6 +258,17 @@ export class RemoteServer extends ClientListener {
             );
 
             // TODO: move to a separate module
+            if (msg.props.setNodeScale) {
+              const setNodeScale = msg.props.setNodeScale;
+              for (const key in setNodeScale) {
+                const scale = setNodeScale[key];
+                const firstPerson = false;
+                this.sp.NetImmerse.setNodeScale(refr, key, scale, firstPerson);
+                logTrace(this, refr.getFormID().toString(16), `Applied node scale`, scale, `to`, key);
+              }
+            }
+
+            // TODO: move to a separate module
             if (msg.props.setNodeTextureSet) {
               const setNodeTextureSet = msg.props.setNodeTextureSet;
               for (const key in setNodeTextureSet) {
@@ -267,9 +278,9 @@ export class RemoteServer extends ClientListener {
                 const textureSet = this.sp.TextureSet.from(Game.getFormEx(textureSetId));
                 if (textureSet !== null) {
                   this.sp.NetImmerse.setNodeTextureSet(refr, key, textureSet, firstPerson);
-                  logTrace(this, `Applied texture set`, textureSetId.toString(16), `to`, key);
+                  logTrace(this, refr.getFormID().toString(16), `Applied texture set`, textureSetId.toString(16), `to`, key);
                 } else {
-                  logError(this, `Failed to apply texture set`, textureSetId.toString(16), `to`, key);
+                  logError(this, refr.getFormID().toString(16), `Failed to apply texture set`, textureSetId.toString(16), `to`, key);
                 }
               }
             }
