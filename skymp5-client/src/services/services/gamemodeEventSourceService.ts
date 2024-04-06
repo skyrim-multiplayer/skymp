@@ -36,7 +36,18 @@ export class GamemodeEventSourceService extends ClientListener {
                 ctx._expired = true;
             });
         }
-        const eventNames = Object.keys(event.message.eventSources);
+
+        let eventNames = Object.keys(event.message.eventSources);
+
+        let blockedEventSources = this.sp.settings["skymp5-client"]["blockedEventSources"];
+
+        if (Array.isArray(blockedEventSources)) {
+            blockedEventSources.forEach((blockedEventSource: unknown) => {
+                eventNames = eventNames.filter((eventName) => eventName !== blockedEventSource);
+                logTrace(this, `'eventSources`, blockedEventSource, `- Blocked by the client`);
+            });
+        }
+
         eventNames.forEach((eventName) => {
             try {
                 const fn = new Function('ctx', event.message.eventSources[eventName]);
