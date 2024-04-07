@@ -122,20 +122,32 @@ VarValue PapyrusGame::GetFormInternal(VarValue self,
                                       bool extended) const noexcept
 {
   if (arguments.size() != 1) {
+    spdlog::error("{}: expected 1 argument, got {}",
+                  extended ? "GetFormEx" : "GetForm", arguments.size());
     return VarValue::None();
   }
-  auto formId = static_cast<const int32_t>(arguments[0].CastToInt());
+
+  double formId = static_cast<double>(arguments[0].CastToFloat());
+
   constexpr const uint32_t maxId = 0x80000000;
 
   if (!extended && formId > maxId) {
+    spdlog::warn("GetForm: formId is too large: {:x}, use GetFormEx",
+                 static_cast<uint32_t>(formId));
     return VarValue::None();
   }
 
   const std::shared_ptr<MpForm>& pForm =
-    compatibilityPolicy->GetWorldState()->LookupFormById(formId);
-  espm::LookupResult res = GetRecordPtr(VarValue(formId));
+    compatibilityPolicy->GetWorldState()->LookupFormById(
+      static_cast<uint32_t>(formId));
+  espm::LookupResult res =
+    compatibilityPolicy->GetWorldState()->GetEspm().GetBrowser().LookupById(
+      static_cast<uint32_t>(formId));
 
   if (!pForm && !res.rec) {
+    spdlog::warn("{}: form not found: {:x}",
+                 extended ? "GetFormEx" : "GetForm",
+                 static_cast<uint32_t>(formId));
     return VarValue::None();
   }
 
@@ -174,17 +186,17 @@ void PapyrusGame::Register(VirtualMachine& vm,
 {
   compatibilityPolicy = policy;
 
-  AddStatic(vm, "IncrementStat", &PapyrusGame::IncrementStat);
-  AddStatic(vm, "ForceThirdPerson", &PapyrusGame::ForceThirdPerson);
-  AddStatic(vm, "DisablePlayerControls", &PapyrusGame::DisablePlayerControls);
-  AddStatic(vm, "EnablePlayerControls", &PapyrusGame::EnablePlayerControls);
-  AddStatic(vm, "FindClosestReferenceOfAnyTypeInListFromRef",
+  AddStatic(vm, "incrementStat", &PapyrusGame::IncrementStat);
+  AddStatic(vm, "forceThirdPerson", &PapyrusGame::ForceThirdPerson);
+  AddStatic(vm, "disablePlayerControls", &PapyrusGame::DisablePlayerControls);
+  AddStatic(vm, "enablePlayerControls", &PapyrusGame::EnablePlayerControls);
+  AddStatic(vm, "findClosestReferenceOfAnyTypeInListFromRef",
             &PapyrusGame::FindClosestReferenceOfAnyTypeInListFromRef);
-  AddStatic(vm, "GetPlayer", &PapyrusGame::GetPlayer);
-  AddStatic(vm, "ShowRaceMenu", &PapyrusGame::ShowRaceMenu);
-  AddStatic(vm, "ShowLimitedRaceMenu", &PapyrusGame::ShowLimitedRaceMenu);
-  AddStatic(vm, "GetCameraState", &PapyrusGame::GetCameraState);
-  AddStatic(vm, "GetForm", &PapyrusGame::GetForm);
-  AddStatic(vm, "GetFormEx", &PapyrusGame::GetFormEx);
-  AddStatic(vm, "ShakeController", &PapyrusGame::ShakeController);
+  AddStatic(vm, "getPlayer", &PapyrusGame::GetPlayer);
+  AddStatic(vm, "showRaceMenu", &PapyrusGame::ShowRaceMenu);
+  AddStatic(vm, "showLimitedRaceMenu", &PapyrusGame::ShowLimitedRaceMenu);
+  AddStatic(vm, "getCameraState", &PapyrusGame::GetCameraState);
+  AddStatic(vm, "getForm", &PapyrusGame::GetForm);
+  AddStatic(vm, "getFormEx", &PapyrusGame::GetFormEx);
+  AddStatic(vm, "shakeController", &PapyrusGame::ShakeController);
 }

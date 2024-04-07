@@ -33,6 +33,11 @@ static std::mt19937 g_generator{ std::random_device{}() };
 VarValue PapyrusUtility::RandomInt(VarValue self,
                                    const std::vector<VarValue>& arguments)
 {
+  if (arguments.size() != 2) {
+    spdlog::error("RandomInt: expected 2 arguments, got {}", arguments.size());
+    return VarValue(0);
+  }
+
   int32_t min = static_cast<int32_t>(arguments[0].CastToInt());
   int32_t max = static_cast<int32_t>(arguments[1].CastToInt());
   std::uniform_int_distribution<> distribute{ min, max };
@@ -42,6 +47,12 @@ VarValue PapyrusUtility::RandomInt(VarValue self,
 VarValue PapyrusUtility::RandomFloat(VarValue self,
                                      const std::vector<VarValue>& arguments)
 {
+  if (arguments.size() != 2) {
+    spdlog::error("RandomFloat: expected 2 arguments, got {}",
+                  arguments.size());
+    return VarValue(0);
+  }
+
   double min = static_cast<double>(arguments[0].CastToFloat());
   double max = static_cast<double>(arguments[1].CastToFloat());
   std::uniform_real_distribution<> distribute{ min, max };
@@ -54,7 +65,7 @@ void PapyrusUtility::Register(
 {
   compatibilityPolicy = policy;
 
-  AddStatic(vm, "Wait", &PapyrusUtility::Wait);
-  AddStatic(vm, "RandomInt", &PapyrusUtility::RandomInt);
-  AddStatic(vm, "RandomFloat", &PapyrusUtility::RandomFloat);
+  AddStatic(vm, "wait", &PapyrusUtility::Wait);
+  AddStatic(vm, "randomInt", &PapyrusUtility::RandomInt);
+  AddStatic(vm, "randomFloat", &PapyrusUtility::RandomFloat);
 }

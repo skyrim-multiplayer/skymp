@@ -6,7 +6,7 @@
 class PapyrusCell final : public IPapyrusClass<PapyrusCell>
 {
 public:
-  const char* GetName() override { return "cell"; }
+  const char* GetName() override { return "Cell"; }
 
   VarValue IsAttached(VarValue self, const std::vector<VarValue>& arguments);
 

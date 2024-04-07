@@ -4,7 +4,7 @@
 class PapyrusSkymp final : public IPapyrusClass<PapyrusSkymp>
 {
 public:
-  const char* GetName() override { return "skymp"; }
+  const char* GetName() override { return "Skymp"; }
 
   VarValue SetDefaultActor(VarValue self,
                            const std::vector<VarValue>& arguments);
@@ -15,7 +15,7 @@ public:
   {
     policy = compatibilityPolicy;
 
-    AddStatic(vm, "SetDefaultActor", &PapyrusSkymp::SetDefaultActor);
+    AddStatic(vm, "setDefaultActor", &PapyrusSkymp::SetDefaultActor);
   }
 
   std::shared_ptr<IPapyrusCompatibilityPolicy> policy;

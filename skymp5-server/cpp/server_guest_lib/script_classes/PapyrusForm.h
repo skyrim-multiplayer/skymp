@@ -4,7 +4,7 @@
 class PapyrusForm final : public IPapyrusClass<PapyrusForm>
 {
 public:
-  const char* GetName() override { return "form"; }
+  const char* GetName() override { return "Form"; }
 
   VarValue RegisterForSingleUpdate(VarValue self,
                                    const std::vector<VarValue>& arguments);
@@ -20,12 +20,12 @@ public:
   void Register(VirtualMachine& vm,
                 std::shared_ptr<IPapyrusCompatibilityPolicy> policy) override
   {
-    AddMethod(vm, "RegisterForSingleUpdate",
+    AddMethod(vm, "registerForSingleUpdate",
               &PapyrusForm::RegisterForSingleUpdate);
-    AddMethod(vm, "GetType", &PapyrusForm::GetType);
-    AddMethod(vm, "HasKeyword", &PapyrusForm::HasKeyword);
-    AddMethod(vm, "GetFormID", &PapyrusForm::GetFormId);
-    AddMethod(vm, "GetName", &PapyrusForm::GetName_);
+    AddMethod(vm, "getType", &PapyrusForm::GetType);
+    AddMethod(vm, "hasKeyword", &PapyrusForm::HasKeyword);
+    AddMethod(vm, "getFormID", &PapyrusForm::GetFormId);
+    AddMethod(vm, "getName", &PapyrusForm::GetName_);
 
     this->compatibilityPolicy = policy;
   }

@@ -5,7 +5,7 @@
 class PapyrusGame final : public IPapyrusClass<PapyrusGame>
 {
 public:
-  const char* GetName() override { return "game"; }
+  const char* GetName() override { return "Game"; }
 
   DEFINE_STATIC_SPSNIPPET(ForceThirdPerson);
   DEFINE_STATIC_SPSNIPPET(DisablePlayerControls);
