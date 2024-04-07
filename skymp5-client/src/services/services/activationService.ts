@@ -7,6 +7,7 @@ import { getInventory } from "../../sync/inventory";
 import { localIdToRemoteId } from "../../view/worldViewMisc";
 
 import { LastInvService } from "./lastInvService";
+import { logError, logTrace } from "../../logging";
 
 export class ActivationService extends ClientListener {
     constructor(private sp: Sp, private controller: CombinedController) {
@@ -28,12 +29,14 @@ export class ActivationService extends ClientListener {
 
         target = localIdToRemoteId(target);
         if (!target) {
-            return this.logError('localIdToRemoteId returned 0 (target) in on(\'activate\')');
+            logError(this, 'localIdToRemoteId returned 0 (target) in on(\'activate\')');
+            return;
         }
 
         caster = localIdToRemoteId(caster);
         if (!caster) {
-            return this.logError('localIdToRemoteId returned 0 (caster) in on(\'activate\')');
+            logError(this, 'localIdToRemoteId returned 0 (caster) in on(\'activate\')');
+            return;
         }
 
         const openState = e.target.getOpenState();
@@ -48,7 +51,8 @@ export class ActivationService extends ClientListener {
         }
 
         if (openState === OpenState.Opening || openState === OpenState.Closing) {
-            return this.logTrace("Ignoring activation of door because it's already opening or closing");
+            logTrace(this, "Ignoring activation of door because it's already opening or closing");
+            return;
         }
 
         this.controller.emitter.emit("sendMessage", {
@@ -59,6 +63,6 @@ export class ActivationService extends ClientListener {
             reliability: "reliable"
         });
 
-        this.logTrace(`Sent activation for caster=${caster.toString(16)} and target=${target.toString(16)}`);
+        logTrace(this, `Sent activation for caster=`, caster.toString(16), `and target=`, target.toString(16));
     }
 };

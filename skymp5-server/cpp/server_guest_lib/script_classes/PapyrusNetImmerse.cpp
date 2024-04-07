@@ -17,16 +17,27 @@ VarValue PapyrusNetImmerse::SetNodeTextureSet(
 
   std::ignore = firstPerson;
 
-  //   for (auto listener : selfRefr->GetListeners()) {
-  //     auto targetRefr = dynamic_cast<MpActor*>(listener);
-  //     if (targetRefr) {
-  //       SpSnippet(GetName(), funcName, serializedArgs.data(),
-  //                 selfRefr->GetFormId())
-  //         .Execute(targetRefr);
-  //     }
-  //   }
+  if (!ref) {
+    throw std::runtime_error(
+      "PapyrusNetImmerse::SetNodeTextureSet - ref is nullptr");
+  }
 
-  // TODO
+  if (!tSet.rec) {
+    throw std::runtime_error(
+      "PapyrusNetImmerse::SetNodeTextureSet - tSet.rec is nullptr");
+  }
+
+  ref->SetNodeTextureSet(node, tSet, firstPerson);
+
+  auto funcName = "SetNodeTextureSet";
+  auto serializedArgs = SpSnippetFunctionGen::SerializeArguments(arguments);
+  for (auto listener : ref->GetListeners()) {
+    auto targetRefr = dynamic_cast<MpActor*>(listener);
+    if (targetRefr) {
+      SpSnippet(GetName(), funcName, serializedArgs.data())
+        .Execute(targetRefr);
+    }
+  }
 
   return VarValue::None();
 }
@@ -34,7 +45,35 @@ VarValue PapyrusNetImmerse::SetNodeTextureSet(
 VarValue PapyrusNetImmerse::SetNodeScale(
   VarValue, const std::vector<VarValue>& arguments)
 {
-  // TODO
+  if (arguments.size() != 4) {
+    throw std::runtime_error(
+      "PapyrusNetImmerse::SetNodeScale - expected 4 arguments");
+  }
+
+  MpObjectReference* ref = GetFormPtr<MpObjectReference>(arguments[0]);
+  const char* node = static_cast<const char*>(arguments[1]);
+  float scale = static_cast<float>(static_cast<double>(arguments[2]));
+  bool firstPerson = static_cast<bool>(arguments[3]);
+
+  std::ignore = firstPerson;
+
+  if (!ref) {
+    throw std::runtime_error(
+      "PapyrusNetImmerse::SetNodeScale - ref is nullptr");
+  }
+
+  ref->SetNodeScale(node, scale, firstPerson);
+
+  auto funcName = "SetNodeScale";
+  auto serializedArgs = SpSnippetFunctionGen::SerializeArguments(arguments);
+  for (auto listener : ref->GetListeners()) {
+    auto targetRefr = dynamic_cast<MpActor*>(listener);
+    if (targetRefr) {
+      SpSnippet(GetName(), funcName, serializedArgs.data())
+        .Execute(targetRefr);
+    }
+  }
+
   return VarValue::None();
 }
 

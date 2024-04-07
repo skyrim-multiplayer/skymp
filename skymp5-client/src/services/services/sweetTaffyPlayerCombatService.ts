@@ -1,3 +1,4 @@
+import { logTrace, logError } from "../../logging";
 import { ClientListener, Sp, CombinedController } from "./clientListener";
 import { WeaponType } from "skyrimPlatform";
 
@@ -42,10 +43,10 @@ export class SweetTaffyPlayerCombatService extends ClientListener {
     super();
 
     if (!this.hasSweetPie()) {
-      this.logTrace("SweetTaffy features disabled");
+      logTrace(this, "SweetTaffy features disabled");
     }
     else {
-      this.logTrace("SweetTaffy features enabled");
+      logTrace(this, "SweetTaffy features enabled");
     }
 
     this.controller.once("update", () => this.onceUpdate());
@@ -185,7 +186,7 @@ export class SweetTaffyPlayerCombatService extends ClientListener {
     const res = weaponTimings.get(weapon);
 
     if (res === undefined) {
-      this.logError(`No timings found for weapon type ${weapon}`);
+      logError(this, `No timings found for weapon type`, weapon);
       return [0, 0];
     }
 

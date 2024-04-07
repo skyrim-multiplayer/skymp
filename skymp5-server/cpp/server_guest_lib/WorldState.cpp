@@ -489,58 +489,39 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
     }
   }
 
-  // This function dosen't use LookupFormById to prevent recursion
-  auto existing = forms.find(formId);
-
-  if (existing != forms.end()) {
-    auto existingAsRefr =
-      reinterpret_cast<MpObjectReference*>(existing->second.get());
-
-    if (locationalData) {
-      existingAsRefr->SetPosAndAngleSilent(
-        LocationalDataUtils::GetPos(locationalData),
-        LocationalDataUtils::GetRot(locationalData));
-
-      assert(existingAsRefr->GetPos() ==
-             NiPoint3(LocationalDataUtils::GetPos(locationalData)));
+  if (!locationalData) {
+    logger->error("Anomaly: refr without locationalData");
+    if (optionalOutTrace) {
+      *optionalOutTrace << fmt::format("Anomaly: refr without locationalData")
+                        << std::endl;
     }
-
-  } else {
-    if (!locationalData) {
-      logger->error("Anomaly: refr without locationalData");
-      if (optionalOutTrace) {
-        *optionalOutTrace << fmt::format(
-                               "Anomaly: refr without locationalData")
-                          << std::endl;
-      }
-      return false;
-    }
-
-    std::optional<NiPoint3> primitiveBoundsDiv2;
-    if (data.boundsDiv2) {
-      primitiveBoundsDiv2 =
-        NiPoint3(data.boundsDiv2[0], data.boundsDiv2[1], data.boundsDiv2[2]);
-    }
-
-    auto typeStr = t.ToString();
-    std::unique_ptr<MpForm> form;
-    LocationalData formLocationalData = {
-      LocationalDataUtils::GetPos(locationalData),
-      LocationalDataUtils::GetRot(locationalData),
-      FormDesc::FromFormId(worldOrCell, espmFiles)
-    };
-    if (!isNpc) {
-      form.reset(new MpObjectReference(formLocationalData,
-                                       formCallbacksFactory(), baseId,
-                                       typeStr.data(), primitiveBoundsDiv2));
-    } else {
-      form.reset(
-        new MpActor(formLocationalData, formCallbacksFactory(), baseId));
-    }
-    AddForm(std::move(form), formId, true);
-
-    // Do not TriggerFormInitEvent here, doing it later after changeForm apply
+    return false;
   }
+
+  std::optional<NiPoint3> primitiveBoundsDiv2;
+  if (data.boundsDiv2) {
+    primitiveBoundsDiv2 =
+      NiPoint3(data.boundsDiv2[0], data.boundsDiv2[1], data.boundsDiv2[2]);
+  }
+
+  auto typeStr = t.ToString();
+  std::unique_ptr<MpForm> form;
+  LocationalData formLocationalData = {
+    LocationalDataUtils::GetPos(locationalData),
+    LocationalDataUtils::GetRot(locationalData),
+    FormDesc::FromFormId(worldOrCell, espmFiles)
+  };
+  if (!isNpc) {
+    form.reset(new MpObjectReference(formLocationalData,
+                                     formCallbacksFactory(), baseId,
+                                     typeStr.data(), primitiveBoundsDiv2));
+  } else {
+    form.reset(
+      new MpActor(formLocationalData, formCallbacksFactory(), baseId));
+  }
+  AddForm(std::move(form), formId, true);
+
+  // Do not TriggerFormInitEvent here, doing it later after changeForm apply
 
   if (optionalOutTrace) {
     *optionalOutTrace << fmt::format("AttachEspmRecord returned true")
@@ -551,23 +532,24 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
 
 bool WorldState::LoadForm(uint32_t formId, std::stringstream* optionalOutTrace)
 {
-  bool atLeastOneLoaded = false;
   auto& br = GetEspm().GetBrowser();
-  auto lookupResults = br.LookupByIdAll(formId);
-  for (auto& lookupRes : lookupResults) {
-    auto mapping = br.GetCombMapping(lookupRes.fileIdx);
-    bool attached =
-      AttachEspmRecord(br, lookupRes.rec, *mapping, optionalOutTrace);
-    if (attached) {
-      atLeastOneLoaded = true;
-    }
-    if (optionalOutTrace) {
-      *optionalOutTrace << "AttachEspmRecord " << (attached ? "true" : "false")
-                        << std::endl;
-    }
+
+  auto lookupRes = br.LookupById(formId);
+
+  if (!lookupRes.rec) {
+    return false;
   }
 
-  if (atLeastOneLoaded) {
+  auto mapping = br.GetCombMapping(lookupRes.fileIdx);
+
+  bool attached =
+    AttachEspmRecord(br, lookupRes.rec, *mapping, optionalOutTrace);
+  if (optionalOutTrace) {
+    *optionalOutTrace << "AttachEspmRecord " << (attached ? "true" : "false")
+                      << std::endl;
+  }
+
+  if (attached) {
     auto& refr = GetFormAt<MpObjectReference>(formId);
     auto it = pImpl->changeFormsForDeferredLoad.find(formId);
     if (it != pImpl->changeFormsForDeferredLoad.end()) {
@@ -578,7 +560,7 @@ bool WorldState::LoadForm(uint32_t formId, std::stringstream* optionalOutTrace)
     refr.ForceSubscriptionsUpdate();
   }
 
-  return atLeastOneLoaded;
+  return attached;
 }
 
 void WorldState::TickReloot(const std::chrono::system_clock::time_point& now)

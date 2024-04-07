@@ -307,6 +307,27 @@ void MpObjectReference::VisitProperties(const PropertiesVisitor& visitor,
     visitor("lastAnimation", lastAnimationAsJson.data());
   }
 
+  if (ChangeForm().setNodeScale.has_value()) {
+    // worse performance than building json string manually but proper escaping
+    // TODO: consider switching to a faster JSON builder
+    nlohmann::json setNodeScaleAsJson;
+    for (auto& [key, value] : *ChangeForm().setNodeScale) {
+      setNodeScaleAsJson[key] = value;
+    }
+    visitor("setNodeScale", setNodeScaleAsJson.dump().data());
+  }
+
+  if (ChangeForm().setNodeTextureSet.has_value()) {
+    // worse performance than building json string manually but proper escaping
+    // TODO: consider switching to a faster JSON builder
+    nlohmann::json setNodeTextureSetAsJson;
+    for (auto& [key, value] : *ChangeForm().setNodeTextureSet) {
+      setNodeTextureSetAsJson[key] =
+        FormDesc::FromString(value).ToFormId(GetParent()->espmFiles);
+    }
+    visitor("setNodeTextureSet", setNodeTextureSetAsJson.dump().data());
+  }
+
   if (ChangeForm().displayName.has_value()) {
     std::string raw = *ChangeForm().displayName;
     nlohmann::json j = raw;
@@ -921,6 +942,40 @@ void MpObjectReference::SetLastAnimation(const std::string& lastAnimation)
 {
   EditChangeForm([&](MpChangeForm& changeForm) {
     changeForm.lastAnimation = lastAnimation;
+  });
+}
+
+void MpObjectReference::SetNodeTextureSet(const std::string& node,
+                                          const espm::LookupResult& textureSet,
+                                          bool firstPerson)
+{
+  // This only changes var in database, SpSnippet is being sent in
+  // PapyrusNetImmerse.cpp
+  EditChangeForm([&](MpChangeForm& changeForm) {
+    if (changeForm.setNodeTextureSet == std::nullopt) {
+      changeForm.setNodeTextureSet = std::map<std::string, std::string>();
+    }
+
+    uint32_t textureSetId = textureSet.ToGlobalId(textureSet.rec->GetId());
+
+    FormDesc textureSetFormDesc =
+      FormDesc::FromFormId(textureSetId, GetParent()->espmFiles);
+
+    changeForm.setNodeTextureSet->insert_or_assign(
+      node, textureSetFormDesc.ToString());
+  });
+}
+
+void MpObjectReference::SetNodeScale(const std::string& node, float scale,
+                                     bool firstPerson)
+{
+  // This only changes var in database, SpSnippet is being sent in
+  // PapyrusNetImmerse.cpp
+  EditChangeForm([&](MpChangeForm& changeForm) {
+    if (changeForm.setNodeScale == std::nullopt) {
+      changeForm.setNodeScale = std::map<std::string, float>();
+    }
+    changeForm.setNodeScale->insert_or_assign(node, scale);
   });
 }
 

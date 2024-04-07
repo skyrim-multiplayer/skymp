@@ -224,6 +224,22 @@ VarValue PapyrusActor::EquipItem(VarValue self,
   return VarValue::None();
 }
 
+VarValue PapyrusActor::UnequipItem(VarValue self,
+                                   const std::vector<VarValue>& arguments)
+{
+  if (arguments.size() < 3) {
+    throw std::runtime_error("UnequipItem requires at least 3 arguments");
+  }
+
+  if (auto actor = GetFormPtr<MpActor>(self)) {
+    SpSnippet(GetName(), "UnequipItem",
+              SpSnippetFunctionGen::SerializeArguments(arguments).data(),
+              actor->GetFormId())
+      .Execute(actor);
+  }
+  return VarValue::None();
+}
+
 VarValue PapyrusActor::SetDontMove(VarValue self,
                                    const std::vector<VarValue>& arguments)
 {
@@ -429,6 +445,7 @@ void PapyrusActor::Register(
             &PapyrusActor::GetActorValuePercentage);
   AddMethod(vm, "SetAlpha", &PapyrusActor::SetAlpha);
   AddMethod(vm, "EquipItem", &PapyrusActor::EquipItem);
+  AddMethod(vm, "UnequipItem", &PapyrusActor::UnequipItem);
   AddMethod(vm, "SetDontMove", &PapyrusActor::SetDontMove);
   AddMethod(vm, "IsDead", &PapyrusActor::IsDead);
   AddMethod(vm, "WornHasKeyword", &PapyrusActor::WornHasKeyword);
