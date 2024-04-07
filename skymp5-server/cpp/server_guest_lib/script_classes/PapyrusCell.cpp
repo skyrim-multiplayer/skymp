@@ -11,5 +11,5 @@ void PapyrusCell::Register(VirtualMachine& vm,
 {
   compatibilityPolicy = policy;
 
-  AddMethod(vm, "IsAttached", &PapyrusCell::IsAttached);
+  AddMethod(vm, "isAttached", &PapyrusCell::IsAttached);
 }

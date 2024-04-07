@@ -32,8 +32,8 @@ void PapyrusDebug::Register(
 {
   compatibilityPolicy = policy;
 
-  AddStatic(vm, "Notification", &PapyrusDebug::Notification);
-  AddStatic(vm, "MessageBox", &PapyrusDebug::MessageBox);
-  AddStatic(vm, "SendAnimationEvent", &PapyrusDebug::SendAnimationEvent);
-  AddStatic(vm, "Trace", &PapyrusDebug::Trace);
+  AddStatic(vm, "notification", &PapyrusDebug::Notification);
+  AddStatic(vm, "messageBox", &PapyrusDebug::MessageBox);
+  AddStatic(vm, "sendAnimationEvent", &PapyrusDebug::SendAnimationEvent);
+  AddStatic(vm, "trace", &PapyrusDebug::Trace);
 }

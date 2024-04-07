@@ -432,24 +432,24 @@ void PapyrusActor::Register(
 {
   compatibilityPolicy = policy;
 
-  AddMethod(vm, "IsWeaponDrawn", &PapyrusActor::IsWeaponDrawn);
-  AddMethod(vm, "DrawWeapon", &PapyrusActor::DrawWeapon);
-  AddMethod(vm, "UnequipAll", &PapyrusActor::UnequipAll);
-  AddMethod(vm, "PlayIdle", &PapyrusActor::PlayIdle);
-  AddMethod(vm, "GetSitState", &PapyrusActor::GetSitState);
-  AddMethod(vm, "RestoreActorValue", &PapyrusActor::RestoreActorValue);
-  AddMethod(vm, "SetActorValue", &PapyrusActor::SetActorValue);
-  AddMethod(vm, "DamageActorValue", &PapyrusActor::DamageActorValue);
-  AddMethod(vm, "IsEquipped", &PapyrusActor::IsEquipped);
-  AddMethod(vm, "GetActorValuePercentage",
+  AddMethod(vm, "isWeaponDrawn", &PapyrusActor::IsWeaponDrawn);
+  AddMethod(vm, "drawWeapon", &PapyrusActor::DrawWeapon);
+  AddMethod(vm, "unequipAll", &PapyrusActor::UnequipAll);
+  AddMethod(vm, "playIdle", &PapyrusActor::PlayIdle);
+  AddMethod(vm, "getSitState", &PapyrusActor::GetSitState);
+  AddMethod(vm, "restoreActorValue", &PapyrusActor::RestoreActorValue);
+  AddMethod(vm, "setActorValue", &PapyrusActor::SetActorValue);
+  AddMethod(vm, "damageActorValue", &PapyrusActor::DamageActorValue);
+  AddMethod(vm, "isEquipped", &PapyrusActor::IsEquipped);
+  AddMethod(vm, "getActorValuePercentage",
             &PapyrusActor::GetActorValuePercentage);
-  AddMethod(vm, "SetAlpha", &PapyrusActor::SetAlpha);
-  AddMethod(vm, "EquipItem", &PapyrusActor::EquipItem);
-  AddMethod(vm, "UnequipItem", &PapyrusActor::UnequipItem);
-  AddMethod(vm, "SetDontMove", &PapyrusActor::SetDontMove);
-  AddMethod(vm, "IsDead", &PapyrusActor::IsDead);
-  AddMethod(vm, "WornHasKeyword", &PapyrusActor::WornHasKeyword);
-  AddMethod(vm, "AddSpell", &PapyrusActor::AddSpell);
-  AddMethod(vm, "RemoveSpell", &PapyrusActor::RemoveSpell);
-  AddMethod(vm, "GetRace", &PapyrusActor::GetRace);
+  AddMethod(vm, "setAlpha", &PapyrusActor::SetAlpha);
+  AddMethod(vm, "equipItem", &PapyrusActor::EquipItem);
+  AddMethod(vm, "unequipItem", &PapyrusActor::UnequipItem);
+  AddMethod(vm, "setDontMove", &PapyrusActor::SetDontMove);
+  AddMethod(vm, "isDead", &PapyrusActor::IsDead);
+  AddMethod(vm, "wornHasKeyword", &PapyrusActor::WornHasKeyword);
+  AddMethod(vm, "addSpell", &PapyrusActor::AddSpell);
+  AddMethod(vm, "removeSpell", &PapyrusActor::RemoveSpell);
+  AddMethod(vm, "getRace", &PapyrusActor::GetRace);
 }

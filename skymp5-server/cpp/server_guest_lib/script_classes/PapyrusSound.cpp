@@ -37,5 +37,5 @@ void PapyrusSound::Register(
 {
   compatibilityPolicy = policy;
 
-  AddMethod(vm, "Play", &PapyrusSound::Play);
+  AddMethod(vm, "play", &PapyrusSound::Play);
 }

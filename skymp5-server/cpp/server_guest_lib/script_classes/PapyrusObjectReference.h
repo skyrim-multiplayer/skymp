@@ -5,7 +5,7 @@ class PapyrusObjectReference final
   : public IPapyrusClass<PapyrusObjectReference>
 {
 public:
-  const char* GetName() override { return "objectreference"; }
+  const char* GetName() override { return "ObjectReference"; }
 
   VarValue IsHarvested(VarValue self, const std::vector<VarValue>& arguments);
   VarValue IsDisabled(VarValue self, const std::vector<VarValue>& arguments);

@@ -82,6 +82,6 @@ void PapyrusNetImmerse::Register(
 {
   compatibilityPolicy = policy;
 
-  AddStatic(vm, "SetNodeTextureSet", &PapyrusNetImmerse::SetNodeTextureSet);
-  AddStatic(vm, "SetNodeScale", &PapyrusNetImmerse::SetNodeScale);
+  AddStatic(vm, "setNodeTextureSet", &PapyrusNetImmerse::SetNodeTextureSet);
+  AddStatic(vm, "setNodeScale", &PapyrusNetImmerse::SetNodeScale);
 }

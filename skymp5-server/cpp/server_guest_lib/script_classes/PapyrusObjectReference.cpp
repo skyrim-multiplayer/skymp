@@ -900,46 +900,46 @@ VarValue PapyrusObjectReference::GetDistance(
 void PapyrusObjectReference::Register(
   VirtualMachine& vm, std::shared_ptr<IPapyrusCompatibilityPolicy> policy)
 {
-  AddMethod(vm, "IsHarvested", &PapyrusObjectReference::IsHarvested);
-  AddMethod(vm, "IsDisabled", &PapyrusObjectReference::IsDisabled);
-  AddMethod(vm, "IsDeleted", &PapyrusObjectReference::IsDeleted);
-  AddMethod(vm, "GetScale", &PapyrusObjectReference::GetScale);
-  AddMethod(vm, "SetScale", &PapyrusObjectReference::SetScale);
-  AddMethod(vm, "EnableNoWait", &PapyrusObjectReference::EnableNoWait);
-  AddMethod(vm, "DisableNoWait", &PapyrusObjectReference::DisableNoWait);
-  AddMethod(vm, "AddItem", &PapyrusObjectReference::AddItem);
-  AddMethod(vm, "RemoveItem", &PapyrusObjectReference::RemoveItem);
-  AddMethod(vm, "GetItemCount", &PapyrusObjectReference::GetItemCount);
-  AddMethod(vm, "GetAnimationVariableBool",
+  AddMethod(vm, "isHarvested", &PapyrusObjectReference::IsHarvested);
+  AddMethod(vm, "isDisabled", &PapyrusObjectReference::IsDisabled);
+  AddMethod(vm, "isDeleted", &PapyrusObjectReference::IsDeleted);
+  AddMethod(vm, "getScale", &PapyrusObjectReference::GetScale);
+  AddMethod(vm, "setScale", &PapyrusObjectReference::SetScale);
+  AddMethod(vm, "enableNoWait", &PapyrusObjectReference::EnableNoWait);
+  AddMethod(vm, "disableNoWait", &PapyrusObjectReference::DisableNoWait);
+  AddMethod(vm, "addItem", &PapyrusObjectReference::AddItem);
+  AddMethod(vm, "removeItem", &PapyrusObjectReference::RemoveItem);
+  AddMethod(vm, "getItemCount", &PapyrusObjectReference::GetItemCount);
+  AddMethod(vm, "getAnimationVariableBool",
             &PapyrusObjectReference::GetAnimationVariableBool);
-  AddMethod(vm, "PlaceAtMe", &PapyrusObjectReference::PlaceAtMe);
-  AddMethod(vm, "SetAngle", &PapyrusObjectReference::SetAngle);
-  AddMethod(vm, "Enable", &PapyrusObjectReference::Enable);
-  AddMethod(vm, "Disable", &PapyrusObjectReference::Disable);
-  AddMethod(vm, "Delete", &PapyrusObjectReference::Delete);
-  AddMethod(vm, "BlockActivation", &PapyrusObjectReference::BlockActivation);
-  AddMethod(vm, "IsActivationBlocked",
+  AddMethod(vm, "placeAtMe", &PapyrusObjectReference::PlaceAtMe);
+  AddMethod(vm, "setAngle", &PapyrusObjectReference::SetAngle);
+  AddMethod(vm, "enable", &PapyrusObjectReference::Enable);
+  AddMethod(vm, "disable", &PapyrusObjectReference::Disable);
+  AddMethod(vm, "delete", &PapyrusObjectReference::Delete);
+  AddMethod(vm, "blockActivation", &PapyrusObjectReference::BlockActivation);
+  AddMethod(vm, "isActivationBlocked",
             &PapyrusObjectReference::IsActivationBlocked);
-  AddMethod(vm, "Activate", &PapyrusObjectReference::Activate);
-  AddMethod(vm, "GetPositionX", &PapyrusObjectReference::GetPositionX);
-  AddMethod(vm, "GetPositionY", &PapyrusObjectReference::GetPositionY);
-  AddMethod(vm, "GetPositionZ", &PapyrusObjectReference::GetPositionZ);
-  AddMethod(vm, "SetPosition", &PapyrusObjectReference::SetPosition);
-  AddMethod(vm, "GetBaseObject", &PapyrusObjectReference::GetBaseObject);
-  AddMethod(vm, "PlayAnimation", &PapyrusObjectReference::PlayAnimation);
-  AddMethod(vm, "PlayAnimationAndWait",
+  AddMethod(vm, "activate", &PapyrusObjectReference::Activate);
+  AddMethod(vm, "getPositionX", &PapyrusObjectReference::GetPositionX);
+  AddMethod(vm, "getPositionY", &PapyrusObjectReference::GetPositionY);
+  AddMethod(vm, "getPositionZ", &PapyrusObjectReference::GetPositionZ);
+  AddMethod(vm, "setPosition", &PapyrusObjectReference::SetPosition);
+  AddMethod(vm, "getBaseObject", &PapyrusObjectReference::GetBaseObject);
+  AddMethod(vm, "playAnimation", &PapyrusObjectReference::PlayAnimation);
+  AddMethod(vm, "playAnimationAndWait",
             &PapyrusObjectReference::PlayAnimationAndWait);
-  AddMethod(vm, "PlayGamebryoAnimation",
+  AddMethod(vm, "playGamebryoAnimation",
             &PapyrusObjectReference::PlayGamebryoAnimation);
-  AddMethod(vm, "MoveTo", &PapyrusObjectReference::MoveTo);
-  AddMethod(vm, "SetOpen", &PapyrusObjectReference::SetOpen);
-  AddMethod(vm, "Is3DLoaded", &PapyrusObjectReference::Is3DLoaded);
-  AddMethod(vm, "GetLinkedRef", &PapyrusObjectReference::GetLinkedRef);
-  AddMethod(vm, "GetNthLinkedRef", &PapyrusObjectReference::GetNthLinkedRef);
-  AddMethod(vm, "GetParentCell", &PapyrusObjectReference::GetParentCell);
-  AddMethod(vm, "GetOpenState", &PapyrusObjectReference::GetOpenState);
-  AddMethod(vm, "GetAllItemsCount", &PapyrusObjectReference::GetAllItemsCount);
-  AddMethod(vm, "IsContainerEmpty", &PapyrusObjectReference::IsContainerEmpty);
-  AddMethod(vm, "SetDisplayName", &PapyrusObjectReference::SetDisplayName);
-  AddMethod(vm, "GetDistance", &PapyrusObjectReference::GetDistance);
+  AddMethod(vm, "moveTo", &PapyrusObjectReference::MoveTo);
+  AddMethod(vm, "setOpen", &PapyrusObjectReference::SetOpen);
+  AddMethod(vm, "is3DLoaded", &PapyrusObjectReference::Is3DLoaded);
+  AddMethod(vm, "getLinkedRef", &PapyrusObjectReference::GetLinkedRef);
+  AddMethod(vm, "getNthLinkedRef", &PapyrusObjectReference::GetNthLinkedRef);
+  AddMethod(vm, "getParentCell", &PapyrusObjectReference::GetParentCell);
+  AddMethod(vm, "getOpenState", &PapyrusObjectReference::GetOpenState);
+  AddMethod(vm, "getAllItemsCount", &PapyrusObjectReference::GetAllItemsCount);
+  AddMethod(vm, "isContainerEmpty", &PapyrusObjectReference::IsContainerEmpty);
+  AddMethod(vm, "setDisplayName", &PapyrusObjectReference::SetDisplayName);
+  AddMethod(vm, "getDistance", &PapyrusObjectReference::GetDistance);
 }
