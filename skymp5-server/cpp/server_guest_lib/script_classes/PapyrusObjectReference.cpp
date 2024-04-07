@@ -897,6 +897,16 @@ VarValue PapyrusObjectReference::GetDistance(
   return VarValue(0.f);
 }
 
+VarValue PapyrusObjectReference::GetTotalItemWeight(
+  VarValue self, const std::vector<VarValue>& arguments)
+{
+  auto selfRefr = GetFormPtr<MpObjectReference>(self);
+  if (!selfRefr) {
+    return VarValue::None();
+  }
+  return VarValue(selfRefr->GetTotalItemWeight());
+}
+
 void PapyrusObjectReference::Register(
   VirtualMachine& vm, std::shared_ptr<IPapyrusCompatibilityPolicy> policy)
 {
@@ -942,4 +952,6 @@ void PapyrusObjectReference::Register(
   AddMethod(vm, "IsContainerEmpty", &PapyrusObjectReference::IsContainerEmpty);
   AddMethod(vm, "SetDisplayName", &PapyrusObjectReference::SetDisplayName);
   AddMethod(vm, "GetDistance", &PapyrusObjectReference::GetDistance);
+  AddMethod(vm, "GetTotalItemWeight",
+            &PapyrusObjectReference::GetTotalItemWeight);
 }
