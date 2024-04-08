@@ -235,6 +235,13 @@ public:
 
   bool disableVanillaScriptsInExterior = true;
 
+  // Playable and vampire races by default
+  std::vector<uint32_t> bannedEspmCharacterRaceIds = {
+    0x000e7713, 0x00012e82, 0x001052a3, 0x00088884, 0x0008883a,
+    0x00088846, 0x00108272, 0x000a82b9, 0x0008883c, 0x00088794,
+    0x00088845, 0x0008883d, 0x00088844, 0x00088840, 0x000a82ba
+  };
+
 private:
   bool AttachEspmRecord(const espm::CombineBrowser& br,
                         const espm::RecordHeader* record,
