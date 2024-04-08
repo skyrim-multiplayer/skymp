@@ -428,34 +428,6 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
       this, baseId, templateChain,
       [&](const auto&, const auto& npcData) { return npcData.race; });
 
-    enum class PlayableRace : uint32_t
-    {
-      ArgonianRace = 0x00013740,
-      BretonRace,
-      DarkElfRace,
-      HighElfRace,
-      ImperialRace,
-      KhajiitRace,
-      NordRace,
-      OrcRace,
-      RedguardRace,
-      WoodElfRace,
-
-      RaceMIN = ArgonianRace,
-      RaceMAX = WoodElfRace
-    };
-
-    if (race >= static_cast<uint32_t>(PlayableRace::RaceMIN) &&
-        race <= static_cast<uint32_t>(PlayableRace::RaceMAX)) {
-      logger->info("Skipping actor {:#x} because it has playable race {:#x}",
-                   record->GetId(), race);
-      if (optionalOutTrace) {
-        *optionalOutTrace << fmt::format("Skip NPC due to playable race")
-                          << std::endl;
-      }
-      return false;
-    }
-
     bool isBanned = std::find(bannedEspmCharacterRaceIds.begin(),
                               bannedEspmCharacterRaceIds.end(),
                               race) != bannedEspmCharacterRaceIds.end();
