@@ -117,14 +117,6 @@ public:
 
     Flags flags = Flags::None;
 
-    // Coordinates for the bottom left (South-West) corner of the worldspace
-    // (assumed from Oblivion)
-    int32_t bottomLeftCoord[2] = {};
-
-    // Coordinates for the top right (North-East) corner of the worldspace
-    // (assumed from Oblivion)
-    int32_t topRightCoord[2] = {};
-
     // Form ID of the parent worldspace
     formId parentWorldspaceId = 0;
 

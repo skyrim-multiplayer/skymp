@@ -7,7 +7,7 @@
 
 namespace espm {
 
-class ScriptData;
+struct ScriptData;
 
 class RecordHeader
 {
