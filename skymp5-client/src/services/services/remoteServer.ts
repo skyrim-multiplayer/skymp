@@ -303,8 +303,23 @@ export class RemoteServer extends ClientListener {
             }
 
 
-            const displayName = msg.props.displayName;
+            let displayName = msg.props.displayName;
+
+            // keep in sync with spSnippetService.ts
             if (typeof displayName === "string") {
+
+              const replaceValue = refr.getBaseObject()?.getName();
+
+              if (replaceValue !== undefined && replaceValue !== "%original_name%") {
+                // SP doesn't support String.replaceAll because Chakracore doesn't
+                while (displayName.includes("%original_name%")) {
+                  displayName = displayName.replace("%original_name%", replaceValue);
+                }
+              }
+              else {
+                logError(this, "Couldn't get a replaceValue for SetDisplayName, refr.getFormID() was", refr.getFormID().toString(16));
+              }
+
               refr.setDisplayName(displayName, true);
               logTrace(this, `calling setDisplayName`, displayName, `for`, refr.getFormID().toString(16));
             }
