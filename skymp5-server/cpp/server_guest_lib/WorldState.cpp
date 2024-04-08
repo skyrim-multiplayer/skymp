@@ -1,5 +1,7 @@
 #include "WorldState.h"
+#include "EvaluateTemplate.h"
 #include "FormCallbacks.h"
+#include "LeveledListUtils.h"
 #include "LocationalDataUtils.h"
 #include "MpActor.h"
 #include "MpChangeForms.h"
@@ -408,6 +410,37 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
         }
         return false;
       }
+    }
+
+    const int kPcLevel = 0; // Shouldn't mean much to races
+
+    // May be not exact the same template chain as it would be in MpActor
+    // but it's ok for this check
+    std::vector<uint32_t> evaluateChainResult =
+      LeveledListUtils::EvaluateTemplateChain(br, base, kPcLevel);
+    std::vector<FormDesc> templateChain(evaluateChainResult.size());
+    std::transform(evaluateChainResult.begin(), evaluateChainResult.end(),
+                   templateChain.begin(), [&](uint32_t formId) {
+                     return FormDesc::FromFormId(formId, this->espmFiles);
+                   });
+
+    uint32_t race = EvaluateTemplate<espm::NPC_::UseTraits>(
+      this, baseId, templateChain,
+      [&](const auto& npcLookupResult, const auto& npcData) {
+        return npcLookupResult.ToGlobalId(npcData.race);
+      });
+
+    bool isBanned = std::find(bannedEspmCharacterRaceIds.begin(),
+                              bannedEspmCharacterRaceIds.end(),
+                              race) != bannedEspmCharacterRaceIds.end();
+    if (isBanned) {
+      logger->info("Skipping actor {:#x} because it has banned race {:#x}",
+                   record->GetId(), race);
+      if (optionalOutTrace) {
+        *optionalOutTrace << fmt::format("Skip NPC due to banned race")
+                          << std::endl;
+      }
+      return false;
     }
   }
 
