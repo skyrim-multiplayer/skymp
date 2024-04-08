@@ -1,7 +1,8 @@
 #pragma once
 
 #include <DirectXTK/SpriteBatch.h>
-#include <MakeID.h-1.0.2>
+#include <MakeID.h>
+#include <optional>
 
 class TextsCollection
 {
@@ -44,7 +45,7 @@ public:
   int GetTextDepth(int textId) const;
   const std::array<double, 2>& GetTextOrigin(int textId) const;
 
-  const std::vector<TextToDraw>& GetCreatedTexts() const;
+  const std::vector<std::optional<TextToDraw>>& GetCreatedTexts() const;
 
   int GetNumCreatedTexts() const noexcept { return texts.size(); }
 
@@ -53,5 +54,5 @@ private:
 
 private:
   std::unique_ptr<MakeID> makeId;
-  std::vector<TextToDraw> texts;
+  std::vector<std::optional<TextToDraw>> texts;
 };
