@@ -42,12 +42,6 @@ WRLD::Data WRLD::GetData(CompressedFieldsCache& cache) const noexcept
         result.distantLODMult = *reinterpret_cast<const float*>(data);
       } else if (!std::memcmp(type, "DATA", 4)) {
         result.flags = *reinterpret_cast<const WRLD::Flags*>(data);
-      } else if (!std::memcmp(type, "NAM0", 4)) {
-        std::copy_n(data, std::size(result.bottomLeftCoord),
-                    result.bottomLeftCoord);
-      } else if (!std::memcmp(type, "NAM9", 4)) {
-        std::copy_n(data, std::size(result.topRightCoord),
-                    result.topRightCoord);
       } else if (!std::memcmp(type, "WNAM", 4)) {
         result.parentWorldspaceId = *reinterpret_cast<const formId*>(data);
       } else if (!std::memcmp(type, "PNAM", 4)) {
