@@ -426,7 +426,9 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
 
     uint32_t race = EvaluateTemplate<espm::NPC_::UseTraits>(
       this, baseId, templateChain,
-      [&](const auto&, const auto& npcData) { return npcData.race; });
+      [&](const auto& npcLookupResult, const auto& npcData) {
+        return npcLookupResult.ToGlobalId(npcData.race);
+      });
 
     bool isBanned = std::find(bannedEspmCharacterRaceIds.begin(),
                               bannedEspmCharacterRaceIds.end(),
