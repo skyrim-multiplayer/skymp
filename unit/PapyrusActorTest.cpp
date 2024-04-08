@@ -1,7 +1,7 @@
 #include "TestUtils.hpp"
 #include <catch2/catch_all.hpp>
 
-#include "PapyrusActor.h"
+#include "script_classes/PapyrusActor.h"
 
 PartOne& GetPartOne();
 

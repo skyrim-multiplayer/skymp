@@ -40,6 +40,10 @@ RE::BGSColorForm* GetSkinColor(IVM* vm, StackID stackId,
 
 RE::TESNPC* CreateNpc(IVM* vm, StackID stackId, RE::StaticFunctionTag*);
 
+RE::TESNPC* EvaluateLeveledNpc(IVM* vm, StackID stackId,
+                               RE::StaticFunctionTag*,
+                               FixedString commaSeparatedListOfIds);
+
 void SetNpcSex(IVM* vm, StackID stackId, RE::StaticFunctionTag*,
                RE::TESNPC* npc, int32_t sex);
 
@@ -85,9 +89,16 @@ void UpdateEquipment(IVM* vm, StackID stackId, RE::StaticFunctionTag*,
 
 void ResetContainer(IVM* vm, StackID stackId, RE::StaticFunctionTag*,
                     RE::TESForm* container);
+void CloseMenu(IVM* vm, StackID stackId, RE::StaticFunctionTag*,
+               std::string_view name);
 
 void BlockPapyrusEvents(IVM* vm, StackID stackId, RE::StaticFunctionTag*,
                         bool blocked);
+
+RE::TESObjectREFR* CreateReferenceAtLocation(
+  IVM* vm, StackID stackId, RE::StaticFunctionTag*, RE::TESForm* baseForm,
+  RE::TESObjectCELL* cell, RE::TESWorldSpace* world, float posX, float posY,
+  float posZ, float rotX, float rotY, float rotZ, bool persist);
 
 // Threadsafe
 void BlockMoveRefrToPosition(bool blocked);

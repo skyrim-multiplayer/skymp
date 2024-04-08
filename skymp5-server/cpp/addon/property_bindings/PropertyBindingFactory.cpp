@@ -19,7 +19,9 @@
 #include "PercentagesBinding.h"
 #include "PosBinding.h"
 #include "ProfileIdBinding.h"
+#include "SpawnDelayBinding.h"
 #include "SpawnPointBinding.h"
+#include "TemplateChainBinding.h"
 #include "TypeBinding.h"
 #include "WorldOrCellDescBinding.h"
 
@@ -49,6 +51,8 @@ PropertyBindingFactory::CreateStandardPropertyBindings()
   result["idx"] = std::make_shared<IdxBinding>();
   result["consoleCommandsAllowed"] =
     std::make_shared<ConsoleCommandsAllowedBinding>();
+  result["spawnDelay"] = std::make_shared<SpawnDelayBinding>();
+  result["templateChain"] = std::make_shared<TemplateChainBinding>();
   return result;
 }
 

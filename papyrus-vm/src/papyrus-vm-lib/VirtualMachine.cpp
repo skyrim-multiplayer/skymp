@@ -80,7 +80,9 @@ void VirtualMachine::AddObject(std::shared_ptr<IGameObject> self,
     }
   }
 
-  self->activePexInstances = scriptsForObject;
+  for (auto& script : scriptsForObject) {
+    self->AddScript(script);
+  }
   gameObjectsHolder.insert(self);
 }
 
@@ -89,7 +91,7 @@ void VirtualMachine::SendEvent(std::shared_ptr<IGameObject> self,
                                const std::vector<VarValue>& arguments,
                                OnEnter enter)
 {
-  for (auto& scriptInstance : self->activePexInstances) {
+  for (auto& scriptInstance : self->ListActivePexInstances()) {
     auto name = scriptInstance->GetActiveStateName();
 
     auto fn = scriptInstance->GetFunctionByName(
@@ -150,23 +152,7 @@ VarValue VirtualMachine::CallMethod(
     return VarValue::None();
   }
 
-  const char* nativeClass = selfObj->GetParentNativeScript();
-  const char* base = nativeClass;
-  while (1) {
-    if (auto f = nativeFunctions[ToLower(base)][ToLower(methodName)]) {
-      auto self = VarValue(selfObj);
-      self.SetMetaStackIdHolder(stackIdHolder);
-      return f(self, arguments);
-    }
-    auto it = allLoadedScripts.find(base);
-    if (it == allLoadedScripts.end())
-      break;
-    base = it->second.fn()->objectTable[0].parentClassName.data();
-    if (!base[0])
-      break;
-  }
-
-  for (auto& activeScript : selfObj->activePexInstances) {
+  for (auto& activeScript : selfObj->ListActivePexInstances()) {
     FunctionInfo functionInfo;
 
     if (!Utils::stricmp(methodName, "GotoState") ||
@@ -183,6 +169,24 @@ VarValue VirtualMachine::CallMethod(
       return activeScript->StartFunction(functionInfo, arguments,
                                          stackIdHolder);
     }
+  }
+
+  // natives have to be after non-natives (Bethesda overrides native functions
+  // in some scripts)
+  const char* nativeClass = selfObj->GetParentNativeScript();
+  const char* base = nativeClass;
+  while (1) {
+    if (auto f = nativeFunctions[ToLower(base)][ToLower(methodName)]) {
+      auto self = VarValue(selfObj);
+      self.SetMetaStackIdHolder(stackIdHolder);
+      return f(self, arguments);
+    }
+    auto it = allLoadedScripts.find(base);
+    if (it == allLoadedScripts.end())
+      break;
+    base = it->second.fn()->objectTable[0].parentClassName.data();
+    if (!base[0])
+      break;
   }
 
   std::string e = "Method not found - '";

@@ -1,8 +1,9 @@
 import { requiredVersion } from "../../version";
 import { ClientListener, Sp, CombinedController } from "./clientListener";
 
-export class SpVersionCheckService implements ClientListener {
+export class SpVersionCheckService extends ClientListener {
     constructor(private sp: Sp, private controller: CombinedController) {
+        super();
         controller.once("update", () => this.onceUpdate());
     }
 

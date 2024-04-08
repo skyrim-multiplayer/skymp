@@ -1,5 +1,17 @@
 #include "LeveledListUtils.h"
+#include <optional>
 #include <random>
+#include <spdlog/spdlog.h>
+#include <stdexcept>
+
+namespace {
+bool IsLeveledType(const espm::LookupResult& lookupRes) noexcept
+{
+  espm::Type type = lookupRes.rec->GetType();
+  return type == espm::LVLI::kType || type == espm::LVLN::kType ||
+    type == "LVSP" /* for the future leveled spell implementation */;
+}
+}
 
 std::vector<LeveledListUtils::Entry> LeveledListUtils::EvaluateList(
   const espm::CombineBrowser& br, const espm::LookupResult& lookupRes,
@@ -7,7 +19,11 @@ std::vector<LeveledListUtils::Entry> LeveledListUtils::EvaluateList(
 {
   espm::CompressedFieldsCache dummyCache;
 
-  auto leveledList = espm::Convert<espm::LVLI>(lookupRes.rec);
+  const espm::LeveledListBase* leveledList = nullptr;
+  if (IsLeveledType(lookupRes)) {
+    leveledList =
+      reinterpret_cast<const espm::LeveledListBase*>(lookupRes.rec);
+  }
   if (!leveledList) {
     return {};
   }
@@ -16,22 +32,25 @@ std::vector<LeveledListUtils::Entry> LeveledListUtils::EvaluateList(
   std::vector<Entry> res;
 
   int chanceNone = data.chanceNoneGlobalId ? 100 : data.chanceNone;
-  if (chanceNoneOverride)
+  if (chanceNoneOverride) {
     chanceNone = *chanceNoneOverride;
+  }
+
+  std::uniform_real_distribution<double> dist(0.0, 100.0);
 
   std::random_device rd;
   std::mt19937 mt(rd());
-  std::uniform_real_distribution<double> dist(0.0, 100.0);
-
   bool none = dist(mt) < chanceNone;
   if (!none) {
-    std::vector<const espm::LVLI::Entry*> entriesAllowed;
+    std::vector<const espm::LeveledListBase::Entry*> entriesAllowed;
     for (size_t i = 0; i < data.numEntries; ++i) {
-      if (!pcLevel || data.entries[i].level <= pcLevel)
+      if (!pcLevel || data.entries[i].level <= pcLevel) {
         entriesAllowed.push_back(&data.entries[i]);
+      }
     }
 
-    bool useRandomEntry = !(data.leveledItemFlags & espm::LVLI::UseAll);
+    bool useRandomEntry =
+      !(data.leveledItemFlags & espm::LeveledListBase::UseAll);
     if (useRandomEntry && !entriesAllowed.empty()) {
       std::uniform_int_distribution<int> dist(0, entriesAllowed.size() - 1);
       auto entry = entriesAllowed[dist(mt)];
@@ -54,9 +73,15 @@ std::map<uint32_t, uint32_t> LeveledListUtils::EvaluateListRecurse(
 {
   espm::CompressedFieldsCache dummyCache;
 
-  auto leveledList = espm::Convert<espm::LVLI>(lookupRes.rec);
+  const espm::LeveledListBase* leveledList = nullptr;
+  if (IsLeveledType(lookupRes)) {
+    leveledList =
+      reinterpret_cast<const espm::LeveledListBase*>(lookupRes.rec);
+  }
+
   bool calcForEach = leveledList &&
-    (leveledList->GetData(dummyCache).leveledItemFlags & espm::LVLI::Each);
+    (leveledList->GetData(dummyCache).leveledItemFlags &
+     espm::LeveledListBase::Each);
 
   if (calcForEach && countMult != 1) {
     std::map<uint32_t, uint32_t> res;
@@ -76,7 +101,7 @@ std::map<uint32_t, uint32_t> LeveledListUtils::EvaluateListRecurse(
     if (!eLookupRes.rec) {
       continue;
     }
-    if (eLookupRes.rec->GetType() == espm::LVLI::kType) {
+    if (IsLeveledType(eLookupRes)) {
       auto childRes = EvaluateListRecurse(br, eLookupRes, 1, pcLevel);
       for (auto& p : childRes) {
         res[p.first] += p.second;
@@ -94,4 +119,106 @@ std::map<uint32_t, uint32_t> LeveledListUtils::EvaluateListRecurse(
   }
 
   return res;
+}
+
+std::vector<uint32_t> LeveledListUtils::EvaluateTemplateChain(
+  const espm::CombineBrowser& browser, const espm::LookupResult& headNpc,
+  uint32_t pcLevel)
+{
+  std::vector<uint32_t> result;
+  auto npcCursor = ConvertToNpc(headNpc);
+  if (!npcCursor) {
+    spdlog::error("EvaluateTemplateChain: NPC_ expected");
+    return result;
+  }
+
+  uint32_t cursorFileIdx = headNpc.fileIdx;
+  result.push_back(headNpc.ToGlobalId(headNpc.rec->GetId()));
+
+  while (true) {
+    uint32_t templateId = GetBaseTemplateId(npcCursor, cursorFileIdx, browser);
+    if (templateId == 0) {
+      break; // End if no base template
+    }
+
+    espm::LookupResult templateResult = browser.LookupById(templateId);
+
+    if (!templateResult.rec) {
+      spdlog::error("EvaluateTemplateChain: Not found template record");
+      return result;
+    }
+
+    UpdateCursorAndResult(templateId, templateResult, npcCursor, cursorFileIdx,
+                          result, browser, pcLevel);
+  }
+
+  return result;
+}
+
+const espm::NPC_* LeveledListUtils::ConvertToNpc(
+  const espm::LookupResult& lookupResult)
+{
+  return espm::Convert<espm::NPC_>(lookupResult.rec);
+}
+
+uint32_t LeveledListUtils::GetBaseTemplateId(
+  const espm::NPC_* cursor, uint32_t fileIdx,
+  const espm::CombineBrowser& browser)
+{
+  espm::CompressedFieldsCache dummyCache;
+  auto data = cursor->GetData(dummyCache);
+  if (!data.baseTemplate) {
+    return 0; // Indicates there's no base template
+  }
+
+  auto lookupRes = espm::LookupResult(&browser, cursor, fileIdx);
+  return lookupRes.ToGlobalId(data.baseTemplate);
+}
+
+void LeveledListUtils::UpdateCursorAndResult(
+  uint32_t templateId, espm::LookupResult& templateResult,
+  const espm::NPC_*& cursor, uint32_t& cursorFileIdx,
+  std::vector<uint32_t>& result, const espm::CombineBrowser& browser,
+  uint32_t pcLevel)
+{
+  if (auto npc = espm::Convert<espm::NPC_>(templateResult.rec)) {
+    result.push_back(templateId);
+    cursor = npc;
+    cursorFileIdx = templateResult.fileIdx;
+  } else if (auto lvln = espm::Convert<espm::LVLN>(templateResult.rec)) {
+    auto selectedNpcId =
+      EvaluateAndSelectNpcId(browser, templateResult, pcLevel);
+    if (selectedNpcId == 0) {
+      return;
+    }
+
+    auto npcLookupRes = browser.LookupById(selectedNpcId);
+    cursor = espm::Convert<espm::NPC_>(npcLookupRes.rec);
+    result.push_back(selectedNpcId);
+    cursorFileIdx = npcLookupRes.fileIdx;
+  } else {
+    spdlog::error("EvaluateTemplateChain: Not found template record");
+  }
+}
+
+uint32_t LeveledListUtils::EvaluateAndSelectNpcId(
+  const espm::CombineBrowser& browser,
+  const espm::LookupResult& templateResult, uint32_t pcLevel)
+{
+  auto countByFormId =
+    LeveledListUtils::EvaluateListRecurse(browser, templateResult, 1, pcLevel);
+
+  if (countByFormId.empty()) {
+    spdlog::error(
+      "EvaluateTemplateChain: EvaluateListRecurse returned empty map");
+    return 0;
+  }
+
+  if (countByFormId.size() > 1) {
+    spdlog::warn("EvaluateTemplateChain: EvaluateListRecurse returned more "
+                 "than 1 result, omitting other results");
+  }
+
+  // Return the id of the first npc in the map
+  return countByFormId.begin()->first;
 }

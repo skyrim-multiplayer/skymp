@@ -293,22 +293,29 @@ EventResult EventHandler::ProcessEvent(
     return EventResult::kContinue;
   }
 
+  auto refr = event->reference.get().get();
+  auto refrId = refr ? refr->GetFormID() : 0;
+
   auto e = CopyEventPtr(event);
 
-  SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([e, refrId] {
     auto obj = JsValue::Object();
 
     auto contFormOld = RE::TESForm::LookupByID(e->oldContainer);
     auto contFormNew = RE::TESForm::LookupByID(e->newContainer);
     auto baseObjForm = RE::TESForm::LookupByID(e->baseObj);
+    auto reference = RE::TESForm::LookupByID<RE::TESObjectREFR>(refrId);
+
+    if (!reference && refrId != 0) {
+      return;
+    }
 
     AddObjProperty(&obj, "oldContainer", contFormOld, "ObjectReference");
     AddObjProperty(&obj, "newContainer", contFormNew, "ObjectReference");
     AddObjProperty(&obj, "baseObj", baseObjForm, "Form");
     AddObjProperty(&obj, "numItems", e->itemCount);
     AddObjProperty(&obj, "uniqueID", e->uniqueID);
-    AddObjProperty(&obj, "reference", e->reference.get().get(),
-                   "ObjectReference");
+    AddObjProperty(&obj, "reference", reference, "ObjectReference");
 
     SendEvent("containerChanged", obj);
   });
@@ -816,7 +823,7 @@ EventResult EventHandler::ProcessEvent(
     AddObjProperty(&obj, "weapon", weapon, "Weapon");
     AddObjProperty(&obj, "ammo", ammo, "Ammo");
     AddObjProperty(&obj, "power", e->power);
-    AddObjProperty(&obj, "target", e->isSunGazing);
+    AddObjProperty(&obj, "isSunGazing", e->isSunGazing);
 
     SendEvent("playerBowShot", obj);
   });
@@ -1280,16 +1287,25 @@ EventResult EventHandler::ProcessEvent(const SKSE::CameraEvent* event,
     return EventResult::kContinue;
   }
 
-  auto e = CopyEventPtr(event);
+  uint32_t oldStateId =
+    (event && event->oldState) ? to_underlying(event->oldState->id) : ~0;
+  uint32_t newStateId =
+    (event && event->newState) ? to_underlying(event->newState->id) : ~0;
 
-  SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([oldStateId, newStateId] {
     auto obj = JsValue::Object();
 
-    auto oldStateId = to_underlying(e->oldState->id);
-    auto newStateId = to_underlying(e->newState->id);
+    if (oldStateId == ~0) {
+      obj.SetProperty("oldStateId", JsValue::Null());
+    } else {
+      AddObjProperty(&obj, "oldStateId", oldStateId);
+    }
 
-    AddObjProperty(&obj, "oldStateId", oldStateId);
-    AddObjProperty(&obj, "newStateId", newStateId);
+    if (newStateId == ~0) {
+      obj.SetProperty("newStateId", JsValue::Null());
+    } else {
+      AddObjProperty(&obj, "newStateId", newStateId);
+    }
 
     SendEvent("cameraStateChanged", obj);
   });

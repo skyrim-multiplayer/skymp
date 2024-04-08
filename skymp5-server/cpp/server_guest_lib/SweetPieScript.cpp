@@ -12,6 +12,7 @@
 #include <iostream>
 #include <nlohmann/json.hpp>
 #include <random>
+#include <spdlog/spdlog.h>
 #include <sstream>
 #include <stdexcept>
 #include <unordered_map>
@@ -33,6 +34,7 @@ uint32_t GenerateRandomNumber(uint32_t leftBound, uint32_t rightBound)
 
 SweetPieScript::SweetPieScript(const std::vector<std::string>& espmFiles)
 {
+  // TODO: check other ids
   miscLootTable = {
     { 0x07A45089, { 0x07A30B91 } },
     { 0x07A4508b, { 0x07A4A191, 0x0010B0A7 } },
@@ -57,7 +59,9 @@ SweetPieScript::SweetPieScript(const std::vector<std::string>& espmFiles)
     { 0x071746be, { 0x070df89c } },
     { 0x07267fe5, { 0x07267fd9 } },
     { 0x07267fe3, { 0x07267fd8 } },
-    { 0x07267fe1, { 0x0726f5a8 } },
+
+    { 0x07267fe1, { 0x0716f5a8 } },
+
     { 0x07267fe9, { 0x07267fdc } },
     { 0x07267fe7, { 0x07267fdb } },
     { 0x07267fef, { 0x07267fda } },
@@ -121,6 +125,12 @@ void SweetPieScript::Notify(MpActor& actor, const WorldState& worldState,
   std::string type;
   std::stringstream ss;
   auto lookupRes = worldState.GetEspm().GetBrowser().LookupById(formId);
+
+  if (!lookupRes.rec) {
+    return spdlog::error(
+      "SweetPieScript::Notify - formId {:x} not found in espm");
+  }
+
   auto recType = lookupRes.rec->GetType();
 
   if (recType == "WEAP") {
@@ -136,7 +146,9 @@ void SweetPieScript::Notify(MpActor& actor, const WorldState& worldState,
   } else if (recType == "ALCH") {
     type = "potion";
   } else {
-    throw std::runtime_error(fmt::format("Unexpected type {}", type));
+    return spdlog::error(
+      "SweetPieScript::Notify - Unexpected type {} in formId {:x}", type,
+      formId);
   }
 
   ss << "[";

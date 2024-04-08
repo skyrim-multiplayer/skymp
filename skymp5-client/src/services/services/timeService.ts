@@ -1,14 +1,26 @@
 import { ClientListener, CombinedController, Sp } from "./clientListener";
 
-export class TimeService implements ClientListener {
+export class TimeService extends ClientListener {
     constructor(private sp: Sp, private controller: CombinedController) {
+        super();
         controller.on("update", () => this.onUpdate());
     }
 
-    private every2seconds() {
+    public getTime() {
         const hoursOffset = -3;
         const hoursOffsetMs = hoursOffset * 60 * 60 * 1000;
 
+        const d = new Date(Date.now() + hoursOffsetMs);
+
+        let newGameHourValue = 0;
+        newGameHourValue += d.getUTCHours();
+        newGameHourValue += d.getUTCMinutes() / 60;
+        newGameHourValue += d.getUTCSeconds() / 60 / 60;
+        newGameHourValue += d.getUTCMilliseconds() / 60 / 60 / 1000;
+        return { newGameHourValue, date: d };
+    }
+
+    private every2seconds() {
         const gameHourId = 0x38;
         const gameMonthId = 0x36;
         const gameDayId = 0x37;
@@ -20,26 +32,20 @@ export class TimeService implements ClientListener {
         const gameMonth = this.sp.GlobalVariable.from(this.sp.Game.getFormEx(gameMonthId));
         const gameYear = this.sp.GlobalVariable.from(this.sp.Game.getFormEx(gameYearId));
         const timeScale = this.sp.GlobalVariable.from(this.sp.Game.getFormEx(timeScaleId));
-        
+
         if (!gameHour || !gameDay || !gameMonth || !gameYear || !timeScale) {
             return;
         }
 
-        const d = new Date(Date.now() + hoursOffsetMs);
-
-        let newGameHourValue = 0;
-        newGameHourValue += d.getUTCHours();
-        newGameHourValue += d.getUTCMinutes() / 60;
-        newGameHourValue += d.getUTCSeconds() / 60 / 60;
-        newGameHourValue += d.getUTCMilliseconds() / 60 / 60 / 1000;
+        const { newGameHourValue, date } = this.getTime();
 
         const diff = Math.abs(gameHour.getValue() - newGameHourValue);
 
         if (diff >= 1 / 60) {
             gameHour.setValue(newGameHourValue);
-            gameDay.setValue(d.getUTCDate());
-            gameMonth.setValue(d.getUTCMonth());
-            gameYear.setValue(d.getUTCFullYear() - 2020 + 199);
+            gameDay.setValue(date.getUTCDate());
+            gameMonth.setValue(date.getUTCMonth());
+            gameYear.setValue(date.getUTCFullYear() - 2020 + 199);
         }
 
         timeScale.setValue(gameHour.getValue() > newGameHourValue ? 0.6 : 1.2);

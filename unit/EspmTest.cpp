@@ -10,6 +10,11 @@ extern espm::Loader l;
 
 TEST_CASE("Hash check", "[espm]")
 {
+  auto ci = getenv("CI");
+  if (!ci || strcmp(ci, "true") != 0) {
+    return spdlog::info("Skipping EspmTest Hash check - CI env not detected");
+  }
+
   const auto hashes = l.GetFilesInfo();
   for (const auto& [filename, info] : hashes) {
     DYNAMIC_SECTION(filename << " checksum and size test")
@@ -273,6 +278,7 @@ TEST_CASE("Loads Npc", "[espm]")
   REQUIRE(npc->GetData(compressedFieldsCache).defaultOutfitId == 0x1697c);
   REQUIRE(npc->GetData(compressedFieldsCache).sleepOutfitId == 0x0);
   REQUIRE(npc->GetData(compressedFieldsCache).objects.size() == 16);
+  REQUIRE(npc->GetData(compressedFieldsCache).templateDataFlags == 0);
 }
 
 TEST_CASE("Loads Weapon", "[espm]")

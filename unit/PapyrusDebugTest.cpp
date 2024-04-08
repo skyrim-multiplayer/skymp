@@ -1,7 +1,8 @@
 #include "TestUtils.hpp"
 #include <catch2/catch_all.hpp>
 
-#include "PapyrusDebug.h"
+#include "script_classes/PapyrusDebug.h"
+#include "script_compatibility_policies/HeuristicPolicy.h"
 
 TEST_CASE("Notification", "[Papyrus][Debug]")
 {
@@ -15,8 +16,11 @@ TEST_CASE("Notification", "[Papyrus][Debug]")
 
   auto& ac = p.worldState.GetFormAt<MpActor>(0xff000000);
 
+  auto policy = new HeuristicPolicy(&p.worldState);
+  policy->SetDefaultActor(VarValue::AttachTestStackId().GetMetaStackId(), &ac);
+
   PapyrusDebug debug;
-  debug.compatibilityPolicy.reset(new PapyrusCompatibilityPolicy(&ac));
+  debug.compatibilityPolicy.reset(policy);
 
   DoConnect(p, 3);
   p.SetUserActor(3, 0xff000000);
@@ -25,6 +29,8 @@ TEST_CASE("Notification", "[Papyrus][Debug]")
                      { VarValue("Hello, world!") });
   debug.Notification(VarValue::AttachTestStackId(),
                      { VarValue("Hello, \"world!\"") });
+
+  p.Tick(); // Tick deferred messages
 
   REQUIRE(p.Messages().size() == 3);
   REQUIRE(p.Messages()[1].userId == 3);

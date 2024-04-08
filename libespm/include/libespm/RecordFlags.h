@@ -1,9 +1,10 @@
 #pragma once
+#include "DataTypes.h"
 #include <cstdint>
 
 namespace espm {
 
-enum RecordFlags : uint32_t
+enum RecordFlags : RecordFlagsType
 {
   Deleted = 0x00000020,
   Constant = 0x00000040,

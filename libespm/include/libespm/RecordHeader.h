@@ -1,5 +1,6 @@
 #pragma once
 #include "CompressedFieldsCache.h"
+#include "DataTypes.h"
 #include "Type.h"
 
 #pragma pack(push, 1)
@@ -14,7 +15,13 @@ class RecordHeader
   friend class RecordHeaderAccess;
 
 public:
+  const Type GetType() const noexcept;
+  // Please use for tests only
+  // Do not rely on Skyrim record flags format
+  uint32_t GetFlags() const noexcept;
   uint32_t GetId() const noexcept;
+  uint16_t GetVersion() const noexcept;
+
   const char* GetEditorId(
     CompressedFieldsCache& compressedFieldsCache) const noexcept;
   void GetScriptData(
@@ -23,12 +30,6 @@ public:
   std::vector<uint32_t> GetKeywordIds(
     CompressedFieldsCache& compressedFieldsCache) const noexcept;
 
-  const Type GetType() const noexcept;
-
-  // Please use for tests only
-  // Do not rely on Skyrim record flags format
-  uint32_t GetFlags() const noexcept;
-
 private:
   RecordHeader() = delete;
   RecordHeader(const RecordHeader&) = delete;
@@ -36,7 +37,7 @@ private:
 
   uint32_t GetFieldsSizeSum() const noexcept;
 
-private:
+protected:
   uint32_t flags;
   uint32_t id;
   uint32_t revision;

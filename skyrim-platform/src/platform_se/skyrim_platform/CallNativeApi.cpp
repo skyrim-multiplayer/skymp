@@ -6,14 +6,57 @@
 #include "Override.h"
 #include "VmProvider.h"
 
+#include <RE/T/TESDataHandler.h>
+
 JsValue CallNativeApi::CallNative(
   const JsFunctionArguments& args,
   const std::function<NativeCallRequirements()>& getNativeCallRequirements)
 {
-  auto className = (std::string)args[1];
-  auto functionName = (std::string)args[2];
+  auto className = static_cast<std::string>(args[1]);
+  auto functionName = static_cast<std::string>(args[2]);
   auto self = args[3];
   constexpr int nativeArgsStart = 4;
+
+  // https://github.com/ianpatt/skse64/blob/971babc435e2620521c8556ea8ae7b9a4910ff61/skse64/PapyrusGame.cpp#L94
+  if (!stricmp("Game", className.data())) {
+    if (!stricmp("GetModCount", functionName.data())) {
+      auto dataHandler = RE::TESDataHandler::GetSingleton();
+      if (!dataHandler) {
+        throw NullPointerException("dataHandler");
+      }
+      return JsValue(
+        static_cast<int>(dataHandler->compiledFileCollection.files.size()));
+
+    } else if (!stricmp("GetModName", functionName.data())) {
+
+      constexpr int kLightModOffset = 0x100;
+
+      int index = static_cast<int>(args[nativeArgsStart]);
+
+      auto dataHandler = RE::TESDataHandler::GetSingleton();
+      if (!dataHandler) {
+        throw NullPointerException("dataHandler");
+      }
+
+      if (index > 0xff) {
+        uint32_t adjusted = index - kLightModOffset;
+        if (adjusted >=
+            dataHandler->compiledFileCollection.smallFiles.size()) {
+          return JsValue("");
+        }
+        std::string s =
+          dataHandler->compiledFileCollection.smallFiles[adjusted]->fileName;
+        return JsValue(s);
+      } else {
+        if (index >= dataHandler->compiledFileCollection.files.size()) {
+          return JsValue("");
+        }
+        std::string s =
+          dataHandler->compiledFileCollection.files[index]->fileName;
+        return JsValue(s);
+      }
+    }
+  }
 
   auto requirements = getNativeCallRequirements();
   if (!requirements.vm)

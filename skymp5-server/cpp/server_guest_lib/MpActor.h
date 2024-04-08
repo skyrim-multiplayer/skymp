@@ -3,9 +3,12 @@
 #include "GetBaseActorValues.h"
 #include "MpObjectReference.h"
 #include "libespm/espm.h"
+#include <map>
 #include <memory>
 #include <optional>
 #include <set>
+
+#include "DeathStateContainerMessage.h"
 
 class WorldState;
 struct ActorValues;
@@ -23,7 +26,8 @@ public:
   const bool& IsDead() const;
   const bool& IsRespawning() const;
 
-  [[nodiscard]] bool IsSpellLearned(uint32_t baseId) const;
+  bool IsSpellLearned(uint32_t spellId) const; // including from base
+  bool IsSpellLearnedFromBase(uint32_t spellId) const;
 
   std::unique_ptr<const Appearance> GetAppearance() const;
   const std::string& GetAppearanceAsJson();
@@ -33,6 +37,11 @@ public:
   uint32_t GetRaceId() const;
   bool IsWeaponDrawn() const;
   espm::ObjectBounds GetBounds() const;
+  const std::vector<FormDesc>& GetTemplateChain() const;
+  bool IsCreatedAsPlayer() const;
+
+  bool ShouldSkipRestoration() const noexcept;
+  void UpdateNextRestorationTime(std::chrono::seconds duration) noexcept;
 
   void SetRaceMenuOpen(bool isOpen);
   void SetAppearance(const Appearance* newAppearance);
@@ -42,9 +51,10 @@ public:
                        VisitPropertiesMode mode) override;
   void Disable() override;
 
-  void SendToUser(const void* data, size_t size, bool reliable);
+  void SendToUser(const IMessageBase& message, bool reliable);
   void SendToUserDeferred(const void* data, size_t size, bool reliable,
-                          int deferredChannelId);
+                          int deferredChannelId,
+                          bool overwritePreviousChannelMessages);
 
   [[nodiscard]] bool OnEquip(uint32_t baseId);
 
@@ -89,6 +99,7 @@ public:
   void Teleport(const LocationalData& position);
   void SetSpawnPoint(const LocationalData& position);
   LocationalData GetSpawnPoint() const;
+  LocationalData GetEditorLocationalData() const;
   const float GetRespawnTime() const;
   void SetRespawnTime(float time);
 
@@ -122,14 +133,23 @@ public:
   bool GetConsoleCommandsAllowedFlag() const;
   void SetConsoleCommandsAllowedFlag(bool newValue);
 
+  void EquipBestWeapon();
+
+  bool MpApiCraft(uint32_t craftedItemBaseId, uint32_t count,
+                  uint32_t recipeId);
+
+  void AddSpell(uint32_t spellId);
+  void RemoveSpell(uint32_t spellId);
+
 private:
   struct Impl;
   std::shared_ptr<Impl> pImpl;
 
   void SendAndSetDeathState(bool isDead, bool shouldTeleport);
 
-  std::string GetDeathStateMsg(const LocationalData& position, bool isDead,
-                               bool shouldTeleport);
+  DeathStateContainerMessage GetDeathStateMsg(const LocationalData& position,
+                                              bool isDead,
+                                              bool shouldTeleport);
 
   void MpApiDeath(MpActor* killer = nullptr);
   void EatItem(uint32_t baseId, espm::Type t);
@@ -144,6 +164,13 @@ private:
   void SetLastRestorationTime(espm::ActorValue av,
                               std::chrono::steady_clock::time_point timePoint);
   bool CanActorValueBeRestored(espm::ActorValue av);
+
+  void EnsureTemplateChainEvaluated(
+    espm::Loader& loader,
+    ChangeFormGuard::Mode mode = ChangeFormGuard::Mode::RequestSave);
+
+  std::map<uint32_t, uint32_t> EvaluateDeathItem();
+  void AddDeathItem();
 
 protected:
   void BeforeDestroy() override;

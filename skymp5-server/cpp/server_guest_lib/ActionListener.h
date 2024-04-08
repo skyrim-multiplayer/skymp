@@ -60,6 +60,10 @@ public:
   virtual void OnDropItem(const RawMessageData& rawMsgdata, uint32_t baseId,
                           const Inventory::Entry& entry);
 
+  virtual void OnPlayerBowShot(const RawMessageData& rawMsgdata,
+                               uint32_t weaponId, uint32_t ammoId, float power,
+                               bool isSunGazing);
+
   virtual void OnFinishSpSnippet(const RawMessageData& rawMsgData,
                                  uint32_t snippetIdx,
                                  simdjson::dom::element& returnValue);
@@ -85,8 +89,7 @@ public:
 
   virtual void OnHit(const RawMessageData& rawMsgData, const HitData& hitData);
 
-  virtual void OnUnknown(const RawMessageData& rawMsgData,
-                         simdjson::dom::element data);
+  virtual void OnUnknown(const RawMessageData& rawMsgData);
 
 private:
   // Returns user's actor if there is attached one

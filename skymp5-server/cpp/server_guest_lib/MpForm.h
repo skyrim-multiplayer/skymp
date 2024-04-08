@@ -1,22 +1,26 @@
 #pragma once
 #include "NiPoint3.h"
-#include "papyrus-vm/Structures.h"
 #include <cstdint>
 #include <memory>
 #include <string.h>
 #include <typeinfo>
+#include <vector>
 
 class WorldState;
 class IGameObject;
+class ActivePexInstance;
+struct VarValue;
 
 class MpForm
 {
   friend class WorldState;
+  friend class MpFormGameObject;
 
 public:
   MpForm();
 
   static const char* Type() { return "Form"; }
+  bool IsEspmForm() const noexcept;
   virtual const char* GetFormType() const { return "Form"; }
 
   auto GetParent() const { return parent; }
@@ -50,6 +54,7 @@ public:
   virtual ~MpForm() = default;
 
   auto GetFormId() const noexcept { return id; }
+  float GetWeight() const;
 
   MpForm(const MpForm&) = delete;
   MpForm& operator=(const MpForm&) = delete;
@@ -68,7 +73,13 @@ private:
   uint32_t id = 0;
   WorldState* parent = nullptr;
   mutable GameObjectPtr gameObject;
+  std::vector<std::shared_ptr<ActivePexInstance>> activePexInstances;
 
 protected:
   virtual void BeforeDestroy(){};
+
+  const std::vector<std::shared_ptr<ActivePexInstance>>&
+  ListActivePexInstances() const;
+
+  void AddScript(const std::shared_ptr<ActivePexInstance>& script) noexcept;
 };

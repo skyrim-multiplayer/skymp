@@ -24,11 +24,14 @@ NPC_::Data NPC_::GetData(
       } else if (!std::memcmp(type, "ACBS", 4)) {
         const uint32_t flags = *reinterpret_cast<const uint32_t*>(data);
 
-        result.isEssential = !!(flags & 0x02);
+        result.isEssential = !!(flags & 0x2);
+        result.isUnique = !!(flags & 0x20);
         result.isProtected = !!(flags & 0x800);
-        result.magickaOffset = *reinterpret_cast<const uint16_t*>(data + 4);
-        result.staminaOffset = *reinterpret_cast<const uint16_t*>(data + 6);
-        result.healthOffset = *reinterpret_cast<const uint16_t*>(data + 20);
+        result.magickaOffset = *reinterpret_cast<const int16_t*>(data + 4);
+        result.staminaOffset = *reinterpret_cast<const int16_t*>(data + 6);
+        result.healthOffset = *reinterpret_cast<const int16_t*>(data + 20);
+        result.templateDataFlags =
+          *reinterpret_cast<const uint16_t*>(data + 18);
 
       } else if (!std::memcmp(type, "RNAM", 4)) {
         result.race = *reinterpret_cast<const uint32_t*>(data);
@@ -39,6 +42,10 @@ NPC_::Data NPC_::GetData(
         }
       } else if (!std::memcmp(type, "SPLO", 4)) {
         result.spells.emplace(*reinterpret_cast<const uint32_t*>(data));
+      } else if (!std::memcmp(type, "TPLT", 4)) {
+        result.baseTemplate = (*reinterpret_cast<const uint32_t*>(data));
+      } else if (!std::memcmp(type, "INAM", 4)) {
+        result.deathItem = (*reinterpret_cast<const uint32_t*>(data));
       }
     },
     compressedFieldsCache);

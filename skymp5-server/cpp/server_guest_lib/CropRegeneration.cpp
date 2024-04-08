@@ -12,7 +12,8 @@ BaseActorValues GetValues(MpActor* actor)
   auto appearance = actor->GetAppearance();
   uint32_t raceId = appearance ? appearance->raceId : 0;
   auto worldState = actor->GetParent();
-  return GetBaseActorValues(worldState, baseId, raceId);
+  return GetBaseActorValues(worldState, baseId, raceId,
+                            actor->GetTemplateChain());
 }
 
 }
@@ -21,16 +22,35 @@ float CropRegeneration(float newAttributeValue, float secondsAfterLastRegen,
                        float attributeRate, float attributeRateMult,
                        float oldAttributeValue, bool hasActiveMagicEffects)
 {
+  spdlog::trace(
+    "[crop]: args=(newAttributeValue={}, secondsAfterLastRegen={}, "
+    "attributerate={}, attributeRateMult={}, oldAttributeValue={}, "
+    "hasActiveMagicEffects={})",
+    newAttributeValue, secondsAfterLastRegen, attributeRate, attributeRateMult,
+    oldAttributeValue, hasActiveMagicEffects);
+
   float validRegenerationPercentage =
     MathUtils::PercentToFloat(attributeRate) *
     MathUtils::PercentToFloat(attributeRateMult) * secondsAfterLastRegen;
+
+  spdlog::trace("[crop]: validRegenerationPercentage={}",
+                validRegenerationPercentage);
+
   validRegenerationPercentage =
     validRegenerationPercentage < 0.0f ? 0.0f : validRegenerationPercentage;
   float validAttributePercentage =
     oldAttributeValue + validRegenerationPercentage;
+
+  spdlog::trace("[crop]: validAttributePercentage={}",
+                validAttributePercentage);
+
   validAttributePercentage =
     validAttributePercentage > 1.0f ? 1.0f : validAttributePercentage;
   constexpr float kMaxOldPercentage = 1.f;
+
+  spdlog::trace("[crop]: comparing received attribute value and valid one: "
+                "newAttributeValue={}, validAttributePercentage={}",
+                newAttributeValue, validAttributePercentage);
 
   if (newAttributeValue > validAttributePercentage) {
     return validAttributePercentage;
@@ -38,10 +58,10 @@ float CropRegeneration(float newAttributeValue, float secondsAfterLastRegen,
   if (newAttributeValue < 0.0f) {
     return 0.0f;
   }
-  if (hasActiveMagicEffects &&
-      !MathUtils::IsNearlyEqual(oldAttributeValue, kMaxOldPercentage)) {
-    return validAttributePercentage;
-  }
+  // if (hasActiveMagicEffects &&
+  //    !MathUtils::IsNearlyEqual(oldAttributeValue, kMaxOldPercentage)) {
+  //  return validAttributePercentage;
+  // }
   return newAttributeValue;
 }
 

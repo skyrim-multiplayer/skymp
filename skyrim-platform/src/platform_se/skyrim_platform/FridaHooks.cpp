@@ -6,6 +6,8 @@
 #include "PapyrusTESModPlatform.h"
 #include "StringHolder.h"
 
+#include <fmt/format.h>
+
 /**
  * Send Event hook
  */
@@ -55,6 +57,10 @@ void OnSendEventEnter(GumInvocationContext* ic)
         if (strlen(name) >= 4 && name[0] == skyui_name[0] &&
             name[1] == skyui_name[1] && name[2] == skyui_name[2] &&
             name[3] == skyui_name[3]) {
+          blockEvents = false;
+          break;
+        } else if (!stricmp(name, "defaultDisableHavokOnLoad")) {
+          // Maybe worth unblocking events only for this script, not for all
           blockEvents = false;
           break;
         }
@@ -268,6 +274,22 @@ void OnRenderCursorMenuEnter(GumInvocationContext* ic)
   } else {
     FridaHooksUtils::SetMenuNumberVariable(RE::CursorMenu::MENU_NAME,
                                            "_root.mc_Cursor._alpha", 100);
+  }
+
+  auto strings = {
+    R"(_root.MenuHolder.Menu_mc.MainListHolder.List_mc._alpha)"
+  };
+
+  if (visibleFlag && focusFlag) {
+    for (auto string : strings) {
+      FridaHooksUtils::SetMenuNumberVariable(RE::MainMenu::MENU_NAME, string,
+                                             0);
+    }
+  } else {
+    for (auto string : strings) {
+      FridaHooksUtils::SetMenuNumberVariable(RE::MainMenu::MENU_NAME, string,
+                                             100);
+    }
   }
 }
 

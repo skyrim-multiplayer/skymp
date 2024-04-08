@@ -138,9 +138,9 @@ public:
                                std::to_string(kMaxPlayers));
     }
 
-    idManager.reset(new IdManager(maxConnections));
-    peer.reset(new RakPeer);
-    socket.reset(new SocketDescriptor(port_, nullptr));
+    idManager = std::make_unique<IdManager>(maxConnections);
+    peer = std::make_unique<RakPeer>();
+    socket = std::make_unique<SocketDescriptor>(port_, nullptr);
 
     const auto res = peer->Startup(maxConnections, &*socket, 1);
     if (res != StartupResult::RAKNET_STARTED) {
@@ -153,6 +153,7 @@ public:
       peer->SetIncomingPassword(password.data(),
                                 static_cast<int>(password.size()));
     }
+    peer->SetLimitIPConnectionFrequency(true);
   }
 
   void Send(Networking::UserId id, Networking::PacketData data, size_t length,

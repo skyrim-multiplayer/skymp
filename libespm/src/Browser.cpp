@@ -8,9 +8,11 @@
 #include "libespm/KYWD.h"
 #include "libespm/NAVM.h"
 #include "libespm/NavMeshKey.h"
+#include "libespm/QUST.h"
 #include "libespm/REFR.h"
 #include "libespm/RecordHeader.h"
 #include "libespm/RefrKey.h"
+#include "libespm/WRLD.h"
 #include <cstring>
 #include <optional>
 #include <sparsepp/spp.h>
@@ -39,6 +41,8 @@ struct Browser::Impl
   std::vector<const RecordHeader*> objectReferences;
   std::vector<const RecordHeader*> constructibleObjects;
   std::vector<const RecordHeader*> keywords;
+  std::vector<const RecordHeader*> quests;
+  std::vector<const RecordHeader*> worlds;
 
   GroupStack grStack;
   std::vector<std::unique_ptr<GroupStack>> grStackCopies;
@@ -104,17 +108,23 @@ std::pair<const RecordHeader**, size_t> Browser::FindNavMeshes(
 const std::vector<const RecordHeader*>& Browser::GetRecordsByType(
   const char* type) const
 {
-  if (!std::strcmp(type, "REFR")) {
+  if (!std::strcmp(type, espm::REFR::kType)) {
     return pImpl->objectReferences;
   }
-  if (!std::strcmp(type, "COBJ")) {
+  if (!std::strcmp(type, espm::COBJ::kType)) {
     return pImpl->constructibleObjects;
   }
-  if (!std::strcmp(type, "KYWD")) {
+  if (!std::strcmp(type, espm::KYWD::kType)) {
     return pImpl->keywords;
   }
-  throw std::runtime_error(
-    "GetRecordsByType currently supports only REFR and COBJ records");
+  if (!std::strcmp(type, espm::QUST::kType)) {
+    return pImpl->quests;
+  }
+  if (!std::strcmp(type, espm::WRLD::kType)) {
+    return pImpl->worlds;
+  }
+  throw std::runtime_error("GetRecordsByType currently supports only REFR, "
+                           "COBJ, KYWD and QUST records");
 }
 
 const std::vector<const RecordHeader*>& Browser::GetRecordsAtPos(
@@ -236,6 +246,14 @@ bool Browser::ReadAny(const GroupStack* parentGrStack)
         nvnm->GetData(pImpl->dummyCache).worldSpaceId,
         nvnm->GetData(pImpl->dummyCache).cellOrGridPos)];
       v.push_back(nvnm);
+    }
+
+    if (utils::Is<espm::QUST>(t)) {
+      pImpl->quests.push_back(recHeader);
+    }
+
+    if (utils::Is<espm::WRLD>(t)) {
+      pImpl->worlds.push_back(recHeader);
     }
 
     pImpl->pos += sizeof(RecordHeader) + *pDataSize;

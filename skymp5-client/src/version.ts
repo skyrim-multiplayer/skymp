@@ -4,6 +4,7 @@ export const requiredVersion = '2.8.0';
 
 const realVersion = typeof getPlatformVersion === 'function' ? getPlatformVersion() : 'unknown';
 
+// TODO: no one actually calls this function. make a service
 export const verifyVersion = (): void => {
   if (!requiredVersion.includes(realVersion)) {
     Debug.messageBox(

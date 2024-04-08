@@ -3,30 +3,29 @@
 #include <chrono>
 
 namespace Viet {
+
 class Timer
 {
 public:
   Timer();
 
   template <typename T>
-  Viet::Promise<Viet::Void> SetTimer(T&& duration)
+  Promise<Void> SetTimer(T&& duration, uint32_t* outTimerId)
   {
     auto endTime = std::chrono::system_clock::now() + duration;
-    return Set(endTime);
+    return Set(endTime, outTimerId);
   };
 
-  Viet::Promise<Viet::Void> SetTimer(
-    const std::chrono::system_clock::time_point& endTime);
-  [[maybe_unused]] bool RemoveTimer(
-    const std::chrono::system_clock::time_point& endTime);
+  [[maybe_unused]] bool RemoveTimer(uint32_t timerId);
   void TickTimers();
 
 private:
-  Viet::Promise<Viet::Void> Set(
-    const std::chrono::system_clock::time_point& endTime);
+  Promise<Void> Set(const std::chrono::system_clock::time_point& endTime,
+                    uint32_t* outTimerId);
 
 private:
   struct Impl;
   std::shared_ptr<Impl> pImpl;
 };
+
 }

@@ -16,6 +16,7 @@ export declare function getPluginSourceCode(pluginName: string): string
 export declare function writePlugin(pluginName: string, newSources: string): string
 export declare function getPlatformVersion(): string
 export declare function disableCtrlPrtScnHotkey(): void
+export declare function blockPapyrusEvents(block: boolean): void
 export declare function sendIpcMessage(targetSystemName: string, message: ArrayBuffer): void
 export declare function encodeUtf8(text: string): ArrayBuffer
 export declare function decodeUtf8(buffer: ArrayBuffer): string
@@ -50,7 +51,7 @@ export interface ChangeFormNpc {
   face?: Face
 }
 
-export declare function loadGame(pos: number[], angle: number[], worldOrCell: number, changeFormNpc?: ChangeFormNpc): void
+export declare function loadGame(pos: number[], angle: number[], worldOrCell: number, changeFormNpc?: ChangeFormNpc, loadOrder?: string[], time?: { seconds: number, minutes: number, hours: number }): void
 
 export declare function worldPointToScreenPoint(...args: number[][]): number[][]
 
@@ -1532,8 +1533,8 @@ export type HttpHeaders = Record<string, string>
 
 export declare class HttpClient {
     constructor(url: string);
-    get(path: string, options?: { headers?: HttpHeaders }): Promise<HttpResponse>;
-    post(path: string, options: { body: string, contentType: string, headers?: HttpHeaders }): Promise<HttpResponse>;
+    get(path: string, options?: { headers?: HttpHeaders }, callback?: (result: HttpResponse) => void): Promise<HttpResponse>;
+    post(path: string, options: { body: string, contentType: string, headers?: HttpHeaders }, callback?: (result: HttpResponse) => void): Promise<HttpResponse>;
 }
 
 export declare function createText(xPos: number, yPos: number, text: string, color: number[], name?: string): number; //default name is Tavern
@@ -3228,6 +3229,7 @@ export declare class TESModPlatform extends PapyrusObject {
   static addItemEx(containerRefr: ObjectReference | null, item: Form | null, countDelta: number, health: number, enchantment: Enchantment | null, maxCharge: number, removeEnchantmentOnUnequip: boolean, chargePercent: number, textDisplayData: string, soul: number, poison: Potion | null, poisonCount: number): void
   static clearTintMasks(targetActor: Actor | null): void
   static createNpc(): ActorBase | null
+  static evaluateLeveledNpc(commaSeparatedListOfIds: string): ActorBase | null
   static getNthVtableElement(pointer: Form | null, pointerOffset: number, elementIndex: number): number
   static getSkinColor(base: ActorBase | null): ColorForm | null
   static isPlayerRunningEnabled(): boolean

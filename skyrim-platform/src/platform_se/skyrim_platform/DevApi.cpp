@@ -2,6 +2,7 @@
 #include "FileUtils.h"
 #include "InvalidArgumentException.h"
 #include "NullPointerException.h"
+#include "PapyrusTESModPlatform.h"
 #include "Validators.h"
 
 std::shared_ptr<JsEngine> DevApi::jsEngine = nullptr;
@@ -106,6 +107,13 @@ JsValue DevApi::GetJsMemoryUsage(const JsFunctionArguments& args)
     throw NullPointerException("jsEngine");
   }
   return static_cast<double>(jsEngine->GetMemoryUsage());
+}
+
+JsValue DevApi::BlockPapyrusEvents(const JsFunctionArguments& args)
+{
+  bool block = static_cast<bool>(args[1]);
+  TESModPlatform::BlockPapyrusEvents(nullptr, -1, nullptr, block);
+  return JsValue::Undefined();
 }
 
 namespace {

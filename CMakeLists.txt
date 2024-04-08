@@ -12,7 +12,12 @@ endif()
 
 set(VCPKG_OVERLAY_TRIPLETS "${CMAKE_CURRENT_LIST_DIR}/overlay_triplets")
 set(VCPKG_OVERLAY_PORTS "${CMAKE_CURRENT_LIST_DIR}/overlay_ports")
-set(VCPKG_INSTALL_OPTIONS --no-print-usage --clean-after-build)
+
+if("$ENV{CI}" STREQUAL "true")
+  set(VCPKG_INSTALL_OPTIONS --no-print-usage)
+else()
+  set(VCPKG_INSTALL_OPTIONS --no-print-usage --clean-after-build)
+endif()
 
 if("$ENV{CI}" STREQUAL "true" AND WIN32)
   # The same submodule but moved to a larger disk in Windows CI. See action files:
@@ -128,6 +133,8 @@ add_subdirectory(skymp5-front)
 add_subdirectory(skymp5-functions-lib)
 add_subdirectory(skymp5-scripts)
 add_subdirectory(skymp5-server)
+add_subdirectory(skymp5-downloader)
+
 if(BUILD_UNIT_TESTS)
   add_subdirectory(unit)
 endif()

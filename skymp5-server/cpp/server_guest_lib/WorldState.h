@@ -4,14 +4,14 @@
 #include "GridElement.h"
 #include "MpChangeForms.h"
 #include "MpForm.h"
-#include "MpFormGameObject.h"
 #include "MpObjectReference.h"
 #include "NiPoint3.h"
 #include "PartOneListener.h"
 #include "Timer.h"
 #include "libespm/Loader.h"
 #include "papyrus-vm/VirtualMachine.h"
-#include <MakeID.h-1.0.2>
+#include "script_objects/MpFormGameObject.h"
+#include <MakeID.h>
 #include <algorithm>
 #include <chrono>
 #include <functional>
@@ -22,6 +22,7 @@
 #include <sparsepp/spp.h>
 #include <spdlog/spdlog.h>
 #include <sstream>
+#include <unordered_map>
 
 #ifdef AddForm
 #  undef AddForm
@@ -76,15 +77,17 @@ public:
   bool HasEspmFile(std::string_view filename) const noexcept;
 
   template <typename T>
-  Viet::Promise<Viet::Void> SetTimer(T&& duration)
+  Viet::Promise<Viet::Void> SetTimer(T&& duration,
+                                     uint32_t* outTimerId = nullptr)
   {
-    return timerRegular.SetTimer(std::forward<T>(duration));
+    return timerRegular.SetTimer(std::forward<T>(duration), outTimerId);
   }
 
   template <typename T>
-  Viet::Promise<Viet::Void> SetEffectTimer(T&& duration)
+  Viet::Promise<Viet::Void> SetEffectTimer(T&& duration,
+                                           uint32_t* outTimerId = nullptr)
   {
-    return timerEffects.SetTimer(std::forward<T>(duration));
+    return timerEffects.SetTimer(std::forward<T>(duration), outTimerId);
   }
 
   template <typename T>
@@ -97,15 +100,17 @@ public:
     });
   }
 
+  bool RemoveTimer(uint32_t timerId);
   Viet::Promise<Viet::Void> SetTimer(
     std::reference_wrapper<const std::chrono::system_clock::time_point>
       wrapper);
   Viet::Promise<Viet::Void> SetEffectTimer(
     std::reference_wrapper<const std::chrono::system_clock::time_point>
       wrapper);
-  bool RemoveEffectTimer(const std::chrono::system_clock::time_point& endTime);
+  bool RemoveEffectTimer(uint32_t timerId);
 
-  const std::shared_ptr<MpForm>& LookupFormById(uint32_t formId);
+  const std::shared_ptr<MpForm>& LookupFormById(
+    uint32_t formId, std::stringstream* optionalOutTrace = nullptr);
 
   MpForm* LookupFormByIdx(int idx);
 
@@ -196,11 +201,17 @@ public:
                      std::chrono::system_clock::duration dur);
   std::optional<std::chrono::system_clock::duration> GetRelootTime(
     std::string recordType) const;
+
+  // Utility function to check if the provided baseId has the certain keyword
+  bool HasKeyword(uint32_t baseId, const char* keyword);
+
   // Only for tests
   auto& GetGrids() { return grids; }
+
   void SetNpcSettings(
     std::unordered_map<std::string, NpcSettingsEntry>&& settings);
   void SetForbiddenRelootTypes(const std::set<std::string>& types);
+  void SetEnableConsoleCommandsForAllSetting(bool enable);
 
 public:
   std::vector<std::string> espmFiles;
@@ -209,7 +220,9 @@ public:
     actorIdByPrivateIndexedProperty;
   std::shared_ptr<spdlog::logger> logger;
   std::vector<std::shared_ptr<PartOneListener>> listeners;
-  std::map<uint32_t, uint32_t> hosters;
+  std::unordered_map<uint32_t, uint32_t> hosters;
+  std::unordered_map<uint32_t, std::map<uint32_t, float>>
+    activationChildsByActivationParent;
   std::vector<std::optional<std::chrono::system_clock::time_point>>
     lastMovUpdateByIdx;
 
@@ -218,19 +231,24 @@ public:
   bool npcEnabled = false;
   std::unordered_map<std::string, NpcSettingsEntry> npcSettings;
   NpcSettingsEntry defaultSetting;
+  bool enableConsoleCommandsForAll = false;
+
+  bool disableVanillaScriptsInExterior = true;
 
 private:
   bool AttachEspmRecord(const espm::CombineBrowser& br,
                         const espm::RecordHeader* record,
-                        const espm::IdMapping& mapping);
+                        const espm::IdMapping& mapping,
+                        std::stringstream* optionalOutTrace = nullptr);
 
-  bool LoadForm(uint32_t formId);
+  bool LoadForm(uint32_t formId,
+                std::stringstream* optionalOutTrace = nullptr);
   void TickReloot(const std::chrono::system_clock::time_point& now);
   void TickSaveStorage(const std::chrono::system_clock::time_point& now);
   void TickTimers(const std::chrono::system_clock::time_point& now);
   [[nodiscard]] bool NpcSourceFilesOverriden() const noexcept;
-  [[nodiscard]] bool IsNpcAllowed(uint32_t baseId) const noexcept;
-  [[nodiscard]] uint32_t GetFileIdx(uint32_t baseId) const noexcept;
+  [[nodiscard]] bool IsNpcAllowed(uint32_t refrId) const noexcept;
+  [[nodiscard]] uint32_t GetFileIdx(uint32_t formId) const noexcept;
   [[nodiscard]] bool IsRelootForbidden(std::string type) const noexcept;
 
 private:

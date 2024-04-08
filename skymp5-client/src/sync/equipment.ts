@@ -13,7 +13,7 @@ import { Entry, Inventory, getInventory } from './inventory';
 export const enum SpellType {
   Left,
   Right,
-  Voise,
+  Voice,
   Instant,
 }
 
@@ -36,8 +36,8 @@ export const getEquipedSpell = (
       const spell = actor.getEquippedSpell(SpellType.Right);
       return spell ? spell.getFormID() : 0;
     }
-    case SpellType.Voise: {
-      const spell = actor.getEquippedSpell(SpellType.Voise);
+    case SpellType.Voice: {
+      const spell = actor.getEquippedSpell(SpellType.Voice);
       return spell ? spell.getFormID() : 0;
     }
     case SpellType.Instant: {
@@ -80,7 +80,7 @@ export const getEquipment = (ac: Actor, numChanges: number): Equipment => {
     inv: getInventory(ac),
     leftSpell: getEquipedSpell(ac, SpellType.Left),
     rightSpell: getEquipedSpell(ac, SpellType.Right),
-    voiceSpell: getEquipedSpell(ac, SpellType.Voise),
+    voiceSpell: getEquipedSpell(ac, SpellType.Voice),
     instantSpell: getEquipedSpell(ac, SpellType.Instant),
     numChanges,
   };
@@ -108,7 +108,7 @@ export const applyEquipment = (ac: Actor, eq: Equipment): boolean => {
 
   syncSpellEquipment(ac, eq.leftSpell, SpellType.Left);
   syncSpellEquipment(ac, eq.rightSpell, SpellType.Right);
-  syncSpellEquipment(ac, eq.voiceSpell, SpellType.Voise);
+  syncSpellEquipment(ac, eq.voiceSpell, SpellType.Voice);
   syncSpellEquipment(ac, eq.instantSpell, SpellType.Instant);
 
   return true;

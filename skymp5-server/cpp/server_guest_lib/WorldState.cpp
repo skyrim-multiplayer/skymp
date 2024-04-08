@@ -1,46 +1,22 @@
 #include "WorldState.h"
 #include "FormCallbacks.h"
-#include "HeuristicPolicy.h"
-#include "ISaveStorage.h"
+#include "LocationalDataUtils.h"
 #include "MpActor.h"
 #include "MpChangeForms.h"
-#include "MpFormGameObject.h"
 #include "MpObjectReference.h"
-#include "PapyrusActor.h"
-#include "PapyrusDebug.h"
-#include "PapyrusEffectShader.h"
-#include "PapyrusForm.h"
-#include "PapyrusFormList.h"
-#include "PapyrusGame.h"
-#include "PapyrusKeyword.h"
-#include "PapyrusMessage.h"
-#include "PapyrusObjectReference.h"
-#include "PapyrusSkymp.h"
-#include "PapyrusUtility.h"
 #include "ScopedTask.h"
-#include "ScriptStorage.h"
 #include "Timer.h"
 #include "libespm/GroupUtils.h"
 #include "papyrus-vm/Reader.h"
+#include "papyrus-vm/Utils.h"
+#include "save_storages/ISaveStorage.h"
+#include "script_classes/PapyrusClassesFactory.h"
+#include "script_compatibility_policies/PapyrusCompatibilityPolicyFactory.h"
+#include "script_storages/IScriptStorage.h"
 #include <algorithm>
 #include <deque>
 #include <iterator>
 #include <unordered_map>
-
-namespace {
-inline const NiPoint3& GetPos(const espm::REFR::LocationalData* locationalData)
-{
-  return *reinterpret_cast<const NiPoint3*>(locationalData->pos);
-}
-
-inline NiPoint3 GetRot(const espm::REFR::LocationalData* locationalData)
-{
-  static const auto g_pi = std::acos(-1.f);
-  return { locationalData->rotRadians[0] / g_pi * 180.f,
-           locationalData->rotRadians[1] / g_pi * 180.f,
-           locationalData->rotRadians[2] / g_pi * 180.f };
-}
-}
 
 struct WorldState::Impl
 {
@@ -50,7 +26,7 @@ struct WorldState::Impl
   bool saveStorageBusy = false;
   std::shared_ptr<VirtualMachine> vm;
   uint32_t nextId = 0xff000000;
-  std::shared_ptr<HeuristicPolicy> policy;
+  std::shared_ptr<IPapyrusCompatibilityPolicy> policy;
   std::unordered_map<uint32_t, MpChangeForm> changeFormsForDeferredLoad;
   bool chunkLoadingInProgress = false;
   bool formLoadingInProgress = false;
@@ -65,7 +41,7 @@ WorldState::WorldState()
   logger.reset(new spdlog::logger("empty logger"));
 
   pImpl.reset(new Impl);
-  pImpl->policy.reset(new HeuristicPolicy(logger, this));
+  pImpl->policy = PapyrusCompatibilityPolicyFactory::Create(this);
 }
 
 void WorldState::Clear()
@@ -158,11 +134,41 @@ void WorldState::LoadChangeForm(const MpChangeForm& changeForm,
     const auto rec = espm->GetBrowser().LookupById(baseId).rec;
 
     if (!rec) {
-      std::stringstream ss;
-      ss << std::hex << "Unable to find record " << baseId;
-      throw std::runtime_error(ss.str());
+      spdlog::warn("Skipping ChangeForm {:x}: unable to find base record {:x}",
+                   formId, baseId);
+      return;
     }
     baseType = rec->GetType().ToString();
+  }
+
+  if (espm) {
+    if (!changeForm.appearanceDump.empty()) {
+      simdjson::dom::parser p;
+      auto res = p.parse(changeForm.appearanceDump);
+      if (res.error()) {
+        spdlog::warn(
+          "Skipping ChangeForm {:x}: unable to parse appearanceDump", formId);
+        return;
+      }
+
+      Appearance appearance;
+      try {
+        appearance = Appearance::FromJson(res.value());
+      } catch (std::exception& e) {
+        spdlog::warn("Skipping ChangeForm {:x}: Appearance::FromJson failed "
+                     "on appearanceDump: {}",
+                     formId, e.what());
+        return;
+      }
+
+      const auto rec = espm->GetBrowser().LookupById(appearance.raceId).rec;
+
+      if (!rec || rec->GetType().ToString() != "RACE") {
+        spdlog::warn("Skipping ChangeForm {:x}: bad raceId in appearanceDump",
+                     formId);
+        return;
+      }
+    }
   }
 
   if (formId < 0xff000000) {
@@ -219,38 +225,55 @@ void WorldState::RequestSave(MpObjectReference& ref)
   }
 }
 
-Viet::Promise<Viet::Void> WorldState::SetTimer(
-  std::reference_wrapper<const std::chrono::system_clock::time_point> wrapper)
-{
-  return timerRegular.SetTimer(wrapper.get());
-}
-
-Viet::Promise<Viet::Void> WorldState::SetEffectTimer(
-  std::reference_wrapper<const std::chrono::system_clock::time_point> wrapper)
-{
-  return timerEffects.SetTimer(wrapper.get());
-}
-
-const std::shared_ptr<MpForm>& WorldState::LookupFormById(uint32_t formId)
+const std::shared_ptr<MpForm>& WorldState::LookupFormById(
+  uint32_t formId, std::stringstream* optionalOutTrace)
 {
   static const std::shared_ptr<MpForm> kNullForm;
+
+  if (optionalOutTrace) {
+    *optionalOutTrace << "searching for " << std::hex << formId << std::endl;
+  }
 
   auto it = forms.find(formId);
   if (it == forms.end()) {
     if (formId < 0xff000000) {
-      if (LoadForm(formId)) {
+      if (LoadForm(formId, optionalOutTrace)) {
         it = forms.find(formId);
-        return it == forms.end() ? kNullForm : it->second;
+        if (it != forms.end()) {
+          if (optionalOutTrace) {
+            *optionalOutTrace << "found after successful LoadForm" << std::hex
+                              << formId << std::endl;
+          }
+          return it->second;
+        }
+        if (optionalOutTrace) {
+          *optionalOutTrace << "not found after successful LoadForm"
+                            << std::hex << formId << std::endl;
+        }
+        return kNullForm;
+      } else {
+        if (optionalOutTrace) {
+          *optionalOutTrace << "LoadForm returned false " << std::hex << formId
+                            << std::endl;
+        }
       }
     }
+    if (optionalOutTrace) {
+      *optionalOutTrace << "not found " << std::hex << formId << std::endl;
+    }
     return kNullForm;
+  }
+
+  if (optionalOutTrace) {
+    *optionalOutTrace << "found " << std::hex << formId << std::endl;
   }
   return it->second;
 }
 
 bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
                                   const espm::RecordHeader* record,
-                                  const espm::IdMapping& mapping)
+                                  const espm::IdMapping& mapping,
+                                  std::stringstream* optionalOutTrace)
 {
   auto& cache = GetEspmCache();
   // this place is a hotpath.
@@ -263,6 +286,10 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
   espm::LookupResult base = br.LookupById(baseId);
   if (!base.rec) {
     logger->info("baseId {} {}", baseId, static_cast<const void*>(base.rec));
+    if (optionalOutTrace) {
+      *optionalOutTrace << fmt::format(
+        "AttachEspmRecord - base record not found {:x} \n", baseId);
+    }
     return false;
   }
 
@@ -279,33 +306,79 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
 
   if (!isNpc && !isFurniture && !isActivator && !espm::utils::IsItem(t) &&
       !isDoor && !isContainer && !isFlor && !isTree) {
+    if (optionalOutTrace) {
+      *optionalOutTrace << fmt::format(
+        "AttachEspmRecord - the server skips base type {} \n", t.ToString());
+    }
     return false;
+  }
+
+  bool startsDead = false;
+  if (isNpc) {
+    auto* achr = reinterpret_cast<const espm::ACHR*>(record);
+    startsDead = achr->StartsDead();
+    if (startsDead) {
+      if (optionalOutTrace) {
+        *optionalOutTrace << fmt::format(
+          "AttachEspmRecord - the server skips dead actors\n");
+      }
+      return false; // TODO: Load dead references
+    }
   }
 
   // TODO: Load disabled references
   enum
   {
-    InitiallyDisabled = 0x800
+    InitiallyDisabled = 0x800,
+    DeletedRecord = 0x20
   };
 
   if (refr->GetFlags() & InitiallyDisabled) {
+    if (optionalOutTrace) {
+      *optionalOutTrace << fmt::format(
+        "AttachEspmRecord - the server skips initially disabled references\n");
+    }
+    return false;
+  }
+
+  if (refr->GetFlags() & DeletedRecord) {
+    if (optionalOutTrace) {
+      *optionalOutTrace << fmt::format(
+        "AttachEspmRecord - the server skips deleted references\n");
+    }
     return false;
   }
 
   if (!npcEnabled && isNpc) {
+    if (optionalOutTrace) {
+      *optionalOutTrace << fmt::format(
+        "AttachEspmRecord - the server skips npcs: npcEnabled = false\n");
+    }
     return false;
   }
 
+  uint32_t formId = espm::utils::GetMappedId(record->GetId(), mapping);
+
   if (isNpc) {
-    if (NpcSourceFilesOverriden() && !IsNpcAllowed(baseId)) {
-      spdlog::trace("Skip NPC loading, it is not allowed. baseId {:#x}",
-                    baseId);
+    if (NpcSourceFilesOverriden() && !IsNpcAllowed(formId)) {
+      spdlog::trace("Skip NPC loading, it is not allowed. refrId {:#x}",
+                    formId);
+      if (optionalOutTrace) {
+        *optionalOutTrace
+          << fmt::format("Skip NPC loading, it is not allowed. refrId {:#x}",
+                         formId)
+          << std::endl;
+      }
       return false;
     }
     auto npcData =
       reinterpret_cast<const espm::NPC_*>(base.rec)->GetData(cache);
 
-    if (npcData.isEssential || npcData.isProtected) {
+    if (npcData.isEssential || npcData.isProtected || npcData.isUnique) {
+      if (optionalOutTrace) {
+        *optionalOutTrace << fmt::format("Skip NPC due to its flags")
+                          << std::endl;
+      }
       return false;
     }
 
@@ -329,18 +402,25 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
       if (it != factionFormIds.end()) {
         logger->info("Skipping actor {:#x} because it's in faction {:#x}",
                      record->GetId(), *it);
+        if (optionalOutTrace) {
+          *optionalOutTrace << fmt::format("Skip NPC due to faction")
+                            << std::endl;
+        }
         return false;
       }
     }
   }
 
-  uint32_t formId = espm::utils::GetMappedId(record->GetId(), mapping);
   auto locationalData = data.loc;
 
   uint32_t worldOrCell =
     espm::utils::GetMappedId(GetWorldOrCell(br, record), mapping);
   if (!worldOrCell) {
     logger->error("Anomaly: refr without world/cell");
+    if (optionalOutTrace) {
+      *optionalOutTrace << fmt::format("Anomaly: refr without world/cell")
+                        << std::endl;
+    }
     return false;
   }
 
@@ -357,12 +437,20 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
     if (worldRecord) {
       isExterior = true;
     }
-    uint32_t npcFileIdx = GetFileIdx(baseId);
+    uint32_t npcFileIdx = GetFileIdx(formId);
     if (npcFileIdx >= espmFiles.size()) {
       spdlog::error("NPC's idx is greater than espmFiles.size(). NPC's"
-                    "baseId "
+                    "formId "
                     "{:#x}, espmFiles size: {}",
-                    baseId, espmFiles.size());
+                    formId, espmFiles.size());
+      if (optionalOutTrace) {
+        *optionalOutTrace
+          << fmt::format("NPC's idx is greater than espmFiles.size(). NPC's"
+                         "formId "
+                         "{:#x}, espmFiles size: {}",
+                         formId, espmFiles.size())
+          << std::endl;
+      }
       return false;
     }
     auto it = npcSettings.find(espmFiles[npcFileIdx]);
@@ -385,73 +473,83 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
         (!spawnInExterior || !isExterior)) {
       spdlog::trace(
         "Unable to spawn npc because of "
-        "rules applied in server settings: spanwInInterior={}, "
+        "rules applied in server settings: spawnInInterior={}, "
         "spawnInExterior={}, NPC location: exterior={}, interior={}",
         spawnInInterior, spawnInExterior, isExterior, isInterior);
+      if (optionalOutTrace) {
+        *optionalOutTrace
+          << fmt::format(
+               "Unable to spawn npc because of "
+               "rules applied in server settings: spawnInInterior={}, "
+               "spawnInExterior={}, NPC location: exterior={}, interior={}",
+               spawnInInterior, spawnInExterior, isExterior, isInterior)
+          << std::endl;
+      }
       return false;
     }
   }
 
-  // This function dosen't use LookupFormById to prevent recursion
-  auto existing = forms.find(formId);
-
-  if (existing != forms.end()) {
-    auto existingAsRefr =
-      reinterpret_cast<MpObjectReference*>(existing->second.get());
-
-    if (locationalData) {
-      existingAsRefr->SetPosAndAngleSilent(GetPos(locationalData),
-                                           GetRot(locationalData));
-
-      assert(existingAsRefr->GetPos() == NiPoint3(GetPos(locationalData)));
+  if (!locationalData) {
+    logger->error("Anomaly: refr without locationalData");
+    if (optionalOutTrace) {
+      *optionalOutTrace << fmt::format("Anomaly: refr without locationalData")
+                        << std::endl;
     }
+    return false;
+  }
 
+  std::optional<NiPoint3> primitiveBoundsDiv2;
+  if (data.boundsDiv2) {
+    primitiveBoundsDiv2 =
+      NiPoint3(data.boundsDiv2[0], data.boundsDiv2[1], data.boundsDiv2[2]);
+  }
+
+  auto typeStr = t.ToString();
+  std::unique_ptr<MpForm> form;
+  LocationalData formLocationalData = {
+    LocationalDataUtils::GetPos(locationalData),
+    LocationalDataUtils::GetRot(locationalData),
+    FormDesc::FromFormId(worldOrCell, espmFiles)
+  };
+  if (!isNpc) {
+    form.reset(new MpObjectReference(formLocationalData,
+                                     formCallbacksFactory(), baseId,
+                                     typeStr.data(), primitiveBoundsDiv2));
   } else {
-    if (!locationalData) {
-      logger->error("Anomaly: refr without locationalData");
-      return false;
-    }
-
-    std::optional<NiPoint3> primitiveBoundsDiv2;
-    if (data.boundsDiv2) {
-      primitiveBoundsDiv2 =
-        NiPoint3(data.boundsDiv2[0], data.boundsDiv2[1], data.boundsDiv2[2]);
-    }
-
-    auto typeStr = t.ToString();
-    std::unique_ptr<MpForm> form;
-    LocationalData formLocationalData = {
-      GetPos(locationalData), GetRot(locationalData),
-      FormDesc::FromFormId(worldOrCell, espmFiles)
-    };
-    if (!isNpc) {
-      form.reset(new MpObjectReference(formLocationalData,
-                                       formCallbacksFactory(), baseId,
-                                       typeStr.data(), primitiveBoundsDiv2));
-    } else {
-      form.reset(
-        new MpActor(formLocationalData, formCallbacksFactory(), baseId));
-    }
-    AddForm(std::move(form), formId, true);
-    // Do not TriggerFormInitEvent here, doing it later after changeForm apply
+    form.reset(
+      new MpActor(formLocationalData, formCallbacksFactory(), baseId));
   }
+  AddForm(std::move(form), formId, true);
 
+  // Do not TriggerFormInitEvent here, doing it later after changeForm apply
+
+  if (optionalOutTrace) {
+    *optionalOutTrace << fmt::format("AttachEspmRecord returned true")
+                      << std::endl;
+  }
   return true;
 }
 
-bool WorldState::LoadForm(uint32_t formId)
+bool WorldState::LoadForm(uint32_t formId, std::stringstream* optionalOutTrace)
 {
-  bool atLeastOneLoaded = false;
   auto& br = GetEspm().GetBrowser();
-  auto lookupResults = br.LookupByIdAll(formId);
-  for (auto& lookupRes : lookupResults) {
-    auto mapping = br.GetCombMapping(lookupRes.fileIdx);
-    if (AttachEspmRecord(br, lookupRes.rec, *mapping)) {
-      atLeastOneLoaded = true;
-    }
+
+  auto lookupRes = br.LookupById(formId);
+
+  if (!lookupRes.rec) {
+    return false;
   }
 
-  if (atLeastOneLoaded) {
+  auto mapping = br.GetCombMapping(lookupRes.fileIdx);
+
+  bool attached =
+    AttachEspmRecord(br, lookupRes.rec, *mapping, optionalOutTrace);
+  if (optionalOutTrace) {
+    *optionalOutTrace << "AttachEspmRecord " << (attached ? "true" : "false")
+                      << std::endl;
+  }
+
+  if (attached) {
     auto& refr = GetFormAt<MpObjectReference>(formId);
     auto it = pImpl->changeFormsForDeferredLoad.find(formId);
     if (it != pImpl->changeFormsForDeferredLoad.end()) {
@@ -462,7 +560,7 @@ bool WorldState::LoadForm(uint32_t formId)
     refr.ForceSubscriptionsUpdate();
   }
 
-  return atLeastOneLoaded;
+  return attached;
 }
 
 void WorldState::TickReloot(const std::chrono::system_clock::time_point& now)
@@ -516,12 +614,36 @@ void WorldState::SendPapyrusEvent(MpForm* form, const char* eventName,
                                   const VarValue* arguments,
                                   size_t argumentsCount)
 {
+  std::vector<VarValue> args = { arguments, arguments + argumentsCount };
+
+  if (spdlog::should_log(spdlog::level::trace)) {
+    std::vector<std::string> argsStrings(args.size());
+    for (size_t i = 0; i < args.size(); ++i) {
+      argsStrings[i] = args[i].ToString();
+    }
+
+    if (!strcmp(eventName, "OnTrigger")) {
+      static std::once_flag g_once;
+      std::call_once(g_once, [&] {
+        spdlog::trace("WorldState::SendPapyrusEvent {:x} - {} [{}]",
+                      form->GetFormId(), eventName,
+                      fmt::join(argsStrings, ", "));
+        spdlog::trace("WorldState::SendPapyrusEvent {:x} - Muting {} globally "
+                      "to keep logs clear",
+                      form->GetFormId(), eventName);
+      });
+    } else {
+      spdlog::trace("WorldState::SendPapyrusEvent {:x} - {} [{}]",
+                    form->GetFormId(), eventName,
+                    fmt::join(argsStrings, ", "));
+    }
+  }
+
   VirtualMachine::OnEnter onEnter = [&](const StackIdHolder& holder) {
     pImpl->policy->BeforeSendPapyrusEvent(form, eventName, arguments,
                                           argumentsCount, holder.GetStackId());
   };
   auto& vm = GetPapyrusVm();
-  std::vector<VarValue> args = { arguments, arguments + argumentsCount };
   return vm.SendEvent(form->ToGameObject(), eventName, args, onEnter);
 }
 
@@ -701,20 +823,8 @@ VirtualMachine& WorldState::GetPapyrusVm()
         }
       });
 
-      pImpl->classes.emplace_back(std::make_unique<PapyrusObjectReference>());
-      pImpl->classes.emplace_back(std::make_unique<PapyrusGame>());
-      pImpl->classes.emplace_back(std::make_unique<PapyrusForm>());
-      pImpl->classes.emplace_back(std::make_unique<PapyrusMessage>());
-      pImpl->classes.emplace_back(std::make_unique<PapyrusFormList>());
-      pImpl->classes.emplace_back(std::make_unique<PapyrusDebug>());
-      pImpl->classes.emplace_back(std::make_unique<PapyrusActor>());
-      pImpl->classes.emplace_back(std::make_unique<PapyrusSkymp>());
-      pImpl->classes.emplace_back(std::make_unique<PapyrusUtility>());
-      pImpl->classes.emplace_back(std::make_unique<PapyrusEffectShader>());
-      pImpl->classes.emplace_back(std::make_unique<PapyrusKeyword>());
-      for (auto& cl : pImpl->classes) {
-        cl->Register(*pImpl->vm, pImpl->policy);
-      }
+      pImpl->classes =
+        PapyrusClassesFactory::CreateAndRegister(*pImpl->vm, pImpl->policy);
     }
   }
 
@@ -775,17 +885,38 @@ std::optional<std::chrono::system_clock::duration> WorldState::GetRelootTime(
   return it->second;
 }
 
+bool WorldState::HasKeyword(uint32_t baseId, const char* keyword)
+{
+  auto lookupRes = GetEspm().GetBrowser().LookupById(baseId);
+
+  if (!lookupRes.rec) {
+    return false;
+  }
+
+  const auto keywordIds = lookupRes.rec->GetKeywordIds(GetEspmCache());
+
+  for (auto keywordId : keywordIds) {
+    auto keywordIdGlobal = lookupRes.ToGlobalId(keywordId);
+    auto rec = GetEspm().GetBrowser().LookupById(keywordIdGlobal).rec;
+    if (rec && !Utils::stricmp(rec->GetEditorId(GetEspmCache()), keyword)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 bool WorldState::NpcSourceFilesOverriden() const noexcept
 {
   return !npcSettings.empty() || defaultSetting.overriden;
 }
 
-bool WorldState::IsNpcAllowed(uint32_t baseId) const noexcept
+bool WorldState::IsNpcAllowed(uint32_t refrId) const noexcept
 {
   if (npcSettings.empty() && defaultSetting.overriden) {
     return true;
   }
-  uint32_t npcFileIdx = GetFileIdx(baseId);
+  uint32_t npcFileIdx = GetFileIdx(refrId);
   for (const auto& [fileName, _] : npcSettings) {
     auto it = std::find(espmFiles.begin(), espmFiles.end(), fileName);
     if (it == espmFiles.end()) {
@@ -799,9 +930,9 @@ bool WorldState::IsNpcAllowed(uint32_t baseId) const noexcept
   return false;
 }
 
-uint32_t WorldState::GetFileIdx(uint32_t baseId) const noexcept
+uint32_t WorldState::GetFileIdx(uint32_t formId) const noexcept
 {
-  return baseId >> 24;
+  return formId >> 24;
 }
 
 void WorldState::SetNpcSettings(
@@ -810,15 +941,24 @@ void WorldState::SetNpcSettings(
   npcSettings = settings;
 }
 
-bool WorldState::RemoveEffectTimer(
-  const std::chrono::system_clock::time_point& endTime)
+bool WorldState::RemoveTimer(uint32_t timerId)
 {
-  return timerEffects.RemoveTimer(endTime);
+  return timerRegular.RemoveTimer(timerId);
+}
+
+bool WorldState::RemoveEffectTimer(uint32_t timerId)
+{
+  return timerEffects.RemoveTimer(timerId);
 }
 
 void WorldState::SetForbiddenRelootTypes(const std::set<std::string>& types)
 {
   pImpl->forbiddenRelootTypes = types;
+}
+
+void WorldState::SetEnableConsoleCommandsForAllSetting(bool enable)
+{
+  enableConsoleCommandsForAll = enable;
 }
 
 bool WorldState::IsRelootForbidden(std::string type) const noexcept

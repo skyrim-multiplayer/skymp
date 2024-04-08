@@ -1,6 +1,23 @@
 #include "MpChangeForms.h"
 #include "JsonUtils.h"
 
+namespace {
+std::vector<std::string> ToStringArray(const std::vector<FormDesc>& formDescs)
+{
+  std::vector<std::string> res(formDescs.size());
+  std::transform(formDescs.begin(), formDescs.end(), res.begin(),
+                 [](const FormDesc& v) { return v.ToString(); });
+  return res;
+}
+std::vector<FormDesc> ToFormDescsArray(const std::vector<std::string>& strings)
+{
+  std::vector<FormDesc> res(strings.size());
+  std::transform(strings.begin(), strings.end(), res.begin(),
+                 [](const std::string& v) { return FormDesc::FromString(v); });
+  return res;
+}
+}
+
 nlohmann::json MpChangeForm::ToJson(const MpChangeForm& changeForm)
 {
   auto res = nlohmann::json::object();
@@ -19,6 +36,8 @@ nlohmann::json MpChangeForm::ToJson(const MpChangeForm& changeForm)
   res["nextRelootDatetime"] = changeForm.nextRelootDatetime;
   res["isDisabled"] = changeForm.isDisabled;
   res["profileId"] = changeForm.profileId;
+  res["isDeleted"] = changeForm.isDeleted;
+  res["count"] = changeForm.count;
   res["isRaceMenuOpen"] = changeForm.isRaceMenuOpen;
   res["dynamicFields"] = changeForm.dynamicFields.GetAsJson();
 
@@ -55,6 +74,28 @@ nlohmann::json MpChangeForm::ToJson(const MpChangeForm& changeForm)
 
   res["spawnDelay"] = changeForm.spawnDelay;
   res["effects"] = changeForm.activeMagicEffects.ToJson();
+
+  if (!changeForm.templateChain.empty()) {
+    res["templateChain"] = ToStringArray(changeForm.templateChain);
+  }
+
+  // TODO: uncomment when add script vars save feature
+  // if (changeForm.lastAnimation.has_value()) {
+  //   res["lastAnimation"] = *changeForm.lastAnimation;
+  // }
+
+  if (changeForm.setNodeTextureSet.has_value()) {
+    res["setNodeTextureSet"] = *changeForm.setNodeTextureSet;
+  }
+
+  if (changeForm.setNodeScale.has_value()) {
+    res["setNodeScale"] = *changeForm.setNodeScale;
+  }
+
+  if (changeForm.displayName.has_value()) {
+    res["displayName"] = *changeForm.displayName;
+  }
+
   return res;
 }
 
@@ -65,16 +106,19 @@ MpChangeForm MpChangeForm::JsonToChangeForm(simdjson::dom::element& element)
     worldOrCellDesc("worldOrCellDesc"), inv("inv"), isHarvested("isHarvested"),
     isOpen("isOpen"), baseContainerAdded("baseContainerAdded"),
     nextRelootDatetime("nextRelootDatetime"), isDisabled("isDisabled"),
-    profileId("profileId"), isRaceMenuOpen("isRaceMenuOpen"),
-    appearanceDump("appearanceDump"), equipmentDump("equipmentDump"),
-    learnedSpells("learnedSpells"), dynamicFields("dynamicFields"),
-    healthPercentage("healthPercentage"),
+    profileId("profileId"), isDeleted("isDeleted"), count("count"),
+    isRaceMenuOpen("isRaceMenuOpen"), appearanceDump("appearanceDump"),
+    equipmentDump("equipmentDump"), learnedSpells("learnedSpells"),
+    dynamicFields("dynamicFields"), healthPercentage("healthPercentage"),
     magickaPercentage("magickaPercentage"),
     staminaPercentage("staminaPercentage"), isDead("isDead"),
     consoleCommandsAllowed("consoleCommandsAllowed"),
     spawnPointPos("spawnPoint_pos"), spawnPointRot("spawnPoint_rot"),
     spawnPointCellOrWorldDesc("spawnPoint_cellOrWorldDesc"),
-    spawnDelay("spawnDelay"), effects("effects");
+    spawnDelay("spawnDelay"), effects("effects"),
+    templateChain("templateChain"), lastAnimation("lastAnimation"),
+    setNodeTextureSet("setNodeTextureSet"), setNodeScale("setNodeScale"),
+    displayName("displayName");
 
   MpChangeForm res;
   ReadEx(element, recType, &res.recType);
@@ -110,6 +154,17 @@ MpChangeForm MpChangeForm::JsonToChangeForm(simdjson::dom::element& element)
   ReadEx(element, nextRelootDatetime, &res.nextRelootDatetime);
   ReadEx(element, isDisabled, &res.isDisabled);
   ReadEx(element, profileId, &res.profileId);
+
+  if (element.at_pointer(isDeleted.GetData()).error() ==
+      simdjson::error_code::SUCCESS) {
+    ReadEx(element, isDeleted, &res.isDeleted);
+  }
+
+  if (element.at_pointer(count.GetData()).error() ==
+      simdjson::error_code::SUCCESS) {
+    ReadEx(element, count, &res.count);
+  }
+
   ReadEx(element, isRaceMenuOpen, &res.isRaceMenuOpen);
 
   ReadEx(element, appearanceDump, &jTmp);
@@ -172,12 +227,71 @@ MpChangeForm MpChangeForm::JsonToChangeForm(simdjson::dom::element& element)
     ReadEx(element, effects, &jTmp);
     res.activeMagicEffects = ActiveMagicEffectsMap::FromJson(jTmp);
   }
+
+  if (element.at_pointer(templateChain.GetData()).error() ==
+      simdjson::error_code::SUCCESS) {
+    std::vector<std::string> data;
+    ReadVector(element, templateChain, &data);
+    res.templateChain = ToFormDescsArray(data);
+  }
+
+  if (element.at_pointer(lastAnimation.GetData()).error() ==
+      simdjson::error_code::SUCCESS) {
+    const char* tmp;
+    ReadEx(element, lastAnimation, &tmp);
+    res.lastAnimation = tmp;
+  }
+
+  if (element.at_pointer(setNodeTextureSet.GetData()).error() ==
+      simdjson::error_code::SUCCESS) {
+    simdjson::dom::element data;
+    ReadEx(element, setNodeTextureSet, &data);
+
+    if (res.setNodeTextureSet == std::nullopt) {
+      res.setNodeTextureSet = std::map<std::string, std::string>();
+    }
+
+    for (auto [key, value] : data.get_object()) {
+      std::string keyStr = key.data();
+      std::string valueStr = value.get_string().value().data();
+      res.setNodeTextureSet->emplace(keyStr, valueStr);
+    }
+  }
+
+  if (element.at_pointer(setNodeScale.GetData()).error() ==
+      simdjson::error_code::SUCCESS) {
+    simdjson::dom::element data;
+    ReadEx(element, setNodeScale, &data);
+
+    if (res.setNodeScale == std::nullopt) {
+      res.setNodeScale = std::map<std::string, float>();
+    }
+
+    for (auto [key, value] : data.get_object()) {
+      std::string keyStr = key.data();
+      float valueFloat = static_cast<float>(value.get_double().value());
+      res.setNodeScale->emplace(keyStr, valueFloat);
+    }
+  }
+
+  if (element.at_pointer(displayName.GetData()).error() ==
+      simdjson::error_code::SUCCESS) {
+    const char* tmp;
+    ReadEx(element, displayName, &tmp);
+    res.displayName = tmp;
+  }
+
   return res;
 }
 
-void LearnedSpells::LearnSpell(const Data::key_type baseId)
+void LearnedSpells::LearnSpell(const Data::key_type spellId)
 {
-  _learnedSpellIds.emplace(baseId);
+  _learnedSpellIds.emplace(spellId);
+}
+
+void LearnedSpells::ForgetSpell(const Data::key_type spellId)
+{
+  _learnedSpellIds.erase(spellId);
 }
 
 size_t LearnedSpells::Count() const noexcept
@@ -185,9 +299,9 @@ size_t LearnedSpells::Count() const noexcept
   return _learnedSpellIds.size();
 }
 
-bool LearnedSpells::IsSpellLearned(const Data::key_type baseId) const
+bool LearnedSpells::IsSpellLearned(const Data::key_type spellId) const
 {
-  return _learnedSpellIds.contains(baseId);
+  return _learnedSpellIds.count(spellId) != 0;
 }
 
 std::vector<LearnedSpells::Data::key_type> LearnedSpells::GetLearnedSpells()

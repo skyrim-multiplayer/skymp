@@ -23,7 +23,7 @@ function(link_vcpkg_dependencies)
     find_package(ZLIB REQUIRED)
     target_link_libraries(${target} PUBLIC ZLIB::ZLIB)
 
-    find_path(MAKEID_INCLUDE_DIR NAMES MakeID.h-1.0.2)
+    find_path(MAKEID_INCLUDE_DIR NAMES MakeID.h)
     target_include_directories(${target} PUBLIC ${MAKEID_INCLUDE_DIR})
 
     if(MSVC AND "${target}" MATCHES "skyrim_platform")
@@ -57,5 +57,8 @@ function(link_vcpkg_dependencies)
 
     find_package(OpenSSL REQUIRED)
     target_link_libraries(${target} PUBLIC OpenSSL::SSL OpenSSL::Crypto)
+
+    find_package(bsa CONFIG REQUIRED)
+    target_link_libraries(${target} PUBLIC bsa::bsa)
   endforeach()
 endfunction()

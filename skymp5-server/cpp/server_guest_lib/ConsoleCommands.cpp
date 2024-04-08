@@ -1,9 +1,9 @@
 #include "ConsoleCommands.h"
-#include "EspmGameObject.h"
 #include "MpActor.h"
-#include "PapyrusObjectReference.h"
 #include "WorldState.h"
 #include "papyrus-vm/Utils.h"
+#include "script_classes/PapyrusObjectReference.h"
+#include "script_objects/EspmGameObject.h"
 
 ConsoleCommands::Argument::Argument()
 {
@@ -50,6 +50,14 @@ namespace {
 
 void EnsureAdmin(const MpActor& me)
 {
+  if (auto worldState = me.GetParent()) {
+    if (worldState->enableConsoleCommandsForAll) {
+      spdlog::trace("Bypassing EnsureAdmin check: enableConsoleCommandsForAll "
+                    "set to true");
+      return;
+    }
+  }
+
   bool isAdmin = me.GetConsoleCommandsAllowedFlag();
   if (!isAdmin) {
     throw std::runtime_error("Not enough permissions to use this command");
@@ -116,8 +124,10 @@ void ExecuteDisable(MpActor& caller,
     ? caller
     : caller.GetParent()->GetFormAt<MpObjectReference>(targetId);
 
-  if (target.GetFormId() >= 0xff000000)
+  if (target.GetFormId() >= 0xff000000 ||
+      dynamic_cast<MpActor*>(&target) != nullptr) {
     target.Disable();
+  }
 }
 
 void ExecuteMp(MpActor& caller,

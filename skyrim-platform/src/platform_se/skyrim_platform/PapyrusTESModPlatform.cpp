@@ -4,6 +4,10 @@
 #include "ExceptionPrinter.h"
 #include "NullPointerException.h"
 
+#include <RE/B/BSPointerHandle.h>
+#include <RE/N/NiPoint3.h>
+#include <REL/Relocation.h>
+
 extern CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
 
 namespace TESModPlatform {
@@ -217,22 +221,20 @@ RE::BGSColorForm* TESModPlatform::GetSkinColor(IVM* vm, StackID stackId,
   return col;
 }
 
-RE::TESNPC* TESModPlatform::CreateNpc(IVM* vm, StackID stackId,
-                                      RE::StaticFunctionTag*)
+enum class AiPackagesMode
 {
-  auto npc = CreateForm<RE::TESNPC>();
+  KeepOriginal,
+  ReplaceWithDoNothing
+};
+
+static RE::TESNPC* CloneNpc(uint32_t npcId, AiPackagesMode aiPackagesMode)
+{
+  auto npc = TESModPlatform::CreateForm<RE::TESNPC>();
   if (!npc) {
     return nullptr;
   }
 
-  enum
-  {
-    AADeleteWhenDoneTestJeremyRegular = 0x0010D13E
-  };
-  const auto srcNpc =
-    RE::TESForm::LookupByID<RE::TESNPC>(AADeleteWhenDoneTestJeremyRegular);
-  assert(srcNpc);
-  assert(srcNpc->formType.get() == RE::FormType::NPC);
+  const auto srcNpc = RE::TESForm::LookupByID<RE::TESNPC>(npcId);
   if (!srcNpc || srcNpc->formType != RE::FormType::NPC) {
     return nullptr;
   }
@@ -249,21 +251,29 @@ RE::TESNPC* TESModPlatform::CreateNpc(IVM* vm, StackID stackId,
   npc_->actorData.actorBaseFlags.set(RE::ACTOR_BASE_DATA::Flag::kUnique);
   npc_->actorData.actorBaseFlags.set(RE::ACTOR_BASE_DATA::Flag::kSimpleActor);
 
-  // Clear AI Packages to prevent idle animations with Furniture
-  enum
-  {
-    DoNothing = 0x654e2,
-    DefaultMoveToCustom02IgnoreCombat = 0x6af62
-  };
-  // ignore combat && no
-  auto doNothing = RE::TESForm::LookupByID<RE::TESPackage>(DoNothing);
-  // combat alert
-  auto flagsSource =
-    RE::TESForm::LookupByID<RE::TESPackage>(DefaultMoveToCustom02IgnoreCombat);
+  switch (aiPackagesMode) {
+    case AiPackagesMode::ReplaceWithDoNothing: {
+      // Clear AI Packages to prevent idle animations with Furniture
+      enum
+      {
+        DoNothing = 0x654e2,
+        DefaultMoveToCustom02IgnoreCombat = 0x6af62
+      };
+      // ignore combat && no combat alert
+      auto doNothing = RE::TESForm::LookupByID<RE::TESPackage>(DoNothing);
+      auto flagsSource = RE::TESForm::LookupByID<RE::TESPackage>(
+        DefaultMoveToCustom02IgnoreCombat);
 
-  doNothing->packData = flagsSource->packData;
-  npc_->aiPackages.packages.clear();
-  npc_->aiPackages.packages.push_front(doNothing);
+      doNothing->packData = flagsSource->packData;
+      npc_->aiPackages.packages.clear();
+      npc_->aiPackages.packages.push_front(doNothing);
+      break;
+    }
+    case AiPackagesMode::KeepOriginal:
+      break;
+    default:
+      break;
+  }
 
   auto sourceFaceData = npc_->faceData;
   npc_->faceData = new RE::TESNPC::FaceData;
@@ -273,6 +283,110 @@ RE::TESNPC* TESModPlatform::CreateNpc(IVM* vm, StackID stackId,
   *npc_->faceData = *sourceFaceData;
 
   return npc;
+}
+
+template <class VectorT>
+static void FillFormsArray(VectorT& leak, std::vector<RE::TESNPC*> cursorStack)
+{
+  leak.reserve(cursorStack.size());
+  for (auto it = cursorStack.begin(); it != cursorStack.end(); ++it) {
+    leak.push_back(*it);
+  }
+}
+
+RE::TESNPC* TESModPlatform::CreateNpc(IVM* vm, StackID stackId,
+                                      RE::StaticFunctionTag*)
+{
+  constexpr uint32_t kAADeleteWhenDoneTestJeremyRegular = 0x0010D13E;
+  return CloneNpc(kAADeleteWhenDoneTestJeremyRegular,
+                  AiPackagesMode::ReplaceWithDoNothing);
+}
+
+RE::TESNPC* TESModPlatform::EvaluateLeveledNpc(
+  IVM* vm, StackID stackId, RE::StaticFunctionTag*,
+  FixedString commaSeparatedListOfIds)
+{
+  auto str = std::string(commaSeparatedListOfIds.data());
+
+  thread_local std::unordered_map<std::string, RE::TESNPC*> g_cache;
+  auto& cachedNpc = g_cache[str];
+  if (cachedNpc) {
+    return cachedNpc;
+  }
+
+  std::vector<uint32_t> formIds;
+  formIds.reserve(10);
+
+  std::istringstream iss(str);
+  std::string id;
+  while (std::getline(iss, id, ',')) {
+    auto formId = static_cast<uint32_t>(atoll(id.data()));
+    const auto srcNpc = RE::TESForm::LookupByID<RE::TESNPC>(formId);
+    if (!srcNpc || srcNpc->formType != RE::FormType::NPC) {
+      return nullptr;
+    }
+    formIds.push_back(formId);
+  }
+
+  std::vector<RE::TESNPC*> cursorStack;
+  cursorStack.reserve(10);
+
+  for (auto it = formIds.rbegin(); it != formIds.rend(); ++it) {
+    uint32_t formId = *it;
+    // TODO: replace with DoNothing for humanoids? and how to determine
+    // humanoids in case of leveled?
+    auto copiedNpc = CloneNpc(formId, AiPackagesMode::KeepOriginal);
+    if (!copiedNpc) {
+      return nullptr;
+    }
+
+    {
+      std::stringstream ss;
+      ss << std::hex << "working on " << formId << "\n";
+      auto str = ss.str();
+      OutputDebugStringA(str.data());
+    }
+
+    if (cursorStack.size() > 0) {
+      OutputDebugStringA("cursorStack.size() > 0\n");
+      str =
+        "cursorStack.size() is " + std::to_string(cursorStack.size()) + "\n";
+      OutputDebugStringA(str.data());
+      for (auto v : cursorStack) {
+        std::stringstream ss;
+        ss << " - " << v << std::endl;
+        str = ss.str();
+        OutputDebugStringA(str.data());
+      }
+      copiedNpc->baseTemplateForm = cursorStack.back();
+      // copiedNpc->baseTemplateForm = nullptr;
+
+      // auto leak = new std::vector<RE::TESActorBase *>();
+      // leak->reserve(10);
+      auto leak = new RE::BSTArray<RE::TESActorBase*>();
+      FillFormsArray(*leak, cursorStack);
+
+      // copiedNpc->CopyFromTemplateForms(leak->data());
+
+      auto leak2 = new RE::BSTArray<RE::TESActorBase*>();
+      leak2->resize(100, 0);
+
+      // copiedNpc->templateForms = reinterpret_cast<RE::TESForm**>(leak2);
+
+      copiedNpc->CopyFromTemplateForms(
+        reinterpret_cast<RE::TESActorBase**>(leak));
+    } else {
+      OutputDebugStringA("cursorStack.size() == 0\n");
+    }
+    cursorStack.push_back(copiedNpc);
+  }
+
+  if (cursorStack.empty()) {
+    return nullptr;
+  }
+
+  cachedNpc = cursorStack.back();
+  return cachedNpc;
 }
 
 void TESModPlatform::SetNpcSex(IVM* vm, StackID stackId,
@@ -761,6 +875,33 @@ void TESModPlatform::BlockPapyrusEvents(IVM* vm, StackID stackId,
   papyrusEventsBlocked = blocked;
 }
 
+RE::TESObjectREFR* TESModPlatform::CreateReferenceAtLocation(
+  IVM* vm, StackID stackId, RE::StaticFunctionTag*, RE::TESForm* baseForm,
+  RE::TESObjectCELL* cell, RE::TESWorldSpace* world, float posX, float posY,
+  float posZ, float rotX, float rotY, float rotZ, bool persist)
+{
+  if (!baseForm || (!cell && !world)) {
+    return nullptr;
+  }
+
+  auto dataHandler = reinterpret_cast<TESDataHandlerExtension*>(
+    RE::TESDataHandler::GetSingleton());
+  if (!dataHandler) {
+    return nullptr;
+  }
+
+  constexpr bool kUnknownBool = true;
+
+  RE::ObjectRefHandle objectRefHandle =
+    dataHandler->CreateReferenceAtLocationImpl(
+      reinterpret_cast<RE::TESBoundObject*>(baseForm),
+      RE::NiPoint3{ posX, posY, posZ }, RE::NiPoint3{ rotX, rotY, rotZ }, cell,
+      world, nullptr, nullptr, RE::ObjectRefHandle(), persist, kUnknownBool);
+
+  RE::TESObjectREFR* result = objectRefHandle.get().get();
+  return result;
+}
+
 int TESModPlatform::GetWeapDrawnMode(uint32_t actorId)
 {
   std::lock_guard l(share.m);
@@ -871,6 +1012,13 @@ bool TESModPlatform::GetPapyrusEventsBlocked()
   return papyrusEventsBlocked;
 }
 
+void TESModPlatform::CloseMenu(IVM* vm, StackID stackId,
+                               RE::StaticFunctionTag*, std::string_view name)
+{
+  RE::UIMessageQueue::GetSingleton()->AddMessage(
+    name, RE::UI_MESSAGE_TYPE::kHide, nullptr);
+}
+
 bool TESModPlatform::Register(IVM* vm)
 {
   TESModPlatform::onPapyrusUpdate = onPapyrusUpdate;
@@ -913,6 +1061,12 @@ bool TESModPlatform::Register(IVM* vm)
     new RE::BSScript::NativeFunction<true, decltype(CreateNpc), RE::TESNPC*,
                                      RE::StaticFunctionTag*>(
       "CreateNpc", "TESModPlatform", CreateNpc));
+
+  vm->BindNativeMethod(
+    new RE::BSScript::NativeFunction<true, decltype(EvaluateLeveledNpc),
+                                     RE::TESNPC*, RE::StaticFunctionTag*,
+                                     FixedString>(
+      "EvaluateLeveledNpc", "TESModPlatform", EvaluateLeveledNpc));
 
   vm->BindNativeMethod(
     new RE::BSScript::NativeFunction<true, decltype(SetNpcSex), void,
@@ -993,6 +1147,19 @@ bool TESModPlatform::Register(IVM* vm)
     new RE::BSScript::NativeFunction<true, decltype(BlockPapyrusEvents), void,
                                      RE::StaticFunctionTag*, bool>(
       "BlockPapyrusEvents", "TESModPlatform", BlockPapyrusEvents));
+
+  vm->BindNativeMethod(
+    new RE::BSScript::NativeFunction<
+      true, decltype(CreateReferenceAtLocation), RE::TESObjectREFR*,
+      RE::StaticFunctionTag*, RE::TESForm*, RE::TESObjectCELL*,
+      RE::TESWorldSpace*, float, float, float, float, float, float, bool>(
+      "CreateReferenceAtLocation", "TESModPlatform",
+      CreateReferenceAtLocation));
+
+  vm->BindNativeMethod(
+    new RE::BSScript::NativeFunction<true, decltype(CloseMenu), void,
+                                     RE::StaticFunctionTag*, std::string_view>(
+      "CloseMenu", "TESModPlatform", CloseMenu));
 
   static LoadGameEvent loadGameEvent;
 

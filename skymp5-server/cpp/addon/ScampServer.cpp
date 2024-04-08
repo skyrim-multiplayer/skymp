@@ -1,25 +1,22 @@
 #include "ScampServer.h"
 
-#include "AsyncSaveStorage.h"
 #include "Bot.h"
-#include "EspmGameObject.h"
-#include "FileDatabase.h"
 #include "FormCallbacks.h"
 #include "GamemodeApi.h"
-#include "MigrationDatabase.h"
-#include "MongoDatabase.h"
-#include "MpFormGameObject.h"
 #include "NapiHelper.h"
 #include "NetworkingCombined.h"
 #include "PacketHistoryWrapper.h"
 #include "PapyrusUtils.h"
 #include "ScampServerListener.h"
-#include "ScriptStorage.h"
-#include "SettingsUtils.h"
+#include "database_drivers/DatabaseFactory.h"
+#include "formulas/DamageMultFormula.h"
 #include "formulas/SweetPieDamageFormula.h"
 #include "formulas/TES5DamageFormula.h"
 #include "libespm/IterateFields.h"
 #include "property_bindings/PropertyBindingFactory.h"
+#include "save_storages/SaveStorageFactory.h"
+#include "script_objects/EspmGameObject.h"
+#include "script_storages/ScriptStorageFactory.h"
 #include <cassert>
 #include <cctype>
 #include <memory>
@@ -35,12 +32,6 @@ std::shared_ptr<spdlog::logger>& GetLogger()
 {
   static auto g_logger = spdlog::stdout_color_mt("console");
   return g_logger;
-}
-
-std::shared_ptr<ISaveStorage> CreateSaveStorage(
-  std::shared_ptr<IDatabase> db, std::shared_ptr<spdlog::logger> logger)
-{
-  return std::make_shared<AsyncSaveStorage>(db, logger);
 }
 
 std::string GetPropertyAlphabet()
@@ -220,13 +211,28 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
       }
     } else {
       std::stringstream msg;
-      msg << "\"npcSettings\" are not found in the server configuration "
+      msg << "\"npcSettings\" weren't found in the server configuration "
              "file.";
       msg << (partOne->worldState.npcEnabled
                 ? "Allowing all npc by default"
                 : "NPCs are disabled due to \"npcEnabled\": ")
           << std::boolalpha << partOne->worldState.npcEnabled;
       spdlog::info(msg.str());
+    }
+
+    if (serverSettings.find("enableConsoleCommandsForAll") !=
+        serverSettings.end()) {
+      if (serverSettings.at("enableConsoleCommandsForAll").is_boolean()) {
+        bool enableConsoleCommandsForAll =
+          serverSettings["enableConsoleCommandsForAll"].get<bool>();
+        spdlog::info("enableConsoleCommandsForAll is explicitly set to {}",
+                     enableConsoleCommandsForAll);
+        partOne->worldState.SetEnableConsoleCommandsForAllSetting(
+          enableConsoleCommandsForAll);
+      } else {
+        spdlog::error("Unexpected value of enableConsoleCommandsForAll "
+                      "setting, should be true or false");
+      }
     }
 
     partOne->worldState.isPapyrusHotReloadEnabled =
@@ -282,22 +288,22 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
 
     partOne->SetSendTarget(server.get());
 
-    const auto& sweetPieDamageFormulaSettings =
+    auto sweetPieDamageFormulaSettings =
       serverSettings["sweetPieDamageFormulaSettings"];
-    if (sweetPieDamageFormulaSettings.is_object()) {
-      partOne->SetDamageFormula(std::make_unique<SweetPieDamageFormula>(
-        std::make_unique<TES5DamageFormula>(), sweetPieDamageFormulaSettings));
-    } else {
-      partOne->SetDamageFormula(std::make_unique<TES5DamageFormula>());
-    }
 
-    std::vector<std::shared_ptr<IScriptStorage>> scriptStorages;
-    scriptStorages.push_back(std::make_shared<DirectoryScriptStorage>(
-      (espm::fs::path(dataDir) / "scripts").string()));
-    scriptStorages.push_back(std::make_shared<AssetsScriptStorage>());
-    auto scriptStorage =
-      std::make_shared<CombinedScriptStorage>(scriptStorages);
-    partOne->worldState.AttachScriptStorage(scriptStorage);
+    auto damageMultFormulaSettings =
+      serverSettings["damageMultFormulaSettings"];
+
+    std::unique_ptr<IDamageFormula> formula;
+    formula = std::make_unique<TES5DamageFormula>();
+    formula = std::make_unique<DamageMultFormula>(std::move(formula),
+                                                  damageMultFormulaSettings);
+    formula = std::make_unique<SweetPieDamageFormula>(
+      std::move(formula), sweetPieDamageFormulaSettings);
+    partOne->SetDamageFormula(std::move(formula));
+
+    partOne->worldState.AttachScriptStorage(
+      ScriptStorageFactory::Create(serverSettings));
 
     partOne->AttachEspm(espm);
     partOne->animationSystem.Init(&partOne->worldState);
@@ -336,8 +342,9 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
 Napi::Value ScampServer::AttachSaveStorage(const Napi::CallbackInfo& info)
 {
   try {
-    partOne->AttachSaveStorage(CreateSaveStorage(
-      SettingsUtils::CreateDatabase(serverSettings, logger), logger));
+    auto db = DatabaseFactory::Create(serverSettings, logger);
+    auto saveStorage = SaveStorageFactory::Create(db, logger);
+    partOne->AttachSaveStorage(saveStorage);
   } catch (std::exception& e) {
     throw Napi::Error::New(info.Env(), (std::string)e.what());
   }
@@ -1039,8 +1046,14 @@ Napi::Value ScampServer::CallPapyrusFunction(const Napi::CallbackInfo& info)
 
     auto& vm = partOne->worldState.GetPapyrusVm();
     if (callType == "method") {
-      res = vm.CallMethod(static_cast<IGameObject*>(self), functionName.data(),
-                          args);
+      if (self.GetType() == VarValue::Type::kType_Object) {
+        res = vm.CallMethod(static_cast<IGameObject*>(self),
+                            functionName.data(), args);
+      } else {
+        throw std::runtime_error(
+          "Can't call Papyrus method on non-object self '" + self.ToString() +
+          "'");
+      }
     } else if (callType == "global") {
       res = vm.CallStatic(className, functionName, args);
     } else {

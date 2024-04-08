@@ -46,32 +46,14 @@ export class MasterClient implements System {
       try {
         await Axios.post(this.endpoint, { name, maxPlayers, online });
       } catch (e) {
-        const hasHttpStatus = e.response !== undefined;
-        if (hasHttpStatus) {
-          throw new Error(`${e.response.status} - ${e.response.data}`);
-        } else {
-          throw e;
-        }
+        console.error(`Error updating info on master server: ${e}`);
       }
     }
   }
 
   // connect/disconnect events are not reliable so we do full recalculate
   private getCurrentOnline(svr: ScampServer): number {
-    let online = 0;
-    for (let i = 0; i < this.maxPlayers; ++i) {
-      try {
-        if (svr.getUserActor(i) != 0) {
-          ++online;
-        }
-      } catch (e) {
-        const error: Error = e;
-        if (!error.message.includes(`User with id ${i} doesn't exist`)) {
-          throw e;
-        }
-      }
-    }
-    return online;
+    return (svr as any).get(0, "onlinePlayers").length;
   }
 
   customPacket(): void {

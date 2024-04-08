@@ -1,0 +1,23 @@
+From 5a9a5d0854b1fbf92ea0f0c710bacd195a2342b0 Mon Sep 17 00:00:00 2001
+From: Leonid Pospelov <leonidpospelov.dev@gmail.com>
+Date: Sun, 15 Oct 2023 02:33:51 +0600
+Subject: [PATCH] Update common.hpp
+
+---
+ include/bsa/detail/common.hpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/include/bsa/detail/common.hpp b/include/bsa/detail/common.hpp
+index 8998d38..66e449f 100644
+--- a/include/bsa/detail/common.hpp
++++ b/include/bsa/detail/common.hpp
+@@ -1074,7 +1074,7 @@ namespace bsa::components
+ 			_hash(a_hash)
+ 		{
+ 			if (a_in.has_file() && a_in.shallow_copy()) {
+-				_name.emplace<name_proxied>(a_name, a_in.file());
++				_name = name_proxy{ a_name, a_in.file() };
+ 			} else {
+ 				if (a_in.deep_copy()) {
+ 					_name.emplace<name_owner>(a_name);
+ 

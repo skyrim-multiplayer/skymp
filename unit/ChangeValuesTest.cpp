@@ -6,50 +6,12 @@
 #include "PacketParser.h"
 #include "libespm/Loader.h"
 
+#include "ChangeValuesMessage.h"
+
 PartOne& GetPartOne();
 extern espm::Loader l;
 
 using namespace std::chrono_literals;
-
-TEST_CASE("ChangeValues packet is parsed correctly", "[ChangeValues]")
-{
-  class MyActionListener : public ActionListener
-  {
-  public:
-    MyActionListener()
-      : ActionListener(GetPartOne())
-    {
-    }
-
-    void OnChangeValues(const RawMessageData& rawMsgData_,
-                        const ActorValues& actorValues_) override
-    {
-      rawMsgData = rawMsgData_;
-      actorValues = actorValues_;
-    }
-
-    RawMessageData rawMsgData;
-    ActorValues actorValues;
-  };
-
-  nlohmann::json j{
-    { "t", MsgType::ChangeValues },
-    { "data", { { "health", 0.5 }, { "magicka", 0.3 }, { "stamina", 0 } } }
-  };
-
-  auto msg = MakeMessage(j);
-
-  MyActionListener listener;
-
-  PacketParser p;
-  p.TransformPacketIntoAction(
-    122, reinterpret_cast<Networking::PacketData>(msg.data()), msg.size(),
-    listener);
-
-  REQUIRE(listener.actorValues.healthPercentage == 0.5f);
-  REQUIRE(listener.actorValues.magickaPercentage == 0.3f);
-  REQUIRE(listener.actorValues.staminaPercentage == 0.0f);
-}
 
 TEST_CASE("Player attribute percentages are changing correctly",
           "[ChangeValues] ")
@@ -92,7 +54,7 @@ TEST_CASE("OnChangeValues call is cropping percentage values",
   auto appearance = ac.GetAppearance();
   uint32_t raceId = appearance ? appearance->raceId : 0;
   BaseActorValues baseValues =
-    GetBaseActorValues(&p.worldState, baseId, raceId);
+    GetBaseActorValues(&p.worldState, baseId, raceId, {});
 
   ActionListener::RawMessageData msgData;
   msgData.userId = 0;
@@ -142,16 +104,13 @@ TEST_CASE("ChangeValues message is being delivered to client",
   auto& ac = partOne.worldState.GetFormAt<MpActor>(0xff000000);
   partOne.Messages().clear();
 
-  nlohmann::json j = nlohmann::json{ { "t", MsgType::ChangeValues },
-                                     { "data",
-                                       {
-                                         { "health", 1.0f },
-                                         { "magicka", 1.0f },
-                                         { "stamina", 1.0f },
-                                       } } };
-  std::string s = MakeMessage(j);
+  ChangeValuesMessage msg;
+  msg.idx = ac.GetIdx();
+  msg.health = 1.f;
+  msg.magicka = 1.f;
+  msg.stamina = 1.f;
 
-  ac.SendToUser(s.data(), s.size(), true);
+  ac.SendToUser(msg, true);
 
   REQUIRE(partOne.Messages().size() == 1);
   nlohmann::json message = partOne.Messages()[0].j;

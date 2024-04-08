@@ -8,8 +8,6 @@ add_library(papyrus-vm-lib STATIC ${src})
 apply_default_settings(TARGETS papyrus-vm-lib)
 target_include_directories(papyrus-vm-lib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
 target_include_directories(papyrus-vm-lib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src")
-# TODO: fetch this via vcpkg
-target_include_directories(papyrus-vm-lib PUBLIC "${CMAKE_SOURCE_DIR}/skymp5-server/cpp/third_party")
 
 target_link_libraries(papyrus-vm-lib PUBLIC viet)
 link_vcpkg_dependencies(TARGETS papyrus-vm-lib)

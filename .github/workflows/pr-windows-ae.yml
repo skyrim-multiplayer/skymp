@@ -11,7 +11,7 @@ on:
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   BUILD_TYPE: Release
-  VCPKG_BINARY_SOURCES: 'clear;nuget,GitHub,readwrite'
+  VCPKG_BINARY_SOURCES: 'clear;x-gha,readwrite'
   VCPKG_FEATURE_FLAGS: 'manifests'
 
 jobs:
@@ -41,16 +41,11 @@ jobs:
     - name: Debug - free space
       run: Get-PSDrive
 
-    - name: 'Setup NuGet Credentials'
-      shell: 'bash'
-      run: >
-        `C:/vcpkg/vcpkg.exe fetch nuget | tail -n 1`
-        sources add
-        -source "https://nuget.pkg.github.com/skyrim-multiplayer/index.json"
-        -storepasswordincleartext
-        -name "GitHub"
-        -username "skyrim-multiplayer"
-        -password "${{ secrets.GITHUB_TOKEN }}"
+    - uses: actions/github-script@v6
+      with:
+        script: |
+          core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
+          core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
 
     # Download Skyrim SE data files
     - uses: suisei-cn/actions-download-file@v1

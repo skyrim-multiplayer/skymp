@@ -1,5 +1,5 @@
-#include "ScriptStorage.h"
 #include "TestUtils.hpp"
+#include "script_storages/DirectoryScriptStorage.h"
 
 using Catch::Matchers::ContainsSubstring;
 
@@ -251,7 +251,7 @@ TEST_CASE("Activate WRDoorMainGate01 in Whiterun", "[PartOne][espm]")
   REQUIRE(partOne.Messages()[0].j["t"] == MsgType::UpdateProperty);
 
   REQUIRE(partOne.Messages().size() >= 2);
-  REQUIRE(partOne.Messages()[1].j["type"] == "teleport");
+  REQUIRE(partOne.Messages()[1].j["t"] == MsgType::Teleport);
   REQUIRE(partOne.Messages()[1].j["pos"].dump() ==
           nlohmann::json{ 19243.53515625, -7427.3427734375, -3595.4052734375 }
             .dump());
@@ -387,7 +387,7 @@ TEST_CASE("BarrelFood01 PutItem/TakeItem", "[PartOne][espm]")
   REQUIRE(partOne.Messages()[1].j["propName"] == "inventory");
   REQUIRE(partOne.Messages()[1].j["idx"] == ref.GetIdx());
   REQUIRE(partOne.Messages().size() == 3);
-  REQUIRE(partOne.Messages()[2].j["type"] == "openContainer");
+  REQUIRE(partOne.Messages()[2].j["t"] == MsgType::OpenContainer);
   REQUIRE(partOne.Messages()[2].j["target"] == ref.GetFormId());
 
   REQUIRE_THROWS_WITH(
@@ -593,4 +593,44 @@ TEST_CASE("Activate torch", "[espm][PartOne]")
 
   DoDisconnect(partOne, 0);
   partOne.DestroyActor(0xff000000);
+}
+
+TEST_CASE("Regress test for 'Record ff00b5de doesn't exist'",
+          "[PartOne][espm]")
+{
+  auto& partOne = GetPartOne();
+  partOne.worldState.npcEnabled = true;
+  partOne.Messages().clear();
+
+  const auto refrId = 0x000524f2;
+
+  // 1: C:\skymp\unit\PartOne_ActivateTest.cpp(598): FAILED:
+  // 1: due to unexpected exception with message:
+  // 1:   Record ff00b5de doesn't exist
+
+  auto& actor = partOne.worldState.GetFormAt<MpActor>(refrId);
+
+  // REQUIRE(actor.GetInventory().ToJson().dump() == "");
+
+  // TODO: Why 0???
+  // REQUIRE(actor.GetInventory().GetItemCount(0x0000B5DE) == 1);
+}
+
+TEST_CASE("Regress: LvlGiant mustn't have Fox race health", "[PartOne][espm]")
+{
+  auto& partOne = GetPartOne();
+  partOne.worldState.npcEnabled = true;
+  partOne.Messages().clear();
+
+  const auto refrId = 0x000ecf8a;
+
+  auto& actor = partOne.worldState.GetFormAt<MpActor>(refrId);
+
+  uint32_t baseId = actor.GetBaseId();
+  uint32_t raceId = actor.GetRaceId();
+
+  auto baseActorValues = GetBaseActorValues(&partOne.worldState, baseId,
+                                            raceId, actor.GetTemplateChain());
+
+  REQUIRE(baseActorValues.health == 250.f);
 }

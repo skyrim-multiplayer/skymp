@@ -56,7 +56,7 @@ function requireTemp(module: string) {
 
     require(tempPath);
   }
-  catch(e) {
+  catch (e) {
     console.error(e.stack);
   }
   finally {
@@ -222,7 +222,14 @@ const main = async () => {
   });
 
   // It's important to call this before gamemode
-  server.attachSaveStorage();
+  try {
+    server.attachSaveStorage();
+  }
+  catch (e) {
+    console.error(e);
+    console.error(`Stopping the server due to the previous error`);
+    process.exit(-1);
+  }
 
   const clear = () => server.clear();
 

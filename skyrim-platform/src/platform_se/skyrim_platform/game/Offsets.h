@@ -126,3 +126,31 @@ inline void PushActorAway(void* vm, StackID stackId, RE::Actor* self,
 }
 
 }
+
+class TESDataHandlerExtension
+{
+public:
+  RE::ObjectRefHandle CreateReferenceAtLocationImpl(
+    RE::TESBoundObject* a_base, const RE::NiPoint3& a_location,
+    const RE::NiPoint3& a_rotation, RE::TESObjectCELL* a_targetCell,
+    RE::TESWorldSpace* a_selfWorldSpace,
+    RE::TESObjectREFR* a_alreadyCreatedRef, RE::BGSPrimitive* a_primitive,
+    const RE::ObjectRefHandle& a_linkedRoomRefHandle, bool a_forcePersist,
+    bool a_arg11)
+  {
+    using func_t =
+      decltype(&TESDataHandlerExtension::CreateReferenceAtLocationImpl);
+
+    int id;
+#ifdef SKYRIMSE
+    id = 13625;
+#else
+    id = 13723;
+#endif
+
+    REL::Relocation<func_t> func{ REL::ID(id) };
+    return func(this, a_base, a_location, a_rotation, a_targetCell,
+                a_selfWorldSpace, a_alreadyCreatedRef, a_primitive,
+                a_linkedRoomRefHandle, a_forcePersist, a_arg11);
+  }
+};

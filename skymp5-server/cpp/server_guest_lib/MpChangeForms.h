@@ -8,7 +8,9 @@
 #include "Inventory.h"
 #include "LocationalData.h"
 #include "NiPoint3.h"
+#include "Quest.h"
 #include <cstdint>
+#include <map>
 #include <optional>
 #include <ostream>
 #include <set>
@@ -23,6 +25,8 @@ struct LearnedSpells
   using Data = std::set<uint32_t>;
 
   void LearnSpell(Data::key_type baseId);
+
+  void ForgetSpell(Data::key_type baseId);
 
   [[nodiscard]] size_t Count() const noexcept;
 
@@ -73,6 +77,8 @@ public:
   uint64_t nextRelootDatetime = 0;
   bool isDisabled = false;
   int32_t profileId = -1;
+  bool isDeleted = false;
+  uint32_t count = 0;
 
   bool isRaceMenuOpen = false;
   bool isDead = false;
@@ -84,10 +90,31 @@ public:
   // values in skymp due to poor design
   std::string appearanceDump, equipmentDump;
   ActorValues actorValues;
+
+  // Used only for player characters. See GetSpawnPoint
   LocationalData spawnPoint = { { 133857, -61130, 14662 },
                                 { 0.f, 0.f, 72.f },
                                 FormDesc::Tamriel() };
+
+  // Used only for player characters. See GetSpawnDelay
   float spawnDelay = 25.0f;
+
+  std::vector<FormDesc> templateChain;
+
+  // Used for PlayAnimation (object reference)
+  std::optional<std::string> lastAnimation;
+
+  // Used for SetNodeTextureSet (node, texture set desc)
+  std::optional<std::map<std::string, std::string>> setNodeTextureSet;
+
+  // Used for SetNodeScale (node, scale value)
+  std::optional<std::map<std::string, float>> setNodeScale;
+
+  // Used for SetDisplayName (object reference)
+  std::optional<std::string> displayName;
+
+  // Used for Quest (QUST) synchronization
+  std::optional<std::vector<Quest>> quests;
 
   // Please update 'ActorTest.cpp' when adding new Actor-related rows
 
@@ -98,10 +125,11 @@ public:
     return std::make_tuple(
       recType, formDesc, baseDesc, position.x, position.y, position.z, angle.x,
       angle.y, angle.z, worldOrCellDesc, inv.ToJson(), isHarvested, isOpen,
-      baseContainerAdded, nextRelootDatetime, isDisabled, profileId,
-      isRaceMenuOpen, isDead, consoleCommandsAllowed, appearanceDump,
+      baseContainerAdded, nextRelootDatetime, isDisabled, profileId, isDeleted,
+      count, isRaceMenuOpen, isDead, consoleCommandsAllowed, appearanceDump,
       equipmentDump, actorValues.ToTuple(), spawnPoint, dynamicFields,
-      spawnDelay, learnedSpells);
+      spawnDelay, learnedSpells, templateChain, lastAnimation,
+      setNodeTextureSet, setNodeScale, displayName);
   }
 
   static nlohmann::json ToJson(const MpChangeFormREFR& changeForm);
