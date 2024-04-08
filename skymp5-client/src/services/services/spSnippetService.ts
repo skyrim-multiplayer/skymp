@@ -43,8 +43,39 @@ export class SpSnippetService extends ClientListener {
     }
 
     private async run(snippet: SpSnippetMessage): Promise<any> {
-        if (snippet.class === "SkympHacks") {
-            if (snippet.function === "AddItem" || snippet.function === "RemoveItem") {
+        const functionLowerCase = snippet.function.toLowerCase();
+        const classLowerCase = snippet.class.toLowerCase();
+
+        // keep in sync with remoteServer.ts
+        if (classLowerCase === "objectreference") {
+            if (functionLowerCase === "setdisplayname") {
+                let newName = snippet.arguments[0];
+                if (typeof newName === "string") {
+
+                    const selfId = remoteIdToLocalId(snippet.selfId);
+                    const self = this.sp.ObjectReference.from(this.sp.Game.getFormEx(selfId));
+
+                    const replaceValue = self?.getBaseObject()?.getName();
+
+                    if (replaceValue !== undefined && replaceValue !== "%original_name%") {
+                        // SP doesn't support String.replaceAll because Chakracore doesn't
+                        while (newName.includes("%original_name%")) {
+                            newName = newName.replace("%original_name%", replaceValue);
+                        }
+                        snippet.arguments[0] = newName;
+                    }
+                    else {
+                        logError(this, "Couldn't get a replaceValue for SetDisplayName, snippet.selfId was", snippet.selfId.toString(16));
+                    }
+                }
+                else {
+                    logError(this, "Encountered SetDisplayName with non-string argument", newName);
+                }
+            }
+        }
+
+        if (classLowerCase === "skymphacks") {
+            if (functionLowerCase === "additem" || functionLowerCase === "removeitem") {
                 const form = this.sp.Form.from(this.deserializeArg(snippet.arguments[0]));
                 if (form === null) {
                     logError(this, "Unable to find form with id " + snippet.arguments[0].formId.toString(16));
