@@ -2,18 +2,7 @@ import { Game, Utility, HttpClient, printConsole, createText } from "skyrimPlatf
 import { getServerIp, getServerUiPort } from "./skympClient";
 import { getScreenResolution } from "../../view/formView";
 import { ClientListener, CombinedController, Sp } from "./clientListener";
-
-interface Mod {
-  filename: string;
-  size: number;
-  crc32: number;
-};
-
-interface ServerManifest {
-  versionMajor: number;
-  mods: Mod[];
-  loadOrder: string[];
-};
+import { Mod, ServerManifest } from "../messages_http/serverManifest";
 
 const STATE_KEY = 'loadOrderCheckState';
 
@@ -80,7 +69,6 @@ export class LoadOrderVerificationService extends ClientListener {
           'LOAD ORDER ERROR!\nCheck console for details.',
           [255, 0, 0, 1]
         );
-        this.sp.browser.loadUrl('about:blank');
       });
   };
 

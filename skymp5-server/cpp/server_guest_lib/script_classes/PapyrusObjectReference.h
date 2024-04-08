@@ -1,5 +1,7 @@
 #pragma once
 #include "IPapyrusClass.h"
+#include "papyrus-vm/Structures.h"
+#include <vector>
 
 class PapyrusObjectReference final
   : public IPapyrusClass<PapyrusObjectReference>
@@ -34,6 +36,8 @@ public:
   VarValue GetPositionY(VarValue self, const std::vector<VarValue>& arguments);
   VarValue GetPositionZ(VarValue self, const std::vector<VarValue>& arguments);
   VarValue SetPosition(VarValue self, const std::vector<VarValue>& arguments);
+  VarValue GetTotalItemWeight(VarValue self,
+                              const std::vector<VarValue>& arguments);
 
   VarValue GetBaseObject(VarValue self,
                          const std::vector<VarValue>& arguments);
@@ -67,6 +71,8 @@ public:
 
   VarValue SetDisplayName(VarValue self,
                           const std::vector<VarValue>& arguments);
+
+  VarValue GetDistance(VarValue self, const std::vector<VarValue>& arguments);
 
   void Register(VirtualMachine& vm,
                 std::shared_ptr<IPapyrusCompatibilityPolicy> policy) override;

@@ -594,3 +594,43 @@ TEST_CASE("Activate torch", "[espm][PartOne]")
   DoDisconnect(partOne, 0);
   partOne.DestroyActor(0xff000000);
 }
+
+TEST_CASE("Regress test for 'Record ff00b5de doesn't exist'",
+          "[PartOne][espm]")
+{
+  auto& partOne = GetPartOne();
+  partOne.worldState.npcEnabled = true;
+  partOne.Messages().clear();
+
+  const auto refrId = 0x000524f2;
+
+  // 1: C:\skymp\unit\PartOne_ActivateTest.cpp(598): FAILED:
+  // 1: due to unexpected exception with message:
+  // 1:   Record ff00b5de doesn't exist
+
+  auto& actor = partOne.worldState.GetFormAt<MpActor>(refrId);
+
+  // REQUIRE(actor.GetInventory().ToJson().dump() == "");
+
+  // TODO: Why 0???
+  // REQUIRE(actor.GetInventory().GetItemCount(0x0000B5DE) == 1);
+}
+
+TEST_CASE("Regress: LvlGiant mustn't have Fox race health", "[PartOne][espm]")
+{
+  auto& partOne = GetPartOne();
+  partOne.worldState.npcEnabled = true;
+  partOne.Messages().clear();
+
+  const auto refrId = 0x000ecf8a;
+
+  auto& actor = partOne.worldState.GetFormAt<MpActor>(refrId);
+
+  uint32_t baseId = actor.GetBaseId();
+  uint32_t raceId = actor.GetRaceId();
+
+  auto baseActorValues = GetBaseActorValues(&partOne.worldState, baseId,
+                                            raceId, actor.GetTemplateChain());
+
+  REQUIRE(baseActorValues.health == 250.f);
+}

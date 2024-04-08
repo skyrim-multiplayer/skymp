@@ -34,6 +34,8 @@ public:
 
   VarValue EquipItem(VarValue self, const std::vector<VarValue>& arguments);
 
+  VarValue UnequipItem(VarValue self, const std::vector<VarValue>& arguments);
+
   VarValue SetDontMove(VarValue self, const std::vector<VarValue>& arguments);
 
   VarValue IsDead(VarValue self,
@@ -45,6 +47,8 @@ public:
   VarValue AddSpell(VarValue self, const std::vector<VarValue>& arguments);
 
   VarValue RemoveSpell(VarValue self, const std::vector<VarValue>& arguments);
+
+  VarValue GetRace(VarValue self, const std::vector<VarValue>& arguments);
 
   void Register(VirtualMachine& vm,
                 std::shared_ptr<IPapyrusCompatibilityPolicy> policy) override;

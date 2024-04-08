@@ -1,3 +1,4 @@
+import { logTrace, logError } from "../../logging";
 import { ClientListener, Sp, CombinedController } from "./clientListener";
 import { WeaponType } from "skyrimPlatform";
 
@@ -40,6 +41,14 @@ const staminaAttackMap = new Map<AttackType, number>([
 export class SweetTaffyPlayerCombatService extends ClientListener {
   constructor(private sp: Sp, private controller: CombinedController) {
     super();
+
+    if (!this.hasSweetPie()) {
+      logTrace(this, "SweetTaffy features disabled");
+    }
+    else {
+      logTrace(this, "SweetTaffy features enabled");
+    }
+
     this.controller.once("update", () => this.onceUpdate());
   }
 
@@ -177,7 +186,7 @@ export class SweetTaffyPlayerCombatService extends ClientListener {
     const res = weaponTimings.get(weapon);
 
     if (res === undefined) {
-      this.logError(`No timings found for weapon type ${weapon}`);
+      logError(this, `No timings found for weapon type`, weapon);
       return [0, 0];
     }
 

@@ -1,3 +1,4 @@
+import { logError, logTrace } from "../../logging";
 import { MsgType } from "../../messages";
 
 // TODO: refactor this out
@@ -34,7 +35,8 @@ export class ConsoleCommandsService extends ClientListener {
     private setupMpCommand() {
         const command = this.sp.findConsoleCommand(" ConfigureUM") || this.sp.findConsoleCommand("test");
         if (command === null) {
-            return this.logError("command was null in setupMpCommand");
+            logError(this, "command was null in setupMpCommand");
+            return;
         }
 
         command.shortName = "mp";
@@ -45,10 +47,12 @@ export class ConsoleCommandsService extends ClientListener {
         this.schemas.forEach((_, commandName) => {
             const command = this.sp.findConsoleCommand(commandName);
             if (command === null) {
-                return this.logError(`command '${commandName}' was null in setupVanilaCommands`);
+                logError(this, `command`, commandName, `was null in setupVanilaCommands`);
+                return;
             }
             if (this.nonVanilaCommands.includes(commandName)) {
-                return this.logTrace(`command '${commandName}' is non-vanila command`);
+                logTrace(this, `command`, commandName, ` is non-vanila command`);
+                return;
             }
             command.execute = this.getCommandExecutor(commandName);
         });
@@ -59,12 +63,12 @@ export class ConsoleCommandsService extends ClientListener {
             // TODO: handle possible exceptions in this function
             const schema = this.schemas.get(commandName);
             if (schema === undefined) {
-                this.logError(`Schema not found for command '${commandName}'`);
+                logError(this, `Schema not found for command`, commandName);
                 return false;
             }
 
             if (args.length !== schema.length && !this.immuneSchema.includes(commandName)) {
-                this.logError(`Mismatch found in the schema of '${commandName}' command`);
+                logError(this, `Mismatch found in the schema of`, commandName, `command`);
                 return false;
             }
             for (let i = 0; i < args.length; ++i) {
@@ -77,8 +81,8 @@ export class ConsoleCommandsService extends ClientListener {
 
             this.controller.emitter.emit("sendMessage", {
                 message: {
-                    t: MsgType.ConsoleCommand, 
-                    data: { 
+                    t: MsgType.ConsoleCommand,
+                    data: {
                         commandName,
                         args
                     }

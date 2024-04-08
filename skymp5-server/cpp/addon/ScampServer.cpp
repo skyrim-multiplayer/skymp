@@ -9,6 +9,7 @@
 #include "PapyrusUtils.h"
 #include "ScampServerListener.h"
 #include "database_drivers/DatabaseFactory.h"
+#include "formulas/DamageMultFormula.h"
 #include "formulas/SweetPieDamageFormula.h"
 #include "formulas/TES5DamageFormula.h"
 #include "libespm/IterateFields.h"
@@ -287,14 +288,19 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
 
     partOne->SetSendTarget(server.get());
 
-    const auto& sweetPieDamageFormulaSettings =
+    auto sweetPieDamageFormulaSettings =
       serverSettings["sweetPieDamageFormulaSettings"];
-    if (sweetPieDamageFormulaSettings.is_object()) {
-      partOne->SetDamageFormula(std::make_unique<SweetPieDamageFormula>(
-        std::make_unique<TES5DamageFormula>(), sweetPieDamageFormulaSettings));
-    } else {
-      partOne->SetDamageFormula(std::make_unique<TES5DamageFormula>());
-    }
+
+    auto damageMultFormulaSettings =
+      serverSettings["damageMultFormulaSettings"];
+
+    std::unique_ptr<IDamageFormula> formula;
+    formula = std::make_unique<TES5DamageFormula>();
+    formula = std::make_unique<DamageMultFormula>(std::move(formula),
+                                                  damageMultFormulaSettings);
+    formula = std::make_unique<SweetPieDamageFormula>(
+      std::move(formula), sweetPieDamageFormulaSettings);
+    partOne->SetDamageFormula(std::move(formula));
 
     partOne->worldState.AttachScriptStorage(
       ScriptStorageFactory::Create(serverSettings));

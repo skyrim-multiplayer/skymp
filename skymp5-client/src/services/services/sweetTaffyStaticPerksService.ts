@@ -1,8 +1,17 @@
+import { logTrace } from "../../logging";
 import { ClientListener, Sp, CombinedController } from "./clientListener";
 
 export class SweetTaffyStaticPerksService extends ClientListener {
     constructor(private sp: Sp, private controller: CombinedController) {
         super();
+
+        if (!this.hasSweetPie()) {
+            logTrace(this, "SweetTaffy features disabled");
+        }
+        else {
+            logTrace(this, "SweetTaffy features enabled");
+        }
+
         this.controller.once("update", () => this.onceUpdate());
     }
 

@@ -8,7 +8,9 @@
 #include "Inventory.h"
 #include "LocationalData.h"
 #include "NiPoint3.h"
+#include "Quest.h"
 #include <cstdint>
+#include <map>
 #include <optional>
 #include <ostream>
 #include <set>
@@ -102,8 +104,17 @@ public:
   // Used for PlayAnimation (object reference)
   std::optional<std::string> lastAnimation;
 
+  // Used for SetNodeTextureSet (node, texture set desc)
+  std::optional<std::map<std::string, std::string>> setNodeTextureSet;
+
+  // Used for SetNodeScale (node, scale value)
+  std::optional<std::map<std::string, float>> setNodeScale;
+
   // Used for SetDisplayName (object reference)
   std::optional<std::string> displayName;
+
+  // Used for Quest (QUST) synchronization
+  std::optional<std::vector<Quest>> quests;
 
   // Please update 'ActorTest.cpp' when adding new Actor-related rows
 
@@ -117,7 +128,8 @@ public:
       baseContainerAdded, nextRelootDatetime, isDisabled, profileId, isDeleted,
       count, isRaceMenuOpen, isDead, consoleCommandsAllowed, appearanceDump,
       equipmentDump, actorValues.ToTuple(), spawnPoint, dynamicFields,
-      spawnDelay, learnedSpells, templateChain, lastAnimation, displayName);
+      spawnDelay, learnedSpells, templateChain, lastAnimation,
+      setNodeTextureSet, setNodeScale, displayName);
   }
 
   static nlohmann::json ToJson(const MpChangeFormREFR& changeForm);

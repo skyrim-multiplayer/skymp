@@ -9,4 +9,5 @@ public:
   ~WindowsConsolePrinter() override;
 
   void Print(const JsFunctionArguments& args) override;
+  void PrintRaw(const char* str) override;
 };

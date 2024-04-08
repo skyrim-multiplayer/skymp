@@ -30,3 +30,12 @@ void InGameConsolePrinter::Print(const JsFunctionArguments& args)
   const char* prefix = ConsoleApi::GetScriptPrefix();
   console->Print("%s%s", prefix, s.data());
 }
+
+void InGameConsolePrinter::PrintRaw(const char* str)
+{
+  auto console = RE::ConsoleLog::GetSingleton();
+  if (!console)
+    throw NullPointerException("console");
+
+  console->Print(str);
+}

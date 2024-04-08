@@ -4,10 +4,19 @@ import { ContainerChangedEvent, Form } from "skyrimPlatform";
 import { CreateActorMessage } from "../messages/createActorMessage";
 import { ConnectionMessage } from "../events/connectionMessage";
 import { SetInventoryMessage } from "../messages/setInventoryMessage";
+import { logTrace } from "../../logging";
 
 export class SweetTaffyDynamicPerksService extends ClientListener {
   constructor(private sp: Sp, private controller: CombinedController) {
     super();
+
+    if (!this.hasSweetPie()) {
+      logTrace(this, "SweetTaffy features disabled");
+    }
+    else {
+      logTrace(this, "SweetTaffy features enabled");
+    }
+
     controller.on('containerChanged', (e) => this.onContainerChanged(e));
     controller.emitter.on("setInventoryMessage", (e) => this.onSetInventoryMessage(e));
     controller.emitter.on("createActorMessage", (e) => this.onCreateActorMessage(e));
@@ -32,7 +41,8 @@ export class SweetTaffyDynamicPerksService extends ClientListener {
     const entries = e.message.inventory.entries;
 
     if (entries.length === 0) {
-      return this.logTrace("Received SetInventoryMessage with empty inventory")
+      logTrace(this, "Received SetInventoryMessage with empty inventory");
+      return;
     }
 
     this.controller.once("update", () => {
@@ -47,11 +57,13 @@ export class SweetTaffyDynamicPerksService extends ClientListener {
 
     const entries = e.message.inventory?.entries;
     if (entries === undefined) {
-      return this.logTrace("Received CreateActorMessage without inventory");
+      logTrace(this, "Received CreateActorMessage without inventory");
+      return;
     }
 
     if (entries.length === 0) {
-      return this.logTrace("Received CreateActorMessage with empty inventory")
+      logTrace(this, "Received CreateActorMessage with empty inventory");
+      return;
     }
 
     this.controller.once("update", () => {

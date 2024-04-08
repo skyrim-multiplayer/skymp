@@ -20,6 +20,7 @@ public:
   MpForm();
 
   static const char* Type() { return "Form"; }
+  bool IsEspmForm() const noexcept;
   virtual const char* GetFormType() const { return "Form"; }
 
   auto GetParent() const { return parent; }
@@ -53,6 +54,7 @@ public:
   virtual ~MpForm() = default;
 
   auto GetFormId() const noexcept { return id; }
+  float GetWeight() const;
 
   MpForm(const MpForm&) = delete;
   MpForm& operator=(const MpForm&) = delete;

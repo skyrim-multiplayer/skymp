@@ -1,5 +1,6 @@
 import { ActorValue } from "skyrimPlatform";
 import { ClientListener, Sp, CombinedController } from "./clientListener";
+import { logError } from "../../logging";
 
 export class DisableSkillAdvanceService extends ClientListener {
     constructor(private sp: Sp, private controller: CombinedController) {
@@ -35,7 +36,7 @@ export class DisableSkillAdvanceService extends ClientListener {
     private turnOffSkillLocalExp(av: ActorValue): void {
         const avi = this.sp.ActorValueInfo.getActorValueInfoByID(av);
         if (avi === null) {
-            this.logError(`Not found ActorValueInfo for actor value ${av}`);
+            logError(this, `Not found ActorValueInfo for actor value`, av);
             return;
         }
         avi.setSkillUseMult(0);

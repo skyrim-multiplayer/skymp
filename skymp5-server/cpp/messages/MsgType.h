@@ -25,6 +25,7 @@ enum class MsgType : uint8_t
   DropItem = 19,
   Teleport = 20,
   OpenContainer = 21,
+  PlayerBowShot = 22,
 
   Max
 };

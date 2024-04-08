@@ -44,6 +44,8 @@ NPC_::Data NPC_::GetData(
         result.spells.emplace(*reinterpret_cast<const uint32_t*>(data));
       } else if (!std::memcmp(type, "TPLT", 4)) {
         result.baseTemplate = (*reinterpret_cast<const uint32_t*>(data));
+      } else if (!std::memcmp(type, "INAM", 4)) {
+        result.deathItem = (*reinterpret_cast<const uint32_t*>(data));
       }
     },
     compressedFieldsCache);

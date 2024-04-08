@@ -10,6 +10,7 @@
 #include "Timer.h"
 #include "libespm/GroupUtils.h"
 #include "papyrus-vm/Reader.h"
+#include "papyrus-vm/Utils.h"
 #include "save_storages/ISaveStorage.h"
 #include "script_classes/PapyrusClassesFactory.h"
 #include "script_compatibility_policies/PapyrusCompatibilityPolicyFactory.h"
@@ -358,14 +359,16 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
     return false;
   }
 
+  uint32_t formId = espm::utils::GetMappedId(record->GetId(), mapping);
+
   if (isNpc) {
-    if (NpcSourceFilesOverriden() && !IsNpcAllowed(baseId)) {
-      spdlog::trace("Skip NPC loading, it is not allowed. baseId {:#x}",
-                    baseId);
+    if (NpcSourceFilesOverriden() && !IsNpcAllowed(formId)) {
+      spdlog::trace("Skip NPC loading, it is not allowed. refrId {:#x}",
+                    formId);
       if (optionalOutTrace) {
         *optionalOutTrace
-          << fmt::format("Skip NPC loading, it is not allowed. baseId {:#x}",
-                         baseId)
+          << fmt::format("Skip NPC loading, it is not allowed. refrId {:#x}",
+                         formId)
           << std::endl;
       }
       return false;
@@ -468,7 +471,6 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
     }
   }
 
-  uint32_t formId = espm::utils::GetMappedId(record->GetId(), mapping);
   auto locationalData = data.loc;
 
   uint32_t worldOrCell =
@@ -495,18 +497,18 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
     if (worldRecord) {
       isExterior = true;
     }
-    uint32_t npcFileIdx = GetFileIdx(baseId);
+    uint32_t npcFileIdx = GetFileIdx(formId);
     if (npcFileIdx >= espmFiles.size()) {
       spdlog::error("NPC's idx is greater than espmFiles.size(). NPC's"
-                    "baseId "
+                    "formId "
                     "{:#x}, espmFiles size: {}",
-                    baseId, espmFiles.size());
+                    formId, espmFiles.size());
       if (optionalOutTrace) {
         *optionalOutTrace
           << fmt::format("NPC's idx is greater than espmFiles.size(). NPC's"
-                         "baseId "
+                         "formId "
                          "{:#x}, espmFiles size: {}",
-                         baseId, espmFiles.size())
+                         formId, espmFiles.size())
           << std::endl;
       }
       return false;
@@ -531,14 +533,14 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
         (!spawnInExterior || !isExterior)) {
       spdlog::trace(
         "Unable to spawn npc because of "
-        "rules applied in server settings: spanwInInterior={}, "
+        "rules applied in server settings: spawnInInterior={}, "
         "spawnInExterior={}, NPC location: exterior={}, interior={}",
         spawnInInterior, spawnInExterior, isExterior, isInterior);
       if (optionalOutTrace) {
         *optionalOutTrace
           << fmt::format(
                "Unable to spawn npc because of "
-               "rules applied in server settings: spanwInInterior={}, "
+               "rules applied in server settings: spawnInInterior={}, "
                "spawnInExterior={}, NPC location: exterior={}, interior={}",
                spawnInInterior, spawnInExterior, isExterior, isInterior)
           << std::endl;
@@ -547,58 +549,39 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
     }
   }
 
-  // This function dosen't use LookupFormById to prevent recursion
-  auto existing = forms.find(formId);
-
-  if (existing != forms.end()) {
-    auto existingAsRefr =
-      reinterpret_cast<MpObjectReference*>(existing->second.get());
-
-    if (locationalData) {
-      existingAsRefr->SetPosAndAngleSilent(
-        LocationalDataUtils::GetPos(locationalData),
-        LocationalDataUtils::GetRot(locationalData));
-
-      assert(existingAsRefr->GetPos() ==
-             NiPoint3(LocationalDataUtils::GetPos(locationalData)));
+  if (!locationalData) {
+    logger->error("Anomaly: refr without locationalData");
+    if (optionalOutTrace) {
+      *optionalOutTrace << fmt::format("Anomaly: refr without locationalData")
+                        << std::endl;
     }
-
-  } else {
-    if (!locationalData) {
-      logger->error("Anomaly: refr without locationalData");
-      if (optionalOutTrace) {
-        *optionalOutTrace << fmt::format(
-                               "Anomaly: refr without locationalData")
-                          << std::endl;
-      }
-      return false;
-    }
-
-    std::optional<NiPoint3> primitiveBoundsDiv2;
-    if (data.boundsDiv2) {
-      primitiveBoundsDiv2 =
-        NiPoint3(data.boundsDiv2[0], data.boundsDiv2[1], data.boundsDiv2[2]);
-    }
-
-    auto typeStr = t.ToString();
-    std::unique_ptr<MpForm> form;
-    LocationalData formLocationalData = {
-      LocationalDataUtils::GetPos(locationalData),
-      LocationalDataUtils::GetRot(locationalData),
-      FormDesc::FromFormId(worldOrCell, espmFiles)
-    };
-    if (!isNpc) {
-      form.reset(new MpObjectReference(formLocationalData,
-                                       formCallbacksFactory(), baseId,
-                                       typeStr.data(), primitiveBoundsDiv2));
-    } else {
-      form.reset(
-        new MpActor(formLocationalData, formCallbacksFactory(), baseId));
-    }
-    AddForm(std::move(form), formId, true);
-
-    // Do not TriggerFormInitEvent here, doing it later after changeForm apply
+    return false;
   }
+
+  std::optional<NiPoint3> primitiveBoundsDiv2;
+  if (data.boundsDiv2) {
+    primitiveBoundsDiv2 =
+      NiPoint3(data.boundsDiv2[0], data.boundsDiv2[1], data.boundsDiv2[2]);
+  }
+
+  auto typeStr = t.ToString();
+  std::unique_ptr<MpForm> form;
+  LocationalData formLocationalData = {
+    LocationalDataUtils::GetPos(locationalData),
+    LocationalDataUtils::GetRot(locationalData),
+    FormDesc::FromFormId(worldOrCell, espmFiles)
+  };
+  if (!isNpc) {
+    form.reset(new MpObjectReference(formLocationalData,
+                                     formCallbacksFactory(), baseId,
+                                     typeStr.data(), primitiveBoundsDiv2));
+  } else {
+    form.reset(
+      new MpActor(formLocationalData, formCallbacksFactory(), baseId));
+  }
+  AddForm(std::move(form), formId, true);
+
+  // Do not TriggerFormInitEvent here, doing it later after changeForm apply
 
   if (optionalOutTrace) {
     *optionalOutTrace << fmt::format("AttachEspmRecord returned true")
@@ -609,23 +592,24 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
 
 bool WorldState::LoadForm(uint32_t formId, std::stringstream* optionalOutTrace)
 {
-  bool atLeastOneLoaded = false;
   auto& br = GetEspm().GetBrowser();
-  auto lookupResults = br.LookupByIdAll(formId);
-  for (auto& lookupRes : lookupResults) {
-    auto mapping = br.GetCombMapping(lookupRes.fileIdx);
-    bool attached =
-      AttachEspmRecord(br, lookupRes.rec, *mapping, optionalOutTrace);
-    if (attached) {
-      atLeastOneLoaded = true;
-    }
-    if (optionalOutTrace) {
-      *optionalOutTrace << "AttachEspmRecord " << (attached ? "true" : "false")
-                        << std::endl;
-    }
+
+  auto lookupRes = br.LookupById(formId);
+
+  if (!lookupRes.rec) {
+    return false;
   }
 
-  if (atLeastOneLoaded) {
+  auto mapping = br.GetCombMapping(lookupRes.fileIdx);
+
+  bool attached =
+    AttachEspmRecord(br, lookupRes.rec, *mapping, optionalOutTrace);
+  if (optionalOutTrace) {
+    *optionalOutTrace << "AttachEspmRecord " << (attached ? "true" : "false")
+                      << std::endl;
+  }
+
+  if (attached) {
     auto& refr = GetFormAt<MpObjectReference>(formId);
     auto it = pImpl->changeFormsForDeferredLoad.find(formId);
     if (it != pImpl->changeFormsForDeferredLoad.end()) {
@@ -636,7 +620,7 @@ bool WorldState::LoadForm(uint32_t formId, std::stringstream* optionalOutTrace)
     refr.ForceSubscriptionsUpdate();
   }
 
-  return atLeastOneLoaded;
+  return attached;
 }
 
 void WorldState::TickReloot(const std::chrono::system_clock::time_point& now)
@@ -961,17 +945,38 @@ std::optional<std::chrono::system_clock::duration> WorldState::GetRelootTime(
   return it->second;
 }
 
+bool WorldState::HasKeyword(uint32_t baseId, const char* keyword)
+{
+  auto lookupRes = GetEspm().GetBrowser().LookupById(baseId);
+
+  if (!lookupRes.rec) {
+    return false;
+  }
+
+  const auto keywordIds = lookupRes.rec->GetKeywordIds(GetEspmCache());
+
+  for (auto keywordId : keywordIds) {
+    auto keywordIdGlobal = lookupRes.ToGlobalId(keywordId);
+    auto rec = GetEspm().GetBrowser().LookupById(keywordIdGlobal).rec;
+    if (rec && !Utils::stricmp(rec->GetEditorId(GetEspmCache()), keyword)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 bool WorldState::NpcSourceFilesOverriden() const noexcept
 {
   return !npcSettings.empty() || defaultSetting.overriden;
 }
 
-bool WorldState::IsNpcAllowed(uint32_t baseId) const noexcept
+bool WorldState::IsNpcAllowed(uint32_t refrId) const noexcept
 {
   if (npcSettings.empty() && defaultSetting.overriden) {
     return true;
   }
-  uint32_t npcFileIdx = GetFileIdx(baseId);
+  uint32_t npcFileIdx = GetFileIdx(refrId);
   for (const auto& [fileName, _] : npcSettings) {
     auto it = std::find(espmFiles.begin(), espmFiles.end(), fileName);
     if (it == espmFiles.end()) {
@@ -985,9 +990,9 @@ bool WorldState::IsNpcAllowed(uint32_t baseId) const noexcept
   return false;
 }
 
-uint32_t WorldState::GetFileIdx(uint32_t baseId) const noexcept
+uint32_t WorldState::GetFileIdx(uint32_t formId) const noexcept
 {
-  return baseId >> 24;
+  return formId >> 24;
 }
 
 void WorldState::SetNpcSettings(

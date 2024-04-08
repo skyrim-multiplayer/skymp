@@ -34,7 +34,7 @@ export const SkyrimSlider = ({
           if ((props.key as number) % 2 === 0) {
             return (
               <div {...props} className={'skyrimSlider_mark even'}>
-                <span className={'skyrimSlider_mark__number'}>{props.key}</span>
+                <span className={'skyrimSlider_mark__number'}>{props.key as any}</span>
               </div>
             );
           } else {

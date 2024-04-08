@@ -1,5 +1,6 @@
 #pragma once
 #include "IPapyrusClass.h"
+#include "papyrus-vm/Structures.h"
 
 class PapyrusForm final : public IPapyrusClass<PapyrusForm>
 {
@@ -15,13 +16,12 @@ public:
 
   VarValue GetFormId(VarValue self, const std::vector<VarValue>& arguments);
 
+  VarValue GetName_(VarValue self, const std::vector<VarValue>& arguments);
+  VarValue GetWeight(VarValue self, const std::vector<VarValue>& arguments);
+
   void Register(VirtualMachine& vm,
-                std::shared_ptr<IPapyrusCompatibilityPolicy> policy) override
-  {
-    AddMethod(vm, "RegisterForSingleUpdate",
-              &PapyrusForm::RegisterForSingleUpdate);
-    AddMethod(vm, "GetType", &PapyrusForm::GetType);
-    AddMethod(vm, "HasKeyword", &PapyrusForm::HasKeyword);
-    AddMethod(vm, "GetFormID", &PapyrusForm::GetFormId);
-  }
+                std::shared_ptr<IPapyrusCompatibilityPolicy> policy) override;
+
+private:
+  std::shared_ptr<IPapyrusCompatibilityPolicy> compatibilityPolicy;
 };

@@ -78,6 +78,7 @@ public:
   const bool& IsDisabled() const;
   const bool& IsDeleted() const;
   const uint32_t& GetCount() const;
+  float GetTotalItemWeight() const;
   std::chrono::system_clock::duration GetRelootTime() const;
   bool GetAnimationVariableBool(const char* name) const;
   bool IsPointInsidePrimitive(const NiPoint3& point) const;
@@ -145,6 +146,10 @@ public:
                           MpObjectReference* listener);
 
   void SetLastAnimation(const std::string& lastAnimation);
+  void SetNodeTextureSet(const std::string& node,
+                         const espm::LookupResult& textureSet,
+                         bool firstPerson);
+  void SetNodeScale(const std::string& node, float scale, bool firstPerson);
   void SetDisplayName(const std::string& newName);
 
   const std::set<MpObjectReference*>& GetListeners() const;
@@ -203,6 +208,8 @@ private:
   void ProcessActivate(MpObjectReference& activationSource);
   void ActivateChilds();
   bool MpApiOnActivate(MpObjectReference& caster);
+  bool MpApiOnPutItem(MpActor& source, const Inventory::Entry& entry);
+  bool MpApiOnTakeItem(MpActor& source, const Inventory::Entry& entry);
 
   bool everSubscribedOrListened = false;
   std::unique_ptr<std::set<MpObjectReference*>> listeners;
