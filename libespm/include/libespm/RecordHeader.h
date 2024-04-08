@@ -1,5 +1,6 @@
 #pragma once
 #include "CompressedFieldsCache.h"
+#include "DataTypes.h"
 #include "Type.h"
 
 #pragma pack(push, 1)
