@@ -84,6 +84,34 @@ CombineBrowser::GetRecordsByType(const char* type) const
   return res;
 }
 
+const std::vector<const RecordHeader*>
+CombineBrowser::GetDistinctRecordsByType(const char* type) const
+{
+  const auto allRecordsSrc = GetRecordsByType(type);
+  if (allRecordsSrc.size() == 0) {
+    return {};
+  }
+
+  size_t approxSize = 0;
+  for (const auto recSrc : allRecordsSrc) {
+    approxSize = std::max(approxSize, recSrc->size());
+  }
+
+  spp::sparse_hash_set<formId> formSet(approxSize);
+  std::vector<const RecordHeader*> result;
+  result.reserve(approxSize);
+
+  for (auto i = allRecordsSrc.size() - 1; i != static_cast<size_t>(-1); --i) {
+    for (auto rec : *allRecordsSrc[i]) {
+      if (formSet.insert(rec->GetId()).second) {
+        result.push_back(rec);
+      }
+    }
+  }
+
+  return result;
+}
+
 std::vector<const std::vector<const RecordHeader*>*>
 CombineBrowser::GetRecordsAtPos(uint32_t cellOrWorld, int16_t cellX,
                                 int16_t cellY) const
