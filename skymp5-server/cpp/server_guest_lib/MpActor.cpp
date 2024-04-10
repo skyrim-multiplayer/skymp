@@ -368,7 +368,7 @@ bool MpActor::OnEquip(uint32_t baseId)
       auto targetRefr = dynamic_cast<MpActor*>(listener);
       if (targetRefr && targetRefr != this) {
         SpSnippet("Actor", "EquipItem", serializedArgs.data(), GetFormId())
-          .Execute(targetRefr);
+          .Execute(targetRefr, SpSnippetMode::kNoReturnResult);
       }
     }
   } else if (isBook) {

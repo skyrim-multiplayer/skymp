@@ -38,14 +38,14 @@ void PapyrusEffectShader::Helper(VarValue& self, const char* funcName,
             SpSnippetFunctionGen::SerializeArguments(arguments, targetRefr)
               .data(),
             selfRec.ToGlobalId(selfRec.rec->GetId()))
-            .Execute(targetRefr);
+            .Execute(targetRefr, SpSnippetMode::kNoReturnResult);
           // Workaround to use this function on player clone
           if (actorForm->GetFormId() == targetRefr->GetFormId()) {
             SpSnippet(
               GetName(), funcName,
               SpSnippetFunctionGen::SerializeArguments(arguments).data(),
               selfRec.ToGlobalId(selfRec.rec->GetId()))
-              .Execute(targetRefr);
+              .Execute(targetRefr, SpSnippetMode::kNoReturnResult);
           }
         }
       }

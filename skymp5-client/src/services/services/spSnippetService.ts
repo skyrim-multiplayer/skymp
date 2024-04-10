@@ -21,6 +21,11 @@ export class SpSnippetService extends ClientListener {
         this.controller.once('update', async () => {
             this.run(msg)
                 .then((res) => {
+                    const isNoResultSnippet = msg.snippetIdx === 0xffffffff;
+                    if (isNoResultSnippet) {
+                        return;
+                    }
+
                     if (res === undefined) {
                         res = null;
                     }

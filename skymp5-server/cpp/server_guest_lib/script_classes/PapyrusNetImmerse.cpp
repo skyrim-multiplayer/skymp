@@ -35,7 +35,7 @@ VarValue PapyrusNetImmerse::SetNodeTextureSet(
     auto targetRefr = dynamic_cast<MpActor*>(listener);
     if (targetRefr) {
       SpSnippet(GetName(), funcName, serializedArgs.data())
-        .Execute(targetRefr);
+        .Execute(targetRefr, SpSnippetMode::kNoReturnResult);
     }
   }
 
@@ -70,7 +70,7 @@ VarValue PapyrusNetImmerse::SetNodeScale(
     auto targetRefr = dynamic_cast<MpActor*>(listener);
     if (targetRefr) {
       SpSnippet(GetName(), funcName, serializedArgs.data())
-        .Execute(targetRefr);
+        .Execute(targetRefr, SpSnippetMode::kNoReturnResult);
     }
   }
 
