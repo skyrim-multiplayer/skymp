@@ -87,24 +87,23 @@ CombineBrowser::GetRecordsByType(const char* type) const
 const std::vector<const RecordHeader*>
 CombineBrowser::GetDistinctRecordsByType(const char* type) const
 {
-  const auto allRecordsSrc = GetRecordsByType(type);
-  if (allRecordsSrc.size() == 0) {
+  if (pImpl->numSources == 0) {
     return {};
   }
 
-  size_t approxSize = 0;
-  for (const auto recSrc : allRecordsSrc) {
-    approxSize = std::max(approxSize, recSrc->size());
-  }
-
-  spp::sparse_hash_set<formId> formSet(approxSize);
+  spp::sparse_hash_set<formId> formSet;
   std::vector<const RecordHeader*> result;
-  result.reserve(approxSize);
+  for (size_t i = pImpl->numSources - 1; i != static_cast<size_t>(-1); --i) {
+    const auto& records = pImpl->sources[i].br->GetRecordsByType(type);
+    formSet.reserve(records.size());
+    result.reserve(records.size());
 
-  for (auto i = allRecordsSrc.size() - 1; i != static_cast<size_t>(-1); --i) {
-    for (auto rec : *allRecordsSrc[i]) {
-      if (formSet.insert(rec->GetId()).second) {
-        result.push_back(rec);
+    for (auto record : records) {
+      if (formSet
+            .insert(
+              utils::GetMappedId(record->GetId(), *pImpl->sources[i].toComb))
+            .second) {
+        result.push_back(record);
       }
     }
   }
