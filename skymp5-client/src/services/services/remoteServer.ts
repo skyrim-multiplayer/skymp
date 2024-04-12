@@ -247,10 +247,10 @@ export class RemoteServer extends ClientListener {
       this.onceLoad(refrId, (refr: ObjectReference) => {
         if (refr) {
           ObjectReferenceEx.dealWithRef(refr, refr.getBaseObject() as Form);
-          if (msg.inventory) {
-            ModelApplyUtils.applyModelInventory(refr, msg.inventory);
-          }
           if (msg.props) {
+            if (msg.props.inventory) {
+              ModelApplyUtils.applyModelInventory(refr, msg.props.inventory);
+            }
             ModelApplyUtils.applyModelIsOpen(refr, !!msg.props['isOpen']);
             ModelApplyUtils.applyModelIsHarvested(
               refr,
