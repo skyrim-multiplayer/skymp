@@ -150,7 +150,7 @@ public:
                          const espm::LookupResult& textureSet,
                          bool firstPerson);
   void SetNodeScale(const std::string& node, float scale, bool firstPerson);
-  void SetDisplayName(const std::string& newName);
+  void SetDisplayName(const std::optional<std::string>& newName);
 
   const std::set<MpObjectReference*>& GetListeners() const;
   const std::set<MpObjectReference*>& GetEmitters() const;

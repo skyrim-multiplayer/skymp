@@ -69,6 +69,8 @@ public:
   VarValue IsContainerEmpty(VarValue self,
                             const std::vector<VarValue>& arguments);
 
+  static constexpr auto kOriginalNameExpression = R"(%original_name%)";
+
   // %original_name% will be replaced with the original localized name
   // client-side
   VarValue SetDisplayName(VarValue self,
