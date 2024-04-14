@@ -62,11 +62,8 @@ export class SpSnippetService extends ClientListener {
 
                     const replaceValue = self?.getBaseObject()?.getName();
 
-                    if (replaceValue !== undefined && replaceValue !== "%original_name%") {
-                        // SP doesn't support String.replaceAll because Chakracore doesn't
-                        while (newName.includes("%original_name%")) {
-                            newName = newName.replace("%original_name%", replaceValue);
-                        }
+                    if (replaceValue !== undefined) {
+                        newName = newName.replace(/%original_name%/g, replaceValue);
                         snippet.arguments[0] = newName;
                     }
                     else {

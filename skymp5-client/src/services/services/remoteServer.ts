@@ -310,11 +310,8 @@ export class RemoteServer extends ClientListener {
 
               const replaceValue = refr.getBaseObject()?.getName();
 
-              if (replaceValue !== undefined && replaceValue !== "%original_name%") {
-                // SP doesn't support String.replaceAll because Chakracore doesn't
-                while (displayName.includes("%original_name%")) {
-                  displayName = displayName.replace("%original_name%", replaceValue);
-                }
+              if (replaceValue !== undefined) {
+                displayName = displayName.replace(/%original_name%/g, replaceValue);
               }
               else {
                 logError(this, "Couldn't get a replaceValue for SetDisplayName, refr.getFormID() was", refr.getFormID().toString(16));

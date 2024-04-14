@@ -856,7 +856,13 @@ VarValue PapyrusObjectReference::SetDisplayName(
       throw std::runtime_error("SetDisplayName requires at least 2 arguments");
     }
     const char* displayName = static_cast<const char*>(arguments[0]);
-    selfRefr->SetDisplayName(displayName);
+
+    if (!strcmp(displayName, kOriginalNameExpression)) {
+      selfRefr->SetDisplayName(std::nullopt);
+    }
+    else {
+      selfRefr->SetDisplayName(displayName);
+    }
 
     bool force = static_cast<bool>(arguments[1]);
     std::ignore = force;
