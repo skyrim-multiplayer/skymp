@@ -998,7 +998,8 @@ void MpObjectReference::SetNodeScale(const std::string& node, float scale,
   });
 }
 
-void MpObjectReference::SetDisplayName(const std::optional<std::string>& newName)
+void MpObjectReference::SetDisplayName(
+  const std::optional<std::string>& newName)
 {
   EditChangeForm(
     [&](MpChangeForm& changeForm) { changeForm.displayName = newName; });
