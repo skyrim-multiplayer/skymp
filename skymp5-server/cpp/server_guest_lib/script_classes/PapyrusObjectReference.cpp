@@ -857,11 +857,7 @@ VarValue PapyrusObjectReference::SetDisplayName(
     }
     const char* displayName = static_cast<const char*>(arguments[0]);
 
-    if (!strcmp(displayName, kOriginalNameExpression)) {
-      selfRefr->SetDisplayName(std::nullopt);
-    } else {
-      selfRefr->SetDisplayName(displayName);
-    }
+    selfRefr->SetDisplayName(displayName);
 
     bool force = static_cast<bool>(arguments[1]);
     std::ignore = force;

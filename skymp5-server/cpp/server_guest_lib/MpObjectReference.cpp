@@ -29,6 +29,8 @@
 #include "OpenContainerMessage.h"
 #include "TeleportMessage.h"
 
+#include "script_classes/PapyrusObjectReference.h" // kOriginalNameExpression
+
 constexpr uint32_t kPlayerCharacterLevel = 1;
 
 UpdatePropertyMessage MpObjectReference::CreatePropertyMessage(
@@ -335,10 +337,12 @@ void MpObjectReference::VisitProperties(const PropertiesVisitor& visitor,
   }
 
   if (ChangeForm().displayName.has_value()) {
-    std::string raw = *ChangeForm().displayName;
-    nlohmann::json j = raw;
-    std::string displayNameAsJson = j.dump();
-    visitor("displayName", displayNameAsJson.data());
+    const std::string& raw = *ChangeForm().displayName;
+    if (raw != PapyrusObjectReference::kOriginalNameExpression) {
+      nlohmann::json j = raw;
+      std::string displayNameAsJson = j.dump();
+      visitor("displayName", displayNameAsJson.data());
+    }
   }
 
   // Property flags (isVisibleByOwner, isVisibleByNeighbor) should be checked
