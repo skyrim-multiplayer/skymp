@@ -859,8 +859,7 @@ VarValue PapyrusObjectReference::SetDisplayName(
 
     if (!strcmp(displayName, kOriginalNameExpression)) {
       selfRefr->SetDisplayName(std::nullopt);
-    }
-    else {
+    } else {
       selfRefr->SetDisplayName(displayName);
     }
 
