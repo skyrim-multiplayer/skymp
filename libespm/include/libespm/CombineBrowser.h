@@ -27,8 +27,7 @@ public:
   std::vector<const std::vector<const RecordHeader*>*> GetRecordsByType(
     const char* type) const;
 
-  const std::vector<const RecordHeader*> GetDistinctRecordsByType(
-    const char* type) const;
+  std::vector<LookupResult> GetDistinctRecordsByType(const char* type) const;
 
   std::vector<const std::vector<const RecordHeader*>*> GetRecordsAtPos(
     uint32_t cellOrWorld, int16_t cellX, int16_t cellY) const;

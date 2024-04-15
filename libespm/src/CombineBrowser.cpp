@@ -84,26 +84,25 @@ CombineBrowser::GetRecordsByType(const char* type) const
   return res;
 }
 
-const std::vector<const RecordHeader*>
-CombineBrowser::GetDistinctRecordsByType(const char* type) const
+std::vector<LookupResult> CombineBrowser::GetDistinctRecordsByType(
+  const char* type) const
 {
   if (pImpl->numSources == 0) {
     return {};
   }
 
   spp::sparse_hash_set<formId> formSet;
-  std::vector<const RecordHeader*> result;
+  std::vector<LookupResult> result;
   for (size_t i = pImpl->numSources - 1; i != static_cast<size_t>(-1); --i) {
     const auto& records = pImpl->sources[i].br->GetRecordsByType(type);
     formSet.reserve(records.size());
     result.reserve(records.size());
 
     for (auto record : records) {
-      if (formSet
-            .insert(
-              utils::GetMappedId(record->GetId(), *pImpl->sources[i].toComb))
-            .second) {
-        result.push_back(record);
+      auto mappedId =
+        utils::GetMappedId(record->GetId(), *pImpl->sources[i].toComb);
+      if (formSet.insert(mappedId).second) {
+        result.push_back(LookupResult(this, record, static_cast<uint8_t>(i)));
       }
     }
   }
