@@ -24,7 +24,7 @@ jobs:
           # https://github.com/actions/checkout/issues/197#issuecomment-971545044
           uses: Pospelove/checkout@main
           with:
-            repository: skyrim-multiplayer/skymp5
+            repository: skyrim-multiplayer/skymp
             # submodules: recursive
             fetch-depth: 0
             path: /home/runner/work/skymp
