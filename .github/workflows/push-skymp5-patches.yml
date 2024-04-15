@@ -21,13 +21,20 @@ jobs:
             path: /home/runner/work/skymp5-patches
             ref: main
         - name: Checkout skyrim-multiplayer/skymp
-          uses: actions/checkout@v3
+          # https://github.com/actions/checkout/issues/197#issuecomment-971545044
+          uses: Pospelove/checkout@main
+          with:
+            repository: skyrim-multiplayer/skymp5
+            # submodules: recursive
+            fetch-depth: 0
+            path: /home/runner/work/skymp
+            ref: main
         
         - name: Set skymp5-patches main branch to skymp main branch
           run: |
             cd /home/runner/work/skymp5-patches
             git checkout main
-            git remote add skymp ../skymp || true
+            git remote add skymp /home/runner/work/skymp || true
             git fetch skymp main
             git reset --hard skymp/main
             git push origin main
