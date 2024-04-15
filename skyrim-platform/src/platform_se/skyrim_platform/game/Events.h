@@ -14,7 +14,7 @@
 #include "events/SpellsLearned.h"
 
 namespace RE {
-
+#ifdef SKYRIMSE
 struct TESSpellCastEvent
 {
 public:
@@ -23,37 +23,43 @@ public:
   {
   }
 
-  TESSpellCastEvent(RE::TESObjectREFR* caster, RE::FormID spell)
-    : caster(caster)
+  TESSpellCastEvent(RE::TESObjectREFR* object, RE::FormID spell)
+    : object(object)
     , spell(spell)
   {
   }
   ~TESSpellCastEvent() = default;
 
-  RE::NiPointer<RE::TESObjectREFR> caster;
+  RE::NiPointer<RE::TESObjectREFR> object;
   RE::FormID spell;
 };
 static_assert(sizeof(TESSpellCastEvent) == 0x10);
-
+#endif
 struct TESQuestInitEvent
 {
   RE::FormID questId;
 };
 
+#ifdef SKYRIMSE
 struct TESQuestStartStopEvent
 {
-  RE::FormID questId;
-  bool isStarted;
+  RE::FormID formID;
+  bool started;
+  uint8_t unk05;
+	uint16_t pad06;
 };
+#endif
 
+#ifdef SKYRIMSE
 struct TESQuestStageEvent
 {
   void* finishedCallback;
-  RE::FormID questId;
+  RE::FormID formID;
   uint16_t stage;
   uint8_t unk;
   uint8_t pad;
 };
+#endif
 
 struct TESQuestStageItemDoneEvent // not finished
 {
@@ -88,16 +94,20 @@ struct TESSleepStartEvent
   float desiredSleepEndTime;
 };
 
+#ifdef SKYRIMSE
 struct TESSleepStopEvent
 {
-  bool isInterrupted;
+  bool interrupted;
 };
+#endif
 
+#ifdef SKYRIMSE
 struct TESCellAttachDetachEvent
 {
   RE::NiPointer<RE::TESObjectREFR> reference;
-  uint8_t action;
+  bool attached;
 };
+#endif
 
 struct TESWaitStartEvent
 {
@@ -105,12 +115,14 @@ struct TESWaitStartEvent
   float desiredWaitEndTime;
 };
 
+#ifdef SKYRIMSE
 struct TESActorLocationChangeEvent
 {
   RE::NiPointer<RE::TESObjectREFR> actor;
   RE::BGSLocation* oldLoc;
   RE::BGSLocation* newLoc;
 };
+#endif
 
 struct TESBookReadEvent
 {
@@ -155,10 +167,12 @@ struct TESPackageEvent
   EventType type;
 };
 
+#ifdef SKYRIMSE
 struct TESEnterBleedoutEvent
 {
   RE::NiPointer<RE::TESObjectREFR> actor;
 };
+#endif
 
 struct TESDestructionStageChangedEvent
 {
@@ -182,18 +196,23 @@ struct TESSceneEvent
   RE::FormID sceneId;
 };
 
+#ifdef SKYRIMSE
 struct TESPlayerBowShotEvent
 {
-  RE::FormID weaponId;
-  RE::FormID ammoId;
-  float power;
+  RE::FormID weapon;
+  RE::FormID ammo;
+  float shotPower;
   bool isSunGazing;
 };
+#endif
 
+#ifdef SKYRIMSE
 struct TESFastTravelEndEvent
 {
-  float travelTimeGameHours;
+  float fastTravelEndHours;
+  uint32_t pad04;
 };
+#endif
 
 struct TESObjectREFRTranslationEvent
 {

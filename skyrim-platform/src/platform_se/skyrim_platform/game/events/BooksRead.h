@@ -2,6 +2,7 @@
 
 namespace RE {
 
+#ifdef SKYRIMSE
 struct BooksRead
 {
 public:
@@ -23,5 +24,6 @@ public:
     return func();
   }
 };
+#endif
 
 }
