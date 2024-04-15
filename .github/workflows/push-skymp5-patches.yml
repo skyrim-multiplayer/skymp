@@ -1,0 +1,22 @@
+name: Push to skymp5-patches
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Update patches main branch
+        env:
+          ACCESS_TOKEN: ${{ secrets.SKYMP5_PATCHES_PUSH_MAIN_TOKEN }}
+        run: |
+          git config --global user.name 'SkyMP Bot'
+          git config --global user.email 'dummy@nic11.xyz'
+          git remote add patches https://x-access-token:${ACCESS_TOKEN}@github.com/skyrim-multiplayer/skymp5-patches.git
+          git push patches main
