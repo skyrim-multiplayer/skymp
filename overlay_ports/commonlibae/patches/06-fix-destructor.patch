@@ -1,13 +1,13 @@
 diff --git a/include/RE/E/ExtraDataList.h b/include/RE/E/ExtraDataList.h
-index 82c4ba8b..3c001c94 100644
+index baec37472..f27a15001 100644
 --- a/include/RE/E/ExtraDataList.h
 +++ b/include/RE/E/ExtraDataList.h
-@@ -28,7 +28,7 @@ namespace RE
-                };
-                static_assert(sizeof(PresenceBitfield) == 0x18);
+@@ -32,7 +32,7 @@ namespace RE
+ #ifndef SKYRIM_SUPPORT_AE
+ 		~BaseExtraList();  // 00
+ #else
+-		virtual ~BaseExtraList();  // 00
++		virtual ~BaseExtraList() = default;  // 00
+ #endif
  
--               virtual ~BaseExtraList();  // 00
-+               virtual ~BaseExtraList() = default;  // 00
- 
-                // members
-                BSExtraData*      data = nullptr;      // 08
+ 		// members
