@@ -15,7 +15,11 @@ vcpkg_from_github(
       patches/06-fix-destructor.patch
 )
 
-vcpkg_configure_cmake(SOURCE_PATH ${SOURCE_PATH})
+vcpkg_configure_cmake(
+  SOURCE_PATH ${SOURCE_PATH} 
+  OPTIONS
+    -DSKYRIM_SUPPORT_AE=ON
+)
 
 vcpkg_install_cmake()
 vcpkg_fixup_cmake_targets(CONFIG_PATH "lib/cmake/commonlibsse")
