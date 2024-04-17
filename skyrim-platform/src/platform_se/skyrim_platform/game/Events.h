@@ -46,7 +46,7 @@ struct TESQuestStartStopEvent
   RE::FormID formID;
   bool started;
   uint8_t unk05;
-	uint16_t pad06;
+  uint16_t pad06;
 };
 #endif
 
