@@ -88,6 +88,7 @@ private:
   SkyrimPlatform_IpcUnsubscribe_Impl ipcUnsubscribe = nullptr;
 };
 
+#ifndef SKYRIMSE
 constexpr SKSE::PluginVersionData GetPluginVersion()
 {
   constexpr REL::Version kSPTargetRuntimeVersion(1, 6, 1170, 0);
@@ -102,6 +103,7 @@ constexpr SKSE::PluginVersionData GetPluginVersion()
 
   return v;
 };
+#endif
 
 extern "C" {
 
