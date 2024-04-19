@@ -373,8 +373,36 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
         parentInstance ? parentInstance->GetSourcePexName() : "";
       try {
         auto gameObject = static_cast<IGameObject*>(activeInstanceOwner);
+
+        std::vector<std::shared_ptr<ActivePexInstance>>
+          activePexInstancesForCallParent;
+        if (gameObject) {
+          activePexInstancesForCallParent =
+            gameObject->ListActivePexInstances();
+
+          std::string toFind = sourcePex.source;
+
+          for (auto& v : activePexInstancesForCallParent) {
+            if (!Utils::stricmp(v->GetSourcePexName().data(), toFind.data())) {
+              v = parentInstance;
+              spdlog::trace("CallParent: redirecting method call {} -> {}",
+                            toFind, parentName);
+            }
+          }
+        }
+
+        if (spdlog::should_log(spdlog::level::trace)) {
+          std::vector<std::string> argsForCallStr;
+          for (auto v : argsForCall) {
+            argsForCallStr.push_back(v.ToString());
+          }
+          spdlog::trace("CallParent: calling with args {}",
+                        fmt::join(argsForCallStr, ", "));
+        }
+
         auto res = parentVM->CallMethod(gameObject, (const char*)(*args[0]),
-                                        argsForCall);
+                                        argsForCall, ctx->stackIdHolder,
+                                        &activePexInstancesForCallParent);
         if (EnsureCallResultIsSynchronous(res, ctx))
           *args[1] = res;
       } catch (std::exception& e) {
@@ -390,7 +418,7 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
       // BYOHRelationshipAdoptionPetDoorTrigger
       if (args[0]->GetType() != VarValue::kType_String &&
           args[0]->GetType() != VarValue::kType_Identifier)
-        throw std::runtime_error("Anomally in CallMethod. String expected");
+        throw std::runtime_error("Anomaly in CallMethod. String expected");
 
       std::string functionName = (const char*)(*args[0]);
       static const std::string nameOnBeginState = "onBeginState";
@@ -736,8 +764,8 @@ ActivePexInstance::TransformInstructions(
         dereferenceStart = 2;
         break;
       case OpcodesImplementation::Opcodes::op_CallParent:
-        // TODO?
-        dereferenceStart = 0;
+        // Do not dereference functionName
+        dereferenceStart = 1;
         break;
       case OpcodesImplementation::Opcodes::op_PropGet:
       case OpcodesImplementation::Opcodes::op_PropSet:
