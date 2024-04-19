@@ -158,6 +158,8 @@ VarValue VirtualMachine::CallMethod(
     ? *activePexInstancesOverride
     : selfObj->ListActivePexInstances();
 
+  // TODO: in theory we shouldn't iterate over all scripts, but only use the
+  // current one
   for (auto& activeScript : instances) {
     FunctionInfo functionInfo;
 
