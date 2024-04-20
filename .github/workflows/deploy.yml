@@ -71,7 +71,7 @@ jobs:
                         {
                             "owner": "skyrim-multiplayer",
                             "repo": "skymp",
-                            "labels": ["merge-to:${{env.DEPLOY_BRANCH}}"],
+                            "labels": ["merge-to:${{env.DEPLOY_BRANCH}}"]
                         },
                         {
                             "owner": "skyrim-multiplayer",
