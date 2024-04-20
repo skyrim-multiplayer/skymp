@@ -86,8 +86,11 @@ jobs:
             run: |
                 echo ""
                 echo "=== Full diff being deployed:"
-                git add -A
-                git diff | tee deploy_git_diff
+                git config --global user.name "Your Name"
+                git config --global user.email "your.email@example.com"
+                git add .
+                git commit -m "Temporary commit for diff"
+                git diff HEAD~1 | tee deploy_git_diff
 
           - name: Upload diff artifact
             if: ${{env.DEPLOY_ACTION == 'deploy'}}
