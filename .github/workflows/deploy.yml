@@ -65,7 +65,7 @@ jobs:
             if: ${{env.DEPLOY_ACTION == 'deploy'}}
             uses: Pospelove/auto-merge-action@main
             with:
-                path: ${{github.workspace}}/skymp
+                path: ${{github.workspace}}
                 repositories: |
                     [
                         {
