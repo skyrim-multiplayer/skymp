@@ -108,45 +108,69 @@ EventResult EventHandler::ProcessEvent(
     return EventResult::kContinue;
   }
 
-  auto e = CopyEventPtr(event);
+  struct EffectData
+  {
+    uint32_t baseMagicEffectId = 0;
+    uint32_t casterRefrId = 0;
+    uint32_t targetRefrId = 0;
+    bool isApplied = false;
+  };
 
-  /**
-   * this is a workaround
-   * at the moment of writing if you try to create new instance of
-   * RE::ActiveEffect the game crashes either at instance construction or
-   * deconstruction, but since we really need copies of those classes here we
-   * have to manually manage memory to avoid leaks
-   */
-  auto effectList = std::make_shared<std::vector<std::unique_ptr<
-    RE::ActiveEffect, game_type_pointer_deleter<RE::ActiveEffect>>>>();
+  EffectData effectData;
+  effectData.casterRefrId =
+    event->caster.get() ? event->caster.get()->GetFormID() : 0;
+  effectData.targetRefrId =
+    event->target.get() ? event->target.get()->GetFormID() : 0;
+  effectData.isApplied = event->isApplied;
 
-  for (const auto& eff :
-       *event->target.get()->As<RE::Actor>()->GetActiveEffectList()) {
-    if (eff->usUniqueID != 0) {
-      auto activeEffect = RE::malloc<RE::ActiveEffect>();
-      std::memcpy(activeEffect, eff, sizeof(*eff));
-      effectList->emplace_back(activeEffect,
-                               game_type_pointer_deleter<RE::ActiveEffect>());
+  RE::Actor* targetActor =
+    event->target.get() ? event->target.get()->As<RE::Actor>() : nullptr;
+
+  if (targetActor) {
+    for (RE::ActiveEffect* eff : *targetActor->GetActiveEffectList()) {
+      if (eff->usUniqueID == e->activeEffectUniqueID) {
+        auto baseMagicEffect = eff->GetBaseObject();
+        effectData.baseMagicEffectId =
+          baseMagicEffect ? baseMagicEffect->formID : 0;
+        break;
+      }
     }
   }
 
-  SkyrimPlatform::GetSingleton()->AddUpdateTask([e, effectList] {
-    for (const auto& effect : *effectList.get()) {
-      if (effect->usUniqueID == e->activeEffectUniqueID) {
-        auto obj = JsValue::Object();
+  if (effectData.baseMagicEffectId == 0) {
+    return EventResult::kContinue;
+  }
 
-        AddObjProperty(&obj, "effect", effect->GetBaseObject(), "MagicEffect");
-        AddObjProperty(&obj, "caster", e->caster.get(), "ObjectReference");
-        AddObjProperty(&obj, "target", e->target.get(), "ObjectReference");
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([effectData] {
+    auto obj = JsValue::Object();
 
-        if (e->isApplied) {
-          SendEvent("effectStart", obj);
-        } else {
-          SendEvent("effectFinish", obj);
-        }
+    auto baseMagicEffect =
+      RE::TESForm::LookupByID<RE::EffectSetting>(effectData.baseMagicEffectId);
+    auto casterRefr =
+      RE::TESForm::LookupByID<RE::TESObjectREFR>(effectData.casterRefrId);
+    auto targetRefr =
+      RE::TESForm::LookupByID<RE::TESObjectREFR>(effectData.targetRefrId);
 
-        return;
-      }
+    if (!baseMagicEffect) {
+      return;
+    }
+
+    if (!casterRefr && effectData.casterRefrId != 0) {
+      return;
+    }
+
+    if (!targetRefr && effectData.targetRefrId != 0) {
+      return;
+    }
+
+    AddObjProperty(&obj, "effect", baseMagicEffect, "MagicEffect");
+    AddObjProperty(&obj, "caster", casterRefr, "ObjectReference");
+    AddObjProperty(&obj, "target", targetRefr, "ObjectReference");
+
+    if (effectData.isApplied) {
+      SendEvent("effectStart", obj);
+    } else {
+      SendEvent("effectFinish", obj);
     }
   });
 
