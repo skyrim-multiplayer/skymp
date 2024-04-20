@@ -21,12 +21,11 @@ jobs:
 
     strategy:
       matrix:
-        matrix:
-          include:
-            - SKYRIM_SE_FLAG: ON
-              SP_NEXUS_ARTIFACT_NAME: SP-SE-nexus
-            - SKYRIM_SE_FLAG: OFF
-              SP_NEXUS_ARTIFACT_NAME: SP-AE-nexus
+        include:
+          - SKYRIM_SE_FLAG: ON
+            SP_NEXUS_ARTIFACT_NAME: SP-SE-nexus
+          - SKYRIM_SE_FLAG: OFF
+            SP_NEXUS_ARTIFACT_NAME: SP-AE-nexus
 
     steps:
     - uses: actions/checkout@v2
