@@ -121,9 +121,8 @@ jobs:
                 image: ${{ env.SKYMP_VCPKG_DEPS_IMAGE }}
                 options: |
                     -v ${{github.workspace}}:/src
-                    -v ${{github.workspace}}/.cmake-js:/home/skymp/.cmake-js
                 run: |
-                    chown -R skymp:skymp /src /home/skymp/.cmake-js
+                    chown -R skymp:skymp /src
 
           - name: CMake Configure
             if: ${{env.DEPLOY_ACTION == 'deploy'}}
@@ -132,7 +131,6 @@ jobs:
                 image: ${{ env.SKYMP_VCPKG_DEPS_IMAGE }}
                 options: |
                     -v ${{github.workspace}}:/src
-                    -v ${{github.workspace}}/.cmake-js:/home/skymp/.cmake-js
                     -u skymp
                 run: |
                     cd /src \
@@ -156,7 +154,6 @@ jobs:
                 image: ${{ env.SKYMP_VCPKG_DEPS_IMAGE }}
                 options: |
                     -v ${{github.workspace}}:/src
-                    -v ${{github.workspace}}/.cmake-js:/home/skymp/.cmake-js
                     -u skymp
                 run: |
                     cd /src \
