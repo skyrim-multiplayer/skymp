@@ -86,7 +86,7 @@ jobs:
             run: |
                 echo ""
                 echo "=== Full diff being deployed:"
-                git diff "$base_rev" | tee deploy_git_diff
+                git diff | tee deploy_git_diff
 
           - name: Upload diff artifact
             if: ${{env.DEPLOY_ACTION == 'deploy'}}
