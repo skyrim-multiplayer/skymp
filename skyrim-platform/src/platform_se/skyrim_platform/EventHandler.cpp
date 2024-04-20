@@ -128,7 +128,7 @@ EventResult EventHandler::ProcessEvent(
 
   if (targetActor) {
     for (RE::ActiveEffect* eff : *targetActor->GetActiveEffectList()) {
-      if (eff->usUniqueID == e->activeEffectUniqueID) {
+      if (eff->usUniqueID == event->activeEffectUniqueID) {
         auto baseMagicEffect = eff->GetBaseObject();
         effectData.baseMagicEffectId =
           baseMagicEffect ? baseMagicEffect->formID : 0;
