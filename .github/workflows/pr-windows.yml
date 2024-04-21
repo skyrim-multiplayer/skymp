@@ -36,9 +36,12 @@ jobs:
     - name: Install tools
       run: choco install opencppcoverage
 
-    - name: Move vcpkg submodule to a larger drive
+    - name: Remove pre-installed vcpkg
       run: |
         Remove-Item -Recurse -Force C:/vcpkg
+
+    - name: Move vcpkg submodule to a larger drive
+      run: |
         Move-Item -Path ./vcpkg C:/vcpkg
 
     - name: Bootstrap vcpkg
