@@ -38,6 +38,8 @@ size_t FileDatabase::Upsert(
         f << MpChangeForm::ToJson(*changeForm).dump(2);
       }
 
+      bool wasOpen = f.is_open();
+
       if (!f.fail()) {
         f.close();
 
@@ -50,7 +52,7 @@ size_t FileDatabase::Upsert(
         }
       }
 
-      if (!f.is_open()) {
+      if (!wasOpen) {
         throw std::runtime_error(
           fmt::format("Unable to open file {}", filePath.string()));
       } else if (!f) {
