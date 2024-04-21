@@ -155,6 +155,13 @@ jobs:
         --profiling-output cmake-profiling-output
         --profiling-format google-trace
 
+    - name: Upload vcpkg failure logs
+      if: failure()
+      uses: actions/upload-artifact@v2
+      with:
+        name: install-x64-linux-dbg-out.log
+        path: C:\vcpkg\buildtrees\spdlog\install-x64-windows-sp-dbg-out.log
+
     - uses: actions/upload-artifact@v3
       if: ${{ !matrix.ONLY_PUSH || github.event_name == 'push' }}
       with:
