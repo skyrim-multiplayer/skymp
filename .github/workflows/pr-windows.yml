@@ -24,21 +24,25 @@ jobs:
             SP_NEXUS_ARTIFACT_NAME: SP-SE-nexus
             DEPLOY_BRANCH: ""
             ONLY_PUSH: false
+            DIST_ARTIFACT_NAME: dist
           - DESCRIPTION: 'Skyrim Anniversary Edition (1.6)'
             SKYRIM_SE_FLAG: OFF
             SP_NEXUS_ARTIFACT_NAME: SP-AE-nexus
             DEPLOY_BRANCH: ""
             ONLY_PUSH: false
+            DIST_ARTIFACT_NAME: dist
           - DESCRIPTION: 'Skyrim Anniversary Edition (1.6) - Indev'
             SKYRIM_SE_FLAG: OFF
             SP_NEXUS_ARTIFACT_NAME: SP-AE-nexus
             DEPLOY_BRANCH: "indev"
             ONLY_PUSH: true
+            DIST_ARTIFACT_NAME: dist-indev
           - DESCRIPTION: 'Skyrim Anniversary Edition (1.6) - SweetPie'
             SKYRIM_SE_FLAG: OFF
             SP_NEXUS_ARTIFACT_NAME: SP-AE-nexus
             DEPLOY_BRANCH: "sweetpie"
             ONLY_PUSH: true
+            DIST_ARTIFACT_NAME: dist-sweetpie
 
     # VS 2019 is still supported, but GitHub windows-2019 runners have unsupported WinSDK version
     runs-on: windows-2022
@@ -172,7 +176,7 @@ jobs:
     - uses: actions/upload-artifact@v3
       if: ${{ !matrix.ONLY_PUSH || github.event_name == 'push' }}
       with:
-        name: dist
+        name: ${{ matrix.DIST_ARTIFACT_NAME }}
         path: ${{github.workspace}}/build/dist
 
     - uses: actions/upload-artifact@v3
