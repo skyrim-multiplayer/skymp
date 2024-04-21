@@ -44,11 +44,8 @@ jobs:
     runs-on: windows-2022
     name: PR Windows - ${{ matrix.DESCRIPTION }}
 
-    env:
-      RUN_CONDITION: ${{ matrix.ONLY_PUSH }}
-
     if: >
-      env.RUN_CONDITION == 'false' || github.event_name == 'push'
+      ${{ !matrix.ONLY_PUSH || github.event_name == 'push' }}
 
     steps:
     - uses: actions/checkout@v2
