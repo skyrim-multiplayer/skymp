@@ -38,7 +38,7 @@ jobs:
         cd C:/vcpkg
         git remote add submodule ${{github.workspace}}/vcpkg
         git fetch submodule
-        git reset --hard submodule/$(git -C ${{github.workspace}}/vcpkg rev-parse HEAD)
+        git reset --hard $(git -C ${{github.workspace}}/vcpkg rev-parse HEAD)
 
     - name: Install tools
       run: choco install opencppcoverage
