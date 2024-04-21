@@ -36,13 +36,11 @@ jobs:
     - name: Install tools
       run: choco install opencppcoverage
 
-    - name: Remove pre-installed vcpkg
+    - name: Reset vcpkg to submodule revision
       run: |
-        Remove-Item -Recurse -Force C:/vcpkg
-
-    - name: Move vcpkg submodule to a larger drive
-      run: |
-        Move-Item -Path ./vcpkg C:/vcpkg
+        cd C:/vcpkg
+        git fetch --all
+        git reset --hard $(git -C $GITHUB_WORKSPACE/vcpkg rev-parse HEAD)
 
     - name: Bootstrap vcpkg
       run: C:/vcpkg/bootstrap-vcpkg.bat
