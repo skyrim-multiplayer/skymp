@@ -7,10 +7,10 @@
 #include "Validators.h"
 #include "WindowsConsolePrinter.h"
 
-namespace {
-// TODO: Add printers switching
-static std::shared_ptr<IConsolePrinter> g_printer(new InGameConsolePrinter);
+std::shared_ptr<IConsolePrinter> g_printer(new InGameConsolePrinter);
+std::shared_ptr<IConsolePrinter> g_windowsConsolePrinter = nullptr;
 
+namespace {
 struct ConsoleCommand
 {
   std::string longName;
@@ -23,7 +23,6 @@ struct ConsoleCommand
 };
 static std::map<std::string, ConsoleCommand> g_replacedConsoleCmd;
 static bool g_printConsolePrefixesEnabled = true;
-static std::unique_ptr<WindowsConsolePrinter> g_windowsConsolePrinter = NULL;
 
 bool IsNameEqual(const std::string& first, const std::string& second)
 {
@@ -69,7 +68,7 @@ void ConsoleApi::InitCmd(int offsetLeft, int offsetTop, int width, int height,
                          bool isAlwaysOnTop)
 {
 
-  g_windowsConsolePrinter = std::make_unique<WindowsConsolePrinter>(
+  g_windowsConsolePrinter = std::make_shared<WindowsConsolePrinter>(
     offsetLeft, offsetTop, width, height, isAlwaysOnTop);
 }
 
@@ -211,7 +210,9 @@ JsValue GetTypedArg(RE::SCRIPT_PARAM_TYPE type, std::string param)
     case RE::SCRIPT_PARAM_TYPE::kFloat:
       return JsValue::Double((double)strtod(param.c_str(), nullptr));
 
-    case RE::SCRIPT_PARAM_TYPE::kCoontainerRef:
+      // RE::SCRIPT_PARAM_TYPE::kContainerRef/kCoontainerRef
+    case static_cast<RE::SCRIPT_PARAM_TYPE>(0x1A):
+
     case RE::SCRIPT_PARAM_TYPE::kInvObjectOrFormList:
     case RE::SCRIPT_PARAM_TYPE::kSpellItem:
     case RE::SCRIPT_PARAM_TYPE::kInventoryObject:

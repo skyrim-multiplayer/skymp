@@ -3,6 +3,7 @@ import { ClientListener, CombinedController, Sp } from "./clientListener";
 import { MsgType } from "../../messages";
 import { getEquipment } from "../../sync/equipment";
 import { QueryBlockSetInventoryEvent } from "../events/queryBlockSetInventoryEvent";
+import { logError, logTrace } from "../../logging";
 
 export class PlayerBowShotService extends ClientListener {
     constructor(private sp: Sp, private controller: CombinedController) {
@@ -40,11 +41,11 @@ export class PlayerBowShotService extends ClientListener {
 
     private onQueryBlockSetInventoryEvent(e: QueryBlockSetInventoryEvent) {
         if (Date.now() < this.inventoryUnblockMoment) {
-            this.logTrace("Blocked inventory operation");
+            logTrace(this, "Blocked inventory operation");
             e.block();
         }
         else {
-            this.logTrace("Not blocked inventory operation");
+            logTrace(this, "Not blocked inventory operation");
         }
     }
 
@@ -68,23 +69,27 @@ export class PlayerBowShotService extends ClientListener {
         const crossbow = actor.getEquippedWeapon(false);
 
         if (crossbow === null) {
-            return this.logError(`Couldn't get equipped weapon`);
+            logError(this, `Couldn't get equipped weapon`);
+            return;
         }
 
         const weaponType = crossbow.getWeaponType();
         if (weaponType !== WeaponType.Crossbow) {
-            return this.logError(`Expected weapon to be crossbow, but got WeaponType ${weaponType}`);
+            logError(this, `Expected weapon to be crossbow, but got WeaponType`, weaponType);
+            return;
         }
 
         const equippedAmmoEntries = getEquipment(actor, 0).inv.entries.filter(entry => entry.worn && Ammo.from(Game.getFormEx(entry.baseId)));
 
         if (equippedAmmoEntries.length === 0) {
-            return this.logError(`Ammo not found`);
+            logError(this, `Ammo not found`);
+            return;
         }
 
         if (equippedAmmoEntries.length > 1) {
             const equippedAmmoIds = equippedAmmoEntries.map(entry => entry.baseId);
-            return this.logError(`Found more than 1 ammos: ${equippedAmmoIds}`);
+            logError(this, `Found more than 1 ammos:`, equippedAmmoIds);
+            return;
         }
 
         this.controller.emitter.emit("sendMessage", {
@@ -103,7 +108,7 @@ export class PlayerBowShotService extends ClientListener {
         // The item is being added back: -1 total (which is correct but looks ugly in process)
         this.inventoryUnblockMoment = Date.now() + 5 * 1000;
 
-        this.logTrace(`Sent crossbow shot`);
+        logTrace(this, `Sent crossbow shot`);
     }
 
     private score = 0;

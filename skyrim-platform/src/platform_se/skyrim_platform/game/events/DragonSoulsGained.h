@@ -2,6 +2,7 @@
 
 namespace RE {
 
+#ifdef SKYRIMSE
 struct DragonSoulsGained
 {
 public:
@@ -21,5 +22,6 @@ public:
     return func();
   }
 };
+#endif
 
 }

@@ -1,5 +1,10 @@
 #include "ExceptionPrinter.h"
 #include "ConsoleApi.h"
+#include "IConsolePrinter.h"
+
+// ConsoleApi.cpp
+extern std::shared_ptr<IConsolePrinter> g_printer;
+extern std::shared_ptr<IConsolePrinter> g_windowsConsolePrinter;
 
 const char* ExceptionPrinter::RemoveMultiplePrefixes(const char* str,
                                                      const char* prefix)
@@ -41,7 +46,18 @@ void ExceptionPrinter::PrintException(const char* what)
       msg += '...';
     }
     const char* prefix = ConsoleApi::GetExceptionPrefix();
-    console->Print("%s%s", (i ? "" : prefix), msg.data());
+
+    if (i > 0) {
+      g_printer->PrintRaw(msg.data());
+    } else {
+      msg = std::string(prefix) + msg;
+      g_printer->PrintRaw(msg.data());
+    }
+
+    if (g_windowsConsolePrinter) {
+      g_windowsConsolePrinter->PrintRaw(msg.data());
+    }
+
     ++i;
   };
 

@@ -5,6 +5,7 @@ import { Actor, ContainerChangedEvent } from "skyrimPlatform";
 import { ClientListener, CombinedController, Sp } from "./clientListener";
 import { Inventory } from "../../sync/inventory";
 import { MsgType } from "../../messages";
+import { logTrace, logError } from "../../logging";
 
 type FurnitureId = number;
 
@@ -35,22 +36,23 @@ export class CraftService extends ClientListener {
                 count: e.numItems,
             });
             this.furnitureStreak.set(furnitureId, craftInputObjects);
-            this.logTrace(
-                `Adding baseObjId=${baseObjId.toString(16)}, numItems=${e.numItems} to craft`,
+            logTrace(this,
+                `Adding baseObjId`, baseObjId.toString(16), `numItems`, e.numItems, `to craft`,
             );
         } else if (oldContainerId === 0 && newContainerId === 0x14) {
-            this.logTrace('Finishing craft');
+            logTrace(this, 'Finishing craft');
             const craftInputObjects = this.furnitureStreak.get(furnitureId);
             if (craftInputObjects && craftInputObjects.entries.length) {
                 this.furnitureStreak.delete(furnitureId);
                 const workbench = localIdToRemoteId(furnitureId);
                 if (!workbench) {
-                    return this.logError(`localIdToRemoteId returned 0 for furnitureId=${furnitureId}`);
+                    logError(this, `localIdToRemoteId returned 0 for furnitureId`, furnitureId);
+                    return;
                 }
 
                 const resultObjectId = baseObjId;
 
-                this.logTrace(`Sending craft workbench=${workbench}, resultObjectId=${resultObjectId}, craftInputObjects=${JSON.stringify(craftInputObjects.entries)}`);
+                logTrace(this, `Sending craft workbench`, workbench, `resultObjectId`, resultObjectId, `craftInputObjects`, JSON.stringify(craftInputObjects.entries));
 
                 this.controller.emitter.emit("sendMessage", {
                     message: {

@@ -54,62 +54,53 @@ jobs:
                 submodules: recursive
                 fetch-depth: 0
 
-          - name: Checkout skymp5-patches (full)
-            if: ${{env.DEPLOY_ACTION == 'deploy'}}
-            # # https://github.com/actions/checkout/issues/197#issuecomment-971545044
-            uses: Pospelove/checkout@main
-            with:
-                repository: skyrim-multiplayer/skymp5-patches
-                submodules: recursive
-                fetch-depth: 0
-                token: ${{ secrets.SKYMP5_PATCHES_PAT }}
-                path: /home/runner/work/skymp5-patches
-
           - name: Checkout (last commit)
             if: ${{env.DEPLOY_ACTION != 'deploy'}}
             uses: actions/checkout@v2
             with:
                 submodules: recursive
                 fetch-depth: 0
-
+        
           - name: Gather PRs
             if: ${{env.DEPLOY_ACTION == 'deploy'}}
-            env:
-                DEPLOY_STATUS_WEBHOOK: ${{secrets.DEPLOY_STATUS_WEBHOOK}}
+            uses: Pospelove/auto-merge-action@main
+            with:
+                path: ${{github.workspace}}
+                repositories: |
+                    [
+                        {
+                            "owner": "skyrim-multiplayer",
+                            "repo": "skymp",
+                            "labels": ["merge-to:${{env.DEPLOY_BRANCH}}"]
+                        },
+                        {
+                            "owner": "skyrim-multiplayer",
+                            "repo": "skymp5-patches",
+                            "labels": ["merge-to:${{env.DEPLOY_BRANCH}}"],
+                            "token": "${{secrets.SKYMP5_PATCHES_PAT}}"
+                        }
+                    ]
+
+          - name: Calculate diff being deployed
+            if: ${{env.DEPLOY_ACTION == 'deploy'}}
             run: |
-                git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
-                git config --local user.name "github-actions[bot]"
-                git config pull.rebase false
-
-                base_rev="`git rev-parse HEAD`"
-                echo "=== Base revision: $base_rev"
-
-                git checkout -b tmp
-                yarn --cwd="${{github.workspace}}/misc/deploy/gather-server-branch"
-                ./misc/deploy/gather_server_branch.sh
-
-                git remote add patches /home/runner/work/skymp5-patches
-                git fetch patches
-                git merge patches/main --no-edit
-
-                echo ""
-                echo "=== Changes since $base_rev:"
-                git log -p "$base_rev.." | tee deploy_git_log
-
                 echo ""
                 echo "=== Full diff being deployed:"
-                git diff "$base_rev" | tee deploy_git_diff
+                git config --global user.name "Your Name"
+                git config --global user.email "your.email@example.com"
+                git add .
+                git commit -m "Temporary commit for diff"
+                git diff HEAD~1 | tee deploy_git_diff
 
-          - name: Upload patches
+          - name: Upload diff artifact
             if: ${{env.DEPLOY_ACTION == 'deploy'}}
             uses: actions/upload-artifact@v3
             with:
                 name: patches
                 path: |
-                    deploy_git_log
                     deploy_git_diff
 
-          - name: Post link
+          - name: Post a link in Discord
             if: ${{env.DEPLOY_ACTION == 'deploy'}}
             env:
                 DEPLOY_STATUS_WEBHOOK: ${{secrets.DEPLOY_STATUS_WEBHOOK}}
@@ -130,9 +121,8 @@ jobs:
                 image: ${{ env.SKYMP_VCPKG_DEPS_IMAGE }}
                 options: |
                     -v ${{github.workspace}}:/src
-                    -v ${{github.workspace}}/.cmake-js:/home/skymp/.cmake-js
                 run: |
-                    chown -R skymp:skymp /src /home/skymp/.cmake-js
+                    chown -R skymp:skymp /src
 
           - name: CMake Configure
             if: ${{env.DEPLOY_ACTION == 'deploy'}}
@@ -141,7 +131,6 @@ jobs:
                 image: ${{ env.SKYMP_VCPKG_DEPS_IMAGE }}
                 options: |
                     -v ${{github.workspace}}:/src
-                    -v ${{github.workspace}}/.cmake-js:/home/skymp/.cmake-js
                     -u skymp
                 run: |
                     cd /src \
@@ -165,7 +154,6 @@ jobs:
                 image: ${{ env.SKYMP_VCPKG_DEPS_IMAGE }}
                 options: |
                     -v ${{github.workspace}}:/src
-                    -v ${{github.workspace}}/.cmake-js:/home/skymp/.cmake-js
                     -u skymp
                 run: |
                     cd /src \

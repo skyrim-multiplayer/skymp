@@ -70,7 +70,9 @@ public:
 
   VarValue CallMethod(IGameObject* self, const char* methodName,
                       std::vector<VarValue>& arguments,
-                      std::shared_ptr<StackIdHolder> stackIdHolder = nullptr);
+                      std::shared_ptr<StackIdHolder> stackIdHolder = nullptr,
+                      const std::vector<std::shared_ptr<ActivePexInstance>>*
+                        activePexInstancesOverride = nullptr);
 
   VarValue CallStatic(const std::string& className,
                       const std::string& functionName,

@@ -172,6 +172,7 @@ private:
                  pluginName);
 
     settingsByPluginName[pluginName] = Viet::ReadFileIntoString(path);
+    settingsByPluginNameCache.reset();
   }
 
   void LoadPluginFile(const std::filesystem::path& path)
@@ -180,13 +181,17 @@ private:
     auto scriptSrc = Viet::ReadFileIntoString(path);
 
     getSettings = [this](const JsFunctionArguments&) {
-      auto result = JsValue::Object();
-      auto standardJson = JsValue::GlobalObject().GetProperty("JSON");
-      auto parse = standardJson.GetProperty("parse");
-      for (const auto& [pluginName, settings] : settingsByPluginName) {
-        result.SetProperty(pluginName, parse.Call({ standardJson, settings }));
+      if (!settingsByPluginNameCache) {
+        auto result = JsValue::Object();
+        auto standardJson = JsValue::GlobalObject().GetProperty("JSON");
+        auto parse = standardJson.GetProperty("parse");
+        for (const auto& [pluginName, settings] : settingsByPluginName) {
+          result.SetProperty(pluginName,
+                             parse.Call({ standardJson, settings }));
+        }
+        settingsByPluginNameCache.reset(new JsValue(result));
       }
-      return result;
+      return *settingsByPluginNameCache;
     };
 
     // We will be able to use require()
@@ -242,6 +247,7 @@ private:
     jsPromiseTaskQueue.Clear();
     nativeCallRequirements.jsThrQ->Clear();
     settingsByPluginName.clear();
+    settingsByPluginNameCache.reset();
   }
 
   std::shared_ptr<JsEngine> GetJsEngine()
@@ -274,6 +280,7 @@ private:
   Viet::TaskQueue jsPromiseTaskQueue;
   CallNativeApi::NativeCallRequirements& nativeCallRequirements;
   std::unordered_map<std::string, std::string> settingsByPluginName;
+  std::unique_ptr<JsValue> settingsByPluginNameCache;
   std::shared_ptr<BrowserApi::State> browserApiState;
   std::function<JsValue(const JsFunctionArguments&)> getSettings;
 };

@@ -100,7 +100,7 @@ VarValue PapyrusGame::GetCameraState(VarValue self,
         GetName(), "GetCameraState", self.GetMetaStackId())) {
     Viet::Promise<VarValue> promise =
       SpSnippet(GetName(), "GetCameraState", serializedArgs.data())
-        .Execute(actor);
+        .Execute(actor, SpSnippetMode::kReturnResult);
     return VarValue(Viet::Promise<VarValue>(promise));
   }
   return VarValue(-1);
@@ -113,7 +113,8 @@ void PapyrusGame::RaceMenuHelper(VarValue& self, const char* funcName,
   if (auto actor = compatibilityPolicy->GetDefaultActor(
         GetName(), funcName, self.GetMetaStackId())) {
     actor->SetRaceMenuOpen(true);
-    SpSnippet(GetName(), funcName, serializedArgs.data()).Execute(actor);
+    SpSnippet(GetName(), funcName, serializedArgs.data())
+      .Execute(actor, SpSnippetMode::kNoReturnResult);
   }
 }
 
@@ -163,7 +164,8 @@ VarValue PapyrusGame::ShakeController(VarValue self,
   auto serializedArgs = SpSnippetFunctionGen::SerializeArguments(arguments);
   if (auto actor = compatibilityPolicy->GetDefaultActor(
         GetName(), funcName, self.GetMetaStackId())) {
-    SpSnippet(GetName(), funcName, serializedArgs.data()).Execute(actor);
+    SpSnippet(GetName(), funcName, serializedArgs.data())
+      .Execute(actor, SpSnippetMode::kNoReturnResult);
   }
 
   return VarValue::None();

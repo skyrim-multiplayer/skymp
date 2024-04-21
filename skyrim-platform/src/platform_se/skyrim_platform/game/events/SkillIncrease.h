@@ -1,7 +1,7 @@
 #pragma once
 
 namespace RE {
-
+#ifdef SKYRIMSE
 struct SkillIncrease
 {
 public:
@@ -22,5 +22,5 @@ public:
     return func();
   }
 };
-
+#endif
 }

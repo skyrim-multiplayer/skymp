@@ -22,6 +22,7 @@ import { UpdateEquipmentMessage } from "../messages/updateEquipmentMessage";
 import { UpdateAppearanceMessage } from "../messages/updateAppearanceMessage";
 import { RemoteServer } from "./remoteServer";
 import { DeathService } from "./deathService";
+import { logTrace } from "../../logging";
 
 const playerFormId = 0x14;
 
@@ -142,7 +143,7 @@ export class SendInputsService extends ClientListener {
 
         const deathService = this.controller.lookupListener(DeathService);
         if (deathService.isBusy()) {
-            this.logTrace("Not sending actor values, death service is busy");
+            logTrace(this, "Not sending actor values, death service is busy");
             return;
         }
 
