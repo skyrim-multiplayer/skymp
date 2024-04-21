@@ -43,8 +43,7 @@ jobs:
     # VS 2019 is still supported, but GitHub windows-2019 runners have unsupported WinSDK version
     runs-on: windows-2022
     name: PR Windows - ${{ matrix.DESCRIPTION }}
-    if: >
-      !matrix.ONLY_PUSH || github.event_name == 'push'
+    if: ${{ !matrix.ONLY_PUSH || github.event_name == 'push' }}
 
     steps:
     - uses: actions/checkout@v2
