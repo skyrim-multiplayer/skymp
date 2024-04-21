@@ -203,12 +203,10 @@ jobs:
 
     - name: Debug - free space
       if: ${{ !matrix.ONLY_PUSH || github.event_name == 'push' }}
-      if: 'always()'
       run: Get-PSDrive
 
     - uses: actions/upload-artifact@v3
       if: ${{ !matrix.ONLY_PUSH || github.event_name == 'push' }}
-      if: 'always()'
       with:
         name: msbuild_files
         path: |
