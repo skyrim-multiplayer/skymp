@@ -37,7 +37,7 @@ jobs:
       run: |
         cd C:/vcpkg
         git remote add submodule ${{github.workspace}}/vcpkg
-        git fetch submodule $(git -C ${{github.workspace}}/vcpkg rev-parse HEAD)
+        git fetch --depth=1 submodule $(git -C ${{github.workspace}}/vcpkg rev-parse HEAD)
         git reset --hard $(git -C ${{github.workspace}}/vcpkg rev-parse HEAD)
 
     - name: Install tools
