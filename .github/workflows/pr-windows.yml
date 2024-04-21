@@ -16,22 +16,55 @@ env:
 
 jobs:
   build:
-    # VS 2019 is still supported, but GitHub windows-2019 runners have unsupported WinSDK version
-    runs-on: windows-2022
-
     strategy:
       matrix:
         include:
-          - SKYRIM_SE_FLAG: ON
+          - DESCRIPTION: 'Skyrim Special Edition (1.5)'
+            SKYRIM_SE_FLAG: ON
             SP_NEXUS_ARTIFACT_NAME: SP-SE-nexus
-          - SKYRIM_SE_FLAG: OFF
+            DEPLOY_BRANCH: ""
+          - DESCRIPTION: 'Skyrim Anniversary Edition (1.6)'
+            SKYRIM_SE_FLAG: OFF
             SP_NEXUS_ARTIFACT_NAME: SP-AE-nexus
+            DEPLOY_BRANCH: ""
+          - DESCRIPTION: 'Skyrim Anniversary Edition (1.6) - Indev'
+            SKYRIM_SE_FLAG: OFF
+            SP_NEXUS_ARTIFACT_NAME: SP-AE-nexus
+            DEPLOY_BRANCH: "indev"
+          - DESCRIPTION: 'Skyrim Anniversary Edition (1.6) - SweetPie'
+            SKYRIM_SE_FLAG: OFF
+            SP_NEXUS_ARTIFACT_NAME: SP-AE-nexus
+            DEPLOY_BRANCH: "sweetpie"
+
+    # VS 2019 is still supported, but GitHub windows-2019 runners have unsupported WinSDK version
+    runs-on: windows-2022
+    name: PR Windows - ${{ matrix.DESCRIPTION }}
 
     steps:
     - uses: actions/checkout@v2
       with:
         fetch-depth: 1
         submodules: 'true'
+    
+    - name: Gather PRs
+      if: ${{matrix.DEPLOY_BRANCH != ''}}
+      uses: Pospelove/auto-merge-action@main
+      with:
+        path: ${{github.workspace}}
+        repositories: |
+          [
+            {
+              "owner": "skyrim-multiplayer",
+              "repo": "skymp",
+              "labels": ["merge-to:${{matrix.DEPLOY_BRANCH}}"]
+            },
+            {
+              "owner": "skyrim-multiplayer",
+              "repo": "skymp5-patches",
+              "labels": ["merge-to:${{matrix.DEPLOY_BRANCH}}"],
+              "token": "${{secrets.SKYMP5_PATCHES_PAT}}"
+            }
+          ]
 
     - name: Install tools
       run: choco install opencppcoverage
@@ -146,10 +179,3 @@ jobs:
         path: |
           ${{github.workspace}}/build/**/*.sln
           ${{github.workspace}}/build/**/*.vcxproj
-
-    - uses: actions/upload-artifact@v3
-      if: 'always()'
-      with:
-        name: vcpkg_include
-        path: |
-          ${{github.workspace}}/build/vcpkg_installed/*/include
