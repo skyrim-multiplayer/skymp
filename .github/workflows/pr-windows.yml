@@ -158,9 +158,9 @@ jobs:
     - name: Upload vcpkg failure logs
       if: failure()
       uses: actions/upload-artifact@v2
-        with:
-          name: install-x64-linux-dbg-out.log
-          path: ${{github.workspace}}/vcpkg/buildtrees/spdlog/install-x64-windows-sp-dbg-out.log
+      with:
+        name: install-x64-linux-dbg-out.log
+        path: ${{github.workspace}}/vcpkg/buildtrees/spdlog/install-x64-windows-sp-dbg-out.log
 
     - uses: actions/upload-artifact@v3
       if: ${{ !matrix.ONLY_PUSH || github.event_name == 'push' }}
