@@ -1,0 +1,37 @@
+name: Push to skymp5-patches
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout skyrim-multiplayer/skymp5-patches
+        uses: actions/checkout@v2
+        with:
+          repository: skyrim-multiplayer/skymp5-patches
+          fetch-depth: 0
+          token: ${{ secrets.SKYMP5_PATCHES_PAT }}
+          path: skymp5-patches
+          ref: main
+
+      - name: Checkout skyrim-multiplayer/skymp
+        uses: actions/checkout@v2
+        with:
+          repository: skyrim-multiplayer/skymp
+          fetch-depth: 0
+          path: skymp
+          ref: main
+      
+      - name: Set skymp5-patches main branch to skymp main branch
+        run: |
+          cd ${GITHUB_WORKSPACE}/skymp5-patches
+          git checkout main
+          git remote add skymp ${GITHUB_WORKSPACE}/skymp || true
+          git fetch skymp main
+          git reset --hard skymp/main
+          git push origin main
+        shell: bash

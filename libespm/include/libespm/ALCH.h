@@ -14,6 +14,7 @@ public:
   struct Data
   {
     std::vector<Effects::Effect> effects;
+    float weight;
   };
 
   Data GetData(CompressedFieldsCache& compressedFieldsCache) const noexcept;

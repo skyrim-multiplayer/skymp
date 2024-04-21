@@ -12,7 +12,7 @@ SpSnippet::SpSnippet(const char* cl_, const char* func_, const char* args_,
 {
 }
 
-Viet::Promise<VarValue> SpSnippet::Execute(MpActor* actor)
+Viet::Promise<VarValue> SpSnippet::Execute(MpActor* actor, SpSnippetMode mode)
 {
   auto worldState = actor->GetParent();
   if (!actor->IsCreatedAsPlayer()) {
@@ -24,7 +24,9 @@ Viet::Promise<VarValue> SpSnippet::Execute(MpActor* actor)
 
   Viet::Promise<VarValue> promise;
 
-  auto snippetIdx = actor->NextSnippetIndex(promise);
+  const uint32_t snippetIdx = mode == SpSnippetMode::kReturnResult
+    ? actor->NextSnippetIndex(promise)
+    : std::numeric_limits<uint32_t>::max();
 
   // Player character is always 0x14 on client, but 0xff000000+ in our server
   // See also SpSnippetFunctionGen.cpp

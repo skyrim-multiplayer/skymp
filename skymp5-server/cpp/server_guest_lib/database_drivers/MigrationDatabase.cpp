@@ -115,6 +115,7 @@ size_t MigrationDatabase::Upsert(
 {
   spdlog::error("MigrationDatabase::Upsert - should never be reached");
   pImpl->terminate();
+  return 0;
 }
 
 void MigrationDatabase::Iterate(const IterateCallback& iterateCallback)

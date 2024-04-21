@@ -11,8 +11,15 @@ class INGR final : public RecordHeader
 public:
   static constexpr auto kType = "INGR";
 
+  struct ItemData
+  {
+    uint32_t value;
+    float weight;
+  };
+
   struct Data
   {
+    ItemData itemData;
     std::vector<Effects::Effect> effects;
   };
 

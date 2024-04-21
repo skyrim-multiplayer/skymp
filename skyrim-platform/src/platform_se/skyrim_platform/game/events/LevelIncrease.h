@@ -2,6 +2,7 @@
 
 namespace RE {
 
+#ifdef SKYRIMSE
 struct LevelIncrease
 {
 public:
@@ -23,5 +24,5 @@ public:
     return func();
   }
 };
-
+#endif
 }

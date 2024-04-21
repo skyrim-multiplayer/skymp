@@ -8,6 +8,7 @@ export class BlockPapyrusEventsService extends ClientListener {
     }
 
     private onceTick() {
+        // @ts-ignore
         this.sp.blockPapyrusEvents(true);
     }
 

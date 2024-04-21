@@ -1,4 +1,3 @@
-import * as sp from 'skyrimPlatform';
 import { Actor, Form } from 'skyrimPlatform';
 import {
   Armor,
@@ -9,23 +8,21 @@ import {
   Ui,
   Utility,
   WorldSpace,
-  on,
-  once,
-  printConsole,
-  storage,
+  on, // TODO: use this.controller.on instead
+  once, // TODO: use this.controller.once instead
+  storage, // TODO: use this.sp.storage instead
 } from 'skyrimPlatform';
 
-import * as updateOwner from '../../gamemodeApi/updateOwner';
 import * as messages from '../../messages';
 
 /* eslint-disable @typescript-eslint/no-empty-function */
 import { ObjectReferenceEx } from '../../extensions/objectReferenceEx';
-import { AuthGameData } from '../../features/authModel';
+import { AuthGameData, authGameDataStorageKey } from '../../features/authModel';
 import { IdManager } from '../../lib/idManager';
 import { nameof } from '../../lib/nameof';
 import { setActorValuePercentage } from '../../sync/actorvalues';
 import { applyAppearanceToPlayer } from '../../sync/appearance';
-import { isBadMenuShown } from '../../sync/equipment';
+import { applyEquipment, isBadMenuShown } from '../../sync/equipment';
 import { Inventory, applyInventory } from '../../sync/inventory';
 import { Movement } from '../../sync/movement';
 import { learnSpells, removeAllSpells } from '../../sync/spell';
@@ -51,8 +48,7 @@ import { HostStartMessage } from '../messages/hostStartMessage';
 import { HostStopMessage } from '../messages/hostStopMessage';
 import { ConnectionMessage } from '../events/connectionMessage';
 import { SetInventoryMessage } from '../messages/setInventoryMessage';
-import { CreateActorMessage } from '../messages/createActorMessage';
-import { UpdateGamemodeDataMessage } from '../messages/updateGameModeDataMessage';
+import { CreateActorMessage, CreateActorMessageAdditionalProps } from '../messages/createActorMessage';
 import { CustomPacketMessage2 } from '../messages/customPacketMessage2';
 import { DestroyActorMessage } from '../messages/destroyActorMessage';
 import { SetRaceMenuOpenMessage } from '../messages/setRaceMenuOpenMessage';
@@ -67,71 +63,7 @@ import {
   remoteIdToLocalId,
 } from '../../view/worldViewMisc';
 import { TimeService } from './timeService';
-
-const onceLoad = (
-  refrId: number,
-  callback: (refr: ObjectReference) => void,
-  maxAttempts: number = 120,
-) => {
-  once('update', () => {
-    const refr = ObjectReference.from(Game.getFormEx(refrId));
-    if (refr) {
-      callback(refr);
-    } else {
-      maxAttempts--;
-      if (maxAttempts > 0) {
-        once('update', () => onceLoad(refrId, callback, maxAttempts));
-      } else {
-        printConsole('Failed to load object reference ' + refrId.toString(16));
-      }
-    }
-  });
-};
-
-const skipFormViewCreation = (
-  msg: UpdatePropertyMessage | CreateActorMessage,
-) => {
-  // Optimization added in #1186, however it doesn't work for doors for some reason
-  return msg.refrId && msg.refrId < 0xff000000 && msg.baseRecordType !== 'DOOR';
-};
-
-//
-// eventSource system
-//
-
-const setupEventSource = (ctx: any) => {
-  once('update', () => {
-    try {
-      ctx._fn(ctx);
-      printConsole(`'eventSources.${ctx._eventName}' - Added`);
-    } catch (e) {
-      printConsole(`'eventSources.${ctx._eventName}' -`, e);
-    }
-  });
-};
-
-// Handle hot reload for eventSoucres
-if (Array.isArray(storage['eventSourceContexts'])) {
-  storage['eventSourceContexts'] = storage['eventSourceContexts'].filter(
-    (ctx: Record<string, unknown>) => !ctx._expired,
-  );
-  (storage['eventSourceContexts'] as any).forEach((ctx: any) => {
-    setupEventSource(ctx);
-  });
-}
-
-//
-//
-//
-
-const showConnectionError = () => {
-  // TODO: unhardcode it or render via browser
-  printConsole("Server connection failed. This may be caused by one of the following:");
-  printConsole("1. You are not present on the SkyMP Discord server");
-  printConsole("2. You have been banned by server admins");
-  printConsole("3. There is some technical issue. Try linking your Discord account again");
-  printConsole("If you feel that something is wrong, please contact us on Discord.");
-};
+import { logTrace, logError } from '../../logging';
 
 export const getPcInventory = (): Inventory | undefined => {
   const res = storage['pcInv'];
@@ -151,7 +83,7 @@ on('update', () => {
   if (Date.now() - pcInvLastApply > 5000) {
     pcInvLastApply = Date.now();
     const pcInv = getPcInventory();
-    if (pcInv) applyInventory(Game.getPlayer() as Actor, pcInv, false, true);
+    if (pcInv) applyInventory(Game.getPlayer()!, pcInv, false, true);
   }
 });
 
@@ -182,7 +114,6 @@ export class RemoteServer extends ClientListener {
     this.controller.emitter.on("customPacketMessage2", (e) => this.onCustomPacketMessage2(e));
     this.controller.emitter.on("destroyActorMessage", (e) => this.onDestroyActorMessage(e));
     this.controller.emitter.on("setRaceMenuOpenMessage", (e) => this.onSetRaceMenuOpenMessage(e));
-    this.controller.emitter.on("updateGamemodeDataMessage", (e) => this.onUpdateGamemodeDataMessage(e));
     this.controller.emitter.on("updatePropertyMessage", (e) => this.onUpdatePropertyMessage(e));
     this.controller.emitter.on("deathStateContainerMessage", (e) => this.onDeathStateContainerMessage(e));
 
@@ -194,8 +125,8 @@ export class RemoteServer extends ClientListener {
     // TODO: Busy waiting is bad. Should be replaced with some kind of event
     const maxLoggingDelay = 15000;
     if (this.loggingStartMoment && Date.now() - this.loggingStartMoment > maxLoggingDelay) {
-      printConsole('Logging in failed. Reconnecting.');
-      showConnectionError();
+      logError(this, 'Logging in failed. Reconnecting.');
+      this.showConnectionError();
       this.controller.lookupListener(NetworkingService).reconnect();
       this.loggingStartMoment = 0;
     }
@@ -221,7 +152,7 @@ export class RemoteServer extends ClientListener {
   private onHostStopMessage(event: ConnectionMessage<HostStopMessage>) {
     const msg = event.message;
     const target = msg.target;
-    this.logTrace('hostStop ' + target.toString(16));
+    logTrace(this, 'hostStop ' + target.toString(16));
 
     const hosted = storage['hosted'] as Array<number>;
     if (typeof hosted === typeof []) {
@@ -276,8 +207,8 @@ export class RemoteServer extends ClientListener {
     once('update', () => {
       const id = ("idx" in msg && typeof msg.idx === "number") ? this.getIdManager().getId(msg.idx) : this.getMyActorIndex();
       const refr = id === this.getMyActorIndex() ? Game.getPlayer() : getObjectReference(id);
-      printConsole(
-        `Teleporting (id=${id}) ${refr?.getFormID().toString(16)}...`,
+      logTrace(this,
+        `Teleporting id`, id, `refrId`, refr?.getFormID().toString(16), `...`,
         msg.pos,
         'cell/world is',
         msg.worldOrCell.toString(16),
@@ -311,21 +242,52 @@ export class RemoteServer extends ClientListener {
 
   private onCreateActorMessage(event: ConnectionMessage<CreateActorMessage>): void {
     const msg = event.message;
-    if (skipFormViewCreation(msg)) {
+    if (this.skipFormViewCreation(msg)) {
       const refrId = msg.refrId!;
-      onceLoad(refrId, (refr: ObjectReference) => {
+      this.onceLoad(refrId, (refr: ObjectReference) => {
         if (refr) {
           ObjectReferenceEx.dealWithRef(refr, refr.getBaseObject() as Form);
-          if (msg.inventory) {
-            ModelApplyUtils.applyModelInventory(refr, msg.inventory);
-          }
           if (msg.props) {
+            if (msg.props.inventory) {
+              ModelApplyUtils.applyModelInventory(refr, msg.props.inventory);
+            }
             ModelApplyUtils.applyModelIsOpen(refr, !!msg.props['isOpen']);
             ModelApplyUtils.applyModelIsHarvested(
               refr,
               !!msg.props['isHarvested'],
             );
+
+            // TODO: move to a separate module
+            if (msg.props.setNodeScale) {
+              const setNodeScale = msg.props.setNodeScale;
+              for (const key in setNodeScale) {
+                const scale = setNodeScale[key];
+                const firstPerson = false;
+                this.sp.NetImmerse.setNodeScale(refr, key, scale, firstPerson);
+                logTrace(this, refr.getFormID().toString(16), `Applied node scale`, scale, `to`, key);
+              }
+            }
+
+            // TODO: move to a separate module
+            if (msg.props.setNodeTextureSet) {
+              const setNodeTextureSet = msg.props.setNodeTextureSet;
+              for (const key in setNodeTextureSet) {
+                const textureSetId = setNodeTextureSet[key];
+                const firstPerson = false;
+
+                const textureSet = this.sp.TextureSet.from(Game.getFormEx(textureSetId));
+                if (textureSet !== null) {
+                  this.sp.NetImmerse.setNodeTextureSet(refr, key, textureSet, firstPerson);
+                  logTrace(this, refr.getFormID().toString(16), `Applied texture set`, textureSetId.toString(16), `to`, key);
+                } else {
+                  logError(this, refr.getFormID().toString(16), `Failed to apply texture set`, textureSetId.toString(16), `to`, key);
+                }
+              }
+            }
+
             ModelApplyUtils.applyModelIsDisabled(refr, !!msg.props['disabled']);
+
+            // TODO: move to a separate module
             const animation = msg.props.lastAnimation;
             if (typeof animation === "string") {
               const refrid = refr.getFormID();
@@ -341,29 +303,43 @@ export class RemoteServer extends ClientListener {
             }
 
 
-            const displayName = msg.props.displayName;
+            let displayName = msg.props.displayName;
+
+            // keep in sync with spSnippetService.ts
             if (typeof displayName === "string") {
+
+              const replaceValue = refr.getBaseObject()?.getName();
+
+              if (replaceValue !== undefined) {
+                displayName = displayName.replace(/%original_name%/g, replaceValue);
+              }
+              else {
+                logError(this, "Couldn't get a replaceValue for SetDisplayName, refr.getFormID() was", refr.getFormID().toString(16));
+              }
+
               refr.setDisplayName(displayName, true);
-              this.logTrace(`calling setDisplayName "${displayName}" for ${refr.getFormID().toString(16)}`);
+              logTrace(this, `calling setDisplayName`, displayName, `for`, refr.getFormID().toString(16));
             }
           }
         } else {
-          printConsole('Failed to apply model to', refrId.toString(16));
+          logError(this, 'Failed to apply model to', refrId.toString(16));
         }
       });
       return;
     }
 
-    printConsole("Create actor")
+    logTrace(this, "Create actor");
 
     this.loggingStartMoment = 0;
 
     const i = this.getIdManager().allocateIdFor(msg.idx);
-    if (this.worldModel.forms.length <= i) this.worldModel.forms.length = i + 1;
+    if (this.worldModel.forms.length <= i) {
+      this.worldModel.forms.length = i + 1;
+    }
 
-    let movement: Movement = null as unknown as Movement;
+    let movement: Movement | undefined = undefined;
     // TODO: better check if it is an npc (not an object reference)
-    if ((msg.refrId as number) >= 0xff000000) {
+    if (msg.refrId !== undefined && msg.refrId >= 0xff000000) {
       movement = {
         pos: msg.transform.pos,
         rot: msg.transform.rot,
@@ -391,10 +367,6 @@ export class RemoteServer extends ClientListener {
     };
     this.worldModel.forms[i] = form;
 
-    if (msg.isMe) {
-      updateOwner.setOwnerModel(form);
-    }
-
     if (msg.appearance) {
       form.appearance = msg.appearance;
     }
@@ -407,10 +379,14 @@ export class RemoteServer extends ClientListener {
       form.isDead = msg.isDead;
     }
 
+    if (msg.animation) {
+      form.animation = msg.animation;
+    }
+
     if (msg.props) {
       for (const propName in msg.props) {
         const i = this.getIdManager().getId(msg.idx);
-        (form as Record<string, unknown>)[propName] = msg.props[propName];
+        (form as Record<string, unknown>)[propName] = msg.props[propName as keyof CreateActorMessageAdditionalProps];
       }
     }
 
@@ -425,28 +401,21 @@ export class RemoteServer extends ClientListener {
       this.onSetRaceMenuOpenMessage({ message: { type: 'setRaceMenuOpen', open: true } });
 
     const applyPcInv = () => {
-      applyInventory(
-        Game.getPlayer() as Actor,
-        msg.equipment
-          ? {
-            entries: msg.equipment.inv.entries.filter(
-              (x) => !!Armor.from(Game.getFormEx(x.baseId)),
-            ),
-          }
-          : { entries: [] },
-        false,
-      );
+      if (msg.equipment) {
+        applyEquipment(Game.getPlayer()!, msg.equipment)
+      }
+
       if (msg.props && msg.props.inventory)
         this.onSetInventoryMessage({
           message: {
             type: 'setInventory',
-            inventory: (msg.props as any).inventory as Inventory,
+            inventory: msg.props.inventory
           }
         });
     };
 
-    if (msg.isMe && msg.props) {
-      const learnedSpells = msg.props['learnedSpells'] as Array<number>;
+    if (msg.isMe && msg.props && msg.props.learnedSpells) {
+      const learnedSpells = msg.props.learnedSpells;
 
       once('update', () => {
         Utility.wait(1).then(() => {
@@ -455,8 +424,8 @@ export class RemoteServer extends ClientListener {
           if (player) {
             removeAllSpells(player);
             learnSpells(player, learnedSpells);
-            printConsole(
-              `player learnedSpells: ${JSON.stringify(learnedSpells)}`,
+            logTrace(this,
+              `player learnedSpells:`, JSON.stringify(learnedSpells),
             );
           }
         });
@@ -481,10 +450,10 @@ export class RemoteServer extends ClientListener {
         // In case of connection lost this is essential
         if (!spawnTask.running) {
           spawnTask.running = true;
-          printConsole('Using moveRefrToPosition to spawn player');
+          logTrace(this, 'Using moveRefrToPosition to spawn player');
           (async () => {
             while (true) {
-              printConsole('Spawning...');
+              logTrace(this, 'Spawning...');
               TESModPlatform.moveRefrToPosition(
                 Game.getPlayer(),
                 Cell.from(Game.getFormEx(msg.transform.worldOrCell)),
@@ -522,7 +491,7 @@ export class RemoteServer extends ClientListener {
             applyAppearanceToPlayer(msg.appearance);
             if (msg.appearance.isFemale)
               // Fix gender-specific walking anim
-              (Game.getPlayer() as Actor).resurrect();
+              (Game.getPlayer()!).resurrect();
           }
         }
 
@@ -570,7 +539,7 @@ export class RemoteServer extends ClientListener {
               loadOrder.push(this.sp.Game.getModName(i));
             }
 
-            this.logTrace(`loading game in world/cell ${msg.transform.worldOrCell.toString(16)}`);
+            logTrace(this, `loading game in world/cell`, msg.transform.worldOrCell.toString(16));
             const loadGameService = this.controller.lookupListener(LoadGameService);
             loadGameService.loadGame(
               msg.transform.pos,
@@ -600,7 +569,7 @@ export class RemoteServer extends ClientListener {
                 applyAppearanceToPlayer(msg.appearance);
                 if (msg.appearance.isFemale)
                   // Fix gender-specific walking anim
-                  (Game.getPlayer() as Actor).resurrect();
+                  (Game.getPlayer()!).resurrect();
               }
             });
           }
@@ -642,7 +611,8 @@ export class RemoteServer extends ClientListener {
     const form = this.worldModel.forms[i];
 
     if (form === undefined) {
-      return this.logError(`onUpdateMovementMessage - Form with idx ${msg.idx} not found`);
+      logError(this, `onUpdateMovementMessage - Form with idx`, msg.idx, `not found`);
+      return;
     }
 
     form.movement = msg.data;
@@ -660,7 +630,8 @@ export class RemoteServer extends ClientListener {
     const form = this.worldModel.forms[i];
 
     if (form === undefined) {
-      return this.logError(`onUpdateAnimationMessage - Form with idx ${msg.idx} not found`);
+      logError(this, `onUpdateAnimationMessage - Form with idx`, msg.idx, `not found`);
+      return;
     }
 
     form.animation = msg.data;
@@ -674,7 +645,8 @@ export class RemoteServer extends ClientListener {
     const form = this.worldModel.forms[i];
 
     if (form === undefined) {
-      return this.logError(`onUpdateAppearanceMessage - Form with idx ${msg.idx} not found`);
+      logError(this, `onUpdateAppearanceMessage - Form with idx`, msg.idx, `not found`);
+      return;
     }
 
     form.appearance = msg.data || undefined;
@@ -688,7 +660,7 @@ export class RemoteServer extends ClientListener {
     if (i === this.getMyActorIndex() && newAppearance) {
       this.controller.once("update", () => {
         applyAppearanceToPlayer(newAppearance);
-        this.logTrace("Applied appearance to the player");
+        logTrace(this, "Applied appearance to the player");
       });
     }
   }
@@ -701,7 +673,8 @@ export class RemoteServer extends ClientListener {
     const form = this.worldModel.forms[i];
 
     if (form === undefined) {
-      return this.logError(`onUpdateEquipmentMessage - Form with idx ${msg.idx} not found`);
+      logError(this, `onUpdateEquipmentMessage - Form with idx`, msg.idx, `not found`);
+      return;
     }
 
     form.equipment = msg.data;
@@ -710,12 +683,12 @@ export class RemoteServer extends ClientListener {
   private onUpdatePropertyMessage(event: ConnectionMessage<UpdatePropertyMessage>): void {
     const msg = event.message;
 
-    if (skipFormViewCreation(msg)) {
+    if (this.skipFormViewCreation(msg)) {
       const refrId = msg.refrId;
       once('update', () => {
         const refr = ObjectReference.from(Game.getFormEx(refrId));
         if (!refr) {
-          printConsole('UpdateProperty: refr not found');
+          logError(this, 'UpdateProperty: refr not found');
           return;
         }
         if (msg.propName === 'inventory') {
@@ -738,13 +711,14 @@ export class RemoteServer extends ClientListener {
   private onDeathStateContainerMessage(event: ConnectionMessage<DeathStateContainerMessage>): void {
     const msg = event.message;
 
-    this.logTrace(`Received death state: ${JSON.stringify(msg.tIsDead)}`);
+    logTrace(this, `Received death state:`, JSON.stringify(msg.tIsDead));
 
     const id = this.getIdManager().getId(msg.tIsDead.idx);
     const form = this.worldModel.forms[id];
 
     if (form === undefined) {
-      return this.logError(`onDeathStateContainerMessage - Form with idx ${msg.tIsDead.idx} not found`);
+      logError(this, `onDeathStateContainerMessage - Form with idx`, msg.tIsDead.idx, `not found`);
+      return;
     }
 
     if (
@@ -789,7 +763,7 @@ export class RemoteServer extends ClientListener {
     this.worldModel.forms = [];
     this.worldModel.playerCharacterFormIdx = -1;
 
-    this.logTrace("Handle connection accepted");
+    logTrace(this, "Handle connection accepted");
 
     this.loginWithSkympIoCredentials();
   }
@@ -830,99 +804,10 @@ export class RemoteServer extends ClientListener {
 
     switch (msg.content.customPacketType) {
       case 'loginRequired':
-        this.logTrace('loginRequired received');
+        logTrace(this, 'loginRequired received');
         this.loginWithSkympIoCredentials();
         break;
     }
-  }
-
-  private updateGamemodeUpdateFunctions(
-    storageVar: string,
-    functionSources: Record<string, string>,
-  ): void {
-    storage[storageVar] = JSON.parse(JSON.stringify(functionSources));
-    for (const propName of Object.keys(functionSources)) {
-      try {
-        (storage[storageVar] as any)[propName] = new Function(
-          'ctx',
-          (storage[storageVar] as any)[propName],
-        );
-        const emptyFunction = functionSources[propName] === '';
-        if (emptyFunction) {
-          delete (storage[storageVar] as any)[propName];
-          printConsole(`'${storageVar}.${propName}' -`, 'Added empty');
-        } else {
-          printConsole(`'${storageVar}.${propName}' -`, 'Added');
-        }
-      } catch (e) {
-        printConsole(`'${storageVar}.${propName}' -`, e);
-      }
-    }
-    storage[`${storageVar}_keys`] = Object.keys(storage[storageVar] as any);
-  }
-
-  private onUpdateGamemodeDataMessage(event: ConnectionMessage<UpdateGamemodeDataMessage>): void {
-    const msg = event.message;
-
-    //
-    // updateOwnerFunctions/updateNeighborFunctions
-    //
-    storage['updateNeighborFunctions'] = undefined;
-    storage['updateOwnerFunctions'] = undefined;
-
-    this.updateGamemodeUpdateFunctions(
-      'updateNeighborFunctions',
-      msg.updateNeighborFunctions || {},
-    );
-    this.updateGamemodeUpdateFunctions(
-      'updateOwnerFunctions',
-      msg.updateOwnerFunctions || {},
-    );
-
-    //
-    // EventSource
-    //
-    if (!Array.isArray(storage['eventSourceContexts'])) {
-      storage['eventSourceContexts'] = [];
-    } else {
-      storage['eventSourceContexts'].forEach((ctx: Record<string, unknown>) => {
-        ctx.sendEvent = () => { };
-        ctx._expired = true;
-      });
-    }
-    const eventNames = Object.keys(msg.eventSources);
-    eventNames.forEach((eventName) => {
-      try {
-        const fn = new Function('ctx', msg.eventSources[eventName]);
-        const ctx = {
-          sp,
-          sendEvent: (...args: unknown[]) => {
-            const message: CustomEventMessage = {
-              t: messages.MsgType.CustomEvent,
-              args,
-              eventName
-            };
-            this.controller.emitter.emit("sendMessage", {
-              message: message,
-              reliability: "reliable"
-            });
-          },
-          getFormIdInServerFormat: (clientsideFormId: number) => {
-            return localIdToRemoteId(clientsideFormId);
-          },
-          getFormIdInClientFormat: (serversideFormId: number) => {
-            return remoteIdToLocalId(serversideFormId);
-          },
-          _fn: fn,
-          _eventName: eventName,
-          state: {},
-        };
-        (storage['eventSourceContexts'] as Record<string, any>).push(ctx);
-        setupEventSource(ctx);
-      } catch (e) {
-        printConsole(`'eventSources.${eventName}' -`, e);
-      }
-    });
   }
 
   /** Packet handlers end **/
@@ -957,10 +842,10 @@ export class RemoteServer extends ClientListener {
   private loginWithSkympIoCredentials() {
     this.loggingStartMoment = Date.now();
 
-    const authData = storage[AuthGameData.storageKey] as AuthGameData | undefined;
+    const authData = storage[authGameDataStorageKey] as AuthGameData | undefined;
     if (authData?.local) {
-      this.logTrace(
-        `Logging in offline mode, profileId = ${authData.local.profileId}`,
+      logTrace(this,
+        `Logging in offline mode, profileId =`, authData.local.profileId
       );
       const message: CustomPacketMessage = {
         t: messages.MsgType.CustomPacket,
@@ -979,7 +864,7 @@ export class RemoteServer extends ClientListener {
     }
 
     if (authData?.remote) {
-      this.logTrace('Logging in as a master API user');
+      logTrace(this, 'Logging in as a master API user');
       const message: CustomPacketMessage = {
         t: messages.MsgType.CustomPacket,
         content: {
@@ -996,7 +881,43 @@ export class RemoteServer extends ClientListener {
       return;
     }
 
-    this.logError('Not found authentication method');
+    logError(this, 'Not found authentication method');
+  };
+
+  private onceLoad(
+    refrId: number,
+    callback: (refr: ObjectReference) => void,
+    maxAttempts: number = 120,
+  ) {
+    once('update', () => {
+      const refr = ObjectReference.from(Game.getFormEx(refrId));
+      if (refr) {
+        callback(refr);
+      } else {
+        maxAttempts--;
+        if (maxAttempts > 0) {
+          once('update', () => this.onceLoad(refrId, callback, maxAttempts));
+        } else {
+          logError(this, 'Failed to load object reference ' + refrId.toString(16));
+        }
+      }
+    });
+  };
+
+  private skipFormViewCreation(
+    msg: UpdatePropertyMessage | CreateActorMessage,
+  ) {
+    // Optimization added in #1186, however it doesn't work for doors for some reason
+    return msg.refrId && msg.refrId < 0xff000000 && msg.baseRecordType !== 'DOOR';
+  };
+
+  private showConnectionError() {
+    // TODO: unhardcode it or render via browser
+    this.sp.printConsole("Server connection failed. This may be caused by one of the following:");
+    this.sp.printConsole("1. You are not present on the SkyMP Discord server");
+    this.sp.printConsole("2. You have been banned by server admins");
+    this.sp.printConsole("3. There is some technical issue. Try linking your Discord account again");
+    this.sp.printConsole("If you feel that something is wrong, please contact us on Discord.");
   };
 
   private loggingStartMoment = 0;

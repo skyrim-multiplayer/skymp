@@ -84,6 +84,14 @@ nlohmann::json MpChangeForm::ToJson(const MpChangeForm& changeForm)
   //   res["lastAnimation"] = *changeForm.lastAnimation;
   // }
 
+  if (changeForm.setNodeTextureSet.has_value()) {
+    res["setNodeTextureSet"] = *changeForm.setNodeTextureSet;
+  }
+
+  if (changeForm.setNodeScale.has_value()) {
+    res["setNodeScale"] = *changeForm.setNodeScale;
+  }
+
   if (changeForm.displayName.has_value()) {
     res["displayName"] = *changeForm.displayName;
   }
@@ -109,6 +117,7 @@ MpChangeForm MpChangeForm::JsonToChangeForm(simdjson::dom::element& element)
     spawnPointCellOrWorldDesc("spawnPoint_cellOrWorldDesc"),
     spawnDelay("spawnDelay"), effects("effects"),
     templateChain("templateChain"), lastAnimation("lastAnimation"),
+    setNodeTextureSet("setNodeTextureSet"), setNodeScale("setNodeScale"),
     displayName("displayName");
 
   MpChangeForm res;
@@ -231,6 +240,38 @@ MpChangeForm MpChangeForm::JsonToChangeForm(simdjson::dom::element& element)
     const char* tmp;
     ReadEx(element, lastAnimation, &tmp);
     res.lastAnimation = tmp;
+  }
+
+  if (element.at_pointer(setNodeTextureSet.GetData()).error() ==
+      simdjson::error_code::SUCCESS) {
+    simdjson::dom::element data;
+    ReadEx(element, setNodeTextureSet, &data);
+
+    if (res.setNodeTextureSet == std::nullopt) {
+      res.setNodeTextureSet = std::map<std::string, std::string>();
+    }
+
+    for (auto [key, value] : data.get_object()) {
+      std::string keyStr = key.data();
+      std::string valueStr = value.get_string().value().data();
+      res.setNodeTextureSet->emplace(keyStr, valueStr);
+    }
+  }
+
+  if (element.at_pointer(setNodeScale.GetData()).error() ==
+      simdjson::error_code::SUCCESS) {
+    simdjson::dom::element data;
+    ReadEx(element, setNodeScale, &data);
+
+    if (res.setNodeScale == std::nullopt) {
+      res.setNodeScale = std::map<std::string, float>();
+    }
+
+    for (auto [key, value] : data.get_object()) {
+      std::string keyStr = key.data();
+      float valueFloat = static_cast<float>(value.get_double().value());
+      res.setNodeScale->emplace(keyStr, valueFloat);
+    }
   }
 
   if (element.at_pointer(displayName.GetData()).error() ==

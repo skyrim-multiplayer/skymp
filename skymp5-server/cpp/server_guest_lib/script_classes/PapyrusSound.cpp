@@ -25,7 +25,7 @@ VarValue PapyrusSound::Play(VarValue self,
       auto targetRefr = dynamic_cast<MpActor*>(listener);
       if (targetRefr) {
         SpSnippet(GetName(), funcName, serializedArgs.data(), selfId)
-          .Execute(targetRefr);
+          .Execute(targetRefr, SpSnippetMode::kNoReturnResult);
       }
     }
   }

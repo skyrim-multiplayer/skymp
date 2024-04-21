@@ -67,7 +67,8 @@ VarValue PapyrusActor::SetActorValue(VarValue self,
               actor->GetFormId())
       .Execute(it == actor->GetParent()->hosters.end()
                  ? actor
-                 : &actor->GetParent()->GetFormAt<MpActor>(it->second));
+                 : &actor->GetParent()->GetFormAt<MpActor>(it->second),
+               SpSnippetMode::kNoReturnResult);
   }
   return VarValue();
 }
@@ -171,7 +172,7 @@ VarValue PapyrusActor::SetAlpha(VarValue self,
       if (targetRefr) {
         SpSnippet(GetName(), funcName, serializedArgs.data(),
                   selfRefr->GetFormId())
-          .Execute(targetRefr);
+          .Execute(targetRefr, SpSnippetMode::kNoReturnResult);
       }
     }
   }
@@ -219,7 +220,23 @@ VarValue PapyrusActor::EquipItem(VarValue self,
     SpSnippet(GetName(), "EquipItem",
               SpSnippetFunctionGen::SerializeArguments(arguments).data(),
               actor->GetFormId())
-      .Execute(actor);
+      .Execute(actor, SpSnippetMode::kNoReturnResult);
+  }
+  return VarValue::None();
+}
+
+VarValue PapyrusActor::UnequipItem(VarValue self,
+                                   const std::vector<VarValue>& arguments)
+{
+  if (arguments.size() < 3) {
+    throw std::runtime_error("UnequipItem requires at least 3 arguments");
+  }
+
+  if (auto actor = GetFormPtr<MpActor>(self)) {
+    SpSnippet(GetName(), "UnequipItem",
+              SpSnippetFunctionGen::SerializeArguments(arguments).data(),
+              actor->GetFormId())
+      .Execute(actor, SpSnippetMode::kNoReturnResult);
   }
   return VarValue::None();
 }
@@ -234,7 +251,7 @@ VarValue PapyrusActor::SetDontMove(VarValue self,
     SpSnippet(GetName(), "SetDontMove",
               SpSnippetFunctionGen::SerializeArguments(arguments).data(),
               actor->GetFormId())
-      .Execute(actor);
+      .Execute(actor, SpSnippetMode::kNoReturnResult);
   }
   return VarValue::None();
 }
@@ -320,7 +337,7 @@ VarValue PapyrusActor::AddSpell(VarValue self,
       SpSnippet(GetName(), "AddSpell",
                 SpSnippetFunctionGen::SerializeArguments(arguments).data(),
                 actor->GetFormId())
-        .Execute(actor);
+        .Execute(actor, SpSnippetMode::kNoReturnResult);
 
       return VarValue(true);
     }
@@ -364,7 +381,7 @@ VarValue PapyrusActor::RemoveSpell(VarValue self,
       SpSnippet(GetName(), "RemoveSpell",
                 SpSnippetFunctionGen::SerializeArguments(arguments).data(),
                 actor->GetFormId())
-        .Execute(actor);
+        .Execute(actor, SpSnippetMode::kNoReturnResult);
 
       return VarValue(true);
     }
@@ -429,6 +446,7 @@ void PapyrusActor::Register(
             &PapyrusActor::GetActorValuePercentage);
   AddMethod(vm, "SetAlpha", &PapyrusActor::SetAlpha);
   AddMethod(vm, "EquipItem", &PapyrusActor::EquipItem);
+  AddMethod(vm, "UnequipItem", &PapyrusActor::UnequipItem);
   AddMethod(vm, "SetDontMove", &PapyrusActor::SetDontMove);
   AddMethod(vm, "IsDead", &PapyrusActor::IsDead);
   AddMethod(vm, "WornHasKeyword", &PapyrusActor::WornHasKeyword);

@@ -1,23 +1,16 @@
 import * as sp from "skyrimPlatform";
 import { EventEmitterType } from "../events/events";
 
-export interface ClientListenerEvents { 
-    on: typeof sp.on, 
-    once: typeof sp.once 
+export interface ClientListenerEvents {
+    on: typeof sp.on,
+    once: typeof sp.once
 };
 
 export type Sp = Omit<typeof sp, "on" | "once">;
 
 export abstract class ClientListener {
-    // TODO: redirect this to spdlog
-    protected logError(error: string) {
-        sp.printConsole(`Error in ${this.constructor.name}:`, error);
-    }
-
-    // TODO: redirect this to spdlog
-    protected logTrace(trace: string) {
-        sp.printConsole(`Trace in ${this.constructor.name}:`, trace);
-    }
+    // Don't let TypeScript treat this class as empty
+    private _nonEmptyClassMark = '';
 }
 
 export type ClientListenerConstructor<T> = {
@@ -30,7 +23,7 @@ export type ListenerLookupController = {
 };
 
 export type EventsController = {
-    readonly on: typeof sp.on, 
+    readonly on: typeof sp.on,
     readonly once: typeof sp.once,
     readonly emitter: EventEmitterType
 };

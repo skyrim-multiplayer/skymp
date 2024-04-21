@@ -4,7 +4,7 @@ import * as sp from "skyrimPlatform";
 
 export class SpApiInteractor {
     static setup(listeners: ClientListener[]) {
-        listeners.forEach(listener => SpApiInteractor.registerListenerForLookup(listener.constructor.name, listener));
+        listeners.forEach(listener => SpApiInteractor.registerListenerForLookup(listener.constructor, listener));
     }
 
     static getControllerInstance(): CombinedController {
@@ -17,7 +17,7 @@ export class SpApiInteractor {
             once: sp.once,
             emitter: EventEmitterFactory.makeEventEmitter(),
             lookupListener<T extends ClientListener>(constructor: ClientListenerConstructor<T>): T {
-                const listener = SpApiInteractor.listenersForLookupByName.get(constructor.name);
+                const listener = SpApiInteractor.listenersForLookupByName.get(constructor);
                 if (listener === undefined) {
                     throw new Error(`listener not found for name '${constructor.name}'`);
                 }
@@ -30,14 +30,14 @@ export class SpApiInteractor {
         return SpApiInteractor.controller;
     }
 
-    private static registerListenerForLookup(listenerName: string, listener: ClientListener): void {
-        if (SpApiInteractor.listenersForLookupByName.has(listenerName)) {
-            throw new Error(`listener re-registration for name '${listenerName}'`);
+    private static registerListenerForLookup(constructor: Function, listener: ClientListener): void {
+        if (SpApiInteractor.listenersForLookupByName.has(constructor)) {
+            throw new Error(`listener re-registration for name '${constructor}'`);
         }
-        SpApiInteractor.listenersForLookupByName.set(listenerName, listener);
+        SpApiInteractor.listenersForLookupByName.set(constructor, listener);
     }
 
-    private static listenersForLookupByName = new Map<string, ClientListener>();
+    private static listenersForLookupByName = new Map<Function, ClientListener>();
 
     private static controller?: CombinedController;
 }

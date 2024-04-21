@@ -1,4 +1,4 @@
-name: PR Windows - Special Edition 1.5 (Old)
+name: PR Windows
 
 on:
   push:
@@ -11,142 +11,208 @@ on:
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   BUILD_TYPE: Release
-  VCPKG_BINARY_SOURCES: 'clear;nuget,GitHub,readwrite'
+  VCPKG_BINARY_SOURCES: 'clear;x-gha,readwrite'
   VCPKG_FEATURE_FLAGS: 'manifests'
 
 jobs:
   build:
+    strategy:
+      matrix:
+        include:
+          - DESCRIPTION: 'Skyrim Special Edition (1.5)'
+            SKYRIM_SE_FLAG: ON
+            SP_NEXUS_ARTIFACT_NAME: SP-SE-nexus
+            DEPLOY_BRANCH: ""
+            ONLY_PUSH: false
+            DIST_ARTIFACT_NAME: dist
+          - DESCRIPTION: 'Skyrim Anniversary Edition (1.6)'
+            SKYRIM_SE_FLAG: OFF
+            SP_NEXUS_ARTIFACT_NAME: SP-AE-nexus
+            DEPLOY_BRANCH: ""
+            ONLY_PUSH: false
+            DIST_ARTIFACT_NAME: dist
+          - DESCRIPTION: 'Skyrim Anniversary Edition (1.6) - Indev'
+            SKYRIM_SE_FLAG: OFF
+            SP_NEXUS_ARTIFACT_NAME: SP-AE-nexus
+            DEPLOY_BRANCH: "indev"
+            ONLY_PUSH: true
+            DIST_ARTIFACT_NAME: dist-indev
+          - DESCRIPTION: 'Skyrim Anniversary Edition (1.6) - SweetPie'
+            SKYRIM_SE_FLAG: OFF
+            SP_NEXUS_ARTIFACT_NAME: SP-AE-nexus
+            DEPLOY_BRANCH: "sweetpie"
+            ONLY_PUSH: true
+            DIST_ARTIFACT_NAME: dist-sweetpie
+
     # VS 2019 is still supported, but GitHub windows-2019 runners have unsupported WinSDK version
     runs-on: windows-2022
+    name: PR Windows - ${{ matrix.DESCRIPTION }}
 
     steps:
     - uses: actions/checkout@v2
+      if: ${{ !matrix.ONLY_PUSH || github.event_name == 'push' }}
       with:
         fetch-depth: 1
         submodules: 'true'
+    
+    - name: Gather PRs
+      if: ${{ matrix.DEPLOY_BRANCH != '' && (!matrix.ONLY_PUSH || github.event_name == 'push')}}
+      uses: Pospelove/auto-merge-action@main
+      with:
+        path: ${{github.workspace}}
+        repositories: |
+          [
+            {
+              "owner": "skyrim-multiplayer",
+              "repo": "skymp",
+              "labels": ["merge-to:${{matrix.DEPLOY_BRANCH}}"]
+            },
+            {
+              "owner": "skyrim-multiplayer",
+              "repo": "skymp5-patches",
+              "labels": ["merge-to:${{matrix.DEPLOY_BRANCH}}"],
+              "token": "${{secrets.SKYMP5_PATCHES_PAT}}"
+            }
+          ]
+
+    - name: Early build skymp5-client
+      if: ${{ !matrix.ONLY_PUSH || github.event_name == 'push' }}
+      run: |
+        cd ${{github.workspace}}/skymp5-client
+        yarn
+        yarn build
 
     - name: Install tools
+      if: ${{ !matrix.ONLY_PUSH || github.event_name == 'push' }}
       run: choco install opencppcoverage
 
     - name: Move vcpkg submodule to a larger drive
+      if: ${{ !matrix.ONLY_PUSH || github.event_name == 'push' }}
       run: |
         Remove-Item -Recurse -Force C:/vcpkg
         Move-Item -Path ./vcpkg C:/vcpkg
 
     - name: Bootstrap vcpkg
+      if: ${{ !matrix.ONLY_PUSH || github.event_name == 'push' }}
       run: C:/vcpkg/bootstrap-vcpkg.bat
 
     - name: Debug - free space
+      if: ${{ !matrix.ONLY_PUSH || github.event_name == 'push' }}
       run: Get-PSDrive
 
-    - name: 'Setup NuGet Credentials'
-      shell: 'bash'
-      run: >
-        `C:/vcpkg/vcpkg.exe fetch nuget | tail -n 1`
-        sources add
-        -source "https://nuget.pkg.github.com/skyrim-multiplayer/index.json"
-        -storepasswordincleartext
-        -name "GitHub"
-        -username "skyrim-multiplayer"
-        -password "${{ secrets.GITHUB_TOKEN }}"
+    - uses: actions/github-script@v6
+      if: ${{ !matrix.ONLY_PUSH || github.event_name == 'push' }}
+      with:
+        script: |
+          core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
+          core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
 
     # Download Skyrim SE data files
     - uses: suisei-cn/actions-download-file@v1
+      if: ${{ !matrix.ONLY_PUSH || github.event_name == 'push' }}
       name: Download Skyrim.esm
       with:
         url: "https://gitlab.com/pospelov/se-data/-/raw/main/Skyrim.esm"
         target: ${{github.workspace}}/skyrim_data_files/
     - uses: suisei-cn/actions-download-file@v1
+      if: ${{ !matrix.ONLY_PUSH || github.event_name == 'push' }}
       name: Download Update.esm
       with:
         url: "https://gitlab.com/pospelov/se-data/-/raw/main/Update.esm"
         target: ${{github.workspace}}/skyrim_data_files/
     - uses: suisei-cn/actions-download-file@v1
+      if: ${{ !matrix.ONLY_PUSH || github.event_name == 'push' }}
       name: Download Dawnguard.esm
       with:
         url: "https://gitlab.com/pospelov/se-data/-/raw/main/Dawnguard.esm"
         target: ${{github.workspace}}/skyrim_data_files/
     - uses: suisei-cn/actions-download-file@v1
+      if: ${{ !matrix.ONLY_PUSH || github.event_name == 'push' }}
       name: Download HearthFires.esm
       with:
         url: "https://gitlab.com/pospelov/se-data/-/raw/main/HearthFires.esm"
         target: ${{github.workspace}}/skyrim_data_files/
     - uses: suisei-cn/actions-download-file@v1
+      if: ${{ !matrix.ONLY_PUSH || github.event_name == 'push' }}
       name: Download Dragonborn.esm
       with:
         url: "https://gitlab.com/pospelov/se-data/-/raw/main/Dragonborn.esm"
         target: ${{github.workspace}}/skyrim_data_files/
 
     - name: Configure CMake
+      if: ${{ !matrix.ONLY_PUSH || github.event_name == 'push' }}
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
       # Outputs profiling data in Google Trace Format, which can be parsed by the about:tracing tab of Google Chrome or using a plugin for a tool like Trace Compass.
-      run: > 
+      run: >
         cmake -B ${{github.workspace}}/build
         -DVCPKG_ROOT=C:/vcpkg
         -DCPPCOV_PATH="C:\Program Files\OpenCppCoverage"
         -DUNIT_DATA_DIR="skyrim_data_files"
         -DPREPARE_NEXUS_ARCHIVES=ON
         -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
-        -DSKYRIM_SE=ON
+        -DSKYRIM_SE=${{ matrix.SKYRIM_SE_FLAG }}
         --profiling-output cmake-profiling-output
         --profiling-format google-trace
 
     - uses: actions/upload-artifact@v3
+      if: ${{ !matrix.ONLY_PUSH || github.event_name == 'push' }}
       with:
         name: cmake-profiling-output
         path: cmake-profiling-output
 
     - name: Build
+      if: ${{ !matrix.ONLY_PUSH || github.event_name == 'push' }}
       # Build your program with the given configuration
       run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
 
     - name: Test
+      if: ${{ !matrix.ONLY_PUSH || github.event_name == 'push' }}
       working-directory: ${{github.workspace}}/build
       # Execute tests defined by the CMake configuration.  
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
       run: ctest -C ${{env.BUILD_TYPE}} --verbose # --output-on-failure
 
     - uses: actions/upload-artifact@v3
+      if: ${{ !matrix.ONLY_PUSH || github.event_name == 'push' }}
       with:
-        name: dist
+        name: ${{ matrix.DIST_ARTIFACT_NAME }}
         path: ${{github.workspace}}/build/dist
+
     - uses: actions/upload-artifact@v3
+      if: ${{ !matrix.ONLY_PUSH || github.event_name == 'push' }}
       with:
         name: skymp5-client-js
         path: ${{github.workspace}}/build/dist/client/Data/Platform/Plugins/skymp5-client.js
 
     - uses: actions/upload-artifact@v3
+      if: ${{ !matrix.ONLY_PUSH || github.event_name == 'push' }}
       with:
         name: coverage
         path: ${{github.workspace}}/build/__coverage
       
     - uses: actions/upload-artifact@v3
+      if: ${{ !matrix.ONLY_PUSH || github.event_name == 'push' }}
       with:
-        name: SP-SE-nexus
+        name: ${{ matrix.SP_NEXUS_ARTIFACT_NAME }}
         # Data folder is skipped for mod managers
         path: ${{github.workspace}}/build/nexus/sp/data/*
+
     - uses: actions/upload-artifact@v3
+      if: ${{ !matrix.ONLY_PUSH || github.event_name == 'push' }}
       with:
         name: papyrus-vm-nexus
         # Data folder is skipped for mod managers
         path: ${{github.workspace}}/build/nexus/papyrus-vm/*
 
     - name: Debug - free space
-      if: 'always()'
+      if: ${{ !matrix.ONLY_PUSH || github.event_name == 'push' }}
       run: Get-PSDrive
 
     - uses: actions/upload-artifact@v3
-      if: 'always()'
+      if: ${{ !matrix.ONLY_PUSH || github.event_name == 'push' }}
       with:
         name: msbuild_files
         path: |
           ${{github.workspace}}/build/**/*.sln
           ${{github.workspace}}/build/**/*.vcxproj
-
-    - uses: actions/upload-artifact@v3
-      if: 'always()'
-      with:
-        name: vcpkg_include
-        path: |
-          ${{github.workspace}}/build/vcpkg_installed/*/include
