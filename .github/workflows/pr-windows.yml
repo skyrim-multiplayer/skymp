@@ -37,11 +37,11 @@ jobs:
       run: |
         cd C:/vcpkg
         git remote add submodule ${{github.workspace}}/vcpkg
-        git fetch submodule
+        git fetch submodule $(git -C ${{github.workspace}}/vcpkg rev-parse HEAD)
         git reset --hard $(git -C ${{github.workspace}}/vcpkg rev-parse HEAD)
 
     - name: Install tools
-      run: choco install opencppcoverage
+      run: choco install opencppcoverage ninja
 
     - name: Bootstrap vcpkg
       run: C:/vcpkg/bootstrap-vcpkg.bat
