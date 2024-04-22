@@ -18,6 +18,7 @@
 #include "script_storages/IScriptStorage.h"
 #include <algorithm>
 #include <deque>
+#include <fmt/format.h>
 #include <iterator>
 #include <optional>
 #include <unordered_map>
@@ -83,15 +84,11 @@ void WorldState::AddForm(std::unique_ptr<MpForm> form, uint32_t formId,
                          const MpChangeForm* optionalChangeFormToApply)
 {
   if (!skipChecks && forms.find(formId) != forms.end()) {
-
     throw std::runtime_error(
-      static_cast<const std::stringstream&>(std::stringstream()
-                                            << "Form with id " << std::hex
-                                            << formId << " already exists")
-        .str());
+      fmt::format("Form with id {:#x} already exists", formId));
   }
-  form->Init(this, formId, optionalChangeFormToApply != nullptr);
 
+  // Assign formIndex before Init
   if (auto formIndex = dynamic_cast<FormIndex*>(form.get())) {
     if (!formIdxManager)
       formIdxManager.reset(new MakeID(FormIndex::g_invalidIdx - 1));
@@ -102,6 +99,10 @@ void WorldState::AddForm(std::unique_ptr<MpForm> form, uint32_t formId,
       formByIdxUnreliable.resize(formIndex->idx + 1, nullptr);
     formByIdxUnreliable[formIndex->idx] = form.get();
   }
+
+  // MpObjectReference::Init requests save for newly created forms. That's why
+  // we want formIndex to be assigned before init.
+  form->Init(this, formId, optionalChangeFormToApply != nullptr);
 
   auto it = forms.insert({ formId, std::move(form) }).first;
 
