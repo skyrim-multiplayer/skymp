@@ -85,7 +85,7 @@ void WorldState::AddForm(std::unique_ptr<MpForm> form, uint32_t formId,
 {
   if (!skipChecks && forms.find(formId) != forms.end()) {
     throw std::runtime_error(
-      fmt::format("Form with id {:#x} already exists", formId));
+      fmt::format("Form with id {:x} already exists", formId));
   }
 
   // Assign formIndex before Init
