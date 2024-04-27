@@ -100,6 +100,13 @@ jobs:
                 path: |
                     deploy_git_diff
 
+          - name: Early build skymp5-client
+            if: ${{env.DEPLOY_ACTION == 'deploy'}}
+            run: |
+                cd ${{github.workspace}}/skymp5-client
+                yarn
+                yarn build
+
           - name: Post a link in Discord
             if: ${{env.DEPLOY_ACTION == 'deploy'}}
             env:
