@@ -148,6 +148,13 @@ jobs:
                        -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
                        -DGITHUB_TOKEN=${{env.GAMEMODE_GITHUB_TOKEN}}
 
+          - name: Upload vcpkg failure logs
+            if: failure()
+            uses: actions/upload-artifact@v2
+            with:
+                name: install-x64-linux-dbg-out.log
+                path: C:\vcpkg\buildtrees\spdlog\install-x64-windows-sp-dbg-out.log
+
           - name: Upload compile_commands.json
             uses: actions/upload-artifact@v3
             with:
