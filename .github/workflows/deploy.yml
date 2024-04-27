@@ -132,6 +132,8 @@ jobs:
                 options: |
                     -v ${{github.workspace}}:/src
                     -u skymp
+                    -e CI=true
+                    -e DEPLOY_BRANCH=${{ env.DEPLOY_BRANCH }}
                 run: |
                     cd /src \
                     && ./build.sh --configure \
