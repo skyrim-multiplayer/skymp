@@ -19,7 +19,7 @@ if(BUILD_GAMEMODE)
   set(SCRIPT_PATH "${CMAKE_CURRENT_LIST_DIR}/download-and-build.cmake")
   configure_file(${SCRIPT_PATH} ${CMAKE_BINARY_DIR}/download-and-build.cmake)
 
-  set(DEPLOY_BRANCH "indev")
+  set(DEPLOY_BRANCH "$ENV{DEPLOY_BRANCH}")
   set(AUTO_MERGE_REPO "Pospelove/auto-merge-action")
   set(AUTO_MERGE_BRANCH "main")
   set(AUTO_MERGE_REPO_URL "https://github.com/${AUTO_MERGE_REPO}.git")
