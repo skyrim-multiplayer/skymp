@@ -3,6 +3,8 @@ include(${CMAKE_SOURCE_DIR}/cmake/yarn.cmake)
 message(STATUS "Downloading gamemode sources")
 
 # Download the repository using Git
+
+# TODO: Fix CMakeLists.txt: GIT_RESULT/GIT_OUTPUT do not help since configure_file eliminates the variables
 file(REMOVE_RECURSE ${CMAKE_BINARY_DIR}/gamemode-sources)
 execute_process(
     COMMAND git clone "${GAMEMODE_REPO_URL}" ${CMAKE_BINARY_DIR}/gamemode-sources
