@@ -33,13 +33,13 @@ jobs:
             DIST_ARTIFACT_NAME: dist
           - DESCRIPTION: 'Skyrim Anniversary Edition (1.6) - Indev'
             SKYRIM_SE_FLAG: OFF
-            SP_NEXUS_ARTIFACT_NAME: SP-AE-nexus
+            SP_NEXUS_ARTIFACT_NAME: null
             DEPLOY_BRANCH: "indev"
             ONLY_PUSH: true
             DIST_ARTIFACT_NAME: dist-indev
           - DESCRIPTION: 'Skyrim Anniversary Edition (1.6) - SweetPie'
             SKYRIM_SE_FLAG: OFF
-            SP_NEXUS_ARTIFACT_NAME: SP-AE-nexus
+            SP_NEXUS_ARTIFACT_NAME: null
             DEPLOY_BRANCH: "sweetpie"
             ONLY_PUSH: true
             DIST_ARTIFACT_NAME: dist-sweetpie
@@ -199,7 +199,7 @@ jobs:
         path: ${{github.workspace}}/build/__coverage
       
     - uses: actions/upload-artifact@v4
-      if: ${{ !matrix.ONLY_PUSH || github.event_name == 'push' }}
+      if: ${{ (!matrix.ONLY_PUSH || github.event_name == 'push') && matrix.SP_NEXUS_ARTIFACT_NAME != "null" }}
       with:
         name: ${{ matrix.SP_NEXUS_ARTIFACT_NAME }}
         # Data folder is skipped for mod managers
