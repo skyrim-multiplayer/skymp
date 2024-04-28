@@ -157,12 +157,12 @@ jobs:
 
     - name: Upload vcpkg failure logs
       if: failure()
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: install-x64-linux-dbg-out.log
         path: C:\vcpkg\buildtrees\spdlog\install-x64-windows-sp-dbg-out.log
 
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       if: ${{ !matrix.ONLY_PUSH || github.event_name == 'push' }}
       with:
         name: cmake-profiling-output
@@ -180,32 +180,32 @@ jobs:
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
       run: ctest -C ${{env.BUILD_TYPE}} --verbose # --output-on-failure
 
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       if: ${{ !matrix.ONLY_PUSH || github.event_name == 'push' }}
       with:
         name: ${{ matrix.DIST_ARTIFACT_NAME }}
         path: ${{github.workspace}}/build/dist
 
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       if: ${{ !matrix.ONLY_PUSH || github.event_name == 'push' }}
       with:
         name: skymp5-client-js
         path: ${{github.workspace}}/build/dist/client/Data/Platform/Plugins/skymp5-client.js
 
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       if: ${{ !matrix.ONLY_PUSH || github.event_name == 'push' }}
       with:
         name: coverage
         path: ${{github.workspace}}/build/__coverage
       
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       if: ${{ !matrix.ONLY_PUSH || github.event_name == 'push' }}
       with:
         name: ${{ matrix.SP_NEXUS_ARTIFACT_NAME }}
         # Data folder is skipped for mod managers
         path: ${{github.workspace}}/build/nexus/sp/data/*
 
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       if: ${{ !matrix.ONLY_PUSH || github.event_name == 'push' }}
       with:
         name: papyrus-vm-nexus
@@ -216,7 +216,7 @@ jobs:
       if: ${{ !matrix.ONLY_PUSH || github.event_name == 'push' }}
       run: Get-PSDrive
 
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       if: ${{ !matrix.ONLY_PUSH || github.event_name == 'push' }}
       with:
         name: msbuild_files
