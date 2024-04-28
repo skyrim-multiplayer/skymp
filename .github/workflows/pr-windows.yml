@@ -24,7 +24,7 @@ jobs:
             SP_NEXUS_ARTIFACT_NAME: SP-SE-nexus
             DEPLOY_BRANCH: ""
             ONLY_PUSH: false
-            DIST_ARTIFACT_NAME: dist
+            DIST_ARTIFACT_NAME: dist-1.5
           - DESCRIPTION: 'Skyrim Anniversary Edition (1.6)'
             SKYRIM_SE_FLAG: OFF
             SP_NEXUS_ARTIFACT_NAME: SP-AE-nexus
