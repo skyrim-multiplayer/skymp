@@ -165,7 +165,7 @@ jobs:
     - uses: actions/upload-artifact@v4
       if: ${{ !matrix.ONLY_PUSH || github.event_name == 'push' }}
       with:
-        name: cmake-profiling-output
+        name: cmake-profiling-output (${{ matrix.DESCRIPTION }})
         path: cmake-profiling-output
 
     - name: Build
@@ -189,13 +189,13 @@ jobs:
     - uses: actions/upload-artifact@v4
       if: ${{ !matrix.ONLY_PUSH || github.event_name == 'push' }}
       with:
-        name: skymp5-client-js
+        name: skymp5-client-js (${{ matrix.DESCRIPTION }})
         path: ${{github.workspace}}/build/dist/client/Data/Platform/Plugins/skymp5-client.js
 
     - uses: actions/upload-artifact@v4
       if: ${{ !matrix.ONLY_PUSH || github.event_name == 'push' }}
       with:
-        name: coverage
+        name: coverage (${{ matrix.DESCRIPTION }})
         path: ${{github.workspace}}/build/__coverage
       
     - uses: actions/upload-artifact@v4
@@ -208,7 +208,7 @@ jobs:
     - uses: actions/upload-artifact@v4
       if: ${{ !matrix.ONLY_PUSH || github.event_name == 'push' }}
       with:
-        name: papyrus-vm-nexus
+        name: papyrus-vm-nexus (${{ matrix.DESCRIPTION }})
         # Data folder is skipped for mod managers
         path: ${{github.workspace}}/build/nexus/papyrus-vm/*
 
@@ -219,7 +219,7 @@ jobs:
     - uses: actions/upload-artifact@v4
       if: ${{ !matrix.ONLY_PUSH || github.event_name == 'push' }}
       with:
-        name: msbuild_files
+        name: msbuild_files (${{ matrix.DESCRIPTION }})
         path: |
           ${{github.workspace}}/build/**/*.sln
           ${{github.workspace}}/build/**/*.vcxproj
