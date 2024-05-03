@@ -2,6 +2,7 @@
 
 namespace RE {
 
+#ifdef SKYRIMSE
 struct CriticalHit
 {
 public:
@@ -25,5 +26,6 @@ public:
     return func();
   }
 };
+#endif
 
 }

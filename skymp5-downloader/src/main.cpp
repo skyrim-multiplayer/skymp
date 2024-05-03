@@ -104,6 +104,36 @@ void SwitchCurrentDirectoryToExeParentFolder()
   }
 }
 
+int CalculateNumBins()
+{
+  auto [hash, hostname] = GetHashAndHostname();
+  int numBins = 0;
+  int binIndex = 1; // starts with 1
+  while (true) {
+    std::string binUrl = "https://" +
+      std::string(hostname.begin(), hostname.end()) + "/" + "InstallSkyMP-" +
+      std::string(hash.begin(), hash.end()) + "-" + std::to_string(binIndex) +
+      ".bin";
+    httplib::Client cli(std::string(hostname.begin(), hostname.end()));
+    auto res = cli.Head(binUrl.c_str());
+
+    if (res) {
+      if (res->status == 404) {
+        break;
+      }
+    } else {
+      MessageBoxA(0, "Failed to download file. No response from server.",
+                  "Error", MB_OK | MB_ICONERROR);
+      break;
+    }
+
+    numBins++;
+    binIndex++;
+  }
+
+  return numBins;
+}
+
 // Main function
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
                    PSTR szCmdLine, int iCmdShow)
@@ -148,6 +178,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
     auto [hash, hostname] = GetHashAndHostname();
 
+    const int numFiles = CalculateNumBins() + 1;
+
     // Download exe
     std::string exeUrl = "https://" +
       std::string(hostname.begin(), hostname.end()) + "/" + "InstallSkyMP-" +
@@ -155,7 +187,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     std::string exePath =
       "InstallSkyMP-" + std::string(hash.begin(), hash.end()) + ".exe";
     DownloadFile(std::string(hostname.begin(), hostname.end()), exeUrl,
-                 exePath, hwndProgressBar, 1, 1);
+                 exePath, hwndProgressBar, 1, numFiles);
 
     // Download bins till 404 error
     int binIndex = 1;
@@ -182,7 +214,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
       }
 
       DownloadFile(std::string(hostname.begin(), hostname.end()), binUrl,
-                   binPath, hwndProgressBar, binIndex, 1);
+                   binPath, hwndProgressBar, binIndex, numFiles);
       binIndex++;
     }
 

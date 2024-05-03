@@ -214,7 +214,7 @@ EventResult EventHandler::ProcessEvent(
   }
   auto refrId = refr->GetFormID();
 
-  bool isAttach = event->action == 1;
+  bool isAttach = event->attached;
   if (isAttach) {
     SkyrimPlatform::GetSingleton()->AddUpdateTask([refrId] {
       auto obj = JsValue::Object();
@@ -227,7 +227,7 @@ EventResult EventHandler::ProcessEvent(
     return EventResult::kContinue;
   }
 
-  bool isDetach = event->action == 0;
+  bool isDetach = !event->attached;
   if (isDetach) {
     SkyrimPlatform::GetSingleton()->AddUpdateTask([refrId] {
       auto obj = JsValue::Object();
@@ -452,7 +452,7 @@ EventResult EventHandler::ProcessEvent(
   SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
-    AddObjProperty(&obj, "travelTimeGameHours", e->travelTimeGameHours);
+    AddObjProperty(&obj, "travelTimeGameHours", e->fastTravelEndHours);
 
     SendEvent("fastTravelEnd", obj);
   });
@@ -841,12 +841,12 @@ EventResult EventHandler::ProcessEvent(
   SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
-    auto weapon = RE::TESForm::LookupByID(e->weaponId);
-    auto ammo = RE::TESForm::LookupByID(e->ammoId);
+    auto weapon = RE::TESForm::LookupByID(e->weapon);
+    auto ammo = RE::TESForm::LookupByID(e->ammo);
 
     AddObjProperty(&obj, "weapon", weapon, "Weapon");
     AddObjProperty(&obj, "ammo", ammo, "Ammo");
-    AddObjProperty(&obj, "power", e->power);
+    AddObjProperty(&obj, "power", e->shotPower);
     AddObjProperty(&obj, "isSunGazing", e->isSunGazing);
 
     SendEvent("playerBowShot", obj);
@@ -891,7 +891,7 @@ EventResult EventHandler::ProcessEvent(
   SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
-    auto quest = RE::TESForm::LookupByID(e->questId);
+    auto quest = RE::TESForm::LookupByID(e->formID);
 
     AddObjProperty(&obj, "quest", quest, "Quest");
     AddObjProperty(&obj, "stage", e->stage);
@@ -915,11 +915,11 @@ EventResult EventHandler::ProcessEvent(
   SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
-    auto quest = RE::TESForm::LookupByID(e->questId);
+    auto quest = RE::TESForm::LookupByID(e->formID);
 
     AddObjProperty(&obj, "quest", quest, "Quest");
 
-    if (e->isStarted) {
+    if (e->started) {
       SendEvent("questStart", obj);
     } else {
       SendEvent("questStop", obj);
@@ -1031,7 +1031,7 @@ EventResult EventHandler::ProcessEvent(
   SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
     auto obj = JsValue::Object();
 
-    AddObjProperty(&obj, "isInterrupted", e->isInterrupted);
+    AddObjProperty(&obj, "isInterrupted", e->interrupted);
 
     SendEvent("sleepStop", obj);
   });
@@ -1054,7 +1054,7 @@ EventResult EventHandler::ProcessEvent(
 
     auto spell = RE::TESForm::LookupByID(e->spell);
 
-    AddObjProperty(&obj, "caster", e->caster.get(), "ObjectReference");
+    AddObjProperty(&obj, "caster", e->object.get(), "ObjectReference");
     AddObjProperty(&obj, "spell", spell, "Spell");
 
     SendEvent("spellCast", obj);

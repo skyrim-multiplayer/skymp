@@ -2,6 +2,7 @@
 
 namespace RE {
 
+#ifdef SKYRIMSE
 struct DisarmedEvent
 {
 public:
@@ -21,5 +22,5 @@ public:
     return func();
   }
 };
-
+#endif
 }
