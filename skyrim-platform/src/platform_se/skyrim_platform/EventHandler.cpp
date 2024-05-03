@@ -616,19 +616,39 @@ EventResult EventHandler::ProcessEvent(
     return EventResult::kContinue;
   }
 
-  auto e = CopyEventPtr(event);
+  uint32_t casterId =
+    event->caster.get() ? event->caster.get()->GetFormID() : 0;
+  uint32_t targetId =
+    event->target.get() ? event->target.get()->GetFormID() : 0;
+  uint32_t effectId = event->magicEffect;
 
-  SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
-    auto obj = JsValue::Object();
+  SkyrimPlatform::GetSingleton()->AddUpdateTask(
+    [casterId, targetId, effectId] {
+      auto obj = JsValue::Object();
 
-    auto effect = RE::TESForm::LookupByID(e->magicEffect);
+      auto effect = RE::TESForm::LookupByID(effectId);
 
-    AddObjProperty(&obj, "effect", effect, "MagicEffect");
-    AddObjProperty(&obj, "caster", e->caster.get(), "ObjectReference");
-    AddObjProperty(&obj, "target", e->target.get(), "ObjectReference");
+      auto casterRefr = RE::TESForm::LookupByID<RE::TESObjectREFR>(casterId);
+      auto targetRefr = RE::TESForm::LookupByID<RE::TESObjectREFR>(targetId);
 
-    SendEvent("magicEffectApply", obj);
-  });
+      if (!effect) {
+        return;
+      }
+
+      if (!casterRefr && casterId != 0) {
+        return;
+      }
+
+      if (!targetRefr && targetId != 0) {
+        return;
+      }
+
+      AddObjProperty(&obj, "effect", effect, "MagicEffect");
+      AddObjProperty(&obj, "caster", casterRefr, "ObjectReference");
+      AddObjProperty(&obj, "target", targetRefr, "ObjectReference");
+
+      SendEvent("magicEffectApply", obj);
+    });
 
   return EventResult::kContinue;
 }
