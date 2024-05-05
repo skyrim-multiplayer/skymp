@@ -8,3 +8,6 @@ apply_default_settings(TARGETS viet)
 
 find_path(MAKEID_INCLUDE_DIR NAMES MakeID.h)
 target_include_directories(viet PUBLIC ${MAKEID_INCLUDE_DIR})
+
+find_package(spdlog CONFIG REQUIRED)
+target_link_libraries(viet PUBLIC spdlog::spdlog)

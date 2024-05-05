@@ -193,6 +193,11 @@ if(MSVC)
   target_link_libraries(mhook INTERFACE "$<IF:$<CONFIG:Debug>,${MHOOH_LIBRARY_DEBUG},${MHOOH_LIBRARY_RELEASE}>")
   target_include_directories(mhook INTERFACE ${MHOOK_INCLUDE_DIR})
 
+  # ui vcpkg deps
+
+  find_package(spdlog CONFIG REQUIRED)
+  target_link_libraries(ui PUBLIC spdlog::spdlog)
+
   # reverse vcpkg deps
 
   target_link_libraries(core_library PUBLIC mhook)
