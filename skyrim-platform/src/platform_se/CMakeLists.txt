@@ -187,7 +187,7 @@ if(MSVC)
 
   find_library(MHOOH_LIBRARY_DEBUG mhook)
   string(REPLACE "/debug/lib/" "/lib/" MHOOH_LIBRARY_RELEASE ${MHOOH_LIBRARY_DEBUG})
-  find_path(MHOOH_INCLUDE_DIR NAMES mhook.h PATH_SUFFIXES mhook-lib)
+  find_path(MHOOH_INCLUDE_DIR NAMES mhook.h PATH_SUFFIXES mhook-lib REQUIRED)
   add_library(mhook INTERFACE)
   target_link_libraries(mhook INTERFACE "$<IF:$<CONFIG:Debug>,${MHOOH_LIBRARY_DEBUG},${MHOOH_LIBRARY_RELEASE}>")
   target_include_directories(mhook INTERFACE ${MHOOH_INCLUDE_DIR})
