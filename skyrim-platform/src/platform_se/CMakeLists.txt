@@ -175,6 +175,12 @@ if(MSVC)
   )
 endif()
 
+# TSConverter vcpkg deps
+
+find_path(JSON_INCLUDE_DIR NAMES json.hpp PATH_SUFFIXES nlohmann)
+get_filename_component(JSON_INCLUDE_DIR ${JSON_INCLUDE_DIR} DIRECTORY)
+target_include_directories(TSConverter PUBLIC ${JSON_INCLUDE_DIR})
+
 if(MSVC)
 
   # interface targets
@@ -185,12 +191,6 @@ if(MSVC)
   add_library(mhook INTERFACE)
   target_link_libraries(mhook INTERFACE "$<IF:$<CONFIG:Debug>,${MHOOH_LIBRARY_DEBUG},${MHOOH_LIBRARY_RELEASE}>")
   target_include_directories(mhook INTERFACE ${MHOOH_INCLUDE_DIR})
-
-  # TSConverter vcpkg deps
-
-  find_path(JSON_INCLUDE_DIR NAMES json.hpp PATH_SUFFIXES nlohmann)
-  get_filename_component(JSON_INCLUDE_DIR ${JSON_INCLUDE_DIR} DIRECTORY)
-  target_include_directories(TSConverter PUBLIC ${JSON_INCLUDE_DIR})
 
   # reverse vcpkg deps
 
