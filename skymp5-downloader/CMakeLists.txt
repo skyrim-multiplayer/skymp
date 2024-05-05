@@ -18,7 +18,6 @@ if(WIN32)
   target_link_libraries(${PROJECT_NAME} PRIVATE ComCtl32)
 
   find_path(HTTPLIB_INCLUDE_DIR NAMES httplib.h PATH_SUFFIXES include)
-  get_filename_component(HTTPLIB_INCLUDE_DIR ${HTTPLIB_INCLUDE_DIR} DIRECTORY)
   target_include_directories(${PROJECT_NAME} PUBLIC ${HTTPLIB_INCLUDE_DIR})
 else()
   add_custom_target(${PROJECT_NAME} ALL SOURCES ${sources} 
