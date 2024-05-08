@@ -1769,6 +1769,12 @@ EventResult EventHandler::ProcessEvent(RE::InputEvent* const* event,
     virtual ~EventDataBase() = default;
     virtual const char* GetSPEventName() = 0;
     virtual JsValue ToJavaScriptObject() = 0;
+
+    void Send()
+    {
+      auto obj = ToJavaScriptObject();
+      SendEvent(GetSPEventName(), obj);
+    }
   };
 
   struct ButtonEventData : public EventDataBase
@@ -1936,59 +1942,52 @@ EventResult EventHandler::ProcessEvent(RE::InputEvent* const* event,
     std::string heard;
   };
 
-  std::vector<std::unique_ptr<EventDataBase>> eventsToSend;
-
   for (auto eventItem = *event; eventItem; eventItem = eventItem->next) {
     if (!eventItem) {
       break;
     }
+
+    switch (eventItem->eventType.get()) {
+      case RE::INPUT_EVENT_TYPE::kButton: {
+        auto buttonEvent = static_cast<RE::ButtonEvent*>(eventItem);
+        auto eventData = std::make_shared<ButtonEventData>(*buttonEvent);
+        SkyrimPlatform::GetSingleton()->AddUpdateTask(
+          [eventData] { eventData->Send(); });
+        break;
+      }
+      case RE::INPUT_EVENT_TYPE::kMouseMove: {
+        auto mouseMoveEvent = static_cast<RE::MouseMoveEvent*>(eventItem);
+        auto eventData = std::make_shared<MouseMoveEventData>(*mouseMoveEvent);
+        SkyrimPlatform::GetSingleton()->AddUpdateTask(
+          [eventData] { eventData->Send(); });
+        break;
+      }
+      case RE::INPUT_EVENT_TYPE::kDeviceConnect: {
+        auto deviceConnectEvent =
+          static_cast<RE::DeviceConnectEvent*>(eventItem);
+        auto eventData =
+          std::make_shared<DeviceConnectEventData>(*deviceConnectEvent);
+        SkyrimPlatform::GetSingleton()->AddUpdateTask(
+          [eventData] { eventData->Send(); });
+        break;
+      }
+      case RE::INPUT_EVENT_TYPE::kThumbstick: {
+        auto thumbstickEvent = static_cast<RE::ThumbstickEvent*>(eventItem);
+        auto eventData =
+          std::make_shared<ThumbstickEventData>(*thumbstickEvent);
+        SkyrimPlatform::GetSingleton()->AddUpdateTask(
+          [eventData] { eventData->Send(); });
+        break;
+      }
+      case RE::INPUT_EVENT_TYPE::kKinect: {
+        auto kinectEvent = static_cast<RE::KinectEvent*>(eventItem);
+        auto eventData = std::make_shared<KinectEventData>(*kinectEvent);
+        SkyrimPlatform::GetSingleton()->AddUpdateTask(
+          [eventData] { eventData->Send(); });
+        break;
+      }
+    }
   }
-
-  //   switch (eventItem->eventType.get()) {
-  //     case RE::INPUT_EVENT_TYPE::kButton: {
-  //       auto buttonEvent = static_cast<RE::ButtonEvent*>(eventItem);
-  //       auto eventData = std::make_unique<ButtonEventData>(*buttonEvent);
-  //       eventsToSend.push_back(std::move(eventData));
-  //       break;
-  //     }
-  //     case RE::INPUT_EVENT_TYPE::kMouseMove: {
-  //       auto mouseMoveEvent = static_cast<RE::MouseMoveEvent*>(eventItem);
-  //       auto eventData =
-  //       std::make_unique<MouseMoveEventData>(*mouseMoveEvent);
-  //       eventsToSend.push_back(std::move(eventData));
-  //       break;
-  //     }
-  //     case RE::INPUT_EVENT_TYPE::kDeviceConnect: {
-  //       auto deviceConnectEvent =
-  //         static_cast<RE::DeviceConnectEvent*>(eventItem);
-  //       auto eventData =
-  //         std::make_unique<DeviceConnectEventData>(*deviceConnectEvent);
-  //       eventsToSend.push_back(std::move(eventData));
-  //       break;
-  //     }
-  //     case RE::INPUT_EVENT_TYPE::kThumbstick: {
-  //       auto thumbstickEvent = static_cast<RE::ThumbstickEvent*>(eventItem);
-  //       auto eventData =
-  //         std::make_unique<ThumbstickEventData>(*thumbstickEvent);
-  //       eventsToSend.push_back(std::move(eventData));
-  //       break;
-  //     }
-  //     case RE::INPUT_EVENT_TYPE::kKinect: {
-  //       auto kinectEvent = static_cast<RE::KinectEvent*>(eventItem);
-  //       auto eventData = std::make_unique<KinectEventData>(*kinectEvent);
-  //       eventsToSend.push_back(std::move(eventData));
-  //       break;
-  //     }
-  //   }
-  // }
-
-  // SkyrimPlatform::GetSingleton()->AddUpdateTask(
-  //   [eventsToSend = std::move(eventsToSend)] {
-  //     for (auto& eventData : eventsToSend) {
-  //       auto obj = eventData->ToJavaScriptObject();
-  //       SendEvent(eventData->GetSPEventName(), obj);
-  //     }
-  //   });
 
   return EventResult::kContinue;
 }
