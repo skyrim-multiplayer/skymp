@@ -1764,92 +1764,233 @@ EventResult EventHandler::ProcessEvent(RE::InputEvent* const* event,
     return EventResult::kContinue;
   }
 
-  auto e = CopyEventPtr(event);
+  struct EventDataBase
+  {
+    virtual ~EventDataBase() = default;
+    virtual const char* GetSPEventName() = 0;
+    virtual JsValue ToJavaScriptObject() = 0;
 
-  SkyrimPlatform::GetSingleton()->AddUpdateTask([e] {
-    for (auto eventItem = *e; eventItem; eventItem = eventItem->next) {
-      if (!eventItem) {
-        return;
+    void Send()
+    {
+      auto obj = ToJavaScriptObject();
+      SendEvent(GetSPEventName(), obj);
+    }
+  };
+
+  struct ButtonEventData : public EventDataBase
+  {
+    explicit ButtonEventData(const RE::ButtonEvent& buttonEvent)
+    {
+      device = to_underlying(buttonEvent.device.get());
+      idCode = buttonEvent.idCode;
+      userEvent = buttonEvent.userEvent.c_str();
+      value = buttonEvent.value;
+      heldDownSecs = buttonEvent.heldDownSecs;
+      isPressed = buttonEvent.IsPressed();
+      isUp = buttonEvent.IsUp();
+      isDown = buttonEvent.IsDown();
+      isHeld = buttonEvent.IsHeld();
+      isRepeating = buttonEvent.IsRepeating();
+    }
+
+    const char* GetSPEventName() override { return "buttonEvent"; }
+
+    JsValue ToJavaScriptObject() override
+    {
+      auto obj = JsValue::Object();
+      AddObjProperty(&obj, "device", device);
+      AddObjProperty(&obj, "code", idCode);
+      AddObjProperty(&obj, "userEventName", userEvent.data());
+      AddObjProperty(&obj, "value", value);
+      AddObjProperty(&obj, "heldDuration", heldDownSecs);
+      AddObjProperty(&obj, "isPressed", isPressed);
+      AddObjProperty(&obj, "isUp", isUp);
+      AddObjProperty(&obj, "isDown", isDown);
+      AddObjProperty(&obj, "isHeld", isHeld);
+      AddObjProperty(&obj, "isRepeating", isRepeating);
+      return obj;
+    }
+
+    int32_t device = RE::INPUT_DEVICE::kNone;
+    uint32_t idCode = 0;
+    std::string userEvent;
+    float value = 0.f;
+    float heldDownSecs = 0.f;
+    bool isPressed = false;
+    bool isUp = false;
+    bool isDown = false;
+    bool isHeld = false;
+    bool isRepeating = false;
+  };
+
+  struct MouseMoveEventData : public EventDataBase
+  {
+    explicit MouseMoveEventData(const RE::MouseMoveEvent& mouseMoveEvent)
+    {
+      device = to_underlying(mouseMoveEvent.device.get());
+      idCode = mouseMoveEvent.idCode;
+      userEvent = mouseMoveEvent.userEvent.c_str();
+      inputX = mouseMoveEvent.mouseInputX;
+      inputY = mouseMoveEvent.mouseInputY;
+    }
+
+    const char* GetSPEventName() override { return "mouseMove"; }
+
+    JsValue ToJavaScriptObject() override
+    {
+      auto obj = JsValue::Object();
+      AddObjProperty(&obj, "device", device);
+      AddObjProperty(&obj, "code", idCode);
+      AddObjProperty(&obj, "userEventName", userEvent.data());
+      AddObjProperty(&obj, "inputX", inputX);
+      AddObjProperty(&obj, "inputY", inputY);
+      return obj;
+    }
+
+    int32_t device = RE::INPUT_DEVICE::kNone;
+    uint32_t idCode = 0;
+    std::string userEvent;
+    float inputX = 0.f;
+    float inputY = 0.f;
+  };
+
+  struct DeviceConnectEventData : public EventDataBase
+  {
+    explicit DeviceConnectEventData(
+      const RE::DeviceConnectEvent& deviceConnectEvent)
+    {
+      device = to_underlying(deviceConnectEvent.device.get());
+      isConnected = deviceConnectEvent.connected;
+    }
+
+    const char* GetSPEventName() override { return "deviceConnect"; }
+
+    JsValue ToJavaScriptObject() override
+    {
+      auto obj = JsValue::Object();
+      AddObjProperty(&obj, "device", device);
+      AddObjProperty(&obj, "isConnected", isConnected);
+      return obj;
+    }
+
+    int32_t device = RE::INPUT_DEVICE::kNone;
+    bool isConnected = false;
+  };
+
+  struct ThumbstickEventData : public EventDataBase
+  {
+    explicit ThumbstickEventData(const RE::ThumbstickEvent& thumbstickEvent)
+    {
+      device = to_underlying(thumbstickEvent.device.get());
+      idCode = thumbstickEvent.idCode;
+      userEvent = thumbstickEvent.userEvent.c_str();
+      xValue = thumbstickEvent.xValue;
+      yValue = thumbstickEvent.yValue;
+      isLeft = thumbstickEvent.IsLeft();
+      isRight = thumbstickEvent.IsRight();
+    }
+
+    const char* GetSPEventName() override { return "thumbstickEvent"; }
+
+    JsValue ToJavaScriptObject() override
+    {
+      auto obj = JsValue::Object();
+      AddObjProperty(&obj, "device", device);
+      AddObjProperty(&obj, "code", idCode);
+      AddObjProperty(&obj, "userEventName", userEvent.data());
+      AddObjProperty(&obj, "inputX", xValue);
+      AddObjProperty(&obj, "inputY", yValue);
+      AddObjProperty(&obj, "isLeft", isLeft);
+      AddObjProperty(&obj, "isRight", isRight);
+      return obj;
+    }
+
+    int32_t device = RE::INPUT_DEVICE::kNone;
+    uint32_t idCode = 0;
+    std::string userEvent;
+    float xValue = 0.f;
+    float yValue = 0.f;
+    bool isLeft = false;
+    bool isRight = false;
+  };
+
+  struct KinectEventData : public EventDataBase
+  {
+    explicit KinectEventData(const RE::KinectEvent& kinectEvent)
+    {
+      device = to_underlying(kinectEvent.device.get());
+      idCode = kinectEvent.idCode;
+      userEvent = kinectEvent.userEvent.c_str();
+      heard = kinectEvent.heard.c_str();
+    }
+
+    const char* GetSPEventName() override { return "kinectEvent"; }
+
+    JsValue ToJavaScriptObject() override
+    {
+      auto obj = JsValue::Object();
+      AddObjProperty(&obj, "device", device);
+      AddObjProperty(&obj, "code", idCode);
+      AddObjProperty(&obj, "userEventName", userEvent.data());
+      AddObjProperty(&obj, "heard", heard.data());
+      return obj;
+    }
+
+    int32_t device = RE::INPUT_DEVICE::kNone;
+    uint32_t idCode = 0;
+    std::string userEvent;
+    std::string heard;
+  };
+
+  for (auto eventItem = *event; eventItem; eventItem = eventItem->next) {
+    if (!eventItem) {
+      break;
+    }
+
+    switch (eventItem->eventType.get()) {
+      case RE::INPUT_EVENT_TYPE::kButton: {
+        auto buttonEvent = static_cast<RE::ButtonEvent*>(eventItem);
+        auto eventData = std::make_shared<ButtonEventData>(*buttonEvent);
+        SkyrimPlatform::GetSingleton()->AddUpdateTask(
+          [eventData] { eventData->Send(); });
+        break;
       }
-
-      auto device = to_underlying(eventItem->device.get());
-
-      switch (eventItem->eventType.get()) {
-        case RE::INPUT_EVENT_TYPE::kButton: {
-          auto buttonEvent = static_cast<RE::ButtonEvent*>(eventItem);
-          auto obj = JsValue::Object();
-
-          AddObjProperty(&obj, "device", device);
-          AddObjProperty(&obj, "code", buttonEvent->idCode);
-          AddObjProperty(&obj, "userEventName", buttonEvent->userEvent);
-          AddObjProperty(&obj, "value", buttonEvent->value);
-          AddObjProperty(&obj, "heldDuration", buttonEvent->heldDownSecs);
-          AddObjProperty(&obj, "isPressed", buttonEvent->IsPressed());
-          AddObjProperty(&obj, "isUp", buttonEvent->IsUp());
-          AddObjProperty(&obj, "isDown", buttonEvent->IsDown());
-          AddObjProperty(&obj, "isHeld", buttonEvent->IsHeld());
-          AddObjProperty(&obj, "isRepeating", buttonEvent->IsRepeating());
-
-          SendEvent("buttonEvent", obj);
-          break;
-        }
-        case RE::INPUT_EVENT_TYPE::kMouseMove: {
-          auto mouseEvent = static_cast<RE::MouseMoveEvent*>(eventItem);
-          auto obj = JsValue::Object();
-
-          AddObjProperty(&obj, "device", device);
-          AddObjProperty(&obj, "code", mouseEvent->idCode);
-          AddObjProperty(&obj, "userEventName", mouseEvent->userEvent);
-          AddObjProperty(&obj, "inputX", mouseEvent->mouseInputX);
-          AddObjProperty(&obj, "inputY", mouseEvent->mouseInputY);
-
-          SendEvent("mouseMove", obj);
-          break;
-        }
-        case RE::INPUT_EVENT_TYPE::kDeviceConnect: {
-          auto deviceConnectEvent =
-            static_cast<RE::DeviceConnectEvent*>(eventItem);
-          auto obj = JsValue::Object();
-
-          AddObjProperty(&obj, "device", device);
-          AddObjProperty(&obj, "isConnected", deviceConnectEvent->connected);
-
-          SendEvent("deviceConnect", obj);
-          break;
-        }
-        case RE::INPUT_EVENT_TYPE::kThumbstick: {
-          auto thumbstickEvent = static_cast<RE::ThumbstickEvent*>(eventItem);
-          auto obj = JsValue::Object();
-
-          AddObjProperty(&obj, "device", device);
-          AddObjProperty(&obj, "code", thumbstickEvent->idCode);
-          AddObjProperty(&obj, "userEventName", thumbstickEvent->userEvent);
-          AddObjProperty(&obj, "inputX", thumbstickEvent->xValue);
-          AddObjProperty(&obj, "inputY", thumbstickEvent->yValue);
-          AddObjProperty(&obj, "isLeft", thumbstickEvent->IsLeft());
-          AddObjProperty(&obj, "isRight", thumbstickEvent->IsRight());
-
-          SendEvent("thumbstickEvent", obj);
-          break;
-        }
-        case RE::INPUT_EVENT_TYPE::kKinect: {
-          auto kinectEvent = static_cast<RE::KinectEvent*>(eventItem);
-          auto obj = JsValue::Object();
-
-          AddObjProperty(&obj, "device", device);
-          AddObjProperty(&obj, "code", kinectEvent->idCode);
-          AddObjProperty(&obj, "userEventName", kinectEvent->userEvent);
-          AddObjProperty(&obj, "heard", kinectEvent->heard);
-
-          SendEvent("kinectEvent", obj);
-          break;
-        }
+      case RE::INPUT_EVENT_TYPE::kMouseMove: {
+        auto mouseMoveEvent = static_cast<RE::MouseMoveEvent*>(eventItem);
+        auto eventData = std::make_shared<MouseMoveEventData>(*mouseMoveEvent);
+        SkyrimPlatform::GetSingleton()->AddUpdateTask(
+          [eventData] { eventData->Send(); });
+        break;
+      }
+      case RE::INPUT_EVENT_TYPE::kDeviceConnect: {
+        auto deviceConnectEvent =
+          static_cast<RE::DeviceConnectEvent*>(eventItem);
+        auto eventData =
+          std::make_shared<DeviceConnectEventData>(*deviceConnectEvent);
+        SkyrimPlatform::GetSingleton()->AddUpdateTask(
+          [eventData] { eventData->Send(); });
+        break;
+      }
+      case RE::INPUT_EVENT_TYPE::kThumbstick: {
+        auto thumbstickEvent = static_cast<RE::ThumbstickEvent*>(eventItem);
+        auto eventData =
+          std::make_shared<ThumbstickEventData>(*thumbstickEvent);
+        SkyrimPlatform::GetSingleton()->AddUpdateTask(
+          [eventData] { eventData->Send(); });
+        break;
+      }
+      case RE::INPUT_EVENT_TYPE::kKinect: {
+        auto kinectEvent = static_cast<RE::KinectEvent*>(eventItem);
+        auto eventData = std::make_shared<KinectEventData>(*kinectEvent);
+        SkyrimPlatform::GetSingleton()->AddUpdateTask(
+          [eventData] { eventData->Send(); });
+        break;
       }
     }
-  });
+  }
 
   return EventResult::kContinue;
-};
+}
 
 EventResult EventHandler::ProcessEvent(
   const RE::BGSFootstepEvent* event,
