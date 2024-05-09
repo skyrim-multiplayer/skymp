@@ -47,8 +47,6 @@ jobs:
           sed -i "s/{{NEWVER}}/${{ env.NEWVER }}/g" $TRAGET
           sed -i "s/{{OLDVER}}/${{ env.OLDVER }}/g" $TRAGET
 
-          echo "SP supports both Steam version of Skyrim SE (1.6.640) and legacy 1.5.97."$'\n' >> $TRAGET
-
           for file in `find ${{github.workspace}}/docs/release/dev -type f -name "sp*.md"`
           do
             content=$(< $file)
