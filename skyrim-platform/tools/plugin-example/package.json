@@ -25,6 +25,6 @@
     "skryim platform"
   ],
   "dependencies": {
-    "@skyrim-platform/skyrim-platform": "2.8.0"
+    "@skyrim-platform/skyrim-platform": "2.9.0"
   }
 }
