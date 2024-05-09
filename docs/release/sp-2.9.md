@@ -7,7 +7,7 @@ This document includes changes made since SP 2.8.0
 WARNING: New game required. Update on current save at your own risk. Please backup your savegames.
 
 This document will tell you more about project status: https://github.com/skyrim-multiplayer/skymp/blob/main/skyrim-platform/README.md
-## Other changes
+## Changes
 
 - After a series of individual fixes, all remaining unsafe event handlers have been resolved. **Crashes when loading a save should no longer occur** ❤️‍🩹
 
