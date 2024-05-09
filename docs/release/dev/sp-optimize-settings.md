@@ -1,1 +1,0 @@
-Significantly optimized settings API.
