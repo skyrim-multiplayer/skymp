@@ -1,3 +1,4 @@
+import { logTrace, logError } from "../../logging";
 import { ClientListener, CombinedController, Sp } from "./clientListener";
 import { ButtonEvent } from "skyrimPlatform";
 
@@ -9,12 +10,12 @@ export class AnimDebugService extends ClientListener {
 
     // clear previous texts in case of hotreload
     if (this.sp.storage[AnimQueueCollection.Name] && (this.sp.storage[AnimQueueCollection.Name] as AnimQueueCollection).clearSPText) {
-      this.logTrace(`Destroying old AnimQueueCollection`);
+      logTrace(this, `Destroying old AnimQueueCollection`);
       try {
         (this.sp.storage[AnimQueueCollection.Name] as AnimQueueCollection).clearSPText();
       }
       catch (e) {
-        this.logError(`Failed to destroy old AnimQueueCollection: ${e}`);
+        logError(this, `Failed to destroy old AnimQueueCollection:`, e);
       }
     }
 

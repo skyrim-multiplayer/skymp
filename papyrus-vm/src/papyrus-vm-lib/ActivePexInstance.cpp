@@ -88,7 +88,7 @@ std::string ActivePexInstance::GetActiveStateName() const
 }
 
 Object::PropInfo* ActivePexInstance::GetProperty(
-  const ActivePexInstance& scriptInstance, std::string nameProperty,
+  const ActivePexInstance& scriptInstance, std::string propertyName,
   uint8_t flag)
 {
   if (!scriptInstance.IsValid())
@@ -98,7 +98,7 @@ Object::PropInfo* ActivePexInstance::GetProperty(
 
     for (auto& object : scriptInstance.sourcePex.fn()->objectTable) {
       for (auto& prop : object.properties) {
-        if (prop.name == nameProperty &&
+        if (prop.name == propertyName &&
             (prop.flags & 5) == prop.kFlags_Read) {
           return &prop;
         }
@@ -109,7 +109,7 @@ Object::PropInfo* ActivePexInstance::GetProperty(
 
       for (auto& object : scriptInstance.sourcePex.fn()->objectTable) {
         for (auto& prop : object.properties) {
-          if (prop.name == nameProperty &&
+          if (prop.name == propertyName &&
               (prop.flags & 6) == prop.kFlags_Write) {
             return &prop;
           }
@@ -373,8 +373,36 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
         parentInstance ? parentInstance->GetSourcePexName() : "";
       try {
         auto gameObject = static_cast<IGameObject*>(activeInstanceOwner);
+
+        std::vector<std::shared_ptr<ActivePexInstance>>
+          activePexInstancesForCallParent;
+        if (gameObject) {
+          activePexInstancesForCallParent =
+            gameObject->ListActivePexInstances();
+
+          std::string toFind = sourcePex.source;
+
+          for (auto& v : activePexInstancesForCallParent) {
+            if (!Utils::stricmp(v->GetSourcePexName().data(), toFind.data())) {
+              v = parentInstance;
+              spdlog::trace("CallParent: redirecting method call {} -> {}",
+                            toFind, parentName);
+            }
+          }
+        }
+
+        if (spdlog::should_log(spdlog::level::trace)) {
+          std::vector<std::string> argsForCallStr;
+          for (auto v : argsForCall) {
+            argsForCallStr.push_back(v.ToString());
+          }
+          spdlog::trace("CallParent: calling with args {}",
+                        fmt::join(argsForCallStr, ", "));
+        }
+
         auto res = parentVM->CallMethod(gameObject, (const char*)(*args[0]),
-                                        argsForCall);
+                                        argsForCall, ctx->stackIdHolder,
+                                        &activePexInstancesForCallParent);
         if (EnsureCallResultIsSynchronous(res, ctx))
           *args[1] = res;
       } catch (std::exception& e) {
@@ -390,7 +418,7 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
       // BYOHRelationshipAdoptionPetDoorTrigger
       if (args[0]->GetType() != VarValue::kType_String &&
           args[0]->GetType() != VarValue::kType_Identifier)
-        throw std::runtime_error("Anomally in CallMethod. String expected");
+        throw std::runtime_error("Anomaly in CallMethod. String expected");
 
       std::string functionName = (const char*)(*args[0]);
       static const std::string nameOnBeginState = "onBeginState";
@@ -446,17 +474,56 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
     case OpcodesImplementation::Opcodes::op_PropGet:
       // PropGet/Set seems to work only in very simple cases covered by unit
       // tests
-      if (args[1] != nullptr) {
-        std::string nameProperty = (const char*)*args[0];
-        auto object = static_cast<IGameObject*>(
-          IsSelfStr(*args[1]) ? activeInstanceOwner : *args[1]);
-        if (!object)
-          object = static_cast<IGameObject*>(activeInstanceOwner);
+      if (args[0] == nullptr) {
+        spdlog::error(
+          "Papyrus VM: null argument with index 0 for Opcodes::op_PropGet");
+      } else if (args[1] == nullptr) {
+        spdlog::error(
+          "Papyrus VM: null argument with index 1 for Opcodes::op_PropGet");
+      } else if (args[2] == nullptr) {
+        spdlog::error(
+          "Papyrus VM: null argument with index 2 for Opcodes::op_PropGet");
+      } else {
+        std::string propertyName;
+
+        if (args[0]->GetType() == VarValue::kType_String ||
+            args[0]->GetType() == VarValue::kType_Identifier) {
+          propertyName = static_cast<const char*>(*args[0]);
+        } else {
+          spdlog::error("Papyrus VM: argument with index 0 has unexpected "
+                        "type {} for Opcodes::op_PropGet",
+                        static_cast<int>(args[0]->GetType()));
+        }
+
+        IGameObject* object = nullptr;
+        VarValue objectVarValue =
+          IsSelfStr(*args[1]) ? activeInstanceOwner : *args[1];
+        if (objectVarValue.GetType() == VarValue::kType_Object) {
+          object = static_cast<IGameObject*>(objectVarValue);
+        } else {
+          spdlog::error("Papyrus VM: object has unexpected type {} for "
+                        "Opcodes::op_PropGet",
+                        static_cast<int>(objectVarValue.GetType()));
+        }
+
+        if (!object) {
+          if (activeInstanceOwner.GetType() == VarValue::kType_Object) {
+            object = static_cast<IGameObject*>(activeInstanceOwner);
+          } else {
+            spdlog::error(
+              "Papyrus VM: activeInstanceOwner has unexpected type {} for "
+              "Opcodes::op_PropGet",
+              static_cast<int>(activeInstanceOwner.GetType()));
+          }
+        }
+
         if (object && object->ListActivePexInstances().size() > 0) {
           auto inst = object->ListActivePexInstances().back();
           Object::PropInfo* runProperty =
-            GetProperty(*inst, nameProperty, Object::PropInfo::kFlags_Read);
+            GetProperty(*inst, propertyName, Object::PropInfo::kFlags_Read);
           if (runProperty != nullptr) {
+            // TODO: use of argsForCall looks incorrect. why use argsForCall
+            // here? shoud be {} (empty args)
             *args[2] = inst->StartFunction(runProperty->readHandler,
                                            argsForCall, ctx->stackIdHolder);
             spdlog::trace("propget function called");
@@ -466,11 +533,11 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
               std::find_if(instProps.begin(), instProps.end(),
                            [&](const Object::PropInfo& propInfo) {
                              return !Utils::stricmp(propInfo.name.data(),
-                                                    nameProperty.data());
+                                                    propertyName.data());
                            });
             if (it == instProps.end()) {
               spdlog::trace("propget do nothing: prop {} not found",
-                            nameProperty);
+                            propertyName);
             } else {
               VarValue* var = inst->variables->GetVariableByName(
                 it->autoVarName.data(), *inst->sourcePex.fn());
@@ -486,24 +553,63 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
                         args[0]->ToString(), args[1]->ToString(),
                         args[2]->ToString());
         }
-      } else {
-        throw std::runtime_error(
-          "Papyrus VM: null argument for Opcodes::op_PropGet");
       }
       break;
     case OpcodesImplementation::Opcodes::op_PropSet:
-      if (args[1] != nullptr) {
+      if (args[0] == nullptr) {
+        spdlog::error(
+          "Papyrus VM: null argument with index 0 for Opcodes::op_PropSet");
+      } else if (args[1] == nullptr) {
+        spdlog::error(
+          "Papyrus VM: null argument with index 1 for Opcodes::op_PropSet");
+      } else if (args[2] == nullptr) {
+        spdlog::error(
+          "Papyrus VM: null argument with index 2 for Opcodes::op_PropSet");
+      } else {
+
+        // TODO: use of argsForCall looks incorrect
         argsForCall.push_back(*args[2]);
-        std::string nameProperty = (const char*)*args[0];
-        auto object = static_cast<IGameObject*>(
-          IsSelfStr(*args[1]) ? activeInstanceOwner : *args[1]);
-        if (!object)
-          object = static_cast<IGameObject*>(activeInstanceOwner);
+
+        std::string propertyName;
+
+        if (args[0]->GetType() == VarValue::kType_String ||
+            args[0]->GetType() == VarValue::kType_Identifier) {
+          propertyName = static_cast<const char*>(*args[0]);
+        } else {
+          spdlog::error("Papyrus VM: argument with index 0 has unexpected "
+                        "type {} for Opcodes::op_PropSet",
+                        static_cast<int>(args[0]->GetType()));
+        }
+
+        IGameObject* object = nullptr;
+        VarValue objectVarValue =
+          IsSelfStr(*args[1]) ? activeInstanceOwner : *args[1];
+        if (objectVarValue.GetType() == VarValue::kType_Object) {
+          object = static_cast<IGameObject*>(objectVarValue);
+        } else {
+          spdlog::error("Papyrus VM: object has unexpected type {} for "
+                        "Opcodes::op_PropSet",
+                        static_cast<int>(objectVarValue.GetType()));
+        }
+
+        if (!object) {
+          if (activeInstanceOwner.GetType() == VarValue::kType_Object) {
+            object = static_cast<IGameObject*>(activeInstanceOwner);
+          } else {
+            spdlog::error(
+              "Papyrus VM: activeInstanceOwner has unexpected type {} for "
+              "Opcodes::op_PropSet",
+              static_cast<int>(activeInstanceOwner.GetType()));
+          }
+        }
+
         if (object && object->ListActivePexInstances().size() > 0) {
           auto inst = object->ListActivePexInstances().back();
           Object::PropInfo* runProperty =
-            GetProperty(*inst, nameProperty, Object::PropInfo::kFlags_Write);
+            GetProperty(*inst, propertyName, Object::PropInfo::kFlags_Write);
           if (runProperty != nullptr) {
+            // TODO: use of argsForCall looks incorrect.
+            // probably should only *args[2]
             inst->StartFunction(runProperty->writeHandler, argsForCall,
                                 ctx->stackIdHolder);
             spdlog::trace("propset function called");
@@ -513,11 +619,11 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
               std::find_if(instProps.begin(), instProps.end(),
                            [&](const Object::PropInfo& propInfo) {
                              return !Utils::stricmp(propInfo.name.data(),
-                                                    nameProperty.data());
+                                                    propertyName.data());
                            });
             if (it == instProps.end()) {
               spdlog::trace("propset do nothing: prop {} not found",
-                            nameProperty);
+                            propertyName);
             } else {
               VarValue* var = inst->variables->GetVariableByName(
                 it->autoVarName.data(), *inst->sourcePex.fn());
@@ -533,9 +639,6 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
                         args[0]->ToString(), args[1]->ToString(),
                         args[2]->ToString());
         }
-      } else {
-        throw std::runtime_error(
-          "Papyrus VM: null argument for Opcodes::op_PropSet");
       }
       break;
     case OpcodesImplementation::Opcodes::op_Array_Create:
@@ -661,8 +764,13 @@ ActivePexInstance::TransformInstructions(
         dereferenceStart = 2;
         break;
       case OpcodesImplementation::Opcodes::op_CallParent:
-        // TODO?
-        dereferenceStart = 0;
+        // Do not dereference functionName
+        dereferenceStart = 1;
+        break;
+      case OpcodesImplementation::Opcodes::op_PropGet:
+      case OpcodesImplementation::Opcodes::op_PropSet:
+        // Do not dereference property name
+        dereferenceStart = 1;
         break;
       default:
         dereferenceStart = 0;

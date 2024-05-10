@@ -79,7 +79,6 @@ Napi::Object ScampServer::Init(Napi::Env env, Napi::Object exports)
       InstanceMethod("setEnabled", &ScampServer::SetEnabled),
       InstanceMethod("createBot", &ScampServer::CreateBot),
       InstanceMethod("getUserByActor", &ScampServer::GetUserByActor),
-      InstanceMethod("writeLogs", &ScampServer::WriteLogs),
       InstanceMethod("getUserIp", &ScampServer::GetUserIp),
 
       InstanceMethod("getLocalizedString", &ScampServer::GetLocalizedString),
@@ -110,7 +109,33 @@ Napi::Object ScampServer::Init(Napi::Env env, Napi::Object exports)
   constructor = Napi::Persistent(func);
   constructor.SuppressDestruct();
   exports.Set("ScampServer", func);
+
+  exports.Set("writeLogs", Napi::Function::New(env, WriteLogs));
   return exports;
+}
+
+Napi::Value ScampServer::WriteLogs(const Napi::CallbackInfo& info)
+{
+  try {
+    Napi::String logLevel = info[0].As<Napi::String>();
+    Napi::String message = info[1].As<Napi::String>();
+
+    auto messageStr = static_cast<std::string>(message);
+    while (!messageStr.empty() && messageStr.back() == '\n') {
+      messageStr.pop_back();
+    }
+
+    if (static_cast<std::string>(logLevel) == "info") {
+      GetLogger()->info(messageStr);
+    } else if (static_cast<std::string>(logLevel) == "error") {
+      GetLogger()->error(messageStr);
+    }
+  } catch (std::exception& e) {
+    // No sense to rethrow, NodeJS will unlikely be able to print this
+    // exception
+    GetLogger()->error("ScampServer::WriteLogs - {}", e.what());
+  }
+  return info.Env().Undefined();
 }
 
 ScampServer::ScampServer(const Napi::CallbackInfo& info)
@@ -124,6 +149,9 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
     Napi::Number port = info[0].As<Napi::Number>(),
                  maxConnections = info[1].As<Napi::Number>();
 
+    std::string serverSettingsJson =
+      static_cast<std::string>(info[2].As<Napi::String>());
+
     serverMock = std::make_shared<Networking::MockServer>();
 
     std::string dataDir;
@@ -131,15 +159,7 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
     const auto& logger = GetLogger();
     partOne->AttachLogger(logger);
 
-    std::ifstream f("server-settings.json");
-    if (!f.good()) {
-      throw std::runtime_error("server-settings.json is missing");
-    }
-
-    std::stringstream buffer;
-    buffer << f.rdbuf();
-
-    auto serverSettings = nlohmann::json::parse(buffer.str());
+    auto serverSettings = nlohmann::json::parse(serverSettingsJson);
 
     if (serverSettings.find("weaponStaminaModifiers") !=
         serverSettings.end()) {
@@ -291,9 +311,13 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
     auto sweetPieDamageFormulaSettings =
       serverSettings["sweetPieDamageFormulaSettings"];
 
+    auto damageMultFormulaSettings =
+      serverSettings["damageMultFormulaSettings"];
+
     std::unique_ptr<IDamageFormula> formula;
     formula = std::make_unique<TES5DamageFormula>();
-    formula = std::make_unique<DamageMultFormula>(std::move(formula));
+    formula = std::make_unique<DamageMultFormula>(std::move(formula),
+                                                  damageMultFormulaSettings);
     formula = std::make_unique<SweetPieDamageFormula>(
       std::move(formula), sweetPieDamageFormulaSettings);
     partOne->SetDamageFormula(std::move(formula));
@@ -606,30 +630,6 @@ Napi::Value ScampServer::GetUserByActor(const Napi::CallbackInfo& info)
     return Napi::Number::New(info.Env(), partOne->GetUserByActor(formId));
   } catch (std::exception& e) {
     throw Napi::Error::New(info.Env(), (std::string)e.what());
-  }
-  return info.Env().Undefined();
-}
-
-Napi::Value ScampServer::WriteLogs(const Napi::CallbackInfo& info)
-{
-  try {
-    Napi::String logLevel = info[0].As<Napi::String>();
-    Napi::String message = info[1].As<Napi::String>();
-
-    auto messageStr = static_cast<std::string>(message);
-    while (!messageStr.empty() && messageStr.back() == '\n') {
-      messageStr.pop_back();
-    }
-
-    if (static_cast<std::string>(logLevel) == "info") {
-      GetLogger()->info(messageStr);
-    } else if (static_cast<std::string>(logLevel) == "error") {
-      GetLogger()->error(messageStr);
-    }
-  } catch (std::exception& e) {
-    // No sense to rethrow, NodeJS will unlikely be able to print this
-    // exception
-    GetLogger()->error("ScampServer::WriteLogs - {}", e.what());
   }
   return info.Env().Undefined();
 }

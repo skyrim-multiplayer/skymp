@@ -1,5 +1,5 @@
 #pragma once
-#include <BS_thread_pool_light.hpp>
+#include <BS_thread_pool.hpp>
 #include <cstdint>
 #include <memory>
 #include <mutex>
@@ -17,16 +17,16 @@ public:
     {
       std::lock_guard l(initMutex);
       if (!pool) {
-        pool = std::make_unique<BS::thread_pool_light>(numThreads);
+        pool = std::make_unique<BS::thread_pool>(numThreads);
       }
     }
-    return pool->submit(task);
+    return pool->submit_task(task);
   }
 
   void PushAndWait(const std::function<void()>& task) { Push(task).wait(); }
 
 private:
-  std::unique_ptr<BS::thread_pool_light> pool;
+  std::unique_ptr<BS::thread_pool> pool;
   const int32_t numThreads;
   std::mutex initMutex;
 };

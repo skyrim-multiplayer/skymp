@@ -1,7 +1,7 @@
 #pragma once
 
 namespace RE {
-
+#ifdef SKYRIMSE
 struct SoulsTrapped
 {
 public:
@@ -30,5 +30,5 @@ public:
     }
   }
 };
-
+#endif
 }

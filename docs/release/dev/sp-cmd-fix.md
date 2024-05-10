@@ -1,0 +1,1 @@
+[Embedded console](https://github.com/skyrim-multiplayer/skymp/blob/592c6527ed91e6c97a38d143f4ae1cdab9c3268e/docs/release/sp-2.8.md?plain=1#L68) now mirrors unhandled exceptions from the game console properly.

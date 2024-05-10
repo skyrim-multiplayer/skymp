@@ -8,7 +8,6 @@ import { applyMovement } from "../sync/movementApply";
 import { SpawnProcess } from "./spawnProcess";
 import { ObjectReferenceEx } from "../extensions/objectReferenceEx";
 import { View } from "./view";
-import { GamemodeApiSupport } from "../gamemodeApi/gamemodeApiSupport";
 import { PlayerCharacterDataHolder } from "./playerCharacterDataHolder";
 import { getMovement } from "../sync/movementGet";
 import { lastTryHost, tryHost } from "./hostAttempts";
@@ -16,6 +15,7 @@ import { ModelApplyUtils } from "./modelApplyUtils";
 import { localIdToRemoteId } from "./worldViewMisc";
 import { SpApiInteractor } from "../services/spApiInteractor";
 import { WorldCleanerService } from "../services/services/worldCleanerService";
+import { GamemodeUpdateService } from "../services/services/gamemodeUpdateService";
 
 export interface ScreenResolution {
   width: number;
@@ -55,7 +55,7 @@ export class FormView implements View<FormModel> {
       }
     }
 
-    
+
 
     // Don't spawn dead actors if not already
     if (model.isDead) {
@@ -301,7 +301,9 @@ export class FormView implements View<FormModel> {
         this.localImmortal = true;
       }
       this.applyAll(refr, model);
-      GamemodeApiSupport.updateNeighbor(refr, model, this.state);
+
+      const gamemodeUpdateService = SpApiInteractor.getControllerInstance().lookupListener(GamemodeUpdateService);
+      gamemodeUpdateService.updateNeighbor(refr, model, this.state);
     }
   }
 
@@ -454,7 +456,15 @@ export class FormView implements View<FormModel> {
         }
       }
     }
-    if (model.animation) applyAnimation(refr, model.animation, this.animState);
+    
+    if (refr.is3DLoaded() !== undefined && refr.is3DLoaded() == true){
+      if (model.animation){
+        //printConsole(`${model.animation?.animEventName}`);
+        applyAnimation(refr, model.animation, this.animState);
+      } 
+      
+    }
+    
 
     if (model.appearance) {
       const actor = Actor.from(refr);
@@ -579,6 +589,7 @@ export class FormView implements View<FormModel> {
     const str = templateChain.join(',');
 
     if (this.leveledBaseId === 0) {
+      // @ts-ignore
       const leveledBase = TESModPlatform.evaluateLeveledNpc(str);
       if (!leveledBase) {
         printConsole("Failed to evaluate leveled npc", str);
@@ -642,6 +653,7 @@ export class FormView implements View<FormModel> {
   private state = {};
   private localImmortal = false;
   private textNameId: number | undefined = undefined;
+
 
   public static isDisplayingNicknames: boolean = true;
 }

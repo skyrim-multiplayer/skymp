@@ -1,7 +1,7 @@
 #pragma once
 
 namespace RE {
-
+#ifdef SKYRIMSE
 struct LocationDiscovery
 {
 public:
@@ -21,5 +21,5 @@ public:
     return func();
   }
 };
-
+#endif
 }

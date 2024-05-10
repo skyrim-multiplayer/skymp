@@ -61,9 +61,8 @@ jobs:
                 image: ${{ env.SKYMP_VCPKG_DEPS_IMAGE }}
                 options: |
                     -v ${{github.workspace}}:/src
-                    -v ${{github.workspace}}/.cmake-js:/home/skymp/.cmake-js
                 run: |
-                    chown -R skymp:skymp /src /home/skymp/.cmake-js
+                    chown -R skymp:skymp /src
 
           - name: CMake Configure
             id: cmake_configure
@@ -72,7 +71,6 @@ jobs:
                 image: ${{ env.SKYMP_VCPKG_DEPS_IMAGE }}
                 options: |
                     -v ${{github.workspace}}:/src
-                    -v ${{github.workspace}}/.cmake-js:/home/skymp/.cmake-js
                     -u skymp
                     --name configure_container
                 run: |
@@ -105,7 +103,6 @@ jobs:
                 image: ${{ env.SKYMP_VCPKG_DEPS_IMAGE }}
                 options: |
                     -v ${{github.workspace}}:/src
-                    -v ${{github.workspace}}/.cmake-js:/home/skymp/.cmake-js
                     -u skymp
                 run: |
                     cd /src \
@@ -117,7 +114,6 @@ jobs:
                 image: ${{ env.SKYMP_VCPKG_DEPS_IMAGE }}
                 options: |
                     -v ${{github.workspace}}:/src
-                    -v ${{github.workspace}}/.cmake-js:/home/skymp/.cmake-js
                     -u skymp
                 run: |
                     cd /src/build \
@@ -144,13 +140,25 @@ jobs:
               fi
               echo "SP Types in codegen and build dist equal"
 
+          - name: SP Const Enums Check
+            run: |
+              cd skyrim-platform/tools/const_enum_extractor
+              sudo yarn install
+              sudo node ./index.js
+              # Checking if ConstEnumApi.cpp has changed
+              cd ../../../
+              git diff --exit-code skyrim-platform/src/platform_se/skyrim_platform/ConstEnumApi.cpp
+              if [ $? -ne 0 ]; then
+                echo "ConstEnumApi.cpp has changed after running const_enum_extractor. Please re-run it locally and commit changes"
+                exit 1
+              fi
+
           - name: Test
             uses: addnab/docker-run-action@v3
             with:
                 image: ${{ env.SKYMP_VCPKG_DEPS_IMAGE }}
                 options: |
                     -v ${{github.workspace}}:/src
-                    -v ${{github.workspace}}/.cmake-js:/home/skymp/.cmake-js
                     -u skymp
                 run: |
                     cd /src/build \

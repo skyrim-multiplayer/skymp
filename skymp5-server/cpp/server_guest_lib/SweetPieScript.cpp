@@ -157,7 +157,8 @@ void SweetPieScript::Notify(MpActor& actor, const WorldState& worldState,
      << (static_cast<bool>(silent) ? "true" : "false");
   ss << "]";
   std::string args = ss.str();
-  (void)SpSnippet("SkympHacks", "AddItem", args.data()).Execute(&actor);
+  (void)SpSnippet("SkympHacks", "AddItem", args.data())
+    .Execute(&actor, SpSnippetMode::kNoReturnResult);
 }
 
 void SweetPieScript::Play(MpActor& actor, WorldState& worldState,
@@ -242,8 +243,9 @@ void SweetPieScript::EquipItem(MpActor& actor, uint32_t baseId,
   std::string args = ss.str();
   spdlog::info("Equipping item: {}", args);
   SpSnippet("Actor", "EquipItem", args.data(), actor.GetFormId())
-    .Execute(&actor);
+    .Execute(&actor, SpSnippetMode::kNoReturnResult);
   if (!isShield && !isArrow) {
-    SpSnippet("Actor", "DrawWeapon", "[]", actor.GetFormId()).Execute(&actor);
+    SpSnippet("Actor", "DrawWeapon", "[]", actor.GetFormId())
+      .Execute(&actor, SpSnippetMode::kNoReturnResult);
   }
 }

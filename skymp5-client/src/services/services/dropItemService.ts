@@ -4,6 +4,7 @@ import { ClientListener, CombinedController, Sp } from "./clientListener";
 import { MsgType } from "../../messages";
 import { SweetTaffySweetCantDropService } from "./sweetTaffySweetCantDropService";
 import { WorldCleanerService } from "./worldCleanerService";
+import { logTrace } from "../../logging";
 
 export class DropItemService extends ClientListener {
     constructor(private sp: Sp, private controller: CombinedController) {
@@ -64,15 +65,15 @@ export class DropItemService extends ClientListener {
                     if (worldCleanerService.getWcProtection(refrId) === 0) {
                         ref.delete();
                         ++numFound;
-                        this.logTrace("Found and deleted reference " + refrId.toString(16));
+                        logTrace(this, "Found and deleted reference " + refrId.toString(16));
                     }
                     else
-                        this.logTrace("Found reference " + refrId.toString(16) + " but it's protected");
+                        logTrace(this, "Found reference " + refrId.toString(16) + " but it's protected");
                 }
             });
 
             if (!numFound) {
-                return this.logTrace("Ignoring item drop as false positive");
+                return logTrace(this, "Ignoring item drop as false positive");
             }
 
             const t = MsgType.DropItem;

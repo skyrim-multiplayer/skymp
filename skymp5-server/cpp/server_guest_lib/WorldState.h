@@ -235,6 +235,16 @@ public:
 
   bool disableVanillaScriptsInExterior = true;
 
+  std::vector<uint32_t> bannedEspmCharacterRaceIds = {
+    0x000e7713, 0x00012e82, 0x001052a3, 0x00088884, 0x0008883a, 0x00088846,
+    0x00108272, 0x000a82b9, 0x0008883c, 0x00088794, 0x00088845, 0x0008883d,
+    0x00088844, 0x00088840, 0x000a82ba,
+
+    /* Playable races from ArgonianRace to WoodElfRace */
+    0x00013740, 0x00013741, 0x00013742, 0x00013743, 0x00013744, 0x00013745,
+    0x00013746, 0x00013747, 0x00013748, 0x00013749
+  };
+
 private:
   bool AttachEspmRecord(const espm::CombineBrowser& br,
                         const espm::RecordHeader* record,
@@ -247,8 +257,8 @@ private:
   void TickSaveStorage(const std::chrono::system_clock::time_point& now);
   void TickTimers(const std::chrono::system_clock::time_point& now);
   [[nodiscard]] bool NpcSourceFilesOverriden() const noexcept;
-  [[nodiscard]] bool IsNpcAllowed(uint32_t baseId) const noexcept;
-  [[nodiscard]] uint32_t GetFileIdx(uint32_t baseId) const noexcept;
+  [[nodiscard]] bool IsNpcAllowed(uint32_t refrId) const noexcept;
+  [[nodiscard]] uint32_t GetFileIdx(uint32_t formId) const noexcept;
   [[nodiscard]] bool IsRelootForbidden(std::string type) const noexcept;
 
 private:

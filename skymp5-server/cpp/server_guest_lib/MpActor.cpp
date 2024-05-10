@@ -368,7 +368,7 @@ bool MpActor::OnEquip(uint32_t baseId)
       auto targetRefr = dynamic_cast<MpActor*>(listener);
       if (targetRefr && targetRefr != this) {
         SpSnippet("Actor", "EquipItem", serializedArgs.data(), GetFormId())
-          .Execute(targetRefr);
+          .Execute(targetRefr, SpSnippetMode::kNoReturnResult);
       }
     }
   } else if (isBook) {
@@ -630,7 +630,11 @@ uint32_t MpActor::GetRaceId() const
     return appearance->raceId;
   }
 
-  return espm::GetData<espm::NPC_>(GetBaseId(), GetParent()).race;
+  return EvaluateTemplate<espm::NPC_::UseTraits>(
+    GetParent(), GetBaseId(), GetTemplateChain(),
+    [](const auto& npcLookupResult, const auto& npcData) {
+      return npcLookupResult.ToGlobalId(npcData.race);
+    });
 }
 
 bool MpActor::IsWeaponDrawn() const
