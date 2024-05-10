@@ -1,5 +1,7 @@
 # Skyrim Platform
 
+## **This information is for mod creators. For general details, please read the [README](https://github.com/skyrim-multiplayer/skymp/blob/main/skyrim-platform/README.md).**
+
 Skyrim Platform is a modding tool for Skyrim allowing writing scripts with JavaScript/TypeScript.
 
 ```ts

@@ -26,6 +26,8 @@ PartOne& GetPartOne()
     std::make_shared<DirectoryScriptStorage>(TEST_PEX_DIR));
   instance->AttachEspm(&l);
 
+  instance->worldState.bannedEspmCharacterRaceIds.clear();
+
   static std::vector<std::shared_ptr<PartOne>> g_partOneInstances;
   g_partOneInstances.push_back(instance);
   return *g_partOneInstances.back();

@@ -1,7 +1,7 @@
 #pragma once
 
 namespace RE {
-
+#ifdef SKYRIMSE
 struct SpellsLearned
 {
 public:
@@ -28,5 +28,5 @@ public:
     }
   }
 };
-
+#endif
 }

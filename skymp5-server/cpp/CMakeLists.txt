@@ -87,38 +87,41 @@ target_include_directories(localization-provider PUBLIC "${CMAKE_CURRENT_SOURCE_
 # Link vcpkg deps
 #
 
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/modules)
+find_path(CATCH_INCLUDE_DIR NAMES catch.hpp PATH_SUFFIXES catch2)
+get_filename_component(CATCH_INCLUDE_DIR ${CATCH_INCLUDE_DIR} DIRECTORY)
+
+find_path(SPARSEPP_INCLUDE_DIR NAMES spp.h PATH_SUFFIXES sparsepp)
+get_filename_component(SPARSEPP_INCLUDE_DIR ${SPARSEPP_INCLUDE_DIR} DIRECTORY)
+
+find_path(JSON_INCLUDE_DIR NAMES json.hpp PATH_SUFFIXES nlohmann)
+get_filename_component(JSON_INCLUDE_DIR ${JSON_INCLUDE_DIR} DIRECTORY)
+
+find_package(spdlog CONFIG REQUIRED)
+
+find_package(simdjson CONFIG REQUIRED)
+
+find_package(slikenet CONFIG REQUIRED)
+
+find_package(ZLIB REQUIRED)
+
+find_package(mongocxx REQUIRED)
+find_package(mongoc-1.0 CONFIG REQUIRED)
+
+find_package(OpenSSL REQUIRED)
+
+find_package(bsa CONFIG REQUIRED)
 
 foreach(target ${VCPKG_DEPENDENT})
-  find_path(CATCH_INCLUDE_DIR NAMES catch.hpp PATH_SUFFIXES catch2)
-  get_filename_component(CATCH_INCLUDE_DIR ${CATCH_INCLUDE_DIR} DIRECTORY)
   target_include_directories(${target} PUBLIC ${CATCH_INCLUDE_DIR})
-
-  find_path(SPARSEPP_INCLUDE_DIR NAMES spp.h PATH_SUFFIXES sparsepp)
-  get_filename_component(SPARSEPP_INCLUDE_DIR ${SPARSEPP_INCLUDE_DIR} DIRECTORY)
   target_include_directories(${target} PUBLIC ${SPARSEPP_INCLUDE_DIR})
-
-  find_path(JSON_INCLUDE_DIR NAMES json.hpp PATH_SUFFIXES nlohmann)
-  get_filename_component(JSON_INCLUDE_DIR ${JSON_INCLUDE_DIR} DIRECTORY)
   target_include_directories(${target} PUBLIC ${JSON_INCLUDE_DIR})
-
-  find_package(spdlog CONFIG REQUIRED)
   target_link_libraries(${target} PUBLIC spdlog::spdlog)
-
-  find_package(simdjson CONFIG REQUIRED)
   target_link_libraries(${target} PUBLIC simdjson::simdjson)
-
-  find_package(slikenet CONFIG REQUIRED)
   target_link_libraries(${target} PUBLIC SLikeNet)
-
-  find_package(ZLIB REQUIRED)
   target_link_libraries(${target} PUBLIC ZLIB::ZLIB)
-
-  find_package(mongocxx REQUIRED)
-  find_package(mongoc-1.0 CONFIG REQUIRED)
   target_link_libraries(${target} PUBLIC mongo::mongocxx_static mongo::bsoncxx_static mongo::mongoc_static mongo::bson_static)
-  find_package(OpenSSL REQUIRED)
   target_link_libraries(${target} PUBLIC OpenSSL::SSL OpenSSL::Crypto)
+  target_link_libraries(${target} PUBLIC bsa::bsa)
 
   if(UNIX)
     target_link_libraries(${target} PUBLIC pthread resolv rt m)

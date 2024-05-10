@@ -29,6 +29,9 @@ set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "scam_native" PREFI
 target_link_libraries(${PROJECT_NAME} PRIVATE unofficial::node-addon-api::node-addon-api)
 target_include_directories(${PROJECT_NAME} PRIVATE ${SKYMP5_SERVER_SOURCE_DIR}/cpp/addon)
 
+# Make 'cmake --build . --target skymp5-server' building typescript part as well
+add_dependencies(${PROJECT_NAME} skymp5-server-ts)
+
 # Put build artifacts into build/dist/server
 if(WIN32)
   set_target_properties(${PROJECT_NAME} PROPERTIES

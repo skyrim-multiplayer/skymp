@@ -6,9 +6,24 @@
 
 namespace espm {
 
+const Type RecordHeader::GetType() const noexcept
+{
+  return Type{ reinterpret_cast<const char*>(this) - 8 };
+}
+
+uint32_t RecordHeader::GetFlags() const noexcept
+{
+  return flags;
+}
+
 uint32_t RecordHeader::GetId() const noexcept
 {
   return id;
+}
+
+uint16_t RecordHeader::GetVersion() const noexcept
+{
+  return version;
 }
 
 const char* RecordHeader::GetEditorId(
@@ -70,16 +85,6 @@ std::vector<uint32_t> RecordHeader::GetKeywordIds(
     compressedFieldsCache);
 
   return res;
-}
-
-const Type RecordHeader::GetType() const noexcept
-{
-  return Type{ reinterpret_cast<const char*>(this) - 8 };
-}
-
-uint32_t RecordHeader::GetFlags() const noexcept
-{
-  return flags;
 }
 
 uint32_t RecordHeader::GetFieldsSizeSum() const noexcept

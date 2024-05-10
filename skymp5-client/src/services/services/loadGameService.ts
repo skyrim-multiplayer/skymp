@@ -10,10 +10,12 @@ export class LoadGameService extends ClientListener {
     public loadGame(pos: number[], rot: number[], worldOrCell: number, changeFormNpc?: ChangeFormNpc, loadOrder?: string[], time?: { seconds: number, minutes: number, hours: number }) {
 
         try {
+            // @ts-ignore
             this.sp.loadGame(pos, rot, worldOrCell, changeFormNpc, loadOrder, time);
         }
         catch (e) {
             // Hotfix non-vanilla headparts bug
+            // @ts-ignore
             this.sp.loadGame(pos, rot, worldOrCell, undefined, loadOrder, time);
         }
         this._isCausedBySkyrimPlatform = true;

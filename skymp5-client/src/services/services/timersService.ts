@@ -2,7 +2,7 @@ import { EventHandle, Menu, MenuOpenEvent } from "skyrimPlatform";
 import { ClientListener, CombinedController, Sp } from "./clientListener";
 
 interface Timer {
-  handler: TimerHandler;
+  handler: string | Function;
   args: any[];
   delayMs: number;
   passedMs: number;
@@ -28,7 +28,7 @@ export class TimersService extends ClientListener {
     this.controller.on("preLoadGame", () => this.onPreLoadGame());
   }
 
-  setTimeout(handler: TimerHandler, timeout?: number, ...args: any[]): number {
+  setTimeout(handler: string | Function, timeout?: number, ...args: any[]): number {
     const timer: Timer = { handler, args, delayMs: timeout ?? 0, passedMs: 0 };
     for (let i = 0; i < this.timersArr.length; ++i) {
       if (!this.timersArr[i]) {
@@ -51,7 +51,7 @@ export class TimersService extends ClientListener {
     return;
   }
 
-  setInterval(handler: TimerHandler, timeout?: number, ...args: any[]): number {
+  setInterval(handler: string | Function, timeout?: number, ...args: any[]): number {
     const timer: Timer = { handler, args, delayMs: timeout ?? 0, passedMs: 0 };
     for (let i = 0; i < this.intervalsArr.length; ++i) {
       if (!this.intervalsArr[i]) {

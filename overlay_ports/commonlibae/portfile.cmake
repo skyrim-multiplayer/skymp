@@ -1,19 +1,25 @@
 vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
-    REPO Ryan-rsm-McKenzie/CommonLibSSE
-    REF 0e9d380b90950eb3ece1e5b95e3b6a379ee03f8e
-    SHA512 80afa2c9444f4bbb873e8de4a4af8b38b19af2ac3b60d0d68ca25d02b1b3f4bdac83ebe30ced2385c8fc90bb0e0dcf64f9fc05f896951a0dd60a799bc8d53a35
-    HEAD_REF master
+    REPO powerof3/CommonLibSSE
+    REF 26015a042947ef3787eac754d559e9653c664a2c
+    SHA512 14ad2555baa155b3240ce53ef0cd527b01173925de1d2bd28ce03d135acd1f33495eaf1e9d2d1dda94052394b3f7dc975357778b0df3a8ce71f3320d2e57128c
+    HEAD_REF dev
     PATCHES
       patches/01-objectrefr-make_moverefr_public.patch
       patches/02-variable-make_members_public.patch
+      
       patches/03-stackframe-uncomment_top_args.patch
+      
       patches/04-extradatalist-make_members_public.patch
-      patches/05-expand-alias.patch
+      # patches/05-expand-alias.patch
       patches/06-fix-destructor.patch
 )
 
-vcpkg_configure_cmake(SOURCE_PATH ${SOURCE_PATH})
+vcpkg_configure_cmake(
+  SOURCE_PATH ${SOURCE_PATH} 
+  OPTIONS
+    -DSKYRIM_SUPPORT_AE=ON
+)
 
 vcpkg_install_cmake()
 vcpkg_fixup_cmake_targets(CONFIG_PATH "lib/cmake/commonlibsse")

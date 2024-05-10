@@ -3,26 +3,14 @@ import { Animation } from "../sync/animation";
 import { Appearance } from "../sync/appearance";
 import { Equipment } from "../sync/equipment";
 import { Inventory } from "../sync/inventory";
+import { CreateActorMessageMainProps, CreateActorMessageAdditionalProps } from "src/services/messages/createActorMessage";
 
-export interface FormModel {
+// Own properties (not inherited) are being assigned locally
+export interface FormModel extends CreateActorMessageAdditionalProps, CreateActorMessageMainProps{
   idx?: number;
-  baseId?: number;
-  refrId?: number;
   movement?: Movement;
-  animation?: Animation;
   numMovementChanges?: number;
-  appearance?: Appearance;
   numAppearanceChanges?: number;
-  equipment?: Equipment;
-  isHarvested?: boolean;
-  isOpen?: boolean;
-  inventory?: Inventory;
-  isHostedByOther?: boolean;
-  isDead?: boolean;
-  templateChain?: number[];
-  lastAnimation?: string;
-
-  // Assigned locally
   isMyClone?: boolean;
 }
 

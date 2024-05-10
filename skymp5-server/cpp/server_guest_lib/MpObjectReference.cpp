@@ -2,7 +2,10 @@
 #include "ChangeFormGuard.h"
 #include "EvaluateTemplate.h"
 #include "FormCallbacks.h"
+#include "GetWeightFromRecord.h"
+#include "Inventory.h"
 #include "LeveledListUtils.h"
+#include "MathUtils.h"
 #include "MpActor.h"
 #include "MpChangeForms.h"
 #include "MsgType.h"
@@ -11,6 +14,8 @@
 #include "ScriptVariablesHolder.h"
 #include "TimeUtils.h"
 #include "WorldState.h"
+#include "libespm/CompressedFieldsCache.h"
+#include "libespm/Convert.h"
 #include "libespm/GroupUtils.h"
 #include "libespm/Utils.h"
 #include "papyrus-vm/Reader.h"
@@ -18,10 +23,13 @@
 #include "script_objects/EspmGameObject.h"
 #include "script_storages/IScriptStorage.h"
 #include <map>
+#include <numeric>
 #include <optional>
 
 #include "OpenContainerMessage.h"
 #include "TeleportMessage.h"
+
+#include "script_classes/PapyrusObjectReference.h" // kOriginalNameExpression
 
 constexpr uint32_t kPlayerCharacterLevel = 1;
 
@@ -307,11 +315,34 @@ void MpObjectReference::VisitProperties(const PropertiesVisitor& visitor,
     visitor("lastAnimation", lastAnimationAsJson.data());
   }
 
+  if (ChangeForm().setNodeScale.has_value()) {
+    // worse performance than building json string manually but proper escaping
+    // TODO: consider switching to a faster JSON builder
+    nlohmann::json setNodeScaleAsJson;
+    for (auto& [key, value] : *ChangeForm().setNodeScale) {
+      setNodeScaleAsJson[key] = value;
+    }
+    visitor("setNodeScale", setNodeScaleAsJson.dump().data());
+  }
+
+  if (ChangeForm().setNodeTextureSet.has_value()) {
+    // worse performance than building json string manually but proper escaping
+    // TODO: consider switching to a faster JSON builder
+    nlohmann::json setNodeTextureSetAsJson;
+    for (auto& [key, value] : *ChangeForm().setNodeTextureSet) {
+      setNodeTextureSetAsJson[key] =
+        FormDesc::FromString(value).ToFormId(GetParent()->espmFiles);
+    }
+    visitor("setNodeTextureSet", setNodeTextureSetAsJson.dump().data());
+  }
+
   if (ChangeForm().displayName.has_value()) {
-    std::string raw = *ChangeForm().displayName;
-    nlohmann::json j = raw;
-    std::string displayNameAsJson = j.dump();
-    visitor("displayName", displayNameAsJson.data());
+    const std::string& raw = *ChangeForm().displayName;
+    if (raw != PapyrusObjectReference::kOriginalNameExpression) {
+      nlohmann::json j = raw;
+      std::string displayNameAsJson = j.dump();
+      visitor("displayName", displayNameAsJson.data());
+    }
   }
 
   // Property flags (isVisibleByOwner, isVisibleByNeighbor) should be checked
@@ -524,6 +555,12 @@ void MpObjectReference::PutItem(MpActor& ac, const Inventory::Entry& e)
         << GetFormId();
     throw std::runtime_error(err.str());
   }
+
+  if (MpApiOnPutItem(ac, e)) {
+    return spdlog::trace("onPutItem - blocked by gamemode");
+  }
+
+  spdlog::trace("onPutItem - not blocked by gamemode");
   ac.RemoveItems({ e }, this);
 }
 
@@ -536,6 +573,12 @@ void MpObjectReference::TakeItem(MpActor& ac, const Inventory::Entry& e)
         << GetFormId();
     throw std::runtime_error(err.str());
   }
+
+  if (MpApiOnTakeItem(ac, e)) {
+    return spdlog::trace("onTakeItem - blocked by gamemode");
+  }
+
+  spdlog::trace("onPutItem - not blocked by gamemode");
   RemoveItems({ e }, &ac);
 }
 
@@ -596,8 +639,8 @@ void MpObjectReference::ForceSubscriptionsUpdate()
   for (auto listener : toAdd) {
     Subscribe(this, listener);
     // Note: Self-subscription is OK this check is performed as we don't want
-    // to self-subscribe twice! We have already been subscribed to self in the
-    // last line of code
+    // to self-subscribe twice! We have already been subscribed to self in
+    // the last line of code
     if (this != listener)
       Subscribe(listener, this);
   }
@@ -734,7 +777,8 @@ void MpObjectReference::AddItems(const std::vector<Inventory::Entry>& entries)
   //   auto itemCount = VarValue(static_cast<int32_t>(entri.count));
   //   auto itemReference = VarValue((IGameObject*)nullptr);
   //   auto sourceContainer = VarValue((IGameObject*)nullptr);
-  //   VarValue args[4] = { baseItem, itemCount, itemReference, sourceContainer
+  //   VarValue args[4] = { baseItem, itemCount, itemReference,
+  //   sourceContainer
   //   }; SendPapyrusEvent("OnItemAdded", args, 4);
   // }
 }
@@ -829,9 +873,9 @@ void MpObjectReference::RegisterPrivateIndexedProperty(
     auto key = worldState->MakePrivateIndexedPropertyMapKey(
       propertyName, currentValueStringified);
     worldState->actorIdByPrivateIndexedProperty[key].erase(formId);
-    spdlog::trace(
-      "MpObjectReference::RegisterPrivateIndexedProperty {:x} - unregister {}",
-      formId, key);
+    spdlog::trace("MpObjectReference::RegisterPrivateIndexedProperty {:x} - "
+                  "unregister {}",
+                  formId, key);
   }
 
   EditChangeForm([&](MpChangeFormREFR& changeForm) {
@@ -924,7 +968,42 @@ void MpObjectReference::SetLastAnimation(const std::string& lastAnimation)
   });
 }
 
-void MpObjectReference::SetDisplayName(const std::string& newName)
+void MpObjectReference::SetNodeTextureSet(const std::string& node,
+                                          const espm::LookupResult& textureSet,
+                                          bool firstPerson)
+{
+  // This only changes var in database, SpSnippet is being sent in
+  // PapyrusNetImmerse.cpp
+  EditChangeForm([&](MpChangeForm& changeForm) {
+    if (changeForm.setNodeTextureSet == std::nullopt) {
+      changeForm.setNodeTextureSet = std::map<std::string, std::string>();
+    }
+
+    uint32_t textureSetId = textureSet.ToGlobalId(textureSet.rec->GetId());
+
+    FormDesc textureSetFormDesc =
+      FormDesc::FromFormId(textureSetId, GetParent()->espmFiles);
+
+    changeForm.setNodeTextureSet->insert_or_assign(
+      node, textureSetFormDesc.ToString());
+  });
+}
+
+void MpObjectReference::SetNodeScale(const std::string& node, float scale,
+                                     bool firstPerson)
+{
+  // This only changes var in database, SpSnippet is being sent in
+  // PapyrusNetImmerse.cpp
+  EditChangeForm([&](MpChangeForm& changeForm) {
+    if (changeForm.setNodeScale == std::nullopt) {
+      changeForm.setNodeScale = std::map<std::string, float>();
+    }
+    changeForm.setNodeScale->insert_or_assign(node, scale);
+  });
+}
+
+void MpObjectReference::SetDisplayName(
+  const std::optional<std::string>& newName)
 {
   EditChangeForm(
     [&](MpChangeForm& changeForm) { changeForm.displayName = newName; });
@@ -1747,4 +1826,73 @@ void MpObjectReference::BeforeDestroy()
   MpForm::BeforeDestroy();
 
   RemoveFromGridAndUnsubscribeAll();
+}
+
+bool MpObjectReference::MpApiOnPutItem(MpActor& source,
+                                       const Inventory::Entry& entry)
+{
+  simdjson::dom::parser parser;
+  std::string rawArgs = "[" + std::to_string(source.GetFormId()) + "," +
+    std::to_string(entry.baseId) + "," + std::to_string(entry.count) + "]";
+  auto args = parser.parse(rawArgs).value();
+  bool blockedByMpApi = false;
+
+  if (auto wst = GetParent()) {
+    const auto id = GetFormId();
+    for (auto& listener : wst->listeners) {
+      bool notBlocked = listener->OnMpApiEvent("onPutItem", args, id);
+      blockedByMpApi = !notBlocked;
+    }
+  }
+
+  return blockedByMpApi;
+}
+
+bool MpObjectReference::MpApiOnTakeItem(MpActor& source,
+                                        const Inventory::Entry& entry)
+{
+  simdjson::dom::parser parser;
+  std::string rawArgs = "[" + std::to_string(source.GetFormId()) + "," +
+    std::to_string(entry.baseId) + "," + std::to_string(entry.count) + "]";
+  auto args = parser.parse(rawArgs).value();
+  bool blockedByMpApi = false;
+
+  if (auto wst = GetParent()) {
+    const auto id = GetFormId();
+    for (auto& listener : wst->listeners) {
+      bool notBlocked = listener->OnMpApiEvent("onTakeItem", args, id);
+      blockedByMpApi = !notBlocked;
+    }
+  }
+
+  return blockedByMpApi;
+}
+
+float MpObjectReference::GetTotalItemWeight() const
+{
+  const auto& entries = GetInventory().entries;
+  const auto calculateWeight = [this](float sum,
+                                      const Inventory::Entry& entry) {
+    const auto& espm = GetParent()->GetEspm();
+    const auto* record = espm.GetBrowser().LookupById(entry.baseId).rec;
+    if (!record) {
+      spdlog::warn(
+        "MpObjectReference::GetTotalItemWeight of ({:x}): Record of form "
+        "({}) is nullptr",
+        GetFormId(), entry.baseId);
+      return 0.f;
+    }
+    float weight = GetWeightFromRecord(record, GetParent()->GetEspmCache());
+    if (!espm::utils::IsItem(record->GetType())) {
+      spdlog::warn("Unsupported espm type {} has been detected, when "
+                   "calculating overall weight.",
+                   record->GetType().ToString());
+    } else {
+      spdlog::trace("Weight: {} for record of type {}", weight,
+                    record->GetType().ToString());
+    }
+    return sum + entry.count * weight;
+  };
+
+  return std::accumulate(entries.begin(), entries.end(), 0.f, calculateWeight);
 }

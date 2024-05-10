@@ -1,3 +1,4 @@
+import { logTrace, logError } from "../../logging";
 import { NeverError } from "../../lib/errors";
 import { MsgType } from "../../messages";
 import { SendMessageEvent } from "../events/sendMessageEvent";
@@ -190,13 +191,13 @@ export class NetworkingService extends ClientListener {
   private createClientSafe() {
     const { hostName, port } = this.serverAddress;
 
-    this.logTrace("createClientSafe " + hostName + ":" + port);
+    logTrace(this, "createClientSafe " + hostName + ":" + port);
 
     if (this.serverAddress.hostName !== "" && this.serverAddress.port !== 0) {
       this.sp.mpClientPlugin.createClient(hostName, port);
     }
     else {
-      this.logError("createClientSafe failed");
+      logError(this, "createClientSafe failed");
     }
   }
 

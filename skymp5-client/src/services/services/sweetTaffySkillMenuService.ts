@@ -1,5 +1,6 @@
 import { ActivateEvent, browser } from 'skyrimPlatform'
 import { ClientListener, CombinedController, Sp } from './clientListener';
+import { logTrace } from '../../logging';
 
 // TODO: move to server/gamemode
 export class SweetTaffySkillMenuService extends ClientListener {
@@ -7,10 +8,10 @@ export class SweetTaffySkillMenuService extends ClientListener {
         super();
 
         if (!this.hasSweetPie()) {
-            this.logTrace("SweetTaffy features disabled");
+            logTrace(this, "SweetTaffy features disabled");
         }
         else {
-            this.logTrace("SweetTaffy features enabled");
+            logTrace(this, "SweetTaffy features enabled");
         }
 
         this.controller.once("activate", (e) => this.onActivate(e));

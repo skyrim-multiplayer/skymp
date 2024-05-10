@@ -1,0 +1,1 @@
+Slightly optimized Texts API.

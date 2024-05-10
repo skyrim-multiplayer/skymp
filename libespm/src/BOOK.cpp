@@ -23,6 +23,7 @@ BOOK::Data BOOK::GetData(
 
         result.spellOrSkillFormId =
           *reinterpret_cast<const uint32_t*>(data + 0x4);
+        result.weight = *reinterpret_cast<const float*>(data + 0xc);
       }
     },
     compressedFieldsCache);

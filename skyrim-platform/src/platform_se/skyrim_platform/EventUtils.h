@@ -19,11 +19,3 @@ inline RE::BSTEventSource<E>* GetEventSource()
 {
   return T::GetSingleton();
 }
-
-// helper functions
-
-template <class T>
-inline std::shared_ptr<T> CopyEventPtr(const T* ptr)
-{
-  return std::make_shared<T>(*ptr);
-}

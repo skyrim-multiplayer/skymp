@@ -1,8 +1,10 @@
 #include "PapyrusForm.h"
 
+#include "GetWeightFromRecord.h"
 #include "MpActor.h"
 #include "TimeUtils.h"
 #include "WorldState.h"
+#include "papyrus-vm/Structures.h"
 #include "script_objects/EspmGameObject.h"
 #include "script_objects/MpFormGameObject.h"
 
@@ -131,6 +133,35 @@ VarValue PapyrusForm::GetName_(VarValue self, const std::vector<VarValue>&)
   }
 
   return VarValue("");
+}
+
+VarValue PapyrusForm::GetWeight(VarValue self,
+                                const std::vector<VarValue>& arguments)
+{
+  if (const auto* form = GetFormPtr<MpForm>(self)) {
+    return VarValue(form->GetWeight());
+  }
+
+  if (const auto record = GetRecordPtr(self).rec) {
+    auto& cache = compatibilityPolicy->GetWorldState()->GetEspmCache();
+    return VarValue(GetWeightFromRecord(record, cache));
+  }
+
+  return VarValue::None();
+}
+
+void PapyrusForm::Register(VirtualMachine& vm,
+                           std::shared_ptr<IPapyrusCompatibilityPolicy> policy)
+{
+  AddMethod(vm, "RegisterForSingleUpdate",
+            &PapyrusForm::RegisterForSingleUpdate);
+  AddMethod(vm, "GetType", &PapyrusForm::GetType);
+  AddMethod(vm, "HasKeyword", &PapyrusForm::HasKeyword);
+  AddMethod(vm, "GetFormID", &PapyrusForm::GetFormId);
+  AddMethod(vm, "GetName", &PapyrusForm::GetName_);
+  AddMethod(vm, "GetWeight", &PapyrusForm::GetWeight);
+
+  compatibilityPolicy = policy;
 }
 
 namespace {
