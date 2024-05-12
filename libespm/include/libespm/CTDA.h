@@ -48,6 +48,7 @@ struct CTDA
   uint8_t unknown[3];
   float comparisonValue;
   uint16_t functionIndex;
+  uint8_t padding[2];
   const char* additionalData;
   RunOnTypeFlags runOnType;
   uint32_t referenceID;

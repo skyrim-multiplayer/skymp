@@ -17,6 +17,7 @@
 #include <optional>
 #include <sparsepp/spp.h>
 #include <vector>
+#include <iostream>
 
 namespace espm {
 
@@ -232,6 +233,19 @@ bool Browser::ReadAny(const GroupStack* parentGrStack)
     }
 
     if (utils::Is<espm::COBJ>(t)) {
+      const auto cobj = reinterpret_cast<const espm::COBJ*>(recHeader);
+      COBJ::Data data = cobj->GetData(pImpl->dummyCache);
+      std::vector<CTDA> cond = data.conditions;
+
+      for (int i = 0; i < cond.size(); i++) {
+        if (cond[i].IsGetEventData()) {
+          std::cout << "Get Event Data" << std::endl;
+        }
+        if (cond[i].IsItemCount()) {
+          std::cout << "Is Item Count" << std::endl;
+        }
+      }
+
       pImpl->constructibleObjects.push_back(recHeader);
     }
 
