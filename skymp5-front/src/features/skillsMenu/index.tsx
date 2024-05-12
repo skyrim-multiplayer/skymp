@@ -320,7 +320,7 @@ const SkillsMenu = ({ send }: { send: (message: string) => void }) => {
                     )
                   : (
                   <FrameButton
-                    text="сбросить все"
+                    text="сбросить"
                     name="discardBtn"
                     variant="DEFAULT"
                     width={242}
