@@ -1,4 +1,4 @@
-export type SpSnippetMessage = {
+export interface SpSnippetMessage {
     type: "spSnippet";
     class: string;
     function: string;
