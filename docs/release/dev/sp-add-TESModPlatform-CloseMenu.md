@@ -1,1 +1,0 @@
-Added `TESModPlatform.CloseMenu` native
