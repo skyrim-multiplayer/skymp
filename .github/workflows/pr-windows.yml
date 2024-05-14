@@ -21,13 +21,13 @@ jobs:
         include:
           - DESCRIPTION: 'Skyrim Special Edition (1.5)'
             SKYRIM_SE_FLAG: ON
-            SP_NEXUS_ARTIFACT_NAME: SP-SE-nexus
+            SP_NEXUS_ARTIFACT_NAME: Skyrim Platform %SP_VERSION% (Special Edition)
             DEPLOY_BRANCH: ""
             ONLY_PUSH: false
             DIST_ARTIFACT_NAME: dist-1.5
           - DESCRIPTION: 'Skyrim Anniversary Edition (1.6)'
             SKYRIM_SE_FLAG: OFF
-            SP_NEXUS_ARTIFACT_NAME: SP-AE-nexus
+            SP_NEXUS_ARTIFACT_NAME: Skyrim Platform %SP_VERSION% (Anniversary Edition)
             DEPLOY_BRANCH: ""
             ONLY_PUSH: false
             DIST_ARTIFACT_NAME: dist
@@ -197,11 +197,24 @@ jobs:
       with:
         name: coverage (${{ matrix.DESCRIPTION }})
         path: ${{github.workspace}}/build/__coverage
+
+    - name: Extract SP Version Number
+      if: ${{ (!matrix.ONLY_PUSH || github.event_name == 'push') && matrix.SP_NEXUS_ARTIFACT_NAME != 'nope' }}
+      run: |
+        $version = (Get-Content ./skyrim-platform/package.json | ConvertFrom-Json).version
+        echo "VERSION=$version" | Out-File -Append -FilePath $env:GITHUB_ENV
+
+    - name: Replace %SP_VERSION% with actual version in artifact name
+      if: ${{ (!matrix.ONLY_PUSH || github.event_name == 'push') && matrix.SP_NEXUS_ARTIFACT_NAME != 'nope' }}
+      run: |
+        $artifactName = "${{ matrix.SP_NEXUS_ARTIFACT_NAME }}"
+        $artifactName = $artifactName.Replace("%SP_VERSION%", "${{ env.VERSION }}")
+        echo "SP_NEXUS_ARTIFACT_NAME=$artifactName" | Out-File -Append -FilePath $env:GITHUB_ENV
       
     - uses: actions/upload-artifact@v4
       if: ${{ (!matrix.ONLY_PUSH || github.event_name == 'push') && matrix.SP_NEXUS_ARTIFACT_NAME != 'nope' }}
       with:
-        name: ${{ matrix.SP_NEXUS_ARTIFACT_NAME }}
+        name: ${{ env.SP_NEXUS_ARTIFACT_NAME }}
         # Data folder is skipped for mod managers
         path: ${{github.workspace}}/build/nexus/sp/data/*
 
