@@ -207,9 +207,9 @@ jobs:
     - name: Replace %SP_VERSION% with actual version in artifact name
       if: ${{ (!matrix.ONLY_PUSH || github.event_name == 'push') && matrix.SP_NEXUS_ARTIFACT_NAME != 'nope' }}
       run: |
-        ARTIFACT_NAME="${{ matrix.SP_NEXUS_ARTIFACT_NAME }}"
-        ARTIFACT_NAME="${ARTIFACT_NAME/\%SP_VERSION\%/${{ env.SP_VERSION }}}"
-        echo "SP_NEXUS_ARTIFACT_NAME=$ARTIFACT_NAME" >> $GITHUB_ENV
+        $artifactName = "${{ matrix.SP_NEXUS_ARTIFACT_NAME }}"
+        $artifactName = $artifactName.Replace("%SP_VERSION%", "${{ env.VERSION }}")
+        echo "SP_NEXUS_ARTIFACT_NAME=$artifactName" | Out-File -Append -FilePath $env:GITHUB_ENV
       
     - uses: actions/upload-artifact@v4
       if: ${{ (!matrix.ONLY_PUSH || github.event_name == 'push') && matrix.SP_NEXUS_ARTIFACT_NAME != 'nope' }}
