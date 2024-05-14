@@ -200,8 +200,8 @@ jobs:
 
     - name: Extract SP Version Number
       run: |
-        SP_VERSION=$(jq -r '.version' ./skyrim-platform/package.json)
-        echo "SP_VERSION=$SP_VERSION" >> $GITHUB_ENV
+        $version = (Get-Content ./skyrim-platform/package.json | ConvertFrom-Json).version
+        echo "VERSION=$version" | Out-File -Append -FilePath $env:GITHUB_ENV
 
     - name: Replace %SP_VERSION% with actual version in artifact name
       if: ${{ (!matrix.ONLY_PUSH || github.event_name == 'push') && matrix.SP_NEXUS_ARTIFACT_NAME != 'nope' }}
