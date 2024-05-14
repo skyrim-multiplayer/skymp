@@ -15,7 +15,7 @@ This is the latest version of the mod: `✔️`
 
 File category: `Main files`
 
-This is a new version of an existing file (optional): `❌`
+This is a new version of an existing file (optional): `Yes it is!`
 
 Description:
 ```
