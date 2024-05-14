@@ -199,6 +199,7 @@ jobs:
         path: ${{github.workspace}}/build/__coverage
 
     - name: Extract SP Version Number
+      if: ${{ (!matrix.ONLY_PUSH || github.event_name == 'push') && matrix.SP_NEXUS_ARTIFACT_NAME != 'nope' }}
       run: |
         $version = (Get-Content ./skyrim-platform/package.json | ConvertFrom-Json).version
         echo "VERSION=$version" | Out-File -Append -FilePath $env:GITHUB_ENV
