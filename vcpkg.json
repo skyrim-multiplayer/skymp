@@ -67,5 +67,12 @@
     "skyrim-vr": {
       "description": "Build platform for Skyrim VR."
     }
-  }
+  },
+  "overrides": [
+    {
+      "name": "openssl",
+      "version": "3.1.4#1"
+    }
+  ],
+  "builtin-baseline": "a34c873a9717a888f58dc05268dea15592c2f0ff"
 }
