@@ -29,6 +29,10 @@ message(STATUS "Run Pospelove/auto-merge-action@main (dist/index.js)")
 
 # Execute the NodeJS script
 
+if("${GITHUB_TOKEN}" STREQUAL "")
+    message(FATAL_ERROR "GITHUB_TOKEN is not set")
+endif()
+
 set(ENV_INPUT_REPOSITORIES "
 [
     {
