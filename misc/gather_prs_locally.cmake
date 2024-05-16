@@ -1,3 +1,7 @@
+# A utility script for gathering PRs locally.
+# Usage:
+# cmake -DGITHUB_TOKEN=<your_token> -P misc/gather_prs_locally.cmake
+
 set(AUTO_MERGE_REPO "Pospelove/auto-merge-action")
 set(AUTO_MERGE_BRANCH "main")
 set(AUTO_MERGE_REPO_URL "https://github.com/${AUTO_MERGE_REPO}.git")
