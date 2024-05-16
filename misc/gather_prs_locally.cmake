@@ -66,3 +66,32 @@ if(NODE_RESULT EQUAL 0)
 else()
     message(FATAL_ERROR "Failed to run Pospelove/auto-merge-action@main: ${NODE_OUTPUT}")
 endif()
+
+# Commit the changes locally
+# git add . && git commit -m "Gather PRs"
+
+message(STATUS "Commit the changes locally")
+
+execute_process(
+    COMMAND git add .
+    RESULT_VARIABLE GIT_ADD_RESULT
+    OUTPUT_VARIABLE GIT_ADD_OUTPUT
+)
+
+if(GIT_ADD_RESULT EQUAL 0)
+    message(STATUS "Added changes to the index")
+else()
+    message(FATAL_ERROR "Failed to add changes to the index: ${GIT_ADD_OUTPUT}")
+endif()
+
+execute_process(
+    COMMAND git commit -m "Gather PRs"
+    RESULT_VARIABLE GIT_COMMIT_RESULT
+    OUTPUT_VARIABLE GIT_COMMIT_OUTPUT
+)
+
+if(GIT_COMMIT_RESULT EQUAL 0)
+    message(STATUS "Committed the changes")
+else()
+    message(FATAL_ERROR "Failed to commit the changes: ${GIT_COMMIT_OUTPUT}")
+endif()
