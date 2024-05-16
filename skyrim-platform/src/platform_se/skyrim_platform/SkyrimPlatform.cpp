@@ -127,16 +127,31 @@ public:
   }
 
 private:
-  std::vector<const char*> GetFileDirs() const
+  std::vector<std::filesystem::path> GetFileDirs() const
   {
-    constexpr auto kSkympPluginsDir =
-      "C:/projects/skymp/build/dist/client/Data/Platform/Plugins";
-    if (std::filesystem::exists(kSkympPluginsDir)) {
-      return { kSkympPluginsDir };
+    if (pluginFolders.empty()) {
+      auto settings = Settings::GetPlatformSettings();
+      std::string utf8pluginFoldersSemicolonSeparated =
+        settings->GetString("Main", "PluginFolders",
+                            "Data/Platform/Plugins;Data/Platform/PluginsDev");
+
+      std::vector<std::string> folders;
+      std::istringstream ss(utf8pluginFoldersSemicolonSeparated);
+      std::string folder;
+
+      while (std::getline(ss, folder, ';')) {
+        if (!folder.empty()) {
+          folders.push_back(folder);
+        }
+      }
+
+      pluginFolders.reserve(folders.size());
+      for (const auto& folder : folders) {
+        pluginFolders.emplace_back(folder);
+      }
     }
-    std::vector<const char*> dirs = { "Data/Platform/Plugins",
-                                      "Data/Platform/PluginsDev" };
-    return dirs;
+
+    return pluginFolders;
   }
 
   void LoadFiles(const std::vector<std::filesystem::path>& pathsToLoad)
@@ -283,6 +298,7 @@ private:
   std::unique_ptr<JsValue> settingsByPluginNameCache;
   std::shared_ptr<BrowserApi::State> browserApiState;
   std::function<JsValue(const JsFunctionArguments&)> getSettings;
+  mutable std::vector<std::filesystem::path> pluginFolders;
 };
 }
 
