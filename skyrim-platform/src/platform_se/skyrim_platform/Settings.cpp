@@ -1,5 +1,7 @@
 #include "Settings.h"
 
+// Keep in sync with docs\skyrim_platform\ini_settings.md
+
 constexpr auto kPlatformSettingsFilePath =
   "Data/SKSE/Plugins/SkyrimPlatform.ini";
 

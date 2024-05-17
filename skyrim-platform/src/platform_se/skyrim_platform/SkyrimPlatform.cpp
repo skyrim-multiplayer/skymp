@@ -73,10 +73,10 @@ public:
     try {
       GetJsEngine();
 
-      auto fileDirs = GetFileDirs();
+      auto& fileDirs = GetFileDirs();
 
       if (monitors.empty()) {
-        for (auto fileDir : fileDirs) {
+        for (auto& fileDir : fileDirs) {
           monitors.push_back(std::make_shared<DirectoryMonitor>(fileDir));
         }
       }
@@ -127,31 +127,37 @@ public:
   }
 
 private:
-  std::vector<std::filesystem::path> GetFileDirs() const
+  const std::vector<std::filesystem::path>& GetFileDirs() const
   {
-    if (pluginFolders.empty()) {
+    if (!pluginFolders) {
       auto settings = Settings::GetPlatformSettings();
       std::string utf8pluginFoldersSemicolonSeparated =
         settings->GetString("Main", "PluginFolders",
                             "Data/Platform/Plugins;Data/Platform/PluginsDev");
 
-      std::vector<std::string> folders;
       std::istringstream ss(utf8pluginFoldersSemicolonSeparated);
       std::string folder;
 
+      if (utf8pluginFoldersSemicolonSeparated.find_first_of("\"") !=
+          std::string::npos) {
+        pluginFolders = std::make_unique<std::vector<std::filesystem::path>>();
+        throw std::runtime_error(
+          "Invalid path with quotes in PluginFolders setting. Please remove "
+          "quotes and restart the game.");
+      }
+
+      auto result = std::make_unique<std::vector<std::filesystem::path>>();
+
       while (std::getline(ss, folder, ';')) {
         if (!folder.empty()) {
-          folders.push_back(folder);
+          result->emplace_back(folder);
         }
       }
 
-      pluginFolders.reserve(folders.size());
-      for (const auto& folder : folders) {
-        pluginFolders.emplace_back(folder);
-      }
+      pluginFolders = std::move(result);
     }
 
-    return pluginFolders;
+    return *pluginFolders;
   }
 
   void LoadFiles(const std::vector<std::filesystem::path>& pathsToLoad)
@@ -298,7 +304,7 @@ private:
   std::unique_ptr<JsValue> settingsByPluginNameCache;
   std::shared_ptr<BrowserApi::State> browserApiState;
   std::function<JsValue(const JsFunctionArguments&)> getSettings;
-  mutable std::vector<std::filesystem::path> pluginFolders;
+  mutable std::unique_ptr<std::vector<std::filesystem::path>> pluginFolders;
 };
 }
 

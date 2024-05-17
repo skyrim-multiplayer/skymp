@@ -1,7 +1,16 @@
 ## Skyrim platform settings
 You can utilize custom settings of the Skyrim platform in your code to retrieve and modify values located at ```"Data/SKSE/Plugins/SkyrimPlatform.ini"```
 
-### Current  settings
+### Current settings
+
+This section describes INI settings implemented in the current version of SkyrimPlatform.
+
+#### [Main]
+
+- ```PluginFolders = Data/Platform/Plugins;Data/Platform/PluginsDev``` - List of plugin folders to load plugins from
+
+#### [DEBUG]
+
 - ```LogLevel = 2``` - This parameter controls the level of Logging 
     >0 - trace; 1 - debug; 2 - info; 3 - warn; 4 - error; 5 - critical; 6 - none
 - ```Cmd = false``` - This parameter controls whether the console is enabled.
@@ -15,7 +24,10 @@ You can utilize custom settings of the Skyrim platform in your code to retrieve 
 - ```CmdHeight = 317``` - This parameter controls the height of the console window.
 > The default values are for full hd
 
-### Add new parametrs
+### Contributing new settings
+
+This section is for code contributors who is interested in contributing new INI settings.
+
 To create your standart value upon game startup, you need to locate the method Settings::GetPlatformSettings() and use there:
 - ```SetInteger(section, key, value, comment)```
 - ```SetFloat(section, key, value, comment)```
