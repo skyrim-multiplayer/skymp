@@ -1,5 +1,7 @@
 #include "Settings.h"
 
+// Keep in sync with docs\skyrim_platform\ini_settings.md
+
 constexpr auto kPlatformSettingsFilePath =
   "Data/SKSE/Plugins/SkyrimPlatform.ini";
 
@@ -30,6 +32,10 @@ std::unique_ptr<Settings::File> Settings::GetPlatformSettings()
 
     file->SetBool("Debug", "ChromiumEnabled", true,
                   "; Enables Chromium functionality");
+
+    file->SetString("Main", "PluginFolders",
+                    "Data/Platform/Plugins;Data/Platform/PluginsDev",
+                    "; List of plugin folders to load plugins from");
 
     file->Save();
   }
