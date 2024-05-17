@@ -9,7 +9,7 @@ This section describes INI settings implemented in the current version of Skyrim
 
 - ```PluginFolders = Data/Platform/Plugins;Data/Platform/PluginsDev``` - List of plugin folders to load plugins from
 
-#### [DEBUG]
+#### [Debug]
 
 - ```LogLevel = 2``` - This parameter controls the level of Logging 
     >0 - trace; 1 - debug; 2 - info; 3 - warn; 4 - error; 5 - critical; 6 - none
