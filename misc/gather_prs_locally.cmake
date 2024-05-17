@@ -12,8 +12,6 @@ set(PSEUDO_BINARY_DIR "./build")
 
 include(${CMAKE_SOURCE_DIR}/cmake/yarn.cmake)
 
-message(STATUS "Downloading Pospelove/auto-merge-action@main (dist/index.js)")
-
 message(STATUS "Downloading ${AUTO_MERGE_REPO}@${AUTO_MERGE_BRANCH} (dist/index.js)")
 
 file(REMOVE_RECURSE ${PSEUDO_BINARY_DIR}/auto-merge-action)
@@ -65,6 +63,40 @@ if(NODE_RESULT EQUAL 0)
     message(STATUS "Successfully ran Pospelove/auto-merge-action@main")
 else()
     message(FATAL_ERROR "Failed to run Pospelove/auto-merge-action@main: ${NODE_OUTPUT}")
+endif()
+
+# if branch is main, then do git switch -c gather-prs-<timestamp>
+
+execute_process(
+    COMMAND git branch --show-current
+    OUTPUT_VARIABLE CURRENT_BRANCH
+    RESULT_VARIABLE GIT_COMMIT_RESULT
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
+if(NOT GIT_COMMIT_RESULT EQUAL 0)
+    message(FATAL_ERROR "Failed to get the current branch: ${GIT_COMMIT_RESULT} ${CURRENT_BRANCH}")
+endif()
+
+message(STATUS "Current branch: ${CURRENT_BRANCH}")
+
+if(CURRENT_BRANCH MATCHES main)
+    message(STATUS "Main branch detected. Switching to a temporary branch")
+
+    string(TIMESTAMP TIMESTAMP "%Y%m%d%H%M%S")
+    set(TEMP_BRANCH "gather-prs-${TIMESTAMP}")
+
+    execute_process(
+        COMMAND git switch -c ${TEMP_BRANCH}
+        RESULT_VARIABLE GIT_SWITCH_RESULT
+        OUTPUT_VARIABLE GIT_SWITCH_OUTPUT
+    )
+
+    if(GIT_SWITCH_RESULT EQUAL 0)
+        message(STATUS "Switched to a temporary branch ${TEMP_BRANCH}")
+    else()
+        message(FATAL_ERROR "Failed to switch to a temporary branch: ${GIT_SWITCH_OUTPUT}")
+    endif()
 endif()
 
 # Commit the changes locally
