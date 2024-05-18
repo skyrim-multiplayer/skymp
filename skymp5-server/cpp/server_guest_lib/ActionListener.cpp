@@ -458,6 +458,20 @@ void UseCraftRecipe(MpActor* me, const espm::COBJ* recipeUsed,
 
   for (auto& condition : recipeData.conditions) {
     // impl race, item, perk? checks
+
+    if (condition.IsGetItemCount()) {
+      if (me->GetInventory().GetItemCount(
+            condition.GetDefaultData().firstParameter) !=
+          condition.comparisonValue) {
+        spdlog::trace("onCraft - blocked by gamemode");
+        return;
+      }
+    } else if (condition.IsGetIsRace()) {
+      if (me->GetRaceId() != condition.GetDefaultData().firstParameter) {
+        spdlog::trace("onCraft - blocked by gamemode");
+        return;
+      }
+    }
   }
 
   std::vector<Inventory::Entry> entries;
