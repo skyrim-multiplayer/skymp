@@ -110,24 +110,29 @@ TEST_CASE("Loads Conditions", "[espm]")
   REQUIRE(form.rec->GetType() == "COBJ");
 
   auto data = reinterpret_cast<const espm::COBJ*>(form.rec)->GetData(cache);
-  REQUIRE(data.editorId ==
+  REQUIRE(form.rec->GetEditorId(cache) ==
           std::string("DLC1TemperArmorVampireCuirassRoyalRed"));
   REQUIRE(data.conditions.size() == 2);
 
-  const int maxFunctionIndex = 726;
-  for (int i = 0; i < data.conditions.size(); i++) {
-    REQUIRE(data.conditions[i].GetOperator() >= (espm::CTDA::Operator)0);
-    REQUIRE(data.conditions[i].GetOperator() <= (espm::CTDA::Operator)5);
-    REQUIRE(data.conditions[i].GetFlags() >= (espm::CTDA::Flags)0x00);
-    REQUIRE(data.conditions[i].GetFlags() <= (espm::CTDA::Flags)0x10);
-    REQUIRE(data.conditions[i].functionIndex >= 0);
-    REQUIRE(data.conditions[i].functionIndex < maxFunctionIndex);
-    REQUIRE(data.conditions[i].comparisonValue == 1);
-    REQUIRE(data.conditions[i].IsGetEventData() ==
-            false); // sure for this editorId
-    REQUIRE(data.conditions[i].runOnType == (espm::CTDA::RunOnTypeFlags)0);
-    REQUIRE(data.conditions[i].reference == 0);
-  }
+  REQUIRE(data.conditions[0].GetOperator() ==
+          espm::CTDA::Operator::NotEqualTo);
+  REQUIRE(data.conditions[0].GetFlags() == espm::CTDA::Flags::OR);
+  REQUIRE(data.conditions[0].functionIndex == 659); // EPTemperingItemIsEnchanted
+  REQUIRE(data.conditions[0].comparisonValue == 1);
+  REQUIRE(data.conditions[0].runOnType == espm::CTDA::RunOnTypeFlags::Subject);
+  REQUIRE(data.conditions[0].reference == 0);
+  REQUIRE(data.conditions[0].GetDefaultData().firstParameter == 0);
+  REQUIRE(data.conditions[0].GetDefaultData().secondParameter == 0);
+
+  REQUIRE(data.conditions[1].GetOperator() == espm::CTDA::Operator::EqualTo);
+  REQUIRE(data.conditions[1].GetFlags() == espm::CTDA::Flags::ANDORDEFAULT);
+  REQUIRE(data.conditions[1].functionIndex == 448); // HasPerk
+  REQUIRE(data.conditions[1].comparisonValue == 1);
+  REQUIRE(data.conditions[1].runOnType == espm::CTDA::RunOnTypeFlags::Subject);
+  REQUIRE(data.conditions[1].reference == 0);
+  REQUIRE(data.conditions[1].IsHasPerk());
+  REQUIRE(data.conditions[1].GetDefaultData().firstParameter == 0x5218E); // ArcaneBlacksmith
+  REQUIRE(data.conditions[1].GetDefaultData().secondParameter == 0);
 }
 
 TEST_CASE("Loads script-related subrecords for SovngardeWatcherStatue2",
