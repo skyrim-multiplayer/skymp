@@ -19,6 +19,7 @@ struct CTDA
 
   enum Flags : uint8_t
   {
+    ANDORDEFAULT = 0x00,
     OR = 0x01,
     Parameters = 0x02,
     UseGlobal = 0x04,
@@ -66,7 +67,8 @@ struct CTDA
   int32_t reference;
   int32_t unknown2;
 
-  Operator GetOperator() {
+  Operator GetOperator()
+  {
     uint8_t firstBit = (uint8_t)((operatorFlag & 0x80) ? 4 : 0);
     uint8_t secondBit = (uint8_t)((operatorFlag & 0x40) ? 2 : 0);
     uint8_t thirdBit = (uint8_t)((operatorFlag & 0x20) ? 1 : 0);

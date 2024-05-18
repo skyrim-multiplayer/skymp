@@ -458,13 +458,7 @@ void UseCraftRecipe(MpActor* me, const espm::COBJ* recipeUsed,
 
   for (auto& condition : recipeData.conditions)
   {
-    std::cout << "Start" << std::endl;
-    for (int i = 0;
-         i < (sizeof(condition.unknown) / sizeof(*condition.unknown)); i++) {
-      std::cout << condition.unknown[i] << std::endl;
-    }
-    //auto data = condition.GetDefaultData();
-
+    // impl race, item, perk? checks
   }
 
   std::vector<Inventory::Entry> entries;
