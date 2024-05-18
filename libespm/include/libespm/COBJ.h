@@ -20,6 +20,7 @@ public:
 
   struct Data
   {
+    const char* editorId = "";
     std::vector<InputObject> inputObjects;
     uint32_t outputObjectFormId = 0;
     uint32_t benchKeywordId = 0;

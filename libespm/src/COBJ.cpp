@@ -11,7 +11,9 @@ COBJ::Data COBJ::GetData(
   RecordHeaderAccess::IterateFields(
     this,
     [&](const char* type, uint32_t dataSize, const char* data) {
-      if (!std::memcmp(type, "CNTO", 4)) {
+      if (!std::memcmp(type, "EDID", 4)) {
+        result.editorId = data;
+      } else if (!std::memcmp(type, "CNTO", 4)) {
         result.inputObjects.push_back(
           *reinterpret_cast<const InputObject*>(data));
       } else if (!std::memcmp(type, "CNAM", 4)) {

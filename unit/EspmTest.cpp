@@ -101,6 +101,35 @@ TEST_CASE("Loads LeveledItem", "[espm]")
   REQUIRE(data.chanceNone == 90);
 }
 
+TEST_CASE("Loads Conditions", "[espm]")
+{
+  auto& br = l.GetBrowser();
+  espm::CompressedFieldsCache cache;
+
+  auto form = br.LookupById(0x200E8F4);
+  REQUIRE(form.rec->GetType() == "COBJ");
+
+  auto data = reinterpret_cast<const espm::COBJ*>(form.rec)->GetData(cache);
+  REQUIRE(data.editorId ==
+          std::string("DLC1TemperArmorVampireCuirassRoyalRed"));
+  REQUIRE(data.conditions.size() == 2);
+
+  const int maxFunctionIndex = 726;
+  for (int i = 0; i < data.conditions.size(); i++) {
+    REQUIRE(data.conditions[i].GetOperator() >= 0);
+    REQUIRE(data.conditions[i].GetOperator() <= 5);
+    REQUIRE(data.conditions[i].GetFlags() >= 0x00);
+    REQUIRE(data.conditions[i].GetFlags() <= 0x10);
+    REQUIRE(data.conditions[i].functionIndex >= 0);
+    REQUIRE(data.conditions[i].functionIndex < maxFunctionIndex);
+    REQUIRE(data.conditions[i].comparisonValue == 1);
+    REQUIRE(data.conditions[i].IsGetEventData() ==
+            false); // sure for this editorId
+    REQUIRE(data.conditions[i].runOnType == 0);
+    REQUIRE(data.conditions[i].reference == 0);
+  }
+}
+
 TEST_CASE("Loads script-related subrecords for SovngardeWatcherStatue2",
           "[espm]")
 {
