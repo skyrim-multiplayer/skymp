@@ -73,7 +73,7 @@ struct CTDA
     uint8_t secondBit = static_cast<uint8_t>((operatorFlag & 0x40) ? 2 : 0);
     uint8_t thirdBit = static_cast<uint8_t>((operatorFlag & 0x20) ? 1 : 0);
 
-    return (Operator)(firstBit + secondBit + thirdBit);
+    return static_cast<Operator>(firstBit + secondBit + thirdBit);
   }
 
   Flags GetFlags()
@@ -84,7 +84,8 @@ struct CTDA
     uint8_t fourthBit = static_cast<uint8_t>((operatorFlag & 0x02) ? 2 : 0);
     uint8_t fifthBit = static_cast<uint8_t>((operatorFlag & 0x01) ? 1 : 0);
 
-    return (Flags)(firstBit + secondBit + thirdBit + fourthBit + fifthBit);
+    return static_cast<Flags>(firstBit + secondBit + thirdBit + fourthBit +
+                              fifthBit);
   }
 
   bool IsGetIsRace() { return functionIndex == 69; }
