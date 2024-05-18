@@ -17,7 +17,6 @@
 #include <optional>
 #include <sparsepp/spp.h>
 #include <vector>
-#include <iostream>
 
 namespace espm {
 
