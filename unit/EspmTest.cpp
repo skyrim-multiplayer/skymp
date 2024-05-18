@@ -117,7 +117,8 @@ TEST_CASE("Loads Conditions", "[espm]")
   REQUIRE(data.conditions[0].GetOperator() ==
           espm::CTDA::Operator::NotEqualTo);
   REQUIRE(data.conditions[0].GetFlags() == espm::CTDA::Flags::OR);
-  REQUIRE(data.conditions[0].functionIndex == 659); // EPTemperingItemIsEnchanted
+  REQUIRE(data.conditions[0].functionIndex ==
+          659); // EPTemperingItemIsEnchanted
   REQUIRE(data.conditions[0].comparisonValue == 1);
   REQUIRE(data.conditions[0].runOnType == espm::CTDA::RunOnTypeFlags::Subject);
   REQUIRE(data.conditions[0].reference == 0);
@@ -131,7 +132,8 @@ TEST_CASE("Loads Conditions", "[espm]")
   REQUIRE(data.conditions[1].runOnType == espm::CTDA::RunOnTypeFlags::Subject);
   REQUIRE(data.conditions[1].reference == 0);
   REQUIRE(data.conditions[1].IsHasPerk());
-  REQUIRE(data.conditions[1].GetDefaultData().firstParameter == 0x5218E); // ArcaneBlacksmith
+  REQUIRE(data.conditions[1].GetDefaultData().firstParameter ==
+          0x5218E); // ArcaneBlacksmith
   REQUIRE(data.conditions[1].GetDefaultData().secondParameter == 0);
 }
 
