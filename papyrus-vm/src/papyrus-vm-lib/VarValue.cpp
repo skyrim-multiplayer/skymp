@@ -579,3 +579,91 @@ VarValue& VarValue::operator=(const VarValue& arg2)
 
   return *this;
 }
+
+VarValue VarValue::CastToString(const VarValue& var)
+{
+  switch (var.GetType()) {
+    case VarValue::kType_Object: {
+      IGameObject* ptr = ((IGameObject*)var);
+      if (ptr) {
+        return VarValue(ptr->GetStringID());
+      } else {
+        const static std::string noneString = "None";
+        return VarValue(noneString.c_str());
+      }
+    }
+    case VarValue::kType_Identifier:
+      throw std::runtime_error(
+        "Papyrus VM: failed to get valid type indentifier, ::CastToString()");
+    case VarValue::kType_String:
+      return var;
+    case VarValue::kType_Integer:
+      return VarValue(std::to_string(static_cast<int32_t>(var)));
+    case VarValue::kType_Float: {
+      char buffer[512];
+      snprintf(buffer, sizeof(buffer), "%.*g", 9000, static_cast<double>(var));
+      return VarValue(std::string(buffer));
+    }
+    case VarValue::kType_Bool: {
+      return VarValue(static_cast<bool>(var) ? "True" : "False");
+    }
+    case VarValue::kType_ObjectArray:
+      return GetElementsArrayAtString(var, var.kType_ObjectArray);
+    case VarValue::kType_StringArray:
+      return GetElementsArrayAtString(var, var.kType_StringArray);
+    case VarValue::kType_IntArray:
+      return GetElementsArrayAtString(var, var.kType_IntArray);
+    case VarValue::kType_FloatArray:
+      return GetElementsArrayAtString(var, var.kType_FloatArray);
+    case VarValue::kType_BoolArray:
+      return GetElementsArrayAtString(var, var.kType_BoolArray);
+    default:
+      throw std::runtime_error(
+        "Papyrus VM: Received wrong type, ::CastToString()");
+  }
+}
+
+VarValue VarValue::GetElementsArrayAtString(const VarValue& array,
+                                            uint8_t type)
+{
+  std::string returnValue = "[";
+
+  for (size_t i = 0; i < array.pArray->size(); ++i) {
+    switch (type) {
+      case VarValue::kType_ObjectArray: {
+        auto object = (static_cast<IGameObject*>((*array.pArray)[i]));
+        returnValue += object ? object->GetStringID() : "None";
+        break;
+      }
+
+      case VarValue::kType_StringArray:
+        returnValue += (const char*)((*array.pArray)[i]);
+        break;
+
+      case VarValue::kType_IntArray:
+        returnValue += std::to_string((int)((*array.pArray)[i]));
+        break;
+
+      case VarValue::kType_FloatArray:
+        returnValue += std::to_string((double)((*array.pArray)[i]));
+        break;
+
+      case VarValue::kType_BoolArray: {
+        VarValue& temp = ((*array.pArray)[i]);
+        returnValue += (const char*)(CastToString(temp));
+        break;
+      }
+      default:
+        throw std::runtime_error(
+          " Papyrus VM: None of the type values "
+          "​​matched catched exception ::GetElementArrayAtString");
+    }
+
+    if (i < array.pArray->size() - 1)
+      returnValue += ", ";
+    else
+      returnValue += "]";
+  }
+
+  return VarValue(returnValue);
+}
