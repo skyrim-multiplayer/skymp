@@ -7,7 +7,7 @@ namespace espm {
 // types
 struct CTDA
 {
-  enum Operator : uint8_t
+  enum class Operator : uint8_t
   {
     EqualTo = 0,
     NotEqualTo = 1,
@@ -17,7 +17,7 @@ struct CTDA
     LessThenOrEqualTo = 5
   };
 
-  enum Flags : uint8_t
+  enum class Flags : uint8_t
   {
     ANDORDEFAULT = 0x00,
     OR = 0x01,
@@ -27,7 +27,7 @@ struct CTDA
     SwapSubject = 0x10
   };
 
-  enum RunOnTypeFlags : uint32_t
+  enum class RunOnTypeFlags : uint32_t
   {
     Subject = 0,
     Target = 1,
@@ -36,7 +36,7 @@ struct CTDA
     LinkedReference = 4,
     QuestAlias = 5,
     PackageData = 6,
-    e_EventData = 7
+    EventData = 7
   };
 
   struct DefaultData

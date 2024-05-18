@@ -116,16 +116,16 @@ TEST_CASE("Loads Conditions", "[espm]")
 
   const int maxFunctionIndex = 726;
   for (int i = 0; i < data.conditions.size(); i++) {
-    REQUIRE(data.conditions[i].GetOperator() >= 0);
-    REQUIRE(data.conditions[i].GetOperator() <= 5);
-    REQUIRE(data.conditions[i].GetFlags() >= 0x00);
-    REQUIRE(data.conditions[i].GetFlags() <= 0x10);
+    REQUIRE(data.conditions[i].GetOperator() >= (espm::CTDA::Operator)0);
+    REQUIRE(data.conditions[i].GetOperator() <= (espm::CTDA::Operator)5);
+    REQUIRE(data.conditions[i].GetFlags() >= (espm::CTDA::Flags)0x00);
+    REQUIRE(data.conditions[i].GetFlags() <= (espm::CTDA::Flags)0x10);
     REQUIRE(data.conditions[i].functionIndex >= 0);
     REQUIRE(data.conditions[i].functionIndex < maxFunctionIndex);
     REQUIRE(data.conditions[i].comparisonValue == 1);
     REQUIRE(data.conditions[i].IsGetEventData() ==
             false); // sure for this editorId
-    REQUIRE(data.conditions[i].runOnType == 0);
+    REQUIRE(data.conditions[i].runOnType == (espm::CTDA::RunOnTypeFlags)0);
     REQUIRE(data.conditions[i].reference == 0);
   }
 }
