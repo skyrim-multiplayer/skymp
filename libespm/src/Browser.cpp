@@ -238,12 +238,72 @@ bool Browser::ReadAny(const GroupStack* parentGrStack)
       std::vector<CTDA> cond = data.conditions;
 
       for (int i = 0; i < cond.size(); i++) {
-        if (cond[i].IsGetEventData()) {
-          std::cout << "Get Event Data" << std::endl;
+        if (((std::string)cobj->GetEditorId(pImpl->dummyCache))
+              .starts_with("DLC1TemperArmorVampireCuirassRoyalRed") == false) {
+          break;
         }
-        if (cond[i].IsItemCount()) {
-          std::cout << "Is Item Count" << std::endl;
+        std::cout << "------Start " << cobj->GetEditorId(pImpl->dummyCache) << std::endl;
+
+        espm::CTDA::Operator oper = cond[i].GetOperator();
+        switch (oper) {
+          case espm::CTDA::Operator::EqualTo:
+            std::cout << "EqualTo" << std::endl;
+            break;
+          case espm::CTDA::Operator::NotEqualTo:
+            std::cout << "NotEqualTo" << std::endl;
+            break;
+          case espm::CTDA::Operator::GreaterThen:
+            std::cout << "GreaterThen" << std::endl;
+            break;
+          case espm::CTDA::Operator::GreaterThenOrEqualTo:
+            std::cout << "GreaterThenOrEqualTo" << std::endl;
+            break;
+          case espm::CTDA::Operator::LessThen:
+            std::cout << "LessThen" << std::endl;
+            break;
+          case espm::CTDA::Operator::LessThenOrEqualTo:
+            std::cout << "LessThenOrEqualTo" << std::endl;
+            break;
         }
+
+        espm::CTDA::Flags flags = cond[i].GetFlags();
+        switch (flags) {
+          case espm::CTDA::Flags::OR:
+            std::cout << "OR" << std::endl;
+            break;
+          case espm::CTDA::Flags::Parameters:
+            std::cout << "Parameters" << std::endl;
+            break;
+          case espm::CTDA::Flags::UseGlobal:
+            std::cout << "UseGlobal" << std::endl;
+            break;
+          case espm::CTDA::Flags::UsePackData:
+            std::cout << "UsePackData" << std::endl;
+            break;
+          case espm::CTDA::Flags::SwapSubject:
+            std::cout << "SwapSubject" << std::endl;
+            break;
+          default:
+            std::cout << ((int)flags) << std::endl;
+            break;
+        }
+
+        std::cout << "Comparison value: " << cond[i].comparisonValue
+                  << std::endl;
+
+        std::cout << "Function index: " << cond[i].functionIndex
+                  << std::endl;
+
+         if (cond[i].IsGetEventData()) {
+           std::cout << "Get Event Data" << std::endl;
+         } else {
+           std::cout << "First parameter: " << cond[i].GetDefaultData().firstParameter << std::endl;
+           std::cout << "Second parameter: "
+                     << cond[i].GetDefaultData().secondParameter << std::endl;
+         }
+
+        std::cout << "RunOnType index: " << cond[i].runOnType << std::endl;
+        std::cout << "Reference: " << cond[i].reference << std::endl;
       }
 
       pImpl->constructibleObjects.push_back(recHeader);

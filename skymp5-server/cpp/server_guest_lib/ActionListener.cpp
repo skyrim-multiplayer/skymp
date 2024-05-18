@@ -456,14 +456,16 @@ void UseCraftRecipe(MpActor* me, const espm::COBJ* recipeUsed,
   spdlog::info("Using craft recipe with EDID {} from espm file with index {}",
                recipeUsed->GetEditorId(cache), espmIdx);
 
-   for (auto& condition : recipeData.conditions)
-   {
-     if (condition.IsItemCount() == false)
-       continue;
+  for (auto& condition : recipeData.conditions)
+  {
+    std::cout << "Start" << std::endl;
+    for (int i = 0;
+         i < (sizeof(condition.unknown) / sizeof(*condition.unknown)); i++) {
+      std::cout << condition.unknown[i] << std::endl;
+    }
+    //auto data = condition.GetDefaultData();
 
-     auto data = condition.GetDefaultData();
-
-   }
+  }
 
   std::vector<Inventory::Entry> entries;
   for (auto& entry : recipeData.inputObjects) {
