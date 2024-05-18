@@ -6,6 +6,9 @@
 #include <map>
 #include <set>
 
+using NativeFunction =
+  std::function<VarValue(VarValue self, std::vector<VarValue> arguments)>;
+
 class VirtualMachine;
 
 class StackIdHolder

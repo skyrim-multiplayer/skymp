@@ -1,6 +1,7 @@
 #include "papyrus-vm/VirtualMachine.h"
 #include "papyrus-vm/Utils.h"
 #include <algorithm>
+#include <cassert>
 #include <sstream>
 #include <stdexcept>
 

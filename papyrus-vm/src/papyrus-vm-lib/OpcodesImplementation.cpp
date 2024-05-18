@@ -7,7 +7,7 @@ VarValue OpcodesImplementation::StrCat(const VarValue& s1, const VarValue& s2,
   std::string temp;
 
   for (auto param : { &s1, &s2 }) {
-    auto str = CastToString(*param);
+    auto str = VarValue::CastToString(*param);
     temp += static_cast<const char*>(str);
   }
 
