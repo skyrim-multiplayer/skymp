@@ -446,6 +446,26 @@ void ActionListener::OnConsoleCommand(
     ConsoleCommands::Execute(*me, consoleCommandName, args);
 }
 
+bool CalculateOperationResult(int firstArgument, int secondArgument, espm::CTDA::Operator conditionOperator)
+{
+  switch (conditionOperator) {
+    case espm::CTDA::Operator::EqualTo:
+      return firstArgument == secondArgument;
+    case espm::CTDA::Operator::NotEqualTo:
+      return firstArgument != secondArgument;
+    case espm::CTDA::Operator::GreaterThen:
+      return firstArgument > secondArgument;
+    case espm::CTDA::Operator::GreaterThenOrEqualTo:
+      return firstArgument >= secondArgument;
+    case espm::CTDA::Operator::LessThen:
+      return firstArgument < secondArgument;
+    case espm::CTDA::Operator::LessThenOrEqualTo:
+      return firstArgument <= secondArgument;
+    default:
+      return false;
+  }
+}
+
 void UseCraftRecipe(MpActor* me, const espm::COBJ* recipeUsed,
                     espm::CompressedFieldsCache& cache,
                     const espm::CombineBrowser& br, int espmIdx)
@@ -456,21 +476,39 @@ void UseCraftRecipe(MpActor* me, const espm::COBJ* recipeUsed,
   spdlog::info("Using craft recipe with EDID {} from espm file with index {}",
                recipeUsed->GetEditorId(cache), espmIdx);
 
+  bool requireAnd = false;
   for (auto& condition : recipeData.conditions) {
     // impl race, item, perk? checks
 
     if (condition.IsGetItemCount()) {
-      if (me->GetInventory().GetItemCount(
-            condition.GetDefaultData().firstParameter) !=
-          condition.comparisonValue) {
-        spdlog::trace("onCraft - blocked by gamemode");
-        return;
+      int itemCount = me->GetInventory().GetItemCount(
+        condition.GetDefaultData().firstParameter);
+
+      if (CalculateOperationResult(itemCount,
+          condition.comparisonValue, condition.GetOperator()) == false) {
+        if (condition.GetFlags() != espm::CTDA::Flags::OR || requireAnd) {
+          spdlog::trace("onCraft - blocked by gamemode");
+          return;
+        }
+      } else {
+        requireAnd = false;
       }
     } else if (condition.IsGetIsRace()) {
-      if (me->GetRaceId() != condition.GetDefaultData().firstParameter) {
-        spdlog::trace("onCraft - blocked by gamemode");
-        return;
+      int raceEquals =
+        me->GetRaceId() == condition.GetDefaultData().firstParameter ? 1 : 0;
+
+      if (CalculateOperationResult(raceEquals, condition.comparisonValue, condition.GetOperator()) == false) {
+        if (condition.GetFlags() != espm::CTDA::Flags::OR || requireAnd) {
+          spdlog::trace("onCraft - blocked by gamemode");
+          return;
+        }
+      } else {
+        requireAnd = false;
       }
+    }
+
+    if (condition.GetFlags() == espm::CTDA::Flags::ANDORDEFAULT) {
+      requireAnd = true;
     }
   }
 
