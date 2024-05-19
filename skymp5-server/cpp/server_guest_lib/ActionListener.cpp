@@ -446,7 +446,8 @@ void ActionListener::OnConsoleCommand(
     ConsoleCommands::Execute(*me, consoleCommandName, args);
 }
 
-bool CalculateOperationResult(int firstArgument, int secondArgument, espm::CTDA::Operator conditionOperator)
+bool CalculateOperationResult(int firstArgument, int secondArgument,
+                              espm::CTDA::Operator conditionOperator)
 {
   switch (conditionOperator) {
     case espm::CTDA::Operator::EqualTo:
@@ -484,8 +485,8 @@ void UseCraftRecipe(MpActor* me, const espm::COBJ* recipeUsed,
       int itemCount = me->GetInventory().GetItemCount(
         condition.GetDefaultData().firstParameter);
 
-      if (CalculateOperationResult(itemCount,
-          condition.comparisonValue, condition.GetOperator()) == false) {
+      if (CalculateOperationResult(itemCount, condition.comparisonValue,
+                                   condition.GetOperator()) == false) {
         if (condition.GetFlags() != espm::CTDA::Flags::OR || requireAnd) {
           spdlog::trace("onCraft - blocked by gamemode");
           return;
@@ -497,7 +498,8 @@ void UseCraftRecipe(MpActor* me, const espm::COBJ* recipeUsed,
       int raceEquals =
         me->GetRaceId() == condition.GetDefaultData().firstParameter ? 1 : 0;
 
-      if (CalculateOperationResult(raceEquals, condition.comparisonValue, condition.GetOperator()) == false) {
+      if (CalculateOperationResult(raceEquals, condition.comparisonValue,
+                                   condition.GetOperator()) == false) {
         if (condition.GetFlags() != espm::CTDA::Flags::OR || requireAnd) {
           spdlog::trace("onCraft - blocked by gamemode");
           return;
