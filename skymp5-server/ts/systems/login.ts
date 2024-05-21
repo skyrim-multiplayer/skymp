@@ -32,7 +32,7 @@ export class Login implements System {
     private offlineMode: boolean
   ) { }
 
-  private async getUserProfile(session: string): Promise<UserProfile> {
+  private async getUserProfile(session: string, userId: number): Promise<UserProfile> {
     try {
       const response = await Axios.get(
         `${this.masterUrl}/api/servers/${this.myAddr}/sessions/${session}`
@@ -81,7 +81,7 @@ export class Login implements System {
       this.log("The server is in offline mode, the client is NOT");
     } else if (this.offlineMode === false && gameData && gameData.session) {
       (async () => {
-        const profile = await this.getUserProfile(gameData.session);
+        const profile = await this.getUserProfile(gameData.session, userId);
         console.log("getUserProfileId:", profile);
 
         if (discordAuth && !discordAuth.botToken) {
