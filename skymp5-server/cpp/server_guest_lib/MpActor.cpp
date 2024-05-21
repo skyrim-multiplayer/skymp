@@ -770,15 +770,36 @@ void MpActor::EatItem(uint32_t baseId, espm::Type t)
 
 bool MpActor::ReadBook(const uint32_t baseId)
 {
+  auto& loader = GetParent()->GetEspm();
+  auto bookLookupResult = loader.GetBrowser().LookupById(baseId);
+
+  if (!bookLookupResult.rec) {
+    spdlog::error("ReadBook {:x} - No book form {:x}", GetFormId(), baseId);
+    return false;
+  }
+
   const auto bookData = espm::GetData<espm::BOOK>(baseId, GetParent());
+  const auto spellOrSkillFormId =
+    bookLookupResult.ToGlobalId(bookData.spellOrSkillFormId);
 
   if (bookData.IsFlagSet(espm::BOOK::Flags::TeachesSpell)) {
+    if (ChangeForm().learnedSpells.IsSpellLearned(spellOrSkillFormId)) {
+      spdlog::info(
+        "ReadBook {:x} - Spell already learned {:x}, not spending the book",
+        GetFormId(), spellOrSkillFormId);
+      return false;
+    }
 
     EditChangeForm([&](MpChangeForm& changeForm) {
-      changeForm.learnedSpells.LearnSpell(bookData.spellOrSkillFormId);
+      changeForm.learnedSpells.LearnSpell(spellOrSkillFormId);
     });
     return true;
+  } else if (bookData.IsFlagSet(espm::BOOK::Flags::TeachesSkill)) {
+    spdlog::info("ReadBook {:x} - Skill book {:x} detected, not implemented",
+                 GetFormId(), baseId);
+    return false;
   }
+
   return false;
 }
 
