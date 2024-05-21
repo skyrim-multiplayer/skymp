@@ -1,5 +1,5 @@
 import { AuthGameData } from "../../features/authModel";
 
-export interface AuthEvent {
+export interface AuthAttemptEvent {
     authGameData: AuthGameData;
 }

@@ -1,12 +1,14 @@
 import { RemoteAuthGameData } from "../../features/authModel";
 import { FunctionInfo } from "../../lib/functionInfo";
 import { ClientListener, CombinedController, Sp } from "./clientListener";
-import { BrowserMessageEvent } from "skyrimPlatform";
+import { BrowserMessageEvent, browser } from "skyrimPlatform";
 import { AuthNeededEvent } from "../events/authNeededEvent";
 import { BrowserWindowLoadedEvent } from "../events/browserWindowLoadedEvent";
 import { TimersService } from "./timersService";
 import { MasterApiAuthStatus } from "../messages_http/masterApiAuthStatus";
 import { logTrace, logError } from "../../logging";
+import { ConnectionMessage } from "../events/connectionMessage";
+import { CreateActorMessage } from "../messages/createActorMessage";
 
 // for browsersideWidgetSetter
 declare const window: any;
@@ -14,7 +16,7 @@ declare const window: any;
 // Constants used on both client and browser side (see browsersideWidgetSetter)
 const events = {
   openDiscordOauth: 'openDiscordOauth',
-  login: 'loginRequiredEvent',
+  authAttempt: 'authAttemptEvent',
   openGithub: 'openGithub',
   openPatreon: 'openPatreon',
   clearAuthData: 'clearAuthData',
@@ -31,7 +33,10 @@ export class AuthService extends ClientListener {
   constructor(private sp: Sp, private controller: CombinedController) {
     super();
     this.controller.emitter.on("authNeeded", (e) => this.onAuthNeeded(e));
-    this.controller.emitter.on("browserWindowLoaded", (e) => this.onBrowserWindowLoaded(e))
+    this.controller.emitter.on("browserWindowLoaded", (e) => this.onBrowserWindowLoaded(e));
+    this.controller.emitter.on("createActorMessage", (e) => this.onCreateActorMessage(e));
+
+    // this.controller.emitter.on("connectionDenied");
 
     this.controller.on("browserMessage", (e) => this.onBrowserMessage(e));
   }
@@ -43,7 +48,7 @@ export class AuthService extends ClientListener {
     const isOfflineMode = Number.isInteger(settingsGameData?.profileId);
     if (isOfflineMode) {
       logTrace(this, `Offline mode detected in settings, emitting auth event with authGameData.local`);
-      this.controller.emitter.emit("auth", { authGameData: { local: { profileId: settingsGameData.profileId } } });
+      this.controller.emitter.emit("authAttempt", { authGameData: { local: { profileId: settingsGameData.profileId } } });
     } else {
       logTrace(this, `No offline mode detectted in settings, regular auth needed`);
       this.isListenBrowserMessage = true;
@@ -61,6 +66,19 @@ export class AuthService extends ClientListener {
     this.trigger.browserWindowLoadedFired = true;
     if (this.trigger.conditionMet) {
       this.onBrowserWindowLoadedAndOnlineAuthNeeded();
+    }
+  }
+
+  private onCreateActorMessage(e: ConnectionMessage<CreateActorMessage>) {
+    if (e.message.isMe) {
+      if (this.authDialogOpen) {
+        logTrace(this, `Received createActorMessage for self, resetting widgets`);
+        this.sp.browser.executeJavaScript('window.skyrimPlatform.widgets.set([]);');
+        this.authDialogOpen = false;
+      }
+      else {
+        logTrace(this, `Received createActorMessage for self, but auth dialog was not open so not resetting widgets`);
+      }
     }
   }
 
@@ -106,14 +124,14 @@ export class AuthService extends ClientListener {
       case events.openDiscordOauth:
         this.sp.win32.loadUrl(`${this.getMasterUrl()}/api/users/login-discord?state=${this.discordAuthState}`);
         break;
-      case events.login:
+      case events.authAttempt:
         if (authData === null) {
-          browserState.comment = 'logic error: remoteAuthGameData is null';
+          browserState.comment = 'сначала войдите через discord';
           this.refreshWidgets();
           break;
         }
         this.writeAuthDataToDisk(authData);
-        this.controller.emitter.emit("auth", { authGameData: { remote: authData } });
+        this.controller.emitter.emit("authAttempt", { authGameData: { remote: authData } });
         break;
       case events.clearAuthData:
         this.writeAuthDataToDisk(null);
@@ -198,6 +216,7 @@ export class AuthService extends ClientListener {
                   discordDiscriminator,
                   discordAvatar,
                 };
+                browserState.comment = 'привязан успешно';
                 this.refreshWidgets();
               });
               break;
@@ -224,6 +243,7 @@ export class AuthService extends ClientListener {
       logError(this, `Auth check fail:`, browserState.comment);
     }
     this.sp.browser.executeJavaScript(new FunctionInfo(this.browsersideWidgetSetter).getText({ events, browserState, authData: authData }));
+    this.authDialogOpen = true;
   };
 
   private readAuthDataFromDisk(): RemoteAuthGameData | null {
@@ -327,12 +347,12 @@ export class AuthService extends ClientListener {
           type: "button",
           text: "Играть",
           tags: ["BUTTON_STYLE_FRAME", "ELEMENT_STYLE_MARGIN_EXTENDED"],
-          click: () => window.skyrimPlatform.sendMessage(events.login),
+          click: () => window.skyrimPlatform.sendMessage(events.authAttempt),
           hint: "Подключиться к игровому серверу",
         },
         {
           type: "text",
-          text: browserState.failCount > 3 ? browserState.comment : "",
+          text: browserState.comment,
           tags: [],
         },
       ]
@@ -351,6 +371,7 @@ export class AuthService extends ClientListener {
     }
   };
   private discordAuthState = "" + Math.random();
+  private authDialogOpen = false;
 
   private readonly githubUrl = "https://github.com/skyrim-multiplayer/skymp";
   private readonly patreonUrl = "https://www.patreon.com/skymp";
