@@ -35,13 +35,13 @@ jobs:
             SKYRIM_SE_FLAG: OFF
             SP_NEXUS_ARTIFACT_NAME: nope
             DEPLOY_BRANCH: "indev"
-            ONLY_PUSH: false
+            ONLY_PUSH: true
             DIST_ARTIFACT_NAME: dist-indev
           - DESCRIPTION: 'Skyrim Anniversary Edition (1.6) - SweetPie'
             SKYRIM_SE_FLAG: OFF
             SP_NEXUS_ARTIFACT_NAME: nope
             DEPLOY_BRANCH: "sweetpie"
-            ONLY_PUSH: false
+            ONLY_PUSH: true
             DIST_ARTIFACT_NAME: dist-sweetpie
 
     # VS 2019 is still supported, but GitHub windows-2019 runners have unsupported WinSDK version
