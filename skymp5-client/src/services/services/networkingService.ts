@@ -53,21 +53,9 @@ export class NetworkingService extends ClientListener {
     this.sp.mpClientPlugin.destroyClient();
   }
 
-<<<<<<< HEAD
-  send(msg: Record<string, unknown>, reliable: boolean) {
-    // TODO(#175): JS object instead of JSON?
-    this.sp.mpClientPlugin.send(JSON.stringify(msg), reliable);
-  }
-=======
   isConnected() {
     return this.sp.mpClientPlugin.isConnected();
   }
-
-  // send(msg: Record<string, unknown>, reliable: boolean) {
-  //   // TODO(#175): JS object instead of JSON?
-  //   this.sp.mpClientPlugin.send(JSON.stringify(msg), reliable);
-  // }
->>>>>>> b8405f76 (authux part2)
 
   private onTick() {
     this.sp.mpClientPlugin.tick((packetType, jsonContent, error) => {
