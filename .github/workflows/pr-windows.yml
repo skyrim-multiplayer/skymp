@@ -75,6 +75,15 @@ jobs:
             }
           ]
 
+    - name: Commit gathered PRs
+      if: ${{ matrix.DEPLOY_BRANCH != '' && (!matrix.ONLY_PUSH || github.event_name == 'push')}}
+      run: |
+        # fake user for bot
+        git config --global user.email "skyrim_multiplayer_bot@users.noreply.github.com"
+        git config --global user.name "Skyrim Multiplayer Bot"
+        git add .
+        git commit -m "Merge PRs ${{matrix.DEPLOY_BRANCH}}"
+
     - name: Early build skymp5-client
       if: ${{ !matrix.ONLY_PUSH || github.event_name == 'push' }}
       run: |
