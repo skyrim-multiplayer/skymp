@@ -3,6 +3,11 @@ import Axios from "axios";
 import { getMyPublicIp } from "../publicIp";
 import { Settings } from "../settings";
 
+const loginFailedNotLoggedViaDiscord = JSON.stringify({ customPacketType: "loginFailedNotLoggedViaDiscord" });
+const loginFailedNotInTheDiscordServer = JSON.stringify({ customPacketType: "loginFailedNotInTheDiscordServer" });
+const loginFailedBanned = JSON.stringify({ customPacketType: "loginFailedBanned" });
+const loginFailedIpMismatch = JSON.stringify({ customPacketType: "loginFailedIpMismatch" });
+
 type Mp = any; // TODO
 
 interface UserProfile {
@@ -84,6 +89,7 @@ export class Login implements System {
 
         if (discordAuth) {
           if (!profile.discordId) {
+            ctx.svr.sendCustomPacket(userId, loginFailedNotLoggedViaDiscord);
             throw new Error("Not logged in via Discord");
           }
           const response = await Axios.get(
@@ -132,7 +138,8 @@ export class Login implements System {
           }
 
           if (response.status === 404 && response.data?.code === DiscordErrors.unknownMember) {
-            throw new Error("Not on the Discord server");
+            ctx.svr.sendCustomPacket(userId, loginFailedNotInTheDiscordServer);
+            throw new Error("Not in the Discord server");
           }
           // Disabled this check to be able bypassing ratelimit
           // if (response.status !== 200) {
@@ -140,18 +147,22 @@ export class Login implements System {
           //     JSON.stringify({ status: response.status, data: response.data }));
           // }
           if (roles.indexOf(discordAuth.banRoleId) !== -1) {
+            ctx.svr.sendCustomPacket(userId, loginFailedBanned);
             throw new Error("Banned");
           }
           if (ip !== ctx.svr.getUserIp(userId)) {
             // It's a quick and dirty way to check if it's the same user
             // During async http call the user could free userId and someone else could connect with the same userId
+            ctx.svr.sendCustomPacket(userId, loginFailedIpMismatch);
             throw new Error("IP mismatch");
           }
         }
         ctx.gm.emit("spawnAllowed", userId, profile.id, roles, profile.discordId);
         this.log("Logged as " + profile.id);
       })()
-        .catch((err) => console.error("Error logging in client:", JSON.stringify(gameData), err));
+        .catch((err) => {
+          console.error("Error logging in client:", JSON.stringify(gameData), err)
+        });
     } else if (this.offlineMode === true && gameData && typeof gameData.profileId === "number") {
       const profileId = gameData.profileId;
       ctx.gm.emit("spawnAllowed", userId, profileId, [], undefined);
