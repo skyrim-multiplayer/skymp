@@ -104,7 +104,14 @@ export const syncSpellEquipment = (
 
 export const applyEquipment = (ac: Actor, eq: Equipment): boolean => {
   ac.removeAllItems(null, false, true);
-  setInventory(ac.getFormID(), removeUnnecessaryExtra(filterWorn(eq.inv)));
+
+  ac.unequipAll();
+
+  ac.removeAllItems(null, false, true);
+
+  const newInventory = removeUnnecessaryExtra(filterWorn(eq.inv));
+
+  setInventory(ac.getFormID(), newInventory);
 
   syncSpellEquipment(ac, eq.leftSpell, SpellType.Left);
   syncSpellEquipment(ac, eq.rightSpell, SpellType.Right);
