@@ -1,7 +1,7 @@
 import { AuthGameData, RemoteAuthGameData, authGameDataStorageKey } from "../../features/authModel";
 import { FunctionInfo } from "../../lib/functionInfo";
 import { ClientListener, CombinedController, Sp } from "./clientListener";
-import { BrowserMessageEvent, Menu } from "skyrimPlatform";
+import { BrowserMessageEvent, Menu, browser } from "skyrimPlatform";
 import { AuthNeededEvent } from "../events/authNeededEvent";
 import { BrowserWindowLoadedEvent } from "../events/browserWindowLoadedEvent";
 import { TimersService } from "./timersService";
@@ -91,6 +91,7 @@ export class AuthService extends ClientListener {
     }
 
     this.loggingStartMoment = 0;
+    this.authAttemptProgressIndicator = false;
   }
 
   private onCustomPacketMessage2(event: ConnectionMessage<CustomPacketMessage2>): void {
@@ -101,29 +102,30 @@ export class AuthService extends ClientListener {
       //   logTrace(this, 'loginRequired received');
       //   this.loginWithSkympIoCredentials();
       //   break;
-
-      // const loginFailedNotLoggedViaDiscord = JSON.stringify({ customPacketType: "loginFailedNotLoggedViaDiscord" });
-      // const loginFailedNotInTheDiscordServer = JSON.stringify({ customPacketType: "loginFailedNotInTheDiscordServer" });
-      // const loginFailedBanned = JSON.stringify({ customPacketType: "loginFailedBanned" });
-      // const loginFailedIpMismatch = JSON.stringify({ customPacketType: "loginFailedIpMismatch" });
-      
-
       case 'loginFailedNotLoggedViaDiscord':
+        this.authAttemptProgressIndicator = false;
+        this.controller.lookupListener(NetworkingService).close();
         logTrace(this, 'loginFailedNotLoggedViaDiscord received');
-        browserState.comment = 'войдите через discord';
+        browserState.loginFailedReason = 'войдите через discord';
         this.sp.browser.executeJavaScript(new FunctionInfo(this.loginFailedWidgetSetter).getText({ events, browserState, authData: authData }));
         break;
       case 'loginFailedNotInTheDiscordServer':
+        this.authAttemptProgressIndicator = false;
+        this.controller.lookupListener(NetworkingService).close();
         logTrace(this, 'loginFailedNotInTheDiscordServer received');
-        browserState.comment = 'вступите в discord сервер';
+        browserState.loginFailedReason = 'вступите в discord сервер';
         this.sp.browser.executeJavaScript(new FunctionInfo(this.loginFailedWidgetSetter).getText({ events, browserState, authData: authData }));
         break;
       case 'loginFailedBanned':
+        this.authAttemptProgressIndicator = false;
+        this.controller.lookupListener(NetworkingService).close();
         logTrace(this, 'loginFailedBanned received');
-        browserState.comment = 'вы забанены';
+        browserState.loginFailedReason = 'вы забанены';
         this.sp.browser.executeJavaScript(new FunctionInfo(this.loginFailedWidgetSetter).getText({ events, browserState, authData: authData }));
         break;
       case 'loginFailedIpMismatch':
+        this.authAttemptProgressIndicator = false;
+        this.controller.lookupListener(NetworkingService).close();
         logTrace(this, 'loginFailedIpMismatch received');
         browserState.comment = 'что это было?';
         this.sp.browser.executeJavaScript(new FunctionInfo(this.loginFailedWidgetSetter).getText({ events, browserState, authData: authData }));
@@ -171,6 +173,8 @@ export class AuthService extends ClientListener {
     const eventKey = e.arguments[0];
     switch (eventKey) {
       case events.openDiscordOauth:
+        browserState.comment = 'открываем браузер...';
+        this.refreshWidgets();
         this.sp.win32.loadUrl(`${this.getMasterUrl()}/api/users/login-discord?state=${this.discordAuthState}`);
         break;
       case events.authAttempt:
@@ -181,6 +185,10 @@ export class AuthService extends ClientListener {
         }
         this.writeAuthDataToDisk(authData);
         this.controller.emitter.emit("authAttempt", { authGameData: { remote: authData } });
+
+        this.authAttemptProgressIndicator = true;
+
+
         break;
       case events.clearAuthData:
         this.writeAuthDataToDisk(null);
@@ -278,7 +286,7 @@ export class AuthService extends ClientListener {
               break;
             case 401: // Unauthorized
               browserState.failCount = 0;
-              browserState.comment = (`Still waiting...`);
+              browserState.comment = '';//(`Still waiting...`);
               timersService.setTimeout(() => this.checkLoginState(), 1.5 + Math.random() * 2);
               break;
             case 403: // Forbidden
@@ -379,25 +387,31 @@ export class AuthService extends ClientListener {
   }
 
   private loginFailedWidgetSetter = () => {
+    const splitParts = browserState.loginFailedReason.split('\n');
+
+    const textElements = splitParts.map((part) => ({
+      type: "text",
+      text: part,
+      tags: [],
+    }));
+
     const widget = {
       type: "form",
       id: 2,
-      caption: "Авторизация",
-      elements: [
-        {
-          type: "text",
-          text: browserState.loginFailedReason,
-          tags: []
-        },
-        {
-          type: "button",
-          text: "назад",
-          tags: ["ELEMENT_STYLE_MARGIN_EXTENDED"],
-          click: () => window.skyrimPlatform.sendMessage(events.backToLogin),
-          hint: undefined
-        }
-      ]
+      caption: "упс",
+      elements: new Array<any>()
     }
+
+    textElements.forEach((element) => widget.elements.push(element));
+
+    widget.elements.push({
+      type: "button",
+      text: "назад",
+      tags: ["ELEMENT_STYLE_MARGIN_EXTENDED"],
+      click: () => window.skyrimPlatform.sendMessage(events.backToLogin),
+      hint: undefined
+    });
+
     window.skyrimPlatform.widgets.set([widget]);
   }
 
@@ -476,6 +490,8 @@ export class AuthService extends ClientListener {
   }
 
   private handleConnectionDenied(e: ConnectionDenied) {
+    this.authAttemptProgressIndicator = false;
+
     if (e.error.toLowerCase().includes("invalid password")) {
       this.controller.once("tick", () => {
         this.controller.lookupListener(NetworkingService).close();
@@ -539,21 +555,44 @@ export class AuthService extends ClientListener {
     // TODO: Busy waiting is bad. Should be replaced with some kind of event
     const maxLoggingDelay = 15000;
     if (this.loggingStartMoment && Date.now() - this.loggingStartMoment > maxLoggingDelay) {
-      logError(this, 'Logging in failed. Reconnecting.');
-      this.showConnectionError();
-      this.controller.lookupListener(NetworkingService).reconnect();
+      // logError(this, 'Logging in failed. Reconnecting.');
+
+      // browserState.comment = 'проблемы с авторизацией';
+      // this.refreshWidgets();
+
+      // this.controller.lookupListener(NetworkingService).reconnect();
       this.loggingStartMoment = 0;
+      this.authAttemptProgressIndicator = false;
+      this.controller.lookupListener(NetworkingService).close();
+      logTrace(this, 'max logging delay reached received');
+      browserState.loginFailedReason = 'технические шоколадки\nпопробуйте еще раз\nпожалуйста\nили напишите нам в discord';
+      this.sp.browser.executeJavaScript(new FunctionInfo(this.loginFailedWidgetSetter).getText({ events, browserState, authData: authData }));
+    }
+
+    if (this.authAttemptProgressIndicator) {
+      this.authAttemptProgressIndicatorCounter++;
+
+      if (this.authAttemptProgressIndicatorCounter === 1000000) {
+        this.authAttemptProgressIndicatorCounter = 0;
+      }
+
+      const slowCounter = Math.floor(this.authAttemptProgressIndicatorCounter / 15);
+
+      const dot = slowCounter % 3 === 0 ? '.' : slowCounter % 3 === 1 ? '..' : '...';
+
+      browserState.comment = "подключение" + dot;
+      this.refreshWidgets();
     }
   }
 
-  private showConnectionError() {
-    // TODO: unhardcode it or render via browser
-    this.sp.printConsole("Server connection failed. This may be caused by one of the following:");
-    this.sp.printConsole("1. You are not present on the SkyMP Discord server");
-    this.sp.printConsole("2. You have been banned by server admins");
-    this.sp.printConsole("3. There is some technical issue. Try linking your Discord account again");
-    this.sp.printConsole("If you feel that something is wrong, please contact us on Discord.");
-  };
+  // private showConnectionError() {
+  //   // TODO: unhardcode it or render via browser
+  //   this.sp.printConsole("Server connection failed. This may be caused by one of the following:");
+  //   this.sp.printConsole("1. You are not present on the SkyMP Discord server");
+  //   this.sp.printConsole("2. You have been banned by server admins");
+  //   this.sp.printConsole("3. There is some technical issue. Try linking your Discord account again");
+  //   this.sp.printConsole("If you feel that something is wrong, please contact us on Discord.");
+  // };
 
   private isListenBrowserMessage = false;
   private trigger = {
@@ -568,6 +607,9 @@ export class AuthService extends ClientListener {
   private authDialogOpen = false;
 
   private loggingStartMoment = 0;
+
+  private authAttemptProgressIndicator = false;
+  private authAttemptProgressIndicatorCounter = 0;
 
   private readonly githubUrl = "https://github.com/skyrim-multiplayer/skymp";
   private readonly patreonUrl = "https://www.patreon.com/skymp";
