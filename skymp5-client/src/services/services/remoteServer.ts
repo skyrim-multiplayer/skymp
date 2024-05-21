@@ -17,7 +17,6 @@ import * as messages from '../../messages';
 
 /* eslint-disable @typescript-eslint/no-empty-function */
 import { ObjectReferenceEx } from '../../extensions/objectReferenceEx';
-import { AuthGameData, authGameDataStorageKey } from '../../features/authModel';
 import { IdManager } from '../../lib/idManager';
 import { nameof } from '../../lib/nameof';
 import { setActorValuePercentage } from '../../sync/actorvalues';
@@ -33,15 +32,12 @@ import { UpdateMovementMessage } from '../messages/updateMovementMessage';
 import { ChangeValuesMessage } from '../messages/changeValues';
 import { UpdateAnimationMessage } from '../messages/updateAnimationMessage';
 import { UpdateEquipmentMessage } from '../messages/updateEquipmentMessage';
-import { CustomPacketMessage } from '../messages/customPacketMessage';
-import { CustomEventMessage } from '../messages/customEventMessage';
 import { RagdollService } from './ragdollService';
 import { UpdateAppearanceMessage } from '../messages/updateAppearanceMessage';
 import { TeleportMessage } from '../messages/teleportMessage';
 import { DeathStateContainerMessage } from '../messages/deathStateContainerMessage';
 import { RespawnNeededError } from '../../lib/errors';
 import { OpenContainerMessage } from '../messages/openContainerMessage';
-import { NetworkingService } from './networkingService';
 import { ActivateMessage } from '../messages/activateMessage';
 import { ClientListener, CombinedController, Sp } from './clientListener';
 import { HostStartMessage } from '../messages/hostStartMessage';
@@ -49,7 +45,6 @@ import { HostStopMessage } from '../messages/hostStopMessage';
 import { ConnectionMessage } from '../events/connectionMessage';
 import { SetInventoryMessage } from '../messages/setInventoryMessage';
 import { CreateActorMessage, CreateActorMessageAdditionalProps } from '../messages/createActorMessage';
-import { CustomPacketMessage2 } from '../messages/customPacketMessage2';
 import { DestroyActorMessage } from '../messages/destroyActorMessage';
 import { SetRaceMenuOpenMessage } from '../messages/setRaceMenuOpenMessage';
 import { UpdatePropertyMessage } from '../messages/updatePropertyMessage';
@@ -59,7 +54,6 @@ import { TeleportMessage2 } from '../messages/teleportMessage2';
 import {
   getObjectReference,
   getViewFromStorage,
-  localIdToRemoteId,
   remoteIdToLocalId,
 } from '../../view/worldViewMisc';
 import { TimeService } from './timeService';
@@ -97,8 +91,6 @@ export class RemoteServer extends ClientListener {
   constructor(private sp: Sp, private controller: CombinedController) {
     super();
 
-    this.controller.on("tick", () => this.onTick());
-
     this.controller.emitter.on("hostStartMessage", (e) => this.onHostStartMessage(e));
     this.controller.emitter.on("hostStopMessage", (e) => this.onHostStopMessage(e));
     this.controller.emitter.on("setInventoryMessage", (e) => this.onSetInventoryMessage(e));
@@ -111,25 +103,12 @@ export class RemoteServer extends ClientListener {
     this.controller.emitter.on("teleportMessage", (e) => this.onTeleportMessage(e));
     this.controller.emitter.on("teleportMessage2", (e) => this.onTeleportMessage(e));
     this.controller.emitter.on("createActorMessage", (e) => this.onCreateActorMessage(e));
-    this.controller.emitter.on("customPacketMessage2", (e) => this.onCustomPacketMessage2(e));
     this.controller.emitter.on("destroyActorMessage", (e) => this.onDestroyActorMessage(e));
     this.controller.emitter.on("setRaceMenuOpenMessage", (e) => this.onSetRaceMenuOpenMessage(e));
     this.controller.emitter.on("updatePropertyMessage", (e) => this.onUpdatePropertyMessage(e));
     this.controller.emitter.on("deathStateContainerMessage", (e) => this.onDeathStateContainerMessage(e));
 
     this.controller.emitter.on("connectionAccepted", () => this.handleConnectionAccepted());
-  }
-
-  private onTick() {
-    // TODO: Should be no hardcoded/magic-number limit
-    // TODO: Busy waiting is bad. Should be replaced with some kind of event
-    const maxLoggingDelay = 15000;
-    if (this.loggingStartMoment && Date.now() - this.loggingStartMoment > maxLoggingDelay) {
-      logError(this, 'Logging in failed. Reconnecting.');
-      this.showConnectionError();
-      this.controller.lookupListener(NetworkingService).reconnect();
-      this.loggingStartMoment = 0;
-    }
   }
 
   private onHostStartMessage(event: ConnectionMessage<HostStartMessage>) {
@@ -329,8 +308,6 @@ export class RemoteServer extends ClientListener {
     }
 
     logTrace(this, "Create actor");
-
-    this.loggingStartMoment = 0;
 
     const i = this.getIdManager().allocateIdFor(msg.idx);
     if (this.worldModel.forms.length <= i) {
@@ -764,8 +741,6 @@ export class RemoteServer extends ClientListener {
     this.worldModel.playerCharacterFormIdx = -1;
 
     logTrace(this, "Handle connection accepted");
-
-    this.loginWithSkympIoCredentials();
   }
 
   private onChangeValuesMessage(event: ConnectionMessage<ChangeValuesMessage>): void {
@@ -799,17 +774,6 @@ export class RemoteServer extends ClientListener {
     }
   }
 
-  private onCustomPacketMessage2(event: ConnectionMessage<CustomPacketMessage2>): void {
-    const msg = event.message;
-
-    switch (msg.content.customPacketType) {
-      case 'loginRequired':
-        logTrace(this, 'loginRequired received');
-        this.loginWithSkympIoCredentials();
-        break;
-    }
-  }
-
   /** Packet handlers end **/
 
   getWorldModel(): WorldModel {
@@ -839,51 +803,6 @@ export class RemoteServer extends ClientListener {
     return storage["idManager"] as IdManager;
   }
 
-  private loginWithSkympIoCredentials() {
-    this.loggingStartMoment = Date.now();
-
-    const authData = storage[authGameDataStorageKey] as AuthGameData | undefined;
-    if (authData?.local) {
-      logTrace(this,
-        `Logging in offline mode, profileId =`, authData.local.profileId
-      );
-      const message: CustomPacketMessage = {
-        t: messages.MsgType.CustomPacket,
-        content: {
-          customPacketType: 'loginWithSkympIo',
-          gameData: {
-            profileId: authData.local.profileId,
-          },
-        },
-      };
-      this.controller.emitter.emit("sendMessage", {
-        message: message,
-        reliability: "reliable"
-      });
-      return;
-    }
-
-    if (authData?.remote) {
-      logTrace(this, 'Logging in as a master API user');
-      const message: CustomPacketMessage = {
-        t: messages.MsgType.CustomPacket,
-        content: {
-          customPacketType: 'loginWithSkympIo',
-          gameData: {
-            session: authData.remote.session,
-          },
-        },
-      };
-      this.controller.emitter.emit("sendMessage", {
-        message: message,
-        reliability: "reliable"
-      });
-      return;
-    }
-
-    logError(this, 'Not found authentication method');
-  };
-
   private onceLoad(
     refrId: number,
     callback: (refr: ObjectReference) => void,
@@ -910,15 +829,4 @@ export class RemoteServer extends ClientListener {
     // Optimization added in #1186, however it doesn't work for doors for some reason
     return msg.refrId && msg.refrId < 0xff000000 && msg.baseRecordType !== 'DOOR';
   };
-
-  private showConnectionError() {
-    // TODO: unhardcode it or render via browser
-    this.sp.printConsole("Server connection failed. This may be caused by one of the following:");
-    this.sp.printConsole("1. You are not present on the SkyMP Discord server");
-    this.sp.printConsole("2. You have been banned by server admins");
-    this.sp.printConsole("3. There is some technical issue. Try linking your Discord account again");
-    this.sp.printConsole("If you feel that something is wrong, please contact us on Discord.");
-  };
-
-  private loggingStartMoment = 0;
 }
