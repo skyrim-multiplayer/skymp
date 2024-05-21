@@ -173,13 +173,10 @@ private:
         LoadSettingsFile(path);
         continue;
       }
-      if (EndsWith(path.wstring(), L"-logs.txt")) {
+      if (EndsWith(path.wstring(), L".js")) {
+        LoadPluginFile(path);
         continue;
       }
-      if (EndsWith(path.wstring(), L".DS_Store")) {
-        continue;
-      }
-      LoadPluginFile(path);
     }
   }
 
