@@ -102,7 +102,9 @@ export class SkympClient extends ClientListener {
   }
 
   private establishConnectionConditional() {
-    if (storage.targetIp !== targetIp || storage.targetPort !== targetPort) {
+    const isConnected = this.controller.lookupListener(networking.NetworkingService).isConnected();
+
+    if (!isConnected || storage.targetIp !== targetIp || storage.targetPort !== targetPort) {
       storage.targetIp = targetIp;
       storage.targetPort = targetPort;
 
