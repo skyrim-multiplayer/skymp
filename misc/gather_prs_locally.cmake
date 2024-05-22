@@ -35,12 +35,14 @@ if("${GITHUB_TOKEN}" STREQUAL "")
     message(FATAL_ERROR "GITHUB_TOKEN is not set")
 endif()
 
+# P.S. GITHUB_TOKEN is used for skyrim-multiplayer/skymp as well to increase the rate limit
 set(ENV_INPUT_REPOSITORIES "
 [
     {
         \"owner\": \"skyrim-multiplayer\",
         \"repo\": \"skymp\",
-        \"labels\": [\"merge-to:indev\"]
+        \"labels\": [\"merge-to:indev\"],
+        \"token\": \"${GITHUB_TOKEN}\"
     },
     {
         \"owner\": \"skyrim-multiplayer\",
@@ -80,7 +82,7 @@ endif()
 
 message(STATUS "Current branch: ${CURRENT_BRANCH}")
 
-if(CURRENT_BRANCH MATCHES main)
+if("${CURRENT_BRANCH}" STREQUAL main)
     message(STATUS "Main branch detected. Switching to a temporary branch")
 
     string(TIMESTAMP TIMESTAMP "%Y%m%d%H%M%S")
@@ -97,6 +99,8 @@ if(CURRENT_BRANCH MATCHES main)
     else()
         message(FATAL_ERROR "Failed to switch to a temporary branch: ${GIT_SWITCH_OUTPUT}")
     endif()
+else()
+    message(FATAL_ERROR "Not a main branch, please switch to main and run the script again")
 endif()
 
 # Commit the changes locally
