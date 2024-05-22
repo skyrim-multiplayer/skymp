@@ -23,6 +23,8 @@ bool CalculateOperationResult(int firstArgument, int secondArgument,
 
 Condition::Condition(espm::CTDA::Operator conditionOperator,
                      espm::CTDA::Flags flags)
+  : conditionOperator(conditionOperator)
+  , flags(flags)
 {
 }
 
