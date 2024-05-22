@@ -1,5 +1,6 @@
 #include "ActionListener.h"
 #include "AnimationSystem.h"
+#include "Condition.h"
 #include "ConsoleCommands.h"
 #include "CropRegeneration.h"
 #include "DummyMessageOutput.h"
@@ -11,14 +12,13 @@
 #include "MovementValidation.h"
 #include "MpObjectReference.h"
 #include "MsgType.h"
+#include "UpdateEquipmentMessage.h"
 #include "UserMessageOutput.h"
 #include "WorldState.h"
 #include "script_objects/EspmGameObject.h"
 #include <fmt/format.h>
 #include <spdlog/spdlog.h>
 #include <unordered_set>
-
-#include "UpdateEquipmentMessage.h"
 
 namespace {
 void SendHostStop(PartOne& partOne, Networking::UserId badHosterUserId,
@@ -446,27 +446,6 @@ void ActionListener::OnConsoleCommand(
     ConsoleCommands::Execute(*me, consoleCommandName, args);
 }
 
-bool CalculateOperationResult(int firstArgument, int secondArgument,
-                              espm::CTDA::Operator conditionOperator)
-{
-  switch (conditionOperator) {
-    case espm::CTDA::Operator::EqualTo:
-      return firstArgument == secondArgument;
-    case espm::CTDA::Operator::NotEqualTo:
-      return firstArgument != secondArgument;
-    case espm::CTDA::Operator::GreaterThen:
-      return firstArgument > secondArgument;
-    case espm::CTDA::Operator::GreaterThenOrEqualTo:
-      return firstArgument >= secondArgument;
-    case espm::CTDA::Operator::LessThen:
-      return firstArgument < secondArgument;
-    case espm::CTDA::Operator::LessThenOrEqualTo:
-      return firstArgument <= secondArgument;
-    default:
-      return false;
-  }
-}
-
 void UseCraftRecipe(MpActor* me, const espm::COBJ* recipeUsed,
                     espm::CompressedFieldsCache& cache,
                     const espm::CombineBrowser& br, int espmIdx)
@@ -477,41 +456,37 @@ void UseCraftRecipe(MpActor* me, const espm::COBJ* recipeUsed,
   spdlog::info("Using craft recipe with EDID {} from espm file with index {}",
                recipeUsed->GetEditorId(cache), espmIdx);
 
-  bool requireAnd = false;
+  std::vector<Condition*> conditions;
+
   for (auto& condition : recipeData.conditions) {
-    // impl race, item, perk? checks
-
     if (condition.IsGetItemCount()) {
-      int itemCount = me->GetInventory().GetItemCount(
-        condition.GetDefaultData().firstParameter);
-
-      if (CalculateOperationResult(itemCount, condition.comparisonValue,
-                                   condition.GetOperator()) == false) {
-        if (condition.GetFlags() != espm::CTDA::Flags::OR || requireAnd) {
-          spdlog::trace("onCraft - blocked by gamemode");
-          return;
-        }
-      } else {
-        requireAnd = false;
-      }
+      conditions.push_back(new ItemCountCondition(
+        condition.GetDefaultData().firstParameter, condition.comparisonValue,
+        condition.GetOperator(), condition.GetFlags()));
     } else if (condition.IsGetIsRace()) {
-      int raceEquals =
-        me->GetRaceId() == condition.GetDefaultData().firstParameter ? 1 : 0;
+      conditions.push_back(new RaceCondition(
+        condition.GetDefaultData().firstParameter, condition.comparisonValue,
+        condition.GetOperator(), condition.GetFlags()));
+    }
+  }
 
-      if (CalculateOperationResult(raceEquals, condition.comparisonValue,
-                                   condition.GetOperator()) == false) {
-        if (condition.GetFlags() != espm::CTDA::Flags::OR || requireAnd) {
-          spdlog::trace("onCraft - blocked by gamemode");
-          return;
-        }
-      } else {
-        requireAnd = false;
+  bool requireAnd = false;
+  for (auto& cond : conditions) {
+    if (!cond->Evaluate(me)) {
+      if (cond->GetFlags() != espm::CTDA::Flags::OR || requireAnd) {
+        spdlog::trace("UseCraftRecipe - blocked by condition: {}",
+                      cond->GetDescription());
+        delete cond;
+        return;
       }
+    } else {
+      requireAnd = false;
     }
 
-    if (condition.GetFlags() == espm::CTDA::Flags::ANDORDEFAULT) {
+    if (cond->GetFlags() == espm::CTDA::Flags::ANDORDEFAULT) {
       requireAnd = true;
     }
+    delete cond;
   }
 
   std::vector<Inventory::Entry> entries;
