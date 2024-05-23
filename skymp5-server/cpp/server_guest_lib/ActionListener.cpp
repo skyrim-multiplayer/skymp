@@ -474,7 +474,7 @@ void UseCraftRecipe(MpActor* me, const espm::COBJ* recipeUsed,
   for (auto& cond : conditions) {
     if (!cond->Evaluate(me)) {
       if ((static_cast<uint32_t>(cond->GetFlags()) &
-           static_cast<uint32_t>(espm::CTDA::Flags::OR)) == false ||
+           static_cast<uint32_t>(espm::CTDA::Flags::OR)) == 0 ||
           requireAnd) {
         spdlog::trace("UseCraftRecipe - blocked by condition: {}",
                       cond->GetDescription());
