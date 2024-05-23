@@ -456,27 +456,28 @@ void UseCraftRecipe(MpActor* me, const espm::COBJ* recipeUsed,
   spdlog::info("Using craft recipe with EDID {} from espm file with index {}",
                recipeUsed->GetEditorId(cache), espmIdx);
 
-  std::vector<Condition*> conditions;
+  std::vector<std::shared_ptr<Condition>> conditions;
 
   for (auto& condition : recipeData.conditions) {
     if (condition.IsGetItemCount()) {
-      conditions.push_back(new ItemCountCondition(
+      conditions.push_back(std::shared_ptr<Condition>(new ItemCountCondition(
         condition.GetDefaultData().firstParameter, condition.comparisonValue,
-        condition.GetOperator(), condition.GetFlags()));
+        condition.GetOperator(), condition.GetFlags())));
     } else if (condition.IsGetIsRace()) {
-      conditions.push_back(new RaceCondition(
+      conditions.push_back(std::shared_ptr<Condition>(new RaceCondition(
         condition.GetDefaultData().firstParameter, condition.comparisonValue,
-        condition.GetOperator(), condition.GetFlags()));
+        condition.GetOperator(), condition.GetFlags())));
     }
   }
 
   bool requireAnd = false;
   for (auto& cond : conditions) {
     if (!cond->Evaluate(me)) {
-      if (cond->GetFlags() != espm::CTDA::Flags::OR || requireAnd) {
+      if ((static_cast<uint32_t>(cond->GetFlags()) &
+           static_cast<uint32_t>(espm::CTDA::Flags::OR)) == false ||
+          requireAnd) {
         spdlog::trace("UseCraftRecipe - blocked by condition: {}",
                       cond->GetDescription());
-        delete cond;
         return;
       }
     } else {
@@ -486,7 +487,6 @@ void UseCraftRecipe(MpActor* me, const espm::COBJ* recipeUsed,
     if (cond->GetFlags() == espm::CTDA::Flags::ANDORDEFAULT) {
       requireAnd = true;
     }
-    delete cond;
   }
 
   std::vector<Inventory::Entry> entries;
