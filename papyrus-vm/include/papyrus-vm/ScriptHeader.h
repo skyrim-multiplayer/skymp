@@ -1,6 +1,32 @@
 #pragma once
 #include <cstdint>
 
+class ScriptHeaderView
+{
+public:
+  ScriptHeaderView(const uint8_t* data_, size_t dataSize_,
+                   const StringTable* stringTable_) noexcept;
+
+  enum
+  {
+    kSignature = 0xFA57C0DE,
+    kVerMajor = 0x03,
+    kVerMinor = 0x01,
+    kGameID = 0x0001,
+  };
+
+  uint32_t GetSignature() const noexcept;
+  uint8_t GetVerMajor() const noexcept;
+  uint8_t GetVerMinor() const noexcept;
+  uint16_t GetGameID() const noexcept;
+  uint64_t GetBuildTime() const noexcept;
+
+private:
+  const uint8_t* data = nullptr;
+  size_t dataSize = 0;
+  const StringTable* stringTable = nullptr;
+};
+
 struct ScriptHeader
 {
   enum

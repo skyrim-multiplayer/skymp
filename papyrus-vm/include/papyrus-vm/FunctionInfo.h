@@ -3,33 +3,67 @@
 #include <string>
 #include <vector>
 
-struct FunctionInfo
+class FunctionInfoView
 {
-  bool valid = false;
-
-  enum
+public:
+  FunctionInfoView(const uint8_t* data_, size_t dataSize_,
+                   const StringTable* stringTable_) noexcept
   {
-    kFlags_Read = 1 << 0,
-    kFlags_Write = 1 << 1,
-  };
+    data = data_;
+    dataSize = dataSize_;
+    stringTable = stringTable_;
+  }
 
-  struct ParamInfo
-  {
-    std::string name;
-    std::string type;
-  };
+  bool IsValid() const noexcept;
+  const std::string& GetReturnType() const noexcept;
+  const std::string& GetDocString() const noexcept;
+  uint32_t GetUserFlags() const noexcept;
+  uint8_t GetFlags() const noexcept;
 
-  std::string returnType;
-  std::string docstring;
-  uint32_t userFlags = 0;
-  uint8_t flags = 0;
+  template <class Callback /* void(const ParamInfoView&) */>
+  void ForEachParam(const Callback& callback) const noexcept;
 
-  std::vector<ParamInfo> params;
-  std::vector<ParamInfo> locals;
+  template <class Callback /* void(const ParamInfoView&) */>
+  void ForEachLocal(const Callback& callback) const noexcept;
 
-  FunctionCode code;
+  const FunctionCodeView& GetFunctionCode() const noexcept;
 
-  bool IsGlobal() const { return flags & (1 << 0); }
+  bool IsGlobal() const noexcept { return GetFlags() & (1 << 0); }
+  bool IsNative() const noexcept { return GetFlags() & (1 << 1); }
 
-  bool IsNative() const { return flags & (1 << 1); }
+private:
+  const uint8_t* data = nullptr;
+  size_t dataSize = 0;
+  const StringTable* stringTable = nullptr;
 };
+
+// struct FunctionInfo
+// {
+//   bool valid = false;
+
+//   enum
+//   {
+//     kFlags_Read = 1 << 0,
+//     kFlags_Write = 1 << 1,
+//   };
+
+//   struct ParamInfo
+//   {
+//     std::string name;
+//     std::string type;
+//   };
+
+//   std::string returnType;
+//   std::string docstring;
+//   uint32_t userFlags = 0;
+//   uint8_t flags = 0;
+
+//   std::vector<ParamInfo> params;
+//   std::vector<ParamInfo> locals;
+
+//   FunctionCode code;
+
+//   bool IsGlobal() const { return flags & (1 << 0); }
+
+//   bool IsNative() const { return flags & (1 << 1); }
+// };
