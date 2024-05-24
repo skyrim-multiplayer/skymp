@@ -87,7 +87,7 @@ export class SkympClient extends ClientListener {
   }
 
   private startClient() {
-    this.establishConnectionConditional();
+    this.controller.once("tick", () => this.establishConnectionConditional());
     this.ctor();
   }
 
