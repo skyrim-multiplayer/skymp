@@ -87,6 +87,7 @@ export class SkympClient extends ClientListener {
   }
 
   private startClient() {
+    // once("tick", ...) is needed to ensure networking service initialized
     this.controller.once("tick", () => this.establishConnectionConditional());
     this.ctor();
   }
