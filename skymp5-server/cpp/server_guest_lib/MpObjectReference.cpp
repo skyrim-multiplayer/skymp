@@ -752,14 +752,25 @@ void MpObjectReference::AddItem(uint32_t baseId, uint32_t count)
   });
   SendInventoryUpdate();
 
-  //  TODO: No one used it due to incorrect baseItem which should be object,
-  //  not id. Needs to be revised. Seems to also be buggy
-  // auto baseItem = VarValue(static_cast<int32_t>(baseId));
-  // auto itemCount = VarValue(static_cast<int32_t>(count));
-  // auto itemReference = VarValue((IGameObject*)nullptr);
-  // auto sourceContainer = VarValue((IGameObject*)nullptr);
-  // VarValue args[4] = { baseItem, itemCount, itemReference, sourceContainer
-  // }; SendPapyrusEvent("OnItemAdded", args, 4);
+  if (auto worldState = GetParent()) {
+    espm::LookupResult lookupRes =
+      worldState->GetEspm().GetBrowser().LookupById(baseId);
+
+    if (lookupRes.rec) {
+      auto baseItem = VarValue(std::make_shared<EspmGameObject>(lookupRes));
+      auto itemCount = VarValue(static_cast<int32_t>(count));
+      auto itemReference =
+        VarValue(static_cast<IGameObject*>(nullptr)); // TODO
+      auto sourceContainer =
+        VarValue(static_cast<IGameObject*>(nullptr)); // TODO
+      VarValue args[4] = { baseItem, itemCount, itemReference,
+                           sourceContainer };
+      SendPapyrusEvent("OnItemAdded", args, 4);
+    } else {
+      spdlog::warn("MpObjectReference::AddItem - failed to lookup item {:x}",
+                   baseId);
+    }
+  }
 }
 
 void MpObjectReference::AddItems(const std::vector<Inventory::Entry>& entries)
