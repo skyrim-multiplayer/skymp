@@ -550,7 +550,7 @@ export class FormView implements View<FormModel> {
         if (!this.textNameId) {
           this.textNameId = createText(textXPos, textYPos, model.appearance.name, [255, 255, 255, 1]);
         } else {
-          setTextString(this.textNameId, headScreenPos[2] >= 0 ? model.appearance.name : "");
+          setTextString(this.textNameId, "");
           setTextPos(this.textNameId, textXPos, textYPos);
         }
       } else {
