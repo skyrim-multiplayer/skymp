@@ -4,7 +4,7 @@
 4. Run the SP Types Update action https://github.com/skyrim-multiplayer/skymp/actions/workflows/trigger-sp-types-update.yml. It usually takes less than a minute.
 5. Make sure that the commit to the main branch https://github.com/skyrim-platform/skyrim-platform arrived here.
 6. Wait for PR Windows, PR Windows AE actions to be built in the main branch.
-7. Download SP-AE-nexus.zip and SP-SE-nexus.zip from artifacts. Rename them to `Skyrim Platform 2.X.0 (Anniversary Edition)` and `Skyrim Platform 2.X.0 (Special Edition)`.
+7. Download `Skyrim Platform 2.X.0 (Anniversary Edition).zip` and `Skyrim Platform 2.X.0 (Special Edition).zip` from artifacts.
 8. Go to file management on Nexus https://www.nexusmods.com/skyrimspecialedition/mods/edit/?id=54909&game_id=1704&step=files, scroll down to "Add a new file" and fill in all the items:
 
 File name: `Skyrim Platform 2.X.0 (Anniversary Edition)`
