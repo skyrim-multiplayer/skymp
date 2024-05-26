@@ -5,7 +5,6 @@
 
 #include <BitStream.h>
 
-
 // class StringTable
 // {
 // public:
@@ -41,23 +40,44 @@ public:
   const std::string& GetNthString(size_t index,
                                   StringTableCache& cache) const noexcept
   {
-
     if (cache.storage.empty()) {
-      SLNet::BitStream bs(const_cast<uint8_t*>(data), dataSize, false);
+      FillCache(cache);
+    }
 
-      uint16_t numStrings = 0;
-      bs.Read(numStrings);
+    static const std::string kEmptyString;
 
-      std::vector<std::string> strings;
-      strings.resize(numStrings);
+    if (index >= cache.storage.size()) {
+      return kEmptyString;
+    }
 
-      for (size_t i = 0; i < numStrings && bs.GetNumberOfUnreadBits() > 0; ++ i) {
-        // TODO
+    return cache.storage[index];
+  }
+
+private:
+  void FillCache(StringTableCache& cache) const noexcept
+  {
+    SLNet::BitStream bs(const_cast<uint8_t*>(data), dataSize, false);
+
+    uint16_t numStrings = 0;
+    bs.Read(numStrings);
+
+    cache.storage.resize(numStrings);
+
+    for (size_t stringIdx = 0; stringIdx < numStrings; ++stringIdx) {
+      uint16_t length = 0;
+      bs.Read(length);
+
+      std::string& str = cache.storage[stringIdx];
+      str.resize(length);
+
+      for (size_t charIdx = 0; charIdx < length; ++charIdx) {
+        char c = 0;
+        bs.Read(c);
+        str[charIdx] = c;
       }
     }
   }
 
-private:
   const uint8_t* data = nullptr;
   size_t dataSize = 0;
 };
