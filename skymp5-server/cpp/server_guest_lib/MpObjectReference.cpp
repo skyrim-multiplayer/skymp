@@ -752,7 +752,7 @@ void MpObjectReference::AddItem(uint32_t baseId, uint32_t count)
   });
   SendInventoryUpdate();
 
-  if (auto worldState = GetParent()) {
+  if (auto worldState = GetParent(); worldState->HasEspm()) {
     espm::LookupResult lookupRes =
       worldState->GetEspm().GetBrowser().LookupById(baseId);
 
