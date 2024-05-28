@@ -17,6 +17,7 @@ These properties can be modified by a script with `mp.set`.
 - appearance
 - isOpen
 - isDisabled
+- isDead (setting isDead to true will not initiate respawn timer. only "natural" actor deaths lead to respawn. consider using DamageActorValue)
 
 ### Readonly properties
 
