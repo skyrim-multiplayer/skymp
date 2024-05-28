@@ -1157,7 +1157,7 @@ LocationalData MpActor::GetEditorLocationalData() const
 
 const float MpActor::GetRespawnTime() const
 {
-  // This was commented out in order to deahrcode spawnDelay gamemode property
+  // This was commented out in order to de-hardcode spawnDelay gamemode property
   // for all actors
 
   // if (!IsCreatedAsPlayer()) {
