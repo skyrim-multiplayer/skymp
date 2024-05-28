@@ -96,7 +96,6 @@ public:
                                 { 0.f, 0.f, 72.f },
                                 FormDesc::Tamriel() };
 
-  // Used only for player characters. See GetSpawnDelay
   float spawnDelay = 25.0f;
 
   std::vector<FormDesc> templateChain;
