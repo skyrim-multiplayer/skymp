@@ -50,6 +50,17 @@ enum class VisitPropertiesMode
   All
 };
 
+enum class SetPosMode
+{
+  // Will save pos from time to time
+  CalledByUpdateMovement,
+
+  // Will save pos immediately
+  Other
+};
+
+using SetAngleMode = SetPosMode;
+
 class MpObjectReference
   : public MpForm
   , public FormIndex
@@ -98,8 +109,10 @@ public:
   virtual void Disable();
   virtual void Enable();
 
-  void SetPos(const NiPoint3& newPos);
-  void SetAngle(const NiPoint3& newAngle);
+  void SetPos(const NiPoint3& newPos,
+              SetPosMode setPosMode = SetPosMode::Other);
+  void SetAngle(const NiPoint3& newAngle,
+                SetAngleMode setAngleMode = SetAngleMode::Other);
   void SetHarvested(bool harvested);
   void SetOpen(bool open);
   void PutItem(MpActor& actor, const Inventory::Entry& entry);

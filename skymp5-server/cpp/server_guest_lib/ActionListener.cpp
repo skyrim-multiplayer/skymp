@@ -135,8 +135,8 @@ void ActionListener::OnUpdateMovement(const RawMessageData& rawMsgData,
       actor->ResetBlockCount();
     }
 
-    actor->SetPos(pos);
-    actor->SetAngle(rot);
+    actor->SetPos(pos, SetPosMode::CalledByUpdateMovement);
+    actor->SetAngle(rot, SetAngleMode::CalledByUpdateMovement);
     actor->SetAnimationVariableBool("bInJumpState", isInJumpState);
     actor->SetAnimationVariableBool("_skymp_isWeapDrawn", isWeapDrawn);
     actor->SetAnimationVariableBool("IsBlocking", isBlocking);
