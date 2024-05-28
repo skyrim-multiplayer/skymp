@@ -1157,13 +1157,6 @@ LocationalData MpActor::GetEditorLocationalData() const
 
 const float MpActor::GetRespawnTime() const
 {
-  // This was commented out in order to de-hardcode spawnDelay gamemode property
-  // for all actors
-
-  // if (!IsCreatedAsPlayer()) {
-  //   static const auto kNpcSpawnDelay = 2 * 60.f * 60.f;
-  //   return kNpcSpawnDelay;
-  // }
   return ChangeForm().spawnDelay;
 }
 
