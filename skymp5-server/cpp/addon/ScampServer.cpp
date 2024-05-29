@@ -402,15 +402,17 @@ Napi::Value ScampServer::On(const Napi::CallbackInfo& info)
 
 Napi::Value ScampServer::CreateActor(const Napi::CallbackInfo& info)
 {
-  auto formId = NapiHelper::ExtractUInt32(info[0], "formId");
-  auto pos = NapiHelper::ExtractNiPoint3(info[1], "pos");
-  auto angleZ = NapiHelper::ExtractFloat(info[2], "angleZ");
-  auto cellOrWorld = NapiHelper::ExtractUInt32(info[3], "cellOrWorld");
-
-  int32_t userProfileId = -1;
-  if (info[4].IsNumber())
-    userProfileId = info[4].As<Napi::Number>().Int32Value();
   try {
+    auto formId = NapiHelper::ExtractUInt32(info[0], "formId");
+    auto pos = NapiHelper::ExtractNiPoint3(info[1], "pos");
+    auto angleZ = NapiHelper::ExtractFloat(info[2], "angleZ");
+    auto cellOrWorld = NapiHelper::ExtractUInt32(info[3], "cellOrWorld");
+
+    int32_t userProfileId = -1;
+    if (info[4].IsNumber()) {
+      userProfileId = info[4].As<Napi::Number>().Int32Value();
+    }
+
     uint32_t res =
       partOne->CreateActor(formId, pos, angleZ, cellOrWorld, userProfileId);
     return Napi::Number::New(info.Env(), res);
