@@ -1,6 +1,7 @@
 import { logTrace, logError } from "../../logging";
+import { AnimDebugSettings } from "../messages_settings/animDebugSettings";
 import { ClientListener, CombinedController, Sp } from "./clientListener";
-import { ButtonEvent } from "skyrimPlatform";
+import { ButtonEvent, CameraStateChangedEvent, DxScanCode } from "skyrimPlatform";
 
 export class AnimDebugService extends ClientListener {
   constructor(private sp: Sp, private controller: CombinedController) {
@@ -35,7 +36,11 @@ export class AnimDebugService extends ClientListener {
     }
 
     if (this.settings.animKeys) {
+      logTrace(this, `Found animKeys in settings. Registering buttonEvent listener`);
       this.controller.on("buttonEvent", (e) => this.onButtonEvent(e));
+    }
+    else {
+      logError(this, `No animKeys defined in settings`);
     }
   }
 
@@ -46,26 +51,46 @@ export class AnimDebugService extends ClientListener {
   }
 
   private onButtonEvent(e: ButtonEvent) {
-    if (e.isUp && this.settings && this.settings.animKeys![e.code]) {
-      this.sp.Debug.sendAnimationEvent(this.sp.Game.getPlayer(), this.settings.animKeys![e.code]);
+    // TODO: de-hardcode controls
+    if (e.code === DxScanCode.Spacebar
+      || e.code === DxScanCode.W
+      || e.code === DxScanCode.A
+      || e.code === DxScanCode.S
+      || e.code === DxScanCode.D) {
+
+      if (this.needsExitingAnim) {
+
+        this.sp.Debug.sendAnimationEvent(this.sp.Game.getPlayer(), "IdleForceDefaultState");
+        logTrace(this, `Sent animation event: IdleForceDefaultState`);
+        this.needsExitingAnim = false;
+        this.sp.Game.enablePlayerControls(true, false, true, false, false, false, false, false, 0);
+      }
     }
+    else {
+      if (this.needsExitingAnim) {
+        this.sp.Debug.notification("Пробел, чтобы выйти из анимации");
+      }
+    }
+
+    if (!e.isUp) return;
+
+    if (!this.settings) return;
+
+    if (!this.settings.animKeys![e.code]) return;
+
+    this.sp.Game.forceThirdPerson();
+    this.sp.Game.disablePlayerControls(true, false, true, false, false, false, false, false, 0);
+    this.sp.Debug.sendAnimationEvent(this.sp.Game.getPlayer(), this.settings.animKeys![e.code]);
+
+    this.needsExitingAnim = true;
+
+    logTrace(this, `Sent animation event: ${this.settings.animKeys![e.code]}`);
   }
 
   private queue?: AnimQueueCollection;
   private settings?: AnimDebugSettings;
-}
 
-interface AnimTextOutput {
-  isActive?: boolean;
-  itemCount?: number;
-  startPos?: { x: number, y: number },
-  yPosDelta?: number,
-}
-
-interface AnimDebugSettings {
-  isActive?: boolean;
-  textOutput?: AnimTextOutput,
-  animKeys?: { [index: number]: string };
+  private needsExitingAnim = false;
 }
 
 type AnimListItem = {
