@@ -59,10 +59,12 @@ if(WIN32)
   file(WRITE ${PROJECT_BINARY_DIR}/launch_server.bat.tmp "${bat}")
 
   # Same but for dev (no pause, placed into ./build dir)
-  set(bat "setlocal\n") # setlocal/endlocal is for temporary cd
+  set(bat "@echo off\n") # Turn off command echoing
+  set(bat "${bat}setlocal\n") # setlocal/endlocal is for temporary cd
   set(bat "${bat}cd dist/server\n")
   set(bat "${bat}node dist_back/skymp5-server.js\n")
-  set(bat "${bat}endlocal\n")
+  set(bat "${bat}set EXIT_CODE=%ERRORLEVEL%\n")
+  set(bat "${bat}endlocal & exit /B %EXIT_CODE%\n")
   file(WRITE ${CMAKE_BINARY_DIR}/launch_server.bat "${bat}")
 
   add_custom_command(
