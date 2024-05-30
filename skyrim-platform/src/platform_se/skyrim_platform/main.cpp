@@ -24,9 +24,7 @@ void GetTextsToDraw(TextToDrawCallback callback)
   auto text = &TextsCollection::GetSingleton();
 
   for (const auto& a : TextsCollection::GetSingleton().GetCreatedTexts()) {
-    if (a != std::nullopt) {
-      callback(*a);
-    }
+    callback(a.second);
   }
 }
 
