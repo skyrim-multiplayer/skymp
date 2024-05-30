@@ -1,7 +1,7 @@
 import { logTrace, logError } from "../../logging";
 import { AnimDebugSettings } from "../messages_settings/animDebugSettings";
 import { ClientListener, CombinedController, Sp } from "./clientListener";
-import { ButtonEvent, CameraStateChangedEvent, DxScanCode } from "skyrimPlatform";
+import { ButtonEvent, CameraStateChangedEvent, DxScanCode, Menu } from "skyrimPlatform";
 
 export class AnimDebugService extends ClientListener {
   constructor(private sp: Sp, private controller: CombinedController) {
@@ -77,6 +77,10 @@ export class AnimDebugService extends ClientListener {
     if (!this.settings) return;
 
     if (!this.settings.animKeys![e.code]) return;
+
+    if (this.sp.Game.getPlayer()?.isWeaponDrawn()) return;
+
+    if (this.sp.Ui.isMenuOpen(Menu.Favorites)) return;
 
     this.sp.Game.forceThirdPerson();
     this.sp.Game.disablePlayerControls(true, false, true, false, false, false, false, false, 0);
