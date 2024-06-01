@@ -18,8 +18,7 @@ const createApp = (getOriginPort: () => number) => {
   return app;
 };
 
-export const main = (): void => {
-  const settings = Settings.get();
+export const main = (settings: Settings): void => {
 
   const devServerPort = 1234;
 
