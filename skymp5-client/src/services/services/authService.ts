@@ -200,7 +200,7 @@ export class AuthService extends ClientListener {
         this.sp.win32.loadUrl(this.patreonUrl);
         break;
       case events.updateRequired:
-        this.sp.win32.loadUrl("https://skymp.net/");
+        this.sp.win32.loadUrl("https://skymp.net/AlternativeDownload");
         break;
       case events.backToLogin:
         this.sp.browser.executeJavaScript(new FunctionInfo(this.browsersideWidgetSetter).getText({ events, browserState, authData: authData }));
@@ -368,7 +368,12 @@ export class AuthService extends ClientListener {
         },
         {
           type: "text",
-          text: "спешите скачать на skymp.net",
+          text: "спешите скачать на",
+          tags: []
+        },
+        {
+          type: "text",
+          text: "skymp.net",
           tags: []
         },
         {
@@ -502,6 +507,7 @@ export class AuthService extends ClientListener {
       this.controller.once("update", () => {
         this.sp.Game.disablePlayerControls(true, true, true, true, true, true, true, true, 0);
       });
+      this.isListenBrowserMessage = true;
     }
   }
 
