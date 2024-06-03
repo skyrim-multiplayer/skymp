@@ -231,6 +231,7 @@ private:
                            FileInfoApi::Register(e);
                            TextApi::Register(e);
                            InventoryApi::Register(e);
+                           FenixFunctions::Register(e);
                            ConstEnumApi::Register(e, engine);
                            CallNativeApi::Register(
                              e, [this] { return nativeCallRequirements; });

@@ -4,12 +4,12 @@ namespace FenixFunctions {
 
 namespace Impl {
 
-void sit(RE::Actor* a)
+void Sit(RE::Actor* a)
 {
   a->actorState1.sitSleepState = RE::SIT_SLEEP_STATE::kIsSitting;
 }
 
-void getUp(RE::Actor* a)
+void GetUp(RE::Actor* a)
 {
   a->actorState1.sitSleepState = RE::SIT_SLEEP_STATE::kNormal;
 }
@@ -31,7 +31,7 @@ RE::NiPoint3 CalculateLOSLocation(RE::TESObjectREFR* refr,
   return func(refr, los_loc);
 }
 
-RE::NiPoint3 angles2dir(const RE::NiPoint3& angles)
+RE::NiPoint3 ConvertAnglesToDir(const RE::NiPoint3& angles)
 {
   RE::NiPoint3 ans;
 
@@ -47,38 +47,40 @@ RE::NiPoint3 angles2dir(const RE::NiPoint3& angles)
   return ans;
 }
 
-RE::NiPoint3 rotate(float r, const RE::NiPoint3& angles)
+RE::NiPoint3 Rotate(float r, const RE::NiPoint3& angles)
 {
-  return angles2dir(angles) * r;
+  return ConvertAnglesToDir(angles) * r;
 }
 
-RE::NiPoint3 raycast_actor(RE::Actor* caster, float R)
+std::pair<RE::NiPoint3, RE::NiPoint3> RaycastActor(RE::Actor* caster, float R)
 {
   auto havokWorldScale = RE::bhkWorld::GetWorldScale();
-  RE::bhkPickData pick_data;
-  RE::NiPoint3 ray_start, ray_end;
+  RE::bhkPickData pickData;
+  RE::NiPoint3 rayStart, rayEnd;
 
-  ray_start = CalculateLOSLocation(caster, LineOfSightLocation::kHead);
-  ray_end = ray_start + rotate(R, caster->data.angle);
-  pick_data.rayInput.from = ray_start * havokWorldScale;
-  pick_data.rayInput.to = ray_end * havokWorldScale;
+  rayStart = CalculateLOSLocation(caster, LineOfSightLocation::kHead);
+  rayEnd = rayStart + Rotate(R, caster->data.angle);
+  pickData.rayInput.from = rayStart * havokWorldScale;
+  pickData.rayInput.to = rayEnd * havokWorldScale;
 
   uint32_t collisionFilterInfo = 0;
   caster->GetCollisionFilterInfo(collisionFilterInfo);
-  pick_data.rayInput.filterInfo =
+  pickData.rayInput.filterInfo =
     (static_cast<uint32_t>(collisionFilterInfo >> 16) << 16) |
     static_cast<uint32_t>(RE::COL_LAYER::kCharController);
 
-  caster->GetParentCell()->GetbhkWorld()->PickObject(pick_data);
-  RE::NiPoint3 hitpos;
-  if (pick_data.rayOutput.HasHit()) {
-    hitpos =
-      ray_start + (ray_end - ray_start) * pick_data.rayOutput.hitFraction;
+  caster->GetParentCell()->GetbhkWorld()->PickObject(pickData);
+  RE::NiPoint3 hitPos;
+  if (pickData.rayOutput.HasHit()) {
+    hitPos = rayStart + (rayEnd - rayStart) * pickData.rayOutput.hitFraction;
     // pick_data.rayOutput.normal;
+    RE::NiPoint3 normal = { pickData.rayOutput.normal.quad.m128_f32[0],
+                            pickData.rayOutput.normal.quad.m128_f32[1],
+                            pickData.rayOutput.normal.quad.m128_f32[2] };
+    return { hitPos, normal };
   } else {
-    hitpos = ray_end;
+    return { rayEnd, {} };
   }
-  return hitpos;
 }
 
 void CalculateAnticipatedLocation(RE::TESObjectREFR* refr, float dtime,
@@ -91,7 +93,7 @@ void CalculateAnticipatedLocation(RE::TESObjectREFR* refr, float dtime,
 
 }
 
-RE::Actor* get_arg_actor(const JsValue& arg)
+RE::Actor* GetArgActor(const JsValue& arg)
 {
   auto formId = static_cast<uint32_t>(static_cast<double>(arg));
   auto a = RE::TESForm::LookupByID<RE::Actor>(formId);
@@ -103,7 +105,7 @@ RE::Actor* get_arg_actor(const JsValue& arg)
   return a;
 }
 
-JsValue point2js(const RE::NiPoint3& P)
+JsValue ConvertPointToJS(const RE::NiPoint3& P)
 {
   std::vector<JsValue> p = { P.x, P.y, P.z };
   return p;
@@ -111,34 +113,36 @@ JsValue point2js(const RE::NiPoint3& P)
 
 JsValue ActorSit(const JsFunctionArguments& args)
 {
-  auto a = get_arg_actor(args[1]);
-  Impl::sit(a);
+  auto a = GetArgActor(args[1]);
+  Impl::Sit(a);
   return JsValue::Undefined();
 }
 
 JsValue ActorGetUp(const JsFunctionArguments& args)
 {
-  auto a = get_arg_actor(args[1]);
-  Impl::getUp(a);
+  auto a = GetArgActor(args[1]);
+  Impl::GetUp(a);
   return JsValue::Undefined();
 }
 
 JsValue ActorRaycast(const JsFunctionArguments& args)
 {
-  auto a = get_arg_actor(args[1]);
+  auto a = GetArgActor(args[1]);
   float R = static_cast<float>(static_cast<double>(args[2]));
-  return point2js(Impl::raycast_actor(a, R));
+  auto [P, N] = Impl::RaycastActor(a, R);
+  std::vector<JsValue> ans = { P.x, P.y, P.z, N.x, N.y, N.z };
+  return ans;
 }
 
 JsValue CalculateAnticipatedLocation(const JsFunctionArguments& args)
 {
-  auto a = get_arg_actor(args[1]);
-  float dtime = static_cast<float>(static_cast<double>(args[2]));
+  auto a = GetArgActor(args[1]);
+  float dTime = static_cast<float>(static_cast<double>(args[2]));
 
   RE::NiPoint3 ans;
-  Impl::CalculateAnticipatedLocation(a, dtime, ans);
+  Impl::CalculateAnticipatedLocation(a, dTime, ans);
 
-  return point2js(ans);
+  return ConvertPointToJS(ans);
 }
 
 void Register(JsValue& exports)
