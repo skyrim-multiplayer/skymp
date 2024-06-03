@@ -130,7 +130,10 @@ JsValue ActorRaycast(const JsFunctionArguments& args)
   auto a = GetArgActor(args[1]);
   float R = static_cast<float>(static_cast<double>(args[2]));
   auto [P, N] = Impl::RaycastActor(a, R);
-  std::vector<JsValue> ans = { P.x, P.y, P.z, N.x, N.y, N.z };
+
+  auto ans = JsValue::Object();
+  ans.SetProperty("pos", ConvertPointToJS(P));
+  ans.SetProperty("normal", ConvertPointToJS(N));
   return ans;
 }
 
