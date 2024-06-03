@@ -14,6 +14,7 @@
 #include "HttpClient.h"
 #include "HttpClientApi.h"
 #include "InventoryApi.h"
+#include "FenixFunctions.h"
 #include "LoadGameApi.h"
 #include "MpClientPluginApi.h"
 #include "SkyrimPlatformProxy.h"
