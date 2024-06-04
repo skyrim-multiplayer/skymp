@@ -32,6 +32,15 @@ size_t FileDatabase::Upsert(const std::vector<MpChangeForm>& changeForms)
       f << MpChangeForm::ToJson(changeForm).dump(2);
     }
 
+    if (!f.is_open()) {
+      pImpl->logger->error("Unable to open file {}", filePath.string());
+    } else if (!f) {
+      pImpl->logger->error("Unknown error while writing file {}",
+                           filePath.string());
+    } else {
+      ++nUpserted;
+    }
+
     if (!f.fail()) {
       f.close();
 
@@ -42,15 +51,6 @@ size_t FileDatabase::Upsert(const std::vector<MpChangeForm>& changeForms)
                              tempFilePath.string(), filePath.string(),
                              errorCode.message());
       }
-    }
-
-    if (!f.is_open()) {
-      pImpl->logger->error("Unable to open file {}", filePath.string());
-    } else if (!f) {
-      pImpl->logger->error("Unknown error while writing file {}",
-                           filePath.string());
-    } else {
-      ++nUpserted;
     }
   }
 
