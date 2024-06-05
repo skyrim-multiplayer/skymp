@@ -44,7 +44,9 @@ export class ConsoleCommandsService extends ClientListener {
     }
 
     private setupVanilaCommands() {
+        logTrace(this, `Setting up vanila commands`);
         this.schemas.forEach((_, commandName) => {
+            logTrace(this, `Setting up command`, commandName);
             const command = this.sp.findConsoleCommand(commandName);
             if (command === null) {
                 logError(this, `command`, commandName, `was null in setupVanilaCommands`);
@@ -56,6 +58,7 @@ export class ConsoleCommandsService extends ClientListener {
             }
             command.execute = this.getCommandExecutor(commandName);
         });
+        logTrace(this, `Vanila commands set up`);
     }
 
     private getCommandExecutor(commandName: CmdName): (...args: unknown[]) => boolean {

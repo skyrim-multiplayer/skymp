@@ -8,8 +8,9 @@
 std::shared_ptr<JsEngine> DevApi::jsEngine = nullptr;
 DevApi::NativeExportsMap DevApi::nativeExportsMap;
 
-JsValue DevApi::Require(const JsFunctionArguments& args,
-                        const std::vector<const char*>& pluginLoadDirectories)
+JsValue DevApi::Require(
+  const JsFunctionArguments& args,
+  const std::vector<std::filesystem::path>& pluginLoadDirectories)
 {
   auto fileName = args[1].ToString();
 
@@ -17,9 +18,8 @@ JsValue DevApi::Require(const JsFunctionArguments& args,
     throw InvalidArgumentException("fileName", fileName);
   }
 
-  for (auto dir : pluginLoadDirectories) {
-    std::filesystem::path filePath =
-      std::filesystem::path(dir) / (fileName + ".js");
+  for (const std::filesystem::path& dir : pluginLoadDirectories) {
+    std::filesystem::path filePath = dir / (fileName + ".js");
 
     if (!std::filesystem::exists(filePath)) {
       continue; // Throws in the end of the function if nothing found
@@ -98,7 +98,7 @@ JsValue DevApi::WritePlugin(const JsFunctionArguments& args)
 
 JsValue DevApi::GetPlatformVersion(const JsFunctionArguments& args)
 {
-  return "2.8.0";
+  return "2.9.0";
 }
 
 JsValue DevApi::GetJsMemoryUsage(const JsFunctionArguments& args)

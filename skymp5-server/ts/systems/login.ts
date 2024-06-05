@@ -37,6 +37,8 @@ export class Login implements System {
   }
 
   async initAsync(ctx: SystemContext): Promise<void> {
+    this.settingsObject = await Settings.get();
+
     if (this.ip && this.ip != "null") {
       this.myAddr = this.ip + ":" + this.serverPort;
     } else {
@@ -61,7 +63,7 @@ export class Login implements System {
     const ip = ctx.svr.getUserIp(userId);
     console.log(`Connecting a user ${userId} with ip ${ip}`);
 
-    let discordAuth = Settings.get().discordAuth;
+    let discordAuth = this.settingsObject.discordAuth;
 
     const gameData = content["gameData"];
     if (this.offlineMode === true && gameData && gameData.session) {
@@ -162,4 +164,5 @@ export class Login implements System {
   }
 
   private myAddr: string;
+  private settingsObject: Settings;
 }

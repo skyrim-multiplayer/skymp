@@ -135,8 +135,8 @@ void ActionListener::OnUpdateMovement(const RawMessageData& rawMsgData,
       actor->ResetBlockCount();
     }
 
-    actor->SetPos(pos);
-    actor->SetAngle(rot);
+    actor->SetPos(pos, SetPosMode::CalledByUpdateMovement);
+    actor->SetAngle(rot, SetAngleMode::CalledByUpdateMovement);
     actor->SetAnimationVariableBool("bInJumpState", isInJumpState);
     actor->SetAnimationVariableBool("_skymp_isWeapDrawn", isWeapDrawn);
     actor->SetAnimationVariableBool("IsBlocking", isBlocking);
@@ -455,6 +455,10 @@ void UseCraftRecipe(MpActor* me, const espm::COBJ* recipeUsed,
 
   spdlog::info("Using craft recipe with EDID {} from espm file with index {}",
                recipeUsed->GetEditorId(cache), espmIdx);
+
+  for (auto& condition : recipeData.conditions) {
+    // impl race, item, perk? checks
+  }
 
   std::vector<Inventory::Entry> entries;
   for (auto& entry : recipeData.inputObjects) {

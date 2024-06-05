@@ -1,12 +1,19 @@
-import { RemoteAuthGameData } from "../../features/authModel";
+import { AuthGameData, RemoteAuthGameData, authGameDataStorageKey } from "../../features/authModel";
 import { FunctionInfo } from "../../lib/functionInfo";
 import { ClientListener, CombinedController, Sp } from "./clientListener";
-import { BrowserMessageEvent } from "skyrimPlatform";
+import { BrowserMessageEvent, Menu, browser } from "skyrimPlatform";
 import { AuthNeededEvent } from "../events/authNeededEvent";
 import { BrowserWindowLoadedEvent } from "../events/browserWindowLoadedEvent";
 import { TimersService } from "./timersService";
 import { MasterApiAuthStatus } from "../messages_http/masterApiAuthStatus";
 import { logTrace, logError } from "../../logging";
+import { ConnectionMessage } from "../events/connectionMessage";
+import { CreateActorMessage } from "../messages/createActorMessage";
+import { CustomPacketMessage } from "../messages/customPacketMessage";
+import { NetworkingService } from "./networkingService";
+import { CustomPacketMessage2 } from "../messages/customPacketMessage2";
+import { MsgType } from "../../messages";
+import { ConnectionDenied } from "../events/connectionDenied";
 
 // for browsersideWidgetSetter
 declare const window: any;
@@ -14,16 +21,19 @@ declare const window: any;
 // Constants used on both client and browser side (see browsersideWidgetSetter)
 const events = {
   openDiscordOauth: 'openDiscordOauth',
-  login: 'loginRequiredEvent',
+  authAttempt: 'authAttemptEvent',
   openGithub: 'openGithub',
   openPatreon: 'openPatreon',
   clearAuthData: 'clearAuthData',
+  updateRequired: 'updateRequired',
+  backToLogin: 'backToLogin',
 };
 
 // Vaiables used on both client and browser side (see browsersideWidgetSetter)
 let browserState = {
   comment: '',
   failCount: 9000,
+  loginFailedReason: '',
 };
 let authData: RemoteAuthGameData | null = null;
 
@@ -31,9 +41,13 @@ export class AuthService extends ClientListener {
   constructor(private sp: Sp, private controller: CombinedController) {
     super();
     this.controller.emitter.on("authNeeded", (e) => this.onAuthNeeded(e));
-    this.controller.emitter.on("browserWindowLoaded", (e) => this.onBrowserWindowLoaded(e))
-
+    this.controller.emitter.on("browserWindowLoaded", (e) => this.onBrowserWindowLoaded(e));
+    this.controller.emitter.on("createActorMessage", (e) => this.onCreateActorMessage(e));
+    this.controller.emitter.on("connectionAccepted", () => this.handleConnectionAccepted());
+    this.controller.emitter.on("connectionDenied", (e) => this.handleConnectionDenied(e));
+    this.controller.emitter.on("customPacketMessage2", (e) => this.onCustomPacketMessage2(e));
     this.controller.on("browserMessage", (e) => this.onBrowserMessage(e));
+    this.controller.on("tick", () => this.onTick());
   }
 
   private onAuthNeeded(e: AuthNeededEvent) {
@@ -43,7 +57,7 @@ export class AuthService extends ClientListener {
     const isOfflineMode = Number.isInteger(settingsGameData?.profileId);
     if (isOfflineMode) {
       logTrace(this, `Offline mode detected in settings, emitting auth event with authGameData.local`);
-      this.controller.emitter.emit("auth", { authGameData: { local: { profileId: settingsGameData.profileId } } });
+      this.controller.emitter.emit("authAttempt", { authGameData: { local: { profileId: settingsGameData.profileId } } });
     } else {
       logTrace(this, `No offline mode detectted in settings, regular auth needed`);
       this.isListenBrowserMessage = true;
@@ -61,6 +75,70 @@ export class AuthService extends ClientListener {
     this.trigger.browserWindowLoadedFired = true;
     if (this.trigger.conditionMet) {
       this.onBrowserWindowLoadedAndOnlineAuthNeeded();
+    }
+  }
+
+  private onCreateActorMessage(e: ConnectionMessage<CreateActorMessage>) {
+    if (e.message.isMe) {
+      if (this.authDialogOpen) {
+        logTrace(this, `Received createActorMessage for self, resetting widgets`);
+        this.sp.browser.executeJavaScript('window.skyrimPlatform.widgets.set([]);');
+        this.authDialogOpen = false;
+
+        // The idea is to write authData to disk after auth dialog is closed
+        // This is because write to plugins dir triggers hotreload, which in turn breaks the auth dialog
+        // So we need to write to disk after dialog is closed
+        if (this.authDataWriteTask) {
+          const task = this.authDataWriteTask.authDataToWrite;
+          this.controller.once("update", () => this.writeAuthDataToDisk(task));
+          this.authDataWriteTask = null;
+        }
+      }
+      else {
+        logTrace(this, `Received createActorMessage for self, but auth dialog was not open so not resetting widgets`);
+      }
+    }
+
+    this.loggingStartMoment = 0;
+    this.authAttemptProgressIndicator = false;
+  }
+
+  private onCustomPacketMessage2(event: ConnectionMessage<CustomPacketMessage2>): void {
+    const msg = event.message;
+
+    switch (msg.content["customPacketType"]) {
+      // case 'loginRequired':
+      //   logTrace(this, 'loginRequired received');
+      //   this.loginWithSkympIoCredentials();
+      //   break;
+      case 'loginFailedNotLoggedViaDiscord':
+        this.authAttemptProgressIndicator = false;
+        this.controller.lookupListener(NetworkingService).close();
+        logTrace(this, 'loginFailedNotLoggedViaDiscord received');
+        browserState.loginFailedReason = 'войдите через discord';
+        this.sp.browser.executeJavaScript(new FunctionInfo(this.loginFailedWidgetSetter).getText({ events, browserState, authData: authData }));
+        break;
+      case 'loginFailedNotInTheDiscordServer':
+        this.authAttemptProgressIndicator = false;
+        this.controller.lookupListener(NetworkingService).close();
+        logTrace(this, 'loginFailedNotInTheDiscordServer received');
+        browserState.loginFailedReason = 'вступите в discord сервер';
+        this.sp.browser.executeJavaScript(new FunctionInfo(this.loginFailedWidgetSetter).getText({ events, browserState, authData: authData }));
+        break;
+      case 'loginFailedBanned':
+        this.authAttemptProgressIndicator = false;
+        this.controller.lookupListener(NetworkingService).close();
+        logTrace(this, 'loginFailedBanned received');
+        browserState.loginFailedReason = 'вы забанены';
+        this.sp.browser.executeJavaScript(new FunctionInfo(this.loginFailedWidgetSetter).getText({ events, browserState, authData: authData }));
+        break;
+      case 'loginFailedIpMismatch':
+        this.authAttemptProgressIndicator = false;
+        this.controller.lookupListener(NetworkingService).close();
+        logTrace(this, 'loginFailedIpMismatch received');
+        browserState.comment = 'что это было?';
+        this.sp.browser.executeJavaScript(new FunctionInfo(this.loginFailedWidgetSetter).getText({ events, browserState, authData: authData }));
+        break;
     }
   }
 
@@ -104,19 +182,26 @@ export class AuthService extends ClientListener {
     const eventKey = e.arguments[0];
     switch (eventKey) {
       case events.openDiscordOauth:
+        browserState.comment = 'открываем браузер...';
+        this.refreshWidgets();
         this.sp.win32.loadUrl(`${this.getMasterUrl()}/api/users/login-discord?state=${this.discordAuthState}`);
         break;
-      case events.login:
+      case events.authAttempt:
         if (authData === null) {
-          browserState.comment = 'logic error: remoteAuthGameData is null';
+          browserState.comment = 'сначала войдите через discord';
           this.refreshWidgets();
           break;
         }
-        this.writeAuthDataToDisk(authData);
-        this.controller.emitter.emit("auth", { authGameData: { remote: authData } });
+        this.authDataWriteTask = { authDataToWrite: authData };
+        this.controller.emitter.emit("authAttempt", { authGameData: { remote: authData } });
+
+        this.authAttemptProgressIndicator = true;
+
+
         break;
       case events.clearAuthData:
-        this.writeAuthDataToDisk(null);
+        // Doesn't seem to be used
+        this.authDataWriteTask = { authDataToWrite: null };
         break;
       case events.openGithub:
         this.sp.win32.loadUrl(this.githubUrl);
@@ -124,7 +209,14 @@ export class AuthService extends ClientListener {
       case events.openPatreon:
         this.sp.win32.loadUrl(this.patreonUrl);
         break;
+      case events.updateRequired:
+        this.sp.win32.loadUrl("https://skymp.net/AlternativeDownload");
+        break;
+      case events.backToLogin:
+        this.sp.browser.executeJavaScript(new FunctionInfo(this.browsersideWidgetSetter).getText({ events, browserState, authData: authData }));
+        break;
       default:
+        logError(this, `Unknown event key`, eventKey);
         break;
     }
   }
@@ -198,12 +290,13 @@ export class AuthService extends ClientListener {
                   discordDiscriminator,
                   discordAvatar,
                 };
+                browserState.comment = 'привязан успешно';
                 this.refreshWidgets();
               });
               break;
             case 401: // Unauthorized
               browserState.failCount = 0;
-              browserState.comment = (`Still waiting...`);
+              browserState.comment = '';//(`Still waiting...`);
               timersService.setTimeout(() => this.checkLoginState(), 1.5 + Math.random() * 2);
               break;
             case 403: // Forbidden
@@ -224,6 +317,7 @@ export class AuthService extends ClientListener {
       logError(this, `Auth check fail:`, browserState.comment);
     }
     this.sp.browser.executeJavaScript(new FunctionInfo(this.browsersideWidgetSetter).getText({ events, browserState, authData: authData }));
+    this.authDialogOpen = true;
   };
 
   private readAuthDataFromDisk(): RemoteAuthGameData | null {
@@ -270,6 +364,71 @@ export class AuthService extends ClientListener {
     }
     return url;
   };
+
+  private deniedWidgetSetter = () => {
+    const widget = {
+      type: "form",
+      id: 2,
+      caption: "новинка",
+      elements: [
+        {
+          type: "text",
+          text: "ура! вышло обновление",
+          tags: []
+        },
+        {
+          type: "text",
+          text: "спешите скачать на",
+          tags: []
+        },
+        {
+          type: "text",
+          text: "skymp.net",
+          tags: []
+        },
+        {
+          type: "button",
+          text: "открыть skymp.net",
+          tags: ["ELEMENT_STYLE_MARGIN_EXTENDED"],
+          click: () => window.skyrimPlatform.sendMessage(events.updateRequired),
+          hint: "Перейти на страницу скачивания обновления",
+        }
+      ]
+    }
+    window.skyrimPlatform.widgets.set([widget]);
+
+    // Make sure gamemode will not be able to update widgets anymore
+    window.skyrimPlatform.widgets = null;
+  }
+
+  private loginFailedWidgetSetter = () => {
+    const splitParts = browserState.loginFailedReason.split('\n');
+
+    const textElements = splitParts.map((part) => ({
+      type: "text",
+      text: part,
+      tags: [],
+    }));
+
+    const widget = {
+      type: "form",
+      id: 2,
+      caption: "упс",
+      elements: new Array<any>()
+    }
+
+    textElements.forEach((element) => widget.elements.push(element));
+
+    widget.elements.push({
+      type: "button",
+      text: "назад",
+      tags: ["ELEMENT_STYLE_MARGIN_EXTENDED"],
+      click: () => window.skyrimPlatform.sendMessage(events.backToLogin),
+      hint: undefined
+    });
+
+    window.skyrimPlatform.widgets.set([widget]);
+  }
 
   private browsersideWidgetSetter = () => {
     console.log(new Date());
@@ -327,12 +486,12 @@ export class AuthService extends ClientListener {
           type: "button",
           text: "Играть",
           tags: ["BUTTON_STYLE_FRAME", "ELEMENT_STYLE_MARGIN_EXTENDED"],
-          click: () => window.skyrimPlatform.sendMessage(events.login),
+          click: () => window.skyrimPlatform.sendMessage(events.authAttempt),
           hint: "Подключиться к игровому серверу",
         },
         {
           type: "text",
-          text: browserState.failCount > 3 ? browserState.comment : "",
+          text: browserState.comment,
           tags: [],
         },
       ]
@@ -340,6 +499,119 @@ export class AuthService extends ClientListener {
     console.log(loginWidget);
     window.skyrimPlatform.widgets.set([loginWidget]);
   };
+
+  private handleConnectionAccepted() {
+    this.loginWithSkympIoCredentials();
+  }
+
+  private handleConnectionDenied(e: ConnectionDenied) {
+    this.authAttemptProgressIndicator = false;
+
+    if (e.error.toLowerCase().includes("invalid password")) {
+      this.controller.once("tick", () => {
+        this.controller.lookupListener(NetworkingService).close();
+      });
+      this.sp.browser.executeJavaScript(new FunctionInfo(this.deniedWidgetSetter).getText({ events }));
+      this.sp.browser.setVisible(true);
+      this.sp.browser.setFocused(true);
+      this.controller.once("update", () => {
+        this.sp.Game.disablePlayerControls(true, true, true, true, true, true, true, true, 0);
+      });
+      this.isListenBrowserMessage = true;
+    }
+  }
+
+  private loginWithSkympIoCredentials() {
+    this.loggingStartMoment = Date.now();
+
+    const authData = this.sp.storage[authGameDataStorageKey] as AuthGameData | undefined;
+    if (authData?.local) {
+      logTrace(this,
+        `Logging in offline mode, profileId =`, authData.local.profileId
+      );
+      const message: CustomPacketMessage = {
+        t: MsgType.CustomPacket,
+        content: {
+          customPacketType: 'loginWithSkympIo',
+          gameData: {
+            profileId: authData.local.profileId,
+          },
+        },
+      };
+      this.controller.emitter.emit("sendMessage", {
+        message: message,
+        reliability: "reliable"
+      });
+      return;
+    }
+
+    if (authData?.remote) {
+      logTrace(this, 'Logging in as a master API user');
+      const message: CustomPacketMessage = {
+        t: MsgType.CustomPacket,
+        content: {
+          customPacketType: 'loginWithSkympIo',
+          gameData: {
+            session: authData.remote.session,
+          },
+        },
+      };
+      this.controller.emitter.emit("sendMessage", {
+        message: message,
+        reliability: "reliable"
+      });
+      return;
+    }
+
+    logError(this, 'Not found authentication method');
+  };
+
+  private onTick() {
+    // TODO: Should be no hardcoded/magic-number limit
+    // TODO: Busy waiting is bad. Should be replaced with some kind of event
+    const maxLoggingDelay = 15000;
+    if (this.loggingStartMoment && Date.now() - this.loggingStartMoment > maxLoggingDelay) {
+      // logError(this, 'Logging in failed. Reconnecting.');
+
+      // browserState.comment = 'проблемы с авторизацией';
+      // this.refreshWidgets();
+
+      // this.controller.lookupListener(NetworkingService).reconnect();
+      this.loggingStartMoment = 0;
+      this.authAttemptProgressIndicator = false;
+      this.controller.lookupListener(NetworkingService).close();
+      logTrace(this, 'max logging delay reached received');
+      browserState.comment = "";
+      browserState.loginFailedReason = 'технические шоколадки\nпопробуйте еще раз\nпожалуйста\nили напишите нам в discord';
+      this.sp.browser.executeJavaScript(new FunctionInfo(this.loginFailedWidgetSetter).getText({ events, browserState, authData: authData }));
+
+      authData = null;
+    }
+
+    if (this.authAttemptProgressIndicator) {
+      this.authAttemptProgressIndicatorCounter++;
+
+      if (this.authAttemptProgressIndicatorCounter === 1000000) {
+        this.authAttemptProgressIndicatorCounter = 0;
+      }
+
+      const slowCounter = Math.floor(this.authAttemptProgressIndicatorCounter / 15);
+
+      const dot = slowCounter % 3 === 0 ? '.' : slowCounter % 3 === 1 ? '..' : '...';
+
+      browserState.comment = "подключение" + dot;
+      this.refreshWidgets();
+    }
+  }
+
+  // private showConnectionError() {
+  //   // TODO: unhardcode it or render via browser
+  //   this.sp.printConsole("Server connection failed. This may be caused by one of the following:");
+  //   this.sp.printConsole("1. You are not present on the SkyMP Discord server");
+  //   this.sp.printConsole("2. You have been banned by server admins");
+  //   this.sp.printConsole("3. There is some technical issue. Try linking your Discord account again");
+  //   this.sp.printConsole("If you feel that something is wrong, please contact us on Discord.");
+  // };
 
   private isListenBrowserMessage = false;
   private trigger = {
@@ -351,6 +623,14 @@ export class AuthService extends ClientListener {
     }
   };
   private discordAuthState = "" + Math.random();
+  private authDialogOpen = false;
+
+  private loggingStartMoment = 0;
+
+  private authAttemptProgressIndicator = false;
+  private authAttemptProgressIndicatorCounter = 0;
+
+  private authDataWriteTask: { authDataToWrite: RemoteAuthGameData | null } | null = null;
 
   private readonly githubUrl = "https://github.com/skyrim-multiplayer/skymp";
   private readonly patreonUrl = "https://www.patreon.com/skymp";

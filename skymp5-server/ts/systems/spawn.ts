@@ -13,8 +13,9 @@ export class Spawn implements System {
   constructor(private log: Log) {}
 
   async initAsync(ctx: SystemContext): Promise<void> {
+    const settingsObject = await Settings.get();
     ctx.gm.on("spawnAllowed", (userId: number, userProfileId: number, discordRoleIds: string[], discordId: string | undefined) => {
-      const { startPoints } = Settings.get();
+      const { startPoints } = settingsObject;
       // TODO: Show race menu if character is not created after relogging
       let actorId = ctx.svr.getActorsByProfileId(userProfileId)[0];
       if (actorId) {

@@ -101,6 +101,42 @@ TEST_CASE("Loads LeveledItem", "[espm]")
   REQUIRE(data.chanceNone == 90);
 }
 
+TEST_CASE("Loads Conditions", "[espm]")
+{
+  auto& br = l.GetBrowser();
+  espm::CompressedFieldsCache cache;
+
+  auto form = br.LookupById(0x200E8F4);
+  REQUIRE(form.rec->GetType() == "COBJ");
+
+  auto data = reinterpret_cast<const espm::COBJ*>(form.rec)->GetData(cache);
+  REQUIRE(form.rec->GetEditorId(cache) ==
+          std::string("DLC1TemperArmorVampireCuirassRoyalRed"));
+  REQUIRE(data.conditions.size() == 2);
+
+  REQUIRE(data.conditions[0].GetOperator() ==
+          espm::CTDA::Operator::NotEqualTo);
+  REQUIRE(data.conditions[0].GetFlags() == espm::CTDA::Flags::OR);
+  REQUIRE(data.conditions[0].functionIndex ==
+          659); // EPTemperingItemIsEnchanted
+  REQUIRE(data.conditions[0].comparisonValue == 1);
+  REQUIRE(data.conditions[0].runOnType == espm::CTDA::RunOnTypeFlags::Subject);
+  REQUIRE(data.conditions[0].reference == 0);
+  REQUIRE(data.conditions[0].GetDefaultData().firstParameter == 0);
+  REQUIRE(data.conditions[0].GetDefaultData().secondParameter == 0);
+
+  REQUIRE(data.conditions[1].GetOperator() == espm::CTDA::Operator::EqualTo);
+  REQUIRE(data.conditions[1].GetFlags() == espm::CTDA::Flags::ANDORDEFAULT);
+  REQUIRE(data.conditions[1].functionIndex == 448); // HasPerk
+  REQUIRE(data.conditions[1].comparisonValue == 1);
+  REQUIRE(data.conditions[1].runOnType == espm::CTDA::RunOnTypeFlags::Subject);
+  REQUIRE(data.conditions[1].reference == 0);
+  REQUIRE(data.conditions[1].IsHasPerk());
+  REQUIRE(data.conditions[1].GetDefaultData().firstParameter ==
+          0x5218E); // ArcaneBlacksmith
+  REQUIRE(data.conditions[1].GetDefaultData().secondParameter == 0);
+}
+
 TEST_CASE("Loads script-related subrecords for SovngardeWatcherStatue2",
           "[espm]")
 {

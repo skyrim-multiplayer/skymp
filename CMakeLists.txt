@@ -135,7 +135,6 @@ add_subdirectory(skymp5-front)
 add_subdirectory(skymp5-functions-lib)
 add_subdirectory(skymp5-scripts)
 add_subdirectory(skymp5-server)
-add_subdirectory(skymp5-downloader)
 
 if(BUILD_UNIT_TESTS)
   add_subdirectory(unit)

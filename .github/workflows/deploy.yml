@@ -132,6 +132,8 @@ jobs:
                 options: |
                     -v ${{github.workspace}}:/src
                     -u skymp
+                    -e CI=true
+                    -e DEPLOY_BRANCH=${{ env.DEPLOY_BRANCH }}
                 run: |
                     cd /src \
                     && ./build.sh --configure \
@@ -162,10 +164,10 @@ jobs:
           - name: Deploy
             env:
                 DEPLOY_STATUS_WEBHOOK: ${{secrets.DEPLOY_STATUS_WEBHOOK}}
-                DEPLOY_TARGET_HOST: ${{secrets.DEPLOY_TARGET_HOST}}
-                DEPLOY_TARGET_USER: skmp
-                DEPLOY_SSH_PRIVATE_KEY: ${{secrets.DEPLOY_SSH_PRIVATE_KEY}}
-                DEPLOY_SSH_KNOWN_HOSTS: ${{secrets.DEPLOY_SSH_KNOWN_HOSTS}}
+                DEPLOY_TARGET_HOST: ${{secrets.DEPLOY_TARGET_HOST_06_2024}}
+                DEPLOY_TARGET_USER: ${{secrets.DEPLOY_TARGET_USER_06_2024}}
+                DEPLOY_SSH_PRIVATE_KEY: ${{secrets.DEPLOY_SSH_PRIVATE_KEY_06_2024}}
+                DEPLOY_SSH_KNOWN_HOSTS: ${{secrets.DEPLOY_SSH_KNOWN_HOSTS_06_2024}}
             run: |
                 ./misc/deploy/push_branch_to_server.sh
 

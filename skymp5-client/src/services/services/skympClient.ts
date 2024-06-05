@@ -16,7 +16,7 @@ import { ConnectionFailed } from '../events/connectionFailed';
 import { ConnectionDenied } from '../events/connectionDenied';
 import { ConnectionMessage } from '../events/connectionMessage';
 import { CreateActorMessage } from '../messages/createActorMessage';
-import { AuthEvent } from '../events/authEvent';
+import { AuthAttemptEvent } from '../events/authAttemptEvent';
 import { logTrace } from '../../logging';
 
 printConsole('Hello Multiplayer!');
@@ -57,11 +57,11 @@ export class SkympClient extends ClientListener {
       this.controller.once("tick", () => {
         this.controller.emitter.emit("authNeeded", {});
       });
-      this.controller.emitter.on("auth", (e) => this.onAuth(e));
+      this.controller.emitter.on("authAttempt", (e) => this.onAuthAttempt(e));
     }
   }
 
-  private onAuth(e: AuthEvent) {
+  private onAuthAttempt(e: AuthAttemptEvent) {
     logTrace(this, `Caught auth event`);
 
     storage[authGameDataStorageKey] = e.authGameData;
@@ -69,7 +69,7 @@ export class SkympClient extends ClientListener {
     this.startClient();
 
     // TODO: remove this when you will be able to see errors without console
-    this.sp.browser.setFocused(false);
+    // this.sp.browser.setFocused(false);
   }
 
   private onActorCreateMessage(e: ConnectionMessage<CreateActorMessage>) {
@@ -87,7 +87,8 @@ export class SkympClient extends ClientListener {
   }
 
   private startClient() {
-    this.establishConnectionConditional();
+    // once("tick", ...) is needed to ensure networking service initialized
+    this.controller.once("tick", () => this.establishConnectionConditional());
     this.ctor();
   }
 
@@ -102,7 +103,9 @@ export class SkympClient extends ClientListener {
   }
 
   private establishConnectionConditional() {
-    if (storage.targetIp !== targetIp || storage.targetPort !== targetPort) {
+    const isConnected = this.controller.lookupListener(networking.NetworkingService).isConnected();
+
+    if (!isConnected || storage.targetIp !== targetIp || storage.targetPort !== targetPort) {
       storage.targetIp = targetIp;
       storage.targetPort = targetPort;
 

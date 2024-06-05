@@ -659,6 +659,10 @@ bool MpActor::IsCreatedAsPlayer() const
 
 void MpActor::SendAndSetDeathState(bool isDead, bool shouldTeleport)
 {
+  spdlog::trace(
+    "MpActor::SendAndSetDeathState {:x} - isDead: {}, shouldTeleport: {}",
+    GetFormId(), isDead, shouldTeleport);
+
   float attribute = isDead ? 0.f : 1.f;
   auto position = GetSpawnPoint();
 
@@ -709,6 +713,9 @@ DeathStateContainerMessage MpActor::GetDeathStateMsg(
 
 void MpActor::MpApiDeath(MpActor* killer)
 {
+  spdlog::trace("MpActor::MpApiDeath {:x} - killer is {:x}", GetFormId(),
+                killer ? killer->GetFormId() : 0);
+
   simdjson::dom::parser parser;
   bool isRespawnBlocked = false;
 
@@ -723,6 +730,9 @@ void MpActor::MpApiDeath(MpActor* killer)
       };
     }
   }
+
+  spdlog::trace("MpActor::MpApiDeath {:x} - isRespawnBlocked: {}", GetFormId(),
+                isRespawnBlocked);
 
   if (!isRespawnBlocked) {
     RespawnWithDelay();
@@ -770,15 +780,36 @@ void MpActor::EatItem(uint32_t baseId, espm::Type t)
 
 bool MpActor::ReadBook(const uint32_t baseId)
 {
+  auto& loader = GetParent()->GetEspm();
+  auto bookLookupResult = loader.GetBrowser().LookupById(baseId);
+
+  if (!bookLookupResult.rec) {
+    spdlog::error("ReadBook {:x} - No book form {:x}", GetFormId(), baseId);
+    return false;
+  }
+
   const auto bookData = espm::GetData<espm::BOOK>(baseId, GetParent());
+  const auto spellOrSkillFormId =
+    bookLookupResult.ToGlobalId(bookData.spellOrSkillFormId);
 
   if (bookData.IsFlagSet(espm::BOOK::Flags::TeachesSpell)) {
+    if (ChangeForm().learnedSpells.IsSpellLearned(spellOrSkillFormId)) {
+      spdlog::info(
+        "ReadBook {:x} - Spell already learned {:x}, not spending the book",
+        GetFormId(), spellOrSkillFormId);
+      return false;
+    }
 
     EditChangeForm([&](MpChangeForm& changeForm) {
-      changeForm.learnedSpells.LearnSpell(bookData.spellOrSkillFormId);
+      changeForm.learnedSpells.LearnSpell(spellOrSkillFormId);
     });
     return true;
+  } else if (bookData.IsFlagSet(espm::BOOK::Flags::TeachesSkill)) {
+    spdlog::info("ReadBook {:x} - Skill book {:x} detected, not implemented",
+                 GetFormId(), baseId);
+    return false;
   }
+
   return false;
 }
 
@@ -958,6 +989,10 @@ void MpActor::Init(WorldState* worldState, uint32_t formId, bool hasChangeForm)
 
 void MpActor::Kill(MpActor* killer, bool shouldTeleport)
 {
+  spdlog::trace("MpActor::Kill {:x} - killer is {:x}", GetFormId(),
+                killer ? killer->GetFormId() : 0);
+
+  // Keep in sync with MpActor::SetIsDead
   SendAndSetDeathState(true, shouldTeleport);
   MpApiDeath(killer);
   AddDeathItem();
@@ -965,6 +1000,9 @@ void MpActor::Kill(MpActor* killer, bool shouldTeleport)
 
 void MpActor::RespawnWithDelay(bool shouldTeleport)
 {
+  spdlog::trace("MpActor::RespawnWithDelay {:x} - isRespawning: {}",
+                GetFormId(), pImpl->isRespawning);
+
   if (pImpl->isRespawning) {
     return;
   }
@@ -1136,10 +1174,6 @@ LocationalData MpActor::GetEditorLocationalData() const
 
 const float MpActor::GetRespawnTime() const
 {
-  if (!IsCreatedAsPlayer()) {
-    static const auto kNpcSpawnDelay = 100 /*6 * 60.f *  60.f*/;
-    return kNpcSpawnDelay;
-  }
   return ChangeForm().spawnDelay;
 }
 
@@ -1151,15 +1185,28 @@ void MpActor::SetRespawnTime(float time)
 
 void MpActor::SetIsDead(bool isDead)
 {
+  spdlog::trace("MpActor::SetIsDead {:x} - isDead: {}", GetFormId(), isDead);
+
   constexpr bool kShouldTeleport = false;
 
   if (isDead) {
     if (IsDead() == false) {
+
+      // Keep in sync with MpActor::Kill
       SendAndSetDeathState(isDead, kShouldTeleport);
+      MpApiDeath(nullptr);
+      AddDeathItem();
+
+      spdlog::trace("MpActor::SetIsDead {:x} - actor is now dead",
+                    GetFormId());
+    } else {
+      spdlog::trace("MpActor::SetIsDead {:x} - actor is already dead",
+                    GetFormId());
     }
   } else {
     // same as SendAndSetDeathState but resets isRespawning flag
     Respawn(kShouldTeleport);
+    spdlog::trace("MpActor::SetIsDead {:x} - actor is now alive", GetFormId());
   }
 }
 
@@ -1221,13 +1268,6 @@ void MpActor::DropItem(const uint32_t baseId, const Inventory::Entry& entry)
 
   std::string editorId =
     lookupRes.rec->GetEditorId(worldState->GetEspmCache());
-
-  // TODO: remove this when we will be sure that none of armors crashes clients
-  if (lookupRes.rec->GetType().ToString() == "ARMO") {
-    spdlog::warn("MpActor::DropItem - Attempt to drop ARMO by actor {:x}",
-                 GetFormId());
-    return;
-  }
 
   spdlog::trace("MpActor::DropItem - dropping {}", editorId);
   RemoveItems({ entry });

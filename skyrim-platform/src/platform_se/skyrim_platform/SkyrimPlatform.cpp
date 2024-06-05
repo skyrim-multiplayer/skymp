@@ -73,10 +73,10 @@ public:
     try {
       GetJsEngine();
 
-      auto fileDirs = GetFileDirs();
+      auto& fileDirs = GetFileDirs();
 
       if (monitors.empty()) {
-        for (auto fileDir : fileDirs) {
+        for (auto& fileDir : fileDirs) {
           monitors.push_back(std::make_shared<DirectoryMonitor>(fileDir));
         }
       }
@@ -127,16 +127,37 @@ public:
   }
 
 private:
-  std::vector<const char*> GetFileDirs() const
+  const std::vector<std::filesystem::path>& GetFileDirs() const
   {
-    constexpr auto kSkympPluginsDir =
-      "C:/projects/skymp/build/dist/client/Data/Platform/Plugins";
-    if (std::filesystem::exists(kSkympPluginsDir)) {
-      return { kSkympPluginsDir };
+    if (!pluginFolders) {
+      auto settings = Settings::GetPlatformSettings();
+      std::string utf8pluginFoldersSemicolonSeparated =
+        settings->GetString("Main", "PluginFolders",
+                            "Data/Platform/Plugins;Data/Platform/PluginsDev");
+
+      std::istringstream ss(utf8pluginFoldersSemicolonSeparated);
+      std::string folder;
+
+      if (utf8pluginFoldersSemicolonSeparated.find_first_of("\"") !=
+          std::string::npos) {
+        pluginFolders = std::make_unique<std::vector<std::filesystem::path>>();
+        throw std::runtime_error(
+          "Invalid path with quotes in PluginFolders setting. Please remove "
+          "quotes and restart the game.");
+      }
+
+      auto result = std::make_unique<std::vector<std::filesystem::path>>();
+
+      while (std::getline(ss, folder, ';')) {
+        if (!folder.empty()) {
+          result->emplace_back(folder);
+        }
+      }
+
+      pluginFolders = std::move(result);
     }
-    std::vector<const char*> dirs = { "Data/Platform/Plugins",
-                                      "Data/Platform/PluginsDev" };
-    return dirs;
+
+    return *pluginFolders;
   }
 
   void LoadFiles(const std::vector<std::filesystem::path>& pathsToLoad)
@@ -152,13 +173,10 @@ private:
         LoadSettingsFile(path);
         continue;
       }
-      if (EndsWith(path.wstring(), L"-logs.txt")) {
+      if (EndsWith(path.wstring(), L".js")) {
+        LoadPluginFile(path);
         continue;
       }
-      if (EndsWith(path.wstring(), L".DS_Store")) {
-        continue;
-      }
-      LoadPluginFile(path);
     }
   }
 
@@ -283,6 +301,7 @@ private:
   std::unique_ptr<JsValue> settingsByPluginNameCache;
   std::shared_ptr<BrowserApi::State> browserApiState;
   std::function<JsValue(const JsFunctionArguments&)> getSettings;
+  mutable std::unique_ptr<std::vector<std::filesystem::path>> pluginFolders;
 };
 }
 

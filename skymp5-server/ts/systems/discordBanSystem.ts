@@ -11,9 +11,11 @@ export class DiscordBanSystem implements System {
     ) { }
 
     async initAsync(ctx: SystemContext): Promise<void> {
-        let discordAuth = Settings.get().discordAuth;
+        const settingsObject = await Settings.get();
 
-        if (Settings.get().offlineMode) {
+        let discordAuth = settingsObject.discordAuth;
+
+        if (settingsObject.offlineMode) {
             return console.log("discord ban system is disabled due to offline mode");
         }
         if (!discordAuth) {
