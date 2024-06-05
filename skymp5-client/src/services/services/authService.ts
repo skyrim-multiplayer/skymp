@@ -48,6 +48,7 @@ export class AuthService extends ClientListener {
     this.controller.emitter.on("customPacketMessage2", (e) => this.onCustomPacketMessage2(e));
     this.controller.on("browserMessage", (e) => this.onBrowserMessage(e));
     this.controller.on("tick", () => this.onTick());
+    this.controller.once("update", () => this.onceUpdate());
   }
 
   private onAuthNeeded(e: AuthNeededEvent) {
@@ -188,7 +189,7 @@ export class AuthService extends ClientListener {
         break;
       case events.authAttempt:
         if (authData === null) {
-          browserState.comment = 'сначала войдите через discord';
+          browserState.comment = 'сначала войдите';
           this.refreshWidgets();
           break;
         }
@@ -571,21 +572,25 @@ export class AuthService extends ClientListener {
     // TODO: Busy waiting is bad. Should be replaced with some kind of event
     const maxLoggingDelay = 15000;
     if (this.loggingStartMoment && Date.now() - this.loggingStartMoment > maxLoggingDelay) {
-      // logError(this, 'Logging in failed. Reconnecting.');
+      logTrace(this, 'Max logging delay reached received');
 
-      // browserState.comment = 'проблемы с авторизацией';
-      // this.refreshWidgets();
+      if (this.playerEverSawActualGameplay) {
+        logTrace(this, 'Player saw actual gameplay, reconnecting');
+        this.loggingStartMoment = 0;
+        this.controller.lookupListener(NetworkingService).reconnect();
+        // TODO: should we prompt user to relogin?
+      }
+      else {
+        logTrace(this, 'Player never saw actual gameplay, showing login dialog');
+        this.loggingStartMoment = 0;
+        this.authAttemptProgressIndicator = false;
+        this.controller.lookupListener(NetworkingService).close();
+        browserState.comment = "";
+        browserState.loginFailedReason = 'технические шоколадки\nпопробуйте еще раз\nпожалуйста\nили напишите нам в discord';
+        this.sp.browser.executeJavaScript(new FunctionInfo(this.loginFailedWidgetSetter).getText({ events, browserState, authData: authData }));
 
-      // this.controller.lookupListener(NetworkingService).reconnect();
-      this.loggingStartMoment = 0;
-      this.authAttemptProgressIndicator = false;
-      this.controller.lookupListener(NetworkingService).close();
-      logTrace(this, 'max logging delay reached received');
-      browserState.comment = "";
-      browserState.loginFailedReason = 'технические шоколадки\nпопробуйте еще раз\nпожалуйста\nили напишите нам в discord';
-      this.sp.browser.executeJavaScript(new FunctionInfo(this.loginFailedWidgetSetter).getText({ events, browserState, authData: authData }));
-
-      authData = null;
+        authData = null;
+      }
     }
 
     if (this.authAttemptProgressIndicator) {
@@ -602,6 +607,10 @@ export class AuthService extends ClientListener {
       browserState.comment = "подключение" + dot;
       this.refreshWidgets();
     }
+  }
+
+  private onceUpdate() {
+    this.playerEverSawActualGameplay = true;
   }
 
   // private showConnectionError() {
@@ -631,6 +640,8 @@ export class AuthService extends ClientListener {
   private authAttemptProgressIndicatorCounter = 0;
 
   private authDataWriteTask: { authDataToWrite: RemoteAuthGameData | null } | null = null;
+
+  private playerEverSawActualGameplay = false;
 
   private readonly githubUrl = "https://github.com/skyrim-multiplayer/skymp";
   private readonly patreonUrl = "https://www.patreon.com/skymp";
