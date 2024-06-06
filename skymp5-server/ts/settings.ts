@@ -321,5 +321,7 @@ async function fetchServerSettings(): Promise<any> {
   console.log(`Merging "server-settings.json" (original settings file)`);
   serverSettings = lodash.merge(serverSettings, serverSettingsFile);
 
+  fs.writeFileSync('server-settings-merged.json', JSON.stringify(serverSettings, null, 2));
+
   return serverSettings;
 }
