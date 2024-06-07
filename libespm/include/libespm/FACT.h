@@ -59,20 +59,27 @@ public:
   };
   static_assert(sizeof(CrimeGold) == 12);
 
+  struct Rank
+  {
+    uint32_t rankId = 0;
+    std::optional<uint32_t> maleTitle;
+    std::optional<uint32_t> femaleTitle;
+  };
+
   struct Data
   {
     // fullName is lstring = uint - id in String Table (4 byte length)
     std::optional<uint32_t> fullNameTableID;
     std::vector<InterfactionRelation> interfactionRelations;
     Flags flags;
-    std::optional<uint32_t> prisonMarker = 0;
-    std::optional<uint32_t> followerWaitMarker = 0;
-    std::optional<uint32_t> evidenceChest = 0;
-    std::optional<uint32_t> playerBelongingsChest = 0;
-    std::optional<uint32_t> crimeGroup = 0;
-    std::optional<uint32_t> jailOutfit = 0;
+    std::optional<uint32_t> prisonMarker;
+    std::optional<uint32_t> followerWaitMarker;
+    std::optional<uint32_t> evidenceChest;
+    std::optional<uint32_t> playerBelongingsChest;
+    std::optional<uint32_t> crimeGroup;
+    std::optional<uint32_t> jailOutfit;
     std::optional<CrimeGold> crimeGold;
-    // ranks skipped
+    std::vector<Rank> ranks;
     // vendor items skipped
     std::vector<CTDA> conditions;
   };

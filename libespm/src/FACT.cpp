@@ -34,6 +34,15 @@ FACT::Data FACT::GetData(
         result.jailOutfit = *reinterpret_cast<const uint32_t*>(data);
       } else if (!std::memcmp(type, "CRVA", 4)) {
         result.crimeGold = *reinterpret_cast<const CrimeGold*>(data);
+      } else if (!std::memcmp(type, "RNAM", 4)) {
+        result.ranks.push_back(espm::FACT::Rank());
+        result.ranks.back().rankId = *reinterpret_cast<const uint32_t*>(data);
+      } else if (!std::memcmp(type, "MNAM", 4)) {
+        result.ranks.back().maleTitle =
+          *reinterpret_cast<const uint32_t*>(data);
+      } else if (!std::memcmp(type, "FNAM", 4)) {
+        result.ranks.back().femaleTitle =
+          *reinterpret_cast<const uint32_t*>(data);
       } else if (!std::memcmp(type, "CTDA", 4)) {
         result.conditions.push_back(*reinterpret_cast<const CTDA*>(data));
       }
