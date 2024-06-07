@@ -111,8 +111,6 @@ find_package(OpenSSL REQUIRED)
 
 find_package(bsa CONFIG REQUIRED)
 
-find_package(LibArchive REQUIRED)
-
 find_package(libzippp REQUIRED)
 
 foreach(target ${VCPKG_DEPENDENT})
@@ -126,7 +124,6 @@ foreach(target ${VCPKG_DEPENDENT})
   target_link_libraries(${target} PUBLIC mongo::mongocxx_static mongo::bsoncxx_static mongo::mongoc_static mongo::bson_static)
   target_link_libraries(${target} PUBLIC OpenSSL::SSL OpenSSL::Crypto)
   target_link_libraries(${target} PUBLIC bsa::bsa)
-  target_link_libraries(${target} PUBLIC ${LibArchive_LIBRARIES})
   target_link_libraries(${target} PUBLIC libzippp::libzippp)
 
   if(UNIX)
