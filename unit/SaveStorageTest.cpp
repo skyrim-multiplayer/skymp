@@ -24,10 +24,11 @@ MpChangeForm CreateChangeForm(const char* descStr)
   return res;
 }
 
-void UpsertSync(ISaveStorage& st, std::vector<MpChangeForm> changeForms)
+void UpsertSync(ISaveStorage& st,
+                std::vector<std::optional<MpChangeForm>> changeForms)
 {
   bool finished = false;
-  st.Upsert(changeForms, [&] { finished = true; });
+  st.Upsert(std::move(changeForms), [&] { finished = true; });
 
   int i = 0;
   while (!finished) {
