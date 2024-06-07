@@ -2,13 +2,13 @@
 #include "ISaveStorage.h"
 #include "database_drivers/IDatabase.h"
 #include <spdlog/logger.h>
-
 class AsyncSaveStorage : public ISaveStorage
 {
 public:
   // logger must support multithreaded writing
   AsyncSaveStorage(const std::shared_ptr<IDatabase>& dbImpl,
-                   std::shared_ptr<spdlog::logger> logger = nullptr);
+                   std::shared_ptr<spdlog::logger> logger = nullptr,
+                   const std::string& name = "");
   ~AsyncSaveStorage();
 
   void IterateSync(const IterateSyncCallback& cb) override;
@@ -16,6 +16,7 @@ public:
               const UpsertCallback& cb) override;
   uint32_t GetNumFinishedUpserts() const override;
   void Tick() override;
+  const std::string &GetName() const override;
 
 private:
   struct Impl;

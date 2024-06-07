@@ -2,23 +2,55 @@
 
 #include "JsonUtils.h"
 #include <bsoncxx/builder/stream/document.hpp>
-#include <bsoncxx/document/element.hpp>
-#include <bsoncxx/document/value.hpp>
-#include <bsoncxx/document/view.hpp>
-#include <bsoncxx/document/view_or_value.hpp>
 #include <bsoncxx/json.hpp>
 #include <mongocxx/client.hpp>
+#include <mongocxx/client_session.hpp>
 #include <mongocxx/instance.hpp>
 #include <mongocxx/stdx.hpp>
 #include <mongocxx/uri.hpp>
 #include <nlohmann/json.hpp>
+#include <optional>
+
+constexpr auto kChangeFormsCollectionName = "changeForms";
+
+namespace {
+struct DbHashResult
+{
+  std::string changeFormsHash;
+};
+
+std::optional<DbHashResult> ParseDbHashResult(
+  bsoncxx::v_noabi::document::value& hashResultView)
+{
+  static const JsonPointer kCollectionsJsonPointer("collections");
+  static const JsonPointer kChangeFormsCollectionNameJsonPointer(
+    kChangeFormsCollectionName);
+
+  simdjson::dom::parser p;
+
+  try {
+    auto hashResult = p.parse(bsoncxx::to_json(hashResultView)).value();
+
+    simdjson::dom::element collections;
+    ReadEx(hashResult, kCollectionsJsonPointer, &collections);
+
+    const char* changeFormsHash = "";
+    ReadEx(collections, kChangeFormsCollectionNameJsonPointer,
+           &changeFormsHash);
+
+    return DbHashResult{ changeFormsHash };
+
+  } catch (JsonIndexException&) {
+    return std::nullopt;
+  }
+}
+
+}
 
 struct MongoDatabase::Impl
 {
   const std::string uri;
   const std::string name;
-
-  const char* const collectionName = "changeForms";
 
   std::shared_ptr<mongocxx::client> client;
   std::shared_ptr<mongocxx::database> db;
@@ -34,13 +66,17 @@ MongoDatabase::MongoDatabase(std::string uri_, std::string name_)
   pImpl->client.reset(new mongocxx::client(mongocxx::uri(pImpl->uri.data())));
   pImpl->db.reset(new mongocxx::database((*pImpl->client)[pImpl->name]));
   pImpl->changeFormsCollection.reset(
-    new mongocxx::collection((*pImpl->db)[pImpl->collectionName]));
+    new mongocxx::collection((*pImpl->db)[kChangeFormsCollectionName]));
 }
 
-size_t MongoDatabase::Upsert(
+UpsertResult MongoDatabase::Upsert(
   std::vector<std::optional<MpChangeForm>>&& changeForms)
 {
   try {
+    mongocxx::client_session session = pImpl->client->start_session();
+
+    session.start_transaction();
+
     auto bulk = pImpl->changeFormsCollection->create_bulk_write();
     for (auto& changeForm : changeForms) {
       if (changeForm == std::nullopt) {
@@ -63,8 +99,25 @@ size_t MongoDatabase::Upsert(
 
     (void)bulk.execute();
 
+    // dbHash command
+    bsoncxx::document::value dbHashCommand =
+      bsoncxx::builder::stream::document{}
+      << "dbHash" << 1 << "collections" << bsoncxx::builder::stream::open_array
+      << kChangeFormsCollectionName << bsoncxx::builder::stream::close_array
+      << bsoncxx::builder::stream::finalize;
+
+    auto hashResultView =
+      pImpl->db->run_command(session, dbHashCommand.view());
+
+    std::optional<DbHashResult> hashResult = ParseDbHashResult(hashResultView);
+
+    session.commit_transaction();
+
     // TODO: Should take data from bulk.execute result instead?
-    return changeForms.size();
+    return { changeForms.size(),
+             hashResult.has_value()
+               ? std::make_optional(hashResult->changeFormsHash)
+               : std::nullopt };
   } catch (std::exception& e) {
     throw UpsertFailedException(std::move(changeForms), e.what());
   }

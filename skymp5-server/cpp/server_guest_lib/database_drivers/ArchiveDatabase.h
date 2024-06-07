@@ -2,11 +2,14 @@
 #include "IDatabase.h"
 #include <spdlog/spdlog.h>
 
-class FileDatabase : public IDatabase
+// This is for internal use only and not referenced in the server settings at
+// this time.
+class ArchiveDatabase : public IDatabase
 {
 public:
-  FileDatabase(std::string directory_,
-               std::shared_ptr<spdlog::logger> logger_);
+  ArchiveDatabase(std::string filePath_,
+                  std::shared_ptr<spdlog::logger> logger_);
+  ~ArchiveDatabase();
 
   UpsertResult Upsert(
     std::vector<std::optional<MpChangeForm>>&& changeForms) override;

@@ -18,7 +18,7 @@ FileDatabase::FileDatabase(std::string directory_,
   std::filesystem::create_directories(p);
 }
 
-size_t FileDatabase::Upsert(
+UpsertResult FileDatabase::Upsert(
   std::vector<std::optional<MpChangeForm>>&& changeForms)
 {
   try {
@@ -63,7 +63,7 @@ size_t FileDatabase::Upsert(
       }
     }
 
-    return nUpserted;
+    return { nUpserted, std::nullopt };
   } catch (std::exception& e) {
     throw UpsertFailedException(std::move(changeForms), e.what());
   }
@@ -92,7 +92,7 @@ void FileDatabase::Iterate(const IterateCallback& iterateCallback)
       auto result = parser.parse(jsonDump).value();
       iterateCallback(MpChangeForm::JsonToChangeForm(result));
     } catch (std::exception& e) {
-      pImpl->logger->error("Parsing of {} failed with {}",
+      pImpl->logger->error("Parsing or loading of {} failed with {}",
                            entry.path().string(), e.what());
     }
   }
