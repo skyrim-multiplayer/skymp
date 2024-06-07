@@ -16,7 +16,7 @@ public:
               const UpsertCallback& cb) override;
   uint32_t GetNumFinishedUpserts() const override;
   void Tick() override;
-  const std::string &GetName() const override;
+  const std::string& GetName() const override;
 
 private:
   struct Impl;
