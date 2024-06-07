@@ -40,7 +40,7 @@ public:
   struct InterfactionRelation
   {
     uint32_t factionFormId = 0;
-    int32_t modUnused = 0;
+    int32_t unusedMod = 0;
     CombatState combat;
   };
   static_assert(sizeof(InterfactionRelation) == 12);
