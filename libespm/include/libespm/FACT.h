@@ -1,6 +1,6 @@
 #pragma once
-#include "RecordHeader.h"
 #include "CTDA.h"
+#include "RecordHeader.h"
 #include <optional>
 
 #pragma pack(push, 1)
@@ -61,7 +61,8 @@ public:
 
   struct Data
   {
-    std::optional<std::string> fullName;
+    // fullName is lstring = uint - id in String Table (4 byte length)
+    std::optional<uint32_t> fullNameTableID;
     std::vector<InterfactionRelation> interfactionRelations;
     Flags flags;
     std::optional<uint32_t> prisonMarker = 0;

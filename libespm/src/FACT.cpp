@@ -12,7 +12,7 @@ FACT::Data FACT::GetData(
     this,
     [&](const char* type, uint32_t dataSize, const char* data) {
       if (!std::memcmp(type, "FULL", 4)) {
-        result.fullName = data;
+        result.fullNameTableID = *reinterpret_cast<const uint32_t*>(data);
       } else if (!std::memcmp(type, "XNAM", 4)) {
         const auto relation =
           *reinterpret_cast<const InterfactionRelation*>(data);
