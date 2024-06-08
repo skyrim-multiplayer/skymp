@@ -48,9 +48,7 @@ public:
 
   VarValue IsInFaction(VarValue self, const std::vector<VarValue>& arguments);
 
-  // TODO: Cant Implement for now because VarValue array is missing
-  // VarValue GetFactions(VarValue self, const std::vector<VarValue>&
-  // arguments);
+  VarValue GetFactions(VarValue self, const std::vector<VarValue>& arguments);
 
   VarValue RemoveFromFaction(VarValue self,
                              const std::vector<VarValue>& arguments);

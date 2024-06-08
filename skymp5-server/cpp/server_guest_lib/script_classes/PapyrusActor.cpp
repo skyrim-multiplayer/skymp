@@ -349,47 +349,46 @@ VarValue PapyrusActor::IsInFaction(VarValue self,
   return VarValue(false);
 }
 
-// TODO: Cant Implement for now because VarValue array is missing
-// VarValue PapyrusActor::GetFactions(VarValue self,
-//                                   const std::vector<VarValue>& arguments)
-//{
-//  if (auto actor = GetFormPtr<MpActor>(self)) {
-//    auto worldState = actor->GetParent();
-//    if (!worldState) {
-//      throw std::runtime_error("Actor.GetFactions - no WorldState attached");
-//    }
-//
-//    if (arguments.size() < 2) {
-//      throw std::runtime_error("Actor.GetFactions requires two arguments");
-//    }
-//
-//    auto minFactionRank = static_cast<int>(arguments[0]);
-//    auto maxFactionRank = static_cast<int>(arguments[1]);
-//
-//    if (minFactionRank < -128 || minFactionRank > 127 ||
-//        maxFactionRank < -128 || maxFactionRank > 127 ||
-//        minFactionRank > maxFactionRank) {
-//      return VarValue::None();
-//    }
-//
-//    WorldState* worldState = compatibilityPolicy->GetWorldState();
-//
-//    const auto& factions = actor->GetChangeForm().factions;
-//
-//    if (!factions.has_value()) {
-//      return VarValue(false);
-//    }
-//
-//    for (const auto& faction : factions.value()) {
-//       if (faction.rank >= minFactionRank && faction.rank <= maxFactionRank)
-//       {
-//        return VarValue(std::make_shared<EspmGameObject>(
-//          worldState->GetEspm().GetBrowser().LookupById(faction.formID)));
-//       }
-//    }
-//  }
-//  return VarValue(false);
-//}
+VarValue PapyrusActor::GetFactions(VarValue self,
+                                   const std::vector<VarValue>& arguments)
+{
+  VarValue result = VarValue();
+  *result.pArray = std::vector<VarValue>();
+
+  if (auto actor = GetFormPtr<MpActor>(self)) {
+    auto worldState = actor->GetParent();
+    if (!worldState) {
+      throw std::runtime_error("Actor.GetFactions - no WorldState attached");
+    }
+
+    if (arguments.size() < 2) {
+      throw std::runtime_error("Actor.GetFactions requires two arguments");
+    }
+
+    auto minFactionRank = static_cast<int>(arguments[0]);
+    auto maxFactionRank = static_cast<int>(arguments[1]);
+
+    if (minFactionRank < -128 || minFactionRank > 127 ||
+        maxFactionRank < -128 || maxFactionRank > 127 ||
+        minFactionRank > maxFactionRank) {
+      return result;
+    }
+
+    const auto& factions = actor->GetChangeForm().factions;
+
+    if (!factions.has_value()) {
+      return result;
+    }
+
+    for (const auto& faction : factions.value()) {
+      if (faction.rank >= minFactionRank && faction.rank <= maxFactionRank) {
+        result.pArray->push_back(VarValue(std::make_shared<EspmGameObject>(
+          worldState->GetEspm().GetBrowser().LookupById(faction.formID))));
+      }
+    }
+  }
+  return result;
+}
 
 VarValue PapyrusActor::RemoveFromFaction(
   VarValue self, const std::vector<VarValue>& arguments)
@@ -564,7 +563,7 @@ void PapyrusActor::Register(
   AddMethod(vm, "WornHasKeyword", &PapyrusActor::WornHasKeyword);
   AddMethod(vm, "AddToFaction", &PapyrusActor::AddToFaction);
   AddMethod(vm, "IsInFaction", &PapyrusActor::IsInFaction);
-  // AddMethod(vm, "GetFactions", &PapyrusActor::GetFactions);
+  AddMethod(vm, "GetFactions", &PapyrusActor::GetFactions);
   AddMethod(vm, "RemoveFromFaction", &PapyrusActor::RemoveFromFaction);
   AddMethod(vm, "AddSpell", &PapyrusActor::AddSpell);
   AddMethod(vm, "RemoveSpell", &PapyrusActor::RemoveSpell);
