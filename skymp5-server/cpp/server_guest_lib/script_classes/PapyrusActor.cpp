@@ -322,9 +322,7 @@ VarValue PapyrusActor::AddToFaction(VarValue self,
     WorldState* worldState = compatibilityPolicy->GetWorldState();
 
     Faction resultFaction = Faction();
-    resultFaction.factionID = factionRec.rec->GetId();
-    resultFaction.editorID =
-      factionRec.rec->GetEditorId(worldState->GetEspmCache());
+    resultFaction.formID = factionRec.rec->GetId();
     resultFaction.rank = 0;
 
     actor->AddToFaction(resultFaction);
@@ -346,17 +344,7 @@ VarValue PapyrusActor::IsInFaction(VarValue self,
       return VarValue(false);
     }
 
-    const auto& factions = actor->GetChangeForm().factions;
-
-    if (!factions.has_value()) {
-      return VarValue(false);
-    }
-
-    for (const auto& faction : factions.value()) {
-      if (faction.factionID == factionRec.rec->GetId()) {
-        return VarValue(true);
-      }
-    }
+    return VarValue(actor->IsInFaction(factionRec.rec->GetId()));
   }
   return VarValue(false);
 }
@@ -396,7 +384,7 @@ VarValue PapyrusActor::IsInFaction(VarValue self,
 //       if (faction.rank >= minFactionRank && faction.rank <= maxFactionRank)
 //       {
 //        return VarValue(std::make_shared<EspmGameObject>(
-//          worldState->GetEspm().GetBrowser().LookupById(faction.factionID)));
+//          worldState->GetEspm().GetBrowser().LookupById(faction.formID)));
 //       }
 //    }
 //  }
@@ -424,11 +412,7 @@ VarValue PapyrusActor::RemoveFromFaction(
       return VarValue();
     }
 
-    for (const auto& faction : factions.value()) {
-      if (faction.factionID == factionRec.rec->GetId()) {
-        actor->RemoveFromFaction(faction);
-      }
-    }
+    actor->RemoveFromFaction(factionRec.rec->GetId());
   }
   return VarValue();
 }

@@ -4,13 +4,12 @@
 
 struct Faction
 {
-  uint32_t factionID;
-  const char* editorID;
+  uint32_t formID;
   int8_t rank;
 
   friend bool operator==(const Faction& r, const Faction& l)
   {
-    return r.editorID == l.editorID;
+    return r.formID == l.formID;
   }
 
   friend bool operator!=(const Faction& r, const Faction& l)

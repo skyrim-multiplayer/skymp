@@ -916,7 +916,7 @@ void MpObjectReference::AddToFaction(Faction faction)
       changeForm.factions.value().push_back(faction);
     } else {
       for (const auto& fact : changeForm.factions.value()) {
-        if (faction.factionID == fact.factionID) {
+        if (faction.formID == fact.formID) {
           return;
         }
       }
@@ -925,17 +925,35 @@ void MpObjectReference::AddToFaction(Faction faction)
   });
 }
 
-void MpObjectReference::RemoveFromFaction(Faction faction)
+bool MpObjectReference::IsInFaction(uint32_t factionFormID)
+{
+  const auto& factions = GetChangeForm().factions;
+
+  if (!factions.has_value()) {
+    return false;
+  }
+
+  for (const auto& faction : factions.value()) {
+    if (faction.formID == factionFormID) {
+      return true;
+    }
+  }
+  return false;
+}
+
+void MpObjectReference::RemoveFromFaction(uint32_t factionFormID)
 {
   EditChangeForm([&](MpChangeFormREFR& changeForm) {
     if (!changeForm.factions.has_value()) {
       return;
     }
-    auto fact = std::find(changeForm.factions.value().begin(),
-                          changeForm.factions.value().end(), faction);
 
-    if (fact != changeForm.factions.value().end()) {
-      changeForm.factions.value().erase(fact);
+    for (auto it = changeForm.factions.value().begin();
+         it != changeForm.factions.value().end(); ++it) {
+      if (it->formID == factionFormID) {
+        changeForm.factions.value().erase(it);
+        return;
+      }
     }
   });
 }
