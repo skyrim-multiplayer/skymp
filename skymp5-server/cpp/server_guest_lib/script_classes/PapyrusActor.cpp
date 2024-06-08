@@ -562,6 +562,10 @@ void PapyrusActor::Register(
   AddMethod(vm, "SetDontMove", &PapyrusActor::SetDontMove);
   AddMethod(vm, "IsDead", &PapyrusActor::IsDead);
   AddMethod(vm, "WornHasKeyword", &PapyrusActor::WornHasKeyword);
+  AddMethod(vm, "AddToFaction", &PapyrusActor::AddToFaction);
+  AddMethod(vm, "IsInFaction", &PapyrusActor::IsInFaction);
+  // AddMethod(vm, "GetFactions", &PapyrusActor::GetFactions);
+  AddMethod(vm, "RemoveFromFaction", &PapyrusActor::RemoveFromFaction);
   AddMethod(vm, "AddSpell", &PapyrusActor::AddSpell);
   AddMethod(vm, "RemoveSpell", &PapyrusActor::RemoveSpell);
   AddMethod(vm, "GetRace", &PapyrusActor::GetRace);
