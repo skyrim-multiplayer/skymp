@@ -153,6 +153,9 @@ public:
     const std::string& propertyName,
     const std::string& propertyValueStringified);
 
+  void AddToFaction(Faction faction);
+  void RemoveFromFaction(Faction faction);
+
   static void Subscribe(MpObjectReference* emitter,
                         MpObjectReference* listener);
   static void Unsubscribe(MpObjectReference* emitter,

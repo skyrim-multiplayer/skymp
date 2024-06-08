@@ -305,6 +305,134 @@ VarValue PapyrusActor::WornHasKeyword(VarValue self,
   return VarValue(false);
 }
 
+VarValue PapyrusActor::AddToFaction(VarValue self,
+                                    const std::vector<VarValue>& arguments)
+{
+  if (auto actor = GetFormPtr<MpActor>(self)) {
+    if (arguments.size() < 1) {
+      throw std::runtime_error("Actor.AddToFaction requires one argument");
+    }
+
+    const auto& factionRec = GetRecordPtr(arguments[0]);
+    if (!factionRec.rec) {
+      spdlog::error("Actor.AddToFaction - invalid faction form");
+      return VarValue();
+    }
+
+    WorldState* worldState = compatibilityPolicy->GetWorldState();
+
+    Faction resultFaction = Faction();
+    resultFaction.factionID = factionRec.rec->GetId();
+    resultFaction.editorID =
+      factionRec.rec->GetEditorId(worldState->GetEspmCache());
+    resultFaction.rank = 0;
+
+    actor->AddToFaction(resultFaction);
+  }
+  return VarValue();
+}
+
+VarValue PapyrusActor::IsInFaction(VarValue self,
+                                   const std::vector<VarValue>& arguments)
+{
+  if (auto actor = GetFormPtr<MpActor>(self)) {
+    if (arguments.size() < 1) {
+      throw std::runtime_error("Actor.IsInFaction requires one argument");
+    }
+
+    const auto& factionRec = GetRecordPtr(arguments[0]);
+    if (!factionRec.rec) {
+      spdlog::error("Actor.IsInFaction - invalid faction form");
+      return VarValue(false);
+    }
+
+    const auto& factions = actor->GetChangeForm().factions;
+
+    if (!factions.has_value()) {
+      return VarValue(false);
+    }
+
+    for (const auto& faction : factions.value()) {
+      if (faction.factionID == factionRec.rec->GetId()) {
+        return VarValue(true);
+      }
+    }
+  }
+  return VarValue(false);
+}
+
+// TODO: Cant Implement for now because VarValue array is missing
+// VarValue PapyrusActor::GetFactions(VarValue self,
+//                                   const std::vector<VarValue>& arguments)
+//{
+//  if (auto actor = GetFormPtr<MpActor>(self)) {
+//    auto worldState = actor->GetParent();
+//    if (!worldState) {
+//      throw std::runtime_error("Actor.GetFactions - no WorldState attached");
+//    }
+//
+//    if (arguments.size() < 2) {
+//      throw std::runtime_error("Actor.GetFactions requires two arguments");
+//    }
+//
+//    auto minFactionRank = static_cast<int>(arguments[0]);
+//    auto maxFactionRank = static_cast<int>(arguments[1]);
+//
+//    if (minFactionRank < -128 || minFactionRank > 127 ||
+//        maxFactionRank < -128 || maxFactionRank > 127 ||
+//        minFactionRank > maxFactionRank) {
+//      return VarValue::None();
+//    }
+//
+//    WorldState* worldState = compatibilityPolicy->GetWorldState();
+//
+//    const auto& factions = actor->GetChangeForm().factions;
+//
+//    if (!factions.has_value()) {
+//      return VarValue(false);
+//    }
+//
+//    for (const auto& faction : factions.value()) {
+//       if (faction.rank >= minFactionRank && faction.rank <= maxFactionRank)
+//       {
+//        return VarValue(std::make_shared<EspmGameObject>(
+//          worldState->GetEspm().GetBrowser().LookupById(faction.factionID)));
+//       }
+//    }
+//  }
+//  return VarValue(false);
+//}
+
+VarValue PapyrusActor::RemoveFromFaction(
+  VarValue self, const std::vector<VarValue>& arguments)
+{
+  if (auto actor = GetFormPtr<MpActor>(self)) {
+    if (arguments.size() < 1) {
+      throw std::runtime_error(
+        "Actor.RemoveFromFaction requires one argument");
+    }
+
+    const auto& factionRec = GetRecordPtr(arguments[0]);
+    if (!factionRec.rec) {
+      spdlog::error("Actor.RemoveFromFaction - invalid faction form");
+      return VarValue();
+    }
+
+    const auto& factions = actor->GetChangeForm().factions;
+
+    if (!factions.has_value()) {
+      return VarValue();
+    }
+
+    for (const auto& faction : factions.value()) {
+      if (faction.factionID == factionRec.rec->GetId()) {
+        actor->RemoveFromFaction(faction);
+      }
+    }
+  }
+  return VarValue();
+}
+
 VarValue PapyrusActor::AddSpell(VarValue self,
                                 const std::vector<VarValue>& arguments)
 {

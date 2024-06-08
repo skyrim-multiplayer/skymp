@@ -908,6 +908,38 @@ void MpObjectReference::RegisterPrivateIndexedProperty(
   }
 }
 
+void MpObjectReference::AddToFaction(Faction faction)
+{
+  EditChangeForm([&](MpChangeFormREFR& changeForm) {
+    if (!changeForm.factions.has_value()) {
+      changeForm.factions = std::vector<Faction>();
+      changeForm.factions.value().push_back(faction);
+    } else {
+      for (const auto& fact : changeForm.factions.value()) {
+        if (faction.factionID == fact.factionID) {
+          return;
+        }
+      }
+      changeForm.factions.value().push_back(faction);
+    }
+  });
+}
+
+void MpObjectReference::RemoveFromFaction(Faction faction)
+{
+  EditChangeForm([&](MpChangeFormREFR& changeForm) {
+    if (!changeForm.factions.has_value()) {
+      return;
+    }
+    auto fact = std::find(changeForm.factions.value().begin(),
+                          changeForm.factions.value().end(), faction);
+
+    if (fact != changeForm.factions.value().end()) {
+      changeForm.factions.value().erase(fact);
+    }
+  });
+}
+
 void MpObjectReference::Subscribe(MpObjectReference* emitter,
                                   MpObjectReference* listener)
 {
