@@ -1091,6 +1091,7 @@ void MpActor::Respawn(bool shouldTeleport)
   }
 
   SendAndSetDeathState(false, shouldTeleport);
+  SendPropertyToListeners("isDead", false);
 }
 
 void MpActor::Teleport(const LocationalData& position)
