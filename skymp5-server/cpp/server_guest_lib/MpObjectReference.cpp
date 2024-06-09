@@ -916,7 +916,7 @@ void MpObjectReference::AddToFaction(Faction faction)
       changeForm.factions.value().push_back(faction);
     } else {
       for (const auto& fact : changeForm.factions.value()) {
-        if (faction.formID == fact.formID) {
+        if (faction.formId == fact.formId) {
           return;
         }
       }
@@ -934,7 +934,7 @@ bool MpObjectReference::IsInFaction(uint32_t factionFormID)
   }
 
   for (const auto& faction : factions.value()) {
-    if (faction.formID == factionFormID) {
+    if (faction.formId == factionFormID) {
       return true;
     }
   }
@@ -950,7 +950,7 @@ void MpObjectReference::RemoveFromFaction(uint32_t factionFormID)
 
     for (auto it = changeForm.factions.value().begin();
          it != changeForm.factions.value().end(); ++it) {
-      if (it->formID == factionFormID) {
+      if (it->formId == factionFormID) {
         changeForm.factions.value().erase(it);
         return;
       }

@@ -581,6 +581,8 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
     LocationalDataUtils::GetRot(locationalData),
     FormDesc::FromFormId(worldOrCell, espmFiles)
   };
+
+  MpChangeFormREFR* changeForm = nullptr;
   if (!isNpc) {
     form.reset(new MpObjectReference(formLocationalData,
                                      formCallbacksFactory(), baseId,
@@ -588,8 +590,22 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
   } else {
     form.reset(
       new MpActor(formLocationalData, formCallbacksFactory(), baseId));
+
+    if (isNpc) {
+      changeForm->factions = std::vector<Faction>();
+
+      auto npcData =
+        reinterpret_cast<const espm::NPC_*>(base.rec)->GetData(cache);
+
+      for (auto npcFaction : npcData.factions) {
+        Faction faction = Faction();
+        faction.formId = npcFaction.formId;
+        faction.rank = npcFaction.rank;
+        changeForm->factions.value().push_back(faction);
+      }
+    }
   }
-  AddForm(std::move(form), formId, true);
+  AddForm(std::move(form), formId, true, changeForm);
 
   // Do not TriggerFormInitEvent here, doing it later after changeForm apply
 

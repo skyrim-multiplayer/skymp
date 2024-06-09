@@ -1,5 +1,6 @@
 #pragma once
 #include "IPapyrusClass.h"
+#include "WorldState.h"
 #include "script_objects/EspmGameObject.h"
 
 class PapyrusSkymp final : public IPapyrusClass<PapyrusSkymp>

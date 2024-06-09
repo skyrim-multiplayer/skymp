@@ -9,6 +9,7 @@ std::vector<std::string> ToStringArray(const std::vector<FormDesc>& formDescs)
                  [](const FormDesc& v) { return v.ToString(); });
   return res;
 }
+
 std::vector<FormDesc> ToFormDescsArray(const std::vector<std::string>& strings)
 {
   std::vector<FormDesc> res(strings.size());
@@ -96,6 +97,20 @@ nlohmann::json MpChangeForm::ToJson(const MpChangeForm& changeForm)
     res["displayName"] = *changeForm.displayName;
   }
 
+  if (changeForm.factions.has_value() &&
+      !changeForm.factions.value().empty()) {
+    auto factionsJson = nlohmann::json::array();
+    for (int i = 0; i < static_cast<int>(changeForm.factions.value().size());
+         ++i) {
+      nlohmann::json obj = {
+        { "formId", changeForm.factions.value()[i].formId },
+        { "rank", (uint32_t)changeForm.factions.value()[i].rank }
+      };
+      factionsJson.push_back(obj);
+    }
+    res["factions"] = { { "entries", factionsJson } };
+  }
+
   return res;
 }
 
@@ -118,7 +133,7 @@ MpChangeForm MpChangeForm::JsonToChangeForm(simdjson::dom::element& element)
     spawnDelay("spawnDelay"), effects("effects"),
     templateChain("templateChain"), lastAnimation("lastAnimation"),
     setNodeTextureSet("setNodeTextureSet"), setNodeScale("setNodeScale"),
-    displayName("displayName");
+    displayName("displayName"), factions("factions");
 
   MpChangeForm res;
   ReadEx(element, recType, &res.recType);
@@ -279,6 +294,33 @@ MpChangeForm MpChangeForm::JsonToChangeForm(simdjson::dom::element& element)
     const char* tmp;
     ReadEx(element, displayName, &tmp);
     res.displayName = tmp;
+  }
+
+  if (element.at_pointer(factions.GetData()).error() ==
+      simdjson::error_code::SUCCESS) {
+    ReadEx(element, factions, &jTmp);
+    static const JsonPointer entries("entries");
+
+    std::vector<simdjson::dom::element> parsedEntries;
+    ReadVector(jTmp, entries, &parsedEntries);
+
+    std::vector<Faction> factions = std::vector<Faction>(parsedEntries.size());
+
+    for (size_t i = 0; i != parsedEntries.size(); ++i) {
+      auto& jEntry = parsedEntries[i];
+
+      static JsonPointer formId("formId"), rank("rank");
+      Faction fact = Faction();
+      ReadEx(jEntry, formId, &fact.formId);
+
+      uint32_t rankTemp = 0;
+      ReadEx(jEntry, rank, &rankTemp);
+      fact.rank = rankTemp;
+
+      factions[i] = fact;
+    }
+
+    res.factions = factions;
   }
 
   return res;

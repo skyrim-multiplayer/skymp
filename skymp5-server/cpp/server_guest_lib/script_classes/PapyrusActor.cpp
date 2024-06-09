@@ -322,7 +322,7 @@ VarValue PapyrusActor::AddToFaction(VarValue self,
     WorldState* worldState = compatibilityPolicy->GetWorldState();
 
     Faction resultFaction = Faction();
-    resultFaction.formID = factionRec.rec->GetId();
+    resultFaction.formId = factionRec.rec->GetId();
     resultFaction.rank = 0;
 
     actor->AddToFaction(resultFaction);
@@ -383,7 +383,7 @@ VarValue PapyrusActor::GetFactions(VarValue self,
     for (const auto& faction : factions.value()) {
       if (faction.rank >= minFactionRank && faction.rank <= maxFactionRank) {
         result.pArray->push_back(VarValue(std::make_shared<EspmGameObject>(
-          worldState->GetEspm().GetBrowser().LookupById(faction.formID))));
+          worldState->GetEspm().GetBrowser().LookupById(faction.formId))));
       }
     }
   }
