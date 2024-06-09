@@ -100,24 +100,14 @@ UpsertResult MongoDatabase::Upsert(
     (void)bulk.execute();
 
     // dbHash command
-    bsoncxx::document::value dbHashCommand =
-      bsoncxx::builder::stream::document{}
-      << "dbHash" << 1 << "collections" << bsoncxx::builder::stream::open_array
-      << kChangeFormsCollectionName << bsoncxx::builder::stream::close_array
-      << bsoncxx::builder::stream::finalize;
-
-    auto hashResultView =
-      pImpl->db->run_command(session, dbHashCommand.view());
-
-    std::optional<DbHashResult> hashResult = ParseDbHashResult(hashResultView);
+    auto res = DbHashImpl(&session);
 
     session.commit_transaction();
 
     // TODO: Should take data from bulk.execute result instead?
-    return { changeForms.size(),
-             hashResult.has_value()
-               ? std::make_optional(hashResult->changeFormsHash)
-               : std::nullopt };
+    res.numUpserted = changeForms.size();
+
+    return res;
   } catch (std::exception& e) {
     throw UpsertFailedException(std::move(changeForms), e.what());
   }
@@ -136,4 +126,38 @@ void MongoDatabase::Iterate(const IterateCallback& iterateCallback)
     auto changeForm = MpChangeForm::JsonToChangeForm(document);
     iterateCallback(changeForm);
   }
+}
+
+UpsertResult MongoDatabase::DbHash()
+{
+  return DbHashImpl(std::nullopt);
+}
+
+UpsertResult MongoDatabase::DbHashImpl(
+  std::optional<mongocxx::v_noabi::client_session*> existingSession)
+{
+  std::optional<mongocxx::client_session> newSession;
+  mongocxx::client_session* sessionToUse = nullptr;
+
+  if (!existingSession.has_value()) {
+    newSession = pImpl->client->start_session();
+    sessionToUse = &*newSession;
+  } else {
+    sessionToUse = *existingSession;
+  }
+
+  bsoncxx::document::value dbHashCommand = bsoncxx::builder::stream::document{}
+    << "dbHash" << 1 << "collections" << bsoncxx::builder::stream::open_array
+    << kChangeFormsCollectionName << bsoncxx::builder::stream::close_array
+    << bsoncxx::builder::stream::finalize;
+
+  auto hashResultView =
+    pImpl->db->run_command(*sessionToUse, dbHashCommand.view());
+
+  std::optional<DbHashResult> hashResult = ParseDbHashResult(hashResultView);
+
+  return { 0,
+           hashResult.has_value()
+             ? std::make_optional(hashResult->changeFormsHash)
+             : std::nullopt };
 }

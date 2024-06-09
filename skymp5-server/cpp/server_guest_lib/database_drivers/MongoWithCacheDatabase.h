@@ -1,24 +1,20 @@
 #pragma once
 #include "IDatabase.h"
 #include <memory>
+#include <spdlog/spdlog.h>
 
-namespace mongocxx::v_noabi {
-class client_session; // fwd
-}
-
-class MongoDatabase : public IDatabase
+class MongoWithCacheDatabase : public IDatabase
 {
 public:
-  MongoDatabase(std::string uri_, std::string name_);
+  MongoWithCacheDatabase(std::string uri_, std::string name_,
+                         std::shared_ptr<spdlog::logger> logger_);
   UpsertResult Upsert(
     std::vector<std::optional<MpChangeForm>>&& changeForms) override;
   void Iterate(const IterateCallback& iterateCallback) override;
 
-  UpsertResult DbHash();
-
 private:
-  UpsertResult DbHashImpl(
-    std::optional<mongocxx::v_noabi::client_session*> existingSession);
+  void EnsureArchiveMatchesCrc32();
+  void EnsureArchiveMatchesMongoDbHash();
 
   struct Impl;
   std::shared_ptr<Impl> pImpl;
