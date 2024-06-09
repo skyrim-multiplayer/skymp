@@ -792,9 +792,9 @@ bool IsDistanceValid(const MpActor& actor, const MpActor& targetActor,
         auto weapDNAM =
           espm::GetData<espm::WEAP>(hitData.source, worldState).weapDNAM;
         if (weapDNAM->animType == espm::WEAP::AnimType::Bow) {
-          reach = kExteriorCellWidthUnits;
+          reach = kExteriorCellWidthUnits * 2;
         } else if (weapDNAM->animType == espm::WEAP::AnimType::Crossbow) {
-          reach = kExteriorCellWidthUnits;
+          reach = kExteriorCellWidthUnits * 2;
         }
       }
     }
