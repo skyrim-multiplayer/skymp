@@ -56,3 +56,29 @@ TEST_CASE("Actor should load be able to load appearance, equipment, "
   REQUIRE(actor.GetChangeForm().spawnDelay == 8.0f);
   REQUIRE(actor.GetChangeForm().consoleCommandsAllowed == true);
 }
+
+TEST_CASE("Actor factions in changeForm", "[Actor]")
+{
+  MpActor actor(LocationalData(), FormCallbacks::DoNothing());
+
+  Faction faction = Faction();
+  faction.formId = 0x000123;
+  faction.rank = 0;
+
+  actor.AddToFaction(faction);
+  // Second time should be ignored
+  actor.AddToFaction(faction);
+
+  REQUIRE(actor.GetChangeForm().factions.has_value());
+  REQUIRE(actor.GetChangeForm().factions.value().size() == 1);
+  REQUIRE(actor.GetChangeForm().factions.value()[0].formId == 0x000123);
+
+  REQUIRE(actor.IsInFaction(0x000223) == false);
+  REQUIRE(actor.IsInFaction(0x000123));
+
+  actor.RemoveFromFaction(0x000f);
+  REQUIRE(actor.GetChangeForm().factions.value().size() == 1);
+
+  actor.RemoveFromFaction(0x000123);
+  REQUIRE(actor.GetChangeForm().factions.value().size() == 0);
+}
