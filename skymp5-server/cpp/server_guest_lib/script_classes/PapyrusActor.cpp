@@ -353,7 +353,7 @@ VarValue PapyrusActor::GetFactions(VarValue self,
                                    const std::vector<VarValue>& arguments)
 {
   VarValue result = VarValue();
-  *result.pArray = std::vector<VarValue>();
+  result.pArray = std::make_shared<std::vector<VarValue>>();
 
   if (auto actor = GetFormPtr<MpActor>(self)) {
     auto worldState = actor->GetParent();

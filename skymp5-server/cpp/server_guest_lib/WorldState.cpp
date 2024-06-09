@@ -588,12 +588,11 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
                                      formCallbacksFactory(), baseId,
                                      typeStr.data(), primitiveBoundsDiv2));
   } else {
-    form.reset(
-      new MpActor(formLocationalData, formCallbacksFactory(), baseId));
+    MpActor* actor =
+      new MpActor(formLocationalData, formCallbacksFactory(), baseId);
+    form.reset(actor);
 
     if (isNpc) {
-      changeForm->factions = std::vector<Faction>();
-
       auto npcData =
         reinterpret_cast<const espm::NPC_*>(base.rec)->GetData(cache);
 
@@ -601,7 +600,7 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
         Faction faction = Faction();
         faction.formId = npcFaction.formId;
         faction.rank = npcFaction.rank;
-        changeForm->factions.value().push_back(faction);
+        actor->AddToFaction(faction);
       }
     }
   }
