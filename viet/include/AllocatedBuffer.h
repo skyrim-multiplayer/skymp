@@ -3,9 +3,8 @@
 #include <filesystem>
 
 #include "IBuffer.h"
-#include "Loader.h"
 
-namespace espm {
+namespace Viet {
 
 class AllocatedBuffer : public IBuffer
 {
@@ -20,4 +19,4 @@ private:
   std::vector<char> data;
 };
 
-} // namespace espm
+}
