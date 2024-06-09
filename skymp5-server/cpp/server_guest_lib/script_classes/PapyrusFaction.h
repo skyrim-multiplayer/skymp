@@ -8,9 +8,6 @@ class PapyrusFaction final : public IPapyrusClass<PapyrusFaction>
 public:
   const char* GetName() override { return "faction"; }
 
-  // NOT VANILLA/SKSE ONE. Custom. (looks as Keyword.GetKeyword)
-  VarValue GetFaction(VarValue self, const std::vector<VarValue>& arguments);
-
   VarValue GetReaction(VarValue self, const std::vector<VarValue>& arguments);
   // SetReaction ignored, because no way to edit factions forever?
 
@@ -24,9 +21,7 @@ public:
                  .GetBrowser()
                  .GetRecordsByType("FACT");
 
-    AddStatic(vm, "GetFaction", &PapyrusFaction::GetFaction);
-
-    AddMethod(vm, "GetReaction", &PapyrusFaction::GetFaction);
+    AddMethod(vm, "GetReaction", &PapyrusFaction::GetReaction);
   }
 
   std::shared_ptr<IPapyrusCompatibilityPolicy> compatibilityPolicy;
