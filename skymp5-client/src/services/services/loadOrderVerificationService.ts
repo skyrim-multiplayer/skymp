@@ -3,7 +3,7 @@ import { getServerIp, getServerUiPort } from "./skympClient";
 import { getScreenResolution } from "../../view/formView";
 import { ClientListener, CombinedController, Sp } from "./clientListener";
 import { Mod, ServerManifest } from "../messages_http/serverManifest";
-import { logTrace } from "src/logging";
+import { logTrace } from "../../logging";
 
 const STATE_KEY = 'loadOrderCheckState';
 
