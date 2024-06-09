@@ -13,3 +13,5 @@ add_library(libespm ALIAS espm)
 find_path(SPARSEPP_INCLUDE_DIR NAMES spp.h PATH_SUFFIXES sparsepp)
 get_filename_component(SPARSEPP_INCLUDE_DIR ${SPARSEPP_INCLUDE_DIR} DIRECTORY)
 target_include_directories(espm PUBLIC ${SPARSEPP_INCLUDE_DIR})
+
+target_link_libraries(espm PUBLIC viet)
