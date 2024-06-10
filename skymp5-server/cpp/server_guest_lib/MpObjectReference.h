@@ -153,10 +153,6 @@ public:
     const std::string& propertyName,
     const std::string& propertyValueStringified);
 
-  void AddToFaction(Faction faction);
-  bool IsInFaction(uint32_t factionFormID);
-  void RemoveFromFaction(uint32_t factionFormID);
-
   static void Subscribe(MpObjectReference* emitter,
                         MpObjectReference* listener);
   static void Unsubscribe(MpObjectReference* emitter,

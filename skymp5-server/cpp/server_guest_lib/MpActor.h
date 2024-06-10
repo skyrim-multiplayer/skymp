@@ -47,6 +47,10 @@ public:
   void SetAppearance(const Appearance* newAppearance);
   void SetEquipment(const std::string& jsonString);
 
+  void AddToFaction(Faction faction);
+  bool IsInFaction(uint32_t factionFormID);
+  void RemoveFromFaction(uint32_t factionFormID);
+
   void VisitProperties(const PropertiesVisitor& visitor,
                        VisitPropertiesMode mode) override;
   void Disable() override;
@@ -144,6 +148,7 @@ public:
 private:
   struct Impl;
   std::shared_ptr<Impl> pImpl;
+  bool factionsLoaded = false;
 
   void SendAndSetDeathState(bool isDead, bool shouldTeleport);
 
@@ -171,6 +176,7 @@ private:
 
   std::map<uint32_t, uint32_t> EvaluateDeathItem();
   void AddDeathItem();
+  void LoadFactions();
 
 protected:
   void BeforeDestroy() override;

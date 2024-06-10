@@ -322,7 +322,7 @@ VarValue PapyrusActor::AddToFaction(VarValue self,
     WorldState* worldState = compatibilityPolicy->GetWorldState();
 
     Faction resultFaction = Faction();
-    resultFaction.formId = factionRec.rec->GetId();
+    resultFaction.formId = factionRec.ToGlobalId(factionRec.rec->GetId());
     resultFaction.rank = 0;
 
     actor->AddToFaction(resultFaction);
@@ -344,7 +344,7 @@ VarValue PapyrusActor::IsInFaction(VarValue self,
       return VarValue(false);
     }
 
-    return VarValue(actor->IsInFaction(factionRec.rec->GetId()));
+    return VarValue(actor->IsInFaction(factionRec.ToGlobalId(factionRec.rec->GetId())));
   }
   return VarValue(false);
 }
@@ -352,7 +352,7 @@ VarValue PapyrusActor::IsInFaction(VarValue self,
 VarValue PapyrusActor::GetFactions(VarValue self,
                                    const std::vector<VarValue>& arguments)
 {
-  VarValue result = VarValue();
+  VarValue result = VarValue((uint8_t)VarValue::kType_ObjectArray);
   result.pArray = std::make_shared<std::vector<VarValue>>();
 
   if (auto actor = GetFormPtr<MpActor>(self)) {
@@ -371,6 +371,7 @@ VarValue PapyrusActor::GetFactions(VarValue self,
     if (minFactionRank < -128 || minFactionRank > 127 ||
         maxFactionRank < -128 || maxFactionRank > 127 ||
         minFactionRank > maxFactionRank) {
+      spdlog::warn("Actor.GetFactions - minRank > maxRank or out of range (-128/127)");
       return result;
     }
 

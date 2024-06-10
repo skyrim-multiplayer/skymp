@@ -908,56 +908,6 @@ void MpObjectReference::RegisterPrivateIndexedProperty(
   }
 }
 
-void MpObjectReference::AddToFaction(Faction faction)
-{
-  EditChangeForm([&](MpChangeFormREFR& changeForm) {
-    if (!changeForm.factions.has_value()) {
-      changeForm.factions = std::vector<Faction>();
-      changeForm.factions.value().push_back(faction);
-    } else {
-      for (const auto& fact : changeForm.factions.value()) {
-        if (faction.formId == fact.formId) {
-          return;
-        }
-      }
-      changeForm.factions.value().push_back(faction);
-    }
-  });
-}
-
-bool MpObjectReference::IsInFaction(uint32_t factionFormID)
-{
-  const auto& factions = GetChangeForm().factions;
-
-  if (!factions.has_value()) {
-    return false;
-  }
-
-  for (const auto& faction : factions.value()) {
-    if (faction.formId == factionFormID) {
-      return true;
-    }
-  }
-  return false;
-}
-
-void MpObjectReference::RemoveFromFaction(uint32_t factionFormID)
-{
-  EditChangeForm([&](MpChangeFormREFR& changeForm) {
-    if (!changeForm.factions.has_value()) {
-      return;
-    }
-
-    for (auto it = changeForm.factions.value().begin();
-         it != changeForm.factions.value().end(); ++it) {
-      if (it->formId == factionFormID) {
-        changeForm.factions.value().erase(it);
-        return;
-      }
-    }
-  });
-}
-
 void MpObjectReference::Subscribe(MpObjectReference* emitter,
                                   MpObjectReference* listener)
 {

@@ -148,8 +148,7 @@ TEST_CASE("Loads factions", "[espm]")
   REQUIRE(form.rec->GetEditorId(cache) ==
           std::string("KhajiitCaravanFaction"));
 
-  REQUIRE((static_cast<uint32_t>(data.flags) &
-           static_cast<uint32_t>(espm::FACT::Flags::CanBeOwner)) != 0);
+  REQUIRE(static_cast<uint32_t>(data.flags) == static_cast<uint32_t>(espm::FACT::Flags::CanBeOwner));
 
   REQUIRE(data.interfactionRelations.size() == 2);
   REQUIRE(data.interfactionRelations[0].factionFormId == 275865);
@@ -161,8 +160,8 @@ TEST_CASE("Loads factions", "[espm]")
   REQUIRE(data.interfactionRelations[1].combat ==
           espm::FACT::CombatState::Friend);
 
-  REQUIRE(data.crimeGold.value().arrest == 1);
-  REQUIRE(data.crimeGold.value().attackOnSight == 1);
+  REQUIRE(data.crimeGold.arrest == 1);
+  REQUIRE(data.crimeGold.attackOnSight == 1);
 }
 
 TEST_CASE("Loads script-related subrecords for SovngardeWatcherStatue2",

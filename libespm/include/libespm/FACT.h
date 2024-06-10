@@ -69,16 +69,16 @@ public:
   struct Data
   {
     // fullName is lstring = uint - id in String Table (4 byte length)
-    std::optional<uint32_t> fullNameTableID;
+    uint32_t fullNameTableID = 0;
     std::vector<InterfactionRelation> interfactionRelations;
     Flags flags;
-    std::optional<uint32_t> prisonMarker;
-    std::optional<uint32_t> followerWaitMarker;
-    std::optional<uint32_t> evidenceChest;
-    std::optional<uint32_t> playerBelongingsChest;
-    std::optional<uint32_t> crimeGroup;
-    std::optional<uint32_t> jailOutfit;
-    std::optional<CrimeGold> crimeGold;
+    uint32_t prisonMarker = 0;
+    uint32_t followerWaitMarker = 0;
+    uint32_t evidenceChest = 0;
+    uint32_t playerBelongingsChest = 0;
+    uint32_t crimeGroup = 0;
+    uint32_t jailOutfit = 0;
+    CrimeGold crimeGold;
     std::vector<Rank> ranks;
     // vendor items skipped
     std::vector<CTDA> conditions;

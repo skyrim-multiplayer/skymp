@@ -220,6 +220,66 @@ void MpActor::SetEquipment(const std::string& jsonString)
     [&](MpChangeForm& changeForm) { changeForm.equipmentDump = jsonString; });
 }
 
+void MpActor::AddToFaction(Faction faction)
+{
+  if (factionsLoaded == false)
+    LoadFactions();
+
+  EditChangeForm([&](MpChangeFormREFR& changeForm) {
+    if (!changeForm.factions.has_value()) {
+      changeForm.factions = std::vector<Faction>();
+      changeForm.factions.value().push_back(faction);
+    } else {
+      for (const auto& fact : changeForm.factions.value()) {
+        if (faction.formId == fact.formId) {
+          return;
+        }
+      }
+      changeForm.factions.value().push_back(faction);
+    }
+  });
+}
+
+bool MpActor::IsInFaction(uint32_t factionFormID)
+{
+  if (factionsLoaded == false)
+    LoadFactions();
+
+  const auto& factions = GetChangeForm().factions;
+
+  if (!factions.has_value()) {
+    return false;
+  }
+
+  for (const auto& faction : factions.value()) {
+    if (faction.formId == factionFormID) {
+      return true;
+    }
+  }
+  return false;
+}
+
+void MpActor::RemoveFromFaction(uint32_t factionFormID)
+{
+  if (factionsLoaded == false)
+    LoadFactions();
+
+  EditChangeForm([&](MpChangeFormREFR& changeForm) {
+    if (!changeForm.factions.has_value()) {
+      return;
+    }
+
+    auto& factions = changeForm.factions.value();
+
+    for (int i = 0; i < factions.size(); i++) {
+      if (factions[i].formId == factionFormID) {
+        factions.erase(factions.begin() + i);
+        i -= 1;
+      }
+    }
+  });
+}
+
 void MpActor::VisitProperties(const PropertiesVisitor& visitor,
                               VisitPropertiesMode mode)
 {
@@ -863,6 +923,26 @@ void MpActor::AddDeathItem()
   for (auto& p : map) {
     AddItem(p.first, p.second);
   }
+}
+
+void MpActor::LoadFactions()
+{
+  std::vector<Faction> factions = EvaluateTemplate<espm::NPC_::UseFactions>(
+    GetParent(), GetBaseId(), GetTemplateChain(),
+    [](const auto& npcLookupResult, const auto& npcData) {
+      std::vector<Faction> factions = std::vector<Faction>();
+      for (auto npcFaction : npcData.factions) {
+        Faction faction = Faction();
+        faction.formId = npcFaction.formId;
+        faction.rank = npcFaction.rank;
+        factions.push_back(faction);
+      }
+      return factions;
+    });
+  for (Faction faction : factions) {
+    AddToFaction(faction);
+  }
+  factionsLoaded = true;
 }
 
 std::map<uint32_t, uint32_t> MpActor::EvaluateDeathItem()
