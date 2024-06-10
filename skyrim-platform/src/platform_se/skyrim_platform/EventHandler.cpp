@@ -1064,7 +1064,7 @@ EventResult EventHandler::ProcessEvent(
       auto obj = JsValue::Object();
 
       auto weapon = RE::TESForm::LookupByID<RE::TESObjectWEAP>(weaponId);
-      auto ammo = RE::TESForm::LookupByID<RE::TESObjectWEAP>(ammoId);
+      auto ammo = RE::TESForm::LookupByID<RE::TESObjectAMMO>(ammoId);
 
       if (!weapon && weaponId != 0) {
         return;
