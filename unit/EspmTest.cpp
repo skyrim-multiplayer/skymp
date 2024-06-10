@@ -148,7 +148,8 @@ TEST_CASE("Loads factions", "[espm]")
   REQUIRE(form.rec->GetEditorId(cache) ==
           std::string("KhajiitCaravanFaction"));
 
-  REQUIRE(static_cast<uint32_t>(data.flags) == static_cast<uint32_t>(espm::FACT::Flags::CanBeOwner));
+  REQUIRE(static_cast<uint32_t>(data.flags) ==
+          static_cast<uint32_t>(espm::FACT::Flags::CanBeOwner));
 
   REQUIRE(data.interfactionRelations.size() == 2);
   REQUIRE(data.interfactionRelations[0].factionFormId == 275865);
