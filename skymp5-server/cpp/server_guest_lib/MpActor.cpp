@@ -270,13 +270,11 @@ void MpActor::RemoveFromFaction(uint32_t factionFormID, bool lazyLoad)
     }
 
     auto& factions = changeForm.factions.value();
-
-    for (int i = 0; i < factions.size(); i++) {
-      if (factions[i].formId == factionFormID) {
-        factions.erase(factions.begin() + i);
-        i -= 1;
-      }
-    }
+    factions.erase(std::remove_if(factions.begin(), factions.end(),
+                                  [&](const Faction& faction) {
+                                    return faction.formId == factionFormID;
+                                  }),
+                   factions.end());
   });
 }
 
@@ -933,14 +931,14 @@ void MpActor::LoadFactions()
       std::vector<Faction> factions = std::vector<Faction>();
       for (auto npcFaction : npcData.factions) {
         Faction faction = Faction();
-        faction.formId = npcFaction.formId;
+        faction.formId = npcLookupResult.ToGlobalId(npcFaction.formId);
         faction.rank = npcFaction.rank;
         factions.push_back(faction);
       }
       return factions;
     });
   for (Faction faction : factions) {
-    AddToFaction(faction);
+    AddToFaction(faction, false);
   }
   factionsLoaded = true;
 }
