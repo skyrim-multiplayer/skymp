@@ -220,9 +220,9 @@ void MpActor::SetEquipment(const std::string& jsonString)
     [&](MpChangeForm& changeForm) { changeForm.equipmentDump = jsonString; });
 }
 
-void MpActor::AddToFaction(Faction faction)
+void MpActor::AddToFaction(Faction faction, bool lazyLoad)
 {
-  if (factionsLoaded == false)
+  if (factionsLoaded == false && lazyLoad)
     LoadFactions();
 
   EditChangeForm([&](MpChangeFormREFR& changeForm) {
@@ -240,9 +240,9 @@ void MpActor::AddToFaction(Faction faction)
   });
 }
 
-bool MpActor::IsInFaction(uint32_t factionFormID)
+bool MpActor::IsInFaction(uint32_t factionFormID, bool lazyLoad)
 {
-  if (factionsLoaded == false)
+  if (factionsLoaded == false && lazyLoad)
     LoadFactions();
 
   const auto& factions = GetChangeForm().factions;
@@ -259,9 +259,9 @@ bool MpActor::IsInFaction(uint32_t factionFormID)
   return false;
 }
 
-void MpActor::RemoveFromFaction(uint32_t factionFormID)
+void MpActor::RemoveFromFaction(uint32_t factionFormID, bool lazyLoad)
 {
-  if (factionsLoaded == false)
+  if (factionsLoaded == false && lazyLoad)
     LoadFactions();
 
   EditChangeForm([&](MpChangeFormREFR& changeForm) {

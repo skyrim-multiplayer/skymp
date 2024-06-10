@@ -47,9 +47,9 @@ public:
   void SetAppearance(const Appearance* newAppearance);
   void SetEquipment(const std::string& jsonString);
 
-  void AddToFaction(Faction faction);
-  bool IsInFaction(uint32_t factionFormID);
-  void RemoveFromFaction(uint32_t factionFormID);
+  void AddToFaction(Faction faction, bool lazyLoad = true);
+  bool IsInFaction(uint32_t factionFormID, bool lazyLoad = true);
+  void RemoveFromFaction(uint32_t factionFormID, bool lazyLoad = true);
 
   void VisitProperties(const PropertiesVisitor& visitor,
                        VisitPropertiesMode mode) override;

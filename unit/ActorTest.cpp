@@ -65,20 +65,20 @@ TEST_CASE("Actor factions in changeForm", "[Actor]")
   faction.formId = 0x000123;
   faction.rank = 0;
 
-  actor.AddToFaction(faction);
+  actor.AddToFaction(faction, false);
   // Second time should be ignored
-  actor.AddToFaction(faction);
+  actor.AddToFaction(faction, false);
 
   REQUIRE(actor.GetChangeForm().factions.has_value());
   REQUIRE(actor.GetChangeForm().factions.value().size() == 1);
   REQUIRE(actor.GetChangeForm().factions.value()[0].formId == 0x000123);
 
-  REQUIRE(actor.IsInFaction(0x000223) == false);
-  REQUIRE(actor.IsInFaction(0x000123));
+  REQUIRE(actor.IsInFaction(0x000223, false) == false);
+  REQUIRE(actor.IsInFaction(0x000123, false));
 
-  actor.RemoveFromFaction(0x000f);
+  actor.RemoveFromFaction(0x000f, false);
   REQUIRE(actor.GetChangeForm().factions.value().size() == 1);
 
-  actor.RemoveFromFaction(0x000123);
+  actor.RemoveFromFaction(0x000123, false);
   REQUIRE(actor.GetChangeForm().factions.value().size() == 0);
 }
