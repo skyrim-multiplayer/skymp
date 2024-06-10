@@ -344,7 +344,8 @@ VarValue PapyrusActor::IsInFaction(VarValue self,
       return VarValue(false);
     }
 
-    return VarValue(actor->IsInFaction(factionRec.ToGlobalId(factionRec.rec->GetId())));
+    return VarValue(
+      actor->IsInFaction(factionRec.ToGlobalId(factionRec.rec->GetId())));
   }
   return VarValue(false);
 }
@@ -371,7 +372,8 @@ VarValue PapyrusActor::GetFactions(VarValue self,
     if (minFactionRank < -128 || minFactionRank > 127 ||
         maxFactionRank < -128 || maxFactionRank > 127 ||
         minFactionRank > maxFactionRank) {
-      spdlog::warn("Actor.GetFactions - minRank > maxRank or out of range (-128/127)");
+      spdlog::warn(
+        "Actor.GetFactions - minRank > maxRank or out of range (-128/127)");
       return result;
     }
 
