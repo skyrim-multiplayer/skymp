@@ -369,25 +369,10 @@ VarValue PapyrusActor::GetFactions(VarValue self,
     auto minFactionRank = static_cast<int>(arguments[0]);
     auto maxFactionRank = static_cast<int>(arguments[1]);
 
-    if (minFactionRank < -128 || minFactionRank > 127 ||
-        maxFactionRank < -128 || maxFactionRank > 127 ||
-        minFactionRank > maxFactionRank) {
-      spdlog::warn(
-        "Actor.GetFactions - minRank > maxRank or out of range (-128/127)");
-      return result;
-    }
-
-    const auto& factions = actor->GetChangeForm().factions;
-
-    if (!factions.has_value()) {
-      return result;
-    }
-
-    for (const auto& faction : factions.value()) {
-      if (faction.rank >= minFactionRank && faction.rank <= maxFactionRank) {
-        result.pArray->push_back(VarValue(std::make_shared<EspmGameObject>(
-          worldState->GetEspm().GetBrowser().LookupById(faction.formId))));
-      }
+    auto factions = actor->GetFactions(minFactionRank, maxFactionRank);
+    for (auto faction : factions) {
+      result.pArray->push_back(VarValue(std::make_shared<EspmGameObject>(
+        worldState->GetEspm().GetBrowser().LookupById(faction.formId))));
     }
   }
   return result;

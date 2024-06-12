@@ -259,6 +259,36 @@ bool MpActor::IsInFaction(uint32_t factionFormID, bool lazyLoad)
   return false;
 }
 
+std::vector<Faction> MpActor::GetFactions(int minFactionRank,
+                                          int maxFactionRank, bool lazyLoad)
+{
+  if (factionsLoaded == false && lazyLoad)
+    LoadFactions();
+
+  std::vector<Faction> result = std::vector<Faction>();
+
+  if (minFactionRank < -128 || minFactionRank > 127 || maxFactionRank < -128 ||
+      maxFactionRank > 127 || minFactionRank > maxFactionRank) {
+    spdlog::warn(
+      "Actor.GetFactions - minRank > maxRank or out of range (-128/127)");
+    return result;
+  }
+
+  const auto& factions = GetChangeForm().factions;
+
+  if (!factions.has_value()) {
+    return result;
+  }
+
+  for (const auto& faction : factions.value()) {
+    if (faction.rank >= minFactionRank && faction.rank <= maxFactionRank) {
+      result.push_back(faction);
+    }
+  }
+
+  return result;
+}
+
 void MpActor::RemoveFromFaction(uint32_t factionFormID, bool lazyLoad)
 {
   if (factionsLoaded == false && lazyLoad)
