@@ -1,6 +1,4 @@
 #pragma once
-#include <nlohmann/json.hpp>
-#include <simdjson.h>
 
 struct Faction
 {
