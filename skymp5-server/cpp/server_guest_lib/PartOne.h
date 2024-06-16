@@ -94,6 +94,9 @@ public:
   void RequestPacketHistoryPlayback(Networking::UserId userId,
                                     const PacketHistory& history);
 
+  void SendHostStop(Networking::UserId badHosterUserId,
+                    MpObjectReference& remote);
+
 private:
   void Init();
 
