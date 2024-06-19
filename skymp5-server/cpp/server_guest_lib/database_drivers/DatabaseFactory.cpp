@@ -4,6 +4,7 @@
 #include <nlohmann/json.hpp>
 #include <spdlog/spdlog.h>
 
+#include "ArchiveDatabase.h"
 #include "FileDatabase.h"
 #include "MigrationDatabase.h"
 #include "MongoDatabase.h"

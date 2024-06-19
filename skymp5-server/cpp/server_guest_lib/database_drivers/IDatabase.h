@@ -26,6 +26,12 @@ private:
   const std::vector<std::optional<MpChangeForm>> affectedForms;
 };
 
+struct UpsertResult
+{
+  size_t numUpserted = 0;
+  std::optional<std::string> changeFormsCollectionHash;
+};
+
 class IDatabase
 {
 public:
@@ -36,7 +42,7 @@ public:
   // Returns numbers of change forms inserted or updated successfully (Suitable
   // for logging). In practice, it should be equal to `changeForms.size()` when
   // saving succeed.
-  virtual size_t Upsert(
+  virtual UpsertResult Upsert(
     std::vector<std::optional<MpChangeForm>>&& changeForms) = 0;
 
   virtual void Iterate(const IterateCallback& iterateCallback) = 0;

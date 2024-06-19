@@ -1,18 +1,21 @@
 #pragma once
 #include "IDatabase.h"
+#include <memory>
 #include <spdlog/spdlog.h>
 
-class FileDatabase : public IDatabase
+class MongoWithCacheDatabase : public IDatabase
 {
 public:
-  FileDatabase(std::string directory_,
-               std::shared_ptr<spdlog::logger> logger_);
-
+  MongoWithCacheDatabase(std::string uri_, std::string name_,
+                         std::shared_ptr<spdlog::logger> logger_);
   UpsertResult Upsert(
     std::vector<std::optional<MpChangeForm>>&& changeForms) override;
   void Iterate(const IterateCallback& iterateCallback) override;
 
 private:
+  void EnsureArchiveMatchesCrc32();
+  void EnsureArchiveMatchesMongoDbHash();
+
   struct Impl;
   std::shared_ptr<Impl> pImpl;
 };

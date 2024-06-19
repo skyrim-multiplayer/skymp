@@ -40,12 +40,15 @@ struct AsyncSaveStorage::Impl
   std::unique_ptr<std::thread> thr;
   std::atomic<bool> destroyed = false;
   uint32_t numFinishedUpserts = 0;
+  std::string name;
 };
 
 AsyncSaveStorage::AsyncSaveStorage(const std::shared_ptr<IDatabase>& dbImpl,
-                                   std::shared_ptr<spdlog::logger> logger)
+                                   std::shared_ptr<spdlog::logger> logger,
+                                   const std::string& name)
   : pImpl(new Impl, [](Impl* p) { delete p; })
 {
+  pImpl->name = name;
   pImpl->logger = logger;
   pImpl->share.dbImpl = dbImpl;
 
@@ -80,7 +83,7 @@ void AsyncSaveStorage::SaverThreadMain(Impl* pImpl)
         size_t numChangeForms = 0;
         for (auto& t : tasks) {
           numChangeForms +=
-            pImpl->share.dbImpl->Upsert(std::move(t.changeForms));
+            pImpl->share.dbImpl->Upsert(std::move(t.changeForms)).numUpserted;
           t.changeForms.clear();
           callbacksToFire.push_back(t.callback);
         }
@@ -145,4 +148,9 @@ void AsyncSaveStorage::Tick()
     pImpl->numFinishedUpserts++;
     cb();
   }
+}
+
+const std::string& AsyncSaveStorage::GetName() const
+{
+  return pImpl->name;
 }
