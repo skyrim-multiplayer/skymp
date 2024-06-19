@@ -95,6 +95,11 @@ TEST_CASE("ChangeForm is saved correctly", "[save]")
   f2.actorValues.healthPercentage = 0;
   f2.actorValues.magickaPercentage = 0;
   f2.actorValues.staminaPercentage = 0;
+  Faction faction = Faction();
+  faction.formDesc = FormDesc(13, "Skyrim.esm");
+  faction.rank = 10;
+  f2.factions = std::vector<Faction>();
+  f2.factions.value().push_back(faction);
   UpsertSync(*st, { f1, f2 });
 
   auto res = ISaveStorageUtils::FindAllSync(*st);
@@ -114,6 +119,11 @@ TEST_CASE("ChangeForm is saved correctly", "[save]")
   REQUIRE(res[{ 2, "" }].actorValues.healthPercentage == 0);
   REQUIRE(res[{ 2, "" }].actorValues.magickaPercentage == 0);
   REQUIRE(res[{ 2, "" }].actorValues.staminaPercentage == 0);
+  REQUIRE(res[{ 2, "" }].factions.has_value());
+  REQUIRE(res[{ 2, "" }].factions.value().size() == 1);
+  REQUIRE(res[{ 2, "" }].factions.value()[0].formDesc.shortFormId == 13);
+  REQUIRE(res[{ 2, "" }].factions.value()[0].formDesc.file == "Skyrim.esm");
+  REQUIRE(res[{ 2, "" }].factions.value()[0].rank == 10);
 }
 
 TEST_CASE("Upsert affects the number of change forms in the database in the "

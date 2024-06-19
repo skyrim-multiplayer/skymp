@@ -1,7 +1,8 @@
 #pragma once
+#include "FormDesc.h"
 
 struct Faction
 {
-  uint32_t formId = 0;
+  FormDesc formDesc;
   int8_t rank = 0;
 };

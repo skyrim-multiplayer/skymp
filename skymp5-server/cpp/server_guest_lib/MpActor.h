@@ -48,10 +48,10 @@ public:
   void SetEquipment(const std::string& jsonString);
 
   void AddToFaction(Faction faction, bool lazyLoad = true);
-  bool IsInFaction(uint32_t factionFormID, bool lazyLoad = true);
+  bool IsInFaction(FormDesc factionForm, bool lazyLoad = true);
   std::vector<Faction> GetFactions(int minFactionID, int maxFactionID,
                                    bool lazyLoad = true);
-  void RemoveFromFaction(uint32_t factionFormID, bool lazyLoad = true);
+  void RemoveFromFaction(FormDesc factionForm, bool lazyLoad = true);
 
   void VisitProperties(const PropertiesVisitor& visitor,
                        VisitPropertiesMode mode) override;

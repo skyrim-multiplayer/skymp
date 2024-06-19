@@ -103,7 +103,7 @@ nlohmann::json MpChangeForm::ToJson(const MpChangeForm& changeForm)
     for (int i = 0; i < static_cast<int>(changeForm.factions.value().size());
          ++i) {
       nlohmann::json obj = {
-        { "formId", changeForm.factions.value()[i].formId },
+        { "formDesc", changeForm.factions.value()[i].formDesc.ToString() },
         { "rank", (uint32_t)changeForm.factions.value()[i].rank }
       };
       factionsJson.push_back(obj);
@@ -309,9 +309,11 @@ MpChangeForm MpChangeForm::JsonToChangeForm(simdjson::dom::element& element)
     for (size_t i = 0; i != parsedEntries.size(); ++i) {
       auto& jEntry = parsedEntries[i];
 
-      static JsonPointer formId("formId"), rank("rank");
+      static JsonPointer rank("rank");
       Faction fact = Faction();
-      ReadEx(jEntry, formId, &fact.formId);
+      const char* tmp;
+      ReadEx(jEntry, formDesc, &tmp);
+      fact.formDesc = FormDesc::FromString(tmp);
 
       uint32_t rankTemp = 0;
       ReadEx(jEntry, rank, &rankTemp);

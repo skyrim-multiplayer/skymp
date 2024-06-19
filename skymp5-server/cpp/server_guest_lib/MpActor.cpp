@@ -231,7 +231,7 @@ void MpActor::AddToFaction(Faction faction, bool lazyLoad)
       changeForm.factions.value().push_back(faction);
     } else {
       for (const auto& fact : changeForm.factions.value()) {
-        if (faction.formId == fact.formId) {
+        if (faction.formDesc == fact.formDesc) {
           return;
         }
       }
@@ -240,7 +240,7 @@ void MpActor::AddToFaction(Faction faction, bool lazyLoad)
   });
 }
 
-bool MpActor::IsInFaction(uint32_t factionFormID, bool lazyLoad)
+bool MpActor::IsInFaction(FormDesc factionForm, bool lazyLoad)
 {
   if (factionsLoaded == false && lazyLoad)
     LoadFactions();
@@ -252,7 +252,7 @@ bool MpActor::IsInFaction(uint32_t factionFormID, bool lazyLoad)
   }
 
   for (const auto& faction : factions.value()) {
-    if (faction.formId == factionFormID) {
+    if (faction.formDesc == factionForm) {
       return true;
     }
   }
@@ -289,7 +289,7 @@ std::vector<Faction> MpActor::GetFactions(int minFactionRank,
   return result;
 }
 
-void MpActor::RemoveFromFaction(uint32_t factionFormID, bool lazyLoad)
+void MpActor::RemoveFromFaction(FormDesc factionForm, bool lazyLoad)
 {
   if (factionsLoaded == false && lazyLoad)
     LoadFactions();
@@ -302,7 +302,7 @@ void MpActor::RemoveFromFaction(uint32_t factionFormID, bool lazyLoad)
     auto& factions = changeForm.factions.value();
     factions.erase(std::remove_if(factions.begin(), factions.end(),
                                   [&](const Faction& faction) {
-                                    return faction.formId == factionFormID;
+                                    return faction.formDesc == factionForm;
                                   }),
                    factions.end());
   });
@@ -957,11 +957,13 @@ void MpActor::LoadFactions()
 {
   std::vector<Faction> factions = EvaluateTemplate<espm::NPC_::UseFactions>(
     GetParent(), GetBaseId(), GetTemplateChain(),
-    [](const auto& npcLookupResult, const auto& npcData) {
+    [&](const auto& npcLookupResult, const auto& npcData) {
       std::vector<Faction> factions = std::vector<Faction>();
       for (auto npcFaction : npcData.factions) {
         Faction faction = Faction();
-        faction.formId = npcLookupResult.ToGlobalId(npcFaction.formId);
+        faction.formDesc =
+          FormDesc::FromFormId(npcLookupResult.ToGlobalId(npcFaction.formId),
+                               GetParent()->espmFiles);
         faction.rank = npcFaction.rank;
         factions.push_back(faction);
       }

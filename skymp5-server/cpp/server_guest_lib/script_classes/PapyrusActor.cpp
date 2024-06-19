@@ -309,6 +309,11 @@ VarValue PapyrusActor::AddToFaction(VarValue self,
                                     const std::vector<VarValue>& arguments)
 {
   if (auto actor = GetFormPtr<MpActor>(self)) {
+    auto worldState = actor->GetParent();
+    if (!worldState) {
+      throw std::runtime_error("Actor.AddToFaction - no WorldState attached");
+    }
+
     if (arguments.size() < 1) {
       throw std::runtime_error("Actor.AddToFaction requires one argument");
     }
@@ -319,10 +324,9 @@ VarValue PapyrusActor::AddToFaction(VarValue self,
       return VarValue();
     }
 
-    WorldState* worldState = compatibilityPolicy->GetWorldState();
-
     Faction resultFaction = Faction();
-    resultFaction.formId = factionRec.ToGlobalId(factionRec.rec->GetId());
+    resultFaction.formDesc = FormDesc::FromFormId(
+      factionRec.ToGlobalId(factionRec.rec->GetId()), worldState->espmFiles);
     resultFaction.rank = 0;
 
     actor->AddToFaction(resultFaction);
@@ -334,6 +338,11 @@ VarValue PapyrusActor::IsInFaction(VarValue self,
                                    const std::vector<VarValue>& arguments)
 {
   if (auto actor = GetFormPtr<MpActor>(self)) {
+    auto worldState = actor->GetParent();
+    if (!worldState) {
+      throw std::runtime_error("Actor.IsInFaction - no WorldState attached");
+    }
+
     if (arguments.size() < 1) {
       throw std::runtime_error("Actor.IsInFaction requires one argument");
     }
@@ -344,8 +353,8 @@ VarValue PapyrusActor::IsInFaction(VarValue self,
       return VarValue(false);
     }
 
-    return VarValue(
-      actor->IsInFaction(factionRec.ToGlobalId(factionRec.rec->GetId())));
+    return VarValue(actor->IsInFaction(FormDesc::FromFormId(
+      factionRec.ToGlobalId(factionRec.rec->GetId()), worldState->espmFiles)));
   }
   return VarValue(false);
 }
@@ -372,7 +381,8 @@ VarValue PapyrusActor::GetFactions(VarValue self,
     auto factions = actor->GetFactions(minFactionRank, maxFactionRank);
     for (auto faction : factions) {
       result.pArray->push_back(VarValue(std::make_shared<EspmGameObject>(
-        worldState->GetEspm().GetBrowser().LookupById(faction.formId))));
+        worldState->GetEspm().GetBrowser().LookupById(
+          faction.formDesc.ToFormId(worldState->espmFiles)))));
     }
   }
   return result;
@@ -382,6 +392,12 @@ VarValue PapyrusActor::RemoveFromFaction(
   VarValue self, const std::vector<VarValue>& arguments)
 {
   if (auto actor = GetFormPtr<MpActor>(self)) {
+    auto worldState = actor->GetParent();
+    if (!worldState) {
+      throw std::runtime_error(
+        "Actor.RemoveFromFaction - no WorldState attached");
+    }
+
     if (arguments.size() < 1) {
       throw std::runtime_error(
         "Actor.RemoveFromFaction requires one argument");
@@ -399,7 +415,8 @@ VarValue PapyrusActor::RemoveFromFaction(
       return VarValue();
     }
 
-    actor->RemoveFromFaction(factionRec.rec->GetId());
+    actor->RemoveFromFaction(FormDesc::FromFormId(
+      factionRec.ToGlobalId(factionRec.rec->GetId()), worldState->espmFiles));
   }
   return VarValue();
 }
