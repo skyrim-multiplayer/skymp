@@ -14,6 +14,11 @@ namespace Viet {
 MappedBuffer::MappedBuffer(const std::filesystem::path& path)
 {
   size_ = std::filesystem::file_size(path);
+  if (size_ == 0) {
+    throw std::runtime_error("[MappedBuffer] attempt to map empty file " +
+                             path.string());
+  }
+
 #ifdef WIN32
   fileHandle_ = CreateFileW(path.c_str(), GENERIC_READ, FILE_SHARE_READ, NULL,
                             OPEN_EXISTING, FILE_FLAG_RANDOM_ACCESS, 0);
