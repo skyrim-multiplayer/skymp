@@ -303,6 +303,15 @@ const main = async () => {
 main();
 
 // This is needed at least to handle axios errors in masterClient
+// TODO: implement alerts
 process.on("unhandledRejection", (...args) => {
+  console.error("[!!!] unhandledRejection")
+  console.error(...args);
+});
+
+// setTimeout on gamemode should not be able to kill the entire server
+// TODO: implement alerts
+process.on("uncaughtException", (...args) => {
+  console.error("[!!!] uncaughtException")
   console.error(...args);
 });
