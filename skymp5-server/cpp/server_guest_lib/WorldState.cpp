@@ -581,6 +581,8 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
     LocationalDataUtils::GetRot(locationalData),
     FormDesc::FromFormId(worldOrCell, espmFiles)
   };
+
+  MpChangeFormREFR* changeForm = nullptr;
   if (!isNpc) {
     form.reset(new MpObjectReference(formLocationalData,
                                      formCallbacksFactory(), baseId,
@@ -589,7 +591,7 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
     form.reset(
       new MpActor(formLocationalData, formCallbacksFactory(), baseId));
   }
-  AddForm(std::move(form), formId, true);
+  AddForm(std::move(form), formId, true, changeForm);
 
   // Do not TriggerFormInitEvent here, doing it later after changeForm apply
 

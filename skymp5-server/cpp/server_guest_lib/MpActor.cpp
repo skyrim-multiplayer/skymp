@@ -220,6 +220,94 @@ void MpActor::SetEquipment(const std::string& jsonString)
     [&](MpChangeForm& changeForm) { changeForm.equipmentDump = jsonString; });
 }
 
+void MpActor::AddToFaction(Faction faction, bool lazyLoad)
+{
+  if (factionsLoaded == false && lazyLoad)
+    LoadFactions();
+
+  EditChangeForm([&](MpChangeFormREFR& changeForm) {
+    if (!changeForm.factions.has_value()) {
+      changeForm.factions = std::vector<Faction>();
+      changeForm.factions.value().push_back(faction);
+    } else {
+      for (const auto& fact : changeForm.factions.value()) {
+        if (faction.formDesc == fact.formDesc) {
+          return;
+        }
+      }
+      changeForm.factions.value().push_back(faction);
+    }
+  });
+}
+
+bool MpActor::IsInFaction(FormDesc factionForm, bool lazyLoad)
+{
+  if (factionsLoaded == false && lazyLoad)
+    LoadFactions();
+
+  const auto& factions = GetChangeForm().factions;
+
+  if (!factions.has_value()) {
+    return false;
+  }
+
+  for (const auto& faction : factions.value()) {
+    if (faction.formDesc == factionForm) {
+      return true;
+    }
+  }
+  return false;
+}
+
+std::vector<Faction> MpActor::GetFactions(int minFactionRank,
+                                          int maxFactionRank, bool lazyLoad)
+{
+  if (factionsLoaded == false && lazyLoad)
+    LoadFactions();
+
+  std::vector<Faction> result = std::vector<Faction>();
+
+  if (minFactionRank < -128 || minFactionRank > 127 || maxFactionRank < -128 ||
+      maxFactionRank > 127 || minFactionRank > maxFactionRank) {
+    spdlog::warn(
+      "Actor.GetFactions - minRank > maxRank or out of range (-128/127)");
+    return result;
+  }
+
+  const auto& factions = GetChangeForm().factions;
+
+  if (!factions.has_value()) {
+    return result;
+  }
+
+  for (const auto& faction : factions.value()) {
+    if (faction.rank >= minFactionRank && faction.rank <= maxFactionRank) {
+      result.push_back(faction);
+    }
+  }
+
+  return result;
+}
+
+void MpActor::RemoveFromFaction(FormDesc factionForm, bool lazyLoad)
+{
+  if (factionsLoaded == false && lazyLoad)
+    LoadFactions();
+
+  EditChangeForm([&](MpChangeFormREFR& changeForm) {
+    if (!changeForm.factions.has_value()) {
+      return;
+    }
+
+    auto& factions = changeForm.factions.value();
+    factions.erase(std::remove_if(factions.begin(), factions.end(),
+                                  [&](const Faction& faction) {
+                                    return faction.formDesc == factionForm;
+                                  }),
+                   factions.end());
+  });
+}
+
 void MpActor::VisitProperties(const PropertiesVisitor& visitor,
                               VisitPropertiesMode mode)
 {
@@ -863,6 +951,28 @@ void MpActor::AddDeathItem()
   for (auto& p : map) {
     AddItem(p.first, p.second);
   }
+}
+
+void MpActor::LoadFactions()
+{
+  std::vector<Faction> factions = EvaluateTemplate<espm::NPC_::UseFactions>(
+    GetParent(), GetBaseId(), GetTemplateChain(),
+    [&](const auto& npcLookupResult, const auto& npcData) {
+      std::vector<Faction> factions = std::vector<Faction>();
+      for (auto npcFaction : npcData.factions) {
+        Faction faction = Faction();
+        faction.formDesc =
+          FormDesc::FromFormId(npcLookupResult.ToGlobalId(npcFaction.formId),
+                               GetParent()->espmFiles);
+        faction.rank = npcFaction.rank;
+        factions.push_back(faction);
+      }
+      return factions;
+    });
+  for (Faction faction : factions) {
+    AddToFaction(faction, false);
+  }
+  factionsLoaded = true;
 }
 
 std::map<uint32_t, uint32_t> MpActor::EvaluateDeathItem()

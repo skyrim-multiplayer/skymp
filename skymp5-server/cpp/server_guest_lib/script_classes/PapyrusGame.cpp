@@ -134,7 +134,9 @@ VarValue PapyrusGame::GetFormInternal(VarValue self,
 
   const std::shared_ptr<MpForm>& pForm =
     compatibilityPolicy->GetWorldState()->LookupFormById(formId);
-  espm::LookupResult res = GetRecordPtr(VarValue(formId));
+  espm::LookupResult res =
+    compatibilityPolicy->GetWorldState()->GetEspm().GetBrowser().LookupById(
+      formId);
 
   if (!pForm && !res.rec) {
     return VarValue::None();
