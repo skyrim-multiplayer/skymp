@@ -330,6 +330,11 @@ VarValue PapyrusActor::AddToFaction(VarValue self,
     resultFaction.rank = 0;
 
     actor->AddToFaction(resultFaction);
+
+    auto serializedArgs = SpSnippetFunctionGen::SerializeArguments(arguments);
+    SpSnippet(GetName(), "AddToFaction", serializedArgs.data(),
+              actor->GetFormId())
+      .Execute(actor, SpSnippetMode::kNoReturnResult);
   }
   return VarValue();
 }
@@ -417,6 +422,11 @@ VarValue PapyrusActor::RemoveFromFaction(
 
     actor->RemoveFromFaction(FormDesc::FromFormId(
       factionRec.ToGlobalId(factionRec.rec->GetId()), worldState->espmFiles));
+
+    auto serializedArgs = SpSnippetFunctionGen::SerializeArguments(arguments);
+    SpSnippet(GetName(), "RemoveFromFaction", serializedArgs.data(),
+              actor->GetFormId())
+      .Execute(actor, SpSnippetMode::kNoReturnResult);
   }
   return VarValue();
 }
