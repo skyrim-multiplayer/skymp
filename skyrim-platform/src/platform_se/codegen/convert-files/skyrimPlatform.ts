@@ -12,8 +12,8 @@ export declare function writeLogs(pluginName: string, ...arguments: unknown[]): 
 export declare function setPrintConsolePrefixesEnabled(enabled: boolean): void
 export declare function callNative(className: string, functionName: string, self?: PapyrusObject, ...args: PapyrusValue[]): PapyrusValue
 export declare function getJsMemoryUsage(): number
-export declare function getPluginSourceCode(pluginName: string): string
-export declare function writePlugin(pluginName: string, newSources: string): string
+export declare function getPluginSourceCode(pluginName: string, overrideFolder?: string): string // overrideFolder is relative to Data/Platform
+export declare function writePlugin(pluginName: string, newSources: string, overrideFolder?: string): string // overrideFolder is relative to Data/Platform
 export declare function getPlatformVersion(): string
 export declare function disableCtrlPrtScnHotkey(): void
 export declare function blockPapyrusEvents(block: boolean): void
@@ -1525,16 +1525,16 @@ export declare class Hooks {
 export declare let hooks: Hooks
 
 export declare class HttpResponse {
-    body: string;
-    status: number;
-    error: string;
+  body: string;
+  status: number;
+  error: string;
 }
 export type HttpHeaders = Record<string, string>
 
 export declare class HttpClient {
-    constructor(url: string);
-    get(path: string, options?: { headers?: HttpHeaders }, callback?: (result: HttpResponse) => void): Promise<HttpResponse>;
-    post(path: string, options: { body: string, contentType: string, headers?: HttpHeaders }, callback?: (result: HttpResponse) => void): Promise<HttpResponse>;
+  constructor(url: string);
+  get(path: string, options?: { headers?: HttpHeaders }, callback?: (result: HttpResponse) => void): Promise<HttpResponse>;
+  post(path: string, options: { body: string, contentType: string, headers?: HttpHeaders }, callback?: (result: HttpResponse) => void): Promise<HttpResponse>;
 }
 
 export declare function createText(xPos: number, yPos: number, text: string, color: number[], name?: string): number; //default name is Tavern
