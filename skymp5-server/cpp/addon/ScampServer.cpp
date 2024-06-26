@@ -92,7 +92,7 @@ Napi::Object ScampServer::Init(Napi::Env env, Napi::Object exports)
       InstanceMethod("lookupEspmRecordById",
                      &ScampServer::LookupEspmRecordById),
       InstanceMethod("getEspmLoadOrder", &ScampServer::GetEspmLoadOrder),
-      InstanceMethod("пetNeighborsByPosition",
+      InstanceMethod("getNeighborsByPosition",
                      &ScampServer::GetNeighborsByPosition),
       InstanceMethod("getDescFromId", &ScampServer::GetDescFromId),
       InstanceMethod("getIdFromDesc", &ScampServer::GetIdFromDesc),
