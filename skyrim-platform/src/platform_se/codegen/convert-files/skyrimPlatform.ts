@@ -1525,16 +1525,16 @@ export declare class Hooks {
 export declare let hooks: Hooks
 
 export declare class HttpResponse {
-  body: string;
-  status: number;
-  error: string;
+    body: string;
+    status: number;
+    error: string;
 }
 export type HttpHeaders = Record<string, string>
 
 export declare class HttpClient {
-  constructor(url: string);
-  get(path: string, options?: { headers?: HttpHeaders }, callback?: (result: HttpResponse) => void): Promise<HttpResponse>;
-  post(path: string, options: { body: string, contentType: string, headers?: HttpHeaders }, callback?: (result: HttpResponse) => void): Promise<HttpResponse>;
+    constructor(url: string);
+    get(path: string, options?: { headers?: HttpHeaders }, callback?: (result: HttpResponse) => void): Promise<HttpResponse>;
+    post(path: string, options: { body: string, contentType: string, headers?: HttpHeaders }, callback?: (result: HttpResponse) => void): Promise<HttpResponse>;
 }
 
 export declare function createText(xPos: number, yPos: number, text: string, color: number[], name?: string): number; //default name is Tavern
