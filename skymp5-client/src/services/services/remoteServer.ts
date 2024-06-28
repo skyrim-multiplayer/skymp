@@ -784,7 +784,7 @@ export class RemoteServer extends ClientListener {
     return this.worldModel.playerCharacterFormIdx;
   }
 
-  private getIdManager() {
+  getIdManager() {
     return this.idManager_;
   }
 
