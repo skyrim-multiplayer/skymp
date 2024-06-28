@@ -20,23 +20,6 @@
 
 #include "UpdateEquipmentMessage.h"
 
-namespace {
-void SendHostStop(PartOne& partOne, Networking::UserId badHosterUserId,
-                  MpObjectReference& remote)
-{
-  auto remoteAsActor = dynamic_cast<MpActor*>(&remote);
-
-  uint64_t longFormId = remote.GetFormId();
-  if (remoteAsActor && longFormId < 0xff000000) {
-    longFormId += 0x100000000;
-  }
-
-  Networking::SendFormatted(&partOne.GetSendTarget(), badHosterUserId,
-                            R"({ "type": "hostStop", "target": %llu })",
-                            longFormId);
-}
-}
-
 MpActor* ActionListener::SendToNeighbours(
   uint32_t idx, const simdjson::dom::element& jMessage,
   Networking::UserId userId, Networking::PacketData data, size_t length,
@@ -57,6 +40,20 @@ MpActor* ActionListener::SendToNeighbours(
   }
 
   if (idx != myActor->GetIdx()) {
+    // Possible fix for "players link to each other" bug
+    // See also PartOne::SetUserActor
+    Networking::UserId actorsOwningUserId =
+      partOne.serverState.UserByActor(actor);
+    if (actorsOwningUserId != Networking::InvalidUserId) {
+      spdlog::error("SendToNeighbours - No permission to update actor {:x} "
+                    "(already owned by user {})",
+                    actor->GetFormId(), actorsOwningUserId);
+      partOne.SendHostStop(userId, *actor);
+
+      partOne.worldState.hosters.erase(actor->GetFormId());
+      return nullptr;
+    }
+
     auto it = partOne.worldState.hosters.find(actor->GetFormId());
     if (it == partOne.worldState.hosters.end() ||
         it->second != myActor->GetFormId()) {
@@ -64,9 +61,10 @@ MpActor* ActionListener::SendToNeighbours(
         spdlog::warn("SendToNeighbours - idx=0, <Message>::ReadJson or "
                      "similar is probably incorrect");
       }
-      spdlog::error("SendToNeighbours - No permission to update actor {:x}",
-                    actor->GetFormId());
-      SendHostStop(partOne, userId, *actor);
+      spdlog::error(
+        "SendToNeighbours - No permission to update actor {:x} (not a hoster)",
+        actor->GetFormId());
+      partOne.SendHostStop(userId, *actor);
       return nullptr;
     }
   }
@@ -135,8 +133,8 @@ void ActionListener::OnUpdateMovement(const RawMessageData& rawMsgData,
       actor->ResetBlockCount();
     }
 
-    actor->SetPos(pos);
-    actor->SetAngle(rot);
+    actor->SetPos(pos, SetPosMode::CalledByUpdateMovement);
+    actor->SetAngle(rot, SetAngleMode::CalledByUpdateMovement);
     actor->SetAnimationVariableBool("bInJumpState", isInJumpState);
     actor->SetAnimationVariableBool("_skymp_isWeapDrawn", isWeapDrawn);
     actor->SetAnimationVariableBool("IsBlocking", isBlocking);
@@ -792,9 +790,9 @@ bool IsDistanceValid(const MpActor& actor, const MpActor& targetActor,
         auto weapDNAM =
           espm::GetData<espm::WEAP>(hitData.source, worldState).weapDNAM;
         if (weapDNAM->animType == espm::WEAP::AnimType::Bow) {
-          reach = kExteriorCellWidthUnits;
+          reach = kExteriorCellWidthUnits * 2;
         } else if (weapDNAM->animType == espm::WEAP::AnimType::Crossbow) {
-          reach = kExteriorCellWidthUnits;
+          reach = kExteriorCellWidthUnits * 2;
         }
       }
     }

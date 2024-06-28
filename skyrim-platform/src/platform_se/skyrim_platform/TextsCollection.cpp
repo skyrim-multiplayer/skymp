@@ -1,8 +1,8 @@
 #include "TextsCollection.h"
 
 TextsCollection::TextsCollection()
+  : textCount(0)
 {
-  makeId.reset(new MakeID(std::numeric_limits<uint32_t>::max()));
 }
 
 TextsCollection::~TextsCollection()
@@ -16,185 +16,106 @@ int TextsCollection::CreateText(double xPos, double yPos, std::wstring str,
 {
   TextToDraw text{ name, xPos, yPos, str, color };
 
-  uint32_t id;
-  makeId->CreateID(id);
-  if (texts.size() <= id) {
-    texts.resize(id + 1);
-  }
+  textCount++;
+  std::pair<int, TextToDraw> arg = { textCount, text };
 
-  texts[id] = text;
-  return id;
+  texts.insert(arg);
+
+  return textCount;
 }
 
 void TextsCollection::DestroyText(int textId)
 {
-  if (makeId->IsID(textId) == false) {
-    throw std::runtime_error("DestroyText - textId doesn't exist");
-  }
-  texts[textId] = std::nullopt;
-  makeId->DestroyID(textId);
-
-  while (!texts.empty() && texts.back() == std::nullopt) {
-    texts.pop_back();
-  }
+  texts.erase(textId);
 }
-
 void TextsCollection::DestroyAllTexts()
 {
   texts.clear();
-  makeId.reset(new MakeID(std::numeric_limits<uint32_t>::max()));
+  textCount = 0;
 }
 
 void TextsCollection::SetTextPos(int& textId, double& xPos, double& yPos)
 {
-  if (makeId->IsID(textId) == false) {
-    throw std::runtime_error("SetTextPos - textId doesn't exist");
-  }
-  texts[textId]->x = xPos;
-  texts[textId]->y = yPos;
+  texts.at(textId).x = xPos;
+  texts.at(textId).y = yPos;
 }
-
 void TextsCollection::SetTextString(int& textId, std::wstring& str)
 {
-  if (makeId->IsID(textId) == false) {
-    throw std::runtime_error("SetTextString - textId doesn't exist");
-  }
-  texts[textId]->string = std::move(str);
+  texts.at(textId).string = std::move(str);
 }
-
 void TextsCollection::SetTextColor(int& textId, std::array<double, 4>& color)
 {
-  if (makeId->IsID(textId) == false) {
-    throw std::runtime_error("SetTextColor - textId doesn't exist");
-  }
-  texts[textId]->color = color;
+  texts.at(textId).color = color;
 }
-
 void TextsCollection::SetTextFont(int& textId, std::wstring& name)
 {
-  if (makeId->IsID(textId) == false) {
-    throw std::runtime_error("SetTextFont - textId doesn't exist");
-  }
-  texts[textId]->fontName = name;
+  texts.at(textId).fontName = name;
 }
-
 void TextsCollection::SetTextRotation(int& textId, float& rotation)
 {
-  if (makeId->IsID(textId) == false) {
-    throw std::runtime_error("SetTextRotation - textId doesn't exist");
-  }
-  texts[textId]->rotation = rotation;
+  texts.at(textId).rotation = rotation;
 }
-
 void TextsCollection::SetTextSize(int& textId, float& size)
 {
-  if (makeId->IsID(textId) == false) {
-    throw std::runtime_error("SetTextSize - textId doesn't exist");
-  }
-  texts[textId]->size = size;
+  texts.at(textId).size = size;
 }
-
 void TextsCollection::SetTextEffect(int& textId, int& effect)
 {
-  if (makeId->IsID(textId) == false) {
-    throw std::runtime_error("SetTextEffect - textId doesn't exist");
-  }
-  texts[textId]->effects = static_cast<DirectX::SpriteEffects>(effect);
+  texts.at(textId).effects = static_cast<DirectX::SpriteEffects>(effect);
 }
-
 void TextsCollection::SetTextDepth(int& textId, int& depth)
 {
-  if (makeId->IsID(textId) == false) {
-    throw std::runtime_error("SetTextDepth - textId doesn't exist");
-  }
-  texts[textId]->layerDepth = depth;
+  texts.at(textId).layerDepth = depth;
 }
-
 void TextsCollection::SetTextOrigin(int& textId, std::array<double, 2>& origin)
 {
-  if (makeId->IsID(textId) == false) {
-    throw std::runtime_error("SetTextOrigin - textId doesn't exist");
-  }
-  texts[textId]->origin = origin;
+  texts.at(textId).origin = origin;
 }
 
-std::pair<double, double> TextsCollection::GetTextPos(int textId) const
+const std::pair<double, double> TextsCollection::GetTextPos(int textId) const
 {
-  if (makeId->IsID(textId) == false) {
-    throw std::runtime_error("GetTextPos - textId doesn't exist");
-  }
-  return {
-    texts[textId]->x,
-    texts[textId]->y,
+  std::pair<double, double> positions = {
+    texts.at(textId).x,
+    texts.at(textId).y,
   };
-}
 
+  return positions;
+}
 const std::wstring& TextsCollection::GetTextString(int textId) const
 {
-  if (makeId->IsID(textId) == false) {
-    throw std::runtime_error("GetTextString - textId doesn't exist");
-  }
-  return texts[textId]->string;
+  return texts.at(textId).string;
 }
-
 const std::array<double, 4>& TextsCollection::GetTextColor(int textId) const
 {
-  if (makeId->IsID(textId) == false) {
-    throw std::runtime_error("GetTextColor - textId doesn't exist");
-  }
-  return texts[textId]->color;
+  return texts.at(textId).color;
 }
-
 const std::wstring& TextsCollection::GetTextFont(int textId) const
 {
-  if (makeId->IsID(textId) == false) {
-    throw std::runtime_error("GetTextFont - textId doesn't exist");
-  }
-  return texts[textId]->fontName;
+  return texts.at(textId).fontName;
 }
-
-float TextsCollection::GetTextRotation(int textId) const
+const float& TextsCollection::GetTextRotation(int textId) const
 {
-  if (makeId->IsID(textId) == false) {
-    throw std::runtime_error("GetTextRotation - textId doesn't exist");
-  }
-  return texts[textId]->rotation;
+  return texts.at(textId).rotation;
 }
-
-float TextsCollection::GetTextSize(int textId) const
+const float& TextsCollection::GetTextSize(int textId) const
 {
-  if (makeId->IsID(textId) == false) {
-    throw std::runtime_error("GetTextSize - textId doesn't exist");
-  }
-  return texts[textId]->size;
+  return texts.at(textId).size;
 }
-
-int TextsCollection::GetTextEffect(int textId) const
+const int TextsCollection::GetTextEffect(int textId) const
 {
-  if (makeId->IsID(textId) == false) {
-    throw std::runtime_error("GetTextEffect - textId doesn't exist");
-  }
-  return texts[textId]->effects;
+  return texts.at(textId).effects;
 }
-
-int TextsCollection::GetTextDepth(int textId) const
+const int& TextsCollection::GetTextDepth(int textId) const
 {
-  if (makeId->IsID(textId) == false) {
-    throw std::runtime_error("GetTextDepth - textId doesn't exist");
-  }
-  return texts[textId]->layerDepth;
+  return texts.at(textId).layerDepth;
 }
-
-const std::array<double, 2>& TextsCollection::GetTextOrigin(int textId) const
+const std::array<double, 2> TextsCollection::GetTextOrigin(int textId) const
 {
-  if (makeId->IsID(textId) == false) {
-    throw std::runtime_error("GetTextOrigin - textId doesn't exist");
-  }
-  return texts[textId]->origin;
+  return texts.at(textId).origin;
 }
 
-const std::vector<std::optional<TextToDraw>>&
-TextsCollection::GetCreatedTexts() const
+const std::unordered_map<int, TextToDraw>& TextsCollection::GetCreatedTexts()
+  const
 {
   return texts;
 }

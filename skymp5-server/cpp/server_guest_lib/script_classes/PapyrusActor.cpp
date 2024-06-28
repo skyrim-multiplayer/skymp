@@ -305,6 +305,122 @@ VarValue PapyrusActor::WornHasKeyword(VarValue self,
   return VarValue(false);
 }
 
+VarValue PapyrusActor::AddToFaction(VarValue self,
+                                    const std::vector<VarValue>& arguments)
+{
+  if (auto actor = GetFormPtr<MpActor>(self)) {
+    auto worldState = actor->GetParent();
+    if (!worldState) {
+      throw std::runtime_error("Actor.AddToFaction - no WorldState attached");
+    }
+
+    if (arguments.size() < 1) {
+      throw std::runtime_error("Actor.AddToFaction requires one argument");
+    }
+
+    const auto& factionRec = GetRecordPtr(arguments[0]);
+    if (!factionRec.rec) {
+      spdlog::error("Actor.AddToFaction - invalid faction form");
+      return VarValue();
+    }
+
+    Faction resultFaction = Faction();
+    resultFaction.formDesc = FormDesc::FromFormId(
+      factionRec.ToGlobalId(factionRec.rec->GetId()), worldState->espmFiles);
+    resultFaction.rank = 0;
+
+    actor->AddToFaction(resultFaction);
+  }
+  return VarValue();
+}
+
+VarValue PapyrusActor::IsInFaction(VarValue self,
+                                   const std::vector<VarValue>& arguments)
+{
+  if (auto actor = GetFormPtr<MpActor>(self)) {
+    auto worldState = actor->GetParent();
+    if (!worldState) {
+      throw std::runtime_error("Actor.IsInFaction - no WorldState attached");
+    }
+
+    if (arguments.size() < 1) {
+      throw std::runtime_error("Actor.IsInFaction requires one argument");
+    }
+
+    const auto& factionRec = GetRecordPtr(arguments[0]);
+    if (!factionRec.rec) {
+      spdlog::error("Actor.IsInFaction - invalid faction form");
+      return VarValue(false);
+    }
+
+    return VarValue(actor->IsInFaction(FormDesc::FromFormId(
+      factionRec.ToGlobalId(factionRec.rec->GetId()), worldState->espmFiles)));
+  }
+  return VarValue(false);
+}
+
+VarValue PapyrusActor::GetFactions(VarValue self,
+                                   const std::vector<VarValue>& arguments)
+{
+  VarValue result = VarValue((uint8_t)VarValue::kType_ObjectArray);
+  result.pArray = std::make_shared<std::vector<VarValue>>();
+
+  if (auto actor = GetFormPtr<MpActor>(self)) {
+    auto worldState = actor->GetParent();
+    if (!worldState) {
+      throw std::runtime_error("Actor.GetFactions - no WorldState attached");
+    }
+
+    if (arguments.size() < 2) {
+      throw std::runtime_error("Actor.GetFactions requires two arguments");
+    }
+
+    auto minFactionRank = static_cast<int>(arguments[0]);
+    auto maxFactionRank = static_cast<int>(arguments[1]);
+
+    auto factions = actor->GetFactions(minFactionRank, maxFactionRank);
+    for (auto faction : factions) {
+      result.pArray->push_back(VarValue(std::make_shared<EspmGameObject>(
+        worldState->GetEspm().GetBrowser().LookupById(
+          faction.formDesc.ToFormId(worldState->espmFiles)))));
+    }
+  }
+  return result;
+}
+
+VarValue PapyrusActor::RemoveFromFaction(
+  VarValue self, const std::vector<VarValue>& arguments)
+{
+  if (auto actor = GetFormPtr<MpActor>(self)) {
+    auto worldState = actor->GetParent();
+    if (!worldState) {
+      throw std::runtime_error(
+        "Actor.RemoveFromFaction - no WorldState attached");
+    }
+
+    if (arguments.size() < 1) {
+      throw std::runtime_error(
+        "Actor.RemoveFromFaction requires one argument");
+    }
+
+    const auto& factionRec = GetRecordPtr(arguments[0]);
+    if (!factionRec.rec) {
+      spdlog::error("Actor.RemoveFromFaction - invalid faction form");
+      return VarValue();
+    }
+
+    const auto& factions = actor->GetChangeForm().factions;
+
+    if (!factions.has_value()) {
+      return VarValue();
+    }
+
+    actor->RemoveFromFaction(FormDesc::FromFormId(
+      factionRec.ToGlobalId(factionRec.rec->GetId()), worldState->espmFiles));
+  }
+  return VarValue();
+}
+
 VarValue PapyrusActor::AddSpell(VarValue self,
                                 const std::vector<VarValue>& arguments)
 {
@@ -450,6 +566,10 @@ void PapyrusActor::Register(
   AddMethod(vm, "SetDontMove", &PapyrusActor::SetDontMove);
   AddMethod(vm, "IsDead", &PapyrusActor::IsDead);
   AddMethod(vm, "WornHasKeyword", &PapyrusActor::WornHasKeyword);
+  AddMethod(vm, "AddToFaction", &PapyrusActor::AddToFaction);
+  AddMethod(vm, "IsInFaction", &PapyrusActor::IsInFaction);
+  AddMethod(vm, "GetFactions", &PapyrusActor::GetFactions);
+  AddMethod(vm, "RemoveFromFaction", &PapyrusActor::RemoveFromFaction);
   AddMethod(vm, "AddSpell", &PapyrusActor::AddSpell);
   AddMethod(vm, "RemoveSpell", &PapyrusActor::RemoveSpell);
   AddMethod(vm, "GetRace", &PapyrusActor::GetRace);

@@ -402,15 +402,17 @@ Napi::Value ScampServer::On(const Napi::CallbackInfo& info)
 
 Napi::Value ScampServer::CreateActor(const Napi::CallbackInfo& info)
 {
-  auto formId = NapiHelper::ExtractUInt32(info[0], "formId");
-  auto pos = NapiHelper::ExtractNiPoint3(info[1], "pos");
-  auto angleZ = NapiHelper::ExtractFloat(info[2], "angleZ");
-  auto cellOrWorld = NapiHelper::ExtractUInt32(info[3], "cellOrWorld");
-
-  int32_t userProfileId = -1;
-  if (info[4].IsNumber())
-    userProfileId = info[4].As<Napi::Number>().Int32Value();
   try {
+    auto formId = NapiHelper::ExtractUInt32(info[0], "formId");
+    auto pos = NapiHelper::ExtractNiPoint3(info[1], "pos");
+    auto angleZ = NapiHelper::ExtractFloat(info[2], "angleZ");
+    auto cellOrWorld = NapiHelper::ExtractUInt32(info[3], "cellOrWorld");
+
+    int32_t userProfileId = -1;
+    if (info[4].IsNumber()) {
+      userProfileId = info[4].As<Napi::Number>().Int32Value();
+    }
+
     uint32_t res =
       partOne->CreateActor(formId, pos, angleZ, cellOrWorld, userProfileId);
     return Napi::Number::New(info.Env(), res);
@@ -1019,6 +1021,12 @@ Napi::Value ScampServer::GetIdFromDesc(const Napi::CallbackInfo& info)
 
 Napi::Value ScampServer::CallPapyrusFunction(const Napi::CallbackInfo& info)
 {
+  // This function throws exceptions in case of bad input
+  // But it also catches exceptions from the Papyrus VM functions
+  // This is because
+  // 1) they're rare and unexpected, and we don't want to crash the sever
+  // 2) in Papyrus (not JS) we catch them all. so it's consistent
+  // 3) we plan replacing all exceptions with logs in Papyrus VM functions
   try {
     auto callType = NapiHelper::ExtractString(info[0], "callType");
     auto className = NapiHelper::ExtractString(info[1], "className");
@@ -1043,15 +1051,27 @@ Napi::Value ScampServer::CallPapyrusFunction(const Napi::CallbackInfo& info)
     auto& vm = partOne->worldState.GetPapyrusVm();
     if (callType == "method") {
       if (self.GetType() == VarValue::Type::kType_Object) {
-        res = vm.CallMethod(static_cast<IGameObject*>(self),
-                            functionName.data(), args);
+        try {
+          res = vm.CallMethod(static_cast<IGameObject*>(self),
+                              functionName.data(), args);
+        } catch (std::exception& e) {
+          res = VarValue::None();
+          spdlog::error("ScampServer::CallPapyrusFunction {} {} - {}",
+                        self.ToString(), functionName, e.what());
+        }
       } else {
         throw std::runtime_error(
           "Can't call Papyrus method on non-object self '" + self.ToString() +
           "'");
       }
     } else if (callType == "global") {
-      res = vm.CallStatic(className, functionName, args);
+      try {
+        res = vm.CallStatic(className, functionName, args);
+      } catch (std::exception& e) {
+        res = VarValue::None();
+        spdlog::error("ScampServer::CallPapyrusFunction {} {} - {}", className,
+                      functionName, e.what());
+      }
     } else {
       throw std::runtime_error("Unknown call type '" + callType +
                                "', expected one of ['method', 'global']");

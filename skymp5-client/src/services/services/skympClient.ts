@@ -87,7 +87,8 @@ export class SkympClient extends ClientListener {
   }
 
   private startClient() {
-    this.establishConnectionConditional();
+    // once("tick", ...) is needed to ensure networking service initialized
+    this.controller.once("tick", () => this.establishConnectionConditional());
     this.ctor();
   }
 
@@ -102,7 +103,9 @@ export class SkympClient extends ClientListener {
   }
 
   private establishConnectionConditional() {
-    if (storage.targetIp !== targetIp || storage.targetPort !== targetPort) {
+    const isConnected = this.controller.lookupListener(networking.NetworkingService).isConnected();
+
+    if (!isConnected || storage.targetIp !== targetIp || storage.targetPort !== targetPort) {
       storage.targetIp = targetIp;
       storage.targetPort = targetPort;
 

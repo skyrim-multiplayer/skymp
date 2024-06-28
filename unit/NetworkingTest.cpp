@@ -52,7 +52,7 @@ TEST_CASE("Connect/disconnect", "[Networking]")
 TEST_CASE("Ctors", "[Networking]")
 {
   auto server = Networking::CreateServer(7778, MAX_PLAYERS);
-  auto client = Networking::CreateClient("127.0.0.1", 7778);
+  auto client = Networking::CreateClient("127.0.0.1", 7778, 4000);
 
   try {
     Networking::CreateServer(7778, MAX_PLAYERS);
@@ -62,7 +62,7 @@ TEST_CASE("Ctors", "[Networking]")
   }
 
   try {
-    Networking::CreateClient("cococo", 1);
+    Networking::CreateClient("cococo", 1, 4000);
     REQUIRE(false);
   } catch (std::exception& e) {
     REQUIRE(e.what() == std::string("Peer connect failed with code 2"));

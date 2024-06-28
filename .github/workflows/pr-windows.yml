@@ -25,24 +25,28 @@ jobs:
             DEPLOY_BRANCH: ""
             ONLY_PUSH: false
             DIST_ARTIFACT_NAME: dist-1.5
+            SERVER_DIST_ARTIFACT_NAME: server-dist-1.5
           - DESCRIPTION: 'Skyrim Anniversary Edition (1.6)'
             SKYRIM_SE_FLAG: OFF
             SP_NEXUS_ARTIFACT_NAME: Skyrim Platform %SP_VERSION% (Anniversary Edition)
             DEPLOY_BRANCH: ""
             ONLY_PUSH: false
             DIST_ARTIFACT_NAME: dist
+            SERVER_DIST_ARTIFACT_NAME: server-dist
           - DESCRIPTION: 'Skyrim Anniversary Edition (1.6) - Indev'
             SKYRIM_SE_FLAG: OFF
             SP_NEXUS_ARTIFACT_NAME: nope
             DEPLOY_BRANCH: "indev"
             ONLY_PUSH: true
             DIST_ARTIFACT_NAME: dist-indev
+            SERVER_DIST_ARTIFACT_NAME: server-dist-indev
           - DESCRIPTION: 'Skyrim Anniversary Edition (1.6) - SweetPie'
             SKYRIM_SE_FLAG: OFF
             SP_NEXUS_ARTIFACT_NAME: nope
             DEPLOY_BRANCH: "sweetpie"
             ONLY_PUSH: true
             DIST_ARTIFACT_NAME: dist-sweetpie
+            SERVER_DIST_ARTIFACT_NAME: server-dist-sweetpie
 
     # VS 2019 is still supported, but GitHub windows-2019 runners have unsupported WinSDK version
     runs-on: windows-2022
@@ -74,6 +78,15 @@ jobs:
               "token": "${{secrets.SKYMP5_PATCHES_PAT}}"
             }
           ]
+
+    - name: Commit gathered PRs
+      if: ${{ matrix.DEPLOY_BRANCH != '' && (!matrix.ONLY_PUSH || github.event_name == 'push')}}
+      run: |
+        # fake user for bot
+        git config --global user.email "skyrim_multiplayer_bot@users.noreply.github.com"
+        git config --global user.name "Skyrim Multiplayer Bot"
+        git add .
+        git commit -m "Merge PRs ${{matrix.DEPLOY_BRANCH}}"
 
     - name: Early build skymp5-client
       if: ${{ !matrix.ONLY_PUSH || github.event_name == 'push' }}
@@ -191,6 +204,12 @@ jobs:
       with:
         name: skymp5-client-js (${{ matrix.DESCRIPTION }})
         path: ${{github.workspace}}/build/dist/client/Data/Platform/Plugins/skymp5-client.js
+
+    - uses: actions/upload-artifact@v4
+      if: ${{ !matrix.ONLY_PUSH || github.event_name == 'push' }}
+      with:
+        name: ${{ matrix.SERVER_DIST_ARTIFACT_NAME }}
+        path: ${{github.workspace}}/build/dist/server
 
     - uses: actions/upload-artifact@v4
       if: ${{ !matrix.ONLY_PUSH || github.event_name == 'push' }}

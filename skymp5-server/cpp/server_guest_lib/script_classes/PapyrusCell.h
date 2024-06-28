@@ -10,6 +10,8 @@ public:
 
   VarValue IsAttached(VarValue self, const std::vector<VarValue>& arguments);
 
+  VarValue IsInterior(VarValue self, const std::vector<VarValue>& arguments);
+
   void Register(VirtualMachine& vm,
                 std::shared_ptr<IPapyrusCompatibilityPolicy> policy) override;
 

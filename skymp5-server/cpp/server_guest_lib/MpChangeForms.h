@@ -4,6 +4,7 @@
 #include "Appearance.h"
 #include "DynamicFields.h"
 #include "Equipment.h"
+#include "Faction.h"
 #include "FormDesc.h"
 #include "Inventory.h"
 #include "LocationalData.h"
@@ -96,7 +97,6 @@ public:
                                 { 0.f, 0.f, 72.f },
                                 FormDesc::Tamriel() };
 
-  // Used only for player characters. See GetSpawnDelay
   float spawnDelay = 25.0f;
 
   std::vector<FormDesc> templateChain;
@@ -112,6 +112,9 @@ public:
 
   // Used for SetDisplayName (object reference)
   std::optional<std::string> displayName;
+
+  // Used for Faction (FACT) synchronization
+  std::optional<std::vector<Faction>> factions;
 
   // Used for Quest (QUST) synchronization
   std::optional<std::vector<Quest>> quests;

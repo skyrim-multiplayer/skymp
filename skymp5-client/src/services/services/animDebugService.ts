@@ -1,6 +1,9 @@
 import { logTrace, logError } from "../../logging";
+import { AnimDebugSettings } from "../messages_settings/animDebugSettings";
 import { ClientListener, CombinedController, Sp } from "./clientListener";
-import { ButtonEvent } from "skyrimPlatform";
+import { ButtonEvent, CameraStateChangedEvent, DxScanCode, Menu } from "skyrimPlatform";
+
+const playerId = 0x14;
 
 export class AnimDebugService extends ClientListener {
   constructor(private sp: Sp, private controller: CombinedController) {
@@ -19,53 +22,122 @@ export class AnimDebugService extends ClientListener {
       }
     }
 
+    const self = this;
+    this.sp.hooks.sendAnimationEvent.add({
+      enter: (ctx) => { },
+      leave: (ctx) => {
+        self.onSendAnimationEventLeave(ctx);
+      }
+    }, playerId, playerId);
+
     if (!this.settings || !this.settings.isActive) return;
 
     if (this.settings.textOutput?.isActive) {
       this.queue = new AnimQueueCollection(this.sp, this.settings);
       this.sp.storage[AnimQueueCollection.name] = this.queue;
-
-      const self = this;
-      this.sp.hooks.sendAnimationEvent.add({
-        enter: (ctx) => { },
-        leave: (ctx) => {
-          self.onSendAnimationEventLeave(ctx);
-        }
-      }, playerId, playerId);
     }
 
     if (this.settings.animKeys) {
+      logTrace(this, `Found animKeys in settings. Registering buttonEvent listener`);
       this.controller.on("buttonEvent", (e) => this.onButtonEvent(e));
+    }
+    else {
+      logError(this, `No animKeys defined in settings`);
     }
   }
 
   private onSendAnimationEventLeave(ctx: { animEventName: string, animationSucceeded: boolean }) {
+    const animLowerCase = ctx.animEventName.toLowerCase();
+    if (animLowerCase.startsWith("idle") && !animLowerCase.startsWith("idleforcedefaultstate")) {
+      this.controller.once("update", () => {
+        // This is only for player.playidle
+        if (!this.sp.Ui.isMenuOpen(Menu.Console)) return;
+
+        if (this.sp.Game.getPlayer()?.getFurnitureReference()) return;
+
+        logTrace(this, `Forcing third person and disabling player controls`);
+        this.sp.Game.forceThirdPerson();
+        this.sp.Game.disablePlayerControls(true, false, true, false, false, false, false, false, 0);
+        this.needsExitingAnim = true;
+      });
+    }
+
     if (this.queue === undefined) return;
 
     this.queue.push(ctx.animEventName, ctx.animationSucceeded ? animationSucceededTextColor : animationNotSucceededTextColor);
   }
 
   private onButtonEvent(e: ButtonEvent) {
-    if (e.isUp && this.settings && this.settings.animKeys![e.code]) {
-      this.sp.Debug.sendAnimationEvent(this.sp.Game.getPlayer(), this.settings.animKeys![e.code]);
+    // TODO: de-hardcode controls
+    if (e.code === DxScanCode.Spacebar
+      || e.code === DxScanCode.W
+      || e.code === DxScanCode.A
+      || e.code === DxScanCode.S
+      || e.code === DxScanCode.D) {
+
+      if (this.needsExitingAnim) {
+        this.exitAnim();
+      }
     }
+    else {
+      if (this.needsExitingAnim) {
+        this.sp.Debug.notification("Пробел, чтобы выйти из анимации");
+      }
+    }
+
+    if (!e.isUp) return;
+
+    if (!this.settings) return;
+
+    if (!this.settings.animKeys![e.code]) return;
+
+    if (this.sp.Game.getPlayer()?.isWeaponDrawn()) return;
+
+    if (this.sp.Ui.isMenuOpen(Menu.Favorites)) return;
+    if (this.sp.Ui.isMenuOpen(Menu.Console)) return;
+
+    if (this.stopAnimInProgress) return;
+
+    if (this.sp.Game.getPlayer()?.getFurnitureReference()) return;
+    if (this.sp.Game.getPlayer()?.isSneaking()) return;
+    if (this.sp.Game.getPlayer()?.isSwimming()) return;
+
+    if (this.settings.animKeys![e.code].toLowerCase() === "idleforcedefaultstate") {
+      if (this.needsExitingAnim) {
+        this.exitAnim();
+      }
+    }
+    else {
+      this.sp.Game.forceThirdPerson();
+      this.sp.Game.disablePlayerControls(true, false, true, false, false, false, false, false, 0);
+      this.sp.Debug.sendAnimationEvent(this.sp.Game.getPlayer(), this.settings.animKeys![e.code]);
+
+      this.needsExitingAnim = true;
+    }
+
+    logTrace(this, `Sent animation event: ${this.settings.animKeys![e.code]}`);
+  }
+
+  private exitAnim() {
+    this.sp.Debug.sendAnimationEvent(this.sp.Game.getPlayer(), "IdleForceDefaultState");
+    logTrace(this, `Sent animation event: IdleForceDefaultState`);
+    this.needsExitingAnim = false;
+
+    this.stopAnimInProgress = true;
+    this.sp.Utility.wait(0.5).then(() => {
+      this.sp.Game.enablePlayerControls(true, false, true, false, false, false, false, false, 0);
+    });
+    this.sp.Utility.wait(1).then(() => {
+      this.stopAnimInProgress = false;
+    });
   }
 
   private queue?: AnimQueueCollection;
   private settings?: AnimDebugSettings;
-}
 
-interface AnimTextOutput {
-  isActive?: boolean;
-  itemCount?: number;
-  startPos?: { x: number, y: number },
-  yPosDelta?: number,
-}
+  private needsExitingAnim = false;
 
-interface AnimDebugSettings {
-  isActive?: boolean;
-  textOutput?: AnimTextOutput,
-  animKeys?: { [index: number]: string };
+  private stopAnimInProgress = false;
 }
 
 type AnimListItem = {
@@ -74,7 +146,6 @@ type AnimListItem = {
   color: number[]
 }
 
-const playerId = 0x14;
 const animationSucceededTextColor = [255, 255, 255, 1];
 const animationNotSucceededTextColor = [255, 0, 0, 1];
 
