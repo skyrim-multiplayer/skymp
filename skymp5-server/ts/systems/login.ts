@@ -7,6 +7,7 @@ const loginFailedNotLoggedViaDiscord = JSON.stringify({ customPacketType: "login
 const loginFailedNotInTheDiscordServer = JSON.stringify({ customPacketType: "loginFailedNotInTheDiscordServer" });
 const loginFailedBanned = JSON.stringify({ customPacketType: "loginFailedBanned" });
 const loginFailedIpMismatch = JSON.stringify({ customPacketType: "loginFailedIpMismatch" });
+const loginFailedSessionNotFound = JSON.stringify({ customPacketType: "loginFailedSessionNotFound" });
 
 type Mp = any; // TODO
 
@@ -31,14 +32,21 @@ export class Login implements System {
     private offlineMode: boolean
   ) { }
 
-  private async getUserProfile(session: string): Promise<UserProfile> {
-    const response = await Axios.get(
-      `${this.masterUrl}/api/servers/${this.myAddr}/sessions/${session}`
-    );
-    if (!response.data || !response.data.user || !response.data.user.id) {
-      throw new Error("getUserProfile: bad master-api response");
+  private async getUserProfile(session: string, userId: number, ctx: SystemContext): Promise<UserProfile> {
+    try {
+      const response = await Axios.get(
+        `${this.masterUrl}/api/servers/${this.myAddr}/sessions/${session}`
+      );
+      if (!response.data || !response.data.user || !response.data.user.id) {
+        throw new Error("getUserProfile: bad master-api response");
+      }
+      return response.data.user as UserProfile;
+    } catch (error) {
+      if (Axios.isAxiosError(error) && error.response?.status === 404) {
+        ctx.svr.sendCustomPacket(userId, loginFailedSessionNotFound);
+      }
+      throw error;
     }
-    return response.data.user as UserProfile;
   }
 
   async initAsync(ctx: SystemContext): Promise<void> {
@@ -75,7 +83,7 @@ export class Login implements System {
       this.log("The server is in offline mode, the client is NOT");
     } else if (this.offlineMode === false && gameData && gameData.session) {
       (async () => {
-        const profile = await this.getUserProfile(gameData.session);
+        const profile = await this.getUserProfile(gameData.session, userId, ctx);
         console.log("getUserProfileId:", profile);
 
         if (discordAuth && !discordAuth.botToken) {
