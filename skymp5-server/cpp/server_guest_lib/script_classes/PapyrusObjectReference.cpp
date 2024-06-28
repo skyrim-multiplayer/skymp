@@ -188,7 +188,9 @@ VarValue PapyrusObjectReference::RemoveItem(
 
   auto worldState = selfRefr->GetParent();
   if (!worldState) {
-    throw std::runtime_error("RemoveItem - no WorldState attached");
+    spdlog::error("RemoveItem {:x} - no WorldState attached",
+                  selfRefr->GetFormId());
+    return VarValue::None();
   }
 
   if (!selfRefr || !item.rec)
@@ -196,7 +198,10 @@ VarValue PapyrusObjectReference::RemoveItem(
 
   if (!espm::utils::Is<espm::FLST>(item.rec->GetType())) {
     if (!espm::utils::IsItem(item.rec->GetType())) {
-      throw std::runtime_error("RemoveItem - form is not an item");
+      spdlog::error("RemoveItem {:x} - form {:x} is not an item, it is {}",
+                    selfRefr->GetFormId(), item.ToGlobalId(item.rec->GetId()),
+                    item.rec->GetType().ToString());
+      return VarValue::None();
     }
   }
 
@@ -205,8 +210,10 @@ VarValue PapyrusObjectReference::RemoveItem(
       espm::Convert<espm::LIGH>(item.rec)->GetData(worldState->GetEspmCache());
     bool isTorch = res.data.flags & espm::LIGH::Flags::CanBeCarried;
     if (!isTorch) {
-      throw std::runtime_error(
-        "RemoveItem - form is LIGH without CanBeCarried flag");
+      spdlog::error(
+        "RemoveItem {:x} - form {:x} is LIGH without CanBeCarried flag",
+        selfRefr->GetFormId(), item.ToGlobalId(item.rec->GetId()));
+      return VarValue::None();
     }
   }
 
