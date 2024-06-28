@@ -367,7 +367,10 @@ export class RemoteServer extends ClientListener {
       }
     }
 
-    if (msg.isMe) this.worldModel.playerCharacterFormIdx = i;
+    if (msg.isMe) {
+      this.worldModel.playerCharacterFormIdx = i;
+      this.worldModel.playerCharacterRefrId = msg.refrId || 0;
+    }
 
     // TODO: move to a separate module
 
@@ -572,6 +575,7 @@ export class RemoteServer extends ClientListener {
 
     if (this.worldModel.playerCharacterFormIdx === i) {
       this.worldModel.playerCharacterFormIdx = -1;
+      this.worldModel.playerCharacterRefrId = 0;
 
       // TODO: move to a separate module
       once('update', () => Game.quitToMainMenu());
@@ -739,6 +743,7 @@ export class RemoteServer extends ClientListener {
   private handleConnectionAccepted(): void {
     this.worldModel.forms = [];
     this.worldModel.playerCharacterFormIdx = -1;
+    this.worldModel.playerCharacterRefrId = 0;
 
     logTrace(this, "Handle connection accepted");
   }
@@ -784,13 +789,17 @@ export class RemoteServer extends ClientListener {
     return this.worldModel.playerCharacterFormIdx;
   }
 
+  getMyRemoteRefrId(): number {
+    return this.worldModel.playerCharacterRefrId;
+  }
+
   getIdManager() {
     return this.idManager_;
   }
 
   private get worldModel(): WorldModel {
     if (typeof storage["worldModel"] === "function") {
-      storage["worldModel"] = { forms: [], playerCharacterFormIdx: -1 };
+      storage["worldModel"] = { forms: [], playerCharacterFormIdx: -1, playerCharacterRefrId: 0 };
     }
     return storage["worldModel"] as WorldModel;
   }
