@@ -985,7 +985,7 @@ Napi::Value ScampServer::GetNeighborsByPosition(const Napi::CallbackInfo& info)
 {
   try {
     auto cellOrWorldDesc = FormDesc::FromString(
-      NapiHelper::ExtractString(info[1], "cellOrWorldDesc"));
+      NapiHelper::ExtractString(info[0], "cellOrWorldDesc"));
     auto pos = NapiHelper::ExtractNiPoint3(info[1], "pos");
 
     auto cellX = static_cast<int32_t>(pos[0] / 4096);
