@@ -142,8 +142,18 @@ void PartOne::SetUserActor(Networking::UserId userId, uint32_t actorFormId)
       throw std::runtime_error(ss.str());
     }
 
+    // Clear actor's hoster if any.
+    // HostStop message will be sent on the next attempt to update actor's
+    // movement
+    // Possible fix for "players link to each other" bug
+    // See also ActionListener::SendToNeighbours
+    auto hosterActorIt = worldState.hosters.find(actor.GetFormId());
+    if (hosterActorIt != worldState.hosters.end()) {
+      worldState.hosters.erase(hosterActorIt);
+    }
+
     // Both functions are required here, but it is NOT covered by unit tests
-    // properly. If you do something wrong here, players would not be able to
+    // properly. If you do something wrong here, players will not be able to
     // interact with items in the same cell after reconnecting.
     actor.UnsubscribeFromAll();
     actor.RemoveFromGridAndUnsubscribeAll();
@@ -471,6 +481,21 @@ void PartOne::RequestPacketHistoryPlayback(Networking::UserId userId,
   } else {
     throw std::runtime_error("Invalid user id " + std::to_string(userId));
   }
+}
+
+void PartOne::SendHostStop(Networking::UserId badHosterUserId,
+                           MpObjectReference& remote)
+{
+  auto remoteAsActor = dynamic_cast<MpActor*>(&remote);
+
+  uint64_t longFormId = remote.GetFormId();
+  if (remoteAsActor && longFormId < 0xff000000) {
+    longFormId += 0x100000000;
+  }
+
+  Networking::SendFormatted(&GetSendTarget(), badHosterUserId,
+                            R"({ "type": "hostStop", "target": %llu })",
+                            longFormId);
 }
 
 FormCallbacks PartOne::CreateFormCallbacks()
