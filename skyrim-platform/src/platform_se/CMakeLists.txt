@@ -118,16 +118,16 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
 
     set(DEPENDENCIES_FOR_CUSTOM_TARGETS skyrim_platform SkyrimPlatformCEF skyrim_platform_entry)
 
-  add_papyrus_library_ck(
-    NAME TESModPlatformPsc
-    DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/psc"
-    OUTPUT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/pex"
-    COMPILER_EXECUTABLE_PATH "${SKYRIM_DIR}/Papyrus compiler/PapyrusCompiler.exe"
-  )
-  if(TARGET TESModPlatformPsc)
-    add_dependencies(TESModPlatformPsc ${DEPENDENCIES_FOR_CUSTOM_TARGETS})
-    list(APPEND DEPENDENCIES_FOR_CUSTOM_TARGETS TESModPlatformPsc)
-  endif()
+    add_papyrus_library_ck(
+      NAME TESModPlatformPsc
+      DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/psc"
+      OUTPUT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/pex"
+      COMPILER_EXECUTABLE_PATH "${SKYRIM_DIR}/Papyrus compiler/PapyrusCompiler.exe"
+    )
+    if(TARGET TESModPlatformPsc)
+      add_dependencies(TESModPlatformPsc ${DEPENDENCIES_FOR_CUSTOM_TARGETS})
+      list(APPEND DEPENDENCIES_FOR_CUSTOM_TARGETS TESModPlatformPsc)
+    endif()
 
     file(GLOB papyrus_sources "${CMAKE_CURRENT_SOURCE_DIR}/psc/*.psc")
     set(def "")
