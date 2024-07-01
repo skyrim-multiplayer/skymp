@@ -4,5 +4,5 @@
 struct Faction
 {
   FormDesc formDesc;
-  int8_t rank = 0;
+  uint8_t rank = 0;
 };

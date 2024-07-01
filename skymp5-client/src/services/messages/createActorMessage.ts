@@ -1,6 +1,7 @@
 import { Appearance } from "../../sync/appearance";
 import { Equipment } from "../../sync/equipment";
 import { Inventory } from "../../sync/inventory";
+import { Faction } from "../../sync/factions";
 import { Transform } from "../../sync/movement";
 import { Animation } from "../../sync/animation";
 
@@ -31,6 +32,7 @@ export interface CreateActorMessageAdditionalProps {
     disabled?: boolean;
     lastAnimation?: string;
     displayName?: string;
+    factions?: Faction[];
     isHostedByOther?: boolean;
     isRaceMenuOpen?: boolean;
     learnedSpells?: number[];
