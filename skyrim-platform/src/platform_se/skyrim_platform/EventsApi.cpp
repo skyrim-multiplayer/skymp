@@ -484,7 +484,8 @@ JsValue EventsApi::SendIpcMessage(const JsFunctionArguments& args)
   }
 
   if (messageLength == 0) {
-    throw std::runtime_error("sendIpcMessage expects a non-empty ArrayBuffer");
+    throw std::runtime_error(
+      "sendIpcMessage expects an ArrayBuffer of length > 0");
   }
 
   IPC::Call(targetSystemName, reinterpret_cast<uint8_t*>(message),
