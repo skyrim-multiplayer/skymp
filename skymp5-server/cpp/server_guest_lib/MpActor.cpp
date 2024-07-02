@@ -904,7 +904,7 @@ bool MpActor::ReadBook(const uint32_t baseId)
 bool MpActor::CanActorValueBeRestored(espm::ActorValue av)
 {
   if (std::chrono::steady_clock::now() - GetLastRestorationTime(av) <
-      std::chrono::minutes(1)) {
+      std::chrono::milliseconds(1)) {
     return false;
   }
   SetLastRestorationTime(av, std::chrono::steady_clock::now());
