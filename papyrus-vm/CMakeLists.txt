@@ -9,6 +9,8 @@ target_include_directories(papyrus-vm-lib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/in
 target_include_directories(papyrus-vm-lib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src")
 
 target_link_libraries(papyrus-vm-lib PUBLIC viet)
+find_package(slikenet CONFIG REQUIRED)
+target_link_libraries(papyrus-vm-lib PRIVATE SLikeNet) # For BitStream
 
 find_package(spdlog CONFIG REQUIRED)
 target_link_libraries(papyrus-vm-lib PUBLIC spdlog::spdlog)
