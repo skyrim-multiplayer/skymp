@@ -149,6 +149,11 @@ export class SweetTaffyPlayerCombatService extends ClientListener {
     this.controller.on("update", () => {
       if (isPlayerControlDisabled === true && Date.now() - blockPlayerControlTimeStamp >= playerAttackTimeout) {
         this.sp.Game.getPlayer()!.setDontMove(false);
+        this.sp.Utility.wait(1).then(() => {
+          logTrace(this, "setDontMode false - enable controls");
+          this.sp.Game.enablePlayerControls(true, false, false, true, false, false, false, false, 0);
+        });
+        logTrace(this, "setDontMode false");
         isPlayerControlDisabled = false;
       }
     });
@@ -172,6 +177,10 @@ export class SweetTaffyPlayerCombatService extends ClientListener {
           blockPlayerControlTimeStamp = Date.now();
 
           this.sp.Game.getPlayer()!.setDontMove(true);
+          this.sp.Utility.wait(0.5).then(() => {
+            this.sp.Game.disablePlayerControls(true, false, false, true, false, false, false, false, 0);
+          });
+          logTrace(this, "setDontMode true");
           playerAttackTimeout = timeout;
         });
       });
