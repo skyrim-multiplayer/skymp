@@ -123,7 +123,7 @@ public:
   void SendPapyrusEvent(MpForm* form, const char* eventName,
                         const VarValue* arguments, size_t argumentsCount);
 
-  const std::set<MpObjectReference*>& GetReferencesAtPosition(
+  const std::set<MpObjectReference*>& GetNeighborsByPosition(
     uint32_t cellOrWorld, int16_t cellX, int16_t cellY);
 
   // See LookupFormById comment

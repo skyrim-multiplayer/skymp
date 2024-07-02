@@ -774,7 +774,7 @@ void WorldState::SendPapyrusEvent(MpForm* form, const char* eventName,
   return vm.SendEvent(form->ToGameObject(), eventName, args, onEnter);
 }
 
-const std::set<MpObjectReference*>& WorldState::GetReferencesAtPosition(
+const std::set<MpObjectReference*>& WorldState::GetNeighborsByPosition(
   uint32_t cellOrWorld, int16_t cellX, int16_t cellY)
 {
   if (espm && !pImpl->chunkLoadingInProgress) {
