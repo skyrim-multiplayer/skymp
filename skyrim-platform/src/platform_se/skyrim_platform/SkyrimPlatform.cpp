@@ -14,6 +14,7 @@
 #include "HttpClient.h"
 #include "HttpClientApi.h"
 #include "InventoryApi.h"
+#include "FenixFunctions.h"
 #include "LoadGameApi.h"
 #include "MpClientPluginApi.h"
 #include "SkyrimPlatformProxy.h"
@@ -211,6 +212,7 @@ private:
                            FileInfoApi::Register(e);
                            TextApi::Register(e);
                            InventoryApi::Register(e);
+                           FenixFunctions::Register(e);
                            ConstEnumApi::Register(e, engine);
                            CallNativeApi::Register(
                              e, [this] { return nativeCallRequirements; });

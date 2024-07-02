@@ -1592,6 +1592,17 @@ export interface Inventory {
 
 export declare function setInventory(formId: number, inventory: Inventory): void;
 
+export interface RayCastResult
+{
+  pos: number[];
+  normal: number[];
+};
+
+export declare function actorSit(formId: number): void;
+export declare function actorGetUp(actorId: number): void;
+export declare function actorRaycast(actorId: number, r: number): RayCastResult;
+export declare function calculateAnticipatedLocation(actorId: number): number[];
+
 // Based on Form.pex
 export declare class Form extends PapyrusObject {
   static from(papyrusObject: PapyrusObject | null): Form | null
