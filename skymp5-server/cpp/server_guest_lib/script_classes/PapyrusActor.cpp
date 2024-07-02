@@ -332,9 +332,14 @@ VarValue PapyrusActor::AddToFaction(VarValue self,
     actor->AddToFaction(resultFaction);
 
     auto serializedArgs = SpSnippetFunctionGen::SerializeArguments(arguments);
-    SpSnippet(GetName(), "AddToFaction", serializedArgs.data(),
-              actor->GetFormId())
-      .Execute(actor, SpSnippetMode::kNoReturnResult);
+    for (auto listener : actor->GetListeners()) {
+      auto targetRefr = dynamic_cast<MpActor*>(listener);
+      if (targetRefr) {
+        SpSnippet(GetName(), "AddToFaction", serializedArgs.data(),
+                  actor->GetFormId())
+          .Execute(targetRefr, SpSnippetMode::kNoReturnResult);
+      }
+    }
   }
   return VarValue();
 }
@@ -424,9 +429,16 @@ VarValue PapyrusActor::RemoveFromFaction(
       factionRec.ToGlobalId(factionRec.rec->GetId()), worldState->espmFiles));
 
     auto serializedArgs = SpSnippetFunctionGen::SerializeArguments(arguments);
-    SpSnippet(GetName(), "RemoveFromFaction", serializedArgs.data(),
-              actor->GetFormId())
-      .Execute(actor, SpSnippetMode::kNoReturnResult);
+    for (auto listener : actor->GetListeners()) {
+      auto targetRefr = dynamic_cast<MpActor*>(listener);
+      if (targetRefr) {
+        auto serializedArgs =
+          SpSnippetFunctionGen::SerializeArguments(arguments);
+        SpSnippet(GetName(), "RemoveFromFaction", serializedArgs.data(),
+                  actor->GetFormId())
+          .Execute(targetRefr, SpSnippetMode::kNoReturnResult);
+      }
+    }
   }
   return VarValue();
 }
