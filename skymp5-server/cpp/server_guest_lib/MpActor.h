@@ -147,6 +147,8 @@ public:
   void AddSpell(uint32_t spellId);
   void RemoveSpell(uint32_t spellId);
 
+  espm::LookupResult GetRace() const;
+
 private:
   struct Impl;
   std::shared_ptr<Impl> pImpl;
