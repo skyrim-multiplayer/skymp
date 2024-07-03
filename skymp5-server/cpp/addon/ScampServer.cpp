@@ -92,6 +92,8 @@ Napi::Object ScampServer::Init(Napi::Env env, Napi::Object exports)
       InstanceMethod("lookupEspmRecordById",
                      &ScampServer::LookupEspmRecordById),
       InstanceMethod("getEspmLoadOrder", &ScampServer::GetEspmLoadOrder),
+      InstanceMethod("getNeighborsByPosition",
+                     &ScampServer::GetNeighborsByPosition),
       InstanceMethod("getDescFromId", &ScampServer::GetDescFromId),
       InstanceMethod("getIdFromDesc", &ScampServer::GetIdFromDesc),
       InstanceMethod("callPapyrusFunction", &ScampServer::CallPapyrusFunction),
@@ -974,6 +976,28 @@ Napi::Value ScampServer::LookupEspmRecordById(const Napi::CallbackInfo& info)
     }
 
     return espmLookupResult;
+  } catch (std::exception& e) {
+    throw Napi::Error::New(info.Env(), std::string(e.what()));
+  }
+}
+
+Napi::Value ScampServer::GetNeighborsByPosition(const Napi::CallbackInfo& info)
+{
+  try {
+    auto cellOrWorldDesc = FormDesc::FromString(
+      NapiHelper::ExtractString(info[0], "cellOrWorldDesc"));
+    auto pos = NapiHelper::ExtractNiPoint3(info[1], "pos");
+
+    auto cellX = static_cast<int32_t>(pos[0] / 4096);
+    auto cellY = static_cast<int32_t>(pos[1] / 4096);
+    auto& refs = partOne->worldState.GetNeighborsByPosition(
+      cellOrWorldDesc.ToFormId(partOne->worldState.espmFiles), cellX, cellY);
+
+    Napi::Array arr = Napi::Array::New(info.Env(), refs.size());
+    for (auto ref : refs) {
+      arr.Set(arr.Length(), Napi::Number::New(info.Env(), ref->GetFormId()));
+    }
+    return arr;
   } catch (std::exception& e) {
     throw Napi::Error::New(info.Env(), std::string(e.what()));
   }
