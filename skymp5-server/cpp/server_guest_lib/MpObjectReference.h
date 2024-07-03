@@ -50,6 +50,17 @@ enum class VisitPropertiesMode
   All
 };
 
+enum class SetPosMode
+{
+  // Will save pos from time to time
+  CalledByUpdateMovement,
+
+  // Will save pos immediately
+  Other
+};
+
+using SetAngleMode = SetPosMode;
+
 class MpObjectReference
   : public MpForm
   , public FormIndex
@@ -78,6 +89,7 @@ public:
   const bool& IsDisabled() const;
   const bool& IsDeleted() const;
   const uint32_t& GetCount() const;
+  float GetTotalItemWeight() const;
   std::chrono::system_clock::duration GetRelootTime() const;
   bool GetAnimationVariableBool(const char* name) const;
   bool IsPointInsidePrimitive(const NiPoint3& point) const;
@@ -97,8 +109,10 @@ public:
   virtual void Disable();
   virtual void Enable();
 
-  void SetPos(const NiPoint3& newPos);
-  void SetAngle(const NiPoint3& newAngle);
+  void SetPos(const NiPoint3& newPos,
+              SetPosMode setPosMode = SetPosMode::Other);
+  void SetAngle(const NiPoint3& newAngle,
+                SetAngleMode setAngleMode = SetAngleMode::Other);
   void SetHarvested(bool harvested);
   void SetOpen(bool open);
   void PutItem(MpActor& actor, const Inventory::Entry& entry);
@@ -145,7 +159,11 @@ public:
                           MpObjectReference* listener);
 
   void SetLastAnimation(const std::string& lastAnimation);
-  void SetDisplayName(const std::string& newName);
+  void SetNodeTextureSet(const std::string& node,
+                         const espm::LookupResult& textureSet,
+                         bool firstPerson);
+  void SetNodeScale(const std::string& node, float scale, bool firstPerson);
+  void SetDisplayName(const std::optional<std::string>& newName);
 
   const std::set<MpObjectReference*>& GetListeners() const;
   const std::set<MpObjectReference*>& GetEmitters() const;
@@ -203,6 +221,8 @@ private:
   void ProcessActivate(MpObjectReference& activationSource);
   void ActivateChilds();
   bool MpApiOnActivate(MpObjectReference& caster);
+  bool MpApiOnPutItem(MpActor& source, const Inventory::Entry& entry);
+  bool MpApiOnTakeItem(MpActor& source, const Inventory::Entry& entry);
 
   bool everSubscribedOrListened = false;
   std::unique_ptr<std::set<MpObjectReference*>> listeners;

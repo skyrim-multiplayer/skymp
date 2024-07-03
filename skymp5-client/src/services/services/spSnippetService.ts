@@ -6,6 +6,7 @@ import { ClientListener, CombinedController, Sp } from "./clientListener";
 
 // TODO: refactor worldViewMisc into service
 import { remoteIdToLocalId } from '../../view/worldViewMisc';
+import { logError, logTrace } from "../../logging";
 
 export class SpSnippetService extends ClientListener {
     constructor(private sp: Sp, private controller: CombinedController) {
@@ -20,6 +21,11 @@ export class SpSnippetService extends ClientListener {
         this.controller.once('update', async () => {
             this.run(msg)
                 .then((res) => {
+                    const isNoResultSnippet = msg.snippetIdx === 0xffffffff;
+                    if (isNoResultSnippet) {
+                        return;
+                    }
+
                     if (res === undefined) {
                         res = null;
                     }
@@ -35,16 +41,47 @@ export class SpSnippetService extends ClientListener {
                         reliability: "reliable"
                     });
                 })
-                .catch((e) => this.logError('SpSnippet ' + msg.class + ' ' + msg.function + ' failed ' + e));
+                .catch((e) => {
+                    logError(this, 'SpSnippet ' + msg.class + ' ' + msg.function + ' failed ' + e);
+                });
         });
     }
 
     private async run(snippet: SpSnippetMessage): Promise<any> {
-        if (snippet.class === "SkympHacks") {
-            if (snippet.function === "AddItem" || snippet.function === "RemoveItem") {
+        const functionLowerCase = snippet.function.toLowerCase();
+        const classLowerCase = snippet.class.toLowerCase();
+
+        // keep in sync with remoteServer.ts
+        if (classLowerCase === "objectreference") {
+            if (functionLowerCase === "setdisplayname") {
+                let newName = snippet.arguments[0];
+                if (typeof newName === "string") {
+
+                    const selfId = remoteIdToLocalId(snippet.selfId);
+                    const self = this.sp.ObjectReference.from(this.sp.Game.getFormEx(selfId));
+
+                    const replaceValue = self?.getBaseObject()?.getName();
+
+                    if (replaceValue !== undefined) {
+                        newName = newName.replace(/%original_name%/g, replaceValue);
+                        snippet.arguments[0] = newName;
+                    }
+                    else {
+                        logError(this, "Couldn't get a replaceValue for SetDisplayName, snippet.selfId was", snippet.selfId.toString(16));
+                    }
+                }
+                else {
+                    logError(this, "Encountered SetDisplayName with non-string argument", newName);
+                }
+            }
+        }
+
+        if (classLowerCase === "skymphacks") {
+            if (functionLowerCase === "additem" || functionLowerCase === "removeitem") {
                 const form = this.sp.Form.from(this.deserializeArg(snippet.arguments[0]));
                 if (form === null) {
-                    return this.logError("Unable to find form with id " + snippet.arguments[0].formId.toString(16));
+                    logError(this, "Unable to find form with id " + snippet.arguments[0].formId.toString(16));
+                    return;
                 }
 
                 const sign = snippet.function === "AddItem" ? "+" : "-";
@@ -59,28 +96,28 @@ export class SpSnippetService extends ClientListener {
                 if (sound !== null) {
                     const name = form.getName();
                     if (name.trim() === "") {
-                        this.logTrace("Sound will not be played because item has no name")
+                        logTrace(this, "Sound will not be played because item has no name")
                     }
                     else {
                         sound.play(this.sp.Game.getPlayer());
                     }
                 }
                 else {
-                    this.logError("Unable to find sound with id " + soundId.toString(16));
+                    logError(this, "Unable to find sound with id " + soundId.toString(16));
                 }
 
                 if (count <= 0) {
-                    this.logError("Positive count expected, got " + count.toString());
+                    logError(this, "Positive count expected, got " + count.toString());
                 }
                 else {
                     const name = form.getName();
                     if (name.trim() === "") {
-                        this.logTrace("Notification will not be shown because item has no name")
+                        logTrace(this, "Notification will not be shown because item has no name")
                     }
                     else {
                         this.sp.Debug.notification(sign + " " + name + " (" + count + ")");
                     }
-                    this.logTrace(sign + " " + name + " (" + count + ")");
+                    logTrace(this, sign + " " + name + " (" + count + ")");
                 }
             } else throw new Error("Unknown SkympHack - " + snippet.function);
             return;

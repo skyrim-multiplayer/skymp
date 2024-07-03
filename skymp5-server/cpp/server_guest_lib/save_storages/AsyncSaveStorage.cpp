@@ -1,12 +1,13 @@
 #include "AsyncSaveStorage.h"
 #include <chrono>
+#include <list>
 #include <thread>
 
 struct AsyncSaveStorage::Impl
 {
   struct UpsertTask
   {
-    std::vector<MpChangeForm> changeForms;
+    std::vector<std::optional<MpChangeForm>> changeForms;
     std::function<void()> callback;
   };
 
@@ -78,7 +79,9 @@ void AsyncSaveStorage::SaverThreadMain(Impl* pImpl)
         auto start = std::chrono::high_resolution_clock::now();
         size_t numChangeForms = 0;
         for (auto& t : tasks) {
-          numChangeForms += pImpl->share.dbImpl->Upsert(t.changeForms);
+          numChangeForms +=
+            pImpl->share.dbImpl->Upsert(std::move(t.changeForms));
+          t.changeForms.clear();
           callbacksToFire.push_back(t.callback);
         }
         if (numChangeForms > 0 && pImpl->logger) {
@@ -108,8 +111,9 @@ void AsyncSaveStorage::IterateSync(const IterateSyncCallback& cb)
   pImpl->share.dbImpl->Iterate(cb);
 }
 
-void AsyncSaveStorage::Upsert(const std::vector<MpChangeForm>& changeForms,
-                              const UpsertCallback& cb)
+void AsyncSaveStorage::Upsert(
+  std::vector<std::optional<MpChangeForm>>&& changeForms,
+  const UpsertCallback& cb)
 {
   std::lock_guard l(pImpl->share3.m);
   pImpl->share3.upsertTasks.push_back({ changeForms, cb });

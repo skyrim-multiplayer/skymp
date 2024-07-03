@@ -29,6 +29,9 @@ set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "scam_native" PREFI
 target_link_libraries(${PROJECT_NAME} PRIVATE unofficial::node-addon-api::node-addon-api)
 target_include_directories(${PROJECT_NAME} PRIVATE ${SKYMP5_SERVER_SOURCE_DIR}/cpp/addon)
 
+# Make 'cmake --build . --target skymp5-server' building typescript part as well
+add_dependencies(${PROJECT_NAME} skymp5-server-ts)
+
 # Put build artifacts into build/dist/server
 if(WIN32)
   set_target_properties(${PROJECT_NAME} PROPERTIES
@@ -56,10 +59,12 @@ if(WIN32)
   file(WRITE ${PROJECT_BINARY_DIR}/launch_server.bat.tmp "${bat}")
 
   # Same but for dev (no pause, placed into ./build dir)
-  set(bat "setlocal\n") # setlocal/endlocal is for temporary cd
+  set(bat "@echo off\n") # Turn off command echoing
+  set(bat "${bat}setlocal\n") # setlocal/endlocal is for temporary cd
   set(bat "${bat}cd dist/server\n")
   set(bat "${bat}node dist_back/skymp5-server.js\n")
-  set(bat "${bat}endlocal\n")
+  set(bat "${bat}set EXIT_CODE=%ERRORLEVEL%\n")
+  set(bat "${bat}endlocal & exit /B %EXIT_CODE%\n")
   file(WRITE ${CMAKE_BINARY_DIR}/launch_server.bat "${bat}")
 
   add_custom_command(

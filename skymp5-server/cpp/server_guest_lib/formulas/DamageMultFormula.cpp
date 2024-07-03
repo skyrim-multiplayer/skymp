@@ -1,18 +1,43 @@
 #include "DamageMultFormula.h"
 
 #include "MpActor.h"
+#include <nlohmann/json.hpp>
 
 namespace {
+
 bool IsNonPlayerBaseId(const MpActor& actor)
 {
   return actor.GetBaseId() != 0x7;
 }
+
+DamageMultFormula::Settings ParseConfig(const nlohmann::json& config)
+{
+  DamageMultFormula::Settings settings;
+
+  if (!config.is_object()) {
+    spdlog::warn(
+      "Invalid damage mult formula config format. Using default one.");
+    return settings;
+  }
+
+  if (!config.contains("multiplier")) {
+    spdlog::warn("Unable to get multiplier from config. Using default damage "
+                 "mult formula settings");
+    return settings;
+  }
+
+  settings.multiplier = config.at("multiplier").get<float>();
+
+  return settings;
+}
+
 }
 
 DamageMultFormula::DamageMultFormula(
-  std::unique_ptr<IDamageFormula> baseFormula_)
+  std::unique_ptr<IDamageFormula> baseFormula_, const nlohmann::json& config_)
   : baseFormula(std::move(baseFormula_))
 {
+  settings = ParseConfig(config_);
 }
 
 float DamageMultFormula::CalculateDamage(const MpActor& aggressor,
@@ -27,7 +52,7 @@ float DamageMultFormula::CalculateDamage(const MpActor& aggressor,
   }
 
   if (IsNonPlayerBaseId(aggressor) && !IsNonPlayerBaseId(target)) {
-    baseDamage *= 2.0f;
+    baseDamage *= settings.multiplier;
   }
 
   return baseDamage;

@@ -13,7 +13,6 @@
 #include "MsgType.h"
 #include "UserMessageOutput.h"
 #include "WorldState.h"
-#include "papyrus-vm/Utils.h"
 #include "script_objects/EspmGameObject.h"
 #include <fmt/format.h>
 #include <spdlog/spdlog.h>
@@ -41,6 +40,20 @@ MpActor* ActionListener::SendToNeighbours(
   }
 
   if (idx != myActor->GetIdx()) {
+    // Possible fix for "players link to each other" bug
+    // See also PartOne::SetUserActor
+    Networking::UserId actorsOwningUserId =
+      partOne.serverState.UserByActor(actor);
+    if (actorsOwningUserId != Networking::InvalidUserId) {
+      spdlog::error("SendToNeighbours - No permission to update actor {:x} "
+                    "(already owned by user {})",
+                    actor->GetFormId(), actorsOwningUserId);
+      partOne.SendHostStop(userId, *actor);
+
+      partOne.worldState.hosters.erase(actor->GetFormId());
+      return nullptr;
+    }
+
     auto it = partOne.worldState.hosters.find(actor->GetFormId());
     if (it == partOne.worldState.hosters.end() ||
         it->second != myActor->GetFormId()) {
@@ -48,8 +61,10 @@ MpActor* ActionListener::SendToNeighbours(
         spdlog::warn("SendToNeighbours - idx=0, <Message>::ReadJson or "
                      "similar is probably incorrect");
       }
-      spdlog::error("SendToNeighbours - No permission to update actor {:x}",
-                    actor->GetFormId());
+      spdlog::error(
+        "SendToNeighbours - No permission to update actor {:x} (not a hoster)",
+        actor->GetFormId());
+      partOne.SendHostStop(userId, *actor);
       return nullptr;
     }
   }
@@ -118,8 +133,8 @@ void ActionListener::OnUpdateMovement(const RawMessageData& rawMsgData,
       actor->ResetBlockCount();
     }
 
-    actor->SetPos(pos);
-    actor->SetAngle(rot);
+    actor->SetPos(pos, SetPosMode::CalledByUpdateMovement);
+    actor->SetAngle(rot, SetAngleMode::CalledByUpdateMovement);
     actor->SetAnimationVariableBool("bInJumpState", isInJumpState);
     actor->SetAnimationVariableBool("_skymp_isWeapDrawn", isWeapDrawn);
     actor->SetAnimationVariableBool("IsBlocking", isBlocking);
@@ -268,28 +283,6 @@ void ActionListener::OnActivate(const RawMessageData& rawMsgData,
   }
 }
 
-namespace {
-bool IsCantDrop(WorldState* worldState, uint32_t baseId)
-{
-  auto lookupRes = worldState->GetEspm().GetBrowser().LookupById(baseId);
-
-  std::vector<uint32_t> keywordIds =
-    lookupRes.rec->GetKeywordIds(worldState->GetEspmCache());
-
-  for (auto& keywordId : keywordIds) {
-    auto rec = worldState->GetEspm().GetBrowser().LookupById(keywordId).rec;
-    auto keywordRecord = espm::Convert<espm::KYWD>(rec);
-    auto editorId =
-      keywordRecord->GetData(worldState->GetEspmCache()).editorId;
-    if (!Utils::stricmp(editorId, "SweetCantDrop")) {
-      return true;
-    }
-  }
-
-  return false;
-}
-}
-
 void ActionListener::OnPutItem(const RawMessageData& rawMsgData,
                                uint32_t target, const Inventory::Entry& entry)
 {
@@ -304,7 +297,7 @@ void ActionListener::OnPutItem(const RawMessageData& rawMsgData,
     return spdlog::error("No WorldState attached");
   }
 
-  if (IsCantDrop(worldState, entry.baseId)) {
+  if (worldState->HasKeyword(entry.baseId, "SweetCantDrop")) {
     return spdlog::error("Attempt to put SweetCantDrop item {:x}",
                          actor->GetFormId());
   }
@@ -326,7 +319,7 @@ void ActionListener::OnTakeItem(const RawMessageData& rawMsgData,
     return spdlog::error("No WorldState attached");
   }
 
-  if (IsCantDrop(worldState, entry.baseId)) {
+  if (worldState->HasKeyword(entry.baseId, "SweetCantDrop")) {
     return spdlog::error("Attempt to take SweetCantDrop item {:x}",
                          actor->GetFormId());
   }
@@ -348,12 +341,45 @@ void ActionListener::OnDropItem(const RawMessageData& rawMsgData,
     return spdlog::error("No WorldState attached");
   }
 
-  if (IsCantDrop(worldState, entry.baseId)) {
+  if (worldState->HasKeyword(entry.baseId, "SweetCantDrop")) {
     return spdlog::error("Attempt to drop SweetCantDrop item {:x}",
                          ac->GetFormId());
   }
 
   ac->DropItem(baseId, entry);
+}
+
+void ActionListener::OnPlayerBowShot(const RawMessageData& rawMsgData,
+                                     uint32_t weaponId, uint32_t ammoId,
+                                     float power, bool isSunGazing)
+{
+  MpActor* ac = partOne.serverState.ActorByUser(rawMsgData.userId);
+  if (!ac) {
+    return spdlog::error("Unable to shot from user with id: {}.",
+                         rawMsgData.userId);
+  }
+
+  auto worldState = ac->GetParent();
+
+  if (!worldState) {
+    return;
+  }
+
+  auto ammoLookupRes = worldState->GetEspm().GetBrowser().LookupById(ammoId);
+
+  if (!ammoLookupRes.rec) {
+    return spdlog::error("ActionListener::OnPlayerBowShot {:x} - unable to "
+                         "find espm record for {:x}",
+                         ac->GetFormId(), ammoId);
+  }
+
+  if (ammoLookupRes.rec->GetType().ToString() != "AMMO") {
+    return spdlog::error(
+      "ActionListener::OnPlayerBowShot {:x} - unable to shot not an ammo {:x}",
+      ac->GetFormId(), ammoId);
+  }
+
+  ac->RemoveItem(ammoId, 1, nullptr);
 }
 
 namespace {
@@ -430,6 +456,10 @@ void UseCraftRecipe(MpActor* me, const espm::COBJ* recipeUsed,
 
   spdlog::info("Using craft recipe with EDID {} from espm file with index {}",
                recipeUsed->GetEditorId(cache), espmIdx);
+
+  for (auto& condition : recipeData.conditions) {
+    // impl race, item, perk? checks
+  }
 
   std::vector<Inventory::Entry> entries;
   for (auto& entry : recipeData.inputObjects) {
@@ -534,6 +564,10 @@ void ActionListener::OnHostAttempt(const RawMessageData& rawMsgData,
     hoster = me->GetFormId();
     remote.UpdateHoster(hoster);
 
+    // Prevents too fast host switch
+    partOne.worldState.lastMovUpdateByIdx[remoteIdx] =
+      std::chrono::system_clock::now();
+
     auto remoteAsActor = dynamic_cast<MpActor*>(&remote);
 
     if (remoteAsActor) {
@@ -605,6 +639,11 @@ void ActionListener::OnChangeValues(const RawMessageData& rawMsgData,
   if (!actor) {
     throw std::runtime_error("Unable to change values without Actor attached");
   }
+
+  if (actor->ShouldSkipRestoration()) {
+    return;
+  }
+
   auto now = std::chrono::steady_clock::now();
 
   float timeAfterRegeneration = CropPeriodAfterLastRegen(
@@ -754,9 +793,9 @@ bool IsDistanceValid(const MpActor& actor, const MpActor& targetActor,
         auto weapDNAM =
           espm::GetData<espm::WEAP>(hitData.source, worldState).weapDNAM;
         if (weapDNAM->animType == espm::WEAP::AnimType::Bow) {
-          reach = kExteriorCellWidthUnits;
+          reach = kExteriorCellWidthUnits * 2;
         } else if (weapDNAM->animType == espm::WEAP::AnimType::Crossbow) {
-          reach = kExteriorCellWidthUnits;
+          reach = kExteriorCellWidthUnits * 2;
         }
       }
     }
@@ -765,8 +804,8 @@ bool IsDistanceValid(const MpActor& actor, const MpActor& targetActor,
   return reach * reach > sqrDistance;
 }
 
-bool IsAvailableForNextAttack(const MpActor& actor, const HitData& hitData,
-                              const std::chrono::duration<float>& timePassed)
+bool CanHit(const MpActor& actor, const HitData& hitData,
+            const std::chrono::duration<float>& timePassed)
 {
   WorldState* espmProvider = actor.GetParent();
   auto weapDNAM =
@@ -784,11 +823,10 @@ bool IsAvailableForNextAttack(const MpActor& actor, const HitData& hitData,
 bool ShouldBeBlocked(const MpActor& aggressor, const MpActor& target)
 {
   NiPoint3 targetViewDirection = target.GetViewDirection();
-  NiPoint3 aggressorViewDirection = aggressor.GetViewDirection();
-  if (targetViewDirection * aggressorViewDirection >= 0) {
+  NiPoint3 aggressorDirection = aggressor.GetPos() - target.GetPos();
+  if (targetViewDirection * aggressorDirection <= 0) {
     return false;
   }
-  NiPoint3 aggressorDirection = aggressor.GetPos() - target.GetPos();
   float angle =
     std::acos((targetViewDirection * aggressorDirection) /
               (targetViewDirection.Length() * aggressorDirection.Length()));
@@ -876,10 +914,10 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
 
   auto& targetActor = *targetActorPtr;
 
-  auto lastHitTime = targetActor.GetLastHitTime();
+  auto lastHitTime = aggressor->GetLastHitTime();
   std::chrono::duration<float> timePassed = currentHitTime - lastHitTime;
 
-  if (!IsAvailableForNextAttack(targetActor, hitData, timePassed)) {
+  if (!CanHit(*aggressor, hitData, timePassed)) {
     WorldState* espmProvider = targetActor.GetParent();
     auto weapDNAM =
       espm::GetData<espm::WEAP>(hitData.source, espmProvider).weapDNAM;
@@ -977,7 +1015,7 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
     : currentActorValues.healthPercentage;
 
   targetActor.NetSetPercentages(currentActorValues, aggressor);
-  targetActor.SetLastHitTime();
+  aggressor->SetLastHitTime();
 
   spdlog::debug("Target {0:x} is hitted by {1} damage. Percentage was: {3}, "
                 "percentage now: {2}, base health: {4})",

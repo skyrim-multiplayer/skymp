@@ -35,6 +35,9 @@ private:
     const Inventory::Entry& opponentEquipmentEntry) const;
   float CalcOpponentArmorRating() const;
   float CalcMagicEffects(const Effects& effects) const;
+  float DetermineDamageFromSource(uint32_t source) const;
+  float CalcUnarmedDamage() const;
+  float CalcArmorDamagePenalty() const;
 };
 
 TES5DamageFormulaImpl::TES5DamageFormulaImpl(const MpActor& aggressor_,
@@ -107,42 +110,54 @@ float TES5DamageFormulaImpl::CalcOpponentArmorRating() const
   return combinedArmorRating;
 }
 
-float TES5DamageFormulaImpl::CalculateDamage() const
+float TES5DamageFormulaImpl::CalcUnarmedDamage() const
 {
-  if (IsUnarmedAttack(hitData.source)) {
-    uint32_t raceId = aggressor.GetRaceId();
+  uint32_t raceId = aggressor.GetRaceId();
+  return espm::GetData<espm::RACE>(raceId, espmProvider).unarmedDamage;
+}
 
-    float unarmedDamage =
-      espm::GetData<espm::RACE>(raceId, espmProvider).unarmedDamage;
-    return hitData.isHitBlocked ? unarmedDamage * 0.1f : unarmedDamage;
-  }
+float TES5DamageFormulaImpl::DetermineDamageFromSource(uint32_t source) const
+{
+  return IsUnarmedAttack(source) ? CalcUnarmedDamage() : CalcWeaponRating();
+}
 
+float TES5DamageFormulaImpl::CalcArmorDamagePenalty() const
+{
   // TODO(#457): weapon rating is probably not only component of incomingDamage
   // Replace this with another issue reference upon investigation
-  float incomingDamage = CalcWeaponRating();
   float maxArmorRating =
     espm::GetData<espm::GMST>(espm::GMST::kFMaxArmorRating, espmProvider)
       .value;
   float armorScalingFactor =
     espm::GetData<espm::GMST>(espm::GMST::kFArmorScalingFactor, espmProvider)
       .value;
-
-  // TODO(#461): add difficulty multiplier
-  // TODO(#463): add sneak modifier
-  float damage = incomingDamage * 0.01f *
+  return 0.01f *
     (100.f -
      std::min<float>(CalcOpponentArmorRating() * armorScalingFactor,
                      maxArmorRating));
+}
+
+float TES5DamageFormulaImpl::CalculateDamage() const
+{
+  float incomingDamage = DetermineDamageFromSource(hitData.source);
+
+  // TODO(#461): add difficulty multiplier
+  // TODO(#463): add sneak modifier
+  float damage = incomingDamage * CalcArmorDamagePenalty();
+
   if (hitData.isPowerAttack) {
-    damage *= 2;
+    damage *= 2.f;
   }
+
   if (hitData.isHitBlocked) {
     // TODO(#460): implement correct block formula
-    damage *= 0.1;
+    damage *= 0.1f;
   }
+
   if (hitData.isSneakAttack) {
-    damage *= 2;
+    damage *= 2.f;
   }
+
   return damage;
 }
 

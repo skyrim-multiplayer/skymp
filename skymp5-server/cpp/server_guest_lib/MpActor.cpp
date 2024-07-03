@@ -3,6 +3,7 @@
 #include "ActorValues.h"
 #include "ChangeFormGuard.h"
 #include "CropRegeneration.h"
+#include "EvaluateTemplate.h"
 #include "FormCallbacks.h"
 #include "GetBaseActorValues.h"
 #include "LeveledListUtils.h"
@@ -66,7 +67,31 @@ struct MpActor::Impl
   uint32_t blockActiveCount = 0;
   std::vector<std::pair<uint32_t, MpObjectReference*>> droppedItemsQueue;
   std::optional<AnimationData> animationData;
+
+  // this is a hot fix attempt to make permanent restoration potions work
+  std::chrono::system_clock::time_point nextRestorationTime{};
 };
+
+namespace {
+
+void RestoreActorValuePatched(MpActor* actor, espm::ActorValue actorValue,
+                              float value)
+{
+  actor->RestoreActorValue(actorValue, value);
+  actor->UpdateNextRestorationTime(std::chrono::seconds{ 5 });
+}
+
+}
+
+void MpActor::UpdateNextRestorationTime(std::chrono::seconds duration) noexcept
+{
+  pImpl->nextRestorationTime = std::chrono::system_clock::now() + duration;
+}
+
+bool MpActor::ShouldSkipRestoration() const noexcept
+{
+  return pImpl->nextRestorationTime > std::chrono::system_clock::now();
+}
 
 MpActor::MpActor(const LocationalData& locationalData_,
                  const FormCallbacks& callbacks_, uint32_t optBaseId)
@@ -204,6 +229,94 @@ void MpActor::SetEquipment(const std::string& jsonString)
 {
   EditChangeForm(
     [&](MpChangeForm& changeForm) { changeForm.equipmentDump = jsonString; });
+}
+
+void MpActor::AddToFaction(Faction faction, bool lazyLoad)
+{
+  if (factionsLoaded == false && lazyLoad)
+    LoadFactions();
+
+  EditChangeForm([&](MpChangeFormREFR& changeForm) {
+    if (!changeForm.factions.has_value()) {
+      changeForm.factions = std::vector<Faction>();
+      changeForm.factions.value().push_back(faction);
+    } else {
+      for (const auto& fact : changeForm.factions.value()) {
+        if (faction.formDesc == fact.formDesc) {
+          return;
+        }
+      }
+      changeForm.factions.value().push_back(faction);
+    }
+  });
+}
+
+bool MpActor::IsInFaction(FormDesc factionForm, bool lazyLoad)
+{
+  if (factionsLoaded == false && lazyLoad)
+    LoadFactions();
+
+  const auto& factions = GetChangeForm().factions;
+
+  if (!factions.has_value()) {
+    return false;
+  }
+
+  for (const auto& faction : factions.value()) {
+    if (faction.formDesc == factionForm) {
+      return true;
+    }
+  }
+  return false;
+}
+
+std::vector<Faction> MpActor::GetFactions(int minFactionRank,
+                                          int maxFactionRank, bool lazyLoad)
+{
+  if (factionsLoaded == false && lazyLoad)
+    LoadFactions();
+
+  std::vector<Faction> result = std::vector<Faction>();
+
+  if (minFactionRank < -128 || minFactionRank > 127 || maxFactionRank < -128 ||
+      maxFactionRank > 127 || minFactionRank > maxFactionRank) {
+    spdlog::warn(
+      "Actor.GetFactions - minRank > maxRank or out of range (-128/127)");
+    return result;
+  }
+
+  const auto& factions = GetChangeForm().factions;
+
+  if (!factions.has_value()) {
+    return result;
+  }
+
+  for (const auto& faction : factions.value()) {
+    if (faction.rank >= minFactionRank && faction.rank <= maxFactionRank) {
+      result.push_back(faction);
+    }
+  }
+
+  return result;
+}
+
+void MpActor::RemoveFromFaction(FormDesc factionForm, bool lazyLoad)
+{
+  if (factionsLoaded == false && lazyLoad)
+    LoadFactions();
+
+  EditChangeForm([&](MpChangeFormREFR& changeForm) {
+    if (!changeForm.factions.has_value()) {
+      return;
+    }
+
+    auto& factions = changeForm.factions.value();
+    factions.erase(std::remove_if(factions.begin(), factions.end(),
+                                  [&](const Faction& faction) {
+                                    return faction.formDesc == factionForm;
+                                  }),
+                   factions.end());
+  });
 }
 
 void MpActor::VisitProperties(const PropertiesVisitor& visitor,
@@ -354,7 +467,7 @@ bool MpActor::OnEquip(uint32_t baseId)
       auto targetRefr = dynamic_cast<MpActor*>(listener);
       if (targetRefr && targetRefr != this) {
         SpSnippet("Actor", "EquipItem", serializedArgs.data(), GetFormId())
-          .Execute(targetRefr);
+          .Execute(targetRefr, SpSnippetMode::kNoReturnResult);
       }
     }
   } else if (isBook) {
@@ -429,6 +542,19 @@ void MpActor::ApplyChangeForm(const MpChangeForm& newChangeForm)
     },
     Mode::NoRequestSave);
   ReapplyMagicEffects();
+
+  // We do the same in PartOne::SetUserActor for player characters
+  if (IsDead() && !IsRespawning()) {
+    spdlog::info("MpActor::ApplyChangeForm {:x} - respawning dead actor",
+                 GetFormId());
+    RespawnWithDelay();
+  }
+
+  // Mirrors MpObjectReference impl
+  // Perform all required grid operations
+  newChangeForm.isDisabled ? Disable() : Enable();
+  SetCellOrWorldObsolete(newChangeForm.worldOrCellDesc);
+  SetPos(newChangeForm.position);
 }
 
 uint32_t MpActor::NextSnippetIndex(
@@ -632,7 +758,11 @@ uint32_t MpActor::GetRaceId() const
     return appearance->raceId;
   }
 
-  return espm::GetData<espm::NPC_>(GetBaseId(), GetParent()).race;
+  return EvaluateTemplate<espm::NPC_::UseTraits>(
+    GetParent(), GetBaseId(), GetTemplateChain(),
+    [](const auto& npcLookupResult, const auto& npcData) {
+      return npcLookupResult.ToGlobalId(npcData.race);
+    });
 }
 
 bool MpActor::IsWeaponDrawn() const
@@ -657,6 +787,10 @@ bool MpActor::IsCreatedAsPlayer() const
 
 void MpActor::SendAndSetDeathState(bool isDead, bool shouldTeleport)
 {
+  spdlog::trace(
+    "MpActor::SendAndSetDeathState {:x} - isDead: {}, shouldTeleport: {}",
+    GetFormId(), isDead, shouldTeleport);
+
   float attribute = isDead ? 0.f : 1.f;
   auto position = GetSpawnPoint();
 
@@ -707,6 +841,9 @@ DeathStateContainerMessage MpActor::GetDeathStateMsg(
 
 void MpActor::MpApiDeath(MpActor* killer)
 {
+  spdlog::trace("MpActor::MpApiDeath {:x} - killer is {:x}", GetFormId(),
+                killer ? killer->GetFormId() : 0);
+
   simdjson::dom::parser parser;
   bool isRespawnBlocked = false;
 
@@ -721,6 +858,9 @@ void MpActor::MpApiDeath(MpActor* killer)
       };
     }
   }
+
+  spdlog::trace("MpActor::MpApiDeath {:x} - isRespawnBlocked: {}", GetFormId(),
+                isRespawnBlocked);
 
   if (!isRespawnBlocked) {
     RespawnWithDelay();
@@ -768,15 +908,36 @@ void MpActor::EatItem(uint32_t baseId, espm::Type t)
 
 bool MpActor::ReadBook(const uint32_t baseId)
 {
+  auto& loader = GetParent()->GetEspm();
+  auto bookLookupResult = loader.GetBrowser().LookupById(baseId);
+
+  if (!bookLookupResult.rec) {
+    spdlog::error("ReadBook {:x} - No book form {:x}", GetFormId(), baseId);
+    return false;
+  }
+
   const auto bookData = espm::GetData<espm::BOOK>(baseId, GetParent());
+  const auto spellOrSkillFormId =
+    bookLookupResult.ToGlobalId(bookData.spellOrSkillFormId);
 
   if (bookData.IsFlagSet(espm::BOOK::Flags::TeachesSpell)) {
+    if (ChangeForm().learnedSpells.IsSpellLearned(spellOrSkillFormId)) {
+      spdlog::info(
+        "ReadBook {:x} - Spell already learned {:x}, not spending the book",
+        GetFormId(), spellOrSkillFormId);
+      return false;
+    }
 
     EditChangeForm([&](MpChangeForm& changeForm) {
-      changeForm.learnedSpells.LearnSpell(bookData.spellOrSkillFormId);
+      changeForm.learnedSpells.LearnSpell(spellOrSkillFormId);
     });
     return true;
+  } else if (bookData.IsFlagSet(espm::BOOK::Flags::TeachesSkill)) {
+    spdlog::info("ReadBook {:x} - Skill book {:x} detected, not implemented",
+                 GetFormId(), baseId);
+    return false;
   }
+
   return false;
 }
 
@@ -822,6 +983,99 @@ void MpActor::EnsureTemplateChainEvaluated(espm::Loader& loader,
       changeForm.templateChain = std::move(templateChain);
     },
     mode);
+}
+
+void MpActor::AddDeathItem()
+{
+  auto map = EvaluateDeathItem();
+  for (auto& p : map) {
+    AddItem(p.first, p.second);
+  }
+}
+
+void MpActor::LoadFactions()
+{
+  std::vector<Faction> factions = EvaluateTemplate<espm::NPC_::UseFactions>(
+    GetParent(), GetBaseId(), GetTemplateChain(),
+    [&](const auto& npcLookupResult, const auto& npcData) {
+      std::vector<Faction> factions = std::vector<Faction>();
+      for (auto npcFaction : npcData.factions) {
+        Faction faction = Faction();
+        faction.formDesc =
+          FormDesc::FromFormId(npcLookupResult.ToGlobalId(npcFaction.formId),
+                               GetParent()->espmFiles);
+        faction.rank = npcFaction.rank;
+        factions.push_back(faction);
+      }
+      return factions;
+    });
+  for (Faction faction : factions) {
+    AddToFaction(faction, false);
+  }
+  factionsLoaded = true;
+}
+
+std::map<uint32_t, uint32_t> MpActor::EvaluateDeathItem()
+{
+  auto worldState = GetParent();
+  if (!worldState) {
+    return {};
+  }
+
+  constexpr int kPlayerCharacterLevel = 1;
+
+  auto& loader = worldState->GetEspm();
+
+  auto base = loader.GetBrowser().LookupById(GetBaseId());
+  if (!base.rec) {
+    spdlog::error("EvaluateDeathItem {:x} - No base form", GetFormId());
+    return {};
+  }
+
+  auto npc = espm::Convert<espm::NPC_>(base.rec);
+  if (!npc) {
+    spdlog::error(
+      "EvaluateDeathItem {:x} - Expected base type to be NPC_, but got {}",
+      GetFormId(), base.rec->GetType().ToString());
+    return {};
+  }
+
+  uint32_t baseId = base.ToGlobalId(base.rec->GetId());
+  auto& templateChain = ChangeForm().templateChain;
+
+  uint32_t deathItemId = EvaluateTemplate<espm::NPC_::UseInventory>(
+    worldState, baseId, templateChain,
+    [](const auto& npcLookupResult, const auto& npcData) {
+      return npcLookupResult.ToGlobalId(npcData.deathItem);
+    });
+
+  if (deathItemId == 0) {
+    spdlog::info("EvaluateDeathItem {:x} - No death item found, skipping add",
+                 GetFormId());
+    return {};
+  }
+
+  espm::LookupResult deathItemLookupRes =
+    loader.GetBrowser().LookupById(deathItemId);
+  if (!deathItemLookupRes.rec) {
+    spdlog::error("EvaluateDeathItem {:x} - Death item {:x} not found in espm",
+                  GetFormId(), deathItemId);
+    return {};
+  }
+
+  auto deathItemLvli = espm::Convert<espm::LVLI>(deathItemLookupRes.rec);
+  if (!deathItemLvli) {
+    spdlog::error("EvaluateDeathItem {:x} - Expected death item type to be "
+                  "LVLI, but got {}",
+                  GetFormId(), deathItemLookupRes.rec->GetType().ToString());
+    return {};
+  }
+
+  const auto kCountMult = 1;
+  auto map = LeveledListUtils::EvaluateListRecurse(
+    loader.GetBrowser(), deathItemLookupRes, kCountMult,
+    kPlayerCharacterLevel);
+  return map;
 }
 
 std::chrono::steady_clock::time_point MpActor::GetLastRestorationTime(
@@ -885,12 +1139,20 @@ void MpActor::Init(WorldState* worldState, uint32_t formId, bool hasChangeForm)
 
 void MpActor::Kill(MpActor* killer, bool shouldTeleport)
 {
+  spdlog::trace("MpActor::Kill {:x} - killer is {:x}", GetFormId(),
+                killer ? killer->GetFormId() : 0);
+
+  // Keep in sync with MpActor::SetIsDead
   SendAndSetDeathState(true, shouldTeleport);
   MpApiDeath(killer);
+  AddDeathItem();
 }
 
 void MpActor::RespawnWithDelay(bool shouldTeleport)
 {
+  spdlog::trace("MpActor::RespawnWithDelay {:x} - isRespawning: {}",
+                GetFormId(), pImpl->isRespawning);
+
   if (pImpl->isRespawning) {
     return;
   }
@@ -904,11 +1166,56 @@ void MpActor::RespawnWithDelay(bool shouldTeleport)
     float respawnTime = GetRespawnTime();
     auto time = Viet::TimeUtils::To<std::chrono::milliseconds>(respawnTime);
     worldState->SetTimer(time).Then([worldState, this, formId, shouldTeleport,
-                                     respawnTimerIndex](Viet::Void) {
+                                     respawnTimerIndex,
+                                     respawnTime](Viet::Void) {
       if (worldState->LookupFormById(formId).get() == this) {
         bool isLatestRespawn = respawnTimerIndex == pImpl->respawnTimerIndex;
         if (isLatestRespawn) {
-          this->Respawn(shouldTeleport);
+          // This is implemented here, not in MpActor::Respawn because we don't
+          // want inventory to be re-added in case of artificial resurrect from
+          // the gamemode
+
+          // This will do nothing if death item resolved to no items
+          auto deathItem = EvaluateDeathItem();
+          if (deathItem.empty()) {
+            spdlog::info("MpActor::RespawnWithDelay {:x} - death item "
+                         "resolved to no items, keeping inventory",
+                         GetFormId());
+          } else {
+            spdlog::info("MpActor::RespawnWithDelay {:x} - death item "
+                         "resolved to {} items, re-adding base inventory",
+                         GetFormId(), deathItem.size());
+
+            if (!worldState->HasEspm()) {
+              spdlog::error(
+                "MpActor::RespawnWithDelay {:x} - no espm attached",
+                GetFormId());
+            } else {
+              Inventory inventory = GetInventory();
+              Inventory inventoryToKeep;
+              for (auto& entry : inventory.entries) {
+                if (worldState->HasKeyword(entry.baseId, "SweetCantDrop")) {
+                  inventoryToKeep.entries.push_back(entry);
+                }
+              }
+              EditChangeForm(
+                [&](MpChangeForm& changeForm) {
+                  changeForm.inv = inventoryToKeep;
+                  changeForm.baseContainerAdded = false;
+                },
+                Mode::NoRequestSave);
+              EnsureBaseContainerAdded(worldState->GetEspm());
+              spdlog::info("MpActor::RespawnWithDelay {:x} - {} inventory "
+                           "entries with keyword kept",
+                           GetFormId(), inventoryToKeep.entries.size());
+            }
+          }
+
+          // Do actual respawn
+          spdlog::info("MpActor::RespawnWithDelay {:x} - finally, respawn "
+                       "after {} seconds",
+                       GetFormId(), respawnTime);
+          Respawn(shouldTeleport);
         }
       }
     });
@@ -981,10 +1288,34 @@ LocationalData MpActor::GetEditorLocationalData() const
   auto data = espm::GetData<espm::ACHR>(formId, worldState);
   auto lookupRes = worldState->GetEspm().GetBrowser().LookupById(formId);
 
-  const NiPoint3& pos = LocationalDataUtils::GetPos(data.loc);
-  NiPoint3 rot = LocationalDataUtils::GetRot(data.loc);
-  uint32_t worldOrCell = LocationalDataUtils::GetWorldOrCell(
-    worldState->GetEspm().GetBrowser(), lookupRes);
+  // TODO: Angles are probably messed up here (radians/degrees)
+
+  NiPoint3 pos;
+  NiPoint3 rot;
+  uint32_t worldOrCell = 0x0000003c;
+
+  if (!lookupRes.rec) {
+    spdlog::error("MpActor::GetEditorLocationalData {:x} - lookupRes.rec was "
+                  "nullptr, using current location as spawn point",
+                  formId);
+
+    pos = this->GetPos();
+    rot = this->GetAngle();
+    worldOrCell = this->GetCellOrWorld().ToFormId(worldState->espmFiles);
+  } else if (!data.loc) {
+    spdlog::error("MpActor::GetEditorLocationalData {:x} - data.loc was "
+                  "nullptr, using current location as spawn point",
+                  formId);
+
+    pos = this->GetPos();
+    rot = this->GetAngle();
+    worldOrCell = this->GetCellOrWorld().ToFormId(worldState->espmFiles);
+  } else {
+    pos = LocationalDataUtils::GetPos(data.loc);
+    rot = LocationalDataUtils::GetRot(data.loc);
+    worldOrCell = LocationalDataUtils::GetWorldOrCell(
+      worldState->GetEspm().GetBrowser(), lookupRes);
+  }
 
   return LocationalData{
     pos, rot, FormDesc::FromFormId(worldOrCell, worldState->espmFiles)
@@ -993,10 +1324,6 @@ LocationalData MpActor::GetEditorLocationalData() const
 
 const float MpActor::GetRespawnTime() const
 {
-  if (!IsCreatedAsPlayer()) {
-    static const auto kNpcSpawnDelay = 6 * 60.f * 60.f;
-    return kNpcSpawnDelay;
-  }
   return ChangeForm().spawnDelay;
 }
 
@@ -1008,15 +1335,28 @@ void MpActor::SetRespawnTime(float time)
 
 void MpActor::SetIsDead(bool isDead)
 {
+  spdlog::trace("MpActor::SetIsDead {:x} - isDead: {}", GetFormId(), isDead);
+
   constexpr bool kShouldTeleport = false;
 
   if (isDead) {
     if (IsDead() == false) {
+
+      // Keep in sync with MpActor::Kill
       SendAndSetDeathState(isDead, kShouldTeleport);
+      MpApiDeath(nullptr);
+      AddDeathItem();
+
+      spdlog::trace("MpActor::SetIsDead {:x} - actor is now dead",
+                    GetFormId());
+    } else {
+      spdlog::trace("MpActor::SetIsDead {:x} - actor is already dead",
+                    GetFormId());
     }
   } else {
     // same as SendAndSetDeathState but resets isRespawning flag
     Respawn(kShouldTeleport);
+    spdlog::trace("MpActor::SetIsDead {:x} - actor is now alive", GetFormId());
   }
 }
 
@@ -1078,13 +1418,6 @@ void MpActor::DropItem(const uint32_t baseId, const Inventory::Entry& entry)
 
   std::string editorId =
     lookupRes.rec->GetEditorId(worldState->GetEspmCache());
-
-  // TODO: remove this when we will be sure that none of armors crashes clients
-  if (lookupRes.rec->GetType().ToString() == "ARMO") {
-    spdlog::warn("MpActor::DropItem - Attempt to drop ARMO by actor {:x}",
-                 GetFormId());
-    return;
-  }
 
   spdlog::trace("MpActor::DropItem - dropping {}", editorId);
   RemoveItems({ entry });
@@ -1294,10 +1627,10 @@ void MpActor::ApplyMagicEffect(espm::Effects::Effect& effect, bool hasSweetpie,
         // balance and because of disability to restrict players use potions
         // often on client side
         constexpr float kMagnitudeCoeff = 100.f;
-        RestoreActorValue(av, effect.magnitude * kMagnitudeCoeff);
+        RestoreActorValuePatched(this, av, effect.magnitude * kMagnitudeCoeff);
       }
     } else {
-      RestoreActorValue(av, effect.magnitude);
+      RestoreActorValuePatched(this, av, effect.magnitude);
     }
   }
 

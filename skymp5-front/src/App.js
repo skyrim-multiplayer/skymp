@@ -5,9 +5,10 @@ import Chat from './constructorComponents/chat';
 import AnimList from './features/animList';
 import Constructor from './constructor';
 import SkillsMenu from './features/skillsMenu';
+import TestMenu from './features/testMenu';
 
 class App extends React.Component {
-  constructor (props) {
+  constructor(props) {
     super(props);
     this.state = {
       isLoggined: false,
@@ -15,7 +16,7 @@ class App extends React.Component {
     };
   }
 
-  componentDidMount () {
+  componentDidMount() {
     window.addEventListener('focus', this.onWindowFocus.bind(this));
     window.addEventListener('blur', this.onWindowFocus.bind(this));
     window.mp = {
@@ -45,57 +46,58 @@ class App extends React.Component {
     window.skyrimPlatform.widgets.addListener(this.handleWidgetUpdate.bind(this));
   }
 
-  handleWidgetUpdate (newWidgets) {
+  handleWidgetUpdate(newWidgets) {
     this.setState({
       ...this.state,
       widgets: newWidgets
     });
   }
 
-  componentWillUnmount () {
+  componentWillUnmount() {
     window.removeEventListener('focus', this.onWindowFocus.bind(this));
     window.removeEventListener('blur', this.onWindowFocus.bind(this));
     window.addEventListener('mousemove', this.onMoveWindow);
     window.skyrimPlatform.widgets.removeListener(this.handleWidgetUpdate.bind(this));
   }
 
-  onWindowFocus (e) {
+  onWindowFocus(e) {
     const focus = document.hasFocus();
     this.props.updateBrowserFocus(focus);
   }
 
-  onMoveWindow (e) {
+  onMoveWindow(e) {
     if (window.isMoveWindow && typeof window.moveWindow === 'function') {
       window.moveWindow(e.clientX, e.clientY);
     }
   }
 
-  onMouseUp () {
+  onMouseUp() {
     if (window.isMoveWindow) window.isMoveWindow = false;
     window.moveWindow = null;
   }
 
-  render () {
+  render() {
     if (this.state.isLoggined) {
       return (
         <div className={`App ${!window.hasOwnProperty('skyrimPlatform') ? 'bg' : ''}`}>
           <AnimList />
           <Chat />
           <SkillsMenu />
+          <TestMenu />
         </div>
       );
     } else if (this.state.widgets) {
       return (
-          <div style={{ position: 'static' }}>
-            {this.state.widgets.map((widget, index) =>
-               <Constructor
-                  key={index.toString() + widget.type + ((widget.type === 'form') ? widget.elements + widget.caption : 'chat')}
-                  dynamicSize={true}
-                  elem={widget}
-                  height={this.props.height || 704}
-                  width={this.props.width || 512} />
-            )}
-          </div>
+        <div style={{ position: 'static' }}>
+          {this.state.widgets.map((widget, index) =>
+            <Constructor
+              key={index.toString() + widget.type + ((widget.type === 'form') ? widget.elements + widget.caption : 'chat')}
+              dynamicSize={true}
+              elem={widget}
+              height={this.props.height || 704}
+              width={this.props.width || 512} />
+          )}
+        </div>
       );
     } else { return <></>; }
   }

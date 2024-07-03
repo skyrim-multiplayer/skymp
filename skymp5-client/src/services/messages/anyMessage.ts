@@ -17,6 +17,7 @@ import { HostStartMessage } from "./hostStartMessage";
 import { HostStopMessage } from "./hostStopMessage";
 import { OnEquipMessage } from "./onEquipMessage";
 import { OpenContainerMessage } from "./openContainerMessage";
+import { PlayerBowShotMessage } from "./playerBowShotMessage";
 import { PutItemMessage } from "./putItemMessage";
 import { SetInventoryMessage } from "./setInventoryMessage";
 import { SetRaceMenuOpenMessage } from "./setRaceMenuOpenMessage";
@@ -62,3 +63,4 @@ export type AnyMessage = ActivateMessage
     | UpdatePropertyMessage
     | DeathStateContainerMessage
     | TeleportMessage2
+    | PlayerBowShotMessage

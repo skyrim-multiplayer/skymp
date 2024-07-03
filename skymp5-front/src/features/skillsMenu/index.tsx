@@ -178,7 +178,7 @@ const SkillsMenu = ({ send }: { send: (message: string) => void }) => {
 
   const confirmHanlder = () => {
     setconfirmDiscard(true);
-    setcurrentLevel('хотите удалить персонажа?');
+    setcurrentLevel('хотите сбросить прогресс?');
     setcurrentDescription('нажимая “да” вы полностью сбросите все выученные профессии и получите обратно половину потраченного опыта.');
   };
 
@@ -320,7 +320,7 @@ const SkillsMenu = ({ send }: { send: (message: string) => void }) => {
                     )
                   : (
                   <FrameButton
-                    text="сбросить все"
+                    text="сбросить"
                     name="discardBtn"
                     variant="DEFAULT"
                     width={242}

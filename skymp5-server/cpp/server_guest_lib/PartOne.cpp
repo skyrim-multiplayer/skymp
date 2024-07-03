@@ -142,8 +142,18 @@ void PartOne::SetUserActor(Networking::UserId userId, uint32_t actorFormId)
       throw std::runtime_error(ss.str());
     }
 
+    // Clear actor's hoster if any.
+    // HostStop message will be sent on the next attempt to update actor's
+    // movement
+    // Possible fix for "players link to each other" bug
+    // See also ActionListener::SendToNeighbours
+    auto hosterActorIt = worldState.hosters.find(actor.GetFormId());
+    if (hosterActorIt != worldState.hosters.end()) {
+      worldState.hosters.erase(hosterActorIt);
+    }
+
     // Both functions are required here, but it is NOT covered by unit tests
-    // properly. If you do something wrong here, players would not be able to
+    // properly. If you do something wrong here, players will not be able to
     // interact with items in the same cell after reconnecting.
     actor.UnsubscribeFromAll();
     actor.RemoveFromGridAndUnsubscribeAll();
@@ -152,7 +162,10 @@ void PartOne::SetUserActor(Networking::UserId userId, uint32_t actorFormId)
 
     actor.ForceSubscriptionsUpdate();
 
+    // We do the same in MpActor::ApplyChangeForm for non-player characters
     if (actor.IsDead() && !actor.IsRespawning()) {
+      spdlog::info("PartOne::SetUserActor {} {:x} - respawning dead actor",
+                   userId, actorFormId);
       actor.RespawnWithDelay();
     }
 
@@ -470,6 +483,21 @@ void PartOne::RequestPacketHistoryPlayback(Networking::UserId userId,
   }
 }
 
+void PartOne::SendHostStop(Networking::UserId badHosterUserId,
+                           MpObjectReference& remote)
+{
+  auto remoteAsActor = dynamic_cast<MpActor*>(&remote);
+
+  uint64_t longFormId = remote.GetFormId();
+  if (remoteAsActor && longFormId < 0xff000000) {
+    longFormId += 0x100000000;
+  }
+
+  Networking::SendFormatted(&GetSendTarget(), badHosterUserId,
+                            R"({ "type": "hostStop", "target": %llu })",
+                            longFormId);
+}
+
 FormCallbacks PartOne::CreateFormCallbacks()
 {
   static auto g_serializer =
@@ -648,6 +676,13 @@ void PartOne::Init()
       sprintf(baseId, "%u", emitter->GetBaseId());
     }
 
+    const char* isDeadPrefix = "";
+    const char* isDead = "";
+    if (emitterAsActor && emitterAsActor->IsDead()) {
+      isDeadPrefix = R"(, "isDead": )";
+      isDead = "\"true\"";
+    }
+
     const bool isOwner = emitter == listener;
 
     std::string props;
@@ -662,9 +697,9 @@ void PartOne::Init()
       auto it = pImpl->gamemodeApiState.createdProperties.find(propName);
       if (it != pImpl->gamemodeApiState.createdProperties.end()) {
         if (!it->second.isVisibleByOwner) {
-          //  From docs: isVisibleByNeighbors considered to be always false for
-          //  properties with `isVisibleByOwner == false`, in that case, actual
-          //  flag value is ignored.
+          //  From docs: isVisibleByNeighbors is considered to be always false
+          //  for properties with `isVisibleByOwner == false`, in that case,
+          //  actual flag value is ignored.
           return;
         }
 
@@ -715,13 +750,13 @@ void PartOne::Init()
     Networking::SendFormatted(
       sendTarget, listenerUserId,
       R"({"type": "%s", "idx": %u, "isMe": %s, "transform": {"pos":
-    [%f,%f,%f], "rot": [%f,%f,%f], "worldOrCell": %u}%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s})",
+    [%f,%f,%f], "rot": [%f,%f,%f], "worldOrCell": %u}%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s})",
       method, emitter->GetIdx(), isMe ? "true" : "false", emitterPos.x,
       emitterPos.y, emitterPos.z, emitterRot.x, emitterRot.y, emitterRot.z,
       worldOrCell, baseRecordTypePrefix, baseRecordType.data(),
-      appearancePrefix, appearance, equipmentPrefix, equipment,
-      animationPrefix, animation, refrIdPrefix, refrId, baseIdPrefix, baseId,
-      propsPrefix, props.data(), propsPostfix);
+      appearancePrefix, appearance, equipmentPrefix, equipment, animationPrefix, animation, refrIdPrefix,
+      refrId, baseIdPrefix, baseId, isDeadPrefix, isDead, propsPrefix,
+      props.data(), propsPostfix);
   };
 
   pImpl->onUnsubscribe = [this](Networking::ISendTarget* sendTarget,

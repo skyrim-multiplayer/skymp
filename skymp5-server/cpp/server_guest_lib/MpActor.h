@@ -4,6 +4,7 @@
 #include "GetBaseActorValues.h"
 #include "MpObjectReference.h"
 #include "libespm/espm.h"
+#include <map>
 #include <memory>
 #include <optional>
 #include <set>
@@ -41,9 +42,18 @@ public:
   const std::vector<FormDesc>& GetTemplateChain() const;
   bool IsCreatedAsPlayer() const;
 
+  bool ShouldSkipRestoration() const noexcept;
+  void UpdateNextRestorationTime(std::chrono::seconds duration) noexcept;
+
   void SetRaceMenuOpen(bool isOpen);
   void SetAppearance(const Appearance* newAppearance);
   void SetEquipment(const std::string& jsonString);
+
+  void AddToFaction(Faction faction, bool lazyLoad = true);
+  bool IsInFaction(FormDesc factionForm, bool lazyLoad = true);
+  std::vector<Faction> GetFactions(int minFactionID, int maxFactionID,
+                                   bool lazyLoad = true);
+  void RemoveFromFaction(FormDesc factionForm, bool lazyLoad = true);
 
   void VisitProperties(const PropertiesVisitor& visitor,
                        VisitPropertiesMode mode) override;
@@ -145,6 +155,7 @@ public:
 private:
   struct Impl;
   std::shared_ptr<Impl> pImpl;
+  bool factionsLoaded = false;
 
   void SendAndSetDeathState(bool isDead, bool shouldTeleport);
 
@@ -169,6 +180,10 @@ private:
   void EnsureTemplateChainEvaluated(
     espm::Loader& loader,
     ChangeFormGuard::Mode mode = ChangeFormGuard::Mode::RequestSave);
+
+  std::map<uint32_t, uint32_t> EvaluateDeathItem();
+  void AddDeathItem();
+  void LoadFactions();
 
 protected:
   void BeforeDestroy() override;

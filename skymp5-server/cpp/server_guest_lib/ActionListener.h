@@ -60,6 +60,10 @@ public:
   virtual void OnDropItem(const RawMessageData& rawMsgdata, uint32_t baseId,
                           const Inventory::Entry& entry);
 
+  virtual void OnPlayerBowShot(const RawMessageData& rawMsgdata,
+                               uint32_t weaponId, uint32_t ammoId, float power,
+                               bool isSunGazing);
+
   virtual void OnFinishSpSnippet(const RawMessageData& rawMsgData,
                                  uint32_t snippetIdx,
                                  simdjson::dom::element& returnValue);

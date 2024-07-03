@@ -18,6 +18,8 @@ public:
   static Napi::Object Init(Napi::Env env, Napi::Object exports);
   ScampServer(const Napi::CallbackInfo& info);
 
+  static Napi::Value WriteLogs(const Napi::CallbackInfo& info);
+
   Napi::Value AttachSaveStorage(const Napi::CallbackInfo& info);
   Napi::Value Tick(const Napi::CallbackInfo& info);
   Napi::Value On(const Napi::CallbackInfo& info);
@@ -33,7 +35,6 @@ public:
   Napi::Value SetEnabled(const Napi::CallbackInfo& info);
   Napi::Value CreateBot(const Napi::CallbackInfo& info);
   Napi::Value GetUserByActor(const Napi::CallbackInfo& info);
-  Napi::Value WriteLogs(const Napi::CallbackInfo& info);
   Napi::Value GetUserIp(const Napi::CallbackInfo& info);
 
   Napi::Value GetLocalizedString(const Napi::CallbackInfo& info);
@@ -45,6 +46,7 @@ public:
   Napi::Value Set(const Napi::CallbackInfo& info);
   Napi::Value Place(const Napi::CallbackInfo& info);
   Napi::Value LookupEspmRecordById(const Napi::CallbackInfo& info);
+  Napi::Value GetNeighborsByPosition(const Napi::CallbackInfo& info);
   Napi::Value GetEspmLoadOrder(const Napi::CallbackInfo& info);
   Napi::Value GetDescFromId(const Napi::CallbackInfo& info);
   Napi::Value GetIdFromDesc(const Napi::CallbackInfo& info);

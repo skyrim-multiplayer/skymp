@@ -1,3 +1,4 @@
+import { logTrace, logError } from "../../logging";
 import { ConnectionMessage } from "../events/connectionMessage";
 import { NewLocalLagValueCalculatedEvent } from "../events/newLocalLagValueCalculatedEvent";
 import { SendMessageEvent } from "../events/sendMessageEvent";
@@ -11,12 +12,12 @@ export class NetInfoService extends ClientListener {
 
     // clear previous texts in case of hotreload
     if (this.sp.storage[NetInfoTexts.Name] && (this.sp.storage[NetInfoTexts.Name] as NetInfoTexts).clear) {
-      this.logTrace(`Destroying old NetInfoTexts`);
+      logTrace(this, `Destroying old NetInfoTexts`);
       try {
         (this.sp.storage[NetInfoTexts.Name] as NetInfoTexts)?.clear();
       }
       catch (e) {
-        this.logError(`Failed to destroy old NetInfoTexts: ${e}`);
+        logError(this, `Failed to destroy old NetInfoTexts:`, e);
       }
     }
 

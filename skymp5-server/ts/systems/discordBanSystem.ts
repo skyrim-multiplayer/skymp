@@ -11,26 +11,34 @@ export class DiscordBanSystem implements System {
     ) { }
 
     async initAsync(ctx: SystemContext): Promise<void> {
-        let discordAuth = Settings.get().discordAuth;
+        const settingsObject = await Settings.get();
 
-        if (Settings.get().offlineMode) {
+        let discordAuth = settingsObject.discordAuth;
+
+        if (settingsObject.offlineMode) {
             return console.log("discord ban system is disabled due to offline mode");
         }
         if (!discordAuth) {
-            return console.error("discordAuth is missing, skipping Discord ban system");
+            return console.warn("discordAuth is missing, skipping Discord ban system");
         }
         if (!discordAuth.botToken) {
-            return console.error("discordAuth.botToken is missing, skipping Discord ban system");
+            return console.warn("discordAuth.botToken is missing, skipping Discord ban system");
         }
         if (!discordAuth.guildId) {
-            return console.error("discordAuth.guildId is missing, skipping Discord ban system");
+            return console.warn("discordAuth.guildId is missing, skipping Discord ban system");
         }
         if (!discordAuth.banRoleId) {
-            return console.error("discordAuth.banRoleId is missing, skipping Discord ban system");
-        } 
+            return console.warn("discordAuth.banRoleId is missing, skipping Discord ban system");
+        }
 
         const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers] });
-        await client.login(discordAuth.botToken);
+
+        try {
+            await client.login(discordAuth.botToken);
+        }
+        catch (e) {
+            return console.error(`Error logging in Discord client: ${e}`);
+        }
 
         client.on("error", (error) => {
             console.error(error);

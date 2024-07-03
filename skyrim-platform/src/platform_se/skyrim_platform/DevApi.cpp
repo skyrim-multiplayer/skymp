@@ -3,13 +3,31 @@
 #include "InvalidArgumentException.h"
 #include "NullPointerException.h"
 #include "PapyrusTESModPlatform.h"
+#include "Settings.h"
 #include "Validators.h"
 
 std::shared_ptr<JsEngine> DevApi::jsEngine = nullptr;
 DevApi::NativeExportsMap DevApi::nativeExportsMap;
 
-JsValue DevApi::Require(const JsFunctionArguments& args,
-                        const std::vector<const char*>& pluginLoadDirectories)
+namespace {
+bool CreateDirectoryRecursive(const std::string& dirName, std::error_code& err)
+{
+  err.clear();
+  if (!std::filesystem::create_directories(dirName, err)) {
+    if (std::filesystem::exists(dirName)) {
+      // The folder already exists:
+      err.clear();
+      return true;
+    }
+    return false;
+  }
+  return true;
+}
+}
+
+JsValue DevApi::Require(
+  const JsFunctionArguments& args,
+  const std::vector<std::filesystem::path>& pluginLoadDirectories)
 {
   auto fileName = args[1].ToString();
 
@@ -17,9 +35,8 @@ JsValue DevApi::Require(const JsFunctionArguments& args,
     throw InvalidArgumentException("fileName", fileName);
   }
 
-  for (auto dir : pluginLoadDirectories) {
-    std::filesystem::path filePath =
-      std::filesystem::path(dir) / (fileName + ".js");
+  for (const std::filesystem::path& dir : pluginLoadDirectories) {
+    std::filesystem::path filePath = dir / (fileName + ".js");
 
     if (!std::filesystem::exists(filePath)) {
       continue; // Throws in the end of the function if nothing found
@@ -64,12 +81,38 @@ JsValue DevApi::AddNativeExports(const JsFunctionArguments& args)
 }
 
 namespace {
-std::filesystem::path GetPluginPath(const std::string& pluginName)
+std::filesystem::path GetPluginPath(const std::string& pluginName,
+                                    std::optional<std::string> folderOverride)
 {
   if (!ValidateFilename(pluginName, /*allowDots*/ false)) {
     throw InvalidArgumentException("pluginName", pluginName);
   }
-  return std::filesystem::path("Data/Platform/Plugins") / (pluginName + ".js");
+
+  // Folder override is alowed to be not in list of plugin folders
+  // In this case it will be writable, but SkyrimPlatform will not monitor and
+  // load plugins from it.
+  if (folderOverride) {
+    if (!ValidateFilename(folderOverride->data(), /*allowDots*/ false)) {
+      throw InvalidArgumentException("folderOverride", *folderOverride);
+    }
+
+    return std::filesystem::path("Data/Platform") / *folderOverride /
+      (pluginName + ".js");
+  }
+
+  auto pluginFolders = Settings::GetPlatformSettings()->GetPluginFolders();
+
+  if (!pluginFolders) {
+    throw NullPointerException("pluginFolders");
+  }
+
+  if (pluginFolders->empty()) {
+    throw std::runtime_error("No plugin folders found");
+  }
+
+  auto folder = pluginFolders->front();
+
+  return folder / (pluginName + ".js");
 }
 }
 
@@ -77,7 +120,16 @@ JsValue DevApi::GetPluginSourceCode(const JsFunctionArguments& args)
 {
   // TODO: Support multifile plugins?
   auto pluginName = args[1].ToString();
-  return Viet::ReadFileIntoString(GetPluginPath(pluginName));
+
+  std::optional<std::string> overrideFolder;
+  if (args.GetSize() >= 3) {
+    auto t = args[2].GetType();
+    if (t != JsValue::Type::Undefined && t != JsValue::Type::Null) {
+      overrideFolder = args[2].ToString();
+    }
+  }
+
+  return Viet::ReadFileIntoString(GetPluginPath(pluginName, overrideFolder));
 }
 
 JsValue DevApi::WritePlugin(const JsFunctionArguments& args)
@@ -86,19 +138,36 @@ JsValue DevApi::WritePlugin(const JsFunctionArguments& args)
   auto pluginName = args[1].ToString();
   auto newSources = args[2].ToString();
 
-  auto path = GetPluginPath(pluginName);
+  std::optional<std::string> overrideFolder;
+  if (args.GetSize() >= 4) {
+    auto t = args[3].GetType();
+    if (t != JsValue::Type::Undefined && t != JsValue::Type::Null) {
+      overrideFolder = args[3].ToString();
+    }
+  }
+
+  auto path = GetPluginPath(pluginName, overrideFolder);
+
+  std::error_code err;
+  CreateDirectoryRecursive(path.parent_path().string(), err);
+  if (err) {
+    throw std::runtime_error("Failed to create directory " +
+                             path.parent_path().string() + ": " +
+                             err.message());
+  }
 
   std::ofstream f(path);
   f << newSources;
   f.close();
-  if (!f)
+  if (!f) {
     throw std::runtime_error("Failed to write into " + path.string());
+  }
   return JsValue::Undefined();
 }
 
 JsValue DevApi::GetPlatformVersion(const JsFunctionArguments& args)
 {
-  return "2.8.0";
+  return "2.9.0";
 }
 
 JsValue DevApi::GetJsMemoryUsage(const JsFunctionArguments& args)

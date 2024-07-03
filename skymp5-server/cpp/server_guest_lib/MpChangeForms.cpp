@@ -9,6 +9,7 @@ std::vector<std::string> ToStringArray(const std::vector<FormDesc>& formDescs)
                  [](const FormDesc& v) { return v.ToString(); });
   return res;
 }
+
 std::vector<FormDesc> ToFormDescsArray(const std::vector<std::string>& strings)
 {
   std::vector<FormDesc> res(strings.size());
@@ -84,8 +85,30 @@ nlohmann::json MpChangeForm::ToJson(const MpChangeForm& changeForm)
   //   res["lastAnimation"] = *changeForm.lastAnimation;
   // }
 
+  if (changeForm.setNodeTextureSet.has_value()) {
+    res["setNodeTextureSet"] = *changeForm.setNodeTextureSet;
+  }
+
+  if (changeForm.setNodeScale.has_value()) {
+    res["setNodeScale"] = *changeForm.setNodeScale;
+  }
+
   if (changeForm.displayName.has_value()) {
     res["displayName"] = *changeForm.displayName;
+  }
+
+  if (changeForm.factions.has_value() &&
+      !changeForm.factions.value().empty()) {
+    auto factionsJson = nlohmann::json::array();
+    for (int i = 0; i < static_cast<int>(changeForm.factions.value().size());
+         ++i) {
+      nlohmann::json obj = {
+        { "formDesc", changeForm.factions.value()[i].formDesc.ToString() },
+        { "rank", (uint32_t)changeForm.factions.value()[i].rank }
+      };
+      factionsJson.push_back(obj);
+    }
+    res["factions"] = { { "entries", factionsJson } };
   }
 
   return res;
@@ -109,7 +132,8 @@ MpChangeForm MpChangeForm::JsonToChangeForm(simdjson::dom::element& element)
     spawnPointCellOrWorldDesc("spawnPoint_cellOrWorldDesc"),
     spawnDelay("spawnDelay"), effects("effects"),
     templateChain("templateChain"), lastAnimation("lastAnimation"),
-    displayName("displayName");
+    setNodeTextureSet("setNodeTextureSet"), setNodeScale("setNodeScale"),
+    displayName("displayName"), factions("factions");
 
   MpChangeForm res;
   ReadEx(element, recType, &res.recType);
@@ -233,11 +257,72 @@ MpChangeForm MpChangeForm::JsonToChangeForm(simdjson::dom::element& element)
     res.lastAnimation = tmp;
   }
 
+  if (element.at_pointer(setNodeTextureSet.GetData()).error() ==
+      simdjson::error_code::SUCCESS) {
+    simdjson::dom::element data;
+    ReadEx(element, setNodeTextureSet, &data);
+
+    if (res.setNodeTextureSet == std::nullopt) {
+      res.setNodeTextureSet = std::map<std::string, std::string>();
+    }
+
+    for (auto [key, value] : data.get_object()) {
+      std::string keyStr = key.data();
+      std::string valueStr = value.get_string().value().data();
+      res.setNodeTextureSet->emplace(keyStr, valueStr);
+    }
+  }
+
+  if (element.at_pointer(setNodeScale.GetData()).error() ==
+      simdjson::error_code::SUCCESS) {
+    simdjson::dom::element data;
+    ReadEx(element, setNodeScale, &data);
+
+    if (res.setNodeScale == std::nullopt) {
+      res.setNodeScale = std::map<std::string, float>();
+    }
+
+    for (auto [key, value] : data.get_object()) {
+      std::string keyStr = key.data();
+      float valueFloat = static_cast<float>(value.get_double().value());
+      res.setNodeScale->emplace(keyStr, valueFloat);
+    }
+  }
+
   if (element.at_pointer(displayName.GetData()).error() ==
       simdjson::error_code::SUCCESS) {
     const char* tmp;
     ReadEx(element, displayName, &tmp);
     res.displayName = tmp;
+  }
+
+  if (element.at_pointer(factions.GetData()).error() ==
+      simdjson::error_code::SUCCESS) {
+    ReadEx(element, factions, &jTmp);
+    static const JsonPointer entries("entries");
+
+    std::vector<simdjson::dom::element> parsedEntries;
+    ReadVector(jTmp, entries, &parsedEntries);
+
+    std::vector<Faction> factions = std::vector<Faction>(parsedEntries.size());
+
+    for (size_t i = 0; i != parsedEntries.size(); ++i) {
+      auto& jEntry = parsedEntries[i];
+
+      static JsonPointer rank("rank");
+      Faction fact = Faction();
+      const char* tmp;
+      ReadEx(jEntry, formDesc, &tmp);
+      fact.formDesc = FormDesc::FromString(tmp);
+
+      uint32_t rankTemp = 0;
+      ReadEx(jEntry, rank, &rankTemp);
+      fact.rank = rankTemp;
+
+      factions[i] = fact;
+    }
+
+    res.factions = factions;
   }
 
   return res;

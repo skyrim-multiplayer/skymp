@@ -165,7 +165,8 @@ VarValue PapyrusObjectReference::AddItem(
     if (!silent && count > 0) {
       if (auto actor = dynamic_cast<MpActor*>(selfRefr)) {
         auto args = SpSnippetFunctionGen::SerializeArguments(arguments);
-        (void)SpSnippet("SkympHacks", "AddItem", args.data()).Execute(actor);
+        (void)SpSnippet("SkympHacks", "AddItem", args.data())
+          .Execute(actor, SpSnippetMode::kNoReturnResult);
       }
     }
   }
@@ -187,7 +188,9 @@ VarValue PapyrusObjectReference::RemoveItem(
 
   auto worldState = selfRefr->GetParent();
   if (!worldState) {
-    throw std::runtime_error("RemoveItem - no WorldState attached");
+    spdlog::error("RemoveItem {:x} - no WorldState attached",
+                  selfRefr->GetFormId());
+    return VarValue::None();
   }
 
   if (!selfRefr || !item.rec)
@@ -195,7 +198,10 @@ VarValue PapyrusObjectReference::RemoveItem(
 
   if (!espm::utils::Is<espm::FLST>(item.rec->GetType())) {
     if (!espm::utils::IsItem(item.rec->GetType())) {
-      throw std::runtime_error("RemoveItem - form is not an item");
+      spdlog::error("RemoveItem {:x} - form {:x} is not an item, it is {}",
+                    selfRefr->GetFormId(), item.ToGlobalId(item.rec->GetId()),
+                    item.rec->GetType().ToString());
+      return VarValue::None();
     }
   }
 
@@ -204,8 +210,10 @@ VarValue PapyrusObjectReference::RemoveItem(
       espm::Convert<espm::LIGH>(item.rec)->GetData(worldState->GetEspmCache());
     bool isTorch = res.data.flags & espm::LIGH::Flags::CanBeCarried;
     if (!isTorch) {
-      throw std::runtime_error(
-        "RemoveItem - form is LIGH without CanBeCarried flag");
+      spdlog::error(
+        "RemoveItem {:x} - form {:x} is LIGH without CanBeCarried flag",
+        selfRefr->GetFormId(), item.ToGlobalId(item.rec->GetId()));
+      return VarValue::None();
     }
   }
 
@@ -251,7 +259,7 @@ VarValue PapyrusObjectReference::RemoveItem(
       if (auto actor = dynamic_cast<MpActor*>(selfRefr)) {
         auto args = SpSnippetFunctionGen::SerializeArguments(arguments);
         (void)SpSnippet("SkympHacks", "RemoveItem", args.data())
-          .Execute(actor);
+          .Execute(actor, SpSnippetMode::kNoReturnResult);
       }
     }
   }
@@ -316,7 +324,7 @@ void PlaceAtMeSpSnippet(MpObjectReference* self,
     if (targetRefr) {
       SpSnippet("ObjectReference", funcName, serializedArgs.data(),
                 self->GetFormId())
-        .Execute(targetRefr);
+        .Execute(targetRefr, SpSnippetMode::kNoReturnResult);
     }
   }
 }
@@ -405,6 +413,20 @@ VarValue PapyrusObjectReference::Enable(VarValue self,
   if (selfRefr) {
     selfRefr->Enable();
   }
+
+  if (selfRefr->IsEspmForm() && !dynamic_cast<MpActor*>(selfRefr)) {
+    auto funcName = "Enable";
+    auto serializedArgs = SpSnippetFunctionGen::SerializeArguments(arguments);
+    for (auto listener : selfRefr->GetListeners()) {
+      auto targetRefr = dynamic_cast<MpActor*>(listener);
+      if (targetRefr) {
+        SpSnippet(GetName(), funcName, serializedArgs.data(),
+                  selfRefr->GetFormId())
+          .Execute(targetRefr, SpSnippetMode::kNoReturnResult);
+      }
+    }
+  }
+
   return VarValue::None();
 }
 
@@ -415,6 +437,20 @@ VarValue PapyrusObjectReference::Disable(
   if (selfRefr) {
     selfRefr->Disable();
   }
+
+  if (selfRefr->IsEspmForm() && !dynamic_cast<MpActor*>(selfRefr)) {
+    auto funcName = "Disable";
+    auto serializedArgs = SpSnippetFunctionGen::SerializeArguments(arguments);
+    for (auto listener : selfRefr->GetListeners()) {
+      auto targetRefr = dynamic_cast<MpActor*>(listener);
+      if (targetRefr) {
+        SpSnippet(GetName(), funcName, serializedArgs.data(),
+                  selfRefr->GetFormId())
+          .Execute(targetRefr, SpSnippetMode::kNoReturnResult);
+      }
+    }
+  }
+
   return VarValue::None();
 }
 
@@ -523,7 +559,7 @@ VarValue PapyrusObjectReference::SetPosition(
       if (targetRefr) {
         SpSnippet(GetName(), funcName, serializedArgs.data(),
                   selfRefr->GetFormId())
-          .Execute(targetRefr);
+          .Execute(targetRefr, SpSnippetMode::kNoReturnResult);
       }
     }
   }
@@ -565,7 +601,7 @@ VarValue PapyrusObjectReference::PlayAnimation(
       if (targetRefr) {
         SpSnippet(GetName(), funcName, serializedArgs.data(),
                   selfRefr->GetFormId())
-          .Execute(targetRefr);
+          .Execute(targetRefr, SpSnippetMode::kNoReturnResult);
       }
     }
   }
@@ -593,7 +629,7 @@ VarValue PapyrusObjectReference::PlayAnimationAndWait(
       if (targetRefr) {
         auto promise = SpSnippet(GetName(), funcName, serializedArgs.data(),
                                  selfRefr->GetFormId())
-                         .Execute(targetRefr);
+                         .Execute(targetRefr, SpSnippetMode::kReturnResult);
         promises.push_back(promise);
       }
     }
@@ -635,7 +671,7 @@ VarValue PapyrusObjectReference::PlayGamebryoAnimation(
       if (targetRefr) {
         SpSnippet(GetName(), funcName, serializedArgs.data(),
                   selfRefr->GetFormId())
-          .Execute(targetRefr);
+          .Execute(targetRefr, SpSnippetMode::kNoReturnResult);
       }
     }
   }
@@ -827,6 +863,7 @@ VarValue PapyrusObjectReference::SetDisplayName(
       throw std::runtime_error("SetDisplayName requires at least 2 arguments");
     }
     const char* displayName = static_cast<const char*>(arguments[0]);
+
     selfRefr->SetDisplayName(displayName);
 
     bool force = static_cast<bool>(arguments[1]);
@@ -839,11 +876,44 @@ VarValue PapyrusObjectReference::SetDisplayName(
       if (targetRefr) {
         SpSnippet(GetName(), funcName, serializedArgs.data(),
                   selfRefr->GetFormId())
-          .Execute(targetRefr);
+          .Execute(targetRefr, SpSnippetMode::kNoReturnResult);
       }
     }
   }
   return VarValue::None();
+}
+
+VarValue PapyrusObjectReference::GetDistance(
+  VarValue self, const std::vector<VarValue>& arguments)
+{
+  if (auto selfRefr = GetFormPtr<MpObjectReference>(self)) {
+
+    if (arguments.size() < 1) {
+      spdlog::error("GetDistance requires at least 1 argument");
+      return VarValue(0.f);
+    }
+
+    if (auto other = GetFormPtr<MpObjectReference>(arguments[0])) {
+      if (selfRefr->GetCellOrWorld() == other->GetCellOrWorld()) {
+        return VarValue((other->GetPos() - selfRefr->GetPos()).Length());
+      } else {
+        // There must be "very large number" according to wiki
+        return VarValue(1'000'000'000.f);
+      }
+    }
+  }
+
+  return VarValue(0.f);
+}
+
+VarValue PapyrusObjectReference::GetTotalItemWeight(
+  VarValue self, const std::vector<VarValue>& arguments)
+{
+  auto selfRefr = GetFormPtr<MpObjectReference>(self);
+  if (!selfRefr) {
+    return VarValue::None();
+  }
+  return VarValue(selfRefr->GetTotalItemWeight());
 }
 
 void PapyrusObjectReference::Register(
@@ -890,4 +960,7 @@ void PapyrusObjectReference::Register(
   AddMethod(vm, "GetAllItemsCount", &PapyrusObjectReference::GetAllItemsCount);
   AddMethod(vm, "IsContainerEmpty", &PapyrusObjectReference::IsContainerEmpty);
   AddMethod(vm, "SetDisplayName", &PapyrusObjectReference::SetDisplayName);
+  AddMethod(vm, "GetDistance", &PapyrusObjectReference::GetDistance);
+  AddMethod(vm, "GetTotalItemWeight",
+            &PapyrusObjectReference::GetTotalItemWeight);
 }

@@ -12,8 +12,8 @@ export declare function writeLogs(pluginName: string, ...arguments: unknown[]): 
 export declare function setPrintConsolePrefixesEnabled(enabled: boolean): void
 export declare function callNative(className: string, functionName: string, self?: PapyrusObject, ...args: PapyrusValue[]): PapyrusValue
 export declare function getJsMemoryUsage(): number
-export declare function getPluginSourceCode(pluginName: string): string
-export declare function writePlugin(pluginName: string, newSources: string): string
+export declare function getPluginSourceCode(pluginName: string, overrideFolder?: string): string // overrideFolder is relative to Data/Platform
+export declare function writePlugin(pluginName: string, newSources: string, overrideFolder?: string): string // overrideFolder is relative to Data/Platform
 export declare function getPlatformVersion(): string
 export declare function disableCtrlPrtScnHotkey(): void
 export declare function blockPapyrusEvents(block: boolean): void
@@ -824,11 +824,11 @@ export declare function once(eventName: 'soulsTrapped', callback: (event: SoulsT
 export declare function on(eventName: 'spellsLearned', callback: (event: SpellsLearnedEvent) => void): EventHandle
 export declare function once(eventName: 'spellsLearned', callback: (event: SpellsLearnedEvent) => void): EventHandle
 
-declare class ConsoleCommand {
+export interface ConsoleCommand {
   longName: string
   shortName: string
   numArgs: number
-  execute: (...arguments: unknown[]) => boolean
+  execute: (...args: unknown[]) => boolean
 }
 export declare function findConsoleCommand(cmdName: string): ConsoleCommand | null
 

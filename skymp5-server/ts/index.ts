@@ -31,16 +31,6 @@ import * as manifestGen from "./manifestGen";
 import { DiscordBanSystem } from "./systems/discordBanSystem";
 import { createScampServer } from "./scampNative";
 
-const {
-  master,
-  port,
-  maxPlayers,
-  name,
-  ip,
-  gamemodePath,
-  offlineMode,
-} = Settings.get();
-
 const gamemodeCache = new Map<string, string>();
 
 function requireTemp(module: string) {
@@ -106,16 +96,7 @@ function requireUncached(
   }
 }
 
-const log = console.log;
-const systems = new Array<System>();
-systems.push(
-  new MasterClient(log, port, master, maxPlayers, name, ip, 5000, offlineMode),
-  new Spawn(log),
-  new Login(log, maxPlayers, master, port, ip, offlineMode),
-  new DiscordBanSystem()
-);
-
-const setupStreams = (server: scampNative.ScampServer) => {
+const setupStreams = (scampNative: any) => {
   class LogsStream {
     constructor(private logLevel: string) {
     }
@@ -124,7 +105,7 @@ const setupStreams = (server: scampNative.ScampServer) => {
       // @ts-ignore
       const str = chunk.toString(encoding);
       if (str.trim().length > 0) {
-        server.writeLogs(this.logLevel, str);
+        scampNative.writeLogs(this.logLevel, str);
       }
       callback();
     }
@@ -143,13 +124,37 @@ const setupStreams = (server: scampNative.ScampServer) => {
 };
 
 const main = async () => {
-  manifestGen.generateManifest(Settings.get());
-  ui.main();
+  const settingsObject = await Settings.get();
+  const {
+    port, master, maxPlayers, name, ip, offlineMode, gamemodePath
+  } = settingsObject;
 
-  const server = createScampServer(port, maxPlayers);
+  const log = console.log;
+  const systems = new Array<System>();
+  systems.push(
+    new MasterClient(log, port, master, maxPlayers, name, ip, 5000, offlineMode),
+    new Spawn(log),
+    new Login(log, maxPlayers, master, port, ip, offlineMode),
+    new DiscordBanSystem()
+  );
+
+  setupStreams(scampNative.getScampNative());
+
+  manifestGen.generateManifest(settingsObject);
+  ui.main(settingsObject);
+
+  let server: any;
+
+  try {
+    server = createScampServer(port, maxPlayers, settingsObject.allSettings);
+  }
+  catch (e) {
+    console.error(e);
+    console.error(`Stopping the server due to the previous error`);
+    process.exit(-1);
+  }
   const ctx = { svr: server, gm: new EventEmitter() };
 
-  setupStreams(server);
   console.log(`Current process ID is ${pid}`);
 
   (async () => {
@@ -298,6 +303,15 @@ const main = async () => {
 main();
 
 // This is needed at least to handle axios errors in masterClient
+// TODO: implement alerts
 process.on("unhandledRejection", (...args) => {
+  console.error("[!!!] unhandledRejection")
+  console.error(...args);
+});
+
+// setTimeout on gamemode should not be able to kill the entire server
+// TODO: implement alerts
+process.on("uncaughtException", (...args) => {
+  console.error("[!!!] uncaughtException")
   console.error(...args);
 });

@@ -9,6 +9,14 @@ ALCH::Data ALCH::GetData(
 {
   Data result;
   result.effects = Effects(this).GetData(compressedFieldsCache).effects;
+  RecordHeaderAccess::IterateFields(
+    this,
+    [&](const char* type, uint32_t size, const char* data) {
+      if (!std::memcmp(type, "DATA", 4)) {
+        result.weight = *reinterpret_cast<const float*>(data);
+      }
+    },
+    compressedFieldsCache);
   return result;
 }
 

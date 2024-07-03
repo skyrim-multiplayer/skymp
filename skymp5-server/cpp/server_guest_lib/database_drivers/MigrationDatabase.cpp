@@ -84,7 +84,7 @@ MigrationDatabase::MigrationDatabase(std::shared_ptr<IDatabase> newDatabase,
   size_t totalUpserted = 0;
 
   for (size_t i = 0; i < changeForms.size(); i += chunkSize) {
-    std::vector<MpChangeForm> chunk;
+    std::vector<std::optional<MpChangeForm>> chunk;
 
     // Calculate the end of the current chunk
     size_t end = std::min(i + chunkSize, changeForms.size());
@@ -94,7 +94,7 @@ MigrationDatabase::MigrationDatabase(std::shared_ptr<IDatabase> newDatabase,
               std::back_inserter(chunk));
 
     // Upsert the current chunk
-    size_t numUpserted = newDatabase->Upsert(chunk);
+    size_t numUpserted = newDatabase->Upsert(std::move(chunk));
     totalUpserted += numUpserted;
 
     spdlog::info("MigrationDatabase: upserted chunk {}/{} ({} changeForms)",
@@ -110,10 +110,12 @@ MigrationDatabase::MigrationDatabase(std::shared_ptr<IDatabase> newDatabase,
   pImpl->exit();
 }
 
-size_t MigrationDatabase::Upsert(const std::vector<MpChangeForm>& changeForms)
+size_t MigrationDatabase::Upsert(
+  std::vector<std::optional<MpChangeForm>>&& changeForms)
 {
   spdlog::error("MigrationDatabase::Upsert - should never be reached");
   pImpl->terminate();
+  return 0;
 }
 
 void MigrationDatabase::Iterate(const IterateCallback& iterateCallback)

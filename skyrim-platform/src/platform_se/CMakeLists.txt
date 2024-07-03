@@ -1,9 +1,8 @@
-project(platform_se VERSION 2.8.0 LANGUAGES CXX)
+project(platform_se VERSION 2.9.0 LANGUAGES CXX)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Version.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/Version.h @ONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/version.rc.in ${CMAKE_CURRENT_BINARY_DIR}/version.rc @ONLY)
 
 include(${CMAKE_SOURCE_DIR}/cmake/apply_default_settings.cmake)
-include(${CMAKE_SOURCE_DIR}/cmake/link_vcpkg_dependencies.cmake)
 
 if(MSVC)
   include(${CMAKE_SOURCE_DIR}/cmake/add_papyrus_library_ck.cmake)
@@ -25,19 +24,16 @@ if(MSVC)
   file(GLOB_RECURSE core_library_src "${tilted}/core_library/*")
   add_library(core_library STATIC ${core_library_src})
   target_include_directories(core_library PUBLIC "${tilted}/core_library")
-  list(APPEND VCPKG_DEPENDENT core_library)
 
   file(GLOB_RECURSE reverse_src "${tilted}/reverse/*")
   add_library(reverse STATIC ${reverse_src})
   target_include_directories(reverse PUBLIC "${tilted}/reverse")
   target_link_libraries(reverse PUBLIC core_library)
-  list(APPEND VCPKG_DEPENDENT reverse)
 
   file(GLOB_RECURSE hooks_src "${tilted}/hooks/*")
   add_library(hooks STATIC ${hooks_src})
   target_include_directories(hooks PUBLIC "${tilted}/hooks")
   target_link_libraries(hooks PUBLIC core_library reverse)
-  list(APPEND VCPKG_DEPENDENT hooks)
 
   file(GLOB_RECURSE ui_src "${tilted}/ui/*")
   add_library(ui STATIC ${ui_src})
@@ -46,7 +42,6 @@ if(MSVC)
   target_link_libraries(ui PUBLIC "d3d11.lib" "dxguid.lib")
   target_link_libraries(ui PUBLIC skyrim_plugin_resources)
   target_link_libraries(ui PUBLIC cef)
-  list(APPEND VCPKG_DEPENDENT ui)
 
   file(GLOB_RECURSE ui_process_src "${tilted}/ui_process/*")
   add_executable(SkyrimPlatformCEF ${ui_process_src})
@@ -79,10 +74,6 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
   )
 
   if(MSVC)
-    if(SKYRIM_SE)
-      add_compile_definitions(SKYRIMSE)
-    endif()
-
     file(GLOB_RECURSE platform_src "skyrim_platform/*")
     list(APPEND platform_src "${CMAKE_SOURCE_DIR}/.clang-format")
     list(APPEND platform_src ${CMAKE_CURRENT_BINARY_DIR}/include/Version.h)
@@ -103,7 +94,6 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
     target_link_options(skyrim_platform PRIVATE "LINKER:-ignore:4099")
     target_precompile_headers(skyrim_platform	PRIVATE	skyrim_platform/PCH.h)
     apply_default_settings(TARGETS skyrim_platform)
-    list(APPEND VCPKG_DEPENDENT skyrim_platform)
 
     file(GLOB_RECURSE platform_entry_src "skyrim_platform_entry/*")
     list(APPEND platform_entry_src "${CMAKE_SOURCE_DIR}/.clang-format")
@@ -117,6 +107,11 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
     target_precompile_headers(skyrim_platform_entry	PRIVATE	skyrim_platform_entry/PCH.h)
     apply_default_settings(TARGETS skyrim_platform_entry)
 
+    if(SKYRIM_SE)
+      target_compile_definitions(skyrim_platform PRIVATE SKYRIMSE)
+      target_compile_definitions(skyrim_platform_entry PRIVATE SKYRIMSE)
+    endif()
+
     set_target_properties(skyrim_platform SkyrimPlatformCEF skyrim_platform_entry PROPERTIES
       RUNTIME_OUTPUT_DIRECTORY "bin"
       PDB_OUTPUT_DIRECTORY "bin"
@@ -124,16 +119,16 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
 
     set(DEPENDENCIES_FOR_CUSTOM_TARGETS skyrim_platform SkyrimPlatformCEF skyrim_platform_entry)
 
-  add_papyrus_library_ck(
-    NAME TESModPlatformPsc
-    DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/psc"
-    OUTPUT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/pex"
-    COMPILER_EXECUTABLE_PATH "${SKYRIM_DIR}/Papyrus compiler/PapyrusCompiler.exe"
-  )
-  if(TARGET TESModPlatformPsc)
-    add_dependencies(TESModPlatformPsc ${DEPENDENCIES_FOR_CUSTOM_TARGETS})
-    list(APPEND DEPENDENCIES_FOR_CUSTOM_TARGETS TESModPlatformPsc)
-  endif()
+    add_papyrus_library_ck(
+      NAME TESModPlatformPsc
+      DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/psc"
+      OUTPUT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/pex"
+      COMPILER_EXECUTABLE_PATH "${SKYRIM_DIR}/Papyrus compiler/PapyrusCompiler.exe"
+    )
+    if(TARGET TESModPlatformPsc)
+      add_dependencies(TESModPlatformPsc ${DEPENDENCIES_FOR_CUSTOM_TARGETS})
+      list(APPEND DEPENDENCIES_FOR_CUSTOM_TARGETS TESModPlatformPsc)
+    endif()
 
     file(GLOB papyrus_sources "${CMAKE_CURRENT_SOURCE_DIR}/psc/*.psc")
     set(def "")
@@ -154,7 +149,6 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
   add_executable(TSConverter ${CMAKE_CURRENT_LIST_DIR}/codegen/TSConverter.cpp)
   apply_default_settings(TARGETS TSConverter)
   set_target_properties(TSConverter PROPERTIES CXX_STANDARD 20)
-  list(APPEND VCPKG_DEPENDENT TSConverter)
 
   set(CONVERT_FILES_DIR ${CMAKE_CURRENT_LIST_DIR}/codegen/convert-files/)
   list(APPEND CODEGEN_ARGS
@@ -182,4 +176,66 @@ if(MSVC)
   )
 endif()
 
-link_vcpkg_dependencies(TARGETS ${VCPKG_DEPENDENT})
+# TSConverter vcpkg deps
+
+find_path(JSON_INCLUDE_DIR NAMES json.hpp PATH_SUFFIXES nlohmann)
+get_filename_component(JSON_INCLUDE_DIR ${JSON_INCLUDE_DIR} DIRECTORY)
+target_include_directories(TSConverter PUBLIC ${JSON_INCLUDE_DIR})
+
+if(MSVC)
+
+  # interface targets
+
+  find_library(MHOOH_LIBRARY_DEBUG mhook)
+  string(REPLACE "/debug/lib/" "/lib/" MHOOH_LIBRARY_RELEASE ${MHOOH_LIBRARY_DEBUG})
+  find_path(MHOOK_INCLUDE_DIR NAMES mhook.h PATH_SUFFIXES mhook-lib REQUIRED)
+  get_filename_component(MHOOK_INCLUDE_DIR ${MHOOK_INCLUDE_DIR} DIRECTORY)
+  add_library(mhook INTERFACE)
+  target_link_libraries(mhook INTERFACE "$<IF:$<CONFIG:Debug>,${MHOOH_LIBRARY_DEBUG},${MHOOH_LIBRARY_RELEASE}>")
+  target_include_directories(mhook INTERFACE ${MHOOK_INCLUDE_DIR})
+
+  # ui vcpkg deps
+
+  find_package(spdlog CONFIG REQUIRED)
+  target_link_libraries(ui PUBLIC spdlog::spdlog)
+
+  # reverse vcpkg deps
+
+  target_link_libraries(core_library PUBLIC mhook)
+  target_link_libraries(reverse PUBLIC mhook)
+
+  # ui vcpkg deps
+  find_package(directxtk CONFIG REQUIRED)
+  find_package(directxmath CONFIG REQUIRED)
+  target_link_libraries(ui PUBLIC Microsoft::DirectXTK)
+
+  # skyrim_platform vcpkg deps
+
+  find_package(unofficial-chakracore CONFIG REQUIRED)
+  target_link_libraries(skyrim_platform PUBLIC unofficial::chakracore::chakracore)
+
+  target_link_libraries(skyrim_platform PUBLIC mhook)
+
+  if(SKYRIM_SE)
+    find_package(commonlibse REQUIRED CONFIGS CommonLibSSEConfig.cmake)
+  else()
+    find_package(commonlibae REQUIRED CONFIGS CommonLibSSEConfig.cmake)
+  endif()
+
+  find_package(robin_hood REQUIRED)
+
+  find_path(SIMPLEINI_INCLUDE_DIRS "ConvertUTF.c")
+  target_include_directories(skyrim_platform PRIVATE ${SIMPLEINI_INCLUDE_DIRS})
+
+  target_link_libraries(skyrim_platform	PRIVATE CommonLibSSE::CommonLibSSE robin_hood::robin_hood)
+
+  find_package(directxtk CONFIG REQUIRED)
+  find_package(directxmath CONFIG REQUIRED)
+  target_link_libraries(skyrim_platform PUBLIC Microsoft::DirectXTK)
+
+  find_package(spdlog CONFIG REQUIRED)
+  target_link_libraries(skyrim_platform PUBLIC spdlog::spdlog)
+
+  find_package(OpenSSL REQUIRED)
+  target_link_libraries(skyrim_platform PUBLIC OpenSSL::SSL OpenSSL::Crypto)
+endif()

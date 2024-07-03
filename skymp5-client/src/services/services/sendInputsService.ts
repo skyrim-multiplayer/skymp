@@ -8,7 +8,7 @@ import { getMovement } from "../../sync/movementGet";
 import * as worldViewMisc from "../../view/worldViewMisc";
 
 import { Animation, AnimationSource } from "../../sync/animation";
-import { Actor, EquipEvent } from "skyrimPlatform";
+import { Actor, EquipEvent, FormType } from "skyrimPlatform";
 import { getAppearance } from "../../sync/appearance";
 import { ActorValues, getActorValues } from "../../sync/actorvalues";
 import { getEquipment } from "../../sync/equipment";
@@ -22,6 +22,7 @@ import { UpdateEquipmentMessage } from "../messages/updateEquipmentMessage";
 import { UpdateAppearanceMessage } from "../messages/updateAppearanceMessage";
 import { RemoteServer } from "./remoteServer";
 import { DeathService } from "./deathService";
+import { logTrace } from "../../logging";
 
 const playerFormId = 0x14;
 
@@ -46,14 +47,22 @@ export class SendInputsService extends ClientListener {
             return;
         }
 
-        if (event.actor.getFormID() === playerFormId) {
-            this.equipmentChanged = true;
-
-            this.controller.emitter.emit("sendMessage", {
-                message: { t: MsgType.OnEquip, baseId: event.baseObj.getFormID() },
-                reliability: "unreliable"
-            });
+        if (event.actor.getFormID() !== playerFormId) {
+            return;
         }
+
+        const type = event.baseObj.getType();
+        if (type !== FormType.Book && type !== FormType.Potion && type !== FormType.Ingredient) {
+            // Trigger UpdateEquipment only for equips that are not spell tomes, potions, ingredients
+            this.equipmentChanged = true;
+        }
+
+        // Send OnEquip for any equips including spell tomes, potions, ingredients
+        // Otherwise, the server won't trigger spell learn, potion drink, ingredient eat and Papyrus scripts
+        this.controller.emitter.emit("sendMessage", {
+            message: { t: MsgType.OnEquip, baseId: event.baseObj.getFormID() },
+            reliability: "unreliable"
+        });
     }
 
     private onUnequip(event: EquipEvent) {
@@ -142,7 +151,7 @@ export class SendInputsService extends ClientListener {
 
         const deathService = this.controller.lookupListener(DeathService);
         if (deathService.isBusy()) {
-            this.logTrace("Not sending actor values, death service is busy");
+            logTrace(this, "Not sending actor values, death service is busy");
             return;
         }
 
@@ -236,6 +245,7 @@ export class SendInputsService extends ClientListener {
                 data: eq,
                 _refrId
             };
+
             this.controller.emitter.emit("sendMessageWithRefrId", {
                 message,
                 reliability: "reliable"

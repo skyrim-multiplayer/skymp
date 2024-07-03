@@ -2,18 +2,8 @@ import { Game, Utility, HttpClient, printConsole, createText } from "skyrimPlatf
 import { getServerIp, getServerUiPort } from "./skympClient";
 import { getScreenResolution } from "../../view/formView";
 import { ClientListener, CombinedController, Sp } from "./clientListener";
-
-interface Mod {
-  filename: string;
-  size: number;
-  crc32: number;
-};
-
-interface ServerManifest {
-  versionMajor: number;
-  mods: Mod[];
-  loadOrder: string[];
-};
+import { Mod, ServerManifest } from "../messages_http/serverManifest";
+import { logTrace } from "../../logging";
 
 const STATE_KEY = 'loadOrderCheckState';
 
@@ -80,7 +70,6 @@ export class LoadOrderVerificationService extends ClientListener {
           'LOAD ORDER ERROR!\nCheck console for details.',
           [255, 0, 0, 1]
         );
-        this.sp.browser.loadUrl('about:blank');
       });
   };
 
@@ -148,7 +137,7 @@ export class LoadOrderVerificationService extends ClientListener {
     const result = [];
     for (let i = 0; i < getCount(); ++i) {
       const filename = getAt(i);
-      const { crc32, size } = this.sp.getFileInfo(filename);
+      const { crc32, size } = this.getFileInfoSafe(filename);
       result.push({ filename, crc32, size });
     }
     return result;
@@ -164,4 +153,24 @@ export class LoadOrderVerificationService extends ClientListener {
       printConsole(`#${i} ${JSON.stringify(mod)}`);
     }
   };
+
+  private getFileInfoSafe(filename: string) {
+    try {
+      return this.sp.getFileInfo(filename);
+    }
+    catch (e) {
+      // InvalidArgumentException.h, Skyrim Platform
+      const searchString = 'is not a valid argument';
+
+      const message = (e as Record<string, unknown>).message;
+
+      if (typeof message === "string" && message.includes('is not a valid argument')) {
+        logTrace(this, `Failed to get file info for`, filename);
+        return { crc32: 0, size: 0 };
+      }
+      else {
+        throw e;
+      }
+    }
+  }
 }

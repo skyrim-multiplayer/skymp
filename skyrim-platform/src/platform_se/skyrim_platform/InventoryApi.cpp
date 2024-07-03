@@ -297,8 +297,9 @@ JsValue InventoryApi::SetInventory(const JsFunctionArguments& args)
                                    nullptr);
       if (object.slot) {
         RE::ActorEquipManager* manager = RE::ActorEquipManager::GetSingleton();
+        bool forceEquip = pActor->GetFormID() != 0x14;
         manager->EquipObject(pActor, pBoundObject, nullptr, 1, object.slot,
-                             false, true, false, false);
+                             false, forceEquip, false, false);
       }
     }
   });

@@ -34,6 +34,8 @@ public:
 
   VarValue EquipItem(VarValue self, const std::vector<VarValue>& arguments);
 
+  VarValue UnequipItem(VarValue self, const std::vector<VarValue>& arguments);
+
   VarValue SetDontMove(VarValue self, const std::vector<VarValue>& arguments);
 
   VarValue IsDead(VarValue self,
@@ -42,9 +44,20 @@ public:
   VarValue WornHasKeyword(VarValue self,
                           const std::vector<VarValue>& arguments);
 
+  VarValue AddToFaction(VarValue self, const std::vector<VarValue>& arguments);
+
+  VarValue IsInFaction(VarValue self, const std::vector<VarValue>& arguments);
+
+  VarValue GetFactions(VarValue self, const std::vector<VarValue>& arguments);
+
+  VarValue RemoveFromFaction(VarValue self,
+                             const std::vector<VarValue>& arguments);
+
   VarValue AddSpell(VarValue self, const std::vector<VarValue>& arguments);
 
   VarValue RemoveSpell(VarValue self, const std::vector<VarValue>& arguments);
+
+  VarValue GetRace(VarValue self, const std::vector<VarValue>& arguments);
 
   void Register(VirtualMachine& vm,
                 std::shared_ptr<IPapyrusCompatibilityPolicy> policy) override;

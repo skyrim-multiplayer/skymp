@@ -13,7 +13,7 @@ public:
   using UpsertCallback = std::function<void()>;
 
   virtual void IterateSync(const IterateSyncCallback& cb) = 0;
-  virtual void Upsert(const std::vector<MpChangeForm>& changeForms,
+  virtual void Upsert(std::vector<std::optional<MpChangeForm>>&& changeForms,
                       const UpsertCallback& cb) = 0;
   virtual uint32_t GetNumFinishedUpserts() const = 0;
   virtual void Tick() = 0;

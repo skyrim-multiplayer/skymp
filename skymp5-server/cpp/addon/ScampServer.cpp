@@ -79,7 +79,6 @@ Napi::Object ScampServer::Init(Napi::Env env, Napi::Object exports)
       InstanceMethod("setEnabled", &ScampServer::SetEnabled),
       InstanceMethod("createBot", &ScampServer::CreateBot),
       InstanceMethod("getUserByActor", &ScampServer::GetUserByActor),
-      InstanceMethod("writeLogs", &ScampServer::WriteLogs),
       InstanceMethod("getUserIp", &ScampServer::GetUserIp),
 
       InstanceMethod("getLocalizedString", &ScampServer::GetLocalizedString),
@@ -93,6 +92,8 @@ Napi::Object ScampServer::Init(Napi::Env env, Napi::Object exports)
       InstanceMethod("lookupEspmRecordById",
                      &ScampServer::LookupEspmRecordById),
       InstanceMethod("getEspmLoadOrder", &ScampServer::GetEspmLoadOrder),
+      InstanceMethod("getNeighborsByPosition",
+                     &ScampServer::GetNeighborsByPosition),
       InstanceMethod("getDescFromId", &ScampServer::GetDescFromId),
       InstanceMethod("getIdFromDesc", &ScampServer::GetIdFromDesc),
       InstanceMethod("callPapyrusFunction", &ScampServer::CallPapyrusFunction),
@@ -110,7 +111,33 @@ Napi::Object ScampServer::Init(Napi::Env env, Napi::Object exports)
   constructor = Napi::Persistent(func);
   constructor.SuppressDestruct();
   exports.Set("ScampServer", func);
+
+  exports.Set("writeLogs", Napi::Function::New(env, WriteLogs));
   return exports;
+}
+
+Napi::Value ScampServer::WriteLogs(const Napi::CallbackInfo& info)
+{
+  try {
+    Napi::String logLevel = info[0].As<Napi::String>();
+    Napi::String message = info[1].As<Napi::String>();
+
+    auto messageStr = static_cast<std::string>(message);
+    while (!messageStr.empty() && messageStr.back() == '\n') {
+      messageStr.pop_back();
+    }
+
+    if (static_cast<std::string>(logLevel) == "info") {
+      GetLogger()->info(messageStr);
+    } else if (static_cast<std::string>(logLevel) == "error") {
+      GetLogger()->error(messageStr);
+    }
+  } catch (std::exception& e) {
+    // No sense to rethrow, NodeJS will unlikely be able to print this
+    // exception
+    GetLogger()->error("ScampServer::WriteLogs - {}", e.what());
+  }
+  return info.Env().Undefined();
 }
 
 ScampServer::ScampServer(const Napi::CallbackInfo& info)
@@ -124,6 +151,9 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
     Napi::Number port = info[0].As<Napi::Number>(),
                  maxConnections = info[1].As<Napi::Number>();
 
+    std::string serverSettingsJson =
+      static_cast<std::string>(info[2].As<Napi::String>());
+
     serverMock = std::make_shared<Networking::MockServer>();
 
     std::string dataDir;
@@ -131,15 +161,7 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
     const auto& logger = GetLogger();
     partOne->AttachLogger(logger);
 
-    std::ifstream f("server-settings.json");
-    if (!f.good()) {
-      throw std::runtime_error("server-settings.json is missing");
-    }
-
-    std::stringstream buffer;
-    buffer << f.rdbuf();
-
-    auto serverSettings = nlohmann::json::parse(buffer.str());
+    auto serverSettings = nlohmann::json::parse(serverSettingsJson);
 
     if (serverSettings.find("weaponStaminaModifiers") !=
         serverSettings.end()) {
@@ -291,9 +313,13 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
     auto sweetPieDamageFormulaSettings =
       serverSettings["sweetPieDamageFormulaSettings"];
 
+    auto damageMultFormulaSettings =
+      serverSettings["damageMultFormulaSettings"];
+
     std::unique_ptr<IDamageFormula> formula;
     formula = std::make_unique<TES5DamageFormula>();
-    formula = std::make_unique<DamageMultFormula>(std::move(formula));
+    formula = std::make_unique<DamageMultFormula>(std::move(formula),
+                                                  damageMultFormulaSettings);
     formula = std::make_unique<SweetPieDamageFormula>(
       std::move(formula), sweetPieDamageFormulaSettings);
     partOne->SetDamageFormula(std::move(formula));
@@ -378,15 +404,17 @@ Napi::Value ScampServer::On(const Napi::CallbackInfo& info)
 
 Napi::Value ScampServer::CreateActor(const Napi::CallbackInfo& info)
 {
-  auto formId = NapiHelper::ExtractUInt32(info[0], "formId");
-  auto pos = NapiHelper::ExtractNiPoint3(info[1], "pos");
-  auto angleZ = NapiHelper::ExtractFloat(info[2], "angleZ");
-  auto cellOrWorld = NapiHelper::ExtractUInt32(info[3], "cellOrWorld");
-
-  int32_t userProfileId = -1;
-  if (info[4].IsNumber())
-    userProfileId = info[4].As<Napi::Number>().Int32Value();
   try {
+    auto formId = NapiHelper::ExtractUInt32(info[0], "formId");
+    auto pos = NapiHelper::ExtractNiPoint3(info[1], "pos");
+    auto angleZ = NapiHelper::ExtractFloat(info[2], "angleZ");
+    auto cellOrWorld = NapiHelper::ExtractUInt32(info[3], "cellOrWorld");
+
+    int32_t userProfileId = -1;
+    if (info[4].IsNumber()) {
+      userProfileId = info[4].As<Napi::Number>().Int32Value();
+    }
+
     uint32_t res =
       partOne->CreateActor(formId, pos, angleZ, cellOrWorld, userProfileId);
     return Napi::Number::New(info.Env(), res);
@@ -606,30 +634,6 @@ Napi::Value ScampServer::GetUserByActor(const Napi::CallbackInfo& info)
     return Napi::Number::New(info.Env(), partOne->GetUserByActor(formId));
   } catch (std::exception& e) {
     throw Napi::Error::New(info.Env(), (std::string)e.what());
-  }
-  return info.Env().Undefined();
-}
-
-Napi::Value ScampServer::WriteLogs(const Napi::CallbackInfo& info)
-{
-  try {
-    Napi::String logLevel = info[0].As<Napi::String>();
-    Napi::String message = info[1].As<Napi::String>();
-
-    auto messageStr = static_cast<std::string>(message);
-    while (!messageStr.empty() && messageStr.back() == '\n') {
-      messageStr.pop_back();
-    }
-
-    if (static_cast<std::string>(logLevel) == "info") {
-      GetLogger()->info(messageStr);
-    } else if (static_cast<std::string>(logLevel) == "error") {
-      GetLogger()->error(messageStr);
-    }
-  } catch (std::exception& e) {
-    // No sense to rethrow, NodeJS will unlikely be able to print this
-    // exception
-    GetLogger()->error("ScampServer::WriteLogs - {}", e.what());
   }
   return info.Env().Undefined();
 }
@@ -977,6 +981,28 @@ Napi::Value ScampServer::LookupEspmRecordById(const Napi::CallbackInfo& info)
   }
 }
 
+Napi::Value ScampServer::GetNeighborsByPosition(const Napi::CallbackInfo& info)
+{
+  try {
+    auto cellOrWorldDesc = FormDesc::FromString(
+      NapiHelper::ExtractString(info[0], "cellOrWorldDesc"));
+    auto pos = NapiHelper::ExtractNiPoint3(info[1], "pos");
+
+    auto cellX = static_cast<int32_t>(pos[0] / 4096);
+    auto cellY = static_cast<int32_t>(pos[1] / 4096);
+    auto& refs = partOne->worldState.GetNeighborsByPosition(
+      cellOrWorldDesc.ToFormId(partOne->worldState.espmFiles), cellX, cellY);
+
+    Napi::Array arr = Napi::Array::New(info.Env(), refs.size());
+    for (auto ref : refs) {
+      arr.Set(arr.Length(), Napi::Number::New(info.Env(), ref->GetFormId()));
+    }
+    return arr;
+  } catch (std::exception& e) {
+    throw Napi::Error::New(info.Env(), std::string(e.what()));
+  }
+}
+
 Napi::Value ScampServer::GetEspmLoadOrder(const Napi::CallbackInfo& info)
 {
   try {
@@ -1019,6 +1045,12 @@ Napi::Value ScampServer::GetIdFromDesc(const Napi::CallbackInfo& info)
 
 Napi::Value ScampServer::CallPapyrusFunction(const Napi::CallbackInfo& info)
 {
+  // This function throws exceptions in case of bad input
+  // But it also catches exceptions from the Papyrus VM functions
+  // This is because
+  // 1) they're rare and unexpected, and we don't want to crash the sever
+  // 2) in Papyrus (not JS) we catch them all. so it's consistent
+  // 3) we plan replacing all exceptions with logs in Papyrus VM functions
   try {
     auto callType = NapiHelper::ExtractString(info[0], "callType");
     auto className = NapiHelper::ExtractString(info[1], "className");
@@ -1043,15 +1075,27 @@ Napi::Value ScampServer::CallPapyrusFunction(const Napi::CallbackInfo& info)
     auto& vm = partOne->worldState.GetPapyrusVm();
     if (callType == "method") {
       if (self.GetType() == VarValue::Type::kType_Object) {
-        res = vm.CallMethod(static_cast<IGameObject*>(self),
-                            functionName.data(), args);
+        try {
+          res = vm.CallMethod(static_cast<IGameObject*>(self),
+                              functionName.data(), args);
+        } catch (std::exception& e) {
+          res = VarValue::None();
+          spdlog::error("ScampServer::CallPapyrusFunction {} {} - {}",
+                        self.ToString(), functionName, e.what());
+        }
       } else {
         throw std::runtime_error(
           "Can't call Papyrus method on non-object self '" + self.ToString() +
           "'");
       }
     } else if (callType == "global") {
-      res = vm.CallStatic(className, functionName, args);
+      try {
+        res = vm.CallStatic(className, functionName, args);
+      } catch (std::exception& e) {
+        res = VarValue::None();
+        spdlog::error("ScampServer::CallPapyrusFunction {} {} - {}", className,
+                      functionName, e.what());
+      }
     } else {
       throw std::runtime_error("Unknown call type '" + callType +
                                "', expected one of ['method', 'global']");

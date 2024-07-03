@@ -4,6 +4,7 @@
 #include "script_objects/EspmGameObject.h"
 #include "script_objects/MpFormGameObject.h"
 
+#include "EvaluateTemplate.h"
 #include "SpSnippetFunctionGen.h"
 #include "papyrus-vm/CIString.h"
 #include <algorithm>
@@ -66,7 +67,8 @@ VarValue PapyrusActor::SetActorValue(VarValue self,
               actor->GetFormId())
       .Execute(it == actor->GetParent()->hosters.end()
                  ? actor
-                 : &actor->GetParent()->GetFormAt<MpActor>(it->second));
+                 : &actor->GetParent()->GetFormAt<MpActor>(it->second),
+               SpSnippetMode::kNoReturnResult);
   }
   return VarValue();
 }
@@ -170,7 +172,7 @@ VarValue PapyrusActor::SetAlpha(VarValue self,
       if (targetRefr) {
         SpSnippet(GetName(), funcName, serializedArgs.data(),
                   selfRefr->GetFormId())
-          .Execute(targetRefr);
+          .Execute(targetRefr, SpSnippetMode::kNoReturnResult);
       }
     }
   }
@@ -218,7 +220,23 @@ VarValue PapyrusActor::EquipItem(VarValue self,
     SpSnippet(GetName(), "EquipItem",
               SpSnippetFunctionGen::SerializeArguments(arguments).data(),
               actor->GetFormId())
-      .Execute(actor);
+      .Execute(actor, SpSnippetMode::kNoReturnResult);
+  }
+  return VarValue::None();
+}
+
+VarValue PapyrusActor::UnequipItem(VarValue self,
+                                   const std::vector<VarValue>& arguments)
+{
+  if (arguments.size() < 3) {
+    throw std::runtime_error("UnequipItem requires at least 3 arguments");
+  }
+
+  if (auto actor = GetFormPtr<MpActor>(self)) {
+    SpSnippet(GetName(), "UnequipItem",
+              SpSnippetFunctionGen::SerializeArguments(arguments).data(),
+              actor->GetFormId())
+      .Execute(actor, SpSnippetMode::kNoReturnResult);
   }
   return VarValue::None();
 }
@@ -233,7 +251,7 @@ VarValue PapyrusActor::SetDontMove(VarValue self,
     SpSnippet(GetName(), "SetDontMove",
               SpSnippetFunctionGen::SerializeArguments(arguments).data(),
               actor->GetFormId())
-      .Execute(actor);
+      .Execute(actor, SpSnippetMode::kNoReturnResult);
   }
   return VarValue::None();
 }
@@ -287,6 +305,122 @@ VarValue PapyrusActor::WornHasKeyword(VarValue self,
   return VarValue(false);
 }
 
+VarValue PapyrusActor::AddToFaction(VarValue self,
+                                    const std::vector<VarValue>& arguments)
+{
+  if (auto actor = GetFormPtr<MpActor>(self)) {
+    auto worldState = actor->GetParent();
+    if (!worldState) {
+      throw std::runtime_error("Actor.AddToFaction - no WorldState attached");
+    }
+
+    if (arguments.size() < 1) {
+      throw std::runtime_error("Actor.AddToFaction requires one argument");
+    }
+
+    const auto& factionRec = GetRecordPtr(arguments[0]);
+    if (!factionRec.rec) {
+      spdlog::error("Actor.AddToFaction - invalid faction form");
+      return VarValue();
+    }
+
+    Faction resultFaction = Faction();
+    resultFaction.formDesc = FormDesc::FromFormId(
+      factionRec.ToGlobalId(factionRec.rec->GetId()), worldState->espmFiles);
+    resultFaction.rank = 0;
+
+    actor->AddToFaction(resultFaction);
+  }
+  return VarValue();
+}
+
+VarValue PapyrusActor::IsInFaction(VarValue self,
+                                   const std::vector<VarValue>& arguments)
+{
+  if (auto actor = GetFormPtr<MpActor>(self)) {
+    auto worldState = actor->GetParent();
+    if (!worldState) {
+      throw std::runtime_error("Actor.IsInFaction - no WorldState attached");
+    }
+
+    if (arguments.size() < 1) {
+      throw std::runtime_error("Actor.IsInFaction requires one argument");
+    }
+
+    const auto& factionRec = GetRecordPtr(arguments[0]);
+    if (!factionRec.rec) {
+      spdlog::error("Actor.IsInFaction - invalid faction form");
+      return VarValue(false);
+    }
+
+    return VarValue(actor->IsInFaction(FormDesc::FromFormId(
+      factionRec.ToGlobalId(factionRec.rec->GetId()), worldState->espmFiles)));
+  }
+  return VarValue(false);
+}
+
+VarValue PapyrusActor::GetFactions(VarValue self,
+                                   const std::vector<VarValue>& arguments)
+{
+  VarValue result = VarValue((uint8_t)VarValue::kType_ObjectArray);
+  result.pArray = std::make_shared<std::vector<VarValue>>();
+
+  if (auto actor = GetFormPtr<MpActor>(self)) {
+    auto worldState = actor->GetParent();
+    if (!worldState) {
+      throw std::runtime_error("Actor.GetFactions - no WorldState attached");
+    }
+
+    if (arguments.size() < 2) {
+      throw std::runtime_error("Actor.GetFactions requires two arguments");
+    }
+
+    auto minFactionRank = static_cast<int>(arguments[0]);
+    auto maxFactionRank = static_cast<int>(arguments[1]);
+
+    auto factions = actor->GetFactions(minFactionRank, maxFactionRank);
+    for (auto faction : factions) {
+      result.pArray->push_back(VarValue(std::make_shared<EspmGameObject>(
+        worldState->GetEspm().GetBrowser().LookupById(
+          faction.formDesc.ToFormId(worldState->espmFiles)))));
+    }
+  }
+  return result;
+}
+
+VarValue PapyrusActor::RemoveFromFaction(
+  VarValue self, const std::vector<VarValue>& arguments)
+{
+  if (auto actor = GetFormPtr<MpActor>(self)) {
+    auto worldState = actor->GetParent();
+    if (!worldState) {
+      throw std::runtime_error(
+        "Actor.RemoveFromFaction - no WorldState attached");
+    }
+
+    if (arguments.size() < 1) {
+      throw std::runtime_error(
+        "Actor.RemoveFromFaction requires one argument");
+    }
+
+    const auto& factionRec = GetRecordPtr(arguments[0]);
+    if (!factionRec.rec) {
+      spdlog::error("Actor.RemoveFromFaction - invalid faction form");
+      return VarValue();
+    }
+
+    const auto& factions = actor->GetChangeForm().factions;
+
+    if (!factions.has_value()) {
+      return VarValue();
+    }
+
+    actor->RemoveFromFaction(FormDesc::FromFormId(
+      factionRec.ToGlobalId(factionRec.rec->GetId()), worldState->espmFiles));
+  }
+  return VarValue();
+}
+
 VarValue PapyrusActor::AddSpell(VarValue self,
                                 const std::vector<VarValue>& arguments)
 {
@@ -319,7 +453,7 @@ VarValue PapyrusActor::AddSpell(VarValue self,
       SpSnippet(GetName(), "AddSpell",
                 SpSnippetFunctionGen::SerializeArguments(arguments).data(),
                 actor->GetFormId())
-        .Execute(actor);
+        .Execute(actor, SpSnippetMode::kNoReturnResult);
 
       return VarValue(true);
     }
@@ -363,12 +497,51 @@ VarValue PapyrusActor::RemoveSpell(VarValue self,
       SpSnippet(GetName(), "RemoveSpell",
                 SpSnippetFunctionGen::SerializeArguments(arguments).data(),
                 actor->GetFormId())
-        .Execute(actor);
+        .Execute(actor, SpSnippetMode::kNoReturnResult);
 
       return VarValue(true);
     }
   }
   return VarValue(false);
+}
+
+VarValue PapyrusActor::GetRace(VarValue self,
+                               const std::vector<VarValue>& arguments)
+{
+  auto actor = GetFormPtr<MpActor>(self);
+  if (!actor) {
+    return VarValue::None();
+  }
+
+  uint32_t raceId = 0;
+
+  if (auto appearance = actor->GetAppearance()) {
+    raceId = appearance->raceId;
+  } else {
+    raceId = EvaluateTemplate<espm::NPC_::UseTraits>(
+      actor->GetParent(), actor->GetBaseId(), actor->GetTemplateChain(),
+      [](const auto& npcLookupResult, const auto& npcData) {
+        return npcLookupResult.ToGlobalId(npcData.race);
+      });
+  }
+
+  auto lookupRes =
+    actor->GetParent()->GetEspm().GetBrowser().LookupById(raceId);
+
+  if (!lookupRes.rec) {
+    spdlog::error("Actor.GetRace - Race with id {:x} not found in espm",
+                  raceId);
+    return VarValue::None();
+  }
+
+  if (!(lookupRes.rec->GetType() == espm::RACE::kType)) {
+    spdlog::error(
+      "Actor.GetRace - Expected record {:x} to be RACE, but it is {}", raceId,
+      lookupRes.rec->GetType().ToString());
+    return VarValue::None();
+  }
+
+  return VarValue(std::make_shared<EspmGameObject>(lookupRes));
 }
 
 void PapyrusActor::Register(
@@ -389,9 +562,15 @@ void PapyrusActor::Register(
             &PapyrusActor::GetActorValuePercentage);
   AddMethod(vm, "SetAlpha", &PapyrusActor::SetAlpha);
   AddMethod(vm, "EquipItem", &PapyrusActor::EquipItem);
+  AddMethod(vm, "UnequipItem", &PapyrusActor::UnequipItem);
   AddMethod(vm, "SetDontMove", &PapyrusActor::SetDontMove);
   AddMethod(vm, "IsDead", &PapyrusActor::IsDead);
   AddMethod(vm, "WornHasKeyword", &PapyrusActor::WornHasKeyword);
+  AddMethod(vm, "AddToFaction", &PapyrusActor::AddToFaction);
+  AddMethod(vm, "IsInFaction", &PapyrusActor::IsInFaction);
+  AddMethod(vm, "GetFactions", &PapyrusActor::GetFactions);
+  AddMethod(vm, "RemoveFromFaction", &PapyrusActor::RemoveFromFaction);
   AddMethod(vm, "AddSpell", &PapyrusActor::AddSpell);
   AddMethod(vm, "RemoveSpell", &PapyrusActor::RemoveSpell);
+  AddMethod(vm, "GetRace", &PapyrusActor::GetRace);
 }

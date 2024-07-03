@@ -1,6 +1,7 @@
 #include "papyrus-vm/VirtualMachine.h"
 #include "papyrus-vm/Utils.h"
 #include <algorithm>
+#include <cassert>
 #include <sstream>
 #include <stdexcept>
 
@@ -142,7 +143,9 @@ int32_t StackIdHolder::GetStackId() const
 VarValue VirtualMachine::CallMethod(
   IGameObject* selfObj, const char* methodName,
   std::vector<VarValue>& arguments,
-  std::shared_ptr<StackIdHolder> stackIdHolder)
+  std::shared_ptr<StackIdHolder> stackIdHolder,
+  const std::vector<std::shared_ptr<ActivePexInstance>>*
+    activePexInstancesOverride)
 {
   if (!stackIdHolder) {
     stackIdHolder.reset(new StackIdHolder(*this));
@@ -152,7 +155,13 @@ VarValue VirtualMachine::CallMethod(
     return VarValue::None();
   }
 
-  for (auto& activeScript : selfObj->ListActivePexInstances()) {
+  const auto& instances = activePexInstancesOverride
+    ? *activePexInstancesOverride
+    : selfObj->ListActivePexInstances();
+
+  // TODO: in theory we shouldn't iterate over all scripts, but only use the
+  // current one
+  for (auto& activeScript : instances) {
     FunctionInfo functionInfo;
 
     if (!Utils::stricmp(methodName, "GotoState") ||

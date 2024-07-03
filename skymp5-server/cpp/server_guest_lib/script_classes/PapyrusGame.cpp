@@ -68,6 +68,11 @@ VarValue PapyrusGame::GetPlayer(VarValue self,
 {
   auto actor = compatibilityPolicy->GetDefaultActor("Game", "GetPlayer",
                                                     self.GetMetaStackId());
+
+  if (!actor) {
+    return VarValue::None();
+  }
+
   return VarValue(std::make_shared<MpFormGameObject>(actor));
 }
 
@@ -95,7 +100,7 @@ VarValue PapyrusGame::GetCameraState(VarValue self,
         GetName(), "GetCameraState", self.GetMetaStackId())) {
     Viet::Promise<VarValue> promise =
       SpSnippet(GetName(), "GetCameraState", serializedArgs.data())
-        .Execute(actor);
+        .Execute(actor, SpSnippetMode::kReturnResult);
     return VarValue(Viet::Promise<VarValue>(promise));
   }
   return VarValue(-1);
@@ -108,7 +113,8 @@ void PapyrusGame::RaceMenuHelper(VarValue& self, const char* funcName,
   if (auto actor = compatibilityPolicy->GetDefaultActor(
         GetName(), funcName, self.GetMetaStackId())) {
     actor->SetRaceMenuOpen(true);
-    SpSnippet(GetName(), funcName, serializedArgs.data()).Execute(actor);
+    SpSnippet(GetName(), funcName, serializedArgs.data())
+      .Execute(actor, SpSnippetMode::kNoReturnResult);
   }
 }
 
@@ -128,7 +134,9 @@ VarValue PapyrusGame::GetFormInternal(VarValue self,
 
   const std::shared_ptr<MpForm>& pForm =
     compatibilityPolicy->GetWorldState()->LookupFormById(formId);
-  espm::LookupResult res = GetRecordPtr(VarValue(formId));
+  espm::LookupResult res =
+    compatibilityPolicy->GetWorldState()->GetEspm().GetBrowser().LookupById(
+      formId);
 
   if (!pForm && !res.rec) {
     return VarValue::None();
@@ -150,6 +158,21 @@ VarValue PapyrusGame::GetFormEx(
   return GetFormInternal(self, arguments, true);
 }
 
+VarValue PapyrusGame::ShakeController(VarValue self,
+                                      const std::vector<VarValue>& arguments)
+{
+  auto funcName = "ShakeController";
+
+  auto serializedArgs = SpSnippetFunctionGen::SerializeArguments(arguments);
+  if (auto actor = compatibilityPolicy->GetDefaultActor(
+        GetName(), funcName, self.GetMetaStackId())) {
+    SpSnippet(GetName(), funcName, serializedArgs.data())
+      .Execute(actor, SpSnippetMode::kNoReturnResult);
+  }
+
+  return VarValue::None();
+}
+
 void PapyrusGame::Register(VirtualMachine& vm,
                            std::shared_ptr<IPapyrusCompatibilityPolicy> policy)
 {
@@ -167,4 +190,5 @@ void PapyrusGame::Register(VirtualMachine& vm,
   AddStatic(vm, "GetCameraState", &PapyrusGame::GetCameraState);
   AddStatic(vm, "GetForm", &PapyrusGame::GetForm);
   AddStatic(vm, "GetFormEx", &PapyrusGame::GetFormEx);
+  AddStatic(vm, "ShakeController", &PapyrusGame::ShakeController);
 }

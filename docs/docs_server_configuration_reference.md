@@ -359,7 +359,41 @@ In case this field is not provided, some default, yet hardcoded, values are in u
     "WeapTypeDagger": 4.0,
     "WeapTypeShortSword": 5.0,
     "WeapTypeSword": 6.0,
-    ...
+    // ...
+  }
+  // ...
+}
+```
+
+## additionalServerSettings
+
+To automate the fetching of the latest server settings from GitHub, configure the additionalServerSettings in your server's startup script or configuration file as follows:
+
+```json5
+{
+  // ...
+  "additionalServerSettings": [
+    {
+      "type": "github",
+      "repo": "your-org/server-settings-repo",
+      "ref": "main", // Specify the branch, tag, or commit hash here
+      "pathRegex": "^(common|indev)/.*", // No need to check for .json extension
+      "token": "YOUR_GITHUB_PERSONAL_ACCESS_TOKEN"
+    }
+  ]
+  // ...
+}
+```
+
+## damageMultFormulaSettings
+This setting allows you to control server damage mult formula through its variables.
+If "damageMultFormulaSettings" is not present, the server will use some default values.
+
+```json5
+{
+  // ...
+  "damageMultFormulaSettings": {
+    "multiplier": 1.0
   }
   // ...
 }
