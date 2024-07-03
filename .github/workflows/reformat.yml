@@ -13,6 +13,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+        with:
+          ref: ${{ github.head_ref }}
+
       - name: Format with clang-format
         uses: DoozyX/clang-format-lint-action@v0.17
         with:
@@ -21,6 +24,8 @@ jobs:
           extensions: 'h,cpp,hpp'
           clangFormatVersion: 15
           inplace: True
+
+      # Uncomment these steps if you need to install yarn packages and format with prettier
       # - name: Install yarn packages
       #   uses: borales/actions-yarn@v4
       #   with:
@@ -29,7 +34,9 @@ jobs:
       #   uses: borales/actions-yarn@v4
       #   with:
       #     cmd: --cwd=./misc/prettier prettier-format
-      - uses: EndBug/add-and-commit@v9
+
+      - name: Commit changes
+        uses: EndBug/add-and-commit@v9
         with:
           default_author: github_actor
           message: 'Committing reformat changes'
