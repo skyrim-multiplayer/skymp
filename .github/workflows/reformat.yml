@@ -14,7 +14,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
       - name: Format with clang-format
-        uses: DoozyX/clang-format-lint-action@v0.14
+        uses: DoozyX/clang-format-lint-action@v0.17
         with:
           source: '.'
           exclude: './skyrim-platform/src/third_party ./skymp5-server/cpp/third_party/MakeID.h'
