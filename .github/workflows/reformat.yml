@@ -15,6 +15,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           ref: ${{ github.head_ref }}
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
 
       - name: Format with clang-format
         uses: DoozyX/clang-format-lint-action@v0.17
