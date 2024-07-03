@@ -192,7 +192,7 @@ void SweetPieScript::Play(MpActor& actor, WorldState& worldState,
         }
         uint32_t boundWeaponBaseId = boundItem.GetBaseId(),
                  bookBaseId = it->first;
-        actor.AddItem(boundWeaponBaseId, isArrow ? 10 : 1);
+        actor.AddItem(boundWeaponBaseId, isArrow ? 40 : 1);
         EquipItem(actor, boundWeaponBaseId);
         uint32_t formId = actor.GetFormId();
         float cooldown = boundItem.GetCooldown();
