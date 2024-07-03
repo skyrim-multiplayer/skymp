@@ -939,6 +939,7 @@ export class RemoteServer extends ClientListener {
       });
       return;
     }
+  
 
     this.logError('Not found authentication method');
   };
