@@ -1,10 +1,15 @@
 name: Reformat
-on: [push, pull_request]
+on: 
+  push:
+  pull_request:
+    branches:
+      - '**'
+
 jobs:
   reformat:
     name: Reformat
     runs-on: ubuntu-latest
-    if: contains(github.event.head_commit.message, '[reformat]')
+    if: ${{ contains(github.event.commits[0].message, '[reformat]') || contains(github.event.pull_request.title, '[reformat]') || contains(github.event.pull_request.body, '[reformat]') }}
     steps:
       - name: Checkout
         uses: actions/checkout@v2
