@@ -754,9 +754,9 @@ void PartOne::Init()
       method, emitter->GetIdx(), isMe ? "true" : "false", emitterPos.x,
       emitterPos.y, emitterPos.z, emitterRot.x, emitterRot.y, emitterRot.z,
       worldOrCell, baseRecordTypePrefix, baseRecordType.data(),
-      appearancePrefix, appearance, equipmentPrefix, equipment, animationPrefix, animation, refrIdPrefix,
-      refrId, baseIdPrefix, baseId, isDeadPrefix, isDead, propsPrefix,
-      props.data(), propsPostfix);
+      appearancePrefix, appearance, equipmentPrefix, equipment, 
+      animationPrefix, animation, refrIdPrefix, refrId, baseIdPrefix, 
+      baseId, isDeadPrefix, isDead, propsPrefix, props.data(), propsPostfix);
   };
 
   pImpl->onUnsubscribe = [this](Networking::ISendTarget* sendTarget,
