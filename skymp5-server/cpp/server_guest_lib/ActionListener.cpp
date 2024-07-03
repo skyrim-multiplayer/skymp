@@ -18,6 +18,7 @@
 #include <spdlog/spdlog.h>
 #include <unordered_set>
 
+
 #include "UpdateEquipmentMessage.h"
 
 MpActor* ActionListener::SendToNeighbours(
