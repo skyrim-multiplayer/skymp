@@ -36,10 +36,13 @@ jobs:
       #   with:
       #     cmd: --cwd=./misc/prettier prettier-format
 
-      - name: Commit changes
-        uses: EndBug/add-and-commit@v9
+      - name: Create Pull Request Review with Suggestions
+        uses: marocchino/sticky-pull-request-comment@v2
         with:
-          default_author: github_actor
-          message: 'Committing reformat changes'
+          message: |
+            The following reformatting changes are suggested:
+            \`\`\`
+            $(git diff)
+            \`\`\`
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
