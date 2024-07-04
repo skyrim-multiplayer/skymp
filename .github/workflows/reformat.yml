@@ -36,13 +36,22 @@ jobs:
       #   with:
       #     cmd: --cwd=./misc/prettier prettier-format
 
-      - name: Create Pull Request Review with Suggestions
-        uses: marocchino/sticky-pull-request-comment@v2
+      - name: Create Comment with Suggested Changes
+        uses: actions/github-script@v6
         with:
-          message: |
-            The following reformatting changes are suggested:
-            \`\`\`
-            $(git diff)
-            \`\`\`
+          script: |
+            const { execSync } = require('child_process');
+            const fs = require('fs');
+
+            // Get the diff
+            const diff = execSync('git diff').toString();
+
+            // Create a comment
+            const { data: comment } = await github.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              body: `The following reformatting changes are suggested:\n\`\`\`\n${diff}\n\`\`\``
+            });
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
