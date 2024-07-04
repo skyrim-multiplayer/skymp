@@ -47,7 +47,7 @@ jobs:
             const diff = execSync('git diff').toString();
 
             // Create a comment
-            const { data: comment } = await github.issues.createComment({
+            const { data: comment } = await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.payload.pull_request.number,
