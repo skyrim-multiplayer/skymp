@@ -1432,6 +1432,10 @@ void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
       this->occupant->RemoveEventSink(this->occupantDestroySink);
       this->occupant = nullptr;
     }
+  } else if ((t == espm::ACTI::kType || t == "FURN") && actorActivator) {
+    // SendOpenContainer being used to activate the object
+    // TODO: rename SendOpenContainer to SendActivate
+    activationSource.SendOpenContainer(GetFormId());
   }
 }
 

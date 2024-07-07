@@ -1,4 +1,4 @@
-import { Actor, Form } from 'skyrimPlatform';
+import { Actor, Form, FormType } from 'skyrimPlatform';
 import {
   Armor,
   Cell,
@@ -159,9 +159,29 @@ export class RemoteServer extends ClientListener {
   private onOpenContainerMessage(event: ConnectionMessage<OpenContainerMessage>): void {
     once('update', async () => {
       await Utility.wait(0.1); // Give a chance to update inventory
-      (
-        ObjectReference.from(Game.getFormEx(event.message.target)) as ObjectReference
-      ).activate(Game.getPlayer(), true);
+
+      const remoteId = event.message.target;
+      const localId = remoteIdToLocalId(remoteId);
+      const refr = ObjectReference.from(Game.getFormEx(localId));
+
+      if (refr === null) {
+        logError(this, 'onOpenContainerMessage - refr not found', 'remoteId', remoteId.toString(16), 'localId', localId.toString(16));
+        return;
+      }
+
+      refr.activate(Game.getPlayer(), true);
+
+      const baseObject = refr.getBaseObject();
+      const baseType = baseObject?.getType();
+      const isContainer = baseType === FormType.Container;
+
+      if (!isContainer) {
+        return;
+      }
+
+      // In SkyMP containers have 2-nd, closing activation under the hood.
+      // This differs from Skyrim's behavior, where it's just one activation.
+
       (async () => {
         while (!Ui.isMenuOpen('ContainerMenu')) await Utility.wait(0.1);
         while (Ui.isMenuOpen('ContainerMenu')) await Utility.wait(0.1);
