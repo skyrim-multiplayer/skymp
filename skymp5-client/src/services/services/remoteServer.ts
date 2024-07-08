@@ -305,7 +305,9 @@ export class RemoteServer extends ClientListener {
               if (actorRefr) {
                 actorRefr.removeFromAllFactions();
                 for (let i = 0; i < msg.props.factions.length; i++) {
-                  actorRefr.addToFaction(Faction.from(Game.getFormEx(msg.props.factions[i].formId)));
+                  const faction = Faction.from(Game.getFormEx(msg.props.factions[i].formId));
+                  actorRefr.addToFaction(faction);
+                  actorRefr.setFactionRank(faction, msg.props.factions[i].rank);
                 }
               }
             }
@@ -424,7 +426,9 @@ export class RemoteServer extends ClientListener {
       if (player) {
         player.removeFromAllFactions();
         for (let i = 0; i < msg.props.factions.length; i++) {
-          player.addToFaction(Faction.from(Game.getFormEx(msg.props.factions[i].formId)));
+          const faction = Faction.from(Game.getFormEx(msg.props.factions[i].formId));
+          player.addToFaction(faction);
+          player.setFactionRank(faction, msg.props.factions[i].rank);
         }
       }
     }
