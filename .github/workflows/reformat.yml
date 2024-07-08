@@ -36,22 +36,23 @@ jobs:
       #   with:
       #     cmd: --cwd=./misc/prettier prettier-format
 
-      - name: Create Comment with Suggested Changes
-        uses: actions/github-script@v6
-        with:
-          script: |
-            const { execSync } = require('child_process');
-            const fs = require('fs');
+      # TODO: get this to work
+      # - name: Create Comment with Suggested Changes
+      #   uses: actions/github-script@v6
+      #   with:
+      #     script: |
+      #       const { execSync } = require('child_process');
+      #       const fs = require('fs');
 
-            // Get the diff
-            const diff = execSync('git diff').toString();
+      #       // Get the diff
+      #       const diff = execSync('git diff').toString();
 
-            // Create a comment
-            const { data: comment } = await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.payload.pull_request.number,
-              body: `The following reformatting changes are suggested:\n\`\`\`\n${diff}\n\`\`\``
-            });
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #       // Create a comment
+      #       const { data: comment } = await github.rest.issues.createComment({
+      #         owner: context.repo.owner,
+      #         repo: context.repo.repo,
+      #         issue_number: context.payload.pull_request.number,
+      #         body: `The following reformatting changes are suggested:\n\`\`\`\n${diff}\n\`\`\``
+      #       });
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
