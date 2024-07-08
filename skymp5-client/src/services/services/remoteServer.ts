@@ -1,4 +1,5 @@
-import { Actor, Faction, Form } from 'skyrimPlatform';
+import { Actor, Faction, Form, FormType } from 'skyrimPlatform';
+
 import {
   Armor,
   Cell,
@@ -159,9 +160,29 @@ export class RemoteServer extends ClientListener {
   private onOpenContainerMessage(event: ConnectionMessage<OpenContainerMessage>): void {
     once('update', async () => {
       await Utility.wait(0.1); // Give a chance to update inventory
-      (
-        ObjectReference.from(Game.getFormEx(event.message.target)) as ObjectReference
-      ).activate(Game.getPlayer(), true);
+
+      const remoteId = event.message.target;
+      const localId = remoteIdToLocalId(remoteId);
+      const refr = ObjectReference.from(Game.getFormEx(localId));
+
+      if (refr === null) {
+        logError(this, 'onOpenContainerMessage - refr not found', 'remoteId', remoteId.toString(16), 'localId', localId.toString(16));
+        return;
+      }
+
+      refr.activate(Game.getPlayer(), true);
+
+      const baseObject = refr.getBaseObject();
+      const baseType = baseObject?.getType();
+      const isContainer = baseType === FormType.Container;
+
+      if (!isContainer) {
+        return;
+      }
+
+      // In SkyMP containers have 2-nd, closing activation under the hood.
+      // This differs from Skyrim's behavior, where it's just one activation.
+
       (async () => {
         while (!Ui.isMenuOpen('ContainerMenu')) await Utility.wait(0.1);
         while (Ui.isMenuOpen('ContainerMenu')) await Utility.wait(0.1);
@@ -379,7 +400,10 @@ export class RemoteServer extends ClientListener {
       }
     }
 
-    if (msg.isMe) this.worldModel.playerCharacterFormIdx = i;
+    if (msg.isMe) {
+      this.worldModel.playerCharacterFormIdx = i;
+      this.worldModel.playerCharacterRefrId = msg.refrId || 0;
+    }
 
     // TODO: move to a separate module
 
@@ -490,9 +514,6 @@ export class RemoteServer extends ClientListener {
           // Note: appearance part was copy-pasted
           if (msg.appearance) {
             applyAppearanceToPlayer(msg.appearance);
-            if (msg.appearance.isFemale)
-              // Fix gender-specific walking anim
-              (Game.getPlayer()!).resurrect();
           }
         }
 
@@ -568,9 +589,6 @@ export class RemoteServer extends ClientListener {
               // Note: appearance part was copy-pasted
               if (msg.appearance) {
                 applyAppearanceToPlayer(msg.appearance);
-                if (msg.appearance.isFemale)
-                  // Fix gender-specific walking anim
-                  (Game.getPlayer()!).resurrect();
               }
             });
           }
@@ -596,6 +614,7 @@ export class RemoteServer extends ClientListener {
 
     if (this.worldModel.playerCharacterFormIdx === i) {
       this.worldModel.playerCharacterFormIdx = -1;
+      this.worldModel.playerCharacterRefrId = 0;
 
       // TODO: move to a separate module
       once('update', () => Game.quitToMainMenu());
@@ -763,6 +782,7 @@ export class RemoteServer extends ClientListener {
   private handleConnectionAccepted(): void {
     this.worldModel.forms = [];
     this.worldModel.playerCharacterFormIdx = -1;
+    this.worldModel.playerCharacterRefrId = 0;
 
     logTrace(this, "Handle connection accepted");
   }
@@ -808,13 +828,17 @@ export class RemoteServer extends ClientListener {
     return this.worldModel.playerCharacterFormIdx;
   }
 
-  private getIdManager() {
+  getMyRemoteRefrId(): number {
+    return this.worldModel.playerCharacterRefrId;
+  }
+
+  getIdManager() {
     return this.idManager_;
   }
 
   private get worldModel(): WorldModel {
     if (typeof storage["worldModel"] === "function") {
-      storage["worldModel"] = { forms: [], playerCharacterFormIdx: -1 };
+      storage["worldModel"] = { forms: [], playerCharacterFormIdx: -1, playerCharacterRefrId: 0 };
     }
     return storage["worldModel"] as WorldModel;
   }

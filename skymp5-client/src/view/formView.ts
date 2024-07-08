@@ -7,7 +7,6 @@ import { FormModel } from "./model";
 import { applyMovement } from "../sync/movementApply";
 import { SpawnProcess } from "./spawnProcess";
 import { ObjectReferenceEx } from "../extensions/objectReferenceEx";
-import { View } from "./view";
 import { PlayerCharacterDataHolder } from "./playerCharacterDataHolder";
 import { getMovement } from "../sync/movementGet";
 import { lastTryHost, tryHost } from "./hostAttempts";
@@ -33,7 +32,7 @@ export const getScreenResolution = (): ScreenResolution => {
   return _screenResolution;
 }
 
-export class FormView implements View<FormModel> {
+export class FormView {
   constructor(private remoteRefrId?: number) { }
 
   update(model: FormModel): void {

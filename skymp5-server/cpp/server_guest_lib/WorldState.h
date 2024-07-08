@@ -123,7 +123,7 @@ public:
   void SendPapyrusEvent(MpForm* form, const char* eventName,
                         const VarValue* arguments, size_t argumentsCount);
 
-  const std::set<MpObjectReference*>& GetReferencesAtPosition(
+  const std::set<MpObjectReference*>& GetNeighborsByPosition(
     uint32_t cellOrWorld, int16_t cellX, int16_t cellY);
 
   // See LookupFormById comment
@@ -249,7 +249,10 @@ public:
 
     /* Playable races from ArgonianRace to WoodElfRace */
     0x00013740, 0x00013741, 0x00013742, 0x00013743, 0x00013744, 0x00013745,
-    0x00013746, 0x00013747, 0x00013748, 0x00013749
+    0x00013746, 0x00013747, 0x00013748, 0x00013749,
+
+    /* Mannequin */
+    0x0010760a
   };
 
 private:

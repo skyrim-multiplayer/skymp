@@ -156,7 +156,7 @@ DLLEXPORT bool SKSEPlugin_Load(void* skse)
   try {
     return PlatformImplInterface::GetSingleton().Load(skse);
   } catch (std::exception& e) {
-    MessageBoxA(0, e.what(), "Fatal", MB_ICONERROR);
+    MessageBoxA(0, e.what(), "Fatal (SkyrimPlatform)", MB_ICONERROR);
     return false;
   }
 }
