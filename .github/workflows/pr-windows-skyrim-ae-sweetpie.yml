@@ -31,3 +31,4 @@ jobs:
           ONLY_PUSH: true
           DIST_ARTIFACT_NAME: dist-sweetpie
           SERVER_DIST_ARTIFACT_NAME: server-dist-sweetpie
+          SKYMP5_PATCHES_PAT: ${{ secrets.SKYMP5_PATCHES_PAT }}

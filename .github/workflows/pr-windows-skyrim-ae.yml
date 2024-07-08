@@ -31,3 +31,4 @@ jobs:
           ONLY_PUSH: false
           DIST_ARTIFACT_NAME: dist
           SERVER_DIST_ARTIFACT_NAME: server-dist
+          SKYMP5_PATCHES_PAT: ${{ secrets.SKYMP5_PATCHES_PAT }}
