@@ -280,7 +280,7 @@ export class AuthService extends ClientListener {
                 if (error) {
                   browserState.failCount = 0;
                   browserState.comment = (error);
-                  timersService.setTimeout(() => this.checkLoginState(), 1.5 + Math.random() * 2);
+                  timersService.setTimeout(() => this.checkLoginState(), Math.floor((1.5 + Math.random() * 2) * 1000));
                   this.refreshWidgets();
                   return;
                 }
@@ -298,7 +298,7 @@ export class AuthService extends ClientListener {
             case 401: // Unauthorized
               browserState.failCount = 0;
               browserState.comment = '';//(`Still waiting...`);
-              timersService.setTimeout(() => this.checkLoginState(), 1.5 + Math.random() * 2);
+              timersService.setTimeout(() => this.checkLoginState(), Math.floor((1.5 + Math.random() * 2) * 1000));
               break;
             case 403: // Forbidden
             case 404: // Not found
@@ -308,7 +308,7 @@ export class AuthService extends ClientListener {
             default:
               ++browserState.failCount;
               browserState.comment = `Server returned ${response.status.toString() || "???"} "${response.body || response.error}"`;
-              timersService.setTimeout(() => this.checkLoginState(), 1.5 + Math.random() * 2);
+              timersService.setTimeout(() => this.checkLoginState(), Math.floor((1.5 + Math.random() * 2) * 1000));
           }
         });
   };
