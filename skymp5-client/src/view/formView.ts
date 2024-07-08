@@ -1,4 +1,4 @@
-import { Actor, ActorBase, createText, destroyText, Faction, Form, FormType, Game, Keyword, NetImmerse, ObjectReference, once, printConsole, setTextPos, setTextString, storage, TESModPlatform, Utility, worldPointToScreenPoint } from "skyrimPlatform";
+import { Actor, ActorBase, createText, destroyText, Form, FormType, Game, Keyword, NetImmerse, ObjectReference, once, printConsole, setTextPos, setTextString, storage, TESModPlatform, Utility, worldPointToScreenPoint } from "skyrimPlatform";
 import { setDefaultAnimsDisabled, applyAnimation } from "../sync/animation";
 import { Appearance, applyAppearance } from "../sync/appearance";
 import { isBadMenuShown, applyEquipment } from "../sync/equipment";
@@ -284,11 +284,6 @@ export class FormView implements View<FormModel> {
 
         if (model.appearance && model.appearance.name) {
           refr?.setDisplayName("" + model.appearance.name, true);
-        }
-        if (model.factions !== undefined && model.factions.length > 0) {
-          for (let i = 0; i < model.factions.length; i++) {
-            (Actor.from(refr) as any).addToFaction(Faction.from(Game.getFormEx(model.factions[i].formDesc)));
-          }
         }
         Actor.from(refr)?.setActorValue("attackDamageMult", 0);
       }

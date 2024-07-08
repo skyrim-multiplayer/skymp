@@ -1,5 +1,5 @@
 
 export interface Faction {
-  formDesc: number;
+  formId: number;
   rank: number;
 }
