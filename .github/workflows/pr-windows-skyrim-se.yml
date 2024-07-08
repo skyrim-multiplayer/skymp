@@ -28,7 +28,6 @@ jobs:
           SKYRIM_SE_FLAG: ON
           SP_NEXUS_ARTIFACT_NAME: Skyrim Platform %SP_VERSION% (Special Edition)
           DEPLOY_BRANCH: ""
-          ONLY_PUSH: false
           DIST_ARTIFACT_NAME: dist-1.5
           SERVER_DIST_ARTIFACT_NAME: server-dist-1.5
           SKYMP5_PATCHES_PAT: ${{ secrets.SKYMP5_PATCHES_PAT }}

@@ -15,10 +15,6 @@ inputs:
     description: "May be empty. Branch here refers to indev/sweetpie"
     required: false
     default: ""
-  ONLY_PUSH:
-    description: "Set to true to only run on push events"
-    required: false
-    default: false
   DIST_ARTIFACT_NAME:
     description: "Artifact name for the dist folder"
     required: true
@@ -32,7 +28,7 @@ runs:
   using: composite
   steps:  
     - name: Gather PRs
-      if: ${{ inputs.DEPLOY_BRANCH != '' && (!inputs.ONLY_PUSH || github.event_name == 'push')}}
+      if: ${{ inputs.DEPLOY_BRANCH != '' }}
       uses: Pospelove/auto-merge-action@main
       with:
         path: ${{github.workspace}}
@@ -52,7 +48,7 @@ runs:
           ]
 
     - name: Commit gathered PRs
-      if: ${{ inputs.DEPLOY_BRANCH != '' && (!inputs.ONLY_PUSH || github.event_name == 'push')}}
+      if: ${{ inputs.DEPLOY_BRANCH != '' }}
       run: |
         # fake user for bot
         git config --global user.email "skyrim_multiplayer_bot@users.noreply.github.com"
@@ -62,7 +58,6 @@ runs:
       shell: bash
 
     - name: Early build skymp5-client
-      if: ${{ !inputs.ONLY_PUSH || github.event_name == 'push' }}
       run: |
         cd ${{github.workspace}}/skymp5-client
         yarn
@@ -70,29 +65,24 @@ runs:
       shell: bash
 
     - name: Install tools
-      if: ${{ !inputs.ONLY_PUSH || github.event_name == 'push' }}
       run: choco install opencppcoverage
       shell: bash
 
     - name: Move vcpkg submodule to a larger drive
-      if: ${{ !inputs.ONLY_PUSH || github.event_name == 'push' }}
       run: |
         Remove-Item -Recurse -Force C:/vcpkg
         Move-Item -Path ./vcpkg C:/vcpkg
       shell: powershell
 
     - name: Bootstrap vcpkg
-      if: ${{ !inputs.ONLY_PUSH || github.event_name == 'push' }}
       run: C:/vcpkg/bootstrap-vcpkg.bat
       shell: powershell
 
     - name: Debug - free space
-      if: ${{ !inputs.ONLY_PUSH || github.event_name == 'push' }}
       run: Get-PSDrive
       shell: powershell
 
     - uses: actions/github-script@v6
-      if: ${{ !inputs.ONLY_PUSH || github.event_name == 'push' }}
       with:
         script: |
           core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
@@ -100,38 +90,32 @@ runs:
 
     # Download Skyrim SE data files
     - uses: suisei-cn/actions-download-file@v1
-      if: ${{ !inputs.ONLY_PUSH || github.event_name == 'push' }}
       name: Download Skyrim.esm
       with:
         url: "https://gitlab.com/pospelov/se-data/-/raw/main/Skyrim.esm"
         target: ${{github.workspace}}/skyrim_data_files/
     - uses: suisei-cn/actions-download-file@v1
-      if: ${{ !inputs.ONLY_PUSH || github.event_name == 'push' }}
       name: Download Update.esm
       with:
         url: "https://gitlab.com/pospelov/se-data/-/raw/main/Update.esm"
         target: ${{github.workspace}}/skyrim_data_files/
     - uses: suisei-cn/actions-download-file@v1
-      if: ${{ !inputs.ONLY_PUSH || github.event_name == 'push' }}
       name: Download Dawnguard.esm
       with:
         url: "https://gitlab.com/pospelov/se-data/-/raw/main/Dawnguard.esm"
         target: ${{github.workspace}}/skyrim_data_files/
     - uses: suisei-cn/actions-download-file@v1
-      if: ${{ !inputs.ONLY_PUSH || github.event_name == 'push' }}
       name: Download HearthFires.esm
       with:
         url: "https://gitlab.com/pospelov/se-data/-/raw/main/HearthFires.esm"
         target: ${{github.workspace}}/skyrim_data_files/
     - uses: suisei-cn/actions-download-file@v1
-      if: ${{ !inputs.ONLY_PUSH || github.event_name == 'push' }}
       name: Download Dragonborn.esm
       with:
         url: "https://gitlab.com/pospelov/se-data/-/raw/main/Dragonborn.esm"
         target: ${{github.workspace}}/skyrim_data_files/
 
     - name: Configure CMake
-      if: ${{ !inputs.ONLY_PUSH || github.event_name == 'push' }}
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
       # Outputs profiling data in Google Trace Format, which can be parsed by the about:tracing tab of Google Chrome or using a plugin for a tool like Trace Compass.
@@ -155,19 +139,16 @@ runs:
         path: C:\vcpkg\buildtrees\spdlog\install-x64-windows-sp-dbg-out.log
 
     - uses: actions/upload-artifact@v4
-      if: ${{ !inputs.ONLY_PUSH || github.event_name == 'push' }}
       with:
         name: cmake-profiling-output (${{ inputs.DESCRIPTION }})
         path: cmake-profiling-output
 
     - name: Build
-      if: ${{ !inputs.ONLY_PUSH || github.event_name == 'push' }}
       # Build your program with the given configuration
       run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
       shell: bash
 
     - name: Test
-      if: ${{ !inputs.ONLY_PUSH || github.event_name == 'push' }}
       working-directory: ${{github.workspace}}/build
       # Execute tests defined by the CMake configuration.  
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
@@ -175,38 +156,34 @@ runs:
       shell: bash
 
     - uses: actions/upload-artifact@v4
-      if: ${{ !inputs.ONLY_PUSH || github.event_name == 'push' }}
       with:
         name: ${{ inputs.DIST_ARTIFACT_NAME }}
         path: ${{github.workspace}}/build/dist
 
     - uses: actions/upload-artifact@v4
-      if: ${{ !inputs.ONLY_PUSH || github.event_name == 'push' }}
       with:
         name: skymp5-client-js (${{ inputs.DESCRIPTION }})
         path: ${{github.workspace}}/build/dist/client/Data/Platform/Plugins/skymp5-client.js
 
     - uses: actions/upload-artifact@v4
-      if: ${{ !inputs.ONLY_PUSH || github.event_name == 'push' }}
       with:
         name: ${{ inputs.SERVER_DIST_ARTIFACT_NAME }}
         path: ${{github.workspace}}/build/dist/server
 
     - uses: actions/upload-artifact@v4
-      if: ${{ !inputs.ONLY_PUSH || github.event_name == 'push' }}
       with:
         name: coverage (${{ inputs.DESCRIPTION }})
         path: ${{github.workspace}}/build/__coverage
 
     - name: Extract SP Version Number
-      if: ${{ (!inputs.ONLY_PUSH || github.event_name == 'push') && inputs.SP_NEXUS_ARTIFACT_NAME != 'nope' }}
+      if: ${{ inputs.SP_NEXUS_ARTIFACT_NAME != 'nope' }}
       run: |
         $version = (Get-Content ./skyrim-platform/package.json | ConvertFrom-Json).version
         echo "VERSION=$version" | Out-File -Append -FilePath $env:GITHUB_ENV
       shell: powershell
 
     - name: Replace %SP_VERSION% with actual version in artifact name
-      if: ${{ (!inputs.ONLY_PUSH || github.event_name == 'push') && inputs.SP_NEXUS_ARTIFACT_NAME != 'nope' }}
+      if: ${{ inputs.SP_NEXUS_ARTIFACT_NAME != 'nope' }}
       run: |
         $artifactName = "${{ inputs.SP_NEXUS_ARTIFACT_NAME }}"
         $artifactName = $artifactName.Replace("%SP_VERSION%", "${{ env.VERSION }}")
@@ -214,26 +191,23 @@ runs:
       shell: powershell
       
     - uses: actions/upload-artifact@v4
-      if: ${{ (!inputs.ONLY_PUSH || github.event_name == 'push') && inputs.SP_NEXUS_ARTIFACT_NAME != 'nope' }}
+      if: ${{ inputs.SP_NEXUS_ARTIFACT_NAME != 'nope' }}
       with:
         name: ${{ env.SP_NEXUS_ARTIFACT_NAME }}
         # Data folder is skipped for mod managers
         path: ${{github.workspace}}/build/nexus/sp/data/*
 
     - uses: actions/upload-artifact@v4
-      if: ${{ !inputs.ONLY_PUSH || github.event_name == 'push' }}
       with:
         name: papyrus-vm-nexus (${{ inputs.DESCRIPTION }})
         # Data folder is skipped for mod managers
         path: ${{github.workspace}}/build/nexus/papyrus-vm/*
 
     - name: Debug - free space
-      if: ${{ !inputs.ONLY_PUSH || github.event_name == 'push' }}
       run: Get-PSDrive
       shell: powershell
 
     - uses: actions/upload-artifact@v4
-      if: ${{ !inputs.ONLY_PUSH || github.event_name == 'push' }}
       with:
         name: msbuild_files (${{ inputs.DESCRIPTION }})
         path: |
