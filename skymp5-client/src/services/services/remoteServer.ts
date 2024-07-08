@@ -489,9 +489,6 @@ export class RemoteServer extends ClientListener {
           // Note: appearance part was copy-pasted
           if (msg.appearance) {
             applyAppearanceToPlayer(msg.appearance);
-            if (msg.appearance.isFemale)
-              // Fix gender-specific walking anim
-              (Game.getPlayer()!).resurrect();
           }
         }
 
@@ -567,9 +564,6 @@ export class RemoteServer extends ClientListener {
               // Note: appearance part was copy-pasted
               if (msg.appearance) {
                 applyAppearanceToPlayer(msg.appearance);
-                if (msg.appearance.isFemale)
-                  // Fix gender-specific walking anim
-                  (Game.getPlayer()!).resurrect();
               }
             });
           }
