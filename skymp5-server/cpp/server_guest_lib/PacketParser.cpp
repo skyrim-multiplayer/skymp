@@ -79,7 +79,7 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
           { message->pos[0], message->pos[1], message->pos[2] },
           { message->rot[0], message->rot[1], message->rot[2] },
           message->isInJumpState, message->isWeapDrawn, message->isBlocking,
-          message->worldOrCell);
+          message->worldOrCell, message->runMode);
         return;
       }
       case MsgType::UpdateAnimation: {

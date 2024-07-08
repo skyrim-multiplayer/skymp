@@ -199,7 +199,8 @@ void MpActor::RemoveSpell(const uint32_t spellId)
   });
 }
 
-void MpActor::SetLastAnimEvent(const AnimationData& animationData)
+void MpActor::SetLastAnimEvent(
+  const std::optional<AnimationData>& animationData)
 {
   pImpl->animationData = animationData;
 }

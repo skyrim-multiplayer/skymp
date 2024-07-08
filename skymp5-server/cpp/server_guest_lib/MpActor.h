@@ -149,7 +149,7 @@ public:
   void AddSpell(uint32_t spellId);
   void RemoveSpell(uint32_t spellId);
 
-  void SetLastAnimEvent(const AnimationData& animationData);
+  void SetLastAnimEvent(const std::optional<AnimationData>& animationData);
   std::optional<AnimationData> GetLastAnimEvent() const;
 
 private:
