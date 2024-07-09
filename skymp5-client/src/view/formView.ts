@@ -328,6 +328,8 @@ export class FormView {
 
   private lastHarvestedApply = 0;
   private lastOpenApply = 0;
+  private isSetNodeTextureSetApplied = false;
+  private isSetNodeScaleApplied = false;
 
   private applyAll(refr: ObjectReference, model: FormModel) {
     let forcedWeapDrawn: boolean | null = null;
@@ -344,6 +346,14 @@ export class FormView {
     if (now - this.lastOpenApply > 133) {
       this.lastOpenApply = now;
       ModelApplyUtils.applyModelIsOpen(refr, !!model.isOpen);
+    }
+    if (!this.isSetNodeScaleApplied) {
+      this.isSetNodeScaleApplied = true;
+      ModelApplyUtils.applyModelNodeScale(refr, model.setNodeScale);
+    }
+    if (!this.isSetNodeTextureSetApplied) {
+      this.isSetNodeTextureSetApplied = true;
+      ModelApplyUtils.applyModelNodeTextureSet(refr, model.setNodeTextureSet);
     }
 
     if (
