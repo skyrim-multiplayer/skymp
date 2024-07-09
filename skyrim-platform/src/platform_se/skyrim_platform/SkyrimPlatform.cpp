@@ -130,31 +130,12 @@ private:
   const std::vector<std::filesystem::path>& GetFileDirs() const
   {
     if (!pluginFolders) {
-      auto settings = Settings::GetPlatformSettings();
-      std::string utf8pluginFoldersSemicolonSeparated =
-        settings->GetString("Main", "PluginFolders",
-                            "Data/Platform/Plugins;Data/Platform/PluginsDev");
-
-      std::istringstream ss(utf8pluginFoldersSemicolonSeparated);
-      std::string folder;
-
-      if (utf8pluginFoldersSemicolonSeparated.find_first_of("\"") !=
-          std::string::npos) {
+      try {
+        pluginFolders = Settings::GetPlatformSettings()->GetPluginFolders();
+      } catch (std::exception& e) {
         pluginFolders = std::make_unique<std::vector<std::filesystem::path>>();
-        throw std::runtime_error(
-          "Invalid path with quotes in PluginFolders setting. Please remove "
-          "quotes and restart the game.");
+        throw;
       }
-
-      auto result = std::make_unique<std::vector<std::filesystem::path>>();
-
-      while (std::getline(ss, folder, ';')) {
-        if (!folder.empty()) {
-          result->emplace_back(folder);
-        }
-      }
-
-      pluginFolders = std::move(result);
     }
 
     return *pluginFolders;
@@ -173,13 +154,10 @@ private:
         LoadSettingsFile(path);
         continue;
       }
-      if (EndsWith(path.wstring(), L"-logs.txt")) {
+      if (EndsWith(path.wstring(), L".js")) {
+        LoadPluginFile(path);
         continue;
       }
-      if (EndsWith(path.wstring(), L".DS_Store")) {
-        continue;
-      }
-      LoadPluginFile(path);
     }
   }
 

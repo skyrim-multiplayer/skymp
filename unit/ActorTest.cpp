@@ -56,3 +56,38 @@ TEST_CASE("Actor should load be able to load appearance, equipment, "
   REQUIRE(actor.GetChangeForm().spawnDelay == 8.0f);
   REQUIRE(actor.GetChangeForm().consoleCommandsAllowed == true);
 }
+
+TEST_CASE("Actor factions in changeForm", "[Actor]")
+{
+  PartOne p;
+  p.worldState.espmFiles = { "Skyrim.esm" };
+
+  MpActor actor(LocationalData(), FormCallbacks::DoNothing());
+
+  Faction faction = Faction();
+  faction.formDesc = FormDesc::FromFormId(0x000123, p.worldState.espmFiles);
+  faction.rank = 0;
+
+  actor.AddToFaction(faction, false);
+  // Second time should be ignored
+  actor.AddToFaction(faction, false);
+
+  REQUIRE(actor.GetChangeForm().factions.has_value());
+  REQUIRE(actor.GetChangeForm().factions.value().size() == 1);
+  REQUIRE(actor.GetChangeForm().factions.value()[0].formDesc.shortFormId ==
+          0x000123);
+
+  REQUIRE(
+    actor.IsInFaction(FormDesc::FromFormId(0x000223, p.worldState.espmFiles),
+                      false) == false);
+  REQUIRE(actor.IsInFaction(
+    FormDesc::FromFormId(0x000123, p.worldState.espmFiles), false));
+
+  actor.RemoveFromFaction(
+    FormDesc::FromFormId(0x000003, p.worldState.espmFiles), false);
+  REQUIRE(actor.GetChangeForm().factions.value().size() == 1);
+
+  actor.RemoveFromFaction(
+    FormDesc::FromFormId(0x000123, p.worldState.espmFiles), false);
+  REQUIRE(actor.GetChangeForm().factions.value().size() == 0);
+}

@@ -127,7 +127,7 @@ private:
 class Server : public Networking::IServer
 {
 public:
-  constexpr static int timeoutTimeMs = 6000;
+  constexpr static int timeoutTimeMs = 60000;
 
   Server(unsigned short port_, unsigned short maxConnections,
          const char* password_)

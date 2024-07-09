@@ -63,12 +63,17 @@ const filterWorn = (inv: Inventory): Inventory => {
   return { entries: inv.entries.filter((x) => x.worn || x.wornLeft) };
 };
 
-const removeUnnecessaryExtra = (inv: Inventory): Inventory => {
+const removeUnnecessaryExtra = (inv: Inventory, ignoreAmmo: boolean): Inventory => {
   return {
     entries: inv.entries.map((x) => {
       const r: Entry = JSON.parse(JSON.stringify(x));
       r.chargePercent = r.maxCharge;
-      r.count = Ammo.from(Game.getFormEx(x.baseId)) ? 1000 : 1;
+      if (ignoreAmmo) {
+        r.count = Ammo.from(Game.getFormEx(x.baseId)) ? r.count : 1;
+      }
+      else {
+        r.count = Ammo.from(Game.getFormEx(x.baseId)) ? 1000 : 1;
+      }
       delete r.name;
       return r;
     }),
@@ -104,7 +109,14 @@ export const syncSpellEquipment = (
 
 export const applyEquipment = (ac: Actor, eq: Equipment): boolean => {
   ac.removeAllItems(null, false, true);
-  setInventory(ac.getFormID(), removeUnnecessaryExtra(filterWorn(eq.inv)));
+
+  ac.unequipAll();
+
+  ac.removeAllItems(null, false, true);
+
+  const newInventory = removeUnnecessaryExtra(filterWorn(eq.inv), ac.getFormID() === 0x14);
+
+  setInventory(ac.getFormID(), newInventory);
 
   syncSpellEquipment(ac, eq.leftSpell, SpellType.Left);
   syncSpellEquipment(ac, eq.rightSpell, SpellType.Right);

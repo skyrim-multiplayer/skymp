@@ -4,6 +4,7 @@
 #include "PapyrusCell.h"
 #include "PapyrusDebug.h"
 #include "PapyrusEffectShader.h"
+#include "PapyrusFaction.h"
 #include "PapyrusForm.h"
 #include "PapyrusFormList.h"
 #include "PapyrusGame.h"
@@ -33,6 +34,7 @@ PapyrusClassesFactory::CreateAndRegister(
   result.emplace_back(std::make_unique<PapyrusUtility>());
   result.emplace_back(std::make_unique<PapyrusEffectShader>());
   result.emplace_back(std::make_unique<PapyrusKeyword>());
+  result.emplace_back(std::make_unique<PapyrusFaction>());
   result.emplace_back(std::make_unique<PapyrusCell>());
   result.emplace_back(std::make_unique<PapyrusSound>());
   result.emplace_back(std::make_unique<PapyrusNetImmerse>());

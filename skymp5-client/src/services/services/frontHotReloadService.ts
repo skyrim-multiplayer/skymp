@@ -1,6 +1,6 @@
 import { logTrace } from "../../logging";
 import { AuthGameData, authGameDataStorageKey } from "../../features/authModel";
-import { AuthEvent } from "../events/authEvent";
+import { AuthAttemptEvent } from "../events/authAttemptEvent";
 import { ClientListener, Sp, CombinedController } from "./clientListener";
 
 export class FrontHotReloadService extends ClientListener {
@@ -25,11 +25,11 @@ export class FrontHotReloadService extends ClientListener {
             this.connectToFrontHotReload();
         } else {
             logTrace(this, `Unable to recover AuthGameData from storage, waiting for auth`);
-            this.controller.emitter.on("auth", (e) => this.onAuth(e));
+            this.controller.emitter.on("authAttempt", (e) => this.onAuthAttempt(e));
         }
     }
 
-    private onAuth(e: AuthEvent) {
+    private onAuthAttempt(e: AuthAttemptEvent) {
         this.connectToFrontHotReload();
     }
 

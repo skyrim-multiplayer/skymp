@@ -17,4 +17,5 @@ export interface FormModel extends CreateActorMessageAdditionalProps, CreateActo
 export interface WorldModel {
   forms: Array<FormModel | undefined>;
   playerCharacterFormIdx: number;
+  playerCharacterRefrId: number;
 }

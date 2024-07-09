@@ -11,7 +11,7 @@ class IdManager;
 namespace Networking {
 
 std::shared_ptr<IClient> CreateClient(
-  const char* serverIp, unsigned short serverPort, int timeoutMs = 4000,
+  const char* serverIp, unsigned short serverPort, int timeoutMs,
   const char* password = kNetworkingPassword);
 std::shared_ptr<IServer> CreateServer(
   unsigned short port, unsigned short maxConnections,
