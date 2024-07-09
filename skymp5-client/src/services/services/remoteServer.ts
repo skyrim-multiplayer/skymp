@@ -1,4 +1,4 @@
-import { Actor, Form } from 'skyrimPlatform';
+import { Actor, Form, FormType } from 'skyrimPlatform';
 import {
   Armor,
   Cell,
@@ -159,9 +159,29 @@ export class RemoteServer extends ClientListener {
   private onOpenContainerMessage(event: ConnectionMessage<OpenContainerMessage>): void {
     once('update', async () => {
       await Utility.wait(0.1); // Give a chance to update inventory
-      (
-        ObjectReference.from(Game.getFormEx(event.message.target)) as ObjectReference
-      ).activate(Game.getPlayer(), true);
+
+      const remoteId = event.message.target;
+      const localId = remoteIdToLocalId(remoteId);
+      const refr = ObjectReference.from(Game.getFormEx(localId));
+
+      if (refr === null) {
+        logError(this, 'onOpenContainerMessage - refr not found', 'remoteId', remoteId.toString(16), 'localId', localId.toString(16));
+        return;
+      }
+
+      refr.activate(Game.getPlayer(), true);
+
+      const baseObject = refr.getBaseObject();
+      const baseType = baseObject?.getType();
+      const isContainer = baseType === FormType.Container;
+
+      if (!isContainer) {
+        return;
+      }
+
+      // In SkyMP containers have 2-nd, closing activation under the hood.
+      // This differs from Skyrim's behavior, where it's just one activation.
+
       (async () => {
         while (!Ui.isMenuOpen('ContainerMenu')) await Utility.wait(0.1);
         while (Ui.isMenuOpen('ContainerMenu')) await Utility.wait(0.1);
@@ -236,33 +256,9 @@ export class RemoteServer extends ClientListener {
               !!msg.props['isHarvested'],
             );
 
-            // TODO: move to a separate module
-            if (msg.props.setNodeScale) {
-              const setNodeScale = msg.props.setNodeScale;
-              for (const key in setNodeScale) {
-                const scale = setNodeScale[key];
-                const firstPerson = false;
-                this.sp.NetImmerse.setNodeScale(refr, key, scale, firstPerson);
-                logTrace(this, refr.getFormID().toString(16), `Applied node scale`, scale, `to`, key);
-              }
-            }
+            ModelApplyUtils.applyModelNodeScale(refr, msg.props.setNodeScale);
 
-            // TODO: move to a separate module
-            if (msg.props.setNodeTextureSet) {
-              const setNodeTextureSet = msg.props.setNodeTextureSet;
-              for (const key in setNodeTextureSet) {
-                const textureSetId = setNodeTextureSet[key];
-                const firstPerson = false;
-
-                const textureSet = this.sp.TextureSet.from(Game.getFormEx(textureSetId));
-                if (textureSet !== null) {
-                  this.sp.NetImmerse.setNodeTextureSet(refr, key, textureSet, firstPerson);
-                  logTrace(this, refr.getFormID().toString(16), `Applied texture set`, textureSetId.toString(16), `to`, key);
-                } else {
-                  logError(this, refr.getFormID().toString(16), `Failed to apply texture set`, textureSetId.toString(16), `to`, key);
-                }
-              }
-            }
+            ModelApplyUtils.applyModelNodeTextureSet(refr, msg.props.setNodeTextureSet);
 
             ModelApplyUtils.applyModelIsDisabled(refr, !!msg.props['disabled']);
 
@@ -469,9 +465,6 @@ export class RemoteServer extends ClientListener {
           // Note: appearance part was copy-pasted
           if (msg.appearance) {
             applyAppearanceToPlayer(msg.appearance);
-            if (msg.appearance.isFemale)
-              // Fix gender-specific walking anim
-              (Game.getPlayer()!).resurrect();
           }
         }
 
@@ -547,9 +540,6 @@ export class RemoteServer extends ClientListener {
               // Note: appearance part was copy-pasted
               if (msg.appearance) {
                 applyAppearanceToPlayer(msg.appearance);
-                if (msg.appearance.isFemale)
-                  // Fix gender-specific walking anim
-                  (Game.getPlayer()!).resurrect();
               }
             });
           }

@@ -1,5 +1,6 @@
-import { ObjectReference, Actor, Game, FormType } from "skyrimPlatform";
+import { ObjectReference, Actor, Game, FormType, TextureSet, NetImmerse } from "skyrimPlatform";
 import { Inventory, applyInventory } from "../sync/inventory";
+import { logError, logTrace } from "../logging";
 
 // For 0xff000000+ used from FormView
 // For objects from master files used directly from remoteServer.ts
@@ -91,6 +92,34 @@ export class ModelApplyUtils {
             refr.enable(true);
           }
         }
+      }
+    }
+  }
+
+  static applyModelNodeTextureSet(refr: ObjectReference, setNodeTextureSet?: Record<string, number>) {
+    if (setNodeTextureSet) {
+      for (const key in setNodeTextureSet) {
+        const textureSetId = setNodeTextureSet[key];
+        const firstPerson = false;
+
+        const textureSet = TextureSet.from(Game.getFormEx(textureSetId));
+        if (textureSet !== null) {
+          NetImmerse.setNodeTextureSet(refr, key, textureSet, firstPerson);
+          logTrace("ModelApplyUtils", refr.getFormID().toString(16), `Applied texture set`, textureSetId.toString(16), `to`, key);
+        } else {
+          logError("ModelApplyUtils", refr.getFormID().toString(16), `Failed to apply texture set`, textureSetId.toString(16), `to`, key);
+        }
+      }
+    }
+  }
+
+  static applyModelNodeScale(refr: ObjectReference, setNodeScale?: Record<string, number>) {
+    if (setNodeScale) {
+      for (const key in setNodeScale) {
+        const scale = setNodeScale[key];
+        const firstPerson = false;
+        NetImmerse.setNodeScale(refr, key, scale, firstPerson);
+        logTrace("ModelApplyUtils", refr.getFormID().toString(16), `Applied node scale`, scale, `to`, key);
       }
     }
   }
