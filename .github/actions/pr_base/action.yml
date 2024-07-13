@@ -128,15 +128,16 @@ runs:
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
       # Outputs profiling data in Google Trace Format, which can be parsed by the about:tracing tab of Google Chrome or using a plugin for a tool like Trace Compass.
-      run: >
-        cmake -B ${{github.workspace}}/build
-        -DVCPKG_ROOT=C:/vcpkg
-        -DCPPCOV_PATH="C:\Program Files\OpenCppCoverage"
-        -DUNIT_DATA_DIR="skyrim_data_files"
-        -DPREPARE_NEXUS_ARCHIVES=ON
-        -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
-        -DSKYRIM_SE=${{ inputs.SKYRIM_SE_FLAG }}
-        --profiling-output cmake-profiling-output
+      run: |
+        $cppcov_path_arg = if ($env:RUNNER_OS -eq 'Windows') { '-DCPPCOV_PATH="C:\Program Files\OpenCppCoverage"' } else { '' }
+        cmake -B ${{github.workspace}}/build `
+        -DVCPKG_ROOT=${{ runner.os == 'Windows' && 'C:/vcpkg' || './vcpkg' }} `
+        -DUNIT_DATA_DIR="skyrim_data_files" `
+        -DPREPARE_NEXUS_ARCHIVES=ON `
+        -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} `
+        -DSKYRIM_SE=${{ inputs.SKYRIM_SE_FLAG }} `
+        $cppcov_path_arg `
+        --profiling-output cmake-profiling-output `
         --profiling-format google-trace
       shell: powershell
 
