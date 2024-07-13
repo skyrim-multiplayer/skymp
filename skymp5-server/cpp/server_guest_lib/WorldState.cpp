@@ -581,6 +581,8 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
     LocationalDataUtils::GetRot(locationalData),
     FormDesc::FromFormId(worldOrCell, espmFiles)
   };
+
+  MpChangeFormREFR* changeForm = nullptr;
   if (!isNpc) {
     form.reset(new MpObjectReference(formLocationalData,
                                      formCallbacksFactory(), baseId,
@@ -589,7 +591,7 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
     form.reset(
       new MpActor(formLocationalData, formCallbacksFactory(), baseId));
   }
-  AddForm(std::move(form), formId, true);
+  AddForm(std::move(form), formId, true, changeForm);
 
   // Do not TriggerFormInitEvent here, doing it later after changeForm apply
 
@@ -772,7 +774,7 @@ void WorldState::SendPapyrusEvent(MpForm* form, const char* eventName,
   return vm.SendEvent(form->ToGameObject(), eventName, args, onEnter);
 }
 
-const std::set<MpObjectReference*>& WorldState::GetReferencesAtPosition(
+const std::set<MpObjectReference*>& WorldState::GetNeighborsByPosition(
   uint32_t cellOrWorld, int16_t cellX, int16_t cellY)
 {
   if (espm && !pImpl->chunkLoadingInProgress) {

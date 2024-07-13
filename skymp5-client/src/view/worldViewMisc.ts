@@ -2,7 +2,8 @@ import { Game, ObjectReference, storage } from "skyrimPlatform";
 import { WorldView } from "./worldView";
 
 export const getViewFromStorage = (): WorldView | undefined => {
-  const res = storage.view as WorldView;
+  const res = storage["view"] as WorldView;
+  // can't use instanceof here because each hot reload creates a new class
   if (typeof res === "object") return res;
   return undefined;
 };

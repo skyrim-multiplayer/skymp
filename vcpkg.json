@@ -44,6 +44,11 @@
     {
       "name": "asio",
       "platform": "windows"
+    },
+    {
+      "name": "libarchive",
+      "platform": "windows",
+      "features": []
     }
   ],
   "features": {

@@ -636,7 +636,7 @@ void MpObjectReference::ForceSubscriptionsUpdate()
   auto& was = *this->listeners;
   auto pos = GetGridPos(GetPos());
   auto& now =
-    worldState->GetReferencesAtPosition(worldOrCell, pos.first, pos.second);
+    worldState->GetNeighborsByPosition(worldOrCell, pos.first, pos.second);
 
   std::vector<MpObjectReference*> toRemove;
   std::set_difference(was.begin(), was.end(), now.begin(), now.end(),
@@ -1221,7 +1221,7 @@ void MpObjectReference::VisitNeighbours(const Visitor& visitor)
   auto& grid = gridIterator->second;
   auto pos = GetGridPos(GetPos());
   auto& neighbours =
-    worldState->GetReferencesAtPosition(worldOrCell, pos.first, pos.second);
+    worldState->GetNeighborsByPosition(worldOrCell, pos.first, pos.second);
   for (auto neighbour : neighbours) {
     visitor(neighbour);
   }
@@ -1432,6 +1432,10 @@ void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
       this->occupant->RemoveEventSink(this->occupantDestroySink);
       this->occupant = nullptr;
     }
+  } else if ((t == espm::ACTI::kType || t == "FURN") && actorActivator) {
+    // SendOpenContainer being used to activate the object
+    // TODO: rename SendOpenContainer to SendActivate
+    activationSource.SendOpenContainer(GetFormId());
   }
 }
 
