@@ -1,0 +1,30 @@
+name: PR Windows Skyrim AE
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    - cron: '0 0 * * *'
+
+env:
+  # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
+  BUILD_TYPE: Release
+  VCPKG_BINARY_SOURCES: 'clear;x-gha,readwrite'
+  VCPKG_FEATURE_FLAGS: 'manifests'
+
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 1
+          submodules: 'true'
+      - uses: ./.github/actions/pr_windows_base
+        with:
+          DESCRIPTION: 'MacOS Build'
+          DIST_ARTIFACT_NAME: dist-macos
+          SERVER_DIST_ARTIFACT_NAME: server-dist-macos
+          SKYMP5_PATCHES_PAT: ${{ secrets.SKYMP5_PATCHES_PAT }}
