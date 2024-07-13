@@ -47,7 +47,13 @@ auto GetExpectedPaths(const nlohmann::json& j)
 
 #ifdef WIN32
   configurationTags.insert("Win32");
+#elif __APPLE__
+  configurationTags.insert("MacOS");
 #else
+  configurationTags.insert("Linux");
+#endif
+
+#ifndef WIN32
   configurationTags.insert("Unix");
 #endif
 

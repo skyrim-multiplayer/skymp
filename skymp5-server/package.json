@@ -4,7 +4,7 @@
   "description": "",
   "license": "AGPL-3.0",
   "scripts": {
-    "build-ts": "tsc --noEmit && esbuild ts/index.ts --bundle --platform=node --target=node16 --keep-names --minify --sourcemap --target=es2022 --outfile=../build/dist/server/dist_back/skymp5-server.js"
+    "build-ts": "tsc --noEmit && esbuild ts/index.ts --loader:.node=copy --bundle --platform=node --target=node16 --keep-names --minify --sourcemap --target=es2022 --outfile=../build/dist/server/dist_back/skymp5-server.js"
   },
   "author": "Leonid Pospelov <pospelovlm@yandex.ru>",
   "dependencies": {
