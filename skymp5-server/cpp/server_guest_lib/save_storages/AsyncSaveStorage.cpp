@@ -12,6 +12,7 @@ struct AsyncSaveStorage::Impl
   };
 
   std::shared_ptr<spdlog::logger> logger;
+  std::string name;
 
   struct
   {
@@ -43,9 +44,11 @@ struct AsyncSaveStorage::Impl
 };
 
 AsyncSaveStorage::AsyncSaveStorage(const std::shared_ptr<IDatabase>& dbImpl,
-                                   std::shared_ptr<spdlog::logger> logger)
+                                   std::shared_ptr<spdlog::logger> logger,
+                                   std::string name)
   : pImpl(new Impl, [](Impl* p) { delete p; })
 {
+  pImpl->name = std::move(name);
   pImpl->logger = logger;
   pImpl->share.dbImpl = dbImpl;
 
@@ -145,4 +148,9 @@ void AsyncSaveStorage::Tick()
     pImpl->numFinishedUpserts++;
     cb();
   }
+}
+
+const std::string& AsyncSaveStorage::GetName() const
+{
+  return pImpl->name;
 }

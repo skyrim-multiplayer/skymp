@@ -19,6 +19,7 @@
     "node-addon-api",
     "bshoshany-thread-pool",
     "makeid",
+    "libzippp",
     {
       "name": "rsm-bsa",
       "platform": "!osx"
