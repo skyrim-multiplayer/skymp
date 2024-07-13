@@ -1,4 +1,4 @@
-name: PR Windows Skyrim AE
+name: PR MacOS
 
 on:
   push:
