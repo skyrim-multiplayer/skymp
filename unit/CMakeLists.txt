@@ -24,7 +24,7 @@ endif()
 
 # TODO: debug and fix failing test
 if(APPLE)
-  list(FILTER src REGEX EXCLUDE ".*MigrationDatabaseTest.cpp")
+  list(FILTER src EXCLUDE REGEX ".*MigrationDatabaseTest.cpp")
 endif()
 
 add_executable(unit ${src})
