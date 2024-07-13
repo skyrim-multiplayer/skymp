@@ -1,7 +1,7 @@
 #include "BsaArchiveScriptStorage.h"
 
 #ifndef NO_BSA
-#include <bsa/tes4.hpp>
+#  include <bsa/tes4.hpp>
 #endif
 
 #include <filesystem>
@@ -58,7 +58,8 @@ const std::set<CIString>& BsaArchiveScriptStorage::ListScripts(
     }
   }
 #else
-  spdlog::warn("BsaArchiveScriptStorage::ListScripts - Built without bsa support");
+  spdlog::warn(
+    "BsaArchiveScriptStorage::ListScripts - Built without bsa support");
 #endif
   return scripts;
 }
