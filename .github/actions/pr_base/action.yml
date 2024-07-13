@@ -129,8 +129,8 @@ runs:
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
       # Outputs profiling data in Google Trace Format, which can be parsed by the about:tracing tab of Google Chrome or using a plugin for a tool like Trace Compass.
       run: |
-        $cppcov_path_arg = if ($env:RUNNER_OS -eq 'Windows') { '-DCPPCOV_PATH="C:\Program Files\OpenCppCoverage"' } else { '-DCPPCOV_PATH=""' }
-        $vcpkg_root_arg = if ($env:RUNNER_OS -eq 'Windows') { '-DVCPKG_ROOT="C:/vcpkg"' } else { '-DVCPKG_ROOT="${{github.workspace}}/vcpkg"' }
+        $cppcov_path_arg = if ($env:RUNNER_OS -eq 'Windows') { '-DCPPCOV_PATH="C:\Program Files\OpenCppCoverage"' } else { '-DCPPCOV_PATH=OFF' }
+        $vcpkg_root_arg = if ($env:RUNNER_OS -eq 'Windows') { '-DVCPKG_ROOT=C:/vcpkg' } else { '-DVCPKG_ROOT="${{github.workspace}}/vcpkg"' }
         cmake -B ${{github.workspace}}/build `
         $vcpkg_root_arg `
         -DUNIT_DATA_DIR="skyrim_data_files" `
