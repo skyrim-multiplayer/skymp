@@ -1,4 +1,4 @@
-name: PR Windows Base
+name: PR Base
 inputs:
   DESCRIPTION:
     description: "Will be used for artifact names"
@@ -65,20 +65,29 @@ runs:
       shell: powershell
 
     - name: Install tools
+      if: runner.os == 'Windows'
       run: choco install opencppcoverage
       shell: powershell
 
     - name: Move vcpkg submodule to a larger drive
+      if: runner.os == 'Windows'
       run: |
         Remove-Item -Recurse -Force C:/vcpkg
         Move-Item -Path ./vcpkg C:/vcpkg
       shell: powershell
 
-    - name: Bootstrap vcpkg
+    - name: Bootstrap vcpkg (Windows)
+      if: runner.os == 'Windows'
       run: C:/vcpkg/bootstrap-vcpkg.bat
       shell: powershell
 
+    - name: Bootstrap vcpkg (Non-Windows)
+      if: runner.os != 'Windows'
+      run: ./vcpkg/bootstrap-vcpkg.sh
+      shell: bash
+
     - name: Debug - free space
+      if: runner.os == 'Windows'
       run: Get-PSDrive
       shell: powershell
 
@@ -204,6 +213,7 @@ runs:
         path: ${{github.workspace}}/build/nexus/papyrus-vm/*
 
     - name: Debug - free space
+      if: runner.os == 'Windows'
       run: Get-PSDrive
       shell: powershell
 

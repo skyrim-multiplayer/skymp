@@ -22,7 +22,7 @@ jobs:
         with:
           fetch-depth: 1
           submodules: 'true'
-      - uses: ./.github/actions/pr_windows_base
+      - uses: ./.github/actions/pr_base
         with:
           DESCRIPTION: 'Skyrim Special Edition (1.5)'
           SKYRIM_SE_FLAG: ON

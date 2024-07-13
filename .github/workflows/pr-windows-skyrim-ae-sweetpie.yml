@@ -20,7 +20,7 @@ jobs:
         with:
           fetch-depth: 1
           submodules: 'true'
-      - uses: ./.github/actions/pr_windows_base
+      - uses: ./.github/actions/pr_base
         with:
           DESCRIPTION: 'Skyrim Anniversary Edition (1.6) - SweetPie'
           SKYRIM_SE_FLAG: OFF
