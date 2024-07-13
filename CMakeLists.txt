@@ -6,6 +6,8 @@ endif()
 
 if(WIN32)
   set(VCPKG_TARGET_TRIPLET "x64-windows-sp")
+elseif(APPLE)
+  set(VCPKG_TARGET_TRIPLET "arm64-osx")
 else()
   set(VCPKG_TARGET_TRIPLET "x64-linux")
 endif()
