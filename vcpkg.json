@@ -20,6 +20,7 @@
     "bshoshany-thread-pool",
     "makeid",
     "rsm-bsa",
+    "libzippp",
     {
       "name": "frida-gum",
       "platform": "windows"
