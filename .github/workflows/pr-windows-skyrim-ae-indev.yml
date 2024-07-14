@@ -6,6 +6,10 @@ on:
   schedule:
     - cron: '0 0 * * *'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   BUILD_TYPE: Release
@@ -20,7 +24,7 @@ jobs:
         with:
           fetch-depth: 1
           submodules: 'true'
-      - uses: ./.github/actions/pr_windows_base
+      - uses: ./.github/actions/pr_base
         with:
           DESCRIPTION: 'Skyrim Anniversary Edition (1.6) - Indev'
           SKYRIM_SE_FLAG: OFF

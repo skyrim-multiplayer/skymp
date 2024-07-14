@@ -1,6 +1,9 @@
 #include "BsaArchiveScriptStorage.h"
 
-#include <bsa/tes4.hpp>
+#ifndef NO_BSA
+#  include <bsa/tes4.hpp>
+#endif
+
 #include <filesystem>
 #include <spdlog/spdlog.h>
 #include <stdexcept>
@@ -31,6 +34,7 @@ std::vector<uint8_t> BsaArchiveScriptStorage::GetScriptPex(
 const std::set<CIString>& BsaArchiveScriptStorage::ListScripts(
   bool forceReloadScripts)
 {
+#ifndef NO_BSA
   if (scripts.empty() || forceReloadScripts) {
     scripts.clear();
     bsa::tes4::archive bsa;
@@ -53,5 +57,9 @@ const std::set<CIString>& BsaArchiveScriptStorage::ListScripts(
         pex;
     }
   }
+#else
+  spdlog::warn(
+    "BsaArchiveScriptStorage::ListScripts - Built without bsa support");
+#endif
   return scripts;
 }

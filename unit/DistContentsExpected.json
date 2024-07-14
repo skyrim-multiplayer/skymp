@@ -27,6 +27,14 @@
   },
   {
     "configurationTags": [
+      "MacOS"
+    ],
+    "expectedFiles": [
+      "server/dist_back/fsevents-X6WP4TKM.node"
+    ]
+  },
+  {
+    "configurationTags": [
       "Win32"
     ],
     "expectedFiles": [
