@@ -98,9 +98,11 @@ void VirtualMachine::SendEvent(std::shared_ptr<IGameObject> self,
     auto fn = scriptInstance->GetFunctionByName(
       eventName, scriptInstance->GetActiveStateName());
     if (fn.valid) {
-      auto stackData = std::make_shared<StackData>(*this);
-      if (enter)
+      std::shared_ptr<StackData> stackData;
+      stackData.reset(new StackData{ StackIdHolder{ *this } });
+      if (enter) {
         enter(*stackData);
+      }
       scriptInstance->StartFunction(
         fn, const_cast<std::vector<VarValue>&>(arguments), stackData);
     }
@@ -115,8 +117,10 @@ void VirtualMachine::SendEvent(ActivePexInstance* instance,
   auto fn =
     instance->GetFunctionByName(eventName, instance->GetActiveStateName());
   if (fn.valid) {
+    std::shared_ptr<StackData> stackData;
+    stackData.reset(new StackData{ StackIdHolder{ *this } });
     instance->StartFunction(fn, const_cast<std::vector<VarValue>&>(arguments),
-                            std::make_shared<StackData>(*this));
+                            stackData);
   }
 }
 
