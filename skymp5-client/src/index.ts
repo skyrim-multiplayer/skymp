@@ -46,6 +46,8 @@ import { PlayerBowShotService } from "./services/services/playerBowShotService";
 import { GamemodeEventSourceService } from "./services/services/gamemodeEventSourceService";
 import { GamemodeUpdateService } from "./services/services/gamemodeUpdateService";
 import { FrontHotReloadService } from "./services/services/frontHotReloadService";
+import { BlockedAnimationsService } from "./services/services/blockedAnimationsService";
+import { WorldView } from "./view/worldView";
 
 once("update", () => {
   Utility.setINIBool("bAlwaysActive:General", true);
@@ -95,7 +97,9 @@ const main = () => {
       new PlayerBowShotService(sp, controller),
       new GamemodeEventSourceService(sp, controller),
       new GamemodeUpdateService(sp, controller),
-      new FrontHotReloadService(sp, controller)
+      new FrontHotReloadService(sp, controller),
+      new BlockedAnimationsService(sp, controller),
+      new WorldView(sp, controller)
     ];
     SpApiInteractor.setup(listeners);
   }

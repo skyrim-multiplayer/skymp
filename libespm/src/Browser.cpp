@@ -3,6 +3,7 @@
 #include "libespm/COBJ.h"
 #include "libespm/CellOrGridPos.h"
 #include "libespm/CompressedFieldsCache.h"
+#include "libespm/FACT.h"
 #include "libespm/GroupDataInternal.h"
 #include "libespm/GroupUtils.h"
 #include "libespm/KYWD.h"
@@ -41,6 +42,7 @@ struct Browser::Impl
   std::vector<const RecordHeader*> objectReferences;
   std::vector<const RecordHeader*> constructibleObjects;
   std::vector<const RecordHeader*> keywords;
+  std::vector<const RecordHeader*> factions;
   std::vector<const RecordHeader*> quests;
   std::vector<const RecordHeader*> worlds;
 
@@ -116,6 +118,9 @@ const std::vector<const RecordHeader*>& Browser::GetRecordsByType(
   }
   if (!std::strcmp(type, espm::KYWD::kType)) {
     return pImpl->keywords;
+  }
+  if (!std::strcmp(type, espm::FACT::kType)) {
+    return pImpl->factions;
   }
   if (!std::strcmp(type, espm::QUST::kType)) {
     return pImpl->quests;
@@ -237,6 +242,10 @@ bool Browser::ReadAny(const GroupStack* parentGrStack)
 
     if (utils::Is<espm::KYWD>(t)) {
       pImpl->keywords.push_back(recHeader);
+    }
+
+    if (utils::Is<espm::FACT>(t)) {
+      pImpl->factions.push_back(recHeader);
     }
 
     if (utils::Is<espm::NAVM>(t)) {

@@ -7,7 +7,6 @@ import { FormModel } from "./model";
 import { applyMovement } from "../sync/movementApply";
 import { SpawnProcess } from "./spawnProcess";
 import { ObjectReferenceEx } from "../extensions/objectReferenceEx";
-import { View } from "./view";
 import { PlayerCharacterDataHolder } from "./playerCharacterDataHolder";
 import { getMovement } from "../sync/movementGet";
 import { lastTryHost, tryHost } from "./hostAttempts";
@@ -33,7 +32,7 @@ export const getScreenResolution = (): ScreenResolution => {
   return _screenResolution;
 }
 
-export class FormView implements View<FormModel> {
+export class FormView {
   constructor(private remoteRefrId?: number) { }
 
   update(model: FormModel): void {
@@ -329,6 +328,8 @@ export class FormView implements View<FormModel> {
 
   private lastHarvestedApply = 0;
   private lastOpenApply = 0;
+  private isSetNodeTextureSetApplied = false;
+  private isSetNodeScaleApplied = false;
 
   private applyAll(refr: ObjectReference, model: FormModel) {
     let forcedWeapDrawn: boolean | null = null;
@@ -345,6 +346,14 @@ export class FormView implements View<FormModel> {
     if (now - this.lastOpenApply > 133) {
       this.lastOpenApply = now;
       ModelApplyUtils.applyModelIsOpen(refr, !!model.isOpen);
+    }
+    if (!this.isSetNodeScaleApplied) {
+      this.isSetNodeScaleApplied = true;
+      ModelApplyUtils.applyModelNodeScale(refr, model.setNodeScale);
+    }
+    if (!this.isSetNodeTextureSetApplied) {
+      this.isSetNodeTextureSetApplied = true;
+      ModelApplyUtils.applyModelNodeTextureSet(refr, model.setNodeTextureSet);
     }
 
     if (
@@ -456,15 +465,15 @@ export class FormView implements View<FormModel> {
         }
       }
     }
-    
-    if (refr.is3DLoaded() !== undefined && refr.is3DLoaded() == true){
-      if (model.animation){
+
+    if (refr.is3DLoaded() !== undefined && refr.is3DLoaded() == true) {
+      if (model.animation) {
         //printConsole(`${model.animation?.animEventName}`);
         applyAnimation(refr, model.animation, this.animState);
-      } 
-      
+      }
+
     }
-    
+
 
     if (model.appearance) {
       const actor = Actor.from(refr);
