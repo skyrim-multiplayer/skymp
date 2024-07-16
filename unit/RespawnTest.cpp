@@ -33,37 +33,37 @@ TEST_CASE("DeathState packed is correct if actor was killed", "[Respawn]")
   REQUIRE(ac.GetChangeForm().actorValues.healthPercentage == 0.f);
 }
 
-// TEST_CASE("DeathState packed is correct if actor is respawning", "[Respawn]")
-// {
-//   PartOne& p = GetPartOne();
-//   DoConnect(p, 0);
-//   p.CreateActor(0xff000000, { 0, 0, 0 }, 0, 0x3c);
-//   p.SetUserActor(0, 0xff000000);
-//   auto& ac = p.worldState.GetFormAt<MpActor>(0xff000000);
-//   ac.SetPos(ac.GetSpawnPoint().pos);
-//   ac.SetAngle(ac.GetSpawnPoint().rot);
-//   ac.SetCellOrWorld(ac.GetSpawnPoint().cellOrWorldDesc);
+TEST_CASE("DeathState packed is correct if actor is respawning", "[Respawn]")
+{
+  PartOne& p = GetPartOne();
+  DoConnect(p, 0);
+  p.CreateActor(0xff000000, { 0, 0, 0 }, 0, 0x3c);
+  p.SetUserActor(0, 0xff000000);
+  auto& ac = p.worldState.GetFormAt<MpActor>(0xff000000);
+  ac.SetPos(ac.GetSpawnPoint().pos);
+  ac.SetAngle(ac.GetSpawnPoint().rot);
+  ac.SetCellOrWorld(ac.GetSpawnPoint().cellOrWorldDesc);
 
-//   ac.Kill();
-//   p.Messages().clear();
-//   ac.Respawn();
+  ac.Kill();
+  p.Messages().clear();
+  ac.Respawn();
 
-//   REQUIRE(p.Messages().size() == 1);
-//   nlohmann::json message = p.Messages()[0].j;
-//   REQUIRE(message["t"] == MsgType::DeathStateContainer);
+  REQUIRE(p.Messages().size() == 1);
+  nlohmann::json message = p.Messages()[0].j;
+  REQUIRE(message["t"] == MsgType::DeathStateContainer);
 
-//   nlohmann::json updateProperyMsg = message["tIsDead"];
-//   nlohmann::json teleportMsg = message["tTeleport"];
-//   nlohmann::json changeValuesMsg = message["tChangeValues"];
+  nlohmann::json updateProperyMsg = message["tIsDead"];
+  nlohmann::json teleportMsg = message["tTeleport"];
+  nlohmann::json changeValuesMsg = message["tChangeValues"];
 
-//   REQUIRE(updateProperyMsg["t"] == MsgType::UpdateProperty);
-//   REQUIRE(updateProperyMsg["propName"] == "isDead");
-//   REQUIRE(updateProperyMsg["data"] == false);
-//   REQUIRE(updateProperyMsg["idx"] == ac.GetIdx());
+  REQUIRE(updateProperyMsg["t"] == MsgType::UpdateProperty);
+  REQUIRE(updateProperyMsg["propName"] == "isDead");
+  REQUIRE(updateProperyMsg["data"] == false);
+  REQUIRE(updateProperyMsg["idx"] == ac.GetIdx());
 
-//   REQUIRE(teleportMsg["t"] == MsgType::Teleport);
-//   REQUIRE(changeValuesMsg["t"] == MsgType::ChangeValues);
+  REQUIRE(teleportMsg["t"] == MsgType::Teleport);
+  REQUIRE(changeValuesMsg["t"] == MsgType::ChangeValues);
 
-//   REQUIRE(ac.IsDead() == false);
-//   REQUIRE(ac.GetChangeForm().actorValues.healthPercentage == 1.f);
-// }
+  REQUIRE(ac.IsDead() == false);
+  REQUIRE(ac.GetChangeForm().actorValues.healthPercentage == 1.f);
+}
