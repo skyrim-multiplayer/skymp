@@ -1201,6 +1201,9 @@ void MpActor::Respawn(bool shouldTeleport)
   }
 
   SendAndSetDeathState(false, shouldTeleport);
+
+  // TODO: should probably not sending to ourselves. see also RespawnTest.cpp
+  SendPropertyToListeners("isDead", false);
 }
 
 void MpActor::Teleport(const LocationalData& position)
