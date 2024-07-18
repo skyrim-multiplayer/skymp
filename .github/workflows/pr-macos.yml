@@ -1,7 +1,9 @@
-name: PR Windows Skyrim AE SweetPie
+name: PR MacOS
 
 on:
   push:
+    branches: [ main ]
+  pull_request:
     branches: [ main ]
   schedule:
     - cron: '0 0 * * *'
@@ -18,7 +20,7 @@ env:
 
 jobs:
   build:
-    runs-on: windows-2022
+    runs-on: macos-12
     steps:
       - uses: actions/checkout@v2
         with:
@@ -26,10 +28,7 @@ jobs:
           submodules: 'true'
       - uses: ./.github/actions/pr_base
         with:
-          DESCRIPTION: 'Skyrim Anniversary Edition (1.6) - SweetPie'
-          SKYRIM_SE_FLAG: OFF
-          SP_NEXUS_ARTIFACT_NAME: nope
-          DEPLOY_BRANCH: "sweetpie"
-          DIST_ARTIFACT_NAME: dist-sweetpie
-          SERVER_DIST_ARTIFACT_NAME: server-dist-sweetpie
+          DESCRIPTION: 'MacOS Build'
+          DIST_ARTIFACT_NAME: dist-macos
+          SERVER_DIST_ARTIFACT_NAME: server-dist-macos
           SKYMP5_PATCHES_PAT: ${{ secrets.SKYMP5_PATCHES_PAT }}

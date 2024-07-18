@@ -19,8 +19,11 @@
     "node-addon-api",
     "bshoshany-thread-pool",
     "makeid",
-    "rsm-bsa",
     "libzippp",
+    {
+      "name": "rsm-bsa",
+      "platform": "!osx"
+    },
     {
       "name": "frida-gum",
       "platform": "windows"
