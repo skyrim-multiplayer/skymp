@@ -8,12 +8,14 @@ VarValue PapyrusVisualEffect::Play(VarValue self,
                                    const std::vector<VarValue>& arguments)
 {
   Helper(self, "Play", arguments);
+  return VarValue::None();
 }
 
 VarValue PapyrusVisualEffect::Stop(VarValue self,
                                    const std::vector<VarValue>& arguments)
 {
   Helper(self, "Stop", arguments);
+  return VarValue::None();
 }
 
 // This is exact copy of PapyrusEffectShader::Helper
