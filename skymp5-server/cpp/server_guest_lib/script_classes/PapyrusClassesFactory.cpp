@@ -15,6 +15,7 @@
 #include "PapyrusSkymp.h"
 #include "PapyrusSound.h"
 #include "PapyrusUtility.h"
+#include "PapyrusVisualEffect.h"
 
 std::vector<std::unique_ptr<IPapyrusClassBase>>
 PapyrusClassesFactory::CreateAndRegister(
@@ -38,6 +39,7 @@ PapyrusClassesFactory::CreateAndRegister(
   result.emplace_back(std::make_unique<PapyrusCell>());
   result.emplace_back(std::make_unique<PapyrusSound>());
   result.emplace_back(std::make_unique<PapyrusNetImmerse>());
+  result.emplace_back(std::make_unique<PapyrusVisualEffect>());
 
   for (auto& papyrusClass : result) {
     papyrusClass->Register(vm, compatibilityPolicy);
