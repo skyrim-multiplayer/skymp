@@ -1,8 +1,8 @@
 #include "PapyrusVisualEffect.h"
-#include "EspmGameObject.h"
 #include "MpActor.h"
-#include "MpFormGameObject.h"
 #include "SpSnippetFunctionGen.h"
+#include "script_objects/EspmGameObject.h"
+#include "script_objects/MpFormGameObject.h"
 
 VarValue PapyrusVisualEffect::Play(VarValue self,
                                    const std::vector<VarValue>& arguments)
