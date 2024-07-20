@@ -12,9 +12,15 @@ public:
   void Iterate(const IterateCallback& iterateCallback) override;
 
 private:
+  enum class MongoUpsertTransactionMode
+  {
+    kAppendVersion,
+    kReplaceVersion,
+  };
+
   size_t MongoUpsertTransaction(
     std::vector<std::optional<MpChangeForm>>&& changeForms,
-    const std::string& changeFormsVersion);
+    const std::string& changeFormsVersion, MongoUpsertTransactionMode mode);
 
   void RedisMsetChangeForms(
     const std::vector<std::optional<MpChangeForm>>& changeForms,

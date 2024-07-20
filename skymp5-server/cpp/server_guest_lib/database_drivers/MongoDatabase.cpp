@@ -91,7 +91,8 @@ size_t MongoDatabase::Upsert(
 
   RedisMsetChangeForms(changeForms, changeFormsVersion);
 
-  return MongoUpsertTransaction(std::move(changeForms), changeFormsVersion);
+  return MongoUpsertTransaction(std::move(changeForms), changeFormsVersion,
+                                MongoUpsertTransactionMode::kAppendVersion);
 }
 
 void MongoDatabase::Iterate(const IterateCallback& iterateCallback)
@@ -103,13 +104,29 @@ void MongoDatabase::Iterate(const IterateCallback& iterateCallback)
     for (auto& documentView : versionCursor) {
       auto document = bsoncxx::to_json(documentView);
       auto j = nlohmann::json::parse(document);
-      auto version = j["version"].get<std::string>();
-      std::string versionFromRedis;
 
-      sw::redis::OptionalString versionFromRedisOptional;
+      if (!j["version"].is_array()) {
+        throw std::runtime_error("MongoDatabase::Iterate - version is not an "
+                                 "array: " +
+                                 document);
+      }
+
+      std::vector<std::string> versionHistoryFromMongo;
+
+      for (auto& version : j["version"]) {
+        if (!version.is_string()) {
+          throw std::runtime_error(
+            "MongoDatabase::Iterate - version element is not a string: " +
+            document);
+        }
+        versionHistoryFromMongo.push_back(version.get<std::string>());
+      }
+
+      std::vector<std::string> versionHistoryFromRedis;
 
       try {
-        versionFromRedisOptional = pImpl->redis->get(pImpl->redisVersionKey);
+        pImpl->redis->lrange(pImpl->redisVersionKey, 0, -1,
+                             std::back_inserter(versionHistoryFromRedis));
       } catch (std::exception& e) {
         spdlog::error("MongoDatabase::Iterate - Redis error getting "
                       "changeforms version: {}, disabling redis",
@@ -117,12 +134,14 @@ void MongoDatabase::Iterate(const IterateCallback& iterateCallback)
         pImpl->redis = nullptr;
       }
 
-      if (versionFromRedisOptional) {
-        versionFromRedis = *versionFromRedisOptional;
-      }
-      if (!version.empty() && version == versionFromRedis) {
+      // Version histories must be equal and non-empty
+      // Empty doesn't make sense because it means that there were no Redis
+      // upserts yet
+      if (!versionHistoryFromRedis.empty() &&
+          versionHistoryFromMongo == versionHistoryFromRedis) {
         versionsMatch = true;
-        spdlog::info("MongoDatabase::Iterate - Versions match: {}", version);
+        spdlog::info("MongoDatabase::Iterate - Versions match: {}",
+                     fmt::join(versionHistoryFromMongo, ", "));
         break;
       }
     }
@@ -152,6 +171,8 @@ void MongoDatabase::Iterate(const IterateCallback& iterateCallback)
     simdjson::dom::parser p;
 
     std::shared_ptr<sw::redis::Transaction> transaction;
+
+    std::string initialRedisVersion = GetCurrentTimestampIso8601();
 
     if (pImpl->redis) {
       transaction.reset(
@@ -185,14 +206,19 @@ void MongoDatabase::Iterate(const IterateCallback& iterateCallback)
     }
 
     if (transaction) {
+      transaction->del(pImpl->redisVersionKey);
+      transaction->lpush(pImpl->redisVersionKey, initialRedisVersion);
       (void)transaction->exec();
+
+      MongoUpsertTransaction({}, initialRedisVersion,
+                             MongoUpsertTransactionMode::kReplaceVersion);
     }
   }
 }
 
 size_t MongoDatabase::MongoUpsertTransaction(
   std::vector<std::optional<MpChangeForm>>&& changeForms,
-  const std::string& changeFormsVersion)
+  const std::string& changeFormsVersion, MongoUpsertTransactionMode mode)
 {
   try {
     std::shared_ptr<mongocxx::client_session> session(
@@ -221,13 +247,30 @@ size_t MongoDatabase::MongoUpsertTransaction(
             std::move(bsoncxx::from_json(upd.dump())) })
           .upsert(true));
     }
-    pImpl->changeFormsCollection->bulk_write(changeFormUpserts);
+    if (!changeFormUpserts.empty()) {
+      pImpl->changeFormsCollection->bulk_write(changeFormUpserts);
+    }
 
     auto emptyFilter = nlohmann::json::object();
     auto emptyFilterBson = bsoncxx::from_json(emptyFilter.dump());
     auto upd = nlohmann::json::object();
-    upd["$set"] = nlohmann::json::object();
-    upd["$set"]["version"] = changeFormsVersion;
+
+    if (mode == MongoUpsertTransactionMode::kReplaceVersion) {
+      upd["$set"] = nlohmann::json::object();
+      upd["$set"]["version"] = nlohmann::json::array();
+      upd["$set"]["version"].push_back(changeFormsVersion);
+    } else if (mode == MongoUpsertTransactionMode::kAppendVersion) {
+      upd["$push"] = nlohmann::json::object();
+      upd["$push"]["version"] = changeFormsVersion;
+      upd["$setOnInsert"] = nlohmann::json::object();
+      upd["$setOnInsert"]["version"] = nlohmann::json::array();
+      upd["$setOnInsert"]["version"].push_back(changeFormsVersion);
+    } else {
+      throw std::runtime_error("MongoDatabase::MongoUpsertTransaction - "
+                               "Unknown mode: " +
+                               std::to_string(static_cast<int>(mode)));
+    }
+
     std::vector<mongocxx::model::update_one> versionUpserts;
     versionUpserts.push_back(mongocxx::model::update_one(
                                { std::move(emptyFilterBson),
@@ -252,7 +295,7 @@ void MongoDatabase::RedisMsetChangeForms(
     return;
   }
 
-  std::vector<std::pair<std::string, std::string>> redisData;
+    std::vector<std::pair<std::string, std::string>> redisData;
   redisData.reserve(changeForms.size());
   for (auto& changeForm : changeForms) {
     if (changeForm == std::nullopt) {
