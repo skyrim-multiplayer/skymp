@@ -16,11 +16,9 @@ private:
     std::vector<std::optional<MpChangeForm>>&& changeForms,
     const std::string& changeFormsVersion);
 
-  void RedisSetWriteInProgress();
   void RedisMsetChangeForms(
     const std::vector<std::optional<MpChangeForm>>& changeForms,
     const std::string& changeFormsVersion);
-  void RedisDeleteWriteInProgress();
 
   std::string GetCurrentTimestampIso8601();
 

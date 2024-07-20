@@ -45,7 +45,6 @@ struct MongoDatabase::Impl
 {
   const std::string uri;
   const std::string name;
-  // const std::string redisWriteInProgressKey;
   const std::string redisVersionKey;
 
   const char* const collectionName = "changeForms";
@@ -65,12 +64,8 @@ MongoDatabase::MongoDatabase(std::string uri_, std::string name_,
   static mongocxx::instance g_instance;
 
   pImpl.reset(new Impl{
-    uri_, name_,
-    // mongo uri hash could also be a redis keys prefix,
-    // but the uri contains password that can be changed
-    // "skymp5-server:" + name_ + ":_write_in_progress", //inprogress
-    // "skymp5-server:" + name_ + ":version"
-
+    uri_,
+    name_,
   });
 
   pImpl->client.reset(new mongocxx::client(mongocxx::uri(pImpl->uri.data())));
@@ -94,12 +89,7 @@ size_t MongoDatabase::Upsert(
 {
   auto changeFormsVersion = GetCurrentTimestampIso8601();
 
-  // RedisSetWriteInProgress();
   RedisMsetChangeForms(changeForms, changeFormsVersion);
-
-  // // Will be executed even if MongoUpsertTransaction throws
-  // Viet::ScopedTask<MongoDatabase> taskRedisDeleteWriteInProgress(
-  //   [](MongoDatabase& self) { self.RedisDeleteWriteInProgress(); }, *this);
 
   return MongoUpsertTransaction(std::move(changeForms), changeFormsVersion);
 }
@@ -254,22 +244,6 @@ size_t MongoDatabase::MongoUpsertTransaction(
   }
 }
 
-// void MongoDatabase::RedisSetWriteInProgress()
-// {
-//   if (!pImpl->redis) {
-//     return;
-//   }
-
-//   try {
-//     pImpl->redis->set(pImpl->redisWriteInProgressKey, "1");
-//   } catch (std::exception& e) {
-//     spdlog::error("MongoDatabase::Upsert - Redis error setting {}: {}, "
-//                   "disabling redis",
-//                   pImpl->redisWriteInProgressKey, e.what());
-//     pImpl->redis = nullptr;
-//   }
-// }
-
 void MongoDatabase::RedisMsetChangeForms(
   const std::vector<std::optional<MpChangeForm>>& changeForms,
   const std::string& changeFormsVersion)
@@ -299,18 +273,6 @@ void MongoDatabase::RedisMsetChangeForms(
     pImpl->redis = nullptr;
   }
 }
-
-// void MongoDatabase::RedisDeleteWriteInProgress()
-// {
-//   try {
-//     pImpl->redis->del(pImpl->redisWriteInProgressKey);
-//   } catch (std::exception& e) {
-//     spdlog::error("MongoDatabase::Upsert - Redis error del "
-//                   "{}: {}, disabling redis",
-//                   pImpl->redisWriteInProgressKey, e.what());
-//     pImpl->redis = nullptr;
-//   }
-// }
 
 std::string MongoDatabase::GetCurrentTimestampIso8601()
 {
