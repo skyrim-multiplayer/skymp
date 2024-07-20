@@ -1,6 +1,7 @@
 #include "MongoDatabase.h"
 
 #include "JsonUtils.h"
+
 #include <bsoncxx/builder/stream/document.hpp>
 #include <bsoncxx/document/element.hpp>
 #include <bsoncxx/document/value.hpp>
@@ -11,37 +12,206 @@
 #include <mongocxx/instance.hpp>
 #include <mongocxx/stdx.hpp>
 #include <mongocxx/uri.hpp>
+
+#include <sw/redis++/redis++.h>
+
 #include <nlohmann/json.hpp>
+#include <spdlog/spdlog.h>
+
+#include "ScopedTask.h"
+
+namespace {
+template <class Callback>
+void RedisIterateKeysByPattern(const std::string& pattern,
+                               sw::redis::Redis& redis,
+                               const Callback& callback)
+{
+  int64_t cursor = 0;
+  std::vector<std::string> keys;
+
+  do {
+    cursor = redis.scan(cursor, pattern, 1000, std::back_inserter(keys));
+
+    if (!keys.empty()) {
+      callback(keys.begin(), keys.end());
+      keys.clear();
+    }
+
+  } while (cursor != 0);
+}
+}
 
 struct MongoDatabase::Impl
 {
   const std::string uri;
   const std::string name;
+  // const std::string redisWriteInProgressKey;
+  const std::string redisVersionKey;
 
   const char* const collectionName = "changeForms";
+  const char* const versionCollectionName = "version";
 
   std::shared_ptr<mongocxx::client> client;
   std::shared_ptr<mongocxx::database> db;
-  std::shared_ptr<mongocxx::collection> changeFormsCollection;
+  std::shared_ptr<mongocxx::collection> changeFormsCollection,
+    versionCollection;
+
+  std::shared_ptr<sw::redis::Redis> redis;
 };
 
-MongoDatabase::MongoDatabase(std::string uri_, std::string name_)
+MongoDatabase::MongoDatabase(std::string uri_, std::string name_,
+                             std::optional<std::string> redisUri_)
 {
   static mongocxx::instance g_instance;
 
-  pImpl.reset(new Impl{ uri_, name_ });
+  pImpl.reset(new Impl{
+    uri_, name_,
+    // mongo uri hash could also be a redis keys prefix,
+    // but the uri contains password that can be changed
+    // "skymp5-server:" + name_ + ":_write_in_progress", //inprogress
+    // "skymp5-server:" + name_ + ":version"
+
+  });
 
   pImpl->client.reset(new mongocxx::client(mongocxx::uri(pImpl->uri.data())));
   pImpl->db.reset(new mongocxx::database((*pImpl->client)[pImpl->name]));
   pImpl->changeFormsCollection.reset(
     new mongocxx::collection((*pImpl->db)[pImpl->collectionName]));
+  pImpl->versionCollection.reset(
+    new mongocxx::collection((*pImpl->db)[pImpl->versionCollectionName]));
+
+  if (redisUri_) {
+    spdlog::info("MongoDatabase::MongoDatabase - Redis URI: {}",
+                 redisUri_.value());
+    pImpl->redis.reset(new sw::redis::Redis(redisUri_.value()));
+  } else {
+    spdlog::info("MongoDatabase::MongoDatabase - No Redis URI");
+  }
 }
 
 size_t MongoDatabase::Upsert(
   std::vector<std::optional<MpChangeForm>>&& changeForms)
 {
+  auto changeFormsVersion = GetCurrentTimestampIso8601();
+
+  // RedisSetWriteInProgress();
+  RedisMsetChangeForms(changeForms, changeFormsVersion);
+
+  // // Will be executed even if MongoUpsertTransaction throws
+  // Viet::ScopedTask<MongoDatabase> taskRedisDeleteWriteInProgress(
+  //   [](MongoDatabase& self) { self.RedisDeleteWriteInProgress(); }, *this);
+
+  return MongoUpsertTransaction(std::move(changeForms), changeFormsVersion);
+}
+
+void MongoDatabase::Iterate(const IterateCallback& iterateCallback)
+{
+  bool versionsMatch = false;
+
+  if (pImpl->redis) {
+    auto versionCursor = pImpl->versionCollection->find({});
+    for (auto& documentView : versionCursor) {
+      auto document = bsoncxx::to_json(documentView);
+      auto j = nlohmann::json::parse(document);
+      auto version = j["version"].get<std::string>();
+      std::string versionFromRedis;
+
+      sw::redis::OptionalString versionFromRedisOptional;
+
+      try {
+        versionFromRedisOptional = pImpl->redis->get(pImpl->redisVersionKey);
+      } catch (std::exception& e) {
+        spdlog::error("MongoDatabase::Iterate - Redis error getting "
+                      "changeforms version: {}, disabling redis",
+                      e.what());
+        pImpl->redis = nullptr;
+      }
+
+      if (versionFromRedisOptional) {
+        versionFromRedis = *versionFromRedisOptional;
+      }
+      if (!version.empty() && version == versionFromRedis) {
+        versionsMatch = true;
+        spdlog::info("MongoDatabase::Iterate - Versions match: {}", version);
+        break;
+      }
+    }
+  }
+
+  if (versionsMatch) {
+    spdlog::info("MongoDatabase::Iterate - Loading from redis");
+    RedisIterateKeysByPattern(
+      MakeChangeFormRedisKeyWildcard(), *pImpl->redis,
+      [&](auto begin, auto end) {
+        std::vector<std::string> changeFormJsons;
+        pImpl->redis->mget(begin, end, std::back_inserter(changeFormJsons));
+
+        simdjson::dom::parser p;
+        for (auto& changeFormJson : changeFormJsons) {
+          auto document = p.parse(changeFormJson).value();
+          auto changeForm = MpChangeForm::JsonToChangeForm(document);
+
+          iterateCallback(changeForm);
+        }
+      });
+  } else {
+    spdlog::info("MongoDatabase::Iterate - Loading from mongo, feeding redis");
+    auto emptyFilter = nlohmann::json::object();
+    auto emptyFilterBson = bsoncxx::from_json(emptyFilter.dump());
+
+    simdjson::dom::parser p;
+
+    std::shared_ptr<sw::redis::Transaction> transaction;
+
+    if (pImpl->redis) {
+      transaction.reset(
+        new sw::redis::Transaction(pImpl->redis->transaction()));
+
+      try {
+        RedisIterateKeysByPattern(
+          MakeChangeFormRedisKeyWildcard(), *pImpl->redis,
+          [&](auto begin, auto end) { transaction->del(begin, end); });
+      } catch (std::exception& e) {
+        spdlog::error(
+          "MongoDatabase::Iterate - Redis error del: {}, disabling redis",
+          e.what());
+        pImpl->redis = nullptr;
+        transaction = nullptr;
+      }
+    }
+
+    auto cursor =
+      pImpl->changeFormsCollection->find(std::move(emptyFilterBson));
+    for (auto& documentView : cursor) {
+      std::string documentViewDump = bsoncxx::to_json(documentView);
+      auto document = p.parse(documentViewDump).value();
+      auto changeForm = MpChangeForm::JsonToChangeForm(document);
+
+      iterateCallback(changeForm);
+
+      if (transaction) {
+        transaction->set(MakeChangeFormRedisKey(changeForm), documentViewDump);
+      }
+    }
+
+    if (transaction) {
+      (void)transaction->exec();
+    }
+  }
+}
+
+size_t MongoDatabase::MongoUpsertTransaction(
+  std::vector<std::optional<MpChangeForm>>&& changeForms,
+  const std::string& changeFormsVersion)
+{
   try {
-    auto bulk = pImpl->changeFormsCollection->create_bulk_write();
+    std::shared_ptr<mongocxx::client_session> session(
+      new mongocxx::client_session(pImpl->client->start_session()));
+
+    session->start_transaction();
+
+    std::vector<mongocxx::model::update_one> changeFormUpserts;
+    changeFormUpserts.reserve(changeForms.size());
     for (auto& changeForm : changeForms) {
       if (changeForm == std::nullopt) {
         continue;
@@ -55,13 +225,27 @@ size_t MongoDatabase::Upsert(
       auto upd = nlohmann::json::object();
       upd["$set"] = jChangeForm;
 
-      bulk.append(mongocxx::model::update_one(
-                    { std::move(bsoncxx::from_json(filter.dump())),
-                      std::move(bsoncxx::from_json(upd.dump())) })
-                    .upsert(true));
+      changeFormUpserts.push_back(
+        mongocxx::model::update_one(
+          { std::move(bsoncxx::from_json(filter.dump())),
+            std::move(bsoncxx::from_json(upd.dump())) })
+          .upsert(true));
     }
+    pImpl->changeFormsCollection->bulk_write(changeFormUpserts);
 
-    (void)bulk.execute();
+    auto emptyFilter = nlohmann::json::object();
+    auto emptyFilterBson = bsoncxx::from_json(emptyFilter.dump());
+    auto upd = nlohmann::json::object();
+    upd["$set"] = nlohmann::json::object();
+    upd["$set"]["version"] = changeFormsVersion;
+    std::vector<mongocxx::model::update_one> versionUpserts;
+    versionUpserts.push_back(mongocxx::model::update_one(
+                               { std::move(emptyFilterBson),
+                                 std::move(bsoncxx::from_json(upd.dump())) })
+                               .upsert(true));
+    pImpl->versionCollection->bulk_write(versionUpserts);
+
+    session->commit_transaction();
 
     // TODO: Should take data from bulk.execute result instead?
     return changeForms.size();
@@ -70,17 +254,82 @@ size_t MongoDatabase::Upsert(
   }
 }
 
-void MongoDatabase::Iterate(const IterateCallback& iterateCallback)
+// void MongoDatabase::RedisSetWriteInProgress()
+// {
+//   if (!pImpl->redis) {
+//     return;
+//   }
+
+//   try {
+//     pImpl->redis->set(pImpl->redisWriteInProgressKey, "1");
+//   } catch (std::exception& e) {
+//     spdlog::error("MongoDatabase::Upsert - Redis error setting {}: {}, "
+//                   "disabling redis",
+//                   pImpl->redisWriteInProgressKey, e.what());
+//     pImpl->redis = nullptr;
+//   }
+// }
+
+void MongoDatabase::RedisMsetChangeForms(
+  const std::vector<std::optional<MpChangeForm>>& changeForms,
+  const std::string& changeFormsVersion)
 {
-  auto emptyFilter = nlohmann::json::object();
-  auto emptyFilterBson = bsoncxx::from_json(emptyFilter.dump());
-
-  simdjson::dom::parser p;
-
-  auto cursor = pImpl->changeFormsCollection->find(std::move(emptyFilterBson));
-  for (auto& documentView : cursor) {
-    auto document = p.parse(bsoncxx::to_json(documentView)).value();
-    auto changeForm = MpChangeForm::JsonToChangeForm(document);
-    iterateCallback(changeForm);
+  if (!pImpl->redis) {
+    return;
   }
+
+  std::vector<std::pair<std::string, std::string>> redisData;
+  redisData.reserve(changeForms.size());
+  for (auto& changeForm : changeForms) {
+    if (changeForm == std::nullopt) {
+      continue;
+    }
+    redisData.emplace_back(MakeChangeFormRedisKey(*changeForm),
+                           MpChangeForm::ToJson(*changeForm).dump());
+  }
+
+  redisData.emplace_back(pImpl->redisVersionKey, changeFormsVersion);
+
+  try {
+    pImpl->redis->mset(redisData.begin(), redisData.end());
+  } catch (std::exception& e) {
+    spdlog::error(
+      "MongoDatabase::Upsert - Redis error mset: {}, disabling redis",
+      e.what());
+    pImpl->redis = nullptr;
+  }
+}
+
+// void MongoDatabase::RedisDeleteWriteInProgress()
+// {
+//   try {
+//     pImpl->redis->del(pImpl->redisWriteInProgressKey);
+//   } catch (std::exception& e) {
+//     spdlog::error("MongoDatabase::Upsert - Redis error del "
+//                   "{}: {}, disabling redis",
+//                   pImpl->redisWriteInProgressKey, e.what());
+//     pImpl->redis = nullptr;
+//   }
+// }
+
+std::string MongoDatabase::GetCurrentTimestampIso8601()
+{
+  auto now = std::chrono::system_clock::now();
+  auto now_c = std::chrono::system_clock::to_time_t(now);
+  std::tm now_tm = *std::gmtime(&now_c);
+  char buffer[128];
+  std::strftime(buffer, sizeof(buffer), "%FT%TZ", &now_tm);
+  return std::string(buffer);
+}
+
+std::string MongoDatabase::MakeChangeFormRedisKey(
+  const MpChangeForm& changeForm)
+{
+  return "skymp5-server:" + pImpl->name +
+    ":changeForm:" + changeForm.formDesc.ToString();
+}
+
+std::string MongoDatabase::MakeChangeFormRedisKeyWildcard()
+{
+  return "skymp5-server:" + pImpl->name + ":changeForm:*";
 }

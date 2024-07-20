@@ -5,12 +5,28 @@
 class MongoDatabase : public IDatabase
 {
 public:
-  MongoDatabase(std::string uri_, std::string name_);
+  MongoDatabase(std::string uri_, std::string name_,
+                std::optional<std::string> redisUri_);
   size_t Upsert(
     std::vector<std::optional<MpChangeForm>>&& changeForms) override;
   void Iterate(const IterateCallback& iterateCallback) override;
 
 private:
+  size_t MongoUpsertTransaction(
+    std::vector<std::optional<MpChangeForm>>&& changeForms,
+    const std::string& changeFormsVersion);
+
+  void RedisSetWriteInProgress();
+  void RedisMsetChangeForms(
+    const std::vector<std::optional<MpChangeForm>>& changeForms,
+    const std::string& changeFormsVersion);
+  void RedisDeleteWriteInProgress();
+
+  std::string GetCurrentTimestampIso8601();
+
+  std::string MakeChangeFormRedisKey(const MpChangeForm& changeForm);
+  std::string MakeChangeFormRedisKeyWildcard();
+
   struct Impl;
   std::shared_ptr<Impl> pImpl;
 };

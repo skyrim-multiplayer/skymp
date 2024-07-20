@@ -32,7 +32,8 @@ std::shared_ptr<IDatabase> DatabaseFactory::Create(
 
     auto databaseUri = settings["databaseUri"].get<std::string>();
     logger->info("Using mongodb with name '" + databaseName + "'");
-    return std::make_shared<MongoDatabase>(databaseUri, databaseName);
+    return std::make_shared<MongoDatabase>(databaseUri, databaseName,
+                                           "tcp://127.0.0.1:6379");
   }
 
   if (databaseDriver == "migration") {

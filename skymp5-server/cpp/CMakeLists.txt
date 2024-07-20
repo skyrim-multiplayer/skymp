@@ -116,6 +116,8 @@ endif()
 
 find_package(libzippp REQUIRED)
 
+find_package(redis++ CONFIG REQUIRED)
+
 foreach(target ${VCPKG_DEPENDENT})
   target_include_directories(${target} PUBLIC ${CATCH_INCLUDE_DIR})
   target_include_directories(${target} PUBLIC ${SPARSEPP_INCLUDE_DIR})
@@ -132,6 +134,7 @@ foreach(target ${VCPKG_DEPENDENT})
     target_compile_definitions(${target} PUBLIC NO_BSA=1)
   endif()
   target_link_libraries(${target} PUBLIC libzippp::libzippp)
+  target_link_libraries(${target} PUBLIC redis++::redis++_static)
 
   if(APPLE)
     target_link_libraries(${target} PUBLIC pthread resolv m)

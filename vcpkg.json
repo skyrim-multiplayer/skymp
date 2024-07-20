@@ -20,6 +20,7 @@
     "bshoshany-thread-pool",
     "makeid",
     "libzippp",
+    "redis-plus-plus",
     {
       "name": "rsm-bsa",
       "platform": "!osx"
