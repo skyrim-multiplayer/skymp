@@ -100,7 +100,10 @@ void MongoDatabase::Iterate(const IterateCallback& iterateCallback)
   bool versionsMatch = false;
 
   if (pImpl->redis) {
-    auto versionCursor = pImpl->versionCollection->find({});
+    auto emptyFilter = nlohmann::json::object();
+    auto emptyFilterBson = bsoncxx::from_json(emptyFilter.dump());
+    auto versionCursor =
+      pImpl->versionCollection->find(std::move(emptyFilterBson));
     for (auto& documentView : versionCursor) {
       auto document = bsoncxx::to_json(documentView);
       auto j = nlohmann::json::parse(document);
@@ -260,11 +263,24 @@ size_t MongoDatabase::MongoUpsertTransaction(
       upd["$set"]["version"] = nlohmann::json::array();
       upd["$set"]["version"].push_back(changeFormsVersion);
     } else if (mode == MongoUpsertTransactionMode::kAppendVersion) {
-      upd["$push"] = nlohmann::json::object();
-      upd["$push"]["version"] = changeFormsVersion;
-      upd["$setOnInsert"] = nlohmann::json::object();
-      upd["$setOnInsert"]["version"] = nlohmann::json::array();
-      upd["$setOnInsert"]["version"].push_back(changeFormsVersion);
+      auto emptyFilter = nlohmann::json::object();
+      auto emptyFilterBson = bsoncxx::from_json(emptyFilter.dump());
+      std::optional<bsoncxx::document::value> value =
+        pImpl->versionCollection->find_one(std::move(emptyFilterBson));
+      upd["$set"] = nlohmann::json::object();
+      upd["$set"]["version"] = nlohmann::json::array();
+
+      if (value) {
+
+        // TODO: handle bad version in db
+        auto arr = nlohmann::json::parse(
+          bsoncxx::to_json(value->view()["version"].get_array().value));
+
+        for (auto& element : arr)
+          upd["$set"]["version"].push_back(element);
+      }
+
+      upd["$set"]["version"].push_back(changeFormsVersion);
     } else {
       throw std::runtime_error("MongoDatabase::MongoUpsertTransaction - "
                                "Unknown mode: " +
