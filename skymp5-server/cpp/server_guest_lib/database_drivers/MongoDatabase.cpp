@@ -295,7 +295,7 @@ void MongoDatabase::RedisMsetChangeForms(
     return;
   }
 
-    std::vector<std::pair<std::string, std::string>> redisData;
+  std::vector<std::pair<std::string, std::string>> redisData;
   redisData.reserve(changeForms.size());
   for (auto& changeForm : changeForms) {
     if (changeForm == std::nullopt) {
