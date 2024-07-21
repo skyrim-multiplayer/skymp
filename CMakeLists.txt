@@ -140,6 +140,7 @@ add_subdirectory(skymp5-server)
 
 if(BUILD_UNIT_TESTS)
   add_subdirectory(unit)
+  add_subdirectory(misc/tests)
 endif()
 
 if(PREPARE_NEXUS_ARCHIVES)

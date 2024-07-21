@@ -1,0 +1,7 @@
+{
+  "dependencies": {
+    "mongodb-memory-server": "^10.0.0",
+    "pm2": "^5.4.2",
+    "redis-memory-server": "^0.11.0"
+  }
+}
