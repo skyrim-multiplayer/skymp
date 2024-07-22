@@ -2,45 +2,65 @@ const { MongoMemoryServer } = require('../dependencies/node_modules/mongodb-memo
 const { RedisMemoryServer } = require('../dependencies/node_modules/redis-memory-server/lib');
 const { exec } = require('../dependencies/node_modules/@actions/exec/lib/exec');
 const { Redis } = require('../dependencies/node_modules/ioredis');
+const { MongoClient } = require('../dependencies/node_modules/mongodb');
 const path = require('path');
+const assert = require('assert');
+
+let mongod, mongodUri, redisServer, redisHost, redisPort, redisClient, mongodbClient;
 
 const main = async () => {
-    const mongod = await MongoMemoryServer.create();
-    const mongodUri = mongod.getUri();
+    try {
+        mongod = await MongoMemoryServer.create();
+        mongodUri = mongod.getUri();
+        redisServer = new RedisMemoryServer();
+        redisHost = await redisServer.getHost();
+        redisPort = await redisServer.getPort();
 
-    const redisServer = new RedisMemoryServer();
-    const redisHost = await redisServer.getHost();
-    const redisPort = await redisServer.getPort();
+        redisClient = new Redis({ host: redisHost, port: redisPort });
+        mongodbClient = new MongoClient(mongodUri, { useUnifiedTopology: true });
 
-    const options = {
-        cwd: path.normalize("../../../build/dist/server"),
-        ignoreReturnCode: true
-    };
+        await mongodbClient.connect();
 
-    const testGamemode = path.normalize("../../../misc/tests/redis_test/test_build_redis_cache.gamemode.js")
+        const options = {
+            cwd: path.normalize("../../../build/dist/server"),
+            ignoreReturnCode: true
+        };
 
-    const args = [
-        `--gamemodePath`,
-        testGamemode,
-        `--databaseDriver`,
-        `mongodb`,
-        `--databaseName`,
-        `test`,
-        `--databaseUri`,
-        mongodUri,
-        `--databaseRedisCacheUri`,
-        `tcp://${redisHost}:${redisPort}`,
-    ];
-    const res = await exec(`node dist_back/skymp5-server.js`, args, options);
+        const initActorsGamemode = path.normalize("../../../misc/tests/redis_test/test_build_redis_cache.gamemode.init-actors.js")
 
-    await mongod.stop();
+        const args = [
+            `--gamemodePath`,
+            initActorsGamemode,
+            `--databaseDriver`,
+            `mongodb`,
+            `--databaseName`,
+            `test`,
+            `--databaseUri`,
+            mongodUri,
+            `--databaseRedisCacheUri`,
+            `tcp://${redisHost}:${redisPort}`,
+        ];
+        const res = await exec(`node dist_back/skymp5-server.js`, args, options);
 
-    
+        if (res !== 0) {
+            throw new Error('Expected the server to exit with 0, but it exited with ' + res);
+        }
 
-    await redisServer.stop();
+        const db = mongodbClient.db('test');
+        const changeForms = db.collection('changeForms');
+        const version = db.collection('version');
 
-    if (res !== 0) {
-        throw new Error('Expected the server to exit gracefully, but it exited with ' + res);
+        assert.strictEqual(await changeForms.countDocuments(), 3);
+        assert.strictEqual(await version.countDocuments(), 1);
+
+        const found = await version.findOne({});
+        assert.strictEqual(found.version, 1);
+
+    } finally {
+        await redisClient.quit();
+        await mongodbClient.close();
+        await mongod.stop();
+        await redisServer.stop();
     }
 };
 

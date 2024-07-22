@@ -157,10 +157,8 @@ const main = async () => {
   const gracefulShutdown = (signal: string) => {
     console.log(`Received ${signal}, closing the server...`);
 
-    if (!server.isDatabaseBusy()) {
-      console.log("Database is not busy, exiting immediately");
-      process.exit(0);
-    }
+    // isDatabaseBusy can be false even with pending writes, because the db didn't start writing yet.
+    // This is why we don't try exiting immediately, but wait at least for a second.
 
     console.log("Suspending database writes...");
     server.setDatabaseWriteSuspended(true);
@@ -176,6 +174,8 @@ const main = async () => {
   };
   process.on('SIGINT', () => gracefulShutdown('SIGINT'));
   process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+  
+  console.log("shit handleer")
 
   const ctx = { svr: server, gm: new EventEmitter() };
 

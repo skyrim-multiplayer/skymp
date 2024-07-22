@@ -1,6 +1,8 @@
 {
   "dependencies": {
     "@actions/exec": "^1.1.1",
+    "ioredis": "^5.4.1",
+    "mongodb": "^6.8.0",
     "mongodb-memory-server": "^10.0.0",
     "pm2": "^5.4.2",
     "redis-memory-server": "^0.11.0"
