@@ -231,6 +231,15 @@
   },
   {
     "configurationTags": [
+      "CI",
+      "Win32"
+    ],
+    "expectedFiles": [
+      "client/Data/Platform/Distribution/build-metadata-public.json"
+    ]
+  },
+  {
+    "configurationTags": [
       "Win32"
     ],
     "expectedFiles": [

@@ -159,6 +159,40 @@ runs:
       run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
       shell: powershell
 
+    # before running tests, because of dist check test
+    - name: Compile metadata into public format
+      if: ${{ runner.os == 'Windows' }}
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const deployBranch = "${{ inputs.DEPLOY_BRANCH }}";
+          const fs = require('fs');
+          const crypto = require('crypto');
+
+          const res = {};
+
+          res.commitSha = process.env.GITHUB_SHA;
+
+          if (deployBranch !== '') {
+            const file = fs.readFileSync('./build-metadata.json');
+            const data = JSON.parse(file);
+
+            res.refs_info = data.refs_info.map((refInfo) => {
+              if (refInfo.repoName !== "skymp5-patches") {
+                return refInfo;
+              }
+              else {
+                return { refInfoHash: crypto.createHash('sha256').update(refInfo.ref).digest('hex') };
+              }
+            });
+          }
+
+          console.log("Resulting data:");
+          console.log(res);
+
+          const outFilePath = './build/dist/client/Data/Platform/Distribution/build-metadata-public.json';
+          fs.writeFileSync(outFilePath, JSON.stringify(res, null, 2));
+
     - name: Test
       working-directory: ${{github.workspace}}/build
       # Execute tests defined by the CMake configuration.  
