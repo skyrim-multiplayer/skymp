@@ -32,6 +32,7 @@ runs:
       uses: Pospelove/auto-merge-action@main
       with:
         path: ${{github.workspace}}
+        generate-build-metadata: true
         repositories: |
           [
             {
