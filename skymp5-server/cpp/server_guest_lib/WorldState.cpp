@@ -30,6 +30,7 @@ struct WorldState::Impl
   std::shared_ptr<ISaveStorage> saveStorage;
   std::shared_ptr<IScriptStorage> scriptStorage;
   bool saveStorageBusy = false;
+  bool isDatabaseWriteSuspended = false;
   std::shared_ptr<VirtualMachine> vm;
   uint32_t nextId = 0xff000000;
   std::shared_ptr<IPapyrusCompatibilityPolicy> policy;
@@ -712,6 +713,10 @@ void WorldState::TickSaveStorage(const std::chrono::system_clock::time_point&)
     return;
   }
 
+  if (pImpl->isDatabaseWriteSuspended) {
+    return;
+  }
+
   if (pImpl->changesByIdx.empty()) {
     return;
   }
@@ -1086,6 +1091,22 @@ void WorldState::SetForbiddenRelootTypes(const std::set<std::string>& types)
 void WorldState::SetEnableConsoleCommandsForAllSetting(bool enable)
 {
   enableConsoleCommandsForAll = enable;
+}
+
+bool WorldState::IsDatabaseBusy() const
+{
+  return pImpl->saveStorageBusy;
+}
+
+bool WorldState::IsDatabaseWriteSuspended() const
+{
+  return pImpl->isDatabaseWriteSuspended;
+}
+
+void WorldState::SetDatabaseWriteSuspended(bool value)
+{
+  pImpl->isDatabaseWriteSuspended = value;
+  spdlog::info("WorldState::SetDatabaseWriteSuspended {}", value);
 }
 
 bool WorldState::IsRelootForbidden(std::string type) const noexcept

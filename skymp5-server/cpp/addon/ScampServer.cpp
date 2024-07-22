@@ -107,7 +107,12 @@ Napi::Object ScampServer::Init(Napi::Env env, Napi::Object exports)
       InstanceMethod("requestPacketHistoryPlayback",
                      &ScampServer::RequestPacketHistoryPlayback),
       InstanceMethod("findFormsByPropertyValue",
-                     &ScampServer::FindFormsByPropertyValue) });
+                     &ScampServer::FindFormsByPropertyValue),
+      InstanceMethod("isDatabaseBusy", &ScampServer::IsDatabaseBusy),
+      InstanceMethod("isDatabaseWriteSuspended",
+                     &ScampServer::IsDatabaseWriteSuspended),
+      InstanceMethod("setDatabaseWriteSuspended",
+                     &ScampServer::SetDatabaseWriteSuspended) });
   constructor = Napi::Persistent(func);
   constructor.SuppressDestruct();
   exports.Set("ScampServer", func);
@@ -1243,6 +1248,39 @@ Napi::Value ScampServer::FindFormsByPropertyValue(
       ++i;
     }
     return result;
+  } catch (std::exception& e) {
+    throw Napi::Error::New(info.Env(), std::string(e.what()));
+  }
+}
+
+Napi::Value ScampServer::IsDatabaseBusy(const Napi::CallbackInfo& info)
+{
+  try {
+    return Napi::Boolean::New(info.Env(),
+                              partOne->worldState.IsDatabaseBusy());
+  } catch (std::exception& e) {
+    throw Napi::Error::New(info.Env(), std::string(e.what()));
+  }
+}
+
+Napi::Value ScampServer::IsDatabaseWriteSuspended(
+  const Napi::CallbackInfo& info)
+{
+  try {
+    return Napi::Boolean::New(info.Env(),
+                              partOne->worldState.IsDatabaseWriteSuspended());
+  } catch (std::exception& e) {
+    throw Napi::Error::New(info.Env(), std::string(e.what()));
+  }
+}
+
+Napi::Value ScampServer::SetDatabaseWriteSuspended(
+  const Napi::CallbackInfo& info)
+{
+  try {
+    auto value = NapiHelper::ExtractBoolean(info[0], "value");
+    partOne->worldState.SetDatabaseWriteSuspended(value);
+    return info.Env().Undefined();
   } catch (std::exception& e) {
     throw Napi::Error::New(info.Env(), std::string(e.what()));
   }

@@ -220,6 +220,11 @@ public:
   void SetForbiddenRelootTypes(const std::set<std::string>& types);
   void SetEnableConsoleCommandsForAllSetting(bool enable);
 
+  bool IsDatabaseBusy() const;
+
+  bool IsDatabaseWriteSuspended() const;
+  void SetDatabaseWriteSuspended(bool value);
+
 public:
   std::vector<std::string> espmFiles;
   std::unordered_map<int32_t, std::set<uint32_t>> actorIdByProfileId;

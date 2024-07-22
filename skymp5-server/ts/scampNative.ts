@@ -45,6 +45,10 @@ export interface ScampServer {
   executeJavaScriptOnChakra(src: string): void;
   clear(): void;
   writeLogs(logLevel: string, message: string): void;
+
+  isDatabaseBusy(): boolean;
+  isDatabaseWriteSuspended(): boolean;
+  setDatabaseWriteSuspended(value: boolean): void;
 }
 
 export const createScampServer = (serverPort: number, maxPlayers: number, serverSettings: Record<string, unknown>) => {

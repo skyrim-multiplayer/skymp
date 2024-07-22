@@ -30,10 +30,16 @@ std::shared_ptr<IDatabase> DatabaseFactory::Create(
       ? settings["databaseName"].get<std::string>()
       : std::string("db");
 
+    std::optional<std::string> databaseRedisCacheUri =
+      settings.count("databaseRedisCacheUri")
+      ? std::optional<std::string>(
+          settings["databaseRedisCacheUri"].get<std::string>())
+      : std::nullopt;
+
     auto databaseUri = settings["databaseUri"].get<std::string>();
     logger->info("Using mongodb with name '" + databaseName + "'");
     return std::make_shared<MongoDatabase>(databaseUri, databaseName,
-                                           "tcp://127.0.0.1:6379");
+                                           databaseRedisCacheUri);
   }
 
   if (databaseDriver == "migration") {

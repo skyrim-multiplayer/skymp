@@ -61,6 +61,10 @@ public:
 
   Napi::Value FindFormsByPropertyValue(const Napi::CallbackInfo& info);
 
+  Napi::Value IsDatabaseBusy(const Napi::CallbackInfo& info);
+  Napi::Value IsDatabaseWriteSuspended(const Napi::CallbackInfo& info);
+  Napi::Value SetDatabaseWriteSuspended(const Napi::CallbackInfo& info);
+
   const std::shared_ptr<PartOne>& GetPartOne() const { return partOne; }
   const GamemodeApi::State& GetGamemodeApiState() const
   {

@@ -29,6 +29,12 @@ export class Settings {
       angleZ: 72,
     },
   ];
+  databaseDriver: string | undefined = undefined;
+  databaseName: string | undefined = undefined;
+  databaseUri: string | undefined = undefined;
+  databaseRedisCacheUri: string | undefined = undefined;
+  logLevel: string | undefined = undefined;
+
   discordAuth: DiscordAuthSettings | null = null;
 
   allSettings: Record<string, unknown> | null = null;
@@ -44,12 +50,18 @@ export class Settings {
         await res.loadSettings();  // Load settings asynchronously
 
         // Override settings with command line arguments if available
-        res.port = +args['port'] || res.port;
-        res.maxPlayers = +args['maxPlayers'] || res.maxPlayers;
-        res.master = args['master'] || res.master;
-        res.name = args['name'] || res.name;
-        res.ip = args['ip'] || res.ip;
-        res.offlineMode = args['offlineMode'] || res.offlineMode;
+        res.allSettings.port = res.port = +args['port'] || res.port;
+        res.allSettings.maxPlayers = res.maxPlayers = +args['maxPlayers'] || res.maxPlayers;
+        res.allSettings.master = res.master = args['master'] || res.master;
+        res.allSettings.name = res.name = args['name'] || res.name;
+        res.allSettings.ip = res.ip = args['ip'] || res.ip;
+        res.allSettings.offlineMode = res.offlineMode = args['offlineMode'] || res.offlineMode;
+        res.allSettings.gamemodePath = res.gamemodePath = args['gamemodePath'] || res.gamemodePath;
+        res.allSettings.databaseDriver = res.databaseDriver = args['databaseDriver'] || res.databaseDriver;
+        res.allSettings.databaseName = res.databaseName = args['databaseName'] || res.databaseName;
+        res.allSettings.databaseUri = res.databaseUri = args['databaseUri'] || res.databaseUri;
+        res.allSettings.databaseRedisCacheUri = res.databaseRedisCacheUri = args['databaseRedisCacheUri'] || res.databaseRedisCacheUri;
+        res.allSettings.logLevel = res.logLevel = args['logLevel'] || res.logLevel;
 
         return res;
       })();
@@ -78,6 +90,11 @@ export class Settings {
       'startPoints',
       'offlineMode',
       'discordAuth',
+      'databaseDriver',
+      'databaseName',
+      'databaseUri',
+      'databaseRedisCacheUri',
+      'logLevel',
     ].forEach((prop) => {
       if (settings[prop]) (this as Record<string, unknown>)[prop] = settings[prop];
     });
@@ -96,6 +113,12 @@ export class Settings {
     parser.add_argument('--port');
     parser.add_argument('--ip');
     parser.add_argument('--offlineMode');
+    parser.add_argument('--gamemodePath');
+    parser.add_argument('--databaseDriver');
+    parser.add_argument('--databaseName');
+    parser.add_argument('--databaseUri');
+    parser.add_argument('--databaseRedisCacheUri');
+    parser.add_argument('--logLevel');
     return parser.parse_args();
   }
 

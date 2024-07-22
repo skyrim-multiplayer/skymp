@@ -153,6 +153,30 @@ const main = async () => {
     console.error(`Stopping the server due to the previous error`);
     process.exit(-1);
   }
+
+  const gracefulShutdown = (signal: string) => {
+    console.log(`Received ${signal}, closing the server...`);
+
+    if (!server.isDatabaseBusy()) {
+      console.log("Database is not busy, exiting immediately");
+      process.exit(0);
+    }
+
+    console.log("Suspending database writes...");
+    server.setDatabaseWriteSuspended(true);
+
+    console.log("Waiting for database to finish writes...");
+    const interval = setInterval(() => {
+      if (!server.isDatabaseBusy()) {
+        console.log("Database is not busy, exiting");
+        clearInterval(interval);
+        process.exit(0);
+      }
+    }, 1000);
+  };
+  process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+  process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+
   const ctx = { svr: server, gm: new EventEmitter() };
 
   console.log(`Current process ID is ${pid}`);
