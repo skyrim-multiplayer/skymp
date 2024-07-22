@@ -27,14 +27,6 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Install Xcode Command Line Tools (macOS only)
-      if: runner.os == 'macOS'
-      run: |
-       #sudo xcode-select --install
-        # Verify installation
-        ls /usr/include/string.h
-        ls /usr/include/stdlib.h
-      shell: bash  
     - name: Gather PRs
       if: ${{ inputs.DEPLOY_BRANCH != '' }}
       uses: Pospelove/auto-merge-action@main
