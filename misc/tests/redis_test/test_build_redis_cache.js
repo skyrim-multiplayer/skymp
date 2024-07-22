@@ -1,6 +1,7 @@
 const { MongoMemoryServer } = require('../dependencies/node_modules/mongodb-memory-server');
-const { RedisMemoryServer } = require('../dependencies/node_modules/redis-memory-server');
-const { exec } = require('../dependencies/node_modules/@actions/exec');
+const { RedisMemoryServer } = require('../dependencies/node_modules/redis-memory-server/lib');
+const { exec } = require('../dependencies/node_modules/@actions/exec/lib/exec');
+const { Redis } = require('../dependencies/node_modules/ioredis');
 const path = require('path');
 
 const main = async () => {
@@ -16,7 +17,7 @@ const main = async () => {
         ignoreReturnCode: true
     };
 
-    const testGamemode = path.normalize("../../../misc/tests/redis_test/test_gamemode.js")
+    const testGamemode = path.normalize("../../../misc/tests/redis_test/test_build_redis_cache.gamemode.js")
 
     const args = [
         `--gamemodePath`,
@@ -33,10 +34,13 @@ const main = async () => {
     const res = await exec(`node dist_back/skymp5-server.js`, args, options);
 
     await mongod.stop();
+
+    
+
     await redisServer.stop();
 
     if (res !== 0) {
-        throw new Error('Test failed ' + res);
+        throw new Error('Expected the server to exit gracefully, but it exited with ' + res);
     }
 };
 

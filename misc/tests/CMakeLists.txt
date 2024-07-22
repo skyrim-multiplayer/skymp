@@ -7,5 +7,5 @@ yarn_execute_command(
 
 add_test(
   NAME redis_test
-  COMMAND node ${CMAKE_CURRENT_SOURCE_DIR}/redis_test/run_test.js
+  COMMAND node ${CMAKE_CURRENT_SOURCE_DIR}/redis_test/test_build_redis_cache.js
 )
