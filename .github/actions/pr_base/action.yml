@@ -190,7 +190,8 @@ runs:
           console.log("Resulting data:");
           console.log(res);
 
-          fs.writeFileSync('./build/dist/client/Data/Platform/Distribution/build-metadata-public.json', JSON.stringify(res, null, 2));
+          const outFilePath = './build/dist/client/Data/Platform/Distribution/build-metadata-public.json';
+          fs.writeFileSync(outFilePath, JSON.stringify(res, null, 2));
 
     - name: Test
       working-directory: ${{github.workspace}}/build
