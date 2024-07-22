@@ -30,11 +30,10 @@ runs:
     - name: Install Xcode Command Line Tools (macOS only)
       if: runner.os == 'macOS'
       run: |
-        xcode-select --install
+       sudo xcode-select --install
         # Verify installation
         ls /usr/include/string.h
         ls /usr/include/stdlib.h
-      run: sudo xcode-select --install
       shell: bash  
     - name: Gather PRs
       if: ${{ inputs.DEPLOY_BRANCH != '' }}
