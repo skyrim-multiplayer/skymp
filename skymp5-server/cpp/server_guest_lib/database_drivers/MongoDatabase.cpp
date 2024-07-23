@@ -1,7 +1,7 @@
 #include "MongoDatabase.h"
 
 #include "JsonUtils.h"
-
+#include "ScopedTask.h"
 #include <bsoncxx/builder/stream/document.hpp>
 #include <bsoncxx/document/element.hpp>
 #include <bsoncxx/document/value.hpp>
@@ -12,13 +12,139 @@
 #include <mongocxx/instance.hpp>
 #include <mongocxx/stdx.hpp>
 #include <mongocxx/uri.hpp>
-
+#include <nlohmann/json.hpp>
+#include <openssl/sha.h>
+#include <spdlog/spdlog.h>
+#include <sstream>
 #include <sw/redis++/redis++.h>
 
-#include <nlohmann/json.hpp>
-#include <spdlog/spdlog.h>
+namespace {
+std::string BytesToHex(const uint8_t* bytes, size_t length)
+{
+  std::ostringstream hexStream;
+  hexStream << std::hex << std::setfill('0');
+  for (size_t i = 0; i < length; ++i) {
+    hexStream << std::setw(2) << static_cast<uint64_t>(bytes[i]);
+  }
+  return hexStream.str();
+}
 
-#include "ScopedTask.h"
+std::string GetSha256Hash(const std::string& input)
+{
+  unsigned char hash[SHA256_DIGEST_LENGTH];
+  SHA256_CTX sha256;
+  SHA256_Init(&sha256);
+  SHA256_Update(&sha256, input.c_str(), input.size());
+  SHA256_Final(hash, &sha256);
+  return BytesToHex(hash, SHA256_DIGEST_LENGTH);
+}
+
+// std::string PushVersionHash(std::function<std::string()> getCurrentHash,
+//                             const std::string& versionToAdd)
+// {
+//   GetSha256Hash(getCurrentHash() + versionToAdd);
+// }
+
+class IVersionHashStore
+{
+public:
+  virtual ~IVersionHashStore() = default;
+
+  void PushVersionHash(const std::string& versionToAdd)
+  {
+    auto currentHash = GetVersionHash();
+    SetVersionHash(GetSha256Hash(currentHash + versionToAdd));
+  }
+
+protected:
+  virtual std::string GetVersionHash() = 0;
+  virtual void SetVersionHash(const std::string& newVersionHash) = 0;
+};
+
+class RedisTransactionVersionHashStore : public IVersionHashStore
+{
+public:
+  explicit RedisTransactionVersionHashStore(
+    std::shared_ptr<sw::redis::Transaction> transaction_)
+    : transaction(transaction_)
+  {
+    // TODO
+  }
+
+  std::string GetVersionHash() override { return transaction->get("version"); }
+
+  void SetVersionHash(const std::string& newVersionHash) override {}
+
+private:
+  std::shared_ptr<sw::redis::Transaction> transaction;
+};
+
+class MongodbTransactionVersionHashStore : public IVersionHashStore
+{
+public:
+  explicit MongodbTransactionVersionHashStore(
+    const std::shared_ptr<mongocxx::client_session>& session_,
+    const std::string& versionCollectionName_,
+    const std::shared_ptr<mongocxx::collection>& versionCollection_)
+    : session(session_)
+    , versionCollectionName(versionCollectionName_)
+    , versionCollection(versionCollection_)
+  {
+  }
+
+  std::string GetVersionHash() override
+  {
+    std::optional<bsoncxx::document::value> document =
+      versionCollection->find_one({});
+
+    if (!document) {
+      spdlog::trace("MongodbTransactionVersionHashStore::GetVersionHash - "
+                    "No version document found");
+      return "0";
+    }
+
+    auto view = document->view();
+    auto it = view.find("version");
+
+    if (it == view.end()) {
+      spdlog::trace("MongodbTransactionVersionHashStore::GetVersionHash - "
+                    "No version field found");
+      return "0";
+    }
+
+    if (it->type() != bsoncxx::type::k_string) {
+      spdlog::trace("MongodbTransactionVersionHashStore::GetVersionHash - "
+                    "Version field is not a string");
+      return "0";
+    }
+
+    std::string result = it->get_utf8().value.data();
+
+    spdlog::trace("MongodbTransactionVersionHashStore::GetVersionHash - "
+                  "Version: {}",
+                  result);
+
+    return result;
+  }
+
+  void SetVersionHash(const std::string& newVersionHash) override
+  {
+    versionCollection->update_one(
+      {},
+      bsoncxx::builder::stream::document{}
+        << "$set" << bsoncxx::builder::stream::open_document << "version"
+        << newVersionHash << bsoncxx::builder::stream::close_document
+        << bsoncxx::builder::stream::finalize,
+      mongocxx::options::update().upsert(true));
+  }
+
+private:
+  const std::shared_ptr<mongocxx::client_session> session;
+  const std::string versionCollectionName;
+  std::shared_ptr<mongocxx::collection> versionCollection;
+};
+
+}
 
 namespace {
 template <class Callback>
