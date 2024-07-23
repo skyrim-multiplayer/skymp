@@ -3,7 +3,7 @@ const fs = require("node:fs");
 
 const main = async () => {
   const crabActorId = 0xDC558;
-
+ 
   // trigger lazy load of the actor
   mp.get(crabActorId, "isDead");
 
