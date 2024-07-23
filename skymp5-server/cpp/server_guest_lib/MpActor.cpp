@@ -849,8 +849,56 @@ bool MpActor::MpApiCraft(uint32_t craftedItemBaseId, uint32_t count,
   return !isCraftBlocked;
 }
 
+bool MpActor::MpApiDropItem(uint32_t baseId, uint32_t count)
+{
+  simdjson::dom::parser parser;
+  bool isDropItemBlocked = false;
+
+  std::string s =
+    "[" + std::to_string(baseId) + "," + std::to_string(count) + "]";
+  auto args = parser.parse(s).value();
+
+  if (auto wst = GetParent()) {
+    const auto id = GetFormId();
+    for (auto& listener : wst->listeners) {
+      if (listener->OnMpApiEvent("onDropItem", args, id) == false) {
+        isDropItemBlocked = true;
+      };
+    }
+  }
+
+  return !isDropItemBlocked;
+}
+
+bool MpActor::MpApiEatItem(uint32_t baseId)
+{
+  simdjson::dom::parser parser;
+  bool isEatItemBlocked = false;
+
+  std::string s = "[" + std::to_string(baseId) + "]";
+  auto args = parser.parse(s).value();
+
+  if (auto wst = GetParent()) {
+    const auto id = GetFormId();
+    for (auto& listener : wst->listeners) {
+      if (listener->OnMpApiEvent("onEatItem", args, id) == false) {
+        isEatItemBlocked = true;
+      };
+    }
+  }
+
+  return !isEatItemBlocked;
+}
+
 void MpActor::EatItem(uint32_t baseId, espm::Type t)
 {
+  if (!MpApiEatItem(baseId)) {
+    spdlog::info(
+      "MpActor::DropItem {:x} - blocked by MpApiEatItem (baseId={:x})",
+      GetFormId(), baseId);
+    return;
+  }
+
   auto espmProvider = GetParent();
   std::vector<espm::Effects::Effect> effects;
   if (t == "ALCH") {
@@ -1366,12 +1414,19 @@ void MpActor::DropItem(const uint32_t baseId, const Inventory::Entry& entry)
 
   constexpr uint32_t kGold001 = 0x0000000f;
   if (baseId == kGold001) {
-    spdlog::warn("MpActor::DropItem - Attempt to drop Gold001 by actor {:x}",
+    spdlog::warn("MpActor::DropItem {:x} - Attempt to drop Gold001 by actor",
                  GetFormId());
     return;
   }
 
-  int count = entry.count;
+  const int count = entry.count;
+
+  if (!MpApiDropItem(baseId, count)) {
+    spdlog::info("MpActor::DropItem {:x} - blocked by MpApiDropItem "
+                 "(baseId={:x}, count={})",
+                 GetFormId(), baseId, count);
+    return;
+  }
 
   auto worldState = GetParent();
 
