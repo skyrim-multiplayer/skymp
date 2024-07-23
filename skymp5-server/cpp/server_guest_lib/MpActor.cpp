@@ -949,16 +949,6 @@ bool MpActor::ReadBook(const uint32_t baseId)
   return false;
 }
 
-bool MpActor::CanActorValueBeRestored(espm::ActorValue av)
-{
-  if (std::chrono::steady_clock::now() - GetLastRestorationTime(av) <
-      std::chrono::minutes(1)) {
-    return false;
-  }
-  SetLastRestorationTime(av, std::chrono::steady_clock::now());
-  return true;
-}
-
 void MpActor::EnsureTemplateChainEvaluated(espm::Loader& loader,
                                            ChangeFormGuard::Mode mode)
 {
@@ -1084,18 +1074,6 @@ std::map<uint32_t, uint32_t> MpActor::EvaluateDeathItem()
     loader.GetBrowser(), deathItemLookupRes, kCountMult,
     kPlayerCharacterLevel);
   return map;
-}
-
-std::chrono::steady_clock::time_point MpActor::GetLastRestorationTime(
-  espm::ActorValue av) const noexcept
-{
-  return pImpl->restorationTimePoints[av];
-}
-
-void MpActor::SetLastRestorationTime(
-  espm::ActorValue av, std::chrono::steady_clock::time_point timePoint)
-{
-  pImpl->restorationTimePoints[av] = timePoint;
 }
 
 void MpActor::ModifyActorValuePercentage(espm::ActorValue av,
@@ -1640,22 +1618,17 @@ void MpActor::ApplyMagicEffect(espm::Effects::Effect& effect, bool hasSweetpie,
 
   if (isValue) { // other types are unsupported
     if (hasSweetpie) {
-      if (CanActorValueBeRestored(av)) {
-        // this coefficient (workaround) has been added for sake of game
-        // balance and because of disability to restrict players use potions
-        // often on client side
-        constexpr float kMagnitudeCoeff = 100.f;
-        RestoreActorValuePatched(this, av, effect.magnitude * kMagnitudeCoeff);
-      }
+      // this coefficient (workaround) has been added for sake of game
+      // balance and because of disability to restrict players use potions
+      // often on client side
+      constexpr float kMagnitudeCoeff = 100.f;
+      RestoreActorValuePatched(this, av, effect.magnitude * kMagnitudeCoeff);
     } else {
       RestoreActorValuePatched(this, av, effect.magnitude);
     }
   }
 
   if (isRate || isMult) {
-    if (hasSweetpie && !CanActorValueBeRestored(av)) {
-      return;
-    }
     MpChangeForm changeForm = GetChangeForm();
     BaseActorValues baseValues = GetBaseActorValues(
       GetParent(), GetBaseId(), GetRaceId(), changeForm.templateChain);
