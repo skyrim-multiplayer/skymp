@@ -20,3 +20,9 @@ VarValue PapyrusPotion::IsFood(VarValue self,
   espm::ALCH::Data data = alch->GetData(cache);
   return VarValue(data.isFood);
 }
+
+void PapyrusPotion::Register(
+  VirtualMachine& vm, std::shared_ptr<IPapyrusCompatibilityPolicy> policy)
+{
+  AddMethod(vm, "IsFood", &PapyrusPotion::IsFood);
+}
