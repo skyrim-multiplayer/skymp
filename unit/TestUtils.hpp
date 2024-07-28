@@ -89,7 +89,7 @@ public:
   void OnCustomPacket(Networking::UserId userId,
                       const simdjson::dom::element& content) override;
 
-  bool OnMpApiEvent(const GameModeEvent &event) override;
+  bool OnMpApiEvent(const GameModeEvent& event) override;
 
   std::string str();
 
