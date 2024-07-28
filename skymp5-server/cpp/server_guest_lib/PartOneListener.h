@@ -1,5 +1,6 @@
 #pragma once
 #include "Networking.h"
+#include "gamemode_events/GameModeEvent.h"
 #include <optional>
 #include <simdjson.h>
 
@@ -11,7 +12,5 @@ public:
   virtual void OnDisconnect(Networking::UserId userId) = 0;
   virtual void OnCustomPacket(Networking::UserId userId,
                               const simdjson::dom::element& content) = 0;
-  virtual bool OnMpApiEvent(const char* eventName,
-                            std::optional<simdjson::dom::element> args,
-                            std::optional<uint32_t> formId) = 0;
+  virtual bool OnMpApiEvent(const GameModeEvent& event) = 0;
 };

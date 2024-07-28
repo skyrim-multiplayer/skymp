@@ -17,6 +17,11 @@
 #include "SweetPieScript.h"
 #include "TimeUtils.h"
 #include "WorldState.h"
+#include "gamemode_events/CraftEvent.h"
+#include "gamemode_events/DeathEvent.h"
+#include "gamemode_events/DropItemEvent.h"
+#include "gamemode_events/EatItemEvent.h"
+#include "gamemode_events/RespawnEvent.h"
 #include "libespm/espm.h"
 #include "papyrus-vm/Utils.h"
 #include "script_objects/EspmGameObject.h"
@@ -804,16 +809,12 @@ void MpActor::MpApiDeath(MpActor* killer)
   spdlog::trace("MpActor::MpApiDeath {:x} - killer is {:x}", GetFormId(),
                 killer ? killer->GetFormId() : 0);
 
-  simdjson::dom::parser parser;
   bool isRespawnBlocked = false;
 
-  std::string s = "[" + std::to_string(killer ? killer->GetFormId() : 0) + "]";
-  auto args = parser.parse(s).value();
-
   if (auto wst = GetParent()) {
-    const auto id = GetFormId();
     for (auto& listener : wst->listeners) {
-      if (listener->OnMpApiEvent("onDeath", args, id) == false) {
+      DeathEvent deathEvent(GetFormId(), killer ? killer->GetFormId() : 0);
+      if (listener->OnMpApiEvent(deathEvent) == false) {
         isRespawnBlocked = true;
       };
     }
@@ -830,17 +831,12 @@ void MpActor::MpApiDeath(MpActor* killer)
 bool MpActor::MpApiCraft(uint32_t craftedItemBaseId, uint32_t count,
                          uint32_t recipeId)
 {
-  simdjson::dom::parser parser;
   bool isCraftBlocked = false;
 
-  std::string s = "[" + std::to_string(craftedItemBaseId) + "," +
-    std::to_string(count) + "," + std::to_string(recipeId) + "]";
-  auto args = parser.parse(s).value();
-
   if (auto wst = GetParent()) {
-    const auto id = GetFormId();
     for (auto& listener : wst->listeners) {
-      if (listener->OnMpApiEvent("onCraft", args, id) == false) {
+      CraftEvent craftEvent(GetFormId(), craftedItemBaseId, count, recipeId);
+      if (listener->OnMpApiEvent(craftEvent) == false) {
         isCraftBlocked = true;
       };
     }
@@ -851,17 +847,12 @@ bool MpActor::MpApiCraft(uint32_t craftedItemBaseId, uint32_t count,
 
 bool MpActor::MpApiDropItem(uint32_t baseId, uint32_t count)
 {
-  simdjson::dom::parser parser;
   bool isDropItemBlocked = false;
 
-  std::string s =
-    "[" + std::to_string(baseId) + "," + std::to_string(count) + "]";
-  auto args = parser.parse(s).value();
-
   if (auto wst = GetParent()) {
-    const auto id = GetFormId();
     for (auto& listener : wst->listeners) {
-      if (listener->OnMpApiEvent("onDropItem", args, id) == false) {
+      DropItemEvent dropEvent(GetFormId(), baseId, count);
+      if (listener->OnMpApiEvent(dropEvent) == false) {
         isDropItemBlocked = true;
       };
     }
@@ -872,16 +863,12 @@ bool MpActor::MpApiDropItem(uint32_t baseId, uint32_t count)
 
 bool MpActor::MpApiEatItem(uint32_t baseId)
 {
-  simdjson::dom::parser parser;
   bool isEatItemBlocked = false;
 
-  std::string s = "[" + std::to_string(baseId) + "]";
-  auto args = parser.parse(s).value();
-
   if (auto wst = GetParent()) {
-    const auto id = GetFormId();
     for (auto& listener : wst->listeners) {
-      if (listener->OnMpApiEvent("onEatItem", args, id) == false) {
+      EatItemEvent eatItemEvent(GetFormId(), baseId);
+      if (listener->OnMpApiEvent(eatItemEvent) == false) {
         isEatItemBlocked = true;
       };
     }
@@ -1215,14 +1202,10 @@ void MpActor::Respawn(bool shouldTeleport)
   }
   pImpl->isRespawning = false;
 
-  simdjson::dom::parser parser;
-  std::string s = "[]";
-  auto args = parser.parse(s).value();
-
   if (auto wst = GetParent()) {
-    const auto id = GetFormId();
     for (auto& listener : wst->listeners) {
-      listener->OnMpApiEvent("onRespawn", args, id);
+      RespawnEvent respawnEvent(GetFormId());
+      listener->OnMpApiEvent(respawnEvent);
     }
   }
 

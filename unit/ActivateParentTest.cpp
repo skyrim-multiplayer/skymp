@@ -35,15 +35,12 @@ public:
                       const simdjson::dom::element& content)
   {
   }
-  bool OnMpApiEvent(const char* eventName,
-                    std::optional<simdjson::dom::element>,
-                    std::optional<uint32_t> formId)
+  bool OnMpApiEvent(const GameModeEvent& event)
   {
-    if (eventName == std::string("onActivate")) {
-      if (!formId) {
-        throw std::runtime_error("ActivateParentTest.cpp - null formId");
-      }
-      numActivates[*formId]++;
+    if (event.GetName() == std::string("onActivate")) {
+      auto arr = nlohmann::json::parse(event.GetArgumentsJsonArray());
+      uint32_t formId = arr[0].get<uint32_t>();
+      numActivates[formId]++;
     }
     return true;
   }

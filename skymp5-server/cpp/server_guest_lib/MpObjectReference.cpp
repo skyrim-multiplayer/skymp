@@ -14,6 +14,9 @@
 #include "ScriptVariablesHolder.h"
 #include "TimeUtils.h"
 #include "WorldState.h"
+#include "gamemode_events/ActivateEvent.h"
+#include "gamemode_events/PutItemEvent.h"
+#include "gamemode_events/TakeItemEvent.h"
 #include "libespm/CompressedFieldsCache.h"
 #include "libespm/Convert.h"
 #include "libespm/GroupUtils.h"
@@ -1473,17 +1476,12 @@ void MpObjectReference::ActivateChilds()
 
 bool MpObjectReference::MpApiOnActivate(MpObjectReference& caster)
 {
-  simdjson::dom::parser parser;
-
-  std::string s = "[" + std::to_string(caster.GetFormId()) + " ]";
-  auto args = parser.parse(s).value();
-
   bool activationBlocked = false;
 
   if (auto wst = GetParent()) {
-    const auto id = GetFormId();
     for (auto& listener : wst->listeners) {
-      if (listener->OnMpApiEvent("onActivate", args, id) == false) {
+      ActivateEvent activateEvent(GetFormId(), caster.GetFormId());
+      if (listener->OnMpApiEvent(activateEvent) == false) {
         activationBlocked = true;
       }
     }
@@ -1850,16 +1848,13 @@ void MpObjectReference::BeforeDestroy()
 bool MpObjectReference::MpApiOnPutItem(MpActor& source,
                                        const Inventory::Entry& entry)
 {
-  simdjson::dom::parser parser;
-  std::string rawArgs = "[" + std::to_string(source.GetFormId()) + "," +
-    std::to_string(entry.baseId) + "," + std::to_string(entry.count) + "]";
-  auto args = parser.parse(rawArgs).value();
   bool blockedByMpApi = false;
 
   if (auto wst = GetParent()) {
-    const auto id = GetFormId();
     for (auto& listener : wst->listeners) {
-      bool notBlocked = listener->OnMpApiEvent("onPutItem", args, id);
+      PutItemEvent putItemEvent(GetFormId(), source.GetFormId(), entry.baseId,
+                                entry.count);
+      bool notBlocked = listener->OnMpApiEvent(putItemEvent);
       blockedByMpApi = !notBlocked;
     }
   }
@@ -1870,16 +1865,13 @@ bool MpObjectReference::MpApiOnPutItem(MpActor& source,
 bool MpObjectReference::MpApiOnTakeItem(MpActor& source,
                                         const Inventory::Entry& entry)
 {
-  simdjson::dom::parser parser;
-  std::string rawArgs = "[" + std::to_string(source.GetFormId()) + "," +
-    std::to_string(entry.baseId) + "," + std::to_string(entry.count) + "]";
-  auto args = parser.parse(rawArgs).value();
   bool blockedByMpApi = false;
 
   if (auto wst = GetParent()) {
-    const auto id = GetFormId();
     for (auto& listener : wst->listeners) {
-      bool notBlocked = listener->OnMpApiEvent("onTakeItem", args, id);
+      TakeItemEvent takeItemEvent(GetFormId(), source.GetFormId(),
+                                  entry.baseId, entry.count);
+      bool notBlocked = listener->OnMpApiEvent(takeItemEvent);
       blockedByMpApi = !notBlocked;
     }
   }
