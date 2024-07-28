@@ -593,7 +593,7 @@ void MpObjectReference::TakeItem(MpActor& ac, const Inventory::Entry& e)
     return spdlog::trace("onTakeItem - blocked by gamemode");
   }
 
-  spdlog::trace("onPutItem - not blocked by gamemode");
+  spdlog::trace("onTakeItem - not blocked by gamemode");
   RemoveItems({ e }, &ac);
 }
 
