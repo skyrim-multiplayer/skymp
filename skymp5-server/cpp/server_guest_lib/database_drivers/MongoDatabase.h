@@ -11,6 +11,8 @@ public:
   void Iterate(const IterateCallback& iterateCallback) override;
 
 private:
+  int GetDocumentCount();
+
   struct Impl;
   std::shared_ptr<Impl> pImpl;
 };
