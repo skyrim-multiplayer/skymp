@@ -9,6 +9,7 @@
 #include "PacketParser.h"
 #include <array>
 #include <cassert>
+#include <chrono>
 #include <type_traits>
 #include <vector>
 
@@ -268,7 +269,7 @@ void PartOne::AttachSaveStorage(std::shared_ptr<ISaveStorage> saveStorage)
 {
   worldState.AttachSaveStorage(saveStorage);
 
-  clock_t was = clock();
+  auto start = std::chrono::steady_clock::now();
 
   int n = 0;
   int numPlayerCharacters = 0;
@@ -311,9 +312,14 @@ void PartOne::AttachSaveStorage(std::shared_ptr<ISaveStorage> saveStorage)
     }
   });
 
-  pImpl->logger->info("AttachSaveStorage took {} ticks, loaded {} ChangeForms "
-                      "(Including {} player characters)",
-                      clock() - was, n, numPlayerCharacters);
+  auto end = std::chrono::steady_clock::now();
+  auto duration =
+    std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+
+  pImpl->logger->info("AttachSaveStorage took {} seconds and {} milliseconds, "
+                      "loaded {} ChangeForms (Including {} player characters)",
+                      duration.count() / 1000, duration.count() % 1000, n,
+                      numPlayerCharacters);
 }
 
 espm::Loader& PartOne::GetEspm() const
