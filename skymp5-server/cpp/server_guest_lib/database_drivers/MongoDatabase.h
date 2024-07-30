@@ -12,6 +12,7 @@ public:
 
 private:
   int GetDocumentCount();
+  void CheckErrorList(const std::vector<std::string>& errorList);
 
   struct Impl;
   std::shared_ptr<Impl> pImpl;

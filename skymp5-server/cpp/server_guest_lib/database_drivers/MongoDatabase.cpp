@@ -84,40 +84,47 @@ void MongoDatabase::Iterate(const IterateCallback& iterateCallback)
 
   auto totalDocuments = GetDocumentCount();
 
-  constexpr int kNumParts = 100;
+  int numParts = std::min(totalDocuments, 100);
 
-  int partSize = totalDocuments / kNumParts;
+  int partSize = totalDocuments / numParts;
 
   std::atomic<int> totalDocumentsProcessed = 0;
 
   std::vector<std::shared_ptr<std::thread>> threads;
+  std::vector<std::string> errors;
+  std::mutex errorsMutex;
 
-  for (int i = 0; i < kNumParts; i++) {
+  for (int i = 0; i < numParts; i++) {
     auto skip = i * partSize;
-    auto limit = (i == kNumParts - 1) ? totalDocuments - skip : partSize;
+    auto limit = (i == numParts - 1) ? totalDocuments - skip : partSize;
 
     auto f = [skip, limit, &totalDocumentsProcessed, &iterateCallbackMutex,
-              &iterateCallback, findOptions, this] {
-      simdjson::dom::parser p;
+              &iterateCallback, &errors, &errorsMutex, findOptions, this] {
+      try {
+        simdjson::dom::parser p;
 
-      mongocxx::v_noabi::pool::entry poolEntry = pImpl->pool->acquire();
+        mongocxx::v_noabi::pool::entry poolEntry = pImpl->pool->acquire();
 
-      mongocxx::v_noabi::collection collection =
-        poolEntry->database(pImpl->name).collection(pImpl->collectionName);
+        mongocxx::v_noabi::collection collection =
+          poolEntry->database(pImpl->name).collection(pImpl->collectionName);
 
-      mongocxx::options::find options = findOptions;
-      options.skip(skip);
-      options.limit(limit);
+        mongocxx::options::find options = findOptions;
+        options.skip(skip);
+        options.limit(limit);
 
-      auto cursor = collection.find({}, options);
+        auto cursor = collection.find({}, options);
 
-      for (auto& documentView : cursor) {
-        auto document = p.parse(bsoncxx::to_json(documentView)).value();
-        auto changeForm = MpChangeForm::JsonToChangeForm(document);
+        for (auto& documentView : cursor) {
+          auto document = p.parse(bsoncxx::to_json(documentView)).value();
+          auto changeForm = MpChangeForm::JsonToChangeForm(document);
 
-        std::lock_guard<std::mutex> lock(iterateCallbackMutex);
-        iterateCallback(changeForm);
-        totalDocumentsProcessed++;
+          std::lock_guard<std::mutex> lock(iterateCallbackMutex);
+          iterateCallback(changeForm);
+          totalDocumentsProcessed++;
+        }
+      } catch (std::exception& e) {
+        std::lock_guard<std::mutex> lock(errorsMutex);
+        errors.push_back(e.what());
       }
     };
 
@@ -128,12 +135,14 @@ void MongoDatabase::Iterate(const IterateCallback& iterateCallback)
     thread->join();
   }
 
+  CheckErrorList(errors);
+
   if (totalDocumentsProcessed.load() == totalDocuments) {
     spdlog::info("All documents processed: {}", totalDocuments);
   } else {
-    spdlog::critical("Not all documents processed: {} / {}",
-                     totalDocumentsProcessed.load(), totalDocuments);
-    std::terminate();
+    throw std::runtime_error(
+      fmt::format("Not all documents processed: {} / {}",
+                  totalDocumentsProcessed.load(), totalDocuments));
   }
 }
 
@@ -144,4 +153,26 @@ int MongoDatabase::GetDocumentCount()
     poolEntry->database(pImpl->name).collection(pImpl->collectionName);
 
   return collection.count_documents({});
+}
+
+void MongoDatabase::CheckErrorList(const std::vector<std::string>& errorList)
+{
+  const int kMaxDisplayErrors = 5;
+
+  if (!errorList.empty()) {
+    std::string errorMessage;
+    int displayCount =
+      std::min(kMaxDisplayErrors, static_cast<int>(errorList.size()));
+
+    for (int i = 0; i < displayCount; ++i) {
+      errorMessage += fmt::format("Error {}: {}\n", i + 1, errorList[i]);
+    }
+
+    if (errorList.size() > kMaxDisplayErrors) {
+      errorMessage += fmt::format("... ({} errors remaining)\n",
+                                  errorList.size() - kMaxDisplayErrors);
+    }
+
+    throw std::runtime_error(errorMessage);
+  }
 }
