@@ -12,7 +12,8 @@ public:
 
 private:
   int GetDocumentCount();
-  void CheckErrorList(const std::vector<std::string>& errorList);
+  std::optional<std::string> GetCombinedErrorOrNull(
+    const std::vector<std::optional<std::string>>& errorList);
   std::string BytesToHexString(const uint8_t* bytes, size_t length);
   std::string Sha256(const std::string& str);
 
