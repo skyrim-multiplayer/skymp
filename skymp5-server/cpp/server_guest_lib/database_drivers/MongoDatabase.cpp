@@ -112,8 +112,13 @@ void MongoDatabase::Iterate(const IterateCallback& iterateCallback)
       }
       numThreadsToRun++;
     }
-    spdlog::info("Spawning {} threads to load remaining ChangeForms",
-                 numThreadsToRun);
+
+    if (numattempts > 1) {
+      spdlog::info("Spawning {} threads to load remaining ChangeForms",
+                   numThreadsToRun);
+    } else {
+      spdlog::info("Spawning {} threads to load ChangeForms", numThreadsToRun);
+    }
 
     for (int i = 0; i < numParts; i++) {
       if (threadsSuccess[i] == 1) {
