@@ -91,48 +91,88 @@ void MongoDatabase::Iterate(const IterateCallback& iterateCallback)
 
   std::string hash;
   std::vector<std::shared_ptr<std::thread>> threads;
-  std::vector<std::string> errors;
+  std::vector<std::optional<std::string>> threadsErrors;
+  std::vector<uint8_t> threadsSuccess;
   std::vector<std::string> threadsDocumentsJsonArray;
-  std::mutex errorsMutex;
 
-  // space is to be replaced with ] in case of empty array
-  threadsDocumentsJsonArray.resize(numParts, "[ ");
+  threadsDocumentsJsonArray.resize(numParts);
+  threadsErrors.resize(numParts);
+  threadsSuccess.resize(numParts, 0);
 
-  for (int i = 0; i < numParts; i++) {
-    auto skip = i * partSize;
-    auto limit = (i == numParts - 1) ? totalDocuments - skip : partSize;
+  bool allFinished = false;
+  int numAttempts = 0;
 
-    auto f = [i, skip, limit, &totalDocumentsProcessed, &iterateCallback,
-              &errors, &errorsMutex, &threadsDocumentsJsonArray, findOptions,
-              this] {
-      try {
-        simdjson::dom::parser p;
+  while (!allFinished) {
+    numAttempts++;
 
-        mongocxx::v_noabi::pool::entry poolEntry = pImpl->pool->acquire();
-
-        mongocxx::v_noabi::collection collection =
-          poolEntry->database(pImpl->name).collection(pImpl->collectionName);
-
-        mongocxx::options::find options = findOptions;
-        options.skip(skip);
-        options.limit(limit);
-
-        auto cursor = collection.find({}, options);
-
-        for (auto& documentView : cursor) {
-          threadsDocumentsJsonArray[i] += bsoncxx::to_json(documentView) + ",";
-        }
-      } catch (std::exception& e) {
-        std::lock_guard<std::mutex> lock(errorsMutex);
-        errors.push_back(e.what());
+    int numThreadsToRun = 0;
+    for (int i = 0; i < numParts; i++) {
+      if (threadsSuccess[i] == 1) {
+        continue;
       }
-    };
+      numThreadsToRun++;
+    }
+    spdlog::info("Spawning {} threads to load remaining ChangeForms",
+                 numThreadsToRun);
 
-    threads.push_back(std::make_shared<std::thread>(f));
-  }
+    for (int i = 0; i < numParts; i++) {
+      if (threadsSuccess[i] == 1) {
+        continue;
+      }
 
-  for (auto& thread : threads) {
-    thread->join();
+      // space is to be replaced with ] in case of empty array
+      threadsDocumentsJsonArray[i] = "[ ";
+
+      auto skip = i * partSize;
+      auto limit = (i == numParts - 1) ? totalDocuments - skip : partSize;
+
+      auto f = [i, skip, limit, &totalDocumentsProcessed, &iterateCallback,
+                &threadsSuccess, &threadsErrors, &threadsDocumentsJsonArray,
+                findOptions, this] {
+        try {
+          simdjson::dom::parser p;
+
+          mongocxx::v_noabi::pool::entry poolEntry = pImpl->pool->acquire();
+
+          mongocxx::v_noabi::collection collection =
+            poolEntry->database(pImpl->name).collection(pImpl->collectionName);
+
+          mongocxx::options::find options = findOptions;
+          options.skip(skip);
+          options.limit(limit);
+
+          auto cursor = collection.find({}, options);
+
+          for (auto& documentView : cursor) {
+            threadsDocumentsJsonArray[i] +=
+              bsoncxx::to_json(documentView) + ",";
+          }
+          threadsErrors[i] = std::nullopt;
+          threadsSuccess[i] = 1;
+        } catch (std::exception& e) {
+          threadsErrors[i] = e.what();
+          threadsSuccess[i] = 0;
+        }
+      };
+
+      threads.push_back(std::make_shared<std::thread>(f));
+    }
+
+    for (auto& thread : threads) {
+      thread->join();
+    }
+    threads.clear();
+
+    auto erorrOrNull = GetCombinedErrorOrNull(threadsErrors);
+
+    if (erorrOrNull == std::nullopt) {
+      spdlog::info("All documents fetched from the database. Num attempts: {}",
+                   numAttempts);
+      allFinished = true;
+    } else {
+      spdlog::warn("Error: {}", *erorrOrNull);
+      spdlog::info("Retrying failed threads. Num attempts: {}", numAttempts);
+    }
   }
 
   for (int i = 0; i < numParts; i++) {
@@ -154,8 +194,6 @@ void MongoDatabase::Iterate(const IterateCallback& iterateCallback)
       hash = Sha256(hash + changeForm.formDesc.ToString());
     }
   }
-
-  CheckErrorList(errors);
 
   // If it's the same iech time, it means that the order of the changeforms
   // load is the same. Which is good for testing potential startup bugs.
@@ -179,26 +217,37 @@ int MongoDatabase::GetDocumentCount()
   return collection.count_documents({});
 }
 
-void MongoDatabase::CheckErrorList(const std::vector<std::string>& errorList)
+std::optional<std::string> MongoDatabase::GetCombinedErrorOrNull(
+  const std::vector<std::optional<std::string>>& errorList)
 {
   const int kMaxDisplayErrors = 5;
 
-  if (!errorList.empty()) {
+  std::vector<std::string> errorListNonNull;
+  errorListNonNull.reserve(errorList.size());
+  for (auto& error : errorList) {
+    if (error != std::nullopt) {
+      errorListNonNull.push_back(*error);
+    }
+  }
+
+  if (!errorListNonNull.empty()) {
     std::string errorMessage;
     int displayCount =
-      std::min(kMaxDisplayErrors, static_cast<int>(errorList.size()));
+      std::min(kMaxDisplayErrors, static_cast<int>(errorListNonNull.size()));
 
     for (int i = 0; i < displayCount; ++i) {
-      errorMessage += fmt::format("Error {}: {}\n", i + 1, errorList[i]);
+      errorMessage += fmt::format("Thread #{}: {}\n", i, errorListNonNull[i]);
     }
 
-    if (errorList.size() > kMaxDisplayErrors) {
+    if (errorListNonNull.size() > kMaxDisplayErrors) {
       errorMessage += fmt::format("... ({} errors remaining)\n",
-                                  errorList.size() - kMaxDisplayErrors);
+                                  errorListNonNull.size() - kMaxDisplayErrors);
     }
 
-    throw std::runtime_error(errorMessage);
+    return errorMessage;
   }
+
+  return std::nullopt;
 }
 
 std::string MongoDatabase::BytesToHexString(const uint8_t* bytes,
