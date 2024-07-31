@@ -77,6 +77,15 @@ SweetPieScript::SweetPieScript(const std::vector<std::string>& espmFiles)
     { 0x07000823, { 0x07000808 } },
     { 0x07000824, { 0x07005905, 0x07005906 } },
     { 0x07005908, { 0x07005904 } },
+    { 0x070A696C, { 0x070782C9 } },
+    { 0x070A696D, { 0x070782C8 } },
+    { 0x07d6e896, { 0x07d6e890 } },
+    { 0x07d6e897, { 0x07d6e891 } },
+    { 0x07d6e899, { 0x07d6e892 } },
+    { 0x07d6e89b, { 0x07d6e893 } },
+    { 0x07d6e89d, { 0x07d6e894 } },
+    { 0x07d6e89f, { 0x07d6e88f } },
+    { 0x07d6e8a1, { 0x07d6e895 } },
   };
 
   bookBoundWeapons = {
@@ -107,8 +116,6 @@ SweetPieScript::SweetPieScript(const std::vector<std::string>& espmFiles)
       { { 0x7A30B92, SweetPieBoundWeapon::SkillLevel::Novice },
         { 0x7F47DC9, SweetPieBoundWeapon::SkillLevel::Novice } } },
     { 0x72BDE4A, { { 0x72B8D47, SweetPieBoundWeapon::SkillLevel::Novice } } },
-    { 0x70A696C, { { 0x70782C9, SweetPieBoundWeapon::SkillLevel::Novice } } },
-    { 0x70A696D, { { 0x70782C8, SweetPieBoundWeapon::SkillLevel::Novice } } },
   };
 }
 
