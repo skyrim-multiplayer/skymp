@@ -163,14 +163,14 @@ void MongoDatabase::Iterate(const IterateCallback& iterateCallback)
     }
     threads.clear();
 
-    auto erorrOrNull = GetCombinedErrorOrNull(threadsErrors);
+    auto errorOrNull = GetCombinedErrorOrNull(threadsErrors);
 
-    if (erorrOrNull == std::nullopt) {
+    if (errorOrNull == std::nullopt) {
       spdlog::info("All documents fetched from the database. Num attempts: {}",
                    numAttempts);
       allFinished = true;
     } else {
-      spdlog::warn("Error: {}", *erorrOrNull);
+      spdlog::warn("Error: {}", *errorOrNull);
       spdlog::info("Retrying failed threads. Num attempts: {}", numAttempts);
     }
   }
@@ -236,7 +236,7 @@ std::optional<std::string> MongoDatabase::GetCombinedErrorOrNull(
       std::min(kMaxDisplayErrors, static_cast<int>(errorListNonNull.size()));
 
     for (int i = 0; i < displayCount; ++i) {
-      errorMessage += fmt::format("Thread #{}: {}\n", i, errorListNonNull[i]);
+      errorMessage += fmt::format("Error #{}: {}\n", i, errorListNonNull[i]);
     }
 
     if (errorListNonNull.size() > kMaxDisplayErrors) {
