@@ -113,7 +113,7 @@ void MongoDatabase::Iterate(const IterateCallback& iterateCallback)
       numThreadsToRun++;
     }
 
-    if (numattempts > 1) {
+    if (numAttempts > 1) {
       spdlog::info("Spawning {} threads to load remaining ChangeForms",
                    numThreadsToRun);
     } else {
