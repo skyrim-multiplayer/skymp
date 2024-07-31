@@ -14,6 +14,7 @@
 #include <mongocxx/uri.hpp>
 #include <mutex>
 #include <nlohmann/json.hpp>
+#include <openssl/sha.h>
 #include <spdlog/spdlog.h>
 #include <thread>
 
@@ -76,8 +77,6 @@ size_t MongoDatabase::Upsert(
 
 void MongoDatabase::Iterate(const IterateCallback& iterateCallback)
 {
-  std::mutex iterateCallbackMutex;
-
   constexpr int kBatchSize = 1001;
   mongocxx::options::find findOptions;
   findOptions.batch_size(kBatchSize);
@@ -90,16 +89,22 @@ void MongoDatabase::Iterate(const IterateCallback& iterateCallback)
 
   std::atomic<int> totalDocumentsProcessed = 0;
 
+  std::string hash;
   std::vector<std::shared_ptr<std::thread>> threads;
   std::vector<std::string> errors;
+  std::vector<std::string> threadsDocumentsJsonArray;
   std::mutex errorsMutex;
+
+  // space is to be replaced with ] in case of empty array
+  threadsDocumentsJsonArray.resize(numParts, "[ ");
 
   for (int i = 0; i < numParts; i++) {
     auto skip = i * partSize;
     auto limit = (i == numParts - 1) ? totalDocuments - skip : partSize;
 
-    auto f = [skip, limit, &totalDocumentsProcessed, &iterateCallbackMutex,
-              &iterateCallback, &errors, &errorsMutex, findOptions, this] {
+    auto f = [i, skip, limit, &totalDocumentsProcessed, &iterateCallback,
+              &errors, &errorsMutex, &threadsDocumentsJsonArray, findOptions,
+              this] {
       try {
         simdjson::dom::parser p;
 
@@ -115,12 +120,7 @@ void MongoDatabase::Iterate(const IterateCallback& iterateCallback)
         auto cursor = collection.find({}, options);
 
         for (auto& documentView : cursor) {
-          auto document = p.parse(bsoncxx::to_json(documentView)).value();
-          auto changeForm = MpChangeForm::JsonToChangeForm(document);
-
-          std::lock_guard<std::mutex> lock(iterateCallbackMutex);
-          iterateCallback(changeForm);
-          totalDocumentsProcessed++;
+          threadsDocumentsJsonArray[i] += bsoncxx::to_json(documentView) + ",";
         }
       } catch (std::exception& e) {
         std::lock_guard<std::mutex> lock(errorsMutex);
@@ -135,7 +135,31 @@ void MongoDatabase::Iterate(const IterateCallback& iterateCallback)
     thread->join();
   }
 
+  for (int i = 0; i < numParts; i++) {
+    threadsDocumentsJsonArray[i].back() = ']';
+
+    auto documentsJsonArray = threadsDocumentsJsonArray[i];
+
+    simdjson::dom::parser p;
+    auto allDocs = p.parse(documentsJsonArray).value();
+
+    auto documentAsArray = allDocs.get_array();
+
+    for (auto document : documentAsArray) {
+      auto changeForm = MpChangeForm::JsonToChangeForm(document);
+
+      iterateCallback(changeForm);
+
+      totalDocumentsProcessed++;
+      hash = Sha256(hash + changeForm.formDesc.ToString());
+    }
+  }
+
   CheckErrorList(errors);
+
+  // If it's the same iech time, it means that the order of the changeforms
+  // load is the same. Which is good for testing potential startup bugs.
+  spdlog::info("Hash: {}", hash);
 
   if (totalDocumentsProcessed.load() == totalDocuments) {
     spdlog::info("All documents processed: {}", totalDocuments);
@@ -175,4 +199,29 @@ void MongoDatabase::CheckErrorList(const std::vector<std::string>& errorList)
 
     throw std::runtime_error(errorMessage);
   }
+}
+
+std::string MongoDatabase::BytesToHexString(const uint8_t* bytes,
+                                            size_t length)
+{
+  static constexpr auto kHexDigits = "0123456789abcdef";
+
+  std::string hexStr(length * 2, ' ');
+  for (size_t i = 0; i < length; ++i) {
+    hexStr[2 * i] = kHexDigits[(bytes[i] >> 4) & 0xF];
+    hexStr[2 * i + 1] = kHexDigits[bytes[i] & 0xF];
+  }
+
+  return hexStr;
+}
+
+std::string MongoDatabase::Sha256(const std::string& str)
+{
+  uint8_t hash[SHA256_DIGEST_LENGTH];
+  SHA256_CTX sha256;
+  SHA256_Init(&sha256);
+  SHA256_Update(&sha256, str.c_str(), str.size());
+  SHA256_Final(hash, &sha256);
+
+  return BytesToHexString(hash, SHA256_DIGEST_LENGTH);
 }
