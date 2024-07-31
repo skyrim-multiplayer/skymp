@@ -933,11 +933,15 @@ void MpObjectReference::Subscribe(MpObjectReference* emitter,
 
   emitter->InitListenersAndEmitters();
   listener->InitListenersAndEmitters();
-  emitter->listeners->insert(listener);
-  if (actorListener) {
-    emitter->actorListeners.insert(actorListener);
+
+  auto [it, inserted] = emitter->listeners->insert(listener);
+
+  if (actorListener && inserted) {
+    emitter->actorListenerArray.push_back(actorListener);
   }
+
   listener->emitters->insert(emitter);
+
   if (!hasPrimitive) {
     emitter->callbacks->subscribe(emitter, listener);
   }
@@ -965,10 +969,16 @@ void MpObjectReference::Unsubscribe(MpObjectReference* emitter,
   if (!hasPrimitive) {
     emitter->callbacks->unsubscribe(emitter, listener);
   }
-  emitter->listeners->erase(listener);
-  if (actorListener) {
-    emitter->actorListeners.erase(actorListener);
+
+  size_t numElementsErased = emitter->listeners->erase(listener);
+
+  if (actorListener && numElementsErased > 0) {
+    emitter->actorListenerArray.erase(
+      std::remove(emitter->actorListenerArray.begin(),
+                  emitter->actorListenerArray.end(), actorListener),
+      emitter->actorListenerArray.end());
   }
+
   listener->emitters->erase(emitter);
 
   if (listener->emittersWithPrimitives && hasPrimitive) {
@@ -1030,9 +1040,10 @@ const std::set<MpObjectReference*>& MpObjectReference::GetListeners() const
   return listeners ? *listeners : kEmptyListeners;
 }
 
-const std::set<MpActor*>& MpObjectReference::GetActorListeners() const noexcept
+const std::vector<MpActor*>& MpObjectReference::GetActorListeners()
+  const noexcept
 {
-  return actorListeners;
+  return actorListenerArray;
 }
 
 const std::set<MpObjectReference*>& MpObjectReference::GetEmitters() const
@@ -1624,7 +1635,7 @@ void MpObjectReference::InitListenersAndEmitters()
   if (!listeners) {
     listeners.reset(new std::set<MpObjectReference*>);
     emitters.reset(new std::set<MpObjectReference*>);
-    actorListeners.clear();
+    actorListenersArray.clear();
   }
 }
 
