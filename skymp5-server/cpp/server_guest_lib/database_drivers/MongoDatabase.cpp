@@ -147,9 +147,11 @@ void MongoDatabase::Iterate(const IterateCallback& iterateCallback)
             threadsDocumentsJsonArray[i] +=
               bsoncxx::to_json(documentView) + ",";
           }
+          threadsErrors[i] = std::nullopt;
           threadsSuccess[i] = 1;
         } catch (std::exception& e) {
           threadsErrors[i] = e.what();
+          threadsSuccess[i] = 0;
         }
       };
 
