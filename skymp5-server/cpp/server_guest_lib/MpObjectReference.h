@@ -2,7 +2,6 @@
 #include "ChangeFormGuard.h"
 #include "FormIndex.h"
 #include "Grid.h"
-#include "IWorldObject.h"
 #include "Inventory.h"
 #include "JsonUtils.h"
 #include "LocationalData.h"
@@ -64,7 +63,6 @@ using SetAngleMode = SetPosMode;
 class MpObjectReference
   : public MpForm
   , public FormIndex
-  , public IWorldObject
   , protected ChangeFormGuard
 {
   friend class OccupantDestroyEventSink;
