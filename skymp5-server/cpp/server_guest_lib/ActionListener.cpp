@@ -121,8 +121,7 @@ void ActionListener::OnUpdateMovement(const RawMessageData& rawMsgData,
 
     const auto& currentPos = actor->GetPos();
     const auto& currentRot = actor->GetAngle();
-    auto currentCellOrWorld =
-      FormDesc::FromFormId(actor->GetWorldOrCell(), espmFiles);
+    const auto& currentCellOrWorld = actor->GetCellOrWorld();
 
     if (!MovementValidation::Validate(
           currentPos, currentRot, currentCellOrWorld,
