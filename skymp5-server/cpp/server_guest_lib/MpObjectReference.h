@@ -2,7 +2,6 @@
 #include "ChangeFormGuard.h"
 #include "FormIndex.h"
 #include "Grid.h"
-#include "IWorldObject.h"
 #include "Inventory.h"
 #include "JsonUtils.h"
 #include "LocationalData.h"
@@ -64,7 +63,6 @@ using SetAngleMode = SetPosMode;
 class MpObjectReference
   : public MpForm
   , public FormIndex
-  , public IWorldObject
   , protected ChangeFormGuard
 {
   friend class OccupantDestroyEventSink;
@@ -78,9 +76,9 @@ public:
     uint32_t baseId, std::string baseType,
     std::optional<NiPoint3> primitiveBoundsDiv2 = std::nullopt);
 
-  const NiPoint3& GetPos() const override;
-  const NiPoint3& GetAngle() const override;
-  const FormDesc& GetCellOrWorld() const override;
+  const NiPoint3& GetPos() const;
+  const NiPoint3& GetAngle() const;
+  const FormDesc& GetCellOrWorld() const;
   const uint32_t& GetBaseId() const;
   const std::string& GetBaseType() const;
   const Inventory& GetInventory() const;
