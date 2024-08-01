@@ -80,7 +80,7 @@ private:
   std::vector<std::shared_ptr<ActivePexInstance>> activePexInstances;
 
 protected:
-  virtual void BeforeDestroy() {};
+  virtual void BeforeDestroy() {}
 
   const std::vector<std::shared_ptr<ActivePexInstance>>&
   ListActivePexInstances() const;
