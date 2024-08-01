@@ -185,7 +185,7 @@ public:
   void VisitNeighbours(const Visitor& visitor);
 
   void SendInventoryUpdate();
-  const std::set<MpActor*>& GetActorListeners() const noexcept;
+  const std::vector<MpActor*>& GetActorListeners() const noexcept;
 
   static const char* GetPropertyPrefixPrivate() noexcept { return "private."; }
   static const char* GetPropertyPrefixPrivateIndexed() noexcept
@@ -224,7 +224,7 @@ private:
 
   bool everSubscribedOrListened = false;
   std::unique_ptr<std::set<MpObjectReference*>> listeners;
-  std::set<MpActor*> actorListeners;
+  std::vector<MpActor*> actorListenerArray;
 
   // Should be empty for non-actor refs
   std::unique_ptr<std::set<MpObjectReference*>> emitters;

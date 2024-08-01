@@ -32,8 +32,8 @@ MpActor* ActionListener::SendToNeighbours(
     return nullptr;
   }
 
-  MpActor* actor =
-    dynamic_cast<MpActor*>(partOne.worldState.LookupFormByIdx(idx));
+  MpForm* form = partOne.worldState.LookupFormByIdx(idx);
+  MpActor* actor = form ? form->AsActor() : nullptr;
   if (!actor) {
     spdlog::error("SendToNeighbours - Target actor doesn't exist");
     return nullptr;
@@ -542,7 +542,7 @@ void ActionListener::OnHostAttempt(const RawMessageData& rawMsgData,
 
   auto& remote = partOne.worldState.GetFormAt<MpObjectReference>(remoteId);
 
-  auto user = partOne.serverState.UserByActor(dynamic_cast<MpActor*>(&remote));
+  auto user = partOne.serverState.UserByActor(remote.AsActor());
   if (user != Networking::InvalidUserId) {
     return;
   }
@@ -571,7 +571,7 @@ void ActionListener::OnHostAttempt(const RawMessageData& rawMsgData,
     partOne.worldState.lastMovUpdateByIdx[remoteIdx] =
       std::chrono::system_clock::now();
 
-    auto remoteAsActor = dynamic_cast<MpActor*>(&remote);
+    auto remoteAsActor = remote.AsActor();
 
     if (remoteAsActor) {
       remoteAsActor->EquipBestWeapon();
@@ -604,8 +604,8 @@ void ActionListener::OnHostAttempt(const RawMessageData& rawMsgData,
         remote.SendToUser(msg, true); // in fact sends to hoster
       });
 
-    if (MpActor* prevHosterActor = dynamic_cast<MpActor*>(
-          partOne.worldState.LookupFormById(prevHoster).get())) {
+    auto& prevHosterForm = partOne.worldState.LookupFormById(prevHoster);
+    if (MpActor* prevHosterActor = prevHosterForm->AsActor()) {
       auto prevHosterUser = partOne.serverState.UserByActor(prevHosterActor);
       if (prevHosterUser != Networking::InvalidUserId &&
           prevHosterUser != rawMsgData.userId) {
@@ -910,7 +910,7 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
   args[6] = VarValue(hitData.isHitBlocked);  // abHitBlocked
   refr->SendPapyrusEvent("OnHit", args.data(), args.size());
 
-  auto targetActorPtr = dynamic_cast<MpActor*>(refr.get());
+  auto targetActorPtr = refr->AsActor();
   if (!targetActorPtr) {
     return; // Not an actor, damage calculation is not needed
   }

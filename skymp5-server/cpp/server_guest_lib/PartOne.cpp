@@ -188,8 +188,10 @@ uint32_t PartOne::GetUserActor(Networking::UserId userId)
 Networking::UserId PartOne::GetUserByActor(uint32_t formId)
 {
   auto& form = worldState.LookupFormById(formId);
-  if (auto ac = dynamic_cast<MpActor*>(form.get())) {
-    return serverState.UserByActor(ac);
+  if (form) {
+    if (auto ac = form.get()->AsActor()) {
+      return serverState.UserByActor(ac);
+    }
   }
   return Networking::InvalidUserId;
 }
@@ -492,7 +494,7 @@ void PartOne::RequestPacketHistoryPlayback(Networking::UserId userId,
 void PartOne::SendHostStop(Networking::UserId badHosterUserId,
                            MpObjectReference& remote)
 {
-  auto remoteAsActor = dynamic_cast<MpActor*>(&remote);
+  auto remoteAsActor = remote.AsActor();
 
   uint64_t longFormId = remote.GetFormId();
   if (remoteAsActor && longFormId < 0xff000000) {
@@ -619,21 +621,26 @@ void PartOne::Init()
   pImpl->onSubscribe = [this](Networking::ISendTarget* sendTarget,
                               MpObjectReference* emitter,
                               MpObjectReference* listener) {
-    if (!emitter)
+    if (!emitter) {
       throw std::runtime_error("nullptr emitter in onSubscribe");
-    auto listenerAsActor = dynamic_cast<MpActor*>(listener);
-    if (!listenerAsActor)
+    }
+
+    MpActor* listenerAsActor = listener->AsActor();
+    if (!listenerAsActor) {
       return;
+    }
+
     auto listenerUserId = serverState.UserByActor(listenerAsActor);
-    if (listenerUserId == Networking::InvalidUserId)
+    if (listenerUserId == Networking::InvalidUserId) {
       return;
+    }
 
     auto& emitterPos = emitter->GetPos();
     auto& emitterRot = emitter->GetAngle();
 
     bool isMe = emitter == listener;
 
-    auto emitterAsActor = dynamic_cast<MpActor*>(emitter);
+    MpActor* emitterAsActor = emitter->AsActor();
 
     std::string jEquipment, jAppearance;
 
@@ -758,9 +765,10 @@ void PartOne::Init()
   pImpl->onUnsubscribe = [this](Networking::ISendTarget* sendTarget,
                                 MpObjectReference* emitter,
                                 MpObjectReference* listener) {
-    auto listenerAsActor = dynamic_cast<MpActor*>(listener);
-    if (!listenerAsActor)
+    MpActor* listenerAsActor = listener->AsActor();
+    if (!listenerAsActor) {
       return;
+    }
 
     auto listenerUserId = serverState.UserByActor(listenerAsActor);
     if (listenerUserId != Networking::InvalidUserId &&
