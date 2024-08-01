@@ -9,6 +9,11 @@ MpForm::MpForm()
 {
 }
 
+MpActor* MpForm::AsActor() const noexcept
+{
+  return asActor;
+}
+
 void MpForm::Init(WorldState* parent_, uint32_t formId_, bool hasChangeForm)
 {
   parent = parent_;
