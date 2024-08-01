@@ -1635,7 +1635,7 @@ void MpObjectReference::InitListenersAndEmitters()
   if (!listeners) {
     listeners.reset(new std::set<MpObjectReference*>);
     emitters.reset(new std::set<MpObjectReference*>);
-    actorListenersArray.clear();
+    actorListenerArray.clear();
   }
 }
 
