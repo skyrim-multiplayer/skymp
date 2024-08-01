@@ -118,8 +118,15 @@ void ActionListener::OnUpdateMovement(const RawMessageData& rawMsgData,
     };
 
     auto& espmFiles = actor->GetParent()->espmFiles;
+
+    const auto& currentPos = actor->GetPos();
+    const auto& currentRot = actor->GetAngle();
+    auto currentCellOrWorld =
+      FormDesc::FromFormId(actor->GetWorldOrCell(), espmFiles);
+
     if (!MovementValidation::Validate(
-          *actor, teleportFlag ? reallyWrongPos : pos,
+          currentPos, currentRot, currentCellOrWorld,
+          teleportFlag ? reallyWrongPos : pos,
           FormDesc::FromFormId(worldOrCell, espmFiles),
           isMe ? static_cast<IMessageOutput&>(msgOutput)
                : static_cast<IMessageOutput&>(msgOutputDummy),
