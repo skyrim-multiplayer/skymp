@@ -766,9 +766,10 @@ void WorldState::SendPapyrusEvent(MpForm* form, const char* eventName,
     }
   }
 
-  VirtualMachine::OnEnter onEnter = [&](const StackIdHolder& holder) {
-    pImpl->policy->BeforeSendPapyrusEvent(form, eventName, arguments,
-                                          argumentsCount, holder.GetStackId());
+  VirtualMachine::OnEnter onEnter = [&](const StackData& stackData) {
+    pImpl->policy->BeforeSendPapyrusEvent(
+      form, eventName, arguments, argumentsCount,
+      stackData.stackIdHolder.GetStackId());
   };
   auto& vm = GetPapyrusVm();
   return vm.SendEvent(form->ToGameObject(), eventName, args, onEnter);
