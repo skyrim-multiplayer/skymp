@@ -850,8 +850,56 @@ bool MpActor::MpApiCraft(uint32_t craftedItemBaseId, uint32_t count,
   return !isCraftBlocked;
 }
 
+bool MpActor::MpApiDropItem(uint32_t baseId, uint32_t count)
+{
+  simdjson::dom::parser parser;
+  bool isDropItemBlocked = false;
+
+  std::string s =
+    "[" + std::to_string(baseId) + "," + std::to_string(count) + "]";
+  auto args = parser.parse(s).value();
+
+  if (auto wst = GetParent()) {
+    const auto id = GetFormId();
+    for (auto& listener : wst->listeners) {
+      if (listener->OnMpApiEvent("onDropItem", args, id) == false) {
+        isDropItemBlocked = true;
+      };
+    }
+  }
+
+  return !isDropItemBlocked;
+}
+
+bool MpActor::MpApiEatItem(uint32_t baseId)
+{
+  simdjson::dom::parser parser;
+  bool isEatItemBlocked = false;
+
+  std::string s = "[" + std::to_string(baseId) + "]";
+  auto args = parser.parse(s).value();
+
+  if (auto wst = GetParent()) {
+    const auto id = GetFormId();
+    for (auto& listener : wst->listeners) {
+      if (listener->OnMpApiEvent("onEatItem", args, id) == false) {
+        isEatItemBlocked = true;
+      };
+    }
+  }
+
+  return !isEatItemBlocked;
+}
+
 void MpActor::EatItem(uint32_t baseId, espm::Type t)
 {
+  if (!MpApiEatItem(baseId)) {
+    spdlog::info(
+      "MpActor::DropItem {:x} - blocked by MpApiEatItem (baseId={:x})",
+      GetFormId(), baseId);
+    return;
+  }
+
   auto espmProvider = GetParent();
   std::vector<espm::Effects::Effect> effects;
   if (t == "ALCH") {
@@ -900,16 +948,6 @@ bool MpActor::ReadBook(const uint32_t baseId)
   }
 
   return false;
-}
-
-bool MpActor::CanActorValueBeRestored(espm::ActorValue av)
-{
-  if (std::chrono::steady_clock::now() - GetLastRestorationTime(av) <
-      std::chrono::minutes(1)) {
-    return false;
-  }
-  SetLastRestorationTime(av, std::chrono::steady_clock::now());
-  return true;
 }
 
 void MpActor::EnsureTemplateChainEvaluated(espm::Loader& loader,
@@ -1037,18 +1075,6 @@ std::map<uint32_t, uint32_t> MpActor::EvaluateDeathItem()
     loader.GetBrowser(), deathItemLookupRes, kCountMult,
     kPlayerCharacterLevel);
   return map;
-}
-
-std::chrono::steady_clock::time_point MpActor::GetLastRestorationTime(
-  espm::ActorValue av) const noexcept
-{
-  return pImpl->restorationTimePoints[av];
-}
-
-void MpActor::SetLastRestorationTime(
-  espm::ActorValue av, std::chrono::steady_clock::time_point timePoint)
-{
-  pImpl->restorationTimePoints[av] = timePoint;
 }
 
 void MpActor::ModifyActorValuePercentage(espm::ActorValue av,
@@ -1367,12 +1393,19 @@ void MpActor::DropItem(const uint32_t baseId, const Inventory::Entry& entry)
 
   constexpr uint32_t kGold001 = 0x0000000f;
   if (baseId == kGold001) {
-    spdlog::warn("MpActor::DropItem - Attempt to drop Gold001 by actor {:x}",
+    spdlog::warn("MpActor::DropItem {:x} - Attempt to drop Gold001 by actor",
                  GetFormId());
     return;
   }
 
-  int count = entry.count;
+  const int count = entry.count;
+
+  if (!MpApiDropItem(baseId, count)) {
+    spdlog::info("MpActor::DropItem {:x} - blocked by MpApiDropItem "
+                 "(baseId={:x}, count={})",
+                 GetFormId(), baseId, count);
+    return;
+  }
 
   auto worldState = GetParent();
 
@@ -1586,22 +1619,17 @@ void MpActor::ApplyMagicEffect(espm::Effects::Effect& effect, bool hasSweetpie,
 
   if (isValue) { // other types are unsupported
     if (hasSweetpie) {
-      if (CanActorValueBeRestored(av)) {
-        // this coefficient (workaround) has been added for sake of game
-        // balance and because of disability to restrict players use potions
-        // often on client side
-        constexpr float kMagnitudeCoeff = 100.f;
-        RestoreActorValuePatched(this, av, effect.magnitude * kMagnitudeCoeff);
-      }
+      // this coefficient (workaround) has been added for sake of game
+      // balance and because of disability to restrict players use potions
+      // often on client side
+      constexpr float kMagnitudeCoeff = 100.f;
+      RestoreActorValuePatched(this, av, effect.magnitude * kMagnitudeCoeff);
     } else {
       RestoreActorValuePatched(this, av, effect.magnitude);
     }
   }
 
   if (isRate || isMult) {
-    if (hasSweetpie && !CanActorValueBeRestored(av)) {
-      return;
-    }
     MpChangeForm changeForm = GetChangeForm();
     BaseActorValues baseValues = GetBaseActorValues(
       GetParent(), GetBaseId(), GetRaceId(), changeForm.templateChain);

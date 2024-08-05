@@ -615,3 +615,19 @@ TEST_CASE("MGEF parsing", "[espm]")
   auto data = espm::GetData<espm::MGEF>(0x51B15, &provider);
   REQUIRE(data.data.primaryAV == espm::ActorValue::DamageResist);
 }
+
+TEST_CASE("isFood flag is not set for heal potion", "[espm]")
+{
+  MyEspmProvider provider;
+  auto data = espm::GetData<espm::ALCH>(0x0003eade, &provider);
+  REQUIRE(data.isFood == false);
+  REQUIRE(data.isPoison == false);
+}
+
+TEST_CASE("isFood flag is set for sweet roll", "[espm]")
+{
+  MyEspmProvider provider;
+  auto data = espm::GetData<espm::ALCH>(0x00064B3D, &provider);
+  REQUIRE(data.isFood == true);
+  REQUIRE(data.isPoison == false);
+}
