@@ -1440,7 +1440,53 @@ void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
   } else if ((t == espm::ACTI::kType || t == "FURN") && actorActivator) {
     // SendOpenContainer being used to activate the object
     // TODO: rename SendOpenContainer to SendActivate
-    activationSource.SendOpenContainer(GetFormId());
+    if (auto worldState = GetParent()) {
+      espm::LookupResult res =
+        worldState->GetEspm().GetBrowser().LookupById(GetBaseId());
+
+      bool isCrafting = false;
+
+      if (res.rec) {
+        std::vector<uint32_t> keywordIds =
+          res.rec->GetKeywordIds(worldState->GetEspmCache());
+        for (auto& keywordId : keywordIds) {
+          keywordId = res.ToGlobalId(keywordId);
+          spdlog::trace("MpObjectReference::ProcessActivate - KeywordId: {:x}",
+                        keywordId);
+          auto keywordRes =
+            worldState->GetEspm().GetBrowser().LookupById(keywordId);
+          if (keywordRes.rec) {
+            std::string edid =
+              keywordRes.rec->GetEditorId(worldState->GetEspmCache());
+            auto edidLowercase = edid;
+            std::transform(edidLowercase.begin(), edidLowercase.end(),
+                           edidLowercase.begin(), ::tolower);
+            const char* stringToFind = "craft";
+
+            if (edidLowercase.find(stringToFind) != std::string::npos) {
+              isCrafting = true;
+              spdlog::trace("MpObjectReference::ProcessActivate - Found "
+                            "crafting keyword: {:x}",
+                            keywordId);
+              break;
+            } else {
+              spdlog::trace("MpObjectReference::ProcessActivate - KeywordId "
+                            "doesn't contain 'craft': {:x}",
+                            keywordId);
+            }
+
+          } else {
+            spdlog::warn("MpObjectReference::ProcessActivate - KeywordId "
+                         "lookup failed: {:x}",
+                         keywordId);
+          }
+        }
+      }
+
+      if (isCrafting) {
+        activationSource.SendOpenContainer(GetFormId());
+      }
+    }
   }
 }
 
