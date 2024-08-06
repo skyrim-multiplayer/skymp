@@ -99,7 +99,7 @@ void ActionListener::OnUpdateMovement(const RawMessageData& rawMsgData,
                                       uint32_t idx, const NiPoint3& pos,
                                       const NiPoint3& rot, bool isInJumpState,
                                       bool isWeapDrawn, bool isBlocking,
-                                      uint32_t worldOrCell, RunMode runMode)
+                                      uint32_t worldOrCell)
 {
   auto actor = SendToNeighbours(idx, rawMsgData);
   if (actor) {
@@ -144,15 +144,9 @@ void ActionListener::OnUpdateMovement(const RawMessageData& rawMsgData,
     actor->SetAnimationVariableBool("bInJumpState", isInJumpState);
     actor->SetAnimationVariableBool("_skymp_isWeapDrawn", isWeapDrawn);
     actor->SetAnimationVariableBool("IsBlocking", isBlocking);
-
     if (actor->GetBlockCount() == 5) {
       actor->SetIsBlockActive(false);
       actor->ResetBlockCount();
-    }
-
-    if (runMode != RunMode::Standing) {
-      // otherwise, people will slide in anims after quitting furniture
-      actor->SetLastAnimEvent(std::nullopt);
     }
 
     if (partOne.worldState.lastMovUpdateByIdx.size() <= idx) {
@@ -168,24 +162,19 @@ void ActionListener::OnUpdateAnimation(const RawMessageData& rawMsgData,
                                        uint32_t idx,
                                        const AnimationData& animationData)
 {
-  MpActor* myActor = partOne.serverState.ActorByUser(rawMsgData.userId);
-  if (!myActor) {
+  MpActor* actor = partOne.serverState.ActorByUser(rawMsgData.userId);
+  if (!actor) {
     return;
   }
 
-  auto targetActor = SendToNeighbours(idx, rawMsgData);
-
-  if (!targetActor) {
+  WorldState* espmProvider = actor->GetParent();
+  if (!espmProvider) {
     return;
   }
 
-  // Only process animation system and set last anim event for player's actor
-  if (targetActor != myActor) {
-    return;
-  }
+  partOne.animationSystem.Process(actor, animationData);
 
-  partOne.animationSystem.Process(targetActor, animationData);
-  targetActor->SetLastAnimEvent(animationData);
+  SendToNeighbours(idx, rawMsgData);
 }
 
 void ActionListener::OnUpdateAppearance(const RawMessageData& rawMsgData,

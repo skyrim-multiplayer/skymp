@@ -642,7 +642,7 @@ void PartOne::Init()
 
     MpActor* emitterAsActor = emitter->AsActor();
 
-    std::string jEquipment, jAppearance, jAnimation;
+    std::string jEquipment, jAppearance;
 
     const char *appearancePrefix = "", *appearance = "";
     if (emitterAsActor) {
@@ -659,15 +659,6 @@ void PartOne::Init()
       if (!jEquipment.empty()) {
         equipmentPrefix = R"(, "equipment": )";
         equipment = jEquipment.data();
-      }
-    }
-
-    const char *animationPrefix = "", *animation = "";
-    if (emitterAsActor) {
-      jAnimation = emitterAsActor->GetLastAnimEventAsJson();
-      if (!jAnimation.empty()) {
-        animationPrefix = R"(, "animation": )";
-        animation = jAnimation.data();
       }
     }
 
@@ -701,9 +692,8 @@ void PartOne::Init()
     std::string props;
 
     auto mode = VisitPropertiesMode::OnlyPublic;
-    if (isOwner) {
+    if (isOwner)
       mode = VisitPropertiesMode::All;
-    }
 
     const char *propsPrefix = "", *propsPostfix = "";
     auto visitor = [&](const char* propName, const char* jsonValue) {
@@ -763,13 +753,13 @@ void PartOne::Init()
     Networking::SendFormatted(
       sendTarget, listenerUserId,
       R"({"type": "%s", "idx": %u, "isMe": %s, "transform": {"pos":
-    [%f,%f,%f], "rot": [%f,%f,%f], "worldOrCell": %u}%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s})",
+    [%f,%f,%f], "rot": [%f,%f,%f], "worldOrCell": %u}%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s})",
       method, emitter->GetIdx(), isMe ? "true" : "false", emitterPos.x,
       emitterPos.y, emitterPos.z, emitterRot.x, emitterRot.y, emitterRot.z,
       worldOrCell, baseRecordTypePrefix, baseRecordType.data(),
-      appearancePrefix, appearance, equipmentPrefix, equipment,
-      animationPrefix, animation, refrIdPrefix, refrId, baseIdPrefix, baseId,
-      isDeadPrefix, isDead, propsPrefix, props.data(), propsPostfix);
+      appearancePrefix, appearance, equipmentPrefix, equipment, refrIdPrefix,
+      refrId, baseIdPrefix, baseId, isDeadPrefix, isDead, propsPrefix,
+      props.data(), propsPostfix);
   };
 
   pImpl->onUnsubscribe = [this](Networking::ISendTarget* sendTarget,

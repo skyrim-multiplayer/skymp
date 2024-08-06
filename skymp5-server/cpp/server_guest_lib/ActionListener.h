@@ -2,7 +2,6 @@
 #include "ActionListener.h"
 #include "AnimationData.h"
 #include "ConsoleCommands.h"
-#include "MovementMessage.h" // RunMode
 #include "MpActor.h"
 #include "PartOne.h"
 #include "libespm/Loader.h"
@@ -33,8 +32,7 @@ public:
   virtual void OnUpdateMovement(const RawMessageData& rawMsgData, uint32_t idx,
                                 const NiPoint3& pos, const NiPoint3& rot,
                                 bool isInJumpState, bool isWeapDrawn,
-                                bool isBlocking, uint32_t worldOrCell,
-                                RunMode runMode);
+                                bool isBlocking, uint32_t worldOrCell);
 
   virtual void OnUpdateAnimation(const RawMessageData& rawMsgData,
                                  uint32_t idx,
