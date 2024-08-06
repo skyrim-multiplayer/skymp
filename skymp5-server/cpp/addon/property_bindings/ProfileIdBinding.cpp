@@ -25,7 +25,7 @@ void ProfileIdBinding::Set(Napi::Env env, ScampServer& scampServer,
   auto newProfileId = NapiHelper::ExtractUInt32(newValue, "newProfileId");
 
   auto& refr = partOne->worldState.GetFormAt<MpObjectReference>(formId);
-  if (auto actor = dynamic_cast<MpActor*>(&refr)) {
+  if (auto actor = refr.AsActor()) {
     actor->RegisterProfileId(static_cast<int32_t>(newProfileId));
   }
 }

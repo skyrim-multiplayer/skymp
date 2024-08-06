@@ -39,7 +39,7 @@ public:
   espm::ObjectBounds GetBounds() const;
   const std::vector<FormDesc>& GetTemplateChain() const;
   bool IsCreatedAsPlayer() const;
-  const& ActorValues GetActorValues() const;
+  const ActorValues &GetActorValues() const;
 
   bool ShouldSkipRestoration() const noexcept;
   void UpdateNextRestorationTime(std::chrono::seconds duration) noexcept;
