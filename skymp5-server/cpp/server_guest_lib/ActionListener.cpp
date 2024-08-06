@@ -653,7 +653,7 @@ void ActionListener::OnChangeValues(const RawMessageData& rawMsgData,
   float timeAfterRegeneration = CropPeriodAfterLastRegen(
     actor->GetDurationOfAttributesPercentagesUpdate(now).count());
 
-  ActorValues currentActorValues = actor->GetChangeForm().actorValues;
+  const ActorValues& currentActorValues = actor->GetActorValues();
   float health = newActorValues.healthPercentage;
   float magicka = newActorValues.magickaPercentage;
   float stamina = newActorValues.staminaPercentage;

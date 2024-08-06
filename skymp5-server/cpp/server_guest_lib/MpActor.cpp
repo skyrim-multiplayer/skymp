@@ -746,6 +746,11 @@ bool MpActor::IsCreatedAsPlayer() const
   return GetFormId() >= 0xff000000 && GetBaseId() <= 0x7;
 }
 
+const ActorValues& MpActor::GetActorValues() const
+{
+  return ChangeForm().actorValues;
+}
+
 void MpActor::SendAndSetDeathState(bool isDead, bool shouldTeleport)
 {
   spdlog::trace(

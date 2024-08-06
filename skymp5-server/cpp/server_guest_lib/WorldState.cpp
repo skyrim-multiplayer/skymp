@@ -637,18 +637,31 @@ bool WorldState::LoadForm(uint32_t formId, std::stringstream* optionalOutTrace)
 
 void WorldState::TickReloot(const std::chrono::system_clock::time_point& now)
 {
-  for (auto& p : relootTimers) {
-    auto& list = p.second;
+  std::vector<decltype(relootTimers.begin())> toErase;
+
+  for (auto it = relootTimers.begin(); it != relootTimers.end(); ++it) {
+    auto& list = it->second;
     while (!list.empty() && list.begin()->second <= now) {
       uint32_t relootTargetId = list.begin()->first;
-      auto relootTarget = std::dynamic_pointer_cast<MpObjectReference>(
-        LookupFormById(relootTargetId));
+
+      const std::shared_ptr<MpForm>& relootTargetForm =
+        LookupFormById(relootTargetId);
+
+      MpObjectReference* relootTarget =
+        relootTargetForm ? relootTargetForm->AsObjectReference() : nullptr;
+
       if (relootTarget) {
         relootTarget->DoReloot();
       }
-
       list.pop_front();
     }
+    if (list.empty()) {
+      toErase.push_back(it);
+    }
+  }
+
+  for (auto& it : toErase) {
+    relootTimers.erase(it);
   }
 }
 

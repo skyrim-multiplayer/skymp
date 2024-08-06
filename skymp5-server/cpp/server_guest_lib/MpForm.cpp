@@ -9,6 +9,11 @@ MpForm::MpForm()
 {
 }
 
+MpObjectReference* MpForm::AsObjectReference() const noexcept
+{
+  return asObjectReference;
+}
+
 MpActor* MpForm::AsActor() const noexcept
 {
   return asActor;
