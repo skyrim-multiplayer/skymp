@@ -130,13 +130,22 @@ public:
   template <class F>
   F& GetFormAt(uint32_t formId)
   {
-    auto form = LookupFormById(formId);
+    const std::shared_ptr<MpForm>& form = LookupFormById(formId);
     if (!form) {
       throw std::runtime_error(
         fmt::format("Form with id {:#x} doesn't exist", formId));
     }
 
-    auto typedForm = std::dynamic_pointer_cast<F>(form);
+    F* typedForm = nullptr;
+
+    if constexpr (std::is_same_v<F, MpActor>) {
+      typedForm = form->AsActor();
+    } else if constexpr (std::is_same_v<F, MpObjectReference>) {
+      typedForm = form->AsObjectReference();
+    } else {
+      typedForm = dynamic_cast<F*>(form.get());
+    }
+
     if (!typedForm) {
       if constexpr (std::is_same_v<F, MpActor>) {
         if (auto ref = std::dynamic_pointer_cast<MpObjectReference>(form)) {
