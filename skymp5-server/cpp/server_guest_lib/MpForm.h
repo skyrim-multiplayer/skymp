@@ -10,6 +10,7 @@ class WorldState;
 class IGameObject;
 class ActivePexInstance;
 struct VarValue;
+class MpActor;
 
 class MpForm
 {
@@ -18,6 +19,9 @@ class MpForm
 
 public:
   MpForm();
+
+  // Fast dynamic_cast replacement
+  MpActor* AsActor() const noexcept;
 
   static const char* Type() { return "Form"; }
   bool IsEspmForm() const noexcept;
@@ -76,10 +80,12 @@ private:
   std::vector<std::shared_ptr<ActivePexInstance>> activePexInstances;
 
 protected:
-  virtual void BeforeDestroy(){};
+  virtual void BeforeDestroy() {}
 
   const std::vector<std::shared_ptr<ActivePexInstance>>&
   ListActivePexInstances() const;
 
   void AddScript(const std::shared_ptr<ActivePexInstance>& script) noexcept;
+
+  MpActor* asActor = nullptr;
 };

@@ -31,12 +31,9 @@ VarValue PapyrusNetImmerse::SetNodeTextureSet(
 
   auto funcName = "SetNodeTextureSet";
   auto serializedArgs = SpSnippetFunctionGen::SerializeArguments(arguments);
-  for (auto listener : ref->GetListeners()) {
-    auto targetRefr = dynamic_cast<MpActor*>(listener);
-    if (targetRefr) {
-      SpSnippet(GetName(), funcName, serializedArgs.data())
-        .Execute(targetRefr, SpSnippetMode::kNoReturnResult);
-    }
+  for (auto listener : ref->GetActorListeners()) {
+    SpSnippet(GetName(), funcName, serializedArgs.data())
+      .Execute(listener, SpSnippetMode::kNoReturnResult);
   }
 
   return VarValue::None();
@@ -66,12 +63,9 @@ VarValue PapyrusNetImmerse::SetNodeScale(
 
   auto funcName = "SetNodeScale";
   auto serializedArgs = SpSnippetFunctionGen::SerializeArguments(arguments);
-  for (auto listener : ref->GetListeners()) {
-    auto targetRefr = dynamic_cast<MpActor*>(listener);
-    if (targetRefr) {
-      SpSnippet(GetName(), funcName, serializedArgs.data())
-        .Execute(targetRefr, SpSnippetMode::kNoReturnResult);
-    }
+  for (auto listener : ref->GetActorListeners()) {
+    SpSnippet(GetName(), funcName, serializedArgs.data())
+      .Execute(listener, SpSnippetMode::kNoReturnResult);
   }
 
   return VarValue::None();

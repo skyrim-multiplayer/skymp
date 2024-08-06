@@ -2,7 +2,6 @@
 #include "ChangeFormGuard.h"
 #include "FormIndex.h"
 #include "Grid.h"
-#include "IWorldObject.h"
 #include "Inventory.h"
 #include "JsonUtils.h"
 #include "LocationalData.h"
@@ -64,7 +63,6 @@ using SetAngleMode = SetPosMode;
 class MpObjectReference
   : public MpForm
   , public FormIndex
-  , public IWorldObject
   , protected ChangeFormGuard
 {
   friend class OccupantDestroyEventSink;
@@ -78,9 +76,9 @@ public:
     uint32_t baseId, std::string baseType,
     std::optional<NiPoint3> primitiveBoundsDiv2 = std::nullopt);
 
-  const NiPoint3& GetPos() const override;
-  const NiPoint3& GetAngle() const override;
-  const FormDesc& GetCellOrWorld() const override;
+  const NiPoint3& GetPos() const;
+  const NiPoint3& GetAngle() const;
+  const FormDesc& GetCellOrWorld() const;
   const uint32_t& GetBaseId() const;
   const std::string& GetBaseType() const;
   const Inventory& GetInventory() const;
@@ -187,7 +185,7 @@ public:
   void VisitNeighbours(const Visitor& visitor);
 
   void SendInventoryUpdate();
-  const std::set<MpActor*>& GetActorListeners() const noexcept;
+  const std::vector<MpActor*>& GetActorListeners() const noexcept;
 
   static const char* GetPropertyPrefixPrivate() noexcept { return "private."; }
   static const char* GetPropertyPrefixPrivateIndexed() noexcept
@@ -226,7 +224,7 @@ private:
 
   bool everSubscribedOrListened = false;
   std::unique_ptr<std::set<MpObjectReference*>> listeners;
-  std::set<MpActor*> actorListeners;
+  std::vector<MpActor*> actorListenerArray;
 
   // Should be empty for non-actor refs
   std::unique_ptr<std::set<MpObjectReference*>> emitters;

@@ -191,10 +191,9 @@ int32_t VarValue::GetMetaStackId() const
   return stackId;
 }
 
-void VarValue::SetMetaStackIdHolder(
-  std::shared_ptr<StackIdHolder> stackIdHolder_)
+void VarValue::SetMetaStackIdHolder(const StackIdHolder& stackIdHolder_)
 {
-  stackId = stackIdHolder_->GetStackId();
+  stackId = stackIdHolder_.GetStackId();
 }
 
 VarValue VarValue::AttachTestStackId(VarValue original, int32_t stackId)

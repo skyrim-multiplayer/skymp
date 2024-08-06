@@ -103,6 +103,7 @@ MpActor::MpActor(const LocationalData& locationalData_,
                       optBaseId == 0 ? 0x7 : optBaseId, "NPC_")
 {
   pImpl.reset(new Impl);
+  asActor = this;
 }
 
 void MpActor::IncreaseBlockCount() noexcept
