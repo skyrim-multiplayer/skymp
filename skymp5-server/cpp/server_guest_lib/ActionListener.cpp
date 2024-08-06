@@ -605,7 +605,8 @@ void ActionListener::OnHostAttempt(const RawMessageData& rawMsgData,
       });
 
     auto& prevHosterForm = partOne.worldState.LookupFormById(prevHoster);
-    if (MpActor* prevHosterActor = prevHosterForm->AsActor()) {
+    if (MpActor* prevHosterActor =
+          prevHosterForm ? prevHosterForm->AsActor() : nullptr) {
       auto prevHosterUser = partOne.serverState.UserByActor(prevHosterActor);
       if (prevHosterUser != Networking::InvalidUserId &&
           prevHosterUser != rawMsgData.userId) {
