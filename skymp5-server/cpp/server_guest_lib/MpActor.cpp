@@ -751,6 +751,11 @@ const ActorValues& MpActor::GetActorValues() const
   return ChangeForm().actorValues;
 }
 
+int32_t MpActor::GetProfileId() const
+{
+  return ChangeForm().profileId;
+}
+
 void MpActor::SendAndSetDeathState(bool isDead, bool shouldTeleport)
 {
   spdlog::trace(
