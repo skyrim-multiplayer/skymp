@@ -246,7 +246,7 @@ void WorldState::RequestReloot(MpObjectReference& ref,
   for (auto& entry : pImpl->relootTimeForTypes) {
     auto diff = entry.time - time;
     if (diff < kEpsilon && diff > -kEpsilon) {
-      timer = entry.timer.SetTimer(time);
+      timer = entry.timer.SetTimer(time, nullptr);
       break;
     }
   }
@@ -1021,11 +1021,11 @@ uint32_t WorldState::GenerateFormId()
 void WorldState::SetRelootTime(const std::string& recordType,
                                std::chrono::system_clock::duration time)
 {
-
-  auto it = pImpl->relootTimeForTypes.find_if(
-    [&recordType](const RelootTimeForTypesEntry& entry) {
-      return entry.recordType == recordType;
-    });
+  auto it = std::find_if(pImpl->relootTimeForTypes.begin(),
+                         pImpl->relootTimeForTypes.end(),
+                         [&recordType](const RelootTimeForTypesEntry& entry) {
+                           return entry.recordType == recordType;
+                         });
 
   if (it != pImpl->relootTimeForTypes.end()) {
     it->time = time;
@@ -1037,10 +1037,11 @@ void WorldState::SetRelootTime(const std::string& recordType,
 std::optional<std::chrono::system_clock::duration> WorldState::GetRelootTime(
   const std::string& recordType) const
 {
-  auto it = pImpl->relootTimeForTypes.find_if(
-    [&recordType](const RelootTimeForTypesEntry& entry) {
-      return entry.recordType == recordType;
-    });
+  auto it = std::find_if(pImpl->relootTimeForTypes.begin(),
+                         pImpl->relootTimeForTypes.end(),
+                         [&recordType](const RelootTimeForTypesEntry& entry) {
+                           return entry.recordType == recordType;
+                         });
 
   if (it == pImpl->relootTimeForTypes.end()) {
     return std::nullopt;
