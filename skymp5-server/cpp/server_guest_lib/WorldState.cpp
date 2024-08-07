@@ -255,7 +255,7 @@ void WorldState::RequestReloot(MpObjectReference& ref,
     timer = SetTimer(time);
   }
 
-  timer->Then([this, refPtr, formId = ref.GetFormId()]() {
+  timer->Then([this, refPtr, formId = ref.GetFormId()](Viet::Void) {
     auto& form = LookupFormById(formId);
     auto reference = form->AsObjectReference();
     // Check if the reference is still the same, not re-created with the same
