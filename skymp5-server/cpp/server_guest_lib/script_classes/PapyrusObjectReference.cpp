@@ -163,7 +163,7 @@ VarValue PapyrusObjectReference::AddItem(
 
   if (runSkympHacks) {
     if (!silent && count > 0) {
-      if (auto actor = dynamic_cast<MpActor*>(selfRefr)) {
+      if (auto actor = selfRefr->AsActor()) {
         auto args = SpSnippetFunctionGen::SerializeArguments(arguments);
         (void)SpSnippet("SkympHacks", "AddItem", args.data())
           .Execute(actor, SpSnippetMode::kNoReturnResult);
@@ -256,7 +256,7 @@ VarValue PapyrusObjectReference::RemoveItem(
 
   if (runSkympHacks) {
     if (!silent && count > 0) {
-      if (auto actor = dynamic_cast<MpActor*>(selfRefr)) {
+      if (auto actor = selfRefr->AsActor()) {
         auto args = SpSnippetFunctionGen::SerializeArguments(arguments);
         (void)SpSnippet("SkympHacks", "RemoveItem", args.data())
           .Execute(actor, SpSnippetMode::kNoReturnResult);
@@ -319,13 +319,10 @@ void PlaceAtMeSpSnippet(MpObjectReference* self,
 {
   auto funcName = "PlaceAtMe";
   auto serializedArgs = SpSnippetFunctionGen::SerializeArguments(arguments);
-  for (auto listener : self->GetListeners()) {
-    auto targetRefr = dynamic_cast<MpActor*>(listener);
-    if (targetRefr) {
-      SpSnippet("ObjectReference", funcName, serializedArgs.data(),
-                self->GetFormId())
-        .Execute(targetRefr, SpSnippetMode::kNoReturnResult);
-    }
+  for (auto listener : self->GetActorListeners()) {
+    SpSnippet("ObjectReference", funcName, serializedArgs.data(),
+              self->GetFormId())
+      .Execute(listener, SpSnippetMode::kNoReturnResult);
   }
 }
 }
@@ -414,16 +411,13 @@ VarValue PapyrusObjectReference::Enable(VarValue self,
     selfRefr->Enable();
   }
 
-  if (selfRefr->IsEspmForm() && !dynamic_cast<MpActor*>(selfRefr)) {
+  if (selfRefr->IsEspmForm() && !selfRefr->AsActor()) {
     auto funcName = "Enable";
     auto serializedArgs = SpSnippetFunctionGen::SerializeArguments(arguments);
-    for (auto listener : selfRefr->GetListeners()) {
-      auto targetRefr = dynamic_cast<MpActor*>(listener);
-      if (targetRefr) {
-        SpSnippet(GetName(), funcName, serializedArgs.data(),
-                  selfRefr->GetFormId())
-          .Execute(targetRefr, SpSnippetMode::kNoReturnResult);
-      }
+    for (auto listener : selfRefr->GetActorListeners()) {
+      SpSnippet(GetName(), funcName, serializedArgs.data(),
+                selfRefr->GetFormId())
+        .Execute(listener, SpSnippetMode::kNoReturnResult);
     }
   }
 
@@ -438,16 +432,13 @@ VarValue PapyrusObjectReference::Disable(
     selfRefr->Disable();
   }
 
-  if (selfRefr->IsEspmForm() && !dynamic_cast<MpActor*>(selfRefr)) {
+  if (selfRefr->IsEspmForm() && !selfRefr->AsActor()) {
     auto funcName = "Disable";
     auto serializedArgs = SpSnippetFunctionGen::SerializeArguments(arguments);
     for (auto listener : selfRefr->GetListeners()) {
-      auto targetRefr = dynamic_cast<MpActor*>(listener);
-      if (targetRefr) {
-        SpSnippet(GetName(), funcName, serializedArgs.data(),
-                  selfRefr->GetFormId())
-          .Execute(targetRefr, SpSnippetMode::kNoReturnResult);
-      }
+      SpSnippet(GetName(), funcName, serializedArgs.data(),
+                selfRefr->GetFormId())
+        .Execute(listener, SpSnippetMode::kNoReturnResult);
     }
   }
 
@@ -554,13 +545,10 @@ VarValue PapyrusObjectReference::SetPosition(
     selfRefr->ForceSubscriptionsUpdate();
     auto funcName = "SetPosition";
     auto serializedArgs = SpSnippetFunctionGen::SerializeArguments(arguments);
-    for (auto listener : selfRefr->GetListeners()) {
-      auto targetRefr = dynamic_cast<MpActor*>(listener);
-      if (targetRefr) {
-        SpSnippet(GetName(), funcName, serializedArgs.data(),
-                  selfRefr->GetFormId())
-          .Execute(targetRefr, SpSnippetMode::kNoReturnResult);
-      }
+    for (auto listener : selfRefr->GetActorListeners()) {
+      SpSnippet(GetName(), funcName, serializedArgs.data(),
+                selfRefr->GetFormId())
+        .Execute(listener, SpSnippetMode::kNoReturnResult);
     }
   }
   return VarValue::None();
@@ -596,13 +584,10 @@ VarValue PapyrusObjectReference::PlayAnimation(
 
     auto funcName = "PlayAnimation";
     auto serializedArgs = SpSnippetFunctionGen::SerializeArguments(arguments);
-    for (auto listener : selfRefr->GetListeners()) {
-      auto targetRefr = dynamic_cast<MpActor*>(listener);
-      if (targetRefr) {
-        SpSnippet(GetName(), funcName, serializedArgs.data(),
-                  selfRefr->GetFormId())
-          .Execute(targetRefr, SpSnippetMode::kNoReturnResult);
-      }
+    for (auto listener : selfRefr->GetActorListeners()) {
+      SpSnippet(GetName(), funcName, serializedArgs.data(),
+                selfRefr->GetFormId())
+        .Execute(listener, SpSnippetMode::kNoReturnResult);
     }
   }
   return VarValue::None();
@@ -624,14 +609,11 @@ VarValue PapyrusObjectReference::PlayAnimationAndWait(
 
     std::vector<Viet::Promise<VarValue>> promises;
 
-    for (auto listener : selfRefr->GetListeners()) {
-      auto targetRefr = dynamic_cast<MpActor*>(listener);
-      if (targetRefr) {
-        auto promise = SpSnippet(GetName(), funcName, serializedArgs.data(),
-                                 selfRefr->GetFormId())
-                         .Execute(targetRefr, SpSnippetMode::kReturnResult);
-        promises.push_back(promise);
-      }
+    for (auto listener : selfRefr->GetActorListeners()) {
+      auto promise = SpSnippet(GetName(), funcName, serializedArgs.data(),
+                               selfRefr->GetFormId())
+                       .Execute(listener, SpSnippetMode::kReturnResult);
+      promises.push_back(promise);
     }
 
     if (promises.empty()) {
@@ -666,13 +648,10 @@ VarValue PapyrusObjectReference::PlayGamebryoAnimation(
     }
     auto funcName = "PlayGamebryoAnimation";
     auto serializedArgs = SpSnippetFunctionGen::SerializeArguments(arguments);
-    for (auto listener : selfRefr->GetListeners()) {
-      auto targetRefr = dynamic_cast<MpActor*>(listener);
-      if (targetRefr) {
-        SpSnippet(GetName(), funcName, serializedArgs.data(),
-                  selfRefr->GetFormId())
-          .Execute(targetRefr, SpSnippetMode::kNoReturnResult);
-      }
+    for (auto listener : selfRefr->GetActorListeners()) {
+      SpSnippet(GetName(), funcName, serializedArgs.data(),
+                selfRefr->GetFormId())
+        .Execute(listener, SpSnippetMode::kNoReturnResult);
     }
   }
   return VarValue::None();
@@ -871,13 +850,10 @@ VarValue PapyrusObjectReference::SetDisplayName(
 
     auto funcName = "SetDisplayName";
     auto serializedArgs = SpSnippetFunctionGen::SerializeArguments(arguments);
-    for (auto listener : selfRefr->GetListeners()) {
-      auto targetRefr = dynamic_cast<MpActor*>(listener);
-      if (targetRefr) {
-        SpSnippet(GetName(), funcName, serializedArgs.data(),
-                  selfRefr->GetFormId())
-          .Execute(targetRefr, SpSnippetMode::kNoReturnResult);
-      }
+    for (auto listener : selfRefr->GetActorListeners()) {
+      SpSnippet(GetName(), funcName, serializedArgs.data(),
+                selfRefr->GetFormId())
+        .Execute(listener, SpSnippetMode::kNoReturnResult);
     }
   }
   return VarValue::None();

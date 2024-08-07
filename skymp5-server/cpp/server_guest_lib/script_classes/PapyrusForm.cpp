@@ -40,11 +40,11 @@ VarValue PapyrusForm::GetType(VarValue self, const std::vector<VarValue>&)
   }
 
   if (auto form = GetFormPtr<MpForm>(self)) {
-    if (dynamic_cast<MpActor*>(form)) {
+    if (form->AsActor()) {
       constexpr auto kCharacter = 62;
       return VarValue(static_cast<int32_t>(kCharacter));
     }
-    if (dynamic_cast<MpObjectReference*>(form)) {
+    if (form->AsObjectReference()) {
       constexpr auto kReference = 61;
       return VarValue(static_cast<int32_t>(kReference));
     }
