@@ -10,7 +10,7 @@ Napi::Value ActorNeighborsBinding::Get(Napi::Env env, ScampServer& scampServer,
   std::set<MpActor*> neighbors;
 
   for (auto listener : refr.GetActorListeners()) {
-    neighbors.insert(actor);
+    neighbors.insert(listener);
   }
   for (auto emitter : refr.GetEmitters()) {
     if (MpActor* actor = emitter->AsActor()) {
