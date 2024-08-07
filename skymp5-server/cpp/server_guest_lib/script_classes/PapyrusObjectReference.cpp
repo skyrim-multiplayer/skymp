@@ -435,7 +435,7 @@ VarValue PapyrusObjectReference::Disable(
   if (selfRefr->IsEspmForm() && !selfRefr->AsActor()) {
     auto funcName = "Disable";
     auto serializedArgs = SpSnippetFunctionGen::SerializeArguments(arguments);
-    for (auto listener : selfRefr->GetListeners()) {
+    for (auto listener : selfRefr->GetActorListeners()) {
       SpSnippet(GetName(), funcName, serializedArgs.data(),
                 selfRefr->GetFormId())
         .Execute(listener, SpSnippetMode::kNoReturnResult);

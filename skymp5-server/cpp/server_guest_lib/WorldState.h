@@ -213,10 +213,10 @@ public:
     const std::string& propertyName,
     const std::string& propertyValueStringified);
   uint32_t GenerateFormId();
-  void SetRelootTime(std::string recordType,
-                     std::chrono::system_clock::duration dur);
+  void SetRelootTime(const std::string& recordType,
+                     std::chrono::system_clock::duration time);
   std::optional<std::chrono::system_clock::duration> GetRelootTime(
-    std::string recordType) const;
+    const std::string& recordType) const;
 
   // Utility function to check if the provided baseId has the certain keyword
   bool HasKeyword(uint32_t baseId, const char* keyword);
@@ -272,7 +272,6 @@ private:
 
   bool LoadForm(uint32_t formId,
                 std::stringstream* optionalOutTrace = nullptr);
-  void TickReloot(const std::chrono::system_clock::time_point& now);
   void TickSaveStorage(const std::chrono::system_clock::time_point& now);
   void TickTimers(const std::chrono::system_clock::time_point& now);
   [[nodiscard]] bool NpcSourceFilesOverriden() const noexcept;
@@ -293,10 +292,6 @@ private:
   spp::sparse_hash_map<uint32_t, GridInfo> grids;
   std::unique_ptr<MakeID> formIdxManager;
   std::vector<MpForm*> formByIdxUnreliable;
-  std::map<
-    std::chrono::system_clock::duration,
-    std::list<std::pair<uint32_t, std::chrono::system_clock::time_point>>>
-    relootTimers;
   espm::Loader* espm = nullptr;
   FormCallbacksFactory formCallbacksFactory;
   std::unique_ptr<espm::CompressedFieldsCache> espmCache;
