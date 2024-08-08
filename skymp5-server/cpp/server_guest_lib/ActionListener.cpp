@@ -13,6 +13,7 @@
 #include "MsgType.h"
 #include "UserMessageOutput.h"
 #include "WorldState.h"
+#include "gamemode_events/CustomEvent.h"
 #include "script_objects/EspmGameObject.h"
 #include <fmt/format.h>
 #include <spdlog/spdlog.h>
@@ -643,7 +644,9 @@ void ActionListener::OnCustomEvent(const RawMessageData& rawMsgData,
   }
 
   for (auto& listener : partOne.GetListeners()) {
-    listener->OnMpApiEvent(eventName, args, ac->GetFormId());
+    CustomEvent customEvent(ac->GetFormId(), eventName,
+                            simdjson::minify(args));
+    listener->OnMpApiEvent(customEvent);
   }
 }
 
