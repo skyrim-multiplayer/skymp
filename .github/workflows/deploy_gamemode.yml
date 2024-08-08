@@ -1,0 +1,51 @@
+name: Deploy Gamemode
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch, meaning server instance'
+        required: true
+        type: choice
+        options:
+          - 'sweetpie'
+          - 'indev'
+        default: 'indev'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: skyrim-multiplayer/skymp5-gamemode
+          token: ${{ secrets.SKYMP5_GAMEMODE_PAT }}
+          fetch-depth: 0
+      - run: yarn
+      - run: yarn build
+      - name: Rsync gamemode.js to the remote server
+        run: |
+          # cheatsheet: https://stackoverflow.com/a/44606194
+          # ? without : accepts empty string
+          # Ensuring all required variables are set:
+          echo "${DEPLOY_SSH_PRIVATE_KEY:?}" > /dev/null
+          echo "${DEPLOY_SSH_KNOWN_HOSTS:?}" > /dev/null
+
+          touch ssh_id
+          touch ssh_known_hosts
+          chmod 600 ssh_id
+          chmod 600 ssh_known_hosts
+          echo "$DEPLOY_SSH_PRIVATE_KEY" > ssh_id
+          echo "$DEPLOY_SSH_KNOWN_HOSTS" > ssh_known_hosts
+
+          remote_server_connstr="$DEPLOY_TARGET_USER@$DEPLOY_TARGET_HOST"
+          remote_dir="~/skymp-server-indev/server/"
+
+          remote_shell="ssh -i ssh_id -o UserKnownHostsFile=ssh_known_hosts"
+          rsync --rsh="$remote_shell" -vazPh --checksum \
+            ./build/gamemode.js "$remote_server_connstr:$remote_dir/"
+        env:
+          DEPLOY_TARGET_HOST: ${{secrets.DEPLOY_TARGET_HOST_06_2024}}
+          DEPLOY_TARGET_USER: ${{secrets.DEPLOY_TARGET_USER_06_2024}}
+          DEPLOY_SSH_PRIVATE_KEY: ${{secrets.DEPLOY_SSH_PRIVATE_KEY_06_2024}}
+          DEPLOY_SSH_KNOWN_HOSTS: ${{secrets.DEPLOY_SSH_KNOWN_HOSTS_06_2024}}
