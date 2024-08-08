@@ -39,7 +39,7 @@ jobs:
           echo "$DEPLOY_SSH_KNOWN_HOSTS" > ssh_known_hosts
 
           remote_server_connstr="$DEPLOY_TARGET_USER@$DEPLOY_TARGET_HOST"
-          remote_dir="~/skymp-server-indev/server/"
+          remote_dir="~/skymp-server-${{ github.event.inputs.branch }}/server/"
 
           remote_shell="ssh -i ssh_id -o UserKnownHostsFile=ssh_known_hosts"
           rsync --rsh="$remote_shell" -vazPh --checksum \
