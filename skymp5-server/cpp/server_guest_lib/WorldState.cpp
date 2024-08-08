@@ -1046,7 +1046,7 @@ std::optional<std::chrono::system_clock::duration> WorldState::GetRelootTime(
   if (it == pImpl->relootTimeForTypes.end()) {
     return std::nullopt;
   }
-  return it->second;
+  return it->time;
 }
 
 bool WorldState::HasKeyword(uint32_t baseId, const char* keyword)
