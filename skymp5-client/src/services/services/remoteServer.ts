@@ -565,11 +565,6 @@ export class RemoteServer extends ClientListener {
     this.worldModel.forms[i] = undefined;
     getViewFromStorage()?.syncFormArray(this.worldModel);
 
-    // syncFormArray calls FormView.destroy that requires update context
-    // this.controller.once("update", () => {
-    getViewFromStorage()?.syncFormArray(this.worldModel);
-    // });
-
     // Shrink to fit
     while (1) {
       const length = this.worldModel.forms.length;
