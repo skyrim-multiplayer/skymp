@@ -71,6 +71,7 @@ struct MpActor::Impl
   };
   uint32_t blockActiveCount = 0;
   std::vector<std::pair<uint32_t, MpObjectReference*>> droppedItemsQueue;
+  std::optional<AnimationData> animationData;
 
   // this is a hot fix attempt to make permanent restoration potions work
   std::chrono::system_clock::time_point nextRestorationTime{};
@@ -202,6 +203,17 @@ void MpActor::RemoveSpell(const uint32_t spellId)
   EditChangeForm([&](MpChangeForm& changeForm) {
     changeForm.learnedSpells.ForgetSpell(spellId);
   });
+}
+
+void MpActor::SetLastAnimEvent(
+  const std::optional<AnimationData>& animationData)
+{
+  pImpl->animationData = animationData;
+}
+
+std::optional<AnimationData> MpActor::GetLastAnimEvent() const
+{
+  return pImpl->animationData;
 }
 
 void MpActor::SetRaceMenuOpen(bool isOpen)
@@ -707,6 +719,35 @@ const std::string& MpActor::GetAppearanceAsJson()
 const std::string& MpActor::GetEquipmentAsJson() const
 {
   return ChangeForm().equipmentDump;
+}
+
+namespace {
+bool IsValidAnimEventName(const std::string& eventName)
+{
+  return std::all_of(eventName.begin(), eventName.end(),
+                     [](char c) { return std::isalnum(c) || (c == '_'); });
+}
+}
+
+std::string MpActor::GetLastAnimEventAsJson() const
+{
+  std::optional<AnimationData> anim = GetLastAnimEvent();
+
+  if (!anim) {
+    return "";
+  }
+
+  // Don't want bad anims to break JSON syntax
+  if (!IsValidAnimEventName(anim->animEventName)) {
+    return "";
+  }
+
+  std::string res = R"({"animEventName":)";
+  res += '"' + anim->animEventName + '"';
+  res += R"(,"numChanges":)";
+  res += std::to_string(anim->numChanges);
+  res += "}";
+  return res;
 }
 
 Equipment MpActor::GetEquipment() const

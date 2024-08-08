@@ -1,4 +1,5 @@
 #pragma once
+#include "AnimationData.h"
 #include "Appearance.h"
 #include "GetBaseActorValues.h"
 #include "MpObjectReference.h"
@@ -32,6 +33,7 @@ public:
   std::unique_ptr<const Appearance> GetAppearance() const;
   const std::string& GetAppearanceAsJson();
   const std::string& GetEquipmentAsJson() const;
+  std::string GetLastAnimEventAsJson() const;
   Equipment GetEquipment() const;
   std::array<std::optional<Inventory::Entry>, 2> GetEquippedWeapon() const;
   uint32_t GetRaceId() const;
@@ -148,6 +150,9 @@ public:
 
   void AddSpell(uint32_t spellId);
   void RemoveSpell(uint32_t spellId);
+
+  void SetLastAnimEvent(const std::optional<AnimationData>& animationData);
+  std::optional<AnimationData> GetLastAnimEvent() const;
 
 private:
   struct Impl;
