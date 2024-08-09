@@ -1,5 +1,6 @@
 #pragma once
 #include "GameModeEvent.h"
+#include <nlohmann/json.hpp>
 
 class CustomEvent : public GameModeEvent
 {
@@ -16,7 +17,17 @@ public:
 
   std::string GetArgumentsJsonArray() const override
   {
-    return argumentsJsonArrayDump;
+    const nlohmann::json argumentsJsonArray =
+      nlohmann::json::parse(argumentsJsonArrayDump);
+
+    auto newArray = nlohmann::json::array();
+    newArray.push_back(refrId);
+
+    for (const auto& element : argumentsJsonArray) {
+      newArray.push_back(element);
+    }
+
+    return newArray.dump();
   }
 
 private:
