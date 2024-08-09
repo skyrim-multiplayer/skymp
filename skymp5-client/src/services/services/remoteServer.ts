@@ -1,4 +1,5 @@
-import { Actor, Form, FormType } from 'skyrimPlatform';
+import { Actor, Faction, Form, FormType } from 'skyrimPlatform';
+
 import {
   Armor,
   Cell,
@@ -297,6 +298,18 @@ export class RemoteServer extends ClientListener {
               refr.setDisplayName(displayName, true);
               logTrace(this, `calling setDisplayName`, displayName, `for`, refr.getFormID().toString(16));
             }
+
+            if (msg.props.factions !== undefined && msg.props.factions.length > 0) {
+              const actorRefr = Actor.from(refr) as any;
+              if (actorRefr) {
+                actorRefr.removeFromAllFactions();
+                for (let i = 0; i < msg.props.factions.length; i++) {
+                  const faction = Faction.from(Game.getFormEx(msg.props.factions[i].formId));
+                  actorRefr.addToFaction(faction);
+                  actorRefr.setFactionRank(faction, msg.props.factions[i].rank);
+                }
+              }
+            }
           }
         } else {
           logError(this, 'Failed to apply model to', refrId.toString(16));
@@ -416,6 +429,18 @@ export class RemoteServer extends ClientListener {
           }
         });
       });
+    }
+
+    if (msg.isMe && msg.props && msg.props.factions !== undefined && msg.props.factions.length > 0) {
+      const player = Game.getPlayer() as any;
+      if (player) {
+        player.removeFromAllFactions();
+        for (let i = 0; i < msg.props.factions.length; i++) {
+          const faction = Faction.from(Game.getFormEx(msg.props.factions[i].formId));
+          player.addToFaction(faction);
+          player.setFactionRank(faction, msg.props.factions[i].rank);
+        }
+      }
     }
 
     if (msg.isMe) {
