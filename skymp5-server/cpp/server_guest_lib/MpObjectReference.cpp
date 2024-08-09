@@ -407,7 +407,9 @@ void MpObjectReference::Activate(MpObjectReference& activationSource,
     }
   }
 
-  bool activationBlockedByMpApi = MpApiOnActivate(activationSource);
+  ActivateEvent activateEvent(GetFormId(), activationSource.GetFormId());
+
+  bool activationBlockedByMpApi = !activateEvent.Fire(GetParent());
 
   if (!activationBlockedByMpApi &&
       (!activationBlocked || defaultProcessingOnly)) {
@@ -573,12 +575,8 @@ void MpObjectReference::PutItem(MpActor& ac, const Inventory::Entry& e)
     throw std::runtime_error(err.str());
   }
 
-  if (MpApiOnPutItem(ac, e)) {
-    return spdlog::trace("onPutItem - blocked by gamemode");
-  }
-
-  spdlog::trace("onPutItem - not blocked by gamemode");
-  ac.RemoveItems({ e }, this);
+  PutItemEvent putItemEvent(&ac, this, e);
+  putItemEvent.Fire(GetParent());
 }
 
 void MpObjectReference::TakeItem(MpActor& ac, const Inventory::Entry& e)
@@ -591,12 +589,8 @@ void MpObjectReference::TakeItem(MpActor& ac, const Inventory::Entry& e)
     throw std::runtime_error(err.str());
   }
 
-  if (MpApiOnTakeItem(ac, e)) {
-    return spdlog::trace("onTakeItem - blocked by gamemode");
-  }
-
-  spdlog::trace("onTakeItem - not blocked by gamemode");
-  RemoveItems({ e }, &ac);
+  TakeItemEvent takeItemEvent(&ac, this, e);
+  takeItemEvent.Fire(GetParent());
 }
 
 void MpObjectReference::SetRelootTime(
@@ -1490,22 +1484,6 @@ void MpObjectReference::ActivateChilds()
   }
 }
 
-bool MpObjectReference::MpApiOnActivate(MpObjectReference& caster)
-{
-  bool activationBlocked = false;
-
-  if (auto wst = GetParent()) {
-    for (auto& listener : wst->listeners) {
-      ActivateEvent activateEvent(GetFormId(), caster.GetFormId());
-      if (listener->OnMpApiEvent(activateEvent) == false) {
-        activationBlocked = true;
-      }
-    }
-  }
-
-  return activationBlocked;
-}
-
 void MpObjectReference::RemoveFromGridAndUnsubscribeAll()
 {
   auto worldOrCell = GetCellOrWorld().ToFormId(GetParent()->espmFiles);
@@ -1856,40 +1834,6 @@ void MpObjectReference::BeforeDestroy()
   MpForm::BeforeDestroy();
 
   RemoveFromGridAndUnsubscribeAll();
-}
-
-bool MpObjectReference::MpApiOnPutItem(MpActor& source,
-                                       const Inventory::Entry& entry)
-{
-  bool blockedByMpApi = false;
-
-  if (auto wst = GetParent()) {
-    for (auto& listener : wst->listeners) {
-      PutItemEvent putItemEvent(GetFormId(), source.GetFormId(), entry.baseId,
-                                entry.count);
-      bool notBlocked = listener->OnMpApiEvent(putItemEvent);
-      blockedByMpApi = !notBlocked;
-    }
-  }
-
-  return blockedByMpApi;
-}
-
-bool MpObjectReference::MpApiOnTakeItem(MpActor& source,
-                                        const Inventory::Entry& entry)
-{
-  bool blockedByMpApi = false;
-
-  if (auto wst = GetParent()) {
-    for (auto& listener : wst->listeners) {
-      TakeItemEvent takeItemEvent(GetFormId(), source.GetFormId(),
-                                  entry.baseId, entry.count);
-      bool notBlocked = listener->OnMpApiEvent(takeItemEvent);
-      blockedByMpApi = !notBlocked;
-    }
-  }
-
-  return blockedByMpApi;
 }
 
 float MpObjectReference::GetTotalItemWeight() const

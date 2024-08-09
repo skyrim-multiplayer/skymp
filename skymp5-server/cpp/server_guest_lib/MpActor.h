@@ -13,10 +13,13 @@
 
 class WorldState;
 struct ActorValues;
+class RespawnEvent;
 
 class MpActor : public MpObjectReference
 {
 public:
+  friend class RespawnEvent;
+
   static const char* Type() { return "Actor"; }
   const char* GetFormType() const override { return "Actor"; }
 
@@ -143,11 +146,6 @@ public:
 
   void EquipBestWeapon();
 
-  bool MpApiCraft(uint32_t craftedItemBaseId, uint32_t count,
-                  uint32_t recipeId);
-  bool MpApiDropItem(uint32_t baseId, uint32_t count);
-  bool MpApiEatItem(uint32_t baseId);
-
   void AddSpell(uint32_t spellId);
   void RemoveSpell(uint32_t spellId);
 
@@ -165,7 +163,6 @@ private:
                                               bool isDead,
                                               bool shouldTeleport);
 
-  void MpApiDeath(MpActor* killer = nullptr);
   void EatItem(uint32_t baseId, espm::Type t);
 
   bool ReadBook(uint32_t baseId);

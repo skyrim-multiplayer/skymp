@@ -13,7 +13,9 @@
 #include "MsgType.h"
 #include "UserMessageOutput.h"
 #include "WorldState.h"
+#include "gamemode_events/CraftEvent.h"
 #include "gamemode_events/CustomEvent.h"
+#include "gamemode_events/EatItemEvent.h"
 #include "script_objects/EspmGameObject.h"
 #include <fmt/format.h>
 #include <spdlog/spdlog.h>
@@ -496,13 +498,10 @@ void UseCraftRecipe(MpActor* me, const espm::COBJ* recipeUsed,
 
   auto recipeId = espm::utils::GetMappedId(recipeUsed->GetId(), *mapping);
 
-  if (me->MpApiCraft(outputFormId, recipeData.outputCount, recipeId)) {
-    spdlog::trace("onCraft - not blocked by gamemode");
-    me->RemoveItems(entries);
-    me->AddItem(outputFormId, recipeData.outputCount);
-  } else {
-    spdlog::trace("onCraft - blocked by gamemode");
-  }
+  CraftEvent craftEvent(me, outputFormId, recipeData.outputCount,
+                        recipeId, entries);
+
+  craftEvent.Fire(me->GetParent());
 }
 
 void ActionListener::OnCraftItem(const RawMessageData& rawMsgData,

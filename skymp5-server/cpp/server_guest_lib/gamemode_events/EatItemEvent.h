@@ -1,29 +1,26 @@
 #pragma once
 #include "GameModeEvent.h"
 
+class MpActor;
+
 class EatItemEvent : public GameModeEvent
 {
 public:
-  EatItemEvent(uint32_t refrId_, uint32_t baseId_)
-    : refrId(refrId_)
-    , baseId(baseId_)
-  {
-  }
+  EatItemEvent(MpActor* actor_, uint32_t baseId_, bool isIngredient_,
+               bool isAlchemyItem_);
 
-  const char* GetName() const override { return "onEatItem"; }
+  const char* GetName() const override;
 
-  std::string GetArgumentsJsonArray() const override
-  {
-    std::string result;
-    result += "[";
-    result += std::to_string(refrId);
-    result += ",";
-    result += std::to_string(baseId);
-    result += "]";
-    return result;
-  }
+  std::string GetArgumentsJsonArray() const override;
 
 private:
-  uint32_t refrId = 0;
+  void OnFireSuccess(WorldState* worldState) override;
+
+  // event arguments
+  MpActor* actor = nullptr;
   uint32_t baseId = 0;
+
+  // OnFireSuccess-specific arguments
+  bool isIngredient = false;
+  bool isAlchemyItem = false;
 };

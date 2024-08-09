@@ -17,7 +17,6 @@
 #include "SweetPieScript.h"
 #include "TimeUtils.h"
 #include "WorldState.h"
-#include "gamemode_events/CraftEvent.h"
 #include "gamemode_events/DeathEvent.h"
 #include "gamemode_events/DropItemEvent.h"
 #include "gamemode_events/EatItemEvent.h"
@@ -846,101 +845,13 @@ DeathStateContainerMessage MpActor::GetDeathStateMsg(
   return res;
 }
 
-void MpActor::MpApiDeath(MpActor* killer)
-{
-  spdlog::trace("MpActor::MpApiDeath {:x} - killer is {:x}", GetFormId(),
-                killer ? killer->GetFormId() : 0);
-
-  bool isRespawnBlocked = false;
-
-  if (auto wst = GetParent()) {
-    for (auto& listener : wst->listeners) {
-      DeathEvent deathEvent(GetFormId(), killer ? killer->GetFormId() : 0);
-      if (listener->OnMpApiEvent(deathEvent) == false) {
-        isRespawnBlocked = true;
-      };
-    }
-  }
-
-  spdlog::trace("MpActor::MpApiDeath {:x} - isRespawnBlocked: {}", GetFormId(),
-                isRespawnBlocked);
-
-  if (!isRespawnBlocked) {
-    RespawnWithDelay();
-  }
-}
-
-bool MpActor::MpApiCraft(uint32_t craftedItemBaseId, uint32_t count,
-                         uint32_t recipeId)
-{
-  bool isCraftBlocked = false;
-
-  if (auto wst = GetParent()) {
-    for (auto& listener : wst->listeners) {
-      CraftEvent craftEvent(GetFormId(), craftedItemBaseId, count, recipeId);
-      if (listener->OnMpApiEvent(craftEvent) == false) {
-        isCraftBlocked = true;
-      };
-    }
-  }
-
-  return !isCraftBlocked;
-}
-
-bool MpActor::MpApiDropItem(uint32_t baseId, uint32_t count)
-{
-  bool isDropItemBlocked = false;
-
-  if (auto wst = GetParent()) {
-    for (auto& listener : wst->listeners) {
-      DropItemEvent dropEvent(GetFormId(), baseId, count);
-      if (listener->OnMpApiEvent(dropEvent) == false) {
-        isDropItemBlocked = true;
-      };
-    }
-  }
-
-  return !isDropItemBlocked;
-}
-
-bool MpActor::MpApiEatItem(uint32_t baseId)
-{
-  bool isEatItemBlocked = false;
-
-  if (auto wst = GetParent()) {
-    for (auto& listener : wst->listeners) {
-      EatItemEvent eatItemEvent(GetFormId(), baseId);
-      if (listener->OnMpApiEvent(eatItemEvent) == false) {
-        isEatItemBlocked = true;
-      };
-    }
-  }
-
-  return !isEatItemBlocked;
-}
-
 void MpActor::EatItem(uint32_t baseId, espm::Type t)
 {
-  if (!MpApiEatItem(baseId)) {
-    spdlog::info(
-      "MpActor::DropItem {:x} - blocked by MpApiEatItem (baseId={:x})",
-      GetFormId(), baseId);
-    return;
-  }
+  bool isIngredient = t == "INGR";
+  bool isAlchemyItem = t == "ALCH";
 
-  auto espmProvider = GetParent();
-  std::vector<espm::Effects::Effect> effects;
-  if (t == "ALCH") {
-    effects = espm::GetData<espm::ALCH>(baseId, espmProvider).effects;
-  } else if (t == "INGR") {
-    effects = espm::GetData<espm::INGR>(baseId, espmProvider).effects;
-  } else {
-    return;
-  }
-  std::unordered_set<std::string> modFiles = { GetParent()->espmFiles.begin(),
-                                               GetParent()->espmFiles.end() };
-  bool hasSweetpie = modFiles.count("SweetPie.esp");
-  ApplyMagicEffects(effects, hasSweetpie);
+  EatItemEvent eatItemEvent(this, baseId, isIngredient, isAlchemyItem);
+  eatItemEvent.Fire(GetParent());
 }
 
 bool MpActor::ReadBook(const uint32_t baseId)
@@ -1159,7 +1070,10 @@ void MpActor::Kill(MpActor* killer, bool shouldTeleport)
 
   // Keep in sync with MpActor::SetIsDead
   SendAndSetDeathState(true, shouldTeleport);
-  MpApiDeath(killer);
+
+  DeathEvent deathEvent(this, killer);
+  deathEvent.Fire(GetParent());
+
   AddDeathItem();
 }
 
@@ -1244,17 +1158,8 @@ void MpActor::Respawn(bool shouldTeleport)
   }
   pImpl->isRespawning = false;
 
-  if (auto wst = GetParent()) {
-    for (auto& listener : wst->listeners) {
-      RespawnEvent respawnEvent(GetFormId());
-      listener->OnMpApiEvent(respawnEvent);
-    }
-  }
-
-  SendAndSetDeathState(false, shouldTeleport);
-
-  // TODO: should probably not sending to ourselves. see also RespawnTest.cpp
-  SendPropertyToListeners("isDead", false);
+  RespawnEvent respawnEvent(this, shouldTeleport);
+  respawnEvent.Fire(GetParent());
 }
 
 void MpActor::Teleport(const LocationalData& position)
@@ -1358,7 +1263,10 @@ void MpActor::SetIsDead(bool isDead)
 
       // Keep in sync with MpActor::Kill
       SendAndSetDeathState(isDead, kShouldTeleport);
-      MpApiDeath(nullptr);
+
+      DeathEvent deathEvent(this, nullptr);
+      deathEvent.Fire(GetParent());
+
       AddDeathItem();
 
       spdlog::trace("MpActor::SetIsDead {:x} - actor is now dead",
@@ -1424,7 +1332,10 @@ void MpActor::DropItem(const uint32_t baseId, const Inventory::Entry& entry)
 
   const int count = entry.count;
 
-  if (!MpApiDropItem(baseId, count)) {
+  DropItemEvent dropEvent(GetFormId(), baseId, count);
+  bool success = dropEvent.Fire(GetParent());
+
+  if (!success) {
     spdlog::info("MpActor::DropItem {:x} - blocked by MpApiDropItem "
                  "(baseId={:x}, count={})",
                  GetFormId(), baseId, count);
