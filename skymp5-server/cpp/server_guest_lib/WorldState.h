@@ -252,7 +252,10 @@ public:
     0x00013746, 0x00013747, 0x00013748, 0x00013749,
 
     /* Mannequin */
-    0x0010760a
+    0x0010760a,
+
+    /* Buggy Giants */
+    0x000131f9
   };
 
 private:
