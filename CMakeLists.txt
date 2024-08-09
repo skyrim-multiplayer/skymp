@@ -55,7 +55,7 @@ endif()
 
 option(SKYRIM_SE "Legacy Skyrim SE (1.5) build" OFF)
 
-if (SKYRIM_SE)
+if(SKYRIM_SE)
   list(APPEND VCPKG_MANIFEST_FEATURES "skyrim-se")
 else()
   list(APPEND VCPKG_MANIFEST_FEATURES "skyrim-ae")
@@ -64,6 +64,13 @@ endif()
 cmake_minimum_required(VERSION 3.19)
 project(skymp)
 enable_testing()
+
+# Check the Visual Studio version
+if(MSVC)
+  if(NOT CMAKE_GENERATOR MATCHES "Visual Studio 17 2022")
+    message(FATAL_ERROR "This project requires \"Visual Studio 17 2022\". But the generator was \"${CMAKE_GENERATOR}\"")
+  endif()
+endif()
 
 # Bool options
 option(JS_ENGINE_TRACING_ENABLED "Useful for JsEngine debugging. See JsEngine.h" OFF)
