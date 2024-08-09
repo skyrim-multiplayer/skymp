@@ -18,6 +18,7 @@ VarValue PapyrusEffectShader::Stop(VarValue self,
   return VarValue::None();
 }
 
+// This is exact copy of PapyrusVisualEffect::Helper
 void PapyrusEffectShader::Helper(VarValue& self, const char* funcName,
                                  const std::vector<VarValue>& arguments)
 {
@@ -27,8 +28,6 @@ void PapyrusEffectShader::Helper(VarValue& self, const char* funcName,
       throw std::runtime_error(std::string(funcName) +
                                " requires at least one argument");
     }
-    // TODO: Make normal sync for this. For now using workaround to inform
-    // neigbours by sending papyrus functions to them.
     if (auto actorForm = GetFormPtr<MpObjectReference>(arguments[0])) {
       for (auto listener : actorForm->GetListeners()) {
         auto targetRefr = dynamic_cast<MpActor*>(listener);

@@ -137,6 +137,34 @@ TEST_CASE("Loads Conditions", "[espm]")
   REQUIRE(data.conditions[1].GetDefaultData().secondParameter == 0);
 }
 
+TEST_CASE("Loads factions", "[espm]")
+{
+  auto& br = l.GetBrowser();
+  espm::CompressedFieldsCache cache;
+
+  auto form = br.LookupById(0x00EB091);
+  REQUIRE(form.rec->GetType() == "FACT");
+  auto data = reinterpret_cast<const espm::FACT*>(form.rec)->GetData(cache);
+  REQUIRE(form.rec->GetEditorId(cache) ==
+          std::string("KhajiitCaravanFaction"));
+
+  REQUIRE(static_cast<uint32_t>(data.flags) ==
+          static_cast<uint32_t>(espm::FACT::Flags::CanBeOwner));
+
+  REQUIRE(data.interfactionRelations.size() == 2);
+  REQUIRE(data.interfactionRelations[0].factionFormId == 275865);
+  REQUIRE(data.interfactionRelations[0].unusedMod == 0);
+  REQUIRE(data.interfactionRelations[0].combat ==
+          espm::FACT::CombatState::Friend);
+  REQUIRE(data.interfactionRelations[1].factionFormId == 113856);
+  REQUIRE(data.interfactionRelations[1].unusedMod == 0);
+  REQUIRE(data.interfactionRelations[1].combat ==
+          espm::FACT::CombatState::Friend);
+
+  REQUIRE(data.crimeGold.arrest == 1);
+  REQUIRE(data.crimeGold.attackOnSight == 1);
+}
+
 TEST_CASE("Loads script-related subrecords for SovngardeWatcherStatue2",
           "[espm]")
 {
@@ -586,4 +614,20 @@ TEST_CASE("MGEF parsing", "[espm]")
   MyEspmProvider provider;
   auto data = espm::GetData<espm::MGEF>(0x51B15, &provider);
   REQUIRE(data.data.primaryAV == espm::ActorValue::DamageResist);
+}
+
+TEST_CASE("isFood flag is not set for heal potion", "[espm]")
+{
+  MyEspmProvider provider;
+  auto data = espm::GetData<espm::ALCH>(0x0003eade, &provider);
+  REQUIRE(data.isFood == false);
+  REQUIRE(data.isPoison == false);
+}
+
+TEST_CASE("isFood flag is set for sweet roll", "[espm]")
+{
+  MyEspmProvider provider;
+  auto data = espm::GetData<espm::ALCH>(0x00064B3D, &provider);
+  REQUIRE(data.isFood == true);
+  REQUIRE(data.isPoison == false);
 }

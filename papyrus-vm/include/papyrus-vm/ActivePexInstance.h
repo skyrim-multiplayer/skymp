@@ -15,6 +15,7 @@
 #include "VarValue.h"
 
 class VirtualMachine;
+class StackData;
 
 class ActivePexInstance
 {
@@ -39,7 +40,7 @@ public:
 
   VarValue StartFunction(FunctionInfo& function,
                          std::vector<VarValue>& arguments,
-                         std::shared_ptr<StackIdHolder> stackIdHolder);
+                         std::shared_ptr<StackData> stackData);
 
   static uint8_t GetTypeByName(std::string typeRef);
   std::string GetActiveStateName() const;

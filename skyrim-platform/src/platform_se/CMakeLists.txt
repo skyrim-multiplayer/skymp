@@ -74,10 +74,6 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
   )
 
   if(MSVC)
-    if(SKYRIM_SE)
-      add_compile_definitions(SKYRIMSE)
-    endif()
-
     file(GLOB_RECURSE platform_src "skyrim_platform/*")
     list(APPEND platform_src "${CMAKE_SOURCE_DIR}/.clang-format")
     list(APPEND platform_src ${CMAKE_CURRENT_BINARY_DIR}/include/Version.h)
@@ -111,6 +107,11 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
     target_precompile_headers(skyrim_platform_entry	PRIVATE	skyrim_platform_entry/PCH.h)
     apply_default_settings(TARGETS skyrim_platform_entry)
 
+    if(SKYRIM_SE)
+      target_compile_definitions(skyrim_platform PRIVATE SKYRIMSE)
+      target_compile_definitions(skyrim_platform_entry PRIVATE SKYRIMSE)
+    endif()
+
     set_target_properties(skyrim_platform SkyrimPlatformCEF skyrim_platform_entry PROPERTIES
       RUNTIME_OUTPUT_DIRECTORY "bin"
       PDB_OUTPUT_DIRECTORY "bin"
@@ -118,16 +119,16 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
 
     set(DEPENDENCIES_FOR_CUSTOM_TARGETS skyrim_platform SkyrimPlatformCEF skyrim_platform_entry)
 
-  add_papyrus_library_ck(
-    NAME TESModPlatformPsc
-    DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/psc"
-    OUTPUT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/pex"
-    COMPILER_EXECUTABLE_PATH "${SKYRIM_DIR}/Papyrus compiler/PapyrusCompiler.exe"
-  )
-  if(TARGET TESModPlatformPsc)
-    add_dependencies(TESModPlatformPsc ${DEPENDENCIES_FOR_CUSTOM_TARGETS})
-    list(APPEND DEPENDENCIES_FOR_CUSTOM_TARGETS TESModPlatformPsc)
-  endif()
+    add_papyrus_library_ck(
+      NAME TESModPlatformPsc
+      DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/psc"
+      OUTPUT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/pex"
+      COMPILER_EXECUTABLE_PATH "${SKYRIM_DIR}/Papyrus compiler/PapyrusCompiler.exe"
+    )
+    if(TARGET TESModPlatformPsc)
+      add_dependencies(TESModPlatformPsc ${DEPENDENCIES_FOR_CUSTOM_TARGETS})
+      list(APPEND DEPENDENCIES_FOR_CUSTOM_TARGETS TESModPlatformPsc)
+    endif()
 
     file(GLOB papyrus_sources "${CMAKE_CURRENT_SOURCE_DIR}/psc/*.psc")
     set(def "")

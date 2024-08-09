@@ -7,14 +7,13 @@
 #endif
 
 #include "IBuffer.h"
-#include "Loader.h"
 
-namespace espm {
+namespace Viet {
 
 class MappedBuffer : public IBuffer
 {
 public:
-  MappedBuffer(const fs::path& path);
+  MappedBuffer(const std::filesystem::path& path);
 
   ~MappedBuffer();
 
@@ -34,4 +33,4 @@ private:
   size_t size_;
 };
 
-} // namespace espm
+}

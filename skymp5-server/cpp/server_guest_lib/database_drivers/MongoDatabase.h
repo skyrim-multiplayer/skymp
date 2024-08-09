@@ -6,10 +6,17 @@ class MongoDatabase : public IDatabase
 {
 public:
   MongoDatabase(std::string uri_, std::string name_);
-  size_t Upsert(const std::vector<MpChangeForm>& changeForms) override;
+  size_t Upsert(
+    std::vector<std::optional<MpChangeForm>>&& changeForms) override;
   void Iterate(const IterateCallback& iterateCallback) override;
 
 private:
+  int GetDocumentCount();
+  std::optional<std::string> GetCombinedErrorOrNull(
+    const std::vector<std::optional<std::string>>& errorList);
+  std::string BytesToHexString(const uint8_t* bytes, size_t length);
+  std::string Sha256(const std::string& str);
+
   struct Impl;
   std::shared_ptr<Impl> pImpl;
 };

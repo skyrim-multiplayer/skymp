@@ -15,9 +15,7 @@ public:
   void OnCustomPacket(Networking::UserId userId,
                       const simdjson::dom::element& content) override;
 
-  bool OnMpApiEvent(const char* eventName,
-                    std::optional<simdjson::dom::element> args,
-                    std::optional<uint32_t> formId) override;
+  bool OnMpApiEvent(const GameModeEvent& event) override;
 
 private:
   ScampServer& server;

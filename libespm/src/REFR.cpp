@@ -36,6 +36,8 @@ REFR::Data REFR::GetData(
         } else if (dataSize == 4) {
           result.linkedRefId = *reinterpret_cast<const uint32_t*>(data);
         }
+      } else if (!std::memcmp(type, "XOWN", 4)) {
+        result.ownerFaction = *reinterpret_cast<const uint32_t*>(data);
       }
     },
     compressedFieldsCache);

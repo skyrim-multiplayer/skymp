@@ -40,7 +40,12 @@ export class ObjectReferenceEx {
     const caveGSecretDoor01 = 0x6f703;
 
     // You can also block for t === FormType.Flora || t === FormType.Tree, but I don't think it's necessary.
-    if (t === FormType.Container || isItem || t === FormType.NPC || (t === FormType.Door && self.getBaseObject()?.getFormID() !== caveGSecretDoor01)) {
+    if (t === FormType.Furniture
+      || t === FormType.Activator
+      || t === FormType.Container
+      || isItem
+      || t === FormType.NPC
+      || (t === FormType.Door && self.getBaseObject()?.getFormID() !== caveGSecretDoor01)) {
       self.blockActivation(true);
     } else {
       self.blockActivation(false);

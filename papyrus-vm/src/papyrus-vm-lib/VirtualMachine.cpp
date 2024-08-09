@@ -98,11 +98,13 @@ void VirtualMachine::SendEvent(std::shared_ptr<IGameObject> self,
     auto fn = scriptInstance->GetFunctionByName(
       eventName, scriptInstance->GetActiveStateName());
     if (fn.valid) {
-      auto stackIdHolder = std::make_shared<StackIdHolder>(*this);
-      if (enter)
-        enter(*stackIdHolder);
+      std::shared_ptr<StackData> stackData;
+      stackData.reset(new StackData{ StackIdHolder{ *this } });
+      if (enter) {
+        enter(*stackData);
+      }
       scriptInstance->StartFunction(
-        fn, const_cast<std::vector<VarValue>&>(arguments), stackIdHolder);
+        fn, const_cast<std::vector<VarValue>&>(arguments), stackData);
     }
   }
 }
@@ -115,8 +117,10 @@ void VirtualMachine::SendEvent(ActivePexInstance* instance,
   auto fn =
     instance->GetFunctionByName(eventName, instance->GetActiveStateName());
   if (fn.valid) {
+    std::shared_ptr<StackData> stackData;
+    stackData.reset(new StackData{ StackIdHolder{ *this } });
     instance->StartFunction(fn, const_cast<std::vector<VarValue>&>(arguments),
-                            std::make_shared<StackIdHolder>(*this));
+                            stackData);
   }
 }
 
@@ -140,15 +144,31 @@ int32_t StackIdHolder::GetStackId() const
   return stackId;
 }
 
+StackDepthHolder::StackDepthHolder() = default;
+
+size_t StackDepthHolder::GetStackDepth() const
+{
+  return depth;
+}
+
+void StackDepthHolder::IncreaseStackDepth()
+{
+  ++depth;
+}
+
+void StackDepthHolder::DecreaseStackDepth()
+{
+  --depth;
+}
+
 VarValue VirtualMachine::CallMethod(
   IGameObject* selfObj, const char* methodName,
-  std::vector<VarValue>& arguments,
-  std::shared_ptr<StackIdHolder> stackIdHolder,
+  std::vector<VarValue>& arguments, std::shared_ptr<StackData> stackData,
   const std::vector<std::shared_ptr<ActivePexInstance>>*
     activePexInstancesOverride)
 {
-  if (!stackIdHolder) {
-    stackIdHolder.reset(new StackIdHolder(*this));
+  if (!stackData) {
+    stackData.reset(new StackData{ StackIdHolder{ *this } });
   }
 
   if (!selfObj) {
@@ -175,8 +195,7 @@ VarValue VirtualMachine::CallMethod(
     }
 
     if (functionInfo.valid) {
-      return activeScript->StartFunction(functionInfo, arguments,
-                                         stackIdHolder);
+      return activeScript->StartFunction(functionInfo, arguments, stackData);
     }
   }
 
@@ -187,7 +206,7 @@ VarValue VirtualMachine::CallMethod(
   while (1) {
     if (auto f = nativeFunctions[ToLower(base)][ToLower(methodName)]) {
       auto self = VarValue(selfObj);
-      self.SetMetaStackIdHolder(stackIdHolder);
+      self.SetMetaStackIdHolder(stackData->stackIdHolder);
       return f(self, arguments);
     }
     auto it = allLoadedScripts.find(base);
@@ -204,13 +223,13 @@ VarValue VirtualMachine::CallMethod(
   throw std::runtime_error(e);
 }
 
-VarValue VirtualMachine::CallStatic(
-  const std::string& className, const std::string& functionName,
-  std::vector<VarValue>& arguments,
-  std::shared_ptr<StackIdHolder> stackIdHolder)
+VarValue VirtualMachine::CallStatic(const std::string& className,
+                                    const std::string& functionName,
+                                    std::vector<VarValue>& arguments,
+                                    std::shared_ptr<StackData> stackData)
 {
-  if (!stackIdHolder) {
-    stackIdHolder.reset(new StackIdHolder(*this));
+  if (!stackData) {
+    stackData.reset(new StackData{ StackIdHolder{ *this } });
   }
 
   VarValue result = VarValue::None();
@@ -223,7 +242,7 @@ VarValue VirtualMachine::CallStatic(
 
   if (f) {
     auto self = VarValue::None();
-    self.SetMetaStackIdHolder(stackIdHolder);
+    self.SetMetaStackIdHolder(stackData->stackIdHolder);
     return f(self, arguments);
   }
 
@@ -254,7 +273,7 @@ VarValue VirtualMachine::CallStatic(
                                std::string(functionName) + "'");
     }
 
-    result = instance->StartFunction(function, arguments, stackIdHolder);
+    result = instance->StartFunction(function, arguments, stackData);
   }
   if (!function.valid) {
     throw std::runtime_error("Function is not valid - '" +

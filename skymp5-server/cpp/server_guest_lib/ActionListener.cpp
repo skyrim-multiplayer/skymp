@@ -13,29 +13,13 @@
 #include "MsgType.h"
 #include "UserMessageOutput.h"
 #include "WorldState.h"
+#include "gamemode_events/CustomEvent.h"
 #include "script_objects/EspmGameObject.h"
 #include <fmt/format.h>
 #include <spdlog/spdlog.h>
 #include <unordered_set>
 
 #include "UpdateEquipmentMessage.h"
-
-namespace {
-void SendHostStop(PartOne& partOne, Networking::UserId badHosterUserId,
-                  MpObjectReference& remote)
-{
-  auto remoteAsActor = dynamic_cast<MpActor*>(&remote);
-
-  uint64_t longFormId = remote.GetFormId();
-  if (remoteAsActor && longFormId < 0xff000000) {
-    longFormId += 0x100000000;
-  }
-
-  Networking::SendFormatted(&partOne.GetSendTarget(), badHosterUserId,
-                            R"({ "type": "hostStop", "target": %llu })",
-                            longFormId);
-}
-}
 
 MpActor* ActionListener::SendToNeighbours(
   uint32_t idx, const simdjson::dom::element& jMessage,
@@ -49,14 +33,28 @@ MpActor* ActionListener::SendToNeighbours(
     return nullptr;
   }
 
-  MpActor* actor =
-    dynamic_cast<MpActor*>(partOne.worldState.LookupFormByIdx(idx));
+  MpForm* form = partOne.worldState.LookupFormByIdx(idx);
+  MpActor* actor = form ? form->AsActor() : nullptr;
   if (!actor) {
     spdlog::error("SendToNeighbours - Target actor doesn't exist");
     return nullptr;
   }
 
   if (idx != myActor->GetIdx()) {
+    // Possible fix for "players link to each other" bug
+    // See also PartOne::SetUserActor
+    Networking::UserId actorsOwningUserId =
+      partOne.serverState.UserByActor(actor);
+    if (actorsOwningUserId != Networking::InvalidUserId) {
+      spdlog::error("SendToNeighbours - No permission to update actor {:x} "
+                    "(already owned by user {})",
+                    actor->GetFormId(), actorsOwningUserId);
+      partOne.SendHostStop(userId, *actor);
+
+      partOne.worldState.hosters.erase(actor->GetFormId());
+      return nullptr;
+    }
+
     auto it = partOne.worldState.hosters.find(actor->GetFormId());
     if (it == partOne.worldState.hosters.end() ||
         it->second != myActor->GetFormId()) {
@@ -64,9 +62,10 @@ MpActor* ActionListener::SendToNeighbours(
         spdlog::warn("SendToNeighbours - idx=0, <Message>::ReadJson or "
                      "similar is probably incorrect");
       }
-      spdlog::error("SendToNeighbours - No permission to update actor {:x}",
-                    actor->GetFormId());
-      SendHostStop(partOne, userId, *actor);
+      spdlog::error(
+        "SendToNeighbours - No permission to update actor {:x} (not a hoster)",
+        actor->GetFormId());
+      partOne.SendHostStop(userId, *actor);
       return nullptr;
     }
   }
@@ -101,7 +100,7 @@ void ActionListener::OnUpdateMovement(const RawMessageData& rawMsgData,
                                       uint32_t idx, const NiPoint3& pos,
                                       const NiPoint3& rot, bool isInJumpState,
                                       bool isWeapDrawn, bool isBlocking,
-                                      uint32_t worldOrCell)
+                                      uint32_t worldOrCell, RunMode runMode)
 {
   auto actor = SendToNeighbours(idx, rawMsgData);
   if (actor) {
@@ -120,8 +119,14 @@ void ActionListener::OnUpdateMovement(const RawMessageData& rawMsgData,
     };
 
     auto& espmFiles = actor->GetParent()->espmFiles;
+
+    const auto& currentPos = actor->GetPos();
+    const auto& currentRot = actor->GetAngle();
+    const auto& currentCellOrWorld = actor->GetCellOrWorld();
+
     if (!MovementValidation::Validate(
-          *actor, teleportFlag ? reallyWrongPos : pos,
+          currentPos, currentRot, currentCellOrWorld,
+          teleportFlag ? reallyWrongPos : pos,
           FormDesc::FromFormId(worldOrCell, espmFiles),
           isMe ? static_cast<IMessageOutput&>(msgOutput)
                : static_cast<IMessageOutput&>(msgOutputDummy),
@@ -135,14 +140,20 @@ void ActionListener::OnUpdateMovement(const RawMessageData& rawMsgData,
       actor->ResetBlockCount();
     }
 
-    actor->SetPos(pos);
-    actor->SetAngle(rot);
+    actor->SetPos(pos, SetPosMode::CalledByUpdateMovement);
+    actor->SetAngle(rot, SetAngleMode::CalledByUpdateMovement);
     actor->SetAnimationVariableBool("bInJumpState", isInJumpState);
     actor->SetAnimationVariableBool("_skymp_isWeapDrawn", isWeapDrawn);
     actor->SetAnimationVariableBool("IsBlocking", isBlocking);
+
     if (actor->GetBlockCount() == 5) {
       actor->SetIsBlockActive(false);
       actor->ResetBlockCount();
+    }
+
+    if (runMode != RunMode::Standing) {
+      // otherwise, people will slide in anims after quitting furniture
+      actor->SetLastAnimEvent(std::nullopt);
     }
 
     if (partOne.worldState.lastMovUpdateByIdx.size() <= idx) {
@@ -158,19 +169,24 @@ void ActionListener::OnUpdateAnimation(const RawMessageData& rawMsgData,
                                        uint32_t idx,
                                        const AnimationData& animationData)
 {
-  MpActor* actor = partOne.serverState.ActorByUser(rawMsgData.userId);
-  if (!actor) {
+  MpActor* myActor = partOne.serverState.ActorByUser(rawMsgData.userId);
+  if (!myActor) {
     return;
   }
 
-  WorldState* espmProvider = actor->GetParent();
-  if (!espmProvider) {
+  auto targetActor = SendToNeighbours(idx, rawMsgData);
+
+  if (!targetActor) {
     return;
   }
 
-  partOne.animationSystem.Process(actor, animationData);
+  // Only process animation system and set last anim event for player's actor
+  if (targetActor != myActor) {
+    return;
+  }
 
-  SendToNeighbours(idx, rawMsgData);
+  partOne.animationSystem.Process(targetActor, animationData);
+  targetActor->SetLastAnimEvent(animationData);
 }
 
 void ActionListener::OnUpdateAppearance(const RawMessageData& rawMsgData,
@@ -538,7 +554,7 @@ void ActionListener::OnHostAttempt(const RawMessageData& rawMsgData,
 
   auto& remote = partOne.worldState.GetFormAt<MpObjectReference>(remoteId);
 
-  auto user = partOne.serverState.UserByActor(dynamic_cast<MpActor*>(&remote));
+  auto user = partOne.serverState.UserByActor(remote.AsActor());
   if (user != Networking::InvalidUserId) {
     return;
   }
@@ -567,7 +583,7 @@ void ActionListener::OnHostAttempt(const RawMessageData& rawMsgData,
     partOne.worldState.lastMovUpdateByIdx[remoteIdx] =
       std::chrono::system_clock::now();
 
-    auto remoteAsActor = dynamic_cast<MpActor*>(&remote);
+    auto remoteAsActor = remote.AsActor();
 
     if (remoteAsActor) {
       remoteAsActor->EquipBestWeapon();
@@ -600,8 +616,9 @@ void ActionListener::OnHostAttempt(const RawMessageData& rawMsgData,
         remote.SendToUser(msg, true); // in fact sends to hoster
       });
 
-    if (MpActor* prevHosterActor = dynamic_cast<MpActor*>(
-          partOne.worldState.LookupFormById(prevHoster).get())) {
+    auto& prevHosterForm = partOne.worldState.LookupFormById(prevHoster);
+    if (MpActor* prevHosterActor =
+          prevHosterForm ? prevHosterForm->AsActor() : nullptr) {
       auto prevHosterUser = partOne.serverState.UserByActor(prevHosterActor);
       if (prevHosterUser != Networking::InvalidUserId &&
           prevHosterUser != rawMsgData.userId) {
@@ -627,7 +644,9 @@ void ActionListener::OnCustomEvent(const RawMessageData& rawMsgData,
   }
 
   for (auto& listener : partOne.GetListeners()) {
-    listener->OnMpApiEvent(eventName, args, ac->GetFormId());
+    CustomEvent customEvent(ac->GetFormId(), eventName,
+                            simdjson::minify(args));
+    listener->OnMpApiEvent(customEvent);
   }
 }
 
@@ -792,9 +811,9 @@ bool IsDistanceValid(const MpActor& actor, const MpActor& targetActor,
         auto weapDNAM =
           espm::GetData<espm::WEAP>(hitData.source, worldState).weapDNAM;
         if (weapDNAM->animType == espm::WEAP::AnimType::Bow) {
-          reach = kExteriorCellWidthUnits;
+          reach = kExteriorCellWidthUnits * 2;
         } else if (weapDNAM->animType == espm::WEAP::AnimType::Crossbow) {
-          reach = kExteriorCellWidthUnits;
+          reach = kExteriorCellWidthUnits * 2;
         }
       }
     }
@@ -906,7 +925,7 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
   args[6] = VarValue(hitData.isHitBlocked);  // abHitBlocked
   refr->SendPapyrusEvent("OnHit", args.data(), args.size());
 
-  auto targetActorPtr = dynamic_cast<MpActor*>(refr.get());
+  auto targetActorPtr = refr->AsActor();
   if (!targetActorPtr) {
     return; // Not an actor, damage calculation is not needed
   }

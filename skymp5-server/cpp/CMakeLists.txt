@@ -109,7 +109,12 @@ find_package(mongoc-1.0 CONFIG REQUIRED)
 
 find_package(OpenSSL REQUIRED)
 
-find_package(bsa CONFIG REQUIRED)
+# MacOS not supported by rsm-bsa
+if(NOT APPLE)
+  find_package(bsa CONFIG REQUIRED)
+endif()
+
+find_package(libzippp REQUIRED)
 
 foreach(target ${VCPKG_DEPENDENT})
   target_include_directories(${target} PUBLIC ${CATCH_INCLUDE_DIR})
@@ -121,12 +126,18 @@ foreach(target ${VCPKG_DEPENDENT})
   target_link_libraries(${target} PUBLIC ZLIB::ZLIB)
   target_link_libraries(${target} PUBLIC mongo::mongocxx_static mongo::bsoncxx_static mongo::mongoc_static mongo::bson_static)
   target_link_libraries(${target} PUBLIC OpenSSL::SSL OpenSSL::Crypto)
-  target_link_libraries(${target} PUBLIC bsa::bsa)
-
-  if(UNIX)
-    target_link_libraries(${target} PUBLIC pthread resolv rt m)
+  if(TARGET bsa::bsa)
+    target_link_libraries(${target} PUBLIC bsa::bsa)
+  else()
+    target_compile_definitions(${target} PUBLIC NO_BSA=1)
   endif()
-  if(WIN32)
+  target_link_libraries(${target} PUBLIC libzippp::libzippp)
+
+  if(APPLE)
+    target_link_libraries(${target} PUBLIC pthread resolv m)
+  elseif(WIN32)
     target_link_libraries(${target} PUBLIC Secur32.lib Crypt32.lib Dnsapi.lib Bcrypt.lib)
+  elseif(UNIX)
+    target_link_libraries(${target} PUBLIC pthread resolv rt m)
   endif()
 endforeach()

@@ -17,7 +17,7 @@ void MpClientPlugin::CreateClient(State& state, const char* targetHostname,
   // Keep in sync with installer code
   static const std::string kPasswordPath =
     "Data/Platform/Distribution/password";
-  static const int kTimeoutMs = 4000;
+  static const int kTimeoutMs = 60000;
   try {
     password = Viet::ReadFileIntoString(kPasswordPath);
 

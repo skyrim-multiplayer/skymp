@@ -7,6 +7,7 @@
 #include "FileDatabase.h"
 #include "MigrationDatabase.h"
 #include "MongoDatabase.h"
+#include "ZipDatabase.h"
 
 std::shared_ptr<IDatabase> DatabaseFactory::Create(
   nlohmann::json settings, std::shared_ptr<spdlog::logger> logger)
@@ -40,6 +41,15 @@ std::shared_ptr<IDatabase> DatabaseFactory::Create(
     auto oldDatabase = Create(from, logger);
     auto newDatabase = Create(to, logger);
     return std::make_shared<MigrationDatabase>(newDatabase, oldDatabase);
+  }
+
+  if (databaseDriver == "zip") {
+    auto databaseName = settings.count("databaseName")
+      ? settings["databaseName"].get<std::string>()
+      : std::string("world");
+
+    logger->info("Using zip with name '" + databaseName + "'");
+    return std::make_shared<ZipDatabase>(databaseName, logger);
   }
 
   throw std::runtime_error("Unrecognized databaseDriver: " + databaseDriver);

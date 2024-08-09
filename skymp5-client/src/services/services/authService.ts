@@ -48,6 +48,7 @@ export class AuthService extends ClientListener {
     this.controller.emitter.on("customPacketMessage2", (e) => this.onCustomPacketMessage2(e));
     this.controller.on("browserMessage", (e) => this.onBrowserMessage(e));
     this.controller.on("tick", () => this.onTick());
+    this.controller.once("update", () => this.onceUpdate());
   }
 
   private onAuthNeeded(e: AuthNeededEvent) {
@@ -84,6 +85,15 @@ export class AuthService extends ClientListener {
         logTrace(this, `Received createActorMessage for self, resetting widgets`);
         this.sp.browser.executeJavaScript('window.skyrimPlatform.widgets.set([]);');
         this.authDialogOpen = false;
+
+        // The idea is to write authData to disk after auth dialog is closed
+        // This is because write to plugins dir triggers hotreload, which in turn breaks the auth dialog
+        // So we need to write to disk after dialog is closed
+        if (this.authDataWriteTask) {
+          const task = this.authDataWriteTask.authDataToWrite;
+          this.controller.once("update", () => this.writeAuthDataToDisk(task));
+          this.authDataWriteTask = null;
+        }
       }
       else {
         logTrace(this, `Received createActorMessage for self, but auth dialog was not open so not resetting widgets`);
@@ -179,11 +189,11 @@ export class AuthService extends ClientListener {
         break;
       case events.authAttempt:
         if (authData === null) {
-          browserState.comment = 'сначала войдите через discord';
+          browserState.comment = 'сначала войдите';
           this.refreshWidgets();
           break;
         }
-        this.writeAuthDataToDisk(authData);
+        this.authDataWriteTask = { authDataToWrite: authData };
         this.controller.emitter.emit("authAttempt", { authGameData: { remote: authData } });
 
         this.authAttemptProgressIndicator = true;
@@ -191,7 +201,8 @@ export class AuthService extends ClientListener {
 
         break;
       case events.clearAuthData:
-        this.writeAuthDataToDisk(null);
+        // Doesn't seem to be used
+        this.authDataWriteTask = { authDataToWrite: null };
         break;
       case events.openGithub:
         this.sp.win32.loadUrl(this.githubUrl);
@@ -200,7 +211,7 @@ export class AuthService extends ClientListener {
         this.sp.win32.loadUrl(this.patreonUrl);
         break;
       case events.updateRequired:
-        this.sp.win32.loadUrl("https://skymp.net/");
+        this.sp.win32.loadUrl("https://skymp.net/AlternativeDownload");
         break;
       case events.backToLogin:
         this.sp.browser.executeJavaScript(new FunctionInfo(this.browsersideWidgetSetter).getText({ events, browserState, authData: authData }));
@@ -269,7 +280,7 @@ export class AuthService extends ClientListener {
                 if (error) {
                   browserState.failCount = 0;
                   browserState.comment = (error);
-                  timersService.setTimeout(() => this.checkLoginState(), 1.5 + Math.random() * 2);
+                  timersService.setTimeout(() => this.checkLoginState(), Math.floor((1.5 + Math.random() * 2) * 1000));
                   this.refreshWidgets();
                   return;
                 }
@@ -287,7 +298,7 @@ export class AuthService extends ClientListener {
             case 401: // Unauthorized
               browserState.failCount = 0;
               browserState.comment = '';//(`Still waiting...`);
-              timersService.setTimeout(() => this.checkLoginState(), 1.5 + Math.random() * 2);
+              timersService.setTimeout(() => this.checkLoginState(), Math.floor((1.5 + Math.random() * 2) * 1000));
               break;
             case 403: // Forbidden
             case 404: // Not found
@@ -297,7 +308,7 @@ export class AuthService extends ClientListener {
             default:
               ++browserState.failCount;
               browserState.comment = `Server returned ${response.status.toString() || "???"} "${response.body || response.error}"`;
-              timersService.setTimeout(() => this.checkLoginState(), 1.5 + Math.random() * 2);
+              timersService.setTimeout(() => this.checkLoginState(), Math.floor((1.5 + Math.random() * 2) * 1000));
           }
         });
   };
@@ -314,7 +325,8 @@ export class AuthService extends ClientListener {
     logTrace(this, `Reading`, this.pluginAuthDataName, `from disk`);
 
     try {
-      const data = this.sp.getPluginSourceCode(this.pluginAuthDataName);
+      // @ts-expect-error
+      const data = this.sp.getPluginSourceCode(this.pluginAuthDataName, "PluginsNoLoad");
 
       if (!data) {
         logTrace(this, `Read empty`, this.pluginAuthDataName, `returning null`);
@@ -336,7 +348,9 @@ export class AuthService extends ClientListener {
     try {
       this.sp.writePlugin(
         this.pluginAuthDataName,
-        content
+        content,
+        // @ts-expect-error
+        "PluginsNoLoad"
       );
     }
     catch (e) {
@@ -368,7 +382,12 @@ export class AuthService extends ClientListener {
         },
         {
           type: "text",
-          text: "спешите скачать на skymp.net",
+          text: "спешите скачать на",
+          tags: []
+        },
+        {
+          type: "text",
+          text: "skymp.net",
           tags: []
         },
         {
@@ -502,6 +521,7 @@ export class AuthService extends ClientListener {
       this.controller.once("update", () => {
         this.sp.Game.disablePlayerControls(true, true, true, true, true, true, true, true, 0);
       });
+      this.isListenBrowserMessage = true;
     }
   }
 
@@ -555,18 +575,25 @@ export class AuthService extends ClientListener {
     // TODO: Busy waiting is bad. Should be replaced with some kind of event
     const maxLoggingDelay = 15000;
     if (this.loggingStartMoment && Date.now() - this.loggingStartMoment > maxLoggingDelay) {
-      // logError(this, 'Logging in failed. Reconnecting.');
+      logTrace(this, 'Max logging delay reached received');
 
-      // browserState.comment = 'проблемы с авторизацией';
-      // this.refreshWidgets();
+      if (this.playerEverSawActualGameplay) {
+        logTrace(this, 'Player saw actual gameplay, reconnecting');
+        this.loggingStartMoment = 0;
+        this.controller.lookupListener(NetworkingService).reconnect();
+        // TODO: should we prompt user to relogin?
+      }
+      else {
+        logTrace(this, 'Player never saw actual gameplay, showing login dialog');
+        this.loggingStartMoment = 0;
+        this.authAttemptProgressIndicator = false;
+        this.controller.lookupListener(NetworkingService).close();
+        browserState.comment = "";
+        browserState.loginFailedReason = 'технические шоколадки\nпопробуйте еще раз\nпожалуйста\nили напишите нам в discord';
+        this.sp.browser.executeJavaScript(new FunctionInfo(this.loginFailedWidgetSetter).getText({ events, browserState, authData: authData }));
 
-      // this.controller.lookupListener(NetworkingService).reconnect();
-      this.loggingStartMoment = 0;
-      this.authAttemptProgressIndicator = false;
-      this.controller.lookupListener(NetworkingService).close();
-      logTrace(this, 'max logging delay reached received');
-      browserState.loginFailedReason = 'технические шоколадки\nпопробуйте еще раз\nпожалуйста\nили напишите нам в discord';
-      this.sp.browser.executeJavaScript(new FunctionInfo(this.loginFailedWidgetSetter).getText({ events, browserState, authData: authData }));
+        authData = null;
+      }
     }
 
     if (this.authAttemptProgressIndicator) {
@@ -583,6 +610,10 @@ export class AuthService extends ClientListener {
       browserState.comment = "подключение" + dot;
       this.refreshWidgets();
     }
+  }
+
+  private onceUpdate() {
+    this.playerEverSawActualGameplay = true;
   }
 
   // private showConnectionError() {
@@ -610,6 +641,10 @@ export class AuthService extends ClientListener {
 
   private authAttemptProgressIndicator = false;
   private authAttemptProgressIndicatorCounter = 0;
+
+  private authDataWriteTask: { authDataToWrite: RemoteAuthGameData | null } | null = null;
+
+  private playerEverSawActualGameplay = false;
 
   private readonly githubUrl = "https://github.com/skyrim-multiplayer/skymp";
   private readonly patreonUrl = "https://www.patreon.com/skymp";

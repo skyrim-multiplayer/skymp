@@ -1,6 +1,8 @@
-#include "libespm/AllocatedBuffer.h"
+#include "AllocatedBuffer.h"
 
-namespace espm {
+#include <fstream>
+
+namespace Viet {
 
 AllocatedBuffer::AllocatedBuffer(const std::filesystem::path& path)
   : data()
@@ -10,7 +12,7 @@ AllocatedBuffer::AllocatedBuffer(const std::filesystem::path& path)
 
   std::ifstream f(path.string(), std::ios::binary);
   if (!f.read(data.data(), size)) {
-    throw std::runtime_error("[espm] can't read " + path.string());
+    throw std::runtime_error("[AllocatedBuffer] can't read " + path.string());
   }
 }
 
@@ -23,5 +25,4 @@ size_t AllocatedBuffer::GetLength() const
 {
   return data.size();
 }
-
-} // namespace espm
+}

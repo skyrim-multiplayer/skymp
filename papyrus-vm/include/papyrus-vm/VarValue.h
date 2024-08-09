@@ -85,7 +85,7 @@ public:
   std::shared_ptr<std::string> stringHolder;
 
   int32_t GetMetaStackId() const;
-  void SetMetaStackIdHolder(std::shared_ptr<StackIdHolder> stackIdHolder);
+  void SetMetaStackIdHolder(const StackIdHolder& stackIdHolder);
   static VarValue AttachTestStackId(VarValue original = VarValue::None(),
                                     int32_t stackId = 108);
 
