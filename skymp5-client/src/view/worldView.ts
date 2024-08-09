@@ -65,7 +65,7 @@ export class WorldView extends ClientListener {
       this.oldView = undefined;
       logTrace(this, 'Previous View destroyed');
     }
-    this.waitOneSecondAndAllowFormViewUpdate();
+    this.waitGameTimeAndAllowFormViewUpdate(1.0);
   }
 
   private resetAllFormViewsIfPlayerChangedWorld() {
@@ -88,19 +88,30 @@ export class WorldView extends ClientListener {
   // Default nord in Race Menu will have very ugly face
   // If other players are spawning when we show this menu
   // TODO: separate listener
-  private waitOneSecondAndAllowFormViewUpdate() {
+  public waitGameTimeAndAllowFormViewUpdate(seconds: number) {
     // Wait 1s game time (time spent in Race Menu isn't counted)
-    this.sp.Utility.wait(1).then(() => {
+    this.sp.Utility.wait(seconds).then(() => {
       this.state.allowUpdate = true;
       logTrace(this, 'Update is now allowed');
     });
+  }
+
+  public setFormViewUpdateAllowed(allowed: boolean) {
+    this.state.allowUpdate = allowed;
+    logTrace(this, 'Update is now', allowed ? 'allowed' : 'disallowed');
   }
 
   private updateWorld(model: WorldModel): void {
     const { settings } = this.sp;
     const state = this.state;
 
-    if (!state.allowUpdate) return;
+    if (!state.allowUpdate) {
+      model = {
+        forms: [],
+        playerCharacterFormIdx: model.playerCharacterFormIdx,
+        playerCharacterRefrId: model.playerCharacterRefrId
+      }
+    }
 
     const skipUpdates = settings['skymp5-client']['skipUpdates'];
 

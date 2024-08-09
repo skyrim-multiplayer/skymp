@@ -7,6 +7,7 @@ import { ClientListener, CombinedController, Sp } from "./clientListener";
 // TODO: refactor worldViewMisc into service
 import { remoteIdToLocalId } from '../../view/worldViewMisc';
 import { logError, logTrace } from "../../logging";
+import { WorldView } from "../../view/worldView";
 
 export class SpSnippetService extends ClientListener {
     constructor(private sp: Sp, private controller: CombinedController) {
@@ -73,6 +74,21 @@ export class SpSnippetService extends ClientListener {
                 else {
                     logError(this, "Encountered SetDisplayName with non-string argument", newName);
                 }
+            }
+        }
+
+        if (classLowerCase === "game") {
+            if (functionLowerCase === "showracemenu" || functionLowerCase === "showlimitedracemenu") {
+                logTrace(this, "showracemenu called");
+                const worldView = this.controller.lookupListener(WorldView);
+                worldView.setFormViewUpdateAllowed(false);
+
+                logTrace(this, "Waiting 1.0s before calling showracemenu");
+                this.sp.Utility.wait(1.0).then(() => {
+                    this.runStatic(snippet);
+                    worldView.waitGameTimeAndAllowFormViewUpdate(1.0);
+                });
+                return;
             }
         }
 
