@@ -179,15 +179,11 @@ void MpActor::EquipBestWeapon()
   }
 
   SetEquipment(newEq.ToJson().dump());
-  for (auto listener : GetListeners()) {
-    auto actor = dynamic_cast<MpActor*>(listener);
-    if (!actor) {
-      continue;
-    }
+  for (auto listener : GetActorListeners()) {
     UpdateEquipmentMessage msg;
     msg.data = newEq.ToJson();
     msg.idx = GetIdx();
-    actor->SendToUser(msg, true);
+    listener->SendToUser(msg, true);
   }
 }
 
@@ -451,7 +447,7 @@ bool MpActor::OnEquip(uint32_t baseId)
   }
 
   const bool hasItem = isSpell
-    ? GetChangeForm().learnedSpells.IsSpellLearned(baseId)
+    ? ChangeForm().learnedSpells.IsSpellLearned(baseId)
     : GetInventory().GetItemCount(baseId) > 0;
 
   if (!hasItem) {
@@ -470,11 +466,10 @@ bool MpActor::OnEquip(uint32_t baseId)
     j.push_back(false);
 
     std::string serializedArgs = j.dump();
-    for (auto listener : GetListeners()) {
-      auto targetRefr = dynamic_cast<MpActor*>(listener);
-      if (targetRefr && targetRefr != this) {
+    for (auto listener : GetActorListeners()) {
+      if (listener != this) {
         SpSnippet("Actor", "EquipItem", serializedArgs.data(), GetFormId())
-          .Execute(targetRefr, SpSnippetMode::kNoReturnResult);
+          .Execute(listener, SpSnippetMode::kNoReturnResult);
       }
     }
   } else if (isBook) {
@@ -790,6 +785,16 @@ const std::vector<FormDesc>& MpActor::GetTemplateChain() const
 bool MpActor::IsCreatedAsPlayer() const
 {
   return GetFormId() >= 0xff000000 && GetBaseId() <= 0x7;
+}
+
+const ActorValues& MpActor::GetActorValues() const
+{
+  return ChangeForm().actorValues;
+}
+
+int32_t MpActor::GetProfileId() const
+{
+  return ChangeForm().profileId;
 }
 
 void MpActor::SendAndSetDeathState(bool isDead, bool shouldTeleport)

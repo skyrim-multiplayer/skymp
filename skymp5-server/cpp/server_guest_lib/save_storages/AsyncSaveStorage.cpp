@@ -119,7 +119,9 @@ void AsyncSaveStorage::Upsert(
   const UpsertCallback& cb)
 {
   std::lock_guard l(pImpl->share3.m);
-  pImpl->share3.upsertTasks.push_back({ changeForms, cb });
+  pImpl->share3.upsertTasks.push_back(AsyncSaveStorage::Impl::UpsertTask());
+  pImpl->share3.upsertTasks.back().changeForms = std::move(changeForms);
+  pImpl->share3.upsertTasks.back().callback = cb;
 }
 
 uint32_t AsyncSaveStorage::GetNumFinishedUpserts() const

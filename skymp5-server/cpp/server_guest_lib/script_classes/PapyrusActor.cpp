@@ -167,13 +167,10 @@ VarValue PapyrusActor::SetAlpha(VarValue self,
     // neigbours by sending papyrus functions to them.
     auto funcName = "SetAlpha";
     auto serializedArgs = SpSnippetFunctionGen::SerializeArguments(arguments);
-    for (auto listener : selfRefr->GetListeners()) {
-      auto targetRefr = dynamic_cast<MpActor*>(listener);
-      if (targetRefr) {
-        SpSnippet(GetName(), funcName, serializedArgs.data(),
-                  selfRefr->GetFormId())
-          .Execute(targetRefr, SpSnippetMode::kNoReturnResult);
-      }
+    for (auto listener : selfRefr->GetActorListeners()) {
+      SpSnippet(GetName(), funcName, serializedArgs.data(),
+                selfRefr->GetFormId())
+        .Execute(listener, SpSnippetMode::kNoReturnResult);
     }
   }
   return VarValue::None();
