@@ -498,8 +498,8 @@ void UseCraftRecipe(MpActor* me, const espm::COBJ* recipeUsed,
 
   auto recipeId = espm::utils::GetMappedId(recipeUsed->GetId(), *mapping);
 
-  CraftEvent craftEvent(me, outputFormId, recipeData.outputCount,
-                        recipeId, entries);
+  CraftEvent craftEvent(me, outputFormId, recipeData.outputCount, recipeId,
+                        entries);
 
   craftEvent.Fire(me->GetParent());
 }

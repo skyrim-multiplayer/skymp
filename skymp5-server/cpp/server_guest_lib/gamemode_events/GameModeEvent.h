@@ -25,6 +25,6 @@ public:
   bool Fire(WorldState* worldState);
 
 protected:
-  virtual void OnFireBlocked(WorldState* worldState) {};
+  virtual void OnFireBlocked(WorldState* worldState) { return; }
   virtual void OnFireSuccess(WorldState* worldState) = 0;
 };
