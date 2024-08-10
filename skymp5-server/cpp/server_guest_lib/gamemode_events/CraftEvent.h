@@ -1,38 +1,30 @@
 #pragma once
 #include "GameModeEvent.h"
 
+#include "Inventory.h"
+
+class MpActor;
+
 class CraftEvent : public GameModeEvent
 {
 public:
-  CraftEvent(uint32_t actorId_, uint32_t craftedItemBaseId_, uint32_t count_,
-             uint32_t recipeId_)
-    : actorId(actorId_)
-    , craftedItemBaseId(craftedItemBaseId_)
-    , count(count_)
-    , recipeId(recipeId_)
-  {
-  }
+  CraftEvent(MpActor* actor_, uint32_t craftedItemBaseId_, uint32_t count_,
+             uint32_t recipeId_,
+             const std::vector<Inventory::Entry>& entries_);
 
-  const char* GetName() const override { return "onCraft"; }
+  const char* GetName() const override;
 
-  std::string GetArgumentsJsonArray() const override
-  {
-    std::string result;
-    result += "[";
-    result += std::to_string(actorId);
-    result += ",";
-    result += std::to_string(craftedItemBaseId);
-    result += ",";
-    result += std::to_string(count);
-    result += ",";
-    result += std::to_string(recipeId);
-    result += "]";
-    return result;
-  }
+  std::string GetArgumentsJsonArray() const override;
 
 private:
-  uint32_t actorId = 0;
+  void OnFireSuccess(WorldState* worldState) override;
+
+  // event arguments
+  MpActor* actor = 0;
   uint32_t craftedItemBaseId = 0;
   uint32_t count = 0;
   uint32_t recipeId = 0;
+
+  // OnFireSuccess-specific arguments
+  const std::vector<Inventory::Entry>& entries;
 };

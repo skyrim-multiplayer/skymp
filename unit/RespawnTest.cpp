@@ -68,7 +68,7 @@ TEST_CASE("DeathState packed is correct if actor is respawning", "[Respawn]")
   REQUIRE(ac.IsDead() == false);
   REQUIRE(ac.GetChangeForm().actorValues.healthPercentage == 1.f);
 
-  // TODO: should probably not sending to ourselves. see also MpActor::Respawn
+  // TODO: should probably not sending to ourselves. see also RespawnEvent.cpp
   nlohmann::json message2 = p.Messages()[1].j;
   REQUIRE(message2["t"] == MsgType::UpdateProperty);
 

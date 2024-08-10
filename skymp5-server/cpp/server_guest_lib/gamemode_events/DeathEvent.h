@@ -1,29 +1,20 @@
 #pragma once
 #include "GameModeEvent.h"
 
+class MpActor;
+
 class DeathEvent : public GameModeEvent
 {
 public:
-  DeathEvent(uint32_t actorId_, uint32_t killerId_)
-    : actorId(actorId_)
-    , killerId(killerId_)
-  {
-  }
+  DeathEvent(MpActor* actor_, MpActor* optionalKiller_);
 
-  const char* GetName() const override { return "onDeath"; }
+  const char* GetName() const override;
 
-  std::string GetArgumentsJsonArray() const override
-  {
-    std::string result;
-    result += "[";
-    result += std::to_string(actorId);
-    result += ",";
-    result += std::to_string(killerId);
-    result += "]";
-    return result;
-  }
+  std::string GetArgumentsJsonArray() const override;
 
 private:
-  uint32_t actorId = 0;
-  uint32_t killerId = 0;
+  void OnFireSuccess(WorldState*) override;
+
+  MpActor* actor = nullptr;
+  MpActor* optionalKiller = nullptr;
 };

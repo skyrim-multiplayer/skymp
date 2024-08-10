@@ -91,8 +91,11 @@ bool GetIsItemWithLightCarryableFlagChecked(
 VarValue PapyrusObjectReference::AddItem(
   VarValue self, const std::vector<VarValue>& arguments)
 {
-  if (arguments.size() < 3)
+  if (arguments.size() < 3) {
+    spdlog::error("PapyrusObjectReference::AddItem - not enough arguments");
     return VarValue::None();
+  }
+
   const auto& item = GetRecordPtr(arguments[0]);
   auto count = static_cast<int>(arguments[1]);
   bool silent = static_cast<bool>(arguments[2].CastToBool());

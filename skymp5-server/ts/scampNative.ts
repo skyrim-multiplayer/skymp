@@ -48,7 +48,9 @@ export interface ScampServer {
 }
 
 export const createScampServer = (serverPort: number, maxPlayers: number, serverSettings: Record<string, unknown>) => {
-  return new scampNativeNode.ScampServer(serverPort, maxPlayers, JSON.stringify(serverSettings));
+  const res = new scampNativeNode.ScampServer(serverPort, maxPlayers, JSON.stringify(serverSettings));
+  res._setSelf(res);
+  return res;
 }
 
 export const getScampNative = () => {
