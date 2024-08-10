@@ -6,9 +6,6 @@
 #include <spdlog/spdlog.h>
 #include <string_view>
 
-constexpr auto kSafeJsonStringAlphabet =
-  "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_";
-
 PapyrusEventEvent::PapyrusEventEvent(MpForm* form_,
                                      const char* papyrusEventName_,
                                      const VarValue* arguments_,
@@ -17,15 +14,14 @@ PapyrusEventEvent::PapyrusEventEvent(MpForm* form_,
   , papyrusEventName(papyrusEventName_)
   , arguments(arguments_)
   , numArguments(numArguments_)
-  , papyrusEventNameEscape(std::string_view(papyrusEventName_)
-                             .find_first_not_of(kSafeJsonStringAlphabet) !=
-                           std::string_view::npos)
 {
+  eventNameFull += "onPapyrusEvent:";
+  eventNameFull += papyrusEventName;
 }
 
 const char* PapyrusEventEvent::GetName() const
 {
-  return "papyrusEvent";
+  return eventNameFull.data();
 }
 
 std::string PapyrusEventEvent::GetArgumentsJsonArray() const
@@ -33,16 +29,6 @@ std::string PapyrusEventEvent::GetArgumentsJsonArray() const
   std::string result;
   result += "[";
   result += std::to_string(form->GetFormId());
-  result += ",";
-
-  if (papyrusEventNameEscape) {
-    result += nlohmann::json(papyrusEventName).dump();
-  } else {
-    result += "\"";
-    result += papyrusEventName;
-    result += "\"";
-  }
-
   result += "]";
   return result;
 }
@@ -55,11 +41,7 @@ std::pair<const VarValue*, size_t> PapyrusEventEvent::GetAdditionalArguments()
 
 std::string PapyrusEventEvent::GetDetailedNameForLogging() const
 {
-  std::string result;
-  result += GetName();
-  result += ':';
-  result += papyrusEventName;
-  return result;
+  return eventNameFull;
 }
 
 void PapyrusEventEvent::OnFireSuccess(WorldState* worldState)

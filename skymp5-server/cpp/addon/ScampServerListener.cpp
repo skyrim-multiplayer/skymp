@@ -63,15 +63,9 @@ bool ScampServerListener::OnMpApiEvent(const GameModeEvent& event)
     return true;
   }
 
-  auto mpValue = server.tickEnv.Global().Get("mp");
-  if (!mpValue.IsObject()) {
-    spdlog::error("ScampServerListener::OnMpApiEvent {}: failed to get 'mp' "
-                  "object from global scope",
-                  event.GetDetailedNameForLogging());
-    return true;
-  }
+  auto& mpValue = server.self;
 
-  auto mp = mpValue.As<Napi::Object>();
+  auto mp = mpValue.Value().As<Napi::Object>();
 
   auto fValue = mp.Get(eventName);
   if (!fValue.IsFunction()) {

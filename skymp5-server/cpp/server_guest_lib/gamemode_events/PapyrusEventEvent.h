@@ -25,5 +25,5 @@ private:
   const char* papyrusEventName = "";
   const VarValue* arguments = nullptr;
   size_t numArguments = 0;
-  bool papyrusEventNameEscape = false;
+  std::string eventNameFull;
 };
