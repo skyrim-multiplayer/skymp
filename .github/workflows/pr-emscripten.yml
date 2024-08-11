@@ -39,4 +39,4 @@ jobs:
           DIST_ARTIFACT_NAME: dist-emscripten
           SERVER_DIST_ARTIFACT_NAME: server-dist-emscripten
           SKYMP5_PATCHES_PAT: ${{ secrets.SKYMP5_PATCHES_PAT }}
-          CMAKE_EXECUTABLE: emcmake cmake
+          EMSCRIPTEN: true

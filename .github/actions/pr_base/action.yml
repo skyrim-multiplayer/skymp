@@ -24,10 +24,10 @@ inputs:
   SKYMP5_PATCHES_PAT:
     description: "PAT for skymp5-patches repository"
     required: true
-  CMAKE_EXECUTABLE:
-    description: "Path to CMake executable"
+  EMSCRIPTEN:
+    description: "Set to true if building for Emscripten"
     required: false
-    default: "cmake"
+    default: "false"
 runs:
   using: composite
   steps:  
@@ -134,16 +134,23 @@ runs:
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
       # Outputs profiling data in Google Trace Format, which can be parsed by the about:tracing tab of Google Chrome or using a plugin for a tool like Trace Compass.
       run: |
-        git clone https://github.com/emscripten-core/emsdk.git
-        cd emsdk
-        ./emsdk install 3.1.64
-        ./emsdk activate 3.1.64
-        . .\emsdk_env.ps1
-        cd ..
+        if (${{ inputs.EMSCRIPTEN }} -eq 'true') {
+          git clone --depth 1 https://github.com/emscripten-core/emsdk.git
+          cd emsdk
+          ./emsdk install 3.1.64
+          ./emsdk activate 3.1.64
+          . .\emsdk_env.ps1
+          cd ..
+        }
+
+        $cmake_command = if (${{ inputs.EMSCRIPTEN }} -eq 'true') { "emcmake cmake" } else { "cmake" }
 
         $cppcov_path_arg = if ($env:RUNNER_OS -eq 'Windows') { '-DCPPCOV_PATH="C:\Program Files\OpenCppCoverage"' } else { '-DCPPCOV_PATH=OFF' }
         $vcpkg_root_arg = if ($env:RUNNER_OS -eq 'Windows') { '-DVCPKG_ROOT=C:/vcpkg' } else { '-DVCPKG_ROOT="${{github.workspace}}/vcpkg"' }
-        ${{ inputs.CMAKE_EXECUTABLE }} -B ${{github.workspace}}/build `
+        $vcpkg_chainload_toolchain_arg = if (${{ inputs.EMSCRIPTEN }} -eq 'true') { '-DVCPKG_CHAINLOAD_TOOLCHAIN_FILE="${{github.workspace}}/emsdk/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake"' } else { '' }
+
+        $cmake_command -B ${{github.workspace}}/build `
+        $vcpkg_chainload_toolchain_arg `
         $vcpkg_root_arg `
         -DUNIT_DATA_DIR="skyrim_data_files" `
         -DPREPARE_NEXUS_ARCHIVES=ON `
