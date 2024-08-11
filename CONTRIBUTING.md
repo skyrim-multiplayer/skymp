@@ -1,7 +1,5 @@
 # Contributing
 
-Test
-
 Contributions are what make the open source community such an amazing place to be learn, inspire, and create. Contributions are welcome and will be fully credited.
 
 We welcome all contributions, there is no minor things to contribute with, even one letter typo fixes are welcome.
