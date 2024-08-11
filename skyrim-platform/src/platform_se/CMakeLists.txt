@@ -170,7 +170,10 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
   add_custom_target(skyrim-platform ALL
     COMMAND yarn --cwd \"${SKYRIM_PLATFORM_SOURCE_DIR}/tools/dev_service\" run pack$<$<CONFIG:Debug>:-debug>
   )
-  add_dependencies(skyrim-platform ${DEPENDENCIES_FOR_CUSTOM_TARGETS})
+
+  if(DEPENDENCIES_FOR_CUSTOM_TARGETS)
+    add_dependencies(skyrim-platform ${DEPENDENCIES_FOR_CUSTOM_TARGETS})
+  endif()
 endif()
 
 if(MSVC)
