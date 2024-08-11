@@ -1,5 +1,7 @@
 #pragma once
 #include "RecordHeader.h"
+#include <string>
+#include <vector>
 
 #pragma pack(push, 1)
 
@@ -13,7 +15,7 @@ public:
   struct Data
   {
     std::string editorId;
-    std::string translation;
+    std::vector<std::string> translations;
   };
 
   Data GetData(CompressedFieldsCache& compressedFieldsCache) const;
