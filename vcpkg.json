@@ -11,13 +11,16 @@
     "spdlog",
     "catch2",
     "sparsepp",
-    "slikenet",
     "simdjson",
     "robin-hood-hashing",
     "simpleini",
     "bshoshany-thread-pool",
     "makeid",
     "libzippp",
+    {
+      "name": "slikenet",
+      "platform": "!emscripten"
+    },
     {
       "name": "mongo-cxx-driver",
       "platform": "!emscripten"
