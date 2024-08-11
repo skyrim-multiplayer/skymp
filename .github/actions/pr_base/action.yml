@@ -149,7 +149,7 @@ runs:
         $vcpkg_root_arg = if ($env:RUNNER_OS -eq 'Windows') { '-DVCPKG_ROOT=C:/vcpkg' } else { '-DVCPKG_ROOT="${{github.workspace}}/vcpkg"' }
         $vcpkg_chainload_toolchain_arg = if ('${{ inputs.EMSCRIPTEN }}' -eq 'true') { '-DVCPKG_CHAINLOAD_TOOLCHAIN_FILE="${{github.workspace}}/emsdk/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake"' } else { '' }
         $vcpkg_triplet_arg = if ('${{ inputs.EMSCRIPTEN }}' -eq 'true') { '-DVCPKG_TARGET_TRIPLET=wasm32-emscripten' } else { '' }
-        $prepare_nexus_archives_arg = if ('${{ inputs.SP_NEXUS_ARTIFACT_NAME' -eq 'nope') { '-DPREPARE_NEXUS_ARCHIVES=OFF' } else { '-DPREPARE_NEXUS_ARCHIVES=ON' }
+        $prepare_nexus_archives_arg = if ('${{ inputs.SP_NEXUS_ARTIFACT_NAME}}' -eq 'nope') { '-DPREPARE_NEXUS_ARCHIVES=OFF' } else { '-DPREPARE_NEXUS_ARCHIVES=ON' }
 
         $cmake_command_full = "$cmake_command "
         $cmake_command_full += "-B ${{github.workspace}}/build "
