@@ -114,7 +114,7 @@ endif()
 find_package(OpenSSL REQUIRED)
 
 # MacOS not supported by rsm-bsa
-if(NOT APPLE)
+if(NOT APPLE AND NOT EMSCRIPTEN)
   find_package(bsa CONFIG REQUIRED)
 endif()
 
