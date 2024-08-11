@@ -24,6 +24,10 @@ inputs:
   SKYMP5_PATCHES_PAT:
     description: "PAT for skymp5-patches repository"
     required: true
+  CMAKE_EXECUTABLE:
+    description: "Path to CMake executable"
+    required: false
+    default: "cmake"
 runs:
   using: composite
   steps:  
@@ -132,7 +136,7 @@ runs:
       run: |
         $cppcov_path_arg = if ($env:RUNNER_OS -eq 'Windows') { '-DCPPCOV_PATH="C:\Program Files\OpenCppCoverage"' } else { '-DCPPCOV_PATH=OFF' }
         $vcpkg_root_arg = if ($env:RUNNER_OS -eq 'Windows') { '-DVCPKG_ROOT=C:/vcpkg' } else { '-DVCPKG_ROOT="${{github.workspace}}/vcpkg"' }
-        cmake -B ${{github.workspace}}/build `
+        ${{ inputs.CMAKE_EXECUTABLE }} -B ${{github.workspace}}/build `
         $vcpkg_root_arg `
         -DUNIT_DATA_DIR="skyrim_data_files" `
         -DPREPARE_NEXUS_ARCHIVES=ON `

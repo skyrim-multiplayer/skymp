@@ -1,0 +1,50 @@
+name: PR Emscripten
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    - cron: '0 0 * * *'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
+  BUILD_TYPE: Release
+  VCPKG_BINARY_SOURCES: 'clear;x-gha,readwrite'
+  VCPKG_FEATURE_FLAGS: 'manifests'
+  EMSCRIPTEN_VERSION: 3.1.21  # Specify the Emscripten version
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 1
+          submodules: 'true'
+          
+      - name: Setup Emscripten environment
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+      
+      - name: Install Emscripten SDK
+        run: |
+          git clone https://github.com/emscripten-core/emsdk.git
+          cd emsdk
+          ./emsdk install ${{ env.EMSCRIPTEN_VERSION }}
+          ./emsdk activate ${{ env.EMSCRIPTEN_VERSION }}
+          source ./emsdk_env.sh
+      
+      - uses: ./.github/actions/pr_base
+        with:
+          DESCRIPTION: 'Emscripten Build'
+          DIST_ARTIFACT_NAME: dist-emscripten
+          SERVER_DIST_ARTIFACT_NAME: server-dist-emscripten
+          SKYMP5_PATCHES_PAT: ${{ secrets.SKYMP5_PATCHES_PAT }}
+          CMAKE_EXECUTABLE: emcmake cmake
