@@ -5,7 +5,7 @@ if(POLICY 0115)
 endif()
 
 if(EMSCRIPTEN)
-  set(VCPKG_TARGET_TRIPLET "wasm-emscripten")
+  set(VCPKG_TARGET_TRIPLET "wasm32-emscripten")
 elseif(WIN32)
   set(VCPKG_TARGET_TRIPLET "x64-windows-sp")
 elseif(APPLE)
