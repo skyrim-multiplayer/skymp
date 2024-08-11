@@ -22,14 +22,16 @@ add_subdirectory(cpp)
 add_subdirectory(ts)
 
 # Add C++ addon for NodeJS
-file(GLOB_RECURSE sources "${SKYMP5_SERVER_SOURCE_DIR}/cpp/addon/*")
-if(MSVC)
-  list(APPEND sources "${CMAKE_SOURCE_DIR}/.clang-format")
+if(NOT EMSCRIPTEN)
+  file(GLOB_RECURSE sources "${SKYMP5_SERVER_SOURCE_DIR}/cpp/addon/*")
+  if(MSVC)
+    list(APPEND sources "${CMAKE_SOURCE_DIR}/.clang-format")
+  endif()
+  add_library(${PROJECT_NAME} SHARED ${sources})
+  set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "scam_native" PREFIX "" SUFFIX ".node")
+  target_link_libraries(${PROJECT_NAME} PRIVATE unofficial::node-addon-api::node-addon-api)
+  target_include_directories(${PROJECT_NAME} PRIVATE ${SKYMP5_SERVER_SOURCE_DIR}/cpp/addon)
 endif()
-add_library(${PROJECT_NAME} SHARED ${sources})
-set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "scam_native" PREFIX "" SUFFIX ".node")
-target_link_libraries(${PROJECT_NAME} PRIVATE unofficial::node-addon-api::node-addon-api)
-target_include_directories(${PROJECT_NAME} PRIVATE ${SKYMP5_SERVER_SOURCE_DIR}/cpp/addon)
 
 # Make 'cmake --build . --target skymp5-server' building typescript part as well
 add_dependencies(${PROJECT_NAME} skymp5-server-ts)
