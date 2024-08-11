@@ -46,6 +46,8 @@ jobs:
           echo "EM_CONFIG=${EM_CONFIG}" >> $GITHUB_ENV
           echo "PATH=${PATH}" >> $GITHUB_ENV
 
+      - name: Generate Emscripten Config
+        run: emcc --generate-config
       
       - uses: ./.github/actions/pr_base
         with:
