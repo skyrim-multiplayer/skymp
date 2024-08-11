@@ -181,9 +181,11 @@ endif()
 
 # TSConverter vcpkg deps
 
-find_path(JSON_INCLUDE_DIR NAMES json.hpp PATH_SUFFIXES nlohmann)
-get_filename_component(JSON_INCLUDE_DIR ${JSON_INCLUDE_DIR} DIRECTORY)
-target_include_directories(TSConverter PUBLIC ${JSON_INCLUDE_DIR})
+if(TARGET TSConverter)
+  find_path(JSON_INCLUDE_DIR NAMES json.hpp PATH_SUFFIXES nlohmann)
+  get_filename_component(JSON_INCLUDE_DIR ${JSON_INCLUDE_DIR} DIRECTORY)
+  target_include_directories(TSConverter PUBLIC ${JSON_INCLUDE_DIR})
+endif()
 
 if(MSVC)
 
