@@ -16,6 +16,7 @@
 #include "libespm/WRLD.h"
 #include <cstring>
 #include <optional>
+#include <stdexcept>
 #include <unordered_map>
 #include <vector>
 
