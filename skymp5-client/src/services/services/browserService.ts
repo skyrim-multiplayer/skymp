@@ -6,6 +6,9 @@ import { QueryKeyCodeBindings } from "../events/queryKeyCodeBindings";
 import { ClientListener, CombinedController, Sp } from "./clientListener";
 import { BrowserMessageEvent, DxScanCode, Menu, MenuCloseEvent, MenuOpenEvent } from "skyrimPlatform";
 
+const unfocusEventString = `window.dispatchEvent(new CustomEvent('skymp5-client:browserUnfocused', {}))`;
+const focusEventString = `window.dispatchEvent(new CustomEvent('skymp5-client:browserFocused', {}))`;
+
 export class BrowserService extends ClientListener {
   constructor(private sp: Sp, private controller: CombinedController) {
     super();
@@ -28,16 +31,25 @@ export class BrowserService extends ClientListener {
       this.sp.browser.setVisible(!this.sp.browser.isVisible());
     }
     if (e.isDown([DxScanCode.F6])) {
-      this.sp.browser.setFocused(!this.sp.browser.isFocused());
+      const newState = !this.sp.browser.isFocused();
+      this.sp.browser.setFocused(newState);
+      if (newState) {
+        this.sp.browser.executeJavaScript(focusEventString);
+      }
+      else {
+        this.sp.browser.executeJavaScript(unfocusEventString);
+      }
     }
     if (e.isDown([DxScanCode.Enter])) {
       if (this.badMenusOpen.size === 0) {
         this.sp.browser.setFocused(true);
+        this.sp.browser.executeJavaScript(focusEventString);
       }
     }
     if (e.isDown([DxScanCode.Escape])) {
       if (this.sp.browser.isFocused()) {
         this.sp.browser.setFocused(false);
+        this.sp.browser.executeJavaScript(unfocusEventString);
       }
     }
   }
