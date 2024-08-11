@@ -138,7 +138,7 @@ runs:
         cd emsdk
         ./emsdk install 3.1.64
         ./emsdk activate 3.1.64
-        source ./emsdk_env.sh
+        . .\emsdk_env.ps1
         cd ..
 
         $cppcov_path_arg = if ($env:RUNNER_OS -eq 'Windows') { '-DCPPCOV_PATH="C:\Program Files\OpenCppCoverage"' } else { '-DCPPCOV_PATH=OFF' }
