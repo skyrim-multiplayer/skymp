@@ -33,3 +33,8 @@
 #include "TREE.h"
 #include "WEAP.h"
 #include "WRLD.h"
+#include "WTHR.h"
+#include "WOOP.h"
+#include "SHOU.h"
+#include "SLGM.h"
+
