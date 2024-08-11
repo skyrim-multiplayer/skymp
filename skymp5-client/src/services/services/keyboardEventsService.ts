@@ -14,16 +14,16 @@ export class KeyboardEventsService extends ClientListener {
 
         if (this.lastNumKeys !== numKeys) {
             this.lastNumKeys = numKeys;
-        }
 
-        this.controller.emitter.emit("queryKeyCodeBindings", {
-            isDown: (binding: DxScanCode[]) => {
-                if (binding.every((key) => this.sp.Input.isKeyPressed(key))) {
-                    return true;
+            this.controller.emitter.emit("queryKeyCodeBindings", {
+                isDown: (binding: DxScanCode[]) => {
+                    if (binding.every((key) => this.sp.Input.isKeyPressed(key))) {
+                        return true;
+                    }
+                    return false;
                 }
-                return false;
-            }
-        });
+            });
+        }
     }
 
     private lastNumKeys = 0;
