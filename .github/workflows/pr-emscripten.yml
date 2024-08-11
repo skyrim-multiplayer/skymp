@@ -21,7 +21,8 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    # MacOS has powershell
+    runs-on: macos-12
     steps:
       - uses: actions/checkout@v2
         with:
