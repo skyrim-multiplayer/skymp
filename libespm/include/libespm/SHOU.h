@@ -1,22 +1,27 @@
 #pragma once
+#include "RecordHeader.h"
 
-#include <string>
-#include <vector>
+#pragma pack(push, 1)
 
-struct SHOU
-{  
-  std::string editorId;
-  std::string fullName;
-  uint32_t inventoryModel;
-  std::string description;
+namespace espm {
 
-  struct ShoutData
+class SHOU final : public RecordHeader
+{
+public:
+  static constexpr auto kType = "SHOU";
+
+  struct Data
   {
-    uint32_t wordOfPower;
-    uint32_t spellEffect;
-    float recoveryTime;
+    float recoveryTime[3];
+    uint32_t wordOfPower[3];
+    uint32_t spell[3];
   };
 
-  std::vector<ShoutData> shoutData;
+  Data GetData(CompressedFieldsCache& compressedFieldsCache) const;
 };
 
+static_assert(sizeof(SHOU) == sizeof(RecordHeader));
+
+}
+
+#pragma pack(pop)

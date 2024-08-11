@@ -1,11 +1,26 @@
 #pragma once
+#include "RecordHeader.h"
 
-#include <string>
+#pragma pack(push, 1)
 
-struct WOOP
+namespace espm {
+
+class WOOP final : public RecordHeader
 {
+public:
+  static constexpr auto kType = "WOOP";
+
+  struct Data
+  {
     std::string editorId;
-    std::string recordName;
     std::string translation;
+  };
+
+  Data GetData(CompressedFieldsCache& compressedFieldsCache) const;
 };
 
+static_assert(sizeof(WOOP) == sizeof(RecordHeader));
+
+}
+
+#pragma pack(pop)

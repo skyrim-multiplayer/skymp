@@ -1,23 +1,23 @@
 #include "libespm/WOOP.h"
-#include <fstream>
-#include <iostream>
+#include "libespm/CompressedFieldsCache.h"
+#include "libespm/RecordHeaderAccess.h"
 
-void parseWOOP(const std::string& filePath)
+namespace espm {
+
+WOOP::Data WOOP::GetData(CompressedFieldsCache& cache) const
 {
-  std::ifstream file(filePath, std::ios::binary);
-  if (!file.is_open()) {
-    std::cerr << "Failed to open file: " << filePath << std::endl;
-    return;
-  }
-
-  WOOP woop;
-
-  std::getline(file, woop.editorId, '\0');
-
-  std::getline(file, woop.recordName, '\0');
-
-  std::getline(file, woop.translation, '\0');
-
-  file.close();
+  Data res;
+  RecordHeaderAccess::IterateFields(
+    this,
+    [&](const char* type, uint32_t size, const char* data) {
+      if (!std::memcmp(type, "EDID", 4)) {
+        res.editorId = std::string(data, size);
+      } else if (!std::memcmp(type, "TNAM", 4)) {
+        res.translation = std::string(data, size);
+      }
+    },
+    cache);
+  return res;
 }
 
+}

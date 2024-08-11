@@ -1,73 +1,41 @@
 #pragma once
-
+#include "RecordHeader.h"
 #include <string>
 #include <vector>
-#include <array>
 
-struct WTHR
+#pragma pack(push, 1)
+
+namespace espm {
+
+class WTHR final : public RecordHeader
 {
-  std::string editorId;
-  std::vector<std::string> cloudTextures;
-  uint32_t unkownLNAM;
-  uint32_t precipitation;
-  uint32_t visualEffect;
-  std::array<float, 32> unkownRNAM;
-  std::array<float, 32> unkownQNAM;
-  std::array<std::array<float, 4>, 32> cloudTextureColors;
-  std::array<std::array<float, 4>, 32> cloudTextureAlphas;
-  std::array<std::array<float, 4>, 17> unknownNAM0;
-  struct FogDistance
-  {
-    float dayNear;
-    float dayFar;
-    float nightNear;
-    float nightFar;
-    float dayPow;
-    float nightPow;
-    float dayMax;
-    float nightMax;
-  };
+public:
+  static constexpr auto kType = "WTHR";
+
   struct Data
   {
-    uint8_t windSpeed;
-    uint8_t unknown1;
-    uint8_t unknown2;
-    uint8_t transDelta;
-    uint8_t sunGlare;
-    uint8_t sunDamage;
-    uint8_t precipBeginFadeIn;
-    uint8_t precipEndFadeOut;
-    uint8_t thuderBeginFadeIn;
-    uint8_t thunderEndFadeOut;
-    uint8_t thunderFrequency;
-    uint8_t flags;
-    std::array<uint8_t, 3> precipLightingColor;
-    uint8_t unknown3;
-    uint8_t windDirection;
-    uint8_t windDirRange;
+    std::string editorId;
+    std::vector<std::string> cloudTextures;
+    uint32_t numberOfTextureLayers;
+    uint32_t precipitation;
+    uint32_t visualEffect;
+    std::vector<float> cloudSpeeds;
+    std::vector<std::array<float, 4>> cloudTextureColors;
+    std::vector<std::array<float, 4>> cloudTextureAlphas;
+    std::vector<std::array<float, 4>> colorDefinitions;
+    std::array<float, 8> fogDistances;
+    std::array<uint8_t, 19> weatherData;
+    std::vector<std::pair<uint32_t, uint32_t>> ambientSounds;
+    uint32_t skyStatics;
+    std::array<uint32_t, 4> imageSpaces;
+    std::vector<std::array<float, 6>> directionalAmbient;
   };
-  uint32_t unknownNAM1;
-  struct AmbientSound
-  {
-    uint32_t soundReference;
-    uint32_t type;
-  };
-  std::vector<AmbientSound> ambientSounds;
-  uint32_t skyStatics;
-  std::array<uint32_t, 4> imageSpaces;
-  struct DirectionalAmbient
-  {
-    std::array<float, 3> directionalAmbientXPlus;
-    std::array<float, 3> directionalAmbientXMinus;
-    std::array<float, 3> directionalAmbientYPlus;
-    std::array<float, 3> directionalAmbientYMinus;
-    std::array<float, 3> directionalAmbientZPlus;
-    std::array<float, 3> directionalAmbientZMinus;
-    std::array<float, 3> specularColor;
-    float fresnelPower;
-  } directionalAmbient;
-  std::string auroraModel;
-  std::array<uint32_t, 4> unknownNAM2;
-  std::array<uint32_t, 4> unknownNAM3;
+
+  Data GetData(CompressedFieldsCache& compressedFieldsCache) const;
 };
 
+static_assert(sizeof(WTHR) == sizeof(RecordHeader));
+
+}
+
+#pragma pack(pop)

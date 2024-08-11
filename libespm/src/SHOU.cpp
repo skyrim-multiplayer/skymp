@@ -1,33 +1,26 @@
 #include "libespm/SHOU.h"
-#include <fstream>
-#include <iostream>
+#include "libespm/CompressedFieldsCache.h"
+#include "libespm/RecordHeaderAccess.h"
 
-void parseSHOU(const std::string& filePath)
+namespace espm {
+
+SHOU::Data SHOU::GetData(CompressedFieldsCache& cache) const
 {
-  std::ifstream file(filePath, std::ios::binary);
-  if (!file.is_open()) {
-    std::cerr << "Failed to open file: " << filePath << std::endl;
-    return;
-  }
-
-  SHOU shou;
-
-  std::getline(file, shou.editorId, '\0');
-
-  std::getline(file, shou.fullName, '\0');
-
-  file.read(reinterpret_cast<char*>(&shou.inventoryModel), sizeof(shou.inventoryModel));
-
-  std::getline(file, shou.description, '\0');
-
-  for (int i = 0; i < 3; ++i) {
-    SHOU::ShoutData data;
-    file.read(reinterpret_cast<char*>(&data.wordOfPower), sizeof(data.wordOfPower));
-    file.read(reinterpret_cast<char*>(&data.spellEffect), sizeof(data.spellEffect));
-    file.read(reinterpret_cast<char*>(&data.recoveryTime), sizeof(data.recoveryTime));
-    shou.shoutData.push_back(data);
-  }
-
-  file.close();
+  Data res;
+  int snamIndex = 0;
+  RecordHeaderAccess::IterateFields(
+    this,
+    [&](const char* type, uint32_t size, const char* data) {
+      if (!std::memcmp(type, "SNAM", 4) && snamIndex < 3) {
+        res.wordOfPower[snamIndex] = *reinterpret_cast<const uint32_t*>(data);
+        res.spell[snamIndex] = *reinterpret_cast<const uint32_t*>(data + 4);
+        res.recoveryTime[snamIndex] =
+          *reinterpret_cast<const float*>(data + 8);
+        snamIndex++;
+      }
+    },
+    cache);
+  return res;
 }
 
+}
