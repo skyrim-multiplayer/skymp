@@ -27,7 +27,6 @@
 #include "RACE.h"
 #include "REFR.h"
 #include "SCRL.h"
-#include "SLGM.h"
 #include "SPEL.h"
 #include "TES4.h"
 #include "TREE.h"
