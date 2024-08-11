@@ -100,7 +100,9 @@ find_package(spdlog CONFIG REQUIRED)
 
 find_package(simdjson CONFIG REQUIRED)
 
-find_package(slikenet CONFIG REQUIRED)
+if(NOT EMSCRIPTEN)
+  find_package(slikenet CONFIG REQUIRED)
+endif()
 
 find_package(ZLIB REQUIRED)
 
@@ -124,14 +126,23 @@ foreach(target ${VCPKG_DEPENDENT})
   target_include_directories(${target} PUBLIC ${JSON_INCLUDE_DIR})
   target_link_libraries(${target} PUBLIC spdlog::spdlog)
   target_link_libraries(${target} PUBLIC simdjson::simdjson)
-  target_link_libraries(${target} PUBLIC SLikeNet)
+
+  if(TARGET SLikeNet)
+    target_link_libraries(${target} PUBLIC SLikeNet)
+  else()
+    target_compile_definitions(${target} PUBLIC NO_SLIKENET=1)
+  endif()
+
   target_link_libraries(${target} PUBLIC ZLIB::ZLIB)
+
   if(TARGET mongo::mongocxx_static)
     target_link_libraries(${target} PUBLIC mongo::mongocxx_static mongo::bsoncxx_static mongo::mongoc_static mongo::bson_static)
   else()
     target_compile_definitions(${target} PUBLIC NO_MONGO=1)
   endif()
+
   target_link_libraries(${target} PUBLIC OpenSSL::SSL OpenSSL::Crypto)
+
   if(TARGET bsa::bsa)
     target_link_libraries(${target} PUBLIC bsa::bsa)
   else()
