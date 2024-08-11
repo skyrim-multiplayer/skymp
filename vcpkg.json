@@ -12,13 +12,16 @@
     "catch2",
     "sparsepp",
     "slikenet",
-    "mongo-cxx-driver",
     "simdjson",
     "robin-hood-hashing",
     "simpleini",
     "bshoshany-thread-pool",
     "makeid",
     "libzippp",
+    {
+      "name": "mongo-cxx-driver",
+      "platform": "!emscripten"
+    },
     {
       "name": "node-addon-api",
       "platform": "!emscripten"
