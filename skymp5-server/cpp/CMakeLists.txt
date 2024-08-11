@@ -90,9 +90,6 @@ target_include_directories(localization-provider PUBLIC "${CMAKE_CURRENT_SOURCE_
 find_path(CATCH_INCLUDE_DIR NAMES catch.hpp PATH_SUFFIXES catch2)
 get_filename_component(CATCH_INCLUDE_DIR ${CATCH_INCLUDE_DIR} DIRECTORY)
 
-find_path(SPARSEPP_INCLUDE_DIR NAMES spp.h PATH_SUFFIXES sparsepp)
-get_filename_component(SPARSEPP_INCLUDE_DIR ${SPARSEPP_INCLUDE_DIR} DIRECTORY)
-
 find_path(JSON_INCLUDE_DIR NAMES json.hpp PATH_SUFFIXES nlohmann)
 get_filename_component(JSON_INCLUDE_DIR ${JSON_INCLUDE_DIR} DIRECTORY)
 
@@ -122,7 +119,6 @@ find_package(libzippp REQUIRED)
 
 foreach(target ${VCPKG_DEPENDENT})
   target_include_directories(${target} PUBLIC ${CATCH_INCLUDE_DIR})
-  target_include_directories(${target} PUBLIC ${SPARSEPP_INCLUDE_DIR})
   target_include_directories(${target} PUBLIC ${JSON_INCLUDE_DIR})
   target_link_libraries(${target} PUBLIC spdlog::spdlog)
   target_link_libraries(${target} PUBLIC simdjson::simdjson)

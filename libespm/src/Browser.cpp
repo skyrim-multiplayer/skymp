@@ -16,7 +16,7 @@
 #include "libespm/WRLD.h"
 #include <cstring>
 #include <optional>
-#include <sparsepp/spp.h>
+#include <unordered_map>
 #include <vector>
 
 namespace espm {
@@ -31,13 +31,13 @@ struct Browser::Impl
 
   size_t pos = 0;
   uint32_t fiDataSizeOverride = 0;
-  spp::sparse_hash_map<uint32_t, const RecordHeader*> recById;
-  spp::sparse_hash_map<uint64_t, std::vector<const RecordHeader*>> navmeshes;
-  spp::sparse_hash_map<uint64_t, std::vector<const RecordHeader*>>
+  std::unordered_map<uint32_t, const RecordHeader*> recById;
+  std::unordered_map<uint64_t, std::vector<const RecordHeader*>> navmeshes;
+  std::unordered_map<uint64_t, std::vector<const RecordHeader*>>
     cellOrWorldChildren;
-  spp::sparse_hash_map<const GroupHeader*, const GroupDataInternal*>
+  std::unordered_map<const GroupHeader*, const GroupDataInternal*>
     groupDataByGroupPtr;
-  spp::sparse_hash_map<const RecordHeader*, const GroupStack*>
+  std::unordered_map<const RecordHeader*, const GroupStack*>
     groupStackByRecordPtr;
   std::vector<const RecordHeader*> objectReferences;
   std::vector<const RecordHeader*> constructibleObjects;

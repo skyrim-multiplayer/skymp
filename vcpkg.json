@@ -10,7 +10,6 @@
     "zlib",
     "spdlog",
     "catch2",
-    "sparsepp",
     "simdjson",
     "robin-hood-hashing",
     "simpleini",
