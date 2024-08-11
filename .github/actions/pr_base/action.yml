@@ -149,16 +149,19 @@ runs:
         $vcpkg_root_arg = if ($env:RUNNER_OS -eq 'Windows') { '-DVCPKG_ROOT=C:/vcpkg' } else { '-DVCPKG_ROOT="${{github.workspace}}/vcpkg"' }
         $vcpkg_chainload_toolchain_arg = if (${{ inputs.EMSCRIPTEN }} -eq 'true') { '-DVCPKG_CHAINLOAD_TOOLCHAIN_FILE="${{github.workspace}}/emsdk/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake"' } else { '' }
 
-        $cmake_command -B ${{github.workspace}}/build `
-        $vcpkg_chainload_toolchain_arg `
-        $vcpkg_root_arg `
-        -DUNIT_DATA_DIR="skyrim_data_files" `
-        -DPREPARE_NEXUS_ARCHIVES=ON `
-        -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} `
-        -DSKYRIM_SE=${{ inputs.SKYRIM_SE_FLAG }} `
-        $cppcov_path_arg `
-        --profiling-output cmake-profiling-output `
-        --profiling-format google-trace
+        $cmake_command_full = "$cmake_command "
+        $cmake_command_full += "-B ${{github.workspace}}/build "
+        $cmake_command_full += "$vcpkg_chainload_toolchain_arg "
+        $cmake_command_full += "$vcpkg_root_arg "
+        $cmake_command_full += "-DUNIT_DATA_DIR=\"skyrim_data_files\" "
+        $cmake_command_full += "-DPREPARE_NEXUS_ARCHIVES=ON "
+        $cmake_command_full += "-DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} "
+        $cmake_command_full += "-DSKYRIM_SE=${{ inputs.SKYRIM_SE_FLAG }} "
+        $cmake_command_full += "$cppcov_path_arg "
+        $cmake_command_full += "--profiling-output cmake-profiling-output "
+        $cmake_command_full += "--profiling-format google-trace"
+
+        Invoke-Expression $cmake_command_full
       shell: powershell
 
     - name: Upload vcpkg failure logs
