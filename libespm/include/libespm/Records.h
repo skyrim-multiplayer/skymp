@@ -36,5 +36,3 @@
 #include "WTHR.h"
 #include "WOOP.h"
 #include "SHOU.h"
-#include "SLGM.h"
-
