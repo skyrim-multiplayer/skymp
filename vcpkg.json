@@ -16,10 +16,7 @@
     "bshoshany-thread-pool",
     "makeid",
     "libzippp",
-    {
-      "name": "slikenet",
-      "platform": "!emscripten"
-    },
+    "slikenet",
     {
       "name": "mongo-cxx-driver",
       "platform": "!emscripten"
