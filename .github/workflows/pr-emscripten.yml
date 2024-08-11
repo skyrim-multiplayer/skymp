@@ -40,7 +40,12 @@ jobs:
           cd emsdk
           ./emsdk install ${{ env.EMSCRIPTEN_VERSION }}
           ./emsdk activate ${{ env.EMSCRIPTEN_VERSION }}
-          echo "source $(pwd)/emsdk_env.sh" >> $GITHUB_ENV
+          echo "EMSDK_PATH=$(pwd)" >> $GITHUB_ENV
+          source ./emsdk_env.sh
+          echo "EMSCRIPTEN=${EMSCRIPTEN}" >> $GITHUB_ENV
+          echo "EM_CONFIG=${EM_CONFIG}" >> $GITHUB_ENV
+          echo "PATH=${PATH}" >> $GITHUB_ENV
+
       
       - uses: ./.github/actions/pr_base
         with:
