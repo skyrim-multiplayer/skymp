@@ -153,7 +153,7 @@ runs:
         $cmake_command_full += "-B ${{github.workspace}}/build "
         $cmake_command_full += "$vcpkg_chainload_toolchain_arg "
         $cmake_command_full += "$vcpkg_root_arg "
-        $cmake_command_full += "-DUNIT_DATA_DIR=\"skyrim_data_files\" "
+        $cmake_command_full += "-DUNIT_DATA_DIR=skyrim_data_files "
         $cmake_command_full += "-DPREPARE_NEXUS_ARCHIVES=ON "
         $cmake_command_full += "-DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} "
         $cmake_command_full += "-DSKYRIM_SE=${{ inputs.SKYRIM_SE_FLAG }} "
