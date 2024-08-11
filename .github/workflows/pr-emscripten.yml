@@ -17,7 +17,6 @@ env:
   BUILD_TYPE: Release
   VCPKG_BINARY_SOURCES: 'clear;x-gha,readwrite'
   VCPKG_FEATURE_FLAGS: 'manifests'
-  EMSCRIPTEN_VERSION: 3.1.21  # Specify the Emscripten version
 
 jobs:
   build:
@@ -33,18 +32,6 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: '3.x'
-      
-      - name: Install Emscripten SDK
-        run: |
-          git clone https://github.com/emscripten-core/emsdk.git
-          cd emsdk
-          ./emsdk install ${{ env.EMSCRIPTEN_VERSION }}
-          ./emsdk activate ${{ env.EMSCRIPTEN_VERSION }}
-          echo "EMSDK_PATH=$(pwd)" >> $GITHUB_ENV
-          source ./emsdk_env.sh
-          echo "EMSCRIPTEN=${EMSCRIPTEN}" >> $GITHUB_ENV
-          echo "EM_CONFIG=${EM_CONFIG}" >> $GITHUB_ENV
-          echo "PATH=${PATH}" >> $GITHUB_ENV
 
       - name: Generate Emscripten Config
         run: emcc --generate-config
