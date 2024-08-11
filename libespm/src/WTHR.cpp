@@ -1,10 +1,10 @@
-#include "libespm/SHOU.h"
-#include "libespm/SLGM.h"
+#include "libespm/WTHR.h"
 #include "libespm/CompressedFieldsCache.h"
 #include "libespm/RecordHeaderAccess.h"
 
 namespace espm {
-SLGM::Data SLGM::GetData(CompressedFieldsCache& cache) const
+
+WTHR::Data WTHR::GetData(CompressedFieldsCache& cache) const
 {
   Data res;
   RecordHeaderAccess::IterateFields(
@@ -16,7 +16,6 @@ SLGM::Data SLGM::GetData(CompressedFieldsCache& cache) const
     },
     cache);
   return res;
-}
 }
 
 }

@@ -1,6 +1,10 @@
 #pragma once
 #include "ACHR.h"
 #include "ACTI.h"
+#include "SHOU.h"
+#include "SLGM.h"
+#include "WOOP.h"
+#include "WTHR.h"
 #include "ALCH.h"
 #include "AMMO.h"
 #include "ARMO.h"

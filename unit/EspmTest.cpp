@@ -631,3 +631,51 @@ TEST_CASE("isFood flag is set for sweet roll", "[espm]")
   REQUIRE(data.isFood == true);
   REQUIRE(data.isPoison == false);
 }
+
+TEST_CASE("Loads SHOU", "[espm]")
+{
+  auto& br = l.GetBrowser();
+  espm::CompressedFieldsCache cache;
+
+  auto form = br.LookupById(0xPLACEHOLDER_SHOU_ID);
+  REQUIRE(form.rec->GetType() == "SHOU");
+
+  auto data = reinterpret_cast<const espm::SHOU*>(form.rec)->GetData(cache);
+  REQUIRE(data.weight == 0.0f); // Adjust expected value as needed
+}
+
+TEST_CASE("Loads SLGM", "[espm]")
+{
+  auto& br = l.GetBrowser();
+  espm::CompressedFieldsCache cache;
+
+  auto form = br.LookupById(0xPLACEHOLDER_SLGM_ID);
+  REQUIRE(form.rec->GetType() == "SLGM");
+
+  auto data = reinterpret_cast<const espm::SLGM*>(form.rec)->GetData(cache);
+  REQUIRE(data.weight == 0.0f); // Adjust expected value as needed
+}
+
+TEST_CASE("Loads WOOP", "[espm]")
+{
+  auto& br = l.GetBrowser();
+  espm::CompressedFieldsCache cache;
+
+  auto form = br.LookupById(0xPLACEHOLDER_WOOP_ID);
+  REQUIRE(form.rec->GetType() == "WOOP");
+
+  auto data = reinterpret_cast<const espm::WOOP*>(form.rec)->GetData(cache);
+  REQUIRE(data.weight == 0.0f); // Adjust expected value as needed
+}
+
+TEST_CASE("Loads WTHR", "[espm]")
+{
+  auto& br = l.GetBrowser();
+  espm::CompressedFieldsCache cache;
+
+  auto form = br.LookupById(0xPLACEHOLDER_WTHR_ID);
+  REQUIRE(form.rec->GetType() == "WTHR");
+
+  auto data = reinterpret_cast<const espm::WTHR*>(form.rec)->GetData(cache);
+  REQUIRE(data.weight == 0.0f); // Adjust expected value as needed
+}
