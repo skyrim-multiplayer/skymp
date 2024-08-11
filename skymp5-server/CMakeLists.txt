@@ -11,7 +11,9 @@ yarn_execute_command(
 )
 
 # Find node-addon-api
-find_package(unofficial-node-addon-api REQUIRED)
+if(NOT EMSCRIPTEN)
+  find_package(unofficial-node-addon-api REQUIRED)
+endif()
 
 # Add C++ part of the server (except cpp/addon)
 add_subdirectory(cpp)
