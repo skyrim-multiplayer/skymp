@@ -1,14 +1,13 @@
-diff --git a/Source/src/_FindFirst.cpp b/Source/src/_FindFirst.cpp
-index 10fab3462..6d47464dc 100644
---- a/Source/src/_FindFirst.cpp
-+++ b/Source/src/_FindFirst.cpp
-@@ -137,7 +137,8 @@ int _findnext(long h, _finddata_t *f)
-                                  // are not supported.
+diff --git a/Lib/LibStatic/CMakeLists.txt b/Lib/LibStatic/CMakeLists.txt
+index 955a99dec..8cd204b0b 100644
+--- a/Lib/LibStatic/CMakeLists.txt
++++ b/Lib/LibStatic/CMakeLists.txt
+@@ -16,7 +16,7 @@ project(SLikeNetLibStatic)
+ FILE(GLOB ALL_HEADER_SRCS ${SLikeNet_SOURCE_DIR}/Source/include/slikenet/*.h)
+ FILE(GLOB ALL_COMPATIBILITY_HEADER_SRC ${SLikeNet_SOURCE_DIR}/Source/*.h)
+ FILE(GLOB ALL_COMPATIBILITY_HEADER_SRC_2 ${SLikeNet_SOURCE_DIR}/Source/slikenet/*.h)
+-FILE(GLOB ALL_CPP_SRCS ${SLikeNet_SOURCE_DIR}/Source/src/*.cpp)
++FILE(GLOB ALL_CPP_SRCS ${SLikeNet_SOURCE_DIR}/Source/src/BitStream.cpp)
+ FILE(GLOB CRYPTO_CPP_SRCS ${SLikeNet_SOURCE_DIR}/Source/src/crypto/*.cpp)
  
-                 f->size = filestat.st_size;
--                strncpy_s(f->name, entry->d_name, STRING_BUFFER_SIZE);
-+                strncpy(f->name, entry->d_name, STRING_BUFFER_SIZE);
-+                f->name[STRING_BUFFER_SIZE - 1] = '\0'; // Ensure null-termination
-                 
-                 return 0;
- 	}
+ add_library(SLikeNetLibStatic STATIC ${ALL_CPP_SRCS} ${CRYPTO_CPP_SRCS} ${ALL_HEADER_SRCS})
