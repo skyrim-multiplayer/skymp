@@ -1,7 +1,7 @@
 set(PATCHES fix-install.patch)
 
 if(VCPKG_TARGET_ARCHITECTURE MATCHES "wasm32")
-    set(PATCHES ${PATCHES} emscripten.patch.patch)
+    set(PATCHES ${PATCHES} emscripten.patch)
 endif()
 
 vcpkg_from_github(
