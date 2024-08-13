@@ -149,8 +149,6 @@ std::unique_ptr<std::vector<std::string>> CreateLoadOrder(
 
 }
 
-#include <spdlog/spdlog.h>
-
 JsValue LoadGameApi::LoadGame(const JsFunctionArguments& args)
 {
   std::array<float, 3> pos = JsExtractPoint(args[1]),
@@ -161,33 +159,8 @@ JsValue LoadGameApi::LoadGame(const JsFunctionArguments& args)
   auto time = args[6];
 
   constexpr auto kPathInAssetsMale = "assets/template.ess";
-  constexpr auto kPathInAssetsFemale = "assets/women.ess";
 
   const char* pathInAsset = kPathInAssetsMale;
-  // throw std::runtime_error("no female");
-
-  // bool cond1 = !!(npcData.GetType() == JsValue::Type::Object);
-  // bool cond2 = cond1 && !!(npcData.GetProperty("isFemale"));
-  // bool cond3 = cond2 &&
-  //   !!(npcData.GetProperty("isFemale").GetType() == JsValue::Type::Boolean);
-
-  bool cond1 = 0, cond2 = 0, cond3 = 0;
-
-  auto json = JsValue::GlobalObject().GetProperty("JSON");
-  std::string s = json.GetProperty("stringify").Call({ json, npcData });
-
-  spdlog::error("LoadGameApi::LoadGame - {}", s);
-
-  // if (npcData.GetType() == JsValue::Type::Object) {
-  //   // throw std::runtime_error("bemale");
-  //   spdlog::error("LoadGameApi::LoadGame - npcData is object");
-  //   if (auto isFemale = npcData.GetProperty("isFemale");
-  //       isFemale.GetType() == JsValue::Type::Boolean) {
-  //     // throw std::runtime_error("female");
-  //     pathInAsset = kPathInAssetsFemale;
-  //     spdlog::error("LoadGameApi::LoadGame - Using female savegame")
-  //   }
-  // }
 
   auto save = LoadGame::PrepareSaveFile(pathInAsset);
   if (!save) {

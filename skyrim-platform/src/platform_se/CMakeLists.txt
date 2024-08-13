@@ -60,7 +60,6 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
   # assets
   set(ASSET_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/skyrim_platform/assets/template.ess
-    ${CMAKE_CURRENT_SOURCE_DIR}/skyrim_platform/assets/women.ess
     ${CMAKE_CURRENT_SOURCE_DIR}/skyrim_platform/assets/cursor.png
   )
   cmrc_add_resource_library(skyrim_plugin_resources ${ASSET_FILES}
