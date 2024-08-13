@@ -37,10 +37,15 @@ const SkillsMenu = ({ send }: { send: (message: string) => void }) => {
     if (el) {
       el.style.display = 'flex';
     }
-    const audio = document
-      .getElementById('quitSound')
-      .cloneNode(true) as HTMLAudioElement;
-    audio.play();
+    try {
+      const audio = document
+        .getElementById('quitSound')
+        .cloneNode(true) as HTMLAudioElement;
+      audio.play();
+    }
+    catch (e) {
+      console.log("Error playing sound", e);
+    }
     setplayerData(undefined);
     send('/skill quit');
   };
@@ -209,7 +214,7 @@ const SkillsMenu = ({ send }: { send: (message: string) => void }) => {
                   {category.map((perk, index) => (
                     <div
                       className={`perks__perk perks__perk--level-${(playerData.perks[perk.name] /
-                          perk.levelsPrice.length) *
+                        perk.levelsPrice.length) *
                         4 || 0
                         } ${index > 7 ? 'perks__perk--absolute' : ''} ${index % 2 ? 'perks__perk--right' : 'perks__perk--left'
                         }
