@@ -532,12 +532,14 @@ export class RemoteServer extends ClientListener {
                 ? {
                   name: msg.appearance.name,
                   raceId: msg.appearance.raceId,
+                  // @ts-expect-error
+                  isFemale: msg.appearance.isFemale,
                   face: {
                     hairColor: msg.appearance.hairColor,
                     bodySkinColor: msg.appearance.skinColor,
                     headTextureSetId: msg.appearance.headTextureSetId,
                     headPartIds: msg.appearance.headpartIds,
-                    presets: msg.appearance.presets,
+                    presets: msg.appearance.presets
                   },
                 }
                 : undefined,
