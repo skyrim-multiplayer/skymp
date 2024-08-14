@@ -49,7 +49,7 @@ void LocationalDataBinding::Set(Napi::Env, ScampServer& scampServer,
   locationalData.rot = NapiHelper::ExtractNiPoint3(
     newLocationalData.Get("rot"), "newLocationalData.rot");
 
-  if (auto actor = dynamic_cast<MpActor*>(&refr)) {
+  if (auto actor = refr.AsActor()) {
     Apply(*actor, locationalData);
   } else {
     throw std::runtime_error("mp.set can only change '" + GetPropertyName() +

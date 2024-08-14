@@ -10,6 +10,11 @@ MpForm::MpForm()
 {
 }
 
+MpObjectReference* MpForm::AsObjectReference() const noexcept
+{
+  return asObjectReference;
+}
+
 MpActor* MpForm::AsActor() const noexcept
 {
   return asActor;
@@ -77,7 +82,7 @@ bool MpForm::IsEspmForm() const noexcept
 
 float MpForm::GetWeight() const
 {
-  const auto* objectReference = dynamic_cast<const MpObjectReference*>(this);
+  auto objectReference = AsObjectReference();
   if (!objectReference) {
     return 0.f;
   }
@@ -86,7 +91,7 @@ float MpForm::GetWeight() const
   const auto& espm = GetParent()->GetEspm();
   const auto* record = espm.GetBrowser().LookupById(baseId).rec;
   if (!record) {
-    spdlog::trace("Record of form ({}) is nullptr", baseId);
+    spdlog::warn("MpForm::GetWeight - Record of form ({}) is nullptr", baseId);
     return 0.f;
   }
 

@@ -7,7 +7,7 @@ Napi::Value PercentagesBinding::Get(Napi::Env env, ScampServer& scampServer,
   auto& partOne = scampServer.GetPartOne();
 
   auto& actor = partOne->worldState.GetFormAt<MpActor>(formId);
-  auto actorValues = actor.GetChangeForm().actorValues;
+  auto& actorValues = actor.GetActorValues();
   auto percentages = Napi::Object::New(env);
   percentages.Set("health",
                   Napi::Number::New(env, actorValues.healthPercentage));
@@ -26,7 +26,7 @@ void PercentagesBinding::Set(Napi::Env env, ScampServer& scampServer,
   auto newPercentages = NapiHelper::ExtractObject(newValue, "newPercentages");
 
   auto& actor = partOne->worldState.GetFormAt<MpActor>(formId);
-  ActorValues actorValues = actor.GetChangeForm().actorValues;
+  ActorValues actorValues = actor.GetActorValues();
   actorValues.healthPercentage = NapiHelper::ExtractFloat(
     newPercentages.Get("health"), "newPercentages.health");
   actorValues.magickaPercentage = NapiHelper::ExtractFloat(

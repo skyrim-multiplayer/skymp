@@ -130,13 +130,22 @@ public:
   template <class F>
   F& GetFormAt(uint32_t formId)
   {
-    auto form = LookupFormById(formId);
+    const std::shared_ptr<MpForm>& form = LookupFormById(formId);
     if (!form) {
       throw std::runtime_error(
         fmt::format("Form with id {:#x} doesn't exist", formId));
     }
 
-    auto typedForm = std::dynamic_pointer_cast<F>(form);
+    F* typedForm = nullptr;
+
+    if constexpr (std::is_same_v<F, MpActor>) {
+      typedForm = form->AsActor();
+    } else if constexpr (std::is_same_v<F, MpObjectReference>) {
+      typedForm = form->AsObjectReference();
+    } else {
+      typedForm = dynamic_cast<F*>(form.get());
+    }
+
     if (!typedForm) {
       if constexpr (std::is_same_v<F, MpActor>) {
         if (auto ref = std::dynamic_pointer_cast<MpObjectReference>(form)) {
@@ -204,10 +213,10 @@ public:
     const std::string& propertyName,
     const std::string& propertyValueStringified);
   uint32_t GenerateFormId();
-  void SetRelootTime(std::string recordType,
-                     std::chrono::system_clock::duration dur);
+  void SetRelootTime(const std::string& recordType,
+                     std::chrono::system_clock::duration time);
   std::optional<std::chrono::system_clock::duration> GetRelootTime(
-    std::string recordType) const;
+    const std::string& recordType) const;
 
   // Utility function to check if the provided baseId has the certain keyword
   bool HasKeyword(uint32_t baseId, const char* keyword);
@@ -263,7 +272,6 @@ private:
 
   bool LoadForm(uint32_t formId,
                 std::stringstream* optionalOutTrace = nullptr);
-  void TickReloot(const std::chrono::system_clock::time_point& now);
   void TickSaveStorage(const std::chrono::system_clock::time_point& now);
   void TickTimers(const std::chrono::system_clock::time_point& now);
   [[nodiscard]] bool NpcSourceFilesOverriden() const noexcept;
@@ -284,10 +292,6 @@ private:
   spp::sparse_hash_map<uint32_t, GridInfo> grids;
   std::unique_ptr<MakeID> formIdxManager;
   std::vector<MpForm*> formByIdxUnreliable;
-  std::map<
-    std::chrono::system_clock::duration,
-    std::list<std::pair<uint32_t, std::chrono::system_clock::time_point>>>
-    relootTimers;
   espm::Loader* espm = nullptr;
   FormCallbacksFactory formCallbacksFactory;
   std::unique_ptr<espm::CompressedFieldsCache> espmCache;

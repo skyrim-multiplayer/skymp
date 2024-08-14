@@ -7,7 +7,7 @@ Napi::Value TypeBinding::Get(Napi::Env env, ScampServer& scampServer,
 
   auto& refr = partOne->worldState.GetFormAt<MpObjectReference>(formId);
 
-  if (dynamic_cast<MpActor*>(&refr)) {
+  if (refr.AsActor()) {
     return Napi::String::New(env, "MpActor");
   } else {
     return Napi::String::New(env, "MpObjectReference");

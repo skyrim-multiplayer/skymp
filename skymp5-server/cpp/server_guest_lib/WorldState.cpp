@@ -23,6 +23,17 @@
 #include <optional>
 #include <unordered_map>
 
+namespace {
+
+struct RelootTimeForTypesEntry
+{
+  std::string recordType;
+  std::chrono::system_clock::duration time;
+
+  Viet::Timer timer;
+};
+}
+
 struct WorldState::Impl
 {
   std::vector<std::optional<MpChangeForm>> changesByIdx;
@@ -36,8 +47,7 @@ struct WorldState::Impl
   std::unordered_map<uint32_t, MpChangeForm> changeFormsForDeferredLoad;
   bool chunkLoadingInProgress = false;
   bool formLoadingInProgress = false;
-  std::map<std::string, std::chrono::system_clock::duration>
-    relootTimeForTypes;
+  std::vector<RelootTimeForTypesEntry> relootTimeForTypes;
   std::set<std::string> forbiddenRelootTypes;
   std::vector<std::unique_ptr<IPapyrusClassBase>> classes;
 };
@@ -120,7 +130,6 @@ void WorldState::AddForm(std::unique_ptr<MpForm> form, uint32_t formId,
 void WorldState::Tick()
 {
   const auto now = std::chrono::system_clock::now();
-  TickReloot(now);
   TickSaveStorage(now);
   TickTimers(now);
 }
@@ -228,8 +237,33 @@ void WorldState::LoadChangeForm(const MpChangeForm& changeForm,
 void WorldState::RequestReloot(MpObjectReference& ref,
                                std::chrono::system_clock::duration time)
 {
-  auto& list = relootTimers[time];
-  list.push_back({ ref.GetFormId(), std::chrono::system_clock::now() + time });
+  auto refPtr = &ref;
+
+  std::optional<Viet::Promise<Viet::Void>> timer;
+
+  constexpr auto kEpsilon = std::chrono::milliseconds(1);
+
+  for (auto& entry : pImpl->relootTimeForTypes) {
+    auto diff = entry.time - time;
+    if (diff < kEpsilon && diff > -kEpsilon) {
+      timer = entry.timer.SetTimer(time, nullptr);
+      break;
+    }
+  }
+
+  if (timer == std::nullopt) {
+    timer = SetTimer(time);
+  }
+
+  timer->Then([this, refPtr, formId = ref.GetFormId()](Viet::Void) {
+    auto& form = LookupFormById(formId);
+    auto reference = form->AsObjectReference();
+    // Check if the reference is still the same, not re-created with the same
+    // id for example
+    if (reference && reference == refPtr) {
+      reference->DoReloot();
+    }
+  });
 }
 
 void WorldState::RequestSave(MpObjectReference& ref)
@@ -635,23 +669,6 @@ bool WorldState::LoadForm(uint32_t formId, std::stringstream* optionalOutTrace)
   return attached;
 }
 
-void WorldState::TickReloot(const std::chrono::system_clock::time_point& now)
-{
-  for (auto& p : relootTimers) {
-    auto& list = p.second;
-    while (!list.empty() && list.begin()->second <= now) {
-      uint32_t relootTargetId = list.begin()->first;
-      auto relootTarget = std::dynamic_pointer_cast<MpObjectReference>(
-        LookupFormById(relootTargetId));
-      if (relootTarget) {
-        relootTarget->DoReloot();
-      }
-
-      list.pop_front();
-    }
-  }
-}
-
 void WorldState::TickSaveStorage(const std::chrono::system_clock::time_point&)
 {
   if (!pImpl->saveStorage) {
@@ -735,6 +752,10 @@ void WorldState::TickTimers(const std::chrono::system_clock::time_point&)
 {
   timerEffects.TickTimers();
   timerRegular.TickTimers();
+
+  for (auto& entry : pImpl->relootTimeForTypes) {
+    entry.timer.TickTimers();
+  }
 }
 
 void WorldState::SendPapyrusEvent(MpForm* form, const char* eventName,
@@ -997,20 +1018,35 @@ uint32_t WorldState::GenerateFormId()
   return pImpl->nextId++;
 }
 
-void WorldState::SetRelootTime(std::string recordType,
-                               std::chrono::system_clock::duration dur)
+void WorldState::SetRelootTime(const std::string& recordType,
+                               std::chrono::system_clock::duration time)
 {
-  pImpl->relootTimeForTypes[recordType] = dur;
+  auto it = std::find_if(pImpl->relootTimeForTypes.begin(),
+                         pImpl->relootTimeForTypes.end(),
+                         [&recordType](const RelootTimeForTypesEntry& entry) {
+                           return entry.recordType == recordType;
+                         });
+
+  if (it != pImpl->relootTimeForTypes.end()) {
+    it->time = time;
+  } else {
+    pImpl->relootTimeForTypes.push_back({ recordType, time });
+  }
 }
 
 std::optional<std::chrono::system_clock::duration> WorldState::GetRelootTime(
-  std::string recordType) const
+  const std::string& recordType) const
 {
-  auto it = pImpl->relootTimeForTypes.find(recordType);
+  auto it = std::find_if(pImpl->relootTimeForTypes.begin(),
+                         pImpl->relootTimeForTypes.end(),
+                         [&recordType](const RelootTimeForTypesEntry& entry) {
+                           return entry.recordType == recordType;
+                         });
+
   if (it == pImpl->relootTimeForTypes.end()) {
     return std::nullopt;
   }
-  return it->second;
+  return it->time;
 }
 
 bool WorldState::HasKeyword(uint32_t baseId, const char* keyword)

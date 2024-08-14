@@ -5,7 +5,7 @@ Napi::Value IsOnlineBinding::Get(Napi::Env env, ScampServer& scampServer,
 {
   auto& partOne = scampServer.GetPartOne();
   auto& refr = partOne->worldState.GetFormAt<MpObjectReference>(formId);
-  if (auto actor = dynamic_cast<MpActor*>(&refr)) {
+  if (auto actor = refr.AsActor()) {
     auto userId = partOne->serverState.UserByActor(actor);
     if (userId != Networking::InvalidUserId) {
       return Napi::Boolean::New(env, true);

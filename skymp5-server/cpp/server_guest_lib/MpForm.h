@@ -10,6 +10,7 @@ class WorldState;
 class IGameObject;
 class ActivePexInstance;
 struct VarValue;
+class MpObjectReference;
 class MpActor;
 
 class MpForm
@@ -21,6 +22,7 @@ public:
   MpForm();
 
   // Fast dynamic_cast replacement
+  MpObjectReference* AsObjectReference() const noexcept;
   MpActor* AsActor() const noexcept;
 
   static const char* Type() { return "Form"; }
@@ -87,5 +89,6 @@ protected:
 
   void AddScript(const std::shared_ptr<ActivePexInstance>& script) noexcept;
 
+  MpObjectReference* asObjectReference = nullptr;
   MpActor* asActor = nullptr;
 };

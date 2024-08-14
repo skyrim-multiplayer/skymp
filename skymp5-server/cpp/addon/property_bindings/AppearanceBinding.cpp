@@ -44,12 +44,9 @@ void AppearanceBinding::Set(Napi::Env env, ScampServer& scampServer,
     { "t", MsgType::UpdateAppearance }
   }.dump();
 
-  for (auto listener : actor.GetListeners()) {
-    auto listenerActor = dynamic_cast<MpActor*>(listener);
-    if (listenerActor) {
-      // TODO: change to SendToUser
-      listenerActor->SendToUserDeferred(msg.data(), msg.size(), true,
-                                        kChannelAppearance, false);
-    }
+  for (auto listener : actor.GetActorListeners()) {
+    // TODO: change to SendToUser
+    listener->SendToUserDeferred(msg.data(), msg.size(), true,
+                                 kChannelAppearance, false);
   }
 }

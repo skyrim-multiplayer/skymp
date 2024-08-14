@@ -176,6 +176,7 @@ MpObjectReference::MpObjectReference(
   , ChangeFormGuard(MakeChangeForm(locationalData_), this)
 {
   pImpl.reset(new Impl);
+  asObjectReference = this;
 
   if (primitiveBoundsDiv2)
     SetPrimitive(*primitiveBoundsDiv2);
@@ -476,8 +477,8 @@ void MpObjectReference::SetPos(const NiPoint3& newPos, SetPosMode setPosMode)
 
       for (auto& [emitterId, wasInside] : *emittersWithPrimitives) {
         auto& emitter = GetParent()->LookupFormById(emitterId);
-        auto emitterRefr =
-          std::dynamic_pointer_cast<MpObjectReference>(emitter);
+        MpObjectReference* emitterRefr =
+          emitter ? emitter->AsObjectReference() : nullptr;
         if (!emitterRefr) {
           GetParent()->logger->error("Emitter not found ({0:x})", emitterId);
           continue;
@@ -496,10 +497,9 @@ void MpObjectReference::SetPos(const NiPoint3& newPos, SetPosMode setPosMode)
                 wst->logger->error("Refr pointer expired", id);
                 return;
               }
-
               auto& emitter = wst->LookupFormById(id);
-              auto emitterRefr =
-                std::dynamic_pointer_cast<MpObjectReference>(emitter);
+              MpObjectReference* emitterRefr =
+                emitter ? emitter->AsObjectReference() : nullptr;
               if (!emitterRefr) {
                 wst->logger->error("Emitter not found in timer ({0:x})", id);
                 return;
