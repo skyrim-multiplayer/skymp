@@ -150,6 +150,8 @@ foreach(target ${VCPKG_DEPENDENT})
     target_link_libraries(${target} PUBLIC pthread resolv m)
   elseif(WIN32)
     target_link_libraries(${target} PUBLIC Secur32.lib Crypt32.lib Dnsapi.lib Bcrypt.lib)
+  elseif(EMSCRIPTEN)
+    # ...
   elseif(UNIX)
     target_link_libraries(${target} PUBLIC pthread resolv rt m)
   endif()
