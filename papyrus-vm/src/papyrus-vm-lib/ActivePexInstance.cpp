@@ -8,6 +8,7 @@
 #include <sstream>
 #include <stdexcept>
 
+#include <fmt/ranges.h>
 #include <spdlog/spdlog.h>
 
 namespace {
