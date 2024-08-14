@@ -50,6 +50,19 @@ index 74f5d8aa0..8906063aa 100644
  
  #include <dirent.h>
  
+diff --git a/Source/include/slikenet/linux_adapter.h b/Source/include/slikenet/linux_adapter.h
+index b8a228f2d..1b578d9e5 100644
+--- a/Source/include/slikenet/linux_adapter.h
++++ b/Source/include/slikenet/linux_adapter.h
+@@ -9,7 +9,7 @@
+  */
+ #pragma once
+ 
+-#ifdef __linux__
++#if defined(__linux__) || defined(__EMSCRIPTEN__)
+ #define _TRUNCATE ((size_t)-1)
+ typedef int errno_t;
+ 
 diff --git a/Source/include/slikenet/socket2.h b/Source/include/slikenet/socket2.h
 index fde1ee471..52514512b 100644
 --- a/Source/include/slikenet/socket2.h
@@ -206,3 +219,16 @@ index 0391948d2..83112d263 100644
  
  #include "slikenet/gettimeofday.h"
  
+diff --git a/Source/src/linux_adapter.cpp b/Source/src/linux_adapter.cpp
+index fe25abe96..9d1f66e71 100644
+--- a/Source/src/linux_adapter.cpp
++++ b/Source/src/linux_adapter.cpp
+@@ -8,7 +8,7 @@
+  *  This file defines adapters for all MS-specific functions used throughout SLikeNet.
+  */
+ 
+-#ifdef __linux__
++#if defined(__linux__) || defined(__EMSCRIPTEN__)
+ #include "slikenet/linux_adapter.h"
+ 
+ #include <algorithm>	// for std::max, std::min
