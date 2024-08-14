@@ -140,6 +140,8 @@ export class RemoteServer extends ClientListener {
   }
 
   private onSetInventoryMessage(event: ConnectionMessage<SetInventoryMessage>): void {
+    this.numSetInventory++;
+
     const msg = event.message;
     once('update', () => {
       setPcInventory(msg.inventory);
@@ -376,18 +378,26 @@ export class RemoteServer extends ClientListener {
     if (msg.props && msg.props.isRaceMenuOpen && msg.isMe)
       this.onSetRaceMenuOpenMessage({ message: { type: 'setRaceMenuOpen', open: true } });
 
+    const numSetInventory = this.numSetInventory;
+
     const applyPcInv = () => {
       if (msg.equipment) {
         applyEquipment(Game.getPlayer()!, msg.equipment)
       }
 
-      if (msg.props && msg.props.inventory)
+      if (numSetInventory !== this.numSetInventory) {
+        logTrace(this, 'Skipping inventory apply due to newer setInventory message');
+        return;
+      }
+
+      if (msg.props && msg.props.inventory) {
         this.onSetInventoryMessage({
           message: {
             type: 'setInventory',
             inventory: msg.props.inventory
           }
         });
+      }
     };
 
     if (msg.isMe && msg.props && msg.props.learnedSpells) {
@@ -522,12 +532,14 @@ export class RemoteServer extends ClientListener {
                 ? {
                   name: msg.appearance.name,
                   raceId: msg.appearance.raceId,
+                  // @ts-expect-error
+                  isFemale: msg.appearance.isFemale,
                   face: {
                     hairColor: msg.appearance.hairColor,
                     bodySkinColor: msg.appearance.skinColor,
                     headTextureSetId: msg.appearance.headTextureSetId,
                     headPartIds: msg.appearance.headpartIds,
-                    presets: msg.appearance.presets,
+                    presets: msg.appearance.presets
                   },
                 }
                 : undefined,
@@ -828,4 +840,6 @@ export class RemoteServer extends ClientListener {
     // Optimization added in #1186, however it doesn't work for doors for some reason
     return msg.refrId && msg.refrId < 0xff000000 && msg.baseRecordType !== 'DOOR';
   };
+
+  private numSetInventory = 0;
 }

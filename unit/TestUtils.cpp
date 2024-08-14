@@ -87,9 +87,7 @@ void FakeListener::OnCustomPacket(Networking::UserId userId,
      << std::endl;
 }
 
-bool FakeListener::OnMpApiEvent(const char* eventName,
-                                std::optional<simdjson::dom::element> args,
-                                std::optional<uint32_t> formId)
+bool FakeListener::OnMpApiEvent(const GameModeEvent&)
 {
   return true;
 }

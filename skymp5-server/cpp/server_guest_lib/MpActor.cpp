@@ -17,6 +17,10 @@
 #include "SweetPieScript.h"
 #include "TimeUtils.h"
 #include "WorldState.h"
+#include "gamemode_events/DeathEvent.h"
+#include "gamemode_events/DropItemEvent.h"
+#include "gamemode_events/EatItemEvent.h"
+#include "gamemode_events/RespawnEvent.h"
 #include "libespm/espm.h"
 #include "papyrus-vm/Utils.h"
 #include "script_objects/EspmGameObject.h"
@@ -66,6 +70,7 @@ struct MpActor::Impl
   };
   uint32_t blockActiveCount = 0;
   std::vector<std::pair<uint32_t, MpObjectReference*>> droppedItemsQueue;
+  std::optional<AnimationData> animationData;
 
   // this is a hot fix attempt to make permanent restoration potions work
   std::chrono::system_clock::time_point nextRestorationTime{};
@@ -193,6 +198,17 @@ void MpActor::RemoveSpell(const uint32_t spellId)
   EditChangeForm([&](MpChangeForm& changeForm) {
     changeForm.learnedSpells.ForgetSpell(spellId);
   });
+}
+
+void MpActor::SetLastAnimEvent(
+  const std::optional<AnimationData>& animationData)
+{
+  pImpl->animationData = animationData;
+}
+
+std::optional<AnimationData> MpActor::GetLastAnimEvent() const
+{
+  return pImpl->animationData;
 }
 
 void MpActor::SetRaceMenuOpen(bool isOpen)
@@ -699,6 +715,35 @@ const std::string& MpActor::GetEquipmentAsJson() const
   return ChangeForm().equipmentDump;
 }
 
+namespace {
+bool IsValidAnimEventName(const std::string& eventName)
+{
+  return std::all_of(eventName.begin(), eventName.end(),
+                     [](char c) { return std::isalnum(c) || (c == '_'); });
+}
+}
+
+std::string MpActor::GetLastAnimEventAsJson() const
+{
+  std::optional<AnimationData> anim = GetLastAnimEvent();
+
+  if (!anim) {
+    return "";
+  }
+
+  // Don't want bad anims to break JSON syntax
+  if (!IsValidAnimEventName(anim->animEventName)) {
+    return "";
+  }
+
+  std::string res = R"({"animEventName":)";
+  res += '"' + anim->animEventName + '"';
+  res += R"(,"numChanges":)";
+  res += std::to_string(anim->numChanges);
+  res += "}";
+  return res;
+}
+
 Equipment MpActor::GetEquipment() const
 {
   simdjson::dom::parser p;
@@ -805,119 +850,13 @@ DeathStateContainerMessage MpActor::GetDeathStateMsg(
   return res;
 }
 
-void MpActor::MpApiDeath(MpActor* killer)
-{
-  spdlog::trace("MpActor::MpApiDeath {:x} - killer is {:x}", GetFormId(),
-                killer ? killer->GetFormId() : 0);
-
-  simdjson::dom::parser parser;
-  bool isRespawnBlocked = false;
-
-  std::string s = "[" + std::to_string(killer ? killer->GetFormId() : 0) + "]";
-  auto args = parser.parse(s).value();
-
-  if (auto wst = GetParent()) {
-    const auto id = GetFormId();
-    for (auto& listener : wst->listeners) {
-      if (listener->OnMpApiEvent("onDeath", args, id) == false) {
-        isRespawnBlocked = true;
-      };
-    }
-  }
-
-  spdlog::trace("MpActor::MpApiDeath {:x} - isRespawnBlocked: {}", GetFormId(),
-                isRespawnBlocked);
-
-  if (!isRespawnBlocked) {
-    RespawnWithDelay();
-  }
-}
-
-bool MpActor::MpApiCraft(uint32_t craftedItemBaseId, uint32_t count,
-                         uint32_t recipeId)
-{
-  simdjson::dom::parser parser;
-  bool isCraftBlocked = false;
-
-  std::string s = "[" + std::to_string(craftedItemBaseId) + "," +
-    std::to_string(count) + "," + std::to_string(recipeId) + "]";
-  auto args = parser.parse(s).value();
-
-  if (auto wst = GetParent()) {
-    const auto id = GetFormId();
-    for (auto& listener : wst->listeners) {
-      if (listener->OnMpApiEvent("onCraft", args, id) == false) {
-        isCraftBlocked = true;
-      };
-    }
-  }
-
-  return !isCraftBlocked;
-}
-
-bool MpActor::MpApiDropItem(uint32_t baseId, uint32_t count)
-{
-  simdjson::dom::parser parser;
-  bool isDropItemBlocked = false;
-
-  std::string s =
-    "[" + std::to_string(baseId) + "," + std::to_string(count) + "]";
-  auto args = parser.parse(s).value();
-
-  if (auto wst = GetParent()) {
-    const auto id = GetFormId();
-    for (auto& listener : wst->listeners) {
-      if (listener->OnMpApiEvent("onDropItem", args, id) == false) {
-        isDropItemBlocked = true;
-      };
-    }
-  }
-
-  return !isDropItemBlocked;
-}
-
-bool MpActor::MpApiEatItem(uint32_t baseId)
-{
-  simdjson::dom::parser parser;
-  bool isEatItemBlocked = false;
-
-  std::string s = "[" + std::to_string(baseId) + "]";
-  auto args = parser.parse(s).value();
-
-  if (auto wst = GetParent()) {
-    const auto id = GetFormId();
-    for (auto& listener : wst->listeners) {
-      if (listener->OnMpApiEvent("onEatItem", args, id) == false) {
-        isEatItemBlocked = true;
-      };
-    }
-  }
-
-  return !isEatItemBlocked;
-}
-
 void MpActor::EatItem(uint32_t baseId, espm::Type t)
 {
-  if (!MpApiEatItem(baseId)) {
-    spdlog::info(
-      "MpActor::DropItem {:x} - blocked by MpApiEatItem (baseId={:x})",
-      GetFormId(), baseId);
-    return;
-  }
+  bool isIngredient = t == "INGR";
+  bool isAlchemyItem = t == "ALCH";
 
-  auto espmProvider = GetParent();
-  std::vector<espm::Effects::Effect> effects;
-  if (t == "ALCH") {
-    effects = espm::GetData<espm::ALCH>(baseId, espmProvider).effects;
-  } else if (t == "INGR") {
-    effects = espm::GetData<espm::INGR>(baseId, espmProvider).effects;
-  } else {
-    return;
-  }
-  std::unordered_set<std::string> modFiles = { GetParent()->espmFiles.begin(),
-                                               GetParent()->espmFiles.end() };
-  bool hasSweetpie = modFiles.count("SweetPie.esp");
-  ApplyMagicEffects(effects, hasSweetpie);
+  EatItemEvent eatItemEvent(this, baseId, isIngredient, isAlchemyItem);
+  eatItemEvent.Fire(GetParent());
 }
 
 bool MpActor::ReadBook(const uint32_t baseId)
@@ -1136,7 +1075,10 @@ void MpActor::Kill(MpActor* killer, bool shouldTeleport)
 
   // Keep in sync with MpActor::SetIsDead
   SendAndSetDeathState(true, shouldTeleport);
-  MpApiDeath(killer);
+
+  DeathEvent deathEvent(this, killer);
+  deathEvent.Fire(GetParent());
+
   AddDeathItem();
 }
 
@@ -1221,21 +1163,8 @@ void MpActor::Respawn(bool shouldTeleport)
   }
   pImpl->isRespawning = false;
 
-  simdjson::dom::parser parser;
-  std::string s = "[]";
-  auto args = parser.parse(s).value();
-
-  if (auto wst = GetParent()) {
-    const auto id = GetFormId();
-    for (auto& listener : wst->listeners) {
-      listener->OnMpApiEvent("onRespawn", args, id);
-    }
-  }
-
-  SendAndSetDeathState(false, shouldTeleport);
-
-  // TODO: should probably not sending to ourselves. see also RespawnTest.cpp
-  SendPropertyToListeners("isDead", false);
+  RespawnEvent respawnEvent(this, shouldTeleport);
+  respawnEvent.Fire(GetParent());
 }
 
 void MpActor::Teleport(const LocationalData& position)
@@ -1339,7 +1268,10 @@ void MpActor::SetIsDead(bool isDead)
 
       // Keep in sync with MpActor::Kill
       SendAndSetDeathState(isDead, kShouldTeleport);
-      MpApiDeath(nullptr);
+
+      DeathEvent deathEvent(this, nullptr);
+      deathEvent.Fire(GetParent());
+
       AddDeathItem();
 
       spdlog::trace("MpActor::SetIsDead {:x} - actor is now dead",
@@ -1405,7 +1337,10 @@ void MpActor::DropItem(const uint32_t baseId, const Inventory::Entry& entry)
 
   const int count = entry.count;
 
-  if (!MpApiDropItem(baseId, count)) {
+  DropItemEvent dropEvent(GetFormId(), baseId, count);
+  bool success = dropEvent.Fire(GetParent());
+
+  if (!success) {
     spdlog::info("MpActor::DropItem {:x} - blocked by MpApiDropItem "
                  "(baseId={:x}, count={})",
                  GetFormId(), baseId, count);

@@ -66,6 +66,11 @@ std::unique_ptr<SaveFile_::ChangeFormNPC_> CreateChangeFormNpc(
       FormIdToRefId(static_cast<uint32_t>(static_cast<double>(raceId)));
   }
 
+  if (auto isFemale = npcData.GetProperty("isFemale");
+      isFemale.GetType() == JsValue::Type::Boolean) {
+    changeFormNpc->gender = isFemale ? 1 : 0;
+  }
+
   if (auto face = npcData.GetProperty("face");
       face.GetType() == JsValue::Type::Object) {
     changeFormNpc->face = SaveFile_::ChangeFormNPC_::Face();
@@ -153,7 +158,11 @@ JsValue LoadGameApi::LoadGame(const JsFunctionArguments& args)
   auto loadOrder = args[5];
   auto time = args[6];
 
-  auto save = LoadGame::PrepareSaveFile();
+  constexpr auto kPathInAssetsMale = "assets/template.ess";
+
+  const char* pathInAsset = kPathInAssetsMale;
+
+  auto save = LoadGame::PrepareSaveFile(pathInAsset);
   if (!save) {
     throw NullPointerException("save");
   }

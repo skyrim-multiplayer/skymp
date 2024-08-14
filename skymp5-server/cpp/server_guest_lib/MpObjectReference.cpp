@@ -14,6 +14,9 @@
 #include "ScriptVariablesHolder.h"
 #include "TimeUtils.h"
 #include "WorldState.h"
+#include "gamemode_events/ActivateEvent.h"
+#include "gamemode_events/PutItemEvent.h"
+#include "gamemode_events/TakeItemEvent.h"
 #include "libespm/CompressedFieldsCache.h"
 #include "libespm/Convert.h"
 #include "libespm/GroupUtils.h"
@@ -405,7 +408,9 @@ void MpObjectReference::Activate(MpObjectReference& activationSource,
     }
   }
 
-  bool activationBlockedByMpApi = MpApiOnActivate(activationSource);
+  ActivateEvent activateEvent(GetFormId(), activationSource.GetFormId());
+
+  bool activationBlockedByMpApi = !activateEvent.Fire(GetParent());
 
   if (!activationBlockedByMpApi &&
       (!activationBlocked || defaultProcessingOnly)) {
@@ -570,12 +575,8 @@ void MpObjectReference::PutItem(MpActor& ac, const Inventory::Entry& e)
     throw std::runtime_error(err.str());
   }
 
-  if (MpApiOnPutItem(ac, e)) {
-    return spdlog::trace("onPutItem - blocked by gamemode");
-  }
-
-  spdlog::trace("onPutItem - not blocked by gamemode");
-  ac.RemoveItems({ e }, this);
+  PutItemEvent putItemEvent(&ac, this, e);
+  putItemEvent.Fire(GetParent());
 }
 
 void MpObjectReference::TakeItem(MpActor& ac, const Inventory::Entry& e)
@@ -588,12 +589,8 @@ void MpObjectReference::TakeItem(MpActor& ac, const Inventory::Entry& e)
     throw std::runtime_error(err.str());
   }
 
-  if (MpApiOnTakeItem(ac, e)) {
-    return spdlog::trace("onTakeItem - blocked by gamemode");
-  }
-
-  spdlog::trace("onTakeItem - not blocked by gamemode");
-  RemoveItems({ e }, &ac);
+  TakeItemEvent takeItemEvent(&ac, this, e);
+  takeItemEvent.Fire(GetParent());
 }
 
 void MpObjectReference::SetRelootTime(
@@ -762,14 +759,25 @@ void MpObjectReference::AddItem(uint32_t baseId, uint32_t count)
   });
   SendInventoryUpdate();
 
-  //  TODO: No one used it due to incorrect baseItem which should be object,
-  //  not id. Needs to be revised. Seems to also be buggy
-  // auto baseItem = VarValue(static_cast<int32_t>(baseId));
-  // auto itemCount = VarValue(static_cast<int32_t>(count));
-  // auto itemReference = VarValue((IGameObject*)nullptr);
-  // auto sourceContainer = VarValue((IGameObject*)nullptr);
-  // VarValue args[4] = { baseItem, itemCount, itemReference, sourceContainer
-  // }; SendPapyrusEvent("OnItemAdded", args, 4);
+  if (auto worldState = GetParent(); worldState->HasEspm()) {
+    espm::LookupResult lookupRes =
+      worldState->GetEspm().GetBrowser().LookupById(baseId);
+
+    if (lookupRes.rec) {
+      auto baseItem = VarValue(std::make_shared<EspmGameObject>(lookupRes));
+      auto itemCount = VarValue(static_cast<int32_t>(count));
+      auto itemReference =
+        VarValue(static_cast<IGameObject*>(nullptr)); // TODO
+      auto sourceContainer =
+        VarValue(static_cast<IGameObject*>(nullptr)); // TODO
+      VarValue args[4] = { baseItem, itemCount, itemReference,
+                           sourceContainer };
+      SendPapyrusEvent("OnItemAdded", args, 4);
+    } else {
+      spdlog::warn("MpObjectReference::AddItem - failed to lookup item {:x}",
+                   baseId);
+    }
+  }
 }
 
 void MpObjectReference::AddItems(const std::vector<Inventory::Entry>& entries)
@@ -1476,27 +1484,6 @@ void MpObjectReference::ActivateChilds()
   }
 }
 
-bool MpObjectReference::MpApiOnActivate(MpObjectReference& caster)
-{
-  simdjson::dom::parser parser;
-
-  std::string s = "[" + std::to_string(caster.GetFormId()) + " ]";
-  auto args = parser.parse(s).value();
-
-  bool activationBlocked = false;
-
-  if (auto wst = GetParent()) {
-    const auto id = GetFormId();
-    for (auto& listener : wst->listeners) {
-      if (listener->OnMpApiEvent("onActivate", args, id) == false) {
-        activationBlocked = true;
-      }
-    }
-  }
-
-  return activationBlocked;
-}
-
 void MpObjectReference::RemoveFromGridAndUnsubscribeAll()
 {
   auto worldOrCell = GetCellOrWorld().ToFormId(GetParent()->espmFiles);
@@ -1847,46 +1834,6 @@ void MpObjectReference::BeforeDestroy()
   MpForm::BeforeDestroy();
 
   RemoveFromGridAndUnsubscribeAll();
-}
-
-bool MpObjectReference::MpApiOnPutItem(MpActor& source,
-                                       const Inventory::Entry& entry)
-{
-  simdjson::dom::parser parser;
-  std::string rawArgs = "[" + std::to_string(source.GetFormId()) + "," +
-    std::to_string(entry.baseId) + "," + std::to_string(entry.count) + "]";
-  auto args = parser.parse(rawArgs).value();
-  bool blockedByMpApi = false;
-
-  if (auto wst = GetParent()) {
-    const auto id = GetFormId();
-    for (auto& listener : wst->listeners) {
-      bool notBlocked = listener->OnMpApiEvent("onPutItem", args, id);
-      blockedByMpApi = !notBlocked;
-    }
-  }
-
-  return blockedByMpApi;
-}
-
-bool MpObjectReference::MpApiOnTakeItem(MpActor& source,
-                                        const Inventory::Entry& entry)
-{
-  simdjson::dom::parser parser;
-  std::string rawArgs = "[" + std::to_string(source.GetFormId()) + "," +
-    std::to_string(entry.baseId) + "," + std::to_string(entry.count) + "]";
-  auto args = parser.parse(rawArgs).value();
-  bool blockedByMpApi = false;
-
-  if (auto wst = GetParent()) {
-    const auto id = GetFormId();
-    for (auto& listener : wst->listeners) {
-      bool notBlocked = listener->OnMpApiEvent("onTakeItem", args, id);
-      blockedByMpApi = !notBlocked;
-    }
-  }
-
-  return blockedByMpApi;
 }
 
 float MpObjectReference::GetTotalItemWeight() const

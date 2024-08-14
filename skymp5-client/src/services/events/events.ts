@@ -33,6 +33,7 @@ import { AuthAttemptEvent } from "./authAttemptEvent";
 import { NewLocalLagValueCalculatedEvent } from "./newLocalLagValueCalculatedEvent";
 import { AuthNeededEvent } from "./authNeededEvent";
 import { QueryBlockSetInventoryEvent } from "./queryBlockSetInventoryEvent";
+import { QueryKeyCodeBindings } from "./queryKeyCodeBindings";
 
 type EventTypes = {
     'gameLoad': [GameLoadEvent],
@@ -72,7 +73,8 @@ type EventTypes = {
     'authNeeded': [AuthNeededEvent],
     'anyMessage': [ConnectionMessage<AnyMessage>],
     'newLocalLagValueCalculated': [NewLocalLagValueCalculatedEvent],
-    'queryBlockSetInventoryEvent': [QueryBlockSetInventoryEvent]
+    'queryBlockSetInventoryEvent': [QueryBlockSetInventoryEvent],
+    'queryKeyCodeBindings': [QueryKeyCodeBindings]
 }
 
 // https://blog.makerx.com.au/a-type-safe-event-emitter-in-node-js/

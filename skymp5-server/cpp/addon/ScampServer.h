@@ -20,6 +20,10 @@ public:
 
   static Napi::Value WriteLogs(const Napi::CallbackInfo& info);
 
+  // private methods, not intended for use in gamemode
+  Napi::Value _SetSelf(const Napi::CallbackInfo& info);
+
+  // public API methods
   Napi::Value AttachSaveStorage(const Napi::CallbackInfo& info);
   Napi::Value Tick(const Napi::CallbackInfo& info);
   Napi::Value On(const Napi::CallbackInfo& info);
@@ -74,6 +78,7 @@ private:
   std::shared_ptr<ScampServerListener> listener;
   Napi::Env tickEnv;
   Napi::ObjectReference emitter;
+  Napi::ObjectReference self;
   Napi::FunctionReference emit;
   std::shared_ptr<spdlog::logger> logger;
   nlohmann::json serverSettings;

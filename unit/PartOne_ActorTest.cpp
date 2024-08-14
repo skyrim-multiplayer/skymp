@@ -183,12 +183,7 @@ TEST_CASE("Destroying actor in disconnect event handler", "[PartOne]")
                         const simdjson::dom::element& content) override
     {
     }
-    bool OnMpApiEvent(const char* eventName,
-                      std::optional<simdjson::dom::element> args,
-                      std::optional<uint32_t> formId) override
-    {
-      return true;
-    }
+    bool OnMpApiEvent(const GameModeEvent&) override { return true; }
   };
 
   partOne.AddListener(std::shared_ptr<PartOne::Listener>(new Listener));

@@ -63,7 +63,8 @@ Napi::Object ScampServer::Init(Napi::Env env, Napi::Object exports)
 {
   Napi::Function func = DefineClass(
     env, "ScampServer",
-    { InstanceMethod("attachSaveStorage", &ScampServer::AttachSaveStorage),
+    { InstanceMethod("_setSelf", &ScampServer::_SetSelf),
+      InstanceMethod("attachSaveStorage", &ScampServer::AttachSaveStorage),
       InstanceMethod("tick", &ScampServer::Tick),
       InstanceMethod("on", &ScampServer::On),
       InstanceMethod("createActor", &ScampServer::CreateActor),
@@ -359,6 +360,18 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
   } catch (std::exception& e) {
     throw Napi::Error::New(info.Env(), (std::string)e.what());
   }
+}
+
+Napi::Value ScampServer::_SetSelf(const Napi::CallbackInfo& info)
+{
+  try {
+    auto self = info[0].As<Napi::Object>();
+    auto persistent = Napi::Persistent(self);
+    this->self = std::move(persistent);
+  } catch (std::exception& e) {
+    throw Napi::Error::New(info.Env(), (std::string)e.what());
+  }
+  return info.Env().Undefined();
 }
 
 Napi::Value ScampServer::AttachSaveStorage(const Napi::CallbackInfo& info)

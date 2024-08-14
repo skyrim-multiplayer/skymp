@@ -13,6 +13,9 @@
 #include "MsgType.h"
 #include "UserMessageOutput.h"
 #include "WorldState.h"
+#include "gamemode_events/CraftEvent.h"
+#include "gamemode_events/CustomEvent.h"
+#include "gamemode_events/EatItemEvent.h"
 #include "script_objects/EspmGameObject.h"
 #include <fmt/format.h>
 #include <spdlog/spdlog.h>
@@ -99,7 +102,7 @@ void ActionListener::OnUpdateMovement(const RawMessageData& rawMsgData,
                                       uint32_t idx, const NiPoint3& pos,
                                       const NiPoint3& rot, bool isInJumpState,
                                       bool isWeapDrawn, bool isBlocking,
-                                      uint32_t worldOrCell)
+                                      uint32_t worldOrCell, RunMode runMode)
 {
   auto actor = SendToNeighbours(idx, rawMsgData);
   if (actor) {
@@ -144,9 +147,15 @@ void ActionListener::OnUpdateMovement(const RawMessageData& rawMsgData,
     actor->SetAnimationVariableBool("bInJumpState", isInJumpState);
     actor->SetAnimationVariableBool("_skymp_isWeapDrawn", isWeapDrawn);
     actor->SetAnimationVariableBool("IsBlocking", isBlocking);
+
     if (actor->GetBlockCount() == 5) {
       actor->SetIsBlockActive(false);
       actor->ResetBlockCount();
+    }
+
+    if (runMode != RunMode::Standing) {
+      // otherwise, people will slide in anims after quitting furniture
+      actor->SetLastAnimEvent(std::nullopt);
     }
 
     if (partOne.worldState.lastMovUpdateByIdx.size() <= idx) {
@@ -162,19 +171,24 @@ void ActionListener::OnUpdateAnimation(const RawMessageData& rawMsgData,
                                        uint32_t idx,
                                        const AnimationData& animationData)
 {
-  MpActor* actor = partOne.serverState.ActorByUser(rawMsgData.userId);
-  if (!actor) {
+  MpActor* myActor = partOne.serverState.ActorByUser(rawMsgData.userId);
+  if (!myActor) {
     return;
   }
 
-  WorldState* espmProvider = actor->GetParent();
-  if (!espmProvider) {
+  auto targetActor = SendToNeighbours(idx, rawMsgData);
+
+  if (!targetActor) {
     return;
   }
 
-  partOne.animationSystem.Process(actor, animationData);
+  // Only process animation system and set last anim event for player's actor
+  if (targetActor != myActor) {
+    return;
+  }
 
-  SendToNeighbours(idx, rawMsgData);
+  partOne.animationSystem.Process(targetActor, animationData);
+  targetActor->SetLastAnimEvent(animationData);
 }
 
 void ActionListener::OnUpdateAppearance(const RawMessageData& rawMsgData,
@@ -484,13 +498,10 @@ void UseCraftRecipe(MpActor* me, const espm::COBJ* recipeUsed,
 
   auto recipeId = espm::utils::GetMappedId(recipeUsed->GetId(), *mapping);
 
-  if (me->MpApiCraft(outputFormId, recipeData.outputCount, recipeId)) {
-    spdlog::trace("onCraft - not blocked by gamemode");
-    me->RemoveItems(entries);
-    me->AddItem(outputFormId, recipeData.outputCount);
-  } else {
-    spdlog::trace("onCraft - blocked by gamemode");
-  }
+  CraftEvent craftEvent(me, outputFormId, recipeData.outputCount, recipeId,
+                        entries);
+
+  craftEvent.Fire(me->GetParent());
 }
 
 void ActionListener::OnCraftItem(const RawMessageData& rawMsgData,
@@ -632,7 +643,9 @@ void ActionListener::OnCustomEvent(const RawMessageData& rawMsgData,
   }
 
   for (auto& listener : partOne.GetListeners()) {
-    listener->OnMpApiEvent(eventName, args, ac->GetFormId());
+    CustomEvent customEvent(ac->GetFormId(), eventName,
+                            simdjson::minify(args));
+    listener->OnMpApiEvent(customEvent);
   }
 }
 

@@ -91,8 +91,11 @@ bool GetIsItemWithLightCarryableFlagChecked(
 VarValue PapyrusObjectReference::AddItem(
   VarValue self, const std::vector<VarValue>& arguments)
 {
-  if (arguments.size() < 3)
+  if (arguments.size() < 3) {
+    spdlog::error("PapyrusObjectReference::AddItem - not enough arguments");
     return VarValue::None();
+  }
+
   const auto& item = GetRecordPtr(arguments[0]);
   auto count = static_cast<int>(arguments[1]);
   bool silent = static_cast<bool>(arguments[2].CastToBool());
@@ -177,8 +180,10 @@ VarValue PapyrusObjectReference::AddItem(
 VarValue PapyrusObjectReference::RemoveItem(
   VarValue self, const std::vector<VarValue>& arguments)
 {
-  if (arguments.size() < 4)
+  if (arguments.size() < 4) {
+    spdlog::error("PapyrusObjectReference::RemoveItem - not enough arguments");
     return VarValue::None();
+  }
 
   const auto& item = GetRecordPtr(arguments[0]);
   auto count = static_cast<int>(arguments[1]);
@@ -264,6 +269,33 @@ VarValue PapyrusObjectReference::RemoveItem(
     }
   }
 
+  return VarValue::None();
+}
+
+VarValue PapyrusObjectReference::RemoveAllItems(
+  VarValue self, const std::vector<VarValue>& arguments)
+{
+  if (arguments.size() < 3) {
+    spdlog::error(
+      "PapyrusObjectReference::RemoveAllItems - not enough arguments");
+    return VarValue::None();
+  }
+
+  auto selfRefr = GetFormPtr<MpObjectReference>(self);
+  if (selfRefr) {
+    auto targetRefr = GetFormPtr<MpObjectReference>(arguments[0]);
+
+    spdlog::trace("PapyrusObjectReference::RemoveAllItems - targetRefr={:x}",
+                  targetRefr ? targetRefr->GetFormId() : 0);
+
+    // TODO: implement these arguments
+    bool abKeepOwnership = static_cast<bool>(arguments[1].CastToBool());
+    bool abRemoveQuestItems = static_cast<bool>(arguments[2].CastToBool());
+    (void)abKeepOwnership;
+    (void)abRemoveQuestItems;
+
+    selfRefr->RemoveAllItems(targetRefr);
+  }
   return VarValue::None();
 }
 
@@ -904,6 +936,7 @@ void PapyrusObjectReference::Register(
   AddMethod(vm, "DisableNoWait", &PapyrusObjectReference::DisableNoWait);
   AddMethod(vm, "AddItem", &PapyrusObjectReference::AddItem);
   AddMethod(vm, "RemoveItem", &PapyrusObjectReference::RemoveItem);
+  AddMethod(vm, "RemoveAllItems", &PapyrusObjectReference::RemoveAllItems);
   AddMethod(vm, "GetItemCount", &PapyrusObjectReference::GetItemCount);
   AddMethod(vm, "GetAnimationVariableBool",
             &PapyrusObjectReference::GetAnimationVariableBool);

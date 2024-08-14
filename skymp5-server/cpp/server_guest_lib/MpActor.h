@@ -1,4 +1,5 @@
 #pragma once
+#include "AnimationData.h"
 #include "Appearance.h"
 #include "GetBaseActorValues.h"
 #include "MpObjectReference.h"
@@ -12,10 +13,13 @@
 
 class WorldState;
 struct ActorValues;
+class RespawnEvent;
 
 class MpActor : public MpObjectReference
 {
 public:
+  friend class RespawnEvent;
+
   static const char* Type() { return "Actor"; }
   const char* GetFormType() const override { return "Actor"; }
 
@@ -32,6 +36,7 @@ public:
   std::unique_ptr<const Appearance> GetAppearance() const;
   const std::string& GetAppearanceAsJson();
   const std::string& GetEquipmentAsJson() const;
+  std::string GetLastAnimEventAsJson() const;
   Equipment GetEquipment() const;
   std::array<std::optional<Inventory::Entry>, 2> GetEquippedWeapon() const;
   uint32_t GetRaceId() const;
@@ -143,13 +148,11 @@ public:
 
   void EquipBestWeapon();
 
-  bool MpApiCraft(uint32_t craftedItemBaseId, uint32_t count,
-                  uint32_t recipeId);
-  bool MpApiDropItem(uint32_t baseId, uint32_t count);
-  bool MpApiEatItem(uint32_t baseId);
-
   void AddSpell(uint32_t spellId);
   void RemoveSpell(uint32_t spellId);
+
+  void SetLastAnimEvent(const std::optional<AnimationData>& animationData);
+  std::optional<AnimationData> GetLastAnimEvent() const;
 
 private:
   struct Impl;
@@ -162,7 +165,6 @@ private:
                                               bool isDead,
                                               bool shouldTeleport);
 
-  void MpApiDeath(MpActor* killer = nullptr);
   void EatItem(uint32_t baseId, espm::Type t);
 
   bool ReadBook(uint32_t baseId);

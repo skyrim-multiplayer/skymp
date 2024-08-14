@@ -3,6 +3,7 @@
 #include "GetWeightFromRecord.h"
 #include "MpObjectReference.h"
 #include "WorldState.h"
+#include "gamemode_events/PapyrusEventEvent.h"
 #include "script_objects/MpFormGameObject.h"
 
 MpForm::MpForm()
@@ -33,7 +34,9 @@ void MpForm::Update()
 void MpForm::SendPapyrusEvent(const char* eventName, const VarValue* arguments,
                               size_t argumentsCount)
 {
-  GetParent()->SendPapyrusEvent(this, eventName, arguments, argumentsCount);
+  PapyrusEventEvent papyrusEventEvent(this, eventName, arguments,
+                                      argumentsCount);
+  papyrusEventEvent.Fire(parent);
 }
 
 VarValue MpForm::ToVarValue() const
