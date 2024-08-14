@@ -76,6 +76,19 @@ index fde1ee471..52514512b 100644
  class RNS2_Windows_Linux_360
  {
  public:
+diff --git a/Source/src/FileList.cpp b/Source/src/FileList.cpp
+index 514d2aa88..77c6bf12a 100644
+--- a/Source/src/FileList.cpp
++++ b/Source/src/FileList.cpp
+@@ -25,7 +25,7 @@
+ #include <io.h>
+ 
+ 
+-#elif !defined ( __APPLE__ ) && !defined ( __APPLE_CC__ ) && !defined ( __PPC__ ) && !defined ( __FreeBSD__ ) && !defined ( __S3E__ )
++#elif !defined ( __EMSCRIPTEN__ ) && !defined ( __APPLE__ ) && !defined ( __APPLE_CC__ ) && !defined ( __PPC__ ) && !defined ( __FreeBSD__ ) && !defined ( __S3E__ )
+ #include <sys/io.h>
+ #endif
+ 
 diff --git a/Source/src/GetTime.cpp b/Source/src/GetTime.cpp
 index 6e30e255c..67d69ace0 100644
 --- a/Source/src/GetTime.cpp
