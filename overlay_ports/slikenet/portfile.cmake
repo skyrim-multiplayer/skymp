@@ -2,6 +2,7 @@ set(PATCHES fix-install.patch)
 
 if(VCPKG_TARGET_ARCHITECTURE MATCHES "wasm32")
     #set(PATCHES ${PATCHES} emscripten.patch emscripten2.patch)
+    set(PATCHES ${PATCHES} define_linux.patch)
 endif()
 
 vcpkg_from_github(

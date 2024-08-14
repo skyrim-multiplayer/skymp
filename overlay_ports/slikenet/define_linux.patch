@@ -1,0 +1,12 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 007291d94..f3c5ca752 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -87,3 +87,7 @@ set(SLIKENET_COMMON_LIBS SLikeNetLibStatic)
+ if(SLIKENET_ENABLE_SAMPLES)
+ 	add_subdirectory(Samples)
+ endif()
++
++add_compile_definitions(__linux__=1)
++add_compile_definitions(__unix__=1)
++
