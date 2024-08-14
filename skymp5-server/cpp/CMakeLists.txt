@@ -97,9 +97,7 @@ find_package(spdlog CONFIG REQUIRED)
 
 find_package(simdjson CONFIG REQUIRED)
 
-if(NOT EMSCRIPTEN)
-  find_package(slikenet CONFIG REQUIRED)
-endif()
+find_package(slikenet CONFIG REQUIRED)
 
 find_package(ZLIB REQUIRED)
 
@@ -123,11 +121,7 @@ foreach(target ${VCPKG_DEPENDENT})
   target_link_libraries(${target} PUBLIC spdlog::spdlog)
   target_link_libraries(${target} PUBLIC simdjson::simdjson)
 
-  if(TARGET SLikeNet)
-    target_link_libraries(${target} PUBLIC SLikeNet)
-  else()
-    target_compile_definitions(${target} PUBLIC NO_SLIKENET=1)
-  endif()
+  target_link_libraries(${target} PUBLIC SLikeNet)
 
   target_link_libraries(${target} PUBLIC ZLIB::ZLIB)
 
