@@ -4,12 +4,11 @@
 #include "papyrus-vm/VirtualMachine.h"
 #include <algorithm>
 #include <cctype> // tolower
+#include <fmt/ranges.h>
 #include <functional>
+#include <spdlog/spdlog.h>
 #include <sstream>
 #include <stdexcept>
-
-#include <fmt/ranges.h>
-#include <spdlog/spdlog.h>
 
 namespace {
 bool IsSelfStr(const VarValue& v)
