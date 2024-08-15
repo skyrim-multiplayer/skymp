@@ -68,7 +68,9 @@ std::unique_ptr<SaveFile_::ChangeFormNPC_> CreateChangeFormNpc(
 
   if (auto isFemale = npcData.GetProperty("isFemale");
       isFemale.GetType() == JsValue::Type::Boolean) {
-    changeFormNpc->gender = isFemale ? 1 : 0;
+    if (isFemale.ToString() == "true") {
+      changeFormNpc->gender = isFemale ? 1 : 0;
+    }
   }
 
   if (auto face = npcData.GetProperty("face");
