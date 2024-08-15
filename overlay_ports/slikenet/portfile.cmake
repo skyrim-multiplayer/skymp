@@ -1,17 +1,12 @@
-set(PATCHES fix-install.patch)
-
-if(VCPKG_TARGET_ARCHITECTURE MATCHES "wasm32")
-    #set(PATCHES ${PATCHES} emscripten.patch emscripten2.patch)
-    set(PATCHES ${PATCHES} define_linux.patch)
-endif()
-
 vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO SLikeSoft/SLikeNet
     REF 358462052fce7e585fc1cce0a17a7042ba724c08
     SHA512 2c932b0a7910ec36dd6a340dd841cefcf259fbdadadff220747d13752181ea14e3c5f05331beb36dea21c0de360edc270ff4c55375bbea23ee2149828f07e9ab
     HEAD_REF master
-    PATCHES ${PATCHES}
+    PATCHES
+        fix-install.patch
+        fix-emscripten.patch
 )
 #Uses an outdated OpenSSL version and is in an experimental namespace any way. As such we delete it here
 file(REMOVE_RECURSE "${SOURCE_PATH}/Source/src/crypto" "${SOURCE_PATH}/Source/include/slikenet/crypto")
