@@ -170,6 +170,9 @@ void PartOne::SetUserActor(Networking::UserId userId, uint32_t actorFormId)
       actor.RespawnWithDelay();
     }
 
+    // This is not currently saved client-side, so reset
+    actor.SetLastAnimEvent(std::nullopt);
+
   } else {
     serverState.actorsMap.Erase(userId);
   }
