@@ -1445,10 +1445,39 @@ void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
       this->occupant->RemoveEventSink(this->occupantDestroySink);
       this->occupant = nullptr;
     }
-  } else if ((t == espm::ACTI::kType || t == "FURN") && actorActivator) {
+  } else if (t == espm::ACTI::kType && actorActivator) {
     // SendOpenContainer being used to activate the object
     // TODO: rename SendOpenContainer to SendActivate
     activationSource.SendOpenContainer(GetFormId());
+  } else if (t == "FURN" && actorActivator) {
+
+    auto occupantPos = this->occupant ? this->occupant->GetPos() : NiPoint3();
+    auto occupantCellOrWorld =
+      this->occupant ? this->occupant->GetCellOrWorld() : FormDesc();
+
+    constexpr float kOccupationReach = 256.f;
+    auto distanceToOccupant = (occupantPos - GetPos()).Length();
+
+    if (!this->occupant || this->occupant->IsDisabled() ||
+        distanceToOccupant > kOccupationReach ||
+        occupantCellOrWorld != GetCellOrWorld()) {
+      if (this->occupant) {
+        this->occupant->RemoveEventSink(this->occupantDestroySink);
+      }
+
+      // SendOpenContainer being used to activate the object
+      // TODO: rename SendOpenContainer to SendActivate
+      activationSource.SendOpenContainer(GetFormId());
+
+      this->occupant = actorActivator;
+
+      this->occupantDestroySink.reset(
+        new OccupantDestroyEventSink(*GetParent(), this));
+      this->occupant->AddEventSink(occupantDestroySink);
+    } else if (this->occupant == &activationSource) {
+      this->occupant->RemoveEventSink(this->occupantDestroySink);
+      this->occupant = nullptr;
+    }
   }
 }
 
