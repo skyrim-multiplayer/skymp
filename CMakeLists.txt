@@ -151,7 +151,8 @@ add_subdirectory(skymp5-functions-lib)
 add_subdirectory(skymp5-scripts)
 add_subdirectory(skymp5-server)
 
-if(BUILD_UNIT_TESTS)
+# TODO: enable for Emscripten once stabilize
+if(BUILD_UNIT_TESTS AND NOT EMSCRIPTEN)
   add_subdirectory(unit)
 endif()
 
