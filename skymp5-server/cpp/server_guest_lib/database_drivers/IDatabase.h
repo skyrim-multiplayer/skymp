@@ -36,8 +36,15 @@ public:
   // Returns numbers of change forms inserted or updated successfully (Suitable
   // for logging). In practice, it should be equal to `changeForms.size()` when
   // saving succeed.
-  virtual size_t Upsert(
-    std::vector<std::optional<MpChangeForm>>&& changeForms) = 0;
+  size_t Upsert(std::vector<std::optional<MpChangeForm>>&& changeForms);
 
   virtual void Iterate(const IterateCallback& iterateCallback) = 0;
+
+  bool GetRecycledChangeFormsBuffer(std::vector<MpChangeForm>& changeForms);
+
+protected:
+  virtual std::vector<std::optional<MpChangeForm>>&& UpsertImpl(
+    std::vector<std::optional<MpChangeForm>>&& changeForms, size_t &outNumUpserted) = 0;
+
+  std::vector<std::optional<MpChangeForm>> recycledChangeFormsBuffer;
 };

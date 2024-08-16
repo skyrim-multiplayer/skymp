@@ -738,6 +738,8 @@ void WorldState::TickSaveStorage(const std::chrono::system_clock::time_point&)
 
   auto pImpl_ = pImpl;
 
+  auto previousSize = pImpl->changesByIdx.size();
+
   try {
     pImpl->saveStorage->Upsert(std::move(pImpl->changesByIdx),
                                [pImpl_] { pImpl_->saveStorageBusy = false; });
@@ -747,6 +749,14 @@ void WorldState::TickSaveStorage(const std::chrono::system_clock::time_point&)
   }
 
   pImpl->changesByIdx.clear();
+
+  bool recycleSuccess =
+    pImpl->saveStorage->GetRecycledChangeFormsBuffer(pImpl->changesByIdx);
+
+  if (!recycleSuccess) {
+    // Just resize to previous size, at least not to resize every RequestSave
+    pImpl->changesByIdx.resize(previousSize);
+  }
 }
 
 void WorldState::TickTimers(const std::chrono::system_clock::time_point&)

@@ -18,8 +18,9 @@ FileDatabase::FileDatabase(std::string directory_,
   std::filesystem::create_directories(p);
 }
 
-size_t FileDatabase::Upsert(
-  std::vector<std::optional<MpChangeForm>>&& changeForms)
+std::vector<std::optional<MpChangeForm>>&& FileDatabase::UpsertImpl(
+  std::vector<std::optional<MpChangeForm>>&& changeForms,
+  size_t& outNumUpserted)
 {
   try {
     std::filesystem::path p = pImpl->changeFormsDirectory;
@@ -63,7 +64,8 @@ size_t FileDatabase::Upsert(
       }
     }
 
-    return nUpserted;
+    outNumUpserted = nUpserted;
+    return std::move(changeForms);
   } catch (std::exception& e) {
     throw UpsertFailedException(std::move(changeForms), e.what());
   }
@@ -96,4 +98,16 @@ void FileDatabase::Iterate(const IterateCallback& iterateCallback)
                            entry.path().string(), e.what());
     }
   }
+}
+
+bool FileDatabase::GetRecycledChangeFormsBuffer(
+  std::vector<MpChangeForm>& changeForms)
+{
+  if (pImpl->recycledChangeFormsBuffer) {
+    changeForms = std::move(*pImpl->recycledChangeFormsBuffer);
+    pImpl->recycledChangeFormsBuffer.reset();
+    return true;
+  }
+
+  return false;
 }

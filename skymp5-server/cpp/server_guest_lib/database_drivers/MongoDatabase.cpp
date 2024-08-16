@@ -39,7 +39,7 @@ MongoDatabase::MongoDatabase(std::string uri_, std::string name_)
 {
   throw std::runtime_error("MongoDB is not supported in this build");
 }
-size_t MongoDatabase::Upsert(std::vector<std::optional<MpChangeForm>>&&)
+size_t MongoDatabase::UpsertImpl(std::vector<std::optional<MpChangeForm>>&&)
 {
   return 0;
 }
@@ -60,8 +60,8 @@ MongoDatabase::MongoDatabase(std::string uri_, std::string name_)
   pImpl->pool.reset(new mongocxx::pool(mongocxx::uri(pImpl->uri.data())));
 }
 
-size_t MongoDatabase::Upsert(
-  std::vector<std::optional<MpChangeForm>>&& changeForms)
+std::vector<std::optional<MpChangeForm>>&& MongoDatabase::UpsertImpl(
+  std::vector<std::optional<MpChangeForm>>&& changeForms, size_t& outNumUpserted)
 {
   try {
     mongocxx::v_noabi::pool::entry poolEntry = pImpl->pool->acquire();
@@ -92,7 +92,9 @@ size_t MongoDatabase::Upsert(
     (void)bulk.execute();
 
     // TODO: Should take data from bulk.execute result instead?
-    return changeForms.size();
+    outNumUpserted = changeForms.size();
+
+    return std::move(changeForms);
   } catch (std::exception& e) {
     throw UpsertFailedException(std::move(changeForms), e.what());
   }

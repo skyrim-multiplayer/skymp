@@ -35,6 +35,8 @@ struct AsyncSaveStorage::Impl
   struct
   {
     std::vector<std::function<void()>> upsertCallbacksToFire;
+    std::list<std::vector<std::optional<MpChangeForm>>>
+      recycledChangeFormsBuffers;
     std::mutex m;
   } share4;
 
@@ -76,6 +78,8 @@ void AsyncSaveStorage::SaverThreadMain(Impl* pImpl)
       }
 
       std::vector<std::function<void()>> callbacksToFire;
+      std::vector<std::vector<std::optional<MpChangeForm>>>
+        recycledChangeFormsBuffers;
 
       {
         std::lock_guard l(pImpl->share.m);
@@ -86,6 +90,11 @@ void AsyncSaveStorage::SaverThreadMain(Impl* pImpl)
             pImpl->share.dbImpl->Upsert(std::move(t.changeForms));
           t.changeForms.clear();
           callbacksToFire.push_back(t.callback);
+
+          std::vector<MpChangeForm> tmp;
+          if (pImpl->share.dbImpl->GetRecycledChangeFormsBuffer(tmp)) {
+            recycledChangeFormsBuffers.push_back(std::move(tmp));
+          }
         }
         if (numChangeForms > 0 && pImpl->logger) {
           auto end = std::chrono::high_resolution_clock::now();
@@ -97,8 +106,12 @@ void AsyncSaveStorage::SaverThreadMain(Impl* pImpl)
 
       {
         std::lock_guard l(pImpl->share4.m);
-        for (auto& cb : callbacksToFire)
+        for (auto& cb : callbacksToFire) {
           pImpl->share4.upsertCallbacksToFire.push_back(cb);
+        }
+        for (auto& buf : recycledChangeFormsBuffers) {
+          pImpl->share4.recycledChangeFormsBuffers.push_back(std::move(buf));
+        }
       }
     } catch (...) {
       std::lock_guard l(pImpl->share2.m);
@@ -150,6 +163,19 @@ void AsyncSaveStorage::Tick()
     pImpl->numFinishedUpserts++;
     cb();
   }
+}
+
+bool AsyncSaveStorage::GetRecycledChangeFormsBuffer(
+  std::vector<MpChangeForm>& changeForms)
+{
+  std::lock_guard l(pImpl->share4.m);
+  if (pImpl->share4.recycledChangeFormsBuffers.empty()) {
+    return false;
+  }
+
+  changeForms = std::move(pImpl->share4.recycledChangeFormsBuffers.front());
+  pImpl->share4.recycledChangeFormsBuffers.pop_front();
+  return true;
 }
 
 const std::string& AsyncSaveStorage::GetName() const

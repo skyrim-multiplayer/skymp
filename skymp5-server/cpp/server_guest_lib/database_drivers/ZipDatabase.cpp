@@ -37,36 +37,45 @@ ZipDatabase::ZipDatabase(std::string filePath_,
 
 ZipDatabase::~ZipDatabase() = default;
 
-size_t ZipDatabase::Upsert(
-  std::vector<std::optional<MpChangeForm>>&& changeForms)
+std::vector<std::optional<MpChangeForm>>&& ZipDatabase::UpsertImpl(
+  std::vector<std::optional<MpChangeForm>>&& changeForms,
+  size_t& outNumUpserted)
 {
-  auto filePathAbsolute = std::filesystem::absolute(pImpl->filePath).string();
+  try {
+    auto filePathAbsolute =
+      std::filesystem::absolute(pImpl->filePath).string();
 
-  libzippp::ZipArchive archive(filePathAbsolute.data());
+    libzippp::ZipArchive archive(filePathAbsolute.data());
 
-  archive.open(libzippp::ZipArchive::Write);
+    archive.open(libzippp::ZipArchive::Write);
 
-  std::vector<std::unique_ptr<std::string>> buffers;
+    std::vector<std::unique_ptr<std::string>> buffers;
 
-  for (auto& changeForm : changeForms) {
-    if (changeForm == std::nullopt) {
-      continue;
+    for (auto& changeForm : changeForms) {
+      if (changeForm == std::nullopt) {
+        continue;
+      }
+
+      // Data to be added or updated
+      std::string data = MpChangeForm::ToJson(*changeForm).dump(2);
+      std::string fileName = changeForm->formDesc.ToString('_') + ".json";
+      std::string filePath = fileName;
+
+      buffers.push_back(std::make_unique<std::string>(data));
+
+      // Add new file or replace existing one
+      archive.addData(filePath, buffers.back()->data(),
+                      buffers.back()->size());
     }
 
-    // Data to be added or updated
-    std::string data = MpChangeForm::ToJson(*changeForm).dump(2);
-    std::string fileName = changeForm->formDesc.ToString('_') + ".json";
-    std::string filePath = fileName;
+    archive.close();
 
-    buffers.push_back(std::make_unique<std::string>(data));
+    outNumUpserted = changeForms.size();
 
-    // Add new file or replace existing one
-    archive.addData(filePath, buffers.back()->data(), buffers.back()->size());
+    return std::move(changeForms);
+  } catch (std::exception& e) {
+    throw UpsertFailedException(std::move(changeForms), e.what());
   }
-
-  archive.close();
-
-  return changeForms.size();
 }
 
 void ZipDatabase::Iterate(const IterateCallback& iterateCallback)
