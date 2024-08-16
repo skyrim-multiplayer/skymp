@@ -24,6 +24,10 @@ inputs:
   SKYMP5_PATCHES_PAT:
     description: "PAT for skymp5-patches repository"
     required: true
+  EMSCRIPTEN:
+    description: "Set to true if building for Emscripten"
+    required: false
+    default: "false"
 runs:
   using: composite
   steps:  
@@ -130,17 +134,37 @@ runs:
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
       # Outputs profiling data in Google Trace Format, which can be parsed by the about:tracing tab of Google Chrome or using a plugin for a tool like Trace Compass.
       run: |
+        if ('${{ inputs.EMSCRIPTEN }}' -eq 'true') {
+          git clone --depth 1 https://github.com/emscripten-core/emsdk.git
+          cd emsdk
+          ./emsdk install 3.1.64
+          ./emsdk activate 3.1.64
+          . .\emsdk_env.ps1
+          cd ..
+        }
+
+        $cmake_command = if ('${{ inputs.EMSCRIPTEN }}' -eq 'true') { "emcmake cmake" } else { "cmake" }
+
         $cppcov_path_arg = if ($env:RUNNER_OS -eq 'Windows') { '-DCPPCOV_PATH="C:\Program Files\OpenCppCoverage"' } else { '-DCPPCOV_PATH=OFF' }
         $vcpkg_root_arg = if ($env:RUNNER_OS -eq 'Windows') { '-DVCPKG_ROOT=C:/vcpkg' } else { '-DVCPKG_ROOT="${{github.workspace}}/vcpkg"' }
-        cmake -B ${{github.workspace}}/build `
-        $vcpkg_root_arg `
-        -DUNIT_DATA_DIR="skyrim_data_files" `
-        -DPREPARE_NEXUS_ARCHIVES=ON `
-        -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} `
-        -DSKYRIM_SE=${{ inputs.SKYRIM_SE_FLAG }} `
-        $cppcov_path_arg `
-        --profiling-output cmake-profiling-output `
-        --profiling-format google-trace
+        $vcpkg_chainload_toolchain_arg = if ('${{ inputs.EMSCRIPTEN }}' -eq 'true') { '-DVCPKG_CHAINLOAD_TOOLCHAIN_FILE="${{github.workspace}}/emsdk/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake"' } else { '' }
+        $vcpkg_triplet_arg = if ('${{ inputs.EMSCRIPTEN }}' -eq 'true') { '-DVCPKG_TARGET_TRIPLET=wasm32-emscripten' } else { '' }
+        $prepare_nexus_archives_arg = if ('${{ inputs.SP_NEXUS_ARTIFACT_NAME}}' -eq 'nope') { '-DPREPARE_NEXUS_ARCHIVES=OFF' } else { '-DPREPARE_NEXUS_ARCHIVES=ON' }
+
+        $cmake_command_full = "$cmake_command "
+        $cmake_command_full += "-B ${{github.workspace}}/build "
+        $cmake_command_full += "$vcpkg_chainload_toolchain_arg "
+        $cmake_command_full += "$vcpkg_triplet_arg "
+        $cmake_command_full += "$vcpkg_root_arg "
+        $cmake_command_full += "-DUNIT_DATA_DIR=skyrim_data_files "
+        $cmake_command_full += "$prepare_nexus_archives_arg "
+        $cmake_command_full += "-DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} "
+        $cmake_command_full += "-DSKYRIM_SE=${{ inputs.SKYRIM_SE_FLAG }} "
+        $cmake_command_full += "$cppcov_path_arg "
+        $cmake_command_full += "--profiling-output cmake-profiling-output "
+        $cmake_command_full += "--profiling-format google-trace"
+
+        Invoke-Expression $cmake_command_full
       shell: powershell
 
     - name: Upload vcpkg failure logs
@@ -148,7 +172,8 @@ runs:
       uses: actions/upload-artifact@v4
       with:
         name: install-x64-linux-dbg-out.log
-        path: C:\vcpkg\buildtrees\spdlog\install-x64-windows-sp-dbg-out.log
+        #path: C:\vcpkg\buildtrees\spdlog\install-x64-windows-sp-dbg-out.log
+        path: /Users/runner/work/skymp/skymp/vcpkg/buildtrees/slikenet/install-wasm32-emscripten-dbg-out.log
 
     - uses: actions/upload-artifact@v4
       with:

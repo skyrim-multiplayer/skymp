@@ -3,6 +3,7 @@
 #include <ChakraCore.h>
 #include <cstdint>
 #include <cstring>
+#include <fmt/ranges.h>
 #include <memory>
 #include <optional>
 #include <sstream>

@@ -4,12 +4,14 @@ if(POLICY 0115)
   cmake_policy(SET CMP0115 NEW)
 endif()
 
-if(WIN32)
-  set(VCPKG_TARGET_TRIPLET "x64-windows-sp")
-elseif(APPLE)
-  set(VCPKG_TARGET_TRIPLET "x64-osx")
-else()
-  set(VCPKG_TARGET_TRIPLET "x64-linux")
+if("${VCPKG_TARGET_TRIPLET}" STREQUAL "")
+  if(WIN32)
+    set(VCPKG_TARGET_TRIPLET "x64-windows-sp")
+  elseif(APPLE)
+    set(VCPKG_TARGET_TRIPLET "x64-osx")
+  else()
+    set(VCPKG_TARGET_TRIPLET "x64-linux")
+  endif()
 endif()
 
 set(VCPKG_OVERLAY_TRIPLETS "${CMAKE_CURRENT_LIST_DIR}/overlay_triplets")
@@ -88,6 +90,10 @@ message(STATUS INSTALL_CLIENT_DIST=${INSTALL_CLIENT_DIST})
 message(STATUS BUILD_GAMEMODE=${BUILD_GAMEMODE})
 message(STATUS OFFLINE_MODE=${OFFLINE_MODE})
 
+if(PREPARE_NEXUS_ARCHIVES AND EMSCRIPTEN)
+  message(FATAL_ERROR "PREPARE_NEXUS_ARCHIVES is not supported on Emscripten")
+endif()
+
 # Note that SkyrimPlatform performance drops significantly with JS_ENGINE_TRACING_ENABLED set to true.
 
 if(JS_ENGINE_TRACING_ENABLED)
@@ -145,7 +151,8 @@ add_subdirectory(skymp5-functions-lib)
 add_subdirectory(skymp5-scripts)
 add_subdirectory(skymp5-server)
 
-if(BUILD_UNIT_TESTS)
+# TODO: enable for Emscripten once stabilize
+if(BUILD_UNIT_TESTS AND NOT EMSCRIPTEN)
   add_subdirectory(unit)
 endif()
 

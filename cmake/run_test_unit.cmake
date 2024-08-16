@@ -13,11 +13,21 @@ if(temp_coverage)
   file(REMOVE ${temp_coverage})
 endif()
 
-execute_process(COMMAND ${EXE_PATH}
-  RESULT_VARIABLE res
-  OUTPUT_VARIABLE out
-  WORKING_DIRECTORY "${UNIT_WORKING_DIRECTORY}"
-)
+# Emscripten support
+if("${EXE_PATH}" MATCHES ".*\.js")
+  execute_process(COMMAND node ${EXE_PATH}
+    RESULT_VARIABLE res
+    OUTPUT_VARIABLE out
+    WORKING_DIRECTORY "${UNIT_WORKING_DIRECTORY}"
+  )
+else()
+  execute_process(COMMAND ${EXE_PATH}
+    RESULT_VARIABLE res
+    OUTPUT_VARIABLE out
+    WORKING_DIRECTORY "${UNIT_WORKING_DIRECTORY}"
+  )
+endif()
+
 message("${out}")
 
 if(NOT "${res}" STREQUAL "0")

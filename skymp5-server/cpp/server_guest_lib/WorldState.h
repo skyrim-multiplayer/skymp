@@ -19,7 +19,6 @@
 #include <map>
 #include <memory>
 #include <optional>
-#include <sparsepp/spp.h>
 #include <spdlog/spdlog.h>
 #include <sstream>
 #include <unordered_map>
@@ -287,9 +286,9 @@ private:
     std::map<int16_t, std::map<int16_t, bool>> loadedChunks;
   };
 
-  spp::sparse_hash_map<uint32_t, std::shared_ptr<MpForm>> forms;
+  std::unordered_map<uint32_t, std::shared_ptr<MpForm>> forms;
   std::unordered_map<std::string, size_t> loadOrderMap;
-  spp::sparse_hash_map<uint32_t, GridInfo> grids;
+  std::unordered_map<uint32_t, GridInfo> grids;
   std::unique_ptr<MakeID> formIdxManager;
   std::vector<MpForm*> formByIdxUnreliable;
   espm::Loader* espm = nullptr;

@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <deque>
 #include <fmt/format.h>
+#include <fmt/ranges.h>
 #include <iterator>
 #include <optional>
 #include <unordered_map>

@@ -90,9 +90,6 @@ target_include_directories(localization-provider PUBLIC "${CMAKE_CURRENT_SOURCE_
 find_path(CATCH_INCLUDE_DIR NAMES catch.hpp PATH_SUFFIXES catch2)
 get_filename_component(CATCH_INCLUDE_DIR ${CATCH_INCLUDE_DIR} DIRECTORY)
 
-find_path(SPARSEPP_INCLUDE_DIR NAMES spp.h PATH_SUFFIXES sparsepp)
-get_filename_component(SPARSEPP_INCLUDE_DIR ${SPARSEPP_INCLUDE_DIR} DIRECTORY)
-
 find_path(JSON_INCLUDE_DIR NAMES json.hpp PATH_SUFFIXES nlohmann)
 get_filename_component(JSON_INCLUDE_DIR ${JSON_INCLUDE_DIR} DIRECTORY)
 
@@ -104,13 +101,15 @@ find_package(slikenet CONFIG REQUIRED)
 
 find_package(ZLIB REQUIRED)
 
-find_package(mongocxx REQUIRED)
-find_package(mongoc-1.0 CONFIG REQUIRED)
+if(NOT EMSCRIPTEN)
+  find_package(mongocxx REQUIRED)
+  find_package(mongoc-1.0 CONFIG REQUIRED)
+endif()
 
 find_package(OpenSSL REQUIRED)
 
 # MacOS not supported by rsm-bsa
-if(NOT APPLE)
+if(NOT APPLE AND NOT EMSCRIPTEN)
   find_package(bsa CONFIG REQUIRED)
 endif()
 
@@ -118,14 +117,22 @@ find_package(libzippp REQUIRED)
 
 foreach(target ${VCPKG_DEPENDENT})
   target_include_directories(${target} PUBLIC ${CATCH_INCLUDE_DIR})
-  target_include_directories(${target} PUBLIC ${SPARSEPP_INCLUDE_DIR})
   target_include_directories(${target} PUBLIC ${JSON_INCLUDE_DIR})
   target_link_libraries(${target} PUBLIC spdlog::spdlog)
   target_link_libraries(${target} PUBLIC simdjson::simdjson)
+
   target_link_libraries(${target} PUBLIC SLikeNet)
+
   target_link_libraries(${target} PUBLIC ZLIB::ZLIB)
-  target_link_libraries(${target} PUBLIC mongo::mongocxx_static mongo::bsoncxx_static mongo::mongoc_static mongo::bson_static)
+
+  if(TARGET mongo::mongocxx_static)
+    target_link_libraries(${target} PUBLIC mongo::mongocxx_static mongo::bsoncxx_static mongo::mongoc_static mongo::bson_static)
+  else()
+    target_compile_definitions(${target} PUBLIC NO_MONGO=1)
+  endif()
+
   target_link_libraries(${target} PUBLIC OpenSSL::SSL OpenSSL::Crypto)
+
   if(TARGET bsa::bsa)
     target_link_libraries(${target} PUBLIC bsa::bsa)
   else()
@@ -137,6 +144,8 @@ foreach(target ${VCPKG_DEPENDENT})
     target_link_libraries(${target} PUBLIC pthread resolv m)
   elseif(WIN32)
     target_link_libraries(${target} PUBLIC Secur32.lib Crypt32.lib Dnsapi.lib Bcrypt.lib)
+  elseif(EMSCRIPTEN)
+    # ...
   elseif(UNIX)
     target_link_libraries(${target} PUBLIC pthread resolv rt m)
   endif()

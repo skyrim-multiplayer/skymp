@@ -1,17 +1,21 @@
 #include "MongoDatabase.h"
 
 #include "JsonUtils.h"
-#include <bsoncxx/builder/stream/document.hpp>
-#include <bsoncxx/document/element.hpp>
-#include <bsoncxx/document/value.hpp>
-#include <bsoncxx/document/view.hpp>
-#include <bsoncxx/document/view_or_value.hpp>
-#include <bsoncxx/json.hpp>
-#include <mongocxx/client.hpp>
-#include <mongocxx/instance.hpp>
-#include <mongocxx/pool.hpp>
-#include <mongocxx/stdx.hpp>
-#include <mongocxx/uri.hpp>
+
+#ifndef NO_MONGO
+#  include <bsoncxx/builder/stream/document.hpp>
+#  include <bsoncxx/document/element.hpp>
+#  include <bsoncxx/document/value.hpp>
+#  include <bsoncxx/document/view.hpp>
+#  include <bsoncxx/document/view_or_value.hpp>
+#  include <bsoncxx/json.hpp>
+#  include <mongocxx/client.hpp>
+#  include <mongocxx/instance.hpp>
+#  include <mongocxx/pool.hpp>
+#  include <mongocxx/stdx.hpp>
+#  include <mongocxx/uri.hpp>
+#endif
+
 #include <mutex>
 #include <nlohmann/json.hpp>
 #include <openssl/sha.h>
@@ -20,14 +24,33 @@
 
 struct MongoDatabase::Impl
 {
+#ifndef NO_MONGO
   const std::string uri;
   const std::string name;
 
   const char* const collectionName = "changeForms";
 
   std::shared_ptr<mongocxx::pool> pool;
+#endif
 };
 
+#ifdef NO_MONGO
+MongoDatabase::MongoDatabase(std::string uri_, std::string name_)
+{
+  throw std::runtime_error("MongoDB is not supported in this build");
+}
+size_t MongoDatabase::Upsert(std::vector<std::optional<MpChangeForm>>&&)
+{
+  return 0;
+}
+
+void MongoDatabase::Iterate(const IterateCallback&)
+{
+}
+
+#endif
+
+#ifndef NO_MONGO
 MongoDatabase::MongoDatabase(std::string uri_, std::string name_)
 {
   static mongocxx::instance g_instance;
@@ -279,3 +302,5 @@ std::string MongoDatabase::Sha256(const std::string& str)
 
   return BytesToHexString(hash, SHA256_DIGEST_LENGTH);
 }
+
+#endif // #ifndef NO_MONGO

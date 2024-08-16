@@ -5,6 +5,7 @@
 #include <array>
 #include <fmt/format.h>
 #include <memory>
+#include <unordered_set>
 
 namespace espm {
 
@@ -91,7 +92,7 @@ std::vector<LookupResult> CombineBrowser::GetDistinctRecordsByType(
     return {};
   }
 
-  spp::sparse_hash_set<formId> formSet;
+  std::unordered_set<formId> formSet;
   std::vector<LookupResult> result;
   for (size_t i = pImpl->numSources - 1; i != static_cast<size_t>(-1); --i) {
     const auto& records = pImpl->sources[i].br->GetRecordsByType(type);
