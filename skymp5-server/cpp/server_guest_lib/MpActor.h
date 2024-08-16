@@ -14,6 +14,7 @@
 class WorldState;
 struct ActorValues;
 class RespawnEvent;
+class ActiveMagicEffectsMap;
 
 class MpActor : public MpObjectReference
 {
@@ -45,6 +46,7 @@ public:
   const std::vector<FormDesc>& GetTemplateChain() const;
   bool IsCreatedAsPlayer() const;
   const ActorValues& GetActorValues() const;
+  const ActiveMagicEffectsMap& GetActiveMagicEffects() const;
   int32_t GetProfileId() const;
 
   bool ShouldSkipRestoration() const noexcept;

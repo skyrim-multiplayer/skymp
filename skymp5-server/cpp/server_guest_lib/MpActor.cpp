@@ -791,6 +791,11 @@ const ActorValues& MpActor::GetActorValues() const
   return ChangeForm().actorValues;
 }
 
+const ActiveMagicEffectsMap& MpActor::GetActiveMagicEffects() const
+{
+  return ChangeForm().activeMagicEffects;
+}
+
 int32_t MpActor::GetProfileId() const
 {
   return ChangeForm().profileId;
