@@ -11,9 +11,11 @@ void DynamicFields::Set(const std::string& propName,
 
 const nlohmann::json& DynamicFields::Get(const std::string& propName) const
 {
+  static const auto kNull = nlohmann::json();
+
   auto it = props.find(propName);
   if (it == props.end()) {
-    return nlohmann::json();
+    return kNull;
   }
   return it->second;
 }
