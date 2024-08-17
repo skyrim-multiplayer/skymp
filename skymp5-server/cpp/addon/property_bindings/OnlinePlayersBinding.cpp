@@ -10,8 +10,8 @@ Napi::Value OnlinePlayersBinding::Get(Napi::Env env, ScampServer& scampServer,
   thread_local std::vector<uint32_t> g_onlineActors(kMaxPlayers);
   size_t numOnlineActors = 0;
 
-  auto n = partOne->serverState.userInfo.size();
-  for (size_t i = 0; i < n; ++i) {
+  auto maxConnectedId = partOne->serverState.maxConnectedId;
+  for (size_t i = 0; i <= maxConnectedId; ++i) {
     if (auto actor = partOne->serverState.ActorByUser(i)) {
       g_onlineActors[numOnlineActors] = actor->GetFormId();
       ++numOnlineActors;
