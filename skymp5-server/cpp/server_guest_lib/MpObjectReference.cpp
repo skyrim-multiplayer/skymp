@@ -280,8 +280,6 @@ bool MpObjectReference::GetAnimationVariableBool(const char* name) const
                  "variable name: {}",
                  name);
     return false;
-
-    constexpr int s = sizeof(::MpChangeFormREFR);
   }
 
   return pImpl->animGraphHolder.boolVariables[static_cast<size_t>(variable)];
