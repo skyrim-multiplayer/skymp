@@ -1085,17 +1085,17 @@ void ActionListener::OnUnknown(const RawMessageData& rawMsgData)
 
 void ActionListener::TickDeferredSendToNeighboursMultithreaded()
 {
-  for (auto& value : deferredSendToNeighbours) {
-    futures.push_back(threadPool.submit_task(
-      [this, myActor = value.myActor, rawMsgCopy = std::move(value.rawMsgCopy),
-       idx = value.idx] {
+  while (!deferredSendToNeighbours.empty()) {
+    auto entry = std::move(deferredSendToNeighbours.front());
+    deferredSendToNeighbours.pop_front();
+
+    futures.push_back(
+      threadPool.submit_task([this, entry = std::move(entry)]() mutable {
         constexpr auto kReliableFalse = false;
         SendToNeighbours(idx, myActor, rawMsgCopy.data(), rawMsgCopy.size(),
                          kReliableFalse);
       }));
   }
-
-  deferredSendToNeighbours.clear();
 
   for (auto& future : futures) {
     future.wait();

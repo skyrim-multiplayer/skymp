@@ -7,6 +7,7 @@
 #include "PartOne.h"
 #include "libespm/Loader.h"
 #include <BS_thread_pool.hpp>
+#include <list>
 
 class ServerState;
 class WorldState;
@@ -106,12 +107,17 @@ private:
 
   struct DeferredSendToNeighboursEntry
   {
+    DeferredSendToNeighboursEntry(DeferredSendToNeighboursEntry&& rhs) =
+      default;
+    DeferredSendToNeighboursEntry& operator=(
+      DeferredSendToNeighboursEntry&& rhs) = default;
+
     uint32_t idx = -1;
     MpActor* myActor = nullptr;
     std::vector<uint8_t> rawMsgCopy;
   };
 
-  std::vector<DeferredSendToNeighboursEntry> deferredSendToNeighbours;
+  std::list<DeferredSendToNeighboursEntry> deferredSendToNeighbours;
 
   BS::thread_pool threadPool;
 
