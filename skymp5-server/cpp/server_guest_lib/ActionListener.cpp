@@ -18,23 +18,18 @@
 #include "gamemode_events/EatItemEvent.h"
 #include "script_objects/EspmGameObject.h"
 #include <fmt/format.h>
+#include <future>
 #include <spdlog/spdlog.h>
 #include <unordered_set>
 
 #include "UpdateEquipmentMessage.h"
 
-MpActor* ActionListener::SendToNeighbours(
-  uint32_t idx, const simdjson::dom::element& jMessage,
-  Networking::UserId userId, Networking::PacketData data, size_t length,
-  bool reliable)
-{
-  MpActor* myActor = partOne.serverState.ActorByUser(userId);
-  // The old behavior is doing nothing in that case. This is covered by tests
-  if (!myActor) {
-    spdlog::warn("SendToNeighbours - No actor assigned to user");
-    return nullptr;
-  }
+constexpr int kNumThreadsForThreadPool = 10;
 
+MpActor* ActionListener::SendToNeighbours(uint32_t idx, MpActor* myActor,
+                                          Networking::PacketData data,
+                                          size_t length, bool reliable)
+{
   MpForm* form = partOne.worldState.LookupFormByIdx(idx);
   MpActor* actor = form ? form->AsActor() : nullptr;
   if (!actor) {
@@ -86,9 +81,21 @@ MpActor* ActionListener::SendToNeighbours(uint32_t idx,
                                           const RawMessageData& rawMsgData,
                                           bool reliable)
 {
-  return SendToNeighbours(idx, rawMsgData.parsed, rawMsgData.userId,
-                          rawMsgData.unparsed, rawMsgData.unparsedLength,
-                          reliable);
+  MpActor* myActor = partOne.serverState.ActorByUser(rawMsgData.userId);
+  // The old behavior is doing nothing in that case. This is covered by tests
+  if (!myActor) {
+    spdlog::warn("SendToNeighbours - No actor assigned to user");
+    return nullptr;
+  }
+
+  return SendToNeighbours(idx, myActor, rawMsgData.unparsed,
+                          rawMsgData.unparsedLength, reliable);
+}
+
+ActionListener::ActionListener(PartOne& partOne_)
+  : partOne(partOne_)
+  , threadPool(kNumThreadsForThreadPool)
+{
 }
 
 void ActionListener::OnCustomPacket(const RawMessageData& rawMsgData,
@@ -104,7 +111,31 @@ void ActionListener::OnUpdateMovement(const RawMessageData& rawMsgData,
                                       bool isWeapDrawn, bool isBlocking,
                                       uint32_t worldOrCell, RunMode runMode)
 {
-  auto actor = SendToNeighbours(idx, rawMsgData);
+  MpActor* myActor = partOne.serverState.ActorByUser(rawMsgData.userId);
+  if (!myActor) {
+    spdlog::error("ActionListener::OnUpdateMovement - My actor doesn't exist");
+    return;
+  }
+
+  MpForm* form = partOne.worldState.LookupFormByIdx(idx);
+  MpActor* actor = form ? form->AsActor() : nullptr;
+  if (!actor) {
+    spdlog::error(
+      "ActionListener::OnUpdateMovement - Target actor doesn't exist");
+    return;
+  }
+
+  {
+    // TODO: eliminate copying the message
+    std::vector<uint8_t> rawMsgCopy = std::vector<uint8_t>(
+      rawMsgData.unparsed, rawMsgData.unparsed + rawMsgData.unparsedLength);
+
+    deferredSendToNeighbours.push_back(DeferredSendToNeighboursEntry());
+    deferredSendToNeighbours.back().myActor = myActor;
+    deferredSendToNeighbours.back().rawMsgCopy = std::move(rawMsgCopy);
+  }
+
+  // auto actor = SendToNeighbours(idx, rawMsgData);
   if (actor) {
     DummyMessageOutput msgOutputDummy;
     UserMessageOutput msgOutput(partOne.GetSendTarget(), rawMsgData.userId);
@@ -1044,4 +1075,25 @@ void ActionListener::OnUnknown(const RawMessageData& rawMsgData)
 {
   spdlog::error("Got unhandled message: {}",
                 simdjson::minify(rawMsgData.parsed));
+}
+
+void ActionListener::TickDeferredSendToNeighboursMultithreaded()
+{
+  for (auto& value : deferredSendToNeighbours) {
+    futures.push_back(threadPool.submit_task(
+      [this, myActor = value.myActor, rawMsgCopy = std::move(value.rawMsgCopy),
+       idx = value.idx] {
+        constexpr auto kReliableFalse = false;
+        SendToNeighbours(idx, myActor, rawMsgCopy.data(), rawMsgCopy.size(),
+                         kReliableFalse);
+      }));
+  }
+
+  deferredSendToNeighbours.clear();
+
+  for (auto& future : futures) {
+    future.wait();
+  }
+
+  futures.clear();
 }

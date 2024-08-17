@@ -106,6 +106,7 @@ void PartOne::Tick()
   TickPacketHistoryPlaybacks();
   TickDeferredMessages();
   worldState.Tick();
+  GetActionListener().TickDeferredSendToNeighboursMultithreaded();
 }
 
 uint32_t PartOne::CreateActor(uint32_t formId, const NiPoint3& pos,
