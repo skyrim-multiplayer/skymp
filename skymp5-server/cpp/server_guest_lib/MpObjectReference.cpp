@@ -492,24 +492,18 @@ void MpObjectReference::SetPos(const NiPoint3& newPos, SetPosMode setPosMode)
 
   if (!IsDisabled()) {
     if (emittersWithPrimitives) {
-      if (!primitivesWeAreInside)
-        primitivesWeAreInside.reset(new std::set<uint32_t>);
+      if (!primitivesWeAreInside) {
+        primitivesWeAreInside.reset(new std::set<MpObjectReference*>);
+      }
 
-      for (auto& [emitterId, wasInside] : *emittersWithPrimitives) {
-        auto& emitter = GetParent()->LookupFormById(emitterId);
-        MpObjectReference* emitterRefr =
-          emitter ? emitter->AsObjectReference() : nullptr;
-        if (!emitterRefr) {
-          GetParent()->logger->error("Emitter not found ({0:x})", emitterId);
-          continue;
-        }
+      for (auto& [emitterRefr, wasInside] : *emittersWithPrimitives) {
         bool inside = emitterRefr->IsPointInsidePrimitive(newPos);
         if (wasInside != inside) {
           wasInside = inside;
           auto me = ToVarValue();
 
           auto wst = GetParent();
-          auto id = emitterId;
+          auto id = emitterRefr->GetFormId();
           auto myId = GetFormId();
           wst->SetTimer(std::chrono::seconds(0))
             .Then([wst, id, inside, me, myId, this](Viet::Void) {
@@ -528,10 +522,11 @@ void MpObjectReference::SetPos(const NiPoint3& newPos, SetPosMode setPosMode)
                 inside ? "OnTriggerEnter" : "OnTriggerLeave", &me, 1);
             });
 
-          if (inside)
-            primitivesWeAreInside->insert(emitterId);
-          else
-            primitivesWeAreInside->erase(emitterId);
+          if (inside) {
+            primitivesWeAreInside->insert(emitterRefr);
+          } else {
+            primitivesWeAreInside->erase(emitterRefr);
+          }
         }
       }
     }
@@ -544,8 +539,7 @@ void MpObjectReference::SetPos(const NiPoint3& newPos, SetPosMode setPosMode)
 
       for (auto emitterId : map) {
         auto& emitter = GetParent()->LookupFormById(emitterId);
-        auto emitterRefr =
-          std::dynamic_pointer_cast<MpObjectReference>(emitter);
+        auto emitterRefr = emitter->AsObjectReference();
         if (!emitterRefr) {
           GetParent()->logger->error(
             "Emitter not found ({0:x}) when trying to send OnTrigger event",
@@ -968,9 +962,10 @@ void MpObjectReference::Subscribe(MpObjectReference* emitter,
 
   if (hasPrimitive) {
     if (!listener->emittersWithPrimitives) {
-      listener->emittersWithPrimitives.reset(new std::map<uint32_t, bool>);
+      listener->emittersWithPrimitives.reset(
+        new std::map<MpObjectReference*, bool>);
     }
-    listener->emittersWithPrimitives->insert({ emitter->GetFormId(), false });
+    listener->emittersWithPrimitives->insert({ emitter, false });
   }
 }
 
@@ -1002,7 +997,7 @@ void MpObjectReference::Unsubscribe(MpObjectReference* emitter,
   listener->emitters->erase(emitter);
 
   if (listener->emittersWithPrimitives && hasPrimitive) {
-    listener->emittersWithPrimitives->erase(emitter->GetFormId());
+    listener->emittersWithPrimitives->erase(emitter);
   }
 }
 
@@ -1514,8 +1509,9 @@ void MpObjectReference::ActivateChilds()
     auto delayMs = Viet::TimeUtils::To<std::chrono::milliseconds>(delay);
     worldState->SetTimer(delayMs).Then([worldState, childRefrId,
                                         myFormId](Viet::Void) {
-      auto childRefr = std::dynamic_pointer_cast<MpObjectReference>(
-        worldState->LookupFormById(childRefrId));
+      auto& childForm = worldState->LookupFormById(childRefrId);
+      MpObjectReference* childRefr =
+        childForm ? childForm->AsObjectReference() : nullptr;
       if (!childRefr) {
         spdlog::warn("MpObjectReference::ActivateChilds {:x} - Bad/missing "
                      "activation child {:x}",
