@@ -1097,12 +1097,14 @@ void ActionListener::TickDeferredSendToNeighboursMultithreaded()
     auto entry = std::move(deferredSendToNeighbours.front());
     deferredSendToNeighbours.pop_front();
 
+    ActionListener* self = this;
     futures.push_back(
-      threadPool.submit_task([this, entry = std::move(entry)]() mutable {
+      threadPool.submit_task([self, entry = std::move(entry)]() mutable {
         try {
           constexpr auto kReliableFalse = false;
-          SendToNeighbours(entry.idx, entry.myActor, entry.rawMsgCopy.data(),
-                           entry.rawMsgCopy.size(), kReliableFalse);
+          self->SendToNeighbours(entry.idx, entry.myActor,
+                                 entry.rawMsgCopy.data(),
+                                 entry.rawMsgCopy.size(), kReliableFalse);
         } catch (const std::exception& e) {
           spdlog::error(
             "ActionListener::TickDeferredSendToNeighboursMultithreaded - "
