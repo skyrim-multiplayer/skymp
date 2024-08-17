@@ -9,7 +9,7 @@ class DynamicFields
 {
 public:
   void Set(const std::string& propName, const nlohmann::json& value);
-  nlohmann::json Get(const std::string& propName) const;
+  const nlohmann::json& Get(const std::string& propName) const;
 
   const nlohmann::json& GetAsJson() const;
   static DynamicFields FromJson(const nlohmann::json& j);
