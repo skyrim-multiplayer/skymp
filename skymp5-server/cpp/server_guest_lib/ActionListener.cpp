@@ -1103,7 +1103,8 @@ void ActionListener::TickDeferredSendToNeighboursMultithreaded()
     auto myActor = entry.myActor;
     auto rawMsgCopy = std::move(entry.rawMsgCopy);
 
-    std::function<void()> t = [self, idx, myActor, rawMsgCopy]() {
+    std::function<void()> t = [self, idx, myActor,
+                               rawMsgCopy = std::move(rawMsgCopy)]() {
       try {
         constexpr auto kReliableFalse = false;
         self->SendToNeighbours(idx, myActor, rawMsgCopy.data(),
