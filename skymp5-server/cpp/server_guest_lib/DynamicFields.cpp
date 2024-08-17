@@ -9,7 +9,7 @@ void DynamicFields::Set(const std::string& propName,
   props[propName] = value;
 }
 
-nlohmann::json DynamicFields::Get(const std::string& propName) const
+const nlohmann::json& DynamicFields::Get(const std::string& propName) const
 {
   auto it = props.find(propName);
   if (it == props.end()) {
