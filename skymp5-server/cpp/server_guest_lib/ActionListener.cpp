@@ -1099,12 +1099,15 @@ void ActionListener::TickDeferredSendToNeighboursMultithreaded()
 
     ActionListener* self = this;
 
-    std::function<void()> t = [self, entry = std::move(entry)]() {
+    auto idx = entry.idx;
+    auto myActor = entry.myActor;
+    auto rawMsgCopy = std::move(entry.rawMsgCopy);
+
+    std::function<void()> t = [self, idx, myActor, rawMsgCopy]() {
       try {
         constexpr auto kReliableFalse = false;
-        self->SendToNeighbours(entry.idx, entry.myActor,
-                               entry.rawMsgCopy.data(),
-                               entry.rawMsgCopy.size(), kReliableFalse);
+        self->SendToNeighbours(idx, myActor, rawMsgCopy.data(),
+                               rawMsgCopy.size(), kReliableFalse);
       } catch (const std::exception& e) {
         spdlog::error(
           "ActionListener::TickDeferredSendToNeighboursMultithreaded - "
