@@ -1100,8 +1100,8 @@ void ActionListener::TickDeferredSendToNeighboursMultithreaded()
     futures.push_back(
       threadPool.submit_task([this, entry = std::move(entry)]() mutable {
         constexpr auto kReliableFalse = false;
-        SendToNeighbours(idx, myActor, rawMsgCopy.data(), rawMsgCopy.size(),
-                         kReliableFalse);
+        SendToNeighbours(entry.idx, entry.myActor, entry.rawMsgCopy.data(),
+                         entry.rawMsgCopy.size(), kReliableFalse);
       }));
   }
 
