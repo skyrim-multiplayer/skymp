@@ -535,17 +535,9 @@ void MpObjectReference::SetPos(const NiPoint3& newPos, SetPosMode setPosMode)
       auto me = ToVarValue();
 
       // May be modified inside loop, so copying
-      const auto map = *primitivesWeAreInside;
+      const auto set = *primitivesWeAreInside;
 
-      for (auto emitterId : map) {
-        auto& emitter = GetParent()->LookupFormById(emitterId);
-        auto emitterRefr = emitter->AsObjectReference();
-        if (!emitterRefr) {
-          GetParent()->logger->error(
-            "Emitter not found ({0:x}) when trying to send OnTrigger event",
-            emitterId);
-          continue;
-        }
+      for (MpObjectReference* emitterRefr : set) {
         emitterRefr->SendPapyrusEvent("OnTrigger", &me, 1);
       }
     }
