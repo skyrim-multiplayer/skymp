@@ -107,6 +107,7 @@ private:
 
   struct DeferredSendToNeighboursEntry
   {
+    DeferredSendToNeighboursEntry() = default;
     DeferredSendToNeighboursEntry(DeferredSendToNeighboursEntry&& rhs) =
       default;
     DeferredSendToNeighboursEntry& operator=(
