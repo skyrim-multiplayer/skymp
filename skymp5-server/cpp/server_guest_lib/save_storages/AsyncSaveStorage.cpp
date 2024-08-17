@@ -166,7 +166,7 @@ void AsyncSaveStorage::Tick()
 }
 
 bool AsyncSaveStorage::GetRecycledChangeFormsBuffer(
-  std::vector<MpChangeForm>& changeForms)
+  std::vector<std::optional<MpChangeForm>>& changeForms)
 {
   std::lock_guard l(pImpl->share4.m);
   if (pImpl->share4.recycledChangeFormsBuffers.empty()) {
