@@ -91,7 +91,7 @@ void AsyncSaveStorage::SaverThreadMain(Impl* pImpl)
           t.changeForms.clear();
           callbacksToFire.push_back(t.callback);
 
-          std::vector<MpChangeForm> tmp;
+          std::vector<std::optional<MpChangeForm>> tmp;
           if (pImpl->share.dbImpl->GetRecycledChangeFormsBuffer(tmp)) {
             recycledChangeFormsBuffers.push_back(std::move(tmp));
           }
