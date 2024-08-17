@@ -48,7 +48,11 @@ MpActor* ActionListener::SendToNeighbours(uint32_t idx, MpActor* myActor,
       spdlog::error("SendToNeighbours - No permission to update actor {:x} "
                     "(already owned by user {})",
                     actor->GetFormId(), actorsOwningUserId);
-      partOne.SendHostStop(userId, *actor);
+
+      Networking::UserId myUserId = partOne.serverState.UserByActor(myActor);
+      if (myUserId != Networking::InvalidUserId) {
+        partOne.SendHostStop(myUserId, *actor);
+      }
 
       // TODO: implement cleaner solution
       static std::mutex g_hostersEraseMutex;
@@ -68,7 +72,11 @@ MpActor* ActionListener::SendToNeighbours(uint32_t idx, MpActor* myActor,
       spdlog::error(
         "SendToNeighbours - No permission to update actor {:x} (not a hoster)",
         actor->GetFormId());
-      partOne.SendHostStop(userId, *actor);
+
+      Networking::UserId myUserId = partOne.serverState.UserByActor(myActor);
+      if (myUserId != Networking::InvalidUserId) {
+        partOne.SendHostStop(myUserId, *actor);
+      }
       return nullptr;
     }
   }
