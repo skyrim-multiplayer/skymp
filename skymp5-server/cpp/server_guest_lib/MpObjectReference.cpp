@@ -111,6 +111,8 @@ std::pair<int16_t, int16_t> GetGridPos(const NiPoint3& pos) noexcept
 
 struct AnimGraphHolder
 {
+  AnimGraphHolder() { boolVariables.fill(false); }
+
   std::array<bool, static_cast<size_t>(AnimationVariableBool::kNumVariables)>
     boolVariables;
 };
