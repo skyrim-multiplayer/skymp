@@ -118,7 +118,7 @@ std::vector<std::optional<MpChangeForm>>&& MigrationDatabase::UpsertImpl(
   pImpl->terminate();
 
   outNumUpserted = 0;
-  return changeForms;
+  return std::move(changeForms);
 }
 
 void MigrationDatabase::Iterate(const IterateCallback& iterateCallback)
