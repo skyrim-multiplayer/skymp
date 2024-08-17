@@ -26,6 +26,8 @@
 
 constexpr int kNumThreadsForThreadPool = 10;
 
+// Supports multithreading. Nothing must mutate the state read by this method
+// while it's executing
 MpActor* ActionListener::SendToNeighbours(uint32_t idx, MpActor* myActor,
                                           Networking::PacketData data,
                                           size_t length, bool reliable)
@@ -47,6 +49,10 @@ MpActor* ActionListener::SendToNeighbours(uint32_t idx, MpActor* myActor,
                     "(already owned by user {})",
                     actor->GetFormId(), actorsOwningUserId);
       partOne.SendHostStop(userId, *actor);
+
+      // TODO: implement cleaner solution
+      static std::mutex g_hostersEraseMutex;
+      std::lock_guard l(g_hostersEraseMutex);
 
       partOne.worldState.hosters.erase(actor->GetFormId());
       return nullptr;
