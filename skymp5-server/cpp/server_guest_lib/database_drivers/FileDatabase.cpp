@@ -99,15 +99,3 @@ void FileDatabase::Iterate(const IterateCallback& iterateCallback)
     }
   }
 }
-
-bool FileDatabase::GetRecycledChangeFormsBuffer(
-  std::vector<MpChangeForm>& changeForms)
-{
-  if (pImpl->recycledChangeFormsBuffer) {
-    changeForms = std::move(*pImpl->recycledChangeFormsBuffer);
-    pImpl->recycledChangeFormsBuffer.reset();
-    return true;
-  }
-
-  return false;
-}
