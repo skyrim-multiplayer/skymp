@@ -11,13 +11,13 @@ size_t IDatabase::Upsert(
 }
 
 bool IDatabase::GetRecycledChangeFormsBuffer(
-  std::vector<MpChangeForm>& changeForms)
+  std::vector<std::optional<MpChangeForm>>& changeForms)
 {
   if (recycledChangeFormsBuffer.empty()) {
     return false;
   }
 
-  for (auto &value : recycledChangeFormsBuffer) {
+  for (auto& value : recycledChangeFormsBuffer) {
     value = std::nullopt;
   }
 

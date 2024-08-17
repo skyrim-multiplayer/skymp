@@ -40,11 +40,13 @@ public:
 
   virtual void Iterate(const IterateCallback& iterateCallback) = 0;
 
-  bool GetRecycledChangeFormsBuffer(std::vector<MpChangeForm>& changeForms);
+  bool GetRecycledChangeFormsBuffer(
+    std::vector<std::optional<MpChangeForm>>& changeForms);
 
 protected:
   virtual std::vector<std::optional<MpChangeForm>>&& UpsertImpl(
-    std::vector<std::optional<MpChangeForm>>&& changeForms, size_t &outNumUpserted) = 0;
+    std::vector<std::optional<MpChangeForm>>&& changeForms,
+    size_t& outNumUpserted) = 0;
 
   std::vector<std::optional<MpChangeForm>> recycledChangeFormsBuffer;
 };
