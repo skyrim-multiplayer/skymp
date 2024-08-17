@@ -12,7 +12,8 @@ public:
 
 private:
   std::vector<std::optional<MpChangeForm>>&& UpsertImpl(
-    std::vector<std::optional<MpChangeForm>>&& changeForms, size_t &outNumUpserted) override;
+    std::vector<std::optional<MpChangeForm>>&& changeForms,
+    size_t& outNumUpserted) override;
 
   struct Impl;
   std::shared_ptr<Impl> pImpl;

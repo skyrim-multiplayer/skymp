@@ -10,7 +10,8 @@ public:
 
 private:
   std::vector<std::optional<MpChangeForm>>&& UpsertImpl(
-    std::vector<std::optional<MpChangeForm>>&& changeForms, size_t &outNumUpserted) override;
+    std::vector<std::optional<MpChangeForm>>&& changeForms,
+    size_t& outNumUpserted) override;
 
   int GetDocumentCount();
   std::optional<std::string> GetCombinedErrorOrNull(
