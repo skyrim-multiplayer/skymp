@@ -44,7 +44,7 @@ std::vector<std::optional<MpChangeForm>>&& MongoDatabase::UpsertImpl(
   size_t& outNumUpserted)
 {
   outNumUpserted = 0;
-  return changeForms;
+  return std::move(changeForms);
 }
 
 void MongoDatabase::Iterate(const IterateCallback&)
