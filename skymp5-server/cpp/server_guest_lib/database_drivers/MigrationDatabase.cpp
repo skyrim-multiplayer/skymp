@@ -116,7 +116,9 @@ std::vector<std::optional<MpChangeForm>>&& MigrationDatabase::UpsertImpl(
 {
   spdlog::error("MigrationDatabase::Upsert - should never be reached");
   pImpl->terminate();
-  return std::vector<std::optional<MpChangeForm>>();
+
+  outNumUpserted = 0;
+  return changeForms;
 }
 
 void MigrationDatabase::Iterate(const IterateCallback& iterateCallback)

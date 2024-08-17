@@ -39,9 +39,12 @@ MongoDatabase::MongoDatabase(std::string uri_, std::string name_)
 {
   throw std::runtime_error("MongoDB is not supported in this build");
 }
-size_t MongoDatabase::UpsertImpl(std::vector<std::optional<MpChangeForm>>&&)
+std::vector<std::optional<MpChangeForm>>&& MongoDatabase::UpsertImpl(
+  std::vector<std::optional<MpChangeForm>>&& changeForms,
+  size_t& outNumUpserted)
 {
-  return 0;
+  outNumUpserted = 0;
+  return changeForms;
 }
 
 void MongoDatabase::Iterate(const IterateCallback&)
@@ -61,7 +64,8 @@ MongoDatabase::MongoDatabase(std::string uri_, std::string name_)
 }
 
 std::vector<std::optional<MpChangeForm>>&& MongoDatabase::UpsertImpl(
-  std::vector<std::optional<MpChangeForm>>&& changeForms, size_t& outNumUpserted)
+  std::vector<std::optional<MpChangeForm>>&& changeForms,
+  size_t& outNumUpserted)
 {
   try {
     mongocxx::v_noabi::pool::entry poolEntry = pImpl->pool->acquire();
