@@ -58,6 +58,17 @@ enum class SetPosMode
   Other
 };
 
+// Corresponding string is a constant name without "kVariable_" prefix
+// Keep in sync with MpObjectReference::GetAnimationVariableBool
+enum class AnimationVariableBool
+{
+  kInvalidVariable,
+  kVariable_bInJumpState,
+  kVariable__skymp_isWeapDrawn,
+  kVariable_IsBlocking,
+  kNumVariables
+};
+
 using SetAngleMode = SetPosMode;
 
 class MpObjectReference
@@ -118,7 +129,8 @@ public:
   void SetRelootTime(std::chrono::system_clock::duration newRelootTime);
   void SetChanceNoneOverride(uint8_t chanceNone);
   void SetCellOrWorld(const FormDesc& worldOrCell);
-  void SetAnimationVariableBool(const char* name, bool value);
+  void SetAnimationVariableBool(AnimationVariableBool animationVariableBool,
+                                bool value);
   void SetActivationBlocked(bool blocked);
   void ForceSubscriptionsUpdate();
   void SetPrimitive(const NiPoint3& boundsDiv2);

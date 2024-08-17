@@ -22,6 +22,7 @@
 #include "libespm/GroupUtils.h"
 #include "libespm/Utils.h"
 #include "papyrus-vm/Reader.h"
+#include "papyrus-vm/Utils.h" // stricmp
 #include "papyrus-vm/VirtualMachine.h"
 #include "script_objects/EspmGameObject.h"
 #include "script_storages/IScriptStorage.h"
@@ -110,7 +111,8 @@ std::pair<int16_t, int16_t> GetGridPos(const NiPoint3& pos) noexcept
 
 struct AnimGraphHolder
 {
-  std::set<CIString> animationVariablesBool;
+  std::array<bool, static_cast<size_t>(AnimationVariableBool::kNumVariables)>
+    boolVariables;
 };
 
 struct ScriptState
@@ -130,7 +132,7 @@ public:
   bool onInitEventSent = false;
   bool scriptsInited = false;
   std::unique_ptr<ScriptState> scriptState;
-  std::unique_ptr<AnimGraphHolder> animGraphHolder;
+  AnimGraphHolder animGraphHolder;
   std::optional<PrimitiveData> primitive;
   bool teleportFlag = false;
   bool setPropertyCalled = false;
@@ -263,8 +265,26 @@ std::chrono::system_clock::duration MpObjectReference::GetRelootTime() const
 
 bool MpObjectReference::GetAnimationVariableBool(const char* name) const
 {
-  return pImpl->animGraphHolder &&
-    pImpl->animGraphHolder->animationVariablesBool.count(name) > 0;
+  AnimationVariableBool variable = AnimationVariableBool::kInvalidVariable;
+
+  if (!Utils::stricmp(name, "bInJumpState")) {
+    variable = AnimationVariableBool::kVariable_bInJumpState;
+  } else if (!Utils::stricmp(name, "_skymp_isWeapDrawn")) {
+    variable = AnimationVariableBool::kVariable__skymp_isWeapDrawn;
+  } else if (!Utils::stricmp(name, "IsBlocking")) {
+    variable = AnimationVariableBool::kVariable_IsBlocking;
+  }
+
+  if (variable == AnimationVariableBool::kInvalidVariable) {
+    spdlog::warn("MpObjectReference::GetAnimationVariableBool - unknown "
+                 "variable name: {}",
+                 name);
+    return false;
+
+    constexpr int s = sizeof(::MpChangeFormREFR);
+  }
+
+  return pImpl->animGraphHolder.boolVariables[static_cast<size_t>(variable)];
 }
 
 bool MpObjectReference::IsPointInsidePrimitive(const NiPoint3& point) const
@@ -732,14 +752,11 @@ void MpObjectReference::SetCount(uint32_t newCount)
     [&](MpChangeFormREFR& changeForm) { changeForm.count = newCount; });
 }
 
-void MpObjectReference::SetAnimationVariableBool(const char* name, bool value)
+void MpObjectReference::SetAnimationVariableBool(
+  AnimationVariableBool animationVariableBool, bool value)
 {
-  if (!pImpl->animGraphHolder)
-    pImpl->animGraphHolder.reset(new AnimGraphHolder);
-  if (value)
-    pImpl->animGraphHolder->animationVariablesBool.insert(name);
-  else
-    pImpl->animGraphHolder->animationVariablesBool.erase(name);
+  auto i = static_cast<size_t>(animationVariableBool);
+  pImpl->animGraphHolder.boolVariables[i] = value;
 }
 
 void MpObjectReference::SetInventory(const Inventory& inv)

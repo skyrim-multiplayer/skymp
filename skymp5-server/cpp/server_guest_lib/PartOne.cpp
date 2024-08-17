@@ -898,7 +898,7 @@ void PartOne::TickPacketHistoryPlaybacks()
 
 void PartOne::TickDeferredMessages()
 {
-  for (Networking::UserId userId = 0; userId < serverState.userInfo.size();
+  for (Networking::UserId userId = 0; userId <= serverState.maxConnectedId;
        ++userId) {
     auto& userInfo = serverState.userInfo[userId];
     if (!userInfo) {
