@@ -19,9 +19,9 @@ std::string PutItemEvent::GetArgumentsJsonArray() const
 {
   std::string result;
   result += "[";
-  result += std::to_string(actor->GetFormId());
-  result += ",";
   result += std::to_string(sourceRefr->GetFormId());
+  result += ",";
+  result += std::to_string(actor->GetFormId());
   result += ",";
   result += std::to_string(entry.baseId);
   result += ",";
