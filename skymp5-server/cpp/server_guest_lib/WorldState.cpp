@@ -100,15 +100,19 @@ void WorldState::AddForm(std::unique_ptr<MpForm> form, uint32_t formId,
   }
 
   // Assign formIndex before Init
-  if (auto formIndex = dynamic_cast<FormIndex*>(form.get())) {
-    if (!formIdxManager)
+  if (auto refr = form->AsObjectReference()) {
+    if (!formIdxManager) {
       formIdxManager.reset(new MakeID(FormIndex::g_invalidIdx - 1));
-    if (!formIdxManager->CreateID(formIndex->idx))
-      throw std::runtime_error("CreateID failed");
+    }
 
-    if (formByIdxUnreliable.size() <= formIndex->idx)
-      formByIdxUnreliable.resize(formIndex->idx + 1, nullptr);
-    formByIdxUnreliable[formIndex->idx] = form.get();
+    if (!formIdxManager->CreateID(refr->idx)) {
+      throw std::runtime_error("CreateID failed");
+    }
+
+    if (refrByIdxUnreliable.size() <= refr->GetIdx()) {
+      refrByIdxUnreliable.resize(refr->GetIdx() + 1, nullptr);
+    }
+    refrByIdxUnreliable[refr->GetIdx()] = refr;
   }
 
   // MpObjectReference::Init requests save for newly created forms. That's why
@@ -839,11 +843,10 @@ const std::set<MpObjectReference*>& WorldState::GetNeighborsByPosition(
 MpForm* WorldState::LookupFormByIdx(int idx)
 {
   if (formIdxManager) {
-    if (idx >= 0 && idx < formByIdxUnreliable.size()) {
-      auto form = formByIdxUnreliable[idx];
-      if (auto formIndex = dynamic_cast<FormIndex*>(form)) {
-        if (formIndex->GetIdx() == idx)
-          return form;
+    if (idx >= 0 && idx < refrByIdxUnreliable.size()) {
+      auto refr = refrByIdxUnreliable[idx];
+      if (refr && refr->GetIdx() == idx) {
+        return refr;
       }
     }
   }

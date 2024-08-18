@@ -290,7 +290,7 @@ private:
   std::unordered_map<std::string, size_t> loadOrderMap;
   std::unordered_map<uint32_t, GridInfo> grids;
   std::unique_ptr<MakeID> formIdxManager;
-  std::vector<MpForm*> formByIdxUnreliable;
+  std::vector<MpObjectReference*> refrByIdxUnreliable;
   espm::Loader* espm = nullptr;
   FormCallbacksFactory formCallbacksFactory;
   std::unique_ptr<espm::CompressedFieldsCache> espmCache;

@@ -58,6 +58,17 @@ enum class SetPosMode
   Other
 };
 
+// Corresponding string is a constant name without "kVariable_" prefix
+// Keep in sync with MpObjectReference::GetAnimationVariableBool
+enum class AnimationVariableBool
+{
+  kInvalidVariable,
+  kVariable_bInJumpState,
+  kVariable__skymp_isWeapDrawn,
+  kVariable_IsBlocking,
+  kNumVariables
+};
+
 using SetAngleMode = SetPosMode;
 
 class MpObjectReference
@@ -118,7 +129,8 @@ public:
   void SetRelootTime(std::chrono::system_clock::duration newRelootTime);
   void SetChanceNoneOverride(uint8_t chanceNone);
   void SetCellOrWorld(const FormDesc& worldOrCell);
-  void SetAnimationVariableBool(const char* name, bool value);
+  void SetAnimationVariableBool(AnimationVariableBool animationVariableBool,
+                                bool value);
   void SetActivationBlocked(bool blocked);
   void ForceSubscriptionsUpdate();
   void SetPrimitive(const NiPoint3& boundsDiv2);
@@ -225,8 +237,14 @@ private:
 
   // Should be empty for non-actor refs
   std::unique_ptr<std::set<MpObjectReference*>> emitters;
-  std::unique_ptr<std::map<uint32_t, bool>> emittersWithPrimitives;
-  std::unique_ptr<std::set<uint32_t>> primitivesWeAreInside;
+
+  // The following keys were originally formIds, but changed to pointers for
+  // the sake of performance. Luckily, the server never releases objects, so
+  // the pointers are always valid.
+  // TODO: ensure primitivesWeAreInside is freed correctly
+  std::unique_ptr<std::map<MpObjectReference*, bool /* wasInside */>>
+    emittersWithPrimitives;
+  std::unique_ptr<std::set<MpObjectReference*>> primitivesWeAreInside;
 
   std::string baseType;
   uint32_t baseId = 0;
