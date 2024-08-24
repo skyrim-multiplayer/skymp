@@ -15,10 +15,6 @@ if(BUILD_GAMEMODE)
   set(GAMEMODE_ZIP_EXTRACT_DIR "${CMAKE_BINARY_DIR}/gamemode-zip")
   set(GAMEMODE_JS_DEST_DIR "${CMAKE_BINARY_DIR}/dist/server")
 
-  # Pass variables to the download script.
-  set(SCRIPT_PATH "${CMAKE_CURRENT_LIST_DIR}/download-and-build.cmake")
-  configure_file(${SCRIPT_PATH} ${CMAKE_BINARY_DIR}/download-and-build.cmake)
-
   set(DEPLOY_BRANCH "$ENV{DEPLOY_BRANCH}")
   set(AUTO_MERGE_REPO "Pospelove/auto-merge-action")
   set(AUTO_MERGE_BRANCH "main")
@@ -32,8 +28,8 @@ if(BUILD_GAMEMODE)
   endif()
 
   # Pass variables to the download script with PRS.
-  set(SCRIPT_PATH2 "${CMAKE_CURRENT_LIST_DIR}/download-and-build-with-prs.cmake")
-  configure_file(${SCRIPT_PATH2} ${CMAKE_BINARY_DIR}/download-and-build-with-prs.cmake ESCAPE_QUOTES)
+  set(SCRIPT_PATH "${CMAKE_CURRENT_LIST_DIR}/download-and-build-with-prs.cmake")
+  configure_file(${SCRIPT_PATH} ${CMAKE_BINARY_DIR}/download-and-build-with-prs.cmake ESCAPE_QUOTES)
 
   set(source download-and-build-with-prs.cmake)
 
