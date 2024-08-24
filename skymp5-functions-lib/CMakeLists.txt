@@ -1,6 +1,6 @@
 project(skymp5-functions-lib)
 
-set(GAMEMODE_REPO_OWNER Pospelove)
+set(GAMEMODE_REPO_OWNER skyrim-multiplayer)
 set(GAMEMODE_REPO_NAME skymp5-gamemode)
 set(GAMEMODE_REPO ${GAMEMODE_REPO_OWNER}/${GAMEMODE_REPO_NAME})
 set(GAMEMODE_BRANCH master)
