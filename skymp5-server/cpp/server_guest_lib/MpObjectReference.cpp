@@ -684,13 +684,13 @@ void MpObjectReference::UpdateHoster(uint32_t newHosterId)
   }
 }
 
-void MpObjectReference::SetProperty(const std::string& propertyName,
-                                    const nlohmann::json& newValue,
-                                    bool isVisibleByOwner,
-                                    bool isVisibleByNeighbor)
+void MpObjectReference::SetProperty(
+  const std::string& propertyName, const nlohmann::json& newValue,
+  std::optional<DynamicFieldsEntryCache> cache, bool isVisibleByOwner,
+  bool isVisibleByNeighbor)
 {
   EditChangeForm([&](MpChangeFormREFR& changeForm) {
-    changeForm.dynamicFields.Set(propertyName, newValue);
+    changeForm.dynamicFields.Set(propertyName, newValue, cache);
   });
   if (isVisibleByNeighbor) {
     SendPropertyToListeners(propertyName.data(), newValue);

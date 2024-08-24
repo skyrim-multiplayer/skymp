@@ -136,8 +136,9 @@ public:
   void SetPrimitive(const NiPoint3& boundsDiv2);
   void UpdateHoster(uint32_t newHosterId);
   void SetProperty(const std::string& propertyName,
-                   const nlohmann::json& newValue, bool isVisibleByOwner,
-                   bool isVisibleByNeighbor);
+                   const nlohmann::json& newValue,
+                   std::optional<DynamicFieldsEntryCache> cache,
+                   bool isVisibleByOwner, bool isVisibleByNeighbor);
   void SetTeleportFlag(bool value);
   void SetPosAndAngleSilent(const NiPoint3& pos, const NiPoint3& rot);
   void Delete();

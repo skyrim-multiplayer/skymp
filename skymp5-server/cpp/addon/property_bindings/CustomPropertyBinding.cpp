@@ -42,14 +42,27 @@ Napi::Value CustomPropertyBinding::Get(Napi::Env env, ScampServer& scampServer,
 
   auto& refr = partOne->worldState.GetFormAt<MpObjectReference>(formId);
 
-  if (isPrivate) {
-    return NapiHelper::ParseJson(env,
-                                 refr.GetDynamicFields().Get(propertyName));
-  } else {
+  if (!isPrivate) {
     EnsurePropertyExists(scampServer.GetGamemodeApiState(), propertyName);
-    return NapiHelper::ParseJson(env,
-                                 refr.GetDynamicFields().Get(propertyName));
   }
+
+  auto& fynamicFields = refr.GetDynamicFields();
+  auto& entry = dynamicFields.Get(propertyName);
+
+  if (entry.cache != std::nullopt) {
+    switch (entry.cache->index()) {
+      case static_cast<size_t>(DynamicFieldsEntryCacheIndex::kVoidPtr):
+        return static_cast<napi_value>(std::get<void*>(*entry.cache));
+      case static_cast<size_t>(DynamicFieldsEntryCacheIndex::kDouble):
+        return Napi::Number::New(env, std::get<double>(*entry.cache));
+      case static_cast<size_t>(DynamicFieldsEntryCacheIndex::kBool):
+        return Napi::Boolean::New(env, std::get<bool>(*entry.cache));
+      case static_cast<size_t>(DynamicFieldsEntryCacheIndex::kString):
+        return Napi::String::New(env, std::get<std::string>(*entry.cache));
+    }
+  }
+
+  return NapiHelper::ParseJson(env, entry.value);
 }
 
 void CustomPropertyBinding::Set(Napi::Env env, ScampServer& scampServer,
@@ -64,14 +77,42 @@ void CustomPropertyBinding::Set(Napi::Env env, ScampServer& scampServer,
   auto newValueDump = NapiHelper::Stringify(env, newValue);
   auto newValueJson = nlohmann::json::parse(newValueDump);
 
+  std::optional<DynamicFieldsEntryCache> newValueCache;
+
+  switch (newValue.Type()) {
+    case napi_undefined:
+      break;
+    case napi_null:
+      newValueCache = static_cast<void*>(nullptr);
+      break;
+    case napi_boolean:
+      newValueCache = newValue.As<Napi::Boolean>().Value();
+      break;
+    case napi_number:
+      break;
+    case napi_string:
+      break;
+    case napi_symbol:
+      break;
+    case napi_object:
+      break;
+    case napi_function:
+      break;
+    case napi_external:
+      break;
+    case napi_bigint:
+      break;
+  }
+
   if (isPrivate) {
-    refr.SetProperty(propertyName, newValueJson, false, false);
+    refr.SetProperty(propertyName, newValueJson, newValueCache, false, false);
     if (isPrivateIndexed) {
       refr.RegisterPrivateIndexedProperty(propertyName, newValueDump);
     }
     return;
   }
   auto it = EnsurePropertyExists(state, propertyName);
-  refr.SetProperty(propertyName, newValueJson, it->second.isVisibleByOwner,
+  refr.SetProperty(propertyName, newValueJson, newValueCache,
+                   it->second.isVisibleByOwner,
                    it->second.isVisibleByNeighbors);
 }

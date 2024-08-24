@@ -4,12 +4,30 @@
 #include <nlohmann/json.hpp>
 #include <optional>
 #include <string>
+#include <variant>
+
+enum class DynamicFieldsEntryCacheIndex
+{
+  kObject,
+  kDouble,
+  kBool,
+  kString
+};
+
+struct DynamicFieldsValueObject
+{
+  void* napiValue = nullptr;
+  std::string jsonDump;
+};
+
+using DynamicFieldsEntryValue =
+  std::variant<DynamicFieldsValueObject, double, bool, std::string> value;
 
 class DynamicFields
 {
 public:
-  void Set(const std::string& propName, const nlohmann::json& value);
-  const nlohmann::json& Get(const std::string& propName) const;
+  void Set(const std::string& propName, const DynamicFieldsEntryValue& value);
+  const DynamicFieldsEntryValue& Get(const std::string& propName) const;
 
   const nlohmann::json& GetAsJson() const;
   static DynamicFields FromJson(const nlohmann::json& j);
@@ -27,6 +45,8 @@ public:
   friend bool operator!=(const DynamicFields& r, const DynamicFields& l);
 
 private:
-  std::unordered_map<std::string, nlohmann::json> props;
+  static nlohmann::json ToJson(const DynamicFieldsEntryValue& value);
+
+  std::unordered_map<std::string, DynamicFieldsEntryValue> props;
   mutable std::optional<nlohmann::json> jsonCache;
 };
