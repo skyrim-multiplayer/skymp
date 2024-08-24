@@ -24,17 +24,18 @@ if(BUILD_GAMEMODE)
   set(AUTO_MERGE_BRANCH "main")
   set(AUTO_MERGE_REPO_URL "https://github.com/${AUTO_MERGE_REPO}.git")
   set(GAMEMODE_REPO_URL "https://${GITHUB_TOKEN}:x-oauth-basic@github.com/${GAMEMODE_REPO_OWNER}/${GAMEMODE_REPO_NAME}.git")
-  set(ENV_INPUT_REPOSITORIES "[{\"owner\": \"Pospelove\", \"repo\": \"skymp5-gamemode\", \"labels\": [\"merge-to:${DEPLOY_BRANCH}\"], \"token\": \"${GITHUB_TOKEN}\"}]")
+
+  if("$ENV{DEPLOY_BRANCH}" STREQUAL "")
+    set(ENV_INPUT_REPOSITORIES "[{\"owner\": \"Pospelove\", \"repo\": \"skymp5-gamemode\", \"labels\": [], \"token\": \"${GITHUB_TOKEN}\"}]")
+  else()
+    set(ENV_INPUT_REPOSITORIES "[{\"owner\": \"Pospelove\", \"repo\": \"skymp5-gamemode\", \"labels\": [\"merge-to:${DEPLOY_BRANCH}\"], \"token\": \"${GITHUB_TOKEN}\"}]")
+  endif()
 
   # Pass variables to the download script with PRS.
   set(SCRIPT_PATH2 "${CMAKE_CURRENT_LIST_DIR}/download-and-build-with-prs.cmake")
   configure_file(${SCRIPT_PATH2} ${CMAKE_BINARY_DIR}/download-and-build-with-prs.cmake ESCAPE_QUOTES)
 
-  if("$ENV{CI}" STREQUAL "true" AND NOT "$ENV{DEPLOY_BRANCH}" STREQUAL "")
-    set(source download-and-build-with-prs.cmake)
-  else()
-    set(source download-and-build.cmake)
-  endif()
+  set(source download-and-build-with-prs.cmake)
 
   add_custom_target(skymp5-functions-lib ALL
     SOURCES ${source}
