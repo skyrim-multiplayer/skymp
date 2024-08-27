@@ -17,6 +17,8 @@ public:
               const UpsertCallback& cb) override;
   uint32_t GetNumFinishedUpserts() const override;
   void Tick() override;
+  bool GetRecycledChangeFormsBuffer(
+    std::vector<std::optional<MpChangeForm>>& changeForms) override;
   const std::string& GetName() const override;
 
 private:

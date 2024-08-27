@@ -110,12 +110,15 @@ MigrationDatabase::MigrationDatabase(std::shared_ptr<IDatabase> newDatabase,
   pImpl->exit();
 }
 
-size_t MigrationDatabase::Upsert(
-  std::vector<std::optional<MpChangeForm>>&& changeForms)
+std::vector<std::optional<MpChangeForm>>&& MigrationDatabase::UpsertImpl(
+  std::vector<std::optional<MpChangeForm>>&& changeForms,
+  size_t& outNumUpserted)
 {
   spdlog::error("MigrationDatabase::Upsert - should never be reached");
   pImpl->terminate();
-  return 0;
+
+  outNumUpserted = 0;
+  return std::move(changeForms);
 }
 
 void MigrationDatabase::Iterate(const IterateCallback& iterateCallback)

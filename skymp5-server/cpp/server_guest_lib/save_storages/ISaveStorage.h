@@ -18,6 +18,8 @@ public:
                       const UpsertCallback& cb) = 0;
   virtual uint32_t GetNumFinishedUpserts() const = 0;
   virtual void Tick() = 0;
+  virtual bool GetRecycledChangeFormsBuffer(
+    std::vector<std::optional<MpChangeForm>>& changeForms) = 0;
 
   virtual const std::string& GetName() const = 0;
 };
