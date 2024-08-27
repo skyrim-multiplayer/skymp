@@ -38,6 +38,7 @@ struct RelootTimeForTypesEntry
 struct WorldState::Impl
 {
   std::vector<std::optional<MpChangeForm>> changesByIdx;
+  bool changesByIdxEmpty = true;
 
   std::shared_ptr<ISaveStorage> saveStorage;
   std::shared_ptr<IScriptStorage> scriptStorage;
@@ -284,6 +285,7 @@ void WorldState::RequestSave(MpObjectReference& ref)
   }
 
   pImpl->changesByIdx[idx] = ref.GetChangeForm();
+  pImpl->changesByIdxEmpty = false;
 }
 
 const std::shared_ptr<MpForm>& WorldState::LookupFormById(
@@ -730,7 +732,7 @@ void WorldState::TickSaveStorage(const std::chrono::system_clock::time_point&)
     return;
   }
 
-  if (pImpl->changesByIdx.empty()) {
+  if (pImpl->changesByIdxEmpty) {
     return;
   }
 
@@ -743,6 +745,7 @@ void WorldState::TickSaveStorage(const std::chrono::system_clock::time_point&)
   try {
     pImpl->saveStorage->Upsert(std::move(pImpl->changesByIdx),
                                [pImpl_] { pImpl_->saveStorageBusy = false; });
+    pImpl->changesByIdxEmpty = true;
   } catch (std::exception& e) {
     pImpl->saveStorageBusy = false;
     spdlog::error("TickSaveStorage - Upsert failed with {}", e.what());
