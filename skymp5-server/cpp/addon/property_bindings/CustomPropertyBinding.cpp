@@ -52,13 +52,27 @@ Napi::Value CustomPropertyBinding::Get(Napi::Env env, ScampServer& scampServer,
   if (entry.cache != std::nullopt) {
     switch (entry.cache->index()) {
       case static_cast<size_t>(DynamicFieldsEntryCacheIndex::kVoidPtr):
-        return static_cast<napi_value>(std::get<void*>(*entry.cache));
+
+// TODO: !!!!!!!!!!!!!!!!!! Bad type in std::get<DynamicFieldsValueObject>(*entry.cache)
+
+        if (auto ptr = std::get<void*>(*entry.cache)) {
+          auto napiValue = static_cast<napi_value>(ptr);
+          auto napiValueWrapped = Napi::Value(env, napiValue);
+          return structuredClone.Value().Call(
+            { env.Null(), napiValueWrapped });
+        } else {
+          return env.Null();
+        }
       case static_cast<size_t>(DynamicFieldsEntryCacheIndex::kDouble):
         return Napi::Number::New(env, std::get<double>(*entry.cache));
       case static_cast<size_t>(DynamicFieldsEntryCacheIndex::kBool):
         return Napi::Boolean::New(env, std::get<bool>(*entry.cache));
       case static_cast<size_t>(DynamicFieldsEntryCacheIndex::kString):
         return Napi::String::New(env, std::get<std::string>(*entry.cache));
+      default:
+        spdlog::error(
+          "CustomPropertyBinding::Get {:x} {} - unknown cache type {}", formId,
+          propertyName, entry.cache->index());
     }
   }
 
@@ -77,10 +91,40 @@ void CustomPropertyBinding::Set(Napi::Env env, ScampServer& scampServer,
   auto newValueDump = NapiHelper::Stringify(env, newValue);
   auto newValueJson = nlohmann::json::parse(newValueDump);
 
+  auto& fynamicFields = refr.GetDynamicFields();
+  auto& entry = dynamicFields.Get(propertyName);
+
+  // If there was an object in the cache, we need to free it before setting a
+  // new value, otherwise we'll have a memory leak
+  if (entry.cache != std::nullopt) {
+    switch (entry.cache->index()) {
+      case static_cast<size_t>(DynamicFieldsEntryCacheIndex::kVoidPtr):
+
+        // TODO: napi_delete_reference instead!!!!!!!!!!!!
+
+        if (auto ptr = std::get<DynamicFieldsValueObject>(*entry.cache)) {
+          uint32_t unrefResult;
+          auto res = napi_reference_unref(env, static_cast<napi_ref>(ptr),
+                                          &unrefResult);
+          if (res != napi_ok) {
+            spdlog::error("CustomPropertyBinding::Set {:x} {} - failed to "
+                          "unref napi reference, res={}",
+                          formId, propertyName, res);
+          } else {
+            spdlog::info("unref result: {}", unrefResult);
+          }
+        }
+        break;
+      default:
+        break;
+    }
+  }
+
   std::optional<DynamicFieldsEntryCache> newValueCache;
 
   switch (newValue.Type()) {
     case napi_undefined:
+      newValueCache = static_cast<void*>(nullptr);
       break;
     case napi_null:
       newValueCache = static_cast<void*>(nullptr);
@@ -89,18 +133,62 @@ void CustomPropertyBinding::Set(Napi::Env env, ScampServer& scampServer,
       newValueCache = newValue.As<Napi::Boolean>().Value();
       break;
     case napi_number:
+      newValueCache = newValue.As<Napi::Number>().DoubleValue();
       break;
     case napi_string:
+      newValueCache = newValue.As<Napi::String>().Utf8Value();
       break;
     case napi_symbol:
+      newValueJson = nlohmann::json{};
+      newValueDump = "null";
+      newValueCache = static_cast<void*>(nullptr);
+      spdlog::error(
+        "CustomPropertyBinding::Set {:x} {} - symbol type is not supported",
+        formId, propertyName);
       break;
-    case napi_object:
-      break;
+    case napi_object: {
+      auto obj = newValue.As<Napi::Object>();
+
+      auto napiValue = static_cast<napi_value>(newValue);
+      napi_ref ref;
+      auto res = napi_create_reference(env, napiValue, 1, &ref);
+      if (res != napi_ok) {
+        spdlog::error("CustomPropertyBinding::Set {:x} {} - failed to "
+                      "create napi reference, res={}",
+                      formId, propertyName, res);
+        newValueJson = nlohmann::json{};
+        newValueDump = "null";
+        newValueCache = static_cast<void*>(nullptr);
+      } else {
+        newValueJson = nlohmann::json{};
+        newValueDump = "null";
+        newValueCache = static_cast<void*>(ref);
+      }
+
+    } break;
     case napi_function:
+      newValueJson = nlohmann::json{};
+      newValueDump = "null";
+      newValueCache = static_cast<void*>(nullptr);
+      spdlog::error("CustomPropertyBinding::Set {:x} {} - function type "
+                    "is not supported",
+                    formId, propertyName);
       break;
     case napi_external:
+      newValueJson = nlohmann::json{};
+      newValueDump = "null";
+      newValueCache = static_cast<void*>(nullptr);
+      spdlog::error("CustomPropertyBinding::Set {:x} {} - external type "
+                    "is not supported",
+                    formId, propertyName);
       break;
     case napi_bigint:
+      newValueJson = nlohmann::json{};
+      newValueDump = "null";
+      newValueCache = static_cast<void*>(nullptr);
+      spdlog::error("CustomPropertyBinding::Set {:x} {} - bigint type is "
+                    "not supported",
+                    formId, propertyName);
       break;
   }
 

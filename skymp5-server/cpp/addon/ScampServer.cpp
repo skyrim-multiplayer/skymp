@@ -357,6 +357,13 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
 
     emitter = Napi::Persistent(res.As<Napi::Object>());
     emit = Napi::Persistent(emitter.Value().Get("emit").As<Napi::Function>());
+
+    auto structuredCloneValue = env.Gloval().Get("structuredClone");
+    if (structuredCloneValue.IsUndefined()) {
+      throw std::runtime_error("structuredClone is not defined");
+    }
+    structuredClone =
+      Napi::Persistent(structuredCloneValue.As<Napi::Function>());
   } catch (std::exception& e) {
     throw Napi::Error::New(info.Env(), (std::string)e.what());
   }

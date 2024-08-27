@@ -79,7 +79,7 @@ private:
   Napi::Env tickEnv;
   Napi::ObjectReference emitter;
   Napi::ObjectReference self;
-  Napi::FunctionReference emit;
+  Napi::FunctionReference emit, structuredClone;
   std::shared_ptr<spdlog::logger> logger;
   nlohmann::json serverSettings;
   GamemodeApi::State gamemodeApiState;

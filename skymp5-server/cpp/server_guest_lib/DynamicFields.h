@@ -17,6 +17,7 @@ enum class DynamicFieldsEntryCacheIndex
 struct DynamicFieldsValueObject
 {
   void* napiValue = nullptr;
+  void *napiRef = nullptr;
   std::string jsonDump;
 };
 
