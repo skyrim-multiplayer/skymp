@@ -1303,9 +1303,23 @@ void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
 
   auto base = loader.GetBrowser().LookupById(GetBaseId());
   if (!base.rec || !GetBaseId()) {
-    std::stringstream ss;
-    ss << std::hex << GetFormId() << " doesn't have base form";
-    throw std::runtime_error(ss.str());
+    return spdlog::error("MpObjectReference::ProcessActivate {:x} - doesn't "
+                         "have base form, activationSource is {:x}",
+                         GetFormId(), activationSource.GetFormId());
+  }
+
+  // Not sure if this is needed
+  if (IsDeleted()) {
+    return spdlog::warn("MpObjectReference::ProcessActivate {:x} - deleted "
+                        "object, activationSource is {:x}",
+                        GetFormId(), activationSource.GetFormId());
+  }
+
+  // Not sure if this is needed
+  if (IsDisabled()) {
+    return spdlog::warn("MpObjectReference::ProcessActivate {:x} - disabled "
+                        "object, activationSource is {:x}",
+                        GetFormId(), activationSource.GetFormId());
   }
 
   auto t = base.rec->GetType();
