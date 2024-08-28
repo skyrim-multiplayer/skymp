@@ -147,7 +147,7 @@ export class Login implements System {
             ).catch((err) => console.error("Error sending message to Discord:", err));
           }
 
-          if (1 || (response.status === 404 && response.data?.code === DiscordErrors.unknownMember)) {
+          if (response.status === 404 && response.data?.code === DiscordErrors.unknownMember) {
             ctx.svr.sendCustomPacket(userId, loginFailedNotInTheDiscordServer);
             throw new Error("Not in the Discord server");
           }
