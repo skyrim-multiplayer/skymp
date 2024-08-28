@@ -85,15 +85,6 @@ export class AuthService extends ClientListener {
         logTrace(this, `Received createActorMessage for self, resetting widgets`);
         this.sp.browser.executeJavaScript('window.skyrimPlatform.widgets.set([]);');
         this.authDialogOpen = false;
-
-        // The idea is to write authData to disk after auth dialog is closed
-        // This is because write to plugins dir triggers hotreload, which in turn breaks the auth dialog
-        // So we need to write to disk after dialog is closed
-        if (this.authDataWriteTask) {
-          const task = this.authDataWriteTask.authDataToWrite;
-          this.controller.once("update", () => this.writeAuthDataToDisk(task));
-          this.authDataWriteTask = null;
-        }
       }
       else {
         logTrace(this, `Received createActorMessage for self, but auth dialog was not open so not resetting widgets`);
@@ -193,16 +184,15 @@ export class AuthService extends ClientListener {
           this.refreshWidgets();
           break;
         }
-        this.authDataWriteTask = { authDataToWrite: authData };
+        this.writeAuthDataToDisk(authData);
         this.controller.emitter.emit("authAttempt", { authGameData: { remote: authData } });
 
         this.authAttemptProgressIndicator = true;
 
-
         break;
       case events.clearAuthData:
         // Doesn't seem to be used
-        this.authDataWriteTask = { authDataToWrite: null };
+        this.writeAuthDataToDisk(null);
         break;
       case events.openGithub:
         this.sp.win32.loadUrl(this.githubUrl);
@@ -593,6 +583,7 @@ export class AuthService extends ClientListener {
         this.sp.browser.executeJavaScript(new FunctionInfo(this.loginFailedWidgetSetter).getText({ events, browserState, authData: authData }));
 
         authData = null;
+        this.writeAuthDataToDisk(null);
       }
     }
 
@@ -641,8 +632,6 @@ export class AuthService extends ClientListener {
 
   private authAttemptProgressIndicator = false;
   private authAttemptProgressIndicatorCounter = 0;
-
-  private authDataWriteTask: { authDataToWrite: RemoteAuthGameData | null } | null = null;
 
   private playerEverSawActualGameplay = false;
 
