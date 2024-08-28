@@ -3,6 +3,12 @@ import Axios from "axios";
 import { getMyPublicIp } from "../publicIp";
 import { Settings } from "../settings";
 
+const loginFailedNotLoggedViaDiscord = JSON.stringify({ customPacketType: "loginFailedNotLoggedViaDiscord" });
+const loginFailedNotInTheDiscordServer = JSON.stringify({ customPacketType: "loginFailedNotInTheDiscordServer" });
+const loginFailedBanned = JSON.stringify({ customPacketType: "loginFailedBanned" });
+const loginFailedIpMismatch = JSON.stringify({ customPacketType: "loginFailedIpMismatch" });
+const loginFailedSessionNotFound = JSON.stringify({ customPacketType: "loginFailedSessionNotFound" });
+
 type Mp = any; // TODO
 
 interface UserProfile {
@@ -26,14 +32,21 @@ export class Login implements System {
     private offlineMode: boolean
   ) { }
 
-  private async getUserProfile(session: string): Promise<UserProfile> {
-    const response = await Axios.get(
-      `${this.masterUrl}/api/servers/${this.myAddr}/sessions/${session}`
-    );
-    if (!response.data || !response.data.user || !response.data.user.id) {
-      throw new Error("getUserProfile: bad master-api response");
+  private async getUserProfile(session: string, userId: number, ctx: SystemContext): Promise<UserProfile> {
+    try {
+      const response = await Axios.get(
+        `${this.masterUrl}/api/servers/${this.myAddr}/sessions/${session}`
+      );
+      if (!response.data || !response.data.user || !response.data.user.id) {
+        throw new Error("getUserProfile: bad master-api response");
+      }
+      return response.data.user as UserProfile;
+    } catch (error) {
+      if (Axios.isAxiosError(error) && error.response?.status === 404) {
+        ctx.svr.sendCustomPacket(userId, loginFailedSessionNotFound);
+      }
+      throw error;
     }
-    return response.data.user as UserProfile;
   }
 
   async initAsync(ctx: SystemContext): Promise<void> {
@@ -70,7 +83,7 @@ export class Login implements System {
       this.log("The server is in offline mode, the client is NOT");
     } else if (this.offlineMode === false && gameData && gameData.session) {
       (async () => {
-        const profile = await this.getUserProfile(gameData.session);
+        const profile = await this.getUserProfile(gameData.session, userId, ctx);
         console.log("getUserProfileId:", profile);
 
         if (discordAuth && !discordAuth.botToken) {
@@ -86,6 +99,7 @@ export class Login implements System {
 
         if (discordAuth) {
           if (!profile.discordId) {
+            ctx.svr.sendCustomPacket(userId, loginFailedNotLoggedViaDiscord);
             throw new Error("Not logged in via Discord");
           }
           const response = await Axios.get(
@@ -134,7 +148,8 @@ export class Login implements System {
           }
 
           if (response.status === 404 && response.data?.code === DiscordErrors.unknownMember) {
-            throw new Error("Not on the Discord server");
+            ctx.svr.sendCustomPacket(userId, loginFailedNotInTheDiscordServer);
+            throw new Error("Not in the Discord server");
           }
           // Disabled this check to be able bypassing ratelimit
           // if (response.status !== 200) {
@@ -142,18 +157,22 @@ export class Login implements System {
           //     JSON.stringify({ status: response.status, data: response.data }));
           // }
           if (roles.indexOf(discordAuth.banRoleId) !== -1) {
+            ctx.svr.sendCustomPacket(userId, loginFailedBanned);
             throw new Error("Banned");
           }
           if (ip !== ctx.svr.getUserIp(userId)) {
             // It's a quick and dirty way to check if it's the same user
             // During async http call the user could free userId and someone else could connect with the same userId
+            ctx.svr.sendCustomPacket(userId, loginFailedIpMismatch);
             throw new Error("IP mismatch");
           }
         }
         ctx.gm.emit("spawnAllowed", userId, profile.id, roles, profile.discordId);
         this.log("Logged as " + profile.id);
       })()
-        .catch((err) => console.error("Error logging in client:", JSON.stringify(gameData), err));
+        .catch((err) => {
+          console.error("Error logging in client:", JSON.stringify(gameData), err)
+        });
     } else if (this.offlineMode === true && gameData && typeof gameData.profileId === "number") {
       const profileId = gameData.profileId;
       ctx.gm.emit("spawnAllowed", userId, profileId, [], undefined);
