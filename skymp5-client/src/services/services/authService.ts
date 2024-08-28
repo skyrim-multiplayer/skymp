@@ -27,6 +27,7 @@ const events = {
   clearAuthData: 'clearAuthData',
   updateRequired: 'updateRequired',
   backToLogin: 'backToLogin',
+  joinDiscord: 'joinDiscord'
 };
 
 // Vaiables used on both client and browser side (see browsersideWidgetSetter)
@@ -108,6 +109,7 @@ export class AuthService extends ClientListener {
         this.controller.lookupListener(NetworkingService).close();
         logTrace(this, 'loginFailedNotLoggedViaDiscord received');
         browserState.loginFailedReason = 'войдите через discord';
+        browserState.comment = '';
         this.sp.browser.executeJavaScript(new FunctionInfo(this.loginFailedWidgetSetter).getText({ events, browserState, authData: authData }));
         break;
       case 'loginFailedNotInTheDiscordServer':
@@ -115,6 +117,7 @@ export class AuthService extends ClientListener {
         this.controller.lookupListener(NetworkingService).close();
         logTrace(this, 'loginFailedNotInTheDiscordServer received');
         browserState.loginFailedReason = 'вступите в discord сервер';
+        browserState.comment = '';
         this.sp.browser.executeJavaScript(new FunctionInfo(this.loginFailedWidgetSetter).getText({ events, browserState, authData: authData }));
         break;
       case 'loginFailedBanned':
@@ -122,13 +125,15 @@ export class AuthService extends ClientListener {
         this.controller.lookupListener(NetworkingService).close();
         logTrace(this, 'loginFailedBanned received');
         browserState.loginFailedReason = 'вы забанены';
+        browserState.comment = '';
         this.sp.browser.executeJavaScript(new FunctionInfo(this.loginFailedWidgetSetter).getText({ events, browserState, authData: authData }));
         break;
       case 'loginFailedIpMismatch':
         this.authAttemptProgressIndicator = false;
         this.controller.lookupListener(NetworkingService).close();
         logTrace(this, 'loginFailedIpMismatch received');
-        browserState.comment = 'что это было?';
+        browserState.loginFailedReason = 'что это было?';
+        browserState.comment = '';
         this.sp.browser.executeJavaScript(new FunctionInfo(this.loginFailedWidgetSetter).getText({ events, browserState, authData: authData }));
         break;
     }
@@ -205,6 +210,9 @@ export class AuthService extends ClientListener {
         break;
       case events.backToLogin:
         this.sp.browser.executeJavaScript(new FunctionInfo(this.browsersideWidgetSetter).getText({ events, browserState, authData: authData }));
+        break;
+      case events.joinDiscord:
+        this.sp.win32.loadUrl("https://discord.gg/9KhSZ6zjGT");
         break;
       default:
         logError(this, `Unknown event key`, eventKey);
@@ -412,6 +420,16 @@ export class AuthService extends ClientListener {
     }
 
     textElements.forEach((element) => widget.elements.push(element));
+
+    if (browserState.loginFailedReason === 'вступите в discord сервер') {
+      widget.elements.push({
+        type: "button",
+        text: "вступить",
+        tags: ["ELEMENT_STYLE_MARGIN_EXTENDED"],
+        click: () => window.skyrimPlatform.sendMessage(events.joinDiscord),
+        hint: null
+      });
+    }
 
     widget.elements.push({
       type: "button",

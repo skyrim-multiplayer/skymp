@@ -147,7 +147,7 @@ export class Login implements System {
             ).catch((err) => console.error("Error sending message to Discord:", err));
           }
 
-          if (response.status === 404 && response.data?.code === DiscordErrors.unknownMember) {
+          if (1 || (response.status === 404 && response.data?.code === DiscordErrors.unknownMember)) {
             ctx.svr.sendCustomPacket(userId, loginFailedNotInTheDiscordServer);
             throw new Error("Not in the Discord server");
           }
@@ -156,7 +156,7 @@ export class Login implements System {
           //   throw new Error("Unexpected response status: " +
           //     JSON.stringify({ status: response.status, data: response.data }));
           // }
-          if (1 || roles.indexOf(discordAuth.banRoleId) !== -1) {
+          if (roles.indexOf(discordAuth.banRoleId) !== -1) {
             ctx.svr.sendCustomPacket(userId, loginFailedBanned);
             throw new Error("Banned");
           }
