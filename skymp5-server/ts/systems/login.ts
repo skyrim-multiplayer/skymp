@@ -156,7 +156,7 @@ export class Login implements System {
           //   throw new Error("Unexpected response status: " +
           //     JSON.stringify({ status: response.status, data: response.data }));
           // }
-          if (roles.indexOf(discordAuth.banRoleId) !== -1) {
+          if (1 || roles.indexOf(discordAuth.banRoleId) !== -1) {
             ctx.svr.sendCustomPacket(userId, loginFailedBanned);
             throw new Error("Banned");
           }
