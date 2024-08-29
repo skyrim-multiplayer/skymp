@@ -171,9 +171,9 @@ runs:
       if: failure()
       uses: actions/upload-artifact@v4
       with:
-        name: install-x64-linux-dbg-out.log
+        name: install-x64-windows-sp-dbg-out.log
         #path: C:\vcpkg\buildtrees\spdlog\install-x64-windows-sp-dbg-out.log
-        path: /Users/runner/work/skymp/skymp/vcpkg/buildtrees/slikenet/install-wasm32-emscripten-dbg-out.log
+        path: C:\vcpkg\buildtrees\mongo-cxx-driver\install-x64-windows-sp-dbg-out.log
 
     - uses: actions/upload-artifact@v4
       with:
