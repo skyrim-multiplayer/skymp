@@ -1,7 +1,7 @@
 vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO mongodb/mongo-cxx-driver
-    REF "r${VERSION}"
+    REF "aa0b94c2c33b1df06b22c777a78149f4e7c70b2b"
     SHA512 0
     HEAD_REF master
     PATCHES
