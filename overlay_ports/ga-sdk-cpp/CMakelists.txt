@@ -1,0 +1,68 @@
+cmake_minimum_required(VERSION 3.15)
+project(ga-sdk-cpp)
+
+add_definitions("-DGUID_WINDOWS")
+
+add_library(ga-sdk-cpp
+    source/gameanalytics/GADevice.cpp
+    source/gameanalytics/GADevice.h
+    source/gameanalytics/GAEvents.cpp
+    source/gameanalytics/GAEvents.h
+    source/gameanalytics/GAHTTPApi.cpp
+    source/gameanalytics/GAHTTPApi.h
+    source/gameanalytics/GALogger.cpp
+    source/gameanalytics/GALogger.h
+    source/gameanalytics/GAState.cpp
+    source/gameanalytics/GAState.h
+    source/gameanalytics/GAStore.cpp
+    source/gameanalytics/GAStore.h
+    source/gameanalytics/GAThreading.cpp
+    source/gameanalytics/GAThreading.h
+    source/gameanalytics/GAUncaughtExceptionHandler.cpp
+    source/gameanalytics/GAUncaughtExceptionHandler.h
+    source/gameanalytics/GAUtilities.cpp
+    source/gameanalytics/GAUtilities.h
+    source/gameanalytics/GAValidator.cpp
+    source/gameanalytics/GAValidator.h
+    source/gameanalytics/GameAnalytics.cpp
+    source/gameanalytics/GameAnalytics.h
+    source/gameanalytics/GameAnalyticsExtern.cpp
+    source/gameanalytics/GameAnalyticsExtern.h
+    source/dependencies/crypto/aes.cpp
+    source/dependencies/crypto/aes.h
+    source/dependencies/crypto/hmac_sha2.c
+    source/dependencies/crypto/hmac_sha2.h
+    source/dependencies/crypto/md5.cpp
+    source/dependencies/crypto/md5.h
+    source/dependencies/crypto/sha2.c
+    source/dependencies/crypto/sha2.h
+    
+    source/dependencies/stacktrace/stacktrace/call_stack.hpp
+    source/dependencies/stacktrace/stacktrace/call_stack_msvc.cpp
+    source/dependencies/stacktrace/stacktrace/stack_exception.hpp
+
+    source/dependencies/crossguid/guid.cpp
+    source/dependencies/crossguid/guid.h
+
+    source/dependencies/stackwalker/StackWalker.cpp
+    source/dependencies/stackwalker/StackWalker.h
+    
+)
+target_include_directories(ga-sdk-cpp PUBLIC source/gameanalytics)
+target_include_directories(ga-sdk-cpp PUBLIC source/dependencies/crypto)
+target_include_directories(ga-sdk-cpp PUBLIC source/dependencies/stacktrace)
+target_include_directories(ga-sdk-cpp PUBLIC source/dependencies/crossguid)
+target_include_directories(ga-sdk-cpp PUBLIC source/dependencies/miniz)
+target_include_directories(ga-sdk-cpp PUBLIC source/dependencies/stackwalker)
+
+find_package(RapidJSON CONFIG REQUIRED)
+set(RAPID_JSON_DIR ${RAPIDJSON_INCLUDE_DIRS})
+target_include_directories(ga-sdk-cpp PUBLIC ${RAPID_JSON_DIR})
+
+# install
+install(TARGETS ga-sdk-cpp
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
+    RUNTIME DESTINATION bin
+    INCLUDES DESTINATION include
+)
