@@ -124,10 +124,12 @@ struct TESActorLocationChangeEvent
 };
 #endif
 
+#ifdef SKYRIMSE
 struct TESBookReadEvent
 {
   RE::NiPointer<RE::TESObjectREFR> book;
 };
+#endif
 
 struct TESSellEvent
 {
