@@ -2,6 +2,7 @@
 #include "NiPoint3.h"
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <string.h>
 #include <typeinfo>
 #include <vector>
@@ -62,13 +63,17 @@ public:
   auto GetFormId() const noexcept { return id; }
   float GetWeight() const;
 
+  std::optional<uint32_t> GetSingleUpdateTimerId() const noexcept;
+  void SetSingleUpdateTimerId(std::optional<uint32_t> id) noexcept;
+
+  virtual void Update();
+
   MpForm(const MpForm&) = delete;
   MpForm& operator=(const MpForm&) = delete;
 
 protected:
   virtual void Init(WorldState* parent_, uint32_t formId_,
                     bool hasChangeForm); // See WorldState::AddForm
-  virtual void Update();
   virtual void SendPapyrusEvent(const char* eventName,
                                 const VarValue* arguments = nullptr,
                                 size_t argumentsCount = 0);
@@ -80,6 +85,7 @@ private:
   WorldState* parent = nullptr;
   mutable GameObjectPtr gameObject;
   std::vector<std::shared_ptr<ActivePexInstance>> activePexInstances;
+  std::optional<uint32_t> singleUpdateTimerId;
 
 protected:
   virtual void BeforeDestroy() {}
