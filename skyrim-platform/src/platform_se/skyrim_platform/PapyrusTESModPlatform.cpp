@@ -66,10 +66,13 @@ public:
 class StackCallbackFunctor : public RE::BSScript::IStackCallbackFunctor
 {
 public:
-  void operator()(Variable a_result) override {}
+  void operator()(Variable a_result) override { return; }
   bool CanSave() const override { return false; }
   void SetObject(
-    const RE::BSTSmartPointer<RE::BSScript::Object>& a_object) override {};
+    const RE::BSTSmartPointer<RE::BSScript::Object>& a_object) override
+  {
+    return;
+  };
 };
 
 // This class has been added as an issue 52 workaround
