@@ -306,10 +306,42 @@ JsValue InventoryApi::SetInventory(const JsFunctionArguments& args)
   return JsValue::Undefined();
 }
 
+JsValue InventoryApi::CastSpellImmediate(const JsFunctionArguments& args)
+{
+  RE::Actor* pActor =
+    RE::TESForm::LookupByID<RE::Actor>(static_cast<double>(args[1]));
+
+  const auto castingSource =
+    static_cast<RE::MagicSystem::CastingSource>(static_cast<int>(args[2]));
+
+  const auto formIdSpell = reinterpret_cast<RE::MagicItem*>(
+    RE::TESForm::LookupByID(static_cast<int>(args[3])));
+
+  const auto formIdTarget = reinterpret_cast<RE::TESObjectREFR*>(
+    RE::TESForm::LookupByID(static_cast<int>(args[4])));
+
+  if (!pActor) {
+    return JsValue::Undefined();
+  }
+
+  const auto magicCaster = pActor->GetMagicCaster(castingSource);
+
+  if (!magicCaster) {
+    return JsValue::Undefined();
+  }
+
+  magicCaster->CastSpellImmediate(formIdSpell, false, formIdTarget, 1.0f,
+                                  false, 0.0f, pActor);
+
+  return JsValue::Undefined();
+}
+
 void InventoryApi::Register(JsValue& exports)
 {
   exports.SetProperty("getExtraContainerChanges",
                       JsValue::Function(GetExtraContainerChanges));
   exports.SetProperty("getContainer", JsValue::Function(GetContainer));
   exports.SetProperty("setInventory", JsValue::Function(SetInventory));
+  exports.SetProperty("castSpellImmediate",
+                      JsValue::Function(CastSpellImmediate));
 }
