@@ -89,16 +89,6 @@ public:
     return timerEffects.SetTimer(std::forward<T>(duration), outTimerId);
   }
 
-  template <typename T>
-  void RegisterForSingleUpdate(const VarValue& self, T&& duration)
-  {
-    SetTimer(std::forward<T>(duration)).Then([self](Viet::Void) {
-      if (auto form = GetFormPtr<MpForm>(self)) {
-        form->Update();
-      }
-    });
-  }
-
   bool RemoveTimer(uint32_t timerId);
   Viet::Promise<Viet::Void> SetTimer(
     std::reference_wrapper<const std::chrono::system_clock::time_point>

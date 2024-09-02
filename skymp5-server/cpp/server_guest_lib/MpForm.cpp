@@ -97,3 +97,13 @@ float MpForm::GetWeight() const
 
   return GetWeightFromRecord(record, GetParent()->GetEspmCache());
 }
+
+std::optional<uint32_t> MpForm::GetSingleUpdateTimerId() const noexcept
+{
+  return singleUpdateTimerId;
+}
+
+void MpForm::SetSingleUpdateTimerId(std::optional<uint32_t> id) noexcept
+{
+  singleUpdateTimerId = id;
+}
