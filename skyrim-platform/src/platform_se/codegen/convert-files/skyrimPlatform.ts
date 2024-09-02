@@ -267,8 +267,11 @@ export interface ConsoleMessageEvent {
 }
 
 export interface SpellCastEvent {
-  caster: ObjectReference
+  caster: ObjectReference | null
+  target: ObjectReference | null
   spell: Spell
+  isDualCasting: boolean
+  castingSource: SpellType
 }
 
 export interface OpenCloseEvent {
@@ -832,6 +835,13 @@ export interface ConsoleCommand {
   execute: (...args: unknown[]) => boolean
 }
 export declare function findConsoleCommand(cmdName: string): ConsoleCommand | null
+
+export const enum SpellType {
+  Left,
+  Right,
+  Voise,
+  Instant,
+}
 
 export const enum MarkerType {
   None = 0,
@@ -1526,16 +1536,16 @@ export declare class Hooks {
 export declare let hooks: Hooks
 
 export declare class HttpResponse {
-    body: string;
-    status: number;
-    error: string;
+  body: string;
+  status: number;
+  error: string;
 }
 export type HttpHeaders = Record<string, string>
 
 export declare class HttpClient {
-    constructor(url: string);
-    get(path: string, options?: { headers?: HttpHeaders }, callback?: (result: HttpResponse) => void): Promise<HttpResponse>;
-    post(path: string, options: { body: string, contentType: string, headers?: HttpHeaders }, callback?: (result: HttpResponse) => void): Promise<HttpResponse>;
+  constructor(url: string);
+  get(path: string, options?: { headers?: HttpHeaders }, callback?: (result: HttpResponse) => void): Promise<HttpResponse>;
+  post(path: string, options: { body: string, contentType: string, headers?: HttpHeaders }, callback?: (result: HttpResponse) => void): Promise<HttpResponse>;
 }
 
 export declare function createText(xPos: number, yPos: number, text: string, color: number[], name?: string): number; //default name is Tavern
@@ -1592,6 +1602,8 @@ export interface Inventory {
 }
 
 export declare function setInventory(formId: number, inventory: Inventory): void;
+
+export declare function castSpellImmediate(formId: number, castingSource: SpellType, formIdSpell: number, formIdTarget: number): void;
 
 // Based on Form.pex
 export declare class Form extends PapyrusObject {

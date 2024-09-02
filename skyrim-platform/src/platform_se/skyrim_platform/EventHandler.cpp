@@ -1314,8 +1314,55 @@ EventResult EventHandler::ProcessEvent(
       return;
     }
 
+    if (!(spell && spell->IsMagicItem())) {
+      spdlog::error(
+        "ProcessEvent TESSpellCastEvent error! spell not a MagicItem");
+      return;
+    }
+
+    if (!caster) {
+      spdlog::error(
+        "ProcessEvent TESSpellCastEvent error! caster == nullptr)");
+      return;
+    }
+
+    auto castingSource = RE::MagicSystem::CastingSource::kLeftHand;
+    bool isCasterValid = false;
+
+    for (const auto magicCaster : caster->magicCasters) {
+
+      if (!magicCaster) {
+        continue;
+      }
+
+      if (magicCaster->currentSpell == spell) {
+        castingSource = magicCaster->GetCastingSource();
+        isCasterValid = true;
+        break;
+      }
+    }
+
+    if (!isCasterValid) {
+      return;
+    }
+
+    const auto magicCaster = caster->GetMagicCaster(castingSource);
+
+    const auto magicTarget = caster->GetMagicTarget();
+
+    RE::Actor* handleTarget = nullptr;
+
+    if (magicTarget->MagicTargetIsActor()) {
+      handleTarget =
+        reinterpret_cast<RE::Actor*>(magicTarget->GetTargetStatsObject());
+    }
+
     AddObjProperty(&obj, "caster", caster, "ObjectReference");
+    AddObjProperty(&obj, "target", handleTarget, "ObjectReference");
     AddObjProperty(&obj, "spell", spell, "Spell");
+    AddObjProperty(&obj, "isDualCasting", magicCaster->GetIsDualCasting());
+    AddObjProperty(&obj, "castingSource",
+                   static_cast<uint32_t>(castingSource));
 
     SendEvent("spellCast", obj);
   });
