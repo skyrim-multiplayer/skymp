@@ -314,11 +314,28 @@ JsValue InventoryApi::CastSpellImmediate(const JsFunctionArguments& args)
   const auto castingSource =
     static_cast<RE::MagicSystem::CastingSource>(static_cast<int>(args[2]));
 
-  const auto formIdSpell = reinterpret_cast<RE::MagicItem*>(
-    RE::TESForm::LookupByID(static_cast<int>(args[3])));
+  const auto formIdSpell =
+    reinterpret_cast<RE::MagicItem*>(RE::TESForm::LookupByID(
+      static_cast<uint32_t>(static_cast<double>(args[3]))));
 
-  const auto formIdTarget = reinterpret_cast<RE::TESObjectREFR*>(
-    RE::TESForm::LookupByID(static_cast<int>(args[4])));
+  if (!formIdSpell) {
+    return JsValue::Undefined();
+  }
+
+  auto t = formIdSpell->GetFormType();
+
+  if (t != RE::FormType::Spell && t != RE::FormType::Scroll &&
+      t != RE::FormType::Ingredient && t != RE::FormType::Potion &&
+      t != RE::FormType::Enchantment) {
+    return JsValue::Undefined();
+  }
+
+  const auto formIdTarget = RE::TESForm::LookupByID<RE::TESObjectREFR>(
+    static_cast<uint32_t>(static_cast<double>(args[4])));
+
+  if (!formIdTarget) {
+    return JsValue::Undefined();
+  }
 
   if (!pActor) {
     return JsValue::Undefined();
