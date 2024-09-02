@@ -1,65 +1,13 @@
 #pragma once
 
-#include "events/ActorKill.h"
-#include "events/BooksRead.h"
-#include "events/CriticalHit.h"
-#include "events/DisarmedEvent.h"
-#include "events/DragonSoulsGained.h"
 #include "events/ItemHarvested.h"
-#include "events/LevelIncrease.h"
-#include "events/LocationDiscovery.h"
-#include "events/ShoutAttack.h"
-#include "events/SkillIncrease.h"
-#include "events/SoulsTrapped.h"
-#include "events/SpellsLearned.h"
 
 namespace RE {
-#ifdef SKYRIMSE
-struct TESSpellCastEvent
-{
-public:
-  TESSpellCastEvent()
-    : TESSpellCastEvent(nullptr, static_cast<RE::FormID>(0))
-  {
-  }
 
-  TESSpellCastEvent(RE::TESObjectREFR* object, RE::FormID spell)
-    : object(object)
-    , spell(spell)
-  {
-  }
-  ~TESSpellCastEvent() = default;
-
-  RE::NiPointer<RE::TESObjectREFR> object;
-  RE::FormID spell;
-};
-static_assert(sizeof(TESSpellCastEvent) == 0x10);
-#endif
 struct TESQuestInitEvent
 {
   RE::FormID questId;
 };
-
-#ifdef SKYRIMSE
-struct TESQuestStartStopEvent
-{
-  RE::FormID formID;
-  bool started;
-  uint8_t unk05;
-  uint16_t pad06;
-};
-#endif
-
-#ifdef SKYRIMSE
-struct TESQuestStageEvent
-{
-  void* finishedCallback;
-  RE::FormID formID;
-  uint16_t stage;
-  uint8_t unk;
-  uint8_t pad;
-};
-#endif
 
 struct TESQuestStageItemDoneEvent // not finished
 {
@@ -94,42 +42,11 @@ struct TESSleepStartEvent
   float desiredSleepEndTime;
 };
 
-#ifdef SKYRIMSE
-struct TESSleepStopEvent
-{
-  bool interrupted;
-};
-#endif
-
-#ifdef SKYRIMSE
-struct TESCellAttachDetachEvent
-{
-  RE::NiPointer<RE::TESObjectREFR> reference;
-  bool attached;
-};
-#endif
-
 struct TESWaitStartEvent
 {
   float waitStartTime;
   float desiredWaitEndTime;
 };
-
-#ifdef SKYRIMSE
-struct TESActorLocationChangeEvent
-{
-  RE::NiPointer<RE::TESObjectREFR> actor;
-  RE::BGSLocation* oldLoc;
-  RE::BGSLocation* newLoc;
-};
-#endif
-
-#ifdef SKYRIMSE
-struct TESBookReadEvent
-{
-  RE::NiPointer<RE::TESObjectREFR> book;
-};
-#endif
 
 struct TESSellEvent
 {
@@ -169,13 +86,6 @@ struct TESPackageEvent
   EventType type;
 };
 
-#ifdef SKYRIMSE
-struct TESEnterBleedoutEvent
-{
-  RE::NiPointer<RE::TESObjectREFR> actor;
-};
-#endif
-
 struct TESDestructionStageChangedEvent
 {
   RE::NiPointer<RE::TESObjectREFR> target;
@@ -197,24 +107,6 @@ struct TESSceneEvent
   RE::TESForm* reference; // what ref?
   RE::FormID sceneId;
 };
-
-#ifdef SKYRIMSE
-struct TESPlayerBowShotEvent
-{
-  RE::FormID weapon;
-  RE::FormID ammo;
-  float shotPower;
-  bool isSunGazing;
-};
-#endif
-
-#ifdef SKYRIMSE
-struct TESFastTravelEndEvent
-{
-  float fastTravelEndHours;
-  uint32_t pad04;
-};
-#endif
 
 struct TESObjectREFRTranslationEvent
 {
