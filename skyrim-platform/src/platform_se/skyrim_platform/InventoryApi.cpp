@@ -325,7 +325,7 @@ JsValue InventoryApi::CastSpellImmediate(const JsFunctionArguments& args)
   auto t = formIdSpell->GetFormType();
 
   if (t != RE::FormType::Spell && t != RE::FormType::Scroll &&
-      t != RE::FormType::Ingredient && t != RE::FormType::Potion &&
+      t != RE::FormType::Ingredient && t != RE::FormType::AlchemyItem &&
       t != RE::FormType::Enchantment) {
     return JsValue::Undefined();
   }
