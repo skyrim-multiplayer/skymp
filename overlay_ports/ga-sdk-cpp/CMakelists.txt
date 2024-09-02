@@ -59,10 +59,14 @@ find_package(RapidJSON CONFIG REQUIRED)
 set(RAPID_JSON_DIR ${RAPIDJSON_INCLUDE_DIRS})
 target_include_directories(ga-sdk-cpp PUBLIC ${RAPID_JSON_DIR})
 
+set_target_properties(ga-sdk-cpp PROPERTIES
+    PUBLIC_HEADER "source/gameanalytics/GameAnalytics.h"
+)
+
 # install
 install(TARGETS ga-sdk-cpp
     LIBRARY DESTINATION lib
     ARCHIVE DESTINATION lib
     RUNTIME DESTINATION bin
-    INCLUDES DESTINATION include
+    PUBLIC_HEADER DESTINATION include
 )
