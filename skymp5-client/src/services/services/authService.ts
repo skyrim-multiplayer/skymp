@@ -357,7 +357,7 @@ export class AuthService extends ClientListener {
   };
 
   private getMasterUrl() {
-    return this.normalizeUrl((this.sp.settings["skymp5-client"]["master"] as string) || "https://sweetpie.nic11.xyz");
+    return this.normalizeUrl((this.sp.settings["skymp5-client"]["master"] as string) || "https://gateway.skymp.net");
   }
 
   private normalizeUrl(url: string) {
