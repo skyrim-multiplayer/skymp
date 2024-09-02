@@ -90,7 +90,7 @@ index 50d7eb63..675312f7 100644
  	{
  		return flags.all(FLAGS::kQuestObject);
 diff --git a/src/RE/T/TESQuest.cpp b/src/RE/T/TESQuest.cpp
-index 397c7db5..94a41796 100644
+index 397c7db5..e7df5af6 100644
 --- a/src/RE/T/TESQuest.cpp
 +++ b/src/RE/T/TESQuest.cpp
 @@ -10,6 +10,13 @@ namespace RE
@@ -100,7 +100,7 @@ index 397c7db5..94a41796 100644
 +	ObjectRefHandle& TESQuest::CreateRefHandleByAliasID(ObjectRefHandle& a_handle, std::uint32_t a_aliasID)
 +	{
 +		using func_t = decltype(&TESQuest::CreateRefHandleByAliasID);
-+		REL::Relocation<func_t> func{ REL::ID(24537) };
++		REL::Relocation<func_t> func{ REL::ID(25066) };
 +		return func(this, a_handle, a_aliasID);
 +	}
 +

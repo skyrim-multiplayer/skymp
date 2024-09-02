@@ -1,0 +1,22 @@
+From b163a805b4ccd6ae479cdd3e4a55f89beaac6c5a Mon Sep 17 00:00:00 2001
+From: Leonid Pospelov <leonidpospelov.dev@gmail.com>
+Date: Mon, 15 Apr 2024 23:19:30 +0500
+Subject: [PATCH] Update ExtraDataList.h
+
+---
+ include/RE/E/ExtraDataList.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/include/RE/E/ExtraDataList.h b/include/RE/E/ExtraDataList.h
+index baec37472..a97f146b5 100644
+--- a/include/RE/E/ExtraDataList.h
++++ b/include/RE/E/ExtraDataList.h
+@@ -191,7 +191,7 @@ namespace RE
+ 		void                  SetLinkedRef(TESObjectREFR* a_targetRef, BGSKeyword* a_keyword);
+ 		void                  SetOwner(TESForm* a_owner);
+ 
+-	private:
++	public:
+ 		BSExtraData* GetByTypeImpl(ExtraDataType a_type) const;
+ 		void         MarkType(std::uint32_t a_type, bool a_cleared);
+ 		void         MarkType(ExtraDataType a_type, bool a_cleared);
