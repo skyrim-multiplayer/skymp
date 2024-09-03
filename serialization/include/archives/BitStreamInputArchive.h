@@ -84,5 +84,5 @@ public:
     return *this;
   }
 
-  Raknet::Bitsrem& bs;
+  Raknet::BitStream& bs;
 };
