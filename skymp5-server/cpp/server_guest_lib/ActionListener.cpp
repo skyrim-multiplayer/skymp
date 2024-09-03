@@ -102,7 +102,8 @@ void ActionListener::OnUpdateMovement(const RawMessageData& rawMsgData,
                                       uint32_t idx, const NiPoint3& pos,
                                       const NiPoint3& rot, bool isInJumpState,
                                       bool isWeapDrawn, bool isBlocking,
-                                      uint32_t worldOrCell, RunMode runMode)
+                                      uint32_t worldOrCell,
+                                      const std::string& runMode)
 {
   auto actor = SendToNeighbours(idx, rawMsgData);
   if (actor) {
@@ -156,7 +157,7 @@ void ActionListener::OnUpdateMovement(const RawMessageData& rawMsgData,
       actor->ResetBlockCount();
     }
 
-    if (runMode != RunMode::Standing) {
+    if (runMode != "Standing") {
       // otherwise, people will slide in anims after quitting furniture
       actor->SetLastAnimEvent(std::nullopt);
     }
