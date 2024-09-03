@@ -2,6 +2,8 @@
 #include <nlohmann/json_fwd.hpp>
 #include <slikenet/types.h>
 
+#include "archives/BitStreamInputArchive.h"
+#include "archives/BitStreamOutputArchive.h"
 #include "archives/JsonInputArchive.h"
 #include "archives/JsonOutputArchive.h"
 
@@ -21,9 +23,17 @@ template <class Message>
 class MessageBase : public IMessageBase
 {
 public:
-  void WriteBinary(SLNet::BitStream& stream) const override {}
+  void WriteBinary(SLNet::BitStream& stream) const override
+  {
+    BitStreamOutputArchive archive(stream);
+    AsMessage().Serialize(archive);
+  }
 
-  void ReadBinary(SLNet::BitStream& stream) override {}
+  void ReadBinary(SLNet::BitStream& stream) override
+  {
+    BitStreamInputArchive archive(stream);
+    AsMessage().Serialize(archive);
+  }
 
   void WriteJson(nlohmann::json& json) const override
   {
