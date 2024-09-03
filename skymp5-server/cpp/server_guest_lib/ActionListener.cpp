@@ -102,8 +102,7 @@ void ActionListener::OnUpdateMovement(const RawMessageData& rawMsgData,
                                       uint32_t idx, const NiPoint3& pos,
                                       const NiPoint3& rot, bool isInJumpState,
                                       bool isWeapDrawn, bool isBlocking,
-                                      uint32_t worldOrCell,
-                                      const std::string& runMode)
+                                      uint32_t worldOrCell, RunMode runMode)
 {
   auto actor = SendToNeighbours(idx, rawMsgData);
   if (actor) {
@@ -157,7 +156,7 @@ void ActionListener::OnUpdateMovement(const RawMessageData& rawMsgData,
       actor->ResetBlockCount();
     }
 
-    if (runMode != "Standing") {
+    if (runMode != RunMode::Standing) {
       // otherwise, people will slide in anims after quitting furniture
       actor->SetLastAnimEvent(std::nullopt);
     }
@@ -613,9 +612,9 @@ void ActionListener::OnHostAttempt(const RawMessageData& rawMsgData,
 
         ChangeValuesMessage msg;
         msg.idx = remote.GetIdx();
-        msg.data.health = changeForm.actorValues.healthPercentage;
-        msg.data.magicka = changeForm.actorValues.magickaPercentage;
-        msg.data.stamina = changeForm.actorValues.staminaPercentage;
+        msg.health = changeForm.actorValues.healthPercentage;
+        msg.magicka = changeForm.actorValues.magickaPercentage;
+        msg.stamina = changeForm.actorValues.staminaPercentage;
         remote.SendToUser(msg, true); // in fact sends to hoster
       });
 
