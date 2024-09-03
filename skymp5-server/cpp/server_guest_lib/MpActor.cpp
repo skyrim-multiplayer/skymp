@@ -600,9 +600,9 @@ void MpActor::NetSendChangeValues(const ActorValues& actorValues)
 {
   ChangeValuesMessage message;
   message.idx = GetIdx();
-  message.data.health = actorValues.healthPercentage;
-  message.data.magicka = actorValues.magickaPercentage;
-  message.data.stamina = actorValues.staminaPercentage;
+  message.health = actorValues.healthPercentage;
+  message.magicka = actorValues.magickaPercentage;
+  message.stamina = actorValues.staminaPercentage;
   SendToUser(message, true);
 }
 
@@ -847,9 +847,9 @@ DeathStateContainerMessage MpActor::GetDeathStateMsg(
     constexpr float kAttributePercentageFull = 1.f;
     res.tChangeValues = ChangeValuesMessage();
     res.tChangeValues->idx = GetIdx();
-    res.tChangeValues->data.health = kAttributePercentageFull;
-    res.tChangeValues->data.magicka = kAttributePercentageFull;
-    res.tChangeValues->data.stamina = kAttributePercentageFull;
+    res.tChangeValues->health = kAttributePercentageFull;
+    res.tChangeValues->magicka = kAttributePercentageFull;
+    res.tChangeValues->stamina = kAttributePercentageFull;
   }
 
   return res;

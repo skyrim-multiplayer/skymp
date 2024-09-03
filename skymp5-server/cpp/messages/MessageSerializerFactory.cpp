@@ -10,6 +10,7 @@ namespace {
 void Serialize(const IMessageBase& message, SLNet::BitStream& outputStream)
 {
   outputStream.Write(static_cast<uint8_t>(Networking::MinPacketId));
+  outputStream.Write(static_cast<uint8_t>(message.GetHeaderByte()));
   message.WriteBinary(outputStream);
 }
 
@@ -27,7 +28,7 @@ template <class Message>
 std::optional<DeserializeResult> Deserialize(
   const uint8_t* rawMessageJsonOrBinary, size_t length)
 {
-  if (length >= 2 && rawMessageJsonOrBinary[1] == Message::kMsgType.value) {
+  if (length >= 2 && rawMessageJsonOrBinary[1] == Message::kHeaderByte) {
     // BitStream requires non-const ref even though it doesn't modify it
     SLNet::BitStream stream(
       const_cast<unsigned char*>(rawMessageJsonOrBinary) + 2, length - 2,
@@ -37,7 +38,7 @@ std::optional<DeserializeResult> Deserialize(
     message.ReadBinary(stream);
 
     DeserializeResult result;
-    result.msgType = static_cast<MsgType>(Message::kMsgType.value);
+    result.msgType = static_cast<MsgType>(Message::kMsgType);
     result.message = std::make_unique<Message>(std::move(message));
     result.format = DeserializeInputFormat::Binary;
     return result;
@@ -73,14 +74,19 @@ std::optional<DeserializeResult> Deserialize(
 
 #define REGISTER_MESSAGE(Message)                                             \
   serializeFns[static_cast<size_t>(Message::kMsgType)] = Serialize<Message>;  \
-  deserializeFns[static_cast<size_t>(Message::kMsgType)] =                    \
+  deserializeFns[static_cast<size_t>(Message::kHeaderByte)] =                 \
     Deserialize<Message>;
 
 std::shared_ptr<MessageSerializer>
 MessageSerializerFactory::CreateMessageSerializer()
 {
   constexpr auto kSerializeFnMax = static_cast<size_t>(MsgType::Max);
-  constexpr auto kDeserializeFnMax = static_cast<size_t>(MsgType::Max);
+
+  // A hack to support MovementMessage, the first message that was ported to
+  // binary back in 2021 MovementMessage uses 'M' char instead of MsgType to
+  // identify itself in binary encoded packets
+  constexpr auto kDeserializeFnMax = std::max(
+    static_cast<size_t>(MovementMessage::kHeaderByte) + 1, kSerializeFnMax);
 
   std::vector<MessageSerializer::SerializeFn> serializeFns(kSerializeFnMax);
   std::vector<MessageSerializer::DeserializeFn> deserializeFns(
