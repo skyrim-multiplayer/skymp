@@ -50,10 +50,10 @@ public:
     Serialize("size", n);
 
     // TODO: check n before resizing, so that we don't allocate a huge vector
-    value.resize(n);
-
     for (size_t i = 0; i < n; ++i) {
-      Serialize("element", value[i]);
+      T element;
+      Serialize("element", element);
+      value.push_back(element);
     }
     return *this;
   }
@@ -83,7 +83,7 @@ public:
   template <NoneOfTheAbove T>
   BitStreamInputArchive& Serialize(const char* key, T& value)
   {
-    Serialize("child", value);
+    value.Serialize(*this);
     return *this;
   }
 

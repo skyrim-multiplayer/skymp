@@ -75,7 +75,7 @@ public:
   template <NoneOfTheAbove T>
   BitStreamOutputArchive& Serialize(const char* key, T& value)
   {
-    Serialize("child", value);
+    value.Serialize(*this);
     return *this;
   }
 
