@@ -6,8 +6,8 @@
 #include <string>
 #include <vector>
 
-#include "BitStreamUtil.h"
-#include "BitStreamUtil.ipp"
+#include "../impl/BitStreamUtil.h"
+#include "../impl/BitStreamUtil.ipp"
 
 class BitStreamInputArchive
 {
