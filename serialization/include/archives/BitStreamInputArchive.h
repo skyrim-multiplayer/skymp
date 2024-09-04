@@ -12,7 +12,7 @@
 class BitStreamInputArchive
 {
 public:
-  explicit BitStreamInputArchive(RakNet::BitStream& bitStream)
+  explicit BitStreamInputArchive(SLNet::BitStream& bitStream)
     : bs(bitStream)
   {
   }
@@ -49,6 +49,7 @@ public:
     uint32_t n = 0;
     Serialize("size", n);
 
+    // TODO: check n before resizing, so that we don't allocate a huge vector
     value.resize(n);
 
     for (size_t i = 0; i < n; ++i) {
@@ -86,5 +87,5 @@ public:
     return *this;
   }
 
-  Raknet::BitStream& bs;
+  SLNet::BitStream& bs;
 };

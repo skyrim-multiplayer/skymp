@@ -12,7 +12,7 @@
 class BitStreamOutputArchive
 {
 public:
-  explicit BitStreamOutputArchive(RakNet::BitStream& bitStream)
+  explicit BitStreamOutputArchive(SLNet::BitStream& bitStream)
     : bs(bitStream)
   {
   }
@@ -79,5 +79,5 @@ public:
     return *this;
   }
 
-  Raknet::BitStream& bs;
+  SLNet::BitStream& bs;
 };
