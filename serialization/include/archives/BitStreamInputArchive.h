@@ -29,7 +29,7 @@ public:
   template <StringLike T>
   BitStreamInputArchive& Serialize(const char* key, T& value)
   {
-    ReadFromBitStream(bs, value);
+    SerializationUtil::ReadFromBitStream(bs, value);
     return *this;
   }
 
@@ -76,7 +76,7 @@ public:
   template <Arithmetic T>
   BitStreamInputArchive& Serialize(const char* key, T& value)
   {
-    ReadFromBitStream(bs, value);
+    SerializationUtil::ReadFromBitStream(bs, value);
     return *this;
   }
 

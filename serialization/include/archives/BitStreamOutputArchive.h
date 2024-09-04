@@ -20,14 +20,14 @@ public:
   template <IntegralConstant T>
   BitStreamOutputArchive& Serialize(const char* key, T& value)
   {
-    WriteToBitStream(bs, value);
+    SerializationUtil::WriteToBitStream(bs, value);
     return *this;
   }
 
   template <StringLike T>
   BitStreamOutputArchive& Serialize(const char* key, T& value)
   {
-    WriteToBitStream(bs, value);
+    SerializationUtil::WriteToBitStream(bs, value);
     return *this;
   }
 
@@ -68,7 +68,7 @@ public:
   template <Arithmetic T>
   BitStreamOutputArchive& Serialize(const char* key, T& value)
   {
-    WriteToBitStream(bs, value);
+    SerializationUtil::WriteToBitStream(bs, value);
     return *this;
   }
 
