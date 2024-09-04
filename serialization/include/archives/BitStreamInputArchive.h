@@ -49,6 +49,8 @@ public:
     uint32_t n = 0;
     Serialize("size", n);
 
+    value.resize(n);
+
     for (size_t i = 0; i < n; ++i) {
       Serialize("element", value[i]);
     }
