@@ -393,7 +393,8 @@ void MpObjectReference::VisitProperties(const PropertiesVisitor& visitor,
 }
 
 void MpObjectReference::Activate(MpObjectReference& activationSource,
-                                 bool defaultProcessingOnly)
+                                 bool defaultProcessingOnly,
+                                 bool isSecondActivation)
 {
   if (spdlog::should_log(spdlog::level::trace)) {
     for (auto& script : ListActivePexInstances()) {
@@ -428,25 +429,29 @@ void MpObjectReference::Activate(MpObjectReference& activationSource,
     }
   }
 
-  ActivateEvent activateEvent(GetFormId(), activationSource.GetFormId());
-
-  bool activationBlockedByMpApi = !activateEvent.Fire(GetParent());
-
-  if (!activationBlockedByMpApi &&
-      (!activationBlocked || defaultProcessingOnly)) {
-    ProcessActivate(activationSource);
-    ActivateChilds();
+  if (isSecondActivation) {
+    ProcessActivateSecond(activationSource);
   } else {
-    spdlog::trace(
-      "Activation of form {:#x} has been blocked. Reasons: "
-      "blocked by MpApi={}, form is blocked={}, defaultProcessingOnly={}",
-      GetFormId(), activationBlockedByMpApi, activationBlocked,
-      defaultProcessingOnly);
-  }
+    ActivateEvent activateEvent(GetFormId(), activationSource.GetFormId());
 
-  if (!defaultProcessingOnly) {
-    auto arg = activationSource.ToVarValue();
-    SendPapyrusEvent("OnActivate", &arg, 1);
+    bool activationBlockedByMpApi = !activateEvent.Fire(GetParent());
+
+    if (!activationBlockedByMpApi &&
+        (!activationBlocked || defaultProcessingOnly)) {
+      ProcessActivateNormal(activationSource);
+      ActivateChilds();
+    } else {
+      spdlog::trace(
+        "Activation of form {:#x} has been blocked. Reasons: "
+        "blocked by MpApi={}, form is blocked={}, defaultProcessingOnly={}",
+        GetFormId(), activationBlockedByMpApi, activationBlocked,
+        defaultProcessingOnly);
+    }
+
+    if (!defaultProcessingOnly) {
+      auto arg = activationSource.ToVarValue();
+      SendPapyrusEvent("OnActivate", &arg, 1);
+    }
   }
 }
 
@@ -1293,7 +1298,8 @@ bool MpObjectReference::IsLocationSavingNeeded() const
     std::chrono::system_clock::now() - *last > std::chrono::seconds(30);
 }
 
-void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
+void MpObjectReference::ProcessActivateNormal(
+  MpObjectReference& activationSource)
 {
   auto actorActivator = activationSource.AsActor();
 
@@ -1458,10 +1464,6 @@ void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
       this->occupantDestroySink.reset(
         new OccupantDestroyEventSink(*GetParent(), this));
       this->occupant->AddEventSink(occupantDestroySink);
-    } else if (this->occupant == &activationSource) {
-      SetOpen(false);
-      this->occupant->RemoveEventSink(this->occupantDestroySink);
-      this->occupant = nullptr;
     }
   } else if (t == espm::ACTI::kType && actorActivator) {
     // SendOpenContainer being used to activate the object
@@ -1476,9 +1478,12 @@ void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
     constexpr float kOccupationReach = 256.f;
     auto distanceToOccupant = (occupantPos - GetPos()).Length();
 
+    spdlog::info("try normal-activate furn 1");
+
     if (!this->occupant || this->occupant->IsDisabled() ||
         distanceToOccupant > kOccupationReach ||
         occupantCellOrWorld != GetCellOrWorld()) {
+      spdlog::info("try normal-activate furn 2");
       if (this->occupant) {
         this->occupant->RemoveEventSink(this->occupantDestroySink);
       }
@@ -1492,7 +1497,31 @@ void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
       this->occupantDestroySink.reset(
         new OccupantDestroyEventSink(*GetParent(), this));
       this->occupant->AddEventSink(occupantDestroySink);
-    } else if (this->occupant == &activationSource) {
+    }
+  }
+}
+
+void MpObjectReference::ProcessActivateSecond(
+  MpObjectReference& activationSource)
+{
+  auto actorActivator = activationSource.AsActor();
+
+  auto worldState = GetParent();
+  auto& loader = GetParent()->GetEspm();
+  auto& compressedFieldsCache = GetParent()->GetEspmCache();
+
+  auto t = base.rec->GetType();
+
+  if (t == espm::CONT::kType && actorActivator) {
+    if (this->occupant == &activationSource) {
+      SetOpen(false);
+      this->occupant->RemoveEventSink(this->occupantDestroySink);
+      this->occupant = nullptr;
+    }
+  } else if (t == "FURN" && actorActivator) {
+    spdlog::info("second-activate furn 1");
+    if (this->occupant == &activationSource) {
+      spdlog::info("second-activate furn 2");
       this->occupant->RemoveEventSink(this->occupantDestroySink);
       this->occupant = nullptr;
     }
