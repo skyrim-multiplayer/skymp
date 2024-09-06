@@ -430,7 +430,11 @@ void MpObjectReference::Activate(MpObjectReference& activationSource,
   }
 
   if (isSecondActivation) {
-    ProcessActivateSecond(activationSource);
+    bool processed = ProcessActivateSecond(activationSource);
+    if (processed) {
+      auto arg = activationSource.ToVarValue();
+      SendPapyrusEvent("SkympOnActivateClose", &arg, 1);
+    }
   } else {
     ActivateEvent activateEvent(GetFormId(), activationSource.GetFormId());
 
@@ -1478,12 +1482,9 @@ void MpObjectReference::ProcessActivateNormal(
     constexpr float kOccupationReach = 256.f;
     auto distanceToOccupant = (occupantPos - GetPos()).Length();
 
-    spdlog::info("try normal-activate furn 1");
-
     if (!this->occupant || this->occupant->IsDisabled() ||
         distanceToOccupant > kOccupationReach ||
         occupantCellOrWorld != GetCellOrWorld()) {
-      spdlog::info("try normal-activate furn 2");
       if (this->occupant) {
         this->occupant->RemoveEventSink(this->occupantDestroySink);
       }
@@ -1501,7 +1502,7 @@ void MpObjectReference::ProcessActivateNormal(
   }
 }
 
-void MpObjectReference::ProcessActivateSecond(
+bool MpObjectReference::ProcessActivateSecond(
   MpObjectReference& activationSource)
 {
   auto actorActivator = activationSource.AsActor();
@@ -1524,15 +1525,17 @@ void MpObjectReference::ProcessActivateSecond(
       SetOpen(false);
       this->occupant->RemoveEventSink(this->occupantDestroySink);
       this->occupant = nullptr;
+      return true;
     }
   } else if (t == "FURN" && actorActivator) {
-    spdlog::info("second-activate furn 1");
     if (this->occupant == &activationSource) {
-      spdlog::info("second-activate furn 2");
       this->occupant->RemoveEventSink(this->occupantDestroySink);
       this->occupant = nullptr;
+      return true;
     }
   }
+
+  return false;
 }
 
 void MpObjectReference::ActivateChilds()

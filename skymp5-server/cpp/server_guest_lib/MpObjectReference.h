@@ -230,7 +230,7 @@ private:
   void CheckInteractionAbility(MpObjectReference& ac);
   bool IsLocationSavingNeeded() const;
   void ProcessActivateNormal(MpObjectReference& activationSource);
-  void ProcessActivateSecond(MpObjectReference& activationSource);
+  bool ProcessActivateSecond(MpObjectReference& activationSource);
   void ActivateChilds();
 
   bool everSubscribedOrListened = false;
