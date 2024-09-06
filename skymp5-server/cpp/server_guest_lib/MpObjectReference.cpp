@@ -1513,9 +1513,10 @@ bool MpObjectReference::ProcessActivateSecond(
 
   auto base = loader.GetBrowser().LookupById(GetBaseId());
   if (!base.rec || !GetBaseId()) {
-    return spdlog::error("MpObjectReference::ProcessActivate {:x} - doesn't "
-                         "have base form, activationSource is {:x}",
-                         GetFormId(), activationSource.GetFormId());
+    spdlog::error("MpObjectReference::ProcessActivate {:x} - doesn't "
+                  "have base form, activationSource is {:x}",
+                  GetFormId(), activationSource.GetFormId());
+    return false;
   }
 
   auto t = base.rec->GetType();
