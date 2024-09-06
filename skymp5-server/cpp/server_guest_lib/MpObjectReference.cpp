@@ -1510,6 +1510,13 @@ void MpObjectReference::ProcessActivateSecond(
   auto& loader = GetParent()->GetEspm();
   auto& compressedFieldsCache = GetParent()->GetEspmCache();
 
+  auto base = loader.GetBrowser().LookupById(GetBaseId());
+  if (!base.rec || !GetBaseId()) {
+    return spdlog::error("MpObjectReference::ProcessActivate {:x} - doesn't "
+                         "have base form, activationSource is {:x}",
+                         GetFormId(), activationSource.GetFormId());
+  }
+
   auto t = base.rec->GetType();
 
   if (t == espm::CONT::kType && actorActivator) {
