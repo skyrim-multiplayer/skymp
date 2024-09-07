@@ -51,6 +51,13 @@ public:
     return *this;
   }
 
+  template <NlohmannJson T>
+  JsonOutputArchive& Serialize(const char* key, T& value)
+  {
+    j[key] = value;
+    return *this;
+  }
+
   template <NoneOfTheAbove T>
   JsonOutputArchive& Serialize(const char* key, const T& value)
   {

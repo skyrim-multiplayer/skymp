@@ -51,6 +51,8 @@ public:
   template <ContainerLike T>
   JsonInputArchive& Serialize(const char* key, T& value)
   {
+    value.clear();
+
     const auto& arr = j.at(key);
     nlohmann::json childArchiveInput = nlohmann::json::object();
     for (auto& elementJson : arr) {
@@ -81,6 +83,13 @@ public:
   JsonInputArchive& Serialize(const char* key, T& value)
   {
     value = j.at(key).get<T>();
+    return *this;
+  }
+
+  template <NlohmannJson T>
+  JsonInputArchive& Serialize(const char* key, T& value)
+  {
+    value = j.at(key);
     return *this;
   }
 

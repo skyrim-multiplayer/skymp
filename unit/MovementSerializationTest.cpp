@@ -5,6 +5,8 @@
 
 #include "UpdateMovementMessage.h"
 
+#include <fmt/ranges.h>
+
 namespace {
 
 UpdateMovementMessage MakeTestMovementMessage(std::string runMode,
@@ -83,11 +85,21 @@ TEST_CASE("MovementMessage correctly encoded and decoded to BitStream",
       SLNet::BitStream stream;
       movData.WriteBinary(stream);
 
+      auto msg = std::vector<uint8_t>(
+        stream.GetData(), stream.GetData() + stream.GetNumberOfBytesUsed());
+      spdlog::trace("AAA serialized movement message {}", fmt::join(msg,
+                    ", "));
+
       UpdateMovementMessage movData2;
       movData2.ReadBinary(stream);
 
       SLNet::BitStream stream2;
       movData2.WriteBinary(stream2);
+
+      auto msg2 = std::vector<uint8_t>(
+        stream2.GetData(), stream2.GetData() + stream2.GetNumberOfBytesUsed());
+      spdlog::trace("BBB serialized movement message {}",
+                    fmt::join(msg2, ", "));
 
       REQUIRE(stream.GetNumberOfBytesUsed() == stream2.GetNumberOfBytesUsed());
       REQUIRE(memcmp(stream.GetData(), stream2.GetData(),

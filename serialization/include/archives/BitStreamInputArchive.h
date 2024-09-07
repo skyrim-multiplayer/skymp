@@ -24,7 +24,7 @@ public:
   {
     // Compile time constant. Do nothing
     // Maybe worth adding equality check
-    bs.IgnoreBytes(sizeof(T::value_type));
+    bs.IgnoreBytes(sizeof(typename T::value_type));
     // spdlog::info("!!! deserialized integral constant {}", key);
     return *this;
   }
@@ -32,6 +32,8 @@ public:
   template <StringLike T>
   BitStreamInputArchive& Serialize(const char* key, T& value)
   {
+    value.clear();
+
     uint32_t n = 0;
     Serialize("size", n);
 
@@ -57,6 +59,8 @@ public:
   template <ContainerLike T>
   BitStreamInputArchive& Serialize(const char* key, T& value)
   {
+    value.clear();
+
     uint32_t n = 0;
     Serialize("size", n);
 
@@ -89,6 +93,17 @@ public:
   {
     SerializationUtil::ReadFromBitStream(bs, value);
     // spdlog::info("!!! deserialized arithmetic {} {}", key, value);
+    return *this;
+  }
+
+  template <NlohmannJson T>
+  BitStreamInputArchive& Serialize(const char* key, T& value)
+  {
+    std::string jsonDump;
+    Serialize(key, jsonDump);
+
+    value = nlohmann::json::parse(jsonDump);
+    // spdlog::info("!!! deserialized nlohmann json {}", key);
     return *this;
   }
 
