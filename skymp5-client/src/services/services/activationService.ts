@@ -58,7 +58,7 @@ export class ActivationService extends ClientListener {
         this.controller.emitter.emit("sendMessage", {
             message: {
                 t: MsgType.Activate,
-                data: { caster, target }
+                data: { caster, target, isSecondActivation: false }
             },
             reliability: "reliable"
         });
