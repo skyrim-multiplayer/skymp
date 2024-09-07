@@ -2,6 +2,7 @@
 #include "Messages.h"
 #include "MinPacketId.h"
 #include "MsgType.h"
+#include <fmt/ranges.h>
 #include <nlohmann/json.hpp>
 #include <slikenet/BitStream.h>
 #include <spdlog/spdlog.h>
@@ -175,17 +176,25 @@ std::optional<DeserializeResult> MessageSerializer::Deserialize(
 
   auto deserializerFn = deserializerFns[headerByte];
   if (!deserializerFn) {
-    spdlog::trace("MessageSerializer::Deserialize - deserializerFn not found "
-                  "for headerByte {}",
-                  static_cast<int>(headerByte));
+    spdlog::warn(
+      "MessageSerializer::Deserialize - deserializerFn not found "
+      "for headerByte {}, (full message was {})",
+      static_cast<int>(headerByte),
+      fmt::join(std::vector<uint8_t>(rawMessageJsonOrBinary,
+                                     rawMessageJsonOrBinary + length),
+                ", "));
     return std::nullopt;
   }
 
   auto result = deserializerFn(rawMessageJsonOrBinary, length);
   if (result == std::nullopt) {
-    spdlog::trace("MessageSerializer::Deserialize - deserializerFn returned "
-                  "nullopt for headerByte {}",
-                  static_cast<int>(headerByte));
+    spdlog::warn(
+      "MessageSerializer::Deserialize - deserializerFn returned "
+      "nullopt for headerByte {}, (full message was {})",
+      static_cast<int>(headerByte),
+      fmt::join(std::vector<uint8_t>(rawMessageJsonOrBinary,
+                                     rawMessageJsonOrBinary + length),
+                ", "));
     return std::nullopt;
   }
 

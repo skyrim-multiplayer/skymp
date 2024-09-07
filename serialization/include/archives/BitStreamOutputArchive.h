@@ -9,6 +9,8 @@
 #include "../impl/BitStreamUtil.h"
 #include "../impl/BitStreamUtil.ipp"
 
+#include <spdlog/spdlog.h>
+
 class BitStreamOutputArchive
 {
 public:
@@ -20,14 +22,23 @@ public:
   template <IntegralConstant T>
   BitStreamOutputArchive& Serialize(const char* key, T& value)
   {
-    SerializationUtil::WriteToBitStream(bs, value);
+    using ValueType = typename T::value_type;
+    auto actualValue = static_cast<ValueType>(value);
+    SerializationUtil::WriteToBitStream(bs, actualValue);
+    // spdlog::info("!!! serialized integral constant {} {}", key,
+    //              static_cast<int>(static_cast<char>(value)));
     return *this;
   }
 
   template <StringLike T>
   BitStreamOutputArchive& Serialize(const char* key, T& value)
   {
-    SerializationUtil::WriteToBitStream(bs, value);
+    uint32_t n = static_cast<uint32_t>(value.size());
+    Serialize("size", n);
+
+    for (size_t i = 0; i < n; ++i) {
+      Serialize("element", value[i]);
+    }
     return *this;
   }
 
@@ -69,6 +80,7 @@ public:
   BitStreamOutputArchive& Serialize(const char* key, T& value)
   {
     SerializationUtil::WriteToBitStream(bs, value);
+    // spdlog::info("!!! serialized arithmetic {} {}", key, value);
     return *this;
   }
 
@@ -76,6 +88,7 @@ public:
   BitStreamOutputArchive& Serialize(const char* key, T& value)
   {
     value.Serialize(*this);
+    // spdlog::info("!!! serialized none of the above {}");
     return *this;
   }
 
