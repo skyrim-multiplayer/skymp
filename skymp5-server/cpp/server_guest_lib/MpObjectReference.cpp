@@ -59,7 +59,7 @@ UpdatePropertyMessage MpObjectReference::PreparePropertyMessage(
   res.idx = self->GetIdx();
   res.propName = name;
   res.refrId = self->GetFormId();
-  res.data = value;
+  res.dataDump = value.dump();
 
   // See 'perf: improve game framerate #1186'
   // Client needs to know if it is DOOR or not

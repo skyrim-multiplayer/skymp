@@ -86,13 +86,6 @@ public:
     return *this;
   }
 
-  template <NlohmannJson T>
-  JsonInputArchive& Serialize(const char* key, T& value)
-  {
-    value = j.at(key);
-    return *this;
-  }
-
   template <NoneOfTheAbove T>
   JsonInputArchive& Serialize(const char* key, T& value)
   {

@@ -96,17 +96,6 @@ public:
     return *this;
   }
 
-  template <NlohmannJson T>
-  BitStreamInputArchive& Serialize(const char* key, T& value)
-  {
-    std::string jsonDump;
-    Serialize(key, jsonDump);
-
-    value = nlohmann::json::parse(jsonDump);
-    // spdlog::info("!!! deserialized nlohmann json {}", key);
-    return *this;
-  }
-
   template <NoneOfTheAbove T>
   BitStreamInputArchive& Serialize(const char* key, T& value)
   {

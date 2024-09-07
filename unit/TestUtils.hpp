@@ -42,6 +42,7 @@ static const auto jMovement =
                     { { "worldOrCell", 0x3c },
                       { "pos", { 1.f, -1.f, 1.f } },
                       { "rot", { 0.f, 0.f, 179.f } },
+                      { "lookAt", nullptr },
                       { "runMode", "Standing" },
                       { "direction", 0.f },
                       { "healthPercentage", 1.f },

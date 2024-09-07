@@ -20,13 +20,13 @@ struct UpdatePropertyMessage : public MessageBase<UpdatePropertyMessage>
       .Serialize("idx", idx)
       .Serialize("propName", propName)
       .Serialize("refrId", refrId)
-      .Serialize("data", data)
+      .Serialize("dataDump", dataDump)
       .Serialize("baseRecordType", baseRecordType);
   }
 
   uint32_t idx = 0;
   std::string propName;
   uint32_t refrId = 0;
-  nlohmann::json data;
+  std::string dataDump;
   std::optional<std::string> baseRecordType;
 };
