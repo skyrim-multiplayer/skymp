@@ -29,9 +29,16 @@ std::optional<DeserializeResult> Deserialize(
   const uint8_t* rawMessageJsonOrBinary, size_t length)
 {
   if (length >= 2 && rawMessageJsonOrBinary[1] == Message::kMsgType.value) {
+    // byte 0 is packet id => skipping here
+    // byte 1 is message type => letting Message::ReadBinary handle it
+    // kMsgReadBinaryStart is 1, not 2 because of Message::ReadBinary design
+    constexpr auto kMsgReadBinaryOffset = 1;
+
     // BitStream requires non-const ref even though it doesn't modify it
     SLNet::BitStream stream(
-      const_cast<unsigned char*>(rawMessageJsonOrBinary) + 2, length - 2,
+      const_cast<unsigned char*>(rawMessageJsonOrBinary) +
+        kMsgReadBinaryOffset,
+      length - kMsgReadBinaryOffset,
       /*copyData*/ false);
 
     Message message;
