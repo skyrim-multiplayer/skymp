@@ -216,11 +216,11 @@ TEST_CASE("Activate DisplayCaseSmFlat01 in Whiterun", "[PartOne][espm]")
   REQUIRE(!ref.IsOpen());
 
   REQUIRE(partOne.Messages().size() == 2);
-  REQUIRE(partOne.Messages()[0].j["data"] == true);
+  REQUIRE(partOne.Messages()[0].j["dataDump"] == "true");
   REQUIRE(partOne.Messages()[0].j["idx"] == ref.GetIdx());
   REQUIRE(partOne.Messages()[0].j["propName"] == "isOpen");
   REQUIRE(partOne.Messages()[0].j["t"] == MsgType::UpdateProperty);
-  REQUIRE(partOne.Messages()[1].j["data"] == false);
+  REQUIRE(partOne.Messages()[1].j["dataDump"] == "false");
   REQUIRE(partOne.Messages()[1].j["idx"] == ref.GetIdx());
   REQUIRE(partOne.Messages()[1].j["propName"] == "isOpen");
   REQUIRE(partOne.Messages()[1].j["t"] == MsgType::UpdateProperty);
@@ -247,7 +247,7 @@ TEST_CASE("Activate WRDoorMainGate01 in Whiterun", "[PartOne][espm]")
               { "t", MsgType::Activate },
               { "data", { { "caster", 0x14 }, { "target", refrId } } } });
   REQUIRE(partOne.Messages().size() >= 1);
-  REQUIRE(partOne.Messages()[0].j["data"] == true);
+  REQUIRE(partOne.Messages()[0].j["dataDump"] == "true");
   REQUIRE(partOne.Messages()[0].j["idx"] == ref.GetIdx());
   REQUIRE(partOne.Messages()[0].j["propName"] == "isOpen");
   REQUIRE(partOne.Messages()[0].j["t"] == MsgType::UpdateProperty);
@@ -318,7 +318,7 @@ TEST_CASE("Activate PurpleMountainFlower in Whiterun", "[PartOne][espm]")
   REQUIRE(partOne.Messages().size() >= 2);
   REQUIRE(partOne.Messages()[0].j["idx"] == ref.GetIdx());
   REQUIRE(partOne.Messages()[0].j["t"] == MsgType::UpdateProperty);
-  REQUIRE(partOne.Messages()[0].j["data"] == true);
+  REQUIRE(partOne.Messages()[0].j["dataDump"] == "true");
   REQUIRE(partOne.Messages()[0].j["propName"] == "isHarvested");
   REQUIRE(partOne.Messages()[1].j["type"] == "setInventory");
   REQUIRE(partOne.Messages()[1].j["inventory"].dump() ==
@@ -344,7 +344,7 @@ TEST_CASE("Activate PurpleMountainFlower in Whiterun", "[PartOne][espm]")
   REQUIRE(!ref.IsHarvested());
   REQUIRE(partOne.Messages().size() == 1);
   REQUIRE(partOne.Messages()[0].j["t"] == MsgType::UpdateProperty);
-  REQUIRE(partOne.Messages()[0].j["data"] == false);
+  REQUIRE(partOne.Messages()[0].j["dataDump"] == "false");
   REQUIRE(partOne.Messages()[0].j["propName"] == "isHarvested");
 
   DoDisconnect(partOne, 0);
@@ -383,7 +383,7 @@ TEST_CASE("BarrelFood01 PutItem/TakeItem", "[PartOne][espm]")
   REQUIRE(partOne.Messages()[0].j["t"] == MsgType::UpdateProperty);
   REQUIRE(partOne.Messages()[0].j["propName"] == "isOpen");
   REQUIRE(partOne.Messages()[0].j["idx"] == ref.GetIdx());
-  REQUIRE(partOne.Messages()[0].j["data"] == true);
+  REQUIRE(partOne.Messages()[0].j["dataDump"] == "true");
   REQUIRE(partOne.Messages().size() >= 2);
   REQUIRE(partOne.Messages()[1].j["t"] == MsgType::UpdateProperty);
   REQUIRE(partOne.Messages()[1].j["propName"] == "inventory");
@@ -564,7 +564,7 @@ TEST_CASE("Activate torch", "[espm][PartOne]")
   REQUIRE(partOne.Messages().size() >= 2);
   REQUIRE(partOne.Messages()[0].j["idx"] == ref.GetIdx());
   REQUIRE(partOne.Messages()[0].j["t"] == MsgType::UpdateProperty);
-  REQUIRE(partOne.Messages()[0].j["data"] == true);
+  REQUIRE(partOne.Messages()[0].j["dataDump"] == "true");
   REQUIRE(partOne.Messages()[0].j["propName"] == "isHarvested");
   REQUIRE(partOne.Messages()[1].j["type"] == "setInventory");
   REQUIRE(
@@ -590,7 +590,7 @@ TEST_CASE("Activate torch", "[espm][PartOne]")
   REQUIRE(!ref.IsHarvested());
   REQUIRE(partOne.Messages().size() == 1);
   REQUIRE(partOne.Messages()[0].j["t"] == MsgType::UpdateProperty);
-  REQUIRE(partOne.Messages()[0].j["data"] == false);
+  REQUIRE(partOne.Messages()[0].j["dataDump"] == "false");
   REQUIRE(partOne.Messages()[0].j["propName"] == "isHarvested");
 
   DoDisconnect(partOne, 0);
