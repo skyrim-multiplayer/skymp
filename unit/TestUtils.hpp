@@ -42,7 +42,6 @@ static const auto jMovement =
                     { { "worldOrCell", 0x3c },
                       { "pos", { 1.f, -1.f, 1.f } },
                       { "rot", { 0.f, 0.f, 179.f } },
-                      { "lookAt", nullptr },
                       { "runMode", "Standing" },
                       { "direction", 0.f },
                       { "healthPercentage", 1.f },
@@ -75,7 +74,9 @@ static const auto jAppearance = nlohmann::json{
 static const auto jEquipment = nlohmann::json{
   { "t", MsgType::UpdateEquipment },
   { "idx", 0 },
-  { "data", { { "inv", { { "entries", nlohmann::json::array() } } } } }
+  { "data",
+    { { "numChanges", 0 },
+      { "inv", { { "entries", nlohmann::json::array() } } } } }
 };
 
 class FakeListener : public PartOne::Listener

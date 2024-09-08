@@ -82,7 +82,7 @@ float TES5DamageFormulaImpl::CalcMagicEffects(const Effects& effects) const
 float TES5DamageFormulaImpl::CalcArmorRatingComponent(
   const Inventory::Entry& opponentEquipmentEntry) const
 {
-  if (opponentEquipmentEntry.extra.worn != Inventory::Worn::None &&
+  if (opponentEquipmentEntry.GetWorn() != Inventory::Worn::None &&
       espm::GetRecordType(opponentEquipmentEntry.baseId, espmProvider) ==
         espm::ARMO::kType) {
     auto armorData =
@@ -104,7 +104,8 @@ float TES5DamageFormulaImpl::CalcArmorRatingComponent(
 float TES5DamageFormulaImpl::CalcOpponentArmorRating() const
 {
   float combinedArmorRating = 0;
-  for (const auto& entry : target.GetEquipment().inv.entries) {
+  auto eq = target.GetEquipment();
+  for (auto& entry : eq.inv.entries) {
     combinedArmorRating += CalcArmorRatingComponent(entry);
   }
   return combinedArmorRating;

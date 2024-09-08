@@ -28,6 +28,7 @@ TEST_CASE("OnHit damages target actor based on damage formula", "[Hit]")
   ac.AddItem(hitData.source, 1);
   ac.SetEquipment(R"(
     {
+      "numChanges": 0,
       "inv": {
         "entries": [
           {
@@ -74,6 +75,7 @@ TEST_CASE("OnHit function sends ChangeValues message with coorect percentages",
   ac.AddItem(hitData.source, 1);
   ac.SetEquipment(R"(
     {
+      "numChanges": 0,
       "inv": {
         "entries": [
           {
@@ -218,6 +220,7 @@ TEST_CASE("checking weapon cooldown", "[Hit]")
   ac.AddItem(hitData.source, 1);
   ac.SetEquipment(R"(
     {
+      "numChanges": 0,
       "inv": {
         "entries": [
           {
