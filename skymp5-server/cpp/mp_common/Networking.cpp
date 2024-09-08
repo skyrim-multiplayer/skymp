@@ -2,6 +2,7 @@
 #include "Exceptions.h"
 #include "IdManager.h"
 #include "RakNet.h"
+#include <array>
 #include <fmt/format.h>
 #include <iostream>
 #include <memory>
