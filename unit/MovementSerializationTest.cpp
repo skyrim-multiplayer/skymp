@@ -87,8 +87,8 @@ TEST_CASE("MovementMessage correctly encoded and decoded to BitStream",
 
       auto msg = std::vector<uint8_t>(
         stream.GetData(), stream.GetData() + stream.GetNumberOfBytesUsed());
-      spdlog::trace("AAA serialized movement message {}", fmt::join(msg,
-                    ", "));
+      spdlog::trace("AAA serialized movement message {}",
+                    fmt::join(msg, ", "));
 
       UpdateMovementMessage movData2;
       movData2.ReadBinary(stream);
