@@ -277,7 +277,8 @@ void Networking::HandlePacketServerside(Networking::IServer::OnPacket onPacket,
       std::string guid = guidToStringDestination.data();
 
       onPacket(state, userId, Networking::PacketType::ServerSideUserConnect,
-               static_cast<PacketData>(guid.data()), guid.size());
+               reinterpret_cast<PacketData>(guid.data()), guid.size());
+
       break;
     }
     default:
