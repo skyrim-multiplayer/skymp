@@ -265,14 +265,21 @@ void Networking::HandlePacketServerside(Networking::IServer::OnPacket onPacket,
                nullptr, 0);
       idManager.freeId(userId);
       break;
-    case ID_NEW_INCOMING_CONNECTION:
+    case ID_NEW_INCOMING_CONNECTION: {
       userId = idManager.allocateId(packet->guid);
       if (userId == Networking::InvalidUserId) {
         throw std::runtime_error("idManager is full");
       }
+
+      std::array<char, 256> guidToStringDestination;
+      packet->guid.ToString(guidToStringDestination,
+                            std::size(guidToStringDestination));
+      std::string guid = guidToStringDestination.data();
+
       onPacket(state, userId, Networking::PacketType::ServerSideUserConnect,
-               nullptr, 0);
+               static_cast<PacketData>(guid.data()), guid.size());
       break;
+    }
     default:
       userId = idManager.find(packet->guid);
       if (packetId >= Networking::MinPacketId) {
