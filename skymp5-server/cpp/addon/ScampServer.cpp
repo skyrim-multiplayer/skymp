@@ -71,6 +71,7 @@ Napi::Object ScampServer::Init(Napi::Env env, Napi::Object exports)
       InstanceMethod("setUserActor", &ScampServer::SetUserActor),
       InstanceMethod("getUserActor", &ScampServer::GetUserActor),
       InstanceMethod("getUserGuid", &ScampServer::GetUserGuid),
+      InstanceMethod("isConnected", &ScampServer::IsConnected),
       InstanceMethod("getActorPos", &ScampServer::GetActorPos),
       InstanceMethod("getActorCellOrWorld", &ScampServer::GetActorCellOrWorld),
       InstanceMethod("getActorName", &ScampServer::GetActorName),
@@ -465,6 +466,17 @@ Napi::Value ScampServer::GetUserGuid(const Napi::CallbackInfo& info)
   auto userId = info[0].As<Napi::Number>().Uint32Value();
   try {
     return Napi::String::New(info.Env(), partOne->GetUserGuid(userId));
+  } catch (std::exception& e) {
+    throw Napi::Error::New(info.Env(), (std::string)e.what());
+  }
+  return info.Env().Undefined();
+}
+
+Napi::Value ScampServer::IsConnected(const Napi::CallbackInfo& info)
+{
+  auto userId = info[0].As<Napi::Number>().Uint32Value();
+  try {
+    return Napi::Boolean::New(info.Env(), partOne->IsConnected(userId));
   } catch (std::exception& e) {
     throw Napi::Error::New(info.Env(), (std::string)e.what());
   }

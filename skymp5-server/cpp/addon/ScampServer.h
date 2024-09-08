@@ -31,6 +31,7 @@ public:
   Napi::Value SetUserActor(const Napi::CallbackInfo& info);
   Napi::Value GetUserActor(const Napi::CallbackInfo& info);
   Napi::Value GetUserGuid(const Napi::CallbackInfo& info);
+  Napi::Value IsConnected(const Napi::CallbackInfo& info);
   Napi::Value GetActorPos(const Napi::CallbackInfo& info);
   Napi::Value GetActorCellOrWorld(const Napi::CallbackInfo& info);
   Napi::Value GetActorName(const Napi::CallbackInfo& info);
