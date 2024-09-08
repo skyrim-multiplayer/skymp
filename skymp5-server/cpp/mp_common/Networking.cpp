@@ -272,7 +272,7 @@ void Networking::HandlePacketServerside(Networking::IServer::OnPacket onPacket,
       }
 
       std::array<char, 256> guidToStringDestination;
-      packet->guid.ToString(guidToStringDestination,
+      packet->guid.ToString(guidToStringDestination.data(),
                             std::size(guidToStringDestination));
       std::string guid = guidToStringDestination.data();
 
