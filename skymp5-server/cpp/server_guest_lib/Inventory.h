@@ -16,41 +16,6 @@ public:
     Left
   };
 
-  // class EntryExtras
-  // {
-  // public:
-  //   float health = 1.f;
-
-  //   struct
-  //   {
-  //     uint32_t id = 0;
-  //     float maxCharge = 0.f;
-  //     bool removeOnUnequip = false;
-  //   } ench;
-
-  //   struct
-  //   {
-  //     uint32_t id = 0;
-  //     uint32_t count = 0;
-  //   } poison;
-
-  //   float chargePercent = 0.f;
-
-  //   std::string name;
-
-  //   uint8_t soul = 0;
-
-  //   bool worn_ = false;
-  //   bool wornLeft = false;
-
-  //   friend bool operator==(const EntryExtras& r, const EntryExtras& l);
-
-  //   friend bool operator!=(const EntryExtras& r, const EntryExtras& l)
-  //   {
-  //     return !(r == l);
-  //   }
-  // };
-
   // Doesn't parse extra data currently
   template <class Archive>
   void Serialize(Archive& archive)
@@ -58,12 +23,10 @@ public:
     archive.Serialize("entries", entries);
   }
 
-  // // TODO: get rid of this in favor of Serialize
-  // nlohmann::json ToJson() const;
-
-  // // TODO: get rid of this in favor of Serialize
-  // static Inventory FromJson(simdjson::dom::element& element);
-  // static Inventory FromJson(const nlohmann::json& j);
+  // TODO: get rid of this in favor of Serialize
+  nlohmann::json ToJson() const;
+  static Inventory FromJson(simdjson::dom::element& element);
+  static Inventory FromJson(const nlohmann::json& j);
 
   class Entry
   {
@@ -76,7 +39,7 @@ public:
         .Serialize("health", health)
         .Serialize("enchantmentId", enchantmentId)
         .Serialize("maxCharge", maxCharge)
-        .Serialize("removeEnchantmentOnUnequip", removeOnUnequip)
+        .Serialize("removeEnchantmentOnUnequip", removeEnchantmentOnUnequip)
         .Serialize("chargePercent", chargePercent)
         .Serialize("name", name)
         .Serialize("soul", soul)
@@ -106,20 +69,15 @@ public:
     std::optional<bool> wornLeft;
 
     // TODO: get rid of this in favor of Serialize
-    // static Entry FromJson(const simdjson::dom::element& e);
+    static Entry FromJson(const simdjson::dom::element& e);
+
+    Worn GetWorn() const;
+    void SetWorn(Worn worn);
+    bool EqualExceptCount(const Entry& other) const;
 
     friend bool operator==(const Entry& lhs, const Entry& rhs)
     {
-      return std::make_tuple(lhs.baseId, lhs.count, lhs.health,
-                             lfs.enchantmentId, lfs.maxCharge,
-                             lfs.removeEnchantmentOnUnequip, lfs.chargePercent,
-                             lfs.name, lfs.soul, lfs.poisonId, lfs.poisonCount,
-                             lfs.worn_, lfs.wornLeft) ==
-        std::make_tuple(rhs.baseId, rhs.count, rhs.extra, rhs.health,
-                        rhs.enchantmentId, rhs.maxCharge,
-                        rhs.removeEnchantmentOnUnequip, rhs.chargePercent,
-                        rhs.name, rhs.soul, rhs.poisonId, rhs.poisonCount,
-                        rhs.worn_, rhs.wornLeft);
+      return lhs.EqualExceptCount(rhs) && lhs.count == rhs.count;
     }
 
     friend bool operator!=(const Entry& lhs, const Entry& rhs)

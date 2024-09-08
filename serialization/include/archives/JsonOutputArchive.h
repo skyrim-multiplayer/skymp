@@ -39,7 +39,8 @@ public:
     if (value.has_value()) {
       Serialize(key, *value);
     } else {
-      j[key] = nlohmann::json{};
+      // enable this if you want to serialize nulls
+      // j[key] = nlohmann::json{};
     }
     return *this;
   }

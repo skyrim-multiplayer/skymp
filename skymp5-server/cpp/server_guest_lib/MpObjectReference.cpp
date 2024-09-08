@@ -1803,7 +1803,7 @@ void MpObjectReference::EnsureBaseContainerAdded(espm::Loader& espm)
       Inventory::Entry e;
       e.baseId = p.first;
       e.count = p.second;
-      e.extra.worn = Inventory::Worn::Right;
+      e.SetWorn(Inventory::Worn::Right);
       eq.inv.AddItems({ e });
     }
     actor->SetEquipment(eq.ToJson().dump());

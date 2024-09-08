@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Inventory.h"
+#include "../server_guest_lib/Equipment.h"
 #include "MessageBase.h"
 #include "MsgType.h"
 #include <cstdint>
@@ -15,8 +15,6 @@ struct UpdateEquipmentMessage : public MessageBase<UpdateEquipmentMessage>
     std::integral_constant<char,
                            static_cast<char>(MsgType::UpdateEquipment)>{};
 
-  using Data = nlohmann::json; // TODO: static typing
-
   template <class Archive>
   void Serialize(Archive& archive)
   {
@@ -26,5 +24,5 @@ struct UpdateEquipmentMessage : public MessageBase<UpdateEquipmentMessage>
   }
 
   uint32_t idx = 0;
-  Data data;
+  Equipment data;
 };

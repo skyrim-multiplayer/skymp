@@ -97,20 +97,13 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
         auto message =
           reinterpret_cast<UpdateEquipmentMessage*>(result->message.get());
         auto idx = message->idx;
-        auto data = pImpl->simdjsonParser.parse(message->data.dump()).value();
-        auto inv = Inventory::FromJson(message->data.at("inv"));
-        auto leftSpell = message->data.contains("leftSpell")
-          ? message->data.at("leftSpell").get<uint32_t>()
-          : 0;
-        auto rightSpell = message->data.contains("rightSpell")
-          ? message->data.at("rightSpell").get<uint32_t>()
-          : 0;
-        auto voiceSpell = message->data.contains("voiceSpell")
-          ? message->data.at("voiceSpell").get<uint32_t>()
-          : 0;
-        auto instantSpell = message->data.contains("instantSpell")
-          ? message->data.at("instantSpell").get<uint32_t>()
-          : 0;
+
+        const Equipment& data = message->data;
+        const Inventory& inv = data.inv;
+        uint32_t leftSpell = data.leftSpell.value_or(0);
+        uint32_t rightSpell = data.rightSpell.value_or(0);
+        uint32_t voiceSpell = data.voiceSpell.value_or(0);
+        uint32_t instantSpell = data.instantSpell.value_or(0);
 
         actionListener.OnUpdateEquipment(rawMsgData, idx, data, inv, leftSpell,
                                          rightSpell, voiceSpell, instantSpell);
@@ -177,7 +170,7 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
       ReadEx(jMessage, JsonPointers::target, &target);
       auto e = Inventory::Entry::FromJson(jMessage);
       if (static_cast<MsgType>(type) == MsgType::PutItem) {
-        e.extra.worn = Inventory::Worn::None;
+        e.SetWorn(Inventory::Worn::None);
         actionListener.OnPutItem(rawMsgData, target, e);
       } else {
         actionListener.OnTakeItem(rawMsgData, target, e);
