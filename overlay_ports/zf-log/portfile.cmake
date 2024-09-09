@@ -9,5 +9,30 @@ vcpkg_from_github(
 vcpkg_cmake_configure(
     SOURCE_PATH "${SOURCE_PATH}"
 )
+
 vcpkg_cmake_install()
-vcpkg_cmake_config_fixup(CONFIG_PATH "lib/cmake/zf_log/")
+vcpkg_cmake_config_fixup(PACKAGE_NAME "zf-log" CONFIG_PATH "lib/cmake/zf_log/")
+
+# zf_log-config.cmake
+# zf_log-debug.cmake
+# zf_log-release.cmake
+# zf_log.cmake
+
+# rename zf_log to zf-log for each
+file(RENAME "${CURRENT_PACKAGES_DIR}/share/zf-log/zf_log-config.cmake" "${CURRENT_PACKAGES_DIR}/share/zf-log/zf-log-config.cmake")
+file(RENAME "${CURRENT_PACKAGES_DIR}/share/zf-log/zf_log-debug.cmake" "${CURRENT_PACKAGES_DIR}/share/zf-log/zf-log-debug.cmake")
+file(RENAME "${CURRENT_PACKAGES_DIR}/share/zf-log/zf_log-release.cmake" "${CURRENT_PACKAGES_DIR}/share/zf-log/zf-log-release.cmake")
+file(RENAME "${CURRENT_PACKAGES_DIR}/share/zf-log/zf_log.cmake" "${CURRENT_PACKAGES_DIR}/share/zf-log/zf-log.cmake")
+
+file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug/include")
+file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug/share")
+
+#message("${CURRENT_PACKAGES_DIR}")
+#file(READ tmp "${CURRENT_PACKAGES_DIR}/share/zf_log/zf_log-config.cmake")
+#message("zf_log-config.cmake: ${tmp}")
+
+vcpkg_replace_string("${CURRENT_PACKAGES_DIR}/share/zf-log/zf-log-config.cmake" "zf_log" "zf-log")
+
+# also replace zf_log-*.cmake with zf-log-*.cmake
+
+vcpkg_replace_string("${CURRENT_PACKAGES_DIR}/share/zf-log/zf-log.cmake" "zf_log-*.cmake" "zf-log-*.cmake")

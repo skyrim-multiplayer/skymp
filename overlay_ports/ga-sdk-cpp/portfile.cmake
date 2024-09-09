@@ -7,7 +7,7 @@ vcpkg_from_github(
     PATCHES void.patch
 )
 
-# copy cmakrlists.txt
+# copy cmakelists.txt
 file(COPY "${CMAKE_CURRENT_LIST_DIR}/CMakeLists.txt" DESTINATION "${SOURCE_PATH}")
 
 # add missing includes
@@ -17,8 +17,13 @@ file(WRITE "${SOURCE_PATH}/source/gameanalytics/GADevice.cpp" "#include <tchar.h
 vcpkg_cmake_configure(
     SOURCE_PATH "${SOURCE_PATH}"
 )
+
 vcpkg_cmake_install()
 
 file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug/include")
 
 vcpkg_install_copyright(FILE_LIST "${SOURCE_PATH}/LICENSE")
+
+file(INSTALL ${CMAKE_CURRENT_LIST_DIR}/unofficial-ga-sdk-cpp-config.cmake
+    DESTINATION "${CURRENT_PACKAGES_DIR}/share/unofficial-${PORT}"
+)
