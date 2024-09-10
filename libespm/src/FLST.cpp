@@ -13,9 +13,7 @@ FLST::Data FLST::GetData(
     [&](const char* type, uint32_t dataSize, const char* data) {
       if (!std::memcmp(type, "LNAM", 4)) {
         const auto formId = *reinterpret_cast<const uint32_t*>(data);
-        // push front by intention: order reversed in game files
-        // we care about indexes in PapyrusFormList
-        result.formIds.insert(result.formIds.begin(), formId);
+        result.formIds.push_back(formId);
       }
     },
     compressedFieldsCache);
