@@ -246,7 +246,7 @@ TEST_CASE("Loads FormList", "[espm]")
   REQUIRE(form.rec->GetType() == "FLST");
 
   auto data = reinterpret_cast<const espm::FLST*>(form.rec)->GetData(cache);
-  REQUIRE(data.formIds == std::vector<uint32_t>({ 0x3eab9, 0x4e4bb }));
+  REQUIRE(data.formIds == std::vector<uint32_t>({ 0x4e4bb, 0x3eab9 }));
 }
 
 TEST_CASE("Loads refr with primitive", "[espm]")

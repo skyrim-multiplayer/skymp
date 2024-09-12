@@ -17,10 +17,10 @@ TEST_CASE("GetSize/GetAt", "[Papyrus][FormList][espm]")
   REQUIRE(PapyrusFormList().GetSize(formlist, {}) == VarValue(2));
 
   VarValue element0 = PapyrusFormList().GetAt(formlist, { VarValue(0) });
-  REQUIRE(GetRecordPtr(element0).rec->GetId() == 0x3eab9);
+  REQUIRE(GetRecordPtr(element0).rec->GetId() == 0x4e4bb);
 
   VarValue element1 = PapyrusFormList().GetAt(formlist, { VarValue(1) });
-  REQUIRE(GetRecordPtr(element1).rec->GetId() == 0x4e4bb);
+  REQUIRE(GetRecordPtr(element1).rec->GetId() == 0x3eab9);
 
   REQUIRE(PapyrusFormList().GetAt(formlist, { VarValue(-1) }) ==
           VarValue::None());
