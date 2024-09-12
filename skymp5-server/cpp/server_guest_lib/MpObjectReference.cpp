@@ -932,10 +932,6 @@ void MpObjectReference::Subscribe(MpObjectReference* emitter,
     return;
   }
 
-  // I don't know how often Subscrbe is called but I suppose
-  // it is to be invoked quite frequently. In this case, each
-  // time if below is performed we are obtaining a copy of
-  // MpChangeForm which can be large. See what it consists of.
   if (!emitter->pImpl->onInitEventSent &&
       listener->GetChangeForm().profileId != -1) {
     emitter->pImpl->onInitEventSent = true;
