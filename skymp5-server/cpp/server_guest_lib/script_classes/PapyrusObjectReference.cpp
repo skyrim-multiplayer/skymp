@@ -379,6 +379,8 @@ VarValue PapyrusObjectReference::PlaceAtMe(
 
   bool isExplosion = akFormToPlace.rec->GetType() == "EXPL";
   if (isExplosion) {
+    spdlog::warn(
+      "PapyrusObjectReference::PlaceAtMe - explosion is not supported yet");
     // Well sp snippet fails ATM. and I don't want to overpollute clients and
     // network with those placeatme s for now
 

@@ -28,6 +28,49 @@ bool ExistsInFormList(const VarValue& formList, uint32_t baseId)
 }
 }
 
+namespace {
+VarValue FindClosestReferenceHelper(
+  MpObjectReference* arCenter, double afRadius,
+  std::function<bool(MpObjectReference*)> criteria)
+{
+  if (!arCenter) {
+    spdlog::warn("FindClosestReferenceHelper - arCenter is nullptr");
+    return VarValue::None();
+  }
+
+  // why not < 0? because of NaN
+  if (!(afRadius >= 0)) {
+    spdlog::warn("FindClosestReferenceHelper - expected afRadius to be >= 0");
+    return VarValue::None();
+  }
+
+  float bestDistance = std::numeric_limits<float>::infinity();
+  MpObjectReference* bestNeighbour = nullptr;
+
+  arCenter->VisitNeighbours([&](MpObjectReference* neighbour) {
+    if (!criteria(neighbour)) {
+      return;
+    }
+
+    float distance = (arCenter->GetPos() - neighbour->GetPos()).SqrLength();
+    if (distance > afRadius * afRadius) {
+      return;
+    }
+
+    if (bestDistance > distance) {
+      bestDistance = distance;
+      bestNeighbour = neighbour;
+    }
+  });
+
+  if (bestNeighbour) {
+    return VarValue(std::make_shared<MpFormGameObject>(bestNeighbour));
+  }
+
+  return VarValue::None();
+}
+}
+
 VarValue PapyrusGame::FindClosestReferenceOfAnyTypeInListFromRef(
   VarValue self, const std::vector<VarValue>& arguments)
 {
@@ -36,29 +79,29 @@ VarValue PapyrusGame::FindClosestReferenceOfAnyTypeInListFromRef(
     auto arCenter = GetFormPtr<MpObjectReference>(arguments[1]);
     double afRadius = static_cast<double>(arguments[2].CastToFloat());
 
-    if (arBaseObjects && arCenter && afRadius >= 0) {
-
-      float bestDistance = std::numeric_limits<float>::infinity();
-      MpObjectReference* bestNeighbour = nullptr;
-
-      arCenter->VisitNeighbours([&](MpObjectReference* neighbour) {
+    return FindClosestReferenceHelper(
+      arCenter, afRadius, [&](MpObjectReference* neighbour) {
         auto baseId = neighbour->GetBaseId();
-        if (!ExistsInFormList(arBaseObjects, baseId))
-          return;
-
-        float distance = (arCenter->GetPos() - neighbour->GetPos()).Length();
-        if (distance > afRadius)
-          return;
-
-        if (bestDistance > distance) {
-          bestDistance = distance;
-          bestNeighbour = neighbour;
-        }
+        return ExistsInFormList(arBaseObjects, baseId);
       });
+  }
+  return VarValue::None();
+}
 
-      if (bestNeighbour)
-        return VarValue(std::make_shared<MpFormGameObject>(bestNeighbour));
-    }
+VarValue PapyrusGame::FindClosestReferenceOfTypeFromRef(
+  VarValue self, const std::vector<VarValue>& arguments)
+{
+  if (arguments.size() >= 3) {
+    auto arBaseObject = GetRecordPtr(arguments[0]);
+    auto arCenter = GetFormPtr<MpObjectReference>(arguments[1]);
+    double afRadius = static_cast<double>(arguments[2].CastToFloat());
+
+    return FindClosestReferenceHelper(
+      arCenter, afRadius, [&](MpObjectReference* neighbour) {
+        auto baseId = neighbour->GetBaseId();
+        return arBaseObject.rec &&
+          baseId == arBaseObject.ToGlobalId(arBaseObject.rec->GetId());
+      });
   }
   return VarValue::None();
 }
@@ -184,6 +227,8 @@ void PapyrusGame::Register(VirtualMachine& vm,
   AddStatic(vm, "EnablePlayerControls", &PapyrusGame::EnablePlayerControls);
   AddStatic(vm, "FindClosestReferenceOfAnyTypeInListFromRef",
             &PapyrusGame::FindClosestReferenceOfAnyTypeInListFromRef);
+  AddStatic(vm, "FindClosestReferenceOfTypeFromRef",
+            &PapyrusGame::FindClosestReferenceOfTypeFromRef);
   AddStatic(vm, "GetPlayer", &PapyrusGame::GetPlayer);
   AddStatic(vm, "ShowRaceMenu", &PapyrusGame::ShowRaceMenu);
   AddStatic(vm, "ShowLimitedRaceMenu", &PapyrusGame::ShowLimitedRaceMenu);
