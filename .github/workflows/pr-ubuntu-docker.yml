@@ -86,13 +86,13 @@ jobs:
 
           - name: Upload vcpkg failure logs
             if: failure()
-            uses: actions/upload-artifact@v2
+            uses: actions/upload-artifact@v4
             with:
               name: install-x64-linux-dbg-out.log
               path: ${{github.workspace}}/install-x64-linux-dbg-out.log
 
           - name: Upload compile_commands.json
-            uses: actions/upload-artifact@v3
+            uses: actions/upload-artifact@v4
             with:
                 name: compile_commands.json
                 path: ${{github.workspace}}/build/compile_commands.json
@@ -120,7 +120,7 @@ jobs:
                     && tar czf dist.tar.gz dist
 
           - name: Upload dist.tar.gz
-            uses: actions/upload-artifact@v3
+            uses: actions/upload-artifact@v4
             with:
               name: dist.tar.gz
               path: ${{github.workspace}}/build/dist.tar.gz
