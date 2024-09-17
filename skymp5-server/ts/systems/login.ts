@@ -83,7 +83,17 @@ export class Login implements System {
       this.log("The server is in offline mode, the client is NOT");
     } else if (this.offlineMode === false && gameData && gameData.session) {
       (async () => {
+        const guidBeforeAsyncOp = ctx.svr.getUserGuid(userId);
         const profile = await this.getUserProfile(gameData.session, userId, ctx);
+        const guidAfterAsyncOp = ctx.svr.isConnected(userId) ? ctx.svr.getUserGuid(userId) : "<disconnected>";
+
+        console.log({ guidBeforeAsyncOp, guidAfterAsyncOp, op: "getUserProfile" });
+
+        if (guidBeforeAsyncOp !== guidAfterAsyncOp) {
+          console.error(`User ${userId} changed guid from ${guidBeforeAsyncOp} to ${guidAfterAsyncOp} during async getUserProfile`);
+          throw new Error("Guid mismatch after getUserProfile");
+        }
+
         console.log("getUserProfileId:", profile);
 
         if (discordAuth && !discordAuth.botToken) {
@@ -102,6 +112,7 @@ export class Login implements System {
             ctx.svr.sendCustomPacket(userId, loginFailedNotLoggedViaDiscord);
             throw new Error("Not logged in via Discord");
           }
+          const guidBeforeAsyncOp = ctx.svr.getUserGuid(userId);
           const response = await Axios.get(
             `https://discord.com/api/guilds/${discordAuth.guildId}/members/${profile.discordId}`,
             {
@@ -111,6 +122,14 @@ export class Login implements System {
               validateStatus: (status) => true,
             },
           );
+          const guidAfterAsyncOp = ctx.svr.isConnected(userId) ? ctx.svr.getUserGuid(userId) : "<disconnected>";
+
+          console.log({ guidBeforeAsyncOp, guidAfterAsyncOp, op: "Discord request" });
+
+          if (guidBeforeAsyncOp !== guidAfterAsyncOp) {
+            console.error(`User ${userId} changed guid from ${guidBeforeAsyncOp} to ${guidAfterAsyncOp} during async Discord request`);
+            throw new Error("Guid mismatch after Discord request");
+          }
 
           const mp = ctx.svr as unknown as Mp;
 
