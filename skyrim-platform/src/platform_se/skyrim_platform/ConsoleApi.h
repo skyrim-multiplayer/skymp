@@ -15,11 +15,11 @@ const char* GetExceptionPrefix();
 
 inline void Register(Napi::Env env, Napi::Value& exports)
 {
-  exports.SetProperty("printConsole", Napi::Function::New(env, NapiHelper::WrapCppExceptions(PrintConsole)));
-  exports.SetProperty("findConsoleCommand",
+  exports.Set("printConsole", Napi::Function::New(env, NapiHelper::WrapCppExceptions(PrintConsole)));
+  exports.Set("findConsoleCommand",
                       Napi::Function::New(env, NapiHelper::WrapCppExceptions(FindConsoleCommand)));
-  exports.SetProperty("writeLogs", Napi::Function::New(env, WriteLogs));
-  exports.SetProperty("setPrintConsolePrefixesEnabled",
+  exports.Set("writeLogs", Napi::Function::New(env, WriteLogs));
+  exports.Set("setPrintConsolePrefixesEnabled",
                       Napi::Function::New(env, NapiHelper::WrapCppExceptions(SetPrintConsolePrefixesEnabled)));
 }
 

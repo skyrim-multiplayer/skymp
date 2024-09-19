@@ -17,12 +17,13 @@ struct ConsoleCommand
   std::string shortName;
   uint16_t numArgs = 0;
   RE::SCRIPT_FUNCTION::Execute_t* execute;
-  Napi::Value jsExecute;
+  std::shared_ptr<Napi::Reference<Napi::Function>> jsExecute;
   RE::SCRIPT_FUNCTION* myIter;
   RE::SCRIPT_FUNCTION myOriginalData;
 };
 static std::map<std::string, ConsoleCommand> g_replacedConsoleCmd;
 static bool g_printConsolePrefixesEnabled = true;
+static std::shared_ptr<Napi::Env> g_envForExecuteCallback; // TODO
 
 bool IsNameEqual(const std::string& first, const std::string& second)
 {
@@ -73,7 +74,7 @@ void ConsoleApi::InitCmd(int offsetLeft, int offsetTop, int width, int height,
 }
 
 namespace {
-ConsoleCommand FillCmdInfo(RE::SCRIPT_FUNCTION* cmd)
+ConsoleCommand FillCmdInfo(Napi::Env env, RE::SCRIPT_FUNCTION* cmd)
 {
   ConsoleCommand cmdInfo;
 
@@ -83,71 +84,100 @@ ConsoleCommand FillCmdInfo(RE::SCRIPT_FUNCTION* cmd)
   cmdInfo.execute = cmd->executeFunction;
   cmdInfo.myIter = cmd;
   cmdInfo.myOriginalData = *cmd;
-  cmdInfo.jsExecute = Napi::Value::Function(
-    [](const Napi::CallbackInfo &info) { return Napi::Value::Bool(true); });
+  cmdInfo.jsExecute = Napi::Function::New(env,
+    [](const Napi::CallbackInfo &info) { return Napi::Boolean::New(info.Env(), true); });
 
   return cmdInfo;
 }
 
-// TODO starts here  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-void CreateLongNameProperty(Napi::Value& obj, ConsoleCommand* replaced)
-{
-  obj.SetProperty(
-    "longName",
-    [=](const Napi::CallbackInfo &info) {
-      return Napi::Value::String(replaced->myIter->functionName);
-    },
-    [=](const Napi::CallbackInfo &info) {
-      replaced->longName = args[1].ToString();
+void CreateLongNameProperty(Napi::Object& obj, ConsoleCommand* replaced) {
+  auto getter = [=](const Napi::CallbackInfo &info) -> Napi::Value {
+    return Napi::String::New(info.Env(), replaced->myIter->functionName);
+  };
 
-      RE::SCRIPT_FUNCTION cmd = *replaced->myIter;
-      cmd.functionName = replaced->longName.c_str();
+  auto setter = [=](const Napi::CallbackInfo &info) {
+    Napi::Env env = info.Env();
+    
+    if (info.Length() < 1 || !info[0].IsString()) {
+      Napi::TypeError::New(env, "String expected").ThrowAsJavaScriptException();
+      return;
+    }
 
-      REL::safe_write((uintptr_t)replaced->myIter, &cmd, sizeof(cmd));
-      return info.Env().Undefined();
-    });
+    replaced->longName = info[0].As<Napi::String>().Utf8Value();
+
+    RE::SCRIPT_FUNCTION cmd = *replaced->myIter;
+    cmd.functionName = replaced->longName.c_str();
+
+    REL::safe_write((uintptr_t)replaced->myIter, &cmd, sizeof(cmd));
+  };
+
+  Napi::PropertyDescriptor longNameProperty = Napi::PropertyDescriptor::Accessor(
+    "longName", getter, setter, napi_default
+  );
+
+  obj.DefineProperty(longNameProperty);
 }
 
-void CreateShortNameProperty(Napi::Value& obj, ConsoleCommand* replaced)
-{
-  obj.SetProperty(
-    "shortName",
-    [=](const Napi::CallbackInfo &info) {
-      return Napi::Value::String(replaced->myIter->shortName);
-    },
-    [=](const Napi::CallbackInfo &info) {
-      replaced->shortName = args[1].ToString();
+void CreateShortNameProperty(Napi::Object& obj, ConsoleCommand* replaced) {
+  auto getter = [=](const Napi::CallbackInfo &info) -> Napi::Value {
+    return Napi::String::New(info.Env(), replaced->myIter->shortName);
+  };
 
-      RE::SCRIPT_FUNCTION cmd = *replaced->myIter;
-      cmd.shortName = replaced->shortName.c_str();
+  auto setter = [=](const Napi::CallbackInfo &info) {
+    Napi::Env env = info.Env();
+    
+    if (info.Length() < 1 || !info[0].IsString()) {
+      Napi::TypeError::New(env, "String expected").ThrowAsJavaScriptException();
+      return;
+    }
 
-      REL::safe_write((uintptr_t)replaced->myIter, &cmd, sizeof(cmd));
-      return info.Env().Undefined();
-    });
+    replaced->shortName = info[0].As<Napi::String>().Utf8Value();
+
+    RE::SCRIPT_FUNCTION cmd = *replaced->myIter;
+    cmd.shortName = replaced->shortName.c_str();
+
+    REL::safe_write((uintptr_t)replaced->myIter, &cmd, sizeof(cmd));
+  };
+
+  Napi::PropertyDescriptor shortNameProperty = Napi::PropertyDescriptor::Accessor(
+    "shortName", getter, setter, napi_default
+  );
+
+  obj.DefineProperty(shortNameProperty);
 }
 
-void CreateNumArgsProperty(Napi::Value& obj, ConsoleCommand* replaced)
-{
-  obj.SetProperty(
-    "numArgs",
-    [=](const Napi::CallbackInfo &info) {
-      return Napi::Value::Double(replaced->myIter->numParams);
-    },
-    [=](const Napi::CallbackInfo &info) {
-      replaced->numArgs = (double)args[1];
+void CreateNumArgsProperty(Napi::Object& obj, ConsoleCommand* replaced) {
+  auto getter = [=](const Napi::CallbackInfo &info) -> Napi::Value {
+    return Napi::Number::New(info.Env(), replaced->myIter->numParams);
+  };
 
-      RE::SCRIPT_FUNCTION cmd = *replaced->myIter;
-      cmd.numParams = replaced->numArgs;
+  auto setter = [=](const Napi::CallbackInfo &info) {
+    Napi::Env env = info.Env();
+    
+    if (info.Length() < 1 || !info[0].IsNumber()) {
+      Napi::TypeError::New(env, "Number expected").ThrowAsJavaScriptException();
+      return;
+    }
 
-      REL::safe_write((uintptr_t)replaced->myIter, &cmd, sizeof(cmd));
-      return info.Env().Undefined();
-    });
+    replaced->numArgs = info[0].As<Napi::Number>().DoubleValue();
+
+    RE::SCRIPT_FUNCTION cmd = *replaced->myIter;
+    cmd.numParams = replaced->numArgs;
+
+    REL::safe_write((uintptr_t)replaced->myIter, &cmd, sizeof(cmd));
+  };
+
+  Napi::PropertyDescriptor numArgsProperty = Napi::PropertyDescriptor::Accessor(
+    "numArgs", getter, setter, napi_default
+  );
+
+  obj.DefineProperty(numArgsProperty);
 }
 
 void CreateExecuteProperty(Napi::Value& obj, ConsoleCommand* replaced)
 {
-  obj.SetProperty("execute", nullptr, [=](const Napi::CallbackInfo &info) {
-    replaced->jsExecute = args[1];
+  obj.Set("execute", nullptr, [=](const Napi::CallbackInfo &info) {
+    replaced->jsExecute = info[0];
     return info.Env().Undefined();
   });
 }
@@ -187,29 +217,29 @@ ParseCommandResult ParseCommand(std::string command)
   return res;
 }
 
-Napi::Value GetObject(const std::string& param)
+Napi::Value GetObject(Napi::Env env, const std::string& param)
 {
   if (auto formByEditorId = RE::TESForm::LookupByEditorID(param))
-    return Napi::Value::Double(formByEditorId->formID);
+    return Napi::Number::New(env, formByEditorId->formID);
 
   auto id = strtoul(param.c_str(), nullptr, 16);
 
   if (auto formById = RE::TESForm::LookupByID(id))
-    return Napi::Value::Double(formById->formID);
+    return Napi::Number::New(env, formById->formID);
 
   auto err = "For param: " + param + " formId and editorId was not found";
   throw std::runtime_error(err.data());
 }
 
-Napi::Value GetTypedArg(RE::SCRIPT_PARAM_TYPE type, std::string param)
+Napi::Value GetTypedArg(Napi::Env env, RE::SCRIPT_PARAM_TYPE type, std::string param)
 {
   switch (type) {
     case RE::SCRIPT_PARAM_TYPE::kStage:
     case RE::SCRIPT_PARAM_TYPE::kInt:
-      return Napi::Value::Double((double)strtoll(param.c_str(), nullptr, 10));
+      return Napi::Number::New(env, (double)strtoll(param.c_str(), nullptr, 10));
 
     case RE::SCRIPT_PARAM_TYPE::kFloat:
-      return Napi::Value::Double((double)strtod(param.c_str(), nullptr));
+      return Napi::Number::New(env, (double)strtod(param.c_str(), nullptr));
 
       // RE::SCRIPT_PARAM_TYPE::kContainerRef/kCoontainerRef
     case static_cast<RE::SCRIPT_PARAM_TYPE>(0x1A):
@@ -220,7 +250,7 @@ Napi::Value GetTypedArg(RE::SCRIPT_PARAM_TYPE type, std::string param)
     case RE::SCRIPT_PARAM_TYPE::kPerk:
     case RE::SCRIPT_PARAM_TYPE::kActorBase:
     case RE::SCRIPT_PARAM_TYPE::kObjectRef:
-      return Napi::Value::Double((double)strtoul(param.c_str(), nullptr, 16));
+      return Napi::Number::New(env, (double)strtoul(param.c_str(), nullptr, 16));
 
     case RE::SCRIPT_PARAM_TYPE::kAxis:
     case RE::SCRIPT_PARAM_TYPE::kActorValue:
@@ -228,7 +258,7 @@ Napi::Value GetTypedArg(RE::SCRIPT_PARAM_TYPE type, std::string param)
       return Napi::Value::String(param);
 
     default:
-      return GetObject(param);
+      return GetObject(env, param);
   }
 }
 
@@ -243,6 +273,10 @@ bool ConsoleComand_Execute(const RE::SCRIPT_PARAMETER* paramInfo,
 
   auto func = [&] {
     try {
+      if (!g_envForExecuteCallback)
+        throw NullPointerException("g_envForExecuteCallback");
+      auto env = *g_envForExecuteCallback;
+
       if (!scriptObj)
         throw NullPointerException("scriptObj");
 
@@ -256,20 +290,19 @@ bool ConsoleComand_Execute(const RE::SCRIPT_PARAMETER* paramInfo,
                         parseCommandResult.commandName)) {
 
           std::vector<Napi::Value> args;
-          args.push_back(Napi::Value::Undefined());
           auto refr = reinterpret_cast<RE::TESObjectREFR*>(thisObj);
 
-          refr ? args.push_back(Napi::Value::Double((double)refr->formID))
-               : args.push_back(Napi::Value::Double(0));
+          refr ? args.push_back(Napi::Number::New(env, (double)refr->formID))
+               : args.push_back(Napi::Number::New(env, 0));
 
           for (size_t i = 0; i < parseCommandResult.params.size(); ++i) {
             if (!paramInfo)
               break;
 
-            Napi::Value arg = GetTypedArg(paramInfo[i].paramType.get(),
+            Napi::Value arg = GetTypedArg(env, paramInfo[i].paramType.get(),
                                       parseCommandResult.params[i]);
 
-            if (arg.GetType() == Napi::Value::Type::Undefined) {
+            if (arg.IsUndefined()) {
               auto err = " typeId " +
                 std::to_string((uint32_t)paramInfo[i].paramType.get()) +
                 " not yet supported";
@@ -279,7 +312,7 @@ bool ConsoleComand_Execute(const RE::SCRIPT_PARAMETER* paramInfo,
             args.push_back(arg);
           }
 
-          if (item.second.jsExecute.Call(args))
+          if (item.second.jsExecute->Value().Call(env.Undefined(), args))
             iterator = &item;
           break;
         }
@@ -299,7 +332,7 @@ bool ConsoleComand_Execute(const RE::SCRIPT_PARAMETER* paramInfo,
   return true;
 }
 
-Napi::Value FindCommand(const std::string& commandName, RE::SCRIPT_FUNCTION* start,
+Napi::Value FindCommand(Napi::Env env, const std::string& commandName, RE::SCRIPT_FUNCTION* start,
                     size_t count)
 {
   for (size_t i = 0; i < count; ++i) {
@@ -307,10 +340,10 @@ Napi::Value FindCommand(const std::string& commandName, RE::SCRIPT_FUNCTION* sta
 
     if (IsNameEqual(_iter->functionName, commandName) ||
         IsNameEqual(_iter->shortName, commandName)) {
-      Napi::Value obj = Napi::Value::Object();
+      Napi::Value obj = Napi::Object::New(env);
 
       auto& replaced = g_replacedConsoleCmd[commandName];
-      replaced = FillCmdInfo(_iter);
+      replaced = FillCmdInfo(env, _iter);
 
       CreateLongNameProperty(obj, &replaced);
       CreateShortNameProperty(obj, &replaced);
@@ -323,21 +356,21 @@ Napi::Value FindCommand(const std::string& commandName, RE::SCRIPT_FUNCTION* sta
       return obj;
     }
   }
-  return Napi::Value::Null();
+  return env.Null();
 }
 } // namespace
 
 Napi::Value ConsoleApi::FindConsoleCommand(const Napi::CallbackInfo &info)
 {
-  auto commandName = args[1].ToString();
+  auto commandName = NapiHelper::ExtractString(info[0], "commandName");
 
   Napi::Value res =
-    FindCommand(commandName, RE::SCRIPT_FUNCTION::GetFirstConsoleCommand(),
+    FindCommand(env, commandName, RE::SCRIPT_FUNCTION::GetFirstConsoleCommand(),
                 RE::SCRIPT_FUNCTION::Commands::kConsoleCommandsEnd);
 
-  if (res.GetType() == Napi::Value::Type::Null) {
+  if (res.IsNull()) {
     res =
-      FindCommand(commandName, RE::SCRIPT_FUNCTION::GetFirstScriptCommand(),
+      FindCommand(env, commandName, RE::SCRIPT_FUNCTION::GetFirstScriptCommand(),
                   RE::SCRIPT_FUNCTION::Commands::kScriptCommandsEnd);
   }
 
@@ -346,7 +379,7 @@ Napi::Value ConsoleApi::FindConsoleCommand(const Napi::CallbackInfo &info)
 
 Napi::Value ConsoleApi::WriteLogs(const Napi::CallbackInfo &info)
 {
-  auto pluginName = args[1].ToString();
+  auto pluginName = NapiHelper::ExtractString(info[0], "pluginName");
   if (!ValidateFilename(pluginName, /*allowDots*/ false)) {
     throw InvalidArgumentException("pluginName", pluginName);
   }
@@ -360,15 +393,18 @@ Napi::Value ConsoleApi::WriteLogs(const Napi::CallbackInfo &info)
 
   std::string s;
 
-  for (size_t i = 2; i < args.GetSize(); ++i) {
-    Napi::Value str = args[i];
-    if (args[i].GetType() == Napi::Value::Type::Object &&
-        !args[i].GetExternalData()) {
+  for (size_t i = 1; i < info.Length(); ++i) {
+    Napi::Value str = info[i];
 
-      Napi::Value json = Napi::Value::GlobalObject().GetProperty("JSON");
-      str = json.GetProperty("stringify").Call({ json, args[i] });
+    if (info[i].IsObject() && !info[i].IsExternal()) {
+      Napi::Object global = env.Global();
+      Napi::Object json = global.Get("JSON").As<Napi::Object>();
+
+      Napi::Function stringify = json.Get("stringify").As<Napi::Function>();
+      str = stringify.Call(json, { info[i] });
     }
-    s += str.ToString() + ' ';
+
+    s += str.As<Napi::String>().Utf8Value() + ' ';
   }
 
   (*g_m[pluginName]) << s << std::endl;
