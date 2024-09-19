@@ -7,6 +7,7 @@ import { ClientListener, CombinedController, Sp } from "./clientListener";
 // TODO: refactor worldViewMisc into service
 import { remoteIdToLocalId } from '../../view/worldViewMisc';
 import { logError, logTrace } from "../../logging";
+import { WorldView } from "../../view/worldView";
 
 export class SpSnippetService extends ClientListener {
     constructor(private sp: Sp, private controller: CombinedController) {
@@ -21,6 +22,11 @@ export class SpSnippetService extends ClientListener {
         this.controller.once('update', async () => {
             this.run(msg)
                 .then((res) => {
+                    const isNoResultSnippet = msg.snippetIdx === 0xffffffff;
+                    if (isNoResultSnippet) {
+                        return;
+                    }
+
                     if (res === undefined) {
                         res = null;
                     }
@@ -43,8 +49,51 @@ export class SpSnippetService extends ClientListener {
     }
 
     private async run(snippet: SpSnippetMessage): Promise<any> {
-        if (snippet.class === "SkympHacks") {
-            if (snippet.function === "AddItem" || snippet.function === "RemoveItem") {
+        const functionLowerCase = snippet.function.toLowerCase();
+        const classLowerCase = snippet.class.toLowerCase();
+
+        // keep in sync with remoteServer.ts
+        if (classLowerCase === "objectreference") {
+            if (functionLowerCase === "setdisplayname") {
+                let newName = snippet.arguments[0];
+                if (typeof newName === "string") {
+
+                    const selfId = remoteIdToLocalId(snippet.selfId);
+                    const self = this.sp.ObjectReference.from(this.sp.Game.getFormEx(selfId));
+
+                    const replaceValue = self?.getBaseObject()?.getName();
+
+                    if (replaceValue !== undefined) {
+                        newName = newName.replace(/%original_name%/g, replaceValue);
+                        snippet.arguments[0] = newName;
+                    }
+                    else {
+                        logError(this, "Couldn't get a replaceValue for SetDisplayName, snippet.selfId was", snippet.selfId.toString(16));
+                    }
+                }
+                else {
+                    logError(this, "Encountered SetDisplayName with non-string argument", newName);
+                }
+            }
+        }
+
+        if (classLowerCase === "game") {
+            if (functionLowerCase === "showracemenu" || functionLowerCase === "showlimitedracemenu") {
+                logTrace(this, "showracemenu called");
+                const worldView = this.controller.lookupListener(WorldView);
+                worldView.setFormViewUpdateAllowed(false);
+
+                logTrace(this, "Waiting 1.0s before calling showracemenu");
+                this.sp.Utility.wait(1.0).then(() => {
+                    this.runStatic(snippet);
+                    worldView.waitGameTimeAndAllowFormViewUpdate(1.0);
+                });
+                return;
+            }
+        }
+
+        if (classLowerCase === "skymphacks") {
+            if (functionLowerCase === "additem" || functionLowerCase === "removeitem") {
                 const form = this.sp.Form.from(this.deserializeArg(snippet.arguments[0]));
                 if (form === null) {
                     logError(this, "Unable to find form with id " + snippet.arguments[0].formId.toString(16));

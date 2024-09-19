@@ -8,7 +8,7 @@ extern espm::Loader l;
 TEST_CASE("Loading Cells from Solstheim.esm", "[LoadCells]")
 {
   auto& p = GetPartOne();
-  auto& t = p.worldState.GetReferencesAtPosition(0x04000800, 7, 8);
+  auto& t = p.worldState.GetNeighborsByPosition(0x04000800, 7, 8);
   REQUIRE(t.size() != 0);
 }
 

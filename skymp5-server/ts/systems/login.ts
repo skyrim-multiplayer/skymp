@@ -3,6 +3,12 @@ import Axios from "axios";
 import { getMyPublicIp } from "../publicIp";
 import { Settings } from "../settings";
 
+const loginFailedNotLoggedViaDiscord = JSON.stringify({ customPacketType: "loginFailedNotLoggedViaDiscord" });
+const loginFailedNotInTheDiscordServer = JSON.stringify({ customPacketType: "loginFailedNotInTheDiscordServer" });
+const loginFailedBanned = JSON.stringify({ customPacketType: "loginFailedBanned" });
+const loginFailedIpMismatch = JSON.stringify({ customPacketType: "loginFailedIpMismatch" });
+const loginFailedSessionNotFound = JSON.stringify({ customPacketType: "loginFailedSessionNotFound" });
+
 type Mp = any; // TODO
 
 interface UserProfile {
@@ -26,17 +32,26 @@ export class Login implements System {
     private offlineMode: boolean
   ) { }
 
-  private async getUserProfile(session: string): Promise<UserProfile> {
-    const response = await Axios.get(
-      `${this.masterUrl}/api/servers/${this.myAddr}/sessions/${session}`
-    );
-    if (!response.data || !response.data.user || !response.data.user.id) {
-      throw new Error("getUserProfile: bad master-api response");
+  private async getUserProfile(session: string, userId: number, ctx: SystemContext): Promise<UserProfile> {
+    try {
+      const response = await Axios.get(
+        `${this.masterUrl}/api/servers/${this.myAddr}/sessions/${session}`
+      );
+      if (!response.data || !response.data.user || !response.data.user.id) {
+        throw new Error("getUserProfile: bad master-api response");
+      }
+      return response.data.user as UserProfile;
+    } catch (error) {
+      if (Axios.isAxiosError(error) && error.response?.status === 404) {
+        ctx.svr.sendCustomPacket(userId, loginFailedSessionNotFound);
+      }
+      throw error;
     }
-    return response.data.user as UserProfile;
   }
 
   async initAsync(ctx: SystemContext): Promise<void> {
+    this.settingsObject = await Settings.get();
+
     if (this.ip && this.ip != "null") {
       this.myAddr = this.ip + ":" + this.serverPort;
     } else {
@@ -61,14 +76,24 @@ export class Login implements System {
     const ip = ctx.svr.getUserIp(userId);
     console.log(`Connecting a user ${userId} with ip ${ip}`);
 
-    let discordAuth = Settings.get().discordAuth;
+    let discordAuth = this.settingsObject.discordAuth;
 
     const gameData = content["gameData"];
     if (this.offlineMode === true && gameData && gameData.session) {
       this.log("The server is in offline mode, the client is NOT");
     } else if (this.offlineMode === false && gameData && gameData.session) {
       (async () => {
-        const profile = await this.getUserProfile(gameData.session);
+        const guidBeforeAsyncOp = ctx.svr.getUserGuid(userId);
+        const profile = await this.getUserProfile(gameData.session, userId, ctx);
+        const guidAfterAsyncOp = ctx.svr.isConnected(userId) ? ctx.svr.getUserGuid(userId) : "<disconnected>";
+
+        console.log({ guidBeforeAsyncOp, guidAfterAsyncOp, op: "getUserProfile" });
+
+        if (guidBeforeAsyncOp !== guidAfterAsyncOp) {
+          console.error(`User ${userId} changed guid from ${guidBeforeAsyncOp} to ${guidAfterAsyncOp} during async getUserProfile`);
+          throw new Error("Guid mismatch after getUserProfile");
+        }
+
         console.log("getUserProfileId:", profile);
 
         if (discordAuth && !discordAuth.botToken) {
@@ -84,8 +109,10 @@ export class Login implements System {
 
         if (discordAuth) {
           if (!profile.discordId) {
+            ctx.svr.sendCustomPacket(userId, loginFailedNotLoggedViaDiscord);
             throw new Error("Not logged in via Discord");
           }
+          const guidBeforeAsyncOp = ctx.svr.getUserGuid(userId);
           const response = await Axios.get(
             `https://discord.com/api/guilds/${discordAuth.guildId}/members/${profile.discordId}`,
             {
@@ -95,6 +122,14 @@ export class Login implements System {
               validateStatus: (status) => true,
             },
           );
+          const guidAfterAsyncOp = ctx.svr.isConnected(userId) ? ctx.svr.getUserGuid(userId) : "<disconnected>";
+
+          console.log({ guidBeforeAsyncOp, guidAfterAsyncOp, op: "Discord request" });
+
+          if (guidBeforeAsyncOp !== guidAfterAsyncOp) {
+            console.error(`User ${userId} changed guid from ${guidBeforeAsyncOp} to ${guidAfterAsyncOp} during async Discord request`);
+            throw new Error("Guid mismatch after Discord request");
+          }
 
           const mp = ctx.svr as unknown as Mp;
 
@@ -132,7 +167,8 @@ export class Login implements System {
           }
 
           if (response.status === 404 && response.data?.code === DiscordErrors.unknownMember) {
-            throw new Error("Not on the Discord server");
+            ctx.svr.sendCustomPacket(userId, loginFailedNotInTheDiscordServer);
+            throw new Error("Not in the Discord server");
           }
           // Disabled this check to be able bypassing ratelimit
           // if (response.status !== 200) {
@@ -140,18 +176,22 @@ export class Login implements System {
           //     JSON.stringify({ status: response.status, data: response.data }));
           // }
           if (roles.indexOf(discordAuth.banRoleId) !== -1) {
+            ctx.svr.sendCustomPacket(userId, loginFailedBanned);
             throw new Error("Banned");
           }
           if (ip !== ctx.svr.getUserIp(userId)) {
             // It's a quick and dirty way to check if it's the same user
             // During async http call the user could free userId and someone else could connect with the same userId
+            ctx.svr.sendCustomPacket(userId, loginFailedIpMismatch);
             throw new Error("IP mismatch");
           }
         }
         ctx.gm.emit("spawnAllowed", userId, profile.id, roles, profile.discordId);
         this.log("Logged as " + profile.id);
       })()
-        .catch((err) => console.error("Error logging in client:", JSON.stringify(gameData), err));
+        .catch((err) => {
+          console.error("Error logging in client:", JSON.stringify(gameData), err)
+        });
     } else if (this.offlineMode === true && gameData && typeof gameData.profileId === "number") {
       const profileId = gameData.profileId;
       ctx.gm.emit("spawnAllowed", userId, profileId, [], undefined);
@@ -162,4 +202,5 @@ export class Login implements System {
   }
 
   private myAddr: string;
+  private settingsObject: Settings;
 }

@@ -29,10 +29,11 @@ import { UpdatePropertyMessage } from "../messages/updatePropertyMessage";
 import { DeathStateContainerMessage } from "../messages/deathStateContainerMessage";
 import { TeleportMessage2 } from "../messages/teleportMessage2";
 import { BrowserWindowLoadedEvent } from "./browserWindowLoadedEvent";
-import { AuthEvent } from "./authEvent";
+import { AuthAttemptEvent } from "./authAttemptEvent";
 import { NewLocalLagValueCalculatedEvent } from "./newLocalLagValueCalculatedEvent";
 import { AuthNeededEvent } from "./authNeededEvent";
 import { QueryBlockSetInventoryEvent } from "./queryBlockSetInventoryEvent";
+import { QueryKeyCodeBindings } from "./queryKeyCodeBindings";
 
 type EventTypes = {
     'gameLoad': [GameLoadEvent],
@@ -68,11 +69,12 @@ type EventTypes = {
     'teleportMessage2': [ConnectionMessage<TeleportMessage2>]
 
     'browserWindowLoaded': [BrowserWindowLoadedEvent],
-    'auth': [AuthEvent],
+    'authAttempt': [AuthAttemptEvent],
     'authNeeded': [AuthNeededEvent],
     'anyMessage': [ConnectionMessage<AnyMessage>],
     'newLocalLagValueCalculated': [NewLocalLagValueCalculatedEvent],
-    'queryBlockSetInventoryEvent': [QueryBlockSetInventoryEvent]
+    'queryBlockSetInventoryEvent': [QueryBlockSetInventoryEvent],
+    'queryKeyCodeBindings': [QueryKeyCodeBindings]
 }
 
 // https://blog.makerx.com.au/a-type-safe-event-emitter-in-node-js/

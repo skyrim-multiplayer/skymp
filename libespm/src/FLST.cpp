@@ -17,7 +17,6 @@ FLST::Data FLST::GetData(
       }
     },
     compressedFieldsCache);
-  std::reverse(result.formIds.begin(), result.formIds.end());
   return result;
 }
 

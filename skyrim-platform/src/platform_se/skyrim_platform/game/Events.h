@@ -1,58 +1,12 @@
 #pragma once
 
-#include "events/ActorKill.h"
-#include "events/BooksRead.h"
-#include "events/CriticalHit.h"
-#include "events/DisarmedEvent.h"
-#include "events/DragonSoulsGained.h"
 #include "events/ItemHarvested.h"
-#include "events/LevelIncrease.h"
-#include "events/LocationDiscovery.h"
-#include "events/ShoutAttack.h"
-#include "events/SkillIncrease.h"
-#include "events/SoulsTrapped.h"
-#include "events/SpellsLearned.h"
 
 namespace RE {
-
-struct TESSpellCastEvent
-{
-public:
-  TESSpellCastEvent()
-    : TESSpellCastEvent(nullptr, static_cast<RE::FormID>(0))
-  {
-  }
-
-  TESSpellCastEvent(RE::TESObjectREFR* caster, RE::FormID spell)
-    : caster(caster)
-    , spell(spell)
-  {
-  }
-  ~TESSpellCastEvent() = default;
-
-  RE::NiPointer<RE::TESObjectREFR> caster;
-  RE::FormID spell;
-};
-static_assert(sizeof(TESSpellCastEvent) == 0x10);
 
 struct TESQuestInitEvent
 {
   RE::FormID questId;
-};
-
-struct TESQuestStartStopEvent
-{
-  RE::FormID questId;
-  bool isStarted;
-};
-
-struct TESQuestStageEvent
-{
-  void* finishedCallback;
-  RE::FormID questId;
-  uint16_t stage;
-  uint8_t unk;
-  uint8_t pad;
 };
 
 struct TESQuestStageItemDoneEvent // not finished
@@ -88,33 +42,10 @@ struct TESSleepStartEvent
   float desiredSleepEndTime;
 };
 
-struct TESSleepStopEvent
-{
-  bool isInterrupted;
-};
-
-struct TESCellAttachDetachEvent
-{
-  RE::NiPointer<RE::TESObjectREFR> reference;
-  uint8_t action;
-};
-
 struct TESWaitStartEvent
 {
   float waitStartTime;
   float desiredWaitEndTime;
-};
-
-struct TESActorLocationChangeEvent
-{
-  RE::NiPointer<RE::TESObjectREFR> actor;
-  RE::BGSLocation* oldLoc;
-  RE::BGSLocation* newLoc;
-};
-
-struct TESBookReadEvent
-{
-  RE::NiPointer<RE::TESObjectREFR> book;
 };
 
 struct TESSellEvent
@@ -155,11 +86,6 @@ struct TESPackageEvent
   EventType type;
 };
 
-struct TESEnterBleedoutEvent
-{
-  RE::NiPointer<RE::TESObjectREFR> actor;
-};
-
 struct TESDestructionStageChangedEvent
 {
   RE::NiPointer<RE::TESObjectREFR> target;
@@ -180,19 +106,6 @@ struct TESSceneEvent
 {
   RE::TESForm* reference; // what ref?
   RE::FormID sceneId;
-};
-
-struct TESPlayerBowShotEvent
-{
-  RE::FormID weaponId;
-  RE::FormID ammoId;
-  float power;
-  bool isSunGazing;
-};
-
-struct TESFastTravelEndEvent
-{
-  float travelTimeGameHours;
 };
 
 struct TESObjectREFRTranslationEvent

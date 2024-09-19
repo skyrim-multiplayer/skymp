@@ -9,6 +9,7 @@
 #include "PacketParser.h"
 #include <array>
 #include <cassert>
+#include <chrono>
 #include <type_traits>
 #include <vector>
 
@@ -142,8 +143,18 @@ void PartOne::SetUserActor(Networking::UserId userId, uint32_t actorFormId)
       throw std::runtime_error(ss.str());
     }
 
+    // Clear actor's hoster if any.
+    // HostStop message will be sent on the next attempt to update actor's
+    // movement
+    // Possible fix for "players link to each other" bug
+    // See also ActionListener::SendToNeighbours
+    auto hosterActorIt = worldState.hosters.find(actor.GetFormId());
+    if (hosterActorIt != worldState.hosters.end()) {
+      worldState.hosters.erase(hosterActorIt);
+    }
+
     // Both functions are required here, but it is NOT covered by unit tests
-    // properly. If you do something wrong here, players would not be able to
+    // properly. If you do something wrong here, players will not be able to
     // interact with items in the same cell after reconnecting.
     actor.UnsubscribeFromAll();
     actor.RemoveFromGridAndUnsubscribeAll();
@@ -159,6 +170,9 @@ void PartOne::SetUserActor(Networking::UserId userId, uint32_t actorFormId)
       actor.RespawnWithDelay();
     }
 
+    // This is not currently saved client-side, so reset
+    actor.SetLastAnimEvent(std::nullopt);
+
   } else {
     serverState.actorsMap.Erase(userId);
   }
@@ -169,16 +183,25 @@ uint32_t PartOne::GetUserActor(Networking::UserId userId)
   serverState.EnsureUserExists(userId);
 
   auto actor = serverState.ActorByUser(userId);
-  if (!actor)
+  if (!actor) {
     return 0;
+  }
   return actor->GetFormId();
+}
+
+std::string PartOne::GetUserGuid(Networking::UserId userId)
+{
+  serverState.EnsureUserExists(userId);
+  return serverState.UserGuid(userId);
 }
 
 Networking::UserId PartOne::GetUserByActor(uint32_t formId)
 {
   auto& form = worldState.LookupFormById(formId);
-  if (auto ac = dynamic_cast<MpActor*>(form.get())) {
-    return serverState.UserByActor(ac);
+  if (form) {
+    if (auto ac = form.get()->AsActor()) {
+      return serverState.UserByActor(ac);
+    }
   }
   return Networking::InvalidUserId;
 }
@@ -258,7 +281,7 @@ void PartOne::AttachSaveStorage(std::shared_ptr<ISaveStorage> saveStorage)
 {
   worldState.AttachSaveStorage(saveStorage);
 
-  clock_t was = clock();
+  auto start = std::chrono::steady_clock::now();
 
   int n = 0;
   int numPlayerCharacters = 0;
@@ -301,9 +324,14 @@ void PartOne::AttachSaveStorage(std::shared_ptr<ISaveStorage> saveStorage)
     }
   });
 
-  pImpl->logger->info("AttachSaveStorage took {} ticks, loaded {} ChangeForms "
-                      "(Including {} player characters)",
-                      clock() - was, n, numPlayerCharacters);
+  auto end = std::chrono::steady_clock::now();
+  auto duration =
+    std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+
+  pImpl->logger->info("AttachSaveStorage took {} seconds and {} milliseconds, "
+                      "loaded {} ChangeForms (Including {} player characters)",
+                      duration.count() / 1000, duration.count() % 1000, n,
+                      numPlayerCharacters);
 }
 
 espm::Loader& PartOne::GetEspm() const
@@ -343,6 +371,15 @@ public:
 private:
   const std::function<void()> f;
 };
+
+std::string ExtractGuid(Networking::PacketData data, size_t length)
+{
+  std::string guid;
+  guid.resize(length);
+  std::copy(data, data + length, guid.begin());
+  return guid;
+}
+
 }
 
 void PartOne::HandlePacket(void* partOneInstance, Networking::UserId userId,
@@ -352,8 +389,10 @@ void PartOne::HandlePacket(void* partOneInstance, Networking::UserId userId,
   auto this_ = reinterpret_cast<PartOne*>(partOneInstance);
 
   switch (packetType) {
-    case Networking::PacketType::ServerSideUserConnect:
-      return this_->AddUser(userId, UserType::User);
+    case Networking::PacketType::ServerSideUserConnect: {
+      std::string guid = ExtractGuid(data, length);
+      return this_->AddUser(userId, UserType::User, guid);
+    }
     case Networking::PacketType::ServerSideUserDisconnect: {
       ScopedTask t([userId, this_] {
         if (auto actor = this_->serverState.ActorByUser(userId)) {
@@ -473,6 +512,21 @@ void PartOne::RequestPacketHistoryPlayback(Networking::UserId userId,
   }
 }
 
+void PartOne::SendHostStop(Networking::UserId badHosterUserId,
+                           MpObjectReference& remote)
+{
+  auto remoteAsActor = remote.AsActor();
+
+  uint64_t longFormId = remote.GetFormId();
+  if (remoteAsActor && longFormId < 0xff000000) {
+    longFormId += 0x100000000;
+  }
+
+  Networking::SendFormatted(&GetSendTarget(), badHosterUserId,
+                            R"({ "type": "hostStop", "target": %llu })",
+                            longFormId);
+}
+
 FormCallbacks PartOne::CreateFormCallbacks()
 {
   static auto g_serializer =
@@ -588,23 +642,28 @@ void PartOne::Init()
   pImpl->onSubscribe = [this](Networking::ISendTarget* sendTarget,
                               MpObjectReference* emitter,
                               MpObjectReference* listener) {
-    if (!emitter)
+    if (!emitter) {
       throw std::runtime_error("nullptr emitter in onSubscribe");
-    auto listenerAsActor = dynamic_cast<MpActor*>(listener);
-    if (!listenerAsActor)
+    }
+
+    MpActor* listenerAsActor = listener->AsActor();
+    if (!listenerAsActor) {
       return;
+    }
+
     auto listenerUserId = serverState.UserByActor(listenerAsActor);
-    if (listenerUserId == Networking::InvalidUserId)
+    if (listenerUserId == Networking::InvalidUserId) {
       return;
+    }
 
     auto& emitterPos = emitter->GetPos();
     auto& emitterRot = emitter->GetAngle();
 
     bool isMe = emitter == listener;
 
-    auto emitterAsActor = dynamic_cast<MpActor*>(emitter);
+    MpActor* emitterAsActor = emitter->AsActor();
 
-    std::string jEquipment, jAppearance;
+    std::string jEquipment, jAppearance, jAnimation;
 
     const char *appearancePrefix = "", *appearance = "";
     if (emitterAsActor) {
@@ -621,6 +680,15 @@ void PartOne::Init()
       if (!jEquipment.empty()) {
         equipmentPrefix = R"(, "equipment": )";
         equipment = jEquipment.data();
+      }
+    }
+
+    const char *animationPrefix = "", *animation = "";
+    if (emitterAsActor) {
+      jAnimation = emitterAsActor->GetLastAnimEventAsJson();
+      if (!jAnimation.empty()) {
+        animationPrefix = R"(, "animation": )";
+        animation = jAnimation.data();
       }
     }
 
@@ -654,8 +722,9 @@ void PartOne::Init()
     std::string props;
 
     auto mode = VisitPropertiesMode::OnlyPublic;
-    if (isOwner)
+    if (isOwner) {
       mode = VisitPropertiesMode::All;
+    }
 
     const char *propsPrefix = "", *propsPostfix = "";
     auto visitor = [&](const char* propName, const char* jsonValue) {
@@ -715,21 +784,22 @@ void PartOne::Init()
     Networking::SendFormatted(
       sendTarget, listenerUserId,
       R"({"type": "%s", "idx": %u, "isMe": %s, "transform": {"pos":
-    [%f,%f,%f], "rot": [%f,%f,%f], "worldOrCell": %u}%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s})",
+    [%f,%f,%f], "rot": [%f,%f,%f], "worldOrCell": %u}%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s})",
       method, emitter->GetIdx(), isMe ? "true" : "false", emitterPos.x,
       emitterPos.y, emitterPos.z, emitterRot.x, emitterRot.y, emitterRot.z,
       worldOrCell, baseRecordTypePrefix, baseRecordType.data(),
-      appearancePrefix, appearance, equipmentPrefix, equipment, refrIdPrefix,
-      refrId, baseIdPrefix, baseId, isDeadPrefix, isDead, propsPrefix,
-      props.data(), propsPostfix);
+      appearancePrefix, appearance, equipmentPrefix, equipment,
+      animationPrefix, animation, refrIdPrefix, refrId, baseIdPrefix, baseId,
+      isDeadPrefix, isDead, propsPrefix, props.data(), propsPostfix);
   };
 
   pImpl->onUnsubscribe = [this](Networking::ISendTarget* sendTarget,
                                 MpObjectReference* emitter,
                                 MpObjectReference* listener) {
-    auto listenerAsActor = dynamic_cast<MpActor*>(listener);
-    if (!listenerAsActor)
+    MpActor* listenerAsActor = listener->AsActor();
+    if (!listenerAsActor) {
       return;
+    }
 
     auto listenerUserId = serverState.UserByActor(listenerAsActor);
     if (listenerUserId != Networking::InvalidUserId &&
@@ -740,9 +810,10 @@ void PartOne::Init()
   };
 }
 
-void PartOne::AddUser(Networking::UserId userId, UserType type)
+void PartOne::AddUser(Networking::UserId userId, UserType type,
+                      const std::string& guid)
 {
-  serverState.Connect(userId);
+  serverState.Connect(userId, guid);
   for (auto& listener : worldState.listeners)
     listener->OnConnect(userId);
 
@@ -846,7 +917,7 @@ void PartOne::TickPacketHistoryPlaybacks()
 
 void PartOne::TickDeferredMessages()
 {
-  for (Networking::UserId userId = 0; userId < serverState.userInfo.size();
+  for (Networking::UserId userId = 0; userId <= serverState.maxConnectedId;
        ++userId) {
     auto& userInfo = serverState.userInfo[userId];
     if (!userInfo) {

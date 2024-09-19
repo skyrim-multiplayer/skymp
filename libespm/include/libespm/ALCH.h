@@ -14,6 +14,9 @@ public:
   struct Data
   {
     std::vector<Effects::Effect> effects;
+    float weight = 0.f;
+    bool isFood = false;
+    bool isPoison = false;
   };
 
   Data GetData(CompressedFieldsCache& compressedFieldsCache) const noexcept;

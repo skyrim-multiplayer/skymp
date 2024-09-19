@@ -1,4 +1,5 @@
 #pragma once
+#include "AnimationData.h"
 #include "Appearance.h"
 #include "GetBaseActorValues.h"
 #include "MpObjectReference.h"
@@ -12,10 +13,14 @@
 
 class WorldState;
 struct ActorValues;
+class RespawnEvent;
+class ActiveMagicEffectsMap;
 
 class MpActor : public MpObjectReference
 {
 public:
+  friend class RespawnEvent;
+
   static const char* Type() { return "Actor"; }
   const char* GetFormType() const override { return "Actor"; }
 
@@ -32,6 +37,7 @@ public:
   std::unique_ptr<const Appearance> GetAppearance() const;
   const std::string& GetAppearanceAsJson();
   const std::string& GetEquipmentAsJson() const;
+  std::string GetLastAnimEventAsJson() const;
   Equipment GetEquipment() const;
   std::array<std::optional<Inventory::Entry>, 2> GetEquippedWeapon() const;
   uint32_t GetRaceId() const;
@@ -39,6 +45,9 @@ public:
   espm::ObjectBounds GetBounds() const;
   const std::vector<FormDesc>& GetTemplateChain() const;
   bool IsCreatedAsPlayer() const;
+  const ActorValues& GetActorValues() const;
+  const ActiveMagicEffectsMap& GetActiveMagicEffects() const;
+  int32_t GetProfileId() const;
 
   bool ShouldSkipRestoration() const noexcept;
   void UpdateNextRestorationTime(std::chrono::seconds duration) noexcept;
@@ -46,6 +55,12 @@ public:
   void SetRaceMenuOpen(bool isOpen);
   void SetAppearance(const Appearance* newAppearance);
   void SetEquipment(const std::string& jsonString);
+
+  void AddToFaction(Faction faction, bool lazyLoad = true);
+  bool IsInFaction(FormDesc factionForm, bool lazyLoad = true);
+  std::vector<Faction> GetFactions(int minFactionID, int maxFactionID,
+                                   bool lazyLoad = true);
+  void RemoveFromFaction(FormDesc factionForm, bool lazyLoad = true);
 
   void VisitProperties(const PropertiesVisitor& visitor,
                        VisitPropertiesMode mode) override;
@@ -135,15 +150,16 @@ public:
 
   void EquipBestWeapon();
 
-  bool MpApiCraft(uint32_t craftedItemBaseId, uint32_t count,
-                  uint32_t recipeId);
-
   void AddSpell(uint32_t spellId);
   void RemoveSpell(uint32_t spellId);
+
+  void SetLastAnimEvent(const std::optional<AnimationData>& animationData);
+  std::optional<AnimationData> GetLastAnimEvent() const;
 
 private:
   struct Impl;
   std::shared_ptr<Impl> pImpl;
+  bool factionsLoaded = false;
 
   void SendAndSetDeathState(bool isDead, bool shouldTeleport);
 
@@ -151,19 +167,11 @@ private:
                                               bool isDead,
                                               bool shouldTeleport);
 
-  void MpApiDeath(MpActor* killer = nullptr);
   void EatItem(uint32_t baseId, espm::Type t);
 
   bool ReadBook(uint32_t baseId);
 
   void ModifyActorValuePercentage(espm::ActorValue av, float percentageDelta);
-
-  std::chrono::steady_clock::time_point GetLastRestorationTime(
-    espm::ActorValue av) const noexcept;
-
-  void SetLastRestorationTime(espm::ActorValue av,
-                              std::chrono::steady_clock::time_point timePoint);
-  bool CanActorValueBeRestored(espm::ActorValue av);
 
   void EnsureTemplateChainEvaluated(
     espm::Loader& loader,
@@ -171,6 +179,7 @@ private:
 
   std::map<uint32_t, uint32_t> EvaluateDeathItem();
   void AddDeathItem();
+  void LoadFactions();
 
 protected:
   void BeforeDestroy() override;

@@ -37,18 +37,17 @@ const SkillsMenu = ({ send }: { send: (message: string) => void }) => {
     if (el) {
       el.style.display = 'flex';
     }
-    const audio = document
-      .getElementById('quitSound')
-      .cloneNode(true) as HTMLAudioElement;
-    audio.play();
+    try {
+      const audio = document
+        .getElementById('quitSound')
+        .cloneNode(true) as HTMLAudioElement;
+      audio.play();
+    }
+    catch (e) {
+      console.log("Error playing sound", e);
+    }
     setplayerData(undefined);
     send('/skill quit');
-  };
-
-  const keyListener = (event) => {
-    if (event.key === 'Escape') {
-      quitHandler();
-    }
   };
 
   const init = () => {
@@ -59,7 +58,7 @@ const SkillsMenu = ({ send }: { send: (message: string) => void }) => {
   useEffect(() => {
     window.addEventListener('updateSkillMenu', fetchData);
     window.addEventListener('initSkillMenu', init);
-    window.onkeydown = keyListener;
+    window.addEventListener('skymp5-client:browserUnfocused', quitHandler);
     // !Important: Run commented code to dispatch event
     // window.dispatchEvent(
     //   new CustomEvent('updateSkillMenu', {
@@ -178,7 +177,7 @@ const SkillsMenu = ({ send }: { send: (message: string) => void }) => {
 
   const confirmHanlder = () => {
     setconfirmDiscard(true);
-    setcurrentLevel('хотите удалить персонажа?');
+    setcurrentLevel('хотите сбросить прогресс?');
     setcurrentDescription('нажимая “да” вы полностью сбросите все выученные профессии и получите обратно половину потраченного опыта.');
   };
 
@@ -214,17 +213,14 @@ const SkillsMenu = ({ send }: { send: (message: string) => void }) => {
                 <ul className="perks__category" key={cIndex}>
                   {category.map((perk, index) => (
                     <div
-                      className={`perks__perk perks__perk--level-${
-                        (playerData.perks[perk.name] /
-                          perk.levelsPrice.length) *
-                          4 || 0
-                      } ${index > 7 ? 'perks__perk--absolute' : ''} ${
-                        index % 2 ? 'perks__perk--right' : 'perks__perk--left'
-                      }
-                        ${
-                          perk.levelsPrice.length < 4
-                            ? 'perks__perk--short'
-                            : ''
+                      className={`perks__perk perks__perk--level-${(playerData.perks[perk.name] /
+                        perk.levelsPrice.length) *
+                        4 || 0
+                        } ${index > 7 ? 'perks__perk--absolute' : ''} ${index % 2 ? 'perks__perk--right' : 'perks__perk--left'
+                        }
+                        ${perk.levelsPrice.length < 4
+                          ? 'perks__perk--short'
+                          : ''
                         }
                       `}
                       key={perk.name}
@@ -239,15 +235,15 @@ const SkillsMenu = ({ send }: { send: (message: string) => void }) => {
                       ></div>
                       {playerData.perks[perk.name] !==
                         perk.levelsPrice.length && (
-                        <p className="perks__perk__price">
-                          <span>
-                            {playerData.perks[perk.name]
-                              ? perk.levelsPrice[playerData.perks[perk.name]]
-                              : perk.levelsPrice[0]}
-                          </span>
-                          <span className="perks__exp" />
-                        </p>
-                      )}
+                          <p className="perks__perk__price">
+                            <span>
+                              {playerData.perks[perk.name]
+                                ? perk.levelsPrice[playerData.perks[perk.name]]
+                                : perk.levelsPrice[0]}
+                            </span>
+                            <span className="perks__exp" />
+                          </p>
+                        )}
                     </div>
                   ))}
                 </ul>
@@ -291,7 +287,7 @@ const SkillsMenu = ({ send }: { send: (message: string) => void }) => {
                   disabled={
                     !selectedPerk ||
                     selectedPerk.levelsPrice[
-                      playerData.perks[selectedPerk.name] || 0
+                    playerData.perks[selectedPerk.name] || 0
                     ] > pExp ||
                     (!playerData.perks[selectedPerk.name] && pMem === 0)
                   }
@@ -299,36 +295,36 @@ const SkillsMenu = ({ send }: { send: (message: string) => void }) => {
                 ></FrameButton>
                 {confirmDiscard
                   ? (
-                  <div className="perks__footer__buttons__confirm">
-                    <FrameButton
-                      text="да"
-                      name="yesBtn"
-                      variant="DEFAULT"
-                      width={178}
-                      height={56}
-                      onMouseDown={() => discardHandler()}
-                    ></FrameButton>
-                    <FrameButton
-                      text="нет"
-                      name="noBtn"
-                      variant="DEFAULT"
-                      width={178}
-                      height={56}
-                      onMouseDown={() => setconfirmDiscard(false)}
-                    ></FrameButton>
-                  </div>
-                    )
+                    <div className="perks__footer__buttons__confirm">
+                      <FrameButton
+                        text="да"
+                        name="yesBtn"
+                        variant="DEFAULT"
+                        width={178}
+                        height={56}
+                        onMouseDown={() => discardHandler()}
+                      ></FrameButton>
+                      <FrameButton
+                        text="нет"
+                        name="noBtn"
+                        variant="DEFAULT"
+                        width={178}
+                        height={56}
+                        onMouseDown={() => setconfirmDiscard(false)}
+                      ></FrameButton>
+                    </div>
+                  )
                   : (
-                  <FrameButton
-                    text="сбросить все"
-                    name="discardBtn"
-                    variant="DEFAULT"
-                    width={242}
-                    height={56}
-                    // disabled={Object.keys(playerData.perks).length === 0}
-                    onMouseDown={() => confirmHanlder()}
-                  ></FrameButton>
-                    )}
+                    <FrameButton
+                      text="сбросить"
+                      name="discardBtn"
+                      variant="DEFAULT"
+                      width={242}
+                      height={56}
+                      // disabled={Object.keys(playerData.perks).length === 0}
+                      onMouseDown={() => confirmHanlder()}
+                    ></FrameButton>
+                  )}
               </div>
               <div className="perks__footer__exit-button">
                 <FrameButton

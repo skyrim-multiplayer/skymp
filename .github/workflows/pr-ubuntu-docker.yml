@@ -61,9 +61,8 @@ jobs:
                 image: ${{ env.SKYMP_VCPKG_DEPS_IMAGE }}
                 options: |
                     -v ${{github.workspace}}:/src
-                    -v ${{github.workspace}}/.cmake-js:/home/skymp/.cmake-js
                 run: |
-                    chown -R skymp:skymp /src /home/skymp/.cmake-js
+                    chown -R skymp:skymp /src
 
           - name: CMake Configure
             id: cmake_configure
@@ -72,7 +71,6 @@ jobs:
                 image: ${{ env.SKYMP_VCPKG_DEPS_IMAGE }}
                 options: |
                     -v ${{github.workspace}}:/src
-                    -v ${{github.workspace}}/.cmake-js:/home/skymp/.cmake-js
                     -u skymp
                     --name configure_container
                 run: |
@@ -88,13 +86,13 @@ jobs:
 
           - name: Upload vcpkg failure logs
             if: failure()
-            uses: actions/upload-artifact@v2
+            uses: actions/upload-artifact@v4
             with:
               name: install-x64-linux-dbg-out.log
               path: ${{github.workspace}}/install-x64-linux-dbg-out.log
 
           - name: Upload compile_commands.json
-            uses: actions/upload-artifact@v3
+            uses: actions/upload-artifact@v4
             with:
                 name: compile_commands.json
                 path: ${{github.workspace}}/build/compile_commands.json
@@ -105,7 +103,6 @@ jobs:
                 image: ${{ env.SKYMP_VCPKG_DEPS_IMAGE }}
                 options: |
                     -v ${{github.workspace}}:/src
-                    -v ${{github.workspace}}/.cmake-js:/home/skymp/.cmake-js
                     -u skymp
                 run: |
                     cd /src \
@@ -117,19 +114,19 @@ jobs:
                 image: ${{ env.SKYMP_VCPKG_DEPS_IMAGE }}
                 options: |
                     -v ${{github.workspace}}:/src
-                    -v ${{github.workspace}}/.cmake-js:/home/skymp/.cmake-js
                     -u skymp
                 run: |
                     cd /src/build \
                     && tar czf dist.tar.gz dist
 
           - name: Upload dist.tar.gz
-            uses: actions/upload-artifact@v3
+            uses: actions/upload-artifact@v4
             with:
               name: dist.tar.gz
               path: ${{github.workspace}}/build/dist.tar.gz
 
           - name: SP Types Check
+            id: sp_types_check
             run: |
               commit=$(< ${{github.workspace}}/skyrim-platform/src/platform_se/codegen/convert-files/temp.txt)
               build=$(< ${{github.workspace}}/build/dist/client/Data/Platform/Modules/skyrimPlatform.ts)
@@ -145,6 +142,7 @@ jobs:
               echo "SP Types in codegen and build dist equal"
 
           - name: SP Const Enums Check
+            id: sp_const_enums_check
             run: |
               cd skyrim-platform/tools/const_enum_extractor
               sudo yarn install
@@ -156,6 +154,18 @@ jobs:
                 echo "ConstEnumApi.cpp has changed after running const_enum_extractor. Please re-run it locally and commit changes"
                 exit 1
               fi
+          
+          - name: SP Types Check failed - Here is what you can do
+            if: ${{ failure() && steps.sp_types_check.outcome == 'failure' }}
+            run: |
+              echo "skyrimPlatform.ts and Definitions.txt do not match."
+              echo "You can fix this manually or simply build the project locally and commit the changes."
+
+          - name: SP Const Enums Check failed - Here is what you can do
+            if: ${{ failure() && steps.sp_const_enums_check.outcome == 'failure' }}
+            run: |
+              echo "ConstEnumApi.cpp has changed after running const_enum_extractor. Please re-run it locally and commit changes."
+              echo "In folder skyrim-platform/tools/const_enum_extractor run 'yarn install' and then 'node ./index.js'"
 
           - name: Test
             uses: addnab/docker-run-action@v3
@@ -163,7 +173,6 @@ jobs:
                 image: ${{ env.SKYMP_VCPKG_DEPS_IMAGE }}
                 options: |
                     -v ${{github.workspace}}:/src
-                    -v ${{github.workspace}}/.cmake-js:/home/skymp/.cmake-js
                     -u skymp
                 run: |
                     cd /src/build \

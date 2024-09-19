@@ -25,6 +25,7 @@ public:
 
     Flags flags = Flags::None;
     uint32_t spellOrSkillFormId = 0;
+    float weight;
   };
 
   Data GetData(CompressedFieldsCache& compressedFieldsCache) const noexcept;

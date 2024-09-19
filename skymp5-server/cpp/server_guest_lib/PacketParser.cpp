@@ -29,7 +29,8 @@ static const JsonPointer t("t"), idx("idx"), content("content"), data("data"),
   magicka("magicka"), stamina("stamina"), leftSpell("leftSpell"),
   rightSpell("rightSpell"), voiceSpell("voiceSpell"),
   instantSpell("instantSpell"), weaponId("weaponId"), ammoId("ammoId"),
-  power("power"), isSunGazing("isSunGazing");
+  power("power"), isSunGazing("isSunGazing"),
+  isSecondActivation("isSecondActivation");
 }
 
 struct PacketParser::Impl
@@ -79,14 +80,14 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
           { message->pos[0], message->pos[1], message->pos[2] },
           { message->rot[0], message->rot[1], message->rot[2] },
           message->isInJumpState, message->isWeapDrawn, message->isBlocking,
-          message->worldOrCell);
+          message->worldOrCell, message->runMode);
         return;
       }
       case MsgType::UpdateAnimation: {
         auto message =
           reinterpret_cast<UpdateAnimationMessage*>(result->message.get());
         AnimationData animationData;
-        animationData.animEventName = message->animEventName.data();
+        animationData.animEventName = message->animEventName;
         animationData.numChanges = message->numChanges;
         actionListener.OnUpdateAnimation(rawMsgData, message->idx,
                                          animationData);
@@ -165,8 +166,11 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
       uint64_t caster, target;
       ReadEx(data_, JsonPointers::caster, &caster);
       ReadEx(data_, JsonPointers::target, &target);
+      bool isSecondActivation;
+      ReadEx(data_, JsonPointers::isSecondActivation, &isSecondActivation);
       actionListener.OnActivate(rawMsgData, FormIdCasts::LongToNormal(caster),
-                                FormIdCasts::LongToNormal(target));
+                                FormIdCasts::LongToNormal(target),
+                                isSecondActivation);
     } break;
     case MsgType::UpdateProperty:
       break;

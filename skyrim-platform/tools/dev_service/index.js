@@ -3,6 +3,13 @@ let path = require("path");
 let childProcess = require("child_process");
 let game = require("./game");
 
+// Keep this in sync with triplet file overlay_triplets\x64-windows-sp.cmake or similar
+const requiredVcpkgDlls = [
+  "spdlog.dll",
+  "fmt.dll",
+  "ChakraCore.dll"
+];
+
 function writeFileSyncRecursive(filename, content, charset) {
   filename
     .split(path.sep)
@@ -134,10 +141,12 @@ const watchCallback = (_eventType, fileName) => {
 
         cp(binPath("SkyrimPlatform.pdb"), distDir);
         cp(binPath("SkyrimPlatformImpl.pdb"), distDir);
-        cp(
-          binPath("ChakraCore.dll"),
-          path.join(distDir, "Data/Platform/Distribution/RuntimeDependencies")
-        );
+        requiredVcpkgDlls.forEach((dll) => {
+          cp(
+            binPath(dll),
+            path.join(distDir, "Data/Platform/Distribution/RuntimeDependencies")
+          );
+        });
         cp(
           binPath("SkyrimPlatformCEF.exe.hidden"),
           path.join(distDir, "Data/Platform/Distribution/RuntimeDependencies")
@@ -189,12 +198,24 @@ const watchCallback = (_eventType, fileName) => {
 
       // On Linux, we would not have this directory created yet
       createDirectory(path.join(distDir, "Data/Platform/Modules"));
+
+      // Fallback to spDotTsPath2 if codegen/tsconverter is not available (Emscripten build)
+      const spDotTsPath1 = path.join(bin, `_codegen/skyrimPlatform.ts`);
+      const spDotTsPath2 = path.join(sourceDir, "src/platform_se/codegen/convert-files/skyrimPlatform.ts");
+      let spDotTsPath;
+      if (fs.existsSync(spDotTsPath1)) {
+        spDotTsPath = spDotTsPath1;
+      } else if (fs.existsSync(spDotTsPath2)) {
+        spDotTsPath = spDotTsPath2;
+      } else {
+        throw new Error(`Cannot find skyrimPlatform.ts in ${spDotTsPath1} or ${spDotTsPath2}`);
+      }
       cp(
-        path.join(bin, `_codegen/skyrimPlatform.ts`),
+        spDotTsPath,
         path.join(distDir, "Data/Platform/Modules")
       );
       cp(
-        path.join(bin, `_codegen/skyrimPlatform.ts`),
+        spDotTsPath,
         path.join(sourceDir, "src/platform_se/codegen/convert-files")
       );
 

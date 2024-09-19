@@ -2,6 +2,7 @@
 #include "NiPoint3.h"
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <string.h>
 #include <typeinfo>
 #include <vector>
@@ -10,6 +11,8 @@ class WorldState;
 class IGameObject;
 class ActivePexInstance;
 struct VarValue;
+class MpObjectReference;
+class MpActor;
 
 class MpForm
 {
@@ -18,6 +21,10 @@ class MpForm
 
 public:
   MpForm();
+
+  // Fast dynamic_cast replacement
+  MpObjectReference* AsObjectReference() const noexcept;
+  MpActor* AsActor() const noexcept;
 
   static const char* Type() { return "Form"; }
   bool IsEspmForm() const noexcept;
@@ -54,6 +61,12 @@ public:
   virtual ~MpForm() = default;
 
   auto GetFormId() const noexcept { return id; }
+  float GetWeight() const;
+
+  std::optional<uint32_t> GetSingleUpdateTimerId() const noexcept;
+  void SetSingleUpdateTimerId(std::optional<uint32_t> id) noexcept;
+
+  virtual void Update();
 
   MpForm(const MpForm&) = delete;
   MpForm& operator=(const MpForm&) = delete;
@@ -61,7 +74,6 @@ public:
 protected:
   virtual void Init(WorldState* parent_, uint32_t formId_,
                     bool hasChangeForm); // See WorldState::AddForm
-  virtual void Update();
   virtual void SendPapyrusEvent(const char* eventName,
                                 const VarValue* arguments = nullptr,
                                 size_t argumentsCount = 0);
@@ -73,12 +85,16 @@ private:
   WorldState* parent = nullptr;
   mutable GameObjectPtr gameObject;
   std::vector<std::shared_ptr<ActivePexInstance>> activePexInstances;
+  std::optional<uint32_t> singleUpdateTimerId;
 
 protected:
-  virtual void BeforeDestroy(){};
+  virtual void BeforeDestroy() {}
 
   const std::vector<std::shared_ptr<ActivePexInstance>>&
   ListActivePexInstances() const;
 
   void AddScript(const std::shared_ptr<ActivePexInstance>& script) noexcept;
+
+  MpObjectReference* asObjectReference = nullptr;
+  MpActor* asActor = nullptr;
 };

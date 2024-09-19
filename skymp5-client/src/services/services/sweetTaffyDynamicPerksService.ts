@@ -55,7 +55,7 @@ export class SweetTaffyDynamicPerksService extends ClientListener {
 
     if (!e.message.isMe) return;
 
-    const entries = e.message.inventory?.entries;
+    const entries = e.message.props?.inventory?.entries;
     if (entries === undefined) {
       logTrace(this, "Received CreateActorMessage without inventory");
       return;

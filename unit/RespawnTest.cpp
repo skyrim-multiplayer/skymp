@@ -48,7 +48,8 @@ TEST_CASE("DeathState packed is correct if actor is respawning", "[Respawn]")
   p.Messages().clear();
   ac.Respawn();
 
-  REQUIRE(p.Messages().size() == 1);
+  REQUIRE(p.Messages().size() == 2);
+
   nlohmann::json message = p.Messages()[0].j;
   REQUIRE(message["t"] == MsgType::DeathStateContainer);
 
@@ -66,4 +67,14 @@ TEST_CASE("DeathState packed is correct if actor is respawning", "[Respawn]")
 
   REQUIRE(ac.IsDead() == false);
   REQUIRE(ac.GetChangeForm().actorValues.healthPercentage == 1.f);
+
+  // TODO: should probably not sending to ourselves. see also RespawnEvent.cpp
+  nlohmann::json message2 = p.Messages()[1].j;
+  REQUIRE(message2["t"] == MsgType::UpdateProperty);
+
+  REQUIRE(message2["propName"] == "isDead");
+  REQUIRE(message2["data"] == false);
+  REQUIRE(message2["idx"] == ac.GetIdx());
+  REQUIRE(message2["refrId"] == ac.GetFormId());
+  REQUIRE(message2["baseRecordType"] == nlohmann::json{});
 }

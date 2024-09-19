@@ -1,10 +1,23 @@
 #include "MpForm.h"
 
+#include "GetWeightFromRecord.h"
+#include "MpObjectReference.h"
 #include "WorldState.h"
+#include "gamemode_events/PapyrusEventEvent.h"
 #include "script_objects/MpFormGameObject.h"
 
 MpForm::MpForm()
 {
+}
+
+MpObjectReference* MpForm::AsObjectReference() const noexcept
+{
+  return asObjectReference;
+}
+
+MpActor* MpForm::AsActor() const noexcept
+{
+  return asActor;
 }
 
 void MpForm::Init(WorldState* parent_, uint32_t formId_, bool hasChangeForm)
@@ -21,7 +34,9 @@ void MpForm::Update()
 void MpForm::SendPapyrusEvent(const char* eventName, const VarValue* arguments,
                               size_t argumentsCount)
 {
-  GetParent()->SendPapyrusEvent(this, eventName, arguments, argumentsCount);
+  PapyrusEventEvent papyrusEventEvent(this, eventName, arguments,
+                                      argumentsCount);
+  papyrusEventEvent.Fire(parent);
 }
 
 VarValue MpForm::ToVarValue() const
@@ -63,4 +78,32 @@ void MpForm::AddScript(
 bool MpForm::IsEspmForm() const noexcept
 {
   return id < 0xff000000;
+}
+
+float MpForm::GetWeight() const
+{
+  auto objectReference = AsObjectReference();
+  if (!objectReference) {
+    return 0.f;
+  }
+
+  const uint32_t baseId = objectReference->GetBaseId();
+  const auto& espm = GetParent()->GetEspm();
+  const auto* record = espm.GetBrowser().LookupById(baseId).rec;
+  if (!record) {
+    spdlog::warn("MpForm::GetWeight - Record of form ({}) is nullptr", baseId);
+    return 0.f;
+  }
+
+  return GetWeightFromRecord(record, GetParent()->GetEspmCache());
+}
+
+std::optional<uint32_t> MpForm::GetSingleUpdateTimerId() const noexcept
+{
+  return singleUpdateTimerId;
+}
+
+void MpForm::SetSingleUpdateTimerId(std::optional<uint32_t> id) noexcept
+{
+  singleUpdateTimerId = id;
 }

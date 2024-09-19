@@ -1,13 +1,14 @@
-﻿#include "papyrus-vm/OpcodesImplementation.h"
+﻿#include "ScopedTask.h"
+#include "papyrus-vm/OpcodesImplementation.h"
 #include "papyrus-vm/Utils.h"
 #include "papyrus-vm/VirtualMachine.h"
 #include <algorithm>
 #include <cctype> // tolower
+#include <fmt/ranges.h>
 #include <functional>
+#include <spdlog/spdlog.h>
 #include <sstream>
 #include <stdexcept>
-
-#include <spdlog/spdlog.h>
 
 namespace {
 bool IsSelfStr(const VarValue& v)
@@ -131,96 +132,9 @@ const std::string& ActivePexInstance::GetSourcePexName() const
   return sourcePex.fn()->source;
 }
 
-VarValue CastToString(const VarValue& var)
-{
-  switch (var.GetType()) {
-    case VarValue::kType_Object: {
-      IGameObject* ptr = ((IGameObject*)var);
-      if (ptr) {
-        return VarValue(ptr->GetStringID());
-      } else {
-        const static std::string noneString = "None";
-        return VarValue(noneString.c_str());
-      }
-    }
-    case VarValue::kType_Identifier:
-      throw std::runtime_error(
-        "Papyrus VM: failed to get valid type indentifier, ::CastToString()");
-    case VarValue::kType_String:
-      return var;
-    case VarValue::kType_Integer:
-      return VarValue(std::to_string(static_cast<int32_t>(var)));
-    case VarValue::kType_Float: {
-      char buffer[512];
-      snprintf(buffer, sizeof(buffer), "%.*g", 9000, static_cast<double>(var));
-      return VarValue(std::string(buffer));
-    }
-    case VarValue::kType_Bool: {
-      return VarValue(static_cast<bool>(var) ? "True" : "False");
-    }
-    case VarValue::kType_ObjectArray:
-      return GetElementsArrayAtString(var, var.kType_ObjectArray);
-    case VarValue::kType_StringArray:
-      return GetElementsArrayAtString(var, var.kType_StringArray);
-    case VarValue::kType_IntArray:
-      return GetElementsArrayAtString(var, var.kType_IntArray);
-    case VarValue::kType_FloatArray:
-      return GetElementsArrayAtString(var, var.kType_FloatArray);
-    case VarValue::kType_BoolArray:
-      return GetElementsArrayAtString(var, var.kType_BoolArray);
-    default:
-      throw std::runtime_error(
-        "Papyrus VM: Received wrong type, ::CastToString()");
-  }
-}
-
-VarValue GetElementsArrayAtString(const VarValue& array, uint8_t type)
-{
-  std::string returnValue = "[";
-
-  for (size_t i = 0; i < array.pArray->size(); ++i) {
-    switch (type) {
-      case VarValue::kType_ObjectArray: {
-        auto object = (static_cast<IGameObject*>((*array.pArray)[i]));
-        returnValue += object ? object->GetStringID() : "None";
-        break;
-      }
-
-      case VarValue::kType_StringArray:
-        returnValue += (const char*)((*array.pArray)[i]);
-        break;
-
-      case VarValue::kType_IntArray:
-        returnValue += std::to_string((int)((*array.pArray)[i]));
-        break;
-
-      case VarValue::kType_FloatArray:
-        returnValue += std::to_string((double)((*array.pArray)[i]));
-        break;
-
-      case VarValue::kType_BoolArray: {
-        VarValue& temp = ((*array.pArray)[i]);
-        returnValue += (const char*)(CastToString(temp));
-        break;
-      }
-      default:
-        throw std::runtime_error(
-          " Papyrus VM: None of the type values "
-          "​​matched catched exception ::GetElementArrayAtString");
-    }
-
-    if (i < array.pArray->size() - 1)
-      returnValue += ", ";
-    else
-      returnValue += "]";
-  }
-
-  return VarValue(returnValue);
-}
-
 struct ActivePexInstance::ExecutionContext
 {
-  std::shared_ptr<StackIdHolder> stackIdHolder;
+  std::shared_ptr<StackData> stackData;
   std::vector<FunctionCode::Instruction> instructions;
   std::shared_ptr<std::vector<Local>> locals;
   bool needReturn = false;
@@ -328,7 +242,7 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
           *args[0] = (*args[1]).CastToBool();
           break;
         case VarValue::kType_String:
-          *args[0] = CastToString(*args[1]);
+          *args[0] = VarValue::CastToString(*args[1]);
           break;
         default:
           // assert(0);
@@ -373,8 +287,36 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
         parentInstance ? parentInstance->GetSourcePexName() : "";
       try {
         auto gameObject = static_cast<IGameObject*>(activeInstanceOwner);
+
+        std::vector<std::shared_ptr<ActivePexInstance>>
+          activePexInstancesForCallParent;
+        if (gameObject) {
+          activePexInstancesForCallParent =
+            gameObject->ListActivePexInstances();
+
+          std::string toFind = sourcePex.source;
+
+          for (auto& v : activePexInstancesForCallParent) {
+            if (!Utils::stricmp(v->GetSourcePexName().data(), toFind.data())) {
+              v = parentInstance;
+              spdlog::trace("CallParent: redirecting method call {} -> {}",
+                            toFind, parentName);
+            }
+          }
+        }
+
+        if (spdlog::should_log(spdlog::level::trace)) {
+          std::vector<std::string> argsForCallStr;
+          for (auto v : argsForCall) {
+            argsForCallStr.push_back(v.ToString());
+          }
+          spdlog::trace("CallParent: calling with args {}",
+                        fmt::join(argsForCallStr, ", "));
+        }
+
         auto res = parentVM->CallMethod(gameObject, (const char*)(*args[0]),
-                                        argsForCall);
+                                        argsForCall, ctx->stackData,
+                                        &activePexInstancesForCallParent);
         if (EnsureCallResultIsSynchronous(res, ctx))
           *args[1] = res;
       } catch (std::exception& e) {
@@ -390,7 +332,7 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
       // BYOHRelationshipAdoptionPetDoorTrigger
       if (args[0]->GetType() != VarValue::kType_String &&
           args[0]->GetType() != VarValue::kType_Identifier)
-        throw std::runtime_error("Anomally in CallMethod. String expected");
+        throw std::runtime_error("Anomaly in CallMethod. String expected");
 
       std::string functionName = (const char*)(*args[0]);
       static const std::string nameOnBeginState = "onBeginState";
@@ -406,7 +348,7 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
           auto nullableGameObject = static_cast<IGameObject*>(*object);
           auto res =
             parentVM->CallMethod(nullableGameObject, functionName.c_str(),
-                                 argsForCall, ctx->stackIdHolder);
+                                 argsForCall, ctx->stackData);
           spdlog::trace("callmethod object={} funcName={} result={}",
                         object->ToString(), functionName, res.ToString());
           if (EnsureCallResultIsSynchronous(res, ctx)) {
@@ -425,7 +367,7 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
       const char* functionName = (const char*)(*args[1]);
       try {
         auto res = parentVM->CallStatic(className, functionName, argsForCall,
-                                        ctx->stackIdHolder);
+                                        ctx->stackData);
         if (EnsureCallResultIsSynchronous(res, ctx))
           *args[2] = res;
       } catch (std::exception& e) {
@@ -497,7 +439,7 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
             // TODO: use of argsForCall looks incorrect. why use argsForCall
             // here? shoud be {} (empty args)
             *args[2] = inst->StartFunction(runProperty->readHandler,
-                                           argsForCall, ctx->stackIdHolder);
+                                           argsForCall, ctx->stackData);
             spdlog::trace("propget function called");
           } else {
             auto& instProps = inst->sourcePex.fn()->objectTable[0].properties;
@@ -583,7 +525,7 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
             // TODO: use of argsForCall looks incorrect.
             // probably should only *args[2]
             inst->StartFunction(runProperty->writeHandler, argsForCall,
-                                ctx->stackIdHolder);
+                                ctx->stackData);
             spdlog::trace("propset function called");
           } else {
             auto& instProps = inst->sourcePex.fn()->objectTable[0].properties;
@@ -736,8 +678,8 @@ ActivePexInstance::TransformInstructions(
         dereferenceStart = 2;
         break;
       case OpcodesImplementation::Opcodes::op_CallParent:
-        // TODO?
-        dereferenceStart = 0;
+        // Do not dereference functionName
+        dereferenceStart = 1;
         break;
       case OpcodesImplementation::Opcodes::op_PropGet:
       case OpcodesImplementation::Opcodes::op_PropSet:
@@ -791,14 +733,35 @@ VarValue ActivePexInstance::ExecuteAll(
   return ctx.returnValue;
 }
 
-VarValue ActivePexInstance::StartFunction(
-  FunctionInfo& function, std::vector<VarValue>& arguments,
-  std::shared_ptr<StackIdHolder> stackIdHolder)
+VarValue ActivePexInstance::StartFunction(FunctionInfo& function,
+                                          std::vector<VarValue>& arguments,
+                                          std::shared_ptr<StackData> stackData)
 {
-  if (!stackIdHolder)
-    throw std::runtime_error("An empty stackIdHolder passed to StartFunction");
+  if (!stackData) {
+    throw std::runtime_error("An empty stackData passed to StartFunction");
+  }
+
+  thread_local StackDepthHolder g_stackDepthHolder;
+
+  g_stackDepthHolder.IncreaseStackDepth();
+
+  Viet::ScopedTask<StackDepthHolder> stackDepthDecreaseTask(
+    [](StackDepthHolder& stackDepthHolder) {
+      stackDepthHolder.DecreaseStackDepth();
+    },
+    g_stackDepthHolder);
+
+  constexpr size_t kMaxStackDepth = 128;
+
+  if (g_stackDepthHolder.GetStackDepth() >= kMaxStackDepth) {
+    spdlog::error("ActivePexInstance::StartFunction - Stack overflow in "
+                  "script {}, returning None",
+                  sourcePex.fn()->source);
+    return VarValue::None();
+  }
+
   auto locals = MakeLocals(function, arguments);
-  ExecutionContext ctx{ stackIdHolder, function.code.instructions, locals };
+  ExecutionContext ctx{ stackData, function.code.instructions, locals };
   return ExecuteAll(ctx);
 }
 

@@ -54,11 +54,11 @@ private:
   std::vector<fs::path> MakeFilePaths(const fs::path& dataDir,
                                       const std::vector<fs::path>& fileNames);
 
-  std::unique_ptr<IBuffer> MakeBuffer(const fs::path& filePath) const;
+  std::unique_ptr<Viet::IBuffer> MakeBuffer(const fs::path& filePath) const;
 
   struct Entry
   {
-    std::unique_ptr<IBuffer> buffer;
+    std::unique_ptr<Viet::IBuffer> buffer;
     std::unique_ptr<Browser> browser;
 
     uintmax_t size = 0;

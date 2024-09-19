@@ -125,10 +125,11 @@ public:
    * @brief Registers sink using script event source.
    */
   template <class E>
-  void ActivateSink(const Sink* sink)
+  void ActivateSink(const Sink* sink,
+                    RE::BSTEventSink<typename E::Event>* singleton)
   {
     if (const auto source = ::GetEventSource<E>()) {
-      source->AddEventSink(GetSingleton());
+      source->AddEventSink(singleton);
       logger::debug("Registered {} handler"sv, typeid(E).name());
       activeSinks.emplace(sink);
     }
@@ -138,10 +139,11 @@ public:
    * @brief Registers sink using specific event source.
    */
   template <class E>
-  void ActivateSink(const Sink* sink, RE::BSTEventSource<E>* source)
+  void ActivateSink(const Sink* sink, RE::BSTEventSource<E>* source,
+                    RE::BSTEventSink<E>* singleton)
   {
     if (source) {
-      source->AddEventSink(GetSingleton());
+      source->AddEventSink(singleton);
       logger::debug("Registered {} handler"sv, typeid(E).name());
       activeSinks.emplace(sink);
     }
@@ -151,10 +153,10 @@ public:
    * @brief Registers sink using specific class as event source.
    */
   template <class T, class E>
-  void ActivateSink(const Sink* sink)
+  void ActivateSink(const Sink* sink, RE::BSTEventSink<E>* singleton)
   {
     if (const auto source = ::GetEventSource<T, E>()) {
-      source->AddEventSink(GetSingleton());
+      source->AddEventSink(singleton);
       logger::debug("Registered {} handler"sv, typeid(E).name());
       activeSinks.emplace(sink);
     }
@@ -544,7 +546,9 @@ private:
         [](const Sink* sink) {
           const auto handler = EventHandler::GetSingleton();
           auto source = SKSE::GetActionEventSource();
-          handler->ActivateSink(sink, source);
+          handler->ActivateSink(
+            sink, source,
+            static_cast<RE::BSTEventSink<SKSE::ActionEvent>*>(handler));
         },
         [](const Sink* sink) {
           const auto handler = EventHandler::GetSingleton();
@@ -566,7 +570,9 @@ private:
         [](const Sink* sink) {
           const auto handler = EventHandler::GetSingleton();
           auto source = SKSE::GetCameraEventSource();
-          handler->ActivateSink(sink, source);
+          handler->ActivateSink(
+            sink, source,
+            static_cast<RE::BSTEventSink<SKSE::CameraEvent>*>(handler));
         },
         [](const Sink* sink) {
           const auto handler = EventHandler::GetSingleton();
@@ -588,7 +594,9 @@ private:
         [](const Sink* sink) {
           const auto handler = EventHandler::GetSingleton();
           auto source = SKSE::GetCrosshairRefEventSource();
-          handler->ActivateSink(sink, source);
+          handler->ActivateSink(
+            sink, source,
+            static_cast<RE::BSTEventSink<SKSE::CrosshairRefEvent>*>(handler));
         },
         [](const Sink* sink) {
           const auto handler = EventHandler::GetSingleton();
@@ -610,7 +618,9 @@ private:
         [](const Sink* sink) {
           const auto handler = EventHandler::GetSingleton();
           auto source = SKSE::GetModCallbackEventSource();
-          handler->ActivateSink(sink, source);
+          handler->ActivateSink(
+            sink, source,
+            static_cast<RE::BSTEventSink<SKSE::ModCallbackEvent>*>(handler));
         },
         [](const Sink* sink) {
           const auto handler = EventHandler::GetSingleton();
@@ -632,7 +642,9 @@ private:
         [](const Sink* sink) {
           const auto handler = EventHandler::GetSingleton();
           auto source = SKSE::GetNiNodeUpdateEventSource();
-          handler->ActivateSink(sink, source);
+          handler->ActivateSink(
+            sink, source,
+            static_cast<RE::BSTEventSink<SKSE::NiNodeUpdateEvent>*>(handler));
         },
         [](const Sink* sink) {
           const auto handler = EventHandler::GetSingleton();
@@ -687,7 +699,8 @@ private:
       // Activate
       [](const ::Sink* sink) {
         const auto handler = EventHandler::GetSingleton();
-        handler->ActivateSink<E>(sink, GetEventSourceScriptEvent<E>());
+        handler->ActivateSink<E>(sink, GetEventSourceScriptEvent<E>(),
+                                 static_cast<RE::BSTEventSink<E>*>(handler));
       },
       // Deactivate
       [](const ::Sink* sink) {
@@ -720,7 +733,8 @@ private:
       // Activate
       [](const ::Sink* sink) {
         const auto handler = EventHandler::GetSingleton();
-        handler->ActivateSink<E>(sink);
+        handler->ActivateSink<E>(
+          sink, static_cast<RE::BSTEventSink<E::Event>*>(handler));
       },
       // Deactivate
       [](const ::Sink* sink) {
@@ -753,7 +767,8 @@ private:
       // Activate
       [](const ::Sink* sink) {
         const auto handler = EventHandler::GetSingleton();
-        handler->ActivateSink<T, E>(sink);
+        handler->ActivateSink<T, E>(
+          sink, static_cast<RE::BSTEventSink<E>*>(handler));
       },
       // Deactivate
       [](const ::Sink* sink) {

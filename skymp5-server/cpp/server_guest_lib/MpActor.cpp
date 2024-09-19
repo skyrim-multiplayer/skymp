@@ -17,6 +17,10 @@
 #include "SweetPieScript.h"
 #include "TimeUtils.h"
 #include "WorldState.h"
+#include "gamemode_events/DeathEvent.h"
+#include "gamemode_events/DropItemEvent.h"
+#include "gamemode_events/EatItemEvent.h"
+#include "gamemode_events/RespawnEvent.h"
 #include "libespm/espm.h"
 #include "papyrus-vm/Utils.h"
 #include "script_objects/EspmGameObject.h"
@@ -66,6 +70,7 @@ struct MpActor::Impl
   };
   uint32_t blockActiveCount = 0;
   std::vector<std::pair<uint32_t, MpObjectReference*>> droppedItemsQueue;
+  std::optional<AnimationData> animationData;
 
   // this is a hot fix attempt to make permanent restoration potions work
   std::chrono::system_clock::time_point nextRestorationTime{};
@@ -98,6 +103,7 @@ MpActor::MpActor(const LocationalData& locationalData_,
                       optBaseId == 0 ? 0x7 : optBaseId, "NPC_")
 {
   pImpl.reset(new Impl);
+  asActor = this;
 }
 
 void MpActor::IncreaseBlockCount() noexcept
@@ -172,15 +178,11 @@ void MpActor::EquipBestWeapon()
   }
 
   SetEquipment(newEq.ToJson().dump());
-  for (auto listener : GetListeners()) {
-    auto actor = dynamic_cast<MpActor*>(listener);
-    if (!actor) {
-      continue;
-    }
+  for (auto listener : GetActorListeners()) {
     UpdateEquipmentMessage msg;
     msg.data = newEq.ToJson();
     msg.idx = GetIdx();
-    actor->SendToUser(msg, true);
+    listener->SendToUser(msg, true);
   }
 }
 
@@ -196,6 +198,17 @@ void MpActor::RemoveSpell(const uint32_t spellId)
   EditChangeForm([&](MpChangeForm& changeForm) {
     changeForm.learnedSpells.ForgetSpell(spellId);
   });
+}
+
+void MpActor::SetLastAnimEvent(
+  const std::optional<AnimationData>& animationData)
+{
+  pImpl->animationData = animationData;
+}
+
+std::optional<AnimationData> MpActor::GetLastAnimEvent() const
+{
+  return pImpl->animationData;
 }
 
 void MpActor::SetRaceMenuOpen(bool isOpen)
@@ -218,6 +231,94 @@ void MpActor::SetEquipment(const std::string& jsonString)
 {
   EditChangeForm(
     [&](MpChangeForm& changeForm) { changeForm.equipmentDump = jsonString; });
+}
+
+void MpActor::AddToFaction(Faction faction, bool lazyLoad)
+{
+  if (factionsLoaded == false && lazyLoad)
+    LoadFactions();
+
+  EditChangeForm([&](MpChangeFormREFR& changeForm) {
+    if (!changeForm.factions.has_value()) {
+      changeForm.factions = std::vector<Faction>();
+      changeForm.factions.value().push_back(faction);
+    } else {
+      for (const auto& fact : changeForm.factions.value()) {
+        if (faction.formDesc == fact.formDesc) {
+          return;
+        }
+      }
+      changeForm.factions.value().push_back(faction);
+    }
+  });
+}
+
+bool MpActor::IsInFaction(FormDesc factionForm, bool lazyLoad)
+{
+  if (factionsLoaded == false && lazyLoad)
+    LoadFactions();
+
+  const auto& factions = GetChangeForm().factions;
+
+  if (!factions.has_value()) {
+    return false;
+  }
+
+  for (const auto& faction : factions.value()) {
+    if (faction.formDesc == factionForm) {
+      return true;
+    }
+  }
+  return false;
+}
+
+std::vector<Faction> MpActor::GetFactions(int minFactionRank,
+                                          int maxFactionRank, bool lazyLoad)
+{
+  if (factionsLoaded == false && lazyLoad)
+    LoadFactions();
+
+  std::vector<Faction> result = std::vector<Faction>();
+
+  if (minFactionRank < -128 || minFactionRank > 127 || maxFactionRank < -128 ||
+      maxFactionRank > 127 || minFactionRank > maxFactionRank) {
+    spdlog::warn(
+      "Actor.GetFactions - minRank > maxRank or out of range (-128/127)");
+    return result;
+  }
+
+  const auto& factions = GetChangeForm().factions;
+
+  if (!factions.has_value()) {
+    return result;
+  }
+
+  for (const auto& faction : factions.value()) {
+    if (faction.rank >= minFactionRank && faction.rank <= maxFactionRank) {
+      result.push_back(faction);
+    }
+  }
+
+  return result;
+}
+
+void MpActor::RemoveFromFaction(FormDesc factionForm, bool lazyLoad)
+{
+  if (factionsLoaded == false && lazyLoad)
+    LoadFactions();
+
+  EditChangeForm([&](MpChangeFormREFR& changeForm) {
+    if (!changeForm.factions.has_value()) {
+      return;
+    }
+
+    auto& factions = changeForm.factions.value();
+    factions.erase(std::remove_if(factions.begin(), factions.end(),
+                                  [&](const Faction& faction) {
+                                    return faction.formDesc == factionForm;
+                                  }),
+                   factions.end());
+  });
 }
 
 void MpActor::VisitProperties(const PropertiesVisitor& visitor,
@@ -345,7 +446,7 @@ bool MpActor::OnEquip(uint32_t baseId)
   }
 
   const bool hasItem = isSpell
-    ? GetChangeForm().learnedSpells.IsSpellLearned(baseId)
+    ? ChangeForm().learnedSpells.IsSpellLearned(baseId)
     : GetInventory().GetItemCount(baseId) > 0;
 
   if (!hasItem) {
@@ -364,11 +465,10 @@ bool MpActor::OnEquip(uint32_t baseId)
     j.push_back(false);
 
     std::string serializedArgs = j.dump();
-    for (auto listener : GetListeners()) {
-      auto targetRefr = dynamic_cast<MpActor*>(listener);
-      if (targetRefr && targetRefr != this) {
+    for (auto listener : GetActorListeners()) {
+      if (listener != this) {
         SpSnippet("Actor", "EquipItem", serializedArgs.data(), GetFormId())
-          .Execute(targetRefr);
+          .Execute(listener, SpSnippetMode::kNoReturnResult);
       }
     }
   } else if (isBook) {
@@ -615,6 +715,35 @@ const std::string& MpActor::GetEquipmentAsJson() const
   return ChangeForm().equipmentDump;
 }
 
+namespace {
+bool IsValidAnimEventName(const std::string& eventName)
+{
+  return std::all_of(eventName.begin(), eventName.end(),
+                     [](char c) { return std::isalnum(c) || (c == '_'); });
+}
+}
+
+std::string MpActor::GetLastAnimEventAsJson() const
+{
+  std::optional<AnimationData> anim = GetLastAnimEvent();
+
+  if (!anim) {
+    return "";
+  }
+
+  // Don't want bad anims to break JSON syntax
+  if (!IsValidAnimEventName(anim->animEventName)) {
+    return "";
+  }
+
+  std::string res = R"({"animEventName":)";
+  res += '"' + anim->animEventName + '"';
+  res += R"(,"numChanges":)";
+  res += std::to_string(anim->numChanges);
+  res += "}";
+  return res;
+}
+
 Equipment MpActor::GetEquipment() const
 {
   simdjson::dom::parser p;
@@ -657,8 +786,27 @@ bool MpActor::IsCreatedAsPlayer() const
   return GetFormId() >= 0xff000000 && GetBaseId() <= 0x7;
 }
 
+const ActorValues& MpActor::GetActorValues() const
+{
+  return ChangeForm().actorValues;
+}
+
+const ActiveMagicEffectsMap& MpActor::GetActiveMagicEffects() const
+{
+  return ChangeForm().activeMagicEffects;
+}
+
+int32_t MpActor::GetProfileId() const
+{
+  return ChangeForm().profileId;
+}
+
 void MpActor::SendAndSetDeathState(bool isDead, bool shouldTeleport)
 {
+  spdlog::trace(
+    "MpActor::SendAndSetDeathState {:x} - isDead: {}, shouldTeleport: {}",
+    GetFormId(), isDead, shouldTeleport);
+
   float attribute = isDead ? 0.f : 1.f;
   auto position = GetSpawnPoint();
 
@@ -707,89 +855,48 @@ DeathStateContainerMessage MpActor::GetDeathStateMsg(
   return res;
 }
 
-void MpActor::MpApiDeath(MpActor* killer)
-{
-  simdjson::dom::parser parser;
-  bool isRespawnBlocked = false;
-
-  std::string s = "[" + std::to_string(killer ? killer->GetFormId() : 0) + "]";
-  auto args = parser.parse(s).value();
-
-  if (auto wst = GetParent()) {
-    const auto id = GetFormId();
-    for (auto& listener : wst->listeners) {
-      if (listener->OnMpApiEvent("onDeath", args, id) == false) {
-        isRespawnBlocked = true;
-      };
-    }
-  }
-
-  if (!isRespawnBlocked) {
-    RespawnWithDelay();
-  }
-}
-
-bool MpActor::MpApiCraft(uint32_t craftedItemBaseId, uint32_t count,
-                         uint32_t recipeId)
-{
-  simdjson::dom::parser parser;
-  bool isCraftBlocked = false;
-
-  std::string s = "[" + std::to_string(craftedItemBaseId) + "," +
-    std::to_string(count) + "," + std::to_string(recipeId) + "]";
-  auto args = parser.parse(s).value();
-
-  if (auto wst = GetParent()) {
-    const auto id = GetFormId();
-    for (auto& listener : wst->listeners) {
-      if (listener->OnMpApiEvent("onCraft", args, id) == false) {
-        isCraftBlocked = true;
-      };
-    }
-  }
-
-  return !isCraftBlocked;
-}
-
 void MpActor::EatItem(uint32_t baseId, espm::Type t)
 {
-  auto espmProvider = GetParent();
-  std::vector<espm::Effects::Effect> effects;
-  if (t == "ALCH") {
-    effects = espm::GetData<espm::ALCH>(baseId, espmProvider).effects;
-  } else if (t == "INGR") {
-    effects = espm::GetData<espm::INGR>(baseId, espmProvider).effects;
-  } else {
-    return;
-  }
-  std::unordered_set<std::string> modFiles = { GetParent()->espmFiles.begin(),
-                                               GetParent()->espmFiles.end() };
-  bool hasSweetpie = modFiles.count("SweetPie.esp");
-  ApplyMagicEffects(effects, hasSweetpie);
+  bool isIngredient = t == "INGR";
+  bool isAlchemyItem = t == "ALCH";
+
+  EatItemEvent eatItemEvent(this, baseId, isIngredient, isAlchemyItem);
+  eatItemEvent.Fire(GetParent());
 }
 
 bool MpActor::ReadBook(const uint32_t baseId)
 {
-  const auto bookData = espm::GetData<espm::BOOK>(baseId, GetParent());
+  auto& loader = GetParent()->GetEspm();
+  auto bookLookupResult = loader.GetBrowser().LookupById(baseId);
 
-  if (bookData.IsFlagSet(espm::BOOK::Flags::TeachesSpell)) {
-
-    EditChangeForm([&](MpChangeForm& changeForm) {
-      changeForm.learnedSpells.LearnSpell(bookData.spellOrSkillFormId);
-    });
-    return true;
-  }
-  return false;
-}
-
-bool MpActor::CanActorValueBeRestored(espm::ActorValue av)
-{
-  if (std::chrono::steady_clock::now() - GetLastRestorationTime(av) <
-      std::chrono::minutes(1)) {
+  if (!bookLookupResult.rec) {
+    spdlog::error("ReadBook {:x} - No book form {:x}", GetFormId(), baseId);
     return false;
   }
-  SetLastRestorationTime(av, std::chrono::steady_clock::now());
-  return true;
+
+  const auto bookData = espm::GetData<espm::BOOK>(baseId, GetParent());
+  const auto spellOrSkillFormId =
+    bookLookupResult.ToGlobalId(bookData.spellOrSkillFormId);
+
+  if (bookData.IsFlagSet(espm::BOOK::Flags::TeachesSpell)) {
+    if (ChangeForm().learnedSpells.IsSpellLearned(spellOrSkillFormId)) {
+      spdlog::info(
+        "ReadBook {:x} - Spell already learned {:x}, not spending the book",
+        GetFormId(), spellOrSkillFormId);
+      return false;
+    }
+
+    EditChangeForm([&](MpChangeForm& changeForm) {
+      changeForm.learnedSpells.LearnSpell(spellOrSkillFormId);
+    });
+    return true;
+  } else if (bookData.IsFlagSet(espm::BOOK::Flags::TeachesSkill)) {
+    spdlog::info("ReadBook {:x} - Skill book {:x} detected, not implemented",
+                 GetFormId(), baseId);
+    return false;
+  }
+
+  return false;
 }
 
 void MpActor::EnsureTemplateChainEvaluated(espm::Loader& loader,
@@ -834,6 +941,28 @@ void MpActor::AddDeathItem()
   }
 }
 
+void MpActor::LoadFactions()
+{
+  std::vector<Faction> factions = EvaluateTemplate<espm::NPC_::UseFactions>(
+    GetParent(), GetBaseId(), GetTemplateChain(),
+    [&](const auto& npcLookupResult, const auto& npcData) {
+      std::vector<Faction> factions = std::vector<Faction>();
+      for (auto npcFaction : npcData.factions) {
+        Faction faction = Faction();
+        faction.formDesc =
+          FormDesc::FromFormId(npcLookupResult.ToGlobalId(npcFaction.formId),
+                               GetParent()->espmFiles);
+        faction.rank = npcFaction.rank;
+        factions.push_back(faction);
+      }
+      return factions;
+    });
+  for (Faction faction : factions) {
+    AddToFaction(faction, false);
+  }
+  factionsLoaded = true;
+}
+
 std::map<uint32_t, uint32_t> MpActor::EvaluateDeathItem()
 {
   auto worldState = GetParent();
@@ -862,7 +991,7 @@ std::map<uint32_t, uint32_t> MpActor::EvaluateDeathItem()
   uint32_t baseId = base.ToGlobalId(base.rec->GetId());
   auto& templateChain = ChangeForm().templateChain;
 
-  uint32_t deathItemId = EvaluateTemplate<espm::NPC_::UseInventory>(
+  uint32_t deathItemId = EvaluateTemplate<espm::NPC_::UseTraits>(
     worldState, baseId, templateChain,
     [](const auto& npcLookupResult, const auto& npcData) {
       return npcLookupResult.ToGlobalId(npcData.deathItem);
@@ -895,18 +1024,6 @@ std::map<uint32_t, uint32_t> MpActor::EvaluateDeathItem()
     loader.GetBrowser(), deathItemLookupRes, kCountMult,
     kPlayerCharacterLevel);
   return map;
-}
-
-std::chrono::steady_clock::time_point MpActor::GetLastRestorationTime(
-  espm::ActorValue av) const noexcept
-{
-  return pImpl->restorationTimePoints[av];
-}
-
-void MpActor::SetLastRestorationTime(
-  espm::ActorValue av, std::chrono::steady_clock::time_point timePoint)
-{
-  pImpl->restorationTimePoints[av] = timePoint;
 }
 
 void MpActor::ModifyActorValuePercentage(espm::ActorValue av,
@@ -958,13 +1075,23 @@ void MpActor::Init(WorldState* worldState, uint32_t formId, bool hasChangeForm)
 
 void MpActor::Kill(MpActor* killer, bool shouldTeleport)
 {
+  spdlog::trace("MpActor::Kill {:x} - killer is {:x}", GetFormId(),
+                killer ? killer->GetFormId() : 0);
+
+  // Keep in sync with MpActor::SetIsDead
   SendAndSetDeathState(true, shouldTeleport);
-  MpApiDeath(killer);
+
+  DeathEvent deathEvent(this, killer);
+  deathEvent.Fire(GetParent());
+
   AddDeathItem();
 }
 
 void MpActor::RespawnWithDelay(bool shouldTeleport)
 {
+  spdlog::trace("MpActor::RespawnWithDelay {:x} - isRespawning: {}",
+                GetFormId(), pImpl->isRespawning);
+
   if (pImpl->isRespawning) {
     return;
   }
@@ -1041,18 +1168,8 @@ void MpActor::Respawn(bool shouldTeleport)
   }
   pImpl->isRespawning = false;
 
-  simdjson::dom::parser parser;
-  std::string s = "[]";
-  auto args = parser.parse(s).value();
-
-  if (auto wst = GetParent()) {
-    const auto id = GetFormId();
-    for (auto& listener : wst->listeners) {
-      listener->OnMpApiEvent("onRespawn", args, id);
-    }
-  }
-
-  SendAndSetDeathState(false, shouldTeleport);
+  RespawnEvent respawnEvent(this, shouldTeleport);
+  respawnEvent.Fire(GetParent());
 }
 
 void MpActor::Teleport(const LocationalData& position)
@@ -1136,10 +1253,6 @@ LocationalData MpActor::GetEditorLocationalData() const
 
 const float MpActor::GetRespawnTime() const
 {
-  if (!IsCreatedAsPlayer()) {
-    static const auto kNpcSpawnDelay = 100 /*6 * 60.f *  60.f*/;
-    return kNpcSpawnDelay;
-  }
   return ChangeForm().spawnDelay;
 }
 
@@ -1151,15 +1264,31 @@ void MpActor::SetRespawnTime(float time)
 
 void MpActor::SetIsDead(bool isDead)
 {
+  spdlog::trace("MpActor::SetIsDead {:x} - isDead: {}", GetFormId(), isDead);
+
   constexpr bool kShouldTeleport = false;
 
   if (isDead) {
     if (IsDead() == false) {
+
+      // Keep in sync with MpActor::Kill
       SendAndSetDeathState(isDead, kShouldTeleport);
+
+      DeathEvent deathEvent(this, nullptr);
+      deathEvent.Fire(GetParent());
+
+      AddDeathItem();
+
+      spdlog::trace("MpActor::SetIsDead {:x} - actor is now dead",
+                    GetFormId());
+    } else {
+      spdlog::trace("MpActor::SetIsDead {:x} - actor is already dead",
+                    GetFormId());
     }
   } else {
     // same as SendAndSetDeathState but resets isRespawning flag
     Respawn(kShouldTeleport);
+    spdlog::trace("MpActor::SetIsDead {:x} - actor is now alive", GetFormId());
   }
 }
 
@@ -1206,12 +1335,22 @@ void MpActor::DropItem(const uint32_t baseId, const Inventory::Entry& entry)
 
   constexpr uint32_t kGold001 = 0x0000000f;
   if (baseId == kGold001) {
-    spdlog::warn("MpActor::DropItem - Attempt to drop Gold001 by actor {:x}",
+    spdlog::warn("MpActor::DropItem {:x} - Attempt to drop Gold001 by actor",
                  GetFormId());
     return;
   }
 
-  int count = entry.count;
+  const int count = entry.count;
+
+  DropItemEvent dropEvent(GetFormId(), baseId, count);
+  bool success = dropEvent.Fire(GetParent());
+
+  if (!success) {
+    spdlog::info("MpActor::DropItem {:x} - blocked by MpApiDropItem "
+                 "(baseId={:x}, count={})",
+                 GetFormId(), baseId, count);
+    return;
+  }
 
   auto worldState = GetParent();
 
@@ -1221,13 +1360,6 @@ void MpActor::DropItem(const uint32_t baseId, const Inventory::Entry& entry)
 
   std::string editorId =
     lookupRes.rec->GetEditorId(worldState->GetEspmCache());
-
-  // TODO: remove this when we will be sure that none of armors crashes clients
-  if (lookupRes.rec->GetType().ToString() == "ARMO") {
-    spdlog::warn("MpActor::DropItem - Attempt to drop ARMO by actor {:x}",
-                 GetFormId());
-    return;
-  }
 
   spdlog::trace("MpActor::DropItem - dropping {}", editorId);
   RemoveItems({ entry });
@@ -1432,22 +1564,17 @@ void MpActor::ApplyMagicEffect(espm::Effects::Effect& effect, bool hasSweetpie,
 
   if (isValue) { // other types are unsupported
     if (hasSweetpie) {
-      if (CanActorValueBeRestored(av)) {
-        // this coefficient (workaround) has been added for sake of game
-        // balance and because of disability to restrict players use potions
-        // often on client side
-        constexpr float kMagnitudeCoeff = 100.f;
-        RestoreActorValuePatched(this, av, effect.magnitude * kMagnitudeCoeff);
-      }
+      // this coefficient (workaround) has been added for sake of game
+      // balance and because of disability to restrict players use potions
+      // often on client side
+      constexpr float kMagnitudeCoeff = 100.f;
+      RestoreActorValuePatched(this, av, effect.magnitude * kMagnitudeCoeff);
     } else {
       RestoreActorValuePatched(this, av, effect.magnitude);
     }
   }
 
   if (isRate || isMult) {
-    if (hasSweetpie && !CanActorValueBeRestored(av)) {
-      return;
-    }
     MpChangeForm changeForm = GetChangeForm();
     BaseActorValues baseValues = GetBaseActorValues(
       GetParent(), GetBaseId(), GetRaceId(), changeForm.templateChain);

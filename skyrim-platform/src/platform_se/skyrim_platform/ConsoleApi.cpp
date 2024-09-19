@@ -210,7 +210,9 @@ JsValue GetTypedArg(RE::SCRIPT_PARAM_TYPE type, std::string param)
     case RE::SCRIPT_PARAM_TYPE::kFloat:
       return JsValue::Double((double)strtod(param.c_str(), nullptr));
 
-    case RE::SCRIPT_PARAM_TYPE::kCoontainerRef:
+      // RE::SCRIPT_PARAM_TYPE::kContainerRef/kCoontainerRef
+    case static_cast<RE::SCRIPT_PARAM_TYPE>(0x1A):
+
     case RE::SCRIPT_PARAM_TYPE::kInvObjectOrFormList:
     case RE::SCRIPT_PARAM_TYPE::kSpellItem:
     case RE::SCRIPT_PARAM_TYPE::kInventoryObject:

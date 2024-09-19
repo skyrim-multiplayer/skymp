@@ -73,10 +73,10 @@ public:
     try {
       GetJsEngine();
 
-      auto fileDirs = GetFileDirs();
+      auto& fileDirs = GetFileDirs();
 
       if (monitors.empty()) {
-        for (auto fileDir : fileDirs) {
+        for (auto& fileDir : fileDirs) {
           monitors.push_back(std::make_shared<DirectoryMonitor>(fileDir));
         }
       }
@@ -127,16 +127,18 @@ public:
   }
 
 private:
-  std::vector<const char*> GetFileDirs() const
+  const std::vector<std::filesystem::path>& GetFileDirs() const
   {
-    constexpr auto kSkympPluginsDir =
-      "C:/projects/skymp/build/dist/client/Data/Platform/Plugins";
-    if (std::filesystem::exists(kSkympPluginsDir)) {
-      return { kSkympPluginsDir };
+    if (!pluginFolders) {
+      try {
+        pluginFolders = Settings::GetPlatformSettings()->GetPluginFolders();
+      } catch (std::exception& e) {
+        pluginFolders = std::make_unique<std::vector<std::filesystem::path>>();
+        throw;
+      }
     }
-    std::vector<const char*> dirs = { "Data/Platform/Plugins",
-                                      "Data/Platform/PluginsDev" };
-    return dirs;
+
+    return *pluginFolders;
   }
 
   void LoadFiles(const std::vector<std::filesystem::path>& pathsToLoad)
@@ -152,13 +154,10 @@ private:
         LoadSettingsFile(path);
         continue;
       }
-      if (EndsWith(path.wstring(), L"-logs.txt")) {
+      if (EndsWith(path.wstring(), L".js")) {
+        LoadPluginFile(path);
         continue;
       }
-      if (EndsWith(path.wstring(), L".DS_Store")) {
-        continue;
-      }
-      LoadPluginFile(path);
     }
   }
 
@@ -172,6 +171,7 @@ private:
                  pluginName);
 
     settingsByPluginName[pluginName] = Viet::ReadFileIntoString(path);
+    settingsByPluginNameCache.reset();
   }
 
   void LoadPluginFile(const std::filesystem::path& path)
@@ -180,13 +180,17 @@ private:
     auto scriptSrc = Viet::ReadFileIntoString(path);
 
     getSettings = [this](const JsFunctionArguments&) {
-      auto result = JsValue::Object();
-      auto standardJson = JsValue::GlobalObject().GetProperty("JSON");
-      auto parse = standardJson.GetProperty("parse");
-      for (const auto& [pluginName, settings] : settingsByPluginName) {
-        result.SetProperty(pluginName, parse.Call({ standardJson, settings }));
+      if (!settingsByPluginNameCache) {
+        auto result = JsValue::Object();
+        auto standardJson = JsValue::GlobalObject().GetProperty("JSON");
+        auto parse = standardJson.GetProperty("parse");
+        for (const auto& [pluginName, settings] : settingsByPluginName) {
+          result.SetProperty(pluginName,
+                             parse.Call({ standardJson, settings }));
+        }
+        settingsByPluginNameCache.reset(new JsValue(result));
       }
-      return result;
+      return *settingsByPluginNameCache;
     };
 
     // We will be able to use require()
@@ -242,6 +246,7 @@ private:
     jsPromiseTaskQueue.Clear();
     nativeCallRequirements.jsThrQ->Clear();
     settingsByPluginName.clear();
+    settingsByPluginNameCache.reset();
   }
 
   std::shared_ptr<JsEngine> GetJsEngine()
@@ -274,8 +279,10 @@ private:
   Viet::TaskQueue jsPromiseTaskQueue;
   CallNativeApi::NativeCallRequirements& nativeCallRequirements;
   std::unordered_map<std::string, std::string> settingsByPluginName;
+  std::unique_ptr<JsValue> settingsByPluginNameCache;
   std::shared_ptr<BrowserApi::State> browserApiState;
   std::function<JsValue(const JsFunctionArguments&)> getSettings;
+  mutable std::unique_ptr<std::vector<std::filesystem::path>> pluginFolders;
 };
 }
 

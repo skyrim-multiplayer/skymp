@@ -1,0 +1,35 @@
+name: Gather PRs test
+
+on:
+    workflow_dispatch:
+        inputs:
+            branch:
+                description: 'Branch, meaning server instance'
+                required: true
+                type: choice
+                options:
+                    - 'sweetpie'
+                    - 'indev'
+                default: 'indev'
+jobs:
+    gather_prs_test:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Gather PRs
+              uses: Pospelove/auto-merge-action@main
+              with:
+                path: ${{github.workspace}}
+                repositories: |
+                    [
+                        {
+                            "owner": "skyrim-multiplayer",
+                            "repo": "skymp",
+                            "labels": ["merge-to:${{env.DEPLOY_BRANCH}}"]
+                        },
+                        {
+                            "owner": "skyrim-multiplayer",
+                            "repo": "skymp5-patches",
+                            "labels": ["merge-to:${{env.DEPLOY_BRANCH}}"],
+                            "token": "${{secrets.SKYMP5_PATCHES_PAT}}"
+                        }
+                    ]

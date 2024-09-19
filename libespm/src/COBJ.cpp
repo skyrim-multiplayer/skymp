@@ -23,6 +23,8 @@ COBJ::Data COBJ::GetData(
       } else if (!std::memcmp(type, "NAM1", 4)) {
         const auto count = *reinterpret_cast<const uint16_t*>(data);
         result.outputCount = count;
+      } else if (!std::memcmp(type, "CTDA", 4)) {
+        result.conditions.push_back(*reinterpret_cast<const CTDA*>(data));
       }
     },
     compressedFieldsCache);

@@ -88,6 +88,25 @@ private:
   SkyrimPlatform_IpcUnsubscribe_Impl ipcUnsubscribe = nullptr;
 };
 
+#ifndef SKYRIMSE
+constexpr SKSE::PluginVersionData GetPluginVersion()
+{
+  constexpr REL::Version kSPTargetRuntimeVersion1170(1, 6, 1170, 0);
+  constexpr REL::Version kSPTargetRuntimeVersion640(1, 6, 640, 0);
+
+  SKSE::PluginVersionData v;
+  v.PluginVersion(Version::ASINT);
+  v.PluginName("SkyrimPlatform");
+  v.AuthorName("SkyMP Team and Contributors");
+  v.UsesAddressLibrary();
+  v.UsesUpdatedStructs();
+  v.CompatibleVersions(
+    { kSPTargetRuntimeVersion1170, kSPTargetRuntimeVersion640 });
+
+  return v;
+};
+#endif
+
 extern "C" {
 
 #ifdef SKYRIMSE
@@ -106,16 +125,9 @@ DLLEXPORT bool SKSEPlugin_Query(const SKSE::QueryInterface* skse,
 }
 
 #else
-DLLEXPORT constinit auto SKSEPlugin_Version = []() {
-  SKSE::PluginVersionData v;
-  v.PluginVersion(Version::ASINT);
-  v.PluginName("SkyrimPlatform");
-  v.AuthorName("SkyMP Team and Contributors");
-  v.UsesAddressLibrary(true);
-  v.CompatibleVersions({ SKSE::RUNTIME_LATEST });
 
-  return v;
-}();
+DLLEXPORT constinit SKSE::PluginVersionData SKSEPlugin_Version =
+  GetPluginVersion();
 
 #endif
 
@@ -144,7 +156,7 @@ DLLEXPORT bool SKSEPlugin_Load(void* skse)
   try {
     return PlatformImplInterface::GetSingleton().Load(skse);
   } catch (std::exception& e) {
-    MessageBoxA(0, e.what(), "Fatal", MB_ICONERROR);
+    MessageBoxA(0, e.what(), "Fatal (SkyrimPlatform)", MB_ICONERROR);
     return false;
   }
 }

@@ -7,13 +7,6 @@ else()
     set(CLIENT_SETTINGS_JSON "{}")
     string(JSON CLIENT_SETTINGS_JSON SET "${CLIENT_SETTINGS_JSON}" "server-ip" "\"127.0.0.1\"")
     string(JSON CLIENT_SETTINGS_JSON SET "${CLIENT_SETTINGS_JSON}" "server-port" "7777")
-
-    set(lobby_location "{
-        \"pos\": [133710, -61252, 14605],
-        \"rot\": [0, 0, 0],
-        \"worldOrCell\": 60
-    }")
-    string(JSON CLIENT_SETTINGS_JSON SET "${CLIENT_SETTINGS_JSON}" "lobbyLocation" "${lobby_location}")
 endif()
 
 if(OFFLINE_MODE)
@@ -30,10 +23,18 @@ if(OFFLINE_MODE)
     string(JSON CLIENT_SETTINGS_JSON SET "${CLIENT_SETTINGS_JSON}" "server-master-key" "null")
 else()
     string(JSON CLIENT_SETTINGS_JSON REMOVE "${CLIENT_SETTINGS_JSON}" "gameData")
-    string(JSON CLIENT_SETTINGS_JSON SET "${CLIENT_SETTINGS_JSON}" "master" "\"https://sweetpie.nic11.xyz\"")
-    file(DOWNLOAD "https://api.ipify.org" "${CMAKE_CURRENT_BINARY_DIR}/ip.txt")
-    file(READ "${CMAKE_CURRENT_BINARY_DIR}/ip.txt" ip)
-    string(JSON CLIENT_SETTINGS_JSON SET "${CLIENT_SETTINGS_JSON}" "server-master-key" "\"${ip}:7777\"")
+    string(JSON CLIENT_SETTINGS_JSON SET "${CLIENT_SETTINGS_JSON}" "master" "\"https://gateway.skymp.net\"")
+
+    # if ip in config is 127.0.0.1
+    string(JSON server_ip ERROR_VARIABLE dummy GET "${CLIENT_SETTINGS_JSON}" "server-ip")
+    if(server_ip STREQUAL "127.0.0.1")
+        file(DOWNLOAD "https://api.ipify.org" "${CMAKE_CURRENT_BINARY_DIR}/ip.txt")
+        file(READ "${CMAKE_CURRENT_BINARY_DIR}/ip.txt" ip)
+        set(port 7777)
+        string(JSON CLIENT_SETTINGS_JSON SET "${CLIENT_SETTINGS_JSON}" "server-master-key" "\"${ip}:${port}\"")
+    else()
+        string(JSON CLIENT_SETTINGS_JSON SET "${CLIENT_SETTINGS_JSON}" "server-master-key" "null")
+    endif()
 endif()
 
 file(WRITE "${CLIENT_SETTINGS_JSON_PATH}" "${CLIENT_SETTINGS_JSON}")

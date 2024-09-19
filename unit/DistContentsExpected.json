@@ -27,6 +27,14 @@
   },
   {
     "configurationTags": [
+      "MacOS"
+    ],
+    "expectedFiles": [
+      "server/dist_back/fsevents-X6WP4TKM.node"
+    ]
+  },
+  {
+    "configurationTags": [
       "Win32"
     ],
     "expectedFiles": [
@@ -90,7 +98,9 @@
       "client/Data/Platform/UI/fb344395b65fad4dc9b2b4dbecaaf9ae.svg",
       "client/Data/Platform/UI/ffb48dba84edac2a01a89b25c3ba270e.mp3",
       "client/Data/Platform/UI/24f47c642fc63bf9f479df7cb8e4746a.wav",
-      "client/Data/Platform/UI/4c9effcbaeeb2d8ca70ae680ac1e3b9a.wav"
+      "client/Data/Platform/UI/4c9effcbaeeb2d8ca70ae680ac1e3b9a.wav",
+      "server/fmt.dll",
+      "server/spdlog.dll"
     ]
   },
   {
@@ -214,7 +224,18 @@
       "client/Data/SKSE/Plugins/versionlib-1-6-323-0.bin",
       "client/Data/SKSE/Plugins/versionlib-1-6-342-0.bin",
       "client/Data/SKSE/Plugins/versionlib-1-6-353-0.bin",
-      "client/Data/SKSE/Plugins/versionlib-1-6-640-0.bin"
+      "client/Data/SKSE/Plugins/versionlib-1-6-640-0.bin",
+      "client/Data/SKSE/Plugins/versionlib-1-6-1170-0-1.bin",
+      "client/Data/SKSE/Plugins/versionlib-1-6-1170-0.bin"
+    ]
+  },
+  {
+    "configurationTags": [
+      "CI",
+      "Win32"
+    ],
+    "expectedFiles": [
+      "client/Data/Platform/Distribution/build-metadata-public.json"
     ]
   },
   {
@@ -283,6 +304,7 @@
       "client/Data/Platform/Distribution/RuntimeDependencies/ChakraCore.dll",
       "client/Data/Platform/Distribution/RuntimeDependencies/chrome_elf.dll",
       "client/Data/Platform/Distribution/RuntimeDependencies/d3dcompiler_47.dll",
+      "client/Data/Platform/Distribution/RuntimeDependencies/fmt.dll",
       "client/Data/Platform/Distribution/RuntimeDependencies/icudtl.dat",
       "client/Data/Platform/Distribution/RuntimeDependencies/libcef.dll",
       "client/Data/Platform/Distribution/RuntimeDependencies/libEGL.dll",
@@ -291,6 +313,7 @@
       "client/Data/Platform/Distribution/RuntimeDependencies/libGLESv2.dll",
       "client/Data/Platform/Distribution/RuntimeDependencies/SkyrimPlatformCEF.exe.hidden",
       "client/Data/Platform/Distribution/RuntimeDependencies/SkyrimPlatformImpl.dll",
+      "client/Data/Platform/Distribution/RuntimeDependencies/spdlog.dll",
       "client/Data/Platform/Distribution/RuntimeDependencies/snapshot_blob.bin",
       "client/Data/Platform/Distribution/RuntimeDependencies/v8_context_snapshot.bin",
       "client/Data/Platform/Distribution/___systemPolyfill.js",
@@ -309,9 +332,7 @@
       "client/Data/Scripts/MpClientPlugin.pex",
       "client/Data/Scripts/TESModPlatform.pex",
       "client/Data/SKSE/Plugins/MpClientPlugin.dll",
-      "client/Data/SKSE/Plugins/SkyrimPlatform.dll",
-      "client/Data/SKSE/Plugins/SkyrimSoulsRE.dll",
-      "client/Data/SKSE/Plugins/SkyrimSoulsRE.ini"
+      "client/Data/SKSE/Plugins/SkyrimPlatform.dll"
     ]
   }
 ]

@@ -11,7 +11,9 @@ yarn_execute_command(
 )
 
 # Find node-addon-api
-find_package(unofficial-node-addon-api REQUIRED)
+if(NOT EMSCRIPTEN)
+  find_package(unofficial-node-addon-api REQUIRED)
+endif()
 
 # Add C++ part of the server (except cpp/addon)
 add_subdirectory(cpp)
@@ -20,31 +22,36 @@ add_subdirectory(cpp)
 add_subdirectory(ts)
 
 # Add C++ addon for NodeJS
-file(GLOB_RECURSE sources "${SKYMP5_SERVER_SOURCE_DIR}/cpp/addon/*")
-if(MSVC)
-  list(APPEND sources "${CMAKE_SOURCE_DIR}/.clang-format")
-endif()
-add_library(${PROJECT_NAME} SHARED ${sources})
-set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "scam_native" PREFIX "" SUFFIX ".node")
-target_link_libraries(${PROJECT_NAME} PRIVATE unofficial::node-addon-api::node-addon-api)
-target_include_directories(${PROJECT_NAME} PRIVATE ${SKYMP5_SERVER_SOURCE_DIR}/cpp/addon)
+if(NOT EMSCRIPTEN)
+  file(GLOB_RECURSE sources "${SKYMP5_SERVER_SOURCE_DIR}/cpp/addon/*")
+  if(MSVC)
+    list(APPEND sources "${CMAKE_SOURCE_DIR}/.clang-format")
+  endif()
+  add_library(${PROJECT_NAME} SHARED ${sources})
+  set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "scam_native" PREFIX "" SUFFIX ".node")
+  target_link_libraries(${PROJECT_NAME} PRIVATE unofficial::node-addon-api::node-addon-api)
+  target_include_directories(${PROJECT_NAME} PRIVATE ${SKYMP5_SERVER_SOURCE_DIR}/cpp/addon)
 
-# Put build artifacts into build/dist/server
-if(WIN32)
-  set_target_properties(${PROJECT_NAME} PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY_DEBUG "${CMAKE_BINARY_DIR}/dist/server"
-    RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_BINARY_DIR}/dist/server"
-  )
-else()
-  add_custom_command(
-    TARGET ${PROJECT_NAME} POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${PROJECT_NAME}> ${CMAKE_BINARY_DIR}/dist/server/$<TARGET_FILE_NAME:${PROJECT_NAME}>
-  )
-endif()
+  # Make 'cmake --build . --target skymp5-server' building typescript part as well
+  add_dependencies(${PROJECT_NAME} skymp5-server-ts)
 
-target_link_libraries(${PROJECT_NAME} PRIVATE mp_common server_guest_lib localization-provider)
-list(APPEND VCPKG_DEPENDENT ${PROJECT_NAME})
-apply_default_settings(TARGETS ${PROJECT_NAME})
+  # Put build artifacts into build/dist/server
+  if(WIN32)
+    set_target_properties(${PROJECT_NAME} PROPERTIES
+      RUNTIME_OUTPUT_DIRECTORY_DEBUG "${CMAKE_BINARY_DIR}/dist/server"
+      RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_BINARY_DIR}/dist/server"
+    )
+  else()
+    add_custom_command(
+      TARGET ${PROJECT_NAME} POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${PROJECT_NAME}> ${CMAKE_BINARY_DIR}/dist/server/$<TARGET_FILE_NAME:${PROJECT_NAME}>
+    )
+  endif()
+
+  target_link_libraries(${PROJECT_NAME} PRIVATE mp_common server_guest_lib localization-provider)
+  list(APPEND VCPKG_DEPENDENT ${PROJECT_NAME})
+  apply_default_settings(TARGETS ${PROJECT_NAME})
+endif()
 
 # All targets are ready
 
@@ -56,10 +63,12 @@ if(WIN32)
   file(WRITE ${PROJECT_BINARY_DIR}/launch_server.bat.tmp "${bat}")
 
   # Same but for dev (no pause, placed into ./build dir)
-  set(bat "setlocal\n") # setlocal/endlocal is for temporary cd
+  set(bat "@echo off\n") # Turn off command echoing
+  set(bat "${bat}setlocal\n") # setlocal/endlocal is for temporary cd
   set(bat "${bat}cd dist/server\n")
   set(bat "${bat}node dist_back/skymp5-server.js\n")
-  set(bat "${bat}endlocal\n")
+  set(bat "${bat}set EXIT_CODE=%ERRORLEVEL%\n")
+  set(bat "${bat}endlocal & exit /B %EXIT_CODE%\n")
   file(WRITE ${CMAKE_BINARY_DIR}/launch_server.bat "${bat}")
 
   add_custom_command(
@@ -80,20 +89,22 @@ endif()
 
 message(STATUS "esm_prefix is '${esm_prefix}'")
 
-add_custom_command(
-  TARGET ${PROJECT_NAME} POST_BUILD
-  COMMAND ${CMAKE_COMMAND} -DESM_PREFIX=${esm_prefix} -DSERVER_SETTINGS_JSON_PATH=${CMAKE_BINARY_DIR}/dist/server/server-settings.json -DOFFLINE_MODE=${OFFLINE_MODE} -P ${CMAKE_SOURCE_DIR}/cmake/scripts/generate_server_settings.cmake
-)
+if(TARGET ${PROJECT_NAME})
+  add_custom_command(
+    TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -DESM_PREFIX=${esm_prefix} -DSERVER_SETTINGS_JSON_PATH=${CMAKE_BINARY_DIR}/dist/server/server-settings.json -DOFFLINE_MODE=${OFFLINE_MODE} -P ${CMAKE_SOURCE_DIR}/cmake/scripts/generate_server_settings.cmake
+  )
 
-add_custom_command(
-  TARGET ${PROJECT_NAME} POST_BUILD
-  COMMAND ${CMAKE_COMMAND} -E copy ${SKYMP5_SERVER_SOURCE_DIR}/package.json ${CMAKE_BINARY_DIR}/dist/server/package.json
-)
+  add_custom_command(
+    TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy ${SKYMP5_SERVER_SOURCE_DIR}/package.json ${CMAKE_BINARY_DIR}/dist/server/package.json
+  )
 
-add_custom_command(
-  TARGET ${PROJECT_NAME} POST_BUILD
-  COMMAND ${CMAKE_COMMAND} -E copy ${SKYMP5_SERVER_SOURCE_DIR}/yarn.lock ${CMAKE_BINARY_DIR}/dist/server/yarn.lock
-)
+  add_custom_command(
+    TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy ${SKYMP5_SERVER_SOURCE_DIR}/yarn.lock ${CMAKE_BINARY_DIR}/dist/server/yarn.lock
+  )
+endif()
 
 file(GLOB_RECURSE standard_scripts
   ${CMAKE_CURRENT_SOURCE_DIR}/standard_scripts/*

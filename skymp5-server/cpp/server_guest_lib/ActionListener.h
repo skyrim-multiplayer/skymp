@@ -2,6 +2,7 @@
 #include "ActionListener.h"
 #include "AnimationData.h"
 #include "ConsoleCommands.h"
+#include "MovementMessage.h" // RunMode
 #include "MpActor.h"
 #include "PartOne.h"
 #include "libespm/Loader.h"
@@ -32,7 +33,8 @@ public:
   virtual void OnUpdateMovement(const RawMessageData& rawMsgData, uint32_t idx,
                                 const NiPoint3& pos, const NiPoint3& rot,
                                 bool isInJumpState, bool isWeapDrawn,
-                                bool isBlocking, uint32_t worldOrCell);
+                                bool isBlocking, uint32_t worldOrCell,
+                                RunMode runMode);
 
   virtual void OnUpdateAnimation(const RawMessageData& rawMsgData,
                                  uint32_t idx,
@@ -49,7 +51,7 @@ public:
                                  uint32_t voiceSpell, uint32_t instantSpell);
 
   virtual void OnActivate(const RawMessageData& rawMsgData, uint32_t caster,
-                          uint32_t target);
+                          uint32_t target, bool isSecondActivation);
 
   virtual void OnPutItem(const RawMessageData& rawMsgData, uint32_t target,
                          const Inventory::Entry& entry);

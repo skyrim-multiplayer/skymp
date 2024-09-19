@@ -6,6 +6,9 @@
 #include <map>
 #include <set>
 
+using NativeFunction =
+  std::function<VarValue(VarValue self, std::vector<VarValue> arguments)>;
+
 class VirtualMachine;
 
 class StackIdHolder
@@ -23,6 +26,27 @@ private:
   std::shared_ptr<MakeID> makeId;
 };
 
+class StackDepthHolder
+{
+public:
+  StackDepthHolder();
+
+  size_t GetStackDepth() const;
+  void IncreaseStackDepth();
+  void DecreaseStackDepth();
+
+  StackDepthHolder& operator=(const StackDepthHolder&) = delete;
+  StackDepthHolder(const StackDepthHolder&) = delete;
+
+private:
+  size_t depth = 0;
+};
+
+struct StackData
+{
+  StackIdHolder stackIdHolder;
+};
+
 struct VmExceptionInfo
 {
   std::string what;
@@ -34,7 +58,7 @@ class VirtualMachine
   friend class StackIdHolder;
 
 public:
-  using OnEnter = std::function<void(const StackIdHolder&)>;
+  using OnEnter = std::function<void(const StackData&)>;
   using ExceptionHandler = std::function<void(VmExceptionInfo)>;
   using MissingScriptHandler =
     std::function<std::optional<PexScript::Lazy>(std::string)>;
@@ -70,12 +94,14 @@ public:
 
   VarValue CallMethod(IGameObject* self, const char* methodName,
                       std::vector<VarValue>& arguments,
-                      std::shared_ptr<StackIdHolder> stackIdHolder = nullptr);
+                      std::shared_ptr<StackData> stackData = nullptr,
+                      const std::vector<std::shared_ptr<ActivePexInstance>>*
+                        activePexInstancesOverride = nullptr);
 
   VarValue CallStatic(const std::string& className,
                       const std::string& functionName,
                       std::vector<VarValue>& arguments,
-                      std::shared_ptr<StackIdHolder> stackIdHolder = nullptr);
+                      std::shared_ptr<StackData> stackData = nullptr);
 
   PexScript::Lazy GetPexByName(const std::string& name) const;
 

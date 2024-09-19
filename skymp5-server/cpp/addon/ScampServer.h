@@ -18,12 +18,20 @@ public:
   static Napi::Object Init(Napi::Env env, Napi::Object exports);
   ScampServer(const Napi::CallbackInfo& info);
 
+  static Napi::Value WriteLogs(const Napi::CallbackInfo& info);
+
+  // private methods, not intended for use in gamemode
+  Napi::Value _SetSelf(const Napi::CallbackInfo& info);
+
+  // public API methods
   Napi::Value AttachSaveStorage(const Napi::CallbackInfo& info);
   Napi::Value Tick(const Napi::CallbackInfo& info);
   Napi::Value On(const Napi::CallbackInfo& info);
   Napi::Value CreateActor(const Napi::CallbackInfo& info);
   Napi::Value SetUserActor(const Napi::CallbackInfo& info);
   Napi::Value GetUserActor(const Napi::CallbackInfo& info);
+  Napi::Value GetUserGuid(const Napi::CallbackInfo& info);
+  Napi::Value IsConnected(const Napi::CallbackInfo& info);
   Napi::Value GetActorPos(const Napi::CallbackInfo& info);
   Napi::Value GetActorCellOrWorld(const Napi::CallbackInfo& info);
   Napi::Value GetActorName(const Napi::CallbackInfo& info);
@@ -33,7 +41,6 @@ public:
   Napi::Value SetEnabled(const Napi::CallbackInfo& info);
   Napi::Value CreateBot(const Napi::CallbackInfo& info);
   Napi::Value GetUserByActor(const Napi::CallbackInfo& info);
-  Napi::Value WriteLogs(const Napi::CallbackInfo& info);
   Napi::Value GetUserIp(const Napi::CallbackInfo& info);
 
   Napi::Value GetLocalizedString(const Napi::CallbackInfo& info);
@@ -45,6 +52,7 @@ public:
   Napi::Value Set(const Napi::CallbackInfo& info);
   Napi::Value Place(const Napi::CallbackInfo& info);
   Napi::Value LookupEspmRecordById(const Napi::CallbackInfo& info);
+  Napi::Value GetNeighborsByPosition(const Napi::CallbackInfo& info);
   Napi::Value GetEspmLoadOrder(const Napi::CallbackInfo& info);
   Napi::Value GetDescFromId(const Napi::CallbackInfo& info);
   Napi::Value GetIdFromDesc(const Napi::CallbackInfo& info);
@@ -81,6 +89,7 @@ private:
   std::shared_ptr<ScampServerListener> listener;
   Napi::Env tickEnv;
   Napi::ObjectReference emitter;
+  Napi::ObjectReference self;
   Napi::FunctionReference emit;
   std::shared_ptr<spdlog::logger> logger;
   nlohmann::json serverSettings;

@@ -20,6 +20,7 @@ jobs:
           echo "SHORTVER=$SHORTVER" >> $GITHUB_ENV
           echo "Detect oldver: $OLDVER"
           echo "Newver: $NEWVER"
+
       - name: Replace Version In Files
         run: |
           chmod 777 ${{github.workspace}}/skyrim-platform/src/platform_se/CMakeLists.txt
@@ -42,10 +43,10 @@ jobs:
         run: |
           chmod 777 ${{github.workspace}}/docs/release
           TRAGET=$(echo "${{github.workspace}}/docs/release/sp-${{ env.SHORTVER }}.md")
-          echo "# SP ${{ env.NEWVER }} Release Notes"$'\n'$'\n' >> $TRAGET
-          echo "This document includes changes made since SP ${{ env.OLDVER }}"$'\n'$'\n' >> $TRAGET
-          echo "WARNING: SP may break your saves. For now, please backup your saves before installing. See https://github.com/skyrim-multiplayer/skymp/issues/796"$'\n'$'\n' >> $TRAGET
-          echo "SP supports both Steam version of Skyrim SE (1.6.640) and legacy 1.5.97."$'\n' >> $TRAGET
+          cp ${{github.workspace}}/docs/release/changelog_template.md $TRAGET
+          sed -i "s/{{NEWVER}}/${{ env.NEWVER }}/g" $TRAGET
+          sed -i "s/{{OLDVER}}/${{ env.OLDVER }}/g" $TRAGET
+
           for file in `find ${{github.workspace}}/docs/release/dev -type f -name "sp*.md"`
           do
             content=$(< $file)
@@ -57,6 +58,7 @@ jobs:
               echo $'\n' >> ./temp.txt
             fi
           done
+
           if [ -e temp.txt ]; then
             echo "## Other changes"$'\n' >> $TRAGET
             content=$(< ./temp.txt)

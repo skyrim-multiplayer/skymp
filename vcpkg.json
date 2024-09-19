@@ -10,16 +10,25 @@
     "zlib",
     "spdlog",
     "catch2",
-    "sparsepp",
-    "slikenet",
-    "mongo-cxx-driver",
     "simdjson",
     "robin-hood-hashing",
     "simpleini",
-    "node-addon-api",
     "bshoshany-thread-pool",
     "makeid",
-    "rsm-bsa",
+    "libzippp",
+    "slikenet",
+    {
+      "name": "mongo-cxx-driver",
+      "platform": "!emscripten"
+    },
+    {
+      "name": "node-addon-api",
+      "platform": "!emscripten"
+    },
+    {
+      "name": "rsm-bsa",
+      "platform": "!osx & !emscripten"
+    },
     {
       "name": "frida-gum",
       "platform": "windows"
@@ -42,6 +51,15 @@
     },
     {
       "name": "asio",
+      "platform": "windows"
+    },
+    {
+      "name": "libarchive",
+      "platform": "windows",
+      "features": []
+    },
+    {
+      "name": "ga-sdk-cpp",
       "platform": "windows"
     }
   ],

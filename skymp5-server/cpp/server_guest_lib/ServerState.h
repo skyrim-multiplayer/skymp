@@ -49,6 +49,8 @@ struct UserInfo
     packetHistoryStartTime;
 
   std::vector<std::vector<DeferredMessage>> deferredChannels;
+
+  std::string guid;
 };
 
 class ServerState
@@ -65,10 +67,11 @@ public:
     activePlaybacks; // do not modify directly, use requestedPlaybacks
   std::map<Networking::UserId, Playback> requestedPlaybacks;
 
-  void Connect(Networking::UserId userId);
+  void Connect(Networking::UserId userId, const std::string& guid);
   void Disconnect(Networking::UserId userId) noexcept;
   bool IsConnected(Networking::UserId userId) const;
   MpActor* ActorByUser(Networking::UserId userId);
+  const std::string& UserGuid(Networking::UserId userId);
   Networking::UserId UserByActor(MpActor* actor);
   void EnsureUserExists(Networking::UserId userId);
 };

@@ -5,6 +5,7 @@
 #include <array>
 #include <fmt/format.h>
 #include <memory>
+#include <unordered_set>
 
 namespace espm {
 
@@ -82,6 +83,32 @@ CombineBrowser::GetRecordsByType(const char* type) const
     res.push_back(&pImpl->sources[i].br->GetRecordsByType(type));
   }
   return res;
+}
+
+std::vector<LookupResult> CombineBrowser::GetDistinctRecordsByType(
+  const char* type) const
+{
+  if (pImpl->numSources == 0) {
+    return {};
+  }
+
+  std::unordered_set<formId> formSet;
+  std::vector<LookupResult> result;
+  for (size_t i = pImpl->numSources - 1; i != static_cast<size_t>(-1); --i) {
+    const auto& records = pImpl->sources[i].br->GetRecordsByType(type);
+    formSet.reserve(records.size());
+    result.reserve(records.size());
+
+    for (auto record : records) {
+      auto mappedId =
+        utils::GetMappedId(record->GetId(), *pImpl->sources[i].toComb);
+      if (formSet.insert(mappedId).second) {
+        result.push_back(LookupResult(this, record, static_cast<uint8_t>(i)));
+      }
+    }
+  }
+
+  return result;
 }
 
 std::vector<const std::vector<const RecordHeader*>*>

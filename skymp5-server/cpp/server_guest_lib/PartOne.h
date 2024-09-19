@@ -54,6 +54,7 @@ public:
                        uint32_t cellOrWorld, ProfileId profileId = -1);
   void SetUserActor(Networking::UserId userId, uint32_t actorFormId);
   uint32_t GetUserActor(Networking::UserId userId);
+  std::string GetUserGuid(Networking::UserId userId);
   Networking::UserId GetUserByActor(uint32_t formId);
   void DestroyActor(uint32_t actorFormId);
   void SetRaceMenuOpen(uint32_t formId, bool open);
@@ -94,6 +95,9 @@ public:
   void RequestPacketHistoryPlayback(Networking::UserId userId,
                                     const PacketHistory& history);
 
+  void SendHostStop(Networking::UserId badHosterUserId,
+                    MpObjectReference& remote);
+
 private:
   void Init();
 
@@ -103,7 +107,8 @@ private:
     Bot
   };
 
-  void AddUser(Networking::UserId userId, UserType userType);
+  void AddUser(Networking::UserId userId, UserType userType,
+               const std::string& guid);
 
   void HandleMessagePacket(Networking::UserId userId,
                            Networking::PacketData data, size_t length);

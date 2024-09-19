@@ -4,16 +4,22 @@ if(POLICY 0115)
   cmake_policy(SET CMP0115 NEW)
 endif()
 
-if(WIN32)
-  set(VCPKG_TARGET_TRIPLET "x64-windows-sp")
-else()
-  set(VCPKG_TARGET_TRIPLET "x64-linux")
+if("${VCPKG_TARGET_TRIPLET}" STREQUAL "")
+  if(WIN32)
+    set(VCPKG_TARGET_TRIPLET "x64-windows-sp")
+  elseif(APPLE)
+    set(VCPKG_TARGET_TRIPLET "x64-osx")
+  else()
+    set(VCPKG_TARGET_TRIPLET "x64-linux")
+  endif()
 endif()
 
 set(VCPKG_OVERLAY_TRIPLETS "${CMAKE_CURRENT_LIST_DIR}/overlay_triplets")
 set(VCPKG_OVERLAY_PORTS "${CMAKE_CURRENT_LIST_DIR}/overlay_ports")
 
-if("$ENV{CI}" STREQUAL "true")
+option(NO_CLEAN_AFTER_BUILD "Don't clean vcpkg temporary folders after build" OFF)
+
+if("$ENV{CI}" STREQUAL "true" OR NO_CLEAN_AFTER_BUILD)
   set(VCPKG_INSTALL_OPTIONS --no-print-usage)
 else()
   set(VCPKG_INSTALL_OPTIONS --no-print-usage --clean-after-build)
@@ -51,7 +57,7 @@ endif()
 
 option(SKYRIM_SE "Legacy Skyrim SE (1.5) build" OFF)
 
-if (SKYRIM_SE)
+if(SKYRIM_SE)
   list(APPEND VCPKG_MANIFEST_FEATURES "skyrim-se")
 else()
   list(APPEND VCPKG_MANIFEST_FEATURES "skyrim-ae")
@@ -60,6 +66,13 @@ endif()
 cmake_minimum_required(VERSION 3.19)
 project(skymp)
 enable_testing()
+
+# Check the Visual Studio version
+if(MSVC)
+  if(NOT CMAKE_GENERATOR MATCHES "Visual Studio 17 2022")
+    message(FATAL_ERROR "This project requires \"Visual Studio 17 2022\". But the generator was \"${CMAKE_GENERATOR}\"")
+  endif()
+endif()
 
 # Bool options
 option(JS_ENGINE_TRACING_ENABLED "Useful for JsEngine debugging. See JsEngine.h" OFF)
@@ -76,6 +89,10 @@ message(STATUS BUILD_UNIT_TESTS=${BUILD_UNIT_TESTS})
 message(STATUS INSTALL_CLIENT_DIST=${INSTALL_CLIENT_DIST})
 message(STATUS BUILD_GAMEMODE=${BUILD_GAMEMODE})
 message(STATUS OFFLINE_MODE=${OFFLINE_MODE})
+
+if(PREPARE_NEXUS_ARCHIVES AND EMSCRIPTEN)
+  message(FATAL_ERROR "PREPARE_NEXUS_ARCHIVES is not supported on Emscripten")
+endif()
 
 # Note that SkyrimPlatform performance drops significantly with JS_ENGINE_TRACING_ENABLED set to true.
 
@@ -133,9 +150,9 @@ add_subdirectory(skymp5-front)
 add_subdirectory(skymp5-functions-lib)
 add_subdirectory(skymp5-scripts)
 add_subdirectory(skymp5-server)
-add_subdirectory(skymp5-downloader)
 
-if(BUILD_UNIT_TESTS)
+# TODO: enable for Emscripten once stabilize
+if(BUILD_UNIT_TESTS AND NOT EMSCRIPTEN)
   add_subdirectory(unit)
 endif()
 

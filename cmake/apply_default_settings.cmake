@@ -10,9 +10,12 @@ function(apply_default_settings)
     set_target_properties(${target} PROPERTIES
       MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>"
     )
-    if(MSVC)
-      target_compile_features(${target} PRIVATE cxx_std_20)
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+      # "not all execution paths return value" must be error
+      target_compile_options(${target} PRIVATE -Werror=return-type)
+    elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
       target_compile_options(${target} PRIVATE
+        /WX /we4715 # "not all execution paths return value" must be error
         /wd4551 # disable non critical frida warning
         /wd5104 # disable non critical winsdk warning
         /wd5105 # TODO: investigate and fix

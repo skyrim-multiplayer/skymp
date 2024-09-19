@@ -31,6 +31,8 @@ export interface ScampServer {
   destroyActor(formId: number): void;
   setUserActor(userId: number, actorFormId: number): void;
   getUserActor(userId: number): number;
+  getUserGuid(userId: number): string;
+  isConnected(userId: number): boolean;
   getActorName(actorId: number): string;
   getActorPos(actorId: number): number[];
   getActorCellOrWorld(actorId: number): number;
@@ -47,6 +49,12 @@ export interface ScampServer {
   writeLogs(logLevel: string, message: string): void;
 }
 
-export const createScampServer = (serverPort: number, maxPlayers: number) => {
-  return new scampNativeNode.ScampServer(serverPort, maxPlayers);
+export const createScampServer = (serverPort: number, maxPlayers: number, serverSettings: Record<string, unknown>) => {
+  const res = new scampNativeNode.ScampServer(serverPort, maxPlayers, JSON.stringify(serverSettings));
+  res._setSelf(res);
+  return res;
+}
+
+export const getScampNative = () => {
+  return scampNativeNode;
 }

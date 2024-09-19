@@ -20,7 +20,6 @@ export interface CreateActorMessageMainProps {
     equipment?: Equipment;
     animation?: Animation;
 
-    inventory?: Inventory;
     isDead?: boolean;
 }
 
@@ -48,7 +47,7 @@ export interface CreateActorMessageAdditionalProps {
     staminaPercentage?: number;
     magickaPercentage?: number;
     templateChain?: number[];
+    inventory?: Inventory;
 
-    inventory?: Inventory; // TODO: take a look why doubles CreateActorMessageMainProps
     isDead?: boolean; // TODO: take a look why doubles CreateActorMessageMainProps
 }

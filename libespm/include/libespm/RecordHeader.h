@@ -1,12 +1,14 @@
 #pragma once
 #include "CompressedFieldsCache.h"
+#include "DataTypes.h"
 #include "Type.h"
+#include <cstring> // memcmp
 
 #pragma pack(push, 1)
 
 namespace espm {
 
-class ScriptData;
+struct ScriptData;
 
 class RecordHeader
 {

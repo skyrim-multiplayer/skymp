@@ -1,11 +1,14 @@
 #include "WorldState.h"
+#include "EvaluateTemplate.h"
 #include "FormCallbacks.h"
+#include "LeveledListUtils.h"
 #include "LocationalDataUtils.h"
 #include "MpActor.h"
 #include "MpChangeForms.h"
 #include "MpObjectReference.h"
 #include "ScopedTask.h"
 #include "Timer.h"
+#include "database_drivers/IDatabase.h" // UpsertFailedException
 #include "libespm/GroupUtils.h"
 #include "papyrus-vm/Reader.h"
 #include "papyrus-vm/Utils.h"
@@ -15,12 +18,28 @@
 #include "script_storages/IScriptStorage.h"
 #include <algorithm>
 #include <deque>
+#include <fmt/format.h>
+#include <fmt/ranges.h>
 #include <iterator>
+#include <optional>
 #include <unordered_map>
+
+namespace {
+
+struct RelootTimeForTypesEntry
+{
+  std::string recordType;
+  std::chrono::system_clock::duration time;
+
+  Viet::Timer timer;
+};
+}
 
 struct WorldState::Impl
 {
-  std::unordered_map<uint32_t, MpChangeForm> changes;
+  std::vector<std::optional<MpChangeForm>> changesByIdx;
+  bool changesByIdxEmpty = true;
+
   std::shared_ptr<ISaveStorage> saveStorage;
   std::shared_ptr<IScriptStorage> scriptStorage;
   bool saveStorageBusy = false;
@@ -30,8 +49,7 @@ struct WorldState::Impl
   std::unordered_map<uint32_t, MpChangeForm> changeFormsForDeferredLoad;
   bool chunkLoadingInProgress = false;
   bool formLoadingInProgress = false;
-  std::map<std::string, std::chrono::system_clock::duration>
-    relootTimeForTypes;
+  std::vector<RelootTimeForTypesEntry> relootTimeForTypes;
   std::set<std::string> forbiddenRelootTypes;
   std::vector<std::unique_ptr<IPapyrusClassBase>> classes;
 };
@@ -62,6 +80,8 @@ void WorldState::AttachEspm(espm::Loader* espm_,
 
 void WorldState::AttachSaveStorage(std::shared_ptr<ISaveStorage> saveStorage)
 {
+  spdlog::info("AttachSaveStorage - db fixes installed");
+
   pImpl->saveStorage = saveStorage;
 }
 
@@ -76,25 +96,29 @@ void WorldState::AddForm(std::unique_ptr<MpForm> form, uint32_t formId,
                          const MpChangeForm* optionalChangeFormToApply)
 {
   if (!skipChecks && forms.find(formId) != forms.end()) {
-
     throw std::runtime_error(
-      static_cast<const std::stringstream&>(std::stringstream()
-                                            << "Form with id " << std::hex
-                                            << formId << " already exists")
-        .str());
+      fmt::format("Form with id {:x} already exists", formId));
   }
-  form->Init(this, formId, optionalChangeFormToApply != nullptr);
 
-  if (auto formIndex = dynamic_cast<FormIndex*>(form.get())) {
-    if (!formIdxManager)
+  // Assign formIndex before Init
+  if (auto refr = form->AsObjectReference()) {
+    if (!formIdxManager) {
       formIdxManager.reset(new MakeID(FormIndex::g_invalidIdx - 1));
-    if (!formIdxManager->CreateID(formIndex->idx))
-      throw std::runtime_error("CreateID failed");
+    }
 
-    if (formByIdxUnreliable.size() <= formIndex->idx)
-      formByIdxUnreliable.resize(formIndex->idx + 1, nullptr);
-    formByIdxUnreliable[formIndex->idx] = form.get();
+    if (!formIdxManager->CreateID(refr->idx)) {
+      throw std::runtime_error("CreateID failed");
+    }
+
+    if (refrByIdxUnreliable.size() <= refr->GetIdx()) {
+      refrByIdxUnreliable.resize(refr->GetIdx() + 1, nullptr);
+    }
+    refrByIdxUnreliable[refr->GetIdx()] = refr;
   }
+
+  // MpObjectReference::Init requests save for newly created forms. That's why
+  // we want formIndex to be assigned before init.
+  form->Init(this, formId, optionalChangeFormToApply != nullptr);
 
   auto it = forms.insert({ formId, std::move(form) }).first;
 
@@ -112,7 +136,6 @@ void WorldState::AddForm(std::unique_ptr<MpForm> form, uint32_t formId,
 void WorldState::Tick()
 {
   const auto now = std::chrono::system_clock::now();
-  TickReloot(now);
   TickSaveStorage(now);
   TickTimers(now);
 }
@@ -197,7 +220,9 @@ void WorldState::LoadChangeForm(const MpChangeForm& changeForm,
                                std::to_string(changeForm.recType));
   }
 
+  auto formRawPtr = reinterpret_cast<MpObjectReference*>(form.get());
   AddForm(std::move(form), formId, false, &changeForm);
+  auto idx = formRawPtr->GetIdx();
 
   // EnsureBaseContainerAdded forces saving here.
   // We do not want characters to save when they are load partially
@@ -205,24 +230,66 @@ void WorldState::LoadChangeForm(const MpChangeForm& changeForm,
   // https://github.com/skyrim-multiplayer/issue-tracker/issues/64
 
   // So we expect that RequestSave does nothing in this case:
-  assert(pImpl->changes.count(formId) == 0);
 
-  // For Release configuration we just manually remove formId from changes
-  pImpl->changes.erase(formId);
+  if (pImpl->changesByIdx.size() > idx &&
+      pImpl->changesByIdx[idx] != std::nullopt) {
+    assert(false);
+
+    // For Release configuration we just manually remove formId from changes
+    pImpl->changesByIdx[idx] = std::nullopt;
+  }
 }
 
 void WorldState::RequestReloot(MpObjectReference& ref,
                                std::chrono::system_clock::duration time)
 {
-  auto& list = relootTimers[time];
-  list.push_back({ ref.GetFormId(), std::chrono::system_clock::now() + time });
+  auto refPtr = &ref;
+
+  std::optional<Viet::Promise<Viet::Void>> timer;
+
+  constexpr auto kEpsilon = std::chrono::milliseconds(1);
+
+  for (auto& entry : pImpl->relootTimeForTypes) {
+    auto diff = entry.time - time;
+    if (diff < kEpsilon && diff > -kEpsilon) {
+      timer = entry.timer.SetTimer(time, nullptr);
+      break;
+    }
+  }
+
+  if (timer == std::nullopt) {
+    timer = SetTimer(time);
+  }
+
+  timer->Then([this, refPtr, formId = ref.GetFormId()](Viet::Void) {
+    auto& form = LookupFormById(formId);
+    auto reference = form->AsObjectReference();
+    // Check if the reference is still the same, not re-created with the same
+    // id for example
+    if (reference && reference == refPtr) {
+      reference->DoReloot();
+    }
+  });
 }
 
 void WorldState::RequestSave(MpObjectReference& ref)
 {
-  if (!pImpl->formLoadingInProgress) {
-    pImpl->changes[ref.GetFormId()] = ref.GetChangeForm();
+  if (pImpl->formLoadingInProgress) {
+    return;
   }
+
+  auto idx = ref.GetIdx();
+
+  [[unlikely]] if (idx == FormIndex::g_invalidIdx) {
+    return spdlog::error("RequestSave {:x} - Invalid index", ref.GetFormId());
+  }
+
+  if (pImpl->changesByIdx.size() <= idx) {
+    pImpl->changesByIdx.resize(idx + 1);
+  }
+
+  pImpl->changesByIdx[idx] = ref.GetChangeForm();
+  pImpl->changesByIdxEmpty = false;
 }
 
 const std::shared_ptr<MpForm>& WorldState::LookupFormById(
@@ -267,6 +334,19 @@ const std::shared_ptr<MpForm>& WorldState::LookupFormById(
   if (optionalOutTrace) {
     *optionalOutTrace << "found " << std::hex << formId << std::endl;
   }
+  return it->second;
+}
+
+const std::shared_ptr<MpForm>& WorldState::LookupFormByIdNoLoad(
+  uint32_t formId)
+{
+  static const std::shared_ptr<MpForm> kNullForm;
+
+  auto it = forms.find(formId);
+  if (it == forms.end()) {
+    return kNullForm;
+  }
+
   return it->second;
 }
 
@@ -409,6 +489,37 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
         return false;
       }
     }
+
+    const int kPcLevel = 0; // Shouldn't mean much to races
+
+    // May be not exact the same template chain as it would be in MpActor
+    // but it's ok for this check
+    std::vector<uint32_t> evaluateChainResult =
+      LeveledListUtils::EvaluateTemplateChain(br, base, kPcLevel);
+    std::vector<FormDesc> templateChain(evaluateChainResult.size());
+    std::transform(evaluateChainResult.begin(), evaluateChainResult.end(),
+                   templateChain.begin(), [&](uint32_t formId) {
+                     return FormDesc::FromFormId(formId, this->espmFiles);
+                   });
+
+    uint32_t race = EvaluateTemplate<espm::NPC_::UseTraits>(
+      this, baseId, templateChain,
+      [&](const auto& npcLookupResult, const auto& npcData) {
+        return npcLookupResult.ToGlobalId(npcData.race);
+      });
+
+    bool isBanned = std::find(bannedEspmCharacterRaceIds.begin(),
+                              bannedEspmCharacterRaceIds.end(),
+                              race) != bannedEspmCharacterRaceIds.end();
+    if (isBanned) {
+      logger->info("Skipping actor {:#x} because it has banned race {:#x}",
+                   record->GetId(), race);
+      if (optionalOutTrace) {
+        *optionalOutTrace << fmt::format("Skip NPC due to banned race")
+                          << std::endl;
+      }
+      return false;
+    }
   }
 
   auto locationalData = data.loc;
@@ -511,6 +622,8 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
     LocationalDataUtils::GetRot(locationalData),
     FormDesc::FromFormId(worldOrCell, espmFiles)
   };
+
+  MpChangeFormREFR* changeForm = nullptr;
   if (!isNpc) {
     form.reset(new MpObjectReference(formLocationalData,
                                      formCallbacksFactory(), baseId,
@@ -519,7 +632,7 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
     form.reset(
       new MpActor(formLocationalData, formCallbacksFactory(), baseId));
   }
-  AddForm(std::move(form), formId, true);
+  AddForm(std::move(form), formId, true, changeForm);
 
   // Do not TriggerFormInitEvent here, doing it later after changeForm apply
 
@@ -563,44 +676,93 @@ bool WorldState::LoadForm(uint32_t formId, std::stringstream* optionalOutTrace)
   return attached;
 }
 
-void WorldState::TickReloot(const std::chrono::system_clock::time_point& now)
-{
-  for (auto& p : relootTimers) {
-    auto& list = p.second;
-    while (!list.empty() && list.begin()->second <= now) {
-      uint32_t relootTargetId = list.begin()->first;
-      auto relootTarget = std::dynamic_pointer_cast<MpObjectReference>(
-        LookupFormById(relootTargetId));
-      if (relootTarget) {
-        relootTarget->DoReloot();
-      }
-
-      list.pop_front();
-    }
-  }
-}
-
 void WorldState::TickSaveStorage(const std::chrono::system_clock::time_point&)
 {
   if (!pImpl->saveStorage) {
     return;
   }
 
-  pImpl->saveStorage->Tick();
+  try {
+    pImpl->saveStorage->Tick();
+  } catch (UpsertFailedException& e) {
+    spdlog::error(
+      "TickSaveStorage - received UpsertFailedException {}, re-saving",
+      e.what());
 
-  auto& changes = pImpl->changes;
-  if (!pImpl->saveStorageBusy && !changes.empty()) {
-    pImpl->saveStorageBusy = true;
-    std::vector<MpChangeForm> changeForms;
-    changeForms.reserve(changes.size());
-    for (auto [formId, changeForm] : changes) {
-      changeForms.push_back(changeForm);
+    // No SetTimer here because timers may also break in theory. we faced such
+    // problems earlier
+    pImpl->saveStorageBusy = false;
+
+    auto& forms = e.GetAffectedForms();
+    size_t numRequested = 0;
+
+    for (size_t i = 0; i < forms.size(); ++i) {
+      auto& changeForm = forms[i];
+      if (changeForm == std::nullopt) {
+        continue;
+      }
+
+      // TODO: remove reinterpret_cast
+      MpObjectReference* form = reinterpret_cast<MpObjectReference*>(
+        LookupFormByIdx(static_cast<int>(i)));
+      if (!form) {
+        continue;
+      }
+
+      auto formId = changeForm->formDesc.ToFormId(espmFiles);
+
+      if (form->GetFormId() != formId) {
+        spdlog::error("TickSaveStorage - formIds not matching {:x} <=> {:x}",
+                      form->GetFormId(), formId);
+        continue;
+      }
+
+      RequestSave(*form);
+      numRequested++;
     }
-    changes.clear();
 
-    auto pImpl_ = pImpl;
-    pImpl->saveStorage->Upsert(changeForms,
+    spdlog::info("TickSaveStorage - requested re-save for {} forms in buffer "
+                 "with size {}",
+                 numRequested, forms.size());
+
+  } catch (std::exception& e) {
+    spdlog::error(
+      "TickSaveStorage - received std::exception {}, can't request re-save",
+      e.what());
+    pImpl->saveStorageBusy = false;
+  }
+
+  if (pImpl->saveStorageBusy) {
+    return;
+  }
+
+  if (pImpl->changesByIdxEmpty) {
+    return;
+  }
+
+  pImpl->saveStorageBusy = true;
+
+  auto pImpl_ = pImpl;
+
+  auto previousSize = pImpl->changesByIdx.size();
+
+  try {
+    pImpl->saveStorage->Upsert(std::move(pImpl->changesByIdx),
                                [pImpl_] { pImpl_->saveStorageBusy = false; });
+    pImpl->changesByIdxEmpty = true;
+  } catch (std::exception& e) {
+    pImpl->saveStorageBusy = false;
+    spdlog::error("TickSaveStorage - Upsert failed with {}", e.what());
+  }
+
+  pImpl->changesByIdx.clear();
+
+  bool recycleSuccess =
+    pImpl->saveStorage->GetRecycledChangeFormsBuffer(pImpl->changesByIdx);
+
+  if (!recycleSuccess) {
+    // Just resize to previous size, at least not to resize every RequestSave
+    pImpl->changesByIdx.resize(previousSize);
   }
 }
 
@@ -608,6 +770,10 @@ void WorldState::TickTimers(const std::chrono::system_clock::time_point&)
 {
   timerEffects.TickTimers();
   timerRegular.TickTimers();
+
+  for (auto& entry : pImpl->relootTimeForTypes) {
+    entry.timer.TickTimers();
+  }
 }
 
 void WorldState::SendPapyrusEvent(MpForm* form, const char* eventName,
@@ -639,15 +805,16 @@ void WorldState::SendPapyrusEvent(MpForm* form, const char* eventName,
     }
   }
 
-  VirtualMachine::OnEnter onEnter = [&](const StackIdHolder& holder) {
-    pImpl->policy->BeforeSendPapyrusEvent(form, eventName, arguments,
-                                          argumentsCount, holder.GetStackId());
+  VirtualMachine::OnEnter onEnter = [&](const StackData& stackData) {
+    pImpl->policy->BeforeSendPapyrusEvent(
+      form, eventName, arguments, argumentsCount,
+      stackData.stackIdHolder.GetStackId());
   };
   auto& vm = GetPapyrusVm();
   return vm.SendEvent(form->ToGameObject(), eventName, args, onEnter);
 }
 
-const std::set<MpObjectReference*>& WorldState::GetReferencesAtPosition(
+const std::set<MpObjectReference*>& WorldState::GetNeighborsByPosition(
   uint32_t cellOrWorld, int16_t cellX, int16_t cellY)
 {
   if (espm && !pImpl->chunkLoadingInProgress) {
@@ -689,11 +856,10 @@ const std::set<MpObjectReference*>& WorldState::GetReferencesAtPosition(
 MpForm* WorldState::LookupFormByIdx(int idx)
 {
   if (formIdxManager) {
-    if (idx >= 0 && idx < formByIdxUnreliable.size()) {
-      auto form = formByIdxUnreliable[idx];
-      if (auto formIndex = dynamic_cast<FormIndex*>(form)) {
-        if (formIndex->GetIdx() == idx)
-          return form;
+    if (idx >= 0 && idx < refrByIdxUnreliable.size()) {
+      auto refr = refrByIdxUnreliable[idx];
+      if (refr && refr->GetIdx() == idx) {
+        return refr;
       }
     }
   }
@@ -731,9 +897,9 @@ struct LazyState
   std::shared_ptr<PexScript> pex;
   std::vector<uint8_t> pexBin;
 
-  // With Papyrus hotreload enabled, this variable hold references to previous
-  // versions of pex files. This prevents the invalidation of string/identifier
-  // types of VarValue
+  // With Papyrus hotreload enabled, this variable hold references to
+  // previous versions of pex files. This prevents the invalidation of
+  // string/identifier types of VarValue
   std::vector<std::shared_ptr<PexScript>> oldPexHolder;
 };
 
@@ -869,20 +1035,35 @@ uint32_t WorldState::GenerateFormId()
   return pImpl->nextId++;
 }
 
-void WorldState::SetRelootTime(std::string recordType,
-                               std::chrono::system_clock::duration dur)
+void WorldState::SetRelootTime(const std::string& recordType,
+                               std::chrono::system_clock::duration time)
 {
-  pImpl->relootTimeForTypes[recordType] = dur;
+  auto it = std::find_if(pImpl->relootTimeForTypes.begin(),
+                         pImpl->relootTimeForTypes.end(),
+                         [&recordType](const RelootTimeForTypesEntry& entry) {
+                           return entry.recordType == recordType;
+                         });
+
+  if (it != pImpl->relootTimeForTypes.end()) {
+    it->time = time;
+  } else {
+    pImpl->relootTimeForTypes.push_back({ recordType, time });
+  }
 }
 
 std::optional<std::chrono::system_clock::duration> WorldState::GetRelootTime(
-  std::string recordType) const
+  const std::string& recordType) const
 {
-  auto it = pImpl->relootTimeForTypes.find(recordType);
+  auto it = std::find_if(pImpl->relootTimeForTypes.begin(),
+                         pImpl->relootTimeForTypes.end(),
+                         [&recordType](const RelootTimeForTypesEntry& entry) {
+                           return entry.recordType == recordType;
+                         });
+
   if (it == pImpl->relootTimeForTypes.end()) {
     return std::nullopt;
   }
-  return it->second;
+  return it->time;
 }
 
 bool WorldState::HasKeyword(uint32_t baseId, const char* keyword)

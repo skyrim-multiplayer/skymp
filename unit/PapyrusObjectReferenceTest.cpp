@@ -131,8 +131,8 @@ TEST_CASE("GetAnimationVariableBool", "[Papyrus][ObjectReference][espm]")
             ac.ToVarValue(), { VarValue("bInJumpState") }) == VarValue(false));
 
   p.GetActionListener().OnUpdateMovement(GetDummyMessageData(), 0, { 0, 0, 0 },
-                                         { 0, 0, 0 }, true, false, false,
-                                         0x3c);
+                                         { 0, 0, 0 }, true, false, false, 0x3c,
+                                         RunMode::Standing);
 
   REQUIRE(PapyrusObjectReference().GetAnimationVariableBool(
             ac.ToVarValue(), { VarValue("bInJumpState") }) == VarValue(true));

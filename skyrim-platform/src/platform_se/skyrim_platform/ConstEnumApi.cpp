@@ -5,6 +5,17 @@
 void ConstEnumApi::Register(JsValue& exports,
                             std::shared_ptr<JsEngine> jsEngine)
 {
+  auto SpellType = JsValue::Object();
+  SpellType.SetProperty(0, "Left");
+  SpellType.SetProperty(1, "Right");
+  SpellType.SetProperty(2, "Voise");
+  SpellType.SetProperty(3, "Instant");
+  SpellType.SetProperty("Left", 0);
+  SpellType.SetProperty("Right", 1);
+  SpellType.SetProperty("Voise", 2);
+  SpellType.SetProperty("Instant", 3);
+  exports.SetProperty("SpellType", SpellType);
+
   auto MarkerType = JsValue::Object();
   MarkerType.SetProperty(0, "None");
   MarkerType.SetProperty(1, "City");

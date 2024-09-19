@@ -2,6 +2,7 @@
 #include "Exceptions.h"
 #include "IdManager.h"
 #include "RakNet.h"
+#include <array>
 #include <fmt/format.h>
 #include <iostream>
 #include <memory>
@@ -127,7 +128,7 @@ private:
 class Server : public Networking::IServer
 {
 public:
-  constexpr static int timeoutTimeMs = 6000;
+  constexpr static int timeoutTimeMs = 60000;
 
   Server(unsigned short port_, unsigned short maxConnections,
          const char* password_)
@@ -265,14 +266,22 @@ void Networking::HandlePacketServerside(Networking::IServer::OnPacket onPacket,
                nullptr, 0);
       idManager.freeId(userId);
       break;
-    case ID_NEW_INCOMING_CONNECTION:
+    case ID_NEW_INCOMING_CONNECTION: {
       userId = idManager.allocateId(packet->guid);
       if (userId == Networking::InvalidUserId) {
         throw std::runtime_error("idManager is full");
       }
+
+      std::array<char, 256> guidToStringDestination;
+      packet->guid.ToString(guidToStringDestination.data(),
+                            std::size(guidToStringDestination));
+      std::string guid = guidToStringDestination.data();
+
       onPacket(state, userId, Networking::PacketType::ServerSideUserConnect,
-               nullptr, 0);
+               reinterpret_cast<PacketData>(guid.data()), guid.size());
+
       break;
+    }
     default:
       userId = idManager.find(packet->guid);
       if (packetId >= Networking::MinPacketId) {

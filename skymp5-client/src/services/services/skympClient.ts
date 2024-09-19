@@ -1,22 +1,17 @@
 import {
-  on,
-  once,
   printConsole,
   settings,
   storage,
 } from 'skyrimPlatform';
 import * as networking from './networkingService';
-import { RemoteServer } from './remoteServer';
 import { setupHooks } from '../../sync/animation';
-import { WorldView } from '../../view/worldView';
-import { SinglePlayerService } from './singlePlayerService';
 import { AuthGameData, authGameDataStorageKey } from '../../features/authModel';
 import { ClientListener, CombinedController, Sp } from './clientListener';
 import { ConnectionFailed } from '../events/connectionFailed';
 import { ConnectionDenied } from '../events/connectionDenied';
 import { ConnectionMessage } from '../events/connectionMessage';
 import { CreateActorMessage } from '../messages/createActorMessage';
-import { AuthEvent } from '../events/authEvent';
+import { AuthAttemptEvent } from '../events/authAttemptEvent';
 import { logTrace } from '../../logging';
 
 printConsole('Hello Multiplayer!');
@@ -57,11 +52,11 @@ export class SkympClient extends ClientListener {
       this.controller.once("tick", () => {
         this.controller.emitter.emit("authNeeded", {});
       });
-      this.controller.emitter.on("auth", (e) => this.onAuth(e));
+      this.controller.emitter.on("authAttempt", (e) => this.onAuthAttempt(e));
     }
   }
 
-  private onAuth(e: AuthEvent) {
+  private onAuthAttempt(e: AuthAttemptEvent) {
     logTrace(this, `Caught auth event`);
 
     storage[authGameDataStorageKey] = e.authGameData;
@@ -69,7 +64,7 @@ export class SkympClient extends ClientListener {
     this.startClient();
 
     // TODO: remove this when you will be able to see errors without console
-    this.sp.browser.setFocused(false);
+    // this.sp.browser.setFocused(false);
   }
 
   private onActorCreateMessage(e: ConnectionMessage<CreateActorMessage>) {
@@ -87,14 +82,12 @@ export class SkympClient extends ClientListener {
   }
 
   private startClient() {
-    this.establishConnectionConditional();
+    // once("tick", ...) is needed to ensure networking service initialized
+    this.controller.once("tick", () => this.establishConnectionConditional());
     this.ctor();
   }
 
   private ctor() {
-    // TODO: refactor WorldView into service
-    this.resetView();
-
     // TODO: refactor into service
     setupHooks();
 
@@ -102,7 +95,9 @@ export class SkympClient extends ClientListener {
   }
 
   private establishConnectionConditional() {
-    if (storage.targetIp !== targetIp || storage.targetPort !== targetPort) {
+    const isConnected = this.controller.lookupListener(networking.NetworkingService).isConnected();
+
+    if (!isConnected || storage.targetIp !== targetIp || storage.targetPort !== targetPort) {
       storage.targetIp = targetIp;
       storage.targetPort = targetPort;
 
@@ -111,24 +106,5 @@ export class SkympClient extends ClientListener {
     } else {
       logTrace(this, 'Reconnect is not required');
     }
-  }
-
-  private resetView() {
-    const prevView: WorldView = storage.view as WorldView;
-    const view = new WorldView();
-    once('update', () => {
-      if (prevView && prevView.destroy) {
-        prevView.destroy();
-        printConsole('Previous View destroyed');
-      }
-      storage.view = view;
-    });
-    on('update', () => {
-      const singlePlayerService = this.controller.lookupListener(SinglePlayerService);
-      if (!singlePlayerService.isSinglePlayer) {
-        const modelSource = this.controller.lookupListener(RemoteServer);
-        view.update(modelSource.getWorldModel());
-      }
-    });
   }
 }
