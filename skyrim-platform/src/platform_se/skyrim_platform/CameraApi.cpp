@@ -37,16 +37,16 @@ Napi::Value CameraApi::WorldPointToScreenPoint(const Napi::CallbackInfo& info)
       argNameForExtract[4] = static_cast<char>(charSizeT);
     }
 
-    RE::NiPoint3 pos = NapiHelper::ExtractNiPoint3(info[i], argNameForExtract);
+    RE::NiPoint3 pos = NapiHelper::ExtractNiPoint3(info[i], argNameForExtract.data());
     float outX, outY, outZ;
     RE::NiCamera::WorldPtToScreenPt3(niCamera->worldToCam, niCamera->port, pos,
                                      outX, outY, outZ, 1.f);
 
-    auto jsPos = JsValue::Array(3);
-    jsPos.SetProperty(0, outX);
-    jsPos.SetProperty(1, outY);
-    jsPos.SetProperty(2, outZ);
-    res.SetProperty(JsValue::Int(i - 1), jsPos);
+    auto jsPos = Napi::Array::New(info.Env(), 3);
+    jsPos.Set(0, Napi::Number::New(info.Env(), outX));
+    jsPos.Set(1, Napi::Number::New(info.Env(), outY));
+    jsPos.Set(2, Napi::Number::New(info.Env(), outZ));
+    res.Set(i, jsPos);
   }
 
   return res;

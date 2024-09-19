@@ -17,7 +17,7 @@ struct ConsoleCommand
   std::string shortName;
   uint16_t numArgs = 0;
   RE::SCRIPT_FUNCTION::Execute_t* execute;
-  JsValue jsExecute;
+  Napi::Value jsExecute;
   RE::SCRIPT_FUNCTION* myIter;
   RE::SCRIPT_FUNCTION myOriginalData;
 };
@@ -32,15 +32,15 @@ bool IsNameEqual(const std::string& first, const std::string& second)
 }
 } // namespace
 
-JsValue ConsoleApi::PrintConsole(const JsFunctionArguments& args)
+Napi::Value ConsoleApi::PrintConsole(const Napi::CallbackInfo &info)
 {
-  g_printer->Print(args);
+  g_printer->Print(info);
 
   if (g_windowsConsolePrinter) {
-    g_windowsConsolePrinter->Print(args);
+    g_windowsConsolePrinter->Print(info);
   }
 
-  return JsValue::Undefined();
+  return info.Env().Undefined();
 }
 
 void ConsoleApi::Clear()
@@ -83,71 +83,72 @@ ConsoleCommand FillCmdInfo(RE::SCRIPT_FUNCTION* cmd)
   cmdInfo.execute = cmd->executeFunction;
   cmdInfo.myIter = cmd;
   cmdInfo.myOriginalData = *cmd;
-  cmdInfo.jsExecute = JsValue::Function(
-    [](const JsFunctionArguments& args) { return JsValue::Bool(true); });
+  cmdInfo.jsExecute = Napi::Value::Function(
+    [](const Napi::CallbackInfo &info) { return Napi::Value::Bool(true); });
 
   return cmdInfo;
 }
 
-void CreateLongNameProperty(JsValue& obj, ConsoleCommand* replaced)
+// TODO starts here  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+void CreateLongNameProperty(Napi::Value& obj, ConsoleCommand* replaced)
 {
   obj.SetProperty(
     "longName",
-    [=](const JsFunctionArguments& args) {
-      return JsValue::String(replaced->myIter->functionName);
+    [=](const Napi::CallbackInfo &info) {
+      return Napi::Value::String(replaced->myIter->functionName);
     },
-    [=](const JsFunctionArguments& args) {
+    [=](const Napi::CallbackInfo &info) {
       replaced->longName = args[1].ToString();
 
       RE::SCRIPT_FUNCTION cmd = *replaced->myIter;
       cmd.functionName = replaced->longName.c_str();
 
       REL::safe_write((uintptr_t)replaced->myIter, &cmd, sizeof(cmd));
-      return JsValue::Undefined();
+      return info.Env().Undefined();
     });
 }
 
-void CreateShortNameProperty(JsValue& obj, ConsoleCommand* replaced)
+void CreateShortNameProperty(Napi::Value& obj, ConsoleCommand* replaced)
 {
   obj.SetProperty(
     "shortName",
-    [=](const JsFunctionArguments& args) {
-      return JsValue::String(replaced->myIter->shortName);
+    [=](const Napi::CallbackInfo &info) {
+      return Napi::Value::String(replaced->myIter->shortName);
     },
-    [=](const JsFunctionArguments& args) {
+    [=](const Napi::CallbackInfo &info) {
       replaced->shortName = args[1].ToString();
 
       RE::SCRIPT_FUNCTION cmd = *replaced->myIter;
       cmd.shortName = replaced->shortName.c_str();
 
       REL::safe_write((uintptr_t)replaced->myIter, &cmd, sizeof(cmd));
-      return JsValue::Undefined();
+      return info.Env().Undefined();
     });
 }
 
-void CreateNumArgsProperty(JsValue& obj, ConsoleCommand* replaced)
+void CreateNumArgsProperty(Napi::Value& obj, ConsoleCommand* replaced)
 {
   obj.SetProperty(
     "numArgs",
-    [=](const JsFunctionArguments& args) {
-      return JsValue::Double(replaced->myIter->numParams);
+    [=](const Napi::CallbackInfo &info) {
+      return Napi::Value::Double(replaced->myIter->numParams);
     },
-    [=](const JsFunctionArguments& args) {
+    [=](const Napi::CallbackInfo &info) {
       replaced->numArgs = (double)args[1];
 
       RE::SCRIPT_FUNCTION cmd = *replaced->myIter;
       cmd.numParams = replaced->numArgs;
 
       REL::safe_write((uintptr_t)replaced->myIter, &cmd, sizeof(cmd));
-      return JsValue::Undefined();
+      return info.Env().Undefined();
     });
 }
 
-void CreateExecuteProperty(JsValue& obj, ConsoleCommand* replaced)
+void CreateExecuteProperty(Napi::Value& obj, ConsoleCommand* replaced)
 {
-  obj.SetProperty("execute", nullptr, [=](const JsFunctionArguments& args) {
+  obj.SetProperty("execute", nullptr, [=](const Napi::CallbackInfo &info) {
     replaced->jsExecute = args[1];
-    return JsValue::Undefined();
+    return info.Env().Undefined();
   });
 }
 
@@ -186,29 +187,29 @@ ParseCommandResult ParseCommand(std::string command)
   return res;
 }
 
-JsValue GetObject(const std::string& param)
+Napi::Value GetObject(const std::string& param)
 {
   if (auto formByEditorId = RE::TESForm::LookupByEditorID(param))
-    return JsValue::Double(formByEditorId->formID);
+    return Napi::Value::Double(formByEditorId->formID);
 
   auto id = strtoul(param.c_str(), nullptr, 16);
 
   if (auto formById = RE::TESForm::LookupByID(id))
-    return JsValue::Double(formById->formID);
+    return Napi::Value::Double(formById->formID);
 
   auto err = "For param: " + param + " formId and editorId was not found";
   throw std::runtime_error(err.data());
 }
 
-JsValue GetTypedArg(RE::SCRIPT_PARAM_TYPE type, std::string param)
+Napi::Value GetTypedArg(RE::SCRIPT_PARAM_TYPE type, std::string param)
 {
   switch (type) {
     case RE::SCRIPT_PARAM_TYPE::kStage:
     case RE::SCRIPT_PARAM_TYPE::kInt:
-      return JsValue::Double((double)strtoll(param.c_str(), nullptr, 10));
+      return Napi::Value::Double((double)strtoll(param.c_str(), nullptr, 10));
 
     case RE::SCRIPT_PARAM_TYPE::kFloat:
-      return JsValue::Double((double)strtod(param.c_str(), nullptr));
+      return Napi::Value::Double((double)strtod(param.c_str(), nullptr));
 
       // RE::SCRIPT_PARAM_TYPE::kContainerRef/kCoontainerRef
     case static_cast<RE::SCRIPT_PARAM_TYPE>(0x1A):
@@ -219,12 +220,12 @@ JsValue GetTypedArg(RE::SCRIPT_PARAM_TYPE type, std::string param)
     case RE::SCRIPT_PARAM_TYPE::kPerk:
     case RE::SCRIPT_PARAM_TYPE::kActorBase:
     case RE::SCRIPT_PARAM_TYPE::kObjectRef:
-      return JsValue::Double((double)strtoul(param.c_str(), nullptr, 16));
+      return Napi::Value::Double((double)strtoul(param.c_str(), nullptr, 16));
 
     case RE::SCRIPT_PARAM_TYPE::kAxis:
     case RE::SCRIPT_PARAM_TYPE::kActorValue:
     case RE::SCRIPT_PARAM_TYPE::kChar:
-      return JsValue::String(param);
+      return Napi::Value::String(param);
 
     default:
       return GetObject(param);
@@ -254,21 +255,21 @@ bool ConsoleComand_Execute(const RE::SCRIPT_PARAMETER* paramInfo,
             IsNameEqual(item.second.shortName,
                         parseCommandResult.commandName)) {
 
-          std::vector<JsValue> args;
-          args.push_back(JsValue::Undefined());
+          std::vector<Napi::Value> args;
+          args.push_back(Napi::Value::Undefined());
           auto refr = reinterpret_cast<RE::TESObjectREFR*>(thisObj);
 
-          refr ? args.push_back(JsValue::Double((double)refr->formID))
-               : args.push_back(JsValue::Double(0));
+          refr ? args.push_back(Napi::Value::Double((double)refr->formID))
+               : args.push_back(Napi::Value::Double(0));
 
           for (size_t i = 0; i < parseCommandResult.params.size(); ++i) {
             if (!paramInfo)
               break;
 
-            JsValue arg = GetTypedArg(paramInfo[i].paramType.get(),
+            Napi::Value arg = GetTypedArg(paramInfo[i].paramType.get(),
                                       parseCommandResult.params[i]);
 
-            if (arg.GetType() == JsValue::Type::Undefined) {
+            if (arg.GetType() == Napi::Value::Type::Undefined) {
               auto err = " typeId " +
                 std::to_string((uint32_t)paramInfo[i].paramType.get()) +
                 " not yet supported";
@@ -298,7 +299,7 @@ bool ConsoleComand_Execute(const RE::SCRIPT_PARAMETER* paramInfo,
   return true;
 }
 
-JsValue FindCommand(const std::string& commandName, RE::SCRIPT_FUNCTION* start,
+Napi::Value FindCommand(const std::string& commandName, RE::SCRIPT_FUNCTION* start,
                     size_t count)
 {
   for (size_t i = 0; i < count; ++i) {
@@ -306,7 +307,7 @@ JsValue FindCommand(const std::string& commandName, RE::SCRIPT_FUNCTION* start,
 
     if (IsNameEqual(_iter->functionName, commandName) ||
         IsNameEqual(_iter->shortName, commandName)) {
-      JsValue obj = JsValue::Object();
+      Napi::Value obj = Napi::Value::Object();
 
       auto& replaced = g_replacedConsoleCmd[commandName];
       replaced = FillCmdInfo(_iter);
@@ -322,19 +323,19 @@ JsValue FindCommand(const std::string& commandName, RE::SCRIPT_FUNCTION* start,
       return obj;
     }
   }
-  return JsValue::Null();
+  return Napi::Value::Null();
 }
 } // namespace
 
-JsValue ConsoleApi::FindConsoleCommand(const JsFunctionArguments& args)
+Napi::Value ConsoleApi::FindConsoleCommand(const Napi::CallbackInfo &info)
 {
   auto commandName = args[1].ToString();
 
-  JsValue res =
+  Napi::Value res =
     FindCommand(commandName, RE::SCRIPT_FUNCTION::GetFirstConsoleCommand(),
                 RE::SCRIPT_FUNCTION::Commands::kConsoleCommandsEnd);
 
-  if (res.GetType() == JsValue::Type::Null) {
+  if (res.GetType() == Napi::Value::Type::Null) {
     res =
       FindCommand(commandName, RE::SCRIPT_FUNCTION::GetFirstScriptCommand(),
                   RE::SCRIPT_FUNCTION::Commands::kScriptCommandsEnd);
@@ -343,7 +344,7 @@ JsValue ConsoleApi::FindConsoleCommand(const JsFunctionArguments& args)
   return res;
 }
 
-JsValue ConsoleApi::WriteLogs(const JsFunctionArguments& args)
+Napi::Value ConsoleApi::WriteLogs(const Napi::CallbackInfo &info)
 {
   auto pluginName = args[1].ToString();
   if (!ValidateFilename(pluginName, /*allowDots*/ false)) {
@@ -360,23 +361,23 @@ JsValue ConsoleApi::WriteLogs(const JsFunctionArguments& args)
   std::string s;
 
   for (size_t i = 2; i < args.GetSize(); ++i) {
-    JsValue str = args[i];
-    if (args[i].GetType() == JsValue::Type::Object &&
+    Napi::Value str = args[i];
+    if (args[i].GetType() == Napi::Value::Type::Object &&
         !args[i].GetExternalData()) {
 
-      JsValue json = JsValue::GlobalObject().GetProperty("JSON");
+      Napi::Value json = Napi::Value::GlobalObject().GetProperty("JSON");
       str = json.GetProperty("stringify").Call({ json, args[i] });
     }
     s += str.ToString() + ' ';
   }
 
   (*g_m[pluginName]) << s << std::endl;
-  return JsValue::Undefined();
+  return info.Env().Undefined();
 }
 
-JsValue ConsoleApi::SetPrintConsolePrefixesEnabled(
-  const JsFunctionArguments& args)
+Napi::Value ConsoleApi::SetPrintConsolePrefixesEnabled(
+  const Napi::CallbackInfo &info)
 {
   g_printConsolePrefixesEnabled = static_cast<bool>(args[1]);
-  return JsValue::Undefined();
+  return info.Env().Undefined();
 }
