@@ -3,6 +3,7 @@ ignore:
   - '**/third_party'
   - 'skymp5-scripts/'
   - 'overlay_ports/rsm-bsa/*.patch'
+  - 'overlay_ports/node-embedder-api/portfile.cmake'
 
 rules:
   end-of-file:
