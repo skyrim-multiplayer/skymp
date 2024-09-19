@@ -84,6 +84,15 @@
     },
     "skyrim-vr": {
       "description": "Build platform for Skyrim VR."
+    },
+    "build-nodejs": {
+      "description": "",
+      "dependencies": [
+        {
+          "name": "node-embedder-api",
+          "platform": "windows"
+        }
+      ]
     }
   }
 }

@@ -55,12 +55,18 @@ if(NOT "${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}/build")
   message(FATAL_ERROR "${msg}")
 endif()
 
+# Bool options (Part 1)
 option(SKYRIM_SE "Legacy Skyrim SE (1.5) build" OFF)
+option(BUILD_NODEJS_PLUGIN "Build a NodeJS plugin for Skyrim if ON, use a pre-built from ./client-deps otherwise" OFF)
 
 if(SKYRIM_SE)
   list(APPEND VCPKG_MANIFEST_FEATURES "skyrim-se")
 else()
   list(APPEND VCPKG_MANIFEST_FEATURES "skyrim-ae")
+endif()
+
+if(BUILD_NODEJS_PLUGIN)
+  list(APPEND VCPKG_MANIFEST_FEATURES "build-nodejs")
 endif()
 
 cmake_minimum_required(VERSION 3.19)
@@ -74,7 +80,7 @@ if(MSVC)
   endif()
 endif()
 
-# Bool options
+# Bool options (Part 2)
 option(JS_ENGINE_TRACING_ENABLED "Useful for JsEngine debugging. See JsEngine.h" OFF)
 option(PREPARE_NEXUS_ARCHIVES "Prepare SP and other archives during build or not" OFF)
 option(BUILD_UNIT_TESTS "Build unit tests (excluded from build when off - workaround for #1182)" ON)
@@ -89,6 +95,7 @@ message(STATUS BUILD_UNIT_TESTS=${BUILD_UNIT_TESTS})
 message(STATUS INSTALL_CLIENT_DIST=${INSTALL_CLIENT_DIST})
 message(STATUS BUILD_GAMEMODE=${BUILD_GAMEMODE})
 message(STATUS OFFLINE_MODE=${OFFLINE_MODE})
+message(STATUS BUILD_NODEJS_PLUGIN=${BUILD_NODEJS_PLUGIN})
 
 if(PREPARE_NEXUS_ARCHIVES AND EMSCRIPTEN)
   message(FATAL_ERROR "PREPARE_NEXUS_ARCHIVES is not supported on Emscripten")
