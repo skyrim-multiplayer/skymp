@@ -1,11 +1,13 @@
 #pragma once
 
-namespace CameraApi {
-JsValue WorldPointToScreenPoint(const JsFunctionArguments& args);
+#include "NapiHelper.h"
 
-inline void Register(JsValue& exports)
+namespace CameraApi {
+Napi::Value WorldPointToScreenPoint(const Napi::CallbackInfo& info);
+
+inline void Register(Napi::Env env, Napi::Value& exports)
 {
-  exports.SetProperty("worldPointToScreenPoint",
-                      JsValue::Function(WorldPointToScreenPoint));
+  exports.Set("worldPointToScreenPoint",
+                      Napi::Function::New(env, NapiHelper::WrapCppExceptions(WorldPointToScreenPoint)));
 }
 }

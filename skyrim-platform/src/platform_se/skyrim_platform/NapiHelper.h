@@ -1,3 +1,4 @@
+// Copied from skymp5-server
 #pragma once
 
 #include "NiPoint3.h"

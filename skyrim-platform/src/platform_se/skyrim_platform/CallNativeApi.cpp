@@ -8,13 +8,13 @@
 
 #include <RE/T/TESDataHandler.h>
 
-JsValue CallNativeApi::CallNative(
-  const JsFunctionArguments& args,
+Napi::Value CallNativeApi::CallNative(
+  const Napi::CallbackInfo& info,
   const std::function<NativeCallRequirements()>& getNativeCallRequirements)
 {
-  auto className = static_cast<std::string>(args[1]);
-  auto functionName = static_cast<std::string>(args[2]);
-  auto self = args[3];
+  auto className = NapiHelper::ExtractString(info[0], "className");
+  auto functionName = NapiHelper::ExtractString(info[1], "functionName");
+  auto self = info[2];
   constexpr int nativeArgsStart = 4;
 
   // https://github.com/ianpatt/skse64/blob/971babc435e2620521c8556ea8ae7b9a4910ff61/skse64/PapyrusGame.cpp#L94
@@ -24,8 +24,8 @@ JsValue CallNativeApi::CallNative(
       if (!dataHandler) {
         throw NullPointerException("dataHandler");
       }
-      return JsValue(
-        static_cast<int>(dataHandler->compiledFileCollection.files.size()));
+      auto numFiles = dataHandler->compiledFileCollection.files.size();
+      return Napi::Number::New(info.Env(), numFiles);
 
     } else if (!stricmp("GetModName", functionName.data())) {
 
@@ -42,18 +42,18 @@ JsValue CallNativeApi::CallNative(
         uint32_t adjusted = index - kLightModOffset;
         if (adjusted >=
             dataHandler->compiledFileCollection.smallFiles.size()) {
-          return JsValue("");
+          return Napi::String::New(info.Env(), "");
         }
         std::string s =
           dataHandler->compiledFileCollection.smallFiles[adjusted]->fileName;
-        return JsValue(s);
+        return Napi::String::New(info.Env(), s);
       } else {
         if (index >= dataHandler->compiledFileCollection.files.size()) {
-          return JsValue("");
+          return Napi::String::New(info.Env(), "");
         }
         std::string s =
           dataHandler->compiledFileCollection.files[index]->fileName;
-        return JsValue(s);
+        return Napi::String::New(info.Env(), s);
       }
     }
   }
@@ -100,17 +100,19 @@ JsValue CallNativeApi::CallNative(
     g_callNativeArgsPtr = &callNativeArgs;
 
     thread_local auto g_promiseFn =
-      JsValue::Function([](const JsFunctionArguments& args) {
-        auto resolve = std::shared_ptr<JsValue>(new JsValue(args[1]));
+      Napi::Function::New(info.Env(), [](const Napi::CallbackInfo& info) {
+        std::shared_ptr<Napi::Reference<Napi::Function>> resolveFunctionRef(
+          new Napi::Reference<Napi::Function>(
+          Napi::Persistent<Napi::Function>(info[0].As<Napi::Function>())));
+
         if (!g_callNativeArgsPtr)
           throw NullPointerException("g_callNativeArgsPtr");
         g_callNativeArgsPtr->latentCallback =
-          [resolve](const CallNative::AnySafe& v) {
-            resolve->Call({ JsValue::Undefined(),
-                            NativeValueCasts::NativeValueToJsValue(v) });
+          [resolveFunctionRef](const CallNative::AnySafe& v) {
+            resolveFunctionRef->Value().Call({ info.Env().Undefined(),  NativeValueCasts::NativeValueToJsValue(v) });
           };
         CallNative::CallNativeSafe(*g_callNativeArgsPtr);
-        return JsValue::Undefined();
+        return info.Env().Undefined();
       });
     return CreatePromise(g_promiseFn);
   } else {
@@ -121,12 +123,12 @@ JsValue CallNativeApi::CallNative(
   }
 }
 
-JsValue CallNativeApi::DynamicCast(
-  const JsFunctionArguments& args,
+Napi::Value CallNativeApi::DynamicCast(
+  const Napi::CallbackInfo& info,
   const std::function<NativeCallRequirements()>& getNativeCallRequirements)
 {
-  auto form = NativeValueCasts::JsValueToNativeValue(args[1]);
-  auto targetType = std::string(args[2]);
+  auto form = NativeValueCasts::JsValueToNativeValue(info[0]);
+  auto targetType = NapiHelper::ExtractString(info[1], "targetType");
   return NativeValueCasts::NativeValueToJsValue(
     CallNative::DynamicCast(targetType, form));
 }

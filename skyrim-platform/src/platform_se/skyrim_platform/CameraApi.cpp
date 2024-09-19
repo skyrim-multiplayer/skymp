@@ -2,7 +2,7 @@
 #include "JsExtractPoint.h"
 #include "NullPointerException.h"
 
-JsValue CameraApi::WorldPointToScreenPoint(const JsFunctionArguments& args)
+Napi::Value CameraApi::WorldPointToScreenPoint(const Napi::CallbackInfo& info)
 {
   auto camera = RE::PlayerCamera::GetSingleton();
   if (!camera)
@@ -24,12 +24,20 @@ JsValue CameraApi::WorldPointToScreenPoint(const JsFunctionArguments& args)
   if (!niCamera)
     throw NullPointerException("matrix");
 
-  auto res = JsValue::Array(args.GetSize() - 1);
+  auto length = info.Length();
 
-  for (size_t i = 1; i < args.GetSize(); ++i) {
+  auto res = Napi::Array::New(info.Env(), length);
 
-    std::array<float, 3> arrayPos = JsExtractPoint(args[i]);
-    RE::NiPoint3 pos{ arrayPos[0], arrayPos[1], arrayPos[2] };
+  char argNameForExtract[5] = "argX";
+
+  for (size_t i = 0; i < length; ++i) {
+
+    size_t charSizeT = static_cast<size_t>('0') + i;
+    if (charSizeT <= 255 && i <= 9) {
+      argNameForExtract[4] = static_cast<char>(charSizeT);
+    }
+
+    RE::NiPoint3 pos = NapiHelper::ExtractNiPoint3(info[i], argNameForExtract);
     float outX, outY, outZ;
     RE::NiCamera::WorldPtToScreenPt3(niCamera->worldToCam, niCamera->port, pos,
                                      outX, outY, outZ, 1.f);

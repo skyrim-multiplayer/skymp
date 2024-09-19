@@ -18,26 +18,26 @@ inline CEFUtils::MyChromiumApp& GetApp(
 }
 }
 
-JsValue BrowserApi::SetVisible(const JsFunctionArguments& args)
+Napi::Value BrowserApi::SetVisible(const Napi::CallbackInfo& info)
 {
   bool& v = CEFUtils::DX11RenderHandler::Visible();
-  v = (bool)args[1];
-  return JsValue::Undefined();
+  v = NapiHelper::ExtractBoolean(info[0], "visible");
+  return info.Env().Undefined();
 }
 
-JsValue BrowserApi::IsVisible(const JsFunctionArguments& args)
+Napi::Value BrowserApi::IsVisible(const Napi::CallbackInfo& info)
 {
-  return JsValue::Bool(CEFUtils::DX11RenderHandler::Visible());
+  return Napi::Boolean::New(info.Env(), CEFUtils::DX11RenderHandler::Visible());
 }
 
-JsValue BrowserApi::SetFocused(const JsFunctionArguments& args)
+Napi::Value BrowserApi::SetFocused(const Napi::CallbackInfo& info)
 {
   auto settings = Settings::GetPlatformSettings();
   if (settings->GetBool("Debug", "ChromiumEnabled", true) == false)
     throw std::runtime_error("Chromium is disabled!");
 
   bool& v = CEFUtils::DInputHook::ChromeFocus();
-  bool newFocus = (bool)args[1];
+  bool newFocus = NapiHelper::ExtractBoolean(info[0], "focused");
   if (v != newFocus) {
     v = newFocus;
 
@@ -45,14 +45,14 @@ JsValue BrowserApi::SetFocused(const JsFunctionArguments& args)
     auto msgQ = RE::UIMessageQueue::GetSingleton();
 
     if (!ui || !msgQ)
-      return JsValue::Undefined();
+      return info.Env().Undefined();
 
     const bool alreadyOpen = ui->IsMenuOpen(RE::CursorMenu::MENU_NAME);
 
     if (newFocus) {
       if (!alreadyOpen) {
         msgQ->AddMessage(RE::CursorMenu::MENU_NAME, RE::UI_MESSAGE_TYPE::kShow,
-                         NULL);
+                        NULL);
         g_cursorIsOpenByFocus = true;
       }
     } else {
@@ -63,46 +63,46 @@ JsValue BrowserApi::SetFocused(const JsFunctionArguments& args)
       }
     }
   }
-  return JsValue::Undefined();
+  return info.Env().Undefined();
 }
 
-JsValue BrowserApi::IsFocused(const JsFunctionArguments& args)
+Napi::Value BrowserApi::IsFocused(const Napi::CallbackInfo& info)
 {
   auto settings = Settings::GetPlatformSettings();
   if (settings->GetBool("Debug", "ChromiumEnabled", true) == false)
     throw std::runtime_error("Chromium is disabled!");
 
-  return JsValue::Bool(CEFUtils::DInputHook::ChromeFocus());
+  return Napi::Boolean::New(info.Env(), CEFUtils::DInputHook::ChromeFocus());
 }
 
-JsValue BrowserApi::LoadUrl(const JsFunctionArguments& args,
+Napi::Value BrowserApi::LoadUrl(const Napi::CallbackInfo& info,
                             std::shared_ptr<State> state)
 {
   auto settings = Settings::GetPlatformSettings();
   if (settings->GetBool("Debug", "ChromiumEnabled", true) == false)
     throw std::runtime_error("Chromium is disabled!");
 
-  auto str = static_cast<std::string>(args[1]);
-  return JsValue::Bool(GetApp(state).LoadUrl(str.data()));
+  auto str = NapiHelper::ExtractString(info[0], "url");
+  return Napi::Boolean::New(info.Env(), GetApp(state).LoadUrl(str.data()));
 }
 
-JsValue BrowserApi::GetToken(const JsFunctionArguments& args)
+Napi::Value BrowserApi::GetToken(const Napi::CallbackInfo& info)
 {
   auto settings = Settings::GetPlatformSettings();
   if (settings->GetBool("Debug", "ChromiumEnabled", true) == false)
     throw std::runtime_error("Chromium is disabled!");
 
-  return MyChromiumApp::GetCurrentSpToken();
+  return Napi::String::New(info.Env(), MyChromiumApp::GetCurrentSpToken());
 }
 
-JsValue BrowserApi::ExecuteJavaScript(const JsFunctionArguments& args,
+Napi::Value BrowserApi::ExecuteJavaScript(const Napi::CallbackInfo& info,
                                       std::shared_ptr<State> state)
 {
   auto settings = Settings::GetPlatformSettings();
   if (settings->GetBool("Debug", "ChromiumEnabled", true) == false)
     throw std::runtime_error("Chromium is disabled!");
 
-  auto str = static_cast<std::string>(args[1]);
+  auto str = NapiHelper::ExtractString(info[0], "src");
   GetApp(state).ExecuteJavaScript(str);
-  return JsValue::Undefined();
+  return info.Env().Undefined();
 }

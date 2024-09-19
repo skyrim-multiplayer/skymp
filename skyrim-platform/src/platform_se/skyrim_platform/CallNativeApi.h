@@ -1,6 +1,8 @@
 #pragma once
 #include "CallNative.h" // CallNative::State
 
+#include "NapiHelper.h"
+
 namespace CallNativeApi {
 
 struct NativeCallRequirements
@@ -17,23 +19,24 @@ struct NativeCallRequirements
   std::shared_ptr<Viet::TaskQueue> gameThrQ, jsThrQ;
 };
 
-JsValue CallNative(
-  const JsFunctionArguments& args,
+Napi::Value CallNative(
+  const Napi::CallbackInfo& info,
   const std::function<NativeCallRequirements()>& getNativeCallRequirements);
 
-JsValue DynamicCast(
-  const JsFunctionArguments& args,
+Napi::Value DynamicCast(
+  const Napi::CallbackInfo& info,
   const std::function<NativeCallRequirements()>& getNativeCallRequirements);
 
 inline void Register(
-  JsValue& exports,
+  Napi::Env env,
+  Napi::Value& exports,
   std::function<NativeCallRequirements()> getNativeCallRequirements)
 {
-  exports.SetProperty("callNative", JsValue::Function([=](auto& args) {
+  exports.Set("callNative", Napi::Function::New(env, NapiHelper::WrapCppExceptions([=](auto& args) {
                         return CallNative(args, getNativeCallRequirements);
-                      }));
-  exports.SetProperty("dynamicCast", JsValue::Function([=](auto& args) {
+                      })));
+  exports.Set("dynamicCast",  Napi::Function::New(env, NapiHelper::WrapCppExceptions([=](auto& args) {
                         return DynamicCast(args, getNativeCallRequirements);
-                      }));
+                      })));
 }
 }
