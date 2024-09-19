@@ -21,12 +21,9 @@ VarValue PapyrusSound::Play(VarValue self,
     }
     auto funcName = "Play";
     auto serializedArgs = SpSnippetFunctionGen::SerializeArguments(arguments);
-    for (auto listener : refr->GetListeners()) {
-      auto targetRefr = dynamic_cast<MpActor*>(listener);
-      if (targetRefr) {
-        SpSnippet(GetName(), funcName, serializedArgs.data(), selfId)
-          .Execute(targetRefr);
-      }
+    for (auto listener : refr->GetActorListeners()) {
+      SpSnippet(GetName(), funcName, serializedArgs.data(), selfId)
+        .Execute(listener, SpSnippetMode::kNoReturnResult);
     }
   }
   return VarValue::None();
@@ -37,5 +34,5 @@ void PapyrusSound::Register(
 {
   compatibilityPolicy = policy;
 
-  AddMethod(vm, "play", &PapyrusSound::Play);
+  AddMethod(vm, "Play", &PapyrusSound::Play);
 }

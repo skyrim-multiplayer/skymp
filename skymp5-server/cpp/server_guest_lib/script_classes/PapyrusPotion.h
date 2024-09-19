@@ -2,12 +2,12 @@
 #include "IPapyrusClass.h"
 #include "SpSnippetFunctionGen.h"
 
-class PapyrusMessage final : public IPapyrusClass<PapyrusMessage>
+class PapyrusPotion final : public IPapyrusClass<PapyrusPotion>
 {
 public:
-  const char* GetName() override { return "message"; }
+  const char* GetName() override { return "potion"; }
 
-  DEFINE_METHOD_SPSNIPPET(Show);
+  VarValue IsFood(VarValue self, const std::vector<VarValue>& arguments);
 
   void Register(VirtualMachine& vm,
                 std::shared_ptr<IPapyrusCompatibilityPolicy> policy) override;

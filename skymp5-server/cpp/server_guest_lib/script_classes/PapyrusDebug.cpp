@@ -10,7 +10,8 @@ VarValue PapyrusDebug::SendAnimationEvent(
   if (targetActor) {
     auto funcName = "SendAnimationEvent";
     auto s = SpSnippetFunctionGen::SerializeArguments(arguments, targetActor);
-    SpSnippet(GetName(), funcName, s.data()).Execute(targetActor);
+    SpSnippet(GetName(), funcName, s.data())
+      .Execute(targetActor, SpSnippetMode::kNoReturnResult);
   }
   return VarValue::None();
 }
@@ -32,8 +33,8 @@ void PapyrusDebug::Register(
 {
   compatibilityPolicy = policy;
 
-  AddStatic(vm, "notification", &PapyrusDebug::Notification);
-  AddStatic(vm, "messageBox", &PapyrusDebug::MessageBox);
-  AddStatic(vm, "sendAnimationEvent", &PapyrusDebug::SendAnimationEvent);
-  AddStatic(vm, "trace", &PapyrusDebug::Trace);
+  AddStatic(vm, "Notification", &PapyrusDebug::Notification);
+  AddStatic(vm, "MessageBox", &PapyrusDebug::MessageBox);
+  AddStatic(vm, "SendAnimationEvent", &PapyrusDebug::SendAnimationEvent);
+  AddStatic(vm, "Trace", &PapyrusDebug::Trace);
 }

@@ -6,7 +6,7 @@
 class PapyrusActor final : public IPapyrusClass<PapyrusActor>
 {
 public:
-  const char* GetName() override { return "Actor"; }
+  const char* GetName() override { return "actor"; }
 
   DEFINE_METHOD_SPSNIPPET(DrawWeapon);
   DEFINE_METHOD_SPSNIPPET(UnequipAll);
@@ -43,6 +43,15 @@ public:
 
   VarValue WornHasKeyword(VarValue self,
                           const std::vector<VarValue>& arguments);
+
+  VarValue AddToFaction(VarValue self, const std::vector<VarValue>& arguments);
+
+  VarValue IsInFaction(VarValue self, const std::vector<VarValue>& arguments);
+
+  VarValue GetFactions(VarValue self, const std::vector<VarValue>& arguments);
+
+  VarValue RemoveFromFaction(VarValue self,
+                             const std::vector<VarValue>& arguments);
 
   VarValue AddSpell(VarValue self, const std::vector<VarValue>& arguments);
 

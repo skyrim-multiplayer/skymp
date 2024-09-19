@@ -1,25 +1,25 @@
-#include "PapyrusEffectShader.h"
-
-#include "WorldState.h"
+#include "PapyrusVisualEffect.h"
+#include "MpActor.h"
+#include "SpSnippetFunctionGen.h"
 #include "script_objects/EspmGameObject.h"
 #include "script_objects/MpFormGameObject.h"
 
-VarValue PapyrusEffectShader::Play(VarValue self,
+VarValue PapyrusVisualEffect::Play(VarValue self,
                                    const std::vector<VarValue>& arguments)
 {
   Helper(self, "Play", arguments);
   return VarValue::None();
 }
 
-VarValue PapyrusEffectShader::Stop(VarValue self,
+VarValue PapyrusVisualEffect::Stop(VarValue self,
                                    const std::vector<VarValue>& arguments)
 {
   Helper(self, "Stop", arguments);
   return VarValue::None();
 }
 
-// This is exact copy of PapyrusVisualEffect::Helper
-void PapyrusEffectShader::Helper(VarValue& self, const char* funcName,
+// This is exact copy of PapyrusEffectShader::Helper
+void PapyrusVisualEffect::Helper(VarValue& self, const char* funcName,
                                  const std::vector<VarValue>& arguments)
 {
   const auto& selfRec = GetRecordPtr(self);

@@ -6,7 +6,7 @@
 class PapyrusKeyword final : public IPapyrusClass<PapyrusKeyword>
 {
 public:
-  const char* GetName() override { return "Keyword"; }
+  const char* GetName() override { return "keyword"; }
 
   VarValue GetKeyword(VarValue self, const std::vector<VarValue>& arguments);
 
@@ -20,7 +20,7 @@ public:
                  .GetBrowser()
                  .GetRecordsByType("KYWD");
 
-    AddStatic(vm, "getKeyword", &PapyrusKeyword::GetKeyword);
+    AddStatic(vm, "GetKeyword", &PapyrusKeyword::GetKeyword);
   }
 
   std::shared_ptr<IPapyrusCompatibilityPolicy> compatibilityPolicy;

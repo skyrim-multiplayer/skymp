@@ -5,7 +5,7 @@
 class PapyrusGame final : public IPapyrusClass<PapyrusGame>
 {
 public:
-  const char* GetName() override { return "Game"; }
+  const char* GetName() override { return "game"; }
 
   DEFINE_STATIC_SPSNIPPET(ForceThirdPerson);
   DEFINE_STATIC_SPSNIPPET(DisablePlayerControls);
@@ -13,8 +13,19 @@ public:
 
   VarValue IncrementStat(VarValue self,
                          const std::vector<VarValue>& arguments);
+
+  // In Skyrim it's not a native, just a wrapper around
+  // FindClosestReferenceOfAnyTypeInList
+  // TODO: implement FindClosestReferenceOfAnyTypeInList native instead
   VarValue FindClosestReferenceOfAnyTypeInListFromRef(
     VarValue self, const std::vector<VarValue>& arguments);
+
+  // In Skyrim it's not a native, just a wrapper around
+  // FindClosestReferenceOfType
+  // TODO: implement FindClosestReferenceOfType native instead
+  VarValue FindClosestReferenceOfTypeFromRef(
+    VarValue self, const std::vector<VarValue>& arguments);
+
   VarValue GetPlayer(VarValue self, const std::vector<VarValue>& arguments);
   VarValue ShowRaceMenu(VarValue self, const std::vector<VarValue>& arguments);
   VarValue ShowLimitedRaceMenu(VarValue self,

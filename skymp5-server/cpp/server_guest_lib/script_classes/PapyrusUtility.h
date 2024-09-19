@@ -4,7 +4,7 @@
 class PapyrusUtility final : public IPapyrusClass<PapyrusUtility>
 {
 public:
-  const char* GetName() override { return "Utility"; }
+  const char* GetName() override { return "utility"; }
 
   VarValue Wait(VarValue self, const std::vector<VarValue>& arguments);
   VarValue RandomInt(VarValue slef, const std::vector<VarValue>& arguments);

@@ -1,8 +1,10 @@
 #include "PapyrusForm.h"
 
+#include "GetWeightFromRecord.h"
 #include "MpActor.h"
 #include "TimeUtils.h"
 #include "WorldState.h"
+#include "papyrus-vm/Structures.h"
 #include "script_objects/EspmGameObject.h"
 #include "script_objects/MpFormGameObject.h"
 
@@ -20,9 +22,26 @@ VarValue PapyrusForm::RegisterForSingleUpdate(
 {
   if (arguments.size() >= 1) {
     if (auto form = GetFormPtr<MpForm>(self)) {
+      auto worldState = form->GetParent();
+
+      std::optional<uint32_t> existingTimerId = form->GetSingleUpdateTimerId();
+      if (existingTimerId) {
+        worldState->RemoveTimer(*existingTimerId);
+      }
+
       double seconds = static_cast<double>(arguments[0]);
       auto time = Viet::TimeUtils::To<std::chrono::milliseconds>(seconds);
-      form->GetParent()->RegisterForSingleUpdate(self, time);
+
+      uint32_t timerId = 0;
+      auto promise = worldState->SetTimer(time, &timerId);
+      uint32_t formId = form->GetFormId();
+      promise.Then([form, formId, worldState](const Viet::Void&) {
+        if (form == worldState->LookupFormById(formId).get()) {
+          form->Update();
+        }
+      });
+
+      form->SetSingleUpdateTimerId(timerId);
     }
   }
 
@@ -38,11 +57,11 @@ VarValue PapyrusForm::GetType(VarValue self, const std::vector<VarValue>&)
   }
 
   if (auto form = GetFormPtr<MpForm>(self)) {
-    if (dynamic_cast<MpActor*>(form)) {
+    if (form->AsActor()) {
       constexpr auto kCharacter = 62;
       return VarValue(static_cast<int32_t>(kCharacter));
     }
-    if (dynamic_cast<MpObjectReference*>(form)) {
+    if (form->AsObjectReference()) {
       constexpr auto kReference = 61;
       return VarValue(static_cast<int32_t>(kReference));
     }
@@ -131,6 +150,35 @@ VarValue PapyrusForm::GetName_(VarValue self, const std::vector<VarValue>&)
   }
 
   return VarValue("");
+}
+
+VarValue PapyrusForm::GetWeight(VarValue self,
+                                const std::vector<VarValue>& arguments)
+{
+  if (const auto* form = GetFormPtr<MpForm>(self)) {
+    return VarValue(form->GetWeight());
+  }
+
+  if (const auto record = GetRecordPtr(self).rec) {
+    auto& cache = compatibilityPolicy->GetWorldState()->GetEspmCache();
+    return VarValue(GetWeightFromRecord(record, cache));
+  }
+
+  return VarValue::None();
+}
+
+void PapyrusForm::Register(VirtualMachine& vm,
+                           std::shared_ptr<IPapyrusCompatibilityPolicy> policy)
+{
+  AddMethod(vm, "RegisterForSingleUpdate",
+            &PapyrusForm::RegisterForSingleUpdate);
+  AddMethod(vm, "GetType", &PapyrusForm::GetType);
+  AddMethod(vm, "HasKeyword", &PapyrusForm::HasKeyword);
+  AddMethod(vm, "GetFormID", &PapyrusForm::GetFormId);
+  AddMethod(vm, "GetName", &PapyrusForm::GetName_);
+  AddMethod(vm, "GetWeight", &PapyrusForm::GetWeight);
+
+  compatibilityPolicy = policy;
 }
 
 namespace {

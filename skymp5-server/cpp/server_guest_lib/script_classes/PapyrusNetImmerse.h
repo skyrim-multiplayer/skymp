@@ -5,7 +5,7 @@
 class PapyrusNetImmerse final : public IPapyrusClass<PapyrusNetImmerse>
 {
 public:
-  const char* GetName() override { return "NetImmerse"; }
+  const char* GetName() override { return "netimmerse"; }
 
   VarValue SetNodeTextureSet(VarValue self,
                              const std::vector<VarValue>& arguments);

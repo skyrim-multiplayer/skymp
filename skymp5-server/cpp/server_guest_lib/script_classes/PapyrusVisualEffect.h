@@ -1,19 +1,18 @@
 #pragma once
 #include "IPapyrusClass.h"
-#include "SpSnippetFunctionGen.h"
 
-class PapyrusEffectShader final : public IPapyrusClass<PapyrusEffectShader>
+class PapyrusVisualEffect final : public IPapyrusClass<PapyrusVisualEffect>
 {
 public:
-  const char* GetName() override { return "effectshader"; }
+  const char* GetName() override { return "visualeffect"; }
   VarValue Play(VarValue self, const std::vector<VarValue>& arguments);
   VarValue Stop(VarValue self, const std::vector<VarValue>& arguments);
 
   void Register(VirtualMachine& vm,
                 std::shared_ptr<IPapyrusCompatibilityPolicy> policy) override
   {
-    AddMethod(vm, "Play", &PapyrusEffectShader::Play);
-    AddMethod(vm, "Stop", &PapyrusEffectShader::Stop);
+    AddMethod(vm, "Play", &PapyrusVisualEffect::Play);
+    AddMethod(vm, "Stop", &PapyrusVisualEffect::Stop);
   }
 
 private:

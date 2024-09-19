@@ -5,5 +5,5 @@ void PapyrusMessage::Register(
 {
   compatibilityPolicy = policy;
 
-  AddMethod(vm, "show", &PapyrusMessage::Show);
+  AddMethod(vm, "Show", &PapyrusMessage::Show);
 }
