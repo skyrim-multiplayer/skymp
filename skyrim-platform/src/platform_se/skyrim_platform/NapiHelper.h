@@ -10,6 +10,9 @@
 #include <string>
 #include <functional>
 
+// TODO: Stringify/ToString mismatch in error handling
+// TODO: Stringify might not be the best printer for all types, because not all are JSON-serializable
+// TODO: Use fmt instead of std::stringstream
 class NapiHelper
 {
 public:
@@ -42,6 +45,18 @@ public:
       throw std::runtime_error(ss.str());
     }
     return v.As<Napi::Number>().FloatValue();
+  }
+
+  static float ExtractDouble(const Napi::Value& v, const char* argName)
+  {
+    if (!v.IsNumber()) {
+      std::stringstream ss;
+      ss << "Expected '" << argName << "' to be number, but got '";
+      ss << Stringify(v.Env(), v);
+      ss << "'";
+      throw std::runtime_error(ss.str());
+    }
+    return v.As<Napi::Number>().DoubleValue();
   }
 
   static bool ExtractBoolean(const Napi::Value& v, const char* argName)
@@ -127,6 +142,18 @@ public:
       throw std::runtime_error(ss.str());
     }
     return v.As<Napi::Object>();
+  }
+
+  static Napi::ArrayBuffer ExtractArrayBuffer(const Napi::Value& v, const char *argName) {
+    if (!v.IsArrayBuffer()) {
+      std::stringstream ss;
+      ss << "Expected '" << argName << "' to be an ArrayBuffer, but got '";
+      ss << Stringify(v.Env(), v);
+      ss << "'";
+      throw std::runtime_error(ss.str());
+    }
+
+    return v.As<Napi::ArrayBuffer>();
   }
 
   static Napi::Uint8Array ExtractUInt8Array(const Napi::Value& v,

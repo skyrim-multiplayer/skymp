@@ -1,12 +1,14 @@
 #pragma once
 
-namespace EventsApi {
-JsValue On(const JsFunctionArguments& args);
-JsValue Once(const JsFunctionArguments& args);
-JsValue SendIpcMessage(const JsFunctionArguments& args);
-JsValue Unsubscribe(const JsFunctionArguments& args);
+#include "NapiHelper.h"
 
-void SendEvent(const char* eventName, const std::vector<JsValue>& arguments);
+namespace EventsApi {
+Napi::Value On(const Napi::CallbackInfo &info);
+Napi::Value Once(const Napi::CallbackInfo &info);
+Napi::Value SendIpcMessage(const Napi::CallbackInfo &info);
+Napi::Value Unsubscribe(const Napi::CallbackInfo &info);
+
+void SendEvent(const char* eventName, const std::vector<Napi::Value>& arguments);
 void Clear();
 
 // Exceptions will be pushed to g_taskQueue
@@ -17,14 +19,14 @@ void SendPapyrusEventEnter(uint32_t selfId,
                            std::string& papyrusEventName) noexcept;
 void SendPapyrusEventLeave() noexcept;
 
-JsValue GetHooks();
+Napi::Value GetHooks(Napi::Env env);
 
-inline void Register(JsValue& exports)
+inline void Register(Napi::Env env, Napi::Value& exports)
 {
-  exports.SetProperty("on", JsValue::Function(On));
-  exports.SetProperty("once", JsValue::Function(Once));
-  exports.SetProperty("hooks", GetHooks());
-  exports.SetProperty("sendIpcMessage", JsValue::Function(SendIpcMessage));
-  exports.SetProperty("unsubscribe", JsValue::Function(Unsubscribe));
+  exports.Set("on", Napi::Function::New(env, NapiHelper::WrapCppExceptions(On)));
+  exports.Set("once", Napi::Function::New(env, NapiHelper::WrapCppExceptions(Once)));
+  exports.Set("hooks", GetHooks());
+  exports.Set("sendIpcMessage", Napi::Function::New(env, NapiHelper::WrapCppExceptions(SendIpcMessage)));
+  exports.Set("unsubscribe", Napi::Function::New(env, NapiHelper::WrapCppExceptions(Unsubscribe)));
 }
 }

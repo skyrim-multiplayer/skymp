@@ -60,9 +60,8 @@ void EventManager::Init()
   logger::debug("Game events initialized.");
 }
 
-/// TODO: migrate this file
 std::unique_ptr<EventHandle> EventManager::Subscribe(
-  const std::string& eventName, const JsValue& callback, bool runOnce)
+  const std::string& eventName, const std::shared_ptr<Napi::Reference<Napi::Function>>& callback, bool runOnce)
 {
   // check if event is supported
   auto event = events[eventName];

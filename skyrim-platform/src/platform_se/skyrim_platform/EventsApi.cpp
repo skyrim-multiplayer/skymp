@@ -54,10 +54,10 @@ class Handler
 public:
   Handler() = default;
 
-  Handler(const JsValue& handler_, std::optional<double> minSelfId_,
+  Handler(const Napi::Value& handler_, std::optional<double> minSelfId_,
           std::optional<double> maxSelfId_, std::optional<Pattern> pattern_)
-    : enter(handler_.GetProperty("enter"))
-    , leave(handler_.GetProperty("leave"))
+    : enter(Napi::Persistent(handler_.Get("enter").As<Napi::Function>()))
+    , leave(Napi::Persistent(handler_.Get("leave").As<Napi::Function>()))
     , minSelfId(minSelfId_)
     , maxSelfId(maxSelfId_)
     , pattern(pattern_)
@@ -93,13 +93,13 @@ public:
   // PerThread structure is unique for each thread
   struct PerThread
   {
-    JsValue storage, context;
+    std::shared_ptr<Napi::Reference<Napi::Object>> storage, context;
     bool matchesCondition = false;
   };
   std::unordered_map<DWORD, PerThread> perThread;
 
   // Shared between threads
-  const JsValue enter, leave;
+  const Napi::Reference<Napi::Function> enter, leave;
   const std::optional<Pattern> pattern;
   const std::optional<double> minSelfId;
   const std::optional<double> maxSelfId;
@@ -161,18 +161,18 @@ public:
       }
 
       return SkyrimPlatform::GetSingleton()->AddUpdateTask(
-        [this, owningThread, selfId, eventName] {
+        [this, owningThread, selfId, eventName](Napi::Env env) {
           std::string s = eventName;
-          HandleEnter(owningThread, selfId, s);
+          HandleEnter(owningThread, selfId, s, env);
         });
     }
 
-    auto f = [&] {
+    auto f = [&](Napi::Env env) {
       try {
         if (inProgressThreads.count(owningThread))
           throw std::runtime_error("'" + hookName + "' is already processing");
         inProgressThreads.insert(owningThread);
-        HandleEnter(owningThread, selfId, eventName);
+        HandleEnter(owningThread, selfId, eventName, env);
       } catch (std::exception& e) {
         auto err = std::string(e.what()) + " (while performing enter on '" +
           hookName + "')";
@@ -193,12 +193,12 @@ public:
       return;
     }
 
-    auto f = [&] {
+    auto f = [&](Napi::Env env) {
       try {
         if (!inProgressThreads.count(owningThread))
           throw std::runtime_error("'" + hookName + "' is not processing");
         inProgressThreads.erase(owningThread);
-        HandleLeave(owningThread, succeeded);
+        HandleLeave(owningThread, succeeded, env);
 
       } catch (std::exception& e) {
         std::string what = e.what();
@@ -212,52 +212,57 @@ public:
   }
 
 private:
-  void HandleEnter(DWORD owningThread, uint32_t selfId, std::string& eventName)
+  void HandleEnter(DWORD owningThread, uint32_t selfId, std::string& eventName, const Napi::Env& env)
   {
     for (auto& hp : handlers) {
-      auto* h = &hp.second;
+      Handler* h = &hp.second;
       auto& perThread = h->perThread[owningThread];
+
       perThread.matchesCondition = h->Matches(selfId, eventName);
       if (!perThread.matchesCondition) {
         continue;
       }
 
-      PrepareContext(perThread);
-      ClearContextStorage(perThread);
+      PrepareContext(perThread, env);
+      ClearContextStorage(perThread, env);
 
-      perThread.context.SetProperty("selfId", static_cast<double>(selfId));
-      perThread.context.SetProperty(eventNameVariableName, eventName);
-      h->enter.Call({ JsValue::Undefined(), perThread.context });
+      perThread.context->Value().As<Napi::Object>().Set("selfId", Napi::Number::New(env, static_cast<double>(selfId)));
+      perThread.context->Value().As<Napi::Object>().Set(eventNameVariableName, Napi::String::New(env, eventName));
+      h->enter.As<Napi::Function>().Call({ env.Undefined(), perThread.context });
 
-      eventName = static_cast<std::string>(
-        perThread.context.GetProperty(eventNameVariableName));
+      // Retrieve the updated eventName from the context
+      Napi::Value updatedEventName = perThread.context.As<Napi::Object>().Get(eventNameVariableName);
+      eventName = updatedEventName.As<Napi::String>().Utf8Value();
     }
   }
 
-  void PrepareContext(Handler::PerThread& h)
+  void PrepareContext(Handler::PerThread& h, const Napi::Env& env)
   {
-    if (h.context.GetType() != JsValue::Type::Object) {
-      h.context = JsValue::Object();
+    if (!h.context) {
+      auto object = Napi::Object::New(env);
+      h.context.reset(new Napi::Reference<Napi::Object>(
+        Napi::Persistent<Napi::Object>(object)));
     }
 
-    thread_local auto g_standardMap =
-      JsValue::GlobalObject().GetProperty("Map");
-    if (h.storage.GetType() != JsValue::Type::Object) {
-      h.storage = g_standardMap.Constructor({ g_standardMap });
-      h.context.SetProperty("storage", h.storage);
+    Napi::Value standardMap = env.Global().Get("Map");
+
+    if (!h.storage.IsObject()) {
+      Napi::Object mapInstance = standardMap.As<Napi::Function>().New({});
+      h.storage = mapInstance;
+      h.context.As<Napi::Object>().Set("storage", h.storage);
     }
   }
 
-  void ClearContextStorage(Handler::PerThread& h)
+  void ClearContextStorage(Handler::PerThread& h, Napi::Env env)
   {
-    thread_local auto g_standardMap =
-      JsValue::GlobalObject().GetProperty("Map");
-    thread_local auto g_clear =
-      g_standardMap.GetProperty("prototype").GetProperty("clear");
-    g_clear.Call({ h.storage });
+    Napi::Object global = env.Global();
+    Napi::Object standardMap = global.Get("Map").As<Napi::Object>();
+    Napi::Function clear = standardMap.Get("prototype").As<Napi::Object>().Get("clear").As<Napi::Function>();
+
+    clear.Call(h.storage, {});
   }
 
-  void HandleLeave(DWORD owningThread, bool succeeded)
+  void HandleLeave(DWORD owningThread, bool succeeded, Napi::Env env)
   {
     for (auto& hp : handlers) {
       auto* h = &hp.second;
@@ -266,13 +271,36 @@ private:
         continue;
       }
 
-      PrepareContext(perThread);
+      PrepareContext(perThread, env);
 
       if (succeededVariableName.has_value()) {
-        perThread.context.SetProperty(succeededVariableName.value(),
-                                      JsValue::Bool(succeeded));
+        perThread.context.Set(succeededVariableName.value(),
+                                      Napi::Value::Bool(succeeded));
       }
-      h->leave.Call({ JsValue::Undefined(), perThread.context });
+      h->leave.Call({ Napi::Value::Undefined(), perThread.context });
+      h->perThread.erase(owningThread);
+    }
+  }
+
+  void HandleLeave(DWORD owningThread, bool succeeded, Napi::Env env) {
+    for (auto& hp : handlers) {
+      Handler* h = &hp.second;
+      auto& perThread = h->perThread.at(owningThread);
+
+      if (!perThread.matchesCondition) {
+        continue;
+      }
+
+      PrepareContext(perThread, env);
+
+      if (succeededVariableName.has_value()) {
+        perThread.context->Value().As<Napi::Object>().Set(
+          succeededVariableName.value(),
+          Napi::Boolean::New(env, succeeded)
+        );
+      }
+
+      h->leave->Value().As<Napi::Function>().Call({ env.Undefined(), perThread.context });
       h->perThread.erase(owningThread);
     }
   }
@@ -297,7 +325,7 @@ struct EventsGlobalState
       new Hook("sendPapyrusEvent", "papyrusEventName", std::nullopt));
   }
 
-  using Callbacks = std::map<std::string, std::vector<JsValue>>;
+  using Callbacks = std::map<std::string, std::vector<std::shared_ptr<Napi::Reference<Napi::Function>>>>;
   Callbacks callbacks;
   Callbacks callbacksOnce;
   std::shared_ptr<Hook> sendAnimationEvent;
@@ -305,7 +333,7 @@ struct EventsGlobalState
 } g;
 
 void EventsApi::SendEvent(const char* eventName,
-                          const std::vector<JsValue>& arguments)
+                          const std::vector<Napi::Value>& arguments)
 {
   auto manager = EventManager::GetSingleton();
 
@@ -335,7 +363,8 @@ void EventsApi::SendEvent(const char* eventName,
   // 3. Finally, call the callbacks
   for (auto& callbackInfo : callbacksToCall) {
     try {
-      callbackInfo.callback.Call(arguments);
+      Napi::Function callback = callbackInfo.callback->Value().As<Napi::Function>();
+      callback.Call(env.Undefined(), arguments);
     } catch (const std::exception& e) {
       const char* method = callbackInfo.runOnce ? "once" : "on";
       std::string what = e.what();
@@ -387,63 +416,64 @@ void EventsApi::SendPapyrusEventLeave() noexcept
 }
 
 namespace {
-JsValue CreateHookApi(std::shared_ptr<Hook> hookInfo)
+Napi::Value CreateHookApi(Napi::Env env, std::shared_ptr<Hook> hookInfo)
 {
-  auto hook = JsValue::Object();
-  hook.SetProperty(
-    "add", JsValue::Function([hookInfo](const JsFunctionArguments& args) {
-      auto handlerObj = args[1];
+  auto hook = Napi::Object::New(env);
+  hook.Set(
+    "add", Napi::Function::New(env, [hookInfo](const Napi::CallbackInfo &info) {
+      auto handlerObj = NapiHelper::ExtractObject(info[0], "handlerObj");
 
       std::optional<double> minSelfId;
-      if (args[2].GetType() == JsValue::Type::Number) {
-        minSelfId = static_cast<double>(args[2]);
+      if (info[1].IsNumber()) {
+        minSelfId = NapiHelper::ExtractDouble(info[1], "minSelfId");
       }
 
       std::optional<double> maxSelfId;
-      if (args[3].GetType() == JsValue::Type::Number) {
-        maxSelfId = static_cast<double>(args[3]);
+      if (info[2].IsNumber()) {
+        maxSelfId = NapiHelper::ExtractDouble(info[2], "maxSelfId");
       }
 
       std::optional<Pattern> pattern;
-      if (args[4].GetType() == JsValue::Type::String) {
-        pattern = Pattern::Parse(static_cast<std::string>(args[4]));
+      if (info[3].IsString()) {
+        auto s = NapiHelper::ExtractString(info[3], "pattern");
+        pattern = Pattern::Parse(s);
       }
 
       Handler handler(handlerObj, minSelfId, maxSelfId, pattern);
       uint32_t id = hookInfo->AddHandler(handler);
 
-      return JsValue((int)id);
+      return Napi::Number::New(env, id);
     }));
 
-  hook.SetProperty(
-    "remove", JsValue::Function([hookInfo](const JsFunctionArguments& args) {
-      uint32_t toRemove = static_cast<int>(args[1]);
+  hook.Set(
+    "remove", Napi::Function::New(env, [hookInfo](const Napi::CallbackInfo &info) {
+      uint32_t toRemove = NapiHelper::ExtractUInt32(info[0], "toRemove");
       hookInfo->RemoveHandler(toRemove);
-      return JsValue::Undefined();
+      return info.Env().Undefined();
     }));
   return hook;
 }
 }
 
-JsValue EventsApi::GetHooks()
+Napi::Value EventsApi::GetHooks(Napi::Env env)
 {
-  auto res = JsValue::Object();
+  auto res = Napi::Object::New(env);
   for (auto& hook : { g.sendAnimationEvent, g.sendPapyrusEvent }) {
-    res.SetProperty(hook->GetName(), CreateHookApi(hook));
+    res.Set(hook->GetName(), CreateHookApi(hook));
   }
   return res;
 }
 
 namespace {
-JsValue Subscribe(const JsFunctionArguments& args, bool runOnce = false)
+Napi::Value Subscribe(const Napi::CallbackInfo &info, bool runOnce = false)
 {
-  auto eventName = args[1].ToString();
-  auto callback = args[2];
+  auto eventName = NapiHelper::ExtractString(info[0], "eventName");
+  auto callback = NapiHelper::ExtractFunction(info[1], "callback");
 
   auto handle =
     EventManager::GetSingleton()->Subscribe(eventName, callback, runOnce);
 
-  auto obj = JsValue::Object();
+  auto obj = Napi::Object::New(env);
   AddObjProperty(&obj, "uid", handle->uid);
   AddObjProperty(&obj, "eventName", handle->eventName);
 
@@ -451,28 +481,30 @@ JsValue Subscribe(const JsFunctionArguments& args, bool runOnce = false)
 }
 }
 
-JsValue EventsApi::On(const JsFunctionArguments& args)
+Napi::Value EventsApi::On(const Napi::CallbackInfo &info)
 {
   return Subscribe(args);
 }
 
-JsValue EventsApi::Once(const JsFunctionArguments& args)
+Napi::Value EventsApi::Once(const Napi::CallbackInfo &info)
 {
   return Subscribe(args, true);
 }
 
-JsValue EventsApi::Unsubscribe(const JsFunctionArguments& args)
+Napi::Value EventsApi::Unsubscribe(const Napi::CallbackInfo &info)
 {
-  auto obj = args[1];
+  auto obj = NapiHelper::ExtractObject(info[0], "obj");
+  auto jEventName = NapiHelper::ExtractString(obj.Get("eventName"), "obj.eventName");
+  auto jUid = NapiHelper::ExtractUInt32(obj.Get("uid"), "obj.uid");
   auto eventName = std::get<std::string>(
-    NativeValueCasts::JsValueToNativeValue(obj.GetProperty("eventName")));
+    NativeValueCasts::Napi::ValueToNativeValue(jEventName));
   auto uid = std::get<double>(
-    NativeValueCasts::JsValueToNativeValue(obj.GetProperty("uid")));
+    NativeValueCasts::Napi::ValueToNativeValue(jUid));
   EventManager::GetSingleton()->Unsubscribe(uid, eventName);
-  return JsValue::Undefined();
+  return info.Env().Undefined();
 }
 
-JsValue EventsApi::SendIpcMessage(const JsFunctionArguments& args)
+Napi::Value EventsApi::SendIpcMessage(const Napi::CallbackInfo &info)
 {
   auto targetSystemName = args[1].ToString();
   auto message = args[2].GetArrayBufferData();
@@ -491,5 +523,42 @@ JsValue EventsApi::SendIpcMessage(const JsFunctionArguments& args)
   IPC::Call(targetSystemName, reinterpret_cast<uint8_t*>(message),
             messageLength);
 
-  return JsValue::Undefined();
+  return Napi::Value::Undefined();
+}
+
+// TODO: review
+Napi::Value EventsApi::SendIpcMessage(const Napi::CallbackInfo &info) {
+  Napi::Env env = info.Env();
+
+  // Ensure we have at least two arguments: targetSystemName and the ArrayBuffer
+  if (info.Length() < 2 || !info[0].IsString() || !info[1].IsArrayBuffer()) {
+    Napi::TypeError::New(env, "Expected a string and an ArrayBuffer as arguments").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  // Extract the target system name (a string)
+  std::string targetSystemName = info[0].As<Napi::String>().Utf8Value();
+
+  // Extract the message (an ArrayBuffer)
+  Napi::ArrayBuffer messageBuffer = info[1].As<Napi::ArrayBuffer>();
+  void* message = messageBuffer.Data();
+  size_t messageLength = messageBuffer.ByteLength();
+
+  // Check if the message is valid
+  if (!message) {
+    Napi::Error::New(env, "sendIpcMessage expects a valid ArrayBuffer instance").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  // Check if the message length is valid
+  if (messageLength == 0) {
+    Napi::Error::New(env, "sendIpcMessage expects an ArrayBuffer of length > 0").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  // Call the IPC function, passing the message data and length
+  IPC::Call(targetSystemName, reinterpret_cast<uint8_t*>(message), messageLength);
+
+  // Return undefined as the function does not have a return value
+  return env.Undefined();
 }
