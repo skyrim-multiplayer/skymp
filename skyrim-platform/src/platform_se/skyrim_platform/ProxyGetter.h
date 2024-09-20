@@ -1,5 +1,6 @@
 #pragma once
 
+// TODO: port to nodejs
 using ProxyGetterFn =
   std::function<JsValue(const JsValue& origin, const JsValue& keyStr)>;
 

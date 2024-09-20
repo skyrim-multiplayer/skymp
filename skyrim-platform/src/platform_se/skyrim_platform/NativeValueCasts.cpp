@@ -6,9 +6,9 @@
 #include "PapyrusTESModPlatform.h"
 
 namespace {
-JsValue ToString(const JsFunctionArguments& args)
+Napi::Value ToString(const Napi::CallbackInfo& info)
 {
-  auto nativeObj = NativeValueCasts::JsObjectToNativeObject(args[0]);
+  auto nativeObj = NativeValueCasts::JsObjectToNativeObject(info[0]);
   std::stringstream ss;
   ss << "[object " << (nativeObj ? nativeObj->GetType() : "") << "]";
   return ss.str();
@@ -16,41 +16,50 @@ JsValue ToString(const JsFunctionArguments& args)
 
 struct PoolEntry
 {
-  JsValue object;
+  std::shared_ptr<Napi::Reference<Napi::Object>> object;
   const char* type = "";
   NativeObject* nativeObject = nullptr;
 };
 }
 
 CallNative::ObjectPtr NativeValueCasts::JsObjectToNativeObject(
-  const JsValue& v)
+  const Napi::Value& v)
 {
-  switch (v.GetType()) {
-    case JsValue::Type::Null:
-    case JsValue::Type::Undefined:
-      return nullptr;
-    case JsValue::Type::Object: {
-      auto nativeObj = dynamic_cast<NativeObject*>(v.GetExternalData());
-      if (!nativeObj)
-        throw std::runtime_error(
-          "This JavaScript object is not a valid game object");
-      return nativeObj->Get();
+  if (v.IsNull() || v.IsUndefined()) {
+    return nullptr;
+  }
+
+  // Check if the value is an external object
+  if (v.IsExternal()) {
+    Napi::External<NativeObject> ext = v.As<Napi::External<NativeObject>>();
+    NativeObject* nativeObj = ext.Data();
+
+    if (nativeObj) {
+      return nativeObj;
+    } else {
+      throw std::runtime_error(
+        "This JavaScript object does not contain a valid native object");
     }
-    default:
-      throw std::runtime_error("Unsupported JavaScript type (" +
-                               std::to_string((int)v.GetType()) + ")");
+  } else if (v.IsObject()) {
+    throw std::runtime_error(
+      "This JavaScript object is not a valid native object");
+  } else {
+    throw std::runtime_error(
+      "Unsupported JavaScript type (not an object or external)");
   }
 }
 
-JsValue NativeValueCasts::NativeObjectToJsObject(
+
+Napi::Value NativeValueCasts::NativeObjectToJsObject(Napi::Env env,
   const CallNative::ObjectPtr& obj)
 {
-  if (!obj)
-    return JsValue::Null();
+  if (!obj) {
+    return env.Null();
+  }
 
   const auto numPapyrusUpdates = TESModPlatform::GetNumPapyrusUpdates();
 
-  thread_local auto g_toString = JsValue::Function(ToString);
+  auto toString = Napi::Function::New(env, ToString);
   thread_local std::unordered_map<void*, PoolEntry>
     g_nativeObjectPool; // TODO: Add memory usage metrics for this
 
@@ -59,20 +68,20 @@ JsValue NativeValueCasts::NativeObjectToJsObject(
     throw NullPointerException("nativeObjPtr");
 
   auto& poolEntry = g_nativeObjectPool[nativeObjPtr];
-  if (poolEntry.object.GetType() != JsValue::Type::Object ||
-      0 != strcmp(poolEntry.type, obj->GetType())) {
+  if (!poolEntry.object || 0 != strcmp(poolEntry.type, obj->GetType())) {
     auto nativeObject = new NativeObject(obj);
-    poolEntry.object = JsValue::ExternalObject(nativeObject);
+    auto newExternal = Napi::External<NativeObject>::New(env, nativeObject);
+    poolEntry.object.reset(new Napi::Reference(Napi::Persistent(newExternal)));
     poolEntry.type = obj->GetType();
     poolEntry.nativeObject = nativeObject;
-    thread_local auto g_toJson =
-      JsValue::Null(); // Called by JSON.stringify if callable
-    NativeObjectProxy::Attach(poolEntry.object, obj->GetType(), g_toString,
-                              g_toJson);
+    auto toJson =
+      env.Null(); // Called by JSON.stringify if callable
+    NativeObjectProxy::Attach(newExternal, obj->GetType(), toString,
+                              toJson);
   }
   poolEntry.nativeObject->papyrusUpdateId = numPapyrusUpdates;
 
-  // Clear pool
+  // Clean pool from time to time
   thread_local uint32_t g_callCounter = 0;
   ++g_callCounter;
   if (g_callCounter == 1000) {
@@ -92,60 +101,65 @@ JsValue NativeValueCasts::NativeObjectToJsObject(
   return poolEntry.object;
 }
 
-CallNative::AnySafe NativeValueCasts::JsValueToNativeValue(const JsValue& v)
+CallNative::AnySafe NativeValueCasts::JsValueToNativeValue(const Napi::Value& v)
 {
-  switch (v.GetType()) {
-    case JsValue::Type::Boolean:
-      return (bool)v;
-    case JsValue::Type::Number:
-      return (double)v;
-    case JsValue::Type::String:
-      return (std::string)v;
-    case JsValue::Type::Object:
-    case JsValue::Type::Null:
-    case JsValue::Type::Undefined:
-      return JsObjectToNativeObject(v);
-    default:
-      throw std::runtime_error("Unsupported JavaScript type (" +
-                               std::to_string((int)v.GetType()) + ")");
+  // TODO: better switch(v.Type())
+  if (v.IsBoolean()) {
+    return static_cast<bool>(v.As<Napi::Boolean>());
   }
+
+  if (v.IsNumber()) {
+    return static_cast<double>(v.As<Napi::Number>().DoubleValue());
+  }
+
+  if (v.IsString()) {
+    return static_cast<std::string>(v.As<Napi::String>());
+  }
+
+  if (v.IsUndefined() || v.IsNull() || v.IsObject()) {
+    return JsObjectToNativeObject(v);
+  }
+
+  throw std::runtime_error("Unsupported JavaScript type (" +
+                            std::to_string((int)v.Type()) + ")");
 }
 
-JsValue NativeValueCasts::NativeValueToJsValue(const CallNative::AnySafe& v)
+Napi::Value NativeValueCasts::NativeValueToJsValue(Napi::Env env, const CallNative::AnySafe& v)
 {
-  if (v.valueless_by_exception())
-    return JsValue::Null();
+  if (v.valueless_by_exception()) {
+    return env.Null();
+  }
   return std::visit(
     overloaded{
-      [](double v) { return JsValue(v); },
-      [](bool v) { return JsValue::Bool(v); },
-      [](const std::string& v) { return JsValue(v); },
-      [](const CallNative::ObjectPtr& v) { return NativeObjectToJsObject(v); },
-      [](const std::vector<std::string>& v) {
-        auto out = JsValue::Array(v.size());
+      [env](double v) { return Napi::Number::New(env, v); },
+      [env](bool v) { return Napi::Boolean::New(env, v); },
+      [env](const std::string& v) { return Napi::String::New(env, v); },
+      [env](const CallNative::ObjectPtr& v) { return NativeObjectToJsObject(env, v); },
+      [env](const std::vector<std::string>& v) {
+        auto out = Napi::Array::New(env, v.size());
         for (size_t i = 0; i < v.size(); ++i) {
-          out.SetProperty(JsValue::Int(i), v[i]);
+          out.Set(i, Napi::String::New(env, v[i]));
         }
         return out;
       },
-      [](const std::vector<bool>& v) {
-        auto out = JsValue::Array(v.size());
+      [env](const std::vector<bool>& v) {
+        auto out = Napi::Array::New(env, v.size());
         for (size_t i = 0; i < v.size(); ++i) {
-          out.SetProperty(JsValue::Int(i), JsValue::Bool(v[i]));
+          out.Set(i, Napi::Boolean::New(env, v[i]));
         }
         return out;
       },
-      [](const std::vector<double>& v) {
-        auto out = JsValue::Array(v.size());
+      [env](const std::vector<double>& v) {
+        auto out = Napi::Array::New(env, v.size());
         for (size_t i = 0; i < v.size(); ++i) {
-          out.SetProperty(JsValue::Int(i), v[i]);
+          out.Set(i, Napi::Number::New(env, v[i]));
         }
         return out;
       },
-      [](const std::vector<CallNative::ObjectPtr>& v) {
-        auto out = JsValue::Array(v.size());
+      [env](const std::vector<CallNative::ObjectPtr>& v) {
+        auto out = Napi::Array::New(env, v.size());
         for (size_t i = 0; i < v.size(); ++i) {
-          out.SetProperty(JsValue::Int(i), NativeObjectToJsObject(v[i]));
+          out.Set(i, NativeObjectToJsObject(v[i]));
         }
         return out;
       },

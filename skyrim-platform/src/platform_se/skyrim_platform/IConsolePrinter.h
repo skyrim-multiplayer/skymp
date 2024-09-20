@@ -1,5 +1,6 @@
 #pragma once
 
+// TODO: port to nodejs
 class JsFunctionArguments;
 
 class IConsolePrinter

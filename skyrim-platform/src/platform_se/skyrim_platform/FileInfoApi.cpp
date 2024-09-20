@@ -5,17 +5,18 @@
 
 namespace FileInfoApi {
 
-JsValue FileInfo(const JsFunctionArguments& args)
+Napi::Value FileInfo(const Napi::CallbackInfo& info)
 {
-  auto filename = static_cast<std::string>(args[1]);
+  auto filename = NapiHelper::ExtractString(info[0], "filename");
+
   if (!ValidateFilename(filename, /*allowDots*/ true)) {
     throw InvalidArgumentException("filename", filename);
   }
 
   const auto cppResult = ::FileInfo("Data/" + filename);
-  auto jsResult = JsValue::Object();
-  jsResult.SetProperty("crc32", static_cast<int>(cppResult.crc32));
-  jsResult.SetProperty("size", static_cast<int>(cppResult.size));
+  auto jsResult = Napi::Object::New(info.Env());
+  jsResult.Set("crc32", Napi::Number::New(info.Env(), cppResult.crc32));
+  jsResult.Set("size", Napi::Number::New(info.Env(), cppResult.size));
   return jsResult;
 }
 

@@ -1,13 +1,14 @@
 #pragma once
-#include "JsEngine.h"
+
+#include "NapiHelper.h"
 
 namespace FileInfoApi {
 
-JsValue FileInfo(const JsFunctionArguments& args);
+Napi::Value FileInfo(const Napi::CallbackInfo& info);
 
-inline void Register(JsValue& exports)
+inline void Register(Napi::Env env, Napi::Value& exports)
 {
-  exports.SetProperty("getFileInfo", JsValue::Function(FileInfo));
+  exports.Set("getFileInfo", Napi::Function::New(env, FileInfo));
 }
 
 }

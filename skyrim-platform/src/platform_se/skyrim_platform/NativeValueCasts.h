@@ -1,10 +1,12 @@
 #pragma once
 #include "CallNative.h"
 
+#include "NapiHelper.h"
+
 namespace NativeValueCasts {
 
-CallNative::ObjectPtr JsObjectToNativeObject(const JsValue& v);
-JsValue NativeObjectToJsObject(const CallNative::ObjectPtr& obj);
-CallNative::AnySafe JsValueToNativeValue(const JsValue& v);
-JsValue NativeValueToJsValue(const CallNative::AnySafe& v);
+CallNative::ObjectPtr JsObjectToNativeObject(const Napi::Value& v);
+Napi::Value NativeObjectToJsObject(Napi::Env env, const CallNative::ObjectPtr& obj);
+CallNative::AnySafe JsValueToNativeValue(const Napi::Value& v);
+Napi::Value NativeValueToJsValue(Napi::Env env, const CallNative::AnySafe& v);
 }

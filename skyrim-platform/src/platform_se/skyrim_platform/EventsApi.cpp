@@ -526,39 +526,25 @@ Napi::Value EventsApi::SendIpcMessage(const Napi::CallbackInfo &info)
   return Napi::Value::Undefined();
 }
 
-// TODO: review
-Napi::Value EventsApi::SendIpcMessage(const Napi::CallbackInfo &info) {
+Napi::Value EventsApi::SendIpcMessage(const Napi::CallbackInfo &info)
+{
   Napi::Env env = info.Env();
 
-  // Ensure we have at least two arguments: targetSystemName and the ArrayBuffer
-  if (info.Length() < 2 || !info[0].IsString() || !info[1].IsArrayBuffer()) {
-    Napi::TypeError::New(env, "Expected a string and an ArrayBuffer as arguments").ThrowAsJavaScriptException();
-    return env.Null();
-  }
+  std::string targetSystemName = NapiHelper::ExtractString(info[0], "targetSystemName");
+  Napi::ArrayBuffer messageBuffer = NapiHelper::ExtractArrayBuffer(info[1], "message");
 
-  // Extract the target system name (a string)
-  std::string targetSystemName = info[0].As<Napi::String>().Utf8Value();
-
-  // Extract the message (an ArrayBuffer)
-  Napi::ArrayBuffer messageBuffer = info[1].As<Napi::ArrayBuffer>();
   void* message = messageBuffer.Data();
   size_t messageLength = messageBuffer.ByteLength();
 
-  // Check if the message is valid
   if (!message) {
-    Napi::Error::New(env, "sendIpcMessage expects a valid ArrayBuffer instance").ThrowAsJavaScriptException();
-    return env.Null();
+    throw std::runtime_error("sendIpcMessage expects a valid ArrayBuffer instance");
   }
 
-  // Check if the message length is valid
   if (messageLength == 0) {
-    Napi::Error::New(env, "sendIpcMessage expects an ArrayBuffer of length > 0").ThrowAsJavaScriptException();
-    return env.Null();
+    throw std::runtime_error("sendIpcMessage expects an ArrayBuffer of length > 0");
   }
 
-  // Call the IPC function, passing the message data and length
   IPC::Call(targetSystemName, reinterpret_cast<uint8_t*>(message), messageLength);
 
-  // Return undefined as the function does not have a return value
   return env.Undefined();
 }
