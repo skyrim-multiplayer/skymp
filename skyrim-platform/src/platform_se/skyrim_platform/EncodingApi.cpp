@@ -38,24 +38,30 @@ bool utf8_check_is_valid(const char* str, int len)
   return true;
 }
 
-JsValue EncodingApi::EncodeUtf8(const JsFunctionArguments& args)
-{
-  std::string str = static_cast<std::string>(args[1]);
-  auto res = JsValue::ArrayBuffer(str.size());
-  memcpy(res.GetArrayBufferData(), str.data(), str.size());
-  return res;
+Napi::Value EncodingApi::EncodeUtf8(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+  std::string str = NapiHelper::ExtractString(info[0], "str");
+  Napi::ArrayBuffer arrayBuffer = Napi::ArrayBuffer::New(env, str.size());
+  memcpy(arrayBuffer.Data(), str.data(), str.size());
+  return arrayBuffer;
 }
 
-JsValue EncodingApi::DecodeUtf8(const JsFunctionArguments& args)
-{
-  JsValue arrayBuffer = args[1];
-  auto data = arrayBuffer.GetArrayBufferData();
-  auto length = arrayBuffer.GetArrayBufferLength();
+Napi::Value DecodeUtf8(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
 
-  std::string res(reinterpret_cast<char*>(data), length);
-  if (!utf8_check_is_valid(res.data(), res.size())) {
-    throw std::runtime_error("decodeUtf8 failed to decode");
+  if (info.Length() < 1 || !info[0].IsArrayBuffer()) {
+    throw std::runtime_error("ArrayBuffer expected");
   }
 
-  return JsValue::String(res);
+  Napi::ArrayBuffer arrayBuffer = info[0].As<Napi::ArrayBuffer>();
+
+  void* data = arrayBuffer.Data();
+  size_t length = arrayBuffer.ByteLength();
+
+  std::string res(reinterpret_cast<char*>(data), length);
+
+  if (!utf8_check_is_valid(res.data(), res.size())) {
+    throw std::runtime_error("Invalid utf8 passed");
+  }
+  return Napi::String::New(env, res);
 }

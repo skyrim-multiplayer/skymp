@@ -60,6 +60,7 @@ void EventManager::Init()
   logger::debug("Game events initialized.");
 }
 
+/// TODO: migrate this file
 std::unique_ptr<EventHandle> EventManager::Subscribe(
   const std::string& eventName, const JsValue& callback, bool runOnce)
 {

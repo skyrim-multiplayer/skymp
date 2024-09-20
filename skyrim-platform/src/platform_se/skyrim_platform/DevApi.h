@@ -1,30 +1,32 @@
 #pragma once
 
+#include "NapiHelper.h"
+
 namespace DevApi {
-JsValue Require(
-  const JsFunctionArguments& args,
+Napi::Value Require(
+  const Napi::CallbackInfo &info,
   const std::vector<std::filesystem::path>& pluginLoadDirectories);
-JsValue AddNativeExports(const JsFunctionArguments& args);
+Napi::Value AddNativeExports(const Napi::CallbackInfo &info);
 
-JsValue GetPluginSourceCode(const JsFunctionArguments& args);
+Napi::Value GetPluginSourceCode(const Napi::CallbackInfo &info);
 
-JsValue WritePlugin(const JsFunctionArguments& args);
+Napi::Value WritePlugin(const Napi::CallbackInfo &info);
 
-JsValue GetPlatformVersion(const JsFunctionArguments& args);
+Napi::Value GetPlatformVersion(const Napi::CallbackInfo &info);
 
-JsValue GetJsMemoryUsage(const JsFunctionArguments& args);
+Napi::Value GetJsMemoryUsage(const Napi::CallbackInfo &info);
 
-JsValue BlockPapyrusEvents(const JsFunctionArguments& args);
+Napi::Value BlockPapyrusEvents(const Napi::CallbackInfo &info);
 
 void DisableCtrlPrtScnHotkey();
 
 using NativeExportsMap =
-  std::map<std::string, std::function<JsValue(const JsValue&)>>;
+  std::map<std::string, std::function<Napi::Value(const Napi::Value&)>>;
 
 extern std::shared_ptr<JsEngine> jsEngine;
 extern NativeExportsMap nativeExportsMap;
 
-inline void Register(JsValue& exports, std::shared_ptr<JsEngine> jsEngine,
+inline void Register(Napi::Env env, Napi::Value& exports, std::shared_ptr<JsEngine> jsEngine,
                      NativeExportsMap nativeExportsMap,
                      const std::vector<std::filesystem::path>& builtScriptsDir)
 {
@@ -34,24 +36,24 @@ inline void Register(JsValue& exports, std::shared_ptr<JsEngine> jsEngine,
   }
   DevApi::jsEngine = jsEngine;
 
-  exports.SetProperty(
+  exports.Set(
     "require",
-    JsValue::Function([builtScriptsDir](const JsFunctionArguments& args) {
+    Napi::Function::New(env, NapiHelper::WrapCppExceptions([builtScriptsDir](const Napi::CallbackInfo &info) {
       return Require(args, builtScriptsDir);
-    }));
-  exports.SetProperty("addNativeExports", JsValue::Function(AddNativeExports));
-  exports.SetProperty("getPluginSourceCode",
-                      JsValue::Function(GetPluginSourceCode));
-  exports.SetProperty("writePlugin", JsValue::Function(WritePlugin));
-  exports.SetProperty("getPlatformVersion",
-                      JsValue::Function(GetPlatformVersion));
-  exports.SetProperty("getJsMemoryUsage", JsValue::Function(GetJsMemoryUsage));
-  exports.SetProperty("disableCtrlPrtScnHotkey",
-                      JsValue::Function([](const JsFunctionArguments& args) {
+    })));
+  exports.Set("addNativeExports", Napi::Function::New(env, NapiHelper::WrapCppExceptions(AddNativeExports)));
+  exports.Set("getPluginSourceCode",
+                      Napi::Function::New(env, NapiHelper::WrapCppExceptions(GetPluginSourceCode)));
+  exports.Set("writePlugin", Napi::Function::New(env, NapiHelper::WrapCppExceptions(WritePlugin)));
+  exports.Set("getPlatformVersion",
+                      Napi::Function::New(env, NapiHelper::WrapCppExceptions(GetPlatformVersion)));
+  exports.Set("getJsMemoryUsage", Napi::Function::New(env, NapiHelper::WrapCppExceptions(GetJsMemoryUsage)));
+  exports.Set("disableCtrlPrtScnHotkey",
+                      Napi::Function::New(env, NapiHelper::WrapCppExceptions([](const Napi::CallbackInfo &info) {
                         DisableCtrlPrtScnHotkey();
-                        return JsValue::Undefined();
-                      }));
-  exports.SetProperty("blockPapyrusEvents",
-                      JsValue::Function(BlockPapyrusEvents));
+                        return info.Env().Undefined();
+                      })));
+  exports.Set("blockPapyrusEvents",
+                      Napi::Function::New(env, NapiHelper::WrapCppExceptions(BlockPapyrusEvents)));
 }
 }

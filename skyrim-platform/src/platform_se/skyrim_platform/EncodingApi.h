@@ -1,12 +1,14 @@
 #pragma once
 
-namespace EncodingApi {
-JsValue EncodeUtf8(const JsFunctionArguments& args);
-JsValue DecodeUtf8(const JsFunctionArguments& args);
+#include "NapiHelper.h"
 
-inline void Register(JsValue& exports)
+namespace EncodingApi {
+Napi::Value EncodeUtf8(const Napi::CallbackInfo &info);
+Napi::Value DecodeUtf8(const Napi::CallbackInfo &info);
+
+inline void Register(Napi::Env env, Napi::Value& exports)
 {
-  exports.SetProperty("encodeUtf8", JsValue::Function(EncodeUtf8));
-  exports.SetProperty("decodeUtf8", JsValue::Function(DecodeUtf8));
+  exports.Set("encodeUtf8", Napi::Function::New(env, NapiHelper::WrapCppExceptions(EncodeUtf8)));
+  exports.Set("decodeUtf8", Napi::Function::New(env, NapiHelper::WrapCppExceptions(DecodeUtf8)));
 }
 }

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "NapiHelper.h"
+
 namespace ConstEnumApi {
-void Register(JsValue& exports, std::shared_ptr<JsEngine> jsEngine);
+void Register(Napi::Env env, Napi::Value& exports, std::shared_ptr<JsEngine> jsEngine);
 }
