@@ -664,13 +664,6 @@ void TESModPlatform::AddItemEx(
     return;
   }
 
-  auto tuple = std::make_tuple(
-    containerRefr->formID, item, health, enchantment, maxCharge,
-    removeEnchantmentOnUnequip, chargePercent,
-    (std::string)textDisplayData.data(), soul, poison, poisonCount);
-
-  using Tuple = decltype(tuple);
-
   RE::ExtraDataList* extraList = nullptr;
 
   const bool isShieldLike =
