@@ -84,91 +84,75 @@ ConsoleCommand FillCmdInfo(Napi::Env env, RE::SCRIPT_FUNCTION* cmd)
   cmdInfo.execute = cmd->executeFunction;
   cmdInfo.myIter = cmd;
   cmdInfo.myOriginalData = *cmd;
-  cmdInfo.jsExecute = Napi::Function::New(env,
-    [](const Napi::CallbackInfo &info) { return Napi::Boolean::New(info.Env(), true); });
+  cmdInfo.jsExecute.reset(new Napi::Reference<Napi::Function>(Napi::Persistent(Napi::Function::New(env,
+    [](const Napi::CallbackInfo &info) { return Napi::Boolean::New(info.Env(), true); }))));
 
   return cmdInfo;
 }
 
 void CreateLongNameProperty(Napi::Object& obj, ConsoleCommand* replaced) {
-  auto getter = [=](const Napi::CallbackInfo &info) -> Napi::Value {
+  auto getter = NapiHelper::WrapCppExceptions([=](const Napi::CallbackInfo &info) -> Napi::Value {
     return Napi::String::New(info.Env(), replaced->myIter->functionName);
-  };
+  });
 
-  auto setter = [=](const Napi::CallbackInfo &info) {
+  auto setter = NapiHelper::WrapCppExceptions([=](const Napi::CallbackInfo &info) {
     Napi::Env env = info.Env();
-    
-    if (info.Length() < 1 || !info[0].IsString()) {
-      Napi::TypeError::New(env, "String expected").ThrowAsJavaScriptException();
-      return;
-    }
 
-    replaced->longName = info[0].As<Napi::String>().Utf8Value();
+    replaced->longName = NapiHelper::ExtractString(info[0], "longName");
 
     RE::SCRIPT_FUNCTION cmd = *replaced->myIter;
     cmd.functionName = replaced->longName.c_str();
 
     REL::safe_write((uintptr_t)replaced->myIter, &cmd, sizeof(cmd));
-  };
+  });
 
   Napi::PropertyDescriptor longNameProperty = Napi::PropertyDescriptor::Accessor(
-    "longName", getter, setter, napi_default
+    "longName", getter, setter
   );
 
   obj.DefineProperty(longNameProperty);
 }
 
 void CreateShortNameProperty(Napi::Object& obj, ConsoleCommand* replaced) {
-  auto getter = [=](const Napi::CallbackInfo &info) -> Napi::Value {
+  auto getter = NapiHelper::WrapCppExceptions([=](const Napi::CallbackInfo &info) -> Napi::Value {
     return Napi::String::New(info.Env(), replaced->myIter->shortName);
-  };
+  });
 
-  auto setter = [=](const Napi::CallbackInfo &info) {
+  auto setter = NapiHelper::WrapCppExceptions([=](const Napi::CallbackInfo &info) {
     Napi::Env env = info.Env();
-    
-    if (info.Length() < 1 || !info[0].IsString()) {
-      Napi::TypeError::New(env, "String expected").ThrowAsJavaScriptException();
-      return;
-    }
-
-    replaced->shortName = info[0].As<Napi::String>().Utf8Value();
+    replaced->shortName = NapiHelper::ExtractString(info[0], "shortName");
 
     RE::SCRIPT_FUNCTION cmd = *replaced->myIter;
     cmd.shortName = replaced->shortName.c_str();
 
     REL::safe_write((uintptr_t)replaced->myIter, &cmd, sizeof(cmd));
-  };
+  });
 
   Napi::PropertyDescriptor shortNameProperty = Napi::PropertyDescriptor::Accessor(
-    "shortName", getter, setter, napi_default
+    "shortName", getter, setter
   );
 
   obj.DefineProperty(shortNameProperty);
 }
 
 void CreateNumArgsProperty(Napi::Object& obj, ConsoleCommand* replaced) {
-  auto getter = [=](const Napi::CallbackInfo &info) -> Napi::Value {
+  auto getter = NapiHelper::WrapCppExceptions([=](const Napi::CallbackInfo &info) -> Napi::Value {
     return Napi::Number::New(info.Env(), replaced->myIter->numParams);
-  };
+  });
 
-  auto setter = [=](const Napi::CallbackInfo &info) {
+  auto setter = NapiHelper::WrapCppExceptions([=](const Napi::CallbackInfo &info) {
     Napi::Env env = info.Env();
-    
-    if (info.Length() < 1 || !info[0].IsNumber()) {
-      Napi::TypeError::New(env, "Number expected").ThrowAsJavaScriptException();
-      return;
-    }
 
-    replaced->numArgs = info[0].As<Napi::Number>().DoubleValue();
+    replaced->numArgs = NapiHelper::ExtractUInt32(info[0], "numArgs");
 
     RE::SCRIPT_FUNCTION cmd = *replaced->myIter;
     cmd.numParams = replaced->numArgs;
 
     REL::safe_write((uintptr_t)replaced->myIter, &cmd, sizeof(cmd));
-  };
+  });
 
   Napi::PropertyDescriptor numArgsProperty = Napi::PropertyDescriptor::Accessor(
-    "numArgs", getter, setter, napi_default
+    "numArgs", getter, setter
   );
 
   obj.DefineProperty(numArgsProperty);
@@ -176,10 +160,10 @@ void CreateNumArgsProperty(Napi::Object& obj, ConsoleCommand* replaced) {
 
 void CreateExecuteProperty(Napi::Value& obj, ConsoleCommand* replaced)
 {
-  obj.Set("execute", nullptr, [=](const Napi::CallbackInfo &info) {
-    replaced->jsExecute = info[0];
+  obj.Set("execute", nullptr, NapiHelper::WrapCppExceptions([=](const Napi::CallbackInfo &info) {
+    replaced->jsExecute.reset(new Napi::Reference<Napi::Function>(Napi::Persistent(NapiHelper::ExtractFunction(info[0], "execute"))));
     return info.Env().Undefined();
-  });
+  }));
 }
 
 struct ParseCommandResult

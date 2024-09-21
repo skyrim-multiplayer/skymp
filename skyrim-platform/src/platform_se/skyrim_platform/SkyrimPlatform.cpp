@@ -21,6 +21,8 @@
 #include "ThreadPoolWrapper.h"
 #include "Win32Api.h"
 
+#include "NapiHelper.h"
+
 CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
 
 namespace {
@@ -177,57 +179,66 @@ private:
   void LoadPluginFile(const std::filesystem::path& path)
   {
     auto engine = GetJsEngine();
+    auto env = engine.Env();
     auto scriptSrc = Viet::ReadFileIntoString(path);
 
-    getSettings = [this](const JsFunctionArguments&) {
+    getSettings = [this](const Napi::CallbackInfo &info) {
       if (!settingsByPluginNameCache) {
-        auto result = JsValue::Object();
-        auto standardJson = JsValue::GlobalObject().GetProperty("JSON");
-        auto parse = standardJson.GetProperty("parse");
+        auto result = Napi::Object::New(info.Env());
         for (const auto& [pluginName, settings] : settingsByPluginName) {
-          result.SetProperty(pluginName,
-                             parse.Call({ standardJson, settings }));
+          auto parsedSettings = NapiHelper::ParseJson(info.Env(), settings);
+          result.Set(pluginName, parsedSettings);
         }
-        settingsByPluginNameCache.reset(new JsValue(result));
+        settingsByPluginNameCache.reset(new Napi::Reference<Napi::Object>(Napi::Persistent(result)))
       }
       return *settingsByPluginNameCache;
     };
 
+    setSettings = [](const Napi::CallbackInfo &info) {
+      throw std::runtime_error("settings setter not implemented");
+    };
+
     // We will be able to use require()
-    JsValue devApi = JsValue::Object();
+    auto devApi = Napi::Object::New(env);
     DevApi::Register(devApi, engine,
                      { { "skyrimPlatform",
-                         [this, engine](JsValue e) {
-                           EncodingApi::Register(e);
-                           LoadGameApi::Register(e);
-                           CameraApi::Register(e);
-                           MpClientPluginApi::Register(e);
-                           HttpClientApi::Register(e);
-                           ConsoleApi::Register(e);
+                         [this, engine](Napi::Object e) {
+                           EncodingApi::Register(env, e);
+                           LoadGameApi::Register(env, e);
+                           CameraApi::Register(env, e);
+                           MpClientPluginApi::Register(env, e);
+                           HttpClientApi::Register(env, e);
+                           ConsoleApi::Register(env, e);
                            DevApi::Register(e, engine, {}, GetFileDirs());
-                           EventsApi::Register(e);
-                           BrowserApi::Register(e, browserApiState);
-                           Win32Api::Register(e);
-                           FileInfoApi::Register(e);
-                           TextApi::Register(e);
-                           InventoryApi::Register(e);
-                           ConstEnumApi::Register(e, engine);
+                           EventsApi::Register(env, e);
+                           BrowserApi::Register(env, e, browserApiState);
+                           Win32Api::Register(env, e);
+                           FileInfoApi::Register(env, e);
+                           TextApi::Register(env, e);
+                           InventoryApi::Register(env, e);
+                           ConstEnumApi::Register(env, e, engine);
                            CallNativeApi::Register(
                              e, [this] { return nativeCallRequirements; });
-                           e.SetProperty("settings", getSettings, nullptr);
+
+                          auto getter = NapiHelper::WrapCppExceptions(getSettings);
+                          auto setter = NapiHelper::WrapCppExceptions(setSettings);
+
+                          Napi::PropertyDescriptor settingsProperty = Napi::PropertyDescriptor::Accessor(
+                            "settings", getter, setter
+                          );
+                          e.DefineProperty(settingsProperty);
 
                            return SkyrimPlatformProxy::Attach(
                              e, [this] { return nativeCallRequirements; });
                          } } },
                      GetFileDirs());
 
-    JsValue consoleApi = JsValue::Object();
-    ConsoleApi::Register(consoleApi);
+    Napi::Object consoleApi = Napi::Object::New(env);
+    ConsoleApi::Register(env, consoleApi);
     for (auto f : { "require", "addNativeExports" }) {
-      JsValue::GlobalObject().SetProperty(f, devApi.GetProperty(f));
+      env.Global().Set(f, devApi.Get(f));
     }
-    JsValue::GlobalObject().SetProperty(
-      "log", consoleApi.GetProperty("printConsole"));
+    env.Global().Set("log", consoleApi.Get("printConsole"));
 
     engine->RunScript(Viet::ReadFileIntoString(
                         std::filesystem::path("Data/Platform/Distribution") /
@@ -279,9 +290,9 @@ private:
   Viet::TaskQueue jsPromiseTaskQueue;
   CallNativeApi::NativeCallRequirements& nativeCallRequirements;
   std::unordered_map<std::string, std::string> settingsByPluginName;
-  std::unique_ptr<JsValue> settingsByPluginNameCache;
+  std::unique_ptr<Napi::Reference<Napi::Object>> settingsByPluginNameCache;
   std::shared_ptr<BrowserApi::State> browserApiState;
-  std::function<JsValue(const JsFunctionArguments&)> getSettings;
+  std::function<Napi::Value(const Napi::CallbackInfo &info)> getSettings, setSettings;
   mutable std::unique_ptr<std::vector<std::filesystem::path>> pluginFolders;
 };
 }

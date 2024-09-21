@@ -1,23 +1,25 @@
 #pragma once
 
-namespace MpClientPluginApi {
-JsValue GetVersion(const JsFunctionArguments& args);
-JsValue CreateClient(const JsFunctionArguments& args);
-JsValue DestroyClient(const JsFunctionArguments& args);
-JsValue IsConnected(const JsFunctionArguments& args);
-JsValue Tick(const JsFunctionArguments& args);
-JsValue Send(const JsFunctionArguments& args);
+#include "NapiHelper.h"
 
-inline void Register(JsValue& exports)
+namespace MpClientPluginApi {
+Napi::Value GetVersion(const Napi::CallbackInfo &info);
+Napi::Value CreateClient(const Napi::CallbackInfo &info);
+Napi::Value DestroyClient(const Napi::CallbackInfo &info);
+Napi::Value IsConnected(const Napi::CallbackInfo &info);
+Napi::Value Tick(const Napi::CallbackInfo &info);
+Napi::Value Send(const Napi::CallbackInfo &info);
+
+inline void Register(Napi::Env env, Napi::Object& exports)
 {
-  auto mpClientPlugin = JsValue::Object();
-  mpClientPlugin.SetProperty("getVersion", JsValue::Function(GetVersion));
-  mpClientPlugin.SetProperty("createClient", JsValue::Function(CreateClient));
-  mpClientPlugin.SetProperty("destroyClient",
-                             JsValue::Function(DestroyClient));
-  mpClientPlugin.SetProperty("isConnected", JsValue::Function(IsConnected));
-  mpClientPlugin.SetProperty("tick", JsValue::Function(Tick));
-  mpClientPlugin.SetProperty("send", JsValue::Function(Send));
-  exports.SetProperty("mpClientPlugin", mpClientPlugin);
+  auto mpClientPlugin = Napi::Object::New(env);
+  mpClientPlugin.Set("getVersion", Napi::Function::New(env, NapiHelper::WrapCppExceptions(GetVersion)));
+  mpClientPlugin.Set("createClient", Napi::Function::New(env, NapiHelper::WrapCppExceptions(CreateClient)));
+  mpClientPlugin.Set("destroyClient",
+                             Napi::Function::New(env, NapiHelper::WrapCppExceptions(DestroyClient)));
+  mpClientPlugin.Set("isConnected", Napi::Function::New(env, NapiHelper::WrapCppExceptions(IsConnected)));
+  mpClientPlugin.Set("tick", Napi::Function::New(env, NapiHelper::WrapCppExceptions(Tick)));
+  mpClientPlugin.Set("send", Napi::Function::New(env, NapiHelper::WrapCppExceptions(Send)));
+  exports.Set("mpClientPlugin", mpClientPlugin);
 }
 }

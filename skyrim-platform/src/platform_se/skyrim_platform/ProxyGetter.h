@@ -1,18 +1,19 @@
 #pragma once
 
-// TODO: port to nodejs
-using ProxyGetterFn =
-  std::function<JsValue(const JsValue& origin, const JsValue& keyStr)>;
+#include "NapiHelper.h"
 
-inline JsValue ProxyGetter(const ProxyGetterFn& f)
+using ProxyGetterFn =
+  std::function<Napi::Value(const Napi::Object& origin, const Napi::String& keyStr)>;
+
+inline Napi::Value ProxyGetter(Napi::Env env, const ProxyGetterFn& f)
 {
-  return JsValue::Function([=](const JsFunctionArguments& args) -> JsValue {
-    auto& origin = args[1];
-    auto& key = args[2];
-    auto originProperty = origin.GetProperty(key);
-    if (originProperty.GetType() != JsValue::Type::Undefined)
+  return Napi::Function::New(env, NapiHelper::WrapCppExceptions([=](const Napi::CallbackInfo &info) -> Napi::Value {
+    auto& origin = Napi::ExtractObject(info[0], "origin");
+    auto& key = Napi::ExtractString(info[1], "key");
+    auto originProperty = origin.Get(key);
+    if (!originProperty.IsUndefined()) {
       return originProperty;
-    return key.GetType() != JsValue::Type::String ? JsValue::Undefined()
-                                                  : f(origin, key);
-  });
+    }
+    return (!key.IsString()) ? info.Env().Undefined() : f(origin, key);
+  }));
 }

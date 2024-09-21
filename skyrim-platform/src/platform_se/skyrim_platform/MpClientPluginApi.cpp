@@ -52,45 +52,46 @@ MpClientPlugin* GetMpClientPlugin()
 }
 }
 
-JsValue MpClientPluginApi::GetVersion(const JsFunctionArguments& args)
+Napi::Value MpClientPluginApi::GetVersion(const Napi::CallbackInfo &info)
 {
   typedef const char* (*GetVersion)();
   auto f = (GetVersion)GetMpClientPlugin()->GetFunction("MpCommonGetVersion");
-  return JsValue::String(f());
+  return Napi::String::New(info.Env(), f());
 }
 
-JsValue MpClientPluginApi::CreateClient(const JsFunctionArguments& args)
+Napi::Value MpClientPluginApi::CreateClient(const Napi::CallbackInfo &info)
 {
-  auto hostName = (std::string)args[1];
-  auto port = (int)args[2];
+  auto hostName = NapiHelper::ExtractString(info[0], "hostName");
+  auto port = NapiHelper::ExtractInt32(info[1], "port");
 
-  if (port < 0 || port > 65535)
+  if (port < 0 || port > 65535) {
     throw std::runtime_error(std::to_string(port) + " is not a valid port");
+  }
 
   typedef void (*CreateClient)(const char* hostName, uint16_t port);
   auto f = (CreateClient)GetMpClientPlugin()->GetFunction("CreateClient");
-  f(hostName.data(), (uint16_t)port);
-  return JsValue::Undefined();
+  f(hostName.data(), static_cast<uint16_t>(port));
+  return info.Env().Undefined();
 }
 
-JsValue MpClientPluginApi::DestroyClient(const JsFunctionArguments& args)
+Napi::Value MpClientPluginApi::DestroyClient(const Napi::CallbackInfo &info)
 {
   typedef void (*DestroyClient)();
   auto f = (DestroyClient)GetMpClientPlugin()->GetFunction("DestroyClient");
   f();
-  return JsValue::Undefined();
+  return info.Env().Undefined();
 }
 
-JsValue MpClientPluginApi::IsConnected(const JsFunctionArguments& args)
+Napi::Value MpClientPluginApi::IsConnected(const Napi::CallbackInfo &info)
 {
   typedef bool (*IsConnected)();
   auto f = (IsConnected)GetMpClientPlugin()->GetFunction("IsConnected");
-  return JsValue::Bool(f());
+  return Napi::Boolean::New(info.Env(), f());
 }
 
-JsValue MpClientPluginApi::Tick(const JsFunctionArguments& args)
+Napi::Value MpClientPluginApi::Tick(const Napi::CallbackInfo &info)
 {
-  auto onPacket = args[1];
+  auto onPacket = NapiHelper::ExtractFunction(env, info[0]);
 
   typedef void (*OnPacket)(int32_t type, const char* jsonContent,
                            const char* error, void* state);
@@ -99,22 +100,22 @@ JsValue MpClientPluginApi::Tick(const JsFunctionArguments& args)
   auto f = (Tick)GetMpClientPlugin()->GetFunction("Tick");
   f(
     [](int32_t type, const char* jsonContent, const char* error, void* state) {
-      auto onPacket = reinterpret_cast<JsValue*>(state);
+      auto onPacket = reinterpret_cast<Napi::Function*>(state);
       onPacket->Call(
-        { JsValue::Undefined(), GetPacketTypeName(type), jsonContent, error });
+        { Napi::String::New(info.Env(), GetPacketTypeName(type)), Napi::String::New(info.Env(), jsonContent), Napi::String::New(info.Env(), error) });
     },
     &onPacket);
-  return JsValue::Undefined();
+  return info.Env().Undefined();
 }
 
-JsValue MpClientPluginApi::Send(const JsFunctionArguments& args)
+Napi::Value MpClientPluginApi::Send(const Napi::CallbackInfo &info)
 {
   typedef void (*Send)(const char* jsonContent, bool reliable);
 
-  auto jsonContent = (std::string)args[1];
-  auto reliable = (bool)args[2];
+  auto jsonContent = NapiHelper::ExtractString(info[0], "jsonContent");
+  auto reliable = NapiHelper::ExtractBoolean(info[1], "reliable");
 
   auto f = (Send)GetMpClientPlugin()->GetFunction("Send");
   f(jsonContent.data(), reliable);
-  return JsValue::Undefined();
+  return info.Env().Undefined();
 }

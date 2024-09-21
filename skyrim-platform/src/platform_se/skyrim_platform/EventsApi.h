@@ -8,6 +8,7 @@ Napi::Value Once(const Napi::CallbackInfo &info);
 Napi::Value SendIpcMessage(const Napi::CallbackInfo &info);
 Napi::Value Unsubscribe(const Napi::CallbackInfo &info);
 
+// arguments[0] is 'this' even after NodeJS migration
 void SendEvent(const char* eventName, const std::vector<Napi::Value>& arguments);
 void Clear();
 
