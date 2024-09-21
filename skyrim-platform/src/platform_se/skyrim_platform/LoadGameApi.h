@@ -1,10 +1,12 @@
 #pragma once
 
-namespace LoadGameApi {
-JsValue LoadGame(const JsFunctionArguments& args);
+#include "NapiHelper.h"
 
-inline void Register(JsValue& exports)
+namespace LoadGameApi {
+Napi::Value LoadGame(const Napi::CallbackInfo& info);
+
+inline void Register(Napi::Env env, Napi::Object& exports)
 {
-  exports.SetProperty("loadGame", JsValue::Function(LoadGame));
+  exports.Set("loadGame", Napi::Function::New(env, NapiHelper::WrapCppExceptions(LoadGame)));
 }
 }

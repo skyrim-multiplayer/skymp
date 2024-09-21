@@ -1,5 +1,4 @@
 #include "LoadGameApi.h"
-#include "JsExtractPoint.h"
 #include "LoadGame.h"
 #include "NullPointerException.h"
 #include "savefile/SFChangeFormNPC.h"
@@ -114,36 +113,29 @@ std::unique_ptr<SaveFile_::ChangeFormNPC_> CreateChangeFormNpc(
   return changeFormNpc;
 }
 
+// ^^^ upper still needs to be ported to nodejs 
+
 std::unique_ptr<LoadGame::Time> CreateTime(
-  std::shared_ptr<SaveFile_::SaveFile>, JsValue time_)
+  std::shared_ptr<SaveFile_::SaveFile>, Napi::Object time_)
 {
-  if (time_.GetType() != JsValue::Type::Object) {
-    return nullptr;
-  }
+  auto hours = NapiHelper::ExtractInt32(time_.Get("hours"), "time.hours");
+  auto minutes = NapiHelper::ExtractInt32(time_.Get("minutes"), "time.minutes");
+  auto seconds = NapiHelper::ExtractInt32(time_.Get("seconds"), "time.seconds");
 
-  auto hours = static_cast<int>(time_.GetProperty("hours"));
-  auto minutes = static_cast<int>(time_.GetProperty("minutes"));
-  auto seconds = static_cast<int>(time_.GetProperty("seconds"));
-
-  std::unique_ptr<LoadGame::Time> time;
-  time.reset(new LoadGame::Time);
+  auto time = std::make_unique<LoadGame::Time>();
   time->Set(seconds, minutes, hours);
   return time;
 }
 
 std::unique_ptr<std::vector<std::string>> CreateLoadOrder(
-  std::shared_ptr<SaveFile_::SaveFile>, JsValue loadOrder_)
+  std::shared_ptr<SaveFile_::SaveFile>, Napi::Array loadOrder_)
 {
-  if (loadOrder_.GetType() != JsValue::Type::Array) {
-    return nullptr;
-  }
-
   std::unique_ptr<std::vector<std::string>> loadOrder;
   loadOrder.reset(new std::vector<std::string>);
-  int n = static_cast<int>(loadOrder_.GetProperty("length"));
+  int n = loadOrder_.Length();
   for (int i = 0; i < n; ++i) {
-    auto jValue = loadOrder_.GetProperty(i);
-    auto value = static_cast<std::string>(jValue);
+    auto jValue = loadOrder_.Get(i);
+    auto value = NapiHelper::ExtractString(jValue, fmt::format("loadOrder[{}]", i));
     loadOrder->push_back(value);
   }
   return loadOrder;
@@ -151,14 +143,17 @@ std::unique_ptr<std::vector<std::string>> CreateLoadOrder(
 
 }
 
-JsValue LoadGameApi::LoadGame(const JsFunctionArguments& args)
+Napi::Value LoadGameApi::LoadGame(const Napi::CallbackInfo& info)
 {
-  std::array<float, 3> pos = JsExtractPoint(args[1]),
-                       angle = JsExtractPoint(args[2]);
-  uint32_t cellOrWorld = static_cast<uint32_t>(static_cast<double>(args[3]));
-  auto npcData = args[4];
-  auto loadOrder = args[5];
-  auto time = args[6];
+  NiPoint3 niPos = NapiHelper::ExtractNiPoint3(info[0], "pos");
+  NiPoint3 niAngle = NapiHelper::ExtractNiPoint3(info[1], "angle");
+  std::array<float, 3> pos = {niPos[0], niPos[1], niPos[2]};
+  std::array<float, 3> angle = {niAngle[0], niAngle[1], niAngle[2]};
+
+  uint32_t cellOrWorld = NapiHelper::ExtractUInt32(info[2], "cellOrWorld");
+  auto npcData = NapiHelper::ExtractObject(info[3], "npcData");
+  auto loadOrder = NapiHelper::ExtractArray(info[4], "loadOrder");
+  auto time = NapiHelper::ExtractObject(info[5], "time");
 
   constexpr auto kPathInAssetsMale = "assets/template.ess";
 
@@ -188,5 +183,5 @@ JsValue LoadGameApi::LoadGame(const JsFunctionArguments& args)
   LoadGame::Run(_baseSavefile, _pos, _angle, _cellOrWorld, _time, _weather,
                 _changeFormNPC, _loadOrder);
 
-  return JsValue::Undefined();
+  return info.Env().Undefined();
 }
