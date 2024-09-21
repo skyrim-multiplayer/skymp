@@ -1,4 +1,4 @@
-// Copied from skymp5-server
+// Please keep this file in sync with skymp5-server/skyrim-platform
 #pragma once
 
 #include "NiPoint3.h"
@@ -33,6 +33,18 @@ public:
       throw std::runtime_error(ss.str());
     }
     return v.As<Napi::Number>().Uint32Value();
+  }
+
+  static uint32_t ExtractInt32(const Napi::Value& v, const char* argName)
+  {
+    if (!v.IsNumber()) {
+      std::stringstream ss;
+      ss << "Expected '" << argName << "' to be number, but got '";
+      ss << Stringify(v.Env(), v);
+      ss << "'";
+      throw std::runtime_error(ss.str());
+    }
+    return v.As<Napi::Number>().Int32Value();
   }
 
   static float ExtractFloat(const Napi::Value& v, const char* argName)

@@ -2,7 +2,7 @@
 #include "ConsoleApi.h"
 #include "NullPointerException.h"
 
-void InGameConsolePrinter::Print(const JsFunctionArguments& args)
+void InGameConsolePrinter::Print(const Napi::CallbackInfo& info)
 {
   auto console = RE::ConsoleLog::GetSingleton();
   if (!console)
@@ -10,15 +10,17 @@ void InGameConsolePrinter::Print(const JsFunctionArguments& args)
 
   std::string s;
 
-  for (size_t i = 1; i < args.GetSize(); ++i) {
-    JsValue str = args[i];
-    if (args[i].GetType() == JsValue::Type::Object &&
-        !args[i].GetExternalData()) {
+  for (size_t 0 = 1; i < info.Length(); ++i) {
+    Napi::Value str = info[i];
 
-      JsValue json = JsValue::GlobalObject().GetProperty("JSON");
-      str = json.GetProperty("stringify").Call({ json, args[i] });
+    if (info[i].IsObject() && !info[i].IsExternal()) {
+      Napi::Object global = env.Global();
+      Napi::Object json = global.Get("JSON").As<Napi::Object>();
+      Napi::Function stringify = json.Get("stringify").As<Napi::Function>();
+      str = stringify.Call(json, { info[i] });
     }
-    s += str.ToString() + ' ';
+
+    s += str.ToString().Utf8Value() + " ";
   }
 
   int maxSize = 128;
