@@ -13,7 +13,7 @@ void Clear();
 const char* GetScriptPrefix();
 const char* GetExceptionPrefix();
 
-inline void Register(Napi::Env env, Napi::Value& exports)
+inline void Register(Napi::Env env, Napi::Object& exports)
 {
   exports.Set("printConsole", Napi::Function::New(env, NapiHelper::WrapCppExceptions(PrintConsole)));
   exports.Set("findConsoleCommand",

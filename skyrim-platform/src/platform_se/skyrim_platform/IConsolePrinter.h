@@ -1,13 +1,10 @@
 #pragma once
 
-// TODO: port to nodejs
-class JsFunctionArguments;
-
 class IConsolePrinter
 {
 public:
   virtual ~IConsolePrinter() = default;
 
-  virtual void Print(const JsFunctionArguments& args) = 0;
+  virtual void Print(const Napi::CallbackInfo& info) = 0;
   virtual void PrintRaw(const char* str) = 0;
 };

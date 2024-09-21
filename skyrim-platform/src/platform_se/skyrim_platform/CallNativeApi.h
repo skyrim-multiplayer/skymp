@@ -29,7 +29,7 @@ Napi::Value DynamicCast(
 
 inline void Register(
   Napi::Env env,
-  Napi::Value& exports,
+  Napi::Object& exports,
   std::function<NativeCallRequirements()> getNativeCallRequirements)
 {
   exports.Set("callNative", Napi::Function::New(env, NapiHelper::WrapCppExceptions([=](auto& args) {

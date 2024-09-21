@@ -21,7 +21,7 @@ void SendPapyrusEventLeave() noexcept;
 
 Napi::Value GetHooks(Napi::Env env);
 
-inline void Register(Napi::Env env, Napi::Value& exports)
+inline void Register(Napi::Env env, Napi::Object& exports)
 {
   exports.Set("on", Napi::Function::New(env, NapiHelper::WrapCppExceptions(On)));
   exports.Set("once", Napi::Function::New(env, NapiHelper::WrapCppExceptions(Once)));
