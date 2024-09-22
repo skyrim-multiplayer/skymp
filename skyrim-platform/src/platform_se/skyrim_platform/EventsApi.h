@@ -8,7 +8,6 @@ Napi::Value Once(const Napi::CallbackInfo &info);
 Napi::Value SendIpcMessage(const Napi::CallbackInfo &info);
 Napi::Value Unsubscribe(const Napi::CallbackInfo &info);
 
-// arguments[0] is 'this' even after NodeJS migration
 void SendEvent(const char* eventName, const std::vector<Napi::Value>& arguments);
 void Clear();
 
@@ -26,7 +25,7 @@ inline void Register(Napi::Env env, Napi::Object& exports)
 {
   exports.Set("on", Napi::Function::New(env, NapiHelper::WrapCppExceptions(On)));
   exports.Set("once", Napi::Function::New(env, NapiHelper::WrapCppExceptions(Once)));
-  exports.Set("hooks", GetHooks());
+  exports.Set("hooks", GetHooks(env));
   exports.Set("sendIpcMessage", Napi::Function::New(env, NapiHelper::WrapCppExceptions(SendIpcMessage)));
   exports.Set("unsubscribe", Napi::Function::New(env, NapiHelper::WrapCppExceptions(Unsubscribe)));
 }

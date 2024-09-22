@@ -29,13 +29,13 @@ inline void Register(Napi::Env env, Napi::Object& exports, std::shared_ptr<State
   browser.Set(
     "loadUrl",
     Napi::Function::New(NapiHelper::WrapCppExceptions([=](const Napi::CallbackInfo& info) -> JsValue {
-      return LoadUrl(args, state);
+      return LoadUrl(info, state);
     })));
   browser.Set("getToken", Napi::Function::New(env, NapiHelper::WrapCppExceptions(GetToken)));
   browser.Set(
     "executeJavaScript",
     NapiHelper::WrapCppExceptions(Napi::Function::New([=](const Napi::CallbackInfo& info) -> JsValue {
-      return ExecuteJavaScript(args, state);
+      return ExecuteJavaScript(info, state);
     })));
   exports.Set("browser", browser);
 }

@@ -1,5 +1,4 @@
 #include "CameraApi.h"
-#include "JsExtractPoint.h"
 #include "NullPointerException.h"
 
 Napi::Value CameraApi::WorldPointToScreenPoint(const Napi::CallbackInfo& info)

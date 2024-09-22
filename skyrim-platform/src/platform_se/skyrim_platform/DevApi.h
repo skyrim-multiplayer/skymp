@@ -26,7 +26,7 @@ using NativeExportsMap =
 extern std::shared_ptr<JsEngine> jsEngine;
 extern NativeExportsMap nativeExportsMap;
 
-inline void Register(Napi::Env env, Napi::Value& exports, std::shared_ptr<JsEngine> jsEngine,
+inline void Register(Napi::Env env, Napi::Object& exports, std::shared_ptr<JsEngine> jsEngine,
                      NativeExportsMap nativeExportsMap,
                      const std::vector<std::filesystem::path>& builtScriptsDir)
 {

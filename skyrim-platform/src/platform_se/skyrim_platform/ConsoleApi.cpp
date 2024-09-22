@@ -104,6 +104,8 @@ void CreateLongNameProperty(Napi::Object& obj, ConsoleCommand* replaced) {
     cmd.functionName = replaced->longName.c_str();
 
     REL::safe_write((uintptr_t)replaced->myIter, &cmd, sizeof(cmd));
+
+    return info.Env().Undefined();
   });
 
   Napi::PropertyDescriptor longNameProperty = Napi::PropertyDescriptor::Accessor(
@@ -126,6 +128,8 @@ void CreateShortNameProperty(Napi::Object& obj, ConsoleCommand* replaced) {
     cmd.shortName = replaced->shortName.c_str();
 
     REL::safe_write((uintptr_t)replaced->myIter, &cmd, sizeof(cmd));
+
+    return info.Env().Undefined();
   });
 
   Napi::PropertyDescriptor shortNameProperty = Napi::PropertyDescriptor::Accessor(
@@ -158,7 +162,7 @@ void CreateNumArgsProperty(Napi::Object& obj, ConsoleCommand* replaced) {
   obj.DefineProperty(numArgsProperty);
 }
 
-void CreateExecuteProperty(Napi::Value& obj, ConsoleCommand* replaced)
+void CreateExecuteProperty(Napi::Object& obj, ConsoleCommand* replaced)
 {
   obj.Set("execute", nullptr, NapiHelper::WrapCppExceptions([=](const Napi::CallbackInfo &info) {
     replaced->jsExecute.reset(new Napi::Reference<Napi::Function>(Napi::Persistent(NapiHelper::ExtractFunction(info[0], "execute"))));
@@ -239,7 +243,7 @@ Napi::Value GetTypedArg(Napi::Env env, RE::SCRIPT_PARAM_TYPE type, std::string p
     case RE::SCRIPT_PARAM_TYPE::kAxis:
     case RE::SCRIPT_PARAM_TYPE::kActorValue:
     case RE::SCRIPT_PARAM_TYPE::kChar:
-      return Napi::Value::String(param);
+      return Napi::String::New(env, param);
 
     default:
       return GetObject(env, param);
@@ -349,12 +353,12 @@ Napi::Value ConsoleApi::FindConsoleCommand(const Napi::CallbackInfo &info)
   auto commandName = NapiHelper::ExtractString(info[0], "commandName");
 
   Napi::Value res =
-    FindCommand(env, commandName, RE::SCRIPT_FUNCTION::GetFirstConsoleCommand(),
+    FindCommand(info.Env(), commandName, RE::SCRIPT_FUNCTION::GetFirstConsoleCommand(),
                 RE::SCRIPT_FUNCTION::Commands::kConsoleCommandsEnd);
 
   if (res.IsNull()) {
     res =
-      FindCommand(env, commandName, RE::SCRIPT_FUNCTION::GetFirstScriptCommand(),
+      FindCommand(info.Env(), commandName, RE::SCRIPT_FUNCTION::GetFirstScriptCommand(),
                   RE::SCRIPT_FUNCTION::Commands::kScriptCommandsEnd);
   }
 
@@ -381,7 +385,7 @@ Napi::Value ConsoleApi::WriteLogs(const Napi::CallbackInfo &info)
     Napi::Value str = info[i];
 
     if (info[i].IsObject() && !info[i].IsExternal()) {
-      Napi::Object global = env.Global();
+      Napi::Object global = info.Env().Global();
       Napi::Object json = global.Get("JSON").As<Napi::Object>();
 
       Napi::Function stringify = json.Get("stringify").As<Napi::Function>();

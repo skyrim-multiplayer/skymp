@@ -19,7 +19,7 @@ Napi::Value CallNativeImpl(
   auto className = NapiHelper::ExtractString(info[0], "className");
   auto functionName = NapiHelper::ExtractString(info[1], "functionName");
   auto self = info[2];
-  constexpr int nativeArgsStart = 4;
+  constexpr int nativeArgsStart = 3;
 
   // https://github.com/ianpatt/skse64/blob/971babc435e2620521c8556ea8ae7b9a4910ff61/skse64/PapyrusGame.cpp#L94
   if (!stricmp("Game", className.data())) {
@@ -35,7 +35,7 @@ Napi::Value CallNativeImpl(
 
       constexpr int kLightModOffset = 0x100;
 
-      int index = static_cast<int>(args[nativeArgsStart]);
+      int index = NapiHelper::ExtractInt32(info[nativeArgsStart], "index");
 
       auto dataHandler = RE::TESDataHandler::GetSingleton();
       if (!dataHandler) {
@@ -68,11 +68,12 @@ Napi::Value CallNativeImpl(
                              "' can't be called in this context");
 
   CallNative::AnySafe nativeArgs[CallNative::g_maxArgs + 1];
-  auto n = (size_t)std::max((int)args.GetSize() - nativeArgsStart, 0);
+  auto n = (size_t)std::max(static_cast<int>(info.Legnth()) - nativeArgsStart, 0);
 
-  for (size_t i = 0; i < n; ++i)
+  for (size_t i = 0; i < n; ++i) {
     nativeArgs[i] =
-      NativeValueCasts::JsValueToNativeValue(args[nativeArgsStart + i]);
+      NativeValueCasts::JsValueToNativeValue(info[nativeArgsStart + i]);
+  }
 
   static VmProvider provider;
 
@@ -175,6 +176,6 @@ Napi::Value CallNativeApi::DynamicCast(
 {
   auto form = NativeValueCasts::JsValueToNativeValue(info[0]);
   auto targetType = NapiHelper::ExtractString(info[1], "targetType");
-  return NativeValueCasts::NativeValueToJsValue(
+  return NativeValueCasts::NativeValueToJsValue(info.Env(),
     CallNative::DynamicCast(targetType, form));
 }

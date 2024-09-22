@@ -348,9 +348,9 @@ void EventsApi::SendEvent(const char* eventName,
   std::vector<CallbackObject> callbacksToCall;
 
   // 1. Collect all callbacks and remember "runOnce" callbacks
-  for (const auto& [uid, callbackInfo] : *cbObjMap) {
-    callbacksToCall.push_back(callbackInfo);
-    if (callbackInfo.runOnce) {
+  for (const auto& [uid, cb] : *cbObjMap) {
+    callbacksToCall.push_back(cb);
+    if (cb.runOnce) {
       callbacksToUnsubscribe.push_back(uid);
     }
   }
@@ -361,12 +361,12 @@ void EventsApi::SendEvent(const char* eventName,
   }
 
   // 3. Finally, call the callbacks
-  for (auto& callbackInfo : callbacksToCall) {
+  for (auto& cb : callbacksToCall) {
     try {
-      Napi::Function callback = callbackInfo.callback->Value().As<Napi::Function>();
+      Napi::Function callback = cb.callback->Value().As<Napi::Function>();
       callback.Call(env.Undefined(), arguments);
     } catch (const std::exception& e) {
-      const char* method = callbackInfo.runOnce ? "once" : "on";
+      const char* method = cb.runOnce ? "once" : "on";
       std::string what = e.what();
       logger::error("{}('{}'): {}", method, eventName, what);
 

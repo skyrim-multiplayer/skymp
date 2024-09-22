@@ -25,11 +25,11 @@ bool CreateDirectoryRecursive(const std::string& dirName, std::error_code& err)
 }
 }
 
-JsValue DevApi::Require(
-  const JsFunctionArguments& args,
+Napi::Value DevApi::Require(
+  const Napi::CallbackInfo& info,
   const std::vector<std::filesystem::path>& pluginLoadDirectories)
 {
-  auto fileName = args[1].ToString();
+  auto fileName = NapiHelper::ExtractString(info[0], "fileName");
 
   if (!ValidateRelativePath(fileName)) {
     throw InvalidArgumentException("fileName", fileName);
@@ -66,10 +66,10 @@ JsValue DevApi::Require(
   throw std::runtime_error("'" + fileName + "' doesn't exist");
 }
 
-JsValue DevApi::AddNativeExports(const JsFunctionArguments& args)
+Napi::Value DevApi::AddNativeExports(const Napi::CallbackInfo& info)
 {
-  auto fileName = static_cast<std::string>(args[1]);
-  auto exports = args[2];
+  auto fileName = NapiHelper::ExtractString(info[0], "fileName");
+  auto exports = NapiHelper::ExtractObject(info[1], "exports");
 
   for (auto& [moduleName, f] : DevApi::nativeExportsMap) {
     if (moduleName == fileName ||
@@ -116,33 +116,33 @@ std::filesystem::path GetPluginPath(const std::string& pluginName,
 }
 }
 
-JsValue DevApi::GetPluginSourceCode(const JsFunctionArguments& args)
+Napi::Value DevApi::GetPluginSourceCode(const Napi::CallbackInfo &info)
 {
-  // TODO: Support multifile plugins?
-  auto pluginName = args[1].ToString();
+  // Multifile plugins unsupported
+  auto pluginName = NapiHelper::ExtractString(info[0], "fileName");
 
   std::optional<std::string> overrideFolder;
-  if (args.GetSize() >= 3) {
-    auto t = args[2].GetType();
-    if (t != JsValue::Type::Undefined && t != JsValue::Type::Null) {
-      overrideFolder = args[2].ToString();
+  if (info.Length() >= 2) {
+    auto overrideFolderCandidate = info[1];
+    if (!overrideFolderCandidate.IsNull() && !overrideFolderCandidate.IsUndefined()) {
+      overrideFolder = Napi::ExtractString(overrideFolderCandidate, "overrideFolder");
     }
   }
 
   return Viet::ReadFileIntoString(GetPluginPath(pluginName, overrideFolder));
 }
 
-JsValue DevApi::WritePlugin(const JsFunctionArguments& args)
+Napi::Value DevApi::WritePlugin(const Napi::CallbackInfo &info)
 {
-  // TODO: Support multifile plugins?
-  auto pluginName = args[1].ToString();
-  auto newSources = args[2].ToString();
+  // Multifile plugins unsupported
+  auto pluginName = NapiHelper::ExtractString(info[0], "pluginName");
+  auto newSources = NapiHelper::ExtractString(info[1], "newSources");
 
   std::optional<std::string> overrideFolder;
-  if (args.GetSize() >= 4) {
-    auto t = args[3].GetType();
-    if (t != JsValue::Type::Undefined && t != JsValue::Type::Null) {
-      overrideFolder = args[3].ToString();
+  if (info.Length() >= 3) {
+    auto overrideFolderCandidate = info[2];
+    if (!overrideFolderCandidate.IsNull() && !overrideFolderCandidate.IsUndefined()) {
+      overrideFolder = Napi::ExtractString(overrideFolderCandidate, "overrideFolder");
     }
   }
 
@@ -162,27 +162,28 @@ JsValue DevApi::WritePlugin(const JsFunctionArguments& args)
   if (!f) {
     throw std::runtime_error("Failed to write into " + path.string());
   }
-  return JsValue::Undefined();
+  return info.Env().Undefined();
 }
 
-JsValue DevApi::GetPlatformVersion(const JsFunctionArguments& args)
+Napi::Value DevApi::GetPlatformVersion(const Napi::CallbackInfo &info)
 {
-  return "2.9.0";
+  constexpr auto kSkyrimPlatformVersion = "2.9.0";
+  return Napi::String::New(info.Env(), kSkyrimPlatformVersion);
 }
 
-JsValue DevApi::GetJsMemoryUsage(const JsFunctionArguments& args)
+Napi::Value DevApi::GetJsMemoryUsage(const Napi::CallbackInfo &info)
 {
   if (!jsEngine) {
     throw NullPointerException("jsEngine");
   }
-  return static_cast<double>(jsEngine->GetMemoryUsage());
+  return Napi::Number::New(info.Env(), jsEngine->GetMemoryUsage());
 }
 
-JsValue DevApi::BlockPapyrusEvents(const JsFunctionArguments& args)
+Napi::Value DevApi::BlockPapyrusEvents(const Napi::CallbackInfo &info)
 {
-  bool block = static_cast<bool>(args[1]);
+  bool block = NapiHelper::ExtractBoolean(info.Env(), "block");
   TESModPlatform::BlockPapyrusEvents(nullptr, -1, nullptr, block);
-  return JsValue::Undefined();
+  return info.Env().Undefined();
 }
 
 namespace {
