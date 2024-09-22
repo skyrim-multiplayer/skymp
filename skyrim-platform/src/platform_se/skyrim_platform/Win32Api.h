@@ -1,25 +1,27 @@
 #pragma once
 
+#include "NapiHelper.h"
+
 namespace Win32Api {
-JsValue LoadUrl(const JsFunctionArguments& args);
+Napi::Value LoadUrl(const Napi::CallbackInfo &info);
 
-JsValue ExitProcess(const JsFunctionArguments& args);
+Napi::Value ExitProcess(const Napi::CallbackInfo &info);
 
-inline void Register(JsValue& exports)
+inline void Register(Napi::Env env, Napi::Object& exports)
 {
-  auto win32 = JsValue::Object();
-  win32.SetProperty(
+  auto win32 = Napi::Value::Object();
+  win32.Set(
     "loadUrl",
-    JsValue::Function([=](const JsFunctionArguments& args) -> JsValue {
-      return LoadUrl(args);
-    }));
+    Napi::Function::New(env, NapiHelper::WrapCppExceptions([=](const Napi::CallbackInfo &info) -> Napi::Value {
+      return LoadUrl(info);
+    })));
 
-  win32.SetProperty(
+  win32.Set(
     "exitProcess",
-    JsValue::Function([=](const JsFunctionArguments& args) -> JsValue {
-      return ExitProcess(args);
-    }));
+    Napi::Function::New(env, NapiHelper::WrapCppExceptions([=](const Napi::CallbackInfo &info) -> Napi::Value {
+      return ExitProcess(info);
+    })));
 
-  exports.SetProperty("win32", win32);
+  exports.Set("win32", win32);
 }
 }

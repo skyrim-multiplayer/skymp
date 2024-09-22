@@ -1,33 +1,35 @@
 #pragma once
 #include "TextsCollection.h"
 
+#include "NapiHelper.h"
+
 namespace TextApi {
-void Register(JsValue& exports);
+void Register(Napi::Env env, Napi::Object& exports);
 
-JsValue CreateText(const JsFunctionArguments& args);
+Napi::Value CreateText(const Napi::CallbackInfo &info);
 
-JsValue DestroyText(const JsFunctionArguments& args);
-JsValue DestroyAllTexts(const JsFunctionArguments& args);
+Napi::Value DestroyText(const Napi::CallbackInfo &info);
+Napi::Value DestroyAllTexts(const Napi::CallbackInfo &info);
 
-JsValue SetTextPos(const JsFunctionArguments& args);
-JsValue SetTextString(const JsFunctionArguments& args);
-JsValue SetTextColor(const JsFunctionArguments& args);
-JsValue SetTextSize(const JsFunctionArguments& args);
-JsValue SetTextRotation(const JsFunctionArguments& args);
-JsValue SetTextFont(const JsFunctionArguments& args);
-JsValue SetTextDepth(const JsFunctionArguments& args);
-JsValue SetTextEffect(const JsFunctionArguments& args);
-JsValue SetTextOrigin(const JsFunctionArguments& args);
+Napi::Value SetTextPos(const Napi::CallbackInfo &info);
+Napi::Value SetTextString(const Napi::CallbackInfo &info);
+Napi::Value SetTextColor(const Napi::CallbackInfo &info);
+Napi::Value SetTextSize(const Napi::CallbackInfo &info);
+Napi::Value SetTextRotation(const Napi::CallbackInfo &info);
+Napi::Value SetTextFont(const Napi::CallbackInfo &info);
+Napi::Value SetTextDepth(const Napi::CallbackInfo &info);
+Napi::Value SetTextEffect(const Napi::CallbackInfo &info);
+Napi::Value SetTextOrigin(const Napi::CallbackInfo &info);
 
-JsValue GetTextPos(const JsFunctionArguments& args);
-JsValue GetTextString(const JsFunctionArguments& args);
-JsValue GetTextColor(const JsFunctionArguments& args);
-JsValue GetTextSize(const JsFunctionArguments& args);
-JsValue GetTextRotation(const JsFunctionArguments& args);
-JsValue GetTextFont(const JsFunctionArguments& args);
-JsValue GetTextDepth(const JsFunctionArguments& args);
-JsValue GetTextEffect(const JsFunctionArguments& args);
-JsValue GetTextOrigin(const JsFunctionArguments& args);
+Napi::Value GetTextPos(const Napi::CallbackInfo &info);
+Napi::Value GetTextString(const Napi::CallbackInfo &info);
+Napi::Value GetTextColor(const Napi::CallbackInfo &info);
+Napi::Value GetTextSize(const Napi::CallbackInfo &info);
+Napi::Value GetTextRotation(const Napi::CallbackInfo &info);
+Napi::Value GetTextFont(const Napi::CallbackInfo &info);
+Napi::Value GetTextDepth(const Napi::CallbackInfo &info);
+Napi::Value GetTextEffect(const Napi::CallbackInfo &info);
+Napi::Value GetTextOrigin(const Napi::CallbackInfo &info);
 
-JsValue GetNumCreatedTexts(const JsFunctionArguments& args);
+Napi::Value GetNumCreatedTexts(const Napi::CallbackInfo &info);
 }

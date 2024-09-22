@@ -3,255 +3,278 @@
 
 namespace TextApi {
 
-JsValue TextApi::CreateText(const JsFunctionArguments& args)
+Napi::Value TextApi::CreateText(const Napi::CallbackInfo &info)
 {
   std::array<double, 4> argColor;
 
-  auto argPosX = static_cast<double>(args[1]);
-  auto argPosY = static_cast<double>(args[2]);
+  auto argPosX = NapiHelper::ExtractDouble(info[0], "posX");
+  auto argPosY = NapiHelper::ExtractDouble(info[1], "posY");
 
   std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
-  auto argString = converter.from_bytes(static_cast<std::string>(args[3]));
+  auto argString = converter.from_bytes(NapiHelper::ExtractString(info[2], "string"));
+
+  auto color = NapiHelper::ExtractArray(info[3], "color");
+  for (int i = 0; i < 4; i++) {
+    argColor[i] = NapiHelper::ExtractDouble(color.Get(i), fmt::format("color[{}]", i));
+  }
 
   std::wstring fontName;
 
-  if (args[5].GetType() != JsValue::Type::String ||
-      !ValidateFilename(static_cast<std::string>(args[5]), false)) {
+  if (!info[4].IsString() ||
+      !ValidateFilename(static_cast<std::string>(info[4].As<Napi::String>()), false)) {
     fontName = L"Tavern";
   } else {
-    fontName = converter.from_bytes(static_cast<std::string>(args[5]));
+    fontName = converter.from_bytes(static_cast<std::string>(info[4].As<Napi::String>()));
   }
 
-  for (int i = 0; i < 4; i++) {
-    argColor[i] = args[4].GetProperty(i);
-  }
-
-  return JsValue(TextsCollection::GetSingleton().CreateText(
+  return Napi::Number::New(info.Env(), TextsCollection::GetSingleton().CreateText(
     argPosX, argPosY, argString, argColor, fontName));
 }
 
-JsValue TextApi::DestroyText(const JsFunctionArguments& args)
+Napi::Value TextApi::DestroyText(const Napi::CallbackInfo &info)
 {
-  TextsCollection::GetSingleton().DestroyText(static_cast<int>(args[1]));
-  return JsValue::Undefined();
+  auto textId = NapiHelper::ExtractInt32(info[0], "textId");
+  TextsCollection::GetSingleton().DestroyText(textId);
+  return info.Env().Undefined();
 }
-JsValue TextApi::DestroyAllTexts(const JsFunctionArguments&)
+
+Napi::Value TextApi::DestroyAllTexts(const JsFunctionArguments&)
 {
   TextsCollection::GetSingleton().DestroyAllTexts();
-  return JsValue::Undefined();
+  return info.Env().Undefined();
 }
 
-JsValue TextApi::SetTextPos(const JsFunctionArguments& args)
+Napi::Value TextApi::SetTextPos(const Napi::CallbackInfo &info)
 {
-  auto textNameId = static_cast<int>(args[1]);
-  auto argPosX = static_cast<double>(args[2]);
-  auto argPosY = static_cast<double>(args[3]);
+  auto textId = NapiHelper::ExtractInt32(info[0], "textId");
+  auto argPosX = NapiHelper::ExtractDouble(info[1], "posX");
+  auto argPosY = NapiHelper::ExtractDouble(info[2], "posY");
 
-  TextsCollection::GetSingleton().SetTextPos(textNameId, argPosX, argPosY);
-  return JsValue::Undefined();
+  TextsCollection::GetSingleton().SetTextPos(textId, argPosX, argPosY);
+  return info.Env().Undefined();
 }
-JsValue TextApi::SetTextString(const JsFunctionArguments& args)
+
+Napi::Value TextApi::SetTextString(const Napi::CallbackInfo &info)
 {
-  auto textId = static_cast<int>(args[1]);
+  auto textId = NapiHelper::ExtractInt32(info[0], "textId");
 
   std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
   auto argString = converter.from_bytes(static_cast<std::string>(args[2]));
   auto moveArgString = std::move(argString);
 
   TextsCollection::GetSingleton().SetTextString(textId, moveArgString);
-  return JsValue::Undefined();
+  return info.Env().Undefined();
 }
-JsValue TextApi::SetTextColor(const JsFunctionArguments& args)
+
+Napi::Value TextApi::SetTextColor(const Napi::CallbackInfo &info)
 {
   std::array<double, 4> argColor;
 
-  auto textNameId = static_cast<int>(args[1]);
+  auto textId = NapiHelper::ExtractInt32(info[0], "textId");
 
+  auto color = NapiHelper::ExtractArray(info[1], "color");
   for (int i = 0; i < 4; i++) {
-    argColor[i] = args[2].GetProperty(i);
+    argColor[i] = NapiHelper::ExtractDouble(color.Get(i), fmt::format("color[{}]", i));
   }
 
   auto moveArgColor = std::move(argColor);
 
-  TextsCollection::GetSingleton().SetTextColor(textNameId, moveArgColor);
-  return JsValue::Undefined();
+  TextsCollection::GetSingleton().SetTextColor(textId, moveArgColor);
+  return info.Env().Undefined();
 }
-JsValue TextApi::SetTextSize(const JsFunctionArguments& args)
-{
-  auto textId = static_cast<int>(args[1]);
 
-  auto size = (float)static_cast<double>(args[2]);
+Napi::Value TextApi::SetTextSize(const Napi::CallbackInfo &info)
+{
+  auto textId = NapiHelper::ExtractInt32(info[0], "textId");
+
+  auto size = NapiHelper::ExtractFloat(info[1], "size");
 
   TextsCollection::GetSingleton().SetTextSize(textId, size);
-  return JsValue::Undefined();
+  return info.Env().Undefined();
 }
-JsValue TextApi::SetTextRotation(const JsFunctionArguments& args)
-{
-  auto textId = static_cast<int>(args[1]);
 
-  auto rot = (float)static_cast<double>(args[2]);
+Napi::Value TextApi::SetTextRotation(const Napi::CallbackInfo &info)
+{
+  auto textId = NapiHelper::ExtractInt32(info[0], "textId");
+
+  auto rot = NapiHelper::ExtractFloat(info[1], "rot");
 
   TextsCollection::GetSingleton().SetTextRotation(textId, rot);
-  return JsValue::Undefined();
+  return info.Env().Undefined();
 }
-JsValue TextApi::SetTextFont(const JsFunctionArguments& args)
+
+Napi::Value TextApi::SetTextFont(const Napi::CallbackInfo &info)
 {
-  auto textId = static_cast<int>(args[1]);
+  auto textId = NapiHelper::ExtractInt32(info[0], "textId");
+  auto name = NapiHelper::ExtractString(info[1], "name");
 
   std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
-  auto font = converter.from_bytes(static_cast<std::string>(args[2]));
+  auto font = converter.from_bytes(name);
 
   TextsCollection::GetSingleton().SetTextFont(textId, font);
 
-  return JsValue::Undefined();
+  return info.Env().Undefined();
 }
-JsValue TextApi::SetTextDepth(const JsFunctionArguments& args)
-{
-  auto textId = static_cast<int>(args[1]);
 
-  auto depth = static_cast<int>(args[2]);
+Napi::Value TextApi::SetTextDepth(const Napi::CallbackInfo &info)
+{
+  auto textId = NapiHelper::ExtractInt32(info[0], "textId");
+
+  auto depth = NapiHelper::ExtractInt32(info[1], "depth");
 
   TextsCollection::GetSingleton().SetTextDepth(textId, depth);
-  return JsValue::Undefined();
+  return info.Env().Undefined();
 }
-JsValue TextApi::SetTextEffect(const JsFunctionArguments& args)
+
+Napi::Value TextApi::SetTextEffect(const Napi::CallbackInfo &info)
 {
-  auto textId = static_cast<int>(args[1]);
+  auto textId = NapiHelper::ExtractInt32(info[0], "textId");
 
-  auto eff = static_cast<int>(args[2]);
+  auto effect = NapiHelper::ExtractInt32(info[1], "effect");
 
-  TextsCollection::GetSingleton().SetTextEffect(textId, eff);
-  return JsValue::Undefined();
+  TextsCollection::GetSingleton().SetTextEffect(textId, effect);
+  return info.Env().Undefined();
 }
-JsValue TextApi::SetTextOrigin(const JsFunctionArguments& args)
+
+Napi::Value TextApi::SetTextOrigin(const Napi::CallbackInfo &info)
 {
+  auto textId = NapiHelper::ExtractInt32(info[0], "textId");
+  auto originArray = NapiHelper::ExtractArray(info[1], "origin");
+
   std::array<double, 2> argOrigin;
 
   for (int i = 0; i < 2; i++) {
-    argOrigin[i] = args[2].GetProperty(i);
+    argOrigin[i] = NapiHelper::ExtractDouble(originArray.Get(i), fmt::format("origin[{}]", i));
   }
 
-  auto textNameId = static_cast<int>(args[1]);
   auto moveArgOrigin = std::move(argOrigin);
 
-  TextsCollection::GetSingleton().SetTextOrigin(textNameId, moveArgOrigin);
-  return JsValue::Undefined();
+  TextsCollection::GetSingleton().SetTextOrigin(textId, moveArgOrigin);
+  return info.Env().Undefined();
 }
 
-JsValue TextApi::GetTextPos(const JsFunctionArguments& args)
+Napi::Value TextApi::GetTextPos(const Napi::CallbackInfo &info)
 {
   auto& postions =
-    TextsCollection::GetSingleton().GetTextPos(static_cast<int>(args[1]));
-  auto jsArray = JsValue::Array(2);
+    TextsCollection::GetSingleton().GetTextPos(NapiHelper::ExtractInt32(info[0], "textId"));
+  auto jsArray = Napi::Array::New(info.Env(), 2);
 
-  jsArray.SetProperty(0, postions.first);
-  jsArray.SetProperty(1, postions.second);
+  jsArray.Set(0, Napi::Number::New(info.Env(), postions.first));
+  jsArray.Set(1, Napi::Number::New(info.Env(), postions.second));
 
   return jsArray;
 }
-JsValue TextApi::GetTextString(const JsFunctionArguments& args)
+
+Napi::Value TextApi::GetTextString(const Napi::CallbackInfo &info)
 {
   const auto& str =
-    TextsCollection::GetSingleton().GetTextString(static_cast<int>(args[1]));
+    TextsCollection::GetSingleton().GetTextString(NapiHelper::ExtractInt32(info[0], "textId"));
 
   std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
-  return JsValue(converter.to_bytes(str));
+  return Napi::String::New(info.Env(), converter.to_bytes(str));
 }
-JsValue TextApi::GetTextColor(const JsFunctionArguments& args)
+
+Napi::Value TextApi::GetTextColor(const Napi::CallbackInfo &info)
 {
   const auto& argArray =
-    TextsCollection::GetSingleton().GetTextColor(static_cast<int>(args[1]));
-  auto jsArray = JsValue::Array(4);
+    TextsCollection::GetSingleton().GetTextColor(NapiHelper::ExtractInt32(info[0], "textId"));
+  auto jsArray = Napi::Array::New(info.Env(), 4);
 
   for (int i = 0; i < 4; i++) {
-    jsArray.SetProperty(i, argArray.at(i));
+    jsArray.Set(i, Napi::Number::New(info.Env(), argArray.at(i)));
   }
 
   return jsArray;
 }
-JsValue TextApi::GetTextSize(const JsFunctionArguments& args)
+
+Napi::Value TextApi::GetTextSize(const Napi::CallbackInfo &info)
 {
   const auto& size =
-    TextsCollection::GetSingleton().GetTextSize(static_cast<double>(args[1]));
+    TextsCollection::GetSingleton().GetTextSize(NapiHelper::ExtractInt32(info[0], "textId"));
 
-  return JsValue(size);
+  return Napi::Number::New(info.Env(), size);
 }
-JsValue TextApi::GetTextRotation(const JsFunctionArguments& args)
+
+Napi::Value TextApi::GetTextRotation(const Napi::CallbackInfo &info)
 {
   const auto& rot = TextsCollection::GetSingleton().GetTextRotation(
-    static_cast<double>(args[1]));
+    NapiHelper::ExtractInt32(info[0], "textId"));
 
-  return JsValue(rot);
+  return Napi::Number::New(info.Env(), rot);
 }
-JsValue TextApi::GetTextFont(const JsFunctionArguments& args)
+
+Napi::Value TextApi::GetTextFont(const Napi::CallbackInfo &info)
 {
   const auto& font =
-    TextsCollection::GetSingleton().GetTextFont(static_cast<int>(args[1]));
+    TextsCollection::GetSingleton().GetTextFont(NapiHelper::ExtractInt32(info[0], "textId"));
 
   std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
-  return JsValue(converter.to_bytes(font));
+  return Napi::String::New(info.Env(), converter.to_bytes(font));
 }
-JsValue TextApi::GetTextDepth(const JsFunctionArguments& args)
+
+Napi::Value TextApi::GetTextDepth(const Napi::CallbackInfo &info)
 {
   const auto& depth =
-    TextsCollection::GetSingleton().GetTextDepth(static_cast<int>(args[1]));
+    TextsCollection::GetSingleton().GetTextDepth(NapiHelper::ExtractInt32(info[0], "textId"));
 
-  return JsValue(depth);
+  return Napi::Number::New(info.Env(), depth);
 }
-JsValue TextApi::GetTextEffect(const JsFunctionArguments& args)
+
+Napi::Value TextApi::GetTextEffect(const Napi::CallbackInfo &info)
 {
   const auto& effect =
-    TextsCollection::GetSingleton().GetTextEffect(static_cast<int>(args[1]));
+    TextsCollection::GetSingleton().GetTextEffect(NapiHelper::ExtractInt32(info[0], "textId"));
 
-  return JsValue(effect);
+  return Napi::Number::New(info.Env(), effect);
 }
-JsValue TextApi::GetTextOrigin(const JsFunctionArguments& args)
+
+Napi::Value TextApi::GetTextOrigin(const Napi::CallbackInfo &info)
 {
   auto argArray =
-    TextsCollection::GetSingleton().GetTextColor(static_cast<double>(args[1]));
-  auto jsArray = JsValue::Array(2);
+    TextsCollection::GetSingleton().GetTextColor(NapiHelper::ExtractInt32(info[0], "textId"));
+  auto jsArray = Napi::Array::New(info.Env(), 2);
 
   for (int i = 0; i < 2; i++) {
-    jsArray.SetProperty(i, argArray.at(i));
+    jsArray.Set(i, argArray.at(i));
   }
 
   return jsArray;
 }
 
-JsValue TextApi::GetNumCreatedTexts(const JsFunctionArguments& args)
+Napi::Value TextApi::GetNumCreatedTexts(const Napi::CallbackInfo &info)
 {
-  return JsValue(TextsCollection::GetSingleton().GetNumCreatedTexts());
+  return Napi::Number::New(info.Env(), TextsCollection::GetSingleton().GetNumCreatedTexts());
 }
 
-void Register(JsValue& exports)
+void Register(Napi::Env env, Napi::Object& exports)
 {
-  exports.SetProperty("createText", JsValue::Function(CreateText));
+  exports.Set("createText", Napi::Function::New(env, NapiHelper::WrapCppExceptions(CreateText)));
 
-  exports.SetProperty("destroyText", JsValue::Function(DestroyText));
-  exports.SetProperty("destroyAllTexts", JsValue::Function(DestroyAllTexts));
+  exports.Set("destroyText", Napi::Function::New(env, NapiHelper::WrapCppExceptions(DestroyText)));
+  exports.Set("destroyAllTexts", Napi::Function::New(env, NapiHelper::WrapCppExceptions(DestroyAllTexts)));
 
-  exports.SetProperty("setTextPos", JsValue::Function(SetTextPos));
-  exports.SetProperty("setTextString", JsValue::Function(SetTextString));
-  exports.SetProperty("setTextColor", JsValue::Function(SetTextColor));
-  exports.SetProperty("setTextSize", JsValue::Function(SetTextSize));
-  exports.SetProperty("setTextRotation", JsValue::Function(SetTextRotation));
-  exports.SetProperty("setTextFont", JsValue::Function(SetTextFont));
-  exports.SetProperty("setTextDepth", JsValue::Function(SetTextDepth));
-  exports.SetProperty("setTextEffect", JsValue::Function(SetTextEffect));
-  exports.SetProperty("setTextOrigin", JsValue::Function(SetTextOrigin));
+  exports.Set("setTextPos", Napi::Function::New(env, NapiHelper::WrapCppExceptions(SetTextPos)));
+  exports.Set("setTextString", Napi::Function::New(env, NapiHelper::WrapCppExceptions(SetTextString)));
+  exports.Set("setTextColor", Napi::Function::New(env, NapiHelper::WrapCppExceptions(SetTextColor)));
+  exports.Set("setTextSize", Napi::Function::New(env, NapiHelper::WrapCppExceptions(SetTextSize)));
+  exports.Set("setTextRotation", Napi::Function::New(env, NapiHelper::WrapCppExceptions(SetTextRotation)));
+  exports.Set("setTextFont", Napi::Function::New(env, NapiHelper::WrapCppExceptions(SetTextFont)));
+  exports.Set("setTextDepth", Napi::Function::New(env, NapiHelper::WrapCppExceptions(SetTextDepth)));
+  exports.Set("setTextEffect", Napi::Function::New(env, NapiHelper::WrapCppExceptions(SetTextEffect)));
+  exports.Set("setTextOrigin", Napi::Function::New(env, NapiHelper::WrapCppExceptions(SetTextOrigin)));
 
-  exports.SetProperty("getTextPos", JsValue::Function(GetTextPos));
-  exports.SetProperty("getTextString", JsValue::Function(GetTextString));
-  exports.SetProperty("getTextColor", JsValue::Function(GetTextColor));
-  exports.SetProperty("getTextSize", JsValue::Function(GetTextSize));
-  exports.SetProperty("getTextRotation", JsValue::Function(GetTextRotation));
-  exports.SetProperty("getTextFont", JsValue::Function(GetTextFont));
-  exports.SetProperty("getTextDepth", JsValue::Function(GetTextDepth));
-  exports.SetProperty("getTextEffect", JsValue::Function(GetTextEffect));
-  exports.SetProperty("getTextOrigin", JsValue::Function(GetTextOrigin));
+  exports.Set("getTextPos", Napi::Function::New(env, NapiHelper::WrapCppExceptions(GetTextPos)));
+  exports.Set("getTextString", Napi::Function::New(env, NapiHelper::WrapCppExceptions(GetTextString)));
+  exports.Set("getTextColor", Napi::Function::New(env, NapiHelper::WrapCppExceptions(GetTextColor)));
+  exports.Set("getTextSize", Napi::Function::New(env, NapiHelper::WrapCppExceptions(GetTextSize)));
+  exports.Set("getTextRotation", Napi::Function::New(env, NapiHelper::WrapCppExceptions(GetTextRotation)));
+  exports.Set("getTextFont", Napi::Function::New(env, NapiHelper::WrapCppExceptions(GetTextFont)));
+  exports.Set("getTextDepth", Napi::Function::New(env, NapiHelper::WrapCppExceptions(GetTextDepth)));
+  exports.Set("getTextEffect", Napi::Function::New(env, NapiHelper::WrapCppExceptions(GetTextEffect)));
+  exports.Set("getTextOrigin", Napi::Function::New(env, NapiHelper::WrapCppExceptions(GetTextOrigin)));
 
-  exports.SetProperty("getNumCreatedTexts",
-                      JsValue::Function(GetNumCreatedTexts));
+  exports.Set("getNumCreatedTexts",
+                      Napi::Function::New(env, NapiHelper::WrapCppExceptions(GetNumCreatedTexts)));
 }
 
 }

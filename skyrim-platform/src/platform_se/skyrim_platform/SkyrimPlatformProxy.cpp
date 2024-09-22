@@ -25,35 +25,26 @@ namespace {
     "get", ProxyGetter([=](const Napi::Object& origin, const Napi:String& keyStr) {
       auto env = origin.Env();
 
-      auto s = NapiHelper::ExtractString(keyStr, "keyStr");
-      std::shared_ptr<Napi::Reference<Napi::Function>> &f = (*functionsCache)[s];
+      auto keyStrExtracted = NapiHelper::ExtractString(keyStr, "keyStr");
+      std::shared_ptr<Napi::Reference<Napi::Function>> &fRef = (*functionsCache)[s];
 
-      if (!f) {
+      if (!fRef) {
+        std::shared_ptr<Napi::Reference<Napi::Object>> originRef;
+        originRef.reset(new Napi::Reference<Napi::Object>(Napi::Persistent(origin)));
 
-        // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! TODO
-
-        // Make a persistent ref to origin
-        // in nodejs keyStr won't be able to survive till lambda call, please just capture string
-
-        // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! TODO
-        std::shared_ptr<std::vector<Napi::Value>> callNativeArgs(
-          new std::vector<Napi::Value>{ origin, className, keyStr, // TODO: probably remove origin since its thisArg, not regular arg
-                                    env.Null() /*self*/ });
-        std::shared_ptr<std::vector<Napi::Value>> dynamicCastArgs(
-          new std::vector<Napi::Value>{ origin, env.Undefined(), className }); // TODO: probably remove origin since its thisArg, not regular arg
-
-        if (isGame && s == "getFormEx") {
-          f =
+        if (isGame && keyStrExtracted == "getFormEx") {
+          auto f =
             Napi::Function::New(env, NapiHelper::WrapCppExceptions([](const Napi::CallbackInfo &info) -> Napi::Value {
               auto f = RE::TESForm::LookupByID(NapiHelper::ExtractUInt32(info[0], "formId"));
               if (f)
-                return CreateObject("Form", f);
+                return CreateObject(env, "Form", f);
               else
                 return info.Env().Null();
             }));
-        } else if (s == "from") {
+          fRef.reset(new Napi::Reference<Napi::Function>(Napi::Persistent(f)));
+        } else if (keyStrExtracted == "from") {
           if (isObjectReference) {
-            f = Napi::Function::New(env, NapiHelper::WrapCppExceptions(
+            auto f = Napi::Function::New(env, NapiHelper::WrapCppExceptions(
               [](const Napi::CallbackInfo &info) -> Napi::Value {
                 CallNative::ObjectPtr obj =
                   NativeValueCasts::JsObjectToNativeObject(NapiHelper::ExtractObject(info[0], "obj"));
@@ -65,10 +56,11 @@ namespace {
                 auto objRefr = form->As<RE::TESObjectREFR>();
                 if (!objRefr)
                   return info.Env().Null();
-                return CreateObject("ObjectReference", objRefr);
+                return CreateObject(env, "ObjectReference", objRefr);
               }));
+            fRef.reset(new Napi::Reference<Napi::Function>(Napi::Persistent(f)));
           } else if (isActor) {
-            f = Napi::Function::New(env, NapiHelper::WrapCppExceptions(
+            auto f = Napi::Function::New(env, NapiHelper::WrapCppExceptions(
               [](const Napi::CallbackInfo &info) -> Napi::Value {
                 CallNative::ObjectPtr obj =
                   NativeValueCasts::JsObjectToNativeObject(NapiHelper::ExtractObject(info[0], "objActorCandidate"));
@@ -80,36 +72,48 @@ namespace {
                 auto actor = form->As<RE::Actor>();
                 if (!actor)
                   return info.Env().Null();
-                return CreateObject("Actor", actor);
+                return CreateObject(env, "Actor", actor);
               }));
+            fRef.reset(new Napi::Reference<Napi::Function>(Napi::Persistent(f)));
           } else {
-            f = Napi::Function::New(env, NapiHelper::WrapCppExceptions(
-              [keyStr, origin, className, callNativeArgs,
-               dynamicCastArgs](const Napi::CallbackInfo &info) -> Napi::Value {
-                auto& from = args[1];
-                (*dynamicCastArgs)[1] = from;
-                thread_local auto dynamicCast =
-                  origin.Get("dynamicCast");
-                return dynamicCast.Call(*dynamicCastArgs);
+            auto f = Napi::Function::New(env, NapiHelper::WrapCppExceptions(
+              [originRef, className](const Napi::CallbackInfo &info) -> Napi::Value {
+                Napi::Value& from = info[0];
+                Napi::Value to = Napi::String::New(info.Env(), className);
+                auto dynamicCast = originRef->Value().Get("dynamicCast");
+                return dynamicCast.Call(originRef->Value(), { from, to });
               }));
+            fRef.reset(new Napi::Reference<Napi::Function>(Napi::Persistent(f)));
           }
         } else {
-          f = Napi::Function::New(env, NapiHelper::WrapCppExceptions(
-            [keyStr, className, callNativeArgs, getNativeCallRequirements](
-              const Napi::CallbackInfo &info) -> Napi::Value {
-              callNativeArgs->resize(args.GetSize() + 3);
-              for (size_t i = 1; i < args.GetSize(); ++i)
-                (*callNativeArgs)[i + 3] = args[i];
+          auto f = Napi::Function::New(env, NapiHelper::WrapCppExceptions(
+            [keyStrExtracted, className, getNativeCallRequirements](const Napi::CallbackInfo &info) -> Napi::Value {
+
+              auto keyStr = Napi::String::New(info.Env(), keyStrExtracted);
+              auto jClassName = Napi::String::New(info.Env(), className);
+
+              std::vector<Napi::Value> callNativeArgs{ jClassName, keyStr };
+
+              for (size_t i = 0; i < info.Length(); i++) {
+                callNativeArgs.push_back(info[i]);
+              }
+
               return CallNativeApi::CallNative(
-                JsFunctionArgumentsVectorImpl(*callNativeArgs),
+                info.Env(), callNativeArgs,
                 getNativeCallRequirements);
             }));
+          fRef.reset(new Napi::Reference<Napi::Function>(Napi::Persistent(f)));
         }
       }
-      return f;
+      if (!fRef) {
+        throw NullPointerException(fRef);
+      }
+      return fRef->Value();
     }));
-  return Napi::Value::GlobalObject().GetProperty("Proxy").Constructor(
-    { env.Undefined(), skyrimPlatformExports, handler });
+
+  Napi::Object proxyConstructor = env.Global().Get("Proxy").As<Napi::Object>();
+  Napi::Object proxyObject = proxyConstructor.Call({ skyrimPlatformExports, handler });
+  return proxyObject;
 }
 }
 
@@ -118,17 +122,27 @@ Napi::Value SkyrimPlatformProxy::Attach(
   const std::function<CallNativeApi::NativeCallRequirements()>&
     getNativeCallRequirements)
 {
-  thread_local std::unordered_map<std::string, Napi::Value> g_classProxies;
+  auto env = skyrimPlatformExports.Env();
+
+  thread_local std::unordered_map<std::string, std::shared_ptr<Napi::Reference<Napi::Object>>> g_classProxies;
+
+  std::shared_ptr<Napi::Reference<Napi::Object>> skyrimPlatformExportsRef;
+  skyrimPlatformExportsRef.reset(new Napi::Reference<Napi::Object>(Napi::Persistent(skyrimPlatformExports)));
 
   auto handler = Napi::Object::New(env);
   handler.Set(
-    "get", ProxyGetter([=](const Napi::Value& origin, const Napi::Value& keyStr) {
-      auto& proxy = g_classProxies[(std::string)keyStr];
-      if (proxy.GetType() != Napi::Value::Type::Object)
-        proxy = GetProxyForClass((std::string)keyStr, skyrimPlatformExports,
+    "get", ProxyGetter([skyrimPlatformExportsRef](const Napi::Object& origin, const Napi:String& keyStr) {
+      auto keyStrExtracted = static_cast<std::string>(keyStr);
+      auto& proxyRef = g_classProxies[keyStrExtracted];
+      if (!proxyRef) {
+        auto proxy = GetProxyForClass(keyStrExtracted, skyrimPlatformExportsRef->Value(),
                                  getNativeCallRequirements);
-      return proxy;
+        proxyRef.reset(new Napi::Reference<Napi::Object>(Napi::Persistent(proxy)));
+      }
+      return proxyRef;
     }));
-  return Napi::Value::GlobalObject().GetProperty("Proxy").Constructor(
-    { env.Undefined(), skyrimPlatformExports, handler });
+
+  Napi::Object proxyConstructor = env.Global().Get("Proxy").As<Napi::Object>();
+  Napi::Object proxyObject = proxyConstructor.Call( { skyrimPlatformExports, handler });
+  return proxyObject;
 }

@@ -8,8 +8,12 @@
 
 #include <RE/T/TESDataHandler.h>
 
-Napi::Value CallNativeApi::CallNative(
-  const Napi::CallbackInfo& info,
+namespace 
+{
+
+template <class CallbackInfoLike>
+Napi::Value CallNativeImpl(
+  const CallbackInfoLike& info,
   const std::function<NativeCallRequirements()>& getNativeCallRequirements)
 {
   auto className = NapiHelper::ExtractString(info[0], "className");
@@ -121,6 +125,48 @@ Napi::Value CallNativeApi::CallNative(
       CallNative::CallNativeSafe(callNativeArgs));
     return res;
   }
+}
+
+class PseudoCallbackInfo {
+public:
+  PseudoCallbackInfo(Napi::Env env_, const std::vector<Napi::Value> &args_) : env(env_), args(args_)
+  {
+  }
+
+  // Length method skipped
+
+  Napi::Value operator[](size_t i) const
+  {
+    if (i >= args.size()) {
+      return env.Undefined();
+    }
+    return args[i];
+  }
+
+  Napi::Env Env() const
+  {
+    return env;
+  }
+
+private:
+  const std::vector<Napi::Value> &args;
+  const Napi::Env env;
+};
+}
+
+Napi::Value CallNative(
+  Napi::Env env, const std::vector<Napi::Value> &args,
+  const std::function<NativeCallRequirements()>& getNativeCallRequirements)
+{
+  PseudoCallbackInfo pseudoCallbackInfo(env, args);
+  return CallNativeImpl(pseudoCallbackInfo, getNativeCallRequirements);
+}
+
+Napi::Value CallNativeApi::CallNative(
+  const Napi::CallbackInfo& info,
+  const std::function<NativeCallRequirements()>& getNativeCallRequirements)
+{
+  return CallNativeImpl(info, getNativeCallRequirements);
 }
 
 Napi::Value CallNativeApi::DynamicCast(

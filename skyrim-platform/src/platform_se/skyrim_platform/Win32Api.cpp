@@ -1,8 +1,8 @@
 #include "Win32Api.h"
 
-JsValue Win32Api::LoadUrl(const JsFunctionArguments& args)
+Napi::Value Win32Api::LoadUrl(const Napi::CallbackInfo &info)
 {
-  auto str = static_cast<std::string>(args[1]);
+  auto str = NapiHelper::ExtractString(info.Env(), "url");
   if (str.substr(0, 8) != "https://") {
     throw std::runtime_error(
       "Permission denied, only 'https://' prefix is allowed");
@@ -12,11 +12,11 @@ JsValue Win32Api::LoadUrl(const JsFunctionArguments& args)
     // https://docs.microsoft.com/en-us/windows/win32/api/shellapi/nf-shellapi-shellexecutea
     ShellExecute(0, 0, str.c_str(), 0, 0, SW_SHOW);
   }
-  return JsValue::Undefined();
+  return info.Env().Undefined();
 }
 
-JsValue Win32Api::ExitProcess(const JsFunctionArguments& args)
+Napi::Value Win32Api::ExitProcess(const Napi::CallbackInfo &info)
 {
   std::exit(0);
-  return JsValue::Undefined();
+  return info.Env().Undefined();
 }
