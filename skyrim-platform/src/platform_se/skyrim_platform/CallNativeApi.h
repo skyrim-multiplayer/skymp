@@ -17,7 +17,7 @@ struct NativeCallRequirements
   StackID stackId = std::numeric_limits<StackID>::max();
 
   std::shared_ptr<Viet::TaskQueue> gameThrQ, jsThrQ;
-}
+};
 
 // Version to be called from C++, but with Napi values (from SkyrimPlatformProxy.cpp)
 Napi::Value CallNative(

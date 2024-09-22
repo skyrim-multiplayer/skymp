@@ -258,7 +258,7 @@ public:
   }
 
   // TODO: std::function originalFunc should be optimized out by introducing a template parameter
-  std::function<Napi::Value(const Napi::CallbackInfo& info)> 
+  static std::function<Napi::Value(const Napi::CallbackInfo& info)> 
   WrapCppExceptions(std::function<Napi::Value(const Napi::CallbackInfo& info)> originalFunc)
   {
     return [originalFunc](const Napi::CallbackInfo& info) {
