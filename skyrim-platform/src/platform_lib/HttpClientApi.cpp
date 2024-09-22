@@ -6,39 +6,41 @@ namespace {
 HttpClient g_httpClient;
 
 template <class F>
-inline void IterateKeys(const JsValue& object, F fn)
+inline void IterateKeys(const Napi::Value& object, F fn)
 {
-  if (object.GetType() != JsValue::Type::Object) {
+  auto env = object.Env();
+
+  if (!object.IsObject()) {
     return;
   }
 
   auto builtinKeys =
-    JsValue::GlobalObject().GetProperty("Object").GetProperty("keys");
-  auto thisArg = JsValue::Undefined();
+    env.Global().Get("Object").As<Napi::Object>().Get("keys");
+  auto thisArg = env.Undefined();
 
-  auto keys = builtinKeys.Call({ thisArg, object });
-  int length = static_cast<int>(keys.GetProperty("length"));
+  auto keys = builtinKeys.Call(thisArg, { object }).As<Napi::Array>();
+  int length = keys.Length();
   for (int i = 0; i < length; ++i) {
-    fn(keys.GetProperty(i));
+    fn(keys.Get(i));
   }
 }
 
-inline HttpClient::Headers GetHeaders(const JsValue& options)
+inline HttpClient::Headers GetHeaders(const Napi::Value& options)
 {
-  if (options.GetType() != JsValue::Type::Object) {
+  if (!options.IsObject()) {
     return HttpClient::Headers();
   }
 
-  auto headers = options.GetProperty("headers");
-  if (headers.GetType() != JsValue::Type::Object) {
+  auto headers = options.As<Napi::Object>().Get("headers");
+  if (!headers.IsObject()) {
     return HttpClient::Headers();
   }
 
   HttpClient::Headers res;
-  IterateKeys(headers, [&](const JsValue& key) {
-    auto value = headers.GetProperty(key);
+  IterateKeys(headers, [&](const Napi::Value& key) {
+    auto value = headers.As<Napi::Object>().Get(key);
 
-    if (value.GetType() != JsValue::Type::String) {
+    if (!value.IsString()) {
       std::stringstream ss;
       ss << "Expected HTTP header value be a string but got "
          << value.ToString() << ", header key: " << key.ToString();
@@ -46,92 +48,110 @@ inline HttpClient::Headers GetHeaders(const JsValue& options)
     }
 
     res.push_back(
-      { static_cast<std::string>(key), static_cast<std::string>(value) });
+      { key.ToString(), value.ToString() });
   });
   return res;
 }
 }
 
-JsValue HttpClientApi::Constructor(const JsFunctionArguments& args)
+Napi::Value HttpClientApi::Constructor(const Napi::CallbackInfo &info)
 {
-  args[0].SetProperty(JsValue::String("host"), args[1]);
-  args[0].SetProperty("get", JsValue::Function(Get));
-  args[0].SetProperty("post", JsValue::Function(Post));
-  return JsValue::Undefined();
+  if (!info.This().IsObject()) {
+    throw std::runtime_error("thisArg must be an object in HttpClient constructor");
+  }
+
+  info.This().As<Napi::Object>().Set(Napi::String::New(info.Env(), "host"), info[0]);
+  info.This().As<Napi::Object>().Set("get", Napi::Function::New(info.Env(), NapiHelper::WrapCppExceptions(Get)));
+  info.This().As<Napi::Object>().Set("post", Napi::Function::New(info.Env(), NapiHelper::WrapCppExceptions(Post)));
+  return info.Env().Undefined();
 }
 
-JsValue HttpClientApi::Get(const JsFunctionArguments& args)
+Napi::Value HttpClientApi::Get(const Napi::CallbackInfo &info)
 {
-  JsValue path = args[1], options = args[2], callback = args[3],
-          host = args[0].GetProperty("host");
+  if (!info.This().IsObject()) {
+    throw std::runtime_error("thisArg must be an object in HttpClientApi::Get");
+  }
 
-  auto handleGetRequest = [&](const std::shared_ptr<JsValue>& resolver) {
-    auto pathStr = static_cast<std::string>(path);
-    auto hostStr = static_cast<std::string>(host);
+  Napi::Value path = info[0], options = info[1], callback = NapiHelper::ExtractFunction(info[2], "callback"),
+          host = info.This().As<Napi::Object>().Get("host");
+
+  auto handleGetRequest = [&](Napi::Function resolver) {
+    auto pathStr = NapiHelper::ExtractString(path, "path");
+    auto hostStr = NapiHelper::ExtractString(host, "host");
+
+    std::shared_ptr<Napi::Reference<Napi::Function>> resolverRef;
+    resolverRef.reset(new Napi::Reference<Napi::Function>(Napi::Persistent(resolver)));
+
     g_httpClient.Get(
       hostStr.data(), pathStr.data(), GetHeaders(options),
-      [=](const HttpClient::HttpResult& res) {
-        auto result = JsValue::Object();
-        result.SetProperty(
+      [resolverRef](Napi::Env env, const HttpClient::HttpResult& res) {
+        auto result = Napi::Object::New(env);
+        result.Set(
           "body",
-          JsValue::String(std::string{ res.body.begin(), res.body.end() }));
-        result.SetProperty("status", res.status);
-        result.SetProperty("error", res.error);
-        resolver->Call({ JsValue::Undefined(), result });
+          Napi::String::New(env, std::string{ res.body.begin(), res.body.end() }));
+        result.Set("status", Napi::Number::New(env, res.status));
+        result.Set("error", Napi::String::New(env, res.error));
+        resolverRef->Value().Call(env.Undefined(), { result });
       });
   };
 
-  if (callback.GetType() == JsValue::Type::Function) {
-    auto resolve = std::make_shared<JsValue>(callback);
-    handleGetRequest(resolve);
-    return JsValue::Undefined();
+  if (callback.IsFunction()) {
+    handleGetRequest(callback);
+    return info.Env().Undefined();
   }
 
-  JsValue resolverFn = JsValue::Function([=](const JsFunctionArguments& args) {
-    auto resolve = std::make_shared<JsValue>(args[1]);
+  Napi::Value resolverFn = Napi::Function::New(info.Env(), NapiHelper::WrapCppExceptions([handleGetRequest](const Napi::CallbackInfo &info) {
+    auto resolve = NapiHelper::ExtractFunction(info[0], "resolve");
     handleGetRequest(resolve);
-    return JsValue::Undefined();
+    return info.Env().Undefined();
   });
 
-  return CreatePromise(resolverFn);
+  return CreatePromise(info.Env(), resolverFn);
 }
 
-JsValue HttpClientApi::Post(const JsFunctionArguments& args)
+Napi::Value HttpClientApi::Post(const Napi::CallbackInfo &info)
 {
-  JsValue path = args[1], options = args[2], callback = args[3],
-          host = args[0].GetProperty("host");
+  if (!info.This().IsObject()) {
+    throw std::runtime_error("thisArg must be an object in HttpClientApi::Post");
+  }
 
-  auto handlePostRequest = [&](const std::shared_ptr<JsValue>& resolver) {
-    auto pathStr = static_cast<std::string>(path);
-    auto hostStr = static_cast<std::string>(host);
-    auto bodyStr = static_cast<std::string>(options.GetProperty("body"));
-    auto type = static_cast<std::string>(options.GetProperty("contentType"));
+  Napi::Value path = info[0], options = Napi::ExtractObject(info[1], "options"), callback = info[2],
+          host = info.This().Get("host");
+
+  auto handlePostRequest = [&](Napi::Function resolver) {
+    auto pathStr = NapiHelper::ExtractString(path, "path");
+    auto hostStr = NapiHelper::ExtractString(host, "host");
+    auto bodyStr = NapiHelper::ExtractString(options.Get("body"), "options.body");
+    auto type = NapiHelper::ExtractString(options.Get("contentType"), "options.contentType");
+
+    std::shared_ptr<Napi::Reference<Napi::Function>> resolverRef;
+    resolverRef.reset(new Napi::Reference<Napi::Function>(Napi::Persistent(resolver)));
+
     g_httpClient.Post(
       hostStr.data(), pathStr.data(), bodyStr.data(), type.data(),
-      GetHeaders(options), [=](const HttpClient::HttpResult& res) {
-        auto result = JsValue::Object();
-        result.SetProperty(
+      GetHeaders(options), [resolverRef](Napi::Env env, const HttpClient::HttpResult& res) {
+        auto result = Napi::Object::New(env);
+        result.Set(
           "body",
-          JsValue::String(std::string{ res.body.begin(), res.body.end() }));
-        result.SetProperty("status", res.status);
-        result.SetProperty("error", res.error);
-        resolver->Call({ JsValue::Undefined(), result });
+          Napi::String::New(info.Env(), std::string{ res.body.begin(), res.body.end() }));
+        result.Set("status", Napi::Number::New(env, res.status));
+        result.Set("error", Napi::String::New(res.error));
+        resolverRef->Value().Call(info.Env().Undefined(), { result });
       });
   };
 
-  if (callback.GetType() == JsValue::Type::Function) {
-    auto resolve = std::make_shared<JsValue>(callback);
-    handlePostRequest(resolve);
-    return JsValue::Undefined();
+  if (callback.IsFunction()) {
+    handlePostRequest(callback);
+    return info.Env().Undefined();
   }
 
-  auto resolverFn = JsValue::Function([=](const JsFunctionArguments& args) {
-    auto resolve = std::make_shared<JsValue>(args[1]);
+  auto resolverFn = Napi::Function::New(info.Env(), NapiHelper::WrapCppExceptions([=](const Napi::CallbackInfo &info) {
+    auto resolve = NapiHelper::ExtractFunction(info[0], "resolve");
     handlePostRequest(resolve);
-    return JsValue::Undefined();
+    return info.Env().Undefined();
   });
 
-  return CreatePromise(resolverFn);
+  return CreatePromise(info.Env(), resolverFn);
 }
 
 HttpClient& HttpClientApi::GetHttpClient()
