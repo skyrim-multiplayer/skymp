@@ -38,7 +38,7 @@ Napi::Value TextApi::DestroyText(const Napi::CallbackInfo &info)
   return info.Env().Undefined();
 }
 
-Napi::Value TextApi::DestroyAllTexts(const JsFunctionArguments&)
+Napi::Value TextApi::DestroyAllTexts(const Napi::CallbackInfo &info)
 {
   TextsCollection::GetSingleton().DestroyAllTexts();
   return info.Env().Undefined();

@@ -26,7 +26,7 @@ namespace {
       auto env = origin.Env();
 
       auto keyStrExtracted = NapiHelper::ExtractString(keyStr, "keyStr");
-      std::shared_ptr<Napi::Reference<Napi::Function>> &fRef = (*functionsCache)[s];
+      std::shared_ptr<Napi::Reference<Napi::Function>> &fRef = (*functionsCache)[keyStrExtracted];
 
       if (!fRef) {
         std::shared_ptr<Napi::Reference<Napi::Object>> originRef;
