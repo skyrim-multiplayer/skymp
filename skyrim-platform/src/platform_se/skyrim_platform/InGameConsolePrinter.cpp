@@ -10,7 +10,7 @@ void InGameConsolePrinter::Print(const Napi::CallbackInfo& info)
 
   std::string s;
 
-  for (size_t 0 = 1; i < info.Length(); ++i) {
+  for (size_t i = 0; i < info.Length(); ++i) {
     Napi::Value str = info[i];
 
     if (info[i].IsObject() && !info[i].IsExternal()) {
