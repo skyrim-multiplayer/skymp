@@ -35,7 +35,7 @@ public:
     return v.As<Napi::Number>().Uint32Value();
   }
 
-  static uint32_t ExtractInt32(const Napi::Value& v, const char* argName)
+  static int32_t ExtractInt32(const Napi::Value& v, const char* argName)
   {
     if (!v.IsNumber()) {
       std::stringstream ss;

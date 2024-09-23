@@ -2,7 +2,7 @@
 
 Napi::Value Win32Api::LoadUrl(const Napi::CallbackInfo &info)
 {
-  auto str = NapiHelper::ExtractString(info.Env(), "url");
+  auto str = NapiHelper::ExtractString(info[0], "url");
   if (str.substr(0, 8) != "https://") {
     throw std::runtime_error(
       "Permission denied, only 'https://' prefix is allowed");

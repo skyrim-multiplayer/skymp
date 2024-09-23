@@ -9,7 +9,7 @@ Napi::Value ExitProcess(const Napi::CallbackInfo &info);
 
 inline void Register(Napi::Env env, Napi::Object& exports)
 {
-  auto win32 = Napi::Value::Object();
+  auto win32 = Napi::Object::New(env);
   win32.Set(
     "loadUrl",
     Napi::Function::New(env, NapiHelper::WrapCppExceptions([=](const Napi::CallbackInfo &info) -> Napi::Value {
