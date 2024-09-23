@@ -57,7 +57,7 @@ void HttpClient::Get(const char* host, const char* path,
     int32_t status = res ? res->status : 0;
     std::string error = res ? std::string{} : to_string(res.error());
 
-    pImpl_->q.AddTask((Napi::Env env) [callback, resultVector, status, error] {
+    pImpl_->q.AddTask([callback, resultVector, status, error] (Napi::Env env) {
       callback(env, { resultVector, status, error });
     });
   });
@@ -87,7 +87,7 @@ void HttpClient::Post(const char* host, const char* path, const char* body,
         : std::vector<uint8_t>();
       int32_t status = res ? res->status : 0;
 
-      pImpl_->q.AddTask((Napi::Env env) [callback, resultVector, status] {
+      pImpl_->q.AddTask([callback, resultVector, status] (Napi::Env env) {
         callback(env, HttpResult{ resultVector, status });
       });
     });

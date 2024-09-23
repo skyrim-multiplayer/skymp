@@ -118,9 +118,9 @@ Napi::Value HttpClientApi::Post(const Napi::CallbackInfo &info)
   }
 
   Napi::Value path = info[0];
-  Napi::Object options = Napi::ExtractObject(info[1], "options");
+  Napi::Object options = NapiHelper::ExtractObject(info[1], "options");
   Napi::Function callback = NapiHelper::ExtractFunction(info[2], "callback");
-  Napi::Value host = info.This().Get("host");
+  Napi::Value host = info.This().As<Napi::Object>().Get("host");
 
   auto handlePostRequest = [&](Napi::Function resolver) {
     auto pathStr = NapiHelper::ExtractString(path, "path");
@@ -137,10 +137,10 @@ Napi::Value HttpClientApi::Post(const Napi::CallbackInfo &info)
         auto result = Napi::Object::New(env);
         result.Set(
           "body",
-          Napi::String::New(info.Env(), std::string{ res.body.begin(), res.body.end() }));
+          Napi::String::New(env, std::string{ res.body.begin(), res.body.end() }));
         result.Set("status", Napi::Number::New(env, res.status));
-        result.Set("error", Napi::String::New(res.error));
-        resolverRef->Value().Call(info.Env().Undefined(), { result });
+        result.Set("error", Napi::String::New(env, res.error));
+        resolverRef->Value().Call(env.Undefined(), { result });
       });
   };
 
