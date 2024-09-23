@@ -315,14 +315,14 @@ Napi::Value InventoryApi::SetInventory(const Napi::CallbackInfo &info)
 Napi::Value InventoryApi::CastSpellImmediate(const Napi::CallbackInfo &info)
 {
   RE::Actor* pActor =
-    RE::TESForm::LookupByID<RE::Actor>(static_cast<double>(args[1]));
+    RE::TESForm::LookupByID<RE::Actor>(NapiHelper::ExtractUInt32(info[0], "formId"));
 
   const auto castingSource =
-    static_cast<RE::MagicSystem::CastingSource>(static_cast<int>(args[2]));
+    static_cast<RE::MagicSystem::CastingSource>(NapiHelper::ExtractInt32(info[1], "castingSource"));
 
   const auto formIdSpell =
     reinterpret_cast<RE::MagicItem*>(RE::TESForm::LookupByID(
-      static_cast<uint32_t>(static_cast<double>(args[3]))));
+      NapiHelper::ExtractUInt32(info[2], "formIdSpell"))));
 
   if (!formIdSpell) {
     return env.Undefined();
@@ -337,7 +337,7 @@ Napi::Value InventoryApi::CastSpellImmediate(const Napi::CallbackInfo &info)
   }
 
   const auto formIdTarget = RE::TESForm::LookupByID<RE::TESObjectREFR>(
-    static_cast<uint32_t>(static_cast<double>(args[4])));
+    NapiHelper::ExtractUInt32(info[3], "formIdTarget"));
 
   if (!formIdTarget) {
     return env.Undefined();
