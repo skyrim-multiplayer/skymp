@@ -33,7 +33,7 @@ public:
     // TODO
   }
 
-  void ResetContext(Viet::TaskQueue& taskQueue)
+  void ResetContext(Viet::TaskQueue<Napi::Env>& taskQueue)
   {
     // TODO
   }

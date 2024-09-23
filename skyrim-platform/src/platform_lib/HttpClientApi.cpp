@@ -72,8 +72,10 @@ Napi::Value HttpClientApi::Get(const Napi::CallbackInfo &info)
     throw std::runtime_error("thisArg must be an object in HttpClientApi::Get");
   }
 
-  Napi::Value path = info[0], options = info[1], callback = NapiHelper::ExtractFunction(info[2], "callback"),
-          host = info.This().As<Napi::Object>().Get("host");
+  Napi::Value path = info[0];
+  Napi::Value options = info[1];
+  Napi::Function callback = NapiHelper::ExtractFunction(info[2], "callback");
+  Napi::Value host = info.This().As<Napi::Object>().Get("host");
 
   auto handleGetRequest = [&](Napi::Function resolver) {
     auto pathStr = NapiHelper::ExtractString(path, "path");
@@ -104,9 +106,9 @@ Napi::Value HttpClientApi::Get(const Napi::CallbackInfo &info)
     auto resolve = NapiHelper::ExtractFunction(info[0], "resolve");
     handleGetRequest(resolve);
     return info.Env().Undefined();
-  });
+  }));
 
-  return CreatePromise(info.Env(), resolverFn);
+  return CreatePromise(resolverFn);
 }
 
 Napi::Value HttpClientApi::Post(const Napi::CallbackInfo &info)
@@ -115,8 +117,10 @@ Napi::Value HttpClientApi::Post(const Napi::CallbackInfo &info)
     throw std::runtime_error("thisArg must be an object in HttpClientApi::Post");
   }
 
-  Napi::Value path = info[0], options = Napi::ExtractObject(info[1], "options"), callback = info[2],
-          host = info.This().Get("host");
+  Napi::Value path = info[0];
+  Napi::Object options = Napi::ExtractObject(info[1], "options");
+  Napi::Function callback = NapiHelper::ExtractFunction(info[2], "callback");
+  Napi::Value host = info.This().Get("host");
 
   auto handlePostRequest = [&](Napi::Function resolver) {
     auto pathStr = NapiHelper::ExtractString(path, "path");
@@ -149,9 +153,9 @@ Napi::Value HttpClientApi::Post(const Napi::CallbackInfo &info)
     auto resolve = NapiHelper::ExtractFunction(info[0], "resolve");
     handlePostRequest(resolve);
     return info.Env().Undefined();
-  });
+  }));
 
-  return CreatePromise(info.Env(), resolverFn);
+  return CreatePromise(resolverFn);
 }
 
 HttpClient& HttpClientApi::GetHttpClient()
