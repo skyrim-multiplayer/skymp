@@ -125,7 +125,7 @@ Napi::Value DevApi::GetPluginSourceCode(const Napi::CallbackInfo &info)
   if (info.Length() >= 2) {
     auto overrideFolderCandidate = info[1];
     if (!overrideFolderCandidate.IsNull() && !overrideFolderCandidate.IsUndefined()) {
-      overrideFolder = Napi::ExtractString(overrideFolderCandidate, "overrideFolder");
+      overrideFolder = NapiHelper::ExtractString(overrideFolderCandidate, "overrideFolder");
     }
   }
 
@@ -142,7 +142,7 @@ Napi::Value DevApi::WritePlugin(const Napi::CallbackInfo &info)
   if (info.Length() >= 3) {
     auto overrideFolderCandidate = info[2];
     if (!overrideFolderCandidate.IsNull() && !overrideFolderCandidate.IsUndefined()) {
-      overrideFolder = Napi::ExtractString(overrideFolderCandidate, "overrideFolder");
+      overrideFolder = NapiHelper::ExtractString(overrideFolderCandidate, "overrideFolder");
     }
   }
 
@@ -181,7 +181,7 @@ Napi::Value DevApi::GetJsMemoryUsage(const Napi::CallbackInfo &info)
 
 Napi::Value DevApi::BlockPapyrusEvents(const Napi::CallbackInfo &info)
 {
-  bool block = NapiHelper::ExtractBoolean(info.Env(), "block");
+  bool block = NapiHelper::ExtractBoolean(info[0], "block");
   TESModPlatform::BlockPapyrusEvents(nullptr, -1, nullptr, block);
   return info.Env().Undefined();
 }

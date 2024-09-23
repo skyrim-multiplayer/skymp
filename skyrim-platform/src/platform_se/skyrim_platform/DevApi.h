@@ -21,7 +21,7 @@ Napi::Value BlockPapyrusEvents(const Napi::CallbackInfo &info);
 void DisableCtrlPrtScnHotkey();
 
 using NativeExportsMap =
-  std::map<std::string, std::function<Napi::Value(const Napi::Value&)>>;
+  std::map<std::string, std::function<Napi::Object(const Napi::Value&)>>;
 
 extern std::shared_ptr<JsEngine> jsEngine;
 extern NativeExportsMap nativeExportsMap;
@@ -38,7 +38,7 @@ inline void Register(Napi::Env env, Napi::Object& exports, std::shared_ptr<JsEng
 
   exports.Set(
     "require",
-    Napi::Function::New(env, NapiHelper::WrapCppExceptions([builtScriptsDir](const Napi::CallbackInfo &info) {
+    Napi::Function::New(env, NapiHelper::WrapCppExceptions([builtScriptsDir](const Napi::CallbackInfo &info) -> Napi::Value {
       return Require(args, builtScriptsDir);
     })));
   exports.Set("addNativeExports", Napi::Function::New(env, NapiHelper::WrapCppExceptions(AddNativeExports)));
@@ -49,7 +49,7 @@ inline void Register(Napi::Env env, Napi::Object& exports, std::shared_ptr<JsEng
                       Napi::Function::New(env, NapiHelper::WrapCppExceptions(GetPlatformVersion)));
   exports.Set("getJsMemoryUsage", Napi::Function::New(env, NapiHelper::WrapCppExceptions(GetJsMemoryUsage)));
   exports.Set("disableCtrlPrtScnHotkey",
-                      Napi::Function::New(env, NapiHelper::WrapCppExceptions([](const Napi::CallbackInfo &info) {
+                      Napi::Function::New(env, NapiHelper::WrapCppExceptions([](const Napi::CallbackInfo &info) -> Napi::Value {
                         DisableCtrlPrtScnHotkey();
                         return info.Env().Undefined();
                       })));

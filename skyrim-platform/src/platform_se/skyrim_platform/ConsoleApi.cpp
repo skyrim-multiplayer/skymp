@@ -164,10 +164,23 @@ void CreateNumArgsProperty(Napi::Object& obj, ConsoleCommand* replaced) {
 
 void CreateExecuteProperty(Napi::Object& obj, ConsoleCommand* replaced)
 {
-  obj.Set("execute", nullptr, NapiHelper::WrapCppExceptions([=](const Napi::CallbackInfo &info) {
+  auto getter = NapiHelper::WrapCppExceptions([=](const Napi::CallbackInfo &info) -> Napi::Value {
+    if (!replaced->jsExecute) {
+      throw std::runtime_error("impossible to get 'execute' value before assigning any");
+    }
+    return replaced->jsExecute->Value();
+  });
+
+  auto setter = NapiHelper::WrapCppExceptions([=](const Napi::CallbackInfo &info) {
     replaced->jsExecute.reset(new Napi::Reference<Napi::Function>(Napi::Persistent(NapiHelper::ExtractFunction(info[0], "execute"))));
     return info.Env().Undefined();
-  }));
+  });
+
+  Napi::PropertyDescriptor executeProperty = Napi::PropertyDescriptor::Accessor(
+    "execute", getter, setter
+  );
+
+  obj.DefineProperty(executeProperty);
 }
 
 struct ParseCommandResult
@@ -328,7 +341,7 @@ Napi::Value FindCommand(Napi::Env env, const std::string& commandName, RE::SCRIP
 
     if (IsNameEqual(_iter->functionName, commandName) ||
         IsNameEqual(_iter->shortName, commandName)) {
-      Napi::Value obj = Napi::Object::New(env);
+      Napi::Object obj = Napi::Object::New(env);
 
       auto& replaced = g_replacedConsoleCmd[commandName];
       replaced = FillCmdInfo(env, _iter);
@@ -402,6 +415,6 @@ Napi::Value ConsoleApi::WriteLogs(const Napi::CallbackInfo &info)
 Napi::Value ConsoleApi::SetPrintConsolePrefixesEnabled(
   const Napi::CallbackInfo &info)
 {
-  g_printConsolePrefixesEnabled = static_cast<bool>(args[1]);
+  g_printConsolePrefixesEnabled = NapiHelper::ExtractBoolean(info[0], "enabled");
   return info.Env().Undefined();
 }

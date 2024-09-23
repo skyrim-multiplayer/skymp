@@ -14,7 +14,7 @@ namespace
 template <class CallbackInfoLike>
 Napi::Value CallNativeImpl(
   const CallbackInfoLike& info,
-  const std::function<NativeCallRequirements()>& getNativeCallRequirements)
+  const std::function<CallNativeApi::NativeCallRequirements()>& getNativeCallRequirements)
 {
   auto className = NapiHelper::ExtractString(info[0], "className");
   auto functionName = NapiHelper::ExtractString(info[1], "functionName");

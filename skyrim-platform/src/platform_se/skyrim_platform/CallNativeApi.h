@@ -9,8 +9,8 @@ struct NativeCallRequirements
 {
   NativeCallRequirements()
   {
-    gameThrQ = std::make_shared<Viet::TaskQueue>();
-    jsThrQ = std::make_shared<Viet::TaskQueue>();
+    gameThrQ = std::make_shared<Viet::TaskQueue<Napi::Env>>();
+    jsThrQ = std::make_shared<Viet::TaskQueue<Napi::Env>>();
   }
 
   IVM* vm = nullptr;
