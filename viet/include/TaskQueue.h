@@ -9,7 +9,8 @@
 #include "Void.h"
 
 namespace Viet {
-class TaskQueue<State = Viet::Void> 
+template <class State = Viet::Void>
+class TaskQueue
 {
 public:
   TaskQueue();
