@@ -1442,12 +1442,10 @@ void MpObjectReference::ProcessActivateNormal(
   } else if (t == espm::CONT::kType && actorActivator) {
     EnsureBaseContainerAdded(loader);
 
-    auto occupantPos = this->occupant ? this->occupant->GetPos() : NiPoint3();
     auto occupantCellOrWorld =
       this->occupant ? this->occupant->GetCellOrWorld() : FormDesc();
 
     constexpr float kOccupationReach = 512.f;
-    auto distanceToOccupant = (occupantPos - GetPos()).Length();
 
     if (CheckIfObjectCanStartOccupyThis(activationSource, kOccupationReach)) {
       if (this->occupant) {
@@ -1469,12 +1467,10 @@ void MpObjectReference::ProcessActivateNormal(
     activationSource.SendOpenContainer(GetFormId());
   } else if (t == "FURN" && actorActivator) {
 
-    auto occupantPos = this->occupant ? this->occupant->GetPos() : NiPoint3();
     auto occupantCellOrWorld =
       this->occupant ? this->occupant->GetCellOrWorld() : FormDesc();
 
     constexpr float kOccupationReach = 256.f;
-    auto distanceToOccupant = (occupantPos - GetPos()).Length();
 
     if (CheckIfObjectCanStartOccupyThis(activationSource, kOccupationReach)) {
       if (this->occupant) {
@@ -1573,25 +1569,31 @@ bool MpObjectReference::CheckIfObjectCanStartOccupyThis(
                  GetFormId(), activationSource.GetFormId());
     return true;
   }
+
   if (this->occupant->IsDisabled()) {
     spdlog::info("MpObjectReference::ProcessActivate {:x} - occupant is "
                  "disabled (activationSource = {:x})",
                  GetFormId(), activationSource.GetFormId());
     return true;
   }
-  if (distanceToOccupant > occupationReach) {
+
+  auto& occupantPos = this->occupant->GetPos();
+  auto distanceToOccupantSqr = (occupantPos - GetPos()).SqrLength();
+  if (distanceToOccupantSqr > occupationReach * occupationReach) {
     isActivationSourceAllowedToActivateThis = true;
     spdlog::info("MpObjectReference::ProcessActivate {:x} - occupant is too "
                  "far away (activationSource = {:x})",
                  GetFormId(), activationSource.GetFormId());
     return true;
   }
+
   if (occupantCellOrWorld != GetCellOrWorld()) {
     spdlog::info("MpObjectReference::ProcessActivate {:x} - occupant is in "
                  "another cell/world (activationSource = {:x})",
                  GetFormId(), activationSource.GetFormId());
     return true;
   }
+
   if (this->occupant == &activationSource) {
     spdlog::info("MpObjectReference::ProcessActivate {:x} - occupant is "
                  "already this object (activationSource = {:x})",
