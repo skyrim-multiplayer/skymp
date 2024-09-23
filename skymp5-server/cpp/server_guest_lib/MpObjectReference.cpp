@@ -1442,9 +1442,6 @@ void MpObjectReference::ProcessActivateNormal(
   } else if (t == espm::CONT::kType && actorActivator) {
     EnsureBaseContainerAdded(loader);
 
-    auto occupantCellOrWorld =
-      this->occupant ? this->occupant->GetCellOrWorld() : FormDesc();
-
     constexpr float kOccupationReach = 512.f;
 
     if (CheckIfObjectCanStartOccupyThis(activationSource, kOccupationReach)) {
@@ -1466,9 +1463,6 @@ void MpObjectReference::ProcessActivateNormal(
     // TODO: rename SendOpenContainer to SendActivate
     activationSource.SendOpenContainer(GetFormId());
   } else if (t == "FURN" && actorActivator) {
-
-    auto occupantCellOrWorld =
-      this->occupant ? this->occupant->GetCellOrWorld() : FormDesc();
 
     constexpr float kOccupationReach = 256.f;
 
@@ -1580,13 +1574,13 @@ bool MpObjectReference::CheckIfObjectCanStartOccupyThis(
   auto& occupantPos = this->occupant->GetPos();
   auto distanceToOccupantSqr = (occupantPos - GetPos()).SqrLength();
   if (distanceToOccupantSqr > occupationReach * occupationReach) {
-    isActivationSourceAllowedToActivateThis = true;
     spdlog::info("MpObjectReference::ProcessActivate {:x} - occupant is too "
                  "far away (activationSource = {:x})",
                  GetFormId(), activationSource.GetFormId());
     return true;
   }
 
+  auto &occupantCellOrWorld = this->occupant->GetCellOrWorld();
   if (occupantCellOrWorld != GetCellOrWorld()) {
     spdlog::info("MpObjectReference::ProcessActivate {:x} - occupant is in "
                  "another cell/world (activationSource = {:x})",
