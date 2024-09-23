@@ -11,13 +11,13 @@ Viet::TaskQueue::TaskQueue()
   pImpl = std::make_shared<Impl>();
 }
 
-void Viet::TaskQueue::AddTask(const std::function<void()>& task)
+void Viet::TaskQueue::AddTask(const std::function<void(const State &)>& task)
 {
   std::lock_guard l(pImpl->m);
   pImpl->tasks.push_back(task);
 }
 
-void Viet::TaskQueue::Update()
+void Viet::TaskQueue::Update(const State &state)
 {
   decltype(pImpl->tasks) tasksCopy;
   {
@@ -29,7 +29,7 @@ void Viet::TaskQueue::Update()
   for (size_t i = 0; i < tasksCopy.size(); ++i) {
     auto& task = tasksCopy[i];
     try {
-      task();
+      task(state);
     } catch (const std::exception&) {
       // Other tasks should be executed later even if one throws
       std::lock_guard l(pImpl->m);

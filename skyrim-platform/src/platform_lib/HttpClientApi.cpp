@@ -15,7 +15,7 @@ inline void IterateKeys(const Napi::Value& object, F fn)
   }
 
   auto builtinKeys =
-    env.Global().Get("Object").As<Napi::Object>().Get("keys");
+    env.Global().Get("Object").As<Napi::Object>().Get("keys").As<Napi::Function>();
   auto thisArg = env.Undefined();
 
   auto keys = builtinKeys.Call(thisArg, { object }).As<Napi::Array>();

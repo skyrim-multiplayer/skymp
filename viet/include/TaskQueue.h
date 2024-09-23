@@ -6,14 +6,16 @@
 
 #include <memory>
 
+#include "Void.h"
+
 namespace Viet {
-class TaskQueue
+class TaskQueue<State = Viet::Void> 
 {
 public:
   TaskQueue();
 
-  void AddTask(const std::function<void()>& task);
-  void Update();
+  void AddTask(const std::function<void(const State&)>& task);
+  void Update(const State &state);
   void Clear();
 
 private:

@@ -24,7 +24,7 @@ struct HttpClient::Impl
   {
   }
 
-  Viet::TaskQueue q;
+  Viet::TaskQueue<Napi::Env> q;
   ThreadPoolWrapper pool;
 };
 
@@ -33,9 +33,9 @@ HttpClient::HttpClient()
   pImpl.reset(new Impl);
 }
 
-void HttpClient::ExecuteQueuedCallbacks()
+void HttpClient::ExecuteQueuedCallbacks(Napi::Env env)
 {
-  pImpl->q.Update();
+  pImpl->q.Update(env);
 }
 
 void HttpClient::Get(const char* host, const char* path,
@@ -57,8 +57,8 @@ void HttpClient::Get(const char* host, const char* path,
     int32_t status = res ? res->status : 0;
     std::string error = res ? std::string{} : to_string(res.error());
 
-    pImpl_->q.AddTask([callback, resultVector, status, error] {
-      callback({ resultVector, status, error });
+    pImpl_->q.AddTask((Napi::Env env) [callback, resultVector, status, error] {
+      callback(env, { resultVector, status, error });
     });
   });
 }
@@ -87,8 +87,8 @@ void HttpClient::Post(const char* host, const char* path, const char* body,
         : std::vector<uint8_t>();
       int32_t status = res ? res->status : 0;
 
-      pImpl_->q.AddTask([callback, resultVector, status] {
-        callback({ resultVector, status });
+      pImpl_->q.AddTask((Napi::Env env) [callback, resultVector, status] {
+        callback(env, HttpResult{ resultVector, status });
       });
     });
 }
