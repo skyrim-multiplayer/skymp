@@ -6,10 +6,10 @@ class SkyrimPlatform
 public:
   static SkyrimPlatform* GetSingleton();
 
-  void JsTick(bool gameFunctionsAvailable);
+  void JsTick(Napi::Env env, bool gameFunctionsAvailable);
   void SetOverlayService(std::shared_ptr<OverlayService> overlayService);
-  void AddTickTask(const std::function<void()>& f);
-  void AddUpdateTask(const std::function<void()>& f);
+  void AddTickTask(Napi::Env env, const std::function<void()>& f);
+  void AddUpdateTask(Napi::Env env, const std::function<void()>& f);
   void PushAndWait(const std::function<void()>& task);
   void Push(const std::function<void()>& task);
   void PushToWorkerAndWait(

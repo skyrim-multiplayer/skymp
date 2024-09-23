@@ -59,7 +59,7 @@ public:
     return v.As<Napi::Number>().FloatValue();
   }
 
-  static float ExtractDouble(const Napi::Value& v, const char* argName)
+  static double ExtractDouble(const Napi::Value& v, const char* argName)
   {
     if (!v.IsNumber()) {
       std::stringstream ss;

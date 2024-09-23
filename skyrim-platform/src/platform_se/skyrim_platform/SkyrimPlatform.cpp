@@ -342,14 +342,14 @@ SkyrimPlatform* SkyrimPlatform::GetSingleton()
   return &g_skyrimPlatform;
 }
 
-void SkyrimPlatform::JsTick(bool gameFunctionsAvailable)
+void SkyrimPlatform::JsTick(Napi::Env env, bool gameFunctionsAvailable)
 {
   for (auto& listener : pImpl->tickListeners) {
     gameFunctionsAvailable ? listener->Update() : listener->Tick();
   }
 
   try {
-    (gameFunctionsAvailable ? pImpl->updateTasks : pImpl->tickTasks).Update();
+    (gameFunctionsAvailable ? pImpl->updateTasks : pImpl->tickTasks).Update(env);
   } catch (const std::exception& e) {
     ExceptionPrinter::Print(e);
   }
@@ -361,12 +361,12 @@ void SkyrimPlatform::SetOverlayService(
   pImpl->browserApiState->overlayService = overlayService;
 }
 
-void SkyrimPlatform::AddTickTask(const std::function<void()>& f)
+void SkyrimPlatform::AddTickTask(const std::function<void(Napi::Env)>& f)
 {
   pImpl->tickTasks.AddTask(f);
 }
 
-void SkyrimPlatform::AddUpdateTask(const std::function<void()>& f)
+void SkyrimPlatform::AddUpdateTask(const std::function<void(Napi::Env)>& f)
 {
   pImpl->updateTasks.AddTask(f);
 }

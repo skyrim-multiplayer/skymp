@@ -15,7 +15,8 @@ Napi::Value TextApi::CreateText(const Napi::CallbackInfo &info)
 
   auto color = NapiHelper::ExtractArray(info[3], "color");
   for (int i = 0; i < 4; i++) {
-    argColor[i] = NapiHelper::ExtractDouble(color.Get(i), fmt::format("color[{}]", i));
+    std::string comment = fmt::format("color[{}]", i);
+    argColor[i] = NapiHelper::ExtractDouble(color.Get(i), comment.data());
   }
 
   std::wstring fontName;
@@ -74,7 +75,8 @@ Napi::Value TextApi::SetTextColor(const Napi::CallbackInfo &info)
 
   auto color = NapiHelper::ExtractArray(info[1], "color");
   for (int i = 0; i < 4; i++) {
-    argColor[i] = NapiHelper::ExtractDouble(color.Get(i), fmt::format("color[{}]", i));
+    std::string comment = fmt::format("color[{}]", i);
+    argColor[i] = NapiHelper::ExtractDouble(color.Get(i), comment.data());
   }
 
   auto moveArgColor = std::move(argColor);
@@ -144,7 +146,8 @@ Napi::Value TextApi::SetTextOrigin(const Napi::CallbackInfo &info)
   std::array<double, 2> argOrigin;
 
   for (int i = 0; i < 2; i++) {
-    argOrigin[i] = NapiHelper::ExtractDouble(originArray.Get(i), fmt::format("origin[{}]", i));
+    std::string comment = fmt::format("origin[{}]", i);
+    argOrigin[i] = NapiHelper::ExtractDouble(originArray.Get(i), comment.data());
   }
 
   auto moveArgOrigin = std::move(argOrigin);
