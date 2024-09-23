@@ -53,6 +53,6 @@ public:
 
 private:
   std::mutex m;
-  std::vector<std::function<void()>> tasks;
+  std::vector<std::function<void(const State&)>> tasks;
 };
 }
