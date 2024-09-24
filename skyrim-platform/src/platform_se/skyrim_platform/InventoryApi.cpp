@@ -17,7 +17,7 @@ Napi::Value ToJsValue(Napi::Env env, RE::ExtraHealth& extra)
 Napi::Value ToJsValue(Napi::Env env, RE::ExtraCount& extra)
 {
   auto res = Napi::Object::New(env);
-  res.Set("count", Napi::Number::New(env, extra.count)));
+  res.Set("count", Napi::Number::New(env, extra.count));
   res.Set("type", Napi::String::New(env, "Count"));
   return res;
 }
@@ -52,7 +52,7 @@ Napi::Value ToJsValue(Napi::Env env, RE::ExtraTextDisplayData& extra)
 Napi::Value ToJsValue(Napi::Env env, RE::ExtraSoul& extra)
 {
   auto res = Napi::Object::New(env);
-  res.Set("soul", Napi::Number::New(env, extra.GetType()));
+  res.Set("soul", Napi::Number::New(env, static_cast<int>(extra.GetType())));
   res.Set("type", Napi::String::New(env, "Soul"));
   return res;
 }
@@ -131,7 +131,11 @@ Napi::Value ToJsValue(Napi::Env env, RE::ExtraDataList* extraList)
     }
   }
 
-  return jData;
+  auto resultArray = Napi::Array::New(info.Env(), jData.size());
+  for (uint32_t i = 0; i < static_cast<uint32_t>(jData.size()); i++) {
+    resultArray.Set(i, jData[i]);
+  }
+  return resultArray;
 }
 
 Napi::Value ToJsValue(Napi::Env env, RE::BSSimpleList<RE::ExtraDataList*>* extendDataList)
@@ -180,7 +184,7 @@ Napi::Value InventoryApi::GetExtraContainerChanges(const Napi::CallbackInfo &inf
     auto jEntry = Napi::Object::New(info.Env());
     jEntry.Set("countDelta", (*it)->countDelta);
     jEntry.Set("baseId", Napi::Number::New(info.Env(), baseID));
-    jEntry.Set("extendDataList", ToJsValue((*it)->extraLists));
+    jEntry.Set("extendDataList", ToJsValue(info.Env(), (*it)->extraLists));
 
     res.push_back(jEntry);
   }

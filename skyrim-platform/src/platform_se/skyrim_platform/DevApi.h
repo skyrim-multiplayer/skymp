@@ -39,7 +39,7 @@ inline void Register(Napi::Env env, Napi::Object& exports, std::shared_ptr<JsEng
   exports.Set(
     "require",
     Napi::Function::New(env, NapiHelper::WrapCppExceptions([builtScriptsDir](const Napi::CallbackInfo &info) -> Napi::Value {
-      return Require(args, builtScriptsDir);
+      return Require(info, builtScriptsDir);
     })));
   exports.Set("addNativeExports", Napi::Function::New(env, NapiHelper::WrapCppExceptions(AddNativeExports)));
   exports.Set("getPluginSourceCode",

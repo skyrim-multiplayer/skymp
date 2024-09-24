@@ -130,6 +130,6 @@ void BrowserApi::Register(Napi::Env env, Napi::Object& exports, std::shared_ptr<
   browser.Set("setFocused", Napi::Function::New(env, NapiHelper::WrapCppExceptions(SetFocused)));
   browser.Set("isFocused", Napi::Function::New(env, NapiHelper::WrapCppExceptions(IsFocused)));
   browser.Set("loadUrl", Napi::Function::New(env, NapiHelper::WrapCppExceptions(LoadUrl)));
-  browser.Set("executeJavaScript", Napi::Function::New(env, NapiHelper::ExecuteJavaScript(ExecuteJavaScript)));
+  browser.Set("executeJavaScript", Napi::Function::New(env, NapiHelper::WrapCppExceptions(ExecuteJavaScript)));
   exports.Set("browser", browser);
 }

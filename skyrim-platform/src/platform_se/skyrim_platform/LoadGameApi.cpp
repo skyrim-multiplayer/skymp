@@ -51,7 +51,7 @@ std::unique_ptr<SaveFile_::ChangeFormNPC_> CreateChangeFormNpc(
   }
 
   if (auto raceId = npcData.Get("raceId"); !raceId.IsUndefined() && !raceId.IsNull()) {
-    raceIdExtracted = NapiHelper::ExtractUInt32(name, "npcData.raceId");
+    auto raceIdExtracted = NapiHelper::ExtractUInt32(raceId, "npcData.raceId");
     changeFormNpc->race = SaveFile_::ChangeFormNPC_::RaceChange();
     changeFormNpc->race->defaultRace = FormIdToRefId(raceIdExtracted);
     changeFormNpc->race->myRaceNow = FormIdToRefId(raceIdExtracted);

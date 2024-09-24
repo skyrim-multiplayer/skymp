@@ -98,7 +98,7 @@ Napi::Value NativeValueCasts::NativeObjectToJsObject(Napi::Env env,
       g_nativeObjectPool.erase(k);
   }
 
-  return poolEntry.object;
+  return poolEntry.object->Value();
 }
 
 CallNative::AnySafe NativeValueCasts::JsValueToNativeValue(const Napi::Value& v)

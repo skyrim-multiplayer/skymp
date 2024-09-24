@@ -113,7 +113,7 @@ Napi::Value CallNativeImpl(
         if (!g_callNativeArgsPtr)
           throw NullPointerException("g_callNativeArgsPtr");
         g_callNativeArgsPtr->latentCallback =
-          [resolveFunctionRef](const CallNative::AnySafe& v) {
+          [resolveFunctionRef](Napi::Env env, const CallNative::AnySafe& v) {
             resolveFunctionRef->Value().Call(env.Undefined(), { NativeValueCasts::NativeValueToJsValue(env, v) });
           };
         CallNative::CallNativeSafe(*g_callNativeArgsPtr);

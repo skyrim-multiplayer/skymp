@@ -91,7 +91,7 @@ Napi::Value MpClientPluginApi::IsConnected(const Napi::CallbackInfo &info)
 
 Napi::Value MpClientPluginApi::Tick(const Napi::CallbackInfo &info)
 {
-  auto onPacket = NapiHelper::ExtractFunction(env, info[0]);
+  auto onPacket = NapiHelper::ExtractFunction(info[0], "onPacket");
 
   typedef void (*OnPacket)(int32_t type, const char* jsonContent,
                            const char* error, void* state);

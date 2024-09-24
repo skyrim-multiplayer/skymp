@@ -22,7 +22,7 @@ namespace {
 
   auto handler = Napi::Object::New(env);
   handler.Set(
-    "get", ProxyGetter([=](const Napi::Object& origin, const Napi:String& keyStr) {
+    "get", ProxyGetter([=](const Napi::Object& origin, const Napi::String& keyStr) {
       auto env = origin.Env();
 
       auto keyStrExtracted = NapiHelper::ExtractString(keyStr, "keyStr");
@@ -72,7 +72,7 @@ namespace {
                 auto actor = form->As<RE::Actor>();
                 if (!actor)
                   return info.Env().Null();
-                return CreateObject(env, "Actor", actor);
+                return CreateObject(info.Env(), "Actor", actor);
               }));
             fRef.reset(new Napi::Reference<Napi::Function>(Napi::Persistent(f)));
           } else {

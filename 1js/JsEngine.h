@@ -10,6 +10,12 @@
 #include <vector>
 #include <napi.h>
 
+class JsExternalObjectBase
+{
+public:
+  virtual ~JsExternalObjectBase() = default;
+};
+
 class JsEngine
 {
 public:

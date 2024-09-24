@@ -152,7 +152,7 @@ void CreateNumArgsProperty(Napi::Object& obj, ConsoleCommand* replaced) {
     RE::SCRIPT_FUNCTION cmd = *replaced->myIter;
     cmd.numParams = replaced->numArgs;
 
-    REL::safe_write((uintptr_t)replaced->myIter, &cmd, sizeof(cmd));
+    REL::safe_write((uintptr_t)replaced->myIter, &cmd, sizeof(cmd)); return info.Env().Undefined();
   });
 
   Napi::PropertyDescriptor numArgsProperty = Napi::PropertyDescriptor::Accessor(
@@ -320,7 +320,7 @@ bool ConsoleComand_Execute(const RE::SCRIPT_PARAMETER* paramInfo,
       }
     } catch (std::exception& e) {
       std::string what = e.what();
-      SkyrimPlatform::GetSingleton()->AddUpdateTask([what] {
+      SkyrimPlatform::GetSingleton()->AddUpdateTask([what](Napi::Env)  {
         throw std::runtime_error(what + " (in ConsoleCommand_Execute)");
       });
     }

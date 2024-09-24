@@ -14,6 +14,7 @@ inline Napi::Value ProxyGetter(Napi::Env env, const ProxyGetterFn& f)
     if (!originProperty.IsUndefined()) {
       return originProperty;
     }
-    return (!key.IsString()) ? info.Env().Undefined() : f(origin, key);
+    // return (!key.IsString()) ? info.Env().Undefined() : f(origin, key);
+    return f(origin, key);
   }));
 }
