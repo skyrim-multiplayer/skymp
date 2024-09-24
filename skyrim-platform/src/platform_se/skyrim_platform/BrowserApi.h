@@ -19,24 +19,5 @@ Napi::Value GetToken(const Napi::CallbackInfo& info);
 Napi::Value ExecuteJavaScript(const Napi::CallbackInfo& info,
                           std::shared_ptr<State> state);
 
-inline void Register(Napi::Env env, Napi::Object& exports, std::shared_ptr<State> state)
-{
-  auto browser = Napi::Object::New(env);
-  browser.Set("setVisible", Napi::Function::New(env, NapiHelper::WrapCppExceptions(SetVisible)));
-  browser.Set("isVisible", Napi::Function::New(env, NapiHelper::WrapCppExceptions(IsVisible)));
-  browser.Set("setFocused", Napi::Function::New(env, NapiHelper::WrapCppExceptions(SetFocused)));
-  browser.Set("isFocused", Napi::Function::New(env, NapiHelper::WrapCppExceptions(IsFocused)));
-  browser.Set(
-    "loadUrl",
-    Napi::Function::New(NapiHelper::WrapCppExceptions([=](const Napi::CallbackInfo& info) -> Napi::Value {
-      return LoadUrl(info, state);
-    })));
-  browser.Set("getToken", Napi::Function::New(env, NapiHelper::WrapCppExceptions(GetToken)));
-  browser.Set(
-    "executeJavaScript",
-    NapiHelper::WrapCppExceptions(Napi::Function::New([=](const Napi::CallbackInfo& info) -> Napi::Value {
-      return ExecuteJavaScript(info, state);
-    })));
-  exports.Set("browser", browser);
-}
+void Register(Napi::Env env, Napi::Object& exports, std::shared_ptr<State> state);
 }

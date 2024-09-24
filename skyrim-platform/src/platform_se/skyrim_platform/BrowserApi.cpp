@@ -4,6 +4,8 @@
 namespace {
 thread_local bool g_cursorIsOpenByFocus = false;
 
+static std::shared_ptr<BrowserApi::State> g_browserApiState;
+
 inline CEFUtils::MyChromiumApp& GetApp(
   const std::shared_ptr<BrowserApi::State>& state)
 {
@@ -75,12 +77,17 @@ Napi::Value BrowserApi::IsFocused(const Napi::CallbackInfo& info)
   return Napi::Boolean::New(info.Env(), CEFUtils::DInputHook::ChromeFocus());
 }
 
-Napi::Value BrowserApi::LoadUrl(const Napi::CallbackInfo& info,
-                            std::shared_ptr<State> state)
+Napi::Value BrowserApi::LoadUrl(const Napi::CallbackInfo& info)
 {
+  const std::shared_ptr<State> &state = g_browserApiState;
+  if (!state) {
+    throw NullPointerException("state");
+  }
+
   auto settings = Settings::GetPlatformSettings();
-  if (settings->GetBool("Debug", "ChromiumEnabled", true) == false)
+  if (settings->GetBool("Debug", "ChromiumEnabled", true) == false) {
     throw std::runtime_error("Chromium is disabled!");
+  }
 
   auto str = NapiHelper::ExtractString(info[0], "url");
   return Napi::Boolean::New(info.Env(), GetApp(state).LoadUrl(str.data()));
@@ -89,20 +96,40 @@ Napi::Value BrowserApi::LoadUrl(const Napi::CallbackInfo& info,
 Napi::Value BrowserApi::GetToken(const Napi::CallbackInfo& info)
 {
   auto settings = Settings::GetPlatformSettings();
-  if (settings->GetBool("Debug", "ChromiumEnabled", true) == false)
+  if (settings->GetBool("Debug", "ChromiumEnabled", true) == false) {
     throw std::runtime_error("Chromium is disabled!");
+  }
 
   return Napi::String::New(info.Env(), MyChromiumApp::GetCurrentSpToken());
 }
 
-Napi::Value BrowserApi::ExecuteJavaScript(const Napi::CallbackInfo& info,
-                                      std::shared_ptr<State> state)
+Napi::Value BrowserApi::ExecuteJavaScript(const Napi::CallbackInfo& info)
 {
+  const std::shared_ptr<State> &state = g_browserApiState;
+  if (!state) {
+    throw NullPointerException("state");
+  }
+
   auto settings = Settings::GetPlatformSettings();
-  if (settings->GetBool("Debug", "ChromiumEnabled", true) == false)
+  if (settings->GetBool("Debug", "ChromiumEnabled", true) == false) {
     throw std::runtime_error("Chromium is disabled!");
+  }
 
   auto str = NapiHelper::ExtractString(info[0], "src");
   GetApp(state).ExecuteJavaScript(str);
   return info.Env().Undefined();
+}
+
+void BrowserApi::Register(Napi::Env env, Napi::Object& exports, std::shared_ptr<State> state)
+{
+  g_browserApiState = state;
+
+  auto browser = Napi::Object::New(env);
+  browser.Set("setVisible", Napi::Function::New(env, NapiHelper::WrapCppExceptions(SetVisible)));
+  browser.Set("isVisible", Napi::Function::New(env, NapiHelper::WrapCppExceptions(IsVisible)));
+  browser.Set("setFocused", Napi::Function::New(env, NapiHelper::WrapCppExceptions(SetFocused)));
+  browser.Set("isFocused", Napi::Function::New(env, NapiHelper::WrapCppExceptions(IsFocused)));
+  browser.Set("loadUrl", Napi::Function::New(env, NapiHelper::WrapCppExceptions(LoadUrl)));
+  browser.Set("executeJavaScript", Napi::Function::New(env, NapiHelper::ExecuteJavaScript(ExecuteJavaScript)));
+  exports.Set("browser", browser);
 }
