@@ -155,7 +155,7 @@ private:
 };
 }
 
-Napi::Value CallNative(
+Napi::Value CallNativeApi::CallNative(
   Napi::Env env, const std::vector<Napi::Value> &args,
   const std::function<NativeCallRequirements()>& getNativeCallRequirements)
 {

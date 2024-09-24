@@ -58,9 +58,10 @@ Napi::Value TextApi::SetTextPos(const Napi::CallbackInfo &info)
 Napi::Value TextApi::SetTextString(const Napi::CallbackInfo &info)
 {
   auto textId = NapiHelper::ExtractInt32(info[0], "textId");
+  auto text = NapiHelper::ExtractString(info[1], "text");
 
   std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
-  auto argString = converter.from_bytes(static_cast<std::string>(args[2]));
+  auto argString = converter.from_bytes(text);
   auto moveArgString = std::move(argString);
 
   TextsCollection::GetSingleton().SetTextString(textId, moveArgString);
@@ -162,8 +163,8 @@ Napi::Value TextApi::GetTextPos(const Napi::CallbackInfo &info)
     TextsCollection::GetSingleton().GetTextPos(NapiHelper::ExtractInt32(info[0], "textId"));
   auto jsArray = Napi::Array::New(info.Env(), 2);
 
-  jsArray.Set(0, Napi::Number::New(info.Env(), postions.first));
-  jsArray.Set(1, Napi::Number::New(info.Env(), postions.second));
+  jsArray.Set(0ul, Napi::Number::New(info.Env(), postions.first));
+  jsArray.Set(1ul, Napi::Number::New(info.Env(), postions.second));
 
   return jsArray;
 }

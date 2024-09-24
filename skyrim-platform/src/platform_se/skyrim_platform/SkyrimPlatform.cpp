@@ -303,7 +303,7 @@ struct SkyrimPlatform::Impl
 {
   std::shared_ptr<BrowserApi::State> browserApiState;
   std::vector<std::shared_ptr<TickListener>> tickListeners;
-  Viet::TaskQueue tickTasks, updateTasks;
+  Viet::TaskQueue<Napi::Env> tickTasks, updateTasks;
   ThreadPoolWrapper pool;
 
   // Stuff needed to push functions from js to game thread
