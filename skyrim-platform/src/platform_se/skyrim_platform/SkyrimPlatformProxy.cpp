@@ -2,8 +2,6 @@
 #include "JsUtils.h"
 #include "ProxyGetter.h"
 
-// Leonid, do u want other to build their projects with skymp in mind? make sure the're aware of skymp existence
-
 namespace {
 
  Napi::Object GetProxyForClass(
