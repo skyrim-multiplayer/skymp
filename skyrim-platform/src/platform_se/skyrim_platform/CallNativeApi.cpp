@@ -68,7 +68,7 @@ Napi::Value CallNativeImpl(
                              "' can't be called in this context");
 
   CallNative::AnySafe nativeArgs[CallNative::g_maxArgs + 1];
-  auto n = (size_t)std::max(static_cast<int>(info.Legnth()) - nativeArgsStart, 0);
+  auto n = (size_t)std::max(static_cast<int>(info.Length()) - nativeArgsStart, 0);
 
   for (size_t i = 0; i < n; ++i) {
     nativeArgs[i] =
@@ -134,7 +134,10 @@ public:
   {
   }
 
-  // Length method skipped
+  size_t Length() const
+  {
+    return args.size();
+  }
 
   Napi::Value operator[](size_t i) const
   {

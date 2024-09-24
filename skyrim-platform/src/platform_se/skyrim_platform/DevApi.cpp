@@ -129,7 +129,7 @@ Napi::Value DevApi::GetPluginSourceCode(const Napi::CallbackInfo &info)
     }
   }
 
-  return Viet::ReadFileIntoString(GetPluginPath(pluginName, overrideFolder));
+  return Napi::String::New(info.Env(), Viet::ReadFileIntoString(GetPluginPath(pluginName, overrideFolder)));
 }
 
 Napi::Value DevApi::WritePlugin(const Napi::CallbackInfo &info)

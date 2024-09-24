@@ -262,26 +262,6 @@ private:
     clear.Call(h.storage, {});
   }
 
-  void HandleLeave(DWORD owningThread, bool succeeded, Napi::Env env)
-  {
-    for (auto& hp : handlers) {
-      auto* h = &hp.second;
-      auto& perThread = h->perThread.at(owningThread);
-      if (!perThread.matchesCondition) {
-        continue;
-      }
-
-      PrepareContext(perThread, env);
-
-      if (succeededVariableName.has_value()) {
-        perThread.context.Set(succeededVariableName.value(),
-                                      Napi::Value::Bool(succeeded));
-      }
-      h->leave.Call({ Napi::Value::Undefined(), perThread.context });
-      h->perThread.erase(owningThread);
-    }
-  }
-
   void HandleLeave(DWORD owningThread, bool succeeded, Napi::Env env) {
     for (auto& hp : handlers) {
       Handler* h = &hp.second;

@@ -43,9 +43,9 @@ Napi::Value CameraApi::WorldPointToScreenPoint(const Napi::CallbackInfo& info)
                                      outX, outY, outZ, 1.f);
 
     auto jsPos = Napi::Array::New(info.Env(), 3);
-    jsPos.Set(static_cast<uin32_t>(0), Napi::Number::New(info.Env(), outX));
-    jsPos.Set(static_cast<uin32_t>(1), Napi::Number::New(info.Env(), outY));
-    jsPos.Set(static_cast<uin32_t>(2), Napi::Number::New(info.Env(), outZ));
+    jsPos.Set(static_cast<uint32_t>(0), Napi::Number::New(info.Env(), outX));
+    jsPos.Set(static_cast<uint32_t>(1), Napi::Number::New(info.Env(), outY));
+    jsPos.Set(static_cast<uint32_t>(2), Napi::Number::New(info.Env(), outZ));
     res.Set(static_cast<uint32_t>(i), jsPos);
   }
 

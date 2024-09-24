@@ -1677,13 +1677,13 @@ EventResult EventHandler::ProcessEvent(
     auto obj = Napi::Object::New(env);
 
     if (oldStateId == uint32_t(-1)) {
-      obj.SetProperty("oldStateId", Napi::Object::Null());
+      obj.Set("oldStateId", env.Null());
     } else {
       AddObjProperty(&obj, "oldStateId", oldStateId);
     }
 
     if (newStateId == uint32_t(-1)) {
-      obj.SetProperty("newStateId", Napi::Object::Null());
+      obj.Set("newStateId", env.Null());
     } else {
       AddObjProperty(&obj, "newStateId", newStateId);
     }
@@ -1815,11 +1815,11 @@ EventResult EventHandler::ProcessEvent(RE::InputEvent* const* event,
   {
     virtual ~EventDataBase() = default;
     virtual const char* GetSPEventName() = 0;
-    virtual Napi::Object ToJavaScriptObject() = 0;
+    virtual Napi::Object ToJavaScriptObject(Napi::Env env) = 0;
 
-    void Send()
+    void Send(Napi::Env env)
     {
-      auto obj = ToJavaScriptObject();
+      auto obj = ToJavaScriptObject(env);
       SendEvent(GetSPEventName(), obj);
     }
   };
@@ -1842,7 +1842,7 @@ EventResult EventHandler::ProcessEvent(RE::InputEvent* const* event,
 
     const char* GetSPEventName() override { return "buttonEvent"; }
 
-    Napi::Object ToJavaScriptObject() override
+    Napi::Object ToJavaScriptObject(Napi::Env env) override
     {
       auto obj = Napi::Object::New(env);
       AddObjProperty(&obj, "device", device);
@@ -1883,7 +1883,7 @@ EventResult EventHandler::ProcessEvent(RE::InputEvent* const* event,
 
     const char* GetSPEventName() override { return "mouseMove"; }
 
-    Napi::Object ToJavaScriptObject() override
+    Napi::Object ToJavaScriptObject(Napi::Env env) override
     {
       auto obj = Napi::Object::New(env);
       AddObjProperty(&obj, "device", device);
@@ -1912,7 +1912,7 @@ EventResult EventHandler::ProcessEvent(RE::InputEvent* const* event,
 
     const char* GetSPEventName() override { return "deviceConnect"; }
 
-    Napi::Object ToJavaScriptObject() override
+    Napi::Object ToJavaScriptObject(Napi::Env env) override
     {
       auto obj = Napi::Object::New(env);
       AddObjProperty(&obj, "device", device);
@@ -1939,7 +1939,7 @@ EventResult EventHandler::ProcessEvent(RE::InputEvent* const* event,
 
     const char* GetSPEventName() override { return "thumbstickEvent"; }
 
-    Napi::Object ToJavaScriptObject() override
+    Napi::Object ToJavaScriptObject(Napi::Env env) override
     {
       auto obj = Napi::Object::New(env);
       AddObjProperty(&obj, "device", device);
@@ -1973,7 +1973,7 @@ EventResult EventHandler::ProcessEvent(RE::InputEvent* const* event,
 
     const char* GetSPEventName() override { return "kinectEvent"; }
 
-    Napi::Object ToJavaScriptObject() override
+    Napi::Object ToJavaScriptObject(Napi::Env env) override
     {
       auto obj = Napi::Object::New(env);
       AddObjProperty(&obj, "device", device);
@@ -1999,14 +1999,14 @@ EventResult EventHandler::ProcessEvent(RE::InputEvent* const* event,
         auto buttonEvent = static_cast<RE::ButtonEvent*>(eventItem);
         auto eventData = std::make_shared<ButtonEventData>(*buttonEvent);
         SkyrimPlatform::GetSingleton()->AddUpdateTask(
-          [eventData](Napi::Env) { eventData->Send(); });
+          [eventData](Napi::Env env) { eventData->Send(env); });
         break;
       }
       case RE::INPUT_EVENT_TYPE::kMouseMove: {
         auto mouseMoveEvent = static_cast<RE::MouseMoveEvent*>(eventItem);
         auto eventData = std::make_shared<MouseMoveEventData>(*mouseMoveEvent);
         SkyrimPlatform::GetSingleton()->AddUpdateTask(
-          [eventData](Napi::Env) { eventData->Send(); });
+          [eventData](Napi::Env env) { eventData->Send(env); });
         break;
       }
       case RE::INPUT_EVENT_TYPE::kDeviceConnect: {
@@ -2015,7 +2015,7 @@ EventResult EventHandler::ProcessEvent(RE::InputEvent* const* event,
         auto eventData =
           std::make_shared<DeviceConnectEventData>(*deviceConnectEvent);
         SkyrimPlatform::GetSingleton()->AddUpdateTask(
-          [eventData](Napi::Env) { eventData->Send(); });
+          [eventData](Napi::Env env) { eventData->Send(env); });
         break;
       }
       case RE::INPUT_EVENT_TYPE::kThumbstick: {
@@ -2023,14 +2023,14 @@ EventResult EventHandler::ProcessEvent(RE::InputEvent* const* event,
         auto eventData =
           std::make_shared<ThumbstickEventData>(*thumbstickEvent);
         SkyrimPlatform::GetSingleton()->AddUpdateTask(
-          [eventData](Napi::Env) { eventData->Send(); });
+          [eventData](Napi::Env env) { eventData->Send(env); });
         break;
       }
       case RE::INPUT_EVENT_TYPE::kKinect: {
         auto kinectEvent = static_cast<RE::KinectEvent*>(eventItem);
         auto eventData = std::make_shared<KinectEventData>(*kinectEvent);
         SkyrimPlatform::GetSingleton()->AddUpdateTask(
-          [eventData](Napi::Env) { eventData->Send(); });
+          [eventData](Napi::Env env) { eventData->Send(env); });
         break;
       }
     }
