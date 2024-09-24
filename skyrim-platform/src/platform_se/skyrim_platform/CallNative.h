@@ -37,7 +37,7 @@ static inline size_t GetIndexFor()
 
 Variable AnySafeToVariable(const AnySafe& v, bool treatNumberAsInt);
 
-using LatentCallback = std::function<void(AnySafe)>;
+using LatentCallback = std::function<void(Napi::Env, AnySafe)>;
 
 struct Arguments
 {

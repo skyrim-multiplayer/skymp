@@ -104,7 +104,7 @@ Napi::Value CallNativeImpl(
     thread_local CallNative::Arguments* g_callNativeArgsPtr = nullptr;
     g_callNativeArgsPtr = &callNativeArgs;
 
-    thread_local auto g_promiseFn =
+    auto g_promiseFn =
       Napi::Function::New(info.Env(), [](const Napi::CallbackInfo& info) {
         std::shared_ptr<Napi::Reference<Napi::Function>> resolveFunctionRef(
           new Napi::Reference<Napi::Function>(
@@ -114,7 +114,7 @@ Napi::Value CallNativeImpl(
           throw NullPointerException("g_callNativeArgsPtr");
         g_callNativeArgsPtr->latentCallback =
           [resolveFunctionRef](const CallNative::AnySafe& v) {
-            resolveFunctionRef->Value().Call({ info.Env().Undefined(),  NativeValueCasts::NativeValueToJsValue(v) });
+            resolveFunctionRef->Value().Call(env.Undefined(), { NativeValueCasts::NativeValueToJsValue(env, v) });
           };
         CallNative::CallNativeSafe(*g_callNativeArgsPtr);
         return info.Env().Undefined();
@@ -123,7 +123,7 @@ Napi::Value CallNativeImpl(
   } else {
     Override o;
     auto res = NativeValueCasts::NativeValueToJsValue(
-      CallNative::CallNativeSafe(callNativeArgs));
+      info.Env(), CallNative::CallNativeSafe(callNativeArgs));
     return res;
   }
 }
