@@ -1580,7 +1580,7 @@ bool MpObjectReference::CheckIfObjectCanStartOccupyThis(
     return true;
   }
 
-  auto &occupantCellOrWorld = this->occupant->GetCellOrWorld();
+  auto& occupantCellOrWorld = this->occupant->GetCellOrWorld();
   if (occupantCellOrWorld != GetCellOrWorld()) {
     spdlog::info("MpObjectReference::ProcessActivate {:x} - occupant is in "
                  "another cell/world (activationSource = {:x})",
