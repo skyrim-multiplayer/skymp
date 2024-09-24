@@ -483,12 +483,12 @@ Napi::Value Subscribe(const Napi::CallbackInfo &info, bool runOnce = false)
 
 Napi::Value EventsApi::On(const Napi::CallbackInfo &info)
 {
-  return Subscribe(args);
+  return Subscribe(info);
 }
 
 Napi::Value EventsApi::Once(const Napi::CallbackInfo &info)
 {
-  return Subscribe(args, true);
+  return Subscribe(info, true);
 }
 
 Napi::Value EventsApi::Unsubscribe(const Napi::CallbackInfo &info)
@@ -497,33 +497,11 @@ Napi::Value EventsApi::Unsubscribe(const Napi::CallbackInfo &info)
   auto jEventName = NapiHelper::ExtractString(obj.Get("eventName"), "obj.eventName");
   auto jUid = NapiHelper::ExtractUInt32(obj.Get("uid"), "obj.uid");
   auto eventName = std::get<std::string>(
-    NativeValueCasts::Napi::ValueToNativeValue(jEventName));
+    NativeValueCasts::JsValueToNativeValue(jEventName));
   auto uid = std::get<double>(
-    NativeValueCasts::Napi::ValueToNativeValue(jUid));
+    NativeValueCasts::JsValueToNativeValue(jUid));
   EventManager::GetSingleton()->Unsubscribe(uid, eventName);
   return info.Env().Undefined();
-}
-
-Napi::Value EventsApi::SendIpcMessage(const Napi::CallbackInfo &info)
-{
-  auto targetSystemName = args[1].ToString();
-  auto message = args[2].GetArrayBufferData();
-  auto messageLength = args[2].GetArrayBufferLength();
-
-  if (!message) {
-    throw std::runtime_error(
-      "sendIpcMessage expects a valid ArrayBuffer instance");
-  }
-
-  if (messageLength == 0) {
-    throw std::runtime_error(
-      "sendIpcMessage expects an ArrayBuffer of length > 0");
-  }
-
-  IPC::Call(targetSystemName, reinterpret_cast<uint8_t*>(message),
-            messageLength);
-
-  return Napi::Value::Undefined();
 }
 
 Napi::Value EventsApi::SendIpcMessage(const Napi::CallbackInfo &info)

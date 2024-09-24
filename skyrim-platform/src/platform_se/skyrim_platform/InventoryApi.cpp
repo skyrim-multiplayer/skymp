@@ -309,7 +309,7 @@ Napi::Value InventoryApi::SetInventory(const Napi::CallbackInfo &info)
       }
     }
   });
-  return env.Undefined();
+  return info.Env().Undefined();
 }
 
 Napi::Value InventoryApi::CastSpellImmediate(const Napi::CallbackInfo &info)

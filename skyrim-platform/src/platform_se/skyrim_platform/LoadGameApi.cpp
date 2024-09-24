@@ -61,7 +61,7 @@ std::unique_ptr<SaveFile_::ChangeFormNPC_> CreateChangeFormNpc(
   if (auto isFemale = npcData.Get("isFemale"); !isFemale.IsUndefined() && !isFemale.IsNull()) {
     // TODO: this is a hotfix, fix properly.
     // To test ensure players after relog preserve their gender anims
-    if (isFemale.ToString() == "true") {
+    if (static_cast<std::string>(isFemale.ToString()) == "true") {
       changeFormNpc->gender = isFemale ? 1 : 0;
     }
   }
@@ -83,8 +83,9 @@ std::unique_ptr<SaveFile_::ChangeFormNPC_> CreateChangeFormNpc(
       int n = headPartIdsExtracted.Length();
 
       for (int i = 0; i < n; ++i) {
-        auto jHpId = headPartIds.Get(i);
-        auto hpId = NapiHelper::ExtractUInt32(jHpId, fmt::format("npcData.headPartIds[{}]", i));
+        auto jHpId = headPartIdsExtracted.Get(i);
+        std::string comment = fmt::format("npcData.headPartIds[{}]", i);
+        auto hpId = NapiHelper::ExtractUInt32(jHpId, comment.data());
         changeFormNpc->face->headParts.push_back(FormIdToRefId(hpId));
       }
     }
@@ -94,8 +95,9 @@ std::unique_ptr<SaveFile_::ChangeFormNPC_> CreateChangeFormNpc(
       auto presetsExtracted = NapiHelper::ExtractArray(presets, "npcData.presets");
       int n = presetsExtracted.Length();
       for (int i = 0; i < n; ++i) {
-        auto jValue = presets.Get(i);
-        auto value = NapiHelper::ExtractUInt32(jValue, fmt::format("npcData.presets[{}]", i));
+        auto jValue = presetsExtracted.Get(i);
+        std::string comment = fmt::format("npcData.presets[{}]", i);
+        auto value = NapiHelper::ExtractUInt32(jValue, comment.data());
         changeFormNpc->face->presets.push_back(value);
       }
     }
@@ -129,7 +131,8 @@ std::unique_ptr<std::vector<std::string>> CreateLoadOrder(
   int n = loadOrder_.Length();
   for (int i = 0; i < n; ++i) {
     auto jValue = loadOrder_.Get(i);
-    auto value = NapiHelper::ExtractString(jValue, fmt::format("loadOrder[{}]", i));
+    std::string comment = fmt::format("loadOrder[{}]", i);
+    auto value = NapiHelper::ExtractString(jValue, comment.data());
     loadOrder->push_back(value);
   }
   return loadOrder;

@@ -101,8 +101,9 @@ Napi::Value MpClientPluginApi::Tick(const Napi::CallbackInfo &info)
   f(
     [](int32_t type, const char* jsonContent, const char* error, void* state) {
       auto onPacket = reinterpret_cast<Napi::Function*>(state);
+      auto env = onPacket->Env();
       onPacket->Call(
-        { Napi::String::New(info.Env(), GetPacketTypeName(type)), Napi::String::New(info.Env(), jsonContent), Napi::String::New(info.Env(), error) });
+        { Napi::String::New(env, GetPacketTypeName(type)), Napi::String::New(env, jsonContent), Napi::String::New(env, error) });
     },
     &onPacket);
   return info.Env().Undefined();
