@@ -163,8 +163,8 @@ Napi::Value TextApi::GetTextPos(const Napi::CallbackInfo &info)
     TextsCollection::GetSingleton().GetTextPos(NapiHelper::ExtractInt32(info[0], "textId"));
   auto jsArray = Napi::Array::New(info.Env(), 2);
 
-  jsArray.Set(0ul, Napi::Number::New(info.Env(), postions.first));
-  jsArray.Set(1ul, Napi::Number::New(info.Env(), postions.second));
+  jsArray.Set(static_cast<uint32_t>(0), Napi::Number::New(info.Env(), postions.first));
+  jsArray.Set(static_cast<uint32_t>(1), Napi::Number::New(info.Env(), postions.second));
 
   return jsArray;
 }

@@ -118,10 +118,12 @@ public:
   void Update() override
   {
     try {
-      GetJsEngine();
-      taskQueue.Update();
-      nativeCallRequirements.jsThrQ->Update();
-      jsPromiseTaskQueue.Update();
+      auto engine = GetJsEngine();
+      auto env = engine->Env();
+
+      taskQueue.Update(env);
+      nativeCallRequirements.jsThrQ->Update(env);
+      jsPromiseTaskQueue.Update(env);
       EventsApi::SendEvent("update", {});
     } catch (const std::exception& e) {
       ExceptionPrinter::Print(e);
@@ -179,7 +181,7 @@ private:
   void LoadPluginFile(const std::filesystem::path& path)
   {
     auto engine = GetJsEngine();
-    auto env = engine.Env();
+    auto env = engine->Env();
     auto scriptSrc = Viet::ReadFileIntoString(path);
 
     getSettings = [this](const Napi::CallbackInfo &info) {
@@ -218,7 +220,7 @@ private:
                            InventoryApi::Register(env, e);
                            ConstEnumApi::Register(env, e, engine);
                            CallNativeApi::Register(
-                             e, [this] { return nativeCallRequirements; });
+                             env, e, [this] { return nativeCallRequirements; });
 
                           auto getter = NapiHelper::WrapCppExceptions(getSettings);
                           auto setter = NapiHelper::WrapCppExceptions(setSettings);
@@ -286,8 +288,8 @@ private:
   std::shared_ptr<JsEngine> engine_;
   std::vector<std::shared_ptr<DirectoryMonitor>> monitors;
   uint32_t tickId = 0;
-  Viet::TaskQueue taskQueue;
-  Viet::TaskQueue jsPromiseTaskQueue;
+  Viet::TaskQueue<Napi::Env> taskQueue;
+  Viet::TaskQueue<Napi::Env> jsPromiseTaskQueue;
   CallNativeApi::NativeCallRequirements& nativeCallRequirements;
   std::unordered_map<std::string, std::string> settingsByPluginName;
   std::unique_ptr<Napi::Reference<Napi::Object>> settingsByPluginNameCache;
