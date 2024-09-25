@@ -287,7 +287,7 @@ bool ConsoleComand_Execute(const RE::SCRIPT_PARAMETER* paramInfo,
 {
   std::pair<const std::string, ConsoleCommand>* iterator = nullptr;
 
-  auto func = [&] {
+  auto func = [&](Napi::Env) {
     try {
       if (!g_envForExecuteCallback)
         throw NullPointerException("g_envForExecuteCallback");

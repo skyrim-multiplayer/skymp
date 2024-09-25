@@ -1205,9 +1205,7 @@ void ConstEnumApi::Register(Napi::Env env, Napi::Object& exports,
   SlotMask.Set(static_cast<uint32_t>(536870912), "ArmOuter");
   SlotMask.Set(static_cast<uint32_t>(536870912), "ArmPrimary");
   SlotMask.Set(static_cast<uint32_t>(536870912), "ArmRight");
-  SlotMask.Set(static_cast<uint32_t>(1073741824), "Misc02");
-  SlotMask.Set(
-    static_cast<uint32_t>(jsEngine->RunScript("2147483648", "_.js")), "FX01");
+  SlotMask.Set(static_cast<uint32_t>(2147483648), "FX01");
   SlotMask.Set("Head", Napi::Number::New(env, 1));
   SlotMask.Set("Hair", Napi::Number::New(env, 2));
   SlotMask.Set("Body", Napi::Number::New(env, 4));
@@ -1251,8 +1249,7 @@ void ConstEnumApi::Register(Napi::Env env, Napi::Object& exports,
   SlotMask.Set("ArmPrimary", Napi::Number::New(env, 536870912));
   SlotMask.Set("ArmRight", Napi::Number::New(env, 536870912));
   SlotMask.Set("Misc02", Napi::Number::New(env, 1073741824));
-  SlotMask.Set(
-    "FX01", Napi::Number::New(env, jsEngine->RunScript("2147483648", "_.js")));
+  SlotMask.Set("FX01", Napi::Number::New(env, 2147483648));
   exports.Set("SlotMask", SlotMask);
 
   auto SpriteEffects = Napi::Object::New(env);

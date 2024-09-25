@@ -93,7 +93,7 @@ void Hook::Leave(bool succeeded)
 
     } catch (std::exception& e) {
       std::string what = e.what();
-      SkyrimPlatform::GetSingleton()->AddUpdateTask([what] {
+      SkyrimPlatform::GetSingleton()->AddUpdateTask([what](Napi::Env) {
         throw std::runtime_error(what + " (in SendAnimationEventLeave)");
       });
     }
@@ -125,7 +125,7 @@ void Hook::HandleEnter(DWORD owningThread, uint32_t selfId,
 
     // Retrieve the updated eventName from the context
     Napi::Value updatedEventName =
-      perThread.context.As<Napi::Object>().Get(eventNameVariableName);
+      perThread.context->Value().As<Napi::Object>().Get(eventNameVariableName);
     eventName = updatedEventName.As<Napi::String>().Utf8Value();
   }
 }
@@ -140,15 +140,20 @@ void Hook::PrepareContext(HandlerInfoPerThread& h, const Napi::Env& env)
 
   Napi::Value standardMap = env.Global().Get("Map");
 
-  if (!h.storage.IsObject()) {
+  if (!h.storage) {
     Napi::Object mapInstance = standardMap.As<Napi::Function>().New({});
-    h.storage = mapInstance;
-    h.context.As<Napi::Object>().Set("storage", h.storage);
+    h.storage.reset(new Napi::Reference<Napi::Object>(
+      Napi::Persistent(mapInstance)));
+    h.context->Value().As<Napi::Object>().Set("storage", h.storage->Value());
   }
 }
 
 void Hook::ClearContextStorage(HandlerInfoPerThread& h, Napi::Env env)
 {
+  if (!h.storage) {
+    return;
+  }
+
   Napi::Object global = env.Global();
   Napi::Object standardMap = global.Get("Map").As<Napi::Object>();
   Napi::Function clear = standardMap.Get("prototype")
@@ -156,7 +161,7 @@ void Hook::ClearContextStorage(HandlerInfoPerThread& h, Napi::Env env)
                            .Get("clear")
                            .As<Napi::Function>();
 
-  clear.Call(h.storage, {});
+  clear.Call(h.storage->Value(), {});
 }
 
 void Hook::HandleLeave(DWORD owningThread, bool succeeded, Napi::Env env)
@@ -176,8 +181,8 @@ void Hook::HandleLeave(DWORD owningThread, bool succeeded, Napi::Env env)
         succeededVariableName.value(), Napi::Boolean::New(env, succeeded));
     }
 
-    h->leave->Value().As<Napi::Function>().Call(
-      { env.Undefined(), perThread.context });
+    h->leave->Value().As<Napi::Function>().Call(env.Undefined(),
+      { perThread.context->Value() });
     h->perThread.erase(owningThread);
   }
 }

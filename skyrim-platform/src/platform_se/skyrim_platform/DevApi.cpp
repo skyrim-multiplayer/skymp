@@ -54,7 +54,8 @@ Napi::Value DevApi::Require(
     if (!jsEngine) {
       throw NullPointerException("jsEngine");
     }
-    auto exports = jsEngine->RunScript(src.str(), fileName);
+    auto runScriptResult = jsEngine->RunScript(src.str(), fileName);
+    auto exports = NapiHelper::ExtractObject(runScriptResult, "runScriptResult");
 
     if (auto& f = DevApi::nativeExportsMap[fileName]) {
       exports = f(exports);
