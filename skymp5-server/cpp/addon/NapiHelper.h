@@ -2,16 +2,17 @@
 #pragma once
 
 #include "NiPoint3.h"
+#include <functional>
 #include <napi.h>
 #include <nlohmann/json.hpp>
 #include <optional>
 #include <sstream>
 #include <stdexcept>
 #include <string>
-#include <functional>
 
 // TODO: Stringify/ToString mismatch in error handling
-// TODO: Stringify might not be the best printer for all types, because not all are JSON-serializable
+// TODO: Stringify might not be the best printer for all types, because not all
+// are JSON-serializable
 // TODO: Use fmt instead of std::stringstream
 class NapiHelper
 {
@@ -156,7 +157,9 @@ public:
     return v.As<Napi::Object>();
   }
 
-  static Napi::ArrayBuffer ExtractArrayBuffer(const Napi::Value& v, const char *argName) {
+  static Napi::ArrayBuffer ExtractArrayBuffer(const Napi::Value& v,
+                                              const char* argName)
+  {
     if (!v.IsArrayBuffer()) {
       std::stringstream ss;
       ss << "Expected '" << argName << "' to be an ArrayBuffer, but got '";
@@ -257,14 +260,16 @@ public:
     return static_cast<std::string>(result.As<Napi::String>());
   }
 
-  // TODO: std::function originalFunc should be optimized out by introducing a template parameter
-  static std::function<Napi::Value(const Napi::CallbackInfo& info)> 
-  WrapCppExceptions(std::function<Napi::Value(const Napi::CallbackInfo& info)> originalFunc)
+  // TODO: std::function originalFunc should be optimized out by introducing a
+  // template parameter
+  static std::function<Napi::Value(const Napi::CallbackInfo& info)>
+  WrapCppExceptions(
+    std::function<Napi::Value(const Napi::CallbackInfo& info)> originalFunc)
   {
     return [originalFunc](const Napi::CallbackInfo& info) {
       try {
         return originalFunc(info);
-      } catch (std::exception &e) {
+      } catch (std::exception& e) {
         throw Napi::Error::New(info.Env(), std::string(e.what()));
       }
     };

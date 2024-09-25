@@ -21,7 +21,7 @@ public:
     tasks.push_back(task);
   }
 
-  void Update(const State &state)
+  void Update(const State& state)
   {
     decltype(tasks) tasksCopy;
     {
