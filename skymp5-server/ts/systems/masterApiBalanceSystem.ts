@@ -2,6 +2,7 @@ import { System, Log } from "./system";
 import Axios from "axios";
 import { SystemContext } from "./system";
 import { getMyPublicIp } from "../publicIp";
+import { Settings } from "../settings";
 
 export class MasterApiBalanceSystem implements System {
     systemName = "MasterApiBalanceSystem";
@@ -77,9 +78,17 @@ export class MasterApiBalanceSystem implements System {
 
     private async makeUserMasterApiPurchaseImpl(session: string, balanceToSpend: number): Promise<{ balanceSpent: number, success: boolean }> {
         try {
+            const settings = await Settings.get();
+            const authToken = settings.allSettings.masterApiAuthToken;
+
+            if (typeof authToken !== "string" || !authToken) {
+                throw new Error(`Bad masterApiAuthToken setting: ${authToken}`);
+            }
+
             const response = await Axios.post(
                 `${this.masterUrl}/api/servers/${this.myAddr}/sessions/${session}/purchase`,
-                { balanceToSpend }
+                { balanceToSpend },
+                { headers: { 'X-Auth-Token': authToken } }
             );
             if (!response.data || typeof response.data.balanceSpent !== "number" || typeof response.data.success !== "boolean") {
                 throw new Error(`makeUserMasterApiPurchaseImpl: bad master-api response ${JSON.stringify(response.data)}`);
