@@ -32,7 +32,7 @@ export class MasterApiBalanceSystem implements System {
             `MasterApiBalanceSystem system assumed that ${this.myAddr} is our address on master`
         );
 
-        // Effectively makes mp.getUserMasterApiBalance a part of gamemode API
+        // Effectively makes mp.getUserMasterApiBalance & mp.makeUserMasterApiPurchase a part of gamemode API
         (ctx.svr as any).getUserMasterApiBalance = async (userId: number): Promise<number> => {
             if (this.offlineMode) {
                 console.log("MasterApiBalanceSystem.getUserMasterApiBalance - Always zero balance in offline mode");
@@ -46,6 +46,19 @@ export class MasterApiBalanceSystem implements System {
             }
             return await this.getUserBalanceImpl(session);
         };
+
+        (ctx.svr as any).makeUserMasterApiPurchase = async (userId: number, balanceToSpend: number): Promise<{ balanceSpent: number, success: boolean }> => {
+            if (this.offlineMode) {
+                console.log("MasterApiBalanceSystem.makeUserMasterApiPurchase - Purchase impossible in offline mode");
+                return { balanceSpent: 0, success: false };
+            }
+            const session = this.sessionByUserId[userId];
+            if (!session) {
+                console.error(`MasterApiBalanceSystem.makeUserMasterApiPurchase - Invalid session value for userId ${userId} (session = ${session})`);
+                throw new Error(`MasterApiBalanceSystem.makeUserMasterApiPurchase - Invalid session value for userId ${userId} (session = ${session})`);
+            }
+            return await this.makeUserMasterApiPurchaseImpl(session, balanceToSpend);
+        };
     }
 
     private async getUserBalanceImpl(session: string): Promise<number> {
@@ -54,9 +67,24 @@ export class MasterApiBalanceSystem implements System {
                 `${this.masterUrl}/api/servers/${this.myAddr}/sessions/${session}/balance`
             );
             if (!response.data || !response.data.user || !response.data.user.id || typeof response.data.user.balance !== "number") {
-                throw new Error(`getUserBalance: bad master-api response ${JSON.stringify(response.data)}`);
+                throw new Error(`getUserBalanceImpl: bad master-api response ${JSON.stringify(response.data)}`);
             }
             return response.data.user.balance as number;
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    private async makeUserMasterApiPurchaseImpl(session: string, balanceToSpend: number): Promise<{ balanceSpent: number, success: boolean }> {
+        try {
+            const response = await Axios.post(
+                `${this.masterUrl}/api/servers/${this.myAddr}/sessions/${session}/purchase`,
+                { balanceToSpend }
+            );
+            if (!response.data || typeof response.data.balanceSpent !== "number" || typeof response.data.success !== "boolean") {
+                throw new Error(`makeUserMasterApiPurchaseImpl: bad master-api response ${JSON.stringify(response.data)}`);
+            }
+            return response.data;
         } catch (error) {
             throw error;
         }
