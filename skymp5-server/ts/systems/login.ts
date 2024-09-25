@@ -32,23 +32,6 @@ export class Login implements System {
     private offlineMode: boolean
   ) { }
 
-  private async getUserProfile(session: string, userId: number, ctx: SystemContext): Promise<UserProfile> {
-    try {
-      const response = await Axios.get(
-        `${this.masterUrl}/api/servers/${this.myAddr}/sessions/${session}`
-      );
-      if (!response.data || !response.data.user || !response.data.user.id) {
-        throw new Error(`getUserProfile: bad master-api response ${JSON.stringify(response.data)}`);
-      }
-      return response.data.user as UserProfile;
-    } catch (error) {
-      if (Axios.isAxiosError(error) && error.response?.status === 404) {
-        ctx.svr.sendCustomPacket(userId, loginFailedSessionNotFound);
-      }
-      throw error;
-    }
-  }
-
   private async getUserBalance(session: string): Promise<number> {
     try {
       const response = await Axios.get(
