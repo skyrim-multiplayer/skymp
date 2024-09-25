@@ -38,13 +38,27 @@ export class Login implements System {
         `${this.masterUrl}/api/servers/${this.myAddr}/sessions/${session}`
       );
       if (!response.data || !response.data.user || !response.data.user.id) {
-        throw new Error("getUserProfile: bad master-api response");
+        throw new Error(`getUserProfile: bad master-api response ${JSON.stringify(response.data)}`);
       }
       return response.data.user as UserProfile;
     } catch (error) {
       if (Axios.isAxiosError(error) && error.response?.status === 404) {
         ctx.svr.sendCustomPacket(userId, loginFailedSessionNotFound);
       }
+      throw error;
+    }
+  }
+
+  private async getUserBalance(session: string): Promise<number> {
+    try {
+      const response = await Axios.get(
+        `${this.masterUrl}/api/servers/${this.myAddr}/sessions/${session}/balance`
+      );
+      if (!response.data || !response.data.user || !response.data.user.id || typeof response.data.user.balance !== "number") {
+        throw new Error(`getUserBalance: bad master-api response ${JSON.stringify(response.data)}`);
+      }
+      return response.data.user.balance as number;
+    } catch (error) {
       throw error;
     }
   }
@@ -83,6 +97,8 @@ export class Login implements System {
       this.log("The server is in offline mode, the client is NOT");
     } else if (this.offlineMode === false && gameData && gameData.session) {
       (async () => {
+        ctx.gm.emit("userAssignSession", userId, gameData.session);
+
         const guidBeforeAsyncOp = ctx.svr.getUserGuid(userId);
         const profile = await this.getUserProfile(gameData.session, userId, ctx);
         const guidAfterAsyncOp = ctx.svr.isConnected(userId) ? ctx.svr.getUserGuid(userId) : "<disconnected>";
