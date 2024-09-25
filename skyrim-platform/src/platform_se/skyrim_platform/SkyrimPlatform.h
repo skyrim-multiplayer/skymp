@@ -10,8 +10,8 @@ public:
   void SetOverlayService(std::shared_ptr<OverlayService> overlayService);
   void AddTickTask(const std::function<void(Napi::Env env)>& f);
   void AddUpdateTask(const std::function<void(Napi::Env env)>& f);
-  void PushAndWait(const std::function<void()>& task);
-  void Push(const std::function<void()>& task);
+  void PushAndWait(const std::function<void(Napi::Env env)>& task);
+  void Push(const std::function<void(Napi::Env env)>& task);
   void PushToWorkerAndWait(
     RE::BSTSmartPointer<RE::BSScript::IFunction> fPtr,
     const RE::BSTSmartPointer<RE::BSScript::Stack>& stack,

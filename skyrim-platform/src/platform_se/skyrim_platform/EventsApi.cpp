@@ -64,7 +64,7 @@ void EventsApi::SendEvent(const char* eventName,
   for (auto& cb : callbacksToCall) {
     try {
       Napi::Function callback = cb.callback->Value().As<Napi::Function>();
-      callback.Call(env.Undefined(), arguments);
+      callback.Call(arguments);
     } catch (const std::exception& e) {
       const char* method = cb.runOnce ? "once" : "on";
       std::string what = e.what();
@@ -143,7 +143,7 @@ Napi::Value CreateHookApi(Napi::Env env, std::shared_ptr<Hook> hookInfo)
       Handler handler(handlerObj, minSelfId, maxSelfId, pattern);
       uint32_t id = hookInfo->AddHandler(handler);
 
-      return Napi::Number::New(env, id);
+      return Napi::Number::New(info.Env(), id);
     }));
 
   hook.Set(
@@ -161,7 +161,7 @@ Napi::Value EventsApi::GetHooks(Napi::Env env)
 {
   auto res = Napi::Object::New(env);
   for (auto& hook : { g.sendAnimationEvent, g.sendPapyrusEvent }) {
-    res.Set(hook->GetName(), CreateHookApi(hook));
+    res.Set(hook->GetName(), CreateHookApi(env, hook));
   }
   return res;
 }
@@ -172,10 +172,14 @@ Napi::Value Subscribe(const Napi::CallbackInfo& info, bool runOnce = false)
   auto eventName = NapiHelper::ExtractString(info[0], "eventName");
   auto callback = NapiHelper::ExtractFunction(info[1], "callback");
 
-  auto handle =
-    EventManager::GetSingleton()->Subscribe(eventName, callback, runOnce);
+  std::shared_ptr<Napi::Reference<Napi::Function>> callbackRef;
+  callbackRef.reset(
+    new Napi::Reference<Napi::Function>(Napi::Persistent(callback)));
 
-  auto obj = Napi::Object::New(env);
+  auto handle =
+    EventManager::GetSingleton()->Subscribe(eventName, callbackRef, runOnce);
+
+  auto obj = Napi::Object::New(info.Env());
   AddObjProperty(&obj, "uid", handle->uid);
   AddObjProperty(&obj, "eventName", handle->eventName);
 
@@ -196,12 +200,9 @@ Napi::Value EventsApi::Once(const Napi::CallbackInfo& info)
 Napi::Value EventsApi::Unsubscribe(const Napi::CallbackInfo& info)
 {
   auto obj = NapiHelper::ExtractObject(info[0], "obj");
-  auto jEventName =
-    NapiHelper::ExtractString(obj.Get("eventName"), "obj.eventName");
-  auto jUid = NapiHelper::ExtractUInt32(obj.Get("uid"), "obj.uid");
   auto eventName =
-    std::get<std::string>(NativeValueCasts::JsValueToNativeValue(jEventName));
-  auto uid = std::get<double>(NativeValueCasts::JsValueToNativeValue(jUid));
+    NapiHelper::ExtractString(obj.Get("eventName"), "obj.eventName");
+  auto uid = NapiHelper::ExtractUInt32(obj.Get("uid"), "obj.uid");
   EventManager::GetSingleton()->Unsubscribe(uid, eventName);
   return info.Env().Undefined();
 }

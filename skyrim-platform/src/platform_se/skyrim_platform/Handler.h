@@ -1,4 +1,5 @@
 #pragma once
+#include "HookPattern.h"
 
 // HandlerInfoPerThread structure is unique for each thread
 struct HandlerInfoPerThread
@@ -13,7 +14,7 @@ public:
   Handler();
 
   Handler(const Napi::Value& handler_, std::optional<double> minSelfId_,
-          std::optional<double> maxSelfId_, std::optional<Pattern> pattern_);
+          std::optional<double> maxSelfId_, std::optional<HookPattern> pattern_);
 
   bool Matches(uint32_t selfId, const std::string& eventName);
 
@@ -21,7 +22,7 @@ public:
 
   // Shared between threads
   const Napi::Reference<Napi::Function> enter, leave;
-  const std::optional<Pattern> pattern;
+  const std::optional<HookPattern> pattern;
   const std::optional<double> minSelfId;
   const std::optional<double> maxSelfId;
 };

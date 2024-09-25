@@ -1,5 +1,6 @@
 #include "Hook.h"
 #include "Handler.h"
+#include "SkyrimPlatform.h"
 
 Hook::Hook(std::string hookName_, std::string eventNameVariableName_,
            std::optional<std::string> succeededVariableName_)
@@ -67,7 +68,7 @@ void Hook::Enter(uint32_t selfId, std::string& eventName)
       auto err = std::string(e.what()) + " (while performing enter on '" +
         hookName + "')";
       SkyrimPlatform::GetSingleton()->AddUpdateTask(
-        [err] { throw std::runtime_error(err); });
+        [err](Napi::Env) { throw std::runtime_error(err); });
     }
   };
   SkyrimPlatform::GetSingleton()->PushAndWait(f);

@@ -9,5 +9,5 @@ Napi::Value GetContainer(const Napi::CallbackInfo& info);
 Napi::Value SetInventory(const Napi::CallbackInfo& info);
 Napi::Value CastSpellImmediate(const Napi::CallbackInfo& info);
 
-void Register(Napi::Env env, Napi::Value& exports);
+void Register(Napi::Env env, Napi::Object& exports);
 }

@@ -63,6 +63,8 @@ private:
 
 class CommonExecutionListener : public TickListener
 {
+  friend class SkyrimPlatform;
+
 public:
   CommonExecutionListener(std::shared_ptr<BrowserApi::State> browserApiState_)
     : nativeCallRequirements(g_nativeCallRequirements)
@@ -73,7 +75,8 @@ public:
   void Tick() override
   {
     try {
-      GetJsEngine();
+      auto engine = GetJsEngine();
+      auto env = engine->Env();
 
       auto& fileDirs = GetFileDirs();
 
@@ -107,7 +110,7 @@ public:
         }
       }
 
-      HttpClientApi::GetHttpClient().ExecuteQueuedCallbacks();
+      HttpClientApi::GetHttpClient().ExecuteQueuedCallbacks(env);
 
       EventsApi::SendEvent("tick", {});
     } catch (const std::exception& e) {
@@ -184,7 +187,7 @@ private:
     auto env = engine->Env();
     auto scriptSrc = Viet::ReadFileIntoString(path);
 
-    getSettings = [this](const Napi::CallbackInfo& info) {
+    getSettings = [this](const Napi::CallbackInfo& info) -> Napi::Value {
       if (!settingsByPluginNameCache) {
         auto result = Napi::Object::New(info.Env());
         for (const auto& [pluginName, settings] : settingsByPluginName) {
@@ -192,49 +195,51 @@ private:
           result.Set(pluginName, parsedSettings);
         }
         settingsByPluginNameCache.reset(
-          new Napi::Reference<Napi::Object>(Napi::Persistent(result)))
+          new Napi::Reference<Napi::Object>(Napi::Persistent(result)));
       }
-      return *settingsByPluginNameCache;
+      return (*settingsByPluginNameCache).Value();
     };
 
-    setSettings = [](const Napi::CallbackInfo& info) {
+    setSettings = [](const Napi::CallbackInfo& info) -> Napi::Value {
       throw std::runtime_error("settings setter not implemented");
+      return info.Env().Undefined();
     };
 
     // We will be able to use require()
     auto devApi = Napi::Object::New(env);
-    DevApi::Register(
-      devApi, engine,
-      { { "skyrimPlatform",
-          [this, engine](Napi::Object e) {
-            EncodingApi::Register(env, e);
-            LoadGameApi::Register(env, e);
-            CameraApi::Register(env, e);
-            MpClientPluginApi::Register(env, e);
-            HttpClientApi::Register(env, e);
-            ConsoleApi::Register(env, e);
-            DevApi::Register(e, engine, {}, GetFileDirs());
-            EventsApi::Register(env, e);
-            BrowserApi::Register(env, e, browserApiState);
-            Win32Api::Register(env, e);
-            FileInfoApi::Register(env, e);
-            TextApi::Register(env, e);
-            InventoryApi::Register(env, e);
-            ConstEnumApi::Register(env, e, engine);
-            CallNativeApi::Register(env, e,
-                                    [this] { return nativeCallRequirements; });
 
-            auto getter = NapiHelper::WrapCppExceptions(getSettings);
-            auto setter = NapiHelper::WrapCppExceptions(setSettings);
+    DevApi::NativeExportsMap nativeExportsMap;
 
-            Napi::PropertyDescriptor settingsProperty =
-              Napi::PropertyDescriptor::Accessor("settings", getter, setter);
-            e.DefineProperty(settingsProperty);
+    nativeExportsMap["skyrimPlatform"] = [this, engine](Napi::Object e) {
+      EncodingApi::Register(engine->Env(), e);
+      LoadGameApi::Register(engine->Env(), e);
+      CameraApi::Register(engine->Env(), e);
+      MpClientPluginApi::Register(engine->Env(), e);
+      HttpClientApi::Register(engine->Env(), e);
+      ConsoleApi::Register(engine->Env(), e);
+      DevApi::Register(engine->Env(), e, engine, {}, GetFileDirs());
+      EventsApi::Register(engine->Env(), e);
+      BrowserApi::Register(engine->Env(), e, browserApiState);
+      Win32Api::Register(engine->Env(), e);
+      FileInfoApi::Register(engine->Env(), e);
+      TextApi::Register(engine->Env(), e);
+      InventoryApi::Register(engine->Env(), e);
+      ConstEnumApi::Register(engine->Env(), e, engine);
+      CallNativeApi::Register(engine->Env(), e,
+                              [this] { return nativeCallRequirements; });
 
-            return SkyrimPlatformProxy::Attach(
-              e, [this] { return nativeCallRequirements; });
-          } } },
-      GetFileDirs());
+      auto getter = NapiHelper::WrapCppExceptions(getSettings);
+      auto setter = NapiHelper::WrapCppExceptions(setSettings);
+
+      Napi::PropertyDescriptor settingsProperty =
+        Napi::PropertyDescriptor::Accessor("settings", getter, setter);
+      e.DefineProperty(settingsProperty);
+
+      return SkyrimPlatformProxy::Attach(
+        e, [this] { return nativeCallRequirements; });
+    };
+
+    DevApi::Register(env, devApi, engine, nativeExportsMap, GetFileDirs());
 
     Napi::Object consoleApi = Napi::Object::New(env);
     ConsoleApi::Register(env, consoleApi);
@@ -305,6 +310,7 @@ typedef asio::executor_work_guard<asio::io_context::executor_type> SPWorkGuard;
 
 struct SkyrimPlatform::Impl
 {
+  std::shared_ptr<CommonExecutionListener> commonExecutionListener;
   std::shared_ptr<BrowserApi::State> browserApiState;
   std::vector<std::shared_ptr<TickListener>> tickListeners;
   Viet::TaskQueue<Napi::Env> tickTasks, updateTasks;
@@ -334,9 +340,11 @@ SkyrimPlatform::SkyrimPlatform()
   pImpl = std::make_shared<Impl>();
   pImpl->browserApiState = std::make_shared<BrowserApi::State>();
 
+  pImpl->commonExecutionListener =
+    std::make_shared<CommonExecutionListener>(pImpl->browserApiState);
+
   pImpl->tickListeners.push_back(std::make_shared<HelloTickListener>());
-  pImpl->tickListeners.push_back(
-    std::make_shared<CommonExecutionListener>(pImpl->browserApiState));
+  pImpl->tickListeners.push_back(pImpl->commonExecutionListener);
   pImpl->complete = false;
 }
 
@@ -376,14 +384,22 @@ void SkyrimPlatform::AddUpdateTask(const std::function<void(Napi::Env)>& f)
   pImpl->updateTasks.AddTask(f);
 }
 
-void SkyrimPlatform::PushAndWait(const std::function<void()>& f)
+void SkyrimPlatform::PushAndWait(const std::function<void(Napi::Env)>& f)
 {
-  pImpl->pool.PushAndWait(f);
+  pImpl->pool.PushAndWait([this, f] {
+    auto engine = pImpl->commonExecutionListener->GetJsEngine();
+    auto env = engine->Env();
+    f(env);
+  });
 }
 
-void SkyrimPlatform::Push(const std::function<void()>& f)
+void SkyrimPlatform::Push(const std::function<void(Napi::Env)>& f)
 {
-  pImpl->pool.Push(f);
+  pImpl->pool.Push([this, f] {
+    auto engine = pImpl->commonExecutionListener->GetJsEngine();
+    auto env = engine->Env();
+    f(env);
+  });
 }
 
 void SkyrimPlatform::PushToWorkerAndWait(

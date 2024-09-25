@@ -11,12 +11,12 @@ Napi::Value ToString(const Napi::CallbackInfo& info)
   auto nativeObj = NativeValueCasts::JsObjectToNativeObject(info[0]);
   std::stringstream ss;
   ss << "[object " << (nativeObj ? nativeObj->GetType() : "") << "]";
-  return ss.str();
+  return Napi::String::New(info.Env(), ss.str());
 }
 
 struct PoolEntry
 {
-  std::shared_ptr<Napi::Reference<Napi::Object>> object;
+  std::shared_ptr<Napi::Reference<Napi::External<NativeObject>>> object;
   const char* type = "";
   NativeObject* nativeObject = nullptr;
 };
@@ -35,7 +35,7 @@ CallNative::ObjectPtr NativeValueCasts::JsObjectToNativeObject(
     NativeObject* nativeObj = ext.Data();
 
     if (nativeObj) {
-      return nativeObj;
+      return nativeObj->Get();
     } else {
       throw std::runtime_error(
         "This JavaScript object does not contain a valid native object");
@@ -130,37 +130,39 @@ Napi::Value NativeValueCasts::NativeValueToJsValue(
   }
   return std::visit(
     overloaded{
-      [env](double v) { return Napi::Number::New(env, v); },
-      [env](bool v) { return Napi::Boolean::New(env, v); },
-      [env](const std::string& v) { return Napi::String::New(env, v); },
-      [env](const CallNative::ObjectPtr& v) {
+      [env](double v) -> Napi::Value { return Napi::Number::New(env, v); },
+      [env](bool v) -> Napi::Value { return Napi::Boolean::New(env, v); },
+      [env](const std::string& v) -> Napi::Value {
+        return Napi::String::New(env, v);
+      },
+      [env](const CallNative::ObjectPtr& v) -> Napi::Value {
         return NativeObjectToJsObject(env, v);
       },
-      [env](const std::vector<std::string>& v) {
+      [env](const std::vector<std::string>& v) -> Napi::Value {
         auto out = Napi::Array::New(env, v.size());
         for (size_t i = 0; i < v.size(); ++i) {
           out.Set(i, Napi::String::New(env, v[i]));
         }
         return out;
       },
-      [env](const std::vector<bool>& v) {
+      [env](const std::vector<bool>& v) -> Napi::Value {
         auto out = Napi::Array::New(env, v.size());
         for (size_t i = 0; i < v.size(); ++i) {
           out.Set(i, Napi::Boolean::New(env, v[i]));
         }
         return out;
       },
-      [env](const std::vector<double>& v) {
+      [env](const std::vector<double>& v) -> Napi::Value {
         auto out = Napi::Array::New(env, v.size());
         for (size_t i = 0; i < v.size(); ++i) {
           out.Set(i, Napi::Number::New(env, v[i]));
         }
         return out;
       },
-      [env](const std::vector<CallNative::ObjectPtr>& v) {
+      [env](const std::vector<CallNative::ObjectPtr>& v) -> Napi::Value {
         auto out = Napi::Array::New(env, v.size());
         for (size_t i = 0; i < v.size(); ++i) {
-          out.Set(i, NativeObjectToJsObject(v[i]));
+          out.Set(i, NativeObjectToJsObject(env, v[i]));
         }
         return out;
       },

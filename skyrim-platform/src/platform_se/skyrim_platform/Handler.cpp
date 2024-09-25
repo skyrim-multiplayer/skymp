@@ -1,11 +1,12 @@
 
 #include "Handler.h"
+#include "HookPattern.h"
 
 Handler::Handler() = default;
 
 Handler::Handler(const Napi::Value& handler_, std::optional<double> minSelfId_,
                  std::optional<double> maxSelfId_,
-                 std::optional<Pattern> pattern_)
+                 std::optional<HookPattern> pattern_)
   : enter(Napi::Persistent(
       handler_.As<Napi::Object>().Get("enter").As<Napi::Function>()))
   , leave(Napi::Persistent(
@@ -26,12 +27,12 @@ bool Handler::Matches(uint32_t selfId, const std::string& eventName)
   }
   if (pattern.has_value()) {
     switch (pattern->type) {
-      case PatternType::Exact:
+      case HookPatternType::Exact:
         return eventName == pattern->str;
-      case PatternType::StartsWith:
+      case HookPatternType::StartsWith:
         return eventName.size() >= pattern->str.size() &&
           !memcmp(eventName.data(), pattern->str.data(), pattern->str.size());
-      case PatternType::EndsWith:
+      case HookPatternType::EndsWith:
         return eventName.size() >= pattern->str.size() &&
           !memcmp(eventName.data() + (eventName.size() - pattern->str.size()),
                   pattern->str.data(), pattern->str.size());

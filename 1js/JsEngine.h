@@ -4,11 +4,11 @@
 #include <cstring>
 #include <fmt/ranges.h>
 #include <memory>
+#include <napi.h>
 #include <optional>
 #include <sstream>
 #include <string>
 #include <vector>
-#include <napi.h>
 
 class JsExternalObjectBase
 {
@@ -24,19 +24,18 @@ public:
   {
   }
 
-  ~JsEngine()
-  {
-    delete pImpl;
-  }
+  ~JsEngine() { delete pImpl; }
 
   Napi::Env Env()
   {
     // TODO
+    throw 1;
   }
 
   Napi::Value RunScript(const std::string& src, const std::string& fileName)
   {
     // TODO
+    throw 1;
   }
 
   void ResetContext(Viet::TaskQueue<Napi::Env>& taskQueue)
@@ -57,4 +56,3 @@ private:
 
   Impl* const pImpl;
 };
-

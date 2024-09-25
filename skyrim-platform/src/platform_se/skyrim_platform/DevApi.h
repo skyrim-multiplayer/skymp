@@ -21,7 +21,7 @@ Napi::Value BlockPapyrusEvents(const Napi::CallbackInfo& info);
 void DisableCtrlPrtScnHotkey();
 
 using NativeExportsMap =
-  std::map<std::string, std::function<Napi::Object(const Napi::Value&)>>;
+  std::map<std::string, std::function<Napi::Object(const Napi::Object&)>>;
 
 extern std::shared_ptr<JsEngine> jsEngine;
 extern NativeExportsMap nativeExportsMap;
