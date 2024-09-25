@@ -1,6 +1,7 @@
 #pragma once
 
 class Handler;
+struct HandlerInfoPerThread;
 
 class Hook
 {
@@ -24,11 +25,12 @@ public:
   void Leave(bool succeeded);
 
 private:
-  void HandleEnter(DWORD owningThread, uint32_t selfId, std::string& eventName, const Napi::Env& env);
+  void HandleEnter(DWORD owningThread, uint32_t selfId, std::string& eventName,
+                   const Napi::Env& env);
 
-  void PrepareContext(Handler::PerThread& h, const Napi::Env& env);
+  void PrepareContext(HandlerInfoPerThread& h, const Napi::Env& env);
 
-  void ClearContextStorage(Handler::PerThread& h, Napi::Env env);
+  void ClearContextStorage(HandlerInfoPerThread& h, Napi::Env env);
 
   void HandleLeave(DWORD owningThread, bool succeeded, Napi::Env env);
 

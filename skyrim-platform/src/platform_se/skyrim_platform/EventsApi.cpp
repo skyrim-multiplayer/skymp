@@ -11,46 +11,7 @@
 #include "ThreadPoolWrapper.h"
 #include "Hook.h"
 #include "Handler.h"
-
-namespace {
-enum class PatternType
-{
-  Exact,
-  StartsWith,
-  EndsWith
-};
-
-class Pattern
-{
-public:
-  static Pattern Parse(const std::string& str)
-  {
-    auto count = std::count(str.begin(), str.end(), '*');
-    if (count == 0) {
-      return { PatternType::Exact, str };
-    }
-    if (count > 1) {
-      throw std::runtime_error(
-        "Patterns can contain only one '*' at the beginning/end of string");
-    }
-
-    auto pos = str.find('*');
-    if (pos == 0) {
-      return { PatternType::EndsWith,
-               std::string(str.begin() + 1, str.end()) };
-    }
-    if (pos == str.size() - 1) {
-      return { PatternType::StartsWith,
-               std::string(str.begin(), str.end() - 1) };
-    }
-    throw std::runtime_error(
-      "In patterns '*' must be at the beginning/end of string");
-  }
-
-  PatternType type;
-  std::string str;
-};
-}
+#include "HookPattern.h"
 
 struct EventsGlobalState
 {
@@ -170,10 +131,10 @@ Napi::Value CreateHookApi(Napi::Env env, std::shared_ptr<Hook> hookInfo)
         maxSelfId = NapiHelper::ExtractDouble(info[2], "maxSelfId");
       }
 
-      std::optional<Pattern> pattern;
+      std::optional<HookPattern> pattern;
       if (info[3].IsString()) {
         auto s = NapiHelper::ExtractString(info[3], "pattern");
-        pattern = Pattern::Parse(s);
+        pattern = HookPattern::Parse(s);
       }
 
       Handler handler(handlerObj, minSelfId, maxSelfId, pattern);
