@@ -313,7 +313,7 @@ Napi::Value InventoryApi::SetInventory(const Napi::CallbackInfo& info)
     objects.push_back({ baseId, count, slot });
   }
 
-  g_nativeCallRequirements.gameThrQ->AddTask([formId, objects](Napi::Env env) {
+  g_nativeCallRequirements.gameThrQ->AddTask([formId, objects](Viet::Void) {
     RE::Actor* pActor = RE::TESForm::LookupByID<RE::Actor>(formId);
 
     if (!pActor) {

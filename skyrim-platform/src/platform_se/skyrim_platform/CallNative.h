@@ -49,7 +49,7 @@ struct Arguments
   const AnySafe* args;
   size_t numArgs;
   FunctionInfoProvider& provider;
-  Viet::TaskQueue<Napi::Env>& gameThrQ;
+  Viet::TaskQueue<Viet::Void>& gameThrQ;
   Viet::TaskQueue<Napi::Env>& jsThrQ;
   LatentCallback latentCallback;
 };

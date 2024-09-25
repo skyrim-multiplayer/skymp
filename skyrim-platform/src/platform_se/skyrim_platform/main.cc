@@ -4,7 +4,8 @@
 
 Napi::Object Init(Napi::Env env, Napi::Object exports)
 {
-  return ScampServer::Init(env, exports);
+  //return ScampServer::Init(env, exports);
+  return exports;
 }
 
 NODE_API_MODULE(scamp, Init)

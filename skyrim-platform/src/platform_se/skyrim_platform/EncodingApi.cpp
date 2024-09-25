@@ -47,7 +47,7 @@ Napi::Value EncodingApi::EncodeUtf8(const Napi::CallbackInfo& info)
   return arrayBuffer;
 }
 
-Napi::Value DecodeUtf8(const Napi::CallbackInfo& info)
+Napi::Value EncodingApi::DecodeUtf8(const Napi::CallbackInfo& info)
 {
   Napi::Env env = info.Env();
 

@@ -9,14 +9,15 @@ struct NativeCallRequirements
 {
   NativeCallRequirements()
   {
-    gameThrQ = std::make_shared<Viet::TaskQueue<Napi::Env>>();
+    gameThrQ = std::make_shared<Viet::TaskQueue<Viet::Void>>();
     jsThrQ = std::make_shared<Viet::TaskQueue<Napi::Env>>();
   }
 
   IVM* vm = nullptr;
   StackID stackId = std::numeric_limits<StackID>::max();
 
-  std::shared_ptr<Viet::TaskQueue<Napi::Env>> gameThrQ, jsThrQ;
+  std::shared_ptr<Viet::TaskQueue<Viet::Void>> gameThrQ;
+  std::shared_ptr<Viet::TaskQueue<Napi::Env>> jsThrQ;
 };
 
 // Version to be called from C++, but with Napi values (from

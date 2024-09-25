@@ -50,12 +50,12 @@ void OnUpdate(IVM* vm, StackID stackId)
   g_nativeCallRequirements.stackId = stackId;
   g_nativeCallRequirements.vm = vm;
   SkyrimPlatform::GetSingleton()->PrepareWorker();
-  SkyrimPlatform::GetSingleton()->Push([=] {
-    SkyrimPlatform::GetSingleton()->JsTick(true);
+  SkyrimPlatform::GetSingleton()->Push([=](Napi::Env env) {
+    SkyrimPlatform::GetSingleton()->JsTick(env, true);
     SkyrimPlatform::GetSingleton()->StopWorker();
   });
   SkyrimPlatform::GetSingleton()->StartWorker();
-  g_nativeCallRequirements.gameThrQ->Update();
+  g_nativeCallRequirements.gameThrQ->Update(Viet::Void());
   g_nativeCallRequirements.stackId = std::numeric_limits<StackID>::max();
   g_nativeCallRequirements.vm = nullptr;
 }
@@ -440,7 +440,7 @@ public:
         } catch (const std::exception&) {
           auto exception = std::current_exception();
           SkyrimPlatform::GetSingleton()->AddTickTask(
-            [exception = std::move(exception)] {
+            [exception = std::move(exception)](Napi::Env) {
               std::rethrow_exception(exception);
             });
         }

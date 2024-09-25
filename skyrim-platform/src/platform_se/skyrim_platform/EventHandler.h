@@ -103,9 +103,12 @@ public:
 
   static void SendSimpleEventOnUpdate(const char* eventName);
   static void SendSimpleEventOnTick(const char* eventName);
-  static void SendEventOnUpdate(const char* eventName,
-                                const Napi::Object& obj);
-  static void SendEventOnTick(const char* eventName, const Napi::Object& obj);
+  static void SendEventOnUpdate(
+    const char* eventName,
+    std::function<Napi::Object(Napi::Env)> objCreateFunction);
+  static void SendEventOnTick(
+    const char* eventName,
+    std::function<Napi::Object(Napi::Env)> objCreateFunction);
   static void SendEventConsoleMsg(const char* msg);
 
   void DeactivateAllSinks()

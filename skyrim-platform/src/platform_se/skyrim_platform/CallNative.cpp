@@ -300,7 +300,7 @@ CallNative::AnySafe CallNative::CallNativeSafe(Arguments& args_)
     std::vector<AnySafe> _args;
     for (auto it = args; it < args + numArgs; it++)
       _args.push_back(*it);
-    gameThrQ.AddTask([=](Napi::Env) { SendAnimationEvent::Run(_args); });
+    gameThrQ.AddTask([=](Viet::Void) { SendAnimationEvent::Run(_args); });
     return ObjectPtr();
   }
 
@@ -312,7 +312,7 @@ CallNative::AnySafe CallNative::CallNativeSafe(Arguments& args_)
 
     auto formId = rawSelf->GetFormID();
 
-    gameThrQ.AddTask([formId](Napi::Env) {
+    gameThrQ.AddTask([formId](Viet::Void) {
       if (auto refr = RE::TESForm::LookupByID<RE::TESObjectREFR>(formId)) {
         if (refr->GetFormID() == formId &&
             refr->GetFormType() == RE::FormType::Reference) {
@@ -327,7 +327,7 @@ CallNative::AnySafe CallNative::CallNativeSafe(Arguments& args_)
   bool isQueueNiNodeUpdate = !stricmp(classFunc.data(), "queueNiNodeUpdate");
   if (isQueueNiNodeUpdate) {
     CallNative::ObjectPtr _self = self;
-    gameThrQ.AddTask([_self](Napi::Env) {
+    gameThrQ.AddTask([_self](Viet::Void) {
       auto nativeActorPtr = (RE::Actor*)_self->GetNativeObjectPtr();
       if (!nativeActorPtr)
         throw NullPointerException("nativeActorPtr");
@@ -357,7 +357,7 @@ CallNative::AnySafe CallNative::CallNativeSafe(Arguments& args_)
     const auto targetActorId = nativeTargetActor->formID;
     const auto mag = static_cast<float>(std::get<double>(args_.args[1]));
 
-    gameThrQ.AddTask([mag, nativeTargetActor, targetActorId](Napi::Env) {
+    gameThrQ.AddTask([mag, nativeTargetActor, targetActorId](Viet::Void) {
       if (RE::TESForm::LookupByID<RE::Actor>(targetActorId) !=
           nativeTargetActor)
         return;

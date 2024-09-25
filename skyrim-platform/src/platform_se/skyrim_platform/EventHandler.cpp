@@ -28,18 +28,24 @@ void EventHandler::SendSimpleEventOnTick(const char* eventName)
     [eventName](Napi::Env) { SendEvent(eventName); });
 }
 
-void EventHandler::SendEventOnUpdate(const char* eventName,
-                                     const Napi::Object& obj)
+void EventHandler::SendEventOnUpdate(
+  const char* eventName,
+  std::function<Napi::Object(Napi::Env)> objCreateFunction)
 {
   SkyrimPlatform::GetSingleton()->AddUpdateTask(
-    [eventName, obj](Napi::Env) { SendEvent(eventName, obj); });
+    [eventName, objCreateFunction](Napi::Env env) {
+      SendEvent(eventName, objCreateFunction(env));
+    });
 }
 
-void EventHandler::SendEventOnTick(const char* eventName,
-                                   const Napi::Object& obj)
+void EventHandler::SendEventOnTick(
+  const char* eventName,
+  std::function<Napi::Object(Napi::Env)> objCreateFunction)
 {
   SkyrimPlatform::GetSingleton()->AddTickTask(
-    [eventName, obj](Napi::Env) { SendEvent(eventName, obj); });
+    [eventName, objCreateFunction](Napi::Env env) {
+      SendEvent(eventName, objCreateFunction(env));
+    });
 }
 
 void EventHandler::SendEventConsoleMsg(const char* msg)

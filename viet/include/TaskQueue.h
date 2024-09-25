@@ -13,7 +13,7 @@ template <class State = Viet::Void>
 class TaskQueue
 {
 public:
-  TaskQueue();
+  TaskQueue() = default;
 
   void AddTask(const std::function<void(const State&)>& task)
   {

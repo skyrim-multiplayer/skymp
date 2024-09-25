@@ -14,7 +14,7 @@ void InGameConsolePrinter::Print(const Napi::CallbackInfo& info)
     Napi::Value str = info[i];
 
     if (info[i].IsObject() && !info[i].IsExternal()) {
-      Napi::Object global = env.Global();
+      Napi::Object global = info.Env().Global();
       Napi::Object json = global.Get("JSON").As<Napi::Object>();
       Napi::Function stringify = json.Get("stringify").As<Napi::Function>();
       str = stringify.Call(json, { info[i] });
