@@ -664,15 +664,6 @@ void TESModPlatform::AddItemEx(
     return;
   }
 
-  auto tuple = std::make_tuple(
-    containerRefr->formID, item, health, enchantment, maxCharge,
-    removeEnchantmentOnUnequip, chargePercent,
-    (std::string)textDisplayData.data(), soul, poison, poisonCount);
-
-  using Tuple = decltype(tuple);
-
-  thread_local std::map<Tuple, RE::ExtraDataList*> g_lastEquippedExtraList[2];
-
   RE::ExtraDataList* extraList = nullptr;
 
   const bool isShieldLike =
@@ -685,35 +676,12 @@ void TESModPlatform::AddItemEx(
     (item->formType == RE::FormType::Armor && !isShieldLike) ||
     item->formType == RE::FormType::Light;
 
-  // Our extra-less items support is disgusting! EquipItem crashes when we try
-  // an iron sword. This hack saves our slav lives
-  if (item->formType != RE::FormType::Ammo && health <= 1)
-    health = 1.01f;
-
   if (health > 1 || enchantment || chargePercent > 0 ||
       strlen(textDisplayData.data()) > 0 || (soul > 0 && soul <= 5) ||
-      poison || g_worn || g_wornLeft) {
+      poison) {
     extraList = CreateExtraDataList();
 
     auto extraList_ = reinterpret_cast<void*>(extraList);
-
-    if (g_worn) {
-      if (isClothes) {
-        auto extra = reinterpret_cast<RE::BSExtraData*>(
-          new MyExtra<RE::ExtraDataType::kWorn>);
-        addExtra(extraList_, static_cast<uint32_t>(RE::ExtraDataType::kWorn),
-                 extra);
-      }
-    }
-
-    if (g_wornLeft) {
-      if (isClothes) {
-        auto extra = reinterpret_cast<RE::BSExtraData*>(
-          new MyExtra<RE::ExtraDataType::kWornLeft>);
-        addExtra(extraList_,
-                 static_cast<uint32_t>(RE::ExtraDataType::kWornLeft), extra);
-      }
-    }
 
     if (health > 1) {
       addExtra(extraList_, static_cast<uint32_t>(RE::ExtraDataType::kHealth),
@@ -804,7 +772,6 @@ void TESModPlatform::AddItemEx(
         }
 
         if (countDelta > 0) {
-          g_lastEquippedExtraList[g_worn ? false : true][tuple] = extraList;
           g_nativeCallRequirements.gameThrQ->AddTask([=](Napi::Env) {
             if (actor != (void*)RE::TESForm::LookupByID(refrId))
               return;
