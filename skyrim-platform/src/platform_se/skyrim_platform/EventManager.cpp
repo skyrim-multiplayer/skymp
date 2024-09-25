@@ -61,7 +61,9 @@ void EventManager::Init()
 }
 
 std::unique_ptr<EventHandle> EventManager::Subscribe(
-  const std::string& eventName, const std::shared_ptr<Napi::Reference<Napi::Function>>& callback, bool runOnce)
+  const std::string& eventName,
+  const std::shared_ptr<Napi::Reference<Napi::Function>>& callback,
+  bool runOnce)
 {
   // check if event is supported
   auto event = events[eventName];

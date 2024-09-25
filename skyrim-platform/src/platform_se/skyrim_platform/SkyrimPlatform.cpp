@@ -184,56 +184,57 @@ private:
     auto env = engine->Env();
     auto scriptSrc = Viet::ReadFileIntoString(path);
 
-    getSettings = [this](const Napi::CallbackInfo &info) {
+    getSettings = [this](const Napi::CallbackInfo& info) {
       if (!settingsByPluginNameCache) {
         auto result = Napi::Object::New(info.Env());
         for (const auto& [pluginName, settings] : settingsByPluginName) {
           auto parsedSettings = NapiHelper::ParseJson(info.Env(), settings);
           result.Set(pluginName, parsedSettings);
         }
-        settingsByPluginNameCache.reset(new Napi::Reference<Napi::Object>(Napi::Persistent(result)))
+        settingsByPluginNameCache.reset(
+          new Napi::Reference<Napi::Object>(Napi::Persistent(result)))
       }
       return *settingsByPluginNameCache;
     };
 
-    setSettings = [](const Napi::CallbackInfo &info) {
+    setSettings = [](const Napi::CallbackInfo& info) {
       throw std::runtime_error("settings setter not implemented");
     };
 
     // We will be able to use require()
     auto devApi = Napi::Object::New(env);
-    DevApi::Register(devApi, engine,
-                     { { "skyrimPlatform",
-                         [this, engine](Napi::Object e) {
-                           EncodingApi::Register(env, e);
-                           LoadGameApi::Register(env, e);
-                           CameraApi::Register(env, e);
-                           MpClientPluginApi::Register(env, e);
-                           HttpClientApi::Register(env, e);
-                           ConsoleApi::Register(env, e);
-                           DevApi::Register(e, engine, {}, GetFileDirs());
-                           EventsApi::Register(env, e);
-                           BrowserApi::Register(env, e, browserApiState);
-                           Win32Api::Register(env, e);
-                           FileInfoApi::Register(env, e);
-                           TextApi::Register(env, e);
-                           InventoryApi::Register(env, e);
-                           ConstEnumApi::Register(env, e, engine);
-                           CallNativeApi::Register(
-                             env, e, [this] { return nativeCallRequirements; });
+    DevApi::Register(
+      devApi, engine,
+      { { "skyrimPlatform",
+          [this, engine](Napi::Object e) {
+            EncodingApi::Register(env, e);
+            LoadGameApi::Register(env, e);
+            CameraApi::Register(env, e);
+            MpClientPluginApi::Register(env, e);
+            HttpClientApi::Register(env, e);
+            ConsoleApi::Register(env, e);
+            DevApi::Register(e, engine, {}, GetFileDirs());
+            EventsApi::Register(env, e);
+            BrowserApi::Register(env, e, browserApiState);
+            Win32Api::Register(env, e);
+            FileInfoApi::Register(env, e);
+            TextApi::Register(env, e);
+            InventoryApi::Register(env, e);
+            ConstEnumApi::Register(env, e, engine);
+            CallNativeApi::Register(env, e,
+                                    [this] { return nativeCallRequirements; });
 
-                          auto getter = NapiHelper::WrapCppExceptions(getSettings);
-                          auto setter = NapiHelper::WrapCppExceptions(setSettings);
+            auto getter = NapiHelper::WrapCppExceptions(getSettings);
+            auto setter = NapiHelper::WrapCppExceptions(setSettings);
 
-                          Napi::PropertyDescriptor settingsProperty = Napi::PropertyDescriptor::Accessor(
-                            "settings", getter, setter
-                          );
-                          e.DefineProperty(settingsProperty);
+            Napi::PropertyDescriptor settingsProperty =
+              Napi::PropertyDescriptor::Accessor("settings", getter, setter);
+            e.DefineProperty(settingsProperty);
 
-                           return SkyrimPlatformProxy::Attach(
-                             e, [this] { return nativeCallRequirements; });
-                         } } },
-                     GetFileDirs());
+            return SkyrimPlatformProxy::Attach(
+              e, [this] { return nativeCallRequirements; });
+          } } },
+      GetFileDirs());
 
     Napi::Object consoleApi = Napi::Object::New(env);
     ConsoleApi::Register(env, consoleApi);
@@ -294,7 +295,8 @@ private:
   std::unordered_map<std::string, std::string> settingsByPluginName;
   std::unique_ptr<Napi::Reference<Napi::Object>> settingsByPluginNameCache;
   std::shared_ptr<BrowserApi::State> browserApiState;
-  std::function<Napi::Value(const Napi::CallbackInfo &info)> getSettings, setSettings;
+  std::function<Napi::Value(const Napi::CallbackInfo& info)> getSettings,
+    setSettings;
   mutable std::unique_ptr<std::vector<std::filesystem::path>> pluginFolders;
 };
 }
@@ -351,7 +353,8 @@ void SkyrimPlatform::JsTick(Napi::Env env, bool gameFunctionsAvailable)
   }
 
   try {
-    (gameFunctionsAvailable ? pImpl->updateTasks : pImpl->tickTasks).Update(env);
+    (gameFunctionsAvailable ? pImpl->updateTasks : pImpl->tickTasks)
+      .Update(env);
   } catch (const std::exception& e) {
     ExceptionPrinter::Print(e);
   }

@@ -1,6 +1,6 @@
 #include "Win32Api.h"
 
-Napi::Value Win32Api::LoadUrl(const Napi::CallbackInfo &info)
+Napi::Value Win32Api::LoadUrl(const Napi::CallbackInfo& info)
 {
   auto str = NapiHelper::ExtractString(info[0], "url");
   if (str.substr(0, 8) != "https://") {
@@ -15,7 +15,7 @@ Napi::Value Win32Api::LoadUrl(const Napi::CallbackInfo &info)
   return info.Env().Undefined();
 }
 
-Napi::Value Win32Api::ExitProcess(const Napi::CallbackInfo &info)
+Napi::Value Win32Api::ExitProcess(const Napi::CallbackInfo& info)
 {
   std::exit(0);
   return info.Env().Undefined();

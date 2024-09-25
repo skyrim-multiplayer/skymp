@@ -25,9 +25,9 @@ Napi::Value ToJsValue(Napi::Env env, RE::ExtraCount& extra)
 Napi::Value ToJsValue(Napi::Env env, RE::ExtraEnchantment& extra)
 {
   auto res = Napi::Object::New(env);
-  res.Set(
-    "enchantmentId",
-    Napi::Number::New(env, (extra.enchantment ? extra.enchantment->formID : 0)));
+  res.Set("enchantmentId",
+          Napi::Number::New(
+            env, (extra.enchantment ? extra.enchantment->formID : 0)));
   res.Set("maxCharge", extra.charge);
   res.Set("type", Napi::String::New(env, "Enchantment"));
   return res;
@@ -60,8 +60,8 @@ Napi::Value ToJsValue(Napi::Env env, RE::ExtraSoul& extra)
 Napi::Value ToJsValue(Napi::Env env, RE::ExtraPoison& extra)
 {
   auto res = Napi::Object::New(env);
-  res.Set(
-    "poisonId", Napi::Number::New(env, (extra.poison ? extra.poison->formID : 0)));
+  res.Set("poisonId",
+          Napi::Number::New(env, (extra.poison ? extra.poison->formID : 0)));
   res.Set(
     "count",
     Napi::Number::New(env, (reinterpret_cast<RE::ExtraPoison&>(extra).count)));
@@ -95,12 +95,13 @@ Napi::Value ToJsValue(Napi::Env env, RE::BSExtraData* extraData)
       case RE::ExtraDataType::kCount:
         return ToJsValue(env, *reinterpret_cast<RE::ExtraCount*>(extraData));
       case RE::ExtraDataType::kEnchantment:
-        return ToJsValue(env, *reinterpret_cast<RE::ExtraEnchantment*>(extraData));
+        return ToJsValue(env,
+                         *reinterpret_cast<RE::ExtraEnchantment*>(extraData));
       case RE::ExtraDataType::kCharge:
         return ToJsValue(env, *reinterpret_cast<RE::ExtraCharge*>(extraData));
       case RE::ExtraDataType::kTextDisplayData:
-        return ToJsValue(env,
-          *reinterpret_cast<RE::ExtraTextDisplayData*>(extraData));
+        return ToJsValue(
+          env, *reinterpret_cast<RE::ExtraTextDisplayData*>(extraData));
       case RE::ExtraDataType::kSoul:
         return ToJsValue(env, *reinterpret_cast<RE::ExtraSoul*>(extraData));
       case RE::ExtraDataType::kPoison:
@@ -108,7 +109,8 @@ Napi::Value ToJsValue(Napi::Env env, RE::BSExtraData* extraData)
       case RE::ExtraDataType::kWorn:
         return ToJsValue(env, *reinterpret_cast<RE::ExtraWorn*>(extraData));
       case RE::ExtraDataType::kWornLeft:
-        return ToJsValue(env, *reinterpret_cast<RE::ExtraWornLeft*>(extraData));
+        return ToJsValue(env,
+                         *reinterpret_cast<RE::ExtraWornLeft*>(extraData));
     }
   }
   return env.Undefined();
@@ -138,7 +140,8 @@ Napi::Value ToJsValue(Napi::Env env, RE::ExtraDataList* extraList)
   return resultArray;
 }
 
-Napi::Value ToJsValue(Napi::Env env, RE::BSSimpleList<RE::ExtraDataList*>* extendDataList)
+Napi::Value ToJsValue(Napi::Env env,
+                      RE::BSSimpleList<RE::ExtraDataList*>* extendDataList)
 {
   if (!extendDataList) {
     return env.Null();
@@ -156,9 +159,11 @@ Napi::Value ToJsValue(Napi::Env env, RE::BSSimpleList<RE::ExtraDataList*>* exten
 }
 }
 
-Napi::Value InventoryApi::GetExtraContainerChanges(const Napi::CallbackInfo &info)
+Napi::Value InventoryApi::GetExtraContainerChanges(
+  const Napi::CallbackInfo& info)
 {
-  auto objectReferenceId = NapiHelper::ExtractUInt32(info[0], "objectReferenceId");
+  auto objectReferenceId =
+    NapiHelper::ExtractUInt32(info[0], "objectReferenceId");
 
   auto refr = RE::TESForm::LookupByID<RE::TESObjectREFR>(objectReferenceId);
   if (!refr ||
@@ -192,7 +197,7 @@ Napi::Value InventoryApi::GetExtraContainerChanges(const Napi::CallbackInfo &inf
   return res;
 }
 
-Napi::Value InventoryApi::GetContainer(const Napi::CallbackInfo &info)
+Napi::Value InventoryApi::GetContainer(const Napi::CallbackInfo& info)
 {
   auto formID = NapiHelper::ExtractUInt32(info[0], "formId");
   auto form = RE::TESForm::LookupByID<RE::TESObjectREFR>(formID);
@@ -213,7 +218,8 @@ Napi::Value InventoryApi::GetContainer(const Napi::CallbackInfo &info)
     auto e = pContainer->containerObjects[i];
     auto jEntry = Napi::Object::New(info.Env());
     jEntry.Set("count", Napi::Number::New(info.Env(), e->count));
-    jEntry.Set("baseId", Napi::Number::New(info.Env(), e->obj ? e->obj->formID : 0));
+    jEntry.Set("baseId",
+               Napi::Number::New(info.Env(), e->obj ? e->obj->formID : 0));
     res.Set(i, jEntry);
   }
 
@@ -235,12 +241,13 @@ enum EquipSlot
 };
 }
 
-Napi::Value InventoryApi::SetInventory(const Napi::CallbackInfo &info)
+Napi::Value InventoryApi::SetInventory(const Napi::CallbackInfo& info)
 {
   double formId = NapiHelper::ExtractDouble(info[0], "formId");
   Napi::Object inventory = NapiHelper::ExtractObject(info[1], "inv");
 
-  Napi::Array entries = NapiHelper::ExtractArray(inventory.Get("entries"), "inv.entries");
+  Napi::Array entries =
+    NapiHelper::ExtractArray(inventory.Get("entries"), "inv.entries");
 
   const int size = entries.Length();
   RE::Actor* pActor = RE::TESForm::LookupByID<RE::Actor>(formId);
@@ -254,8 +261,10 @@ Napi::Value InventoryApi::SetInventory(const Napi::CallbackInfo &info)
   objects.reserve(size);
 
   for (int i = 0; i < size; ++i) {
-    Napi::Object entry = NapiHelper::ExtractObject(entries.Get(i), fmt::format("inv.entries[{}]", i));
-    double baseId = NapiHelper::ExtractDouble(entry.Get("baseId"), fmt::format("inv.entries[{}].baseId", i));
+    Napi::Object entry = NapiHelper::ExtractObject(
+      entries.Get(i), fmt::format("inv.entries[{}]", i));
+    double baseId = NapiHelper::ExtractDouble(
+      entry.Get("baseId"), fmt::format("inv.entries[{}].baseId", i));
 
     const RE::TESBoundObject* pBoundObject =
       RE::TESForm::LookupByID<RE::TESBoundObject>(baseId);
@@ -264,28 +273,29 @@ Napi::Value InventoryApi::SetInventory(const Napi::CallbackInfo &info)
       continue;
     }
 
-    int count = NapiHelper::ExtractInt32(entry.Get("count"), fmt::format("inv.entries[{}].count", i));
+    int count = NapiHelper::ExtractInt32(
+      entry.Get("count"), fmt::format("inv.entries[{}].count", i));
 
-    const bool worn =
-      (!entry.Get("worn").IsUndefined())
-      ? NapiHelper::ExtractBoolean(entry.Get("worn"), fmt::format("inv.entries[{}].worn", i));
+    const bool worn = (!entry.Get("worn").IsUndefined())
+      ? NapiHelper::ExtractBoolean(entry.Get("worn"),
+                                   fmt::format("inv.entries[{}].worn", i));
       : false;
 
-    const bool wornLeft =
-      (!entry.Get("wornLeft").IsUndefined())
-      ? NapiHelper::ExtractBoolean(entry.Get("wornLeft"), fmt::format("inv.entries[{}].wornLeft", i));
+      const bool wornLeft = (!entry.Get("wornLeft").IsUndefined())
+        ? NapiHelper::ExtractBoolean(
+            entry.Get("wornLeft"), fmt::format("inv.entries[{}].wornLeft", i));
       : false;
 
-    RE::BGSEquipSlot* slot = nullptr;
+      RE::BGSEquipSlot* slot = nullptr;
 
-    if (worn || wornLeft) {
-      slot = worn ? static_cast<RE::BGSEquipSlot*>(
-                      RE::TESForm::LookupByID(EquipSlot::RightHand))
-                  : static_cast<RE::BGSEquipSlot*>(
-                      RE::TESForm::LookupByID(EquipSlot::LeftHand));
-    }
+      if (worn || wornLeft) {
+        slot = worn ? static_cast<RE::BGSEquipSlot*>(
+                        RE::TESForm::LookupByID(EquipSlot::RightHand))
+                    : static_cast<RE::BGSEquipSlot*>(
+                        RE::TESForm::LookupByID(EquipSlot::LeftHand));
+      }
 
-    objects.push_back({ baseId, count, slot });
+      objects.push_back({ baseId, count, slot });
   }
 
   g_nativeCallRequirements.gameThrQ->AddTask([formId, objects]() {
@@ -316,13 +326,13 @@ Napi::Value InventoryApi::SetInventory(const Napi::CallbackInfo &info)
   return info.Env().Undefined();
 }
 
-Napi::Value InventoryApi::CastSpellImmediate(const Napi::CallbackInfo &info)
+Napi::Value InventoryApi::CastSpellImmediate(const Napi::CallbackInfo& info)
 {
-  RE::Actor* pActor =
-    RE::TESForm::LookupByID<RE::Actor>(NapiHelper::ExtractUInt32(info[0], "formId"));
+  RE::Actor* pActor = RE::TESForm::LookupByID<RE::Actor>(
+    NapiHelper::ExtractUInt32(info[0], "formId"));
 
-  const auto castingSource =
-    static_cast<RE::MagicSystem::CastingSource>(NapiHelper::ExtractInt32(info[1], "castingSource"));
+  const auto castingSource = static_cast<RE::MagicSystem::CastingSource>(
+    NapiHelper::ExtractInt32(info[1], "castingSource"));
 
   const auto formIdSpell =
     reinterpret_cast<RE::MagicItem*>(RE::TESForm::LookupByID(
@@ -366,9 +376,15 @@ Napi::Value InventoryApi::CastSpellImmediate(const Napi::CallbackInfo &info)
 void InventoryApi::Register(Napi::Env env, Napi::Object& exports)
 {
   exports.Set("getExtraContainerChanges",
-                      Napi::Function::New(env, NapiHelper::WrapCppExceptions(GetExtraContainerChanges)));
-  exports.Set("getContainer", Napi::Function::New(env, NapiHelper::WrapCppExceptions(GetContainer)));
-  exports.Set("setInventory", Napi::Function::New(env, NapiHelper::WrapCppExceptions(SetInventory)));
+              Napi::Function::New(
+                env, NapiHelper::WrapCppExceptions(GetExtraContainerChanges)));
+  exports.Set(
+    "getContainer",
+    Napi::Function::New(env, NapiHelper::WrapCppExceptions(GetContainer)));
+  exports.Set(
+    "setInventory",
+    Napi::Function::New(env, NapiHelper::WrapCppExceptions(SetInventory)));
   exports.Set("castSpellImmediate",
-                      Napi::Function::New(env, NapiHelper::WrapCppExceptions(CastSpellImmediate)));
+              Napi::Function::New(
+                env, NapiHelper::WrapCppExceptions(CastSpellImmediate)));
 }

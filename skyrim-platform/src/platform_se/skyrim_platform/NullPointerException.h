@@ -4,7 +4,7 @@ class NullPointerException : public std::runtime_error
 {
 public:
   NullPointerException(const char* varName)
-    : runtime_error(What(varName)){};
+    : runtime_error(What(varName)) {};
 
 private:
   static std::string What(const char* varName)

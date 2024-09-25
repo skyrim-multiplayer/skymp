@@ -49,9 +49,8 @@ CallNative::ObjectPtr NativeValueCasts::JsObjectToNativeObject(
   }
 }
 
-
-Napi::Value NativeValueCasts::NativeObjectToJsObject(Napi::Env env,
-  const CallNative::ObjectPtr& obj)
+Napi::Value NativeValueCasts::NativeObjectToJsObject(
+  Napi::Env env, const CallNative::ObjectPtr& obj)
 {
   if (!obj) {
     return env.Null();
@@ -74,10 +73,8 @@ Napi::Value NativeValueCasts::NativeObjectToJsObject(Napi::Env env,
     poolEntry.object.reset(new Napi::Reference(Napi::Persistent(newExternal)));
     poolEntry.type = obj->GetType();
     poolEntry.nativeObject = nativeObject;
-    auto toJson =
-      env.Null(); // Called by JSON.stringify if callable
-    NativeObjectProxy::Attach(newExternal, obj->GetType(), toString,
-                              toJson);
+    auto toJson = env.Null(); // Called by JSON.stringify if callable
+    NativeObjectProxy::Attach(newExternal, obj->GetType(), toString, toJson);
   }
   poolEntry.nativeObject->papyrusUpdateId = numPapyrusUpdates;
 
@@ -101,7 +98,8 @@ Napi::Value NativeValueCasts::NativeObjectToJsObject(Napi::Env env,
   return poolEntry.object->Value();
 }
 
-CallNative::AnySafe NativeValueCasts::JsValueToNativeValue(const Napi::Value& v)
+CallNative::AnySafe NativeValueCasts::JsValueToNativeValue(
+  const Napi::Value& v)
 {
   // TODO: better switch(v.Type())
   if (v.IsBoolean()) {
@@ -121,10 +119,11 @@ CallNative::AnySafe NativeValueCasts::JsValueToNativeValue(const Napi::Value& v)
   }
 
   throw std::runtime_error("Unsupported JavaScript type (" +
-                            std::to_string((int)v.Type()) + ")");
+                           std::to_string((int)v.Type()) + ")");
 }
 
-Napi::Value NativeValueCasts::NativeValueToJsValue(Napi::Env env, const CallNative::AnySafe& v)
+Napi::Value NativeValueCasts::NativeValueToJsValue(
+  Napi::Env env, const CallNative::AnySafe& v)
 {
   if (v.valueless_by_exception()) {
     return env.Null();
@@ -134,7 +133,9 @@ Napi::Value NativeValueCasts::NativeValueToJsValue(Napi::Env env, const CallNati
       [env](double v) { return Napi::Number::New(env, v); },
       [env](bool v) { return Napi::Boolean::New(env, v); },
       [env](const std::string& v) { return Napi::String::New(env, v); },
-      [env](const CallNative::ObjectPtr& v) { return NativeObjectToJsObject(env, v); },
+      [env](const CallNative::ObjectPtr& v) {
+        return NativeObjectToJsObject(env, v);
+      },
       [env](const std::vector<std::string>& v) {
         auto out = Napi::Array::New(env, v.size());
         for (size_t i = 0; i < v.size(); ++i) {

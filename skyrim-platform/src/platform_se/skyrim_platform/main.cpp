@@ -451,21 +451,24 @@ public:
                          const CefRefPtr<CefListValue>& arguments_)
       {
         auto arguments = arguments_->Copy();
-        SkyrimPlatform::GetSingleton()->AddTickTask([name, arguments](Napi::Env env) {
-          auto length = static_cast<uint32_t>(arguments->GetSize());
-          auto argumentsArray = Napi::Array::New(env, length);
-          for (uint32_t i = 0; i < length; ++i) {
-            argumentsArray.Set(i, CefValueToJsValue(env, arguments->GetValue(i)));
-          }
+        SkyrimPlatform::GetSingleton()->AddTickTask(
+          [name, arguments](Napi::Env env) {
+            auto length = static_cast<uint32_t>(arguments->GetSize());
+            auto argumentsArray = Napi::Array::New(env, length);
+            for (uint32_t i = 0; i < length; ++i) {
+              argumentsArray.Set(
+                i, CefValueToJsValue(env, arguments->GetValue(i)));
+            }
 
-          auto browserMessageEvent = Napi::Object::New(env);
-          browserMessageEvent.Set("arguments", argumentsArray);
-          EventsApi::SendEvent("browserMessage",
-                               { env.Undefined(), browserMessageEvent });
-        });
+            auto browserMessageEvent = Napi::Object::New(env);
+            browserMessageEvent.Set("arguments", argumentsArray);
+            EventsApi::SendEvent("browserMessage",
+                                 { env.Undefined(), browserMessageEvent });
+          });
       }
 
-      static Napi::Value CefValueToJsValue(Napi::Env env, const CefRefPtr<CefValue>& cefValue)
+      static Napi::Value CefValueToJsValue(Napi::Env env,
+                                           const CefRefPtr<CefValue>& cefValue)
       {
         switch (cefValue->GetType()) {
           case VTYPE_NULL:

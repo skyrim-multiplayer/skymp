@@ -26,7 +26,9 @@ struct SinkObject
 
 struct CallbackObject
 {
-  CallbackObject(const std::shared_ptr<Napi::Reference<Napi::Function>>& _callback, bool _runOnce)
+  CallbackObject(
+    const std::shared_ptr<Napi::Reference<Napi::Function>>& _callback,
+    bool _runOnce)
     : callback(_callback)
     , runOnce(_runOnce)
   {
@@ -64,9 +66,10 @@ public:
   static void Init();
   static void InitCustom();
 
-  std::unique_ptr<EventHandle> Subscribe(const std::string& eventName,
-                                         const std::shared_ptr<Napi::Reference<Napi::Function>>& callback,
-                                         bool runOnce);
+  std::unique_ptr<EventHandle> Subscribe(
+    const std::string& eventName,
+    const std::shared_ptr<Napi::Reference<Napi::Function>>& callback,
+    bool runOnce);
 
   void Unsubscribe(uintptr_t uid, const std::string_view& eventName);
 

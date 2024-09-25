@@ -103,7 +103,8 @@ public:
 
   static void SendSimpleEventOnUpdate(const char* eventName);
   static void SendSimpleEventOnTick(const char* eventName);
-  static void SendEventOnUpdate(const char* eventName, const Napi::Object& obj);
+  static void SendEventOnUpdate(const char* eventName,
+                                const Napi::Object& obj);
   static void SendEventOnTick(const char* eventName, const Napi::Object& obj);
   static void SendEventConsoleMsg(const char* msg);
 

@@ -1,6 +1,9 @@
 #include "EventsApi.h"
 #include "EventManager.h"
 #include "ExceptionPrinter.h"
+#include "Handler.h"
+#include "Hook.h"
+#include "HookPattern.h"
 #include "IPC.h"
 #include "InvalidArgumentException.h"
 #include "JsUtils.h"
@@ -9,9 +12,6 @@
 #include "NullPointerException.h"
 #include "SkyrimPlatform.h"
 #include "ThreadPoolWrapper.h"
-#include "Hook.h"
-#include "Handler.h"
-#include "HookPattern.h"
 
 struct EventsGlobalState
 {
@@ -23,7 +23,9 @@ struct EventsGlobalState
       new Hook("sendPapyrusEvent", "papyrusEventName", std::nullopt));
   }
 
-  using Callbacks = std::map<std::string, std::vector<std::shared_ptr<Napi::Reference<Napi::Function>>>>;
+  using Callbacks =
+    std::map<std::string,
+             std::vector<std::shared_ptr<Napi::Reference<Napi::Function>>>>;
   Callbacks callbacks;
   Callbacks callbacksOnce;
   std::shared_ptr<Hook> sendAnimationEvent;
@@ -118,7 +120,8 @@ Napi::Value CreateHookApi(Napi::Env env, std::shared_ptr<Hook> hookInfo)
 {
   auto hook = Napi::Object::New(env);
   hook.Set(
-    "add", Napi::Function::New(env, [hookInfo](const Napi::CallbackInfo &info) {
+    "add",
+    Napi::Function::New(env, [hookInfo](const Napi::CallbackInfo& info) {
       auto handlerObj = NapiHelper::ExtractObject(info[0], "handlerObj");
 
       std::optional<double> minSelfId;
@@ -144,7 +147,8 @@ Napi::Value CreateHookApi(Napi::Env env, std::shared_ptr<Hook> hookInfo)
     }));
 
   hook.Set(
-    "remove", Napi::Function::New(env, [hookInfo](const Napi::CallbackInfo &info) {
+    "remove",
+    Napi::Function::New(env, [hookInfo](const Napi::CallbackInfo& info) {
       uint32_t toRemove = NapiHelper::ExtractUInt32(info[0], "toRemove");
       hookInfo->RemoveHandler(toRemove);
       return info.Env().Undefined();
@@ -163,7 +167,7 @@ Napi::Value EventsApi::GetHooks(Napi::Env env)
 }
 
 namespace {
-Napi::Value Subscribe(const Napi::CallbackInfo &info, bool runOnce = false)
+Napi::Value Subscribe(const Napi::CallbackInfo& info, bool runOnce = false)
 {
   auto eventName = NapiHelper::ExtractString(info[0], "eventName");
   auto callback = NapiHelper::ExtractFunction(info[1], "callback");
@@ -179,48 +183,53 @@ Napi::Value Subscribe(const Napi::CallbackInfo &info, bool runOnce = false)
 }
 }
 
-Napi::Value EventsApi::On(const Napi::CallbackInfo &info)
+Napi::Value EventsApi::On(const Napi::CallbackInfo& info)
 {
   return Subscribe(info);
 }
 
-Napi::Value EventsApi::Once(const Napi::CallbackInfo &info)
+Napi::Value EventsApi::Once(const Napi::CallbackInfo& info)
 {
   return Subscribe(info, true);
 }
 
-Napi::Value EventsApi::Unsubscribe(const Napi::CallbackInfo &info)
+Napi::Value EventsApi::Unsubscribe(const Napi::CallbackInfo& info)
 {
   auto obj = NapiHelper::ExtractObject(info[0], "obj");
-  auto jEventName = NapiHelper::ExtractString(obj.Get("eventName"), "obj.eventName");
+  auto jEventName =
+    NapiHelper::ExtractString(obj.Get("eventName"), "obj.eventName");
   auto jUid = NapiHelper::ExtractUInt32(obj.Get("uid"), "obj.uid");
-  auto eventName = std::get<std::string>(
-    NativeValueCasts::JsValueToNativeValue(jEventName));
-  auto uid = std::get<double>(
-    NativeValueCasts::JsValueToNativeValue(jUid));
+  auto eventName =
+    std::get<std::string>(NativeValueCasts::JsValueToNativeValue(jEventName));
+  auto uid = std::get<double>(NativeValueCasts::JsValueToNativeValue(jUid));
   EventManager::GetSingleton()->Unsubscribe(uid, eventName);
   return info.Env().Undefined();
 }
 
-Napi::Value EventsApi::SendIpcMessage(const Napi::CallbackInfo &info)
+Napi::Value EventsApi::SendIpcMessage(const Napi::CallbackInfo& info)
 {
   Napi::Env env = info.Env();
 
-  std::string targetSystemName = NapiHelper::ExtractString(info[0], "targetSystemName");
-  Napi::ArrayBuffer messageBuffer = NapiHelper::ExtractArrayBuffer(info[1], "message");
+  std::string targetSystemName =
+    NapiHelper::ExtractString(info[0], "targetSystemName");
+  Napi::ArrayBuffer messageBuffer =
+    NapiHelper::ExtractArrayBuffer(info[1], "message");
 
   void* message = messageBuffer.Data();
   size_t messageLength = messageBuffer.ByteLength();
 
   if (!message) {
-    throw std::runtime_error("sendIpcMessage expects a valid ArrayBuffer instance");
+    throw std::runtime_error(
+      "sendIpcMessage expects a valid ArrayBuffer instance");
   }
 
   if (messageLength == 0) {
-    throw std::runtime_error("sendIpcMessage expects an ArrayBuffer of length > 0");
+    throw std::runtime_error(
+      "sendIpcMessage expects an ArrayBuffer of length > 0");
   }
 
-  IPC::Call(targetSystemName, reinterpret_cast<uint8_t*>(message), messageLength);
+  IPC::Call(targetSystemName, reinterpret_cast<uint8_t*>(message),
+            messageLength);
 
   return env.Undefined();
 }

@@ -8,13 +8,13 @@
 
 #include <RE/T/TESDataHandler.h>
 
-namespace 
-{
+namespace {
 
 template <class CallbackInfoLike>
 Napi::Value CallNativeImpl(
   const CallbackInfoLike& info,
-  const std::function<CallNativeApi::NativeCallRequirements()>& getNativeCallRequirements)
+  const std::function<CallNativeApi::NativeCallRequirements()>&
+    getNativeCallRequirements)
 {
   auto className = NapiHelper::ExtractString(info[0], "className");
   auto functionName = NapiHelper::ExtractString(info[1], "functionName");
@@ -68,7 +68,8 @@ Napi::Value CallNativeImpl(
                              "' can't be called in this context");
 
   CallNative::AnySafe nativeArgs[CallNative::g_maxArgs + 1];
-  auto n = (size_t)std::max(static_cast<int>(info.Length()) - nativeArgsStart, 0);
+  auto n =
+    (size_t)std::max(static_cast<int>(info.Length()) - nativeArgsStart, 0);
 
   for (size_t i = 0; i < n; ++i) {
     nativeArgs[i] =
@@ -108,13 +109,15 @@ Napi::Value CallNativeImpl(
       Napi::Function::New(info.Env(), [](const Napi::CallbackInfo& info) {
         std::shared_ptr<Napi::Reference<Napi::Function>> resolveFunctionRef(
           new Napi::Reference<Napi::Function>(
-          Napi::Persistent<Napi::Function>(info[0].As<Napi::Function>())));
+            Napi::Persistent<Napi::Function>(info[0].As<Napi::Function>())));
 
         if (!g_callNativeArgsPtr)
           throw NullPointerException("g_callNativeArgsPtr");
         g_callNativeArgsPtr->latentCallback =
           [resolveFunctionRef](Napi::Env env, const CallNative::AnySafe& v) {
-            resolveFunctionRef->Value().Call(env.Undefined(), { NativeValueCasts::NativeValueToJsValue(env, v) });
+            resolveFunctionRef->Value().Call(
+              env.Undefined(),
+              { NativeValueCasts::NativeValueToJsValue(env, v) });
           };
         CallNative::CallNativeSafe(*g_callNativeArgsPtr);
         return info.Env().Undefined();
@@ -128,16 +131,16 @@ Napi::Value CallNativeImpl(
   }
 }
 
-class PseudoCallbackInfo {
+class PseudoCallbackInfo
+{
 public:
-  PseudoCallbackInfo(Napi::Env env_, const std::vector<Napi::Value> &args_) : env(env_), args(args_)
+  PseudoCallbackInfo(Napi::Env env_, const std::vector<Napi::Value>& args_)
+    : env(env_)
+    , args(args_)
   {
   }
 
-  size_t Length() const
-  {
-    return args.size();
-  }
+  size_t Length() const { return args.size(); }
 
   Napi::Value operator[](size_t i) const
   {
@@ -147,19 +150,16 @@ public:
     return args[i];
   }
 
-  Napi::Env Env() const
-  {
-    return env;
-  }
+  Napi::Env Env() const { return env; }
 
 private:
-  const std::vector<Napi::Value> &args;
+  const std::vector<Napi::Value>& args;
   const Napi::Env env;
 };
 }
 
 Napi::Value CallNativeApi::CallNative(
-  Napi::Env env, const std::vector<Napi::Value> &args,
+  Napi::Env env, const std::vector<Napi::Value>& args,
   const std::function<NativeCallRequirements()>& getNativeCallRequirements)
 {
   PseudoCallbackInfo pseudoCallbackInfo(env, args);
@@ -179,6 +179,6 @@ Napi::Value CallNativeApi::DynamicCast(
 {
   auto form = NativeValueCasts::JsValueToNativeValue(info[0]);
   auto targetType = NapiHelper::ExtractString(info[1], "targetType");
-  return NativeValueCasts::NativeValueToJsValue(info.Env(),
-    CallNative::DynamicCast(targetType, form));
+  return NativeValueCasts::NativeValueToJsValue(
+    info.Env(), CallNative::DynamicCast(targetType, form));
 }

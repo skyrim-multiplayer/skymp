@@ -7,7 +7,7 @@ class SkyrimPlatformProxy
 {
 public:
   static Napi::Object Attach(
-    const  Napi::Object& exports,
+    const Napi::Object& exports,
     const std::function<CallNativeApi::NativeCallRequirements()>&
       getNativeCallRequirements);
 };

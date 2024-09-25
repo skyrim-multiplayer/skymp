@@ -38,7 +38,8 @@ bool utf8_check_is_valid(const char* str, int len)
   return true;
 }
 
-Napi::Value EncodingApi::EncodeUtf8(const Napi::CallbackInfo& info) {
+Napi::Value EncodingApi::EncodeUtf8(const Napi::CallbackInfo& info)
+{
   Napi::Env env = info.Env();
   std::string str = NapiHelper::ExtractString(info[0], "str");
   Napi::ArrayBuffer arrayBuffer = Napi::ArrayBuffer::New(env, str.size());
@@ -46,7 +47,8 @@ Napi::Value EncodingApi::EncodeUtf8(const Napi::CallbackInfo& info) {
   return arrayBuffer;
 }
 
-Napi::Value DecodeUtf8(const Napi::CallbackInfo& info) {
+Napi::Value DecodeUtf8(const Napi::CallbackInfo& info)
+{
   Napi::Env env = info.Env();
 
   if (info.Length() < 1 || !info[0].IsArrayBuffer()) {

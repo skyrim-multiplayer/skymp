@@ -36,7 +36,8 @@ Napi::Value CameraApi::WorldPointToScreenPoint(const Napi::CallbackInfo& info)
       argNameForExtract[3] = static_cast<char>(charSizeT);
     }
 
-    auto posExtracted = NapiHelper::ExtractNiPoint3(info[i], argNameForExtract);
+    auto posExtracted =
+      NapiHelper::ExtractNiPoint3(info[i], argNameForExtract);
     RE::NiPoint3 pos = { posExtracted[0], posExtracted[1], posExtracted[2] };
     float outX, outY, outZ;
     RE::NiCamera::WorldPtToScreenPt3(niCamera->worldToCam, niCamera->port, pos,

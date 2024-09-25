@@ -28,13 +28,15 @@ void EventHandler::SendSimpleEventOnTick(const char* eventName)
     [eventName](Napi::Env) { SendEvent(eventName); });
 }
 
-void EventHandler::SendEventOnUpdate(const char* eventName, const Napi::Object& obj)
+void EventHandler::SendEventOnUpdate(const char* eventName,
+                                     const Napi::Object& obj)
 {
   SkyrimPlatform::GetSingleton()->AddUpdateTask(
     [eventName, obj](Napi::Env) { SendEvent(eventName, obj); });
 }
 
-void EventHandler::SendEventOnTick(const char* eventName, const Napi::Object& obj)
+void EventHandler::SendEventOnTick(const char* eventName,
+                                   const Napi::Object& obj)
 {
   SkyrimPlatform::GetSingleton()->AddTickTask(
     [eventName, obj](Napi::Env) { SendEvent(eventName, obj); });
@@ -209,31 +211,32 @@ EventResult EventHandler::ProcessEvent(
   auto oldLocId = event->oldLoc ? event->oldLoc->formID : 0;
   auto newLocId = event->newLoc ? event->newLoc->formID : 0;
 
-  SkyrimPlatform::GetSingleton()->AddUpdateTask([actorId, oldLocId, newLocId](Napi::Env env) {
-    auto obj = Napi::Object::New(env);
+  SkyrimPlatform::GetSingleton()->AddUpdateTask(
+    [actorId, oldLocId, newLocId](Napi::Env env) {
+      auto obj = Napi::Object::New(env);
 
-    auto actor = RE::TESForm::LookupByID<RE::Actor>(actorId);
-    auto oldLoc = RE::TESForm::LookupByID<RE::BGSLocation>(oldLocId);
-    auto newLoc = RE::TESForm::LookupByID<RE::BGSLocation>(newLocId);
+      auto actor = RE::TESForm::LookupByID<RE::Actor>(actorId);
+      auto oldLoc = RE::TESForm::LookupByID<RE::BGSLocation>(oldLocId);
+      auto newLoc = RE::TESForm::LookupByID<RE::BGSLocation>(newLocId);
 
-    if (!actor && actorId != 0) {
-      return;
-    }
+      if (!actor && actorId != 0) {
+        return;
+      }
 
-    if (!oldLoc && oldLocId != 0) {
-      return;
-    }
+      if (!oldLoc && oldLocId != 0) {
+        return;
+      }
 
-    if (!newLoc && newLocId != 0) {
-      return;
-    }
+      if (!newLoc && newLocId != 0) {
+        return;
+      }
 
-    AddObjProperty(&obj, "actor", actor, "Actor");
-    AddObjProperty(&obj, "oldLoc", oldLoc, "Location");
-    AddObjProperty(&obj, "newLoc", newLoc, "Location");
+      AddObjProperty(&obj, "actor", actor, "Actor");
+      AddObjProperty(&obj, "oldLoc", oldLoc, "Location");
+      AddObjProperty(&obj, "newLoc", newLoc, "Location");
 
-    SendEvent("locationChanged", obj);
-  });
+      SendEvent("locationChanged", obj);
+    });
 
   return EventResult::kContinue;
 }
@@ -253,16 +256,17 @@ EventResult EventHandler::ProcessEvent(
   auto refrId = refr->GetFormID();
 
   bool isAttach = event->attached;
-  SkyrimPlatform::GetSingleton()->AddUpdateTask([refrId, isAttach](Napi::Env env) {
-    auto refr = RE::TESForm::LookupByID<RE::TESObjectREFR>(refrId);
-    if (!refr) {
-      return;
-    }
+  SkyrimPlatform::GetSingleton()->AddUpdateTask(
+    [refrId, isAttach](Napi::Env env) {
+      auto refr = RE::TESForm::LookupByID<RE::TESObjectREFR>(refrId);
+      if (!refr) {
+        return;
+      }
 
-    auto obj = Napi::Object::New(env);
-    AddObjProperty(&obj, "refr", refr, "ObjectReference");
-    isAttach ? SendEvent("cellAttach", obj) : SendEvent("cellDetach", obj);
-  });
+      auto obj = Napi::Object::New(env);
+      AddObjProperty(&obj, "refr", refr, "ObjectReference");
+      isAttach ? SendEvent("cellAttach", obj) : SendEvent("cellDetach", obj);
+    });
 
   return EventResult::kContinue;
 }
@@ -356,7 +360,8 @@ EventResult EventHandler::ProcessEvent(
   auto uniqueID = event->uniqueID;
 
   SkyrimPlatform::GetSingleton()->AddUpdateTask(
-    [refrId, oldContainerId, newContainerId, baseObjId, itemCount, uniqueID](Napi::Env env) {
+    [refrId, oldContainerId, newContainerId, baseObjId, itemCount,
+     uniqueID](Napi::Env env) {
       auto obj = Napi::Object::New(env);
 
       auto contFormOld =
@@ -507,36 +512,37 @@ EventResult EventHandler::ProcessEvent(const RE::TESEquipEvent* event,
   auto equipped = event->equipped;
   auto uniqueID = event->uniqueID;
 
-  SkyrimPlatform::GetSingleton()->AddUpdateTask([baseObject, originalRefr,
-                                                 actorId, equipped, uniqueID](Napi::Env env) {
-    auto obj = Napi::Object::New(env);
+  SkyrimPlatform::GetSingleton()->AddUpdateTask(
+    [baseObject, originalRefr, actorId, equipped, uniqueID](Napi::Env env) {
+      auto obj = Napi::Object::New(env);
 
-    auto baseObjForm = RE::TESForm::LookupByID(baseObject);
+      auto baseObjForm = RE::TESForm::LookupByID(baseObject);
 
-    if (!baseObjForm && baseObject != 0) {
-      return;
-    }
+      if (!baseObjForm && baseObject != 0) {
+        return;
+      }
 
-    auto originalRefrForm =
-      RE::TESForm::LookupByID<RE::TESObjectREFR>(originalRefr);
+      auto originalRefrForm =
+        RE::TESForm::LookupByID<RE::TESObjectREFR>(originalRefr);
 
-    if (!originalRefrForm && originalRefr != 0) {
-      return;
-    }
+      if (!originalRefrForm && originalRefr != 0) {
+        return;
+      }
 
-    auto actor = RE::TESForm::LookupByID<RE::Actor>(actorId);
+      auto actor = RE::TESForm::LookupByID<RE::Actor>(actorId);
 
-    if (!actor && actorId != 0) {
-      return;
-    }
+      if (!actor && actorId != 0) {
+        return;
+      }
 
-    AddObjProperty(&obj, "actor", actor, "ObjectReference");
-    AddObjProperty(&obj, "baseObj", baseObjForm, "Form");
-    AddObjProperty(&obj, "originalRefr", originalRefrForm, "ObjectReference");
-    AddObjProperty(&obj, "uniqueId", uniqueID);
+      AddObjProperty(&obj, "actor", actor, "ObjectReference");
+      AddObjProperty(&obj, "baseObj", baseObjForm, "Form");
+      AddObjProperty(&obj, "originalRefr", originalRefrForm,
+                     "ObjectReference");
+      AddObjProperty(&obj, "uniqueId", uniqueID);
 
-    equipped ? SendEvent("equip", obj) : SendEvent("unequip", obj);
-  });
+      equipped ? SendEvent("equip", obj) : SendEvent("unequip", obj);
+    });
 
   return EventResult::kContinue;
 }
@@ -551,13 +557,14 @@ EventResult EventHandler::ProcessEvent(
 
   auto fastTravelEndHours = event->fastTravelEndHours;
 
-  SkyrimPlatform::GetSingleton()->AddUpdateTask([fastTravelEndHours](Napi::Env env) {
-    auto obj = Napi::Object::New(env);
+  SkyrimPlatform::GetSingleton()->AddUpdateTask(
+    [fastTravelEndHours](Napi::Env env) {
+      auto obj = Napi::Object::New(env);
 
-    AddObjProperty(&obj, "travelTimeGameHours", fastTravelEndHours);
+      AddObjProperty(&obj, "travelTimeGameHours", fastTravelEndHours);
 
-    SendEvent("fastTravelEnd", obj);
-  });
+      SendEvent("fastTravelEnd", obj);
+    });
 
   return EventResult::kContinue;
 }
@@ -617,20 +624,21 @@ EventResult EventHandler::ProcessEvent(
   auto refId = event->ref.get() ? event->ref.get()->GetFormID() : 0;
   auto grabbed = event->grabbed;
 
-  SkyrimPlatform::GetSingleton()->AddUpdateTask([refId, grabbed](Napi::Env env) {
-    auto obj = Napi::Object::New(env);
+  SkyrimPlatform::GetSingleton()->AddUpdateTask(
+    [refId, grabbed](Napi::Env env) {
+      auto obj = Napi::Object::New(env);
 
-    auto ref = RE::TESForm::LookupByID<RE::TESObjectREFR>(refId);
+      auto ref = RE::TESForm::LookupByID<RE::TESObjectREFR>(refId);
 
-    if (!ref && refId != 0) {
-      return;
-    }
+      if (!ref && refId != 0) {
+        return;
+      }
 
-    AddObjProperty(&obj, "refr", ref, "ObjectReference");
-    AddObjProperty(&obj, "isGrabbed", grabbed);
+      AddObjProperty(&obj, "refr", ref, "ObjectReference");
+      AddObjProperty(&obj, "isGrabbed", grabbed);
 
-    SendEvent("grabRelease", obj);
-  });
+      SendEvent("grabRelease", obj);
+    });
 
   return EventResult::kContinue;
 }
@@ -700,21 +708,22 @@ EventResult EventHandler::ProcessEvent(
     ? event->objectInitialized.get()->GetFormID()
     : 0;
 
-  SkyrimPlatform::GetSingleton()->AddUpdateTask([objectInitializedId](Napi::Env env) {
-    auto obj = Napi::Object::New(env);
+  SkyrimPlatform::GetSingleton()->AddUpdateTask(
+    [objectInitializedId](Napi::Env env) {
+      auto obj = Napi::Object::New(env);
 
-    auto objectInitialized =
-      RE::TESForm::LookupByID<RE::TESObjectREFR>(objectInitializedId);
+      auto objectInitialized =
+        RE::TESForm::LookupByID<RE::TESObjectREFR>(objectInitializedId);
 
-    if (!objectInitialized && objectInitializedId != 0) {
-      return;
-    }
+      if (!objectInitialized && objectInitializedId != 0) {
+        return;
+      }
 
-    AddObjProperty(&obj, "initializedObject", objectInitialized,
-                   "ObjectReference");
+      AddObjProperty(&obj, "initializedObject", objectInitialized,
+                     "ObjectReference");
 
-    SendEvent("scriptInit", obj);
-  });
+      SendEvent("scriptInit", obj);
+    });
 
   return EventResult::kContinue;
 }
@@ -723,7 +732,8 @@ EventResult EventHandler::ProcessEvent(
 EventResult EventHandler::ProcessEvent(
   const RE::TESLoadGameEvent*, RE::BSTEventSource<RE::TESLoadGameEvent>*)
 {
-  SkyrimPlatform::GetSingleton()->AddUpdateTask([](Napi::Env) { SendEvent("loadGame"); });
+  SkyrimPlatform::GetSingleton()->AddUpdateTask(
+    [](Napi::Env) { SendEvent("loadGame"); });
 
   return EventResult::kContinue;
 }
@@ -738,20 +748,21 @@ EventResult EventHandler::ProcessEvent(
   auto lockedObjectId =
     event->lockedObject.get() ? event->lockedObject.get()->GetFormID() : 0;
 
-  SkyrimPlatform::GetSingleton()->AddUpdateTask([lockedObjectId](Napi::Env env) {
-    auto obj = Napi::Object::New(env);
+  SkyrimPlatform::GetSingleton()->AddUpdateTask(
+    [lockedObjectId](Napi::Env env) {
+      auto obj = Napi::Object::New(env);
 
-    auto lockedObject =
-      RE::TESForm::LookupByID<RE::TESObjectREFR>(lockedObjectId);
+      auto lockedObject =
+        RE::TESForm::LookupByID<RE::TESObjectREFR>(lockedObjectId);
 
-    if (!lockedObject && lockedObjectId != 0) {
-      return;
-    }
+      if (!lockedObject && lockedObjectId != 0) {
+        return;
+      }
 
-    AddObjProperty(&obj, "lockedObject", lockedObject, "ObjectReference");
+      AddObjProperty(&obj, "lockedObject", lockedObject, "ObjectReference");
 
-    SendEvent("lockChanged", obj);
-  });
+      SendEvent("lockChanged", obj);
+    });
 
   return EventResult::kContinue;
 }
@@ -846,20 +857,21 @@ EventResult EventHandler::ProcessEvent(
     event->movedRef.get() ? event->movedRef.get()->GetFormID() : 0;
   bool isCellAttached = event->isCellAttached;
 
-  SkyrimPlatform::GetSingleton()->AddUpdateTask([movedRefId, isCellAttached](Napi::Env env) {
-    auto obj = Napi::Object::New(env);
+  SkyrimPlatform::GetSingleton()->AddUpdateTask(
+    [movedRefId, isCellAttached](Napi::Env env) {
+      auto obj = Napi::Object::New(env);
 
-    auto movedRef = RE::TESForm::LookupByID<RE::TESObjectREFR>(movedRefId);
+      auto movedRef = RE::TESForm::LookupByID<RE::TESObjectREFR>(movedRefId);
 
-    if (!movedRef && movedRefId != 0) {
-      return;
-    }
+      if (!movedRef && movedRefId != 0) {
+        return;
+      }
 
-    AddObjProperty(&obj, "movedRef", movedRef, "ObjectReference");
-    AddObjProperty(&obj, "isCellAttached", isCellAttached);
+      AddObjProperty(&obj, "movedRef", movedRef, "ObjectReference");
+      AddObjProperty(&obj, "isCellAttached", isCellAttached);
 
-    SendEvent("moveAttachDetach", obj);
-  });
+      SendEvent("moveAttachDetach", obj);
+    });
 
   return EventResult::kContinue;
 }
@@ -874,20 +886,21 @@ EventResult EventHandler::ProcessEvent(
   uint32_t formId = event->formID;
   bool loaded = event->loaded;
 
-  SkyrimPlatform::GetSingleton()->AddUpdateTask([formId, loaded](Napi::Env env) {
-    auto obj = Napi::Object::New(env);
+  SkyrimPlatform::GetSingleton()->AddUpdateTask(
+    [formId, loaded](Napi::Env env) {
+      auto obj = Napi::Object::New(env);
 
-    auto object = RE::TESForm::LookupByID(formId);
+      auto object = RE::TESForm::LookupByID(formId);
 
-    if (!object && formId != 0) {
-      return;
-    }
+      if (!object && formId != 0) {
+        return;
+      }
 
-    AddObjProperty(&obj, "object", object, "Form");
-    AddObjProperty(&obj, "isLoaded", loaded);
+      AddObjProperty(&obj, "object", object, "Form");
+      AddObjProperty(&obj, "isLoaded", loaded);
 
-    SendEvent("objectLoaded", obj);
-  });
+      SendEvent("objectLoaded", obj);
+    });
 
   return EventResult::kContinue;
 }
@@ -902,32 +915,33 @@ EventResult EventHandler::ProcessEvent(
   auto refId = event->refr.get() ? event->refr.get()->GetFormID() : 0;
   auto eventType = event->type;
 
-  SkyrimPlatform::GetSingleton()->AddUpdateTask([refId, eventType](Napi::Env env) {
-    auto obj = Napi::Object::New(env);
+  SkyrimPlatform::GetSingleton()->AddUpdateTask(
+    [refId, eventType](Napi::Env env) {
+      auto obj = Napi::Object::New(env);
 
-    auto reference = RE::TESForm::LookupByID<RE::TESObjectREFR>(refId);
+      auto reference = RE::TESForm::LookupByID<RE::TESObjectREFR>(refId);
 
-    if (!reference && refId != 0) {
-      return;
-    }
-
-    AddObjProperty(&obj, "reference", reference, "ObjectReference");
-
-    switch (eventType) {
-      case RE::TESObjectREFRTranslationEvent::EventType::kFailed: {
-        SendEvent("translationFailed", obj);
-        break;
+      if (!reference && refId != 0) {
+        return;
       }
-      case RE::TESObjectREFRTranslationEvent::EventType::kAlmostCompleted: {
-        SendEvent("translationAlmostCompleted", obj);
-        break;
+
+      AddObjProperty(&obj, "reference", reference, "ObjectReference");
+
+      switch (eventType) {
+        case RE::TESObjectREFRTranslationEvent::EventType::kFailed: {
+          SendEvent("translationFailed", obj);
+          break;
+        }
+        case RE::TESObjectREFRTranslationEvent::EventType::kAlmostCompleted: {
+          SendEvent("translationAlmostCompleted", obj);
+          break;
+        }
+        case RE::TESObjectREFRTranslationEvent::EventType::kCompleted: {
+          SendEvent("translationCompleted", obj);
+          break;
+        }
       }
-      case RE::TESObjectREFRTranslationEvent::EventType::kCompleted: {
-        SendEvent("translationCompleted", obj);
-        break;
-      }
-    }
-  });
+    });
 
   return EventResult::kContinue;
 }
@@ -944,28 +958,29 @@ EventResult EventHandler::ProcessEvent(
   auto refId = event->ref.get() ? event->ref.get()->GetFormID() : 0;
   bool opened = event->opened;
 
-  SkyrimPlatform::GetSingleton()->AddUpdateTask([activeRefId, refId, opened](Napi::Env env) {
-    auto obj = Napi::Object::New(env);
+  SkyrimPlatform::GetSingleton()->AddUpdateTask(
+    [activeRefId, refId, opened](Napi::Env env) {
+      auto obj = Napi::Object::New(env);
 
-    auto activeRef = RE::TESForm::LookupByID<RE::TESObjectREFR>(activeRefId);
-    if (!activeRef && activeRefId != 0) {
-      return;
-    }
+      auto activeRef = RE::TESForm::LookupByID<RE::TESObjectREFR>(activeRefId);
+      if (!activeRef && activeRefId != 0) {
+        return;
+      }
 
-    auto ref = RE::TESForm::LookupByID<RE::TESObjectREFR>(refId);
-    if (!ref && refId != 0) {
-      return;
-    }
+      auto ref = RE::TESForm::LookupByID<RE::TESObjectREFR>(refId);
+      if (!ref && refId != 0) {
+        return;
+      }
 
-    AddObjProperty(&obj, "cause", activeRef, "ObjectReference");
-    AddObjProperty(&obj, "target", ref, "ObjectReference");
+      AddObjProperty(&obj, "cause", activeRef, "ObjectReference");
+      AddObjProperty(&obj, "target", ref, "ObjectReference");
 
-    if (opened) {
-      SendEvent("open", obj);
-    } else {
-      SendEvent("close", obj);
-    }
-  });
+      if (opened) {
+        SendEvent("open", obj);
+      } else {
+        SendEvent("close", obj);
+      }
+    });
 
   return EventResult::kContinue;
 }
@@ -980,34 +995,35 @@ EventResult EventHandler::ProcessEvent(
   uint32_t packageId = event->package;
   auto type = event->type;
 
-  SkyrimPlatform::GetSingleton()->AddUpdateTask([actorId, packageId, type](Napi::Env env) {
-    auto obj = Napi::Object::New(env);
+  SkyrimPlatform::GetSingleton()->AddUpdateTask(
+    [actorId, packageId, type](Napi::Env env) {
+      auto obj = Napi::Object::New(env);
 
-    auto actor = RE::TESForm::LookupByID<RE::Actor>(actorId);
-    if (!actor && actorId != 0) {
-      return;
-    }
+      auto actor = RE::TESForm::LookupByID<RE::Actor>(actorId);
+      if (!actor && actorId != 0) {
+        return;
+      }
 
-    auto package = RE::TESForm::LookupByID(packageId);
-    if (!package && packageId != 0) {
-      return;
-    }
+      auto package = RE::TESForm::LookupByID(packageId);
+      if (!package && packageId != 0) {
+        return;
+      }
 
-    AddObjProperty(&obj, "actor", actor, "ObjectReference");
-    AddObjProperty(&obj, "package", package, "Package");
+      AddObjProperty(&obj, "actor", actor, "ObjectReference");
+      AddObjProperty(&obj, "package", package, "Package");
 
-    switch (type) {
-      case RE::TESPackageEvent::EventType::kStart:
-        SendEvent("packageStart", obj);
-        break;
-      case RE::TESPackageEvent::EventType::kChange:
-        SendEvent("packageChange", obj);
-        break;
-      case RE::TESPackageEvent::EventType::kEnd:
-        SendEvent("packageEnd", obj);
-        break;
-    }
-  });
+      switch (type) {
+        case RE::TESPackageEvent::EventType::kStart:
+          SendEvent("packageStart", obj);
+          break;
+        case RE::TESPackageEvent::EventType::kChange:
+          SendEvent("packageChange", obj);
+          break;
+        case RE::TESPackageEvent::EventType::kEnd:
+          SendEvent("packageEnd", obj);
+          break;
+      }
+    });
 
   return EventResult::kContinue;
 }
@@ -1121,19 +1137,20 @@ EventResult EventHandler::ProcessEvent(
   auto questId = event->formID;
   auto stage = event->stage;
 
-  SkyrimPlatform::GetSingleton()->AddUpdateTask([questId, stage](Napi::Env env) {
-    auto obj = Napi::Object::New(env);
+  SkyrimPlatform::GetSingleton()->AddUpdateTask(
+    [questId, stage](Napi::Env env) {
+      auto obj = Napi::Object::New(env);
 
-    auto quest = RE::TESForm::LookupByID<RE::TESQuest>(questId);
-    if (!quest && questId != 0) {
-      return;
-    }
+      auto quest = RE::TESForm::LookupByID<RE::TESQuest>(questId);
+      if (!quest && questId != 0) {
+        return;
+      }
 
-    AddObjProperty(&obj, "quest", quest, "Quest");
-    AddObjProperty(&obj, "stage", stage);
+      AddObjProperty(&obj, "quest", quest, "Quest");
+      AddObjProperty(&obj, "stage", stage);
 
-    SendEvent("questStage", obj);
-  });
+      SendEvent("questStage", obj);
+    });
 
   return EventResult::kContinue;
 }
@@ -1148,21 +1165,22 @@ EventResult EventHandler::ProcessEvent(
   uint32_t formId = event->formID;
   bool started = event->started;
 
-  SkyrimPlatform::GetSingleton()->AddUpdateTask([formId, started] (Napi::Env env) {
-    auto obj = Napi::Object::New(env);
-    auto quest = RE::TESForm::LookupByID(formId);
-    if (!quest && formId != 0) {
-      return;
-    }
+  SkyrimPlatform::GetSingleton()->AddUpdateTask(
+    [formId, started](Napi::Env env) {
+      auto obj = Napi::Object::New(env);
+      auto quest = RE::TESForm::LookupByID(formId);
+      if (!quest && formId != 0) {
+        return;
+      }
 
-    AddObjProperty(&obj, "quest", quest, "Quest");
+      AddObjProperty(&obj, "quest", quest, "Quest");
 
-    if (started) {
-      SendEvent("questStart", obj);
-    } else {
-      SendEvent("questStop", obj);
-    }
-  });
+      if (started) {
+        SendEvent("questStart", obj);
+      } else {
+        SendEvent("questStop", obj);
+      }
+    });
 
   return EventResult::kContinue;
 }
@@ -1201,17 +1219,18 @@ EventResult EventHandler::ProcessEvent(const RE::TESSellEvent* event,
   auto sellerId = event->seller.get() ? event->seller.get()->GetFormID() : 0;
   auto targetId = event->target.get() ? event->target.get()->GetFormID() : 0;
 
-  SkyrimPlatform::GetSingleton()->AddUpdateTask([sellerId, targetId] (Napi::Env env) {
-    auto obj = Napi::Object::New(env);
+  SkyrimPlatform::GetSingleton()->AddUpdateTask(
+    [sellerId, targetId](Napi::Env env) {
+      auto obj = Napi::Object::New(env);
 
-    auto seller = RE::TESForm::LookupByID<RE::Actor>(sellerId);
-    auto target = RE::TESForm::LookupByID<RE::Actor>(targetId);
+      auto seller = RE::TESForm::LookupByID<RE::Actor>(sellerId);
+      auto target = RE::TESForm::LookupByID<RE::Actor>(targetId);
 
-    AddObjProperty(&obj, "seller", seller, "ObjectReference");
-    AddObjProperty(&obj, "target", target, "ObjectReference");
+      AddObjProperty(&obj, "seller", seller, "ObjectReference");
+      AddObjProperty(&obj, "target", target, "ObjectReference");
 
-    SendEvent("sell", obj);
-  });
+      SendEvent("sell", obj);
+    });
 
   return EventResult::kContinue;
 }
@@ -1283,7 +1302,7 @@ EventResult EventHandler::ProcessEvent(
 
   bool interrupted = event->interrupted;
 
-  SkyrimPlatform::GetSingleton()->AddUpdateTask([interrupted] (Napi::Env env) {
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([interrupted](Napi::Env env) {
     auto obj = Napi::Object::New(env);
 
     AddObjProperty(&obj, "isInterrupted", interrupted);
@@ -1304,68 +1323,69 @@ EventResult EventHandler::ProcessEvent(
   auto casterId = event->object.get() ? event->object.get()->GetFormID() : 0;
   auto spellId = event->spell;
 
-  SkyrimPlatform::GetSingleton()->AddUpdateTask([casterId, spellId] (Napi::Env env) {
-    auto obj = Napi::Object::New(env);
+  SkyrimPlatform::GetSingleton()->AddUpdateTask(
+    [casterId, spellId](Napi::Env env) {
+      auto obj = Napi::Object::New(env);
 
-    auto caster = RE::TESForm::LookupByID<RE::Actor>(casterId);
-    auto spell = RE::TESForm::LookupByID<RE::SpellItem>(spellId);
+      auto caster = RE::TESForm::LookupByID<RE::Actor>(casterId);
+      auto spell = RE::TESForm::LookupByID<RE::SpellItem>(spellId);
 
-    if (!caster && casterId != 0) {
-      return;
-    }
-
-    if (!(spell && spell->IsMagicItem())) {
-      spdlog::error(
-        "ProcessEvent TESSpellCastEvent error! spell not a MagicItem");
-      return;
-    }
-
-    if (!caster) {
-      spdlog::error(
-        "ProcessEvent TESSpellCastEvent error! caster == nullptr)");
-      return;
-    }
-
-    auto castingSource = RE::MagicSystem::CastingSource::kLeftHand;
-    bool isCasterValid = false;
-
-    for (const auto magicCaster : caster->magicCasters) {
-
-      if (!magicCaster) {
-        continue;
+      if (!caster && casterId != 0) {
+        return;
       }
 
-      if (magicCaster->currentSpell == spell) {
-        castingSource = magicCaster->GetCastingSource();
-        isCasterValid = true;
-        break;
+      if (!(spell && spell->IsMagicItem())) {
+        spdlog::error(
+          "ProcessEvent TESSpellCastEvent error! spell not a MagicItem");
+        return;
       }
-    }
 
-    if (!isCasterValid) {
-      return;
-    }
+      if (!caster) {
+        spdlog::error(
+          "ProcessEvent TESSpellCastEvent error! caster == nullptr)");
+        return;
+      }
 
-    const auto magicCaster = caster->GetMagicCaster(castingSource);
+      auto castingSource = RE::MagicSystem::CastingSource::kLeftHand;
+      bool isCasterValid = false;
 
-    const auto magicTarget = caster->GetMagicTarget();
+      for (const auto magicCaster : caster->magicCasters) {
 
-    RE::Actor* handleTarget = nullptr;
+        if (!magicCaster) {
+          continue;
+        }
 
-    if (magicTarget->MagicTargetIsActor()) {
-      handleTarget =
-        reinterpret_cast<RE::Actor*>(magicTarget->GetTargetStatsObject());
-    }
+        if (magicCaster->currentSpell == spell) {
+          castingSource = magicCaster->GetCastingSource();
+          isCasterValid = true;
+          break;
+        }
+      }
 
-    AddObjProperty(&obj, "caster", caster, "ObjectReference");
-    AddObjProperty(&obj, "target", handleTarget, "ObjectReference");
-    AddObjProperty(&obj, "spell", spell, "Spell");
-    AddObjProperty(&obj, "isDualCasting", magicCaster->GetIsDualCasting());
-    AddObjProperty(&obj, "castingSource",
-                   static_cast<uint32_t>(castingSource));
+      if (!isCasterValid) {
+        return;
+      }
 
-    SendEvent("spellCast", obj);
-  });
+      const auto magicCaster = caster->GetMagicCaster(castingSource);
+
+      const auto magicTarget = caster->GetMagicTarget();
+
+      RE::Actor* handleTarget = nullptr;
+
+      if (magicTarget->MagicTargetIsActor()) {
+        handleTarget =
+          reinterpret_cast<RE::Actor*>(magicTarget->GetTargetStatsObject());
+      }
+
+      AddObjProperty(&obj, "caster", caster, "ObjectReference");
+      AddObjProperty(&obj, "target", handleTarget, "ObjectReference");
+      AddObjProperty(&obj, "spell", spell, "Spell");
+      AddObjProperty(&obj, "isDualCasting", magicCaster->GetIsDualCasting());
+      AddObjProperty(&obj, "castingSource",
+                     static_cast<uint32_t>(castingSource));
+
+      SendEvent("spellCast", obj);
+    });
 
   return EventResult::kContinue;
 }
@@ -1380,7 +1400,7 @@ EventResult EventHandler::ProcessEvent(
   auto subjectId =
     event->subject.get() ? event->subject.get()->GetFormID() : 0;
 
-  SkyrimPlatform::GetSingleton()->AddUpdateTask([subjectId] (Napi::Env env) {
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([subjectId](Napi::Env env) {
     auto obj = Napi::Object::New(env);
 
     auto subject = RE::TESForm::LookupByID<RE::Actor>(subjectId);
@@ -1407,14 +1427,15 @@ EventResult EventHandler::ProcessEvent(
     event->stat.c_str()); // Properly convert BSFixedString to std::string
   auto newValue = event->value;
 
-  SkyrimPlatform::GetSingleton()->AddUpdateTask([statName, newValue](Napi::Env env) {
-    auto obj = Napi::Object::New(env);
+  SkyrimPlatform::GetSingleton()->AddUpdateTask(
+    [statName, newValue](Napi::Env env) {
+      auto obj = Napi::Object::New(env);
 
-    AddObjProperty(&obj, "statName", statName.c_str());
-    AddObjProperty(&obj, "newValue", newValue);
+      AddObjProperty(&obj, "statName", statName.c_str());
+      AddObjProperty(&obj, "newValue", newValue);
 
-    SendEvent("trackedStats", obj);
-  });
+      SendEvent("trackedStats", obj);
+    });
   return EventResult::kContinue;
 }
 EventResult EventHandler::ProcessEvent(
@@ -1430,24 +1451,25 @@ EventResult EventHandler::ProcessEvent(
   uint32_t targetId =
     event->target.get() ? event->target.get()->GetFormID() : 0;
 
-  SkyrimPlatform::GetSingleton()->AddUpdateTask([causeId, targetId](Napi::Env env) {
-    auto obj = Napi::Object::New(env);
+  SkyrimPlatform::GetSingleton()->AddUpdateTask(
+    [causeId, targetId](Napi::Env env) {
+      auto obj = Napi::Object::New(env);
 
-    auto cause = RE::TESForm::LookupByID<RE::TESObjectREFR>(causeId);
-    if (!cause && causeId != 0) {
-      return;
-    }
+      auto cause = RE::TESForm::LookupByID<RE::TESObjectREFR>(causeId);
+      if (!cause && causeId != 0) {
+        return;
+      }
 
-    auto target = RE::TESForm::LookupByID<RE::TESObjectREFR>(targetId);
-    if (!target && targetId != 0) {
-      return;
-    }
+      auto target = RE::TESForm::LookupByID<RE::TESObjectREFR>(targetId);
+      if (!target && targetId != 0) {
+        return;
+      }
 
-    AddObjProperty(&obj, "cause", cause, "ObjectReference");
-    AddObjProperty(&obj, "target", target, "ObjectReference");
+      AddObjProperty(&obj, "cause", cause, "ObjectReference");
+      AddObjProperty(&obj, "target", target, "ObjectReference");
 
-    SendEvent("triggerEnter", obj);
-  });
+      SendEvent("triggerEnter", obj);
+    });
 
   return EventResult::kContinue;
 }
@@ -1461,24 +1483,25 @@ EventResult EventHandler::ProcessEvent(
   auto casterId = event->caster.get() ? event->caster.get()->GetFormID() : 0;
   auto targetId = event->target.get() ? event->target.get()->GetFormID() : 0;
 
-  SkyrimPlatform::GetSingleton()->AddUpdateTask([casterId, targetId](Napi::Env env) {
-    auto obj = Napi::Object::New(env);
+  SkyrimPlatform::GetSingleton()->AddUpdateTask(
+    [casterId, targetId](Napi::Env env) {
+      auto obj = Napi::Object::New(env);
 
-    auto caster = RE::TESForm::LookupByID<RE::TESObjectREFR>(casterId);
-    auto target = RE::TESForm::LookupByID<RE::TESObjectREFR>(targetId);
+      auto caster = RE::TESForm::LookupByID<RE::TESObjectREFR>(casterId);
+      auto target = RE::TESForm::LookupByID<RE::TESObjectREFR>(targetId);
 
-    if (!caster && casterId != 0) {
-      return;
-    }
-    if (!target && targetId != 0) {
-      return;
-    }
+      if (!caster && casterId != 0) {
+        return;
+      }
+      if (!target && targetId != 0) {
+        return;
+      }
 
-    AddObjProperty(&obj, "cause", caster, "ObjectReference");
-    AddObjProperty(&obj, "target", target, "ObjectReference");
+      AddObjProperty(&obj, "cause", caster, "ObjectReference");
+      AddObjProperty(&obj, "target", target, "ObjectReference");
 
-    SendEvent("trigger", obj);
-  });
+      SendEvent("trigger", obj);
+    });
 
   return EventResult::kContinue;
 }
@@ -1495,24 +1518,25 @@ EventResult EventHandler::ProcessEvent(
   uint32_t targetId =
     event->target.get() ? event->target.get()->GetFormID() : 0;
 
-  SkyrimPlatform::GetSingleton()->AddUpdateTask([casterId, targetId](Napi::Env env) {
-    auto obj = Napi::Object::New(env);
+  SkyrimPlatform::GetSingleton()->AddUpdateTask(
+    [casterId, targetId](Napi::Env env) {
+      auto obj = Napi::Object::New(env);
 
-    auto caster = RE::TESForm::LookupByID<RE::TESObjectREFR>(casterId);
-    auto target = RE::TESForm::LookupByID<RE::TESObjectREFR>(targetId);
+      auto caster = RE::TESForm::LookupByID<RE::TESObjectREFR>(casterId);
+      auto target = RE::TESForm::LookupByID<RE::TESObjectREFR>(targetId);
 
-    if (!caster && casterId != 0) {
-      return;
-    }
-    if (!target && targetId != 0) {
-      return;
-    }
+      if (!caster && casterId != 0) {
+        return;
+      }
+      if (!target && targetId != 0) {
+        return;
+      }
 
-    AddObjProperty(&obj, "cause", caster, "ObjectReference");
-    AddObjProperty(&obj, "target", target, "ObjectReference");
+      AddObjProperty(&obj, "cause", caster, "ObjectReference");
+      AddObjProperty(&obj, "target", target, "ObjectReference");
 
-    SendEvent("triggerLeave", obj);
-  });
+      SendEvent("triggerLeave", obj);
+    });
 
   return EventResult::kContinue;
 }
@@ -1673,23 +1697,24 @@ EventResult EventHandler::ProcessEvent(
     ? to_underlying(event->newState->id)
     : uint32_t(-1);
 
-  SkyrimPlatform::GetSingleton()->AddUpdateTask([oldStateId, newStateId](Napi::Env env) {
-    auto obj = Napi::Object::New(env);
+  SkyrimPlatform::GetSingleton()->AddUpdateTask(
+    [oldStateId, newStateId](Napi::Env env) {
+      auto obj = Napi::Object::New(env);
 
-    if (oldStateId == uint32_t(-1)) {
-      obj.Set("oldStateId", env.Null());
-    } else {
-      AddObjProperty(&obj, "oldStateId", oldStateId);
-    }
+      if (oldStateId == uint32_t(-1)) {
+        obj.Set("oldStateId", env.Null());
+      } else {
+        AddObjProperty(&obj, "oldStateId", oldStateId);
+      }
 
-    if (newStateId == uint32_t(-1)) {
-      obj.Set("newStateId", env.Null());
-    } else {
-      AddObjProperty(&obj, "newStateId", newStateId);
-    }
+      if (newStateId == uint32_t(-1)) {
+        obj.Set("newStateId", env.Null());
+      } else {
+        AddObjProperty(&obj, "newStateId", newStateId);
+      }
 
-    SendEvent("cameraStateChanged", obj);
-  });
+      SendEvent("cameraStateChanged", obj);
+    });
 
   return EventResult::kContinue;
 }
@@ -1704,20 +1729,21 @@ EventResult EventHandler::ProcessEvent(
   uint32_t crosshairRefId =
     event->crosshairRef.get() ? event->crosshairRef.get()->GetFormID() : 0;
 
-  SkyrimPlatform::GetSingleton()->AddUpdateTask([crosshairRefId](Napi::Env env) {
-    auto obj = Napi::Object::New(env);
+  SkyrimPlatform::GetSingleton()->AddUpdateTask(
+    [crosshairRefId](Napi::Env env) {
+      auto obj = Napi::Object::New(env);
 
-    auto crosshairRef =
-      RE::TESForm::LookupByID<RE::TESObjectREFR>(crosshairRefId);
+      auto crosshairRef =
+        RE::TESForm::LookupByID<RE::TESObjectREFR>(crosshairRefId);
 
-    if (!crosshairRef && crosshairRefId != 0) {
-      return;
-    }
+      if (!crosshairRef && crosshairRefId != 0) {
+        return;
+      }
 
-    AddObjProperty(&obj, "reference", crosshairRef, "ObjectReference");
+      AddObjProperty(&obj, "reference", crosshairRef, "ObjectReference");
 
-    SendEvent("crosshairRefChanged", obj);
-  });
+      SendEvent("crosshairRefChanged", obj);
+    });
 
   return EventResult::kContinue;
 }
@@ -1790,17 +1816,18 @@ EventResult EventHandler::ProcessEvent(
   auto menuName = event->menuName;
   bool opening = event->opening;
 
-  SkyrimPlatform::GetSingleton()->AddUpdateTask([menuName, opening](Napi::Env env) {
-    auto obj = Napi::Object::New(env);
+  SkyrimPlatform::GetSingleton()->AddUpdateTask(
+    [menuName, opening](Napi::Env env) {
+      auto obj = Napi::Object::New(env);
 
-    AddObjProperty(&obj, "name", menuName);
+      AddObjProperty(&obj, "name", menuName);
 
-    if (opening) {
-      SendEvent("menuOpen", obj);
-    } else {
-      SendEvent("menuClose", obj);
-    }
-  });
+      if (opening) {
+        SendEvent("menuOpen", obj);
+      } else {
+        SendEvent("menuClose", obj);
+      }
+    });
 
   return EventResult::kContinue;
 }
@@ -2089,24 +2116,25 @@ EventResult EventHandler::ProcessEvent(
   auto killerId = event->killer ? event->killer->GetFormID() : 0;
   auto victimId = event->victim ? event->victim->GetFormID() : 0;
 
-  SkyrimPlatform::GetSingleton()->AddUpdateTask([killerId, victimId](Napi::Env env) {
-    auto obj = Napi::Object::New(env);
+  SkyrimPlatform::GetSingleton()->AddUpdateTask(
+    [killerId, victimId](Napi::Env env) {
+      auto obj = Napi::Object::New(env);
 
-    auto killer = RE::TESForm::LookupByID<RE::Actor>(killerId);
-    auto victim = RE::TESForm::LookupByID<RE::Actor>(victimId);
+      auto killer = RE::TESForm::LookupByID<RE::Actor>(killerId);
+      auto victim = RE::TESForm::LookupByID<RE::Actor>(victimId);
 
-    if (!killer && killerId != 0) {
-      return;
-    }
-    if (!victim && victimId != 0) {
-      return;
-    }
+      if (!killer && killerId != 0) {
+        return;
+      }
+      if (!victim && victimId != 0) {
+        return;
+      }
 
-    AddObjProperty(&obj, "killer", killer, "Actor");
-    AddObjProperty(&obj, "victim", victim, "Actor");
+      AddObjProperty(&obj, "killer", killer, "Actor");
+      AddObjProperty(&obj, "victim", victim, "Actor");
 
-    SendEvent("actorKill", obj);
-  });
+      SendEvent("actorKill", obj);
+    });
 
   return EventResult::kContinue;
 }
@@ -2182,21 +2210,22 @@ EventResult EventHandler::ProcessEvent(
   auto sourceId = event->source ? event->source->GetFormID() : 0;
   auto targetId = event->target ? event->target->GetFormID() : 0;
 
-  SkyrimPlatform::GetSingleton()->AddUpdateTask([sourceId, targetId](Napi::Env env) {
-    auto obj = Napi::Object::New(env);
+  SkyrimPlatform::GetSingleton()->AddUpdateTask(
+    [sourceId, targetId](Napi::Env env) {
+      auto obj = Napi::Object::New(env);
 
-    auto source = RE::TESForm::LookupByID<RE::Actor>(sourceId);
-    auto target = RE::TESForm::LookupByID<RE::Actor>(targetId);
+      auto source = RE::TESForm::LookupByID<RE::Actor>(sourceId);
+      auto target = RE::TESForm::LookupByID<RE::Actor>(targetId);
 
-    if (!source || !target) {
-      return;
-    }
+      if (!source || !target) {
+        return;
+      }
 
-    AddObjProperty(&obj, "source", source, "Actor");
-    AddObjProperty(&obj, "target", target, "Actor");
+      AddObjProperty(&obj, "source", source, "Actor");
+      AddObjProperty(&obj, "target", target, "Actor");
 
-    SendEvent("disarmedEvent", obj);
-  });
+      SendEvent("disarmedEvent", obj);
+    });
 
   return EventResult::kContinue;
 }
@@ -2232,25 +2261,26 @@ EventResult EventHandler::ProcessEvent(
     event->produceItem ? event->produceItem->GetFormID() : 0;
   auto harvesterId = event->harvester ? event->harvester->GetFormID() : 0;
 
-  SkyrimPlatform::GetSingleton()->AddUpdateTask([produceItemId, harvesterId](Napi::Env env) {
-    auto obj = Napi::Object::New(env);
+  SkyrimPlatform::GetSingleton()->AddUpdateTask(
+    [produceItemId, harvesterId](Napi::Env env) {
+      auto obj = Napi::Object::New(env);
 
-    auto produceItem = RE::TESForm::LookupByID(produceItemId);
-    auto harvester = RE::TESForm::LookupByID<RE::Actor>(harvesterId);
+      auto produceItem = RE::TESForm::LookupByID(produceItemId);
+      auto harvester = RE::TESForm::LookupByID<RE::Actor>(harvesterId);
 
-    if (!produceItem && produceItemId != 0) {
-      return;
-    }
+      if (!produceItem && produceItemId != 0) {
+        return;
+      }
 
-    if (!harvester && harvesterId != 0) {
-      return;
-    }
+      if (!harvester && harvesterId != 0) {
+        return;
+      }
 
-    AddObjProperty(&obj, "produceItem", produceItem, "Form");
-    AddObjProperty(&obj, "harvester", harvester, "Actor");
+      AddObjProperty(&obj, "produceItem", produceItem, "Form");
+      AddObjProperty(&obj, "harvester", harvester, "Actor");
 
-    SendEvent("itemHarvested", obj);
-  });
+      SendEvent("itemHarvested", obj);
+    });
 
   return EventResult::kContinue;
 }
@@ -2265,20 +2295,21 @@ EventResult EventHandler::ProcessEvent(
   auto playerId = event->player ? event->player->GetFormID() : 0;
   auto newLevel = event->newLevel;
 
-  SkyrimPlatform::GetSingleton()->AddUpdateTask([playerId, newLevel](Napi::Env env) {
-    auto obj = Napi::Object::New(env);
+  SkyrimPlatform::GetSingleton()->AddUpdateTask(
+    [playerId, newLevel](Napi::Env env) {
+      auto obj = Napi::Object::New(env);
 
-    auto player = RE::TESForm::LookupByID<RE::Actor>(playerId);
+      auto player = RE::TESForm::LookupByID<RE::Actor>(playerId);
 
-    if (!player && playerId != 0) {
-      return;
-    }
+      if (!player && playerId != 0) {
+        return;
+      }
 
-    AddObjProperty(&obj, "player", player, "Actor");
-    AddObjProperty(&obj, "newLevel", newLevel);
+      AddObjProperty(&obj, "player", player, "Actor");
+      AddObjProperty(&obj, "newLevel", newLevel);
 
-    SendEvent("levelIncrease", obj);
-  });
+      SendEvent("levelIncrease", obj);
+    });
 
   return EventResult::kContinue;
 }
@@ -2301,7 +2332,8 @@ EventResult EventHandler::ProcessEvent(
     event->mapMarkerData->flags.any(RE::MapMarkerData::Flag::kShowAllHidden);
 
   SkyrimPlatform::GetSingleton()->AddUpdateTask(
-    [worldspaceID, name, type, isVisible, canTravelTo, isShowAllHidden](Napi::Env env) {
+    [worldspaceID, name, type, isVisible, canTravelTo,
+     isShowAllHidden](Napi::Env env) {
       auto obj = Napi::Object::New(env);
 
       AddObjProperty(&obj, "worldSpaceId", worldspaceID);
@@ -2352,19 +2384,20 @@ EventResult EventHandler::ProcessEvent(
   auto playerId = event->player->GetFormID();
   auto actorValue = to_underlying(event->actorValue);
 
-  SkyrimPlatform::GetSingleton()->AddUpdateTask([playerId, actorValue](Napi::Env env) {
-    auto obj = Napi::Object::New(env);
+  SkyrimPlatform::GetSingleton()->AddUpdateTask(
+    [playerId, actorValue](Napi::Env env) {
+      auto obj = Napi::Object::New(env);
 
-    auto player = RE::TESForm::LookupByID<RE::Actor>(playerId);
-    if (!player) {
-      return;
-    }
+      auto player = RE::TESForm::LookupByID<RE::Actor>(playerId);
+      if (!player) {
+        return;
+      }
 
-    AddObjProperty(&obj, "player", player, "Actor");
-    AddObjProperty(&obj, "actorValue", actorValue);
+      AddObjProperty(&obj, "player", player, "Actor");
+      AddObjProperty(&obj, "actorValue", actorValue);
 
-    SendEvent("skillIncrease", obj);
-  });
+      SendEvent("skillIncrease", obj);
+    });
 
   return EventResult::kContinue;
 }
@@ -2379,21 +2412,22 @@ EventResult EventHandler::ProcessEvent(
   auto trapperId = event->trapper ? event->trapper->formID : 0;
   auto targetId = event->target ? event->target->formID : 0;
 
-  SkyrimPlatform::GetSingleton()->AddUpdateTask([trapperId, targetId] (Napi::Env env) {
-    auto obj = Napi::Object::New(env);
+  SkyrimPlatform::GetSingleton()->AddUpdateTask(
+    [trapperId, targetId](Napi::Env env) {
+      auto obj = Napi::Object::New(env);
 
-    auto trapper = RE::TESForm::LookupByID<RE::Actor>(trapperId);
-    auto target = RE::TESForm::LookupByID<RE::Actor>(targetId);
+      auto trapper = RE::TESForm::LookupByID<RE::Actor>(trapperId);
+      auto target = RE::TESForm::LookupByID<RE::Actor>(targetId);
 
-    if ((!trapper && trapperId != 0) || (!target && targetId != 0)) {
-      return;
-    }
+      if ((!trapper && trapperId != 0) || (!target && targetId != 0)) {
+        return;
+      }
 
-    AddObjProperty(&obj, "trapper", trapper, "Actor");
-    AddObjProperty(&obj, "target", target, "Actor");
+      AddObjProperty(&obj, "trapper", trapper, "Actor");
+      AddObjProperty(&obj, "target", target, "Actor");
 
-    SendEvent("soulsTrapped", obj);
-  });
+      SendEvent("soulsTrapped", obj);
+    });
 
   return EventResult::kContinue;
 }
@@ -2407,7 +2441,7 @@ EventResult EventHandler::ProcessEvent(
 
   auto spellId = event->spell ? event->spell->GetFormID() : 0;
 
-  SkyrimPlatform::GetSingleton()->AddUpdateTask([spellId] (Napi::Env env) {
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([spellId](Napi::Env env) {
     auto obj = Napi::Object::New(env);
 
     auto spell = RE::TESForm::LookupByID<RE::SpellItem>(spellId);

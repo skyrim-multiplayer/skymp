@@ -14,8 +14,11 @@ inline void IterateKeys(const Napi::Value& object, F fn)
     return;
   }
 
-  auto builtinKeys =
-    env.Global().Get("Object").As<Napi::Object>().Get("keys").As<Napi::Function>();
+  auto builtinKeys = env.Global()
+                       .Get("Object")
+                       .As<Napi::Object>()
+                       .Get("keys")
+                       .As<Napi::Function>();
   auto thisArg = env.Undefined();
 
   auto keys = builtinKeys.Call(thisArg, { object }).As<Napi::Array>();
@@ -47,29 +50,35 @@ inline HttpClient::Headers GetHeaders(const Napi::Value& options)
       throw std::runtime_error(ss.str());
     }
 
-    res.push_back(
-      { key.ToString(), value.ToString() });
+    res.push_back({ key.ToString(), value.ToString() });
   });
   return res;
 }
 }
 
-Napi::Value HttpClientApi::Constructor(const Napi::CallbackInfo &info)
+Napi::Value HttpClientApi::Constructor(const Napi::CallbackInfo& info)
 {
   if (!info.This().IsObject()) {
-    throw std::runtime_error("thisArg must be an object in HttpClient constructor");
+    throw std::runtime_error(
+      "thisArg must be an object in HttpClient constructor");
   }
 
-  info.This().As<Napi::Object>().Set(Napi::String::New(info.Env(), "host"), info[0]);
-  info.This().As<Napi::Object>().Set("get", Napi::Function::New(info.Env(), NapiHelper::WrapCppExceptions(Get)));
-  info.This().As<Napi::Object>().Set("post", Napi::Function::New(info.Env(), NapiHelper::WrapCppExceptions(Post)));
+  info.This().As<Napi::Object>().Set(Napi::String::New(info.Env(), "host"),
+                                     info[0]);
+  info.This().As<Napi::Object>().Set(
+    "get",
+    Napi::Function::New(info.Env(), NapiHelper::WrapCppExceptions(Get)));
+  info.This().As<Napi::Object>().Set(
+    "post",
+    Napi::Function::New(info.Env(), NapiHelper::WrapCppExceptions(Post)));
   return info.Env().Undefined();
 }
 
-Napi::Value HttpClientApi::Get(const Napi::CallbackInfo &info)
+Napi::Value HttpClientApi::Get(const Napi::CallbackInfo& info)
 {
   if (!info.This().IsObject()) {
-    throw std::runtime_error("thisArg must be an object in HttpClientApi::Get");
+    throw std::runtime_error(
+      "thisArg must be an object in HttpClientApi::Get");
   }
 
   Napi::Value path = info[0];
@@ -82,15 +91,16 @@ Napi::Value HttpClientApi::Get(const Napi::CallbackInfo &info)
     auto hostStr = NapiHelper::ExtractString(host, "host");
 
     std::shared_ptr<Napi::Reference<Napi::Function>> resolverRef;
-    resolverRef.reset(new Napi::Reference<Napi::Function>(Napi::Persistent(resolver)));
+    resolverRef.reset(
+      new Napi::Reference<Napi::Function>(Napi::Persistent(resolver)));
 
     g_httpClient.Get(
       hostStr.data(), pathStr.data(), GetHeaders(options),
       [resolverRef](Napi::Env env, const HttpClient::HttpResult& res) {
         auto result = Napi::Object::New(env);
-        result.Set(
-          "body",
-          Napi::String::New(env, std::string{ res.body.begin(), res.body.end() }));
+        result.Set("body",
+                   Napi::String::New(
+                     env, std::string{ res.body.begin(), res.body.end() }));
         result.Set("status", Napi::Number::New(env, res.status));
         result.Set("error", Napi::String::New(env, res.error));
         resolverRef->Value().Call(env.Undefined(), { result });
@@ -102,19 +112,24 @@ Napi::Value HttpClientApi::Get(const Napi::CallbackInfo &info)
     return info.Env().Undefined();
   }
 
-  Napi::Value resolverFn = Napi::Function::New(info.Env(), NapiHelper::WrapCppExceptions([handleGetRequest](const Napi::CallbackInfo &info) {
-    auto resolve = NapiHelper::ExtractFunction(info[0], "resolve");
-    handleGetRequest(resolve);
-    return info.Env().Undefined();
-  }));
+  Napi::Value resolverFn =
+    Napi::Function::New(info.Env(),
+                        NapiHelper::WrapCppExceptions(
+                          [handleGetRequest](const Napi::CallbackInfo& info) {
+                            auto resolve =
+                              NapiHelper::ExtractFunction(info[0], "resolve");
+                            handleGetRequest(resolve);
+                            return info.Env().Undefined();
+                          }));
 
   return CreatePromise(resolverFn);
 }
 
-Napi::Value HttpClientApi::Post(const Napi::CallbackInfo &info)
+Napi::Value HttpClientApi::Post(const Napi::CallbackInfo& info)
 {
   if (!info.This().IsObject()) {
-    throw std::runtime_error("thisArg must be an object in HttpClientApi::Post");
+    throw std::runtime_error(
+      "thisArg must be an object in HttpClientApi::Post");
   }
 
   Napi::Value path = info[0];
@@ -125,19 +140,23 @@ Napi::Value HttpClientApi::Post(const Napi::CallbackInfo &info)
   auto handlePostRequest = [&](Napi::Function resolver) {
     auto pathStr = NapiHelper::ExtractString(path, "path");
     auto hostStr = NapiHelper::ExtractString(host, "host");
-    auto bodyStr = NapiHelper::ExtractString(options.Get("body"), "options.body");
-    auto type = NapiHelper::ExtractString(options.Get("contentType"), "options.contentType");
+    auto bodyStr =
+      NapiHelper::ExtractString(options.Get("body"), "options.body");
+    auto type = NapiHelper::ExtractString(options.Get("contentType"),
+                                          "options.contentType");
 
     std::shared_ptr<Napi::Reference<Napi::Function>> resolverRef;
-    resolverRef.reset(new Napi::Reference<Napi::Function>(Napi::Persistent(resolver)));
+    resolverRef.reset(
+      new Napi::Reference<Napi::Function>(Napi::Persistent(resolver)));
 
     g_httpClient.Post(
       hostStr.data(), pathStr.data(), bodyStr.data(), type.data(),
-      GetHeaders(options), [resolverRef](Napi::Env env, const HttpClient::HttpResult& res) {
+      GetHeaders(options),
+      [resolverRef](Napi::Env env, const HttpClient::HttpResult& res) {
         auto result = Napi::Object::New(env);
-        result.Set(
-          "body",
-          Napi::String::New(env, std::string{ res.body.begin(), res.body.end() }));
+        result.Set("body",
+                   Napi::String::New(
+                     env, std::string{ res.body.begin(), res.body.end() }));
         result.Set("status", Napi::Number::New(env, res.status));
         result.Set("error", Napi::String::New(env, res.error));
         resolverRef->Value().Call(env.Undefined(), { result });
@@ -149,11 +168,13 @@ Napi::Value HttpClientApi::Post(const Napi::CallbackInfo &info)
     return info.Env().Undefined();
   }
 
-  auto resolverFn = Napi::Function::New(info.Env(), NapiHelper::WrapCppExceptions([=](const Napi::CallbackInfo &info) {
-    auto resolve = NapiHelper::ExtractFunction(info[0], "resolve");
-    handlePostRequest(resolve);
-    return info.Env().Undefined();
-  }));
+  auto resolverFn = Napi::Function::New(
+    info.Env(),
+    NapiHelper::WrapCppExceptions([=](const Napi::CallbackInfo& info) {
+      auto resolve = NapiHelper::ExtractFunction(info[0], "resolve");
+      handlePostRequest(resolve);
+      return info.Env().Undefined();
+    }));
 
   return CreatePromise(resolverFn);
 }

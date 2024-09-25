@@ -52,14 +52,14 @@ MpClientPlugin* GetMpClientPlugin()
 }
 }
 
-Napi::Value MpClientPluginApi::GetVersion(const Napi::CallbackInfo &info)
+Napi::Value MpClientPluginApi::GetVersion(const Napi::CallbackInfo& info)
 {
   typedef const char* (*GetVersion)();
   auto f = (GetVersion)GetMpClientPlugin()->GetFunction("MpCommonGetVersion");
   return Napi::String::New(info.Env(), f());
 }
 
-Napi::Value MpClientPluginApi::CreateClient(const Napi::CallbackInfo &info)
+Napi::Value MpClientPluginApi::CreateClient(const Napi::CallbackInfo& info)
 {
   auto hostName = NapiHelper::ExtractString(info[0], "hostName");
   auto port = NapiHelper::ExtractInt32(info[1], "port");
@@ -74,7 +74,7 @@ Napi::Value MpClientPluginApi::CreateClient(const Napi::CallbackInfo &info)
   return info.Env().Undefined();
 }
 
-Napi::Value MpClientPluginApi::DestroyClient(const Napi::CallbackInfo &info)
+Napi::Value MpClientPluginApi::DestroyClient(const Napi::CallbackInfo& info)
 {
   typedef void (*DestroyClient)();
   auto f = (DestroyClient)GetMpClientPlugin()->GetFunction("DestroyClient");
@@ -82,14 +82,14 @@ Napi::Value MpClientPluginApi::DestroyClient(const Napi::CallbackInfo &info)
   return info.Env().Undefined();
 }
 
-Napi::Value MpClientPluginApi::IsConnected(const Napi::CallbackInfo &info)
+Napi::Value MpClientPluginApi::IsConnected(const Napi::CallbackInfo& info)
 {
   typedef bool (*IsConnected)();
   auto f = (IsConnected)GetMpClientPlugin()->GetFunction("IsConnected");
   return Napi::Boolean::New(info.Env(), f());
 }
 
-Napi::Value MpClientPluginApi::Tick(const Napi::CallbackInfo &info)
+Napi::Value MpClientPluginApi::Tick(const Napi::CallbackInfo& info)
 {
   auto onPacket = NapiHelper::ExtractFunction(info[0], "onPacket");
 
@@ -102,14 +102,15 @@ Napi::Value MpClientPluginApi::Tick(const Napi::CallbackInfo &info)
     [](int32_t type, const char* jsonContent, const char* error, void* state) {
       auto onPacket = reinterpret_cast<Napi::Function*>(state);
       auto env = onPacket->Env();
-      onPacket->Call(
-        { Napi::String::New(env, GetPacketTypeName(type)), Napi::String::New(env, jsonContent), Napi::String::New(env, error) });
+      onPacket->Call({ Napi::String::New(env, GetPacketTypeName(type)),
+                       Napi::String::New(env, jsonContent),
+                       Napi::String::New(env, error) });
     },
     &onPacket);
   return info.Env().Undefined();
 }
 
-Napi::Value MpClientPluginApi::Send(const Napi::CallbackInfo &info)
+Napi::Value MpClientPluginApi::Send(const Napi::CallbackInfo& info)
 {
   typedef void (*Send)(const char* jsonContent, bool reliable);
 

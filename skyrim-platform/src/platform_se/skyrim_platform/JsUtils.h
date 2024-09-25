@@ -8,7 +8,8 @@ inline Napi::Value CreateObject(Napi::Env env, const char* type, void* form)
               : env.Null();
 }
 
-inline void AddObjProperty(Napi::Object* obj, const char* tag, const char* property)
+inline void AddObjProperty(Napi::Object* obj, const char* tag,
+                           const char* property)
 {
   obj->Set(tag, Napi::String::New(obj->Env(), property));
 }
@@ -35,17 +36,20 @@ inline void AddObjProperty(Napi::Object* obj, const char* tag, int property)
   obj->Set(tag, Napi::Number::New(obj->Env(), property));
 }
 
-inline void AddObjProperty(Napi::Object* obj, const char* tag, uint16_t property)
+inline void AddObjProperty(Napi::Object* obj, const char* tag,
+                           uint16_t property)
 {
   obj->Set(tag, Napi::Number::New(obj->Env(), property));
 }
 
-inline void AddObjProperty(Napi::Object* obj, const char* tag, uint32_t property)
+inline void AddObjProperty(Napi::Object* obj, const char* tag,
+                           uint32_t property)
 {
   obj->Set(tag, Napi::Number::New(obj->Env(), property));
 }
 
-inline void AddObjProperty(Napi::Object* obj, const char* tag, uintptr_t property)
+inline void AddObjProperty(Napi::Object* obj, const char* tag,
+                           uintptr_t property)
 {
   obj->Set(tag, Napi::Number::New(obj->Env(), property));
 }
@@ -55,8 +59,8 @@ inline void AddObjProperty(Napi::Object* obj, const char* tag, float property)
   obj->Set(tag, Napi::Number::New(obj->Env(), property));
 }
 
-inline void AddObjProperty(Napi::Object* obj, const char* tag, const uint8_t* data,
-                           uint32_t length)
+inline void AddObjProperty(Napi::Object* obj, const char* tag,
+                           const uint8_t* data, uint32_t length)
 {
   auto typedArray = Napi::Uint8Array::New(obj->Env(), length);
   memcpy(typedArray.Data(), data, length);
@@ -68,7 +72,7 @@ inline void AddObjProperty(Napi::Object* obj, const char* tag,
 {
   if (property) {
     obj->Set(tag,
-                     CreateObject(obj->Env(), typeName, static_cast<void*>(property)));
+             CreateObject(obj->Env(), typeName, static_cast<void*>(property)));
   } else {
     obj->Set(tag, obj->Env().Undefined());
   }

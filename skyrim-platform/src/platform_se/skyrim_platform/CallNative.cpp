@@ -300,7 +300,7 @@ CallNative::AnySafe CallNative::CallNativeSafe(Arguments& args_)
     std::vector<AnySafe> _args;
     for (auto it = args; it < args + numArgs; it++)
       _args.push_back(*it);
-    gameThrQ.AddTask([=] (Napi::Env) { SendAnimationEvent::Run(_args); });
+    gameThrQ.AddTask([=](Napi::Env) { SendAnimationEvent::Run(_args); });
     return ObjectPtr();
   }
 
@@ -312,7 +312,7 @@ CallNative::AnySafe CallNative::CallNativeSafe(Arguments& args_)
 
     auto formId = rawSelf->GetFormID();
 
-    gameThrQ.AddTask([formId] (Napi::Env) {
+    gameThrQ.AddTask([formId](Napi::Env) {
       if (auto refr = RE::TESForm::LookupByID<RE::TESObjectREFR>(formId)) {
         if (refr->GetFormID() == formId &&
             refr->GetFormType() == RE::FormType::Reference) {
@@ -327,7 +327,7 @@ CallNative::AnySafe CallNative::CallNativeSafe(Arguments& args_)
   bool isQueueNiNodeUpdate = !stricmp(classFunc.data(), "queueNiNodeUpdate");
   if (isQueueNiNodeUpdate) {
     CallNative::ObjectPtr _self = self;
-    gameThrQ.AddTask([_self] (Napi::Env) {
+    gameThrQ.AddTask([_self](Napi::Env) {
       auto nativeActorPtr = (RE::Actor*)_self->GetNativeObjectPtr();
       if (!nativeActorPtr)
         throw NullPointerException("nativeActorPtr");
@@ -357,7 +357,7 @@ CallNative::AnySafe CallNative::CallNativeSafe(Arguments& args_)
     const auto targetActorId = nativeTargetActor->formID;
     const auto mag = static_cast<float>(std::get<double>(args_.args[1]));
 
-    gameThrQ.AddTask([mag, nativeTargetActor, targetActorId] (Napi::Env) {
+    gameThrQ.AddTask([mag, nativeTargetActor, targetActorId](Napi::Env) {
       if (RE::TESForm::LookupByID<RE::Actor>(targetActorId) !=
           nativeTargetActor)
         return;
@@ -453,7 +453,7 @@ CallNative::AnySafe CallNative::CallNativeSafe(Arguments& args_)
     auto jsThrQPtr = &jsThrQ;
     auto cb = latentCallback;
     auto onResult = [cb, funcReturnType, jsThrQPtr](const Variable& result) {
-      jsThrQPtr->AddTask([=] (Napi::Env env) {
+      jsThrQPtr->AddTask([=](Napi::Env env) {
         if (!cb)
           throw NullPointerException("cb");
         cb(env, VariableToAnySafe(result, funcReturnType));

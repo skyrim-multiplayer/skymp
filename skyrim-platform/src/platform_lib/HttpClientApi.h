@@ -14,7 +14,8 @@ HttpClient& GetHttpClient();
 
 inline void Register(Napi::Env env, Napi::Object exports)
 {
-  auto httpClient = Napi::Function::New(env, NapiHelper::WrapCppExceptions(Constructor));
+  auto httpClient =
+    Napi::Function::New(env, NapiHelper::WrapCppExceptions(Constructor));
   exports.Set("HttpClient", httpClient);
 }
 }

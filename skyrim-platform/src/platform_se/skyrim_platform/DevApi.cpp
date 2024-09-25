@@ -116,7 +116,7 @@ std::filesystem::path GetPluginPath(const std::string& pluginName,
 }
 }
 
-Napi::Value DevApi::GetPluginSourceCode(const Napi::CallbackInfo &info)
+Napi::Value DevApi::GetPluginSourceCode(const Napi::CallbackInfo& info)
 {
   // Multifile plugins unsupported
   auto pluginName = NapiHelper::ExtractString(info[0], "fileName");
@@ -124,15 +124,19 @@ Napi::Value DevApi::GetPluginSourceCode(const Napi::CallbackInfo &info)
   std::optional<std::string> overrideFolder;
   if (info.Length() >= 2) {
     auto overrideFolderCandidate = info[1];
-    if (!overrideFolderCandidate.IsNull() && !overrideFolderCandidate.IsUndefined()) {
-      overrideFolder = NapiHelper::ExtractString(overrideFolderCandidate, "overrideFolder");
+    if (!overrideFolderCandidate.IsNull() &&
+        !overrideFolderCandidate.IsUndefined()) {
+      overrideFolder =
+        NapiHelper::ExtractString(overrideFolderCandidate, "overrideFolder");
     }
   }
 
-  return Napi::String::New(info.Env(), Viet::ReadFileIntoString(GetPluginPath(pluginName, overrideFolder)));
+  return Napi::String::New(
+    info.Env(),
+    Viet::ReadFileIntoString(GetPluginPath(pluginName, overrideFolder)));
 }
 
-Napi::Value DevApi::WritePlugin(const Napi::CallbackInfo &info)
+Napi::Value DevApi::WritePlugin(const Napi::CallbackInfo& info)
 {
   // Multifile plugins unsupported
   auto pluginName = NapiHelper::ExtractString(info[0], "pluginName");
@@ -141,8 +145,10 @@ Napi::Value DevApi::WritePlugin(const Napi::CallbackInfo &info)
   std::optional<std::string> overrideFolder;
   if (info.Length() >= 3) {
     auto overrideFolderCandidate = info[2];
-    if (!overrideFolderCandidate.IsNull() && !overrideFolderCandidate.IsUndefined()) {
-      overrideFolder = NapiHelper::ExtractString(overrideFolderCandidate, "overrideFolder");
+    if (!overrideFolderCandidate.IsNull() &&
+        !overrideFolderCandidate.IsUndefined()) {
+      overrideFolder =
+        NapiHelper::ExtractString(overrideFolderCandidate, "overrideFolder");
     }
   }
 
@@ -165,13 +171,13 @@ Napi::Value DevApi::WritePlugin(const Napi::CallbackInfo &info)
   return info.Env().Undefined();
 }
 
-Napi::Value DevApi::GetPlatformVersion(const Napi::CallbackInfo &info)
+Napi::Value DevApi::GetPlatformVersion(const Napi::CallbackInfo& info)
 {
   constexpr auto kSkyrimPlatformVersion = "2.9.0";
   return Napi::String::New(info.Env(), kSkyrimPlatformVersion);
 }
 
-Napi::Value DevApi::GetJsMemoryUsage(const Napi::CallbackInfo &info)
+Napi::Value DevApi::GetJsMemoryUsage(const Napi::CallbackInfo& info)
 {
   if (!jsEngine) {
     throw NullPointerException("jsEngine");
@@ -179,7 +185,7 @@ Napi::Value DevApi::GetJsMemoryUsage(const Napi::CallbackInfo &info)
   return Napi::Number::New(info.Env(), jsEngine->GetMemoryUsage());
 }
 
-Napi::Value DevApi::BlockPapyrusEvents(const Napi::CallbackInfo &info)
+Napi::Value DevApi::BlockPapyrusEvents(const Napi::CallbackInfo& info)
 {
   bool block = NapiHelper::ExtractBoolean(info[0], "block");
   TESModPlatform::BlockPapyrusEvents(nullptr, -1, nullptr, block);
