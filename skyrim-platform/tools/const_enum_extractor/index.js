@@ -68,10 +68,10 @@ const prepareKey = (value) => {
 
 const prepareValue = (value) => {
     if (typeof value === "number") {
-        return `Napi::Number::New(env, ${stringify(value)})`;
+        return `_n_(env, ${stringify(value)})`;
     }
     else if (typeof value === "string") {
-        return `Napi::String::New(env, ${stringify(value)})`;
+        return `_s_(env, ${stringify(value)})`;
     }
     else {
         throw new Error("prepareValue: unsupported value type, value = " + value);
