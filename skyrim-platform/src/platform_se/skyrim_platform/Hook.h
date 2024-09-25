@@ -10,7 +10,7 @@ public:
        std::optional<std::string> succeededVariableName_);
 
   // javascript thread only
-  uint32_t AddHandler(const Handler& handler);
+  uint32_t AddHandler(const std::shared_ptr<Handler>& handler);
   void RemoveHandler(const uint32_t& id);
 
   // Thread-safe, but it isn't too useful actually
@@ -38,7 +38,7 @@ private:
   const std::string eventNameVariableName;
   const std::optional<std::string> succeededVariableName;
   std::set<DWORD> inProgressThreads;
-  std::map<uint32_t, Handler> handlers;
+  std::map<uint32_t, std::shared_ptr<Handler>> handlers;
   uint32_t hCounter = 0;
   std::atomic<int> addRemoveBlocker = 0;
 };

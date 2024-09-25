@@ -37,60 +37,57 @@ void NativeObjectProxy::Attach(Napi::External<NativeObject>& obj,
 
     handler.Set(
       "get",
-      ProxyGetter([classCache, cacheClassName](const Napi::Value& origin,
-                                               const Napi::Value& keyStr) {
-        auto env = origin.Env();
+      ProxyGetter(
+        env,
+        [classCache,
+         cacheClassName](const Napi::Value& origin,
+                         const std::string& keyStr) -> Napi::Value {
+          auto env = origin.Env();
 
-        auto& f =
-          classCache
-            ->funcsCache[static_cast<std::string>(keyStr.As<Napi::String>())];
-        if (!f) {
-          thread_local Napi::Reference<Napi::Object> g_callNativeApi = [] {
-            auto e = Napi::Object::New(env);
-            CallNativeApi::Register(e,
-                                    [] { return g_nativeCallRequirements; });
-            return Napi::Persistent(e);
-          }();
+          auto& f = classCache->funcsCache[keyStr];
+          if (!f) {
+            thread_local Napi::Reference<Napi::Object> g_callNativeApi = [&] {
+              auto e = Napi::Object::New(env);
+              CallNativeApi::Register(env, e,
+                                      [] { return g_nativeCallRequirements; });
+              return Napi::Persistent(e);
+            }();
 
-          std::shared_ptr<std::vector<Napi::Value>> callNativeArgs(
-            new std::vector<Napi::Value>{ g_callNativeApi, cacheClassName,
-                                          keyStr });
+            f.reset(new Napi::Reference<Napi::Function>(
+              Napi::Persistent(Napi::Function::New(
+                env,
+                NapiHelper::WrapCppExceptions(
+                  [cacheClassName,
+                   keyStr](const Napi::CallbackInfo& info) -> Napi::Value {
+                    std::vector<Napi::Value> callNativeParams = {
+                      Napi::String::New(info.Env(), cacheClassName),
+                      Napi::String::New(info.Env(), keyStr), info.This()
+                    };
+                    for (size_t i = 0; i < info.Length(); ++i) {
+                      callNativeParams.push_back(info[i]);
+                    }
 
-          f.reset(new Napi::Reference<Napi::Function>(
-            Napi::Persistent(Napi::Function::New(
-              env,
-              NapiHelper::WrapCppExceptions(
-                [cacheClassName, keyStr, callNativeArgs](
-                  const Napi::CallbackInfo& info) -> Napi::Value {
-                  callNativeArgs->resize(info.Length() + 4);
-                  (*callNativeArgs)[3] = info.This(); // 'this' context (self)
+                    // Access the global function callNative
+                    thread_local auto callNative =
+                      std::shared_ptr<Napi::Reference<Napi::Function>>(
+                        new Napi::Reference<Napi::Function>(
+                          Napi::Persistent(g_callNativeApi.Value()
+                                             .As<Napi::Object>()
+                                             .Get("callNative")
+                                             .As<Napi::Function>())));
 
-                  // Copy the rest of the arguments
-                  for (size_t i = 0; i < info.Length(); ++i) {
-                    // Adjust by 4 since we're adding to the end
-                    (*callNativeArgs)[i + 4] = info[i];
-                  }
+                    // Ensure callNative is a function before calling it
+                    if (!callNative->Value().IsFunction()) {
+                      throw std::runtime_error("callNative is not a function");
+                    }
 
-                  // Access the global function callNative
-                  thread_local auto callNative =
-                    std::shared_ptr<Napi::Reference<Napi::Function>>(
-                      new Napi::Reference<Napi::Function>(
-                        Napi::Persistent(g_callNativeApi.As<Napi::Object>()
-                                           .Get("callNative")
-                                           .As<Napi::Function>())));
-
-                  // Ensure callNative is a function before calling it
-                  if (!callNative->Value().IsFunction()) {
-                    throw std::runtime_error("callNative is not a function");
-                  }
-
-                  // Call callNative with the prepared arguments
-                  return callNative->Value().Call(info.Env().Global(),
-                                                  *callNativeArgs);
-                })))));
-        }
-        return f;
-      }));
+                    // Call callNative with the prepared arguments
+                    return callNative->Value().Call(g_callNativeApi.Value(),
+                                                    callNativeParams);
+                  })))));
+          }
+          return f->Value();
+        }));
     Napi::Object global = env.Global();
     Napi::Function proxyConstructor = global.Get("Proxy").As<Napi::Function>();
     Napi::Object proxy =

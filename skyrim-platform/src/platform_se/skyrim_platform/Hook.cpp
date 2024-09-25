@@ -10,7 +10,7 @@ Hook::Hook(std::string hookName_, std::string eventNameVariableName_,
 {
 }
 
-uint32_t Hook::AddHandler(const Handler& handler)
+uint32_t Hook::AddHandler(const std::shared_ptr<Handler>& handler)
 {
   if (addRemoveBlocker) {
     throw std::runtime_error("Trying to add hook inside hook context");
@@ -41,7 +41,7 @@ void Hook::Enter(uint32_t selfId, std::string& eventName)
     // If there are no handlers, do not do g_taskQueue
     bool anyMatch = false;
     for (auto& hp : handlers) {
-      auto* h = &hp.second;
+      auto* h = hp.second.get();
       if (h->Matches(selfId, eventName)) {
         anyMatch = true;
         break;
@@ -106,7 +106,7 @@ void Hook::HandleEnter(DWORD owningThread, uint32_t selfId,
                        std::string& eventName, const Napi::Env& env)
 {
   for (auto& hp : handlers) {
-    Handler* h = &hp.second;
+    Handler* h = hp.second.get();
     auto& perThread = h->perThread[owningThread];
 
     perThread.matchesCondition = h->Matches(selfId, eventName);
@@ -121,7 +121,8 @@ void Hook::HandleEnter(DWORD owningThread, uint32_t selfId,
       "selfId", Napi::Number::New(env, static_cast<double>(selfId)));
     perThread.context->Value().As<Napi::Object>().Set(
       eventNameVariableName, Napi::String::New(env, eventName));
-    h->enter.As<Napi::Function>().Call({ env.Undefined(), perThread.context });
+    h->enter.Value().As<Napi::Function>().Call(env.Undefined(),
+                                               { perThread.context->Value() });
 
     // Retrieve the updated eventName from the context
     Napi::Value updatedEventName =
@@ -142,8 +143,8 @@ void Hook::PrepareContext(HandlerInfoPerThread& h, const Napi::Env& env)
 
   if (!h.storage) {
     Napi::Object mapInstance = standardMap.As<Napi::Function>().New({});
-    h.storage.reset(new Napi::Reference<Napi::Object>(
-      Napi::Persistent(mapInstance)));
+    h.storage.reset(
+      new Napi::Reference<Napi::Object>(Napi::Persistent(mapInstance)));
     h.context->Value().As<Napi::Object>().Set("storage", h.storage->Value());
   }
 }
@@ -167,7 +168,7 @@ void Hook::ClearContextStorage(HandlerInfoPerThread& h, Napi::Env env)
 void Hook::HandleLeave(DWORD owningThread, bool succeeded, Napi::Env env)
 {
   for (auto& hp : handlers) {
-    Handler* h = &hp.second;
+    Handler* h = hp.second.get();
     auto& perThread = h->perThread.at(owningThread);
 
     if (!perThread.matchesCondition) {
@@ -181,8 +182,8 @@ void Hook::HandleLeave(DWORD owningThread, bool succeeded, Napi::Env env)
         succeededVariableName.value(), Napi::Boolean::New(env, succeeded));
     }
 
-    h->leave->Value().As<Napi::Function>().Call(env.Undefined(),
-      { perThread.context->Value() });
+    h->leave.Value().As<Napi::Function>().Call(env.Undefined(),
+                                               { perThread.context->Value() });
     h->perThread.erase(owningThread);
   }
 }

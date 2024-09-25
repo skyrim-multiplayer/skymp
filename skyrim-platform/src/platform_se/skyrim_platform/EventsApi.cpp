@@ -140,7 +140,8 @@ Napi::Value CreateHookApi(Napi::Env env, std::shared_ptr<Hook> hookInfo)
         pattern = HookPattern::Parse(s);
       }
 
-      Handler handler(handlerObj, minSelfId, maxSelfId, pattern);
+      auto handler =
+        std::make_shared<Handler>(handlerObj, minSelfId, maxSelfId, pattern);
       uint32_t id = hookInfo->AddHandler(handler);
 
       return Napi::Number::New(info.Env(), id);

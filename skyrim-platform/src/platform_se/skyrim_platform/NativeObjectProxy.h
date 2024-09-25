@@ -1,6 +1,7 @@
 #pragma once
 
 #include "NapiHelper.h"
+#include "NativeObject.h"
 
 class NativeObjectProxy
 {
