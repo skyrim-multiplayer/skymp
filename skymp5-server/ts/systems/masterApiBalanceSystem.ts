@@ -32,17 +32,17 @@ export class MasterApiBalanceSystem implements System {
             `MasterApiBalanceSystem system assumed that ${this.myAddr} is our address on master`
         );
 
-        // Effectively makes mp.getUserBalance a part of gamemode API
-        (ctx.svr as any).getUserBalance = async (userId: number): Promise<number> => {
+        // Effectively makes mp.getUserMasterApiBalance a part of gamemode API
+        (ctx.svr as any).getUserMasterApiBalance = async (userId: number): Promise<number> => {
             if (this.offlineMode) {
-                console.log("MasterApiBalanceSystem.getUserBalance - Always zero balance in offline mode");
+                console.log("MasterApiBalanceSystem.getUserMasterApiBalance - Always zero balance in offline mode");
                 return 0;
             }
 
             const session = this.sessionByUserId[userId];
             if (!session) {
-                console.error(`MasterApiBalanceSystem.getUserBalance - Invalid session value for userId ${userId} (session = ${session})`);
-                throw new Error(`MasterApiBalanceSystem.getUserBalance - Invalid session value for userId ${userId} (session = ${session})`);
+                console.error(`MasterApiBalanceSystem.getUserMasterApiBalance - Invalid session value for userId ${userId} (session = ${session})`);
+                throw new Error(`MasterApiBalanceSystem.getUserMasterApiBalance - Invalid session value for userId ${userId} (session = ${session})`);
             }
             return await this.getUserBalanceImpl(session);
         };
