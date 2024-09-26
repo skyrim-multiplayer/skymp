@@ -219,9 +219,6 @@ if(MSVC)
 
   # skyrim_platform vcpkg deps
 
-  find_package(unofficial-chakracore CONFIG REQUIRED)
-  target_link_libraries(skyrim_platform PUBLIC unofficial::chakracore::chakracore)
-
   find_package(unofficial-node-addon-api REQUIRED)
   target_link_libraries(skyrim_platform PRIVATE unofficial::node-addon-api::node-addon-api)
 
