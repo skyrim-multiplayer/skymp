@@ -6,8 +6,7 @@ let game = require("./game");
 // Keep this in sync with triplet file overlay_triplets\x64-windows-sp.cmake or similar
 const requiredVcpkgDlls = [
   "spdlog.dll",
-  "fmt.dll",
-  "ChakraCore.dll"
+  "fmt.dll"
 ];
 
 function writeFileSyncRecursive(filename, content, charset) {

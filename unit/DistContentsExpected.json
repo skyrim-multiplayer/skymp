@@ -301,7 +301,6 @@
       "client/Data/Platform/Distribution/CEF/locales/zh-CN.pak",
       "client/Data/Platform/Distribution/CEF/locales/zh-TW.pak",
       "client/Data/Platform/Distribution/CEF/resources.pak",
-      "client/Data/Platform/Distribution/RuntimeDependencies/ChakraCore.dll",
       "client/Data/Platform/Distribution/RuntimeDependencies/chrome_elf.dll",
       "client/Data/Platform/Distribution/RuntimeDependencies/d3dcompiler_47.dll",
       "client/Data/Platform/Distribution/RuntimeDependencies/fmt.dll",
