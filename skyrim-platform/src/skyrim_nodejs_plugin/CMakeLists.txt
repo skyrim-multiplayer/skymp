@@ -1,7 +1,7 @@
 project(skyrim_nodejs_plugin LANGUAGES CXX)
 
 if(MSVC)
-    file(GLOB_RECURSE installed "${VCPKG_ROOT}/installed/*")
+    file(GLOB_RECURSE installed "${CMAKE_BINARY_DIR}/vcpkg_installed/*")
     foreach(v ${installed})
         message(STATUS ${v})
     endforeach()
