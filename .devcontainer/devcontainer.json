@@ -1,20 +1,36 @@
 {
-    "name": "C++ Codespace",
+    "name": "C++/TypeScript Project",
     "build": {
         "dockerfile": "devcontainer.Dockerfile"
     },
     "customizations": {
         "vscode": {
-            "extensions": [
-                "ms-vscode.cmake-tools",
-                "ms-vscode.cpptools"
-            ],
             "settings": {
-                "C_Cpp.intelliSenseEngine": "default"
-            }
+                "C_Cpp.default.compilerPath": "/usr/bin/clang",
+                "C_Cpp.default.intelliSenseMode": "linux-clang-x64",
+                "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+                "C_Cpp.errorSquiggles": "disabled",
+                "cmake.configureOnOpen": false,
+                "cmake.preferredGenerators": [
+                    "Ninja"
+                ],
+                "cmake.buildDirectory": "${workspaceFolder}/build",
+                "cmake.generator": "Ninja",
+                "cmake.defaultConfigureArgs": [
+                    "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
+                ],
+                "workbench.startupEditor": "none",
+                "telemetry.enableTelemetry": false,
+                "telemetry.enableCrashReporter": false,
+                "update.mode": "manual",
+                "workbench.notification.level": "error"
+            },
+            "extensions": [
+                "ms-vscode.cpptools",
+                "ms-vscode.cmake-tools"
+            ]
         }
     },
-    "remoteUser": "vscode",
-    "mounts": [],
-    "containerUser": "vscode"
+    "postCreateCommand": "cmake -B build",
+    "remoteUser": "vscode"
 }
