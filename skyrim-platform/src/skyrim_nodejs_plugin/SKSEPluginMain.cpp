@@ -44,7 +44,8 @@ __declspec(dllexport) bool SKSEPlugin_Load(void* skse)
 {
   try {
     static NodeInstance g_nodeInstance;
-    return g_nodeInstance.Load();
+    g_nodeInstance.Load();
+    return true;
   } catch (std::exception& e) {
     MessageBoxA(0, e.what(), "Fatal (Skyrim NodeJS Plugin)", MB_ICONERROR);
     return false;
