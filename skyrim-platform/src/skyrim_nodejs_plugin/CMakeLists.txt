@@ -1,11 +1,12 @@
 project(skyrim_nodejs_plugin LANGUAGES CXX)
 
 if(MSVC)
-    #file(GLOB_RECURSE installed "${CMAKE_BINARY_DIR}/vcpkg_installed/*")
-    #foreach(v ${installed})
-    #    message(STATUS ${v})
-    #endforeach()
-    #message(FATAL_ERROR "FOTAL IRAR")
+    file(GLOB_RECURSE installed "${CMAKE_BINARY_DIR}/vcpkg_installed/*")
+    message(STATUS "!!! PRINTING INSTALLED !!!")
+    foreach(v ${installed})
+        message(STATUS ${v})
+    endforeach()
+    message(STATUS "!!! FINISHED PRINTING INSTALLED !!!")
 
     add_library(node-embedder-api INTERFACE)
     find_path(node_INCLUDE_DIR NAMES js_native_api.h PATH_SUFFIXES node-embedder-api)
