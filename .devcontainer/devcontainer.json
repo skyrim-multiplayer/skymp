@@ -1,6 +1,21 @@
 {
-    "name": "Node.js Codespace",
-    "image": "mcr.microsoft.com/devcontainers/javascript-node:22",
-    "postCreateCommand": "yarn",
-    "remoteUser": "node"
+    "name": "C++ Codespace",
+    "build": {
+        "dockerfile": "devcontainer.Dockerfile"
+    },
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-vscode.cmake-tools",
+                "ms-vscode.cpptools"
+            ],
+            "settings": {
+                "cmake.configureOnOpen": true,
+                "C_Cpp.intelliSenseEngine": "Default"
+            }
+        }
+    },
+    "remoteUser": "vscode",
+    "mounts": [],
+    "containerUser": "vscode"
 }
