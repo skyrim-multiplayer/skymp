@@ -144,17 +144,22 @@ file(COPY "${SOURCE_PATH}/src/node.h" DESTINATION "${CURRENT_PACKAGES_DIR}/inclu
 file(COPY "${SOURCE_PATH}/src/node_api.h" DESTINATION "${CURRENT_PACKAGES_DIR}/include/node-embedder-api")
 file(COPY "${SOURCE_PATH}/src/node_version.h" DESTINATION "${CURRENT_PACKAGES_DIR}/include/node-embedder-api")
 
-file(GLOB v8_headers "${SOURCE_PATH}/src/deps/v8/include/*.h")
+file(GLOB v8_headers "${SOURCE_PATH}/deps/v8/include/*.h")
 foreach(v8_header ${v8_headers})
   file(COPY "${v8_header}" DESTINATION "${CURRENT_PACKAGES_DIR}/include/node-embedder-api")
 endforeach()
 
-file(GLOB v8_headers "${SOURCE_PATH}/src/deps/v8/include/cppgc/*.h")
+file(GLOB v8_headers "${SOURCE_PATH}/deps/v8/include/cppgc/*.h")
 foreach(v8_header ${v8_headers})
   file(COPY "${v8_header}" DESTINATION "${CURRENT_PACKAGES_DIR}/include/node-embedder-api/cppgc")
 endforeach()
 
-file(GLOB v8_headers "${SOURCE_PATH}/src/deps/v8/include/libplatform/*.h")
+file(GLOB v8_headers "${SOURCE_PATH}/deps/v8/include/cppgc/internal/*.h")
+foreach(v8_header ${v8_headers})
+  file(COPY "${v8_header}" DESTINATION "${CURRENT_PACKAGES_DIR}/include/node-embedder-api/cppgc/internal")
+endforeach()
+
+file(GLOB v8_headers "${SOURCE_PATH}/deps/v8/include/libplatform/*.h")
 foreach(v8_header ${v8_headers})
   file(COPY "${v8_header}" DESTINATION "${CURRENT_PACKAGES_DIR}/include/node-embedder-api/libplatform")
 endforeach()
