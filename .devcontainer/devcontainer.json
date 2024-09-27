@@ -10,8 +10,7 @@
                 "ms-vscode.cpptools"
             ],
             "settings": {
-                "cmake.configureOnOpen": true,
-                "C_Cpp.intelliSenseEngine": "Default"
+                "C_Cpp.intelliSenseEngine": "default"
             }
         }
     },
