@@ -230,7 +230,7 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
         case VarValue::kType_Object: {
           auto to = args[0];
           auto from = IsSelfStr(*args[1]) ? &activeInstanceOwner : args[1];
-          CastObjectToObject(to, from, *ctx->locals);
+          CastObjectToObject(*parentVM, to, from);
         } break;
         case VarValue::kType_Integer:
           *args[0] = (*args[1]).CastToInt();
@@ -890,10 +890,62 @@ uint8_t ActivePexInstance::GetArrayTypeByElementType(uint8_t type)
   return returnType;
 }
 
+void ActivePexInstance::CastObjectToObject(const VirtualMachine& vm,
+                                           VarValue* result,
+                                           VarValue* scriptToCastOwner)
+{
+  static const VarValue kNone = VarValue::None();
+
+  if (scriptToCastOwner->GetType() != VarValue::kType_Object) {
+    *result = kNone;
+    return spdlog::trace(
+      "CastObjectToObject {} -> {} (object is not an object)",
+      scriptToCastOwner->ToString(), result->ToString());
+  }
+
+  if (*scriptToCastOwner == kNone) {
+    *result = kNone;
+    return spdlog::trace("CastObjectToObject {} -> {} (object is None)",
+                         scriptToCastOwner->ToString(), result->ToString());
+  }
+
+  const std::string& resultTypeName = result->objectType;
+
+  VarValue tmp;
+  std::vector<std::string> outClassesStack;
+
+  if (tmp == kNone) {
+    tmp = TryCastToBaseClass(vm, resultTypeName, scriptToCastOwner,
+                             outClassesStack);
+    if (tmp != kNone) {
+      spdlog::trace("CastObjectToObject {} -> {} (base class found: {})",
+                    scriptToCastOwner->ToString(), tmp.ToString(),
+                    resultTypeName);
+    }
+  }
+
+  if (tmp == kNone) {
+    tmp = TryCastMultipleInheritance(vm, resultTypeName, scriptToCastOwner);
+    if (tmp != kNone) {
+      spdlog::trace(
+        "CastObjectToObject {} -> {} (multiple inheritance found: {})",
+        scriptToCastOwner->ToString(), tmp.ToString(), resultTypeName);
+    }
+  }
+
+  if (tmp == kNone) {
+    spdlog::trace(
+      "CastObjectToObject {} -> {} (match not found, wanted {}, stack is {})",
+      scriptToCastOwner->ToString(), tmp.ToString(), resultTypeName,
+      fmt::join(outClassesStack, ", "));
+  }
+
+  *result = tmp;
+}
+
 VarValue ActivePexInstance::TryCastToBaseClass(
-  VirtualMachine& vm, const std::string& resultTypeName,
-  VarValue* scriptToCastOwner, std::vector<ActivePexInstance::Local>& locals,
-  std::vector<std::string>& outClassesStack)
+  const VirtualMachine& vm, const std::string& resultTypeName,
+  VarValue* scriptToCastOwner, std::vector<std::string>& outClassesStack)
 {
   auto object = static_cast<IGameObject*>(*scriptToCastOwner);
   if (!object) {
@@ -930,8 +982,8 @@ VarValue ActivePexInstance::TryCastToBaseClass(
 }
 
 VarValue ActivePexInstance::TryCastMultipleInheritance(
-  VirtualMachine& vm, const std::string& resultTypeName,
-  VarValue* scriptToCastOwner, std::vector<ActivePexInstance::Local>& locals)
+  const VirtualMachine& vm, const std::string& resultTypeName,
+  VarValue* scriptToCastOwner)
 {
   auto object = static_cast<IGameObject*>(*scriptToCastOwner);
   if (!object) {
@@ -950,60 +1002,6 @@ VarValue ActivePexInstance::TryCastMultipleInheritance(
   }
 
   return VarValue::None();
-}
-
-void ActivePexInstance::CastObjectToObject(VarValue* result,
-                                           VarValue* scriptToCastOwner,
-                                           std::vector<Local>& locals)
-{
-  static const VarValue kNone = VarValue::None();
-
-  if (scriptToCastOwner->GetType() != VarValue::kType_Object) {
-    *result = kNone;
-    return spdlog::trace(
-      "CastObjectToObject {} -> {} (object is not an object)",
-      scriptToCastOwner->ToString(), result->ToString());
-  }
-
-  if (*scriptToCastOwner == kNone) {
-    *result = kNone;
-    return spdlog::trace("CastObjectToObject {} -> {} (object is None)",
-                         scriptToCastOwner->ToString(), result->ToString());
-  }
-
-  const std::string& resultTypeName = result->objectType;
-
-  VarValue tmp;
-  std::vector<std::string> outClassesStack;
-
-  if (tmp == kNone) {
-    tmp = TryCastToBaseClass(*parentVM, resultTypeName, scriptToCastOwner,
-                             locals, outClassesStack);
-    if (tmp != kNone) {
-      spdlog::trace("CastObjectToObject {} -> {} (base class found: {})",
-                    scriptToCastOwner->ToString(), tmp.ToString(),
-                    resultTypeName);
-    }
-  }
-
-  if (tmp == kNone) {
-    tmp = TryCastMultipleInheritance(*parentVM, resultTypeName,
-                                     scriptToCastOwner, locals);
-    if (tmp != kNone) {
-      spdlog::trace(
-        "CastObjectToObject {} -> {} (multiple inheritance found: {})",
-        scriptToCastOwner->ToString(), tmp.ToString(), resultTypeName);
-    }
-  }
-
-  if (tmp == kNone) {
-    spdlog::trace(
-      "CastObjectToObject {} -> {} (match not found, wanted {}, stack is {})",
-      scriptToCastOwner->ToString(), tmp.ToString(), resultTypeName,
-      fmt::join(outClassesStack, ", "));
-  }
-
-  *result = tmp;
 }
 
 bool ActivePexInstance::HasParent(ActivePexInstance* script,

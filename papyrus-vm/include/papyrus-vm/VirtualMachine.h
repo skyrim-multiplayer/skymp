@@ -103,7 +103,7 @@ public:
                       std::vector<VarValue>& arguments,
                       std::shared_ptr<StackData> stackData = nullptr);
 
-  PexScript::Lazy GetPexByName(const std::string& name);
+  PexScript::Lazy GetPexByName(const std::string& name) const;
 
   std::shared_ptr<ActivePexInstance> CreateActivePexInstance(
     const std::string& pexScriptName, VarValue activeInstanceOwner,
@@ -114,11 +114,19 @@ public:
 
   ExceptionHandler GetExceptionHandler() const;
 
+  std::set<CIString> ListClasses() const;
+  CIString GetBaseClass(const CIString& className) const;
+  std::set<CIString> ListStaticFunctions(const CIString& className) const;
+  std::set<CIString> ListMethods(const CIString& className) const;
+  NativeFunction GetFunctionImplementation(const CIString& className,
+                                           const CIString& functionName,
+                                           bool isStatic) const;
+  bool DynamicCast(const VarValue& object, const CIString& className) const;
+
 private:
   CIMap<PexScript::Lazy> allLoadedScripts;
 
-  std::map<std::string, std::map<std::string, NativeFunction>> nativeFunctions,
-    nativeStaticFunctions;
+  CIMap<CIMap<NativeFunction>> nativeFunctions, nativeStaticFunctions;
 
   std::map<std::string, std::shared_ptr<ActivePexInstance>>
     instancesForStaticCalls;
