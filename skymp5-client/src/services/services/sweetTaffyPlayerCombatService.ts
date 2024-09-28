@@ -200,11 +200,7 @@ export class SweetTaffyPlayerCombatService extends ClientListener {
     return [0, 0];
   };
 
-  private getTimingsFromConfig(weapon?: WeaponType): [number, number] | null {
-    if (!weapon) {
-      weapon = WeaponType.Fist;
-    }
-
+  private getSettingsFromFile(): WeaponTimings | null {
     const sweetTaffyPlayerCombatService = this.sp.settings["skymp5-client"]["sweetTaffyPlayerCombatService"];
 
     if (!sweetTaffyPlayerCombatService || typeof sweetTaffyPlayerCombatService !== "object") {
@@ -215,6 +211,40 @@ export class SweetTaffyPlayerCombatService extends ClientListener {
     const weaponTimings = (sweetTaffyPlayerCombatService as Record<string, unknown>).weaponTimings;
     if (!weaponTimings || typeof weaponTimings !== "object") {
       logError(this, `No weaponTimings settings found`);
+      return null;
+    }
+
+    return weaponTimings as WeaponTimings;
+  }
+
+  private getSettingsDefault(): WeaponTimings | null {
+    return {
+      fist: [0, 30],
+      sword: [0, 30],
+      dagger: [0, 60],
+      warAxe: [0, 60],
+      mace: [0, 65],
+      greatsword: [0, 65],
+      // Note: both of Battleaxe and Warhammer weapon types correspond to id=6.
+      battleaxe: [0, 70],
+      warhammer: [0, 70],
+      bow: [0, 70],
+      staff: [0, 70],
+      crossbow: [0, 70]
+    };
+  }
+
+  private getTimingsFromConfig(weapon?: WeaponType): [number, number] | null {
+    if (!weapon) {
+      weapon = WeaponType.Fist;
+    }
+
+    // skymp5-client-settings.txt is perfectly editable by users, so we don't use it for now.
+    // It's well-tested though, so we can enable it once we have a protection mechanism.
+
+    // const weaponTimings = this.getSettingsFromFile();
+    const weaponTimings = this.getSettingsDefault();
+    if (!weaponTimings) {
       return null;
     }
 
