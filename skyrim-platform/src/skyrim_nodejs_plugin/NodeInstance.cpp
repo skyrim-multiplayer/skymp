@@ -1,27 +1,54 @@
-#include <node.h>               // For Node.js related functions
-#include <v8.h>                 // For V8 API
-#include <libplatform/libplatform.h> // For platform-specific functionality
-#include <iostream>            // For standard I/O operations
-#include <memory>              // For smart pointers
-#include <string>              // For std::string
-#include <vector>              // For std::vector
+#include <node.h>
+#include <v8.h>
+#include <libplatform/libplatform.h> 
+#include <iostream>
+#include <memory>
+#include <string>
+#include <vector>
 #include <uv.h>
 
 using namespace node;
 using namespace v8;
 
-//#include <node/api.h>          // For Node API definitions
-//#include <node/common.h>       // For Common functions
-//#include <node/environment.h>  // For Environment class
-//#include <node/node.h>         // For Node related functionalities
-//#include <node/module.h>       // For module related functions
-//#include <node/v8.h>           // For V8 related functions
-
 #include "NodeInstance.h"
+
+namespace {
+  // Function to run a basic Node.js instance
+int RunNodeInstance(node::MultiIsolatePlatform* platform,
+                    const std::vector<std::string>& args,
+                    const std::vector<std::string>& exec_args) {
+    // Initialize V8 and create a new isolate.
+    Isolate::CreateParams create_params;
+    create_params.array_buffer_allocator = v8::ArrayBuffer::Allocator::NewDefaultAllocator();
+    Isolate* isolate = Isolate::New(create_params);
+    
+    {
+        // Isolate and context scope management
+        Isolate::Scope isolate_scope(isolate);
+        HandleScope handle_scope(isolate);
+
+        Local<Context> context = Context::New(isolate);
+        Context::Scope context_scope(context);
+
+        // Simple JavaScript code to run
+        const char* js_code = "console.log('Hello from embedded Node.js!');";
+
+        // Compile and run the JavaScript code
+        Local<String> source = String::NewFromUtf8(isolate, js_code, NewStringType::kNormal).ToLocalChecked();
+        Local<Script> script = Script::Compile(context, source).ToLocalChecked();
+        script->Run(context).ToLocalChecked();
+    }
+
+    // Cleanup V8
+    isolate->Dispose();
+    delete create_params.array_buffer_allocator;
+
+    return 0; // Exit code
+}
+}
 
 struct NodeInstance::Impl
 {
-
 };
 
 NodeInstance::NodeInstance()
@@ -31,7 +58,7 @@ NodeInstance::NodeInstance()
 
 void NodeInstance::Load()
 {
-
+  // TODO
 }
 
 int NodeInstance::NodeMain(int argc, char** argv)
