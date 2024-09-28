@@ -163,7 +163,6 @@ export class AnimDebugService extends ClientListener {
         return f(Infinity);
       }
 
-      //(_callNative("Utility", "wait", undefined, 0.5) as any).then(() => f(i + 1));
       this.controller.once("update", () => f(i + 1));
     }
 
