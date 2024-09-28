@@ -6,6 +6,8 @@
 #include <string>              // For std::string
 #include <vector>              // For std::vector
 
+using namespace node;
+
 //#include <node/api.h>          // For Node API definitions
 //#include <node/common.h>       // For Common functions
 //#include <node/environment.h>  // For Environment class
