@@ -67,6 +67,15 @@ public:
 
   Napi::Value FindFormsByPropertyValue(const Napi::CallbackInfo& info);
 
+  // SkyrimPlatform3 backend implementation
+
+  Napi::Value SP3ListClasses(const Napi::CallbackInfo& info);
+  Napi::Value SP3GetBaseClass(const Napi::CallbackInfo& info);
+  Napi::Value SP3ListStaticFunctions(const Napi::CallbackInfo& info);
+  Napi::Value SP3ListMethods(const Napi::CallbackInfo& info);
+  Napi::Value SP3GetFunctionImplementation(const Napi::CallbackInfo& info);
+  Napi::Value SP3DynamicCast(const Napi::CallbackInfo& info);
+
   const std::shared_ptr<PartOne>& GetPartOne() const { return partOne; }
   const GamemodeApi::State& GetGamemodeApiState() const
   {

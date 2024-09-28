@@ -14,7 +14,7 @@ export class Spawn implements System {
 
   async initAsync(ctx: SystemContext): Promise<void> {
     const settingsObject = await Settings.get();
-    const listenerFn = (userId: number, userProfileId: number, discordRoleIds: string[], discordId: string | undefined) => {
+    const listenerFn = (userId: number, userProfileId: number, discordRoleIds: string[], discordId?: string) => {
       const { startPoints } = settingsObject;
       // TODO: Show race menu if character is not created after relogging
       let actorId = ctx.svr.getActorsByProfileId(userProfileId)[0];
