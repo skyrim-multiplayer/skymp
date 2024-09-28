@@ -113,6 +113,39 @@ export class AnimDebugService extends ClientListener {
       this.sp.Debug.sendAnimationEvent(this.sp.Game.getPlayer(), this.settings.animKeys![e.code]);
 
       this.needsExitingAnim = true;
+
+      // Fixes https://github.com/skyrim-multiplayer/skymp5-gamemode/issues/240
+      // P.S. There is a very similar code in skymp5-gamemode
+      // See disableCheats.ts, skymp5-gamemode for comments
+      (() => {
+        let _callNative = this.sp.callNative;
+        let cameraState = -1;
+        let needsExitingAnim = false;
+
+        let f = (i: number): void => {
+          if (i >= 10) {
+            return;
+          }
+
+          cameraState = _callNative("Game", "getCameraState", undefined) as number;
+
+          needsExitingAnim = this.needsExitingAnim;
+
+          if (!needsExitingAnim) {
+            return f(Infinity);
+          }
+
+          if (cameraState === 0) { // 1-st person
+            _callNative("Game", "forceThirdPerson", undefined);
+            this.exitAnim();
+            return f(Infinity);
+          }
+
+          (_callNative("Utility", "wait", undefined, 0.5) as any).then(() => f(i + 1));
+        }
+
+        f(0);
+      })();
     }
 
     logTrace(this, `Sent animation event: ${this.settings.animKeys![e.code]}`);
