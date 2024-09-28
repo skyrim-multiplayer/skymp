@@ -164,6 +164,16 @@ foreach(v8_header ${v8_headers})
   file(COPY "${v8_header}" DESTINATION "${CURRENT_PACKAGES_DIR}/include/node-embedder-api/libplatform")
 endforeach()
 
+file(GLOB v8_headers "${SOURCE_PATH}/deps/uv/include/*.h")
+foreach(v8_header ${v8_headers})
+  file(COPY "${v8_header}" DESTINATION "${CURRENT_PACKAGES_DIR}/include/node-embedder-api")
+endforeach()
+
+file(GLOB v8_headers "${SOURCE_PATH}/deps/uv/include/uv/*.h")
+foreach(v8_header ${v8_headers})
+  file(COPY "${v8_header}" DESTINATION "${CURRENT_PACKAGES_DIR}/include/node-embedder-api/uv")
+endforeach()
+
 # node_api.h requirements
 file(COPY "${SOURCE_PATH}/src/js_native_api.h" DESTINATION "${CURRENT_PACKAGES_DIR}/include/node-embedder-api")
 file(COPY "${SOURCE_PATH}/src/node_api_types.h" DESTINATION "${CURRENT_PACKAGES_DIR}/include/node-embedder-api")

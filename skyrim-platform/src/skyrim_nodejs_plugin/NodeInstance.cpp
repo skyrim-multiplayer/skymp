@@ -5,8 +5,10 @@
 #include <memory>              // For smart pointers
 #include <string>              // For std::string
 #include <vector>              // For std::vector
+#include <uv.h>
 
 using namespace node;
+using namespace v8;
 
 //#include <node/api.h>          // For Node API definitions
 //#include <node/common.h>       // For Common functions
