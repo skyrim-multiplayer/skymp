@@ -10,7 +10,7 @@ if(MSVC)
 
     add_library(node-embedder-api INTERFACE)
     find_path(node_INCLUDE_DIR NAMES js_native_api.h PATH_SUFFIXES node-embedder-api)
-    find_library(node_LIBRARY_Debug NAMES node)
+    find_library(node_LIBRARY_Debug NAMES node PATH_SUFFIXES node-embedder-api)
     string(REPLACE "/debug/lib/" "/lib/" node_LIBRARY_Release "${node_LIBRARY_Debug}")
     target_link_libraries(node-embedder-api INTERFACE "$<IF:$<CONFIG:Debug>,${node_LIBRARY_Debug},${node_LIBRARY_Release}>")
     target_include_directories(node-embedder-api INTERFACE ${node_INCLUDE_DIR})
