@@ -1151,28 +1151,9 @@ Napi::Value ScampServer::CallPapyrusFunction(const Napi::CallbackInfo& info)
     int callTypeInt = 0;
 
     if (callType == "method") {
-      if (self.GetType() == VarValue::Type::kType_Object) {
-        try {
-          res = vm.CallMethod(static_cast<IGameObject*>(self),
-                              functionName.data(), args);
-        } catch (std::exception& e) {
-          res = VarValue::None();
-          spdlog::error("ScampServer::CallPapyrusFunction {} {} - {}",
-                        self.ToString(), functionName, e.what());
-        }
-      } else {
-        throw std::runtime_error(
-          "Can't call Papyrus method on non-object self '" + self.ToString() +
-          "'");
-      }
+      callTypeInt = 'meth';
     } else if (callType == "global") {
-      try {
-        res = vm.CallStatic(className, functionName, args);
-      } catch (std::exception& e) {
-        res = VarValue::None();
-        spdlog::error("ScampServer::CallPapyrusFunction {} {} - {}", className,
-                      functionName, e.what());
-      }
+      callTypeInt = 'glob';
     } else {
       throw std::runtime_error("Unknown call type '" + callType +
                                "', expected one of ['method', 'global']");
@@ -1455,9 +1436,9 @@ Napi::Value ScampServer::SP3GetFunctionImplementation(
         auto jsRes = PapyrusUtils::GetJsValueFromPapyrusValue(
           info.Env(), res, partOne->worldState.espmFiles);
 
-          if (jsRes.IsObject()) {
-            jsRes.As<Napi::Object>().Set("_sp3ObjectType", res.objectType);
-          }
+        if (jsRes.IsObject()) {
+          jsRes.As<Napi::Object>().Set("_sp3ObjectType", res.objectType);
+        }
 
         // spdlog::info("5");
 
