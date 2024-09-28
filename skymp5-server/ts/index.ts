@@ -20,6 +20,8 @@ import { System } from "./systems/system";
 import { MasterClient } from "./systems/masterClient";
 import { Spawn } from "./systems/spawn";
 import { Login } from "./systems/login";
+import { DiscordBanSystem } from "./systems/discordBanSystem";
+import { MasterApiBalanceSystem } from "./systems/masterApiBalanceSystem";
 import { EventEmitter } from "events";
 import { pid } from "process";
 import * as fs from "fs";
@@ -28,7 +30,6 @@ import * as path from "path";
 import * as os from "os";
 
 import * as manifestGen from "./manifestGen";
-import { DiscordBanSystem } from "./systems/discordBanSystem";
 import { createScampServer } from "./scampNative";
 
 const gamemodeCache = new Map<string, string>();
@@ -135,7 +136,8 @@ const main = async () => {
     new MasterClient(log, port, master, maxPlayers, name, ip, 5000, offlineMode),
     new Spawn(log),
     new Login(log, maxPlayers, master, port, ip, offlineMode),
-    new DiscordBanSystem()
+    new DiscordBanSystem(),
+    new MasterApiBalanceSystem(log, maxPlayers, master, port, ip, offlineMode)
   );
 
   setupStreams(scampNative.getScampNative());
