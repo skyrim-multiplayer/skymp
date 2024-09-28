@@ -9,21 +9,23 @@ let isPlayerControlDisabled = true;
 let playerAttackTimeout = 0;
 let activeTimers = new Set<string>();
 
-// TODO: move to config
-const weaponTimings = new Map<WeaponType, [number, number]>([
-  [WeaponType.Fist, [0, 30]],
-  [WeaponType.Sword, [0, 30]],
-  [WeaponType.Dagger, [0, 60]],
-  [WeaponType.WarAxe, [0, 60]],
-  [WeaponType.Mace, [0, 65]],
-  [WeaponType.Greatsword, [0, 65]],
-  // Note: both of Battleaxe and Warhammer weapon types correspond to id=6.
-  [WeaponType.Battleaxe, [0, 70]],
-  [WeaponType.Warhammer, [0, 70]],
-  [WeaponType.Bow, [0, 70]],
-  [WeaponType.Staff, [0, 70]],
-  [WeaponType.Crossbow, [0, 70]],
-]);
+interface WeaponTimings {
+  fist: [number, number];
+  sword: [number, number];
+  dagger: [number, number];
+  warAxe: [number, number];
+  mace: [number, number];
+  greatsword: [number, number];
+  battleaxe: [number, number];
+  warhammer: [number, number];
+  bow: [number, number];
+  staff: [number, number];
+  crossbow: [number, number];
+}
+
+interface SweetTaffyPlayerCombatServiceSettings {
+  weaponTimings?: WeaponTimings;
+}
 
 type AttackType = "Std" | "Power" | "Jump" | "Bow" | "Crossbow";
 
@@ -178,19 +180,142 @@ export class SweetTaffyPlayerCombatService extends ClientListener {
     });
   }
 
-  private getTimings(weapon?: WeaponType): [number, number] {
-    if (!weapon || !weaponTimings.has(weapon)) {
+  private getAndValidateTimingsConfigKey(key: keyof WeaponTimings, weaponTimings: unknown): [number, number] {
+    const value = (weaponTimings as Record<string, unknown>)[key];
+
+    if (value && Array.isArray(value) && value.length === 2) {
+      const element0 = value[0];
+      if (typeof element0 !== "number") {
+        logError(this, `Invalid timings config for weapon type`, key, value);
+        return [0, 0];
+      }
+      const element1 = value[1];
+      if (typeof element1 !== "number") {
+        logError(this, `Invalid timings config for weapon type`, key, value);
+        return [0, 0];
+      }
+      return [element0, element1];
+    }
+
+    return [0, 0];
+  };
+
+  private getSettingsFromFile(): WeaponTimings | null {
+    const sweetTaffyPlayerCombatService = this.sp.settings["skymp5-client"]["sweetTaffyPlayerCombatService"];
+
+    if (!sweetTaffyPlayerCombatService || typeof sweetTaffyPlayerCombatService !== "object") {
+      logError(this, `No sweetTaffyPlayerCombatService settings found`);
+      return null;
+    }
+
+    const weaponTimings = (sweetTaffyPlayerCombatService as Record<string, unknown>).weaponTimings;
+    if (!weaponTimings || typeof weaponTimings !== "object") {
+      logError(this, `No weaponTimings settings found`);
+      return null;
+    }
+
+    return weaponTimings as WeaponTimings;
+  }
+
+  private getSettingsDefault(): WeaponTimings | null {
+    return {
+      fist: [0, 30],
+      sword: [0, 30],
+      dagger: [0, 60],
+      warAxe: [0, 60],
+      mace: [0, 65],
+      greatsword: [0, 65],
+      // Note: both of Battleaxe and Warhammer weapon types correspond to id=6.
+      battleaxe: [0, 70],
+      warhammer: [0, 70],
+      bow: [0, 70],
+      staff: [0, 70],
+      crossbow: [0, 70]
+    };
+  }
+
+  private getTimingsFromConfig(weapon?: WeaponType): [number, number] | null {
+    if (!weapon) {
       weapon = WeaponType.Fist;
     }
 
-    const res = weaponTimings.get(weapon);
+    // skymp5-client-settings.txt is perfectly editable by users, so we don't use it for now.
+    // It's well-tested though, so we can enable it once we have a protection mechanism.
 
-    if (res === undefined) {
+    // const weaponTimings = this.getSettingsFromFile();
+    const weaponTimings = this.getSettingsDefault();
+    if (!weaponTimings) {
+      return null;
+    }
+
+    const weaponTimingsResult: WeaponTimings = {
+      fist: [0, 0],
+      sword: [0, 0],
+      dagger: [0, 0],
+      warAxe: [0, 0],
+      mace: [0, 0],
+      greatsword: [0, 0],
+      battleaxe: [0, 0],
+      warhammer: [0, 0],
+      bow: [0, 0],
+      staff: [0, 0],
+      crossbow: [0, 0]
+    };
+    weaponTimingsResult.fist = this.getAndValidateTimingsConfigKey("fist", weaponTimings);
+    weaponTimingsResult.sword = this.getAndValidateTimingsConfigKey("sword", weaponTimings);
+    weaponTimingsResult.dagger = this.getAndValidateTimingsConfigKey("dagger", weaponTimings);
+    weaponTimingsResult.warAxe = this.getAndValidateTimingsConfigKey("warAxe", weaponTimings);
+    weaponTimingsResult.mace = this.getAndValidateTimingsConfigKey("mace", weaponTimings);
+    weaponTimingsResult.greatsword = this.getAndValidateTimingsConfigKey("greatsword", weaponTimings);
+    weaponTimingsResult.battleaxe = this.getAndValidateTimingsConfigKey("battleaxe", weaponTimings);
+    weaponTimingsResult.warhammer = this.getAndValidateTimingsConfigKey("warhammer", weaponTimings);
+    weaponTimingsResult.bow = this.getAndValidateTimingsConfigKey("bow", weaponTimings);
+    weaponTimingsResult.staff = this.getAndValidateTimingsConfigKey("staff", weaponTimings);
+    weaponTimingsResult.crossbow = this.getAndValidateTimingsConfigKey("crossbow", weaponTimings);
+
+    switch (weapon) {
+      case WeaponType.Fist:
+        return weaponTimingsResult.fist;
+      case WeaponType.Sword:
+        return weaponTimingsResult.sword;
+      case WeaponType.Dagger:
+        return weaponTimingsResult.dagger;
+      case WeaponType.WarAxe:
+        return weaponTimingsResult.warAxe;
+      case WeaponType.Mace:
+        return weaponTimingsResult.mace;
+      case WeaponType.Greatsword:
+        return weaponTimingsResult.greatsword;
+      case WeaponType.Battleaxe:
+        return weaponTimingsResult.battleaxe;
+      case WeaponType.Warhammer:
+        return weaponTimingsResult.warhammer;
+      case WeaponType.Bow:
+        return weaponTimingsResult.bow;
+      case WeaponType.Staff:
+        return weaponTimingsResult.staff;
+      case WeaponType.Crossbow:
+        return weaponTimingsResult.crossbow;
+      default:
+        logError(this, `No timings found for weapon type`, weapon);
+        return null;
+    }
+  }
+
+  private getTimings(weapon?: WeaponType): [number, number] {
+    let timingsFromConfig = this.getTimingsFromConfig(weapon);
+
+    if (!weapon || !timingsFromConfig) {
+      weapon = WeaponType.Fist;
+      timingsFromConfig = this.getTimingsFromConfig(weapon);
+    }
+
+    if (!timingsFromConfig) {
       logError(this, `No timings found for weapon type`, weapon);
       return [0, 0];
     }
 
-    return res;
+    return timingsFromConfig;
   };
 
   private hasSweetPie(): boolean {
