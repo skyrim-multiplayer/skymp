@@ -115,7 +115,7 @@ export class AnimDebugService extends ClientListener {
       this.sp.Debug.sendAnimationEvent(this.sp.Game.getPlayer(), this.settings.animKeys![e.code]);
 
       this.needsExitingAnim = true;
-      this.startAntiExploitPolling();
+      this.startAntiExploitPolling("no_death");
     }
 
     logTrace(this, `Sent animation event: ${this.settings.animKeys![e.code]}`);
@@ -135,7 +135,7 @@ export class AnimDebugService extends ClientListener {
     });
   }
 
-  private startAntiExploitPolling() {
+  private startAntiExploitPolling(mode: "no_death" | "death" = "death") {
     // Fixes https://github.com/skyrim-multiplayer/skymp5-gamemode/issues/240
     // P.S. There is a very similar code in skymp5-gamemode
     // See disableCheats.ts, skymp5-gamemode for comments
@@ -160,6 +160,9 @@ export class AnimDebugService extends ClientListener {
       if (cameraState === 0) { // 1-st person
         _callNative("Game", "forceThirdPerson", undefined);
         this.exitAnim();
+        if (mode === "death") {
+          this.sp.Game.getPlayer()?.damageActorValue("Health", 10000);
+        }
         return f(Infinity);
       }
 
