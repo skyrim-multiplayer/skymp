@@ -232,6 +232,8 @@ private:
   void ProcessActivateNormal(MpObjectReference& activationSource);
   bool ProcessActivateSecond(MpObjectReference& activationSource);
   void ActivateChilds();
+  bool CheckIfObjectCanStartOccupyThis(MpObjectReference& activationSource,
+                                       float occupationReach);
 
   bool everSubscribedOrListened = false;
   std::unique_ptr<std::set<MpObjectReference*>> listeners;
