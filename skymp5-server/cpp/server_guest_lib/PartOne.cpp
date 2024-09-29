@@ -10,6 +10,7 @@
 #include <array>
 #include <cassert>
 #include <chrono>
+#include <mutex>
 #include <type_traits>
 #include <vector>
 
@@ -19,6 +20,9 @@ public:
   void Send(Networking::UserId targetUserId, Networking::PacketData data,
             size_t length, bool reliable) override
   {
+    // The reason for this is that ActionListener is now multi-threaded
+    std::lock_guard<std::mutex> lock(m);
+
     static auto g_serializer =
       MessageSerializerFactory::CreateMessageSerializer();
     auto deserializeResult = g_serializer->Deserialize(data, length);
@@ -34,6 +38,7 @@ public:
   }
 
   std::vector<PartOne::Message> messages;
+  std::mutex m;
 };
 
 struct PartOne::Impl
@@ -106,6 +111,7 @@ void PartOne::Tick()
   TickPacketHistoryPlaybacks();
   TickDeferredMessages();
   worldState.Tick();
+  GetActionListener().TickDeferredSendToNeighboursMultithreaded();
 }
 
 uint32_t PartOne::CreateActor(uint32_t formId, const NiPoint3& pos,
