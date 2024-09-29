@@ -10,7 +10,7 @@ public:
   void Load();
 
   int Init();
-  int CreateEnvironment(int argc, char** arg, void** outEnv);
+  int CreateEnvironment(int argc, char** argv, void** outEnv);
   int DestroyEnvironment(void* env);
   int Tick(void* env);
   int ExecuteScript(void* env, const char* script);
