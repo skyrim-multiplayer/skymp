@@ -1,15 +1,16 @@
 #pragma once
 #include <memory>
 
-class NodeInstance {
+class NodeInstance
+{
 public:
-    NodeInstance();
+  NodeInstance();
 
-    void Load();
+  void Load();
 
 private:
-    int NodeMain(int argc, char** argv);
+  int NodeMain(int argc, char** argv);
 
-    struct Impl;
-    std::shared_ptr<Impl> pImpl;
+  struct Impl;
+  std::shared_ptr<Impl> pImpl;
 };

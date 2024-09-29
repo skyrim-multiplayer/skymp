@@ -1,11 +1,11 @@
-#include <node.h>
-#include <v8.h>
-#include <libplatform/libplatform.h> 
 #include <iostream>
+#include <libplatform/libplatform.h>
 #include <memory>
+#include <node.h>
 #include <string>
-#include <vector>
 #include <uv.h>
+#include <v8.h>
+#include <vector>
 
 using namespace node;
 using namespace v8;
@@ -13,37 +13,41 @@ using namespace v8;
 #include "NodeInstance.h"
 
 namespace {
-  // Function to run a basic Node.js instance
+// Function to run a basic Node.js instance
 int RunNodeInstance(node::MultiIsolatePlatform* platform,
                     const std::vector<std::string>& args,
-                    const std::vector<std::string>& exec_args) {
-    // Initialize V8 and create a new isolate.
-    Isolate::CreateParams create_params;
-    create_params.array_buffer_allocator = v8::ArrayBuffer::Allocator::NewDefaultAllocator();
-    Isolate* isolate = Isolate::New(create_params);
-    
-    {
-        // Isolate and context scope management
-        Isolate::Scope isolate_scope(isolate);
-        HandleScope handle_scope(isolate);
+                    const std::vector<std::string>& exec_args)
+{
+  // Initialize V8 and create a new isolate.
+  Isolate::CreateParams create_params;
+  create_params.array_buffer_allocator =
+    v8::ArrayBuffer::Allocator::NewDefaultAllocator();
+  Isolate* isolate = Isolate::New(create_params);
 
-        Local<Context> context = Context::New(isolate);
-        Context::Scope context_scope(context);
+  {
+    // Isolate and context scope management
+    Isolate::Scope isolate_scope(isolate);
+    HandleScope handle_scope(isolate);
 
-        // Simple JavaScript code to run
-        const char* js_code = "console.log('Hello from embedded Node.js!');";
+    Local<Context> context = Context::New(isolate);
+    Context::Scope context_scope(context);
 
-        // Compile and run the JavaScript code
-        Local<String> source = String::NewFromUtf8(isolate, js_code, NewStringType::kNormal).ToLocalChecked();
-        Local<Script> script = Script::Compile(context, source).ToLocalChecked();
-        script->Run(context).ToLocalChecked();
-    }
+    // Simple JavaScript code to run
+    const char* js_code = "console.log('Hello from embedded Node.js!');";
 
-    // Cleanup V8
-    isolate->Dispose();
-    delete create_params.array_buffer_allocator;
+    // Compile and run the JavaScript code
+    Local<String> source =
+      String::NewFromUtf8(isolate, js_code, NewStringType::kNormal)
+        .ToLocalChecked();
+    Local<Script> script = Script::Compile(context, source).ToLocalChecked();
+    script->Run(context).ToLocalChecked();
+  }
 
-    return 0; // Exit code
+  // Cleanup V8
+  isolate->Dispose();
+  delete create_params.array_buffer_allocator;
+
+  return 0; // Exit code
 }
 }
 
@@ -53,7 +57,7 @@ struct NodeInstance::Impl
 
 NodeInstance::NodeInstance()
 {
-    pImpl = std::make_shared<Impl>();
+  pImpl = std::make_shared<Impl>();
 }
 
 void NodeInstance::Load()
@@ -68,10 +72,10 @@ int NodeInstance::NodeMain(int argc, char** argv)
   // Parse Node.js CLI options, and print any errors that have occurred while
   // trying to parse them.
   std::unique_ptr<node::InitializationResult> result =
-      node::InitializeOncePerProcess(args, {
-        node::ProcessInitializationFlags::kNoInitializeV8,
-        node::ProcessInitializationFlags::kNoInitializeNodeV8Platform
-      });
+    node::InitializeOncePerProcess(
+      args,
+      { node::ProcessInitializationFlags::kNoInitializeV8,
+        node::ProcessInitializationFlags::kNoInitializeNodeV8Platform });
 
   for (const std::string& error : result->errors()) {
     fprintf(stderr, "%s: %s\n", args[0].c_str(), error.c_str());
@@ -86,13 +90,13 @@ int NodeInstance::NodeMain(int argc, char** argv)
   // Worker threads. When no `MultiIsolatePlatform` instance is present,
   // Worker threads are disabled.
   std::unique_ptr<MultiIsolatePlatform> platform =
-      MultiIsolatePlatform::Create(4);
+    MultiIsolatePlatform::Create(4);
   V8::InitializePlatform(platform.get());
   V8::Initialize();
 
   // See below for the contents of this function.
-  int ret = RunNodeInstance(
-      platform.get(), result->args(), result->exec_args());
+  int ret =
+    RunNodeInstance(platform.get(), result->args(), result->exec_args());
 
   V8::Dispose();
   V8::DisposePlatform();
