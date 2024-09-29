@@ -2,10 +2,11 @@
 
 #include "HitData.h"
 #include "MpActor.h"
+#include "SpellCastData.h"
 #include "WorldState.h"
 #include "libespm/espm.h"
 
-namespace {
+namespace internal {
 
 bool IsUnarmedAttack(const uint32_t sourceFormId)
 {
@@ -20,7 +21,7 @@ public:
   TES5DamageFormulaImpl(const MpActor& aggressor_, const MpActor& target_,
                         const HitData& hitData_);
 
-  float CalculateDamage() const;
+  [[nodiscard]] float CalculateDamage() const;
 
 private:
   const MpActor& aggressor;
@@ -29,15 +30,15 @@ private:
   WorldState* espmProvider;
 
 private:
-  float GetBaseWeaponDamage() const;
-  float CalcWeaponRating() const;
-  float CalcArmorRatingComponent(
+  [[nodiscard]] float GetBaseWeaponDamage() const;
+  [[nodiscard]] float CalcWeaponRating() const;
+  [[nodiscard]] float CalcArmorRatingComponent(
     const Inventory::Entry& opponentEquipmentEntry) const;
-  float CalcOpponentArmorRating() const;
-  float CalcMagicEffects(const Effects& effects) const;
-  float DetermineDamageFromSource(uint32_t source) const;
-  float CalcUnarmedDamage() const;
-  float CalcArmorDamagePenalty() const;
+  [[nodiscard]] float CalcOpponentArmorRating() const;
+  [[nodiscard]] float CalcMagicEffects(const Effects& effects) const;
+  [[nodiscard]] float DetermineDamageFromSource(uint32_t source) const;
+  [[nodiscard]] float CalcUnarmedDamage() const;
+  [[nodiscard]] float CalcArmorDamagePenalty() const;
 };
 
 TES5DamageFormulaImpl::TES5DamageFormulaImpl(const MpActor& aggressor_,
@@ -52,7 +53,8 @@ TES5DamageFormulaImpl::TES5DamageFormulaImpl(const MpActor& aggressor_,
 
 float TES5DamageFormulaImpl::GetBaseWeaponDamage() const
 {
-  auto weapData = espm::GetData<espm::WEAP>(hitData.source, espmProvider);
+  const auto weapData =
+    espm::GetData<espm::WEAP>(hitData.source, espmProvider);
   if (!weapData.weapData) {
     throw std::runtime_error(
       fmt::format("no weapData for {:#x}", hitData.source));
@@ -70,7 +72,7 @@ float TES5DamageFormulaImpl::CalcMagicEffects(const Effects& effects) const
 {
   float armorRating = 0.f;
   for (const auto& effect : effects) {
-    auto actorValueType =
+    const auto actorValueType =
       espm::GetData<espm::MGEF>(effect.effectId, espmProvider).data.primaryAV;
     if (actorValueType == espm::ActorValue::DamageResist) {
       armorRating += effect.magnitude;
@@ -85,13 +87,13 @@ float TES5DamageFormulaImpl::CalcArmorRatingComponent(
   if (opponentEquipmentEntry.extra.worn != Inventory::Worn::None &&
       espm::GetRecordType(opponentEquipmentEntry.baseId, espmProvider) ==
         espm::ARMO::kType) {
-    auto armorData =
+    const auto armorData =
       espm::GetData<espm::ARMO>(opponentEquipmentEntry.baseId, espmProvider);
     // TODO(#458): take other components into account
     auto ac = static_cast<float>(armorData.baseRatingX100) / 100;
     if (armorData.enchantmentFormId) {
       // TODO(#632) refactor this effect with actor effect system
-      auto enchantmentData =
+      const auto enchantmentData =
         espm::GetData<espm::ENCH>(armorData.enchantmentFormId, espmProvider);
       ac += CalcMagicEffects(enchantmentData.effects);
     }
@@ -112,7 +114,7 @@ float TES5DamageFormulaImpl::CalcOpponentArmorRating() const
 
 float TES5DamageFormulaImpl::CalcUnarmedDamage() const
 {
-  uint32_t raceId = aggressor.GetRaceId();
+  const uint32_t raceId = aggressor.GetRaceId();
   return espm::GetData<espm::RACE>(raceId, espmProvider).unarmedDamage;
 }
 
@@ -125,10 +127,10 @@ float TES5DamageFormulaImpl::CalcArmorDamagePenalty() const
 {
   // TODO(#457): weapon rating is probably not only component of incomingDamage
   // Replace this with another issue reference upon investigation
-  float maxArmorRating =
+  const float maxArmorRating =
     espm::GetData<espm::GMST>(espm::GMST::kFMaxArmorRating, espmProvider)
       .value;
-  float armorScalingFactor =
+  const float armorScalingFactor =
     espm::GetData<espm::GMST>(espm::GMST::kFArmorScalingFactor, espmProvider)
       .value;
   return 0.01f *
@@ -139,7 +141,7 @@ float TES5DamageFormulaImpl::CalcArmorDamagePenalty() const
 
 float TES5DamageFormulaImpl::CalculateDamage() const
 {
-  float incomingDamage = DetermineDamageFromSource(hitData.source);
+  const float incomingDamage = DetermineDamageFromSource(hitData.source);
 
   // TODO(#461): add difficulty multiplier
   // TODO(#463): add sneak modifier
@@ -161,11 +163,66 @@ float TES5DamageFormulaImpl::CalculateDamage() const
   return damage;
 }
 
+class TES5SpellDamageFormulaImpl
+{
+  using Effects = std::vector<espm::Effects::Effect>;
+
+public:
+  TES5SpellDamageFormulaImpl(const MpActor& aggressor_, const MpActor& target_,
+                             const SpellCastData& spellCastData_);
+
+  [[nodiscard]] float CalculateDamage() const;
+
+private:
+  const MpActor& aggressor;
+  const MpActor& target;
+  const SpellCastData& spellCastData;
+  WorldState* espmProvider;
+
+private:
+  [[nodiscard]] float GetBaseSpellDamage() const;
+};
+
+TES5SpellDamageFormulaImpl::TES5SpellDamageFormulaImpl(
+  const MpActor& aggressor_, const MpActor& target_,
+  const SpellCastData& spellCastData_)
+  : aggressor(aggressor_)
+  , target(target_)
+  , spellCastData(spellCastData_)
+  , espmProvider(aggressor.GetParent())
+{
+}
+
+float TES5SpellDamageFormulaImpl::GetBaseSpellDamage() const
+{
+  const auto spellData =
+    espm::GetData<espm::SPEL>(spellCastData.spell, espmProvider);
+
+  // TODO Write damage calculation
+  std::ignore = spellData;
+
+  return 10.f;
+}
+
+float TES5SpellDamageFormulaImpl::CalculateDamage() const
+{
+  return GetBaseSpellDamage();
+}
+
 }
 
 float TES5DamageFormula::CalculateDamage(const MpActor& aggressor,
                                          const MpActor& target,
                                          const HitData& hitData) const
 {
-  return TES5DamageFormulaImpl(aggressor, target, hitData).CalculateDamage();
+  return internal::TES5DamageFormulaImpl(aggressor, target, hitData)
+    .CalculateDamage();
+}
+
+float TES5DamageFormula::CalculateDamage(
+  const MpActor& aggressor, const MpActor& target,
+  const SpellCastData& spellCastData) const
+{
+  return internal::TES5SpellDamageFormulaImpl(aggressor, target, spellCastData)
+    .CalculateDamage();
 }

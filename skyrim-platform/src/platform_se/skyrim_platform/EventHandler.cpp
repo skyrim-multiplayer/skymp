@@ -4,6 +4,8 @@
 #include "JsUtils.h"
 #include "SkyrimPlatform.h"
 
+#include "Magic/AnimationGraphMasterBehaviourDescriptor.h"
+
 namespace {
 inline void SendEvent(const char* eventName)
 {
@@ -1326,43 +1328,62 @@ EventResult EventHandler::ProcessEvent(
       return;
     }
 
-    auto castingSource = RE::MagicSystem::CastingSource::kLeftHand;
-    bool isCasterValid = false;
+    const bool isLeftHand =
+      caster->selectedSpells[RE::Actor::SlotTypes::kLeftHand] == spell;
+    const bool isRightHand =
+      caster->selectedSpells[RE::Actor::SlotTypes::kRightHand] == spell;
+    const bool isVoise =
+      caster->selectedSpells[RE::Actor::SlotTypes::kUnknown] == spell;
+    const bool isInstant =
+      caster->selectedSpells[RE::Actor::SlotTypes::kPowerOrShout] == spell;
 
-    for (const auto magicCaster : caster->magicCasters) {
+    const bool isCastValid = isLeftHand || isRightHand || isVoise || isInstant;
 
-      if (!magicCaster) {
-        continue;
-      }
-
-      if (magicCaster->currentSpell == spell) {
-        castingSource = magicCaster->GetCastingSource();
-        isCasterValid = true;
-        break;
-      }
+    if (!isCastValid) {
+      return;
     }
 
-    if (!isCasterValid) {
-      return;
+    auto castingSource = RE::MagicSystem::CastingSource::kLeftHand;
+
+    if (isRightHand) {
+      castingSource = RE::MagicSystem::CastingSource::kRightHand;
+    } else if (isVoise) {
+      castingSource = RE::MagicSystem::CastingSource::kOther;
+    } else if (isInstant) {
+      castingSource = RE::MagicSystem::CastingSource::kInstant;
     }
 
     const auto magicCaster = caster->GetMagicCaster(castingSource);
 
+    const bool isDualCasting =
+      magicCaster ? magicCaster->GetIsDualCasting() : false;
+
     const auto magicTarget = caster->GetMagicTarget();
 
-    RE::Actor* handleTarget = nullptr;
-
-    if (magicTarget->MagicTargetIsActor()) {
-      handleTarget =
-        reinterpret_cast<RE::Actor*>(magicTarget->GetTargetStatsObject());
-    }
+    RE::TESObjectREFR* handleTarget =
+      magicTarget != nullptr ? magicTarget->GetTargetStatsObject() : nullptr;
 
     AddObjProperty(&obj, "caster", caster, "ObjectReference");
     AddObjProperty(&obj, "target", handleTarget, "ObjectReference");
     AddObjProperty(&obj, "spell", spell, "Spell");
-    AddObjProperty(&obj, "isDualCasting", magicCaster->GetIsDualCasting());
+    AddObjProperty(&obj, "isDualCasting", isDualCasting);
     AddObjProperty(&obj, "castingSource",
                    static_cast<uint32_t>(castingSource));
+
+    auto animVariables =
+      AnimationGraphMasterBehaviourDescriptor{ *caster }.GetVariables();
+
+    AddObjProperty(&obj, "booleanAnimationVariables",
+                   reinterpret_cast<uint8_t*>(animVariables.Booleans.data()),
+                   animVariables.SizeBooleansInBytes());
+
+    AddObjProperty(&obj, "floatAnimationVariables",
+                   reinterpret_cast<uint8_t*>(animVariables.Floats.data()),
+                   animVariables.SizeFloatsInBytes());
+
+    AddObjProperty(&obj, "integerAnimationVariables",
+                   reinterpret_cast<uint8_t*>(animVariables.Integers.data()),
+                   animVariables.SizeIntegersInBytes());
 
     SendEvent("spellCast", obj);
   });
@@ -1377,8 +1398,7 @@ EventResult EventHandler::ProcessEvent(
     return EventResult::kContinue;
   }
 
-  auto subjectId =
-    event->subject.get() ? event->subject.get()->GetFormID() : 0;
+  auto subjectId = event->subject ? event->subject->GetFormID() : 0;
 
   SkyrimPlatform::GetSingleton()->AddUpdateTask([subjectId] {
     auto obj = JsValue::Object();

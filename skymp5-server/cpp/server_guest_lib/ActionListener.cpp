@@ -714,10 +714,11 @@ float CalculateCurrentHealthPercentage(const MpActor& actor, float damage,
                                        float healthPercentage,
                                        float* outBaseHealth)
 {
-  uint32_t baseId = actor.GetBaseId();
-  uint32_t raceId = actor.GetRaceId();
+  const uint32_t baseId = actor.GetBaseId();
+  const uint32_t raceId = actor.GetRaceId();
   WorldState* espmProvider = actor.GetParent();
-  float baseHealth =
+
+  const float baseHealth =
     GetBaseActorValues(espmProvider, baseId, raceId, actor.GetTemplateChain())
       .health;
 
@@ -725,9 +726,11 @@ float CalculateCurrentHealthPercentage(const MpActor& actor, float damage,
     *outBaseHealth = baseHealth;
   }
 
-  float damagePercentage = damage / baseHealth;
-  float currentHealthPercentage = healthPercentage - damagePercentage;
-  return currentHealthPercentage;
+  const float damagePercentage = damage / baseHealth;
+  const float currentHealthPercentage = healthPercentage - damagePercentage;
+
+  /// TODO add check for nan and inf!
+  return currentHealthPercentage <= 0.f ? 0.f : currentHealthPercentage;
 }
 
 float GetReach(const MpActor& actor, const uint32_t source,
@@ -833,14 +836,15 @@ bool CanHit(const MpActor& actor, const HitData& hitData,
   WorldState* espmProvider = actor.GetParent();
   auto weapDNAM =
     espm::GetData<espm::WEAP>(hitData.source, espmProvider).weapDNAM;
+
   if (weapDNAM) {
     float speedMult = weapDNAM->speed;
     return timePassed.count() >= (1.1 * (1 / speedMult)) -
       (1.1 * (1 / speedMult) * (speedMult <= 0.75 ? 0.45 : 0.3));
-  } else {
-    throw std::runtime_error(fmt::format(
-      "Cannot get weapon speed from source: {0:x}", hitData.source));
   }
+
+  throw std::runtime_error(
+    fmt::format("Cannot get weapon speed from source: {0:x}", hitData.source));
 }
 
 bool ShouldBeBlocked(const MpActor& aggressor, const MpActor& target)
@@ -907,7 +911,7 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
       "{:x} weapon is not equipped by {:x} actor and cannot be used",
       hitData.source, hitData.aggressor);
     return;
-  };
+  }
 
   auto refr = std::dynamic_pointer_cast<MpObjectReference>(
     partOne.worldState.LookupFormById(hitData.target));
@@ -1044,6 +1048,121 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
                 "percentage now: {2}, base health: {4})",
                 hitData.target, damage, currentActorValues.healthPercentage,
                 healthPercentage, outBaseHealth);
+}
+
+void ActionListener::OnSpellCast(const RawMessageData& rawMsgData,
+                                 const SpellCastData& spellCastData_)
+{
+  MpActor* myActor = partOne.serverState.ActorByUser(rawMsgData.userId);
+
+  if (!myActor) {
+    throw std::runtime_error("Unable to change values without Actor attached");
+  }
+
+  MpActor* caster = nullptr;
+
+  SpellCastData spellCastData = spellCastData_;
+
+  if (spellCastData.caster == 0x14 ||
+      spellCastData.caster == myActor->GetFormId()) {
+    caster = myActor;
+    spellCastData.caster = caster->GetFormId();
+  } else {
+    caster = &partOne.worldState.GetFormAt<MpActor>(spellCastData.caster);
+    const auto it = partOne.worldState.hosters.find(spellCastData.caster);
+
+    if (it == partOne.worldState.hosters.end() ||
+        it->second != myActor->GetFormId()) {
+      spdlog::error(
+        "SendToNeighbours - No permission to send OnSpellCast with "
+        "caster actor {:x}",
+        caster->GetFormId());
+      return;
+    }
+  }
+
+  if (spellCastData.target == 0x14 ||
+      spellCastData.target == myActor->GetFormId()) {
+    spellCastData.target = myActor->GetFormId();
+  }
+
+  if (caster->IsDead()) {
+    spdlog::info(fmt::format("{:x} actor is dead and can't spell cast. "
+                             "requesting respawn in order to fix death state",
+                             caster->GetFormId()));
+    caster->RespawnWithDelay(true);
+    return;
+  }
+
+  const auto equipment = caster->GetEquipment();
+
+  bool isEquippedSpellValid = false;
+
+  switch (spellCastData.castingSource) {
+    case SpellType::Left:
+      isEquippedSpellValid = spellCastData.spell == equipment.leftSpell;
+      break;
+    case SpellType::Right:
+      isEquippedSpellValid = spellCastData.spell == equipment.rightSpell;
+      break;
+    case SpellType::Voise:
+      isEquippedSpellValid = spellCastData.spell == equipment.voiceSpell;
+      break;
+    case SpellType::Instant:
+      isEquippedSpellValid = spellCastData.spell == equipment.instantSpell;
+      break;
+  }
+
+  if (isEquippedSpellValid == false) {
+    spdlog::info("ActionListener::OnSpellCast - spell {0:x} not "
+                 "found in equipment",
+                 spellCastData.spell);
+    return;
+  }
+
+  SendToNeighbours(myActor->idx, rawMsgData);
+
+  auto& browser = partOne.worldState.GetEspm().GetBrowser();
+
+  const std::array<VarValue, 1> args{ VarValue(
+    std::make_shared<EspmGameObject>(
+      browser.LookupById(spellCastData.spell))) };
+
+  caster->SendPapyrusEvent("OnSpellCast", args.data(), args.size());
+
+  const auto targetRef = std::dynamic_pointer_cast<MpObjectReference>(
+    partOne.worldState.LookupFormById(spellCastData.target));
+
+  if (!targetRef) {
+    spdlog::info(
+      "ActionListener::OnSpellCast - MpObjectReference not found for "
+      "spellCastData.target {:x}",
+      spellCastData.target);
+    return;
+  }
+
+  const auto targetActorPtr = targetRef->AsActor();
+
+  if (!targetActorPtr) {
+    return; // Not an actor, damage calculation is not needed
+  }
+
+  auto targetActorValues = targetActorPtr->GetChangeForm().actorValues;
+
+  float damage =
+    partOne.CalculateDamage(*caster, *targetActorPtr, spellCastData);
+  damage = damage <= 0.f ? 0.f : damage;
+
+  targetActorValues.healthPercentage = CalculateCurrentHealthPercentage(
+    *targetActorPtr, damage, targetActorValues.healthPercentage, nullptr);
+
+  targetActorPtr->NetSetPercentages(targetActorValues, caster);
+  caster->SetLastHitTime();
+
+  spdlog::info("Target {0:x} is hitted by {1:x} spell. By caster: {2:x}, "
+               "from castingSource : {3})",
+               spellCastData.target, spellCastData.spell, spellCastData.caster,
+               static_cast<uint32_t>(spellCastData.castingSource));
 }
 
 void ActionListener::OnUnknown(const RawMessageData& rawMsgData)

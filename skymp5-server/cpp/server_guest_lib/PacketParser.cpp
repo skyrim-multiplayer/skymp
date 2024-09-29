@@ -7,6 +7,7 @@
 #include "Messages.h"
 #include "MpActor.h"
 #include "MsgType.h"
+#include "SpellCastData.h"
 #include <simdjson.h>
 #include <slikenet/BitStream.h>
 
@@ -266,6 +267,12 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
       simdjson::dom::element data_;
       ReadEx(jMessage, JsonPointers::data, &data_);
       actionListener.OnHit(rawMsgData, HitData::FromJson(data_));
+      break;
+    }
+    case MsgType::SpellCast: {
+      simdjson::dom::element data_;
+      ReadEx(jMessage, JsonPointers::data, &data_);
+      actionListener.OnSpellCast(rawMsgData, SpellCastData::FromJson(data_));
       break;
     }
     case MsgType::DropItem: {

@@ -323,7 +323,6 @@ export class AuthService extends ClientListener {
     logTrace(this, `Reading`, this.pluginAuthDataName, `from disk`);
 
     try {
-      // @ts-expect-error
       const data = this.sp.getPluginSourceCode(this.pluginAuthDataName, "PluginsNoLoad");
 
       if (!data) {
@@ -347,7 +346,6 @@ export class AuthService extends ClientListener {
       this.sp.writePlugin(
         this.pluginAuthDataName,
         content,
-        // @ts-expect-error
         "PluginsNoLoad"
       );
     }

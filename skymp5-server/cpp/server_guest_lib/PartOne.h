@@ -6,6 +6,7 @@
 #include "NiPoint3.h"
 #include "PartOneListener.h"
 #include "ServerState.h"
+#include "SpellCastData.h"
 #include "WorldState.h"
 #include "formulas/IDamageFormula.h"
 #include "libespm/Loader.h"
@@ -84,6 +85,9 @@ public:
 
   float CalculateDamage(const MpActor& aggressor, const MpActor& target,
                         const HitData& hitData) const;
+
+  float CalculateDamage(const MpActor& aggressor, const MpActor& target,
+                        const SpellCastData& spellCastData) const;
 
   void NotifyGamemodeApiStateChanged(
     const GamemodeApi::State& newState) noexcept;

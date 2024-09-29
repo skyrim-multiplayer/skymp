@@ -49,6 +49,7 @@ import { FrontHotReloadService } from "./services/services/frontHotReloadService
 import { BlockedAnimationsService } from "./services/services/blockedAnimationsService";
 import { WorldView } from "./view/worldView";
 import { KeyboardEventsService } from "./services/services/keyboardEventsService";
+import { SpellCastSyncService } from "./services/services/spellCastSyncService";
 
 once("update", () => {
   Utility.setINIBool("bAlwaysActive:General", true);
@@ -101,7 +102,8 @@ const main = () => {
       new FrontHotReloadService(sp, controller),
       new BlockedAnimationsService(sp, controller),
       new WorldView(sp, controller),
-      new KeyboardEventsService(sp, controller)
+      new KeyboardEventsService(sp, controller),
+      new SpellCastSyncService(sp, controller)
     ];
     SpApiInteractor.setup(listeners);
   }

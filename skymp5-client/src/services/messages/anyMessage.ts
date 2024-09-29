@@ -12,6 +12,7 @@ import { DestroyActorMessage } from "./destroyActorMessage";
 import { DropItemMessage } from "./dropItemMessage";
 import { FinishSpSnippetMessage } from "./finishSpSnippetMessage";
 import { HitMessage } from "./hitMessage";
+import { SpellCastMessage } from "./spellCastMessage";
 import { HostMessage } from "./hostMessage";
 import { HostStartMessage } from "./hostStartMessage";
 import { HostStopMessage } from "./hostStopMessage";
@@ -39,6 +40,7 @@ export type AnyMessage = ActivateMessage
     | CraftItemMessage
     | DropItemMessage
     | HitMessage
+    | SpellCastMessage
     | OnEquipMessage
     | UpdateMovementMessage
     | UpdateAnimationMessage

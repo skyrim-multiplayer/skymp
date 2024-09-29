@@ -160,6 +160,11 @@ export class NetworkingService extends ClientListener {
               this.controller.emitter.emit("changeValuesMessage", event);
               this.controller.emitter.emit("anyMessage", event);
             }
+            else if (msgAny.t === MsgType.SpellCast) {
+              const event = { message: msgAny };
+              this.controller.emitter.emit("spellCastMessage", event);
+              this.controller.emitter.emit("anyMessage", event);
+            }
             else if (msgAny.t === MsgType.UpdateAppearance) {
               const event = { message: msgAny };
               this.controller.emitter.emit("updateAppearanceMessage", event);
