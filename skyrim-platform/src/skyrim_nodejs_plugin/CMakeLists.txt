@@ -1,5 +1,7 @@
 project(skyrim_nodejs_plugin LANGUAGES CXX)
 
+include(${CMAKE_SOURCE_DIR}/cmake/apply_default_settings.cmake)
+
 if(MSVC)
     file(GLOB_RECURSE installed "${CMAKE_BINARY_DIR}/vcpkg_installed/*")
     message(STATUS "!!! PRINTING INSTALLED !!!")
@@ -27,4 +29,6 @@ if(MSVC)
         find_package(commonlibae REQUIRED CONFIGS CommonLibSSEConfig.cmake)
         target_link_libraries(skyrim_nodejs_plugin PRIVATE CommonLibSSE::CommonLibSSE)
     endif()
+
+    apply_default_settings(TARGETS skyrim_nodejs_plugin)
 endif()
