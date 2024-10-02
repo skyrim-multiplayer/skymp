@@ -31,4 +31,5 @@ if(MSVC)
     endif()
 
     apply_default_settings(TARGETS skyrim_nodejs_plugin)
+
 endif()
