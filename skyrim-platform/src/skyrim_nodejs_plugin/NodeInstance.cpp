@@ -19,6 +19,8 @@ using namespace v8;
 struct NodeInstance::Impl
 {
   std::map<void *, std::shared_ptr<Isolate::CreateParams>> createParamsMap;
+  std::map<void *, Isolate*> isolatesMap;
+  std::map<void *, v8::Persistent<v8::Context>> contextsMap;
 };
 
 NodeInstance::NodeInstance()
@@ -71,6 +73,8 @@ int NodeInstance::CreateEnvironment(int argc, char** argv, void** outEnv)
       isolate_data, context, args, std::vector<std::string>());
 
     pImpl->createParamsMap[env] = create_params;
+    pImpl->contextsMap[env].Reset(isolate, context); // Promote to Persistent and store
+    pImpl->isolatesMap[env] = isolate;
 
     // Store the environment for later use
     *outEnv = static_cast<void*>(env);
@@ -81,14 +85,24 @@ int NodeInstance::CreateEnvironment(int argc, char** argv, void** outEnv)
 
 int NodeInstance::DestroyEnvironment(void* env)
 {
-  if (env != nullptr) {
-    node::Environment* node_env = static_cast<node::Environment*>(env);
+  if (env) {
+    auto &context = pImpl->contextsMap[env];
+    auto &isolate = pImpl->isolatesMap[env];
 
-    // Close environment handles and tear down
-    node_env->Dispose();
+    // Step 1: Dispose of the V8 context (Persistent)
+    if (!context.IsEmpty()) {
+        context.Reset();  // Reset the Persistent handle to free the context
+    }
 
-    Isolate* isolate = node_env->isolate();
-    isolate->Dispose(); // Clean up V8 isolate
+    // Step 2: Dispose of the V8 isolate
+    if (isolate) {
+        isolate->Dispose();  // Clean up the V8 isolate
+        isolate = nullptr;    // Null out the reference to avoid dangling pointers
+    }
+
+    // Step 3: Optionally close the libuv loop if you're using one
+    // For example:
+    // uv_loop_close(uv_default_loop());  // Only if you created your own loop
 
     auto create_params = pImpl->createParamsMap[env];
 
@@ -97,6 +111,8 @@ int NodeInstance::DestroyEnvironment(void* env)
     }
 
     pImpl->createParamsMap.erase(env);
+    pImpl->contextsMap.erase(env);
+    pImpl->isolatesMap.erase(env);
   }
 
   return 0; // Success
@@ -104,39 +120,51 @@ int NodeInstance::DestroyEnvironment(void* env)
 
 int NodeInstance::Tick(void* env)
 {
-  if (env == nullptr)
+  if (!env) {
     return -1; // Error: No environment
-
-  node::Environment* node_env = static_cast<node::Environment*>(env);
-  node::IsolateData* isolate_data = node_env->isolate_data();
+  }
 
   // Process all pending events without blocking
-  while (uv_run(node_env->event_loop(), UV_RUN_NOWAIT)) {
+  while (uv_run(uv_default_loop(), UV_RUN_NOWAIT)) {
     // Loop until there are no more immediate events left to process
   }
 
   // Process any microtasks (e.g., resolved Promises)
-  node_env->isolate()->RunMicrotasks();
+  auto isolate = pImpl->isolatesMap[env];
+  if (!isolate) {
+    return -1;
+  }
+
+  isolate->RunMicrotasks();
 
   return 0; // Success
 }
 
 int NodeInstance::ExecuteScript(void* env, const char* script)
 {
-  if (!env || !script) return -1;
-  
-  node::Environment* node_env = static_cast<node::Environment*>(env);
-  Isolate* isolate = node_env->isolate();
+  if (!env || !script) {
+    return -1;
+  }
+
+  Isolate* isolate = pImpl->isolatesMap[env];
+  if (!isolate) {
+    return -1;
+  }
+
   Isolate::Scope isolate_scope(isolate);
   HandleScope handle_scope(isolate);
-  Local<Context> context = node_env->context();
+
+  auto &contextPersistent = pImpl->contextsMap[env];
+  Local<Context> context = contextPersistent.Get(isolate);
   Context::Scope context_scope(context);
   
   Local<String> source = String::NewFromUtf8(isolate, script).ToLocalChecked();
   Local<Script> compiled_script;
+
   if (!Script::Compile(context, source).ToLocal(&compiled_script)) {
     return -1; // Compilation error
   }
+
   compiled_script->Run(context); // Execute script
   
   return 0;
