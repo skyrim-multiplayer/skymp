@@ -1,15 +1,15 @@
 #include <iostream>
 #include <libplatform/libplatform.h>
+#include <map>
 #include <memory>
 #include <node.h>
 #include <string>
 #include <uv.h>
 #include <v8.h>
 #include <vector>
-#include <map>
 
-#include <env.h>
 #include <env-inl.h>
+#include <env.h>
 
 #include "NodeInstance.h"
 
@@ -18,9 +18,9 @@ using namespace v8;
 
 struct NodeInstance::Impl
 {
-  std::map<void *, std::shared_ptr<Isolate::CreateParams>> createParamsMap;
-  std::map<void *, Isolate*> isolatesMap;
-  std::map<void *, v8::Persistent<v8::Context>> contextsMap;
+  std::map<void*, std::shared_ptr<Isolate::CreateParams>> createParamsMap;
+  std::map<void*, Isolate*> isolatesMap;
+  std::map<void*, v8::Persistent<v8::Context>> contextsMap;
   std::string error;
 };
 
@@ -37,7 +37,8 @@ void NodeInstance::Load()
 int NodeInstance::Init()
 {
   // TODO: put here global part of CreateEnvironment
-  // TODO: global deinit with V8::DisposePlatform(); node::TearDownOncePerProcess();
+  // TODO: global deinit with V8::DisposePlatform();
+  // node::TearDownOncePerProcess();
 
   return 0;
 }
@@ -76,7 +77,8 @@ int NodeInstance::CreateEnvironment(int argc, char** argv, void** outEnv)
       isolate_data, context, args, std::vector<std::string>());
 
     pImpl->createParamsMap[env] = create_params;
-    pImpl->contextsMap[env].Reset(isolate, context); // Promote to Persistent and store
+    pImpl->contextsMap[env].Reset(isolate,
+                                  context); // Promote to Persistent and store
     pImpl->isolatesMap[env] = isolate;
 
     // Store the environment for later use
@@ -94,34 +96,33 @@ int NodeInstance::DestroyEnvironment(void* env)
     return -1;
   }
 
-    auto &context = pImpl->contextsMap[env];
-    auto &isolate = pImpl->isolatesMap[env];
+  auto& context = pImpl->contextsMap[env];
+  auto& isolate = pImpl->isolatesMap[env];
 
-    // Step 1: Dispose of the V8 context (Persistent)
-    if (!context.IsEmpty()) {
-        context.Reset();  // Reset the Persistent handle to free the context
-    }
+  // Step 1: Dispose of the V8 context (Persistent)
+  if (!context.IsEmpty()) {
+    context.Reset(); // Reset the Persistent handle to free the context
+  }
 
-    // Step 2: Dispose of the V8 isolate
-    if (isolate) {
-        isolate->Dispose();  // Clean up the V8 isolate
-        isolate = nullptr;    // Null out the reference to avoid dangling pointers
-    }
+  // Step 2: Dispose of the V8 isolate
+  if (isolate) {
+    isolate->Dispose(); // Clean up the V8 isolate
+    isolate = nullptr;  // Null out the reference to avoid dangling pointers
+  }
 
-    // Step 3: Optionally close the libuv loop if you're using one
-    // For example:
-    // uv_loop_close(uv_default_loop());  // Only if you created your own loop
+  // Step 3: Optionally close the libuv loop if you're using one
+  // For example:
+  // uv_loop_close(uv_default_loop());  // Only if you created your own loop
 
-    auto create_params = pImpl->createParamsMap[env];
+  auto create_params = pImpl->createParamsMap[env];
 
-    if (create_params) {
-      delete create_params->array_buffer_allocator;
-    }
+  if (create_params) {
+    delete create_params->array_buffer_allocator;
+  }
 
-    pImpl->createParamsMap.erase(env);
-    pImpl->contextsMap.erase(env);
-    pImpl->isolatesMap.erase(env);
-  
+  pImpl->createParamsMap.erase(env);
+  pImpl->contextsMap.erase(env);
+  pImpl->isolatesMap.erase(env);
 
   pImpl->error = "Success";
   return 0;
@@ -172,10 +173,10 @@ int NodeInstance::ExecuteScript(void* env, const char* script)
   Isolate::Scope isolate_scope(isolate);
   HandleScope handle_scope(isolate);
 
-  auto &contextPersistent = pImpl->contextsMap[env];
+  auto& contextPersistent = pImpl->contextsMap[env];
   Local<Context> context = contextPersistent.Get(isolate);
   Context::Scope context_scope(context);
-  
+
   Local<String> source = String::NewFromUtf8(isolate, script).ToLocalChecked();
   Local<Script> compiled_script;
 
@@ -185,22 +186,24 @@ int NodeInstance::ExecuteScript(void* env, const char* script)
   }
 
   compiled_script->Run(context); // Execute script
-  
+
   pImpl->error = "Success";
   return 0;
 }
 
 uint64_t NodeInstance::GetError(char* buffer, uint64_t bufferSize)
 {
-    constexpr size_t kNullTerminatorLengthInBytes = 1;
+  constexpr size_t kNullTerminatorLengthInBytes = 1;
 
-    if (bufferSize > 0) {
-        size_t copyLength = std::min(static_cast<size_t>(bufferSize - kNullTerminatorLengthInBytes), pImpl->error.size());
+  if (bufferSize > 0) {
+    size_t copyLength =
+      std::min(static_cast<size_t>(bufferSize - kNullTerminatorLengthInBytes),
+               pImpl->error.size());
 
-        std::memcpy(buffer, pImpl->error.data(), copyLength);
+    std::memcpy(buffer, pImpl->error.data(), copyLength);
 
-        buffer[copyLength] = '\0';
-    }
+    buffer[copyLength] = '\0';
+  }
 
-    return pImpl->error.size() + kNullTerminatorLengthInBytes;
+  return pImpl->error.size() + kNullTerminatorLengthInBytes;
 }
