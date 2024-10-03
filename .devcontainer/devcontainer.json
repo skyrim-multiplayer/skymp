@@ -1,0 +1,6 @@
+{
+    "name": "Node.js Codespace",
+    "image": "mcr.microsoft.com/devcontainers/javascript-node:22",
+    "postCreateCommand": "yarn",
+    "remoteUser": "node"
+}

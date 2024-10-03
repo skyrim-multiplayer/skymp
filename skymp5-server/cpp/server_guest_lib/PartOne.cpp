@@ -183,9 +183,16 @@ uint32_t PartOne::GetUserActor(Networking::UserId userId)
   serverState.EnsureUserExists(userId);
 
   auto actor = serverState.ActorByUser(userId);
-  if (!actor)
+  if (!actor) {
     return 0;
+  }
   return actor->GetFormId();
+}
+
+std::string PartOne::GetUserGuid(Networking::UserId userId)
+{
+  serverState.EnsureUserExists(userId);
+  return serverState.UserGuid(userId);
 }
 
 Networking::UserId PartOne::GetUserByActor(uint32_t formId)
@@ -364,6 +371,15 @@ public:
 private:
   const std::function<void()> f;
 };
+
+std::string ExtractGuid(Networking::PacketData data, size_t length)
+{
+  std::string guid;
+  guid.resize(length);
+  std::copy(data, data + length, guid.begin());
+  return guid;
+}
+
 }
 
 void PartOne::HandlePacket(void* partOneInstance, Networking::UserId userId,
@@ -373,8 +389,10 @@ void PartOne::HandlePacket(void* partOneInstance, Networking::UserId userId,
   auto this_ = reinterpret_cast<PartOne*>(partOneInstance);
 
   switch (packetType) {
-    case Networking::PacketType::ServerSideUserConnect:
-      return this_->AddUser(userId, UserType::User);
+    case Networking::PacketType::ServerSideUserConnect: {
+      std::string guid = ExtractGuid(data, length);
+      return this_->AddUser(userId, UserType::User, guid);
+    }
     case Networking::PacketType::ServerSideUserDisconnect: {
       ScopedTask t([userId, this_] {
         if (auto actor = this_->serverState.ActorByUser(userId)) {
@@ -792,9 +810,10 @@ void PartOne::Init()
   };
 }
 
-void PartOne::AddUser(Networking::UserId userId, UserType type)
+void PartOne::AddUser(Networking::UserId userId, UserType type,
+                      const std::string& guid)
 {
-  serverState.Connect(userId);
+  serverState.Connect(userId, guid);
   for (auto& listener : worldState.listeners)
     listener->OnConnect(userId);
 

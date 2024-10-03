@@ -266,7 +266,8 @@ void ActionListener::OnUpdateEquipment(
 }
 
 void ActionListener::OnActivate(const RawMessageData& rawMsgData,
-                                uint32_t caster, uint32_t target)
+                                uint32_t caster, uint32_t target,
+                                bool isSecondActivation)
 {
   if (!partOne.HasEspm())
     throw std::runtime_error("No loaded esm or esp files are found");
@@ -292,9 +293,11 @@ void ActionListener::OnActivate(const RawMessageData& rawMsgData,
   if (!targetPtr)
     return;
 
+  constexpr bool kDefaultProcessingOnlyFalse = false;
   targetPtr->Activate(
     caster == 0x14 ? *ac
-                   : partOne.worldState.GetFormAt<MpObjectReference>(caster));
+                   : partOne.worldState.GetFormAt<MpObjectReference>(caster),
+    kDefaultProcessingOnlyFalse, isSecondActivation);
   if (hosterId) {
     auto actor = std::dynamic_pointer_cast<MpActor>(
       partOne.worldState.LookupFormById(caster));

@@ -30,6 +30,8 @@ public:
   Napi::Value CreateActor(const Napi::CallbackInfo& info);
   Napi::Value SetUserActor(const Napi::CallbackInfo& info);
   Napi::Value GetUserActor(const Napi::CallbackInfo& info);
+  Napi::Value GetUserGuid(const Napi::CallbackInfo& info);
+  Napi::Value IsConnected(const Napi::CallbackInfo& info);
   Napi::Value GetActorPos(const Napi::CallbackInfo& info);
   Napi::Value GetActorCellOrWorld(const Napi::CallbackInfo& info);
   Napi::Value GetActorName(const Napi::CallbackInfo& info);
@@ -64,6 +66,15 @@ public:
   Napi::Value RequestPacketHistoryPlayback(const Napi::CallbackInfo& info);
 
   Napi::Value FindFormsByPropertyValue(const Napi::CallbackInfo& info);
+
+  // SkyrimPlatform3 backend implementation
+
+  Napi::Value SP3ListClasses(const Napi::CallbackInfo& info);
+  Napi::Value SP3GetBaseClass(const Napi::CallbackInfo& info);
+  Napi::Value SP3ListStaticFunctions(const Napi::CallbackInfo& info);
+  Napi::Value SP3ListMethods(const Napi::CallbackInfo& info);
+  Napi::Value SP3GetFunctionImplementation(const Napi::CallbackInfo& info);
+  Napi::Value SP3DynamicCast(const Napi::CallbackInfo& info);
 
   const std::shared_ptr<PartOne>& GetPartOne() const { return partOne; }
   const GamemodeApi::State& GetGamemodeApiState() const

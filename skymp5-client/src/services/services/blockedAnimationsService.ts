@@ -5,7 +5,7 @@ export class BlockedAnimationsService extends ClientListener {
     constructor(private sp: Sp, private controller: CombinedController) {
         super();
 
-        const blockedAnims = ["IdleNocturnal*"];
+        const blockedAnims = ["IdleNocturnal*", "IdleCarryBucketFillEnter", "IdleGreybeardMeditateEnter", "IdleWriteTableChairEnterInstant", "Idlelounge", "IdleTGFalmerStatueEnter", "IdleWounded_02", "IdleWounded_03", "IdleWounded_01", "IdleMT_DoorBang", "pa_KillMove2HMStab", "pa_WW_CutWrist"];
 
         const self = this;
 

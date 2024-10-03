@@ -31,6 +31,8 @@ export interface ScampServer {
   destroyActor(formId: number): void;
   setUserActor(userId: number, actorFormId: number): void;
   getUserActor(userId: number): number;
+  getUserGuid(userId: number): string;
+  isConnected(userId: number): boolean;
   getActorName(actorId: number): string;
   getActorPos(actorId: number): number[];
   getActorCellOrWorld(actorId: number): number;

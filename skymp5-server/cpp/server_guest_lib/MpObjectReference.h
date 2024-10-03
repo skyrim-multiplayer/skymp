@@ -114,7 +114,8 @@ public:
   virtual void VisitProperties(const PropertiesVisitor& visitor,
                                VisitPropertiesMode mode);
   virtual void Activate(MpObjectReference& activationSource,
-                        bool defaultProcessingOnly = false);
+                        bool defaultProcessingOnly = false,
+                        bool isSecondActivation = false);
   virtual void Disable();
   virtual void Enable();
 
@@ -228,8 +229,11 @@ private:
   void SendOpenContainer(uint32_t refId);
   void CheckInteractionAbility(MpObjectReference& ac);
   bool IsLocationSavingNeeded() const;
-  void ProcessActivate(MpObjectReference& activationSource);
+  void ProcessActivateNormal(MpObjectReference& activationSource);
+  bool ProcessActivateSecond(MpObjectReference& activationSource);
   void ActivateChilds();
+  bool CheckIfObjectCanStartOccupyThis(MpObjectReference& activationSource,
+                                       float occupationReach);
 
   bool everSubscribedOrListened = false;
   std::unique_ptr<std::set<MpObjectReference*>> listeners;

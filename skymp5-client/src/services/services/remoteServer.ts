@@ -1,4 +1,4 @@
-import { Actor, Form, FormType } from 'skyrimPlatform';
+import { Actor, Form, FormType, Menu } from 'skyrimPlatform';
 import {
   Armor,
   Cell,
@@ -175,9 +175,19 @@ export class RemoteServer extends ClientListener {
 
       const baseObject = refr.getBaseObject();
       const baseType = baseObject?.getType();
-      const isContainer = baseType === FormType.Container;
 
-      if (!isContainer) {
+      let functionChecker: (() => boolean) | null = null;
+      let factName = "";
+      if (baseType === FormType.Container) {
+        functionChecker = () => Ui.isMenuOpen("ContainerMenu");
+        factName = "'ContainerMenu open'";
+      } else if (baseType === FormType.Furniture) {
+        functionChecker = () => !!Game.getPlayer()?.getFurnitureReference();
+        factName = "'getFurnitureReference not null'";
+      }
+
+      if (functionChecker === null) {
+        logTrace(this, "onOpenContainerMesage - not a container or furniture", baseType);
         return;
       }
 
@@ -185,13 +195,18 @@ export class RemoteServer extends ClientListener {
       // This differs from Skyrim's behavior, where it's just one activation.
 
       (async () => {
-        while (!Ui.isMenuOpen('ContainerMenu')) await Utility.wait(0.1);
-        while (Ui.isMenuOpen('ContainerMenu')) await Utility.wait(0.1);
+        logTrace(this, "onOpenContainerMesage - waiting for", factName, "to be true");
+        while (!functionChecker()) await Utility.wait(0.1);
+
+        logTrace(this, "onOpenContainerMesage - waiting for", factName, "to be false");
+        while (functionChecker()) await Utility.wait(0.1);
+
+        logTrace(this, "onOpenContainerMesage - menu closed", factName);
 
         const message: ActivateMessage = {
           t: messages.MsgType.Activate,
           data: {
-            caster: 0x14, target: event.message.target
+            caster: 0x14, target: event.message.target, isSecondActivation: true
           }
         };
 
@@ -199,6 +214,8 @@ export class RemoteServer extends ClientListener {
           message: message,
           reliability: "reliable"
         });
+
+        logTrace(this, "onOpenContainerMesage - sent ActivateMessage", message);
       })();
     });
   }

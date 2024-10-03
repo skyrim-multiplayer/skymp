@@ -49,7 +49,7 @@ public:
                                  uint32_t voiceSpell, uint32_t instantSpell);
 
   virtual void OnActivate(const RawMessageData& rawMsgData, uint32_t caster,
-                          uint32_t target);
+                          uint32_t target, bool isSecondActivation);
 
   virtual void OnPutItem(const RawMessageData& rawMsgData, uint32_t target,
                          const Inventory::Entry& entry);

@@ -393,7 +393,8 @@ void MpObjectReference::VisitProperties(const PropertiesVisitor& visitor,
 }
 
 void MpObjectReference::Activate(MpObjectReference& activationSource,
-                                 bool defaultProcessingOnly)
+                                 bool defaultProcessingOnly,
+                                 bool isSecondActivation)
 {
   if (spdlog::should_log(spdlog::level::trace)) {
     for (auto& script : ListActivePexInstances()) {
@@ -428,25 +429,33 @@ void MpObjectReference::Activate(MpObjectReference& activationSource,
     }
   }
 
-  ActivateEvent activateEvent(GetFormId(), activationSource.GetFormId());
-
-  bool activationBlockedByMpApi = !activateEvent.Fire(GetParent());
-
-  if (!activationBlockedByMpApi &&
-      (!activationBlocked || defaultProcessingOnly)) {
-    ProcessActivate(activationSource);
-    ActivateChilds();
+  if (isSecondActivation) {
+    bool processed = ProcessActivateSecond(activationSource);
+    if (processed) {
+      auto arg = activationSource.ToVarValue();
+      SendPapyrusEvent("SkympOnActivateClose", &arg, 1);
+    }
   } else {
-    spdlog::trace(
-      "Activation of form {:#x} has been blocked. Reasons: "
-      "blocked by MpApi={}, form is blocked={}, defaultProcessingOnly={}",
-      GetFormId(), activationBlockedByMpApi, activationBlocked,
-      defaultProcessingOnly);
-  }
+    ActivateEvent activateEvent(GetFormId(), activationSource.GetFormId());
 
-  if (!defaultProcessingOnly) {
-    auto arg = activationSource.ToVarValue();
-    SendPapyrusEvent("OnActivate", &arg, 1);
+    bool activationBlockedByMpApi = !activateEvent.Fire(GetParent());
+
+    if (!activationBlockedByMpApi &&
+        (!activationBlocked || defaultProcessingOnly)) {
+      ProcessActivateNormal(activationSource);
+      ActivateChilds();
+    } else {
+      spdlog::trace(
+        "Activation of form {:#x} has been blocked. Reasons: "
+        "blocked by MpApi={}, form is blocked={}, defaultProcessingOnly={}",
+        GetFormId(), activationBlockedByMpApi, activationBlocked,
+        defaultProcessingOnly);
+    }
+
+    if (!defaultProcessingOnly) {
+      auto arg = activationSource.ToVarValue();
+      SendPapyrusEvent("OnActivate", &arg, 1);
+    }
   }
 }
 
@@ -923,10 +932,6 @@ void MpObjectReference::Subscribe(MpObjectReference* emitter,
     return;
   }
 
-  // I don't know how often Subscrbe is called but I suppose
-  // it is to be invoked quite frequently. In this case, each
-  // time if below is performed we are obtaining a copy of
-  // MpChangeForm which can be large. See what it consists of.
   if (!emitter->pImpl->onInitEventSent &&
       listener->GetChangeForm().profileId != -1) {
     emitter->pImpl->onInitEventSent = true;
@@ -1293,7 +1298,8 @@ bool MpObjectReference::IsLocationSavingNeeded() const
     std::chrono::system_clock::now() - *last > std::chrono::seconds(30);
 }
 
-void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
+void MpObjectReference::ProcessActivateNormal(
+  MpObjectReference& activationSource)
 {
   auto actorActivator = activationSource.AsActor();
 
@@ -1436,16 +1442,9 @@ void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
   } else if (t == espm::CONT::kType && actorActivator) {
     EnsureBaseContainerAdded(loader);
 
-    auto occupantPos = this->occupant ? this->occupant->GetPos() : NiPoint3();
-    auto occupantCellOrWorld =
-      this->occupant ? this->occupant->GetCellOrWorld() : FormDesc();
-
     constexpr float kOccupationReach = 512.f;
-    auto distanceToOccupant = (occupantPos - GetPos()).Length();
 
-    if (!this->occupant || this->occupant->IsDisabled() ||
-        distanceToOccupant > kOccupationReach ||
-        occupantCellOrWorld != GetCellOrWorld()) {
+    if (CheckIfObjectCanStartOccupyThis(activationSource, kOccupationReach)) {
       if (this->occupant) {
         this->occupant->RemoveEventSink(this->occupantDestroySink);
       }
@@ -1458,10 +1457,6 @@ void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
       this->occupantDestroySink.reset(
         new OccupantDestroyEventSink(*GetParent(), this));
       this->occupant->AddEventSink(occupantDestroySink);
-    } else if (this->occupant == &activationSource) {
-      SetOpen(false);
-      this->occupant->RemoveEventSink(this->occupantDestroySink);
-      this->occupant = nullptr;
     }
   } else if (t == espm::ACTI::kType && actorActivator) {
     // SendOpenContainer being used to activate the object
@@ -1469,16 +1464,9 @@ void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
     activationSource.SendOpenContainer(GetFormId());
   } else if (t == "FURN" && actorActivator) {
 
-    auto occupantPos = this->occupant ? this->occupant->GetPos() : NiPoint3();
-    auto occupantCellOrWorld =
-      this->occupant ? this->occupant->GetCellOrWorld() : FormDesc();
-
     constexpr float kOccupationReach = 256.f;
-    auto distanceToOccupant = (occupantPos - GetPos()).Length();
 
-    if (!this->occupant || this->occupant->IsDisabled() ||
-        distanceToOccupant > kOccupationReach ||
-        occupantCellOrWorld != GetCellOrWorld()) {
+    if (CheckIfObjectCanStartOccupyThis(activationSource, kOccupationReach)) {
       if (this->occupant) {
         this->occupant->RemoveEventSink(this->occupantDestroySink);
       }
@@ -1492,11 +1480,45 @@ void MpObjectReference::ProcessActivate(MpObjectReference& activationSource)
       this->occupantDestroySink.reset(
         new OccupantDestroyEventSink(*GetParent(), this));
       this->occupant->AddEventSink(occupantDestroySink);
-    } else if (this->occupant == &activationSource) {
-      this->occupant->RemoveEventSink(this->occupantDestroySink);
-      this->occupant = nullptr;
     }
   }
+}
+
+bool MpObjectReference::ProcessActivateSecond(
+  MpObjectReference& activationSource)
+{
+  auto actorActivator = activationSource.AsActor();
+
+  auto worldState = GetParent();
+  auto& loader = GetParent()->GetEspm();
+  auto& compressedFieldsCache = GetParent()->GetEspmCache();
+
+  auto base = loader.GetBrowser().LookupById(GetBaseId());
+  if (!base.rec || !GetBaseId()) {
+    spdlog::error("MpObjectReference::ProcessActivate {:x} - doesn't "
+                  "have base form, activationSource is {:x}",
+                  GetFormId(), activationSource.GetFormId());
+    return false;
+  }
+
+  auto t = base.rec->GetType();
+
+  if (t == espm::CONT::kType && actorActivator) {
+    if (this->occupant == &activationSource) {
+      SetOpen(false);
+      this->occupant->RemoveEventSink(this->occupantDestroySink);
+      this->occupant = nullptr;
+      return true;
+    }
+  } else if (t == "FURN" && actorActivator) {
+    if (this->occupant == &activationSource) {
+      this->occupant->RemoveEventSink(this->occupantDestroySink);
+      this->occupant = nullptr;
+      return true;
+    }
+  }
+
+  return false;
 }
 
 void MpObjectReference::ActivateChilds()
@@ -1530,6 +1552,53 @@ void MpObjectReference::ActivateChilds()
       childRefr->Activate(worldState->GetFormAt<MpObjectReference>(myFormId));
     });
   }
+}
+
+bool MpObjectReference::CheckIfObjectCanStartOccupyThis(
+  MpObjectReference& activationSource, float occupationReach)
+{
+  if (!this->occupant) {
+    spdlog::info("MpObjectReference::ProcessActivate {:x} - no occupant "
+                 "(activationSource = {:x})",
+                 GetFormId(), activationSource.GetFormId());
+    return true;
+  }
+
+  if (this->occupant->IsDisabled()) {
+    spdlog::info("MpObjectReference::ProcessActivate {:x} - occupant is "
+                 "disabled (activationSource = {:x})",
+                 GetFormId(), activationSource.GetFormId());
+    return true;
+  }
+
+  auto& occupantPos = this->occupant->GetPos();
+  auto distanceToOccupantSqr = (occupantPos - GetPos()).SqrLength();
+  if (distanceToOccupantSqr > occupationReach * occupationReach) {
+    spdlog::info("MpObjectReference::ProcessActivate {:x} - occupant is too "
+                 "far away (activationSource = {:x})",
+                 GetFormId(), activationSource.GetFormId());
+    return true;
+  }
+
+  auto& occupantCellOrWorld = this->occupant->GetCellOrWorld();
+  if (occupantCellOrWorld != GetCellOrWorld()) {
+    spdlog::info("MpObjectReference::ProcessActivate {:x} - occupant is in "
+                 "another cell/world (activationSource = {:x})",
+                 GetFormId(), activationSource.GetFormId());
+    return true;
+  }
+
+  if (this->occupant == &activationSource) {
+    spdlog::info("MpObjectReference::ProcessActivate {:x} - occupant is "
+                 "already this object (activationSource = {:x})",
+                 GetFormId(), activationSource.GetFormId());
+    return true;
+  }
+
+  spdlog::info("MpObjectReference::ProcessActivate {:x} - occupant is "
+               "another object and is nearby (activationSource = {:x})",
+               GetFormId(), activationSource.GetFormId());
+  return false;
 }
 
 void MpObjectReference::RemoveFromGridAndUnsubscribeAll()

@@ -8,7 +8,7 @@ TEST_CASE("Connect/Disconnect", "[ServerState]")
   ServerState st;
 
   REQUIRE(!st.userInfo[1]);
-  st.Connect(1);
+  st.Connect(1, "A");
   REQUIRE(st.userInfo[1]);
   st.Disconnect(1);
   REQUIRE(!st.userInfo[1]);
@@ -19,13 +19,13 @@ TEST_CASE("maxConnectedId", "[ServerState]")
   ServerState st;
 
   REQUIRE(st.maxConnectedId == 0);
-  st.Connect(0);
+  st.Connect(0, "B");
   REQUIRE(st.maxConnectedId == 0);
-  st.Connect(1);
+  st.Connect(1, "C");
   REQUIRE(st.maxConnectedId == 1);
-  st.Connect(2);
+  st.Connect(2, "D");
   REQUIRE(st.maxConnectedId == 2);
-  st.Connect(3);
+  st.Connect(3, "E");
   REQUIRE(st.maxConnectedId == 3);
 
   st.Disconnect(2);
