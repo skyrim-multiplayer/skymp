@@ -135,7 +135,7 @@ int NodeInstance::Tick(void* env)
     return -1;
   }
 
-  isolate->RunMicrotasks();
+  isolate->PerformMicrotaskCheckpoint();
 
   return 0; // Success
 }
