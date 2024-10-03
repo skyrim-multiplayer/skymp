@@ -21,6 +21,7 @@ struct NodeInstance::Impl
   std::map<void *, std::shared_ptr<Isolate::CreateParams>> createParamsMap;
   std::map<void *, Isolate*> isolatesMap;
   std::map<void *, v8::Persistent<v8::Context>> contextsMap;
+  std::string error;
 };
 
 NodeInstance::NodeInstance()
@@ -37,6 +38,8 @@ int NodeInstance::Init()
 {
   // TODO: put here global part of CreateEnvironment
   // TODO: global deinit with V8::DisposePlatform(); node::TearDownOncePerProcess();
+
+  return 0;
 }
 
 int NodeInstance::CreateEnvironment(int argc, char** argv, void** outEnv)
@@ -80,12 +83,17 @@ int NodeInstance::CreateEnvironment(int argc, char** argv, void** outEnv)
     *outEnv = static_cast<void*>(env);
   }
 
-  return 0; // Success
+  pImpl->error = "Success";
+  return 0;
 }
 
 int NodeInstance::DestroyEnvironment(void* env)
 {
-  if (env) {
+  if (!env) {
+    pImpl->error = "No env";
+    return -1;
+  }
+
     auto &context = pImpl->contextsMap[env];
     auto &isolate = pImpl->isolatesMap[env];
 
@@ -113,15 +121,17 @@ int NodeInstance::DestroyEnvironment(void* env)
     pImpl->createParamsMap.erase(env);
     pImpl->contextsMap.erase(env);
     pImpl->isolatesMap.erase(env);
-  }
+  
 
-  return 0; // Success
+  pImpl->error = "Success";
+  return 0;
 }
 
 int NodeInstance::Tick(void* env)
 {
   if (!env) {
-    return -1; // Error: No environment
+    pImpl->error = "No environment";
+    return -1;
   }
 
   // Process all pending events without blocking
@@ -132,6 +142,7 @@ int NodeInstance::Tick(void* env)
   // Process any microtasks (e.g., resolved Promises)
   auto isolate = pImpl->isolatesMap[env];
   if (!isolate) {
+    pImpl->error = "No isolate";
     return -1;
   }
 
@@ -142,12 +153,19 @@ int NodeInstance::Tick(void* env)
 
 int NodeInstance::ExecuteScript(void* env, const char* script)
 {
-  if (!env || !script) {
+  if (!env) {
+    pImpl->error = "No env";
+    return -1;
+  }
+
+  if (!script) {
+    pImpl->error = "No script";
     return -1;
   }
 
   Isolate* isolate = pImpl->isolatesMap[env];
   if (!isolate) {
+    pImpl->error = "No isolate";
     return -1;
   }
 
@@ -162,15 +180,27 @@ int NodeInstance::ExecuteScript(void* env, const char* script)
   Local<Script> compiled_script;
 
   if (!Script::Compile(context, source).ToLocal(&compiled_script)) {
-    return -1; // Compilation error
+    pImpl->error = "Compilation error";
+    return -1;
   }
 
   compiled_script->Run(context); // Execute script
   
+  pImpl->error = "Success";
   return 0;
 }
 
 uint64_t NodeInstance::GetError(char* buffer, uint64_t bufferSize)
 {
-  // TODO
+    constexpr size_t kNullTerminatorLengthInBytes = 1;
+
+    if (bufferSize > 0) {
+        size_t copyLength = std::min(static_cast<size_t>(bufferSize - kNullTerminatorLengthInBytes), pImpl->error.size());
+
+        std::memcpy(buffer, pImpl->error.data(), copyLength);
+
+        buffer[copyLength] = '\0';
+    }
+
+    return pImpl->error.size() + kNullTerminatorLengthInBytes;
 }
