@@ -10,6 +10,6 @@ if(${PORT} MATCHES "spdlog|fmt")
 endif()
 
 # The node-embedder-api takes a long time to build, generates an inconsistent number of libraries, and doesn't seem to integrate well with GitHub Actions' binary cache.
-# Disabling Debug for all ports since we don't support Debug anyway.
-# Can be set node-embedder-api only in the future if needed.
-set(VCPKG_BUILD_TYPE release)
+if(${PORT} MATCHES "node-embedder-api")
+  set(VCPKG_BUILD_TYPE release)
+endif()
