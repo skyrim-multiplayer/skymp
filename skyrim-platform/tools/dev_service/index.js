@@ -164,6 +164,10 @@ const watchCallback = (_eventType, fileName) => {
           path.join(distDir, "Data/Scripts")
         );
         cp(
+          `${getBinaryDir()}/skyrim-platform/_skyrim_nodejs_plugin/${buildCfg}/SkyrimNodeJS.dll`,
+          path.join(distDir, "Data/SKSE/Plugins")
+        );
+        cp(
           `${getBinaryDir()}/skymp5-server/cpp/${buildCfg}/MpClientPlugin.dll`,
           path.join(distDir, "Data/SKSE/Plugins")
         );

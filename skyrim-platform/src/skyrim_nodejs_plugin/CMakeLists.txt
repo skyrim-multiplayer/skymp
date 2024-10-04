@@ -21,6 +21,8 @@ if(MSVC)
     add_library(skyrim_nodejs_plugin SHARED ${src})
     target_link_libraries(skyrim_nodejs_plugin PUBLIC node-embedder-api)
 
+    set_target_properties(skyrim_nodejs_plugin PROPERTIES OUTPUT_NAME SkyrimNodeJS)
+
     if(SKYRIM_SE)
         find_package(commonlibse REQUIRED CONFIGS CommonLibSSEConfig.cmake)
         target_link_libraries(skyrim_nodejs_plugin PRIVATE CommonLibSSE::CommonLibSSE)
