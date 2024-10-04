@@ -161,11 +161,18 @@ const watchCallback = (_eventType, fileName) => {
         cp(
           path.join(sourceDir, `src/platform_se/pex/TESModPlatform.pex`),
           path.join(distDir, "Data/Scripts")
-        );
-        cp(
-          `${getBinaryDir()}/skyrim-platform/_skyrim_nodejs_plugin/${buildCfg}/SkyrimNodeJS.dll`,
-          path.join(distDir, "Data/SKSE/Plugins")
-        );
+        );set(SKSE_PLUGINS_DIR "${CMAKE_BINARY_DIR}/dist/client/Data/SKSE/Plugins")
+
+        add_custom_target(skymp5-voice-chat-pack ALL
+            COMMAND ${CMAKE_COMMAND} -E make_directory "${VOICE_CHAT_DIST_PATH}"
+            COMMAND ${CMAKE_COMMAND} -E copy ${DLLS_SDK} "${VOICE_CHAT_DIST_PATH}"
+            COMMAND ${CMAKE_COMMAND} -E copy ${DLLS_FFMPEG} "${VOICE_CHAT_DIST_PATH}"
+            COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:voice_chat_dll> "${VOICE_CHAT_DIST_PATH}"
+            COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:voice_chat_plugin_entry> "${SKSE_PLUGINS_DIR}"
+            COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:voice_chat_test> "${VOICE_CHAT_DIST_PATH}"
+        )
+    
+        add_dependencies(skymp5-voice-chat-pack voice_chat_dll voice_chat_plugin_entry voice_chat_test)
         cp(
           `${getBinaryDir()}/skymp5-server/cpp/${buildCfg}/MpClientPlugin.dll`,
           path.join(distDir, "Data/SKSE/Plugins")

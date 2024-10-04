@@ -34,4 +34,12 @@ if(MSVC)
 
     apply_default_settings(TARGETS skyrim_nodejs_plugin)
 
+    set(SKSE_PLUGINS_DIR "${CMAKE_BINARY_DIR}/dist/client/Data/SKSE/Plugins")
+
+    add_custom_target(skyrim_nodejs_plugin-pack ALL
+        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:skyrim_nodejs_plugin> "${SKSE_PLUGINS_DIR}"
+    )
+
+    add_dependencies(skyrim_nodejs_plugin-pack skyrim_nodejs_plugin)
+
 endif()
