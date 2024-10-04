@@ -1,6 +1,5 @@
 let fs = require("fs-extra");
 let path = require("path");
-let childProcess = require("child_process");
 let game = require("./game");
 
 // Keep this in sync with triplet file overlay_triplets\x64-windows-sp.cmake or similar
