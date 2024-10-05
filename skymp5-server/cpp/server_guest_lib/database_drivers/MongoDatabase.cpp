@@ -114,8 +114,6 @@ void MongoDatabase::Iterate(const IterateCallback& iterateCallback)
 
   int numParts = std::min(totalDocuments, 100);
 
-  int partSize = totalDocuments / numParts;
-
   std::atomic<int> totalDocumentsProcessed = 0;
 
   std::string hash;
@@ -157,6 +155,7 @@ void MongoDatabase::Iterate(const IterateCallback& iterateCallback)
       // space is to be replaced with ] in case of empty array
       threadsDocumentsJsonArray[i] = "[ ";
 
+      int partSize = totalDocuments / numParts;
       auto skip = i * partSize;
       auto limit = (i == numParts - 1) ? totalDocuments - skip : partSize;
 

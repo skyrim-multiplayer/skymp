@@ -106,9 +106,9 @@ TEST_CASE("ChangeValues message is being delivered to client",
 
   ChangeValuesMessage msg;
   msg.idx = ac.GetIdx();
-  msg.health = 1.f;
-  msg.magicka = 1.f;
-  msg.stamina = 1.f;
+  msg.data.health = 1.f;
+  msg.data.magicka = 1.f;
+  msg.data.stamina = 1.f;
 
   ac.SendToUser(msg, true);
 

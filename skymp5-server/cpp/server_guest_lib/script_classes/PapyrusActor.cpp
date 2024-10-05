@@ -114,8 +114,8 @@ VarValue PapyrusActor::IsEquipped(VarValue self,
   // Enum entries of equipment
   for (auto& entry : equipment.entries) {
     // Filter out non-worn (in current implementation it is possible)
-    if (entry.extra.worn == Inventory::Worn::Right ||
-        entry.extra.worn == Inventory::Worn::Left) {
+    if (entry.GetWorn() == Inventory::Worn::Right ||
+        entry.GetWorn() == Inventory::Worn::Left) {
       // Enum entries of form list
       for (const auto& formId : formIds) {
         // If one of equipment entries matches one of formlist entries, then
@@ -281,7 +281,7 @@ VarValue PapyrusActor::WornHasKeyword(VarValue self,
       actor->GetEquipment().inv.entries;
     WorldState* worldState = compatibilityPolicy->GetWorldState();
     for (const auto& entry : entries) {
-      if (entry.extra.worn != Inventory::Worn::None) {
+      if (entry.GetWorn() != Inventory::Worn::None) {
         const espm::LookupResult res =
           worldState->GetEspm().GetBrowser().LookupById(entry.baseId);
         if (!res.rec) {
