@@ -18,6 +18,33 @@ inline void SendEvent(const char* eventName, const JsValue& obj)
 }
 }
 
+namespace skymp::magic::details {
+
+JsValue GetJSObjectFromAnimationVariables(
+  const AnimationGraphMasterBehaviourDescriptor::AnimationVariables&
+    animVariables)
+{
+  auto object = JsValue::Object();
+
+  AddObjProperty(
+    &object, "Booleans",
+    reinterpret_cast<const uint8_t*>(animVariables.Booleans.data()),
+    animVariables.SizeBooleansInBytes());
+
+  AddObjProperty(&object, "Floats",
+                 reinterpret_cast<const uint8_t*>(animVariables.Floats.data()),
+                 animVariables.SizeFloatsInBytes());
+
+  AddObjProperty(
+    &object, "Integers",
+    reinterpret_cast<const uint8_t*>(animVariables.Integers.data()),
+    animVariables.SizeIntegersInBytes());
+
+  return object;
+}
+
+} // namespace skymp::magic::details
+
 void EventHandler::SendSimpleEventOnUpdate(const char* eventName)
 {
   SkyrimPlatform::GetSingleton()->AddUpdateTask(
@@ -1370,20 +1397,10 @@ EventResult EventHandler::ProcessEvent(
     AddObjProperty(&obj, "castingSource",
                    static_cast<uint32_t>(castingSource));
 
-    auto animVariables =
-      AnimationGraphMasterBehaviourDescriptor{ *caster }.GetVariables();
-
-    AddObjProperty(&obj, "booleanAnimationVariables",
-                   reinterpret_cast<uint8_t*>(animVariables.Booleans.data()),
-                   animVariables.SizeBooleansInBytes());
-
-    AddObjProperty(&obj, "floatAnimationVariables",
-                   reinterpret_cast<uint8_t*>(animVariables.Floats.data()),
-                   animVariables.SizeFloatsInBytes());
-
-    AddObjProperty(&obj, "integerAnimationVariables",
-                   reinterpret_cast<uint8_t*>(animVariables.Integers.data()),
-                   animVariables.SizeIntegersInBytes());
+    obj.SetProperty(
+      "animationVariables",
+      skymp::magic::details::GetJSObjectFromAnimationVariables(
+        AnimationGraphMasterBehaviourDescriptor{ *caster }.GetVariables()));
 
     SendEvent("spellCast", obj);
   });

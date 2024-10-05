@@ -1,14 +1,55 @@
 #include "MagicApi.h"
 #include "CallNativeApi.h"
+#include "JsUtils.h"
+#include "SkyrimPlatform.h"
+
 #include "Magic/AnimationGraphMasterBehaviourDescriptor.h"
-#include "NullPointerException.h"
+
+extern CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
+
+namespace skymp::magic::details {
+
+AnimationGraphMasterBehaviourDescriptor::AnimationVariables
+GetAnimationVariablesFromJSArg(const JsValue& argObj)
+{
+  using AnimVarInitializer =
+    AnimationGraphMasterBehaviourDescriptor::AnimationVariables::InitData;
+
+  const auto booleanVarsValue = argObj.GetProperty("Booleans");
+
+  const auto booleanVars = AnimVarInitializer{
+    static_cast<uint8_t*>(booleanVarsValue.GetTypedArrayData()),
+    booleanVarsValue.GetTypedArrayBufferLength()
+  };
+
+  const auto floatsVarsValue = argObj.GetProperty("Floats");
+
+  const auto floatsVars = AnimVarInitializer{
+    static_cast<uint8_t*>(floatsVarsValue.GetTypedArrayData()),
+    floatsVarsValue.GetTypedArrayBufferLength()
+  };
+
+  const auto integersVarsValue = argObj.GetProperty("Integers");
+
+  const auto integersVars = AnimVarInitializer{
+    static_cast<uint8_t*>(integersVarsValue.GetTypedArrayData()),
+    integersVarsValue.GetTypedArrayBufferLength()
+  };
+
+  const auto variables =
+    AnimationGraphMasterBehaviourDescriptor::AnimationVariables{
+      booleanVars, floatsVars, integersVars
+    };
+
+  return variables;
+}
+
+} // namespace skymp::magic::details
 
 JsValue MagicApi::CastSpellImmediate(const JsFunctionArguments& args)
 {
   const auto actorFormId =
     static_cast<RE::FormID>(static_cast<double>(args[1]));
-
-  const auto pActor = RE::TESForm::LookupByID<RE::Actor>(actorFormId);
 
   const auto castingSource =
     static_cast<RE::MagicSystem::CastingSource>(static_cast<int>(args[2]));
@@ -16,57 +57,48 @@ JsValue MagicApi::CastSpellImmediate(const JsFunctionArguments& args)
   const auto spellFormId =
     static_cast<RE::FormID>(static_cast<double>(args[3]));
 
-  const auto pSpell = RE::TESForm::LookupByID<RE::MagicItem>(spellFormId);
-
-  if (!pSpell) {
-    return JsValue::Undefined();
-  }
-
-  const auto t = pSpell->GetFormType();
-
-  if (!(t == RE::FormType::Spell || t == RE::FormType::Scroll ||
-        t == RE::FormType::Ingredient || t == RE::FormType::AlchemyItem ||
-        t == RE::FormType::Enchantment)) {
-    return JsValue::Undefined();
-  }
-
   const auto formIdTarget = RE::TESForm::LookupByID<RE::TESObjectREFR>(
     static_cast<uint32_t>(static_cast<double>(args[4])));
 
-  if (!pActor) {
-    return JsValue::Undefined();
-  }
+  g_nativeCallRequirements.gameThrQ->AddTask(
+    [spellFormId, actorFormId, castingSource, formIdTarget,
+     animVars =
+       skymp::magic::details::GetAnimationVariablesFromJSArg(args[5])]() {
+      const auto pSpell = RE::TESForm::LookupByID<RE::MagicItem>(spellFormId);
 
-  const auto magicCaster = pActor->GetMagicCaster(castingSource);
+      const auto pActor = RE::TESForm::LookupByID<RE::Actor>(actorFormId);
 
-  if (!magicCaster) {
-    return JsValue::Undefined();
-  }
+      if (!pSpell || !pActor) {
+        return;
+      }
 
-  using AnimVarInitializer =
-    AnimationGraphMasterBehaviourDescriptor::AnimationVariables::InitData;
+      const auto t = pSpell->GetFormType();
 
-  const auto variables =
-    AnimationGraphMasterBehaviourDescriptor::AnimationVariables{
-      AnimVarInitializer{ static_cast<uint8_t*>(args[5].GetTypedArrayData()),
-                          args[5].GetTypedArrayBufferLength() },
-      AnimVarInitializer{
-        static_cast<uint8_t*>(args[6].GetTypedArrayData()),
-        static_cast<size_t>(args[6].GetTypedArrayBufferLength()) },
-      AnimVarInitializer{ static_cast<uint8_t*>(args[7].GetTypedArrayData()),
-                          args[7].GetTypedArrayBufferLength() }
-    };
+      const bool isValidSpellType = t == RE::FormType::Spell ||
+        t == RE::FormType::Scroll || t == RE::FormType::Ingredient ||
+        t == RE::FormType::AlchemyItem || t == RE::FormType::Enchantment;
 
-  const bool isAnimationVariablesApplied =
-    AnimationGraphMasterBehaviourDescriptor{ std::move(variables) }
-      .ApplyVariablesToActor(*pActor);
+      if (!isValidSpellType) {
+        return;
+      }
 
-  if (!isAnimationVariablesApplied) {
-    return JsValue::Undefined();
-  }
+      const auto magicCaster = pActor->GetMagicCaster(castingSource);
 
-  magicCaster->CastSpellImmediate(pSpell, false, formIdTarget, 1.0f, false,
-                                  0.0f, pActor);
+      if (!magicCaster) {
+        return;
+      }
+
+      const bool isAnimationVariablesApplied =
+        AnimationGraphMasterBehaviourDescriptor{ std::move(animVars) }
+          .ApplyVariablesToActor(*pActor);
+
+      if (!isAnimationVariablesApplied) {
+        return;
+      }
+
+      magicCaster->CastSpellImmediate(pSpell, false, formIdTarget, 1.0f, false,
+                                      0.0f, pActor);
+    });
 
   return JsValue::Undefined();
 }
@@ -76,37 +108,89 @@ JsValue MagicApi::InterruptCast(const JsFunctionArguments& args)
   const auto actorFormId =
     static_cast<RE::FormID>(static_cast<double>(args[1]));
 
+  const auto castingSource =
+    static_cast<RE::MagicSystem::CastingSource>(static_cast<int>(args[2]));
+
+  g_nativeCallRequirements.gameThrQ->AddTask(
+    [actorFormId, castingSource,
+     animVars =
+       skymp::magic::details::GetAnimationVariablesFromJSArg(args[3])]() {
+      const auto pActor = RE::TESForm::LookupByID<RE::Actor>(actorFormId);
+      if (!pActor) {
+        return;
+      }
+
+      const bool isAnimationVariablesApplied =
+        AnimationGraphMasterBehaviourDescriptor{ std::move(animVars) }
+          .ApplyVariablesToActor(*pActor);
+
+      if (!isAnimationVariablesApplied) {
+        return;
+      }
+
+      if (auto* caster = pActor->GetMagicCaster(castingSource)) {
+        caster->FinishCast();
+      } else {
+        pActor->InterruptCast(false);
+      }
+    });
+
+  return JsValue::Undefined();
+}
+
+JsValue MagicApi::GetAnimationVariablesFromActor(
+  const JsFunctionArguments& args)
+{
+  const auto actorFormId =
+    static_cast<RE::FormID>(static_cast<double>(args[1]));
+
   const auto pActor = RE::TESForm::LookupByID<RE::Actor>(actorFormId);
 
   if (!pActor) {
     return JsValue::Undefined();
   }
 
-  using AnimVarInitializer =
-    AnimationGraphMasterBehaviourDescriptor::AnimationVariables::InitData;
+  const auto animVariables =
+    AnimationGraphMasterBehaviourDescriptor{ *pActor }.GetVariables();
 
-  const auto variables =
-    AnimationGraphMasterBehaviourDescriptor::AnimationVariables{
-      AnimVarInitializer{ static_cast<uint8_t*>(args[3].GetTypedArrayData()),
-                          args[3].GetTypedArrayBufferLength() },
-      AnimVarInitializer{ static_cast<uint8_t*>(args[4].GetTypedArrayData()),
-                          args[4].GetTypedArrayBufferLength() },
-      AnimVarInitializer{ static_cast<uint8_t*>(args[5].GetTypedArrayData()),
-                          args[5].GetTypedArrayBufferLength() }
-    };
+  auto obj = JsValue::Object();
 
-  const bool isAnimationVariablesApplied =
-    AnimationGraphMasterBehaviourDescriptor{ std::move(variables) }
-      .ApplyVariablesToActor(*pActor);
+  AddObjProperty(
+    &obj, "Booleans",
+    reinterpret_cast<const uint8_t*>(animVariables.Booleans.data()),
+    animVariables.SizeBooleansInBytes());
 
-  if (!isAnimationVariablesApplied) {
-    return JsValue::Undefined();
+  AddObjProperty(&obj, "Floats",
+                 reinterpret_cast<const uint8_t*>(animVariables.Floats.data()),
+                 animVariables.SizeFloatsInBytes());
+
+  AddObjProperty(
+    &obj, "Integers",
+    reinterpret_cast<const uint8_t*>(animVariables.Integers.data()),
+    animVariables.SizeIntegersInBytes());
+
+  return obj;
+}
+
+JsValue MagicApi::ApplyAnimationVariablesToActor(
+  const JsFunctionArguments& args)
+{
+  const auto actorFormId =
+    static_cast<RE::FormID>(static_cast<double>(args[1]));
+
+  const auto pActor = RE::TESForm::LookupByID<RE::Actor>(actorFormId);
+
+  if (!pActor) {
+    return JsValue::Bool(false);
   }
 
-  const bool restoreMagic = args[2];
-  pActor->InterruptCast(restoreMagic);
+  const bool isAnimationVariablesApplied =
+    AnimationGraphMasterBehaviourDescriptor{
+      skymp::magic::details::GetAnimationVariablesFromJSArg(args[2])
+    }
+      .ApplyVariablesToActor(*pActor);
 
-  return JsValue::Undefined();
+  return JsValue::Bool(isAnimationVariablesApplied);
 }
 
 void MagicApi::Register(JsValue& exports)
@@ -114,4 +198,10 @@ void MagicApi::Register(JsValue& exports)
   exports.SetProperty("castSpellImmediate",
                       JsValue::Function(CastSpellImmediate));
   exports.SetProperty("interruptCast", JsValue::Function(InterruptCast));
+
+  exports.SetProperty("getAnimationVariablesFromActor",
+                      JsValue::Function(GetAnimationVariablesFromActor));
+
+  exports.SetProperty("applyAnimationVariablesToActor",
+                      JsValue::Function(ApplyAnimationVariablesToActor));
 }

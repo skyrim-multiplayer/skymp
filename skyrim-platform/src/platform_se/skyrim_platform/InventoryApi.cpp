@@ -2,8 +2,6 @@
 #include "CallNativeApi.h"
 #include "NullPointerException.h"
 
-#include "Magic/AnimationGraphMasterBehaviourDescriptor.h"
-
 extern CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
 
 namespace {

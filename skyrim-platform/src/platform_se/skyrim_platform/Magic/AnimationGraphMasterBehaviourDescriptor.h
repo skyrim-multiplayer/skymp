@@ -209,6 +209,7 @@ public:
         &pVariableSet->data[agDescriptor.IntegerLookupTable[i]]) =
         variables.Integers.size() > i ? variables.Integers[i] : 0;
     }
+
     return true;
   }
 

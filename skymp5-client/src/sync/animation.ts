@@ -42,18 +42,6 @@ const isIdle = (animEventName: string) => {
   );
 };
 
-const isSpellCastAnim = (animEventName: string): boolean => {
-  const eventName = animEventName.toLowerCase();
-
-  const isSpellCastAnimForLeftHand = eventName === "mlh_spellaimedconcentrationstart" || eventName === "mlh_spellaimedstart" || eventName === "mlh_spellready_event" ||
-    eventName === "mlh_spellrelease_event" || eventName === "mlh_equipped_event";
-
-  const isSpellCastAnimForRightHand = eventName === "mrh_spellaimedconcentrationstart" || eventName === "mrh_spellaimedstart" || eventName === "mrh_spellready_event" ||
-    eventName === "mrh_spellrelease_event" || eventName === "mrh_equipped_event";
-
-  return isSpellCastAnimForLeftHand || isSpellCastAnimForRightHand;
-};
-
 export const applyAnimation = (
   refr: ObjectReference,
   anim: Animation,
@@ -64,10 +52,6 @@ export const applyAnimation = (
 
   if (isIdle(anim.animEventName)) {
     allowedIdles.push([refr.getFormID(), anim.animEventName]);
-  }
-
-  if (isSpellCastAnim(anim.animEventName)) {
-    return;
   }
 
   const ac = Actor.from(refr);

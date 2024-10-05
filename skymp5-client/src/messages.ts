@@ -22,4 +22,5 @@ export enum MsgType {
   OpenContainer = 21,
   PlayerBowShot = 22,
   SpellCast = 23,
+  UpdateAnimVariables = 24,
 }

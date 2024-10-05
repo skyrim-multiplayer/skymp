@@ -275,6 +275,10 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
       actionListener.OnSpellCast(rawMsgData, SpellCastData::FromJson(data_));
       break;
     }
+    case MsgType::UpdateAnimVariables: {
+      actionListener.OnUpdateAnimVariables(rawMsgData);
+      break;
+    }
     case MsgType::DropItem: {
       uint64_t baseId;
       ReadEx(jMessage, JsonPointers::baseId, &baseId);

@@ -93,6 +93,8 @@ public:
 
   virtual void OnHit(const RawMessageData& rawMsgData, const HitData& hitData);
 
+  virtual void OnUpdateAnimVariables(const RawMessageData& rawMsgData);
+
   virtual void OnSpellCast(const RawMessageData& rawMsgData,
                            const SpellCastData& spellCastData);
 

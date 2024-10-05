@@ -29,10 +29,7 @@ struct SpellCastData
   {
     const JsonPointer caster("caster"), target("target"), spell("spell"),
       interruptCast("interruptCast"), isDualCasting("isDualCasting"),
-      castingSource("castingSource"),
-      booleanAnimationVariables("booleanAnimationVariables"),
-      floatAnimationVariables("floatAnimationVariables"),
-      integerAnimationVariables("integerAnimationVariables");
+      castingSource("castingSource");
 
     SpellCastData result;
     ReadEx(data, caster, &result.caster);
@@ -44,10 +41,6 @@ struct SpellCastData
     uint32_t cSource = 0;
     ReadEx(data, castingSource, &cSource);
     result.castingSource = static_cast<SpellType>(cSource);
-
-    ReadEx(data, booleanAnimationVariables, &result.booleanAnimationVariables);
-    ReadEx(data, floatAnimationVariables, &result.floatAnimationVariables);
-    ReadEx(data, integerAnimationVariables, &result.integerAnimationVariables);
 
     return result;
   }

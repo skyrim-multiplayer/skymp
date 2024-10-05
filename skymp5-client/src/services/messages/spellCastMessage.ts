@@ -1,4 +1,5 @@
 import { MsgType } from "../../messages";
+import { ActorAnimationVariables } from 'skyrimPlatform';
 
 export interface SpellCastMsgData {
     caster: number
@@ -7,9 +8,7 @@ export interface SpellCastMsgData {
     isDualCasting: boolean
     interruptCast: boolean
     castingSource: number
-    booleanAnimationVariables: ArrayBuffer
-    floatAnimationVariables: ArrayBuffer
-    integerAnimationVariables: ArrayBuffer
+    actorAnimationVariables: ActorAnimationVariables
 }
 
 export interface SpellCastMessage {

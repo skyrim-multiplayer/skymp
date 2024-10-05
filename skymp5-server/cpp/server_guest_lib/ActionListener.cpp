@@ -1050,6 +1050,17 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
                 healthPercentage, outBaseHealth);
 }
 
+void ActionListener::OnUpdateAnimVariables(const RawMessageData& rawMsgData)
+{
+  const MpActor* myActor = partOne.serverState.ActorByUser(rawMsgData.userId);
+
+  if (!myActor) {
+    throw std::runtime_error("Unable to change values without Actor attached");
+  }
+
+  SendToNeighbours(myActor->idx, rawMsgData);
+}
+
 void ActionListener::OnSpellCast(const RawMessageData& rawMsgData,
                                  const SpellCastData& spellCastData_)
 {
@@ -1121,6 +1132,10 @@ void ActionListener::OnSpellCast(const RawMessageData& rawMsgData,
   }
 
   SendToNeighbours(myActor->idx, rawMsgData);
+
+  if (spellCastData.isInterruptCast) {
+    return;
+  }
 
   auto& browser = partOne.worldState.GetEspm().GetBrowser();
 
