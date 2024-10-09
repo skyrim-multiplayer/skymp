@@ -432,6 +432,16 @@ float PartOne::CalculateDamage(const MpActor& aggressor, const MpActor& target,
   return pImpl->damageFormula->CalculateDamage(aggressor, target, hitData);
 }
 
+float PartOne::CalculateDamage(const MpActor& aggressor, const MpActor& target,
+                               const SpellCastData& spellCastData) const
+{
+  if (!pImpl->damageFormula) {
+    throw std::runtime_error("no damage formula");
+  }
+  return pImpl->damageFormula->CalculateDamage(aggressor, target,
+                                               spellCastData);
+}
+
 void PartOne::NotifyGamemodeApiStateChanged(
   const GamemodeApi::State& newState) noexcept
 {

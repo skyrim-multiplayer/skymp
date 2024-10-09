@@ -8,10 +8,16 @@ extern espm::Loader l;
 class FakeDamageFormula : public IDamageFormula
 {
 public:
-  float CalculateDamage(const MpActor&, const MpActor&,
-                        const HitData&) const override
+  [[nodiscard]] float CalculateDamage(const MpActor&, const MpActor&,
+                                      const HitData&) const override
   {
-    return 25;
+    return 25.f;
+  }
+
+  [[nodiscard]] float CalculateDamage(const MpActor&, const MpActor&,
+                                      const SpellCastData&) const override
+  {
+    return 25.f;
   }
 };
 

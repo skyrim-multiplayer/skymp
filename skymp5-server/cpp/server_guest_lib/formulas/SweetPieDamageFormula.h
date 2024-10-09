@@ -23,8 +23,13 @@ public:
   SweetPieDamageFormula(std::unique_ptr<IDamageFormula> baseFormula_,
                         const nlohmann::json& config);
 
-  float CalculateDamage(const MpActor& aggressor, const MpActor& target,
-                        const HitData& hitData) const override;
+  [[nodiscard]] float CalculateDamage(const MpActor& aggressor,
+                                      const MpActor& target,
+                                      const HitData& hitData) const override;
+
+  [[nodiscard]] float CalculateDamage(
+    const MpActor& aggressor, const MpActor& target,
+    const SpellCastData& spellCastData) const override;
 
 private:
   SweetPieDamageFormulaSettings ParseConfig(

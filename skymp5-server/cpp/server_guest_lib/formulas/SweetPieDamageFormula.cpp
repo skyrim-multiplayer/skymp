@@ -10,6 +10,7 @@
 
 #include "HitData.h"
 #include "MpActor.h"
+#include "SpellCastData.h"
 #include "libespm/Loader.h"
 #include "libespm/espm.h"
 
@@ -68,13 +69,14 @@ float SweetPieDamageFormula::CalculateDamage(const MpActor& aggressor,
                                              const MpActor& target,
                                              const HitData& hitData) const
 {
-  float baseDamage = baseFormula->CalculateDamage(aggressor, target, hitData);
+  const float baseDamage =
+    baseFormula->CalculateDamage(aggressor, target, hitData);
 
   if (!settings) {
     return baseDamage;
   }
 
-  uint32_t weaponFormId = hitData.source;
+  const uint32_t weaponFormId = hitData.source;
   auto& espmCache = aggressor.GetParent()->GetEspmCache();
 
   const auto& keywordIds = aggressor.GetParent()
@@ -84,7 +86,7 @@ float SweetPieDamageFormula::CalculateDamage(const MpActor& aggressor,
                              .rec->GetKeywordIds(espmCache);
   std::vector<const char*> keywordNames;
   keywordNames.reserve(keywordIds.size());
-  for (uint32_t id : keywordIds) {
+  for (const uint32_t id : keywordIds) {
     const auto& keyword = espm::GetData<espm::KYWD>(id, aggressor.GetParent());
     keywordNames.emplace_back(keyword.editorId);
   }
@@ -108,4 +110,11 @@ float SweetPieDamageFormula::CalculateDamage(const MpActor& aggressor,
   }
 
   return baseDamage;
+}
+
+float SweetPieDamageFormula::CalculateDamage(
+  const MpActor& aggressor, const MpActor& target,
+  const SpellCastData& spellCastData) const
+{
+  return baseFormula->CalculateDamage(aggressor, target, spellCastData);
 }

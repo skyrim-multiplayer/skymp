@@ -1,4 +1,4 @@
-import { Actor, Form, FormType, Menu } from 'skyrimPlatform';
+import { Actor, Form, FormType, Menu, interruptCast, castSpellImmediate, printConsole, applyAnimationVariablesToActor, ActorAnimationVariables } from 'skyrimPlatform';
 import {
   Armor,
   Cell,
@@ -59,6 +59,9 @@ import {
 import { TimeService } from './timeService';
 import { logTrace, logError } from '../../logging';
 
+import { SpellCastMessage } from '../messages/spellCastMessage';
+import { UpdateAnimVariablesMessage } from '../messages/updateAnimVariablesMessage';
+
 export const getPcInventory = (): Inventory | undefined => {
   const res = storage['pcInv'];
   if (typeof res === 'object' && (res as any)['entries']) {
@@ -109,6 +112,10 @@ export class RemoteServer extends ClientListener {
     this.controller.emitter.on("deathStateContainerMessage", (e) => this.onDeathStateContainerMessage(e));
 
     this.controller.emitter.on("connectionAccepted", () => this.handleConnectionAccepted());
+
+    this.controller.emitter.on("spellCastMessage", (e) => this.onSpellCastMessage(e));
+    this.controller.emitter.on("updateAnimVariablesMessage", (e) => this.onUpdateAnimVariablesMessage(e));
+
   }
 
   private onHostStartMessage(event: ConnectionMessage<HostStartMessage>) {
@@ -857,6 +864,52 @@ export class RemoteServer extends ClientListener {
     // Optimization added in #1186, however it doesn't work for doors for some reason
     return msg.refrId && msg.refrId < 0xff000000 && msg.baseRecordType !== 'DOOR';
   };
+
+  private onSpellCastMessage(event: ConnectionMessage<SpellCastMessage>): void {
+    const msg = event.message;
+
+    once('update', () => {
+      const ac = Actor.from(Game.getFormEx(remoteIdToLocalId(msg.data.caster)));
+      if (!ac) return;
+
+      const actorAnimationVariables: ActorAnimationVariables = {
+        Booleans: new Uint8Array(Object.values(msg.data.actorAnimationVariables.Booleans)),
+        Floats: new Uint8Array(Object.values(msg.data.actorAnimationVariables.Floats)),
+        Integers: new Uint8Array(Object.values(msg.data.actorAnimationVariables.Integers))
+      };
+
+      if (msg.data.interruptCast) {
+        interruptCast(ac.getFormID(), msg.data.castingSource, actorAnimationVariables);
+        return;
+      }
+
+      const spell = ac.getEquippedSpell(msg.data.castingSource);
+      if (spell) {
+        castSpellImmediate(ac.getFormID(), msg.data.castingSource, spell.getFormID(), remoteIdToLocalId(msg.data.target), actorAnimationVariables);
+      }
+    });
+  }
+
+  private onUpdateAnimVariablesMessage(event: ConnectionMessage<UpdateAnimVariablesMessage>): void {
+    const msg = event.message;
+
+    once('update', () => {
+      const ac = Actor.from(Game.getFormEx(remoteIdToLocalId(msg.data.actorRemoteId)));
+      if (!ac) return;
+
+      const actorAnimationVariables: ActorAnimationVariables = {
+        Booleans: new Uint8Array(Object.values(msg.data.actorAnimationVariables.Booleans)),
+        Floats: new Uint8Array(Object.values(msg.data.actorAnimationVariables.Floats)),
+        Integers: new Uint8Array(Object.values(msg.data.actorAnimationVariables.Integers))
+      };
+
+      const isApplyed = applyAnimationVariablesToActor(ac.getFormID(), actorAnimationVariables);
+
+      if (!isApplyed) {
+        logError(this, 'Failed apply AnimationVariables to actor with id: ' + ac.getFormID().toString(16));
+      }
+    });
+  }
 
   private numSetInventory = 0;
 }

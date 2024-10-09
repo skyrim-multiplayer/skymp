@@ -8,6 +8,9 @@ import {
   Utility,
   Game,
   storage,
+  castSpellImmediate,
+  SpellType,
+  interruptCast
 } from "skyrimPlatform";
 import { Movement } from "./movement";
 import { applyWeapDrawn } from "./movementApply";
@@ -51,14 +54,19 @@ export const applyAnimation = (
     allowedIdles.push([refr.getFormID(), anim.animEventName]);
   }
 
+  const ac = Actor.from(refr);
+
   if (anim.animEventName === "SkympFakeEquip") {
-    const ac = Actor.from(refr);
     if (ac) applyWeapDrawn(ac, true);
-  } else if (anim.animEventName === "SkympFakeUnequip") {
-    const ac = Actor.from(refr);
+    return;
+  }
+
+  if (anim.animEventName === "SkympFakeUnequip") {
     if (ac) applyWeapDrawn(ac, false);
-  } else if (anim.animEventName === "Ragdoll") {
-    const ac = Actor.from(refr);
+    return;
+  }
+
+  if (anim.animEventName === "Ragdoll") {
     if (ac) {
       if (storage["animationFunc1Set"] === true) {
         // @ts-ignore
@@ -69,21 +77,25 @@ export const applyAnimation = (
         ac.setActorValue("Variable10", -1000);
       }
     }
-  } else {
-    if (refsWithDefaultAnimsDisabled.has(refr.getFormID())) {
-      if (anim.animEventName.toLowerCase().includes("attack")) {
-        allowedAnims.add(refr.getFormID() + ":" + anim.animEventName);
-      }
-    }
-    Debug.sendAnimationEvent(refr, anim.animEventName);
-    if (anim.animEventName === "GetUpBegin") {
-      const refrId = refr.getFormID();
-      Utility.wait(1).then(() => {
-        const ac = Actor.from(Game.getFormEx(refrId));
-        if (ac) ac.setActorValue("Variable10", 1000);
-      });
+    return;
+  }
+
+  if (refsWithDefaultAnimsDisabled.has(refr.getFormID())) {
+    if (anim.animEventName.toLowerCase().includes("attack")) {
+      allowedAnims.add(refr.getFormID() + ":" + anim.animEventName);
     }
   }
+
+  Debug.sendAnimationEvent(refr, anim.animEventName);
+
+  if (anim.animEventName === "GetUpBegin") {
+    const refrId = refr.getFormID();
+    Utility.wait(1).then(() => {
+      const ac = Actor.from(Game.getFormEx(refrId));
+      if (ac) ac.setActorValue("Variable10", 1000);
+    });
+  }
+
 };
 
 export const setDefaultAnimsDisabled = (

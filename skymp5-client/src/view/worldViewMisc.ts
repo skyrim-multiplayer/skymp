@@ -1,5 +1,7 @@
 import { Game, ObjectReference, storage } from "skyrimPlatform";
 import { WorldView } from "./worldView";
+import { SpApiInteractor } from '../services/spApiInteractor';
+import { RemoteServer } from "../services/services/remoteServer";
 
 export const getViewFromStorage = (): WorldView | undefined => {
   const res = storage["view"] as WorldView;
@@ -8,7 +10,11 @@ export const getViewFromStorage = (): WorldView | undefined => {
   return undefined;
 };
 
-export const localIdToRemoteId = (localFormId: number): number => {
+export const localIdToRemoteId = (localFormId: number, newCast: boolean = false): number => {
+  if (newCast && localFormId == 0x14) {
+    return SpApiInteractor.getControllerInstance().lookupListener(RemoteServer).getMyRemoteRefrId();
+  }
+
   if (localFormId >= 0xff000000) {
     const view = getViewFromStorage();
     if (!view) return 0;

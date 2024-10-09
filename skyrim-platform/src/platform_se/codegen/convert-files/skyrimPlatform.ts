@@ -272,6 +272,7 @@ export interface SpellCastEvent {
   spell: Spell
   isDualCasting: boolean
   castingSource: SpellType
+  animationVariables: ActorAnimationVariables
 }
 
 export interface OpenCloseEvent {
@@ -1601,10 +1602,18 @@ export interface Inventory {
   entries: Entry[];
 }
 
+export interface ActorAnimationVariables {
+  Booleans: ArrayBuffer
+  Floats: ArrayBuffer
+  Integers: ArrayBuffer
+}
+
 export declare function setInventory(formId: number, inventory: Inventory): void;
 
-export declare function castSpellImmediate(formId: number, castingSource: SpellType, formIdSpell: number, formIdTarget: number): void;
-
+export declare function castSpellImmediate(actorCasterFormId: number, castingSource: SpellType, formIdSpell: number, formIdTarget: number, animationVariables: ActorAnimationVariables): void;
+export declare function interruptCast(actorCasterFormId: number, castingSource: SpellType, animationVariables: ActorAnimationVariables): void;
+export declare function getAnimationVariablesFromActor(actorFormId: number): ActorAnimationVariables;
+export declare function applyAnimationVariablesToActor(actorFormId: number, animationVariables: ActorAnimationVariables): boolean;
 // Based on Form.pex
 export declare class Form extends PapyrusObject {
   static from(papyrusObject: PapyrusObject | null): Form | null
