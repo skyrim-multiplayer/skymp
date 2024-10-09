@@ -1,13 +1,11 @@
 let fs = require("fs-extra");
 let path = require("path");
-let childProcess = require("child_process");
 let game = require("./game");
 
 // Keep this in sync with triplet file overlay_triplets\x64-windows-sp.cmake or similar
 const requiredVcpkgDlls = [
   "spdlog.dll",
-  "fmt.dll",
-  "ChakraCore.dll"
+  "fmt.dll"
 ];
 
 function writeFileSyncRecursive(filename, content, charset) {
@@ -103,13 +101,13 @@ const watchCallback = (_eventType, fileName) => {
           "libGLESv2.dll",
           "snapshot_blob.bin",
           "v8_context_snapshot.bin",
-        ].forEach((item, i) => {
+        ].forEach((item) => {
           cp(
             path.join(cefDir, "Release", item),
             path.join(distDir, "Data/Platform/Distribution/RuntimeDependencies")
           );
         });
-        ["libEGL.dll", "libGLESv2.dll"].forEach((item, i) => {
+        ["libEGL.dll", "libGLESv2.dll"].forEach((item) => {
           cp(
             path.join(cefDir, "Release", item),
             path.join(
@@ -118,7 +116,7 @@ const watchCallback = (_eventType, fileName) => {
             )
           );
         });
-        ["icudtl.dat"].forEach((item, i) => {
+        ["icudtl.dat"].forEach((item) => {
           cp(
             path.join(cefDir, "Resources", item),
             path.join(distDir, "Data/Platform/Distribution/RuntimeDependencies")
@@ -128,7 +126,7 @@ const watchCallback = (_eventType, fileName) => {
           "chrome_100_percent.pak",
           "chrome_200_percent.pak",
           "resources.pak",
-        ].forEach((item, i) => {
+        ].forEach((item) => {
           cp(
             path.join(cefDir, "Resources", item),
             path.join(distDir, "Data/Platform/Distribution/CEF")
