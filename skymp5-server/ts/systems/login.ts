@@ -38,7 +38,7 @@ export class Login implements System {
         `${this.masterUrl}/api/servers/${this.myAddr}/sessions/${session}`
       );
       if (!response.data || !response.data.user || !response.data.user.id) {
-        throw new Error("getUserProfile: bad master-api response");
+        throw new Error(`getUserProfile: bad master-api response ${JSON.stringify(response.data)}`);
       }
       return response.data.user as UserProfile;
     } catch (error) {
@@ -83,6 +83,8 @@ export class Login implements System {
       this.log("The server is in offline mode, the client is NOT");
     } else if (this.offlineMode === false && gameData && gameData.session) {
       (async () => {
+        ctx.gm.emit("userAssignSession", userId, gameData.session);
+
         const guidBeforeAsyncOp = ctx.svr.getUserGuid(userId);
         const profile = await this.getUserProfile(gameData.session, userId, ctx);
         const guidAfterAsyncOp = ctx.svr.isConnected(userId) ? ctx.svr.getUserGuid(userId) : "<disconnected>";
