@@ -20,9 +20,9 @@ set(VCPKG_OVERLAY_PORTS "${CMAKE_CURRENT_LIST_DIR}/overlay_ports")
 option(NO_CLEAN_AFTER_BUILD "Don't clean vcpkg temporary folders after build" OFF)
 
 if("$ENV{CI}" STREQUAL "true" OR NO_CLEAN_AFTER_BUILD)
-  set(VCPKG_INSTALL_OPTIONS --no-print-usage)
+  set(VCPKG_INSTALL_OPTIONS --debug --no-print-usage)
 else()
-  set(VCPKG_INSTALL_OPTIONS --no-print-usage --clean-after-build)
+  set(VCPKG_INSTALL_OPTIONS --debug --no-print-usage --clean-after-build)
 endif()
 
 if("$ENV{CI}" STREQUAL "true" AND WIN32)
