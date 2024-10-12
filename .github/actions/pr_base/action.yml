@@ -86,11 +86,11 @@ runs:
       run: C:/vcpkg/bootstrap-vcpkg.bat
       shell: powershell
 
-    - name: Patch vcpkg.exe (Windows)
-      if: runner.os == 'Windows'
-      run: |
-        Invoke-WebRequest -Uri "https://github.com/skyrim-multiplayer/vcpkg-tool/releases/download/2024-10-09-skymp/vcpkg.exe" -OutFile "C:/vcpkg/vcpkg.exe" -UseBasicParsing
-      shell: powershell
+    # - name: Patch vcpkg.exe (Windows)
+    #   if: runner.os == 'Windows'
+    #   run: |
+    #     Invoke-WebRequest -Uri "https://github.com/skyrim-multiplayer/vcpkg-tool/releases/download/2024-10-09-skymp/vcpkg.exe" -OutFile "C:/vcpkg/vcpkg.exe" -UseBasicParsing
+    #   shell: powershell
 
     - name: Bootstrap vcpkg (Non-Windows)
       if: runner.os != 'Windows'
