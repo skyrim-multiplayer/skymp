@@ -108,6 +108,18 @@ runs:
           core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
           core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
 
+    - name: 'Setup NuGet Credentials'
+      if: runner.os == 'Windows'
+      shell: 'bash'
+      run: >
+        `C:/vcpkg/vcpkg.exe fetch nuget | tail -n 1`
+        sources add
+        -source "https://nuget.pkg.github.com/skyrim-multiplayer/index.json"
+        -storepasswordincleartext
+        -name "GitHub"
+        -username "skyrim-multiplayer"
+        -password "${{ secrets.GITHUB_TOKEN }}"
+
     # Download Skyrim SE data files
     - uses: suisei-cn/actions-download-file@v1
       name: Download Skyrim.esm
