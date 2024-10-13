@@ -35,3 +35,4 @@ jobs:
           DIST_ARTIFACT_NAME: dist-1.5
           SERVER_DIST_ARTIFACT_NAME: server-dist-1.5
           SKYMP5_PATCHES_PAT: ${{ secrets.SKYMP5_PATCHES_PAT }}
+          NUGET_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

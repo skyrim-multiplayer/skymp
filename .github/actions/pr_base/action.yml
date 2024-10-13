@@ -24,6 +24,10 @@ inputs:
   SKYMP5_PATCHES_PAT:
     description: "PAT for skymp5-patches repository"
     required: true
+  NUGET_GITHUB_TOKEN:
+    description: "A GitHub token for GitHub Packages (Nuget)"
+    required: false
+    default: ""
   EMSCRIPTEN:
     description: "Set to true if building for Emscripten"
     required: false
@@ -118,7 +122,7 @@ runs:
         -storepasswordincleartext
         -name "GitHub"
         -username "skyrim-multiplayer"
-        -password "${{ secrets.GITHUB_TOKEN }}"
+        -password "${{ inputs.NUGET_GITHUB_TOKEN }}"
 
     # Download Skyrim SE data files
     - uses: suisei-cn/actions-download-file@v1
