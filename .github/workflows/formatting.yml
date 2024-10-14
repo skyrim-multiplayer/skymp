@@ -16,4 +16,4 @@ jobs:
             uses: jidicula/clang-format-action@v4.9.0
             with:
               clang-format-version: '15'
-              exclude-regex: '.*third_party.*'
+              exclude-regex: '(.*skyrim-platform/src/platform_se/skyrim_platform/Concepts.h)|(.*serialization/include/concepts/.*)|(.*third_party.*)'
