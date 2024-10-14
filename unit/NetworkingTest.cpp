@@ -8,8 +8,9 @@ using namespace std::chrono_literals;
 
 TEST_CASE("Handler destroys the client", "[Networking]")
 {
-  auto server = Networking::CreateServer(7778, MAX_PLAYERS);
-  static auto client = Networking::CreateClient("127.0.0.1", 7778, 500);
+  auto server = Networking::CreateServer(7778, MAX_PLAYERS, "password");
+  static auto client =
+    Networking::CreateClient("127.0.0.1", 7778, 500, "password");
 
   static bool reset = false;
 
@@ -31,8 +32,8 @@ TEST_CASE("Handler destroys the client", "[Networking]")
 
 TEST_CASE("Connect/disconnect", "[Networking]")
 {
-  auto server = Networking::CreateServer(7778, MAX_PLAYERS);
-  auto client = Networking::CreateClient("127.0.0.1", 7778, 500);
+  auto server = Networking::CreateServer(7778, MAX_PLAYERS, "password");
+  auto client = Networking::CreateClient("127.0.0.1", 7778, 500, "password");
 
   REQUIRE(!client->IsConnected());
   for (int i = 0; i < 100; ++i) {
@@ -51,18 +52,18 @@ TEST_CASE("Connect/disconnect", "[Networking]")
 
 TEST_CASE("Ctors", "[Networking]")
 {
-  auto server = Networking::CreateServer(7778, MAX_PLAYERS);
-  auto client = Networking::CreateClient("127.0.0.1", 7778, 4000);
+  auto server = Networking::CreateServer(7778, MAX_PLAYERS, "password");
+  auto client = Networking::CreateClient("127.0.0.1", 7778, 4000, "password");
 
   try {
-    Networking::CreateServer(7778, MAX_PLAYERS);
+    Networking::CreateServer(7778, MAX_PLAYERS, "password");
     REQUIRE(false);
   } catch (std::exception& e) {
     REQUIRE(e.what() == std::string("Peer startup failed with code 5"));
   }
 
   try {
-    Networking::CreateClient("cococo", 1, 4000);
+    Networking::CreateClient("cococo", 1, 4000, "password");
     REQUIRE(false);
   } catch (std::exception& e) {
     REQUIRE(e.what() == std::string("Peer connect failed with code 2"));
