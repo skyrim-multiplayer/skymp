@@ -29,7 +29,8 @@ Napi::Value BrowserApi::SetVisible(const Napi::CallbackInfo& info)
 
 Napi::Value BrowserApi::IsVisible(const Napi::CallbackInfo& info)
 {
-  return Napi::Boolean::New(info.Env(), CEFUtils::DX11RenderHandler::Visible());
+  return Napi::Boolean::New(info.Env(),
+                            CEFUtils::DX11RenderHandler::Visible());
 }
 
 Napi::Value BrowserApi::SetFocused(const Napi::CallbackInfo& info)
@@ -54,7 +55,7 @@ Napi::Value BrowserApi::SetFocused(const Napi::CallbackInfo& info)
     if (newFocus) {
       if (!alreadyOpen) {
         msgQ->AddMessage(RE::CursorMenu::MENU_NAME, RE::UI_MESSAGE_TYPE::kShow,
-                        NULL);
+                         NULL);
         g_cursorIsOpenByFocus = true;
       }
     } else {
@@ -79,7 +80,7 @@ Napi::Value BrowserApi::IsFocused(const Napi::CallbackInfo& info)
 
 Napi::Value BrowserApi::LoadUrl(const Napi::CallbackInfo& info)
 {
-  const std::shared_ptr<State> &state = g_browserApiState;
+  const std::shared_ptr<State>& state = g_browserApiState;
   if (!state) {
     throw NullPointerException("state");
   }
@@ -105,7 +106,7 @@ Napi::Value BrowserApi::GetToken(const Napi::CallbackInfo& info)
 
 Napi::Value BrowserApi::ExecuteJavaScript(const Napi::CallbackInfo& info)
 {
-  const std::shared_ptr<State> &state = g_browserApiState;
+  const std::shared_ptr<State>& state = g_browserApiState;
   if (!state) {
     throw NullPointerException("state");
   }
@@ -120,16 +121,29 @@ Napi::Value BrowserApi::ExecuteJavaScript(const Napi::CallbackInfo& info)
   return info.Env().Undefined();
 }
 
-void BrowserApi::Register(Napi::Env env, Napi::Object& exports, std::shared_ptr<State> state)
+void BrowserApi::Register(Napi::Env env, Napi::Object& exports,
+                          std::shared_ptr<State> state)
 {
   g_browserApiState = state;
 
   auto browser = Napi::Object::New(env);
-  browser.Set("setVisible", Napi::Function::New(env, NapiHelper::WrapCppExceptions(SetVisible)));
-  browser.Set("isVisible", Napi::Function::New(env, NapiHelper::WrapCppExceptions(IsVisible)));
-  browser.Set("setFocused", Napi::Function::New(env, NapiHelper::WrapCppExceptions(SetFocused)));
-  browser.Set("isFocused", Napi::Function::New(env, NapiHelper::WrapCppExceptions(IsFocused)));
-  browser.Set("loadUrl", Napi::Function::New(env, NapiHelper::WrapCppExceptions(LoadUrl)));
-  browser.Set("executeJavaScript", Napi::Function::New(env, NapiHelper::WrapCppExceptions(ExecuteJavaScript)));
+  browser.Set(
+    "setVisible",
+    Napi::Function::New(env, NapiHelper::WrapCppExceptions(SetVisible)));
+  browser.Set(
+    "isVisible",
+    Napi::Function::New(env, NapiHelper::WrapCppExceptions(IsVisible)));
+  browser.Set(
+    "setFocused",
+    Napi::Function::New(env, NapiHelper::WrapCppExceptions(SetFocused)));
+  browser.Set(
+    "isFocused",
+    Napi::Function::New(env, NapiHelper::WrapCppExceptions(IsFocused)));
+  browser.Set(
+    "loadUrl",
+    Napi::Function::New(env, NapiHelper::WrapCppExceptions(LoadUrl)));
+  browser.Set("executeJavaScript",
+              Napi::Function::New(
+                env, NapiHelper::WrapCppExceptions(ExecuteJavaScript)));
   exports.Set("browser", browser);
 }

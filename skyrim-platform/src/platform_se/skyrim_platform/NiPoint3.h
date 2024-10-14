@@ -10,7 +10,10 @@ public:
   NiPoint3(float X, float Y, float Z)
     : x(X)
     , y(Y)
-    , z(Z) {};
+    , z(Z)
+  {
+    return;
+  };
 
   float& operator[](std::size_t idx)
   {
