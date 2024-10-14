@@ -2,7 +2,7 @@ project(skyrim_nodejs_plugin LANGUAGES CXX)
 
 include(${CMAKE_SOURCE_DIR}/cmake/apply_default_settings.cmake)
 
-if(MSVC)
+if(MSVC AND BUILD_NODEJS_PLUGIN)
     file(GLOB_RECURSE installed "${CMAKE_BINARY_DIR}/vcpkg_installed/*")
     message(STATUS "!!! PRINTING INSTALLED !!!")
     foreach(v ${installed})
