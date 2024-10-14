@@ -114,15 +114,27 @@ runs:
 
     - name: 'Setup NuGet Credentials'
       if: runner.os == 'Windows'
-      shell: 'bash'
-      run: >
+      shell: bash
+      run: |
         `C:/vcpkg/vcpkg.exe fetch nuget | tail -n 1`
-        sources add
-        -source "https://nuget.pkg.github.com/skyrim-multiplayer/index.json"
-        -storepasswordincleartext
-        -name "GitHub"
-        -username "skyrim-multiplayer"
-        -password "${{ inputs.NUGET_GITHUB_TOKEN }}"
+
+        if [ "${{ github.event_name }}" == "pull_request" ]; then
+          echo "Pull request detected."
+          nuget sources add \
+            -source "https://nuget.pkg.github.com/${{ github.actor }}/index.json" \
+            -storepasswordincleartext \
+            -name "GitHub" \
+            -username "${{ github.actor }}" \
+            -password "${{ inputs.NUGET_GITHUB_TOKEN }}"
+        else
+          echo "Push event detected."
+          nuget sources add \
+            -source "https://nuget.pkg.github.com/skyrim-multiplayer/index.json" \
+            -storepasswordincleartext \
+            -name "GitHub" \
+            -username "skyrim-multiplayer" \
+            -password "${{ inputs.NUGET_GITHUB_TOKEN }}"
+        fi
 
     # Download Skyrim SE data files
     - uses: suisei-cn/actions-download-file@v1
