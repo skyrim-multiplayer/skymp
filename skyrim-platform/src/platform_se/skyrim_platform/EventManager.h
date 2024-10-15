@@ -26,13 +26,15 @@ struct SinkObject
 
 struct CallbackObject
 {
-  CallbackObject(const JsValue& _callback, bool _runOnce)
+  CallbackObject(
+    const std::shared_ptr<Napi::Reference<Napi::Function>>& _callback,
+    bool _runOnce)
     : callback(_callback)
     , runOnce(_runOnce)
   {
   }
 
-  JsValue callback = JsValue::Undefined();
+  std::shared_ptr<Napi::Reference<Napi::Function>> callback;
   bool runOnce = false;
 };
 
@@ -52,16 +54,6 @@ struct EventState
 
 using EventMap = robin_hood::unordered_map<std::string_view, EventState*>;
 
-/**
- * TODO: if we want to modularize platform further
- * we should not let EventManager use JsValue here
- * and instead store everything coming from JS side as
- * some generic objects
- *
- * this would require some refactored translation mechanism
- * native->generic->jsValue
- * jsValue->generic->native
- */
 class EventManager
 {
 public:
@@ -74,9 +66,10 @@ public:
   static void Init();
   static void InitCustom();
 
-  std::unique_ptr<EventHandle> Subscribe(const std::string& eventName,
-                                         const JsValue& callback,
-                                         bool runOnce);
+  std::unique_ptr<EventHandle> Subscribe(
+    const std::string& eventName,
+    const std::shared_ptr<Napi::Reference<Napi::Function>>& callback,
+    bool runOnce);
 
   void Unsubscribe(uintptr_t uid, const std::string_view& eventName);
 

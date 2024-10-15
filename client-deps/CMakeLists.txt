@@ -7,12 +7,22 @@ if(WIN32)
     set(CLIENT_DEPS_GAME ae)
   endif()
 
-  add_custom_target(client-deps ALL
-    WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
-    SOURCES ${sources}
-    COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_LIST_DIR}/common/Data" "${CMAKE_BINARY_DIR}/dist/client/data"
-    COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_LIST_DIR}/${CLIENT_DEPS_GAME}/Data" "${CMAKE_BINARY_DIR}/dist/client/data"
-  )
+  if(BUILD_NODEJS_PLUGIN)
+    add_custom_target(client-deps ALL
+      WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
+      SOURCES ${sources}
+      COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_LIST_DIR}/common/Data" "${CMAKE_BINARY_DIR}/dist/client/data"
+      COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_LIST_DIR}/${CLIENT_DEPS_GAME}/Data" "${CMAKE_BINARY_DIR}/dist/client/data"
+    )
+  else()
+    add_custom_target(client-deps ALL
+      WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
+      SOURCES ${sources}
+      COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_LIST_DIR}/common/Data" "${CMAKE_BINARY_DIR}/dist/client/data"
+      COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_LIST_DIR}/${CLIENT_DEPS_GAME}/Data" "${CMAKE_BINARY_DIR}/dist/client/data"
+      COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_LIST_DIR}/skyrim_nodejs_plugin_prebuilt/Data" "${CMAKE_BINARY_DIR}/dist/client/data"
+    )
+  endif()
 
   add_dependencies(client-deps skyrim-platform)
 else()

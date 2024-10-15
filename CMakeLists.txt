@@ -81,14 +81,12 @@ if(MSVC)
 endif()
 
 # Bool options (Part 2)
-option(JS_ENGINE_TRACING_ENABLED "Useful for JsEngine debugging. See JsEngine.h" OFF)
 option(PREPARE_NEXUS_ARCHIVES "Prepare SP and other archives during build or not" OFF)
 option(BUILD_UNIT_TESTS "Build unit tests (excluded from build when off - workaround for #1182)" ON)
 option(INSTALL_CLIENT_DIST "Install the client into SKYRIM_DIR after build" OFF)
 option(BUILD_GAMEMODE "Build gamemode" OFF)
 option(OFFLINE_MODE "Enable offline mode in generated server settings and client settings" ON)
 
-message(STATUS JS_ENGINE_TRACING_ENABLED=${JS_ENGINE_TRACING_ENABLED})
 message(STATUS PREPARE_NEXUS_ARCHIVES=${PREPARE_NEXUS_ARCHIVES})
 message(STATUS SKYRIM_SE=${SKYRIM_SE})
 message(STATUS BUILD_UNIT_TESTS=${BUILD_UNIT_TESTS})
@@ -99,12 +97,6 @@ message(STATUS BUILD_NODEJS_PLUGIN=${BUILD_NODEJS_PLUGIN})
 
 if(PREPARE_NEXUS_ARCHIVES AND EMSCRIPTEN)
   message(FATAL_ERROR "PREPARE_NEXUS_ARCHIVES is not supported on Emscripten")
-endif()
-
-# Note that SkyrimPlatform performance drops significantly with JS_ENGINE_TRACING_ENABLED set to true.
-
-if(JS_ENGINE_TRACING_ENABLED)
-  add_compile_definitions(JS_ENGINE_TRACING_ENABLED)
 endif()
 
 # Path options

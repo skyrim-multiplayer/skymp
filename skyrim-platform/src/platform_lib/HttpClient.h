@@ -5,11 +5,13 @@
 #include <utility>
 #include <vector>
 
+#include <napi.h>
+
 class HttpClient
 {
 public:
   HttpClient();
-  void ExecuteQueuedCallbacks();
+  void ExecuteQueuedCallbacks(Napi::Env env);
 
   struct HttpResult
   {
@@ -20,7 +22,7 @@ public:
 
   using Headers = std::vector<std::pair<std::string, std::string>>;
 
-  using OnComplete = std::function<void(HttpResult)>;
+  using OnComplete = std::function<void(Napi::Env, HttpResult)>;
 
   void Get(const char* host, const char* path, const Headers& headers,
            OnComplete callback);

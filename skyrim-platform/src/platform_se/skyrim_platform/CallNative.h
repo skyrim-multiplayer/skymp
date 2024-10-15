@@ -37,7 +37,7 @@ static inline size_t GetIndexFor()
 
 Variable AnySafeToVariable(const AnySafe& v, bool treatNumberAsInt);
 
-using LatentCallback = std::function<void(AnySafe)>;
+using LatentCallback = std::function<void(Napi::Env, AnySafe)>;
 
 struct Arguments
 {
@@ -49,8 +49,8 @@ struct Arguments
   const AnySafe* args;
   size_t numArgs;
   FunctionInfoProvider& provider;
-  Viet::TaskQueue& gameThrQ;
-  Viet::TaskQueue& jsThrQ;
+  Viet::TaskQueue<Viet::Void>& gameThrQ;
+  Viet::TaskQueue<Napi::Env>& jsThrQ;
   LatentCallback latentCallback;
 };
 

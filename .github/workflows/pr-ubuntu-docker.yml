@@ -167,6 +167,13 @@ jobs:
               echo "ConstEnumApi.cpp has changed after running const_enum_extractor. Please re-run it locally and commit changes."
               echo "In folder skyrim-platform/tools/const_enum_extractor run 'yarn install' and then 'node ./index.js'"
 
+          - name: SP Const Enums Check failed - Upload generated ConstEnumApi.cpp
+            if: ${{ failure() && steps.sp_const_enums_check.outcome == 'failure' }}
+            uses: actions/upload-artifact@v4
+            with:
+              name: ConstEnumApi.cpp
+              path: skyrim-platform/src/platform_se/skyrim_platform/ConstEnumApi.cpp
+
           - name: Test
             uses: addnab/docker-run-action@v3
             with:
