@@ -1172,7 +1172,6 @@ void ActionListener::OnSpellCast(const RawMessageData& rawMsgData,
     *targetActorPtr, damage, targetActorValues.healthPercentage, nullptr);
 
   targetActorPtr->NetSetPercentages(targetActorValues, caster);
-  caster->SetLastHitTime();
 
   spdlog::info("Target {0:x} is hitted by {1:x} spell. By caster: {2:x}, "
                "from castingSource : {3})",

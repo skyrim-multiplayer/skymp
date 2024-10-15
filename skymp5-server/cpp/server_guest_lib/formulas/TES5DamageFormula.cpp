@@ -201,7 +201,7 @@ float TES5SpellDamageFormulaImpl::GetBaseSpellDamage() const
   // TODO Write damage calculation
   std::ignore = spellData;
 
-  return 10.f;
+  return 0.f;
 }
 
 float TES5SpellDamageFormulaImpl::CalculateDamage() const
