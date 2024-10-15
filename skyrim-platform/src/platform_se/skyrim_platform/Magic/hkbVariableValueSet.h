@@ -1,13 +1,14 @@
 #pragma once
 
-template <class T> struct hkbVariableValueSet
+template <class T>
+struct hkbVariableValueSet
 {
-    virtual ~hkbVariableValueSet();
+  virtual ~hkbVariableValueSet();
 
-    uint8_t pad8[0x8]; // 8
-    T* data;           // 10
-    uint32_t size;     // 18
+  void* unk;
+  T* varSet;
+  uint32_t size;
 };
 
-static_assert(offsetof(hkbVariableValueSet<int>, data) == 0x10);
+static_assert(offsetof(hkbVariableValueSet<int>, varSet) == 0x10);
 static_assert(offsetof(hkbVariableValueSet<int>, size) == 0x18);
