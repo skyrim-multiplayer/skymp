@@ -15,21 +15,21 @@ GetAnimationVariablesFromJSArg(const JsValue& argObj)
   using AnimVarInitializer =
     AnimationGraphMasterBehaviourDescriptor::AnimationVariables::InitData;
 
-  const auto booleanVarsValue = argObj.GetProperty("Booleans");
+  const auto booleanVarsValue = argObj.GetProperty("booleans");
 
   const auto booleanVars = AnimVarInitializer{
     static_cast<uint8_t*>(booleanVarsValue.GetTypedArrayData()),
     booleanVarsValue.GetTypedArrayBufferLength()
   };
 
-  const auto floatsVarsValue = argObj.GetProperty("Floats");
+  const auto floatsVarsValue = argObj.GetProperty("floats");
 
   const auto floatsVars = AnimVarInitializer{
     static_cast<uint8_t*>(floatsVarsValue.GetTypedArrayData()),
     floatsVarsValue.GetTypedArrayBufferLength()
   };
 
-  const auto integersVarsValue = argObj.GetProperty("Integers");
+  const auto integersVarsValue = argObj.GetProperty("integers");
 
   const auto integersVars = AnimVarInitializer{
     static_cast<uint8_t*>(integersVarsValue.GetTypedArrayData()),
@@ -156,17 +156,17 @@ JsValue MagicApi::GetAnimationVariablesFromActor(
   auto obj = JsValue::Object();
 
   AddObjProperty(
-    &obj, "Booleans",
-    reinterpret_cast<const uint8_t*>(animVariables.Booleans.data()),
+    &obj, "booleans",
+    reinterpret_cast<const uint8_t*>(animVariables.booleans.data()),
     animVariables.SizeBooleansInBytes());
 
-  AddObjProperty(&obj, "Floats",
-                 reinterpret_cast<const uint8_t*>(animVariables.Floats.data()),
+  AddObjProperty(&obj, "floats",
+                 reinterpret_cast<const uint8_t*>(animVariables.floats.data()),
                  animVariables.SizeFloatsInBytes());
 
   AddObjProperty(
-    &obj, "Integers",
-    reinterpret_cast<const uint8_t*>(animVariables.Integers.data()),
+    &obj, "integers",
+    reinterpret_cast<const uint8_t*>(animVariables.integers.data()),
     animVariables.SizeIntegersInBytes());
 
   return obj;

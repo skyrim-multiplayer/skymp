@@ -1,7 +1,7 @@
 // TODO: refactor this out
 import { localIdToRemoteId, remoteIdToLocalId } from "../../view/worldViewMisc";
 
-import { SpellCastEvent, Actor, printConsole, Game, getAnimationVariablesFromActor, ActorAnimationVariables } from 'skyrimPlatform'
+import { SpellCastEvent, Actor, printConsole, Game, getAnimationVariablesFromActor, ActorAnimationVariables, SpellType, SlotType, EquippedItemType } from 'skyrimPlatform'
 import { ClientListener, CombinedController, Sp } from './clientListener';
 import { logTrace } from '../../logging';
 
@@ -27,6 +27,10 @@ export class MagicSyncService extends ClientListener {
     }
 
     private onUpdate() {
+        if (this.isAnyMagicStuffEquiped() === false) {
+            return;
+        }
+
         if (Date.now() - this.lastSendUpdateAnimationVariables <= this.sendUpdateAnimationVariablesRateMs) {
             return;
         }
@@ -52,7 +56,8 @@ export class MagicSyncService extends ClientListener {
 
     private onSpellCast(event: SpellCastEvent) {
         const isInterruptCast = false;
-        const msg: SpellCastMsgData = this.getSpellCastEventData(event, isInterruptCast, null);
+
+        const msg: SpellCastMsgData = this.getSpellCastEventData(event, isInterruptCast);
 
         this.controller.emitter.emit("sendMessage", {
             message: { t: MsgType.SpellCast, data: msg },
@@ -85,7 +90,7 @@ export class MagicSyncService extends ClientListener {
 
     }
 
-    private getSpellCastEventData(e: SpellCastEvent, isInterruptCast: boolean, animVariables: ActorAnimationVariables | null): SpellCastMsgData {
+    private getSpellCastEventData(e: SpellCastEvent, isInterruptCast: boolean): SpellCastMsgData {
         const spellCastData: SpellCastMsgData = {
             caster: localIdToRemoteId(e.caster!.getFormID(), true),
             target: e.target ? localIdToRemoteId(e.target.getFormID(), true) : 0,
@@ -93,7 +98,7 @@ export class MagicSyncService extends ClientListener {
             interruptCast: isInterruptCast,
             isDualCasting: e.isDualCasting,
             castingSource: e.castingSource,
-            actorAnimationVariables: animVariables ? animVariables : e.animationVariables,
+            actorAnimationVariables: getAnimationVariablesFromActor(e.caster!.getFormID()),
         }
         return spellCastData;
     }
@@ -122,6 +127,32 @@ export class MagicSyncService extends ClientListener {
 
         return isSpellCastAnimForLeftHand || isSpellCastAnimForRightHand;
     };
+
+    private isAnyMagicStuffEquiped(): boolean {
+        const ac = Game.getPlayer();
+
+        if (!ac) {
+            return false;
+        }
+
+        if (ac.getEquippedSpell(SpellType.Left) || ac.getEquippedSpell(SpellType.Right)) {
+            return true;
+        }
+
+        if (ac.getEquippedSpell(SpellType.Voise) || ac.getEquippedSpell(SpellType.Instant)) {
+            return true;
+        }
+
+        const leftHandEquipmentType = ac.getEquippedItemType(SlotType.Left);
+        const rightHandEquipmentType = ac.getEquippedItemType(SlotType.Right);
+
+        if (leftHandEquipmentType === EquippedItemType.SpellOrScroll || leftHandEquipmentType === EquippedItemType.Staff ||
+            rightHandEquipmentType === EquippedItemType.SpellOrScroll || rightHandEquipmentType === EquippedItemType.Staff) {
+            return true;
+        }
+
+        return false;
+    }
 
     private playerId = 0x14;
     private sendUpdateAnimationVariablesRateMs = 500;

@@ -1139,6 +1139,7 @@ void ConstEnumApi::Register(JsValue& exports,
   EquippedItemType.SetProperty(7, "Bow");
   EquippedItemType.SetProperty(8, "Staff");
   EquippedItemType.SetProperty(9, "Spell");
+  EquippedItemType.SetProperty(9, "SpellOrScroll");
   EquippedItemType.SetProperty(10, "Shield");
   EquippedItemType.SetProperty(11, "Torch");
   EquippedItemType.SetProperty(12, "Crossbow");
@@ -1153,6 +1154,7 @@ void ConstEnumApi::Register(JsValue& exports,
   EquippedItemType.SetProperty("Bow", 7);
   EquippedItemType.SetProperty("Staff", 8);
   EquippedItemType.SetProperty("Spell", 9);
+  EquippedItemType.SetProperty("SpellOrScroll", 9);
   EquippedItemType.SetProperty("Shield", 10);
   EquippedItemType.SetProperty("Torch", 11);
   EquippedItemType.SetProperty("Crossbow", 12);

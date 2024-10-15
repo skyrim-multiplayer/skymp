@@ -873,9 +873,9 @@ export class RemoteServer extends ClientListener {
       if (!ac) return;
 
       const actorAnimationVariables: ActorAnimationVariables = {
-        Booleans: new Uint8Array(Object.values(msg.data.actorAnimationVariables.Booleans)),
-        Floats: new Uint8Array(Object.values(msg.data.actorAnimationVariables.Floats)),
-        Integers: new Uint8Array(Object.values(msg.data.actorAnimationVariables.Integers))
+        booleans: new Uint8Array(Object.values(msg.data.actorAnimationVariables.booleans)),
+        floats: new Uint8Array(Object.values(msg.data.actorAnimationVariables.floats)),
+        integers: new Uint8Array(Object.values(msg.data.actorAnimationVariables.integers))
       };
 
       if (msg.data.interruptCast) {
@@ -898,9 +898,9 @@ export class RemoteServer extends ClientListener {
       if (!ac) return;
 
       const actorAnimationVariables: ActorAnimationVariables = {
-        Booleans: new Uint8Array(Object.values(msg.data.actorAnimationVariables.Booleans)),
-        Floats: new Uint8Array(Object.values(msg.data.actorAnimationVariables.Floats)),
-        Integers: new Uint8Array(Object.values(msg.data.actorAnimationVariables.Integers))
+        booleans: new Uint8Array(Object.values(msg.data.actorAnimationVariables.booleans)),
+        floats: new Uint8Array(Object.values(msg.data.actorAnimationVariables.floats)),
+        integers: new Uint8Array(Object.values(msg.data.actorAnimationVariables.integers))
       };
 
       const isApplyed = applyAnimationVariablesToActor(ac.getFormID(), actorAnimationVariables);

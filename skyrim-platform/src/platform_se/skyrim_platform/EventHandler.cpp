@@ -4,8 +4,6 @@
 #include "JsUtils.h"
 #include "SkyrimPlatform.h"
 
-#include "Magic/AnimationGraphMasterBehaviourDescriptor.h"
-
 namespace {
 inline void SendEvent(const char* eventName)
 {
@@ -17,33 +15,6 @@ inline void SendEvent(const char* eventName, const JsValue& obj)
   EventsApi::SendEvent(eventName, { JsValue::Undefined(), obj });
 }
 }
-
-namespace skymp::magic::details {
-
-JsValue GetJSObjectFromAnimationVariables(
-  const AnimationGraphMasterBehaviourDescriptor::AnimationVariables&
-    animVariables)
-{
-  auto object = JsValue::Object();
-
-  AddObjProperty(
-    &object, "Booleans",
-    reinterpret_cast<const uint8_t*>(animVariables.Booleans.data()),
-    animVariables.SizeBooleansInBytes());
-
-  AddObjProperty(&object, "Floats",
-                 reinterpret_cast<const uint8_t*>(animVariables.Floats.data()),
-                 animVariables.SizeFloatsInBytes());
-
-  AddObjProperty(
-    &object, "Integers",
-    reinterpret_cast<const uint8_t*>(animVariables.Integers.data()),
-    animVariables.SizeIntegersInBytes());
-
-  return object;
-}
-
-} // namespace skymp::magic::details
 
 void EventHandler::SendSimpleEventOnUpdate(const char* eventName)
 {
@@ -1330,14 +1301,14 @@ EventResult EventHandler::ProcessEvent(
     return EventResult::kContinue;
   }
 
-  auto casterId = event->object.get() ? event->object.get()->GetFormID() : 0;
-  auto spellId = event->spell;
+  const auto casterId = event->object ? event->object->GetFormID() : 0;
+  const auto spellId = event->spell;
 
   SkyrimPlatform::GetSingleton()->AddUpdateTask([casterId, spellId] {
     auto obj = JsValue::Object();
 
-    auto caster = RE::TESForm::LookupByID<RE::Actor>(casterId);
-    auto spell = RE::TESForm::LookupByID<RE::SpellItem>(spellId);
+    auto* caster = RE::TESForm::LookupByID<RE::Actor>(casterId);
+    auto* spell = RE::TESForm::LookupByID<RE::SpellItem>(spellId);
 
     if (!caster && casterId != 0) {
       return;
@@ -1396,11 +1367,6 @@ EventResult EventHandler::ProcessEvent(
     AddObjProperty(&obj, "isDualCasting", isDualCasting);
     AddObjProperty(&obj, "castingSource",
                    static_cast<uint32_t>(castingSource));
-
-    obj.SetProperty(
-      "animationVariables",
-      skymp::magic::details::GetJSObjectFromAnimationVariables(
-        AnimationGraphMasterBehaviourDescriptor{ *caster }.GetVariables()));
 
     SendEvent("spellCast", obj);
   });

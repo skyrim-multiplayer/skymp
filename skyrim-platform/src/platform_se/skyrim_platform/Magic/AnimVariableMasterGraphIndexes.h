@@ -1,5 +1,8 @@
 #pragma once
 
+#include <span>
+#include <vector>
+
 struct AnimVariableMasterGraphIndexes final
 {
   explicit AnimVariableMasterGraphIndexes(
@@ -15,6 +18,9 @@ struct AnimVariableMasterGraphIndexes final
   {
   }
 
+  [[nodiscard]] static AnimVariableMasterGraphIndexes CreateDefault();
+
+public:
   std::vector<uint32_t> intVariableIndexes{}, floatVariableIndexes{},
     boolVariableIndexes{};
 };

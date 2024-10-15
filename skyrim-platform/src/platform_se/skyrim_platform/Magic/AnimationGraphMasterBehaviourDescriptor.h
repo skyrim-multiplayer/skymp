@@ -1,7 +1,6 @@
 #pragma once
 
-#include "AnimationGraphDescriptor.h"
-#include "AnimationVariablesForMasterBehavior.h"
+#include "AnimVariableMasterGraphIndexes.h"
 #include "hkbVariableValueSet.h"
 
 #include <type_traits>
@@ -14,9 +13,9 @@ public:
   struct AnimationVariables final
   {
   public:
-    std::vector<uint8_t> Booleans{};
-    std::vector<float> Floats{};
-    std::vector<uint32_t> Integers{};
+    std::vector<uint8_t> booleans{};
+    std::vector<float> floats{};
+    std::vector<uint32_t> integers{};
 
   public:
     struct InitData final
@@ -25,9 +24,9 @@ public:
       size_t numBytes = 0;
     };
 
-    using BooleanAnimVarType = decltype(Booleans)::value_type;
-    using FloatAnimVarType = decltype(Floats)::value_type;
-    using IntegerAnimVarType = decltype(Integers)::value_type;
+    using BooleanAnimVarType = decltype(booleans)::value_type;
+    using FloatAnimVarType = decltype(floats)::value_type;
+    using IntegerAnimVarType = decltype(integers)::value_type;
 
     AnimationVariables() = default;
 
@@ -39,10 +38,10 @@ public:
         const size_t numBooleans =
           booleanInitData.numBytes / sizeof(BooleanAnimVarType);
 
-        Booleans.reserve(numBooleans);
+        booleans.reserve(numBooleans);
 
         for (size_t i = 0; i < numBooleans; ++i) {
-          Booleans.emplace_back(*reinterpret_cast<BooleanAnimVarType*>(
+          booleans.emplace_back(*reinterpret_cast<BooleanAnimVarType*>(
             booleanInitData.ptr + (i * sizeof(BooleanAnimVarType))));
         }
       }
@@ -51,10 +50,10 @@ public:
         const size_t numFloats =
           floatInitData.numBytes / sizeof(FloatAnimVarType);
 
-        Floats.reserve(numFloats);
+        floats.reserve(numFloats);
 
         for (size_t i = 0; i < numFloats; ++i) {
-          Floats.emplace_back(*reinterpret_cast<FloatAnimVarType*>(
+          floats.emplace_back(*reinterpret_cast<FloatAnimVarType*>(
             floatInitData.ptr + (i * sizeof(FloatAnimVarType))));
         }
       }
@@ -63,10 +62,10 @@ public:
         const size_t numIntegers =
           integerInitData.numBytes / sizeof(IntegerAnimVarType);
 
-        Integers.reserve(numIntegers);
+        integers.reserve(numIntegers);
 
         for (size_t i = 0; i < numIntegers; ++i) {
-          Integers.emplace_back(*reinterpret_cast<IntegerAnimVarType*>(
+          integers.emplace_back(*reinterpret_cast<IntegerAnimVarType*>(
             integerInitData.ptr + (i * sizeof(IntegerAnimVarType))));
         }
       }
@@ -74,22 +73,22 @@ public:
 
     [[nodiscard]] bool IsEmpty() const noexcept
     {
-      return Booleans.empty() && Floats.empty() && Integers.empty();
+      return booleans.empty() && floats.empty() && integers.empty();
     }
 
     [[nodiscard]] uint32_t SizeBooleansInBytes() const noexcept
     {
-      return Booleans.size() * sizeof(BooleanAnimVarType);
+      return booleans.size() * sizeof(BooleanAnimVarType);
     }
 
     [[nodiscard]] uint32_t SizeFloatsInBytes() const noexcept
     {
-      return Floats.size() * sizeof(FloatAnimVarType);
+      return floats.size() * sizeof(FloatAnimVarType);
     }
 
     [[nodiscard]] uint32_t SizeIntegersInBytes() const noexcept
     {
-      return Integers.size() * sizeof(IntegerAnimVarType);
+      return integers.size() * sizeof(IntegerAnimVarType);
     }
   };
 
@@ -133,26 +132,26 @@ public:
       return;
     }
 
-    variables.Booleans.resize(agDescriptor.BooleanLookUpTable.size());
-    variables.Floats.resize(agDescriptor.FloatLookupTable.size());
-    variables.Integers.resize(agDescriptor.IntegerLookupTable.size());
+    variables.booleans.resize(agDescriptor.boolVariableIndexes.size());
+    variables.floats.resize(agDescriptor.floatVariableIndexes.size());
+    variables.integers.resize(agDescriptor.intVariableIndexes.size());
 
-    for (size_t i = 0; i < agDescriptor.BooleanLookUpTable.size(); ++i) {
-      variables.Booleans[i] =
+    for (size_t i = 0; i < agDescriptor.boolVariableIndexes.size(); ++i) {
+      variables.booleans[i] =
         *reinterpret_cast<AnimationVariables::BooleanAnimVarType*>(
-          &pVariableSet->data[agDescriptor.BooleanLookUpTable[i]]);
+          &pVariableSet->varSet[agDescriptor.boolVariableIndexes[i]]);
     }
 
-    for (size_t i = 0; i < agDescriptor.FloatLookupTable.size(); ++i) {
-      variables.Floats[i] =
+    for (size_t i = 0; i < agDescriptor.floatVariableIndexes.size(); ++i) {
+      variables.floats[i] =
         *reinterpret_cast<AnimationVariables::FloatAnimVarType*>(
-          &pVariableSet->data[agDescriptor.FloatLookupTable[i]]);
+          &pVariableSet->varSet[agDescriptor.floatVariableIndexes[i]]);
     }
 
-    for (size_t i = 0; i < agDescriptor.IntegerLookupTable.size(); ++i) {
-      variables.Integers[i] =
+    for (size_t i = 0; i < agDescriptor.intVariableIndexes.size(); ++i) {
+      variables.integers[i] =
         *reinterpret_cast<AnimationVariables::IntegerAnimVarType*>(
-          &pVariableSet->data[agDescriptor.IntegerLookupTable[i]]);
+          &pVariableSet->varSet[agDescriptor.intVariableIndexes[i]]);
     }
   }
 
@@ -192,101 +191,32 @@ public:
       return false;
     }
 
-    for (size_t i = 0; i < agDescriptor.BooleanLookUpTable.size(); ++i) {
+    for (size_t i = 0; i < agDescriptor.boolVariableIndexes.size(); ++i) {
       *reinterpret_cast<AnimationVariables::BooleanAnimVarType*>(
-        &pVariableSet->data[agDescriptor.BooleanLookUpTable[i]]) =
-        variables.Booleans.size() > i ? variables.Booleans[i] : 0;
+        &pVariableSet->varSet[agDescriptor.boolVariableIndexes[i]]) =
+        variables.booleans.size() > i ? variables.booleans[i] : 0;
     }
 
-    for (size_t i = 0; i < agDescriptor.FloatLookupTable.size(); ++i) {
+    for (size_t i = 0; i < agDescriptor.floatVariableIndexes.size(); ++i) {
       *reinterpret_cast<AnimationVariables::FloatAnimVarType*>(
-        &pVariableSet->data[agDescriptor.FloatLookupTable[i]]) =
-        variables.Floats.size() > i ? variables.Floats[i] : 0.f;
+        &pVariableSet->varSet[agDescriptor.floatVariableIndexes[i]]) =
+        variables.floats.size() > i ? variables.floats[i] : 0.f;
     }
 
-    for (size_t i = 0; i < agDescriptor.IntegerLookupTable.size(); ++i) {
+    for (size_t i = 0; i < agDescriptor.intVariableIndexes.size(); ++i) {
       *reinterpret_cast<AnimationVariables::IntegerAnimVarType*>(
-        &pVariableSet->data[agDescriptor.IntegerLookupTable[i]]) =
-        variables.Integers.size() > i ? variables.Integers[i] : 0;
+        &pVariableSet->varSet[agDescriptor.intVariableIndexes[i]]) =
+        variables.integers.size() > i ? variables.integers[i] : 0;
     }
 
     return true;
   }
 
 private:
-  AnimationVariables variables;
+  AnimationVariables variables{};
 
-  const AnimationGraphDescriptor agDescriptor = AnimationGraphDescriptor{
-    { kbEquipOk,
-      kbMotionDriven,
-      kIsBeastRace,
-      kIsSneaking,
-      kIsBleedingOut,
-      kIsCastingDual,
-      kIs1HM,
-      kIsCastingRight,
-      kIsCastingLeft,
-      kIsBlockHit,
-      kIsPlayer,
-      kIsNPC,
-      kbIsSynced,
-      kbVoiceReady,
-      kbWantCastLeft,
-      kbWantCastRight,
-      kbWantCastVoice,
-      kb1HM_MLh_attack,
-      kb1HMCombat,
-      kbAnimationDriven,
-      kbCastReady,
-      kIsAttacking,
-      kbAllowRotation,
-      kbMagicDraw,
-      kbMLh_Ready,
-      kbMRh_Ready,
-      kbInMoveState,
-      kbSprintOK,
-      kbIdlePlaying,
-      kbIsDialogueExpressive,
-      kbAnimObjectLoaded,
-      kbEquipUnequip,
-      kbAttached,
-      kbIsH2HSolo,
-      kbHeadTracking,
-      kbIsRiding,
-      kbTalkable,
-      kbRitualSpellActive,
-      kbInJumpState,
-      kbHeadTrackSpine,
-      kbLeftHandAttack,
-      kbIsInMT,
-      kbHumanoidFootIKEnable,
-      kbHumanoidFootIKDisable,
-      kbStaggerPlayerOverride,
-      kbNoStagger,
-      kbIsStaffLeftCasting,
-      kbPerkShieldCharge,
-      kbPerkQuickShot,
-      kIsBlocking,
-      kIsBashing,
-      kIsStaggering,
-      kIsRecoiling,
-      kIsEquipping,
-      kIsUnequipping,
-      kisInFurniture,
-      kbNeutralState,
-      kbBowDrawn,
-      kPitchOverride,
-      kNotCasting },
-
-    { kTurnDelta, kDirection, kSpeedSampled, kweapAdj, kSpeed, kCastBlend,
-      kPitchOffset, kSpeedDamped, kPitch, kVelocityZ, k1stPRot, k1stPRotDamped,
-      kCastBlendDamped },
-
-    { kiRightHandEquipped, kiLeftHandEquipped, ki1HMState, kiState,
-      kiLeftHandType, kiRightHandType, kiSyncIdleLocomotion,
-      kiSyncForwardState, kiSyncTurnState, kiIsInSneak, kiWantBlock,
-      kiRegularAttack, ktestint, kcurrentDefaultState }
-  };
+  AnimVariableMasterGraphIndexes agDescriptor =
+    AnimVariableMasterGraphIndexes::CreateDefault();
 };
 
 namespace skymp {
@@ -303,15 +233,15 @@ struct is_vector<std::vector<T, Alloc>> : std::true_type
 
 static_assert(
   skymp::is_vector<decltype(AnimationGraphMasterBehaviourDescriptor::
-                              AnimationVariables::Booleans)>::value,
+                              AnimationVariables::booleans)>::value,
   "Member of AnimationVariables->Booleans must be std::vector<T>");
 
 static_assert(
   skymp::is_vector<decltype(AnimationGraphMasterBehaviourDescriptor::
-                              AnimationVariables::Floats)>::value,
+                              AnimationVariables::floats)>::value,
   "Member of AnimationVariables->Floats must be std::vector<T>");
 
 static_assert(
   skymp::is_vector<decltype(AnimationGraphMasterBehaviourDescriptor::
-                              AnimationVariables::Integers)>::value,
+                              AnimationVariables::integers)>::value,
   "Member of AnimationVariables->Integers must be std::vector<T>");

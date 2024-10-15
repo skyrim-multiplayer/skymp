@@ -272,7 +272,6 @@ export interface SpellCastEvent {
   spell: Spell
   isDualCasting: boolean
   castingSource: SpellType
-  animationVariables: ActorAnimationVariables
 }
 
 export interface OpenCloseEvent {
@@ -1427,7 +1426,8 @@ export const enum EquippedItemType {
   Warhammer = 6,
   Bow,
   Staff,
-  Spell,
+  Spell = 9, // Deprecated (use SpellOrScroll instead)
+  SpellOrScroll = 9,
   Shield,
   Torch,
   Crossbow,
@@ -1603,9 +1603,9 @@ export interface Inventory {
 }
 
 export interface ActorAnimationVariables {
-  Booleans: ArrayBuffer
-  Floats: ArrayBuffer
-  Integers: ArrayBuffer
+  booleans: ArrayBuffer
+  floats: ArrayBuffer
+  integers: ArrayBuffer
 }
 
 export declare function setInventory(formId: number, inventory: Inventory): void;

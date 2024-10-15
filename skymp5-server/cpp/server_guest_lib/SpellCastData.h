@@ -21,10 +21,6 @@ struct SpellCastData
 
   SpellType castingSource = SpellType::Left;
 
-  simdjson::dom::element booleanAnimationVariables;
-  simdjson::dom::element floatAnimationVariables;
-  simdjson::dom::element integerAnimationVariables;
-
   static SpellCastData FromJson(const simdjson::dom::element& data)
   {
     const JsonPointer caster("caster"), target("target"), spell("spell"),
