@@ -323,6 +323,7 @@ export class AuthService extends ClientListener {
     logTrace(this, `Reading`, this.pluginAuthDataName, `from disk`);
 
     try {
+      // @ts-expect-error (TODO: Remove in 2.10.0)
       const data = this.sp.getPluginSourceCode(this.pluginAuthDataName, "PluginsNoLoad");
 
       if (!data) {
@@ -346,6 +347,7 @@ export class AuthService extends ClientListener {
       this.sp.writePlugin(
         this.pluginAuthDataName,
         content,
+        // @ts-expect-error (TODO: Remove in 2.10.0)
         "PluginsNoLoad"
       );
     }
@@ -441,7 +443,6 @@ export class AuthService extends ClientListener {
   }
 
   private browsersideWidgetSetter = () => {
-    console.log(new Date());
     const loginWidget = {
       type: "form",
       id: 1,
@@ -506,7 +507,6 @@ export class AuthService extends ClientListener {
         },
       ]
     };
-    console.log(loginWidget);
     window.skyrimPlatform.widgets.set([loginWidget]);
   };
 

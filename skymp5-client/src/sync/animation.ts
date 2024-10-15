@@ -8,8 +8,11 @@ import {
   Utility,
   Game,
   storage,
+  // @ts-expect-error (TODO: Remove in 2.10.0)
   castSpellImmediate,
+  // @ts-expect-error (TODO: Remove in 2.10.0)
   SpellType,
+  // @ts-expect-error (TODO: Remove in 2.10.0)
   interruptCast
 } from "skyrimPlatform";
 import { Movement } from "./movement";

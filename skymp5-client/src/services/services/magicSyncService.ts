@@ -1,6 +1,7 @@
 // TODO: refactor this out
 import { localIdToRemoteId, remoteIdToLocalId } from "../../view/worldViewMisc";
 
+// @ts-expect-error (TODO: Remove in 2.10.0)
 import { SpellCastEvent, Actor, printConsole, Game, getAnimationVariablesFromActor, ActorAnimationVariables, SpellType, SlotType, EquippedItemType } from 'skyrimPlatform'
 import { ClientListener, CombinedController, Sp } from './clientListener';
 import { logTrace } from '../../logging';
@@ -93,10 +94,13 @@ export class MagicSyncService extends ClientListener {
     private getSpellCastEventData(e: SpellCastEvent, isInterruptCast: boolean): SpellCastMsgData {
         const spellCastData: SpellCastMsgData = {
             caster: localIdToRemoteId(e.caster!.getFormID(), true),
+            // @ts-expect-error (TODO: Remove in 2.10.0)
             target: e.target ? localIdToRemoteId(e.target.getFormID(), true) : 0,
             spell: e.spell ? e.spell.getFormID() : 0,
             interruptCast: isInterruptCast,
+            // @ts-expect-error (TODO: Remove in 2.10.0)
             isDualCasting: e.isDualCasting,
+            // @ts-expect-error (TODO: Remove in 2.10.0)
             castingSource: e.castingSource,
             actorAnimationVariables: getAnimationVariablesFromActor(e.caster!.getFormID()),
         }
@@ -146,7 +150,9 @@ export class MagicSyncService extends ClientListener {
         const leftHandEquipmentType = ac.getEquippedItemType(SlotType.Left);
         const rightHandEquipmentType = ac.getEquippedItemType(SlotType.Right);
 
+        // @ts-expect-error (TODO: Remove in 2.10.0)
         if (leftHandEquipmentType === EquippedItemType.SpellOrScroll || leftHandEquipmentType === EquippedItemType.Staff ||
+            // @ts-expect-error (TODO: Remove in 2.10.0)
             rightHandEquipmentType === EquippedItemType.SpellOrScroll || rightHandEquipmentType === EquippedItemType.Staff) {
             return true;
         }

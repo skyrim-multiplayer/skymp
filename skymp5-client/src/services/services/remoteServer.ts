@@ -1,3 +1,4 @@
+// @ts-expect-error (TODO: Remove in 2.10.0)
 import { Actor, Form, FormType, Menu, interruptCast, castSpellImmediate, printConsole, applyAnimationVariablesToActor, ActorAnimationVariables } from 'skyrimPlatform';
 import {
   Armor,
