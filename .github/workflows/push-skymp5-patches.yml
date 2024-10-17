@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout skyrim-multiplayer/skymp5-patches
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           repository: skyrim-multiplayer/skymp5-patches
           fetch-depth: 0
@@ -19,7 +19,7 @@ jobs:
           ref: main
 
       - name: Checkout skyrim-multiplayer/skymp
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           repository: skyrim-multiplayer/skymp
           fetch-depth: 0

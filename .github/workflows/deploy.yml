@@ -49,14 +49,14 @@ jobs:
 
           - name: Checkout (full)
             if: ${{env.DEPLOY_ACTION == 'deploy'}}
-            uses: actions/checkout@v2
+            uses: actions/checkout@v4
             with:
                 submodules: recursive
                 fetch-depth: 0
 
           - name: Checkout (last commit)
             if: ${{env.DEPLOY_ACTION != 'deploy'}}
-            uses: actions/checkout@v2
+            uses: actions/checkout@v4
             with:
                 submodules: recursive
                 fetch-depth: 0
@@ -94,7 +94,7 @@ jobs:
 
           - name: Upload diff artifact
             if: ${{env.DEPLOY_ACTION == 'deploy'}}
-            uses: actions/upload-artifact@v3
+            uses: actions/upload-artifact@v4
             with:
                 name: patches
                 path: |
@@ -144,7 +144,7 @@ jobs:
                        -DGITHUB_TOKEN=${{env.GAMEMODE_GITHUB_TOKEN}}
 
           - name: Upload compile_commands.json
-            uses: actions/upload-artifact@v3
+            uses: actions/upload-artifact@v4
             with:
                 name: compile_commands.json
                 path: ${{github.workspace}}/build/compile_commands.json
