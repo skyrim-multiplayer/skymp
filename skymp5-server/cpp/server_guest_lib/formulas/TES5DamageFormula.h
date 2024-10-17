@@ -9,6 +9,11 @@
 class TES5DamageFormula : public IDamageFormula
 {
 public:
-  float CalculateDamage(const MpActor& aggressor, const MpActor& target,
-                        const HitData& hitData) const override;
+  [[nodiscard]] float CalculateDamage(const MpActor& aggressor,
+                                      const MpActor& target,
+                                      const HitData& hitData) const override;
+
+  [[nodiscard]] float CalculateDamage(
+    const MpActor& aggressor, const MpActor& target,
+    const SpellCastData& spellCastData) const override;
 };

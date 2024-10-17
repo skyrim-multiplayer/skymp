@@ -7,6 +7,8 @@
 #include "PartOne.h"
 #include "libespm/Loader.h"
 
+#include "SpellCastData.h"
+
 class ServerState;
 class WorldState;
 struct ActorValues;
@@ -90,6 +92,11 @@ public:
                               const ActorValues& actorValues);
 
   virtual void OnHit(const RawMessageData& rawMsgData, const HitData& hitData);
+
+  virtual void OnUpdateAnimVariables(const RawMessageData& rawMsgData);
+
+  virtual void OnSpellCast(const RawMessageData& rawMsgData,
+                           const SpellCastData& spellCastData);
 
   virtual void OnUnknown(const RawMessageData& rawMsgData);
 

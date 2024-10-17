@@ -34,6 +34,9 @@ import { NewLocalLagValueCalculatedEvent } from "./newLocalLagValueCalculatedEve
 import { AuthNeededEvent } from "./authNeededEvent";
 import { QueryBlockSetInventoryEvent } from "./queryBlockSetInventoryEvent";
 import { QueryKeyCodeBindings } from "./queryKeyCodeBindings";
+import { SpellCastMessage } from "../messages/spellCastMessage";
+import { UpdateAnimVariablesMessage } from "../messages/updateAnimVariablesMessage";
+
 
 type EventTypes = {
     'gameLoad': [GameLoadEvent],
@@ -52,6 +55,8 @@ type EventTypes = {
     'updateAnimationMessage': [ConnectionMessage<UpdateAnimationMessage>],
     'updateEquipmentMessage': [ConnectionMessage<UpdateEquipmentMessage>],
     'changeValuesMessage': [ConnectionMessage<ChangeValuesMessage>],
+    'spellCastMessage': [ConnectionMessage<SpellCastMessage>],
+    'updateAnimVariablesMessage': [ConnectionMessage<UpdateAnimVariablesMessage>],
     'updateAppearanceMessage': [ConnectionMessage<UpdateAppearanceMessage>],
     'teleportMessage': [ConnectionMessage<TeleportMessage>],
     'openContainerMessage': [ConnectionMessage<OpenContainerMessage>],
