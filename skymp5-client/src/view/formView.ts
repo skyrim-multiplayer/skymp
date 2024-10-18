@@ -297,6 +297,7 @@ export class FormView {
       if (actor && !this.localImmortal) {
         actor.startDeferredKill();
         actor.setActorValue("health", 1000000);
+        actor.setActorValue("magicka", 1000000);
         this.localImmortal = true;
       }
       this.applyAll(refr, model);
