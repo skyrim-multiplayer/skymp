@@ -7,8 +7,9 @@ using namespace std::chrono_literals;
 
 TEST_CASE("Data transfer", "[Networking]")
 {
-  static auto server = Networking::CreateServer(7778, MAX_PLAYERS);
-  static auto client = Networking::CreateClient("127.0.0.1", 7778, 4000);
+  static auto server = Networking::CreateServer(7778, MAX_PLAYERS, "password");
+  static auto client =
+    Networking::CreateClient("127.0.0.1", 7778, 4000, "password");
 
   std::string res;
 
