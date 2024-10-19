@@ -14,7 +14,7 @@ get_filename_component(PYTHON3_EXE_PATH ${PYTHON3} DIRECTORY)
 vcpkg_add_to_path(PREPEND "${PYTHON3_EXE_PATH}")
 
 if(VCPKG_TARGET_IS_WINDOWS)
-  set(nodejs_options openssl-no-asm static ${VCPKG_TARGET_ARCHITECTURE})
+  set(nodejs_options openssl-no-asm dll ${VCPKG_TARGET_ARCHITECTURE}) # dll/static is an option
 
   if(NOT "${VCPKG_BUILD_TYPE}" STREQUAL "release")
     message(STATUS "Building nodejs Debug")
