@@ -1366,9 +1366,8 @@ Napi::Value ScampServer::SP3ListMethods(const Napi::CallbackInfo& info)
     auto result = Napi::Array::New(info.Env(), methods.size());
     size_t i = 0;
     for (auto& method : methods) {
-      result.Set(i,
-                 Napi::String::New(info.Env(), method.data()));
-                 ++i;
+      result.Set(i, Napi::String::New(info.Env(), method.data()));
+      ++i;
     }
     return result;
   } catch (std::exception& e) {
