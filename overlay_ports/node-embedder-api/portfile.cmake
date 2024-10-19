@@ -1,3 +1,5 @@
+# TODO: fix Linux build, should copy .so, not .a
+
 vcpkg_from_github(
   OUT_SOURCE_PATH SOURCE_PATH
   REPO nodejs/node
@@ -35,6 +37,13 @@ if(VCPKG_TARGET_IS_WINDOWS)
     if(NOT NODE_BUILD_SH_RES EQUAL 0)
       message(FATAL_ERROR "Failed to build nodejs Debug (code ${NODE_BUILD_SH_RES})")
     endif()
+
+    set(dll_path_debug "${SOURCE_PATH}/Debug/libnode.dll")
+    set(lib_path_debug "${SOURCE_PATH}/Debug/libnode.lib")
+    file(MAKE_DIRECTORY "${CURRENT_PACKAGES_DIR}/debug/bin/node-embedder-api")
+    file(MAKE_DIRECTORY "${CURRENT_PACKAGES_DIR}/debug/lib/node-embedder-api")
+    file(COPY "${dll_path_debug}" DESTINATION "${CURRENT_PACKAGES_DIR}/debug/bin/node-embedder-api")
+    file(COPY "${lib_path_debug}" DESTINATION "${CURRENT_PACKAGES_DIR}/debug/lib/node-embedder-api")
   endif()
 
   message(STATUS "Building nodejs Release")
@@ -54,19 +63,12 @@ if(VCPKG_TARGET_IS_WINDOWS)
     message(FATAL_ERROR "Failed to build nodejs Release (code ${NODE_BUILD_SH_RES})")
   endif()
 
-  file(GLOB_RECURSE libs_debug "${SOURCE_PATH}/Debug/*.lib")
-  foreach(path ${libs_debug})
-    file(MAKE_DIRECTORY "${CURRENT_PACKAGES_DIR}/debug/lib/node-embedder-api")
-    file(COPY "${path}" DESTINATION "${CURRENT_PACKAGES_DIR}/debug/lib/node-embedder-api")
-  endforeach()
-
-  file(GLOB_RECURSE libs "${SOURCE_PATH}/Release/*.lib")
-  foreach(path ${libs})
-    if(NOT "${path}" MATCHES ".*cctest\.lib|.*embedtest\.lib")
-      file(MAKE_DIRECTORY "${CURRENT_PACKAGES_DIR}/lib/node-embedder-api")
-      file(COPY "${path}" DESTINATION "${CURRENT_PACKAGES_DIR}/lib/node-embedder-api")
-    endif()
-  endforeach()
+  set(dll_path_release "${SOURCE_PATH}/Release/libnode.dll")
+  set(lib_path_release "${SOURCE_PATH}/Release/libnode.lib")
+  file(MAKE_DIRECTORY "${CURRENT_PACKAGES_DIR}/bin/node-embedder-api")
+  file(MAKE_DIRECTORY "${CURRENT_PACKAGES_DIR}/lib/node-embedder-api")
+  file(COPY "${dll_path_release}" DESTINATION "${CURRENT_PACKAGES_DIR}/bin/node-embedder-api")
+  file(COPY "${lib_path_release}" DESTINATION "${CURRENT_PACKAGES_DIR}/lib/node-embedder-api")
 else()
   find_program(MAKE make REQUIRED)
 
