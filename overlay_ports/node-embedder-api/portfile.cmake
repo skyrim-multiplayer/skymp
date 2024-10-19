@@ -14,7 +14,10 @@ get_filename_component(PYTHON3_EXE_PATH ${PYTHON3} DIRECTORY)
 vcpkg_add_to_path(PREPEND "${PYTHON3_EXE_PATH}")
 
 if(VCPKG_TARGET_IS_WINDOWS)
-  set(nodejs_options openssl-no-asm dll ${VCPKG_TARGET_ARCHITECTURE}) # dll/static is an option
+  # dll/static is an option. 
+  # dll is recommended for embedding by nodejs authors 
+  # https://github.com/nodejs/node/blob/70fcb87af4c41be4f480b213d8b3edfc49629c9f/configure.py#L865
+  set(nodejs_options openssl-no-asm dll ${VCPKG_TARGET_ARCHITECTURE})
 
   if(NOT "${VCPKG_BUILD_TYPE}" STREQUAL "release")
     message(STATUS "Building nodejs Debug")
