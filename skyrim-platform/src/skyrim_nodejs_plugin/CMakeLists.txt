@@ -17,11 +17,36 @@ if(MSVC AND BUILD_NODEJS_PLUGIN)
     target_link_libraries(node-embedder-api INTERFACE "$<IF:$<CONFIG:Debug>,${node_LIBRARY_Debug},${node_LIBRARY_Release}>")
     target_include_directories(node-embedder-api INTERFACE ${node_INCLUDE_DIR})
 
+    # determine parent dir of lib and debug lib
+    get_filename_component(node_LIB_DIR_Debug ${node_LIBRARY_Debug} DIRECTORY)
+    get_filename_component(node_LIB_DIR_Release ${node_LIBRARY_Release} DIRECTORY)
+
+    # glob .lib files in lib and debug lib
+    file(GLOB_RECURSE node_additional_libs_debug "${node_LIB_DIR_Debug}/*.lib")
+    file(GLOB_RECURSE node_additional_libs_release "${node_LIB_DIR_Release}/*.lib")
+
+    # filter out mksnapshot.lib | node.lib
+    list(FILTER node_additional_libs_debug EXCLUDE REGEX "mksnapshot.lib|node.lib")
+    list(FILTER node_additional_libs_release EXCLUDE REGEX "mksnapshot.lib|node.lib")
+
+    # link them to node-embedder-api interface target
+    foreach(path ${node_additional_libs_debug})
+        target_link_libraries(node-embedder-api INTERFACE "$<IF:$<CONFIG:Debug>,${path},>")
+    endforeach()
+    foreach(path ${node_additional_libs_release})
+        target_link_libraries(node-embedder-api INTERFACE "$<IF:$<CONFIG:Release>,${path},>")
+    endforeach()
+
     file(GLOB_RECURSE src "./*")
     add_library(skyrim_nodejs_plugin SHARED ${src})
     target_link_libraries(skyrim_nodejs_plugin PUBLIC node-embedder-api)
 
     set_target_properties(skyrim_nodejs_plugin PROPERTIES OUTPUT_NAME SkyrimNodeJS)
+
+    target_link_libraries(skyrim_nodejs_plugin PUBLIC ws2_32.lib)
+    target_link_libraries(skyrim_nodejs_plugin PUBLIC Iphlpapi.lib)
+    target_link_libraries(skyrim_nodejs_plugin PUBLIC Userenv.lib)
+    target_link_libraries(skyrim_nodejs_plugin PUBLIC Winmm.lib)
 
     if(SKYRIM_SE)
         find_package(commonlibse REQUIRED CONFIGS CommonLibSSEConfig.cmake)
