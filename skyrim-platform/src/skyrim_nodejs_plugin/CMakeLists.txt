@@ -12,10 +12,12 @@ if(MSVC AND BUILD_NODEJS_PLUGIN)
 
     add_library(node-embedder-api INTERFACE)
     find_path(node_INCLUDE_DIR NAMES js_native_api.h PATH_SUFFIXES node-embedder-api)
-    find_library(node_LIBRARY_Debug NAMES libnode PATH_SUFFIXES node-embedder-api)
-    string(REPLACE "/debug/lib/" "/lib/" node_LIBRARY_Release "${node_LIBRARY_Debug}")
-    target_link_libraries(node-embedder-api INTERFACE "$<IF:$<CONFIG:Debug>,${node_LIBRARY_Debug},${node_LIBRARY_Release}>")
+    find_library(libnode_LIBRARY_Debug NAMES libnode PATH_SUFFIXES node-embedder-api)
+    string(REPLACE "/debug/lib/" "/lib/" libnode_LIBRARY_Release "${libnode_LIBRARY_Debug}")
+    target_link_libraries(node-embedder-api INTERFACE "$<IF:$<CONFIG:Debug>,${libnode_LIBRARY_Debug},${libnode_LIBRARY_Release}>")
     target_include_directories(node-embedder-api INTERFACE ${node_INCLUDE_DIR})
+
+    message(STATUS "!!! libnode_LIBRARY_Release: ${libnode_LIBRARY_Release} !!!")
 
     file(GLOB_RECURSE src "./*")
     add_library(skyrim_nodejs_plugin SHARED ${src})
