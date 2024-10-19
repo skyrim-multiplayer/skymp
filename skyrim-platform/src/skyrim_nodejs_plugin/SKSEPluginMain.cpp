@@ -49,9 +49,9 @@ extern "C" {
 // Initialize the Node.js engine. This function should be called before any
 // other NodeJS-related function.
 // Returns 0 on success, or a non-zero error code on failure.
-__declspec(dllexport) int SkyrimNodeJS_Init()
+__declspec(dllexport) int SkyrimNodeJS_Init(int argc, char** argv)
 {
-  return GetNodeInstance().Init();
+  return GetNodeInstance().Init(argc, argv);
 }
 
 // Create a new Node.js runtime environment (equivalent to a new V8 Isolate).

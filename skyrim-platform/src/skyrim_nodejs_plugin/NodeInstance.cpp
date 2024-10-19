@@ -21,6 +21,7 @@ struct NodeInstance::Impl
   std::map<void*, std::shared_ptr<Isolate::CreateParams>> createParamsMap;
   std::map<void*, Isolate*> isolatesMap;
   std::map<void*, v8::Persistent<v8::Context>> contextsMap;
+  std::unique_ptr<MultiIsolatePlatform> platform;
   std::string error;
 };
 
@@ -34,8 +35,28 @@ void NodeInstance::Load()
   // Do nothing
 }
 
-int NodeInstance::Init()
+int NodeInstance::Init(int argc, char **argv)
 {
+std::vector<std::string> args(argv, argv + argc);
+  std::shared_ptr<node::InitializationResult> result =
+      node::InitializeOncePerProcess(
+          args,
+          {
+              node::ProcessInitializationFlags::kNoInitializeV8,
+              node::ProcessInitializationFlags::kNoInitializeNodeV8Platform,
+              // This is used to test NODE_REPL_EXTERNAL_MODULE is disabled with
+              // kDisableNodeOptionsEnv. If other tests need NODE_OPTIONS
+              // support in the future, split this configuration out as a
+              // command line option.
+              node::ProcessInitializationFlags::kDisableNodeOptionsEnv,
+          });
+
+  for (const std::string& error : result->errors())
+    fprintf(stderr, "%s: %s\n", args[0].c_str(), error.c_str());
+  if (result->early_return() != 0) {
+    return result->exit_code();
+  }
+
   // TODO: put here global part of CreateEnvironment
   // TODO: global deinit with V8::DisposePlatform();
   // node::TearDownOncePerProcess();
@@ -49,16 +70,25 @@ int NodeInstance::CreateEnvironment(int argc, char** argv, void** outEnv)
   // to create a v8::Platform instance that Node.js can use when creating
   // Worker threads. When no `MultiIsolatePlatform` instance is present,
   // Worker threads are disabled.
-  std::unique_ptr<MultiIsolatePlatform> platform =
+  pImpl->platform =
     MultiIsolatePlatform::Create(4);
-  V8::InitializePlatform(platform.get());
+  V8::InitializePlatform(pImpl->platform.get());
   V8::Initialize();
 
   // Setup V8 isolate and context
+  // auto create_params = std::make_shared<Isolate::CreateParams>();
+  // create_params->array_buffer_allocator =
+  //   v8::ArrayBuffer::Allocator::NewDefaultAllocator();
+  // Isolate* isolate = Isolate::New(*create_params); 
+  Isolate* isolate = Isolate::Allocate();
+  pImpl->platform->RegisterIsolate(isolate, uv_default_loop());
   auto create_params = std::make_shared<Isolate::CreateParams>();
-  create_params->array_buffer_allocator =
-    v8::ArrayBuffer::Allocator::NewDefaultAllocator();
-  Isolate* isolate = Isolate::New(*create_params);
+
+  std::shared_ptr<node::ArrayBufferAllocator> allocator = node::ArrayBufferAllocator::Create();
+  isolate = NewIsolate(allocator, uv_default_loop(), pImpl->platform.get());
+
+  // register the isolate with the platform
+  // platform->RegisterIsolate(isolate, uv_default_loop());
 
   {
     // Setup scope and context
@@ -66,15 +96,19 @@ int NodeInstance::CreateEnvironment(int argc, char** argv, void** outEnv)
     HandleScope handle_scope(isolate);
 
     Local<Context> context = Context::New(isolate);
+
     Context::Scope context_scope(context);
 
     // Initialize node environment
     node::IsolateData* isolate_data =
-      node::CreateIsolateData(isolate, uv_default_loop(), platform.get());
+      node::CreateIsolateData(isolate, uv_default_loop(), pImpl->platform.get());
 
     std::vector<std::string> args(argv, argv + argc);
     node::Environment* env = node::CreateEnvironment(
       isolate_data, context, args, std::vector<std::string>());
+
+
+       node::LoadEnvironment(env, "const publicRequire = require('node:module').createRequire(process.cwd() + '/'); globalThis.require = publicRequire;", nullptr);
 
     pImpl->createParamsMap[env] = create_params;
     pImpl->contextsMap[env].Reset(isolate,

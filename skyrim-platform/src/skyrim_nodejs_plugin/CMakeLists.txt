@@ -17,9 +17,28 @@ if(MSVC AND BUILD_NODEJS_PLUGIN)
     target_link_libraries(node-embedder-api INTERFACE "$<IF:$<CONFIG:Debug>,${libnode_LIBRARY_Debug},${libnode_LIBRARY_Release}>")
     target_include_directories(node-embedder-api INTERFACE ${node_INCLUDE_DIR})
 
+    # also find dll for each configuration
+    find_path(node_dll_debug NAMES libnode.dll PATH_SUFFIXES debug/bin/node-embedder-api)
+    if(node_dll_debug AND IS_DIRECTORY ${node_dll_debug})
+        set(node_dll_debug "${node_dll_debug}/libnode.dll")
+    endif()
+    find_path(node_dll_release NAMES libnode.dll PATH_SUFFIXES bin/node-embedder-api)
+    if(node_dll_release AND IS_DIRECTORY ${node_dll_release})
+        set(node_dll_release "${node_dll_release}/libnode.dll")
+    endif()
+
+    # if not found debug, use release for debug as well
+    if(NOT node_dll_debug)
+        set(node_dll_debug ${node_dll_release})
+    endif()
+
+    message(STATUS "!!! node_dll_debug: ${node_dll_debug} !!!")
+    message(STATUS "!!! node_dll_release: ${node_dll_release} !!!")
+
     message(STATUS "!!! libnode_LIBRARY_Release: ${libnode_LIBRARY_Release} !!!")
 
     file(GLOB_RECURSE src "./*")
+    list(FILTER src EXCLUDE REGEX ".*test.*")
     add_library(skyrim_nodejs_plugin SHARED ${src})
     target_link_libraries(skyrim_nodejs_plugin PUBLIC node-embedder-api)
 
@@ -44,6 +63,13 @@ if(MSVC AND BUILD_NODEJS_PLUGIN)
         COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:skyrim_nodejs_plugin> "${SKSE_PLUGINS_DIR}"
     )
 
+    # install libnode.dll to a directory of the plugin compiled
+
+    add_custom_command(TARGET skyrim_nodejs_plugin-pack POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy "$<IF:$<CONFIG:Debug>,${node_dll_debug},${node_dll_release}>" $<TARGET_FILE_DIR:skyrim_nodejs_plugin>
+    )
+
     add_dependencies(skyrim_nodejs_plugin-pack skyrim_nodejs_plugin)
 
+    add_executable(skyrim_nodejs_plugin_test "test/main.cpp")
 endif()

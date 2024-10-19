@@ -9,7 +9,7 @@ public:
 
   void Load();
 
-  int Init();
+  int Init(int argc, char** argv);
   int CreateEnvironment(int argc, char** argv, void** outEnv);
   int DestroyEnvironment(void* env);
   int Tick(void* env);
