@@ -67,6 +67,11 @@ int main(int argc, char* argv[])
       const fs = require('fs');
       const v = fs.readFileSync('C:/projects/skymp1/skyrim-platform/src/skyrim_nodejs_plugin/test/main.cpp', 'utf8');
       console.log(v);
+
+      // set timeout
+      setTimeout(() => {
+        console.log('Timeout');
+      }, 10000);
     )";
   // script = "1";
   if (executeScript(env, script) != 0) {
@@ -79,6 +84,23 @@ int main(int argc, char* argv[])
   }
 
   std::cout << "Script executed" << std::endl;
+
+  for (int i = 0; i < 1000; i++) {
+    // Tick
+    if (tick(env) != 0) {
+      size_t errorSize = getError(NULL, 0);
+      char* error = new char[errorSize];
+      getError(error, errorSize);
+      std::cout << "Failed to tick " << error << std::endl;
+      delete[] error;
+      return 1;
+    }
+
+    Sleep(1);
+    if (i % 100 == 0) {
+      std::cout << "Tick " << i << std::endl;
+    }
+  }
 
   // Destroy environment
   if (destroyEnvironment(env) != 0) {
