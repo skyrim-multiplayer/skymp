@@ -172,10 +172,7 @@ int NodeInstance::Tick(void* env)
     return -1;
   }
 
-  // Process all pending events without blocking
-  while (uv_run(uv_default_loop(), UV_RUN_NOWAIT)) {
-    // Loop until there are no more immediate events left to process
-  }
+  uv_run(uv_default_loop(), UV_RUN_NOWAIT);
 
   // Process any microtasks (e.g., resolved Promises)
   auto isolate = pImpl->isolatesMap[env];

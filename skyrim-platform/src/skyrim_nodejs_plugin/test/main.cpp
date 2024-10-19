@@ -71,7 +71,17 @@ int main(int argc, char* argv[])
       // set timeout
       setTimeout(() => {
         console.log('Timeout');
-      }, 10000);
+      }, 500);
+
+      // set timeout with promise
+      const promise = new Promise((resolve, reject) => {
+        setTimeout(() => {
+          resolve('Promise resolved');
+        }, 2333);
+      });
+      promise.then((value) => {
+        console.log(value);
+      });
     )";
   // script = "1";
   if (executeScript(env, script) != 0) {
