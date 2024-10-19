@@ -1346,9 +1346,10 @@ Napi::Value ScampServer::SP3ListStaticFunctions(const Napi::CallbackInfo& info)
     auto staticFunctions =
       partOne->worldState.GetPapyrusVm().ListStaticFunctions(className.data());
     auto result = Napi::Array::New(info.Env(), staticFunctions.size());
+    size_t i = 0;
     for (auto& staticFunction : staticFunctions) {
-      result.Set(result.Length(),
-                 Napi::String::New(info.Env(), staticFunction.data()));
+      result.Set(i, Napi::String::New(info.Env(), staticFunction.data()));
+      ++i;
     }
     return result;
   } catch (std::exception& e) {
@@ -1363,9 +1364,11 @@ Napi::Value ScampServer::SP3ListMethods(const Napi::CallbackInfo& info)
     auto methods =
       partOne->worldState.GetPapyrusVm().ListMethods(className.data());
     auto result = Napi::Array::New(info.Env(), methods.size());
+    size_t i = 0;
     for (auto& method : methods) {
-      result.Set(result.Length(),
+      result.Set(i,
                  Napi::String::New(info.Env(), method.data()));
+                 ++i;
     }
     return result;
   } catch (std::exception& e) {
