@@ -37,8 +37,7 @@ if(MSVC AND BUILD_NODEJS_PLUGIN)
 
     message(STATUS "!!! libnode_LIBRARY_Release: ${libnode_LIBRARY_Release} !!!")
 
-    file(GLOB_RECURSE src "./*")
-    list(FILTER src EXCLUDE REGEX ".*test.*")
+    file(GLOB_RECURSE src "./impl/*")
     add_library(skyrim_nodejs_plugin SHARED ${src})
     target_link_libraries(skyrim_nodejs_plugin PUBLIC node-embedder-api)
 
