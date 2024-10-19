@@ -5,7 +5,7 @@ int main(int argc, char* argv[])
 {
   std::cout << "Test started" << std::endl;
 
-  auto handle = LoadLibrary("SkyrimNodeJS.dll");
+  auto handle = LoadLibrary("skyrim_nodejs_dll.dll");
 
   if (handle == NULL) {
     std::cout << "Failed to load library" << std::endl;
