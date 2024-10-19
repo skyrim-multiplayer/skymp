@@ -43,10 +43,12 @@ if(MSVC AND BUILD_NODEJS_PLUGIN)
 
     set_target_properties(skyrim_nodejs_plugin PROPERTIES OUTPUT_NAME SkyrimNodeJS)
 
-    target_link_libraries(skyrim_nodejs_plugin PUBLIC ws2_32.lib)
-    target_link_libraries(skyrim_nodejs_plugin PUBLIC Iphlpapi.lib)
-    target_link_libraries(skyrim_nodejs_plugin PUBLIC Userenv.lib)
-    target_link_libraries(skyrim_nodejs_plugin PUBLIC Winmm.lib)
+    target_link_libraries(skyrim_nodejs_plugin PRIVATE ws2_32.lib)
+    target_link_libraries(skyrim_nodejs_plugin PRIVATE Iphlpapi.lib)
+    target_link_libraries(skyrim_nodejs_plugin PRIVATE Userenv.lib)
+    target_link_libraries(skyrim_nodejs_plugin PRIVATE Winmm.lib)
+
+    target_compile_definitions(skyrim_nodejs_plugin PRIVATE BUILDING_NODE_EXTENSION)
 
     if(SKYRIM_SE)
         find_package(commonlibse REQUIRED CONFIGS CommonLibSSEConfig.cmake)
