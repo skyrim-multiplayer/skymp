@@ -10,31 +10,31 @@ extern CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
 namespace skymp::magic::details {
 
 AnimationGraphMasterBehaviourDescriptor::AnimationVariables
-GetAnimationVariablesFromJSArg(const JsValue& argObj)
+GetAnimationVariablesFromJSArg(const Napi::Object& argObj)
 {
   using AnimVarInitializer =
     AnimationGraphMasterBehaviourDescriptor::AnimationVariables::InitData;
 
-  const auto booleanVarsValue = argObj.GetProperty("booleans");
+  const auto booleanVarsValue = NapiHelper::ExtractUInt8Array(
+    argObj.Get("booleans"), "animationVariables.booleans");
 
-  const auto booleanVars = AnimVarInitializer{
-    static_cast<uint8_t*>(booleanVarsValue.GetTypedArrayData()),
-    booleanVarsValue.GetTypedArrayBufferLength()
-  };
+  const auto booleanVars =
+    AnimVarInitializer{ static_cast<uint8_t*>(booleanVarsValue.Data()),
+                        booleanVarsValue.ByteLenght() };
 
-  const auto floatsVarsValue = argObj.GetProperty("floats");
+  const auto floatsVarsValue = NapiHelper::ExtractUInt8Array(
+    argObj.Get("floats"), "animationVariables.floats");
 
-  const auto floatsVars = AnimVarInitializer{
-    static_cast<uint8_t*>(floatsVarsValue.GetTypedArrayData()),
-    floatsVarsValue.GetTypedArrayBufferLength()
-  };
+  const auto floatsVars =
+    AnimVarInitializer{ static_cast<uint8_t*>(floatsVarsValue.Data()),
+                        floatsVarsValue.ByteLenght() };
 
-  const auto integersVarsValue = argObj.GetProperty("integers");
+  const auto integersVarsValue = NapiHelper::ExtractUInt8Array(
+    argObj.Get("integers"), "animationVariables.integers");
 
-  const auto integersVars = AnimVarInitializer{
-    static_cast<uint8_t*>(integersVarsValue.GetTypedArrayData()),
-    integersVarsValue.GetTypedArrayBufferLength()
-  };
+  const auto integersVars =
+    AnimVarInitializer{ static_cast<uint8_t*>(integersVarsValue.Data()),
+                        integersVarsValue.ByteLenght() };
 
   const auto variables =
     AnimationGraphMasterBehaviourDescriptor::AnimationVariables{
@@ -46,24 +46,25 @@ GetAnimationVariablesFromJSArg(const JsValue& argObj)
 
 } // namespace skymp::magic::details
 
-JsValue MagicApi::CastSpellImmediate(const JsFunctionArguments& args)
+Napi::Value MagicApi::CastSpellImmediate(const Napi::CallbackInfo& info)
 {
-  const auto actorFormId =
-    static_cast<RE::FormID>(static_cast<double>(args[1]));
+  const uint32_t actorFormId =
+    NapiHelper::ExtractUInt32(info[0], "actorFormId");
 
-  const auto castingSource =
-    static_cast<RE::MagicSystem::CastingSource>(static_cast<int>(args[2]));
+  const RE::MagicSystem::CastingSource castingSource =
+    static_cast<RE::MagicSystem::CastingSource>(
+      NapiHelper::ExtractInt32(info[1], "castingSource"));
 
-  const auto spellFormId =
-    static_cast<RE::FormID>(static_cast<double>(args[3]));
+  const uint32_t spellFormId =
+    NapiHelper::ExtractUInt32(info[2], "spellFormId");
 
   const auto formIdTarget = RE::TESForm::LookupByID<RE::TESObjectREFR>(
-    static_cast<uint32_t>(static_cast<double>(args[4])));
+    NapiHelper::ExtractUInt32(info[3], "formIdTarget"));
 
   g_nativeCallRequirements.gameThrQ->AddTask(
     [spellFormId, actorFormId, castingSource, formIdTarget,
-     animVars =
-       skymp::magic::details::GetAnimationVariablesFromJSArg(args[5])]() {
+     animVars = skymp::magic::details::GetAnimationVariablesFromJSArg(
+       NapiHelper::ExtractObject(info[4], "animationVariables"))]() {
       const auto pSpell = RE::TESForm::LookupByID<RE::MagicItem>(spellFormId);
 
       const auto pActor = RE::TESForm::LookupByID<RE::Actor>(actorFormId);
@@ -100,21 +101,20 @@ JsValue MagicApi::CastSpellImmediate(const JsFunctionArguments& args)
                                       0.0f, pActor);
     });
 
-  return JsValue::Undefined();
+  return info.Env().Undefined();
 }
 
-JsValue MagicApi::InterruptCast(const JsFunctionArguments& args)
+Napi::Value MagicApi::InterruptCast(const Napi::CallbackInfo& info)
 {
-  const auto actorFormId =
-    static_cast<RE::FormID>(static_cast<double>(args[1]));
+  const auto actorFormId = NapiHelper::ExtractUInt32(info[0], "actorFormId");
 
-  const auto castingSource =
-    static_cast<RE::MagicSystem::CastingSource>(static_cast<int>(args[2]));
+  const auto castingSource = static_cast<RE::MagicSystem::CastingSource>(
+    NapiHelper::ExtractInt32(info[1], "castingSource"));
 
   g_nativeCallRequirements.gameThrQ->AddTask(
     [actorFormId, castingSource,
-     animVars =
-       skymp::magic::details::GetAnimationVariablesFromJSArg(args[3])]() {
+     animVars = skymp::magic::details::GetAnimationVariablesFromJSArg(
+       NapiHelper::ExtractObject(info[2], "animationVariables"))]() {
       const auto pActor = RE::TESForm::LookupByID<RE::Actor>(actorFormId);
       if (!pActor) {
         return;
@@ -135,25 +135,24 @@ JsValue MagicApi::InterruptCast(const JsFunctionArguments& args)
       }
     });
 
-  return JsValue::Undefined();
+  return info.Env().Undefined();
 }
 
-JsValue MagicApi::GetAnimationVariablesFromActor(
-  const JsFunctionArguments& args)
+Napi::Value MagicApi::GetAnimationVariablesFromActor(
+  const Napi::CallbackInfo& info)
 {
-  const auto actorFormId =
-    static_cast<RE::FormID>(static_cast<double>(args[1]));
+  const auto actorFormId = NapiHelper::ExtractUInt32(info[0], "actorFormId");
 
   const auto pActor = RE::TESForm::LookupByID<RE::Actor>(actorFormId);
 
   if (!pActor) {
-    return JsValue::Undefined();
+    return info.Env().Undefined();
   }
 
   const auto animVariables =
     AnimationGraphMasterBehaviourDescriptor{ *pActor }.GetVariables();
 
-  auto obj = JsValue::Object();
+  auto obj = Napi::Object::New(info.Env());
 
   AddObjProperty(
     &obj, "booleans",
@@ -172,36 +171,43 @@ JsValue MagicApi::GetAnimationVariablesFromActor(
   return obj;
 }
 
-JsValue MagicApi::ApplyAnimationVariablesToActor(
-  const JsFunctionArguments& args)
+Napi::Value MagicApi::ApplyAnimationVariablesToActor(
+  const Napi::CallbackInfo& info)
 {
-  const auto actorFormId =
-    static_cast<RE::FormID>(static_cast<double>(args[1]));
+  const auto actorFormId = NapiHelper::ExtractUInt32(info[0], "actorFormId");
 
   const auto pActor = RE::TESForm::LookupByID<RE::Actor>(actorFormId);
 
   if (!pActor) {
-    return JsValue::Bool(false);
+    return Napi::Boolean::New(info.Env(), false);
   }
 
   const bool isAnimationVariablesApplied =
     AnimationGraphMasterBehaviourDescriptor{
-      skymp::magic::details::GetAnimationVariablesFromJSArg(args[2])
+      skymp::magic::details::GetAnimationVariablesFromJSArg(
+        NapiHelper::ExtractObject(info[1], "animationVariables"))
     }
       .ApplyVariablesToActor(*pActor);
 
-  return JsValue::Bool(isAnimationVariablesApplied);
+  return Napi::Boolean::New(info.Env(), isAnimationVariablesApplied);
 }
 
-void MagicApi::Register(JsValue& exports)
+void MagicApi::Register(Napi::Env env, Napi::Object& exports)
 {
-  exports.SetProperty("castSpellImmediate",
-                      JsValue::Function(CastSpellImmediate));
-  exports.SetProperty("interruptCast", JsValue::Function(InterruptCast));
+  exports.Set("castSpellImmediate",
+              Napi::Function::New(
+                env, NapiHelper::WrapCppExceptions(CastSpellImmediate)));
+  exports.Set(
+    "interruptCast",
+    Napi::Function::New(env, NapiHelper::WrapCppExceptions(InterruptCast)));
 
-  exports.SetProperty("getAnimationVariablesFromActor",
-                      JsValue::Function(GetAnimationVariablesFromActor));
+  exports.Set(
+    "getAnimationVariablesFromActor",
+    Napi::Function::New(
+      env, NapiHelper::WrapCppExceptions(GetAnimationVariablesFromActor)));
 
-  exports.SetProperty("applyAnimationVariablesToActor",
-                      JsValue::Function(ApplyAnimationVariablesToActor));
+  exports.Set(
+    "applyAnimationVariablesToActor",
+    Napi::Function::New(
+      env, NapiHelper::WrapCppExceptions(ApplyAnimationVariablesToActor)));
 }

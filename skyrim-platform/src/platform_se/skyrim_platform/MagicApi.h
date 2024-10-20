@@ -1,13 +1,15 @@
 #pragma once
 
+#include "NapiHelper.h"
+
 namespace MagicApi {
 
-JsValue CastSpellImmediate(const JsFunctionArguments& args);
-JsValue InterruptCast(const JsFunctionArguments& args);
+Napi::Value CastSpellImmediate(const Napi::CallbackInfo& info);
+Napi::Value InterruptCast(const Napi::CallbackInfo& info);
 
-JsValue GetAnimationVariablesFromActor(const JsFunctionArguments& args);
-JsValue ApplyAnimationVariablesToActor(const JsFunctionArguments& args);
+Napi::Value GetAnimationVariablesFromActor(const Napi::CallbackInfo& info);
+Napi::Value ApplyAnimationVariablesToActor(const Napi::CallbackInfo& info);
 
-void Register(JsValue& exports);
+void Register(Napi::Env env, Napi::Object& exports);
 
 }
