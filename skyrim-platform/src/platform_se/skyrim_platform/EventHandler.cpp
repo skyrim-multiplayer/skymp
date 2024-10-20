@@ -1329,9 +1329,9 @@ EventResult EventHandler::ProcessEvent(
   const auto casterId = event->object ? event->object->GetFormID() : 0;
   const auto spellId = event->spell;
 
-  SkyrimPlatform::GetSingleton()->AddUpdateTask(
-    [casterId, spellId](Napi::Env env) {
-      auto obj = Napi::Object::New(env);
+  SkyrimPlatform::GetSingleton()->AddUpdateTask([casterId,
+                                                 spellId](Napi::Env env) {
+    auto obj = Napi::Object::New(env);
 
     auto* caster = RE::TESForm::LookupByID<RE::Actor>(casterId);
     auto* spell = RE::TESForm::LookupByID<RE::SpellItem>(spellId);
@@ -1394,8 +1394,8 @@ EventResult EventHandler::ProcessEvent(
     AddObjProperty(&obj, "castingSource",
                    static_cast<uint32_t>(castingSource));
 
-      SendEvent("spellCast", obj);
-    });
+    SendEvent("spellCast", obj);
+  });
 
   return EventResult::kContinue;
 }
