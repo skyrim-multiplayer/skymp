@@ -406,6 +406,7 @@ VarValue PapyrusObjectReference::PlaceAtMe(
   if (akFormToPlace.rec->GetType() == "NPC_") {
     auto actor = new MpActor(locationalData, callbacks, baseId);
     newRefr.reset(actor);
+    actor->SetSpawnPoint(locationalData);
   } else {
     newRefr.reset(
       new MpObjectReference(locationalData, callbacks, baseId, type));
