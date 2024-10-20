@@ -15,6 +15,7 @@
 #include "HttpClientApi.h"
 #include "InventoryApi.h"
 #include "LoadGameApi.h"
+#include "MagicApi.h"
 #include "MpClientPluginApi.h"
 #include "SkyrimPlatformProxy.h"
 #include "TextApi.h"
@@ -224,6 +225,7 @@ private:
       FileInfoApi::Register(engine->Env(), e);
       TextApi::Register(engine->Env(), e);
       InventoryApi::Register(engine->Env(), e);
+      MagicApi::Register(engine->Env(), e);
       ConstEnumApi::Register(engine->Env(), e, engine);
       CallNativeApi::Register(engine->Env(), e,
                               [this] { return nativeCallRequirements; });

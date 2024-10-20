@@ -341,55 +341,6 @@ Napi::Value InventoryApi::SetInventory(const Napi::CallbackInfo& info)
   return info.Env().Undefined();
 }
 
-Napi::Value InventoryApi::CastSpellImmediate(const Napi::CallbackInfo& info)
-{
-  auto env = info.Env();
-
-  RE::Actor* pActor = RE::TESForm::LookupByID<RE::Actor>(
-    NapiHelper::ExtractUInt32(info[0], "formId"));
-
-  const auto castingSource = static_cast<RE::MagicSystem::CastingSource>(
-    NapiHelper::ExtractInt32(info[1], "castingSource"));
-
-  const auto formIdSpell =
-    reinterpret_cast<RE::MagicItem*>(RE::TESForm::LookupByID(
-      NapiHelper::ExtractUInt32(info[2], "formIdSpell")));
-
-  if (!formIdSpell) {
-    return env.Undefined();
-  }
-
-  auto t = formIdSpell->GetFormType();
-
-  if (t != RE::FormType::Spell && t != RE::FormType::Scroll &&
-      t != RE::FormType::Ingredient && t != RE::FormType::AlchemyItem &&
-      t != RE::FormType::Enchantment) {
-    return env.Undefined();
-  }
-
-  const auto formIdTarget = RE::TESForm::LookupByID<RE::TESObjectREFR>(
-    NapiHelper::ExtractUInt32(info[3], "formIdTarget"));
-
-  if (!formIdTarget) {
-    return env.Undefined();
-  }
-
-  if (!pActor) {
-    return env.Undefined();
-  }
-
-  const auto magicCaster = pActor->GetMagicCaster(castingSource);
-
-  if (!magicCaster) {
-    return env.Undefined();
-  }
-
-  magicCaster->CastSpellImmediate(formIdSpell, false, formIdTarget, 1.0f,
-                                  false, 0.0f, pActor);
-
-  return env.Undefined();
-}
-
 void InventoryApi::Register(Napi::Env env, Napi::Object& exports)
 {
   exports.Set("getExtraContainerChanges",
@@ -401,7 +352,4 @@ void InventoryApi::Register(Napi::Env env, Napi::Object& exports)
   exports.Set(
     "setInventory",
     Napi::Function::New(env, NapiHelper::WrapCppExceptions(SetInventory)));
-  exports.Set("castSpellImmediate",
-              Napi::Function::New(
-                env, NapiHelper::WrapCppExceptions(CastSpellImmediate)));
 }
