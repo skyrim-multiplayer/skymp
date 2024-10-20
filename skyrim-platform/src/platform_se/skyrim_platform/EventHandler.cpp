@@ -1377,8 +1377,7 @@ EventResult EventHandler::ProcessEvent(
       castingSource = RE::MagicSystem::CastingSource::kInstant;
     }
 
-      auto castingSource = RE::MagicSystem::CastingSource::kLeftHand;
-      bool isCasterValid = false;
+    const auto magicCaster = caster->GetMagicCaster(castingSource);
 
     const bool isDualCasting =
       magicCaster ? magicCaster->GetIsDualCasting() : false;
@@ -1394,24 +1393,6 @@ EventResult EventHandler::ProcessEvent(
     AddObjProperty(&obj, "isDualCasting", isDualCasting);
     AddObjProperty(&obj, "castingSource",
                    static_cast<uint32_t>(castingSource));
-
-      const auto magicCaster = caster->GetMagicCaster(castingSource);
-
-      const auto magicTarget = caster->GetMagicTarget();
-
-      RE::Actor* handleTarget = nullptr;
-
-      if (magicTarget->MagicTargetIsActor()) {
-        handleTarget =
-          reinterpret_cast<RE::Actor*>(magicTarget->GetTargetStatsObject());
-      }
-
-      AddObjProperty(&obj, "caster", caster, "ObjectReference");
-      AddObjProperty(&obj, "target", handleTarget, "ObjectReference");
-      AddObjProperty(&obj, "spell", spell, "Spell");
-      AddObjProperty(&obj, "isDualCasting", magicCaster->GetIsDualCasting());
-      AddObjProperty(&obj, "castingSource",
-                     static_cast<uint32_t>(castingSource));
 
       SendEvent("spellCast", obj);
     });

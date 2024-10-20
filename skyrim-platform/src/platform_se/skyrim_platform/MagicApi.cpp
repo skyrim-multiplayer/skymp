@@ -15,26 +15,26 @@ GetAnimationVariablesFromJSArg(const Napi::Object& argObj)
   using AnimVarInitializer =
     AnimationGraphMasterBehaviourDescriptor::AnimationVariables::InitData;
 
-  const auto booleanVarsValue = NapiHelper::ExtractUInt8Array(
+  auto booleanVarsValue = NapiHelper::ExtractUInt8Array(
     argObj.Get("booleans"), "animationVariables.booleans");
 
   const auto booleanVars =
     AnimVarInitializer{ static_cast<uint8_t*>(booleanVarsValue.Data()),
-                        booleanVarsValue.ByteLenght() };
+                        booleanVarsValue.ByteLength() };
 
-  const auto floatsVarsValue = NapiHelper::ExtractUInt8Array(
+  auto floatsVarsValue = NapiHelper::ExtractUInt8Array(
     argObj.Get("floats"), "animationVariables.floats");
 
   const auto floatsVars =
     AnimVarInitializer{ static_cast<uint8_t*>(floatsVarsValue.Data()),
-                        floatsVarsValue.ByteLenght() };
+                        floatsVarsValue.ByteLength() };
 
-  const auto integersVarsValue = NapiHelper::ExtractUInt8Array(
+  auto integersVarsValue = NapiHelper::ExtractUInt8Array(
     argObj.Get("integers"), "animationVariables.integers");
 
   const auto integersVars =
     AnimVarInitializer{ static_cast<uint8_t*>(integersVarsValue.Data()),
-                        integersVarsValue.ByteLenght() };
+                        integersVarsValue.ByteLength() };
 
   const auto variables =
     AnimationGraphMasterBehaviourDescriptor::AnimationVariables{
@@ -64,7 +64,7 @@ Napi::Value MagicApi::CastSpellImmediate(const Napi::CallbackInfo& info)
   g_nativeCallRequirements.gameThrQ->AddTask(
     [spellFormId, actorFormId, castingSource, formIdTarget,
      animVars = skymp::magic::details::GetAnimationVariablesFromJSArg(
-       NapiHelper::ExtractObject(info[4], "animationVariables"))]() {
+       NapiHelper::ExtractObject(info[4], "animationVariables"))](Viet::Void) {
       const auto pSpell = RE::TESForm::LookupByID<RE::MagicItem>(spellFormId);
 
       const auto pActor = RE::TESForm::LookupByID<RE::Actor>(actorFormId);
@@ -114,7 +114,7 @@ Napi::Value MagicApi::InterruptCast(const Napi::CallbackInfo& info)
   g_nativeCallRequirements.gameThrQ->AddTask(
     [actorFormId, castingSource,
      animVars = skymp::magic::details::GetAnimationVariablesFromJSArg(
-       NapiHelper::ExtractObject(info[2], "animationVariables"))]() {
+       NapiHelper::ExtractObject(info[2], "animationVariables"))](Viet::Void) {
       const auto pActor = RE::TESForm::LookupByID<RE::Actor>(actorFormId);
       if (!pActor) {
         return;
