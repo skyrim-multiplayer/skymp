@@ -245,7 +245,10 @@ private:
 
     Napi::Object consoleApi = Napi::Object::New(env);
     ConsoleApi::Register(env, consoleApi);
-    for (auto f : { "require", "addNativeExports" }) {
+
+    // I commented out require, because NodeJS has its own require function
+    // I think it's the part of systemjs polyfill and it should be removed
+    for (auto f : { /*"require"*/, "addNativeExports" }) {
       env.Global().Set(f, devApi.Get(f));
     }
     env.Global().Set("log", consoleApi.Get("printConsole"));
