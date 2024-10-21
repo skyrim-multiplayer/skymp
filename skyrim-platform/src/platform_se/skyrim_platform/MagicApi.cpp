@@ -44,15 +44,6 @@ GetAnimationVariablesFromJSArg(const JsValue& argObj)
   return variables;
 }
 
-RE::NiPoint3 GetNiPoint3FromJSArg(const JsValue& argObj)
-{
-  return {
-    static_cast<float>(static_cast<double>(argObj.GetProperty("x"))),
-    static_cast<float>(static_cast<double>(argObj.GetProperty("y"))),
-    static_cast<float>(static_cast<double>(argObj.GetProperty("z"))),
-  };
-}
-
 } // namespace skymp::magic::details
 
 JsValue MagicApi::CastSpellImmediate(const JsFunctionArguments& args)
