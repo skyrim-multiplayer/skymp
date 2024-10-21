@@ -44,6 +44,15 @@ GetAnimationVariablesFromJSArg(const JsValue& argObj)
   return variables;
 }
 
+RE::NiPoint3 GetNiPoint3FromJSArg(const JsValue& argObj)
+{
+  return {
+    static_cast<float>(static_cast<double>(argObj.GetProperty("x"))),
+    static_cast<float>(static_cast<double>(argObj.GetProperty("y"))),
+    static_cast<float>(static_cast<double>(argObj.GetProperty("z"))),
+  };
+}
+
 } // namespace skymp::magic::details
 
 JsValue MagicApi::CastSpellImmediate(const JsFunctionArguments& args)
@@ -57,16 +66,21 @@ JsValue MagicApi::CastSpellImmediate(const JsFunctionArguments& args)
   const auto spellFormId =
     static_cast<RE::FormID>(static_cast<double>(args[3]));
 
-  const auto formIdTarget = RE::TESForm::LookupByID<RE::TESObjectREFR>(
+  const auto magicTarget = RE::TESForm::LookupByID<RE::TESObjectREFR>(
     static_cast<uint32_t>(static_cast<double>(args[4])));
 
-  g_nativeCallRequirements.gameThrQ->AddTask(
-    [spellFormId, actorFormId, castingSource, formIdTarget,
-     animVars =
-       skymp::magic::details::GetAnimationVariablesFromJSArg(args[5])]() {
-      const auto pSpell = RE::TESForm::LookupByID<RE::MagicItem>(spellFormId);
+  const auto aimAngle = static_cast<float>(static_cast<double>(args[5]));
+  const auto aimHeading = static_cast<float>(static_cast<double>(args[6]));
+  const RE::Projectile::ProjectileRot projectileAngles{ aimAngle, aimHeading };
 
-      const auto pActor = RE::TESForm::LookupByID<RE::Actor>(actorFormId);
+  g_nativeCallRequirements.gameThrQ->AddTask(
+    [spellFormId, actorFormId, castingSource, magicTarget, projectileAngles,
+
+     animVars =
+       skymp::magic::details::GetAnimationVariablesFromJSArg(args[7])]() {
+      auto* pSpell = RE::TESForm::LookupByID<RE::SpellItem>(spellFormId);
+
+      auto* pActor = RE::TESForm::LookupByID<RE::Actor>(actorFormId);
 
       if (!pSpell || !pActor) {
         return;
@@ -82,12 +96,6 @@ JsValue MagicApi::CastSpellImmediate(const JsFunctionArguments& args)
         return;
       }
 
-      const auto magicCaster = pActor->GetMagicCaster(castingSource);
-
-      if (!magicCaster) {
-        return;
-      }
-
       const bool isAnimationVariablesApplied =
         AnimationGraphMasterBehaviourDescriptor{ std::move(animVars) }
           .ApplyVariablesToActor(*pActor);
@@ -96,8 +104,63 @@ JsValue MagicApi::CastSpellImmediate(const JsFunctionArguments& args)
         return;
       }
 
-      magicCaster->CastSpellImmediate(pSpell, false, formIdTarget, 1.0f, false,
-                                      0.0f, pActor);
+      const auto magicCaster = pActor->GetMagicCaster(castingSource);
+
+      if (!magicCaster) {
+        return;
+      }
+
+      if (pSpell->GetCastingType() ==
+          RE::MagicSystem::CastingType::kConcentration) {
+
+        magicCaster->CastSpellImmediate(pSpell, false, magicTarget, 1.0f,
+                                        false, 0.0f, pActor);
+
+        return;
+      }
+
+      RE::ProjectileHandle pProjectile{};
+
+      const auto magicNode = magicCaster->GetMagicNode();
+
+      RE::NiPoint3 origin =
+        magicNode ? magicNode->world.translate : pActor->GetPosition();
+
+      if (!magicNode) {
+        const auto boundMax = pActor->GetBoundMax();
+        const auto boundMin = pActor->GetBoundMin();
+        origin.z += (boundMax.z - boundMin.z) * 0.7f;
+      }
+
+      if (pSpell->data.delivery ==
+          RE::MagicSystem::Delivery::kTargetLocation) {
+        // TODO we need recalculate origin, cast ray from head to crosshair
+        // direction
+
+        // Maybe anything of this?
+        // pActor->GetLookingAtLocation();
+        // Or
+        // auto* crosshairPickData = RE::CrosshairPickData::GetSingleton();
+        // Or
+        /*const auto hud =
+          RE::UI::GetSingleton()->GetMenu<RE::HUDMenu>(RE::HUDMenu::MENU_NAME);
+
+        hud->UpdateCrosshairMagicTarget(true);*/
+        // Or
+        auto viewDirection = pActor->Get3D2()->world.rotate.GetVectorY();
+        viewDirection.Unitize();
+        origin += viewDirection * 200.f;
+        origin.z = pActor->GetPositionZ();
+      }
+
+      RE::Projectile::LaunchData launchData(pActor, origin, projectileAngles,
+                                            pSpell);
+
+      launchData.castingSource = castingSource;
+      launchData.desiredTarget = magicTarget;
+      launchData.contactNormal = RE::NiPoint3{ 0.f, 0.f, 1.0f };
+
+      RE::Projectile::Launch(&pProjectile, launchData);
     });
 
   return JsValue::Undefined();

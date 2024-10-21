@@ -18,11 +18,25 @@ AnimVariableMasterGraphIndexes AnimVariableMasterGraphIndexes::CreateDefault()
                                              ktestint,
                                              kcurrentDefaultState };
 
-  std::array<uint32_t, 13> floatVarIndexes = {
-    kTurnDelta, kDirection,     kSpeedSampled,   kweapAdj, kSpeed,
-    kCastBlend, kPitchOffset,   kSpeedDamped,    kPitch,   kVelocityZ,
-    k1stPRot,   k1stPRotDamped, kCastBlendDamped
-  };
+  std::array<uint32_t, 19> floatVarIndexes = { kTurnDelta,
+                                               kDirection,
+                                               kSpeedSampled,
+                                               kweapAdj,
+                                               kSpeed,
+                                               kCastBlend,
+                                               kPitchOffset,
+                                               kSpeedDamped,
+                                               kPitch,
+                                               kVelocityZ,
+                                               k1stPRot,
+                                               k1stPRotDamped,
+                                               kCastBlendDamped,
+                                               kAimPitchCurrent,
+                                               kAimHeadingCurrent,
+                                               kBowAimOffsetPitch,
+                                               kBowAimOffsetHeading,
+                                               kMagicAimOffsetHeading,
+                                               kMagicAimOffsetPitch };
 
   std::array<uint32_t, 60> boolVarIndexes = { kbEquipOk,
                                               kbMotionDriven,
