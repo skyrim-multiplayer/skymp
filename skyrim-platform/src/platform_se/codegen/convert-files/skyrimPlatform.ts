@@ -1610,12 +1610,6 @@ export interface ActorAnimationVariables {
   integers: ArrayBuffer
 }
 
-export interface Point3 {
-  x: number
-  y: number
-  z: number
-}
-
 export declare function setInventory(formId: number, inventory: Inventory): void;
 
 export declare function castSpellImmediate(actorCasterFormId: number, castingSource: SpellType, formIdSpell: number, formIdTarget: number, aimAngle: number, aimHeading: number, animationVariables: ActorAnimationVariables): void;
