@@ -9,7 +9,10 @@
 namespace internal {
 
 bool IsUnarmedAttack(const uint32_t sourceFormId)
-{
+{ 
+  if (sourceFormId.isBashDamage == true) {
+    return false;
+  }
   return sourceFormId == 0x1f4;
 }
 
@@ -147,6 +150,10 @@ float TES5DamageFormulaImpl::CalculateDamage() const
   // TODO(#463): add sneak modifier
   float damage = incomingDamage * CalcArmorDamagePenalty();
 
+// Bash Damage = Base Damage+(Skill Modifier*Perk Bonus)+(Stamina Modifier)
+  if (hitData.isBashAttack) {
+    damage *= 0.3f;
+  }
   if (hitData.isPowerAttack) {
     damage *= 2.f;
   }
