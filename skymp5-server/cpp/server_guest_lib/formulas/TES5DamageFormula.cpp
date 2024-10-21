@@ -8,9 +8,9 @@
 
 namespace internal {
 
-bool IsUnarmedAttack(const uint32_t sourceFormId)
+bool IsUnarmedAttack(const uint32_t sourceFormId, bool isBashAttack)
 { 
-  if (sourceFormId.isBashDamage == true) {
+  if (isBashDamage == true) {
     return false;
   }
   return sourceFormId == 0x1f4;
@@ -121,9 +121,9 @@ float TES5DamageFormulaImpl::CalcUnarmedDamage() const
   return espm::GetData<espm::RACE>(raceId, espmProvider).unarmedDamage;
 }
 
-float TES5DamageFormulaImpl::DetermineDamageFromSource(uint32_t source) const
+float TES5DamageFormulaImpl::DetermineDamageFromSource(uint32_t source, bool isBashAttack) const
 {
-  return IsUnarmedAttack(source) ? CalcUnarmedDamage() : CalcWeaponRating();
+  return IsUnarmedAttack(source, isBashAttack) ? CalcUnarmedDamage() : CalcWeaponRating();
 }
 
 float TES5DamageFormulaImpl::CalcArmorDamagePenalty() const
@@ -144,7 +144,7 @@ float TES5DamageFormulaImpl::CalcArmorDamagePenalty() const
 
 float TES5DamageFormulaImpl::CalculateDamage() const
 {
-  const float incomingDamage = DetermineDamageFromSource(hitData.source);
+  const float incomingDamage = DetermineDamageFromSource(hitData.source, hitData.isBashAttack);
 
   // TODO(#461): add difficulty multiplier
   // TODO(#463): add sneak modifier
