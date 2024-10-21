@@ -1,4 +1,3 @@
-// This test was not checked
 const assert = require("node:assert");
 
 const main = async () => {
@@ -9,8 +8,8 @@ const main = async () => {
   const baseNpc = mp.callPapyrusFunction("global", "Game", "getFormEx", null, [baseNpcId]);
   const placedNpc = mp.callPapyrusFunction("method", "ObjectReference", "placeAtMe", barrelInWhiterun, [baseNpc, 1, false, false]);
 
-  const placedNpcSpawnPoint = mp.get(mp.getIdFromDesc(placedNpc), "spawnPoint");
-  const barrelInWhiterunLocationalData = mp.get(mp.getIdFromDesc(barrelInWhiterun), "locationalData");
+  const placedNpcSpawnPoint = mp.get(mp.getIdFromDesc(placedNpc.desc), "spawnPoint");
+  const barrelInWhiterunLocationalData = mp.get(mp.getIdFromDesc(barrelInWhiterun.desc), "locationalData");
 
   assert.deepEqual(placedNpcSpawnPoint, barrelInWhiterunLocationalData);
 };
