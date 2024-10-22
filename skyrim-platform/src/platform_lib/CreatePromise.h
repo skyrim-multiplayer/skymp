@@ -1,5 +1,5 @@
 #pragma once
-#include "JsEngine.h"
+#include "../platform_se/skyrim_platform/JsEngine.h"
 
 inline Napi::Value CreatePromise(const Napi::Value& resolver)
 {

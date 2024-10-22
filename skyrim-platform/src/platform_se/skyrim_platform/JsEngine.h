@@ -14,7 +14,7 @@
 
 #include <Windows.h>
 
-#include "../skyrim-platform/src/platform_se/skyrim_platform/NapiHelper.h"
+#include "NapiHelper.h"
 
 class JsExternalObjectBase
 {
@@ -28,6 +28,11 @@ public:
   JsEngine()
     : pImpl(new Impl)
   {
+    pImpl->argv.push_back(const_cast<char *>("node"));
+    pImpl->argc = 1;
+    auto argv = pImpl->argv.data();
+    auto argc = pImpl->argc;
+
     auto skyrimNodeJs = GetModuleHandleA("skyrim_nodejs_dll.dll");
     if (!skyrimNodeJs) {
       throw std::runtime_error("Unable to GetModuleHandleA skyrim_nodejs_dll.dll: Error " +
@@ -40,6 +45,7 @@ public:
     pImpl->destroyEnvironment = (int (*)(void*))GetProcAddress(skyrimNodeJs, "SkyrimNodeJS_DestroyEnvironment");
     pImpl->tick = (int (*)(void*))GetProcAddress(skyrimNodeJs, "SkyrimNodeJS_Tick");
     pImpl->executeScript = (int (*)(void*, const char*))GetProcAddress(skyrimNodeJs, "SkyrimNodeJS_ExecuteScript");
+    pImpl->getError = (uint64_t (*)(char*, uint64_t))GetProcAddress(skyrimNodeJs, "SkyrimNodeJS_GetError");
 
     if (!pImpl->init) {
       throw std::runtime_error("Unable to find SkyrimNodeJS_Init: Error " + std::to_string(static_cast<int64_t>(GetLastError())));
@@ -56,40 +62,43 @@ public:
     if (!pImpl->executeScript) {
       throw std::runtime_error("Unable to find SkyrimNodeJS_ExecuteScript: Error " + std::to_string(static_cast<int64_t>(GetLastError())));
     }
+    if (!pImpl->getError) {
+      throw std::runtime_error("Unable to find SkyrimNodeJS_GetError: Error " + std::to_string(static_cast<int64_t>(GetLastError())));
+    }
 
     static std::once_flag g_nodeInitFlag;
 
     std::call_once(g_nodeInitFlag, [&]() {
       if (pImpl->init(argc, argv) != 0) {
-        size_t errorSize = getError(NULL, 0);
+        size_t errorSize = pImpl->getError(NULL, 0);
         char* error = new char[errorSize];
-        getError(error, errorSize);
-        std::string error = fmt::format("SkyrimNodeJS: Failed to initialize {}", error);
+        pImpl->getError(error, errorSize);
+        std::string s = fmt::format("SkyrimNodeJS: Failed to initialize {}", error);
         delete[] error;
-        throw std::runtime_error(error);
+        throw std::runtime_error(s);
       }
     });
 
     // create environment
     if (pImpl->createEnvironment(argc, argv, &pImpl->env) != 0) {
-      size_t errorSize = getError(NULL, 0);
+      size_t errorSize = pImpl->getError(NULL, 0);
       char* error = new char[errorSize];
-      getError(error, errorSize);
-      std::string error = fmt::format("SkyrimNodeJS: Failed to create environment {}", error);
+      pImpl->getError(error, errorSize);
+      std::string s = fmt::format("SkyrimNodeJS: Failed to create environment {}", error);
       delete[] error;
-      throw std::runtime_error(error);
+      throw std::runtime_error(s);
     }
   }
 
   ~JsEngine() { 
     if (pImpl->env) {
       if (pImpl->destroyEnvironment(pImpl->env) != 0) {
-        size_t errorSize = getError(NULL, 0);
+        size_t errorSize = pImpl->getError(NULL, 0);
         char* error = new char[errorSize];
-        getError(error, errorSize);
-        std::string e = fmt::format("SkyrimNodeJS: Failed to destroy environment {}", error);
+        pImpl->getError(error, errorSize);
+        std::string s = fmt::format("SkyrimNodeJS: Failed to destroy environment {}", error);
         delete[] error;
-        std::cerr << e << std::endl;
+        std::cerr << s << std::endl;
       }
     }
     delete pImpl; 
@@ -97,28 +106,13 @@ public:
 
   Napi::Env Env()
   {
-    napi_env *env = reinterpret_cast<napi_env*>(pImpl->env);
+    napi_env env = reinterpret_cast<napi_env>(pImpl->env);
     return Napi::Env(env);
   }
 
   Napi::Value RunScript(const std::string& src, const std::string&)
   {
-    // auto script = Napi::String::New(Env(), src.c_str());
-    // auto env = Env();
-    // env.RunScript(script);
-
     return NapiHelper::RunScript(Env(), src.data());
-
-    // if (pImpl->executeScript(pImpl->env, src.c_str()) != 0) {
-    //   size_t errorSize = getError(NULL, 0);
-    //   char* error = new char[errorSize];
-    //   getError(error, errorSize);
-    //   std::string error = fmt::format("SkyrimNodeJS: Failed to execute script {}", error);
-    //   delete[] error;
-    //   throw std::runtime_error(error);
-    // }
-
-    // return Napi::Env(pImpl->env).Undefined();
   }
 
   void ResetContext(Viet::TaskQueue<Napi::Env>&)
@@ -141,8 +135,12 @@ private:
     int (*destroyEnvironment)(void*) = nullptr;
     int (*tick)(void*) = nullptr;
     int (*executeScript)(void*, const char*) = nullptr;
+    uint64_t (*getError)(char*, uint64_t) = nullptr;
 
     void *env = nullptr;
+
+    std::vector<char *> argv;
+    int argc = 0;
   };
 
   Impl* const pImpl;

@@ -1,7 +1,8 @@
 #pragma once
-#include "JsEngine.h"
 
 #include "../platform_se/skyrim_platform/NapiHelper.h"
+
+#include "../platform_se/skyrim_platform/JsEngine.h"
 
 class HttpClient;
 
