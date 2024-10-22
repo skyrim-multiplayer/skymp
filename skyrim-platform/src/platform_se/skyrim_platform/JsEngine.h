@@ -16,12 +16,6 @@
 
 #include "NapiHelper.h"
 
-class JsExternalObjectBase
-{
-public:
-  virtual ~JsExternalObjectBase() = default;
-};
-
 class JsEngine
 {
 public:
