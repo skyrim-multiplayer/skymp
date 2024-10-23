@@ -1361,12 +1361,14 @@ EventResult EventHandler::ProcessEvent(
     RE::TESObjectREFR* handleTarget =
       magicTarget != nullptr ? magicTarget->GetTargetStatsObject() : nullptr;
 
-    AddObjProperty(&obj, "caster", caster, "ObjectReference");
+    AddObjProperty(&obj, "caster", caster, "Actor");
     AddObjProperty(&obj, "target", handleTarget, "ObjectReference");
     AddObjProperty(&obj, "spell", spell, "Spell");
     AddObjProperty(&obj, "isDualCasting", isDualCasting);
     AddObjProperty(&obj, "castingSource",
                    static_cast<uint32_t>(castingSource));
+    AddObjProperty(&obj, "aimAngle", caster->GetAimAngle());
+    AddObjProperty(&obj, "aimHeading", caster->GetAimHeading());
 
     SendEvent("spellCast", obj);
   });

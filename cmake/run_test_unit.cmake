@@ -14,7 +14,7 @@ if(temp_coverage)
 endif()
 
 # Emscripten support
-if("${EXE_PATH}" MATCHES ".*\.js")
+if("${EXE_PATH}" MATCHES ".*\\.js")
   execute_process(COMMAND node ${EXE_PATH}
     RESULT_VARIABLE res
     OUTPUT_VARIABLE out

@@ -2,13 +2,19 @@ name: Build & Push Vcpkg Deps (Docker)
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'vcpkg'
+      - 'Dockerfile'
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         submodules: 'recursive' # ensures submodules are checked out
 
@@ -78,3 +84,16 @@ jobs:
           VCPKG_COMMIT=${{ env.VCPKG_COMMIT }}
         cache-from: type=local,src=/tmp/.buildx-cache
         cache-to: type=local,dest=/tmp/.buildx-cache
+
+    - name: Replace image tags in files
+      run: |
+        sed -i "s|skymp/skymp-runtime-base:[^ ]*|skymp/skymp-runtime-base:${{ env.SHORT_SHA }}|g" misc/deploy/remote/branchctl.sh
+        sed -i "s|skymp/skymp-vcpkg-deps:[^ ]*|skymp/skymp-vcpkg-deps:${{ env.SHORT_SHA }}|g" misc/github_env_linux
+
+    - name: Create Pull Request
+      uses: peter-evans/create-pull-request@v3
+      with:
+        commit-message: "internal: update skymp-runtime-base and skymp-vcpkg-deps to ${{ env.SHORT_SHA }}"
+        title: "internal: update skymp-runtime-base and skymp-vcpkg-deps to ${{ env.SHORT_SHA }}"
+        body: Bot put here this release PR, enjoy...
+        branch: "internal-update-images-${{ env.SHORT_SHA }}"
