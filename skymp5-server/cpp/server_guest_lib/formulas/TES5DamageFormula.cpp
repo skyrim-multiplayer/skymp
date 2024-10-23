@@ -7,12 +7,6 @@
 #include "libespm/espm.h"
 
 namespace internal {
-
-bool IsUnarmedAttack(const uint32_t sourceFormId)
-{
-  return sourceFormId == 0x1f4;
-}
-
 class TES5DamageFormulaImpl
 {
   using Effects = std::vector<espm::Effects::Effect>;
@@ -118,9 +112,9 @@ float TES5DamageFormulaImpl::CalcUnarmedDamage() const
   return espm::GetData<espm::RACE>(raceId, espmProvider).unarmedDamage;
 }
 
-float TES5DamageFormulaImpl::DetermineDamageFromSource(uint32_t source) const
+float TES5DamageFormulaImpl::DetermineDamageFromSource(uint32_t source, bool isBashAttack) const
 {
-  return IsUnarmedAttack(source) ? CalcUnarmedDamage() : CalcWeaponRating();
+  return IsUnarmedAttack(source, isBashAttack) ? CalcUnarmedDamage() : CalcWeaponRating();
 }
 
 float TES5DamageFormulaImpl::CalcArmorDamagePenalty() const
@@ -141,12 +135,16 @@ float TES5DamageFormulaImpl::CalcArmorDamagePenalty() const
 
 float TES5DamageFormulaImpl::CalculateDamage() const
 {
-  const float incomingDamage = DetermineDamageFromSource(hitData.source);
+  const float incomingDamage = DetermineDamageFromSource(hitData.source, hitData.isBashAttack);
 
   // TODO(#461): add difficulty multiplier
   // TODO(#463): add sneak modifier
   float damage = incomingDamage * CalcArmorDamagePenalty();
 
+  // Bash Damage = Base Damage+(Skill Modifier*Perk Bonus)+(Stamina Modifier)
+  if (hitData.isBashAttack) {
+    damage *= 0.3f;
+  }
   if (hitData.isPowerAttack) {
     damage *= 2.f;
   }
@@ -209,6 +207,12 @@ float TES5SpellDamageFormulaImpl::CalculateDamage() const
   return GetBaseSpellDamage();
 }
 
+}
+
+
+bool IsUnarmedAttack(const uint32_t sourceFormId, bool isBashAttack)
+{ 
+   return isBashAttack ? false : sourceFormId == 0x1f4
 }
 
 float TES5DamageFormula::CalculateDamage(const MpActor& aggressor,
