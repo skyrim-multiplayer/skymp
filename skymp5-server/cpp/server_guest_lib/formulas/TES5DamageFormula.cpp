@@ -212,7 +212,7 @@ float TES5SpellDamageFormulaImpl::CalculateDamage() const
 
 bool IsUnarmedAttack(const uint32_t sourceFormId, bool isBashAttack)
 { 
-   return isBashAttack ? false : sourceFormId == 0x1f4
+   return isBashAttack ? false : sourceFormId == 0x1f4;
 }
 
 float TES5DamageFormula::CalculateDamage(const MpActor& aggressor,
