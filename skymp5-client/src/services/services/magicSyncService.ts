@@ -154,7 +154,7 @@ export class MagicSyncService extends ClientListener {
         const leftHandEquipmentType = ac.getEquippedItemType(SlotType.Left);
         const rightHandEquipmentType = ac.getEquippedItemType(SlotType.Right);
 
-        // TODO: Spell => SpellOrScroll, since Spell is now a deprecated name
+        // TODO: Spell => SpellOrScroll, since Spell is now a deprecated name (TODO: Remove in 2.10.0)
         if (leftHandEquipmentType === EquippedItemType.Spell || leftHandEquipmentType === EquippedItemType.Staff ||
             rightHandEquipmentType === EquippedItemType.Spell || rightHandEquipmentType === EquippedItemType.Staff) {
             return true;
