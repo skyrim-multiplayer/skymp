@@ -1,7 +1,7 @@
 #pragma once
 #include "CallNative.h"
 
-class NativeObject : public JsExternalObjectBase
+class NativeObject
 {
 public:
   NativeObject(const CallNative::ObjectPtr& obj_);
