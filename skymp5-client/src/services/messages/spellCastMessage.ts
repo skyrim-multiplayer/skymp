@@ -9,6 +9,8 @@ export interface SpellCastMsgData {
     isDualCasting: boolean
     interruptCast: boolean
     castingSource: number
+    aimAngle: number,
+    aimHeading: number,
     actorAnimationVariables: ActorAnimationVariables
 }
 
