@@ -8,7 +8,7 @@ export class TimeService extends ClientListener {
 
     public getTime() {
         const hoursOffsetSetting = this.sp.settings["skymp5-client"]["hoursOffset"];
-        const hoursOffset = typeof hoursOffsetSetting === "number" ? hoursOffsetSetting : -3;
+        const hoursOffset = typeof hoursOffsetSetting === "number" ? hoursOffsetSetting : 0;
         const hoursOffsetMs = hoursOffset * 60 * 60 * 1000;
 
         const d = new Date(Date.now() + hoursOffsetMs);
