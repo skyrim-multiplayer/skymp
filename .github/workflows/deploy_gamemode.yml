@@ -16,7 +16,7 @@ on:
         default: 'indev'
 
 jobs:
-  deploy:
+  deploy_gamemode:
     runs-on: ubuntu-latest
     steps:
       - name: Set up workflow_dispatch inputs
