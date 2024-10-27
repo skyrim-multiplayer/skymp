@@ -1,24 +1,27 @@
-#pragma once
-#include <cstdint>
-#include <memory>
+// #pragma once
+// #include <cstdint>
+// #include <memory>
 
-class NodeInstance
-{
-public:
-  NodeInstance();
+// class NodeInstance
+// {
+// public:
+//   NodeInstance();
 
-  void Load();
+//   void Load();
 
-  int Init(int argc, char** argv);
-  int CreateEnvironment(int argc, char** argv, void** outEnv);
-  int DestroyEnvironment(void* env);
-  int Tick(void* env);
-  int ExecuteScript(void* env, const char* script);
-  uint64_t GetError(char* buffer, uint64_t bufferSize);
+//   int Init(int argc, char** argv);
+//   int CreateEnvironment(int argc, char** argv, void** outEnv);
+//   int DestroyEnvironment(void* env);
+//   int Tick(void* env);
+//   int ExecuteScript(void* env, const char* script);
+//   uint64_t GetError(char* buffer, uint64_t bufferSize);
 
-private:
-  int NodeMain(int argc, char** argv);
+//   const char* GetJavaScriptError();
+//   void ClearJavaScriptError();
 
-  struct Impl;
-  std::shared_ptr<Impl> pImpl;
-};
+// private:
+//   int NodeMain(int argc, char** argv);
+
+//   struct Impl;
+//   std::shared_ptr<Impl> pImpl;
+// };

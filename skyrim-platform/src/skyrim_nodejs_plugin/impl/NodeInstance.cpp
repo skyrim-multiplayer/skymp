@@ -16,6 +16,33 @@
 using namespace node;
 using namespace v8;
 
+namespace {
+std::string g_javaScriptError;
+
+void ReportErrorCallback(const FunctionCallbackInfo<Value>& args)
+{
+  Isolate* isolate = args.GetIsolate();
+
+  if (args.Length() < 1) {
+    return;
+  }
+
+  String::Utf8Value error(isolate, args[0]);
+  std::string s = *error ? *error : "Unknown JavaScript error";
+
+  g_javaScriptError = s;
+}
+
+void RegisterReportError(Isolate* isolate, Local<Context> context)
+{
+  context->Global()->Set(
+    context,
+    String::NewFromUtf8(isolate, "reportError", NewStringType::kNormal).ToLocalChecked(),
+    FunctionTemplate::New(isolate, ReportErrorCallback)->GetFunction(context).ToLocalChecked()
+  ).ToChecked();
+}
+}
+
 struct NodeInstance::Impl
 {
   std::map<void*, std::shared_ptr<Isolate::CreateParams>> createParamsMap;
@@ -96,6 +123,8 @@ int NodeInstance::CreateEnvironment(int argc, char** argv, void** outEnv)
     HandleScope handle_scope(isolate);
 
     Local<Context> context = Context::New(isolate);
+
+    RegisterReportError(isolate, context);
 
     Context::Scope context_scope(context);
 
@@ -256,4 +285,14 @@ uint64_t NodeInstance::GetError(char* buffer, uint64_t bufferSize)
   }
 
   return pImpl->error.size() + kNullTerminatorLengthInBytes;
+}
+
+const char* NodeInstance::GetJavaScriptError()
+{
+  return g_javaScriptError.c_str();
+}
+
+void NodeInstance::ClearJavaScriptError()
+{
+  g_javaScriptError.clear();
 }

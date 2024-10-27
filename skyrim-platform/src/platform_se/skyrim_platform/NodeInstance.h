@@ -16,6 +16,9 @@ public:
   int ExecuteScript(void* env, const char* script);
   uint64_t GetError(char* buffer, uint64_t bufferSize);
 
+  const char* GetJavaScriptError();
+  void ClearJavaScriptError();
+
 private:
   int NodeMain(int argc, char** argv);
 
