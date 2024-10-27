@@ -1380,13 +1380,8 @@ Napi::Value ScampServer::SP3GetFunctionImplementation(
   const Napi::CallbackInfo& info)
 {
   try {
-    // auto classes = NapiHelper::ExtractObject(info[0], "classes");
     auto className = NapiHelper::ExtractString(info[1], "className");
     auto functionName = NapiHelper::ExtractString(info[2], "functionName");
-
-    // std::shared_ptr<Napi::Reference<Napi::Object>> classesPersistentRef(
-    //   new Napi::Reference<Napi::Object>(
-    //     Napi::Persistent<Napi::Object>(classes)));
 
     NativeFunction functionImplementationStatic, functionImplementationMethod;
 
@@ -1420,29 +1415,21 @@ Napi::Value ScampServer::SP3GetFunctionImplementation(
 
         std::vector<VarValue> args;
 
-        // spdlog::info("1");
-
         for (size_t i = 0; i < info.Length(); ++i) {
           auto arg = PapyrusUtils::GetPapyrusValueFromJsValue(
             info[i], false, partOne->worldState);
           args.push_back(arg);
         }
 
-        // spdlog::info("2");
-
         VarValue self = jsThis.IsUndefined()
           ? VarValue::None()
           : PapyrusUtils::GetPapyrusValueFromJsValue(jsThis, false,
                                                      partOne->worldState);
 
-        // spdlog::info("3");
-
         int callType = jsThis.IsUndefined() ? 'glob' : 'meth';
 
         VarValue res = CallPapyrusFunctionImpl(partOne, callType, className,
                                                functionName, self, args);
-
-        // spdlog::info("4");
 
         auto jsRes = PapyrusUtils::GetJsValueFromPapyrusValue(
           info.Env(), res, partOne->worldState.espmFiles);
@@ -1480,11 +1467,7 @@ Napi::Value ScampServer::SP3GetFunctionImplementation(
               }
             }
           }
-
-          // jsRes.As<Napi::Object>().Set("_sp3ObjectType", res.objectType);
         }
-
-        // spdlog::info("5");
 
         return jsRes;
       } catch (std::exception& e) {
