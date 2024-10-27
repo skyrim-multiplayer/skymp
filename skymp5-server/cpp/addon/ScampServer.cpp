@@ -13,6 +13,7 @@
 #include "formulas/SweetPieDamageFormula.h"
 #include "formulas/TES5DamageFormula.h"
 #include "libespm/IterateFields.h"
+#include "papyrus-vm/Utils.h"
 #include "property_bindings/PropertyBindingFactory.h"
 #include "save_storages/SaveStorageFactory.h"
 #include "script_objects/EspmGameObject.h"
@@ -1407,7 +1408,15 @@ Napi::Value ScampServer::SP3GetFunctionImplementation(
                      functionImplementationMethod,
                      this](const Napi::CallbackInfo& info) -> Napi::Value {
       try {
-        auto jsThis = info.Env().Undefined(); // info.This();
+        Napi::Value jsThis = info.This();
+
+        // Hack to detect that this arg refers to class not to an object, so
+        // it's a static call
+        if (jsThis.IsObject()) {
+          if (jsThis.As<Napi::Object>().Get("desc").IsUndefined()) {
+            jsThis = info.Env().Undefined();
+          }
+        }
 
         std::vector<VarValue> args;
 
@@ -1439,7 +1448,40 @@ Napi::Value ScampServer::SP3GetFunctionImplementation(
           info.Env(), res, partOne->worldState.espmFiles);
 
         if (jsRes.IsObject()) {
-          jsRes.As<Napi::Object>().Set("_sp3ObjectType", res.objectType);
+
+          PexScript::Lazy pexScriptLazy =
+            partOne->worldState.GetPapyrusVm().GetPexByName(className.data());
+
+          if (pexScriptLazy.fn) {
+            std::shared_ptr<PexScript> pexScript = pexScriptLazy.fn();
+
+            if (pexScript) {
+              auto& obj = pexScript->objectTable.at(0);
+              auto& states = obj.states;
+              auto& autoStateName = obj.autoStateName;
+              auto stateIt = std::find_if(states.begin(), states.end(),
+                                          [&](const auto& state) {
+                                            return state.name == autoStateName;
+                                          });
+              if (stateIt != states.end()) {
+                auto& state = *stateIt;
+                auto& functions = state.functions;
+                auto functionIt = std::find_if(
+                  functions.begin(), functions.end(),
+                  [&](const auto& function) {
+                    return Utils::stricmp(function.name.data(),
+                                          functionName.data()) == 0;
+                  });
+                if (functionIt != functions.end()) {
+                  auto& function = functionIt->function;
+                  jsRes.As<Napi::Object>().Set("_sp3ObjectType",
+                                               function.returnType);
+                }
+              }
+            }
+          }
+
+          // jsRes.As<Napi::Object>().Set("_sp3ObjectType", res.objectType);
         }
 
         // spdlog::info("5");
