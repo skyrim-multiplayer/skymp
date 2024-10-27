@@ -39,10 +39,17 @@ void JsEngine::AcquireEnvAndCall(const std::function<void(Napi::Env)>& f)
     return;
   }
 
-  napi_env env = reinterpret_cast<napi_env>(pImpl->env);
-  Napi::Env cppEnv = Napi::Env(env);
+  // napi_env env = reinterpret_cast<napi_env>(pImpl->env);
+  // Napi::Env cppEnv = Napi::Env(env);
 
-  f(cppEnv);
+  // f(cppEnv);
+
+
+
+
+
+
+
 
   // pImpl->preparedFunction = f;
 
@@ -99,7 +106,7 @@ JsEngine::JsEngine() : pImpl(new Impl)
   pImpl->argv.push_back(pImpl->nodejsArgv0);
   pImpl->argc = pImpl->argv.size();
 
-  spdlog::info("JsEngine::JsEngine() - Enter");
+  spdlog::info("JsEngine::JsEngine() - Enter, thread id {}", std::this_thread::get_id());
   spdlog::info("JsEngine::JsEngine() - Initializing NodeInstance");
 
   pImpl->nodeInstance = std::make_unique<NodeInstance>();
@@ -134,7 +141,8 @@ JsEngine::JsEngine() : pImpl(new Impl)
   int executeResult = pImpl->nodeInstance->ExecuteScript(pImpl->env, R"(
     try {
       const nodeProcess = require('node:process');
-      const module = { exports: {} }; 
+      const module = { exports: {} };
+      require('./scam_native.node');
       //nodeProcess.dlopen(module, 'Data/Platform/Distribution/RuntimeDependencies/SkyrimPlatformImpl.dll');
       //globalThis.skyrimPlatformNativeAddon = module.exports;
     } catch (e) { 
