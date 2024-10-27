@@ -13,6 +13,8 @@ struct JsEngine::Impl
   char nodejsArgv0[5] = "node";
 
   std::unique_ptr<NodeInstance> nodeInstance;
+
+  std::function<void(Napi::Env)> preparedFunction;
 };
 
 JsEngine* JsEngine::GetSingleton()
@@ -30,6 +32,39 @@ JsEngine::~JsEngine()
 void JsEngine::AcquireEnvAndCall(const std::function<void(Napi::Env)>& f)
 {  
   spdlog::info("JsEngine::AcquireEnvAndCall()");
+
+  if (!pImpl->nodeInstance)
+  {
+    spdlog::error("JsEngine::AcquireEnvAndCall() - NodeInstance is nullptr");
+    return;
+  }
+
+  pImpl->preparedFunction = f;
+
+  pImpl->nodeInstance->ClearJavaScriptError();
+
+  int executeScriptResult = pImpl->nodeInstance->ExecuteScript(pImpl->env, R"(
+    try {
+      skyrimPlatformNativeAddon.callPreparedFunction();
+    } catch (e) { 
+      reportError(e.toString())
+    }
+  )");
+
+  if (executeScriptResult != 0)
+  {
+    spdlog::error("JsEngine::AcquireEnvAndCall() - Failed to execute script: {}", GetError());
+    return;
+  }
+
+  std::string javaScriptError = pImpl->nodeInstance->GetJavaScriptError();
+  pImpl->nodeInstance->ClearJavaScriptError();
+
+  if (!javaScriptError.empty())
+  {
+    spdlog::error("JsEngine::AcquireEnvAndCall() - JavaScript error: {}", javaScriptError);
+    return;
+  }
 }
 
 Napi::Value JsEngine::RunScript(Napi::Env env, const std::string& src, const std::string&)
@@ -88,7 +123,16 @@ JsEngine::JsEngine() : pImpl(new Impl)
 
   pImpl->nodeInstance->ClearJavaScriptError();
 
-  int executeResult = pImpl->nodeInstance->ExecuteScript(pImpl->env, "try { const module = { exports: {} }; require('node:process').dlopen(module, 'Data/Platform/Distribution/RuntimeDependencies/SkyrimPlatformImpl.dll'); } catch (e) { reportError(e.toString())}");
+  int executeResult = pImpl->nodeInstance->ExecuteScript(pImpl->env, R"(
+    try {
+      const nodeProcess = require('node:process');
+      const module = { exports: {} }; 
+      nodeProcess.dlopen(module, 'Data/Platform/Distribution/RuntimeDependencies/SkyrimPlatformImpl.dll');
+      //globalThis.skyrimPlatformNativeAddon = module.exports;
+    } catch (e) { 
+      reportError(e.toString())
+    }
+  )");
 
   if (executeResult != 0)
   {
@@ -119,9 +163,30 @@ std::string JsEngine::GetError()
 #  error NAPI_CPP_EXCEPTIONS must be defined or throwing from JS code would crash!
 #endif
 
+Napi::Value CallPreparedFunction(const Napi::CallbackInfo& info)
+{
+  spdlog::info("CallPreparedFunction()");
+
+  auto f = JsEngine::GetSingleton()->pImpl->preparedFunction;
+  JsEngine::GetSingleton()->pImpl->preparedFunction = nullptr;
+
+  if (f) {
+    f(info.Env());
+  }
+  else {
+    spdlog::error("CallPreparedFunction() - Prepared function is not set");
+  }
+
+  return info.Env().Undefined();
+}
+
 Napi::Object InitNativeAddon(Napi::Env env, Napi::Object exports)
 {
-  spdlog::info("InitNativeAddon()");
+  spdlog::info("InitNativeAddon() - env {}", reinterpret_cast<uint64_t>(static_cast<napi_env>(env)));
+
+  Napi::Number::New(env, 0);
+  //exports.Set("callPreparedFunction", Napi::Number::New(env, 0));
+  //exports.Set("callPreparedFunction", Napi::Function::New(env, NapiHelper::WrapCppExceptions(CallPreparedFunction)));
   return exports;
 }
 

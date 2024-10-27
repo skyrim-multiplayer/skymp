@@ -18,6 +18,7 @@
 
 class JsEngine
 {
+  friend Napi::Value CallPreparedFunction(const Napi::CallbackInfo& info);
 public:
   static JsEngine* GetSingleton();
   
