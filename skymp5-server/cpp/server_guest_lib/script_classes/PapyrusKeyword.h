@@ -6,7 +6,7 @@
 class PapyrusKeyword final : public IPapyrusClass<PapyrusKeyword>
 {
 public:
-  const char* GetName() override { return "keyword"; }
+  const char* GetName() override { return "Keyword"; }
 
   VarValue GetKeyword(VarValue self, const std::vector<VarValue>& arguments);
 

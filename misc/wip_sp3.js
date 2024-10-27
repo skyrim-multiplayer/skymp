@@ -1,8 +1,8 @@
 // This is an incomplete test for an incomplete SP3 implementation
 
 // TODO(1): Implement typed return values for methods and static functions (e.g. `sp.Game.getFormEx` should return a `Form` object, not a plain object)
-// TODO(2): Normalize class names to match SkyrimPlatform's naming convention (e.g. objectreference -> ObjectReference)
 // TODO(3): Implement 2 versions of method names: one with the SP-style/normalized naming convention (e.g. `getFormEx`) and one with the Papyrus naming convention (e.g. `GetFormEx`)
+// We can use TSConverter for this, see its sources in skyrim-platform
 
 function sortClassesByInheritance(classes, api) {
     let classesSorted = new Array;
