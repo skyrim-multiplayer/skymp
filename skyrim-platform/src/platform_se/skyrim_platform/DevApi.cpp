@@ -6,7 +6,6 @@
 #include "Settings.h"
 #include "Validators.h"
 
-std::shared_ptr<JsEngine> DevApi::jsEngine = nullptr;
 DevApi::NativeExportsMap DevApi::nativeExportsMap;
 
 namespace {
@@ -51,10 +50,7 @@ Napi::Value DevApi::Require(
     std::stringstream src;
     src << t.rdbuf();
 
-    if (!jsEngine) {
-      throw NullPointerException("jsEngine");
-    }
-    auto runScriptResult = jsEngine->RunScript(src.str(), fileName);
+    auto runScriptResult = JsEngine::GetSingleton()->RunScript(info.Env(), src.str(), fileName);
     auto exports =
       NapiHelper::ExtractObject(runScriptResult, "runScriptResult");
 
@@ -181,10 +177,7 @@ Napi::Value DevApi::GetPlatformVersion(const Napi::CallbackInfo& info)
 
 Napi::Value DevApi::GetJsMemoryUsage(const Napi::CallbackInfo& info)
 {
-  if (!jsEngine) {
-    throw NullPointerException("jsEngine");
-  }
-  return Napi::Number::New(info.Env(), jsEngine->GetMemoryUsage());
+  return Napi::Number::New(info.Env(), JsEngine::GetSingleton()->GetMemoryUsage());
 }
 
 Napi::Value DevApi::BlockPapyrusEvents(const Napi::CallbackInfo& info)

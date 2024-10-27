@@ -6,8 +6,7 @@ auto _n_ = [](auto env, const auto& v) { return Napi::Number::New(env, v); };
 auto _s_ = [](auto env, const auto& v) { return Napi::String::New(env, v); };
 auto _u_ = [](auto i) { return static_cast<uint32_t>(i); };
 
-void ConstEnumApi::Register(Napi::Env env, Napi::Object& exports,
-                            std::shared_ptr<JsEngine> jsEngine)
+void ConstEnumApi::Register(Napi::Env env, Napi::Object& exports)
 {
   auto SpellType = Napi::Object::New(env);
   SpellType.Set(_u_(0), "Left");

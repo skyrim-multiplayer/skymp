@@ -76,10 +76,29 @@ public:
   void Tick() override
   {
     try {
-      auto engine = GetJsEngine();
-      auto env = engine->Env();
+      GetJsEngine()->AcquireEnvAndCall([this](Napi::Env env) {
+        TickImpl(env);
+      });
+    } catch (const std::exception& e) {
+      ExceptionPrinter::Print(e);
+    }
+  }
 
-      auto& fileDirs = GetFileDirs();
+  void Update() override
+  {
+    try {
+      GetJsEngine()->AcquireEnvAndCall([this](Napi::Env env) {
+        UpdateImpl(env);
+      });
+    } catch (const std::exception& e) {
+      ExceptionPrinter::Print(e);
+    }
+  }
+
+private:
+  void TickImpl(Napi::Env env)
+  {
+    auto& fileDirs = GetFileDirs();
 
       if (monitors.empty()) {
         for (auto& fileDir : fileDirs) {
@@ -107,34 +126,23 @@ public:
       if (loadNeeded) {
         ClearState();
         for (auto& fileDir : fileDirs) {
-          LoadFiles(GetPathsToLoad(fileDir));
+          LoadFiles(env, GetPathsToLoad(fileDir));
         }
       }
 
       HttpClientApi::GetHttpClient().ExecuteQueuedCallbacks(env);
 
       EventsApi::SendEvent("tick", {});
-    } catch (const std::exception& e) {
-      ExceptionPrinter::Print(e);
-    }
   }
 
-  void Update() override
+  void UpdateImpl(Napi::Env env)
   {
-    try {
-      auto engine = GetJsEngine();
-      auto env = engine->Env();
-
-      taskQueue.Update(env);
-      nativeCallRequirements.jsThrQ->Update(env);
-      jsPromiseTaskQueue.Update(env);
-      EventsApi::SendEvent("update", {});
-    } catch (const std::exception& e) {
-      ExceptionPrinter::Print(e);
-    }
+    taskQueue.Update(env);
+    nativeCallRequirements.jsThrQ->Update(env);
+    jsPromiseTaskQueue.Update(env);
+    EventsApi::SendEvent("update", {});
   }
 
-private:
   const std::vector<std::filesystem::path>& GetFileDirs() const
   {
     if (!pluginFolders) {
@@ -149,7 +157,7 @@ private:
     return *pluginFolders;
   }
 
-  void LoadFiles(const std::vector<std::filesystem::path>& pathsToLoad)
+  void LoadFiles(Napi::Env env, const std::vector<std::filesystem::path>& pathsToLoad)
   {
     for (auto& path : pathsToLoad) {
       // otherwise SkyrimPlatform tries to interpret
@@ -163,7 +171,7 @@ private:
         continue;
       }
       if (EndsWith(path.wstring(), L".js")) {
-        LoadPluginFile(path);
+        LoadPluginFile(env, path);
         continue;
       }
     }
@@ -182,10 +190,8 @@ private:
     settingsByPluginNameCache.reset();
   }
 
-  void LoadPluginFile(const std::filesystem::path& path)
+  void LoadPluginFile(Napi::Env env, const std::filesystem::path& path)
   {
-    auto engine = GetJsEngine();
-    auto env = engine->Env();
     auto scriptSrc = Viet::ReadFileIntoString(path);
 
     getSettings = [this](const Napi::CallbackInfo& info) -> Napi::Value {
@@ -211,23 +217,25 @@ private:
 
     DevApi::NativeExportsMap nativeExportsMap;
 
-    nativeExportsMap["skyrimPlatform"] = [this, engine](Napi::Object e) {
-      EncodingApi::Register(engine->Env(), e);
-      LoadGameApi::Register(engine->Env(), e);
-      CameraApi::Register(engine->Env(), e);
-      MpClientPluginApi::Register(engine->Env(), e);
-      HttpClientApi::Register(engine->Env(), e);
-      ConsoleApi::Register(engine->Env(), e);
-      DevApi::Register(engine->Env(), e, engine, {}, GetFileDirs());
-      EventsApi::Register(engine->Env(), e);
-      BrowserApi::Register(engine->Env(), e, browserApiState);
-      Win32Api::Register(engine->Env(), e);
-      FileInfoApi::Register(engine->Env(), e);
-      TextApi::Register(engine->Env(), e);
-      InventoryApi::Register(engine->Env(), e);
-      MagicApi::Register(engine->Env(), e);
-      ConstEnumApi::Register(engine->Env(), e, engine);
-      CallNativeApi::Register(engine->Env(), e,
+    nativeExportsMap["skyrimPlatform"] = [this](Napi::Object e) {
+      auto env = e.Env();
+      auto engine = GetJsEngine();
+      EncodingApi::Register(env, e);
+      LoadGameApi::Register(env, e);
+      CameraApi::Register(env, e);
+      MpClientPluginApi::Register(env, e);
+      HttpClientApi::Register(env, e);
+      ConsoleApi::Register(env, e);
+      DevApi::Register(env, e, {}, GetFileDirs());
+      EventsApi::Register(env, e);
+      BrowserApi::Register(env, e, browserApiState);
+      Win32Api::Register(env, e);
+      FileInfoApi::Register(env, e);
+      TextApi::Register(env, e);
+      InventoryApi::Register(env, e);
+      MagicApi::Register(env, e);
+      ConstEnumApi::Register(env, e);
+      CallNativeApi::Register(env, e,
                               [this] { return nativeCallRequirements; });
 
       auto getter = NapiHelper::WrapCppExceptions(getSettings);
@@ -241,7 +249,8 @@ private:
         e, [this] { return nativeCallRequirements; });
     };
 
-    DevApi::Register(env, devApi, engine, nativeExportsMap, GetFileDirs());
+    auto engine = GetJsEngine();
+    DevApi::Register(env, devApi, nativeExportsMap, GetFileDirs());
 
     Napi::Object consoleApi = Napi::Object::New(env);
     ConsoleApi::Register(env, consoleApi);
@@ -253,13 +262,13 @@ private:
     }
     env.Global().Set("log", consoleApi.Get("printConsole"));
 
-    engine->RunScript(Viet::ReadFileIntoString(
+    engine->RunScript(env, Viet::ReadFileIntoString(
                         std::filesystem::path("Data/Platform/Distribution") /
                         "___systemPolyfill.js"),
                       "___systemPolyfill.js");
-    engine->RunScript(
+    engine->RunScript(env,
       "skyrimPlatform = addNativeExports('skyrimPlatform', {})", "");
-    engine->RunScript(scriptSrc, path.filename().string()).ToString();
+    engine->RunScript(env, scriptSrc, path.filename().string()).ToString();
   }
 
   void ClearState()
@@ -273,13 +282,9 @@ private:
     settingsByPluginNameCache.reset();
   }
 
-  std::shared_ptr<JsEngine> GetJsEngine()
+  JsEngine *GetJsEngine()
   {
-    if (!engine_) {
-      engine_ = std::make_shared<JsEngine>();
-      engine_->ResetContext(jsPromiseTaskQueue);
-    }
-    return engine_;
+    return JsEngine::GetSingleton();
   }
 
   std::vector<std::filesystem::path> GetPathsToLoad(
@@ -296,7 +301,6 @@ private:
     return paths;
   }
 
-  std::shared_ptr<JsEngine> engine_;
   std::vector<std::shared_ptr<DirectoryMonitor>> monitors;
   uint32_t tickId = 0;
   Viet::TaskQueue<Napi::Env> taskQueue;
@@ -393,8 +397,7 @@ void SkyrimPlatform::PushAndWait(const std::function<void(Napi::Env)>& f)
 {
   pImpl->pool.PushAndWait([this, f] {
     auto engine = pImpl->commonExecutionListener->GetJsEngine();
-    auto env = engine->Env();
-    f(env);
+    engine->AcquireEnvAndCall(f);
   });
 }
 
@@ -402,8 +405,7 @@ void SkyrimPlatform::Push(const std::function<void(Napi::Env)>& f)
 {
   pImpl->pool.Push([this, f] {
     auto engine = pImpl->commonExecutionListener->GetJsEngine();
-    auto env = engine->Env();
-    f(env);
+    engine->AcquireEnvAndCall(f);
   });
 }
 

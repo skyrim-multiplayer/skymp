@@ -23,11 +23,9 @@ void DisableCtrlPrtScnHotkey();
 using NativeExportsMap =
   std::map<std::string, std::function<Napi::Object(const Napi::Object&)>>;
 
-extern std::shared_ptr<JsEngine> jsEngine;
 extern NativeExportsMap nativeExportsMap;
 
 inline void Register(Napi::Env env, Napi::Object& exports,
-                     std::shared_ptr<JsEngine> jsEngine,
                      NativeExportsMap nativeExportsMap,
                      const std::vector<std::filesystem::path>& builtScriptsDir)
 {
@@ -35,7 +33,6 @@ inline void Register(Napi::Env env, Napi::Object& exports,
   for (auto& p : nativeExportsMap) {
     DevApi::nativeExportsMap.insert(p);
   }
-  DevApi::jsEngine = jsEngine;
 
   exports.Set(
     "require",
