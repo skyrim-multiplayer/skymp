@@ -35,7 +35,8 @@ void JsEngine::AcquireEnvAndCall(const std::function<void(Napi::Env)>& f)
 Napi::Value JsEngine::RunScript(Napi::Env env, const std::string& src, const std::string&)
 {
   spdlog::info("JsEngine::RunScript()");
-  throw 1;
+
+  return NapiHelper::RunScript(env, src);
 }
 
 void JsEngine::ResetContext(Viet::TaskQueue<Napi::Env>&)
@@ -63,14 +64,67 @@ JsEngine::JsEngine() : pImpl(new Impl)
 
   if (initResult != 0)
   {
-    size_t errorLength = pImpl->nodeInstance->GetError(nullptr, 0);
-    std::vector<char> errorBuffer(errorLength);
-    pImpl->nodeInstance->GetError(errorBuffer.data(), errorLength);
-    std::string error(errorBuffer.data(), errorLength);
+    spdlog::error("JsEngine::JsEngine() - Failed to initialize NodeInstance: {}", GetError());
+    pImpl->nodeInstance.reset();
+    return;
+  }
+  
+  spdlog::info("JsEngine::JsEngine() - NodeInstance initialized");
 
-    spdlog::error("Failed to initialize NodeInstance: {}", error);
-    //throw std::runtime_error("Failed to initialize NodeInstance: " + error);
+  spdlog::info("JsEngine::JsEngine() - Creating environment");
+
+  int createEnvironmentResult = pImpl->nodeInstance->CreateEnvironment(pImpl->argc, pImpl->argv.data(), &pImpl->env);
+
+  if (createEnvironmentResult != 0)
+  {
+    spdlog::error("JsEngine::JsEngine() - Failed to create environment: {}", GetError());
+    pImpl->nodeInstance.reset();
+    return;
   }
 
-  spdlog::info("JsEngine::JsEngine() - NodeInstance initialized");
+  spdlog::info("JsEngine::JsEngine() - Environment created");
+
+  spdlog::info("JsEngine::JsEngine() - Executing script");
+
+  try {
+    int executeResult = pImpl->nodeInstance->ExecuteScript(pImpl->env, "try { require('node:process').dlopen('Data/Platform/Distribution/RuntimeDependencies/SkyrimPlatformImpl.dll'); } catch (e) {}");
+
+    if (executeResult != 0)
+    {
+      spdlog::error("JsEngine::JsEngine() - Failed to execute script: {}", GetError());
+      pImpl->nodeInstance.reset();
+      return;
+    }
+  }
+  catch (const std::exception& e)
+  {
+    spdlog::error("JsEngine::JsEngine() - Script exception: {}", e.what());
+    pImpl->nodeInstance.reset();
+    return;
+  }
+
+  spdlog::info("JsEngine::JsEngine() - Script executed");
+
+  spdlog::info("JsEngine::JsEngine() - Leave");
 }
+
+std::string JsEngine::GetError()
+{
+  size_t errorLength = pImpl->nodeInstance->GetError(nullptr, 0);
+  std::vector<char> errorBuffer(errorLength);
+  pImpl->nodeInstance->GetError(errorBuffer.data(), errorLength);
+  std::string error(errorBuffer.data(), errorLength);
+  return error;
+}
+
+#ifndef NAPI_CPP_EXCEPTIONS
+#  error NAPI_CPP_EXCEPTIONS must be defined or throwing from JS code would crash!
+#endif
+
+Napi::Object InitNativeAddon(Napi::Env env, Napi::Object exports)
+{
+  spdlog::info("InitNativeAddon()");
+  return exports;
+}
+
+NODE_API_MODULE(skyrim_platform, InitNativeAddon)

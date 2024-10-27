@@ -214,12 +214,28 @@ int NodeInstance::ExecuteScript(void* env, const char* script)
   Local<String> source = String::NewFromUtf8(isolate, script).ToLocalChecked();
   Local<Script> compiled_script;
 
+  // Use TryCatch to handle any exceptions that might occur
+  TryCatch try_catch(isolate);
+
   if (!Script::Compile(context, source).ToLocal(&compiled_script)) {
-    pImpl->error = "Compilation error";
+    String::Utf8Value error(isolate, try_catch.Exception());
+    pImpl->error = *error ? *error : "Unknown compilation error";
     return -1;
   }
 
-  compiled_script->Run(context); // Execute script
+  // Execute script and catch potential runtime exceptions
+  if (!compiled_script->Run(context).IsEmpty()) {
+    Local<Value> result;
+    if (!compiled_script->Run(context).ToLocal(&result)) {
+      String::Utf8Value error(isolate, try_catch.Exception());
+      pImpl->error = *error ? *error : "Unknown runtime error";
+      return -1;
+    }
+  } else {
+    String::Utf8Value error(isolate, try_catch.Exception());
+    pImpl->error = *error ? *error : "Unknown runtime error";
+    return -1;
+  }
 
   pImpl->error = "Success";
   return 0;
