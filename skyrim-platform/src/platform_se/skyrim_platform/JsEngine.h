@@ -31,6 +31,8 @@ public:
 private:
   JsEngine();
 
+  std::string GetError();
+
   struct Impl;
   Impl* const pImpl;
 };
