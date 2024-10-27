@@ -1,6 +1,9 @@
 name: Deploy Gamemode
 
 on:
+  # repository_dispatch is not yet in use, but it's a good idea to have it
+  repository_dispatch:
+    types: [deploy_gamemode]
   workflow_dispatch:
     inputs:
       branch:
@@ -13,14 +16,41 @@ on:
         default: 'indev'
 
 jobs:
-  deploy:
+  deploy_gamemode:
     runs-on: ubuntu-latest
     steps:
+      - name: Set up workflow_dispatch inputs
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          echo "DEPLOY_BRANCH=${{ github.event.inputs.branch }}" >> $GITHUB_ENV
+
+      - name: Set up repository_dispatch inputs
+        if: github.event_name == 'repository_dispatch'
+        run: |
+          echo "Received Payload:"
+          echo "${{ github.event.client_payload.inputs.branch }}"
+          echo "DEPLOY_BRANCH=${{ github.event.client_payload.inputs.branch }}" >> $GITHUB_ENV
+
       - uses: actions/checkout@v4
         with:
           repository: skyrim-multiplayer/skymp5-gamemode
           token: ${{ secrets.SKYMP5_GAMEMODE_PAT }}
           fetch-depth: 0
+
+      - name: Gather PRs
+        uses: Pospelove/auto-merge-action@main
+        with:
+          path: ${{github.workspace}}
+          repositories: |
+            [
+              {
+                "owner": "skyrim-multiplayer",
+                "repo": "skymp5-gamemode",
+                "labels": ["merge-to:${{env.DEPLOY_BRANCH}}"],
+                "token": "${{ secrets.SKYMP5_GAMEMODE_PAT }}"
+              }
+            ]
+
       - run: yarn
       - run: yarn build
       - name: Rsync gamemode.js to the remote server
