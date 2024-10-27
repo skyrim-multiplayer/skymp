@@ -39,32 +39,40 @@ void JsEngine::AcquireEnvAndCall(const std::function<void(Napi::Env)>& f)
     return;
   }
 
-  pImpl->preparedFunction = f;
+  napi_env env = reinterpret_cast<napi_env>(pImpl->env);
+  Napi::Env cppEnv = Napi::Env(env);
 
-  pImpl->nodeInstance->ClearJavaScriptError();
+  f(cppEnv);
 
-  int executeScriptResult = pImpl->nodeInstance->ExecuteScript(pImpl->env, R"(
-    try {
-      skyrimPlatformNativeAddon.callPreparedFunction();
-    } catch (e) { 
-      reportError(e.toString())
-    }
-  )");
+  // pImpl->preparedFunction = f;
 
-  if (executeScriptResult != 0)
-  {
-    spdlog::error("JsEngine::AcquireEnvAndCall() - Failed to execute script: {}", GetError());
-    return;
-  }
+  // pImpl->nodeInstance->ClearJavaScriptError();
 
-  std::string javaScriptError = pImpl->nodeInstance->GetJavaScriptError();
-  pImpl->nodeInstance->ClearJavaScriptError();
+  // int executeScriptResult = pImpl->nodeInstance->ExecuteScript(pImpl->env, R"(
+  //   try {
+  //     skyrimPlatformNativeAddon.callPreparedFunction();
+  //   } catch (e) { 
+  //     reportError(e.toString())
+  //   }
+  // )");
 
-  if (!javaScriptError.empty())
-  {
-    spdlog::error("JsEngine::AcquireEnvAndCall() - JavaScript error: {}", javaScriptError);
-    return;
-  }
+  // if (executeScriptResult != 0)
+  // {
+  //   spdlog::error("JsEngine::AcquireEnvAndCall() - Failed to execute script: {}", GetError());
+  //   return;
+  // }
+
+  // std::string javaScriptError = pImpl->nodeInstance->GetJavaScriptError();
+  // pImpl->nodeInstance->ClearJavaScriptError();
+
+  // if (!javaScriptError.empty())
+  // {
+  //   spdlog::error("JsEngine::AcquireEnvAndCall() - JavaScript error: {}", javaScriptError);
+  //   return;
+  // }
+
+  
+  spdlog::info("JsEngine::AcquireEnvAndCall() - Leave");
 }
 
 Napi::Value JsEngine::RunScript(Napi::Env env, const std::string& src, const std::string&)
@@ -127,7 +135,7 @@ JsEngine::JsEngine() : pImpl(new Impl)
     try {
       const nodeProcess = require('node:process');
       const module = { exports: {} }; 
-      nodeProcess.dlopen(module, 'Data/Platform/Distribution/RuntimeDependencies/SkyrimPlatformImpl.dll');
+      //nodeProcess.dlopen(module, 'Data/Platform/Distribution/RuntimeDependencies/SkyrimPlatformImpl.dll');
       //globalThis.skyrimPlatformNativeAddon = module.exports;
     } catch (e) { 
       reportError(e.toString())
@@ -184,7 +192,7 @@ Napi::Object InitNativeAddon(Napi::Env env, Napi::Object exports)
 {
   spdlog::info("InitNativeAddon() - env {}", reinterpret_cast<uint64_t>(static_cast<napi_env>(env)));
 
-  Napi::Number::New(env, 0);
+  //Napi::Number::New(env, 0);
   //exports.Set("callPreparedFunction", Napi::Number::New(env, 0));
   //exports.Set("callPreparedFunction", Napi::Function::New(env, NapiHelper::WrapCppExceptions(CallPreparedFunction)));
   return exports;
