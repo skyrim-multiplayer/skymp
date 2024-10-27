@@ -86,19 +86,11 @@ JsEngine::JsEngine() : pImpl(new Impl)
 
   spdlog::info("JsEngine::JsEngine() - Executing script");
 
-  try {
-    int executeResult = pImpl->nodeInstance->ExecuteScript(pImpl->env, "try { require('node:process').dlopen('Data/Platform/Distribution/RuntimeDependencies/SkyrimPlatformImpl.dll'); } catch (e) {}");
+  int executeResult = pImpl->nodeInstance->ExecuteScript(pImpl->env, "throw new Error('Hello from Node.js!');");
 
-    if (executeResult != 0)
-    {
-      spdlog::error("JsEngine::JsEngine() - Failed to execute script: {}", GetError());
-      pImpl->nodeInstance.reset();
-      return;
-    }
-  }
-  catch (const std::exception& e)
+  if (executeResult != 0)
   {
-    spdlog::error("JsEngine::JsEngine() - Script exception: {}", e.what());
+    spdlog::error("JsEngine::JsEngine() - Failed to execute script: {}", GetError());
     pImpl->nodeInstance.reset();
     return;
   }

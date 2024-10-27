@@ -87,6 +87,8 @@ int NodeInstance::CreateEnvironment(int argc, char** argv, void** outEnv)
     node::ArrayBufferAllocator::Create();
   isolate = NewIsolate(allocator, uv_default_loop(), pImpl->platform.get());
 
+  isolate->SetCaptureStackTraceForUncaughtExceptions(true);
+
   // register the isolate with the platform
   // platform->RegisterIsolate(isolate, uv_default_loop());
 
