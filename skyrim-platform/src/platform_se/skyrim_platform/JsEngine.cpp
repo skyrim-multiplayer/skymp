@@ -106,11 +106,12 @@ JsEngine::JsEngine() : pImpl(new Impl)
   pImpl->argv.push_back(pImpl->nodejsArgv0);
   pImpl->argc = pImpl->argv.size();
 
-  spdlog::info("JsEngine::JsEngine() - Enter, thread id {}", std::this_thread::get_id());
+  spdlog::info("JsEngine::JsEngine() - Enter");
   spdlog::info("JsEngine::JsEngine() - Initializing NodeInstance");
 
   pImpl->nodeInstance = std::make_unique<NodeInstance>();
   int initResult = pImpl->nodeInstance->Init(pImpl->argc, pImpl->argv.data());
+
 
   if (initResult != 0)
   {
@@ -142,8 +143,11 @@ JsEngine::JsEngine() : pImpl(new Impl)
     try {
       const nodeProcess = require('node:process');
       const module = { exports: {} };
-      require('./scam_native.node');
-      //nodeProcess.dlopen(module, 'Data/Platform/Distribution/RuntimeDependencies/SkyrimPlatformImpl.dll');
+      //require('./scam_native.node');
+      nodeProcess.dlopen(module, 'Data/Platform/Distribution/RuntimeDependencies/SkyrimPlatformImpl.dll');
+
+      module.exports.helloAddon();
+
       //globalThis.skyrimPlatformNativeAddon = module.exports;
     } catch (e) { 
       reportError(e.toString())
@@ -196,13 +200,21 @@ Napi::Value CallPreparedFunction(const Napi::CallbackInfo& info)
   return info.Env().Undefined();
 }
 
+Napi::Value HelloAddon(const Napi::CallbackInfo& info)
+{
+  spdlog::info("HelloAddon()");
+
+  return Napi::String::New(info.Env(), "Hello!");
+}
+
 Napi::Object InitNativeAddon(Napi::Env env, Napi::Object exports)
 {
-  spdlog::info("InitNativeAddon() - env {}", reinterpret_cast<uint64_t>(static_cast<napi_env>(env)));
+  spdlog::info("InitNativeAddon() - env {:x}", reinterpret_cast<uint64_t>(static_cast<napi_env>(env)));
 
-  //Napi::Number::New(env, 0);
+  Napi::Number::New(env, 0);
   //exports.Set("callPreparedFunction", Napi::Number::New(env, 0));
   //exports.Set("callPreparedFunction", Napi::Function::New(env, NapiHelper::WrapCppExceptions(CallPreparedFunction)));
+  exports.Set("helloAddon", Napi::Function::New(env, NapiHelper::WrapCppExceptions(HelloAddon)));
   return exports;
 }
 
