@@ -1,8 +1,21 @@
 // This is an incomplete test for an incomplete SP3 implementation
 
-// TODO(1): Implement typed return values for methods and static functions (e.g. `sp.Game.getFormEx` should return a `Form` object, not a plain object)
-// TODO(3): Implement 2 versions of method names: one with the SP-style/normalized naming convention (e.g. `getFormEx`) and one with the Papyrus naming convention (e.g. `GetFormEx`)
-// We can use TSConverter for this, see its sources in skyrim-platform
+// Replicates the behavior of the pretify function from TSConverter
+// Except it makes the first character lowercase by default
+function prettify(name) {
+    let func = ch => ch.toLowerCase();
+    let firstChar = func(name.charAt(0));
+    name = name.slice(1);
+
+    const lowerCaseName = name.toLowerCase();
+    const upperCaseName = name.toUpperCase();
+
+    if (name === lowerCaseName || name === upperCaseName) {
+        name = name.toLowerCase();
+    }
+
+    return firstChar + name;
+};
 
 function sortClassesByInheritance(classes, api) {
     let classesSorted = new Array;
@@ -53,19 +66,38 @@ function createSkyrimPlatform(api) {
 
         f.prototype.constructor = f;
 
-        methods.forEach(method => {
+        methods.concat(methods.map(prettify)).forEach(method => {
             // TODO(1):
-            // const impl = api._sp3GetFunctionImplementation(sp, className, method);
-            // f.prototype[method] = function () {
-            //   const resWithoutClass = impl(this, ...arguments);
-            // };
-
-            f.prototype[method] = api._sp3GetFunctionImplementation(sp, className, method);
+            const impl = api._sp3GetFunctionImplementation(sp, className, method);
+            f.prototype[method] = function () {
+                const resWithoutClass = impl.bind(this)(...arguments);
+                if (resWithoutClass === null || typeof resWithoutClass !== "object") {
+                    return resWithoutClass;
+                }
+                const _sp3ObjectType = resWithoutClass._sp3ObjectType;
+                const ctor = sp[_sp3ObjectType];
+                const implWithClass = new ctor();
+                implWithClass.type = resWithoutClass.type;
+                implWithClass.desc = resWithoutClass.desc;
+                return implWithClass;
+            };
         });
 
-        staticFunctions.forEach(staticFunction => {
-            // TODO(1):
-            f[staticFunction] = api._sp3GetFunctionImplementation(sp, className, staticFunction);
+        staticFunctions.concat(staticFunctions.map(prettify)).forEach(staticFunction => {
+
+            const impl = api._sp3GetFunctionImplementation(sp, className, staticFunction);
+            f[staticFunction] = function () {
+                const resWithoutClass = impl(...arguments);
+                if (resWithoutClass === null || typeof resWithoutClass !== "object") {
+                    return resWithoutClass;
+                }
+                const _sp3ObjectType = resWithoutClass._sp3ObjectType;
+                const ctor = sp[_sp3ObjectType];
+                const implWithClass = new ctor();
+                implWithClass.type = resWithoutClass.type;
+                implWithClass.desc = resWithoutClass.desc;
+                return implWithClass;
+            };
         });
 
         f["from"] = function (obj) {
@@ -100,18 +132,27 @@ const sp = createSkyrimPlatform(mp);
 //var createdId = mp.createActor(0, [0,0,0], 0, 0x3c);
 //console.log("createdId!", createdId);
 
-var form = sp.game.GetFormEx(4278190082);
+var form = sp.Game.getFormEx(4278190082);
 console.log("form!", form);
 form = { desc: "0", type: "form" };
 console.log("form!", form);
 
-var actor = sp.actor.from(form);
+var actor = sp.Actor.from(form);
 console.log("actor!", actor);
 
-sp.skymp.SetDefaultActor(actor);
-console.log("player!", sp.game.GetPlayer());
+sp.Skymp.setDefaultActor(actor);
+console.log("player!", sp.Game.GetPlayer());
 
-var pos = [sp.game.GetPlayer().GetPositionX()];
+
+var dead = [sp.Game.GetPlayer().isDead()];
+console.log({ dead })
+
+var pos = [sp.Game.GetPlayer().getPositionX()];
+console.log({ pos })
+
+sp.Game.getPlayer().setPosition(100, 200, 300);
+
+var pos = [sp.Game.GetPlayer().getPositionX()];
 console.log({ pos })
 
 process.exit(0);
