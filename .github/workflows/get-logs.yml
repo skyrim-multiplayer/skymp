@@ -14,10 +14,15 @@ on:
                     - 'indev'
                 default: 'indev'
             grep-arg:
-                description: 'Grep argument'
-                required: true
+                description: 'Filter (grep)'
+                required: false
                 type: string
                 default: ''
+            tail:
+                description: 'Num of lines to check (tail)'
+                required: true
+                type: string
+                default: '10000'
 
 jobs:
     get-logs:
@@ -28,6 +33,7 @@ jobs:
             run: |
               echo "DEPLOY_BRANCH=${{ github.event.inputs.branch }}" >> $GITHUB_ENV
               echo "GREP_ARG=${{ github.event.inputs.grep-arg }}" >> $GITHUB_ENV
+              echo "TAIL_ARG=${{ github.event.inputs.tail }}" >> $GITHUB_ENV
 
           - name: Set up repository_dispatch inputs
             if: github.event_name == 'repository_dispatch'
@@ -35,17 +41,18 @@ jobs:
               echo "Received Payload:"
               echo "${{ github.event.client_payload.inputs.branch }}"
               echo "${{ github.event.client_payload.inputs.grep-arg }}"
+              echo "${{ github.event.client_payload.inputs.tail }}"
 
               echo "DEPLOY_BRANCH=${{ github.event.client_payload.inputs.branch }}" >> $GITHUB_ENV
               echo "GREP_ARG=${{ github.event.client_payload.inputs.grep-arg }}" >> $GITHUB_ENV
+              echo "TAIL_ARG=${{ github.event.client_payload.inputs.tail }}" >> $GITHUB_ENV
 
-          - name: Checkout
+          - name: Checkout misc/deploy folder
             uses: actions/checkout@v4
             with:
-                submodules: recursive
-                fetch-depth: 0
+              fetch-depth: 1
 
-          - name: Deploy
+          - name: Get logs from server
             env:
                 DEPLOY_TARGET_HOST: ${{secrets.DEPLOY_TARGET_HOST_06_2024}}
                 DEPLOY_TARGET_USER: ${{secrets.DEPLOY_TARGET_USER_06_2024}}
