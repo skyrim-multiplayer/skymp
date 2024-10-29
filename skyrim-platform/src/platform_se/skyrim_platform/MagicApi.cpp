@@ -57,15 +57,16 @@ JsValue MagicApi::CastSpellImmediate(const JsFunctionArguments& args)
   const auto spellFormId =
     static_cast<RE::FormID>(static_cast<double>(args[3]));
 
-  const auto magicTarget = RE::TESForm::LookupByID<RE::TESObjectREFR>(
-    static_cast<uint32_t>(static_cast<double>(args[4])));
+  const auto magicTargetFormId =
+    static_cast<uint32_t>(static_cast<double>(args[4]));
 
   const auto aimAngle = static_cast<float>(static_cast<double>(args[5]));
   const auto aimHeading = static_cast<float>(static_cast<double>(args[6]));
   const RE::Projectile::ProjectileRot projectileAngles{ aimAngle, aimHeading };
 
   g_nativeCallRequirements.gameThrQ->AddTask(
-    [spellFormId, actorFormId, castingSource, magicTarget, projectileAngles,
+    [spellFormId, actorFormId, castingSource, magicTargetFormId,
+     projectileAngles,
 
      animVars =
        skymp::magic::details::GetAnimationVariablesFromJSArg(args[7])]() {
@@ -101,6 +102,9 @@ JsValue MagicApi::CastSpellImmediate(const JsFunctionArguments& args)
         return;
       }
 
+      auto* magicTarget =
+        RE::TESForm::LookupByID<RE::TESObjectREFR>(magicTargetFormId);
+
       if (pSpell->GetCastingType() ==
           RE::MagicSystem::CastingType::kConcentration) {
 
@@ -126,22 +130,10 @@ JsValue MagicApi::CastSpellImmediate(const JsFunctionArguments& args)
       if (pSpell->data.delivery ==
           RE::MagicSystem::Delivery::kTargetLocation) {
         // TODO we need recalculate origin, cast ray from head to crosshair
-        // direction
-
-        // Maybe anything of this?
-        // pActor->GetLookingAtLocation();
-        // Or
-        // auto* crosshairPickData = RE::CrosshairPickData::GetSingleton();
-        // Or
-        /*const auto hud =
-          RE::UI::GetSingleton()->GetMenu<RE::HUDMenu>(RE::HUDMenu::MENU_NAME);
-
-        hud->UpdateCrosshairMagicTarget(true);*/
-        // Or
         auto viewDirection = pActor->Get3D2()->world.rotate.GetVectorY();
         viewDirection.Unitize();
         origin += viewDirection * 200.f;
-        origin.z = pActor->GetPositionZ();
+        origin.z = pActor->GetPositionZ() + 10.f;
       }
 
       RE::Projectile::LaunchData launchData(pActor, origin, projectileAngles,
