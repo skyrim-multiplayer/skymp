@@ -43,7 +43,7 @@ jobs:
             uses: actions/checkout@v4
             with:
               fetch-depth: 1
-              path: ./misc/deploy
+              filter: ./misc/deploy
 
           - name: Get logs from server
             env:
