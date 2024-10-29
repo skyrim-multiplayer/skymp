@@ -12,6 +12,7 @@ trap report_fail ERR
 echo "${DEPLOY_TARGET_HOST:?}" > /dev/null
 echo "${DEPLOY_TARGET_USER:?}" > /dev/null
 echo "${GREP_ARG:?}" > /dev/null
+echo "${TAIL_ARG:?}" > /dev/null
 echo "${DEPLOY_BRANCH:?}" > /dev/null
 echo "${DEPLOY_SSH_PRIVATE_KEY:?}" > /dev/null
 echo "${DEPLOY_SSH_KNOWN_HOSTS:?}" > /dev/null
@@ -39,4 +40,4 @@ remote_branch_dir="skymp-server-$DEPLOY_BRANCH"
 run_remote test -e "$remote_branch_dir" \
   || (echo "no branch on remote server" && exit 1)
 
-run_remote "bash -c 'docker logs --tail 100 \"$remote_branch_dir\" | grep \"$GREP_ARG\"'"
+run_remote "bash -c 'docker logs --tail $TAIL_ARG \"$remote_branch_dir\" | grep \"$GREP_ARG\"'"
