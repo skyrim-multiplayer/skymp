@@ -198,10 +198,24 @@ float TES5SpellDamageFormulaImpl::GetBaseSpellDamage() const
   const auto spellData =
     espm::GetData<espm::SPEL>(spellCastData.spell, espmProvider);
 
-  // TODO Write damage calculation
-  std::ignore = spellData;
+  float damage = 0.f;
 
-  return 0.f;
+  for (const auto& effect : spellData.effects) {
+
+    if (!effect.effectItem || effect.effectFormId == 0) {
+      continue;
+    }
+
+    auto magicEffect =
+      espm::GetData<espm::MGEF>(effect.effectFormId, espmProvider);
+
+    if (magicEffect.data.IsFlagSet(espm::MGEF::Flags::Hostile) &&
+        magicEffect.data.primaryAV == espm::ActorValue::Health) {
+
+      damage += effect.effectItem->magnitude;
+    }
+  }
+  return damage;
 }
 
 float TES5SpellDamageFormulaImpl::CalculateDamage() const
