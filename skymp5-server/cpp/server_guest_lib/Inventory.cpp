@@ -61,7 +61,7 @@ void Inventory::Entry::SetWorn(Inventory::Worn worn)
 
 bool Inventory::Entry::EqualExceptCount(const Inventory::Entry& other) const
 {
-  // GetWorm() instead of direct comparison because of possible false vs
+  // GetWorn() instead of direct comparison because of possible false vs
   // nullopt mismatch. Logically it should be the same
   return std::make_tuple(baseId, health, enchantmentId, maxCharge,
                          removeEnchantmentOnUnequip, chargePercent, name, soul,
