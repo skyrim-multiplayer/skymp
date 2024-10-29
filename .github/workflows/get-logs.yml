@@ -39,13 +39,13 @@ jobs:
               echo "DEPLOY_BRANCH=${{ github.event.client_payload.inputs.branch }}" >> $GITHUB_ENV
               echo "GREP_ARG=${{ github.event.client_payload.inputs.grep-arg }}" >> $GITHUB_ENV
 
-          - name: Checkout
+          - name: Checkout misc/deploy folder
             uses: actions/checkout@v4
             with:
-                submodules: recursive
-                fetch-depth: 0
+              fetch-depth: 1
+              path: misc/deploy
 
-          - name: Deploy
+          - name: Get logs from server
             env:
                 DEPLOY_TARGET_HOST: ${{secrets.DEPLOY_TARGET_HOST_06_2024}}
                 DEPLOY_TARGET_USER: ${{secrets.DEPLOY_TARGET_USER_06_2024}}
