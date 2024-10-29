@@ -39,4 +39,5 @@ remote_branch_dir="skymp-server-$DEPLOY_BRANCH"
 run_remote test -e "$remote_branch_dir" \
   || (echo "no branch on remote server" && exit 1)
 
-run_remote bash -c "docker logs --tail 100 $remote_branch_dir | grep $GREP_ARG"
+run_remote "bash -c 'docker logs --tail 100 \"$remote_branch_dir\" | grep \"$GREP_ARG\"'"
+
