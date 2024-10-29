@@ -11,7 +11,7 @@ trap report_fail ERR
 # Ensuring all required variables are set:
 echo "${DEPLOY_TARGET_HOST:?}" > /dev/null
 echo "${DEPLOY_TARGET_USER:?}" > /dev/null
-echo "${GREP_ARG:?}" > /dev/null
+echo "${GREP_ARG?}" > /dev/null # OK to be empty
 echo "${TAIL_ARG:?}" > /dev/null
 echo "${DEPLOY_BRANCH:?}" > /dev/null
 echo "${DEPLOY_SSH_PRIVATE_KEY:?}" > /dev/null
