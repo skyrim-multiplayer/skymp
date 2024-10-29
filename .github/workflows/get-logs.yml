@@ -14,12 +14,12 @@ on:
                     - 'indev'
                 default: 'indev'
             grep-arg:
-                description: 'Grep argument'
+                description: 'Filter (grep)'
                 required: false
                 type: string
                 default: ''
             tail:
-                description: 'Tail argument'
+                description: 'Num of lines to check (tail)'
                 required: true
                 type: string
                 default: '10000'

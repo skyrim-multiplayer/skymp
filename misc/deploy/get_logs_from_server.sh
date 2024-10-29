@@ -1,11 +1,5 @@
 #!/usr/bin/env bash
 
-report_fail() {
-  ./misc/deploy/call_webhook.sh "Something went wrong, please see GitHub logs for details"
-  exit 1
-}
-trap report_fail ERR
-
 # cheatsheet: https://stackoverflow.com/a/44606194
 # ? without : accepts empty string
 # Ensuring all required variables are set:
