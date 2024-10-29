@@ -15,7 +15,7 @@ on:
                 default: 'indev'
             grep-arg:
                 description: 'Grep argument'
-                required: true
+                required: false
                 type: string
                 default: ''
             tail:
