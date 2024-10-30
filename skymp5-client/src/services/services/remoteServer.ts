@@ -557,7 +557,11 @@ export class RemoteServer extends ClientListener {
                 ? {
                   name: msg.appearance.name,
                   raceId: msg.appearance.raceId,
+
+                  // TODO: In types, isFemale is under face, but in the reality SP expects it here. Fix required.
+                  // @ts-expect-error
                   isFemale: msg.appearance.isFemale,
+
                   face: {
                     hairColor: msg.appearance.hairColor,
                     bodySkinColor: msg.appearance.skinColor,
