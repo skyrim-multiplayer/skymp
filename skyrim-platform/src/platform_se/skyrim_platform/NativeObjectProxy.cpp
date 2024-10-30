@@ -91,7 +91,7 @@ void NativeObjectProxy::Attach(Napi::External<NativeObject>& obj,
     Napi::Object global = env.Global();
     Napi::Function proxyConstructor = global.Get("Proxy").As<Napi::Function>();
     Napi::Object proxy =
-      proxyConstructor.New({ env.Undefined(), proxyTarget, handler });
+      proxyConstructor.New({ proxyTarget, handler });
     classCache->prototype =
       std::make_shared<Napi::Reference<Napi::Object>>(Napi::Persistent(proxy));
   }

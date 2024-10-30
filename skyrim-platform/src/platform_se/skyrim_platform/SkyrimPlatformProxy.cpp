@@ -142,7 +142,7 @@ Napi::Object GetProxyForClass(
   Napi::Function proxyConstructor =
     NapiHelper::ExtractFunction(env.Global().Get("Proxy"), "Proxy");
   Napi::Object proxyObject = NapiHelper::ExtractObject(
-    proxyConstructor.Call({ skyrimPlatformExports, handler }), "proxyObject");
+    proxyConstructor.New({ skyrimPlatformExports, handler }), "proxyObject");
   return proxyObject;
 }
 }
@@ -182,7 +182,6 @@ Napi::Object SkyrimPlatformProxy::Attach(
 
   Napi::Function proxyConstructor =
     NapiHelper::ExtractFunction(env.Global().Get("Proxy"), "Proxy");
-  Napi::Object proxyObject = NapiHelper::ExtractObject(
-    proxyConstructor.Call({ skyrimPlatformExports, handler }), "proxyObject");
+  Napi::Object proxyObject = proxyConstructor.New({ skyrimPlatformExports, handler });
   return proxyObject;
 }
