@@ -13,6 +13,7 @@
 #include "formulas/SweetPieDamageFormula.h"
 #include "formulas/TES5DamageFormula.h"
 #include "libespm/IterateFields.h"
+#include "papyrus-vm/Utils.h"
 #include "property_bindings/PropertyBindingFactory.h"
 #include "save_storages/SaveStorageFactory.h"
 #include "script_objects/EspmGameObject.h"
@@ -1347,9 +1348,10 @@ Napi::Value ScampServer::SP3ListStaticFunctions(const Napi::CallbackInfo& info)
     auto staticFunctions =
       partOne->worldState.GetPapyrusVm().ListStaticFunctions(className.data());
     auto result = Napi::Array::New(info.Env(), staticFunctions.size());
+    size_t i = 0;
     for (auto& staticFunction : staticFunctions) {
-      result.Set(result.Length(),
-                 Napi::String::New(info.Env(), staticFunction.data()));
+      result.Set(i, Napi::String::New(info.Env(), staticFunction.data()));
+      ++i;
     }
     return result;
   } catch (std::exception& e) {
@@ -1364,9 +1366,10 @@ Napi::Value ScampServer::SP3ListMethods(const Napi::CallbackInfo& info)
     auto methods =
       partOne->worldState.GetPapyrusVm().ListMethods(className.data());
     auto result = Napi::Array::New(info.Env(), methods.size());
+    size_t i = 0;
     for (auto& method : methods) {
-      result.Set(result.Length(),
-                 Napi::String::New(info.Env(), method.data()));
+      result.Set(i, Napi::String::New(info.Env(), method.data()));
+      ++i;
     }
     return result;
   } catch (std::exception& e) {
@@ -1378,13 +1381,8 @@ Napi::Value ScampServer::SP3GetFunctionImplementation(
   const Napi::CallbackInfo& info)
 {
   try {
-    // auto classes = NapiHelper::ExtractObject(info[0], "classes");
     auto className = NapiHelper::ExtractString(info[1], "className");
     auto functionName = NapiHelper::ExtractString(info[2], "functionName");
-
-    // std::shared_ptr<Napi::Reference<Napi::Object>> classesPersistentRef(
-    //   new Napi::Reference<Napi::Object>(
-    //     Napi::Persistent<Napi::Object>(classes)));
 
     NativeFunction functionImplementationStatic, functionImplementationMethod;
 
@@ -1406,11 +1404,17 @@ Napi::Value ScampServer::SP3GetFunctionImplementation(
                      functionImplementationMethod,
                      this](const Napi::CallbackInfo& info) -> Napi::Value {
       try {
-        auto jsThis = info.Env().Undefined(); // info.This();
+        Napi::Value jsThis = info.This();
+
+        // Hack to detect that this arg refers to class not to an object, so
+        // it's a static call
+        if (jsThis.IsObject()) {
+          if (jsThis.As<Napi::Object>().Get("desc").IsUndefined()) {
+            jsThis = info.Env().Undefined();
+          }
+        }
 
         std::vector<VarValue> args;
-
-        // spdlog::info("1");
 
         for (size_t i = 0; i < info.Length(); ++i) {
           auto arg = PapyrusUtils::GetPapyrusValueFromJsValue(
@@ -1418,30 +1422,53 @@ Napi::Value ScampServer::SP3GetFunctionImplementation(
           args.push_back(arg);
         }
 
-        // spdlog::info("2");
-
         VarValue self = jsThis.IsUndefined()
           ? VarValue::None()
           : PapyrusUtils::GetPapyrusValueFromJsValue(jsThis, false,
                                                      partOne->worldState);
-
-        // spdlog::info("3");
 
         int callType = jsThis.IsUndefined() ? 'glob' : 'meth';
 
         VarValue res = CallPapyrusFunctionImpl(partOne, callType, className,
                                                functionName, self, args);
 
-        // spdlog::info("4");
-
         auto jsRes = PapyrusUtils::GetJsValueFromPapyrusValue(
           info.Env(), res, partOne->worldState.espmFiles);
 
         if (jsRes.IsObject()) {
-          jsRes.As<Napi::Object>().Set("_sp3ObjectType", res.objectType);
-        }
 
-        // spdlog::info("5");
+          PexScript::Lazy pexScriptLazy =
+            partOne->worldState.GetPapyrusVm().GetPexByName(className.data());
+
+          if (pexScriptLazy.fn) {
+            std::shared_ptr<PexScript> pexScript = pexScriptLazy.fn();
+
+            if (pexScript) {
+              auto& obj = pexScript->objectTable.at(0);
+              auto& states = obj.states;
+              auto& autoStateName = obj.autoStateName;
+              auto stateIt = std::find_if(states.begin(), states.end(),
+                                          [&](const auto& state) {
+                                            return state.name == autoStateName;
+                                          });
+              if (stateIt != states.end()) {
+                auto& state = *stateIt;
+                auto& functions = state.functions;
+                auto functionIt = std::find_if(
+                  functions.begin(), functions.end(),
+                  [&](const auto& function) {
+                    return Utils::stricmp(function.name.data(),
+                                          functionName.data()) == 0;
+                  });
+                if (functionIt != functions.end()) {
+                  auto& function = functionIt->function;
+                  jsRes.As<Napi::Object>().Set("_sp3ObjectType",
+                                               function.returnType);
+                }
+              }
+            }
+          }
+        }
 
         return jsRes;
       } catch (std::exception& e) {

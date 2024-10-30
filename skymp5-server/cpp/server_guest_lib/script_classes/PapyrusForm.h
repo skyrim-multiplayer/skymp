@@ -5,7 +5,7 @@
 class PapyrusForm final : public IPapyrusClass<PapyrusForm>
 {
 public:
-  const char* GetName() override { return "form"; }
+  const char* GetName() override { return "Form"; }
 
   VarValue RegisterForSingleUpdate(VarValue self,
                                    const std::vector<VarValue>& arguments);

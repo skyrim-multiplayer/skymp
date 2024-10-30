@@ -1174,10 +1174,11 @@ void ActionListener::OnSpellCast(const RawMessageData& rawMsgData,
 
   targetActorPtr->NetSetPercentages(targetActorValues, caster);
 
-  spdlog::info("Target {0:x} is hitted by {1:x} spell. By caster: {2:x}, "
-               "from castingSource : {3})",
-               spellCastData.target, spellCastData.spell, spellCastData.caster,
-               static_cast<uint32_t>(spellCastData.castingSource));
+  spdlog::info(
+    "Target {0:x} is hitted by {1:x} spell on {2} damage. By caster: {3:x}, "
+    "from castingSource : {4})",
+    spellCastData.target, spellCastData.spell, damage, spellCastData.caster,
+    static_cast<uint32_t>(spellCastData.castingSource));
 }
 
 void ActionListener::OnUnknown(const RawMessageData& rawMsgData)

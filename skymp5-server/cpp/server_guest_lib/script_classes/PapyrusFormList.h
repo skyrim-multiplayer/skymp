@@ -4,7 +4,7 @@
 class PapyrusFormList final : public IPapyrusClass<PapyrusFormList>
 {
 public:
-  const char* GetName() override { return "formlist"; }
+  const char* GetName() override { return "FormList"; }
 
   VarValue GetSize(VarValue self, const std::vector<VarValue>& arguments);
   VarValue GetAt(VarValue self, const std::vector<VarValue>& arguments);

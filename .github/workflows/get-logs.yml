@@ -1,0 +1,62 @@
+name: Get Server Logs
+
+on:    
+    repository_dispatch:
+        types: [get-logs]
+    workflow_dispatch:
+        inputs:
+            branch:
+                description: 'Branch, meaning server instance'
+                required: true
+                type: choice
+                options:
+                    - 'sweetpie'
+                    - 'indev'
+                default: 'indev'
+            grep-arg:
+                description: 'Filter (grep)'
+                required: false
+                type: string
+                default: ''
+            tail:
+                description: 'Num of lines to check (tail)'
+                required: true
+                type: string
+                default: '10000'
+
+jobs:
+    get-logs:
+        runs-on: ubuntu-latest
+        steps:
+          - name: Set up workflow_dispatch inputs
+            if: github.event_name == 'workflow_dispatch'
+            run: |
+              echo "DEPLOY_BRANCH=${{ github.event.inputs.branch }}" >> $GITHUB_ENV
+              echo "GREP_ARG=${{ github.event.inputs.grep-arg }}" >> $GITHUB_ENV
+              echo "TAIL_ARG=${{ github.event.inputs.tail }}" >> $GITHUB_ENV
+
+          - name: Set up repository_dispatch inputs
+            if: github.event_name == 'repository_dispatch'
+            run: |
+              echo "Received Payload:"
+              echo "${{ github.event.client_payload.inputs.branch }}"
+              echo "${{ github.event.client_payload.inputs.grep-arg }}"
+              echo "${{ github.event.client_payload.inputs.tail }}"
+
+              echo "DEPLOY_BRANCH=${{ github.event.client_payload.inputs.branch }}" >> $GITHUB_ENV
+              echo "GREP_ARG=${{ github.event.client_payload.inputs.grep-arg }}" >> $GITHUB_ENV
+              echo "TAIL_ARG=${{ github.event.client_payload.inputs.tail }}" >> $GITHUB_ENV
+
+          - name: Checkout misc/deploy folder
+            uses: actions/checkout@v4
+            with:
+              fetch-depth: 1
+
+          - name: Get logs from server
+            env:
+                DEPLOY_TARGET_HOST: ${{secrets.DEPLOY_TARGET_HOST_06_2024}}
+                DEPLOY_TARGET_USER: ${{secrets.DEPLOY_TARGET_USER_06_2024}}
+                DEPLOY_SSH_PRIVATE_KEY: ${{secrets.DEPLOY_SSH_PRIVATE_KEY_06_2024}}
+                DEPLOY_SSH_KNOWN_HOSTS: ${{secrets.DEPLOY_SSH_KNOWN_HOSTS_06_2024}}
+            run: |
+                ./misc/deploy/get_logs_from_server.sh

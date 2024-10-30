@@ -5,7 +5,7 @@
 class PapyrusPotion final : public IPapyrusClass<PapyrusPotion>
 {
 public:
-  const char* GetName() override { return "potion"; }
+  const char* GetName() override { return "Potion"; }
 
   VarValue IsFood(VarValue self, const std::vector<VarValue>& arguments);
 

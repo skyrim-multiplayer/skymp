@@ -1541,7 +1541,7 @@ void MpActor::ApplyMagicEffect(espm::Effects::Effect& effect, bool hasSweetpie,
     auto spells = ChangeForm().learnedSpells.GetLearnedSpells();
     for (auto spellId : spells) {
       auto spellData = espm::GetData<espm::SPEL>(spellId, worldState);
-      if (spellData.type == espm::SPEL::SpellType::Disease) {
+      if (spellData.spellItem->type == espm::SPEL::SpellType::Disease) {
         spdlog::trace("Curing disease {:x}", spellId);
         RemoveSpell(spellId);
       }

@@ -911,7 +911,8 @@ export class RemoteServer extends ClientListener {
 
       const spell = ac.getEquippedSpell(msg.data.castingSource);
       if (spell) {
-        castSpellImmediate(ac.getFormID(), msg.data.castingSource, spell.getFormID(), remoteIdToLocalId(msg.data.target), actorAnimationVariables);
+        castSpellImmediate(ac.getFormID(), msg.data.castingSource, spell.getFormID(), remoteIdToLocalId(msg.data.target),
+          msg.data.aimAngle, msg.data.aimHeading, actorAnimationVariables);
       }
     });
   }

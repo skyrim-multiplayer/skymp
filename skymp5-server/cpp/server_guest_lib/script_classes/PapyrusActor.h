@@ -6,7 +6,7 @@
 class PapyrusActor final : public IPapyrusClass<PapyrusActor>
 {
 public:
-  const char* GetName() override { return "actor"; }
+  const char* GetName() override { return "Actor"; }
 
   DEFINE_METHOD_SPSNIPPET(DrawWeapon);
   DEFINE_METHOD_SPSNIPPET(UnequipAll);
