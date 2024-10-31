@@ -111,8 +111,8 @@ Napi::Value Sp3Api::SP3ListMethods(const Napi::CallbackInfo& info)
 
 Napi::Value Sp3Api::SP3GetFunctionImplementation(const Napi::CallbackInfo& info)
 {
-auto className = NapiHelper::ExtractString(info[1], "className");
-    auto functionName = NapiHelper::ExtractString(info[2], "functionName");
+  auto className = NapiHelper::ExtractString(info[1], "className");
+  auto functionName = NapiHelper::ExtractString(info[2], "functionName");
 
     // TODO: implement
   return info.Env().Undefined();
