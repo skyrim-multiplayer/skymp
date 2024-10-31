@@ -102,5 +102,5 @@ void NativeObjectProxy::Attach(Napi::External<NativeObject>& obj,
     standardObjectApi.Get("setPrototypeOf").As<Napi::Function>();
   setPrototypeOf.Call(
     standardObjectApi,
-    { standardObjectApi, obj, classCache->prototype->Value() });
+    { obj, classCache->prototype->Value() });
 }
