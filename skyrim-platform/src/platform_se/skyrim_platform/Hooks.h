@@ -1,4 +1,5 @@
 #pragma once
+#include <vector>
 
 namespace Hooks {
 
@@ -10,5 +11,7 @@ void write_thunk_call(std::uintptr_t a_src)
 }
 
 void Install();
+
+std::vector<RE::BSScript::IFunction *> GetBoundNatives();
 
 }
