@@ -37,10 +37,47 @@ void InstallOnConsoleVPrintHook()
   Hooks::write_thunk_call<OnConsoleVPrint>(Offsets::Hooks::VPrint.address());
 }
 
+// struct VirtualMachineHook 
+// {
+//     static void thunk(RE::BSScript::Internal::VirtualMachine* vm, void* a_f) {
+
+//       func(vm, a_f);
+//     }
+
+//     inline static decltype(&thunk) func{ nullptr };
+// };
+
+// void HookVirtualMachineBind() {
+//     REL::Relocation<std::uintptr_t> vtbl{ RE::BSScript::Internal::VirtualMachine::VTABLE[0] };
+
+
+//     //VirtualMachineHook::originalFunc = reinterpret_cast<decltype(VirtualMachineHook::Thunk)>(vtbl.read_vfunc(0x18));
+
+//     Hooks::write_vfunc<0x18, VirtualMachineHook>(vtbl);
+// }
+
+void BindNativeMethod(RE::BSScript::Internal::VirtualMachine* a_this, void *func);
+
+decltype(&BindNativeMethod) _BindNativeMethod;
+
+void HookVirtualMachineBind()
+{
+    spdlog::info("Hooking VirtualMachine::Bind");
+		REL::Relocation<std::uintptr_t> Vtbl{ RE::BSScript::Internal::VirtualMachine::VTABLE[0] };
+		_BindNativeMethod = reinterpret_cast<decltype(_BindNativeMethod)>(Vtbl.write_vfunc(0x18, BindNativeMethod));
+}
+
+void BindNativeMethod(RE::BSScript::Internal::VirtualMachine* a_this, void *func)
+{
+    spdlog::info("VirtualMachine::Bind called");
+		_BindNativeMethod(a_this, func);
+}
+
 void Hooks::Install()
 {
   // InstallOnFrameUpdateHook();
   InstallOnConsoleVPrintHook();
+  HookVirtualMachineBind();
 
   logger::info("CommonLib hooks installed.");
 }

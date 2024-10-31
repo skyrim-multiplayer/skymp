@@ -301,6 +301,61 @@ void InstallRenderCursorMenuHook()
     std::make_shared<Frida::Hook>(OnRenderCursorMenuEnter, nullptr));
 }
 
+// void OnFunctionRegistered(RE::BSScript::NativeFunction* func)
+// {
+//         // GetNativeFunctionAddr::Result result = GetNativeFunctionAddr::Run(*func);
+
+//         // auto offset = ((uint64_t)func->_callback) - ((uint64_t)REL::Module::get().base());
+
+//         const char *className = func->GetClassName()->data();
+//         const char *name = func->GetName()->data();
+
+//         // uint64_t returnType = ~0;
+//         // returnType = (uint64_t)func->GetReturnType(&returnType);
+//         // auto t = GetCppTypeName(returnType);
+
+//         // std::string params;
+//         // uint64_t numParams = func->GetNumParams();
+//         // for (uint64_t i = 0; i < numParams; i++) {
+//         //     RE::BSFixedString a_nameOut;
+//         //     uint64_t a_typeOut;
+//         //     a_typeOut = (uint64_t)func->GetParam(i, &a_nameOut, &a_typeOut);
+
+//         //     params += GetCppTypeName(a_typeOut);
+//         //     params += ' ';
+//         //     params += a_nameOut.data();
+//         //     if (i != numParams - 1) {
+//         //         params += ", ";
+//         //     }
+//         // }
+
+//         // file << std::hex << "static REL::Relocation<" << t << " (*)(" << params << ")> " << className << '_' << name << "{ REL::Offset(0x" << offset << ") };" << std::endl;
+// }
+
+void InstallNativeFunctionCtorHook() noexcept
+{
+        // using func_t = std::add_pointer_t<RE::BSScript::NativeFunction*(RE::BSScript::NativeFunction*, const char*, const char*, bool, std::uint32_t)>;
+        // REL::Relocation<func_t> nativeFunctionCtor{ REL::Offset(0x03076DE8) };
+
+        // struct State
+        // {
+        //     uint64_t thisarg = 0;
+        // };
+        // std::shared_ptr<State> state(new State);
+        // Frida::Hook            hook3{
+        //     [state](GumInvocationContext* context) {
+        //         auto self      = (RE::BSScript::NativeFunction*)context->cpu_context->rcx;
+        //         state->thisarg = (uint64_t)self;
+        //     },
+        //     [state](GumInvocationContext* context) {
+        //         auto self = (RE::BSScript::NativeFunction*)state->thisarg;
+        //         OnFunctionRegistered(self);
+        //     }
+        // };
+
+        // Frida::HookHandler::GetSingleton()->Install(Frida::HookID::NATIVE_FUNCTION_CTOR, nativeFunctionCtor.address(), std::make_shared<Frida::Hook>(hook3));
+}
+
 void Frida::InstallHooks()
 {
   InstallSendEventHook();
@@ -312,6 +367,7 @@ void Frida::InstallHooks()
 #ifndef SKYRIMSE
   InstallApplyMasksToRenderTargetsHook();
 #endif
+  InstallNativeFunctionCtorHook();
 
   logger::info("Frida hooks installed.");
 }
