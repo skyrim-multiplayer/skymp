@@ -36,9 +36,25 @@ Napi::Value Sp3Api::SP3GetBaseClass(const Napi::CallbackInfo& info)
 {
   auto className = NapiHelper::ExtractString(info[0], "className");
 
-  // TODO: implement
+  auto vm = RE::BSScript::Internal::VirtualMachine::GetSingleton();
+  RE::BSFixedString classNameBs(className.data());
 
-  return info.Env().Undefined();
+  RE::BSTSmartPointer<RE::BSScript::ObjectTypeInfo> outTypeInfoPtr;
+  bool success = vm->GetScriptObjectType1(classNameBs, outTypeInfoPtr);
+
+  std::string baseClassName;
+
+  RE::BSScript::ObjectTypeInfo* parent = nullptr;
+
+  if (success) {
+    parent = outTypeInfoPtr->GetParent();
+
+    if (parent) {
+      baseClassName = parent->GetName();
+    }
+  }
+
+  return Napi::String::New(info.Env(), baseClassName);
 }
 
 Napi::Value Sp3Api::SP3ListStaticFunctions(const Napi::CallbackInfo& info)
@@ -51,7 +67,7 @@ Napi::Value Sp3Api::SP3ListStaticFunctions(const Napi::CallbackInfo& info)
 
   for (auto func : boundNatives) {
     if (!stricmp(func->GetObjectTypeName().data(), className.data())) {
-      if (func->IsStatic()) {
+      if (func->GetIsStatic()) {
         staticFunctions.push_back(func->GetName().data());
       }
     }
@@ -77,7 +93,7 @@ Napi::Value Sp3Api::SP3ListMethods(const Napi::CallbackInfo& info)
 
   for (auto func : boundNatives) {
     if (!stricmp(func->GetObjectTypeName().data(), className.data())) {
-      if (!func->IsStatic()) {
+      if (!func->GetIsStatic()) {
         methods.push_back(func->GetName().data());
       }
     }
@@ -86,7 +102,7 @@ Napi::Value Sp3Api::SP3ListMethods(const Napi::CallbackInfo& info)
   Napi::Array result = Napi::Array::New(info.Env(), methods.size());
   uint32_t i = 0;
   for (const auto& method : methods) {
-    result.Set(i, Napi::String::New(info.Env(), staticFunction));
+    result.Set(i, Napi::String::New(info.Env(), method));
     i++;
   }
 
