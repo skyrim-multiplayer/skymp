@@ -21,6 +21,7 @@
 #include "TextApi.h"
 #include "ThreadPoolWrapper.h"
 #include "Win32Api.h"
+#include "Sp3Api.h"
 
 #include "NapiHelper.h"
 
@@ -237,6 +238,7 @@ private:
       ConstEnumApi::Register(env, e);
       CallNativeApi::Register(env, e,
                               [this] { return nativeCallRequirements; });
+      Sp3Api::Register(env, e);
 
       auto getter = NapiHelper::WrapCppExceptions(getSettings);
       auto setter = NapiHelper::WrapCppExceptions(setSettings);
