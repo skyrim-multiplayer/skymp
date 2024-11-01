@@ -130,7 +130,7 @@ function createSkyrimPlatform(api) {
 
             const impl = api._sp3GetFunctionImplementation(sp, className, staticFunction);
             f[staticFunction] = function () {
-                verifyTickIds(api, Array.from(arguments), spPrivate, className, method);
+                verifyTickIds(api, Array.from(arguments), spPrivate, className, staticFunction);
                 const resWithoutClass = impl(...arguments);
                 if (resWithoutClass === null || typeof resWithoutClass !== "object") {
                     return resWithoutClass;
@@ -154,7 +154,7 @@ function createSkyrimPlatform(api) {
                 spPrivate.isCtorEnabled = false;
                 resWithClass.type = obj.type;
                 resWithClass.desc = obj.desc;
-                return res;
+                return resWithClass;
             }
             return null;
         }
