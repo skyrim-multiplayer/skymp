@@ -46,30 +46,27 @@ GetAnimationVariablesFromJSArg(const Napi::Object& argObj)
 
 } // namespace skymp::magic::details
 
-JsValue MagicApi::CastSpellImmediate(const JsFunctionArguments& args)
+Napi::Value MagicApi::CastSpellImmediate(const Napi::CallbackInfo& info)
 {
-  const auto actorFormId =
-    static_cast<RE::FormID>(static_cast<double>(args[1]));
+  const auto actorFormId = NapiHelper::ExtractUInt32(info[0], "actorCasterFormId");
 
-  const auto castingSource =
-    static_cast<RE::MagicSystem::CastingSource>(static_cast<int>(args[2]));
+  const auto castingSource = static_cast<RE::MagicSystem::CastingSource>(
+    NapiHelper::ExtractInt32(info[1], "castingSource"));
 
-  const auto spellFormId =
-    static_cast<RE::FormID>(static_cast<double>(args[3]));
+  const auto spellFormId = NapiHelper::ExtractUInt32(info[2], "formIdSpell");
 
-  const auto magicTargetFormId =
-    static_cast<uint32_t>(static_cast<double>(args[4]));
+  const auto magicTargetFormId = NapiHelper::ExtractUInt32(info[3], "formIdTarget");
 
-  const auto aimAngle = static_cast<float>(static_cast<double>(args[5]));
-  const auto aimHeading = static_cast<float>(static_cast<double>(args[6]));
+  const auto aimAngle = NapiHelper::ExtractFloat(info[4], "aimAngle");
+  const auto aimHeading = NapiHelper::ExtractFloat(info[5], "aimHeading");
   const RE::Projectile::ProjectileRot projectileAngles{ aimAngle, aimHeading };
 
   g_nativeCallRequirements.gameThrQ->AddTask(
     [spellFormId, actorFormId, castingSource, magicTargetFormId,
      projectileAngles,
 
-     animVars =
-       skymp::magic::details::GetAnimationVariablesFromJSArg(args[7])]() {
+      animVars = skymp::magic::details::GetAnimationVariablesFromJSArg(
+       NapiHelper::ExtractObject(info[6], "animationVariables"))]() {
       auto* pSpell = RE::TESForm::LookupByID<RE::SpellItem>(spellFormId);
 
       auto* pActor = RE::TESForm::LookupByID<RE::Actor>(actorFormId);
@@ -146,7 +143,7 @@ JsValue MagicApi::CastSpellImmediate(const JsFunctionArguments& args)
       RE::Projectile::Launch(&pProjectile, launchData);
     });
 
-  return JsValue::Undefined();
+  return info.Env().Undefined();
 }
 
 Napi::Value MagicApi::InterruptCast(const Napi::CallbackInfo& info)
