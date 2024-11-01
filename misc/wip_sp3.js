@@ -41,13 +41,38 @@ function sortClassesByInheritance(classes, api) {
     return classesSorted;
 }
 
-function createSkyrimPlatform(api) {
+// While SP3 backend is trusted, it's better to be safe than sorry
+function sanitizeClassNameBeforeEval(className) {
+    const alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-";
 
-    let sp = {};
+    const needThrowSecurityError = className.split("").some(ch => !alphabet.includes(ch));
+
+    if (needThrowSecurityError) {
+        const classNameBase64 = Buffer.from(className).toString("base64");
+        throw new Error("sanitizeClassNameBeforeEval - Invalid class name (base64-encoded): " + classNameBase64);
+    }
+}
+
+// for each argument if creeationTickId is set, verify it's the same as the current tick id
+// if not, throw an error
+function verifyTickIds(api, args, spPrivate, className, functionName) {
+    const creationTickIds = args.map(arg => spPrivate.creationTickIds.get(arg)).filter(Boolean);
+    const currentTickId = api._sp3GetCurrentTickId();
+    if (creationTickIds.some(creationTickId => creationTickId !== currentTickId)) {
+        throw new Error(`An expired object passed to ${className}.${functionName}`);
+    }
+}
+
+function createSkyrimPlatform(api) {
+    const sp = {};
+    const spPrivate = {
+        isCtorEnabled: false,
+        creationTickIds: new WeakMap()
+    };
 
     //console.log(api.get)
 
-    let classes = sortClassesByInheritance(api._sp3ListClasses(), api);
+    const classes = sortClassesByInheritance(api._sp3ListClasses(), api);
 
     console.log({ classes })
 
@@ -58,7 +83,21 @@ function createSkyrimPlatform(api) {
 
         console.log({ className, baseClassName, staticFunctions, methods: JSON.stringify(methods) })
 
-        const f = eval(`(function ${className}() {})`);
+        sanitizeClassNameBeforeEval(className);
+
+        const onConstruct = (resWithClass) => {
+            if (!spPrivate.isCtorEnabled) {
+                throw new Error(`Direct construction of ${className} is not allowed`);
+            }
+
+            spPrivate.creationTickIds.set(resWithClass, api._sp3GetCurrentTickId());
+        };
+
+        const f = eval(`
+            (function ${className}() {
+              onConstruct(this);  
+            })
+          `);
 
         if (baseClassName !== "") {
             f.prototype = Object.create(sp[baseClassName].prototype);
@@ -70,16 +109,20 @@ function createSkyrimPlatform(api) {
             // TODO(1):
             const impl = api._sp3GetFunctionImplementation(sp, className, method);
             f.prototype[method] = function () {
+                verifyTickIds(api, Array.from(arguments), spPrivate, className, method);
+
                 const resWithoutClass = impl.bind(this)(...arguments);
                 if (resWithoutClass === null || typeof resWithoutClass !== "object") {
                     return resWithoutClass;
                 }
                 const _sp3ObjectType = resWithoutClass._sp3ObjectType;
                 const ctor = sp[_sp3ObjectType];
-                const implWithClass = new ctor();
-                implWithClass.type = resWithoutClass.type;
-                implWithClass.desc = resWithoutClass.desc;
-                return implWithClass;
+                spPrivate.isCtorEnabled = true;
+                const resWithClass = new ctor();
+                spPrivate.isCtorEnabled = false;
+                resWithClass.type = resWithoutClass.type;
+                resWithClass.desc = resWithoutClass.desc;
+                return resWithClass;
             };
         });
 
@@ -87,23 +130,30 @@ function createSkyrimPlatform(api) {
 
             const impl = api._sp3GetFunctionImplementation(sp, className, staticFunction);
             f[staticFunction] = function () {
+                verifyTickIds(api, Array.from(arguments), spPrivate, className, method);
                 const resWithoutClass = impl(...arguments);
                 if (resWithoutClass === null || typeof resWithoutClass !== "object") {
                     return resWithoutClass;
                 }
                 const _sp3ObjectType = resWithoutClass._sp3ObjectType;
                 const ctor = sp[_sp3ObjectType];
-                const implWithClass = new ctor();
-                implWithClass.type = resWithoutClass.type;
-                implWithClass.desc = resWithoutClass.desc;
-                return implWithClass;
+                spPrivate.isCtorEnabled = true;
+                const resWithClass = new ctor();
+                spPrivate.isCtorEnabled = false;
+                resWithClass.type = resWithoutClass.type;
+                resWithClass.desc = resWithoutClass.desc;
+                return resWithClass;
             };
         });
 
         f["from"] = function (obj) {
+            verifyTickIds(api, [obj], spPrivate, className, "from");
             if (api._sp3DynamicCast(obj, className)) {
-                let res = new f();
-                Object.assign(res, obj);
+                spPrivate.isCtorEnabled = true;
+                const resWithClass = new f();
+                spPrivate.isCtorEnabled = false;
+                resWithClass.type = obj.type;
+                resWithClass.desc = obj.desc;
                 return res;
             }
             return null;
