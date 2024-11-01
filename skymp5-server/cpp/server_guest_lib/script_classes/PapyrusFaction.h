@@ -6,7 +6,7 @@
 class PapyrusFaction final : public IPapyrusClass<PapyrusFaction>
 {
 public:
-  const char* GetName() override { return "faction"; }
+  const char* GetName() override { return "Faction"; }
 
   VarValue GetReaction(VarValue self, const std::vector<VarValue>& arguments);
   // SetReaction ignored, because no way to edit factions forever?

@@ -93,7 +93,7 @@ export class MagicSyncService extends ClientListener {
 
     private getSpellCastEventData(e: SpellCastEvent, isInterruptCast: boolean): SpellCastMsgData {
         const spellCastData: SpellCastMsgData = {
-            caster: localIdToRemoteId(e.caster!.getFormID(), true),
+            caster: localIdToRemoteId(e.caster.getFormID(), true),
             // @ts-expect-error (TODO: Remove in 2.10.0)
             target: e.target ? localIdToRemoteId(e.target.getFormID(), true) : 0,
             spell: e.spell ? e.spell.getFormID() : 0,
@@ -102,7 +102,11 @@ export class MagicSyncService extends ClientListener {
             isDualCasting: e.isDualCasting,
             // @ts-expect-error (TODO: Remove in 2.10.0)
             castingSource: e.castingSource,
-            actorAnimationVariables: getAnimationVariablesFromActor(e.caster!.getFormID()),
+            // @ts-expect-error (TODO: Remove in 2.10.0)
+            aimAngle: e.aimAngle,
+            // @ts-expect-error (TODO: Remove in 2.10.0)
+            aimHeading: e.aimHeading,
+            actorAnimationVariables: getAnimationVariablesFromActor(e.caster.getFormID()),
         }
         return spellCastData;
     }
@@ -150,10 +154,9 @@ export class MagicSyncService extends ClientListener {
         const leftHandEquipmentType = ac.getEquippedItemType(SlotType.Left);
         const rightHandEquipmentType = ac.getEquippedItemType(SlotType.Right);
 
-        // @ts-expect-error (TODO: Remove in 2.10.0)
-        if (leftHandEquipmentType === EquippedItemType.SpellOrScroll || leftHandEquipmentType === EquippedItemType.Staff ||
-            // @ts-expect-error (TODO: Remove in 2.10.0)
-            rightHandEquipmentType === EquippedItemType.SpellOrScroll || rightHandEquipmentType === EquippedItemType.Staff) {
+        // TODO: Spell => SpellOrScroll, since Spell is now a deprecated name (TODO: Remove in 2.10.0)
+        if (leftHandEquipmentType === EquippedItemType.Spell || leftHandEquipmentType === EquippedItemType.Staff ||
+            rightHandEquipmentType === EquippedItemType.Spell || rightHandEquipmentType === EquippedItemType.Staff) {
             return true;
         }
 

@@ -4,7 +4,7 @@
 class PapyrusVisualEffect final : public IPapyrusClass<PapyrusVisualEffect>
 {
 public:
-  const char* GetName() override { return "visualeffect"; }
+  const char* GetName() override { return "VisualEffect"; }
   VarValue Play(VarValue self, const std::vector<VarValue>& arguments);
   VarValue Stop(VarValue self, const std::vector<VarValue>& arguments);
 
