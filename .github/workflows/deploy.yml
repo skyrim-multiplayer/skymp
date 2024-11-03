@@ -52,7 +52,7 @@ jobs:
               echo "DELAY=${{ github.event.client_payload.inputs.delay }}" >> $GITHUB_ENV
           - name: Check if sleep is needed
             id: check_sleep
-            uses: actions/github-script@v6
+            uses: actions/github-script@v7
             with:
                 script: |
                     const delay = parseFloat(process.env.DELAY || '0'); // Default to 0 if DELAY is not set
