@@ -51,13 +51,27 @@ jobs:
 
           - name: Sleep
             run: |
-                delay=${{env.DELAY}}
+                delay=${{ env.DELAY }}
                 if [ -z "$delay" ]; then
                     echo "No delay specified, defaulting to 0 hours"
                     delay=0
                 fi
                 echo "Sleeping for $delay hours"
-                sleep $((delay * 3600))
+      
+                total_seconds=$((delay * 3600))
+                interval=30
+      
+                while [ $total_seconds -gt 0 ]; do
+                    hours=$((total_seconds / 3600))
+                    minutes=$(((total_seconds % 3600) / 60))
+                    seconds=$((total_seconds % 60))
+                    echo "Time remaining: ${hours}h ${minutes}m ${seconds}s"
+                    sleep $interval
+                    total_seconds=$((total_seconds - interval))
+                done
+      
+                echo "Done sleeping"
+
     deploy:
         needs: sleep
         runs-on: ubuntu-latest
