@@ -59,8 +59,6 @@ jobs:
                     const shouldSleep = delay > 0;
                     console.log(`Delay is ${delay} hours. Should sleep: ${shouldSleep}`);
                     return { should_sleep: shouldSleep };
-            outputs:
-                should_sleep: ${{ steps.check_sleep.outputs.should_sleep }}
     sleep:
         # This is our self-hosted runner label to run the sleep job on
         runs-on: sleepy-runner
