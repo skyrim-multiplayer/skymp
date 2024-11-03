@@ -58,7 +58,7 @@ jobs:
                     const delay = parseFloat(process.env.DELAY || '0'); // Default to 0 if DELAY is not set
                     const shouldSleep = delay > 0;
                     console.log(`Delay is ${delay} hours. Should sleep: ${shouldSleep}`);
-                    return { should_sleep: shouldSleep };
+                    core.setOutput("should_sleep", shouldSleep);
     sleep:
         # This is our self-hosted runner label to run the sleep job on
         runs-on: sleepy-runner
