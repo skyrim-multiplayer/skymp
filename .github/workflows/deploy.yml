@@ -63,6 +63,7 @@ jobs:
         # This is our self-hosted runner label to run the sleep job on
         runs-on: sleepy-runner
         if: needs.check-if-sleep-needed.outputs.should_sleep == 'true'
+        needs: check-if-sleep-needed
         steps:
           - name: Set up workflow_dispatch inputs
             if: github.event_name == 'workflow_dispatch'
