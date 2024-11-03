@@ -58,8 +58,7 @@ jobs:
                 fi
                 echo "Sleeping for $delay hours"
       
-                # total_seconds=$((delay * 3600))
-                total_seconds=60
+                total_seconds=$((delay * 3600))
                 interval=30
       
                 while [ $total_seconds -gt 0 ]; do
