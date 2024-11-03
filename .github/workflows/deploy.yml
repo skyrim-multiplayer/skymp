@@ -22,13 +22,24 @@ on:
                     - 'sweetpie'
                     - 'indev'
                 default: 'indev'
+            delay:
+                description: 'Delay before action in hours'
+                required: false
+                type: number
+                default: 0
 
 env:
     BUILD_TYPE: RelWithDebInfo
     GAMEMODE_GITHUB_TOKEN: ${{secrets.GAMEMODE_GITHUB_TOKEN}}
 
 jobs:
+    sleep:
+        runs-on: ubuntu-latest
+        steps:
+          - name: Sleep
+            run: sleep ${{ github.event.inputs.delay * 3600 }}
     deploy:
+        needs: sleep
         runs-on: ubuntu-latest
         steps:
           - name: Set up workflow_dispatch inputs
