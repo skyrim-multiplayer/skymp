@@ -36,8 +36,28 @@ jobs:
     sleep:
         runs-on: ubuntu-latest
         steps:
+          - name: Set up workflow_dispatch inputs
+            if: github.event_name == 'workflow_dispatch'
+            run: |
+              echo "DELAY=${{ github.event.inputs.delay }}" >> $GITHUB_ENV
+
+          - name: Set up repository_dispatch inputs
+            if: github.event_name == 'repository_dispatch'
+            run: |
+              echo "Received Payload:"
+              echo "${{ github.event.client_payload.inputs.delay }}"
+
+              echo "DELAY=${{ github.event.client_payload.inputs.delay }}" >> $GITHUB_ENV
+
           - name: Sleep
-            run: sleep ${{ github.event.inputs.delay * 3600 }}
+            run: |
+                delay=${{env.DELAY}}
+                if [ -z "$delay" ]; then
+                    echo "No delay specified, defaulting to 0 hours"
+                    delay=0
+                fi
+                echo "Sleeping for $delay hours"
+                sleep $((delay * 3600))
     deploy:
         needs: sleep
         runs-on: ubuntu-latest
