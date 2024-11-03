@@ -34,7 +34,7 @@ env:
 
 jobs:
     sleep:
-        runs-on: ubuntu-latest
+        runs-on: sleepy-runner
         steps:
           - name: Set up workflow_dispatch inputs
             if: github.event_name == 'workflow_dispatch'
