@@ -49,29 +49,32 @@ jobs:
 
               echo "DELAY=${{ github.event.client_payload.inputs.delay }}" >> $GITHUB_ENV
 
-          # using bc in this step to support decimal hour values like 0.1, 0.5, etc.
           - name: Sleep
-            run: |
-                delay=${{ env.DELAY }}
-                if [ -z "$delay" ]; then
-                    echo "No delay specified, defaulting to 0 hours"
-                    delay=0
-                fi
-                echo "Sleeping for $delay hours"
-      
-                total_seconds=$(echo "$delay * 3600" | bc)
-                interval=30
-      
-                while (( $(echo "$total_seconds > 0" | bc -l) )); do
-                    hours=$(echo "$total_seconds / 3600" | bc)
-                    minutes=$(echo "($total_seconds % 3600) / 60" | bc)
-                    seconds=$(echo "$total_seconds % 60" | bc)
-                    echo "Time remaining: ${hours}h ${minutes}m ${seconds}s"
-                    sleep $interval
-                    total_seconds=$(echo "$total_seconds - $interval" | bc)
-                done
-      
-                echo "Done sleeping"
+            uses: actions/github-script@v6
+            with:
+                script: |
+                    const delay = process.env.DELAY || 0; // default to 0 if DELAY is not specified
+                    console.log(`Sleeping for ${delay} hours`);
+
+                    let totalSeconds = parseFloat(delay) * 3600;
+                    const interval = 30;
+
+                    const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms * 1000));
+
+                    (async () => {
+                        while (totalSeconds > 0) {
+                            const hours = Math.floor(totalSeconds / 3600);
+                            const minutes = Math.floor((totalSeconds % 3600) / 60);
+                            const seconds = Math.floor(totalSeconds % 60);
+                            console.log(`Time remaining: ${hours}h ${minutes}m ${seconds}s`);
+
+                            await sleep(interval);
+                            totalSeconds -= interval;
+                        }
+
+                        console.log("Done sleeping");
+                    })();
+
 
     deploy:
         needs: sleep
