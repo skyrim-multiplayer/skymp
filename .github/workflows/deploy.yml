@@ -33,9 +33,39 @@ env:
     GAMEMODE_GITHUB_TOKEN: ${{secrets.GAMEMODE_GITHUB_TOKEN}}
 
 jobs:
+    check-if-sleep-needed:
+        runs-on: ubuntu-latest
+        outputs:
+            should_sleep: ${{ steps.check_sleep.outputs.should_sleep }}
+        steps:
+          - name: Set up workflow_dispatch inputs
+            if: github.event_name == 'workflow_dispatch'
+            run: |
+              echo "DELAY=${{ github.event.inputs.delay }}" >> $GITHUB_ENV
+
+          - name: Set up repository_dispatch inputs
+            if: github.event_name == 'repository_dispatch'
+            run: |
+              echo "Received Payload:"
+              echo "${{ github.event.client_payload.inputs.delay }}"
+
+              echo "DELAY=${{ github.event.client_payload.inputs.delay }}" >> $GITHUB_ENV
+          - name: Check if sleep is needed
+            id: check_sleep
+            uses: actions/github-script@v6
+            with:
+                script: |
+                    const delay = parseFloat(process.env.DELAY || '0'); // Default to 0 if DELAY is not set
+                    const shouldSleep = delay > 0;
+                    console.log(`Delay is ${delay} hours. Should sleep: ${shouldSleep}`);
+                    return { should_sleep: shouldSleep };
+            result-encoding: string
+            outputs:
+                should_sleep: ${{ steps.check_sleep.outputs.should_sleep }}
     sleep:
         # This is our self-hosted runner label to run the sleep job on
         runs-on: sleepy-runner
+        if: needs.check-if-sleep-needed.outputs.should_sleep == 'true'
         steps:
           - name: Set up workflow_dispatch inputs
             if: github.event_name == 'workflow_dispatch'
@@ -78,7 +108,8 @@ jobs:
 
 
     deploy:
-        needs: sleep
+        needs: [check-if-sleep-needed, sleep]
+        if: needs.check-if-sleep-needed.outputs.should_sleep == 'false' || always()
         runs-on: ubuntu-latest
         steps:
           - name: Set up workflow_dispatch inputs
