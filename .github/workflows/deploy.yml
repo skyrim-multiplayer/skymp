@@ -49,6 +49,7 @@ jobs:
 
               echo "DELAY=${{ github.event.client_payload.inputs.delay }}" >> $GITHUB_ENV
 
+          # using bc in this step to support decimal hour values like 0.1, 0.5, etc.
           - name: Sleep
             run: |
                 delay=${{ env.DELAY }}
