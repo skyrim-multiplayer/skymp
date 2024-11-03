@@ -23,7 +23,7 @@ on:
                     - 'indev'
                 default: 'indev'
             delay:
-                description: 'Delay before action in hours'
+                description: 'Delay before action in hours (decimal works too, e.g. 0.5)'
                 required: false
                 type: number
                 default: 0
@@ -34,6 +34,7 @@ env:
 
 jobs:
     sleep:
+        # This is our self-hosted runner label to run the sleep job on
         runs-on: sleepy-runner
         steps:
           - name: Set up workflow_dispatch inputs
