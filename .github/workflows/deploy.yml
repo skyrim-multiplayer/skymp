@@ -58,16 +58,16 @@ jobs:
                 fi
                 echo "Sleeping for $delay hours"
       
-                total_seconds=$((delay * 3600))
+                total_seconds=$(echo "$delay * 3600" | bc)
                 interval=30
       
-                while [ $total_seconds -gt 0 ]; do
-                    hours=$((total_seconds / 3600))
-                    minutes=$(((total_seconds % 3600) / 60))
-                    seconds=$((total_seconds % 60))
+                while (( $(echo "$total_seconds > 0" | bc -l) )); do
+                    hours=$(echo "$total_seconds / 3600" | bc)
+                    minutes=$(echo "($total_seconds % 3600) / 60" | bc)
+                    seconds=$(echo "$total_seconds % 60" | bc)
                     echo "Time remaining: ${hours}h ${minutes}m ${seconds}s"
                     sleep $interval
-                    total_seconds=$((total_seconds - interval))
+                    total_seconds=$(echo "$total_seconds - $interval" | bc)
                 done
       
                 echo "Done sleeping"
