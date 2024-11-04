@@ -34,4 +34,3 @@ jobs:
           SERVER_DIST_ARTIFACT_NAME: server-dist-sweetpie
           SKYMP5_PATCHES_PAT: ${{ secrets.SKYMP5_PATCHES_PAT }}
           NUGET_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
