@@ -63,6 +63,30 @@ function verifyTickIds(api, args, spPrivate, className, functionName) {
     }
 }
 
+let assign = (targetObject, sourceObject) => {
+    if (sourceObject.desc !== undefined) {
+        // Server-side/gamemode raw objects have desc and type properties
+        targetObject.desc = sourceObject.desc;
+        targetObject.type = sourceObject.type;
+
+        // Never check it in runtime again
+        assign = (targetObject, sourceObject) => {
+            targetObject.desc = sourceObject.desc;
+            targetObject.type = sourceObject.type;
+        };
+
+    } else if (sourceObject._skyrimPlatform_indexInPool !== undefined) {
+        // Client-side objects have _skyrimPlatform_indexInPool property starting with SP3 Update in 2024
+        // In previous version, they were completely native objects, without javascript properties
+        targetObject._skyrimPlatform_indexInPool = sourceObject._skyrimPlatform_indexInPool;
+
+        // Never check it in runtime again
+        assign = (targetObject, sourceObject) => {
+            targetObject._skyrimPlatform_indexInPool = sourceObject._skyrimPlatform_indexInPool;
+        };
+    }
+}
+
 function createSkyrimPlatform(api) {
     const sp = {};
     const spPrivate = {
@@ -120,8 +144,7 @@ function createSkyrimPlatform(api) {
                 spPrivate.isCtorEnabled = true;
                 const resWithClass = new ctor();
                 spPrivate.isCtorEnabled = false;
-                resWithClass.type = resWithoutClass.type;
-                resWithClass.desc = resWithoutClass.desc;
+                assign(resWithClass, resWithoutClass);
                 return resWithClass;
             };
         });
@@ -140,8 +163,7 @@ function createSkyrimPlatform(api) {
                 spPrivate.isCtorEnabled = true;
                 const resWithClass = new ctor();
                 spPrivate.isCtorEnabled = false;
-                resWithClass.type = resWithoutClass.type;
-                resWithClass.desc = resWithoutClass.desc;
+                assign(resWithClass, resWithoutClass);
                 return resWithClass;
             };
         });
@@ -152,8 +174,7 @@ function createSkyrimPlatform(api) {
                 spPrivate.isCtorEnabled = true;
                 const resWithClass = new f();
                 spPrivate.isCtorEnabled = false;
-                resWithClass.type = obj.type;
-                resWithClass.desc = obj.desc;
+                assign(resWithClass, obj);
                 return resWithClass;
             }
             return null;
