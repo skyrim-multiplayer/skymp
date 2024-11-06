@@ -159,7 +159,6 @@ void TESModPlatform::SetWeaponDrawnMode(IVM* vm, StackID stackId,
   if (g_nativeCallRequirements.gameThrQ) {
     auto formId = actor->formID;
     g_nativeCallRequirements.gameThrQ->AddTask([=] {
-      // kinda redundant since we get formid from actor
       if (RE::TESForm::LookupByID<RE::Actor>(formId) != actor) {
         return;
       }
