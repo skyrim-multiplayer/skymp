@@ -14,6 +14,8 @@ on:
 jobs:
     gather_prs_test:
         runs-on: ubuntu-latest
+        env:
+            DEPLOY_BRANCH: ${{ github.event.inputs.branch }}
         steps:
             - name: Gather PRs
               uses: Pospelove/auto-merge-action@main
