@@ -17,6 +17,10 @@ jobs:
         env:
             DEPLOY_BRANCH: ${{ github.event.inputs.branch }}
         steps:
+            - uses: actions/checkout@v4
+              with:
+                fetch-depth: 1
+                submodules: 'true'
             - name: Gather PRs
               uses: Pospelove/auto-merge-action@main
               with:
