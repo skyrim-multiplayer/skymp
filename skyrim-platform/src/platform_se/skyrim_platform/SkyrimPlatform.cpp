@@ -187,12 +187,14 @@ private:
   std::string PatchPluginFile(const std::filesystem::path& path,
                               const std::string& scriptSrc)
   {
+    #pragma pack(push, 1)
     struct Msg
     {
       void* onLoadPluginFileCallback = nullptr;
       void* self = nullptr;
       const char* pluginPathUtf8 = nullptr;
     };
+    #pragma pack(pop)
     static_assert(sizeof(Msg) == 24);
 
     std::string pluginPathUtf8 = path.u8string();
