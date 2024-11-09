@@ -49,7 +49,7 @@ void ReadBookEvent::OnFireSuccess(WorldState* worldState)
     bookLookupResult.ToGlobalId(bookData.spellOrSkillFormId);
 
   if (bookData.IsFlagSet(espm::BOOK::Flags::TeachesSpell)) {
-    if (ChangeForm().learnedSpells.IsSpellLearned(spellOrSkillFormId)) {
+    if (actor->ChangeForm().learnedSpells.IsSpellLearned(spellOrSkillFormId)) {
       spdlog::info("ReadBookEvent::OnFireSuccess {:x} - Spell already learned "
                    "{:x}, not spending the book",
                    GetFormId(), spellOrSkillFormId);
