@@ -39,7 +39,8 @@ void ReadBookEvent::OnFireSuccess(WorldState* worldState)
   auto bookLookupResult = loader.GetBrowser().LookupById(baseId);
 
   if (!bookLookupResult.rec) {
-    spdlog::error("ReadBookEvent::OnFireSuccess {:x} - No book form {:x}",
+    spdlog::error("ReadBookEvent::OnFireSuccess - Actor {:x} reading book: No "
+                  "book form {:x}",
                   actor->GetFormId(), baseId);
     return;
   }
@@ -50,9 +51,10 @@ void ReadBookEvent::OnFireSuccess(WorldState* worldState)
 
   if (bookData.IsFlagSet(espm::BOOK::Flags::TeachesSpell)) {
     if (actor->ChangeForm().learnedSpells.IsSpellLearned(spellOrSkillFormId)) {
-      spdlog::info("ReadBookEvent::OnFireSuccess {:x} - Spell already learned "
+      spdlog::info("ReadBookEvent::OnFireSuccess - Actor {:x} reading book: "
+                   "Spell already learned "
                    "{:x}, not spending the book",
-                   GetFormId(), spellOrSkillFormId);
+                   actor->GetFormId(), spellOrSkillFormId);
       return;
     }
 
@@ -62,9 +64,10 @@ void ReadBookEvent::OnFireSuccess(WorldState* worldState)
     spellLearned = true;
     return;
   } else if (bookData.IsFlagSet(espm::BOOK::Flags::TeachesSkill)) {
-    spdlog::info("ReadBookEvent::OnFireSuccess {:x} - Skill book {:x} "
-                 "detected, not implemented",
-                 GetFormId(), baseId);
+    spdlog::info(
+      "ReadBookEvent::OnFireSuccess - Actor {:x} reading skill book {:x} "
+      "detected, not implemented",
+      actor->GetFormId(), baseId);
     return;
   }
 }
