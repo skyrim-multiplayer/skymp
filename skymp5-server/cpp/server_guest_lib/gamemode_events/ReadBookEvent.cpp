@@ -40,7 +40,7 @@ void ReadBookEvent::OnFireSuccess(WorldState* worldState)
 
   if (!bookLookupResult.rec) {
     spdlog::error("ReadBookEvent::OnFireSuccess {:x} - No book form {:x}",
-                  GetFormId(), baseId);
+                  actor->GetFormId(), baseId);
     return;
   }
 
