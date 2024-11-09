@@ -175,10 +175,51 @@ private:
     settingsByPluginNameCache.reset();
   }
 
+  static void OnLoadPluginFileCallback(CommonExecutionListener& self,
+                                       const char* patchedSourceCode,
+                                       uint32_t patchedSourceCodeLength)
+  {
+    self.tmpPatchedPluginSources =
+      std::string{ patchedSourceCode,
+                   patchedSourceCode + patchedSourceCodeLength };
+  }
+
+  std::string PatchPluginFile(const std::filesystem::path& path,
+                              const std::string& scriptSrc)
+  {
+    struct Msg
+    {
+      void* onLoadPluginFileCallback = nullptr;
+      void* self = nullptr;
+      const char* pluginPathUtf8 = nullptr;
+    };
+    static_assert(sizeof(Msg) == 24);
+
+    std::string pluginPathUtf8 = path.u8string();
+
+    Msg msg;
+    msg.onLoadPluginFileCallback = OnLoadPluginFileCallback;
+    msg.self = this;
+    msg.pluginPathUtf8 = pluginPathUtf8.data();
+
+    tmpPatchedPluginSources = std::nullopt;
+
+    IPC::Call("SkyrimPlatform_OnLoadPluginFile",
+              reinterpret_cast<uint8_t*>(&msg), sizeof(Msg));
+
+    if (tmpPatchedPluginSources != std::nullopt) {
+      return *tmpPatchedPluginSources;
+    }
+
+    return scriptSrc;
+  }
+
   void LoadPluginFile(const std::filesystem::path& path)
   {
     auto engine = GetJsEngine();
     auto scriptSrc = Viet::ReadFileIntoString(path);
+
+    scriptSrc = PatchPluginFile(path, scriptSrc);
 
     getSettings = [this](const JsFunctionArguments&) {
       if (!settingsByPluginNameCache) {
@@ -285,6 +326,7 @@ private:
   std::shared_ptr<BrowserApi::State> browserApiState;
   std::function<JsValue(const JsFunctionArguments&)> getSettings;
   mutable std::unique_ptr<std::vector<std::filesystem::path>> pluginFolders;
+  std::optional<std::string> tmpPatchedPluginSources;
 };
 }
 
