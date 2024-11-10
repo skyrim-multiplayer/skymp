@@ -22,6 +22,8 @@
 #include "ThreadPoolWrapper.h"
 #include "Win32Api.h"
 
+#include "IPC.h" // IPC::Call
+
 CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
 
 namespace {
@@ -197,7 +199,8 @@ private:
 #pragma pack(pop)
     static_assert(sizeof(Msg) == 24);
 
-    std::string pluginPathUtf8 = path.u8string();
+    auto s = path.u8string();
+    std::string pluginPathUtf8 = s.data(); 
 
     Msg msg;
     msg.onLoadPluginFileCallback = OnLoadPluginFileCallback;
