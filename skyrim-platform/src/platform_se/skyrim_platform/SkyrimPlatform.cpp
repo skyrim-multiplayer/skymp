@@ -200,7 +200,7 @@ private:
     static_assert(sizeof(Msg) == 24);
 
     auto s = path.u8string();
-    std::string pluginPathUtf8 = s.data(); 
+    std::string pluginPathUtf8 = s.data();
 
     Msg msg;
     msg.onLoadPluginFileCallback = OnLoadPluginFileCallback;
