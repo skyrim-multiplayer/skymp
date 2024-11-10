@@ -45,7 +45,7 @@ void ReadBookEvent::OnFireSuccess(WorldState* worldState)
     return;
   }
 
-  const auto bookData = espm::GetData<espm::BOOK>(baseId, GetParent());
+  const auto bookData = espm::GetData<espm::BOOK>(baseId, actor->GetParent());
   const auto spellOrSkillFormId =
     bookLookupResult.ToGlobalId(bookData.spellOrSkillFormId);
 
