@@ -1172,6 +1172,8 @@ void MpObjectReference::ApplyChangeForm(const MpChangeForm& changeForm)
 
     spdlog::critical("setPropertyTrackingInfo: trace = {}", ss.str());
 
+    pImpl->setPropertyTrackingInfo.reset();
+
     // std::terminate();
   }
 
