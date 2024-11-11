@@ -10,7 +10,7 @@ import { AddressInfo } from "net";
 
 const createApp = (getOriginPort: () => number) => {
   const app = new Koa();
-  app.use(koaBody({ multipart: true }));
+  app.use(koaBody.default({ multipart: true }));
 
   const router = new Router();
   router.get(new RegExp("/scripts/.*"), (ctx: any) => ctx.throw(403));
