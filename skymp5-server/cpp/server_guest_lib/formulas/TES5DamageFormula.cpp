@@ -8,9 +8,9 @@
 
 namespace internal {
 
-bool IsUnarmedAttack(const uint32_t sourceFormId)
+bool IsUnarmedAttack(const uint32_t sourceFormId, bool isBashAttack)
 {
-  return sourceFormId == 0x1f4;
+  return isBashAttack ? false : sourceFormId == 0x1f4;
 }
 
 class TES5DamageFormulaImpl
@@ -36,7 +36,7 @@ private:
     const Inventory::Entry& opponentEquipmentEntry) const;
   [[nodiscard]] float CalcOpponentArmorRating() const;
   [[nodiscard]] float CalcMagicEffects(const Effects& effects) const;
-  [[nodiscard]] float DetermineDamageFromSource(uint32_t source) const;
+  [[nodiscard]] float DetermineDamageFromSource(uint32_t source, bool isBashAttack) const;
   [[nodiscard]] float CalcUnarmedDamage() const;
   [[nodiscard]] float CalcArmorDamagePenalty() const;
 };
@@ -118,9 +118,9 @@ float TES5DamageFormulaImpl::CalcUnarmedDamage() const
   return espm::GetData<espm::RACE>(raceId, espmProvider).unarmedDamage;
 }
 
-float TES5DamageFormulaImpl::DetermineDamageFromSource(uint32_t source) const
+float TES5DamageFormulaImpl::DetermineDamageFromSource(uint32_t source, bool isBashAttack) const
 {
-  return IsUnarmedAttack(source) ? CalcUnarmedDamage() : CalcWeaponRating();
+  return IsUnarmedAttack(source, isBashAttack) ? CalcUnarmedDamage() : CalcWeaponRating();
 }
 
 float TES5DamageFormulaImpl::CalcArmorDamagePenalty() const
@@ -141,7 +141,7 @@ float TES5DamageFormulaImpl::CalcArmorDamagePenalty() const
 
 float TES5DamageFormulaImpl::CalculateDamage() const
 {
-  const float incomingDamage = DetermineDamageFromSource(hitData.source);
+  const float incomingDamage = DetermineDamageFromSource(hitData.source, hitData.isBashAttack);
 
   // TODO(#461): add difficulty multiplier
   // TODO(#463): add sneak modifier
@@ -149,6 +149,10 @@ float TES5DamageFormulaImpl::CalculateDamage() const
 
   if (hitData.isPowerAttack) {
     damage *= 2.f;
+  }
+
+  if (hitData.isBashAttack) {
+    damage *= 0.3f;
   }
 
   if (hitData.isHitBlocked) {
