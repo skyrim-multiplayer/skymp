@@ -1,0 +1,2 @@
+list(APPEND CMAKEPROJ_PROJECTS papyrus-vm)
+set(CMAKEPROJ_PRIORITY_papyrus-vm 1)

@@ -22,13 +22,92 @@ on:
                     - 'sweetpie'
                     - 'indev'
                 default: 'indev'
+            delay:
+                description: 'Delay before action in hours (decimal works too, e.g. 0.5)'
+                required: false
+                type: number
+                default: 0
 
 env:
     BUILD_TYPE: RelWithDebInfo
     GAMEMODE_GITHUB_TOKEN: ${{secrets.GAMEMODE_GITHUB_TOKEN}}
 
 jobs:
+    check-if-sleep-needed:
+        runs-on: ubuntu-latest
+        outputs:
+            should_sleep: ${{ steps.check_sleep.outputs.should_sleep }}
+        steps:
+          - name: Set up workflow_dispatch inputs
+            if: github.event_name == 'workflow_dispatch'
+            run: |
+              echo "DELAY=${{ github.event.inputs.delay }}" >> $GITHUB_ENV
+
+          - name: Set up repository_dispatch inputs
+            if: github.event_name == 'repository_dispatch'
+            run: |
+              echo "Received Payload:"
+              echo "${{ github.event.client_payload.inputs.delay }}"
+
+              echo "DELAY=${{ github.event.client_payload.inputs.delay }}" >> $GITHUB_ENV
+          - name: Check if sleep is needed
+            id: check_sleep
+            uses: actions/github-script@v7
+            with:
+                script: |
+                    const delay = parseFloat(process.env.DELAY || '0'); // Default to 0 if DELAY is not set
+                    const shouldSleep = delay > 0;
+                    console.log(`Delay is ${delay} hours. Should sleep: ${shouldSleep}`);
+                    core.setOutput("should_sleep", shouldSleep);
+    sleep:
+        # This is our self-hosted runner label to run the sleep job on
+        runs-on: sleepy-runner
+        if: needs.check-if-sleep-needed.outputs.should_sleep == 'true'
+        needs: check-if-sleep-needed
+        steps:
+          - name: Set up workflow_dispatch inputs
+            if: github.event_name == 'workflow_dispatch'
+            run: |
+              echo "DELAY=${{ github.event.inputs.delay }}" >> $GITHUB_ENV
+
+          - name: Set up repository_dispatch inputs
+            if: github.event_name == 'repository_dispatch'
+            run: |
+              echo "Received Payload:"
+              echo "${{ github.event.client_payload.inputs.delay }}"
+
+              echo "DELAY=${{ github.event.client_payload.inputs.delay }}" >> $GITHUB_ENV
+
+          - name: Sleep
+            uses: actions/github-script@v6
+            with:
+                script: |
+                    const delay = process.env.DELAY || 0; // default to 0 if DELAY is not specified
+                    console.log(`Sleeping for ${delay} hours`);
+
+                    let totalSeconds = parseFloat(delay) * 3600;
+                    const interval = 30;
+
+                    const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms * 1000));
+
+                    (async () => {
+                        while (totalSeconds > 0) {
+                            const hours = Math.floor(totalSeconds / 3600);
+                            const minutes = Math.floor((totalSeconds % 3600) / 60);
+                            const seconds = Math.floor(totalSeconds % 60);
+                            console.log(`Time remaining: ${hours}h ${minutes}m ${seconds}s`);
+
+                            await sleep(interval);
+                            totalSeconds -= interval;
+                        }
+
+                        console.log("Done sleeping");
+                    })();
+
+
     deploy:
+        needs: [check-if-sleep-needed, sleep]
+        if: needs.check-if-sleep-needed.outputs.should_sleep == 'false' || always()
         runs-on: ubuntu-latest
         steps:
           - name: Set up workflow_dispatch inputs

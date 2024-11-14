@@ -149,6 +149,7 @@ const main = async () => {
 
   try {
     server = createScampServer(port, maxPlayers, settingsObject.allSettings);
+    ui.setServer(server);
   }
   catch (e) {
     console.error(e);

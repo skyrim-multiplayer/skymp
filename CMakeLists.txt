@@ -144,25 +144,52 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/modules)
 
-add_subdirectory(viet)
-add_subdirectory(savefile)
-add_subdirectory(serialization)
-add_subdirectory(papyrus-vm)
-add_subdirectory(libespm)
-add_subdirectory(skyrim-platform)
+# Initialize the CMAKEPROJ projects and their configurations
+list(APPEND CMAKEPROJ_PROJECTS_LIST)  # List of all projects
+set(CMAKEPROJ_PROJECTS_DEPENDENCIES)  # Dependencies for each project
+set(CMAKEPROJ_PROJECTS_PRIORITY)      # Priority for each project
 
+# Glob directories under source directory root
+file(GLOB ROOT_DIRS RELATIVE ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/*)
+foreach(dir ${ROOT_DIRS})
+  if(IS_DIRECTORY ${CMAKE_SOURCE_DIR}/${dir})
+    # Check if directory has a cmakeproj.cmake file
+    if(EXISTS ${CMAKE_SOURCE_DIR}/${dir}/cmakeproj.cmake)
+      include(${CMAKE_SOURCE_DIR}/${dir}/cmakeproj.cmake)
+      # Add project to the list if not already added
+      if(NOT "${CMAKEPROJ_PROJECTS_LIST}" MATCHES "${dir}")
+        list(APPEND CMAKEPROJ_PROJECTS_LIST ${dir})
+      endif()
+      # Set default priority if not set
+      if (NOT DEFINED CMAKEPROJ_PRIORITY_${dir})
+        set(CMAKEPROJ_PRIORITY_${dir} 0) # Default priority 0 if not defined
+      endif()
 
-add_subdirectory(client-deps)
-add_subdirectory(skymp5-client)
-add_subdirectory(skymp5-front)
-add_subdirectory(skymp5-functions-lib)
-add_subdirectory(skymp5-scripts)
-add_subdirectory(skymp5-server)
+      # Store dependencies and priorities for sorting
+      set(CMAKEPROJ_PROJECTS_DEPENDENCIES ${CMAKEPROJ_PROJECTS_DEPENDENCIES} "${CMAKEPROJ_DEPS_${dir}}")
+      set(CMAKEPROJ_PROJECTS_PRIORITY ${CMAKEPROJ_PROJECTS_PRIORITY} ${CMAKEPROJ_PRIORITY_${dir}})
+    endif()
+  endif()
+endforeach()
 
-# TODO: enable for Emscripten once stabilize
-if(BUILD_UNIT_TESTS AND NOT EMSCRIPTEN)
-  add_subdirectory(unit)
-endif()
+foreach(proj ${CMAKEPROJ_PROJECTS_LIST})
+  list(APPEND priorities_list ${CMAKEPROJ_PRIORITY_${proj}})  
+endforeach()
+list(REMOVE_DUPLICATES priorities_list)
+list(SORT priorities_list COMPARE NATURAL)
+
+foreach(priority ${priorities_list})
+  foreach(proj ${CMAKEPROJ_PROJECTS_LIST})
+    if(${CMAKEPROJ_PRIORITY_${proj}} STREQUAL ${priority})
+      list(APPEND sorted_projects ${proj})
+    endif()
+  endforeach()
+endforeach()
+
+foreach(project ${sorted_projects})
+  message(STATUS "Adding project: ${project} with priority ${CMAKEPROJ_PRIORITY_${project}}")
+  add_subdirectory(${project})
+endforeach()
 
 if(PREPARE_NEXUS_ARCHIVES)
   add_custom_target(
