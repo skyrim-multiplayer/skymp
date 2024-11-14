@@ -312,8 +312,9 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
 
     auto espm = new espm::Loader(pluginPaths);
     std::string password = serverSettings.contains("password")
-      ? static_cast<std::string>(serverSettings["password"])
-      : std::string(kNetworkingPassword);
+      ? std::string(kNetworkingPasswordPrefix) +
+        static_cast<std::string>(serverSettings["password"])
+      : std::string(kNetworkingPasswordPrefix);
     auto realServer = Networking::CreateServer(
       static_cast<uint32_t>(port), static_cast<uint32_t>(maxConnections),
       password.data());

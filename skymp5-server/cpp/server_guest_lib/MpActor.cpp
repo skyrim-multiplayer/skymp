@@ -148,7 +148,7 @@ void MpActor::EquipBestWeapon()
   Equipment newEq;
   newEq.numChanges = eq.numChanges + 1;
   for (auto& entry : eq.inv.entries) {
-    bool isEquipped = entry.extra.worn != Inventory::Worn::None;
+    bool isEquipped = entry.GetWorn() != Inventory::Worn::None;
     bool isWeap =
       espm::GetRecordType(entry.baseId, GetParent()) == espm::WEAP::kType;
     if (isEquipped && isWeap) {
@@ -174,15 +174,16 @@ void MpActor::EquipBestWeapon()
   }
 
   if (bestEntry.count > 0) {
-    bestEntry.extra.worn = Inventory::Worn::Right;
+    bestEntry.SetWorn(Inventory::Worn::Right);
     newEq.inv.AddItems({ bestEntry });
   }
 
   SetEquipment(newEq.ToJson().dump());
+
+  UpdateEquipmentMessage msg;
+  msg.data = newEq;
+  msg.idx = GetIdx();
   for (auto listener : GetActorListeners()) {
-    UpdateEquipmentMessage msg;
-    msg.data = newEq.ToJson();
-    msg.idx = GetIdx();
     listener->SendToUser(msg, true);
   }
 }
@@ -601,9 +602,9 @@ void MpActor::NetSendChangeValues(const ActorValues& actorValues)
 {
   ChangeValuesMessage message;
   message.idx = GetIdx();
-  message.health = actorValues.healthPercentage;
-  message.magicka = actorValues.magickaPercentage;
-  message.stamina = actorValues.staminaPercentage;
+  message.data.health = actorValues.healthPercentage;
+  message.data.magicka = actorValues.magickaPercentage;
+  message.data.stamina = actorValues.staminaPercentage;
   SendToUser(message, true);
 }
 
@@ -848,9 +849,9 @@ DeathStateContainerMessage MpActor::GetDeathStateMsg(
     constexpr float kAttributePercentageFull = 1.f;
     res.tChangeValues = ChangeValuesMessage();
     res.tChangeValues->idx = GetIdx();
-    res.tChangeValues->health = kAttributePercentageFull;
-    res.tChangeValues->magicka = kAttributePercentageFull;
-    res.tChangeValues->stamina = kAttributePercentageFull;
+    res.tChangeValues->data.health = kAttributePercentageFull;
+    res.tChangeValues->data.magicka = kAttributePercentageFull;
+    res.tChangeValues->data.stamina = kAttributePercentageFull;
   }
 
   return res;
@@ -1666,14 +1667,14 @@ std::array<std::optional<Inventory::Entry>, 2> MpActor::GetEquippedWeapon()
   // 0 -> left hand, 1 -> right hand
   auto& espmBrowser = GetParent()->GetEspm().GetBrowser();
   for (const auto& entry : GetEquipment().inv.entries) {
-    if (entry.extra.worn != Inventory::Worn::None) {
+    if (entry.GetWorn() != Inventory::Worn::None) {
       espm::LookupResult res = espmBrowser.LookupById(entry.baseId);
       auto* weaponRecord = espm::Convert<espm::WEAP>(res.rec);
       if (weaponRecord) {
-        if (entry.extra.worn == Inventory::Worn::Left) {
+        if (entry.GetWorn() == Inventory::Worn::Left) {
           wornWeaponEntries[0] = std::move(entry);
         }
-        if (entry.extra.worn == Inventory::Worn::Right) {
+        if (entry.GetWorn() == Inventory::Worn::Right) {
           wornWeaponEntries[1] = std::move(entry);
         }
       }

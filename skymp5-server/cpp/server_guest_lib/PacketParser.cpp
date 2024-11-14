@@ -75,21 +75,22 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
     switch (result->msgType) {
       case MsgType::UpdateMovement: {
         auto message =
-          reinterpret_cast<MovementMessage*>(result->message.get());
+          reinterpret_cast<UpdateMovementMessage*>(result->message.get());
         actionListener.OnUpdateMovement(
           rawMsgData, message->idx,
-          { message->pos[0], message->pos[1], message->pos[2] },
-          { message->rot[0], message->rot[1], message->rot[2] },
-          message->isInJumpState, message->isWeapDrawn, message->isBlocking,
-          message->worldOrCell, message->runMode);
+          { message->data.pos[0], message->data.pos[1], message->data.pos[2] },
+          { message->data.rot[0], message->data.rot[1], message->data.rot[2] },
+          message->data.isInJumpState, message->data.isWeapDrawn,
+          message->data.isBlocking, message->data.worldOrCell,
+          message->data.runMode);
         return;
       }
       case MsgType::UpdateAnimation: {
         auto message =
           reinterpret_cast<UpdateAnimationMessage*>(result->message.get());
         AnimationData animationData;
-        animationData.animEventName = message->animEventName;
-        animationData.numChanges = message->numChanges;
+        animationData.animEventName = message->data.animEventName;
+        animationData.numChanges = message->data.numChanges;
         actionListener.OnUpdateAnimation(rawMsgData, message->idx,
                                          animationData);
         return;
@@ -98,20 +99,13 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
         auto message =
           reinterpret_cast<UpdateEquipmentMessage*>(result->message.get());
         auto idx = message->idx;
-        auto data = pImpl->simdjsonParser.parse(message->data.dump()).value();
-        auto inv = Inventory::FromJson(message->data.at("inv"));
-        auto leftSpell = message->data.contains("leftSpell")
-          ? message->data.at("leftSpell").get<uint32_t>()
-          : 0;
-        auto rightSpell = message->data.contains("rightSpell")
-          ? message->data.at("rightSpell").get<uint32_t>()
-          : 0;
-        auto voiceSpell = message->data.contains("voiceSpell")
-          ? message->data.at("voiceSpell").get<uint32_t>()
-          : 0;
-        auto instantSpell = message->data.contains("instantSpell")
-          ? message->data.at("instantSpell").get<uint32_t>()
-          : 0;
+
+        const Equipment& data = message->data;
+        const Inventory& inv = data.inv;
+        uint32_t leftSpell = data.leftSpell.value_or(0);
+        uint32_t rightSpell = data.rightSpell.value_or(0);
+        uint32_t voiceSpell = data.voiceSpell.value_or(0);
+        uint32_t instantSpell = data.instantSpell.value_or(0);
 
         actionListener.OnUpdateEquipment(rawMsgData, idx, data, inv, leftSpell,
                                          rightSpell, voiceSpell, instantSpell);
@@ -121,9 +115,9 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
         auto message =
           reinterpret_cast<ChangeValuesMessage*>(result->message.get());
         ActorValues actorValues;
-        actorValues.healthPercentage = message->health;
-        actorValues.magickaPercentage = message->magicka;
-        actorValues.staminaPercentage = message->stamina;
+        actorValues.healthPercentage = message->data.health;
+        actorValues.magickaPercentage = message->data.magicka;
+        actorValues.staminaPercentage = message->data.stamina;
         actionListener.OnChangeValues(rawMsgData, actorValues);
         return;
       }
@@ -181,7 +175,7 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
       ReadEx(jMessage, JsonPointers::target, &target);
       auto e = Inventory::Entry::FromJson(jMessage);
       if (static_cast<MsgType>(type) == MsgType::PutItem) {
-        e.extra.worn = Inventory::Worn::None;
+        e.SetWorn(Inventory::Worn::None);
         actionListener.OnPutItem(rawMsgData, target, e);
       } else {
         actionListener.OnTakeItem(rawMsgData, target, e);

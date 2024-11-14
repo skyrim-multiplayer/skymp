@@ -2,7 +2,6 @@
 
 #include "FileUtils.h"
 #include "MessageSerializerFactory.h"
-#include "MovementMessage.h"
 #include "MsgType.h"
 #include <nlohmann/json.hpp>
 #include <slikenet/BitStream.h>
@@ -13,7 +12,7 @@
 void MpClientPlugin::CreateClient(State& state, const char* targetHostname,
                                   uint16_t targetPort)
 {
-  std::string password = kNetworkingPassword;
+  std::string password = kNetworkingPasswordPrefix;
   // Keep in sync with installer code
   static const std::string kPasswordPath =
     "Data/Platform/Distribution/password";
@@ -31,9 +30,11 @@ void MpClientPlugin::CreateClient(State& state, const char* targetHostname,
     while (!password.empty() && password.back() == '\n') {
       password.pop_back();
     }
+
+    password = kNetworkingPasswordPrefix + password;
   } catch (std::exception& e) {
     spdlog::warn("Unable to read password from '{}', will use standard '{}'",
-                 kPasswordPath, kNetworkingPassword);
+                 kPasswordPath, password.data());
   }
   state.cl = Networking::CreateClient(targetHostname, targetPort, kTimeoutMs,
                                       password.data());

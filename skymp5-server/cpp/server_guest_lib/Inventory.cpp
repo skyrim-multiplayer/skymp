@@ -1,17 +1,75 @@
 #include "Inventory.h"
 #include "JsonUtils.h"
+#include "archives/JsonInputArchive.h"
+#include "archives/JsonOutputArchive.h"
 #include <fmt/format.h>
+#include <spdlog/spdlog.h>
 #include <tuple>
 
-bool operator==(const Inventory::EntryExtras& r,
-                const Inventory::EntryExtras& l)
+Inventory::Entry Inventory::Entry::FromJson(const simdjson::dom::element& e)
 {
-  return std::make_tuple(r.health, r.ench.id, r.ench.maxCharge,
-                         r.ench.removeOnUnequip, r.poison.count, r.poison.id,
-                         r.chargePercent, r.name, r.soul, r.worn) ==
-    std::make_tuple(l.health, l.ench.id, l.ench.maxCharge,
-                    l.ench.removeOnUnequip, l.poison.count, l.poison.id,
-                    l.chargePercent, l.name, l.soul, l.worn);
+  std::string minifiedDump = simdjson::minify(e);
+  nlohmann::json j = nlohmann::json::parse(minifiedDump);
+
+  Entry res;
+  JsonInputArchive ar(j);
+  res.Serialize(ar);
+  return res;
+}
+
+Inventory::Worn Inventory::Entry::GetWorn() const
+{
+  bool wornValue = worn_.value_or(false);
+  bool wornLeftValue = wornLeft.value_or(false);
+
+  if (wornLeftValue) {
+    return Worn::Left;
+  }
+  if (wornValue) {
+    return Worn::Right;
+  }
+  return Worn::None;
+}
+
+void Inventory::Entry::SetWorn(Inventory::Worn worn)
+{
+  if (worn == GetWorn()) {
+    return;
+  }
+
+  switch (worn) {
+    case Worn::None:
+      worn_ = false;
+      wornLeft = false;
+      break;
+    case Worn::Right:
+      worn_ = true;
+      wornLeft = false;
+      break;
+    case Worn::Left:
+      worn_ = false;
+      wornLeft = true;
+      break;
+    default:
+      spdlog::warn("Inventory::SetWorn: unknown worn value {}",
+                   static_cast<int>(worn));
+      worn_ = false;
+      wornLeft = false;
+      break;
+  }
+}
+
+bool Inventory::Entry::EqualExceptCount(const Inventory::Entry& other) const
+{
+  // GetWorn() instead of direct comparison because of possible false vs
+  // nullopt mismatch. Logically it should be the same
+  return std::make_tuple(baseId, health, enchantmentId, maxCharge,
+                         removeEnchantmentOnUnequip, chargePercent, name, soul,
+                         poisonId, poisonCount, GetWorn()) ==
+    std::make_tuple(other.baseId, other.health, other.enchantmentId,
+                    other.maxCharge, other.removeEnchantmentOnUnequip,
+                    other.chargePercent, other.name, other.soul,
+                    other.poisonId, other.poisonCount, other.GetWorn());
 }
 
 Inventory& Inventory::AddItem(uint32_t baseId, uint32_t count)
@@ -23,14 +81,12 @@ Inventory& Inventory::AddItems(const std::vector<Entry>& toAdd)
 {
   for (auto& entryToAdd : toAdd) {
     for (auto& entry : entries) {
-      if (entry.baseId == entryToAdd.baseId &&
-          entry.extra == entryToAdd.extra) {
+      if (entry.EqualExceptCount(entryToAdd)) {
         entry.count += entryToAdd.count;
         return *this; // TODO: It seems there is a bug
       }
     }
-    entries.push_back(
-      Entry{ entryToAdd.baseId, entryToAdd.count, entryToAdd.extra });
+    entries.push_back(entryToAdd);
   }
   return *this;
 }
@@ -46,7 +102,7 @@ Inventory& Inventory::RemoveItems(const std::vector<Entry>& entries)
     uint32_t remaining = e.count;
     uint32_t totalRemoved = 0;
     for (auto& entry : copy.entries) {
-      if (entry.baseId == e.baseId && entry.extra == e.extra) {
+      if (entry.EqualExceptCount(e)) {
         if (entry.count > remaining) {
           entry.count -= remaining;
           totalRemoved += remaining;
@@ -113,145 +169,24 @@ bool Inventory::IsEmpty() const
   return entries.empty();
 }
 
-nlohmann::json Inventory::Entry::ToJson() const
-{
-  const EntryExtras emptyExtras;
-
-  nlohmann::json obj = { { "baseId", baseId }, { "count", count } };
-  if (extra.health != emptyExtras.health)
-    obj["health"] = extra.health;
-  if (extra.ench.id != emptyExtras.ench.id) {
-    obj["enchantmentId"] = extra.ench.id;
-    obj["maxCharge"] = extra.ench.maxCharge;
-    obj["removeEnchantmentOnUnequip"] = extra.ench.removeOnUnequip;
-  }
-  if (extra.chargePercent != emptyExtras.chargePercent) {
-    obj["chargePercent"] = extra.chargePercent;
-  }
-  if (extra.name != emptyExtras.name) {
-    obj["name"] = extra.name;
-  }
-  if (extra.soul != emptyExtras.soul) {
-    obj["soul"] = extra.soul;
-  }
-  if (extra.poison.id != emptyExtras.poison.id) {
-    obj["poisonId"] = extra.poison.id;
-    obj["poisonCount"] = extra.poison.count;
-  }
-  if (extra.worn == Worn::Left) {
-    obj["wornLeft"] = true;
-  }
-  if (extra.worn == Worn::Right) {
-    obj["worn"] = true;
-  }
-  return obj;
-}
-
-Inventory::Entry Inventory::Entry::FromJson(
-  const simdjson::dom::element& jEntry)
-{
-  static JsonPointer baseId("baseId"), count("count"), worn("worn"),
-    wornLeft("wornLeft"), health("health"), enchantmentId("enchantmentId"),
-    maxCharge("maxCharge"),
-    removeEnchantmentOnUnequip("removeEnchantmentOnUnequip"),
-    chargePercent("chargePercent"), name("name"), soul("soul"),
-    poisonId("poisonId"), poisonCount("poisonCount");
-
-  Entry e;
-
-  ReadEx(jEntry, baseId, &e.baseId);
-  ReadEx(jEntry, count, &e.count);
-
-  if (jEntry.at_pointer(health.GetData()).error() ==
-      simdjson::error_code::SUCCESS) {
-    ReadEx(jEntry, health, &e.extra.health);
-  }
-  if (jEntry.at_pointer(enchantmentId.GetData()).error() ==
-      simdjson::error_code::SUCCESS) {
-    ReadEx(jEntry, enchantmentId, &e.extra.ench.id);
-  }
-  if (jEntry.at_pointer(maxCharge.GetData()).error() ==
-      simdjson::error_code::SUCCESS) {
-    ReadEx(jEntry, maxCharge, &e.extra.ench.maxCharge);
-  }
-  if (jEntry.at_pointer(removeEnchantmentOnUnequip.GetData()).error() ==
-      simdjson::error_code::SUCCESS) {
-    ReadEx(jEntry, removeEnchantmentOnUnequip, &e.extra.ench.removeOnUnequip);
-  }
-  if (jEntry.at_pointer(chargePercent.GetData()).error() ==
-      simdjson::error_code::SUCCESS) {
-    ReadEx(jEntry, chargePercent, &e.extra.chargePercent);
-  }
-  if (jEntry.at_pointer(name.GetData()).error() ==
-      simdjson::error_code::SUCCESS) {
-    ReadEx(jEntry, name, &e.extra.name);
-  }
-  if (jEntry.at_pointer(soul.GetData()).error() ==
-      simdjson::error_code::SUCCESS) {
-    ReadEx(jEntry, soul, &e.extra.soul);
-  }
-  if (jEntry.at_pointer(poisonId.GetData()).error() ==
-      simdjson::error_code::SUCCESS) {
-    ReadEx(jEntry, poisonId, &e.extra.poison.id);
-  }
-  if (jEntry.at_pointer(poisonCount.GetData()).error() ==
-      simdjson::error_code::SUCCESS) {
-    ReadEx(jEntry, poisonCount, &e.extra.poison.count);
-  }
-
-  bool wornValue;
-  if (jEntry.at_pointer(worn.GetData()).error() ==
-      simdjson::error_code::SUCCESS) {
-    ReadEx(jEntry, worn, &wornValue);
-  } else {
-    wornValue = false;
-  }
-
-  bool wornLeftValue;
-  if (jEntry.at_pointer(wornLeft.GetData()).error() ==
-      simdjson::error_code::SUCCESS) {
-    ReadEx(jEntry, wornLeft, &wornLeftValue);
-  } else {
-    wornLeftValue = false;
-  }
-
-  if (wornLeftValue)
-    e.extra.worn = Inventory::Worn::Left;
-  else if (wornValue)
-    e.extra.worn = Inventory::Worn::Right;
-
-  return e;
-}
-
 nlohmann::json Inventory::ToJson() const
 {
-  auto r = nlohmann::json::array();
-  for (int i = 0; i < static_cast<int>(entries.size()); ++i)
-    r.push_back(entries[i].ToJson());
-  return { { "entries", r } };
+  JsonOutputArchive ar;
+  const_cast<Inventory*>(this)->Serialize(ar);
+  return std::move(ar.j);
 }
 
-Inventory Inventory::FromJson(simdjson::dom::element& j)
+Inventory Inventory::FromJson(simdjson::dom::element& element)
 {
-  static const JsonPointer entries("entries");
-
-  std::vector<simdjson::dom::element> parsedEntries;
-  ReadVector(j, entries, &parsedEntries);
-
-  Inventory res;
-  res.entries.resize(parsedEntries.size());
-  for (size_t i = 0; i != res.entries.size(); ++i) {
-    auto& jEntry = parsedEntries[i];
-    auto& e = res.entries[i];
-    e = Entry::FromJson(jEntry);
-  }
-
-  return res;
+  std::string minifiedDump = simdjson::minify(element);
+  nlohmann::json j = nlohmann::json::parse(minifiedDump);
+  return FromJson(j);
 }
 
 Inventory Inventory::FromJson(const nlohmann::json& j)
 {
-  simdjson::dom::parser p;
-  simdjson::dom::element parsed = p.parse(j.dump());
-  return FromJson(parsed);
+  JsonInputArchive ar(j);
+  Inventory res;
+  res.Serialize(ar);
+  return res;
 }

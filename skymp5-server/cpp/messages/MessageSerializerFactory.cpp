@@ -2,6 +2,7 @@
 #include "Messages.h"
 #include "MinPacketId.h"
 #include "MsgType.h"
+#include <fmt/ranges.h>
 #include <nlohmann/json.hpp>
 #include <slikenet/BitStream.h>
 #include <spdlog/spdlog.h>
@@ -10,7 +11,6 @@ namespace {
 void Serialize(const IMessageBase& message, SLNet::BitStream& outputStream)
 {
   outputStream.Write(static_cast<uint8_t>(Networking::MinPacketId));
-  outputStream.Write(static_cast<uint8_t>(message.GetHeaderByte()));
   message.WriteBinary(outputStream);
 }
 
@@ -28,17 +28,24 @@ template <class Message>
 std::optional<DeserializeResult> Deserialize(
   const uint8_t* rawMessageJsonOrBinary, size_t length)
 {
-  if (length >= 2 && rawMessageJsonOrBinary[1] == Message::kHeaderByte) {
+  if (length >= 2 && rawMessageJsonOrBinary[1] == Message::kMsgType.value) {
+    // byte 0 is packet id => skipping here
+    // byte 1 is message type => letting Message::ReadBinary handle it
+    // kMsgReadBinaryStart is 1, not 2 because of Message::ReadBinary design
+    constexpr auto kMsgReadBinaryOffset = 1;
+
     // BitStream requires non-const ref even though it doesn't modify it
     SLNet::BitStream stream(
-      const_cast<unsigned char*>(rawMessageJsonOrBinary) + 2, length - 2,
+      const_cast<unsigned char*>(rawMessageJsonOrBinary) +
+        kMsgReadBinaryOffset,
+      length - kMsgReadBinaryOffset,
       /*copyData*/ false);
 
     Message message;
     message.ReadBinary(stream);
 
     DeserializeResult result;
-    result.msgType = static_cast<MsgType>(Message::kMsgType);
+    result.msgType = static_cast<MsgType>(Message::kMsgType.value);
     result.message = std::make_unique<Message>(std::move(message));
     result.format = DeserializeInputFormat::Binary;
     return result;
@@ -74,19 +81,14 @@ std::optional<DeserializeResult> Deserialize(
 
 #define REGISTER_MESSAGE(Message)                                             \
   serializeFns[static_cast<size_t>(Message::kMsgType)] = Serialize<Message>;  \
-  deserializeFns[static_cast<size_t>(Message::kHeaderByte)] =                 \
+  deserializeFns[static_cast<size_t>(Message::kMsgType)] =                    \
     Deserialize<Message>;
 
 std::shared_ptr<MessageSerializer>
 MessageSerializerFactory::CreateMessageSerializer()
 {
   constexpr auto kSerializeFnMax = static_cast<size_t>(MsgType::Max);
-
-  // A hack to support MovementMessage, the first message that was ported to
-  // binary back in 2021 MovementMessage uses 'M' char instead of MsgType to
-  // identify itself in binary encoded packets
-  constexpr auto kDeserializeFnMax = std::max(
-    static_cast<size_t>(MovementMessage::kHeaderByte) + 1, kSerializeFnMax);
+  constexpr auto kDeserializeFnMax = static_cast<size_t>(MsgType::Max);
 
   std::vector<MessageSerializer::SerializeFn> serializeFns(kSerializeFnMax);
   std::vector<MessageSerializer::DeserializeFn> deserializeFns(
@@ -181,17 +183,25 @@ std::optional<DeserializeResult> MessageSerializer::Deserialize(
 
   auto deserializerFn = deserializerFns[headerByte];
   if (!deserializerFn) {
-    spdlog::trace("MessageSerializer::Deserialize - deserializerFn not found "
-                  "for headerByte {}",
-                  static_cast<int>(headerByte));
+    spdlog::warn(
+      "MessageSerializer::Deserialize - deserializerFn not found "
+      "for headerByte {}, (full message was {})",
+      static_cast<int>(headerByte),
+      fmt::join(std::vector<uint8_t>(rawMessageJsonOrBinary,
+                                     rawMessageJsonOrBinary + length),
+                ", "));
     return std::nullopt;
   }
 
   auto result = deserializerFn(rawMessageJsonOrBinary, length);
   if (result == std::nullopt) {
-    spdlog::trace("MessageSerializer::Deserialize - deserializerFn returned "
-                  "nullopt for headerByte {}",
-                  static_cast<int>(headerByte));
+    spdlog::warn(
+      "MessageSerializer::Deserialize - deserializerFn returned "
+      "nullopt for headerByte {}, (full message was {})",
+      static_cast<int>(headerByte),
+      fmt::join(std::vector<uint8_t>(rawMessageJsonOrBinary,
+                                     rawMessageJsonOrBinary + length),
+                ", "));
     return std::nullopt;
   }
 

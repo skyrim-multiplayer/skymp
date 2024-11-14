@@ -102,7 +102,8 @@ void ActionListener::OnUpdateMovement(const RawMessageData& rawMsgData,
                                       uint32_t idx, const NiPoint3& pos,
                                       const NiPoint3& rot, bool isInJumpState,
                                       bool isWeapDrawn, bool isBlocking,
-                                      uint32_t worldOrCell, RunMode runMode)
+                                      uint32_t worldOrCell,
+                                      const std::string& runMode)
 {
   auto actor = SendToNeighbours(idx, rawMsgData);
   if (actor) {
@@ -156,7 +157,7 @@ void ActionListener::OnUpdateMovement(const RawMessageData& rawMsgData,
       actor->ResetBlockCount();
     }
 
-    if (runMode != RunMode::Standing) {
+    if (runMode != "Standing") {
       // otherwise, people will slide in anims after quitting furniture
       actor->SetLastAnimEvent(std::nullopt);
     }
@@ -209,10 +210,10 @@ void ActionListener::OnUpdateAppearance(const RawMessageData& rawMsgData,
 }
 
 void ActionListener::OnUpdateEquipment(
-  const RawMessageData& rawMsgData, const uint32_t idx,
-  const simdjson::dom::element& data, const Inventory& equipmentInv,
-  const uint32_t leftSpell, const uint32_t rightSpell,
-  const uint32_t voiceSpell, const uint32_t instantSpell)
+  const RawMessageData& rawMsgData, const uint32_t idx, const Equipment& data,
+  const Inventory& equipmentInv, const uint32_t leftSpell,
+  const uint32_t rightSpell, const uint32_t voiceSpell,
+  const uint32_t instantSpell)
 {
   MpActor* actor = partOne.serverState.ActorByUser(rawMsgData.userId);
 
@@ -250,18 +251,18 @@ void ActionListener::OnUpdateEquipment(
 
   const auto& inventory = actor->GetInventory();
 
-  for (auto& [baseId, count, _] : equipmentInv.entries) {
-    if (!inventory.HasItem(baseId)) {
+  for (auto& entry : equipmentInv.entries) {
+    if (!inventory.HasItem(entry.baseId)) {
       spdlog::debug(
         "OnUpdateEquipment result false. The inventory does not contain item "
         "with id {:x}",
-        baseId);
+        entry.baseId);
       return;
     }
   }
 
   SendToNeighbours(idx, rawMsgData, true);
-  actor->SetEquipment(simdjson::minify(data));
+  actor->SetEquipment(data.ToJson().dump());
 }
 
 void ActionListener::OnActivate(const RawMessageData& rawMsgData,
@@ -615,9 +616,9 @@ void ActionListener::OnHostAttempt(const RawMessageData& rawMsgData,
 
         ChangeValuesMessage msg;
         msg.idx = remote.GetIdx();
-        msg.health = changeForm.actorValues.healthPercentage;
-        msg.magicka = changeForm.actorValues.magickaPercentage;
-        msg.stamina = changeForm.actorValues.staminaPercentage;
+        msg.data.health = changeForm.actorValues.healthPercentage;
+        msg.data.magicka = changeForm.actorValues.magickaPercentage;
+        msg.data.stamina = changeForm.actorValues.staminaPercentage;
         remote.SendToUser(msg, true); // in fact sends to hoster
       });
 
@@ -1009,7 +1010,7 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
       auto targetActorEquipmentEntries =
         targetActor.GetEquipment().inv.entries;
       for (auto& entry : targetActorEquipmentEntries) {
-        if (entry.extra.worn != Inventory::Worn::None) {
+        if (entry.GetWorn() != Inventory::Worn::None) {
           auto res =
             targetActor.GetParent()->GetEspm().GetBrowser().LookupById(
               entry.baseId);
