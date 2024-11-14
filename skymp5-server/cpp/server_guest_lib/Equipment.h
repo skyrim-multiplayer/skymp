@@ -3,6 +3,11 @@
 
 struct Equipment
 {
+  uint32_t numChanges = 0;
+  Inventory inv;
+
+  [[nodiscard]] bool IsSpellEquipped(uint32_t spellFormId) const;
+
   // TODO: get rid in favor of Serialize
   nlohmann::json ToJson() const;
   static Equipment FromJson(const simdjson::dom::element& element);
