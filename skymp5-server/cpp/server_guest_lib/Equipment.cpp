@@ -1,6 +1,12 @@
 #include "Equipment.h"
 #include "JsonUtils.h"
 
+bool Equipment::IsSpellEquipped(const uint32_t spellFormId) const
+{
+  return spellFormId == leftSpell || spellFormId == rightSpell ||
+    spellFormId == voiceSpell || spellFormId == instantSpell;
+}
+
 nlohmann::json Equipment::ToJson() const
 {
   nlohmann::json res{

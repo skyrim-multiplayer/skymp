@@ -11,6 +11,8 @@ struct Equipment
   uint32_t voiceSpell = 0;
   uint32_t instantSpell = 0;
 
+  [[nodiscard]] bool IsSpellEquipped(uint32_t spellFormId) const;
+
   nlohmann::json ToJson() const;
 
   static Equipment FromJson(const simdjson::dom::element& element);
