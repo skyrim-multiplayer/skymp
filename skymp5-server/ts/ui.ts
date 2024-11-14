@@ -2,20 +2,39 @@ const Koa = require("koa");
 const serve = require("koa-static");
 const proxy = require("koa-proxy");
 const Router = require("koa-router");
+import * as koaBody from "koa-body";
 import * as http from "http";
 import { Settings } from "./settings";
 import Axios from "axios";
 import { AddressInfo } from "net";
 
+let gScampServer: any = null;
+
 const createApp = (getOriginPort: () => number) => {
   const app = new Koa();
+  app.use(koaBody.default({ multipart: true }));
+
   const router = new Router();
   router.get(new RegExp("/scripts/.*"), (ctx: any) => ctx.throw(403));
   router.get(new RegExp("\.es[mpl]"), (ctx: any) => ctx.throw(403));
   router.get(new RegExp("\.bsa"), (ctx: any) => ctx.throw(403));
+
+  router.post("/rpc/:rpcClassName", (ctx: any) => {
+    const { rpcClassName } = ctx.params;
+    const { payload } = ctx.request.body;
+
+    if (gScampServer.onHttpRpcRunAttempt) {
+      ctx.body = gScampServer.onHttpRpcRunAttempt(rpcClassName, payload);
+    }
+  });
+  
   app.use(router.routes()).use(router.allowedMethods());
   app.use(serve("data"));
   return app;
+};
+
+export const setServer = (scampServer: any) => {
+  gScampServer = scampServer;
 };
 
 export const main = (settings: Settings): void => {
