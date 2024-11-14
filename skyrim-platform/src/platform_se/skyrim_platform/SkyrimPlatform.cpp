@@ -195,9 +195,10 @@ private:
       void* onLoadPluginFileCallback = nullptr;
       void* self = nullptr;
       const char* pluginPathUtf8 = nullptr;
+      const char* scriptSrc = nullptr;
     };
 #pragma pack(pop)
-    static_assert(sizeof(Msg) == 24);
+    static_assert(sizeof(Msg) == 32);
 
     auto s = path.u8string();
     std::string pluginPathUtf8(s.begin(), s.end());
