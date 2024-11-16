@@ -19,7 +19,7 @@ export class SpApiInteractor {
             lookupListener<T extends ClientListener>(constructor: ClientListenerConstructor<T>): T {
                 const listener = SpApiInteractor.listenersForLookupByName.get(constructor);
                 if (listener === undefined) {
-                    throw new Error(`listener not found for name '${onsctructor.name}'`);
+                    throw new Error(`listener not found for name '${constructor.name}'`);
                 }
                 if (!(listener instanceof constructor)) {
                     throw new Error(`listener class mismatch for name '${constructor.name}'`);
