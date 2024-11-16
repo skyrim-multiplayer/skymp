@@ -1073,7 +1073,7 @@ Napi::Value ScampServer::GetAllForms(const Napi::CallbackInfo& info)
     });
 
     size_t elementCount = forms->size();
-    Napi::TypedArray typedArray = Napi::Uint32Array::New(env, elementCount, arrayBuffer, 0);
+    Napi::TypedArray typedArray = Napi::Uint32Array::New(info.Env(), elementCount, arrayBuffer, 0);
 
     return typedArray;
 
