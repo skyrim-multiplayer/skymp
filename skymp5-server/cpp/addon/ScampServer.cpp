@@ -1068,7 +1068,7 @@ Napi::Value ScampServer::GetAllForms(const Napi::CallbackInfo& info)
     void* data = forms->data();
 
     Napi::ArrayBuffer arrayBuffer = Napi::ArrayBuffer::New(info.Env(), data, bufferSize,
-      [mutable forms](Napi::Env /*env*/, void* /*externalData*/) {
+      [forms](Napi::Env /*env*/, void* /*externalData*/) mutable {
       forms.reset();
     });
 
