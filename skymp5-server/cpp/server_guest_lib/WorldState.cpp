@@ -52,6 +52,7 @@ struct WorldState::Impl
   std::vector<RelootTimeForTypesEntry> relootTimeForTypes;
   std::set<std::string> forbiddenRelootTypes;
   std::vector<std::unique_ptr<IPapyrusClassBase>> classes;
+  std::array<std::shared_ptr<const std::vector<uint32_t>>, 0x100> allFormsByModIndexCache;
 };
 
 WorldState::WorldState()
@@ -851,6 +852,32 @@ const std::set<MpObjectReference*>& WorldState::GetNeighborsByPosition(
   auto& neighbours =
     grids[cellOrWorld].grid->GetNeighboursByPosition(cellX, cellY);
   return neighbours;
+}
+
+std::shared_ptr<const std::vector<uint32_t>> WorldState::GetAllForms(uint32_t modIndex)
+{
+  if (modIndex >= std::size(pImpl->allFormsByModIndexCache)) {
+    spdlog::error("WorldState::GetAllForms - Invalid mod index {}", modIndex);
+    return nullptr;
+  }
+
+  auto& resCache = pImpl->allFormsByModIndexCache[modIndex];
+
+  if (!resCache) {
+    // Deduplicate form IDs
+    // TODO: Consider cleaning changeFormsForDeferredLoad after adding a form so we don't need de-duplicate in runtime
+    std::unordered_set<uint32_t> formIds;
+    for (const auto& p : forms) {
+      formIds.insert(p.first);
+    }
+    for (const auto& p : pImpl->changeFormsForDeferredLoad) {
+      formIds.insert(p.first);
+    }
+
+    resCache = std::make_shared<const std::vector<uint32_t>>(formIds.begin(), formIds.end());
+  }
+
+  return resCache;
 }
 
 MpForm* WorldState::LookupFormByIdx(int idx)
