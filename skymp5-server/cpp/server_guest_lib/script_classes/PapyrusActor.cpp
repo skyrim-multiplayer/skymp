@@ -235,18 +235,18 @@ VarValue PapyrusActor::EquipSpell(VarValue self, const std::vector<VarValue>& ar
     return VarValue::None();
   }
 
-  if (lookupRes.rec->GetType() != espm::Type::SPEL) {
+  if (lookupRes.rec->GetType() != espm::SPEL::kType) {
     spdlog::error("EquipSpell - form is not a spell");
     return VarValue::None();
   }
 
-  // If no such spell in spell list, add one (this is standard behavior)
-  auto baseId = lookupRes.ToGlobalId(lookupRes.rec->GetId());
-  if (!actor->IsSpellLearned(baseId)) {
-    actor->AddSpell(baseId);
-  }
-
   if (auto actor = GetFormPtr<MpActor>(self)) {
+    // If no such spell in spell list, add one (this is standard behavior)
+    auto baseId = lookupRes.ToGlobalId(lookupRes.rec->GetId());
+    if (!actor->IsSpellLearned(baseId)) {
+      actor->AddSpell(baseId);
+    }
+
     SpSnippet(GetName(), "EquipSpell",
               SpSnippetFunctionGen::SerializeArguments(arguments).data(),
               actor->GetFormId())
