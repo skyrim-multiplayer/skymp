@@ -1,7 +1,7 @@
-import { logError, logTrace } from "src/logging";
+import { logError, logTrace } from "../../logging";
 import { QuerySuspendSyncEvent } from "../events/querySuspendSync";
 import { ClientListener, Sp, CombinedController } from "./clientListener";
-import { ObjectReferenceEx } from "src/extensions/objectReferenceEx";
+import { ObjectReferenceEx } from "../../extensions/objectReferenceEx";
 
 interface SuspendZonePoint {
     pos: number[];
@@ -25,7 +25,7 @@ export class SweetTaffySuspendSyncInTutorialService extends ClientListener {
 
         logTrace(this, "SweetTaffy features enabled");
 
-        controller.emitter.on("querySuspendSync", (e) => this.onQuerySuspendSync(e));
+        this.controller.emitter.on("querySuspendSync", (e) => this.onQuerySuspendSync(e));
     }
 
     private onQuerySuspendSync(e: QuerySuspendSyncEvent) {
