@@ -222,11 +222,46 @@ VarValue PapyrusActor::EquipItem(VarValue self,
   return VarValue::None();
 }
 
+VarValue PapyrusActor::EquipSpell(VarValue self, const std::vector<VarValue>& arguments)
+{
+  if (arguments.size() < 2) {
+    spdlog::error("EquipSpell requires at least 2 arguments");
+    return VarValue::None();
+  }
+
+  auto lookupRes = GetRecordPtr(arguments[0]);
+  if (!lookupRes.rec) {
+    spdlog::error("EquipSpell - invalid form");
+    return VarValue::None();
+  }
+
+  if (lookupRes.rec->GetType() != espm::Type::SPEL) {
+    spdlog::error("EquipSpell - form is not a spell");
+    return VarValue::None();
+  }
+
+  // If no such spell in spell list, add one (this is standard behavior)
+  auto baseId = lookupRes.ToGlobalId(lookupRes.rec->GetId());
+  if (!actor->IsSpellLearned(baseId)) {
+    actor->AddSpell(baseId);
+  }
+
+  if (auto actor = GetFormPtr<MpActor>(self)) {
+    SpSnippet(GetName(), "EquipSpell",
+              SpSnippetFunctionGen::SerializeArguments(arguments).data(),
+              actor->GetFormId())
+      .Execute(actor, SpSnippetMode::kNoReturnResult);
+  }
+
+  return VarValue::None();
+}
+
 VarValue PapyrusActor::UnequipItem(VarValue self,
                                    const std::vector<VarValue>& arguments)
 {
   if (arguments.size() < 3) {
-    throw std::runtime_error("UnequipItem requires at least 3 arguments");
+    spdlog::error("UnequipItem requires at least 3 arguments");
+    return VarValue::None();
   }
 
   if (auto actor = GetFormPtr<MpActor>(self)) {
@@ -559,6 +594,7 @@ void PapyrusActor::Register(
             &PapyrusActor::GetActorValuePercentage);
   AddMethod(vm, "SetAlpha", &PapyrusActor::SetAlpha);
   AddMethod(vm, "EquipItem", &PapyrusActor::EquipItem);
+  AddMethod(vm, "EquipSpell", &PapyrusActor::EquipSpell);
   AddMethod(vm, "UnequipItem", &PapyrusActor::UnequipItem);
   AddMethod(vm, "SetDontMove", &PapyrusActor::SetDontMove);
   AddMethod(vm, "IsDead", &PapyrusActor::IsDead);
