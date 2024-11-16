@@ -30,15 +30,34 @@ export class FormViewArray {
   }
 
   updateAll(model: WorldModel, showMe: boolean, isCloneView: boolean) {
-    const gamemodeUpdateService = SpApiInteractor.getControllerInstance().lookupListener(GamemodeUpdateService);
+    const controller = SpApiInteractor.getControllerInstance();
+
+    const gamemodeUpdateService = controller.lookupListener(GamemodeUpdateService);
     gamemodeUpdateService.setFormViewArray(this);
+
+    this.isSyncSuspended = false;
+    controller.emitter.emit("querySuspendSync", {
+      suspend: () => {
+        this.isSyncSuspended = true;
+      }
+    });
 
     const forms = model.forms;
     const n = forms.length;
     for (let i = 0; i < n; ++i) {
       const form = forms[i];
 
-      if (!form || (model.playerCharacterFormIdx === i && !showMe)) {
+      if (form === undefined) {
+        this.destroyForm(i);
+        continue;
+      }
+
+      if (this.isSyncSuspended) {
+        this.destroyForm(i);
+        continue;
+      }
+
+      if (model.playerCharacterFormIdx === i && !showMe) {
         this.destroyForm(i);
         continue;
       }
@@ -111,4 +130,5 @@ export class FormViewArray {
   }
 
   private formViews = new Array<FormView | undefined>();
+  private isSyncSuspended = false;
 }

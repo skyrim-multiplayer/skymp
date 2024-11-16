@@ -36,7 +36,7 @@ import { QueryBlockSetInventoryEvent } from "./queryBlockSetInventoryEvent";
 import { QueryKeyCodeBindings } from "./queryKeyCodeBindings";
 import { SpellCastMessage } from "../messages/spellCastMessage";
 import { UpdateAnimVariablesMessage } from "../messages/updateAnimVariablesMessage";
-
+import { QuerySuspendSyncEvent } from "./querySuspendSync";
 
 type EventTypes = {
     'gameLoad': [GameLoadEvent],
@@ -79,7 +79,8 @@ type EventTypes = {
     'anyMessage': [ConnectionMessage<AnyMessage>],
     'newLocalLagValueCalculated': [NewLocalLagValueCalculatedEvent],
     'queryBlockSetInventoryEvent': [QueryBlockSetInventoryEvent],
-    'queryKeyCodeBindings': [QueryKeyCodeBindings]
+    'queryKeyCodeBindings': [QueryKeyCodeBindings],
+    'querySuspendSync': [QuerySuspendSyncEvent],
 }
 
 // https://blog.makerx.com.au/a-type-safe-event-emitter-in-node-js/

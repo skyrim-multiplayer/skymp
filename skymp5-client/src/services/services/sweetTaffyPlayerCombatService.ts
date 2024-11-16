@@ -243,6 +243,8 @@ export class SweetTaffyPlayerCombatService extends ClientListener {
     // It's well-tested though, so we can enable it once we have a protection mechanism.
 
     // const weaponTimings = this.getSettingsFromFile();
+
+    // See also SweetTaffySuspendSyncInTutorialService.ts
     const weaponTimings = this.getSettingsDefault();
     if (!weaponTimings) {
       return null;
