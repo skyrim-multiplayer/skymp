@@ -868,12 +868,12 @@ std::shared_ptr<const std::vector<uint32_t>> WorldState::GetAllForms(uint32_t mo
     // TODO: Consider cleaning changeFormsForDeferredLoad after adding a form so we don't need de-duplicate in runtime
     std::unordered_set<uint32_t> formIds;
     for (const auto& p : forms) {
-      if (p.first / 0x01000000 == modIndex) {
+      if ((p.first >> 24) == modIndex) {
         formIds.insert(p.first);
       }
     }
     for (const auto& p : pImpl->changeFormsForDeferredLoad) {
-      if (p.first / 0x01000000 == modIndex) {
+      if ((p.first >> 24) == modIndex) {
         formIds.insert(p.first);
       }
     }
