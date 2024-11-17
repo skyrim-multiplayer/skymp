@@ -1057,17 +1057,17 @@ Napi::Value ScampServer::GetAllForms(const Napi::CallbackInfo& info)
   try {
     uint32_t modIndex = NapiHelper::ExtractUInt32(info[0], "modIndex");
 
-    std::shared_ptr<const std::vector<uint32_t> forms = partOne->worldState.GetAllForms(modIndex);
+    std::shared_ptr<const std::vector<uint32_t>> forms = partOne->worldState.GetAllForms(modIndex);
 
     if (!forms) {
-      static const auto kEmptyVector = std::make_shared<const std::vector<uint32_t>();
+      static const auto kEmptyVector = std::make_shared<const std::vector<uint32_t>>();
       forms = kEmptyVector;
     }
 
     size_t bufferSizeBytes = forms->size() * sizeof(uint32_t);
     void* data = forms->data();
 
-    Napi::ArrayBuffer arrayBuffer = Napi::ArrayBuffer::New(info.Env(), data, bufferSize,
+    Napi::ArrayBuffer arrayBuffer = Napi::ArrayBuffer::New(info.Env(), data, bufferSizeBytes,
       [forms](Napi::Env /*env*/, void* /*externalData*/) mutable {
       forms.reset();
     });
