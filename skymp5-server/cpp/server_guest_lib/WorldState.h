@@ -115,7 +115,7 @@ public:
   const std::set<MpObjectReference*>& GetNeighborsByPosition(
     uint32_t cellOrWorld, int16_t cellX, int16_t cellY);
 
-  std::shared_ptr<const std::vector<uint32_t>> GetAllForms(uint32_t modIndex);
+  std::shared_ptr<std::vector<uint32_t>> GetAllForms(uint32_t modIndex);
 
   // See LookupFormById comment
   template <class F>

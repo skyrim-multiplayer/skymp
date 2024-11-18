@@ -53,6 +53,7 @@ struct WorldState::Impl
   std::set<std::string> forbiddenRelootTypes;
   std::vector<std::unique_ptr<IPapyrusClassBase>> classes;
   std::array<std::shared_ptr<const std::vector<uint32_t>>, 0x100> allFormsByModIndexCache;
+  std::vector<uint32_t> attachEspmRecordFailures;
 };
 
 WorldState::WorldState()
@@ -663,6 +664,10 @@ bool WorldState::LoadForm(uint32_t formId, std::stringstream* optionalOutTrace)
                       << std::endl;
   }
 
+  if (!attached) {
+    pImpl->attachEspmRecordFailures.push_back(formId);
+  }
+
   if (attached) {
     auto& refr = GetFormAt<MpObjectReference>(formId);
     auto it = pImpl->changeFormsForDeferredLoad.find(formId);
@@ -854,7 +859,7 @@ const std::set<MpObjectReference*>& WorldState::GetNeighborsByPosition(
   return neighbours;
 }
 
-std::shared_ptr<const std::vector<uint32_t>> WorldState::GetAllForms(uint32_t modIndex)
+std::shared_ptr<std::vector<uint32_t>> WorldState::GetAllForms(uint32_t modIndex)
 {
   if (modIndex >= std::size(pImpl->allFormsByModIndexCache)) {
     spdlog::error("WorldState::GetAllForms - Invalid mod index {}", modIndex);
@@ -878,7 +883,11 @@ std::shared_ptr<const std::vector<uint32_t>> WorldState::GetAllForms(uint32_t mo
       }
     }
 
-    resCache = std::make_shared<const std::vector<uint32_t>>(formIds.begin(), formIds.end());
+    for (auto failedToAttachFormId : pImpl->attachEspmRecordFailures) {
+      formIds.erase(failedToAttachFormId);
+    }
+
+    resCache = std::make_shared<std::vector<uint32_t>>(formIds.begin(), formIds.end());
   }
 
   return resCache;
