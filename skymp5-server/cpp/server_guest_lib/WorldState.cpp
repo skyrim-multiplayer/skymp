@@ -52,7 +52,7 @@ struct WorldState::Impl
   std::vector<RelootTimeForTypesEntry> relootTimeForTypes;
   std::set<std::string> forbiddenRelootTypes;
   std::vector<std::unique_ptr<IPapyrusClassBase>> classes;
-  std::array<std::shared_ptr<const std::vector<uint32_t>>, 0x100> allFormsByModIndexCache;
+  std::array<std::shared_ptr<std::vector<uint32_t>>, 0x100> allFormsByModIndexCache;
   std::vector<uint32_t> attachEspmRecordFailures;
 };
 
