@@ -5,7 +5,6 @@ export interface UpdatePropertyMessage {
     idx: number;
     refrId: number;
     baseRecordType: string; // DOOR, ACTI, etc
-    dataDump?: string; // JSON string, alternatives with 'data'
-    data?: unknown; // JSON value, alternatives with 'dataDump'
+    data: unknown;
     propName: string;
 }

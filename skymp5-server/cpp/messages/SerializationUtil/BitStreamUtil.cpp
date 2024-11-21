@@ -1,4 +1,4 @@
-#include "../include/impl/BitStreamUtil.h"
+#include "BitStreamUtil.h"
 #include <nlohmann/json.hpp>
 
 void SerializationUtil::WriteToBitStream(SLNet::BitStream& stream,

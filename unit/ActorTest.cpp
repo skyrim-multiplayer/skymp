@@ -10,13 +10,11 @@ TEST_CASE(
   Appearance appearance;
   appearance.raceId = 0x123;
   actor.SetAppearance(&appearance);
-  actor.SetEquipment(R"({"numChanges": 0, "inv": {"entries":[]}})");
+  actor.SetEquipment(R"({"inv": {"entries":[]}})");
   actor.SetRaceMenuOpen(true);
 
   REQUIRE(actor.GetChangeForm().appearanceDump == appearance.ToJson());
-  REQUIRE(
-    nlohmann::json::parse(actor.GetChangeForm().equipmentDump) ==
-    nlohmann::json::parse(R"({"numChanges": 0, "inv": {"entries":[]}})"));
+  REQUIRE(actor.GetChangeForm().equipmentDump == R"({"inv": {"entries":[]}})");
   REQUIRE(actor.GetChangeForm().isRaceMenuOpen == true);
 }
 

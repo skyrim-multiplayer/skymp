@@ -24,7 +24,7 @@ TEST_CASE("DeathState packed is correct if actor was killed", "[Respawn]")
 
   REQUIRE(updateProperyMsg["t"] == MsgType::UpdateProperty);
   REQUIRE(updateProperyMsg["propName"] == "isDead");
-  REQUIRE(updateProperyMsg["dataDump"] == "true");
+  REQUIRE(updateProperyMsg["data"] == true);
   REQUIRE(updateProperyMsg["idx"] == ac.GetIdx());
   REQUIRE(teleportMsg.is_null());
   REQUIRE(changeValuesMsg.is_null());
@@ -59,7 +59,7 @@ TEST_CASE("DeathState packed is correct if actor is respawning", "[Respawn]")
 
   REQUIRE(updateProperyMsg["t"] == MsgType::UpdateProperty);
   REQUIRE(updateProperyMsg["propName"] == "isDead");
-  REQUIRE(updateProperyMsg["dataDump"] == "false");
+  REQUIRE(updateProperyMsg["data"] == false);
   REQUIRE(updateProperyMsg["idx"] == ac.GetIdx());
 
   REQUIRE(teleportMsg["t"] == MsgType::Teleport);
@@ -73,7 +73,7 @@ TEST_CASE("DeathState packed is correct if actor is respawning", "[Respawn]")
   REQUIRE(message2["t"] == MsgType::UpdateProperty);
 
   REQUIRE(message2["propName"] == "isDead");
-  REQUIRE(message2["dataDump"] == "false");
+  REQUIRE(message2["data"] == false);
   REQUIRE(message2["idx"] == ac.GetIdx());
   REQUIRE(message2["refrId"] == ac.GetFormId());
   REQUIRE(message2["baseRecordType"] == nlohmann::json{});

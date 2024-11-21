@@ -59,7 +59,7 @@ UpdatePropertyMessage MpObjectReference::PreparePropertyMessage(
   res.idx = self->GetIdx();
   res.propName = name;
   res.refrId = self->GetFormId();
-  res.dataDump = value.dump();
+  res.data = value;
 
   // See 'perf: improve game framerate #1186'
   // Client needs to know if it is DOOR or not
@@ -1872,7 +1872,7 @@ void MpObjectReference::EnsureBaseContainerAdded(espm::Loader& espm)
       Inventory::Entry e;
       e.baseId = p.first;
       e.count = p.second;
-      e.SetWorn(Inventory::Worn::Right);
+      e.extra.worn = Inventory::Worn::Right;
       eq.inv.AddItems({ e });
     }
     actor->SetEquipment(eq.ToJson().dump());

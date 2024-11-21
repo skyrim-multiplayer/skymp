@@ -31,7 +31,6 @@ add_library(messages STATIC ${src})
 target_include_directories(messages PUBLIC "${CMAKE_CURRENT_LIST_DIR}/messages")
 target_link_libraries(messages PUBLIC viet)
 target_link_libraries(messages PUBLIC papyrus-vm-lib) # Utils.h: stricmp
-target_link_libraries(messages PUBLIC serialization)
 apply_default_settings(TARGETS messages)
 list(APPEND VCPKG_DEPENDENT messages)
 
@@ -72,7 +71,7 @@ add_library(server_guest_lib STATIC ${src})
 target_include_directories(server_guest_lib PUBLIC "${CMAKE_CURRENT_LIST_DIR}/server_guest_lib")
 apply_default_settings(TARGETS server_guest_lib)
 list(APPEND VCPKG_DEPENDENT server_guest_lib)
-target_link_libraries(server_guest_lib PUBLIC viet mp_common espm papyrus-vm-lib geo serialization)
+target_link_libraries(server_guest_lib PUBLIC viet mp_common espm papyrus-vm-lib geo)
 
 #
 # localization-provider

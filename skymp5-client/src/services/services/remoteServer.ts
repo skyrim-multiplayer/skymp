@@ -557,11 +557,8 @@ export class RemoteServer extends ClientListener {
                 ? {
                   name: msg.appearance.name,
                   raceId: msg.appearance.raceId,
-
-                  // TODO: In types, isFemale is under face, but in the reality SP expects it here. Fix required.
                   // @ts-expect-error
                   isFemale: msg.appearance.isFemale,
-
                   face: {
                     hairColor: msg.appearance.hairColor,
                     bodySkinColor: msg.appearance.skinColor,
@@ -693,7 +690,6 @@ export class RemoteServer extends ClientListener {
 
   private onUpdatePropertyMessage(event: ConnectionMessage<UpdatePropertyMessage>): void {
     const msg = event.message;
-    const msgData = this.extractUpdatePropertyMessageData(msg);
 
     if (this.skipFormViewCreation(msg)) {
       const refrId = msg.refrId;
@@ -704,20 +700,20 @@ export class RemoteServer extends ClientListener {
           return;
         }
         if (msg.propName === 'inventory') {
-          ModelApplyUtils.applyModelInventory(refr, msgData as Inventory);
+          ModelApplyUtils.applyModelInventory(refr, msg.data as Inventory);
         } else if (msg.propName === 'isOpen') {
-          ModelApplyUtils.applyModelIsOpen(refr, !!msgData);
+          ModelApplyUtils.applyModelIsOpen(refr, !!msg.data);
         } else if (msg.propName === 'isHarvested') {
-          ModelApplyUtils.applyModelIsHarvested(refr, !!msgData);
+          ModelApplyUtils.applyModelIsHarvested(refr, !!msg.data);
         } else if (msg.propName === 'disabled') {
-          ModelApplyUtils.applyModelIsDisabled(refr, !!msgData);
+          ModelApplyUtils.applyModelIsDisabled(refr, !!msg.data);
         }
       });
       return;
     }
     const i = this.getIdManager().getId(msg.idx);
     const form = this.worldModel.forms[i];
-    (form as Record<string, unknown>)[msg.propName] = msgData;
+    (form as Record<string, unknown>)[msg.propName] = msg.data;
   }
 
   private onDeathStateContainerMessage(event: ConnectionMessage<DeathStateContainerMessage>): void {
@@ -733,16 +729,11 @@ export class RemoteServer extends ClientListener {
       return;
     }
 
-    if (msg.tIsDead.propName !== nameof<FormModel>('isDead')) {
-      logError(this, `onDeathStateContainerMessage - Invalid propName`, msg.tIsDead.propName);
+    if (
+      msg.tIsDead.propName !== nameof<FormModel>('isDead') ||
+      typeof msg.tIsDead.data !== 'boolean'
+    )
       return;
-    }
-
-    const msgData = this.extractUpdatePropertyMessageData(msg.tIsDead);
-    if (typeof msgData !== 'boolean') {
-      logError(this, `onDeathStateContainerMessage - Invalid data`, msgData);
-      return;
-    }
 
     if (msg.tChangeValues) {
       this.onChangeValuesMessage({ message: msg.tChangeValues });
@@ -762,7 +753,7 @@ export class RemoteServer extends ClientListener {
         try {
           this.controller.emitter.emit("applyDeathStateEvent", {
             actor: actor,
-            isDead: msgData
+            isDead: msg.tIsDead.data as boolean
           });
         } catch (e) {
           if (e instanceof RespawnNeededError) {
@@ -874,26 +865,6 @@ export class RemoteServer extends ClientListener {
     // Optimization added in #1186, however it doesn't work for doors for some reason
     return msg.refrId && msg.refrId < 0xff000000 && msg.baseRecordType !== 'DOOR';
   };
-
-  private extractUpdatePropertyMessageData(updatePropertyMessage: UpdatePropertyMessage) {
-    let msgData: unknown = updatePropertyMessage.data;
-
-    if (updatePropertyMessage.dataDump !== undefined) {
-      try {
-        msgData = JSON.parse(updatePropertyMessage.dataDump);
-      } catch (e) {
-        if (e instanceof SyntaxError) {
-          logError(this, 'extractUpdatePropertyMessageData - Failed to parse dataDump', updatePropertyMessage.dataDump);
-          return;
-        }
-        else {
-          throw e;
-        }
-      }
-    }
-
-    return msgData;
-  }
 
   private onSpellCastMessage(event: ConnectionMessage<SpellCastMessage>): void {
     const msg = event.message;

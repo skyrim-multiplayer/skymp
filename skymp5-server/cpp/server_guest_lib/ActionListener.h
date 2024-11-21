@@ -1,9 +1,10 @@
 #pragma once
+#include "ActionListener.h"
 #include "AnimationData.h"
 #include "ConsoleCommands.h"
+#include "MovementMessage.h" // RunMode
 #include "MpActor.h"
 #include "PartOne.h"
-#include "UpdateMovementMessage.h" // RunMode
 #include "libespm/Loader.h"
 
 #include "SpellCastData.h"
@@ -35,7 +36,7 @@ public:
                                 const NiPoint3& pos, const NiPoint3& rot,
                                 bool isInJumpState, bool isWeapDrawn,
                                 bool isBlocking, uint32_t worldOrCell,
-                                const std::string& runMode);
+                                RunMode runMode);
 
   virtual void OnUpdateAnimation(const RawMessageData& rawMsgData,
                                  uint32_t idx,
@@ -45,7 +46,8 @@ public:
                                   uint32_t idx, const Appearance& appearance);
 
   virtual void OnUpdateEquipment(const RawMessageData& rawMsgData,
-                                 uint32_t idx, const Equipment& data,
+                                 uint32_t idx,
+                                 const simdjson::dom::element& data,
                                  const Inventory& equipmentInv,
                                  uint32_t leftSpell, uint32_t rightSpell,
                                  uint32_t voiceSpell, uint32_t instantSpell);
