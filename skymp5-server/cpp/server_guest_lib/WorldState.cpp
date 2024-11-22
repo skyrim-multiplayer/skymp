@@ -52,7 +52,8 @@ struct WorldState::Impl
   std::vector<RelootTimeForTypesEntry> relootTimeForTypes;
   std::set<std::string> forbiddenRelootTypes;
   std::vector<std::unique_ptr<IPapyrusClassBase>> classes;
-  std::array<std::shared_ptr<std::vector<uint32_t>>, 0x100> allFormsByModIndexCache;
+  std::array<std::shared_ptr<std::vector<uint32_t>>, 0x100>
+    allFormsByModIndexCache;
   std::vector<uint32_t> attachEspmRecordFailures;
 };
 
@@ -859,7 +860,8 @@ const std::set<MpObjectReference*>& WorldState::GetNeighborsByPosition(
   return neighbours;
 }
 
-std::shared_ptr<std::vector<uint32_t>> WorldState::GetAllForms(uint32_t modIndex)
+std::shared_ptr<std::vector<uint32_t>> WorldState::GetAllForms(
+  uint32_t modIndex)
 {
   if (modIndex >= std::size(pImpl->allFormsByModIndexCache)) {
     spdlog::error("WorldState::GetAllForms - Invalid mod index {}", modIndex);
@@ -870,7 +872,8 @@ std::shared_ptr<std::vector<uint32_t>> WorldState::GetAllForms(uint32_t modIndex
 
   if (!resCache) {
     // Deduplicate form IDs
-    // TODO: Consider cleaning changeFormsForDeferredLoad after adding a form so we don't need de-duplicate in runtime
+    // TODO: Consider cleaning changeFormsForDeferredLoad after adding a form
+    // so we don't need de-duplicate in runtime
     std::unordered_set<uint32_t> formIds;
     for (const auto& p : forms) {
       if ((p.first >> 24) == modIndex) {
@@ -887,7 +890,8 @@ std::shared_ptr<std::vector<uint32_t>> WorldState::GetAllForms(uint32_t modIndex
       formIds.erase(failedToAttachFormId);
     }
 
-    resCache = std::make_shared<std::vector<uint32_t>>(formIds.begin(), formIds.end());
+    resCache =
+      std::make_shared<std::vector<uint32_t>>(formIds.begin(), formIds.end());
   }
 
   return resCache;

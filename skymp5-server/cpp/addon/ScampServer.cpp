@@ -1057,23 +1057,27 @@ Napi::Value ScampServer::GetAllForms(const Napi::CallbackInfo& info)
   try {
     uint32_t modIndex = NapiHelper::ExtractUInt32(info[0], "modIndex");
 
-    std::shared_ptr<std::vector<uint32_t>> forms = partOne->worldState.GetAllForms(modIndex);
+    std::shared_ptr<std::vector<uint32_t>> forms =
+      partOne->worldState.GetAllForms(modIndex);
 
     if (!forms) {
-      static const auto kEmptyVector = std::make_shared<std::vector<uint32_t>>();
+      static const auto kEmptyVector =
+        std::make_shared<std::vector<uint32_t>>();
       forms = kEmptyVector;
     }
 
     size_t bufferSizeBytes = forms->size() * sizeof(uint32_t);
     void* data = const_cast<uint32_t*>(forms->data());
 
-    Napi::ArrayBuffer arrayBuffer = Napi::ArrayBuffer::New(info.Env(), data, bufferSizeBytes,
+    Napi::ArrayBuffer arrayBuffer = Napi::ArrayBuffer::New(
+      info.Env(), data, bufferSizeBytes,
       [forms](Napi::Env /*env*/, void* /*externalData*/) mutable {
-      forms.reset();
-    });
+        forms.reset();
+      });
 
     size_t elementCount = forms->size();
-    Napi::TypedArray typedArray = Napi::Uint32Array::New(info.Env(), elementCount, arrayBuffer, 0);
+    Napi::TypedArray typedArray =
+      Napi::Uint32Array::New(info.Env(), elementCount, arrayBuffer, 0);
 
     return typedArray;
 
