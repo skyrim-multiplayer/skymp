@@ -90,7 +90,7 @@ void ExecuteAddItem(MpActor& caller,
 }
 
 void ExecuteEquipItem(MpActor& caller,
-                    const std::vector<ConsoleCommands::Argument>& args)
+                      const std::vector<ConsoleCommands::Argument>& args)
 {
   EnsureAdmin(caller);
 
@@ -110,7 +110,7 @@ void ExecuteEquipItem(MpActor& caller,
   auto aForce = VarValue(false);
   auto aSilent = VarValue(false);
   (void)papyrusActor.EquipItem(target.ToVarValue(),
-                                       { aItem, aForce, aSilent });
+                               { aItem, aForce, aSilent });
 }
 
 void ExecutePlaceAtMe(MpActor& caller,
