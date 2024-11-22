@@ -1,7 +1,6 @@
 const { execSync } = require("child_process");
 const simpleGit = require("simple-git");
 
-// Supported extensions
 const extensions = [".cpp", ".h", ".hpp", ".cxx", ".cc"];
 
 (async () => {
@@ -25,13 +24,13 @@ const extensions = [".cpp", ".h", ".hpp", ".cxx", ".cc"];
     filesToFormat.forEach((file) => {
       console.log(`  - ${file}`);
       execSync(`clang-format -i ${file}`, { stdio: "inherit" });
-      execSync(`git add ${file}`); // Re-add the file after formatting
+      execSync(`git add ${file}`);
     });
 
     console.log("Formatting completed and changes staged.");
   } catch (err) {
     console.error("Error during formatting:", err.message);
     console.error("Autofix failed. Commit aborted.");
-    process.exit(1); // Block the commit
+    process.exit(1);
   }
 })();
