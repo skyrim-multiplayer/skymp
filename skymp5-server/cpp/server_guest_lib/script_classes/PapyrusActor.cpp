@@ -222,7 +222,8 @@ VarValue PapyrusActor::EquipItem(VarValue self,
   return VarValue::None();
 }
 
-VarValue PapyrusActor::EquipSpell(VarValue self, const std::vector<VarValue>& arguments)
+VarValue PapyrusActor::EquipSpell(VarValue self,
+                                  const std::vector<VarValue>& arguments)
 {
   if (arguments.size() < 2) {
     spdlog::error("EquipSpell requires at least 2 arguments");
