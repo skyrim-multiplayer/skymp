@@ -2,6 +2,7 @@
 #include "MpActor.h"
 #include "WorldState.h"
 #include "papyrus-vm/Utils.h"
+#include "script_classes/PapyrusActor.h"
 #include "script_classes/PapyrusObjectReference.h"
 #include "script_objects/EspmGameObject.h"
 
@@ -88,6 +89,30 @@ void ExecuteAddItem(MpActor& caller,
                                        { aItem, aCount, aSilent });
 }
 
+void ExecuteEquipItem(MpActor& caller,
+                      const std::vector<ConsoleCommands::Argument>& args)
+{
+  EnsureAdmin(caller);
+
+  const auto targetId = static_cast<uint32_t>(args.at(0).GetInteger());
+  const auto itemId = static_cast<uint32_t>(args.at(1).GetInteger());
+
+  MpObjectReference& target = (targetId == 0x14)
+    ? caller
+    : caller.GetParent()->GetFormAt<MpObjectReference>(targetId);
+
+  auto& br = caller.GetParent()->GetEspm().GetBrowser();
+
+  PapyrusActor papyrusActor;
+  auto aItem =
+    VarValue(std::make_shared<EspmGameObject>(br.LookupById(itemId)));
+
+  auto aForce = VarValue(false);
+  auto aSilent = VarValue(false);
+  (void)papyrusActor.EquipItem(target.ToVarValue(),
+                               { aItem, aForce, aSilent });
+}
+
 void ExecutePlaceAtMe(MpActor& caller,
                       const std::vector<ConsoleCommands::Argument>& args)
 {
@@ -147,6 +172,8 @@ void ConsoleCommands::Execute(
 {
   if (!Utils::stricmp(consoleCommandName.data(), "AddItem")) {
     ExecuteAddItem(me, args);
+  } else if (!Utils::stricmp(consoleCommandName.data(), "EquipItem")) {
+    ExecuteEquipItem(me, args);
   } else if (!Utils::stricmp(consoleCommandName.data(), "PlaceAtMe")) {
     ExecutePlaceAtMe(me, args);
   } else if (!Utils::stricmp(consoleCommandName.data(), "Disable")) {
