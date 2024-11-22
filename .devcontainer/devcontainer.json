@@ -1,6 +1,9 @@
 {
-    "name": "Node.js Codespace",
-    "image": "mcr.microsoft.com/devcontainers/javascript-node:22",
-    "postCreateCommand": "yarn",
+    "name": "SkyMP Codespace",
+    "build": {
+      "dockerfile": "Dockerfile"
+    },
+    "postCreateCommand": "mkdir -p .git/hooks && ln -sf $(pwd)/misc/git-hooks/pre-commit .git/hooks/pre-commit && chmod +x misc/git-hooks/pre-commit && cd misc/git-hooks && npm install simple-git",
     "remoteUser": "node"
-}
+  }
+  
