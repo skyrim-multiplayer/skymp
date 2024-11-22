@@ -13,7 +13,7 @@ enum CmdArgument {
     String,
 }
 
-type CmdName = "additem" | "placeatme" | "disable" | "mp";
+type CmdName = "additem" | "equipitem" | "placeatme" | "disable" | "mp";
 
 export class ConsoleCommandsService extends ClientListener {
     constructor(private sp: Sp, private controller: CombinedController) {
@@ -26,6 +26,7 @@ export class ConsoleCommandsService extends ClientListener {
     private static createSchemas() {
         const schemas = new Map<CmdName, CmdArgument[]>();
         schemas.set("additem", [CmdArgument.ObjectReference, CmdArgument.BaseForm, CmdArgument.Int]);
+        schemas.set("equipitem", [CmdArgument.ObjectReference, CmdArgument.BaseForm]);
         schemas.set("placeatme", [CmdArgument.ObjectReference, CmdArgument.BaseForm]);
         schemas.set("disable", [CmdArgument.ObjectReference]);
         schemas.set("mp", [CmdArgument.ObjectReference, CmdArgument.String]);
