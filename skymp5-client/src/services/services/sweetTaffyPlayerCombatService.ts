@@ -4,6 +4,7 @@ import { WeaponType } from "skyrimPlatform";
 
 // TODO: move to service
 let playerLastStaminaValue = 0;
+let playerLastIsSprintingValue = false;
 let blockPlayerControlTimeStamp = 0;
 let isPlayerControlDisabled = true;
 let playerAttackTimeout = 0;
@@ -65,8 +66,33 @@ export class SweetTaffyPlayerCombatService extends ClientListener {
     }
 
     this.controller.on("update", () => {
-      playerLastStaminaValue = this.sp.Game.getPlayer()!.getActorValue("Stamina");
+      const player = this.sp.Game.getPlayer()!;
+      playerLastStaminaValue = player.getActorValue("Stamina");
+      playerLastIsSprintingValue = player.isSprinting();
     });
+
+    for (const pattern of ['SprintStart']) {
+      const sp = this.sp;
+      this.sp.hooks.sendAnimationEvent.add({
+        enter: ((ctx) => {
+          if (playerLastStaminaValue < 7.5) {
+            ctx.animEventName = "";
+          }
+        }),
+        leave: (() => { }),
+      }, 0x14, 0x14, pattern);
+    }
+
+    for (const pattern of ['blockStart']) {
+      this.sp.hooks.sendAnimationEvent.add({
+        enter: ((ctx) => {
+          if (playerLastIsSprintingValue) {
+            ctx.animEventName = "";
+          }
+        }),
+        leave: (() => { }),
+      }, 0x14, 0x14, pattern);
+    }
 
     for (const pattern of ['attackStart*', 'AttackStart*']) {
       this.sp.hooks.sendAnimationEvent.add({
