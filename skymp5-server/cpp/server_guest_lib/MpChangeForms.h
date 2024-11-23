@@ -86,10 +86,14 @@ public:
   ActiveMagicEffectsMap activeMagicEffects;
   bool consoleCommandsAllowed = false;
 
-  // 'appearanceDump' and 'equipmentDump' can be empty. it means nullopt.
-  // "unexisting" equipment and equipment with zero entries are different
-  // values in skymp due to poor design
-  std::string appearanceDump, equipmentDump;
+  // 'appearanceDump' can be empty. it means nullopt.
+  // "unexisting" appearanceDump and appearanceDump with zero entries are
+  // different values in skymp due to poor design
+  std::string appearanceDump;
+
+  // Same as 'appearanceDump', but uses std::optional instead of a string
+  std::optional<Equipment> equipmentDump;
+
   ActorValues actorValues;
 
   // Used only for player characters. See GetSpawnPoint

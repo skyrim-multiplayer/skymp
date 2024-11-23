@@ -25,21 +25,18 @@ TEST_CASE("OnHit damages target actor based on damage formula", "[Hit]")
   hitData.target = 0x14;
   hitData.aggressor = 0x14;
   hitData.source = 0x0001397E; // iron dagger 4 damage, id = 80254
+
   ac.AddItem(hitData.source, 1);
-  ac.SetEquipment(R"(
-    {
-      "numChanges": 0,
-      "inv": {
-        "entries": [
-          {
-            "baseId": 80254,
-            "count": 1,
-            "worn": true
-          }
-        ]
-      }
-    }
-  )");
+
+  Inventory::Entry equipmentEntry;
+  equipmentEntry.baseId = hitData.source;
+  equipmentEntry.count = 1;
+  equipmentEntry.worn_ = true;
+
+  Equipment equipment;
+  equipment.inv.AddItems({ equipmentEntry });
+
+  ac.SetEquipment(equipment);
 
   auto past = std::chrono::steady_clock::now() - 10s;
   ac.SetLastHitTime(past);
@@ -64,7 +61,7 @@ TEST_CASE("OnHit function sends ChangeValues message with coorect percentages",
   p.CreateActor(0xff000000, { 0, 0, 0 }, 0, 0x3c);
   p.SetUserActor(0, 0xff000000);
   auto& ac = p.worldState.GetFormAt<MpActor>(0xff000000);
-  ac.SetEquipment(R"({"inv": {"entries": []}})");
+  ac.SetEquipment(Equipment());
 
   ActionListener::RawMessageData rawMsgData;
   rawMsgData.userId = 0;
@@ -73,20 +70,15 @@ TEST_CASE("OnHit function sends ChangeValues message with coorect percentages",
   hitData.aggressor = 0x14;
   hitData.source = 0x0001397E; // iron dagger 4 damage
   ac.AddItem(hitData.source, 1);
-  ac.SetEquipment(R"(
-    {
-      "numChanges": 0,
-      "inv": {
-        "entries": [
-          {
-            "baseId": 80254,
-            "count": 1,
-            "worn": true
-          }
-        ]
-      }
-    }
-  )");
+
+  Inventory::Entry equipmentEntry;
+  equipmentEntry.baseId = hitData.source;
+  equipmentEntry.count = 1;
+  equipmentEntry.worn_ = true;
+
+  Equipment equipment;
+  equipment.inv.AddItems({ entry });
+  ac.SetEquipment(equipment);
 
   p.Messages().clear();
   auto past = std::chrono::steady_clock::now() - 4s;
@@ -218,20 +210,15 @@ TEST_CASE("checking weapon cooldown", "[Hit]")
   hitData.aggressor = 0x14;
   hitData.source = 0x0001397E;
   ac.AddItem(hitData.source, 1);
-  ac.SetEquipment(R"(
-    {
-      "numChanges": 0,
-      "inv": {
-        "entries": [
-          {
-            "baseId": 80254,
-            "count": 1,
-            "worn": true
-          }
-        ]
-      }
-    }
-  )");
+
+  Inventory::Entry equipmentEntry;
+  equipmentEntry.baseId = hitData.source;
+  equipmentEntry.count = 1;
+  equipmentEntry.worn_ = true;
+
+  Equipment equipment;
+  equipment.inv.AddItems({ entry });
+  ac.SetEquipment(equipment);
 
   auto past = std::chrono::steady_clock::now() - 300ms;
 

@@ -10,7 +10,7 @@ TEST_CASE(
   Appearance appearance;
   appearance.raceId = 0x123;
   actor.SetAppearance(&appearance);
-  actor.SetEquipment(R"({"numChanges": 0, "inv": {"entries":[]}})");
+  actor.SetEquipment(Equipment());
   actor.SetRaceMenuOpen(true);
 
   REQUIRE(actor.GetChangeForm().appearanceDump == appearance.ToJson());

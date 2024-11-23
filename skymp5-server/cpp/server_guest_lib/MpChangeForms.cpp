@@ -48,11 +48,9 @@ nlohmann::json MpChangeForm::ToJson(const MpChangeForm& changeForm)
     res["appearanceDump"] = nlohmann::json::parse(changeForm.appearanceDump);
   }
 
-  if (changeForm.equipmentDump.empty()) {
-    res["equipmentDump"] = nullptr;
-  } else {
-    res["equipmentDump"] = nlohmann::json::parse(changeForm.equipmentDump);
-  }
+  res["equipmentDump"] = changeForm.equipmentDump
+    ? changeForm.equipmentDump->ToJson()
+    : nlohmann::json();
 
   res["learnedSpells"] = changeForm.learnedSpells.GetLearnedSpells();
 
@@ -189,9 +187,11 @@ MpChangeForm MpChangeForm::JsonToChangeForm(simdjson::dom::element& element)
   }
 
   ReadEx(element, equipmentDump, &jTmp);
-  res.equipmentDump = simdjson::minify(jTmp);
-  if (res.equipmentDump == "null") {
-    res.equipmentDump.clear();
+  auto equipmentDumpMinified = simdjson::minify(jTmp);
+  if (equipmentDumpMinified != "null") {
+    res.equipmentDump = Equipment::FromJson(jTmp);
+  } else {
+    res.equipmentDump = std::nullopt;
   }
 
   if (element.at_pointer(learnedSpells.GetData()).error() ==

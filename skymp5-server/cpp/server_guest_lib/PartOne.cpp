@@ -686,7 +686,10 @@ void PartOne::Init()
 
     const char *equipmentPrefix = "", *equipment = "";
     if (emitterAsActor) {
-      jEquipment = emitterAsActor->GetEquipmentAsJson();
+      const std::optional<Equipment>& equipment =
+        emitterAsActor->GetEquipment();
+      jEquipment =
+        equipment ? emitterAsActor->GetEquipment().ToJson().dump() : "";
       if (!jEquipment.empty()) {
         equipmentPrefix = R"(, "equipment": )";
         equipment = jEquipment.data();

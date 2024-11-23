@@ -20,7 +20,7 @@ TEST_CASE("Formula takes weapon damage into account", "[TES5DamageFormula]")
   p.SetUserActor(0, 0xff000000);
   auto& ac = p.worldState.GetFormAt<MpActor>(0xff000000);
 
-  ac.SetEquipment(R"({"numChanges": 0, "inv": {"entries": []}})");
+  ac.SetEquipment(Equipment());
 
   ActionListener::RawMessageData rawMsgData;
   rawMsgData.userId = 0;
@@ -51,52 +51,48 @@ TEST_CASE("Damage is reduced based on target's armor", "[TES5DamageFormula]")
   hitData.aggressor = 0x14;
   hitData.source = 0x0001397E; // iron dagger 4 damage
 
-  // 77382 = 0x12e46: Iron Gauntlets, rating = 10
-  // 77387 = 0x12e4b: Iron Boots, rating = 10
-  // 77389 = 0x12e4d: Iron Helmet, rating = 15
+  // 0x00012e46: Iron Gauntlets, rating = 10
+  // 0x00012e4b: Iron Boots, rating = 10
+  // 0x00012e4d: Iron Helmet, rating = 15
   // Total rating for worn armor: 10 + 10 = 20
-  ac.SetEquipment(R"(
-    {
-      "numChanges": 0,
-      "inv": {
-        "entries": [
-          {
-            "baseId": 77382,
-            "count": 1,
-            "worn": true
-          },
-          {
-            "baseId": 77387,
-            "count": 1,
-            "worn": true
-          },
-          {
-            "baseId": 77389,
-            "count": 1,
-            "worn": false
-          }
-        ]
-      }
-    }
-  )");
+
+  Inventory::Entry ironGauntletsEntry, ironBootsEntry, ironHelmetEntry;
+
+  ironGauntletsEntry.baseId = 0x00012e46;
+  ironGauntletsEntry.count = 1;
+  ironGauntletsEntry.worn_ = true;
+
+  ironBootsEntry.baseId = 0x00012e4b;
+  ironBootsEntry.count = 1;
+  ironBootsEntry.worn_ = true;
+
+  ironHelmetEntry.baseId = 0x00012e4d;
+  ironHelmetEntry.count = 1;
+  ironBootsEntry.worn_ = false;
+
+  Equipment equipment;
+  equipment.inv.AddItems(
+    { ironGauntletsEntry, ironBootsEntry, ironHelmetEntry });
+  ac.SetEquipment(equipment);
 
   TES5DamageFormula formula{};
   // 4 * 0.01 * (100 - 20 * .12) = 3,904
   REQUIRE(formula.CalculateDamage(ac, ac, hitData) == 3.903999805f);
 
-  std::string s = R"({
-            "baseId": 77382,
-            "count": 1,
-            "worn": true
-          })";
-  std::string entri = R"(,)" + s;
+  std::vector<Inventory::Entry> entries;
 
-  for (int i = 0; i < 69; i++) {
-    s += entri;
+  for (int i = 0; i < 70; i++) {
+    Inventory::Entry entry;
+    entry.baseId = 0x00012E46;
+    entry.count = 1;
+    entry.worn_ = true;
+    entries.push_back(entry);
   }
 
   // Total rating for worn armor: 10 * 70 = 700
-  ac.SetEquipment(R"({"numChanges": 0, "inv": {"entries": [)" + s + R"(]}})");
+  Equipment equipment;
+  equipment.inv.entries = entries; // Not add, otherwise will stack
+  ac.SetEquipment(equipment);
 
   // Armor rating is 700 * 0.12% = 84%
   // But fMaxArmorRating = 80%
@@ -116,7 +112,7 @@ TEST_CASE("Formula is race-dependent for unarmed attack",
   p.SetUserActor(0, 0xff000000);
   // Nord bu default
   auto& ac = p.worldState.GetFormAt<MpActor>(0xff000000);
-  ac.SetEquipment(R"({"numChanges": 0, "inv": {"entries": []}})");
+  ac.SetEquipment(Equipment());
 
   ActionListener::RawMessageData rawMsgData;
   rawMsgData.userId = 0;

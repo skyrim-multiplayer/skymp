@@ -1,6 +1,7 @@
 #pragma once
 #include "AnimationData.h"
 #include "Appearance.h"
+#include "Equipment.h"
 #include "GetBaseActorValues.h"
 #include "MpObjectReference.h"
 #include "libespm/espm.h"
@@ -27,18 +28,17 @@ public:
   MpActor(const LocationalData& locationalData_,
           const FormCallbacks& calbacks_, uint32_t optBaseId = 0);
 
-  const bool& IsRaceMenuOpen() const;
-  const bool& IsDead() const;
-  const bool& IsRespawning() const;
+  bool IsRaceMenuOpen() const;
+  bool IsDead() const;
+  bool IsRespawning() const;
 
   bool IsSpellLearned(uint32_t spellId) const; // including from base
   bool IsSpellLearnedFromBase(uint32_t spellId) const;
 
   std::unique_ptr<const Appearance> GetAppearance() const;
   const std::string& GetAppearanceAsJson();
-  const std::string& GetEquipmentAsJson() const;
   std::string GetLastAnimEventAsJson() const;
-  Equipment GetEquipment() const;
+  const std::optional<Equipment>& GetEquipment() const;
   std::array<std::optional<Inventory::Entry>, 2> GetEquippedWeapon() const;
   uint32_t GetRaceId() const;
   bool IsWeaponDrawn() const;
@@ -54,7 +54,7 @@ public:
 
   void SetRaceMenuOpen(bool isOpen);
   void SetAppearance(const Appearance* newAppearance);
-  void SetEquipment(const std::string& jsonString);
+  void SetEquipment(const Equipment& newEquipment);
 
   void AddToFaction(Faction faction, bool lazyLoad = true);
   bool IsInFaction(FormDesc factionForm, bool lazyLoad = true);

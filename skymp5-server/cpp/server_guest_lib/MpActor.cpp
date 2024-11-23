@@ -178,7 +178,7 @@ void MpActor::EquipBestWeapon()
     newEq.inv.AddItems({ bestEntry });
   }
 
-  SetEquipment(newEq.ToJson().dump());
+  SetEquipment(newEq);
 
   UpdateEquipmentMessage msg;
   msg.data = newEq;
@@ -229,10 +229,11 @@ void MpActor::SetAppearance(const Appearance* newAppearance)
   });
 }
 
-void MpActor::SetEquipment(const std::string& jsonString)
+void MpActor::SetEquipment(const Equipment& newEquipment)
 {
-  EditChangeForm(
-    [&](MpChangeForm& changeForm) { changeForm.equipmentDump = jsonString; });
+  EditChangeForm([&](MpChangeForm& changeForm) {
+    changeForm.equipmentDump = newEquipment;
+  });
 }
 
 void MpActor::AddToFaction(Faction faction, bool lazyLoad)
@@ -645,17 +646,17 @@ std::chrono::duration<float> MpActor::GetDurationOfAttributesPercentagesUpdate(
   return timeAfterRegeneration;
 }
 
-const bool& MpActor::IsRaceMenuOpen() const
+bool MpActor::IsRaceMenuOpen() const
 {
   return ChangeForm().isRaceMenuOpen;
 }
 
-const bool& MpActor::IsDead() const
+bool MpActor::IsDead() const
 {
   return ChangeForm().isDead;
 }
 
-const bool& MpActor::IsRespawning() const
+bool MpActor::IsRespawning() const
 {
   return pImpl->isRespawning;
 }
@@ -712,11 +713,6 @@ const std::string& MpActor::GetAppearanceAsJson()
   return ChangeForm().appearanceDump;
 }
 
-const std::string& MpActor::GetEquipmentAsJson() const
-{
-  return ChangeForm().equipmentDump;
-}
-
 namespace {
 bool IsValidAnimEventName(const std::string& eventName)
 {
@@ -746,11 +742,28 @@ std::string MpActor::GetLastAnimEventAsJson() const
   return res;
 }
 
-Equipment MpActor::GetEquipment() const
+const std::optional<Equipment>& MpActor::GetEquipment() const
 {
-  simdjson::dom::parser p;
+  // TODO: there should be probably an EquipmentService that monitors Inventory
+  // updates and modifies the equipment. Making a lazy equipment modify for
+  // now.
 
-  return Equipment::FromJson(p.parse(GetEquipmentAsJson()).value());
+  auto& changeForm = ChangeForm();
+
+  if (changeForm.equipmentDump != std::nullopt) {
+    for (auto& entry : changeForm.equipmentDump->inv.entries) {
+      // TODO: consider modifying GetItemCount check to also compare extras
+      if (entry.GetWorn() != Inventory::Worn::None &&
+          GetInventory().GetItemCount(entry.baseId) == 0) {
+        entry.SetWorn(Inventory::Worn::None);
+        spdlog::info("MpActor::GetEquipment {:x} - Missing item detected, "
+                     "removing baseId {:x} from equipment",
+                     GetFormId());
+      }
+    }
+  }
+
+  return changeForm.equipmentDump;
 }
 
 uint32_t MpActor::GetRaceId() const

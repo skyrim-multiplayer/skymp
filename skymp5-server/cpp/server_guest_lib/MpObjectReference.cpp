@@ -1875,7 +1875,7 @@ void MpObjectReference::EnsureBaseContainerAdded(espm::Loader& espm)
       e.SetWorn(Inventory::Worn::Right);
       eq.inv.AddItems({ e });
     }
-    actor->SetEquipment(eq.ToJson().dump());
+    actor->SetEquipment(eq);
   }
 
   std::vector<Inventory::Entry> entries;
