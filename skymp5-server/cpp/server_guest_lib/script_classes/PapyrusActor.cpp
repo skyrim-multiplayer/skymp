@@ -110,9 +110,14 @@ VarValue PapyrusActor::IsEquipped(VarValue self,
     formIds.emplace_back(form.ToGlobalId(form.rec->GetId()));
   }
 
-  auto equipment = actor->GetEquipment().inv;
+  auto equipment = actor->GetEquipment();
+  if (!equipment) {
+    return VarValue(false);
+  }
+
+  auto inv = equipment->inv;
   // Enum entries of equipment
-  for (auto& entry : equipment.entries) {
+  for (auto& entry : inv.entries) {
     // Filter out non-worn (in current implementation it is possible)
     if (entry.GetWorn() == Inventory::Worn::Right ||
         entry.GetWorn() == Inventory::Worn::Left) {
@@ -313,8 +318,9 @@ VarValue PapyrusActor::WornHasKeyword(VarValue self,
       return VarValue(false);
     }
 
-    const std::vector<Inventory::Entry>& entries =
-      actor->GetEquipment().inv.entries;
+    auto equipment = actor->GetEquipment();
+    const std::vector<Inventory::Entry> entries =
+      equipment ? equipment->inv.entries : std::vector<Inventory::Entry>();
     WorldState* worldState = compatibilityPolicy->GetWorldState();
     for (const auto& entry : entries) {
       if (entry.GetWorn() != Inventory::Worn::None) {

@@ -143,11 +143,15 @@ void MpActor::EquipBestWeapon()
   auto& loader = GetParent()->GetEspm();
   auto& cache = GetParent()->GetEspmCache();
 
-  const Equipment eq = GetEquipment();
+  const std::optional<Equipment>& eq = GetEquipment();
+
+  if (!eq) {
+    return;
+  }
 
   Equipment newEq;
-  newEq.numChanges = eq.numChanges + 1;
-  for (auto& entry : eq.inv.entries) {
+  newEq.numChanges = eq->numChanges + 1;
+  for (auto& entry : eq->inv.entries) {
     bool isEquipped = entry.GetWorn() != Inventory::Worn::None;
     bool isWeap =
       espm::GetRecordType(entry.baseId, GetParent()) == espm::WEAP::kType;
@@ -1678,17 +1682,21 @@ std::array<std::optional<Inventory::Entry>, 2> MpActor::GetEquippedWeapon()
 {
   std::array<std::optional<Inventory::Entry>, 2> wornWeaponEntries;
   // 0 -> left hand, 1 -> right hand
-  auto& espmBrowser = GetParent()->GetEspm().GetBrowser();
-  for (const auto& entry : GetEquipment().inv.entries) {
-    if (entry.GetWorn() != Inventory::Worn::None) {
-      espm::LookupResult res = espmBrowser.LookupById(entry.baseId);
-      auto* weaponRecord = espm::Convert<espm::WEAP>(res.rec);
-      if (weaponRecord) {
-        if (entry.GetWorn() == Inventory::Worn::Left) {
-          wornWeaponEntries[0] = std::move(entry);
-        }
-        if (entry.GetWorn() == Inventory::Worn::Right) {
-          wornWeaponEntries[1] = std::move(entry);
+
+  auto equipment = GetEquipment();
+  if (equipment) {
+    auto& espmBrowser = GetParent()->GetEspm().GetBrowser();
+    for (const auto& entry : equipment.inv.entries) {
+      if (entry.GetWorn() != Inventory::Worn::None) {
+        espm::LookupResult res = espmBrowser.LookupById(entry.baseId);
+        auto* weaponRecord = espm::Convert<espm::WEAP>(res.rec);
+        if (weaponRecord) {
+          if (entry.GetWorn() == Inventory::Worn::Left) {
+            wornWeaponEntries[0] = std::move(entry);
+          }
+          if (entry.GetWorn() == Inventory::Worn::Right) {
+            wornWeaponEntries[1] = std::move(entry);
+          }
         }
       }
     }

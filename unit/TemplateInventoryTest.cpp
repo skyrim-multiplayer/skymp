@@ -16,10 +16,11 @@ TEST_CASE("MS13BanditCampfire01 in BleakFalls should have inventory/equipment "
   uint32_t actorId = 0x39fe4;
   auto& bandit = p.worldState.GetFormAt<MpActor>(actorId);
 
-  REQUIRE(bandit.GetEquipment().inv.ToJson().size() > 0);
+  REQUIRE(bandit.GetEquipment() != std::nullopt);
+  REQUIRE(bandit.GetEquipment()->inv.ToJson().size() > 0);
 
   int numWeaps = 0;
-  for (auto entry : bandit.GetEquipment().inv.entries) {
+  for (auto entry : bandit.GetEquipment()->inv.entries) {
     auto lookupRes =
       p.worldState.GetEspm().GetBrowser().LookupById(entry.baseId);
     if (lookupRes.rec && lookupRes.rec->GetType() == "WEAP") {

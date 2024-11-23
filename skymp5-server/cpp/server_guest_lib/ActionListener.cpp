@@ -901,7 +901,9 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
     return;
   }
 
-  if (aggressor->GetEquipment().inv.HasItem(hitData.source) == false &&
+  auto equipment = aggressor->GetEquipment();
+
+  if (equipment && equipment->inv.HasItem(hitData.source) == false &&
       IsUnarmedAttack(hitData.source) == false) {
 
     if (aggressor->GetInventory().HasItem(hitData.source) == false) {
@@ -1007,8 +1009,9 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
 
       bool isBlockingByShield = false;
 
+      auto equipment = targetActor.GetEquipment();
       auto targetActorEquipmentEntries =
-        targetActor.GetEquipment().inv.entries;
+        equipment ? equipment->inv.entries : std::vector<Inventory::Entry>();
       for (auto& entry : targetActorEquipmentEntries) {
         if (entry.GetWorn() != Inventory::Worn::None) {
           auto res =
@@ -1110,22 +1113,24 @@ void ActionListener::OnSpellCast(const RawMessageData& rawMsgData,
 
   bool isEquippedSpellValid = false;
 
-  switch (spellCastData.castingSource) {
-    case SpellType::Left:
-      isEquippedSpellValid = spellCastData.spell == equipment.leftSpell;
-      break;
-    case SpellType::Right:
-      isEquippedSpellValid = spellCastData.spell == equipment.rightSpell;
-      break;
-    case SpellType::Voise:
-      isEquippedSpellValid = spellCastData.spell == equipment.voiceSpell;
-      break;
-    case SpellType::Instant:
-      isEquippedSpellValid = spellCastData.spell == equipment.instantSpell;
-      break;
+  if (equipment) {
+    switch (spellCastData.castingSource) {
+      case SpellType::Left:
+        isEquippedSpellValid = spellCastData.spell == equipment->leftSpell;
+        break;
+      case SpellType::Right:
+        isEquippedSpellValid = spellCastData.spell == equipment->rightSpell;
+        break;
+      case SpellType::Voise:
+        isEquippedSpellValid = spellCastData.spell == equipment->voiceSpell;
+        break;
+      case SpellType::Instant:
+        isEquippedSpellValid = spellCastData.spell == equipment->instantSpell;
+        break;
+    }
   }
 
-  if (isEquippedSpellValid == false) {
+  if (!isEquippedSpellValid) {
     spdlog::info("ActionListener::OnSpellCast - spell {0:x} not "
                  "found in equipment",
                  spellCastData.spell);
