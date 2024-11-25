@@ -93,6 +93,15 @@
           "platform": "windows"
         }
       ]
+    },
+    "prebuilt-nodejs": {
+      "description": "",
+      "dependencies": [
+        {
+          "name": "node-embedder-api-prebuilt",
+          "platform": "windows"
+        }
+      ]
     }
   }
 }
