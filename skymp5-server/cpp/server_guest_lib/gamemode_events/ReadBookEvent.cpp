@@ -83,8 +83,8 @@ void ReadBookEvent::OnFireBlocked(WorldState* worldState) override
     return;
   }
 
-  auto aSpell = VarValue(
-    std::make_shared<EspmGameObject>(br.LookupById(spellOrSkillFormId)));
+  auto aSpell = VarValue(std::make_shared<EspmGameObject>(
+    loader.GetBrowser().LookupById(spellOrSkillFormId)));
 
   std::vector<VarValue> arguments = { aSpell };
 
