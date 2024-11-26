@@ -39,7 +39,7 @@ export class HitService extends ClientListener {
             return;
         }
 
-        if (this.sp.Weapon.from(e.source)) {
+        if (this.sp.Weapon.from(e.source) || this.sp.Spell.from(e.source) || this.sp.Scroll.from(e.source)) {
             this.controller.emitter.emit("sendMessage", {
                 message: { t: MsgType.OnHit, data: this.getHitData(e) },
                 reliability: "reliable"
