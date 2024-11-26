@@ -70,7 +70,7 @@ void ReadBookEvent::OnFireSuccess(WorldState* worldState)
   }
 }
 
-void ReadBookEvent::OnFireBlocked(WorldState* worldState) override
+void ReadBookEvent::OnFireBlocked(WorldState* worldState)
 {
   auto& loader = actor->GetParent()->GetEspm();
   auto bookLookupResult = loader.GetBrowser().LookupById(baseId);
