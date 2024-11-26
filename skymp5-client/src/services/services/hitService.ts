@@ -39,12 +39,31 @@ export class HitService extends ClientListener {
             return;
         }
 
-        if (this.sp.Weapon.from(e.source) || this.sp.Spell.from(e.source) || this.sp.Scroll.from(e.source)) {
-            this.controller.emitter.emit("sendMessage", {
-                message: { t: MsgType.OnHit, data: this.getHitData(e) },
-                reliability: "reliable"
-            });
+        const isWeapon = this.sp.Weapon.from(e.source);
+        const isSpell = !isWeapon && this.sp.Spell.from(e.source);
+        const isScroll = !isWeapon && !isSpell && this.sp.Scroll.from(e.source);
+
+        if (!isWeapon && !isSpell && !isScroll) {
+            return;
         }
+
+        // prevent double hit that happens for some reason with magic projectiles
+        if (isSpell || isScroll) {
+            const aggressorId = e.aggressor.getFormID();
+            const now = Date.now();
+
+            const lastHitTime = this.recentMagicHits.get(aggressorId);
+            if (lastHitTime && now - lastHitTime < 100) {
+                return;
+            }
+
+            this.recentMagicHits.set(aggressorId, now);
+        }
+
+        this.controller.emitter.emit("sendMessage", {
+            message: { t: MsgType.OnHit, data: this.getHitData(e) },
+            reliability: "reliable"
+        });
     }
 
     private getHitData(e: HitEvent): Hit {
@@ -60,4 +79,6 @@ export class HitService extends ClientListener {
         }
         return hitData;
     }
+
+    private recentMagicHits: Map<number, number> = new Map();
 }
