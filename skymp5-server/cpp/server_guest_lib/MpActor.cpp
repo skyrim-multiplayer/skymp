@@ -334,8 +334,8 @@ void MpActor::VisitProperties(const PropertiesVisitor& visitor,
   // this "if" is needed for unit testing: tests can call VisitProperties
   // without espm attached, which will cause tests to fail
   if (worldState && worldState->HasEspm()) {
-    baseActorValues = GetBaseActorValues(worldState, baseId, raceId,
-                                         ChangeForm().templateChain);
+    baseActorValues =
+      GetBaseActorValues(worldState, baseId, raceId, templateChain);
   }
 
   MpChangeForm changeForm = GetChangeForm();
@@ -780,7 +780,7 @@ espm::ObjectBounds MpActor::GetBounds() const
 
 const std::vector<FormDesc>& MpActor::GetTemplateChain() const
 {
-  return ChangeForm().templateChain;
+  return templateChain;
 }
 
 bool MpActor::IsCreatedAsPlayer() const
@@ -888,7 +888,9 @@ void MpActor::EnsureTemplateChainEvaluated(espm::Loader& loader,
     return;
   }
 
-  if (!ChangeForm().templateChain.empty()) {
+  const auto& templateChain = ChangeForm().templateChain;
+
+  if (!templateChain.empty()) {
 
     std::string errorTraits;
     std::string errorStats;
@@ -904,57 +906,57 @@ void MpActor::EnsureTemplateChainEvaluated(espm::Loader& loader,
     std::string errorAttackData;
     std::string errorKeywords;
 
-    EvaluateTemplate<espm::NPC_::UseTraits>(
-      worldState, baseId, ChangeForm().templateChain,
-      [](const auto&, const auto&) { return; }, &errorTraits);
+    auto doNothing = [](const auto&, const auto&) { return; };
 
-    EvaluateTemplate<espm::NPC_::UseStats>(
-      worldState, baseId, ChangeForm().templateChain,
-      [](const auto&, const auto&) { return; }, &errorStats);
+    auto evaluateTemplateChecked =
+      []<typename Flag>(WorldState* worldState, uint32_t baseId,
+                        const std::vector<uint32_t>& templateChain,
+                        const auto& callback, std::string* error) {
+        try {
+          EvaluateTemplate<Flag>(worldState, baseId, templateChain, callback);
+        } catch (std::exception& e) {
+          *error = e.what();
+        }
+      };
 
-    EvaluateTemplate<espm::NPC_::UseFactions>(
-      worldState, baseId, ChangeForm().templateChain,
-      [](const auto&, const auto&) { return; }, &errorFactions);
+    evaluateTemplateChecked<espm::NPC_::UseTraits>(
+      worldState, baseId, templateChain, doNothing, &errorTraits);
 
-    EvaluateTemplate<espm::NPC_::UseSpelllist>(
-      worldState, baseId, ChangeForm().templateChain,
-      [](const auto&, const auto&) { return; }, &errorSpelllist);
+    evaluateTemplateChecked<espm::NPC_::UseStats>(
+      worldState, baseId, templateChain, doNothing, &errorStats);
 
-    EvaluateTemplate<espm::NPC_::UseAIData>(
-      worldState, baseId, ChangeForm().templateChain,
-      [](const auto&, const auto&) { return; }, &errorAIData);
+    evaluateTemplateChecked<espm::NPC_::UseFactions>(
+      worldState, baseId, templateChain, doNothing, &errorFactions);
 
-    EvaluateTemplate<espm::NPC_::UseAIPackages>(
-      worldState, baseId, ChangeForm().templateChain,
-      [](const auto&, const auto&) { return; }, &errorAIPackages);
+    evaluateTemplateChecked<espm::NPC_::UseSpelllist>(
+      worldState, baseId, templateChain, doNothing, &errorSpelllist);
 
-    EvaluateTemplate<espm::NPC_::Unused>(
-      worldState, baseId, ChangeForm().templateChain,
-      [](const auto&, const auto&) { return; }, &errorUnused);
+    evaluateTemplateChecked<espm::NPC_::UseAIData>(
+      worldState, baseId, templateChain, doNothing, &errorAIData);
 
-    EvaluateTemplate<espm::NPC_::UseBaseData>(
-      worldState, baseId, ChangeForm().templateChain,
-      [](const auto&, const auto&) { return; }, &errorBaseData);
+    evaluateTemplateChecked<espm::NPC_::UseAIPackages>(
+      worldState, baseId, templateChain, doNothing, &errorAIPackages);
 
-    EvaluateTemplate<espm::NPC_::UseInventory>(
-      worldState, baseId, ChangeForm().templateChain,
-      [](const auto&, const auto&) { return; }, &errorInventory);
+    evaluateTemplateChecked<espm::NPC_::Unused>(
+      worldState, baseId, templateChain, doNothing, &errorUnused);
 
-    EvaluateTemplate<espm::NPC_::UseScript>(
-      worldState, baseId, ChangeForm().templateChain,
-      [](const auto&, const auto&) { return; }, &errorScript);
+    evaluateTemplateChecked<espm::NPC_::UseBaseData>(
+      worldState, baseId, templateChain, doNothing, &errorBaseData);
 
-    EvaluateTemplate<espm::NPC_::UseDefPackList>(
-      worldState, baseId, ChangeForm().templateChain,
-      [](const auto&, const auto&) { return; }, &errorDefPackList);
+    evaluateTemplateChecked<espm::NPC_::UseInventory>(
+      worldState, baseId, templateChain, doNothing, &errorInventory);
 
-    EvaluateTemplate<espm::NPC_::UseAttackData>(
-      worldState, baseId, ChangeForm().templateChain,
-      [](const auto&, const auto&) { return; }, &errorAttackData);
+    evaluateTemplateChecked<espm::NPC_::UseScript>(
+      worldState, baseId, templateChain, doNothing, &errorScript);
 
-    EvaluateTemplate<espm::NPC_::UseKeywords>(
-      worldState, baseId, ChangeForm().templateChain,
-      [](const auto&, const auto&) { return; }, &errorKeywords);
+    evaluateTemplateChecked<espm::NPC_::UseDefPackList>(
+      worldState, baseId, templateChain, doNothing, &errorDefPackList);
+
+    evaluateTemplateChecked<espm::NPC_::UseAttackData>(
+      worldState, baseId, templateChain, doNothing, &errorAttackData);
+
+    evaluateTemplateChecked<espm::NPC_::UseKeywords>(
+      worldState, baseId, templateChain, doNothing, &errorKeywords);
 
     if (errorTraits.empty() && errorStats.empty() && errorFactions.empty() &&
         errorSpelllist.empty() && errorAIData.empty() &&
@@ -1043,7 +1045,7 @@ std::map<uint32_t, uint32_t> MpActor::EvaluateDeathItem()
   }
 
   uint32_t baseId = base.ToGlobalId(base.rec->GetId());
-  auto& templateChain = ChangeForm().templateChain;
+  auto& templateChain = templateChain;
 
   uint32_t deathItemId = EvaluateTemplate<espm::NPC_::UseTraits>(
     worldState, baseId, templateChain,
@@ -1361,7 +1363,7 @@ void MpActor::DamageActorValue(espm::ActorValue av, float value)
 BaseActorValues MpActor::GetBaseValues()
 {
   return GetBaseActorValues(GetParent(), GetBaseId(), GetRaceId(),
-                            ChangeForm().templateChain);
+                            templateChain);
 }
 
 BaseActorValues MpActor::GetMaximumValues()
@@ -1707,8 +1709,8 @@ void MpActor::ApplyMagicEffects(std::vector<espm::Effects::Effect>& effects,
 
 void MpActor::RemoveMagicEffect(const espm::ActorValue actorValue) noexcept
 {
-  const ActorValues baseActorValues = GetBaseActorValues(
-    GetParent(), GetBaseId(), GetRaceId(), ChangeForm().templateChain);
+  const ActorValues baseActorValues =
+    GetBaseActorValues(GetParent(), GetBaseId(), GetRaceId(), templateChain);
   const float baseActorValue = baseActorValues.GetValue(actorValue);
   SetActorValue(actorValue, baseActorValue);
   EditChangeForm([actorValue](MpChangeForm& changeForm) {
@@ -1718,8 +1720,8 @@ void MpActor::RemoveMagicEffect(const espm::ActorValue actorValue) noexcept
 
 void MpActor::RemoveAllMagicEffects() noexcept
 {
-  const ActorValues baseActorValues = GetBaseActorValues(
-    GetParent(), GetBaseId(), GetRaceId(), ChangeForm().templateChain);
+  const ActorValues baseActorValues =
+    GetBaseActorValues(GetParent(), GetBaseId(), GetRaceId(), templateChain);
   SetActorValues(baseActorValues);
   EditChangeForm(
     [](MpChangeForm& changeForm) { changeForm.activeMagicEffects.Clear(); });
