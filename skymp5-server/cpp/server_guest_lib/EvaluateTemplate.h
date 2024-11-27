@@ -38,8 +38,7 @@ auto EvaluateTemplate(WorldState* worldState, uint32_t baseId,
     auto npcData = npc->GetData(worldState->GetEspmCache());
 
     detailedLog << "Variable npcData: baseTemplate=" << npcData.baseTemplate
-                << ", templateDataFlags=",
-      << npcData.templateDataFlags << "\n";
+                << ", templateDataFlags=" << npcData.templateDataFlags << "\n";
 
     if (npcData.baseTemplate == 0) {
       return callback(npcLookupResult, npcData);
