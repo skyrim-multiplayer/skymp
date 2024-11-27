@@ -906,55 +906,55 @@ void MpActor::EnsureTemplateChainEvaluated(espm::Loader& loader,
 
     EvaluateTemplate<espm::NPC_::UseTraits>(
       worldState, baseId, ChangeForm().templateChain,
-      [](const auto&, const auto&) { return 0; }, &errorTraits);
+      [](const auto&, const auto&) { return; }, &errorTraits);
 
     EvaluateTemplate<espm::NPC_::UseStats>(
       worldState, baseId, ChangeForm().templateChain,
-      [](const auto&, const auto&) { return 0; }, &errorStats);
+      [](const auto&, const auto&) { return; }, &errorStats);
 
     EvaluateTemplate<espm::NPC_::UseFactions>(
       worldState, baseId, ChangeForm().templateChain,
-      [](const auto&, const auto&) { return 0; }, &errorFactions);
+      [](const auto&, const auto&) { return; }, &errorFactions);
 
     EvaluateTemplate<espm::NPC_::UseSpelllist>(
       worldState, baseId, ChangeForm().templateChain,
-      [](const auto&, const auto&) { return 0; }, &errorSpelllist);
+      [](const auto&, const auto&) { return; }, &errorSpelllist);
 
     EvaluateTemplate<espm::NPC_::UseAIData>(
       worldState, baseId, ChangeForm().templateChain,
-      [](const auto&, const auto&) { return 0; }, &errorAIData);
+      [](const auto&, const auto&) { return; }, &errorAIData);
 
     EvaluateTemplate<espm::NPC_::UseAIPackages>(
       worldState, baseId, ChangeForm().templateChain,
-      [](const auto&, const auto&) { return 0; }, &errorAIPackages);
+      [](const auto&, const auto&) { return; }, &errorAIPackages);
 
     EvaluateTemplate<espm::NPC_::Unused>(
       worldState, baseId, ChangeForm().templateChain,
-      [](const auto&, const auto&) { return 0; }, &errorUnused);
+      [](const auto&, const auto&) { return; }, &errorUnused);
 
     EvaluateTemplate<espm::NPC_::UseBaseData>(
       worldState, baseId, ChangeForm().templateChain,
-      [](const auto&, const auto&) { return 0; }, &errorBaseData);
+      [](const auto&, const auto&) { return; }, &errorBaseData);
 
     EvaluateTemplate<espm::NPC_::UseInventory>(
       worldState, baseId, ChangeForm().templateChain,
-      [](const auto&, const auto&) { return 0; }, &errorInventory);
+      [](const auto&, const auto&) { return; }, &errorInventory);
 
     EvaluateTemplate<espm::NPC_::UseScript>(
       worldState, baseId, ChangeForm().templateChain,
-      [](const auto&, const auto&) { return 0; }, &errorScript);
+      [](const auto&, const auto&) { return; }, &errorScript);
 
     EvaluateTemplate<espm::NPC_::UseDefPackList>(
       worldState, baseId, ChangeForm().templateChain,
-      [](const auto&, const auto&) { return 0; }, &errorDefPackList);
+      [](const auto&, const auto&) { return; }, &errorDefPackList);
 
     EvaluateTemplate<espm::NPC_::UseAttackData>(
       worldState, baseId, ChangeForm().templateChain,
-      [](const auto&, const auto&) { return 0; }, &errorAttackData);
+      [](const auto&, const auto&) { return; }, &errorAttackData);
 
     EvaluateTemplate<espm::NPC_::UseKeywords>(
       worldState, baseId, ChangeForm().templateChain,
-      [](const auto&, const auto&) { return 0; }, &errorKeywords);
+      [](const auto&, const auto&) { return; }, &errorKeywords);
 
     if (errorTraits.empty() && errorStats.empty() && errorFactions.empty() &&
         errorSpelllist.empty() && errorAIData.empty() &&
