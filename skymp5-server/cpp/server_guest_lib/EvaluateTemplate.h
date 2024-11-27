@@ -65,3 +65,20 @@ auto EvaluateTemplate(WorldState* worldState, uint32_t baseId,
 
   throw std::runtime_error(ss.str());
 }
+
+template <uint16_t TemplateFlag, class Callback>
+auto EvaluateTemplateNoThrow(WorldState* worldState, uint32_t baseId,
+                             const std::vector<FormDesc>& templateChain,
+                             const Callback& callback,
+                             std::string& outException)
+{
+  try {
+    auto res = EvaluateTemplate<TemplateFlag, Callback>(
+      worldState, baseId, templateChain, callback);
+    std::optional<decltype(res)> resOptional(res);
+    return resOptional;
+  } catch (std::exception& e) {
+    outException = e.what();
+    return std::nullopt;
+  }
+}

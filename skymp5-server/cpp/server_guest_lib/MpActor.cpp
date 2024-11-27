@@ -906,57 +906,45 @@ void MpActor::EnsureTemplateChainEvaluated(espm::Loader& loader,
     std::string errorAttackData;
     std::string errorKeywords;
 
-    auto doNothing = [](const auto&, const auto&) { return; };
+    auto doNothing = [](const auto&, const auto&) { return 1; };
 
-    auto evaluateTemplateChecked =
-      []<espm::NPC_::TemplateFlags Flag>(
-        WorldState* worldState, uint32_t baseId,
-        const std::vector<uint32_t>& templateChain, const auto& callback,
-        std::string* error) {
-        try {
-          EvaluateTemplate<Flag>(worldState, baseId, templateChain, callback);
-        } catch (std::exception& e) {
-          *error = e.what();
-        }
-      };
-
-    evaluateTemplateChecked<espm::NPC_::UseTraits>(
+    EvaluateTemplateNoThrow<espm::NPC_::UseTraits>(
       worldState, baseId, templateChain, doNothing, &errorTraits);
 
-    evaluateTemplateChecked<espm::NPC_::UseStats>(
+    EvaluateTemplateNoThrow<espm::NPC_::UseStats>(
       worldState, baseId, templateChain, doNothing, &errorStats);
 
-    evaluateTemplateChecked<espm::NPC_::UseFactions>(
+    EvaluateTemplateNoThrow<espm::NPC_::UseFactions>(
       worldState, baseId, templateChain, doNothing, &errorFactions);
 
-    evaluateTemplateChecked<espm::NPC_::UseSpelllist>(
+    EvaluateTemplateNoThrow<espm::NPC_::UseSpelllist>(
       worldState, baseId, templateChain, doNothing, &errorSpelllist);
 
-    evaluateTemplateChecked<espm::NPC_::UseAIData>(
+    EvaluateTemplateNoThrow<espm::NPC_::UseAIData>(
       worldState, baseId, templateChain, doNothing, &errorAIData);
 
-    evaluateTemplateChecked<espm::NPC_::UseAIPackages>(
+    EvaluateTemplateNoThrow<espm::NPC_::UseAIPackages>(
       worldState, baseId, templateChain, doNothing, &errorAIPackages);
 
-    evaluateTemplateChecked<espm::NPC_::Unused>(
+    EvaluateTemplateNoThrow<espm::NPC_::Unused>(
       worldState, baseId, templateChain, doNothing, &errorUnused);
 
-    evaluateTemplateChecked<espm::NPC_::UseBaseData>(
+    EvaluateTemplateNoThrow<espm::NPC_::UseBaseData>(
       worldState, baseId, templateChain, doNothing, &errorBaseData);
 
-    evaluateTemplateChecked<espm::NPC_::UseInventory>(
+    EvaluateTemplateNoThrow<espm::NPC_::UseInventory>(
       worldState, baseId, templateChain, doNothing, &errorInventory);
 
-    evaluateTemplateChecked<espm::NPC_::UseScript>(
+    EvaluateTemplateNoThrow<espm::NPC_::UseScript>(
       worldState, baseId, templateChain, doNothing, &errorScript);
 
-    evaluateTemplateChecked<espm::NPC_::UseDefPackList>(
+    EvaluateTemplateNoThrow<espm::NPC_::UseDefPackList>(
       worldState, baseId, templateChain, doNothing, &errorDefPackList);
 
-    evaluateTemplateChecked<espm::NPC_::UseAttackData>(
+    EvaluateTemplateNoThrow<espm::NPC_::UseAttackData>(
       worldState, baseId, templateChain, doNothing, &errorAttackData);
 
-    evaluateTemplateChecked<espm::NPC_::UseKeywords>(
+    EvaluateTemplateNoThrow<espm::NPC_::UseKeywords>(
       worldState, baseId, templateChain, doNothing, &errorKeywords);
 
     if (errorTraits.empty() && errorStats.empty() && errorFactions.empty() &&
