@@ -334,8 +334,8 @@ void MpActor::VisitProperties(const PropertiesVisitor& visitor,
   // this "if" is needed for unit testing: tests can call VisitProperties
   // without espm attached, which will cause tests to fail
   if (worldState && worldState->HasEspm()) {
-    baseActorValues =
-      GetBaseActorValues(worldState, baseId, raceId, templateChain);
+    baseActorValues = GetBaseActorValues(worldState, baseId, raceId,
+                                         ChangeForm().templateChain);
   }
 
   MpChangeForm changeForm = GetChangeForm();
@@ -780,7 +780,7 @@ espm::ObjectBounds MpActor::GetBounds() const
 
 const std::vector<FormDesc>& MpActor::GetTemplateChain() const
 {
-  return templateChain;
+  return ChangeForm().templateChain;
 }
 
 bool MpActor::IsCreatedAsPlayer() const
@@ -909,9 +909,10 @@ void MpActor::EnsureTemplateChainEvaluated(espm::Loader& loader,
     auto doNothing = [](const auto&, const auto&) { return; };
 
     auto evaluateTemplateChecked =
-      []<typename Flag>(WorldState* worldState, uint32_t baseId,
-                        const std::vector<uint32_t>& templateChain,
-                        const auto& callback, std::string* error) {
+      []<espm::NPC_::TemplateFlags Flag>(
+        WorldState* worldState, uint32_t baseId,
+        const std::vector<uint32_t>& templateChain, const auto& callback,
+        std::string* error) {
         try {
           EvaluateTemplate<Flag>(worldState, baseId, templateChain, callback);
         } catch (std::exception& e) {
