@@ -70,7 +70,7 @@ template <uint16_t TemplateFlag, class Callback>
 auto EvaluateTemplateNoThrow(WorldState* worldState, uint32_t baseId,
                              const std::vector<FormDesc>& templateChain,
                              const Callback& callback,
-                             std::string& outException)
+                             std::string* outException)
 {
   try {
     auto res = EvaluateTemplate<TemplateFlag, Callback>(
@@ -78,7 +78,9 @@ auto EvaluateTemplateNoThrow(WorldState* worldState, uint32_t baseId,
     std::optional<decltype(res)> resOptional(res);
     return resOptional;
   } catch (std::exception& e) {
-    outException = e.what();
+    if (outException) {
+      *outException = e.what();
+    }
     return std::nullopt;
   }
 }
