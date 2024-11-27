@@ -1352,7 +1352,7 @@ void MpActor::DamageActorValue(espm::ActorValue av, float value)
 BaseActorValues MpActor::GetBaseValues()
 {
   return GetBaseActorValues(GetParent(), GetBaseId(), GetRaceId(),
-                            templateChain);
+                            ChangeForm().templateChain);
 }
 
 BaseActorValues MpActor::GetMaximumValues()
@@ -1698,8 +1698,8 @@ void MpActor::ApplyMagicEffects(std::vector<espm::Effects::Effect>& effects,
 
 void MpActor::RemoveMagicEffect(const espm::ActorValue actorValue) noexcept
 {
-  const ActorValues baseActorValues =
-    GetBaseActorValues(GetParent(), GetBaseId(), GetRaceId(), templateChain);
+  const ActorValues baseActorValues = GetBaseActorValues(
+    GetParent(), GetBaseId(), GetRaceId(), ChangeForm().templateChain);
   const float baseActorValue = baseActorValues.GetValue(actorValue);
   SetActorValue(actorValue, baseActorValue);
   EditChangeForm([actorValue](MpChangeForm& changeForm) {
@@ -1709,8 +1709,8 @@ void MpActor::RemoveMagicEffect(const espm::ActorValue actorValue) noexcept
 
 void MpActor::RemoveAllMagicEffects() noexcept
 {
-  const ActorValues baseActorValues =
-    GetBaseActorValues(GetParent(), GetBaseId(), GetRaceId(), templateChain);
+  const ActorValues baseActorValues = GetBaseActorValues(
+    GetParent(), GetBaseId(), GetRaceId(), ChangeForm().templateChain);
   SetActorValues(baseActorValues);
   EditChangeForm(
     [](MpChangeForm& changeForm) { changeForm.activeMagicEffects.Clear(); });
