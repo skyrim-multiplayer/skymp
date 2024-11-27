@@ -1034,7 +1034,7 @@ std::map<uint32_t, uint32_t> MpActor::EvaluateDeathItem()
   }
 
   uint32_t baseId = base.ToGlobalId(base.rec->GetId());
-  auto& templateChain = templateChain;
+  auto& templateChain = ChangeForm().templateChain;
 
   uint32_t deathItemId = EvaluateTemplate<espm::NPC_::UseTraits>(
     worldState, baseId, templateChain,

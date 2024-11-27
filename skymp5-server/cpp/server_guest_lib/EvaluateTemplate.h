@@ -72,15 +72,19 @@ auto EvaluateTemplateNoThrow(WorldState* worldState, uint32_t baseId,
                              const Callback& callback,
                              std::string* outException)
 {
+  using ResultType = decltype(EvaluateTemplate<TemplateFlag, Callback>(
+    worldState, baseId, templateChain, callback));
+  std::optional<ResultType> result;
+
   try {
-    auto res = EvaluateTemplate<TemplateFlag, Callback>(
-      worldState, baseId, templateChain, callback);
-    std::optional<decltype(res)> resOptional(res);
-    return resOptional;
+    result = EvaluateTemplate<TemplateFlag, Callback>(worldState, baseId,
+                                                      templateChain, callback);
   } catch (std::exception& e) {
     if (outException) {
       *outException = e.what();
     }
-    return std::nullopt;
+    result.reset();
   }
+
+  return result;
 }
