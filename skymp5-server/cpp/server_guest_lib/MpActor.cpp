@@ -889,7 +889,86 @@ void MpActor::EnsureTemplateChainEvaluated(espm::Loader& loader,
   }
 
   if (!ChangeForm().templateChain.empty()) {
-    return;
+
+    std::string errorTraits;
+    std::string errorStats;
+    std::string errorFactions;
+    std::string errorSpelllist;
+    std::string errorAIData;
+    std::string errorAIPackages;
+    std::string errorUnused;
+    std::string errorBaseData;
+    std::string errorInventory;
+    std::string errorScript;
+    std::string errorDefPackList;
+    std::string errorAttackData;
+    std::string errorKeywords;
+
+    EvaluateTemplate<espm::NPC_::UseTraits>(
+      worldState, baseId, ChangeForm().templateChain,
+      [](const auto&, const auto&) { return 0; }, &errorTraits);
+
+    EvaluateTemplate<espm::NPC_::UseStats>(
+      worldState, baseId, ChangeForm().templateChain,
+      [](const auto&, const auto&) { return 0; }, &errorStats);
+
+    EvaluateTemplate<espm::NPC_::UseFactions>(
+      worldState, baseId, ChangeForm().templateChain,
+      [](const auto&, const auto&) { return 0; }, &errorFactions);
+
+    EvaluateTemplate<espm::NPC_::UseSpelllist>(
+      worldState, baseId, ChangeForm().templateChain,
+      [](const auto&, const auto&) { return 0; }, &errorSpelllist);
+
+    EvaluateTemplate<espm::NPC_::UseAIData>(
+      worldState, baseId, ChangeForm().templateChain,
+      [](const auto&, const auto&) { return 0; }, &errorAIData);
+
+    EvaluateTemplate<espm::NPC_::UseAIPackages>(
+      worldState, baseId, ChangeForm().templateChain,
+      [](const auto&, const auto&) { return 0; }, &errorAIPackages);
+
+    EvaluateTemplate<espm::NPC_::Unused>(
+      worldState, baseId, ChangeForm().templateChain,
+      [](const auto&, const auto&) { return 0; }, &errorUnused);
+
+    EvaluateTemplate<espm::NPC_::UseBaseData>(
+      worldState, baseId, ChangeForm().templateChain,
+      [](const auto&, const auto&) { return 0; }, &errorBaseData);
+
+    EvaluateTemplate<espm::NPC_::UseInventory>(
+      worldState, baseId, ChangeForm().templateChain,
+      [](const auto&, const auto&) { return 0; }, &errorInventory);
+
+    EvaluateTemplate<espm::NPC_::UseScript>(
+      worldState, baseId, ChangeForm().templateChain,
+      [](const auto&, const auto&) { return 0; }, &errorScript);
+
+    EvaluateTemplate<espm::NPC_::UseDefPackList>(
+      worldState, baseId, ChangeForm().templateChain,
+      [](const auto&, const auto&) { return 0; }, &errorDefPackList);
+
+    EvaluateTemplate<espm::NPC_::UseAttackData>(
+      worldState, baseId, ChangeForm().templateChain,
+      [](const auto&, const auto&) { return 0; }, &errorAttackData);
+
+    EvaluateTemplate<espm::NPC_::UseKeywords>(
+      worldState, baseId, ChangeForm().templateChain,
+      [](const auto&, const auto&) { return 0; }, &errorKeywords);
+
+    if (errorTraits.empty() && errorStats.empty() && errorFactions.empty() &&
+        errorSpelllist.empty() && errorAIData.empty() &&
+        errorAIPackages.empty() && errorUnused.empty() &&
+        errorBaseData.empty() && errorInventory.empty() &&
+        errorScript.empty() && errorDefPackList.empty() &&
+        errorAttackData.empty() && errorKeywords.empty()) {
+      return;
+    }
+
+    spdlog::info(
+      "MpActor::EnsureTemplateChainEvaluate {:x} - One of EvaluateTemplate "
+      "errored, forgetting previous template chain",
+      GetFormId());
   }
 
   EditChangeForm(

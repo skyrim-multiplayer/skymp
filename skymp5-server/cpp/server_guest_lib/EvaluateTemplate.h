@@ -9,7 +9,8 @@
 template <uint16_t TemplateFlag, class Callback>
 auto EvaluateTemplate(WorldState* worldState, uint32_t baseId,
                       const std::vector<FormDesc>& templateChain,
-                      const Callback& callback)
+                      const Callback& callback,
+                      std::string* outError = nullptr)
 {
   const std::vector<FormDesc> chainDefault = { FormDesc::FromFormId(
     baseId, worldState->espmFiles) };
@@ -63,5 +64,9 @@ auto EvaluateTemplate(WorldState* worldState, uint32_t baseId,
   ss << ", templateFlag=" << TemplateFlag;
   ss << ", detailedLog=" << detailedLog.str();
 
-  throw std::runtime_error(ss.str());
+  if (outError) {
+    *outError = ss.str();
+  } else {
+    throw std::runtime_error(ss.str());
+  }
 }

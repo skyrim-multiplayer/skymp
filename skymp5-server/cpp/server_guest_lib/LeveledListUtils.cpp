@@ -1,4 +1,5 @@
 #include "LeveledListUtils.h"
+#include "EvaluateTemplate.h"
 #include <optional>
 #include <random>
 #include <spdlog/spdlog.h>
