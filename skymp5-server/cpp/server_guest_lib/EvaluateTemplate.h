@@ -66,6 +66,7 @@ auto EvaluateTemplate(WorldState* worldState, uint32_t baseId,
 
   if (outError) {
     *outError = ss.str();
+    return {};
   } else {
     throw std::runtime_error(ss.str());
   }
