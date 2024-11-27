@@ -967,7 +967,8 @@ void MpActor::EnsureTemplateChainEvaluated(espm::Loader& loader,
 
     spdlog::info(
       "MpActor::EnsureTemplateChainEvaluate {:x} - One of EvaluateTemplate "
-      "errored, forgetting previous template chain",
+      "errored, forgetting previous template chain. Likely, an update on "
+      "esp/esm side.",
       GetFormId());
   }
 
