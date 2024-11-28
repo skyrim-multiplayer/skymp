@@ -1,5 +1,6 @@
 #include "MpChangeForms.h"
 #include "JsonUtils.h"
+#include <spdlog/spdlog.h>
 
 namespace {
 std::vector<std::string> ToStringArray(const std::vector<FormDesc>& formDescs)
@@ -192,6 +193,15 @@ MpChangeForm MpChangeForm::JsonToChangeForm(simdjson::dom::element& element)
   res.equipmentDump = simdjson::minify(jTmp);
   if (res.equipmentDump == "null") {
     res.equipmentDump.clear();
+  } else {
+    auto equipment = nlohmann::json::parse(res.equipmentDump);
+    if (!equipment.contains("numChanges")) {
+      equipment["numChanges"] = 0;
+      res.equipmentDump = equipment.dump();
+      spdlog::info("MpChangeForm::JsonToChangeForm {} - Missing 'numChanges' "
+                   "key, setting to 0",
+                   res.formDesc.ToString());
+    }
   }
 
   if (element.at_pointer(learnedSpells.GetData()).error() ==
