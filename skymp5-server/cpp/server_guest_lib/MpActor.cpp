@@ -888,8 +888,79 @@ void MpActor::EnsureTemplateChainEvaluated(espm::Loader& loader,
     return;
   }
 
-  if (!ChangeForm().templateChain.empty()) {
-    return;
+  const auto& templateChain = ChangeForm().templateChain;
+
+  if (!templateChain.empty()) {
+
+    std::string errorTraits;
+    std::string errorStats;
+    std::string errorFactions;
+    std::string errorSpelllist;
+    std::string errorAIData;
+    std::string errorAIPackages;
+    std::string errorUnused;
+    std::string errorBaseData;
+    std::string errorInventory;
+    std::string errorScript;
+    std::string errorDefPackList;
+    std::string errorAttackData;
+    std::string errorKeywords;
+
+    auto doNothing = [](const auto&, const auto&) { return 1; };
+
+    EvaluateTemplateNoThrow<espm::NPC_::UseTraits>(
+      worldState, baseId, templateChain, doNothing, &errorTraits);
+
+    EvaluateTemplateNoThrow<espm::NPC_::UseStats>(
+      worldState, baseId, templateChain, doNothing, &errorStats);
+
+    EvaluateTemplateNoThrow<espm::NPC_::UseFactions>(
+      worldState, baseId, templateChain, doNothing, &errorFactions);
+
+    EvaluateTemplateNoThrow<espm::NPC_::UseSpelllist>(
+      worldState, baseId, templateChain, doNothing, &errorSpelllist);
+
+    EvaluateTemplateNoThrow<espm::NPC_::UseAIData>(
+      worldState, baseId, templateChain, doNothing, &errorAIData);
+
+    EvaluateTemplateNoThrow<espm::NPC_::UseAIPackages>(
+      worldState, baseId, templateChain, doNothing, &errorAIPackages);
+
+    EvaluateTemplateNoThrow<espm::NPC_::Unused>(
+      worldState, baseId, templateChain, doNothing, &errorUnused);
+
+    EvaluateTemplateNoThrow<espm::NPC_::UseBaseData>(
+      worldState, baseId, templateChain, doNothing, &errorBaseData);
+
+    EvaluateTemplateNoThrow<espm::NPC_::UseInventory>(
+      worldState, baseId, templateChain, doNothing, &errorInventory);
+
+    EvaluateTemplateNoThrow<espm::NPC_::UseScript>(
+      worldState, baseId, templateChain, doNothing, &errorScript);
+
+    EvaluateTemplateNoThrow<espm::NPC_::UseDefPackList>(
+      worldState, baseId, templateChain, doNothing, &errorDefPackList);
+
+    EvaluateTemplateNoThrow<espm::NPC_::UseAttackData>(
+      worldState, baseId, templateChain, doNothing, &errorAttackData);
+
+    EvaluateTemplateNoThrow<espm::NPC_::UseKeywords>(
+      worldState, baseId, templateChain, doNothing, &errorKeywords);
+
+    if (errorTraits.empty() && errorStats.empty() && errorFactions.empty() &&
+        errorSpelllist.empty() && errorAIData.empty() &&
+        errorAIPackages.empty() && errorUnused.empty() &&
+        errorBaseData.empty() && errorInventory.empty() &&
+        errorScript.empty() && errorDefPackList.empty() &&
+        errorAttackData.empty() && errorKeywords.empty()) {
+      return;
+    }
+
+    spdlog::info(
+      "MpActor::EnsureTemplateChainEvaluate {:x} - One of EvaluateTemplate "
+      "errored, forgetting previous template chain. Likely, an update on "
+      "esp/esm side.",
+      GetFormId());
   }
 
   EditChangeForm(
