@@ -112,7 +112,7 @@ TEST_CASE("ChangeForm is saved correctly", "[save]")
       f1.position = { 1, 2, 3 };
       f1.appearanceDump = "{}";
       f1.inv.AddItem(0xf, 1000);
-      f1.equipmentDump = "[]";
+      f1.equipmentDump = Equipment().ToJson().dump();
       f1.actorValues.healthPercentage = 0.25f;
       f1.actorValues.magickaPercentage = 0.3f;
       f1.actorValues.staminaPercentage = 1.0f;
@@ -135,7 +135,7 @@ TEST_CASE("ChangeForm is saved correctly", "[save]")
       REQUIRE(res.size() == 2);
       REQUIRE(res[{ 1, "" }].position == NiPoint3(1, 2, 3));
       REQUIRE(res[{ 1, "" }].appearanceDump == "{}");
-      REQUIRE(res[{ 1, "" }].equipmentDump == "[]");
+      REQUIRE(res[{ 1, "" }].equipmentDump == Equipment().ToJson().dump());
       REQUIRE(res[{ 1, "" }].inv == Inventory().AddItem(0xf, 1000));
       REQUIRE(res[{ 1, "" }].isDisabled == false);
       REQUIRE(res[{ 1, "" }].profileId == -1);
