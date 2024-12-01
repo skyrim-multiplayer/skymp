@@ -144,7 +144,7 @@ during that period. Normally gdb would keep the execution paused until it receiv
 user input, but in this case `-ex c` tells gdb to continue the execution right after
 attaching (i.e. run `c` once attached). This will help us minimise the pause time.
 A simple Ctrl-C would pause the execution again and return us to the gdb prompt.
-Please be careful running that on a server with active players.
+Please be careful running that on a server with active players and not pause for too long.
 
 All typical gdb commands should be available now. Set breakpoints or just type
 `c` to continue the execution.
