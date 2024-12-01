@@ -1,6 +1,7 @@
 #include "ReadBookEvent.h"
 
 #include "MpActor.h"
+#include "SpSnippetFunctionGen.h"
 #include "WorldState.h"
 #include "script_objects/EspmGameObject.h"
 #include <string>
