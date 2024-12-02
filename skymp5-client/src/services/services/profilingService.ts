@@ -62,7 +62,8 @@ export class ProfilingService extends ClientListener {
             });
         });
 
-        fs.writeFileSync('./profile.cpuprofile', JSON.stringify(profile));
+        const fileNameSuffix = Math.random().toString().replace(".0", "");
+        fs.writeFileSync(`./profile${fileNameSuffix}.cpuprofile`, JSON.stringify(profile));
     }
 
     private getInteger(value: unknown) {
