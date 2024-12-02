@@ -50,6 +50,7 @@ import { BlockedAnimationsService } from "./services/services/blockedAnimationsS
 import { WorldView } from "./view/worldView";
 import { KeyboardEventsService } from "./services/services/keyboardEventsService";
 import { MagicSyncService } from "./services/services/magicSyncService";
+import { ProfilingService } from "./services/services/profilingService";
 
 once("update", () => {
   Utility.setINIBool("bAlwaysActive:General", true);
@@ -103,7 +104,8 @@ const main = () => {
       new BlockedAnimationsService(sp, controller),
       new WorldView(sp, controller),
       new KeyboardEventsService(sp, controller),
-      new MagicSyncService(sp, controller)
+      new MagicSyncService(sp, controller),
+      new ProfilingService(sp, controller)
     ];
     SpApiInteractor.setup(listeners);
   }
