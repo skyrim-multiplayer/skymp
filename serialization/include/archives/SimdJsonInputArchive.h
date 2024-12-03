@@ -14,6 +14,7 @@
 
 namespace {
 
+// XXX: rename to mapper or something
 struct SimdJsonNumericAdapterHelper {
   template<std::signed_integral T>
   std::decay<int64_t> Check(T);
@@ -23,6 +24,8 @@ struct SimdJsonNumericAdapterHelper {
 
   template<std::floating_point T>
   std::decay<double> Check(T);
+
+  std::decay<bool> Check(bool);
 };
 
 template<class T>
@@ -143,6 +146,7 @@ public:
     try {
       SimdJsonNumericAdapterType<T> tmp;
       Serialize(tmp);
+      output = std::move(tmp);
     } catch (const std::exception& e) {
       throw std::runtime_error(fmt::format("failed to call Serialize (adapter {} -> {}): {}", typeid(T).name(), typeid(SimdJsonNumericAdapterType<T>).name(), e.what()));
     }
