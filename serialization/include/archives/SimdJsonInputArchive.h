@@ -5,6 +5,8 @@
 #include <simdjson.h>
 #include <optional>
 #include <stdexcept>
+#include <string_view>
+#include <type_traits>
 
 #include "concepts/Concepts.h"
 
@@ -25,11 +27,16 @@ public:
   }
 
   template <StringLike T>
-  SimdJsonInputArchive& Serialize(T& output)
+  SimdJsonInputArchive& Serialize(const T& output)
   {
-    auto err = input.get(output);
-    if (err) {
+    const auto& strResult = input.get_string();
+    if (const auto err = strResult.error()) {
       throw std::runtime_error(fmt::format("simdjson: {}", simdjson::error_message(err)));
+    }
+    if constexpr (std::is_same_v<T, std::string>) {
+      output = std::string(strResult.value_unsafe());
+    } else {
+      static_assert(false, "can only parse to std::string");
     }
     return *this;
   }
@@ -93,30 +100,35 @@ public:
     return *this;
   }
 
-  /*
-  template <Optional T>
+  template <Arithmetic T>
   SimdJsonInputArchive& Serialize(T& output)
   {
-    typename T::value_type outputItem;
-    const simdjson::error_code err = input.get(outputItem); // XXX: should recurse
-    if (err == simdjson::NO_SUCH_FIELD) {
-      output.reset();
+    if constexpr (std::is_same_v<T, float>) {
+      double tmp;
+      Serialize(tmp);
+      output = tmp;
       return *this;
-    }
+    } else if constexpr (std::is_same_v<T, unsigned int> || std::is_same_v<T, unsigned char>) {
+      uint64_t tmp;
+      Serialize(tmp);
+      output = tmp;
+      return *this;
+    } else {
+    const auto err = input.get(output);
     if (err) {
       throw std::runtime_error(fmt::format("simdjson: {}", simdjson::error_message(err)));
     }
-    output.emplace(std::move(outputItem));
     return *this;
+    }
   }
-  */
 
-  template <Arithmetic T>
-  SimdJsonInputArchive& Serialize(T& value)
+  template <NoneOfTheAbove T>
+  SimdJsonInputArchive& Serialize(T& output)
   {
-    const auto err = input.get(value);
-    if (err) {
-      throw std::runtime_error(fmt::format("simdjson: {}", simdjson::error_message(err)));
+    try {
+      output.Serialize(*this);
+    } catch (const std::exception& e) {
+      throw std::runtime_error(fmt::format("failed to call Serialize from SimdJsonInputArchive: {}", e.what()));
     }
     return *this;
   }
@@ -163,7 +175,5 @@ public:
   }
 
 private:
-  // simdjson::dom::object?
   const simdjson::dom::element& input;
-  // const simdjson::dom::object& input;
 };
