@@ -14,7 +14,7 @@ class SimdJsonInputArchive
 {
 public:
   explicit SimdJsonInputArchive(const simdjson::dom::element& j)
-    : j_(j)
+    : input(j)
   {
   }
 
@@ -27,11 +27,9 @@ public:
   }
 
   template <StringLike T>
-  SimdJsonInputArchive& Serialize(const char* key, T& value)
+  SimdJsonInputArchive& Serialize(const char* key, T& output)
   {
-    // auto result = j_.at_key(key).get_string();
-    // result.value();
-    simdjson::error_code err = j_.at_key(key).get(value);
+    auto err = input.at_key(key).get(output);
     if (err) {
       throw std::runtime_error(fmt::format("simdjson error {}, key='{}'", simdjson::error_message(err), key));
     }
@@ -39,51 +37,73 @@ public:
   }
 
   template <typename T, std::size_t N>
-  SimdJsonInputArchive& Serialize(const char* key, std::array<T, N>& value)
+  SimdJsonInputArchive& Serialize(const char* key, std::array<T, N>& output)
   {
-    // const auto& arr = j_.at(key);
-    // if (arr.size() != N) {
-    //   throw std::runtime_error(
-    //     "JSON array size does not match std::array size.");
-    // }
+    const auto& arrayResult = input.at_key(key).get_array();
+    if (const auto err = arrayResult.error()) {
+      throw std::runtime_error(fmt::format("simdjson error {}, key='{}'", simdjson::error_message(err), key));
+    }
+    const auto& input = arrayResult.value_unsafe();
 
-    // nlohmann::json childArchiveInput = nlohmann::json::object();
-    // for (size_t i = 0; i < N; ++i) {
-    //   childArchiveInput["element"] = arr.at(i);
-    //   SimdJsonInputArchive childArchive(childArchiveInput);
-    //   childArchive.Serialize("element", value[i]);
-    // }
+    size_t idx = 0;
+    for (const auto& inputItem : input) {
+      if (idx >= N) {
+        throw std::runtime_error(fmt::format("simdjson archive: index {} out of bounds for output, key='{}'", idx, key));
+      }
+
+      const auto err = inputItem.get(output[idx]);
+      if (err) {
+        throw std::runtime_error(fmt::format("simdjson error {}, key='{}', index={}", simdjson::error_message(err), key, idx));
+      }
+
+      ++idx;
+    }
+    if (idx != N) {
+      throw std::runtime_error(fmt::format("simdjson archive: index {} out of bounds for input, key='{}'", idx, key));
+    }
+
     return *this;
   }
 
   template <ContainerLike T>
-  SimdJsonInputArchive& Serialize(const char* key, T& value)
+  SimdJsonInputArchive& Serialize(const char* key, T& output)
   {
-    value.clear();
+    output.clear();
 
-    // const auto& arr = j_.at(key);
-    // nlohmann::json childArchiveInput = nlohmann::json::object();
-    // for (auto& elementJson : arr) {
-    //   typename T::value_type element;
-    //   childArchiveInput["element"] = elementJson;
-    //   SimdJsonInputArchive childArchive(childArchiveInput);
-    //   childArchive.Serialize("element", element);
-    //   value.insert(value.end(), element);
-    // }
+    const auto& arrayResult = input.at_key(key).get_array();
+    if (const auto err = arrayResult.error()) {
+      throw std::runtime_error(fmt::format("simdjson error {}, key='{}'", simdjson::error_message(err), key));
+    }
+    const auto& input = arrayResult.value_unsafe();
+
+    size_t idx = 0;
+    for (const auto& inputItem : input) {
+      T outputItem;
+      const auto err = inputItem.get(outputItem);
+      if (err) {
+        throw std::runtime_error(fmt::format("simdjson error {}, key='{}', index={}", simdjson::error_message(err), key, idx));
+      }
+      output.emplace_back(std::move(outputItem));
+
+      ++idx;
+    }
+
     return *this;
   }
 
   template <Optional T>
-  SimdJsonInputArchive& Serialize(const char* key, T& value)
+  SimdJsonInputArchive& Serialize(const char* key, T& output)
   {
-    // auto it = j_.find(key);
-    // if (it != j_.end() && !it->is_null()) {
-    //   typename T::value_type actualValue;
-    //   Serialize(key, actualValue);
-    //   value = actualValue;
-    // } else {
-    //   value = std::nullopt;
-    // }
+    typename T::value_type outputItem;
+    const simdjson::error_code err = input.at_key(key).get(outputItem); // XXX: should recurse
+    if (err == simdjson::NO_SUCH_FIELD) {
+      output.reset();
+      return *this;
+    }
+    if (err) {
+      throw std::runtime_error(fmt::format("simdjson error {}, key='{}'", simdjson::error_message(err), key));
+    }
+    output.emplace(std::move(outputItem));
     return *this;
   }
 
@@ -92,7 +112,10 @@ public:
   {
     // value = j_.at(key).get<T>();
     // j_.at_pointer()
-    j_.at_key(key).get(value);
+    const auto err = input.at_key(key).get(value);
+    if (err) {
+      throw std::runtime_error(fmt::format("simdjson error {}, key='{}'", simdjson::error_message(err), key));
+    }
     return *this;
   }
 
@@ -100,7 +123,7 @@ public:
   SimdJsonInputArchive& Serialize(const char* key, T& value)
   {
     simdjson::dom::object objAtKey;
-    simdjson::error_code err = j_.at_key(key).get_object().get(objAtKey);
+    auto err = input.at_key(key).get_object().get(objAtKey);
     if (err) {
       throw std::runtime_error(fmt::format("simdjson error {}, key='{}'", simdjson::error_message(err), key));
     }
@@ -111,5 +134,6 @@ public:
 
 private:
   // simdjson::dom::object?
-  const simdjson::dom::element& j_;
+  const simdjson::dom::element& input;
+  // const simdjson::dom::object& input;
 };
