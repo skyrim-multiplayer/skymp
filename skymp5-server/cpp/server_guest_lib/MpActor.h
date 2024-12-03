@@ -33,6 +33,7 @@ public:
 
   bool IsSpellLearned(uint32_t spellId) const; // including from base
   bool IsSpellLearnedFromBase(uint32_t spellId) const;
+  std::vector<uint32_t> GetSpellList() const;
 
   std::unique_ptr<const Appearance> GetAppearance() const;
   const std::string& GetAppearanceAsJson();

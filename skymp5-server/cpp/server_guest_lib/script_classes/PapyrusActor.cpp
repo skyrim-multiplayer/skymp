@@ -577,6 +577,78 @@ VarValue PapyrusActor::GetRace(VarValue self,
   return VarValue(std::make_shared<EspmGameObject>(lookupRes));
 }
 
+VarValue PapyrusActor::GetSpellCount(VarValue self,
+                                     const std::vector<VarValue>& arguments)
+{
+  auto actor = GetFormPtr<MpActor>(self);
+  if (!actor) {
+    return VarValue(0);
+  }
+
+  std::vector<uint32_t> spellList = actor->GetSpellList();
+
+  int countLearnedDuringGameplay = 0;
+  for (auto spellId : spellList) {
+    if (!actor->IsSpellLearnedFromBase(spellId)) {
+      countLearnedDuringGameplay++;
+    }
+  }
+
+  return VarValue(countLearnedDuringGameplay);
+}
+
+VarValue PapyrusActor::GetNthSpell(VarValue self,
+                                   const std::vector<VarValue>& arguments)
+{
+  auto actor = GetFormPtr<MpActor>(self);
+  if (!actor) {
+    return VarValue::None();
+  }
+
+  if (arguments.empty()) {
+    spdlog::error("GetNthSpell - expected at least 1 argument");
+    return VarValue::None();
+  }
+  int n = static_cast<int>(arguments[0]);
+  if (n < 0) {
+    return VarValue::None();
+  }
+
+  std::vector<uint32_t> spellList = actor->GetSpellList();
+
+  std::vector<uint32_t> spellsLearnedDuringGameplay;
+  spellsLearnedDuringGameplay.reserve(spellList.size());
+  for (auto spellId : spellList) {
+    if (!actor->IsSpellLearnedFromBase(spellId)) {
+      spellsLearnedDuringGameplay.push_back(spellId);
+    }
+  }
+
+  if (n >= static_cast<int>(spellsLearnedDuringGameplay.size())) {
+    return VarValue::None();
+  }
+
+  uint32_t spellId = spellsLearnedDuringGameplay[n];
+
+  auto lookupRes =
+    actor->GetParent()->GetEspm().GetBrowser().LookupById(spellId);
+
+  if (!lookupRes.rec) {
+    spdlog::error("GetNthSpell - Spell with id {:x} not found in espm",
+                  spellId);
+    return VarValue::None();
+  }
+
+  if (!(lookupRes.rec->GetType() == espm::SPEL::kType)) {
+    spdlog::error(
+      "GetNthSpell - Expected record {:x} to be SPEL, but it is {}", spellId,
+      lookupRes.rec->GetType().ToString());
+    return VarValue::None();
+  }
+
+  return VarValue(std::make_shared<EspmGameObject>(lookupRes));
+}
+
 void PapyrusActor::Register(
   VirtualMachine& vm, std::shared_ptr<IPapyrusCompatibilityPolicy> policy)
 {
@@ -607,4 +679,6 @@ void PapyrusActor::Register(
   AddMethod(vm, "AddSpell", &PapyrusActor::AddSpell);
   AddMethod(vm, "RemoveSpell", &PapyrusActor::RemoveSpell);
   AddMethod(vm, "GetRace", &PapyrusActor::GetRace);
+  AddMethod(vm, "GetSpellCount", &PapyrusActor::GetSpellCount);
+  AddMethod(vm, "GetNthSpell", &PapyrusActor::GetNthSpell);
 }
