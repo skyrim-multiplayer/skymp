@@ -1,6 +1,6 @@
 {
     "name": "node-embedder-api",
-    "version": "22.0.0",
+    "version": "23.2.0",
     "description": "NodeJS API for embedding NodeJS in your C++ applications",
     "homepage": "https://nodejs.org/api/embedding.html",
     "license": "MIT",
