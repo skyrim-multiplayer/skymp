@@ -1,6 +1,6 @@
-set(NODE_EMBEDDER_API_URL "https://node-embedder-api-prebuilt-vcpkg-port.b-cdn.net/node-embedder-api-prebuilt.zip")
+set(NODE_EMBEDDER_API_URL "https://node-embedder-api-prebuilt-vcpkg-port-v2.b-cdn.net/archive.zip")
 set(NODE_EMBEDDER_API_FILENAME "node-embedder-api-prebuilt.zip")
-set(NODE_EMBEDDER_API_SHA512 0082a1537052d2343a867cac2eb9acb9ba2da1607c3766ef5ada6fd2498e0fc3df754cabf3a47825358e441a7f594addcf8fdf3be84b05f27fa6eb8aefa1e2ed)
+set(NODE_EMBEDDER_API_SHA512 31aa1c29b0c2cf4da4f6b2fa98471d0c692928d2efbe5d547e1910124db783483e8a899333fb116030b0d93b1896cba13dcd6ddb11b96e8308b02b90a36612f0)
 
 vcpkg_download_distfile(ARCHIVE
     URLS ${NODE_EMBEDDER_API_URL}
