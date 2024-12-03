@@ -185,7 +185,7 @@ runs:
         $cmake_command_full += "$vcpkg_triplet_arg "
         $cmake_command_full += "$vcpkg_root_arg "
         $cmake_command_full += "-DUNIT_DATA_DIR=skyrim_data_files "
-        $cmake_command_full += "-DBUILD_NODEJS_PLUGIN=ON "
+        $cmake_command_full += "-DBUILD_NODEJS=OFF "
         $cmake_command_full += "$prepare_nexus_archives_arg "
         $cmake_command_full += "-DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} "
         $cmake_command_full += "-DSKYRIM_SE=${{ inputs.SKYRIM_SE_FLAG }} "
