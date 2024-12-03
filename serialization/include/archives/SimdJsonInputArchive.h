@@ -13,14 +13,6 @@
 #include "concepts/Concepts.h"
 
 namespace {
-template<class T>
-concept BasicNumericSimdJsonSupported = std::is_same_v<T, int64_t> || std::is_same_v<T, uint64_t>;
-
-// template<std::signed_integral T>
-// using SimdJsonNumericAdapterType = int64_t;
-
-// template<std::unsigned_integral T>
-// using SimdJsonNumericAdapterType = int64_t;
 
 template <class T>
 struct TypeWrapper {
@@ -28,17 +20,14 @@ struct TypeWrapper {
 };
 
 struct SimdJsonNumericAdapterHelper {
-  // std::false_type a;
-// template<std::signed_integral T>
-// using SimdJsonNumericAdapterType = int64_t;
   template<std::signed_integral T>
-  TypeWrapper<int64_t> Check(T);
+  std::decay<int64_t> Check(T);
 
   template<std::unsigned_integral T>
-  TypeWrapper<uint64_t> Check(T);
+  std::decay<uint64_t> Check(T);
 
   template<std::floating_point T>
-  TypeWrapper<double> Check(T);
+  std::decay<double> Check(T);
 };
 
 template<class T>
@@ -50,8 +39,6 @@ concept ArithmeticNonSimdjsonPrimitive = Arithmetic<T> && !std::is_same_v<T, Sim
 template<class T>
 concept ArithmeticSimdjsonPrimitive = Arithmetic<T> && std::is_same_v<T, SimdJsonNumericAdapterType<T>>;
 
-// template<std::unsigned_integral T>
-// using SimdJsonNumericAdapterType = int64_t;
 }
 
 class SimdJsonInputArchive
@@ -144,88 +131,6 @@ public:
 
     return *this;
   }
-
-  // using Integral = std::integral<T>;
-
-  /*
-  template<BasicNumericSimdJsonSupported T>
-  SimdJsonInputArchive& Serialize(T& output)
-  {
-    const auto err = input.get(output);
-    if (err) {
-      throw std::runtime_error(fmt::format("simdjson: {}", simdjson::error_message(err)));
-    }
-    return *this;
-  }
-
-  template <std::unsigned_integral T>
-  SimdJsonInputArchive& Serialize(T& output)
-  {
-    uint64_t tmp;
-    Serialize(tmp);
-    output = tmp;
-  }
-
-  template <Arithmetic T>
-  SimdJsonInputArchive& Serialize(T& output)
-  {
-    if constexpr (std::is_same_v<T, float>) {
-      double tmp;
-      Serialize(tmp);
-      output = tmp;
-      return *this;
-    } else if constexpr (std::is_same_v<T, unsigned int> || std::is_same_v<T, unsigned char>) {
-      uint64_t tmp;
-      Serialize(tmp);
-      output = tmp;
-      return *this;
-    } else {
-    const auto err = input.get(output);
-    if (err) {
-      throw std::runtime_error(fmt::format("simdjson: {}", simdjson::error_message(err)));
-    }
-    return *this;
-    }
-  }
-  */
-
-  /*
-  SimdJsonInputArchive& Serialize(bool& output)
-  {
-    const auto err = input.get(output);
-    if (err) {
-      throw std::runtime_error(fmt::format("simdjson: {}", simdjson::error_message(err)));
-    }
-    return *this;
-  }
-
-  SimdJsonInputArchive& Serialize(double& output)
-  {
-    const auto err = input.get(output);
-    if (err) {
-      throw std::runtime_error(fmt::format("simdjson: {}", simdjson::error_message(err)));
-    }
-    return *this;
-  }
-
-  SimdJsonInputArchive& Serialize(uint64_t& output)
-  {
-    const auto err = input.get(output);
-    if (err) {
-      throw std::runtime_error(fmt::format("simdjson: {}", simdjson::error_message(err)));
-    }
-    return *this;
-  }
-
-  SimdJsonInputArchive& Serialize(int64_t& output)
-  {
-    const auto err = input.get(output);
-    if (err) {
-      throw std::runtime_error(fmt::format("simdjson: {}", simdjson::error_message(err)));
-    }
-    return *this;
-  }
-  */
 
   template <ArithmeticSimdjsonPrimitive T>
   SimdJsonInputArchive& Serialize(T& output)
