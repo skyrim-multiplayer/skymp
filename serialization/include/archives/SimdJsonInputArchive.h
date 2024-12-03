@@ -62,7 +62,7 @@ public:
   {
     const auto& strResult = input.get_string();
     if (const auto err = strResult.error()) {
-      throw std::runtime_error(fmt::format("simdjson: {}", simdjson::error_message(err)));
+      throw std::runtime_error(fmt::format("simdjson (string): {}", simdjson::error_message(err)));
     }
     output = std::string(strResult.value_unsafe());
     return *this;
@@ -73,7 +73,7 @@ public:
   {
     const auto& arrayResult = input.get_array();
     if (const auto err = arrayResult.error()) {
-      throw std::runtime_error(fmt::format("simdjson: {}", simdjson::error_message(err)));
+      throw std::runtime_error(fmt::format("simdjson (type {}): {}", typeid(T).name(), simdjson::error_message(err)));
     }
     const auto& input = arrayResult.value_unsafe();
 
@@ -106,7 +106,7 @@ public:
 
     const auto& arrayResult = input.get_array();
     if (const auto err = arrayResult.error()) {
-      throw std::runtime_error(fmt::format("simdjson: {}", simdjson::error_message(err)));
+      throw std::runtime_error(fmt::format("simdjson (type {}): {}", typeid(T).name(), simdjson::error_message(err)));
     }
     const auto& input = arrayResult.value_unsafe();
 
@@ -132,7 +132,7 @@ public:
   {
     const auto err = input.get(output);
     if (err) {
-      throw std::runtime_error(fmt::format("simdjson: {}", simdjson::error_message(err)));
+      throw std::runtime_error(fmt::format("simdjson (type {}): {}", typeid(T).name(), simdjson::error_message(err)));
     }
     return *this;
   }
