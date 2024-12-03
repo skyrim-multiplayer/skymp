@@ -14,11 +14,6 @@
 
 namespace {
 
-template <class T>
-struct TypeWrapper {
-  using type = T;
-};
-
 struct SimdJsonNumericAdapterHelper {
   template<std::signed_integral T>
   std::decay<int64_t> Check(T);
@@ -149,7 +144,7 @@ public:
       SimdJsonNumericAdapterType<T> tmp;
       Serialize(tmp);
     } catch (const std::exception& e) {
-      throw std::runtime_error(fmt::format("failed to call Serialize from SimdJsonInputArchive: {}", e.what()));
+      throw std::runtime_error(fmt::format("failed to call Serialize (adapter {} -> {}): {}", typeid(T).name(), typeid(SimdJsonNumericAdapterType<T>).name(), e.what()));
     }
     return *this;
   }
@@ -160,7 +155,7 @@ public:
     try {
       output.Serialize(*this);
     } catch (const std::exception& e) {
-      throw std::runtime_error(fmt::format("failed to call Serialize from SimdJsonInputArchive: {}", e.what()));
+      throw std::runtime_error(fmt::format("failed to call custom Serialize for type {}: {}", typeid(T).name(), e.what()));
     }
     return *this;
   }
