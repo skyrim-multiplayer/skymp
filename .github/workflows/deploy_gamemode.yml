@@ -41,6 +41,8 @@ jobs:
         with:
           path: "skymp"
           fetch-depth: 0
+          sparse-checkout: |
+            misc
 
       - name: Post a link in Discord
         env:
