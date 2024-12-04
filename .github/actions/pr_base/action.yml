@@ -237,7 +237,11 @@ runs:
                 return refInfo;
               }
               else {
-                return { refInfoHash: crypto.createHash('sha256').update(refInfo.ref).digest('hex') };
+                return { 
+                  refInfoHash: crypto.createHash('sha256').update(refInfo.ref).digest('hex'),
+                  lastCommitSha: refInfo.lastCommitSha,
+                  prNumber: refInfo.prNumber
+                };
               }
             });
           }
