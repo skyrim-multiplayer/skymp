@@ -1,6 +1,7 @@
 #include "SweetPieSpellDamageFormula.h"
 
 #include "archives/JsonInputArchive.h"
+#include <limits>
 
 namespace SweetPieSpellDamageFormulaPrivate {
 template <class T>
@@ -57,8 +58,8 @@ float SweetPieSpellDamageFormula::CalculateDamage(
 
   for (auto& entry : setings->entries) {
     const auto itemId = entry.itemId;
-    const auto mult =
-      SweetPieSpellDamageFormulaPrivate::Clamp(entry.mult, 0.f, 1.f);
+    const auto mult = SweetPieSpellDamageFormulaPrivate::Clamp(
+      entry.mult, 0.f, std::numeric_limits<float>::infinity());
 
     if (aggressor.GetItemCount(itemId) > 0) {
       biggestMult = std::max(biggestMult, mult);
