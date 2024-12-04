@@ -11,6 +11,7 @@
 #include "database_drivers/DatabaseFactory.h"
 #include "formulas/DamageMultFormula.h"
 #include "formulas/SweetPieDamageFormula.h"
+#include "formulas/SweetPieSpellDamageFormula.h"
 #include "formulas/TES5DamageFormula.h"
 #include "libespm/IterateFields.h"
 #include "papyrus-vm/Utils.h"
