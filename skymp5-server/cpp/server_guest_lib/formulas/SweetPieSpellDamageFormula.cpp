@@ -2,6 +2,7 @@
 
 #include "archives/JsonInputArchive.h"
 #include <limits>
+#include <sstream>
 
 namespace SweetPieSpellDamageFormulaPrivate {
 template <class T>
@@ -57,11 +58,22 @@ float SweetPieSpellDamageFormula::CalculateDamage(
   float biggestMult = -1;
 
   for (auto& entry : settings->entries) {
-    const auto itemId = entry.itemId;
-    const auto mult = SweetPieSpellDamageFormulaPrivate::Clamp(
+    const std::string& itemId = entry.itemId;
+    const float mult = SweetPieSpellDamageFormulaPrivate::Clamp(
       entry.mult, 0.f, std::numeric_limits<float>::infinity());
 
-    if (aggressor.GetItemCount(itemId) > 0) {
+    uint32_t itemIdParsed = 0;
+
+    if (itemId.find("0x") == 0 || itemId.find("0X") == 0) {
+      std::stringstream ss;
+      ss << std::hex << itemId.substr(2); // Skip "0x"
+      ss >> itemIdParsed;
+    } else {
+      std::stringstream ss(itemId);
+      ss >> itemIdParsed;
+    }
+
+    if (aggressor.GetItemCount(itemIdParsed) > 0) {
       biggestMult = std::max(biggestMult, mult);
     }
   }

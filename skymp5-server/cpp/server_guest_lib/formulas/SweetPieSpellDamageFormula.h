@@ -19,7 +19,7 @@ struct SweetPieSpellDamageFormulaSettingsEntry
     archive.Serialize("itemId", itemId).Serialize("mult", mult);
   }
 
-  uint32_t itemId = 0;
+  std::string itemId; // supports hex and decimal ids: "0x000feef1", "0"
   float mult = 0.f;
 };
 
