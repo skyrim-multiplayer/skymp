@@ -50,13 +50,13 @@ float SweetPieSpellDamageFormula::CalculateDamage(
   const float baseDamage =
     baseFormula->CalculateDamage(aggressor, target, spellCastData);
 
-  if (!setings) {
+  if (!settings) {
     return baseDamage;
   }
 
   float biggestMult = -1;
 
-  for (auto& entry : setings->entries) {
+  for (auto& entry : settings->entries) {
     const auto itemId = entry.itemId;
     const auto mult = SweetPieSpellDamageFormulaPrivate::Clamp(
       entry.mult, 0.f, std::numeric_limits<float>::infinity());
