@@ -37,16 +37,16 @@ SweetPieSpellDamageFormula::SweetPieSpellDamageFormula(
   }
 }
 
-float SweetPieSpellDamageFormula::CalculateDamage(
-  const MpActor& aggressor, const MpActor& target,
-  const HitData& hitData) const override
+float SweetPieSpellDamageFormula::CalculateDamage(const MpActor& aggressor,
+                                                  const MpActor& target,
+                                                  const HitData& hitData) const
 {
   return baseFormula->CalculateDamage(aggressor, target, hitData);
 }
 
 float SweetPieSpellDamageFormula::CalculateDamage(
   const MpActor& aggressor, const MpActor& target,
-  const SpellCastData& spellCastData) const override
+  const SpellCastData& spellCastData) const
 {
   const float baseDamage =
     baseFormula->CalculateDamage(aggressor, target, spellCastData);
@@ -73,7 +73,7 @@ float SweetPieSpellDamageFormula::CalculateDamage(
       ss >> itemIdParsed;
     }
 
-    if (aggressor.GetItemCount(itemIdParsed) > 0) {
+    if (aggressor.GetInventory().GetItemCount(itemIdParsed) > 0) {
       biggestMult = std::max(biggestMult, mult);
     }
   }
