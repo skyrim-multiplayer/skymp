@@ -18,7 +18,7 @@ on:
 jobs:
   deploy_gamemode:
     runs-on: ubuntu-latest
-    steps:
+    steps:      
       - name: Set up workflow_dispatch inputs
         if: github.event_name == 'workflow_dispatch'
         run: |
@@ -37,12 +37,17 @@ jobs:
           token: ${{ secrets.SKYMP5_GAMEMODE_PAT }}
           fetch-depth: 0
 
+      - uses: actions/checkout@v4
+        with:
+          path: "skymp"
+          fetch-depth: 0
+
       - name: Post a link in Discord
         env:
           DEPLOY_STATUS_WEBHOOK: ${{secrets.DEPLOY_STATUS_WEBHOOK}}
         run: |
           link="${{github.server_url}}/${{github.repository}}/actions/runs/${{github.run_id}}"
-          ./misc/deploy/call_webhook.sh "Started gamemode deploy. " \
+          ./skymp/misc/deploy/call_webhook.sh "Started gamemode deploy. " \
             "You can follow the process at <$link>. " \
             "Once build is finished, further progress will be reported here."
 
@@ -95,6 +100,6 @@ jobs:
         if: '!success()'
         run: |
           link="${{github.server_url}}/${{github.repository}}/actions/runs/${{github.run_id}}"
-          ./misc/deploy/call_webhook.sh \
+          ./skymp/misc/deploy/call_webhook.sh \
             "Gamemode build or deploy failed or was cancelled. " \
             "Check out the logs at <$link> to find out why."
