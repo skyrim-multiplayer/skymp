@@ -328,6 +328,9 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
     auto sweetPieDamageFormulaSettings =
       serverSettings["sweetPieDamageFormulaSettings"];
 
+    auto sweetPieSpellDamageFormulaSettings =
+      serverSettings["sweetPieSpellDamageFormulaSettings"];
+
     auto damageMultFormulaSettings =
       serverSettings["damageMultFormulaSettings"];
 
@@ -337,6 +340,8 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
                                                   damageMultFormulaSettings);
     formula = std::make_unique<SweetPieDamageFormula>(
       std::move(formula), sweetPieDamageFormulaSettings);
+    formula = std::make_unique<SweetPieSpellDamageFormula>(
+      std::move(formula), sweetPieSpellDamageFormulaSettings);
     partOne->SetDamageFormula(std::move(formula));
 
     partOne->worldState.AttachScriptStorage(
