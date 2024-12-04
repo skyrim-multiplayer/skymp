@@ -18,7 +18,7 @@ on:
 jobs:
   deploy_gamemode:
     runs-on: ubuntu-latest
-    steps:      
+    steps:
       - name: Set up workflow_dispatch inputs
         if: github.event_name == 'workflow_dispatch'
         run: |
