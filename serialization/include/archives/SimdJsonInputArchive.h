@@ -153,6 +153,8 @@ public:
     return *this;
   }
 
+  // This function is called when for non-trivial types.
+  // It's expected that a special function will handle this, implemented by the said type
   template <NoneOfTheAbove T>
   SimdJsonInputArchive& Serialize(T& output)
   {
