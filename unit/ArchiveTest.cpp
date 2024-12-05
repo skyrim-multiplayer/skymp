@@ -1,4 +1,5 @@
 #include "TestUtils.hpp"
+#include "archives/JsonOutputArchive.h"
 #include "archives/SimdJsonInputArchive.h"
 #include "papyrus-vm/VarValue.h"
 #include <catch2/catch_all.hpp>
@@ -17,6 +18,7 @@
 #include <string>
 #include <type_traits>
 #include <variant>
+#include <vector>
 
 #define MAKE_DOM_ELEMENT_VAR_FROM_STRING(varName, s) \
   std::string tmpString_##varName = s; \
@@ -107,16 +109,10 @@ TEST_CASE("SimdJsonArchive simple",
   auto jsonStr = nlohmann::to_string(j);
   CAPTURE(jsonStr);
 
-  simdjson::dom::parser sjParser;
-  auto sj = sjParser.parse(jsonStr);
-  
-  SimdJsonInputArchive ar(sj.value());
   JsonTestParam outVar;
-  std::visit([&ar, &outVar](const auto& val) {
+  std::visit([&jsonStr, &outVar](const auto& val) {
     // val is also optional; pick the same slot
-    std::decay_t<decltype(val)> arOut;
-    ar.Serialize(arOut);
-    outVar = arOut;
+    outVar = ParseWithSimdInputArchive<std::decay_t<decltype(val)>>(jsonStr);
   }, param);
   REQUIRE(param.index() == outVar.index());
   REQUIRE(param == outVar);
@@ -147,33 +143,33 @@ TEST_CASE("SimdJsonArchive array",
           "[Archives]")
 {
   {
-    CheckHelper<std::array<int, 3>> h;
-    h.Parse("[1, 2, 3]");
-    REQUIRE(h.result == std::array<int, 3>{1, 2, 3});
+    // ig this one is fine bc the macro is single-parametred
+    REQUIRE(ParseWithSimdInputArchive<std::array<int, 3>>("[1, 2, 3]") == std::array<int, 3>{1, 2, 3});
   }
 
   {
-    CheckHelper<std::array<int, 2>> h;
-    REQUIRE_THROWS_WITH(h.Parse("[1, 2, 3]"), "index 2 out of bounds for output");
+    REQUIRE_THROWS_WITH((ParseWithSimdInputArchive<std::array<int, 2>>("[1, 2, 3]")), "index 2 out of bounds for output (input is bigger)");
   }
 
   {
-    CheckHelper<std::array<int, 4>> h;
-    REQUIRE_THROWS_WITH(h.Parse("[1, 2, 3]"), "index 3 out of bounds for input");
+    // option 1
+    REQUIRE_THROWS_WITH((ParseWithSimdInputArchive<std::array<int, 4>>("[1, 2, 3]")), "index 3 out of bounds for input (4 elements expected)");
   }
 
   {
+    // option 3
     CheckHelper<std::array<std::string, 3>> h;
     REQUIRE_THROWS_WITH(h.Parse("[1, 2, 3]"), ContainsSubstring("index 0:") && ContainsSubstring("INCORRECT_TYPE"));
   }
 
   {
-    CheckHelper<std::array<int, 3>> h;
-    REQUIRE_THROWS_WITH(h.Parse("[]"), "index 0 out of bounds for input");
+    // using TargetType = std::array<std::string, 3>;
+    // REQUIRE_THROWS_WITH(ParseWithSimdInputArchive<TargetType>("[]"), "index 0 out of bounds for output");
+    using TargetType = std::array<std::string, 3>;
+    REQUIRE_THROWS_WITH((ParseWithSimdInputArchive<std::array<std::string, 3>>("[]")), "index 0 out of bounds for input (3 elements expected)");
   }
 }
 
-/*
 TEST_CASE("SimdJsonArchive vector",
           "[Archives]")
 {
@@ -183,29 +179,51 @@ TEST_CASE("SimdJsonArchive vector",
   // };
 
   {
-    const auto sj = DomElementFromString("[1, 2, 3]");
-    SimdJsonInputArchive ar(sj);
-    std::vector<int> a;
-    ar.Serialize(a);
-    REQUIRE(a == std::vector<int>{1, 2, 3});
+    REQUIRE(ParseWithSimdInputArchive<std::vector<int>>("[1, 2, 3]") == std::vector<int>{1, 2, 3});
   }
 
   {
-    const auto sj = DomElementFromString("[]");
-    SimdJsonInputArchive ar(sj);
-    std::vector<int> a;
-    ar.Serialize(a);
-    REQUIRE(a == std::vector<int>{});
+    REQUIRE(ParseWithSimdInputArchive<std::vector<int>>("[]") == std::vector<int>{});
   }
 
   {
-    const auto sj = DomElementFromString("[123]");
-    SimdJsonInputArchive ar(sj);
-    std::vector<std::string> a;
-    REQUIRE_THROWS_WITH(ar.Serialize(a), ContainsSubstring("index 0:") && ContainsSubstring("INCORRECT_TYPE"));
+    REQUIRE_THROWS_WITH(ParseWithSimdInputArchive<std::vector<std::string>>("[123]"), ContainsSubstring("index 0:") && ContainsSubstring("INCORRECT_TYPE"));
   }
 }
-*/
+
+namespace {
+struct CustomTestObject {
+  int foo{};
+  std::optional<std::string> bar{};
+  std::optional<float> baz{};
+
+  template <class Archive>
+  void Serialize(Archive &ar) {
+    ar.Serialize("foo", foo).Serialize("bar", bar).Serialize("baz", baz);
+  }
+};
+}
+
+TEST_CASE("SimdJsonArchive custom",
+          "[Archives]")
+{
+  CustomTestObject obj;
+  obj.foo = 123;
+  obj.bar = std::nullopt;
+  obj.baz = 1.5;
+
+  nlohmann::json nlj;
+  {
+    JsonOutputArchive ar;
+    obj.Serialize(ar);
+    nlj = std::move(ar.j);
+  }
+
+  auto obj2 = ParseWithSimdInputArchive<CustomTestObject>(nlohmann::to_string(nlj));
+  REQUIRE(obj.foo == obj2.foo);
+  REQUIRE(obj.bar == obj2.bar);
+  REQUIRE(obj.baz == obj2.baz);
+}
 
 // set?
-// custom object
+// list?

@@ -47,6 +47,7 @@ public:
   {
   }
 
+  // TODO(#2250): it's probably useless and should be removed
   template <IntegralConstant T>
   SimdJsonInputArchive& Serialize(const char* key, T& output)
   {
@@ -65,7 +66,7 @@ public:
   {
     const auto& strResult = input.get_string();
     if (const auto err = strResult.error()) {
-      throw std::runtime_error(fmt::format("simdjson (string): {}", simdjson::error_message(err)));
+      throw std::runtime_error(fmt::format("simdjson (type in:{} out:string): {}", static_cast<char>(input.type()), simdjson::error_message(err)));
     }
     output = std::string(strResult.value_unsafe());
     return *this;
@@ -76,14 +77,17 @@ public:
   {
     const auto& arrayResult = input.get_array();
     if (const auto err = arrayResult.error()) {
-      throw std::runtime_error(fmt::format("simdjson (type {}): {}", typeid(T).name(), simdjson::error_message(err)));
+      throw std::runtime_error(fmt::format("simdjson (type in:{} out:array<{}>): {}", static_cast<char>(input.type()), typeid(T).name(), simdjson::error_message(err)));
     }
     const auto& input = arrayResult.value_unsafe();
 
     size_t idx = 0;
     for (const auto& inputItem : input) {
       if (idx >= N) {
-        throw std::runtime_error(fmt::format("index {} out of bounds for output", idx));
+        //           v
+        // I: ............)
+        // O: .......)
+        throw std::runtime_error(fmt::format("index {} out of bounds for output (input is bigger)", idx));
       }
 
       try {
@@ -96,7 +100,10 @@ public:
       ++idx;
     }
     if (idx != N) {
-      throw std::runtime_error(fmt::format("index {} out of bounds for input", idx));
+      //         v
+      // I: .....)
+      // O: ............)
+      throw std::runtime_error(fmt::format("index {} out of bounds for input ({} elements expected)", idx, N));
     }
 
     return *this;
@@ -109,7 +116,7 @@ public:
 
     const auto& arrayResult = input.get_array();
     if (const auto err = arrayResult.error()) {
-      throw std::runtime_error(fmt::format("simdjson (type {}): {}", typeid(T).name(), simdjson::error_message(err)));
+      throw std::runtime_error(fmt::format("simdjson (type in:{} out:{}): {}", static_cast<char>(input.type()), typeid(T).name(), simdjson::error_message(err)));
     }
     const auto& input = arrayResult.value_unsafe();
 
@@ -135,7 +142,7 @@ public:
   {
     const auto err = input.get(output);
     if (err) {
-      throw std::runtime_error(fmt::format("simdjson (type {}): {}", typeid(T).name(), simdjson::error_message(err)));
+      throw std::runtime_error(fmt::format("simdjson (type in:{} out:{}): {}", static_cast<char>(input.type()), typeid(T).name(), simdjson::error_message(err)));
     }
     return *this;
   }
@@ -148,7 +155,7 @@ public:
       Serialize(tmp);
       output = std::move(tmp);
     } catch (const std::exception& e) {
-      throw std::runtime_error(fmt::format("failed to call Serialize (adapter {} -> {}): {}", typeid(T).name(), typeid(SimdJsonNumericAdapterType<T>).name(), e.what()));
+      throw std::runtime_error(fmt::format("failed to call Serialize (type in:{} out:adapter {} -> {}): {}", static_cast<char>(input.type()), typeid(T).name(), typeid(SimdJsonNumericAdapterType<T>).name(), e.what()));
     }
     return *this;
   }
