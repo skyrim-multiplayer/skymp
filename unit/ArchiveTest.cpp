@@ -30,17 +30,6 @@ namespace {
 using JsonTestParam = std::variant<bool, int8_t, uint8_t, int16_t, uint16_t, int32_t, uint32_t, int64_t, uint64_t, float, double, long double, std::string>;
 using Catch::Matchers::ContainsSubstring;
 
-// simdjson::dom::element DomElementFromString(const std::string& s) {
-//   std::string jsonStr = s;
-//   simdjson::dom::parser sjParser;
-//   // return sjParser.parse(jsonStr).value();
-//   auto result = sjParser.parse(s);
-//   // std::cerr << "XXX " << s << "\n";
-//   // std::cerr << "XXX " << simdjson::to_string(result) << "\n";
-//   // std::cerr << "XXX " << simdjson::to_string(result) << "\n";
-//   return result.value();
-// }
-
 template <class Target>
 struct CheckHelper {
   simdjson::dom::parser parser; // we have to keep it, otherwise dom element invalidates
@@ -56,7 +45,16 @@ struct CheckHelper {
 
 }
 
-// also to anon ns?
+template <class T>
+T ParseWithSimdInputArchive(const std::string& json) {
+  simdjson::dom::parser parser;
+  simdjson::dom::element element = parser.parse(json);
+  T result;
+  SimdJsonInputArchive ar(element);
+  ar.Serialize(result);
+  return result;
+}
+
 namespace Catch {
 template<>
 struct StringMaker<JsonTestParam> {
@@ -74,34 +72,6 @@ struct StringMaker<JsonTestParam> {
 TEST_CASE("SimdJsonArchive simple",
           "[Archives]")
 {
-  // auto i = GENERATE();
-  // auto test = []<typename T>(T t) {
-  //   // nlohmann::to_json()
-  //   nlohmann::json j{t};
-  //   CAPTURE(nlohmann::to_string(j));
-  //   INFO("test");
-  // };
-
-  // test(static_cast<int16_t>(123));
-
-  // nlohmann::json j{static_cast<int16_t>(123)};
-  // CAPTURE(nlohmann::to_string(j));
-  //   INFO("test7");
-
-//   std::variant<int, std::string> kek;
-//   kek = 7;
-//   CAPTURE(kek);
-// //   {
-// // Catch ::Capturer capturer6(
-// //   "CAPTURE"_catch_sr,
-// //   ::Catch ::SourceLineInfo("/home/roma/my/skymp/skymp/unit/ArchiveTest.cpp",
-// //                            static_cast<std ::size_t>(30)),
-// //   Catch ::ResultWas ::Info, "kek"_catch_sr);
-// // capturer6.captureValues(0, kek)
-// //   }
-//   kek = "kek";
-//   CAPTURE(kek);
-
 // The supported types are ondemand::object, ondemand::array, raw_json_string, std::string_view, uint64_t, int64_t, double, and bool
 
   JsonTestParam param = GENERATE(
@@ -137,12 +107,8 @@ TEST_CASE("SimdJsonArchive simple",
   auto jsonStr = nlohmann::to_string(j);
   CAPTURE(jsonStr);
 
-  // simdjson::ondemand::parser sjParser;
   simdjson::dom::parser sjParser;
-  // auto padded = simdjson::padded_string(std::move(jsonStr));
-  // auto sj = sjParser.iterate(padded);
   auto sj = sjParser.parse(jsonStr);
-  // static_assert(!sizeof(decltype(sj)));
   
   SimdJsonInputArchive ar(sj.value());
   JsonTestParam outVar;
@@ -180,52 +146,27 @@ TEST_CASE("SimdJsonArchive simple",
 TEST_CASE("SimdJsonArchive array",
           "[Archives]")
 {
-  MAKE_DOM_ELEMENT_VAR_FROM_STRING(sj, "[1, 2, 3]");
-  CAPTURE(simdjson::to_string(sj));
-  SimdJsonInputArchive ar(sj);
-  CAPTURE(simdjson::to_string(sj));
-
-  INFO("hi!");
-  {
-    std::array<int, 3> a;
-    ar.Serialize(a);
-    REQUIRE(a == std::array<int, 3>{1, 2, 3});
-  }
-
-  INFO("hi!");
   {
     CheckHelper<std::array<int, 3>> h;
     h.Parse("[1, 2, 3]");
     REQUIRE(h.result == std::array<int, 3>{1, 2, 3});
   }
 
-  INFO("hi!");
   {
-    std::array<int, 2> a;
-    REQUIRE_THROWS_WITH(ar.Serialize(a), "index 2 out of bounds for output");
+    CheckHelper<std::array<int, 2>> h;
+    REQUIRE_THROWS_WITH(h.Parse("[1, 2, 3]"), "index 2 out of bounds for output");
   }
 
-  INFO("hi!");
   {
-    std::array<int, 4> a;
-    REQUIRE_THROWS_WITH(ar.Serialize(a), "index 3 out of bounds for input");
+    CheckHelper<std::array<int, 4>> h;
+    REQUIRE_THROWS_WITH(h.Parse("[1, 2, 3]"), "index 3 out of bounds for input");
   }
 
-  INFO("hi!");
   {
-    std::array<std::string, 3> a;
-    REQUIRE_THROWS_WITH(ar.Serialize(a), ContainsSubstring("index 0:") && ContainsSubstring("INCORRECT_TYPE"));
+    CheckHelper<std::array<std::string, 3>> h;
+    REQUIRE_THROWS_WITH(h.Parse("[1, 2, 3]"), ContainsSubstring("index 0:") && ContainsSubstring("INCORRECT_TYPE"));
   }
 
-  INFO("hi!");
-  {
-    MAKE_DOM_ELEMENT_VAR_FROM_STRING(sj2, "[]");
-    SimdJsonInputArchive ar2(sj2);
-    std::array<int, 3> a;
-    REQUIRE_THROWS_WITH(ar2.Serialize(a), "index 0 out of bounds for input");
-  }
-
-  INFO("hi!");
   {
     CheckHelper<std::array<int, 3>> h;
     REQUIRE_THROWS_WITH(h.Parse("[]"), "index 0 out of bounds for input");
