@@ -31,6 +31,6 @@ VarValue PapyrusQuest::GetCurrentStageID(
 void PapyrusQuest::Register(
   VirtualMachine& vm, std::shared_ptr<IPapyrusCompatibilityPolicy> policy)
 {
-  AddMethod(vm, "GetStage", &PapyrusPotion::GetStage);
+  AddMethod(vm, "GetStage", &PapyrusQuest::GetStage);
   AddMethod(vm, "GetCurrentStageID", &PapyrusPotion::GetCurrentStageID);
 }
