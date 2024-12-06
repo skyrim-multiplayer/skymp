@@ -1717,6 +1717,8 @@ void MpObjectReference::InitScripts()
       !Utils::stricmp(name, "DA06PreRitualSceneTriggerScript") ||
       !Utils::stricmp(name, "CritterSpawn");
 
+    spdlog::info("Skipping script {}", name);
+
     return isRemoveNeeded;
   };
   scriptNames.erase(std::remove_if(scriptNames.begin(), scriptNames.end(),
