@@ -1710,20 +1710,20 @@ void MpObjectReference::InitScripts()
 
   // A hardcoded hack to remove unsupported scripts
   // TODO: make is a server setting with proper conditions or an API
-  scriptNames.erase(
-    std::remove_if(
-      scriptNames.begin(), scriptNames.end(),
-      [](const std::string& val) {
-        const bool isRemoveNeeded =
-          !Utils::stricmp(
-            name, "DA06PreRitualSceneTriggerScript") // GetStage in OnTrigger
-          || !Utils::stricmp(name,
-                             "CritterSpawn"); // Unable to determine Actor for
-                                              // 'Game.GetPlayer' in 'OnLoad'
+  scriptNames.erase(std::remove_if(scriptNames.begin(), scriptNames.end(),
+                                   [](const std::string& val) {
+                                     // 1. GetStage in OnTrigger
+                                     // 2. Unable to determine Actor for
+                                     // 'Game.GetPlayer' in 'OnLoad'
+                                     const bool isRemoveNeeded =
+                                       !Utils::stricmp(
+                                         name,
+                                         "DA06PreRitualSceneTriggerScript") ||
+                                       !Utils::stricmp(name, "CritterSpawn");
 
-        return isRemoveNeeded;
-      }),
-    scriptNames.end());
+                                     return isRemoveNeeded;
+                                   }),
+                    scriptNames.end());
 
   if (!scriptNames.empty()) {
     pImpl->scriptState = std::make_unique<ScriptState>();
