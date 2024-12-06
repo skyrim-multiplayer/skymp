@@ -21,21 +21,6 @@ namespace {
 using JsonTestParam = std::variant<bool, int8_t, uint8_t, int16_t, uint16_t, int32_t, uint32_t, int64_t, uint64_t, float, double, long double, std::string>;
 using Catch::Matchers::ContainsSubstring;
 
-template <class Target>
-struct CheckHelper {
-  simdjson::dom::parser parser; // we have to keep it, otherwise dom element invalidates
-  simdjson::dom::element element;
-  Target result;
-
-  void Parse(const std::string& s) {
-    element = parser.parse(s);
-    SimdJsonInputArchive ar(element);
-    ar.Serialize(result);
-  }
-};
-
-}
-
 template <class T>
 T ParseWithSimdInputArchive(const std::string& json) {
   simdjson::dom::parser parser;
@@ -45,19 +30,16 @@ T ParseWithSimdInputArchive(const std::string& json) {
   ar.Serialize(result);
   return result;
 }
+} // namespace
 
 namespace Catch {
 template<>
 struct StringMaker<JsonTestParam> {
   static std::string convert(const JsonTestParam & value ) {
-    // std::terminate();
     return std::visit([](auto&& arg) {
       if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, int8_t> || std::is_same_v<std::decay_t<decltype(arg)>, uint8_t>) {
         return std::to_string(arg);
-        // return std::string{"oiadsfjioasdfjiosdfji"};
       }
-      // std::cerr << "XXX " << typeid(decltype(arg)).name() << "\n";
-      // Catch::to_string(arg);
       return StringMaker<decltype(arg)>{}.convert(arg);
     }, value);
   }
@@ -72,19 +54,16 @@ struct StringMaker<std::optional<JsonTestParam>> {
     return StringMaker<JsonTestParam>{}.convert(*value);
   }
 };
-}
+} // namespace Catch
 
 TEST_CASE("SimdJsonArchive simple",
           "[Archives]")
 {
-// The supported types are ondemand::object, ondemand::array, raw_json_string, std::string_view, uint64_t, int64_t, double, and bool
-
   JsonTestParam param = GENERATE(
     // one param is enough, type will be deduced for the others
     JsonTestParam("test_string"),
     false,
     true,
-    // ""
     '7',
     static_cast<int8_t>(42),
     static_cast<uint8_t>(42),
@@ -96,8 +75,7 @@ TEST_CASE("SimdJsonArchive simple",
     static_cast<uint64_t>(42),
     static_cast<uint64_t>(42),
     13.37,
-    13.37f,
-    // 13.37L, // long double; not sure if it should be tested or not. We'd lose precision here anyway
+    13.37f,  // TODO: check with eps if needed
     ""
     // etc
   );
@@ -114,37 +92,18 @@ TEST_CASE("SimdJsonArchive simple",
 
   JsonTestParam outVar;
   std::visit([&jsonStr, &outVar](const auto& val) {
-    // val is also optional; pick the same slot
     outVar = ParseWithSimdInputArchive<std::decay_t<decltype(val)>>(jsonStr);
   }, param);
   REQUIRE(param.index() == outVar.index());
   REQUIRE(param == outVar);
-
-  // bool isFloat;
-  // Catch::Matchers::WithinRel()
-  // std::visit([&](const auto& val) {
-  //   isFloat = std::is_floating_point_v<decltype(val)>;
-  // }, param);
-  // if (isFloat) {
-  //   REQUIRE_THAT(arg, matcher)
-  // } else {
-  //   REQUIRE(param == outVar);
-  // }
-
-  // FAIL();
 }
 
 namespace {
-// struct Case {
-//   JsonTestParam param;
-//   bool valid;
-// };
 template <class T>
 struct TypeMarker {
   T Get() const;
 
-  // using type = T;
-  typedef T type;
+  using type = T;
 };
 
 template <class T>
@@ -178,29 +137,16 @@ std::optional<JsonTestParam> ParseInt(const TypeMarkerVariant& type, const std::
   JsonTestParam result;
   try {
     if (IsSigned(type)) {
-      // std::cerr << "XXX Signed t=" << type << ", s=" << s << "\n";
       auto num = std::stoll(s);
-      // std::cerr << "XXX Signed t=" << type << ", s=" << s << ", num=" << num << "\n";
-      // if (std::to_string(num) != s) {
-      //   // likely a signed/unsigned overflow, it's strangely permitted
-      //   return std::nullopt;
-      // }
       if (!InBounds(type, num)) {
         return std::nullopt;
       }
       return num;
     } else {
       if (s.length() && s[0] == '-') {
-        // std::stoull("-1") := 18446744073709551615 (0xffffffffffffffff)
         return std::nullopt;
       }
-      // std::cerr << "XXX Unsigned t=" << type << ", s=" << s << "\n";
       auto num = std::stoull(s);
-      // std::cerr << "XXX Unsigned t=" << type << ", s=" << s << ", num=" << num << "\n";
-      // if (std::to_string(num) != s) {
-      //   // likely a signed/unsigned overflow, it's strangely permitted
-      //   return std::nullopt;
-      // }
       if (!InBounds(type, num)) {
         return std::nullopt;
       }
@@ -217,29 +163,20 @@ JsonTestParam ParseWithSimdInputArchiveMarker(const TypeMarkerVariant& type, con
   }, type);
 }
 
-// template <class T>
-// std::string ToStringAsInt(T val) {
-//   if constexpr (sizeof(T) == 1) {
-//     return std::to_string(int(val));
-//     return std::to_string(val);
-//   } else {
-//     return std::to_string(val);
-//   }
-// }
 }
 
 TEST_CASE("SimdJsonArchive overflow test util",
           "[Archives]")
 {
+  // tests the simple check against stdd::numeric_limits
   REQUIRE(std::get<uint64_t>(ParseInt(TypeMarker<uint8_t>(), "255").value()) == 255);
   REQUIRE(ParseInt(TypeMarker<int8_t>(), "255") == std::nullopt);
   REQUIRE(std::get<int64_t>(ParseInt(TypeMarker<int8_t>(), "-128").value()) == -128);
   REQUIRE(ParseInt(TypeMarker<uint8_t>(), "-128") == std::nullopt);
 
+  // tests unsigned overflow checks
   REQUIRE(ParseInt(TypeMarker<uint64_t>(), "-1") == std::nullopt);
   REQUIRE(ParseInt(TypeMarker<int64_t>(), std::to_string(static_cast<uint64_t>(-1))) == std::nullopt);
-
-  // FAIL();
 }
 
 TEST_CASE("SimdJsonArchive overflow",
@@ -254,8 +191,6 @@ TEST_CASE("SimdJsonArchive overflow",
     TypeMarkerVariant(TypeMarker< int32_t>()),
     TypeMarkerVariant(TypeMarker<uint64_t>()),
     TypeMarkerVariant(TypeMarker< int64_t>())
-
-    // TypeMarkerVariant(TypeMarker< int8_t>())
   );
   CAPTURE(typeMarker);
 
@@ -267,21 +202,11 @@ TEST_CASE("SimdJsonArchive overflow",
     std::to_string(static_cast<uint64_t>(std::numeric_limits<int16_t>::max()) + 1),
     std::to_string(static_cast<uint64_t>(std::numeric_limits<int32_t>::max()) + 1),
     std::to_string(static_cast<uint64_t>(std::numeric_limits<int64_t>::max()) + 1),
+    std::to_string(static_cast<int64_t>(std::numeric_limits<int32_t>::min()) - 1),
     "999999999999999999999999999999999999",
     "-999999999999999999999999999999999999"
-
-    // std::to_string(static_cast<uint64_t>(std::numeric_limits<int8_t>::max()) + 1)
-    // std::to_string(-std::numeric_limits<int64_t>::max())
   );
   CAPTURE(numStr);
-
-  // CAPTURE(std::to_string(uint8_t(120)));
-  // uint64_t num;
-  // try {
-  //   num = std::stoll(numStr);
-  // } catch (const std::out_of_range&) {
-  //   ;
-  // }
 
   auto numVariant = ParseInt(typeMarker, numStr);
   CAPTURE(numVariant);
@@ -306,78 +231,24 @@ TEST_CASE("SimdJsonArchive overflow",
       // FAIL(e.what());
     }
   }
-
-  /*
-  fix!
-  typeMarker := m
-  numStr := "-1"
-  numVariant := 18446744073709551615
-
-  XXX Unsigned t=m, s=-1
-  XXX Unsigned t=m, s=-1, num=18446744073709551615
-  */
-
-  // FAIL();
 }
-
-// TEST_CASE("SimdJsonArchive objects",
-//           "[Archives]")
-// {
-//   struct Case {
-
-//   };
-// }
 
 TEST_CASE("SimdJsonArchive array",
           "[Archives]")
 {
-  {
-    // ig this one is fine bc the macro is single-parametred
-    REQUIRE(ParseWithSimdInputArchive<std::array<int, 3>>("[1, 2, 3]") == std::array<int, 3>{1, 2, 3});
-  }
-
-  {
-    REQUIRE_THROWS_WITH((ParseWithSimdInputArchive<std::array<int, 2>>("[1, 2, 3]")), "index 2 out of bounds for output (input is bigger)");
-  }
-
-  {
-    // option 1
-    REQUIRE_THROWS_WITH((ParseWithSimdInputArchive<std::array<int, 4>>("[1, 2, 3]")), "index 3 out of bounds for input (4 elements expected)");
-  }
-
-  {
-    // option 3
-    CheckHelper<std::array<std::string, 3>> h;
-    REQUIRE_THROWS_WITH(h.Parse("[1, 2, 3]"), ContainsSubstring("index 0:") && ContainsSubstring("INCORRECT_TYPE"));
-  }
-
-  {
-    // using TargetType = std::array<std::string, 3>;
-    // REQUIRE_THROWS_WITH(ParseWithSimdInputArchive<TargetType>("[]"), "index 0 out of bounds for output");
-    using TargetType = std::array<std::string, 3>;
-    REQUIRE_THROWS_WITH(ParseWithSimdInputArchive<TargetType>("[]"), "index 0 out of bounds for input (3 elements expected)");
-  }
+  REQUIRE(ParseWithSimdInputArchive<std::array<int, 3>>("[1, 2, 3]") == std::array<int, 3>{1, 2, 3});
+  REQUIRE_THROWS_WITH((ParseWithSimdInputArchive<std::array<int, 2>>("[1, 2, 3]")), "index 2 out of bounds for output (input is bigger)");
+  REQUIRE_THROWS_WITH((ParseWithSimdInputArchive<std::array<int, 4>>("[1, 2, 3]")), "index 3 out of bounds for input (4 elements expected)");
+  REQUIRE_THROWS_WITH((ParseWithSimdInputArchive<std::array<std::string, 3>>("[1, 2, 3]")), ContainsSubstring("index 0:") && ContainsSubstring("INCORRECT_TYPE"));
+  REQUIRE_THROWS_WITH((ParseWithSimdInputArchive<std::array<int, 3>>("[]")), "index 0 out of bounds for input (3 elements expected)");
 }
 
 TEST_CASE("SimdJsonArchive vector",
           "[Archives]")
 {
-  // struct Case {
-  //   std::string json;
-  //   Matcher
-  // };
-
-  {
-    REQUIRE(ParseWithSimdInputArchive<std::vector<int>>("[1, 2, 3]") == std::vector<int>{1, 2, 3});
-  }
-
-  {
-    REQUIRE(ParseWithSimdInputArchive<std::vector<int>>("[]") == std::vector<int>{});
-  }
-
-  {
-    REQUIRE_THROWS_WITH(ParseWithSimdInputArchive<std::vector<std::string>>("[123]"), ContainsSubstring("index 0:") && ContainsSubstring("INCORRECT_TYPE"));
-  }
+  REQUIRE(ParseWithSimdInputArchive<std::vector<int>>("[1, 2, 3]") == std::vector<int>{1, 2, 3});
+  REQUIRE(ParseWithSimdInputArchive<std::vector<int>>("[]") == std::vector<int>{});
+  REQUIRE_THROWS_WITH(ParseWithSimdInputArchive<std::vector<std::string>>("[123]"), ContainsSubstring("index 0:") && ContainsSubstring("INCORRECT_TYPE"));
 }
 
 namespace {
