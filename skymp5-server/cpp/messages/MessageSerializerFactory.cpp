@@ -18,7 +18,8 @@ void Serialize(const IMessageBase& message, SLNet::BitStream& outputStream)
 }
 
 template <class Message>
-void Serialize(const simdjson::dom::element& inputJson, SLNet::BitStream& outputStream)
+void Serialize(const simdjson::dom::element& inputJson,
+               SLNet::BitStream& outputStream)
 {
   Message message;
   // may throw. we shouldn't pollute outputStream in this case
@@ -59,7 +60,9 @@ std::optional<DeserializeResult> Deserialize(
   simdjson::dom::parser sjParser;
   auto parseResult = sjParser.parse(str);
   if (auto err = parseResult.error()) {
-    throw std::runtime_error(fmt::format("failed to parse message, simdjson error: {}", simdjson::error_message(err)));
+    throw std::runtime_error(
+      fmt::format("failed to parse message, simdjson error: {}",
+                  simdjson::error_message(err)));
   }
   auto parsedJson = parseResult.value_unsafe();
 
@@ -70,7 +73,9 @@ std::optional<DeserializeResult> Deserialize(
     return std::nullopt;
   }
   if (auto err = msgTypeResult.error()) {
-    throw std::runtime_error(fmt::format("failed to get message type, simdjson error: {}", simdjson::error_message(err)));
+    throw std::runtime_error(
+      fmt::format("failed to get message type, simdjson error: {}",
+                  simdjson::error_message(err)));
   }
   auto msgType = msgTypeResult.value_unsafe();
 
@@ -132,7 +137,9 @@ void MessageSerializer::Serialize(const char* jsonContent,
   // TODO(#2257): logging and write raw instead of throwing exception
   auto tResult = parsedJson.get_object().at_key("t").get_uint64();
   if (auto err = tResult.error()) {
-    throw std::runtime_error(fmt::format("failed to read 't' of a message, simdjson error: {}", simdjson::error_message(err)));
+    throw std::runtime_error(
+      fmt::format("failed to read 't' of a message, simdjson error: {}",
+                  simdjson::error_message(err)));
   }
 
   auto index = static_cast<size_t>(tResult.value_unsafe());

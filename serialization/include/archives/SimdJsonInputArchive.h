@@ -172,7 +172,8 @@ public:
     try {
       SimdJsonNumericAdapterType<T> tmp;
       Serialize(tmp);
-      if (std::is_integral_v<T> && !(std::numeric_limits<T>::min() <= tmp &&
+      if (std::is_integral_v<T> &&
+          !(std::numeric_limits<T>::min() <= tmp &&
             tmp <= std::numeric_limits<T>::max())) {
         throw std::runtime_error(
           fmt::format("value {} doesn't fit into the requested type {}", tmp,
