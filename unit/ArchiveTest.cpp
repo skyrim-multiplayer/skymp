@@ -17,8 +17,7 @@
 #include "archives/SimdJsonInputArchive.h"
 
 namespace {
-// XXX: remove long double?
-using JsonTestParam = std::variant<bool, int8_t, uint8_t, int16_t, uint16_t, int32_t, uint32_t, int64_t, uint64_t, float, double, long double, std::string>;
+using JsonTestParam = std::variant<bool, int8_t, uint8_t, int16_t, uint16_t, int32_t, uint32_t, int64_t, uint64_t, float, double, std::string>;
 using Catch::Matchers::ContainsSubstring;
 
 template <class T>
@@ -75,7 +74,7 @@ TEST_CASE("SimdJsonArchive simple",
     static_cast<uint64_t>(42),
     static_cast<uint64_t>(42),
     13.37,
-    13.37f,  // TODO: check with eps if needed
+    13.37f,  // TODO(#2250): check with eps if needed
     ""
     // etc
   );
@@ -144,6 +143,7 @@ std::optional<JsonTestParam> ParseInt(const TypeMarkerVariant& type, const std::
       return num;
     } else {
       if (s.length() && s[0] == '-') {
+        // because std::stoull("-1") is 18446744073709551615
         return std::nullopt;
       }
       auto num = std::stoull(s);
@@ -285,5 +285,4 @@ TEST_CASE("SimdJsonArchive custom",
   REQUIRE(obj.baz == obj2.baz);
 }
 
-// set?
-// list?
+// TODO(#2250): test structures such as set or list?
