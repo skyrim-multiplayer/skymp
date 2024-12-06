@@ -5,8 +5,8 @@
 #include <exception>
 #include <fmt/format.h>
 #include <limits>
-#include <simdjson.h>
 #include <optional>
+#include <simdjson.h>
 #include <stdexcept>
 #include <string_view>
 #include <type_traits>
@@ -16,27 +16,32 @@
 namespace {
 
 // XXX: rename to mapper or something
-struct SimdJsonNumericAdapterHelper {
-  template<std::signed_integral T>
+struct SimdJsonNumericAdapterHelper
+{
+  template <std::signed_integral T>
   std::decay<int64_t> Check(T);
 
-  template<std::unsigned_integral T>
+  template <std::unsigned_integral T>
   std::decay<uint64_t> Check(T);
 
-  template<std::floating_point T>
+  template <std::floating_point T>
   std::decay<double> Check(T);
 
   std::decay<bool> Check(bool);
 };
 
-template<class T>
-using SimdJsonNumericAdapterType = typename decltype(std::declval<SimdJsonNumericAdapterHelper>().Check(std::declval<T>()))::type;
+template <class T>
+using SimdJsonNumericAdapterType =
+  typename decltype(std::declval<SimdJsonNumericAdapterHelper>().Check(
+    std::declval<T>()))::type;
 
-template<class T>
-concept ArithmeticNonSimdjsonPrimitive = Arithmetic<T> && !std::is_same_v<T, SimdJsonNumericAdapterType<T>>;
+template <class T>
+concept ArithmeticNonSimdjsonPrimitive =
+  Arithmetic<T> && !std::is_same_v<T, SimdJsonNumericAdapterType<T>>;
 
-template<class T>
-concept ArithmeticSimdjsonPrimitive = Arithmetic<T> && std::is_same_v<T, SimdJsonNumericAdapterType<T>>;
+template <class T>
+concept ArithmeticSimdjsonPrimitive =
+  Arithmetic<T> && std::is_same_v<T, SimdJsonNumericAdapterType<T>>;
 
 }
 
@@ -67,7 +72,9 @@ public:
   {
     const auto& strResult = input.get_string();
     if (const auto err = strResult.error()) {
-      throw std::runtime_error(fmt::format("simdjson (type in:{} out:string): {}", static_cast<char>(input.type()), simdjson::error_message(err)));
+      throw std::runtime_error(fmt::format(
+        "simdjson (type in:{} out:string): {}",
+        static_cast<char>(input.type()), simdjson::error_message(err)));
     }
     output = std::string(strResult.value_unsafe());
     return *this;
@@ -78,7 +85,10 @@ public:
   {
     const auto& arrayResult = input.get_array();
     if (const auto err = arrayResult.error()) {
-      throw std::runtime_error(fmt::format("simdjson (type in:{} out:array<{}>): {}", static_cast<char>(input.type()), typeid(T).name(), simdjson::error_message(err)));
+      throw std::runtime_error(
+        fmt::format("simdjson (type in:{} out:array<{}>): {}",
+                    static_cast<char>(input.type()), typeid(T).name(),
+                    simdjson::error_message(err)));
     }
     const auto& input = arrayResult.value_unsafe();
 
@@ -88,14 +98,16 @@ public:
         //           v
         // I: ............)
         // O: .......)
-        throw std::runtime_error(fmt::format("index {} out of bounds for output (input is bigger)", idx));
+        throw std::runtime_error(fmt::format(
+          "index {} out of bounds for output (input is bigger)", idx));
       }
 
       try {
         SimdJsonInputArchive itemArchive(inputItem);
         itemArchive.Serialize(output[idx]);
       } catch (const std::exception& e) {
-        throw std::runtime_error(fmt::format("couldn't get array index {}: {}", idx, e.what()));
+        throw std::runtime_error(
+          fmt::format("couldn't get array index {}: {}", idx, e.what()));
       }
 
       ++idx;
@@ -104,7 +116,8 @@ public:
       //         v
       // I: .....)
       // O: ............)
-      throw std::runtime_error(fmt::format("index {} out of bounds for input ({} elements expected)", idx, N));
+      throw std::runtime_error(fmt::format(
+        "index {} out of bounds for input ({} elements expected)", idx, N));
     }
 
     return *this;
@@ -117,7 +130,9 @@ public:
 
     const auto& arrayResult = input.get_array();
     if (const auto err = arrayResult.error()) {
-      throw std::runtime_error(fmt::format("simdjson (type in:{} out:{}): {}", static_cast<char>(input.type()), typeid(T).name(), simdjson::error_message(err)));
+      throw std::runtime_error(fmt::format(
+        "simdjson (type in:{} out:{}): {}", static_cast<char>(input.type()),
+        typeid(T).name(), simdjson::error_message(err)));
     }
     const auto& input = arrayResult.value_unsafe();
 
@@ -129,7 +144,8 @@ public:
         itemArchive.Serialize(outputItem);
         output.emplace_back(std::move(outputItem));
       } catch (const std::exception& e) {
-        throw std::runtime_error(fmt::format("couldn't get array index {}: {}", idx, e.what()));
+        throw std::runtime_error(
+          fmt::format("couldn't get array index {}: {}", idx, e.what()));
       }
 
       ++idx;
@@ -143,7 +159,9 @@ public:
   {
     const auto err = input.get(output);
     if (err) {
-      throw std::runtime_error(fmt::format("simdjson (type in:{} out:{}): {}", static_cast<char>(input.type()), typeid(T).name(), simdjson::error_message(err)));
+      throw std::runtime_error(fmt::format(
+        "simdjson (type in:{} out:{}): {}", static_cast<char>(input.type()),
+        typeid(T).name(), simdjson::error_message(err)));
     }
     return *this;
   }
@@ -154,25 +172,34 @@ public:
     try {
       SimdJsonNumericAdapterType<T> tmp;
       Serialize(tmp);
-      if (!(std::numeric_limits<T>::min() <= tmp && tmp <= std::numeric_limits<T>::max())) {
-        throw std::runtime_error(fmt::format("value {} doesn't fit into the requested type {}", tmp, typeid(T).name()));
+      if (!(std::numeric_limits<T>::min() <= tmp &&
+            tmp <= std::numeric_limits<T>::max())) {
+        throw std::runtime_error(
+          fmt::format("value {} doesn't fit into the requested type {}", tmp,
+                      typeid(T).name()));
       }
       output = std::move(tmp);
     } catch (const std::exception& e) {
-      throw std::runtime_error(fmt::format("failed to call Serialize (type in:{} out:adapter {} -> {}): {}", static_cast<char>(input.type()), typeid(T).name(), typeid(SimdJsonNumericAdapterType<T>).name(), e.what()));
+      throw std::runtime_error(fmt::format(
+        "failed to call Serialize (type in:{} out:adapter {} -> {}): {}",
+        static_cast<char>(input.type()), typeid(T).name(),
+        typeid(SimdJsonNumericAdapterType<T>).name(), e.what()));
     }
     return *this;
   }
 
   // This function is called when for non-trivial types.
-  // It's expected that a special function will handle this, implemented by the said type
+  // It's expected that a special function will handle this, implemented by the
+  // said type
   template <NoneOfTheAbove T>
   SimdJsonInputArchive& Serialize(T& output)
   {
     try {
       output.Serialize(*this);
     } catch (const std::exception& e) {
-      throw std::runtime_error(fmt::format("failed to call custom Serialize for type {}: {}", typeid(T).name(), e.what()));
+      throw std::runtime_error(
+        fmt::format("failed to call custom Serialize for type {}: {}",
+                    typeid(T).name(), e.what()));
     }
     return *this;
   }
@@ -187,7 +214,9 @@ public:
       return *this;
     }
     if (err) {
-      throw std::runtime_error(fmt::format("simdjson failed to get key '{}': {}", key, simdjson::error_message(err)));
+      throw std::runtime_error(
+        fmt::format("simdjson failed to get key '{}': {}", key,
+                    simdjson::error_message(err)));
     }
 
     try {
@@ -196,7 +225,8 @@ public:
       itemArchive.Serialize(outputItem);
       output.emplace(outputItem);
     } catch (const std::exception& e) {
-      throw std::runtime_error(fmt::format("failed to get key '{}': {}", key, e.what()));
+      throw std::runtime_error(
+        fmt::format("failed to get key '{}': {}", key, e.what()));
     }
 
     return *this;
@@ -207,13 +237,16 @@ public:
   {
     const auto& result = input.at_key(key);
     if (const auto err = result.error()) {
-      throw std::runtime_error(fmt::format("simdjson failed to get key '{}': {}", key, simdjson::error_message(err)));
+      throw std::runtime_error(
+        fmt::format("simdjson failed to get key '{}': {}", key,
+                    simdjson::error_message(err)));
     }
     try {
       SimdJsonInputArchive itemArchive(result.value_unsafe());
       itemArchive.Serialize(output);
     } catch (const std::exception& e) {
-      throw std::runtime_error(fmt::format("failed to get key '{}': {}", key, e.what()));
+      throw std::runtime_error(
+        fmt::format("failed to get key '{}': {}", key, e.what()));
     }
     return *this;
   }

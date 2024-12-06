@@ -1,6 +1,6 @@
 #include "Equipment.h"
-#include "archives/SimdJsonInputArchive.h"
 #include "archives/JsonOutputArchive.h"
+#include "archives/SimdJsonInputArchive.h"
 
 bool Equipment::IsSpellEquipped(const uint32_t spellFormId) const
 {
