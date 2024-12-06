@@ -1,7 +1,6 @@
 #pragma once
 
 #include <nlohmann/json_fwd.hpp>
-// #include <simdjson.h>
 #include <slikenet/types.h>
 
 #include "archives/BitStreamInputArchive.h"

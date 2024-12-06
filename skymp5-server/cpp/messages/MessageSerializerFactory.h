@@ -6,10 +6,12 @@
 #include <memory>
 #include <nlohmann/json_fwd.hpp>
 #include <optional>
-#include <simdjson.h>
 #include <slikenet/types.h>
-#include <utility>
 #include <vector>
+
+namespace simdjson::dom {
+class element;
+}
 
 class MessageSerializer;
 
