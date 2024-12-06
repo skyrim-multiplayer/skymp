@@ -1714,10 +1714,10 @@ void MpObjectReference::InitScripts()
     // 1. GetStage in OnTrigger
     // 2. Unable to determine Actor for 'Game.GetPlayer' in 'OnLoad'
     const bool isRemoveNeeded =
-      !Utils::stricmp(name, "DA06PreRitualSceneTriggerScript") ||
-      !Utils::stricmp(name, "CritterSpawn");
+      !Utils::stricmp(val.data(), "DA06PreRitualSceneTriggerScript") ||
+      !Utils::stricmp(val.data(), "CritterSpawn");
 
-    spdlog::info("Skipping script {}", name);
+    spdlog::info("Skipping script {}", val);
 
     return isRemoveNeeded;
   };
