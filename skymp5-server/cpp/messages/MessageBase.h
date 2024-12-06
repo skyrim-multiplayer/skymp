@@ -5,7 +5,6 @@
 
 #include "archives/BitStreamInputArchive.h"
 #include "archives/BitStreamOutputArchive.h"
-#include "archives/JsonInputArchive.h"
 #include "archives/JsonOutputArchive.h"
 #include "archives/SimdJsonInputArchive.h"
 
@@ -22,8 +21,6 @@ public:
   virtual void ReadBinary(SLNet::BitStream& stream) = 0;
 
   virtual void WriteJson(nlohmann::json& json) const = 0;
-  [[deprecated("use simdjson instead")]]
-  virtual void ReadJson(const nlohmann::json& json) = 0;
   virtual void ReadJson(const simdjson::dom::element& json) = 0;
 };
 
@@ -48,13 +45,6 @@ public:
     JsonOutputArchive archive;
     AsMessage().Serialize(archive);
     json = std::move(archive.j);
-  }
-
-  [[deprecated("use simdjson instead")]]
-  void ReadJson(const nlohmann::json& json) override
-  {
-    JsonInputArchive archive(json);
-    AsMessage().Serialize(archive);
   }
 
   void ReadJson(const simdjson::dom::element& json) override
