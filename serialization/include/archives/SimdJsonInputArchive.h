@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <exception>
 #include <fmt/format.h>
+#include <limits>
 #include <simdjson.h>
 #include <optional>
 #include <stdexcept>
@@ -153,6 +154,9 @@ public:
     try {
       SimdJsonNumericAdapterType<T> tmp;
       Serialize(tmp);
+      if (!(std::numeric_limits<T>::min() <= tmp && tmp <= std::numeric_limits<T>::max())) {
+        throw std::runtime_error(fmt::format("value {} doesn't fit into the requested type {}", tmp, typeid(T).name()));
+      }
       output = std::move(tmp);
     } catch (const std::exception& e) {
       throw std::runtime_error(fmt::format("failed to call Serialize (type in:{} out:adapter {} -> {}): {}", static_cast<char>(input.type()), typeid(T).name(), typeid(SimdJsonNumericAdapterType<T>).name(), e.what()));
