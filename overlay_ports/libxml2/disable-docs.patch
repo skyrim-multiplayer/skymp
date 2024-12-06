@@ -18,3 +18,4 @@ index f922d5ab..70466bc7 100644
  
  configure_package_config_file(
  	libxml2-config.cmake.cmake.in libxml2-config.cmake
+ 

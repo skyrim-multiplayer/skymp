@@ -88,3 +88,4 @@ index 88e3963b..0d1706c9 100644
 +Libs: -L${libdir} -l@XML_LIB_NAME@
 +Libs.private: @THREAD_LIBS@ @ICONV_LIBS@ @LIBM@ @WINSOCK_LIBS@ @LIBS@
  Cflags: @XML_INCLUDEDIR@ @XML_CFLAGS@
+ 
