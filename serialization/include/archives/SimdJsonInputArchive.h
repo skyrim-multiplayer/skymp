@@ -35,8 +35,8 @@ using SimdJsonSupportedType =
     std::declval<T>()))::type;
 
 template <class T>
-concept ArithmeticSimdjsonUnsupported =
-  Arithmetic<T> && !std::is_same_v<T, SimdJsonSupportedType<T>>;
+concept ArithmeticSimdjsonUnsupported = Arithmetic<T> && !
+std::is_same_v<T, SimdJsonSupportedType<T>>;
 
 template <class T>
 concept ArithmeticSimdjsonSupported =
