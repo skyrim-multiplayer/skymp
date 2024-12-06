@@ -147,7 +147,7 @@ struct StringMaker<std::optional<JsonTestParam>>
 };
 } // namespace Catch
 
-TEST_CASE("SimdJsonArchive simple", "[Archives]")
+TEST_CASE("SimdJsonArchive simple", "[Archives] [Serialization]")
 {
   JsonTestParam param = GENERATE(
     // one param is enough, type will be deduced for the others
@@ -195,7 +195,7 @@ TEST_CASE("SimdJsonArchive simple", "[Archives]")
   REQUIRE(param == outVar);
 }
 
-TEST_CASE("SimdJsonArchive overflow test util", "[Archives]")
+TEST_CASE("SimdJsonArchive overflow test util", "[Archives] [Serialization]")
 {
   // tests the simple check against stdd::numeric_limits
   REQUIRE(std::get<uint64_t>(ParseInt(TypeMarker<uint8_t>(), "255").value()) ==
@@ -211,7 +211,7 @@ TEST_CASE("SimdJsonArchive overflow test util", "[Archives]")
                    std::to_string(static_cast<uint64_t>(-1))) == std::nullopt);
 }
 
-TEST_CASE("SimdJsonArchive overflow", "[Archives]")
+TEST_CASE("SimdJsonArchive overflow", "[Archives] [Serialization]")
 {
   auto typeMarker = GENERATE(TypeMarkerVariant(TypeMarker<uint8_t>()),
                              TypeMarkerVariant(TypeMarker<int8_t>()),
@@ -267,7 +267,7 @@ TEST_CASE("SimdJsonArchive overflow", "[Archives]")
   }
 }
 
-TEST_CASE("SimdJsonArchive array", "[Archives]")
+TEST_CASE("SimdJsonArchive array", "[Archives] [Serialization]")
 {
   REQUIRE(ParseWithSimdInputArchive<std::array<int, 3>>("[1, 2, 3]") ==
           std::array<int, 3>{ 1, 2, 3 });
@@ -288,7 +288,7 @@ TEST_CASE("SimdJsonArchive array", "[Archives]")
                       "index 0 out of bounds for input (3 elements expected)");
 }
 
-TEST_CASE("SimdJsonArchive vector", "[Archives]")
+TEST_CASE("SimdJsonArchive vector", "[Archives] [Serialization]")
 {
   REQUIRE(ParseWithSimdInputArchive<std::vector<int>>("[1, 2, 3]") ==
           std::vector<int>{ 1, 2, 3 });
@@ -316,7 +316,7 @@ struct CustomTestObject
 };
 } // namespace
 
-TEST_CASE("SimdJsonArchive custom", "[Archives]")
+TEST_CASE("SimdJsonArchive custom", "[Archives] [Serialization]")
 {
   CustomTestObject obj;
   obj.foo = 123;
