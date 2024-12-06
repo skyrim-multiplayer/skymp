@@ -16,7 +16,8 @@ VarValue PapyrusQuest::GetCurrentStageID(
     espm::CompressedFieldsCache cache;
 
     const auto& quest = GetRecordPtr(self);
-    const char* editorId = quest->GetEditorId(cache);
+    const char* editorId =
+      quest.rec ? quest.rec->GetEditorId(cache) : "<null>";
 
     spdlog::warn(
       "GetCurrentStageID - Not implemented, returning 0 (quest was {})",
