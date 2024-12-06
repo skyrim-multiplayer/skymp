@@ -29,6 +29,71 @@ T ParseWithSimdInputArchive(const std::string& json) {
   ar.Serialize(result);
   return result;
 }
+
+template <class T>
+struct TypeMarker {
+  T Get() const;
+
+  using type = T;
+};
+
+template <class T>
+std::ostream& operator<<(std::ostream& os, const TypeMarker<T>&) {
+  return os << typeid(T).name();
+}
+
+using TypeMarkerVariant = std::variant<TypeMarker<uint8_t>, TypeMarker<int8_t>, TypeMarker<uint16_t>, TypeMarker<int16_t>, TypeMarker<uint32_t>, TypeMarker<int32_t>, TypeMarker<uint64_t>, TypeMarker<int64_t>>;
+
+std::ostream& operator<<(std::ostream& os, const TypeMarkerVariant& marker) {
+  return std::visit([&os](const auto& markerVal) -> std::ostream& {
+    return os << markerVal;
+  }, marker);
+}
+
+bool IsSigned(const TypeMarkerVariant& marker) {
+  return std::visit([](const auto& markerVal) {
+    return std::is_signed_v<decltype(markerVal.Get())>;
+  }, marker);
+}
+
+template <class T>
+bool InBounds(const TypeMarkerVariant& type, T num) {
+  return std::visit([num](const auto& markerVal) {
+    using Limits = std::numeric_limits<decltype(markerVal.Get())>;
+    return Limits::min() <= num && num <= Limits::max();
+  }, type);
+}
+
+std::optional<JsonTestParam> ParseInt(const TypeMarkerVariant& type, const std::string& s) {
+  JsonTestParam result;
+  try {
+    if (IsSigned(type)) {
+      auto num = std::stoll(s);
+      if (!InBounds(type, num)) {
+        return std::nullopt;
+      }
+      return num;
+    } else {
+      if (s.length() && s[0] == '-') {
+        // because std::stoull("-1") is 18446744073709551615
+        return std::nullopt;
+      }
+      auto num = std::stoull(s);
+      if (!InBounds(type, num)) {
+        return std::nullopt;
+      }
+      return num;
+    }
+  } catch (const std::out_of_range&) {
+    return std::nullopt;
+  }
+}
+
+JsonTestParam ParseWithSimdInputArchiveMarker(const TypeMarkerVariant& type, const std::string& json) {
+  return std::visit([&json](const auto& typeVal) -> JsonTestParam {
+    return ParseWithSimdInputArchive<typename std::decay_t<decltype(typeVal)>::type>(json);
+  }, type);
+}
 } // namespace
 
 namespace Catch {
@@ -95,74 +160,6 @@ TEST_CASE("SimdJsonArchive simple",
   }, param);
   REQUIRE(param.index() == outVar.index());
   REQUIRE(param == outVar);
-}
-
-namespace {
-template <class T>
-struct TypeMarker {
-  T Get() const;
-
-  using type = T;
-};
-
-template <class T>
-std::ostream& operator<<(std::ostream& os, const TypeMarker<T>&) {
-  return os << typeid(T).name();
-}
-
-using TypeMarkerVariant = std::variant<TypeMarker<uint8_t>, TypeMarker<int8_t>, TypeMarker<uint16_t>, TypeMarker<int16_t>, TypeMarker<uint32_t>, TypeMarker<int32_t>, TypeMarker<uint64_t>, TypeMarker<int64_t>>;
-
-std::ostream& operator<<(std::ostream& os, const TypeMarkerVariant& marker) {
-  return std::visit([&os](const auto& markerVal) -> std::ostream& {
-    return os << markerVal;
-  }, marker);
-}
-
-bool IsSigned(const TypeMarkerVariant& marker) {
-  return std::visit([](const auto& markerVal) {
-    return std::is_signed_v<decltype(markerVal.Get())>;
-  }, marker);
-}
-
-template <class T>
-bool InBounds(const TypeMarkerVariant& type, T num) {
-  return std::visit([num](const auto& markerVal) {
-    using Limits = std::numeric_limits<decltype(markerVal.Get())>;
-    return Limits::min() <= num && num <= Limits::max();
-  }, type);
-}
-
-std::optional<JsonTestParam> ParseInt(const TypeMarkerVariant& type, const std::string& s) {
-  JsonTestParam result;
-  try {
-    if (IsSigned(type)) {
-      auto num = std::stoll(s);
-      if (!InBounds(type, num)) {
-        return std::nullopt;
-      }
-      return num;
-    } else {
-      if (s.length() && s[0] == '-') {
-        // because std::stoull("-1") is 18446744073709551615
-        return std::nullopt;
-      }
-      auto num = std::stoull(s);
-      if (!InBounds(type, num)) {
-        return std::nullopt;
-      }
-      return num;
-    }
-  } catch (const std::out_of_range&) {
-    return std::nullopt;
-  }
-}
-
-JsonTestParam ParseWithSimdInputArchiveMarker(const TypeMarkerVariant& type, const std::string& json) {
-  return std::visit([&json](const auto& typeVal) -> JsonTestParam {
-    return ParseWithSimdInputArchive<typename std::decay_t<decltype(typeVal)>::type>(json);
-  }, type);
-}
-
 }
 
 TEST_CASE("SimdJsonArchive overflow test util",
@@ -262,7 +259,7 @@ struct CustomTestObject {
     ar.Serialize("foo", foo).Serialize("bar", bar).Serialize("baz", baz);
   }
 };
-}
+} // namespace
 
 TEST_CASE("SimdJsonArchive custom",
           "[Archives]")
