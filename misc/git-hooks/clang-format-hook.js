@@ -50,7 +50,8 @@ const formatFiles = (files) => {
 
       const filesToFormat = changedFiles
         .split("\n")
-        .filter((file) => file.trim() !== "");
+        .filter((file) => file.trim() !== "")
+        .filter((file) => fs.existsSync(file)); // Do not try validate deleted files
       formatFiles(filesToFormat);
 
       filesToFormat.forEach((file) => execSync(`git add ${file}`));
