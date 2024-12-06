@@ -155,22 +155,19 @@ TEST_CASE("SimdJsonArchive simple", "[Archives] [Serialization]")
     false,                        //
     true,                         //
     '7',                          //
-    static_cast<int8_t>(42),      //
 
-    static_cast<uint8_t>(42), //
-    static_cast<int16_t>(42), //
-
+    static_cast<int8_t>(42),   //
+    static_cast<uint8_t>(42),  //
+    static_cast<int16_t>(42),  //
     static_cast<uint16_t>(42), //
     static_cast<int32_t>(42),  //
-
     static_cast<uint32_t>(42), //
-    static_cast<uint32_t>(42), //
+    static_cast<int64_t>(42),  //
+    static_cast<uint64_t>(42), //
 
-    static_cast<uint64_t>(42), //
-    static_cast<uint64_t>(42), //
-    13.37,                     //
-    13.37f,                    // TODO(#2250): check with eps if needed
-    -100.f                     //
+    13.37,  //
+    13.37f, // TODO(#2250): check with eps if needed
+    -100.f  //
   );
   CAPTURE(param);
 
