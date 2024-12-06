@@ -13,6 +13,7 @@
 #include "PapyrusNetImmerse.h"
 #include "PapyrusObjectReference.h"
 #include "PapyrusPotion.h"
+#include "PapyrusQuest.h"
 #include "PapyrusSkymp.h"
 #include "PapyrusSound.h"
 #include "PapyrusUtility.h"
