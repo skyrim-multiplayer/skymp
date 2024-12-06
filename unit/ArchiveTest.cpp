@@ -151,14 +151,26 @@ TEST_CASE("SimdJsonArchive simple", "[Archives]")
 {
   JsonTestParam param = GENERATE(
     // one param is enough, type will be deduced for the others
-    JsonTestParam("test_string"), false, true, '7', static_cast<int8_t>(42),
-    static_cast<uint8_t>(42), static_cast<int16_t>(42),
-    static_cast<uint16_t>(42), static_cast<int32_t>(42),
-    static_cast<uint32_t>(42), static_cast<uint32_t>(42),
-    static_cast<uint64_t>(42), static_cast<uint64_t>(42), 13.37,
-    13.37f, // TODO(#2250): check with eps if needed
-    ""
-    // etc
+    JsonTestParam("test_string"), //
+    false,                        //
+    true,                         //
+    '7',                          //
+    static_cast<int8_t>(42),      //
+
+    static_cast<uint8_t>(42), //
+    static_cast<int16_t>(42), //
+
+    static_cast<uint16_t>(42), //
+    static_cast<int32_t>(42),  //
+
+    static_cast<uint32_t>(42), //
+    static_cast<uint32_t>(42), //
+
+    static_cast<uint64_t>(42), //
+    static_cast<uint64_t>(42), //
+    13.37,                     //
+
+    13.37f // TODO(#2250): check with eps if needed
   );
   CAPTURE(param);
 
@@ -244,6 +256,7 @@ TEST_CASE("SimdJsonArchive overflow", "[Archives]")
     REQUIRE(parsedToStr == numStr);
     // FAIL();
   } else {
+    // parse failed, likely because of limits
     try {
       auto parsed = ParseWithSimdInputArchiveMarker(typeMarker, numStr);
       CAPTURE(parsed);
@@ -258,15 +271,19 @@ TEST_CASE("SimdJsonArchive array", "[Archives]")
 {
   REQUIRE(ParseWithSimdInputArchive<std::array<int, 3>>("[1, 2, 3]") ==
           std::array<int, 3>{ 1, 2, 3 });
+
   REQUIRE_THROWS_WITH(
     (ParseWithSimdInputArchive<std::array<int, 2>>("[1, 2, 3]")),
     "index 2 out of bounds for output (input is bigger)");
+
   REQUIRE_THROWS_WITH(
     (ParseWithSimdInputArchive<std::array<int, 4>>("[1, 2, 3]")),
     "index 3 out of bounds for input (4 elements expected)");
+
   REQUIRE_THROWS_WITH(
     (ParseWithSimdInputArchive<std::array<std::string, 3>>("[1, 2, 3]")),
     ContainsSubstring("index 0:") && ContainsSubstring("INCORRECT_TYPE"));
+
   REQUIRE_THROWS_WITH((ParseWithSimdInputArchive<std::array<int, 3>>("[]")),
                       "index 0 out of bounds for input (3 elements expected)");
 }
@@ -275,8 +292,10 @@ TEST_CASE("SimdJsonArchive vector", "[Archives]")
 {
   REQUIRE(ParseWithSimdInputArchive<std::vector<int>>("[1, 2, 3]") ==
           std::vector<int>{ 1, 2, 3 });
+
   REQUIRE(ParseWithSimdInputArchive<std::vector<int>>("[]") ==
           std::vector<int>{});
+
   REQUIRE_THROWS_WITH(
     ParseWithSimdInputArchive<std::vector<std::string>>("[123]"),
     ContainsSubstring("index 0:") && ContainsSubstring("INCORRECT_TYPE"));
@@ -287,7 +306,7 @@ struct CustomTestObject
 {
   int foo{};
   std::optional<std::string> bar{};
-  std::optional<float> baz{};
+  std::optional<double> baz{};
 
   template <class Archive>
   void Serialize(Archive& ar)
@@ -305,12 +324,10 @@ TEST_CASE("SimdJsonArchive custom", "[Archives]")
   obj.baz = 1.5;
 
   nlohmann::json nlj;
-  {
-    JsonOutputArchive ar;
-    obj.Serialize(ar);
-    nlj = std::move(
-      ar.j); // TODO(#2250): should be a method instead. TakeValue/TakeOutput?
-  }
+  JsonOutputArchive ar;
+  obj.Serialize(ar);
+  // TODO(#2250): j should be a method instead. TakeValue/TakeOutput?
+  nlj = std::move(ar.j);
 
   auto obj2 =
     ParseWithSimdInputArchive<CustomTestObject>(nlohmann::to_string(nlj));
