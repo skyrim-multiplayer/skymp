@@ -15,33 +15,32 @@
 
 namespace {
 
-// XXX: rename to mapper or something
-struct SimdJsonNumericAdapterHelper
+struct SimdJsonSupportedTypeAdapter
 {
   template <std::signed_integral T>
-  std::decay<int64_t> Check(T);
+  std::decay<int64_t> MapType(T);
 
   template <std::unsigned_integral T>
-  std::decay<uint64_t> Check(T);
+  std::decay<uint64_t> MapType(T);
 
   template <std::floating_point T>
-  std::decay<double> Check(T);
+  std::decay<double> MapType(T);
 
-  std::decay<bool> Check(bool);
+  std::decay<bool> MapType(bool);
 };
 
 template <class T>
-using SimdJsonNumericAdapterType =
-  typename decltype(std::declval<SimdJsonNumericAdapterHelper>().Check(
+using SimdJsonSupportedType =
+  typename decltype(std::declval<SimdJsonSupportedTypeAdapter>().MapType(
     std::declval<T>()))::type;
 
 template <class T>
-concept ArithmeticNonSimdjsonPrimitive =
-  Arithmetic<T> && !std::is_same_v<T, SimdJsonNumericAdapterType<T>>;
+concept ArithmeticSimdjsonUnsupported =
+  Arithmetic<T> && !std::is_same_v<T, SimdJsonSupportedType<T>>;
 
 template <class T>
-concept ArithmeticSimdjsonPrimitive =
-  Arithmetic<T> && std::is_same_v<T, SimdJsonNumericAdapterType<T>>;
+concept ArithmeticSimdjsonSupported =
+  Arithmetic<T> && std::is_same_v<T, SimdJsonSupportedType<T>>;
 
 }
 
@@ -154,7 +153,7 @@ public:
     return *this;
   }
 
-  template <ArithmeticSimdjsonPrimitive T>
+  template <ArithmeticSimdjsonSupported T>
   SimdJsonInputArchive& Serialize(T& output)
   {
     const auto err = input.get(output);
@@ -166,11 +165,11 @@ public:
     return *this;
   }
 
-  template <ArithmeticNonSimdjsonPrimitive T>
+  template <ArithmeticSimdjsonUnsupported T>
   SimdJsonInputArchive& Serialize(T& output)
   {
     try {
-      SimdJsonNumericAdapterType<T> tmp;
+      SimdJsonSupportedType<T> tmp;
       Serialize(tmp);
       if (std::is_integral_v<T> &&
           !(std::numeric_limits<T>::min() <= tmp &&
@@ -184,7 +183,7 @@ public:
       throw std::runtime_error(fmt::format(
         "failed to call Serialize (type in:{} out:adapter {} -> {}): {}",
         static_cast<char>(input.type()), typeid(T).name(),
-        typeid(SimdJsonNumericAdapterType<T>).name(), e.what()));
+        typeid(SimdJsonSupportedType<T>).name(), e.what()));
     }
     return *this;
   }
