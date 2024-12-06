@@ -1712,8 +1712,7 @@ void MpObjectReference::InitScripts()
   // TODO: make is a server setting with proper conditions or an API
   auto isScriptEraseNeeded = [](const std::string& val) {
     // 1. GetStage in OnTrigger
-    // 2. Unable to determine Actor for
-    // 'Game.GetPlayer' in 'OnLoad'
+    // 2. Unable to determine Actor for 'Game.GetPlayer' in 'OnLoad'
     const bool isRemoveNeeded =
       !Utils::stricmp(name, "DA06PreRitualSceneTriggerScript") ||
       !Utils::stricmp(name, "CritterSpawn");
