@@ -32,5 +32,5 @@ void PapyrusQuest::Register(
   VirtualMachine& vm, std::shared_ptr<IPapyrusCompatibilityPolicy> policy)
 {
   AddMethod(vm, "GetStage", &PapyrusQuest::GetStage);
-  AddMethod(vm, "GetCurrentStageID", &PapyrusPotion::GetCurrentStageID);
+  AddMethod(vm, "GetCurrentStageID", &PapyrusQuest::GetCurrentStageID);
 }
