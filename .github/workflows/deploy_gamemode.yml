@@ -37,6 +37,22 @@ jobs:
           token: ${{ secrets.SKYMP5_GAMEMODE_PAT }}
           fetch-depth: 0
 
+      - uses: actions/checkout@v4
+        with:
+          path: "skymp"
+          fetch-depth: 0
+          sparse-checkout: |
+            misc
+
+      - name: Post a link in Discord
+        env:
+          DEPLOY_STATUS_WEBHOOK: ${{secrets.DEPLOY_STATUS_WEBHOOK}}
+        run: |
+          link="${{github.server_url}}/${{github.repository}}/actions/runs/${{github.run_id}}"
+          ./skymp/misc/deploy/call_webhook.sh "Started gamemode deploy. " \
+            "You can follow the process at <$link>. " \
+            "Once build is finished, further progress will be reported here."
+
       - name: Gather PRs
         uses: Pospelove/auto-merge-action@main
         with:
@@ -79,3 +95,13 @@ jobs:
           DEPLOY_TARGET_USER: ${{secrets.DEPLOY_TARGET_USER_06_2024}}
           DEPLOY_SSH_PRIVATE_KEY: ${{secrets.DEPLOY_SSH_PRIVATE_KEY_06_2024}}
           DEPLOY_SSH_KNOWN_HOSTS: ${{secrets.DEPLOY_SSH_KNOWN_HOSTS_06_2024}}
+
+      - name: Notify failure
+        env:
+          DEPLOY_STATUS_WEBHOOK: ${{secrets.DEPLOY_STATUS_WEBHOOK}}
+        if: '!success()'
+        run: |
+          link="${{github.server_url}}/${{github.repository}}/actions/runs/${{github.run_id}}"
+          ./skymp/misc/deploy/call_webhook.sh \
+            "Gamemode build or deploy failed or was cancelled. " \
+            "Check out the logs at <$link> to find out why."

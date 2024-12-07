@@ -16,6 +16,7 @@ public:
 
 private:
   void OnFireSuccess(WorldState* worldState) override;
+  void OnFireBlocked(WorldState* worldState) override;
 
   // event arguments
   MpActor* actor = nullptr;

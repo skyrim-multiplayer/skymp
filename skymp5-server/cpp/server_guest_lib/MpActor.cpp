@@ -668,6 +668,8 @@ bool MpActor::IsSpellLearned(const uint32_t spellId) const
 
 bool MpActor::IsSpellLearnedFromBase(const uint32_t spellId) const
 {
+  // TODO: support npc templates here?
+
   const auto npcData = espm::GetData<espm::NPC_>(GetBaseId(), GetParent());
   const auto npc = GetParent()->GetEspm().GetBrowser().LookupById(GetBaseId());
 
@@ -691,6 +693,11 @@ bool MpActor::IsSpellLearnedFromBase(const uint32_t spellId) const
   }
 
   return false;
+}
+
+std::vector<uint32_t> MpActor::GetSpellList() const
+{
+  return ChangeForm().learnedSpells.GetLearnedSpells();
 }
 
 std::unique_ptr<const Appearance> MpActor::GetAppearance() const

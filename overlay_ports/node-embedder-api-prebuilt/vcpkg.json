@@ -1,6 +1,6 @@
 {
     "name": "node-embedder-api-prebuilt",
-    "version": "1",
+    "version": "2",
     "description": "NodeJS API for embedding NodeJS in your C++ applications",
     "homepage": "https://nodejs.org/api/embedding.html",
     "license": "MIT",

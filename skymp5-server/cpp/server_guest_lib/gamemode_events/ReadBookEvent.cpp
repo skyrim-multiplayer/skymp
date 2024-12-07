@@ -1,7 +1,9 @@
 #include "ReadBookEvent.h"
 
 #include "MpActor.h"
+#include "SpSnippetFunctionGen.h"
 #include "WorldState.h"
+#include "script_objects/EspmGameObject.h"
 #include <string>
 #include <unordered_set>
 #include <vector>
@@ -67,4 +69,28 @@ void ReadBookEvent::OnFireSuccess(WorldState* worldState)
       actor->GetFormId(), baseId);
     return;
   }
+}
+
+void ReadBookEvent::OnFireBlocked(WorldState* worldState)
+{
+  auto& loader = actor->GetParent()->GetEspm();
+  auto bookLookupResult = loader.GetBrowser().LookupById(baseId);
+
+  const auto bookData = espm::GetData<espm::BOOK>(baseId, actor->GetParent());
+  const auto spellOrSkillFormId =
+    bookLookupResult.ToGlobalId(bookData.spellOrSkillFormId);
+
+  if (!bookData.IsFlagSet(espm::BOOK::Flags::TeachesSpell)) {
+    return;
+  }
+
+  auto aSpell = VarValue(std::make_shared<EspmGameObject>(
+    loader.GetBrowser().LookupById(spellOrSkillFormId)));
+
+  std::vector<VarValue> arguments = { aSpell };
+
+  SpSnippet("Actor", "RemoveSpell",
+            SpSnippetFunctionGen::SerializeArguments(arguments).data(),
+            actor->GetFormId())
+    .Execute(actor, SpSnippetMode::kNoReturnResult);
 }
