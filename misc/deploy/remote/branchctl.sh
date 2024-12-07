@@ -21,7 +21,7 @@ docker run -d --restart=always --name="skymp-server-$branch" --network=host \
     -u "`id -u`:`id -g`" \
     --cpu-period=50000 --cpu-quota=25000 \
     --cap-add=SYS_PTRACE \
-    skymp/skymp-runtime-base:0718e14 ./run.sh
+    skymp/skymp-runtime-base:2c7d8a5 ./run.sh
 # ^ limited to 50% of CPU: https://stackoverflow.com/a/41552172
 
 # This looks a bit ugly, but apparently is more fault-tolerant than older version:
