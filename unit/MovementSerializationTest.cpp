@@ -1,6 +1,7 @@
 #include <catch2/catch_all.hpp>
 #include <fmt/format.h>
 #include <nlohmann/json.hpp>
+#include <simdjson.h>
 #include <slikenet/BitStream.h>
 
 #include "UpdateMovementMessage.h"
@@ -60,13 +61,16 @@ TEST_CASE("MovementMessage correctly encoded and decoded to JSON",
       nlohmann::json json;
       movData.WriteJson(json);
 
+      simdjson::dom::parser sjParser;
+      auto sjResult = sjParser.parse(nlohmann::to_string(json));
       UpdateMovementMessage movData2;
-      movData2.ReadJson(json);
+      movData2.ReadJson(sjResult.value());
 
       nlohmann::json json2;
       movData2.WriteJson(json2);
 
-      INFO(json.dump());
+      CAPTURE(json.dump());
+      CAPTURE(json2.dump());
       REQUIRE(json == json2);
       REQUIRE(json["t"].get<int>() ==
               static_cast<int>(UpdateMovementMessage::kMsgType.value));

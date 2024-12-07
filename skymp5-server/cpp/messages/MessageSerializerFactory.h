@@ -7,8 +7,11 @@
 #include <nlohmann/json_fwd.hpp>
 #include <optional>
 #include <slikenet/types.h>
-#include <utility>
 #include <vector>
+
+namespace simdjson::dom {
+class element;
+}
 
 class MessageSerializer;
 
@@ -44,7 +47,7 @@ public:
     const uint8_t* rawMessageJsonOrBinary, size_t length);
 
 private:
-  typedef void (*SerializeFn)(const nlohmann::json& inputJson,
+  typedef void (*SerializeFn)(const simdjson::dom::element& inputJson,
                               SLNet::BitStream& outputStream);
   typedef std::optional<DeserializeResult> (*DeserializeFn)(
     const uint8_t* rawMessageJsonOrBinary, size_t length);

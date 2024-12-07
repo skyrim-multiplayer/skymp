@@ -2,10 +2,13 @@
 #include "Messages.h"
 #include "MinPacketId.h"
 #include "MsgType.h"
+#include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <nlohmann/json.hpp>
+#include <simdjson.h>
 #include <slikenet/BitStream.h>
 #include <spdlog/spdlog.h>
+#include <stdexcept>
 
 namespace {
 void Serialize(const IMessageBase& message, SLNet::BitStream& outputStream)
@@ -15,11 +18,12 @@ void Serialize(const IMessageBase& message, SLNet::BitStream& outputStream)
 }
 
 template <class Message>
-void Serialize(const nlohmann::json& inputJson, SLNet::BitStream& outputStream)
+void Serialize(const simdjson::dom::element& inputJson,
+               SLNet::BitStream& outputStream)
 {
   Message message;
-  message.ReadJson(
-    inputJson); // may throw. we shouldn't pollute outputStream in this case
+  // may throw. we shouldn't pollute outputStream in this case
+  message.ReadJson(inputJson);
 
   Serialize(message, outputStream);
 }
@@ -53,15 +57,27 @@ std::optional<DeserializeResult> Deserialize(
 
   std::string str(reinterpret_cast<const char*>(rawMessageJsonOrBinary + 1),
                   length - 1);
-  nlohmann::json json = nlohmann::json::parse(str);
+  simdjson::dom::parser sjParser;
+  auto parseResult = sjParser.parse(str);
+  if (auto err = parseResult.error()) {
+    throw std::runtime_error(
+      fmt::format("failed to parse message, simdjson error: {}",
+                  simdjson::error_message(err)));
+  }
+  auto parsedJson = parseResult.value_unsafe();
 
-  auto msgTypeIt = json.find("t");
-  if (msgTypeIt == json.end()) {
+  auto msgTypeResult = parsedJson.at_key("t").get_uint64();
+  if (msgTypeResult.error() == simdjson::NO_SUCH_FIELD) {
     // Messages produced by the server use string "type" instead of integer "t"
     // We will refactor them out at some point
     return std::nullopt;
   }
-  int msgType = msgTypeIt->get<int>();
+  if (auto err = msgTypeResult.error()) {
+    throw std::runtime_error(
+      fmt::format("failed to get message type, simdjson error: {}",
+                  simdjson::error_message(err)));
+  }
+  auto msgType = msgTypeResult.value_unsafe();
 
   if (msgType != Message::kMsgType) {
     // In case of JSON we keep searching in deserializers array
@@ -69,7 +85,7 @@ std::optional<DeserializeResult> Deserialize(
   }
 
   Message message;
-  message.ReadJson(json);
+  message.ReadJson(parsedJson);
 
   DeserializeResult result;
   result.msgType = static_cast<MsgType>(msgType);
@@ -112,18 +128,23 @@ MessageSerializer::MessageSerializer(
 void MessageSerializer::Serialize(const char* jsonContent,
                                   SLNet::BitStream& outputStream)
 {
-  // TODO(perf): consider using simdjson for parsing OR even use JsValue
-  // directly
+  // TODO(#2257): perf: think if JsValue should be used directly
 
-  // TODO: logging and write raw instead of throwing exception
-  const auto parsedJson = nlohmann::json::parse(jsonContent);
+  simdjson::dom::parser sjParser;
+  // TODO(#2257): logging and write raw instead of throwing exception
+  auto parsedJson = sjParser.parse(jsonContent, strlen(jsonContent));
 
-  // TODO: logging and write raw instead of throwing exception
-  const auto msgType = static_cast<MsgType>(parsedJson.at("t").get<int>());
+  // TODO(#2257): logging and write raw instead of throwing exception
+  auto tResult = parsedJson.get_object().at_key("t").get_uint64();
+  if (auto err = tResult.error()) {
+    throw std::runtime_error(
+      fmt::format("failed to read 't' of a message, simdjson error: {}",
+                  simdjson::error_message(err)));
+  }
 
-  auto index = static_cast<size_t>(msgType);
+  auto index = static_cast<size_t>(tResult.value_unsafe());
   if (index >= serializerFns.size()) {
-    // TODO: logging
+    // TODO(#2257): logging
     outputStream.Write(static_cast<uint8_t>(Networking::MinPacketId));
     outputStream.Write(jsonContent, strlen(jsonContent));
     return;
@@ -131,13 +152,13 @@ void MessageSerializer::Serialize(const char* jsonContent,
 
   auto serializerFn = serializerFns[index];
   if (!serializerFn) {
-    // TODO: logging
+    // TODO(#2257): logging
     outputStream.Write(static_cast<uint8_t>(Networking::MinPacketId));
     outputStream.Write(jsonContent, strlen(jsonContent));
     return;
   }
 
-  serializerFn(parsedJson, outputStream);
+  serializerFn(parsedJson.value(), outputStream);
 }
 
 void MessageSerializer::Serialize(const IMessageBase& message,
@@ -160,6 +181,7 @@ std::optional<DeserializeResult> MessageSerializer::Deserialize(
                   length - 1);
     spdlog::trace(
       "MessageSerializer::Deserialize - Encountered JSON message {}", s);
+    // TODO(#2257): try to pass JSON in advance, avoid parsing each time
     for (auto fn : deserializerFns) {
       if (fn) {
         auto result = fn(rawMessageJsonOrBinary, length);

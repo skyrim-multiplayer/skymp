@@ -1,11 +1,16 @@
 #pragma once
+
 #include <nlohmann/json_fwd.hpp>
 #include <slikenet/types.h>
 
 #include "archives/BitStreamInputArchive.h"
 #include "archives/BitStreamOutputArchive.h"
-#include "archives/JsonInputArchive.h"
 #include "archives/JsonOutputArchive.h"
+#include "archives/SimdJsonInputArchive.h"
+
+namespace simdjson::dom {
+class element;
+}
 
 class IMessageBase
 {
@@ -16,7 +21,7 @@ public:
   virtual void ReadBinary(SLNet::BitStream& stream) = 0;
 
   virtual void WriteJson(nlohmann::json& json) const = 0;
-  virtual void ReadJson(const nlohmann::json& json) = 0;
+  virtual void ReadJson(const simdjson::dom::element& json) = 0;
 };
 
 template <class Message>
@@ -42,9 +47,9 @@ public:
     json = std::move(archive.j);
   }
 
-  void ReadJson(const nlohmann::json& json) override
+  void ReadJson(const simdjson::dom::element& json) override
   {
-    JsonInputArchive archive(json);
+    SimdJsonInputArchive archive(json);
     AsMessage().Serialize(archive);
   }
 

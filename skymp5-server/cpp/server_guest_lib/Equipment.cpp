@@ -1,6 +1,6 @@
 #include "Equipment.h"
-#include "archives/JsonInputArchive.h"
 #include "archives/JsonOutputArchive.h"
+#include "archives/SimdJsonInputArchive.h"
 
 bool Equipment::IsSpellEquipped(const uint32_t spellFormId) const
 {
@@ -17,10 +17,7 @@ nlohmann::json Equipment::ToJson() const
 
 Equipment Equipment::FromJson(const simdjson::dom::element& element)
 {
-  std::string minifiedDump = simdjson::minify(element);
-  nlohmann::json j = nlohmann::json::parse(minifiedDump);
-
-  JsonInputArchive ar(j);
+  SimdJsonInputArchive ar(element);
   Equipment res;
   res.Serialize(ar);
   return res;

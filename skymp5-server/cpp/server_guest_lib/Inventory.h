@@ -25,7 +25,7 @@ public:
 
   // TODO: get rid of this in favor of Serialize
   nlohmann::json ToJson() const;
-  static Inventory FromJson(simdjson::dom::element& element);
+  static Inventory FromJson(const simdjson::dom::element& element);
   static Inventory FromJson(const nlohmann::json& j);
 
   class Entry
