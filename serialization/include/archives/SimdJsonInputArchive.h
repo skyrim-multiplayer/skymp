@@ -18,21 +18,21 @@ namespace {
 struct SimdJsonSupportedTypeAdapter
 {
   template <std::signed_integral T>
-  std::decay<int64_t> MapType(T);
+  int64_t MapType(T);
 
   template <std::unsigned_integral T>
-  std::decay<uint64_t> MapType(T);
+  uint64_t MapType(T);
 
   template <std::floating_point T>
-  std::decay<double> MapType(T);
+  double MapType(T);
 
-  std::decay<bool> MapType(bool);
+  bool MapType(bool);
 };
 
 template <class T>
 using SimdJsonSupportedType =
-  typename decltype(std::declval<SimdJsonSupportedTypeAdapter>().MapType(
-    std::declval<T>()))::type;
+  decltype(std::declval<SimdJsonSupportedTypeAdapter>().MapType(
+    std::declval<T>()));
 
 template <class T>
 concept ArithmeticSimdjsonUnsupported = Arithmetic<T> && !
