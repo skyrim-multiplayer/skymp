@@ -3,19 +3,20 @@
 #include <vector>
 
 void DynamicFields::Set(const std::string& propName,
-                        const nlohmann::json& value)
+                        const DynamicFieldsEntryValue& value)
 {
   jsonCache.reset();
   props[propName] = value;
 }
 
-const nlohmann::json& DynamicFields::Get(const std::string& propName) const
+const DynamicFieldsEntryValue& DynamicFields::Get(
+  const std::string& propName) const
 {
-  static const auto kNull = nlohmann::json();
+  static const DynamicFieldsEntryValue kNullEntry = DynamicFieldsValueObject();
 
   auto it = props.find(propName);
   if (it == props.end()) {
-    return kNull;
+    return kNullEntry;
   }
   return it->second;
 }
@@ -27,7 +28,7 @@ const nlohmann::json& DynamicFields::GetAsJson() const
     auto obj = nlohmann::json::object();
 
     for (auto& [key, v] : props) {
-      obj[key] = v;
+      obj[key] = DynamicFields::ToJson(v);
     }
 
     jsonCache = std::move(obj);
@@ -38,9 +39,9 @@ const nlohmann::json& DynamicFields::GetAsJson() const
 DynamicFields DynamicFields::FromJson(const nlohmann::json& j)
 {
   DynamicFields res;
-  for (auto it = j.begin(); it != j.end(); ++it) {
-    res.props[it.key()] = it.value();
-  }
+  // for (auto it = j.begin(); it != j.end(); ++it) {
+  //   res.props[it.key()] = it.value();
+  // }
   return res;
 }
 
@@ -57,4 +58,8 @@ bool operator==(const DynamicFields& r, const DynamicFields& l)
 bool operator!=(const DynamicFields& r, const DynamicFields& l)
 {
   return !(r == l);
+}
+
+nlohmann::json DynamicFields::ToJson(const DynamicFieldsEntryValue& value)
+{
 }
