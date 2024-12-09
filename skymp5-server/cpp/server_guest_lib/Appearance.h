@@ -15,6 +15,7 @@ struct Tint
 
 struct Appearance
 {
+  // TODO: port to archives
   static Appearance FromJson(const nlohmann::json& j);
   static Appearance FromJson(simdjson::dom::element& j);
   std::string ToJson() const;
