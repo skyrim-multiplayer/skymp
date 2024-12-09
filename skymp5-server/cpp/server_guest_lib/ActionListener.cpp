@@ -16,6 +16,7 @@
 #include "gamemode_events/CraftEvent.h"
 #include "gamemode_events/CustomEvent.h"
 #include "gamemode_events/EatItemEvent.h"
+#include "gamemode_events/UpdateAppearanceAttemptEvent.h"
 #include "script_objects/EspmGameObject.h"
 #include <fmt/format.h>
 #include <spdlog/spdlog.h>
@@ -201,12 +202,21 @@ void ActionListener::OnUpdateAppearance(const RawMessageData& rawMsgData,
 { // TODO: validate
 
   MpActor* actor = partOne.serverState.ActorByUser(rawMsgData.userId);
-  if (!actor || !actor->IsRaceMenuOpen())
+  if (!actor) {
     return;
+  }
 
-  actor->SetRaceMenuOpen(false);
-  actor->SetAppearance(&appearance);
-  SendToNeighbours(idx, rawMsgData, true);
+  const bool isAllowed = actor->IsRaceMenuOpen();
+
+  if (isAllowed) {
+    actor->SetRaceMenuOpen(false);
+    actor->SetAppearance(&appearance);
+    SendToNeighbours(idx, rawMsgData, true);
+  }
+
+  UpdateAppearanceAttemptEvent updateAppearanceAttemptEvent(actor, appearance,
+                                                            isAllowed);
+  updateAppearanceAttemptEvent.Fire(actor->GetParent());
 }
 
 void ActionListener::OnUpdateEquipment(
