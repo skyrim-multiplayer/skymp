@@ -22,7 +22,7 @@ std::string UpdateAppearanceAttemptEvent::GetArgumentsJsonArray() const
   result += "[";
   result += std::to_string(actor->GetFormId());
   result += ",";
-  result += appearance.ToJson().dump();
+  result += appearance.ToJson();
   result += ",";
   result += isAllowed ? "true" : "false";
   result += "]";
