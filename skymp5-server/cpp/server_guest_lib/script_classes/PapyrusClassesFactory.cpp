@@ -13,6 +13,7 @@
 #include "PapyrusNetImmerse.h"
 #include "PapyrusObjectReference.h"
 #include "PapyrusPotion.h"
+#include "PapyrusQuest.h"
 #include "PapyrusSkymp.h"
 #include "PapyrusSound.h"
 #include "PapyrusUtility.h"
@@ -42,6 +43,7 @@ PapyrusClassesFactory::CreateAndRegister(
   result.emplace_back(std::make_unique<PapyrusNetImmerse>());
   result.emplace_back(std::make_unique<PapyrusPotion>());
   result.emplace_back(std::make_unique<PapyrusVisualEffect>());
+  result.emplace_back(std::make_unique<PapyrusQuest>());
 
   for (auto& papyrusClass : result) {
     papyrusClass->Register(vm, compatibilityPolicy);
