@@ -109,7 +109,15 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
         return;
       }
       case MsgType::DropItem: {
-        // TODO:
+        auto message =
+          reinterpret_cast<DropItemMessage*>(result->message.get());
+
+        Inventory::Entry entry;
+        entry.baseId = FormIdCasts::LongToNormal(message->baseId);
+        entry.count = message->count;
+
+        actionListener.OnDropItem(
+          rawMsgData, FormIdCasts::LongToNormal(message->baseId), entry);
         return;
       }
       case MsgType::FinishSpSnippet: {

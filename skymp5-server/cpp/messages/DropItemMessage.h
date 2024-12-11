@@ -16,6 +16,6 @@ struct DropItemMessage : public MessageBase<DropItemMessage>
       .Serialize("count", count);
   }
 
-  uint32_t baseId = 0;
+  uint64_t baseId = 0;
   uint32_t count = 0;
 };
