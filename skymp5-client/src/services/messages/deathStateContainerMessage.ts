@@ -1,5 +1,5 @@
 import { MsgType } from "../../messages";
-import { ChangeValuesMessage } from "./changeValues";
+import { ChangeValuesMessage } from "./changeValuesMessage";
 import { TeleportMessage } from "./teleportMessage";
 import { UpdatePropertyMessage } from "./updatePropertyMessage";
 

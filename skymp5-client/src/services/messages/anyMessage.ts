@@ -1,6 +1,6 @@
 
 import { ActivateMessage } from "./activateMessage";
-import { ChangeValuesMessage } from "./changeValues";
+import { ChangeValuesMessage } from "./changeValuesMessage";
 import { ConsoleCommandMessage } from "./consoleCommandMessage";
 import { CraftItemMessage } from "./craftItemMessage";
 import { CreateActorMessage } from "./createActorMessage";

@@ -29,5 +29,8 @@ enum class MsgType : uint8_t
   SpellCast = 23,
   UpdateAnimVariables = 24,
 
+  // ex-strings
+  DestroyActor = 100,
+
   Max
 };

@@ -13,7 +13,7 @@ import { HostStartMessage } from "../messages/hostStartMessage";
 import { HostStopMessage } from "../messages/hostStopMessage";
 import { SetInventoryMessage } from "../messages/setInventoryMessage";
 import { OpenContainerMessage } from "../messages/openContainerMessage";
-import { ChangeValuesMessage } from "../messages/changeValues";
+import { ChangeValuesMessage } from "../messages/changeValuesMessage";
 import { CreateActorMessage } from "../messages/createActorMessage";
 import { CustomPacketMessage2 } from "../messages/customPacketMessage2";
 import { DestroyActorMessage } from "../messages/destroyActorMessage";

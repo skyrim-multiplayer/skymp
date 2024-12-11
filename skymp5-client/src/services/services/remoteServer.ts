@@ -30,7 +30,7 @@ import { ModelApplyUtils } from '../../view/modelApplyUtils';
 import { FormModel, WorldModel } from '../../view/model';
 import { LoadGameService } from './loadGameService';
 import { UpdateMovementMessage } from '../messages/updateMovementMessage';
-import { ChangeValuesMessage } from '../messages/changeValues';
+import { ChangeValuesMessage } from '../messages/changeValuesMessage';
 import { UpdateAnimationMessage } from '../messages/updateAnimationMessage';
 import { UpdateEquipmentMessage } from '../messages/updateEquipmentMessage';
 import { RagdollService } from './ragdollService';

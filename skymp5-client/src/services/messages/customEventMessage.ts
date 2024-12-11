@@ -2,6 +2,6 @@ import { MsgType } from "../../messages";
 
 export interface CustomEventMessage {
     t: MsgType.CustomEvent,
-    args: unknown[],
+    argsJsonDumps: string[],
     eventName: string
 }

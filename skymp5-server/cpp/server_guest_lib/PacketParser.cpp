@@ -73,6 +73,57 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
       });
     }
     switch (result->msgType) {
+      case MsgType::Activate: {
+        auto message =
+          reinterpret_cast<ActivateMessage*>(result->message.get());
+        actionListener.OnActivate(rawMsgData,
+                                  FormIdCasts::LongToNormal(message->caster),
+                                  FormIdCasts::LongToNormal(message->target),
+                                  message->isSecondActivation);
+        return;
+      }
+      case MsgType::ConsoleCommand: {
+        auto message =
+          reinterpret_cast<ConsoleCommandMessage*>(result->message.get());
+
+        std::vector<ConsoleCommands::Argument> consoleArgs;
+        consoleArgs.resize(message->args.size());
+        for (size_t i = 0; i < message->args.size(); i++) {
+          consoleArgs[i] = ConsoleCommands::Argument(message->args[i]);
+        }
+
+        actionListener.OnConsoleCommand(rawMsgData, message->commandName,
+                                        consoleArgs);
+        return;
+      }
+      case MsgType::CraftItem: {
+        auto message =
+          reinterpret_cast<CraftItemMessage*>(result->message.get());
+        actionListener.OnCraftItem(rawMsgData, message->craftInputObjects,
+                                   message->workbench,
+                                   message->resultObjectId);
+        return;
+      }
+      case MsgType::CustomEvent: {
+        // TODO:
+        return;
+      }
+      case MsgType::DropItem: {
+        // TODO:
+        return;
+      }
+      case MsgType::FinishSpSnippet: {
+        // TODO:
+        return;
+      }
+      case MsgType::OnHit: {
+        // TODO:
+        return;
+      }
+      case MsgType::Host: {
+        // TODO:
+        return;
+      }
       case MsgType::UpdateMovement: {
         auto message =
           reinterpret_cast<UpdateMovementMessage*>(result->message.get());

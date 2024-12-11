@@ -68,7 +68,7 @@ export class GamemodeEventSourceService extends ClientListener {
                     sendEvent: (...args: unknown[]) => {
                         const message: CustomEventMessage = {
                             t: MsgType.CustomEvent,
-                            args,
+                            argsJsonDumps: args.map(arg => JSON.stringify(arg)),
                             eventName
                         };
                         this.controller.emitter.emit("sendMessage", {
