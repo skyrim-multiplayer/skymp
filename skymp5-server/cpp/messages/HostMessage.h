@@ -14,5 +14,5 @@ struct HostMessage : public MessageBase<HostMessage>
     archive.Serialize("t", kMsgType).Serialize("remoteId", remoteId);
   }
 
-  uint32_t remoteId = 0;
+  uint64_t remoteId = 0;
 };

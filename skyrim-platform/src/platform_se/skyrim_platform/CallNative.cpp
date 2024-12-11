@@ -2,12 +2,12 @@
 #include "CallNativeApi.h"
 #include "GetNativeFunctionAddr.h"
 #include "NullPointerException.h"
-#include "Overloaded.h"
 #include "SendAnimationEvent.h"
 #include "SkyrimPlatform.h"
 #include "StringHolder.h"
 #include "VmCall.h"
 #include "VmCallback.h"
+#include "viet/Overloaded.h"
 
 extern CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
 
@@ -20,7 +20,7 @@ Variable CallNative::AnySafeToVariable(const CallNative::AnySafe& v,
     return res;
   }
   return std::visit(
-    overloaded{
+    Viet::Overloaded{
       [&](double f) {
         Variable res;
         treatNumberAsInt ? res.SetSInt((int)floor(f)) : res.SetFloat((float)f);

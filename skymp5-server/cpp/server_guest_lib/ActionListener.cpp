@@ -18,6 +18,7 @@
 #include "gamemode_events/EatItemEvent.h"
 #include "gamemode_events/UpdateAppearanceAttemptEvent.h"
 #include "script_objects/EspmGameObject.h"
+#include "viet/Overloaded.h"
 #include <fmt/format.h>
 #include <spdlog/spdlog.h>
 #include <unordered_set>
@@ -418,37 +419,40 @@ void ActionListener::OnPlayerBowShot(const RawMessageData& rawMsgData,
 
 namespace {
 
-VarValue VarValueFromJson(const simdjson::dom::element& parentMsg,
-                          const simdjson::dom::element& element)
+VarValue VarValueFromSpSnippetReturnValue(
+  const std::optional<std::variant<bool, double, std::string>>& returnValue)
 {
   static const auto kKey = JsonPointer("returnValue");
 
-  // TODO: DOUBLE, STRING ...
-  switch (element.type()) {
-    case simdjson::dom::element_type::INT64:
-    case simdjson::dom::element_type::UINT64: {
-      int32_t v;
-      ReadEx(parentMsg, kKey, &v);
-      return VarValue(v);
-    }
-    case simdjson::dom::element_type::BOOL: {
-      bool v;
-      ReadEx(parentMsg, kKey, &v);
-      return VarValue(v);
-    }
-    case simdjson::dom::element_type::NULL_VALUE:
-      return VarValue::None();
-    default:
-      break;
+  if (!returnValue) {
+    return VarValue::None();
   }
-  throw std::runtime_error("VarValueFromJson - Unsupported json type " +
-                           std::to_string(static_cast<int>(element.type())));
+
+  return std::visit(
+    Viet::Overloaded{
+      [&](bool v) { return VarValue(v); },
+      [&](double v) {
+        // TODO: consider removing std::floor and logs after careful test
+        // because Papyrus VM should support mixed arithmetics, so we can
+        // always pass double
+        auto rounded = static_cast<int32_t>(std::floor(v));
+        if (std::abs(std::floor(v) - v) >
+            std::numeric_limits<double>::epsilon()) {
+          spdlog::error(
+            "VarValueFromSpSnippetReturnValue - Floating point values are not "
+            "yet supported, rounding down ({} -> {})",
+            v, rounded);
+        }
+        return VarValue(rounded);
+      },
+      [&](const std::string& v) { return VarValue(v); } } *
+    returnValue);
 }
 
 }
-void ActionListener::OnFinishSpSnippet(const RawMessageData& rawMsgData,
-                                       uint32_t snippetIdx,
-                                       simdjson::dom::element& returnValue)
+void ActionListener::OnFinishSpSnippet(
+  const RawMessageData& rawMsgData, uint32_t snippetIdx,
+  const std::optional<std::variant<bool, double, std::string>>& returnValue)
 {
   MpActor* actor = partOne.serverState.ActorByUser(rawMsgData.userId);
   if (!actor)
@@ -457,7 +461,7 @@ void ActionListener::OnFinishSpSnippet(const RawMessageData& rawMsgData,
       std::to_string(rawMsgData.userId));
 
   actor->ResolveSnippet(snippetIdx,
-                        VarValueFromJson(rawMsgData.parsed, returnValue));
+                        VarValueFromSpSnippetReturnValue(returnValue));
 }
 
 void ActionListener::OnEquip(const RawMessageData& rawMsgData, uint32_t baseId)
@@ -646,9 +650,9 @@ void ActionListener::OnHostAttempt(const RawMessageData& rawMsgData,
   }
 }
 
-void ActionListener::OnCustomEvent(const RawMessageData& rawMsgData,
-                                   const char* eventName,
-                                   simdjson::dom::element& args)
+void ActionListener::OnCustomEvent(
+  const RawMessageData& rawMsgData, const char* eventName,
+  const std::vector<std::string>& argsJsonDumps)
 {
   auto ac = partOne.serverState.ActorByUser(rawMsgData.userId);
   if (!ac) {
@@ -659,9 +663,16 @@ void ActionListener::OnCustomEvent(const RawMessageData& rawMsgData,
     return;
   }
 
+  nlohmann::json jsonArray = nlohmann::json::array();
+
+  for (auto& arg : argsJsonDumps) {
+    jsonArray.push_back(nlohmann::json::parse(arg));
+  }
+
+  const std::string jsonArrayDump = jsonArray.dump();
+
   for (auto& listener : partOne.GetListeners()) {
-    CustomEvent customEvent(ac->GetFormId(), eventName,
-                            simdjson::minify(args));
+    CustomEvent customEvent(ac->GetFormId(), eventName, jsonArrayDump);
     listener->OnMpApiEvent(customEvent);
   }
 }

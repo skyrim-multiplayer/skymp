@@ -105,7 +105,10 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
         return;
       }
       case MsgType::CustomEvent: {
-        // TODO:
+        auto message =
+          reinterpret_cast<CustomEventMessage*>(result->message.get());
+        actionListener.OnCustomEvent(rawMsgData, message->eventName.data(),
+                                     message->argsJsonDumps);
         return;
       }
       case MsgType::DropItem: {
@@ -120,16 +123,15 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
           rawMsgData, FormIdCasts::LongToNormal(message->baseId), entry);
         return;
       }
-      case MsgType::FinishSpSnippet: {
-        // TODO:
-        return;
-      }
       case MsgType::OnHit: {
-        // TODO:
+        auto message = reinterpret_cast<HitMessage*>(result->message.get());
+        actionListener.OnHit(rawMsgData, message->data);
         return;
       }
       case MsgType::Host: {
-        // TODO:
+        auto message = reinterpret_cast<HostMessage*>(result->message.get());
+        actionListener.OnHostAttempt(
+          rawMsgData, FormIdCasts::LongToNormal(message->remoteId));
         return;
       }
       case MsgType::UpdateMovement: {
@@ -214,18 +216,6 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
       actionListener.OnUpdateAppearance(rawMsgData, idx,
                                         Appearance::FromJson(jData));
     } break;
-    case MsgType::Activate: {
-      simdjson::dom::element data_;
-      ReadEx(jMessage, JsonPointers::data, &data_);
-      uint64_t caster, target;
-      ReadEx(data_, JsonPointers::caster, &caster);
-      ReadEx(data_, JsonPointers::target, &target);
-      bool isSecondActivation;
-      ReadEx(data_, JsonPointers::isSecondActivation, &isSecondActivation);
-      actionListener.OnActivate(rawMsgData, FormIdCasts::LongToNormal(caster),
-                                FormIdCasts::LongToNormal(target),
-                                isSecondActivation);
-    } break;
     case MsgType::UpdateProperty:
       break;
     case MsgType::PutItem:
@@ -257,71 +247,6 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
       actionListener.OnEquip(rawMsgData, baseId);
       break;
     }
-    case MsgType::ConsoleCommand: {
-      simdjson::dom::element data_;
-      ReadEx(jMessage, JsonPointers::data, &data_);
-      const char* commandName;
-      ReadEx(data_, JsonPointers::commandName, &commandName);
-      simdjson::dom::element args;
-      ReadEx(data_, JsonPointers::args, &args);
-
-      auto arr = args.get_array().value();
-
-      std::vector<ConsoleCommands::Argument> consoleArgs;
-      consoleArgs.resize(arr.size());
-      for (size_t i = 0; i < arr.size(); ++i) {
-        simdjson::dom::element el;
-        ReadEx(args, i, &el);
-
-        std::string s = simdjson::minify(el);
-        if (!s.empty() && s[0] == '"') {
-          const char* s;
-          ReadEx(args, i, &s);
-          consoleArgs[i] = std::string(s);
-        } else {
-          int64_t ingeter;
-          ReadEx(args, i, &ingeter);
-          consoleArgs[i] = ingeter;
-        }
-      }
-      actionListener.OnConsoleCommand(rawMsgData, commandName, consoleArgs);
-      break;
-    }
-    case MsgType::CraftItem: {
-      simdjson::dom::element data_;
-      ReadEx(jMessage, JsonPointers::data, &data_);
-      uint32_t workbench;
-      ReadEx(data_, JsonPointers::workbench, &workbench);
-      uint32_t resultObjectId;
-      ReadEx(data_, JsonPointers::resultObjectId, &resultObjectId);
-      simdjson::dom::element craftInputObjects;
-      ReadEx(data_, JsonPointers::craftInputObjects, &craftInputObjects);
-      actionListener.OnCraftItem(rawMsgData,
-                                 Inventory::FromJson(craftInputObjects),
-                                 workbench, resultObjectId);
-      break;
-    }
-    case MsgType::Host: {
-      uint64_t remoteId;
-      ReadEx(jMessage, JsonPointers::remoteId, &remoteId);
-      actionListener.OnHostAttempt(rawMsgData,
-                                   FormIdCasts::LongToNormal(remoteId));
-      break;
-    }
-    case MsgType::CustomEvent: {
-      simdjson::dom::element args;
-      ReadEx(jMessage, JsonPointers::args, &args);
-      const char* eventName;
-      ReadEx(jMessage, JsonPointers::eventName, &eventName);
-      actionListener.OnCustomEvent(rawMsgData, eventName, args);
-      break;
-    }
-    case MsgType::OnHit: {
-      simdjson::dom::element data_;
-      ReadEx(jMessage, JsonPointers::data, &data_);
-      actionListener.OnHit(rawMsgData, HitData::FromJson(data_));
-      break;
-    }
     case MsgType::SpellCast: {
       simdjson::dom::element data_;
       ReadEx(jMessage, JsonPointers::data, &data_);
@@ -330,14 +255,6 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
     }
     case MsgType::UpdateAnimVariables: {
       actionListener.OnUpdateAnimVariables(rawMsgData);
-      break;
-    }
-    case MsgType::DropItem: {
-      uint64_t baseId;
-      ReadEx(jMessage, JsonPointers::baseId, &baseId);
-      auto entry = Inventory::Entry::FromJson(jMessage);
-      actionListener.OnDropItem(rawMsgData, FormIdCasts::LongToNormal(baseId),
-                                entry);
       break;
     }
     case MsgType::PlayerBowShot: {

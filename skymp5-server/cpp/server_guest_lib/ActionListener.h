@@ -66,9 +66,9 @@ public:
                                uint32_t weaponId, uint32_t ammoId, float power,
                                bool isSunGazing);
 
-  virtual void OnFinishSpSnippet(const RawMessageData& rawMsgData,
-                                 uint32_t snippetIdx,
-                                 simdjson::dom::element& returnValue);
+  virtual void OnFinishSpSnippet(
+    const RawMessageData& rawMsgData, uint32_t snippetIdx,
+    const std::optional<std::variant<bool, double, std::string>>& returnValue);
 
   virtual void OnEquip(const RawMessageData& rawMsgData, uint32_t baseId);
 
@@ -84,7 +84,8 @@ public:
                              uint32_t remoteId);
 
   virtual void OnCustomEvent(const RawMessageData& rawMsgData,
-                             const char* eventName, simdjson::dom::element& e);
+                             const char* eventName,
+                             const std::vector<std::string>& argsJsonDumps);
 
   virtual void OnChangeValues(const RawMessageData& rawMsgData,
                               const ActorValues& actorValues);
