@@ -2,8 +2,7 @@
 
 #include <unordered_map>
 
-void DynamicFields::Set(const std::string& propName,
-                        nlohmann::json value)
+void DynamicFields::Set(const std::string& propName, nlohmann::json value)
 {
   jsonCache.reset();
   props[propName] = std::move(value);

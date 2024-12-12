@@ -1942,10 +1942,11 @@ void MpObjectReference::SendPropertyToListeners(const char* name,
                                                 const nlohmann::json& value)
 {
   auto msg = CreatePropertyMessage(this, name, value);
-  SendMessageToActorListeners(msg, /*reliable*/true);
+  SendMessageToActorListeners(msg, /*reliable*/ true);
 }
 
-void MpObjectReference::SendMessageToActorListeners(const IMessageBase& msg, bool reliable) const
+void MpObjectReference::SendMessageToActorListeners(const IMessageBase& msg,
+                                                    bool reliable) const
 {
   for (auto listener : GetActorListeners()) {
     listener->SendToUser(msg, true);
@@ -1960,8 +1961,7 @@ void MpObjectReference::SendPropertyTo(const char* name,
   SendMessageTo(msg, target);
 }
 
-void MpObjectReference::SendMessageTo(const IMessageBase& msg,
-                                       MpActor& target)
+void MpObjectReference::SendMessageTo(const IMessageBase& msg, MpActor& target)
 {
   target.SendToUser(msg, true);
 }

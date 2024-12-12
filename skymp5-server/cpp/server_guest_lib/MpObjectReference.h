@@ -137,9 +137,8 @@ public:
   void ForceSubscriptionsUpdate();
   void SetPrimitive(const NiPoint3& boundsDiv2);
   void UpdateHoster(uint32_t newHosterId);
-  void SetProperty(const std::string& propertyName,
-                   nlohmann::json newValue, bool isVisibleByOwner,
-                   bool isVisibleByNeighbor);
+  void SetProperty(const std::string& propertyName, nlohmann::json newValue,
+                   bool isVisibleByOwner, bool isVisibleByNeighbor);
   void SetTeleportFlag(bool value);
   void SetPosAndAngleSilent(const NiPoint3& pos, const NiPoint3& rot);
   void Delete();
@@ -220,7 +219,8 @@ protected:
   [[deprecated]]
   void SendPropertyToListeners(const char* name, const nlohmann::json& value);
 
-  void SendMessageToActorListeners(const IMessageBase& msg, bool reliable) const;
+  void SendMessageToActorListeners(const IMessageBase& msg,
+                                   bool reliable) const;
 
   void SendPropertyTo(const char* name, const nlohmann::json& value,
                       MpActor& target);
