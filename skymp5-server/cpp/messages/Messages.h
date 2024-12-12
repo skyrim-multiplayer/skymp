@@ -50,10 +50,10 @@
   REGISTER_MESSAGE(PutItemMessage.h)                                          \
   REGISTER_MESSAGE(SetInventoryMessage.h)                                     \
   REGISTER_MESSAGE(SetRaceMenuOpenMessage.h)                                  \
-  REGISTER_MESSAGE(SpellCastMessage.h)                                        \
-  REGISTER_MESSAGE(SpSnippetMessage.h)                                        \
-  REGISTER_MESSAGE(TakeItemMessage.h)                                         \
-  REGISTER_MESSAGE(TeleportMessage2.h)                                        \
-  REGISTER_MESSAGE(UpdateAnimVariablesMessage.h)                              \
-  REGISTER_MESSAGE(UpdateAppearanceMessage.h)                                 \
-  REGISTER_MESSAGE(UpdateGameModeDataMessage.h)
+  REGISTER_MESSAGE(SpellCastMessage)                                          \
+  REGISTER_MESSAGE(SpSnippetMessage)                                          \
+  REGISTER_MESSAGE(TakeItemMessage)                                           \
+  REGISTER_MESSAGE(TeleportMessage2)                                          \
+  REGISTER_MESSAGE(UpdateAnimVariablesMessage)                                \
+  REGISTER_MESSAGE(UpdateAppearanceMessage)                                   \
+  REGISTER_MESSAGE(UpdateGameModeDataMessage)
