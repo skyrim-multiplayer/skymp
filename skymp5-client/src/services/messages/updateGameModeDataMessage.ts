@@ -1,6 +1,11 @@
+export interface GamemodeValuePair {
+    name: string;
+    content: string;
+}
+
 export interface UpdateGamemodeDataMessage {
     type: "updateGamemodeData";
-    eventSources: Record<string, string>;
-    updateOwnerFunctions: Record<string, string>;
-    updateNeighborFunctions: Record<string, string>;
+    eventSources: GamemodeValuePair[];
+    updateOwnerFunctions: GamemodeValuePair[];
+    updateNeighborFunctions: GamemodeValuePair[];
 }

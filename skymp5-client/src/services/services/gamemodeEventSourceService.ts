@@ -37,7 +37,10 @@ export class GamemodeEventSourceService extends ClientListener {
             });
         }
 
-        let eventNames = Object.keys(event.message.eventSources);
+        let eventSourcesRecord: Record<string, string | undefined> = {};
+        event.message.eventSources.forEach(pair => eventSourcesRecord[pair.name] = pair.content);
+
+        let eventNames = Object.keys(eventSourcesRecord);
 
         let blockedEventSources = this.sp.settings["skymp5-client"]["blockedEventSources"];
 
@@ -50,7 +53,7 @@ export class GamemodeEventSourceService extends ClientListener {
 
         eventNames.forEach((eventName) => {
             try {
-                const fn = new Function('ctx', event.message.eventSources[eventName]);
+                const fn = new Function('ctx', eventSourcesRecord[eventName]!);
                 const ctx: GamemodeApiEventSourceCtx = {
                     refr: undefined,
                     value: undefined,

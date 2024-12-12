@@ -1,11 +1,26 @@
 #pragma once
 #include "ActivateMessage.h"
 #include "ChangeValuesMessage.h"
+#include "CustomPacketMessage.h"
 #include "DeathStateContainerMessage.h"
+#include "HostStartMessage.h"
+#include "HostStopMessage.h"
+#include "OnEquipMessage.h"
 #include "OpenContainerMessage.h"
+#include "PlayerBowShotMessage.h"
+#include "PutItemMessage.h"
+#include "SetInventoryMessage.h"
+#include "SetRaceMenuOpenMessage.h"
+#include "SpSnippetMessage.h"
+#include "SpellCastMessage.h"
+#include "TakeItemMessage.h"
 #include "TeleportMessage.h"
+#include "TeleportMessage2.h"
+#include "UpdateAnimVariablesMessage.h"
 #include "UpdateAnimationMessage.h"
+#include "UpdateAppearanceMessage.h"
 #include "UpdateEquipmentMessage.h"
+#include "UpdateGameModeDataMessage.h"
 #include "UpdateMovementMessage.h"
 #include "UpdatePropertyMessage.h"
 
@@ -26,4 +41,19 @@
   REGISTER_MESSAGE(TeleportMessage)                                           \
   REGISTER_MESSAGE(UpdatePropertyMessage)                                     \
   REGISTER_MESSAGE(OpenContainerMessage)                                      \
-  REGISTER_MESSAGE(UpdateEquipmentMessage)
+  REGISTER_MESSAGE(UpdateEquipmentMessage)                                    \
+  REGISTER_MESSAGE(CustomPacketMessage.h)                                     \
+  REGISTER_MESSAGE(HostStartMessage.h)                                        \
+  REGISTER_MESSAGE(HostStopMessage.h)                                         \
+  REGISTER_MESSAGE(OnEquipMessage.h)                                          \
+  REGISTER_MESSAGE(PlayerBowShotMessage.h)                                    \
+  REGISTER_MESSAGE(PutItemMessage.h)                                          \
+  REGISTER_MESSAGE(SetInventoryMessage.h)                                     \
+  REGISTER_MESSAGE(SetRaceMenuOpenMessage.h)                                  \
+  REGISTER_MESSAGE(SpellCastMessage.h)                                        \
+  REGISTER_MESSAGE(SpSnippetMessage.h)                                        \
+  REGISTER_MESSAGE(TakeItemMessage.h)                                         \
+  REGISTER_MESSAGE(TeleportMessage2.h)                                        \
+  REGISTER_MESSAGE(UpdateAnimVariablesMessage.h)                              \
+  REGISTER_MESSAGE(UpdateAppearanceMessage.h)                                 \
+  REGISTER_MESSAGE(UpdateGameModeDataMessage.h)

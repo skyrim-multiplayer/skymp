@@ -30,7 +30,15 @@ enum class MsgType : uint8_t
   UpdateAnimVariables = 24,
 
   // ex-strings
-  DestroyActor = 100,
+  DestroyActor = 25,
+  HostStart = 26,
+  HostStop = 27,
+  SetInventory = 28,
+  SetRaceMenuOpen = 29,
+  SpellCast = 30,
+  SpSnippet = 31,
+  Teleport2 = 32,
+  UpdateGamemodeData = 33,
 
   Max
 };

@@ -28,15 +28,13 @@ public:
   static Inventory FromJson(const simdjson::dom::element& element);
   static Inventory FromJson(const nlohmann::json& j);
 
-  class Entry
+  class ExtraData
   {
   public:
     template <class Archive>
     void Serialize(Archive& archive)
     {
-      archive.Serialize("baseId", baseId)
-        .Serialize("count", count)
-        .Serialize("health", health)
+      archive.Serialize("health", health)
         .Serialize("enchantmentId", enchantmentId)
         .Serialize("maxCharge", maxCharge)
         .Serialize("removeEnchantmentOnUnequip", removeEnchantmentOnUnequip)
@@ -49,13 +47,6 @@ public:
         .Serialize("wornLeft", wornLeft);
     }
 
-    // TODO: get rid of this in favor of Serialize
-    // nlohmann::json ToJson() const;
-
-    uint32_t baseId = 0;
-    uint32_t count = 0;
-
-    // extras
     std::optional<float> health;
     std::optional<uint32_t> enchantmentId;
     std::optional<float> maxCharge;
@@ -67,6 +58,21 @@ public:
     std::optional<uint32_t> poisonCount;
     std::optional<bool> worn_;
     std::optional<bool> wornLeft;
+  };
+
+  class Entry : public ExtraData
+  {
+  public:
+    template <class Archive>
+    void Serialize(Archive& archive)
+    {
+      archive.Serialize("baseId", baseId).Serialize("count", count);
+
+      ExtraData::Serialize(archive);
+    }
+
+    uint32_t baseId = 0;
+    uint32_t count = 0;
 
     // TODO: get rid of this in favor of Serialize
     static Entry FromJson(const simdjson::dom::element& e);

@@ -1,7 +1,7 @@
 import { FormModel } from "../../view/model";
 import { ConnectionMessage } from "../events/connectionMessage";
 import { CreateActorMessage } from "../messages/createActorMessage";
-import { UpdateGamemodeDataMessage } from "../messages/updateGameModeDataMessage";
+import { GamemodeValuePair, UpdateGamemodeDataMessage } from "../messages/updateGameModeDataMessage";
 import { ClientListener, CombinedController, Sp } from "./clientListener";
 import { RemoteServer } from "./remoteServer";
 import { ObjectReference } from "skyrimPlatform";
@@ -109,11 +109,11 @@ export class GamemodeUpdateService extends ClientListener {
 
         this.updateGamemodeUpdateFunctions(
             'updateNeighborFunctions',
-            event.message.updateNeighborFunctions || {},
+            event.message.updateNeighborFunctions,
         );
         this.updateGamemodeUpdateFunctions(
             'updateOwnerFunctions',
-            event.message.updateOwnerFunctions || {},
+            event.message.updateOwnerFunctions,
         );
     }
 
@@ -196,16 +196,20 @@ export class GamemodeUpdateService extends ClientListener {
 
     private updateGamemodeUpdateFunctions(
         storageVar: string,
-        functionSources: Record<string, string>,
+        functionSources: GamemodeValuePair[],
     ) {
-        this.sp.storage[storageVar] = JSON.parse(JSON.stringify(functionSources));
-        for (const propName of Object.keys(functionSources)) {
+        let functionSourcesRecord: Record<string, string | undefined> = {};
+        functionSources.forEach(pair => functionSourcesRecord[pair.name] = pair.content);
+
+        this.sp.storage[storageVar] = functionSourcesRecord;
+
+        for (const propName of Object.keys(functionSourcesRecord)) {
             try {
                 (this.sp.storage[storageVar] as any)[propName] = new Function(
                     'ctx',
                     (this.sp.storage[storageVar] as any)[propName],
                 );
-                const emptyFunction = functionSources[propName] === '';
+                const emptyFunction = functionSourcesRecord[propName] === '';
                 if (emptyFunction) {
                     delete (this.sp.storage[storageVar] as any)[propName];
                     logTrace(this, storageVar, propName, 'Added empty');

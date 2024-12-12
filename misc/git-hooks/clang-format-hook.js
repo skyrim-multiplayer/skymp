@@ -56,7 +56,14 @@ const checks = [
 
       // Check if the file belongs to one of the valid parent directories
       return validDirs.some((dir) => file.includes(path.sep + dir + path.sep))
-        && !file.endsWith(path.sep + "anyMessage.ts");
+        && !file.endsWith(path.sep + "anyMessage.ts")
+        && !file.endsWith(path.sep + "refrIdMessageBase.ts")
+        && !file.endsWith(path.sep + "MessageBase.h")
+        && !file.endsWith(path.sep + "MessageSerializerFactory.cpp")
+        && !file.endsWith(path.sep + "MessageSerializerFactory.h")
+        && !file.endsWith(path.sep + "Messages.h")
+        && !file.endsWith(path.sep + "MinPacketId.h")
+        && !file.endsWith(path.sep + "MsgType.h");
     },
     lint: (file) => {
       const serverDir = "skymp5-server/cpp/messages";

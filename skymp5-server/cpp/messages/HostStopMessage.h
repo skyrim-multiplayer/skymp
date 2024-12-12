@@ -3,10 +3,10 @@
 #include "MsgType.h"
 #include <type_traits>
 
-struct OpenContainerMessage : public MessageBase<OpenContainerMessage>
+struct HostStopMessage : public MessageBase<HostStopMessage>
 {
   static constexpr auto kMsgType =
-    std::integral_constant<char, static_cast<char>(MsgType::OpenContainer)>{};
+    std::integral_constant<char, static_cast<char>(MsgType::HostStop)>{};
 
   template <class Archive>
   void Serialize(Archive& archive)
@@ -14,5 +14,5 @@ struct OpenContainerMessage : public MessageBase<OpenContainerMessage>
     archive.Serialize("t", kMsgType).Serialize("target", target);
   }
 
-  uint32_t target = 0;
+  uint64_t target = 0;
 };
