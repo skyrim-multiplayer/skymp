@@ -1,12 +1,12 @@
 #include "DynamicFields.h"
+
 #include <unordered_map>
-#include <vector>
 
 void DynamicFields::Set(const std::string& propName,
-                        const nlohmann::json& value)
+                        nlohmann::json value)
 {
   jsonCache.reset();
-  props[propName] = value;
+  props[propName] = std::move(value);
 }
 
 const nlohmann::json& DynamicFields::Get(const std::string& propName) const

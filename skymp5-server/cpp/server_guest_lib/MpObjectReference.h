@@ -5,6 +5,7 @@
 #include "Inventory.h"
 #include "JsonUtils.h"
 #include "LocationalData.h"
+#include "MessageBase.h"
 #include "MpChangeForms.h"
 #include "MpForm.h"
 #include "libespm/Loader.h"
@@ -137,7 +138,7 @@ public:
   void SetPrimitive(const NiPoint3& boundsDiv2);
   void UpdateHoster(uint32_t newHosterId);
   void SetProperty(const std::string& propertyName,
-                   const nlohmann::json& newValue, bool isVisibleByOwner,
+                   nlohmann::json newValue, bool isVisibleByOwner,
                    bool isVisibleByNeighbor);
   void SetTeleportFlag(bool value);
   void SetPosAndAngleSilent(const NiPoint3& pos, const NiPoint3& rot);
@@ -215,10 +216,15 @@ protected:
 
   void EnsureBaseContainerAdded(espm::Loader& espm);
 
+  // XXX ensure not used before merging?
+  [[deprecated]]
   void SendPropertyToListeners(const char* name, const nlohmann::json& value);
+
+  void SendMessageToActorListeners(const IMessageBase& msg, bool reliable) const;
+
   void SendPropertyTo(const char* name, const nlohmann::json& value,
                       MpActor& target);
-  void SendPropertyTo(const IMessageBase& preparedPropMsg, MpActor& target);
+  void SendMessageTo(const IMessageBase& preparedPropMsg, MpActor& target);
 
 private:
   void AddContainerObject(const espm::CONT::ContainerObject& containerObject,
