@@ -1692,6 +1692,7 @@ void MpObjectReference::InitScripts()
 
   // A hardcoded hack to remove all scripts except SweetPie scripts from
   // exterior objects
+  // TODO: make is a server setting with proper conditions or an API
   if (GetParent() && GetParent()->disableVanillaScriptsInExterior &&
       GetFormId() < 0x05000000) {
     auto cellOrWorld = GetCellOrWorld().ToFormId(GetParent()->espmFiles);
@@ -1710,6 +1711,23 @@ void MpObjectReference::InitScripts()
                         scriptNames.end());
     }
   }
+
+  // A hardcoded hack to remove unsupported scripts
+  // TODO: make is a server setting with proper conditions or an API
+  auto isScriptEraseNeeded = [](const std::string& val) {
+    // 1. GetStage in OnTrigger
+    // 2. Unable to determine Actor for 'Game.GetPlayer' in 'OnLoad'
+    const bool isRemoveNeeded =
+      !Utils::stricmp(val.data(), "DA06PreRitualSceneTriggerScript") ||
+      !Utils::stricmp(val.data(), "CritterSpawn");
+
+    spdlog::info("Skipping script {}", val);
+
+    return isRemoveNeeded;
+  };
+  scriptNames.erase(std::remove_if(scriptNames.begin(), scriptNames.end(),
+                                   isScriptEraseNeeded),
+                    scriptNames.end());
 
   if (!scriptNames.empty()) {
     pImpl->scriptState = std::make_unique<ScriptState>();
