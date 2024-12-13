@@ -1,16 +1,17 @@
+#include <fmt/format.h>
+#include <spdlog/spdlog.h>
+
 #include "ActionListener.h"
 #include "AnimationSystem.h"
 #include "ConsoleCommands.h"
 #include "CropRegeneration.h"
 #include "DummyMessageOutput.h"
-#include "Exceptions.h"
 #include "FindRecipe.h"
 #include "GetBaseActorValues.h"
 #include "HitData.h"
 #include "MathUtils.h"
 #include "MovementValidation.h"
 #include "MpObjectReference.h"
-#include "MsgType.h"
 #include "UserMessageOutput.h"
 #include "WorldState.h"
 #include "gamemode_events/CraftEvent.h"
@@ -18,11 +19,6 @@
 #include "gamemode_events/EatItemEvent.h"
 #include "gamemode_events/UpdateAppearanceAttemptEvent.h"
 #include "script_objects/EspmGameObject.h"
-#include <fmt/format.h>
-#include <spdlog/spdlog.h>
-#include <unordered_set>
-
-#include "UpdateEquipmentMessage.h"
 
 MpActor* ActionListener::SendToNeighbours(
   uint32_t idx, const simdjson::dom::element& jMessage,
