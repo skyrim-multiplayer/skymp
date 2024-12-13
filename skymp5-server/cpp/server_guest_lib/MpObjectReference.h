@@ -218,8 +218,6 @@ protected:
   void SendMessageToActorListeners(const IMessageBase& msg,
                                    bool reliable) const;
 
-  // void SendMessageTo(const IMessageBase& preparedPropMsg, MpActor& target);
-
 private:
   void AddContainerObject(const espm::CONT::ContainerObject& containerObject,
                           std::map<uint32_t, uint32_t>* itemsToAdd);
