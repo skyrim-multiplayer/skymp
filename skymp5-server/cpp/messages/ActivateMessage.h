@@ -14,7 +14,8 @@ struct ActivateMessage : public MessageBase<ActivateMessage>
     template <class Archive>
     void Serialize(Archive& archive)
     {
-      archive.Serialize("caster", caster)
+      archive.Serialize("t", kMsgType)
+        .Serialize("caster", caster)
         .Serialize("target", target)
         .Serialize("isSecondActivation", isSecondActivation);
     }

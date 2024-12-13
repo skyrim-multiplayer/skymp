@@ -12,8 +12,7 @@ struct ActorAnimationVariables
   template <class Archive>
   void Serialize(Archive& archive)
   {
-    archive.Serialize("t", kMsgType)
-      .Serialize("booleans", booleans)
+    archive.Serialize("booleans", booleans)
       .Serialize("floats", floats)
       .Serialize("integers", integers);
   }

@@ -14,7 +14,8 @@ struct CraftItemMessage : public MessageBase<CraftItemMessage>
     template <class Archive>
     void Serialize(Archive& archive)
     {
-      archive.Serialize("workbench", workbench)
+      archive.Serialize("t", kMsgType)
+        .Serialize("workbench", workbench)
         .Serialize("craftInputObjects", craftInputObjects)
         .Serialize("resultObjectId", resultObjectId);
     }
