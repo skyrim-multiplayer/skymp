@@ -1,11 +1,9 @@
 #pragma once
+
 #include "AnimationData.h"
 #include "ConsoleCommands.h"
 #include "MpActor.h"
 #include "PartOne.h"
-#include "UpdateMovementMessage.h" // RunMode
-#include "libespm/Loader.h"
-
 #include "SpellCastData.h"
 
 class ServerState;
