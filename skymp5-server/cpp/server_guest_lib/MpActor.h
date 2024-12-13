@@ -1,15 +1,14 @@
 #pragma once
-#include "AnimationData.h"
-#include "Appearance.h"
-#include "GetBaseActorValues.h"
-#include "MpObjectReference.h"
-#include "libespm/espm.h"
+
 #include <map>
 #include <memory>
 #include <optional>
-#include <set>
 
+#include "AnimationData.h"
+#include "Appearance.h"
 #include "DeathStateContainerMessage.h"
+#include "GetBaseActorValues.h"
+#include "MpObjectReference.h"
 
 class WorldState;
 struct ActorValues;
