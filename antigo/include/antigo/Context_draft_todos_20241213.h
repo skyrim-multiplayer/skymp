@@ -57,6 +57,7 @@ struct Context/*WithLine : public Context*/ {
   // we can get these messages, e.g. in case of an exception
   // TODO: should be disableable with 0 performance loss
   // alternatively, return spdlog logger that logs to this context
+  // maybe context should receive spdlog for this purpose
   template <class... T>
   void AddMessage(T&&... spdlogArgs);
 
@@ -89,7 +90,7 @@ ThreadData& GetThreadData();
 // should also print a command to run to debug the crash with gdb
 void SetupTerminateHandler();
 
-// TODO: detect catch that
+// TODO: detect catch that didn't pop exception witness
 /*
   0 << thrown
   1
@@ -103,5 +104,6 @@ void SetupTerminateHandler();
 */
 // maybe we should detect in destructor of 3/4?
 // probably in 3. We can see that we're no longer in the stack unwinding process
+// then we probably push it to some other struct and let some loop fetch unhandled witnesses
 
 }
