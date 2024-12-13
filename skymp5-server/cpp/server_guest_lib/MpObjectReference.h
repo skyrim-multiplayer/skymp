@@ -215,16 +215,10 @@ protected:
 
   void EnsureBaseContainerAdded(espm::Loader& espm);
 
-  // // XXX ensure not used before merging?
-  // [[deprecated]]
-  // void SendPropertyToListeners(const char* name, const nlohmann::json& value);
-
   void SendMessageToActorListeners(const IMessageBase& msg,
                                    bool reliable) const;
 
-  void SendPropertyTo(const char* name, const nlohmann::json& value,
-                      MpActor& target);
-  void SendMessageTo(const IMessageBase& preparedPropMsg, MpActor& target);
+  // void SendMessageTo(const IMessageBase& preparedPropMsg, MpActor& target);
 
 private:
   void AddContainerObject(const espm::CONT::ContainerObject& containerObject,
