@@ -1,5 +1,7 @@
+import { MsgType } from "../../messages";
+
 export interface TeleportMessage2 {
-    type: "teleport";
+    t: MsgType.Teleport2;
     pos: number[];
     rot: number[];
     worldOrCell: number;

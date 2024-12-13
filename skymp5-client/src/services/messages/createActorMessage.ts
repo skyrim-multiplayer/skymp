@@ -3,11 +3,12 @@ import { Equipment } from "../../sync/equipment";
 import { Inventory } from "../../sync/inventory";
 import { Transform } from "../../sync/movement";
 import { Animation } from "../../sync/animation";
+import { MsgType } from "src/messages";
 
 export interface CreateActorMessage extends CreateActorMessageMainProps {
-    type: "createActor";
+    t: MsgType.CreateActor,
     idx: number;
-    baseRecordType: "DOOR" | undefined; // see PartOne.cpp
+    baseRecordType?: "DOOR"; // see PartOne.cpp
     transform: Transform;
     isMe: boolean;
     props?: CreateActorMessageAdditionalProps;

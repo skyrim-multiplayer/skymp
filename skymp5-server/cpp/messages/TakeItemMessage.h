@@ -1,3 +1,4 @@
+#pragma once
 #include "Inventory.h"
 #include "MessageBase.h"
 #include "MsgType.h"

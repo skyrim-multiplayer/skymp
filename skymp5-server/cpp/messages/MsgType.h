@@ -35,10 +35,10 @@ enum class MsgType : uint8_t
   HostStop = 27,
   SetInventory = 28,
   SetRaceMenuOpen = 29,
-  SpellCast = 30,
-  SpSnippet = 31,
-  Teleport2 = 32,
-  UpdateGamemodeData = 33,
+  SpSnippet = 30,
+  Teleport2 = 31,
+  UpdateGamemodeData = 32,
+  CreateActor = 33
 
   Max
 };

@@ -1,6 +1,7 @@
 #pragma once
 #include "ActivateMessage.h"
 #include "ChangeValuesMessage.h"
+#include "CreateActorMessage.h"
 #include "CustomPacketMessage.h"
 #include "DeathStateContainerMessage.h"
 #include "HostStartMessage.h"
@@ -56,4 +57,5 @@
   REGISTER_MESSAGE(TeleportMessage2)                                          \
   REGISTER_MESSAGE(UpdateAnimVariablesMessage)                                \
   REGISTER_MESSAGE(UpdateAppearanceMessage)                                   \
-  REGISTER_MESSAGE(UpdateGameModeDataMessage)
+  REGISTER_MESSAGE(UpdateGameModeDataMessage)                                 \
+  REGISTER_MESSAGE(CreateActorMessage)

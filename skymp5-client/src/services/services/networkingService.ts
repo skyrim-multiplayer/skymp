@@ -79,118 +79,113 @@ export class NetworkingService extends ClientListener {
           // TODO: in theory can be empty jsonContent and non-empty error
           const msgAny: AnyMessage = JSON.parse(jsonContent);
 
-          if ("type" in msgAny) {
-            if (msgAny.type === "createActor") {
-              const event = { message: msgAny };
-              this.controller.emitter.emit("createActorMessage", event);
-              this.controller.emitter.emit("anyMessage", event);
-            }
-            else if (msgAny.type === "customPacket") {
-              const event = { message: msgAny };
-              this.controller.emitter.emit("customPacketMessage2", event);
-              this.controller.emitter.emit("anyMessage", event);
-            }
-            else if (msgAny.type === "destroyActor") {
-              const event = { message: msgAny };
-              this.controller.emitter.emit("destroyActorMessage", event);
-              this.controller.emitter.emit("anyMessage", event);
-            }
-            else if (msgAny.type === "hostStart") {
-              const event = { message: msgAny };
-              this.controller.emitter.emit("hostStartMessage", event);
-              this.controller.emitter.emit("anyMessage", event);
-            }
-            else if (msgAny.type === "hostStop") {
-              const event = { message: msgAny };
-              this.controller.emitter.emit("hostStopMessage", event);
-              this.controller.emitter.emit("anyMessage", event);
-            }
-            else if (msgAny.type === "setInventory") {
-              const event = { message: msgAny };
-              this.controller.emitter.emit("setInventoryMessage", event);
-              this.controller.emitter.emit("anyMessage", event);
-            }
-            else if (msgAny.type === "setRaceMenuOpen") {
-              const event = { message: msgAny };
-              this.controller.emitter.emit("setRaceMenuOpenMessage", event);
-              this.controller.emitter.emit("anyMessage", event);
-            }
-            else if (msgAny.type === "spSnippet") {
-              const event = { message: msgAny };
-              this.controller.emitter.emit("spSnippetMessage", event);
-              this.controller.emitter.emit("anyMessage", event);
-            }
-            else if (msgAny.type === "updateGamemodeData") {
-              const event = { message: msgAny };
-              this.controller.emitter.emit("updateGamemodeDataMessage", event);
-              this.controller.emitter.emit("anyMessage", event);
-            }
-            else if (msgAny.type === "teleport") {
-              const event = { message: msgAny };
-              this.controller.emitter.emit("teleportMessage2", event);
-              this.controller.emitter.emit("anyMessage", event);
-            }
-            else {
-              throw new NeverError(msgAny);
-            }
+          if (msgAny.t === MsgType.OpenContainer) {
+            const event = { message: msgAny };
+            this.controller.emitter.emit("openContainerMessage", event);
+            this.controller.emitter.emit("anyMessage", event);
+          }
+          else if (msgAny.t === MsgType.UpdateMovement) {
+            const event = { message: msgAny };
+            this.controller.emitter.emit("updateMovementMessage", event)
+            this.controller.emitter.emit("anyMessage", event);
+          }
+          else if (msgAny.t === MsgType.UpdateAnimation) {
+            const event = { message: msgAny };
+            this.controller.emitter.emit("updateAnimationMessage", event);
+            this.controller.emitter.emit("anyMessage", event);
+          }
+          else if (msgAny.t === MsgType.UpdateEquipment) {
+            const event = { message: msgAny };
+            this.controller.emitter.emit("updateEquipmentMessage", event);
+            this.controller.emitter.emit("anyMessage", event);
+          }
+          else if (msgAny.t === MsgType.ChangeValues) {
+            const event = { message: msgAny };
+            this.controller.emitter.emit("changeValuesMessage", event);
+            this.controller.emitter.emit("anyMessage", event);
+          }
+          else if (msgAny.t === MsgType.SpellCast) {
+            const event = { message: msgAny };
+            this.controller.emitter.emit("spellCastMessage", event);
+            this.controller.emitter.emit("anyMessage", event);
+          }
+          else if (msgAny.t === MsgType.UpdateAnimVariables) {
+            const event = { message: msgAny };
+            this.controller.emitter.emit("updateAnimVariablesMessage", event);
+            this.controller.emitter.emit("anyMessage", event);
+          }
+          else if (msgAny.t === MsgType.UpdateAppearance) {
+            const event = { message: msgAny };
+            this.controller.emitter.emit("updateAppearanceMessage", event);
+            this.controller.emitter.emit("anyMessage", event);
+          }
+          else if (msgAny.t === MsgType.Teleport) {
+            const event = { message: msgAny };
+            this.controller.emitter.emit("teleportMessage", event);
+            this.controller.emitter.emit("anyMessage", event);
+          }
+          else if (msgAny.t === MsgType.UpdateProperty) {
+            const event = { message: msgAny };
+            this.controller.emitter.emit("updatePropertyMessage", event);
+            this.controller.emitter.emit("anyMessage", event);
+          }
+          else if (msgAny.t === MsgType.DeathStateContainer) {
+            const event = { message: msgAny };
+            this.controller.emitter.emit("deathStateContainerMessage", event);
+            this.controller.emitter.emit("anyMessage", event);
+          }
+          else if (msgAny.t === MsgType.CreateActor) {
+            const event = { message: msgAny };
+            this.controller.emitter.emit("createActorMessage", event);
+            this.controller.emitter.emit("anyMessage", event);
+          }
+          else if (msgAny.t === MsgType.CustomPacket) {
+            const event = { message: msgAny };
+            this.controller.emitter.emit("customPacketMessage2", event);
+            this.controller.emitter.emit("anyMessage", event);
+          }
+          else if (msgAny.t === MsgType.DestroyActor) {
+            const event = { message: msgAny };
+            this.controller.emitter.emit("destroyActorMessage", event);
+            this.controller.emitter.emit("anyMessage", event);
+          }
+          else if (msgAny.t === MsgType.HostStart) {
+            const event = { message: msgAny };
+            this.controller.emitter.emit("hostStartMessage", event);
+            this.controller.emitter.emit("anyMessage", event);
+          }
+          else if (msgAny.t === MsgType.HostStop) {
+            const event = { message: msgAny };
+            this.controller.emitter.emit("hostStopMessage", event);
+            this.controller.emitter.emit("anyMessage", event);
+          }
+          else if (msgAny.t === MsgType.SetInventory) {
+            const event = { message: msgAny };
+            this.controller.emitter.emit("setInventoryMessage", event);
+            this.controller.emitter.emit("anyMessage", event);
+          }
+          else if (msgAny.t === MsgType.SetRaceMenuOpen) {
+            const event = { message: msgAny };
+            this.controller.emitter.emit("setRaceMenuOpenMessage", event);
+            this.controller.emitter.emit("anyMessage", event);
+          }
+          else if (msgAny.t === MsgType.SpSnippet) {
+            const event = { message: msgAny };
+            this.controller.emitter.emit("spSnippetMessage", event);
+            this.controller.emitter.emit("anyMessage", event);
+          }
+          else if (msgAny.t === MsgType.UpdateGamemodeData) {
+            const event = { message: msgAny };
+            this.controller.emitter.emit("updateGamemodeDataMessage", event);
+            this.controller.emitter.emit("anyMessage", event);
+          }
+          else if (msgAny.t === MsgType.Teleport2) {
+            const event = { message: msgAny };
+            this.controller.emitter.emit("teleportMessage2", event);
+            this.controller.emitter.emit("anyMessage", event);
           }
           else {
-            if (msgAny.t === MsgType.OpenContainer) {
-              const event = { message: msgAny };
-              this.controller.emitter.emit("openContainerMessage", event);
-              this.controller.emitter.emit("anyMessage", event);
-            }
-            else if (msgAny.t === MsgType.UpdateMovement) {
-              const event = { message: msgAny };
-              this.controller.emitter.emit("updateMovementMessage", event)
-              this.controller.emitter.emit("anyMessage", event);
-            }
-            else if (msgAny.t === MsgType.UpdateAnimation) {
-              const event = { message: msgAny };
-              this.controller.emitter.emit("updateAnimationMessage", event);
-              this.controller.emitter.emit("anyMessage", event);
-            }
-            else if (msgAny.t === MsgType.UpdateEquipment) {
-              const event = { message: msgAny };
-              this.controller.emitter.emit("updateEquipmentMessage", event);
-              this.controller.emitter.emit("anyMessage", event);
-            }
-            else if (msgAny.t === MsgType.ChangeValues) {
-              const event = { message: msgAny };
-              this.controller.emitter.emit("changeValuesMessage", event);
-              this.controller.emitter.emit("anyMessage", event);
-            }
-            else if (msgAny.t === MsgType.SpellCast) {
-              const event = { message: msgAny };
-              this.controller.emitter.emit("spellCastMessage", event);
-              this.controller.emitter.emit("anyMessage", event);
-            }
-            else if (msgAny.t === MsgType.UpdateAnimVariables) {
-              const event = { message: msgAny };
-              this.controller.emitter.emit("updateAnimVariablesMessage", event);
-              this.controller.emitter.emit("anyMessage", event);
-            }
-            else if (msgAny.t === MsgType.UpdateAppearance) {
-              const event = { message: msgAny };
-              this.controller.emitter.emit("updateAppearanceMessage", event);
-              this.controller.emitter.emit("anyMessage", event);
-            }
-            else if (msgAny.t === MsgType.Teleport) {
-              const event = { message: msgAny };
-              this.controller.emitter.emit("teleportMessage", event);
-              this.controller.emitter.emit("anyMessage", event);
-            }
-            else if (msgAny.t === MsgType.UpdateProperty) {
-              const event = { message: msgAny };
-              this.controller.emitter.emit("updatePropertyMessage", event);
-              this.controller.emitter.emit("anyMessage", event);
-            }
-            else if (msgAny.t === MsgType.DeathStateContainer) {
-              const event = { message: msgAny };
-              this.controller.emitter.emit("deathStateContainerMessage", event);
-              this.controller.emitter.emit("anyMessage", event);
-            }
-            // todo: never error
+            throw new NeverError(msgAny);
           }
           break;
       }

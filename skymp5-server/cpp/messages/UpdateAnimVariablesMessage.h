@@ -1,3 +1,4 @@
+#pragma once
 #include "MessageBase.h"
 #include "MsgType.h"
 #include "UpdateAnimVariablesMessage.h" // ActorAnimationVariables
