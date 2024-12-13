@@ -42,14 +42,14 @@
   REGISTER_MESSAGE(UpdatePropertyMessage)                                     \
   REGISTER_MESSAGE(OpenContainerMessage)                                      \
   REGISTER_MESSAGE(UpdateEquipmentMessage)                                    \
-  REGISTER_MESSAGE(CustomPacketMessage.h)                                     \
-  REGISTER_MESSAGE(HostStartMessage.h)                                        \
-  REGISTER_MESSAGE(HostStopMessage.h)                                         \
-  REGISTER_MESSAGE(OnEquipMessage.h)                                          \
-  REGISTER_MESSAGE(PlayerBowShotMessage.h)                                    \
-  REGISTER_MESSAGE(PutItemMessage.h)                                          \
-  REGISTER_MESSAGE(SetInventoryMessage.h)                                     \
-  REGISTER_MESSAGE(SetRaceMenuOpenMessage.h)                                  \
+  REGISTER_MESSAGE(CustomPacketMessage)                                       \
+  REGISTER_MESSAGE(HostStartMessage)                                          \
+  REGISTER_MESSAGE(HostStopMessage)                                           \
+  REGISTER_MESSAGE(OnEquipMessage)                                            \
+  REGISTER_MESSAGE(PlayerBowShotMessage)                                      \
+  REGISTER_MESSAGE(PutItemMessage)                                            \
+  REGISTER_MESSAGE(SetInventoryMessage)                                       \
+  REGISTER_MESSAGE(SetRaceMenuOpenMessage)                                    \
   REGISTER_MESSAGE(SpellCastMessage)                                          \
   REGISTER_MESSAGE(SpSnippetMessage)                                          \
   REGISTER_MESSAGE(TakeItemMessage)                                           \
