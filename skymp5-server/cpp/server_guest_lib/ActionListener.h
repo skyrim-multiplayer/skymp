@@ -19,7 +19,6 @@ public:
   {
     Networking::PacketData unparsed = nullptr;
     size_t unparsedLength = 0;
-    simdjson::dom::element parsed;
     Networking::UserId userId = Networking::InvalidUserId;
   };
 
@@ -96,8 +95,6 @@ public:
 
   virtual void OnSpellCast(const RawMessageData& rawMsgData,
                            const SpellCastData& spellCastData);
-
-  virtual void OnUnknown(const RawMessageData& rawMsgData);
 
 private:
   // Returns user's actor if there is attached one

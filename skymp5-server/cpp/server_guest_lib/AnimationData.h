@@ -4,10 +4,16 @@
 
 struct AnimationData
 {
-  AnimationData();
+  // TODO: get rid of FromJson method in favor of archives
+  static AnimationData FromJson(const simdjson::dom::element& element);
+
+  template <class Archive>
+  void Serialize(Archive& archive)
+  {
+    archive.Serialize("animEventName", animEventName)
+      .Serialize("numChanges", numChanges);
+  }
 
   std::string animEventName;
-  uint32_t numChanges;
-
-  static AnimationData FromJson(const simdjson::dom::element& data);
+  uint32_t numChanges = 0;
 };

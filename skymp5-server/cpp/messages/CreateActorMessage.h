@@ -1,4 +1,8 @@
 #pragma once
+#include "../server_guest_lib/AnimationData.h"
+#include "../server_guest_lib/Appearance.h"
+#include "../server_guest_lib/Equipment.h"
+#include "../server_guest_lib/Inventory.h"
 #include "MessageBase.h"
 #include "MsgType.h"
 #include <map>
@@ -22,7 +26,8 @@ struct Transform
 struct CreateActorMessageAdditionalProps
 {
   template <class Archive>
-  void Serialize(Archive& archive){
+  void Serialize(Archive& archive)
+  {
     archive.Serialize("isOpen", isOpen)
       .Serialize("setNodeTextureSet", setNodeTextureSet)
       .Serialize("setNodeScale", setNodeScale)
@@ -44,6 +49,9 @@ struct CreateActorMessageAdditionalProps
       .Serialize("healthPercentage", healthPercentage)
       .Serialize("staminaPercentage", staminaPercentage)
       .Serialize("magickaPercentage", magickaPercentage)
+      .Serialize("templateChain", templateChain)
+      .Serialize("inventory", inventory)
+      .Serialize("isDead", isDead);
   }
 
   std::optional<bool> isOpen;
@@ -70,8 +78,8 @@ struct CreateActorMessageAdditionalProps
   std::optional<std::vector<uint32_t>> templateChain;
   std::optional<Inventory> inventory;
 
-  std::optional<bool>
-    isDead; // TODO: take a look why doubles CreateActorMessageMainProps
+  // TODO: take a look why doubles CreateActorMessageMainProps
+  std::optional<bool> isDead;
 };
 
 struct CreateActorMessageMainProps
@@ -91,7 +99,7 @@ struct CreateActorMessageMainProps
   std::optional<uint32_t> baseId = 0;
   std::optional<Appearance> appearance;
   std::optional<Equipment> equipment;
-  std::optional<Animation> animation;
+  std::optional<AnimationData> animation;
   std::optional<bool> isDead;
 };
 

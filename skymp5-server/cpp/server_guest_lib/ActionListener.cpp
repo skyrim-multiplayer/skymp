@@ -1201,9 +1201,3 @@ void ActionListener::OnSpellCast(const RawMessageData& rawMsgData,
     spellCastData.target, spellCastData.spell, damage, spellCastData.caster,
     static_cast<uint32_t>(spellCastData.castingSource));
 }
-
-void ActionListener::OnUnknown(const RawMessageData& rawMsgData)
-{
-  spdlog::error("Got unhandled message: {}",
-                simdjson::minify(rawMsgData.parsed));
-}
