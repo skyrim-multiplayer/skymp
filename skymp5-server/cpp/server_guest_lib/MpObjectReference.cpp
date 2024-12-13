@@ -570,7 +570,7 @@ void MpObjectReference::SetHarvested(bool harvested)
       changeForm.isHarvested = harvested;
     });
     SendMessageToActorListeners(
-      CreatePropertyMessage(this, "isHarvested", /*value=*/true),
+      CreatePropertyMessage(this, "isHarvested", /*value=*/harvested),
       /*reliable=*/true);
   }
 }
@@ -581,7 +581,7 @@ void MpObjectReference::SetOpen(bool open)
     EditChangeForm(
       [&](MpChangeFormREFR& changeForm) { changeForm.isOpen = open; });
     SendMessageToActorListeners(
-      CreatePropertyMessage(this, "isOpen", /*value=*/true),
+      CreatePropertyMessage(this, "isOpen", /*value=*/open),
       /*reliable=*/true);
   }
 }
