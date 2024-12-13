@@ -1,5 +1,6 @@
 #include "AppearanceBinding.h"
 #include "NapiHelper.h"
+#include "UpdateAppearanceMessage.h"
 
 Napi::Value AppearanceBinding::Get(Napi::Env env, ScampServer& scampServer,
                                    uint32_t formId)
@@ -34,19 +35,13 @@ void AppearanceBinding::Set(Napi::Env env, ScampServer& scampServer,
 
   auto appearance = actor.GetAppearance();
 
-  std::string msg;
-  msg += Networking::MinPacketId;
-  msg += nlohmann::json{
-    { "data",
-      appearance ? nlohmann::json::parse(appearance->ToJson())
-                 : nlohmann::json{} },
-    { "idx", actor.GetIdx() },
-    { "t", MsgType::UpdateAppearance }
-  }.dump();
+  UpdateAppearanceMessage message;
+  message.appearance = appearance ? *appearance : std::nullopt;
+  message.idx = actor.GetIdx();
 
   for (auto listener : actor.GetActorListeners()) {
-    // TODO: change to SendToUser
-    listener->SendToUserDeferred(msg.data(), msg.size(), true,
-                                 kChannelAppearance, false);
+    // TODO: change to SendToUser, probably was deferred only for ability to
+    // send text packets
+    listener->SendToUserDeferred(message, true, kChannelAppearance, false);
   }
 }

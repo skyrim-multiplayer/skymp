@@ -68,7 +68,7 @@ public:
   void Disable() override;
 
   void SendToUser(const IMessageBase& message, bool reliable);
-  void SendToUserDeferred(const void* data, size_t size, bool reliable,
+  void SendToUserDeferred(const IMessageBase& message, bool reliable,
                           int deferredChannelId,
                           bool overwritePreviousChannelMessages);
 
