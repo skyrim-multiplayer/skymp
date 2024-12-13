@@ -569,7 +569,7 @@ void MpObjectReference::SetHarvested(bool harvested)
     EditChangeForm([&](MpChangeFormREFR& changeForm) {
       changeForm.isHarvested = harvested;
     });
-    SendPropertyToListeners("isHarvested", harvested);
+    SendMessageToActorListeners(CreatePropertyMessage(this, "isHarvested", /*value=*/true), /*reliable=*/true);
   }
 }
 
@@ -578,7 +578,7 @@ void MpObjectReference::SetOpen(bool open)
   if (open != ChangeForm().isOpen) {
     EditChangeForm(
       [&](MpChangeFormREFR& changeForm) { changeForm.isOpen = open; });
-    SendPropertyToListeners("isOpen", open);
+    SendMessageToActorListeners(CreatePropertyMessage(this, "isOpen", /*value=*/true), /*reliable=*/true);
   }
 }
 
@@ -1938,12 +1938,14 @@ void MpObjectReference::CheckInteractionAbility(MpObjectReference& refr)
   }
 }
 
+/*
 void MpObjectReference::SendPropertyToListeners(const char* name,
                                                 const nlohmann::json& value)
 {
   auto msg = CreatePropertyMessage(this, name, value);
-  SendMessageToActorListeners(msg, /*reliable*/ true);
+  SendMessageToActorListeners(msg, reliable= true);
 }
+*/
 
 void MpObjectReference::SendMessageToActorListeners(const IMessageBase& msg,
                                                     bool reliable) const

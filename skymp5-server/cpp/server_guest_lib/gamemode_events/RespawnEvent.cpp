@@ -27,5 +27,5 @@ void RespawnEvent::OnFireSuccess(WorldState*)
   actor->SendAndSetDeathState(false, shouldTeleport);
 
   // TODO: should probably not sending to ourselves. see also RespawnTest.cpp
-  actor->SendPropertyToListeners("isDead", false);
+  actor->SendMessageToActorListeners(actor->CreatePropertyMessage(actor, "isDead", /*value=*/false), /*reliable=*/true);
 }

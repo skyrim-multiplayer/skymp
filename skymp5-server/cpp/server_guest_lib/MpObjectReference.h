@@ -215,9 +215,9 @@ protected:
 
   void EnsureBaseContainerAdded(espm::Loader& espm);
 
-  // XXX ensure not used before merging?
-  [[deprecated]]
-  void SendPropertyToListeners(const char* name, const nlohmann::json& value);
+  // // XXX ensure not used before merging?
+  // [[deprecated]]
+  // void SendPropertyToListeners(const char* name, const nlohmann::json& value);
 
   void SendMessageToActorListeners(const IMessageBase& msg,
                                    bool reliable) const;
