@@ -1,3 +1,26 @@
+#include <map>
+#include <numeric>
+#include <optional>
+
+// viet
+#include "ScopedTask.h"
+#include "TimeUtils.h"
+
+// libespm
+#include "libespm/CompressedFieldsCache.h"
+#include "libespm/Convert.h"
+#include "libespm/GroupUtils.h"
+#include "libespm/Utils.h"
+
+// papyrus vm
+#include "papyrus-vm/Utils.h"
+#include "papyrus-vm/VirtualMachine.h"
+
+// server
+#include "OpenContainerMessage.h"
+#include "TeleportMessage.h"
+
+// server_guest_lib
 #include "MpObjectReference.h"
 #include "ChangeFormGuard.h"
 #include "EvaluateTemplate.h"
@@ -5,34 +28,16 @@
 #include "GetWeightFromRecord.h"
 #include "Inventory.h"
 #include "LeveledListUtils.h"
-#include "MathUtils.h"
 #include "MpActor.h"
 #include "MpChangeForms.h"
-#include "MsgType.h"
 #include "Primitive.h"
-#include "ScopedTask.h"
 #include "ScriptVariablesHolder.h"
-#include "TimeUtils.h"
 #include "WorldState.h"
 #include "gamemode_events/ActivateEvent.h"
 #include "gamemode_events/PutItemEvent.h"
 #include "gamemode_events/TakeItemEvent.h"
-#include "libespm/CompressedFieldsCache.h"
-#include "libespm/Convert.h"
-#include "libespm/GroupUtils.h"
-#include "libespm/Utils.h"
-#include "papyrus-vm/Reader.h"
-#include "papyrus-vm/Utils.h" // stricmp
-#include "papyrus-vm/VirtualMachine.h"
 #include "script_objects/EspmGameObject.h"
 #include "script_storages/IScriptStorage.h"
-#include <map>
-#include <numeric>
-#include <optional>
-
-#include "OpenContainerMessage.h"
-#include "TeleportMessage.h"
-
 #include "script_classes/PapyrusObjectReference.h" // kOriginalNameExpression
 
 constexpr uint32_t kPlayerCharacterLevel = 1;
