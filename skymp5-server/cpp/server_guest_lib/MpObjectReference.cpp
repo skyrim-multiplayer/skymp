@@ -569,7 +569,9 @@ void MpObjectReference::SetHarvested(bool harvested)
     EditChangeForm([&](MpChangeFormREFR& changeForm) {
       changeForm.isHarvested = harvested;
     });
-    SendMessageToActorListeners(CreatePropertyMessage(this, "isHarvested", /*value=*/true), /*reliable=*/true);
+    SendMessageToActorListeners(
+      CreatePropertyMessage(this, "isHarvested", /*value=*/true),
+      /*reliable=*/true);
   }
 }
 
@@ -578,7 +580,9 @@ void MpObjectReference::SetOpen(bool open)
   if (open != ChangeForm().isOpen) {
     EditChangeForm(
       [&](MpChangeFormREFR& changeForm) { changeForm.isOpen = open; });
-    SendMessageToActorListeners(CreatePropertyMessage(this, "isOpen", /*value=*/true), /*reliable=*/true);
+    SendMessageToActorListeners(
+      CreatePropertyMessage(this, "isOpen", /*value=*/true),
+      /*reliable=*/true);
   }
 }
 
@@ -1453,7 +1457,9 @@ void MpObjectReference::ProcessActivateNormal(
         this->occupant->RemoveEventSink(this->occupantDestroySink);
       }
       SetOpen(true);
-      actorActivator->SendToUser(CreatePropertyMessage(this, "inventory", GetInventory().ToJson()), /*reliable=*/true);
+      actorActivator->SendToUser(
+        CreatePropertyMessage(this, "inventory", GetInventory().ToJson()),
+        /*reliable=*/true);
       activationSource.SendOpenContainer(GetFormId());
 
       this->occupant = actorActivator;
