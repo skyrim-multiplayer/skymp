@@ -6,6 +6,7 @@
 #include "Inventory.h"
 #include "LeveledListUtils.h"
 #include "MathUtils.h"
+#include "MessageBase.h"
 #include "MpActor.h"
 #include "MpChangeForms.h"
 #include "MsgType.h"
@@ -13,6 +14,7 @@
 #include "ScopedTask.h"
 #include "ScriptVariablesHolder.h"
 #include "TimeUtils.h"
+#include "UpdatePropertyMessage.h"
 #include "WorldState.h"
 #include "gamemode_events/ActivateEvent.h"
 #include "gamemode_events/PutItemEvent.h"
@@ -567,7 +569,9 @@ void MpObjectReference::SetHarvested(bool harvested)
     EditChangeForm([&](MpChangeFormREFR& changeForm) {
       changeForm.isHarvested = harvested;
     });
-    SendPropertyToListeners("isHarvested", harvested);
+    SendMessageToActorListeners(
+      CreatePropertyMessage(this, "isHarvested", /*value=*/harvested),
+      /*reliable=*/true);
   }
 }
 
@@ -576,7 +580,9 @@ void MpObjectReference::SetOpen(bool open)
   if (open != ChangeForm().isOpen) {
     EditChangeForm(
       [&](MpChangeFormREFR& changeForm) { changeForm.isOpen = open; });
-    SendPropertyToListeners("isOpen", open);
+    SendMessageToActorListeners(
+      CreatePropertyMessage(this, "isOpen", /*value=*/open),
+      /*reliable=*/true);
   }
 }
 
@@ -686,26 +692,28 @@ void MpObjectReference::UpdateHoster(uint32_t newHosterId)
   auto hostedMsg = CreatePropertyMessage(this, "isHostedByOther", true);
   auto notHostedMsg = CreatePropertyMessage(this, "isHostedByOther", false);
   for (auto listener : this->GetActorListeners()) {
-    this->SendPropertyTo(
-      newHosterId != 0 && newHosterId != listener->GetFormId() ? hostedMsg
-                                                               : notHostedMsg,
-      *listener);
+    if (newHosterId != 0 && newHosterId != listener->GetFormId()) {
+      listener->SendToUser(hostedMsg, /*reliable=*/true);
+    } else {
+      listener->SendToUser(notHostedMsg, /*reliable=*/true);
+    }
   }
 }
 
 void MpObjectReference::SetProperty(const std::string& propertyName,
-                                    const nlohmann::json& newValue,
+                                    nlohmann::json newValue,
                                     bool isVisibleByOwner,
                                     bool isVisibleByNeighbor)
 {
+  auto msg = CreatePropertyMessage(this, propertyName.c_str(), newValue);
   EditChangeForm([&](MpChangeFormREFR& changeForm) {
-    changeForm.dynamicFields.Set(propertyName, newValue);
+    changeForm.dynamicFields.Set(propertyName, std::move(newValue));
   });
   if (isVisibleByNeighbor) {
-    SendPropertyToListeners(propertyName.data(), newValue);
+    SendMessageToActorListeners(msg, /*reliable=*/true);
   } else if (isVisibleByOwner) {
     if (auto ac = AsActor()) {
-      SendPropertyTo(propertyName.data(), newValue, *ac);
+      ac->SendToUser(msg, /*reliable=*/true);
     }
   }
   pImpl->setPropertyCalled = true;
@@ -1449,7 +1457,9 @@ void MpObjectReference::ProcessActivateNormal(
         this->occupant->RemoveEventSink(this->occupantDestroySink);
       }
       SetOpen(true);
-      SendPropertyTo("inventory", GetInventory().ToJson(), *actorActivator);
+      actorActivator->SendToUser(
+        CreatePropertyMessage(this, "inventory", GetInventory().ToJson()),
+        /*reliable=*/true);
       activationSource.SendOpenContainer(GetFormId());
 
       this->occupant = actorActivator;
@@ -1935,27 +1945,12 @@ void MpObjectReference::CheckInteractionAbility(MpObjectReference& refr)
   }
 }
 
-void MpObjectReference::SendPropertyToListeners(const char* name,
-                                                const nlohmann::json& value)
+void MpObjectReference::SendMessageToActorListeners(const IMessageBase& msg,
+                                                    bool reliable) const
 {
-  auto msg = CreatePropertyMessage(this, name, value);
   for (auto listener : GetActorListeners()) {
     listener->SendToUser(msg, true);
   }
-}
-
-void MpObjectReference::SendPropertyTo(const char* name,
-                                       const nlohmann::json& value,
-                                       MpActor& target)
-{
-  auto msg = CreatePropertyMessage(this, name, value);
-  SendPropertyTo(msg, target);
-}
-
-void MpObjectReference::SendPropertyTo(const IMessageBase& preparedPropMsg,
-                                       MpActor& target)
-{
-  target.SendToUser(preparedPropMsg, true);
 }
 
 void MpObjectReference::BeforeDestroy()
