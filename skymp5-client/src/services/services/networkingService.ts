@@ -141,7 +141,7 @@ export class NetworkingService extends ClientListener {
           }
           else if (msgAny.t === MsgType.CustomPacket) {
             const event = { message: msgAny };
-            this.controller.emitter.emit("customPacketMessage2", event);
+            this.controller.emitter.emit("customPacketMessage", event);
             this.controller.emitter.emit("anyMessage", event);
           }
           else if (msgAny.t === MsgType.DestroyActor) {
@@ -185,7 +185,8 @@ export class NetworkingService extends ClientListener {
             this.controller.emitter.emit("anyMessage", event);
           }
           else {
-            throw new NeverError(msgAny);
+            // throw new NeverError(msgAny);
+            throw new Error("Unhandled MsgType " + msgAny.t);
           }
           break;
       }
