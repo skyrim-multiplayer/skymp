@@ -5,30 +5,40 @@
 #include "script_objects/EspmGameObject.h"
 #include "script_objects/MpFormGameObject.h"
 #include <nlohmann/json.hpp>
-#include <sstream>
+#include <spdlog/spdlog.h>
 
-uint32_t SpSnippetFunctionGen::GetFormId(VarValue varValue)
+uint32_t SpSnippetFunctionGen::GetFormId(const VarValue& varValue)
 {
-  if (auto form = GetFormPtr<MpForm>(varValue))
-    return form->GetFormId();
-  if (auto record = GetRecordPtr(varValue); record.rec)
-    return record.ToGlobalId(record.rec->GetId());
-  if (varValue == VarValue::None())
+  if (varValue == VarValue::None()) {
     return 0;
-  std::stringstream ss;
-  ss << varValue << " is not a valid Papyrus object";
-  throw std::runtime_error(ss.str());
+  }
+
+  if (auto form = GetFormPtr<MpForm>(varValue)) {
+    return form->GetFormId();
+  }
+
+  if (auto record = GetRecordPtr(varValue); record.rec) {
+    return record.ToGlobalId(record.rec->GetId());
+  }
+
+  spdlog::error("SpSnippetFunctionGen::GetFormId - VarValue {} is not a valid "
+                "Papyrus object",
+                varValue.ToString());
+
+  return 0;
 }
 
-std::string SpSnippetFunctionGen::SerializeArguments(
+std::vector<std::optional<
+  std::variant<bool, double, std::string, SpSnippetObjectArgument>>>
+SpSnippetFunctionGen::SerializeArguments(
   const std::vector<VarValue>& arguments, MpActor* actor)
 {
-  std::stringstream ss;
-  ss << '[';
-  for (auto& arg : arguments) {
-    if (&arg != &arguments[0])
-      ss << ", ";
+  std::vector<std::optional<
+    std::variant<bool, double, std::string, SpSnippetObjectArgument>>>
+    result;
+  result.reserve(arguments.size());
 
+  for (auto& arg : arguments) {
     switch (arg.GetType()) {
       case VarValue::kType_Object: {
         auto formId = GetFormId(arg);
@@ -42,31 +52,33 @@ std::string SpSnippetFunctionGen::SerializeArguments(
 
         auto obj = static_cast<IGameObject*>(arg);
         auto type = obj ? obj->GetParentNativeScript() : "";
-        ss
-          << nlohmann::json({ { "formId", formId }, { "type", type } }).dump();
+
+        SpSnippetObjectArgument objectArg;
+        objectArg.formId = formId;
+        objectArg.type = type;
+        result.push_back(objectArg);
         break;
       }
       case VarValue::kType_String:
-        ss << nlohmann::json(static_cast<const char*>(arg)).dump();
+        result.push_back(std::string(static_cast<const char*>(arg)));
         break;
       case VarValue::kType_Bool:
-        ss << (static_cast<bool>(arg) ? "true" : "false");
+        result.push_back(static_cast<bool>(arg));
         break;
       case VarValue::kType_Integer:
-        ss << static_cast<int>(arg);
+        result.push_back(static_cast<double>(static_cast<int>(arg)));
         break;
       case VarValue::kType_Float:
-        ss << static_cast<double>(arg);
+        result.push_back(static_cast<double>(arg));
         break;
       default: {
-        std::stringstream err;
-        err << "Unable to serialize VarValue " << arg
-            << " due to unsupported type (" << static_cast<int>(arg.GetType())
-            << ")";
-        throw std::runtime_error(err.str());
+        spdlog::error("SpSnippetFunctionGen::SerializeArguments - Unable to "
+                      "serialize VarValue {} due to unsupported type ({})",
+                      arg.ToString(), static_cast<int>(arg.GetType()));
+        result.push_back(std::nullopt);
+        break;
       }
     }
   }
-  ss << ']';
-  return ss.str();
+  return result;
 }

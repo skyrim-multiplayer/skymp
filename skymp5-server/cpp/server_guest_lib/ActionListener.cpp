@@ -23,6 +23,8 @@
 #include <spdlog/spdlog.h>
 #include <unordered_set>
 
+#include "HostStartMessage.h"
+#include "HostStopMessage.h"
 #include "UpdateEquipmentMessage.h"
 
 MpActor* ActionListener::SendToNeighbours(
@@ -614,9 +616,9 @@ void ActionListener::OnHostAttempt(const RawMessageData& rawMsgData,
       longFormId += 0x100000000;
     }
 
-    Networking::SendFormatted(&partOne.GetSendTarget(), rawMsgData.userId,
-                              R"({ "type": "hostStart", "target": %llu })",
-                              longFormId);
+    HostStartMessage message;
+    message.target = longFormId;
+    partOne.GetSendTarget()->Send(rawMsgData.userId, message, true);
 
     // Otherwise, health percentage would remain unsynced until someone hits
     // npc
@@ -642,9 +644,9 @@ void ActionListener::OnHostAttempt(const RawMessageData& rawMsgData,
       auto prevHosterUser = partOne.serverState.UserByActor(prevHosterActor);
       if (prevHosterUser != Networking::InvalidUserId &&
           prevHosterUser != rawMsgData.userId) {
-        Networking::SendFormatted(&partOne.GetSendTarget(), prevHosterUser,
-                                  R"({ "type": "hostStop", "target": %llu })",
-                                  longFormId);
+        HostStopMessage message;
+        message.target = longFormId;
+        partOne.GetSendTarget()->Send(prevHosterUser, message, true);
       }
     }
   }

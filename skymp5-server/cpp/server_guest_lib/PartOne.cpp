@@ -13,15 +13,53 @@
 #include <type_traits>
 #include <vector>
 
+#include "CreateActorMessage.h"
+#include "CustomPacketMessage.h"
+#include "HostStopMessage.h"
+#include "SetRaceMenuOpenMessage.h"
+
+namespace {
+MessageSerializer& GetMessageSerializerInstance()
+{
+  static auto g_serializer =
+    MessageSerializerFactory::CreateMessageSerializer();
+  return *g_serializer;
+}
+}
+
+PartOneSendTargetWrapper::PartOneSendTargetWrapper(
+  Networking::ISendTarget& underlyingSendTarget_)
+  : underlyingSendTarget(underlyingSendTarget_)
+{
+}
+
+void PartOneSendTargetWrapper::Send(Networking::UserId targetUserId,
+                                    Networking::PacketData data, size_t length,
+                                    bool reliable)
+{
+  return underlyingSendTarget.Send(targetUserId, data, length, reliable);
+}
+
+void PartOneSendTargetWrapper::Send(Networking::UserId targetUserId,
+                                    const IMessageBase& message, bool reliable)
+{
+  SLNet::BitStream stream;
+
+  GetMessageSerializerInstance().Serialize(message, stream);
+
+  Send(targetUserId,
+       reinterpret_cast<Networking::PacketData>(stream.GetData()),
+       stream.GetNumberOfBytesUsed(), reliable);
+}
+
 class FakeSendTarget : public Networking::ISendTarget
 {
 public:
   void Send(Networking::UserId targetUserId, Networking::PacketData data,
             size_t length, bool reliable) override
   {
-    static auto g_serializer =
-      MessageSerializerFactory::CreateMessageSerializer();
-    auto deserializeResult = g_serializer->Deserialize(data, length);
+    auto deserializeResult =
+      GetMessageSerializerInstance().Deserialize(data, length);
     nlohmann::json j;
     if (deserializeResult) {
       deserializeResult->message->WriteJson(j);
@@ -52,7 +90,7 @@ struct PartOne::Impl
 
   std::shared_ptr<spdlog::logger> logger;
 
-  Networking::ISendTarget* sendTarget = nullptr;
+  std::unique_ptr<PartOneSendTargetWrapper> sendTarget;
   std::unique_ptr<IDamageFormula> damageFormula{};
   FakeSendTarget fakeSendTarget;
 
@@ -83,7 +121,11 @@ PartOne::~PartOne()
 
 void PartOne::SetSendTarget(Networking::ISendTarget* sendTarget)
 {
-  pImpl->sendTarget = sendTarget ? sendTarget : &pImpl->fakeSendTarget;
+  Networking::ISendTarget* underlyingSendTargetToSet =
+    sendTarget ? sendTarget : &pImpl->fakeSendTarget;
+
+  pImpl->sendTarget.reset(
+    new PartOneSendTargetWrapper(*underlyingSendTargetToSet));
 }
 
 void PartOne::SetDamageFormula(std::unique_ptr<IDamageFormula> dmgFormula)
@@ -218,28 +260,31 @@ void PartOne::SetRaceMenuOpen(uint32_t actorFormId, bool open)
 {
   auto& actor = worldState.GetFormAt<MpActor>(actorFormId);
 
-  if (actor.IsRaceMenuOpen() == open)
+  if (actor.IsRaceMenuOpen() == open) {
     return;
+  }
 
   actor.SetRaceMenuOpen(open);
 
   auto userId = serverState.UserByActor(&actor);
   if (userId == Networking::InvalidUserId) {
-    throw std::runtime_error(fmt::format(
-      "Actor with id {:#x} is not attached to any of users", actorFormId));
+    spdlog::warn(
+      "PartOne::SetRaceMenuOpen {:x} - actor is not attached to any of users",
+      actorFormId);
+    return;
   }
 
-  Networking::SendFormatted(pImpl->sendTarget, userId,
-                            R"({"type": "setRaceMenuOpen", "open": %s})",
-                            open ? "true" : "false");
+  SetRaceMenuOpenMessage message;
+  message.open = open;
+  pImpl->sendTarget->Send(userId, message, true);
 }
 
 void PartOne::SendCustomPacket(Networking::UserId userId,
                                const std::string& jContent)
 {
-  Networking::SendFormatted(pImpl->sendTarget, userId,
-                            R"({"type": "customPacket", "content":%s})",
-                            jContent.data());
+  CustomPacketMessage message;
+  message.contentJsonDump = jContent;
+  pImpl->sendTarget->Send(userId, message, true);
 }
 
 std::string PartOne::GetActorName(uint32_t actorFormId)
@@ -415,7 +460,7 @@ void PartOne::HandlePacket(void* partOneInstance, Networking::UserId userId,
   }
 }
 
-Networking::ISendTarget& PartOne::GetSendTarget() const
+PartOneSendTargetWrapper& PartOne::GetSendTarget() const
 {
   if (!pImpl->sendTarget) {
     throw std::runtime_error("No send target found");
@@ -532,16 +577,13 @@ void PartOne::SendHostStop(Networking::UserId badHosterUserId,
     longFormId += 0x100000000;
   }
 
-  Networking::SendFormatted(&GetSendTarget(), badHosterUserId,
-                            R"({ "type": "hostStop", "target": %llu })",
-                            longFormId);
+  HostStopMessage message;
+  message.target = longFormId;
+  GetSendTarget()->Send(badHosterUserId, message, true);
 }
 
 FormCallbacks PartOne::CreateFormCallbacks()
 {
-  static auto g_serializer =
-    MessageSerializerFactory::CreateMessageSerializer();
-
   auto st = &serverState;
 
   FormCallbacks::SubscribeCallback
@@ -557,12 +599,14 @@ FormCallbacks PartOne::CreateFormCallbacks()
   FormCallbacks::SendToUserFn sendToUser =
     [this, st](MpActor* actor, const IMessageBase& message, bool reliable) {
       SLNet::BitStream stream;
-      g_serializer->Serialize(message, stream);
+      GetMessageSerializerInstance().Serialize(message, stream);
 
       bool isOffline = st->UserByActor(actor) == Networking::InvalidUserId;
 
       // Only send to hoster if actor is offline (no active user)
       // This fixes December 2023 Update "invisible chat" bug
+      // TODO: make send-to-hoster mechanism explicit, instead of implicitly
+      // redirecting packets
       if (isOffline) {
         auto hosterIterator = worldState.hosters.find(actor->GetFormId());
         if (hosterIterator != worldState.hosters.end()) {
@@ -673,58 +717,40 @@ void PartOne::Init()
 
     MpActor* emitterAsActor = emitter->AsActor();
 
-    std::string jEquipment, jAppearance, jAnimation;
+    CreateActorMessage message;
 
-    const char *appearancePrefix = "", *appearance = "";
+    std::string jAnimation;
+
     if (emitterAsActor) {
-      jAppearance = emitterAsActor->GetAppearanceAsJson();
-      if (!jAppearance.empty()) {
-        appearancePrefix = R"(, "appearance": )";
-        appearance = jAppearance.data();
-      }
+      auto appearance = emitterAsActor->GetAppearance();
+      message.appearance = appearance
+        ? std::optional<Appearance>(*appearance)
+        : std::optional<Appearance>(std::nullopt);
     }
 
-    const char *equipmentPrefix = "", *equipment = "";
     if (emitterAsActor) {
-      jEquipment = emitterAsActor->GetEquipmentAsJson();
-      if (!jEquipment.empty()) {
-        equipmentPrefix = R"(, "equipment": )";
-        equipment = jEquipment.data();
-      }
+      message.equipment = emitterAsActor->GetEquipment();
     }
 
-    const char *animationPrefix = "", *animation = "";
     if (emitterAsActor) {
-      jAnimation = emitterAsActor->GetLastAnimEventAsJson();
-      if (!jAnimation.empty()) {
-        animationPrefix = R"(, "animation": )";
-        animation = jAnimation.data();
-      }
+      message.animation = emitterAsActor->GetLastAnimEvent();
     }
 
-    const char* refrIdPrefix = "";
-    char refrId[32] = { 0 };
-    refrIdPrefix = R"(, "refrId": )";
-
-    long long unsigned int longFormId = emitter->GetFormId();
+    uint64_t longFormId = emitter->GetFormId();
     if (emitterAsActor && longFormId < 0xff000000) {
       longFormId += 0x100000000;
     }
-    sprintf(refrId, "%llu", longFormId);
+    message.refrId = longFormId;
 
     const char* baseIdPrefix = "";
     char baseId[32] = { 0 };
     if (emitter->GetBaseId() != 0x00000000 &&
         emitter->GetBaseId() != 0x00000007) {
-      baseIdPrefix = R"(, "baseId": )";
-      sprintf(baseId, "%u", emitter->GetBaseId());
+      message.baseId = emitter->GetBaseId();
     }
 
-    const char* isDeadPrefix = "";
-    const char* isDead = "";
     if (emitterAsActor && emitterAsActor->IsDead()) {
-      isDeadPrefix = R"(, "isDead": )";
-      isDead = "\"true\"";
+      message.= true;
     }
 
     const bool isOwner = emitter == listener;

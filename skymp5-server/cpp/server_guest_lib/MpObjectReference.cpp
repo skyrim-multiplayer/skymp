@@ -31,6 +31,7 @@
 #include <optional>
 
 #include "OpenContainerMessage.h"
+#include "SetInventoryMessage.h"
 #include "TeleportMessage.h"
 
 #include "script_classes/PapyrusObjectReference.h" // kOriginalNameExpression
@@ -1761,14 +1762,9 @@ void MpObjectReference::SendInventoryUpdate()
   constexpr int kChannelSetInventory = 0;
   auto actor = AsActor();
   if (actor) {
-    std::string msg;
-    msg += Networking::MinPacketId;
-    msg += nlohmann::json{
-      { "inventory", actor->GetInventory().ToJson() },
-      { "type", "setInventory" }
-    }.dump();
-    actor->SendToUserDeferred(msg.data(), msg.size(), true,
-                              kChannelSetInventory, true);
+    SetInventoryMessage message;
+    message.inventory = actor->GetInventory();
+    actor->SendToUserDeferred(message, true, kChannelSetInventory, true);
   }
 }
 

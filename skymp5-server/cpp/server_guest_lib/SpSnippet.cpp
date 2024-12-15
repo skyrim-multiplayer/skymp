@@ -2,9 +2,14 @@
 
 #include "MpActor.h"
 #include "NetworkingInterface.h" // Format
+#include "SpSnippetMessage.h"
 
-SpSnippet::SpSnippet(const char* cl_, const char* func_, const char* args_,
-                     uint32_t selfId_)
+SpSnippet::SpSnippet(
+  const char* cl_, const char* func_,
+
+  const std::vector<std::optional<
+    std::variant<bool, double, std::string, SpSnippetObjectArgument>>>& args_,
+  uint32_t selfId_)
   : cl(cl_)
   , func(func_)
   , args(args_)
@@ -33,16 +38,17 @@ Viet::Promise<VarValue> SpSnippet::Execute(MpActor* actor, SpSnippetMode mode)
   auto targetSelfId =
     (selfId < 0xff000000 || selfId != actor->GetFormId()) ? selfId : 0x14;
 
-  Networking::Format(
-    [&](Networking::PacketData data, size_t len) {
-      // The only reason for deferred here is that it still supports raw binary
-      // data send
-      // TODO: change to SendToUser
-      constexpr int kChannelSpSnippet = 1;
-      actor->SendToUserDeferred(data, len, true, kChannelSpSnippet, false);
-    },
-    R"({"type": "spSnippet", "class": "%s", "function": "%s", "arguments": %s, "selfId": %u, "snippetIdx": %u})",
-    cl, func, args, targetSelfId, snippetIdx);
+  SpSnippetMessage message;
+  message.class_ = cl;
+  message.function = func;
+  message.args = args;
+  message.selfId = targetSelfId;
+  message.snippetIdx = static_cast<int64_t>(snippetIdx);
+
+  // TODO: change to SendToUser, probably was deferred only for ability to send
+  // text packets
+  constexpr int kChannelSpSnippet = 1;
+  actor->SendToUserDeferred(message, true, kChannelSpSnippet, false);
 
   return promise;
 }
