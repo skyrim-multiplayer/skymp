@@ -742,54 +742,45 @@ void PartOne::Init()
     }
     message.refrId = longFormId;
 
-    const char* baseIdPrefix = "";
-    char baseId[32] = { 0 };
     if (emitter->GetBaseId() != 0x00000000 &&
         emitter->GetBaseId() != 0x00000007) {
       message.baseId = emitter->GetBaseId();
     }
 
     if (emitterAsActor && emitterAsActor->IsDead()) {
-      message.= true;
+      message.isDead = true;
     }
 
     const bool isOwner = emitter == listener;
-
-    std::string props;
 
     auto mode = VisitPropertiesMode::OnlyPublic;
     if (isOwner) {
       mode = VisitPropertiesMode::All;
     }
 
-    const char *propsPrefix = "", *propsPostfix = "";
-    auto visitor = [&](const char* propName, const char* jsonValue) {
-      auto it = pImpl->gamemodeApiState.createdProperties.find(propName);
+    emitter->VisitProperties(message, mode);
+
+    auto isFilteredOut = [&](const CustomPropsEntry& customPropsEntry) {
+      auto it = pImpl->gamemodeApiState.createdProperties.find(
+        customPropsEntry.propName);
       if (it != pImpl->gamemodeApiState.createdProperties.end()) {
         if (!it->second.isVisibleByOwner) {
           //  From docs: isVisibleByNeighbors is considered to be always false
           //  for properties with `isVisibleByOwner == false`, in that case,
           //  actual flag value is ignored.
-          return;
+          return true;
         }
-
         if (!it->second.isVisibleByNeighbors && !isOwner) {
-          return;
+          return true;
         }
       }
-
-      propsPrefix = R"(, "props": { )";
-      propsPostfix = R"( })";
-
-      if (props.size() > 0)
-        props += R"(, ")";
-      else
-        props += '"';
-      props += propName;
-      props += R"(": )";
-      props += jsonValue;
+      return false;
     };
-    emitter->VisitProperties(visitor, mode);
+
+    message.customPropsJsonDumps.erase(
+      std::remove_if(message.customPropsJsonDumps.begin(),
+                     message.customPropsJsonDumps.end(), isFilteredOut),
+      message.customPropsJsonDumps.end());
 
     const bool hasUser = emitterAsActor &&
       serverState.UserByActor(emitterAsActor) != Networking::InvalidUserId;
@@ -799,34 +790,26 @@ void PartOne::Init()
         (hosterIterator != worldState.hosters.end() &&
          hosterIterator->second != 0 &&
          hosterIterator->second != listener->GetFormId())) {
-      visitor("isHostedByOther", "true");
+      message.isHostedByOther = true;
     }
-
-    const char* method = "createActor";
 
     uint32_t worldOrCell =
       emitter->GetCellOrWorld().ToFormId(worldState.espmFiles);
 
     // See 'perf: improve game framerate #1186'
     // Client needs to know if it is DOOR or not
-    const char* baseRecordTypePrefix = "";
-    std::string baseRecordType;
     if (const std::string& baseType = emitter->GetBaseType();
         baseType == "DOOR") {
-      baseRecordTypePrefix = R"(, "baseRecordType": )";
-      baseRecordType = '"' + baseType + '"';
+      message.baseRecordType = "DOOR";
     }
 
-    Networking::SendFormatted(
-      sendTarget, listenerUserId,
-      R"({"type": "%s", "idx": %u, "isMe": %s, "transform": {"pos":
-    [%f,%f,%f], "rot": [%f,%f,%f], "worldOrCell": %u}%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s})",
-      method, emitter->GetIdx(), isMe ? "true" : "false", emitterPos.x,
-      emitterPos.y, emitterPos.z, emitterRot.x, emitterRot.y, emitterRot.z,
-      worldOrCell, baseRecordTypePrefix, baseRecordType.data(),
-      appearancePrefix, appearance, equipmentPrefix, equipment,
-      animationPrefix, animation, refrIdPrefix, refrId, baseIdPrefix, baseId,
-      isDeadPrefix, isDead, propsPrefix, props.data(), propsPostfix);
+    message.idx = emitter->GetIdx();
+    message.isMe = isMe;
+    message.transform.pos = { emitterPos.x, emitterPos.y, emitterPos.z };
+    message.transform.rot = { emitterRot.x, emitterRot.y, emitterRot.z };
+    message.transform.worldOrCell = worldOrCell;
+
+    sendTarget->Send(listenerUserId, message, true);
   };
 
   pImpl->onUnsubscribe = [this](Networking::ISendTarget* sendTarget,
@@ -839,10 +822,11 @@ void PartOne::Init()
 
     auto listenerUserId = serverState.UserByActor(listenerAsActor);
     if (listenerUserId != Networking::InvalidUserId &&
-        listenerUserId != serverState.disconnectingUserId)
-      Networking::SendFormatted(sendTarget, listenerUserId,
-                                R"({"type": "destroyActor", "idx": %u})",
-                                emitter->GetIdx());
+        listenerUserId != serverState.disconnectingUserId) {
+      DestroyActorMessage message;
+      message.idx = emitter->GetIdx();
+      sendTarget->Send(listenerUserId, message, true);
+    }
   };
 }
 

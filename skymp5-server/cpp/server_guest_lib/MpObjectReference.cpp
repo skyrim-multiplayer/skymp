@@ -323,74 +323,71 @@ bool MpObjectReference::GetTeleportFlag() const
   return pImpl->teleportFlag;
 }
 
-void MpObjectReference::VisitProperties(const PropertiesVisitor& visitor,
+void MpObjectReference::VisitProperties(CreateActorMessage& message,
                                         VisitPropertiesMode mode)
 {
   if (IsHarvested()) {
-    visitor("isHarvested", "true");
+    message.props.isHarvested = true;
   }
 
   if (IsOpen()) {
-    visitor("isOpen", "true");
+    message.props.isOpen = true;
   }
 
   if (auto actor = AsActor(); actor && actor->IsDead()) {
-    visitor("isDead", "true");
+    message.props.isDead = true;
   }
 
   if (mode == VisitPropertiesMode::All && !GetInventory().IsEmpty()) {
-    auto inventoryDump = GetInventory().ToJson().dump();
-    visitor("inventory", inventoryDump.data());
+    message.props.inventory = GetInventory();
   }
 
   if (IsEspmForm() && IsDisabled()) {
-    visitor("disabled", "true");
+    message.props.disabled = true;
   }
 
   if (ChangeForm().lastAnimation.has_value()) {
-    std::string raw = *ChangeForm().lastAnimation;
-    nlohmann::json j = raw;
-    std::string lastAnimationAsJson = j.dump();
-    visitor("lastAnimation", lastAnimationAsJson.data());
+    message.props.lastAnimation = *ChangeForm().lastAnimation;
   }
 
   if (ChangeForm().setNodeScale.has_value()) {
-    // worse performance than building json string manually but proper escaping
-    // TODO: consider switching to a faster JSON builder
-    nlohmann::json setNodeScaleAsJson;
-    for (auto& [key, value] : *ChangeForm().setNodeScale) {
-      setNodeScaleAsJson[key] = value;
+    std::vector<SetNodeScaleEntry> setNodeScale;
+    for (auto& [nodeName, scale] : *ChangeForm().setNodeScale) {
+      SetNodeScaleEntry setNodeScaleEntry;
+      setNodeScaleEntry.nodeName = nodeName;
+      setNodeScaleEntry.scale;
+      setNodeScale.push_back(setNodeScaleEntry);
     }
-    visitor("setNodeScale", setNodeScaleAsJson.dump().data());
+    message.props.setNodeScale = std::move(setNodeScale);
   }
 
   if (ChangeForm().setNodeTextureSet.has_value()) {
-    // worse performance than building json string manually but proper escaping
-    // TODO: consider switching to a faster JSON builder
-    nlohmann::json setNodeTextureSetAsJson;
-    for (auto& [key, value] : *ChangeForm().setNodeTextureSet) {
-      setNodeTextureSetAsJson[key] =
-        FormDesc::FromString(value).ToFormId(GetParent()->espmFiles);
+    std::vector<SetNodeTextureSetEntry> setNodeTextureSet;
+    for (auto& [nodeName, textureSetId] : *ChangeForm().setNodeTextureSet) {
+      SetNodeTextureSetEntry setNodeTextureSetEntry;
+      setNodeTextureSetEntry.nodeName = nodeName;
+      setNodeTextureSetEntry.textureSetId = textureSetId;
+      setNodeTextureSet.push_back(setNodeTextureSetEntry);
     }
-    visitor("setNodeTextureSet", setNodeTextureSetAsJson.dump().data());
+    message.props.setNodeTextureSet = std::move(setNodeTextureSet);
   }
 
   if (ChangeForm().displayName.has_value()) {
     const std::string& raw = *ChangeForm().displayName;
     if (raw != PapyrusObjectReference::kOriginalNameExpression) {
-      nlohmann::json j = raw;
-      std::string displayNameAsJson = j.dump();
-      visitor("displayName", displayNameAsJson.data());
+      message.props.displayName = raw;
     }
   }
 
-  // Property flags (isVisibleByOwner, isVisibleByNeighbor) should be checked
-  // by a visitor
-  auto& dynamicFields = ChangeForm().dynamicFields.GetAsJson();
-  for (auto it = dynamicFields.begin(); it != dynamicFields.end(); ++it) {
-    std::string dump = it.value().dump();
-    visitor(it.key().data(), dump.data());
-  }
+  // Property flags (isVisibleByOwner, isVisibleByNeighbor) are expected to be
+  // checked by a caller (PartOne.cpp in this case)
+  ChangeForm().dynamicFields.ForEach(
+    [&](const std::string& propName, const nlohmann::json& propValue) {
+      CustomPropsEntry customPropsEntry;
+      customPropsEntry.propName = propName;
+      customPropsEntry.propValueJsonDump = propValue.dump();
+      message.customPropsJsonDumps.push_back(customPropsEntry);
+    });
 }
 
 void MpObjectReference::Activate(MpObjectReference& activationSource,

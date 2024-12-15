@@ -63,7 +63,7 @@ public:
                                    bool lazyLoad = true);
   void RemoveFromFaction(FormDesc factionForm, bool lazyLoad = true);
 
-  void VisitProperties(const PropertiesVisitor& visitor,
+  void VisitProperties(CreateActorMessage& message,
                        VisitPropertiesMode mode) override;
   void Disable() override;
 

@@ -323,7 +323,7 @@ void MpActor::RemoveFromFaction(FormDesc factionForm, bool lazyLoad)
   });
 }
 
-void MpActor::VisitProperties(const PropertiesVisitor& visitor,
+void MpActor::VisitProperties(CreateActorMessage& message,
                               VisitPropertiesMode mode)
 {
   const auto baseId = GetBaseId();
@@ -340,31 +340,28 @@ void MpActor::VisitProperties(const PropertiesVisitor& visitor,
 
   MpChangeForm changeForm = GetChangeForm();
 
-  MpObjectReference::VisitProperties(visitor, mode);
+  MpObjectReference::VisitProperties(message, mode);
 
   if (mode == VisitPropertiesMode::All && IsRaceMenuOpen()) {
-    visitor("isRaceMenuOpen", "true");
+    message.isRaceMenuOpen = true;
   }
 
   if (mode == VisitPropertiesMode::All) {
-    baseActorValues.VisitBaseActorValues(baseActorValues, changeForm, visitor);
+    baseActorValues.VisitBaseActorValuesAndPercentages(baseActorValues,
+                                                       changeForm, message);
   }
 
-  visitor("learnedSpells",
-          nlohmann::json(changeForm.learnedSpells.GetLearnedSpells())
-            .dump()
-            .c_str());
+  message.learnedSpells = changeForm.learnedSpells.GetLearnedSpells();
 
   if (!changeForm.templateChain.empty()) {
-    // should be faster than nlohmann::json
-    std::string jsonDump = "[";
+    std::vector<uint32_t> templateChain;
+    templateChain.reserve(changeForm.templateChain.size());
+
     for (auto& element : changeForm.templateChain) {
-      jsonDump += std::to_string(element.ToFormId(GetParent()->espmFiles));
-      jsonDump += ',';
+      templateChain.push_back(element.ToFormId(GetParent()->espmFiles));
     }
-    jsonDump.pop_back(); // comma
-    jsonDump += "]";
-    visitor("templateChain", jsonDump.data());
+
+    message.templateChain = std::move(templateChain);
   }
 }
 

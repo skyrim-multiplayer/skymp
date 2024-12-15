@@ -5,6 +5,21 @@ import { Transform } from "../../sync/movement";
 import { Animation } from "../../sync/animation";
 import { MsgType } from "src/messages";
 
+export interface SetNodeTextureSetEntry {
+    nodeName: string;
+    textureSetId: number;
+};
+
+export interface SetNodeScaleEntry {
+    nodeName: string;
+    scale: number;
+};
+
+export interface CustomPropsEntry {
+    propName: string;
+    propValueJsonDump: string;
+};
+
 export interface CreateActorMessage extends CreateActorMessageMainProps {
     t: MsgType.CreateActor,
     idx: number;
@@ -12,6 +27,7 @@ export interface CreateActorMessage extends CreateActorMessageMainProps {
     transform: Transform;
     isMe: boolean;
     props?: CreateActorMessageAdditionalProps;
+    customPropsJsonDumps: CustomPropsEntry[];
 }
 
 export interface CreateActorMessageMainProps {
@@ -23,16 +39,6 @@ export interface CreateActorMessageMainProps {
 
     isDead?: boolean;
 }
-
-export interface SetNodeTextureSetEntry {
-    nodeName: string;
-    textureSetId: number;
-};
-
-export interface SetNodeScaleEntry {
-    nodeName: string;
-    scale: number;
-};
 
 export interface CreateActorMessageAdditionalProps {
     isOpen?: boolean;

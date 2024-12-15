@@ -48,6 +48,19 @@ struct SetNodeScaleEntry
   float scale = 0.f;
 };
 
+struct CustomPropsEntry
+{
+  template <class Archive>
+  void Serialize(Archive& archive)
+  {
+    archive.Serialize("propName", propName)
+      .Serialize("propValueJsonDump", propValueJsonDump);
+  }
+
+  std::string propName;
+  std::string propValueJsonDump;
+};
+
 struct CreateActorMessageAdditionalProps
 {
   template <class Archive>
@@ -144,7 +157,7 @@ struct CreateActorMessage
       .Serialize("transform", transform)
       .Serialize("isMe", isMe)
       .Serialize("props", props)
-      .Serialize("customPropsJsonDump", customPropsJsonDump);
+      .Serialize("customPropsJsonDumps", customPropsJsonDumps);
 
     CreateActorMessageMainProps::Serialize(archive);
   }
@@ -154,5 +167,5 @@ struct CreateActorMessage
   Transform transform;
   bool isMe = false;
   CreateActorMessageAdditionalProps props;
-  std::string customPropsJsonDump;
+  std::vector<CustomPropsEntry> customPropsJsonDumps;
 };

@@ -3,28 +3,22 @@
 #include "WorldState.h"
 #include <spdlog/spdlog.h>
 
-void BaseActorValues::VisitBaseActorValues(BaseActorValues& baseActorValues,
-                                           MpChangeForm& changeForm,
-                                           const PropertiesVisitor& visitor)
+void BaseActorValues::VisitBaseActorValuesAndPercentages(
+  BaseActorValues& baseActorValues, MpChangeForm& changeForm,
+  CreateActorMessage& message)
 {
-  visitor("health", std::to_string(baseActorValues.health).c_str());
-  visitor("stamina", std::to_string(baseActorValues.stamina).c_str());
-  visitor("magicka", std::to_string(baseActorValues.magicka).c_str());
-  visitor("healRate", std::to_string(baseActorValues.healRate).c_str());
-  visitor("staminaRate", std::to_string(baseActorValues.staminaRate).c_str());
-  visitor("magickaRate", std::to_string(baseActorValues.magickaRate).c_str());
-  visitor("healRateMult",
-          std::to_string(baseActorValues.healRateMult).c_str());
-  visitor("staminaRateMult",
-          std::to_string(baseActorValues.staminaRateMult).c_str());
-  visitor("magickaRateMult",
-          std::to_string(baseActorValues.magickaRateMult).c_str());
-  visitor("healthPercentage",
-          std::to_string(changeForm.actorValues.healthPercentage).c_str());
-  visitor("staminaPercentage",
-          std::to_string(changeForm.actorValues.staminaPercentage).c_str());
-  visitor("magickaPercentage",
-          std::to_string(changeForm.actorValues.magickaPercentage).c_str());
+  message.health = baseActorValues.health;
+  message.stamina = baseActorValues.stamina;
+  message.magicka = baseActorValues.magicka;
+  message.healRate = baseActorValues.healRate;
+  message.staminaRate = baseActorValues.staminaRate;
+  message.magickaRate = baseActorValues.magickaRate;
+  message.healRateMult = baseActorValues.healRateMult;
+  message.staminaRateMult = baseActorValues.staminaRateMult;
+  message.magickaRateMult = baseActorValues.magickaRateMult;
+  message.healthPercentage = changeForm.actorValues.healthPercentage;
+  message.staminaPercentage = changeForm.actorValues.staminaPercentage;
+  message.magickaPercentage = changeForm.actorValues.magickaPercentage;
 }
 
 // TODO: implement auto-calc flag

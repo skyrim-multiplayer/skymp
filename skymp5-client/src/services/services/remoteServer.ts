@@ -62,6 +62,7 @@ import { logTrace, logError } from '../../logging';
 
 import { SpellCastMessage } from '../messages/spellCastMessage';
 import { UpdateAnimVariablesMessage } from '../messages/updateAnimVariablesMessage';
+import { MsgType } from '../../messages';
 
 export const getPcInventory = (): Inventory | undefined => {
   const res = storage['pcInv'];
@@ -385,10 +386,25 @@ export class RemoteServer extends ClientListener {
 
     if (msg.props) {
       for (const propName in msg.props) {
-        const i = this.getIdManager().getId(msg.idx);
         (form as Record<string, unknown>)[propName] = msg.props[propName as keyof CreateActorMessageAdditionalProps];
       }
     }
+
+    msg.customPropsJsonDumps.forEach(element => {
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(element.propValueJsonDump);
+      }
+      catch (e) {
+        if (e instanceof SyntaxError) {
+          logError(this, "createActor", msg.refrId?.toString(16), "failed to parse custom prop", element.propName, element.propValueJsonDump, e.message);
+        }
+        else {
+          throw e;
+        }
+      }
+      (form as Record<string, unknown>)[element.propName] = parsed;
+    });
 
     if (msg.isMe) {
       this.worldModel.playerCharacterFormIdx = i;
@@ -400,8 +416,9 @@ export class RemoteServer extends ClientListener {
     if (msg.props && !msg.props.isHostedByOther) {
     }
 
-    if (msg.props && msg.props.isRaceMenuOpen && msg.isMe)
-      this.onSetRaceMenuOpenMessage({ message: { type: 'setRaceMenuOpen', open: true } });
+    if (msg.props && msg.props.isRaceMenuOpen && msg.isMe) {
+      this.onSetRaceMenuOpenMessage({ message: { t: MsgType.SetRaceMenuOpen, open: true } });
+    }
 
     const numSetInventory = this.numSetInventory;
 
@@ -418,7 +435,7 @@ export class RemoteServer extends ClientListener {
       if (msg.props && msg.props.inventory) {
         this.onSetInventoryMessage({
           message: {
-            type: 'setInventory',
+            t: MsgType.SetInventory,
             inventory: msg.props.inventory
           }
         });
