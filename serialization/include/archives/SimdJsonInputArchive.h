@@ -205,7 +205,7 @@ public:
       }
 
       if (deserializationSuccessful) {
-        value = std::move(deserializedValue);
+        output = std::move(deserializedValue);
       }
 
       return deserializationSuccessful;

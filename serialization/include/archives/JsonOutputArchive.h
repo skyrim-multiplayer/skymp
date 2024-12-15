@@ -2,6 +2,7 @@
 #include "concepts/Concepts.h"
 #include <algorithm>
 #include <nlohmann/json.hpp>
+#include <variant>
 #include <vector>
 
 class JsonOutputArchive
@@ -54,11 +55,12 @@ public:
   }
 
   template <typename... Types>
-  JsonOutputArchive& Serialize(const char* key, std::variant<Types...>& value)
+  JsonOutputArchive& Serialize(const char* key,
+                               const std::variant<Types...>& value)
   {
     auto serializeVisitor = [&](auto& v) {
       JsonOutputArchive childArchive;
-      childArchive.Serialize("element", element);
+      childArchive.Serialize("element", v);
       return childArchive.j["element"];
     };
 

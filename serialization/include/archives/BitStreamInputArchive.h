@@ -4,6 +4,7 @@
 #include <slikenet/BitStream.h>
 #include <stdexcept>
 #include <string>
+#include <variant>
 #include <vector>
 
 #include "../impl/BitStreamUtil.h"

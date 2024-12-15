@@ -21,7 +21,7 @@ struct UpdateGameModeDataMessage
 {
   static constexpr auto kMsgType =
     std::integral_constant<char,
-                           static_cast<char>(MsgType::UpdateGameModeData)>{};
+                           static_cast<char>(MsgType::UpdateGamemodeData)>{};
 
   template <class Archive>
   void Serialize(Archive& archive)
