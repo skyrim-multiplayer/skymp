@@ -1,5 +1,6 @@
 #pragma once
 #include "concepts/Concepts.h"
+#include <algorithm>
 #include <nlohmann/json.hpp>
 #include <vector>
 
