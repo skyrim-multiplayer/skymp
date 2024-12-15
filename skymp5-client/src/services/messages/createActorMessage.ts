@@ -24,11 +24,21 @@ export interface CreateActorMessageMainProps {
     isDead?: boolean;
 }
 
+export interface SetNodeTextureSetEntry {
+    nodeName: string;
+    textureSetId: number;
+};
+
+export interface SetNodeScaleEntry {
+    nodeName: string;
+    scale: number;
+};
+
 export interface CreateActorMessageAdditionalProps {
     isOpen?: boolean;
     isHarvested?: boolean;
-    setNodeTextureSet?: Record<string, number>;
-    setNodeScale?: Record<string, number>;
+    setNodeTextureSet?: SetNodeTextureSetEntry[];
+    setNodeScale?: SetNodeScaleEntry[];
     disabled?: boolean;
     lastAnimation?: string;
     displayName?: string;

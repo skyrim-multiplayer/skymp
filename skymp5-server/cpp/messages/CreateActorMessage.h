@@ -23,6 +23,31 @@ struct Transform
   std::array<float, 3> rot = { 0.f, 0.f, 0.f };
 };
 
+struct SetNodeTextureSetEntry
+{
+  template <class Archive>
+  void Serialize(Archive& archive)
+  {
+    archive.Serialize("nodeName", nodeName)
+      .Serialize("textureSetId", textureSetId);
+  }
+
+  std::string nodeName;
+  uint32_t textureSetId = 0;
+};
+
+struct SetNodeScaleEntry
+{
+  template <class Archive>
+  void Serialize(Archive& archive)
+  {
+    archive.Serialize("nodeName", nodeName).Serialize("scale", scale);
+  }
+
+  std::string nodeName;
+  float scale = 0.f;
+};
+
 struct CreateActorMessageAdditionalProps
 {
   template <class Archive>
@@ -55,8 +80,8 @@ struct CreateActorMessageAdditionalProps
   }
 
   std::optional<bool> isOpen;
-  std::optional<std::map<std::string, std::string>> setNodeTextureSet;
-  std::optional<std::map<std::string, float>> setNodeScale;
+  std::optional<std::vector<SetNodeTextureSetEntry>> setNodeTextureSet;
+  std::optional<std::vector<SetNodeScaleEntry>> setNodeScale;
   std::optional<bool> isDisabled;
   std::optional<std::string> lastAnimation;
   std::optional<std::string> displayName;
