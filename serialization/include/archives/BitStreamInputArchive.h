@@ -96,6 +96,43 @@ public:
     return *this;
   }
 
+  template <typename... Types>
+  BitStreamInputArchive& Serialize(const char* key,
+                                   std::variant<Types...>& value)
+  {
+    uint32_t typeIndex = 0;
+
+    Serialize("typeIndex", typeIndex);
+
+    if (typeIndex >= sizeof...(Types)) {
+      throw std::runtime_error(
+        "Invalid type index for std::variant deserialization");
+    }
+
+    // Helper lambda to visit and deserialize the correct type
+    auto deserializeVisitor = [this](auto indexTag,
+                                     std::variant<Types...>& variant) {
+      using SelectedType =
+        typename std::variant_alternative<decltype(indexTag)::value,
+                                          std::variant<Types...>>::type;
+      SelectedType value;
+      Serialize("value", value);
+      variant = std::move(value);
+    };
+
+    // Visit the type corresponding to the typeIndex
+    [&]<std::size_t... Is>(std::index_sequence<Is...>)
+    {
+      ((typeIndex == Is ? deserializeVisitor(
+                            std::integral_constant<std::size_t, Is>{}, value)
+                        : void()),
+       ...);
+    }
+    (std::make_index_sequence<sizeof...(Types)>{});
+
+    return *this;
+  }
+
   template <NoneOfTheAbove T>
   BitStreamInputArchive& Serialize(const char* key, T& value)
   {

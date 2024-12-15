@@ -52,6 +52,20 @@ public:
     return *this;
   }
 
+  template <typename... Types>
+  JsonOutputArchive& Serialize(const char* key, std::variant<Types...>& value)
+  {
+    auto serializeVisitor = [&](auto& v) {
+      JsonOutputArchive childArchive;
+      childArchive.Serialize("element", element);
+      return childArchive.j["element"];
+    };
+
+    j[key] = std::visit(serializeVisitor, value);
+
+    return *this;
+  }
+
   template <NoneOfTheAbove T>
   JsonOutputArchive& Serialize(const char* key, const T& value)
   {

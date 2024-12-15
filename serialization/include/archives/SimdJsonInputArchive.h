@@ -52,7 +52,6 @@ public:
   {
   }
 
-  // TODO(#2250): it's probably useless and should be removed
   template <IntegralConstant T>
   SimdJsonInputArchive& Serialize(const char* key, T& output)
   {
@@ -185,6 +184,49 @@ public:
         static_cast<char>(input.type()), typeid(T).name(),
         typeid(SimdJsonSupportedType<T>).name(), e.what()));
     }
+    return *this;
+  }
+
+  template <typename... Types>
+  SimdJsonInputArchive& Serialize(std::variant<Types...>& output)
+  {
+    // Helper lambda to attempt deserialization for a specific type
+    auto tryDeserialize = [&](auto typeTag) -> bool {
+      using SelectedType = decltype(typeTag);
+
+      SelectedType deserializedValue;
+
+      bool deserializationSuccessful = false;
+      try {
+        Serialize(deserializedValue);
+        deserializationSuccessful = true;
+      } catch (const std::exception&) {
+        deserializationSuccessful = false;
+      }
+
+      if (deserializationSuccessful) {
+        value = std::move(deserializedValue);
+      }
+
+      return deserializationSuccessful;
+    };
+
+    // Iterate through the variant types and attempt deserialization
+    bool success = false;
+    [&]<std::size_t... Is>(std::index_sequence<Is...>)
+    {
+      ((success = success ||
+          tryDeserialize(std::declval<typename std::variant_alternative<
+                           Is, std::variant<Types...>>::type>())),
+       ...);
+    }
+    (std::make_index_sequence<sizeof...(Types)>{});
+
+    if (!success) {
+      throw std::runtime_error(
+        "Unable to deserialize JSON into any variant type");
+    }
+
     return *this;
   }
 

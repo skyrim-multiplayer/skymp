@@ -86,6 +86,54 @@ public:
     return *this;
   }
 
+  template <typename... Types>
+  JsonInputArchive& Serialize(const char* key, std::variant<Types...>& value)
+  {
+    const auto& jsonValue = j.at(key);
+
+    // Helper lambda to attempt deserialization for a specific type
+    auto tryDeserialize = [&](auto typeTag) -> bool {
+      using SelectedType = decltype(typeTag);
+
+      nlohmann::json childArchiveInput = nlohmann::json::object();
+      childArchiveInput["candidate"] = jsonValue;
+      SelectedType deserializedValue;
+      JsonInputArchive childArchive(childArchiveInput);
+
+      bool deserializationSuccessful = false;
+      try {
+        childArchive.Serialize("candidate", deserializedValue);
+        deserializationSuccessful = true;
+      } catch (const std::exception&) {
+        deserializationSuccessful = false;
+      }
+
+      if (deserializationSuccessful) {
+        value = std::move(deserializedValue);
+      }
+
+      return deserializationSuccessful;
+    };
+
+    // Iterate through the variant types and attempt deserialization
+    bool success = false;
+    [&]<std::size_t... Is>(std::index_sequence<Is...>)
+    {
+      ((success = success ||
+          tryDeserialize(std::declval<typename std::variant_alternative<
+                           Is, std::variant<Types...>>::type>())),
+       ...);
+    }
+    (std::make_index_sequence<sizeof...(Types)>{});
+
+    if (!success) {
+      throw std::runtime_error(
+        "Unable to deserialize JSON into any variant type");
+    }
+
+    return *this;
+  }
+
   template <NoneOfTheAbove T>
   JsonInputArchive& Serialize(const char* key, T& value)
   {
