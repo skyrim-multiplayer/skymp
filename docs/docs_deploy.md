@@ -3,7 +3,7 @@
 A GitHub actions job is configured for deploying server from a git branch.
 This guide shows how to set it up.
 
-## GitHub prereqeusties
+## GitHub prerequisites
 
 * You should own the repository you want to deploy from. Fork of our main repo
 [skyrim-multiplayer/skymp](https://github.com/skyrim-multiplayer/skymp) should work.
@@ -22,7 +22,7 @@ This guide shows how to set it up.
     to the runner when a workflow is triggered from a forked repository.
 
 
-## Server prereqeusties
+## Server prerequisites
 
 * Ubuntu 22.04 (other distros should also work, but not tested)
 * Accessible from the Internet with open ports

@@ -2,7 +2,7 @@
 
 Our build system is CMake-based. This document describes some caveats of our CMake code and guides you in making changes in CMake parts of the codebase.
 
-When you switch between commits, you should run `cmake .. ` in the `build` directory. This action is called "CMake re-generation".
+When you switch between commits, you should run `cmake ..` in the `build` directory. This action is called "CMake re-generation".
 
 Only `Visual Studio 16 2019` generator is supported on Windows.
 

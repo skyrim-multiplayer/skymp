@@ -25,7 +25,6 @@ export CMAKE_CXX_COMPILER="$CXX"
 export CMAKE_MAKE_PROGRAM="ninja"
 
 # Some build dependencies require some strange stuff.
-# For example, Chakra needs Python 2 installed with `python` name.
 # Some other deps won't work if we can't call clang without exact version.
 # It's better to make compatibility aliases than breaking main system's root.
 export SKYMP_COMPAT_BIN="$PWD/build/skymp_compat/bin"
@@ -37,13 +36,13 @@ fi
 
 if [ ! -d "$SKYMP_COMPAT_BIN" ]; then
   mkdir -pv "$SKYMP_COMPAT_BIN"
-  ln -s "`which python2`" "$SKYMP_COMPAT_BIN/python"
   ln -s "$CC" "$SKYMP_COMPAT_BIN/clang"
   ln -s "$CXX" "$SKYMP_COMPAT_BIN/clang++"
 
   echo "Set up compatibility path for build."
 fi
 
+# TODO reverse the order or use [[ ]] ?
 if [ "$1" = "--configure" ]; then
   shift && \
     cd build && \
@@ -53,12 +52,18 @@ elif [ "$1" = "--build" ]; then
     cd build && \
     exec cmake --build . "$@"
 elif [ "$1" = "--clean" ]; then
+  eecho "NOTE: --clean was deprecated, please use --clean-cpp or --clean-node"
+  eecho "Proceeding with cleaning cpp build data"
   exec rm -rf build/
+elif [ "$1" = "--clean-cpp" ]; then
+  exec rm -rf build/
+elif [ "$1" = "--clean-node" ]; then
+  echo not implemented yet, TODO delete node_modules dirs
 else
   eecho "Usage:"
   eecho "  ./build.sh --configure <cmake args...>"
   eecho "OR"
   eecho "  ./build.sh --build <cmake args...>"
   eecho "OR"
-  eecho "  ./build.sh --clean"
+  eecho "  ./build.sh --clean-<cpp|node>"
 fi
