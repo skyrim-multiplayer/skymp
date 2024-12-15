@@ -83,12 +83,19 @@ export class ConsoleCommandsService extends ClientListener {
                 }
             }
 
+            for (let i = 0; i < args.length; ++i) {
+                if (typeof args[i] !== "string" && typeof args[i] !== "number") {
+                    logError(this, `Bad argument type in command`, commandName, `argument index`, i);
+                    return false;
+                }
+            }
+
             this.controller.emitter.emit("sendMessage", {
                 message: {
                     t: MsgType.ConsoleCommand,
                     data: {
                         commandName,
-                        args
+                        args: args as (string | number)[]
                     }
                 },
                 reliability: "reliable"
