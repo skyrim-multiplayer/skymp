@@ -67,6 +67,7 @@ struct CreateActorMessageAdditionalProps
   void Serialize(Archive& archive)
   {
     archive.Serialize("isOpen", isOpen)
+      .Serialize("isHarvested", isHarvested)
       .Serialize("setNodeTextureSet", setNodeTextureSet)
       .Serialize("setNodeScale", setNodeScale)
       .Serialize("isDisabled", isDisabled)
@@ -93,6 +94,7 @@ struct CreateActorMessageAdditionalProps
   }
 
   std::optional<bool> isOpen;
+  std::optional<bool> isHarvested;
   std::optional<std::vector<SetNodeTextureSetEntry>> setNodeTextureSet;
   std::optional<std::vector<SetNodeScaleEntry>> setNodeScale;
   std::optional<bool> isDisabled;

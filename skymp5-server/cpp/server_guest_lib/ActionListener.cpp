@@ -11,6 +11,7 @@
 #include "MovementValidation.h"
 #include "MpObjectReference.h"
 #include "MsgType.h"
+#include "Overloaded.h"
 #include "UserMessageOutput.h"
 #include "WorldState.h"
 #include "gamemode_events/CraftEvent.h"
@@ -18,7 +19,6 @@
 #include "gamemode_events/EatItemEvent.h"
 #include "gamemode_events/UpdateAppearanceAttemptEvent.h"
 #include "script_objects/EspmGameObject.h"
-#include "viet/Overloaded.h"
 #include <fmt/format.h>
 #include <spdlog/spdlog.h>
 #include <unordered_set>
@@ -27,10 +27,10 @@
 #include "HostStopMessage.h"
 #include "UpdateEquipmentMessage.h"
 
-MpActor* ActionListener::SendToNeighbours(
-  uint32_t idx, const simdjson::dom::element& jMessage,
-  Networking::UserId userId, Networking::PacketData data, size_t length,
-  bool reliable)
+MpActor* ActionListener::SendToNeighbours(uint32_t idx,
+                                          Networking::UserId userId,
+                                          Networking::PacketData data,
+                                          size_t length, bool reliable)
 {
   MpActor* myActor = partOne.serverState.ActorByUser(userId);
   // The old behavior is doing nothing in that case. This is covered by tests
@@ -90,9 +90,8 @@ MpActor* ActionListener::SendToNeighbours(uint32_t idx,
                                           const RawMessageData& rawMsgData,
                                           bool reliable)
 {
-  return SendToNeighbours(idx, rawMsgData.parsed, rawMsgData.userId,
-                          rawMsgData.unparsed, rawMsgData.unparsedLength,
-                          reliable);
+  return SendToNeighbours(idx, rawMsgData.userId, rawMsgData.unparsed,
+                          rawMsgData.unparsedLength, reliable);
 }
 
 void ActionListener::OnCustomPacket(const RawMessageData& rawMsgData,
@@ -447,8 +446,8 @@ VarValue VarValueFromSpSnippetReturnValue(
         }
         return VarValue(rounded);
       },
-      [&](const std::string& v) { return VarValue(v); } } *
-    returnValue);
+      [&](const std::string& v) { return VarValue(v); } },
+    *returnValue);
 }
 
 }
@@ -618,7 +617,7 @@ void ActionListener::OnHostAttempt(const RawMessageData& rawMsgData,
 
     HostStartMessage message;
     message.target = longFormId;
-    partOne.GetSendTarget()->Send(rawMsgData.userId, message, true);
+    partOne.GetSendTarget().Send(rawMsgData.userId, message, true);
 
     // Otherwise, health percentage would remain unsynced until someone hits
     // npc
@@ -646,7 +645,7 @@ void ActionListener::OnHostAttempt(const RawMessageData& rawMsgData,
           prevHosterUser != rawMsgData.userId) {
         HostStopMessage message;
         message.target = longFormId;
-        partOne.GetSendTarget()->Send(prevHosterUser, message, true);
+        partOne.GetSendTarget().Send(prevHosterUser, message, true);
       }
     }
   }
@@ -1157,7 +1156,7 @@ void ActionListener::OnSpellCast(const RawMessageData& rawMsgData,
 
   SendToNeighbours(myActor->idx, rawMsgData);
 
-  if (spellCastData.isInterruptCast) {
+  if (spellCastData.interruptCast) {
     return;
   }
 

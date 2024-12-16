@@ -26,16 +26,16 @@ struct SpSnippetMessage : public MessageBase<SpSnippetMessage>
     archive.Serialize("t", kMsgType)
       .Serialize("class", class_)
       .Serialize("function", function)
-      .Serialize("arguments", arguments)
+      // .Serialize("arguments", arguments)
       .Serialize("selfId", selfId)
       .Serialize("snippetIdx", snippetIdx);
   }
 
   std::string class_;
   std::string function;
-  std::vector<std::optional<
-    std::variant<bool, double, std::string, SpSnippetObjectArgument>>>
-    arguments;
+  // std::vector<std::optional<
+  //   std::variant<bool, double, std::string, SpSnippetObjectArgument>>>
+  //   arguments;
   uint32_t selfId = 0;
   int64_t snippetIdx = 0;
 };

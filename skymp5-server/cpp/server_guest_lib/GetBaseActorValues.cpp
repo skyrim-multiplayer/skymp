@@ -7,18 +7,18 @@ void BaseActorValues::VisitBaseActorValuesAndPercentages(
   BaseActorValues& baseActorValues, MpChangeForm& changeForm,
   CreateActorMessage& message)
 {
-  message.health = baseActorValues.health;
-  message.stamina = baseActorValues.stamina;
-  message.magicka = baseActorValues.magicka;
-  message.healRate = baseActorValues.healRate;
-  message.staminaRate = baseActorValues.staminaRate;
-  message.magickaRate = baseActorValues.magickaRate;
-  message.healRateMult = baseActorValues.healRateMult;
-  message.staminaRateMult = baseActorValues.staminaRateMult;
-  message.magickaRateMult = baseActorValues.magickaRateMult;
-  message.healthPercentage = changeForm.actorValues.healthPercentage;
-  message.staminaPercentage = changeForm.actorValues.staminaPercentage;
-  message.magickaPercentage = changeForm.actorValues.magickaPercentage;
+  message.props.health = baseActorValues.health;
+  message.props.stamina = baseActorValues.stamina;
+  message.props.magicka = baseActorValues.magicka;
+  message.props.healRate = baseActorValues.healRate;
+  message.props.staminaRate = baseActorValues.staminaRate;
+  message.props.magickaRate = baseActorValues.magickaRate;
+  message.props.healRateMult = baseActorValues.healRateMult;
+  message.props.staminaRateMult = baseActorValues.staminaRateMult;
+  message.props.magickaRateMult = baseActorValues.magickaRateMult;
+  message.props.healthPercentage = changeForm.actorValues.healthPercentage;
+  message.props.staminaPercentage = changeForm.actorValues.staminaPercentage;
+  message.props.magickaPercentage = changeForm.actorValues.magickaPercentage;
 }
 
 // TODO: implement auto-calc flag

@@ -12,7 +12,8 @@ WRLD::Data WRLD::GetData(CompressedFieldsCache& cache) const noexcept
       if (!std::memcmp(type, "FULL", 4)) {
         result.localNameIndex = *reinterpret_cast<const lstring*>(data);
       } else if (!std::memcmp(type, "WCTR", 4)) {
-        std::copy_n(data, std::size(result.centerCellXY), result.centerCellXY);
+        // std::copy_n(data, std::size(result.centerCellXY),
+        // result.centerCellXY);
       } else if (!std::memcmp(type, "LTMP", 4)) {
         result.interiorLightingId = *reinterpret_cast<const formId*>(data);
       } else if (!std::memcmp(type, "XEZN", 4)) {
@@ -28,7 +29,7 @@ WRLD::Data WRLD::GetData(CompressedFieldsCache& cache) const noexcept
       } else if (!std::memcmp(type, "NAM4", 4)) {
         result.waterLODHeight = *reinterpret_cast<const float*>(data);
       } else if (!std::memcmp(type, "DNAM", 4)) {
-        std::copy_n(data, std::size(result.LandData), result.LandData);
+        // std::copy_n(data, std::size(result.LandData), result.LandData);
       } else if (!std::memcmp(type, "MODL", 4)) {
         result.cloudModelFileName = reinterpret_cast<const char*>(data);
       } else if (!std::memcmp(type, "MNAM", 4)) {
@@ -47,8 +48,8 @@ WRLD::Data WRLD::GetData(CompressedFieldsCache& cache) const noexcept
       } else if (!std::memcmp(type, "PNAM", 4)) {
         result.useFlags = *reinterpret_cast<const WRLD::UseParentFlags*>(data);
       } else if (!std::memcmp(type, "ONAM", 4)) {
-        std::copy_n(data, std::size(result.mapMarkerData),
-                    result.mapMarkerData);
+        // std::copy_n(data, std::size(result.mapMarkerData),
+        //             result.mapMarkerData);
       } else if (!std::memcmp(type, "TNAM", 4)) {
         result.diffuseLODName = reinterpret_cast<const char*>(data);
       } else if (!std::memcmp(type, "UNAM", 4)) {

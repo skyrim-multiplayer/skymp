@@ -98,9 +98,7 @@ public:
 
 private:
   // Returns user's actor if there is attached one
-  MpActor* SendToNeighbours(uint32_t idx,
-                            const simdjson::dom::element& jMessage,
-                            Networking::UserId userId,
+  MpActor* SendToNeighbours(uint32_t idx, Networking::UserId userId,
                             Networking::PacketData data, size_t length,
                             bool reliable);
 

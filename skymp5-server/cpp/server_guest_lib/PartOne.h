@@ -1,6 +1,7 @@
 #pragma once
 #include "AnimationSystem.h"
 #include "GamemodeApi.h"
+#include "HitData.h"
 #include "MpActor.h"
 #include "Networking.h"
 #include "NiPoint3.h"
@@ -20,8 +21,6 @@
 
 using ProfileId = int32_t;
 class ActionListener;
-
-struct HitData;
 
 class PartOneSendTargetWrapper : public Networking::ISendTarget
 {

@@ -22,7 +22,7 @@ Appearance Appearance::FromJson(const nlohmann::json& j)
 
 Appearance Appearance::FromJson(simdjson::dom::element& j)
 {
-  SimdJsonInputArchive ar(element);
+  SimdJsonInputArchive ar(j);
   Appearance res;
   res.Serialize(ar);
   return res;

@@ -343,7 +343,7 @@ void MpObjectReference::VisitProperties(CreateActorMessage& message,
   }
 
   if (IsEspmForm() && IsDisabled()) {
-    message.props.disabled = true;
+    message.props.isDisabled = true;
   }
 
   if (ChangeForm().lastAnimation.has_value()) {
@@ -366,7 +366,8 @@ void MpObjectReference::VisitProperties(CreateActorMessage& message,
     for (auto& [nodeName, textureSetId] : *ChangeForm().setNodeTextureSet) {
       SetNodeTextureSetEntry setNodeTextureSetEntry;
       setNodeTextureSetEntry.nodeName = nodeName;
-      setNodeTextureSetEntry.textureSetId = textureSetId;
+      setNodeTextureSetEntry.textureSetId =
+        FormDesc::FromString(textureSetId).ToFormId(GetParent()->espmFiles);
       setNodeTextureSet.push_back(setNodeTextureSetEntry);
     }
     message.props.setNodeTextureSet = std::move(setNodeTextureSet);

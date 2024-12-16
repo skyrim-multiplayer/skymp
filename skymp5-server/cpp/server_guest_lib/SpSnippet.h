@@ -1,8 +1,11 @@
 #pragma once
+#include "SpSnippetMessage.h" // SpSnippetObjectArgument
 #include "papyrus-vm/Structures.h"
 #include <cstdint>
 #include <functional>
 #include <nlohmann/json.hpp>
+#include <optional>
+#include <variant>
 
 class MpActor;
 

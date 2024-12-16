@@ -59,7 +59,6 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
   ActionListener::RawMessageData rawMsgData{
     data,
     length,
-    /*parsed (json)*/ {},
     userId,
   };
 
@@ -79,10 +78,10 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
       case MsgType::Activate: {
         auto message =
           reinterpret_cast<ActivateMessage*>(result->message.get());
-        actionListener.OnActivate(rawMsgData,
-                                  FormIdCasts::LongToNormal(message->caster),
-                                  FormIdCasts::LongToNormal(message->target),
-                                  message->isSecondActivation);
+        actionListener.OnActivate(
+          rawMsgData, FormIdCasts::LongToNormal(message->data.caster),
+          FormIdCasts::LongToNormal(message->data.target),
+          message->data.isSecondActivation);
         return;
       }
       case MsgType::ConsoleCommand: {
@@ -90,21 +89,21 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
           reinterpret_cast<ConsoleCommandMessage*>(result->message.get());
 
         std::vector<ConsoleCommands::Argument> consoleArgs;
-        consoleArgs.resize(message->args.size());
-        for (size_t i = 0; i < message->args.size(); i++) {
-          consoleArgs[i] = ConsoleCommands::Argument(message->args[i]);
+        consoleArgs.resize(message->data.args.size());
+        for (size_t i = 0; i < message->data.args.size(); i++) {
+          consoleArgs[i] = ConsoleCommands::Argument(message->data.args[i]);
         }
 
-        actionListener.OnConsoleCommand(rawMsgData, message->commandName,
+        actionListener.OnConsoleCommand(rawMsgData, message->data.commandName,
                                         consoleArgs);
         return;
       }
       case MsgType::CraftItem: {
         auto message =
           reinterpret_cast<CraftItemMessage*>(result->message.get());
-        actionListener.OnCraftItem(rawMsgData, message->craftInputObjects,
-                                   message->workbench,
-                                   message->resultObjectId);
+        actionListener.OnCraftItem(rawMsgData, message->data.craftInputObjects,
+                                   message->data.workbench,
+                                   message->data.resultObjectId);
         return;
       }
       case MsgType::CustomEvent: {

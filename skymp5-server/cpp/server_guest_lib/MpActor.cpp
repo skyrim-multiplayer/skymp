@@ -343,7 +343,7 @@ void MpActor::VisitProperties(CreateActorMessage& message,
   MpObjectReference::VisitProperties(message, mode);
 
   if (mode == VisitPropertiesMode::All && IsRaceMenuOpen()) {
-    message.isRaceMenuOpen = true;
+    message.props.isRaceMenuOpen = true;
   }
 
   if (mode == VisitPropertiesMode::All) {
@@ -351,7 +351,7 @@ void MpActor::VisitProperties(CreateActorMessage& message,
                                                        changeForm, message);
   }
 
-  message.learnedSpells = changeForm.learnedSpells.GetLearnedSpells();
+  message.props.learnedSpells = changeForm.learnedSpells.GetLearnedSpells();
 
   if (!changeForm.templateChain.empty()) {
     std::vector<uint32_t> templateChain;
@@ -361,7 +361,7 @@ void MpActor::VisitProperties(CreateActorMessage& message,
       templateChain.push_back(element.ToFormId(GetParent()->espmFiles));
     }
 
-    message.templateChain = std::move(templateChain);
+    message.props.templateChain = std::move(templateChain);
   }
 }
 
@@ -402,7 +402,7 @@ void MpActor::SendToUserDeferred(const IMessageBase& message, bool reliable,
                                  bool overwritePreviousChannelMessages)
 {
   if (callbacks->sendToUserDeferred) {
-    callbacks->sendToUserDeferred(this, data, reliable, deferredChannelId,
+    callbacks->sendToUserDeferred(this, message, reliable, deferredChannelId,
                                   overwritePreviousChannelMessages);
   } else {
     throw std::runtime_error("sendToUserDeferred is nullptr");
@@ -455,17 +455,21 @@ bool MpActor::OnEquip(uint32_t baseId)
   if (isIngredient || isPotion) {
     EatItem(baseId, recordType);
 
-    nlohmann::json j = nlohmann::json::array();
-    j.push_back(
-      nlohmann::json({ { "formId", baseId },
-                       { "type", isIngredient ? "Ingredient" : "Potion" } }));
-    j.push_back(false);
-    j.push_back(false);
+    std::vector<std::optional<
+      std::variant<bool, double, std::string, SpSnippetObjectArgument>>>
+      spSnippetArgs;
 
-    std::string serializedArgs = j.dump();
+    SpSnippetObjectArgument spSnippetObjectArgument;
+    spSnippetObjectArgument.formId = baseId;
+    spSnippetObjectArgument.type = isIngredient ? "Ingredient" : "Potion";
+
+    spSnippetArgs.push_back(spSnippetObjectArgument);
+    spSnippetArgs.push_back(false);
+    spSnippetArgs.push_back(false);
+
     for (auto listener : GetActorListeners()) {
       if (listener != this) {
-        SpSnippet("Actor", "EquipItem", serializedArgs.data(), GetFormId())
+        SpSnippet("Actor", "EquipItem", spSnippetArgs, GetFormId())
           .Execute(listener, SpSnippetMode::kNoReturnResult);
       }
     }

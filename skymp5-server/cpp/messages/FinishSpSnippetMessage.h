@@ -12,11 +12,12 @@ struct FinishSpSnippetMessage : public MessageBase<FinishSpSnippetMessage>
   template <class Archive>
   void Serialize(Archive& archive)
   {
-    archive.Serialize("t", kMsgType)
-      .Serialize("returnValue", returnValue)
+    archive
+      .Serialize("t", kMsgType)
+      //.Serialize("returnValue", returnValue)
       .Serialize("snippetIdx", snippetIdx);
   }
 
-  std::optional<std::variant<bool, double, std::string>> returnValue;
+  // std::optional<std::variant<bool, double, std::string>> returnValue;
   int64_t snippetIdx = 0;
 };

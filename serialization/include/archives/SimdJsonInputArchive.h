@@ -10,6 +10,7 @@
 #include <stdexcept>
 #include <string_view>
 #include <type_traits>
+#include <variant>
 
 #include "concepts/Concepts.h"
 
@@ -64,6 +65,7 @@ public:
   SimdJsonInputArchive& Serialize(T& output)
   {
     static_assert(!sizeof(T), "can only parse to std::string");
+    return *this;
   }
 
   SimdJsonInputArchive& Serialize(std::string& output)
