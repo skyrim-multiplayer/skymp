@@ -1,5 +1,5 @@
 #pragma once
-#include "Inventory.h"
+#include "../server_guest_lib/Inventory.h"
 #include "MessageBase.h"
 #include "MsgType.h"
 #include <type_traits>

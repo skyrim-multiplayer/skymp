@@ -4,7 +4,7 @@
 #include <array>
 #include <type_traits>
 
-struct Teleport2Message : public MessageBase<Teleport2Message>
+struct TeleportMessage2 : public MessageBase<TeleportMessage2>
 {
   static constexpr auto kMsgType =
     std::integral_constant<char, static_cast<char>(MsgType::Teleport2)>{};
