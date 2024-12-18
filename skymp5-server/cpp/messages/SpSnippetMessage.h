@@ -33,9 +33,9 @@ struct SpSnippetMessage : public MessageBase<SpSnippetMessage>
 
   std::string class_;
   std::string function;
-  // std::vector<std::optional<
-  //   std::variant<bool, double, std::string, SpSnippetObjectArgument>>>
-  //   arguments;
+  std::vector<std::optional<
+    std::variant<bool, double, std::string, SpSnippetObjectArgument>>>
+    arguments;
   uint32_t selfId = 0;
   int64_t snippetIdx = 0;
 };

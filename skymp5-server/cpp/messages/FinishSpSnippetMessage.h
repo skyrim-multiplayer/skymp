@@ -18,6 +18,6 @@ struct FinishSpSnippetMessage : public MessageBase<FinishSpSnippetMessage>
       .Serialize("snippetIdx", snippetIdx);
   }
 
-  // std::optional<std::variant<bool, double, std::string>> returnValue;
+  std::optional<std::variant<bool, double, std::string>> returnValue;
   int64_t snippetIdx = 0;
 };

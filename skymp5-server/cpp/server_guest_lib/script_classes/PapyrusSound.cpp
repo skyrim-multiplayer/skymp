@@ -22,7 +22,7 @@ VarValue PapyrusSound::Play(VarValue self,
     auto funcName = "Play";
     auto serializedArgs = SpSnippetFunctionGen::SerializeArguments(arguments);
     for (auto listener : refr->GetActorListeners()) {
-      SpSnippet(GetName(), funcName, serializedArgs.data(), selfId)
+      SpSnippet(GetName(), funcName, serializedArgs, selfId)
         .Execute(listener, SpSnippetMode::kNoReturnResult);
     }
   }

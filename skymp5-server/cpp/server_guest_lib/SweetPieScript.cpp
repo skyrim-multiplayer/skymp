@@ -131,7 +131,6 @@ void SweetPieScript::Notify(MpActor& actor, const WorldState& worldState,
                             uint32_t formId, uint32_t count, bool silent)
 {
   std::string type;
-  std::stringstream ss;
   auto lookupRes = worldState.GetEspm().GetBrowser().LookupById(formId);
 
   if (!lookupRes.rec) {
@@ -159,13 +158,18 @@ void SweetPieScript::Notify(MpActor& actor, const WorldState& worldState,
       formId);
   }
 
-  ss << "[";
-  ss << nlohmann::json({ { "formId", formId }, { "type", type } }).dump();
-  ss << "," << static_cast<uint32_t>(count) << ","
-     << (static_cast<bool>(silent) ? "true" : "false");
-  ss << "]";
-  std::string args = ss.str();
-  (void)SpSnippet("SkympHacks", "AddItem", args.data())
+  SpSnippetObjectArgument itemToAdd;
+  itemToAdd.formId = formId;
+  itemToAdd.type = type;
+
+  std::vector<std::optional<
+    std::variant<bool, double, std::string, SpSnippetObjectArgument>>>
+    addItemArgs;
+  addItemArgs.push_back(itemToAdd);
+  addItemArgs.push_back(static_cast<double>(count));
+  addItemArgs.push_back(silent);
+
+  (void)SpSnippet("SkympHacks", "AddItem", addItemArgs)
     .Execute(&actor, SpSnippetMode::kNoReturnResult);
 }
 
@@ -237,23 +241,37 @@ void SweetPieScript::EquipItem(MpActor& actor, uint32_t baseId,
 {
   bool isShield = baseId == 0x7F47DC9;
   bool isArrow = baseId == 0x010B0A7;
-  std::string type = "weapon";
-  if (isShield) {
-    type = "armor";
-  }
-  if (isArrow) {
-    type = "ammo";
-  }
-  std::stringstream ss;
-  ss << "[" << nlohmann::json{ { "formId", baseId }, { "type", type } }.dump()
-     << ", " << (preventRemoval ? "true" : "false") << ", "
-     << (silent ? "true" : "false") << "]";
-  std::string args = ss.str();
-  spdlog::info("Equipping item: {}", args);
-  SpSnippet("Actor", "EquipItem", args.data(), actor.GetFormId())
+
+  const std::string type = ([&] {
+    if (isShield) {
+      return "armor";
+    } else if (isArrow) {
+      return "ammo";
+    } else {
+      return "weapon";
+    }
+  })();
+
+  SpSnippetObjectArgument itemToEquip;
+  itemToEquip.formId = baseId;
+  itemToEquip.type = type;
+
+  std::vector<std::optional<
+    std::variant<bool, double, std::string, SpSnippetObjectArgument>>>
+    equipItemArgs;
+  equipItemArgs.push_back(itemToEquip);
+  equipItemArgs.push_back(preventRemoval);
+  equipItemArgs.push_back(silent);
+
+  SpSnippet("Actor", "EquipItem", equipItemArgs, actor.GetFormId())
     .Execute(&actor, SpSnippetMode::kNoReturnResult);
+
   if (!isShield && !isArrow) {
-    SpSnippet("Actor", "DrawWeapon", "[]", actor.GetFormId())
+    static const std::vector<std::optional<
+      std::variant<bool, double, std::string, SpSnippetObjectArgument>>>
+      kEmptyArgs;
+
+    SpSnippet("Actor", "DrawWeapon", kEmptyArgs, actor.GetFormId())
       .Execute(&actor, SpSnippetMode::kNoReturnResult);
   }
 }

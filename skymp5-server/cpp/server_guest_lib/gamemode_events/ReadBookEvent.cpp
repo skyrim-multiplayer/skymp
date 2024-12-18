@@ -90,7 +90,7 @@ void ReadBookEvent::OnFireBlocked(WorldState* worldState)
   std::vector<VarValue> arguments = { aSpell };
 
   SpSnippet("Actor", "RemoveSpell",
-            SpSnippetFunctionGen::SerializeArguments(arguments).data(),
+            SpSnippetFunctionGen::SerializeArguments(arguments),
             actor->GetFormId())
     .Execute(actor, SpSnippetMode::kNoReturnResult);
 }

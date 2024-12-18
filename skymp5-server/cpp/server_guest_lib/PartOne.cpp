@@ -15,6 +15,7 @@
 
 #include "CreateActorMessage.h"
 #include "CustomPacketMessage.h"
+#include "DestroyActorMessage.h"
 #include "HostStopMessage.h"
 #include "SetRaceMenuOpenMessage.h"
 
@@ -79,7 +80,7 @@ struct PartOne::Impl
   simdjson::dom::parser parser;
   espm::Loader* espm = nullptr;
 
-  std::function<void(Networking::ISendTarget* sendTarget,
+  std::function<void(PartOneSendTargetWrapper* sendTarget,
                      MpObjectReference* emitter, MpObjectReference* listener)>
     onSubscribe, onUnsubscribe;
 
@@ -579,7 +580,7 @@ void PartOne::SendHostStop(Networking::UserId badHosterUserId,
 
   HostStopMessage message;
   message.target = longFormId;
-  GetSendTarget()->Send(badHosterUserId, message, true);
+  GetSendTarget().Send(badHosterUserId, message, true);
 }
 
 FormCallbacks PartOne::CreateFormCallbacks()
@@ -589,11 +590,11 @@ FormCallbacks PartOne::CreateFormCallbacks()
   FormCallbacks::SubscribeCallback
     subscribe =
       [this](MpObjectReference* emitter, MpObjectReference* listener) {
-        return pImpl->onSubscribe(pImpl->sendTarget, emitter, listener);
+        return pImpl->onSubscribe(pImpl->sendTarget.get(), emitter, listener);
       },
     unsubscribe = [this](MpObjectReference* emitter,
                          MpObjectReference* listener) {
-      return pImpl->onUnsubscribe(pImpl->sendTarget, emitter, listener);
+      return pImpl->onUnsubscribe(pImpl->sendTarget.get(), emitter, listener);
     };
 
   FormCallbacks::SendToUserFn sendToUser =
@@ -698,7 +699,7 @@ void PartOne::Init()
   pImpl.reset(new Impl);
   pImpl->logger.reset(new spdlog::logger{ "empty logger" });
 
-  pImpl->onSubscribe = [this](Networking::ISendTarget* sendTarget,
+  pImpl->onSubscribe = [this](PartOneSendTargetWrapper* sendTarget,
                               MpObjectReference* emitter,
                               MpObjectReference* listener) {
     if (!emitter) {
@@ -795,7 +796,7 @@ void PartOne::Init()
         (hosterIterator != worldState.hosters.end() &&
          hosterIterator->second != 0 &&
          hosterIterator->second != listener->GetFormId())) {
-      message.isHostedByOther = true;
+      message.props.isHostedByOther = true;
     }
 
     uint32_t worldOrCell =
@@ -817,7 +818,7 @@ void PartOne::Init()
     sendTarget->Send(listenerUserId, message, true);
   };
 
-  pImpl->onUnsubscribe = [this](Networking::ISendTarget* sendTarget,
+  pImpl->onUnsubscribe = [this](PartOneSendTargetWrapper* sendTarget,
                                 MpObjectReference* emitter,
                                 MpObjectReference* listener) {
     MpActor* listenerAsActor = listener->AsActor();

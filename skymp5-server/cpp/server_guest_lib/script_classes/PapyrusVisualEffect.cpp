@@ -38,7 +38,7 @@ void PapyrusVisualEffect::Helper(VarValue& self, const char* funcName,
         // Workaround to use this function on player clone
         if (actorForm->GetFormId() == listener->GetFormId()) {
           SpSnippet(GetName(), funcName,
-                    SpSnippetFunctionGen::SerializeArguments(arguments).data(),
+                    SpSnippetFunctionGen::SerializeArguments(arguments),
                     selfRec.ToGlobalId(selfRec.rec->GetId()))
             .Execute(listener, SpSnippetMode::kNoReturnResult);
         }

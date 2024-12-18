@@ -41,7 +41,7 @@ Viet::Promise<VarValue> SpSnippet::Execute(MpActor* actor, SpSnippetMode mode)
   SpSnippetMessage message;
   message.class_ = cl;
   message.function = func;
-  message.args = args;
+  message.arguments = args;
   message.selfId = targetSelfId;
   message.snippetIdx = static_cast<int64_t>(snippetIdx);
 

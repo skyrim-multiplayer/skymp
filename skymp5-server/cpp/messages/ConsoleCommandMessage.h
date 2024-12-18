@@ -14,9 +14,8 @@ struct ConsoleCommandMessage : public MessageBase<ConsoleCommandMessage>
     template <class Archive>
     void Serialize(Archive& archive)
     {
-      archive.Serialize("t", kMsgType)
-        .Serialize("commandName", commandName)
-        .Serialize("args", args);
+      archive.Serialize("t", kMsgType).Serialize("commandName", commandName);
+      //.Serialize("args", args);
     }
 
     std::string commandName;
