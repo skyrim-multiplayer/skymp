@@ -218,8 +218,8 @@ public:
     [&]<std::size_t... Is>(std::index_sequence<Is...>)
     {
       ((success = success ||
-          tryDeserialize(std::declval<typename std::variant_alternative<
-                           Is, std::variant<Types...>>::type>())),
+          tryDeserialize(typename std::variant_alternative<
+                         Is, std::variant<Types...>>::type{})),
        ...);
     }
     (std::make_index_sequence<sizeof...(Types)>{});
@@ -245,6 +245,17 @@ public:
         fmt::format("failed to call custom Serialize for type {}: {}",
                     typeid(T).name(), e.what()));
     }
+    return *this;
+  }
+
+  template <class T>
+  SimdJsonInputArchive& Serialize(std::optional<T>& output)
+  {
+    T outputItem;
+    SimdJsonInputArchive itemArchive(input);
+    itemArchive.Serialize(outputItem);
+    output.emplace(outputItem);
+
     return *this;
   }
 

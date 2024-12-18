@@ -355,7 +355,7 @@ void MpObjectReference::VisitProperties(CreateActorMessage& message,
     for (auto& [nodeName, scale] : *ChangeForm().setNodeScale) {
       SetNodeScaleEntry setNodeScaleEntry;
       setNodeScaleEntry.nodeName = nodeName;
-      setNodeScaleEntry.scale;
+      setNodeScaleEntry.scale = scale;
       setNodeScale.push_back(setNodeScaleEntry);
     }
     message.props.setNodeScale = std::move(setNodeScale);
