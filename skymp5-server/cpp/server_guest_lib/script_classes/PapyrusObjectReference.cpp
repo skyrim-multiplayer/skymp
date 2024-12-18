@@ -168,7 +168,7 @@ VarValue PapyrusObjectReference::AddItem(
     if (!silent && count > 0) {
       if (auto actor = selfRefr->AsActor()) {
         auto args = SpSnippetFunctionGen::SerializeArguments(arguments);
-        (void)SpSnippet("SkympHacks", "AddItem", args.data())
+        (void)SpSnippet("SkympHacks", "AddItem", args)
           .Execute(actor, SpSnippetMode::kNoReturnResult);
       }
     }
@@ -263,7 +263,7 @@ VarValue PapyrusObjectReference::RemoveItem(
     if (!silent && count > 0) {
       if (auto actor = selfRefr->AsActor()) {
         auto args = SpSnippetFunctionGen::SerializeArguments(arguments);
-        (void)SpSnippet("SkympHacks", "RemoveItem", args.data())
+        (void)SpSnippet("SkympHacks", "RemoveItem", args)
           .Execute(actor, SpSnippetMode::kNoReturnResult);
       }
     }

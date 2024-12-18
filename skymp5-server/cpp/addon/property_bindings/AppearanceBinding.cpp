@@ -36,7 +36,8 @@ void AppearanceBinding::Set(Napi::Env env, ScampServer& scampServer,
   auto appearance = actor.GetAppearance();
 
   UpdateAppearanceMessage message;
-  message.appearance = appearance ? *appearance : std::nullopt;
+  message.data =
+    appearance ? std::optional<Appearance>(*appearance) : std::nullopt;
   message.idx = actor.GetIdx();
 
   for (auto listener : actor.GetActorListeners()) {
