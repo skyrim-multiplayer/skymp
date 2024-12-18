@@ -27,6 +27,7 @@ struct SpSnippetMessage : public MessageBase<SpSnippetMessage>
       .Serialize("class", class_)
       .Serialize("function", function)
       // .Serialize("arguments", arguments)
+      .Serialize("foo", foo)
       .Serialize("selfId", selfId)
       .Serialize("snippetIdx", snippetIdx);
   }
@@ -36,6 +37,7 @@ struct SpSnippetMessage : public MessageBase<SpSnippetMessage>
   std::vector<std::optional<
     std::variant<bool, double, std::string, SpSnippetObjectArgument>>>
     arguments;
+  std::variant<int, std::string> foo;
   uint32_t selfId = 0;
   int64_t snippetIdx = 0;
 };

@@ -24,3 +24,6 @@ RUN \
     ninja-build \
   && rm -rf /var/lib/apt/lists/* \
   && mv /usr/bin/clang-format-15 /usr/bin/clang-format
+
+  RUN apt-get purge -y gcc g++ && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
+
