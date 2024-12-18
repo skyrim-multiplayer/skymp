@@ -1509,7 +1509,8 @@ void MpActor::ApplyMagicEffect(espm::Effects::Effect& effect, bool hasSweetpie,
           static_cast<std::underlying_type_t<espm::MGEF::EffectType>>(type));
       }
       spdlog::trace("Final multiplicator is {}", mult);
-      // TODO: proper fix (or effects system) instead of monkey-patching 4x higher mult
+      // TODO: proper fix (or effects system) instead of monkey-patching 4x
+      // higher mult
       // https://github.com/skyrim-multiplayer/skymp/pull/1852
       spdlog::trace("The result of baseValue * mult is: {}*{}={}", baseValue,
                     mult, baseValue * (mult * 4));
