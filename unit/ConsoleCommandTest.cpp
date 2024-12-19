@@ -46,8 +46,11 @@ TEST_CASE("ConsoleCommand packet is parsed", "[ConsoleCommand]")
     122, reinterpret_cast<Networking::PacketData>(msg.data()), msg.size(),
     listener);
 
-  REQUIRE(listener.args ==
-          std::vector<ConsoleCommands::Argument>({ 0x14, 0x12eb7, 0x1 }));
+  REQUIRE(
+    listener.args ==
+    std::vector<ConsoleCommands::Argument>(
+      { ConsoleCommands::Argument(0x14), ConsoleCommands::Argument(0x12eb7),
+        ConsoleCommands::Argument(0x1) }));
   REQUIRE(listener.consoleCommandName == "additem");
   REQUIRE(listener.rawMsgData.userId == 122);
 }
@@ -66,8 +69,10 @@ TEST_CASE("AddItem doesn't execute for non-privilleged users",
   msgData.userId = 0;
 
   REQUIRE_THROWS_WITH(
-    p.GetActionListener().OnConsoleCommand(msgData, "additem",
-                                           { 0x14, 0x12eb7, 0x108 }),
+    p.GetActionListener().OnConsoleCommand(
+      msgData, "additem",
+      { ConsoleCommands::Argument(0x14), ConsoleCommands::Argument(0x12eb7),
+        ConsoleCommands::Argument(0x108) }),
     ContainsSubstring("Not enough permissions to use this command"));
 
   p.DestroyActor(0xff000000);
@@ -90,7 +95,9 @@ TEST_CASE("AddItem executes", "[ConsoleCommand][espm]")
 
   p.Messages().clear();
   p.GetActionListener().OnConsoleCommand(msgData, "additem",
-                                         { 0x14, 0x12eb7, 0x108 });
+                                         { ConsoleCommands::Argument(0x14),
+                                           ConsoleCommands::Argument(0x12eb7),
+                                           ConsoleCommands::Argument(0x108) });
 
   p.Tick(); // send deferred messages
 
@@ -130,8 +137,10 @@ TEST_CASE("PlaceAtMe executes", "[ConsoleCommand][espm]")
   msgData.userId = 0;
 
   p.Messages().clear();
-  p.GetActionListener().OnConsoleCommand(msgData, "placeatme",
-                                         { 0x14, EncGiant01 });
+  p.GetActionListener().OnConsoleCommand(
+    msgData, "placeatme",
+    { ConsoleCommands::Argument(0x14),
+      ConsoleCommands::Argument(EncGiant01) });
 
   auto& refr = p.worldState.GetFormAt<MpActor>(0xff000001);
   REQUIRE(refr.GetBaseId() == EncGiant01);

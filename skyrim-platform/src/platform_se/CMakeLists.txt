@@ -158,11 +158,11 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
       "${CONVERT_FILES_DIR}/Definitions.txt"
       "${CMAKE_CURRENT_BINARY_DIR}/_codegen/skyrimPlatform.ts"
     )
-    add_custom_target(codegen ALL COMMAND $<TARGET_FILE:TSConverter> ${CODEGEN_ARGS})
-    add_dependencies(codegen TSConverter)
+    add_custom_target(skyrim_platform_codegen ALL COMMAND $<TARGET_FILE:TSConverter> ${CODEGEN_ARGS})
+    add_dependencies(skyrim_platform_codegen TSConverter)
 
-    # force "skyrim-platform" custom target to be built strictly after codegen
-    list(APPEND DEPENDENCIES_FOR_CUSTOM_TARGETS codegen)
+    # force "skyrim-platform" custom target to be built strictly after skyrim_platform_codegen
+    list(APPEND DEPENDENCIES_FOR_CUSTOM_TARGETS skyrim_platform_codegen)
   endif()
 
   # this target was originally called pack, now it is called skyrim-platform

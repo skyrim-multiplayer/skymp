@@ -10,6 +10,7 @@
 #include <stdexcept>
 #include <string_view>
 #include <type_traits>
+#include <variant>
 
 #include "concepts/Concepts.h"
 
@@ -52,7 +53,6 @@ public:
   {
   }
 
-  // TODO(#2250): it's probably useless and should be removed
   template <IntegralConstant T>
   SimdJsonInputArchive& Serialize(const char* key, T& output)
   {
@@ -65,6 +65,7 @@ public:
   SimdJsonInputArchive& Serialize(T& output)
   {
     static_assert(!sizeof(T), "can only parse to std::string");
+    return *this;
   }
 
   SimdJsonInputArchive& Serialize(std::string& output)
@@ -188,6 +189,49 @@ public:
     return *this;
   }
 
+  template <typename... Types>
+  SimdJsonInputArchive& Serialize(std::variant<Types...>& output)
+  {
+    // Helper lambda to attempt deserialization for a specific type
+    auto tryDeserialize = [&](auto typeTag) -> bool {
+      using SelectedType = decltype(typeTag);
+
+      SelectedType deserializedValue;
+
+      bool deserializationSuccessful = false;
+      try {
+        Serialize(deserializedValue);
+        deserializationSuccessful = true;
+      } catch (const std::exception&) {
+        deserializationSuccessful = false;
+      }
+
+      if (deserializationSuccessful) {
+        output = std::move(deserializedValue);
+      }
+
+      return deserializationSuccessful;
+    };
+
+    // Iterate through the variant types and attempt deserialization
+    bool success = false;
+    [&]<std::size_t... Is>(std::index_sequence<Is...>)
+    {
+      ((success = success ||
+          tryDeserialize(typename std::variant_alternative<
+                         Is, std::variant<Types...>>::type{})),
+       ...);
+    }
+    (std::make_index_sequence<sizeof...(Types)>{});
+
+    if (!success) {
+      throw std::runtime_error(
+        "Unable to deserialize JSON into any variant type");
+    }
+
+    return *this;
+  }
+
   // This function is called when for non-trivial types.
   // It's expected that a special function will handle this, implemented by the
   // said type
@@ -201,6 +245,17 @@ public:
         fmt::format("failed to call custom Serialize for type {}: {}",
                     typeid(T).name(), e.what()));
     }
+    return *this;
+  }
+
+  template <class T>
+  SimdJsonInputArchive& Serialize(std::optional<T>& output)
+  {
+    T outputItem;
+    SimdJsonInputArchive itemArchive(input);
+    itemArchive.Serialize(outputItem);
+    output.emplace(outputItem);
+
     return *this;
   }
 

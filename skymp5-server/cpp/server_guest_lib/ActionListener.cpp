@@ -11,6 +11,7 @@
 #include "MovementValidation.h"
 #include "MpObjectReference.h"
 #include "MsgType.h"
+#include "Overloaded.h"
 #include "UserMessageOutput.h"
 #include "WorldState.h"
 #include "gamemode_events/CraftEvent.h"
@@ -22,12 +23,14 @@
 #include <spdlog/spdlog.h>
 #include <unordered_set>
 
+#include "HostStartMessage.h"
+#include "HostStopMessage.h"
 #include "UpdateEquipmentMessage.h"
 
-MpActor* ActionListener::SendToNeighbours(
-  uint32_t idx, const simdjson::dom::element& jMessage,
-  Networking::UserId userId, Networking::PacketData data, size_t length,
-  bool reliable)
+MpActor* ActionListener::SendToNeighbours(uint32_t idx,
+                                          Networking::UserId userId,
+                                          Networking::PacketData data,
+                                          size_t length, bool reliable)
 {
   MpActor* myActor = partOne.serverState.ActorByUser(userId);
   // The old behavior is doing nothing in that case. This is covered by tests
@@ -87,9 +90,8 @@ MpActor* ActionListener::SendToNeighbours(uint32_t idx,
                                           const RawMessageData& rawMsgData,
                                           bool reliable)
 {
-  return SendToNeighbours(idx, rawMsgData.parsed, rawMsgData.userId,
-                          rawMsgData.unparsed, rawMsgData.unparsedLength,
-                          reliable);
+  return SendToNeighbours(idx, rawMsgData.userId, rawMsgData.unparsed,
+                          rawMsgData.unparsedLength, reliable);
 }
 
 void ActionListener::OnCustomPacket(const RawMessageData& rawMsgData,
@@ -418,37 +420,40 @@ void ActionListener::OnPlayerBowShot(const RawMessageData& rawMsgData,
 
 namespace {
 
-VarValue VarValueFromJson(const simdjson::dom::element& parentMsg,
-                          const simdjson::dom::element& element)
+VarValue VarValueFromSpSnippetReturnValue(
+  const std::optional<std::variant<bool, double, std::string>>& returnValue)
 {
   static const auto kKey = JsonPointer("returnValue");
 
-  // TODO: DOUBLE, STRING ...
-  switch (element.type()) {
-    case simdjson::dom::element_type::INT64:
-    case simdjson::dom::element_type::UINT64: {
-      int32_t v;
-      ReadEx(parentMsg, kKey, &v);
-      return VarValue(v);
-    }
-    case simdjson::dom::element_type::BOOL: {
-      bool v;
-      ReadEx(parentMsg, kKey, &v);
-      return VarValue(v);
-    }
-    case simdjson::dom::element_type::NULL_VALUE:
-      return VarValue::None();
-    default:
-      break;
+  if (!returnValue) {
+    return VarValue::None();
   }
-  throw std::runtime_error("VarValueFromJson - Unsupported json type " +
-                           std::to_string(static_cast<int>(element.type())));
+
+  return std::visit(
+    Viet::Overloaded{
+      [&](bool v) { return VarValue(v); },
+      [&](double v) {
+        // TODO: consider removing std::floor and logs after careful test
+        // because Papyrus VM should support mixed arithmetics, so we can
+        // always pass double
+        auto rounded = static_cast<int32_t>(std::floor(v));
+        if (std::abs(std::floor(v) - v) >
+            std::numeric_limits<double>::epsilon()) {
+          spdlog::error(
+            "VarValueFromSpSnippetReturnValue - Floating point values are not "
+            "yet supported, rounding down ({} -> {})",
+            v, rounded);
+        }
+        return VarValue(rounded);
+      },
+      [&](const std::string& v) { return VarValue(v); } },
+    *returnValue);
 }
 
 }
-void ActionListener::OnFinishSpSnippet(const RawMessageData& rawMsgData,
-                                       uint32_t snippetIdx,
-                                       simdjson::dom::element& returnValue)
+void ActionListener::OnFinishSpSnippet(
+  const RawMessageData& rawMsgData, uint32_t snippetIdx,
+  const std::optional<std::variant<bool, double, std::string>>& returnValue)
 {
   MpActor* actor = partOne.serverState.ActorByUser(rawMsgData.userId);
   if (!actor)
@@ -457,7 +462,7 @@ void ActionListener::OnFinishSpSnippet(const RawMessageData& rawMsgData,
       std::to_string(rawMsgData.userId));
 
   actor->ResolveSnippet(snippetIdx,
-                        VarValueFromJson(rawMsgData.parsed, returnValue));
+                        VarValueFromSpSnippetReturnValue(returnValue));
 }
 
 void ActionListener::OnEquip(const RawMessageData& rawMsgData, uint32_t baseId)
@@ -610,9 +615,9 @@ void ActionListener::OnHostAttempt(const RawMessageData& rawMsgData,
       longFormId += 0x100000000;
     }
 
-    Networking::SendFormatted(&partOne.GetSendTarget(), rawMsgData.userId,
-                              R"({ "type": "hostStart", "target": %llu })",
-                              longFormId);
+    HostStartMessage message;
+    message.target = longFormId;
+    partOne.GetSendTarget().Send(rawMsgData.userId, message, true);
 
     // Otherwise, health percentage would remain unsynced until someone hits
     // npc
@@ -638,17 +643,17 @@ void ActionListener::OnHostAttempt(const RawMessageData& rawMsgData,
       auto prevHosterUser = partOne.serverState.UserByActor(prevHosterActor);
       if (prevHosterUser != Networking::InvalidUserId &&
           prevHosterUser != rawMsgData.userId) {
-        Networking::SendFormatted(&partOne.GetSendTarget(), prevHosterUser,
-                                  R"({ "type": "hostStop", "target": %llu })",
-                                  longFormId);
+        HostStopMessage message;
+        message.target = longFormId;
+        partOne.GetSendTarget().Send(prevHosterUser, message, true);
       }
     }
   }
 }
 
-void ActionListener::OnCustomEvent(const RawMessageData& rawMsgData,
-                                   const char* eventName,
-                                   simdjson::dom::element& args)
+void ActionListener::OnCustomEvent(
+  const RawMessageData& rawMsgData, const char* eventName,
+  const std::vector<std::string>& argsJsonDumps)
 {
   auto ac = partOne.serverState.ActorByUser(rawMsgData.userId);
   if (!ac) {
@@ -659,9 +664,16 @@ void ActionListener::OnCustomEvent(const RawMessageData& rawMsgData,
     return;
   }
 
+  nlohmann::json jsonArray = nlohmann::json::array();
+
+  for (auto& arg : argsJsonDumps) {
+    jsonArray.push_back(nlohmann::json::parse(arg));
+  }
+
+  const std::string jsonArrayDump = jsonArray.dump();
+
   for (auto& listener : partOne.GetListeners()) {
-    CustomEvent customEvent(ac->GetFormId(), eventName,
-                            simdjson::minify(args));
+    CustomEvent customEvent(ac->GetFormId(), eventName, jsonArrayDump);
     listener->OnMpApiEvent(customEvent);
   }
 }
@@ -1144,7 +1156,7 @@ void ActionListener::OnSpellCast(const RawMessageData& rawMsgData,
 
   SendToNeighbours(myActor->idx, rawMsgData);
 
-  if (spellCastData.isInterruptCast) {
+  if (spellCastData.interruptCast) {
     return;
   }
 
@@ -1189,10 +1201,4 @@ void ActionListener::OnSpellCast(const RawMessageData& rawMsgData,
     "from castingSource : {4})",
     spellCastData.target, spellCastData.spell, damage, spellCastData.caster,
     static_cast<uint32_t>(spellCastData.castingSource));
-}
-
-void ActionListener::OnUnknown(const RawMessageData& rawMsgData)
-{
-  spdlog::error("Got unhandled message: {}",
-                simdjson::minify(rawMsgData.parsed));
 }

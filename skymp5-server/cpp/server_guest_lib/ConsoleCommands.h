@@ -12,8 +12,9 @@ class Argument
 {
 public:
   Argument();
-  Argument(int64_t integer);
-  Argument(const std::string& str);
+  explicit Argument(int64_t integer);
+  explicit Argument(const std::string& str);
+  explicit Argument(const std::variant<int64_t, std::string>& data_);
 
   bool IsInteger() const noexcept;
   bool IsString() const noexcept;

@@ -11,7 +11,6 @@ import { ConnectionMessage } from "../events/connectionMessage";
 import { CreateActorMessage } from "../messages/createActorMessage";
 import { CustomPacketMessage } from "../messages/customPacketMessage";
 import { NetworkingService } from "./networkingService";
-import { CustomPacketMessage2 } from "../messages/customPacketMessage2";
 import { MsgType } from "../../messages";
 import { ConnectionDenied } from "../events/connectionDenied";
 
@@ -46,7 +45,7 @@ export class AuthService extends ClientListener {
     this.controller.emitter.on("createActorMessage", (e) => this.onCreateActorMessage(e));
     this.controller.emitter.on("connectionAccepted", () => this.handleConnectionAccepted());
     this.controller.emitter.on("connectionDenied", (e) => this.handleConnectionDenied(e));
-    this.controller.emitter.on("customPacketMessage2", (e) => this.onCustomPacketMessage2(e));
+    this.controller.emitter.on("customPacketMessage", (e) => this.onCustomPacketMessage(e));
     this.controller.on("browserMessage", (e) => this.onBrowserMessage(e));
     this.controller.on("tick", () => this.onTick());
     this.controller.once("update", () => this.onceUpdate());
@@ -96,10 +95,24 @@ export class AuthService extends ClientListener {
     this.authAttemptProgressIndicator = false;
   }
 
-  private onCustomPacketMessage2(event: ConnectionMessage<CustomPacketMessage2>): void {
+  private onCustomPacketMessage(event: ConnectionMessage<CustomPacketMessage>): void {
     const msg = event.message;
 
-    switch (msg.content["customPacketType"]) {
+    let msgContent: Record<string, unknown> = {};
+
+    try {
+      msgContent = JSON.parse(msg.contentJsonDump);
+    } catch (e) {
+      if (e instanceof SyntaxError) {
+        logError(this, "onCustomPacketMessage failed to parse JSON", e.message, "json:", msg.contentJsonDump);
+        return;
+      }
+      else {
+        throw e;
+      }
+    }
+
+    switch (msgContent["customPacketType"]) {
       // case 'loginRequired':
       //   logTrace(this, 'loginRequired received');
       //   this.loginWithSkympIoCredentials();
@@ -541,12 +554,12 @@ export class AuthService extends ClientListener {
       );
       const message: CustomPacketMessage = {
         t: MsgType.CustomPacket,
-        content: {
+        contentJsonDump: JSON.stringify({
           customPacketType: 'loginWithSkympIo',
           gameData: {
             profileId: authData.local.profileId,
           },
-        },
+        }),
       };
       this.controller.emitter.emit("sendMessage", {
         message: message,
@@ -559,12 +572,12 @@ export class AuthService extends ClientListener {
       logTrace(this, 'Logging in as a master API user');
       const message: CustomPacketMessage = {
         t: MsgType.CustomPacket,
-        content: {
+        contentJsonDump: JSON.stringify({
           customPacketType: 'loginWithSkympIo',
           gameData: {
             session: authData.remote.session,
           },
-        },
+        }),
       };
       this.controller.emitter.emit("sendMessage", {
         message: message,

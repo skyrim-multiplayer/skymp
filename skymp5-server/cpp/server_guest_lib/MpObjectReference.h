@@ -21,6 +21,7 @@
 #include <tuple>
 #include <vector>
 
+#include "CreateActorMessage.h"
 #include "UpdatePropertyMessage.h"
 
 struct GridPosInfo
@@ -109,10 +110,7 @@ public:
   bool IsActivationBlocked() const;
   bool GetTeleportFlag() const;
 
-  using PropertiesVisitor =
-    std::function<void(const char* propName, const char* jsonValue)>;
-
-  virtual void VisitProperties(const PropertiesVisitor& visitor,
+  virtual void VisitProperties(CreateActorMessage& message,
                                VisitPropertiesMode mode);
   virtual void Activate(MpObjectReference& activationSource,
                         bool defaultProcessingOnly = false,

@@ -63,12 +63,12 @@ public:
                                    bool lazyLoad = true);
   void RemoveFromFaction(FormDesc factionForm, bool lazyLoad = true);
 
-  void VisitProperties(const PropertiesVisitor& visitor,
+  void VisitProperties(CreateActorMessage& message,
                        VisitPropertiesMode mode) override;
   void Disable() override;
 
   void SendToUser(const IMessageBase& message, bool reliable);
-  void SendToUserDeferred(const void* data, size_t size, bool reliable,
+  void SendToUserDeferred(const IMessageBase& message, bool reliable,
                           int deferredChannelId,
                           bool overwritePreviousChannelMessages);
 

@@ -1,5 +1,6 @@
 #include "ScriptStorageUtils.h"
 
+#include <cstring>
 #include <filesystem>
 #include <regex>
 
@@ -7,10 +8,12 @@ std::string ScriptStorageUtils::GetFileName(const std::string& path)
 {
   std::string s = path;
   while (s.find('/') != s.npos || s.find('\\') != s.npos) {
-    while (s.find('/') != s.npos)
+    while (s.find('/') != s.npos) {
       s = { s.begin() + s.find('/') + 1, s.end() };
-    while (s.find('\\') != s.npos)
+    }
+    while (s.find('\\') != s.npos) {
       s = { s.begin() + s.find('\\') + 1, s.end() };
+    }
   }
   return s;
 }

@@ -59,7 +59,6 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
   ActionListener::RawMessageData rawMsgData{
     data,
     length,
-    /*parsed (json)*/ {},
     userId,
   };
 
@@ -73,6 +72,70 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
       });
     }
     switch (result->msgType) {
+      case MsgType::Invalid: {
+        return;
+      }
+      case MsgType::Activate: {
+        auto message =
+          reinterpret_cast<ActivateMessage*>(result->message.get());
+        actionListener.OnActivate(
+          rawMsgData, FormIdCasts::LongToNormal(message->data.caster),
+          FormIdCasts::LongToNormal(message->data.target),
+          message->data.isSecondActivation);
+        return;
+      }
+      case MsgType::ConsoleCommand: {
+        auto message =
+          reinterpret_cast<ConsoleCommandMessage*>(result->message.get());
+
+        std::vector<ConsoleCommands::Argument> consoleArgs;
+        consoleArgs.resize(message->data.args.size());
+        for (size_t i = 0; i < message->data.args.size(); i++) {
+          consoleArgs[i] = ConsoleCommands::Argument(message->data.args[i]);
+        }
+
+        actionListener.OnConsoleCommand(rawMsgData, message->data.commandName,
+                                        consoleArgs);
+        return;
+      }
+      case MsgType::CraftItem: {
+        auto message =
+          reinterpret_cast<CraftItemMessage*>(result->message.get());
+        actionListener.OnCraftItem(rawMsgData, message->data.craftInputObjects,
+                                   message->data.workbench,
+                                   message->data.resultObjectId);
+        return;
+      }
+      case MsgType::CustomEvent: {
+        auto message =
+          reinterpret_cast<CustomEventMessage*>(result->message.get());
+        actionListener.OnCustomEvent(rawMsgData, message->eventName.data(),
+                                     message->argsJsonDumps);
+        return;
+      }
+      case MsgType::DropItem: {
+        auto message =
+          reinterpret_cast<DropItemMessage*>(result->message.get());
+
+        Inventory::Entry entry;
+        entry.baseId = FormIdCasts::LongToNormal(message->baseId);
+        entry.count = message->count;
+
+        actionListener.OnDropItem(
+          rawMsgData, FormIdCasts::LongToNormal(message->baseId), entry);
+        return;
+      }
+      case MsgType::OnHit: {
+        auto message = reinterpret_cast<HitMessage*>(result->message.get());
+        actionListener.OnHit(rawMsgData, message->data);
+        return;
+      }
+      case MsgType::Host: {
+        auto message = reinterpret_cast<HostMessage*>(result->message.get());
+        actionListener.OnHostAttempt(
+          rawMsgData, FormIdCasts::LongToNormal(message->remoteId));
+        return;
+      }
       case MsgType::UpdateMovement: {
         auto message =
           reinterpret_cast<UpdateMovementMessage*>(result->message.get());
@@ -121,181 +184,100 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
         actionListener.OnChangeValues(rawMsgData, actorValues);
         return;
       }
+      case MsgType::CustomPacket: {
+        auto message =
+          reinterpret_cast<CustomPacketMessage*>(result->message.get());
+        auto parsedContent = pImpl->simdjsonParser
+                               .parse(message->contentJsonDump.data(),
+                                      message->contentJsonDump.size())
+                               .value();
+        actionListener.OnCustomPacket(rawMsgData, parsedContent);
+        return;
+      }
+      case MsgType::UpdateAppearance: {
+        auto message =
+          reinterpret_cast<UpdateAppearanceMessage*>(result->message.get());
+        const uint32_t idx = message->idx;
+        const Appearance& data = *message->data;
+        actionListener.OnUpdateAppearance(rawMsgData, idx, data);
+        return;
+      }
+      case MsgType::UpdateProperty: {
+        return;
+      }
+      case MsgType::PutItem: {
+        auto message =
+          reinterpret_cast<PutItemMessage*>(result->message.get());
+        const auto& extra = static_cast<Inventory::ExtraData&>(*message);
+        const uint32_t baseId = message->baseId;
+        const uint32_t count = message->count;
+        const uint32_t target = message->target;
+
+        Inventory::Entry entry;
+        entry.baseId = baseId;
+        entry.count = count;
+        static_cast<Inventory::ExtraData&>(entry) = extra;
+
+        entry.SetWorn(Inventory::Worn::None);
+
+        actionListener.OnPutItem(rawMsgData, target, entry);
+        return;
+      }
+      case MsgType::TakeItem: {
+        auto message =
+          reinterpret_cast<TakeItemMessage*>(result->message.get());
+        const auto& extra = static_cast<Inventory::ExtraData&>(*message);
+        const uint32_t baseId = message->baseId;
+        const uint32_t count = message->count;
+        const uint32_t target = message->target;
+
+        Inventory::Entry entry;
+        entry.baseId = baseId;
+        entry.count = count;
+        static_cast<Inventory::ExtraData&>(entry) = extra;
+
+        actionListener.OnTakeItem(rawMsgData, target, entry);
+        return;
+      }
+      case MsgType::FinishSpSnippet: {
+        auto message =
+          reinterpret_cast<FinishSpSnippetMessage*>(result->message.get());
+        const std::optional<std::variant<bool, double, std::string>>&
+          returnValue = message->returnValue;
+        const uint32_t snippetIdx = static_cast<uint32_t>(message->snippetIdx);
+
+        actionListener.OnFinishSpSnippet(rawMsgData, snippetIdx, returnValue);
+        return;
+      }
+      case MsgType::OnEquip: {
+        auto message =
+          reinterpret_cast<OnEquipMessage*>(result->message.get());
+        actionListener.OnEquip(rawMsgData, message->baseId);
+        return;
+      }
+      case MsgType::SpellCast: {
+        auto message =
+          reinterpret_cast<SpellCastMessage*>(result->message.get());
+        actionListener.OnSpellCast(rawMsgData, message->data);
+        return;
+      }
+      case MsgType::UpdateAnimVariables: {
+        actionListener.OnUpdateAnimVariables(rawMsgData);
+        return;
+      }
+      case MsgType::PlayerBowShot: {
+        auto message =
+          reinterpret_cast<PlayerBowShotMessage*>(result->message.get());
+        actionListener.OnPlayerBowShot(rawMsgData, message->weaponId,
+                                       message->ammoId, message->power,
+                                       message->isSunGazing);
+        break;
+      }
       default: {
-        // likel a binary packet, can't just fall back to simdjson parsing
         spdlog::error("PacketParser.cpp doesn't implement MsgType {}",
                       static_cast<int64_t>(result->msgType));
         return;
       }
     }
-  }
-
-  rawMsgData.parsed =
-    pImpl->simdjsonParser.parse(data + 1, length - 1).value();
-
-  const auto& jMessage = rawMsgData.parsed;
-
-  int64_t type = static_cast<int64_t>(MsgType::Invalid);
-  Read(jMessage, JsonPointers::t, &type);
-
-  switch (static_cast<MsgType>(type)) {
-    case MsgType::Invalid:
-      break;
-    case MsgType::CustomPacket: {
-      simdjson::dom::element content;
-      Read(jMessage, JsonPointers::content, &content);
-      actionListener.OnCustomPacket(rawMsgData, content);
-    } break;
-    case MsgType::UpdateAppearance: {
-      uint32_t idx;
-      ReadEx(jMessage, JsonPointers::idx, &idx);
-      simdjson::dom::element jData;
-      Read(jMessage, JsonPointers::data, &jData);
-
-      actionListener.OnUpdateAppearance(rawMsgData, idx,
-                                        Appearance::FromJson(jData));
-    } break;
-    case MsgType::Activate: {
-      simdjson::dom::element data_;
-      ReadEx(jMessage, JsonPointers::data, &data_);
-      uint64_t caster, target;
-      ReadEx(data_, JsonPointers::caster, &caster);
-      ReadEx(data_, JsonPointers::target, &target);
-      bool isSecondActivation;
-      ReadEx(data_, JsonPointers::isSecondActivation, &isSecondActivation);
-      actionListener.OnActivate(rawMsgData, FormIdCasts::LongToNormal(caster),
-                                FormIdCasts::LongToNormal(target),
-                                isSecondActivation);
-    } break;
-    case MsgType::UpdateProperty:
-      break;
-    case MsgType::PutItem:
-    case MsgType::TakeItem: {
-      uint32_t target;
-      ReadEx(jMessage, JsonPointers::target, &target);
-      auto e = Inventory::Entry::FromJson(jMessage);
-      if (static_cast<MsgType>(type) == MsgType::PutItem) {
-        e.SetWorn(Inventory::Worn::None);
-        actionListener.OnPutItem(rawMsgData, target, e);
-      } else {
-        actionListener.OnTakeItem(rawMsgData, target, e);
-      }
-    } break;
-    case MsgType::FinishSpSnippet: {
-      uint32_t snippetIdx;
-      ReadEx(jMessage, JsonPointers::snippetIdx, &snippetIdx);
-
-      simdjson::dom::element returnValue;
-      ReadEx(jMessage, JsonPointers::returnValue, &returnValue);
-
-      actionListener.OnFinishSpSnippet(rawMsgData, snippetIdx, returnValue);
-
-      break;
-    }
-    case MsgType::OnEquip: {
-      uint32_t baseId;
-      ReadEx(jMessage, JsonPointers::baseId, &baseId);
-      actionListener.OnEquip(rawMsgData, baseId);
-      break;
-    }
-    case MsgType::ConsoleCommand: {
-      simdjson::dom::element data_;
-      ReadEx(jMessage, JsonPointers::data, &data_);
-      const char* commandName;
-      ReadEx(data_, JsonPointers::commandName, &commandName);
-      simdjson::dom::element args;
-      ReadEx(data_, JsonPointers::args, &args);
-
-      auto arr = args.get_array().value();
-
-      std::vector<ConsoleCommands::Argument> consoleArgs;
-      consoleArgs.resize(arr.size());
-      for (size_t i = 0; i < arr.size(); ++i) {
-        simdjson::dom::element el;
-        ReadEx(args, i, &el);
-
-        std::string s = simdjson::minify(el);
-        if (!s.empty() && s[0] == '"') {
-          const char* s;
-          ReadEx(args, i, &s);
-          consoleArgs[i] = std::string(s);
-        } else {
-          int64_t ingeter;
-          ReadEx(args, i, &ingeter);
-          consoleArgs[i] = ingeter;
-        }
-      }
-      actionListener.OnConsoleCommand(rawMsgData, commandName, consoleArgs);
-      break;
-    }
-    case MsgType::CraftItem: {
-      simdjson::dom::element data_;
-      ReadEx(jMessage, JsonPointers::data, &data_);
-      uint32_t workbench;
-      ReadEx(data_, JsonPointers::workbench, &workbench);
-      uint32_t resultObjectId;
-      ReadEx(data_, JsonPointers::resultObjectId, &resultObjectId);
-      simdjson::dom::element craftInputObjects;
-      ReadEx(data_, JsonPointers::craftInputObjects, &craftInputObjects);
-      actionListener.OnCraftItem(rawMsgData,
-                                 Inventory::FromJson(craftInputObjects),
-                                 workbench, resultObjectId);
-      break;
-    }
-    case MsgType::Host: {
-      uint64_t remoteId;
-      ReadEx(jMessage, JsonPointers::remoteId, &remoteId);
-      actionListener.OnHostAttempt(rawMsgData,
-                                   FormIdCasts::LongToNormal(remoteId));
-      break;
-    }
-    case MsgType::CustomEvent: {
-      simdjson::dom::element args;
-      ReadEx(jMessage, JsonPointers::args, &args);
-      const char* eventName;
-      ReadEx(jMessage, JsonPointers::eventName, &eventName);
-      actionListener.OnCustomEvent(rawMsgData, eventName, args);
-      break;
-    }
-    case MsgType::OnHit: {
-      simdjson::dom::element data_;
-      ReadEx(jMessage, JsonPointers::data, &data_);
-      actionListener.OnHit(rawMsgData, HitData::FromJson(data_));
-      break;
-    }
-    case MsgType::SpellCast: {
-      simdjson::dom::element data_;
-      ReadEx(jMessage, JsonPointers::data, &data_);
-      actionListener.OnSpellCast(rawMsgData, SpellCastData::FromJson(data_));
-      break;
-    }
-    case MsgType::UpdateAnimVariables: {
-      actionListener.OnUpdateAnimVariables(rawMsgData);
-      break;
-    }
-    case MsgType::DropItem: {
-      uint64_t baseId;
-      ReadEx(jMessage, JsonPointers::baseId, &baseId);
-      auto entry = Inventory::Entry::FromJson(jMessage);
-      actionListener.OnDropItem(rawMsgData, FormIdCasts::LongToNormal(baseId),
-                                entry);
-      break;
-    }
-    case MsgType::PlayerBowShot: {
-      uint32_t weaponId;
-      ReadEx(jMessage, JsonPointers::weaponId, &weaponId);
-      uint32_t ammoId;
-      ReadEx(jMessage, JsonPointers::ammoId, &ammoId);
-      float power;
-      ReadEx(jMessage, JsonPointers::power, &power);
-      bool isSunGazing;
-      ReadEx(jMessage, JsonPointers::isSunGazing, &isSunGazing);
-      actionListener.OnPlayerBowShot(rawMsgData, weaponId, ammoId, power,
-                                     isSunGazing);
-      break;
-    }
-    default:
-      actionListener.OnUnknown(rawMsgData);
-      break;
   }
 }

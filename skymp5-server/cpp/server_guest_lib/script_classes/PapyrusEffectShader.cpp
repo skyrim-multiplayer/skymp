@@ -32,13 +32,13 @@ void PapyrusEffectShader::Helper(VarValue& self, const char* funcName,
       for (auto listener : actorForm->GetActorListeners()) {
         SpSnippet(
           GetName(), funcName,
-          SpSnippetFunctionGen::SerializeArguments(arguments, listener).data(),
+          SpSnippetFunctionGen::SerializeArguments(arguments, listener),
           selfRec.ToGlobalId(selfRec.rec->GetId()))
           .Execute(listener, SpSnippetMode::kNoReturnResult);
         // Workaround to use this function on player clone
         if (actorForm->GetFormId() == listener->GetFormId()) {
           SpSnippet(GetName(), funcName,
-                    SpSnippetFunctionGen::SerializeArguments(arguments).data(),
+                    SpSnippetFunctionGen::SerializeArguments(arguments),
                     selfRec.ToGlobalId(selfRec.rec->GetId()))
             .Execute(listener, SpSnippetMode::kNoReturnResult);
         }

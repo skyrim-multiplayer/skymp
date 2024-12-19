@@ -1,6 +1,13 @@
+import { MsgType } from "../../messages";
+
+export interface GamemodeValuePair {
+    name: string;
+    content: string;
+}
+
 export interface UpdateGamemodeDataMessage {
-    type: "updateGamemodeData";
-    eventSources: Record<string, string>;
-    updateOwnerFunctions: Record<string, string>;
-    updateNeighborFunctions: Record<string, string>;
+    t: MsgType.UpdateGamemodeData;
+    eventSources: GamemodeValuePair[];
+    updateOwnerFunctions: GamemodeValuePair[];
+    updateNeighborFunctions: GamemodeValuePair[];
 }

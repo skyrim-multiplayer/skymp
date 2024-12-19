@@ -1,5 +1,6 @@
 #include "libespm/WRLD.h"
 #include "libespm/RecordHeaderAccess.h"
+#include <algorithm>
 
 namespace espm {
 

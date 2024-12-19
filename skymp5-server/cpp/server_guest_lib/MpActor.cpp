@@ -323,7 +323,7 @@ void MpActor::RemoveFromFaction(FormDesc factionForm, bool lazyLoad)
   });
 }
 
-void MpActor::VisitProperties(const PropertiesVisitor& visitor,
+void MpActor::VisitProperties(CreateActorMessage& message,
                               VisitPropertiesMode mode)
 {
   const auto baseId = GetBaseId();
@@ -340,31 +340,28 @@ void MpActor::VisitProperties(const PropertiesVisitor& visitor,
 
   MpChangeForm changeForm = GetChangeForm();
 
-  MpObjectReference::VisitProperties(visitor, mode);
+  MpObjectReference::VisitProperties(message, mode);
 
   if (mode == VisitPropertiesMode::All && IsRaceMenuOpen()) {
-    visitor("isRaceMenuOpen", "true");
+    message.props.isRaceMenuOpen = true;
   }
 
   if (mode == VisitPropertiesMode::All) {
-    baseActorValues.VisitBaseActorValues(baseActorValues, changeForm, visitor);
+    baseActorValues.VisitBaseActorValuesAndPercentages(baseActorValues,
+                                                       changeForm, message);
   }
 
-  visitor("learnedSpells",
-          nlohmann::json(changeForm.learnedSpells.GetLearnedSpells())
-            .dump()
-            .c_str());
+  message.props.learnedSpells = changeForm.learnedSpells.GetLearnedSpells();
 
   if (!changeForm.templateChain.empty()) {
-    // should be faster than nlohmann::json
-    std::string jsonDump = "[";
+    std::vector<uint32_t> templateChain;
+    templateChain.reserve(changeForm.templateChain.size());
+
     for (auto& element : changeForm.templateChain) {
-      jsonDump += std::to_string(element.ToFormId(GetParent()->espmFiles));
-      jsonDump += ',';
+      templateChain.push_back(element.ToFormId(GetParent()->espmFiles));
     }
-    jsonDump.pop_back(); // comma
-    jsonDump += "]";
-    visitor("templateChain", jsonDump.data());
+
+    message.props.templateChain = std::move(templateChain);
   }
 }
 
@@ -400,13 +397,12 @@ void MpActor::SendToUser(const IMessageBase& message, bool reliable)
   }
 }
 
-void MpActor::SendToUserDeferred(const void* data, size_t size, bool reliable,
+void MpActor::SendToUserDeferred(const IMessageBase& message, bool reliable,
                                  int deferredChannelId,
                                  bool overwritePreviousChannelMessages)
 {
   if (callbacks->sendToUserDeferred) {
-    callbacks->sendToUserDeferred(this, data, size, reliable,
-                                  deferredChannelId,
+    callbacks->sendToUserDeferred(this, message, reliable, deferredChannelId,
                                   overwritePreviousChannelMessages);
   } else {
     throw std::runtime_error("sendToUserDeferred is nullptr");
@@ -459,17 +455,21 @@ bool MpActor::OnEquip(uint32_t baseId)
   if (isIngredient || isPotion) {
     EatItem(baseId, recordType);
 
-    nlohmann::json j = nlohmann::json::array();
-    j.push_back(
-      nlohmann::json({ { "formId", baseId },
-                       { "type", isIngredient ? "Ingredient" : "Potion" } }));
-    j.push_back(false);
-    j.push_back(false);
+    std::vector<std::optional<
+      std::variant<bool, double, std::string, SpSnippetObjectArgument>>>
+      spSnippetArgs;
 
-    std::string serializedArgs = j.dump();
+    SpSnippetObjectArgument spSnippetObjectArgument;
+    spSnippetObjectArgument.formId = baseId;
+    spSnippetObjectArgument.type = isIngredient ? "Ingredient" : "Potion";
+
+    spSnippetArgs.push_back(spSnippetObjectArgument);
+    spSnippetArgs.push_back(false);
+    spSnippetArgs.push_back(false);
+
     for (auto listener : GetActorListeners()) {
       if (listener != this) {
-        SpSnippet("Actor", "EquipItem", serializedArgs.data(), GetFormId())
+        SpSnippet("Actor", "EquipItem", spSnippetArgs, GetFormId())
           .Execute(listener, SpSnippetMode::kNoReturnResult);
       }
     }
