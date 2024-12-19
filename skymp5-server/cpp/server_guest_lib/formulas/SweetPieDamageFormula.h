@@ -9,7 +9,7 @@
 
 #include <nlohmann/json_fwd.hpp>
 
-// Modifies vanilla damage
+// Modifies vanilla damage for weapons
 
 struct SweetPieDamageFormulaSettings
 {
