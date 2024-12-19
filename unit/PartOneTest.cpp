@@ -44,8 +44,9 @@ TEST_CASE("OnCustomPacket", "[PartOne]")
 
   DoConnect(partOne, 0);
   DoMessage(partOne, 0,
-            nlohmann::json{ { "t", MsgType::CustomPacket },
-                            { "content", { { "x", "y" } } } });
+            nlohmann::json{
+              { "t", MsgType::CustomPacket },
+              { "contentJsonDump", nlohmann::json{ { "x", "y" } }.dump() } });
   REQUIRE_THAT(lst->str(),
                ContainsSubstring("OnCustomPacket(0, {\"x\":\"y\"})"));
 
@@ -61,7 +62,8 @@ TEST_CASE("Messages for non-existent users", "[PartOne]")
   REQUIRE_THROWS_WITH(
     DoMessage(partOne, 0,
               nlohmann::json{ { "t", MsgType::CustomPacket },
-                              { "content", { { "x", "y" } } } }),
+                              { "contentJsonDump",
+                                nlohmann::json{ { "x", "y" } }.dump() } }),
     ContainsSubstring("User with id 0 doesn't exist"));
 
   DoConnect(partOne, 0);
@@ -69,14 +71,16 @@ TEST_CASE("Messages for non-existent users", "[PartOne]")
   REQUIRE_NOTHROW(
     DoMessage(partOne, 0,
               nlohmann::json{ { "t", MsgType::CustomPacket },
-                              { "content", { { "x", "y" } } } }));
+                              { "contentJsonDump",
+                                nlohmann::json{ { "x", "y" } }.dump() } }));
 
   DoDisconnect(partOne, 0);
 
   REQUIRE_THROWS_WITH(
     DoMessage(partOne, 0,
               nlohmann::json{ { "t", MsgType::CustomPacket },
-                              { "content", { { "x", "y" } } } }),
+                              { "contentJsonDump",
+                                nlohmann::json{ { "x", "y" } }.dump() } }),
     ContainsSubstring("User with id 0 doesn't exist"));
 }
 
@@ -118,8 +122,9 @@ TEST_CASE("Server custom packet", "[PartOne]")
   partOne.SendCustomPacket(1, nlohmann::json({ { "x", "y" } }).dump());
   REQUIRE(partOne.Messages().size() == 1);
   REQUIRE(partOne.Messages()[0].j.dump() ==
-          nlohmann::json{ { "type", "customPacket" },
-                          { "content", { { "x", "y" } } } }
+          nlohmann::json{
+            { "t", static_cast<int>(MsgType::CustomPacket) },
+            { "contentJsonDump", nlohmann::json{ { "x", "y" } }.dump() } }
             .dump());
   REQUIRE(partOne.Messages()[0].userId == 1);
   REQUIRE(partOne.Messages()[0].reliable);
