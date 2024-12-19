@@ -36,7 +36,7 @@ export class Login implements System {
     return {
       // retry on any network error, or 5xx status codes
       retryOn: (attempt: number, error: Error | null, response: Response) => {
-        const retry = error !== null || response.status >= 400;
+        const retry = error !== null || response.status >= 500;
         if (retry) {
           console.log(`${callerFunctionName}: retrying request ${JSON.stringify({ attempt, error, status: response.status })}`);
         }
