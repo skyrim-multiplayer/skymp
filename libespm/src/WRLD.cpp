@@ -1,5 +1,6 @@
 #include "libespm/WRLD.h"
 #include "libespm/RecordHeaderAccess.h"
+#include <algorithm>
 
 namespace espm {
 
@@ -12,8 +13,7 @@ WRLD::Data WRLD::GetData(CompressedFieldsCache& cache) const noexcept
       if (!std::memcmp(type, "FULL", 4)) {
         result.localNameIndex = *reinterpret_cast<const lstring*>(data);
       } else if (!std::memcmp(type, "WCTR", 4)) {
-        // std::copy_n(data, std::size(result.centerCellXY),
-        // result.centerCellXY);
+        std::copy_n(data, std::size(result.centerCellXY), result.centerCellXY);
       } else if (!std::memcmp(type, "LTMP", 4)) {
         result.interiorLightingId = *reinterpret_cast<const formId*>(data);
       } else if (!std::memcmp(type, "XEZN", 4)) {
