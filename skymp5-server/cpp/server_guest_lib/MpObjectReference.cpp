@@ -31,6 +31,7 @@
 #include <map>
 #include <numeric>
 #include <optional>
+#include <stacktrace>
 
 #include "OpenContainerMessage.h"
 #include "TeleportMessage.h"
@@ -130,6 +131,13 @@ struct PrimitiveData
   GeoProc::GeoPolygonProc polygonProc;
 };
 
+struct SetPropertyTrackingInfo
+{
+  std::string propertyName;
+  nlohmann::json value;
+  std::stacktrace trace;
+};
+
 struct MpObjectReference::Impl
 {
 public:
@@ -139,6 +147,8 @@ public:
   AnimGraphHolder animGraphHolder;
   std::optional<PrimitiveData> primitive;
   bool teleportFlag = false;
+
+  std::unique_ptr<SetPropertyTrackingInfo> setPropertyTrackingInfo;
   bool setPropertyCalled = false;
 };
 
@@ -717,6 +727,13 @@ void MpObjectReference::SetProperty(const std::string& propertyName,
     }
   }
   pImpl->setPropertyCalled = true;
+
+  if (GetFormId() == 0xE2218) {
+    setPropertyTrackingInfo.reset(new SetPropertyTrackingInfo);
+    setPropertyTrackingInfo->propertyName = propertyName;
+    setPropertyTrackingInfo->value = newValue;
+    setPropertyTrackingInfo->trace = std::stacktrace::current();
+  }
 }
 
 void MpObjectReference::SetTeleportFlag(bool value)
@@ -1137,8 +1154,35 @@ MpChangeForm MpObjectReference::GetChangeForm() const
 void MpObjectReference::ApplyChangeForm(const MpChangeForm& changeForm)
 {
   if (pImpl->setPropertyCalled) {
-    GetParent()->logger->critical("ApplyChangeForm called after SetProperty");
-    std::terminate();
+    spdlog::critical(
+      "MpObjectReference::ApplyChangeForm {:x} - called after SetProperty",
+      GetFormId());
+
+    auto& setPropertyTrackingInfo = pImpl->setPropertyTrackingInfo;
+
+    spdlog::critical(
+      "setPropertyTrackingInfo: propertyName = {}, value = {}",
+      setPropertyTrackingInfo ? setPropertyTrackingInfo->propertyName
+                              : std::string("<No property name>"),
+      setPropertyTrackingInfo ? setPropertyTrackingInfo->value.dump()
+                              : std::string("<No value>"));
+
+    std::stringstream ss;
+
+    if (setPropertyTrackingInfo) {
+      auto trace = setPropertyTrackingInfo->trace;
+      for (std::size_t i = 0; i < trace.size(); ++i) {
+        ss << "#" << i << ": " << trace[i] << '\n';
+      }
+    } else {
+      ss << "<No trace available>";
+    }
+
+    spdlog::critical("setPropertyTrackingInfo: trace = {}", ss.str());
+
+    pImpl->setPropertyTrackingInfo.reset();
+
+    // std::terminate();
   }
 
   blockSaving = true;
