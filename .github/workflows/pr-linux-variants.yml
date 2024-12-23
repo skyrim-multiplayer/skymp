@@ -1,4 +1,6 @@
-name: PR Ubuntu Docker
+# TODO(#2280): rename from PR to something else (also applies to Windows etc)
+# TODO(#2280): keep in line with deploy.yml
+name: PR Linux
 on:
     pull_request:
         # any
@@ -10,7 +12,24 @@ env:
     BUILD_TYPE: RelWithDebInfo
 
 jobs:
-    pr-ubuntu-docker:
+    pr-docker:
+        strategy:
+          matrix:
+            base_system:
+            # The usual container used for all builds within the CI and the one
+            # we use as the base for server builds with preinstalled/cached deps
+            - ubuntu-vcpkg-deps
+
+            # Distros that our contributors are likely to run
+            - ubuntu-2204
+            - ubuntu-2404
+            - ubuntu-2410  # latest non-LTS
+            - debian-12
+            - archlinux
+
+            # TODO(#2280): add Fedora
+            # TODO(#2280): test gcc build, test build w/o ninja
+
         runs-on: ubuntu-latest
         steps:
           - name: Checkout
@@ -18,12 +37,90 @@ jobs:
             with:
                 submodules: recursive
 
-          - name: Get image to build upon
+          - name: Debug - print env
+            run: env
+
+          - name: Get/build image to use for building & testing
             run: |
-                cat ${{github.workspace}}/misc/github_env_linux >> "$GITHUB_ENV"
+                set -x  # print executed commands
+
+                echo Some debug data
+                id
+                uname -a
+                lsb_release -a
+
+                # cat ${{github.workspace}}/misc/github_env_linux >> "$GITHUB_ENV"
+
+                # get base image for this distro (or build configuration, in case with skymp-deps)
+                base_image="`misc/deps_linux/${{ matrix.base_system }}.sh --get-image-uri`"
+
+                docker run \
+                  --name prepare_deps_container \
+                  -v "${{github.workspace}}:/src" \
+                  -w "/src" \
+                  -e "CI=$CI" \
+                  -e "CREATE_UID=`id -u`" \
+                  "$base_image" \
+                  'misc/deps_linux/${{ matrix.base_system }}.sh' '--ensure-deps-noninteractive'
+
+                docker commit prepare_deps_container localhost/buildimage
+
+          - name: Debug - check build tools
+            uses: addnab/docker-run-action@v3
+            with:
+              image: localhost/buildimage
+              options: |
+                -v ${{github.workspace}}:/src
+                -w /src
+                -u skymp
+              run: |
+                print_info_unsafe() {
+                  echo .
+                  echo .
+                  echo "=== Checking $1 ==="
+                  out="`which $1`"
+                  ret="$?"
+                  if [ "$ret" != 0 -o -z "$out" ]; then
+                    echo "Which exited with $ret $out"
+                    return
+                  fi
+                  ls -lh "$out"
+                  echo "version call:"
+                  "$out" --version
+                }
+
+                print_info() {
+                  print_info_unsafe "$@" || true
+                }
+
+                print_info clang++
+                print_info clang++-15
+                print_info cmake
+                print_info ninja
+                print_info node
+                print_info yarn
+                print_info git
+                print_info zip
+                print_info unzip
+                print_info curl
+
+                echo .
+                echo .
+                echo === misc ===
+                echo "current dir is $PWD"
+                echo /src:
+                ls -lh /src
+
+                echo .
+                echo .
+                echo === env ===
+                ./build.sh --print-env
 
           - name: Store SP types from commit
             run: |
+              id
+              ls -lh ${{github.workspace}}/skyrim-platform/src/platform_se/codegen/convert-files
+
               commit=$(< ${{github.workspace}}/skyrim-platform/src/platform_se/codegen/convert-files/skyrimPlatform.ts)
               chmod 777 ${{github.workspace}}/skyrim-platform/src/platform_se/codegen/convert-files
               echo "$commit" > ${{github.workspace}}/skyrim-platform/src/platform_se/codegen/convert-files/temp.txt
@@ -58,7 +155,7 @@ jobs:
           - name: Prepare
             uses: addnab/docker-run-action@v3
             with:
-                image: ${{ env.SKYMP_VCPKG_DEPS_IMAGE }}
+                image: localhost/buildimage
                 options: |
                     -v ${{github.workspace}}:/src
                 run: |
@@ -68,7 +165,7 @@ jobs:
             id: cmake_configure
             uses: addnab/docker-run-action@v3
             with:
-                image: ${{ env.SKYMP_VCPKG_DEPS_IMAGE }}
+                image: localhost/buildimage
                 options: |
                     -v ${{github.workspace}}:/src
                     -u skymp
@@ -78,23 +175,25 @@ jobs:
                        -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
                        -DUNIT_DATA_DIR="/src/skyrim_data_files"
 
-          - name: Upload vcpkg failure logs
-            if: failure()
+          - name: Upload vcpkg logs
+            if: always()
             uses: actions/upload-artifact@v4
             with:
-              name: install-x64-linux-dbg-out.log
-              path: ${{github.workspace}}/vcpkg/buildtrees/rsm-bsa/install-x64-linux-dbg-out.log
+              name: ${{matrix.base_system}}_vcpkg_logs
+              path: |
+                ${{github.workspace}}/build/vcpkg-bootstrap.log
+                ${{github.workspace}}/vcpkg/buildtrees/**/*.log
 
           - name: Upload compile_commands.json
             uses: actions/upload-artifact@v4
             with:
-                name: compile_commands.json
+                name: ${{matrix.base_system}}_compile_commands.json
                 path: ${{github.workspace}}/build/compile_commands.json
 
           - name: Build
             uses: addnab/docker-run-action@v3
             with:
-                image: ${{ env.SKYMP_VCPKG_DEPS_IMAGE }}
+                image: localhost/buildimage
                 options: |
                     -v ${{github.workspace}}:/src
                     -u skymp
@@ -105,7 +204,7 @@ jobs:
           - name: Prepare dist.tar.gz
             uses: addnab/docker-run-action@v3
             with:
-                image: ${{ env.SKYMP_VCPKG_DEPS_IMAGE }}
+                image: localhost/buildimage
                 options: |
                     -v ${{github.workspace}}:/src
                     -u skymp
@@ -116,7 +215,7 @@ jobs:
           - name: Upload dist.tar.gz
             uses: actions/upload-artifact@v4
             with:
-              name: dist.tar.gz
+              name: ${{matrix.base_system}}_dist.tar.gz
               path: ${{github.workspace}}/build/dist.tar.gz
 
           - name: SP Types Check
@@ -148,7 +247,7 @@ jobs:
                 echo "ConstEnumApi.cpp has changed after running const_enum_extractor. Please re-run it locally and commit changes"
                 exit 1
               fi
-          
+
           - name: SP Types Check failed - Here is what you can do
             if: ${{ failure() && steps.sp_types_check.outcome == 'failure' }}
             run: |
@@ -164,7 +263,7 @@ jobs:
           - name: Test
             uses: addnab/docker-run-action@v3
             with:
-                image: ${{ env.SKYMP_VCPKG_DEPS_IMAGE }}
+                image: localhost/buildimage
                 options: |
                     -v ${{github.workspace}}:/src
                     -u skymp

@@ -1,5 +1,7 @@
 #include "papyrus-vm/OpcodesImplementation.h"
 
+#include <algorithm>
+
 VarValue OpcodesImplementation::StrCat(const VarValue& s1, const VarValue& s2,
                                        StringTable&)
 {

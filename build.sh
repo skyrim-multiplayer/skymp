@@ -15,34 +15,25 @@ fi
 
 export VCPKG_DISABLE_METRICS=1
 
-export CC=/usr/bin/clang-15
-export CPP=/usr/bin/clang-cpp-15
-export CXX=/usr/bin/clang++-15
-export LD=/usr/bin/ld.lld-15
+if which clang++ > /dev/null 2>&1; then
+  export CC=/usr/bin/clang
+  export CPP=/usr/bin/clang-cpp
+  export CXX=/usr/bin/clang++
+else
+  export CC=/usr/bin/clang-15
+  export CPP=/usr/bin/clang-cpp-15
+  export CXX=/usr/bin/clang++-15
+fi
 
 export CMAKE_C_COMPILER="$CC"
 export CMAKE_CXX_COMPILER="$CXX"
-export CMAKE_MAKE_PROGRAM="ninja"
-
-# Some build dependencies require some strange stuff.
-# Some other deps won't work if we can't call clang without exact version.
-# It's better to make compatibility aliases than breaking main system's root.
-export SKYMP_COMPAT_BIN="$PWD/build/skymp_compat/bin"
-export PATH="$SKYMP_COMPAT_BIN:$PATH"
+export CMAKE_MAKE_PROGRAM="/usr/bin/ninja"
 
 if [ ! -d build ]; then
   mkdir -v build
 fi
 
-if [ ! -d "$SKYMP_COMPAT_BIN" ]; then
-  mkdir -pv "$SKYMP_COMPAT_BIN"
-  ln -s "$CC" "$SKYMP_COMPAT_BIN/clang"
-  ln -s "$CXX" "$SKYMP_COMPAT_BIN/clang++"
-
-  echo "Set up compatibility path for build."
-fi
-
-# TODO reverse the order or use [[ ]] ?
+# TODO(#2280): reverse the order or use [[ ]] ?
 if [ "$1" = "--configure" ]; then
   shift && \
     cd build && \
@@ -52,18 +43,36 @@ elif [ "$1" = "--build" ]; then
     cd build && \
     exec cmake --build . "$@"
 elif [ "$1" = "--clean" ]; then
-  eecho "NOTE: --clean was deprecated, please use --clean-cpp or --clean-node"
+  eecho "NOTE: --clean was deprecated, please use one of the options listed in --help"
   eecho "Proceeding with cleaning cpp build data"
   exec rm -rf build/
 elif [ "$1" = "--clean-cpp" ]; then
   exec rm -rf build/
 elif [ "$1" = "--clean-node" ]; then
-  echo not implemented yet, TODO delete node_modules dirs
+  find -name node_modules -type d -prune -print0 | xargs -0 echo rm -rf
+  echo -n Ctrl-C to abort, Return/Enter to proceed
+  read
+  find -name node_modules -type d -prune -print0 | xargs --verbose -0 rm -rf
+elif [ "$1" = "--clean-vcpkg" ]; then
+  (cd vcpkg && git clean -xfd --dry-run)
+  echo -n Ctrl-C to abort, Return/Enter to proceed
+  read
+  (cd vcpkg && git clean -xfd)
+elif [ "$1" = "--print-env" ]; then
+  env
 else
   eecho "Usage:"
   eecho "  ./build.sh --configure <cmake args...>"
+  eecho "  runs in build: cmake .. <some extra args> <your args>"
   eecho "OR"
   eecho "  ./build.sh --build <cmake args...>"
+  eecho "  runs in build: cmake build . <your args>"
+  eecho "  you can add args like --target=unit"
   eecho "OR"
-  eecho "  ./build.sh --clean-<cpp|node>"
+  eecho "  ./build.sh --clean-<cpp|node|vcpkg>"
+  eecho "OR"
+  eecho "  ./build.sh --print-env"
+  if [ "$1" != "--help" ]; then
+    exit 1
+  fi
 fi
