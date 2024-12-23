@@ -53,6 +53,7 @@ addpackage clang-15
 addpackage clang-format-15  # you will need it to pass clang-format check
 addpackage ninja-build  # would likely build with the regular make, but I haven't tried
 # gdb is also recommended for debugging but isn't required
+# clangd is recommended if you use VS Code / neovim
 
 # These are needed for some parts of the client and server, as well as some build scripts
 addpackage nodejs
