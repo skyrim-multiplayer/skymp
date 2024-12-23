@@ -33,7 +33,7 @@ if [ ! -d build ]; then
   mkdir -v build
 fi
 
-# TODO reverse the order or use [[ ]] ?
+# TODO(#2280): reverse the order or use [[ ]] ?
 if [ "$1" = "--configure" ]; then
   shift && \
     cd build && \
