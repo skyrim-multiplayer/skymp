@@ -21,10 +21,7 @@ RUN useradd -m skymp
 # It contains everything that should be installed on the system.
 FROM skymp-runtime-base AS skymp-build-base
 
-# TODO: replace with a call to ubuntu2204?
-
 # TODO: update clang
-# TODO: remove unnecessary packages based on ubuntu-2204.sh
 RUN \
   curl -fsSL https://dl.yarnpkg.com/debian/pubkey.gpg | gpg --dearmor > /usr/share/keyrings/yarnkey.gpg \
   && echo "deb [signed-by=/usr/share/keyrings/yarnkey.gpg] https://dl.yarnpkg.com/debian stable main" > /etc/apt/sources.list.d/yarn.list \
