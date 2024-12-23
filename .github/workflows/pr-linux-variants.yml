@@ -57,10 +57,11 @@ jobs:
                 docker run \
                   --name prepare_deps_container \
                   -v "${{github.workspace}}:/src" \
+                  -w "/src" \
                   -e "CI=$CI" \
                   -e "CREATE_UID=`id -u`" \
                   "$base_image" \
-                  '/src/misc/deps_linux/${{ matrix.base_system }}.sh' '--ensure-deps-noninteractive'
+                  'misc/deps_linux/${{ matrix.base_system }}.sh' '--ensure-deps-noninteractive'
 
                 docker commit prepare_deps_container localhost/buildimage
 
