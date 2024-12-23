@@ -1,5 +1,6 @@
 #include "ScriptStorageUtils.h"
 
+#include <cstring>
 #include <filesystem>
 #include <regex>
 
