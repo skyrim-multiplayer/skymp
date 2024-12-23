@@ -17,6 +17,7 @@ if [[ "$1" == "--ensure-deps-noninteractive" ]]; then
   fi
   set -x
   APT_ARGS="-y"
+  NONINTERACTIVE=true
   apt-get update
   apt-get full-upgrade $APT_ARGS
   apt-get install $APT_ARGS sudo
@@ -54,9 +55,9 @@ addpackage ninja-build  # would likely build with the regular make, but I haven'
 # clangd is recommended if you use VS Code / neovim
 
 # These are needed for some parts of the client and server, as well as some build scripts
-addpackage nodejs
-addpackage npm  # npm should be installed in order for us to be able to install yarn
-# yarn is also needed, but we'll install it with npm
+# They are installed separately though, as Ubuntu 22.04 repos have too old versions of them
+# nodejs
+# yarn
 
 # Some packages that you likely already have, but we'll just make sure
 # They are needed by vcpkg and some of the used libraries
@@ -71,4 +72,18 @@ addpackage linux-libc-dev  # required by OpenSSL(?)
 echo Will now run the installation command, please check it and confirm
 set -x  # this will print the list that we're going to install
 sudo apt-get install $APT_ARGS $packages
+
+curl -fSL -o misc/deps_linux/node_setup_18.x https://deb.nodesource.com/setup_18.x
+
+set +x
+echo "Node.js is too old for Ubuntu 22.04, we'll have to install a newer version. You may want to inspect misc/deps_linux/node_setup_18.x manually"
+if [[ "$NONINTERACTIVE" == "true" ]]; then
+  echo -n Return/Enter to proceed with adding custom repo
+  read
+fi
+
+set -x
+sudo bash misc/deps_linux/node_setup_18.x
+sudo apt-get update
+sudo apt-get $APT_ARGS install nodejs
 npm install -g yarn
