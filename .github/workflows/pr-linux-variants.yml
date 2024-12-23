@@ -1,3 +1,4 @@
+# TODO(#2280): rename from PR to something else (also applies to Windows etc)
 # TODO(#2280): keep in line with deploy.yml
 name: PR Linux
 on:
