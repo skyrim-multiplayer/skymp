@@ -4,7 +4,7 @@ eecho() {
   echo "$@" >&2
 }
 
-if [[ "`basename "$PWD"`" = "build" ]]; then
+if [ "`basename "$PWD"`" = "build" ]; then
   cd ..
 fi
 
@@ -33,31 +33,32 @@ if [ ! -d build ]; then
   mkdir -v build
 fi
 
-if [[ "$1" = "--configure" ]]; then
+# TODO reverse the order or use [[ ]] ?
+if [ "$1" = "--configure" ]; then
   shift && \
     cd build && \
     exec cmake -G "Ninja" .. -DCMAKE_EXPORT_COMPILE_COMMANDS=ON "$@"
-elif [[ "$1" = "--build" ]]; then
+elif [ "$1" = "--build" ]; then
   shift && \
     cd build && \
     exec cmake --build . "$@"
-elif [[ "$1" = "--clean" ]]; then
+elif [ "$1" = "--clean" ]; then
   eecho "NOTE: --clean was deprecated, please use one of the options listed in --help"
   eecho "Proceeding with cleaning cpp build data"
   exec rm -rf build/
-elif [[ "$1" = "--clean-cpp" ]]; then
+elif [ "$1" = "--clean-cpp" ]; then
   exec rm -rf build/
-elif [[ "$1" = "--clean-node" ]]; then
+elif [ "$1" = "--clean-node" ]; then
   find -name node_modules -type d -prune -print0 | xargs -0 echo rm -rf
   echo -n Ctrl-C to abort, Return/Enter to proceed
   read
   find -name node_modules -type d -prune -print0 | xargs --verbose -0 rm -rf
-elif [[ "$1" = "--clean-vcpkg" ]]; then
+elif [ "$1" = "--clean-vcpkg" ]; then
   (cd vcpkg && git clean -xfd --dry-run)
   echo -n Ctrl-C to abort, Return/Enter to proceed
   read
   (cd vcpkg && git clean -xfd)
-elif [[ "$1" = "--print-env" ]]; then
+elif [ "$1" = "--print-env" ]; then
   env
 else
   eecho "Usage:"
@@ -71,7 +72,7 @@ else
   eecho "  ./build.sh --clean-<cpp|node|vcpkg>"
   eecho "OR"
   eecho "  ./build.sh --print-env"
-  if [[ "$1" != "--help" ]]; then
+  if [ "$1" != "--help" ]; then
     exit 1
   fi
 fi
