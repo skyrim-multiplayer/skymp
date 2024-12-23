@@ -21,8 +21,12 @@ if [[ "$1" == "--ensure-deps-noninteractive" ]]; then
   apt-get update
   apt-get full-upgrade $APT_ARGS
   apt-get install $APT_ARGS sudo
-  useradd -m skymp -u $CREATE_UID
-  chown -R skymp:skymp /src
+  if id "$CREATE_UID" >/dev/null 2>&1; then
+    echo "user $CREATE_UID already exists"
+  else
+    useradd -m skymp -u $CREATE_UID
+  fi
+  chown -R $CREATE_UID:$CREATE_UID /src
 
   cat /etc/passwd
 
@@ -77,7 +81,7 @@ curl -fSL -o misc/deps_linux/node_setup_18.x https://deb.nodesource.com/setup_18
 
 set +x
 echo "Node.js is too old for Ubuntu 22.04, we'll have to install a newer version. You may want to inspect misc/deps_linux/node_setup_18.x manually"
-if [[ "$NONINTERACTIVE" == "true" ]]; then
+if [[ "$NONINTERACTIVE" != "true" ]]; then
   echo -n Return/Enter to proceed with adding custom repo
   read
 fi
