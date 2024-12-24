@@ -86,8 +86,9 @@ float SweetPieSpellDamageFormula::CalculateDamage(
   for (auto& entry : settings->entries) {
     const std::string& itemId = entry.itemId;
     const float mult = SweetPieSpellDamageFormulaPrivate::Clamp(
-      SelectRespectiveMult(aggressor, target, entry), 0.f,
-      std::numeric_limits<float>::infinity());
+      SweetPieSpellDamageFormulaPrivate::SelectRespectiveMult(aggressor,
+                                                              target, entry),
+      0.f, std::numeric_limits<float>::infinity());
 
     uint32_t itemIdParsed = 0;
 
