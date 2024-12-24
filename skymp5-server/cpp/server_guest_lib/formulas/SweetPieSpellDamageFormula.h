@@ -16,11 +16,14 @@ struct SweetPieSpellDamageFormulaSettingsEntry
   template <class Archive>
   void Serialize(Archive& archive)
   {
-    archive.Serialize("itemId", itemId).Serialize("multPlayerHitsPlayer", mult);
+    archive.Serialize("itemId", itemId)
+      .Serialize("multPlayerHitsPlayer", multPlayerHitsPlayer)
+      .Serialize("multPlayerHitsNpc", multPlayerHitsNpc);
   }
 
   std::string itemId; // supports hex and decimal ids: "0x000feef1", "0"
-  float mult = 0.f;
+  std::optional<float> multPlayerHitsPlayer;
+  std::optional<float> multPlayerHitsNpc;
 };
 
 struct SweetPieSpellDamageFormulaSettings

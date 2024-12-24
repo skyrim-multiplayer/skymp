@@ -5,6 +5,32 @@
 #include <sstream>
 
 namespace SweetPieSpellDamageFormulaPrivate {
+
+bool IsPlayerBaseId(const MpActor& actor)
+{
+  return actor.GetBaseId() == 0x7;
+}
+
+float SelectRespectiveMult(
+  const MpActor& aggressor, const MpActor& target,
+  const SweetPieSpellDamageFormulaSettingsEntry& entry)
+{
+  const bool isPlayerAggressor = IsPlayerBaseId(aggressor);
+  const bool isPlayerTarget = IsPlayerBaseId(target);
+
+  if (isPlayerAggressor && isPlayerTarget) {
+    return entry.multPlayerHitsPlayer.has_value() ? *entry.multPlayerHitsPlayer
+                                                  : 1.f;
+  }
+
+  if (isPlayerAggressor && !isPlayerTarget) {
+    return entry.multPlayerHitsNpc.has_value() ? *entry.multPlayerHitsNpc
+                                               : 1.f;
+  }
+
+  return 1.f;
+}
+
 template <class T>
 T Clamp(T value, T minValue, T maxValue)
 {
@@ -60,7 +86,8 @@ float SweetPieSpellDamageFormula::CalculateDamage(
   for (auto& entry : settings->entries) {
     const std::string& itemId = entry.itemId;
     const float mult = SweetPieSpellDamageFormulaPrivate::Clamp(
-      entry.mult, 0.f, std::numeric_limits<float>::infinity());
+      SelectRespectiveMult(aggressor, target, entry), 0.f,
+      std::numeric_limits<float>::infinity());
 
     uint32_t itemIdParsed = 0;
 
@@ -73,7 +100,8 @@ float SweetPieSpellDamageFormula::CalculateDamage(
       ss >> itemIdParsed;
     }
 
-    if (aggressor.GetInventory().GetItemCount(itemIdParsed) > 0) {
+    if (itemIdParsed == 0 ||
+        aggressor.GetInventory().GetItemCount(itemIdParsed) > 0) {
       biggestMult = std::max(biggestMult, mult);
     }
   }
