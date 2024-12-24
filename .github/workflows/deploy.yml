@@ -160,25 +160,6 @@ jobs:
                         }
                     ]
 
-          - name: Calculate diff being deployed
-            if: ${{env.DEPLOY_ACTION == 'deploy'}}
-            run: |
-                echo ""
-                echo "=== Full diff being deployed:"
-                git config --global user.name "Your Name"
-                git config --global user.email "your.email@example.com"
-                git add .
-                git commit -m "Temporary commit for diff"
-                git diff HEAD~1 | tee deploy_git_diff
-
-          - name: Upload diff artifact
-            if: ${{env.DEPLOY_ACTION == 'deploy'}}
-            uses: actions/upload-artifact@v4
-            with:
-                name: patches
-                path: |
-                    deploy_git_diff
-
           - name: Post a link in Discord
             if: ${{env.DEPLOY_ACTION == 'deploy'}}
             env:
