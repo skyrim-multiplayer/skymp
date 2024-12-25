@@ -63,6 +63,8 @@ void DoUpdateMovement(PartOne& partOne, uint32_t actorFormId,
                          partOne.worldState.LookupFormById(actorFormId).get())
                          ->GetIdx();
   DoMessage(partOne, userId, jMyMovement);
+
+  partOne.Tick();
 }
 
 std::shared_ptr<FakeListener> FakeListener::New()
