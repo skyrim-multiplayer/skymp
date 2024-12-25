@@ -1,3 +1,4 @@
+
 #include "SweetPieSpellDamageFormula.h"
 
 #include "archives/JsonInputArchive.h"
@@ -82,6 +83,7 @@ float SweetPieSpellDamageFormula::CalculateDamage(
   }
 
   float biggestMult = -1;
+  float defaultMult = 1.f;
 
   for (auto& entry : settings->entries) {
     const std::string& itemId = entry.itemId;
@@ -101,13 +103,17 @@ float SweetPieSpellDamageFormula::CalculateDamage(
       ss >> itemIdParsed;
     }
 
-    if (itemIdParsed == 0 ||
-        aggressor.GetInventory().GetItemCount(itemIdParsed) > 0) {
+    if (itemIdParsed == 0) {
+      defaultMult = mult;
+    }
+
+    if (aggressor.GetInventory().GetItemCount(itemIdParsed) > 0) {
       biggestMult = std::max(biggestMult, mult);
     }
   }
 
-  return biggestMult >= 0 ? biggestMult * baseDamage : baseDamage;
+  return biggestMult >= 0 ? biggestMult * baseDamage
+                          : defaultMult * baseDamage;
 }
 
 SweetPieSpellDamageFormulaSettings SweetPieSpellDamageFormula::ParseConfig(
