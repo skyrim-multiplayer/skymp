@@ -29,6 +29,7 @@ public:
     VirtualMachine* parentVM, VarValue activeInstanceOwner,
     std::string childrenName);
 
+  // TODO(#xyz): return const&
   FunctionInfo GetFunctionByName(const char* name,
                                  std::string stateName) const;
 
@@ -38,7 +39,7 @@ public:
   VarValue& GetIndentifierValue(std::vector<Local>& locals, VarValue& value,
                                 bool treatStringsAsIdentifiers = false);
 
-  VarValue StartFunction(FunctionInfo& function,
+  VarValue StartFunction(const FunctionInfo& function,
                          std::vector<VarValue>& arguments,
                          std::shared_ptr<StackData> stackData);
 
@@ -68,7 +69,7 @@ private:
                         std::shared_ptr<std::vector<Local>> locals);
 
   std::shared_ptr<std::vector<ActivePexInstance::Local>> MakeLocals(
-    FunctionInfo& function, std::vector<VarValue>& arguments);
+    const FunctionInfo& function, const std::vector<VarValue>& arguments);
 
   VarValue ExecuteAll(
     ExecutionContext& ctx,
