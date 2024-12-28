@@ -1138,7 +1138,7 @@ void MpObjectReference::ApplyChangeForm(const MpChangeForm& changeForm)
 {
   if (pImpl->setPropertyCalled) {
     GetParent()->logger->critical("ApplyChangeForm called after SetProperty");
-    std::terminate();
+    //std::terminate();
   }
 
   blockSaving = true;
