@@ -14,6 +14,12 @@ import { NetworkingService } from "./networkingService";
 import { CustomPacketMessage2 } from "../messages/customPacketMessage2";
 import { MsgType } from "../../messages";
 import { ConnectionDenied } from "../events/connectionDenied";
+import { InstallationData } from "../messages_settings/installationData";
+import { SetInviterRequestBody } from "../messages_http/setInviterRequestBody";
+import { SetPrManagerRequestBody } from "../messages_http/setPrManagerRequestBody";
+import * as fs from "fs";
+import * as os from "os";
+import * as path from "path";
 
 // for browsersideWidgetSetter
 declare const window: any;
@@ -100,10 +106,6 @@ export class AuthService extends ClientListener {
     const msg = event.message;
 
     switch (msg.content["customPacketType"]) {
-      // case 'loginRequired':
-      //   logTrace(this, 'loginRequired received');
-      //   this.loginWithSkympIoCredentials();
-      //   break;
       case 'loginFailedNotLoggedViaDiscord':
         this.authAttemptProgressIndicator = false;
         this.controller.lookupListener(NetworkingService).close();
@@ -220,6 +222,62 @@ export class AuthService extends ClientListener {
     }
   }
 
+  private postInviter(token: string) {
+    const route = `/api/users/me/inviter`;
+    const installationData = this.readInstallationDataFromDisk();
+
+    if (!installationData?.inviterUserId) {
+      return logTrace(this, 'Request to', route, 'will not be sent');
+    }
+
+    const client = new this.sp.HttpClient(this.getMasterUrl());
+    const body: SetInviterRequestBody = { inviterUserId: installationData.inviterUserId };
+
+    client.post(route, {
+      body: JSON.stringify(body),
+      contentType: 'application/json',
+      headers: {
+        'authorization': token,
+      },
+    },
+      // @ts-ignore
+      (res) => {
+        if (res.status < 200 || res.status > 299) {
+          logError(this, 'Request to', route, 'finished with status code ' + res.status)
+        } else {
+          logTrace(this, 'Request to', route, 'succeed');
+        }
+      });
+  }
+
+  private postPrManager(token: string) {
+    const route = `/api/users/me/prManager`;
+    const installationData = this.readInstallationDataFromDisk();
+
+    if (!installationData?.prManagerUserId) {
+      return logTrace(this, 'Request to', route, 'will not be sent');
+    }
+
+    const client = new this.sp.HttpClient(this.getMasterUrl());
+    const body: SetPrManagerRequestBody = { prManagerUserId: installationData.prManagerUserId };
+
+    client.post(route, {
+      body: JSON.stringify(body),
+      contentType: 'application/json',
+      headers: {
+        'authorization': token,
+      },
+    },
+      // @ts-ignore
+      (res) => {
+        if (res.status < 200 || res.status > 299) {
+          logError(this, 'Request to', route, 'finished with status code ' + res.status)
+        } else {
+          logTrace(this, 'Request to', route, 'succeed');
+        }
+      });
+  }
+
   private createPlaySession(token: string, callback: (res: string, err: string) => void) {
     const client = new this.sp.HttpClient(this.getMasterUrl());
     let masterKey = this.sp.settings["skymp5-client"]["server-master-key"];
@@ -274,6 +332,8 @@ export class AuthService extends ClientListener {
                 discordAvatar,
               } = JSON.parse(response.body) as MasterApiAuthStatus;
               browserState.failCount = 0;
+              this.postInviter(token);
+              this.postPrManager(token);
               this.createPlaySession(token, (playSession, error) => {
                 if (error) {
                   browserState.failCount = 0;
@@ -334,6 +394,27 @@ export class AuthService extends ClientListener {
       return JSON.parse(data.slice(2)) || null;
     } catch (e) {
       logError(this, `Error reading`, this.pluginAuthDataName, `from disk:`, e, `, falling back to null`);
+      return null;
+    }
+  }
+
+  private readInstallationDataFromDisk(): InstallationData | null {
+    logTrace(this, `Reading`, this.myDocumentsInstallationDataPath, `from disk`);
+
+    try {
+      const documentsPath = path.join(os.homedir(), 'Documents');
+      const filePath = path.join(documentsPath, this.myDocumentsInstallationDataPath);
+
+      if (!fs.existsSync(filePath)) {
+        logTrace(this, `File does not exist`, this.myDocumentsInstallationDataPath, `returning null`);
+        return null;
+      }
+
+      const data = fs.readFileSync(filePath, { encoding: "utf8" });
+
+      return JSON.parse(data) || null;
+    } catch (e) {
+      logError(this, `Error reading`, this.myDocumentsInstallationDataPath, `from disk:`, e, `, falling back to null`);
       return null;
     }
   }
@@ -623,15 +704,6 @@ export class AuthService extends ClientListener {
     this.playerEverSawActualGameplay = true;
   }
 
-  // private showConnectionError() {
-  //   // TODO: unhardcode it or render via browser
-  //   this.sp.printConsole("Server connection failed. This may be caused by one of the following:");
-  //   this.sp.printConsole("1. You are not present on the SkyMP Discord server");
-  //   this.sp.printConsole("2. You have been banned by server admins");
-  //   this.sp.printConsole("3. There is some technical issue. Try linking your Discord account again");
-  //   this.sp.printConsole("If you feel that something is wrong, please contact us on Discord.");
-  // };
-
   private isListenBrowserMessage = false;
   private trigger = {
     authNeededFired: false,
@@ -654,4 +726,5 @@ export class AuthService extends ClientListener {
   private readonly githubUrl = "https://github.com/skyrim-multiplayer/skymp";
   private readonly patreonUrl = "https://www.patreon.com/skymp";
   private readonly pluginAuthDataName = `auth-data-no-load`;
+  private readonly myDocumentsInstallationDataPath = `SkyMP/installation-data.json`;
 }
