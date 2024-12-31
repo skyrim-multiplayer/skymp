@@ -251,7 +251,7 @@ export class AuthService extends ClientListener {
   }
 
   private postPrManager(token: string) {
-    const route = `/api/users/me/inviter`;
+    const route = `/api/users/me/prManager`;
     const installationData = this.readInstallationDataFromDisk();
 
     if (!installationData?.prManagerUserId) {
