@@ -10,11 +10,13 @@
   "dependencies": {
     "@octokit/rest": "^20.0.2",
     "@types/lodash": "^4.14.202",
+    "@types/node": "^22.10.2",
     "argparse": "^2.0.1",
     "axios": "^1.7.4",
     "chokidar": "^3.5.3",
     "crc-32": "^1.2.2",
     "discord.js": "^14.13.0",
+    "fetch-retry": "^6.0.0",
     "koa": "^2.14.2",
     "koa-body": "^4.2.0",
     "koa-proxy": "^1.0.0-alpha.3",
