@@ -56,13 +56,13 @@ if(NOT "${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}/build")
 endif()
 
 # Bool options (Part 1)
-option(SKYRIM_SE "Legacy Skyrim SE (1.5) build" OFF)
+option(SKYRIM_VR "Skyrim VR (1.4) build" OFF)
 option(BUILD_NODEJS "Build NodeJS port if ON, use a pre-built otherwise" OFF)
 
-if(SKYRIM_SE)
-  list(APPEND VCPKG_MANIFEST_FEATURES "skyrim-se")
+if(SKYRIM_VR)
+  list(APPEND VCPKG_MANIFEST_FEATURES "skyrim-vr")
 else()
-  list(APPEND VCPKG_MANIFEST_FEATURES "skyrim-ae")
+  list(APPEND VCPKG_MANIFEST_FEATURES "skyrim-flatrim")
 endif()
 
 if(BUILD_NODEJS)
@@ -94,7 +94,7 @@ option(BUILD_SCRIPTS "Build skymp5-scripts and Papyrus scripts in skyrim-platfor
 option(OFFLINE_MODE "Enable offline mode in generated server settings and client settings" ON)
 
 message(STATUS PREPARE_NEXUS_ARCHIVES=${PREPARE_NEXUS_ARCHIVES})
-message(STATUS SKYRIM_SE=${SKYRIM_SE})
+message(STATUS SKYRIM_VR=${SKYRIM_VR})
 message(STATUS BUILD_UNIT_TESTS=${BUILD_UNIT_TESTS})
 message(STATUS INSTALL_CLIENT_DIST=${INSTALL_CLIENT_DIST})
 message(STATUS BUILD_GAMEMODE=${BUILD_GAMEMODE})

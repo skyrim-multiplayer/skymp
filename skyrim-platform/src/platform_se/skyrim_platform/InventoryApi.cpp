@@ -124,7 +124,7 @@ Napi::Value ToJsValue(Napi::Env env, RE::ExtraDataList* extraList)
 
   std::vector<Napi::Value> jData;
 
-  RE::BSReadLockGuard lock(extraList->_lock);
+  RE::BSReadLockGuard lock(extraList->GetLock());
 
   for (auto it = extraList->begin(); it != extraList->end(); ++it) {
     auto extra = ToJsValue(env, &(*it));

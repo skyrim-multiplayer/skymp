@@ -1,0 +1,20 @@
+diff --git a/include/RE/T/TESObjectREFR.h b/include/RE/T/TESObjectREFR.h
+index d60462ec..924ec91f 100644
+--- a/include/RE/T/TESObjectREFR.h
++++ b/include/RE/T/TESObjectREFR.h
+@@ -449,6 +449,7 @@ namespace RE
+ 		void                                            MoveTo(TESObjectREFR* a_target);
+ 		bool                                            MoveToNode(TESObjectREFR* a_target, const BSFixedString& a_nodeName);
+ 		bool                                            MoveToNode(TESObjectREFR* a_target, NiAVObject* a_node);
++		void                                            MoveTo_Impl(const ObjectRefHandle& a_targetHandle, TESObjectCELL* a_targetCell, TESWorldSpace* a_selfWorldSpace, const NiPoint3& a_position, const NiPoint3& a_rotation);
+ 		NiPointer<TESObjectREFR>                        PlaceObjectAtMe(TESBoundObject* a_baseToPlace, bool a_forcePersist) const;
+ 		void                                            PlayAnimation(stl::zstring a_from, stl::zstring a_to);
+ 		void                                            PlayAnimation(NiControllerManager* a_manager, NiControllerSequence* a_toSeq, NiControllerSequence* a_fromSeq);
+@@ -495,7 +496,6 @@ namespace RE
+ 	private:
+ 		InventoryChanges* ForceInitInventoryChanges();
+ 		InventoryChanges* MakeInventoryChanges();
+-		void              MoveTo_Impl(const ObjectRefHandle& a_targetHandle, TESObjectCELL* a_targetCell, TESWorldSpace* a_selfWorldSpace, const NiPoint3& a_position, const NiPoint3& a_rotation);
+ 		void              PlayAnimation_Impl(NiControllerManager* a_manager, NiControllerSequence* a_toSeq, NiControllerSequence* a_fromSeq, bool a_arg4 = false);
+ 	};
+ #ifndef ENABLE_SKYRIM_AE

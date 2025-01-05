@@ -1,0 +1,33 @@
+diff --git a/include/RE/E/ExtraDataList.h b/include/RE/E/ExtraDataList.h
+index 025136a4..b9f22944 100644
+--- a/include/RE/E/ExtraDataList.h
++++ b/include/RE/E/ExtraDataList.h
+@@ -38,7 +38,9 @@ namespace RE
+ 		[[nodiscard]] const PresenceBitfield*& GetPresence() const noexcept;
+ 
+ #ifndef ENABLE_SKYRIM_AE
++#ifndef ENABLE_SKYRIM_VR
+ 		~BaseExtraList();  // 00, virtual on AE 1.6.629 and later.
++#endif
+ 
+ 		// members
+ 		BSExtraData*      data = nullptr;      // 00, 08
+@@ -133,9 +135,6 @@ namespace RE
+ 		using iterator = iterator_base<BSExtraData>;
+ 		using const_iterator = iterator_base<const BSExtraData>;
+ 
+-		ExtraDataList();
+-		~ExtraDataList();
+-
+ 		TES_HEAP_REDEFINE_NEW();
+ 
+ 		iterator       begin();
+@@ -194,7 +193,7 @@ namespace RE
+ 		void                  SetInventoryChanges(InventoryChanges* a_changes);
+ 		void                  SetOwner(TESForm* a_owner);
+ 
+-	private:
++	public:
+ 		[[nodiscard]] BSExtraData* GetByTypeImpl(ExtraDataType a_type) const;
+ 		void         MarkType(std::uint32_t a_type, bool a_cleared);
+ 		void         MarkType(ExtraDataType a_type, bool a_cleared);

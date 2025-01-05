@@ -1,0 +1,14 @@
+diff --git a/include/RE/T/TESDataHandler.h b/include/RE/T/TESDataHandler.h
+index 21293e60..4a314aed 100644
+--- a/include/RE/T/TESDataHandler.h
++++ b/include/RE/T/TESDataHandler.h
+@@ -38,6 +38,9 @@ namespace RE
+ 	class TESDataHandler : public BSTSingletonSDM<TESDataHandler>
+ 	{
+ 	public:
++#ifdef ENABLE_SKYRIM_VR
++		inline static RE::TESFileCollection* VRcompiledFileCollection = nullptr;  // used by SkyrimVRESL to store pointer to VR version
++#endif
+ 		static TESDataHandler* GetSingleton();
+ 
+ 		std::uint32_t LoadScripts();

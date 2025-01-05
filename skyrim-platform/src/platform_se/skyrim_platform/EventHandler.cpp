@@ -155,7 +155,8 @@ EventResult EventHandler::ProcessEvent(
     event->target.get() ? event->target.get()->As<RE::Actor>() : nullptr;
 
   if (targetActor) {
-    for (RE::ActiveEffect* eff : *targetActor->GetActiveEffectList()) {
+    for (RE::ActiveEffect* eff :
+         *targetActor->AsMagicTarget()->GetActiveEffectList()) {
       if (eff->usUniqueID == event->activeEffectUniqueID) {
         auto baseMagicEffect = eff->GetBaseObject();
         effectData.baseMagicEffectId =
@@ -1353,13 +1354,17 @@ EventResult EventHandler::ProcessEvent(
     }
 
     const bool isLeftHand =
-      caster->selectedSpells[RE::Actor::SlotTypes::kLeftHand] == spell;
+      caster->GetActorRuntimeData()
+        .selectedSpells[RE::Actor::SlotTypes::kLeftHand] == spell;
     const bool isRightHand =
-      caster->selectedSpells[RE::Actor::SlotTypes::kRightHand] == spell;
+      caster->GetActorRuntimeData()
+        .selectedSpells[RE::Actor::SlotTypes::kRightHand] == spell;
     const bool isVoise =
-      caster->selectedSpells[RE::Actor::SlotTypes::kUnknown] == spell;
+      caster->GetActorRuntimeData()
+        .selectedSpells[RE::Actor::SlotTypes::kUnknown] == spell;
     const bool isInstant =
-      caster->selectedSpells[RE::Actor::SlotTypes::kPowerOrShout] == spell;
+      caster->GetActorRuntimeData()
+        .selectedSpells[RE::Actor::SlotTypes::kPowerOrShout] == spell;
 
     const bool isCastValid = isLeftHand || isRightHand || isVoise || isInstant;
 

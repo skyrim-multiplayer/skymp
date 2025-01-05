@@ -373,7 +373,7 @@ void Frida::InstallHooks()
   InstallSendAnimationEventHook();
   InstallQueueNinodeUpdateHook();
   InstallRenderCursorMenuHook();
-#ifndef SKYRIMSE
+#ifdef ENABLE_SKYRIM_AE
   InstallApplyMasksToRenderTargetsHook();
 #endif
   InstallNativeFunctionCtorHook();
