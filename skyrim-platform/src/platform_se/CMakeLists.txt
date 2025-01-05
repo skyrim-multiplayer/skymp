@@ -115,11 +115,18 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
     set_target_properties(skyrim_platform_entry PROPERTIES OUTPUT_NAME "SkyrimPlatform")
     target_include_directories(skyrim_platform_entry PRIVATE "${third_party}")
     target_include_directories(skyrim_platform_entry PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/include)
-    target_link_libraries(skyrim_platform_entry PRIVATE CommonLibSSE::CommonLibSSE)
+
+    find_package(CommonLibSSE CONFIG REQUIRED)
+
+    target_commonlibsse_properties(skyrim_platform_entry
+      NAME "SkyrimPlatform"
+      AUTHOR "SkyMP Team and Contributors"
+    )
+
     target_precompile_headers(skyrim_platform_entry	PRIVATE	skyrim_platform_entry/PCH.h)
     apply_default_settings(TARGETS skyrim_platform_entry)
 
-    if(SKYRIM_SE)
+    if(SKYRIM_VR)
       target_compile_definitions(skyrim_platform PRIVATE SKYRIMSE)
       target_compile_definitions(skyrim_platform_entry PRIVATE SKYRIMSE)
     endif()
@@ -236,11 +243,7 @@ if(MSVC)
 
   target_link_libraries(skyrim_platform PUBLIC mhook)
 
-  if(SKYRIM_SE)
-    find_package(commonlibse REQUIRED CONFIGS CommonLibSSEConfig.cmake)
-  else()
-    find_package(commonlibae REQUIRED CONFIGS CommonLibSSEConfig.cmake)
-  endif()
+  find_package(CommonLibSSE CONFIG REQUIRED)
 
   find_package(robin_hood REQUIRED)
 
