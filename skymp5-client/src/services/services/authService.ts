@@ -1,3 +1,4 @@
+import * as crypto from "crypto";
 import { AuthGameData, RemoteAuthGameData, authGameDataStorageKey } from "../../features/authModel";
 import { FunctionInfo } from "../../lib/functionInfo";
 import { ClientListener, CombinedController, Sp } from "./clientListener";
@@ -641,7 +642,7 @@ export class AuthService extends ClientListener {
       return this.authNeededFired && this.browserWindowLoadedFired
     }
   };
-  private discordAuthState = "" + Math.random();
+  private discordAuthState = crypto.randomBytes(32).toString('hex');
   private authDialogOpen = false;
 
   private loggingStartMoment = 0;
