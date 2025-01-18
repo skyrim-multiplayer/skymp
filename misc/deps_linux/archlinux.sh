@@ -17,7 +17,7 @@ if [[ "$1" == "--ensure-deps-noninteractive" ]]; then
   fi
   set -x
   PACMAN_ARGS="--noconfirm"
-  pacman -Syu $PACMAN_ARGS sudo
+  pacman -Syu $PACMAN_ARGS sudo --needed
   useradd -m skymp -u $CREATE_UID
   chown -R skymp:skymp /src
 
@@ -50,9 +50,9 @@ addpackage ninja  # would likely build with the regular make, but I haven't trie
 # gdb is also recommended for debugging but isn't required
 
 # These are needed for some parts of the client and server, as well as some build scripts
-addpackage nodejs  # 23 as of 20241222
-# alternatively, nodejs-lts-iron for 20 or nodejs-lts-hydrogen for 18
-# I only found 20, not 22 - https://archlinux.org/packages/?sort=&q=nodejs&maintainer=&flagged=
+addpackage nodejs-lts-jod  # 22
+# alternatively, nodejs for 23 (as of 20250118), nodejs-lts-iron for 20 or nodejs-lts-hydrogen for 18
+# see https://archlinux.org/packages/?sort=&q=nodejs&maintainer=&flagged=
 addpackage yarn
 
 # Some packages that you likely already have, but we'll just make sure
