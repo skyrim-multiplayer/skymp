@@ -1,6 +1,8 @@
 include(${CMAKE_SOURCE_DIR}/cmake/apply_default_settings.cmake)
 
-if(WITH_ANTIGO)
+if(WITH_ANTIGO OR DEFINED ENV{DEPLOY_ACTION})
+  message(STATUS "using real antigo")
+
   file(GLOB_RECURSE antigo_sources "${CMAKE_CURRENT_SOURCE_DIR}/src/*" "${CMAKE_CURRENT_SOURCE_DIR}/include/*")
   add_library(antigo STATIC ${antigo_sources})
   target_include_directories(antigo PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
@@ -16,6 +18,8 @@ if(WITH_ANTIGO)
 
   add_subdirectory(unit)
 else()
+  message(STATUS "using antigo STUB")
+
   file(GLOB_RECURSE antigo_sources "${CMAKE_CURRENT_SOURCE_DIR}/src_stub/*" "${CMAKE_CURRENT_SOURCE_DIR}/include_stub/*")
   add_library(antigo STATIC ${antigo_sources})
   target_include_directories(antigo PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src_stub")

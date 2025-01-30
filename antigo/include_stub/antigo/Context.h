@@ -36,6 +36,9 @@ public:
 
   [[nodiscard]] ResolvedContext Resolve() const { return {}; }
   void Orphan() const {}
+
+  [[deprecated("stub is being used")]]
+  void LogInnerExecution() {}
 };
 
 #define ANTIGO_CONTEXT_INIT(ctx) ::Antigo::OnstackContext ctx(__FILE__, __LINE__, __func__)
