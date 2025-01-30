@@ -316,6 +316,8 @@ const std::shared_ptr<MpForm>& WorldState::LookupFormById(
 {
   ANTIGO_CONTEXT_INIT(ctx);
 
+  ctx.AddUnsigned(formId);
+
   struct Deferred {
     Antigo::OnstackContext& ctx;
     std::stringstream* optionalOutTrace;
@@ -372,6 +374,9 @@ const std::shared_ptr<MpForm>& WorldState::LookupFormById(
 const std::shared_ptr<MpForm>& WorldState::LookupFormByIdNoLoad(
   uint32_t formId)
 {
+  ANTIGO_CONTEXT_INIT(ctx);
+  ctx.AddUnsigned(formId);
+
   static const std::shared_ptr<MpForm> kNullForm;
 
   auto it = forms.find(formId);
@@ -830,6 +835,8 @@ void WorldState::SendPapyrusEvent(MpForm* form, const char* eventName,
                                   const VarValue* arguments,
                                   size_t argumentsCount)
 {
+  ANTIGO_CONTEXT_INIT(ctx);
+
   std::vector<VarValue> args = { arguments, arguments + argumentsCount };
 
   if (spdlog::should_log(spdlog::level::trace)) {
