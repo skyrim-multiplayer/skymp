@@ -2,6 +2,7 @@
 #include "papyrus-vm/Utils.h"
 #include <algorithm>
 #include <cassert>
+#include <spdlog/spdlog.hpp>
 #include <sstream>
 #include <stdexcept>
 
@@ -297,7 +298,24 @@ VarValue VirtualMachine::CallMethod(
     if (auto f = nativeFunctions[base][methodName]) {
       auto self = VarValue(selfObj);
       self.SetMetaStackIdHolder(stackData->stackIdHolder);
-      return f(self, arguments);
+      try {
+        return f(self, arguments);
+      } catch (std::exception& e) {
+        std::string methodNameFull;
+        methodNameFull += base;
+        methodNameFull += (base[0] ? "." : "") + std::string(methodName) + "'";
+        spdlog::error("VirtualMachine::CallMethod - Native {} errored with {}",
+                      methodNameFull, e.what());
+        return VarValue::None();
+      } catch (...) {
+        std::string methodNameFull;
+        methodNameFull += base;
+        methodNameFull += (base[0] ? "." : "") + std::string(methodName) + "'";
+        spdlog::error(
+          "VirtualMachine::CallMethod - Native {} errored with unknown error",
+          methodNameFull);
+        return VarValue::None();
+      }
     }
     auto it = allLoadedScripts.find(base);
     if (it == allLoadedScripts.end())
@@ -335,7 +353,20 @@ VarValue VirtualMachine::CallStatic(const std::string& className,
   if (f) {
     auto self = VarValue::None();
     self.SetMetaStackIdHolder(stackData->stackIdHolder);
-    return f(self, arguments);
+    try {
+      return f(self, arguments);
+    } catch (std::exception& e) {
+      std::string functionNameFull = className + "." + functionName;
+      spdlog::error("VirtualMachine::CallStatic - Native {} errored with {}",
+                    functionNameFull, e.what());
+      return VarValue::None();
+    } catch (...) {
+      std::string functionNameFull = className + "." + functionName;
+      spdlog::error(
+        "VirtualMachine::CallStatic - Native {} errored with unknown error",
+        functionNameFull);
+      return VarValue::None();
+    }
   }
 
   auto classNameCi = CIString{ className.begin(), className.end() };
