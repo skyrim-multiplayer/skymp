@@ -619,8 +619,9 @@ VarValue VarValue::CastToString(const VarValue& var)
       }
     }
     case VarValue::kType_Identifier:
-      throw std::runtime_error(
-        "Papyrus VM: failed to get valid type indentifier, ::CastToString()");
+      spdlog::error(
+        "VarValue::CastToString - kType_Identifier can't be casted");
+      return VarValue(std::string{});
     case VarValue::kType_String:
       return var;
     case VarValue::kType_Integer:
@@ -644,8 +645,8 @@ VarValue VarValue::CastToString(const VarValue& var)
     case VarValue::kType_BoolArray:
       return GetElementsArrayAtString(var, var.kType_BoolArray);
     default:
-      throw std::runtime_error(
-        "Papyrus VM: Received wrong type, ::CastToString()");
+      spdlog::error("VarValue::CastToString - Wrong type");
+      return VarValue(std::string{});
   }
 }
 
@@ -680,15 +681,17 @@ VarValue VarValue::GetElementsArrayAtString(const VarValue& array,
         break;
       }
       default:
-        throw std::runtime_error(
-          " Papyrus VM: None of the type values "
-          "​​matched catched exception ::GetElementArrayAtString");
+        spdlog::error(
+          "GetElementsArrayAtString - Unable to stringify element of type {}",
+          static_cast<int>(type));
+        break;
     }
 
-    if (i < array.pArray->size() - 1)
+    if (i < array.pArray->size() - 1) {
       returnValue += ", ";
-    else
+    } else {
       returnValue += "]";
+    }
   }
 
   return VarValue(returnValue);

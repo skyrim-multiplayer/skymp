@@ -39,11 +39,6 @@ void VirtualMachine::SetMissingScriptHandler(
   this->missingScriptHandler = handler;
 }
 
-void VirtualMachine::SetExceptionHandler(const ExceptionHandler& handler)
-{
-  this->handler = handler;
-}
-
 std::string ToLower(std::string s)
 {
   std::transform(s.begin(), s.end(), s.begin(), tolower);
@@ -315,7 +310,10 @@ VarValue VirtualMachine::CallMethod(
   std::string e = "Method not found - '";
   e += base;
   e += (base[0] ? "." : "") + std::string(methodName) + "'";
-  throw std::runtime_error(e);
+
+  spdlog::error("VirtualMachine::CallMethod - {}", e);
+
+  return VarValue::None();
 }
 
 VarValue VirtualMachine::CallStatic(const std::string& className,
@@ -363,15 +361,17 @@ VarValue VirtualMachine::CallStatic(const std::string& className,
 
   if (function.valid) {
     if (function.IsNative()) {
-      throw std::runtime_error("Function not found - '" +
-                               std::string(functionName) + "'");
+      spdlog::error("VirtualMachine::CallStatic - Function not found - '{}'",
+                    functionName);
+      return VarValue::None();
     }
 
     result = instance->StartFunction(function, arguments, stackData);
   }
   if (!function.valid) {
-    throw std::runtime_error("Function is not valid - '" +
-                             std::string(functionName) + "'");
+    spdlog::error("VirtualMachine::CallStatic - Function is not valid - '{}'",
+                  functionName);
+    return VarValue::None();
   }
 
   return result;
@@ -423,11 +423,6 @@ bool VirtualMachine::IsNativeFunctionByNameExisted(
   }
 
   return false;
-}
-
-VirtualMachine::ExceptionHandler VirtualMachine::GetExceptionHandler() const
-{
-  return handler;
 }
 
 void VirtualMachine::RemoveObject(std::shared_ptr<IGameObject> self)

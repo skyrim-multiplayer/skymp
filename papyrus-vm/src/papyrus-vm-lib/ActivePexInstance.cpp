@@ -197,8 +197,9 @@ bool ActivePexInstance::EnsureCallResultIsSynchronous(
   return false;
 }
 
-void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
-                                      const std::vector<VarValue*>& args)
+void ActivePexInstance::ExecuteOpCode(
+  ExecutionContext* ctx, uint8_t op,
+  const std::vector<VarValue*>& args) noexcept
 {
   auto argsForCall = GetArgsForCall(op, args);
 
@@ -296,45 +297,38 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
     case OpcodesImplementation::Opcodes::op_CallParent: {
       auto parentName =
         parentInstance ? parentInstance->GetSourcePexName() : "";
-      try {
-        auto gameObject = static_cast<IGameObject*>(activeInstanceOwner);
+      auto gameObject = static_cast<IGameObject*>(activeInstanceOwner);
 
-        std::vector<std::shared_ptr<ActivePexInstance>>
-          activePexInstancesForCallParent;
-        if (gameObject) {
-          activePexInstancesForCallParent =
-            gameObject->ListActivePexInstances();
+      std::vector<std::shared_ptr<ActivePexInstance>>
+        activePexInstancesForCallParent;
+      if (gameObject) {
+        activePexInstancesForCallParent = gameObject->ListActivePexInstances();
 
-          std::string toFind = sourcePex.source;
+        std::string toFind = sourcePex.source;
 
-          for (auto& v : activePexInstancesForCallParent) {
-            if (!Utils::stricmp(v->GetSourcePexName().data(), toFind.data())) {
-              v = parentInstance;
-              spdlog::trace("CallParent: redirecting method call {} -> {}",
-                            toFind, parentName);
-            }
+        for (auto& v : activePexInstancesForCallParent) {
+          if (!Utils::stricmp(v->GetSourcePexName().data(), toFind.data())) {
+            v = parentInstance;
+            spdlog::trace("CallParent: redirecting method call {} -> {}",
+                          toFind, parentName);
           }
         }
+      }
 
-        if (spdlog::should_log(spdlog::level::trace)) {
-          std::vector<std::string> argsForCallStr;
-          for (auto v : argsForCall) {
-            argsForCallStr.push_back(v.ToString());
-          }
-          spdlog::trace("CallParent: calling with args {}",
-                        fmt::join(argsForCallStr, ", "));
+      if (spdlog::should_log(spdlog::level::trace)) {
+        std::vector<std::string> argsForCallStr;
+        for (auto v : argsForCall) {
+          argsForCallStr.push_back(v.ToString());
         }
+        spdlog::trace("CallParent: calling with args {}",
+                      fmt::join(argsForCallStr, ", "));
+      }
 
-        auto res = parentVM->CallMethod(gameObject, (const char*)(*args[0]),
-                                        argsForCall, ctx->stackData,
-                                        &activePexInstancesForCallParent);
-        if (EnsureCallResultIsSynchronous(res, ctx))
-          *args[1] = res;
-      } catch (std::exception& e) {
-        if (auto handler = parentVM->GetExceptionHandler())
-          handler({ e.what(), sourcePex.fn()->source });
-        else
-          throw;
+      auto res =
+        parentVM->CallMethod(gameObject, (const char*)(*args[0]), argsForCall,
+                             ctx->stackData, &activePexInstancesForCallParent);
+      if (EnsureCallResultIsSynchronous(res, ctx)) {
+        *args[1] = res;
       }
     } break;
     case OpcodesImplementation::Opcodes::op_CallMethod: {
@@ -352,44 +346,31 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
       std::string functionName = (const char*)(*args[0]);
       static const std::string nameOnBeginState = "onBeginState";
       static const std::string nameOnEndState = "onEndState";
-      try {
-        if (functionName == nameOnBeginState ||
-            functionName == nameOnEndState) {
-          // TODO: consider using CallMethod here. I'm afraid that this event
-          // will pollute other scripts attached to an object
-          parentVM->SendEvent(this, functionName.c_str(), argsForCall);
-          break;
-        } else {
-          auto nullableGameObject = static_cast<IGameObject*>(*object);
-          auto res =
-            parentVM->CallMethod(nullableGameObject, functionName.c_str(),
-                                 argsForCall, ctx->stackData);
-          spdlog::trace("callmethod object={} funcName={} result={}",
-                        object->ToString(), functionName, res.ToString());
-          if (EnsureCallResultIsSynchronous(res, ctx)) {
-            *args[2] = res;
-          }
+
+      if (functionName == nameOnBeginState || functionName == nameOnEndState) {
+        // TODO: consider using CallMethod here. I'm afraid that this event
+        // will pollute other scripts attached to an object
+        parentVM->SendEvent(this, functionName.c_str(), argsForCall);
+        break;
+      } else {
+        auto nullableGameObject = static_cast<IGameObject*>(*object);
+        auto res =
+          parentVM->CallMethod(nullableGameObject, functionName.c_str(),
+                               argsForCall, ctx->stackData);
+        spdlog::trace("callmethod object={} funcName={} result={}",
+                      object->ToString(), functionName, res.ToString());
+        if (EnsureCallResultIsSynchronous(res, ctx)) {
+          *args[2] = res;
         }
-      } catch (std::exception& e) {
-        if (auto handler = parentVM->GetExceptionHandler())
-          handler({ e.what(), sourcePex.fn()->source });
-        else
-          throw;
       }
     } break;
     case OpcodesImplementation::Opcodes::op_CallStatic: {
       const char* className = (const char*)(*args[0]);
       const char* functionName = (const char*)(*args[1]);
-      try {
-        auto res = parentVM->CallStatic(className, functionName, argsForCall,
-                                        ctx->stackData);
-        if (EnsureCallResultIsSynchronous(res, ctx))
-          *args[2] = res;
-      } catch (std::exception& e) {
-        if (auto handler = parentVM->GetExceptionHandler())
-          handler({ e.what(), sourcePex.fn()->source });
-        else
-          throw;
+      auto res = parentVM->CallStatic(className, functionName, argsForCall,
+                                      ctx->stackData);
+      if (EnsureCallResultIsSynchronous(res, ctx)) {
+        *args[2] = res;
       }
     } break;
     case OpcodesImplementation::Opcodes::op_Return:
@@ -715,7 +696,7 @@ ActivePexInstance::TransformInstructions(
 }
 
 VarValue ActivePexInstance::ExecuteAll(
-  ExecutionContext& ctx, std::optional<VarValue> previousCallResult)
+  ExecutionContext& ctx, std::optional<VarValue> previousCallResult) noexcept
 {
   auto pipex = sourcePex.fn();
 
@@ -729,6 +710,7 @@ VarValue ActivePexInstance::ExecuteAll(
     *opCode[i].second[resultIdx] = *previousCallResult;
   }
 
+  // TODO: log and handle this
   assert(opCode.size() == ctx.instructions.size());
 
   for (; ctx.line < opCode.size(); ++ctx.line) {
