@@ -535,8 +535,22 @@ void ActivePexInstance::ExecuteOpCode(
               spdlog::trace("propset do nothing: prop {} not found",
                             propertyName);
             } else {
-              VarValue* var = inst->variables->GetVariableByName(
-                it->autoVarName.data(), *inst->sourcePex.fn());
+              VarValue* var;
+
+              try {
+                var = inst->variables->GetVariableByName(
+                  it->autoVarName.data(), *inst->sourcePex.fn());
+              } catch (std::exception& e) {
+                spdlog::error("OpcodesImplementation::Opcodes::op_PropSet - "
+                              "GetVariableByName errored with '{}'",
+                              e.what());
+                var = nullptr;
+              } catch (...) {
+                spdlog::error("OpcodesImplementation::Opcodes::op_PropSet - "
+                              "GetVariableByName errored with unknown error");
+                var = nullptr;
+              }
+
               if (var) {
                 *var = *args[2];
               } else {
@@ -1068,13 +1082,16 @@ VarValue& ActivePexInstance::GetVariableValueByName(std::vector<Local>* locals,
             variables->GetVariableByName(name.data(), *sourcePex.fn()))
         return *var;
   } catch (std::exception& e) {
-    if (auto handler = parentVM->GetExceptionHandler()) {
-      noneVar = VarValue::None();
-      handler({ e.what(), sourcePex.fn()->source });
-      return noneVar;
-    } else {
-      throw;
-    }
+    spdlog::error("ActivePexInstance::GetVariableValueByName - "
+                  "GetVariableByName errored with '{}'",
+                  e.what());
+    noneVar = VarValue::None();
+    return noneVar;
+  } catch (...) {
+    spdlog::error("ActivePexInstance::GetVariableValueByName - "
+                  "GetVariableByName errored with unknown error");
+    noneVar = VarValue::None();
+    return noneVar;
   }
 
   for (auto& _name : identifiersValueNameCache) {
