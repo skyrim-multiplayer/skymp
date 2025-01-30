@@ -140,6 +140,6 @@ JsValue MpClientPluginApi::SendRaw(const JsFunctionArguments& args)
   auto reliable = (bool)args[2];
 
   auto f = (Send)GetMpClientPlugin()->GetFunction("SendRaw");
-  f(data, size, reliable);
+  f(data, dataLength, reliable);
   return JsValue::Undefined();
 }
