@@ -1,6 +1,7 @@
 import { EventEmitter } from "eventemitter3";
 import { GameLoadEvent } from "./gameLoadEvent";
 import { SendMessageEvent } from "./sendMessageEvent";
+import { SendRawMessageEvent } from "./sendRawMessageEvent";
 import { AnyMessage } from "../messages/anyMessage";
 import { SendMessageWithRefrIdEvent } from "./sendMessageWithRefrIdEvent";
 import { ApplyDeathStateEvent } from "./applyDeathStateEvent";
@@ -38,11 +39,11 @@ import { SpellCastMessage } from "../messages/spellCastMessage";
 import { UpdateAnimVariablesMessage } from "../messages/updateAnimVariablesMessage";
 import { AnyRawMessageEvent } from "./anyRawMessageEvent";
 
-
 type EventTypes = {
     'gameLoad': [GameLoadEvent],
 
     'sendMessage': [SendMessageEvent<AnyMessage>],
+    'sendRawMessage': [SendRawMessageEvent],
     'sendMessageWithRefrId': [SendMessageWithRefrIdEvent<AnyMessage>],
 
     'applyDeathStateEvent': [ApplyDeathStateEvent],

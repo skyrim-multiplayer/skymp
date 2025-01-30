@@ -6,6 +6,7 @@ import { SendMessageWithRefrIdEvent } from "../events/sendMessageWithRefrIdEvent
 import { AnyMessage } from "../messages/anyMessage";
 import { ClientListener, CombinedController, Sp } from "./clientListener";
 import { RemoteServer } from "./remoteServer";
+import { SendRawMessageEvent } from "../events/sendRawMessageEvent";
 
 export class NetworkingService extends ClientListener {
   constructor(private sp: Sp, private controller: CombinedController) {
@@ -13,11 +14,17 @@ export class NetworkingService extends ClientListener {
     this.controller.on("tick", () => this.onTick());
 
     this.controller.emitter.on("sendMessage", (e) => this.onSendMessage(e));
+    this.controller.emitter.on("sendRawMessage", (e) => this.onSendRawMessage(e));
     this.controller.emitter.on("sendMessageWithRefrId", (e) => this.onSendMessageWithRefrId(e));
   }
 
   private onSendMessage(e: SendMessageEvent<AnyMessage>) {
     this.sp.mpClientPlugin.send(JSON.stringify(e.message), this.isReliable(e.reliability));
+  }
+
+  private onSendRawMessage(e: SendRawMessageEvent) {
+    // @ts-expect-error
+    this.sp.mpClientPlugin.sendRaw(e.rawMessage, e.rawMessage.byteLength, this.isReliable(e.reliability));
   }
 
   private onSendMessageWithRefrId(e: SendMessageWithRefrIdEvent<AnyMessage>) {
