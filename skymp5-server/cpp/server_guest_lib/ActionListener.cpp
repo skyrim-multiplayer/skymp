@@ -919,6 +919,12 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
     hitData.target = myActor->GetFormId();
   }
 
+  ctx.AddMessage("next: hitData.aggressor, projectile, source, target (note: some flags skipped)");
+  ctx.AddUnsigned(hitData.aggressor);
+  ctx.AddUnsigned(hitData.projectile);
+  ctx.AddUnsigned(hitData.source);
+  ctx.AddUnsigned(hitData.target);
+
   if (aggressor->IsDead()) {
     spdlog::debug(fmt::format("{:x} actor is dead and can't attack. "
                               "requesting respawn in order to fix death state",

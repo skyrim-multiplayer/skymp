@@ -117,7 +117,7 @@ OnstackContextImpl::~OnstackContextImpl() {
           e.sourceLoc.line = 0;
           e.sourceLoc.func = "n/a";
         }
-        auto& e = w.entries.back();
+        auto& e = w.entries.front();
         AddInnerTracerMessages(*evts, e);
         GetCurrentExecutionData().orphans.push_back(w);
       } else {
