@@ -740,6 +740,8 @@ float CalculateCurrentHealthPercentage(const MpActor& actor, float damage,
                                        float healthPercentage,
                                        float* outBaseHealth)
 {
+  ANTIGO_CONTEXT_INIT(ctx);
+
   const uint32_t baseId = actor.GetBaseId();
   const uint32_t raceId = actor.GetRaceId();
   WorldState* espmProvider = actor.GetParent();
@@ -859,6 +861,8 @@ bool IsDistanceValid(const MpActor& actor, const MpActor& targetActor,
 bool CanHit(const MpActor& actor, const HitData& hitData,
             const std::chrono::duration<float>& timePassed)
 {
+  ANTIGO_CONTEXT_INIT(ctx);
+
   WorldState* espmProvider = actor.GetParent();
   auto weapDNAM =
     espm::GetData<espm::WEAP>(hitData.source, espmProvider).weapDNAM;

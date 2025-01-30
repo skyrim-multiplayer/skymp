@@ -619,6 +619,8 @@ void MpActor::NetSendChangeValues(const ActorValues& actorValues)
 void MpActor::NetSetPercentages(const ActorValues& actorValues,
                                 MpActor* aggressor)
 {
+  ANTIGO_CONTEXT_INIT(ctx);
+
   NetSendChangeValues(actorValues);
   SetPercentages(actorValues, aggressor);
 }
@@ -1149,6 +1151,8 @@ void MpActor::Kill(MpActor* killer, bool shouldTeleport)
 
 void MpActor::RespawnWithDelay(bool shouldTeleport)
 {
+  ANTIGO_CONTEXT_INIT(ctx);
+
   spdlog::trace("MpActor::RespawnWithDelay {:x} - isRespawning: {}",
                 GetFormId(), pImpl->isRespawning);
 

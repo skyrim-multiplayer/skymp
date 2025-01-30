@@ -460,6 +460,8 @@ Networking::ISendTarget& PartOne::GetSendTarget() const
 float PartOne::CalculateDamage(const MpActor& aggressor, const MpActor& target,
                                const HitData& hitData) const
 {
+  ANTIGO_CONTEXT_INIT(ctx);
+
   if (!pImpl->damageFormula) {
     throw std::runtime_error("no damage formula");
   }
