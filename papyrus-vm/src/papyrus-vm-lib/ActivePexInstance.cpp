@@ -1,9 +1,12 @@
 ﻿#include "ScopedTask.h"
+#include "antigo/Context.h"
+#include "antigo/ResolvedContext.h"
 #include "papyrus-vm/OpcodesImplementation.h"
 #include "papyrus-vm/Utils.h"
 #include "papyrus-vm/VirtualMachine.h"
 #include <algorithm>
 #include <cctype> // tolower
+#include <exception>
 #include <fmt/ranges.h>
 #include <functional>
 #include <spdlog/spdlog.h>
@@ -74,17 +77,20 @@ FunctionInfo ActivePexInstance::GetFunctionByName(const char* name,
 
 std::string ActivePexInstance::GetActiveStateName() const
 {
+  ANTIGO_CONTEXT_INIT(ctx);
+
   VarValue* var = nullptr;
   try {
     var = variables->GetVariableByName("::State", *sourcePex.fn());
-  } catch (...) {
+  } catch (const std::exception& e) {
     throw std::runtime_error(
       " Papyrus VM: GetVariableByName must never throw when "
-      "::State variable is  requested");
+      "::State variable is requested; prev error: " + std::string{e.what()});
   }
-  if (!var)
+  if (!var) {
     throw std::runtime_error(
       "Papyrus VM: ::State variable doesn't exist in ActivePexInstance");
+  }
   return static_cast<const char*>(*var);
 }
 
@@ -189,6 +195,21 @@ bool ActivePexInstance::EnsureCallResultIsSynchronous(
 void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
                                       const std::vector<VarValue*>& args)
 {
+  ANTIGO_CONTEXT_INIT(agctx);
+  agctx.AddMessage("next: op, args.size(), args");
+  agctx.AddUnsigned(op);
+  agctx.AddUnsigned(args.size());
+  auto g = agctx.AddLambdaWithRef([&args]() {
+    std::stringstream ss;
+    ss << "size = " << args.size() << "\n[\n";
+    for (const auto& arg : args) {
+      ss << "  " << (arg ? arg->ToString() : "(null)") << "\n";
+    }
+    ss << "]";
+    return std::move(ss).str();
+  });
+  g.Arm();
+
   auto argsForCall = GetArgsForCall(op, args);
 
   switch (op) {
@@ -247,6 +268,8 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
         default:
           // assert(0);
           // Triggered by some array stuff in SkyMP, not sure this is OK
+          agctx.AddMessage("strange cast, had comment \"Triggered by some array stuff in SkyMP, not sure this is OK 4 years ago\" :)");
+          agctx.Orphan();
           *args[0] = (*args[1]);
           break;
       }
@@ -433,8 +456,11 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
 
         if (object && object->ListActivePexInstances().size() > 0) {
           auto inst = object->ListActivePexInstances().back();
+          agctx.AddMessage("next: inst, runProperty");
+          agctx.AddPtr(inst);
           Object::PropInfo* runProperty =
             GetProperty(*inst, propertyName, Object::PropInfo::kFlags_Read);
+          agctx.AddPtr(runProperty);
           if (runProperty != nullptr) {
             // TODO: use of argsForCall looks incorrect. why use argsForCall
             // here? shoud be {} (empty args)
@@ -518,9 +544,12 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
         }
 
         if (object && object->ListActivePexInstances().size() > 0) {
+          agctx.AddMessage("next: inst, runProperty");
           auto inst = object->ListActivePexInstances().back();
+          agctx.AddPtr(inst);
           Object::PropInfo* runProperty =
             GetProperty(*inst, propertyName, Object::PropInfo::kFlags_Write);
+          agctx.AddPtr(runProperty);
           if (runProperty != nullptr) {
             // TODO: use of argsForCall looks incorrect.
             // probably should only *args[2]
@@ -702,7 +731,28 @@ ActivePexInstance::TransformInstructions(
 VarValue ActivePexInstance::ExecuteAll(
   ExecutionContext& ctx, std::optional<VarValue> previousCallResult)
 {
-  auto pipex = sourcePex.fn();
+  ANTIGO_CONTEXT_INIT(agctx);
+  agctx.AddMessage("next: stack id, line");
+  agctx.AddUnsigned(ctx.stackData->stackIdHolder.GetStackId());
+  agctx.AddUnsigned(ctx.line);
+  auto g = agctx.AddLambdaWithRef([&ctx]() {
+    std::stringstream ss;
+    ss << "ExecutionContext:\n";
+    if (ctx.locals == nullptr) {
+      ss << "locals = nullptr\n";
+    } else {
+      ss << "locals = [" << ctx.locals->size() << "] [\n";
+      for (size_t i = 0; i < ctx.locals->size(); ++i) {
+        auto& local = (*ctx.locals)[i];
+        ss << "  " << local.first << " = " << local.second << "\n";
+      }
+      ss << "]\n";
+    }
+    return std::move(ss).str();
+  });
+  g.Arm();
+
+  auto pipex = sourcePex.fn(); // XXX ???
 
   auto opCode = TransformInstructions(ctx.instructions, ctx.locals);
 
@@ -737,9 +787,32 @@ VarValue ActivePexInstance::StartFunction(FunctionInfo& function,
                                           std::vector<VarValue>& arguments,
                                           std::shared_ptr<StackData> stackData)
 {
+  ANTIGO_CONTEXT_INIT(agctx);
+
   if (!stackData) {
     throw std::runtime_error("An empty stackData passed to StartFunction");
   }
+
+  auto g = agctx.AddLambdaWithRef([this, &function]() {
+    std::stringstream ss;
+    ss << "source pex = " << GetSourcePexName() << "\n";
+    ss << "return = " << function.returnType << "\n";
+    ss << "docstring = " << function.docstring << "\n";
+    ss << "userFlags = " << std::hex << function.userFlags << "\n";
+    ss << "flags = " << std::hex << static_cast<int>(function.flags) << "\n";
+    ss << "params: [\n";
+    for (const auto& param : function.params) {
+      ss << "  " << param.name << " " << param.type << "\n";
+    }
+    ss << "]\n";
+    ss << "locals:\n";
+    for (const auto& param : function.locals) {
+      ss << "  " << param.name << " " << param.type << "\n";
+    }
+    ss << "]\n";
+    return std::move(ss).str();
+  });
+  g.Arm();
 
   thread_local StackDepthHolder g_stackDepthHolder;
 
@@ -757,6 +830,7 @@ VarValue ActivePexInstance::StartFunction(FunctionInfo& function,
     spdlog::error("ActivePexInstance::StartFunction - Stack overflow in "
                   "script {}, returning None",
                   sourcePex.fn()->source);
+    agctx.Resolve().Print();
     return VarValue::None();
   }
 
@@ -947,6 +1021,8 @@ VarValue ActivePexInstance::TryCastToBaseClass(
   const VirtualMachine& vm, const std::string& resultTypeName,
   VarValue* scriptToCastOwner, std::vector<std::string>& outClassesStack)
 {
+  ANTIGO_CONTEXT_INIT(ctx);
+
   auto object = static_cast<IGameObject*>(*scriptToCastOwner);
   if (!object) {
     return VarValue::None();

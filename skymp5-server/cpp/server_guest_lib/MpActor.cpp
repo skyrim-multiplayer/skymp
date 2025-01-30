@@ -17,6 +17,7 @@
 #include "SweetPieScript.h"
 #include "TimeUtils.h"
 #include "WorldState.h"
+#include "antigo/Context.h"
 #include "gamemode_events/DeathEvent.h"
 #include "gamemode_events/DropItemEvent.h"
 #include "gamemode_events/EatItemEvent.h"
@@ -190,6 +191,8 @@ void MpActor::EquipBestWeapon()
 
 void MpActor::AddSpell(const uint32_t spellId)
 {
+  ANTIGO_CONTEXT_INIT(ctx);
+
   EditChangeForm([&](MpChangeForm& changeForm) {
     changeForm.learnedSpells.LearnSpell(spellId);
   });
@@ -197,6 +200,8 @@ void MpActor::AddSpell(const uint32_t spellId)
 
 void MpActor::RemoveSpell(const uint32_t spellId)
 {
+  ANTIGO_CONTEXT_INIT(ctx);
+
   EditChangeForm([&](MpChangeForm& changeForm) {
     changeForm.learnedSpells.ForgetSpell(spellId);
   });
@@ -517,6 +522,9 @@ MpChangeForm MpActor::GetChangeForm() const
 
 void MpActor::ApplyChangeForm(const MpChangeForm& newChangeForm)
 {
+  ANTIGO_CONTEXT_INIT(ctx);
+  auto g = ctx.AddLambdaWithRef([&newChangeForm]() { return MpChangeForm::ToJson(newChangeForm).dump(2); });
+  g.Arm();
   if (newChangeForm.recType != MpChangeForm::ACHR) {
     throw std::runtime_error(
       "Expected record type to be ACHR, but found REFR");

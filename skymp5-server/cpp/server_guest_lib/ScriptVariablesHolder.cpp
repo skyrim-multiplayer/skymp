@@ -1,6 +1,8 @@
 #include "ScriptVariablesHolder.h"
 
 #include "WorldState.h"
+#include "antigo/Context.h"
+#include "antigo/ResolvedContext.h"
 #include "libespm/Property.h"
 #include "papyrus-vm/Utils.h"
 #include "script_objects/EspmGameObject.h"
@@ -25,6 +27,9 @@ ScriptVariablesHolder::ScriptVariablesHolder(
 VarValue* ScriptVariablesHolder::GetVariableByName(const char* name,
                                                    const PexScript& pex)
 {
+  ANTIGO_CONTEXT_INIT(ctx);
+  ctx.AddLambdaWithOwned([name = std::string{name}]() { return name; });
+
   if (!scriptsCache) {
     scriptsCache = std::make_unique<ScriptsCache>();
   }
@@ -128,6 +133,8 @@ VarValue ScriptVariablesHolder::CastPrimitivePropertyValue(
   const espm::Property::Value& propValue, espm::Property::Type type,
   const std::function<uint32_t(uint32_t)>& toGlobalId, WorldState* worldState)
 {
+  ANTIGO_CONTEXT_INIT(ctx);
+
   switch (type) {
     case espm::Property::Type::Object: {
       if (!propValue.formId) {
@@ -164,6 +171,7 @@ VarValue ScriptVariablesHolder::CastPrimitivePropertyValue(
                   "not found in the world. LookupFormById trace:\n{}",
                   myScriptName, type.ToString(), propValueFormIdGlobal,
                   traceStream.str());
+                ctx.Resolve().Print();
               }
             } else {
               spdlog::error(

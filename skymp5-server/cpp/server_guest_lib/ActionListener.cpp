@@ -13,6 +13,7 @@
 #include "MsgType.h"
 #include "UserMessageOutput.h"
 #include "WorldState.h"
+#include "antigo/ResolvedContext.h"
 #include "gamemode_events/CraftEvent.h"
 #include "gamemode_events/CustomEvent.h"
 #include "gamemode_events/EatItemEvent.h"
@@ -21,6 +22,7 @@
 #include <fmt/format.h>
 #include <spdlog/spdlog.h>
 #include <unordered_set>
+#include "antigo/Context.h"
 
 #include "UpdateEquipmentMessage.h"
 
@@ -563,10 +565,16 @@ void ActionListener::OnCraftItem(const RawMessageData& rawMsgData,
 void ActionListener::OnHostAttempt(const RawMessageData& rawMsgData,
                                    uint32_t remoteId)
 {
+  ANTIGO_CONTEXT_INIT(ctx);
+  ctx.AddMessage("next: removeId, me, me->baseId, profileId");
+  ctx.AddUnsigned(remoteId);
   MpActor* me = partOne.serverState.ActorByUser(rawMsgData.userId);
+  ctx.AddPtr(me);
   if (!me) {
     throw std::runtime_error("Unable to host without actor attached");
   }
+  ctx.AddUnsigned(me->GetBaseId());
+  ctx.AddUnsigned(me->GetProfileId());
 
   auto& remote = partOne.worldState.GetFormAt<MpObjectReference>(remoteId);
 
@@ -577,6 +585,9 @@ void ActionListener::OnHostAttempt(const RawMessageData& rawMsgData,
 
   auto& hoster = partOne.worldState.hosters[remoteId];
   const uint32_t prevHoster = hoster;
+
+  ctx.AddMessage("next: prev hoster");
+  ctx.AddUnsigned(prevHoster);
 
   auto remoteIdx = remote.GetIdx();
 
@@ -650,6 +661,8 @@ void ActionListener::OnCustomEvent(const RawMessageData& rawMsgData,
                                    const char* eventName,
                                    simdjson::dom::element& args)
 {
+  ANTIGO_CONTEXT_INIT(ctx);
+
   auto ac = partOne.serverState.ActorByUser(rawMsgData.userId);
   if (!ac) {
     return;
@@ -669,6 +682,8 @@ void ActionListener::OnCustomEvent(const RawMessageData& rawMsgData,
 void ActionListener::OnChangeValues(const RawMessageData& rawMsgData,
                                     const ActorValues& newActorValues)
 {
+  ANTIGO_CONTEXT_INIT(ctx);
+
   MpActor* actor = partOne.serverState.ActorByUser(rawMsgData.userId);
   if (!actor) {
     throw std::runtime_error("Unable to change values without Actor attached");
@@ -880,6 +895,7 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
   if (!myActor) {
     throw std::runtime_error("Unable to change values without Actor attached");
   }
+  ANTIGO_CONTEXT_INIT(ctx);
 
   MpActor* aggressor = nullptr;
 
