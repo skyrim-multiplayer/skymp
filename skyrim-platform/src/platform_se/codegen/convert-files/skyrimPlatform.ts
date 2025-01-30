@@ -65,6 +65,7 @@ interface MpClientPlugin {
   destroyClient(): void
   isConnected(): boolean
   tick(tickHandler: (packetType: PacketType, rawContent: ArrayBuffer | null, error: string) => void): void
+  send(jsonContent: string, reliable: boolean): void
   sendRaw(data: ArrayBuffer, size: number, reliable: boolean): void
 }
 export declare let mpClientPlugin: MpClientPlugin
