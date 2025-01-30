@@ -39,7 +39,9 @@ void MpForm::SendPapyrusEvent(const char* eventName, const VarValue* arguments,
   ANTIGO_CONTEXT_INIT(ctx);
   ctx.AddPtr(arguments);
   ctx.AddUnsigned(argumentsCount);
-  auto g = ctx.AddLambdaWithRef([eventName, arguments, argumentsCount]{
+
+  // XXX: bad naming, what it really means is that it lives for a longer time than context
+  ctx.AddLambdaWithOwned([eventName, arguments, argumentsCount]{
     std::stringstream ss;
     ss << "eventName = " << eventName << "\n";
     ss << "arguments = [" << argumentsCount << "] [\n";
@@ -49,7 +51,6 @@ void MpForm::SendPapyrusEvent(const char* eventName, const VarValue* arguments,
     ss << "]";
     return std::move(ss).str();
   });
-  g.Arm();
 
   PapyrusEventEvent papyrusEventEvent(this, eventName, arguments,
                                       argumentsCount);

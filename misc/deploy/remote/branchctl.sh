@@ -6,6 +6,12 @@ set -x
 action="${1:?}"
 branch="${2:?}"
 
+/root/announce.sh "$branch" sys Сервер будет перезапущен через 1 минуту. || true
+sleep 30
+/root/announce.sh "$branch" sys Сервер будет перезапущен через 30 секунд. || true
+sleep 30
+/root/announce.sh "$branch" sys Сервер перезапускается. Пожалуйста, перезайдите примерно через минуту. || true
+
 cd "skymp-server-$branch"
 docker stop "skymp-server-$branch" || true
 
