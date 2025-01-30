@@ -426,7 +426,7 @@ Napi::Value ScampServer::Tick(const Napi::CallbackInfo& info)
         logger->error("{}", e.what());
         while (Antigo::HasExceptionWitness()) {
           auto w = Antigo::PopExceptionWitness();
-          w.Print();
+          logger->error(w.ToString());
         }
       }
     }
@@ -435,14 +435,14 @@ Napi::Value ScampServer::Tick(const Napi::CallbackInfo& info)
   } catch (const std::exception& e) {
     while (Antigo::HasExceptionWitness()) {
       auto w = Antigo::PopExceptionWitness();
-      w.Print();
+      logger->error(w.ToString());
     }
     throw Napi::Error::New(info.Env(), std::string(e.what()));
   }
 
   while (Antigo::HasExceptionWitnessOrphan()) {
     auto w = Antigo::PopExceptionWitnessOrphan();
-    w.Print();
+    logger->error(w.ToString());
   }
 
   return info.Env().Undefined();

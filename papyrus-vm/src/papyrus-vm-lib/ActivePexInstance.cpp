@@ -754,6 +754,18 @@ VarValue ActivePexInstance::ExecuteAll(
 
   auto pipex = sourcePex.fn(); // XXX ???
 
+  auto g2 = agctx.AddLambdaWithRef([&pipex]() {
+    std::stringstream ss;
+    ss << "pipex->?source = ";
+    if (pipex) {
+      ss << pipex->source;
+    } else {
+      ss << "(nullptr)";
+    }
+    return std::move(ss).str();
+  });
+  g2.Arm();
+
   auto opCode = TransformInstructions(ctx.instructions, ctx.locals);
 
   if (previousCallResult) {
