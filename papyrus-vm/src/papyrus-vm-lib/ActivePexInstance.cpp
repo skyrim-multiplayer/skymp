@@ -449,8 +449,24 @@ void ActivePexInstance::ExecuteOpCode(
               spdlog::trace("propget do nothing: prop {} not found",
                             propertyName);
             } else {
-              VarValue* var = inst->variables->GetVariableByName(
-                it->autoVarName.data(), *inst->sourcePex.fn());
+
+              VarValue* var;
+
+              try {
+                var = inst->variables->GetVariableByName(
+                  it->autoVarName.data(), *inst->sourcePex.fn());
+
+              } catch (std::exception& e) {
+                spdlog::error("OpcodesImplementation::Opcodes::op_PropGet - "
+                              "GetVariableByName errored with '{}'",
+                              e.what());
+                var = nullptr;
+              } catch (...) {
+                spdlog::error("OpcodesImplementation::Opcodes::op_PropGet - "
+                              "GetVariableByName errored with unknown error");
+                var = nullptr;
+              }
+
               if (var) {
                 *args[2] = *var;
               } else {
