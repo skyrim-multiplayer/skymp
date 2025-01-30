@@ -84,13 +84,13 @@ export class NetworkingService extends ClientListener {
             msgAny = {} as AnyMessage;
             logError(this, "null rawContent");
           }
-          else if ((new Uint8Array(rawContent)[0]) === 0x7b) {
+          else if ((new Uint8Array(rawContent as unknown as ArrayBuffer)[0]) === 0x7b) {
             // assume json
-            msgAny = JSON.parse(this.sp.decodeUtf8(rawContent));
+            msgAny = JSON.parse(this.sp.decodeUtf8(rawContent as unknown as ArrayBuffer));
           }
           else {
             // assume raw
-            const event = { rawContent: rawContent };
+            const event = { rawContent: rawContent as unknown as ArrayBuffer};
             return this.controller.emitter.emit("anyRawMessage", event);
           }
 
