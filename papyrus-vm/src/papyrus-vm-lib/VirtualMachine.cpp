@@ -2,7 +2,7 @@
 #include "papyrus-vm/Utils.h"
 #include <algorithm>
 #include <cassert>
-#include <spdlog/spdlog.hpp>
+#include <spdlog/spdlog.h>
 #include <sstream>
 #include <stdexcept>
 
