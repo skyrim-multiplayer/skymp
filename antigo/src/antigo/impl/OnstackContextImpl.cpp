@@ -25,7 +25,7 @@ namespace Antigo {
 
 namespace {
 void AddInnerTracerMessages(const std::vector<InnerExecutionEvent>& evts, ResolvedContextEntry& rent) {
-  constexpr size_t maxToPrint = 5;
+  constexpr size_t maxToPrint = 15;
   size_t start = 0;
   if (start + maxToPrint < evts.size()) {
     start = evts.size() - maxToPrint;
