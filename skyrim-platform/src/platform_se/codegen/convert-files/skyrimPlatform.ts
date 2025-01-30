@@ -64,8 +64,8 @@ interface MpClientPlugin {
   createClient(host: string, port: number): void
   destroyClient(): void
   isConnected(): boolean
-  tick(tickHandler: (packetType: PacketType, jsonContent: string, error: string) => void): void
-  send(jsonContent: string, reliable: boolean): void
+  tick(tickHandler: (packetType: PacketType, rawContent: ArrayBuffer | null, error: string) => void): void
+  sendRaw(data: ArrayBuffer, size: number, reliable: boolean): void
 }
 export declare let mpClientPlugin: MpClientPlugin
 

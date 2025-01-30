@@ -36,6 +36,7 @@ import { QueryBlockSetInventoryEvent } from "./queryBlockSetInventoryEvent";
 import { QueryKeyCodeBindings } from "./queryKeyCodeBindings";
 import { SpellCastMessage } from "../messages/spellCastMessage";
 import { UpdateAnimVariablesMessage } from "../messages/updateAnimVariablesMessage";
+import { AnyRawMessageEvent } from "./anyRawMessageEvent";
 
 
 type EventTypes = {
@@ -77,6 +78,7 @@ type EventTypes = {
     'authAttempt': [AuthAttemptEvent],
     'authNeeded': [AuthNeededEvent],
     'anyMessage': [ConnectionMessage<AnyMessage>],
+    'anyRawMessage': [AnyRawMessageEvent],
     'newLocalLagValueCalculated': [NewLocalLagValueCalculatedEvent],
     'queryBlockSetInventoryEvent': [QueryBlockSetInventoryEvent],
     'queryKeyCodeBindings': [QueryKeyCodeBindings]

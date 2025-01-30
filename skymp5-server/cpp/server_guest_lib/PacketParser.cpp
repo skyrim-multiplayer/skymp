@@ -73,6 +73,12 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
       });
     }
     switch (result->msgType) {
+      case MsgType::UpdateVoice: {
+        auto message =
+          reinterpret_cast<UpdateVoiceMessage*>(result->message.get());
+        actionListener.OnUpdateVoice(rawMsgData, message->idx, message);
+        return;
+      }
       case MsgType::UpdateMovement: {
         auto message =
           reinterpret_cast<UpdateMovementMessage*>(result->message.get());

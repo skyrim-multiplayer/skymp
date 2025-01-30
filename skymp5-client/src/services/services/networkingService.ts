@@ -58,7 +58,7 @@ export class NetworkingService extends ClientListener {
   }
 
   private onTick() {
-    this.sp.mpClientPlugin.tick((packetType, jsonContent, error) => {
+    this.sp.mpClientPlugin.tick((packetType, rawContent, error) => {
       switch (packetType) {
         case "connectionAccepted":
           this.controller.emitter.emit("connectionAccepted", {});
@@ -77,7 +77,22 @@ export class NetworkingService extends ClientListener {
           break;
         case "message":
           // TODO: in theory can be empty jsonContent and non-empty error
-          const msgAny: AnyMessage = JSON.parse(jsonContent);
+
+          let msgAny: AnyMessage;
+          
+          if (rawContent === null) {
+            msgAny = {} as AnyMessage;
+            logError(this, "null rawContent");
+          }
+          else if ((new Uint8Array(rawContent)[0]) === 0x7b) {
+            // assume json
+            msgAny = JSON.parse(this.sp.decodeUtf8(rawContent));
+          }
+          else {
+            // assume raw
+            const event = { rawContent: rawContent };
+            return this.controller.emitter.emit("anyRawMessage", event);
+          }
 
           if ("type" in msgAny) {
             if (msgAny.type === "createActor") {
