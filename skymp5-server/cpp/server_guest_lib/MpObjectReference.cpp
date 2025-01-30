@@ -1160,7 +1160,7 @@ void MpObjectReference::ApplyChangeForm(const MpChangeForm& changeForm)
     ctx.Resolve().Print();
     std::cout << std::flush;
     std::cerr << std::flush;
-    std::terminate();
+    // std::terminate();
   }
 
   blockSaving = true;
