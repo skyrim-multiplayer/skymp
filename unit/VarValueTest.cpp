@@ -83,6 +83,9 @@ TEST_CASE("wrong types", "[VarValue]")
 {
   // Cast Functions
 
+  VarValue str1("string1");
+  VarValue str2("string2");
+
   REQUIRE(str1.CastToInt() == VarValue(0));
   REQUIRE(VarValue("3").CastToInt() == VarValue(3));
 
