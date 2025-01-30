@@ -2,6 +2,7 @@
 #include "papyrus-vm/VirtualMachine.h"
 
 #include <cmath>
+#include <spdlog/spdlog.h>
 #include <sstream>
 
 VarValue VarValue::CastToInt() const
@@ -16,7 +17,8 @@ VarValue VarValue::CastToInt() const
     case kType_Bool:
       return VarValue((int32_t)this->data.b);
     default:
-      throw std::runtime_error("Wrong type in CastToInt");
+      spdlog::error("VarValue::CastToInt - Wrong type in CastToInt");
+      return VarValue((int32_t)0);
   }
 }
 
@@ -37,7 +39,8 @@ VarValue VarValue::CastToFloat() const
     case kType_Bool:
       return VarValue(static_cast<double>(this->data.b));
     default:
-      throw std::runtime_error("Wrong type in CastToFloat");
+      spdlog::error("VarValue::CastToFloat - Wrong type in CastToFloat");
+      return VarValue(static_cast<double>(0));
   }
 }
 
@@ -51,7 +54,8 @@ VarValue VarValue::CastToBool() const
         return VarValue(true);
       }
     case kType_Identifier:
-      throw std::runtime_error("Wrong type in CastToBool");
+      spdlog::error("VarValue::CastToBool - Wrong type in CastToBool");
+      return VarValue(false);
     case kType_String: {
       std::string str;
       if (this->data.string == str) {
@@ -73,7 +77,8 @@ VarValue VarValue::CastToBool() const
     case kType_BoolArray:
       return VarValue(this->pArray && this->pArray->size() > 0);
     default:
-      throw std::runtime_error("Wrong type in CastToBool");
+      spdlog::error("VarValue::CastToBool - Wrong type in CastToBool");
+      return VarValue(false);
   }
 }
 
@@ -123,7 +128,11 @@ VarValue::VarValue(uint8_t type)
       break;
 
     default:
-      throw std::runtime_error("Wrong type in VarValue::Constructor");
+      this->type = this->kType_Object;
+      this->data.id = nullptr;
+      spdlog::error("VarValue::VarValue - Unknown type passed {}",
+                    static_cast<int>(type));
+      break;
   }
 }
 
@@ -217,7 +226,9 @@ inline double ToDouble(const VarValue& v)
     case VarValue::kType_Float:
       return static_cast<double>(static_cast<int32_t>(v));
   }
-  throw std::runtime_error("Wrong type in ToDouble");
+  spdlog::error("::ToDouble - Wrong type passed {}",
+                static_cast<int>(v.GetType()));
+  return 0.0;
 }
 
 inline VarValue ConstructArithmeticResult(const VarValue& op1,
@@ -254,7 +265,8 @@ VarValue VarValue::operator+(const VarValue& argument2)
                                      ToDouble(*this) + ToDouble(argument2));
   }
 
-  throw std::runtime_error("Wrong type in operator+");
+  spdlog::error("VarValue::operator+ - Wrong type");
+  return VarValue(0.0);
 }
 
 VarValue VarValue::operator-(const VarValue& argument2)
@@ -280,7 +292,8 @@ VarValue VarValue::operator-(const VarValue& argument2)
                                      ToDouble(*this) - ToDouble(argument2));
   }
 
-  throw std::runtime_error("Wrong type in operator-");
+  spdlog::error("VarValue::operator- - Wrong type");
+  return VarValue(0.0);
 }
 
 VarValue VarValue::operator*(const VarValue& argument2)
@@ -306,7 +319,8 @@ VarValue VarValue::operator*(const VarValue& argument2)
                                      ToDouble(*this) * ToDouble(argument2));
   }
 
-  throw std::runtime_error("Wrong type in operator*");
+  spdlog::error("VarValue::operator* - Wrong type");
+  return VarValue(0.0);
 }
 
 VarValue VarValue::operator/(const VarValue& argument2)
@@ -338,7 +352,8 @@ VarValue VarValue::operator/(const VarValue& argument2)
                                      ToDouble(*this) / ToDouble(argument2));
   }
 
-  throw std::runtime_error("Wrong type in operator/");
+  spdlog::error("VarValue::operator/ - Wrong type");
+  return VarValue(0.0);
 }
 
 VarValue VarValue::operator%(const VarValue& argument2)
@@ -357,7 +372,8 @@ VarValue VarValue::operator%(const VarValue& argument2)
         break;
     }
   }
-  throw std::runtime_error("Wrong type in operator%");
+  spdlog::error("VarValue::operator% - Wrong type");
+  return VarValue(0);
 }
 
 VarValue VarValue::operator!()
@@ -370,7 +386,10 @@ VarValue VarValue::operator!()
       var.data.b = (this->data.id == nullptr);
       return var;
     case kType_Identifier:
-      throw std::runtime_error("Wrong type in operator!");
+      spdlog::error("VarValue::operator! - Wrong type");
+      var.type = this->kType_Bool;
+      var.data.b = false;
+      return var;
     case kType_Integer:
       var.type = this->kType_Bool;
       var.data.b = (this->data.i == 0);
@@ -398,7 +417,10 @@ VarValue VarValue::operator!()
       var.data.b = (this->pArray->size() < 1);
       return var;
     default:
-      throw std::runtime_error("Wrong type in operator!");
+      spdlog::error("VarValue::operator! - Wrong type");
+      var.type = this->kType_Bool;
+      var.data.b = false;
+      return var;
   }
 }
 
@@ -439,7 +461,8 @@ bool VarValue::operator==(const VarValue& argument2) const
     default:
       break;
   }
-  throw std::runtime_error("Wrong type in operator!");
+  spdlog::error("VarValue::operator== - Wrong type");
+  return false;
 }
 
 bool VarValue::operator!=(const VarValue& argument2) const
@@ -459,7 +482,8 @@ bool VarValue::operator>(const VarValue& argument2) const
     default:
       break;
   }
-  throw std::runtime_error("Wrong type in operator>");
+  spdlog::error("VarValue::operator> - Wrong type");
+  return false;
 }
 
 bool VarValue::operator>=(const VarValue& argument2) const
@@ -474,7 +498,8 @@ bool VarValue::operator>=(const VarValue& argument2) const
     default:
       break;
   }
-  throw std::runtime_error("Wrong type in operator>=");
+  spdlog::error("VarValue::operator>= - Wrong type");
+  return false;
 }
 
 bool VarValue::operator<(const VarValue& argument2) const
@@ -489,7 +514,8 @@ bool VarValue::operator<(const VarValue& argument2) const
     default:
       break;
   }
-  throw std::runtime_error("Wrong type in operator<");
+  spdlog::error("VarValue::operator< - Wrong type");
+  return false;
 }
 
 bool VarValue::operator<=(const VarValue& argument2) const
@@ -504,7 +530,8 @@ bool VarValue::operator<=(const VarValue& argument2) const
     default:
       break;
   }
-  throw std::runtime_error("Wrong type in operator<=");
+  spdlog::error("VarValue::operator<= - Wrong type");
+  return false;
 }
 
 std::ostream& operator<<(std::ostream& os, const VarValue& varValue)

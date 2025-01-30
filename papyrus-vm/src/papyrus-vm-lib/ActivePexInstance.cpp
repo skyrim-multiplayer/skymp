@@ -75,16 +75,27 @@ FunctionInfo ActivePexInstance::GetFunctionByName(const char* name,
 std::string ActivePexInstance::GetActiveStateName() const
 {
   VarValue* var = nullptr;
+
   try {
     var = variables->GetVariableByName("::State", *sourcePex.fn());
+  } catch (std::exception& e) {
+    spdlog::error("ActivePexInstance::GetActiveStateName - "
+                  "GetVariableByName(::State) unexpectedly errored: '{}'",
+                  e.what());
+    return "";
   } catch (...) {
-    throw std::runtime_error(
-      " Papyrus VM: GetVariableByName must never throw when "
-      "::State variable is  requested");
+    spdlog::error(
+      "ActivePexInstance::GetActiveStateName - GetVariableByName(::State) "
+      "unexpectedly errored: unknown error");
+    return "";
   }
-  if (!var)
-    throw std::runtime_error(
-      "Papyrus VM: ::State variable doesn't exist in ActivePexInstance");
+
+  if (!var) {
+    spdlog::error("ActivePexInstance::GetActiveStateName - ::State variable "
+                  "doesn't exist in ActivePexInstance");
+    return "";
+  }
+
   return static_cast<const char*>(*var);
 }
 
@@ -329,10 +340,14 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
     case OpcodesImplementation::Opcodes::op_CallMethod: {
       VarValue* object = IsSelfStr(*args[1]) ? &activeInstanceOwner : args[1];
 
-      // BYOHRelationshipAdoptionPetDoorTrigger
+      // BYOHRelationshipAdoptionPetDoorTrigger in Skyrim Legendary Edition
       if (args[0]->GetType() != VarValue::kType_String &&
-          args[0]->GetType() != VarValue::kType_Identifier)
-        throw std::runtime_error("Anomaly in CallMethod. String expected");
+          args[0]->GetType() != VarValue::kType_Identifier) {
+        *args[2] = VarValue::None();
+        spdlog::error("OpcodesImplementation::Opcodes::op_CallMethod - "
+                      "anomaly, string expected");
+        break;
+      }
 
       std::string functionName = (const char*)(*args[0]);
       static const std::string nameOnBeginState = "onBeginState";
@@ -564,8 +579,8 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
           element = VarValue(type);
         }
       } else {
-        throw std::runtime_error(
-          "Papyrus VM: null argument for Opcodes::op_PropSet");
+        spdlog::warn("OpcodesImplementation::Opcodes::op_Array_Create - "
+                     "Zero-size array creation attempt");
       }
       break;
     case OpcodesImplementation::Opcodes::op_Array_Length:
@@ -590,8 +605,8 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
       if ((*args[0]).pArray != nullptr) {
         (*args[0]).pArray->at((int32_t)(*args[1])) = *args[2];
       } else {
-        throw std::runtime_error(
-          "Papyrus VM: null argument for op_Array_SetElement opcode");
+        spdlog::error("OpcodesImplementation::Opcodes::op_Array_SetElement - "
+                      "null array passed");
       }
       break;
     case OpcodesImplementation::Opcodes::op_Array_FindElement:
@@ -738,7 +753,9 @@ VarValue ActivePexInstance::StartFunction(FunctionInfo& function,
                                           std::shared_ptr<StackData> stackData)
 {
   if (!stackData) {
-    throw std::runtime_error("An empty stackData passed to StartFunction");
+    spdlog::error("ActivePexInstance::StartFunction - An empty stackData "
+                  "passed to StartFunction");
+    return VarValue::None();
   }
 
   thread_local StackDepthHolder g_stackDepthHolder;
@@ -850,8 +867,11 @@ uint8_t ActivePexInstance::GetArrayElementType(uint8_t type)
 
       break;
     default:
-      throw std::runtime_error(
-        "Papyrus VM: Unable to get required type ::GetArrayElementType");
+      spdlog::error("ActivePexInstance::GetArrayElementType - Unable to get "
+                    "required type for {}",
+                    static_cast<int>(type));
+      returnType = VarValue::kType_Object;
+      break;
   }
 
   return returnType;
@@ -883,8 +903,11 @@ uint8_t ActivePexInstance::GetArrayTypeByElementType(uint8_t type)
 
       break;
     default:
-      throw std::runtime_error("Papyrus VM:  Unable to get required type "
-                               "::GetArrayTypeByElementType");
+      spdlog::error("ActivePexInstance::GetArrayTypeByElementType - Unable to "
+                    "get required type for {}",
+                    static_cast<int>(type));
+      returnType = VarValue::kType_ObjectArray;
+      break;
   }
 
   return returnType;
