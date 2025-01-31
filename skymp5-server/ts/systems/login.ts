@@ -175,10 +175,6 @@ export class Login implements System {
             }
 
             const actorIds = ctx.svr.getActorsByProfileId(profile.id).map(actorId => actorId.toString(16));
-
-            const loginMessage = `Server Login: Server Slot ${userId}, IP ${ipToPrint}, Actor ID ${actorIds}, Master API ${profile.id}, Discord ID ${profile.discordId} <@${profile.discordId}>`;
-            console.log(loginMessage);
-
             this.fetchRetry(`https://discord.com/api/channels/${discordAuth.eventLogChannelId}/messages`, {
               method: 'POST',
               headers: {
@@ -186,7 +182,7 @@ export class Login implements System {
                 'Content-Type': 'application/json',
               },
               body: JSON.stringify({
-                content: loginMessage,
+                content: `Server Login: IP ${ipToPrint}, Actor ID ${actorIds}, Master API ${profile.id}, Discord ID ${profile.discordId} <@${profile.discordId}>`,
                 allowed_mentions: { parse: [] },
               }),
               ... this.getFetchOptions('discordAuth2'),
