@@ -580,6 +580,14 @@ uint32_t MpActor::NextSnippetIndex(
 
 void MpActor::ResolveSnippet(uint32_t snippetIdx, VarValue v)
 {
+  ANTIGO_CONTEXT_INIT(ctx);
+  ctx.AddMessage("next: snippetIdx, papyrus val");
+  // XXX bad naming, it actually means outer scope
+  ctx.AddLambdaWithOwned([&v]{
+    return v.ToString();
+  });
+  ctx.LogInnerExecution();
+
   auto it = pImpl->snippetPromises.find(snippetIdx);
   if (it != pImpl->snippetPromises.end()) {
     auto& promise = it->second;

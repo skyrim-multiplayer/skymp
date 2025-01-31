@@ -1291,7 +1291,7 @@ void MpObjectReference::SendPapyrusEvent(const char* eventName,
     InitScripts();
     pImpl->scriptsInited = true;
   }
-  if (strcmp(eventName, "OnHit") == 0) {
+  if (strcmp(eventName, "OnHit") == 0 || strcmp(eventName, "OnActivate") == 0) {
     ctx.AddMessage("LOOKATME");
     ctx.LogInnerExecution();
   }

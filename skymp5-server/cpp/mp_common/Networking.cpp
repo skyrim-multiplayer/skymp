@@ -2,6 +2,7 @@
 #include "Exceptions.h"
 #include "IdManager.h"
 #include "RakNet.h"
+#include "antigo/Context.h"
 #include <array>
 #include <fmt/format.h>
 #include <iostream>
@@ -172,6 +173,8 @@ public:
 
   void Tick(OnPacket onPacket, void* state) override
   {
+    ANTIGO_CONTEXT_INIT(ctx);
+
     while (1) {
       auto packet = peer->Receive();
       if (!packet)
@@ -251,12 +254,35 @@ void Networking::HandlePacketServerside(Networking::IServer::OnPacket onPacket,
                                         void* state, Packet* packet,
                                         IdManager& idManager)
 {
+  ANTIGO_CONTEXT_INIT(ctx);
+
   const auto packetId = packet->data[0];
+
+  // log packaketId, guid
+  // ctx.AddMessage("next: packet guid, packet guid tostring, packet systemAdress tostring");
+#ifndef WIN32
+  ctx.AddMessage("next: packetId, packet guid (uint), addr (uint), port, data len");
+  ctx.AddUnsigned(packetId);
+  ctx.AddUnsigned(packet->guid.g);
+  ctx.AddUnsigned(packet->systemAddress.address.addr4.sin_addr.s_addr);
+  ctx.AddUnsigned(packet->systemAddress.address.addr4.sin_port);
+  ctx.AddUnsigned(packet->length);
+  // data b64?
+#endif
+
+  // char guid[70];
+  // packet->guid.ToString(guid, 69);
+  // char addr[30];
+  // packet->systemAddress.ToString(true, addr, 29, '|');
+
   Networking::UserId userId;
   switch (packetId) {
     case ID_DISCONNECTION_NOTIFICATION:
     case ID_CONNECTION_LOST:
+      ctx.AddMessage("disconnect or conn lost, next: userId (found)");
       userId = idManager.find(packet->guid);
+      ctx.AddUnsigned(userId);
+      ctx.Orphan();
       if (userId == Networking::InvalidUserId) {
         throw std::runtime_error(fmt::format(
           "Unexpected disconnection for system without userId (guid={})",
@@ -267,7 +293,10 @@ void Networking::HandlePacketServerside(Networking::IServer::OnPacket onPacket,
       idManager.freeId(userId);
       break;
     case ID_NEW_INCOMING_CONNECTION: {
+      ctx.AddMessage("connect, next: userId (allocated)");
       userId = idManager.allocateId(packet->guid);
+      ctx.AddUnsigned(userId);
+      ctx.Orphan();
       if (userId == Networking::InvalidUserId) {
         throw std::runtime_error("idManager is full");
       }
@@ -283,7 +312,10 @@ void Networking::HandlePacketServerside(Networking::IServer::OnPacket onPacket,
       break;
     }
     default:
+      ctx.AddMessage("default, next: userId (found)");
       userId = idManager.find(packet->guid);
+      ctx.AddUnsigned(userId);
+      ctx.Orphan();
       if (packetId >= Networking::MinPacketId) {
         onPacket(state, userId, Networking::PacketType::Message, packet->data,
                  packet->length);
