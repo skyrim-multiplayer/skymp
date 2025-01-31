@@ -315,7 +315,6 @@ void Networking::HandlePacketServerside(Networking::IServer::OnPacket onPacket,
       ctx.AddMessage("default, next: userId (found)");
       userId = idManager.find(packet->guid);
       ctx.AddUnsigned(userId);
-      ctx.Orphan();
       if (packetId >= Networking::MinPacketId) {
         onPacket(state, userId, Networking::PacketType::Message, packet->data,
                  packet->length);
