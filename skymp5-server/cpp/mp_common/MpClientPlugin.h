@@ -4,7 +4,7 @@
 #include <slikenet/types.h>
 
 namespace MpClientPlugin {
-typedef void (*OnPacket)(int32_t type, const char* jsonContent,
+typedef void (*OnPacket)(int32_t type, const char* rawContent, size_t length,
                          const char* error, void* state_);
 
 struct State
@@ -24,4 +24,5 @@ void Tick(State& st, OnPacket onPacket,
           DeserializeMessage deserializeMessageFn, void* state_);
 void Send(State& st, const char* jsonContent, bool reliable,
           SerializeMessage serializeMessageFn);
+void SendRaw(State& st, const void* data, size_t size, bool reliable);
 };

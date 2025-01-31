@@ -7,6 +7,7 @@ JsValue DestroyClient(const JsFunctionArguments& args);
 JsValue IsConnected(const JsFunctionArguments& args);
 JsValue Tick(const JsFunctionArguments& args);
 JsValue Send(const JsFunctionArguments& args);
+JsValue SendRaw(const JsFunctionArguments& args);
 
 inline void Register(JsValue& exports)
 {
@@ -18,6 +19,7 @@ inline void Register(JsValue& exports)
   mpClientPlugin.SetProperty("isConnected", JsValue::Function(IsConnected));
   mpClientPlugin.SetProperty("tick", JsValue::Function(Tick));
   mpClientPlugin.SetProperty("send", JsValue::Function(Send));
+  mpClientPlugin.SetProperty("sendRaw", JsValue::Function(SendRaw));
   exports.SetProperty("mpClientPlugin", mpClientPlugin);
 }
 }

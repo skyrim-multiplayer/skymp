@@ -44,7 +44,7 @@ bool MyDeserializeMessage(const uint8_t* data, size_t length,
 extern "C" {
 __declspec(dllexport) const char* MpCommonGetVersion()
 {
-  return "0.0.1";
+  return "2.0.0";
 }
 
 __declspec(dllexport) void CreateClient(const char* targetHostname,
@@ -65,7 +65,6 @@ __declspec(dllexport) bool IsConnected()
 
 __declspec(dllexport) void Tick(MpClientPlugin::OnPacket onPacket, void* state)
 {
-
   return MpClientPlugin::Tick(GetState(), onPacket, MyDeserializeMessage,
                               state);
 }
@@ -74,5 +73,11 @@ __declspec(dllexport) void Send(const char* jsonContent, bool reliable)
 {
   return MpClientPlugin::Send(GetState(), jsonContent, reliable,
                               MySerializeMessage);
+}
+
+__declspec(dllexport) void SendRaw(const void* data, size_t size,
+                                   bool reliable)
+{
+  return MpClientPlugin::SendRaw(GetState(), data, size, reliable);
 }
 }
