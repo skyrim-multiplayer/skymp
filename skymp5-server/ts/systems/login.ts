@@ -182,7 +182,7 @@ export class Login implements System {
                 'Content-Type': 'application/json',
               },
               body: JSON.stringify({
-                content: `Server Login: IP ${ipToPrint}, Actor ID ${actorIds}, Master API ${profile.id}, Discord ID ${profile.discordId} <@${profile.discordId}>`,
+                content: `Server Login: Server Slot ${userId}, IP ${ipToPrint}, Actor ID ${actorIds}, Master API ${profile.id}, Discord ID ${profile.discordId} <@${profile.discordId}>`,
                 allowed_mentions: { parse: [] },
               }),
               ... this.getFetchOptions('discordAuth2'),
