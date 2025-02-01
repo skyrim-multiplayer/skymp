@@ -1,4 +1,6 @@
 #include "AsyncSaveStorage.h"
+#include "antigo/Context.h"
+#include "antigo/ResolvedContext.h"
 #include <chrono>
 #include <list>
 #include <thread>
@@ -50,12 +52,19 @@ AsyncSaveStorage::AsyncSaveStorage(const std::shared_ptr<IDatabase>& dbImpl,
                                    std::string name)
   : pImpl(new Impl, [](Impl* p) { delete p; })
 {
+  ANTIGO_CONTEXT_INIT(ctx);
+
   pImpl->name = std::move(name);
   pImpl->logger = logger;
   pImpl->share.dbImpl = dbImpl;
 
   auto p = this->pImpl.get();
-  pImpl->thr.reset(new std::thread([p] { SaverThreadMain(p); }));
+  pImpl->thr.reset(new std::thread([p, callerCtx = ctx.Resolve()] { 
+    ANTIGO_CONTEXT_INIT(ctx);
+    auto g = ctx.AddLambdaWithRef([&callerCtx]() { return callerCtx.ToString(); });
+    g.Arm();
+    SaverThreadMain(p);
+  }));
 }
 
 AsyncSaveStorage::~AsyncSaveStorage()

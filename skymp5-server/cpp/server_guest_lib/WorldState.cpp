@@ -8,6 +8,8 @@
 #include "MpObjectReference.h"
 #include "ScopedTask.h"
 #include "Timer.h"
+#include "antigo/Context.h"
+#include "antigo/ResolvedContext.h"
 #include "database_drivers/IDatabase.h" // UpsertFailedException
 #include "libespm/GroupUtils.h"
 #include "papyrus-vm/Reader.h"
@@ -98,6 +100,12 @@ void WorldState::AddForm(std::unique_ptr<MpForm> form, uint32_t formId,
                          bool skipChecks,
                          const MpChangeForm* optionalChangeFormToApply)
 {
+  ANTIGO_CONTEXT_INIT(ctx);
+  ctx.AddMessage("next: formId, skipChecks, optionalChangeFormToApply");
+  ctx.AddUnsigned(formId);
+  ctx.AddUnsigned(skipChecks);
+  ctx.AddPtr(optionalChangeFormToApply);
+
   if (!skipChecks && forms.find(formId) != forms.end()) {
     throw std::runtime_error(
       fmt::format("Form with id {:x} already exists", formId));
@@ -138,7 +146,9 @@ void WorldState::AddForm(std::unique_ptr<MpForm> form, uint32_t formId,
 
 void WorldState::Tick()
 {
+  ANTIGO_CONTEXT_INIT(ctx);
   const auto now = std::chrono::system_clock::now();
+  ctx.AddUnsigned(now.time_since_epoch().count());
   TickSaveStorage(now);
   TickTimers(now);
 }
@@ -146,6 +156,10 @@ void WorldState::Tick()
 void WorldState::LoadChangeForm(const MpChangeForm& changeForm,
                                 const FormCallbacks& callbacks)
 {
+  ANTIGO_CONTEXT_INIT(ctx);
+  auto g = ctx.AddLambdaWithRef([&changeForm]() { return MpChangeForm::ToJson(changeForm).dump(2); });
+  g.Arm();
+
   Viet::ScopedTask<bool> task([](bool& st) { st = false; },
                               pImpl->formLoadingInProgress);
   pImpl->formLoadingInProgress = true;
@@ -277,6 +291,8 @@ void WorldState::RequestReloot(MpObjectReference& ref,
 
 void WorldState::RequestSave(MpObjectReference& ref)
 {
+  ANTIGO_CONTEXT_INIT(ctx);
+
   if (pImpl->formLoadingInProgress) {
     return;
   }
@@ -284,7 +300,7 @@ void WorldState::RequestSave(MpObjectReference& ref)
   auto idx = ref.GetIdx();
 
   [[unlikely]] if (idx == FormIndex::g_invalidIdx) {
-    return spdlog::error("RequestSave {:x} - Invalid index", ref.GetFormId());
+    return spdlog::error("RequestSave {:x} - Invalid index\n{}", ref.GetFormId(), ctx.Resolve().ToString());
   }
 
   if (pImpl->changesByIdx.size() <= idx) {
@@ -298,6 +314,21 @@ void WorldState::RequestSave(MpObjectReference& ref)
 const std::shared_ptr<MpForm>& WorldState::LookupFormById(
   uint32_t formId, std::stringstream* optionalOutTrace)
 {
+  ANTIGO_CONTEXT_INIT(ctx);
+
+  ctx.AddUnsigned(formId);
+
+  struct Deferred {
+    Antigo::OnstackContext& ctx;
+    std::stringstream* optionalOutTrace;
+
+    ~Deferred() {
+      if (optionalOutTrace) {
+        *optionalOutTrace << "look at my horse, my horse is amazing:\n" << ctx.Resolve();
+      }
+    }
+  } def{ctx, optionalOutTrace};
+
   static const std::shared_ptr<MpForm> kNullForm;
 
   if (optionalOutTrace) {
@@ -325,8 +356,8 @@ const std::shared_ptr<MpForm>& WorldState::LookupFormById(
         if (optionalOutTrace) {
           *optionalOutTrace << "LoadForm returned false " << std::hex << formId
                             << std::endl;
-        }
       }
+    }
     }
     if (optionalOutTrace) {
       *optionalOutTrace << "not found " << std::hex << formId << std::endl;
@@ -343,6 +374,9 @@ const std::shared_ptr<MpForm>& WorldState::LookupFormById(
 const std::shared_ptr<MpForm>& WorldState::LookupFormByIdNoLoad(
   uint32_t formId)
 {
+  ANTIGO_CONTEXT_INIT(ctx);
+  ctx.AddUnsigned(formId);
+
   static const std::shared_ptr<MpForm> kNullForm;
 
   auto it = forms.find(formId);
@@ -648,18 +682,29 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
 
 bool WorldState::LoadForm(uint32_t formId, std::stringstream* optionalOutTrace)
 {
+  ANTIGO_CONTEXT_INIT(ctx);
+  ctx.AddMessage("next: formId");
+  ctx.AddUnsigned(formId);
+
   auto& br = GetEspm().GetBrowser();
 
   auto lookupRes = br.LookupById(formId);
+  ctx.AddMessage("next: lookupRes.rec, ->id");
+  ctx.AddPtr(lookupRes.rec);
 
   if (!lookupRes.rec) {
     return false;
   }
+  ctx.AddUnsigned(lookupRes.rec->GetId());
 
   auto mapping = br.GetCombMapping(lookupRes.fileIdx);
+  ctx.AddMessage("next: mapping");
+  ctx.AddPtr(mapping);
 
   bool attached =
     AttachEspmRecord(br, lookupRes.rec, *mapping, optionalOutTrace);
+  ctx.AddMessage("next: attached");
+  ctx.AddUnsigned(attached);
   if (optionalOutTrace) {
     *optionalOutTrace << "AttachEspmRecord " << (attached ? "true" : "false")
                       << std::endl;
@@ -685,6 +730,8 @@ bool WorldState::LoadForm(uint32_t formId, std::stringstream* optionalOutTrace)
 
 void WorldState::TickSaveStorage(const std::chrono::system_clock::time_point&)
 {
+  ANTIGO_CONTEXT_INIT(ctx);
+
   if (!pImpl->saveStorage) {
     return;
   }
@@ -775,6 +822,7 @@ void WorldState::TickSaveStorage(const std::chrono::system_clock::time_point&)
 
 void WorldState::TickTimers(const std::chrono::system_clock::time_point&)
 {
+  ANTIGO_CONTEXT_INIT(ctx);
   timerEffects.TickTimers();
   timerRegular.TickTimers();
 
@@ -787,6 +835,8 @@ void WorldState::SendPapyrusEvent(MpForm* form, const char* eventName,
                                   const VarValue* arguments,
                                   size_t argumentsCount)
 {
+  ANTIGO_CONTEXT_INIT(ctx);
+
   std::vector<VarValue> args = { arguments, arguments + argumentsCount };
 
   if (spdlog::should_log(spdlog::level::trace)) {

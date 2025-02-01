@@ -1,6 +1,8 @@
 #include "PapyrusActor.h"
 
 #include "MpActor.h"
+#include "antigo/Context.h"
+#include "antigo/ResolvedContext.h"
 #include "script_objects/EspmGameObject.h"
 #include "script_objects/MpFormGameObject.h"
 
@@ -179,6 +181,8 @@ VarValue PapyrusActor::SetAlpha(VarValue self,
 VarValue PapyrusActor::EquipItem(VarValue self,
                                  const std::vector<VarValue>& arguments)
 {
+  ANTIGO_CONTEXT_INIT(ctx);
+
   if (auto actor = GetFormPtr<MpActor>(self)) {
     auto worldState = actor->GetParent();
     if (!worldState) {
@@ -225,19 +229,21 @@ VarValue PapyrusActor::EquipItem(VarValue self,
 VarValue PapyrusActor::EquipSpell(VarValue self,
                                   const std::vector<VarValue>& arguments)
 {
+  ANTIGO_CONTEXT_INIT(ctx);
+
   if (arguments.size() < 2) {
-    spdlog::error("EquipSpell requires at least 2 arguments");
+    spdlog::error("EquipSpell requires at least 2 arguments\n{}", ctx.Resolve().ToString());
     return VarValue::None();
   }
 
   auto lookupRes = GetRecordPtr(arguments[0]);
   if (!lookupRes.rec) {
-    spdlog::error("EquipSpell - invalid form");
+    spdlog::error("EquipSpell - invalid form\n{}", ctx.Resolve().ToString());
     return VarValue::None();
   }
 
   if (lookupRes.rec->GetType() != espm::SPEL::kType) {
-    spdlog::error("EquipSpell - form is not a spell");
+    spdlog::error("EquipSpell - form is not a spell\n{}", ctx.Resolve().ToString());
     return VarValue::None();
   }
 
@@ -260,8 +266,10 @@ VarValue PapyrusActor::EquipSpell(VarValue self,
 VarValue PapyrusActor::UnequipItem(VarValue self,
                                    const std::vector<VarValue>& arguments)
 {
+  ANTIGO_CONTEXT_INIT(ctx);
+
   if (arguments.size() < 3) {
-    spdlog::error("UnequipItem requires at least 3 arguments");
+    spdlog::error("UnequipItem requires at least 3 arguments\n{}", ctx.Resolve().ToString());
     return VarValue::None();
   }
 
@@ -498,32 +506,41 @@ VarValue PapyrusActor::AddSpell(VarValue self,
 VarValue PapyrusActor::RemoveSpell(VarValue self,
                                    const std::vector<VarValue>& arguments)
 {
+  ANTIGO_CONTEXT_INIT(ctx);
+
   if (auto actor = GetFormPtr<MpActor>(self)) {
+    ctx.AddMessage("next: actor form id, base id; spell lookup rec ptr, id");
+    ctx.AddUnsigned(actor->GetFormId());
+    ctx.AddUnsigned(actor->GetBaseId());
     if (arguments.size() < 1) {
       throw std::runtime_error(
         "Actor.RemoveSpell requires at least one argument");
     }
 
     const auto& spell = GetRecordPtr(arguments[0]);
+    ctx.AddPtr(spell.rec);
     if (!spell.rec) {
-      spdlog::error("Actor.RemoveSpell - invalid spell form");
+      spdlog::error("Actor.RemoveSpell - invalid spell form\n{}", ctx.Resolve().ToString());
       return VarValue(false);
     }
+    ctx.AddUnsigned(spell.rec->GetId());
 
     if (spell.rec->GetType().ToString() != "SPEL") {
       spdlog::error(
-        "Actor.RemoveSpell - type expected to be SPEL, but it is {}",
-        spell.rec->GetType().ToString());
+        "Actor.RemoveSpell - type expected to be SPEL, but it is {}\n{}",
+        spell.rec->GetType().ToString(), ctx.Resolve().ToString());
       return VarValue(false);
     }
 
     uint32_t spellId = spell.ToGlobalId(spell.rec->GetId());
+    ctx.AddMessage("next: spellId");
+    ctx.AddUnsigned(spellId);
 
     if (actor->IsSpellLearnedFromBase(spellId)) {
       spdlog::warn("Actor.RemoveSpell - can't remove spells inherited from "
-                   "RACE/NPC_ records");
+                   "RACE/NPC_ records\n{}", ctx.Resolve().ToString());
     } else if (!actor->IsSpellLearned(spellId)) {
-      spdlog::warn("Actor.RemoveSpell - spell already removed/not learned");
+      spdlog::warn("Actor.RemoveSpell - spell already removed/not learned\n{}", ctx.Resolve().ToString());
     } else {
       actor->RemoveSpell(spellId);
 

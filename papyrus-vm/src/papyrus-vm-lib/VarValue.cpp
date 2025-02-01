@@ -1,3 +1,4 @@
+#include "antigo/Context.h"
 #include "papyrus-vm/Structures.h"
 #include "papyrus-vm/VirtualMachine.h"
 
@@ -449,6 +450,11 @@ bool VarValue::operator!=(const VarValue& argument2) const
 
 bool VarValue::operator>(const VarValue& argument2) const
 {
+  ANTIGO_CONTEXT_INIT(ctx);
+  ctx.AddMessage("next: type left, type right");
+  ctx.AddUnsigned(GetType());
+  ctx.AddUnsigned(argument2.GetType());
+
   switch (this->type) {
     case VarValue::kType_Integer:
       return this->CastToInt().data.i > argument2.CastToInt().data.i;
@@ -464,6 +470,11 @@ bool VarValue::operator>(const VarValue& argument2) const
 
 bool VarValue::operator>=(const VarValue& argument2) const
 {
+  ANTIGO_CONTEXT_INIT(ctx);
+  ctx.AddMessage("next: type left, type right");
+  ctx.AddUnsigned(GetType());
+  ctx.AddUnsigned(argument2.GetType());
+
   switch (this->type) {
     case VarValue::kType_Integer:
       return this->CastToInt().data.i >= argument2.CastToInt().data.i;
@@ -479,6 +490,11 @@ bool VarValue::operator>=(const VarValue& argument2) const
 
 bool VarValue::operator<(const VarValue& argument2) const
 {
+  ANTIGO_CONTEXT_INIT(ctx);
+  ctx.AddMessage("next: type left, type right");
+  ctx.AddUnsigned(GetType());
+  ctx.AddUnsigned(argument2.GetType());
+
   switch (this->type) {
     case VarValue::kType_Integer:
       return this->CastToInt().data.i < argument2.CastToInt().data.i;
@@ -494,6 +510,11 @@ bool VarValue::operator<(const VarValue& argument2) const
 
 bool VarValue::operator<=(const VarValue& argument2) const
 {
+  ANTIGO_CONTEXT_INIT(ctx);
+  ctx.AddMessage("next: type left, type right");
+  ctx.AddUnsigned(GetType());
+  ctx.AddUnsigned(argument2.GetType());
+
   switch (this->type) {
     case VarValue::kType_Integer:
       return this->CastToInt().data.i <= argument2.CastToInt().data.i;

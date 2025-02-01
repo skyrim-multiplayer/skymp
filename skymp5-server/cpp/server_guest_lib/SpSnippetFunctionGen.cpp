@@ -2,6 +2,7 @@
 
 #include "SpSnippet.h"
 #include "WorldState.h"
+#include "antigo/Context.h"
 #include "script_objects/EspmGameObject.h"
 #include "script_objects/MpFormGameObject.h"
 #include <nlohmann/json.hpp>
@@ -23,6 +24,8 @@ uint32_t SpSnippetFunctionGen::GetFormId(VarValue varValue)
 std::string SpSnippetFunctionGen::SerializeArguments(
   const std::vector<VarValue>& arguments, MpActor* actor)
 {
+  ANTIGO_CONTEXT_INIT(ctx);
+
   std::stringstream ss;
   ss << '[';
   for (auto& arg : arguments) {
