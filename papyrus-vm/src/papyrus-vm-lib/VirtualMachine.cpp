@@ -311,9 +311,10 @@ VarValue VirtualMachine::CallMethod(
         std::string methodNameFull;
         methodNameFull += base;
         methodNameFull += (base[0] ? "." : "") + std::string(methodName) + "'";
-        spdlog::error(
+        spdlog::critical(
           "VirtualMachine::CallMethod - Native {} errored with unknown error",
           methodNameFull);
+        std::terminate();
         return VarValue::None();
       }
     }
@@ -362,9 +363,10 @@ VarValue VirtualMachine::CallStatic(const std::string& className,
       return VarValue::None();
     } catch (...) {
       std::string functionNameFull = className + "." + functionName;
-      spdlog::error(
+      spdlog::critical(
         "VirtualMachine::CallStatic - Native {} errored with unknown error",
         functionNameFull);
+      std::terminate();
       return VarValue::None();
     }
   }

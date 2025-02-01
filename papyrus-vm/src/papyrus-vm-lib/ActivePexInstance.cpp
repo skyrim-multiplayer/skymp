@@ -84,9 +84,10 @@ std::string ActivePexInstance::GetActiveStateName() const
                   e.what());
     return "";
   } catch (...) {
-    spdlog::error(
+    spdlog::critical(
       "ActivePexInstance::GetActiveStateName - GetVariableByName(::State) "
       "unexpectedly errored: unknown error");
+    std::terminate();
     return "";
   }
 
@@ -462,9 +463,11 @@ void ActivePexInstance::ExecuteOpCode(
                               e.what());
                 var = nullptr;
               } catch (...) {
-                spdlog::error("OpcodesImplementation::Opcodes::op_PropGet - "
-                              "GetVariableByName errored with unknown error");
+                spdlog::critical(
+                  "OpcodesImplementation::Opcodes::op_PropGet - "
+                  "GetVariableByName errored with unknown error");
                 var = nullptr;
+                std::terminate();
               }
 
               if (var) {
@@ -562,9 +565,11 @@ void ActivePexInstance::ExecuteOpCode(
                               e.what());
                 var = nullptr;
               } catch (...) {
-                spdlog::error("OpcodesImplementation::Opcodes::op_PropSet - "
-                              "GetVariableByName errored with unknown error");
+                spdlog::critical(
+                  "OpcodesImplementation::Opcodes::op_PropSet - "
+                  "GetVariableByName errored with unknown error");
                 var = nullptr;
+                std::terminate();
               }
 
               if (var) {
@@ -1104,9 +1109,10 @@ VarValue& ActivePexInstance::GetVariableValueByName(std::vector<Local>* locals,
     noneVar = VarValue::None();
     return noneVar;
   } catch (...) {
-    spdlog::error("ActivePexInstance::GetVariableValueByName - "
-                  "GetVariableByName errored with unknown error");
+    spdlog::critical("ActivePexInstance::GetVariableValueByName - "
+                     "GetVariableByName errored with unknown error");
     noneVar = VarValue::None();
+    std::terminate();
     return noneVar;
   }
 
