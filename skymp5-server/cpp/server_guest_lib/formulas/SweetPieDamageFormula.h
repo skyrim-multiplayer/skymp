@@ -14,6 +14,7 @@
 struct SweetPieDamageFormulaSettings
 {
   std::vector<float> damageMultByLevel{};
+  std::optional<std::vector<float>> damageMultByLevelTargetNpc{};
   std::unordered_map<std::string, std::vector<uint32_t>> weaponKeywords{};
 };
 
