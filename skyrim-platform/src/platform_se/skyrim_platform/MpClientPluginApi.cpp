@@ -92,16 +92,27 @@ JsValue MpClientPluginApi::Tick(const JsFunctionArguments& args)
 {
   auto onPacket = args[1];
 
-  typedef void (*OnPacket)(int32_t type, const char* jsonContent,
+  typedef void (*OnPacket)(int32_t type, const char* rawContent, size_t length,
                            const char* error, void* state);
   typedef void (*Tick)(OnPacket onPacket, void* state);
 
   auto f = (Tick)GetMpClientPlugin()->GetFunction("Tick");
   f(
-    [](int32_t type, const char* jsonContent, const char* error, void* state) {
+    [](int32_t type, const char* rawContent, size_t length, const char* error,
+       void* state) {
       auto onPacket = reinterpret_cast<JsValue*>(state);
-      onPacket->Call(
-        { JsValue::Undefined(), GetPacketTypeName(type), jsonContent, error });
+
+      JsValue rawContentArrayBuffer;
+
+      if (length > 0) {
+        rawContentArrayBuffer = JsValue::ArrayBuffer(length);
+        memcpy(rawContentArrayBuffer.GetArrayBufferData(), rawContent, length);
+      } else {
+        rawContentArrayBuffer = JsValue::Null();
+      }
+
+      onPacket->Call({ JsValue::Undefined(), GetPacketTypeName(type),
+                       rawContentArrayBuffer, error });
     },
     &onPacket);
   return JsValue::Undefined();
@@ -116,5 +127,19 @@ JsValue MpClientPluginApi::Send(const JsFunctionArguments& args)
 
   auto f = (Send)GetMpClientPlugin()->GetFunction("Send");
   f(jsonContent.data(), reliable);
+  return JsValue::Undefined();
+}
+
+JsValue MpClientPluginApi::SendRaw(const JsFunctionArguments& args)
+{
+  typedef void (*SendRaw)(const void* data, size_t size, bool reliable);
+
+  auto data = args[1].GetArrayBufferData();
+  auto dataLength = args[1].GetArrayBufferLength();
+
+  auto reliable = (bool)args[2];
+
+  auto f = (SendRaw)GetMpClientPlugin()->GetFunction("SendRaw");
+  f(data, dataLength, reliable);
   return JsValue::Undefined();
 }
