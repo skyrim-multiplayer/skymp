@@ -73,12 +73,6 @@ runs:
         git commit -m "Merge PRs ${{inputs.DEPLOY_BRANCH}}"
       shell: powershell
 
-    - name: Cache build dir
-      uses: actions/cache@v4
-      with:
-        path: ${{github.workspace}}/build
-        key: ${{ runner.os }}-skymp-${{ hashFiles('./build-metadata.json') }}-${{ env.sha }}
-
     - name: Early build skymp5-client
       run: |
         cd ${{github.workspace}}/skymp5-client
