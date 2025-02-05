@@ -51,9 +51,9 @@ VarValue PapyrusUtility::RandomFloat(VarValue self,
 VarValue PapyrusUtility::GetCurrentRealTime(
   VarValue self, const std::vector<VarValue>& arguments)
 {
-  return VarValue(std::chrono::duration<double, std::micro>(
+  return VarValue(std::chrono::duration<double>(
                     std::chrono::steady_clock::now() -
-                    compatibilityPolicy->GetWorldState()->startPoint())
+                    compatibilityPolicy->GetWorldState()->GetStartPoint())
                     .count());
 }
 

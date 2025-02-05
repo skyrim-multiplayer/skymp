@@ -55,7 +55,7 @@ public:
 
   void Clear();
 
-  const std::chrono::steady_clock::time_point& startPoint() const;
+  const std::chrono::steady_clock::time_point& GetStartPoint() const;
 
   void AttachEspm(espm::Loader* espm,
                   const FormCallbacksFactory& formCallbacksFactory);

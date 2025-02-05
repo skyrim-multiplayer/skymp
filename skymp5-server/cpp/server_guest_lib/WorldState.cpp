@@ -73,7 +73,7 @@ void WorldState::Clear()
   formIdxManager.reset();
 }
 
-const std::chrono::steady_clock::time_point& WorldState::startPoint() const
+const std::chrono::steady_clock::time_point& WorldState::GetStartPoint() const
 {
   return worldStartTime;
 }
