@@ -203,13 +203,23 @@ runs:
         Invoke-Expression $cmake_command_full
       shell: powershell
 
-    - name: Upload vcpkg failure logs
-      if: failure()
+    - name: Upload vcpkg logs (non-Windows)
+      if: ${{ always() && runner.os != 'Windows' }}
       uses: actions/upload-artifact@v4
       with:
-        name: install-x64-windows-sp-dbg-out.log
-        #path: C:\vcpkg\buildtrees\spdlog\install-x64-windows-sp-dbg-out.log
-        path: C:\vcpkg\buildtrees\mongo-cxx-driver\install-x64-windows-sp-dbg-out.log
+        name: vcpkg_logs
+        path: |
+          ${{github.workspace}}/build/vcpkg-bootstrap.log
+          ${{github.workspace}}/vcpkg/buildtrees/**/*.log
+
+    - name: Upload vcpkg logs (Windows)
+      if: ${{ always() && runner.os == 'Windows' }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: vcpkg_logs
+        path: |
+          ${{github.workspace}}/build/vcpkg-bootstrap.log
+          C:/vcpkg/buildtrees/**/*.log
 
     - uses: actions/upload-artifact@v4
       with:
