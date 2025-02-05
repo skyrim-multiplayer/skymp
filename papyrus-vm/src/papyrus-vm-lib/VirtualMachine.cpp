@@ -38,7 +38,7 @@ void StackData::EnableTracing(Antigo::OnstackContext& parentCtx) {
 
 StackData::~StackData() {
   if (tracing.enabled) {
-    spdlog::info("TRACING PAPYRUS STACK {}: DESTRUCTOR", stackIdHolder.GetStackId());
+    spdlog::info("TRACING PAPYRUS STACK {}-{}: DESTRUCTOR", stackIdHolder.GetStackId(), tracing.traceId);
   }
 }
 
