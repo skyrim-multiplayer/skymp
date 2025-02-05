@@ -218,15 +218,19 @@ runs:
       shell: powershell
       run: |
         $logDir = "${{ github.workspace }}\vcpkg_logs"
+        
         New-Item -ItemType Directory -Path $logDir -Force | Out-Null
+        
+        $sourceDir = "C:\vcpkg\buildtrees"
 
-        Get-ChildItem -Path "C:\vcpkg\buildtrees" -Filter "*.log" -Recurse | ForEach-Object {
-          $relativePath = $_.FullName.Substring(3) # Убираем "C:\"
+        Get-ChildItem -Path $sourceDir -Filter "*.log" -Recurse | ForEach-Object {
+          $relativePath = $_.FullName.Substring($sourceDir.Length).TrimStart('\')
           $destinationPath = Join-Path -Path $logDir -ChildPath $relativePath
 
           New-Item -ItemType Directory -Path (Split-Path -Parent $destinationPath) -Force | Out-Null
           Copy-Item -Path $_.FullName -Destination $destinationPath -Force
         }
+
 
     - name: Upload vcpkg logs (Windows)
       if: ${{ always() && runner.os == 'Windows' }}
