@@ -90,8 +90,8 @@ std::string ActivePexInstance::GetActiveStateName() const
     var = variables->GetVariableByName("::State", *sourcePex.fn());
   } catch (std::exception& e) {
     spdlog::error("ActivePexInstance::GetActiveStateName - "
-                  "GetVariableByName(::State) unexpectedly errored: '{}'",
-                  e.what());
+                  "GetVariableByName(::State) unexpectedly errored: '{}'\n{}",
+                  e.what(), ctx.Resolve().ToString());
     return "";
   } catch (...) {
     spdlog::critical(
@@ -565,8 +565,8 @@ void ActivePexInstance::ExecuteOpCode(
 
               } catch (std::exception& e) {
                 spdlog::error("OpcodesImplementation::Opcodes::op_PropGet - "
-                              "GetVariableByName errored with '{}'",
-                              e.what());
+                              "GetVariableByName errored with '{}'\n{}",
+                              e.what(), agctx.Resolve().ToString());
                 var = nullptr;
               } catch (...) {
                 spdlog::critical(
@@ -670,8 +670,8 @@ void ActivePexInstance::ExecuteOpCode(
                   it->autoVarName.data(), *inst->sourcePex.fn());
               } catch (std::exception& e) {
                 spdlog::error("OpcodesImplementation::Opcodes::op_PropSet - "
-                              "GetVariableByName errored with '{}'",
-                              e.what());
+                              "GetVariableByName errored with '{}'\n{}",
+                              e.what(), agctx.Resolve().ToString());
                 var = nullptr;
               } catch (...) {
                 spdlog::critical(
@@ -1344,8 +1344,8 @@ VarValue& ActivePexInstance::GetVariableValueByName(std::vector<Local>* locals,
     }
   } catch (std::exception& e) {
     spdlog::error("ActivePexInstance::GetVariableValueByName - "
-                  "GetVariableByName errored with '{}'",
-                  e.what());
+                  "GetVariableByName errored with '{}'\n{}",
+                  e.what(), agctx.Resolve().ToString());
     noneVar = VarValue::None();
     return noneVar;
   } catch (...) {
