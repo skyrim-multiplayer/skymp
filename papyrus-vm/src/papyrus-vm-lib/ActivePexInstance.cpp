@@ -451,6 +451,9 @@ void ActivePexInstance::ExecuteOpCode(
         // TODO: consider using CallMethod here. I'm afraid that this event
         // will pollute other scripts attached to an object
         parentVM->SendEvent(this, functionName.c_str(), argsForCall);
+        if (ctx->stackData->tracing.enabled) {
+          ctx->stackData->tracing.msgs.push_back(fmt::format("callmethod {}.{}: sent as event", object->ToString(), functionName));
+        }
         break;
       } else {
         auto nullableGameObject = static_cast<IGameObject*>(*object);
@@ -470,8 +473,18 @@ void ActivePexInstance::ExecuteOpCode(
     case OpcodesImplementation::Opcodes::op_CallStatic: {
       const char* className = (const char*)(*args[0]);
       const char* functionName = (const char*)(*args[1]);
+      if (ctx->stackData->tracing.enabled) {
+        std::string argsStr;
+        for (const auto& arg : argsForCall) {
+          argsStr += " " + arg.ToString();
+        }
+        ctx->stackData->tracing.msgs.push_back(fmt::format("callstatic {}.{}{}", className, functionName, argsStr));
+      }
       auto res = parentVM->CallStatic(className, functionName, argsForCall,
                                       ctx->stackData);
+      if (ctx->stackData->tracing.enabled) {
+        ctx->stackData->tracing.msgs.push_back(fmt::format("callstatic {}.{}: result {}", className, functionName, res.ToString()));
+      }
       if (EnsureCallResultIsSynchronous(res, ctx)) {
         *args[2] = res;
       }
