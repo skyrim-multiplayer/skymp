@@ -219,7 +219,9 @@ runs:
       run: |
         $logDir = "${{ github.workspace }}\vcpkg_logs"
         New-Item -ItemType Directory -Path $logDir -Force | Out-Null
-        Copy-Item -Path "C:\vcpkg\buildtrees\*.log" -Destination $logDir -Recurse -Force
+        Get-ChildItem -Path "C:\vcpkg\buildtrees" -Filter "*.log" -Recurse | ForEach-Object {
+          Copy-Item -Path $_.FullName -Destination $logDir -Force
+        }
 
     - name: Upload vcpkg logs (Windows)
       if: ${{ always() && runner.os == 'Windows' }}
