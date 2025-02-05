@@ -219,8 +219,13 @@ runs:
       run: |
         $logDir = "${{ github.workspace }}\vcpkg_logs"
         New-Item -ItemType Directory -Path $logDir -Force | Out-Null
+
         Get-ChildItem -Path "C:\vcpkg\buildtrees" -Filter "*.log" -Recurse | ForEach-Object {
-          Copy-Item -Path $_.FullName -Destination $logDir -Force
+          $relativePath = $_.FullName.Substring(3) # Убираем "C:\"
+          $destinationPath = Join-Path -Path $logDir -ChildPath $relativePath
+
+          New-Item -ItemType Directory -Path (Split-Path -Parent $destinationPath) -Force | Out-Null
+          Copy-Item -Path $_.FullName -Destination $destinationPath -Force
         }
 
     - name: Upload vcpkg logs (Windows)
