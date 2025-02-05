@@ -2,6 +2,7 @@
 #include "antigo/Context.h"
 #include "antigo/ResolvedContext.h"
 #include "papyrus-vm/Utils.h"
+#include "papyrus-vm/VarValue.h"
 #include <algorithm>
 #include <cassert>
 #include <fmt/format.h>
@@ -476,8 +477,11 @@ VarValue VirtualMachine::CallStatic(const std::string& className,
       }
     }
     it = allLoadedScripts.find(classNameCi);
-    if (it == allLoadedScripts.end())
-      throw std::runtime_error("script is missing - '" + className + "'");
+    // XXX to main
+    if (it == allLoadedScripts.end()) {
+      spdlog::error("VirtualMachine::CallStatic - script is missing - '{}'", className, ctx.Resolve().ToString());
+      return VarValue::None();
+    }
   }
 
   auto& instance = instancesForStaticCalls[className];
@@ -490,16 +494,16 @@ VarValue VirtualMachine::CallStatic(const std::string& className,
 
   if (function.valid) {
     if (function.IsNative()) {
-      spdlog::error("VirtualMachine::CallStatic - Function not found - '{}'",
-                    functionName);
+      spdlog::error("VirtualMachine::CallStatic - Function not found - '{}'\n{}",
+                    functionName, ctx.Resolve().ToString());
       return VarValue::None();
     }
 
     result = instance->StartFunction(function, arguments, stackData);
   }
   if (!function.valid) {
-    spdlog::error("VirtualMachine::CallStatic - Function is not valid - '{}'",
-                  functionName);
+    spdlog::error("VirtualMachine::CallStatic - Function is not valid - '{}'\n{}",
+                  functionName, ctx.Resolve().ToString());
     return VarValue::None();
   }
 
