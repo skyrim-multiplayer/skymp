@@ -408,16 +408,11 @@ VarValue VirtualMachine::CallMethod(
       break;
   }
 
-  // ctx.AddMessage("method not found (see adjacent message if this one came from an exception)");
-  // ctx.Orphan();
-
-  ANTIGO_CONTEXT_INIT(ctx_hack); // a way to avoid ref expiry
-
   std::string e = "Method not found - '";
   e += base;
   e += (base[0] ? "." : "") + std::string(methodName) + "'";
 
-  spdlog::error("VirtualMachine::CallMethod - {}", e);
+  spdlog::error("VirtualMachine::CallMethod - {}\n{}", e, ctx.Resolve().ToString());
 
   return VarValue::None();
 }
@@ -447,8 +442,8 @@ VarValue VirtualMachine::CallStatic(const std::string& className,
       return f(self, arguments);
     } catch (std::exception& e) {
       std::string functionNameFull = className + "." + functionName;
-      spdlog::error("VirtualMachine::CallStatic - Native {} errored with {}",
-                    functionNameFull, e.what());
+      spdlog::error("VirtualMachine::CallStatic - Native {} errored with {}\n{}",
+                    functionNameFull, e.what(), ctx.Resolve().ToString());
       return VarValue::None();
     } catch (...) {
       std::string functionNameFull = className + "." + functionName;
