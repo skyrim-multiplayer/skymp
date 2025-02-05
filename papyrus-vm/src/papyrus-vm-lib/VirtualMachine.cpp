@@ -424,6 +424,18 @@ VarValue VirtualMachine::CallStatic(const std::string& className,
 {
   ANTIGO_CONTEXT_INIT(ctx);
 
+  ctx.AddLambdaWithOwned([&className, &functionName, &arguments, &stackData]{
+    std::stringstream ss;
+    ss << "className = " << className << "\n";
+    ss << "functionName = " << functionName << "\n";
+    ss << "arguments [" << arguments.size() << "] = [\n";
+    for (const auto& arg : arguments) {
+      ss << "  " << arg.ToString() << "\n";
+    }
+    ss << "]\nstackData = " << std::hex << stackData;
+    return std::move(ss).str();
+  });
+
   if (!stackData) {
     stackData.reset(new StackData{ StackIdHolder{ *this } });
   }
