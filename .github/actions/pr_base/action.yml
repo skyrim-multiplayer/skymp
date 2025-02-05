@@ -212,6 +212,15 @@ runs:
           ${{github.workspace}}/build/vcpkg-bootstrap.log
           ${{github.workspace}}/vcpkg/buildtrees/**/*.log
 
+    # actions/upload-artifact will not work for C:/vcpkg because it's not under github.workspace
+    - name: Prepare vcpkg logs (Windows)
+      if: ${{ always() && runner.os == 'Windows' }}
+      shell: powershell
+      run: |
+        $logDir = "${{ github.workspace }}\vcpkg_logs"
+        New-Item -ItemType Directory -Path $logDir -Force | Out-Null
+        Copy-Item -Path "C:\vcpkg\buildtrees\*.log" -Destination $logDir -Recurse -Force
+
     - name: Upload vcpkg logs (Windows)
       if: ${{ always() && runner.os == 'Windows' }}
       uses: actions/upload-artifact@v4
@@ -219,7 +228,7 @@ runs:
         name: vcpkg_logs
         path: |
           ${{github.workspace}}/build/vcpkg-bootstrap.log
-          C:/vcpkg/buildtrees/**/*.log
+          ${{github.workspace}}/vcpkg_logs
 
     - uses: actions/upload-artifact@v4
       with:
