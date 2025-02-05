@@ -55,6 +55,8 @@ public:
 
   void Clear();
 
+  const std::chrono::steady_clock::time_point& startPoint() const;
+
   void AttachEspm(espm::Loader* espm,
                   const FormCallbacksFactory& formCallbacksFactory);
   void AttachSaveStorage(std::shared_ptr<ISaveStorage> saveStorage);
@@ -290,4 +292,5 @@ private:
   struct Impl;
   std::shared_ptr<Impl> pImpl;
   Viet::Timer timerEffects, timerRegular;
+  std::chrono::steady_clock::time_point worldStartTime;
 };
