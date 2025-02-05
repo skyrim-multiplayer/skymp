@@ -16,21 +16,27 @@
 #include "TimeUtils.h"
 #include "UpdatePropertyMessage.h"
 #include "WorldState.h"
+#include "antigo/Context.h"
+#include "antigo/ResolvedContext.h"
 #include "gamemode_events/ActivateEvent.h"
 #include "gamemode_events/PutItemEvent.h"
 #include "gamemode_events/TakeItemEvent.h"
 #include "libespm/CompressedFieldsCache.h"
 #include "libespm/Convert.h"
 #include "libespm/GroupUtils.h"
+#include "libespm/LookupResult.h"
+#include "libespm/NPC_.h"
 #include "libespm/Utils.h"
 #include "papyrus-vm/Reader.h"
 #include "papyrus-vm/Utils.h" // stricmp
 #include "papyrus-vm/VirtualMachine.h"
 #include "script_objects/EspmGameObject.h"
 #include "script_storages/IScriptStorage.h"
+#include <cstring>
 #include <map>
 #include <numeric>
 #include <optional>
+#include <stdexcept>
 
 #include "OpenContainerMessage.h"
 #include "TeleportMessage.h"
@@ -140,6 +146,7 @@ public:
   std::optional<PrimitiveData> primitive;
   bool teleportFlag = false;
   bool setPropertyCalled = false;
+  Antigo::ResolvedContext setPropertyCaller;
 };
 
 namespace {
@@ -705,6 +712,7 @@ void MpObjectReference::SetProperty(const std::string& propertyName,
                                     bool isVisibleByOwner,
                                     bool isVisibleByNeighbor)
 {
+  ANTIGO_CONTEXT_INIT(ctx);
   auto msg = CreatePropertyMessage(this, propertyName.c_str(), newValue);
   EditChangeForm([&](MpChangeFormREFR& changeForm) {
     changeForm.dynamicFields.Set(propertyName, std::move(newValue));
@@ -717,6 +725,7 @@ void MpObjectReference::SetProperty(const std::string& propertyName,
     }
   }
   pImpl->setPropertyCalled = true;
+  // pImpl->setPropertyCaller = ctx.Resolve();
 }
 
 void MpObjectReference::SetTeleportFlag(bool value)
@@ -1122,6 +1131,8 @@ MpObjectReference::GetNextRelootMoment() const
 
 MpChangeForm MpObjectReference::GetChangeForm() const
 {
+  ANTIGO_CONTEXT_INIT(ctx);
+
   MpChangeForm res = ChangeForm();
 
   if (GetParent() && !GetParent()->espmFiles.empty()) {
@@ -1131,14 +1142,25 @@ MpChangeForm MpObjectReference::GetChangeForm() const
     res.formDesc = res.baseDesc = FormDesc(GetFormId(), "");
   }
 
+  // res.noSaveRequestor = ctx.Resolve();
+
   return res;
 }
 
 void MpObjectReference::ApplyChangeForm(const MpChangeForm& changeForm)
 {
+  ANTIGO_CONTEXT_INIT(ctx);
+  auto g = ctx.AddLambdaWithRef([&changeForm]() { return MpChangeForm::ToJson(changeForm).dump(2); });
+  g.Arm();
+
   if (pImpl->setPropertyCalled) {
     GetParent()->logger->critical("ApplyChangeForm called after SetProperty");
-    std::terminate();
+    auto g = ctx.AddLambdaWithRef([this]() { return pImpl->setPropertyCaller.ToString(); });
+    g.Arm();
+    ctx.Resolve().Print();
+    std::cout << std::flush;
+    std::cerr << std::flush;
+    // std::terminate();
   }
 
   blockSaving = true;
@@ -1147,6 +1169,9 @@ void MpObjectReference::ApplyChangeForm(const MpChangeForm& changeForm)
 
   const auto currentBaseId = GetBaseId();
   const auto newBaseId = changeForm.baseDesc.ToFormId(GetParent()->espmFiles);
+  ctx.AddMessage("next: current, new base id");
+  ctx.AddUnsigned(currentBaseId);
+  ctx.AddUnsigned(newBaseId);
   if (currentBaseId != newBaseId) {
     spdlog::error("Anomaly, baseId should never change ({:x} => {:x})",
                   currentBaseId, newBaseId);
@@ -1261,10 +1286,15 @@ void MpObjectReference::SendPapyrusEvent(const char* eventName,
                                          const VarValue* arguments,
                                          size_t argumentsCount)
 {
+  ANTIGO_CONTEXT_INIT(ctx);
   if (!pImpl->scriptsInited) {
     InitScripts();
     pImpl->scriptsInited = true;
   }
+  // if (strcmp(eventName, "OnHit") == 0 || strcmp(eventName, "OnActivate") == 0) {
+  //   ctx.AddMessage("LOOKATME");
+  //   // ctx.LogInnerExecution();
+  // }
   return MpForm::SendPapyrusEvent(eventName, arguments, argumentsCount);
 }
 
@@ -1636,6 +1666,8 @@ void MpObjectReference::UnsubscribeFromAll()
 
 void MpObjectReference::InitScripts()
 {
+  ANTIGO_CONTEXT_INIT(ctx);
+
   auto baseId = GetBaseId();
   if (!baseId || !GetParent()->espm) {
     return;
@@ -1796,6 +1828,8 @@ std::vector<espm::CONT::ContainerObject> GetOutfitObjects(
   WorldState* worldState, const std::vector<FormDesc>& templateChain,
   const espm::LookupResult& lookupRes)
 {
+  ANTIGO_CONTEXT_INIT(ctx);
+
   auto& compressedFieldsCache = worldState->GetEspmCache();
 
   std::vector<espm::CONT::ContainerObject> res;

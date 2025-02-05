@@ -1,14 +1,22 @@
 ﻿#include "ScopedTask.h"
+#include "antigo/Context.h"
+#include "antigo/ResolvedContext.h"
 #include "papyrus-vm/OpcodesImplementation.h"
 #include "papyrus-vm/Utils.h"
+#include "papyrus-vm/VarValue.h"
 #include "papyrus-vm/VirtualMachine.h"
 #include <algorithm>
 #include <cctype> // tolower
+#include <exception>
+#include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <functional>
+#include <memory>
+#include <optional>
 #include <spdlog/spdlog.h>
 #include <sstream>
 #include <stdexcept>
+#include <string>
 
 namespace {
 bool IsSelfStr(const VarValue& v)
@@ -74,6 +82,8 @@ FunctionInfo ActivePexInstance::GetFunctionByName(const char* name,
 
 std::string ActivePexInstance::GetActiveStateName() const
 {
+  ANTIGO_CONTEXT_INIT(ctx);
+
   VarValue* var = nullptr;
 
   try {
@@ -176,13 +186,30 @@ std::vector<VarValue> GetArgsForCall(uint8_t op,
 bool ActivePexInstance::EnsureCallResultIsSynchronous(
   const VarValue& callResult, ExecutionContext* ctx)
 {
-  if (!callResult.promise)
+  ANTIGO_CONTEXT_INIT(agctx);
+
+  if (!callResult.promise) {
+    agctx.AddMessage("call result is a promise");
     return true;
+  }
+
+  std::optional<Antigo::ResolvedContext> agctxResolved;
+  if (ctx->stackData->tracing.enabled) {
+    agctxResolved = agctx.Resolve();
+  }
 
   Viet::Promise<VarValue> currentFnPr;
 
   auto ctxCopy = *ctx;
-  callResult.promise->Then([this, ctxCopy, currentFnPr](VarValue v) {
+  callResult.promise->Then([this, ctxCopy, currentFnPr, agctxPrev = std::move(agctxResolved)](VarValue v) {
+    ANTIGO_CONTEXT_INIT(agctx);
+    agctx.AddLambdaWithOwned([agctxPrev = std::move(agctxPrev)]() -> std::string {
+      if (agctxPrev) {
+        return agctxPrev->ToString();
+      }
+      return "tracing disabled, no prev context";
+    });
+
     auto ctxCopy_ = ctxCopy;
     ctxCopy_.line++;
     auto res = ExecuteAll(ctxCopy_, v);
@@ -202,6 +229,21 @@ void ActivePexInstance::ExecuteOpCode(
   ExecutionContext* ctx, uint8_t op,
   const std::vector<VarValue*>& args) noexcept
 {
+  ANTIGO_CONTEXT_INIT(agctx);
+  agctx.AddMessage("next: op, args.size(), args");
+  agctx.AddUnsigned(op);
+  agctx.AddUnsigned(args.size());
+  // XXX bad naming, really it means outer scope
+  agctx.AddLambdaWithOwned([&args]() {
+    std::stringstream ss;
+    ss << "size = " << args.size() << "\n[\n";
+    for (const auto& arg : args) {
+      ss << "  " << (arg ? arg->ToString() : "(null)") << "\n";
+    }
+    ss << "]";
+    return std::move(ss).str();
+  });
+
   auto argsForCall = GetArgsForCall(op, args);
 
   switch (op) {
@@ -260,39 +302,81 @@ void ActivePexInstance::ExecuteOpCode(
         default:
           // assert(0);
           // Triggered by some array stuff in SkyMP, not sure this is OK
+          agctx.AddMessage("strange cast, had comment \"Triggered by some array stuff in SkyMP, not sure this is OK 4 years ago\" :)");
+          agctx.Orphan();
           *args[0] = (*args[1]);
           break;
       }
       break;
     case OpcodesImplementation::op_Cmp_eq:
       *args[0] = VarValue((*args[1]) == (*args[2]));
+      if (ctx->stackData->tracing.enabled) {
+        ctx->stackData->tracing.msgs.push_back(fmt::format(
+          "cmp {} == {}: {}", args[1]->ToString(), args[2]->ToString(), args[0]->ToString()
+        ));
+      }
       break;
     case OpcodesImplementation::Opcodes::op_Cmp_lt:
       *args[0] = VarValue(*args[1] < *args[2]);
+      if (ctx->stackData->tracing.enabled) {
+        ctx->stackData->tracing.msgs.push_back(fmt::format(
+          "cmp {} < {}: {}", args[1]->ToString(), args[2]->ToString(), args[0]->ToString()
+        ));
+      }
       break;
     case OpcodesImplementation::Opcodes::op_Cmp_le:
       *args[0] = VarValue(*args[1] <= *args[2]);
+      if (ctx->stackData->tracing.enabled) {
+        ctx->stackData->tracing.msgs.push_back(fmt::format(
+          "cmp {} <= {}: {}", args[1]->ToString(), args[2]->ToString(), args[0]->ToString()
+        ));
+      }
       break;
     case OpcodesImplementation::Opcodes::op_Cmp_gt:
       *args[0] = VarValue(*args[1] > *args[2]);
+      if (ctx->stackData->tracing.enabled) {
+        ctx->stackData->tracing.msgs.push_back(fmt::format(
+          "cmp {} > {}: {}", args[1]->ToString(), args[2]->ToString(), args[0]->ToString()
+        ));
+      }
       break;
     case OpcodesImplementation::Opcodes::op_Cmp_ge:
       *args[0] = VarValue(*args[1] >= *args[2]);
+      if (ctx->stackData->tracing.enabled) {
+        ctx->stackData->tracing.msgs.push_back(fmt::format(
+          "cmp {} >= {}: {}", args[1]->ToString(), args[2]->ToString(), args[0]->ToString()
+        ));
+      }
       break;
     case OpcodesImplementation::Opcodes::op_Jmp:
       ctx->jumpStep = (int)(*args[0]) - 1;
       ctx->needJump = true;
+      if (ctx->stackData->tracing.enabled) {
+        ctx->stackData->tracing.msgs.push_back(fmt::format(
+          "jmp"
+        ));
+      }
       break;
     case OpcodesImplementation::Opcodes::op_Jmpt:
       if ((bool)(*args[0])) {
         ctx->jumpStep = (int)(*args[1]) - 1;
         ctx->needJump = true;
       }
+      if (ctx->stackData->tracing.enabled) {
+        ctx->stackData->tracing.msgs.push_back(fmt::format(
+          "jmpt {}", args[0]->ToString()
+        ));
+      }
       break;
     case OpcodesImplementation::Opcodes::op_Jmpf:
       if ((bool)(!(*args[0]))) {
         ctx->jumpStep = (int)(*args[1]) - 1;
         ctx->needJump = true;
+      }
+      if (ctx->stackData->tracing.enabled) {
+        ctx->stackData->tracing.msgs.push_back(fmt::format(
+          "jmpf {}", args[0]->ToString()
+        ));
       }
       break;
     case OpcodesImplementation::Opcodes::op_CallParent: {
@@ -312,6 +396,12 @@ void ActivePexInstance::ExecuteOpCode(
             v = parentInstance;
             spdlog::trace("CallParent: redirecting method call {} -> {}",
                           toFind, parentName);
+            if (ctx->stackData->tracing.enabled) {
+              ctx->stackData->tracing.msgs.push_back(fmt::format(
+                "CallParent: redirecting method call {} -> {}",
+                          toFind, parentName
+              ));
+            }
           }
         }
       }
@@ -345,6 +435,15 @@ void ActivePexInstance::ExecuteOpCode(
       }
 
       std::string functionName = (const char*)(*args[0]);
+
+      if (ctx->stackData->tracing.enabled) {
+        std::string vars;
+        for (const auto& arg : argsForCall) {
+          vars += " " + arg.ToString();
+        }
+        ctx->stackData->tracing.msgs.push_back(fmt::format("callmethod {}.{}{}", object->ToString(), functionName, vars));
+      }
+
       static const std::string nameOnBeginState = "onBeginState";
       static const std::string nameOnEndState = "onEndState";
 
@@ -360,6 +459,9 @@ void ActivePexInstance::ExecuteOpCode(
                                argsForCall, ctx->stackData);
         spdlog::trace("callmethod object={} funcName={} result={}",
                       object->ToString(), functionName, res.ToString());
+        if (ctx->stackData->tracing.enabled) {
+          ctx->stackData->tracing.msgs.push_back(fmt::format("callmethod {}.{}: result {}", object->ToString(), functionName, res.ToString()));
+        }
         if (EnsureCallResultIsSynchronous(res, ctx)) {
           *args[2] = res;
         }
@@ -383,6 +485,7 @@ void ActivePexInstance::ExecuteOpCode(
         *args[1], *args[2], this->sourcePex.fn()->stringTable);
       break;
     case OpcodesImplementation::Opcodes::op_PropGet:
+    // XXX add trace
       // PropGet/Set seems to work only in very simple cases covered by unit
       // tests
       if (args[0] == nullptr) {
@@ -430,8 +533,11 @@ void ActivePexInstance::ExecuteOpCode(
 
         if (object && object->ListActivePexInstances().size() > 0) {
           auto inst = object->ListActivePexInstances().back();
+          agctx.AddMessage("next: inst, runProperty");
+          agctx.AddPtr(inst);
           Object::PropInfo* runProperty =
             GetProperty(*inst, propertyName, Object::PropInfo::kFlags_Read);
+          agctx.AddPtr(runProperty);
           if (runProperty != nullptr) {
             // TODO: use of argsForCall looks incorrect. why use argsForCall
             // here? shoud be {} (empty args)
@@ -533,9 +639,12 @@ void ActivePexInstance::ExecuteOpCode(
         }
 
         if (object && object->ListActivePexInstances().size() > 0) {
+          agctx.AddMessage("next: inst, runProperty");
           auto inst = object->ListActivePexInstances().back();
+          agctx.AddPtr(inst);
           Object::PropInfo* runProperty =
             GetProperty(*inst, propertyName, Object::PropInfo::kFlags_Write);
+          agctx.AddPtr(runProperty);
           if (runProperty != nullptr) {
             // TODO: use of argsForCall looks incorrect.
             // probably should only *args[2]
@@ -730,10 +839,90 @@ ActivePexInstance::TransformInstructions(
   return opCode;
 }
 
+namespace {
+void TracingInit(std::shared_ptr<StackData> stackData, Antigo::OnstackContext& agctxParent) {
+  size_t prevSize = stackData->tracing.msgs.size();
+  stackData->tracing.msgs = {fmt::format("reset {} msgs", prevSize)};
+
+  spdlog::info("TRACING PAPYRUS STACK {}-{}: TracingInit (detected enable)", stackData->stackIdHolder.GetStackId(), stackData->tracing.traceId);
+  agctxParent.AddLambdaWithOwned([stackData]{
+    return fmt::format("TRACING PAPYRUS STACK {}-{}", stackData->stackIdHolder.GetStackId(), stackData->tracing.traceId);
+  });
+  agctxParent.LogInnerExecution();
+}
+
+void TracingResolve(std::shared_ptr<StackData> stackData, const VarValue& val) {
+  ANTIGO_CONTEXT_INIT(agctx);
+
+  auto g = agctx.AddLambdaWithRef([&val]{return "return = " + val.ToString();});
+  g.Arm();
+  spdlog::info("TRACING PAPYRUS STACK {}-{}: {}", stackData->stackIdHolder.GetStackId(), stackData->tracing.traceId, agctx.Resolve().ToString());
+}
+
+bool PexNameIsTraced(const std::string& pexName) {
+  if (pexName.starts_with("SweetMineWood")) {
+    return true;
+  }
+  if (pexName.starts_with("SweetMineOre")) {
+    return true;
+  }
+  if (pexName.starts_with("SweetClothesRemoveList")) { // tutorial book
+    return true;
+  }
+  if (pexName.starts_with("SweetMineIngot")) { // smith
+    return true;
+  }
+  return false;
+}
+} // namespace
+
 VarValue ActivePexInstance::ExecuteAll(
   ExecutionContext& ctx, std::optional<VarValue> previousCallResult) noexcept
 {
-  auto pipex = sourcePex.fn();
+  ANTIGO_CONTEXT_INIT(agctx);
+  agctx.AddMessage("next: stack id, line");
+  agctx.AddUnsigned(ctx.stackData->stackIdHolder.GetStackId());
+  agctx.AddUnsigned(ctx.line);
+  auto g = agctx.AddLambdaWithRef([&ctx]() {
+    std::stringstream ss;
+    ss << "ExecutionContext:\n";
+    if (ctx.locals == nullptr) {
+      ss << "locals = nullptr\n";
+    } else {
+      ss << "locals = [" << ctx.locals->size() << "] [\n";
+      for (size_t i = 0; i < ctx.locals->size(); ++i) {
+        auto& local = (*ctx.locals)[i];
+        ss << "  " << local.first << " = " << local.second << "\n";
+      }
+      ss << "]\n";
+    }
+    return std::move(ss).str();
+  });
+  g.Arm();
+
+  auto pipex = sourcePex.fn(); // XXX ???
+
+  if (pipex != nullptr && PexNameIsTraced(pipex->source)) {
+    ctx.stackData->EnableTracing(agctx);
+  }
+
+  bool tracingStartedHere = false;
+  if (ctx.stackData->tracing.enabled && !agctx.IsLoggingInnerExecution()) {
+    TracingInit(ctx.stackData, agctx);
+    tracingStartedHere = true;
+  }
+
+  auto g2 = agctx.AddLambdaWithRef([&pipex]() {
+    std::stringstream ss;
+    ss << "pipex->?source = ";
+    if (pipex) {
+      ss << pipex->source;
+    } else {
+      ss << "(nullptr)";
+    }
+    return std::move(ss).str();
+  });
+  g2.Arm();
 
   auto opCode = TransformInstructions(ctx.instructions, ctx.locals);
 
@@ -762,17 +951,54 @@ VarValue ActivePexInstance::ExecuteAll(
       ctx.line += ctx.jumpStep;
     }
   }
-  return ctx.returnValue;
+  auto result = ctx.returnValue;
+  if (tracingStartedHere) {
+    TracingResolve(ctx.stackData, result);
+  }
+  return result;
 }
 
 VarValue ActivePexInstance::StartFunction(FunctionInfo& function,
                                           std::vector<VarValue>& arguments,
                                           std::shared_ptr<StackData> stackData)
 {
+  ANTIGO_CONTEXT_INIT(agctx);
+
   if (!stackData) {
     spdlog::error("ActivePexInstance::StartFunction - An empty stackData "
                   "passed to StartFunction");
     return VarValue::None();
+  }
+
+  // XXX bad naming, outer scope
+  agctx.AddLambdaWithOwned([this, &function]() {
+    std::stringstream ss;
+    ss << "source pex = " << GetSourcePexName() << "\n";
+    ss << "return = " << function.returnType << "\n";
+    ss << "docstring = " << function.docstring << "\n";
+    ss << "userFlags = " << std::hex << function.userFlags << "\n";
+    ss << "flags = " << std::hex << static_cast<int>(function.flags) << "\n";
+    ss << "params: [\n";
+    for (const auto& param : function.params) {
+      ss << "  " << param.name << " " << param.type << "\n";
+    }
+    ss << "]\n";
+    ss << "locals:\n";
+    for (const auto& param : function.locals) {
+      ss << "  " << param.name << " " << param.type << "\n";
+    }
+    ss << "]\n";
+    return std::move(ss).str();
+  });
+
+  if (PexNameIsTraced(GetSourcePexName())) {
+    stackData->EnableTracing(agctx);
+  }
+
+  bool tracingStartedHere = false;
+  if (stackData->tracing.enabled && !agctx.IsLoggingInnerExecution()) {
+    TracingInit(stackData, agctx);
+    tracingStartedHere = true;
   }
 
   thread_local StackDepthHolder g_stackDepthHolder;
@@ -791,12 +1017,18 @@ VarValue ActivePexInstance::StartFunction(FunctionInfo& function,
     spdlog::error("ActivePexInstance::StartFunction - Stack overflow in "
                   "script {}, returning None",
                   sourcePex.fn()->source);
+    agctx.Resolve().Print();
     return VarValue::None();
   }
 
   auto locals = MakeLocals(function, arguments);
   ExecutionContext ctx{ stackData, function.code.instructions, locals };
-  return ExecuteAll(ctx);
+  auto result = ExecuteAll(ctx);
+  if (tracingStartedHere) {
+    TracingResolve(stackData, result);
+    // XXX or add to the vector?
+  }
+  return result;
 }
 
 VarValue& ActivePexInstance::GetIndentifierValue(
@@ -987,6 +1219,8 @@ VarValue ActivePexInstance::TryCastToBaseClass(
   const VirtualMachine& vm, const std::string& resultTypeName,
   VarValue* scriptToCastOwner, std::vector<std::string>& outClassesStack)
 {
+  ANTIGO_CONTEXT_INIT(ctx);
+
   auto object = static_cast<IGameObject*>(*scriptToCastOwner);
   if (!object) {
     return VarValue::None();
@@ -1085,23 +1319,29 @@ bool ActivePexInstance::HasChild(ActivePexInstance* script,
 VarValue& ActivePexInstance::GetVariableValueByName(std::vector<Local>* locals,
                                                     std::string name)
 {
+  ANTIGO_CONTEXT_INIT(agctx);
 
   if (name == "self") {
+    agctx.AddMessage("returning self");
     return activeInstanceOwner;
   }
 
   if (locals)
     for (auto& var : *locals) {
       if (var.first == name) {
+        agctx.AddMessage("returning from locals");
         return var.second;
       }
     }
 
   try {
-    if (variables)
+    if (variables) {
       if (auto var =
-            variables->GetVariableByName(name.data(), *sourcePex.fn()))
+            variables->GetVariableByName(name.data(), *sourcePex.fn())) {
+        agctx.AddMessage("returning from variables");
         return *var;
+      }
+    }
   } catch (std::exception& e) {
     spdlog::error("ActivePexInstance::GetVariableValueByName - "
                   "GetVariableByName errored with '{}'",
@@ -1118,6 +1358,7 @@ VarValue& ActivePexInstance::GetVariableValueByName(std::vector<Local>* locals,
 
   for (auto& _name : identifiersValueNameCache) {
     if ((const char*)(*_name) == name) {
+      agctx.AddMessage("returning from identifiersValueNameCache path 1");
       return *_name;
     }
   }
@@ -1134,6 +1375,7 @@ VarValue& ActivePexInstance::GetVariableValueByName(std::vector<Local>* locals,
       auto stringTableValue = std::make_shared<VarValue>(name);
 
       identifiersValueNameCache.push_back(stringTableValue);
+      agctx.AddMessage("returning from identifiersValueNameCache path 2");
       return *identifiersValueNameCache.back();
     }
   }
@@ -1144,9 +1386,13 @@ VarValue& ActivePexInstance::GetVariableValueByName(std::vector<Local>* locals,
       auto stringTableParentValue = std::make_shared<VarValue>(name);
 
       identifiersValueNameCache.push_back(stringTableParentValue);
+      agctx.AddMessage("returning from identifiersValueNameCache path 3");
       return *identifiersValueNameCache.back();
     }
   }
+
+  agctx.AddMessage("assert false reached");
+  spdlog::critical("assert false reached: {}", agctx.Resolve().ToString());
 
   assert(false);
   static VarValue _;

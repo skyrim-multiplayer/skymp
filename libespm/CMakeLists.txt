@@ -10,4 +10,4 @@ apply_default_settings(TARGETS espm)
 
 add_library(libespm ALIAS espm)
 
-target_link_libraries(espm PUBLIC viet)
+target_link_libraries(espm PUBLIC antigo viet)

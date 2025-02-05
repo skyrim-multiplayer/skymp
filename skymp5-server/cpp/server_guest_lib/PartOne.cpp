@@ -1,3 +1,8 @@
+// XXX merge conflict
+#include "antigo/Context.h"
+#include <stdexcept>
+#include <string>
+
 #include "PartOne.h"
 #include "ActionListener.h"
 #include "Exceptions.h"
@@ -103,6 +108,8 @@ bool PartOne::IsConnected(Networking::UserId userId) const
 
 void PartOne::Tick()
 {
+  ANTIGO_CONTEXT_INIT(ctx);
+
   TickPacketHistoryPlaybacks();
   TickDeferredMessages();
   worldState.Tick();
@@ -279,6 +286,8 @@ void PartOne::AttachEspm(espm::Loader* espm)
 
 void PartOne::AttachSaveStorage(std::shared_ptr<ISaveStorage> saveStorage)
 {
+  ANTIGO_CONTEXT_INIT(ctx);
+
   worldState.AttachSaveStorage(saveStorage);
 
   auto start = std::chrono::steady_clock::now();
@@ -395,6 +404,24 @@ void PartOne::HandlePacket(void* partOneInstance, Networking::UserId userId,
                            Networking::PacketType packetType,
                            Networking::PacketData data, size_t length)
 {
+  ANTIGO_CONTEXT_INIT(ctx);
+  ctx.AddPtr(partOneInstance);
+  ctx.AddUnsigned(userId);
+  ctx.AddUnsigned(static_cast<int>(packetType));
+  auto g = ctx.AddLambdaWithRef([&data, &length]() {
+    std::string s = "byte[" + std::to_string(length) + "] ";
+    for (size_t i = 0; i < length; ++i) {
+      if (i == 100) {
+        s += "...";
+        break;
+      }
+      s += "0123456789abcdef"[(data[i] & 0xf0) >> 8];
+      s += "0123456789abcdef"[data[i] & 0x0f];
+    }
+    return s;
+  });
+  g.Arm();
+
   auto this_ = reinterpret_cast<PartOne*>(partOneInstance);
 
   switch (packetType) {
@@ -435,6 +462,8 @@ Networking::ISendTarget& PartOne::GetSendTarget() const
 float PartOne::CalculateDamage(const MpActor& aggressor, const MpActor& target,
                                const HitData& hitData) const
 {
+  ANTIGO_CONTEXT_INIT(ctx);
+
   if (!pImpl->damageFormula) {
     throw std::runtime_error("no damage formula");
   }
@@ -655,6 +684,8 @@ std::vector<PartOne::Message>& PartOne::Messages()
 
 void PartOne::Init()
 {
+  ANTIGO_CONTEXT_INIT(ctx);
+
   pImpl.reset(new Impl);
   pImpl->logger.reset(new spdlog::logger{ "empty logger" });
 
@@ -832,6 +863,12 @@ void PartOne::Init()
 void PartOne::AddUser(Networking::UserId userId, UserType type,
                       const std::string& guid)
 {
+  ANTIGO_CONTEXT_INIT(ctx);
+  ctx.AddMessage("next: userId, type, guid");
+  ctx.AddUnsigned(userId);
+  ctx.AddSigned(static_cast<int>(type));
+  ctx.AddLambdaWithOwned([&guid]{return guid;});
+
   serverState.Connect(userId, guid);
   for (auto& listener : worldState.listeners)
     listener->OnConnect(userId);
@@ -847,6 +884,8 @@ void PartOne::AddUser(Networking::UserId userId, UserType type,
 void PartOne::HandleMessagePacket(Networking::UserId userId,
                                   Networking::PacketData data, size_t length)
 {
+  ANTIGO_CONTEXT_INIT(ctx);
+
   if (!serverState.IsConnected(userId)) {
     throw std::runtime_error("User with id " + std::to_string(userId) +
                              " doesn't exist");

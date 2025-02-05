@@ -1,4 +1,6 @@
 #pragma once
+#include "antigo/Context.h"
+#include <cpptrace/basic.hpp>
 #include <functional>
 #include <memory>
 #include <stdexcept>
@@ -58,17 +60,25 @@ public:
 
   void Resolve(const T& value) const
   {
+    ANTIGO_CONTEXT_INIT(ctx);
     if (pImpl->pending) {
       pImpl->pending = false;
       pImpl->thenCb(value);
+    } else {
+      ctx.AddMessage("double resolve");
+      ctx.Orphan();
     }
   }
 
   void Reject(const char* error) const
   {
+    ANTIGO_CONTEXT_INIT(ctx);
     if (pImpl->pending) {
       pImpl->pending = false;
       pImpl->errorCb(error);
+    } else {
+      ctx.AddMessage("double reject");
+      ctx.Orphan();
     }
   }
 
@@ -116,11 +126,28 @@ public:
 private:
   struct Impl
   {
-    ThenCallback thenCb = [](const auto&) {};
+    ThenCallback thenCb = [this](const auto&) {
+      ANTIGO_CONTEXT_INIT(ctx);
+      thread_local size_t counter = 0;
+      if ((counter & 0xf) == 0) {
+        ++counter;
+        ctx.AddMessage("PROMISE NO THEN: promise resolved, default callback; next: constructor stack");
+        ctx.AddLambdaWithOwned([this]{return cpptraceRaw.resolve().to_string();});
+        ctx.Orphan();
+      }
+    };
     ErrorCallback errorCb = [](const auto&) {
+      ANTIGO_CONTEXT_INIT(ctx);
+      ctx.AddMessage("promise rejected, default callback");
       throw std::runtime_error("Unhandled promise rejection");
     };
     bool pending = true;
+
+    cpptrace::raw_trace cpptraceRaw;
+
+    Impl() {
+      cpptraceRaw = cpptrace::generate_raw_trace();
+    }
   };
 
   std::shared_ptr<Impl> pImpl = std::make_shared<Impl>();

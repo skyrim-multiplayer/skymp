@@ -1,6 +1,7 @@
 #include "ScampServerListener.h"
 #include "PapyrusUtils.h"
 #include "ScampServer.h"
+#include "antigo/Context.h"
 
 ScampServerListener::ScampServerListener(ScampServer& scampServer_)
   : server(scampServer_)
@@ -9,6 +10,9 @@ ScampServerListener::ScampServerListener(ScampServer& scampServer_)
 
 void ScampServerListener::OnConnect(Networking::UserId userId)
 {
+  ANTIGO_CONTEXT_INIT(ctx);
+  ctx.AddUnsigned(userId);
+
   auto& env = server.tickEnv;
   auto emit = server.emit.Value();
   emit.Call(

@@ -42,9 +42,24 @@ private:
   size_t depth = 0;
 };
 
+namespace Antigo {
+class OnstackContext;
+}
+
 struct StackData
 {
   StackIdHolder stackIdHolder;
+
+  struct {
+    bool enabled = false;
+    size_t traceId = 0; // set to random
+    // std::vector<Antigo::ResolvedContext> execCalls;
+    std::vector<std::string> msgs;
+  } tracing;
+
+  void EnableTracing(Antigo::OnstackContext& parentCtx);
+
+  ~StackData();
 };
 
 struct VmExceptionInfo
