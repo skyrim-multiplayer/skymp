@@ -13,6 +13,7 @@
 #include <functional>
 #include <memory>
 #include <optional>
+#include <spdlog/common.h>
 #include <spdlog/spdlog.h>
 #include <sstream>
 #include <stdexcept>
@@ -248,39 +249,72 @@ void ActivePexInstance::ExecuteOpCode(
 
   switch (op) {
     case OpcodesImplementation::Opcodes::op_Nop:
+      if (ctx->stackData->tracing.enabled) {
+        ctx->stackData->tracing.msgs.push_back("nop");
+      }
       break;
     case OpcodesImplementation::Opcodes::op_iAdd:
     case OpcodesImplementation::Opcodes::op_fAdd:
+      if (ctx->stackData->tracing.enabled) {
+        ctx->stackData->tracing.msgs.push_back("add");
+      }
       *args[0] = *args[1] + (*args[2]);
       break;
     case OpcodesImplementation::Opcodes::op_iSub:
     case OpcodesImplementation::Opcodes::op_fSub:
+      if (ctx->stackData->tracing.enabled) {
+        ctx->stackData->tracing.msgs.push_back("sub");
+      }
       *args[0] = *args[1] - (*args[2]);
       break;
     case OpcodesImplementation::Opcodes::op_iMul:
     case OpcodesImplementation::Opcodes::op_fMul:
+      if (ctx->stackData->tracing.enabled) {
+        ctx->stackData->tracing.msgs.push_back("mul");
+      }
       *args[0] = *args[1] * (*args[2]);
       break;
     case OpcodesImplementation::Opcodes::op_iDiv:
     case OpcodesImplementation::Opcodes::op_fDiv:
+      if (ctx->stackData->tracing.enabled) {
+        ctx->stackData->tracing.msgs.push_back("div");
+      }
       *args[0] = *args[1] / (*args[2]);
       break;
     case OpcodesImplementation::Opcodes::op_iMod:
+      if (ctx->stackData->tracing.enabled) {
+        ctx->stackData->tracing.msgs.push_back("mod");
+      }
       *args[0] = *args[1] % (*args[2]);
       break;
     case OpcodesImplementation::Opcodes::op_Not:
+      if (ctx->stackData->tracing.enabled) {
+        ctx->stackData->tracing.msgs.push_back("not");
+      }
       *args[0] = !(*args[1]);
       break;
     case OpcodesImplementation::Opcodes::op_iNeg:
+      if (ctx->stackData->tracing.enabled) {
+        ctx->stackData->tracing.msgs.push_back("neg");
+      }
       *args[0] = *args[1] * VarValue(-1);
       break;
     case OpcodesImplementation::Opcodes::op_fNeg:
+      if (ctx->stackData->tracing.enabled) {
+        ctx->stackData->tracing.msgs.push_back("neg");
+      }
       *args[0] = *args[1] * VarValue(-1.0f);
       break;
     case OpcodesImplementation::Opcodes::op_Assign:
+      if (ctx->stackData->tracing.enabled) {
+        ctx->stackData->tracing.msgs.push_back(fmt::format("assign {} = {}", args[0]->ToString(), args[1]->ToString()));
+      }
       *args[0] = *args[1];
       break;
     case OpcodesImplementation::Opcodes::op_Cast:
+      if (ctx->stackData->tracing.enabled) {
+        ctx->stackData->tracing.msgs.push_back(fmt::format("cast {} = {}", args[0]->ToString(), args[1]->ToString()));
+      }
       switch ((*args[0]).GetType()) {
         case VarValue::kType_Object: {
           auto to = args[0];
@@ -380,6 +414,12 @@ void ActivePexInstance::ExecuteOpCode(
       }
       break;
     case OpcodesImplementation::Opcodes::op_CallParent: {
+      if (ctx->stackData->tracing.enabled) {
+        ctx->stackData->tracing.msgs.push_back(fmt::format(
+          "callparent"
+        ));
+      }
+
       auto parentName =
         parentInstance ? parentInstance->GetSourcePexName() : "";
       auto gameObject = static_cast<IGameObject*>(activeInstanceOwner);
@@ -490,6 +530,10 @@ void ActivePexInstance::ExecuteOpCode(
       }
     } break;
     case OpcodesImplementation::Opcodes::op_Return:
+      if (ctx->stackData->tracing.enabled) {
+        ctx->stackData->tracing.msgs.push_back(fmt::format("return {}", args[0]->ToString()));
+      }
+
       ctx->returnValue = *args[0];
       ctx->needReturn = true;
       break;
@@ -498,7 +542,6 @@ void ActivePexInstance::ExecuteOpCode(
         *args[1], *args[2], this->sourcePex.fn()->stringTable);
       break;
     case OpcodesImplementation::Opcodes::op_PropGet:
-    // XXX add trace
       // PropGet/Set seems to work only in very simple cases covered by unit
       // tests
       if (args[0] == nullptr) {
@@ -511,6 +554,10 @@ void ActivePexInstance::ExecuteOpCode(
         spdlog::error(
           "Papyrus VM: null argument with index 2 for Opcodes::op_PropGet");
       } else {
+        if (ctx->stackData->tracing.enabled) {
+          ctx->stackData->tracing.msgs.push_back(fmt::format("propget {} {}", args[0]->ToString(), args[1]->ToString()));
+        }
+
         std::string propertyName;
 
         if (args[0]->GetType() == VarValue::kType_String ||
@@ -600,6 +647,9 @@ void ActivePexInstance::ExecuteOpCode(
           spdlog::trace("propget propName={} object={} result={}",
                         args[0]->ToString(), args[1]->ToString(),
                         args[2]->ToString());
+          if (ctx->stackData->tracing.enabled) {
+            ctx->stackData->tracing.msgs.push_back(fmt::format("propget {} {}: result {}", args[0]->ToString(), args[1]->ToString(), args[2]->ToString()));
+          }
         }
       }
       break;
@@ -614,6 +664,9 @@ void ActivePexInstance::ExecuteOpCode(
         spdlog::error(
           "Papyrus VM: null argument with index 2 for Opcodes::op_PropSet");
       } else {
+        if (ctx->stackData->tracing.enabled) {
+          ctx->stackData->tracing.msgs.push_back(fmt::format("propset {} {} {}", args[0]->ToString(), args[1]->ToString(), args[2]->ToString()));
+        }
 
         // TODO: use of argsForCall looks incorrect
         argsForCall.push_back(*args[2]);
@@ -709,6 +762,9 @@ void ActivePexInstance::ExecuteOpCode(
       }
       break;
     case OpcodesImplementation::Opcodes::op_Array_Create:
+      if (ctx->stackData->tracing.enabled) {
+        ctx->stackData->tracing.msgs.push_back("array create");
+      }
       (*args[0]).pArray = std::make_shared<std::vector<VarValue>>();
       if ((int32_t)(*args[1]) > 0) {
         (*args[0]).pArray->resize((int32_t)(*args[1]));
@@ -722,6 +778,9 @@ void ActivePexInstance::ExecuteOpCode(
       }
       break;
     case OpcodesImplementation::Opcodes::op_Array_Length:
+      if (ctx->stackData->tracing.enabled) {
+        ctx->stackData->tracing.msgs.push_back(fmt::format("array len &{} := len {}", args[0]->ToString(), args[1]->ToString()));
+      }
       if ((*args[1]).pArray != nullptr) {
         if ((*args[0]).GetType() == VarValue::kType_Integer) {
           *args[0] = VarValue((int32_t)(*args[1]).pArray->size());
@@ -738,6 +797,9 @@ void ActivePexInstance::ExecuteOpCode(
       } else {
         *args[0] = VarValue::None();
       }
+      if (ctx->stackData->tracing.enabled) {
+        ctx->stackData->tracing.msgs.push_back(fmt::format("array get {}[{}]: result {}", args[1]->ToString(), args[2]->ToString(), args[0]->ToString()));
+      }
       break;
     case OpcodesImplementation::Opcodes::op_Array_SetElement:
       if ((*args[0]).pArray != nullptr) {
@@ -748,10 +810,16 @@ void ActivePexInstance::ExecuteOpCode(
       }
       break;
     case OpcodesImplementation::Opcodes::op_Array_FindElement:
+      if (ctx->stackData->tracing.enabled) {
+        ctx->stackData->tracing.msgs.push_back("array findelement");
+      }
       OpcodesImplementation::ArrayFindElement(*args[0], *args[1], *args[2],
                                               *args[3]);
       break;
     case OpcodesImplementation::Opcodes::op_Array_RfindElement:
+      if (ctx->stackData->tracing.enabled) {
+        ctx->stackData->tracing.msgs.push_back("array rfindelement");
+      }
       OpcodesImplementation::ArrayRFindElement(*args[0], *args[1], *args[2],
                                                *args[3]);
       break;
@@ -855,7 +923,14 @@ ActivePexInstance::TransformInstructions(
 namespace {
 void TracingInit(std::shared_ptr<StackData> stackData, Antigo::OnstackContext& agctxParent) {
   size_t prevSize = stackData->tracing.msgs.size();
-  stackData->tracing.msgs = {fmt::format("reset {} msgs", prevSize)};
+  // size_t start = 0;
+  // if (prevSize > 5) {
+  //   start = prevSize - 5;
+  // }
+  if (prevSize > 5) {
+    stackData->tracing.msgs.clear();
+  }
+  stackData->tracing.msgs.push_back(fmt::format("{} msgs before", prevSize));
 
   spdlog::info("TRACING PAPYRUS STACK {}-{}: TracingInit (detected enable)", stackData->stackIdHolder.GetStackId(), stackData->tracing.traceId);
   agctxParent.AddLambdaWithOwned([stackData]{

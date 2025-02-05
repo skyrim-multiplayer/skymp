@@ -236,14 +236,16 @@ void VirtualMachine::SendEvent(std::shared_ptr<IGameObject> self,
   });
 
   for (auto& scriptInstance : self->ListActivePexInstances()) {
+    ctx.AddLambdaWithOwned([pexName = scriptInstance->GetSourcePexName()]{return "pex = " + pexName;});
     auto name = scriptInstance->GetActiveStateName();
+    ctx.AddLambdaWithOwned([name]{return "state = " + name;});
 
     auto fn = scriptInstance->GetFunctionByName(
       eventName, scriptInstance->GetActiveStateName());
     if (fn.valid) {
+      ctx.AddMessage("valid");
       std::shared_ptr<StackData> stackData;
       stackData.reset(new StackData{ StackIdHolder{ *this } });
-      // stackData-> mark
       if (strcmp(eventName, "OnHit") == 0) {
         stackData->EnableTracing(ctx);
       }
@@ -252,6 +254,8 @@ void VirtualMachine::SendEvent(std::shared_ptr<IGameObject> self,
       }
       scriptInstance->StartFunction(
         fn, const_cast<std::vector<VarValue>&>(arguments), stackData);
+    } else {
+      ctx.AddMessage("invalid");
     }
   }
 }
