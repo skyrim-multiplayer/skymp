@@ -59,6 +59,7 @@ class VirtualMachine
 
 public:
   using OnEnter = std::function<void(const StackData&)>;
+  using ExceptionHandler = std::function<void(VmExceptionInfo)>;
   using MissingScriptHandler =
     std::function<std::optional<PexScript::Lazy>(std::string)>;
 
@@ -72,6 +73,8 @@ public:
   VirtualMachine(const std::vector<std::shared_ptr<PexScript>>& loadedScripts);
 
   void SetMissingScriptHandler(const MissingScriptHandler& handler);
+
+  void SetExceptionHandler(const ExceptionHandler& handler);
 
   void AddObject(std::shared_ptr<IGameObject> self,
                  const std::vector<ScriptInfo>& scripts);
@@ -109,6 +112,8 @@ public:
 
   bool IsNativeFunctionByNameExisted(const std::string& name) const;
 
+  ExceptionHandler GetExceptionHandler() const;
+
   std::set<CIString> ListClasses() const;
   CIString GetBaseClass(const CIString& className) const;
   std::set<CIString> ListStaticFunctions(const CIString& className) const;
@@ -129,6 +134,7 @@ private:
   std::set<std::shared_ptr<IGameObject>> gameObjectsHolder;
 
   MissingScriptHandler missingScriptHandler;
+  ExceptionHandler handler;
 
   std::shared_ptr<MakeID> stackIdMaker;
 };
