@@ -1031,6 +1031,9 @@ VarValue ActivePexInstance::ExecuteAll(
 
     if (ctx.needReturn) {
       ctx.needReturn = false;
+      if (tracingStartedHere) {
+        TracingResolve(ctx.stackData, ctx.returnValue);
+      }
       return ctx.returnValue;
     }
 
