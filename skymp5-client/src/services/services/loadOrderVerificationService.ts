@@ -1,5 +1,4 @@
 import { Game, Utility, HttpClient, printConsole, createText } from "skyrimPlatform";
-import { getServerIp, getServerUiPort } from "./skympClient";
 import { getScreenResolution } from "../../view/formView";
 import { ClientListener, CombinedController, Sp } from "./clientListener";
 import { Mod, ServerManifest } from "../messages_http/serverManifest";
@@ -107,8 +106,6 @@ export class LoadOrderVerificationService extends ClientListener {
   }
 
   private getServerMods(retriesLeft: number): Promise<Mod[]> {
-    const targetIp = getServerIp();
-    const uiPort = getServerUiPort();
     // TODO: unhardcode master address
     // TODO: unhardcode serverId (sweetpie)
     let addr = "https://gateway.skymp.net";
