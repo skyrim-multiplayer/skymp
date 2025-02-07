@@ -9,10 +9,6 @@ const requiredVcpkgDlls = [
   "fmt.dll",
   "ChakraCore.dll"
 ];
-const requiredVcpkgDllsRoot = [
-  "fmt.dll",
-  "spdlog.dll"
-];
 
 function writeFileSyncRecursive(filename, content, charset) {
   filename
@@ -149,12 +145,6 @@ const watchCallback = (_eventType, fileName) => {
           cp(
             binPath(dll),
             path.join(distDir, "Data/Platform/Distribution/RuntimeDependencies")
-          );
-        });
-        requiredVcpkgDllsRoot.forEach((dll) => {
-          cp(
-            binPath(dll),
-            distDir
           );
         });
         cp(
