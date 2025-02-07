@@ -41,7 +41,7 @@ export const main = (settings: Settings): void => {
 
   const devServerPort = 1234;
 
-  const uiPort = settings.port === 7777 ? 3000 : settings.port + 1;
+  const uiPort = settings.port;
 
   Axios({
     method: "get",
