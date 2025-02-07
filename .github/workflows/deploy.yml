@@ -123,6 +123,7 @@ jobs:
                 run: |
                     cd /src \
                     && ./build.sh --configure \
+                       -DWITH_ANTIGO=1 \
                        -DBUILD_UNIT_TESTS=OFF \
                        -DBUILD_GAMEMODE=ON \
                        -DOFFLINE_MODE=OFF \
@@ -145,7 +146,7 @@ jobs:
                     -u skymp
                 run: |
                     cd /src \
-                    && ./build.sh --build
+                    && ./build.sh --build --target=skymp5-server
 
           - name: Deploy
             env:

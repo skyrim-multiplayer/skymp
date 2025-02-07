@@ -15,6 +15,8 @@ public:
 
   VarValue Trace(VarValue self, const std::vector<VarValue>& arguments);
 
+  VarValue SpDumpStacks(VarValue self, const std::vector<VarValue>& arguments);
+
   void Register(VirtualMachine& vm,
                 std::shared_ptr<IPapyrusCompatibilityPolicy> policy) override;
 
