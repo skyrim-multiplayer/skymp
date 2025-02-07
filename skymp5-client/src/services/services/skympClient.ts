@@ -13,20 +13,16 @@ import { ConnectionMessage } from '../events/connectionMessage';
 import { CreateActorMessage } from '../messages/createActorMessage';
 import { AuthAttemptEvent } from '../events/authAttemptEvent';
 import { logTrace } from '../../logging';
+import { resolve4 } from 'dns';
+import { promisify } from 'util';
+
+const resolve4Promise = promisify(resolve4);
 
 printConsole('Hello Multiplayer!');
 printConsole('settings:', settings['skymp5-client']);
 
-const targetIp = settings['skymp5-client']['server-ip'] as string;
+const targetHost = settings['skymp5-client']['server-host'] as string;
 const targetPort = settings['skymp5-client']['server-port'] as number;
-
-export const getServerIp = () => {
-  return targetIp;
-};
-
-export const getServerUiPort = () => {
-  return targetPort === 7777 ? 3000 : (targetPort as number) + 1;
-};
 
 export class SkympClient extends ClientListener {
   constructor(private sp: Sp, private controller: CombinedController) {
@@ -94,15 +90,23 @@ export class SkympClient extends ClientListener {
     this.sp.printConsole('SkympClient ctor');
   }
 
-  private establishConnectionConditional() {
+  private async resolveHost(host: string) {
+    if (!host.match(/[a-zA-Z]/g)) {
+      return host;
+    }
+    const addrs = await resolve4Promise(host);
+    return addrs[Math.floor(Math.random() * addrs.length)];
+  }
+
+  private async establishConnectionConditional() {
     const isConnected = this.controller.lookupListener(networking.NetworkingService).isConnected();
 
-    if (!isConnected || storage.targetIp !== targetIp || storage.targetPort !== targetPort) {
-      storage.targetIp = targetIp;
+    if (!isConnected) {
+      storage.targetIp = await this.resolveHost(targetHost);
       storage.targetPort = targetPort;
 
       logTrace(this, `Connecting to`, storage.targetIp + ':' + storage.targetPort);
-      this.controller.lookupListener(networking.NetworkingService).connect(targetIp, targetPort);
+      this.controller.lookupListener(networking.NetworkingService).connect(storage.targetIp as string, targetPort);
     } else {
       logTrace(this, 'Reconnect is not required');
     }
