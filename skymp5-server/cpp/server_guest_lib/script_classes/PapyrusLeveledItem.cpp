@@ -22,7 +22,7 @@ VarValue PapyrusLeveledItem::GetNthForm(VarValue self,
     auto data = leveledItem->GetData(
       compatibilityPolicy->GetWorldState()->GetEspmCache());
     int index = static_cast<int>(arguments[0]);
-    if (static_cast<int>(data.numEntries) > index) {
+    if (data.numEntries > static_cast<size_t>(index)) {
       auto formId = itemRecord.ToGlobalId(data.entries[index].formId);
       auto lookupRes = loader.GetBrowser().LookupById(formId);
       if (lookupRes.rec) {
