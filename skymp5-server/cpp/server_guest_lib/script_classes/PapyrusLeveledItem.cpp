@@ -24,9 +24,9 @@ VarValue PapyrusLeveledItem::GetNthForm(VarValue self,
     int index = static_cast<int>(arguments[0]);
     if (static_cast<int>(data.numEntries) > index) {
       auto formId = itemRecord.ToGlobalId(data.entries[index].formId);
-      auto record = loader->GetBrowser().LookupById(formId);
-      if (record) {
-        return VarValue(std::make_shared<EspmGameObject>(record));
+      auto lookupRes = loader.GetBrowser().LookupById(formId);
+      if (lookupRes.rec) {
+        return VarValue(std::make_shared<EspmGameObject>(lookupRes));
       }
     }
   }
