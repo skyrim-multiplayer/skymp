@@ -58,6 +58,7 @@ struct WorldState::Impl
 };
 
 WorldState::WorldState()
+  : worldStartTime(std::chrono::steady_clock::now())
 {
   logger.reset(new spdlog::logger("empty logger"));
 
@@ -70,6 +71,11 @@ void WorldState::Clear()
   forms.clear();
   grids.clear();
   formIdxManager.reset();
+}
+
+const std::chrono::steady_clock::time_point& WorldState::GetStartPoint() const
+{
+  return worldStartTime;
 }
 
 void WorldState::AttachEspm(espm::Loader* espm_,
