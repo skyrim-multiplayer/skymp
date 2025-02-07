@@ -333,8 +333,8 @@
       "client/Data/Scripts/TESModPlatform.pex",
       "client/Data/SKSE/Plugins/MpClientPlugin.dll",
       "client/Data/SKSE/Plugins/SkyrimPlatform.dll",
-      "client/fmt.fll",
-      "client/spdlog.fll"
+      "client/fmt.dll",
+      "client/spdlog.dll"
     ]
   }
 ]
