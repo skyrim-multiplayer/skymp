@@ -25,7 +25,7 @@ export const getServerIp = () => {
 };
 
 export const getServerUiPort = () => {
-  return targetPort === 7777 ? 3000 : (targetPort as number) + 1;
+  return targetPort;
 };
 
 export class SkympClient extends ClientListener {
