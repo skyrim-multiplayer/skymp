@@ -109,9 +109,12 @@ export class LoadOrderVerificationService extends ClientListener {
   private getServerMods(retriesLeft: number): Promise<Mod[]> {
     const targetIp = getServerIp();
     const uiPort = getServerUiPort();
-    printConsole(`http://${targetIp}:${uiPort}`);
-    return new HttpClient(`http://${targetIp}:${uiPort}`)
-      .get('/manifest.json')
+    // TODO: unhardcode master address
+    // TODO: unhardcode serverId (sweetpie)
+    let addr = "https://gateway.skymp.net";
+    printConsole(addr);
+    return new HttpClient(addr)
+      .get('/api/servers/sweetpie/manifest.json')
       .then((res) => {
         if (res.status != 200) {
           throw new Error(`Status code ${res.status}, error ${res.error}`);
