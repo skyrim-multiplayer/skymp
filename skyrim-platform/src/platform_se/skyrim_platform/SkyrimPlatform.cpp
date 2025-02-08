@@ -161,6 +161,7 @@ private:
         LoadPluginFile(path);
         continue;
       }
+      logger::error("Found unprocessed file: {}", path.string());
     }
   }
 
