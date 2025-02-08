@@ -19,13 +19,15 @@ VarValue PapyrusLeveledItem::GetNthForm(VarValue self,
   auto& loader = compatibilityPolicy->GetWorldState()->GetEspm();
   auto leveledItem = espm::Convert<espm::LVLI>(itemRecord.rec);
   if (leveledItem) {
-    auto vec =
-      LeveledListUtils::EvaluateList(loader.GetBrowser(), itemRecord, 1);
+    auto data = leveledItem->GetData(
+      compatibilityPolicy->GetWorldState()->GetEspmCache());
     int index = static_cast<int>(arguments[0]);
-    if (vec.size() > index) {
-      auto formId = itemRecord.ToGlobalId(vec[index].formId);
-      auto record = itemRecord.parent->LookupById(formId);
-      return VarValue(std::make_shared<EspmGameObject>(record));
+    if (data.numEntries > static_cast<size_t>(index)) {
+      auto formId = itemRecord.ToGlobalId(data.entries[index].formId);
+      auto lookupRes = loader.GetBrowser().LookupById(formId);
+      if (lookupRes.rec) {
+        return VarValue(std::make_shared<EspmGameObject>(lookupRes));
+      }
     }
   }
   return VarValue::None();
