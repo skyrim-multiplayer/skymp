@@ -17,7 +17,7 @@ import { logTrace } from '../../logging';
 printConsole('Hello Multiplayer!');
 printConsole('settings:', settings['skymp5-client']);
 
-const targetIp = settings['skymp5-client']['server-host'] as string;
+const targetIp = settings['skymp5-client']['server-ip'] as string;
 const targetPort = settings['skymp5-client']['server-port'] as number;
 
 export class SkympClient extends ClientListener {
