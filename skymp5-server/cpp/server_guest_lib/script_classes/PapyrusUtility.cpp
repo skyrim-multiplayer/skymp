@@ -212,12 +212,17 @@ VarValue PapyrusUtility::ArrayHelper(VarValue& self, const char* funcName,
                                      const std::vector<VarValue>& arguments,
                                      VarValue::Type type, bool resize)
 {
-  if ((!resize && arguments.size() < 1) || (resize && arguments.size() < 2))
+  //! 'fill' argument should have default value in papyrus function definition
+  if ((!resize && arguments.size() < 2) || (resize && arguments.size() < 3))
     throw std::runtime_error(std::string(funcName) + " requires at least " +
                              (resize ? "2 arguments" : "1 argument"));
-  VarValue result(static_cast<uint8_t>(type));
-  size_t arraySize =
+  int32_t probableSize =
     static_cast<int32_t>(resize ? arguments[1] : arguments[0]);
+  if (0 > probableSize)
+    throw std::runtime_error(std::string(funcName) +
+                             ": array size should be positive number");
+  VarValue result(static_cast<uint8_t>(type));
+  size_t arraySize = static_cast<uint32_t>(probableSize);
   VarValue fillValue = resize ? arguments[2] : arguments[1];
   result.pArray = std::make_shared<std::vector<VarValue>>();
   if (resize)
