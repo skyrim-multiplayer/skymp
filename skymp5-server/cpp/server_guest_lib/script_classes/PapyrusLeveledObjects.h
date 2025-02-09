@@ -1,10 +1,14 @@
 #pragma once
 #include "IPapyrusClass.h"
 
-class PapyrusLeveledItem final : public IPapyrusClass<PapyrusLeveledItem>
+class PapyrusLeveledObjects final : public IPapyrusClass<PapyrusLeveledObjects>
 {
 public:
-  const char* GetName() override { return "LeveledItem"; }
+  PapyrusLeveledObjects(const std::string& name)
+    : strName(name)
+  {
+  }
+  const char* GetName() override { return strName.c_str(); }
 
   VarValue GetNthForm(VarValue self, const std::vector<VarValue>& arguments);
 
@@ -12,4 +16,7 @@ public:
                 std::shared_ptr<IPapyrusCompatibilityPolicy> policy) override;
 
   std::shared_ptr<IPapyrusCompatibilityPolicy> compatibilityPolicy;
+
+private:
+  std::string strName;
 };
