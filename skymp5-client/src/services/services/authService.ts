@@ -53,6 +53,27 @@ export class AuthService extends ClientListener {
     this.controller.once("update", () => this.onceUpdate());
   }
 
+  // TODO: consider moving to a separate service called SettingsService
+  public getServerMasterKey() {
+    let masterKey = this.sp.settings["skymp5-client"]["server-master-key"];
+    if (!masterKey) {
+      masterKey = this.sp.settings["skymp5-client"]["master-key"];
+    }
+    if (!masterKey) {
+      masterKey = this.sp.settings["skymp5-client"]["server-ip"] + ":" + this.sp.settings["skymp5-client"]["server-port"];
+    }
+    return masterKey;
+  }
+
+  // TODO: consider moving to a separate service called SettingsService
+  public getMasterUrl() {
+    return this.normalizeUrl((this.sp.settings["skymp5-client"]["master"] as string) || "https://gateway.skymp.net");
+  }
+
+  public getMasterApiId() {
+    return authData?.masterApiId;
+  }
+  
   private onAuthNeeded(e: AuthNeededEvent) {
     logTrace(this, `Received authNeeded event`);
 
@@ -223,15 +244,8 @@ export class AuthService extends ClientListener {
 
   private createPlaySession(token: string, callback: (res: string, err: string) => void) {
     const client = new this.sp.HttpClient(this.getMasterUrl());
-    let masterKey = this.sp.settings["skymp5-client"]["server-master-key"];
-    if (!masterKey) {
-      masterKey = this.sp.settings["skymp5-client"]["master-key"];
-    }
-    if (!masterKey) {
-      masterKey = this.sp.settings["skymp5-client"]["server-ip"] + ":" + this.sp.settings["skymp5-client"]["server-port"];
-    }
 
-    const route = `/api/users/me/play/${masterKey}`;
+    const route = `/api/users/me/play/${this.getServerMasterKey()}`;
 
     logTrace(this, `Creating play session ${route}`);
 
@@ -356,10 +370,6 @@ export class AuthService extends ClientListener {
       logError(this, `Error writing`, this.pluginAuthDataName, `to disk:`, e, `, will not remember user`);
     }
   };
-
-  private getMasterUrl() {
-    return this.normalizeUrl((this.sp.settings["skymp5-client"]["master"] as string) || "https://gateway.skymp.net");
-  }
 
   private normalizeUrl(url: string) {
     if (url.endsWith('/')) {
