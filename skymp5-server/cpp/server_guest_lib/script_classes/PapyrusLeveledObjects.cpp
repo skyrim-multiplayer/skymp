@@ -4,8 +4,8 @@
 #include "WorldState.h"
 #include "script_objects/EspmGameObject.h"
 
-VarValue PapyrusLeveledObjects::GetNthForm(VarValue self,
-                                        const std::vector<VarValue>& arguments)
+VarValue PapyrusLeveledObjects::GetNthForm(
+  VarValue self, const std::vector<VarValue>& arguments)
 {
   if (arguments.size() < 1) {
     throw std::runtime_error(

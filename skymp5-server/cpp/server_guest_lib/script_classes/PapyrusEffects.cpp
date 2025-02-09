@@ -18,7 +18,6 @@ VarValue PapyrusEffects::Stop(VarValue self,
   return VarValue::None();
 }
 
-// This is exact copy of PapyrusVisualEffect::Helper
 void PapyrusEffects::Helper(VarValue& self, const char* funcName,
                             const std::vector<VarValue>& arguments)
 {

@@ -44,6 +44,7 @@ PapyrusClassesFactory::CreateAndRegister(
   result.emplace_back(std::make_unique<PapyrusPotion>());
   result.emplace_back(std::make_unique<PapyrusEffects>("VisualEffect"));
   result.emplace_back(std::make_unique<PapyrusQuest>());
+  result.emplace_back(std::make_unique<PapyrusLeveledObjects>("LeveledActor"));
   result.emplace_back(std::make_unique<PapyrusLeveledObjects>("LeveledItem"));
   result.emplace_back(std::make_unique<PapyrusLeveledObjects>("LeveledSpell"));
 
