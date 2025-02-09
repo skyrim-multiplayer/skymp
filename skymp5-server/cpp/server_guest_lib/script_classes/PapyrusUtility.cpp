@@ -189,8 +189,8 @@ VarValue PapyrusUtility::WaitHelper(VarValue& self, const char* funcName,
     throw std::runtime_error(std::string(funcName) +
                              " requires at least 1 argument");
   double seconds = static_cast<double>(arguments[0].CastToFloat());
-  if (0.0 >= seconds)
-    return VarValue::None();
+  if (0.0 > seconds)
+    seconds = 0.0;
   auto worldState = compatibilityPolicy->GetWorldState();
   if (!worldState) {
     throw std::runtime_error("worldState not found");
