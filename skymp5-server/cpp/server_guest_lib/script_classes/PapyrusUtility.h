@@ -7,8 +7,8 @@ public:
   const char* GetName() override { return "Utility"; }
 
   VarValue Wait(VarValue self, const std::vector<VarValue>& arguments);
-  VarValue RandomInt(VarValue slef, const std::vector<VarValue>& arguments);
-  VarValue RandomFloat(VarValue slef, const std::vector<VarValue>& arguments);
+  VarValue RandomInt(VarValue self, const std::vector<VarValue>& arguments);
+  VarValue RandomFloat(VarValue self, const std::vector<VarValue>& arguments);
   VarValue GetCurrentRealTime(VarValue self,
                               const std::vector<VarValue>& arguments);
   VarValue WaitMenuMode(VarValue self, const std::vector<VarValue>& arguments);
