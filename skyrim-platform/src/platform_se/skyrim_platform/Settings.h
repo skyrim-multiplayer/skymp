@@ -2,9 +2,9 @@
 #include <vector>
 #include <string>
 #include <filesystem>
-#include <memory>
 #include <sstream>
 #include <stdexcept>
+#include <memory>
 
 namespace Settings {
 
