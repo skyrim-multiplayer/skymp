@@ -29,11 +29,11 @@ const formatFiles = (files) => {
     return;
   }
 
+  const config = fs.readFileSync(".clang-format", "utf8");
+
   console.log("Formatting files:");
   filesToFormat.forEach((file) => {
     console.log(`  - ${file}`);
-
-    const config = fs.readFileSync(".clang-format", "utf8");
 
     const formatted = format(
       fs.readFileSync(file, "utf8"),
