@@ -1,7 +1,13 @@
-const { execSync } = require("child_process");
-const simpleGit = require("simple-git");
-const fs = require("fs");
-const path = require("path");
+// const { execSync } = require("child_process");
+// const simpleGit = require("simple-git");
+// const fs = require("fs");
+// const path = require("path");
+//const clangFormat = require("@wasm-fmt/clang-format");
+import init, { format } from "@wasm-fmt/clang-format";
+import fs from "fs";
+import path from "path";
+import simpleGit from "simple-git";
+import { execSync } from "child_process";
 
 const extensions = [".cpp", ".h", ".hpp", ".cxx", ".cc"];
 
@@ -31,11 +37,22 @@ const formatFiles = (files) => {
   console.log("Formatting files:");
   filesToFormat.forEach((file) => {
     console.log(`  - ${file}`);
-    execSync(`clang-format -i ${file}`, { stdio: "inherit" });
+
+    const config = fs.readFileSync(".clang-format", "utf8");
+
+    const formatted = format(
+      fs.readFileSync(file, "utf8"),
+      file,
+      config,
+    );
+
+    fs.writeFileSync(file, formatted);
   });
 };
 
 (async () => {
+  await init();
+
   const args = process.argv.slice(2);
 
   try {
