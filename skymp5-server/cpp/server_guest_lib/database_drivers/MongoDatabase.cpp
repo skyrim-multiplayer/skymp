@@ -300,11 +300,7 @@ std::string MongoDatabase::BytesToHexString(const uint8_t* bytes,
 std::string MongoDatabase::Sha256(const std::string& str)
 {
   uint8_t hash[SHA256_DIGEST_LENGTH];
-  SHA256_CTX sha256;
-  SHA256_Init(&sha256);
-  SHA256_Update(&sha256, str.c_str(), str.size());
-  SHA256_Final(hash, &sha256);
-
+  SHA256(reinterpret_cast<const uint8_t*>(str.data()), str.size(), hash);
   return BytesToHexString(hash, SHA256_DIGEST_LENGTH);
 }
 
