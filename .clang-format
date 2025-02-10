@@ -16,4 +16,3 @@ ColumnLimit: 79
 IndentPPDirectives: AfterHash
 SortUsingDeclarations: false
 SpaceAfterTemplateKeyword: true
-SortIncludes: true
