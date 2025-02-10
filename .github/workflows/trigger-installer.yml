@@ -1,0 +1,22 @@
+name: Trigger Installer
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Repository dispatch
+        uses: peter-evans/repository-dispatch@v2
+        with:
+          token: ${{ secrets.SKYMP5_INSTALLER_REPOSITORY_DISPATCH_PAT }}
+          repository: skyrim-multiplayer/skymp5-installer-v2
+          event-type: 'on-skymp-push'
+          client-payload: |
+            {
+              "ref": "refs/heads/main",
+              "inputs": {}
+            }
