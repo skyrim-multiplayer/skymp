@@ -1,8 +1,3 @@
-// const { execSync } = require("child_process");
-// const simpleGit = require("simple-git");
-// const fs = require("fs");
-// const path = require("path");
-//const clangFormat = require("@wasm-fmt/clang-format");
 import init, { format } from "@wasm-fmt/clang-format";
 import fs from "fs";
 import path from "path";
