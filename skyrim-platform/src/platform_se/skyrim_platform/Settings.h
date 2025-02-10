@@ -1,10 +1,10 @@
 #pragma once
+#include <string>
 #include <vector>
 #include <filesystem>
 #include <memory>
 #include <sstream>
 #include <stdexcept>
-#include <string>
 
 namespace Settings {
 
