@@ -1,11 +1,10 @@
-#include "PapyrusLeveledObjects.h"
+#include "PapyrusLeveledBase.h"
 
-#include "LeveledListUtils.h"
 #include "WorldState.h"
 #include "script_objects/EspmGameObject.h"
 
-VarValue PapyrusLeveledObjects::GetNthForm(
-  VarValue self, const std::vector<VarValue>& arguments)
+VarValue PapyrusLeveledBase::GetNthForm(VarValue self,
+                                        const std::vector<VarValue>& arguments)
 {
   if (arguments.size() < 1) {
     throw std::runtime_error(
@@ -33,10 +32,10 @@ VarValue PapyrusLeveledObjects::GetNthForm(
   return VarValue::None();
 }
 
-void PapyrusLeveledObjects::Register(
+void PapyrusLeveledBase::Register(
   VirtualMachine& vm, std::shared_ptr<IPapyrusCompatibilityPolicy> policy)
 {
   compatibilityPolicy = policy;
 
-  AddMethod(vm, "GetNthForm", &PapyrusLeveledObjects::GetNthForm);
+  AddMethod(vm, "GetNthForm", &PapyrusLeveledBase::GetNthForm);
 }

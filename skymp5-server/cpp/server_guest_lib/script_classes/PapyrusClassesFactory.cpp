@@ -3,13 +3,15 @@
 #include "PapyrusActor.h"
 #include "PapyrusCell.h"
 #include "PapyrusDebug.h"
-#include "PapyrusEffects.h"
+#include "PapyrusEffectShader.h"
 #include "PapyrusFaction.h"
 #include "PapyrusForm.h"
 #include "PapyrusFormList.h"
 #include "PapyrusGame.h"
 #include "PapyrusKeyword.h"
-#include "PapyrusLeveledObjects.h"
+#include "PapyrusLeveledActor.h"
+#include "PapyrusLeveledItem.h"
+#include "PapyrusLeveledSpell.h"
 #include "PapyrusMessage.h"
 #include "PapyrusNetImmerse.h"
 #include "PapyrusObjectReference.h"
@@ -18,6 +20,7 @@
 #include "PapyrusSkymp.h"
 #include "PapyrusSound.h"
 #include "PapyrusUtility.h"
+#include "PapyrusVisualEffect.h"
 
 std::vector<std::unique_ptr<IPapyrusClassBase>>
 PapyrusClassesFactory::CreateAndRegister(
@@ -35,22 +38,43 @@ PapyrusClassesFactory::CreateAndRegister(
   result.emplace_back(std::make_unique<PapyrusActor>());
   result.emplace_back(std::make_unique<PapyrusSkymp>());
   result.emplace_back(std::make_unique<PapyrusUtility>());
-  result.emplace_back(std::make_unique<PapyrusEffects>("EffectShader"));
+  result.emplace_back(std::make_unique<PapyrusEffectShader>());
   result.emplace_back(std::make_unique<PapyrusKeyword>());
   result.emplace_back(std::make_unique<PapyrusFaction>());
   result.emplace_back(std::make_unique<PapyrusCell>());
   result.emplace_back(std::make_unique<PapyrusSound>());
   result.emplace_back(std::make_unique<PapyrusNetImmerse>());
   result.emplace_back(std::make_unique<PapyrusPotion>());
-  result.emplace_back(std::make_unique<PapyrusEffects>("VisualEffect"));
+  result.emplace_back(std::make_unique<PapyrusVisualEffect>());
   result.emplace_back(std::make_unique<PapyrusQuest>());
-  result.emplace_back(std::make_unique<PapyrusLeveledObjects>("LeveledActor"));
-  result.emplace_back(std::make_unique<PapyrusLeveledObjects>("LeveledItem"));
-  result.emplace_back(std::make_unique<PapyrusLeveledObjects>("LeveledSpell"));
+  result.emplace_back(std::make_unique<PapyrusLeveledActor>());
+  result.emplace_back(std::make_unique<PapyrusLeveledItem>());
+  result.emplace_back(std::make_unique<PapyrusLeveledSpell>());
 
   for (auto& papyrusClass : result) {
     papyrusClass->Register(vm, compatibilityPolicy);
   }
 
   return result;
+}
+
+VarValue IPapyrusClassBase::MakeSPSnippetPromise(
+  const char* script, const char* name,
+  std::shared_ptr<IPapyrusCompatibilityPolicy> policy, VarValue self,
+  const std::vector<VarValue>& arguments, bool method, bool returns,
+  VarValue defaultResult)
+{
+  if (auto actor =
+        policy->GetDefaultActor(script, name, self.GetMetaStackId())) {
+    auto s = SpSnippetFunctionGen::SerializeArguments(arguments, actor);
+    auto promise =
+      SpSnippet(script, name, s.data(),
+                method ? SpSnippetFunctionGen::GetFormId(self) : 0)
+        .Execute(actor,
+                 (returns ? SpSnippetMode::kReturnResult
+                          : SpSnippetMode::kNoReturnResult));
+    if (returns)
+      return VarValue(promise);
+  }
+  return defaultResult;
 }

@@ -4,11 +4,9 @@
 #include "MpActor.h"
 #include "TimeUtils.h"
 #include "WorldState.h"
-#include "papyrus-vm/Structures.h"
 #include "script_objects/EspmGameObject.h"
 #include "script_objects/MpFormGameObject.h"
 
-#include <ratio>
 #include <string>
 #include <unordered_map>
 

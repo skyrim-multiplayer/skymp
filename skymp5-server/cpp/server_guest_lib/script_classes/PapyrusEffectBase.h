@@ -1,11 +1,10 @@
 #pragma once
 #include "IPapyrusClass.h"
-#include "SpSnippetFunctionGen.h"
 
-class PapyrusEffects final : public IPapyrusClass<PapyrusEffects>
+class PapyrusEffectBase : public IPapyrusClass<PapyrusEffectBase>
 {
 public:
-  PapyrusEffects(const std::string& name)
+  PapyrusEffectBase(const std::string& name)
     : strName(name)
   {
   }
@@ -14,11 +13,7 @@ public:
   VarValue Stop(VarValue self, const std::vector<VarValue>& arguments);
 
   void Register(VirtualMachine& vm,
-                std::shared_ptr<IPapyrusCompatibilityPolicy> policy) override
-  {
-    AddMethod(vm, "Play", &PapyrusEffects::Play);
-    AddMethod(vm, "Stop", &PapyrusEffects::Stop);
-  }
+                std::shared_ptr<IPapyrusCompatibilityPolicy> policy) override;
 
 private:
   void Helper(VarValue& self, const char* funcName,

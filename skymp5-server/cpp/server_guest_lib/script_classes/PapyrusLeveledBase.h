@@ -1,10 +1,10 @@
 #pragma once
 #include "IPapyrusClass.h"
 
-class PapyrusLeveledObjects final : public IPapyrusClass<PapyrusLeveledObjects>
+class PapyrusLeveledBase : public IPapyrusClass<PapyrusLeveledBase>
 {
 public:
-  PapyrusLeveledObjects(const std::string& name)
+  PapyrusLeveledBase(const std::string& name)
     : strName(name)
   {
   }
@@ -14,9 +14,6 @@ public:
 
   void Register(VirtualMachine& vm,
                 std::shared_ptr<IPapyrusCompatibilityPolicy> policy) override;
-
-  std::shared_ptr<IPapyrusCompatibilityPolicy> compatibilityPolicy;
-
 private:
   std::string strName;
 };

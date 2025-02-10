@@ -1,4 +1,5 @@
 #include "PapyrusCell.h"
+#include "script_objects/EspmGameObject.h"
 
 VarValue PapyrusCell::IsAttached(VarValue self,
                                  const std::vector<VarValue>& arguments)

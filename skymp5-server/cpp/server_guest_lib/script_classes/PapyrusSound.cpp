@@ -1,7 +1,6 @@
 #include "PapyrusSound.h"
 
 #include "MpObjectReference.h"
-#include "SpSnippetFunctionGen.h"
 #include "script_objects/EspmGameObject.h"
 #include "script_objects/MpFormGameObject.h"
 

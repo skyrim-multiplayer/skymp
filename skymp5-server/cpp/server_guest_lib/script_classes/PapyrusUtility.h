@@ -42,8 +42,6 @@ public:
   void Register(VirtualMachine& vm,
                 std::shared_ptr<IPapyrusCompatibilityPolicy> policy) override;
 
-  std::shared_ptr<IPapyrusCompatibilityPolicy> compatibilityPolicy;
-
 private:
   VarValue WaitHelper(VarValue& self, const char* funcName,
                       const std::vector<VarValue>& arguments);
