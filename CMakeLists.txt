@@ -4,10 +4,14 @@ if(POLICY 0115)
   cmake_policy(SET CMP0115 NEW)
 endif()
 
-if(WIN32)
-  set(VCPKG_TARGET_TRIPLET "x64-windows-sp")
-else()
-  set(VCPKG_TARGET_TRIPLET "x64-linux")
+if("${VCPKG_TARGET_TRIPLET}" STREQUAL "")
+  if(WIN32)
+    set(VCPKG_TARGET_TRIPLET "x64-windows-sp")
+  elseif(APPLE)
+    set(VCPKG_TARGET_TRIPLET "x64-osx")
+  else()
+    set(VCPKG_TARGET_TRIPLET "x64-linux")
+  endif()
 endif()
 
 set(VCPKG_OVERLAY_TRIPLETS "${CMAKE_CURRENT_LIST_DIR}/overlay_triplets")
@@ -51,19 +55,34 @@ if(NOT "${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}/build")
   message(FATAL_ERROR "${msg}")
 endif()
 
+# Bool options (Part 1)
 option(SKYRIM_SE "Legacy Skyrim SE (1.5) build" OFF)
+option(BUILD_NODEJS "Build NodeJS port if ON, use a pre-built otherwise" OFF)
 
-if (SKYRIM_SE)
+if(SKYRIM_SE)
   list(APPEND VCPKG_MANIFEST_FEATURES "skyrim-se")
 else()
   list(APPEND VCPKG_MANIFEST_FEATURES "skyrim-ae")
+endif()
+
+if(BUILD_NODEJS)
+  list(APPEND VCPKG_MANIFEST_FEATURES "build-nodejs")
+else()
+  list(APPEND VCPKG_MANIFEST_FEATURES "prebuilt-nodejs")
 endif()
 
 cmake_minimum_required(VERSION 3.19)
 project(skymp)
 enable_testing()
 
-# Bool options
+# Check the Visual Studio version
+if(MSVC)
+  if(NOT CMAKE_GENERATOR MATCHES "Visual Studio 17 2022")
+    message(FATAL_ERROR "This project requires \"Visual Studio 17 2022\". But the generator was \"${CMAKE_GENERATOR}\"")
+  endif()
+endif()
+
+# Bool options (Part 2)
 option(JS_ENGINE_TRACING_ENABLED "Useful for JsEngine debugging. See JsEngine.h" OFF)
 option(PREPARE_NEXUS_ARCHIVES "Prepare SP and other archives during build or not" OFF)
 option(BUILD_UNIT_TESTS "Build unit tests (excluded from build when off - workaround for #1182)" ON)
@@ -78,6 +97,11 @@ message(STATUS BUILD_UNIT_TESTS=${BUILD_UNIT_TESTS})
 message(STATUS INSTALL_CLIENT_DIST=${INSTALL_CLIENT_DIST})
 message(STATUS BUILD_GAMEMODE=${BUILD_GAMEMODE})
 message(STATUS OFFLINE_MODE=${OFFLINE_MODE})
+message(STATUS BUILD_NODEJS=${BUILD_NODEJS})
+
+if(PREPARE_NEXUS_ARCHIVES AND EMSCRIPTEN)
+  message(FATAL_ERROR "PREPARE_NEXUS_ARCHIVES is not supported on Emscripten")
+endif()
 
 # Note that SkyrimPlatform performance drops significantly with JS_ENGINE_TRACING_ENABLED set to true.
 
@@ -122,23 +146,52 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/modules)
 
-add_subdirectory(viet)
-add_subdirectory(savefile)
-add_subdirectory(papyrus-vm)
-add_subdirectory(libespm)
-add_subdirectory(skyrim-platform)
+# Initialize the CMAKEPROJ projects and their configurations
+list(APPEND CMAKEPROJ_PROJECTS_LIST)  # List of all projects
+set(CMAKEPROJ_PROJECTS_DEPENDENCIES)  # Dependencies for each project
+set(CMAKEPROJ_PROJECTS_PRIORITY)      # Priority for each project
 
+# Glob directories under source directory root
+file(GLOB ROOT_DIRS RELATIVE ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/*)
+foreach(dir ${ROOT_DIRS})
+  if(IS_DIRECTORY ${CMAKE_SOURCE_DIR}/${dir})
+    # Check if directory has a cmakeproj.cmake file
+    if(EXISTS ${CMAKE_SOURCE_DIR}/${dir}/cmakeproj.cmake)
+      include(${CMAKE_SOURCE_DIR}/${dir}/cmakeproj.cmake)
+      # Add project to the list if not already added
+      if(NOT "${CMAKEPROJ_PROJECTS_LIST}" MATCHES "${dir}")
+        list(APPEND CMAKEPROJ_PROJECTS_LIST ${dir})
+      endif()
+      # Set default priority if not set
+      if (NOT DEFINED CMAKEPROJ_PRIORITY_${dir})
+        set(CMAKEPROJ_PRIORITY_${dir} 0) # Default priority 0 if not defined
+      endif()
 
-add_subdirectory(client-deps)
-add_subdirectory(skymp5-client)
-add_subdirectory(skymp5-front)
-add_subdirectory(skymp5-functions-lib)
-add_subdirectory(skymp5-scripts)
-add_subdirectory(skymp5-server)
+      # Store dependencies and priorities for sorting
+      set(CMAKEPROJ_PROJECTS_DEPENDENCIES ${CMAKEPROJ_PROJECTS_DEPENDENCIES} "${CMAKEPROJ_DEPS_${dir}}")
+      set(CMAKEPROJ_PROJECTS_PRIORITY ${CMAKEPROJ_PROJECTS_PRIORITY} ${CMAKEPROJ_PRIORITY_${dir}})
+    endif()
+  endif()
+endforeach()
 
-if(BUILD_UNIT_TESTS)
-  add_subdirectory(unit)
-endif()
+foreach(proj ${CMAKEPROJ_PROJECTS_LIST})
+  list(APPEND priorities_list ${CMAKEPROJ_PRIORITY_${proj}})  
+endforeach()
+list(REMOVE_DUPLICATES priorities_list)
+list(SORT priorities_list COMPARE NATURAL)
+
+foreach(priority ${priorities_list})
+  foreach(proj ${CMAKEPROJ_PROJECTS_LIST})
+    if(${CMAKEPROJ_PRIORITY_${proj}} STREQUAL ${priority})
+      list(APPEND sorted_projects ${proj})
+    endif()
+  endforeach()
+endforeach()
+
+foreach(project ${sorted_projects})
+  message(STATUS "Adding project: ${project} with priority ${CMAKEPROJ_PRIORITY_${project}}")
+  add_subdirectory(${project})
+endforeach()
 
 if(PREPARE_NEXUS_ARCHIVES)
   add_custom_target(

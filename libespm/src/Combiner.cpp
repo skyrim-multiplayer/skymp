@@ -6,7 +6,6 @@
 #include "libespm/espm.h"
 #include <array>
 #include <fmt/format.h>
-#include <sparsepp/spp.h>
 #include <string>
 
 namespace espm {

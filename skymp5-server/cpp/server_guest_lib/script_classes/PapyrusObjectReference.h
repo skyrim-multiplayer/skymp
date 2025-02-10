@@ -7,7 +7,7 @@ class PapyrusObjectReference final
   : public IPapyrusClass<PapyrusObjectReference>
 {
 public:
-  const char* GetName() override { return "objectreference"; }
+  const char* GetName() override { return "ObjectReference"; }
 
   VarValue IsHarvested(VarValue self, const std::vector<VarValue>& arguments);
   VarValue IsDisabled(VarValue self, const std::vector<VarValue>& arguments);
@@ -19,6 +19,8 @@ public:
                          const std::vector<VarValue>& arguments);
   VarValue AddItem(VarValue self, const std::vector<VarValue>& arguments);
   VarValue RemoveItem(VarValue self, const std::vector<VarValue>& arguments);
+  VarValue RemoveAllItems(VarValue self,
+                          const std::vector<VarValue>& arguments);
   VarValue GetItemCount(VarValue self, const std::vector<VarValue>& arguments);
   VarValue GetAnimationVariableBool(VarValue self,
                                     const std::vector<VarValue>& arguments);

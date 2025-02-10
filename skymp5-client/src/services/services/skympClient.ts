@@ -1,15 +1,10 @@
 import {
-  on,
-  once,
   printConsole,
   settings,
   storage,
 } from 'skyrimPlatform';
 import * as networking from './networkingService';
-import { RemoteServer } from './remoteServer';
 import { setupHooks } from '../../sync/animation';
-import { WorldView } from '../../view/worldView';
-import { SinglePlayerService } from './singlePlayerService';
 import { AuthGameData, authGameDataStorageKey } from '../../features/authModel';
 import { ClientListener, CombinedController, Sp } from './clientListener';
 import { ConnectionFailed } from '../events/connectionFailed';
@@ -24,14 +19,6 @@ printConsole('settings:', settings['skymp5-client']);
 
 const targetIp = settings['skymp5-client']['server-ip'] as string;
 const targetPort = settings['skymp5-client']['server-port'] as number;
-
-export const getServerIp = () => {
-  return targetIp;
-};
-
-export const getServerUiPort = () => {
-  return targetPort === 7777 ? 3000 : (targetPort as number) + 1;
-};
 
 export class SkympClient extends ClientListener {
   constructor(private sp: Sp, private controller: CombinedController) {
@@ -93,45 +80,23 @@ export class SkympClient extends ClientListener {
   }
 
   private ctor() {
-    // TODO: refactor WorldView into service
-    this.resetView();
-
     // TODO: refactor into service
     setupHooks();
 
     this.sp.printConsole('SkympClient ctor');
   }
 
-  private establishConnectionConditional() {
+  private async establishConnectionConditional() {
     const isConnected = this.controller.lookupListener(networking.NetworkingService).isConnected();
 
-    if (!isConnected || storage.targetIp !== targetIp || storage.targetPort !== targetPort) {
+    if (!isConnected) {
       storage.targetIp = targetIp;
       storage.targetPort = targetPort;
 
       logTrace(this, `Connecting to`, storage.targetIp + ':' + storage.targetPort);
-      this.controller.lookupListener(networking.NetworkingService).connect(targetIp, targetPort);
+      this.controller.lookupListener(networking.NetworkingService).connect(storage.targetIp as string, targetPort);
     } else {
       logTrace(this, 'Reconnect is not required');
     }
-  }
-
-  private resetView() {
-    const prevView: WorldView = storage.view as WorldView;
-    const view = new WorldView();
-    once('update', () => {
-      if (prevView && prevView.destroy) {
-        prevView.destroy();
-        printConsole('Previous View destroyed');
-      }
-      storage.view = view;
-    });
-    on('update', () => {
-      const singlePlayerService = this.controller.lookupListener(SinglePlayerService);
-      if (!singlePlayerService.isSinglePlayer) {
-        const modelSource = this.controller.lookupListener(RemoteServer);
-        view.update(modelSource.getWorldModel());
-      }
-    });
   }
 }

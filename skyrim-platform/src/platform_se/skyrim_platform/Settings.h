@@ -1,4 +1,10 @@
 #pragma once
+#include <filesystem>
+#include <memory>
+#include <sstream>
+#include <stdexcept>
+#include <string>
+#include <vector>
 
 namespace Settings {
 
@@ -169,6 +175,42 @@ public:
                         const char* defaultValue)
   {
     return ini.GetValue(section, key, defaultValue);
+  }
+
+  std::unique_ptr<std::vector<std::filesystem::path>> GetPluginFolders()
+  {
+    return GetPathsSemicolonSeparated(
+      "Main", "PluginFolders",
+      "Data/Platform/Plugins;Data/Platform/PluginsDev");
+  }
+
+  std::unique_ptr<std::vector<std::filesystem::path>>
+  GetPathsSemicolonSeparated(const char* section, const char* key,
+                             const char* defaultValue)
+  {
+    std::string utf8pluginFoldersSemicolonSeparated =
+      GetString("Main", "PluginFolders",
+                "Data/Platform/Plugins;Data/Platform/PluginsDev");
+
+    std::istringstream ss(utf8pluginFoldersSemicolonSeparated);
+    std::string folder;
+
+    if (utf8pluginFoldersSemicolonSeparated.find_first_of("\"") !=
+        std::string::npos) {
+      throw std::runtime_error(
+        "Invalid path with quotes in PluginFolders setting. Please remove "
+        "quotes and restart the game.");
+    }
+
+    auto result = std::make_unique<std::vector<std::filesystem::path>>();
+
+    while (std::getline(ss, folder, ';')) {
+      if (!folder.empty()) {
+        result->emplace_back(folder);
+      }
+    }
+
+    return result;
   }
 
   bool SetString(const char* section, const char* key, const char* value,

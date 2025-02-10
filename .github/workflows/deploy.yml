@@ -22,6 +22,11 @@ on:
                     - 'sweetpie'
                     - 'indev'
                 default: 'indev'
+            delay:
+                description: 'Delay before action in hours (decimal works too, e.g. 0.5)'
+                required: false
+                type: number
+                default: 0
 
 env:
     BUILD_TYPE: RelWithDebInfo
@@ -49,14 +54,14 @@ jobs:
 
           - name: Checkout (full)
             if: ${{env.DEPLOY_ACTION == 'deploy'}}
-            uses: actions/checkout@v2
+            uses: actions/checkout@v4
             with:
                 submodules: recursive
                 fetch-depth: 0
 
           - name: Checkout (last commit)
             if: ${{env.DEPLOY_ACTION != 'deploy'}}
-            uses: actions/checkout@v2
+            uses: actions/checkout@v4
             with:
                 submodules: recursive
                 fetch-depth: 0
@@ -80,25 +85,6 @@ jobs:
                             "token": "${{secrets.SKYMP5_PATCHES_PAT}}"
                         }
                     ]
-
-          - name: Calculate diff being deployed
-            if: ${{env.DEPLOY_ACTION == 'deploy'}}
-            run: |
-                echo ""
-                echo "=== Full diff being deployed:"
-                git config --global user.name "Your Name"
-                git config --global user.email "your.email@example.com"
-                git add .
-                git commit -m "Temporary commit for diff"
-                git diff HEAD~1 | tee deploy_git_diff
-
-          - name: Upload diff artifact
-            if: ${{env.DEPLOY_ACTION == 'deploy'}}
-            uses: actions/upload-artifact@v3
-            with:
-                name: patches
-                path: |
-                    deploy_git_diff
 
           - name: Post a link in Discord
             if: ${{env.DEPLOY_ACTION == 'deploy'}}
@@ -144,7 +130,7 @@ jobs:
                        -DGITHUB_TOKEN=${{env.GAMEMODE_GITHUB_TOKEN}}
 
           - name: Upload compile_commands.json
-            uses: actions/upload-artifact@v3
+            uses: actions/upload-artifact@v4
             with:
                 name: compile_commands.json
                 path: ${{github.workspace}}/build/compile_commands.json

@@ -67,12 +67,12 @@ public:
 
 extern bool g_allowHideMainMenu;
 
-std::shared_ptr<SaveFile_::SaveFile> LoadGame::PrepareSaveFile()
+std::shared_ptr<SaveFile_::SaveFile> LoadGame::PrepareSaveFile(
+  const char* pathInAssets)
 {
   cmrc::file file;
   try {
-    file = cmrc::skyrim_plugin_resources::get_filesystem().open(
-      "assets/template.ess");
+    file = cmrc::skyrim_plugin_resources::get_filesystem().open(pathInAssets);
   } catch (std::exception& e) {
     auto dir =
       cmrc::skyrim_plugin_resources::get_filesystem().iterate_directory("");

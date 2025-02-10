@@ -19,16 +19,16 @@ export class DiscordBanSystem implements System {
             return console.log("discord ban system is disabled due to offline mode");
         }
         if (!discordAuth) {
-            return console.error("discordAuth is missing, skipping Discord ban system");
+            return console.warn("discordAuth is missing, skipping Discord ban system");
         }
         if (!discordAuth.botToken) {
-            return console.error("discordAuth.botToken is missing, skipping Discord ban system");
+            return console.warn("discordAuth.botToken is missing, skipping Discord ban system");
         }
         if (!discordAuth.guildId) {
-            return console.error("discordAuth.guildId is missing, skipping Discord ban system");
+            return console.warn("discordAuth.guildId is missing, skipping Discord ban system");
         }
         if (!discordAuth.banRoleId) {
-            return console.error("discordAuth.banRoleId is missing, skipping Discord ban system");
+            return console.warn("discordAuth.banRoleId is missing, skipping Discord ban system");
         }
 
         const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers] });

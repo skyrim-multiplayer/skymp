@@ -11,8 +11,10 @@
 #include "database_drivers/DatabaseFactory.h"
 #include "formulas/DamageMultFormula.h"
 #include "formulas/SweetPieDamageFormula.h"
+#include "formulas/SweetPieSpellDamageFormula.h"
 #include "formulas/TES5DamageFormula.h"
 #include "libespm/IterateFields.h"
+#include "papyrus-vm/Utils.h"
 #include "property_bindings/PropertyBindingFactory.h"
 #include "save_storages/SaveStorageFactory.h"
 #include "script_objects/EspmGameObject.h"
@@ -63,12 +65,15 @@ Napi::Object ScampServer::Init(Napi::Env env, Napi::Object exports)
 {
   Napi::Function func = DefineClass(
     env, "ScampServer",
-    { InstanceMethod("attachSaveStorage", &ScampServer::AttachSaveStorage),
+    { InstanceMethod("_setSelf", &ScampServer::_SetSelf),
+      InstanceMethod("attachSaveStorage", &ScampServer::AttachSaveStorage),
       InstanceMethod("tick", &ScampServer::Tick),
       InstanceMethod("on", &ScampServer::On),
       InstanceMethod("createActor", &ScampServer::CreateActor),
       InstanceMethod("setUserActor", &ScampServer::SetUserActor),
       InstanceMethod("getUserActor", &ScampServer::GetUserActor),
+      InstanceMethod("getUserGuid", &ScampServer::GetUserGuid),
+      InstanceMethod("isConnected", &ScampServer::IsConnected),
       InstanceMethod("getActorPos", &ScampServer::GetActorPos),
       InstanceMethod("getActorCellOrWorld", &ScampServer::GetActorCellOrWorld),
       InstanceMethod("getActorName", &ScampServer::GetActorName),
@@ -92,6 +97,9 @@ Napi::Object ScampServer::Init(Napi::Env env, Napi::Object exports)
       InstanceMethod("lookupEspmRecordById",
                      &ScampServer::LookupEspmRecordById),
       InstanceMethod("getEspmLoadOrder", &ScampServer::GetEspmLoadOrder),
+      InstanceMethod("getNeighborsByPosition",
+                     &ScampServer::GetNeighborsByPosition),
+      InstanceMethod("getAllForms", &ScampServer::GetAllForms),
       InstanceMethod("getDescFromId", &ScampServer::GetDescFromId),
       InstanceMethod("getIdFromDesc", &ScampServer::GetIdFromDesc),
       InstanceMethod("callPapyrusFunction", &ScampServer::CallPapyrusFunction),
@@ -105,7 +113,16 @@ Napi::Object ScampServer::Init(Napi::Env env, Napi::Object exports)
       InstanceMethod("requestPacketHistoryPlayback",
                      &ScampServer::RequestPacketHistoryPlayback),
       InstanceMethod("findFormsByPropertyValue",
-                     &ScampServer::FindFormsByPropertyValue) });
+                     &ScampServer::FindFormsByPropertyValue),
+
+      InstanceMethod("_sp3ListClasses", &ScampServer::SP3ListClasses),
+      InstanceMethod("_sp3GetBaseClass", &ScampServer::SP3GetBaseClass),
+      InstanceMethod("_sp3ListStaticFunctions",
+                     &ScampServer::SP3ListStaticFunctions),
+      InstanceMethod("_sp3ListMethods", &ScampServer::SP3ListMethods),
+      InstanceMethod("_sp3GetFunctionImplementation",
+                     &ScampServer::SP3GetFunctionImplementation),
+      InstanceMethod("_sp3DynamicCast", &ScampServer::SP3DynamicCast) });
   constructor = Napi::Persistent(func);
   constructor.SuppressDestruct();
   exports.Set("ScampServer", func);
@@ -297,8 +314,9 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
 
     auto espm = new espm::Loader(pluginPaths);
     std::string password = serverSettings.contains("password")
-      ? static_cast<std::string>(serverSettings["password"])
-      : std::string(kNetworkingPassword);
+      ? std::string(kNetworkingPasswordPrefix) +
+        static_cast<std::string>(serverSettings["password"])
+      : std::string(kNetworkingPasswordPrefix);
     auto realServer = Networking::CreateServer(
       static_cast<uint32_t>(port), static_cast<uint32_t>(maxConnections),
       password.data());
@@ -311,6 +329,9 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
     auto sweetPieDamageFormulaSettings =
       serverSettings["sweetPieDamageFormulaSettings"];
 
+    auto sweetPieSpellDamageFormulaSettings =
+      serverSettings["sweetPieSpellDamageFormulaSettings"];
+
     auto damageMultFormulaSettings =
       serverSettings["damageMultFormulaSettings"];
 
@@ -320,6 +341,8 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
                                                   damageMultFormulaSettings);
     formula = std::make_unique<SweetPieDamageFormula>(
       std::move(formula), sweetPieDamageFormulaSettings);
+    formula = std::make_unique<SweetPieSpellDamageFormula>(
+      std::move(formula), sweetPieSpellDamageFormulaSettings);
     partOne->SetDamageFormula(std::move(formula));
 
     partOne->worldState.AttachScriptStorage(
@@ -357,6 +380,18 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
   } catch (std::exception& e) {
     throw Napi::Error::New(info.Env(), (std::string)e.what());
   }
+}
+
+Napi::Value ScampServer::_SetSelf(const Napi::CallbackInfo& info)
+{
+  try {
+    auto self = info[0].As<Napi::Object>();
+    auto persistent = Napi::Persistent(self);
+    this->self = std::move(persistent);
+  } catch (std::exception& e) {
+    throw Napi::Error::New(info.Env(), (std::string)e.what());
+  }
+  return info.Env().Undefined();
 }
 
 Napi::Value ScampServer::AttachSaveStorage(const Napi::CallbackInfo& info)
@@ -438,6 +473,28 @@ Napi::Value ScampServer::GetUserActor(const Napi::CallbackInfo& info)
   auto userId = info[0].As<Napi::Number>().Uint32Value();
   try {
     return Napi::Number::New(info.Env(), partOne->GetUserActor(userId));
+  } catch (std::exception& e) {
+    throw Napi::Error::New(info.Env(), (std::string)e.what());
+  }
+  return info.Env().Undefined();
+}
+
+Napi::Value ScampServer::GetUserGuid(const Napi::CallbackInfo& info)
+{
+  auto userId = info[0].As<Napi::Number>().Uint32Value();
+  try {
+    return Napi::String::New(info.Env(), partOne->GetUserGuid(userId));
+  } catch (std::exception& e) {
+    throw Napi::Error::New(info.Env(), (std::string)e.what());
+  }
+  return info.Env().Undefined();
+}
+
+Napi::Value ScampServer::IsConnected(const Napi::CallbackInfo& info)
+{
+  auto userId = info[0].As<Napi::Number>().Uint32Value();
+  try {
+    return Napi::Boolean::New(info.Env(), partOne->IsConnected(userId));
   } catch (std::exception& e) {
     throw Napi::Error::New(info.Env(), (std::string)e.what());
   }
@@ -979,6 +1036,62 @@ Napi::Value ScampServer::LookupEspmRecordById(const Napi::CallbackInfo& info)
   }
 }
 
+Napi::Value ScampServer::GetNeighborsByPosition(const Napi::CallbackInfo& info)
+{
+  try {
+    auto cellOrWorldDesc = FormDesc::FromString(
+      NapiHelper::ExtractString(info[0], "cellOrWorldDesc"));
+    auto pos = NapiHelper::ExtractNiPoint3(info[1], "pos");
+
+    auto cellX = static_cast<int32_t>(pos[0] / 4096);
+    auto cellY = static_cast<int32_t>(pos[1] / 4096);
+    auto& refs = partOne->worldState.GetNeighborsByPosition(
+      cellOrWorldDesc.ToFormId(partOne->worldState.espmFiles), cellX, cellY);
+
+    Napi::Array arr = Napi::Array::New(info.Env(), refs.size());
+    for (auto ref : refs) {
+      arr.Set(arr.Length(), Napi::Number::New(info.Env(), ref->GetFormId()));
+    }
+    return arr;
+  } catch (std::exception& e) {
+    throw Napi::Error::New(info.Env(), std::string(e.what()));
+  }
+}
+
+Napi::Value ScampServer::GetAllForms(const Napi::CallbackInfo& info)
+{
+  try {
+    uint32_t modIndex = NapiHelper::ExtractUInt32(info[0], "modIndex");
+
+    std::shared_ptr<std::vector<uint32_t>> forms =
+      partOne->worldState.GetAllForms(modIndex);
+
+    if (!forms) {
+      static const auto kEmptyVector =
+        std::make_shared<std::vector<uint32_t>>();
+      forms = kEmptyVector;
+    }
+
+    size_t bufferSizeBytes = forms->size() * sizeof(uint32_t);
+    void* data = const_cast<uint32_t*>(forms->data());
+
+    Napi::ArrayBuffer arrayBuffer = Napi::ArrayBuffer::New(
+      info.Env(), data, bufferSizeBytes,
+      [forms](Napi::Env /*env*/, void* /*externalData*/) mutable {
+        forms.reset();
+      });
+
+    size_t elementCount = forms->size();
+    Napi::TypedArray typedArray =
+      Napi::Uint32Array::New(info.Env(), elementCount, arrayBuffer, 0);
+
+    return typedArray;
+
+  } catch (std::exception& e) {
+    throw Napi::Error::New(info.Env(), std::string(e.what()));
+  }
+}
+
 Napi::Value ScampServer::GetEspmLoadOrder(const Napi::CallbackInfo& info)
 {
   try {
@@ -1019,8 +1132,46 @@ Napi::Value ScampServer::GetIdFromDesc(const Napi::CallbackInfo& info)
   }
 }
 
+namespace {
+VarValue CallPapyrusFunctionImpl(const std::shared_ptr<PartOne>& partOne,
+                                 int callType, const std::string& className,
+                                 const std::string& functionName,
+                                 const VarValue& self,
+                                 std::vector<VarValue>& args)
+{
+  bool treatNumberAsInt = false; // TODO?
+
+  VarValue res;
+
+  auto& vm = partOne->worldState.GetPapyrusVm();
+  if (callType == 'meth') {
+    if (self.GetType() == VarValue::Type::kType_Object) {
+      res = vm.CallMethod(static_cast<IGameObject*>(self), functionName.data(),
+                          args);
+    } else {
+      throw std::runtime_error(
+        "Can't call Papyrus method on non-object self '" + self.ToString() +
+        "'");
+    }
+  } else if (callType == 'glob') {
+    res = vm.CallStatic(className, functionName, args);
+  } else {
+    throw std::runtime_error(
+      "Unknown call type, expected one of ['method', 'global']");
+  }
+
+  return res;
+}
+}
+
 Napi::Value ScampServer::CallPapyrusFunction(const Napi::CallbackInfo& info)
 {
+  // This function throws exceptions in case of bad input
+  // But it also catches exceptions from the Papyrus VM functions
+  // This is because
+  // 1) they're rare and unexpected, and we don't want to crash the sever
+  // 2) in Papyrus (not JS) we catch them all. so it's consistent
+  // 3) we plan replacing all exceptions with logs in Papyrus VM functions
   try {
     auto callType = NapiHelper::ExtractString(info[0], "callType");
     auto className = NapiHelper::ExtractString(info[1], "className");
@@ -1040,24 +1191,19 @@ Napi::Value ScampServer::CallPapyrusFunction(const Napi::CallbackInfo& info)
         arr.Get(i), treatNumberAsInt, partOne->worldState);
     }
 
-    VarValue res;
+    int callTypeInt = 0;
 
-    auto& vm = partOne->worldState.GetPapyrusVm();
     if (callType == "method") {
-      if (self.GetType() == VarValue::Type::kType_Object) {
-        res = vm.CallMethod(static_cast<IGameObject*>(self),
-                            functionName.data(), args);
-      } else {
-        throw std::runtime_error(
-          "Can't call Papyrus method on non-object self '" + self.ToString() +
-          "'");
-      }
+      callTypeInt = 'meth';
     } else if (callType == "global") {
-      res = vm.CallStatic(className, functionName, args);
+      callTypeInt = 'glob';
     } else {
       throw std::runtime_error("Unknown call type '" + callType +
                                "', expected one of ['method', 'global']");
     }
+
+    auto res = CallPapyrusFunctionImpl(partOne, callTypeInt, className,
+                                       functionName, self, args);
 
     return PapyrusUtils::GetJsValueFromPapyrusValue(
       info.Env(), res, partOne->worldState.espmFiles);
@@ -1201,6 +1347,193 @@ Napi::Value ScampServer::FindFormsByPropertyValue(
       ++i;
     }
     return result;
+  } catch (std::exception& e) {
+    throw Napi::Error::New(info.Env(), std::string(e.what()));
+  }
+}
+
+Napi::Value ScampServer::SP3ListClasses(const Napi::CallbackInfo& info)
+{
+  try {
+    auto classNames = partOne->worldState.GetPapyrusVm().ListClasses();
+
+    auto result = Napi::Array::New(info.Env(), 0);
+
+    for (auto& className : classNames) {
+      result.Set(result.Length(),
+                 Napi::String::New(info.Env(), className.data()));
+    }
+
+    return result;
+  } catch (std::exception& e) {
+    throw Napi::Error::New(info.Env(), std::string(e.what()));
+  }
+}
+
+Napi::Value ScampServer::SP3GetBaseClass(const Napi::CallbackInfo& info)
+{
+  try {
+    auto className = NapiHelper::ExtractString(info[0], "className");
+    CIString baseClass =
+      partOne->worldState.GetPapyrusVm().GetBaseClass(className.data());
+    return Napi::String::New(info.Env(), baseClass.data());
+  } catch (std::exception& e) {
+    throw Napi::Error::New(info.Env(), std::string(e.what()));
+  }
+}
+
+Napi::Value ScampServer::SP3ListStaticFunctions(const Napi::CallbackInfo& info)
+{
+  try {
+    auto className = NapiHelper::ExtractString(info[0], "className");
+    auto staticFunctions =
+      partOne->worldState.GetPapyrusVm().ListStaticFunctions(className.data());
+    auto result = Napi::Array::New(info.Env(), staticFunctions.size());
+    size_t i = 0;
+    for (auto& staticFunction : staticFunctions) {
+      result.Set(i, Napi::String::New(info.Env(), staticFunction.data()));
+      ++i;
+    }
+    return result;
+  } catch (std::exception& e) {
+    throw Napi::Error::New(info.Env(), std::string(e.what()));
+  }
+}
+
+Napi::Value ScampServer::SP3ListMethods(const Napi::CallbackInfo& info)
+{
+  try {
+    auto className = NapiHelper::ExtractString(info[0], "className");
+    auto methods =
+      partOne->worldState.GetPapyrusVm().ListMethods(className.data());
+    auto result = Napi::Array::New(info.Env(), methods.size());
+    size_t i = 0;
+    for (auto& method : methods) {
+      result.Set(i, Napi::String::New(info.Env(), method.data()));
+      ++i;
+    }
+    return result;
+  } catch (std::exception& e) {
+    throw Napi::Error::New(info.Env(), std::string(e.what()));
+  }
+}
+
+Napi::Value ScampServer::SP3GetFunctionImplementation(
+  const Napi::CallbackInfo& info)
+{
+  try {
+    auto className = NapiHelper::ExtractString(info[1], "className");
+    auto functionName = NapiHelper::ExtractString(info[2], "functionName");
+
+    NativeFunction functionImplementationStatic, functionImplementationMethod;
+
+    constexpr bool kIsStaticTrue = true;
+    functionImplementationStatic =
+      partOne->worldState.GetPapyrusVm().GetFunctionImplementation(
+        className.data(), functionName.data(), kIsStaticTrue);
+
+    constexpr bool kIsStaticFalse = false;
+    functionImplementationMethod =
+      partOne->worldState.GetPapyrusVm().GetFunctionImplementation(
+        className.data(), functionName.data(), kIsStaticFalse);
+
+    if (!functionImplementationStatic && !functionImplementationMethod) {
+      return info.Env().Undefined();
+    }
+
+    auto function = [className, functionName, functionImplementationStatic,
+                     functionImplementationMethod,
+                     this](const Napi::CallbackInfo& info) -> Napi::Value {
+      try {
+        Napi::Value jsThis = info.This();
+
+        // Hack to detect that this arg refers to class not to an object, so
+        // it's a static call
+        if (jsThis.IsObject()) {
+          if (jsThis.As<Napi::Object>().Get("desc").IsUndefined()) {
+            jsThis = info.Env().Undefined();
+          }
+        }
+
+        std::vector<VarValue> args;
+
+        for (size_t i = 0; i < info.Length(); ++i) {
+          auto arg = PapyrusUtils::GetPapyrusValueFromJsValue(
+            info[i], false, partOne->worldState);
+          args.push_back(arg);
+        }
+
+        VarValue self = jsThis.IsUndefined()
+          ? VarValue::None()
+          : PapyrusUtils::GetPapyrusValueFromJsValue(jsThis, false,
+                                                     partOne->worldState);
+
+        int callType = jsThis.IsUndefined() ? 'glob' : 'meth';
+
+        VarValue res = CallPapyrusFunctionImpl(partOne, callType, className,
+                                               functionName, self, args);
+
+        auto jsRes = PapyrusUtils::GetJsValueFromPapyrusValue(
+          info.Env(), res, partOne->worldState.espmFiles);
+
+        if (jsRes.IsObject()) {
+
+          PexScript::Lazy pexScriptLazy =
+            partOne->worldState.GetPapyrusVm().GetPexByName(className.data());
+
+          if (pexScriptLazy.fn) {
+            std::shared_ptr<PexScript> pexScript = pexScriptLazy.fn();
+
+            if (pexScript) {
+              auto& obj = pexScript->objectTable.at(0);
+              auto& states = obj.states;
+              auto& autoStateName = obj.autoStateName;
+              auto stateIt = std::find_if(states.begin(), states.end(),
+                                          [&](const auto& state) {
+                                            return state.name == autoStateName;
+                                          });
+              if (stateIt != states.end()) {
+                auto& state = *stateIt;
+                auto& functions = state.functions;
+                auto functionIt = std::find_if(
+                  functions.begin(), functions.end(),
+                  [&](const auto& function) {
+                    return Utils::stricmp(function.name.data(),
+                                          functionName.data()) == 0;
+                  });
+                if (functionIt != functions.end()) {
+                  auto& function = functionIt->function;
+                  jsRes.As<Napi::Object>().Set("_sp3ObjectType",
+                                               function.returnType);
+                }
+              }
+            }
+          }
+        }
+
+        return jsRes;
+      } catch (std::exception& e) {
+        throw Napi::Error::New(info.Env(), std::string(e.what()));
+      }
+    };
+
+    return Napi::Function::New(info.Env(), function);
+  } catch (std::exception& e) {
+    throw Napi::Error::New(info.Env(), std::string(e.what()));
+  }
+}
+
+Napi::Value ScampServer::SP3DynamicCast(const Napi::CallbackInfo& info)
+{
+  try {
+    auto object = PapyrusUtils::GetPapyrusValueFromJsValue(
+      info[0], false, partOne->worldState);
+    auto className = NapiHelper::ExtractString(info[1], "className");
+
+    bool result =
+      partOne->worldState.GetPapyrusVm().DynamicCast(object, className.data());
+
+    return Napi::Boolean::New(info.Env(), result);
   } catch (std::exception& e) {
     throw Napi::Error::New(info.Env(), std::string(e.what()));
   }

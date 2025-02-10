@@ -20,7 +20,7 @@ TEST_CASE("Formula takes weapon damage into account", "[TES5DamageFormula]")
   p.SetUserActor(0, 0xff000000);
   auto& ac = p.worldState.GetFormAt<MpActor>(0xff000000);
 
-  ac.SetEquipment(R"({"inv": {"entries": []}})");
+  ac.SetEquipment(R"({"numChanges": 0, "inv": {"entries": []}})");
 
   ActionListener::RawMessageData rawMsgData;
   rawMsgData.userId = 0;
@@ -57,6 +57,7 @@ TEST_CASE("Damage is reduced based on target's armor", "[TES5DamageFormula]")
   // Total rating for worn armor: 10 + 10 = 20
   ac.SetEquipment(R"(
     {
+      "numChanges": 0,
       "inv": {
         "entries": [
           {
@@ -95,7 +96,7 @@ TEST_CASE("Damage is reduced based on target's armor", "[TES5DamageFormula]")
   }
 
   // Total rating for worn armor: 10 * 70 = 700
-  ac.SetEquipment(R"({"inv": {"entries": [)" + s + R"(]}})");
+  ac.SetEquipment(R"({"numChanges": 0, "inv": {"entries": [)" + s + R"(]}})");
 
   // Armor rating is 700 * 0.12% = 84%
   // But fMaxArmorRating = 80%
@@ -115,7 +116,7 @@ TEST_CASE("Formula is race-dependent for unarmed attack",
   p.SetUserActor(0, 0xff000000);
   // Nord bu default
   auto& ac = p.worldState.GetFormAt<MpActor>(0xff000000);
-  ac.SetEquipment(R"({"inv": {"entries": []}})");
+  ac.SetEquipment(R"({"numChanges": 0, "inv": {"entries": []}})");
 
   ActionListener::RawMessageData rawMsgData;
   rawMsgData.userId = 0;

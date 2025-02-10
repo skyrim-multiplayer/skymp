@@ -27,6 +27,14 @@
   },
   {
     "configurationTags": [
+      "MacOS"
+    ],
+    "expectedFiles": [
+      "server/dist_back/fsevents-X6WP4TKM.node"
+    ]
+  },
+  {
+    "configurationTags": [
       "Win32"
     ],
     "expectedFiles": [
@@ -219,6 +227,15 @@
       "client/Data/SKSE/Plugins/versionlib-1-6-640-0.bin",
       "client/Data/SKSE/Plugins/versionlib-1-6-1170-0-1.bin",
       "client/Data/SKSE/Plugins/versionlib-1-6-1170-0.bin"
+    ]
+  },
+  {
+    "configurationTags": [
+      "CI",
+      "Win32"
+    ],
+    "expectedFiles": [
+      "client/Data/Platform/Distribution/build-metadata-public.json"
     ]
   },
   {

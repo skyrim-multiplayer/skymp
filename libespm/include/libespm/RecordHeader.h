@@ -2,6 +2,7 @@
 #include "CompressedFieldsCache.h"
 #include "DataTypes.h"
 #include "Type.h"
+#include <cstring> // memcmp
 
 #pragma pack(push, 1)
 

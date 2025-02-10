@@ -48,6 +48,15 @@ VarValue PapyrusUtility::RandomFloat(VarValue self,
   return VarValue(distribute(g_generator));
 }
 
+VarValue PapyrusUtility::GetCurrentRealTime(
+  VarValue self, const std::vector<VarValue>& arguments)
+{
+  return VarValue(std::chrono::duration<double>(
+                    std::chrono::steady_clock::now() -
+                    compatibilityPolicy->GetWorldState()->GetStartPoint())
+                    .count());
+}
+
 void PapyrusUtility::Register(
   VirtualMachine& vm, std::shared_ptr<IPapyrusCompatibilityPolicy> policy)
 
@@ -57,4 +66,5 @@ void PapyrusUtility::Register(
   AddStatic(vm, "Wait", &PapyrusUtility::Wait);
   AddStatic(vm, "RandomInt", &PapyrusUtility::RandomInt);
   AddStatic(vm, "RandomFloat", &PapyrusUtility::RandomFloat);
+  AddStatic(vm, "GetCurrentRealTime", &PapyrusUtility::GetCurrentRealTime);
 }

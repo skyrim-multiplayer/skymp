@@ -1,16 +1,18 @@
 vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO Ryan-rsm-McKenzie/CommonLibSSE
-    REF 575f84a5c3badd70807fe917939214030967bced
-    SHA512 286876ac975e50b13a8ba433a79c7061887d3a2c907f397211cabed9464d24d0c72eb6da8ce2bcb49b4ab53b4f184892d9b562be9368ca3b98fdef42a1825796
+    REF 20276e9c1f6104c07747d0eddf6d290485ff6e5f
+    SHA512 be201095e0065cbac884f465a73c5331e1e1a97e5442b4768b73c57cb9b5bac3f47a4b81730963ec2239ba45c619cbcb1ef685b534c85fd67db9801edbc2c834
     HEAD_REF master
     PATCHES
-      patches/objectrefr-make_moverefr_public.patch
-      patches/variable-make_members_public.patch
-      patches/stackframe-uncomment_top_args.patch
-      patches/extradatalist-make_members_public.patch
-      patches/update-fmt.patch
-      patches/expand-alias-se.patch
+      patches/01-objectrefr-make_moverefr_public.patch
+      patches/02-variable-make_members_public.patch
+    
+      patches/03-stackframe-uncomment_top_args.patch
+    
+      patches/04-extradatalist-make_members_public.patch
+      # patches/05-expand-alias.patch
+      patches/06-fix-destructor.patch
 )
 
 vcpkg_configure_cmake(SOURCE_PATH ${SOURCE_PATH})

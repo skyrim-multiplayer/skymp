@@ -58,12 +58,107 @@ void VirtualMachine::RegisterFunction(const std::string& className,
   switch (type) {
     case FunctionType::GlobalFunction:
 
-      nativeStaticFunctions[ToLower(className)][ToLower(functionName)] = fn;
+      nativeStaticFunctions[className.data()][functionName.data()] = fn;
       break;
     case FunctionType::Method:
-      nativeFunctions[ToLower(className)][ToLower(functionName)] = fn;
+      nativeFunctions[className.data()][functionName.data()] = fn;
       break;
   }
+}
+
+std::set<CIString> VirtualMachine::ListClasses() const
+{
+  std::set<CIString> result;
+
+  for (auto& f : nativeStaticFunctions) {
+    result.insert(f.first.data());
+  }
+
+  for (auto& f : nativeFunctions) {
+    result.insert(f.first.data());
+  }
+
+  return result;
+}
+
+CIString VirtualMachine::GetBaseClass(const CIString& className) const
+{
+  auto it = allLoadedScripts.find(className);
+  if (it != allLoadedScripts.end()) {
+    return it->second.fn()->objectTable[0].parentClassName.data();
+  }
+  return CIString();
+}
+
+std::set<CIString> VirtualMachine::ListStaticFunctions(
+  const CIString& className) const
+{
+  std::set<CIString> result;
+
+  auto it = nativeStaticFunctions.find(className.data());
+  if (it != nativeStaticFunctions.end()) {
+    for (auto& f : it->second) {
+      result.insert(f.first.data());
+    }
+  }
+
+  return result;
+}
+
+std::set<CIString> VirtualMachine::ListMethods(const CIString& className) const
+{
+  std::set<CIString> result;
+
+  auto it = nativeFunctions.find(className.data());
+  if (it != nativeFunctions.end()) {
+    for (auto& f : it->second) {
+      result.insert(f.first.data());
+    }
+  }
+
+  return result;
+}
+
+NativeFunction VirtualMachine::GetFunctionImplementation(
+  const CIString& className, const CIString& functionName, bool isStatic) const
+{
+
+  if (!isStatic) {
+    auto it = nativeFunctions.find(className.data());
+    if (it != nativeFunctions.end()) {
+      auto it2 = it->second.find(functionName.data());
+      if (it2 != it->second.end()) {
+        return it2->second;
+      }
+    }
+  }
+
+  if (isStatic) {
+    auto it3 = nativeStaticFunctions.find(className.data());
+    if (it3 != nativeStaticFunctions.end()) {
+      auto it4 = it3->second.find(functionName.data());
+      if (it4 != it3->second.end()) {
+        return it4->second;
+      }
+    }
+  }
+
+  return nullptr;
+}
+
+bool VirtualMachine::DynamicCast(const VarValue& object,
+                                 const CIString& className) const
+{
+  VarValue scriptToCastOwner = object;
+  VarValue result;
+  result.objectType = className.data();
+  ActivePexInstance::CastObjectToObject(*this, &result, &scriptToCastOwner);
+
+  if (static_cast<IGameObject*>(result) != nullptr) {
+    return true;
+  }
+
+  return false;
 }
 
 void VirtualMachine::AddObject(std::shared_ptr<IGameObject> self,
@@ -98,11 +193,13 @@ void VirtualMachine::SendEvent(std::shared_ptr<IGameObject> self,
     auto fn = scriptInstance->GetFunctionByName(
       eventName, scriptInstance->GetActiveStateName());
     if (fn.valid) {
-      auto stackIdHolder = std::make_shared<StackIdHolder>(*this);
-      if (enter)
-        enter(*stackIdHolder);
+      std::shared_ptr<StackData> stackData;
+      stackData.reset(new StackData{ StackIdHolder{ *this } });
+      if (enter) {
+        enter(*stackData);
+      }
       scriptInstance->StartFunction(
-        fn, const_cast<std::vector<VarValue>&>(arguments), stackIdHolder);
+        fn, const_cast<std::vector<VarValue>&>(arguments), stackData);
     }
   }
 }
@@ -115,8 +212,10 @@ void VirtualMachine::SendEvent(ActivePexInstance* instance,
   auto fn =
     instance->GetFunctionByName(eventName, instance->GetActiveStateName());
   if (fn.valid) {
+    std::shared_ptr<StackData> stackData;
+    stackData.reset(new StackData{ StackIdHolder{ *this } });
     instance->StartFunction(fn, const_cast<std::vector<VarValue>&>(arguments),
-                            std::make_shared<StackIdHolder>(*this));
+                            stackData);
   }
 }
 
@@ -140,15 +239,31 @@ int32_t StackIdHolder::GetStackId() const
   return stackId;
 }
 
+StackDepthHolder::StackDepthHolder() = default;
+
+size_t StackDepthHolder::GetStackDepth() const
+{
+  return depth;
+}
+
+void StackDepthHolder::IncreaseStackDepth()
+{
+  ++depth;
+}
+
+void StackDepthHolder::DecreaseStackDepth()
+{
+  --depth;
+}
+
 VarValue VirtualMachine::CallMethod(
   IGameObject* selfObj, const char* methodName,
-  std::vector<VarValue>& arguments,
-  std::shared_ptr<StackIdHolder> stackIdHolder,
+  std::vector<VarValue>& arguments, std::shared_ptr<StackData> stackData,
   const std::vector<std::shared_ptr<ActivePexInstance>>*
     activePexInstancesOverride)
 {
-  if (!stackIdHolder) {
-    stackIdHolder.reset(new StackIdHolder(*this));
+  if (!stackData) {
+    stackData.reset(new StackData{ StackIdHolder{ *this } });
   }
 
   if (!selfObj) {
@@ -175,8 +290,7 @@ VarValue VirtualMachine::CallMethod(
     }
 
     if (functionInfo.valid) {
-      return activeScript->StartFunction(functionInfo, arguments,
-                                         stackIdHolder);
+      return activeScript->StartFunction(functionInfo, arguments, stackData);
     }
   }
 
@@ -185,9 +299,9 @@ VarValue VirtualMachine::CallMethod(
   const char* nativeClass = selfObj->GetParentNativeScript();
   const char* base = nativeClass;
   while (1) {
-    if (auto f = nativeFunctions[ToLower(base)][ToLower(methodName)]) {
+    if (auto f = nativeFunctions[base][methodName]) {
       auto self = VarValue(selfObj);
-      self.SetMetaStackIdHolder(stackIdHolder);
+      self.SetMetaStackIdHolder(stackData->stackIdHolder);
       return f(self, arguments);
     }
     auto it = allLoadedScripts.find(base);
@@ -204,26 +318,25 @@ VarValue VirtualMachine::CallMethod(
   throw std::runtime_error(e);
 }
 
-VarValue VirtualMachine::CallStatic(
-  const std::string& className, const std::string& functionName,
-  std::vector<VarValue>& arguments,
-  std::shared_ptr<StackIdHolder> stackIdHolder)
+VarValue VirtualMachine::CallStatic(const std::string& className,
+                                    const std::string& functionName,
+                                    std::vector<VarValue>& arguments,
+                                    std::shared_ptr<StackData> stackData)
 {
-  if (!stackIdHolder) {
-    stackIdHolder.reset(new StackIdHolder(*this));
+  if (!stackData) {
+    stackData.reset(new StackData{ StackIdHolder{ *this } });
   }
 
   VarValue result = VarValue::None();
   FunctionInfo function;
 
-  auto functionNameLower = ToLower(functionName);
-  auto f = nativeStaticFunctions[ToLower(className)][functionNameLower]
-    ? nativeStaticFunctions[ToLower(className)][functionNameLower]
-    : nativeStaticFunctions[""][functionNameLower];
+  auto f = nativeStaticFunctions[className.data()][functionName.data()]
+    ? nativeStaticFunctions[className.data()][functionName.data()]
+    : nativeStaticFunctions[""][functionName.data()];
 
   if (f) {
     auto self = VarValue::None();
-    self.SetMetaStackIdHolder(stackIdHolder);
+    self.SetMetaStackIdHolder(stackData->stackIdHolder);
     return f(self, arguments);
   }
 
@@ -254,7 +367,7 @@ VarValue VirtualMachine::CallStatic(
                                std::string(functionName) + "'");
     }
 
-    result = instance->StartFunction(function, arguments, stackIdHolder);
+    result = instance->StartFunction(function, arguments, stackData);
   }
   if (!function.valid) {
     throw std::runtime_error("Function is not valid - '" +
@@ -264,7 +377,7 @@ VarValue VirtualMachine::CallStatic(
   return result;
 }
 
-PexScript::Lazy VirtualMachine::GetPexByName(const std::string& name)
+PexScript::Lazy VirtualMachine::GetPexByName(const std::string& name) const
 {
   auto it = allLoadedScripts.find(CIString{ name.begin(), name.end() });
   if (it != allLoadedScripts.end())
@@ -299,13 +412,13 @@ bool VirtualMachine::IsNativeFunctionByNameExisted(
   const std::string& name) const
 {
   for (auto& staticFunction : nativeStaticFunctions) {
-    if (staticFunction.first == name)
+    if (staticFunction.first == name.data())
       return true;
   }
 
   for (auto& metod : nativeFunctions) {
     for (auto& func : metod.second)
-      if (func.first == name)
+      if (func.first == name.data())
         return true;
   }
 

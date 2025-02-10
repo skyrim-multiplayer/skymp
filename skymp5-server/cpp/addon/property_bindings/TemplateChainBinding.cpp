@@ -7,14 +7,13 @@ Napi::Value TemplateChainBinding::Get(Napi::Env env, ScampServer& scampServer,
 
   auto& refr = partOne->worldState.GetFormAt<MpObjectReference>(formId);
 
-  if (auto actor = dynamic_cast<MpActor*>(&refr)) {
-    auto chForm = actor->GetChangeForm();
+  if (auto actor = refr.AsActor()) {
+    auto& templateChain = actor->GetTemplateChain();
 
-    auto array = Napi::Array::New(env, chForm.templateChain.size());
+    auto array = Napi::Array::New(env, templateChain.size());
 
-    for (int i = 0; i < static_cast<int>(chForm.templateChain.size()); ++i) {
-      auto formId =
-        chForm.templateChain[i].ToFormId(partOne->worldState.espmFiles);
+    for (int i = 0; i < static_cast<int>(templateChain.size()); ++i) {
+      auto formId = templateChain[i].ToFormId(partOne->worldState.espmFiles);
       array.Set(i, Napi::Number::New(env, formId));
     }
 

@@ -8,6 +8,7 @@ import { LastInvService } from "./lastInvService";
 import { PutItemMessage } from "../messages/putItemMessage";
 import { TakeItemMessage } from "../messages/takeItemMessage";
 import { SweetTaffySweetCantDropService } from "./sweetTaffySweetCantDropService";
+import { localIdToRemoteId } from "../../view/worldViewMisc";
 
 export class ContainersService extends ClientListener {
     constructor(private sp: Sp, private controller: CombinedController) {
@@ -54,8 +55,8 @@ export class ContainersService extends ClientListener {
                                 ...entryCopy,
                                 t: entry.count > 0 ? MsgType.PutItem : MsgType.TakeItem,
                                 target: e.oldContainer.getFormID() === 0x14
-                                    ? e.newContainer.getFormID()
-                                    : e.oldContainer.getFormID()
+                                    ? localIdToRemoteId(e.newContainer.getFormID())
+                                    : localIdToRemoteId(e.oldContainer.getFormID())
                             };
                             msg.count = Math.abs(msg.count);
                             if (this.sp.Game.getFormEx(entry.baseId)?.getName() === msg.name) {

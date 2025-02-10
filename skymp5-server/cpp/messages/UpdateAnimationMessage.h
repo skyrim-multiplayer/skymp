@@ -1,21 +1,37 @@
 #pragma once
-
 #include "MessageBase.h"
 #include "MsgType.h"
 #include <cstdint>
 #include <string>
+#include <type_traits>
 
 struct UpdateAnimationMessage : public MessageBase<UpdateAnimationMessage>
 {
-  const static char kMsgType = static_cast<char>(MsgType::UpdateAnimation);
-  const static char kHeaderByte = static_cast<char>(MsgType::UpdateAnimation);
+  static constexpr auto kMsgType =
+    std::integral_constant<char,
+                           static_cast<char>(MsgType::UpdateAnimation)>{};
 
-  void WriteBinary(SLNet::BitStream& stream) const override;
-  void ReadBinary(SLNet::BitStream& stream) override;
-  void WriteJson(nlohmann::json& json) const override;
-  void ReadJson(const nlohmann::json& json) override;
+  struct Data
+  {
+    template <class Archive>
+    void Serialize(Archive& archive)
+    {
+      archive.Serialize("numChanges", numChanges)
+        .Serialize("animEventName", animEventName);
+    }
+
+    uint32_t numChanges = 0;
+    std::string animEventName;
+  };
+
+  template <class Archive>
+  void Serialize(Archive& archive)
+  {
+    archive.Serialize("t", kMsgType)
+      .Serialize("idx", idx)
+      .Serialize("data", data);
+  }
 
   uint32_t idx = 0;
-  uint32_t numChanges = 0;
-  std::string animEventName;
+  Data data;
 };

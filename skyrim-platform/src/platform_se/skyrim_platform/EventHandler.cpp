@@ -1064,7 +1064,7 @@ EventResult EventHandler::ProcessEvent(
       auto obj = JsValue::Object();
 
       auto weapon = RE::TESForm::LookupByID<RE::TESObjectWEAP>(weaponId);
-      auto ammo = RE::TESForm::LookupByID<RE::TESObjectWEAP>(ammoId);
+      auto ammo = RE::TESForm::LookupByID<RE::TESAmmo>(ammoId);
 
       if (!weapon && weaponId != 0) {
         return;
@@ -1301,21 +1301,74 @@ EventResult EventHandler::ProcessEvent(
     return EventResult::kContinue;
   }
 
-  auto casterId = event->object.get() ? event->object.get()->GetFormID() : 0;
-  auto spellId = event->spell;
+  const auto casterId = event->object ? event->object->GetFormID() : 0;
+  const auto spellId = event->spell;
 
   SkyrimPlatform::GetSingleton()->AddUpdateTask([casterId, spellId] {
     auto obj = JsValue::Object();
 
-    auto caster = RE::TESForm::LookupByID<RE::Actor>(casterId);
-    auto spell = RE::TESForm::LookupByID<RE::SpellItem>(spellId);
+    auto* caster = RE::TESForm::LookupByID<RE::Actor>(casterId);
+    auto* spell = RE::TESForm::LookupByID<RE::SpellItem>(spellId);
 
     if (!caster && casterId != 0) {
       return;
     }
 
-    AddObjProperty(&obj, "caster", caster, "ObjectReference");
+    if (!(spell && spell->IsMagicItem())) {
+      spdlog::error(
+        "ProcessEvent TESSpellCastEvent error! spell not a MagicItem");
+      return;
+    }
+
+    if (!caster) {
+      spdlog::error(
+        "ProcessEvent TESSpellCastEvent error! caster == nullptr)");
+      return;
+    }
+
+    const bool isLeftHand =
+      caster->selectedSpells[RE::Actor::SlotTypes::kLeftHand] == spell;
+    const bool isRightHand =
+      caster->selectedSpells[RE::Actor::SlotTypes::kRightHand] == spell;
+    const bool isVoise =
+      caster->selectedSpells[RE::Actor::SlotTypes::kUnknown] == spell;
+    const bool isInstant =
+      caster->selectedSpells[RE::Actor::SlotTypes::kPowerOrShout] == spell;
+
+    const bool isCastValid = isLeftHand || isRightHand || isVoise || isInstant;
+
+    if (!isCastValid) {
+      return;
+    }
+
+    auto castingSource = RE::MagicSystem::CastingSource::kLeftHand;
+
+    if (isRightHand) {
+      castingSource = RE::MagicSystem::CastingSource::kRightHand;
+    } else if (isVoise) {
+      castingSource = RE::MagicSystem::CastingSource::kOther;
+    } else if (isInstant) {
+      castingSource = RE::MagicSystem::CastingSource::kInstant;
+    }
+
+    const auto magicCaster = caster->GetMagicCaster(castingSource);
+
+    const bool isDualCasting =
+      magicCaster ? magicCaster->GetIsDualCasting() : false;
+
+    const auto magicTarget = caster->GetMagicTarget();
+
+    RE::TESObjectREFR* handleTarget =
+      magicTarget != nullptr ? magicTarget->GetTargetStatsObject() : nullptr;
+
+    AddObjProperty(&obj, "caster", caster, "Actor");
+    AddObjProperty(&obj, "target", handleTarget, "ObjectReference");
     AddObjProperty(&obj, "spell", spell, "Spell");
+    AddObjProperty(&obj, "isDualCasting", isDualCasting);
+    AddObjProperty(&obj, "castingSource",
+                   static_cast<uint32_t>(castingSource));
+    AddObjProperty(&obj, "aimAngle", caster->GetAimAngle());
+    AddObjProperty(&obj, "aimHeading", caster->GetAimHeading());
 
     SendEvent("spellCast", obj);
   });
@@ -1330,8 +1383,7 @@ EventResult EventHandler::ProcessEvent(
     return EventResult::kContinue;
   }
 
-  auto subjectId =
-    event->subject.get() ? event->subject.get()->GetFormID() : 0;
+  auto subjectId = event->subject ? event->subject->GetFormID() : 0;
 
   SkyrimPlatform::GetSingleton()->AddUpdateTask([subjectId] {
     auto obj = JsValue::Object();

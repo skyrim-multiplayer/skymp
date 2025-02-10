@@ -1,0 +1,2 @@
+list(APPEND CMAKEPROJ_PROJECTS skymp5-front)
+set(CMAKEPROJ_PRIORITY_skymp5-front 2)

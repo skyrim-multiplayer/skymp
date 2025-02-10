@@ -5,6 +5,7 @@
 #include <array>
 #include <fmt/format.h>
 #include <memory>
+#include <unordered_set>
 
 namespace espm {
 
@@ -23,6 +24,12 @@ int32_t CombineBrowser::Impl::GetFileIndex(const char* fileName) const noexcept
 
 LookupResult CombineBrowser::LookupById(uint32_t combFormId) const noexcept
 {
+  // Otherwise, we'll find a TES4 record in Skyrim.esm which is not relevant
+  // for CombineBrowser use cases
+  if (combFormId == 0) {
+    return LookupResult();
+  }
+
   const RecordHeader* resRec = nullptr;
   uint8_t resFileIdx = 0;
   for (size_t i = 0; i < pImpl->numSources; ++i) {
@@ -91,7 +98,7 @@ std::vector<LookupResult> CombineBrowser::GetDistinctRecordsByType(
     return {};
   }
 
-  spp::sparse_hash_set<formId> formSet;
+  std::unordered_set<formId> formSet;
   std::vector<LookupResult> result;
   for (size_t i = pImpl->numSources - 1; i != static_cast<size_t>(-1); --i) {
     const auto& records = pImpl->sources[i].br->GetRecordsByType(type);

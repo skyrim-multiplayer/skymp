@@ -34,3 +34,7 @@ This repo hosts all sources to ease local setup and contributing. See [CONTRIBUT
 See [TERMS.md](TERMS.md). TL;DR disclose the source code of your forks.
 
 Third-party code licenses can be found in [THIRD_PARTY_LICENSES](THIRD_PARTY_LICENSES).
+
+### Development with GitHub Codespaces
+
+[![Create Codespace](https://img.shields.io/badge/Codespace-Launch-blue?logo=github)](https://github.com/codespaces/new?repo=skyrim-multiplayer/skymp&ref=main)

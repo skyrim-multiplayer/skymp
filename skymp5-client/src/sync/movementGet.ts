@@ -97,6 +97,9 @@ const getRunMode = (ac: Actor): RunMode => {
   const speed = ac.getAnimationVariableFloat("SpeedSampled");
   if (!speed) return "Standing";
 
+  const furniture = ac.getFurnitureReference();
+  if (furniture !== null) return "Standing"; // TODO: Sitting?
+
   let isRunning = true;
   if (ac.getFormID() == 0x14) {
     if (!TESModPlatform.isPlayerRunningEnabled() || speed < 150)

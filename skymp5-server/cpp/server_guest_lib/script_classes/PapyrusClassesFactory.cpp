@@ -4,16 +4,21 @@
 #include "PapyrusCell.h"
 #include "PapyrusDebug.h"
 #include "PapyrusEffectShader.h"
+#include "PapyrusFaction.h"
 #include "PapyrusForm.h"
 #include "PapyrusFormList.h"
 #include "PapyrusGame.h"
 #include "PapyrusKeyword.h"
+#include "PapyrusLeveledItem.h"
 #include "PapyrusMessage.h"
 #include "PapyrusNetImmerse.h"
 #include "PapyrusObjectReference.h"
+#include "PapyrusPotion.h"
+#include "PapyrusQuest.h"
 #include "PapyrusSkymp.h"
 #include "PapyrusSound.h"
 #include "PapyrusUtility.h"
+#include "PapyrusVisualEffect.h"
 
 std::vector<std::unique_ptr<IPapyrusClassBase>>
 PapyrusClassesFactory::CreateAndRegister(
@@ -33,9 +38,14 @@ PapyrusClassesFactory::CreateAndRegister(
   result.emplace_back(std::make_unique<PapyrusUtility>());
   result.emplace_back(std::make_unique<PapyrusEffectShader>());
   result.emplace_back(std::make_unique<PapyrusKeyword>());
+  result.emplace_back(std::make_unique<PapyrusFaction>());
   result.emplace_back(std::make_unique<PapyrusCell>());
   result.emplace_back(std::make_unique<PapyrusSound>());
   result.emplace_back(std::make_unique<PapyrusNetImmerse>());
+  result.emplace_back(std::make_unique<PapyrusPotion>());
+  result.emplace_back(std::make_unique<PapyrusVisualEffect>());
+  result.emplace_back(std::make_unique<PapyrusQuest>());
+  result.emplace_back(std::make_unique<PapyrusLeveledItem>());
 
   for (auto& papyrusClass : result) {
     papyrusClass->Register(vm, compatibilityPolicy);

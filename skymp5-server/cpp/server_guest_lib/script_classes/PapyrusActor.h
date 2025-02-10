@@ -6,7 +6,7 @@
 class PapyrusActor final : public IPapyrusClass<PapyrusActor>
 {
 public:
-  const char* GetName() override { return "actor"; }
+  const char* GetName() override { return "Actor"; }
 
   DEFINE_METHOD_SPSNIPPET(DrawWeapon);
   DEFINE_METHOD_SPSNIPPET(UnequipAll);
@@ -34,6 +34,8 @@ public:
 
   VarValue EquipItem(VarValue self, const std::vector<VarValue>& arguments);
 
+  VarValue EquipSpell(VarValue self, const std::vector<VarValue>& arguments);
+
   VarValue UnequipItem(VarValue self, const std::vector<VarValue>& arguments);
 
   VarValue SetDontMove(VarValue self, const std::vector<VarValue>& arguments);
@@ -44,11 +46,25 @@ public:
   VarValue WornHasKeyword(VarValue self,
                           const std::vector<VarValue>& arguments);
 
+  VarValue AddToFaction(VarValue self, const std::vector<VarValue>& arguments);
+
+  VarValue IsInFaction(VarValue self, const std::vector<VarValue>& arguments);
+
+  VarValue GetFactions(VarValue self, const std::vector<VarValue>& arguments);
+
+  VarValue RemoveFromFaction(VarValue self,
+                             const std::vector<VarValue>& arguments);
+
   VarValue AddSpell(VarValue self, const std::vector<VarValue>& arguments);
 
   VarValue RemoveSpell(VarValue self, const std::vector<VarValue>& arguments);
 
   VarValue GetRace(VarValue self, const std::vector<VarValue>& arguments);
+
+  VarValue GetSpellCount(VarValue self,
+                         const std::vector<VarValue>& arguments);
+
+  VarValue GetNthSpell(VarValue self, const std::vector<VarValue>& arguments);
 
   void Register(VirtualMachine& vm,
                 std::shared_ptr<IPapyrusCompatibilityPolicy> policy) override;

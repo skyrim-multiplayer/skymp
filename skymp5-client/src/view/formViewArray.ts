@@ -106,5 +106,9 @@ export class FormViewArray {
     return this.formViews[i];
   }
 
+  getFormViewsArrayLength(): number {
+    return this.formViews.length;
+  }
+
   private formViews = new Array<FormView | undefined>();
 }

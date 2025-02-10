@@ -39,7 +39,7 @@ TEST_CASE("Notification", "[Papyrus][Debug]")
           nlohmann::json{ { "type", "spSnippet" },
                           { "snippetIdx", 4294967295 },
                           { "selfId", 0 },
-                          { "class", "debug" },
+                          { "class", "Debug" },
                           { "function", "Notification" },
                           { "arguments", { "Hello, world!" } } });
   REQUIRE(p.Messages()[2].userId == 3);
@@ -48,7 +48,7 @@ TEST_CASE("Notification", "[Papyrus][Debug]")
           nlohmann::json{ { "type", "spSnippet" },
                           { "snippetIdx", 4294967295 },
                           { "selfId", 0 },
-                          { "class", "debug" },
+                          { "class", "Debug" },
                           { "function", "Notification" },
                           { "arguments", { "Hello, \"world!\"" } } });
 

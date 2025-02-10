@@ -61,6 +61,7 @@ if (process.env['DEPLOY_PLUGIN']?.includes('true')) {
 }
 
 module.exports = {
+    target: "node",
     plugins,
     mode: 'development',
     devtool: 'inline-source-map',

@@ -5,7 +5,7 @@
 class PapyrusEffectShader final : public IPapyrusClass<PapyrusEffectShader>
 {
 public:
-  const char* GetName() override { return "effectshader"; }
+  const char* GetName() override { return "EffectShader"; }
   VarValue Play(VarValue self, const std::vector<VarValue>& arguments);
   VarValue Stop(VarValue self, const std::vector<VarValue>& arguments);
 

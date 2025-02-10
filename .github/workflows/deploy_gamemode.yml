@@ -1,0 +1,107 @@
+name: Deploy Gamemode
+
+on:
+  # repository_dispatch is not yet in use, but it's a good idea to have it
+  repository_dispatch:
+    types: [deploy_gamemode]
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch, meaning server instance'
+        required: true
+        type: choice
+        options:
+          - 'sweetpie'
+          - 'indev'
+        default: 'indev'
+
+jobs:
+  deploy_gamemode:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up workflow_dispatch inputs
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          echo "DEPLOY_BRANCH=${{ github.event.inputs.branch }}" >> $GITHUB_ENV
+
+      - name: Set up repository_dispatch inputs
+        if: github.event_name == 'repository_dispatch'
+        run: |
+          echo "Received Payload:"
+          echo "${{ github.event.client_payload.inputs.branch }}"
+          echo "DEPLOY_BRANCH=${{ github.event.client_payload.inputs.branch }}" >> $GITHUB_ENV
+
+      - uses: actions/checkout@v4
+        with:
+          repository: skyrim-multiplayer/skymp5-gamemode
+          token: ${{ secrets.SKYMP5_GAMEMODE_PAT }}
+          fetch-depth: 0
+
+      - uses: actions/checkout@v4
+        with:
+          path: "skymp"
+          fetch-depth: 0
+          sparse-checkout: |
+            misc
+
+      - name: Post a link in Discord
+        env:
+          DEPLOY_STATUS_WEBHOOK: ${{secrets.DEPLOY_STATUS_WEBHOOK}}
+        run: |
+          link="${{github.server_url}}/${{github.repository}}/actions/runs/${{github.run_id}}"
+          ./skymp/misc/deploy/call_webhook.sh "Started gamemode deploy. " \
+            "You can follow the process at <$link>. " \
+            "Once build is finished, further progress will be reported here."
+
+      - name: Gather PRs
+        uses: Pospelove/auto-merge-action@main
+        with:
+          path: ${{github.workspace}}
+          repositories: |
+            [
+              {
+                "owner": "skyrim-multiplayer",
+                "repo": "skymp5-gamemode",
+                "labels": ["merge-to:${{env.DEPLOY_BRANCH}}"],
+                "token": "${{ secrets.SKYMP5_GAMEMODE_PAT }}"
+              }
+            ]
+
+      - run: yarn
+      - run: yarn build
+      - name: Rsync gamemode.js to the remote server
+        run: |
+          # cheatsheet: https://stackoverflow.com/a/44606194
+          # ? without : accepts empty string
+          # Ensuring all required variables are set:
+          echo "${DEPLOY_SSH_PRIVATE_KEY:?}" > /dev/null
+          echo "${DEPLOY_SSH_KNOWN_HOSTS:?}" > /dev/null
+
+          touch ssh_id
+          touch ssh_known_hosts
+          chmod 600 ssh_id
+          chmod 600 ssh_known_hosts
+          echo "$DEPLOY_SSH_PRIVATE_KEY" > ssh_id
+          echo "$DEPLOY_SSH_KNOWN_HOSTS" > ssh_known_hosts
+
+          remote_server_connstr="$DEPLOY_TARGET_USER@$DEPLOY_TARGET_HOST"
+          remote_dir="~/skymp-server-${{ github.event.inputs.branch }}/server/"
+
+          remote_shell="ssh -i ssh_id -o UserKnownHostsFile=ssh_known_hosts"
+          rsync --rsh="$remote_shell" -vazPh --checksum \
+            ./build/gamemode.js "$remote_server_connstr:$remote_dir/"
+        env:
+          DEPLOY_TARGET_HOST: ${{secrets.DEPLOY_TARGET_HOST_06_2024}}
+          DEPLOY_TARGET_USER: ${{secrets.DEPLOY_TARGET_USER_06_2024}}
+          DEPLOY_SSH_PRIVATE_KEY: ${{secrets.DEPLOY_SSH_PRIVATE_KEY_06_2024}}
+          DEPLOY_SSH_KNOWN_HOSTS: ${{secrets.DEPLOY_SSH_KNOWN_HOSTS_06_2024}}
+
+      - name: Notify failure
+        env:
+          DEPLOY_STATUS_WEBHOOK: ${{secrets.DEPLOY_STATUS_WEBHOOK}}
+        if: '!success()'
+        run: |
+          link="${{github.server_url}}/${{github.repository}}/actions/runs/${{github.run_id}}"
+          ./skymp/misc/deploy/call_webhook.sh \
+            "Gamemode build or deploy failed or was cancelled. " \
+            "Check out the logs at <$link> to find out why."

@@ -1,0 +1,19 @@
+{
+    "name": "ga-sdk-cpp",
+    "version-string": "",
+    "homepage": "https://docs.gameanalytics.com/integrations/sdk/cpp",
+    "description": "GameAnalytics SDK for C++",
+    "supports": "windows",
+    "dependencies": [
+        "curl",
+        "openssl",
+        "rapidjson",
+        "sqlite3",
+        "zf-log",
+        "miniz",
+        {
+            "name": "vcpkg-cmake",
+            "host": true
+        }
+    ]
+}

@@ -6,6 +6,7 @@
 #include "NiPoint3.h"
 #include "PartOneListener.h"
 #include "ServerState.h"
+#include "SpellCastData.h"
 #include "WorldState.h"
 #include "formulas/IDamageFormula.h"
 #include "libespm/Loader.h"
@@ -54,6 +55,7 @@ public:
                        uint32_t cellOrWorld, ProfileId profileId = -1);
   void SetUserActor(Networking::UserId userId, uint32_t actorFormId);
   uint32_t GetUserActor(Networking::UserId userId);
+  std::string GetUserGuid(Networking::UserId userId);
   Networking::UserId GetUserByActor(uint32_t formId);
   void DestroyActor(uint32_t actorFormId);
   void SetRaceMenuOpen(uint32_t formId, bool open);
@@ -85,6 +87,9 @@ public:
   float CalculateDamage(const MpActor& aggressor, const MpActor& target,
                         const HitData& hitData) const;
 
+  float CalculateDamage(const MpActor& aggressor, const MpActor& target,
+                        const SpellCastData& spellCastData) const;
+
   void NotifyGamemodeApiStateChanged(
     const GamemodeApi::State& newState) noexcept;
 
@@ -93,6 +98,9 @@ public:
   void ClearPacketHistory(Networking::UserId userId);
   void RequestPacketHistoryPlayback(Networking::UserId userId,
                                     const PacketHistory& history);
+
+  void SendHostStop(Networking::UserId badHosterUserId,
+                    MpObjectReference& remote);
 
 private:
   void Init();
@@ -103,7 +111,8 @@ private:
     Bot
   };
 
-  void AddUser(Networking::UserId userId, UserType userType);
+  void AddUser(Networking::UserId userId, UserType userType,
+               const std::string& guid);
 
   void HandleMessagePacket(Networking::UserId userId,
                            Networking::PacketData data, size_t length);

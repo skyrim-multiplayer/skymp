@@ -66,10 +66,13 @@ public:
 class StackCallbackFunctor : public RE::BSScript::IStackCallbackFunctor
 {
 public:
-  void operator()(Variable a_result) override {}
+  void operator()(Variable a_result) override { return; }
   bool CanSave() const override { return false; }
   void SetObject(
-    const RE::BSTSmartPointer<RE::BSScript::Object>& a_object) override{};
+    const RE::BSTSmartPointer<RE::BSScript::Object>& a_object) override
+  {
+    return;
+  };
 };
 
 // This class has been added as an issue 52 workaround
@@ -156,7 +159,6 @@ void TESModPlatform::SetWeaponDrawnMode(IVM* vm, StackID stackId,
   if (g_nativeCallRequirements.gameThrQ) {
     auto formId = actor->formID;
     g_nativeCallRequirements.gameThrQ->AddTask([=] {
-      // kinda redundant since we get formid from actor
       if (RE::TESForm::LookupByID<RE::Actor>(formId) != actor) {
         return;
       }
@@ -608,11 +610,7 @@ RE::ExtraDataList* CreateExtraDataList()
   for (int i = 0; i < 0x18; ++i) {
     p[i] = 0;
   }
-#ifdef SKYRIMSE
-  reinterpret_cast<void*&>(extraList->_presence) = p;
-#else
   reinterpret_cast<void*&>(extraList->_extraData.presence) = p;
-#endif
 
   return extraList;
 }
@@ -626,11 +624,7 @@ void TESModPlatform::AddItemEx(
   FixedString textDisplayData, int32_t soul, RE::AlchemyItem* poison,
   int32_t poisonCount)
 {
-#ifdef SKYRIMSE
-  auto markType = [](RE::ExtraDataList::PresenceBitfield* presence,
-#else
   auto markType = [](RE::BaseExtraList::PresenceBitfield* presence,
-#endif
                      uint32_t type, bool bCleared) {
     uint32_t index = (type >> 3);
     uint8_t bitMask = 1 << (type % 8);
@@ -651,19 +645,10 @@ void TESModPlatform::AddItemEx(
     }
 
     RE::BSWriteLockGuard locker(this_->_lock);
-#ifdef SKYRIMSE
-    auto* next = this_->_data;
-    this_->_data = toAdd;
-#else
     auto* next = this_->_extraData.data;
     this_->_extraData.data = toAdd;
-#endif
     toAdd->next = next;
-#ifdef SKYRIMSE
-    markType(this_->_presence, extraType, false);
-#else
     markType(this_->_extraData.presence, extraType, false);
-#endif
     return true;
   };
 
@@ -678,15 +663,6 @@ void TESModPlatform::AddItemEx(
     return;
   }
 
-  auto tuple = std::make_tuple(
-    containerRefr->formID, item, health, enchantment, maxCharge,
-    removeEnchantmentOnUnequip, chargePercent,
-    (std::string)textDisplayData.data(), soul, poison, poisonCount);
-
-  using Tuple = decltype(tuple);
-
-  thread_local std::map<Tuple, RE::ExtraDataList*> g_lastEquippedExtraList[2];
-
   RE::ExtraDataList* extraList = nullptr;
 
   const bool isShieldLike =
@@ -699,35 +675,12 @@ void TESModPlatform::AddItemEx(
     (item->formType == RE::FormType::Armor && !isShieldLike) ||
     item->formType == RE::FormType::Light;
 
-  // Our extra-less items support is disgusting! EquipItem crashes when we try
-  // an iron sword. This hack saves our slav lives
-  if (item->formType != RE::FormType::Ammo && health <= 1)
-    health = 1.01f;
-
   if (health > 1 || enchantment || chargePercent > 0 ||
       strlen(textDisplayData.data()) > 0 || (soul > 0 && soul <= 5) ||
-      poison || g_worn || g_wornLeft) {
+      poison) {
     extraList = CreateExtraDataList();
 
     auto extraList_ = reinterpret_cast<void*>(extraList);
-
-    if (g_worn) {
-      if (isClothes) {
-        auto extra = reinterpret_cast<RE::BSExtraData*>(
-          new MyExtra<RE::ExtraDataType::kWorn>);
-        addExtra(extraList_, static_cast<uint32_t>(RE::ExtraDataType::kWorn),
-                 extra);
-      }
-    }
-
-    if (g_wornLeft) {
-      if (isClothes) {
-        auto extra = reinterpret_cast<RE::BSExtraData*>(
-          new MyExtra<RE::ExtraDataType::kWornLeft>);
-        addExtra(extraList_,
-                 static_cast<uint32_t>(RE::ExtraDataType::kWornLeft), extra);
-      }
-    }
 
     if (health > 1) {
       addExtra(extraList_, static_cast<uint32_t>(RE::ExtraDataType::kHealth),
@@ -818,7 +771,6 @@ void TESModPlatform::AddItemEx(
         }
 
         if (countDelta > 0) {
-          g_lastEquippedExtraList[g_worn ? false : true][tuple] = extraList;
           g_nativeCallRequirements.gameThrQ->AddTask([=] {
             if (actor != (void*)RE::TESForm::LookupByID(refrId))
               return;

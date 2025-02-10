@@ -8,4 +8,5 @@ export interface ActivateMessage {
 interface ActivateMessageData {
     caster: number;
     target: number;
+    isSecondActivation: boolean;
 }

@@ -6,7 +6,7 @@ jobs:
         runs-on: ubuntu-latest
         steps:
           - name: Checkout
-            uses: actions/checkout@v2
+            uses: actions/checkout@v4
           - name: Ensure files terminated with one LF
             uses: fernandrone/linelint@0.0.6
             id: linelint
@@ -16,4 +16,4 @@ jobs:
             uses: jidicula/clang-format-action@v4.9.0
             with:
               clang-format-version: '15'
-              exclude-regex: '.*third_party.*'
+              exclude-regex: '(.*skyrim-platform/src/platform_se/skyrim_platform/Concepts.h)|(.*serialization/include/concepts/.*)|(.*third_party.*)'

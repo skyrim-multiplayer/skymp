@@ -5,7 +5,7 @@
 class PapyrusMessage final : public IPapyrusClass<PapyrusMessage>
 {
 public:
-  const char* GetName() override { return "message"; }
+  const char* GetName() override { return "Message"; }
 
   DEFINE_METHOD_SPSNIPPET(Show);
 

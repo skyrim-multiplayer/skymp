@@ -18,6 +18,12 @@ bool RecipeMatches(const espm::IdMapping* mapping, const espm::COBJ* recipe,
     return false;
   }
 
+  // In the original game, setting the benchmark keyword to NONE removes the
+  // recipe from all crafting stations.
+  if (recipeData.benchKeywordId == 0) {
+    return false;
+  }
+
   auto thisInputObjects = recipeData.inputObjects;
   for (auto& entry : thisInputObjects) {
     auto formId = espm::utils::GetMappedId(entry.formId, *mapping);

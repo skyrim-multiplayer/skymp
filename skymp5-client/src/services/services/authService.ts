@@ -1,3 +1,4 @@
+import * as crypto from "crypto";
 import { AuthGameData, RemoteAuthGameData, authGameDataStorageKey } from "../../features/authModel";
 import { FunctionInfo } from "../../lib/functionInfo";
 import { ClientListener, CombinedController, Sp } from "./clientListener";
@@ -27,6 +28,7 @@ const events = {
   clearAuthData: 'clearAuthData',
   updateRequired: 'updateRequired',
   backToLogin: 'backToLogin',
+  joinDiscord: 'joinDiscord'
 };
 
 // Vaiables used on both client and browser side (see browsersideWidgetSetter)
@@ -48,8 +50,30 @@ export class AuthService extends ClientListener {
     this.controller.emitter.on("customPacketMessage2", (e) => this.onCustomPacketMessage2(e));
     this.controller.on("browserMessage", (e) => this.onBrowserMessage(e));
     this.controller.on("tick", () => this.onTick());
+    this.controller.once("update", () => this.onceUpdate());
   }
 
+  // TODO: consider moving to a separate service called SettingsService
+  public getServerMasterKey() {
+    let masterKey = this.sp.settings["skymp5-client"]["server-master-key"];
+    if (!masterKey) {
+      masterKey = this.sp.settings["skymp5-client"]["master-key"];
+    }
+    if (!masterKey) {
+      masterKey = this.sp.settings["skymp5-client"]["server-ip"] + ":" + this.sp.settings["skymp5-client"]["server-port"];
+    }
+    return masterKey;
+  }
+
+  // TODO: consider moving to a separate service called SettingsService
+  public getMasterUrl() {
+    return this.normalizeUrl((this.sp.settings["skymp5-client"]["master"] as string) || "https://gateway.skymp.net");
+  }
+
+  public getMasterApiId() {
+    return authData?.masterApiId;
+  }
+  
   private onAuthNeeded(e: AuthNeededEvent) {
     logTrace(this, `Received authNeeded event`);
 
@@ -107,6 +131,7 @@ export class AuthService extends ClientListener {
         this.controller.lookupListener(NetworkingService).close();
         logTrace(this, 'loginFailedNotLoggedViaDiscord received');
         browserState.loginFailedReason = 'войдите через discord';
+        browserState.comment = '';
         this.sp.browser.executeJavaScript(new FunctionInfo(this.loginFailedWidgetSetter).getText({ events, browserState, authData: authData }));
         break;
       case 'loginFailedNotInTheDiscordServer':
@@ -114,6 +139,7 @@ export class AuthService extends ClientListener {
         this.controller.lookupListener(NetworkingService).close();
         logTrace(this, 'loginFailedNotInTheDiscordServer received');
         browserState.loginFailedReason = 'вступите в discord сервер';
+        browserState.comment = '';
         this.sp.browser.executeJavaScript(new FunctionInfo(this.loginFailedWidgetSetter).getText({ events, browserState, authData: authData }));
         break;
       case 'loginFailedBanned':
@@ -121,13 +147,15 @@ export class AuthService extends ClientListener {
         this.controller.lookupListener(NetworkingService).close();
         logTrace(this, 'loginFailedBanned received');
         browserState.loginFailedReason = 'вы забанены';
+        browserState.comment = '';
         this.sp.browser.executeJavaScript(new FunctionInfo(this.loginFailedWidgetSetter).getText({ events, browserState, authData: authData }));
         break;
       case 'loginFailedIpMismatch':
         this.authAttemptProgressIndicator = false;
         this.controller.lookupListener(NetworkingService).close();
         logTrace(this, 'loginFailedIpMismatch received');
-        browserState.comment = 'что это было?';
+        browserState.loginFailedReason = 'что это было?';
+        browserState.comment = '';
         this.sp.browser.executeJavaScript(new FunctionInfo(this.loginFailedWidgetSetter).getText({ events, browserState, authData: authData }));
         break;
     }
@@ -179,7 +207,7 @@ export class AuthService extends ClientListener {
         break;
       case events.authAttempt:
         if (authData === null) {
-          browserState.comment = 'сначала войдите через discord';
+          browserState.comment = 'сначала войдите';
           this.refreshWidgets();
           break;
         }
@@ -188,9 +216,9 @@ export class AuthService extends ClientListener {
 
         this.authAttemptProgressIndicator = true;
 
-
         break;
       case events.clearAuthData:
+        // Doesn't seem to be used
         this.writeAuthDataToDisk(null);
         break;
       case events.openGithub:
@@ -200,10 +228,13 @@ export class AuthService extends ClientListener {
         this.sp.win32.loadUrl(this.patreonUrl);
         break;
       case events.updateRequired:
-        this.sp.win32.loadUrl("https://skymp.net/");
+        this.sp.win32.loadUrl("https://skymp.net/AlternativeDownload");
         break;
       case events.backToLogin:
         this.sp.browser.executeJavaScript(new FunctionInfo(this.browsersideWidgetSetter).getText({ events, browserState, authData: authData }));
+        break;
+      case events.joinDiscord:
+        this.sp.win32.loadUrl("https://discord.gg/9KhSZ6zjGT");
         break;
       default:
         logError(this, `Unknown event key`, eventKey);
@@ -213,15 +244,8 @@ export class AuthService extends ClientListener {
 
   private createPlaySession(token: string, callback: (res: string, err: string) => void) {
     const client = new this.sp.HttpClient(this.getMasterUrl());
-    let masterKey = this.sp.settings["skymp5-client"]["server-master-key"];
-    if (!masterKey) {
-      masterKey = this.sp.settings["skymp5-client"]["master-key"];
-    }
-    if (!masterKey) {
-      masterKey = this.sp.settings["skymp5-client"]["server-ip"] + ":" + this.sp.settings["skymp5-client"]["server-port"];
-    }
 
-    const route = `/api/users/me/play/${masterKey}`;
+    const route = `/api/users/me/play/${this.getServerMasterKey()}`;
 
     logTrace(this, `Creating play session ${route}`);
 
@@ -269,7 +293,7 @@ export class AuthService extends ClientListener {
                 if (error) {
                   browserState.failCount = 0;
                   browserState.comment = (error);
-                  timersService.setTimeout(() => this.checkLoginState(), 1.5 + Math.random() * 2);
+                  timersService.setTimeout(() => this.checkLoginState(), Math.floor((1.5 + Math.random() * 2) * 1000));
                   this.refreshWidgets();
                   return;
                 }
@@ -287,7 +311,7 @@ export class AuthService extends ClientListener {
             case 401: // Unauthorized
               browserState.failCount = 0;
               browserState.comment = '';//(`Still waiting...`);
-              timersService.setTimeout(() => this.checkLoginState(), 1.5 + Math.random() * 2);
+              timersService.setTimeout(() => this.checkLoginState(), Math.floor((1.5 + Math.random() * 2) * 1000));
               break;
             case 403: // Forbidden
             case 404: // Not found
@@ -297,7 +321,7 @@ export class AuthService extends ClientListener {
             default:
               ++browserState.failCount;
               browserState.comment = `Server returned ${response.status.toString() || "???"} "${response.body || response.error}"`;
-              timersService.setTimeout(() => this.checkLoginState(), 1.5 + Math.random() * 2);
+              timersService.setTimeout(() => this.checkLoginState(), Math.floor((1.5 + Math.random() * 2) * 1000));
           }
         });
   };
@@ -314,7 +338,8 @@ export class AuthService extends ClientListener {
     logTrace(this, `Reading`, this.pluginAuthDataName, `from disk`);
 
     try {
-      const data = this.sp.getPluginSourceCode(this.pluginAuthDataName);
+      // @ts-expect-error (TODO: Remove in 2.10.0)
+      const data = this.sp.getPluginSourceCode(this.pluginAuthDataName, "PluginsNoLoad");
 
       if (!data) {
         logTrace(this, `Read empty`, this.pluginAuthDataName, `returning null`);
@@ -336,17 +361,15 @@ export class AuthService extends ClientListener {
     try {
       this.sp.writePlugin(
         this.pluginAuthDataName,
-        content
+        content,
+        // @ts-expect-error (TODO: Remove in 2.10.0)
+        "PluginsNoLoad"
       );
     }
     catch (e) {
       logError(this, `Error writing`, this.pluginAuthDataName, `to disk:`, e, `, will not remember user`);
     }
   };
-
-  private getMasterUrl() {
-    return this.normalizeUrl((this.sp.settings["skymp5-client"]["master"] as string) || "https://sweetpie.nic11.xyz");
-  }
 
   private normalizeUrl(url: string) {
     if (url.endsWith('/')) {
@@ -368,7 +391,12 @@ export class AuthService extends ClientListener {
         },
         {
           type: "text",
-          text: "спешите скачать на skymp.net",
+          text: "спешите скачать на",
+          tags: []
+        },
+        {
+          type: "text",
+          text: "skymp.net",
           tags: []
         },
         {
@@ -404,6 +432,16 @@ export class AuthService extends ClientListener {
 
     textElements.forEach((element) => widget.elements.push(element));
 
+    if (browserState.loginFailedReason === 'вступите в discord сервер') {
+      widget.elements.push({
+        type: "button",
+        text: "вступить",
+        tags: ["ELEMENT_STYLE_MARGIN_EXTENDED"],
+        click: () => window.skyrimPlatform.sendMessage(events.joinDiscord),
+        hint: null
+      });
+    }
+
     widget.elements.push({
       type: "button",
       text: "назад",
@@ -416,7 +454,6 @@ export class AuthService extends ClientListener {
   }
 
   private browsersideWidgetSetter = () => {
-    console.log(new Date());
     const loginWidget = {
       type: "form",
       id: 1,
@@ -481,7 +518,6 @@ export class AuthService extends ClientListener {
         },
       ]
     };
-    console.log(loginWidget);
     window.skyrimPlatform.widgets.set([loginWidget]);
   };
 
@@ -502,6 +538,7 @@ export class AuthService extends ClientListener {
       this.controller.once("update", () => {
         this.sp.Game.disablePlayerControls(true, true, true, true, true, true, true, true, 0);
       });
+      this.isListenBrowserMessage = true;
     }
   }
 
@@ -555,18 +592,26 @@ export class AuthService extends ClientListener {
     // TODO: Busy waiting is bad. Should be replaced with some kind of event
     const maxLoggingDelay = 15000;
     if (this.loggingStartMoment && Date.now() - this.loggingStartMoment > maxLoggingDelay) {
-      // logError(this, 'Logging in failed. Reconnecting.');
+      logTrace(this, 'Max logging delay reached received');
 
-      // browserState.comment = 'проблемы с авторизацией';
-      // this.refreshWidgets();
+      if (this.playerEverSawActualGameplay) {
+        logTrace(this, 'Player saw actual gameplay, reconnecting');
+        this.loggingStartMoment = 0;
+        this.controller.lookupListener(NetworkingService).reconnect();
+        // TODO: should we prompt user to relogin?
+      }
+      else {
+        logTrace(this, 'Player never saw actual gameplay, showing login dialog');
+        this.loggingStartMoment = 0;
+        this.authAttemptProgressIndicator = false;
+        this.controller.lookupListener(NetworkingService).close();
+        browserState.comment = "";
+        browserState.loginFailedReason = 'технические шоколадки\nпопробуйте еще раз\nпожалуйста\nили напишите нам в discord';
+        this.sp.browser.executeJavaScript(new FunctionInfo(this.loginFailedWidgetSetter).getText({ events, browserState, authData: authData }));
 
-      // this.controller.lookupListener(NetworkingService).reconnect();
-      this.loggingStartMoment = 0;
-      this.authAttemptProgressIndicator = false;
-      this.controller.lookupListener(NetworkingService).close();
-      logTrace(this, 'max logging delay reached received');
-      browserState.loginFailedReason = 'технические шоколадки\nпопробуйте еще раз\nпожалуйста\nили напишите нам в discord';
-      this.sp.browser.executeJavaScript(new FunctionInfo(this.loginFailedWidgetSetter).getText({ events, browserState, authData: authData }));
+        authData = null;
+        this.writeAuthDataToDisk(null);
+      }
     }
 
     if (this.authAttemptProgressIndicator) {
@@ -583,6 +628,10 @@ export class AuthService extends ClientListener {
       browserState.comment = "подключение" + dot;
       this.refreshWidgets();
     }
+  }
+
+  private onceUpdate() {
+    this.playerEverSawActualGameplay = true;
   }
 
   // private showConnectionError() {
@@ -603,13 +652,15 @@ export class AuthService extends ClientListener {
       return this.authNeededFired && this.browserWindowLoadedFired
     }
   };
-  private discordAuthState = "" + Math.random();
+  private discordAuthState = crypto.randomBytes(32).toString('hex');
   private authDialogOpen = false;
 
   private loggingStartMoment = 0;
 
   private authAttemptProgressIndicator = false;
   private authAttemptProgressIndicatorCounter = 0;
+
+  private playerEverSawActualGameplay = false;
 
   private readonly githubUrl = "https://github.com/skyrim-multiplayer/skymp";
   private readonly patreonUrl = "https://www.patreon.com/skymp";

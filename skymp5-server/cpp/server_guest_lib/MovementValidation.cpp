@@ -5,16 +5,14 @@
 #include <nlohmann/json.hpp>
 #include <string>
 
-bool MovementValidation::Validate(const IWorldObject& worldObject,
+bool MovementValidation::Validate(const NiPoint3& currentPos,
+                                  const NiPoint3& currentRot,
+                                  const FormDesc& currentCellOrWorld,
                                   const NiPoint3& newPos,
                                   const FormDesc& newCellOrWorld,
                                   IMessageOutput& tgt,
                                   const std::vector<std::string>& espmFiles)
 {
-  const auto& currentPos = worldObject.GetPos();
-  const auto& currentRot = worldObject.GetAngle();
-  const auto& currentCellOrWorld = worldObject.GetCellOrWorld();
-
   float maxDistance = 4096;
   if (currentCellOrWorld != newCellOrWorld ||
       (currentPos - newPos).Length() >= maxDistance) {

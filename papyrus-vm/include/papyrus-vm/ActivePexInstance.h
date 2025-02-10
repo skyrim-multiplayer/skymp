@@ -15,6 +15,7 @@
 #include "VarValue.h"
 
 class VirtualMachine;
+class StackData;
 
 class ActivePexInstance
 {
@@ -39,7 +40,7 @@ public:
 
   VarValue StartFunction(FunctionInfo& function,
                          std::vector<VarValue>& arguments,
-                         std::shared_ptr<StackIdHolder> stackIdHolder);
+                         std::shared_ptr<StackData> stackData);
 
   static uint8_t GetTypeByName(std::string typeRef);
   std::string GetActiveStateName() const;
@@ -55,6 +56,9 @@ public:
 
   static uint8_t GetArrayElementType(uint8_t type);
   static uint8_t GetArrayTypeByElementType(uint8_t type);
+
+  static void CastObjectToObject(const VirtualMachine& vm, VarValue* result,
+                                 VarValue* scriptToCastOwner);
 
 private:
   struct ExecutionContext;
@@ -79,9 +83,6 @@ private:
   Object::PropInfo* GetProperty(const ActivePexInstance& scriptInstance,
                                 std::string nameProperty, uint8_t flag);
 
-  void CastObjectToObject(VarValue* result, VarValue* objectType,
-                          std::vector<Local>& locals);
-
   bool HasParent(ActivePexInstance* script, std::string castToTypeName);
   bool HasChild(ActivePexInstance* script, std::string castToTypeName);
 
@@ -90,14 +91,12 @@ private:
     const std::shared_ptr<IVariablesHolder>& mapForFillProperties);
 
   static VarValue TryCastToBaseClass(
-    VirtualMachine& vm, const std::string& resultTypeName,
-    VarValue* scriptToCastOwner, std::vector<ActivePexInstance::Local>& locals,
-    std::vector<std::string>& outClassesStack);
+    const VirtualMachine& vm, const std::string& resultTypeName,
+    VarValue* scriptToCastOwner, std::vector<std::string>& outClassesStack);
 
-  static VarValue TryCastMultipleInheritance(
-    VirtualMachine& vm, const std::string& resultTypeName,
-    VarValue* scriptToCastOwner,
-    std::vector<ActivePexInstance::Local>& locals);
+  static VarValue TryCastMultipleInheritance(const VirtualMachine& vm,
+                                             const std::string& resultTypeName,
+                                             VarValue* scriptToCastOwner);
 
   bool _IsValid = false;
 

@@ -32,24 +32,6 @@ int main(int argc, char* argv[])
   std::ifstream papyrusClasses(pathToDefinitionsFile);
   std::ofstream output(pathToTypeScriptFile);
 
-  enum class Mode
-  {
-    Module = 0,
-    Interface
-  };
-
-  const Mode currentMode = Mode::Module; // 'interface' | 'module'
-  // TODO: Implement interface mode correctly
-
-  const auto getPrefix = [&currentMode]() -> std::string {
-    return currentMode == Mode::Interface ? "export interface SkyrimPlatform "
-                                            "{ \n"
-                                          : "";
-  };
-  const auto getPostfix = [&currentMode]() -> std::string {
-    return currentMode == Mode::Interface ? "}\n" : "";
-  };
-
   nlohmann::json j;
   input >> j;
 
@@ -249,15 +231,12 @@ int main(int argc, char* argv[])
             "@typescript-eslint/adjacent-overload-signatures */\n";
   output << "/* eslint-disable @typescript-eslint/no-namespace */\n";
   output << "// Generated automatically. Do not edit.\n";
-  output << getPrefix();
   output << "\n";
   output << papyrusClasses.rdbuf();
 
   for (auto& typeName : j.at("types")) {
     dumpType(typeName);
   }
-
-  output << getPostfix();
 
   output.close();
   if (!output) {

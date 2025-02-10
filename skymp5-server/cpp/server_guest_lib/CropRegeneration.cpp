@@ -68,14 +68,13 @@ float CropRegeneration(float newAttributeValue, float secondsAfterLastRegen,
 float CropHealthRegeneration(float newAttributeValue,
                              float secondsAfterLastRegen, MpActor* actor)
 {
-  MpChangeForm changeForm = actor->GetChangeForm();
   const BaseActorValues baseValues = GetValues(actor);
-  const ActorValues& actorValues = actor->GetChangeForm().actorValues;
+  const ActorValues& actorValues = actor->GetActorValues();
   const float rate = std::max(baseValues.healRate, actorValues.healRate);
   const float rateMult =
     std::max(baseValues.healRateMult, actorValues.healRateMult);
   const float oldPercentage = actorValues.healthPercentage;
-  const bool hasActiveMagicEffects = !changeForm.activeMagicEffects.Empty();
+  const bool hasActiveMagicEffects = !actor->GetActiveMagicEffects().Empty();
   return CropRegeneration(newAttributeValue, secondsAfterLastRegen, rate,
                           rateMult, oldPercentage, hasActiveMagicEffects);
 }
@@ -83,14 +82,13 @@ float CropHealthRegeneration(float newAttributeValue,
 float CropMagickaRegeneration(float newAttributeValue,
                               float secondsAfterLastRegen, MpActor* actor)
 {
-  MpChangeForm changeForm = actor->GetChangeForm();
   const BaseActorValues baseValues = GetValues(actor);
-  const ActorValues& actorValues = changeForm.actorValues;
+  const ActorValues& actorValues = actor->GetActorValues();
   const float rate = std::max(baseValues.magickaRate, actorValues.magickaRate);
   const float rateMult =
     std::max(baseValues.magickaRateMult, actorValues.magickaRateMult);
   const float oldPercentage = actorValues.magickaPercentage;
-  const bool hasActiveMagicEffects = !changeForm.activeMagicEffects.Empty();
+  const bool hasActiveMagicEffects = !actor->GetActiveMagicEffects().Empty();
   return CropRegeneration(newAttributeValue, secondsAfterLastRegen, rate,
                           rateMult, oldPercentage, hasActiveMagicEffects);
 }
@@ -98,16 +96,15 @@ float CropMagickaRegeneration(float newAttributeValue,
 float CropStaminaRegeneration(float newAttributeValue,
                               float secondsAfterLastRegen, MpActor* actor)
 {
-  const MpChangeForm changeForm = actor->GetChangeForm();
   const BaseActorValues baseValues = GetValues(actor);
-  const ActorValues& actorValues = changeForm.actorValues;
+  const ActorValues& actorValues = actor->GetActorValues();
   const float rate = actor->IsBlockActive()
     ? actorValues.staminaRate
     : std::max(baseValues.staminaRate, actorValues.staminaRate);
   const float rateMult =
     std::max(baseValues.staminaRateMult, actorValues.staminaRateMult);
   const float oldPercentage = actorValues.staminaPercentage;
-  const bool hasActiveMagicEffects = !changeForm.activeMagicEffects.Empty();
+  const bool hasActiveMagicEffects = !actor->GetActiveMagicEffects().Empty();
   return CropRegeneration(newAttributeValue, secondsAfterLastRegen, rate,
                           rateMult, oldPercentage, hasActiveMagicEffects);
 }

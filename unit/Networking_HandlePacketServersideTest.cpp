@@ -99,8 +99,8 @@ TEST_CASE("HandlePacketServerside", "[Networking]")
          size_t length) {
         *reinterpret_cast<bool*>(called) = true;
         REQUIRE(userId == 0);
-        REQUIRE(length == 0);
-        REQUIRE(data == nullptr);
+        REQUIRE(length == 3);
+        REQUIRE(std::string(reinterpret_cast<const char*>(data), 3) == "222");
         REQUIRE(packetType == Networking::PacketType::ServerSideUserConnect);
       },
       &called, &packet, idm);

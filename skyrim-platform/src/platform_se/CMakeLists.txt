@@ -74,10 +74,6 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
   )
 
   if(MSVC)
-    if(SKYRIM_SE)
-      add_compile_definitions(SKYRIMSE)
-    endif()
-
     file(GLOB_RECURSE platform_src "skyrim_platform/*")
     list(APPEND platform_src "${CMAKE_SOURCE_DIR}/.clang-format")
     list(APPEND platform_src ${CMAKE_CURRENT_BINARY_DIR}/include/Version.h)
@@ -111,6 +107,11 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
     target_precompile_headers(skyrim_platform_entry	PRIVATE	skyrim_platform_entry/PCH.h)
     apply_default_settings(TARGETS skyrim_platform_entry)
 
+    if(SKYRIM_SE)
+      target_compile_definitions(skyrim_platform PRIVATE SKYRIMSE)
+      target_compile_definitions(skyrim_platform_entry PRIVATE SKYRIMSE)
+    endif()
+
     set_target_properties(skyrim_platform SkyrimPlatformCEF skyrim_platform_entry PROPERTIES
       RUNTIME_OUTPUT_DIRECTORY "bin"
       PDB_OUTPUT_DIRECTORY "bin"
@@ -118,16 +119,16 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
 
     set(DEPENDENCIES_FOR_CUSTOM_TARGETS skyrim_platform SkyrimPlatformCEF skyrim_platform_entry)
 
-  add_papyrus_library_ck(
-    NAME TESModPlatformPsc
-    DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/psc"
-    OUTPUT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/pex"
-    COMPILER_EXECUTABLE_PATH "${SKYRIM_DIR}/Papyrus compiler/PapyrusCompiler.exe"
-  )
-  if(TARGET TESModPlatformPsc)
-    add_dependencies(TESModPlatformPsc ${DEPENDENCIES_FOR_CUSTOM_TARGETS})
-    list(APPEND DEPENDENCIES_FOR_CUSTOM_TARGETS TESModPlatformPsc)
-  endif()
+    add_papyrus_library_ck(
+      NAME TESModPlatformPsc
+      DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/psc"
+      OUTPUT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/pex"
+      COMPILER_EXECUTABLE_PATH "${SKYRIM_DIR}/Papyrus compiler/PapyrusCompiler.exe"
+    )
+    if(TARGET TESModPlatformPsc)
+      add_dependencies(TESModPlatformPsc ${DEPENDENCIES_FOR_CUSTOM_TARGETS})
+      list(APPEND DEPENDENCIES_FOR_CUSTOM_TARGETS TESModPlatformPsc)
+    endif()
 
     file(GLOB papyrus_sources "${CMAKE_CURRENT_SOURCE_DIR}/psc/*.psc")
     set(def "")
@@ -144,29 +145,35 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
     add_custom_target(RestartGame ALL COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/touch_$<CONFIG>)
     add_dependencies(RestartGame ${DEPENDENCIES_FOR_CUSTOM_TARGETS})
   endif()
+  
+  # can't run executables on Emscripten
+  if(NOT EMSCRIPTEN)
+    add_executable(TSConverter ${CMAKE_CURRENT_LIST_DIR}/codegen/TSConverter.cpp)
+    apply_default_settings(TARGETS TSConverter)
+    set_target_properties(TSConverter PROPERTIES CXX_STANDARD 20)
 
-  add_executable(TSConverter ${CMAKE_CURRENT_LIST_DIR}/codegen/TSConverter.cpp)
-  apply_default_settings(TARGETS TSConverter)
-  set_target_properties(TSConverter PROPERTIES CXX_STANDARD 20)
+    set(CONVERT_FILES_DIR ${CMAKE_CURRENT_LIST_DIR}/codegen/convert-files/)
+    list(APPEND CODEGEN_ARGS
+      "${CONVERT_FILES_DIR}/FunctionsDump.txt"
+      "${CONVERT_FILES_DIR}/Definitions.txt"
+      "${CMAKE_CURRENT_BINARY_DIR}/_codegen/skyrimPlatform.ts"
+    )
+    add_custom_target(codegen ALL COMMAND $<TARGET_FILE:TSConverter> ${CODEGEN_ARGS})
+    add_dependencies(codegen TSConverter)
 
-  set(CONVERT_FILES_DIR ${CMAKE_CURRENT_LIST_DIR}/codegen/convert-files/)
-  list(APPEND CODEGEN_ARGS
-    "${CONVERT_FILES_DIR}/FunctionsDump.txt"
-    "${CONVERT_FILES_DIR}/Definitions.txt"
-    "${CMAKE_CURRENT_BINARY_DIR}/_codegen/skyrimPlatform.ts"
-  )
-  add_custom_target(codegen ALL COMMAND $<TARGET_FILE:TSConverter> ${CODEGEN_ARGS})
-  add_dependencies(codegen TSConverter)
-
-  # force "skyrim-platform" custom target to be built strictly after codegen
-  list(APPEND DEPENDENCIES_FOR_CUSTOM_TARGETS codegen)
+    # force "skyrim-platform" custom target to be built strictly after codegen
+    list(APPEND DEPENDENCIES_FOR_CUSTOM_TARGETS codegen)
+  endif()
 
   # this target was originally called pack, now it is called skyrim-platform
   # so we can use add_dependencies(x skyrim-platform) in other projects
   add_custom_target(skyrim-platform ALL
     COMMAND yarn --cwd \"${SKYRIM_PLATFORM_SOURCE_DIR}/tools/dev_service\" run pack$<$<CONFIG:Debug>:-debug>
   )
-  add_dependencies(skyrim-platform ${DEPENDENCIES_FOR_CUSTOM_TARGETS})
+
+  if(DEPENDENCIES_FOR_CUSTOM_TARGETS)
+    add_dependencies(skyrim-platform ${DEPENDENCIES_FOR_CUSTOM_TARGETS})
+  endif()
 endif()
 
 if(MSVC)
@@ -177,9 +184,11 @@ endif()
 
 # TSConverter vcpkg deps
 
-find_path(JSON_INCLUDE_DIR NAMES json.hpp PATH_SUFFIXES nlohmann)
-get_filename_component(JSON_INCLUDE_DIR ${JSON_INCLUDE_DIR} DIRECTORY)
-target_include_directories(TSConverter PUBLIC ${JSON_INCLUDE_DIR})
+if(TARGET TSConverter)
+  find_path(JSON_INCLUDE_DIR NAMES json.hpp PATH_SUFFIXES nlohmann)
+  get_filename_component(JSON_INCLUDE_DIR ${JSON_INCLUDE_DIR} DIRECTORY)
+  target_include_directories(TSConverter PUBLIC ${JSON_INCLUDE_DIR})
+endif()
 
 if(MSVC)
 

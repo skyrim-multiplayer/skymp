@@ -18,6 +18,7 @@ VarValue PapyrusEffectShader::Stop(VarValue self,
   return VarValue::None();
 }
 
+// This is exact copy of PapyrusVisualEffect::Helper
 void PapyrusEffectShader::Helper(VarValue& self, const char* funcName,
                                  const std::vector<VarValue>& arguments)
 {
@@ -27,26 +28,19 @@ void PapyrusEffectShader::Helper(VarValue& self, const char* funcName,
       throw std::runtime_error(std::string(funcName) +
                                " requires at least one argument");
     }
-    // TODO: Make normal sync for this. For now using workaround to inform
-    // neigbours by sending papyrus functions to them.
     if (auto actorForm = GetFormPtr<MpObjectReference>(arguments[0])) {
-      for (auto listener : actorForm->GetListeners()) {
-        auto targetRefr = dynamic_cast<MpActor*>(listener);
-        if (targetRefr) {
-          SpSnippet(
-            GetName(), funcName,
-            SpSnippetFunctionGen::SerializeArguments(arguments, targetRefr)
-              .data(),
-            selfRec.ToGlobalId(selfRec.rec->GetId()))
-            .Execute(targetRefr, SpSnippetMode::kNoReturnResult);
-          // Workaround to use this function on player clone
-          if (actorForm->GetFormId() == targetRefr->GetFormId()) {
-            SpSnippet(
-              GetName(), funcName,
-              SpSnippetFunctionGen::SerializeArguments(arguments).data(),
-              selfRec.ToGlobalId(selfRec.rec->GetId()))
-              .Execute(targetRefr, SpSnippetMode::kNoReturnResult);
-          }
+      for (auto listener : actorForm->GetActorListeners()) {
+        SpSnippet(
+          GetName(), funcName,
+          SpSnippetFunctionGen::SerializeArguments(arguments, listener).data(),
+          selfRec.ToGlobalId(selfRec.rec->GetId()))
+          .Execute(listener, SpSnippetMode::kNoReturnResult);
+        // Workaround to use this function on player clone
+        if (actorForm->GetFormId() == listener->GetFormId()) {
+          SpSnippet(GetName(), funcName,
+                    SpSnippetFunctionGen::SerializeArguments(arguments).data(),
+                    selfRec.ToGlobalId(selfRec.rec->GetId()))
+            .Execute(listener, SpSnippetMode::kNoReturnResult);
         }
       }
     }

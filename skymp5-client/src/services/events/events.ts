@@ -1,6 +1,7 @@
 import { EventEmitter } from "eventemitter3";
 import { GameLoadEvent } from "./gameLoadEvent";
 import { SendMessageEvent } from "./sendMessageEvent";
+import { SendRawMessageEvent } from "./sendRawMessageEvent";
 import { AnyMessage } from "../messages/anyMessage";
 import { SendMessageWithRefrIdEvent } from "./sendMessageWithRefrIdEvent";
 import { ApplyDeathStateEvent } from "./applyDeathStateEvent";
@@ -33,11 +34,16 @@ import { AuthAttemptEvent } from "./authAttemptEvent";
 import { NewLocalLagValueCalculatedEvent } from "./newLocalLagValueCalculatedEvent";
 import { AuthNeededEvent } from "./authNeededEvent";
 import { QueryBlockSetInventoryEvent } from "./queryBlockSetInventoryEvent";
+import { QueryKeyCodeBindings } from "./queryKeyCodeBindings";
+import { SpellCastMessage } from "../messages/spellCastMessage";
+import { UpdateAnimVariablesMessage } from "../messages/updateAnimVariablesMessage";
+import { AnyRawMessageEvent } from "./anyRawMessageEvent";
 
 type EventTypes = {
     'gameLoad': [GameLoadEvent],
 
     'sendMessage': [SendMessageEvent<AnyMessage>],
+    'sendRawMessage': [SendRawMessageEvent],
     'sendMessageWithRefrId': [SendMessageWithRefrIdEvent<AnyMessage>],
 
     'applyDeathStateEvent': [ApplyDeathStateEvent],
@@ -51,6 +57,8 @@ type EventTypes = {
     'updateAnimationMessage': [ConnectionMessage<UpdateAnimationMessage>],
     'updateEquipmentMessage': [ConnectionMessage<UpdateEquipmentMessage>],
     'changeValuesMessage': [ConnectionMessage<ChangeValuesMessage>],
+    'spellCastMessage': [ConnectionMessage<SpellCastMessage>],
+    'updateAnimVariablesMessage': [ConnectionMessage<UpdateAnimVariablesMessage>],
     'updateAppearanceMessage': [ConnectionMessage<UpdateAppearanceMessage>],
     'teleportMessage': [ConnectionMessage<TeleportMessage>],
     'openContainerMessage': [ConnectionMessage<OpenContainerMessage>],
@@ -71,8 +79,10 @@ type EventTypes = {
     'authAttempt': [AuthAttemptEvent],
     'authNeeded': [AuthNeededEvent],
     'anyMessage': [ConnectionMessage<AnyMessage>],
+    'anyRawMessage': [AnyRawMessageEvent],
     'newLocalLagValueCalculated': [NewLocalLagValueCalculatedEvent],
-    'queryBlockSetInventoryEvent': [QueryBlockSetInventoryEvent]
+    'queryBlockSetInventoryEvent': [QueryBlockSetInventoryEvent],
+    'queryKeyCodeBindings': [QueryKeyCodeBindings]
 }
 
 // https://blog.makerx.com.au/a-type-safe-event-emitter-in-node-js/

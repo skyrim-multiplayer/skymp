@@ -59,7 +59,7 @@ void HeuristicPolicy::BeforeSendPapyrusEvent(MpForm* form,
   } else if (!Utils::stricmp(eventName, "OnObjectEquipped") ||
              !Utils::stricmp(eventName, "OnInit") ||
              !Utils::stricmp(eventName, "OnUpdate")) {
-    actor = dynamic_cast<MpActor*>(form);
+    actor = form->AsActor();
   } else if ((!Utils::stricmp(eventName, "OnTriggerEnter") ||
               !Utils::stricmp(eventName, "OnTriggerLeave") ||
               !Utils::stricmp(eventName, "OnTrigger")) &&

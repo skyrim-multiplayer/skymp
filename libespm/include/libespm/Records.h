@@ -10,6 +10,7 @@
 #include "CONT.h"
 #include "DOOR.h"
 #include "ENCH.h"
+#include "FACT.h"
 #include "FLOR.h"
 #include "FLST.h"
 #include "GMST.h"

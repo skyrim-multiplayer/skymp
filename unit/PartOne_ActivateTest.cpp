@@ -8,10 +8,16 @@ extern espm::Loader l;
 class FakeDamageFormula : public IDamageFormula
 {
 public:
-  float CalculateDamage(const MpActor&, const MpActor&,
-                        const HitData&) const override
+  [[nodiscard]] float CalculateDamage(const MpActor&, const MpActor&,
+                                      const HitData&) const override
   {
-    return 25;
+    return 25.f;
+  }
+
+  [[nodiscard]] float CalculateDamage(const MpActor&, const MpActor&,
+                                      const SpellCastData&) const override
+  {
+    return 25.f;
   }
 };
 
@@ -41,10 +47,12 @@ TEST_CASE("Activate without espm attached", "[PartOne][espm]")
   DoConnect(partOne, 0);
 
   REQUIRE_THROWS_WITH(
-    DoMessage(
-      partOne, 0,
-      nlohmann::json{ { "t", MsgType::Activate },
-                      { "data", { { "caster", 0x15 }, { "target", 0 } } } }),
+    DoMessage(partOne, 0,
+              nlohmann::json{ { "t", MsgType::Activate },
+                              { "data",
+                                { { "caster", 0x15 },
+                                  { "target", 0 },
+                                  { "isSecondActivation", false } } } }),
     ContainsSubstring("No loaded esm or esp files are found"));
 }
 
@@ -55,16 +63,18 @@ TEST_CASE("Activate without Actor attached", "[PartOne][espm]")
   DoConnect(partOne, 0);
 
   REQUIRE_THROWS_WITH(
-    DoMessage(
-      partOne, 0,
-      nlohmann::json{ { "t", MsgType::Activate },
-                      { "data", { { "caster", 0x15 }, { "target", 0 } } } }),
+    DoMessage(partOne, 0,
+              nlohmann::json{ { "t", MsgType::Activate },
+                              { "data",
+                                { { "caster", 0x15 },
+                                  { "target", 0 },
+                                  { "isSecondActivation", false } } } }),
     ContainsSubstring("Can't do this without Actor attached"));
 
   DoDisconnect(partOne, 0);
 }
 
-TEST_CASE("Activate with bad caster", "[PartOne][espm]")
+TEST_CASE("Activate with bad hoster", "[PartOne][espm]")
 {
   auto& partOne = GetPartOne();
 
@@ -73,10 +83,12 @@ TEST_CASE("Activate with bad caster", "[PartOne][espm]")
   partOne.SetUserActor(0, 0xff000000);
 
   REQUIRE_THROWS_WITH(
-    DoMessage(
-      partOne, 0,
-      nlohmann::json{ { "t", MsgType::Activate },
-                      { "data", { { "caster", 0x15 }, { "target", 0 } } } }),
+    DoMessage(partOne, 0,
+              nlohmann::json{ { "t", MsgType::Activate },
+                              { "data",
+                                { { "caster", 0x15 },
+                                  { "target", 0 },
+                                  { "isSecondActivation", false } } } }),
     ContainsSubstring(
       "Bad hoster is attached to caster 0x15, expected 0xff000000, but "
       "found 0x0"));
@@ -94,11 +106,12 @@ TEST_CASE("Activate with incorrect WorldSpace", "[PartOne][espm]")
   partOne.SetUserActor(0, 0xff000000);
 
   REQUIRE_THROWS_WITH(
-    DoMessage(
-      partOne, 0,
-      nlohmann::json{
-        { "t", MsgType::Activate },
-        { "data", { { "caster", 0x14 }, { "target", barrelInWhiterun } } } }),
+    DoMessage(partOne, 0,
+              nlohmann::json{ { "t", MsgType::Activate },
+                              { "data",
+                                { { "caster", 0x14 },
+                                  { "target", barrelInWhiterun },
+                                  { "isSecondActivation", false } } } }),
     ContainsSubstring(
       "WorldSpace doesn't match: caster is in Tamriel (0x3c), target "
       "is in WhiterunWorld (0x1a26f)"));
@@ -107,8 +120,7 @@ TEST_CASE("Activate with incorrect WorldSpace", "[PartOne][espm]")
   partOne.DestroyActor(0xff000000);
 }
 
-TEST_CASE("Activation of unexisting ref doesn't throw anything",
-          "[PartOne][espm]")
+TEST_CASE("Activation of an unexisting ref doesn't throw", "[PartOne][espm]")
 {
   auto& partOne = GetPartOne();
   DoConnect(partOne, 0);
@@ -116,9 +128,11 @@ TEST_CASE("Activation of unexisting ref doesn't throw anything",
   partOne.SetUserActor(0, 0xff000000);
 
   DoMessage(partOne, 0,
-            nlohmann::json{
-              { "t", MsgType::Activate },
-              { "data", { { "caster", 0x14 }, { "target", 0xdeadbeef } } } });
+            nlohmann::json{ { "t", MsgType::Activate },
+                            { "data",
+                              { { "caster", 0x14 },
+                                { "target", 0xdeadbeef },
+                                { "isSecondActivation", false } } } });
 
   DoDisconnect(partOne, 0);
   partOne.DestroyActor(0xff000000);
@@ -205,22 +219,26 @@ TEST_CASE("Activate DisplayCaseSmFlat01 in Whiterun", "[PartOne][espm]")
 
   REQUIRE(!ref.IsOpen());
   DoMessage(partOne, 0,
-            nlohmann::json{
-              { "t", MsgType::Activate },
-              { "data", { { "caster", 0x14 }, { "target", refrId } } } });
+            nlohmann::json{ { "t", MsgType::Activate },
+                            { "data",
+                              { { "caster", 0x14 },
+                                { "target", refrId },
+                                { "isSecondActivation", false } } } });
   REQUIRE(ref.IsOpen());
   DoMessage(partOne, 0,
-            nlohmann::json{
-              { "t", MsgType::Activate },
-              { "data", { { "caster", 0x14 }, { "target", refrId } } } });
+            nlohmann::json{ { "t", MsgType::Activate },
+                            { "data",
+                              { { "caster", 0x14 },
+                                { "target", refrId },
+                                { "isSecondActivation", false } } } });
   REQUIRE(!ref.IsOpen());
 
   REQUIRE(partOne.Messages().size() == 2);
-  REQUIRE(partOne.Messages()[0].j["data"] == true);
+  REQUIRE(partOne.Messages()[0].j["dataDump"] == "true");
   REQUIRE(partOne.Messages()[0].j["idx"] == ref.GetIdx());
   REQUIRE(partOne.Messages()[0].j["propName"] == "isOpen");
   REQUIRE(partOne.Messages()[0].j["t"] == MsgType::UpdateProperty);
-  REQUIRE(partOne.Messages()[1].j["data"] == false);
+  REQUIRE(partOne.Messages()[1].j["dataDump"] == "false");
   REQUIRE(partOne.Messages()[1].j["idx"] == ref.GetIdx());
   REQUIRE(partOne.Messages()[1].j["propName"] == "isOpen");
   REQUIRE(partOne.Messages()[1].j["t"] == MsgType::UpdateProperty);
@@ -243,11 +261,13 @@ TEST_CASE("Activate WRDoorMainGate01 in Whiterun", "[PartOne][espm]")
   auto& ref = partOne.worldState.GetFormAt<MpObjectReference>(refrId);
   ref.SetRelootTime(std::chrono::milliseconds(30));
   DoMessage(partOne, 0,
-            nlohmann::json{
-              { "t", MsgType::Activate },
-              { "data", { { "caster", 0x14 }, { "target", refrId } } } });
+            nlohmann::json{ { "t", MsgType::Activate },
+                            { "data",
+                              { { "caster", 0x14 },
+                                { "target", refrId },
+                                { "isSecondActivation", false } } } });
   REQUIRE(partOne.Messages().size() >= 1);
-  REQUIRE(partOne.Messages()[0].j["data"] == true);
+  REQUIRE(partOne.Messages()[0].j["dataDump"] == "true");
   REQUIRE(partOne.Messages()[0].j["idx"] == ref.GetIdx());
   REQUIRE(partOne.Messages()[0].j["propName"] == "isOpen");
   REQUIRE(partOne.Messages()[0].j["t"] == MsgType::UpdateProperty);
@@ -309,16 +329,18 @@ TEST_CASE("Activate PurpleMountainFlower in Whiterun", "[PartOne][espm]")
   REQUIRE(!ref.IsHarvested());
 
   DoMessage(partOne, 0,
-            nlohmann::json{
-              { "t", MsgType::Activate },
-              { "data", { { "caster", 0x14 }, { "target", refrId } } } });
+            nlohmann::json{ { "t", MsgType::Activate },
+                            { "data",
+                              { { "caster", 0x14 },
+                                { "target", refrId },
+                                { "isSecondActivation", false } } } });
 
   partOne.Tick(); // send deferred inventory update messages
 
   REQUIRE(partOne.Messages().size() >= 2);
   REQUIRE(partOne.Messages()[0].j["idx"] == ref.GetIdx());
   REQUIRE(partOne.Messages()[0].j["t"] == MsgType::UpdateProperty);
-  REQUIRE(partOne.Messages()[0].j["data"] == true);
+  REQUIRE(partOne.Messages()[0].j["dataDump"] == "true");
   REQUIRE(partOne.Messages()[0].j["propName"] == "isHarvested");
   REQUIRE(partOne.Messages()[1].j["type"] == "setInventory");
   REQUIRE(partOne.Messages()[1].j["inventory"].dump() ==
@@ -344,7 +366,7 @@ TEST_CASE("Activate PurpleMountainFlower in Whiterun", "[PartOne][espm]")
   REQUIRE(!ref.IsHarvested());
   REQUIRE(partOne.Messages().size() == 1);
   REQUIRE(partOne.Messages()[0].j["t"] == MsgType::UpdateProperty);
-  REQUIRE(partOne.Messages()[0].j["data"] == false);
+  REQUIRE(partOne.Messages()[0].j["dataDump"] == "false");
   REQUIRE(partOne.Messages()[0].j["propName"] == "isHarvested");
 
   DoDisconnect(partOne, 0);
@@ -383,7 +405,7 @@ TEST_CASE("BarrelFood01 PutItem/TakeItem", "[PartOne][espm]")
   REQUIRE(partOne.Messages()[0].j["t"] == MsgType::UpdateProperty);
   REQUIRE(partOne.Messages()[0].j["propName"] == "isOpen");
   REQUIRE(partOne.Messages()[0].j["idx"] == ref.GetIdx());
-  REQUIRE(partOne.Messages()[0].j["data"] == true);
+  REQUIRE(partOne.Messages()[0].j["dataDump"] == "true");
   REQUIRE(partOne.Messages().size() >= 2);
   REQUIRE(partOne.Messages()[1].j["t"] == MsgType::UpdateProperty);
   REQUIRE(partOne.Messages()[1].j["propName"] == "inventory");
@@ -503,20 +525,26 @@ TEST_CASE("Activate BarrelFood01 in Whiterun (open/close)", "[PartOne][espm]")
 
   // Open/close container
   DoMessage(partOne, 0,
-            nlohmann::json{
-              { "t", MsgType::Activate },
-              { "data", { { "caster", 0x14 }, { "target", refrId } } } });
+            nlohmann::json{ { "t", MsgType::Activate },
+                            { "data",
+                              { { "caster", 0x14 },
+                                { "target", refrId },
+                                { "isSecondActivation", false } } } });
   REQUIRE(ref.IsOpen());
   DoMessage(partOne, 0,
-            nlohmann::json{
-              { "t", MsgType::Activate },
-              { "data", { { "caster", 0x14 }, { "target", refrId } } } });
+            nlohmann::json{ { "t", MsgType::Activate },
+                            { "data",
+                              { { "caster", 0x14 },
+                                { "target", refrId },
+                                { "isSecondActivation", true } } } });
   REQUIRE(!ref.IsOpen());
 
   DoMessage(partOne, 0,
-            nlohmann::json{
-              { "t", MsgType::Activate },
-              { "data", { { "caster", 0x14 }, { "target", refrId } } } });
+            nlohmann::json{ { "t", MsgType::Activate },
+                            { "data",
+                              { { "caster", 0x14 },
+                                { "target", refrId },
+                                { "isSecondActivation", false } } } });
   REQUIRE(ref.IsOpen());
 
   DoDisconnect(partOne, 0);
@@ -555,16 +583,18 @@ TEST_CASE("Activate torch", "[espm][PartOne]")
   REQUIRE(!ref.IsHarvested());
 
   DoMessage(partOne, 0,
-            nlohmann::json{
-              { "t", MsgType::Activate },
-              { "data", { { "caster", 0x14 }, { "target", refrId } } } });
+            nlohmann::json{ { "t", MsgType::Activate },
+                            { "data",
+                              { { "caster", 0x14 },
+                                { "target", refrId },
+                                { "isSecondActivation", false } } } });
 
   partOne.Tick(); // send deferred inventory update messages
 
   REQUIRE(partOne.Messages().size() >= 2);
   REQUIRE(partOne.Messages()[0].j["idx"] == ref.GetIdx());
   REQUIRE(partOne.Messages()[0].j["t"] == MsgType::UpdateProperty);
-  REQUIRE(partOne.Messages()[0].j["data"] == true);
+  REQUIRE(partOne.Messages()[0].j["dataDump"] == "true");
   REQUIRE(partOne.Messages()[0].j["propName"] == "isHarvested");
   REQUIRE(partOne.Messages()[1].j["type"] == "setInventory");
   REQUIRE(
@@ -590,7 +620,7 @@ TEST_CASE("Activate torch", "[espm][PartOne]")
   REQUIRE(!ref.IsHarvested());
   REQUIRE(partOne.Messages().size() == 1);
   REQUIRE(partOne.Messages()[0].j["t"] == MsgType::UpdateProperty);
-  REQUIRE(partOne.Messages()[0].j["data"] == false);
+  REQUIRE(partOne.Messages()[0].j["dataDump"] == "false");
   REQUIRE(partOne.Messages()[0].j["propName"] == "isHarvested");
 
   DoDisconnect(partOne, 0);

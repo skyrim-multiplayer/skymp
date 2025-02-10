@@ -35,6 +35,19 @@ We recommend [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) as a cloud dat
 }
 ```
 
+## zip
+
+Similar to `file` driver, but uses zip archive instead of directory. Default `databaseName` is `world`. The server would use `world.zip` for data storage in this case.
+
+```json5
+{
+  // ...
+  "databaseDriver": "zip",
+  "databaseName": "world"
+  // ...
+}
+```
+
 ## migration
 
 A special database driver is used to move from one type of database to another on the fly. Do not forget to backup everything before using this.

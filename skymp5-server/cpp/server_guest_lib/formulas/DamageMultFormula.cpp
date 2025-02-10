@@ -57,3 +57,22 @@ float DamageMultFormula::CalculateDamage(const MpActor& aggressor,
 
   return baseDamage;
 }
+
+float DamageMultFormula::CalculateDamage(
+  const MpActor& aggressor, const MpActor& target,
+  const SpellCastData& spellCastData) const
+{
+  float baseDamage =
+    baseFormula->CalculateDamage(aggressor, target, spellCastData);
+
+  auto worldState = aggressor.GetParent();
+  if (!worldState) {
+    return baseDamage;
+  }
+
+  if (IsNonPlayerBaseId(aggressor) && !IsNonPlayerBaseId(target)) {
+    baseDamage *= settings.multiplier;
+  }
+
+  return baseDamage;
+}

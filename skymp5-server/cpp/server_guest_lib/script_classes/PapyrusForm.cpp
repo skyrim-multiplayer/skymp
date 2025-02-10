@@ -22,9 +22,26 @@ VarValue PapyrusForm::RegisterForSingleUpdate(
 {
   if (arguments.size() >= 1) {
     if (auto form = GetFormPtr<MpForm>(self)) {
+      auto worldState = form->GetParent();
+
+      std::optional<uint32_t> existingTimerId = form->GetSingleUpdateTimerId();
+      if (existingTimerId) {
+        worldState->RemoveTimer(*existingTimerId);
+      }
+
       double seconds = static_cast<double>(arguments[0]);
       auto time = Viet::TimeUtils::To<std::chrono::milliseconds>(seconds);
-      form->GetParent()->RegisterForSingleUpdate(self, time);
+
+      uint32_t timerId = 0;
+      auto promise = worldState->SetTimer(time, &timerId);
+      uint32_t formId = form->GetFormId();
+      promise.Then([form, formId, worldState](const Viet::Void&) {
+        if (form == worldState->LookupFormById(formId).get()) {
+          form->Update();
+        }
+      });
+
+      form->SetSingleUpdateTimerId(timerId);
     }
   }
 
@@ -40,11 +57,11 @@ VarValue PapyrusForm::GetType(VarValue self, const std::vector<VarValue>&)
   }
 
   if (auto form = GetFormPtr<MpForm>(self)) {
-    if (dynamic_cast<MpActor*>(form)) {
+    if (form->AsActor()) {
       constexpr auto kCharacter = 62;
       return VarValue(static_cast<int32_t>(kCharacter));
     }
-    if (dynamic_cast<MpObjectReference*>(form)) {
+    if (form->AsObjectReference()) {
       constexpr auto kReference = 61;
       return VarValue(static_cast<int32_t>(kReference));
     }

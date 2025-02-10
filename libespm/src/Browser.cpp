@@ -3,6 +3,7 @@
 #include "libespm/COBJ.h"
 #include "libespm/CellOrGridPos.h"
 #include "libespm/CompressedFieldsCache.h"
+#include "libespm/FACT.h"
 #include "libespm/GroupDataInternal.h"
 #include "libespm/GroupUtils.h"
 #include "libespm/KYWD.h"
@@ -15,7 +16,8 @@
 #include "libespm/WRLD.h"
 #include <cstring>
 #include <optional>
-#include <sparsepp/spp.h>
+#include <stdexcept>
+#include <unordered_map>
 #include <vector>
 
 namespace espm {
@@ -30,17 +32,18 @@ struct Browser::Impl
 
   size_t pos = 0;
   uint32_t fiDataSizeOverride = 0;
-  spp::sparse_hash_map<uint32_t, const RecordHeader*> recById;
-  spp::sparse_hash_map<uint64_t, std::vector<const RecordHeader*>> navmeshes;
-  spp::sparse_hash_map<uint64_t, std::vector<const RecordHeader*>>
+  std::unordered_map<uint32_t, const RecordHeader*> recById;
+  std::unordered_map<uint64_t, std::vector<const RecordHeader*>> navmeshes;
+  std::unordered_map<uint64_t, std::vector<const RecordHeader*>>
     cellOrWorldChildren;
-  spp::sparse_hash_map<const GroupHeader*, const GroupDataInternal*>
+  std::unordered_map<const GroupHeader*, const GroupDataInternal*>
     groupDataByGroupPtr;
-  spp::sparse_hash_map<const RecordHeader*, const GroupStack*>
+  std::unordered_map<const RecordHeader*, const GroupStack*>
     groupStackByRecordPtr;
   std::vector<const RecordHeader*> objectReferences;
   std::vector<const RecordHeader*> constructibleObjects;
   std::vector<const RecordHeader*> keywords;
+  std::vector<const RecordHeader*> factions;
   std::vector<const RecordHeader*> quests;
   std::vector<const RecordHeader*> worlds;
 
@@ -116,6 +119,9 @@ const std::vector<const RecordHeader*>& Browser::GetRecordsByType(
   }
   if (!std::strcmp(type, espm::KYWD::kType)) {
     return pImpl->keywords;
+  }
+  if (!std::strcmp(type, espm::FACT::kType)) {
+    return pImpl->factions;
   }
   if (!std::strcmp(type, espm::QUST::kType)) {
     return pImpl->quests;
@@ -237,6 +243,10 @@ bool Browser::ReadAny(const GroupStack* parentGrStack)
 
     if (utils::Is<espm::KYWD>(t)) {
       pImpl->keywords.push_back(recHeader);
+    }
+
+    if (utils::Is<espm::FACT>(t)) {
+      pImpl->factions.push_back(recHeader);
     }
 
     if (utils::Is<espm::NAVM>(t)) {

@@ -23,6 +23,7 @@ VarValue PapyrusCell::IsInterior(VarValue self,
   } else {
     spdlog::error("PapyrusCell::IsInterior: record not found");
   }
+  return VarValue(false);
 }
 
 void PapyrusCell::Register(VirtualMachine& vm,

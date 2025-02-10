@@ -1,0 +1,22 @@
+diff --git a/source/gameanalytics/GADevice.cpp b/source/gameanalytics/GADevice.cpp
+index 5af4f16c..83bfbe6c 100644
+--- a/source/gameanalytics/GADevice.cpp
++++ b/source/gameanalytics/GADevice.cpp
+@@ -486,7 +486,7 @@ namespace gameanalytics
+             #endif
+ 
+                 snprintf(GADevice::_deviceModel, sizeof(GADevice::_deviceModel), "%s", modelName.c_str());
+-                return true;
++                return;
+             }
+ 
+             std::cout << "Found device name:" << GADevice::_deviceModel;
+@@ -570,7 +570,7 @@ namespace gameanalytics
+             CoUninitialize();
+ 
+             snprintf(GADevice::_deviceModel, sizeof(GADevice::_deviceModel), "%s", _com_util::ConvertBSTRToString(model));
+-        #elif
++        #else
+             return;
+         #endif // GA_USE_WBEM_SERVICES
+ 

@@ -19,7 +19,6 @@
 #include <map>
 #include <memory>
 #include <optional>
-#include <sparsepp/spp.h>
 #include <spdlog/spdlog.h>
 #include <sstream>
 #include <unordered_map>
@@ -56,6 +55,8 @@ public:
 
   void Clear();
 
+  const std::chrono::steady_clock::time_point& GetStartPoint() const;
+
   void AttachEspm(espm::Loader* espm,
                   const FormCallbacksFactory& formCallbacksFactory);
   void AttachSaveStorage(std::shared_ptr<ISaveStorage> saveStorage);
@@ -90,16 +91,6 @@ public:
     return timerEffects.SetTimer(std::forward<T>(duration), outTimerId);
   }
 
-  template <typename T>
-  void RegisterForSingleUpdate(const VarValue& self, T&& duration)
-  {
-    SetTimer(std::forward<T>(duration)).Then([self](Viet::Void) {
-      if (auto form = GetFormPtr<MpForm>(self)) {
-        form->Update();
-      }
-    });
-  }
-
   bool RemoveTimer(uint32_t timerId);
   Viet::Promise<Viet::Void> SetTimer(
     std::reference_wrapper<const std::chrono::system_clock::time_point>
@@ -109,27 +100,45 @@ public:
       wrapper);
   bool RemoveEffectTimer(uint32_t timerId);
 
+  // Loads a requested form, likely resulting in whole chunk
+  // loading if not yet loaded
   const std::shared_ptr<MpForm>& LookupFormById(
     uint32_t formId, std::stringstream* optionalOutTrace = nullptr);
 
+  // No loading
   MpForm* LookupFormByIdx(int idx);
+
+  // No loading version of LookupFormById
+  const std::shared_ptr<MpForm>& LookupFormByIdNoLoad(uint32_t formId);
 
   void SendPapyrusEvent(MpForm* form, const char* eventName,
                         const VarValue* arguments, size_t argumentsCount);
 
-  const std::set<MpObjectReference*>& GetReferencesAtPosition(
+  const std::set<MpObjectReference*>& GetNeighborsByPosition(
     uint32_t cellOrWorld, int16_t cellX, int16_t cellY);
 
+  std::shared_ptr<std::vector<uint32_t>> GetAllForms(uint32_t modIndex);
+
+  // See LookupFormById comment
   template <class F>
   F& GetFormAt(uint32_t formId)
   {
-    auto form = LookupFormById(formId);
+    const std::shared_ptr<MpForm>& form = LookupFormById(formId);
     if (!form) {
       throw std::runtime_error(
         fmt::format("Form with id {:#x} doesn't exist", formId));
     }
 
-    auto typedForm = std::dynamic_pointer_cast<F>(form);
+    F* typedForm = nullptr;
+
+    if constexpr (std::is_same_v<F, MpActor>) {
+      typedForm = form->AsActor();
+    } else if constexpr (std::is_same_v<F, MpObjectReference>) {
+      typedForm = form->AsObjectReference();
+    } else {
+      typedForm = dynamic_cast<F*>(form.get());
+    }
+
     if (!typedForm) {
       if constexpr (std::is_same_v<F, MpActor>) {
         if (auto ref = std::dynamic_pointer_cast<MpObjectReference>(form)) {
@@ -197,10 +206,10 @@ public:
     const std::string& propertyName,
     const std::string& propertyValueStringified);
   uint32_t GenerateFormId();
-  void SetRelootTime(std::string recordType,
-                     std::chrono::system_clock::duration dur);
+  void SetRelootTime(const std::string& recordType,
+                     std::chrono::system_clock::duration time);
   std::optional<std::chrono::system_clock::duration> GetRelootTime(
-    std::string recordType) const;
+    const std::string& recordType) const;
 
   // Utility function to check if the provided baseId has the certain keyword
   bool HasKeyword(uint32_t baseId, const char* keyword);
@@ -242,7 +251,10 @@ public:
 
     /* Playable races from ArgonianRace to WoodElfRace */
     0x00013740, 0x00013741, 0x00013742, 0x00013743, 0x00013744, 0x00013745,
-    0x00013746, 0x00013747, 0x00013748, 0x00013749
+    0x00013746, 0x00013747, 0x00013748, 0x00013749,
+
+    /* Mannequin */
+    0x0010760a
   };
 
 private:
@@ -253,7 +265,6 @@ private:
 
   bool LoadForm(uint32_t formId,
                 std::stringstream* optionalOutTrace = nullptr);
-  void TickReloot(const std::chrono::system_clock::time_point& now);
   void TickSaveStorage(const std::chrono::system_clock::time_point& now);
   void TickTimers(const std::chrono::system_clock::time_point& now);
   [[nodiscard]] bool NpcSourceFilesOverriden() const noexcept;
@@ -269,15 +280,11 @@ private:
     std::map<int16_t, std::map<int16_t, bool>> loadedChunks;
   };
 
-  spp::sparse_hash_map<uint32_t, std::shared_ptr<MpForm>> forms;
+  std::unordered_map<uint32_t, std::shared_ptr<MpForm>> forms;
   std::unordered_map<std::string, size_t> loadOrderMap;
-  spp::sparse_hash_map<uint32_t, GridInfo> grids;
+  std::unordered_map<uint32_t, GridInfo> grids;
   std::unique_ptr<MakeID> formIdxManager;
-  std::vector<MpForm*> formByIdxUnreliable;
-  std::map<
-    std::chrono::system_clock::duration,
-    std::list<std::pair<uint32_t, std::chrono::system_clock::time_point>>>
-    relootTimers;
+  std::vector<MpObjectReference*> refrByIdxUnreliable;
   espm::Loader* espm = nullptr;
   FormCallbacksFactory formCallbacksFactory;
   std::unique_ptr<espm::CompressedFieldsCache> espmCache;
@@ -285,4 +292,5 @@ private:
   struct Impl;
   std::shared_ptr<Impl> pImpl;
   Viet::Timer timerEffects, timerRegular;
+  std::chrono::steady_clock::time_point worldStartTime;
 };

@@ -1,6 +1,6 @@
 #pragma once
 #include <memory>
-#include <sparsepp/spp.h>
+#include <unordered_map>
 #include <vector>
 
 #pragma pack(push, 1)
@@ -20,7 +20,7 @@ private:
     std::shared_ptr<std::vector<uint8_t>> decompressedFieldsHolder;
   };
 
-  spp::sparse_hash_map<const RecordHeader*, Entry> data;
+  std::unordered_map<const RecordHeader*, Entry> data;
 };
 
 }

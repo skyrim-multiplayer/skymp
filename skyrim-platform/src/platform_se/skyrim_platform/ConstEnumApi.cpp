@@ -5,6 +5,17 @@
 void ConstEnumApi::Register(JsValue& exports,
                             std::shared_ptr<JsEngine> jsEngine)
 {
+  auto SpellType = JsValue::Object();
+  SpellType.SetProperty(0, "Left");
+  SpellType.SetProperty(1, "Right");
+  SpellType.SetProperty(2, "Voise");
+  SpellType.SetProperty(3, "Instant");
+  SpellType.SetProperty("Left", 0);
+  SpellType.SetProperty("Right", 1);
+  SpellType.SetProperty("Voise", 2);
+  SpellType.SetProperty("Instant", 3);
+  exports.SetProperty("SpellType", SpellType);
+
   auto MarkerType = JsValue::Object();
   MarkerType.SetProperty(0, "None");
   MarkerType.SetProperty(1, "City");
@@ -1128,6 +1139,7 @@ void ConstEnumApi::Register(JsValue& exports,
   EquippedItemType.SetProperty(7, "Bow");
   EquippedItemType.SetProperty(8, "Staff");
   EquippedItemType.SetProperty(9, "Spell");
+  EquippedItemType.SetProperty(9, "SpellOrScroll");
   EquippedItemType.SetProperty(10, "Shield");
   EquippedItemType.SetProperty(11, "Torch");
   EquippedItemType.SetProperty(12, "Crossbow");
@@ -1142,6 +1154,7 @@ void ConstEnumApi::Register(JsValue& exports,
   EquippedItemType.SetProperty("Bow", 7);
   EquippedItemType.SetProperty("Staff", 8);
   EquippedItemType.SetProperty("Spell", 9);
+  EquippedItemType.SetProperty("SpellOrScroll", 9);
   EquippedItemType.SetProperty("Shield", 10);
   EquippedItemType.SetProperty("Torch", 11);
   EquippedItemType.SetProperty("Crossbow", 12);

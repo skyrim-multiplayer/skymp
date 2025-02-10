@@ -3,7 +3,7 @@
 A GitHub actions job is configured for deploying server from a git branch.
 This guide shows how to set it up.
 
-## GitHub prereqeusties
+## GitHub prerequisites
 
 * You should own the repository you want to deploy from. Fork of our main repo
 [skyrim-multiplayer/skymp](https://github.com/skyrim-multiplayer/skymp) should work.
@@ -22,7 +22,7 @@ This guide shows how to set it up.
     to the runner when a workflow is triggered from a forked repository.
 
 
-## Server prereqeusties
+## Server prerequisites
 
 * Ubuntu 22.04 (other distros should also work, but not tested)
 * Accessible from the Internet with open ports
@@ -108,6 +108,16 @@ Several actions are available:
 
 ## Debugging crashes
 
+tl;dr These are the commands that you would probably be interested in the most:
+```sh
+# To attach to the running server
+docker exec -it -u 0:0 skymp-server-indev sh -c 'gdb -p "`pgrep node`" -ex c'
+
+# To debug a crash (needs some configuration, see below for details)
+ls -lh /var/crash
+docker exec -it skymp-server-indev gdb /usr/bin/node /var/crash/...
+```
+
 Deployed server might crash under some circumstances. It's important to be able
 to be able to debug it in case something goes wrong.
 
@@ -124,13 +134,20 @@ Prerequisites:
 
 To attach to the server, run:
 ```
-$ docker exec -it -u 0:0 skymp-server-indev sh -c 'gdb -p "`pgrep node`"'
+$ docker exec -it -u 0:0 skymp-server-indev sh -c 'gdb -p "`pgrep node`" -ex c'
 <...>
-(gdb) c
+Continuing.
 ```
 
+Note that gdb needs a couple of seconds to load everything. Server is going to be paused
+during that period. Normally gdb would keep the execution paused until it receives some
+user input, but in this case `-ex c` tells gdb to continue the execution right after
+attaching (i.e. run `c` once attached). This will help us minimise the pause time.
+A simple Ctrl-C would pause the execution again and return us to the gdb prompt.
+Please be careful running that on a server with active players and not pause for too long.
+
 All typical gdb commands should be available now. Set breakpoints or just type
-`c` to contrinue execution right away.
+`c` to continue the execution.
 
 ### Collecting core dumps
 

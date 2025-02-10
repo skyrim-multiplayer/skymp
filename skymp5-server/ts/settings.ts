@@ -16,7 +16,7 @@ export class Settings {
   ip: string | null = null;
   port = 7777;
   maxPlayers = 100;
-  master: string = "https://sweetpie.nic11.xyz";
+  master: string = "https://gateway.skymp.net";
   name = 'Yet Another Server';
   gamemodePath = '...';
   loadOrder = new Array<string>();
@@ -320,6 +320,8 @@ async function fetchServerSettings(): Promise<any> {
 
   console.log(`Merging "server-settings.json" (original settings file)`);
   serverSettings = lodash.merge(serverSettings, serverSettingsFile);
+
+  fs.writeFileSync('server-settings-merged.json', JSON.stringify(serverSettings, null, 2));
 
   return serverSettings;
 }

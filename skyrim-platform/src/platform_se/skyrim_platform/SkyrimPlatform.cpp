@@ -16,11 +16,14 @@
 #include "InventoryApi.h"
 #include "FenixFunctions.h"
 #include "LoadGameApi.h"
+#include "MagicApi.h"
 #include "MpClientPluginApi.h"
 #include "SkyrimPlatformProxy.h"
 #include "TextApi.h"
 #include "ThreadPoolWrapper.h"
 #include "Win32Api.h"
+
+#include "IPC.h" // IPC::Call
 
 CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
 
@@ -131,31 +134,12 @@ private:
   const std::vector<std::filesystem::path>& GetFileDirs() const
   {
     if (!pluginFolders) {
-      auto settings = Settings::GetPlatformSettings();
-      std::string utf8pluginFoldersSemicolonSeparated =
-        settings->GetString("Main", "PluginFolders",
-                            "Data/Platform/Plugins;Data/Platform/PluginsDev");
-
-      std::istringstream ss(utf8pluginFoldersSemicolonSeparated);
-      std::string folder;
-
-      if (utf8pluginFoldersSemicolonSeparated.find_first_of("\"") !=
-          std::string::npos) {
+      try {
+        pluginFolders = Settings::GetPlatformSettings()->GetPluginFolders();
+      } catch (std::exception& e) {
         pluginFolders = std::make_unique<std::vector<std::filesystem::path>>();
-        throw std::runtime_error(
-          "Invalid path with quotes in PluginFolders setting. Please remove "
-          "quotes and restart the game.");
+        throw;
       }
-
-      auto result = std::make_unique<std::vector<std::filesystem::path>>();
-
-      while (std::getline(ss, folder, ';')) {
-        if (!folder.empty()) {
-          result->emplace_back(folder);
-        }
-      }
-
-      pluginFolders = std::move(result);
     }
 
     return *pluginFolders;
@@ -178,6 +162,7 @@ private:
         LoadPluginFile(path);
         continue;
       }
+      logger::warn("Found unprocessed file: {}", path.string());
     }
   }
 
@@ -194,10 +179,56 @@ private:
     settingsByPluginNameCache.reset();
   }
 
+  static void OnLoadPluginFileCallback(CommonExecutionListener& self,
+                                       const char* patchedSourceCode,
+                                       uint32_t patchedSourceCodeLength)
+  {
+    self.tmpPatchedPluginSources =
+      std::string{ patchedSourceCode,
+                   patchedSourceCode + patchedSourceCodeLength };
+  }
+
+  std::string PatchPluginFile(const std::filesystem::path& path,
+                              const std::string& scriptSrc)
+  {
+#pragma pack(push, 1)
+    struct Msg
+    {
+      void* onLoadPluginFileCallback = nullptr;
+      void* self = nullptr;
+      const char* pluginPathUtf8 = nullptr;
+      const char* scriptSrc = nullptr;
+    };
+#pragma pack(pop)
+    static_assert(sizeof(Msg) == 32);
+
+    auto s = path.u8string();
+    std::string pluginPathUtf8(s.begin(), s.end());
+
+    Msg msg;
+    msg.onLoadPluginFileCallback = OnLoadPluginFileCallback;
+    msg.self = this;
+    msg.pluginPathUtf8 = pluginPathUtf8.data();
+    msg.scriptSrc = scriptSrc.data();
+
+    tmpPatchedPluginSources = std::nullopt;
+
+    IPC::Call("SkyrimPlatform_OnLoadPluginFile",
+              reinterpret_cast<uint8_t*>(&msg), sizeof(Msg));
+
+    if (tmpPatchedPluginSources != std::nullopt) {
+      return *tmpPatchedPluginSources;
+    }
+
+    return scriptSrc;
+  }
+
   void LoadPluginFile(const std::filesystem::path& path)
   {
     auto engine = GetJsEngine();
     auto scriptSrc = Viet::ReadFileIntoString(path);
+
+    scriptSrc = PatchPluginFile(path, scriptSrc);
 
     getSettings = [this](const JsFunctionArguments&) {
       if (!settingsByPluginNameCache) {
@@ -232,6 +263,7 @@ private:
                            TextApi::Register(e);
                            InventoryApi::Register(e);
                            FenixFunctions::Register(e);
+                           MagicApi::Register(e);
                            ConstEnumApi::Register(e, engine);
                            CallNativeApi::Register(
                              e, [this] { return nativeCallRequirements; });
@@ -304,6 +336,7 @@ private:
   std::shared_ptr<BrowserApi::State> browserApiState;
   std::function<JsValue(const JsFunctionArguments&)> getSettings;
   mutable std::unique_ptr<std::vector<std::filesystem::path>> pluginFolders;
+  std::optional<std::string> tmpPatchedPluginSources;
 };
 }
 

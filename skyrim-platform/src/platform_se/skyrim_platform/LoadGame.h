@@ -35,7 +35,8 @@ public:
     bool hasData = false;
   };
 
-  static std::shared_ptr<SaveFile_::SaveFile> PrepareSaveFile();
+  static std::shared_ptr<SaveFile_::SaveFile> PrepareSaveFile(
+    const char* pathInAssets);
 
   static void Run(std::shared_ptr<SaveFile_::SaveFile> baseSavefile,
                   const std::array<float, 3>& pos,

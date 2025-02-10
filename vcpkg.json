@@ -10,16 +10,26 @@
     "zlib",
     "spdlog",
     "catch2",
-    "sparsepp",
-    "slikenet",
-    "mongo-cxx-driver",
     "simdjson",
     "robin-hood-hashing",
     "simpleini",
-    "node-addon-api",
     "bshoshany-thread-pool",
     "makeid",
-    "rsm-bsa",
+    "libzippp",
+    "cpptrace",
+    "slikenet",
+    {
+      "name": "mongo-cxx-driver",
+      "platform": "!emscripten"
+    },
+    {
+      "name": "node-addon-api",
+      "platform": "!emscripten"
+    },
+    {
+      "name": "rsm-bsa",
+      "platform": "!osx & !emscripten"
+    },
     {
       "name": "frida-gum",
       "platform": "windows"
@@ -42,6 +52,15 @@
     },
     {
       "name": "asio",
+      "platform": "windows"
+    },
+    {
+      "name": "libarchive",
+      "platform": "windows",
+      "features": []
+    },
+    {
+      "name": "ga-sdk-cpp",
       "platform": "windows"
     }
   ],
@@ -66,6 +85,24 @@
     },
     "skyrim-vr": {
       "description": "Build platform for Skyrim VR."
+    },
+    "build-nodejs": {
+      "description": "",
+      "dependencies": [
+        {
+          "name": "node-embedder-api",
+          "platform": "windows"
+        }
+      ]
+    },
+    "prebuilt-nodejs": {
+      "description": "",
+      "dependencies": [
+        {
+          "name": "node-embedder-api-prebuilt",
+          "platform": "windows"
+        }
+      ]
     }
   }
 }

@@ -12,8 +12,8 @@ export declare function writeLogs(pluginName: string, ...arguments: unknown[]): 
 export declare function setPrintConsolePrefixesEnabled(enabled: boolean): void
 export declare function callNative(className: string, functionName: string, self?: PapyrusObject, ...args: PapyrusValue[]): PapyrusValue
 export declare function getJsMemoryUsage(): number
-export declare function getPluginSourceCode(pluginName: string): string
-export declare function writePlugin(pluginName: string, newSources: string): string
+export declare function getPluginSourceCode(pluginName: string, overrideFolder?: string): string // overrideFolder is relative to Data/Platform
+export declare function writePlugin(pluginName: string, newSources: string, overrideFolder?: string): string // overrideFolder is relative to Data/Platform
 export declare function getPlatformVersion(): string
 export declare function disableCtrlPrtScnHotkey(): void
 export declare function blockPapyrusEvents(block: boolean): void
@@ -43,6 +43,7 @@ export interface Face {
   headTextureSetId: number
   headPartIds: number[]
   presets: number[]
+  isFemale?: boolean
 }
 
 export interface ChangeFormNpc {
@@ -63,8 +64,9 @@ interface MpClientPlugin {
   createClient(host: string, port: number): void
   destroyClient(): void
   isConnected(): boolean
-  tick(tickHandler: (packetType: PacketType, jsonContent: string, error: string) => void): void
+  tick(tickHandler: (packetType: PacketType, rawContent: ArrayBuffer | null, error: string) => void): void
   send(jsonContent: string, reliable: boolean): void
+  sendRaw(data: ArrayBuffer, size: number, reliable: boolean): void
 }
 export declare let mpClientPlugin: MpClientPlugin
 
@@ -266,8 +268,13 @@ export interface ConsoleMessageEvent {
 }
 
 export interface SpellCastEvent {
-  caster: ObjectReference
+  caster: Actor
+  target: ObjectReference | null
   spell: Spell
+  isDualCasting: boolean
+  castingSource: SpellType
+  aimAngle: number
+  aimHeading: number
 }
 
 export interface OpenCloseEvent {
@@ -831,6 +838,13 @@ export interface ConsoleCommand {
   execute: (...args: unknown[]) => boolean
 }
 export declare function findConsoleCommand(cmdName: string): ConsoleCommand | null
+
+export const enum SpellType {
+  Left,
+  Right,
+  Voise,
+  Instant,
+}
 
 export const enum MarkerType {
   None = 0,
@@ -1415,7 +1429,8 @@ export const enum EquippedItemType {
   Warhammer = 6,
   Bow,
   Staff,
-  Spell,
+  Spell = 9, // Deprecated (use SpellOrScroll instead)
+  SpellOrScroll = 9,
   Shield,
   Torch,
   Crossbow,
@@ -1590,6 +1605,12 @@ export interface Inventory {
   entries: Entry[];
 }
 
+export interface ActorAnimationVariables {
+  booleans: ArrayBuffer
+  floats: ArrayBuffer
+  integers: ArrayBuffer
+}
+
 export declare function setInventory(formId: number, inventory: Inventory): void;
 
 export interface RayCastResult
@@ -1602,6 +1623,10 @@ export declare function actorSit(formId: number): void;
 export declare function actorGetUp(actorId: number): void;
 export declare function actorRaycast(actorId: number, r: number): RayCastResult;
 export declare function calculateAnticipatedLocation(actorId: number): number[];
+export declare function castSpellImmediate(actorCasterFormId: number, castingSource: SpellType, formIdSpell: number, formIdTarget: number, aimAngle: number, aimHeading: number, animationVariables: ActorAnimationVariables): void;
+export declare function interruptCast(actorCasterFormId: number, castingSource: SpellType, animationVariables: ActorAnimationVariables): void;
+export declare function getAnimationVariablesFromActor(actorFormId: number): ActorAnimationVariables;
+export declare function applyAnimationVariablesToActor(actorFormId: number, animationVariables: ActorAnimationVariables): boolean;
 
 // Based on Form.pex
 export declare class Form extends PapyrusObject {
