@@ -1,1 +1,1 @@
-Added some utility functions: actorSit, actorGetUp, actorRaycast, calculateAnticipatedLocation.
+Added some utility functions: `actorSit`, `actorGetUp`, `actorRaycast`, `calculateAnticipatedLocation`.
