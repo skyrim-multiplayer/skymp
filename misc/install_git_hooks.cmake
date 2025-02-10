@@ -18,7 +18,11 @@ endif()
 
 # Install dependencies
 
+include(${REPO_ROOT}/cmake/yarn.cmake)
+
 yarn_execute_command(
     WORKING_DIRECTORY ${REPO_ROOT}/misc/git-hooks
-    COMMAND add simple-git
+    COMMAND install
 )
+
+message(STATUS "Git hooks installed successfully")
