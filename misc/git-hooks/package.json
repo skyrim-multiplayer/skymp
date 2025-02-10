@@ -1,4 +1,5 @@
 {
+  "type": "module",
   "dependencies": {
     "@wasm-fmt/clang-format": "^19.1.7",
     "simple-git": "^3.27.0"
