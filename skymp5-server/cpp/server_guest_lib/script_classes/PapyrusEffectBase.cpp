@@ -5,14 +5,14 @@
 #include "script_objects/MpFormGameObject.h"
 
 VarValue PapyrusEffectBase::Play(VarValue self,
-                              const std::vector<VarValue>& arguments)
+                                 const std::vector<VarValue>& arguments)
 {
   Helper(self, "Play", arguments);
   return VarValue::None();
 }
 
 VarValue PapyrusEffectBase::Stop(VarValue self,
-                              const std::vector<VarValue>& arguments)
+                                 const std::vector<VarValue>& arguments)
 {
   Helper(self, "Stop", arguments);
   return VarValue::None();
@@ -26,7 +26,7 @@ void PapyrusEffectBase::Register(
 }
 
 void PapyrusEffectBase::Helper(VarValue& self, const char* funcName,
-                            const std::vector<VarValue>& arguments)
+                               const std::vector<VarValue>& arguments)
 {
   const auto& selfRec = GetRecordPtr(self);
   if (selfRec.rec) {

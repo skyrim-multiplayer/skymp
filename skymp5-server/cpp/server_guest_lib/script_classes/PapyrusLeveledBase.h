@@ -14,6 +14,7 @@ public:
 
   void Register(VirtualMachine& vm,
                 std::shared_ptr<IPapyrusCompatibilityPolicy> policy) override;
+
 private:
   std::string strName;
 };
