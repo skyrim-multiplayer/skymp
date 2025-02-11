@@ -228,7 +228,7 @@ export class AuthService extends ClientListener {
         this.sp.win32.loadUrl(this.patreonUrl);
         break;
       case events.updateRequired:
-        this.sp.win32.loadUrl("https://skymp.net/AlternativeDownload");
+        this.sp.win32.loadUrl("https://skymp.net/UpdInstall");
         break;
       case events.backToLogin:
         this.sp.browser.executeJavaScript(new FunctionInfo(this.browsersideWidgetSetter).getText({ events, browserState, authData: authData }));
