@@ -57,5 +57,3 @@ PapyrusClassesFactory::CreateAndRegister(
 
   return result;
 }
-
-
