@@ -1,5 +1,6 @@
-#include "NullPointerException.h"
 #include "ObjectReferenceApi.h"
+
+#include "NullPointerException.h"
 
 RE::TESObjectREFR* GetArgObjectReference(const JsValue& arg)
 {
