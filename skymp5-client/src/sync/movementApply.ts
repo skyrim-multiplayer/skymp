@@ -174,7 +174,8 @@ const translateTo = (refr: ObjectReference, m: Movement) => {
     m.runMode !== "Standing" ||
     m.isInJumpState ||
     ObjectReferenceEx.getDistanceNoZ(refrRealPos, gTempTargetPos) > 8 ||
-    angleDiff > 80
+    angleDiff > 80 ||
+    Actor.from(refr)?.getSitState() === 3
   ) {
     const actor = Actor.from(refr);
     if (actor && actor.getActorValue("Variable10") < -999) return;

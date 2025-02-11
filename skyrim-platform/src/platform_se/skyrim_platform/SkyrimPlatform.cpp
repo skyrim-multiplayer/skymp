@@ -21,6 +21,7 @@
 #include "TextApi.h"
 #include "ThreadPoolWrapper.h"
 #include "Win32Api.h"
+#include "ObjectReferenceApi.h"
 
 #include "IPC.h" // IPC::Call
 
@@ -263,6 +264,7 @@ private:
                            InventoryApi::Register(e);
                            MagicApi::Register(e);
                            ConstEnumApi::Register(e, engine);
+                           ObjectReferenceApi::Register(e);
                            CallNativeApi::Register(
                              e, [this] { return nativeCallRequirements; });
                            e.SetProperty("settings", getSettings, nullptr);
