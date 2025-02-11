@@ -17,11 +17,11 @@
 #include "LoadGameApi.h"
 #include "MagicApi.h"
 #include "MpClientPluginApi.h"
+#include "ObjectReferenceApi.h"
 #include "SkyrimPlatformProxy.h"
 #include "TextApi.h"
 #include "ThreadPoolWrapper.h"
 #include "Win32Api.h"
-#include "ObjectReferenceApi.h"
 
 #include "IPC.h" // IPC::Call
 
