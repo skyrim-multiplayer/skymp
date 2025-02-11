@@ -13,7 +13,7 @@ RE::TESObjectREFR* GetArgObjectReference(const JsValue& arg)
   return refr;
 }
 
-JsValue ActorApi::SetCollision(const JsFunctionArguments& args)
+JsValue ObjectReferenceApi::SetCollision(const JsFunctionArguments& args)
 {
   auto refr = GetArgObjectReference(args[1]);
   refr->SetCollision(static_cast<bool>(args[2]));
