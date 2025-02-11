@@ -39,3 +39,8 @@ void PapyrusLeveledBase::Register(
 
   AddMethod(vm, "GetNthForm", &PapyrusLeveledBase::GetNthForm);
 }
+
+PapyrusLeveledBase::PapyrusLeveledBase(const std::string& name)
+  : strName(name)
+{
+}

@@ -1,6 +1,7 @@
 #include "PapyrusDebug.h"
 
 #include "MpActor.h"
+#include "SpSnippetFunctionGen.h"
 #include "script_objects/MpFormGameObject.h"
 
 VarValue PapyrusDebug::Notification(VarValue self,

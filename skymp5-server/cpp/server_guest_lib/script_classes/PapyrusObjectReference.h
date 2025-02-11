@@ -1,6 +1,5 @@
 #pragma once
 #include "IPapyrusClass.h"
-#include <vector>
 
 class PapyrusObjectReference final
   : public IPapyrusClass<PapyrusObjectReference>

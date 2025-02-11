@@ -1,6 +1,10 @@
 #pragma once
 #include "IPapyrusClass.h"
 
+namespace espm {
+class RecordHeader;
+}
+
 class PapyrusFaction final : public IPapyrusClass<PapyrusFaction>
 {
 public:

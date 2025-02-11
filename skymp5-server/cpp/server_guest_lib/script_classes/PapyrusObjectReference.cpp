@@ -5,6 +5,7 @@
 #include "LocationalData.h"
 #include "MpActor.h"
 #include "MpObjectReference.h"
+#include "SpSnippetFunctionGen.h"
 #include "TimeUtils.h"
 #include "WorldState.h"
 #include "script_objects/EspmGameObject.h"

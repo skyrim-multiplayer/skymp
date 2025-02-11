@@ -1,8 +1,14 @@
 #include "PapyrusEffectBase.h"
 
+#include "SpSnippetFunctionGen.h"
 #include "WorldState.h"
 #include "script_objects/EspmGameObject.h"
 #include "script_objects/MpFormGameObject.h"
+
+PapyrusEffectBase::PapyrusEffectBase(const std::string& name)
+  : strName(name)
+{
+}
 
 VarValue PapyrusEffectBase::Play(VarValue self,
                                  const std::vector<VarValue>& arguments)

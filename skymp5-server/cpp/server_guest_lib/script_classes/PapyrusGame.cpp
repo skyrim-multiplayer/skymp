@@ -1,6 +1,7 @@
 #include "PapyrusGame.h"
 #include "PapyrusFormList.h"
 
+#include "SpSnippetFunctionGen.h"
 #include "WorldState.h"
 #include "libespm/Combiner.h"
 #include "script_objects/EspmGameObject.h"

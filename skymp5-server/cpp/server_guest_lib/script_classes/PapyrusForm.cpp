@@ -6,6 +6,7 @@
 #include "WorldState.h"
 #include "script_objects/EspmGameObject.h"
 #include "script_objects/MpFormGameObject.h"
+#include "spdlog/spdlog.h"
 
 #include <string>
 #include <unordered_map>

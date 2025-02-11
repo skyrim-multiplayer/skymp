@@ -1,6 +1,7 @@
 #include "PapyrusActor.h"
 
 #include "MpActor.h"
+#include "SpSnippetFunctionGen.h"
 #include "script_objects/EspmGameObject.h"
 #include "script_objects/MpFormGameObject.h"
 

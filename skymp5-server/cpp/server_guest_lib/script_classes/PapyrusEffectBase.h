@@ -4,10 +4,7 @@
 class PapyrusEffectBase : public IPapyrusClass<PapyrusEffectBase>
 {
 public:
-  PapyrusEffectBase(const std::string& name)
-    : strName(name)
-  {
-  }
+  PapyrusEffectBase(const std::string& name);
   const char* GetName() override { return strName.c_str(); }
   VarValue Play(VarValue self, const std::vector<VarValue>& arguments);
   VarValue Stop(VarValue self, const std::vector<VarValue>& arguments);
