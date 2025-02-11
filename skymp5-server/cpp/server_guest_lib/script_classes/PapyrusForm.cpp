@@ -36,9 +36,12 @@ VarValue PapyrusForm::RegisterForSingleUpdate(
       auto promise = worldState->SetTimer(time, &timerId);
       uint32_t formId = form->GetFormId();
       promise.Then([form, formId, worldState](const Viet::Void&) {
-        if (form == worldState->LookupFormById(formId).get()) {
-          form->Update();
+        if (form != worldState->LookupFormById(formId).get()) {
+          spdlog::error("form mismatch on timer resolve: formId={:x}", formId);
+          return;
         }
+        form->SetSingleUpdateTimerId(std::nullopt);
+        form->Update();
       });
 
       form->SetSingleUpdateTimerId(timerId);
