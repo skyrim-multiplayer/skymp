@@ -1,7 +1,6 @@
 #pragma once
 #include "MpActor.h"
 #include "SpSnippet.h"
-#include "SpSnippetFunctionGen.h"
 #include "papyrus-vm/VirtualMachine.h"
 #include <cstdio>
 
