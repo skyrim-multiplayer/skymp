@@ -1,18 +1,26 @@
 #include "SweetPieDamageFormula.h"
 
 #include <cstdint>
-#include <spdlog/spdlog.h>
 #include <stdexcept>
 
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <nlohmann/json.hpp>
+#include <spdlog/spdlog.h>
 
 #include "HitData.h"
 #include "MpActor.h"
 #include "SpellCastData.h"
 #include "libespm/Loader.h"
-#include "libespm/espm.h"
+
+namespace {
+
+bool IsPlayerBaseId(const MpActor& actor)
+{
+  return actor.GetBaseId() == 0x7;
+}
+
+} // namespace
 
 SweetPieDamageFormula::SweetPieDamageFormula(
   std::unique_ptr<IDamageFormula> baseFormula_, const nlohmann::json& config)
@@ -36,6 +44,21 @@ SweetPieDamageFormulaSettings SweetPieDamageFormula::ParseConfig(
   if (result.damageMultByLevel.size() != 5) {
     throw std::runtime_error("error parsing damage formula config: "
                              "damageMultByLevel must have 5 elements");
+  }
+
+  if (auto it = config.find("damageMultByLevelTargetNpc");
+      it != config.end()) {
+    result.damageMultByLevelTargetNpc.emplace();
+
+    for (const auto& level : *it) {
+      result.damageMultByLevelTargetNpc->push_back(level.get<float>());
+    }
+
+    if (result.damageMultByLevelTargetNpc->size() != 5) {
+      throw std::runtime_error(
+        "error parsing damage formula config: damageMultByLevelTargetNpc must "
+        "have 5 elements");
+    }
   }
 
   for (const auto& keywordData : config["weaponKeywords"].items()) {
@@ -94,19 +117,22 @@ float SweetPieDamageFormula::CalculateDamage(const MpActor& aggressor,
                 aggressor.GetFormId(), target.GetFormId(),
                 fmt::join(keywordNames.begin(), keywordNames.end(), ","));
 
+  const auto& levelMapping =
+    !IsPlayerBaseId(target) && settings->damageMultByLevelTargetNpc
+    ? *settings->damageMultByLevelTargetNpc
+    : settings->damageMultByLevel;
   for (const auto& keyword : keywordNames) {
-    const auto it =
-      settings->weaponKeywords.find(keyword); // TODO: rename weaponKeywords?
+    const auto it = settings->weaponKeywords.find(keyword);
     if (it == settings->weaponKeywords.end()) {
       continue;
     }
     const auto& levelItemsFormIds = it->second;
     for (int lvl = 4; lvl >= 1; --lvl) {
       if (aggressor.GetInventory().HasItem(levelItemsFormIds[lvl - 1])) {
-        return baseDamage * settings->damageMultByLevel[lvl];
+        return baseDamage * levelMapping[lvl];
       }
     }
-    return baseDamage * settings->damageMultByLevel[0];
+    return baseDamage * levelMapping[0];
   }
 
   return baseDamage;
