@@ -1613,6 +1613,16 @@ export interface ActorAnimationVariables {
 
 export declare function setInventory(formId: number, inventory: Inventory): void;
 
+export interface RayCastResult
+{
+  pos: number[];
+  normal: number[];
+};
+
+export declare function actorSit(formId: number): void;
+export declare function actorGetUp(actorId: number): void;
+export declare function actorRaycast(actorId: number, r: number): RayCastResult;
+export declare function calculateAnticipatedLocation(actorId: number): number[];
 export declare function castSpellImmediate(actorCasterFormId: number, castingSource: SpellType, formIdSpell: number, formIdTarget: number, aimAngle: number, aimHeading: number, animationVariables: ActorAnimationVariables): void;
 export declare function interruptCast(actorCasterFormId: number, castingSource: SpellType, animationVariables: ActorAnimationVariables): void;
 export declare function getAnimationVariablesFromActor(actorFormId: number): ActorAnimationVariables;
