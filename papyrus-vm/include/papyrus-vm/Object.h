@@ -1,8 +1,10 @@
 #pragma once
+
 #include <cstdint>
 #include <string>
 #include <vector>
 
+#include "FunctionInfo.h"
 #include "VarValue.h"
 
 struct Object
