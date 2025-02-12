@@ -75,16 +75,28 @@ FunctionInfo ActivePexInstance::GetFunctionByName(const char* name,
 std::string ActivePexInstance::GetActiveStateName() const
 {
   VarValue* var = nullptr;
+
   try {
     var = variables->GetVariableByName("::State", *sourcePex.fn());
+  } catch (std::exception& e) {
+    spdlog::error("ActivePexInstance::GetActiveStateName - "
+                  "GetVariableByName(::State) unexpectedly errored: '{}'",
+                  e.what());
+    return "";
   } catch (...) {
-    throw std::runtime_error(
-      " Papyrus VM: GetVariableByName must never throw when "
-      "::State variable is  requested");
+    spdlog::critical(
+      "ActivePexInstance::GetActiveStateName - GetVariableByName(::State) "
+      "unexpectedly errored: unknown error");
+    std::terminate();
+    return "";
   }
-  if (!var)
-    throw std::runtime_error(
-      "Papyrus VM: ::State variable doesn't exist in ActivePexInstance");
+
+  if (!var) {
+    spdlog::error("ActivePexInstance::GetActiveStateName - ::State variable "
+                  "doesn't exist in ActivePexInstance");
+    return "";
+  }
+
   return static_cast<const char*>(*var);
 }
 
@@ -186,8 +198,9 @@ bool ActivePexInstance::EnsureCallResultIsSynchronous(
   return false;
 }
 
-void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
-                                      const std::vector<VarValue*>& args)
+void ActivePexInstance::ExecuteOpCode(
+  ExecutionContext* ctx, uint8_t op,
+  const std::vector<VarValue*>& args) noexcept
 {
   auto argsForCall = GetArgsForCall(op, args);
 
@@ -285,96 +298,80 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
     case OpcodesImplementation::Opcodes::op_CallParent: {
       auto parentName =
         parentInstance ? parentInstance->GetSourcePexName() : "";
-      try {
-        auto gameObject = static_cast<IGameObject*>(activeInstanceOwner);
+      auto gameObject = static_cast<IGameObject*>(activeInstanceOwner);
 
-        std::vector<std::shared_ptr<ActivePexInstance>>
-          activePexInstancesForCallParent;
-        if (gameObject) {
-          activePexInstancesForCallParent =
-            gameObject->ListActivePexInstances();
+      std::vector<std::shared_ptr<ActivePexInstance>>
+        activePexInstancesForCallParent;
+      if (gameObject) {
+        activePexInstancesForCallParent = gameObject->ListActivePexInstances();
 
-          std::string toFind = sourcePex.source;
+        std::string toFind = sourcePex.source;
 
-          for (auto& v : activePexInstancesForCallParent) {
-            if (!Utils::stricmp(v->GetSourcePexName().data(), toFind.data())) {
-              v = parentInstance;
-              spdlog::trace("CallParent: redirecting method call {} -> {}",
-                            toFind, parentName);
-            }
+        for (auto& v : activePexInstancesForCallParent) {
+          if (!Utils::stricmp(v->GetSourcePexName().data(), toFind.data())) {
+            v = parentInstance;
+            spdlog::trace("CallParent: redirecting method call {} -> {}",
+                          toFind, parentName);
           }
         }
+      }
 
-        if (spdlog::should_log(spdlog::level::trace)) {
-          std::vector<std::string> argsForCallStr;
-          for (auto v : argsForCall) {
-            argsForCallStr.push_back(v.ToString());
-          }
-          spdlog::trace("CallParent: calling with args {}",
-                        fmt::join(argsForCallStr, ", "));
+      if (spdlog::should_log(spdlog::level::trace)) {
+        std::vector<std::string> argsForCallStr;
+        for (auto v : argsForCall) {
+          argsForCallStr.push_back(v.ToString());
         }
+        spdlog::trace("CallParent: calling with args {}",
+                      fmt::join(argsForCallStr, ", "));
+      }
 
-        auto res = parentVM->CallMethod(gameObject, (const char*)(*args[0]),
-                                        argsForCall, ctx->stackData,
-                                        &activePexInstancesForCallParent);
-        if (EnsureCallResultIsSynchronous(res, ctx))
-          *args[1] = res;
-      } catch (std::exception& e) {
-        if (auto handler = parentVM->GetExceptionHandler())
-          handler({ e.what(), sourcePex.fn()->source });
-        else
-          throw;
+      auto res =
+        parentVM->CallMethod(gameObject, (const char*)(*args[0]), argsForCall,
+                             ctx->stackData, &activePexInstancesForCallParent);
+      if (EnsureCallResultIsSynchronous(res, ctx)) {
+        *args[1] = res;
       }
     } break;
     case OpcodesImplementation::Opcodes::op_CallMethod: {
       VarValue* object = IsSelfStr(*args[1]) ? &activeInstanceOwner : args[1];
 
-      // BYOHRelationshipAdoptionPetDoorTrigger
+      // BYOHRelationshipAdoptionPetDoorTrigger in Skyrim Legendary Edition
       if (args[0]->GetType() != VarValue::kType_String &&
-          args[0]->GetType() != VarValue::kType_Identifier)
-        throw std::runtime_error("Anomaly in CallMethod. String expected");
+          args[0]->GetType() != VarValue::kType_Identifier) {
+        *args[2] = VarValue::None();
+        spdlog::error("OpcodesImplementation::Opcodes::op_CallMethod - "
+                      "anomaly, string expected");
+        break;
+      }
 
       std::string functionName = (const char*)(*args[0]);
       static const std::string nameOnBeginState = "onBeginState";
       static const std::string nameOnEndState = "onEndState";
-      try {
-        if (functionName == nameOnBeginState ||
-            functionName == nameOnEndState) {
-          // TODO: consider using CallMethod here. I'm afraid that this event
-          // will pollute other scripts attached to an object
-          parentVM->SendEvent(this, functionName.c_str(), argsForCall);
-          break;
-        } else {
-          auto nullableGameObject = static_cast<IGameObject*>(*object);
-          auto res =
-            parentVM->CallMethod(nullableGameObject, functionName.c_str(),
-                                 argsForCall, ctx->stackData);
-          spdlog::trace("callmethod object={} funcName={} result={}",
-                        object->ToString(), functionName, res.ToString());
-          if (EnsureCallResultIsSynchronous(res, ctx)) {
-            *args[2] = res;
-          }
+
+      if (functionName == nameOnBeginState || functionName == nameOnEndState) {
+        // TODO: consider using CallMethod here. I'm afraid that this event
+        // will pollute other scripts attached to an object
+        parentVM->SendEvent(this, functionName.c_str(), argsForCall);
+        break;
+      } else {
+        auto nullableGameObject = static_cast<IGameObject*>(*object);
+        auto res =
+          parentVM->CallMethod(nullableGameObject, functionName.c_str(),
+                               argsForCall, ctx->stackData);
+        spdlog::trace("callmethod object={} funcName={} result={}",
+                      object->ToString(), functionName, res.ToString());
+        if (EnsureCallResultIsSynchronous(res, ctx)) {
+          *args[2] = res;
         }
-      } catch (std::exception& e) {
-        if (auto handler = parentVM->GetExceptionHandler())
-          handler({ e.what(), sourcePex.fn()->source });
-        else
-          throw;
       }
     } break;
     case OpcodesImplementation::Opcodes::op_CallStatic: {
       const char* className = (const char*)(*args[0]);
       const char* functionName = (const char*)(*args[1]);
-      try {
-        auto res = parentVM->CallStatic(className, functionName, argsForCall,
-                                        ctx->stackData);
-        if (EnsureCallResultIsSynchronous(res, ctx))
-          *args[2] = res;
-      } catch (std::exception& e) {
-        if (auto handler = parentVM->GetExceptionHandler())
-          handler({ e.what(), sourcePex.fn()->source });
-        else
-          throw;
+      auto res = parentVM->CallStatic(className, functionName, argsForCall,
+                                      ctx->stackData);
+      if (EnsureCallResultIsSynchronous(res, ctx)) {
+        *args[2] = res;
       }
     } break;
     case OpcodesImplementation::Opcodes::op_Return:
@@ -453,8 +450,26 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
               spdlog::trace("propget do nothing: prop {} not found",
                             propertyName);
             } else {
-              VarValue* var = inst->variables->GetVariableByName(
-                it->autoVarName.data(), *inst->sourcePex.fn());
+
+              VarValue* var;
+
+              try {
+                var = inst->variables->GetVariableByName(
+                  it->autoVarName.data(), *inst->sourcePex.fn());
+
+              } catch (std::exception& e) {
+                spdlog::error("OpcodesImplementation::Opcodes::op_PropGet - "
+                              "GetVariableByName errored with '{}'",
+                              e.what());
+                var = nullptr;
+              } catch (...) {
+                spdlog::critical(
+                  "OpcodesImplementation::Opcodes::op_PropGet - "
+                  "GetVariableByName errored with unknown error");
+                var = nullptr;
+                std::terminate();
+              }
+
               if (var) {
                 *args[2] = *var;
               } else {
@@ -539,8 +554,24 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
               spdlog::trace("propset do nothing: prop {} not found",
                             propertyName);
             } else {
-              VarValue* var = inst->variables->GetVariableByName(
-                it->autoVarName.data(), *inst->sourcePex.fn());
+              VarValue* var;
+
+              try {
+                var = inst->variables->GetVariableByName(
+                  it->autoVarName.data(), *inst->sourcePex.fn());
+              } catch (std::exception& e) {
+                spdlog::error("OpcodesImplementation::Opcodes::op_PropSet - "
+                              "GetVariableByName errored with '{}'",
+                              e.what());
+                var = nullptr;
+              } catch (...) {
+                spdlog::critical(
+                  "OpcodesImplementation::Opcodes::op_PropSet - "
+                  "GetVariableByName errored with unknown error");
+                var = nullptr;
+                std::terminate();
+              }
+
               if (var) {
                 *var = *args[2];
               } else {
@@ -564,8 +595,8 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
           element = VarValue(type);
         }
       } else {
-        throw std::runtime_error(
-          "Papyrus VM: null argument for Opcodes::op_PropSet");
+        spdlog::warn("OpcodesImplementation::Opcodes::op_Array_Create - "
+                     "Zero-size array creation attempt");
       }
       break;
     case OpcodesImplementation::Opcodes::op_Array_Length:
@@ -590,8 +621,8 @@ void ActivePexInstance::ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
       if ((*args[0]).pArray != nullptr) {
         (*args[0]).pArray->at((int32_t)(*args[1])) = *args[2];
       } else {
-        throw std::runtime_error(
-          "Papyrus VM: null argument for op_Array_SetElement opcode");
+        spdlog::error("OpcodesImplementation::Opcodes::op_Array_SetElement - "
+                      "null array passed");
       }
       break;
     case OpcodesImplementation::Opcodes::op_Array_FindElement:
@@ -700,7 +731,7 @@ ActivePexInstance::TransformInstructions(
 }
 
 VarValue ActivePexInstance::ExecuteAll(
-  ExecutionContext& ctx, std::optional<VarValue> previousCallResult)
+  ExecutionContext& ctx, std::optional<VarValue> previousCallResult) noexcept
 {
   auto pipex = sourcePex.fn();
 
@@ -714,6 +745,7 @@ VarValue ActivePexInstance::ExecuteAll(
     *opCode[i].second[resultIdx] = *previousCallResult;
   }
 
+  // TODO: log and handle this
   assert(opCode.size() == ctx.instructions.size());
 
   for (; ctx.line < opCode.size(); ++ctx.line) {
@@ -738,7 +770,9 @@ VarValue ActivePexInstance::StartFunction(FunctionInfo& function,
                                           std::shared_ptr<StackData> stackData)
 {
   if (!stackData) {
-    throw std::runtime_error("An empty stackData passed to StartFunction");
+    spdlog::error("ActivePexInstance::StartFunction - An empty stackData "
+                  "passed to StartFunction");
+    return VarValue::None();
   }
 
   thread_local StackDepthHolder g_stackDepthHolder;
@@ -850,8 +884,11 @@ uint8_t ActivePexInstance::GetArrayElementType(uint8_t type)
 
       break;
     default:
-      throw std::runtime_error(
-        "Papyrus VM: Unable to get required type ::GetArrayElementType");
+      spdlog::error("ActivePexInstance::GetArrayElementType - Unable to get "
+                    "required type for {}",
+                    static_cast<int>(type));
+      returnType = VarValue::kType_Object;
+      break;
   }
 
   return returnType;
@@ -883,8 +920,11 @@ uint8_t ActivePexInstance::GetArrayTypeByElementType(uint8_t type)
 
       break;
     default:
-      throw std::runtime_error("Papyrus VM:  Unable to get required type "
-                               "::GetArrayTypeByElementType");
+      spdlog::error("ActivePexInstance::GetArrayTypeByElementType - Unable to "
+                    "get required type for {}",
+                    static_cast<int>(type));
+      returnType = VarValue::kType_ObjectArray;
+      break;
   }
 
   return returnType;
@@ -1063,13 +1103,17 @@ VarValue& ActivePexInstance::GetVariableValueByName(std::vector<Local>* locals,
             variables->GetVariableByName(name.data(), *sourcePex.fn()))
         return *var;
   } catch (std::exception& e) {
-    if (auto handler = parentVM->GetExceptionHandler()) {
-      noneVar = VarValue::None();
-      handler({ e.what(), sourcePex.fn()->source });
-      return noneVar;
-    } else {
-      throw;
-    }
+    spdlog::error("ActivePexInstance::GetVariableValueByName - "
+                  "GetVariableByName errored with '{}'",
+                  e.what());
+    noneVar = VarValue::None();
+    return noneVar;
+  } catch (...) {
+    spdlog::critical("ActivePexInstance::GetVariableValueByName - "
+                     "GetVariableByName errored with unknown error");
+    noneVar = VarValue::None();
+    std::terminate();
+    return noneVar;
   }
 
   for (auto& _name : identifiersValueNameCache) {
