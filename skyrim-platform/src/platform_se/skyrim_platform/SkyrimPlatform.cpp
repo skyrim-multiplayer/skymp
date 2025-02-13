@@ -17,6 +17,7 @@
 #include "LoadGameApi.h"
 #include "MagicApi.h"
 #include "MpClientPluginApi.h"
+#include "ObjectReferenceApi.h"
 #include "SkyrimPlatformProxy.h"
 #include "TextApi.h"
 #include "ThreadPoolWrapper.h"
@@ -263,6 +264,7 @@ private:
                            InventoryApi::Register(e);
                            MagicApi::Register(e);
                            ConstEnumApi::Register(e, engine);
+                           ObjectReferenceApi::Register(e);
                            CallNativeApi::Register(
                              e, [this] { return nativeCallRequirements; });
                            e.SetProperty("settings", getSettings, nullptr);

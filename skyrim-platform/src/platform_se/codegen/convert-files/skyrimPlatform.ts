@@ -1618,6 +1618,8 @@ export declare function interruptCast(actorCasterFormId: number, castingSource: 
 export declare function getAnimationVariablesFromActor(actorFormId: number): ActorAnimationVariables;
 export declare function applyAnimationVariablesToActor(actorFormId: number, animationVariables: ActorAnimationVariables): boolean;
 
+export declare function setCollision(refrFormId: number, collision: boolean): void;
+
 // Based on Form.pex
 export declare class Form extends PapyrusObject {
   static from(papyrusObject: PapyrusObject | null): Form | null

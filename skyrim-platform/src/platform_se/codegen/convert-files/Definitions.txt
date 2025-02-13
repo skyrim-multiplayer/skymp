@@ -1612,3 +1612,5 @@ export declare function castSpellImmediate(actorCasterFormId: number, castingSou
 export declare function interruptCast(actorCasterFormId: number, castingSource: SpellType, animationVariables: ActorAnimationVariables): void;
 export declare function getAnimationVariablesFromActor(actorFormId: number): ActorAnimationVariables;
 export declare function applyAnimationVariablesToActor(actorFormId: number, animationVariables: ActorAnimationVariables): boolean;
+
+export declare function setCollision(refrFormId: number, collision: boolean): void;
