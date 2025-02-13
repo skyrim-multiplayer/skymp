@@ -1,5 +1,8 @@
 #include "PapyrusFaction.h"
 
+#include "WorldState.h"
+#include "script_objects/EspmGameObject.h"
+
 VarValue PapyrusFaction::GetReaction(VarValue self,
                                      const std::vector<VarValue>& arguments)
 {
@@ -26,4 +29,17 @@ VarValue PapyrusFaction::GetReaction(VarValue self,
   }
 
   return VarValue(reaction);
+}
+
+void PapyrusFaction::Register(
+  VirtualMachine& vm, std::shared_ptr<IPapyrusCompatibilityPolicy> policy)
+{
+  compatibilityPolicy = policy;
+
+  factions = compatibilityPolicy->GetWorldState()
+               ->GetEspm()
+               .GetBrowser()
+               .GetRecordsByType("FACT");
+
+  AddMethod(vm, "GetReaction", &PapyrusFaction::GetReaction);
 }

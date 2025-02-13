@@ -11,10 +11,5 @@ public:
   VarValue Find(VarValue self, const std::vector<VarValue>& arguments) const;
 
   void Register(VirtualMachine& vm,
-                std::shared_ptr<IPapyrusCompatibilityPolicy> policy) override
-  {
-    AddMethod(vm, "GetSize", &PapyrusFormList::GetSize);
-    AddMethod(vm, "GetAt", &PapyrusFormList::GetAt);
-    AddMethod(vm, "Find", &PapyrusFormList::Find);
-  }
+                std::shared_ptr<IPapyrusCompatibilityPolicy> policy) override;
 };

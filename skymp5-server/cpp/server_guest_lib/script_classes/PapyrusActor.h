@@ -1,17 +1,15 @@
 #pragma once
 #include "IPapyrusClass.h"
-#include "SpSnippetFunctionGen.h"
-#include "script_objects/EspmGameObject.h"
 
 class PapyrusActor final : public IPapyrusClass<PapyrusActor>
 {
 public:
   const char* GetName() override { return "Actor"; }
 
-  DEFINE_METHOD_SPSNIPPET(DrawWeapon);
-  DEFINE_METHOD_SPSNIPPET(UnequipAll);
-  DEFINE_METHOD_SPSNIPPET(PlayIdle);
-  DEFINE_METHOD_SPSNIPPET(GetSitState);
+  VarValue DrawWeapon(VarValue self, const std ::vector<VarValue>& arguments);
+  VarValue UnequipAll(VarValue self, const std ::vector<VarValue>& arguments);
+  VarValue PlayIdle(VarValue self, const std ::vector<VarValue>& arguments);
+  VarValue GetSitState(VarValue self, const std ::vector<VarValue>& arguments);
 
   VarValue IsWeaponDrawn(VarValue self,
                          const std::vector<VarValue>& arguments);
@@ -68,6 +66,4 @@ public:
 
   void Register(VirtualMachine& vm,
                 std::shared_ptr<IPapyrusCompatibilityPolicy> policy) override;
-
-  std::shared_ptr<IPapyrusCompatibilityPolicy> compatibilityPolicy;
 };

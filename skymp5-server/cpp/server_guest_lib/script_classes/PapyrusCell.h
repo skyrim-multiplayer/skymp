@@ -1,7 +1,5 @@
 #pragma once
 #include "IPapyrusClass.h"
-#include "SpSnippetFunctionGen.h"
-#include "script_objects/EspmGameObject.h"
 
 class PapyrusCell final : public IPapyrusClass<PapyrusCell>
 {
@@ -14,6 +12,4 @@ public:
 
   void Register(VirtualMachine& vm,
                 std::shared_ptr<IPapyrusCompatibilityPolicy> policy) override;
-
-  std::shared_ptr<IPapyrusCompatibilityPolicy> compatibilityPolicy;
 };

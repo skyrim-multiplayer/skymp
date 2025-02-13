@@ -58,3 +58,11 @@ VarValue PapyrusFormList::Find(VarValue self,
 
   return VarValue::None();
 }
+
+void PapyrusFormList::Register(
+  VirtualMachine& vm, std::shared_ptr<IPapyrusCompatibilityPolicy> policy)
+{
+  AddMethod(vm, "GetSize", &PapyrusFormList::GetSize);
+  AddMethod(vm, "GetAt", &PapyrusFormList::GetAt);
+  AddMethod(vm, "Find", &PapyrusFormList::Find);
+}

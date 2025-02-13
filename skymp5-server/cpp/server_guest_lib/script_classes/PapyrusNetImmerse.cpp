@@ -1,4 +1,5 @@
 #include "PapyrusNetImmerse.h"
+#include "SpSnippetFunctionGen.h"
 #include "script_objects/EspmGameObject.h"
 #include "script_objects/MpFormGameObject.h"
 

@@ -1,16 +1,17 @@
 #pragma once
 #include "IPapyrusClass.h"
-#include "SpSnippetFunctionGen.h"
 
 class PapyrusGame final : public IPapyrusClass<PapyrusGame>
 {
 public:
   const char* GetName() override { return "Game"; }
 
-  DEFINE_STATIC_SPSNIPPET(ForceThirdPerson);
-  DEFINE_STATIC_SPSNIPPET(DisablePlayerControls);
-  DEFINE_STATIC_SPSNIPPET(EnablePlayerControls);
-
+  VarValue ForceThirdPerson(VarValue self,
+                            const std ::vector<VarValue>& arguments);
+  VarValue DisablePlayerControls(VarValue self,
+                                 const std ::vector<VarValue>& arguments);
+  VarValue EnablePlayerControls(VarValue self,
+                                const std ::vector<VarValue>& arguments);
   VarValue IncrementStat(VarValue self,
                          const std::vector<VarValue>& arguments);
 
@@ -41,9 +42,6 @@ public:
 
   void Register(VirtualMachine& vm,
                 std::shared_ptr<IPapyrusCompatibilityPolicy> policy) override;
-
-public:
-  std::shared_ptr<IPapyrusCompatibilityPolicy> compatibilityPolicy;
 
 private:
   void RaceMenuHelper(VarValue& self, const char* funcName,

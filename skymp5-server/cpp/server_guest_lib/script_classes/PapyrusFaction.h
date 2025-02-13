@@ -1,7 +1,9 @@
 #pragma once
 #include "IPapyrusClass.h"
-#include "WorldState.h"
-#include "script_objects/EspmGameObject.h"
+
+namespace espm {
+class RecordHeader;
+}
 
 class PapyrusFaction final : public IPapyrusClass<PapyrusFaction>
 {
@@ -12,18 +14,7 @@ public:
   // SetReaction ignored, because no way to edit factions forever?
 
   void Register(VirtualMachine& vm,
-                std::shared_ptr<IPapyrusCompatibilityPolicy> policy) override
-  {
-    compatibilityPolicy = policy;
+                std::shared_ptr<IPapyrusCompatibilityPolicy> policy) override;
 
-    factions = compatibilityPolicy->GetWorldState()
-                 ->GetEspm()
-                 .GetBrowser()
-                 .GetRecordsByType("FACT");
-
-    AddMethod(vm, "GetReaction", &PapyrusFaction::GetReaction);
-  }
-
-  std::shared_ptr<IPapyrusCompatibilityPolicy> compatibilityPolicy;
   std::vector<const std::vector<const espm::RecordHeader*>*> factions;
 };

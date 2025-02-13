@@ -1,11 +1,11 @@
 #include "PapyrusActor.h"
 
 #include "MpActor.h"
+#include "SpSnippetFunctionGen.h"
 #include "script_objects/EspmGameObject.h"
 #include "script_objects/MpFormGameObject.h"
 
 #include "EvaluateTemplate.h"
-#include "SpSnippetFunctionGen.h"
 #include "papyrus-vm/CIString.h"
 #include <algorithm>
 
@@ -23,6 +23,34 @@ espm::ActorValue ConvertToAV(CIString actorValueName)
   }
   return espm::ActorValue::None;
 }
+}
+
+VarValue PapyrusActor::DrawWeapon(VarValue self,
+                                  const std::vector<VarValue>& arguments)
+{
+  return MakeSPSnippetPromise(GetName(), "DrawWeapon", compatibilityPolicy,
+                              self, arguments, true, true);
+}
+
+VarValue PapyrusActor::UnequipAll(VarValue self,
+                                  const std::vector<VarValue>& arguments)
+{
+  return MakeSPSnippetPromise(GetName(), "UnequipAll", compatibilityPolicy,
+                              self, arguments, true, true);
+}
+
+VarValue PapyrusActor::PlayIdle(VarValue self,
+                                const std::vector<VarValue>& arguments)
+{
+  return MakeSPSnippetPromise(GetName(), "PlayIdle", compatibilityPolicy, self,
+                              arguments, true, true);
+}
+
+VarValue PapyrusActor::GetSitState(VarValue self,
+                                   const std::vector<VarValue>& arguments)
+{
+  return MakeSPSnippetPromise(GetName(), "GetSitState", compatibilityPolicy,
+                              self, arguments, true, true);
 }
 
 VarValue PapyrusActor::IsWeaponDrawn(VarValue self,
