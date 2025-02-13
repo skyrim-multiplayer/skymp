@@ -19,23 +19,20 @@
 #include "gamemode_events/UpdateAppearanceAttemptEvent.h"
 #include "script_objects/EspmGameObject.h"
 #include <fmt/format.h>
+#include <future>
 #include <spdlog/spdlog.h>
 #include <unordered_set>
 
 #include "UpdateEquipmentMessage.h"
 
-MpActor* ActionListener::SendToNeighbours(
-  uint32_t idx, const simdjson::dom::element& jMessage,
-  Networking::UserId userId, Networking::PacketData data, size_t length,
-  bool reliable)
-{
-  MpActor* myActor = partOne.serverState.ActorByUser(userId);
-  // The old behavior is doing nothing in that case. This is covered by tests
-  if (!myActor) {
-    spdlog::warn("SendToNeighbours - No actor assigned to user");
-    return nullptr;
-  }
+constexpr int kNumThreadsForThreadPool = 10;
 
+// Supports multithreading. Nothing must mutate the state read by this method
+// while it's executing
+MpActor* ActionListener::SendToNeighbours(uint32_t idx, MpActor* myActor,
+                                          Networking::PacketData data,
+                                          size_t length, bool reliable)
+{
   MpForm* form = partOne.worldState.LookupFormByIdx(idx);
   MpActor* actor = form ? form->AsActor() : nullptr;
   if (!actor) {
@@ -52,7 +49,15 @@ MpActor* ActionListener::SendToNeighbours(
       spdlog::error("SendToNeighbours - No permission to update actor {:x} "
                     "(already owned by user {})",
                     actor->GetFormId(), actorsOwningUserId);
-      partOne.SendHostStop(userId, *actor);
+
+      Networking::UserId myUserId = partOne.serverState.UserByActor(myActor);
+      if (myUserId != Networking::InvalidUserId) {
+        partOne.SendHostStop(myUserId, *actor);
+      }
+
+      // TODO: implement cleaner solution
+      static std::mutex g_hostersEraseMutex;
+      std::lock_guard l(g_hostersEraseMutex);
 
       partOne.worldState.hosters.erase(actor->GetFormId());
       return nullptr;
@@ -68,7 +73,11 @@ MpActor* ActionListener::SendToNeighbours(
       spdlog::error(
         "SendToNeighbours - No permission to update actor {:x} (not a hoster)",
         actor->GetFormId());
-      partOne.SendHostStop(userId, *actor);
+
+      Networking::UserId myUserId = partOne.serverState.UserByActor(myActor);
+      if (myUserId != Networking::InvalidUserId) {
+        partOne.SendHostStop(myUserId, *actor);
+      }
       return nullptr;
     }
   }
@@ -87,9 +96,21 @@ MpActor* ActionListener::SendToNeighbours(uint32_t idx,
                                           const RawMessageData& rawMsgData,
                                           bool reliable)
 {
-  return SendToNeighbours(idx, rawMsgData.parsed, rawMsgData.userId,
-                          rawMsgData.unparsed, rawMsgData.unparsedLength,
-                          reliable);
+  MpActor* myActor = partOne.serverState.ActorByUser(rawMsgData.userId);
+  // The old behavior is doing nothing in that case. This is covered by tests
+  if (!myActor) {
+    spdlog::warn("SendToNeighbours - No actor assigned to user");
+    return nullptr;
+  }
+
+  return SendToNeighbours(idx, myActor, rawMsgData.unparsed,
+                          rawMsgData.unparsedLength, reliable);
+}
+
+ActionListener::ActionListener(PartOne& partOne_)
+  : partOne(partOne_)
+  , threadPool(kNumThreadsForThreadPool)
+{
 }
 
 void ActionListener::OnCustomPacket(const RawMessageData& rawMsgData,
@@ -106,7 +127,31 @@ void ActionListener::OnUpdateMovement(const RawMessageData& rawMsgData,
                                       uint32_t worldOrCell,
                                       const std::string& runMode)
 {
-  auto actor = SendToNeighbours(idx, rawMsgData);
+  MpActor* myActor = partOne.serverState.ActorByUser(rawMsgData.userId);
+  if (!myActor) {
+    spdlog::error("ActionListener::OnUpdateMovement - My actor doesn't exist");
+    return;
+  }
+
+  MpForm* form = partOne.worldState.LookupFormByIdx(idx);
+  MpActor* actor = form ? form->AsActor() : nullptr;
+  if (!actor) {
+    spdlog::error(
+      "ActionListener::OnUpdateMovement - Target actor doesn't exist");
+    return;
+  }
+
+  {
+    // TODO: eliminate copying the message
+    std::vector<uint8_t> rawMsgCopy = std::vector<uint8_t>(
+      rawMsgData.unparsed, rawMsgData.unparsed + rawMsgData.unparsedLength);
+
+    deferredSendToNeighbours.push_back(DeferredSendToNeighboursEntry());
+    deferredSendToNeighbours.back().myActor = myActor;
+    deferredSendToNeighbours.back().rawMsgCopy = std::move(rawMsgCopy);
+  }
+
+  // auto actor = SendToNeighbours(idx, rawMsgData);
   if (actor) {
     DummyMessageOutput msgOutputDummy;
     UserMessageOutput msgOutput(partOne.GetSendTarget(), rawMsgData.userId);
@@ -1195,4 +1240,40 @@ void ActionListener::OnUnknown(const RawMessageData& rawMsgData)
 {
   spdlog::error("Got unhandled message: {}",
                 simdjson::minify(rawMsgData.parsed));
+}
+
+void ActionListener::TickDeferredSendToNeighboursMultithreaded()
+{
+  while (!deferredSendToNeighbours.empty()) {
+    auto entry = std::move(deferredSendToNeighbours.front());
+    deferredSendToNeighbours.pop_front();
+
+    ActionListener* self = this;
+
+    auto idx = entry.idx;
+    auto myActor = entry.myActor;
+    auto rawMsgCopy = std::move(entry.rawMsgCopy);
+
+    std::function<void()> t = [self, idx, myActor,
+                               rawMsgCopy = std::move(rawMsgCopy)]() {
+      try {
+        constexpr auto kReliableFalse = false;
+        self->SendToNeighbours(idx, myActor, rawMsgCopy.data(),
+                               rawMsgCopy.size(), kReliableFalse);
+      } catch (const std::exception& e) {
+        spdlog::error(
+          "ActionListener::TickDeferredSendToNeighboursMultithreaded - "
+          "Exception in task: {}",
+          e.what());
+      }
+    };
+
+    futures.push_back(threadPool.submit_task(t));
+  }
+
+  for (auto& future : futures) {
+    future.wait();
+  }
+
+  futures.clear();
 }

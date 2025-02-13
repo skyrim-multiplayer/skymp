@@ -5,6 +5,8 @@
 #include "PartOne.h"
 #include "UpdateMovementMessage.h" // RunMode
 #include "libespm/Loader.h"
+#include <BS_thread_pool.hpp>
+#include <list>
 
 #include "SpellCastData.h"
 
@@ -23,10 +25,7 @@ public:
     Networking::UserId userId = Networking::InvalidUserId;
   };
 
-  ActionListener(PartOne& partOne_)
-    : partOne(partOne_)
-  {
-  }
+  explicit ActionListener(PartOne& partOne_);
 
   virtual void OnCustomPacket(const RawMessageData& rawMsgData,
                               simdjson::dom::element& content);
@@ -98,11 +97,11 @@ public:
 
   virtual void OnUnknown(const RawMessageData& rawMsgData);
 
+  virtual void TickDeferredSendToNeighboursMultithreaded();
+
 private:
   // Returns user's actor if there is attached one
-  MpActor* SendToNeighbours(uint32_t idx,
-                            const simdjson::dom::element& jMessage,
-                            Networking::UserId userId,
+  MpActor* SendToNeighbours(uint32_t idx, MpActor* myActor,
                             Networking::PacketData data, size_t length,
                             bool reliable);
 
@@ -110,4 +109,23 @@ private:
                             bool reliable = false);
 
   PartOne& partOne;
+
+  struct DeferredSendToNeighboursEntry
+  {
+    DeferredSendToNeighboursEntry() = default;
+    DeferredSendToNeighboursEntry(DeferredSendToNeighboursEntry&& rhs) =
+      default;
+    DeferredSendToNeighboursEntry& operator=(
+      DeferredSendToNeighboursEntry&& rhs) = default;
+
+    uint32_t idx = -1;
+    MpActor* myActor = nullptr;
+    std::vector<uint8_t> rawMsgCopy;
+  };
+
+  std::list<DeferredSendToNeighboursEntry> deferredSendToNeighbours;
+
+  BS::thread_pool threadPool;
+
+  std::vector<std::future<void>> futures;
 };
