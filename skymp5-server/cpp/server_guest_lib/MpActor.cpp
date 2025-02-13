@@ -17,6 +17,7 @@
 #include "SweetPieScript.h"
 #include "TimeUtils.h"
 #include "WorldState.h"
+#include "antigo/Context.h"
 #include "gamemode_events/DeathEvent.h"
 #include "gamemode_events/DropItemEvent.h"
 #include "gamemode_events/EatItemEvent.h"
@@ -190,6 +191,8 @@ void MpActor::EquipBestWeapon()
 
 void MpActor::AddSpell(const uint32_t spellId)
 {
+  ANTIGO_CONTEXT_INIT(ctx);
+
   EditChangeForm([&](MpChangeForm& changeForm) {
     changeForm.learnedSpells.LearnSpell(spellId);
   });
@@ -197,6 +200,8 @@ void MpActor::AddSpell(const uint32_t spellId)
 
 void MpActor::RemoveSpell(const uint32_t spellId)
 {
+  ANTIGO_CONTEXT_INIT(ctx);
+
   EditChangeForm([&](MpChangeForm& changeForm) {
     changeForm.learnedSpells.ForgetSpell(spellId);
   });
@@ -517,6 +522,9 @@ MpChangeForm MpActor::GetChangeForm() const
 
 void MpActor::ApplyChangeForm(const MpChangeForm& newChangeForm)
 {
+  ANTIGO_CONTEXT_INIT(ctx);
+  auto g = ctx.AddLambdaWithRef([&newChangeForm]() { return MpChangeForm::ToJson(newChangeForm).dump(2); });
+  g.Arm();
   if (newChangeForm.recType != MpChangeForm::ACHR) {
     throw std::runtime_error(
       "Expected record type to be ACHR, but found REFR");
@@ -572,6 +580,14 @@ uint32_t MpActor::NextSnippetIndex(
 
 void MpActor::ResolveSnippet(uint32_t snippetIdx, VarValue v)
 {
+  ANTIGO_CONTEXT_INIT(ctx);
+  ctx.AddMessage("next: snippetIdx, papyrus val");
+  // XXX bad naming, it actually means outer scope
+  // ctx.AddLambdaWithOwned([&v]{
+  //   return v.ToString();
+  // });
+  // ctx.LogInnerExecution();
+
   auto it = pImpl->snippetPromises.find(snippetIdx);
   if (it != pImpl->snippetPromises.end()) {
     auto& promise = it->second;
@@ -611,6 +627,8 @@ void MpActor::NetSendChangeValues(const ActorValues& actorValues)
 void MpActor::NetSetPercentages(const ActorValues& actorValues,
                                 MpActor* aggressor)
 {
+  ANTIGO_CONTEXT_INIT(ctx);
+
   NetSendChangeValues(actorValues);
   SetPercentages(actorValues, aggressor);
 }
@@ -1141,6 +1159,8 @@ void MpActor::Kill(MpActor* killer, bool shouldTeleport)
 
 void MpActor::RespawnWithDelay(bool shouldTeleport)
 {
+  ANTIGO_CONTEXT_INIT(ctx);
+
   spdlog::trace("MpActor::RespawnWithDelay {:x} - isRespawning: {}",
                 GetFormId(), pImpl->isRespawning);
 
