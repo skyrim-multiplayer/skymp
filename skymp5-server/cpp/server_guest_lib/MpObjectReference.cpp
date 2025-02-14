@@ -72,6 +72,10 @@ UpdatePropertyMessage MpObjectReference::PreparePropertyMessage(
   return res;
 }
 
+// TODO: de-duplicate code of
+// OccupantDisableEventSink/OccupantDisableEventSink, the only difference is
+// base classes
+
 class OccupantDestroyEventSink : public MpActor::DestroyEventSink
 {
 public:
@@ -85,8 +89,44 @@ public:
 
   void BeforeDestroy(MpActor& actor) override
   {
-    if (!RefStillValid())
+    if (!RefStillValid()) {
       return;
+    }
+
+    if (untrustedRefPtr->occupant == &actor) {
+      untrustedRefPtr->SetOpen(false);
+      untrustedRefPtr->occupant = nullptr;
+    }
+  }
+
+private:
+  bool RefStillValid() const
+  {
+    return untrustedRefPtr == wst.LookupFormById(refId).get();
+  }
+
+  WorldState& wst;
+  MpObjectReference* const untrustedRefPtr;
+  const uint32_t refId;
+};
+
+class OccupantDisableEventSink : public MpActor::DisableEventSink
+{
+public:
+  OccupantDisableEventSink(WorldState& wst_,
+                           MpObjectReference* untrustedRefPtr_)
+    : wst(wst_)
+    , untrustedRefPtr(untrustedRefPtr_)
+    , refId(untrustedRefPtr_->GetFormId())
+  {
+  }
+
+  void BeforeDisable(MpActor& actor) override
+  {
+    if (!RefStillValid()) {
+      return;
+    }
+
     if (untrustedRefPtr->occupant == &actor) {
       untrustedRefPtr->SetOpen(false);
       untrustedRefPtr->occupant = nullptr;
@@ -1455,6 +1495,7 @@ void MpObjectReference::ProcessActivateNormal(
     if (CheckIfObjectCanStartOccupyThis(activationSource, kOccupationReach)) {
       if (this->occupant) {
         this->occupant->RemoveEventSink(this->occupantDestroySink);
+        this->occupant->RemoveEventSink(this->occupantDisableSink);
       }
       SetOpen(true);
       actorActivator->SendToUser(
@@ -1466,7 +1507,11 @@ void MpObjectReference::ProcessActivateNormal(
 
       this->occupantDestroySink.reset(
         new OccupantDestroyEventSink(*GetParent(), this));
-      this->occupant->AddEventSink(occupantDestroySink);
+      this->occupant->AddEventSink(this->occupantDestroySink);
+
+      this->occupantDisableSink.reset(
+        new OccupantDisableEventSink(*GetParent(), this));
+      this->occupant->AddEventSink(this->occupantDisableSink);
     }
   } else if (t == espm::ACTI::kType && actorActivator) {
     // SendOpenContainer being used to activate the object
@@ -1479,6 +1524,7 @@ void MpObjectReference::ProcessActivateNormal(
     if (CheckIfObjectCanStartOccupyThis(activationSource, kOccupationReach)) {
       if (this->occupant) {
         this->occupant->RemoveEventSink(this->occupantDestroySink);
+        this->occupant->RemoveEventSink(this->occupantDisableSink);
       }
 
       // SendOpenContainer being used to activate the object
@@ -1489,7 +1535,11 @@ void MpObjectReference::ProcessActivateNormal(
 
       this->occupantDestroySink.reset(
         new OccupantDestroyEventSink(*GetParent(), this));
-      this->occupant->AddEventSink(occupantDestroySink);
+      this->occupant->AddEventSink(this->occupantDestroySink);
+
+      this->occupantDisableSink.reset(
+        new OccupantDisableEventSink(*GetParent(), this));
+      this->occupant->AddEventSink(this->occupantDisableSink);
     }
   }
 }
@@ -1785,10 +1835,9 @@ void MpObjectReference::SendInventoryUpdate()
   if (actor) {
     std::string msg;
     msg += Networking::MinPacketId;
-    msg += nlohmann::json{
-      { "inventory", actor->GetInventory().ToJson() },
-      { "type", "setInventory" }
-    }.dump();
+    msg += nlohmann::json{ { "inventory", actor->GetInventory().ToJson() },
+                           { "type", "setInventory" } }
+             .dump();
     actor->SendToUserDeferred(msg.data(), msg.size(), true,
                               kChannelSetInventory, true);
   }
