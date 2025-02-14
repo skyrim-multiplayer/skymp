@@ -1835,9 +1835,10 @@ void MpObjectReference::SendInventoryUpdate()
   if (actor) {
     std::string msg;
     msg += Networking::MinPacketId;
-    msg += nlohmann::json{ { "inventory", actor->GetInventory().ToJson() },
-                           { "type", "setInventory" } }
-             .dump();
+    msg += nlohmann::json{
+      { "inventory", actor->GetInventory().ToJson() },
+      { "type", "setInventory" }
+    }.dump();
     actor->SendToUserDeferred(msg.data(), msg.size(), true,
                               kChannelSetInventory, true);
   }
