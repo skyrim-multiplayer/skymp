@@ -39,6 +39,7 @@ struct GridPosInfo
 class MpActor;
 class WorldState;
 class OccupantDestroyEventSink;
+class OccupantDisableEventSink;
 
 class FormCallbacks;
 
@@ -78,6 +79,7 @@ class MpObjectReference
   , protected ChangeFormGuard
 {
   friend class OccupantDestroyEventSink;
+  friend class OccupantDisableEventSink;
 
 public:
   static const char* Type() { return "ObjectReference"; }
@@ -252,6 +254,7 @@ private:
   uint32_t baseId = 0;
   MpActor* occupant = nullptr;
   std::shared_ptr<OccupantDestroyEventSink> occupantDestroySink;
+  std::shared_ptr<OccupantDisableEventSink> occupantDisableSink;
   std::optional<std::chrono::system_clock::duration> relootTimeOverride;
   std::unique_ptr<uint8_t> chanceNoneOverride;
   bool activationBlocked = false;

@@ -74,6 +74,8 @@ public:
 
   [[nodiscard]] bool OnEquip(uint32_t baseId);
 
+  // TODO: consider removing the entire DestroyEventSink feature because it's
+  // only used in unit tests
   class DestroyEventSink
   {
   public:
@@ -83,6 +85,16 @@ public:
 
   void AddEventSink(std::shared_ptr<DestroyEventSink> sink);
   void RemoveEventSink(std::shared_ptr<DestroyEventSink> sink);
+
+  class DisableEventSink
+  {
+  public:
+    virtual ~DisableEventSink() = default;
+    virtual void BeforeDisable(MpActor& actor) = 0;
+  };
+
+  void AddEventSink(std::shared_ptr<DisableEventSink> sink);
+  void RemoveEventSink(std::shared_ptr<DisableEventSink> sink);
 
   MpChangeForm GetChangeForm() const override;
   void ApplyChangeForm(const MpChangeForm& changeForm) override;
