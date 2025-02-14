@@ -1138,7 +1138,7 @@ void MpObjectReference::ApplyChangeForm(const MpChangeForm& changeForm)
 {
   if (pImpl->setPropertyCalled) {
     GetParent()->logger->critical("ApplyChangeForm called after SetProperty");
-    //std::terminate();
+    std::terminate();
   }
 
   blockSaving = true;
@@ -1605,13 +1605,14 @@ bool MpObjectReference::CheckIfObjectCanStartOccupyThis(
     auto actorActivator = activationSource.AsActor();
     if (t == "FURN" && actorActivator) {
       spdlog::info("MpObjectReference::ProcessActivate {:x} - occupant is "
-                 "already this object (activationSource = {:x}). Blocking because it's FURN",
-                 GetFormId(), activationSource.GetFormId());
+                   "already this object (activationSource = {:x}). Blocking "
+                   "because it's FURN",
+                   GetFormId(), activationSource.GetFormId());
       return false;
     } else {
-       spdlog::info("MpObjectReference::ProcessActivate {:x} - occupant is "
-                 "already this object (activationSource = {:x})",
-                 GetFormId(), activationSource.GetFormId());
+      spdlog::info("MpObjectReference::ProcessActivate {:x} - occupant is "
+                   "already this object (activationSource = {:x})",
+                   GetFormId(), activationSource.GetFormId());
       return true;
     }
   }
@@ -1784,10 +1785,9 @@ void MpObjectReference::SendInventoryUpdate()
   if (actor) {
     std::string msg;
     msg += Networking::MinPacketId;
-    msg += nlohmann::json{
-      { "inventory", actor->GetInventory().ToJson() },
-      { "type", "setInventory" }
-    }.dump();
+    msg += nlohmann::json{ { "inventory", actor->GetInventory().ToJson() },
+                           { "type", "setInventory" } }
+             .dump();
     actor->SendToUserDeferred(msg.data(), msg.size(), true,
                               kChannelSetInventory, true);
   }
