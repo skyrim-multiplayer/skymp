@@ -218,12 +218,14 @@ export class RemoteServer extends ClientListener {
           }
         };
 
-        this.controller.emitter.emit("sendMessage", {
-          message: message,
-          reliability: "reliable"
-        });
+        Utility.waitMenuMode(1).then(() => {
+          this.controller.emitter.emit("sendMessage", {
+            message: message,
+            reliability: "reliable"
+          });
 
-        logTrace(this, "onOpenContainerMesage - sent ActivateMessage", message);
+          logTrace(this, "onOpenContainerMesage - sent ActivateMessage", message);
+        });
       })();
     });
   }
