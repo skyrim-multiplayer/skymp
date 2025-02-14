@@ -22,11 +22,6 @@ on:
                     - 'sweetpie'
                     - 'indev'
                 default: 'indev'
-            delay:
-                description: 'Delay before action in hours (decimal works too, e.g. 0.5)'
-                required: false
-                type: number
-                default: 0
 
 env:
     BUILD_TYPE: RelWithDebInfo
