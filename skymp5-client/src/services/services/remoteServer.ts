@@ -186,12 +186,15 @@ export class RemoteServer extends ClientListener {
 
       let functionChecker: (() => boolean) | null = null;
       let factName = "";
+      let delaySeconds = -1.0;
       if (baseType === FormType.Container) {
         functionChecker = () => Ui.isMenuOpen("ContainerMenu");
         factName = "'ContainerMenu open'";
+        delaySeconds = 0.0;
       } else if (baseType === FormType.Furniture) {
         functionChecker = () => !!Game.getPlayer()?.getFurnitureReference();
         factName = "'getFurnitureReference not null'";
+        delaySeconds = 1.0;
       }
 
       if (functionChecker === null) {
@@ -218,7 +221,9 @@ export class RemoteServer extends ClientListener {
           }
         };
 
-        Utility.waitMenuMode(1).then(() => {
+        logTrace(this, "onOpenContainerMesage - waiting ", delaySeconds, " seconds before sending ActivateMessage");
+
+        Utility.waitMenuMode(delaySeconds).then(() => {
           this.controller.emitter.emit("sendMessage", {
             message: message,
             reliability: "reliable"
