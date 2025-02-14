@@ -510,8 +510,7 @@ void MpActor::AddEventSink(std::shared_ptr<DestroyEventSink> sink)
   pImpl->destroyEventSinks.insert(sink);
 }
 
-void MpActor::RemoveAllDestroyEventSinks(
-  std::shared_ptr<DestroyEventSink> sink)
+void MpActor::RemoveEventSink(std::shared_ptr<DestroyEventSink> sink)
 {
   pImpl->destroyEventSinks.erase(sink);
 }

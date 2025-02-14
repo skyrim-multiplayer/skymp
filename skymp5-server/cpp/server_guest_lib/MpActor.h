@@ -84,7 +84,7 @@ public:
   };
 
   void AddEventSink(std::shared_ptr<DestroyEventSink> sink);
-  void RemoveAllEventSink(std::shared_ptr<DestroyEventSink> sink);
+  void RemoveEventSink(std::shared_ptr<DestroyEventSink> sink);
 
   class DisableEventSink
   {
