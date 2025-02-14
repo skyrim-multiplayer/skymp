@@ -39,6 +39,7 @@ struct GridPosInfo
 class MpActor;
 class WorldState;
 class OccupantDestroyEventSink;
+class OccupantDisableEventSink;
 
 class FormCallbacks;
 
