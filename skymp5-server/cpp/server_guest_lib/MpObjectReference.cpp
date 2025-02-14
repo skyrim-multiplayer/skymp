@@ -1599,10 +1599,20 @@ bool MpObjectReference::CheckIfObjectCanStartOccupyThis(
   }
 
   if (this->occupant == &activationSource) {
-    spdlog::info("MpObjectReference::ProcessActivate {:x} - occupant is "
+    auto base = loader.GetBrowser().LookupById(GetBaseId());
+    auto t = base.rec->GetType();
+    auto actorActivator = activationSource.AsActor();
+    if (t == "FURN" && actorActivator) {
+      spdlog::info("MpObjectReference::ProcessActivate {:x} - occupant is "
+                 "already this object (activationSource = {:x}). Blocking because it's FURN",
+                 GetFormId(), activationSource.GetFormId());
+      return false;
+    } else {
+       spdlog::info("MpObjectReference::ProcessActivate {:x} - occupant is "
                  "already this object (activationSource = {:x})",
                  GetFormId(), activationSource.GetFormId());
-    return true;
+      return true;
+    }
   }
 
   spdlog::info("MpObjectReference::ProcessActivate {:x} - occupant is "
