@@ -1599,6 +1599,7 @@ bool MpObjectReference::CheckIfObjectCanStartOccupyThis(
   }
 
   if (this->occupant == &activationSource) {
+    auto& loader = GetParent()->GetEspm();
     auto base = loader.GetBrowser().LookupById(GetBaseId());
     auto t = base.rec->GetType();
     auto actorActivator = activationSource.AsActor();
