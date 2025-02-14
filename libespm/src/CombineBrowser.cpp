@@ -24,6 +24,12 @@ int32_t CombineBrowser::Impl::GetFileIndex(const char* fileName) const noexcept
 
 LookupResult CombineBrowser::LookupById(uint32_t combFormId) const noexcept
 {
+  // Otherwise, we'll find a TES4 record in Skyrim.esm which is not relevant
+  // for CombineBrowser use cases
+  if (combFormId == 0) {
+    return LookupResult();
+  }
+
   const RecordHeader* resRec = nullptr;
   uint8_t resFileIdx = 0;
   for (size_t i = 0; i < pImpl->numSources; ++i) {

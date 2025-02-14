@@ -20,14 +20,6 @@ printConsole('settings:', settings['skymp5-client']);
 const targetIp = settings['skymp5-client']['server-ip'] as string;
 const targetPort = settings['skymp5-client']['server-port'] as number;
 
-export const getServerIp = () => {
-  return targetIp;
-};
-
-export const getServerUiPort = () => {
-  return targetPort === 7777 ? 3000 : (targetPort as number) + 1;
-};
-
 export class SkympClient extends ClientListener {
   constructor(private sp: Sp, private controller: CombinedController) {
     super();
@@ -94,15 +86,15 @@ export class SkympClient extends ClientListener {
     this.sp.printConsole('SkympClient ctor');
   }
 
-  private establishConnectionConditional() {
+  private async establishConnectionConditional() {
     const isConnected = this.controller.lookupListener(networking.NetworkingService).isConnected();
 
-    if (!isConnected || storage.targetIp !== targetIp || storage.targetPort !== targetPort) {
+    if (!isConnected) {
       storage.targetIp = targetIp;
       storage.targetPort = targetPort;
 
       logTrace(this, `Connecting to`, storage.targetIp + ':' + storage.targetPort);
-      this.controller.lookupListener(networking.NetworkingService).connect(targetIp, targetPort);
+      this.controller.lookupListener(networking.NetworkingService).connect(storage.targetIp as string, targetPort);
     } else {
       logTrace(this, 'Reconnect is not required');
     }

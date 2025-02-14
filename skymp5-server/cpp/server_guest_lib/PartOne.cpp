@@ -311,6 +311,15 @@ void PartOne::AttachSaveStorage(std::shared_ptr<ISaveStorage> saveStorage)
                             lookupRes.rec->GetType().ToString());
         return;
       }
+      if (lookupRes.rec &&
+          (lookupRes.rec->GetType() == "ACTI" ||
+           lookupRes.rec->GetType() == "FURN")) {
+        pImpl->logger->info("Skipping FF object {} (type is {}), will likely "
+                            "overwrite at some point",
+                            changeForm.formDesc.ToString(),
+                            lookupRes.rec->GetType().ToString());
+        return;
+      }
     }
 
     n++;

@@ -9,11 +9,7 @@ import {
   Game,
   storage,
   // @ts-expect-error (TODO: Remove in 2.10.0)
-  castSpellImmediate,
-  // @ts-expect-error (TODO: Remove in 2.10.0)
-  SpellType,
-  // @ts-expect-error (TODO: Remove in 2.10.0)
-  interruptCast
+  setCollision
 } from "skyrimPlatform";
 import { Movement } from "./movement";
 import { applyWeapDrawn } from "./movementApply";
@@ -35,6 +31,52 @@ export interface AnimationApplyState {
 const allowedIdles = new Array<[number, string]>();
 const refsWithDefaultAnimsDisabled = new Set<number>();
 const allowedAnims = new Set<string>();
+
+const actorSitAnimsLowerCase = [
+  "IdleStoolEnterPlayer",
+  "IdleStoolEnter",
+  "IdleStoolEnterInstant",
+  "IdleChairRightEnter",
+  "IdleChairLeftEnter",
+  "IdleChairFrontEnter",
+  "IdleJarlChairEnter",
+  "IdleJarlChairEnterInstant",
+  "IdleSnowElfPrinceChairDialogue",
+  "IdleSnowElfPrinceChairEnter",
+  "IdleSnowElfPrinceChairEnterInstant",
+  "IdleChairCHILDEnterInstant",
+  "IdleChairCHILDFrontEnter",
+  "IdleChairCHILDLeftEnter",
+  "IdleChairCHILDRightEnter",
+  "IdleChairEnterInstant",
+].map(x => x.toLowerCase());
+
+const actorGetUpAnimsLowerCase = [
+  "IdleStoolBackExit",
+  "IdleChairRightExit",
+  "IdleChairRightQuickExit",
+  "IdleChairLeftExit",
+  "IdleChairLeftQuickExit",
+  "IdleChairFrontExit",
+  "IdleChairFrontQuickExit",
+  "IdleChairCHILDFrontExit",
+  "IdleChairCHILDLeftExit",
+  "IdleChairCHILDRightExit",
+].map(x => x.toLocaleLowerCase());
+
+// unclassified:
+
+// IdleChairEnterInstant
+// IdleChairEnterStart
+// IdleChairEnterStop
+// IdleChairEnterToSit
+// IdleChairExitStart
+// IdleChairExitToStand
+// IdleChairSitting
+// IdleLeftChairEnterStart
+// ChairIdle
+// IdleRightChairEnterStart
+// IdleLeftChairEnterStart
 
 const isIdle = (animEventName: string) => {
   return (
@@ -83,8 +125,10 @@ export const applyAnimation = (
     return;
   }
 
+  const animEventNameLowerCase = anim.animEventName.toLowerCase();
+
   if (refsWithDefaultAnimsDisabled.has(refr.getFormID())) {
-    if (anim.animEventName.toLowerCase().includes("attack")) {
+    if (animEventNameLowerCase.includes("attack")) {
       allowedAnims.add(refr.getFormID() + ":" + anim.animEventName);
     }
   }
@@ -99,6 +143,13 @@ export const applyAnimation = (
     });
   }
 
+  if (actorSitAnimsLowerCase.find((x) => x === animEventNameLowerCase) !== undefined) {
+    setCollision(refr.getFormID(), false);
+  }
+
+  if (actorGetUpAnimsLowerCase.find((x) => x === animEventNameLowerCase) !== undefined) {
+    setCollision(refr.getFormID(), true);
+  }
 };
 
 export const setDefaultAnimsDisabled = (

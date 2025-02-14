@@ -1,9 +1,9 @@
 import { Game, Utility, HttpClient, printConsole, createText } from "skyrimPlatform";
-import { getServerIp, getServerUiPort } from "./skympClient";
 import { getScreenResolution } from "../../view/formView";
 import { ClientListener, CombinedController, Sp } from "./clientListener";
 import { Mod, ServerManifest } from "../messages_http/serverManifest";
 import { logTrace } from "../../logging";
+import { AuthService } from "./authService";
 
 const STATE_KEY = 'loadOrderCheckState';
 
@@ -107,11 +107,15 @@ export class LoadOrderVerificationService extends ClientListener {
   }
 
   private getServerMods(retriesLeft: number): Promise<Mod[]> {
-    const targetIp = getServerIp();
-    const uiPort = getServerUiPort();
-    printConsole(`http://${targetIp}:${uiPort}`);
-    return new HttpClient(`http://${targetIp}:${uiPort}`)
-      .get('/manifest.json')
+    const authService = this.controller.lookupListener(AuthService);
+
+    const addr = authService.getMasterUrl();
+    const masterKey = authService.getServerMasterKey();
+    printConsole(addr);
+    printConsole(masterKey);
+
+    return new HttpClient(addr)
+      .get(`/api/servers/${masterKey}/manifest.json`)
       .then((res) => {
         if (res.status != 200) {
           throw new Error(`Status code ${res.status}, error ${res.error}`);
