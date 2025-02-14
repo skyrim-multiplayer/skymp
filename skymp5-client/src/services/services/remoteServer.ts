@@ -221,7 +221,7 @@ export class RemoteServer extends ClientListener {
           }
         };
 
-        logTrace(this, "onOpenContainerMesage - waiting ", delaySeconds, " seconds before sending ActivateMessage");
+        logTrace(this, "onOpenContainerMesage - waiting", delaySeconds, "seconds before sending ActivateMessage");
 
         Utility.waitMenuMode(delaySeconds).then(() => {
           this.controller.emitter.emit("sendMessage", {
