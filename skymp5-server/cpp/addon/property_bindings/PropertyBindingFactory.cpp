@@ -16,6 +16,7 @@
 #include "LocationalDataBinding.h"
 #include "NeighborsBinding.h"
 #include "OnlinePlayersBinding.h"
+#include "OnlinePlayersInfoBinding.h"
 #include "PercentagesBinding.h"
 #include "PosBinding.h"
 #include "ProfileIdBinding.h"
@@ -42,6 +43,7 @@ PropertyBindingFactory::CreateStandardPropertyBindings()
   result["locationalData"] = std::make_shared<LocationalDataBinding>();
   result["neighbors"] = std::make_shared<NeighborsBinding>();
   result["onlinePlayers"] = std::make_shared<OnlinePlayersBinding>();
+  result["onlinePlayersInfo"] = std::make_shared<OnlinePlayersInfoBinding>();
   result["percentages"] = std::make_shared<PercentagesBinding>();
   result["pos"] = std::make_shared<PosBinding>();
   result["profileId"] = std::make_shared<ProfileIdBinding>();

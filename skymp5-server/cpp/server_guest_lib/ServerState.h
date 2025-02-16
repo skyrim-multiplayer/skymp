@@ -41,7 +41,7 @@ struct DeferredMessage
 
 struct UserInfo
 {
-  bool isDisconnecting = false;
+  // bool isDisconnecting = false;
 
   bool isPacketHistoryRecording = false;
   PacketHistory packetHistory;
