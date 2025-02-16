@@ -32,6 +32,10 @@ inputs:
     description: "Set to true if building for Emscripten"
     required: false
     default: "false"
+  WITH_ANTIGO:
+    description: build antigo
+    required: false
+    default: '0'
 runs:
   using: composite
   steps:  
@@ -191,6 +195,7 @@ runs:
         $cmake_command_full += "$vcpkg_chainload_toolchain_arg "
         $cmake_command_full += "$vcpkg_triplet_arg "
         $cmake_command_full += "$vcpkg_root_arg "
+        $cmake_command_full += "-DWITH_ANTIGO=${{env.WITH_ANTIGO}} "
         $cmake_command_full += "-DUNIT_DATA_DIR=skyrim_data_files "
         $cmake_command_full += "-DBUILD_NODEJS=OFF "
         $cmake_command_full += "$prepare_nexus_archives_arg "
