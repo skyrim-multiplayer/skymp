@@ -1,14 +1,24 @@
 #include "ServerState.h"
-#include "Exceptions.h"
-#include "JsonUtils.h"
-#include "MpActor.h"
-#include "MsgType.h"
+
 #include <algorithm>
+
+#include <spdlog/spdlog.h>
+
+#include "MpActor.h"
 
 void ServerState::Connect(Networking::UserId userId, const std::string& guid)
 {
+  if (userInfo[userId] != nullptr) {
+    spdlog::error("ServerState::Connect: overwritten userInfo for userId={}, "
+                  "old guid: {}, new guid: {}",
+                  userId, userInfo[userId]->guid, guid);
+  }
+
   userInfo[userId] = std::make_unique<UserInfo>();
   userInfo[userId]->guid = guid;
+
+  spdlog::error("ServerState::Connect: assigning guid for userId={}: guid={}",
+                userId, guid);
 
   if (maxConnectedId < userId) {
     maxConnectedId = userId;
