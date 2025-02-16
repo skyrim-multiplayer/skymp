@@ -1,6 +1,5 @@
 #pragma once
 #include "IPapyrusClass.h"
-#include "papyrus-vm/Structures.h"
 
 class PapyrusForm final : public IPapyrusClass<PapyrusForm>
 {
@@ -21,7 +20,4 @@ public:
 
   void Register(VirtualMachine& vm,
                 std::shared_ptr<IPapyrusCompatibilityPolicy> policy) override;
-
-private:
-  std::shared_ptr<IPapyrusCompatibilityPolicy> compatibilityPolicy;
 };

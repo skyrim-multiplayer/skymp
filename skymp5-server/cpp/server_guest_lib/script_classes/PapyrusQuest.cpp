@@ -1,5 +1,6 @@
 #include "PapyrusQuest.h"
 #include "script_objects/EspmGameObject.h"
+#include "spdlog/spdlog.h"
 
 VarValue PapyrusQuest::GetStage(VarValue self,
                                 const std::vector<VarValue>& arguments)

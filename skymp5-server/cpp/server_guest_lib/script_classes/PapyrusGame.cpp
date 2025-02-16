@@ -1,10 +1,32 @@
 #include "PapyrusGame.h"
 #include "PapyrusFormList.h"
 
+#include "SpSnippetFunctionGen.h"
 #include "WorldState.h"
 #include "libespm/Combiner.h"
 #include "script_objects/EspmGameObject.h"
 #include "script_objects/MpFormGameObject.h"
+
+VarValue PapyrusGame::ForceThirdPerson(VarValue self,
+                                       const std::vector<VarValue>& arguments)
+{
+  return MakeSPSnippetPromise(GetName(), "ForceThirdPerson",
+                              compatibilityPolicy, self, arguments);
+}
+
+VarValue PapyrusGame::DisablePlayerControls(
+  VarValue self, const std::vector<VarValue>& arguments)
+{
+  return MakeSPSnippetPromise(GetName(), "DisablePlayerControls",
+                              compatibilityPolicy, self, arguments);
+}
+
+VarValue PapyrusGame::EnablePlayerControls(
+  VarValue self, const std::vector<VarValue>& arguments)
+{
+  return MakeSPSnippetPromise(GetName(), "EnablePlayerControls",
+                              compatibilityPolicy, self, arguments);
+}
 
 VarValue PapyrusGame::IncrementStat(VarValue self,
                                     const std::vector<VarValue>& arguments)
@@ -138,15 +160,8 @@ VarValue PapyrusGame::ShowLimitedRaceMenu(
 VarValue PapyrusGame::GetCameraState(VarValue self,
                                      const std::vector<VarValue>& arguments)
 {
-  auto serializedArgs = SpSnippetFunctionGen::SerializeArguments(arguments);
-  if (auto actor = compatibilityPolicy->GetDefaultActor(
-        GetName(), "GetCameraState", self.GetMetaStackId())) {
-    Viet::Promise<VarValue> promise =
-      SpSnippet(GetName(), "GetCameraState", serializedArgs.data())
-        .Execute(actor, SpSnippetMode::kReturnResult);
-    return VarValue(Viet::Promise<VarValue>(promise));
-  }
-  return VarValue(-1);
+  return MakeSPSnippetPromise(GetName(), "GetCameraState", compatibilityPolicy,
+                              self, arguments, false, true, VarValue(-1));
 }
 
 void PapyrusGame::RaceMenuHelper(VarValue& self, const char* funcName,
@@ -204,16 +219,8 @@ VarValue PapyrusGame::GetFormEx(
 VarValue PapyrusGame::ShakeController(VarValue self,
                                       const std::vector<VarValue>& arguments)
 {
-  auto funcName = "ShakeController";
-
-  auto serializedArgs = SpSnippetFunctionGen::SerializeArguments(arguments);
-  if (auto actor = compatibilityPolicy->GetDefaultActor(
-        GetName(), funcName, self.GetMetaStackId())) {
-    SpSnippet(GetName(), funcName, serializedArgs.data())
-      .Execute(actor, SpSnippetMode::kNoReturnResult);
-  }
-
-  return VarValue::None();
+  return MakeSPSnippetPromise(GetName(), "ShakeController",
+                              compatibilityPolicy, self, arguments);
 }
 
 void PapyrusGame::Register(VirtualMachine& vm,

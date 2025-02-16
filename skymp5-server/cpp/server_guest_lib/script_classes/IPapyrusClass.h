@@ -1,4 +1,5 @@
 #pragma once
+#include "SpSnippetFunctionGen.h"
 #include "papyrus-vm/VirtualMachine.h"
 #include "script_compatibility_policies/IPapyrusCompatibilityPolicy.h"
 
@@ -9,9 +10,17 @@ public:
 
   virtual void Register(
     VirtualMachine& vm,
-    std::shared_ptr<IPapyrusCompatibilityPolicy> compatibilityPolicy) = 0;
+    std::shared_ptr<IPapyrusCompatibilityPolicy> policy) = 0;
 
   virtual ~IPapyrusClassBase() = default;
+  static VarValue MakeSPSnippetPromise(
+    const char* script, const char* name,
+    std::shared_ptr<IPapyrusCompatibilityPolicy> policy, VarValue self,
+    const std::vector<VarValue>& arguments, bool method = false,
+    bool returns = false, VarValue defaultResult = VarValue::None());
+
+public:
+  std::shared_ptr<IPapyrusCompatibilityPolicy> compatibilityPolicy;
 };
 
 template <class T>

@@ -1,4 +1,6 @@
 #include "PapyrusKeyword.h"
+#include "WorldState.h"
+#include "script_objects/EspmGameObject.h"
 
 VarValue PapyrusKeyword::GetKeyword(VarValue self,
                                     const std::vector<VarValue>& arguments)
@@ -28,4 +30,17 @@ VarValue PapyrusKeyword::GetKeyword(VarValue self,
   }
 
   return VarValue::None();
+}
+
+void PapyrusKeyword::Register(
+  VirtualMachine& vm, std::shared_ptr<IPapyrusCompatibilityPolicy> policy)
+{
+  compatibilityPolicy = policy;
+
+  keywords = compatibilityPolicy->GetWorldState()
+               ->GetEspm()
+               .GetBrowser()
+               .GetRecordsByType("KYWD");
+
+  AddStatic(vm, "GetKeyword", &PapyrusKeyword::GetKeyword);
 }
