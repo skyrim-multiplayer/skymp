@@ -281,16 +281,12 @@ void ActionListener::OnActivate(const RawMessageData& rawMsgData,
                                 uint32_t caster, uint32_t target,
                                 bool isSecondActivation)
 {
-  ANTIGO_CONTEXT_INIT(ctx);
-
   if (!partOne.HasEspm())
     throw std::runtime_error("No loaded esm or esp files are found");
 
   const auto ac = partOne.serverState.ActorByUser(rawMsgData.userId);
-  if (!ac) {
-    spdlog::error("OnActivate: can't do this without Actor attached; {}", ctx.Resolve().ToString());
+  if (!ac)
     throw std::runtime_error("Can't do this without Actor attached");
-  }
 
   auto it = partOne.worldState.hosters.find(caster);
   auto hosterId = it == partOne.worldState.hosters.end() ? 0 : it->second;
@@ -690,7 +686,6 @@ void ActionListener::OnChangeValues(const RawMessageData& rawMsgData,
 
   MpActor* actor = partOne.serverState.ActorByUser(rawMsgData.userId);
   if (!actor) {
-    spdlog::error("Unable to change values without Actor attached; {}", ctx.Resolve().ToString());
     throw std::runtime_error("Unable to change values without Actor attached");
   }
 
@@ -902,9 +897,6 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
   auto currentHitTime = std::chrono::steady_clock::now();
   MpActor* myActor = partOne.serverState.ActorByUser(rawMsgData_.userId);
   if (!myActor) {
-    ANTIGO_CONTEXT_INIT(ctx);
-
-    spdlog::error("Unable to change values without Actor attached; {}", ctx.Resolve().ToString());
     throw std::runtime_error("Unable to change values without Actor attached");
   }
   ANTIGO_CONTEXT_INIT(ctx);
@@ -1101,12 +1093,9 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
 
 void ActionListener::OnUpdateAnimVariables(const RawMessageData& rawMsgData)
 {
-  ANTIGO_CONTEXT_INIT(ctx);
-
   const MpActor* myActor = partOne.serverState.ActorByUser(rawMsgData.userId);
 
   if (!myActor) {
-    spdlog::error("Unable to change values without Actor attached; {}", ctx.Resolve().ToString());
     throw std::runtime_error("Unable to change values without Actor attached");
   }
 
