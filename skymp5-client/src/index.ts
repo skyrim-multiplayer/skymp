@@ -51,6 +51,7 @@ import { WorldView } from "./view/worldView";
 import { KeyboardEventsService } from "./services/services/keyboardEventsService";
 import { MagicSyncService } from "./services/services/magicSyncService";
 import { ProfilingService } from "./services/services/profilingService";
+import { SettingsService } from "./services/services/settingsService";
 
 once("update", () => {
   Utility.setINIBool("bAlwaysActive:General", true);
@@ -62,6 +63,7 @@ const main = () => {
     const controller = SpApiInteractor.getControllerInstance();
 
     const listeners = [
+      new SettingsService(sp, controller),
       new BlockPapyrusEventsService(sp, controller),
       new LoadGameService(sp, controller),
       new SinglePlayerService(sp, controller),

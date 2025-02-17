@@ -13,12 +13,10 @@ import { ConnectionMessage } from '../events/connectionMessage';
 import { CreateActorMessage } from '../messages/createActorMessage';
 import { AuthAttemptEvent } from '../events/authAttemptEvent';
 import { logTrace } from '../../logging';
+import { SettingsService } from './settingsService';
 
 printConsole('Hello Multiplayer!');
 printConsole('settings:', settings['skymp5-client']);
-
-const targetIp = settings['skymp5-client']['server-ip'] as string;
-const targetPort = settings['skymp5-client']['server-port'] as number;
 
 export class SkympClient extends ClientListener {
   constructor(private sp: Sp, private controller: CombinedController) {
@@ -90,11 +88,13 @@ export class SkympClient extends ClientListener {
     const isConnected = this.controller.lookupListener(networking.NetworkingService).isConnected();
 
     if (!isConnected) {
-      storage.targetIp = targetIp;
-      storage.targetPort = targetPort;
+      const { host, port } = await this.controller.lookupListener(SettingsService).getTargetPeer();
+
+      storage.targetIp = host;
+      storage.targetPort = port;
 
       logTrace(this, `Connecting to`, storage.targetIp + ':' + storage.targetPort);
-      this.controller.lookupListener(networking.NetworkingService).connect(storage.targetIp as string, targetPort);
+      this.controller.lookupListener(networking.NetworkingService).connect(host, port);
     } else {
       logTrace(this, 'Reconnect is not required');
     }

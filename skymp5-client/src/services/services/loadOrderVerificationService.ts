@@ -4,6 +4,7 @@ import { ClientListener, CombinedController, Sp } from "./clientListener";
 import { Mod, ServerManifest } from "../messages_http/serverManifest";
 import { logTrace } from "../../logging";
 import { AuthService } from "./authService";
+import { SettingsService } from "./settingsService";
 
 const STATE_KEY = 'loadOrderCheckState';
 
@@ -106,35 +107,33 @@ export class LoadOrderVerificationService extends ClientListener {
     }
   }
 
-  private getServerMods(retriesLeft: number): Promise<Mod[]> {
-    const authService = this.controller.lookupListener(AuthService);
+  private async getServerMods(retriesLeft: number): Promise<Mod[]> {
+    const settingsService = this.controller.lookupListener(SettingsService);
+    const masterApiClient = await settingsService.makeMasterApiClient();
 
-    const addr = authService.getMasterUrl();
-    const masterKey = authService.getServerMasterKey();
-    printConsole(addr);
+    const masterKey = settingsService.getServerMasterKey();
     printConsole(masterKey);
 
-    return new HttpClient(addr)
-      .get(`/api/servers/${masterKey}/manifest.json`)
-      .then((res) => {
+    for (let attempt = 0; attempt < 5; ++attempt) {
+      try {
+        printConsole(`Trying to get server mods, attempt ${attempt}`);
+        const res = await masterApiClient.get(`/api/servers/${masterKey}/manifest.json`);
         if (res.status != 200) {
-          throw new Error(`Status code ${res.status}, error ${res.error}`);
+          throw new Error(`status code ${res.status}, error ${res.error}`);
         }
         const manifest = JSON.parse(res.body) as ServerManifest;
         if (manifest.versionMajor !== 1) {
-          throw new Error(`Server manifest version is ${manifest.versionMajor}, we expect 1`);
+          printConsole(`server manifest version is ${manifest.versionMajor}, we expect 1`);
+          return [];
         }
         return manifest.mods;
-      })
-      .catch((err) => {
-        printConsole("Can't get server mods", err);
-        if (retriesLeft > 0) {
-          printConsole(`${retriesLeft} retries left...`);
-          return Utility.wait(0.1 + Math.random())
-            .then(() => this.getServerMods(retriesLeft - 1));
-        }
-        return [];
-      });
+      } catch (e) {
+        printConsole(`Request/parse error: ${e}`);
+        await Utility.wait(0.1 + Math.random());
+      }
+    }
+
+    return [];
   };
 
   private enumerateClientMods(getCount: (() => number), getAt: ((idx: number) => string)) {
