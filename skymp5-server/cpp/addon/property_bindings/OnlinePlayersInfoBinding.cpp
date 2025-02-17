@@ -4,15 +4,16 @@
 #include <napi.h>
 
 namespace {
-struct PlayerInfo {
+struct PlayerInfo
+{
   uint32_t actorId; // may be zero if not assigned to any actor
   std::string guid; // may be an empty string if
   Networking::UserId userId;
 };
 }
 
-Napi::Value OnlinePlayersInfoBinding::Get(Napi::Env env, ScampServer& scampServer,
-                                      uint32_t)
+Napi::Value OnlinePlayersInfoBinding::Get(Napi::Env env,
+                                          ScampServer& scampServer, uint32_t)
 {
   auto& partOne = scampServer.GetPartOne();
   // const auto& serverState = partOne->serverState;
@@ -23,7 +24,11 @@ Napi::Value OnlinePlayersInfoBinding::Get(Napi::Env env, ScampServer& scampServe
   auto maxConnectedId = partOne->serverState.maxConnectedId;
   for (size_t i = 0; i <= maxConnectedId; ++i) {
     if (auto actor = partOne->serverState.ActorByUser(i)) {
-      g_onlineActors[numOnlineActors] = {actor->GetFormId(), partOne->serverState.UserGuid(i), static_cast<Networking::UserId>(i)};
+      g_onlineActors[numOnlineActors] = {
+        actor->GetFormId(),
+        partOne->serverState.UserGuid(i),
+        static_cast<Networking::UserId>(i),
+      };
       ++numOnlineActors;
     }
   }
