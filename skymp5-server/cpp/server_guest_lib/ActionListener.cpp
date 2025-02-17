@@ -1116,12 +1116,9 @@ void ActionListener::OnUpdateAnimVariables(const RawMessageData& rawMsgData)
 void ActionListener::OnSpellCast(const RawMessageData& rawMsgData,
                                  const SpellCastData& spellCastData_)
 {
-  ANTIGO_CONTEXT_INIT(ctx);
-
   MpActor* myActor = partOne.serverState.ActorByUser(rawMsgData.userId);
 
   if (!myActor) {
-    spdlog::error("Unable to change values without Actor attached; {}", ctx.Resolve().ToString());
     throw std::runtime_error("Unable to change values without Actor attached");
   }
 
