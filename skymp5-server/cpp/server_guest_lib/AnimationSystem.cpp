@@ -131,11 +131,11 @@ void AnimationSystem::InitAdditionalCallbacks()
         std::chrono::duration<float> elapsedTime =
           std::chrono::steady_clock::now() -
           GetLastAttackReleaseAnimationTime(actor);
-        if (elapsedTime > std::chrono::seconds(2)) {
-          constexpr float defaultModifier = 20.f;
+        if (elapsedTime > std::chrono::seconds(1)) {
+          constexpr float defaultModifier = 10.f;
           HandleAttackAnim(actor, defaultModifier);
         } else {
-          constexpr float defaultModifier = 60.f;
+          constexpr float defaultModifier = 40.f;
           actor->DamageActorValue(espm::ActorValue::Stamina, defaultModifier);
         }
       },
