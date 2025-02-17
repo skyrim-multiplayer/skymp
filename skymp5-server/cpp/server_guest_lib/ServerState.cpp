@@ -17,8 +17,8 @@ void ServerState::Connect(Networking::UserId userId, const std::string& guid)
   userInfo[userId] = std::make_unique<UserInfo>();
   userInfo[userId]->guid = guid;
 
-  spdlog::error("ServerState::Connect: assigning guid for userId={}: guid={}",
-                userId, guid);
+  spdlog::info("ServerState::Connect: assigning guid for userId={}: guid={}",
+               userId, guid);
 
   if (maxConnectedId < userId) {
     maxConnectedId = userId;

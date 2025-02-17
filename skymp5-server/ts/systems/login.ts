@@ -93,7 +93,8 @@ export class Login implements System {
     if (type !== "loginWithSkympIo") return;
 
     const ip = ctx.svr.getUserIp(userId);
-    console.log(`Connecting a user ${userId} with ip ${ip}`);
+    const guid = ctx.svr.getUserGuid(userId);
+    console.log(`Connecting a user ${userId} with ip ${ip}, guid ${guid}`);
 
     let discordAuth = this.settingsObject.discordAuth;
 
