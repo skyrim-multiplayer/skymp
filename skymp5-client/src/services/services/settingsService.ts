@@ -42,7 +42,13 @@ export class SettingsService extends ClientListener {
     const masterApiClient = await this.makeMasterApiClient();
     const masterKey = this.getServerMasterKey();
     try {
-      const res = await masterApiClient.get(`/api/servers/${masterKey}/serverinfo`);
+      let headers: HttpHeaders = {};
+      let session = this.controller.lookupListener(AuthService).readAuthDataFromDisk()?.session;
+      if (session) {
+        headers['X-Session'] = session;
+      }
+
+      const res = await masterApiClient.get(`/api/servers/${masterKey}/serverinfo`, { headers });
       if (res.status != 200) {
         throw new Error(`status ${res.status}`);
       }
@@ -52,7 +58,7 @@ export class SettingsService extends ClientListener {
         port: resJson.port,
       };
     } catch (e) {
-      printConsole(`Server info request failed, falling back`);
+      printConsole(`Server info request failed, falling back; error: ${e}`);
     }
 
     return {

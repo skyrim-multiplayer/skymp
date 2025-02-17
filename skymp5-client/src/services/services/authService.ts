@@ -317,7 +317,7 @@ export class AuthService extends ClientListener {
     this.authDialogOpen = true;
   };
 
-  private readAuthDataFromDisk(): RemoteAuthGameData | null {
+  public readAuthDataFromDisk(): RemoteAuthGameData | null {
     logTrace(this, `Reading`, this.pluginAuthDataName, `from disk`);
 
     try {
