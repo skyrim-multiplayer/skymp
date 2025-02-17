@@ -7,7 +7,7 @@ namespace {
 struct PlayerInfo {
   uint32_t actorId; // may be zero if not assigned to any actor
   std::string guid; // may be an empty string if
-  uint32_t userId;
+  Networking::UserId userId;
 };
 }
 
@@ -23,7 +23,7 @@ Napi::Value OnlinePlayersInfoBinding::Get(Napi::Env env, ScampServer& scampServe
   auto maxConnectedId = partOne->serverState.maxConnectedId;
   for (size_t i = 0; i <= maxConnectedId; ++i) {
     if (auto actor = partOne->serverState.ActorByUser(i)) {
-      g_onlineActors[numOnlineActors] = {actor->GetFormId(), partOne->serverState.UserGuid(i), i};
+      g_onlineActors[numOnlineActors] = {actor->GetFormId(), partOne->serverState.UserGuid(i), static_cast<Networking::UserId>(i)};
       ++numOnlineActors;
     }
   }
