@@ -47,6 +47,7 @@ export class SettingsService extends ClientListener {
     const masterApiClient = this.makeMasterApiClient();
     const masterKey = this.getServerMasterKey();
 
+    const serverInfoRequestTimeoutMs = 5000;
     const defaultPeer: TargetPeer = {
       host: this.sp.settings['skymp5-client']['server-ip'] as string,
       port: this.sp.settings['skymp5-client']['server-port'] as number,
@@ -54,12 +55,12 @@ export class SettingsService extends ClientListener {
 
     let resolved = false;
 
-    const steps = {
+    const states = {
       start: () => {
         try {
           this.controller.lookupListener(TimersService).setTimeout(
-            () => steps.reject(new Error('getTargetPeer: request timed out')),
-            5000,
+            () => states.reject(new Error('getTargetPeer: serverinfo request timed out')),
+            serverInfoRequestTimeoutMs,
           );
 
           let headers: HttpHeaders = {};
@@ -70,10 +71,10 @@ export class SettingsService extends ClientListener {
 
           masterApiClient.get(
             `/api/servers/${masterKey}/serverinfo`, { headers },
-            steps.handleResponse,
+            states.handleResponse,
           );
         } catch (e) {
-          steps.reject(e);
+          states.reject(e);
         }
       },
       handleResponse: (res: HttpResponse) => {
@@ -81,9 +82,9 @@ export class SettingsService extends ClientListener {
           if (res.status !== 200) {
             throw new Error(`status ${res.status}`);
           }
-          steps.resolve(JSON.parse(res.body));
+          states.resolve(JSON.parse(res.body));
         } catch (e) {
-          steps.reject(e);
+          states.reject(e);
         }
       },
 
@@ -106,7 +107,7 @@ export class SettingsService extends ClientListener {
       },
     };
 
-    steps.start();
+    states.start();
   }
 
   public async getServerMods(): Promise<Mod[]> {

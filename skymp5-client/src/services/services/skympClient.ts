@@ -96,7 +96,7 @@ export class SkympClient extends ClientListener {
         storage.targetIp = host;
         storage.targetPort = port;
 
-        logTrace(this, `Connecting to`, storage.targetIp + ':' + storage.targetPort);
+        printConsole(`Connecting to ${host}:${port}`);
         this.controller.lookupListener(networking.NetworkingService).connect(host, port);
       },
     );
