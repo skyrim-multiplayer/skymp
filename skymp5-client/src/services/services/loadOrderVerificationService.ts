@@ -1,9 +1,8 @@
 import { Game, Utility, HttpClient, printConsole, createText } from "skyrimPlatform";
 import { getScreenResolution } from "../../view/formView";
 import { ClientListener, CombinedController, Sp } from "./clientListener";
-import { Mod, ServerManifest } from "../messages_http/serverManifest";
+import { Mod } from "../messages_http/serverManifest";
 import { logTrace } from "../../logging";
-import { AuthService } from "./authService";
 import { SettingsService } from "./settingsService";
 
 const STATE_KEY = 'loadOrderCheckState';
@@ -23,10 +22,12 @@ export class LoadOrderVerificationService extends ClientListener {
   }
 
   private verifyLoadOrder() {
+    const settingsService = this.controller.lookupListener(SettingsService);
+
     this.resetText();
     const clientMods = this.getClientMods();
     this.printModOrder('Client load order:', clientMods);
-    return this.getServerMods(5)
+    return settingsService.getServerMods()
       .then((serverMods) => {
         this.printModOrder('Server load order:', serverMods);
         if (clientMods.length < serverMods.length) {
@@ -106,35 +107,6 @@ export class LoadOrderVerificationService extends ClientListener {
       Utility.wait(clearDelay).then(() => this.resetText());
     }
   }
-
-  private async getServerMods(retriesLeft: number): Promise<Mod[]> {
-    const settingsService = this.controller.lookupListener(SettingsService);
-    const masterApiClient = await settingsService.makeMasterApiClient();
-
-    const masterKey = settingsService.getServerMasterKey();
-    printConsole(masterKey);
-
-    for (let attempt = 0; attempt < 5; ++attempt) {
-      try {
-        printConsole(`Trying to get server mods, attempt ${attempt}`);
-        const res = await masterApiClient.get(`/api/servers/${masterKey}/manifest.json`);
-        if (res.status != 200) {
-          throw new Error(`status code ${res.status}, error ${res.error}`);
-        }
-        const manifest = JSON.parse(res.body) as ServerManifest;
-        if (manifest.versionMajor !== 1) {
-          printConsole(`server manifest version is ${manifest.versionMajor}, we expect 1`);
-          return [];
-        }
-        return manifest.mods;
-      } catch (e) {
-        printConsole(`Request/parse error: ${e}`);
-        await Utility.wait(0.1 + Math.random());
-      }
-    }
-
-    return [];
-  };
 
   private enumerateClientMods(getCount: (() => number), getAt: ((idx: number) => string)) {
     const result = [];

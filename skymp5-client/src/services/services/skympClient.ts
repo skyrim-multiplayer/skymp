@@ -13,7 +13,7 @@ import { ConnectionMessage } from '../events/connectionMessage';
 import { CreateActorMessage } from '../messages/createActorMessage';
 import { AuthAttemptEvent } from '../events/authAttemptEvent';
 import { logTrace } from '../../logging';
-import { SettingsService } from './settingsService';
+import { SettingsService, TargetPeer } from './settingsService';
 
 printConsole('Hello Multiplayer!');
 printConsole('settings:', settings['skymp5-client']);
@@ -84,19 +84,21 @@ export class SkympClient extends ClientListener {
     this.sp.printConsole('SkympClient ctor');
   }
 
-  private async establishConnectionConditional() {
+  private establishConnectionConditional() {
     const isConnected = this.controller.lookupListener(networking.NetworkingService).isConnected();
-
-    if (!isConnected) {
-      const { host, port } = await this.controller.lookupListener(SettingsService).getTargetPeer();
-
-      storage.targetIp = host;
-      storage.targetPort = port;
-
-      logTrace(this, `Connecting to`, storage.targetIp + ':' + storage.targetPort);
-      this.controller.lookupListener(networking.NetworkingService).connect(host, port);
-    } else {
+    if (isConnected) {
       logTrace(this, 'Reconnect is not required');
+      return;
     }
+
+    this.controller.lookupListener(SettingsService).getTargetPeer(
+      ({ host, port }: TargetPeer) => {
+        storage.targetIp = host;
+        storage.targetPort = port;
+
+        logTrace(this, `Connecting to`, storage.targetIp + ':' + storage.targetPort);
+        this.controller.lookupListener(networking.NetworkingService).connect(host, port);
+      },
+    );
   }
 }
