@@ -32,7 +32,6 @@ export class SettingsService extends ClientListener {
     return masterKey;
   }
 
-  // TODO: make async?
   public getMasterUrl() {
     return this.normalizeUrl((this.sp.settings["skymp5-client"]["master"] as string) || "https://gateway.skymp.net");
   }
