@@ -83,6 +83,7 @@ const main = () => {
       new NetworkingService(sp, controller),
       new RemoteServer(sp, controller),
       new SpSnippetService(sp, controller),
+      new SettingsService(sp, controller),
       new SweetTaffyDynamicPerksService(sp, controller),
       new SweetTaffyStaticPerksService(sp, controller),
       new SweetTaffySweetCantDropService(sp, controller),
@@ -106,8 +107,7 @@ const main = () => {
       new WorldView(sp, controller),
       new KeyboardEventsService(sp, controller),
       new MagicSyncService(sp, controller),
-      new ProfilingService(sp, controller),
-      new SettingsService(sp, controller),
+      new ProfilingService(sp, controller)
     ];
     SpApiInteractor.setup(listeners);
   }
