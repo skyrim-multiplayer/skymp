@@ -120,7 +120,7 @@ async function resolveRefToCommitHash(octokit: Octokit, owner: string, repo: str
       // If the branch resolution fails, try to resolve it as a tag.
       return await getCommitHashFromRef(octokit, owner, repo, `tags/${ref}`);
     } catch (tagError) {
-      throw new Error('Could not resolve ref to commit hash.');
+      throw new Error(`Could not resolve ref to commit hash. Error 1: ${error}; error 2: ${tagError}`);
     }
   }
 }
