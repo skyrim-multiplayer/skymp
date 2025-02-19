@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as crypto from "crypto";
 import { Octokit } from '@octokit/rest';
+import { RequestError as OctokitRequestError } from '@octokit/request-error';
 import { ArgumentParser } from 'argparse';
 import lodash from 'lodash';
 
@@ -111,17 +112,24 @@ async function resolveRefToCommitHash(octokit: Octokit, owner: string, repo: str
     return ref; // It's already a commit hash.
   }
 
-  // Attempt to resolve the ref as both a branch and a tag.
+  // First, try to resolve it as a branch.
   try {
-    // First, try to resolve it as a branch.
     return await getCommitHashFromRef(octokit, owner, repo, `heads/${ref}`);
   } catch (error) {
-    try {
-      // If the branch resolution fails, try to resolve it as a tag.
-      return await getCommitHashFromRef(octokit, owner, repo, `tags/${ref}`);
-    } catch (tagError) {
-      throw new Error('Could not resolve ref to commit hash.');
+    if (!(error instanceof OctokitRequestError)) {
+      throw new Error(`Could not resolve ref to commit hash`, { cause: error });
     }
+    if (error.status !== 404) {
+      throw new Error(`Could not resolve ref to commit hash`, { cause: error });
+    }
+    // ignore, try another way
+  }
+
+  // If the branch resolution fails, try to resolve it as a tag.
+  try {
+    return await getCommitHashFromRef(octokit, owner, repo, `tags/${ref}`);
+  } catch (error) {
+    throw new Error(`Could not resolve ref to commit hash`, { cause: error });
   }
 }
 
