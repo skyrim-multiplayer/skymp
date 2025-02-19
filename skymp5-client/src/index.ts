@@ -63,7 +63,6 @@ const main = () => {
     const controller = SpApiInteractor.getControllerInstance();
 
     const listeners = [
-      new SettingsService(sp, controller),
       new BlockPapyrusEventsService(sp, controller),
       new LoadGameService(sp, controller),
       new SinglePlayerService(sp, controller),
@@ -107,7 +106,8 @@ const main = () => {
       new WorldView(sp, controller),
       new KeyboardEventsService(sp, controller),
       new MagicSyncService(sp, controller),
-      new ProfilingService(sp, controller)
+      new ProfilingService(sp, controller),
+      new SettingsService(sp, controller),
     ];
     SpApiInteractor.setup(listeners);
   }
