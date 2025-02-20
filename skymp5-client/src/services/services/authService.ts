@@ -497,10 +497,6 @@ export class AuthService extends ClientListener {
     window.skyrimPlatform.widgets.set([loginWidget]);
   };
 
-  private handleConnectionAccepted() {
-    this.loginWithSkympIoCredentials();
-  }
-
   private handleConnectionDenied(e: ConnectionDenied) {
     this.authAttemptProgressIndicator = false;
 
@@ -518,7 +514,8 @@ export class AuthService extends ClientListener {
     }
   }
 
-  private loginWithSkympIoCredentials() {
+  private handleConnectionAccepted() {
+    this.isListenBrowserMessage = false;
     this.loggingStartMoment = Date.now();
 
     const authData = this.sp.storage[authGameDataStorageKey] as AuthGameData | undefined;
