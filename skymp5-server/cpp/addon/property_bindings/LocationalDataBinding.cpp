@@ -1,10 +1,21 @@
 #include "LocationalDataBinding.h"
 #include "NapiHelper.h"
+#include "antigo/Context.h"
+#include "antigo/ResolvedContext.h"
+#include <exception>
 
 Napi::Value LocationalDataBinding::Get(Napi::Env env, ScampServer& scampServer,
                                        uint32_t formId)
 {
+  ANTIGO_CONTEXT_INIT(ctx);
+
   auto& partOne = scampServer.GetPartOne();
+  if (!partOne) {
+    ctx.AddMessage("fatal: received partOne = nullptr, next: &scampServer");
+    ctx.AddPtr(&scampServer);
+    ctx.Resolve().Print();
+    std::terminate();
+  }
 
   auto& refr = partOne->worldState.GetFormAt<MpObjectReference>(formId);
 
