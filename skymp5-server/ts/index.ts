@@ -148,10 +148,9 @@ const main = async () => {
   let server: any;
 
   try {
-    server = createScampServer(port, maxPlayers, settingsObject.allSettings);
+    server = createScampServer(settingsObject.allSettings);
     ui.setServer(server);
-  }
-  catch (e) {
+  } catch (e) {
     console.error(e);
     console.error(`Stopping the server due to the previous error`);
     process.exit(-1);

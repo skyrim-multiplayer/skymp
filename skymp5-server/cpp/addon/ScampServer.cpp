@@ -25,6 +25,8 @@
 #include <napi.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <sstream>
+#include <stdexcept>
+#include <string_view>
 
 namespace {
 
@@ -56,6 +58,14 @@ bool StartsWith(const std::string& str, const char* prefix)
 {
   return str.compare(0, strlen(prefix), prefix) == 0;
 }
+
+// template <class T>
+// const T& GetFieldOrFail(const nlohmann::json& j, const std::string& field) {
+//   auto it = j.find(field);
+//   if (it == j.end()) {
+//     throw std::runtime_error("no field " + field + " in server settings");
+//   }
+// }
 
 }
 
@@ -163,11 +173,9 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
     partOne = std::make_shared<PartOne>();
     listener = std::make_shared<ScampServerListener>(*this);
     partOne->AddListener(listener);
-    Napi::Number port = info[0].As<Napi::Number>(),
-                 maxConnections = info[1].As<Napi::Number>();
 
     std::string serverSettingsJson =
-      static_cast<std::string>(info[2].As<Napi::String>());
+      static_cast<std::string>(info[0].As<Napi::String>());
 
     serverMock = std::make_shared<Networking::MockServer>();
 
@@ -177,6 +185,11 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
     partOne->AttachLogger(logger);
 
     auto serverSettings = nlohmann::json::parse(serverSettingsJson);
+
+    // TODO: rework parsing with archives?
+    std::string listenHost = serverSettings.at("listenHost").get<std::string>();
+    uint32_t listenPort = serverSettings.at("listenPort").get<uint32_t>();
+    uint32_t maxPlayers = serverSettings.at("maxPlayers").get<uint32_t>();
 
     if (serverSettings.find("weaponStaminaModifiers") !=
         serverSettings.end()) {
@@ -318,7 +331,7 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
         static_cast<std::string>(serverSettings["password"])
       : std::string(kNetworkingPasswordPrefix);
     auto realServer = Networking::CreateServer(
-      static_cast<uint32_t>(port), static_cast<uint32_t>(maxConnections),
+      listenHost.c_str(), listenPort, maxPlayers,
       password.data());
 
     static_assert(kMockServerIdx == 1);

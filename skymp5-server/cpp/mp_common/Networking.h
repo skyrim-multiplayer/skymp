@@ -13,7 +13,8 @@ namespace Networking {
 std::shared_ptr<IClient> CreateClient(const char* serverIp,
                                       unsigned short serverPort, int timeoutMs,
                                       const char* password);
-std::shared_ptr<IServer> CreateServer(unsigned short port,
+
+std::shared_ptr<IServer> CreateServer(const char* listenAddress, unsigned short port,
                                       unsigned short maxConnections,
                                       const char* password);
 
