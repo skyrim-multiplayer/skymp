@@ -14,14 +14,14 @@ Server's name that will be published on a master server.
 }
 ```
 
-## ip
+## masterKey
 
-This IP-address would be used by player clients to connect to your server. Do not try to type `"0.0.0.0"`, just remove this option from document if you want to use your current public IP.
+Specify the server key you wish to use for Master API. Client must have the same key specified to log in successfully.
 
 ```json5
 {
   // ...
-  "ip": "127.0.0.1"
+  "masterKey": "my-awesome-server",
   // ...
 }
 ```
