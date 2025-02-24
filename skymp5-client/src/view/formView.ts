@@ -1,5 +1,5 @@
 import { Actor, ActorBase, createText, destroyText, Form, FormType, Game, Keyword, NetImmerse, ObjectReference, once, printConsole, setTextPos, setTextString, storage, TESModPlatform, Utility, worldPointToScreenPoint } from "skyrimPlatform";
-import { setDefaultAnimsDisabled, applyAnimation } from "../sync/animation";
+import { setDefaultAnimsDisabled, applyAnimation, AnimationApplyState } from "../sync/animation";
 import { Appearance, applyAppearance } from "../sync/appearance";
 import { isBadMenuShown, applyEquipment } from "../sync/equipment";
 import { RespawnNeededError } from "../lib/errors";
@@ -258,6 +258,7 @@ export class FormView {
 
         // TODO: reset all states?
         this.eqState = this.getDefaultEquipState();
+        this.animState = this.getDefaultAnimState();
 
         this.ready = false;
 
@@ -467,12 +468,12 @@ export class FormView {
       }
     }
 
-    if (refr.is3DLoaded() !== undefined && refr.is3DLoaded() == true) {
+    if (refr.is3DLoaded()) {
       if (model.animation) {
-        //printConsole(`${model.animation?.animEventName}`);
         applyAnimation(refr, model.animation, this.animState);
       }
-
+      // Use them only once, for spawning actors with correct animations
+      this.animState.useAnimOverrides = false;
     }
 
 
@@ -618,6 +619,10 @@ export class FormView {
     return { lastNumChanges: 0, appearance: null as (null | Appearance) };
   };
 
+  private getDefaultAnimState() {
+    return { lastNumChanges: 0, useAnimOverrides: true };
+  };
+
   private tryHostIfNeed(ac: Actor, remoteId: number) {
     const last = lastTryHost[remoteId];
     if (!last || Date.now() - last >= 1000) {
@@ -644,7 +649,7 @@ export class FormView {
 
   private refrId = 0;
   private ready = false;
-  private animState = { lastNumChanges: 0 };
+  private animState = this.getDefaultAnimState();
   private movState = {
     lastNumChanges: 0,
     lastApply: 0,
