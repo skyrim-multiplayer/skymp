@@ -176,8 +176,9 @@ std::vector<VarValue> GetArgsForCall(uint8_t op,
 bool ActivePexInstance::EnsureCallResultIsSynchronous(
   const VarValue& callResult, ExecutionContext* ctx)
 {
-  if (!callResult.promise)
+  if (!callResult.promise) {
     return true;
+  }
 
   Viet::Promise<VarValue> currentFnPr;
 
@@ -748,9 +749,23 @@ VarValue ActivePexInstance::ExecuteAll(
   // TODO: log and handle this
   assert(opCode.size() == ctx.instructions.size());
 
+  constexpr static size_t kOpCodeExecutionsQuota = 100'000;
+
+  size_t opCodeExecutions = 0;
+
   for (; ctx.line < opCode.size(); ++ctx.line) {
+
+    if (opCodeExecutions >= kOpCodeExecutionsQuota) {
+      spdlog::error("ActivePexInstance::ExecuteAll - Quota exceeded in script "
+                    "{}, returning None",
+                    sourcePex.fn()->source);
+      return VarValue::None();
+    }
+
     auto& [op, args] = opCode[ctx.line];
     ExecuteOpCode(&ctx, op, args);
+
+    ++opCodeExecutions;
 
     if (ctx.needReturn) {
       ctx.needReturn = false;
