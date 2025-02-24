@@ -188,7 +188,7 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
 
     // TODO: rework parsing with archives?
     std::string listenHost = serverSettings.at("listenHost").get<std::string>();
-    uint32_t listenPort = serverSettings.at("listenPort").get<uint32_t>();
+    uint32_t listenPort = serverSettings.at("port").get<uint32_t>();
     uint32_t maxPlayers = serverSettings.at("maxPlayers").get<uint32_t>();
 
     if (serverSettings.find("weaponStaminaModifiers") !=
