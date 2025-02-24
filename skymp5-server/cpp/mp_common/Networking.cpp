@@ -130,8 +130,8 @@ class Server : public Networking::IServer
 public:
   constexpr static int timeoutTimeMs = 60000;
 
-  Server(const char* listenAddress, unsigned short port_, unsigned short maxConnections,
-         const char* password_)
+  Server(const char* listenAddress, unsigned short port_,
+         unsigned short maxConnections, const char* password_)
     : password(password_)
   {
     if (maxConnections > kMaxPlayers) {
@@ -218,9 +218,11 @@ std::shared_ptr<Networking::IClient> Networking::CreateClient(
 }
 
 std::shared_ptr<Networking::IServer> Networking::CreateServer(
-  const char* listenAddress, unsigned short port, unsigned short maxConnections, const char* password)
+  const char* listenAddress, unsigned short port,
+  unsigned short maxConnections, const char* password)
 {
-  return std::make_shared<Server>(listenAddress, port, maxConnections, password);
+  return std::make_shared<Server>(listenAddress, port, maxConnections,
+                                  password);
 }
 
 void Networking::HandlePacketClientside(Networking::IClient::OnPacket onPacket,

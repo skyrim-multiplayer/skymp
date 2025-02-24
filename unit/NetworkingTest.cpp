@@ -8,7 +8,8 @@ using namespace std::chrono_literals;
 
 TEST_CASE("Handler destroys the client", "[Networking]")
 {
-  auto server = Networking::CreateServer("127.0.0.1", 7778, MAX_PLAYERS, "password");
+  auto server =
+    Networking::CreateServer("127.0.0.1", 7778, MAX_PLAYERS, "password");
   static auto client =
     Networking::CreateClient("127.0.0.1", 7778, 500, "password");
 
@@ -32,7 +33,8 @@ TEST_CASE("Handler destroys the client", "[Networking]")
 
 TEST_CASE("Connect/disconnect", "[Networking]")
 {
-  auto server = Networking::CreateServer("127.0.0.1", 7778, MAX_PLAYERS, "password");
+  auto server =
+    Networking::CreateServer("127.0.0.1", 7778, MAX_PLAYERS, "password");
   auto client = Networking::CreateClient("127.0.0.1", 7778, 500, "password");
 
   REQUIRE(!client->IsConnected());
@@ -52,7 +54,8 @@ TEST_CASE("Connect/disconnect", "[Networking]")
 
 TEST_CASE("Ctors", "[Networking]")
 {
-  auto server = Networking::CreateServer("127.0.0.1", 7778, MAX_PLAYERS, "password");
+  auto server =
+    Networking::CreateServer("127.0.0.1", 7778, MAX_PLAYERS, "password");
   auto client = Networking::CreateClient("127.0.0.1", 7778, 4000, "password");
 
   try {
