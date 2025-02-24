@@ -1,4 +1,4 @@
-﻿#include "ScopedTask.h"
+#include "ScopedTask.h"
 #include "papyrus-vm/OpcodesImplementation.h"
 #include "papyrus-vm/Utils.h"
 #include "papyrus-vm/VirtualMachine.h"
@@ -137,8 +137,8 @@ Object::PropInfo* ActivePexInstance::GetProperty(
 const std::string& ActivePexInstance::GetSourcePexName() const
 {
   if (!sourcePex.fn()) {
-    static const std::string empty = "";
-    return empty;
+    static const std::string kEmptyName = "";
+    return kEmptyName;
   }
 
   return sourcePex.fn()->source;
@@ -802,7 +802,7 @@ VarValue ActivePexInstance::StartFunction(FunctionInfo& function,
 VarValue& ActivePexInstance::GetIndentifierValue(
   std::vector<Local>& locals, VarValue& value, bool treatStringsAsIdentifiers)
 {
-  if (auto valueAsString = static_cast<const char*>(value)) {
+  if (const char* valueAsString = static_cast<const char*>(value)) {
     if (treatStringsAsIdentifiers &&
         value.GetType() == VarValue::kType_String) {
       auto& res = GetVariableValueByName(&locals, valueAsString);
@@ -1044,6 +1044,14 @@ VarValue ActivePexInstance::TryCastMultipleInheritance(
   return VarValue::None();
 }
 
+VarValue& ActivePexInstance::ResetNoneVarAndReturn()
+{
+  // You can't just initialize noneVar once because it can be modified outside
+  // unexpectedly
+  noneVar = VarValue::None();
+  return noneVar;
+}
+
 bool ActivePexInstance::HasParent(ActivePexInstance* script,
                                   std::string castToTypeName)
 {
@@ -1082,10 +1090,10 @@ bool ActivePexInstance::HasChild(ActivePexInstance* script,
   return false;
 }
 
+// TODO: optimize "name" to be passed by a const char * instead of std::string
 VarValue& ActivePexInstance::GetVariableValueByName(std::vector<Local>* locals,
                                                     std::string name)
 {
-
   if (name == "self") {
     return activeInstanceOwner;
   }
@@ -1106,14 +1114,12 @@ VarValue& ActivePexInstance::GetVariableValueByName(std::vector<Local>* locals,
     spdlog::error("ActivePexInstance::GetVariableValueByName - "
                   "GetVariableByName errored with '{}'",
                   e.what());
-    noneVar = VarValue::None();
-    return noneVar;
+    return ResetNoneVarAndReturn();
   } catch (...) {
     spdlog::critical("ActivePexInstance::GetVariableValueByName - "
                      "GetVariableByName errored with unknown error");
-    noneVar = VarValue::None();
     std::terminate();
-    return noneVar;
+    return ResetNoneVarAndReturn();
   }
 
   for (auto& _name : identifiersValueNameCache) {
@@ -1148,7 +1154,8 @@ VarValue& ActivePexInstance::GetVariableValueByName(std::vector<Local>* locals,
     }
   }
 
-  assert(false);
-  static VarValue _;
-  return _;
+  spdlog::error("ActivePexInstance::GetVariableValueByName - Failed all "
+                "attempts to find variable '{}'",
+                name);
+  return ResetNoneVarAndReturn();
 }

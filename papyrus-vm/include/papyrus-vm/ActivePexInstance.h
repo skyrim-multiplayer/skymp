@@ -98,6 +98,8 @@ private:
                                              const std::string& resultTypeName,
                                              VarValue* scriptToCastOwner);
 
+  VarValue& ResetNoneVarAndReturn();
+
   bool _IsValid = false;
 
   std::string childrenName;
