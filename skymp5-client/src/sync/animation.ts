@@ -127,14 +127,11 @@ export const applyAnimation = (
   if (state.lastNumChanges === anim.numChanges) return;
   state.lastNumChanges = anim.numChanges;
 
-  printConsole("apply anim " + anim.animEventName);
-
   if (state.useAnimOverrides) {
     const animOverride = animOverridesLowerCase[anim.animEventName.toLowerCase()];
     if (animOverride !== undefined) {
       anim.animEventName = animOverride;
     }
-    printConsole("anim override " + animOverride);
   }
 
   const animEventNameLowerCase = anim.animEventName.toLowerCase();
