@@ -78,6 +78,10 @@ const animOverridesLowerCase: Record<string, string | undefined> = {
   'chairdrinkingstart': 'IdleChairEnterInstant',
   'chaireatingstart': 'IdleChairEnterInstant',
 
+  // The only triple animation we know for now. One base anim to sit, then two to eat
+  'chaireatingsoupstart': 'IdleChairEnterInstant',
+  'idleeatsoup': 'IdleChairEnterInstant',
+
   // No need to re-play the animation, use instant variant for spawning actors
   // This is not essential, but makes the sync feel more smooth. The list is not complete.
   'idlechairrightenter': 'IdleChairEnterInstant',
