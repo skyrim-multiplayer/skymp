@@ -26,6 +26,18 @@ This IP-address would be used by player clients to connect to your server. Do no
 }
 ```
 
+## listenHost
+
+Specifies the IP address to bind to. Applies to the main UDP traffic (RakNet).
+
+```json5
+{
+  // ...
+  "listenHost": "127.0.0.1",
+  // ...
+}
+```
+
 ## port
 
 This port would be used by player clients to connect to your server. At the current version of Skyrim Multiplayer servers use multiple ports and different protocols to manage different sorts of packets. See [Server Ports Usage](docs_server_ports_usage.md) page to learn more.

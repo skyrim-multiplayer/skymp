@@ -25,8 +25,6 @@
 #include <napi.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <sstream>
-#include <stdexcept>
-#include <string_view>
 
 namespace {
 
@@ -58,14 +56,6 @@ bool StartsWith(const std::string& str, const char* prefix)
 {
   return str.compare(0, strlen(prefix), prefix) == 0;
 }
-
-// template <class T>
-// const T& GetFieldOrFail(const nlohmann::json& j, const std::string& field) {
-//   auto it = j.find(field);
-//   if (it == j.end()) {
-//     throw std::runtime_error("no field " + field + " in server settings");
-//   }
-// }
 
 }
 
