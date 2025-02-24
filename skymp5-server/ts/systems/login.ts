@@ -1,5 +1,4 @@
 import { System, Log, Content, SystemContext } from "./system";
-import { getMyPublicIp } from "../publicIp";
 import { Settings } from "../settings";
 import * as fetchRetry from "fetch-retry";
 
