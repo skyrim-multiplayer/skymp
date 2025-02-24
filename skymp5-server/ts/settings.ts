@@ -14,7 +14,7 @@ export interface DiscordAuthSettings {
 }
 
 export class Settings {
-  ip: string | null = null;
+  masterKey: string | null = null;
   port = 7777;
   maxPlayers = 100;
   master: string = "https://gateway.skymp.net";
@@ -57,7 +57,7 @@ export class Settings {
 
     const settings = await fetchServerSettings();
     [
-      'ip',
+      'masterKey',
       'port',
       'maxPlayers',
       'master',
