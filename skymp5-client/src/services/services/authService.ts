@@ -230,24 +230,36 @@ export class AuthService extends ClientListener {
             return;
           }
 
-          // backup password
-          // TODO: handle filesystem errors
-          if (fs.existsSync("Data/Platform/Distribution/password")) {
-            fs.copyFileSync("Data/Platform/Distribution/password", "Data/Platform/Distribution/password_backup");
+          // try backup password
+          try {
+            if (fs.existsSync("Data/Platform/Distribution/password")) {
+              fs.copyFileSync("Data/Platform/Distribution/password", "Data/Platform/Distribution/password_backup");
+            }
           }
+          catch (e) {
+            logError(this, `Failed to backup password:`, e);
+          }
+
+          let newComment;
 
           if (response.rpcResult !== null) {
             const { password } = response.rpcResult;
 
-            // TODO: handle filesystem errors
-            fs.writeFileSync("Data/Platform/Distribution/password", password);
-
-            browserState.comment = 'исправлено';
-            this.sp.browser.executeJavaScript(new FunctionInfo(this.browsersideWidgetSetter).getText({ events, browserState, authData: authData }));
-          } else {
-            browserState.comment = 'не удалось';
-            this.sp.browser.executeJavaScript(new FunctionInfo(this.browsersideWidgetSetter).getText({ events, browserState, authData: authData }));
+            try {
+              fs.writeFileSync("Data/Platform/Distribution/password", password);
+              newComment = 'исправлено';
+            }
+            catch (e) {
+              logError(this, `Failed to write password:`, e);
+              newComment = 'не удалось';
+            }
           }
+          else {
+            newComment = 'не удалось';
+          }
+
+          browserState.comment = newComment;
+          this.sp.browser.executeJavaScript(new FunctionInfo(this.browsersideWidgetSetter).getText({ events, browserState, authData: authData }));
         });
         break;
       case events.backToLogin:
