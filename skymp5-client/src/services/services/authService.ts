@@ -1,4 +1,5 @@
 import * as crypto from "crypto";
+import * as fs from "fs";
 import { AuthGameData, RemoteAuthGameData, authGameDataStorageKey } from "../../features/authModel";
 import { FunctionInfo } from "../../lib/functionInfo";
 import { ClientListener, CombinedController, Sp } from "./clientListener";
@@ -16,27 +17,30 @@ import { CustomPacketMessage2 } from "../messages/customPacketMessage2";
 import { MsgType } from "../../messages";
 import { ConnectionDenied } from "../events/connectionDenied";
 import { SettingsService } from "./settingsService";
+import { RPCClientService } from "./rpcClientService";
+import { RPCResultGetServerPassword } from "../messages_http/rpcResults/rpcResultGetServerPassword";
 
 // for browsersideWidgetSetter
 declare const window: any;
 
 // Constants used on both client and browser side (see browsersideWidgetSetter)
 const events = {
-  openDiscordOauth: 'openDiscordOauth',
-  authAttempt: 'authAttemptEvent',
-  openGithub: 'openGithub',
-  openPatreon: 'openPatreon',
-  clearAuthData: 'clearAuthData',
-  updateRequired: 'updateRequired',
-  backToLogin: 'backToLogin',
-  joinDiscord: 'joinDiscord'
+  'openDiscordOauth': 'openDiscordOauth',
+  'authAttempt': 'authAttemptEvent',
+  'openGithub': 'openGithub',
+  'openPatreon': 'openPatreon',
+  'clearAuthData': 'clearAuthData',
+  'updateRequired': 'updateRequired',
+  'updateSkip': 'updateSkip',
+  'backToLogin': 'backToLogin',
+  'joinDiscord': 'joinDiscord',
 };
 
 // Vaiables used on both client and browser side (see browsersideWidgetSetter)
 let browserState = {
-  comment: '',
-  failCount: 9000,
-  loginFailedReason: '',
+  'comment': '',
+  'failCount': 9000,
+  'loginFailedReason': '',
 };
 let authData: RemoteAuthGameData | null = null;
 
@@ -213,6 +217,50 @@ export class AuthService extends ClientListener {
       case events.updateRequired:
         this.sp.win32.loadUrl("https://skymp.net/UpdInstall");
         break;
+      case events.updateSkip:
+        browserState.comment = 'исправляем...';
+        this.sp.browser.executeJavaScript(new FunctionInfo(this.browsersideWidgetSetter).getText({ events, browserState, authData: authData }));
+
+        const rpcClientService = this.controller.lookupListener(RPCClientService);
+
+        rpcClientService.callRpc<RPCResultGetServerPassword>("RPCGetServerPassword", {}, (response) => {
+          if (!response) {
+            logError(this, `Failed to get server password`);
+            return;
+          }
+
+          // try backup password
+          try {
+            if (fs.existsSync("Data/Platform/Distribution/password")) {
+              fs.copyFileSync("Data/Platform/Distribution/password", "Data/Platform/Distribution/password_backup");
+            }
+          }
+          catch (e) {
+            logError(this, `Failed to backup password:`, e);
+          }
+
+          let newComment;
+
+          if (response.rpcResult !== null) {
+            const { password } = response.rpcResult;
+
+            try {
+              fs.writeFileSync("Data/Platform/Distribution/password", password);
+              newComment = 'исправлено';
+            }
+            catch (e) {
+              logError(this, `Failed to write password:`, e);
+              newComment = 'не удалось';
+            }
+          }
+          else {
+            newComment = 'не удалось';
+          }
+
+          browserState.comment = newComment;
+          this.sp.browser.executeJavaScript(new FunctionInfo(this.browsersideWidgetSetter).getText({ events, browserState, authData: authData }));
+        });
+        break;
       case events.backToLogin:
         this.sp.browser.executeJavaScript(new FunctionInfo(this.browsersideWidgetSetter).getText({ events, browserState, authData: authData }));
         break;
@@ -354,7 +402,7 @@ export class AuthService extends ClientListener {
     }
   };
 
-  private deniedWidgetSetter = () => {
+  private updateRequiredWidgetSetter = () => {
     const widget = {
       type: "form",
       id: 2,
@@ -388,6 +436,29 @@ export class AuthService extends ClientListener {
 
     // Make sure gamemode will not be able to update widgets anymore
     window.skyrimPlatform.widgets = null;
+  }
+
+  private updateSkipWidgetSetter = () => {
+    const widget = {
+      type: "form",
+      id: 2,
+      caption: "упс",
+      elements: [
+        {
+          type: "text",
+          text: "password отличается",
+          tags: []
+        },
+        {
+          type: "button",
+          text: "исправить",
+          tags: ["ELEMENT_STYLE_MARGIN_EXTENDED"],
+          click: () => window.skyrimPlatform.sendMessage(events.updateSkip),
+          hint: "Подменить password на актуальный",
+        }
+      ]
+    }
+    window.skyrimPlatform.widgets.set([widget]);
   }
 
   private loginFailedWidgetSetter = () => {
@@ -501,16 +572,41 @@ export class AuthService extends ClientListener {
     this.authAttemptProgressIndicator = false;
 
     if (e.error.toLowerCase().includes("invalid password")) {
-      this.controller.once("tick", () => {
-        this.controller.lookupListener(NetworkingService).close();
-      });
-      this.sp.browser.executeJavaScript(new FunctionInfo(this.deniedWidgetSetter).getText({ events }));
-      this.sp.browser.setVisible(true);
-      this.sp.browser.setFocused(true);
-      this.controller.once("update", () => {
-        this.sp.Game.disablePlayerControls(true, true, true, true, true, true, true, true, 0);
-      });
-      this.isListenBrowserMessage = true;
+      logTrace(this, 'Invalid password received');
+
+      const settingsService = this.controller.lookupListener(SettingsService);
+
+      const serverMasterKey = settingsService.getServerMasterKey();
+
+      if (typeof serverMasterKey === "string" && serverMasterKey.includes("indev")) {
+        logTrace(this, 'Skipping update skip required widget');
+
+        this.controller.once("tick", () => {
+          this.controller.lookupListener(NetworkingService).close();
+        });
+
+        this.sp.browser.executeJavaScript(new FunctionInfo(this.updateSkipWidgetSetter).getText({ events }));
+        this.sp.browser.setVisible(true);
+        this.sp.browser.setFocused(true);
+
+      } else {
+        logTrace(this, 'Showing update required widget');
+
+        this.controller.once("tick", () => {
+          this.controller.lookupListener(NetworkingService).close();
+        });
+
+        this.sp.browser.executeJavaScript(new FunctionInfo(this.updateRequiredWidgetSetter).getText({ events }));
+        this.sp.browser.setVisible(true);
+        this.sp.browser.setFocused(true);
+        this.controller.once("update", () => {
+          this.sp.Game.disablePlayerControls(true, true, true, true, true, true, true, true, 0);
+        });
+        this.isListenBrowserMessage = true;
+      }
+    }
+    else {
+      logError(this, 'Unknown reason for connection denied:', e.error);
     }
   }
 
