@@ -1,7 +1,6 @@
 import { System, Log } from "./system";
 import Axios from "axios";
 import { SystemContext } from "./system";
-import { getMyPublicIp } from "../publicIp";
 import { Settings } from "../settings";
 
 export class MasterApiBalanceSystem implements System {
