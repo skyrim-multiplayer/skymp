@@ -18,6 +18,7 @@ import { MsgType } from "../../messages";
 import { ConnectionDenied } from "../events/connectionDenied";
 import { SettingsService } from "./settingsService";
 import { RPCResponse } from "../messages_http/rpcResponse";
+import { RPCClientService } from "./rpcClientService";
 
 // for browsersideWidgetSetter
 declare const window: any;
@@ -220,18 +221,11 @@ export class AuthService extends ClientListener {
         browserState.comment = 'исправляем...';
         this.sp.browser.executeJavaScript(new FunctionInfo(this.browsersideWidgetSetter).getText({ events, browserState, authData: authData }));
 
-        const client = new this.sp.HttpClient(settingsService.getMasterUrl());
-        const serverMasterKey = settingsService.getServerMasterKey();
+        const rpcClientService = this.controller.lookupListener(RPCClientService);
 
-        // TODO: make a separate service for RPC calls
-        client.post(`/api/servers/${serverMasterKey}/rpc/RPCGetServerPassword`, {
-          body: '{}',
-          contentType: 'application/json',
-          headers: {}
-          // @ts-ignore
-        }, (res) => {
-          if (res.status != 200) {
-            logError(this, `Failed to get server password:`, res.status, res.body);
+        rpcClientService.callRpc("RPCGetServerPassword", {}, (response) => {
+          if (!response) {
+            logError(this, `Failed to get server password`);
             return;
           }
 
@@ -240,15 +234,6 @@ export class AuthService extends ClientListener {
           if (fs.existsSync("Data/Platform/Distribution/password")) {
             fs.copyFileSync("Data/Platform/Distribution/password", "Data/Platform/Distribution/password_backup");
           }
-
-          logTrace(this, `RPCGetServerPassword response:`, res.body);
-
-          // TODO: handle JSON.parse failure
-          const response = JSON.parse(res.body) as RPCResponse;
-
-          logTrace(this, response.rpcResult);
-          logTrace(this, typeof (response.rpcResult?.password));
-          logTrace(this, (response.rpcResult?.password));
 
           if (response.rpcResult && typeof (response.rpcResult.password) === "string") {
             const password = response.rpcResult.password;
