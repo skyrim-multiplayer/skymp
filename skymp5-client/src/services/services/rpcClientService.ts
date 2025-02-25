@@ -9,7 +9,7 @@ export class RPCClientService extends ClientListener {
     }
 
     // TODO: rewrite this function to use async/await once Skyrim Platform supports it in main menu
-    callRpc(rpcName: string, payload: Record<string, unknown>, callback: (response: RPCResponse | null) => void): void {
+    callRpc<RPCResult>(rpcName: string, payload: Record<string, unknown>, callback: (response: RPCResponse<RPCResult> | null) => void): void {
         const settingsService = this.controller.lookupListener(SettingsService);
         const client = new this.sp.HttpClient(settingsService.getMasterUrl());
         const serverMasterKey = settingsService.getServerMasterKey();
@@ -26,10 +26,10 @@ export class RPCClientService extends ClientListener {
                 return;
             }
 
-            let response: RPCResponse;
+            let response: RPCResponse<RPCResult>;
             try {
                 // TODO: consider schema validation with zod
-                response = JSON.parse(res.body) as RPCResponse;
+                response = JSON.parse(res.body) as RPCResponse<RPCResult>;
             }
             catch (e) {
                 if (e instanceof SyntaxError) {
