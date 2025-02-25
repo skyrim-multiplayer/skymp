@@ -19,6 +19,7 @@ import { ConnectionDenied } from "../events/connectionDenied";
 import { SettingsService } from "./settingsService";
 import { RPCResponse } from "../messages_http/rpcResponse";
 import { RPCClientService } from "./rpcClientService";
+import { RPCResultGetServerPassword } from "../messages_http/rpcResults/rpcResultGetServerPassword";
 
 // for browsersideWidgetSetter
 declare const window: any;
@@ -223,7 +224,7 @@ export class AuthService extends ClientListener {
 
         const rpcClientService = this.controller.lookupListener(RPCClientService);
 
-        rpcClientService.callRpc("RPCGetServerPassword", {}, (response) => {
+        rpcClientService.callRpc<RPCResultGetServerPassword>("RPCGetServerPassword", {}, (response) => {
           if (!response) {
             logError(this, `Failed to get server password`);
             return;
@@ -235,8 +236,9 @@ export class AuthService extends ClientListener {
             fs.copyFileSync("Data/Platform/Distribution/password", "Data/Platform/Distribution/password_backup");
           }
 
-          if (response.rpcResult && typeof (response.rpcResult.password) === "string") {
-            const password = response.rpcResult.password;
+          if (response.rpcResult !== null) {
+            const { password } = response.rpcResult;
+
             // TODO: handle filesystem errors
             fs.writeFileSync("Data/Platform/Distribution/password", password);
 
