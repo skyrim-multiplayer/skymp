@@ -17,7 +17,6 @@ import { CustomPacketMessage2 } from "../messages/customPacketMessage2";
 import { MsgType } from "../../messages";
 import { ConnectionDenied } from "../events/connectionDenied";
 import { SettingsService } from "./settingsService";
-import { RPCResponse } from "../messages_http/rpcResponse";
 import { RPCClientService } from "./rpcClientService";
 import { RPCResultGetServerPassword } from "../messages_http/rpcResults/rpcResultGetServerPassword";
 
