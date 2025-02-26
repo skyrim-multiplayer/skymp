@@ -14,6 +14,7 @@
 #include "HttpClient.h"
 #include "HttpClientApi.h"
 #include "InventoryApi.h"
+#include "FenixFunctions.h"
 #include "LoadGameApi.h"
 #include "MagicApi.h"
 #include "MpClientPluginApi.h"
@@ -262,6 +263,7 @@ private:
                            FileInfoApi::Register(e);
                            TextApi::Register(e);
                            InventoryApi::Register(e);
+                           FenixFunctions::Register(e);
                            MagicApi::Register(e);
                            ConstEnumApi::Register(e, engine);
                            ObjectReferenceApi::Register(e);
