@@ -1,5 +1,4 @@
 import { System, Log, Content, SystemContext } from "./system";
-import { getMyPublicIp } from "../publicIp";
 import { Settings } from "../settings";
 import * as fetchRetry from "fetch-retry";
 
@@ -28,7 +27,7 @@ export class Login implements System {
     private maxPlayers: number,
     private masterUrl: string | null,
     private serverPort: number,
-    private ip: string,
+    private masterKey: string,
     private offlineMode: boolean
   ) { }
 
@@ -48,7 +47,7 @@ export class Login implements System {
 
   private async getUserProfile(session: string, userId: number, ctx: SystemContext): Promise<UserProfile> {
     const response = await this.fetchRetry(
-      `${this.masterUrl}/api/servers/${this.myAddr}/sessions/${session}`,
+      `${this.masterUrl}/api/servers/${this.masterKey}/sessions/${session}`,
       this.getFetchOptions('getUserProfile')
     );
 
@@ -71,13 +70,8 @@ export class Login implements System {
   async initAsync(ctx: SystemContext): Promise<void> {
     this.settingsObject = await Settings.get();
 
-    if (this.ip && this.ip != "null") {
-      this.myAddr = this.ip + ":" + this.serverPort;
-    } else {
-      this.myAddr = (await getMyPublicIp()) + ":" + this.serverPort;
-    }
     this.log(
-      `Login system assumed that ${this.myAddr} is our address on master`
+      `Login system assumed that ${this.masterKey} is our master api key`
     );
   }
 
@@ -93,8 +87,7 @@ export class Login implements System {
     if (type !== "loginWithSkympIo") return;
 
     const ip = ctx.svr.getUserIp(userId);
-    const guid = ctx.svr.getUserGuid(userId);
-    console.log(`Connecting a user ${userId} with ip ${ip}, guid ${guid}`);
+    console.log(`Connecting a user ${userId} with ip ${ip}`);
 
     let discordAuth = this.settingsObject.discordAuth;
 

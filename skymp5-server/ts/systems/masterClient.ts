@@ -1,7 +1,6 @@
 import { System, Log } from "./system";
 import Axios from "axios";
 import { SystemContext } from "./system";
-import { getMyPublicIp } from "../publicIp";
 import { ScampServer } from "../scampNative";
 
 export class MasterClient implements System {
@@ -13,7 +12,7 @@ export class MasterClient implements System {
     private masterUrl: string | null,
     private maxPlayers: number,
     private name: string,
-    private ip: string,
+    private masterKey: string,
     private updateIntervalMs = 5000,
     private offlineMode = false
   ) { }
@@ -23,11 +22,7 @@ export class MasterClient implements System {
 
     this.log(`Using master server on ${this.masterUrl}`);
 
-    let myAddr: string;
-    if (this.ip && this.ip != "null") myAddr = this.ip + ":" + this.serverPort;
-    else myAddr = (await getMyPublicIp()) + ":" + this.serverPort;
-
-    this.endpoint = `${this.masterUrl}/api/servers/${myAddr}`;
+    this.endpoint = `${this.masterUrl}/api/servers/${this.masterKey}`;
     this.log(`Our endpoint on master is ${this.endpoint}`);
   }
 

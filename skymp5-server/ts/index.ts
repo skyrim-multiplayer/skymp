@@ -127,17 +127,17 @@ const setupStreams = (scampNative: any) => {
 const main = async () => {
   const settingsObject = await Settings.get();
   const {
-    port, master, maxPlayers, name, ip, offlineMode, gamemodePath
+    port, master, maxPlayers, name, masterKey, offlineMode, gamemodePath
   } = settingsObject;
 
   const log = console.log;
   const systems = new Array<System>();
   systems.push(
-    new MasterClient(log, port, master, maxPlayers, name, ip, 5000, offlineMode),
+    new MasterClient(log, port, master, maxPlayers, name, masterKey, 5000, offlineMode),
     new Spawn(log),
-    new Login(log, maxPlayers, master, port, ip, offlineMode),
+    new Login(log, maxPlayers, master, port, masterKey, offlineMode),
     new DiscordBanSystem(),
-    new MasterApiBalanceSystem(log, maxPlayers, master, port, ip, offlineMode)
+    new MasterApiBalanceSystem(log, maxPlayers, master, port, masterKey, offlineMode),
   );
 
   setupStreams(scampNative.getScampNative());
@@ -148,10 +148,9 @@ const main = async () => {
   let server: any;
 
   try {
-    server = createScampServer(port, maxPlayers, settingsObject.allSettings);
+    server = createScampServer(settingsObject.allSettings);
     ui.setServer(server);
-  }
-  catch (e) {
+  } catch (e) {
     console.error(e);
     console.error(`Stopping the server due to the previous error`);
     process.exit(-1);

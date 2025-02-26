@@ -14,7 +14,7 @@ export interface DiscordAuthSettings {
 }
 
 export class Settings {
-  ip: string | null = null;
+  masterKey: string | null = null;
   port = 7777;
   maxPlayers = 100;
   master: string = "https://gateway.skymp.net";
@@ -39,19 +39,8 @@ export class Settings {
   static async get(): Promise<Settings> {
     if (!Settings.cachedPromise) {
       Settings.cachedPromise = (async () => {
-        const args = Settings.parseArgs();
         const res = new Settings();
-
         await res.loadSettings();  // Load settings asynchronously
-
-        // Override settings with command line arguments if available
-        res.port = +args['port'] || res.port;
-        res.maxPlayers = +args['maxPlayers'] || res.maxPlayers;
-        res.master = args['master'] || res.master;
-        res.name = args['name'] || res.name;
-        res.ip = args['ip'] || res.ip;
-        res.offlineMode = args['offlineMode'] || res.offlineMode;
-
         return res;
       })();
     }
@@ -68,7 +57,7 @@ export class Settings {
 
     const settings = await fetchServerSettings();
     [
-      'ip',
+      'masterKey',
       'port',
       'maxPlayers',
       'master',
@@ -91,12 +80,6 @@ export class Settings {
       add_help: false,
       description: '',
     });
-    parser.add_argument('-m', '--maxPlayers');
-    parser.add_argument('--master');
-    parser.add_argument('--name');
-    parser.add_argument('--port');
-    parser.add_argument('--ip');
-    parser.add_argument('--offlineMode');
     return parser.parse_args();
   }
 
