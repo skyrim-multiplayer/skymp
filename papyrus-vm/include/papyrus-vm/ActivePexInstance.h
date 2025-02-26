@@ -1,5 +1,4 @@
 #pragma once
-#include <functional>
 #include <map>
 #include <memory>
 #include <optional>
@@ -7,7 +6,6 @@
 #include <utility>
 #include <vector>
 
-#include "FunctionCode.h"
 #include "FunctionInfo.h"
 #include "IVariablesHolder.h"
 #include "PexScript.h"

@@ -1,4 +1,5 @@
 #pragma once
+#include "papyrus-vm/FunctionCode.h"
 #include <cstdint>
 #include <string>
 #include <vector>

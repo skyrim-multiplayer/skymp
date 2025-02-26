@@ -3,8 +3,10 @@
 #include "GetWeightFromRecord.h"
 #include "MpObjectReference.h"
 #include "WorldState.h"
+#include "antigo/Context.h"
 #include "gamemode_events/PapyrusEventEvent.h"
 #include "script_objects/MpFormGameObject.h"
+#include <sstream>
 
 MpForm::MpForm()
 {
@@ -34,6 +36,22 @@ void MpForm::Update()
 void MpForm::SendPapyrusEvent(const char* eventName, const VarValue* arguments,
                               size_t argumentsCount)
 {
+  ANTIGO_CONTEXT_INIT(ctx);
+  ctx.AddPtr(arguments);
+  ctx.AddUnsigned(argumentsCount);
+
+  // XXX: bad naming, what it really means is that it lives for a longer time than context
+  ctx.AddLambdaWithOwned([eventName, arguments, argumentsCount]{
+    std::stringstream ss;
+    ss << "eventName = " << eventName << "\n";
+    ss << "arguments = [" << argumentsCount << "] [\n";
+    for (size_t i = 0; i < argumentsCount; ++i) {
+      ss << "  " << arguments[i] << "\n";
+    }
+    ss << "]";
+    return std::move(ss).str();
+  });
+
   PapyrusEventEvent papyrusEventEvent(this, eventName, arguments,
                                       argumentsCount);
   papyrusEventEvent.Fire(parent);
