@@ -252,54 +252,47 @@ const main = async () => {
     log(
       `Error during loading a gamemode from "${absoluteGamemodePath}" - file or directory does not exist`
     );
-  } else {
+    return;
+  }
+
+  try {
+    requireUncached(absoluteGamemodePath, clear, server);
+  } catch (e) {
+    console.error(e);
+  }
+
+  const watcher = chokidar.watch(absoluteGamemodePath, {
+    ignored: /^\./,
+    persistent: true,
+    awaitWriteFinish: true,
+  });
+
+  const numReloads = { n: 0 };
+
+  const reloadGamemode = () => {
     try {
       requireUncached(absoluteGamemodePath, clear, server);
+      numReloads.n++;
     } catch (e) {
       console.error(e);
     }
-  }
+  };
 
-  if (fs.existsSync(absoluteGamemodePath)) {
-    try {
-      requireUncached(absoluteGamemodePath, clear, server);
-    } catch (e) {
-      console.error(e);
-    }
+  const reloadGamemodeTimeout = function () {
+    const n = numReloads.n;
+    setTimeout(
+      () => (n === numReloads.n ? reloadGamemode() : undefined),
+      1000
+    );
+  };
 
-    const watcher = chokidar.watch(absoluteGamemodePath, {
-      ignored: /^\./,
-      persistent: true,
-      awaitWriteFinish: true,
-    });
-
-    const numReloads = { n: 0 };
-
-    const reloadGamemode = () => {
-      try {
-        requireUncached(absoluteGamemodePath, clear, server);
-        numReloads.n++;
-      } catch (e) {
-        console.error(e);
-      }
-    };
-
-    const reloadGamemodeTimeout = function () {
-      const n = numReloads.n;
-      setTimeout(
-        () => (n === numReloads.n ? reloadGamemode() : undefined),
-        1000
-      );
-    };
-
-    watcher.on("add", reloadGamemodeTimeout);
-    watcher.on("addDir", reloadGamemodeTimeout);
-    watcher.on("change", reloadGamemodeTimeout);
-    watcher.on("unlink", reloadGamemodeTimeout);
-    watcher.on("error", function (error) {
-      console.error("Error happened in chokidar watch", error);
-    });
-  }
+  watcher.on("add", reloadGamemodeTimeout);
+  watcher.on("addDir", reloadGamemodeTimeout);
+  watcher.on("change", reloadGamemodeTimeout);
+  watcher.on("unlink", reloadGamemodeTimeout);
+  watcher.on("error", function (error) {
+    console.error("Error happened in chokidar watch", error);
+  });
 };
 
 main();
