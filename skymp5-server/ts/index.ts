@@ -124,6 +124,64 @@ const setupStreams = (scampNative: any) => {
   };
 };
 
+const setupGamemode = (server: any, gamemodePath: string) => {
+  const clear = () => server.clear();
+
+  const toAbsolute = (p: string) => {
+    if (path.isAbsolute(p)) return p;
+    return path.resolve("", p);
+  };
+
+  const absoluteGamemodePath = toAbsolute(gamemodePath);
+  console.log(`Gamemode path is "${absoluteGamemodePath}"`);
+
+  if (!fs.existsSync(absoluteGamemodePath)) {
+    console.log(
+      `Error during loading a gamemode from "${absoluteGamemodePath}" - file or directory does not exist`,
+    );
+    return;
+  }
+
+  try {
+    requireUncached(absoluteGamemodePath, clear, server);
+  } catch (e) {
+    console.error(e);
+  }
+
+  const watcher = chokidar.watch(absoluteGamemodePath, {
+    ignored: /^\./,
+    persistent: true,
+    awaitWriteFinish: true,
+  });
+
+  const numReloads = { n: 0 };
+
+  const reloadGamemode = () => {
+    try {
+      requireUncached(absoluteGamemodePath, clear, server);
+      numReloads.n++;
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const reloadGamemodeTimeout = function () {
+    const n = numReloads.n;
+    setTimeout(
+      () => (n === numReloads.n ? reloadGamemode() : undefined),
+      1000
+    );
+  };
+
+  watcher.on("add", reloadGamemodeTimeout);
+  watcher.on("addDir", reloadGamemodeTimeout);
+  watcher.on("change", reloadGamemodeTimeout);
+  watcher.on("unlink", reloadGamemodeTimeout);
+  watcher.on("error", function (error) {
+    console.error("Error happened in chokidar watch", error);
+  });
+};
+
 const main = async () => {
   const settingsObject = await Settings.get();
   const {
@@ -238,68 +296,7 @@ const main = async () => {
     process.exit(-1);
   }
 
-  const clear = () => server.clear();
-
-  const toAbsolute = (p: string) => {
-    if (path.isAbsolute(p)) return p;
-    return path.resolve("", p);
-  };
-
-  const absoluteGamemodePath = toAbsolute(gamemodePath);
-  log(`Gamemode path is "${absoluteGamemodePath}"`);
-
-  if (!fs.existsSync(absoluteGamemodePath)) {
-    log(
-      `Error during loading a gamemode from "${absoluteGamemodePath}" - file or directory does not exist`
-    );
-  } else {
-    try {
-      requireUncached(absoluteGamemodePath, clear, server);
-    } catch (e) {
-      console.error(e);
-    }
-  }
-
-  if (fs.existsSync(absoluteGamemodePath)) {
-    try {
-      requireUncached(absoluteGamemodePath, clear, server);
-    } catch (e) {
-      console.error(e);
-    }
-
-    const watcher = chokidar.watch(absoluteGamemodePath, {
-      ignored: /^\./,
-      persistent: true,
-      awaitWriteFinish: true,
-    });
-
-    const numReloads = { n: 0 };
-
-    const reloadGamemode = () => {
-      try {
-        requireUncached(absoluteGamemodePath, clear, server);
-        numReloads.n++;
-      } catch (e) {
-        console.error(e);
-      }
-    };
-
-    const reloadGamemodeTimeout = function () {
-      const n = numReloads.n;
-      setTimeout(
-        () => (n === numReloads.n ? reloadGamemode() : undefined),
-        1000
-      );
-    };
-
-    watcher.on("add", reloadGamemodeTimeout);
-    watcher.on("addDir", reloadGamemodeTimeout);
-    watcher.on("change", reloadGamemodeTimeout);
-    watcher.on("unlink", reloadGamemodeTimeout);
-    watcher.on("error", function (error) {
-      console.error("Error happened in chokidar watch", error);
-    });
-  }
+  setupGamemode(server, gamemodePath);
 };
 
 main();
