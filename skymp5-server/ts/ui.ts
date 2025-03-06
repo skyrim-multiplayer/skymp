@@ -41,6 +41,7 @@ export const main = (settings: Settings): void => {
 
   const devServerPort = 1234;
 
+  const uiListenHost = settings.allSettings.uiListenHost as (string | undefined);
   const uiPort = settings.port === 7777 ? 3000 : settings.port + 1;
 
   Axios({
@@ -71,13 +72,13 @@ export const main = (settings: Settings): void => {
           })
         );
         console.log(`Server resources folder is listening on ${uiPort}`);
-        http.createServer(appProxy.callback()).listen(uiPort);
+        http.createServer(appProxy.callback()).listen(uiPort, uiListenHost);
       });
     })
     .catch(() => {
       const app = createApp(() => uiPort);
       console.log(`Server resources folder is listening on ${uiPort}`);
-      const server = require("http").createServer(app.callback());
-      server.listen(uiPort);
+      const server = http.createServer(app.callback());
+      server.listen(uiPort, uiListenHost);
     });
 };
