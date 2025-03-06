@@ -28,12 +28,24 @@ Specify the server key you wish to use for Master API. Client must have the same
 
 ## listenHost
 
-Specifies the IP address to bind to. Applies to the main UDP traffic (RakNet).
+Specifies the IP address to bind to. Applies to the main UDP traffic (RakNet). Binds to `0.0.0.0` if unspecified.
 
 ```json5
 {
   // ...
   "listenHost": "127.0.0.1",
+  // ...
+}
+```
+
+## uiListenHost
+
+Specifies the IP address to bind to. Applies to the `uiPort` (http). Binds to `0.0.0.0` if unspecified.
+
+```json5
+{
+  // ...
+  "uiListenHost": "127.0.0.1",
   // ...
 }
 ```
