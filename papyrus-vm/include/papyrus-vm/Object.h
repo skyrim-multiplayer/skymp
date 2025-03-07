@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "VarValue.h"
+#include "papyrus-vm/FunctionInfo.h"
 
 struct Object
 {

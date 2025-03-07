@@ -8,7 +8,7 @@ apply_default_settings(TARGETS papyrus-vm-lib)
 target_include_directories(papyrus-vm-lib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
 target_include_directories(papyrus-vm-lib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src")
 
-target_link_libraries(papyrus-vm-lib PUBLIC viet)
+target_link_libraries(papyrus-vm-lib PUBLIC antigo viet)
 
 find_package(spdlog CONFIG REQUIRED)
 target_link_libraries(papyrus-vm-lib PUBLIC spdlog::spdlog)

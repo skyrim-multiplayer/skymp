@@ -2,6 +2,8 @@
 #include <cstdint>
 #include <vector>
 
+#include "papyrus-vm/VarValue.h"
+
 struct FunctionCode
 {
   enum

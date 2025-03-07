@@ -1,13 +1,75 @@
 #include "papyrus-vm/VirtualMachine.h"
+#include "antigo/Context.h"
+#include "antigo/ResolvedContext.h"
 #include "papyrus-vm/Utils.h"
 #include <algorithm>
 #include <cassert>
+#include <exception>
+#include <fmt/format.h>
+#include <limits>
+#include <memory>
+#include <random>
 #include <spdlog/spdlog.h>
 #include <sstream>
 #include <stdexcept>
 
 namespace {
 constexpr uint32_t g_maxStackId = 100'000;
+}
+
+
+void StackData::EnableTracing(Antigo::OnstackContext& parentCtx) {
+  thread_local std::random_device rd;
+  thread_local std::mt19937 gen(rd());
+  thread_local std::uniform_int_distribution<size_t> dist(std::numeric_limits<size_t>::max() / 2, std::numeric_limits<size_t>::max());
+  if (tracing.enabled) {
+    return;
+  }
+  tracing.enabled = true;
+  // tracing.traceId = std::chrono::steady_clock::now().time_since_epoch().count();
+  tracing.traceId = dist(gen);
+  spdlog::info("TRACING PAPYRUS STACK {}-{}: enabled", stackIdHolder.GetStackId(), tracing.traceId);
+}
+
+std::vector<std::weak_ptr<StackData>> StackData::activeStacks{};
+
+std::shared_ptr<StackData> StackData::Create(VirtualMachine& vm_) {
+  auto p = std::make_shared<StackData>(vm_, InternalToken{});
+  if (activeStacks.empty()) {
+    activeStacks.resize(g_maxStackId);
+    size_t id = p->stackIdHolder.GetStackId();
+    if (id >= activeStacks.size()) {
+      spdlog::error("bad stack id: {} >= {}", id, activeStacks.size());
+      return p;
+    }
+    auto& ptrInArr = activeStacks[id];
+    if (ptrInArr.use_count() != 0) {
+      spdlog::error("duplicate stack id: {}, old use count", id, ptrInArr.use_count());
+    }
+    ptrInArr = p;
+  }
+  return p;
+}
+
+StackData::StackData(VirtualMachine& vm_, InternalToken): stackIdHolder(vm_) {}
+
+StackData::~StackData() {
+  ANTIGO_CONTEXT_INIT(ctx);
+  if (tracing.enabled) {
+    std::string last;
+    if (tracing.msgs.empty()) {
+      last = "(empty)";
+    } else {
+      last = tracing.msgs.back();
+    }
+    std::string resolved;
+    try {
+      resolved = ctx.Resolve().ToString();
+    } catch (const std::exception& e) {
+      resolved = std::string{"unexpected error during resolving: "} + e.what();
+    }
+    spdlog::info("TRACING PAPYRUS STACK {}-{}: DESTRUCTOR (last: {})\n{}", stackIdHolder.GetStackId(), tracing.traceId, last, resolved);
+  }
 }
 
 VirtualMachine::VirtualMachine(
@@ -160,6 +222,8 @@ bool VirtualMachine::DynamicCast(const VarValue& object,
 void VirtualMachine::AddObject(std::shared_ptr<IGameObject> self,
                                const std::vector<ScriptInfo>& scripts)
 {
+  ANTIGO_CONTEXT_INIT(ctx);
+
   std::vector<std::shared_ptr<ActivePexInstance>> scriptsForObject;
 
   for (auto& s : scripts) {
@@ -176,6 +240,7 @@ void VirtualMachine::AddObject(std::shared_ptr<IGameObject> self,
     self->AddScript(script);
   }
   gameObjectsHolder.insert(self);
+  // XXX why
 }
 
 void VirtualMachine::SendEvent(std::shared_ptr<IGameObject> self,
@@ -183,19 +248,42 @@ void VirtualMachine::SendEvent(std::shared_ptr<IGameObject> self,
                                const std::vector<VarValue>& arguments,
                                OnEnter enter)
 {
+  ANTIGO_CONTEXT_INIT(ctx);
+  ctx.AddMessage("next: self, eventName");
+  ctx.AddPtr(self);
+  std::string eventNameS = eventName;
+  ctx.AddLambdaWithOwned([n = std::move(eventNameS)]() { return n; });
+  // XXX bad naming, outer scope
+  ctx.AddLambdaWithOwned([&arguments, &enter]{
+    std::stringstream ss;
+    ss << "arguments = [" << arguments.size() << "] [\n";
+    for (const auto& arg : arguments) {
+      ss << "  " << arg.ToString() << "\n";
+    }
+    ss << "]\nenter as bool = " << static_cast<bool>(enter);
+    return std::move(ss).str();
+  });
+
   for (auto& scriptInstance : self->ListActivePexInstances()) {
+    ctx.AddLambdaWithOwned([pexName = scriptInstance->GetSourcePexName()]{return "pex = " + pexName;});
     auto name = scriptInstance->GetActiveStateName();
+    ctx.AddLambdaWithOwned([name]{return "state = " + name;});
 
     auto fn = scriptInstance->GetFunctionByName(
       eventName, scriptInstance->GetActiveStateName());
     if (fn.valid) {
-      std::shared_ptr<StackData> stackData;
-      stackData.reset(new StackData{ StackIdHolder{ *this } });
+      ctx.AddMessage("valid");
+      auto stackData = StackData::Create(*this);
+      if (strcmp(eventName, "OnHit") == 0) {
+        stackData->EnableTracing(ctx);
+      }
       if (enter) {
         enter(*stackData);
       }
       scriptInstance->StartFunction(
         fn, const_cast<std::vector<VarValue>&>(arguments), stackData);
+    } else {
+      ctx.AddMessage("invalid");
     }
   }
 }
@@ -204,12 +292,16 @@ void VirtualMachine::SendEvent(ActivePexInstance* instance,
                                const char* eventName,
                                const std::vector<VarValue>& arguments)
 {
+  ANTIGO_CONTEXT_INIT(ctx);
+  ctx.AddMessage("next: instance, eventName");
+  ctx.AddPtr(instance);
+  std::string eventNameS = eventName;
+  ctx.AddLambdaWithOwned([n = std::move(eventNameS)]() { return n; });
 
   auto fn =
     instance->GetFunctionByName(eventName, instance->GetActiveStateName());
   if (fn.valid) {
-    std::shared_ptr<StackData> stackData;
-    stackData.reset(new StackData{ StackIdHolder{ *this } });
+    auto stackData = StackData::Create(*this);
     instance->StartFunction(fn, const_cast<std::vector<VarValue>&>(arguments),
                             stackData);
   }
@@ -258,11 +350,33 @@ VarValue VirtualMachine::CallMethod(
   const std::vector<std::shared_ptr<ActivePexInstance>>*
     activePexInstancesOverride)
 {
+  ANTIGO_CONTEXT_INIT(ctx);
+  auto g = ctx.AddLambdaWithRef([selfObj, methodName, arguments]() {
+    std::stringstream ss;
+    ss << "selfObj = ";
+    if (selfObj) {
+      ss << selfObj->GetStringID();
+    } else {
+      ss << "nullptr";
+    }
+    ss << "\n";
+    ss << "methodName = " << methodName << "\n";
+    ss << "arguments = [\n";
+    for (const auto& arg : arguments) {
+      ss << "  " << arg.ToString() << "\n";
+    }
+    ss << "]";
+    return std::move(ss).str();
+  });
+  g.Arm();
+
   if (!stackData) {
-    stackData.reset(new StackData{ StackIdHolder{ *this } });
+    stackData = StackData::Create(*this);
   }
 
   if (!selfObj) {
+    ctx.AddMessage("tried to call a method for null");
+    ctx.Resolve().Print();
     return VarValue::None();
   }
 
@@ -326,6 +440,11 @@ VarValue VirtualMachine::CallMethod(
       break;
   }
 
+  // ctx.AddMessage("method not found (see adjacent message if this one came from an exception)");
+  // ctx.Orphan();
+
+  ANTIGO_CONTEXT_INIT(ctx_hack); // a way to avoid ref expiry
+
   std::string e = "Method not found - '";
   e += base;
   e += (base[0] ? "." : "") + std::string(methodName) + "'";
@@ -340,8 +459,22 @@ VarValue VirtualMachine::CallStatic(const std::string& className,
                                     std::vector<VarValue>& arguments,
                                     std::shared_ptr<StackData> stackData)
 {
+  ANTIGO_CONTEXT_INIT(ctx);
+
+  ctx.AddLambdaWithOwned([&className, &functionName, &arguments, &stackData]{
+    std::stringstream ss;
+    ss << "className = " << className << "\n";
+    ss << "functionName = " << functionName << "\n";
+    ss << "arguments [" << arguments.size() << "] = [\n";
+    for (const auto& arg : arguments) {
+      ss << "  " << arg.ToString() << "\n";
+    }
+    ss << "]\nstackData = " << std::hex << stackData;
+    return std::move(ss).str();
+  });
+
   if (!stackData) {
-    stackData.reset(new StackData{ StackIdHolder{ *this } });
+    stackData = StackData::Create(*this);
   }
 
   VarValue result = VarValue::None();
@@ -423,6 +556,7 @@ std::shared_ptr<ActivePexInstance> VirtualMachine::CreateActivePexInstance(
   const std::shared_ptr<IVariablesHolder>& mapForFillProperties,
   const std::string& childrenName)
 {
+  ANTIGO_CONTEXT_INIT(ctx);
 
   auto it = allLoadedScripts.find(
     CIString{ pexScriptName.begin(), pexScriptName.end() });

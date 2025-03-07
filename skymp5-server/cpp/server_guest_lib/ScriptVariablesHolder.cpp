@@ -1,6 +1,8 @@
 #include "ScriptVariablesHolder.h"
 
 #include "WorldState.h"
+#include "antigo/Context.h"
+#include "antigo/ResolvedContext.h"
 #include "libespm/Property.h"
 #include "papyrus-vm/Utils.h"
 #include "script_objects/EspmGameObject.h"
@@ -25,27 +27,45 @@ ScriptVariablesHolder::ScriptVariablesHolder(
 VarValue* ScriptVariablesHolder::GetVariableByName(const char* name,
                                                    const PexScript& pex)
 {
+  ANTIGO_CONTEXT_INIT(ctx);
+  ctx.AddPtr(this);
+  ctx.AddLambdaWithOwned([name = std::string{name}]() { return name; });
+
   if (!scriptsCache) {
     scriptsCache = std::make_unique<ScriptsCache>();
   }
 
   if (!Utils::stricmp(name, "::State")) {
     if (state == VarValue::None()) {
+      ctx.AddMessage("filling state");
       FillState(pex);
     }
+    // member, outlives the func
+    // XXX bad naming
+    ctx.AddMessage("got state, next: return val");
+    ctx.AddLambdaWithOwned([this]{return state.ToString();});
     return &state;
   }
 
   if (!vars) {
+    ctx.AddMessage("filling vars and properties");
     vars = std::make_unique<CIMap<VarValue>>();
     FillNormalVariables(pex);
     FillProperties();
   }
 
+  ctx.AddMessage("next: vars.size");
+  ctx.AddUnsigned(vars->size());
+
   auto it = vars->find(name);
   if (it != vars->end()) {
+    // member, outlives the func
+    // XXX bad naming
+    ctx.AddMessage("got state, next: return val");
+    ctx.AddLambdaWithOwned([this]{return state.ToString();});
     return &it->second;
   }
+  ctx.AddMessage("var not found");
   return nullptr;
 }
 
@@ -128,6 +148,8 @@ VarValue ScriptVariablesHolder::CastPrimitivePropertyValue(
   const espm::Property::Value& propValue, espm::Property::Type type,
   const std::function<uint32_t(uint32_t)>& toGlobalId, WorldState* worldState)
 {
+  ANTIGO_CONTEXT_INIT(ctx);
+
   switch (type) {
     case espm::Property::Type::Object: {
       if (!propValue.formId) {
@@ -164,6 +186,7 @@ VarValue ScriptVariablesHolder::CastPrimitivePropertyValue(
                   "not found in the world. LookupFormById trace:\n{}",
                   myScriptName, type.ToString(), propValueFormIdGlobal,
                   traceStream.str());
+                ctx.Resolve().Print();
               }
             } else {
               spdlog::error(

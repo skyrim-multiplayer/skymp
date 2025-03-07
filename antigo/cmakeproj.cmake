@@ -1,0 +1,2 @@
+list(APPEND CMAKEPROJ_PROJECTS antigo)
+set(CMAKEPROJ_PRIORITY_antigo 0)
