@@ -144,6 +144,18 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
+include(CheckCXXCompilerFlag)
+
+#check_cxx_compiler_flag("-fsanitize=address" COMPILER_SUPPORTS_ASAN)
+#
+#if(COMPILER_SUPPORTS_ASAN)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -O0 -fno-omit-frame-pointer")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address -O0 -fno-omit-frame-pointer")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=address -lasan")
+# else()
+#     message(WARNING "AddressSanitizer is not supported by this compiler.")
+# endif()
+
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/modules)
 
 # Initialize the CMAKEPROJ projects and their configurations
