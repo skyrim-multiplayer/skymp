@@ -1026,6 +1026,19 @@ VirtualMachine& WorldState::GetPapyrusVm()
           return result;
         });
 
+      pImpl->vm->SetExceptionHandler([this](const VmExceptionInfo& errorData) {
+        std::string sourcePex = errorData.sourcePex;
+        std::string what = errorData.what;
+        std::string loggerMsg = sourcePex + ": " + what;
+        bool methodNotFoundError =
+          what.find("Method not found") != std::string::npos;
+        if (methodNotFoundError) {
+          logger->warn(loggerMsg);
+        } else {
+          logger->error(loggerMsg);
+        }
+      });
+
       pImpl->classes =
         PapyrusClassesFactory::CreateAndRegister(*pImpl->vm, pImpl->policy);
     }
