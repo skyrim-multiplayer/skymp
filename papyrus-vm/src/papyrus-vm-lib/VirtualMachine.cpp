@@ -2,7 +2,6 @@
 #include "papyrus-vm/Utils.h"
 #include <algorithm>
 #include <cassert>
-#include <spdlog/spdlog.h>
 #include <sstream>
 #include <stdexcept>
 
@@ -38,6 +37,11 @@ void VirtualMachine::SetMissingScriptHandler(
   const MissingScriptHandler& handler)
 {
   this->missingScriptHandler = handler;
+}
+
+void VirtualMachine::SetExceptionHandler(const ExceptionHandler& handler)
+{
+  this->handler = handler;
 }
 
 std::string ToLower(std::string s)
@@ -298,25 +302,7 @@ VarValue VirtualMachine::CallMethod(
     if (auto f = nativeFunctions[base][methodName]) {
       auto self = VarValue(selfObj);
       self.SetMetaStackIdHolder(stackData->stackIdHolder);
-      try {
-        return f(self, arguments);
-      } catch (std::exception& e) {
-        std::string methodNameFull;
-        methodNameFull += base;
-        methodNameFull += (base[0] ? "." : "") + std::string(methodName) + "'";
-        spdlog::error("VirtualMachine::CallMethod - Native {} errored with {}",
-                      methodNameFull, e.what());
-        return VarValue::None();
-      } catch (...) {
-        std::string methodNameFull;
-        methodNameFull += base;
-        methodNameFull += (base[0] ? "." : "") + std::string(methodName) + "'";
-        spdlog::critical(
-          "VirtualMachine::CallMethod - Native {} errored with unknown error",
-          methodNameFull);
-        std::terminate();
-        return VarValue::None();
-      }
+      return f(self, arguments);
     }
     auto it = allLoadedScripts.find(base);
     if (it == allLoadedScripts.end())
@@ -329,10 +315,7 @@ VarValue VirtualMachine::CallMethod(
   std::string e = "Method not found - '";
   e += base;
   e += (base[0] ? "." : "") + std::string(methodName) + "'";
-
-  spdlog::error("VirtualMachine::CallMethod - {}", e);
-
-  return VarValue::None();
+  throw std::runtime_error(e);
 }
 
 VarValue VirtualMachine::CallStatic(const std::string& className,
@@ -354,21 +337,7 @@ VarValue VirtualMachine::CallStatic(const std::string& className,
   if (f) {
     auto self = VarValue::None();
     self.SetMetaStackIdHolder(stackData->stackIdHolder);
-    try {
-      return f(self, arguments);
-    } catch (std::exception& e) {
-      std::string functionNameFull = className + "." + functionName;
-      spdlog::error("VirtualMachine::CallStatic - Native {} errored with {}",
-                    functionNameFull, e.what());
-      return VarValue::None();
-    } catch (...) {
-      std::string functionNameFull = className + "." + functionName;
-      spdlog::critical(
-        "VirtualMachine::CallStatic - Native {} errored with unknown error",
-        functionNameFull);
-      std::terminate();
-      return VarValue::None();
-    }
+    return f(self, arguments);
   }
 
   auto classNameCi = CIString{ className.begin(), className.end() };
@@ -394,17 +363,15 @@ VarValue VirtualMachine::CallStatic(const std::string& className,
 
   if (function.valid) {
     if (function.IsNative()) {
-      spdlog::error("VirtualMachine::CallStatic - Function not found - '{}'",
-                    functionName);
-      return VarValue::None();
+      throw std::runtime_error("Function not found - '" +
+                               std::string(functionName) + "'");
     }
 
     result = instance->StartFunction(function, arguments, stackData);
   }
   if (!function.valid) {
-    spdlog::error("VirtualMachine::CallStatic - Function is not valid - '{}'",
-                  functionName);
-    return VarValue::None();
+    throw std::runtime_error("Function is not valid - '" +
+                             std::string(functionName) + "'");
   }
 
   return result;
@@ -456,6 +423,11 @@ bool VirtualMachine::IsNativeFunctionByNameExisted(
   }
 
   return false;
+}
+
+VirtualMachine::ExceptionHandler VirtualMachine::GetExceptionHandler() const
+{
+  return handler;
 }
 
 void VirtualMachine::RemoveObject(std::shared_ptr<IGameObject> self)
