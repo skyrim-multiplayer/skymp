@@ -3,17 +3,14 @@ import { AuthService } from "./authService";
 import { ClientListener, CombinedController, Sp } from "./clientListener";
 import { Mod, ServerManifest } from "../messages_http/serverManifest";
 import { TimersService } from "./timersService";
+import { TargetPeer } from "../messages_http/targetPeer";
 
+// TODO: get rid of this interface once skyrim-platform types gets updated in package.json
 interface IHttpClientWithCallback {
   get(path: string, options?: { headers?: HttpHeaders }): Promise<HttpResponse>;
   post(path: string, options: { body: string, contentType: string, headers?: HttpHeaders }): Promise<HttpResponse>;
 
   get(path: string, options: { headers?: HttpHeaders } | undefined, callback: (response: HttpResponse) => void): void;
-}
-
-export interface TargetPeer {
-  host: string;
-  port: number;
 }
 
 export class SettingsService extends ClientListener {

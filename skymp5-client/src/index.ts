@@ -52,6 +52,7 @@ import { KeyboardEventsService } from "./services/services/keyboardEventsService
 import { MagicSyncService } from "./services/services/magicSyncService";
 import { ProfilingService } from "./services/services/profilingService";
 import { SettingsService } from "./services/services/settingsService";
+import { RPCClientService } from "./services/services/rpcClientService";
 
 once("update", () => {
   Utility.setINIBool("bAlwaysActive:General", true);
@@ -84,6 +85,7 @@ const main = () => {
       new RemoteServer(sp, controller),
       new SpSnippetService(sp, controller),
       new SettingsService(sp, controller),
+      new RPCClientService(sp, controller),
       new SweetTaffyDynamicPerksService(sp, controller),
       new SweetTaffyStaticPerksService(sp, controller),
       new SweetTaffySweetCantDropService(sp, controller),
