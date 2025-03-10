@@ -172,6 +172,7 @@ jobs:
                 run: |
                     cd /src \
                     && ./build.sh --configure \
+                       -DWITH_ANTIGO=1 \
                        -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
                        -DUNIT_DATA_DIR="/src/skyrim_data_files"
 

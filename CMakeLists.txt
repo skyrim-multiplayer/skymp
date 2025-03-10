@@ -1,3 +1,7 @@
+if(WITH_ANTIGO OR DEFINED ENV{DEPLOY_ACTION})
+  add_compile_definitions(WITH_ANTIGO)
+endif()
+
 # At the moment of writing this gives ~10% speedup of cmake command on Windows
 # https://gitlab.kitware.com/cmake/cmake/-/issues/23154
 if(POLICY 0115)

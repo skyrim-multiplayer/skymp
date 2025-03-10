@@ -2,9 +2,12 @@
 #include "CIString.h"
 #include "Structures.h"
 #include <MakeID.h>
+#include <chrono>
 #include <functional>
 #include <map>
+#include <memory>
 #include <set>
+#include <vector>
 
 using NativeFunction =
   std::function<VarValue(VarValue self, std::vector<VarValue> arguments)>;
@@ -42,9 +45,36 @@ private:
   size_t depth = 0;
 };
 
+namespace Antigo {
+class OnstackContext;
+}
+
 struct StackData
 {
   StackIdHolder stackIdHolder;
+
+  std::chrono::time_point<std::chrono::steady_clock> lastExec;
+
+  static std::vector<std::weak_ptr<StackData>> activeStacks;
+
+  struct {
+    bool enabled = false;
+    size_t traceId = 0; // set to random
+    // std::vector<Antigo::ResolvedContext> execCalls;
+    std::vector<std::string> msgs;
+  } tracing;
+
+  void EnableTracing(Antigo::OnstackContext& parentCtx);
+
+  static std::shared_ptr<StackData> Create(VirtualMachine& vm_);
+
+  ~StackData();
+
+private:
+  struct InternalToken {};
+
+public:
+  StackData(VirtualMachine& vm_, InternalToken);
 };
 
 struct VmExceptionInfo
