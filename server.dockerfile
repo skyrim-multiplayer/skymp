@@ -1,4 +1,4 @@
-FROM skymp/skymp-runtime-base:2c7d8a5
+FROM skymp/skymp-vcpkg-deps:2c7d8a5
 
 ARG BUILD_TYPE
 ARG GAMEMODE_GITHUB_TOKEN
