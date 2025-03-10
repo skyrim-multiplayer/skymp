@@ -72,3 +72,23 @@ FROM skymp-build-base AS skymp-vcpkg-deps
 
 COPY --from=skymp-vcpkg-deps-builder --chown=skymp:skymp \
   /home/skymp/.cache/vcpkg /home/skymp/.cache/vcpkg
+
+# New build stage to configure and compile the project
+FROM skymp-vcpkg-deps AS skymp-builder
+ARG BUILD_TYPE
+ARG GAMEMODE_GITHUB_TOKEN
+ENV DEPLOY_BRANCH
+ENV CI=true
+
+COPY --chown=skymp:skymp . /src
+
+USER skymp
+WORKDIR /src
+
+RUN ./build.sh --configure \
+    -DBUILD_UNIT_TESTS=OFF \
+    -DBUILD_GAMEMODE=ON \
+    -DOFFLINE_MODE=OFF \
+    -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
+    -DGITHUB_TOKEN=$GAMEMODE_GITHUB_TOKEN \
+ && ./build.sh --build
