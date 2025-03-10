@@ -16,4 +16,5 @@ RUN ./build.sh --configure \
     -DOFFLINE_MODE=OFF \
     -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
     -DGITHUB_TOKEN=$GAMEMODE_GITHUB_TOKEN \
+ && ls -lah /src \
  && ./build.sh --build
