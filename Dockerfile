@@ -77,7 +77,7 @@ COPY --from=skymp-vcpkg-deps-builder --chown=skymp:skymp \
 FROM skymp-vcpkg-deps AS skymp-builder
 ARG BUILD_TYPE
 ARG GAMEMODE_GITHUB_TOKEN
-ENV DEPLOY_BRANCH
+ARG DEPLOY_BRANCH
 ENV CI=true
 
 COPY --chown=skymp:skymp . /src
