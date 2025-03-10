@@ -17,7 +17,7 @@ endif()
 set(VCPKG_OVERLAY_TRIPLETS "${CMAKE_CURRENT_LIST_DIR}/overlay_triplets")
 set(VCPKG_OVERLAY_PORTS "${CMAKE_CURRENT_LIST_DIR}/overlay_ports")
 
-option(NO_CLEAN_AFTER_BUILD "Don't clean vcpkg temporary folders after build" OFF)
+option(NO_CLEAN_AFTER_BUILD "Don't clean vcpkg temporary folders after build" ON)
 
 if("$ENV{CI}" STREQUAL "true" OR NO_CLEAN_AFTER_BUILD)
   set(VCPKG_INSTALL_OPTIONS --no-print-usage)
@@ -56,13 +56,14 @@ if(NOT "${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}/build")
 endif()
 
 # Bool options (Part 1)
-option(SKYRIM_SE "Legacy Skyrim SE (1.5) build" OFF)
+option(SKYRIM_SE "Legacy Skyrim SE (1.5) build" ON)
 option(BUILD_NODEJS "Build NodeJS port if ON, use a pre-built otherwise" OFF)
 
 if(SKYRIM_SE)
   list(APPEND VCPKG_MANIFEST_FEATURES "skyrim-se")
 else()
-  list(APPEND VCPKG_MANIFEST_FEATURES "skyrim-ae")
+## bellow was originally skrim-ae
+  list(APPEND VCPKG_MANIFEST_FEATURES "skyrim-se")
 endif()
 
 if(BUILD_NODEJS)
@@ -86,7 +87,7 @@ endif()
 option(JS_ENGINE_TRACING_ENABLED "Useful for JsEngine debugging. See JsEngine.h" OFF)
 option(PREPARE_NEXUS_ARCHIVES "Prepare SP and other archives during build or not" OFF)
 option(BUILD_UNIT_TESTS "Build unit tests (excluded from build when off - workaround for #1182)" ON)
-option(INSTALL_CLIENT_DIST "Install the client into SKYRIM_DIR after build" OFF)
+option(INSTALL_CLIENT_DIST "Install the client into SKYRIM_DIR after build" off)
 option(BUILD_GAMEMODE "Build gamemode" OFF)
 option(OFFLINE_MODE "Enable offline mode in generated server settings and client settings" ON)
 
