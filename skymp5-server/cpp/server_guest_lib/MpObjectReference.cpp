@@ -768,7 +768,7 @@ void MpObjectReference::SetProperty(const std::string& propertyName,
     }
   }
   pImpl->setPropertyCalled = true;
-  // pImpl->setPropertyCaller = ctx.Resolve();
+  pImpl->setPropertyCaller = ctx.Resolve();
 }
 
 void MpObjectReference::SetTeleportFlag(bool value)
