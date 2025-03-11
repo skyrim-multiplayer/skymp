@@ -1,7 +1,5 @@
 FROM ubuntu:jammy
 
-ARG BUILD_TYPE
-
 ENV CI=true
 
 ENV TZ=Etc/GMT
@@ -46,5 +44,5 @@ RUN ./build.sh --configure \
     -DBUILD_UNIT_TESTS=OFF \
     -DBUILD_GAMEMODE=OFF \
     -DOFFLINE_MODE=OFF \
-    -DCMAKE_BUILD_TYPE=$BUILD_TYPE
+    -DCMAKE_BUILD_TYPE=RelWithDebInfo
 RUN ./build.sh --build
