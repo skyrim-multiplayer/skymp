@@ -4,7 +4,6 @@ include(${CMAKE_SOURCE_DIR}/cmake/yarn.cmake)
 
 yarn_execute_command(
   WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
-  COMMAND install
 )
 
 file(GLOB_RECURSE sources ${CMAKE_CURRENT_LIST_DIR}/src/*)
