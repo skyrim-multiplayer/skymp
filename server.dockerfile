@@ -5,11 +5,10 @@ ARG GAMEMODE_GITHUB_TOKEN
 ARG DEPLOY_BRANCH
 ENV CI=true
 
-USER skymp
 WORKDIR /src
 
-COPY --chown=skymp:skymp . /src
-COPY --chown=skymp:skymp ./vcpkg /src/vcpkg
+COPY . /src
+COPY ./vcpkg /src/vcpkg
 
 RUN ./build.sh --configure \
     -DBUILD_UNIT_TESTS=OFF \
