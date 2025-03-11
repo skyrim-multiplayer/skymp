@@ -9,6 +9,7 @@ USER skymp
 WORKDIR /src
 
 COPY --chown=skymp:skymp . /src
+COPY --chown=skymp:skymp ./vcpkg /src/vcpkg
 
 RUN ./build.sh --configure \
     -DBUILD_UNIT_TESTS=OFF \
