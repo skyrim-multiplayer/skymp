@@ -5,10 +5,10 @@ ARG GAMEMODE_GITHUB_TOKEN
 ARG DEPLOY_BRANCH
 ENV CI=true
 
-COPY --chown=skymp:skymp . /src
-
 USER skymp
 WORKDIR /src
+
+COPY --chown=skymp:skymp . /src
 
 RUN ./build.sh --configure \
     -DBUILD_UNIT_TESTS=OFF \
