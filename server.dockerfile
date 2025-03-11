@@ -7,8 +7,7 @@ ENV CI=true
 
 WORKDIR /src
 
-COPY . /src
-COPY ./vcpkg /src/vcpkg
+COPY . .
 
 RUN ./build.sh --configure \
     -DBUILD_UNIT_TESTS=OFF \
