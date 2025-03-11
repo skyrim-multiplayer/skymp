@@ -1,8 +1,8 @@
 function(yarn_execute_command)
   cmake_parse_arguments(A "" "WORKING_DIRECTORY;OUTPUT_VARIABLE;RESULT_VARIABLE" "COMMAND" ${ARGN})
-  foreach(arg WORKING_DIRECTORY COMMAND)
+  foreach(arg WORKING_DIRECTORY)
     if("${A_${arg}}" STREQUAL "")
-      message(FATAL_ERROR "Missing ${arg} argument")
+      message(FATAL_ERROR "Missing ${arg} argument (required)")
     endif()
   endforeach()
 
