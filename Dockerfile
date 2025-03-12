@@ -45,7 +45,7 @@ RUN cd vcpkg \
   && chmod +x ./bootstrap-vcpkg.sh \
   && ./bootstrap-vcpkg.sh \
   && mkdir -p /src/build/vcpkg_installed \
-  && ./vcpkg install --x-install-root=/src/build/vcpkg_installed --x-manifest-root=/src
+  && ./vcpkg install --triplet x64-linux --x-install-root=/src/build/vcpkg_installed --x-manifest-root=/src
 
 COPY . .
 
