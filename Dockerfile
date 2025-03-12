@@ -42,7 +42,7 @@ COPY ./vcpkg ./vcpkg
 
 RUN cd vcpkg \
   && chmod +x ./bootstrap-vcpkg.sh \
-  && ./bootstrap_vcpkg.sh \
+  && ./bootstrap-vcpkg.sh \
   && cd .. \
   && ./vcpkg/vcpkg install
 
