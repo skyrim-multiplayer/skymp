@@ -36,14 +36,10 @@ endif()
 
 # File from vcpkg submodule. This indicates inability to find this file or checkout submodules.
 if(NOT EXISTS "${CMAKE_TOOLCHAIN_FILE}")
-  file(GLOB_RECURSE files ${CMAKE_SOURCE_DIR}/*)
   set(msg "${CMAKE_TOOLCHAIN_FILE} doesn't exist. It seems that vcpkg submodule is not initialized.")
   set(msg "${msg}\nUse commands below to initialize:")
   set(msg "${msg}\n  git submodule init")
   set(msg "${msg}\n  git submodule update")
-  foreach(file ${files})
-    set(msg "${msg}\n    ${file}")
-  endforeach()
   message(FATAL_ERROR "${msg}")
 endif()
 
