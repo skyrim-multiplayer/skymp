@@ -41,7 +41,7 @@ WORKDIR /src
 COPY ./vcpkg ./vcpkg
 
 RUN cd vcpkg \
-  && chmod +x ./bootstrap_vcpkg.sh \
+  && chmod +x ./bootstrap-vcpkg.sh \
   && ./bootstrap_vcpkg.sh \
   && cd .. \
   && ./vcpkg/vcpkg install
