@@ -9,7 +9,8 @@ RUN \
   apt-get update && apt-get install -y curl \
   && curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
   && apt-get update \
-  && apt-get install -y nodejs yarn \
+  && apt-get install -y nodejs npm \
+  && npm install -g yarn@1.22.22 \
   && rm -rf /var/lib/apt/lists/*
 
 # TODO: update clang
@@ -73,7 +74,8 @@ RUN \
   apt-get update && apt-get install -y curl \
   && curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
   && apt-get update \
-  && apt-get install -y nodejs gdb \
+  && apt-get install -y nodejs npm \
+  && npm install -g yarn@1.22.22 \
   && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /src
