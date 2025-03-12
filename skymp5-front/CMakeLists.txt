@@ -35,7 +35,7 @@ if(BUILD_FRONT)
   )
 else()
   add_custom_target(skymp5-front ALL
-    SOURCES ${source}
+    SOURCES ${sources}
     COMMAND ${CMAKE_COMMAND} -E echo "Building skymp5-front is disabled. To enable it, set BUILD_FRONT to ON."
   )
 endif()
