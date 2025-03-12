@@ -5,7 +5,7 @@ export class BlockedAnimationsService extends ClientListener {
     constructor(private sp: Sp, private controller: CombinedController) {
         super();
 
-        const blockedAnims = [];
+        const blockedAnims: string[] = [];
 
         const self = this;
 
