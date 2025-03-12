@@ -44,8 +44,8 @@ COPY ./vcpkg.json ./vcpkg.json
 RUN cd vcpkg \
   && chmod +x ./bootstrap-vcpkg.sh \
   && ./bootstrap-vcpkg.sh \
-  && cd .. \
-  && ./vcpkg/vcpkg install
+  && mkdir -p /src/build/vcpkg_installed \
+  && ./vcpkg install --x-install-root=/src/build/vcpkg_installed --x-manifest-root=/src
 
 COPY . .
 
