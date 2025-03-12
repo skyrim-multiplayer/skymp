@@ -62,7 +62,7 @@ option(BUILD_NODEJS "Build NodeJS port if ON, use a pre-built otherwise" OFF)
 if(SKYRIM_SE)
   list(APPEND VCPKG_MANIFEST_FEATURES "skyrim-se")
 else()
-## bellow was originally skrim-ae
+# bellow was originally skyrim-ae
   list(APPEND VCPKG_MANIFEST_FEATURES "skyrim-se")
 endif()
 
