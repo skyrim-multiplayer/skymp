@@ -1,15 +1,15 @@
-FROM ubuntu:jammy
+FROM ubuntu:jammy AS builder
 
 ENV CI=true
-
 ENV TZ=Etc/GMT
+
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 RUN \
   apt-get update && apt-get install -y curl \
   && curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
   && apt-get update \
-  && apt-get install -y nodejs yarn gdb \
+  && apt-get install -y nodejs yarn \
   && rm -rf /var/lib/apt/lists/*
 
 # TODO: update clang
@@ -47,3 +47,24 @@ RUN ./build.sh --configure \
     -DOFFLINE_MODE=OFF \
     -DCMAKE_BUILD_TYPE=RelWithDebInfo
 RUN ./build.sh --build
+
+# --- Second Stage ---
+FROM ubuntu:jammy AS runner
+
+ENV CI=true
+ENV TZ=Etc/GMT
+
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+RUN \
+  apt-get update && apt-get install -y curl \
+  && curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
+  && apt-get update \
+  && apt-get install -y nodejs gdb \
+  && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /src
+
+COPY --from=builder /src/build/dist/server /src
+
+CMD ["node", "dist_back"]
