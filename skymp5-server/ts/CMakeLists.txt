@@ -7,8 +7,9 @@ set(out
 )
 add_custom_command(
   OUTPUT ${out}
-  COMMAND yarn --cwd "\"${SKYMP5_SERVER_SOURCE_DIR}\""
-  COMMAND yarn --cwd "\"${SKYMP5_SERVER_SOURCE_DIR}\"" build-ts
+  COMMAND yarn install
+  COMMAND yarn build-ts
+  WORKING_DIRECTORY ${SKYMP5_SERVER_SOURCE_DIR}
   DEPENDS ${sources}
 )
 add_custom_target(skymp5-server-ts ALL
