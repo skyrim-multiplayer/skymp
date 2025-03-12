@@ -1,17 +1,9 @@
-FROM ubuntu:jammy AS builder
+FROM node:22.14.0 AS builder
 
 ENV CI=true
 ENV TZ=Etc/GMT
 
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
-
-RUN \
-  apt-get update && apt-get install -y curl \
-  && curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
-  && apt-get update \
-  && apt-get install -y nodejs npm \
-  && npm install -g yarn@1.22.22 \
-  && rm -rf /var/lib/apt/lists/*
 
 # TODO: update clang
 RUN \
@@ -63,20 +55,12 @@ RUN ./build.sh --configure \
 RUN ./build.sh --build
 
 # --- Second Stage ---
-FROM ubuntu:jammy AS runner
+FROM node:22.14.0 AS runner
 
 ENV CI=true
 ENV TZ=Etc/GMT
 
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
-
-RUN \
-  apt-get update && apt-get install -y curl \
-  && curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
-  && apt-get update \
-  && apt-get install -y nodejs npm \
-  && npm install -g yarn@1.22.22 \
-  && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /src
 
