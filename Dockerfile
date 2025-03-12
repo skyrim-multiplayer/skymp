@@ -44,6 +44,7 @@ RUN ./build.sh --configure \
     -DBUILD_UNIT_TESTS=OFF \
     -DBUILD_GAMEMODE=OFF \
     -DBUILD_CLIENT=OFF \
+    -DBUILD_FRONT=OFF \
     -DOFFLINE_MODE=OFF \
     -DCMAKE_BUILD_TYPE=RelWithDebInfo
 RUN ./build.sh --build
