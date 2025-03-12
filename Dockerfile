@@ -39,6 +39,7 @@ RUN \
 WORKDIR /src
 
 COPY ./vcpkg ./vcpkg
+COPY ./vcpkg.json ./vcpkg.json
 
 RUN cd vcpkg \
   && chmod +x ./bootstrap-vcpkg.sh \
