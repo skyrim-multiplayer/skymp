@@ -13,7 +13,6 @@ RUN \
   && echo 'deb [signed-by=/usr/share/keyrings/kitware-archive-keyring.gpg] https://apt.kitware.com/ubuntu/ jammy main' > /etc/apt/sources.list.d/kitware.list \
   && apt-get update \
   && apt-get install -y \
-    python2 \
     libicu-dev \
     git \
     cmake \
