@@ -38,6 +38,14 @@ RUN \
 
 WORKDIR /src
 
+COPY ./vcpkg ./vcpkg
+
+RUN cd vcpkg \
+  && chmod +x ./bootstrap_vcpkg.sh \
+  && ./bootstrap_vcpkg.sh \
+  && cd .. \
+  && ./vcpkg/vcpkg install
+
 COPY . .
 
 RUN ./build.sh --configure \
@@ -45,6 +53,7 @@ RUN ./build.sh --configure \
     -DBUILD_GAMEMODE=OFF \
     -DBUILD_CLIENT=OFF \
     -DBUILD_FRONT=OFF \
+    -DBUILD_SKYRIM_PLATFORM=OFF \
     -DOFFLINE_MODE=OFF \
     -DCMAKE_BUILD_TYPE=RelWithDebInfo
 RUN ./build.sh --build
