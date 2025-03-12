@@ -38,14 +38,16 @@ RUN \
 
 WORKDIR /src
 
-COPY ./vcpkg ./vcpkg
-COPY ./vcpkg.json ./vcpkg.json
+# TODO: use build.sh --configure with dummy cmakelists for early ports install
 
-RUN cd vcpkg \
-  && chmod +x ./bootstrap-vcpkg.sh \
-  && ./bootstrap-vcpkg.sh \
-  && mkdir -p /src/build/vcpkg_installed \
-  && ./vcpkg install --triplet x64-linux --x-install-root=/src/build/vcpkg_installed --x-manifest-root=/src
+#COPY ./vcpkg ./vcpkg
+#COPY ./vcpkg.json ./vcpkg.json
+
+#RUN cd vcpkg \
+#  && chmod +x ./bootstrap-vcpkg.sh \
+#  && ./bootstrap-vcpkg.sh \
+#  && mkdir -p /src/build/vcpkg_installed \
+#  && ./vcpkg install --triplet x64-linux --x-install-root=/src/build/vcpkg_installed --x-manifest-root=/src
 
 COPY . .
 
