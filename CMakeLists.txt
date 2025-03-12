@@ -89,6 +89,7 @@ option(BUILD_UNIT_TESTS "Build unit tests (excluded from build when off - workar
 option(INSTALL_CLIENT_DIST "Install the client into SKYRIM_DIR after build" OFF)
 option(BUILD_GAMEMODE "Build gamemode" OFF)
 option(BUILD_CLIENT "Build client" ON)
+option(BUILD_FRONT "Build front" ON)
 option(OFFLINE_MODE "Enable offline mode in generated server settings and client settings" ON)
 
 message(STATUS JS_ENGINE_TRACING_ENABLED=${JS_ENGINE_TRACING_ENABLED})
@@ -98,6 +99,7 @@ message(STATUS BUILD_UNIT_TESTS=${BUILD_UNIT_TESTS})
 message(STATUS INSTALL_CLIENT_DIST=${INSTALL_CLIENT_DIST})
 message(STATUS BUILD_GAMEMODE=${BUILD_GAMEMODE})
 message(STATUS BUILD_CLIENT=${BUILD_CLIENT})
+message(STATUS BUILD_FRONT=${BUILD_FRONT})
 message(STATUS OFFLINE_MODE=${OFFLINE_MODE})
 message(STATUS BUILD_NODEJS=${BUILD_NODEJS})
 
