@@ -3,6 +3,8 @@ enable_testing()
 
 include(${CMAKE_SOURCE_DIR}/cmake/apply_default_settings.cmake)
 
+find_package(CMakeRC CONFIG REQUIRED)
+
 set(SKYMP5_SERVER_SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR})
 
 # Find node-addon-api
