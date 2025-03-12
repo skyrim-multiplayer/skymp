@@ -1,1 +1,12 @@
 .git
+.github
+build
+docs
+skymp5-client/node_modules
+skymp5-front/node_modules
+skymp5-front/config.js
+skymp5-functions-lib/node_modules
+skymp5-functions-lib/coverage
+skymp5-functions-lib/gamemode.js
+skymp5-server/node_modules
+skyrim-platform/node_modules
