@@ -87,7 +87,7 @@ endif()
 option(JS_ENGINE_TRACING_ENABLED "Useful for JsEngine debugging. See JsEngine.h" OFF)
 option(PREPARE_NEXUS_ARCHIVES "Prepare SP and other archives during build or not" OFF)
 option(BUILD_UNIT_TESTS "Build unit tests (excluded from build when off - workaround for #1182)" ON)
-option(INSTALL_CLIENT_DIST "Install the client into SKYRIM_DIR after build" off)
+option(INSTALL_CLIENT_DIST "Install the client into SKYRIM_DIR after build" OFF)
 option(BUILD_GAMEMODE "Build gamemode" OFF)
 option(OFFLINE_MODE "Enable offline mode in generated server settings and client settings" ON)
 
