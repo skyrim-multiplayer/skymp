@@ -35,9 +35,10 @@ fi
 
 # TODO(#2280): reverse the order or use [[ ]] ?
 if [ "$1" = "--configure" ]; then
+  echo build.sh: added WITH_ANTIGO
   shift && \
     cd build && \
-    exec cmake -G "Ninja" .. -DCMAKE_EXPORT_COMPILE_COMMANDS=ON "$@"
+    exec cmake -G "Ninja" .. -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DWITH_ANTIGO=1 "$@"
 elif [ "$1" = "--build" ]; then
   shift && \
     cd build && \

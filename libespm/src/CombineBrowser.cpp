@@ -1,4 +1,5 @@
 #include "libespm/CombineBrowser.h"
+#include "antigo/Context.h"
 #include "libespm/Browser.h"
 #include "libespm/RecordHeader.h"
 #include "libespm/Utils.h"
@@ -8,6 +9,8 @@
 #include <unordered_set>
 
 namespace espm {
+
+thread_local Antigo::ResolvedContext g_lastForm0Lookup;
 
 int32_t CombineBrowser::Impl::GetFileIndex(const char* fileName) const noexcept
 {
@@ -24,9 +27,13 @@ int32_t CombineBrowser::Impl::GetFileIndex(const char* fileName) const noexcept
 
 LookupResult CombineBrowser::LookupById(uint32_t combFormId) const noexcept
 {
+  ANTIGO_CONTEXT_INIT(ctx);
+
   // Otherwise, we'll find a TES4 record in Skyrim.esm which is not relevant
   // for CombineBrowser use cases
   if (combFormId == 0) {
+    ctx.AddMessage("trying to resolve form id 0");
+    g_lastForm0Lookup = ctx.Resolve();
     return LookupResult();
   }
 

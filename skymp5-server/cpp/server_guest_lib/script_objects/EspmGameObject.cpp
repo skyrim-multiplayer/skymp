@@ -1,8 +1,13 @@
 #include "EspmGameObject.h"
 
-#include <spdlog/spdlog.h>
 #include <sstream>
 #include <stdexcept>
+
+#include <spdlog/spdlog.h>
+
+#include "antigo/Context.h"
+#include "antigo/ResolvedContext.h"
+#include "libespm/CombineBrowser.h"
 
 EspmGameObject::EspmGameObject(const espm::LookupResult& record_)
   : record(record_)
@@ -11,8 +16,16 @@ EspmGameObject::EspmGameObject(const espm::LookupResult& record_)
 
 const char* EspmGameObject::GetParentNativeScript()
 {
+  ANTIGO_CONTEXT_INIT(ctx);
+
+  ctx.AddMessage("record ptr = next");
+  ctx.AddPtr(record.rec);
+
   if (record.rec) {
     auto t = record.rec->GetType();
+
+    ctx.AddMessage("record type = next");
+    ctx.AddLambdaWithOwned([t]() { return t.ToString(); });
 
     if (t == "GRUP")
       return "group";
@@ -283,6 +296,8 @@ const char* EspmGameObject::GetParentNativeScript()
 
     // P.S. there is some code outside espm that relies on REFR/ACHR
 
+    ctx.AddLambdaWithOwned([b = espm::g_lastForm0Lookup]{ return b.ToString(); });
+
     throw std::runtime_error("Unable to find native script for record type " +
                              t.ToString());
   }
@@ -299,29 +314,31 @@ bool EspmGameObject::EqualsByValue(const IGameObject& obj) const
 
 const espm::LookupResult& GetRecordPtr(const VarValue& papyrusObject)
 {
+  ANTIGO_CONTEXT_INIT(ctx);
+
   static const espm::LookupResult emptyResult;
 
   if (papyrusObject.GetType() != VarValue::kType_Object) {
     std::stringstream papyrusObjectStr;
     papyrusObjectStr << papyrusObject;
-    spdlog::warn("GetRecordPtr called with non-object ({})",
-                 papyrusObjectStr.str());
+    spdlog::warn("GetRecordPtr called with non-object ({})\n{}",
+                 papyrusObjectStr.str(), ctx.Resolve().ToString());
     return emptyResult;
   }
   auto gameObject = static_cast<IGameObject*>(papyrusObject);
   if (!gameObject) {
     std::stringstream papyrusObjectStr;
     papyrusObjectStr << papyrusObject;
-    spdlog::warn("GetRecordPtr called with null object ({})",
-                 papyrusObjectStr.str());
+    spdlog::warn("GetRecordPtr called with null object ({})\n{}",
+                 papyrusObjectStr.str(), ctx.Resolve().ToString());
     return emptyResult;
   }
   auto espmGameObject = dynamic_cast<EspmGameObject*>(gameObject);
   if (!espmGameObject) {
     std::stringstream papyrusObjectStr;
     papyrusObjectStr << papyrusObject;
-    spdlog::warn("GetRecordPtr called with non-espm object ({})",
-                 papyrusObjectStr.str());
+    spdlog::warn("GetRecordPtr called with non-espm object ({})\n{}",
+                 papyrusObjectStr.str(), ctx.Resolve().ToString());
     return emptyResult;
   }
   return espmGameObject->record;
@@ -349,6 +366,7 @@ EspmGameObject::ListActivePexInstances() const
 void EspmGameObject::AddScript(
   std::shared_ptr<ActivePexInstance> sctipt) noexcept
 {
-  spdlog::critical("EspmGameObject::AddScript is not supported");
+  ANTIGO_CONTEXT_INIT(ctx);
+  spdlog::critical("EspmGameObject::AddScript is not supported\n{}", ctx.Resolve().ToString());
   std::terminate();
 }

@@ -8,6 +8,7 @@
 #include "MpActor.h"
 #include "MsgType.h"
 #include "SpellCastData.h"
+#include "antigo/Context.h"
 #include <simdjson.h>
 #include <slikenet/BitStream.h>
 
@@ -52,6 +53,10 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
                                              size_t length,
                                              ActionListener& actionListener)
 {
+  ANTIGO_CONTEXT_INIT(ctx);
+  ctx.AddMessage("next: userId");
+  ctx.AddUnsigned(userId);
+
   if (!length) {
     throw std::runtime_error("Zero-length message packets are not allowed");
   }
@@ -182,8 +187,11 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
       }
     } break;
     case MsgType::FinishSpSnippet: {
+      ctx.AddMessage("next: snippedIdx");
+
       uint32_t snippetIdx;
       ReadEx(jMessage, JsonPointers::snippetIdx, &snippetIdx);
+      ctx.AddUnsigned(snippetIdx);
 
       simdjson::dom::element returnValue;
       ReadEx(jMessage, JsonPointers::returnValue, &returnValue);
