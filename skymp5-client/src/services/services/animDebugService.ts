@@ -5,7 +5,6 @@ import { ButtonEvent, CameraStateChangedEvent, DxScanCode, Menu } from "skyrimPl
 
 const playerId = 0x14;
 
-// TODO: split into two separate services: AnimDebugService and <you name it: a service for 3rd person camera enforcement in anims>
 export class AnimDebugService extends ClientListener {
   constructor(private sp: Sp, private controller: CombinedController) {
     super();
