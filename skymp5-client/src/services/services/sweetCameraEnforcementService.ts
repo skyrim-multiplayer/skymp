@@ -14,18 +14,29 @@ export class SweetCameraEnforcementService extends ClientListener {
     constructor(private sp: Sp, private controller: CombinedController) {
         super();
 
+        const hasSweetPie = this.hasSweetPie();
+
+        if (!hasSweetPie) {
+            logTrace(this, "SweetTaffy features disabled");
+        }
+        else {
+            logTrace(this, "SweetTaffy features enabled");
+        }
+
         this.settings = this.sp.settings["skymp5-client"]["animDebug"] as AnimDebugSettings | undefined;
 
-        const self = this;
-        this.sp.hooks.sendAnimationEvent.add({
-            enter: (ctx) => { },
-            leave: (ctx) => {
-                self.onSendAnimationEventLeave(ctx);
-            }
-        }, playerId, playerId);
+        if (hasSweetPie) {
+            const self = this;
+            this.sp.hooks.sendAnimationEvent.add({
+                enter: (ctx) => { },
+                leave: (ctx) => {
+                    self.onSendAnimationEventLeave(ctx);
+                }
+            }, playerId, playerId);
 
-        this.controller.on("buttonEvent", (e) => this.onButtonEvent(e));
-        this.controller.emitter.on("customPacketMessage2", (e) => this.onCustomPacketMessage2(e));
+            this.controller.on("buttonEvent", (e) => this.onButtonEvent(e));
+            this.controller.emitter.on("customPacketMessage2", (e) => this.onCustomPacketMessage2(e));
+        }
     }
 
     private onCustomPacketMessage2(e: ConnectionMessage<CustomPacketMessage2>) {
@@ -192,6 +203,16 @@ export class SweetCameraEnforcementService extends ClientListener {
 
         logTrace(this, `Sent animation event: ${animEvent}`);
         return { success: true };
+    }
+
+    private hasSweetPie(): boolean {
+        const modCount = this.sp.Game.getModCount();
+        for (let i = 0; i < modCount; ++i) {
+            if (this.sp.Game.getModName(i).toLowerCase().includes('sweetpie')) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private needsExitingAnim = false;
