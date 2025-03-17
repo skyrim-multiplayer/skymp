@@ -1,4 +1,4 @@
-import { MsgType } from "src/messages";
+import { MsgType } from "../../messages";
 import { logTrace, logError } from "../../logging";
 import { ConnectionMessage } from "../events/connectionMessage";
 import { CustomPacketMessage } from "../messages/customPacketMessage";
