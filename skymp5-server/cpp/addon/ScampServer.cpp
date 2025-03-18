@@ -177,8 +177,9 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
     auto serverSettings = nlohmann::json::parse(serverSettingsJson);
 
     // TODO: rework parsing with archives?
-    std::string listenHost =
-      serverSettings.at("listenHost").get<std::string>();
+    std::string listenHost = serverSettings.contains("listenHost")
+      ? serverSettings.at("listenHost").get<std::string>()
+      : std::string();
     uint32_t listenPort = serverSettings.at("port").get<uint32_t>();
     uint32_t maxPlayers = serverSettings.at("maxPlayers").get<uint32_t>();
 
@@ -321,8 +322,9 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
       ? std::string(kNetworkingPasswordPrefix) +
         static_cast<std::string>(serverSettings["password"])
       : std::string(kNetworkingPasswordPrefix);
-    auto realServer = Networking::CreateServer(listenHost.c_str(), listenPort,
-                                               maxPlayers, password.data());
+    auto realServer = Networking::CreateServer(
+      listenHost.empty() ? nullptr : listenHost.c_str(), listenPort,
+      maxPlayers, password.data());
 
     static_assert(kMockServerIdx == 1);
     server = Networking::CreateCombinedServer({ realServer, serverMock });
