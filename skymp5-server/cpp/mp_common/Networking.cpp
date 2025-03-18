@@ -130,8 +130,8 @@ class Server : public Networking::IServer
 public:
   constexpr static int timeoutTimeMs = 60000;
 
-  Server(unsigned short port_, unsigned short maxConnections,
-         const char* password_)
+  Server(const char* listenAddress, unsigned short port_,
+         unsigned short maxConnections, const char* password_)
     : password(password_)
   {
     if (maxConnections > kMaxPlayers) {
@@ -141,7 +141,7 @@ public:
 
     idManager = std::make_unique<IdManager>(maxConnections);
     peer = std::make_unique<RakPeer>();
-    socket = std::make_unique<SocketDescriptor>(port_, nullptr);
+    socket = std::make_unique<SocketDescriptor>(port_, listenAddress);
 
     const auto res = peer->Startup(maxConnections, &*socket, 1);
     if (res != StartupResult::RAKNET_STARTED) {
@@ -218,9 +218,11 @@ std::shared_ptr<Networking::IClient> Networking::CreateClient(
 }
 
 std::shared_ptr<Networking::IServer> Networking::CreateServer(
-  unsigned short port, unsigned short maxConnections, const char* password)
+  const char* listenAddress, unsigned short port,
+  unsigned short maxConnections, const char* password)
 {
-  return std::make_shared<Server>(port, maxConnections, password);
+  return std::make_shared<Server>(listenAddress, port, maxConnections,
+                                  password);
 }
 
 void Networking::HandlePacketClientside(Networking::IClient::OnPacket onPacket,

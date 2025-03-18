@@ -1,7 +1,22 @@
 #include "PapyrusDebug.h"
 
 #include "MpActor.h"
+#include "SpSnippetFunctionGen.h"
 #include "script_objects/MpFormGameObject.h"
+
+VarValue PapyrusDebug::Notification(VarValue self,
+                                    const std::vector<VarValue>& arguments)
+{
+  return MakeSPSnippetPromise(GetName(), "Notification", compatibilityPolicy,
+                              self, arguments);
+}
+
+VarValue PapyrusDebug::MessageBox(VarValue self,
+                                  const std::vector<VarValue>& arguments)
+{
+  return MakeSPSnippetPromise(GetName(), "MessageBox", compatibilityPolicy,
+                              self, arguments);
+}
 
 VarValue PapyrusDebug::SendAnimationEvent(
   VarValue, const std::vector<VarValue>& arguments)

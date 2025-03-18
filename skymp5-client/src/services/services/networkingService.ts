@@ -6,6 +6,7 @@ import { SendMessageWithRefrIdEvent } from "../events/sendMessageWithRefrIdEvent
 import { AnyMessage } from "../messages/anyMessage";
 import { ClientListener, CombinedController, Sp } from "./clientListener";
 import { RemoteServer } from "./remoteServer";
+import { SendRawMessageEvent } from "../events/sendRawMessageEvent";
 
 export class NetworkingService extends ClientListener {
   constructor(private sp: Sp, private controller: CombinedController) {
@@ -13,11 +14,17 @@ export class NetworkingService extends ClientListener {
     this.controller.on("tick", () => this.onTick());
 
     this.controller.emitter.on("sendMessage", (e) => this.onSendMessage(e));
+    this.controller.emitter.on("sendRawMessage", (e) => this.onSendRawMessage(e));
     this.controller.emitter.on("sendMessageWithRefrId", (e) => this.onSendMessageWithRefrId(e));
   }
 
   private onSendMessage(e: SendMessageEvent<AnyMessage>) {
     this.sp.mpClientPlugin.send(JSON.stringify(e.message), this.isReliable(e.reliability));
+  }
+
+  private onSendRawMessage(e: SendRawMessageEvent) {
+    // @ts-expect-error
+    this.sp.mpClientPlugin.sendRaw(e.rawMessage, e.rawMessage.byteLength, this.isReliable(e.reliability));
   }
 
   private onSendMessageWithRefrId(e: SendMessageWithRefrIdEvent<AnyMessage>) {
@@ -58,7 +65,7 @@ export class NetworkingService extends ClientListener {
   }
 
   private onTick() {
-    this.sp.mpClientPlugin.tick((packetType, jsonContent, error) => {
+    this.sp.mpClientPlugin.tick((packetType, rawContent, error) => {
       switch (packetType) {
         case "connectionAccepted":
           this.controller.emitter.emit("connectionAccepted", {});
@@ -77,7 +84,22 @@ export class NetworkingService extends ClientListener {
           break;
         case "message":
           // TODO: in theory can be empty jsonContent and non-empty error
-          const msgAny: AnyMessage = JSON.parse(jsonContent);
+
+          let msgAny: AnyMessage;
+          
+          if (rawContent === null) {
+            msgAny = {} as AnyMessage;
+            logError(this, "null rawContent");
+          }
+          else if ((new Uint8Array(rawContent as unknown as ArrayBuffer)[0]) === 0x7b) {
+            // assume json
+            msgAny = JSON.parse(this.sp.decodeUtf8(rawContent as unknown as ArrayBuffer));
+          }
+          else {
+            // assume raw
+            const event = { rawContent: rawContent as unknown as ArrayBuffer};
+            return this.controller.emitter.emit("anyRawMessage", event);
+          }
 
           if (msgAny.t === MsgType.OpenContainer) {
             const event = { message: msgAny };

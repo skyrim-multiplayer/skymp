@@ -34,7 +34,7 @@ function(yarn_execute_command)
 
   if("${A_RESULT_VARIABLE}" STREQUAL "")
     if(NOT "${yarn_result}" STREQUAL "0")
-      message(FATAL_ERROR "yarn ${A_COMMAND} exited with ${yarn_result}:\n${yarn_output}\n${yarn_error}")
+      message(FATAL_ERROR "yarn ${A_COMMAND} (working dir ${A_WORKING_DIRECTORY}) exited with ${yarn_result}:\n${yarn_output}\n${yarn_error}")
     endif()
   else()
     set("${A_RESULT_VARIABLE}" "${yarn_result}" PARENT_SCOPE)

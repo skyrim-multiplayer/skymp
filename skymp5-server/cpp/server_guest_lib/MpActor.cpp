@@ -44,8 +44,11 @@
 
 struct MpActor::Impl
 {
-  std::map<uint32_t, Viet::Promise<VarValue>> snippetPromises;
+  // TODO: consider optimizing data structure and/or general refactoring
   std::set<std::shared_ptr<DestroyEventSink>> destroyEventSinks;
+  std::set<std::shared_ptr<DisableEventSink>> disableEventSinks;
+
+  std::map<uint32_t, Viet::Promise<VarValue>> snippetPromises;
   uint32_t snippetIndex = 0;
   uint32_t respawnTimerIndex = 0;
   bool isRespawning = false;
@@ -371,6 +374,10 @@ void MpActor::Disable()
     return;
   }
 
+  for (auto& sink : pImpl->disableEventSinks) {
+    sink->BeforeDisable(*this);
+  }
+
   MpObjectReference::Disable();
 
   for (auto [snippetIdx, promise] : pImpl->snippetPromises) {
@@ -506,6 +513,16 @@ void MpActor::AddEventSink(std::shared_ptr<DestroyEventSink> sink)
 void MpActor::RemoveEventSink(std::shared_ptr<DestroyEventSink> sink)
 {
   pImpl->destroyEventSinks.erase(sink);
+}
+
+void MpActor::AddEventSink(std::shared_ptr<DisableEventSink> sink)
+{
+  pImpl->disableEventSinks.insert(sink);
+}
+
+void MpActor::RemoveEventSink(std::shared_ptr<DisableEventSink> sink)
+{
+  pImpl->disableEventSinks.erase(sink);
 }
 
 MpChangeForm MpActor::GetChangeForm() const
@@ -1103,8 +1120,9 @@ void MpActor::ModifyActorValuePercentage(espm::ActorValue av,
 
 void MpActor::BeforeDestroy()
 {
-  for (auto& sink : pImpl->destroyEventSinks)
+  for (auto& sink : pImpl->destroyEventSinks) {
     sink->BeforeDestroy(*this);
+  }
 
   MpObjectReference::BeforeDestroy();
 
@@ -1688,9 +1706,12 @@ void MpActor::ApplyMagicEffect(espm::Effects::Effect& effect, bool hasSweetpie,
           static_cast<std::underlying_type_t<espm::MGEF::EffectType>>(type));
       }
       spdlog::trace("Final multiplicator is {}", mult);
+      // TODO: proper fix (or effects system) instead of monkey-patching 4x
+      // higher mult
+      // https://github.com/skyrim-multiplayer/skymp/pull/1852
       spdlog::trace("The result of baseValue * mult is: {}*{}={}", baseValue,
-                    mult, baseValue * mult);
-      SetActorValue(av, baseValue * mult);
+                    mult, baseValue * (mult * 4));
+      SetActorValue(av, baseValue * (mult * 4));
     }
   }
 }

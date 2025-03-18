@@ -39,7 +39,7 @@ You'll love Skyrim Platform, especially if you're:
 ### ...a JavaScript Developer with No Modding Background
 Your favorite tech stack is now available for Skyrim modding.
 
-### ...a Hyperactive Person
+### ...a person with ADHD
 The hot-reload feature lets you prototype and iterate rapidly with an extremely short feedback loop. It's incredibly fast compared to Papyrus/C++ development.
 
 Skyrim Platform is an excellent starting point for Skyrim programming. If desired, you can transition to C++ later, as many people do.
@@ -56,7 +56,7 @@ I must admit, using SP plugins isn't as satisfying as creating them. Please cons
 - **SkyrimPlatform is a plugins runner.** If it drops your FPS, then most likely you're running an unoptimized SkyrimPlatform plugin. Not so much we can do on our side.
 - **SkyrimPlatform conflicts with many mods.** Be careful.
 - We're not accepting bugreports for 1.5.97 version of SkyrimPlatform.
-- **Updating deleting SkyrimPlatform on a current save might break your save.** You need to start a new game.
+- **Updating/deleting SkyrimPlatform on a current save might break your save.** You need to start a new game.
 - **In most cases you can repair your savegames.** See [sticked NexusMods posts](https://www.nexusmods.com/skyrimspecialedition/mods/54909?tab=posts).
 
 ## Future plans

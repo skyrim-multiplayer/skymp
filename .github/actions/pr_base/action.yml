@@ -55,6 +55,13 @@ runs:
               "token": "${{inputs.SKYMP5_PATCHES_PAT}}"
             }
           ]
+    
+    - name: Get Git SHA Before Gather
+      id: repo_sha
+      shell: powershell
+      run: |
+        $sha = git rev-parse HEAD
+        echo "sha=$sha" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
 
     - name: Commit gathered PRs
       if: ${{ inputs.DEPLOY_BRANCH != '' }}
@@ -196,13 +203,43 @@ runs:
         Invoke-Expression $cmake_command_full
       shell: powershell
 
-    - name: Upload vcpkg failure logs
-      if: failure()
+    - name: Upload vcpkg logs (non-Windows)
+      if: ${{ always() && runner.os != 'Windows' }}
       uses: actions/upload-artifact@v4
       with:
-        name: install-x64-windows-sp-dbg-out.log
-        #path: C:\vcpkg\buildtrees\spdlog\install-x64-windows-sp-dbg-out.log
-        path: C:\vcpkg\buildtrees\mongo-cxx-driver\install-x64-windows-sp-dbg-out.log
+        name: vcpkg_logs
+        path: |
+          ${{github.workspace}}/build/vcpkg-bootstrap.log
+          ${{github.workspace}}/vcpkg/buildtrees/**/*.log
+
+    # actions/upload-artifact will not work for C:/vcpkg because it's not under github.workspace
+    - name: Prepare vcpkg logs (Windows)
+      if: ${{ always() && runner.os == 'Windows' }}
+      shell: powershell
+      run: |
+        $logDir = "${{ github.workspace }}\vcpkg_logs"
+        
+        New-Item -ItemType Directory -Path $logDir -Force | Out-Null
+        
+        $sourceDir = "C:\vcpkg\buildtrees"
+
+        Get-ChildItem -Path $sourceDir -Filter "*.log" -Recurse | ForEach-Object {
+          $relativePath = $_.FullName.Substring($sourceDir.Length).TrimStart('\')
+          $destinationPath = Join-Path -Path $logDir -ChildPath $relativePath
+
+          New-Item -ItemType Directory -Path (Split-Path -Parent $destinationPath) -Force | Out-Null
+          Copy-Item -Path $_.FullName -Destination $destinationPath -Force
+        }
+
+
+    - name: Upload vcpkg logs (Windows)
+      if: ${{ always() && runner.os == 'Windows' }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: vcpkg_logs
+        path: |
+          ${{github.workspace}}/build/vcpkg-bootstrap.log
+          ${{github.workspace}}/vcpkg_logs
 
     - uses: actions/upload-artifact@v4
       with:

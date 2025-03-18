@@ -1,7 +1,8 @@
-const { execSync } = require("child_process");
-const simpleGit = require("simple-git");
-const fs = require("fs");
-const path = require("path");
+import init, { format } from "@wasm-fmt/clang-format";
+import fs from "fs";
+import path from "path";
+import simpleGit from "simple-git";
+import { execSync } from "child_process";
 
 /**
  * Utility: Recursively find all files in a directory.
@@ -145,6 +146,8 @@ const runChecks = (files, { lintOnly = false }) => {
  * CLI Entry Point
  */
 (async () => {
+  await init();
+
   const args = process.argv.slice(2);
   const lintOnly = args.includes("--lint");
   const allFiles = args.includes("--all");

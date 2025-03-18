@@ -65,7 +65,7 @@ public:
   SimdJsonInputArchive& Serialize(T& output)
   {
     static_assert(!sizeof(T), "can only parse to std::string");
-    return *this;
+    return *this; // gcc wants it
   }
 
   SimdJsonInputArchive& Serialize(std::string& output)

@@ -1,4 +1,7 @@
 #include "libespm/WRLD.h"
+
+#include <algorithm>
+
 #include "libespm/RecordHeaderAccess.h"
 #include <algorithm>
 

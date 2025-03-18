@@ -1,14 +1,14 @@
 #pragma once
-#include <cstdint>
-#include <memory>
-#include <nlohmann/json.hpp>
+
 #include <optional>
 #include <string>
+
+#include <nlohmann/json.hpp>
 
 class DynamicFields
 {
 public:
-  void Set(const std::string& propName, const nlohmann::json& value);
+  void Set(const std::string& propName, nlohmann::json value);
   const nlohmann::json& Get(const std::string& propName) const;
 
   const nlohmann::json& GetAsJson() const;

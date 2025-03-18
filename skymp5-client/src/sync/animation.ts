@@ -9,11 +9,7 @@ import {
   Game,
   storage,
   // @ts-expect-error (TODO: Remove in 2.10.0)
-  castSpellImmediate,
-  // @ts-expect-error (TODO: Remove in 2.10.0)
-  SpellType,
-  // @ts-expect-error (TODO: Remove in 2.10.0)
-  interruptCast
+  setCollision
 } from "skyrimPlatform";
 import { Movement } from "./movement";
 import { applyWeapDrawn } from "./movementApply";
@@ -30,18 +26,96 @@ export interface Animation {
 
 export interface AnimationApplyState {
   lastNumChanges: number;
+  useAnimOverrides: boolean;
 }
 
 const allowedIdles = new Array<[number, string]>();
 const refsWithDefaultAnimsDisabled = new Set<number>();
 const allowedAnims = new Set<string>();
 
+const actorSitAnimsLowerCase = [
+  'idlestoolenterplayer',
+  'idlestoolenter',
+  'idlestoolenterinstant',
+  'idlechairrightenter',
+  'idlechairleftenter',
+  'idlechairfrontenter',
+  'idlechairenterinstant',
+  'idlejarlchairenter',
+  'idlejarlchairenterinstant',
+  'idlesnowelfprincechairdialogue',
+  'idlesnowelfprincechairenter',
+  'idlesnowelfprincechairenterinstant',
+  'idlechairchildenterinstant',
+  'idlechairchildfrontenter',
+  'idlechairchildleftenter',
+  'idlechairchildrightenter',
+];
+
+const actorGetUpAnimsLowerCase = [
+  'idlestoolbackexit',
+  'idlechairrightexit',
+  'idlechairrightquickexit',
+  'idlechairleftexit',
+  'idlechairleftquickexit',
+  'idlechairfrontexit',
+  'idlechairfrontquickexit',
+  'idlechairchildfrontexit',
+  'idlechairchildleftexit',
+  'idlechairchildrightexit'
+];
+
+// It's critical for values to be the correct case, not just lowercase, otherwise 'allowedIdles' check will break
+// We don't want to modify the check itself, because it'll be slower
+const animOverridesLowerCase: Record<string, string | undefined> = {
+  'idlechairbook_onepage': 'IdleChairEnterInstant',
+  'idlechairshoulderflex': 'IdleChairEnterInstant',
+  'idlechairwrite': 'IdleChairEnterInstant',
+  'idlechairarmscrossedvar1': 'IdleChairEnterInstant',
+  'chaireatingstart_vampiremeat': 'IdleChairEnterInstant',
+  'chairreadingstart': 'IdleChairEnterInstant',
+  'chairvampireeatingstart': 'IdleChairEnterInstant',
+  'chairdrinkingstart': 'IdleChairEnterInstant',
+  'chaireatingstart': 'IdleChairEnterInstant',
+
+  // The only triple animation we know for now. One base anim to sit, then two to eat
+  'chaireatingsoupstart': 'IdleChairEnterInstant',
+  'idleeatsoup': 'IdleChairEnterInstant',
+
+  // No need to re-play the animation, use instant variant for spawning actors
+  // This is not essential, but makes the sync feel more smooth. The list is not complete.
+  'idlechairrightenter': 'IdleChairEnterInstant',
+  'idlechairleftenter': 'IdleChairEnterInstant',
+  'idlechairfrontenter': 'IdleChairEnterInstant',
+
+  // Untested yet looks correct
+  'idlesnowelfprincefireandforget': 'IdleSnowElfPrinceChairEnterInstant',
+  'idletablemugenter': 'IdleTableEnterInstant',
+  'idletabledrinkenter': 'IdleTableEnterInstant',
+  'idletabledrinkandmugenter': 'IdleTableEnterInstant'
+};
+
+// unclassified:
+
+// IdleChairEnterInstant
+// IdleChairEnterStart
+// IdleChairEnterStop
+// IdleChairEnterToSit
+// IdleChairExitStart
+// IdleChairExitToStand
+// IdleChairSitting
+// IdleLeftChairEnterStart
+// ChairIdle
+// IdleRightChairEnterStart
+// IdleLeftChairEnterStart
+
 const isIdle = (animEventName: string) => {
+  const animEventNameLowerCase = animEventName.toLowerCase();
   return (
-    animEventName === "MotionDrivenIdle" ||
-    (animEventName.startsWith("Idle") &&
-      animEventName !== "IdleStop" &&
-      animEventName !== "IdleForceDefaultState")
+    animEventNameLowerCase === "motiondrivenidle" ||
+    (animEventNameLowerCase.startsWith("idle") &&
+      animEventNameLowerCase !== "idlestop" &&
+      animEventNameLowerCase !== "idleforcedefaultstate")
   );
 };
 
@@ -52,6 +126,15 @@ export const applyAnimation = (
 ): void => {
   if (state.lastNumChanges === anim.numChanges) return;
   state.lastNumChanges = anim.numChanges;
+
+  if (state.useAnimOverrides) {
+    const animOverride = animOverridesLowerCase[anim.animEventName.toLowerCase()];
+    if (animOverride !== undefined) {
+      anim.animEventName = animOverride;
+    }
+  }
+
+  const animEventNameLowerCase = anim.animEventName.toLowerCase();
 
   if (isIdle(anim.animEventName)) {
     allowedIdles.push([refr.getFormID(), anim.animEventName]);
@@ -84,7 +167,7 @@ export const applyAnimation = (
   }
 
   if (refsWithDefaultAnimsDisabled.has(refr.getFormID())) {
-    if (anim.animEventName.toLowerCase().includes("attack")) {
+    if (animEventNameLowerCase.includes("attack")) {
       allowedAnims.add(refr.getFormID() + ":" + anim.animEventName);
     }
   }
@@ -99,6 +182,13 @@ export const applyAnimation = (
     });
   }
 
+  if (actorSitAnimsLowerCase.find((x) => x === animEventNameLowerCase) !== undefined) {
+    setCollision(refr.getFormID(), false);
+  }
+
+  if (actorGetUpAnimsLowerCase.find((x) => x === animEventNameLowerCase) !== undefined) {
+    setCollision(refr.getFormID(), true);
+  }
 };
 
 export const setDefaultAnimsDisabled = (

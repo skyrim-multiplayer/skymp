@@ -158,7 +158,8 @@ float TES5DamageFormulaImpl::CalculateDamage() const
   }
 
   if (hitData.isSneakAttack) {
-    damage *= 2.f;
+    // TODO(GM-613): get from GameSettings
+    damage *= 1.3f;
   }
 
   return damage;

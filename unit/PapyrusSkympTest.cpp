@@ -12,7 +12,7 @@ TEST_CASE("SetDefaultActor should store actor per stack", "[Papyrus][Skymp]")
 
   auto logger = std::make_shared<spdlog::logger>("empty logger");
   PapyrusSkymp skymp;
-  skymp.policy = std::make_shared<HeuristicPolicy>(&p.worldState);
+  skymp.compatibilityPolicy = std::make_shared<HeuristicPolicy>(&p.worldState);
 
   skymp.SetDefaultActor(VarValue::AttachTestStackId(VarValue::None(), 0),
                         { ac.ToVarValue() });
@@ -20,13 +20,13 @@ TEST_CASE("SetDefaultActor should store actor per stack", "[Papyrus][Skymp]")
   skymp.SetDefaultActor(VarValue::AttachTestStackId(VarValue::None(), 1),
                         { VarValue::None() });
 
-  REQUIRE(skymp.policy->GetDefaultActor("", "", 0) == &ac);
-  REQUIRE(skymp.policy->GetDefaultActor("", "", 1) == nullptr);
+  REQUIRE(skymp.compatibilityPolicy->GetDefaultActor("", "", 0) == &ac);
+  REQUIRE(skymp.compatibilityPolicy->GetDefaultActor("", "", 1) == nullptr);
   REQUIRE_THROWS_WITH(
-    skymp.policy->GetDefaultActor("", "", 91298),
+    skymp.compatibilityPolicy->GetDefaultActor("", "", 91298),
     Catch::Matchers::ContainsSubstring(
       "Invalid stackId was passed to GetDefaultActor (91298)"));
-  REQUIRE_THROWS_WITH(skymp.policy->GetDefaultActor("", "", -1),
+  REQUIRE_THROWS_WITH(skymp.compatibilityPolicy->GetDefaultActor("", "", -1),
                       Catch::Matchers::ContainsSubstring(
                         "Invalid stackId was passed to GetDefaultActor (-1)"));
 }

@@ -4,11 +4,10 @@
 #include "MpActor.h"
 #include "TimeUtils.h"
 #include "WorldState.h"
-#include "papyrus-vm/Structures.h"
 #include "script_objects/EspmGameObject.h"
 #include "script_objects/MpFormGameObject.h"
+#include "spdlog/spdlog.h"
 
-#include <ratio>
 #include <string>
 #include <unordered_map>
 
@@ -36,9 +35,12 @@ VarValue PapyrusForm::RegisterForSingleUpdate(
       auto promise = worldState->SetTimer(time, &timerId);
       uint32_t formId = form->GetFormId();
       promise.Then([form, formId, worldState](const Viet::Void&) {
-        if (form == worldState->LookupFormById(formId).get()) {
-          form->Update();
+        if (form != worldState->LookupFormById(formId).get()) {
+          spdlog::error("form mismatch on timer resolve: formId={:x}", formId);
+          return;
         }
+        form->SetSingleUpdateTimerId(std::nullopt);
+        form->Update();
       });
 
       form->SetSingleUpdateTimerId(timerId);

@@ -51,6 +51,7 @@ import { WorldView } from "./view/worldView";
 import { KeyboardEventsService } from "./services/services/keyboardEventsService";
 import { MagicSyncService } from "./services/services/magicSyncService";
 import { ProfilingService } from "./services/services/profilingService";
+import { SettingsService } from "./services/services/settingsService";
 
 once("update", () => {
   Utility.setINIBool("bAlwaysActive:General", true);
@@ -82,6 +83,7 @@ const main = () => {
       new NetworkingService(sp, controller),
       new RemoteServer(sp, controller),
       new SpSnippetService(sp, controller),
+      new SettingsService(sp, controller),
       new SweetTaffyDynamicPerksService(sp, controller),
       new SweetTaffyStaticPerksService(sp, controller),
       new SweetTaffySweetCantDropService(sp, controller),

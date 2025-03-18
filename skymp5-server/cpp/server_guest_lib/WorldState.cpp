@@ -58,6 +58,7 @@ struct WorldState::Impl
 };
 
 WorldState::WorldState()
+  : worldStartTime(std::chrono::steady_clock::now())
 {
   logger.reset(new spdlog::logger("empty logger"));
 
@@ -70,6 +71,11 @@ void WorldState::Clear()
   forms.clear();
   grids.clear();
   formIdxManager.reset();
+}
+
+const std::chrono::steady_clock::time_point& WorldState::GetStartPoint() const
+{
+  return worldStartTime;
 }
 
 void WorldState::AttachEspm(espm::Loader* espm_,
@@ -1019,19 +1025,6 @@ VirtualMachine& WorldState::GetPapyrusVm()
           }
           return result;
         });
-
-      pImpl->vm->SetExceptionHandler([this](const VmExceptionInfo& errorData) {
-        std::string sourcePex = errorData.sourcePex;
-        std::string what = errorData.what;
-        std::string loggerMsg = sourcePex + ": " + what;
-        bool methodNotFoundError =
-          what.find("Method not found") != std::string::npos;
-        if (methodNotFoundError) {
-          logger->warn(loggerMsg);
-        } else {
-          logger->error(loggerMsg);
-        }
-      });
 
       pImpl->classes =
         PapyrusClassesFactory::CreateAndRegister(*pImpl->vm, pImpl->policy);

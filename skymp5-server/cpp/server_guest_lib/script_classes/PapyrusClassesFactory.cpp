@@ -9,6 +9,9 @@
 #include "PapyrusFormList.h"
 #include "PapyrusGame.h"
 #include "PapyrusKeyword.h"
+#include "PapyrusLeveledActor.h"
+#include "PapyrusLeveledItem.h"
+#include "PapyrusLeveledSpell.h"
 #include "PapyrusMessage.h"
 #include "PapyrusNetImmerse.h"
 #include "PapyrusObjectReference.h"
@@ -44,6 +47,9 @@ PapyrusClassesFactory::CreateAndRegister(
   result.emplace_back(std::make_unique<PapyrusPotion>());
   result.emplace_back(std::make_unique<PapyrusVisualEffect>());
   result.emplace_back(std::make_unique<PapyrusQuest>());
+  result.emplace_back(std::make_unique<PapyrusLeveledActor>());
+  result.emplace_back(std::make_unique<PapyrusLeveledItem>());
+  result.emplace_back(std::make_unique<PapyrusLeveledSpell>());
 
   for (auto& papyrusClass : result) {
     papyrusClass->Register(vm, compatibilityPolicy);
