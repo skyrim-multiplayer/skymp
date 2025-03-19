@@ -6,7 +6,8 @@ VarValue PapyrusBook::GetSpell(VarValue self,
 {
   auto selfRec = GetRecordPtr(self);
   auto bookData =
-    espm::GetData<espm::BOOK>(selfRec.ToGlobalId(selfRec.rec->GetFormId()));
+    espm::GetData<espm::BOOK>(selfRec.ToGlobalId(selfRec.rec->GetId()),
+                              compatibilityPolicy->GetWorldState());
 
   auto spellOrSkillFormId = selfRec.ToGlobalId(bookData.spellOrSkillFormId);
 
