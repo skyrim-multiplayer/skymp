@@ -1,7 +1,6 @@
 import { System, Log } from "./system";
 import Axios from "axios";
 import { SystemContext } from "./system";
-import { getMyPublicIp } from "../publicIp";
 import { Settings } from "../settings";
 
 export class MasterApiBalanceSystem implements System {
@@ -12,7 +11,7 @@ export class MasterApiBalanceSystem implements System {
         private maxPlayers: number,
         private masterUrl: string | null,
         private serverPort: number,
-        private ip: string,
+        private masterKey: string,
         private offlineMode: boolean) { 
             this.sessionByUserId = new Array<string | undefined>(this.maxPlayers);
         }
@@ -24,13 +23,8 @@ export class MasterApiBalanceSystem implements System {
         };
         ctx.gm.on("userAssignSession", listenerFn);
 
-        if (this.ip && this.ip != "null") {
-            this.myAddr = this.ip + ":" + this.serverPort;
-        } else {
-            this.myAddr = (await getMyPublicIp()) + ":" + this.serverPort;
-        }
         this.log(
-            `MasterApiBalanceSystem system assumed that ${this.myAddr} is our address on master`
+            `MasterApiBalanceSystem system assumed that ${this.masterKey} is our address on master`,
         );
 
         // Effectively makes mp.getUserMasterApiBalance & mp.makeUserMasterApiPurchase a part of gamemode API
@@ -65,7 +59,7 @@ export class MasterApiBalanceSystem implements System {
     private async getUserBalanceImpl(session: string): Promise<number> {
         try {
             const response = await Axios.get(
-                `${this.masterUrl}/api/servers/${this.myAddr}/sessions/${session}/balance`
+                `${this.masterUrl}/api/servers/${this.masterKey}/sessions/${session}/balance`,
             );
             if (!response.data || !response.data.user || !response.data.user.id || typeof response.data.user.balance !== "number") {
                 throw new Error(`getUserBalanceImpl: bad master-api response ${JSON.stringify(response.data)}`);
@@ -86,7 +80,7 @@ export class MasterApiBalanceSystem implements System {
             }
 
             const response = await Axios.post(
-                `${this.masterUrl}/api/servers/${this.myAddr}/sessions/${session}/purchase`,
+                `${this.masterUrl}/api/servers/${this.masterKey}/sessions/${session}/purchase`,
                 { balanceToSpend },
                 { headers: { 'X-Auth-Token': authToken } }
             );
@@ -109,6 +103,5 @@ export class MasterApiBalanceSystem implements System {
         this.sessionByUserId[userId] = undefined;
     }
 
-    private myAddr: string;
     private sessionByUserId: Array<string | undefined>;
 }

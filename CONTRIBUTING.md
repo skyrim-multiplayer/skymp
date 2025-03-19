@@ -29,7 +29,9 @@ Before your start make sure that your system meets the conditions:
 * Windows 7 or higher *([Windows 10](https://www.microsoft.com/en-us/software-download/windows10) is recommended)*
 * [Visual Studio 2022](https://visualstudio.microsoft.com/downloads/). 2019 and earlier are not supported.
 * .NET Framework SDK at 4.6.0 or higher *(Visual Studio Installer -> .NET desktop development)*
-* Python 3.9.x 64bit or 32bit *(Visual Studio Installer -> Idividual components -> search for python)*
+* Python 3.9.x 64bit or 32bit
+  * Install option 1: https://www.python.org/downloads/windows/
+  * Install option 2: Visual Studio Installer -> Individual components -> search for 'python'
 
 ### Linux
 
@@ -42,8 +44,6 @@ and it can be tricky to get Skyrim itself to work with non-ASCII text, for examp
   * Alpine Linux doesn't work
   * Arch-based distros also [won't be able to run the server](https://github.com/chakra-core/ChakraCore/issues/6613)
 * Clang 15 *(GCC is not supported)*: `sudo apt install clang-15`
-* Python 2 (not 3.x! It is needed to build ChakraCore. Don't worry, it won't conflict with Python 3):
-  `sudo apt install python2`
 * Make sure that your NodeJS and CMake are fresh enough:
   * You can use [`nvm`](https://github.com/nvm-sh/nvm) or [Nodesource's apt repositories](https://github.com/nodesource/distributions) to install fresh Node
   * The simpliest way to install fresh CMake is to download a `.tar.gz` from [CMake download page](https://cmake.org/download/),

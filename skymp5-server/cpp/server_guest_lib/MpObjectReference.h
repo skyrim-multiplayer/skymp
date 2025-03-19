@@ -5,6 +5,7 @@
 #include "Inventory.h"
 #include "JsonUtils.h"
 #include "LocationalData.h"
+#include "MessageBase.h"
 #include "MpChangeForms.h"
 #include "MpForm.h"
 #include "libespm/Loader.h"
@@ -38,6 +39,7 @@ struct GridPosInfo
 class MpActor;
 class WorldState;
 class OccupantDestroyEventSink;
+class OccupantDisableEventSink;
 
 class FormCallbacks;
 
@@ -77,6 +79,7 @@ class MpObjectReference
   , protected ChangeFormGuard
 {
   friend class OccupantDestroyEventSink;
+  friend class OccupantDisableEventSink;
 
 public:
   static const char* Type() { return "ObjectReference"; }
@@ -136,9 +139,8 @@ public:
   void ForceSubscriptionsUpdate();
   void SetPrimitive(const NiPoint3& boundsDiv2);
   void UpdateHoster(uint32_t newHosterId);
-  void SetProperty(const std::string& propertyName,
-                   const nlohmann::json& newValue, bool isVisibleByOwner,
-                   bool isVisibleByNeighbor);
+  void SetProperty(const std::string& propertyName, nlohmann::json newValue,
+                   bool isVisibleByOwner, bool isVisibleByNeighbor);
   void SetTeleportFlag(bool value);
   void SetPosAndAngleSilent(const NiPoint3& pos, const NiPoint3& rot);
   void Delete();
@@ -215,10 +217,8 @@ protected:
 
   void EnsureBaseContainerAdded(espm::Loader& espm);
 
-  void SendPropertyToListeners(const char* name, const nlohmann::json& value);
-  void SendPropertyTo(const char* name, const nlohmann::json& value,
-                      MpActor& target);
-  void SendPropertyTo(const IMessageBase& preparedPropMsg, MpActor& target);
+  void SendMessageToActorListeners(const IMessageBase& msg,
+                                   bool reliable) const;
 
 private:
   void AddContainerObject(const espm::CONT::ContainerObject& containerObject,
@@ -254,6 +254,7 @@ private:
   uint32_t baseId = 0;
   MpActor* occupant = nullptr;
   std::shared_ptr<OccupantDestroyEventSink> occupantDestroySink;
+  std::shared_ptr<OccupantDisableEventSink> occupantDisableSink;
   std::optional<std::chrono::system_clock::duration> relootTimeOverride;
   std::unique_ptr<uint8_t> chanceNoneOverride;
   bool activationBlocked = false;

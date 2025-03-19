@@ -68,19 +68,22 @@ void MpClientPlugin::Tick(State& state, OnPacket onPacket,
           rawState);
 
       if (packetType != Networking::PacketType::Message) {
-        return onPacket(static_cast<int32_t>(packetType), "", error, state);
+        return onPacket(static_cast<int32_t>(packetType), "", 0, error, state);
       }
 
       std::string deserializedJsonContent;
       if (deserializeMessageFn(data, length, deserializedJsonContent)) {
         return onPacket(static_cast<int32_t>(packetType),
-                        deserializedJsonContent.data(), error, state);
+                        deserializedJsonContent.data(),
+                        deserializedJsonContent.size(), error, state);
       }
 
-      std::string jsonContent =
+      // Previously, it was string-only
+      // Now it can be any bytes while still being std::string
+      std::string rawContent =
         std::string(reinterpret_cast<const char*>(data) + 1, length - 1);
-      onPacket(static_cast<int32_t>(packetType), jsonContent.data(), error,
-               state);
+      onPacket(static_cast<int32_t>(packetType), rawContent.data(),
+               rawContent.size(), error, state);
     },
     &locals);
 }
@@ -96,4 +99,16 @@ void MpClientPlugin::Send(State& state, const char* jsonContent, bool reliable,
   SLNet::BitStream stream;
   serializeMessageFn(jsonContent, stream);
   state.cl->Send(stream.GetData(), stream.GetNumberOfBytesUsed(), reliable);
+}
+
+void MpClientPlugin::SendRaw(State& state, const void* data, size_t size,
+                             bool reliable)
+{
+  if (!state.cl) {
+    // TODO(#263): we probably should log something here
+    return;
+  }
+
+  state.cl->Send(reinterpret_cast<Networking::PacketData>(data), size,
+                 reliable);
 }

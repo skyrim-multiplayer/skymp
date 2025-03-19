@@ -1,4 +1,4 @@
-name: Build & Push Vcpkg Deps (Docker)
+name: Build & Push skymp-vcpkg-deps and skymp-runtime-base
 
 on:
   workflow_dispatch:

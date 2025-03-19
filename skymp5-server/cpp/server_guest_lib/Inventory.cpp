@@ -1,7 +1,7 @@
 #include "Inventory.h"
-#include "JsonUtils.h"
 #include "archives/JsonInputArchive.h"
 #include "archives/JsonOutputArchive.h"
+#include "archives/SimdJsonInputArchive.h"
 #include <fmt/format.h>
 #include <spdlog/spdlog.h>
 #include <tuple>
@@ -176,11 +176,12 @@ nlohmann::json Inventory::ToJson() const
   return std::move(ar.j);
 }
 
-Inventory Inventory::FromJson(simdjson::dom::element& element)
+Inventory Inventory::FromJson(const simdjson::dom::element& element)
 {
-  std::string minifiedDump = simdjson::minify(element);
-  nlohmann::json j = nlohmann::json::parse(minifiedDump);
-  return FromJson(j);
+  SimdJsonInputArchive ar(element);
+  Inventory res;
+  res.Serialize(ar);
+  return res;
 }
 
 Inventory Inventory::FromJson(const nlohmann::json& j)

@@ -1,9 +1,9 @@
 import { Game, Utility, HttpClient, printConsole, createText } from "skyrimPlatform";
-import { getServerIp, getServerUiPort } from "./skympClient";
 import { getScreenResolution } from "../../view/formView";
 import { ClientListener, CombinedController, Sp } from "./clientListener";
-import { Mod, ServerManifest } from "../messages_http/serverManifest";
+import { Mod } from "../messages_http/serverManifest";
 import { logTrace } from "../../logging";
+import { SettingsService } from "./settingsService";
 
 const STATE_KEY = 'loadOrderCheckState';
 
@@ -22,10 +22,12 @@ export class LoadOrderVerificationService extends ClientListener {
   }
 
   private verifyLoadOrder() {
+    const settingsService = this.controller.lookupListener(SettingsService);
+
     this.resetText();
     const clientMods = this.getClientMods();
     this.printModOrder('Client load order:', clientMods);
-    return this.getServerMods(5)
+    return settingsService.getServerMods()
       .then((serverMods) => {
         this.printModOrder('Server load order:', serverMods);
         if (clientMods.length < serverMods.length) {
@@ -105,33 +107,6 @@ export class LoadOrderVerificationService extends ClientListener {
       Utility.wait(clearDelay).then(() => this.resetText());
     }
   }
-
-  private getServerMods(retriesLeft: number): Promise<Mod[]> {
-    const targetIp = getServerIp();
-    const uiPort = getServerUiPort();
-    printConsole(`http://${targetIp}:${uiPort}`);
-    return new HttpClient(`http://${targetIp}:${uiPort}`)
-      .get('/manifest.json')
-      .then((res) => {
-        if (res.status != 200) {
-          throw new Error(`Status code ${res.status}, error ${res.error}`);
-        }
-        const manifest = JSON.parse(res.body) as ServerManifest;
-        if (manifest.versionMajor !== 1) {
-          throw new Error(`Server manifest version is ${manifest.versionMajor}, we expect 1`);
-        }
-        return manifest.mods;
-      })
-      .catch((err) => {
-        printConsole("Can't get server mods", err);
-        if (retriesLeft > 0) {
-          printConsole(`${retriesLeft} retries left...`);
-          return Utility.wait(0.1 + Math.random())
-            .then(() => this.getServerMods(retriesLeft - 1));
-        }
-        return [];
-      });
-  };
 
   private enumerateClientMods(getCount: (() => number), getAt: ((idx: number) => string)) {
     const result = [];

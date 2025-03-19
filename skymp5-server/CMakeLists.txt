@@ -1,14 +1,19 @@
 project(skymp5-server)
 enable_testing()
 
-include(${CMAKE_SOURCE_DIR}/cmake/apply_default_settings.cmake)
-
 set(SKYMP5_SERVER_SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR})
 
-yarn_execute_command(
-  COMMAND install
-  WORKING_DIRECTORY ${SKYMP5_SERVER_SOURCE_DIR}
-)
+include(${CMAKE_SOURCE_DIR}/cmake/apply_default_settings.cmake)
+include(${CMAKE_SOURCE_DIR}/cmake/yarn.cmake)
+
+find_package(CMakeRC CONFIG REQUIRED)
+
+if(WIN32)
+  yarn_execute_command(
+    COMMAND install
+    WORKING_DIRECTORY ${SKYMP5_SERVER_SOURCE_DIR}
+  )
+endif()
 
 # Find node-addon-api
 if(NOT EMSCRIPTEN)

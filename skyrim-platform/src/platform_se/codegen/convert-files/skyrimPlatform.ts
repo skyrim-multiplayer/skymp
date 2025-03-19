@@ -64,8 +64,9 @@ interface MpClientPlugin {
   createClient(host: string, port: number): void
   destroyClient(): void
   isConnected(): boolean
-  tick(tickHandler: (packetType: PacketType, jsonContent: string, error: string) => void): void
+  tick(tickHandler: (packetType: PacketType, rawContent: ArrayBuffer | null, error: string) => void): void
   send(jsonContent: string, reliable: boolean): void
+  sendRaw(data: ArrayBuffer, size: number, reliable: boolean): void
 }
 export declare let mpClientPlugin: MpClientPlugin
 
@@ -1616,6 +1617,8 @@ export declare function castSpellImmediate(actorCasterFormId: number, castingSou
 export declare function interruptCast(actorCasterFormId: number, castingSource: SpellType, animationVariables: ActorAnimationVariables): void;
 export declare function getAnimationVariablesFromActor(actorFormId: number): ActorAnimationVariables;
 export declare function applyAnimationVariablesToActor(actorFormId: number, animationVariables: ActorAnimationVariables): boolean;
+
+export declare function setCollision(refrFormId: number, collision: boolean): void;
 
 // Based on Form.pex
 export declare class Form extends PapyrusObject {

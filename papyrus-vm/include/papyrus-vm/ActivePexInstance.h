@@ -73,10 +73,10 @@ private:
 
   VarValue ExecuteAll(
     ExecutionContext& ctx,
-    std::optional<VarValue> previousCallResult = std::nullopt);
+    std::optional<VarValue> previousCallResult = std::nullopt) noexcept;
 
   void ExecuteOpCode(ExecutionContext* ctx, uint8_t op,
-                     const std::vector<VarValue*>& arguments);
+                     const std::vector<VarValue*>& arguments) noexcept;
 
   bool EnsureCallResultIsSynchronous(const VarValue& callResult,
                                      ExecutionContext* ctx);
@@ -98,6 +98,8 @@ private:
   static VarValue TryCastMultipleInheritance(const VirtualMachine& vm,
                                              const std::string& resultTypeName,
                                              VarValue* scriptToCastOwner);
+
+  VarValue& ResetNoneVarAndReturn();
 
   bool _IsValid = false;
 

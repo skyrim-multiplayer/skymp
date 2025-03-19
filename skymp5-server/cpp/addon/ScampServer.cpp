@@ -11,6 +11,7 @@
 #include "database_drivers/DatabaseFactory.h"
 #include "formulas/DamageMultFormula.h"
 #include "formulas/SweetPieDamageFormula.h"
+#include "formulas/SweetPieSpellDamageFormula.h"
 #include "formulas/TES5DamageFormula.h"
 #include "libespm/IterateFields.h"
 #include "papyrus-vm/Utils.h"
@@ -162,11 +163,9 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
     partOne = std::make_shared<PartOne>();
     listener = std::make_shared<ScampServerListener>(*this);
     partOne->AddListener(listener);
-    Napi::Number port = info[0].As<Napi::Number>(),
-                 maxConnections = info[1].As<Napi::Number>();
 
     std::string serverSettingsJson =
-      static_cast<std::string>(info[2].As<Napi::String>());
+      static_cast<std::string>(info[0].As<Napi::String>());
 
     serverMock = std::make_shared<Networking::MockServer>();
 
@@ -176,6 +175,15 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
     partOne->AttachLogger(logger);
 
     auto serverSettings = nlohmann::json::parse(serverSettingsJson);
+
+    // TODO: rework parsing with archives?
+    std::string listenHost;
+    if (auto it = serverSettings.find("listenHost");
+        it != serverSettings.end()) {
+      listenHost = it.value().get<std::string>();
+    }
+    uint32_t listenPort = serverSettings.at("port").get<uint32_t>();
+    uint32_t maxPlayers = serverSettings.at("maxPlayers").get<uint32_t>();
 
     if (serverSettings.find("weaponStaminaModifiers") !=
         serverSettings.end()) {
@@ -316,9 +324,8 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
       ? std::string(kNetworkingPasswordPrefix) +
         static_cast<std::string>(serverSettings["password"])
       : std::string(kNetworkingPasswordPrefix);
-    auto realServer = Networking::CreateServer(
-      static_cast<uint32_t>(port), static_cast<uint32_t>(maxConnections),
-      password.data());
+    auto realServer = Networking::CreateServer(listenHost.c_str(), listenPort,
+                                               maxPlayers, password.data());
 
     static_assert(kMockServerIdx == 1);
     server = Networking::CreateCombinedServer({ realServer, serverMock });
@@ -327,6 +334,9 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
 
     auto sweetPieDamageFormulaSettings =
       serverSettings["sweetPieDamageFormulaSettings"];
+
+    auto sweetPieSpellDamageFormulaSettings =
+      serverSettings["sweetPieSpellDamageFormulaSettings"];
 
     auto damageMultFormulaSettings =
       serverSettings["damageMultFormulaSettings"];
@@ -337,6 +347,8 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
                                                   damageMultFormulaSettings);
     formula = std::make_unique<SweetPieDamageFormula>(
       std::move(formula), sweetPieDamageFormulaSettings);
+    formula = std::make_unique<SweetPieSpellDamageFormula>(
+      std::move(formula), sweetPieSpellDamageFormulaSettings);
     partOne->SetDamageFormula(std::move(formula));
 
     partOne->worldState.AttachScriptStorage(
