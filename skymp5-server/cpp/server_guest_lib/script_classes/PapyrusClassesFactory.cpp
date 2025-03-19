@@ -21,6 +21,7 @@
 #include "PapyrusSound.h"
 #include "PapyrusUtility.h"
 #include "PapyrusVisualEffect.h"
+#include "PapyrusBook.h"
 
 std::vector<std::unique_ptr<IPapyrusClassBase>>
 PapyrusClassesFactory::CreateAndRegister(
@@ -50,6 +51,7 @@ PapyrusClassesFactory::CreateAndRegister(
   result.emplace_back(std::make_unique<PapyrusLeveledActor>());
   result.emplace_back(std::make_unique<PapyrusLeveledItem>());
   result.emplace_back(std::make_unique<PapyrusLeveledSpell>());
+  result.emplace_back(std::make_unique<PapyrusBook>());
 
   for (auto& papyrusClass : result) {
     papyrusClass->Register(vm, compatibilityPolicy);
