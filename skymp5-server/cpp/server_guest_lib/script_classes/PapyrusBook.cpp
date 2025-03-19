@@ -36,7 +36,7 @@ VarValue PapyrusBook::GetSpell(VarValue self,
     return VarValue::None();
   }
 
-  return VarValue(std::make_shared<EspmGameObject>(spellOrSkill))
+  return VarValue(std::make_shared<EspmGameObject>(spellOrSkill));
 }
 
 void PapyrusBook::Register(VirtualMachine& vm,
