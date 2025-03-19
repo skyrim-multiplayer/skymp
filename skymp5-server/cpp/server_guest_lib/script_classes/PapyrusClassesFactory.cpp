@@ -1,6 +1,7 @@
 #include "PapyrusClassesFactory.h"
 
 #include "PapyrusActor.h"
+#include "PapyrusBook.h"
 #include "PapyrusCell.h"
 #include "PapyrusDebug.h"
 #include "PapyrusEffectShader.h"
@@ -21,7 +22,6 @@
 #include "PapyrusSound.h"
 #include "PapyrusUtility.h"
 #include "PapyrusVisualEffect.h"
-#include "PapyrusBook.h"
 
 std::vector<std::unique_ptr<IPapyrusClassBase>>
 PapyrusClassesFactory::CreateAndRegister(
