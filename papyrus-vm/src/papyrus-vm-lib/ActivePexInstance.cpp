@@ -1,9 +1,10 @@
-#include "ScopedTask.h"
 #include "papyrus-vm/FunctionInfo.h"
-#include "ScopedTask.h"
 #include "papyrus-vm/OpcodesImplementation.h"
 #include "papyrus-vm/Utils.h"
 #include "papyrus-vm/VirtualMachine.h"
+
+#include "ScopedTask.h"
+
 #include <algorithm>
 #include <cctype> // tolower
 #include <fmt/ranges.h>
