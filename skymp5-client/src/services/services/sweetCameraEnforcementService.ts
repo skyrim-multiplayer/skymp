@@ -9,6 +9,11 @@ import { ButtonEvent, CameraStateChangedEvent, DxScanCode, Menu, Message } from 
 
 const playerId = 0x14;
 
+interface InvokeAnimOptions {
+    weaponDrawnAllowed: unknown;
+    furnitureAllowed: unknown;
+}
+
 // ex AnimDebugService part
 export class SweetCameraEnforcementService extends ClientListener {
     constructor(private sp: Sp, private controller: CombinedController) {
@@ -47,6 +52,9 @@ export class SweetCameraEnforcementService extends ClientListener {
         const name = e.message.content["animEventName"];
         const requestId = e.message.content["requestId"];
 
+        let weaponDrawnAllowed = e.message.content["weaponDrawnAllowed"];
+        let furnitureAllowed = e.message.content["furnitureAllowed"];
+
         if (typeof name !== "string") {
             logError(this, "Expected animEventName to be string");
             return;
@@ -57,19 +65,23 @@ export class SweetCameraEnforcementService extends ClientListener {
             return;
         }
 
-        const result = this.tryInvokeAnim(name, true);
+        this.controller.once("update", () => {
+            logTrace(this, "Trying to invoke anim", name, "with weaponDrawnAllowed=", weaponDrawnAllowed, ", furnitureAllowed=", furnitureAllowed);
 
-        const message: CustomPacketMessage = {
-            t: MsgType.CustomPacket,
-            content: {
-                customPacketType: "invokeAnimResult",
-                result, requestId
-            }
-        };
+            const result = this.tryInvokeAnim(name, { weaponDrawnAllowed, furnitureAllowed });
 
-        this.controller.emitter.emit("sendMessage", {
-            message,
-            reliability: "reliable"
+            const message: CustomPacketMessage = {
+                t: MsgType.CustomPacket,
+                content: {
+                    customPacketType: "invokeAnimResult",
+                    result, requestId
+                }
+            };
+
+            this.controller.emitter.emit("sendMessage", {
+                message,
+                reliability: "reliable"
+            });
         });
     }
 
@@ -172,19 +184,19 @@ export class SweetCameraEnforcementService extends ClientListener {
         // this.tryInvokeAnim(animEvent, false);
     }
 
-    private tryInvokeAnim(animEvent: string, weaponDrawnAllowed: boolean) {
+    private tryInvokeAnim(animEvent: string, options: InvokeAnimOptions): { success: boolean, reason?: string } {
         const player = this.sp.Game.getPlayer();
 
         if (!player) return { success: false, reason: "player_not_found" };
 
-        if (player.isWeaponDrawn() && !weaponDrawnAllowed) return { success: false, reason: "weapon_drawn" };
+        if (player.isWeaponDrawn() && !options.weaponDrawnAllowed) return { success: false, reason: "weapon_drawn" };
 
         if (this.sp.Ui.isMenuOpen(Menu.Favorites)) return { success: false, reason: "favorites_menu_open" };
         if (this.sp.Ui.isMenuOpen(Menu.Console)) return { success: false, reason: "console_menu_open" };
 
         if (this.stopAnimInProgress) return { success: false, reason: "busy_stopping_anim" };
 
-        if (player.getFurnitureReference()) return { success: false, reason: "player_in_furniture" };
+        if (player.getFurnitureReference() && !options.furnitureAllowed) return { success: false, reason: "player_in_furniture" };
         if (player.isSneaking()) return { success: false, reason: "player_sneaking" };
         if (player.isSwimming()) return { success: false, reason: "player_swimming" };
 
