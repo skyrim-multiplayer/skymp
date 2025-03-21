@@ -8,5 +8,5 @@ export interface AnimTextOutput {
 export interface AnimDebugSettings {
   isActive?: boolean;
   textOutput?: AnimTextOutput,
-  animKeys?: { [index: number]: string };
+  animKeys?: { [index: number]: string | undefined };
 }
