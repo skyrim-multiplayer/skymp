@@ -24,6 +24,7 @@
 #include "TemplateChainBinding.h"
 #include "TypeBinding.h"
 #include "WorldOrCellDescBinding.h"
+#include "LastAnimEventBinding.h"
 
 std::map<std::string, std::shared_ptr<PropertyBinding>>
 PropertyBindingFactory::CreateStandardPropertyBindings()
@@ -53,6 +54,7 @@ PropertyBindingFactory::CreateStandardPropertyBindings()
     std::make_shared<ConsoleCommandsAllowedBinding>();
   result["spawnDelay"] = std::make_shared<SpawnDelayBinding>();
   result["templateChain"] = std::make_shared<TemplateChainBinding>();
+  result["lastAnimEvent"] = std::make_shared<LastAnimEventBinding>();
   return result;
 }
 
