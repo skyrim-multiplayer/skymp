@@ -201,15 +201,27 @@ export class Login implements System {
             ctx.svr.sendCustomPacket(userId, loginFailedNotInTheDiscordServer);
             throw new Error("Not in the Discord server");
           }
+          // TODO: enable logging instead of throw
           // Disabled this check to be able bypassing ratelimit
           // if (response.status !== 200) {
           //   throw new Error("Unexpected response status: " +
           //     JSON.stringify({ status: response.status, data: response.data }));
           // }
+          
+          // TODO: remove this legacy discord-based ban system
           if (roles.indexOf(discordAuth.banRoleId) !== -1) {
             ctx.svr.sendCustomPacket(userId, loginFailedBanned);
             throw new Error("Banned");
           }
+
+          if ((ctx.svr as any).onLoginAttempt) {
+            const isContinue = (ctx.svr as any).onLoginAttempt(profile.id);
+            if (!isContinue) {
+              ctx.svr.sendCustomPacket(userId, loginFailedBanned);
+              throw new Error("Banned by gamemode");
+            }
+          }
+
           if (ip !== ctx.svr.getUserIp(userId)) {
             // It's a quick and dirty way to check if it's the same user
             // During async http call the user could free userId and someone else could connect with the same userId
