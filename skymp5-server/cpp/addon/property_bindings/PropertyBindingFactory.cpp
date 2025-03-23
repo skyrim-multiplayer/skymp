@@ -13,6 +13,7 @@
 #include "IsDisabledBinding.h"
 #include "IsOnlineBinding.h"
 #include "IsOpenBinding.h"
+#include "LastAnimEventBinding.h"
 #include "LocationalDataBinding.h"
 #include "NeighborsBinding.h"
 #include "OnlinePlayersBinding.h"
@@ -24,7 +25,6 @@
 #include "TemplateChainBinding.h"
 #include "TypeBinding.h"
 #include "WorldOrCellDescBinding.h"
-#include "LastAnimEventBinding.h"
 
 std::map<std::string, std::shared_ptr<PropertyBinding>>
 PropertyBindingFactory::CreateStandardPropertyBindings()
