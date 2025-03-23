@@ -13,6 +13,7 @@
 #include "IsDisabledBinding.h"
 #include "IsOnlineBinding.h"
 #include "IsOpenBinding.h"
+#include "LastAnimEventBinding.h"
 #include "LocationalDataBinding.h"
 #include "NeighborsBinding.h"
 #include "OnlinePlayersBinding.h"
@@ -53,6 +54,7 @@ PropertyBindingFactory::CreateStandardPropertyBindings()
     std::make_shared<ConsoleCommandsAllowedBinding>();
   result["spawnDelay"] = std::make_shared<SpawnDelayBinding>();
   result["templateChain"] = std::make_shared<TemplateChainBinding>();
+  result["lastAnimEvent"] = std::make_shared<LastAnimEventBinding>();
   return result;
 }
 
