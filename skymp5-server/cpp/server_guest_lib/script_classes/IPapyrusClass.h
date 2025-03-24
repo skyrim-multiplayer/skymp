@@ -13,11 +13,13 @@ public:
     std::shared_ptr<IPapyrusCompatibilityPolicy> policy) = 0;
 
   virtual ~IPapyrusClassBase() = default;
-  static VarValue MakeSPSnippetPromise(
+
+  static VarValue ExecuteSpSnippetAndGetPromise(
     const char* script, const char* name,
     std::shared_ptr<IPapyrusCompatibilityPolicy> policy, VarValue self,
     const std::vector<VarValue>& arguments, bool method = false,
-    bool returns = false, VarValue defaultResult = VarValue::None());
+    SpSnippetMode mode = SpSnippetMode::kNoReturnResult,
+    const VarValue& defaultResult = VarValue::None());
 
 public:
   std::shared_ptr<IPapyrusCompatibilityPolicy> compatibilityPolicy;

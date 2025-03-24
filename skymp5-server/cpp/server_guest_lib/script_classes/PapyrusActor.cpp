@@ -28,29 +28,37 @@ espm::ActorValue ConvertToAV(CIString actorValueName)
 VarValue PapyrusActor::DrawWeapon(VarValue self,
                                   const std::vector<VarValue>& arguments)
 {
-  return MakeSPSnippetPromise(GetName(), "DrawWeapon", compatibilityPolicy,
-                              self, arguments, true, true);
+  // TODO: consider making this SpSnippetMode::kNoReturnResult
+  return ExecuteSpSnippetAndGetPromise(GetName(), "DrawWeapon",
+                                       compatibilityPolicy, self, arguments,
+                                       true, SpSnippetMode::kReturnResult);
 }
 
 VarValue PapyrusActor::UnequipAll(VarValue self,
                                   const std::vector<VarValue>& arguments)
 {
-  return MakeSPSnippetPromise(GetName(), "UnequipAll", compatibilityPolicy,
-                              self, arguments, true, true);
+  // TODO: consider making this SpSnippetMode::kNoReturnResult
+  return ExecuteSpSnippetAndGetPromise(GetName(), "UnequipAll",
+                                       compatibilityPolicy, self, arguments,
+                                       true, SpSnippetMode::kReturnResult);
 }
 
 VarValue PapyrusActor::PlayIdle(VarValue self,
                                 const std::vector<VarValue>& arguments)
 {
-  return MakeSPSnippetPromise(GetName(), "PlayIdle", compatibilityPolicy, self,
-                              arguments, true, true);
+  // TODO: consider making this SpSnippetMode::kNoReturnResult
+  return ExecuteSpSnippetAndGetPromise(GetName(), "PlayIdle",
+                                       compatibilityPolicy, self, arguments,
+                                       true, SpSnippetMode::kReturnResult);
 }
 
 VarValue PapyrusActor::GetSitState(VarValue self,
                                    const std::vector<VarValue>& arguments)
 {
-  return MakeSPSnippetPromise(GetName(), "GetSitState", compatibilityPolicy,
-                              self, arguments, true, true);
+  // TODO: make this non-latent
+  return ExecuteSpSnippetAndGetPromise(GetName(), "GetSitState",
+                                       compatibilityPolicy, self, arguments,
+                                       true, SpSnippetMode::kReturnResult);
 }
 
 VarValue PapyrusActor::IsWeaponDrawn(VarValue self,
