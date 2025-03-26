@@ -10,22 +10,22 @@
 VarValue PapyrusGame::ForceThirdPerson(VarValue self,
                                        const std::vector<VarValue>& arguments)
 {
-  return MakeSPSnippetPromise(GetName(), "ForceThirdPerson",
-                              compatibilityPolicy, self, arguments);
+  return ExecuteSpSnippetAndGetPromise(GetName(), "ForceThirdPerson",
+                                       compatibilityPolicy, self, arguments);
 }
 
 VarValue PapyrusGame::DisablePlayerControls(
   VarValue self, const std::vector<VarValue>& arguments)
 {
-  return MakeSPSnippetPromise(GetName(), "DisablePlayerControls",
-                              compatibilityPolicy, self, arguments);
+  return ExecuteSpSnippetAndGetPromise(GetName(), "DisablePlayerControls",
+                                       compatibilityPolicy, self, arguments);
 }
 
 VarValue PapyrusGame::EnablePlayerControls(
   VarValue self, const std::vector<VarValue>& arguments)
 {
-  return MakeSPSnippetPromise(GetName(), "EnablePlayerControls",
-                              compatibilityPolicy, self, arguments);
+  return ExecuteSpSnippetAndGetPromise(GetName(), "EnablePlayerControls",
+                                       compatibilityPolicy, self, arguments);
 }
 
 VarValue PapyrusGame::IncrementStat(VarValue self,
@@ -160,8 +160,10 @@ VarValue PapyrusGame::ShowLimitedRaceMenu(
 VarValue PapyrusGame::GetCameraState(VarValue self,
                                      const std::vector<VarValue>& arguments)
 {
-  return MakeSPSnippetPromise(GetName(), "GetCameraState", compatibilityPolicy,
-                              self, arguments, false, true, VarValue(-1));
+  // TODO: make this non-latent
+  return ExecuteSpSnippetAndGetPromise(
+    GetName(), "GetCameraState", compatibilityPolicy, self, arguments, false,
+    SpSnippetMode::kReturnResult, VarValue(-1));
 }
 
 void PapyrusGame::RaceMenuHelper(VarValue& self, const char* funcName,
@@ -219,8 +221,8 @@ VarValue PapyrusGame::GetFormEx(
 VarValue PapyrusGame::ShakeController(VarValue self,
                                       const std::vector<VarValue>& arguments)
 {
-  return MakeSPSnippetPromise(GetName(), "ShakeController",
-                              compatibilityPolicy, self, arguments);
+  return ExecuteSpSnippetAndGetPromise(GetName(), "ShakeController",
+                                       compatibilityPolicy, self, arguments);
 }
 
 void PapyrusGame::Register(VirtualMachine& vm,

@@ -3,8 +3,9 @@
 VarValue PapyrusMessage::Show(VarValue self,
                               const std::vector<VarValue>& arguments)
 {
-  return MakeSPSnippetPromise(GetName(), "Show", compatibilityPolicy, self,
-                              arguments, true, true);
+  return ExecuteSpSnippetAndGetPromise(GetName(), "Show", compatibilityPolicy,
+                                       self, arguments, true,
+                                       SpSnippetMode::kReturnResult);
 }
 
 void PapyrusMessage::Register(
