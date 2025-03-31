@@ -9,6 +9,8 @@
 #include "VmCall.h"
 #include "VmCallback.h"
 
+#include <spdlog/spdlog.h>
+
 extern CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
 
 Variable CallNative::AnySafeToVariable(const CallNative::AnySafe& v,
@@ -52,7 +54,7 @@ Variable CallNative::AnySafeToVariable(const CallNative::AnySafe& v,
         RE::VMTypeID id = 0;
 
         if (isNotForm) {
-          auto vm = VM::GetSingleton();
+          static auto vm = VM::GetSingleton(); // hotpath, optimize with static
 
           if (!vm) {
             return res;
@@ -90,7 +92,7 @@ CallNative::ObjectPtr GetSingleObjectPtr(
   const Variable& r, std::optional<const char*> className = std::nullopt)
 {
   using namespace CallNative;
-  auto vmImpl = VM::GetSingleton();
+  static auto vmImpl = VM::GetSingleton(); // hotpath, optimize with static
   if (!vmImpl) {
     throw NullPointerException("vmImpl");
   }
@@ -277,7 +279,7 @@ CallNative::AnySafe CallNative::CallNativeSafe(Arguments& args_)
   }
 
   auto f = funcInfo->GetIFunction();
-  auto vmImpl = VM::GetSingleton();
+  static auto vmImpl = VM::GetSingleton(); // hotpath, optimize with static
   if (!vmImpl)
     throw NullPointerException("vmImpl");
 
@@ -300,7 +302,7 @@ CallNative::AnySafe CallNative::CallNativeSafe(Arguments& args_)
     std::vector<AnySafe> _args;
     for (auto it = args; it < args + numArgs; it++)
       _args.push_back(*it);
-    gameThrQ.AddTask([=] { SendAnimationEvent::Run(_args); });
+    gameThrQ.AddTask([=](Viet::Void) { SendAnimationEvent::Run(_args); });
     return ObjectPtr();
   }
 
@@ -312,7 +314,7 @@ CallNative::AnySafe CallNative::CallNativeSafe(Arguments& args_)
 
     auto formId = rawSelf->GetFormID();
 
-    gameThrQ.AddTask([formId] {
+    gameThrQ.AddTask([formId](Viet::Void) {
       if (auto refr = RE::TESForm::LookupByID<RE::TESObjectREFR>(formId)) {
         if (refr->GetFormID() == formId &&
             refr->GetFormType() == RE::FormType::Reference) {
@@ -327,7 +329,7 @@ CallNative::AnySafe CallNative::CallNativeSafe(Arguments& args_)
   bool isQueueNiNodeUpdate = !stricmp(classFunc.data(), "queueNiNodeUpdate");
   if (isQueueNiNodeUpdate) {
     CallNative::ObjectPtr _self = self;
-    gameThrQ.AddTask([_self] {
+    gameThrQ.AddTask([_self](Viet::Void) {
       auto nativeActorPtr = (RE::Actor*)_self->GetNativeObjectPtr();
       if (!nativeActorPtr)
         throw NullPointerException("nativeActorPtr");
@@ -357,7 +359,7 @@ CallNative::AnySafe CallNative::CallNativeSafe(Arguments& args_)
     const auto targetActorId = nativeTargetActor->formID;
     const auto mag = static_cast<float>(std::get<double>(args_.args[1]));
 
-    gameThrQ.AddTask([mag, nativeTargetActor, targetActorId] {
+    gameThrQ.AddTask([mag, nativeTargetActor, targetActorId](Viet::Void) {
       if (RE::TESForm::LookupByID<RE::Actor>(targetActorId) !=
           nativeTargetActor)
         return;
@@ -453,10 +455,11 @@ CallNative::AnySafe CallNative::CallNativeSafe(Arguments& args_)
     auto jsThrQPtr = &jsThrQ;
     auto cb = latentCallback;
     auto onResult = [cb, funcReturnType, jsThrQPtr](const Variable& result) {
-      jsThrQPtr->AddTask([=] {
+      spdlog::info("onResult called");
+      jsThrQPtr->AddTask([=](Napi::Env env) {
         if (!cb)
           throw NullPointerException("cb");
-        cb(VariableToAnySafe(result, funcReturnType));
+        cb(env, VariableToAnySafe(result, funcReturnType));
       });
     };
     VmCall::Run(*vmImpl, fsClassName, fsClassFunc, &selfScriptObject,
@@ -535,7 +538,7 @@ CallNative::AnySafe CallNative::DynamicCast(const std::string& outputTypeName,
   if (!stricmp(fromObjPtr->GetType(), outputTypeName.data()))
     return from_;
 
-  auto vm = VM::GetSingleton();
+  static auto vm = VM::GetSingleton(); // hotpath, optimize with static
   if (!vm)
     throw NullPointerException("vm");
 

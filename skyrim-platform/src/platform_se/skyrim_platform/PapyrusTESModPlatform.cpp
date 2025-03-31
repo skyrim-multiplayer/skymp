@@ -158,7 +158,7 @@ void TESModPlatform::SetWeaponDrawnMode(IVM* vm, StackID stackId,
 
   if (g_nativeCallRequirements.gameThrQ) {
     auto formId = actor->formID;
-    g_nativeCallRequirements.gameThrQ->AddTask([=] {
+    g_nativeCallRequirements.gameThrQ->AddTask([=](Viet::Void) {
       if (RE::TESForm::LookupByID<RE::Actor>(formId) != actor) {
         return;
       }
@@ -718,7 +718,7 @@ void TESModPlatform::AddItemEx(
     }
   }
 
-  g_nativeCallRequirements.gameThrQ->AddTask([=] {
+  g_nativeCallRequirements.gameThrQ->AddTask([=](Viet::Void) {
     if (containerRefr != RE::TESForm::LookupByID<RE::TESObjectREFR>(refrId))
       return;
 
@@ -771,13 +771,13 @@ void TESModPlatform::AddItemEx(
         }
 
         if (countDelta > 0) {
-          g_nativeCallRequirements.gameThrQ->AddTask([=] {
+          g_nativeCallRequirements.gameThrQ->AddTask([=](Viet::Void) {
             if (actor != (void*)RE::TESForm::LookupByID(refrId))
               return;
             s->EquipObject(actor, boundObject, extraList, 1, slot);
           });
         } else if (countDelta < 0)
-          g_nativeCallRequirements.gameThrQ->AddTask([=] {
+          g_nativeCallRequirements.gameThrQ->AddTask([=](Viet::Void) {
             if (actor != (void*)RE::TESForm::LookupByID(refrId))
               return;
             s->UnequipObject(actor, boundObject, extraList, 1, slot);

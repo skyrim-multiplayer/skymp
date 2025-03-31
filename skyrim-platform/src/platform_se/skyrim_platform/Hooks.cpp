@@ -1,5 +1,12 @@
 #include "Hooks.h"
 #include "EventHandler.h"
+#include <mutex>
+
+namespace hook::internal {
+std::mutex g_mutex;
+std::vector<std::tuple<std::string, std::string, RE::BSScript::IFunction*>>
+  g_boundNatives;
+}
 
 /**
  * @brief This hooks into the game main cycle
@@ -37,10 +44,49 @@ void InstallOnConsoleVPrintHook()
   Hooks::write_thunk_call<OnConsoleVPrint>(Offsets::Hooks::VPrint.address());
 }
 
+void BindNativeMethod(RE::BSScript::Internal::VirtualMachine* thisArg,
+                      RE::BSScript::IFunction* func);
+
+decltype(&BindNativeMethod) _BindNativeMethod;
+
+void HookVirtualMachineBind()
+{
+  spdlog::info("Hooking VirtualMachine::Bind");
+  REL::Relocation<std::uintptr_t> Vtbl{
+    RE::BSScript::Internal::VirtualMachine::VTABLE[0]
+  };
+  _BindNativeMethod = reinterpret_cast<decltype(_BindNativeMethod)>(
+    Vtbl.write_vfunc(0x18, BindNativeMethod));
+}
+
+void BindNativeMethod(RE::BSScript::Internal::VirtualMachine* thisArg,
+                      RE::BSScript::IFunction* func)
+{
+  const char* funcName = func ? func->GetName().data() : "<null func>";
+  const char* className =
+    func ? func->GetObjectTypeName().data() : "<null IFunction>";
+  spdlog::trace("VirtualMachine::Bind called {} {}", className, funcName);
+
+  if (func) {
+    std::lock_guard<std::mutex> lock(hook::internal::g_mutex);
+    hook::internal::g_boundNatives.push_back({ className, funcName, func });
+  }
+
+  _BindNativeMethod(thisArg, func);
+}
+
+std::vector<std::tuple<std::string, std::string, RE::BSScript::IFunction*>>
+Hooks::GetBoundNatives()
+{
+  std::lock_guard<std::mutex> lock(hook::internal::g_mutex);
+  return hook::internal::g_boundNatives;
+}
+
 void Hooks::Install()
 {
   // InstallOnFrameUpdateHook();
   InstallOnConsoleVPrintHook();
+  HookVirtualMachineBind();
 
   logger::info("CommonLib hooks installed.");
 }

@@ -118,3 +118,5 @@ struct game_type_pointer_deleter
 #include "game/Events.h"
 
 #include "Concepts.h"
+
+#include <napi.h>

@@ -200,9 +200,10 @@ struct VmProvider::Impl
   FindFunctionCache findFunctionCache;
 };
 
-VmProvider::VmProvider()
-  : pImpl(new Impl)
+VmProvider& VmProvider::GetSingleton()
 {
+  static VmProvider g_instance;
+  return g_instance;
 }
 
 FunctionInfo* VmProvider::GetFunctionInfo(const std::string& className,
@@ -223,4 +224,9 @@ bool VmProvider::IsDerivedFrom(const char* derivedClassName,
     v = derived && base && ::IsDerivedFrom(*derived, *base);
   }
   return *v;
+}
+
+VmProvider::VmProvider()
+  : pImpl(new Impl)
+{
 }

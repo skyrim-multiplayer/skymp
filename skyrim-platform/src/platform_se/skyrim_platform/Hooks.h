@@ -1,4 +1,6 @@
 #pragma once
+#include <vector>
+#include <utility>
 
 namespace Hooks {
 
@@ -9,12 +11,9 @@ void write_thunk_call(std::uintptr_t a_src)
   T::func = trampoline.write_call<5>(a_src, T::thunk);
 }
 
-template <std::size_t idx, class T>
-void write_vfunc(REL::Relocation<uintptr_t> vtbl)
-{
-  T::func = vtbl.write_vfunc(idx, T::thunk);
-}
-
 void Install();
+
+std::vector<std::tuple<std::string, std::string, RE::BSScript::IFunction*>>
+GetBoundNatives();
 
 }

@@ -4,10 +4,9 @@
 #include <stdexcept>
 #include <vector>
 
+#include "Void.h"
+
 namespace Viet {
-struct Void
-{
-};
 
 class AnyPromise
 {

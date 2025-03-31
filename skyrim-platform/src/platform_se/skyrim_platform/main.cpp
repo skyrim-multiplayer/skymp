@@ -50,12 +50,12 @@ void OnUpdate(IVM* vm, StackID stackId)
   g_nativeCallRequirements.stackId = stackId;
   g_nativeCallRequirements.vm = vm;
   SkyrimPlatform::GetSingleton()->PrepareWorker();
-  SkyrimPlatform::GetSingleton()->Push([=] {
-    SkyrimPlatform::GetSingleton()->JsTick(true);
+  SkyrimPlatform::GetSingleton()->Push([=](Napi::Env env) {
+    SkyrimPlatform::GetSingleton()->JsTick(env, true);
     SkyrimPlatform::GetSingleton()->StopWorker();
   });
   SkyrimPlatform::GetSingleton()->StartWorker();
-  g_nativeCallRequirements.gameThrQ->Update();
+  g_nativeCallRequirements.gameThrQ->Update(Viet::Void());
   g_nativeCallRequirements.stackId = std::numeric_limits<StackID>::max();
   g_nativeCallRequirements.vm = nullptr;
 }
@@ -440,7 +440,7 @@ public:
         } catch (const std::exception&) {
           auto exception = std::current_exception();
           SkyrimPlatform::GetSingleton()->AddTickTask(
-            [exception = std::move(exception)] {
+            [exception = std::move(exception)](Napi::Env) {
               std::rethrow_exception(exception);
             });
         }
@@ -451,62 +451,63 @@ public:
                          const CefRefPtr<CefListValue>& arguments_)
       {
         auto arguments = arguments_->Copy();
-        SkyrimPlatform::GetSingleton()->AddTickTask([name, arguments] {
-          auto length = static_cast<uint32_t>(arguments->GetSize());
-          auto argumentsArray = JsValue::Array(length);
-          for (uint32_t i = 0; i < length; ++i) {
-            argumentsArray.SetProperty(
-              static_cast<int>(i), CefValueToJsValue(arguments->GetValue(i)));
-          }
+        SkyrimPlatform::GetSingleton()->AddTickTask(
+          [name, arguments](Napi::Env env) {
+            auto length = static_cast<uint32_t>(arguments->GetSize());
+            auto argumentsArray = Napi::Array::New(env, length);
+            for (uint32_t i = 0; i < length; ++i) {
+              argumentsArray.Set(
+                i, CefValueToJsValue(env, arguments->GetValue(i)));
+            }
 
-          auto browserMessageEvent = JsValue::Object();
-          browserMessageEvent.SetProperty("arguments", argumentsArray);
-          EventsApi::SendEvent("browserMessage",
-                               { JsValue::Undefined(), browserMessageEvent });
-        });
+            auto browserMessageEvent = Napi::Object::New(env);
+            browserMessageEvent.Set("arguments", argumentsArray);
+            EventsApi::SendEvent("browserMessage", { browserMessageEvent });
+          });
       }
 
-      static JsValue CefValueToJsValue(const CefRefPtr<CefValue>& cefValue)
+      static Napi::Value CefValueToJsValue(Napi::Env env,
+                                           const CefRefPtr<CefValue>& cefValue)
       {
         switch (cefValue->GetType()) {
           case VTYPE_NULL:
-            return JsValue::Null();
+            return env.Null();
           case VTYPE_BOOL:
-            return JsValue::Bool(cefValue->GetBool());
+            return Napi::Boolean::New(env, cefValue->GetBool());
           case VTYPE_INT:
-            return JsValue::Int(cefValue->GetInt());
+            return Napi::Number::New(env, cefValue->GetInt());
           case VTYPE_DOUBLE:
-            return JsValue::Double(cefValue->GetDouble());
+            return Napi::Number::New(env, cefValue->GetDouble());
           case VTYPE_STRING:
-            return JsValue::String(cefValue->GetString().ToString());
+            return Napi::String::New(env, cefValue->GetString().ToString());
           case VTYPE_DICTIONARY: {
             auto dict = cefValue->GetDictionary();
-            auto result = JsValue::Object();
+            auto result = Napi::Object::New(env);
             CefDictionaryValue::KeyList keyList;
             dict->GetKeys(keyList);
             for (const std::string& key : keyList) {
               auto cefValue = dict->GetValue(key);
-              auto jsValue = CefValueToJsValue(cefValue);
-              result.SetProperty(key, jsValue);
+              auto jsValue = CefValueToJsValue(env, cefValue);
+              result.Set(key, jsValue);
             }
             return result;
           }
           case VTYPE_LIST: {
             auto list = cefValue->GetList();
             auto length = static_cast<int>(list->GetSize());
-            auto result = JsValue::Array(length);
+            auto result = Napi::Array::New(env, length);
             for (int i = 0; i < length; ++i) {
               auto cefValue = list->GetValue(i);
-              auto jsValue = CefValueToJsValue(cefValue);
-              result.SetProperty(i, jsValue);
+              auto jsValue = CefValueToJsValue(env, cefValue);
+              result.Set(i, jsValue);
             }
             return result;
           }
           case VTYPE_BINARY:
           case VTYPE_INVALID:
-            return JsValue::Undefined();
+            return env.Undefined();
         }
-        return JsValue::Undefined();
+        return env.Undefined();
       }
     };
 

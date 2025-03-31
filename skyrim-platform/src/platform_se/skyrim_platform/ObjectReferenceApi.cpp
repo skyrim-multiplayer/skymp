@@ -2,9 +2,10 @@
 
 #include "NullPointerException.h"
 
-RE::TESObjectREFR* GetArgObjectReference(const JsValue& arg)
+namespace {
+RE::TESObjectREFR* GetArgObjectReference(const Napi::Value& arg)
 {
-  auto formId = static_cast<uint32_t>(static_cast<double>(arg));
+  auto formId = NapiHelper::ExtractUInt32(arg, "refrFormId");
   auto refr = RE::TESForm::LookupByID<RE::TESObjectREFR>(formId);
 
   if (!refr) {
@@ -13,10 +14,11 @@ RE::TESObjectREFR* GetArgObjectReference(const JsValue& arg)
 
   return refr;
 }
+}
 
-JsValue ObjectReferenceApi::SetCollision(const JsFunctionArguments& args)
+Napi::Value ObjectReferenceApi::SetCollision(const Napi::CallbackInfo& info)
 {
-  auto refr = GetArgObjectReference(args[1]);
-  refr->SetCollision(static_cast<bool>(args[2]));
-  return JsValue::Undefined();
+  auto refr = GetArgObjectReference(info[0]);
+  refr->SetCollision(NapiHelper::ExtractBoolean(info[1], "collision"));
+  return info.Env().Undefined();
 }

@@ -25,8 +25,9 @@ private:
   }
 
   const std::function<void()> onTick = [] {
-    SkyrimPlatform::GetSingleton()->PushAndWait(
-      [=] { SkyrimPlatform::GetSingleton()->JsTick(false); });
+    SkyrimPlatform::GetSingleton()->PushAndWait([=](Napi::Env env) {
+      SkyrimPlatform::GetSingleton()->JsTick(env, false);
+    });
     TESModPlatform::Update();
     TickHandler::GetSingleton()->Update();
   };

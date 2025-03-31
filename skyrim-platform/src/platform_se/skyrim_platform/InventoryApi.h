@@ -1,10 +1,12 @@
 #pragma once
 
+#include "NapiHelper.h"
+
 namespace InventoryApi {
 
-JsValue GetExtraContainerChanges(const JsFunctionArguments& args);
-JsValue GetContainer(const JsFunctionArguments& args);
-JsValue SetInventory(const JsFunctionArguments& args);
+Napi::Value GetExtraContainerChanges(const Napi::CallbackInfo& info);
+Napi::Value GetContainer(const Napi::CallbackInfo& info);
+Napi::Value SetInventory(const Napi::CallbackInfo& info);
 
-void Register(JsValue& exports);
+void Register(Napi::Env env, Napi::Object& exports);
 }
