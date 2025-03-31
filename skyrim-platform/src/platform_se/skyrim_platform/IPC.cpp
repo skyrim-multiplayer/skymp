@@ -49,9 +49,16 @@ void IPC::Call(const std::string& systemName, const uint8_t* data,
 
 void IPC::Send(const char* systemName, const uint8_t* data, uint32_t length)
 {
-  auto obj = JsValue::Object();
-  AddObjProperty(&obj, "sourceSystemName", systemName);
-  AddObjProperty(&obj, "message", data, length);
+  std::string systemNameStr = systemName;
+  std::vector<uint8_t> dataVector{ data, data + length };
 
-  EventHandler::SendEventOnTick("ipcMessage", obj);
+  EventHandler::SendEventOnTick(
+    "ipcMessage",
+    [systemNameStr = std::move(systemNameStr),
+     dataVector = std::move(dataVector)](Napi::Env env) {
+      auto obj = Napi::Object::New(env);
+      AddObjProperty(&obj, "sourceSystemName", systemNameStr);
+      AddObjProperty(&obj, "message", dataVector.data(), dataVector.size());
+      return obj;
+    });
 }

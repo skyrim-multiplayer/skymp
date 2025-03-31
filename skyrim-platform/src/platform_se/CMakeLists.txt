@@ -7,6 +7,15 @@ include(${CMAKE_SOURCE_DIR}/cmake/apply_default_settings.cmake)
 if(MSVC)
   include(${CMAKE_SOURCE_DIR}/cmake/add_papyrus_library_ck.cmake)
 
+  add_library(node-embedder-api INTERFACE)
+  find_path(node_INCLUDE_DIR NAMES js_native_api.h PATH_SUFFIXES node-embedder-api node-embedder-api-prebuilt)
+  find_library(libnode_LIBRARY_Debug NAMES libnode PATH_SUFFIXES node-embedder-api node-embedder-api-prebuilt)
+  string(REPLACE "/debug/lib/" "/lib/" libnode_LIBRARY_Release "${libnode_LIBRARY_Debug}")
+  target_link_libraries(node-embedder-api INTERFACE "$<IF:$<CONFIG:Debug>,${libnode_LIBRARY_Debug},${libnode_LIBRARY_Release}>")
+  target_include_directories(node-embedder-api INTERFACE ${node_INCLUDE_DIR})
+
+  message(STATUS "node_INCLUDE_DIR: ${node_INCLUDE_DIR}")
+
   add_library(cef INTERFACE)
   find_library(CEF_LIBRARY_DEBUG libcef_dll_wrapper)
   string(REPLACE "/debug/lib/" "/lib/" CEF_LIBRARY_RELEASE ${CEF_LIBRARY_DEBUG})
@@ -61,6 +70,8 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
   set(ASSET_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/skyrim_platform/assets/template.ess
     ${CMAKE_CURRENT_SOURCE_DIR}/skyrim_platform/assets/cursor.png
+    ${CMAKE_CURRENT_SOURCE_DIR}/skyrim_platform/assets/sp3.js
+    ${CMAKE_CURRENT_SOURCE_DIR}/skyrim_platform/assets/storageProxy.js
   )
   cmrc_add_resource_library(skyrim_plugin_resources ${ASSET_FILES}
     ALIAS assets NAMESPACE skyrim_plugin_resources WHENCE skyrim_platform
@@ -83,6 +94,7 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
     target_include_directories(skyrim_platform PRIVATE "${tilted}")
     target_include_directories(skyrim_platform PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/include)
     target_link_libraries(skyrim_platform PRIVATE papyrus-vm-lib savefile skyrim_plugin_resources ui cef platform_lib viet)
+    target_link_libraries(skyrim_platform PRIVATE node-embedder-api)
     
     find_path(FRIDA_GUM_INCLUDE_DIR NAMES frida-gum.h)
     find_library(FRIDA_GUM_LIBRARY NAMES frida-gum.lib)
@@ -219,8 +231,8 @@ if(MSVC)
 
   # skyrim_platform vcpkg deps
 
-  find_package(unofficial-chakracore CONFIG REQUIRED)
-  target_link_libraries(skyrim_platform PUBLIC unofficial::chakracore::chakracore)
+  find_package(unofficial-node-addon-api REQUIRED)
+  target_link_libraries(skyrim_platform PRIVATE unofficial::node-addon-api::node-addon-api)
 
   target_link_libraries(skyrim_platform PUBLIC mhook)
 

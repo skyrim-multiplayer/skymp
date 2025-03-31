@@ -35,10 +35,6 @@
       "platform": "windows"
     },
     {
-      "name": "chakracore",
-      "platform": "windows"
-    },
-    {
       "name": "directxtk",
       "platform": "windows"
     },
