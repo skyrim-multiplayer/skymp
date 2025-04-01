@@ -1,11 +1,15 @@
 #pragma once
 
+#include "NapiHelper.h"
+
 namespace ObjectReferenceApi {
 
-JsValue SetCollision(const JsFunctionArguments& args);
+Napi::Value SetCollision(const Napi::CallbackInfo& info);
 
-inline void Register(JsValue& exports)
+inline void Register(Napi::Env env, Napi::Object& exports)
 {
-  exports.SetProperty("setCollision", JsValue::Function(SetCollision));
+  exports.Set(
+    "setCollision",
+    Napi::Function::New(env, NapiHelper::WrapCppExceptions(SetCollision)));
 }
 }
