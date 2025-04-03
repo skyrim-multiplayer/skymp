@@ -96,7 +96,7 @@ export class Login implements System {
       this.log("The server is in offline mode, the client is NOT");
     } else if (this.offlineMode === false && gameData && gameData.session) {
       (async () => {
-        ctx.gm.emit("userAssignSession", userId, gameData.session);
+        this.emit(ctx, "userAssignSession", userId, gameData.session);
 
         const guidBeforeAsyncOp = ctx.svr.getUserGuid(userId);
         const profile = await this.getUserProfile(gameData.session, userId, ctx);
@@ -122,11 +122,11 @@ export class Login implements System {
 
         let roles = new Array<string>();
 
-        if (discordAuth) {
-          if (!profile.discordId) {
-            ctx.svr.sendCustomPacket(userId, loginFailedNotLoggedViaDiscord);
-            throw new Error("Not logged in via Discord");
-          }
+        if (discordAuth && profile.discordId) {
+          // if (!profile.discordId) {
+          //   ctx.svr.sendCustomPacket(userId, loginFailedNotLoggedViaDiscord);
+          //   throw new Error("Not logged in via Discord");
+          // }
           const guidBeforeAsyncOp = ctx.svr.getUserGuid(userId);
           const response = await this.fetchRetry(
             `https://discord.com/api/guilds/${discordAuth.guildId}/members/${profile.discordId}`,
@@ -159,55 +159,18 @@ export class Login implements System {
 
           console.log('Discord request:', JSON.stringify({ status: response.status, data: responseData }));
 
-          if (discordAuth.eventLogChannelId) {
-            let ipToPrint = ip;
-
-            if (discordAuth && discordAuth.hideIpRoleId) {
-              if (roles.indexOf(discordAuth.hideIpRoleId) !== -1) {
-                ipToPrint = "hidden";
-              }
-            }
-
-            const actorIds = ctx.svr.getActorsByProfileId(profile.id).map(actorId => actorId.toString(16));
-
-            const loginMessage = `Server Login: Server Slot ${userId}, IP ${ipToPrint}, Actor ID ${actorIds}, Master API ${profile.id}, Discord ID ${profile.discordId} <@${profile.discordId}>`;
-            console.log(loginMessage);
-
-            this.fetchRetry(`https://discord.com/api/channels/${discordAuth.eventLogChannelId}/messages`, {
-              method: 'POST',
-              headers: {
-                'Authorization': `${discordAuth.botToken}`,
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                content: loginMessage,
-                allowed_mentions: { parse: [] },
-              }),
-              ... this.getFetchOptions('discordAuth2'),
-            })
-              .then((response) => {
-                if (!response.ok) {
-                  throw new Error(`Error sending message to Discord: ${response.statusText}`);
-                }
-                return response.json();
-              })
-              .then((_data) => null)
-              .catch((err) => {
-                console.error("Error sending message to Discord:", err);
-              });
-          }
-
           if (response.status === 404 && responseData?.code === DiscordErrors.unknownMember) {
             ctx.svr.sendCustomPacket(userId, loginFailedNotInTheDiscordServer);
             throw new Error("Not in the Discord server");
           }
+
           // TODO: enable logging instead of throw
           // Disabled this check to be able bypassing ratelimit
           // if (response.status !== 200) {
           //   throw new Error("Unexpected response status: " +
           //     JSON.stringify({ status: response.status, data: response.data }));
           // }
-          
+
           // TODO: remove this legacy discord-based ban system
           if (roles.indexOf(discordAuth.banRoleId) !== -1) {
             ctx.svr.sendCustomPacket(userId, loginFailedBanned);
@@ -229,7 +192,27 @@ export class Login implements System {
             throw new Error("IP mismatch");
           }
         }
-        ctx.gm.emit("spawnAllowed", userId, profile.id, roles, profile.discordId);
+
+        if (discordAuth && discordAuth.eventLogChannelId) {
+          let ipToPrint = ip;
+
+          if (discordAuth && discordAuth.hideIpRoleId) {
+            if (roles.indexOf(discordAuth.hideIpRoleId) !== -1) {
+              ipToPrint = "hidden";
+            }
+          }
+
+          const actorIds = ctx.svr.getActorsByProfileId(profile.id).map(actorId => actorId.toString(16));
+
+          this.postServerLoginToDiscord(discordAuth.eventLogChannelId, discordAuth.botToken, {
+            userId,
+            ipToPrint,
+            actorIds,
+            profile,
+          });
+        }
+
+        this.emit(ctx, "spawnAllowed", userId, profile.id, roles, profile.discordId);
         this.log("Logged as " + profile.id);
       })()
         .catch((err) => {
@@ -237,14 +220,46 @@ export class Login implements System {
         });
     } else if (this.offlineMode === true && gameData && typeof gameData.profileId === "number") {
       const profileId = gameData.profileId;
-      ctx.gm.emit("spawnAllowed", userId, profileId, [], undefined);
+      this.emit(ctx, "spawnAllowed", userId, profileId, [], undefined);
       this.log(userId + " logged as " + profileId);
     } else {
       this.log("No credentials found in gameData:", gameData);
     }
   }
 
-  private myAddr: string;
+  private postServerLoginToDiscord(eventLogChannelId: string, botToken: string, options: { userId: number, ipToPrint: string, actorIds: string[], profile: UserProfile }) {
+    const { userId, ipToPrint, actorIds, profile } = options;
+
+    const loginMessage = `Server Login: Server Slot ${userId}, IP ${ipToPrint}, Actor ID ${actorIds}, Master API ${profile.id}, Discord ID ${profile.discordId} <@${profile.discordId}>`;
+    console.log(loginMessage);
+
+    this.fetchRetry(`https://discord.com/api/channels/${eventLogChannelId}/messages`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `${botToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        content: loginMessage,
+        allowed_mentions: { parse: [] },
+      }),
+      ... this.getFetchOptions('discordAuth2'),
+    }).then((response) => {
+      if (!response.ok) {
+        throw new Error(`Error sending message to Discord: ${response.statusText}`);
+      }
+      return response.json();
+    }).then((_data): null => {
+      return null;
+    }).catch((err) => {
+      console.error("Error sending message to Discord:", err);
+    });
+  }
+
+  private emit(ctx: SystemContext, eventName: string, ...args: unknown[]) {
+    (ctx.gm as any).emit(eventName, ...args);
+  }
+
   private settingsObject: Settings;
   private fetchRetry = fetchRetry.default(global.fetch);
 }
