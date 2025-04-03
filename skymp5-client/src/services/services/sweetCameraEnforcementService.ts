@@ -12,6 +12,8 @@ const playerId = 0x14;
 interface InvokeAnimOptions {
     weaponDrawnAllowed: unknown;
     furnitureAllowed: unknown;
+    exitAnimName: unknown;
+    timeMs: unknown;
 }
 
 // ex AnimDebugService part
@@ -54,6 +56,8 @@ export class SweetCameraEnforcementService extends ClientListener {
 
         let weaponDrawnAllowed = e.message.content["weaponDrawnAllowed"];
         let furnitureAllowed = e.message.content["furnitureAllowed"];
+        let exitAnimName = e.message.content["exitAnimName"];
+        let timeMs = e.message.content["timeMs"];
 
         if (typeof name !== "string") {
             logError(this, "Expected animEventName to be string");
@@ -66,9 +70,9 @@ export class SweetCameraEnforcementService extends ClientListener {
         }
 
         this.controller.once("update", () => {
-            logTrace(this, "Trying to invoke anim", name, "with weaponDrawnAllowed=", weaponDrawnAllowed, ", furnitureAllowed=", furnitureAllowed);
+            logTrace(this, "Trying to invoke anim", name, "with weaponDrawnAllowed=", weaponDrawnAllowed, ", furnitureAllowed=", furnitureAllowed, ", exitAnimName=", exitAnimName, ", timeMs=", timeMs);
 
-            const result = this.tryInvokeAnim(name, { weaponDrawnAllowed, furnitureAllowed });
+            const result = this.tryInvokeAnim(name, { weaponDrawnAllowed, furnitureAllowed, exitAnimName, timeMs });
 
             const message: CustomPacketMessage = {
                 t: MsgType.CustomPacket,
@@ -104,7 +108,7 @@ export class SweetCameraEnforcementService extends ClientListener {
     }
 
     private exitAnim() {
-        this.sp.Debug.sendAnimationEvent(this.sp.Game.getPlayer(), "IdleForceDefaultState");
+        this.sp.Debug.sendAnimationEvent(this.sp.Game.getPlayer(), this.exitAnimName || "IdleForceDefaultState");
         logTrace(this, `Sent animation event: IdleForceDefaultState`);
         this.needsExitingAnim = false;
 
@@ -185,6 +189,37 @@ export class SweetCameraEnforcementService extends ClientListener {
     }
 
     private tryInvokeAnim(animEvent: string, options: InvokeAnimOptions): { success: boolean, reason?: string } {
+        this.tryInvokeAnimCount++;
+        if (this.tryInvokeAnimCount >= this.tryInvokeAnimCountMax) {
+            this.tryInvokeAnimCount = 0;
+        }
+
+        const currentInvokeAnimCount = this.tryInvokeAnimCount;
+
+        if (typeof options.exitAnimName === "string") {
+            this.exitAnimName = options.exitAnimName;
+        }
+        else {
+            this.exitAnimName = null;
+        }
+
+        if (typeof options.timeMs === "number" && options.timeMs > 0 && Number.isFinite(options.timeMs)) {
+            const timeSeconds = options.timeMs / 1000;
+
+            // Using Utility.wait makes sense because it waits game time, not simply real time.
+            this.sp.Utility.wait(timeSeconds).then(() => {
+                if (this.tryInvokeAnimCount !== currentInvokeAnimCount) {
+                    return;
+                }
+
+                if (!this.needsExitingAnim) {
+                    return;
+                }
+
+                this.exitAnim();
+            });
+        }
+
         const player = this.sp.Game.getPlayer();
 
         if (!player) return { success: false, reason: "player_not_found" };
@@ -215,6 +250,7 @@ export class SweetCameraEnforcementService extends ClientListener {
         }
 
         logTrace(this, `Sent animation event: ${animEvent}`);
+
         return { success: true };
     }
 
@@ -231,4 +267,7 @@ export class SweetCameraEnforcementService extends ClientListener {
     private needsExitingAnim = false;
     private stopAnimInProgress = false;
     private settings?: AnimDebugSettings;
+    private exitAnimName: string | null = null;
+    private tryInvokeAnimCount: number = 0;
+    private readonly tryInvokeAnimCountMax: number = 1000000000;
 }
