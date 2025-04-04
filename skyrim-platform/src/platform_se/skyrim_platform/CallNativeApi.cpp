@@ -30,7 +30,11 @@ Napi::Value CallNativeImpl(
       if (!dataHandler) {
         throw NullPointerException("dataHandler");
       }
+#ifndef ENABLE_SKYRIM_VR
       auto numFiles = dataHandler->compiledFileCollection.files.size();
+#else
+      auto numFiles = dataHandler->VRcompiledFileCollection->files.size();
+#endif
       return Napi::Number::New(info.Env(), numFiles);
 
     } else if (!stricmp("GetModName", functionName.data())) {
@@ -44,21 +48,26 @@ Napi::Value CallNativeImpl(
         throw NullPointerException("dataHandler");
       }
 
+#ifndef ENABLE_SKYRIM_VR
+      auto files = dataHandler->compiledFileCollection.files;
+      auto smallFiles = dataHandler->compiledFileCollection.smallFiles;
+#else
+      auto files = dataHandler->VRcompiledFileCollection->files;
+      auto smallFiles = dataHandler->VRcompiledFileCollection->smallFiles;
+#endif
+
       if (index > 0xff) {
         uint32_t adjusted = index - kLightModOffset;
-        if (adjusted >=
-            dataHandler->compiledFileCollection.smallFiles.size()) {
+        if (adjusted >= smallFiles.size()) {
           return Napi::String::New(info.Env(), "");
         }
-        std::string s =
-          dataHandler->compiledFileCollection.smallFiles[adjusted]->fileName;
+        std::string s = smallFiles[adjusted]->fileName;
         return Napi::String::New(info.Env(), s);
       } else {
-        if (index >= dataHandler->compiledFileCollection.files.size()) {
+        if (index >= files.size()) {
           return Napi::String::New(info.Env(), "");
         }
-        std::string s =
-          dataHandler->compiledFileCollection.files[index]->fileName;
+        std::string s = files[index]->fileName;
         return Napi::String::New(info.Env(), s);
       }
     }

@@ -129,9 +129,15 @@ Napi::Value MagicApi::CastSpellImmediate(const Napi::CallbackInfo& info)
       if (pSpell->data.delivery ==
           RE::MagicSystem::Delivery::kTargetLocation) {
         // TODO we need recalculate origin, cast ray from head to crosshair
-        auto viewDirection = pActor->Get3D2()->world.rotate.GetVectorY();
+        auto rotation = pActor->Get3D2()->world.rotate.entry;
+        auto viewDirection =
+          NiPoint3{ rotation[0][1], rotation[1][1], rotation[2][1] };
         viewDirection.Unitize();
-        origin += viewDirection * 200.f;
+
+        auto offset = viewDirection * 200.f;
+
+        origin.x += offset.x;
+        origin.y += offset.y;
         origin.z = pActor->GetPositionZ() + 10.f;
       }
 
