@@ -14,6 +14,7 @@ interface InvokeAnimOptions {
     furnitureAllowed: unknown;
     exitAnimName: unknown;
     timeMs: unknown;
+    isPlayExitAnimAfterwardsEnabled: unknown;
 }
 
 // ex AnimDebugService part
@@ -58,6 +59,7 @@ export class SweetCameraEnforcementService extends ClientListener {
         let furnitureAllowed = e.message.content["furnitureAllowed"];
         let exitAnimName = e.message.content["exitAnimName"];
         let timeMs = e.message.content["timeMs"];
+        let isPlayExitAnimAfterwardsEnabled = e.message.content["isPlayExitAnimAfterwardsEnabled"];
 
         if (typeof name !== "string") {
             logError(this, "Expected animEventName to be string");
@@ -70,9 +72,9 @@ export class SweetCameraEnforcementService extends ClientListener {
         }
 
         this.controller.once("update", () => {
-            logTrace(this, "Trying to invoke anim", name, "with weaponDrawnAllowed=", weaponDrawnAllowed, ", furnitureAllowed=", furnitureAllowed, ", exitAnimName=", exitAnimName, ", timeMs=", timeMs);
+            logTrace(this, "Trying to invoke anim", name, "with weaponDrawnAllowed=", weaponDrawnAllowed, ", furnitureAllowed=", furnitureAllowed, ", exitAnimName=", exitAnimName, ", timeMs=", timeMs, ", isPlayExitAnimAfterwardsEnabled=", isPlayExitAnimAfterwardsEnabled);
 
-            const result = this.tryInvokeAnim(name, { weaponDrawnAllowed, furnitureAllowed, exitAnimName, timeMs });
+            const result = this.tryInvokeAnim(name, { weaponDrawnAllowed, furnitureAllowed, exitAnimName, timeMs, isPlayExitAnimAfterwardsEnabled });
 
             const message: CustomPacketMessage = {
                 t: MsgType.CustomPacket,
@@ -107,9 +109,14 @@ export class SweetCameraEnforcementService extends ClientListener {
         }
     }
 
-    private exitAnim() {
-        this.sp.Debug.sendAnimationEvent(this.sp.Game.getPlayer(), this.exitAnimName || "IdleForceDefaultState");
-        logTrace(this, `Sent animation event: IdleForceDefaultState`);
+    private exitAnim(options: { playExitAnim: boolean, exitAnimOverride?: string, cb?: () => void } = { playExitAnim: true }) {
+
+        if (options.playExitAnim) {
+            const animEventToSend = options.exitAnimOverride ? options.exitAnimOverride : (this.exitAnimName || "IdleForceDefaultState");
+            this.sp.Debug.sendAnimationEvent(this.sp.Game.getPlayer(), animEventToSend);
+            logTrace(this, `Sent animation event:`, animEventToSend);
+        }
+
         this.needsExitingAnim = false;
 
         this.stopAnimInProgress = true;
@@ -118,6 +125,9 @@ export class SweetCameraEnforcementService extends ClientListener {
         });
         this.sp.Utility.wait(1).then(() => {
             this.stopAnimInProgress = false;
+            if (options.cb) {
+                options.cb();
+            }
         });
     }
 
@@ -216,7 +226,9 @@ export class SweetCameraEnforcementService extends ClientListener {
                     return;
                 }
 
-                this.exitAnim();
+                const isPlayExitAnimAfterwardsEnabled = typeof options.isPlayExitAnimAfterwardsEnabled === "boolean" ? options.isPlayExitAnimAfterwardsEnabled : true;
+
+                this.exitAnim({ playExitAnim: isPlayExitAnimAfterwardsEnabled });
             });
         }
 
@@ -241,12 +253,21 @@ export class SweetCameraEnforcementService extends ClientListener {
             }
         }
         else {
-            this.sp.Game.forceThirdPerson();
-            this.sp.Game.disablePlayerControls(true, false, true, false, false, false, false, false, 0);
-            this.sp.Debug.sendAnimationEvent(this.sp.Game.getPlayer(), animEvent);
+            const f = () => {
+                this.sp.Game.forceThirdPerson();
+                this.sp.Game.disablePlayerControls(true, false, true, false, false, false, false, false, 0);
+                this.sp.Debug.sendAnimationEvent(this.sp.Game.getPlayer(), animEvent);
 
-            this.needsExitingAnim = true;
-            this.startAntiExploitPolling("no_death");
+                this.needsExitingAnim = true;
+                this.startAntiExploitPolling("no_death");
+            }
+
+            if (this.needsExitingAnim) {
+                this.exitAnim({ playExitAnim: true, exitAnimOverride: "IdleStop", cb: f });
+            }
+            else {
+                f();
+            }
         }
 
         logTrace(this, `Sent animation event: ${animEvent}`);
