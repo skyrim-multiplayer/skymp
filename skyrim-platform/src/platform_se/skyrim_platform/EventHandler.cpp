@@ -3,6 +3,7 @@
 #include "EventsApi.h"
 #include "JsUtils.h"
 #include "SkyrimPlatform.h"
+#include "TickHandler.h"
 
 namespace {
 inline void SendEvent(const char* eventName)
@@ -65,6 +66,8 @@ void EventHandler::HandleSKSEMessage(SKSE::MessagingInterface::Message* msg)
 {
   switch (msg->type) {
     case SKSE::MessagingInterface::kDataLoaded: {
+      TickHandler::GetSingleton()->Update();
+
       EventManager::Init();
       SendSimpleEventOnTick("skyrimLoaded");
     } break;
