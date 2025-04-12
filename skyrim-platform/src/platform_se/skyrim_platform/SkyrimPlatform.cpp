@@ -1,4 +1,5 @@
 #include "SkyrimPlatform.h"
+
 #include "BrowserApi.h"    // APIs for register in CommonExecutionListener
 #include "CallNativeApi.h" // CallNativeApi::NativeCallRequirements
 #include "CameraApi.h"
