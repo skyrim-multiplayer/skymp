@@ -1,5 +1,4 @@
 #pragma once
-#include "TaskQueue.h"
 #include <cstdint>
 #include <cstring>
 #include <fmt/ranges.h>
@@ -15,6 +14,8 @@
 #include <Windows.h>
 
 #include "NapiHelper.h"
+
+#include "TaskQueue.h"
 
 class JsEngine
 {
