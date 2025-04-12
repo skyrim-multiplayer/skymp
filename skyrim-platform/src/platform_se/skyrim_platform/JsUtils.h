@@ -1,6 +1,6 @@
 #pragma once
-#include "SP3NativeValueCasts.h"
 #include "SP3Api.h"
+#include "SP3NativeValueCasts.h"
 
 inline Napi::Value CreateObject(Napi::Env env, const char* type, void* form)
 {
