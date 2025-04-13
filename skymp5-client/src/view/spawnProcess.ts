@@ -1,6 +1,8 @@
 import { ObjectReference, Game, Actor, MotionType } from "skyrimPlatform";
 import { Appearance, applyTints } from "../sync/appearance";
 import { NiPoint3 } from "../sync/movement";
+import { ObjectReferenceEx } from "../extensions/objectReferenceEx";
+import { logTrace } from "../logging";
 
 export class SpawnProcess {
   constructor(
@@ -36,6 +38,9 @@ export class SpawnProcess {
         this.callback();
       });
     }
+
+    ObjectReferenceEx.dealWithRef(refr, refr.getBaseObject()!);
+
     return refr.setMotionType(MotionType.Keyframed, true).then(this.callback);
   }
 }
