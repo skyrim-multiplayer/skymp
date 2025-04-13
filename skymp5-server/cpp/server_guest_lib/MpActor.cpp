@@ -1,5 +1,4 @@
 #include "MpActor.h"
-#include "ActiveMagicEffectsMap.h"
 #include "ActorValues.h"
 #include "ChangeFormGuard.h"
 #include "CropRegeneration.h"
@@ -814,11 +813,6 @@ bool MpActor::IsCreatedAsPlayer() const
 const ActorValues& MpActor::GetActorValues() const
 {
   return ChangeForm().actorValues;
-}
-
-const ActiveMagicEffectsMap& MpActor::GetActiveMagicEffects() const
-{
-  return ChangeForm().activeMagicEffects;
 }
 
 int32_t MpActor::GetProfileId() const

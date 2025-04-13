@@ -1,5 +1,4 @@
 #include "AnimationSystem.h"
-#include "ActiveMagicEffectsMap.h"
 #include "AnimationData.h"
 #include "MathUtils.h"
 #include "MpActor.h"
