@@ -75,7 +75,6 @@ nlohmann::json MpChangeForm::ToJson(const MpChangeForm& changeForm)
     changeForm.spawnPoint.cellOrWorldDesc.ToString();
 
   res["spawnDelay"] = changeForm.spawnDelay;
-  res["effects"] = changeForm.activeMagicEffects.ToJson();
 
   if (!changeForm.templateChain.empty()) {
     res["templateChain"] = ToStringArray(changeForm.templateChain);
@@ -131,10 +130,10 @@ MpChangeForm MpChangeForm::JsonToChangeForm(simdjson::dom::element& element)
     consoleCommandsAllowed("consoleCommandsAllowed"),
     spawnPointPos("spawnPoint_pos"), spawnPointRot("spawnPoint_rot"),
     spawnPointCellOrWorldDesc("spawnPoint_cellOrWorldDesc"),
-    spawnDelay("spawnDelay"), effects("effects"),
-    templateChain("templateChain"), lastAnimation("lastAnimation"),
-    setNodeTextureSet("setNodeTextureSet"), setNodeScale("setNodeScale"),
-    displayName("displayName"), factions("factions");
+    spawnDelay("spawnDelay"), templateChain("templateChain"),
+    lastAnimation("lastAnimation"), setNodeTextureSet("setNodeTextureSet"),
+    setNodeScale("setNodeScale"), displayName("displayName"),
+    factions("factions");
 
   MpChangeForm res;
   ReadEx(element, recType, &res.recType);
@@ -246,12 +245,6 @@ MpChangeForm MpChangeForm::JsonToChangeForm(simdjson::dom::element& element)
   res.spawnPoint.cellOrWorldDesc = FormDesc::FromString(tmp);
 
   ReadEx(element, spawnDelay, &res.spawnDelay);
-
-  if (element.at_pointer(effects.GetData()).error() ==
-      simdjson::error_code::SUCCESS) {
-    ReadEx(element, effects, &jTmp);
-    res.activeMagicEffects = ActiveMagicEffectsMap::FromJson(jTmp);
-  }
 
   if (element.at_pointer(templateChain.GetData()).error() ==
       simdjson::error_code::SUCCESS) {
