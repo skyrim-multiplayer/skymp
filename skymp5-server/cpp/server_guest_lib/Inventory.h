@@ -1,10 +1,12 @@
 #pragma once
+#include <DevApi.h>
 #include <cstdint>
 #include <nlohmann/json.hpp>
 #include <simdjson.h>
 #include <string>
 #include <tuple>
 #include <vector>
+#include <napi.h>
 
 class Inventory
 {
@@ -24,6 +26,7 @@ public:
   }
 
   // TODO: get rid of this in favor of Serialize
+  Napi::Value ToNapiObject() const;
   nlohmann::json ToJson() const;
   static Inventory FromJson(const simdjson::dom::element& element);
   static Inventory FromJson(const nlohmann::json& j);
