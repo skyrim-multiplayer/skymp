@@ -61,6 +61,10 @@ nlohmann::json MpChangeForm::ToJson(const MpChangeForm& changeForm)
   res["magickaPercentage"] = changeForm.actorValues.magickaPercentage;
   res["staminaPercentage"] = changeForm.actorValues.staminaPercentage;
 
+  res["healthRespawnPercentage"] = changeForm.healthRespawnPercentage;
+  res["magickaRespawnPercentage"] = changeForm.magickaRespawnPercentage;
+  res["staminaRespawnPercentage"] = changeForm.staminaRespawnPercentage;
+
   res["isDead"] = changeForm.isDead;
 
   res["consoleCommandsAllowed"] = changeForm.consoleCommandsAllowed;
@@ -219,6 +223,21 @@ MpChangeForm MpChangeForm::JsonToChangeForm(simdjson::dom::element& element)
   ReadEx(element, healthPercentage, &res.actorValues.healthPercentage);
   ReadEx(element, magickaPercentage, &res.actorValues.magickaPercentage);
   ReadEx(element, staminaPercentage, &res.actorValues.staminaPercentage);
+
+  if (element.at_pointer(healthRespawnPercentage.GetData()).error() ==
+      simdjson::error_code::SUCCESS) {
+    ReadEx(element, healthRespawnPercentage, &res.healthRespawnPercentage);
+  }
+
+  if (element.at_pointer(magickaRespawnPercentage.GetData()).error() ==
+      simdjson::error_code::SUCCESS) {
+    ReadEx(element, magickaRespawnPercentage, &res.magickaRespawnPercentage);
+  }
+
+  if (element.at_pointer(staminaRespawnPercentage.GetData()).error() ==
+      simdjson::error_code::SUCCESS) {
+    ReadEx(element, staminaRespawnPercentage, &res.staminaRespawnPercentage);
+  }
 
   ReadEx(element, isDead, &res.isDead);
 

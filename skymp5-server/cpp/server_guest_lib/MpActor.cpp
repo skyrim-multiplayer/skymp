@@ -238,6 +238,27 @@ void MpActor::SetEquipment(const std::string& jsonString)
     [&](MpChangeForm& changeForm) { changeForm.equipmentDump = jsonString; });
 }
 
+void MpActor::SetHealthRespawnPercentage(float percentage)
+{
+  EditChangeForm([&](MpChangeForm& changeForm) {
+    changeForm.healthRespawnPercentage = percentage;
+  });
+}
+
+void MpActor::SetMagickaRespawnPercentage(float percentage)
+{
+  EditChangeForm([&](MpChangeForm& changeForm) {
+    changeForm.magickaRespawnPercentage = percentage;
+  });
+}
+
+void MpActor::SetStaminaRespawnPercentage(float percentage)
+{
+  EditChangeForm([&](MpChangeForm& changeForm) {
+    changeForm.staminaRespawnPercentage = percentage;
+  });
+}
+
 void MpActor::AddToFaction(Faction faction, bool lazyLoad)
 {
   if (factionsLoaded == false && lazyLoad)
@@ -825,6 +846,21 @@ const ActiveMagicEffectsMap& MpActor::GetActiveMagicEffects() const
 int32_t MpActor::GetProfileId() const
 {
   return ChangeForm().profileId;
+}
+
+float MpActor::GetHealthRespawnPercentage() const
+{
+  return ChangeForm().healthRespawnPercentage;
+}
+
+float MpActor::GetMagickaRespawnPercentage() const
+{
+  return ChangeForm().magickaRespawnPercentage;
+}
+
+float MpActor::GetStaminaRespawnPercentage() const
+{
+  return ChangeForm().staminaRespawnPercentage;
 }
 
 void MpActor::SendAndSetDeathState(bool isDead, bool shouldTeleport)
