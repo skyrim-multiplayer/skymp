@@ -8,14 +8,13 @@ Napi::Value RespawnPercentagesBinding::Get(Napi::Env env,
   auto& partOne = scampServer.GetPartOne();
 
   auto& actor = partOne->worldState.GetFormAt<MpActor>(formId);
-  auto& actorValues = actor.GetActorValues();
   auto percentages = Napi::Object::New(env);
   percentages.Set("health",
-                  Napi::Number::New(env, actorValues.healthPercentage));
+                  Napi::Number::New(env, actor.GetHealthRespawnPercentage()));
   percentages.Set("magicka",
-                  Napi::Number::New(env, actorValues.magickaPercentage));
+                  Napi::Number::New(env, actor.GetMagickaRespawnPercentage()));
   percentages.Set("stamina",
-                  Napi::Number::New(env, actorValues.staminaPercentage));
+                  Napi::Number::New(env, actor.GetStaminaRespawnPercentage()));
   return percentages;
 }
 
@@ -27,12 +26,15 @@ void RespawnPercentagesBinding::Set(Napi::Env env, ScampServer& scampServer,
   auto newPercentages = NapiHelper::ExtractObject(newValue, "newPercentages");
 
   auto& actor = partOne->worldState.GetFormAt<MpActor>(formId);
-  ActorValues actorValues = actor.GetActorValues();
-  actorValues.healthPercentage = NapiHelper::ExtractFloat(
+
+  float healthPercentage = NapiHelper::ExtractFloat(
     newPercentages.Get("health"), "newPercentages.health");
-  actorValues.magickaPercentage = NapiHelper::ExtractFloat(
+  float magickaPercentage = NapiHelper::ExtractFloat(
     newPercentages.Get("magicka"), "newPercentages.magicka");
-  actorValues.staminaPercentage = NapiHelper::ExtractFloat(
+  float staminaPercentage = NapiHelper::ExtractFloat(
     newPercentages.Get("stamina"), "newPercentages.stamina");
-  actor.NetSetPercentages(actorValues);
+
+  actor.SetHealthRespawnPercentage(healthPercentage);
+  actor.SetMagickaRespawnPercentage(magickaPercentage);
+  actor.SetStaminaRespawnPercentage(staminaPercentage);
 }
