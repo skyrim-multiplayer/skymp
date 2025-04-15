@@ -25,6 +25,7 @@
 #include "TemplateChainBinding.h"
 #include "TypeBinding.h"
 #include "WorldOrCellDescBinding.h"
+#include "RespawnPercentagesBinding.h"
 
 std::map<std::string, std::shared_ptr<PropertyBinding>>
 PropertyBindingFactory::CreateStandardPropertyBindings()
@@ -55,6 +56,7 @@ PropertyBindingFactory::CreateStandardPropertyBindings()
   result["spawnDelay"] = std::make_shared<SpawnDelayBinding>();
   result["templateChain"] = std::make_shared<TemplateChainBinding>();
   result["lastAnimEvent"] = std::make_shared<LastAnimEventBinding>();
+  result["respawnPercentages"] = std::make_shared<RespawnPercentagesBinding>();
   return result;
 }
 
