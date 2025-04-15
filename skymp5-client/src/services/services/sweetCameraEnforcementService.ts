@@ -13,6 +13,7 @@ interface InvokeAnimOptions {
     weaponDrawnAllowed: unknown;
     furnitureAllowed: unknown;
     exitAnimName: unknown;
+    interruptAnimName: unknown;
     timeMs: unknown;
     isPlayExitAnimAfterwardsEnabled: unknown;
     parentAnimEventName: unknown;
@@ -59,6 +60,7 @@ export class SweetCameraEnforcementService extends ClientListener {
         let weaponDrawnAllowed = e.message.content["weaponDrawnAllowed"];
         let furnitureAllowed = e.message.content["furnitureAllowed"];
         let exitAnimName = e.message.content["exitAnimName"];
+        let interruptAnimName = e.message.content["interruptAnimName"];
         let timeMs = e.message.content["timeMs"];
         let isPlayExitAnimAfterwardsEnabled = e.message.content["isPlayExitAnimAfterwardsEnabled"];
         let parentAnimEventName = e.message.content["parentAnimEventName"];
@@ -74,9 +76,18 @@ export class SweetCameraEnforcementService extends ClientListener {
         }
 
         this.controller.once("update", () => {
-            logTrace(this, "Trying to invoke anim", name, "with weaponDrawnAllowed=", weaponDrawnAllowed, ", furnitureAllowed=", furnitureAllowed, ", exitAnimName=", exitAnimName, ", timeMs=", timeMs, ", isPlayExitAnimAfterwardsEnabled=", isPlayExitAnimAfterwardsEnabled, ", parentAnimEventName=", parentAnimEventName);
+            logTrace(this,
+                "Trying to invoke anim", name,
+                "with weaponDrawnAllowed=", weaponDrawnAllowed,
+                ", furnitureAllowed=", furnitureAllowed,
+                ", exitAnimName=", exitAnimName,
+                ", interruptAnimName=", interruptAnimName,
+                ", timeMs=", timeMs,
+                ", isPlayExitAnimAfterwardsEnabled=", isPlayExitAnimAfterwardsEnabled,
+                ", parentAnimEventName=", parentAnimEventName
+            );
 
-            const result = this.tryInvokeAnim(name, { weaponDrawnAllowed, furnitureAllowed, exitAnimName, timeMs, isPlayExitAnimAfterwardsEnabled, parentAnimEventName });
+            const result = this.tryInvokeAnim(name, { weaponDrawnAllowed, furnitureAllowed, exitAnimName, interruptAnimName, timeMs, isPlayExitAnimAfterwardsEnabled, parentAnimEventName });
 
             const message: CustomPacketMessage = {
                 t: MsgType.CustomPacket,
@@ -111,10 +122,10 @@ export class SweetCameraEnforcementService extends ClientListener {
         }
     }
 
-    private exitAnim(options: { playExitAnim: boolean, exitAnimOverride?: string, cb?: () => void } = { playExitAnim: true }) {
+    private exitAnim(options: { playExitAnim: boolean, useInterruptAnimAsExitAnim?: boolean, cb?: () => void } = { playExitAnim: true }) {
 
         if (options.playExitAnim) {
-            const animEventToSend = options.exitAnimOverride ? options.exitAnimOverride : (this.exitAnimName || "IdleForceDefaultState");
+            const animEventToSend = options.useInterruptAnimAsExitAnim ? (this.interruptAnimName || "IdleStop") : (this.exitAnimName || "IdleForceDefaultState");
             this.sp.Debug.sendAnimationEvent(this.sp.Game.getPlayer(), animEventToSend);
             logTrace(this, `Sent animation event:`, animEventToSend);
         }
@@ -215,6 +226,13 @@ export class SweetCameraEnforcementService extends ClientListener {
             this.exitAnimName = null;
         }
 
+        if (typeof options.interruptAnimName === "string") {
+            this.interruptAnimName = options.interruptAnimName;
+        }
+        else {
+            this.interruptAnimName = null;
+        }
+
         if (typeof options.timeMs === "number" && options.timeMs > 0 && Number.isFinite(options.timeMs)) {
             const timeSeconds = options.timeMs / 1000;
 
@@ -266,10 +284,10 @@ export class SweetCameraEnforcementService extends ClientListener {
 
             if (typeof options.parentAnimEventName === "string" && this.currentAnimName === options.parentAnimEventName) {
                 f();
-            } else if(Array.isArray(options.parentAnimEventName) && options.parentAnimEventName.includes(this.currentAnimName)) {
+            } else if (Array.isArray(options.parentAnimEventName) && options.parentAnimEventName.includes(this.currentAnimName)) {
                 f();
             } else if (this.needsExitingAnim) {
-                this.exitAnim({ playExitAnim: true, exitAnimOverride: "IdleStop", cb: f });
+                this.exitAnim({ playExitAnim: true, useInterruptAnimAsExitAnim: true, cb: f });
             } else {
                 f();
             }
@@ -301,6 +319,7 @@ export class SweetCameraEnforcementService extends ClientListener {
     private stopAnimInProgress = false;
     private settings?: AnimDebugSettings;
     private exitAnimName: string | null = null;
+    private interruptAnimName: string | null = null;
     private tryInvokeAnimCount: number = 0;
     private readonly tryInvokeAnimCountMax: number = 1000000000;
 }
