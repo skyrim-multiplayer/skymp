@@ -1,5 +1,6 @@
 #include "PercentagesBinding.h"
 #include "NapiHelper.h"
+#include <cmath>
 
 Napi::Value PercentagesBinding::Get(Napi::Env env, ScampServer& scampServer,
                                     uint32_t formId)
@@ -37,7 +38,7 @@ void PercentagesBinding::Set(Napi::Env env, ScampServer& scampServer,
     newPercentages.Get("stamina"), "newPercentages.stamina");
 
   if (actorValues.healthPercentage < 0 || actorValues.healthPercentage > 1 ||
-      isnan(actorValues.healthPercentage)) {
+      std::isnan(actorValues.healthPercentage)) {
     spdlog::warn(
       "PercentagesBinding::Set - healthPercentage must be in [0, 1]");
     if (actorValues.healthPercentage < 0) {
@@ -48,7 +49,7 @@ void PercentagesBinding::Set(Napi::Env env, ScampServer& scampServer,
   }
 
   if (actorValues.magickaPercentage < 0 || actorValues.magickaPercentage > 1 ||
-      isnan(actorValues.magickaPercentage)) {
+      std::isnan(actorValues.magickaPercentage)) {
     spdlog::warn(
       "PercentagesBinding::Set - magickaPercentage must be in [0, 1]");
     if (actorValues.magickaPercentage < 0) {
@@ -59,7 +60,7 @@ void PercentagesBinding::Set(Napi::Env env, ScampServer& scampServer,
   }
 
   if (actorValues.staminaPercentage < 0 || actorValues.staminaPercentage > 1 ||
-      isnan(actorValues.staminaPercentage)) {
+      std::isnan(actorValues.staminaPercentage)) {
     spdlog::warn(
       "PercentagesBinding::Set - staminaPercentage must be in [0, 1]");
     if (actorValues.staminaPercentage < 0) {

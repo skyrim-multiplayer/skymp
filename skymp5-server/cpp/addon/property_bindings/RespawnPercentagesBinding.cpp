@@ -1,5 +1,6 @@
 #include "RespawnPercentagesBinding.h"
 #include "NapiHelper.h"
+#include <cmath>
 
 Napi::Value RespawnPercentagesBinding::Get(Napi::Env env,
                                            ScampServer& scampServer,
@@ -35,7 +36,7 @@ void RespawnPercentagesBinding::Set(Napi::Env env, ScampServer& scampServer,
     newPercentages.Get("stamina"), "newPercentages.stamina");
 
   if (healthPercentage <= 0 || healthPercentage > 1 ||
-      isnan(healthPercentage)) {
+      std::isnan(healthPercentage)) {
     spdlog::warn(
       "RespawnPercentagesBinding::Set - healthPercentage must be in (0, 1]");
     if (healthPercentage <= 0) {
@@ -46,7 +47,7 @@ void RespawnPercentagesBinding::Set(Napi::Env env, ScampServer& scampServer,
   }
 
   if (magickaPercentage < 0 || magickaPercentage > 1 ||
-      isnan(magickaPercentage)) {
+      std::isnan(magickaPercentage)) {
     spdlog::warn(
       "RespawnPercentagesBinding::Set - magickaPercentage must be in [0, 1]");
     if (magickaPercentage < 0) {
@@ -57,7 +58,7 @@ void RespawnPercentagesBinding::Set(Napi::Env env, ScampServer& scampServer,
   }
 
   if (staminaPercentage < 0 || staminaPercentage > 1 ||
-      isnan(staminaPercentage)) {
+      std::isnan(staminaPercentage)) {
     spdlog::warn(
       "RespawnPercentagesBinding::Set - staminaPercentage must be in [0, 1]");
     if (staminaPercentage < 0) {
