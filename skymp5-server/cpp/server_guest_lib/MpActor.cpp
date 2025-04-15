@@ -869,7 +869,6 @@ void MpActor::SendAndSetDeathState(bool isDead, bool shouldTeleport)
     "MpActor::SendAndSetDeathState {:x} - isDead: {}, shouldTeleport: {}",
     GetFormId(), isDead, shouldTeleport);
 
-  float attribute = isDead ? 0.f : 1.f;
   auto position = GetSpawnPoint();
 
   auto respawnMsg = GetDeathStateMsg(position, isDead, shouldTeleport);
@@ -877,10 +876,14 @@ void MpActor::SendAndSetDeathState(bool isDead, bool shouldTeleport)
 
   EditChangeForm([&](MpChangeForm& changeForm) {
     changeForm.isDead = isDead;
-    changeForm.actorValues.healthPercentage = attribute;
-    changeForm.actorValues.magickaPercentage = attribute;
-    changeForm.actorValues.staminaPercentage = attribute;
+    changeForm.actorValues.healthPercentage =
+      isDead ? 0.f : GetHealthRespawnPercentage();
+    changeForm.actorValues.magickaPercentage =
+      isDead ? 0.f : GetMagickaRespawnPercentage();
+    changeForm.actorValues.staminaPercentage =
+      isDead ? 0.f : GetStaminaRespawnPercentage();
   });
+
   if (shouldTeleport) {
     SetCellOrWorldObsolete(position.cellOrWorldDesc);
     SetPos(position.pos);
