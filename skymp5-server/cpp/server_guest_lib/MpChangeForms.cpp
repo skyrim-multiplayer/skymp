@@ -121,24 +121,48 @@ nlohmann::json MpChangeForm::ToJson(const MpChangeForm& changeForm)
 
 MpChangeForm MpChangeForm::JsonToChangeForm(simdjson::dom::element& element)
 {
-  static const JsonPointer recType("recType"), formDesc("formDesc"),
-    baseDesc("baseDesc"), position("position"), angle("angle"),
-    worldOrCellDesc("worldOrCellDesc"), inv("inv"), isHarvested("isHarvested"),
-    isOpen("isOpen"), baseContainerAdded("baseContainerAdded"),
-    nextRelootDatetime("nextRelootDatetime"), isDisabled("isDisabled"),
-    profileId("profileId"), isDeleted("isDeleted"), count("count"),
-    isRaceMenuOpen("isRaceMenuOpen"), appearanceDump("appearanceDump"),
-    equipmentDump("equipmentDump"), learnedSpells("learnedSpells"),
-    dynamicFields("dynamicFields"), healthPercentage("healthPercentage"),
-    magickaPercentage("magickaPercentage"),
-    staminaPercentage("staminaPercentage"), isDead("isDead"),
-    consoleCommandsAllowed("consoleCommandsAllowed"),
-    spawnPointPos("spawnPoint_pos"), spawnPointRot("spawnPoint_rot"),
-    spawnPointCellOrWorldDesc("spawnPoint_cellOrWorldDesc"),
-    spawnDelay("spawnDelay"), effects("effects"),
-    templateChain("templateChain"), lastAnimation("lastAnimation"),
-    setNodeTextureSet("setNodeTextureSet"), setNodeScale("setNodeScale"),
-    displayName("displayName"), factions("factions");
+  static const JsonPointer recType("recType");
+  static const JsonPointer formDesc("formDesc");
+  static const JsonPointer baseDesc("baseDesc");
+  static const JsonPointer position("position");
+  static const JsonPointer angle("angle");
+  static const JsonPointer worldOrCellDesc("worldOrCellDesc");
+  static const JsonPointer inv("inv");
+  static const JsonPointer isHarvested("isHarvested");
+  static const JsonPointer isOpen("isOpen");
+  static const JsonPointer baseContainerAdded("baseContainerAdded");
+  static const JsonPointer nextRelootDatetime("nextRelootDatetime");
+  static const JsonPointer isDisabled("isDisabled");
+  static const JsonPointer profileId("profileId");
+  static const JsonPointer isDeleted("isDeleted");
+  static const JsonPointer count("count");
+  static const JsonPointer isRaceMenuOpen("isRaceMenuOpen");
+  static const JsonPointer appearanceDump("appearanceDump");
+  static const JsonPointer equipmentDump("equipmentDump");
+  static const JsonPointer learnedSpells("learnedSpells");
+  static const JsonPointer dynamicFields("dynamicFields");
+  static const JsonPointer healthPercentage("healthPercentage");
+  static const JsonPointer magickaPercentage("magickaPercentage");
+  static const JsonPointer staminaPercentage("staminaPercentage");
+  static const JsonPointer isDead("isDead");
+  static const JsonPointer consoleCommandsAllowed("consoleCommandsAllowed");
+  static const JsonPointer spawnPointPos("spawnPoint_pos");
+  static const JsonPointer spawnPointRot("spawnPoint_rot");
+  static const JsonPointer spawnPointCellOrWorldDesc(
+    "spawnPoint_cellOrWorldDesc");
+  static const JsonPointer spawnDelay("spawnDelay");
+  static const JsonPointer effects("effects");
+  static const JsonPointer templateChain("templateChain");
+  static const JsonPointer lastAnimation("lastAnimation");
+  static const JsonPointer setNodeTextureSet("setNodeTextureSet");
+  static const JsonPointer setNodeScale("setNodeScale");
+  static const JsonPointer displayName("displayName");
+  static const JsonPointer factions("factions");
+  static const JsonPointer healthRespawnPercentage("healthRespawnPercentage");
+  static const JsonPointer magickaRespawnPercentage(
+    "magickaRespawnPercentage");
+  static const JsonPointer staminaRespawnPercentage(
+    "staminaRespawnPercentage");
 
   MpChangeForm res;
   ReadEx(element, recType, &res.recType);
