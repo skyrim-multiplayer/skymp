@@ -233,7 +233,7 @@ if(MSVC)
 
   find_package(unofficial-node-addon-api REQUIRED)
   target_link_libraries(skyrim_platform PRIVATE unofficial::node-addon-api::node-addon-api)
-  target_compile_definitions(skyrim_platform PUBLIC NAPI_CPP_EXCEPTIONS)
+  target_compile_definitions(skyrim_platform PRIVATE NAPI_CPP_EXCEPTIONS)
 
   target_link_libraries(skyrim_platform PUBLIC mhook)
 
