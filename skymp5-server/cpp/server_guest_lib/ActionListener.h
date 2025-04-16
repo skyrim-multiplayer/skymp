@@ -99,6 +99,12 @@ public:
   virtual void OnUnknown(const RawMessageData& rawMsgData);
 
 private:
+  void OnSpellHit(MpActor* aggressor, const HitData& hitData) const;
+  void OnWeaponHit(MpActor* aggressor, HitData hitData, bool isUnarmed) const;
+
+  std::shared_ptr<MpObjectReference> TrySendPapyrusOnHitEvent(
+    const MpActor* aggressor, const HitData& hitData) const;
+
   // Returns user's actor if there is attached one
   MpActor* SendToNeighbours(uint32_t idx,
                             const simdjson::dom::element& jMessage,
