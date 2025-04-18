@@ -25,7 +25,7 @@ float DamageMultConditionalFormula::CalculateDamage(
 DamageMultConditionalFormulaSettings DamageMultConditionalFormula::ParseConfig(
   const nlohmann::json& config) const
 {
-  return SweetPieSpellDamageFormulaSettings::FromJson(config);
+  return DamageMultConditionalFormulaSettings::FromJson(config);
 }
 
 DamageMultConditionalFormulaSettings
