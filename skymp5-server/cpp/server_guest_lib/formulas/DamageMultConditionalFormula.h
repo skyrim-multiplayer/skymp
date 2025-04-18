@@ -6,6 +6,7 @@
 
 struct DamageMultConditionalFormulaSettingsEntry
 {
+  std::vector<Condition> conditionsList;
 };
 
 struct DamageMultConditionalFormulaSettings
