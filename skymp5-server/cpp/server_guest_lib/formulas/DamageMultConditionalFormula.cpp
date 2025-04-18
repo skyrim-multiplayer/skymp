@@ -1,5 +1,9 @@
 #include "DamageMultConditionalFormula.h"
 
+#include "archives/JsonInputArchive.h"
+#include <limits>
+#include <sstream>
+
 DamageMultConditionalFormula::DamageMultConditionalFormula(
   std::unique_ptr<IDamageFormula> baseFormula_, const nlohmann::json& config)
   : baseFormula(std::move(baseFormula_))
