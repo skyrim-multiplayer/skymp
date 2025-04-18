@@ -3,11 +3,11 @@
 #include "CallNativeApi.h"
 #include "Hooks.h"
 #include "NullPointerException.h"
+#include "PapyrusTESModPlatform.h"
 #include "SP3NativeValueCasts.h"
 #include "VmProvider.h"
 #include <cmrc/cmrc.hpp>
 #include <sstream>
-#include "PapyrusTESModPlatform.h"
 
 CMRC_DECLARE(skyrim_plugin_resources);
 
