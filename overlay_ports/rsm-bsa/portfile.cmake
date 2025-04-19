@@ -8,6 +8,7 @@ vcpkg_from_github(
     PATCHES
         variant-emplace-fix.patch
         structural-binding.patch
+        fix-static-cast-error.patch
 )
 
 if (VCPKG_TARGET_IS_LINUX)
