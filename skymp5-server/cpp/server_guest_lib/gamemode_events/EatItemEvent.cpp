@@ -43,5 +43,5 @@ void EatItemEvent::OnFireSuccess(WorldState* worldState)
   std::unordered_set<std::string> modFiles = { worldState->espmFiles.begin(),
                                                worldState->espmFiles.end() };
   bool hasSweetpie = modFiles.count("SweetPie.esp");
-  actor->ApplyMagicEffects(effects, hasSweetpie);
+  // actor->ApplyMagicEffects(effects, hasSweetpie);
 }

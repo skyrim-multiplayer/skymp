@@ -1,5 +1,4 @@
 #pragma once
-#include "ActiveMagicEffectsMap.h"
 #include "ActorValues.h"
 #include "Appearance.h"
 #include "DynamicFields.h"
@@ -83,7 +82,6 @@ public:
 
   bool isRaceMenuOpen = false;
   bool isDead = false;
-  ActiveMagicEffectsMap activeMagicEffects;
   bool consoleCommandsAllowed = false;
 
   // 'appearanceDump' and 'equipmentDump' can be empty. it means nullopt.
@@ -114,9 +112,11 @@ public:
   std::optional<std::string> displayName;
 
   // Used for Faction (FACT) synchronization
+  // TODO: add to ToTuple
   std::optional<std::vector<Faction>> factions;
 
   // Used for Quest (QUST) synchronization
+  // TODO: add to ToTuple
   std::optional<std::vector<Quest>> quests;
 
   // Please update 'ActorTest.cpp' when adding new Actor-related rows
