@@ -163,12 +163,12 @@ void TESModPlatform::SetWeaponDrawnMode(IVM* vm, StackID stackId,
         return;
       }
 
-      if (!actor->IsWeaponDrawn() &&
+      if (!actor->AsActorState()->IsWeaponDrawn() &&
           weapDrawnMode == WEAP_DRAWN_MODE_ALWAYS_TRUE) {
         actor->DrawWeaponMagicHands(true);
       }
 
-      if (actor->IsWeaponDrawn() &&
+      if (actor->AsActorState()->IsWeaponDrawn() &&
           weapDrawnMode == WEAP_DRAWN_MODE_ALWAYS_FALSE) {
         actor->DrawWeaponMagicHands(false);
       }
@@ -464,14 +464,14 @@ void TESModPlatform::ResizeTintsArray(IVM* vm, StackID stackId,
     return;
   }
 
-  auto prevSize = pc->tintMasks.size();
+  auto prevSize = pc->GetTintList()->size();
 
   if (newSize < 0 || newSize > 1024 || newSize == prevSize) {
     return;
   }
 
-  pc->tintMasks.resize(newSize);
-  for (auto& mask : pc->tintMasks) {
+  pc->GetTintList()->resize(newSize);
+  for (auto& mask : *pc->GetTintList()) {
     mask = (RE::TintMask*)new ::TintMask;
   }
 }
@@ -491,7 +491,7 @@ void TESModPlatform::ClearTintMasks(IVM* vm, StackID stackId,
 {
   if (!targetActor) {
     auto pc = RE::PlayerCharacter::GetSingleton();
-    return pc->tintMasks.clear();
+    return pc->GetTintList()->clear();
   }
 
   if (targetActor->formID < 0xff000000) {
@@ -537,7 +537,7 @@ void TESModPlatform::PushTintMask(RE::BSScript::IVirtualMachine* vm,
   newTm->tintType = type;
 
   if (targetActor == nullptr) {
-    auto targetArray = &RE::PlayerCharacter::GetSingleton()->tintMasks;
+    auto targetArray = RE::PlayerCharacter::GetSingleton()->GetTintList();
     auto n = targetArray->size();
     targetArray->resize(1 + n);
     if (targetArray->size() == 1 + n) {
@@ -610,7 +610,7 @@ RE::ExtraDataList* CreateExtraDataList()
   for (int i = 0; i < 0x18; ++i) {
     p[i] = 0;
   }
-  reinterpret_cast<void*&>(extraList->_extraData.presence) = p;
+  reinterpret_cast<void*&>(extraList->_extraData.GetPresence()) = p;
 
   return extraList;
 }
@@ -644,11 +644,11 @@ void TESModPlatform::AddItemEx(
       return false;
     }
 
-    RE::BSWriteLockGuard locker(this_->_lock);
-    auto* next = this_->_extraData.data;
-    this_->_extraData.data = toAdd;
+    RE::BSWriteLockGuard locker(this_->GetLock());
+    auto* next = this_->_extraData.GetData();
+    this_->_extraData.GetData() = toAdd;
     toAdd->next = next;
-    markType(this_->_extraData.presence, extraType, false);
+    markType(this_->_extraData.GetPresence(), extraType, false);
     return true;
   };
 
@@ -795,11 +795,12 @@ void TESModPlatform::UpdateEquipment(IVM* vm, StackID stackId,
                                      RE::TESForm* item, bool leftHand)
 {
 
-  if (!actor || !actor->currentProcess) {
+  if (!actor || !actor->GetActorRuntimeData().currentProcess) {
     return;
   }
-  auto ref = leftHand ? actor->currentProcess->GetEquippedLeftHand()
-                      : actor->currentProcess->GetEquippedRightHand();
+  auto ref = leftHand
+    ? actor->GetActorRuntimeData().currentProcess->GetEquippedLeftHand()
+    : actor->GetActorRuntimeData().currentProcess->GetEquippedRightHand();
   const auto backup = ref;
 
   ref = item;
