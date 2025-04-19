@@ -50,12 +50,20 @@ public:
   const ActiveMagicEffectsMap& GetActiveMagicEffects() const;
   int32_t GetProfileId() const;
 
+  float GetHealthRespawnPercentage() const;
+  float GetMagickaRespawnPercentage() const;
+  float GetStaminaRespawnPercentage() const;
+
   bool ShouldSkipRestoration() const noexcept;
   void UpdateNextRestorationTime(std::chrono::seconds duration) noexcept;
 
   void SetRaceMenuOpen(bool isOpen);
   void SetAppearance(const Appearance* newAppearance);
   void SetEquipment(const std::string& jsonString);
+
+  void SetHealthRespawnPercentage(float percentage);
+  void SetMagickaRespawnPercentage(float percentage);
+  void SetStaminaRespawnPercentage(float percentage);
 
   void AddToFaction(Faction faction, bool lazyLoad = true);
   bool IsInFaction(FormDesc factionForm, bool lazyLoad = true);
