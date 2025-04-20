@@ -1,11 +1,30 @@
 #include "DamageMultConditionalFormula.h"
 
+#include "MpActor.h"
 #include "archives/JsonInputArchive.h"
 #include "papyrus-vm/Utils.h"
 #include <fmt/fmt.h>
 #include <functional>
 #include <limits>
 #include <sstream>
+
+namespace {
+uint32_t ExtractParameter(const std::string& parameter1)
+{
+  uint32_t parameter1Parsed = 0;
+
+  if (parameter1.find("0x") == 0 || parameter1.find("0X") == 0) {
+    std::stringstream ss;
+    ss << std::hex << parameter1.substr(2); // Skip "0x"
+    ss >> parameter1Parsed;
+  } else {
+    std::stringstream ss(parameter1);
+    ss >> parameter1Parsed;
+  }
+
+  return parameter1Parsed;
+}
+}
 
 DamageMultConditionalFormula::DamageMultConditionalFormula(
   std::unique_ptr<IDamageFormula> baseFormula_, const nlohmann::json& config)
@@ -148,21 +167,32 @@ bool DamageMultConditionalFormula::EvaluateCondition(
   const DamageMultConditionalFormulaSettingsValueCondition& condition,
   const MpActor& aggressor, const MpActor& target) const
 {
-  std::function<bool()> conditionFunction = nullptr;
+  uint32_t parameter1 = ExtractParameter(condition.parameter1);
+
+  std::function<float(MpActor & actor, uint32_t parameter1)>
+    conditionFunction = nullptr;
 
   if (Utils::stricmp(condition.function.data(), "GetGlobalValue") == 0) {
-    conditionFunction = [&]() -> bool {
-
+    conditionFunction = [](MpActor& actor, uint32_t parameter1) -> float {
+      return 0.f;
     };
   } else if (Utils::stricmp(condition.function.data(), "HasSpell") == 0) {
-    conditionFunction = [&]() -> bool {
-
+    conditionFunction = [](MpActor& actor, uint32_t parameter1) -> float {
+      auto spelllist = actor.GetSpellList();
+      auto it = std::find(spelllist.begin(), spelllist.end(), parameter1);
+      if (it != spelllist.end()) {
+        return 1.0f;
+      }
+      return 0.f;
     };
   } else if (Utils::stricmp(condition.function.data(), "GetIsRace") == 0) {
-    conditionFunction = [&]() -> bool {
-
+    conditionFunction = [](MpActor& actor, uint32_t parameter1) -> float {
+      if (actor.GetRaceId() == parameter1) {
+        return 1.0f;
+      }
+      return 0.f;
     };
   } else {
-    conditionFunction = [&]() -> bool { return true; };
+    conditionFunction = [&](MpActor&, uint32_t) -> float { return 1.0; };
   }
 }
