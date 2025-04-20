@@ -1,26 +1,59 @@
 #pragma once
 #include <memory>
+#include <unordered_map>
+#include <vector>
 
 #include "IDamageFormula.h"
 #include <nlohmann/json_fwd.hpp>
 
-struct DamageMultConditionalFormulaSettingsEntry
-{
-  std::vector<Condition> conditionsList;
-};
-
-struct DamageMultConditionalFormulaSettings
+struct DamageMultConditionalFormulaSettingsValueCondition
 {
   template <class Archive>
   void Serialize(Archive& archive)
   {
-    archive.Serialize("entries", entries);
+    archive.Serialize("function", function)
+      .Serialize("runsOn", runsOn)
+      .Serialize("comparison", comparison)
+      .Serialize("value", value)
+      .Serialize("parameter1", parameter1)
+      .Serialize("logicalOperator", logicalOperator);
   }
 
+  std::string function;
+  std::string runsOn;
+  std::string comparison; // ==, !=, >, <, >=, <=
+  float value = 0.f;
+  std::string parameter1;      // hex uint32_t
+  std::string logicalOperator; // OR, AND
+};
+
+struct DamageMultConditionalFormulaSettingsValue
+{
+  template <class Archive>
+  void Serialize(Archive& archive)
+  {
+    archive.Serialize("physicalDamageMultiplier", physicalDamageMultiplier);
+    archive.Serialize("magicDamageMultiplier", magicDamageMultiplier);
+    archive.Serialize("conditions", conditions);
+  }
+
+  std::optional<float> physicalDamageMultiplier;
+  std::optional<float> magicDamageMultiplier;
+  std::vector<DamageMultConditionalFormulaSettingsValueCondition> conditions;
+};
+
+// TODO: add Serialize method
+// TODO: support std::unordered_map support in JsonInputArchive
+// TODO: support non-object json values in JsonInputArchive (like nic11 does
+// for simdjson)
+struct DamageMultConditionalFormulaSettings
+{
   static DamageMultConditionalFormulaSettings FromJson(
     const nlohmann::json& j);
 
-  std::vector<DamageMultConditionalFormulaSettingsEntry> entries;
+  std::vector<
+    std::pair<std::string, DamageMultConditionalFormulaSettingsValue>>
+    entries;
 };
 
 class DamageMultConditionalFormula : public IDamageFormula
