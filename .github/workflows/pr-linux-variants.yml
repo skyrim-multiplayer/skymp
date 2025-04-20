@@ -14,6 +14,7 @@ env:
 jobs:
     pr-docker:
         strategy:
+          fail-fast: false
           matrix:
             base_system:
             # The usual container used for all builds within the CI and the one
