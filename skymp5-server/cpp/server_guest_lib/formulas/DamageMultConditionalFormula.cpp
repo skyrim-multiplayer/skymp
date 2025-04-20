@@ -1,7 +1,9 @@
 #include "DamageMultConditionalFormula.h"
 
 #include "archives/JsonInputArchive.h"
+#include "papyrus-vm/Utils.h"
 #include <fmt/fmt.h>
+#include <functional>
 #include <limits>
 #include <sstream>
 
@@ -19,12 +21,43 @@ float DamageMultConditionalFormula::CalculateDamage(
   const MpActor& aggressor, const MpActor& target,
   const HitData& hitData) const
 {
+  float baseDamage = baseFormula->CalculateDamage(aggressor, target, hitData);
+
+  if (!settings) {
+    return baseDamage;
+  }
+
+  for (auto [key, value] : settings->entries) {
+    if (value.physicalDamageMultiplier.has_value()) {
+      if (EvaluateConditions(value.conditions, aggressor, target)) {
+        baseDamage *= *value.physicalDamageMultiplier;
+      }
+    }
+  }
+
+  return baseDamage;
 }
 
 float DamageMultConditionalFormula::CalculateDamage(
   const MpActor& aggressor, const MpActor& target,
   const SpellCastData& spellCastData) const
 {
+  float baseDamage =
+    baseFormula->CalculateDamage(aggressor, target, spellCastData);
+
+  if (!settings) {
+    return baseDamage;
+  }
+
+  for (auto [key, value] : settings->entries) {
+    if (value.magicDamageMultiplier.has_value()) {
+      if (EvaluateConditions(value.conditions, aggressor, target)) {
+        baseDamage *= *value.magicDamageMultiplier;
+      }
+    }
+  }
+
+  return baseDamage;
 }
 
 DamageMultConditionalFormulaSettings DamageMultConditionalFormula::ParseConfig(
@@ -96,4 +129,40 @@ DamageMultConditionalFormulaSettings::FromJson(const nlohmann::json& j)
   }
 
   return res;
+}
+
+bool DamageMultConditionalFormula::EvaluateConditions(
+  const std::vector<DamageMultConditionalFormulaSettingsValueCondition>&
+    conditions,
+  const MpActor& aggressor, const MpActor& target) const
+{
+  std::vector<uint8_t> results(conditions.size(), 0);
+
+  for (size_t i = 0; i < conditions.size(); ++i) {
+    const auto& condition = conditions[i];
+    results[i] = EvaluateCondition(condition, aggressor, target);
+  }
+}
+
+bool DamageMultConditionalFormula::EvaluateCondition(
+  const DamageMultConditionalFormulaSettingsValueCondition& condition,
+  const MpActor& aggressor, const MpActor& target) const
+{
+  std::function<bool()> conditionFunction = nullptr;
+
+  if (Utils::stricmp(condition.function.data(), "GetGlobalValue") == 0) {
+    conditionFunction = [&]() -> bool {
+
+    };
+  } else if (Utils::stricmp(condition.function.data(), "HasSpell") == 0) {
+    conditionFunction = [&]() -> bool {
+
+    };
+  } else if (Utils::stricmp(condition.function.data(), "GetIsRace") == 0) {
+    conditionFunction = [&]() -> bool {
+
+    };
+  } else {
+    conditionFunction = [&]() -> bool { return true; };
+  }
 }

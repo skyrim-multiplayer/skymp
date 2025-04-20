@@ -74,6 +74,15 @@ private:
   DamageMultConditionalFormulaSettings ParseConfig(
     const nlohmann::json& config) const;
 
+  bool EvaluateConditions(
+    const std::vector<DamageMultConditionalFormulaSettingsValueCondition>&
+      conditions,
+    const MpActor& aggressor, const MpActor& target) const;
+
+  bool EvaluateCondition(
+    const DamageMultConditionalFormulaSettingsValueCondition& condition,
+    const MpActor& aggressor, const MpActor& target) const;
+
 private:
   std::unique_ptr<IDamageFormula> baseFormula;
   std::optional<DamageMultConditionalFormulaSettings> settings;
