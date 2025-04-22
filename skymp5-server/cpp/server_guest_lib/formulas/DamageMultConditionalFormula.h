@@ -1,5 +1,6 @@
 #pragma once
 #include <memory>
+#include <optional>
 #include <unordered_map>
 #include <vector>
 
@@ -77,11 +78,19 @@ private:
   bool EvaluateConditions(
     const std::vector<DamageMultConditionalFormulaSettingsValueCondition>&
       conditions,
-    const MpActor& aggressor, const MpActor& target) const;
+    std::vector<int>& outConditionResolutions, const MpActor& aggressor,
+    const MpActor& target) const;
+
+  std::vector<std::string> LogEvaluateConditionsResolution(
+    const std::vector<DamageMultConditionalFormulaSettingsValueCondition>&
+      conditions,
+    const std::vector<int>& conditionResolutions, bool finalResult) const;
 
   bool EvaluateCondition(
     const DamageMultConditionalFormulaSettingsValueCondition& condition,
     const MpActor& aggressor, const MpActor& target) const;
+
+  bool CompareFloats(float a, float b, const std::string& op) const;
 
 private:
   std::unique_ptr<IDamageFormula> baseFormula;
