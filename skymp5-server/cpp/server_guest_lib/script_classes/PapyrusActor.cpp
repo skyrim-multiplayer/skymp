@@ -558,9 +558,7 @@ VarValue PapyrusActor::RemoveSpell(VarValue self,
     if (actor->IsSpellLearnedFromBase(spellId)) {
       spdlog::warn("Actor.RemoveSpell - can't remove spells inherited from "
                    "RACE/NPC_ records");
-    } else if (!actor->IsSpellLearned(spellId)) {
-      spdlog::warn("Actor.RemoveSpell - spell already removed/not learned");
-    } else {
+    } else if (actor->IsSpellLearned(spellId)) {
       actor->RemoveSpell(spellId);
 
       SpSnippet(GetName(), "RemoveSpell",
