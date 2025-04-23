@@ -18,10 +18,10 @@
 #include "MagicApi.h"
 #include "MpClientPluginApi.h"
 #include "ObjectReferenceApi.h"
+#include "Sp3Api.h"
 #include "TextApi.h"
 #include "ThreadPoolWrapper.h"
 #include "Win32Api.h"
-#include "Sp3Api.h"
 
 #include "NapiHelper.h"
 
