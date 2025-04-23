@@ -1,5 +1,4 @@
 #include "AnimationSystem.h"
-#include "ActiveMagicEffectsMap.h"
 #include "AnimationData.h"
 #include "MathUtils.h"
 #include "MpActor.h"
@@ -9,28 +8,27 @@
 
 AnimationSystem::AnimationSystem()
 {
-  animationCallbacks = {
-    {
-      "blockStart",
-      [this](MpActor* actor) {
-        constexpr float newRate = 0.f;
-        actor->SetIsBlockActive(true);
-        if (hasSweetpie) {
-          actor->SetActorValue(espm::ActorValue::StaminaRate, newRate);
-        }
-      },
-    },
-    {
-      "blockStop",
-      [this](MpActor* actor) {
-        actor->SetIsBlockActive(false);
-        if (hasSweetpie) {
-          actor->SetActorValue(espm::ActorValue::StaminaRate,
-                               actor->GetBaseValues().staminaRate);
-        }
-      },
-    }
-  };
+  animationCallbacks = { {
+                           "blockStart",
+                           [this](MpActor* actor) {
+                             // constexpr float newRate = 0.f;
+                             actor->SetIsBlockActive(true);
+                             // if (hasSweetpie) {
+                             //   actor->SetActorValue(espm::ActorValue::StaminaRate,
+                             //   newRate);
+                             // }
+                           },
+                         },
+                         {
+                           "blockStop",
+                           [this](MpActor* actor) {
+                             actor->SetIsBlockActive(false);
+                             // if (hasSweetpie) {
+                             //   actor->SetActorValue(espm::ActorValue::StaminaRate,
+                             //                        actor->GetBaseValues().staminaRate);
+                             // }
+                           },
+                         } };
 }
 
 void AnimationSystem::Init(WorldState* pWorldState)
