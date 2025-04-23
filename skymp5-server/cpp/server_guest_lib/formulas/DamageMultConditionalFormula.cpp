@@ -256,13 +256,9 @@ DamageMultConditionalFormula::LogEvaluateConditionsResolution(
     }
 
     s += nextAlphabetChar++;
-    if (i != conditions.size() - 1) {
-      s += ' ';
-    }
 
     if (i != conditions.size() - 1) {
-      s += conditions[i].logicalOperator == "AND" ? "" : "|";
-      s += ' ';
+      s += conditions[i].logicalOperator == "AND" ? " " : " | ";
     }
   }
 
