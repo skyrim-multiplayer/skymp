@@ -49,28 +49,35 @@ float DamageMultConditionalFormula::CalculateDamage(
 
   for (auto [key, value] : settings->entries) {
     if (value.physicalDamageMultiplier.has_value()) {
+      // TODO
+      bool enableLogging = false;
+
       std::vector<int> conditionResolutions;
-      bool evalRes = EvaluateConditions(value.conditions, conditionResolutions,
-                                        aggressor, target);
+
+      bool evalRes = EvaluateConditions(
+        value.conditions, enableLogging ? &conditionResolutions : nullptr,
+        aggressor, target);
       if (evalRes) {
         baseDamage *= *value.physicalDamageMultiplier;
       }
 
-      std::vector<std::string> strings = LogEvaluateConditionsResolution(
-        value.conditions, conditionResolutions, evalRes);
+      if (enableLogging) {
+        std::vector<std::string> strings = LogEvaluateConditionsResolution(
+          value.conditions, conditionResolutions, evalRes);
 
-      if (evalRes) {
-        strings.insert(strings.begin(),
-                       fmt::format("Damage multiplier: {} (key={})",
-                                   *value.physicalDamageMultiplier, key));
-      } else {
-        strings.insert(
-          strings.begin(),
-          fmt::format("Damage multiplier: {} (key={}, evalRes=false)", 1.f,
-                      key));
+        if (evalRes) {
+          strings.insert(strings.begin(),
+                         fmt::format("Damage multiplier: {} (key={})",
+                                     *value.physicalDamageMultiplier, key));
+        } else {
+          strings.insert(
+            strings.begin(),
+            fmt::format("Damage multiplier: {} (key={}, evalRes=false)", 1.f,
+                        key));
+        }
+
+        spdlog::info("{}", fmt::join(strings.begin(), strings.end(), "\n"));
       }
-
-      spdlog::info("{}", fmt::join(strings.begin(), strings.end(), "\n"));
     }
   }
 
@@ -90,28 +97,35 @@ float DamageMultConditionalFormula::CalculateDamage(
 
   for (auto [key, value] : settings->entries) {
     if (value.magicDamageMultiplier.has_value()) {
+      // TODO
+      bool enableLogging = false;
+
       std::vector<int> conditionResolutions;
-      bool evalRes = EvaluateConditions(value.conditions, conditionResolutions,
-                                        aggressor, target);
+
+      bool evalRes = EvaluateConditions(
+        value.conditions, enableLogging ? &conditionResolutions : nullptr,
+        aggressor, target);
       if (evalRes) {
         baseDamage *= *value.magicDamageMultiplier;
       }
 
-      std::vector<std::string> strings = LogEvaluateConditionsResolution(
-        value.conditions, conditionResolutions, evalRes);
+      if (enableLogging) {
+        std::vector<std::string> strings = LogEvaluateConditionsResolution(
+          value.conditions, conditionResolutions, evalRes);
 
-      if (evalRes) {
-        strings.insert(strings.begin(),
-                       fmt::format("Damage multiplier: {} (key={})",
-                                   *value.magicDamageMultiplier, key));
-      } else {
-        strings.insert(
-          strings.begin(),
-          fmt::format("Damage multiplier: {} (key={}, evalRes=false)", 1.f,
-                      key));
+        if (evalRes) {
+          strings.insert(strings.begin(),
+                         fmt::format("Damage multiplier: {} (key={})",
+                                     *value.magicDamageMultiplier, key));
+        } else {
+          strings.insert(
+            strings.begin(),
+            fmt::format("Damage multiplier: {} (key={}, evalRes=false)", 1.f,
+                        key));
+        }
+
+        spdlog::info("{}", fmt::join(strings.begin(), strings.end(), "\n"));
       }
-
-      spdlog::info("{}", fmt::join(strings.begin(), strings.end(), "\n"));
     }
   }
 
@@ -192,30 +206,45 @@ DamageMultConditionalFormulaSettings::FromJson(const nlohmann::json& j)
 bool DamageMultConditionalFormula::EvaluateConditions(
   const std::vector<DamageMultConditionalFormulaSettingsValueCondition>&
     conditions,
-  std::vector<int>& outConditionResolutions, const MpActor& aggressor,
+  std::vector<int>* outConditionResolutions, const MpActor& aggressor,
   const MpActor& target) const
 {
-  auto conditionResolutions = std::vector<int>(conditions.size(), -1);
+  auto conditionResolutions = outConditionResolutions
+    ? std::vector<int>(conditions.size(), -1)
+    : std::vector<int>();
 
   bool good = false;
 
   for (size_t i = 0; i < conditions.size(); ++i) {
     const auto& condition = conditions[i];
 
-    good = good ||
-      (conditionResolutions[i] =
-         EvaluateCondition(condition, aggressor, target) ? 1 : 0) > 0;
+    if (!good) {
+      uint8_t evaluateConditionResult =
+        EvaluateCondition(condition, aggressor, target) ? 1 : 0;
+
+      if (conditionResolutions.size() > i) {
+        conditionResolutions[i] = evaluateConditionResult;
+      }
+
+      if (evaluateConditionResult > 0) {
+        good = true;
+      }
+    }
 
     if (condition.logicalOperator == "AND" || i == conditions.size() - 1) {
       if (!good) {
-        std::swap(conditionResolutions, outConditionResolutions);
+        if (outConditionResolutions) {
+          std::swap(conditionResolutions, *outConditionResolutions);
+        }
         return false;
       }
       good = false;
     }
   }
 
-  std::swap(conditionResolutions, outConditionResolutions);
+  if (outConditionResolutions) {
+    std::swap(conditionResolutions, *outConditionResolutions);
+  }
 
   return true;
 }

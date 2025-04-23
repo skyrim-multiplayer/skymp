@@ -78,7 +78,7 @@ private:
   bool EvaluateConditions(
     const std::vector<DamageMultConditionalFormulaSettingsValueCondition>&
       conditions,
-    std::vector<int>& outConditionResolutions, const MpActor& aggressor,
+    std::vector<int>* outConditionResolutions, const MpActor& aggressor,
     const MpActor& target) const;
 
   std::vector<std::string> LogEvaluateConditionsResolution(
