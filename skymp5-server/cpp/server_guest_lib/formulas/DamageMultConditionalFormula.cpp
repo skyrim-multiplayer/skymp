@@ -197,26 +197,27 @@ bool DamageMultConditionalFormula::EvaluateConditions(
 {
   auto conditionResolutions = std::vector<int>(conditions.size(), -1);
 
-  std::vector<uint8_t> groupResults = { 0 };
+  bool good = false;
 
   for (size_t i = 0; i < conditions.size(); ++i) {
     const auto& condition = conditions[i];
 
-    groupResults.back() = (groupResults.back() != 0) ||
+    good = good ||
       (conditionResolutions[i] =
          EvaluateCondition(condition, aggressor, target) ? 1 : 0) > 0;
 
-    if (condition.logicalOperator == "AND") {
-      groupResults.push_back(0);
+    if (condition.logicalOperator == "AND" || i == conditions.size() - 1) {
+      if (!good) {
+        std::swap(conditionResolutions, outConditionResolutions);
+        return false;
+      }
+      good = false;
     }
   }
 
-  bool res = std::all_of(groupResults.begin(), groupResults.end(),
-                         [](uint8_t result) { return result != 0; });
-
   std::swap(conditionResolutions, outConditionResolutions);
 
-  return res;
+  return true;
 }
 
 std::vector<std::string>
@@ -246,16 +247,21 @@ DamageMultConditionalFormula::LogEvaluateConditionsResolution(
     if (groupStarts.size() > currentGroupStart &&
         groupStarts[currentGroupStart] == i) {
       currentGroupStart = i + 1;
-      s += s.empty() ? "(" : ")(";
+      if (s.empty()) {
+        s += "(";
+      } else {
+        s.pop_back();
+        s += ") & (";
+      }
     }
 
-    if (i != 0) {
+    s += nextAlphabetChar++;
+    if (i != conditions.size() - 1) {
       s += ' ';
     }
-    s += nextAlphabetChar++;
 
     if (i != conditions.size() - 1) {
-      s += conditions[i].logicalOperator == "AND" ? '&' : '|';
+      s += conditions[i].logicalOperator == "AND" ? "" : "|";
       s += ' ';
     }
   }
@@ -281,6 +287,8 @@ DamageMultConditionalFormula::LogEvaluateConditionsResolution(
     s += conditions[i].parameter1;
     s += ' ';
     s += conditions[i].comparison;
+    s += ' ';
+    s += std::to_string(conditions[i].value);
     s += " -> ";
     if (conditionResolutions[i] == 1) {
       s += "true";
