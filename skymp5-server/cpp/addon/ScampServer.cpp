@@ -9,6 +9,7 @@
 #include "PapyrusUtils.h"
 #include "ScampServerListener.h"
 #include "database_drivers/DatabaseFactory.h"
+#include "formulas/DamageMultConditionalFormula.h"
 #include "formulas/DamageMultFormula.h"
 #include "formulas/SweetPieDamageFormula.h"
 #include "formulas/SweetPieSpellDamageFormula.h"
@@ -341,6 +342,9 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
     auto damageMultFormulaSettings =
       serverSettings["damageMultFormulaSettings"];
 
+    auto damageMultConditionalFormulaSettings =
+      serverSettings["damageMultConditionalFormulaSettings"];
+
     std::unique_ptr<IDamageFormula> formula;
     formula = std::make_unique<TES5DamageFormula>();
     formula = std::make_unique<DamageMultFormula>(std::move(formula),
@@ -349,6 +353,8 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
       std::move(formula), sweetPieDamageFormulaSettings);
     formula = std::make_unique<SweetPieSpellDamageFormula>(
       std::move(formula), sweetPieSpellDamageFormulaSettings);
+    formula = std::make_unique<DamageMultConditionalFormula>(
+      std::move(formula), damageMultConditionalFormulaSettings);
     partOne->SetDamageFormula(std::move(formula));
 
     partOne->worldState.AttachScriptStorage(
