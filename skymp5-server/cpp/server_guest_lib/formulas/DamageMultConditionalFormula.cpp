@@ -299,65 +299,6 @@ DamageMultConditionalFormula::LogEvaluateConditionsResolution(
   return res;
 }
 
-// bool DamageMultConditionalFormula::EvaluateConditions(
-//   const std::vector<DamageMultConditionalFormulaSettingsValueCondition>&
-//     conditions,
-//   std::vector<int>& outConditionResolutions, const MpActor& aggressor,
-//   const MpActor& target) const
-// {
-//   std::vector<uint8_t> results(conditions.size(), 0);
-
-//   for (size_t i = 0; i < conditions.size(); ++i) {
-//     const auto& condition = conditions[i];
-//     results[i] = EvaluateCondition(condition, aggressor, target);
-//   }
-
-//   // unlike in normal boolean logic, we need to evaluate OR first, only then
-//   // AND. so, I want to split the results into groups by OR operator and
-//   then
-//   // solve each group.
-
-//   // remembering that the logical operator in n condition is the one that
-//   // applies to n and n+1
-
-//   std::vector<std::vector<uint8_t>> groups;
-//   std::vector<uint8_t> currentGroup;
-
-//   for (size_t i = 0; i < results.size(); ++i) {
-//     currentGroup.push_back(results[i]);
-
-//     if (conditions[i].logicalOperator == "AND") {
-//       groups.push_back(currentGroup);
-//       currentGroup.clear();
-//     }
-//   }
-
-//   if (!currentGroup.empty()) {
-//     groups.push_back(currentGroup);
-//   }
-
-//   // now we have groups of ORs. let's evaluate them.
-//   std::vector<uint8_t> groupResults(groups.size(), false);
-
-//   for (size_t i = 0; i < groups.size(); ++i) {
-//     const auto& group = groups[i];
-//     groupResults[i] = std::any_of(group.begin(), group.end(),
-//                                   [](uint8_t result) { return result != 0;
-//                                   });
-//   }
-
-//   // now we have groups of ANDs. let's evaluate them.
-//   // if any group is false, the result is false.
-
-//   for (size_t i = 0; i < groupResults.size(); ++i) {
-//     if (groupResults[i] == 0) {
-//       return false;
-//     }
-//   }
-
-//   return true;
-// }
-
 bool DamageMultConditionalFormula::EvaluateCondition(
   const DamageMultConditionalFormulaSettingsValueCondition& condition,
   const MpActor& aggressor, const MpActor& target) const
