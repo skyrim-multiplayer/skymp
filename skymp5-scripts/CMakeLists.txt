@@ -16,7 +16,6 @@ if(BUILD_SCRIPTS)
     )
 else()
     add_custom_target(skymp5-scripts ALL
-        SOURCES ${source}
         COMMAND ${CMAKE_COMMAND} -E echo "Building skymp5-scripts is disabled. To enable it, set BUILD_SCRIPTS to ON."
     )
 endif()
