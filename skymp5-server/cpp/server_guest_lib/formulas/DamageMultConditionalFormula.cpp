@@ -134,7 +134,7 @@ DamageMultConditionalFormulaSettings::FromJson(const nlohmann::json& j)
     const auto& key = it.key();
     const auto& value = it.value();
 
-    JsonInputArchive ar(j);
+    JsonInputArchive ar(value);
     DamageMultConditionalFormulaSettingsValue valueParsed;
     valueParsed.Serialize(ar);
 
