@@ -238,6 +238,27 @@ void MpActor::SetEquipment(const std::string& jsonString)
     [&](MpChangeForm& changeForm) { changeForm.equipmentDump = jsonString; });
 }
 
+void MpActor::SetHealthRespawnPercentage(float percentage)
+{
+  EditChangeForm([&](MpChangeForm& changeForm) {
+    changeForm.healthRespawnPercentage = percentage;
+  });
+}
+
+void MpActor::SetMagickaRespawnPercentage(float percentage)
+{
+  EditChangeForm([&](MpChangeForm& changeForm) {
+    changeForm.magickaRespawnPercentage = percentage;
+  });
+}
+
+void MpActor::SetStaminaRespawnPercentage(float percentage)
+{
+  EditChangeForm([&](MpChangeForm& changeForm) {
+    changeForm.staminaRespawnPercentage = percentage;
+  });
+}
+
 void MpActor::AddToFaction(Faction faction, bool lazyLoad)
 {
   if (factionsLoaded == false && lazyLoad)
@@ -827,13 +848,27 @@ int32_t MpActor::GetProfileId() const
   return ChangeForm().profileId;
 }
 
+float MpActor::GetHealthRespawnPercentage() const
+{
+  return ChangeForm().healthRespawnPercentage;
+}
+
+float MpActor::GetMagickaRespawnPercentage() const
+{
+  return ChangeForm().magickaRespawnPercentage;
+}
+
+float MpActor::GetStaminaRespawnPercentage() const
+{
+  return ChangeForm().staminaRespawnPercentage;
+}
+
 void MpActor::SendAndSetDeathState(bool isDead, bool shouldTeleport)
 {
   spdlog::trace(
     "MpActor::SendAndSetDeathState {:x} - isDead: {}, shouldTeleport: {}",
     GetFormId(), isDead, shouldTeleport);
 
-  float attribute = isDead ? 0.f : 1.f;
   auto position = GetSpawnPoint();
 
   auto respawnMsg = GetDeathStateMsg(position, isDead, shouldTeleport);
@@ -841,10 +876,14 @@ void MpActor::SendAndSetDeathState(bool isDead, bool shouldTeleport)
 
   EditChangeForm([&](MpChangeForm& changeForm) {
     changeForm.isDead = isDead;
-    changeForm.actorValues.healthPercentage = attribute;
-    changeForm.actorValues.magickaPercentage = attribute;
-    changeForm.actorValues.staminaPercentage = attribute;
+    changeForm.actorValues.healthPercentage =
+      isDead ? 0.f : GetHealthRespawnPercentage();
+    changeForm.actorValues.magickaPercentage =
+      isDead ? 0.f : GetMagickaRespawnPercentage();
+    changeForm.actorValues.staminaPercentage =
+      isDead ? 0.f : GetStaminaRespawnPercentage();
   });
+
   if (shouldTeleport) {
     SetCellOrWorldObsolete(position.cellOrWorldDesc);
     SetPos(position.pos);
