@@ -20,12 +20,12 @@
 #include "PercentagesBinding.h"
 #include "PosBinding.h"
 #include "ProfileIdBinding.h"
+#include "RespawnPercentagesBinding.h"
 #include "SpawnDelayBinding.h"
 #include "SpawnPointBinding.h"
 #include "TemplateChainBinding.h"
 #include "TypeBinding.h"
 #include "WorldOrCellDescBinding.h"
-#include "RespawnPercentagesBinding.h"
 
 std::map<std::string, std::shared_ptr<PropertyBinding>>
 PropertyBindingFactory::CreateStandardPropertyBindings()
