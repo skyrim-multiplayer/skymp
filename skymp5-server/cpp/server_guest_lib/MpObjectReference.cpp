@@ -826,10 +826,10 @@ void MpObjectReference::AddItem(uint32_t baseId, uint32_t count)
     if (lookupRes.rec) {
       auto baseItem = VarValue(std::make_shared<EspmGameObject>(lookupRes));
       auto itemCount = VarValue(static_cast<int32_t>(count));
-      auto itemReference =
-        VarValue(static_cast<IGameObject*>(nullptr)); // TODO
-      auto sourceContainer =
-        VarValue(static_cast<IGameObject*>(nullptr)); // TODO
+      auto itemReference = VarValue(static_cast<IGameObject*>(
+        nullptr)); // TODO (attention: code duplicated in AddItems method)
+      auto sourceContainer = VarValue(static_cast<IGameObject*>(
+        nullptr)); // TODO (attention: code duplicated in AddItems method)
       VarValue args[4] = { baseItem, itemCount, itemReference,
                            sourceContainer };
       SendPapyrusEvent("OnItemAdded", args, 4);
@@ -850,15 +850,28 @@ void MpObjectReference::AddItems(const std::vector<Inventory::Entry>& entries)
     SendInventoryUpdate();
   }
 
-  // for (const auto& entri : entries) {
-  //   auto baseItem = VarValue(static_cast<int32_t>(entri.baseId));
-  //   auto itemCount = VarValue(static_cast<int32_t>(entri.count));
-  //   auto itemReference = VarValue((IGameObject*)nullptr);
-  //   auto sourceContainer = VarValue((IGameObject*)nullptr);
-  //   VarValue args[4] = { baseItem, itemCount, itemReference,
-  //   sourceContainer
-  //   }; SendPapyrusEvent("OnItemAdded", args, 4);
-  // }
+  if (auto worldState = GetParent(); worldState->HasEspm()) {
+    for (const auto& entry : entries) {
+      espm::LookupResult lookupRes =
+        worldState->GetEspm().GetBrowser().LookupById(entry.baseId);
+
+      if (lookupRes.rec) {
+        auto baseItem = VarValue(std::make_shared<EspmGameObject>(lookupRes));
+        auto itemCount = VarValue(static_cast<int32_t>(entry.count));
+        auto itemReference = VarValue(static_cast<IGameObject*>(
+          nullptr)); // TODO (attention: code duplicated in AddItem method)
+        auto sourceContainer = VarValue(static_cast<IGameObject*>(
+          nullptr)); // TODO (attention: code duplicated in AddItem method)
+        VarValue args[4] = { baseItem, itemCount, itemReference,
+                             sourceContainer };
+        SendPapyrusEvent("OnItemAdded", args, 4);
+      } else {
+        spdlog::warn(
+          "MpObjectReference::AddItems - failed to lookup item {:x}",
+          entry.baseId);
+      }
+    }
+  }
 }
 
 void MpObjectReference::RemoveItem(uint32_t baseId, uint32_t count,
@@ -1835,10 +1848,9 @@ void MpObjectReference::SendInventoryUpdate()
   if (actor) {
     std::string msg;
     msg += Networking::MinPacketId;
-    msg += nlohmann::json{
-      { "inventory", actor->GetInventory().ToJson() },
-      { "type", "setInventory" }
-    }.dump();
+    msg += nlohmann::json{ { "inventory", actor->GetInventory().ToJson() },
+                           { "type", "setInventory" } }
+             .dump();
     actor->SendToUserDeferred(msg.data(), msg.size(), true,
                               kChannelSetInventory, true);
   }
