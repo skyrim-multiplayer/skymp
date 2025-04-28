@@ -89,9 +89,7 @@ void ReadBookEvent::OnFireBlocked(WorldState* worldState)
 
   std::vector<VarValue> arguments = { aSpell };
 
-  auto& spellList = actor->GetSpellList();
-  if (std::find(spellList.begin(), spellList.end(), spellOrSkillFormId) !=
-      spellList.end()) {
+  if (actor->IsSpellLearned(spellOrSkillFormId)) {
     spdlog::info(
       "ReadBookEvent::OnFireBlocked - Actor {:x} reading book {:x}: "
       "Spell already learned {:x}, not executing RemoveSpell SpSnippet",
