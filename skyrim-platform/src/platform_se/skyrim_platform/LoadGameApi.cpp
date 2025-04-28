@@ -1,5 +1,4 @@
 #include "LoadGameApi.h"
-#include "JsExtractPoint.h"
 #include "LoadGame.h"
 #include "NullPointerException.h"
 #include "savefile/SFChangeFormNPC.h"
@@ -27,8 +26,6 @@ uint32_t RgbToAbgr(int32_t rgb)
 
 SaveFile_::RefID FormIdToRefId(uint32_t formId)
 {
-  // Note: Tested only with normal Skyrim.esm ids
-
   std::string binType = formId >= 0x01000000 ? "10" : "01";
   std::string binId = std::bitset<22>(formId).to_string();
 
@@ -45,68 +42,77 @@ SaveFile_::RefID FormIdToRefId(uint32_t formId)
 }
 
 std::unique_ptr<SaveFile_::ChangeFormNPC_> CreateChangeFormNpc(
-  std::shared_ptr<SaveFile_::SaveFile> save, JsValue npcData)
+  std::shared_ptr<SaveFile_::SaveFile> save, Napi::Object npcData)
 {
-  if (npcData.GetType() != JsValue::Type::Object)
-    return nullptr;
+  auto changeFormNpc = std::make_unique<SaveFile_::ChangeFormNPC_>();
 
-  std::unique_ptr<SaveFile_::ChangeFormNPC_> changeFormNpc;
-  changeFormNpc.reset(new SaveFile_::ChangeFormNPC_);
-
-  if (auto name = npcData.GetProperty("name");
-      name.GetType() == JsValue::Type::String)
-    changeFormNpc->playerName = static_cast<std::string>(name);
-
-  if (auto raceId = npcData.GetProperty("raceId");
-      raceId.GetType() == JsValue::Type::Number) {
-    changeFormNpc->race = SaveFile_::ChangeFormNPC_::RaceChange();
-    changeFormNpc->race->defaultRace =
-      FormIdToRefId(static_cast<uint32_t>(static_cast<double>(raceId)));
-    changeFormNpc->race->myRaceNow =
-      FormIdToRefId(static_cast<uint32_t>(static_cast<double>(raceId)));
+  if (auto name = npcData.Get("name"); !name.IsUndefined() && !name.IsNull()) {
+    changeFormNpc->playerName =
+      NapiHelper::ExtractString(name, "npcData.name");
   }
 
-  if (auto isFemale = npcData.GetProperty("isFemale");
-      isFemale.GetType() == JsValue::Type::Boolean) {
-    if (isFemale.ToString() == "true") {
+  if (auto raceId = npcData.Get("raceId");
+      !raceId.IsUndefined() && !raceId.IsNull()) {
+    auto raceIdExtracted = NapiHelper::ExtractUInt32(raceId, "npcData.raceId");
+    changeFormNpc->race = SaveFile_::ChangeFormNPC_::RaceChange();
+    changeFormNpc->race->defaultRace = FormIdToRefId(raceIdExtracted);
+    changeFormNpc->race->myRaceNow = FormIdToRefId(raceIdExtracted);
+  }
+
+  // TODO: why mismatch with skyrimPlatform.ts: instead of 'npcData' this is in
+  // 'npcData.face'???
+  if (auto isFemale = npcData.Get("isFemale");
+      !isFemale.IsUndefined() && !isFemale.IsNull()) {
+    // TODO: this is a hotfix, fix properly.
+    // To test ensure players after relog preserve their gender anims
+    if (static_cast<std::string>(isFemale.ToString()) == "true") {
       changeFormNpc->gender = isFemale ? 1 : 0;
     }
   }
 
-  if (auto face = npcData.GetProperty("face");
-      face.GetType() == JsValue::Type::Object) {
+  if (auto face = npcData.Get("face"); !face.IsUndefined() && !face.IsNull()) {
     changeFormNpc->face = SaveFile_::ChangeFormNPC_::Face();
 
-    if (auto bodySkinColor = face.GetProperty("bodySkinColor");
-        bodySkinColor.GetType() == JsValue::Type::Number) {
-      changeFormNpc->face->bodySkinColor =
-        RgbToAbgr(static_cast<int32_t>(bodySkinColor));
+    auto faceExtracted = NapiHelper::ExtractObject(face, "npcData.face");
+
+    if (auto bodySkinColor = faceExtracted.Get("bodySkinColor");
+        !bodySkinColor.IsUndefined() && !bodySkinColor.IsNull()) {
+      auto bodySkinColorExtracted =
+        NapiHelper::ExtractInt32(bodySkinColor, "npcData.bodySkinColor");
+      changeFormNpc->face->bodySkinColor = RgbToAbgr(bodySkinColorExtracted);
     }
 
-    if (auto headPartIds = face.GetProperty("headPartIds");
-        headPartIds.GetType() == JsValue::Type::Array) {
-      int n = static_cast<int>(headPartIds.GetProperty("length"));
+    if (auto headPartIds = faceExtracted.Get("headPartIds");
+        !headPartIds.IsUndefined() && !headPartIds.IsNull()) {
+      auto headPartIdsExtracted =
+        NapiHelper::ExtractArray(headPartIds, "npcData.headPartIds");
+      int n = headPartIdsExtracted.Length();
 
       for (int i = 0; i < n; ++i) {
-        auto jHpId = headPartIds.GetProperty(i);
-        auto hpId = static_cast<uint32_t>(static_cast<double>(jHpId));
+        auto jHpId = headPartIdsExtracted.Get(i);
+        std::string comment = fmt::format("npcData.headPartIds[{}]", i);
+        auto hpId = NapiHelper::ExtractUInt32(jHpId, comment.data());
         changeFormNpc->face->headParts.push_back(FormIdToRefId(hpId));
       }
     }
 
-    if (auto presets = face.GetProperty("presets");
-        presets.GetType() == JsValue::Type::Array) {
-      int n = static_cast<int>(presets.GetProperty("length"));
+    if (auto presets = faceExtracted.Get("presets");
+        !presets.IsUndefined() && !presets.IsNull()) {
+      auto presetsExtracted =
+        NapiHelper::ExtractArray(presets, "npcData.presets");
+      int n = presetsExtracted.Length();
       for (int i = 0; i < n; ++i) {
-        auto jValue = presets.GetProperty(i);
-        auto value = static_cast<uint32_t>(static_cast<double>(jValue));
+        auto jValue = presetsExtracted.Get(i);
+        std::string comment = fmt::format("npcData.presets[{}]", i);
+        auto value = NapiHelper::ExtractUInt32(jValue, comment.data());
         changeFormNpc->face->presets.push_back(value);
       }
     }
 
-    if (auto headTextureSetId = face.GetProperty("headTextureSetId");
-        headTextureSetId.GetType() == JsValue::Type::Number) {
-      auto id = static_cast<uint32_t>(static_cast<double>(headTextureSetId));
+    if (auto headTextureSetId = faceExtracted.Get("headTextureSetId");
+        !headTextureSetId.IsUndefined() && !headTextureSetId.IsNull()) {
+      auto id = NapiHelper::ExtractUInt32(headTextureSetId,
+                                          "npcData.headTextureSetId");
       changeFormNpc->face->headTextureSet = FormIdToRefId(id);
     }
   }
@@ -115,35 +121,29 @@ std::unique_ptr<SaveFile_::ChangeFormNPC_> CreateChangeFormNpc(
 }
 
 std::unique_ptr<LoadGame::Time> CreateTime(
-  std::shared_ptr<SaveFile_::SaveFile>, JsValue time_)
+  std::shared_ptr<SaveFile_::SaveFile>, Napi::Object time_)
 {
-  if (time_.GetType() != JsValue::Type::Object) {
-    return nullptr;
-  }
+  auto hours = NapiHelper::ExtractInt32(time_.Get("hours"), "time.hours");
+  auto minutes =
+    NapiHelper::ExtractInt32(time_.Get("minutes"), "time.minutes");
+  auto seconds =
+    NapiHelper::ExtractInt32(time_.Get("seconds"), "time.seconds");
 
-  auto hours = static_cast<int>(time_.GetProperty("hours"));
-  auto minutes = static_cast<int>(time_.GetProperty("minutes"));
-  auto seconds = static_cast<int>(time_.GetProperty("seconds"));
-
-  std::unique_ptr<LoadGame::Time> time;
-  time.reset(new LoadGame::Time);
+  auto time = std::make_unique<LoadGame::Time>();
   time->Set(seconds, minutes, hours);
   return time;
 }
 
 std::unique_ptr<std::vector<std::string>> CreateLoadOrder(
-  std::shared_ptr<SaveFile_::SaveFile>, JsValue loadOrder_)
+  std::shared_ptr<SaveFile_::SaveFile>, Napi::Array loadOrder_)
 {
-  if (loadOrder_.GetType() != JsValue::Type::Array) {
-    return nullptr;
-  }
-
   std::unique_ptr<std::vector<std::string>> loadOrder;
   loadOrder.reset(new std::vector<std::string>);
-  int n = static_cast<int>(loadOrder_.GetProperty("length"));
+  int n = loadOrder_.Length();
   for (int i = 0; i < n; ++i) {
-    auto jValue = loadOrder_.GetProperty(i);
-    auto value = static_cast<std::string>(jValue);
+    auto jValue = loadOrder_.Get(i);
+    std::string comment = fmt::format("loadOrder[{}]", i);
+    auto value = NapiHelper::ExtractString(jValue, comment.data());
     loadOrder->push_back(value);
   }
   return loadOrder;
@@ -151,14 +151,14 @@ std::unique_ptr<std::vector<std::string>> CreateLoadOrder(
 
 }
 
-JsValue LoadGameApi::LoadGame(const JsFunctionArguments& args)
+Napi::Value LoadGameApi::LoadGame(const Napi::CallbackInfo& info)
 {
-  std::array<float, 3> pos = JsExtractPoint(args[1]),
-                       angle = JsExtractPoint(args[2]);
-  uint32_t cellOrWorld = static_cast<uint32_t>(static_cast<double>(args[3]));
-  auto npcData = args[4];
-  auto loadOrder = args[5];
-  auto time = args[6];
+  NiPoint3 niPos = NapiHelper::ExtractNiPoint3(info[0], "pos");
+  NiPoint3 niAngle = NapiHelper::ExtractNiPoint3(info[1], "angle");
+  std::array<float, 3> pos = { niPos[0], niPos[1], niPos[2] };
+  std::array<float, 3> angle = { niAngle[0], niAngle[1], niAngle[2] };
+
+  uint32_t cellOrWorld = NapiHelper::ExtractUInt32(info[2], "cellOrWorld");
 
   constexpr auto kPathInAssetsMale = "assets/template.ess";
 
@@ -170,12 +170,19 @@ JsValue LoadGameApi::LoadGame(const JsFunctionArguments& args)
   }
 
   std::unique_ptr<SaveFile_::ChangeFormNPC_> changeFormNpc =
-    CreateChangeFormNpc(save, npcData);
+    (info[3].IsUndefined() || info[3].IsNull())
+    ? nullptr
+    : CreateChangeFormNpc(save, NapiHelper::ExtractObject(info[3], "npcData"));
 
   std::unique_ptr<std::vector<std::string>> saveLoadOrder =
-    CreateLoadOrder(save, loadOrder);
+    (info[4].IsUndefined() || info[4].IsNull())
+    ? nullptr
+    : CreateLoadOrder(save, NapiHelper::ExtractArray(info[4], "loadOrder"));
 
-  std::unique_ptr<LoadGame::Time> saveFileTime = CreateTime(save, time);
+  std::unique_ptr<LoadGame::Time> saveFileTime =
+    (info[5].IsUndefined() || info[5].IsNull())
+    ? nullptr
+    : CreateTime(save, NapiHelper::ExtractObject(info[5], "time"));
 
   const auto& _baseSavefile = save;
   const auto& _pos = pos;
@@ -188,5 +195,5 @@ JsValue LoadGameApi::LoadGame(const JsFunctionArguments& args)
   LoadGame::Run(_baseSavefile, _pos, _angle, _cellOrWorld, _time, _weather,
                 _changeFormNPC, _loadOrder);
 
-  return JsValue::Undefined();
+  return info.Env().Undefined();
 }

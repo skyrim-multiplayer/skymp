@@ -1,6 +1,7 @@
 #include "PapyrusClassesFactory.h"
 
 #include "PapyrusActor.h"
+#include "PapyrusBook.h"
 #include "PapyrusCell.h"
 #include "PapyrusDebug.h"
 #include "PapyrusEffectShader.h"
@@ -50,6 +51,7 @@ PapyrusClassesFactory::CreateAndRegister(
   result.emplace_back(std::make_unique<PapyrusLeveledActor>());
   result.emplace_back(std::make_unique<PapyrusLeveledItem>());
   result.emplace_back(std::make_unique<PapyrusLeveledSpell>());
+  result.emplace_back(std::make_unique<PapyrusBook>());
 
   for (auto& papyrusClass : result) {
     papyrusClass->Register(vm, compatibilityPolicy);

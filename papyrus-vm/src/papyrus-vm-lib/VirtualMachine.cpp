@@ -186,6 +186,7 @@ void VirtualMachine::SendEvent(std::shared_ptr<IGameObject> self,
   for (auto& scriptInstance : self->ListActivePexInstances()) {
     auto name = scriptInstance->GetActiveStateName();
 
+    // TODO: const&
     auto fn = scriptInstance->GetFunctionByName(
       eventName, scriptInstance->GetActiveStateName());
     if (fn.valid) {
@@ -204,7 +205,7 @@ void VirtualMachine::SendEvent(ActivePexInstance* instance,
                                const char* eventName,
                                const std::vector<VarValue>& arguments)
 {
-
+  // TODO: const&
   auto fn =
     instance->GetFunctionByName(eventName, instance->GetActiveStateName());
   if (fn.valid) {
@@ -273,6 +274,7 @@ VarValue VirtualMachine::CallMethod(
   // TODO: in theory we shouldn't iterate over all scripts, but only use the
   // current one
   for (auto& activeScript : instances) {
+    // TODO: const& (ref/optional)
     FunctionInfo functionInfo;
 
     if (!Utils::stricmp(methodName, "GotoState") ||
@@ -345,7 +347,6 @@ VarValue VirtualMachine::CallStatic(const std::string& className,
   }
 
   VarValue result = VarValue::None();
-  FunctionInfo function;
 
   auto f = nativeStaticFunctions[className.data()][functionName.data()]
     ? nativeStaticFunctions[className.data()][functionName.data()]
@@ -390,6 +391,8 @@ VarValue VirtualMachine::CallStatic(const std::string& className,
                                                    VarValue::None(), "");
   }
 
+  // TODO: const&
+  FunctionInfo function;
   function = instance->GetFunctionByName(functionName.c_str(), "");
 
   if (function.valid) {

@@ -1,7 +1,10 @@
-#include "ScopedTask.h"
+#include "papyrus-vm/FunctionInfo.h"
 #include "papyrus-vm/OpcodesImplementation.h"
 #include "papyrus-vm/Utils.h"
 #include "papyrus-vm/VirtualMachine.h"
+
+#include "ScopedTask.h"
+
 #include <algorithm>
 #include <cctype> // tolower
 #include <fmt/ranges.h>
@@ -54,14 +57,15 @@ std::shared_ptr<ActivePexInstance> ActivePexInstance::FillParentInstance(
 FunctionInfo ActivePexInstance::GetFunctionByName(const char* name,
                                                   std::string stateName) const
 {
-
+  // static FunctionInfo kInvalidFunction;
   FunctionInfo function;
   for (auto& object : sourcePex.fn()->objectTable) {
     for (auto& state : object.states) {
       if (state.name == stateName) {
         for (auto& func : state.functions) {
           if (!Utils::stricmp(func.name.data(), name)) {
-            function = func.function;
+            // return func; ???
+            function = func.function; // ???
             function.valid = true;
             return function;
           }
@@ -640,8 +644,8 @@ void ActivePexInstance::ExecuteOpCode(
 }
 
 std::shared_ptr<std::vector<ActivePexInstance::Local>>
-ActivePexInstance::MakeLocals(FunctionInfo& function,
-                              std::vector<VarValue>& arguments)
+ActivePexInstance::MakeLocals(const FunctionInfo& function,
+                              const std::vector<VarValue>& arguments)
 {
   auto locals = std::make_shared<std::vector<Local>>();
 
@@ -780,7 +784,7 @@ VarValue ActivePexInstance::ExecuteAll(
   return ctx.returnValue;
 }
 
-VarValue ActivePexInstance::StartFunction(FunctionInfo& function,
+VarValue ActivePexInstance::StartFunction(const FunctionInfo& function,
                                           std::vector<VarValue>& arguments,
                                           std::shared_ptr<StackData> stackData)
 {

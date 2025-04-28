@@ -1,11 +1,11 @@
 #include "IPapyrusClass.h"
 #include "SpSnippetFunctionGen.h"
 
-VarValue IPapyrusClassBase::MakeSPSnippetPromise(
+VarValue IPapyrusClassBase::ExecuteSpSnippetAndGetPromise(
   const char* script, const char* name,
   std::shared_ptr<IPapyrusCompatibilityPolicy> policy, VarValue self,
-  const std::vector<VarValue>& arguments, bool method, bool returns,
-  VarValue defaultResult)
+  const std::vector<VarValue>& arguments, bool method, SpSnippetMode mode,
+  const VarValue& defaultResult)
 {
   if (auto actor =
         policy->GetDefaultActor(script, name, self.GetMetaStackId())) {
@@ -13,11 +13,10 @@ VarValue IPapyrusClassBase::MakeSPSnippetPromise(
     auto promise =
       SpSnippet(script, name, s.data(),
                 method ? SpSnippetFunctionGen::GetFormId(self) : 0)
-        .Execute(actor,
-                 (returns ? SpSnippetMode::kReturnResult
-                          : SpSnippetMode::kNoReturnResult));
-    if (returns)
+        .Execute(actor, mode);
+    if (mode == SpSnippetMode::kReturnResult) {
       return VarValue(promise);
+    }
   }
   return defaultResult;
 }

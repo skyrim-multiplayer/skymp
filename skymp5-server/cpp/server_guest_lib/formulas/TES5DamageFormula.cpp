@@ -211,7 +211,11 @@ float TES5SpellDamageFormulaImpl::GetBaseSpellDamage() const
     auto magicEffect =
       espm::GetData<espm::MGEF>(effect.effectFormId, espmProvider);
 
-    if (magicEffect.data.IsFlagSet(espm::MGEF::Flags::Hostile) &&
+    const bool needAddDamage =
+      magicEffect.data.IsFlagSet(espm::MGEF::Flags::Hostile) ||
+      magicEffect.data.IsFlagSet(espm::MGEF::Flags::Detrimental);
+
+    if (needAddDamage &&
         magicEffect.data.primaryAV == espm::ActorValue::Health) {
 
       damage += effect.effectItem->magnitude;

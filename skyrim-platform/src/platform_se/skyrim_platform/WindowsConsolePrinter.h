@@ -8,6 +8,6 @@ public:
                         bool isAlwaysOnTop);
   ~WindowsConsolePrinter() override;
 
-  void Print(const JsFunctionArguments& args) override;
+  void Print(const Napi::CallbackInfo& info) override;
   void PrintRaw(const char* str) override;
 };
