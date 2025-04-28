@@ -114,11 +114,7 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
       case MsgType::ChangeValues: {
         auto message =
           reinterpret_cast<ChangeValuesMessage*>(result->message.get());
-        ActorValues actorValues;
-        actorValues.healthPercentage = message->data.health;
-        actorValues.magickaPercentage = message->data.magicka;
-        actorValues.staminaPercentage = message->data.stamina;
-        actionListener.OnChangeValues(rawMsgData, actorValues);
+        actionListener.OnChangeValues(rawMsgData, *message);
         return;
       }
       default: {
