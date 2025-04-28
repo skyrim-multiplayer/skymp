@@ -670,8 +670,8 @@ void ActionListener::OnChangeValues(const RawMessageData& rawMsgData,
                                     const ChangeValuesMessage& message)
 {
   // TODO: support partial updates
-  if (!message.data.health.has_value() || !message.data.health.has_value() ||
-      !message.data.health.has_value()) {
+  if (!message.data.health.has_value() || !message.data.magicka.has_value() ||
+      !message.data.stamina.has_value()) {
     const std::string healthStr = message.data.health.has_value()
       ? std::to_string(*message.data.health)
       : "null";
