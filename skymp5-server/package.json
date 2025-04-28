@@ -4,7 +4,8 @@
   "description": "",
   "license": "AGPL-3.0",
   "scripts": {
-    "build-ts": "tsc --noEmit && esbuild ts/index.ts --loader:.node=copy --bundle --platform=node --target=node16 --keep-names --minify --sourcemap --target=es2022 --outfile=../build/dist/server/dist_back/skymp5-server.js"
+    "build-ts": "tsc --noEmit && esbuild ts/index.ts --loader:.node=copy --bundle --platform=node --target=node16 --keep-names --minify --sourcemap --target=es2022 --outfile=../build/dist/server/dist_back/skymp5-server.js",
+    "build": "npx esbuild ts/index.ts --bundle --platform=node --target=node22 --sourcemap --target=es2022 --outfile=../build/dist/server/dist_back/skymp5-server.js"
   },
   "author": "Leonid Pospelov <pospelovlm@yandex.ru>",
   "dependencies": {
@@ -14,8 +15,11 @@
     "argparse": "^2.0.1",
     "axios": "^1.8.2",
     "chokidar": "^3.5.3",
+    "cors": "^2.8.5",
     "crc-32": "^1.2.2",
+    "discord-oauth2": "^2.12.1",
     "discord.js": "^14.13.0",
+    "express": "^4.21.2",
     "fetch-retry": "^6.0.0",
     "koa": "^2.15.4",
     "koa-body": "^4.2.0",

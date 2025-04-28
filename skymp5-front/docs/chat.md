@@ -12,13 +12,13 @@
 ## UPDATE_CHAT_SHOWINPUT
 ### Изменить режим отображения поля ввода
 **data:** 'true'/'false'/'auto'
-> **'true'** - всегда показывать
+> **'true'** - всегда показывать[chat.md](chat.md)
 > **'false'** - всегда скрывать
-> **'auto'** - открывать при нажатии **f6**
+> **'auto'** - от[server-settings.json](..%2F..%2Fbuild%2Fdist%2Fserver%2Fserver-settings.json)крывать при нажатии **f6**
 
 
 #  Frontend to Backend
-
+[server-settings.json](..%2F..%2Fbuild%2Fdist%2Fserver%2Fserver-settings.json)
 ## 'cef::chat:send'
 ### Игрок отправил какое то сообщение
 **data:** 'Some text'

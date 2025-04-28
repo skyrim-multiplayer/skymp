@@ -181,7 +181,7 @@ foreach(dir ${ROOT_DIRS})
 endforeach()
 
 foreach(proj ${CMAKEPROJ_PROJECTS_LIST})
-  list(APPEND priorities_list ${CMAKEPROJ_PRIORITY_${proj}})  
+  list(APPEND priorities_list ${CMAKEPROJ_PRIORITY_${proj}})
 endforeach()
 list(REMOVE_DUPLICATES priorities_list)
 list(SORT priorities_list COMPARE NATURAL)

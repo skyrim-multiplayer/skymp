@@ -7,6 +7,7 @@ export interface RemoteAuthGameData {
 };
 
 export interface LocalAuthGameData {
+  accessToken: string;
   profileId: number;
 };
 

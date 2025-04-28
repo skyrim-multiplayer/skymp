@@ -1,4 +1,4 @@
-import * as crypto from "crypto";
+//import * as crypto from "crypto";
 import { AuthGameData, RemoteAuthGameData, authGameDataStorageKey } from "../../features/authModel";
 import { FunctionInfo } from "../../lib/functionInfo";
 import { ClientListener, CombinedController, Sp } from "./clientListener";
@@ -60,16 +60,16 @@ export class AuthService extends ClientListener {
 
     const settingsGameData = this.sp.settings["skymp5-client"]["gameData"] as any;
     const isOfflineMode = Number.isInteger(settingsGameData?.profileId);
+    this.isListenBrowserMessage = true;
     if (isOfflineMode) {
       logTrace(this, `Offline mode detected in settings, emitting auth event with authGameData.local`);
-      this.controller.emitter.emit("authAttempt", { authGameData: { local: { profileId: settingsGameData.profileId } } });
+      this.controller.emitter.emit("authAttempt", { authGameData: { local: { profileId: settingsGameData.profileId, accessToken: settingsGameData.accessToken } } });
     } else {
       logTrace(this, `No offline mode detectted in settings, regular auth needed`);
-      this.isListenBrowserMessage = true;
 
       this.trigger.authNeededFired = true;
+      this.onBrowserWindowLoadedAndOnlineAuthNeeded();
       if (this.trigger.conditionMet) {
-        this.onBrowserWindowLoadedAndOnlineAuthNeeded();
       }
     }
   }
@@ -220,7 +220,7 @@ export class AuthService extends ClientListener {
         this.sp.win32.loadUrl("https://discord.gg/9KhSZ6zjGT");
         break;
       default:
-        logError(this, `Unknown event key`, eventKey);
+        //logError(this, `Unknown event key`, eventKey);
         break;
     }
   }
@@ -515,20 +515,20 @@ export class AuthService extends ClientListener {
   }
 
   private handleConnectionAccepted() {
-    this.isListenBrowserMessage = false;
+    this.isListenBrowserMessage = true;
     this.loggingStartMoment = Date.now();
 
     const authData = this.sp.storage[authGameDataStorageKey] as AuthGameData | undefined;
     if (authData?.local) {
       logTrace(this,
-        `Logging in offline mode, profileId =`, authData.local.profileId
+        `Logging in offline mode, accessToken =`, authData.local.accessToken
       );
       const message: CustomPacketMessage = {
         t: MsgType.CustomPacket,
         content: {
           customPacketType: 'loginWithSkympIo',
           gameData: {
-            profileId: authData.local.profileId,
+            accessToken: authData.local.accessToken,
           },
         },
       };
@@ -625,7 +625,7 @@ export class AuthService extends ClientListener {
       return this.authNeededFired && this.browserWindowLoadedFired
     }
   };
-  private discordAuthState = crypto.randomBytes(32).toString('hex');
+  private discordAuthState = "" + Math.random();//crypto.randomBytes(32).toString('hex');
   private authDialogOpen = false;
 
   private loggingStartMoment = 0;
