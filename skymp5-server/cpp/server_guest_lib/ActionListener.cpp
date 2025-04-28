@@ -667,8 +667,33 @@ void ActionListener::OnCustomEvent(const RawMessageData& rawMsgData,
 }
 
 void ActionListener::OnChangeValues(const RawMessageData& rawMsgData,
-                                    const ActorValues& newActorValues)
+                                    const ChangeValuesMessage& message)
 {
+  // TODO: support partial updates
+  if (!message.data.health.has_value() || !message.data.health.has_value() ||
+      !message.data.health.has_value()) {
+    const std::string healthStr = message.data.health.has_value()
+      ? std::to_string(*message.data.health)
+      : "null";
+    const std::string magickaStr = message.data.magicka.has_value()
+      ? std::to_string(*message.data.magicka)
+      : "null";
+    const std::string staminaStr = message.data.stamina.has_value()
+      ? std::to_string(*message.data.stamina)
+      : "null";
+
+    spdlog::error("ActionListener::OnChangeValues - health, magicka or "
+                  "stamina is null {} {} {}",
+                  healthStr, magickaStr, staminaStr);
+    return;
+  }
+
+  // TODO: refactor our ActorValues struct
+  ActorValues newActorValues;
+  newActorValues.healthPercentage = *message.data.health;
+  newActorValues.magickaPercentage = *message.data.magicka;
+  newActorValues.staminaPercentage = *message.data.stamina;
+
   MpActor* actor = partOne.serverState.ActorByUser(rawMsgData.userId);
   if (!actor) {
     throw std::runtime_error("Unable to change values without Actor attached");

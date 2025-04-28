@@ -799,9 +799,17 @@ export class RemoteServer extends ClientListener {
       const refr = id === this.getMyActorIndex() ? Game.getPlayer() : getObjectReference(id);
       const ac = Actor.from(refr);
       if (!ac) return;
-      setActorValuePercentage(ac, 'health', msg.data.health);
-      setActorValuePercentage(ac, 'stamina', msg.data.stamina);
-      setActorValuePercentage(ac, 'magicka', msg.data.magicka);
+
+      const { health, stamina, magicka } = msg.data;
+      if (typeof health === "number") {
+        setActorValuePercentage(ac, 'health', health);
+      }
+      if (typeof stamina === "number") {
+        setActorValuePercentage(ac, 'stamina', stamina);
+      }
+      if (typeof magicka === "number") {
+        setActorValuePercentage(ac, 'magicka', magicka);
+      }
     });
   }
 

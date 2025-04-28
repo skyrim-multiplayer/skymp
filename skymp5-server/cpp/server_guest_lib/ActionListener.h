@@ -8,6 +8,8 @@
 
 #include "SpellCastData.h"
 
+#include "Messages.h"
+
 class ServerState;
 class WorldState;
 struct ActorValues;
@@ -87,7 +89,7 @@ public:
                              const char* eventName, simdjson::dom::element& e);
 
   virtual void OnChangeValues(const RawMessageData& rawMsgData,
-                              const ActorValues& actorValues);
+                              const ChangeValuesMessage& message);
 
   virtual void OnHit(const RawMessageData& rawMsgData, const HitData& hitData);
 
