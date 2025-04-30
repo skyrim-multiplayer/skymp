@@ -6,6 +6,11 @@
 
 bool GameModeEvent::Fire(WorldState* worldState)
 {
+  if (!worldState) {
+    spdlog::error("GameModeEvent::Fire - worldState is nullptr");
+    return true;
+  }
+
   const char* eventName = GetName();
 
   worldState->currentGameModeEventsStack.push_back(this);
@@ -13,11 +18,6 @@ bool GameModeEvent::Fire(WorldState* worldState)
   Viet::ScopedTask<std::vector<GameModeEvent*>> stackPopTask(
     [](std::vector<GameModeEvent*>& stack) { stack.pop_back(); },
     worldState->currentGameModeEventsStack);
-
-  if (!worldState) {
-    spdlog::error("GameModeEvent::Fire - worldState is nullptr");
-    return true;
-  }
 
   if (spdlog::should_log(spdlog::level::trace)) {
     spdlog::trace("GameModeEvent::Fire {} {}", eventName,
