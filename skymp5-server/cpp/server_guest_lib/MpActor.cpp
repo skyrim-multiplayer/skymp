@@ -1202,10 +1202,20 @@ void MpActor::Kill(MpActor* killer, bool shouldTeleport)
   spdlog::trace("MpActor::Kill {:x} - killer is {:x}", GetFormId(),
                 killer ? killer->GetFormId() : 0);
 
+  auto& changeForm = ChangeForm();
+  const float healhPercentageBeforeDeath =
+    changeForm.actorValues.healthPercentage;
+  const float magickaPercentageBeforeDeath =
+    changeForm.actorValues.magickaPercentage;
+  const float staminaPercentageBeforeDeath =
+    changeForm.actorValues.staminaPercentage;
+
   // Keep in sync with MpActor::SetIsDead
   SendAndSetDeathState(true, shouldTeleport);
 
-  DeathEvent deathEvent(this, killer);
+  DeathEvent deathEvent(this, killer, healhPercentageBeforeDeath,
+                        magickaPercentageBeforeDeath,
+                        staminaPercentageBeforeDeath);
   deathEvent.Fire(GetParent());
 
   AddDeathItem();

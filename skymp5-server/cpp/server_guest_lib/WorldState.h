@@ -32,6 +32,7 @@ class FormCallbacks;
 class MpChangeForm;
 class ISaveStorage;
 class IScriptStorage;
+class GameModeEvent;
 
 class WorldState
 {
@@ -256,6 +257,8 @@ public:
     /* Mannequin */
     0x0010760a
   };
+
+  std::vector<GameModeEvent*> currentGameModeEventsStack;
 
 private:
   bool AttachEspmRecord(const espm::CombineBrowser& br,
