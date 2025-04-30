@@ -927,6 +927,30 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
     hitData.target = myActor->GetFormId();
   }
 
+  MpForm* targetForm = partOne.worldState.LookupFormById(hitData.target).get();
+  MpObjectReference* targetRef =
+    targetForm ? targetForm->AsObjectReference() : nullptr;
+  if (!targetRef) {
+    spdlog::error("ActionListener::OnHit - MpObjectReference not found for "
+                  "hitData.target {:x}",
+                  hitData.target);
+    return;
+  }
+
+  const FormDesc& aggressorCellOrWorld = aggressor->GetCellOrWorld();
+  const FormDesc& targetCellOrWorld = targetRef->GetCellOrWorld();
+
+  if (aggressorCellOrWorld != targetCellOrWorld) {
+    const std::vector<std::string>& files = partOne.worldState.espmFiles;
+    spdlog::error(
+      "ActionListener::OnHit - aggressor and targetRef are in different cells "
+      "or world. Aggressor: {:x}, targetRef: {:x}, cellOrWorld of aggressor: "
+      "{:x}, cellOrWorld of targetRef: {:x}",
+      aggressor->GetFormId(), targetRef->GetFormId(),
+      aggressorCellOrWorld.ToFormId(files), targetCellOrWorld.ToFormId(files));
+    return;
+  }
+
   if (aggressor->IsDead()) {
     spdlog::debug(fmt::format("{:x} actor is dead and can't attack. "
                               "requesting respawn in order to fix death state",
@@ -944,14 +968,14 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
   const auto equipment = aggressor->GetEquipment();
 
   if (isSourceSpell && equipment.IsSpellEquipped(hitData.source)) {
-    OnSpellHit(aggressor, hitData);
+    OnSpellHit(aggressor, targetRef, hitData);
     return;
   }
 
   const bool isUnarmed = IsUnarmedAttack(hitData.source);
 
   if (equipment.inv.HasItem(hitData.source) || isUnarmed) {
-    OnWeaponHit(aggressor, hitData, isUnarmed);
+    OnWeaponHit(aggressor, targetRef, hitData, isUnarmed);
     return;
   }
 
@@ -1063,9 +1087,10 @@ void ActionListener::OnUnknown(const RawMessageData& rawMsgData)
 }
 
 void ActionListener::OnSpellHit(MpActor* aggressor,
-                                const HitData& hitData) const
+                                MpObjectReference* targetRef,
+                                const HitData& hitData)
 {
-  const auto targetRef = TrySendPapyrusOnHitEvent(aggressor, hitData);
+  SendPapyrusOnHitEvent(aggressor, targetRef, hitData);
 
   auto* targetActorPtr = targetRef ? targetRef->AsActor() : nullptr;
   if (!targetActorPtr) {
@@ -1096,14 +1121,15 @@ void ActionListener::OnSpellHit(MpActor* aggressor,
                spellCastData.caster);
 }
 
-void ActionListener::OnWeaponHit(MpActor* aggressor, HitData hitData,
-                                 [[maybe_unused]] bool isUnarmed) const
+void ActionListener::OnWeaponHit(MpActor* aggressor,
+                                 MpObjectReference* targetRef, HitData hitData,
+                                 [[maybe_unused]] bool isUnarmed)
 {
   const auto currentHitTime = std::chrono::steady_clock::now();
 
-  const auto refr = TrySendPapyrusOnHitEvent(aggressor, hitData);
+  SendPapyrusOnHitEvent(aggressor, targetRef, hitData);
 
-  auto* targetActorPtr = refr ? refr->AsActor() : nullptr;
+  auto* targetActorPtr = targetRef ? targetRef->AsActor() : nullptr;
   if (!targetActorPtr) {
     return; // Not an actor, damage calculation is not needed
   }
@@ -1220,20 +1246,10 @@ void ActionListener::OnWeaponHit(MpActor* aggressor, HitData hitData,
     healthPercentage, outBaseHealth);
 }
 
-std::shared_ptr<MpObjectReference> ActionListener::TrySendPapyrusOnHitEvent(
-  const MpActor* aggressor, const HitData& hitData) const
+void ActionListener::SendPapyrusOnHitEvent(MpActor* aggressor,
+                                           MpObjectReference* target,
+                                           const HitData& hitData)
 {
-  auto ref = std::dynamic_pointer_cast<MpObjectReference>(
-    partOne.worldState.LookupFormById(hitData.target));
-
-  if (ref == nullptr) {
-    spdlog::error("ActionListener::TrySendPapyrusOnHitEvent - "
-                  "MpObjectReference not found for "
-                  "hitData.target {:x}",
-                  hitData.target);
-    return nullptr;
-  }
-
   auto& browser = partOne.worldState.GetEspm().GetBrowser();
   std::array<VarValue, 7> args;
   args[0] = VarValue(aggressor->ToGameObject()); // akAgressor
@@ -1244,7 +1260,5 @@ std::shared_ptr<MpObjectReference> ActionListener::TrySendPapyrusOnHitEvent(
   args[4] = VarValue(hitData.isSneakAttack); // abSneakAttack
   args[5] = VarValue(hitData.isBashAttack);  // abBashAttack
   args[6] = VarValue(hitData.isHitBlocked);  // abHitBlocked
-  ref->SendPapyrusEvent("OnHit", args.data(), args.size());
-
-  return ref;
+  target->SendPapyrusEvent("OnHit", args.data(), args.size());
 }
