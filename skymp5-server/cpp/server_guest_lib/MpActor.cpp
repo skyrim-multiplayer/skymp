@@ -1203,7 +1203,7 @@ void MpActor::Kill(MpActor* killer, bool shouldTeleport)
                 killer ? killer->GetFormId() : 0);
 
   auto& changeForm = ChangeForm();
-  const float healhPercentageBeforeDeath =
+  const float healthPercentageBeforeDeath =
     changeForm.actorValues.healthPercentage;
   const float magickaPercentageBeforeDeath =
     changeForm.actorValues.magickaPercentage;
