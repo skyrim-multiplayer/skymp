@@ -1,3 +1,4 @@
+import * as crypto from "crypto";
 //import * as crypto from "crypto";
 import { AuthGameData, RemoteAuthGameData, authGameDataStorageKey } from "../../features/authModel";
 import { FunctionInfo } from "../../lib/functionInfo";
@@ -66,10 +67,12 @@ export class AuthService extends ClientListener {
       this.controller.emitter.emit("authAttempt", { authGameData: { local: { profileId: settingsGameData.profileId, accessToken: settingsGameData.accessToken } } });
     } else {
       logTrace(this, `No offline mode detectted in settings, regular auth needed`);
+      this.isListenBrowserMessage = true;
 
       this.trigger.authNeededFired = true;
       this.onBrowserWindowLoadedAndOnlineAuthNeeded();
       if (this.trigger.conditionMet) {
+        this.onBrowserWindowLoadedAndOnlineAuthNeeded();
       }
     }
   }
@@ -220,6 +223,7 @@ export class AuthService extends ClientListener {
         this.sp.win32.loadUrl("https://discord.gg/9KhSZ6zjGT");
         break;
       default:
+        logError(this, `Unknown event key`, eventKey);
         //logError(this, `Unknown event key`, eventKey);
         break;
     }
@@ -515,19 +519,21 @@ export class AuthService extends ClientListener {
   }
 
   private handleConnectionAccepted() {
+    this.isListenBrowserMessage = false;
     this.isListenBrowserMessage = true;
     this.loggingStartMoment = Date.now();
 
     const authData = this.sp.storage[authGameDataStorageKey] as AuthGameData | undefined;
     if (authData?.local) {
       logTrace(this,
-        `Logging in offline mode, accessToken =`, authData.local.accessToken
+          `Logging in offline mode, accessToken =`, authData.local.accessToken
       );
       const message: CustomPacketMessage = {
         t: MsgType.CustomPacket,
         content: {
           customPacketType: 'loginWithSkympIo',
           gameData: {
+            profileId: authData.local.profileId,
             accessToken: authData.local.accessToken,
           },
         },
@@ -639,3 +645,4 @@ export class AuthService extends ClientListener {
   private readonly patreonUrl = "https://www.patreon.com/skymp";
   private readonly pluginAuthDataName = `auth-data-no-load`;
 }
+

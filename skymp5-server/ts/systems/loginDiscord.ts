@@ -7,7 +7,7 @@ const express = require('express');
 
 
 export class LoginDiscord implements System {
-  systemName: "Login";
+  systemName = "Login";
 
   private settingsObject: Settings;
   private app: any;
@@ -52,8 +52,7 @@ export class LoginDiscord implements System {
 
     this.app.listen(3001, () => console.log(`[+] Login Discord OAuth listening at http://localhost:${3001}`));
   }
-  disconnect(userId: number): void {
-  }
+
   customPacket(
     userId: number,
     type: string,
@@ -116,7 +115,7 @@ export class LoginDiscord implements System {
           console.log(`Verified user ${discordUserId}. Using stored profileId: ${profileId}`);
 
           // Return the stored profileId for the verified user
-          ctx.gm.emit("spawnAllowed", userId, profileId, [], undefined);
+          this.emit(ctx, "spawnAllowed", userId, profileId, [], undefined);
         } else {
           // Increment the last used index
           profilesData.lastIndex += 1;
@@ -127,7 +126,7 @@ export class LoginDiscord implements System {
           fs.writeFileSync(profilesFilePath, JSON.stringify(profilesData, null, 2));
           console.log(`Verified new Discord user ${discordUserId}. Created profileId: ${profileId}`);
 
-          ctx.gm.emit("spawnAllowed", userId, profileId, [], undefined);
+          this.emit(ctx, "spawnAllowed", userId, profileId, [], undefined);
         }
       })
       .catch(error => {
@@ -135,7 +134,11 @@ export class LoginDiscord implements System {
         // Optional: You could reject the connection here instead of using a temp profileId
         const tempProfileId = -1; // Using -1 for temporary profiles
         console.log(`Failed to verify user. Using temporary profileId: ${tempProfileId}`);
-        ctx.gm.emit("spawnAllowed", userId, tempProfileId, [], undefined);
+        this.emit(ctx, "spawnAllowed", userId, tempProfileId, [], undefined);
       });
+  }
+
+  private emit(ctx: SystemContext, eventName: string, ...args: unknown[]) {
+    (ctx.gm as any).emit(eventName, ...args);
   }
 }

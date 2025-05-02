@@ -18,7 +18,7 @@ export class Api implements System {
     this.app = express({ port: this.port });
     this.app.use(cors());
 
-    this.app.get('/api/server-info', async ({ query }: any, response: any) => {
+    this.app.get('/api/server-info', async ({ query }: { query: any }, response: any) => {
       const online = this.getCurrentOnline(ctx.svr);
       const maxPlayers = this.maxPlayers;
 
