@@ -3,6 +3,7 @@
 #include "EventsApi.h"
 #include "JsUtils.h"
 #include "SkyrimPlatform.h"
+#include "TickHandler.h"
 
 namespace {
 inline void SendEvent(const char* eventName)
@@ -65,6 +66,8 @@ void EventHandler::HandleSKSEMessage(SKSE::MessagingInterface::Message* msg)
 {
   switch (msg->type) {
     case SKSE::MessagingInterface::kDataLoaded: {
+      TickHandler::GetSingleton()->Update();
+
       EventManager::Init();
       SendSimpleEventOnTick("skyrimLoaded");
     } break;
@@ -155,7 +158,8 @@ EventResult EventHandler::ProcessEvent(
     event->target.get() ? event->target.get()->As<RE::Actor>() : nullptr;
 
   if (targetActor) {
-    for (RE::ActiveEffect* eff : *targetActor->GetActiveEffectList()) {
+    for (RE::ActiveEffect* eff :
+         *targetActor->AsMagicTarget()->GetActiveEffectList()) {
       if (eff->usUniqueID == event->activeEffectUniqueID) {
         auto baseMagicEffect = eff->GetBaseObject();
         effectData.baseMagicEffectId =
@@ -1353,13 +1357,17 @@ EventResult EventHandler::ProcessEvent(
     }
 
     const bool isLeftHand =
-      caster->selectedSpells[RE::Actor::SlotTypes::kLeftHand] == spell;
+      caster->GetActorRuntimeData()
+        .selectedSpells[RE::Actor::SlotTypes::kLeftHand] == spell;
     const bool isRightHand =
-      caster->selectedSpells[RE::Actor::SlotTypes::kRightHand] == spell;
+      caster->GetActorRuntimeData()
+        .selectedSpells[RE::Actor::SlotTypes::kRightHand] == spell;
     const bool isVoise =
-      caster->selectedSpells[RE::Actor::SlotTypes::kUnknown] == spell;
+      caster->GetActorRuntimeData()
+        .selectedSpells[RE::Actor::SlotTypes::kUnknown] == spell;
     const bool isInstant =
-      caster->selectedSpells[RE::Actor::SlotTypes::kPowerOrShout] == spell;
+      caster->GetActorRuntimeData()
+        .selectedSpells[RE::Actor::SlotTypes::kPowerOrShout] == spell;
 
     const bool isCastValid = isLeftHand || isRightHand || isVoise || isInstant;
 

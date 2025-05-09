@@ -15,7 +15,6 @@
 #include "TPOverlayService.h"
 #include "TPRenderSystemD3D11.h"
 #include "TextsCollection.h"
-#include "TickHandler.h"
 
 extern CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
 
@@ -156,8 +155,6 @@ DLLEXPORT bool SKSEAPI SKSEPlugin_Load_Impl(const SKSE::LoadInterface* skse)
   // init custom events first
   // and the rest at DataLoaded, to be safe
   EventManager::InitCustom();
-
-  TickHandler::GetSingleton()->Update();
 
   TESModPlatform::onPapyrusUpdate = OnUpdate;
 
