@@ -14,12 +14,14 @@
 #include "formulas/SweetPieDamageFormula.h"
 #include "formulas/SweetPieSpellDamageFormula.h"
 #include "formulas/TES5DamageFormula.h"
+#include "gamemode_events/DeathEvent.h"
 #include "libespm/IterateFields.h"
 #include "papyrus-vm/Utils.h"
 #include "property_bindings/PropertyBindingFactory.h"
 #include "save_storages/SaveStorageFactory.h"
 #include "script_objects/EspmGameObject.h"
 #include "script_storages/ScriptStorageFactory.h"
+#include <algorithm>
 #include <cassert>
 #include <cctype>
 #include <memory>
@@ -1549,4 +1551,40 @@ Napi::Value ScampServer::SP3DynamicCast(const Napi::CallbackInfo& info)
   } catch (std::exception& e) {
     throw Napi::Error::New(info.Env(), std::string(e.what()));
   }
+}
+
+bool ScampServer::IsGameModeInsideDeathEventHandler(
+  uint32_t dyingFormId, float* outHealthPercentageBeforeDeath,
+  float* outMagickaPercentageBeforeDeath,
+  float* outStaminaPercentageBeforeDeath) const
+{
+  auto& stack = partOne->worldState.currentGameModeEventsStack;
+  auto it = std::find_if(
+    stack.begin(), stack.end(), [dyingFormId](GameModeEvent* event) {
+      auto deathEvent = dynamic_cast<DeathEvent*>(event);
+      return deathEvent && deathEvent->GetDyingActorId() == dyingFormId;
+    });
+
+  if (it == stack.end()) {
+    return false;
+  }
+
+  auto deathEvent = dynamic_cast<DeathEvent*>(*it);
+
+  if (outHealthPercentageBeforeDeath) {
+    *outHealthPercentageBeforeDeath =
+      deathEvent->GetHealthPercentageBeforeDeath();
+  }
+
+  if (outMagickaPercentageBeforeDeath) {
+    *outMagickaPercentageBeforeDeath =
+      deathEvent->GetMagickaPercentageBeforeDeath();
+  }
+
+  if (outStaminaPercentageBeforeDeath) {
+    *outStaminaPercentageBeforeDeath =
+      deathEvent->GetStaminaPercentageBeforeDeath();
+  }
+
+  return true;
 }
