@@ -1,4 +1,5 @@
 import * as crypto from "crypto";
+//import * as crypto from "crypto";
 import { AuthGameData, RemoteAuthGameData, authGameDataStorageKey } from "../../features/authModel";
 import { FunctionInfo } from "../../lib/functionInfo";
 import { ClientListener, CombinedController, Sp } from "./clientListener";
@@ -60,14 +61,16 @@ export class AuthService extends ClientListener {
 
     const settingsGameData = this.sp.settings["skymp5-client"]["gameData"] as any;
     const isOfflineMode = Number.isInteger(settingsGameData?.profileId);
+    this.isListenBrowserMessage = true;
     if (isOfflineMode) {
       logTrace(this, `Offline mode detected in settings, emitting auth event with authGameData.local`);
-      this.controller.emitter.emit("authAttempt", { authGameData: { local: { profileId: settingsGameData.profileId } } });
+      this.controller.emitter.emit("authAttempt", { authGameData: { local: { profileId: settingsGameData.profileId, accessToken: settingsGameData.accessToken } } });
     } else {
       logTrace(this, `No offline mode detectted in settings, regular auth needed`);
-      this.setListenBrowserMessage(true, 'authNeeded event received');
+      this.isListenBrowserMessage = true;
 
       this.trigger.authNeededFired = true;
+      this.onBrowserWindowLoadedAndOnlineAuthNeeded();
       if (this.trigger.conditionMet) {
         this.onBrowserWindowLoadedAndOnlineAuthNeeded();
       }
@@ -113,8 +116,6 @@ export class AuthService extends ClientListener {
         logTrace(this, 'loginFailedNotLoggedViaDiscord received');
         browserState.loginFailedReason = 'войдите через discord';
         browserState.comment = '';
-        this.setListenBrowserMessage(true, 'loginFailedNotLoggedViaDiscord received');
-        this.loggingStartMoment = 0;
         this.sp.browser.executeJavaScript(new FunctionInfo(this.loginFailedWidgetSetter).getText({ events, browserState, authData: authData }));
         break;
       case 'loginFailedNotInTheDiscordServer':
@@ -123,8 +124,6 @@ export class AuthService extends ClientListener {
         logTrace(this, 'loginFailedNotInTheDiscordServer received');
         browserState.loginFailedReason = 'вступите в discord сервер';
         browserState.comment = '';
-        this.setListenBrowserMessage(true, 'loginFailedNotInTheDiscordServer received');
-        this.loggingStartMoment = 0;
         this.sp.browser.executeJavaScript(new FunctionInfo(this.loginFailedWidgetSetter).getText({ events, browserState, authData: authData }));
         break;
       case 'loginFailedBanned':
@@ -133,8 +132,6 @@ export class AuthService extends ClientListener {
         logTrace(this, 'loginFailedBanned received');
         browserState.loginFailedReason = 'вы забанены';
         browserState.comment = '';
-        this.setListenBrowserMessage(true, 'loginFailedBanned received');
-        this.loggingStartMoment = 0;
         this.sp.browser.executeJavaScript(new FunctionInfo(this.loginFailedWidgetSetter).getText({ events, browserState, authData: authData }));
         break;
       case 'loginFailedIpMismatch':
@@ -143,8 +140,6 @@ export class AuthService extends ClientListener {
         logTrace(this, 'loginFailedIpMismatch received');
         browserState.loginFailedReason = 'что это было?';
         browserState.comment = '';
-        this.setListenBrowserMessage(true, 'loginFailedIpMismatch received');
-        this.loggingStartMoment = 0;
         this.sp.browser.executeJavaScript(new FunctionInfo(this.loginFailedWidgetSetter).getText({ events, browserState, authData: authData }));
         break;
     }
@@ -174,6 +169,9 @@ export class AuthService extends ClientListener {
     catch (e) {
       logError(this, "Failed to call setTimeout");
     }
+
+    // Launch checkLoginState loop
+    this.checkLoginState();
   }
 
   private onBrowserMessage(e: BrowserMessageEvent) {
@@ -192,9 +190,6 @@ export class AuthService extends ClientListener {
         browserState.comment = 'открываем браузер...';
         this.refreshWidgets();
         this.sp.win32.loadUrl(`${settingsService.getMasterUrl()}/api/users/login-discord?state=${this.discordAuthState}`);
-
-        // Launch checkLoginState loop
-        this.checkLoginState();
         break;
       case events.authAttempt:
         if (authData === null) {
@@ -202,7 +197,6 @@ export class AuthService extends ClientListener {
           this.refreshWidgets();
           break;
         }
-
         this.writeAuthDataToDisk(authData);
         this.controller.emitter.emit("authAttempt", { authGameData: { remote: authData } });
 
@@ -230,6 +224,7 @@ export class AuthService extends ClientListener {
         break;
       default:
         logError(this, `Unknown event key`, eventKey);
+        //logError(this, `Unknown event key`, eventKey);
         break;
     }
   }
@@ -266,11 +261,6 @@ export class AuthService extends ClientListener {
 
     const settingsService = this.controller.lookupListener(SettingsService);
     const timersService = this.controller.lookupListener(TimersService);
-
-    // Social engineering protection, don't show the full state
-    const halfDiscordAuthState = this.discordAuthState.slice(0, 16);
-
-    logTrace(this, `Checking login state`, halfDiscordAuthState, '...');
 
     new this.sp.HttpClient(settingsService.getMasterUrl())
       .get("/api/users/login-discord/status?state=" + this.discordAuthState, undefined,
@@ -524,18 +514,19 @@ export class AuthService extends ClientListener {
       this.controller.once("update", () => {
         this.sp.Game.disablePlayerControls(true, true, true, true, true, true, true, true, 0);
       });
-      this.setListenBrowserMessage(true, 'connectionDenied event received');
+      this.isListenBrowserMessage = true;
     }
   }
 
   private handleConnectionAccepted() {
-    this.setListenBrowserMessage(false, 'connectionAccepted event received');
+    this.isListenBrowserMessage = false;
+    this.isListenBrowserMessage = true;
     this.loggingStartMoment = Date.now();
 
     const authData = this.sp.storage[authGameDataStorageKey] as AuthGameData | undefined;
     if (authData?.local) {
       logTrace(this,
-        `Logging in offline mode, profileId =`, authData.local.profileId
+          `Logging in offline mode, accessToken =`, authData.local.accessToken
       );
       const message: CustomPacketMessage = {
         t: MsgType.CustomPacket,
@@ -543,6 +534,7 @@ export class AuthService extends ClientListener {
           customPacketType: 'loginWithSkympIo',
           gameData: {
             profileId: authData.local.profileId,
+            accessToken: authData.local.accessToken,
           },
         },
       };
@@ -621,17 +613,16 @@ export class AuthService extends ClientListener {
     this.playerEverSawActualGameplay = true;
   }
 
-  private isListenBrowserMessage() {
-    return this._isListenBrowserMessage;
-  }
+  // private showConnectionError() {
+  //   // TODO: unhardcode it or render via browser
+  //   this.sp.printConsole("Server connection failed. This may be caused by one of the following:");
+  //   this.sp.printConsole("1. You are not present on the SkyMP Discord server");
+  //   this.sp.printConsole("2. You have been banned by server admins");
+  //   this.sp.printConsole("3. There is some technical issue. Try linking your Discord account again");
+  //   this.sp.printConsole("If you feel that something is wrong, please contact us on Discord.");
+  // };
 
-  private setListenBrowserMessage(value: boolean, reason: string) {
-    logTrace(this, `setListenBrowserMessage:`, value, `reason:`, reason);
-    this._isListenBrowserMessage = value;
-  }
-
-  private _isListenBrowserMessage = false;
-
+  private isListenBrowserMessage = false;
   private trigger = {
     authNeededFired: false,
     browserWindowLoadedFired: false,
@@ -640,7 +631,7 @@ export class AuthService extends ClientListener {
       return this.authNeededFired && this.browserWindowLoadedFired
     }
   };
-  private discordAuthState = crypto.randomBytes(32).toString('hex');
+  private discordAuthState = "" + Math.random();//crypto.randomBytes(32).toString('hex');
   private authDialogOpen = false;
 
   private loggingStartMoment = 0;
@@ -654,3 +645,4 @@ export class AuthService extends ClientListener {
   private readonly patreonUrl = "https://www.patreon.com/skymp";
   private readonly pluginAuthDataName = `auth-data-no-load`;
 }
+

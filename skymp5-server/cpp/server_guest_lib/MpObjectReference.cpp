@@ -82,8 +82,8 @@ public:
   OccupantDestroyEventSink(WorldState& wst_,
                            MpObjectReference* untrustedRefPtr_)
     : wst(wst_)
-    , untrustedRefPtr(untrustedRefPtr_)
-    , refId(untrustedRefPtr_->GetFormId())
+      , untrustedRefPtr(untrustedRefPtr_)
+      , refId(untrustedRefPtr_->GetFormId())
   {
   }
 
@@ -116,8 +116,8 @@ public:
   OccupantDisableEventSink(WorldState& wst_,
                            MpObjectReference* untrustedRefPtr_)
     : wst(wst_)
-    , untrustedRefPtr(untrustedRefPtr_)
-    , refId(untrustedRefPtr_->GetFormId())
+      , untrustedRefPtr(untrustedRefPtr_)
+      , refId(untrustedRefPtr_->GetFormId())
   {
   }
 
@@ -156,7 +156,7 @@ struct AnimGraphHolder
   AnimGraphHolder() { boolVariables.fill(false); }
 
   std::array<bool, static_cast<size_t>(AnimationVariableBool::kNumVariables)>
-    boolVariables;
+  boolVariables;
 };
 
 struct ScriptState
@@ -217,9 +217,9 @@ MpObjectReference::MpObjectReference(
   uint32_t baseId_, std::string baseType_,
   std::optional<NiPoint3> primitiveBoundsDiv2)
   : callbacks(new FormCallbacks(callbacks_))
-  , baseId(baseId_)
-  , baseType(baseType_)
-  , ChangeFormGuard(MakeChangeForm(locationalData_), this)
+    , baseId(baseId_)
+    , baseType(baseType_)
+    , ChangeFormGuard(MakeChangeForm(locationalData_), this)
 {
   pImpl.reset(new Impl);
   asObjectReference = this;
@@ -294,7 +294,7 @@ std::chrono::system_clock::duration MpObjectReference::GetRelootTime() const
   }
 
   if (!std::strcmp(baseType.data(), "FLOR") ||
-      !std::strcmp(baseType.data(), "TREE")) {
+    !std::strcmp(baseType.data(), "TREE")) {
     return std::chrono::hours(1);
   } else if (!std::strcmp(baseType.data(), "DOOR")) {
     return std::chrono::seconds(3);
@@ -483,7 +483,7 @@ void MpObjectReference::Activate(MpObjectReference& activationSource,
     bool activationBlockedByMpApi = !activateEvent.Fire(GetParent());
 
     if (!activationBlockedByMpApi &&
-        (!activationBlocked || defaultProcessingOnly)) {
+      (!activationBlocked || defaultProcessingOnly)) {
       ProcessActivateNormal(activationSource);
       ActivateChilds();
     } else {
@@ -557,21 +557,21 @@ void MpObjectReference::SetPos(const NiPoint3& newPos, SetPosMode setPosMode)
           auto id = emitterRefr->GetFormId();
           auto myId = GetFormId();
           wst->SetTimer(std::chrono::seconds(0))
-            .Then([wst, id, inside, me, myId, this](Viet::Void) {
-              if (wst->LookupFormById(myId).get() != this) {
-                wst->logger->error("Refr pointer expired", id);
-                return;
-              }
-              auto& emitter = wst->LookupFormById(id);
-              MpObjectReference* emitterRefr =
-                emitter ? emitter->AsObjectReference() : nullptr;
-              if (!emitterRefr) {
-                wst->logger->error("Emitter not found in timer ({0:x})", id);
-                return;
-              }
-              emitterRefr->SendPapyrusEvent(
-                inside ? "OnTriggerEnter" : "OnTriggerLeave", &me, 1);
-            });
+             .Then([wst, id, inside, me, myId, this](Viet::Void) {
+               if (wst->LookupFormById(myId).get() != this) {
+                 wst->logger->error("Refr pointer expired", id);
+                 return;
+               }
+               auto& emitter = wst->LookupFormById(id);
+               MpObjectReference* emitterRefr =
+                 emitter ? emitter->AsObjectReference() : nullptr;
+               if (!emitterRefr) {
+                 wst->logger->error("Emitter not found in timer ({0:x})", id);
+                 return;
+               }
+               emitterRefr->SendPapyrusEvent(
+                 inside ? "OnTriggerEnter" : "OnTriggerLeave", &me, 1);
+             });
 
           if (inside) {
             primitivesWeAreInside->insert(emitterRefr);
@@ -632,7 +632,7 @@ void MpObjectReference::PutItem(MpActor& ac, const Inventory::Entry& e)
   if (this->occupant != &ac) {
     std::stringstream err;
     err << std::hex << "Actor 0x" << ac.GetFormId() << " doesn't occupy ref 0x"
-        << GetFormId();
+      << GetFormId();
     throw std::runtime_error(err.str());
   }
 
@@ -646,7 +646,7 @@ void MpObjectReference::TakeItem(MpActor& ac, const Inventory::Entry& e)
   if (this->occupant != &ac) {
     std::stringstream err;
     err << std::hex << "Actor 0x" << ac.GetFormId() << " doesn't occupy ref 0x"
-        << GetFormId();
+      << GetFormId();
     throw std::runtime_error(err.str());
   }
 
@@ -981,7 +981,7 @@ void MpObjectReference::Subscribe(MpObjectReference* emitter,
   }
 
   if (!emitter->pImpl->onInitEventSent &&
-      listener->GetChangeForm().profileId != -1) {
+    listener->GetChangeForm().profileId != -1) {
     emitter->pImpl->onInitEventSent = true;
     emitter->SendPapyrusEvent("OnInit");
     emitter->SendPapyrusEvent("OnCellLoad");
@@ -1101,7 +1101,7 @@ const std::set<MpObjectReference*>& MpObjectReference::GetListeners() const
 }
 
 const std::vector<MpActor*>& MpObjectReference::GetActorListeners()
-  const noexcept
+const noexcept
 {
   return actorListenerArray;
 }
@@ -1194,8 +1194,8 @@ void MpObjectReference::ApplyChangeForm(const MpChangeForm& changeForm)
 
   if (ChangeForm().formDesc != changeForm.formDesc) {
     throw std::runtime_error("Expected formDesc to be " +
-                             ChangeForm().formDesc.ToString() +
-                             ", but found " + changeForm.formDesc.ToString());
+      ChangeForm().formDesc.ToString() +
+      ", but found " + changeForm.formDesc.ToString());
   }
 
   if (changeForm.profileId >= 0) {
@@ -1314,8 +1314,9 @@ void MpObjectReference::Init(WorldState* parent, uint32_t formId,
   MpForm::Init(parent, formId, hasChangeForm);
 
   // We should queue created form for saving as soon as it is initialized
-  const auto mode = (!hasChangeForm && !IsEspmForm()) ? Mode::RequestSave
-                                                      : Mode::NoRequestSave;
+  const auto mode = (!hasChangeForm && !IsEspmForm())
+    ? Mode::RequestSave
+    : Mode::NoRequestSave;
 
   EditChangeForm(
     [&](MpChangeFormREFR& changeForm) {
@@ -1541,6 +1542,12 @@ void MpObjectReference::ProcessActivateNormal(
         new OccupantDisableEventSink(*GetParent(), this));
       this->occupant->AddEventSink(this->occupantDisableSink);
     }
+  } else if (t == espm::NPC_::kType) {
+    spdlog::info("MpObjectReference::ProcessActivate t NPC_ {} -",
+                 t.ToString());
+    auto data =
+        espm::Convert<espm::NPC_>(base.rec)->GetData(compressedFieldsCache);
+
   }
 }
 
@@ -1596,21 +1603,22 @@ void MpObjectReference::ActivateChilds()
 
     auto delayMs = Viet::TimeUtils::To<std::chrono::milliseconds>(delay);
     worldState->SetTimer(delayMs).Then([worldState, childRefrId,
-                                        myFormId](Viet::Void) {
-      auto& childForm = worldState->LookupFormById(childRefrId);
-      MpObjectReference* childRefr =
-        childForm ? childForm->AsObjectReference() : nullptr;
-      if (!childRefr) {
-        spdlog::warn("MpObjectReference::ActivateChilds {:x} - Bad/missing "
-                     "activation child {:x}",
-                     myFormId, childRefrId);
-        return;
-      }
+        myFormId](Viet::Void) {
+        auto& childForm = worldState->LookupFormById(childRefrId);
+        MpObjectReference* childRefr =
+          childForm ? childForm->AsObjectReference() : nullptr;
+        if (!childRefr) {
+          spdlog::warn("MpObjectReference::ActivateChilds {:x} - Bad/missing "
+                       "activation child {:x}",
+                       myFormId, childRefrId);
+          return;
+        }
 
-      // Not sure about activationSource and defaultProcessingOnly in this
-      // case I'll try to keep vanilla scripts working
-      childRefr->Activate(worldState->GetFormAt<MpObjectReference>(myFormId));
-    });
+        // Not sure about activationSource and defaultProcessingOnly in this
+        // case I'll try to keep vanilla scripts working
+        childRefr->
+          Activate(worldState->GetFormAt<MpObjectReference>(myFormId));
+      });
   }
 }
 
@@ -1747,7 +1755,7 @@ void MpObjectReference::InitScripts()
       GetParent()->GetScriptStorage()->ListScripts(false);
     for (auto& script : scriptData->scripts) {
       if (scriptsInStorage.count(
-            { script.scriptName.begin(), script.scriptName.end() })) {
+        { script.scriptName.begin(), script.scriptName.end() })) {
 
         if (std::count(scriptNames.begin(), scriptNames.end(),
                        script.scriptName) == 0) {
@@ -1763,7 +1771,7 @@ void MpObjectReference::InitScripts()
   // exterior objects
   // TODO: make is a server setting with proper conditions or an API
   if (GetParent() && GetParent()->disableVanillaScriptsInExterior &&
-      GetFormId() < 0x05000000) {
+    GetFormId() < 0x05000000) {
     auto cellOrWorld = GetCellOrWorld().ToFormId(GetParent()->espmFiles);
     auto lookupRes =
       GetParent()->GetEspm().GetBrowser().LookupById(cellOrWorld);
@@ -2008,7 +2016,7 @@ void MpObjectReference::CheckInteractionAbility(MpObjectReference& refr)
 }
 
 void MpObjectReference::SendMessageToActorListeners(const IMessageBase& msg,
-                                                    bool reliable) const
+  bool reliable) const
 {
   for (auto listener : GetActorListeners()) {
     listener->SendToUser(msg, true);

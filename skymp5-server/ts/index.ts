@@ -31,6 +31,8 @@ import * as os from "os";
 
 import * as manifestGen from "./manifestGen";
 import { createScampServer } from "./scampNative";
+import { LoginDiscord } from "./systems/loginDiscord";
+import { Api } from "./systems/api";
 
 const gamemodeCache = new Map<string, string>();
 
@@ -191,11 +193,13 @@ const main = async () => {
   const log = console.log;
   const systems = new Array<System>();
   systems.push(
-    new MasterClient(log, port, master, maxPlayers, name, masterKey, 5000, offlineMode),
+    //new MasterClient(log, port, master, maxPlayers, name, masterKey, 5000, offlineMode),
     new Spawn(log),
-    new Login(log, maxPlayers, master, port, masterKey, offlineMode),
+    //new Login(log, maxPlayers, master, port, masterKey, offlineMode),
+    new LoginDiscord(),
     new DiscordBanSystem(),
-    new MasterApiBalanceSystem(log, maxPlayers, master, port, masterKey, offlineMode),
+    //new MasterApiBalanceSystem(log, maxPlayers, master, port, masterKey, offlineMode),
+    new Api(log, maxPlayers),
   );
 
   setupStreams(scampNative.getScampNative());
@@ -268,7 +272,7 @@ const main = async () => {
 
   server.on("customPacket", (userId: number, rawContent: string) => {
     const content = JSON.parse(rawContent);
-
+    console.log("customPacket", userId, content);
     const type = `${content.customPacketType}`;
     delete content.customPacketType;
 

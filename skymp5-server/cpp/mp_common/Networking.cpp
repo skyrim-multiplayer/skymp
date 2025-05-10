@@ -148,6 +148,7 @@ public:
       throw std::runtime_error("Peer startup failed with code " +
                                std::to_string(static_cast<int>(res)));
     }
+
     peer->SetMaximumIncomingConnections(maxConnections);
     peer->SetTimeoutTime(timeoutTimeMs, {});
     if (!password.empty()) {

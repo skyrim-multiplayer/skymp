@@ -17,7 +17,7 @@ public:
     {
       std::lock_guard l(initMutex);
       if (!pool) {
-        pool = std::make_unique<BS::light_thread_pool>(numThreads);
+        pool = std::make_unique<BS::thread_pool>(numThreads);
       }
     }
     return pool->submit_task(task);
@@ -26,7 +26,7 @@ public:
   void PushAndWait(const std::function<void()>& task) { Push(task).wait(); }
 
 private:
-  std::unique_ptr<BS::light_thread_pool> pool;
+  std::unique_ptr<BS::thread_pool> pool;
   const int32_t numThreads;
   std::mutex initMutex;
 };

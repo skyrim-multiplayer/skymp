@@ -1,10 +1,9 @@
-
 // TODO: send event instead of direct dependency on FormView class
-import { FormView } from "../../view/formView";
-import { QueryKeyCodeBindings } from "../events/queryKeyCodeBindings";
+import {FormView} from "../../view/formView";
+import {QueryKeyCodeBindings} from "../events/queryKeyCodeBindings";
 
-import { ClientListener, CombinedController, Sp } from "./clientListener";
-import { BrowserMessageEvent, DxScanCode, Menu, MenuCloseEvent, MenuOpenEvent } from "skyrimPlatform";
+import {ClientListener, CombinedController, Sp} from "./clientListener";
+import {BrowserMessageEvent, DxScanCode, Menu, MenuCloseEvent, MenuOpenEvent} from "skyrimPlatform";
 
 const unfocusEventString = `window.dispatchEvent(new CustomEvent('skymp5-client:browserUnfocused', {}))`;
 const focusEventString = `window.dispatchEvent(new CustomEvent('skymp5-client:browserFocused', {}))`;
@@ -22,6 +21,8 @@ export class BrowserService extends ClientListener {
     this.controller.on("menuClose", (e) => this.onMenuClose(e));
   }
 
+  private isVDown = false;
+
   // TODO: keycodes should be configurable
   private onQueryKeyCodeBindings(e: QueryKeyCodeBindings) {
     if (e.isDown([DxScanCode.F1])) {
@@ -35,8 +36,7 @@ export class BrowserService extends ClientListener {
       this.sp.browser.setFocused(newState);
       if (newState) {
         this.sp.browser.executeJavaScript(focusEventString);
-      }
-      else {
+      } else {
         this.sp.browser.executeJavaScript(unfocusEventString);
       }
     }
@@ -50,6 +50,17 @@ export class BrowserService extends ClientListener {
       if (this.sp.browser.isFocused()) {
         this.sp.browser.setFocused(false);
         this.sp.browser.executeJavaScript(unfocusEventString);
+      }
+    }
+    if (e.isDown([DxScanCode.V])) {
+      if (!this.isVDown) {
+        this.isVDown = true;
+        this.sp.browser.executeJavaScript("window?.setTalking(true)");
+      }
+    } else {
+      if (this.isVDown) {
+        this.isVDown = false;
+        this.sp.browser.executeJavaScript("window?.setTalking(false)");
       }
     }
   }

@@ -86,7 +86,7 @@ export class NetworkingService extends ClientListener {
           // TODO: in theory can be empty jsonContent and non-empty error
 
           let msgAny: AnyMessage;
-          
+
           if (rawContent === null) {
             msgAny = {} as AnyMessage;
             logError(this, "null rawContent");

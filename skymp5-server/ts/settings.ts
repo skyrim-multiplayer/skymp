@@ -1,5 +1,5 @@
 import * as fs from 'fs';
-import * as crypto from "crypto";
+//import * as crypto from "crypto";
 import { Octokit } from '@octokit/rest';
 import { RequestError as OctokitRequestError } from '@octokit/request-error';
 import { ArgumentParser } from 'argparse';
@@ -11,6 +11,8 @@ export interface DiscordAuthSettings {
   banRoleId: string;
   eventLogChannelId?: string;
   hideIpRoleId?: string;
+  clientId: string;
+  callbackUrl: string;
 }
 
 export class Settings {
@@ -180,7 +182,7 @@ async function fetchServerSettings(): Promise<any> {
     delete readDumpNoSha512['_sha512_'];
   }
 
-  const expectedSha512 = readDumpNoSha512 ? crypto.createHash('sha512').update(JSON.stringify(readDumpNoSha512)).digest('hex') : '';
+  const expectedSha512 = readDumpNoSha512 ? "" + Math.random() : '';//crypto.createHash('sha512').update(JSON.stringify(readDumpNoSha512)).digest('hex') : '';
 
   if (readDump && readDump["_meta_"] === dumpFileNameSuffix && readDump["_sha512_"] === expectedSha512) {
     console.log(`Loading settings dump from ${dumpFileName}`);
@@ -304,7 +306,7 @@ async function fetchServerSettings(): Promise<any> {
     if (JSON.stringify(serverSettings) !== JSON.stringify(JSON.parse(rawSettings))) {
       console.log(`Dumping ${dumpFileName} for cache and debugging`);
       serverSettings["_meta_"] = dumpFileNameSuffix;
-      serverSettings["_sha512_"] = crypto.createHash('sha512').update(JSON.stringify(serverSettings)).digest('hex');
+      serverSettings["_sha512_"] = "" + Math.random();//crypto.createHash('sha512').update(JSON.stringify(serverSettings)).digest('hex');
       fs.writeFileSync(dumpFileName, JSON.stringify(serverSettings, null, 2));
     }
   }
