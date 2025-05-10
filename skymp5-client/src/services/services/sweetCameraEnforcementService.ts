@@ -207,8 +207,16 @@ export class SweetCameraEnforcementService extends ClientListener {
 
         if (!animEvent) return;
 
-        logTrace(this, "Starting anims from keyboard is disabled in this version")
-        // this.tryInvokeAnim(animEvent, false);
+        //logTrace(this, "Starting anims from keyboard is disabled in this version")
+        this.tryInvokeAnim(animEvent, {
+            weaponDrawnAllowed: false,
+            furnitureAllowed: false,
+            exitAnimName: null,
+            interruptAnimName: null,
+            timeMs: 0,
+            isPlayExitAnimAfterwardsEnabled: true,
+            parentAnimEventName: null
+        });
     }
 
     private tryInvokeAnim(animEvent: string, options: InvokeAnimOptions): { success: boolean, reason?: string } {
