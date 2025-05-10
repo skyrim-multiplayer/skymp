@@ -837,7 +837,7 @@ float GetSqrDistanceToBounds(const MpActor& actor, const MpActor& target)
 bool IsBowOrCrossbowShot(const HitData& hitData, WorldState* worldState)
 {
   if (!hitData.isBashAttack) {
-    if (auto worldState = actor.GetParent()) {
+    if (worldState) {
       if (worldState->HasEspm()) {
         auto weapDNAM =
           espm::GetData<espm::WEAP>(hitData.source, worldState).weapDNAM;
