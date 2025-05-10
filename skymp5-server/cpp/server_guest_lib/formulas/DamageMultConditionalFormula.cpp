@@ -50,7 +50,7 @@ float DamageMultConditionalFormula::CalculateDamage(
   for (auto [key, value] : settings->entries) {
     if (value.physicalDamageMultiplier.has_value()) {
       // TODO
-      bool enableLogging = false;
+      bool enableLogging = true;
 
       std::vector<int> conditionResolutions;
 
@@ -98,7 +98,7 @@ float DamageMultConditionalFormula::CalculateDamage(
   for (auto [key, value] : settings->entries) {
     if (value.magicDamageMultiplier.has_value()) {
       // TODO
-      bool enableLogging = false;
+      bool enableLogging = true;
 
       std::vector<int> conditionResolutions;
 
