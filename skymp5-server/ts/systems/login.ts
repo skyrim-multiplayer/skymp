@@ -123,10 +123,6 @@ export class Login implements System {
         let roles = new Array<string>();
 
         if (discordAuth && profile.discordId) {
-          // if (!profile.discordId) {
-          //   ctx.svr.sendCustomPacket(userId, loginFailedNotLoggedViaDiscord);
-          //   throw new Error("Not logged in via Discord");
-          // }
           const guidBeforeAsyncOp = ctx.svr.getUserGuid(userId);
           const response = await this.fetchRetry(
             `https://discord.com/api/guilds/${discordAuth.guildId}/members/${profile.discordId}`,
@@ -176,15 +172,17 @@ export class Login implements System {
             ctx.svr.sendCustomPacket(userId, loginFailedBanned);
             throw new Error("Banned");
           }
+        }
 
-          if ((ctx.svr as any).onLoginAttempt) {
-            const isContinue = (ctx.svr as any).onLoginAttempt(profile.id);
-            if (!isContinue) {
-              ctx.svr.sendCustomPacket(userId, loginFailedBanned);
-              throw new Error("Banned by gamemode");
-            }
+        if ((ctx.svr as any).onLoginAttempt) {
+          const isContinue = (ctx.svr as any).onLoginAttempt(profile.id);
+          if (!isContinue) {
+            ctx.svr.sendCustomPacket(userId, loginFailedBanned);
+            throw new Error("Banned by gamemode");
           }
+        }
 
+        if (discordAuth && profile.discordId) {
           if (ip !== ctx.svr.getUserIp(userId)) {
             // It's a quick and dirty way to check if it's the same user
             // During async http call the user could free userId and someone else could connect with the same userId
