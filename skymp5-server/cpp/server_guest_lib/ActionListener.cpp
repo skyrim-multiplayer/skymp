@@ -963,7 +963,7 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
   if (!IsBowOrCrossbowShot(hitData, &partOne.worldState)) {
     const NiPoint3& aggressorPos = aggressor->GetPos();
     const NiPoint3& targetPos = targetRef->GetPos();
-    constexpr kExteriorCellWidthUnits = 4096.f;
+    constexpr float kExteriorCellWidthUnits = 4096.f;
     if ((aggressorPos - targetPos).SqrLength() >
         kExteriorCellWidthUnits * kExteriorCellWidthUnits) {
       spdlog::error("ActionListener::OnHit - aggressor and targetRef are too "
