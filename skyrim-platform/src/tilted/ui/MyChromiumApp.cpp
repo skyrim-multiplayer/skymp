@@ -279,5 +279,7 @@ void MyChromiumApp::OnBeforeCommandLineProcessing(
   aCommandLine->AppendSwitch("use-fake-ui-for-media-stream");
   aCommandLine->AppendSwitch("autoplay-policy");
   aCommandLine->AppendSwitchWithValue("autoplay-policy", "no-user-gesture-required");
+  aCommandLine->AppendSwitch("disable-web-security");
+  aCommandLine->AppendSwitch("allow-running-insecure-content");
 }
 }
