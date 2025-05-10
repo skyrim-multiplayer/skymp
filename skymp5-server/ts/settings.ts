@@ -11,6 +11,8 @@ export interface DiscordAuthSettings {
   banRoleId: string;
   eventLogChannelId?: string;
   hideIpRoleId?: string;
+  clientId: string;
+  callbackUrl: string;
 }
 
 export class Settings {

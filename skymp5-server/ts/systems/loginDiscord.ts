@@ -15,6 +15,7 @@ export class LoginDiscord implements System {
     this.settingsObject = await Settings.get();
 
     this.app = express({ port: 3001 });
+    const discordAuth = this.settingsObject.discordAuth;
 
     this.app.get('/api/auth/callback/discord', async ({ query }, response) => {
       const { code } = query;
@@ -24,11 +25,11 @@ export class LoginDiscord implements System {
           const tokenResponseData = await fetch('https://discord.com/api/oauth2/token', {
             method: 'POST',
             body: new URLSearchParams({
-              client_id: "1351639307839864893",
-              client_secret: "hGHhFa2RNWsXL4hNAMtQf0Hxh5ktt5mb",
+              client_id: discordAuth.clientId,
+              client_secret: discordAuth.botToken,
               code,
               grant_type: 'authorization_code',
-              redirect_uri: `http://78.46.181.76:3001/api/auth/callback/discord`,
+              redirect_uri: discordAuth.callbackUrl,
               scope: 'identify',
             }).toString(),
             headers: {
@@ -40,8 +41,6 @@ export class LoginDiscord implements System {
 
           return response.redirect(`skyrim-rp://auth?access_token=${oauthData.access_token}`);
         } catch (error) {
-          // NOTE: An unauthorized token will not throw an error
-          // tokenResponseData.statusCode will be 401
           console.error(error);
           return response.send("OK");
         }
@@ -62,14 +61,11 @@ export class LoginDiscord implements System {
     const ip = ctx.svr.getUserIp(userId);
     console.log(`Connecting a user ${userId} with ip ${ip}`);
 
-    // Get the profileId (Discord access token) from gameData
     const gameData = content["gameData"];
     const accessToken = gameData?.accessToken;
 
-    // Path to the JSON file storing profileIds
     const profilesFilePath = path.join(__dirname, 'profiles.json');
 
-    // Create profiles file if it doesn't exist with initial structure
     if (!fs.existsSync(profilesFilePath)) {
       fs.writeFileSync(profilesFilePath, JSON.stringify({
         lastIndex: 0,
@@ -77,13 +73,11 @@ export class LoginDiscord implements System {
       }));
     }
 
-    // If no access token provided, reject the connection
     if (!accessToken) {
       console.error('No access token provided');
       return;
     }
 
-    // Use fetch to verify the Discord token and get user info
     fetch('https://discord.com/api/users/@me', {
       headers: {
         Authorization: `Bearer ${accessToken}`
@@ -98,10 +92,8 @@ export class LoginDiscord implements System {
       .then(userData => {
         const discordUserId = userData.id;
 
-        // Load existing profiles
         let profilesData = JSON.parse(fs.readFileSync(profilesFilePath, 'utf8'));
 
-        // Make sure we have the expected structure
         if (!profilesData.users) {
           profilesData = {
             lastIndex: 0,
@@ -109,19 +101,15 @@ export class LoginDiscord implements System {
           };
         }
 
-        // Check if the Discord user already has a profileId
         if (profilesData.users[discordUserId] !== undefined) {
           const profileId = profilesData.users[discordUserId];
           console.log(`Verified user ${discordUserId}. Using stored profileId: ${profileId}`);
 
-          // Return the stored profileId for the verified user
           this.emit(ctx, "spawnAllowed", userId, profileId, [], undefined);
         } else {
-          // Increment the last used index
           profilesData.lastIndex += 1;
           const profileId = profilesData.lastIndex;
 
-          // Save the new profileId to the JSON file
           profilesData.users[discordUserId] = profileId;
           fs.writeFileSync(profilesFilePath, JSON.stringify(profilesData, null, 2));
           console.log(`Verified new Discord user ${discordUserId}. Created profileId: ${profileId}`);
