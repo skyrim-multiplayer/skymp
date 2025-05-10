@@ -866,7 +866,7 @@ bool IsDistanceValid(const MpActor& actor, const MpActor& targetActor,
   float reach = GetReach(actor, hitData.source, reachPveHotfixMult);
 
   // For bow/crossbow shots we don't want to check melee radius
-  if (IsBowOrCrossbowShot(hitData, actor->GetParent())) {
+  if (IsBowOrCrossbowShot(hitData, actor.GetParent())) {
     constexpr float kExteriorCellWidthUnits = 4096.f;
     reach = kExteriorCellWidthUnits * 2;
   }
