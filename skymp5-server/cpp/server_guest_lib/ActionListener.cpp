@@ -836,20 +836,33 @@ float GetSqrDistanceToBounds(const MpActor& actor, const MpActor& target)
 
 bool IsBowOrCrossbowShot(const HitData& hitData, WorldState* worldState)
 {
-  if (!hitData.isBashAttack) {
-    if (worldState) {
-      if (worldState->HasEspm()) {
-        auto weapDNAM =
-          espm::GetData<espm::WEAP>(hitData.source, worldState).weapDNAM;
-        if (weapDNAM->animType == espm::WEAP::AnimType::Bow) {
-          return true;
-        } else if (weapDNAM->animType == espm::WEAP::AnimType::Crossbow) {
-          return true;
-        }
-      }
-    }
+  if (!worldState || !worldState->HasEspm()) {
+    return false;
   }
-  return false;
+
+  if (hitData.isBashAttack) {
+    return false;
+  }
+
+  auto sourceLookupRes =
+    worldState->GetEspm().GetBrowser().LookupById(hitData.source);
+  if (!sourceLookupRes.rec) {
+    return false;
+  }
+
+  auto source = espm::Convert<espm::WEAP>(sourceLookupRes.rec);
+  if (!source) {
+    return false;
+  }
+
+  auto weapDNAM = source->GetData(worldState->GetEspmCache()).weapDNAM;
+
+  if (weapDNAM->animType != espm::WEAP::AnimType::Bow &&
+      weapDNAM->animType != espm::WEAP::AnimType::Crossbow) {
+    return false;
+  }
+
+  return true;
 }
 
 bool IsDistanceValid(const MpActor& actor, const MpActor& targetActor,
