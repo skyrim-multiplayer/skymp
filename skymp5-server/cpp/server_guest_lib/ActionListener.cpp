@@ -834,6 +834,24 @@ float GetSqrDistanceToBounds(const MpActor& actor, const MpActor& target)
     .SqrLength();
 }
 
+bool IsBowOrCrossbowShot(const HitData& hitData, WorldState* worldState)
+{
+  if (!hitData.isBashAttack) {
+    if (worldState) {
+      if (worldState->HasEspm()) {
+        auto weapDNAM =
+          espm::GetData<espm::WEAP>(hitData.source, worldState).weapDNAM;
+        if (weapDNAM->animType == espm::WEAP::AnimType::Bow) {
+          return true;
+        } else if (weapDNAM->animType == espm::WEAP::AnimType::Crossbow) {
+          return true;
+        }
+      }
+    }
+  }
+  return false;
+}
+
 bool IsDistanceValid(const MpActor& actor, const MpActor& targetActor,
                      const HitData& hitData)
 {
@@ -848,19 +866,9 @@ bool IsDistanceValid(const MpActor& actor, const MpActor& targetActor,
   float reach = GetReach(actor, hitData.source, reachPveHotfixMult);
 
   // For bow/crossbow shots we don't want to check melee radius
-  if (!hitData.isBashAttack) {
+  if (IsBowOrCrossbowShot(hitData, actor.GetParent())) {
     constexpr float kExteriorCellWidthUnits = 4096.f;
-    if (auto worldState = actor.GetParent()) {
-      if (worldState->HasEspm()) {
-        auto weapDNAM =
-          espm::GetData<espm::WEAP>(hitData.source, worldState).weapDNAM;
-        if (weapDNAM->animType == espm::WEAP::AnimType::Bow) {
-          reach = kExteriorCellWidthUnits * 2;
-        } else if (weapDNAM->animType == espm::WEAP::AnimType::Crossbow) {
-          reach = kExteriorCellWidthUnits * 2;
-        }
-      }
-    }
+    reach = kExteriorCellWidthUnits * 2;
   }
 
   return reach * reach > sqrDistance;
@@ -949,6 +957,20 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
       aggressor->GetFormId(), targetRef->GetFormId(),
       aggressorCellOrWorld.ToFormId(files), targetCellOrWorld.ToFormId(files));
     return;
+  }
+
+  // TODO: repair IsDistanceValid instead
+  if (!IsBowOrCrossbowShot(hitData, &partOne.worldState)) {
+    const NiPoint3& aggressorPos = aggressor->GetPos();
+    const NiPoint3& targetPos = targetRef->GetPos();
+    constexpr float kExteriorCellWidthUnits = 4096.f;
+    if ((aggressorPos - targetPos).SqrLength() >
+        kExteriorCellWidthUnits * kExteriorCellWidthUnits) {
+      spdlog::error("ActionListener::OnHit - aggressor and targetRef are too "
+                    "distant. Aggressor: {:x}, targetRef: {:x}",
+                    aggressor->GetFormId(), targetRef->GetFormId());
+      return;
+    }
   }
 
   if (aggressor->IsDead()) {
