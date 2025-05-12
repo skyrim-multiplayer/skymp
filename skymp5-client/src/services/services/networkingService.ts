@@ -212,6 +212,11 @@ export class NetworkingService extends ClientListener {
               this.controller.emitter.emit("deathStateContainerMessage", event);
               this.controller.emitter.emit("anyMessage", event);
             }
+            else if (msgAny.t === MsgType.UpdateVoiceChatMessage) {
+              const event = { message: msgAny };
+              this.controller.emitter.emit("updateVoiceChatMessage", event);
+              this.controller.emitter.emit("anyMessage", event);
+            }
             // todo: never error
           }
           break;

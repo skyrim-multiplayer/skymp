@@ -7,6 +7,7 @@
 #include "libespm/Loader.h"
 
 #include "SpellCastData.h"
+#include "VoiceChat.h"
 
 class ServerState;
 class WorldState;
@@ -92,6 +93,9 @@ public:
   virtual void OnHit(const RawMessageData& rawMsgData, const HitData& hitData);
 
   virtual void OnUpdateAnimVariables(const RawMessageData& rawMsgData);
+
+  virtual void OnUpdateVoiceChatMessage(const RawMessageData& rawMsgData, uint32_t idx,
+                                        const VoiceChat& data);
 
   virtual void OnSpellCast(const RawMessageData& rawMsgData,
                            const SpellCastData& spellCastData);

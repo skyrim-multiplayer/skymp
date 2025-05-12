@@ -4,6 +4,10 @@ import {QueryKeyCodeBindings} from "../events/queryKeyCodeBindings";
 
 import {ClientListener, CombinedController, Sp} from "./clientListener";
 import {BrowserMessageEvent, DxScanCode, Menu, MenuCloseEvent, MenuOpenEvent} from "skyrimPlatform";
+import {MsgType} from "../../messages";
+import {MessageWithRefrId} from "../events/sendMessageWithRefrIdEvent";
+import {UpdateEquipmentMessage} from "../messages/updateEquipmentMessage";
+import {UpdateVoiceChatMessage} from "../messages/updateVoiceChatMessage";
 
 const unfocusEventString = `window.dispatchEvent(new CustomEvent('skymp5-client:browserUnfocused', {}))`;
 const focusEventString = `window.dispatchEvent(new CustomEvent('skymp5-client:browserFocused', {}))`;
@@ -56,11 +60,35 @@ export class BrowserService extends ClientListener {
       if (!this.isVDown) {
         this.isVDown = true;
         this.sp.browser.executeJavaScript("window?.setTalking(true)");
+
+        let _refrId: number | undefined = undefined;
+        const message: MessageWithRefrId<UpdateVoiceChatMessage> = {
+          t: MsgType.UpdateVoiceChatMessage,
+          data: {isTalking: true},
+          _refrId,
+        }
+
+        this.controller.emitter.emit("sendMessageWithRefrId", {
+          message,
+          reliability: "reliable"
+        });
       }
     } else {
       if (this.isVDown) {
         this.isVDown = false;
         this.sp.browser.executeJavaScript("window?.setTalking(false)");
+
+        let _refrId: number | undefined = undefined;
+        const message: MessageWithRefrId<UpdateVoiceChatMessage> = {
+          t: MsgType.UpdateVoiceChatMessage,
+          data: {isTalking: false},
+          _refrId,
+        }
+
+        this.controller.emitter.emit("sendMessageWithRefrId", {
+          message,
+          reliability: "reliable"
+        });
       }
     }
   }

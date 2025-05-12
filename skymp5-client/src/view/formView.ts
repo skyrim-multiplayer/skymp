@@ -1,20 +1,39 @@
-import { Actor, ActorBase, createText, destroyText, Form, FormType, Game, Keyword, NetImmerse, ObjectReference, once, printConsole, setTextPos, setTextString, storage, TESModPlatform, Utility, worldPointToScreenPoint } from "skyrimPlatform";
-import { setDefaultAnimsDisabled, applyAnimation, AnimationApplyState } from "../sync/animation";
-import { Appearance, applyAppearance } from "../sync/appearance";
-import { isBadMenuShown, applyEquipment } from "../sync/equipment";
-import { RespawnNeededError } from "../lib/errors";
-import { FormModel } from "./model";
-import { applyMovement } from "../sync/movementApply";
-import { SpawnProcess } from "./spawnProcess";
-import { ObjectReferenceEx } from "../extensions/objectReferenceEx";
-import { PlayerCharacterDataHolder } from "./playerCharacterDataHolder";
-import { getMovement } from "../sync/movementGet";
-import { lastTryHost, tryHost } from "./hostAttempts";
-import { ModelApplyUtils } from "./modelApplyUtils";
-import { localIdToRemoteId } from "./worldViewMisc";
-import { SpApiInteractor } from "../services/spApiInteractor";
-import { WorldCleanerService } from "../services/services/worldCleanerService";
-import { GamemodeUpdateService } from "../services/services/gamemodeUpdateService";
+import {
+  Actor,
+  ActorBase,
+  createText,
+  destroyText,
+  Form,
+  FormType,
+  Game,
+  Keyword,
+  NetImmerse,
+  ObjectReference,
+  once,
+  printConsole,
+  setTextPos,
+  setTextString,
+  storage,
+  TESModPlatform,
+  Utility,
+  worldPointToScreenPoint
+} from "skyrimPlatform";
+import {setDefaultAnimsDisabled, applyAnimation, AnimationApplyState} from "../sync/animation";
+import {Appearance, applyAppearance} from "../sync/appearance";
+import {isBadMenuShown, applyEquipment} from "../sync/equipment";
+import {RespawnNeededError} from "../lib/errors";
+import {FormModel} from "./model";
+import {applyMovement} from "../sync/movementApply";
+import {SpawnProcess} from "./spawnProcess";
+import {ObjectReferenceEx} from "../extensions/objectReferenceEx";
+import {PlayerCharacterDataHolder} from "./playerCharacterDataHolder";
+import {getMovement} from "../sync/movementGet";
+import {lastTryHost, tryHost} from "./hostAttempts";
+import {ModelApplyUtils} from "./modelApplyUtils";
+import {localIdToRemoteId} from "./worldViewMisc";
+import {SpApiInteractor} from "../services/spApiInteractor";
+import {WorldCleanerService} from "../services/services/worldCleanerService";
+import {GamemodeUpdateService} from "../services/services/gamemodeUpdateService";
 
 export interface ScreenResolution {
   width: number;
@@ -33,7 +52,8 @@ export const getScreenResolution = (): ScreenResolution => {
 }
 
 export class FormView {
-  constructor(private remoteRefrId?: number) { }
+  constructor(private remoteRefrId?: number) {
+  }
 
   update(model: FormModel): void {
     // Other players mutate into PC clones when moving to another location
@@ -53,7 +73,6 @@ export class FormView {
         return;
       }
     }
-
 
 
     // Don't spawn dead actors if not already
@@ -97,14 +116,12 @@ export class FormView {
             refr?.getBaseObject()?.setName(model.appearance.name);
             refr?.setDisplayName(model.appearance.name, true);
             printConsole("Appearance updated, changing name inplace");
-          }
-          else {
+          } else {
             // Force re-apply appearance on the next getAppearanceBasedBase call
             this.appearanceBasedBaseId = 0;
             printConsole("Appearance updated");
           }
-        }
-        else {
+        } else {
           // Force re-apply appearance on the next getAppearanceBasedBase call
           this.appearanceBasedBaseId = 0;
           printConsole("Appearance updated");
@@ -148,11 +165,9 @@ export class FormView {
       let respawnRequired = false;
       if (!refr) {
         respawnRequired = true;
-      }
-      else if (!refr.getBaseObject()) {
+      } else if (!refr.getBaseObject()) {
         respawnRequired = true;
-      }
-      else if ((refr.getBaseObject() as Form).getFormID() !== base.getFormID()) {
+      } else if ((refr.getBaseObject() as Form).getFormID() !== base.getFormID()) {
         respawnRequired = true;
       }
 
@@ -202,8 +217,7 @@ export class FormView {
 
         if (model.movement) {
           refr = spawnMethod.spawn(base, model.movement.pos, model.movement.rot);
-        }
-        else {
+        } else {
           printConsole("model.movement was " + model.movement);
         }
 
@@ -215,8 +229,7 @@ export class FormView {
             model.movement?.rot[1] || 0,
             model.movement?.rot[2] || 0
           );
-        }
-        else {
+        } else {
           const race = Actor.from(refr)?.getRace()?.getFormID();
           const draugrRace = 0xd53;
           const falmerRace = 0x131f4;
@@ -266,8 +279,7 @@ export class FormView {
         if (model.movement) {
           spawnPos = model.movement.pos;
           // printConsole("Spawn NPC at movement.pos");
-        }
-        else {
+        } else {
           spawnPos = ObjectReferenceEx.getPos(Game.getPlayer() as Actor);
           printConsole("Spawn NPC at player pos");
         }
@@ -277,8 +289,7 @@ export class FormView {
             this.ready = true;
             this.spawnMoment = Date.now();
           });
-        }
-        else {
+        } else {
           printConsole("Unable to triggerSpawnProcess for null refr");
         }
 
@@ -301,6 +312,7 @@ export class FormView {
         actor.setActorValue("magicka", 1000000);
         this.localImmortal = true;
       }
+
       this.applyAll(refr, model);
 
       const gamemodeUpdateService = SpApiInteractor.getControllerInstance().lookupListener(GamemodeUpdateService);
@@ -558,11 +570,21 @@ export class FormView {
         const textXPos = Math.round(headScreenPos[0] * resolution.width);
         const textYPos = Math.round((1 - headScreenPos[1]) * resolution.height);
 
+        const isTalkingText = model?.isTalking ? "V" : "";
+
         if (!this.textNameId) {
           this.textNameId = createText(textXPos, textYPos, model.appearance.name, [255, 255, 255, 1]);
         } else {
           setTextString(this.textNameId, headScreenPos[2] >= 0 ? model.appearance.name : "");
           setTextPos(this.textNameId, textXPos, textYPos);
+        }
+        if (!this.voiceIndicatorId) {
+          this.voiceIndicatorId = createText(textXPos - 55, textYPos, isTalkingText, [255, 100, 100, 1]);
+        } else {
+          if (this.voiceIndicatorId) {
+            setTextString(this.voiceIndicatorId, headScreenPos[2] >= 0 ? isTalkingText : "");
+            setTextPos(this.voiceIndicatorId, textXPos - 55, textYPos);
+          }
         }
       } else {
         this.removeNickname();
@@ -583,6 +605,11 @@ export class FormView {
     if (this.textNameId) {
       destroyText(this.textNameId);
       this.textNameId = undefined;
+    }
+
+    if (this.voiceIndicatorId) {
+      destroyText(this.voiceIndicatorId);
+      this.voiceIndicatorId = undefined;
     }
   }
 
@@ -612,15 +639,15 @@ export class FormView {
   }
 
   private getDefaultEquipState() {
-    return { lastNumChanges: 0, lastEqMoment: 0 };
+    return {lastNumChanges: 0, lastEqMoment: 0};
   };
 
   private getDefaultAppearanceState() {
-    return { lastNumChanges: 0, appearance: null as (null | Appearance) };
+    return {lastNumChanges: 0, appearance: null as (null | Appearance)};
   };
 
   private getDefaultAnimState() {
-    return { lastNumChanges: 0, useAnimOverrides: true };
+    return {lastNumChanges: 0, useAnimOverrides: true};
   };
 
   private tryHostIfNeed(ac: Actor, remoteId: number) {
@@ -668,7 +695,8 @@ export class FormView {
   private state = {};
   private localImmortal = false;
   private textNameId: number | undefined = undefined;
-
+  private voiceIndicatorId: number | undefined = undefined;
+  private isTalking: boolean = false;
 
   public static isDisplayingNicknames: boolean = true;
 }

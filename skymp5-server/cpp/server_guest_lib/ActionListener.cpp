@@ -950,6 +950,17 @@ void ActionListener::OnUpdateAnimVariables(const RawMessageData& rawMsgData)
   SendToNeighbours(myActor->idx, rawMsgData);
 }
 
+void ActionListener::OnUpdateVoiceChatMessage(const RawMessageData& rawMsgData, uint32_t idx, const VoiceChat& data)
+{
+  const MpActor* myActor = partOne.serverState.ActorByUser(rawMsgData.userId);
+
+  if (!myActor) {
+    throw std::runtime_error("Unable to change values without Actor attached");
+  }
+
+  SendToNeighbours(myActor->idx, rawMsgData);
+}
+
 void ActionListener::OnSpellCast(const RawMessageData& rawMsgData,
                                  const SpellCastData& spellCastData_)
 {
