@@ -3,6 +3,6 @@ import { ActorValues } from "../../sync/actorvalues";
 
 export interface ChangeValuesMessage {
     t: MsgType.ChangeValues;
-    data: ActorValues;
+    data: Partial<ActorValues>;
     idx: number;
 }

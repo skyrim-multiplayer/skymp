@@ -8,6 +8,8 @@
 
 #include "SpellCastData.h"
 
+#include "Messages.h"
+
 class ServerState;
 class WorldState;
 struct ActorValues;
@@ -87,7 +89,7 @@ public:
                              const char* eventName, simdjson::dom::element& e);
 
   virtual void OnChangeValues(const RawMessageData& rawMsgData,
-                              const ActorValues& actorValues);
+                              const ChangeValuesMessage& message);
 
   virtual void OnHit(const RawMessageData& rawMsgData, const HitData& hitData);
 
@@ -99,11 +101,13 @@ public:
   virtual void OnUnknown(const RawMessageData& rawMsgData);
 
 private:
-  void OnSpellHit(MpActor* aggressor, const HitData& hitData) const;
-  void OnWeaponHit(MpActor* aggressor, HitData hitData, bool isUnarmed) const;
+  void OnSpellHit(MpActor* aggressor, MpObjectReference* targetRef,
+                  const HitData& hitData);
+  void OnWeaponHit(MpActor* aggressor, MpObjectReference* targetRef,
+                   HitData hitData, bool isUnarmed);
 
-  std::shared_ptr<MpObjectReference> TrySendPapyrusOnHitEvent(
-    const MpActor* aggressor, const HitData& hitData) const;
+  void SendPapyrusOnHitEvent(MpActor* aggressor, MpObjectReference* target,
+                             const HitData& hitData);
 
   // Returns user's actor if there is attached one
   MpActor* SendToNeighbours(uint32_t idx,

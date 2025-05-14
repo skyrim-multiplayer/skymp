@@ -113,9 +113,11 @@ public:
   void ResolveSnippet(uint32_t snippetIdx, VarValue v);
   void SetPercentages(const ActorValues& actorValues,
                       MpActor* aggressor = nullptr);
-  void NetSendChangeValues(const ActorValues& actorValues);
+  void NetSendChangeValues(const ActorValues& actorValues,
+                           std::optional<espm::ActorValue> av = std::nullopt);
   void NetSetPercentages(const ActorValues& actorValues,
-                         MpActor* aggressor = nullptr);
+                         MpActor* aggressor = nullptr,
+                         std::optional<espm::ActorValue> av = std::nullopt);
 
   std::chrono::steady_clock::time_point GetLastAttributesPercentagesUpdate();
   std::chrono::steady_clock::time_point GetLastHitTime();

@@ -636,20 +636,32 @@ void MpActor::SetPercentages(const ActorValues& actorValues,
   SetLastAttributesPercentagesUpdate(std::chrono::steady_clock::now());
 }
 
-void MpActor::NetSendChangeValues(const ActorValues& actorValues)
+void MpActor::NetSendChangeValues(const ActorValues& actorValues,
+                                  std::optional<espm::ActorValue> av)
 {
   ChangeValuesMessage message;
   message.idx = GetIdx();
-  message.data.health = actorValues.healthPercentage;
-  message.data.magicka = actorValues.magickaPercentage;
-  message.data.stamina = actorValues.staminaPercentage;
+
+  if (av.has_value() && *av == espm::ActorValue::Health) {
+    message.data.health = actorValues.healthPercentage;
+  } else if (av.has_value() && *av == espm::ActorValue::Magicka) {
+    message.data.magicka = actorValues.magickaPercentage;
+  } else if (av.has_value() && *av == espm::ActorValue::Stamina) {
+    message.data.stamina = actorValues.staminaPercentage;
+  } else {
+    message.data.health = actorValues.healthPercentage;
+    message.data.magicka = actorValues.magickaPercentage;
+    message.data.stamina = actorValues.staminaPercentage;
+  }
+
   SendToUser(message, true);
 }
 
 void MpActor::NetSetPercentages(const ActorValues& actorValues,
-                                MpActor* aggressor)
+                                MpActor* aggressor,
+                                std::optional<espm::ActorValue> av)
 {
-  NetSendChangeValues(actorValues);
+  NetSendChangeValues(actorValues, av);
   SetPercentages(actorValues, aggressor);
 }
 
@@ -1154,7 +1166,10 @@ void MpActor::ModifyActorValuePercentage(espm::ActorValue av,
     default:
       return;
   }
-  NetSetPercentages(currentActorValues);
+
+  static MpActor* const kNullAggressor = nullptr;
+
+  NetSetPercentages(currentActorValues, kNullAggressor, av);
 }
 
 void MpActor::BeforeDestroy()
