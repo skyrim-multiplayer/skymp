@@ -4,7 +4,7 @@ bool ConditionsEvaluator::EvaluateConditions(
   const std::vector<Condition>&
     conditions,
   std::vector<int>* outConditionResolutions, const MpActor& aggressor,
-  const MpActor& target) const
+  const MpActor& target)
 {
   auto conditionResolutions = outConditionResolutions
     ? std::vector<int>(conditions.size(), -1)
@@ -50,7 +50,7 @@ std::vector<std::string>
 ConditionsEvaluator::LogEvaluateConditionsResolution(
   const std::vector<Condition>&
     conditions,
-  const std::vector<int>& conditionResolutions, bool finalResult) const
+  const std::vector<int>& conditionResolutions, bool finalResult)
 {
   std::vector<std::string> res;
 
@@ -127,7 +127,7 @@ ConditionsEvaluator::LogEvaluateConditionsResolution(
 
 bool ConditionsEvaluator::EvaluateCondition(
   const Condition& condition,
-  const MpActor& aggressor, const MpActor& target) const
+  const MpActor& aggressor, const MpActor& target)
 {
   uint32_t parameter1 = ExtractParameter(condition.parameter1);
 
@@ -212,7 +212,7 @@ bool ConditionsEvaluator::EvaluateCondition(
 }
 
 bool ConditionsEvaluator::CompareFloats(float a, float b,
-                                                 const std::string& op) const
+                                                 const std::string& op)
 {
   // No idea how the real engine does it. I'm adding epsion for safety.
 
