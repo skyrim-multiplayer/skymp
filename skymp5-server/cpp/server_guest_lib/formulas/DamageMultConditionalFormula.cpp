@@ -65,8 +65,9 @@ float DamageMultConditionalFormula::CalculateDamage(
       }
 
       if (enableLogging) {
-        std::vector<std::string> strings = ConditionsEvaluator::LogEvaluateConditionsResolution(
-          value.conditions, conditionResolutions, evalRes);
+        std::vector<std::string> strings =
+          ConditionsEvaluator::LogEvaluateConditionsResolution(
+            value.conditions, conditionResolutions, evalRes);
 
         if (evalRes) {
           strings.insert(strings.begin(),
@@ -113,8 +114,9 @@ float DamageMultConditionalFormula::CalculateDamage(
       }
 
       if (enableLogging) {
-        std::vector<std::string> strings = ConditionsEvaluator::LogEvaluateConditionsResolution(
-          value.conditions, conditionResolutions, evalRes);
+        std::vector<std::string> strings =
+          ConditionsEvaluator::LogEvaluateConditionsResolution(
+            value.conditions, conditionResolutions, evalRes);
 
         if (evalRes) {
           strings.insert(strings.begin(),
