@@ -2,9 +2,8 @@
 
 class ConditionsEvaluator
 {
-public: 
-
-static bool EvaluateConditions(
+public:
+  static bool EvaluateConditions(
     const std::vector<DamageMultConditionalFormulaSettingsValueCondition>&
       conditions,
     std::vector<int>* outConditionResolutions, const MpActor& aggressor,
@@ -20,5 +19,4 @@ static bool EvaluateConditions(
     const MpActor& aggressor, const MpActor& target) const;
 
   static bool CompareFloats(float a, float b, const std::string& op);
-
 };

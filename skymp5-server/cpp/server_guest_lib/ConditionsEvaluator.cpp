@@ -1,8 +1,7 @@
 #include "ConditionsEvaluator.h"
 
 bool ConditionsEvaluator::EvaluateConditions(
-  const std::vector<Condition>&
-    conditions,
+  const std::vector<Condition>& conditions,
   std::vector<int>* outConditionResolutions, const MpActor& aggressor,
   const MpActor& target)
 {
@@ -11,7 +10,7 @@ bool ConditionsEvaluator::EvaluateConditions(
     : std::vector<int>();
 
   bool good = false;
- 
+
   for (size_t i = 0; i < conditions.size(); ++i) {
     const auto& condition = conditions[i];
 
@@ -46,10 +45,8 @@ bool ConditionsEvaluator::EvaluateConditions(
   return true;
 }
 
-std::vector<std::string>
-ConditionsEvaluator::LogEvaluateConditionsResolution(
-  const std::vector<Condition>&
-    conditions,
+std::vector<std::string> ConditionsEvaluator::LogEvaluateConditionsResolution(
+  const std::vector<Condition>& conditions,
   const std::vector<int>& conditionResolutions, bool finalResult)
 {
   std::vector<std::string> res;
@@ -125,9 +122,9 @@ ConditionsEvaluator::LogEvaluateConditionsResolution(
   return res;
 }
 
-bool ConditionsEvaluator::EvaluateCondition(
-  const Condition& condition,
-  const MpActor& aggressor, const MpActor& target)
+bool ConditionsEvaluator::EvaluateCondition(const Condition& condition,
+                                            const MpActor& aggressor,
+                                            const MpActor& target)
 {
   uint32_t parameter1 = ExtractParameter(condition.parameter1);
 
@@ -163,14 +160,17 @@ bool ConditionsEvaluator::EvaluateCondition(
                            uint32_t parameter1) -> float {
       return static_cast<float>(actor.GetInventory().GetItemCount(parameter1));
     };
-  } else if (Utils::stricmp(condition.function.data(), "WornHasKeyword") == 0) {
+  } else if (Utils::stricmp(condition.function.data(), "WornHasKeyword") ==
+             0) {
     conditionFunction = [](const MpActor& actor,
                            uint32_t parameter1) -> float {
       auto& br = actor.GetParent()->GetEspm().GetBrowser();
       PapyrusActor papyrusActor;
-      auto aKeyword = VarValue(std::make_shared<EspmGameObject>(br.LookupById(parameter1)));
+      auto aKeyword =
+        VarValue(std::make_shared<EspmGameObject>(br.LookupById(parameter1)));
 
-      VarValue res = papyrusActor.WornHasKeyword(actor.ToVarValue(), { aKeyword });
+      VarValue res =
+        papyrusActor.WornHasKeyword(actor.ToVarValue(), { aKeyword });
       bool resBool = static_cast<bool>(res);
       if (resBool) {
         return 1.0f;
@@ -180,10 +180,10 @@ bool ConditionsEvaluator::EvaluateCondition(
   } else if (Utils::stricmp(condition.function.data(), "GetEquipped") == 0) {
     conditionFunction = [](const MpActor& actor,
                            uint32_t parameter1) -> float {
-    if (actor.GetEquipment().inv.GetItemCount(parameter1) > 0) {
-      return 1.f;
-    }
-    return 0.f;
+      if (actor.GetEquipment().inv.GetItemCount(parameter1) > 0) {
+        return 1.f;
+      }
+      return 0.f;
     };
   } else {
     conditionFunction = [&](const MpActor&, uint32_t) -> float { return 1.0; };
@@ -212,7 +212,7 @@ bool ConditionsEvaluator::EvaluateCondition(
 }
 
 bool ConditionsEvaluator::CompareFloats(float a, float b,
-                                                 const std::string& op)
+                                        const std::string& op)
 {
   // No idea how the real engine does it. I'm adding epsion for safety.
 
