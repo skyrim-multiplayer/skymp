@@ -5,7 +5,6 @@
 #include "NullPointerException.h"
 
 #include <RE/B/BSPointerHandle.h>
-#include <RE/M/MemoryManager.h>
 #include <RE/N/NiPoint3.h>
 #include <REL/Relocation.h>
 
