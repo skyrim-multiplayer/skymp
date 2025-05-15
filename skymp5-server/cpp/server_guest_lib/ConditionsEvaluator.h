@@ -2,7 +2,7 @@
 
 class ConditionsEvaluator
 {
-public:
+public: 
 
 static bool EvaluateConditions(
     const std::vector<DamageMultConditionalFormulaSettingsValueCondition>&

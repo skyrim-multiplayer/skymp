@@ -11,7 +11,7 @@ bool ConditionsEvaluator::EvaluateConditions(
     : std::vector<int>();
 
   bool good = false;
-
+ 
   for (size_t i = 0; i < conditions.size(); ++i) {
     const auto& condition = conditions[i];
 
