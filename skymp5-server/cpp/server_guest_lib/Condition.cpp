@@ -112,7 +112,7 @@ Condition Condition::FromCtda(const espm::CTDA& ctda)
     ToStringHexPrefixedUpperCase(ctda.GetDefaultData().secondParameter);
 
   condition.logicalOperator = ConvertLogicalOperatorToString(ctda.GetFlags());
-  conditions.runsOn = ConvertRunOnTypeToString(ctda.runOnType);
+  condition.runsOn = ConvertRunOnTypeToString(ctda.runOnType);
 
   condition.function = ConvertFunctionIndexToString(ctda.functionIndex);
 
