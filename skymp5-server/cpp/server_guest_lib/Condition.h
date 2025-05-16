@@ -11,7 +11,7 @@ struct Condition
       .Serialize("comparison", comparison)
       .Serialize("value", value)
       .Serialize("parameter1", parameter1)
-      .Serialize("parameter2", parameter1)
+      .Serialize("parameter2", parameter2)
       .Serialize("logicalOperator", logicalOperator);
   }
 
