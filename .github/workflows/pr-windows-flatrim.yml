@@ -1,4 +1,4 @@
-name: PR Windows Skyrim SE
+name: PR Windows Flatrim (AE/SE)
 
 on:
   push:
@@ -28,11 +28,11 @@ jobs:
           submodules: 'true'
       - uses: ./.github/actions/pr_base
         with:
-          DESCRIPTION: 'Skyrim Special Edition (1.5)'
-          SKYRIM_SE_FLAG: ON
-          SP_NEXUS_ARTIFACT_NAME: Skyrim Platform %SP_VERSION% (Special Edition)
+          DESCRIPTION: 'Flatrim'
+          SKYRIM_VR_FLAG: OFF
+          SP_NEXUS_ARTIFACT_NAME: Skyrim Platform %SP_VERSION%
           DEPLOY_BRANCH: ""
-          DIST_ARTIFACT_NAME: dist-1.5
-          SERVER_DIST_ARTIFACT_NAME: server-dist-1.5
+          DIST_ARTIFACT_NAME: dist
+          SERVER_DIST_ARTIFACT_NAME: server-dist
           SKYMP5_PATCHES_PAT: ${{ secrets.SKYMP5_PATCHES_PAT }}
           NUGET_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
