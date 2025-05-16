@@ -1,4 +1,5 @@
 #pragma once
+#include "Condition.h"
 
 class ConditionsEvaluator
 {

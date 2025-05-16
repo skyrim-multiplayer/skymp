@@ -22,6 +22,8 @@
 #include <spdlog/spdlog.h>
 #include <unordered_set>
 #include "ConditionsEvaluator.h"
+#include <fmt/format.h>
+#include <fmt/ranges.h>
 
 #include "UpdateEquipmentMessage.h"
 
