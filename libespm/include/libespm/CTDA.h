@@ -88,11 +88,6 @@ struct CTDA
                               fifthBit);
   }
 
-  bool IsGetIsRace() { return functionIndex == 69; }
-  bool IsGetItemCount() { return functionIndex == 47; }
-  bool IsGetEventData() { return functionIndex == 576; }
-  bool IsHasPerk() { return functionIndex == 448; }
-
   DefaultData GetDefaultData()
   {
     return *reinterpret_cast<const DefaultData*>(functionData);
