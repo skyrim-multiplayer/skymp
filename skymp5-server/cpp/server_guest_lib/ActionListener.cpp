@@ -482,7 +482,8 @@ void ActionListener::OnConsoleCommand(
     ConsoleCommands::Execute(*me, consoleCommandName, args);
 }
 
-bool EvaluateCraftRecipeConditions()
+bool EvaluateCraftRecipeConditions(MpActor* me,
+                                   const espm::COBJ::Data& recipeData)
 {
   std::vector<Condition> conditions;
   std::transform(recipeData.conditions.begin(), recipeData.conditions.end(),
@@ -516,6 +517,8 @@ bool EvaluateCraftRecipeConditions()
 
     spdlog::info("{}", fmt::join(strings.begin(), strings.end(), "\n"));
   }
+
+  return evalRes;
 }
 
 void UseCraftRecipe(MpActor* me, const espm::COBJ* recipeUsed,
@@ -588,6 +591,12 @@ void ActionListener::OnCraftItem(const RawMessageData& rawMsgData,
   MpActor* me = partOne.serverState.ActorByUser(rawMsgData.userId);
   if (!me) {
     return spdlog::error("Unable to craft without Actor attached");
+  }
+
+  bool evalRes = EvaluateCraftRecipeConditions(me, recipeUsed->GetData(cache));
+
+  if (!evalRes) {
+    return spdlog::error("Craft recipe conditions are not met");
   }
 
   UseCraftRecipe(me, recipeUsed, cache, br, espmIdx);
