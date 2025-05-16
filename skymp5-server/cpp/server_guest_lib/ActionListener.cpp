@@ -509,10 +509,10 @@ bool EvaluateCraftRecipeConditions(MpActor* me,
 
     if (evalRes) {
       strings.insert(strings.begin(),
-                     fmt::format("EvaluateConditions result is false"));
+                     fmt::format("EvaluateConditions result is true"));
     } else {
       strings.insert(strings.begin(),
-                     fmt::format("EvaluateConditions result is true"));
+                     fmt::format("EvaluateConditions result is false"));
     }
 
     spdlog::info("{}", fmt::join(strings.begin(), strings.end(), "\n"));
