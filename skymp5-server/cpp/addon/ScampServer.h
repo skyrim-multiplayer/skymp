@@ -83,6 +83,11 @@ public:
     return gamemodeApiState;
   }
 
+  bool IsGameModeInsideDeathEventHandler(
+    uint32_t dyingFormId, float* outHealthPercentageBeforeDeath = nullptr,
+    float* outMagickaPercentageBeforeDeath = nullptr,
+    float* outStaminaPercentageBeforeDeath = nullptr) const;
+
 private:
   std::shared_ptr<PartOne> partOne;
   std::shared_ptr<Networking::IServer> server;
