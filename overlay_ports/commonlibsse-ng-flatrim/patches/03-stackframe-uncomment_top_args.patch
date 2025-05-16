@@ -1,0 +1,14 @@
+diff --git a/include/RE/S/StackFrame.h b/include/RE/S/StackFrame.h
+index 03bfc2d5..a17051dc 100644
+--- a/include/RE/S/StackFrame.h
++++ b/include/RE/S/StackFrame.h
+@@ -29,8 +29,7 @@ namespace RE
+ 			bool                            instructionsValid;   // 3C
+ 			std::uint8_t                    pad3D;               // 3D
+ 			std::uint16_t                   pad3E;               // 3E
+-
+-			//Variable args[4];	40 - minimum space for 4 args is allocated
++			Variable                        args[0];             // 40
+ 		};
+ 		static_assert(sizeof(StackFrame) == 0x40);  // frames can be larger
+ 	}
