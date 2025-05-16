@@ -85,11 +85,11 @@ std::string ConvertFunctionIndexToString(uint16_t functionIndex)
       return "HasPerk";
     case 576:
       return "GetEventData";
-    case 65535: // TODO: correct id
+    case 264:
       return "HasSpell";
-    case 65534: // TODO: correct id
+    case 682:
       return "WornHasKeyword";
-    case 65533: // TODO: correct id
+    case 182:
       return "GetEquipped";
     default:
       spdlog::warn("ConvertFunctionIndexToString - Unknown function index: {}",
