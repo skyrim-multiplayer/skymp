@@ -34,7 +34,7 @@ std::string ToStringHexPrefixedUpperCase(uint32_t value)
 
   std::sprintf(buffer.data(), kValueFmt, value);
 
-  return { buffer.begin(), buffer.end() };
+  return { buffer.begin(), buffer.begin() + size };
 }
 
 std::string ConvertLogicalOperatorToString(espm::CTDA::Flags flags)
