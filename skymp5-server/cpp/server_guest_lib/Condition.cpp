@@ -29,12 +29,12 @@ std::string ToStringHexPrefixedUpperCase(uint32_t value)
   constexpr auto kValueFmt = "0x%0X";
   size_t size = std::snprintf(nullptr, 0, kValueFmt, value);
 
-  std::string buffer;
-  buffer.resize(size);
+  std::vector<char> buffer;
+  buffer.resize(size + 1);
 
   std::sprintf(buffer.data(), kValueFmt, value);
 
-  return buffer;
+  return { buffer.begin(), buffer.end() };
 }
 
 std::string ConvertLogicalOperatorToString(espm::CTDA::Flags flags)
