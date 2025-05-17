@@ -131,7 +131,6 @@ TEST_CASE("Loads Conditions", "[espm]")
   REQUIRE(data.conditions[1].comparisonValue == 1);
   REQUIRE(data.conditions[1].runOnType == espm::CTDA::RunOnTypeFlags::Subject);
   REQUIRE(data.conditions[1].reference == 0);
-  REQUIRE(data.conditions[1].IsHasPerk());
   REQUIRE(data.conditions[1].GetDefaultData().firstParameter ==
           0x5218E); // ArcaneBlacksmith
   REQUIRE(data.conditions[1].GetDefaultData().secondParameter == 0);

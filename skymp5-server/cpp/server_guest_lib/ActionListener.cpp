@@ -21,6 +21,9 @@
 #include <fmt/format.h>
 #include <spdlog/spdlog.h>
 #include <unordered_set>
+#include "ConditionsEvaluator.h"
+#include <fmt/format.h>
+#include <fmt/ranges.h>
 
 #include "UpdateEquipmentMessage.h"
 
@@ -481,6 +484,45 @@ void ActionListener::OnConsoleCommand(
     ConsoleCommands::Execute(*me, consoleCommandName, args);
 }
 
+bool EvaluateCraftRecipeConditions(MpActor* me,
+                                   const espm::COBJ::Data& recipeData)
+{
+  std::vector<Condition> conditions;
+  std::transform(recipeData.conditions.begin(), recipeData.conditions.end(),
+                 std::back_inserter(conditions),
+                 [&](const auto& ctda) { return Condition::FromCtda(ctda); });
+
+  std::vector<int> outConditionResolutions;
+
+  // TODO: aggressor and target terms are not relevant for crafting
+  const MpActor& aggressor = *me;
+  const MpActor& target = *me;
+
+  const bool evalRes = ConditionsEvaluator::EvaluateConditions(
+    conditions, &outConditionResolutions, aggressor, target);
+
+  // TODO
+  bool enableLogging = false;
+
+  if (enableLogging) {
+    std::vector<std::string> strings =
+      ConditionsEvaluator::LogEvaluateConditionsResolution(
+        conditions, outConditionResolutions, evalRes);
+
+    if (evalRes) {
+      strings.insert(strings.begin(),
+                     fmt::format("EvaluateConditions result is true"));
+    } else {
+      strings.insert(strings.begin(),
+                     fmt::format("EvaluateConditions result is false"));
+    }
+
+    spdlog::info("{}", fmt::join(strings.begin(), strings.end(), "\n"));
+  }
+
+  return evalRes;
+}
+
 void UseCraftRecipe(MpActor* me, const espm::COBJ* recipeUsed,
                     espm::CompressedFieldsCache& cache,
                     const espm::CombineBrowser& br, int espmIdx)
@@ -490,10 +532,6 @@ void UseCraftRecipe(MpActor* me, const espm::COBJ* recipeUsed,
 
   spdlog::info("Using craft recipe with EDID {} from espm file with index {}",
                recipeUsed->GetEditorId(cache), espmIdx);
-
-  for (auto& condition : recipeData.conditions) {
-    // impl race, item, perk? checks
-  }
 
   std::vector<Inventory::Entry> entries;
   for (auto& entry : recipeData.inputObjects) {
@@ -555,6 +593,12 @@ void ActionListener::OnCraftItem(const RawMessageData& rawMsgData,
   MpActor* me = partOne.serverState.ActorByUser(rawMsgData.userId);
   if (!me) {
     return spdlog::error("Unable to craft without Actor attached");
+  }
+
+  bool evalRes = EvaluateCraftRecipeConditions(me, recipeUsed->GetData(cache));
+
+  if (!evalRes) {
+    return spdlog::error("Craft recipe conditions are not met");
   }
 
   UseCraftRecipe(me, recipeUsed, cache, br, espmIdx);
