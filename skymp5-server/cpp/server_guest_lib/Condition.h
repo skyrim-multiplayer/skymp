@@ -1,5 +1,6 @@
 #pragma once
 #include "libespm/CTDA.h"
+#include <string>
 
 struct Condition
 {

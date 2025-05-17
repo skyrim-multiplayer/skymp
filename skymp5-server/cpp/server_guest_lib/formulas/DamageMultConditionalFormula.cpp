@@ -2,33 +2,12 @@
 
 #include "MpActor.h"
 #include "archives/JsonInputArchive.h"
-#include "papyrus-vm/Utils.h"
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <functional>
 #include <limits>
 #include <sstream>
 #include "ConditionsEvaluator.h"
-
-#include "script_classes/PapyrusActor.h"
-
-namespace {
-uint32_t ExtractParameter(const std::string& parameter1)
-{
-  uint32_t parameter1Parsed = 0;
-
-  if (parameter1.find("0x") == 0 || parameter1.find("0X") == 0) {
-    std::stringstream ss;
-    ss << std::hex << parameter1.substr(2); // Skip "0x"
-    ss >> parameter1Parsed;
-  } else {
-    std::stringstream ss(parameter1);
-    ss >> parameter1Parsed;
-  }
-
-  return parameter1Parsed;
-}
-}
 
 DamageMultConditionalFormula::DamageMultConditionalFormula(
   std::unique_ptr<IDamageFormula> baseFormula_, const nlohmann::json& config)

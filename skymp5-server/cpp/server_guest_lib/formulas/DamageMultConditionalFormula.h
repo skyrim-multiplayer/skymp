@@ -4,9 +4,9 @@
 #include <unordered_map>
 #include <vector>
 
+#include "Condition.h"
 #include "IDamageFormula.h"
 #include <nlohmann/json_fwd.hpp>
-#include "Condition.h"
 
 struct DamageMultConditionalFormulaSettingsValue
 {
@@ -20,7 +20,7 @@ struct DamageMultConditionalFormulaSettingsValue
 
   std::optional<float> physicalDamageMultiplier;
   std::optional<float> magicDamageMultiplier;
-  std::vector<DamageMultConditionalFormulaSettingsValueCondition> conditions;
+  std::vector<Condition> conditions;
 };
 
 // TODO: add Serialize method
@@ -32,7 +32,9 @@ struct DamageMultConditionalFormulaSettings
   static DamageMultConditionalFormulaSettings FromJson(
     const nlohmann::json& j);
 
-  std::vector<std::pair<std::string, Condition>> entries;
+  std::vector<
+    std::pair<std::string, DamageMultConditionalFormulaSettingsValue>>
+    entries;
 };
 
 class DamageMultConditionalFormula : public IDamageFormula

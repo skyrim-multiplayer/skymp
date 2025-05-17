@@ -496,7 +496,7 @@ bool EvaluateCraftRecipeConditions(MpActor* me,
 
   // TODO: aggressor and target terms are not relevant for crafting
   const MpActor& aggressor = *me;
-  const MpObjectReference& target = *me;
+  const MpActor& target = *me;
 
   const bool evalRes = ConditionsEvaluator::EvaluateConditions(
     conditions, &outConditionResolutions, aggressor, target);

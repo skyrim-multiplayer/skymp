@@ -1,4 +1,11 @@
 #include "ConditionsEvaluator.h"
+#include "MpActor.h"
+#include "papyrus-vm/Utils.h"
+
+#include "script_classes/PapyrusActor.h"
+#include "script_objects/EspmGameObject.h"
+
+#include <sstream>
 
 bool ConditionsEvaluator::EvaluateConditions(
   const std::vector<Condition>& conditions,
@@ -126,7 +133,7 @@ bool ConditionsEvaluator::EvaluateCondition(const Condition& condition,
                                             const MpActor& aggressor,
                                             const MpActor& target)
 {
-  uint32_t parameter1 = ExtractParameter(condition.parameter1);
+  uint32_t parameter1 = ExtractParameter1(condition.parameter1);
 
   std::function<float(const MpActor& actor, uint32_t parameter1)>
     conditionFunction = nullptr;
@@ -236,4 +243,20 @@ bool ConditionsEvaluator::CompareFloats(float a, float b,
     return a > b - kEpsilon || std::fabs(a - b) < kEpsilon;
   }
   return false;
+}
+
+uint32_t ConditionsEvaluator::ExtractParameter1(const std::string& parameter1)
+{
+  uint32_t parameter1Parsed = 0;
+
+  if (parameter1.find("0x") == 0 || parameter1.find("0X") == 0) {
+    std::stringstream ss;
+    ss << std::hex << parameter1.substr(2); // Skip "0x"
+    ss >> parameter1Parsed;
+  } else {
+    std::stringstream ss(parameter1);
+    ss >> parameter1Parsed;
+  }
+
+  return parameter1Parsed;
 }

@@ -1,5 +1,10 @@
 #pragma once
 #include "Condition.h"
+#include <functional>
+#include <string>
+#include <vector>
+
+class MpActor;
 
 class ConditionsEvaluator
 {
@@ -15,7 +20,9 @@ public:
 
   static bool EvaluateCondition(const Condition& condition,
                                 const MpActor& aggressor,
-                                const MpActor& target) const;
+                                const MpActor& target);
 
   static bool CompareFloats(float a, float b, const std::string& op);
+
+  static uint32_t ExtractParameter1(const std::string& parameter1);
 };

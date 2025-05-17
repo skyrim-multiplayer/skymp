@@ -67,7 +67,7 @@ struct CTDA
   int32_t reference = 0;
   int32_t unknown2 = 0;
 
-  Operator GetOperator()
+  Operator GetOperator() const
   {
     uint8_t firstBit = static_cast<uint8_t>((operatorFlag & 0x80) ? 4 : 0);
     uint8_t secondBit = static_cast<uint8_t>((operatorFlag & 0x40) ? 2 : 0);
@@ -76,7 +76,7 @@ struct CTDA
     return static_cast<Operator>(firstBit + secondBit + thirdBit);
   }
 
-  Flags GetFlags()
+  Flags GetFlags() const
   {
     uint8_t firstBit = static_cast<uint8_t>((operatorFlag & 0x10) ? 16 : 0);
     uint8_t secondBit = static_cast<uint8_t>((operatorFlag & 0x08) ? 8 : 0);
@@ -88,12 +88,12 @@ struct CTDA
                               fifthBit);
   }
 
-  DefaultData GetDefaultData()
+  DefaultData GetDefaultData() const
   {
     return *reinterpret_cast<const DefaultData*>(functionData);
   }
 
-  EventData GetEventData()
+  EventData GetEventData() const
   {
     return *reinterpret_cast<const EventData*>(functionData);
   }
