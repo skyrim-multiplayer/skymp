@@ -1,5 +1,6 @@
 #include "ActionListener.h"
 #include "AnimationSystem.h"
+#include "ConditionsEvaluator.h"
 #include "ConsoleCommands.h"
 #include "CropRegeneration.h"
 #include "DummyMessageOutput.h"
@@ -19,11 +20,9 @@
 #include "gamemode_events/UpdateAppearanceAttemptEvent.h"
 #include "script_objects/EspmGameObject.h"
 #include <fmt/format.h>
+#include <fmt/ranges.h>
 #include <spdlog/spdlog.h>
 #include <unordered_set>
-#include "ConditionsEvaluator.h"
-#include <fmt/format.h>
-#include <fmt/ranges.h>
 
 #include "UpdateEquipmentMessage.h"
 
