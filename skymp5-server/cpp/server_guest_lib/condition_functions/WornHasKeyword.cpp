@@ -15,7 +15,7 @@ uint16_t ConditionFunctions::WornHasKeyword::GetFunctionIndex() const
 
 float ConditionFunctions::WornHasKeyword::Execute(MpActor& actor,
                                                   uint32_t parameter1,
-                                                  uint32_t parameter2)
+                                                  [[maybe_unused]] uint32_t parameter2)
 {
   auto& br = actor.GetParent()->GetEspm().GetBrowser();
   PapyrusActor papyrusActor;
