@@ -7,7 +7,46 @@
 
 #include <sstream>
 
+#include <spdlog/spdlog.h>
+
 bool ConditionsEvaluator::EvaluateConditions(
+  const ConditionsEvaluatorSettings& settings,
+  ConditionsEvaluatorCaller caller, const std::vector<Condition>& conditions,
+  std::vector<int>* outConditionResolutions, const MpActor& aggressor,
+  const MpActor& target)
+{
+  bool enableLogging = false;
+
+  std::vector<int> conditionResolutions;
+
+  bool evalRes = ConditionsEvaluator::EvaluateConditions(
+    value.conditions, enableLogging ? &conditionResolutions : nullptr,
+    aggressor, target);
+  if (evalRes) {
+    baseDamage *= *value.physicalDamageMultiplier;
+  }
+
+  if (enableLogging) {
+    std::vector<std::string> strings =
+      ConditionsEvaluator::LogEvaluateConditionsResolution(
+        value.conditions, conditionResolutions, evalRes);
+
+    if (evalRes) {
+      strings.insert(strings.begin(),
+                     fmt::format("Damage multiplier: {} (key={})",
+                                 *value.physicalDamageMultiplier, key));
+    } else {
+      strings.insert(
+        strings.begin(),
+        fmt::format("Damage multiplier: {} (key={}, evalRes=false)", 1.f,
+                    key));
+    }
+
+    spdlog::info("{}", fmt::join(strings.begin(), strings.end(), "\n"));
+  }
+}
+
+bool ConditionsEvaluator::EvaluateConditionsImpl(
   const std::vector<Condition>& conditions,
   std::vector<int>* outConditionResolutions, const MpActor& aggressor,
   const MpActor& target)

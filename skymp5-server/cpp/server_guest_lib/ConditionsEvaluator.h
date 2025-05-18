@@ -6,13 +6,31 @@
 
 class MpActor;
 
+enum class ConditionsEvaluatorCaller
+{
+  kDamageMultConditionalFormula,
+  kCraft
+};
+
+struct ConditionsEvaluatorSettings
+{
+};
+
 class ConditionsEvaluator
 {
 public:
-  static bool EvaluateConditions(const std::vector<Condition>& conditions,
+  static bool EvaluateConditions(const ConditionsEvaluatorSettings& settings,
+                                 ConditionsEvaluatorCaller caller,
+                                 const std::vector<Condition>& conditions,
                                  std::vector<int>* outConditionResolutions,
                                  const MpActor& aggressor,
                                  const MpActor& target);
+
+private:
+  static bool EvaluateConditionsImpl(const std::vector<Condition>& conditions,
+                                     std::vector<int>* outConditionResolutions,
+                                     const MpActor& aggressor,
+                                     const MpActor& target);
 
   static std::vector<std::string> LogEvaluateConditionsResolution(
     const std::vector<Condition>& conditions,
