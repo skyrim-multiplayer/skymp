@@ -51,5 +51,5 @@ private:
 
   static bool CompareFloats(float a, float b, const std::string& op);
 
-  static uint32_t ExtractParameter1(const std::string& parameter1);
+  static uint32_t ExtractParameter(const std::string& parameter1);
 };
