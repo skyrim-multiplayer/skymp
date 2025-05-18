@@ -14,6 +14,15 @@ enum class ConditionsEvaluatorCaller
 
 struct ConditionsEvaluatorSettings
 {
+  template <class Archive>
+  void Serialize(Archive& archive)
+  {
+    archive.Serialize("callersToLog", callersToLog);
+  }
+
+  static ConditionsEvaluatorSettings FromJson(const nlohmann::json& j);
+
+  std::vector<std::string> callersToLog;
 };
 
 class ConditionsEvaluator

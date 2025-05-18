@@ -40,8 +40,9 @@ struct DamageMultConditionalFormulaSettings
 class DamageMultConditionalFormula : public IDamageFormula
 {
 public:
-  DamageMultConditionalFormula(std::unique_ptr<IDamageFormula> baseFormula_,
-                               const nlohmann::json& config);
+  DamageMultConditionalFormula(
+    std::unique_ptr<IDamageFormula> baseFormula_, const nlohmann::json& config,
+    const nlohmann::json& conditionsEvaluatorConfig);
 
   [[nodiscard]] float CalculateDamage(const MpActor& aggressor,
                                       const MpActor& target,
@@ -58,4 +59,5 @@ private:
 private:
   std::unique_ptr<IDamageFormula> baseFormula;
   std::optional<DamageMultConditionalFormulaSettings> settings;
+  std::optional<ConditionsEvaluatorSettings> conditionsEvaluatorSettings;
 };

@@ -11,12 +11,19 @@
 #include <sstream>
 
 DamageMultConditionalFormula::DamageMultConditionalFormula(
-  std::unique_ptr<IDamageFormula> baseFormula_, const nlohmann::json& config)
+  std::unique_ptr<IDamageFormula> baseFormula_, const nlohmann::json& config,
+  const nlohmann::json& conditionsEvaluatorConfig)
   : baseFormula(std::move(baseFormula_))
   , settings(std::nullopt)
+  , conditionsEvaluatorSettings(std::nullopt)
 {
   if (config.is_object()) {
     settings = ParseConfig(config);
+  }
+
+  if (conditionsEvaluatorConfig.is_object()) {
+    conditionsEvaluatorSettings =
+      ConditionsEvaluatorSettings::FromJson(conditionsEvaluatorConfig);
   }
 }
 
@@ -32,8 +39,6 @@ float DamageMultConditionalFormula::CalculateDamage(
 
   for (auto [key, value] : settings->entries) {
     if (value.physicalDamageMultiplier.has_value()) {
-      // TODO
-
       auto callback = [&](bool evalRes, std::vector<std::string>& strings) {
         if (evalRes) {
           baseDamage *= *value.physicalDamageMultiplier;
@@ -54,7 +59,8 @@ float DamageMultConditionalFormula::CalculateDamage(
       };
 
       ConditionsEvaluator::EvaluateConditions(
-        settings, ConditionsEvaluatorCaller::kDamageMultConditionalFormula,
+        conditionsEvaluatorSettings,
+        ConditionsEvaluatorCaller::kDamageMultConditionalFormula,
         value.conditions, aggressor, target, callback);
     }
   }
@@ -75,36 +81,29 @@ float DamageMultConditionalFormula::CalculateDamage(
 
   for (auto [key, value] : settings->entries) {
     if (value.magicDamageMultiplier.has_value()) {
-      // TODO
-      bool enableLogging = false;
-
-      std::vector<int> conditionResolutions;
-
-      bool evalRes = ConditionsEvaluator::EvaluateConditions(
-        value.conditions, enableLogging ? &conditionResolutions : nullptr,
-        aggressor, target);
-      if (evalRes) {
-        baseDamage *= *value.magicDamageMultiplier;
-      }
-
-      if (enableLogging) {
-        std::vector<std::string> strings =
-          ConditionsEvaluator::LogEvaluateConditionsResolution(
-            value.conditions, conditionResolutions, evalRes);
-
+      auto callback = [&](bool evalRes, std::vector<std::string>& strings) {
         if (evalRes) {
-          strings.insert(strings.begin(),
-                         fmt::format("Damage multiplier: {} (key={})",
-                                     *value.magicDamageMultiplier, key));
-        } else {
-          strings.insert(
-            strings.begin(),
-            fmt::format("Damage multiplier: {} (key={}, evalRes=false)", 1.f,
-                        key));
+          baseDamage *= *value.magicDamageMultiplier;
         }
 
-        spdlog::info("{}", fmt::join(strings.begin(), strings.end(), "\n"));
-      }
+        if (!strings.empty()) {
+          if (evalRes) {
+            strings.insert(strings.begin(),
+                           fmt::format("Damage multiplier: {} (key={})",
+                                       *value.magicDamageMultiplier, key));
+          } else {
+            strings.insert(
+              strings.begin(),
+              fmt::format("Damage multiplier: {} (key={}, evalRes=false)", 1.f,
+                          key));
+          }
+        }
+      };
+
+      ConditionsEvaluator::EvaluateConditions(
+        conditionsEvaluatorSettings,
+        ConditionsEvaluatorCaller::kDamageMultConditionalFormula,
+        value.conditions, aggressor, target, callback);
     }
   }
 

@@ -11,13 +11,36 @@
 #include <fmt/ranges.h>
 #include <spdlog/spdlog.h>
 
+ConditionsEvaluatorSettings ConditionsEvaluatorSettings::FromJson(
+  const nlohmann::json& j)
+{
+  JsonInputArchive ar(j);
+  ConditionsEvaluatorSettings valueParsed;
+  valueParsed.Serialize(ar);
+
+  return valueParsed;
+}
+
 bool ConditionsEvaluator::EvaluateConditions(
   const ConditionsEvaluatorSettings& settings,
   ConditionsEvaluatorCaller caller, const std::vector<Condition>& conditions,
   const MpActor& aggressor, const MpActor& target,
   const std::function<void(bool, std::vector<std::string>&)>& callback)
 {
-  const bool enableLogging = false;
+  bool enableLogging = false;
+
+  for (auto& callerToLog : settings.callersToLog) {
+    if (callerToLog == "DamageMultConditionalFormula" &&
+        caller == ConditionsEvaluatorCaller::kDamageMultConditionalFormula) {
+      enableLogging = true;
+      break;
+    }
+    if (callerToLog == "Craft" &&
+        caller == ConditionsEvaluatorCaller::kCraft) {
+      enableLogging = true;
+      break;
+    }
+  }
 
   std::vector<int> conditionResolutions;
 
