@@ -42,12 +42,8 @@ std::string ConvertLogicalOperatorToString(espm::CTDA::Flags flags)
   if (static_cast<uint8_t>(flags) &
       static_cast<uint8_t>(espm::CTDA::Flags::OR)) {
     return "OR";
-  } else if (static_cast<uint8_t>(flags) &
-             static_cast<uint8_t>(espm::CTDA::Flags::ANDORDEFAULT)) {
-    return "AND";
-  } else {
-    throw std::runtime_error("Unknown logical operator");
   }
+  return "AND";
 }
 
 std::string ConvertRunOnTypeToString(espm::CTDA::RunOnTypeFlags runOnType)
