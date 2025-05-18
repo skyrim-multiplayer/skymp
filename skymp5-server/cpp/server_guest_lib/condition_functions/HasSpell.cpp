@@ -10,9 +10,8 @@ uint16_t ConditionFunctions::HasSpell::GetFunctionIndex() const
   return 264;
 }
 
-float ConditionFunctions::HasSpell::Execute(MpActor& actor,
-                                            uint32_t parameter1,
-                                            uint32_t parameter2)
+float ConditionFunctions::HasSpell::Execute(
+  MpActor& actor, uint32_t parameter1, [[maybe_unused]] uint32_t parameter2)
 {
   auto spelllist = actor.GetSpellList();
   auto it = std::find(spelllist.begin(), spelllist.end(), parameter1);

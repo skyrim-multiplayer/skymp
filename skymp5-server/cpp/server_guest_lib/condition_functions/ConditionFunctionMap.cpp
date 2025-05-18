@@ -1,5 +1,8 @@
 #include "ConditionFunctionMap.h"
 
+#include <fmt/format.h>
+#include <stdexcept>
+
 void ConditionFunctionMap::RegisterConditionFunction(
   std::shared_ptr<ConditionFunction> function)
 {
@@ -10,6 +13,22 @@ void ConditionFunctionMap::RegisterConditionFunction(
   const char* name = function->GetName();
   if (name == nullptr) {
     return;
+  }
+
+  bool isDuplicateName =
+    conditionFunctionByName.find(name) != conditionFunctionByName.end();
+  if (isDuplicateName) {
+    throw std::runtime_error(
+      fmt::format("Condition function with name '{}' already exists", name));
+  }
+
+  bool isDuplicateIndex =
+    function->GetFunctionIndex() < conditionFunctionByIndex.size() &&
+    conditionFunctionByIndex[function->GetFunctionIndex()] != nullptr;
+  if (isDuplicateIndex) {
+    throw std::runtime_error(
+      fmt::format("Condition function with index '{}' already exists",
+                  function->GetFunctionIndex()));
   }
 
   conditionFunctionByName[name] = function;
