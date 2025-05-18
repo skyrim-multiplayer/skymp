@@ -10,17 +10,18 @@ std::string FormDesc::ToString(char delimiter) const
     : std::snprintf(nullptr, 0, idFmt, shortFormId);
 
   std::string buffer;
-  buffer.resize(size);
+  buffer.resize(size + 1);
 
   if (!file.empty()) {
     std::sprintf(buffer.data(), fullFmt, shortFormId, delimiter, file.c_str());
   } else {
     std::sprintf(buffer.data(), idFmt, shortFormId);
   }
+  buffer.resize(size); // remove extra null terminator
   return buffer;
 }
 
-FormDesc FormDesc::FromString(std::string str, char delimiter)
+FormDesc FormDesc::FromString(const std::string& str, char delimiter)
 {
   FormDesc res;
   std::string id, file;
