@@ -5,6 +5,7 @@
 #include "papyrus-vm/Utils.h"
 #include <fmt/format.h>
 #include <fmt/ranges.h>
+#include <nlohmann/json.hpp>
 #include <spdlog/spdlog.h>
 #include <sstream>
 

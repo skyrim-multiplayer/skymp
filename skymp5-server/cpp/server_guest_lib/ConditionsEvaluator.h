@@ -1,6 +1,7 @@
 #pragma once
 #include "Condition.h"
 #include <functional>
+#include <nlohmann/json_fwd.hpp>
 #include <string>
 #include <vector>
 
