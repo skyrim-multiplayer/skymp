@@ -495,53 +495,28 @@ bool EvaluateCraftRecipeConditions(MpActor* me,
   const MpActor& aggressor = *me;
   const MpActor& target = *me;
 
+  bool evalRes_ = false;
+
   auto callback = [&](bool evalRes, std::vector<std::string>& strings) {
-    if (evalRes) {
-      baseDamage *= *value.magicDamageMultiplier;
-    }
+    evalRes_ = evalRes;
 
     if (!strings.empty()) {
       if (evalRes) {
         strings.insert(strings.begin(),
-                       fmt::format("Damage multiplier: {} (key={})",
-                                   *value.magicDamageMultiplier, key));
+                       fmt::format("EvaluateConditions result is true"));
       } else {
-        strings.insert(
-          strings.begin(),
-          fmt::format("Damage multiplier: {} (key={}, evalRes=false)", 1.f,
-                      key));
+        strings.insert(strings.begin(),
+                       fmt::format("EvaluateConditions result is false"));
       }
     }
   };
 
   ConditionsEvaluator::EvaluateConditions(
-    conditionsEvaluatorSettings,
-    ConditionsEvaluatorCaller::kDamageMultConditionalFormula, value.conditions,
-    aggressor, target, callback);
+    me->GetParent()->conditionsEvaluatorSettings,
+    ConditionsEvaluatorCaller::kCraft, conditions, aggressor, target,
+    callback);
 
-  // const bool evalRes = ConditionsEvaluator::EvaluateConditions(
-  //   conditions, &outConditionResolutions, aggressor, target);
-
-  // // TODO
-  // bool enableLogging = false;
-
-  // if (enableLogging) {
-  //   std::vector<std::string> strings =
-  //     ConditionsEvaluator::LogEvaluateConditionsResolution(
-  //       conditions, outConditionResolutions, evalRes);
-
-  //   if (evalRes) {
-  //     strings.insert(strings.begin(),
-  //                    fmt::format("EvaluateConditions result is true"));
-  //   } else {
-  //     strings.insert(strings.begin(),
-  //                    fmt::format("EvaluateConditions result is false"));
-  //   }
-
-  //   spdlog::info("{}", fmt::join(strings.begin(), strings.end(), "\n"));
-  // }
-
-  return evalRes;
+  return evalRes_;
 }
 
 void UseCraftRecipe(MpActor* me, const espm::COBJ* recipeUsed,
