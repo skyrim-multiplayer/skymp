@@ -44,7 +44,7 @@ bool ConditionsEvaluator::EvaluateConditions(
 
   std::vector<int> conditionResolutions;
 
-  const bool evalRes = ConditionsEvaluator::EvaluateConditions(
+  const bool evalRes = ConditionsEvaluator::EvaluateConditionsImpl(
     conditions, enableLogging ? &conditionResolutions : nullptr, aggressor,
     target);
 

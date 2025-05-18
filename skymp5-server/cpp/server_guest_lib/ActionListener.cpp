@@ -491,33 +491,55 @@ bool EvaluateCraftRecipeConditions(MpActor* me,
                  std::back_inserter(conditions),
                  [&](const auto& ctda) { return Condition::FromCtda(ctda); });
 
-  std::vector<int> outConditionResolutions;
-
   // TODO: aggressor and target terms are not relevant for crafting
   const MpActor& aggressor = *me;
   const MpActor& target = *me;
 
-  const bool evalRes = ConditionsEvaluator::EvaluateConditions(
-    conditions, &outConditionResolutions, aggressor, target);
-
-  // TODO
-  bool enableLogging = false;
-
-  if (enableLogging) {
-    std::vector<std::string> strings =
-      ConditionsEvaluator::LogEvaluateConditionsResolution(
-        conditions, outConditionResolutions, evalRes);
-
+  auto callback = [&](bool evalRes, std::vector<std::string>& strings) {
     if (evalRes) {
-      strings.insert(strings.begin(),
-                     fmt::format("EvaluateConditions result is true"));
-    } else {
-      strings.insert(strings.begin(),
-                     fmt::format("EvaluateConditions result is false"));
+      baseDamage *= *value.magicDamageMultiplier;
     }
 
-    spdlog::info("{}", fmt::join(strings.begin(), strings.end(), "\n"));
-  }
+    if (!strings.empty()) {
+      if (evalRes) {
+        strings.insert(strings.begin(),
+                       fmt::format("Damage multiplier: {} (key={})",
+                                   *value.magicDamageMultiplier, key));
+      } else {
+        strings.insert(
+          strings.begin(),
+          fmt::format("Damage multiplier: {} (key={}, evalRes=false)", 1.f,
+                      key));
+      }
+    }
+  };
+
+  ConditionsEvaluator::EvaluateConditions(
+    conditionsEvaluatorSettings,
+    ConditionsEvaluatorCaller::kDamageMultConditionalFormula, value.conditions,
+    aggressor, target, callback);
+
+  // const bool evalRes = ConditionsEvaluator::EvaluateConditions(
+  //   conditions, &outConditionResolutions, aggressor, target);
+
+  // // TODO
+  // bool enableLogging = false;
+
+  // if (enableLogging) {
+  //   std::vector<std::string> strings =
+  //     ConditionsEvaluator::LogEvaluateConditionsResolution(
+  //       conditions, outConditionResolutions, evalRes);
+
+  //   if (evalRes) {
+  //     strings.insert(strings.begin(),
+  //                    fmt::format("EvaluateConditions result is true"));
+  //   } else {
+  //     strings.insert(strings.begin(),
+  //                    fmt::format("EvaluateConditions result is false"));
+  //   }
+
+  //   spdlog::info("{}", fmt::join(strings.begin(), strings.end(), "\n"));
+  // }
 
   return evalRes;
 }
