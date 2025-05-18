@@ -1,6 +1,7 @@
 #include "ConditionsEvaluator.h"
 #include "JsonInputArchive.h"
 #include "MpActor.h"
+#include "condition_functions/ConditionFunctionFactory.h"
 #include "papyrus-vm/Utils.h"
 #include <fmt/format.h>
 #include <fmt/ranges.h>
@@ -184,94 +185,37 @@ bool ConditionsEvaluator::EvaluateCondition(const Condition& condition,
                                             const MpActor& aggressor,
                                             const MpActor& target)
 {
-  uint32_t parameter1 = ExtractParameter1(condition.parameter1);
+  uint32_t parameter1 = ExtractParameter(condition.parameter1);
+  uint32_t parameter2 = ExtractParameter(condition.parameter2);
 
-  std::function<float(const MpActor& actor, uint32_t parameter1)>
-    conditionFunction = nullptr;
+  static auto g_conditionFunctionMap =
+    ConditionFunctionFactory::CreateConditionFunctions();
 
-  // if (Utils::stricmp(condition.function.data(), "GetGlobalValue") == 0) {
-  //   conditionFunction = [](MpActor& actor, uint32_t parameter1) -> float {
-  //     return 0.f;
-  //   };
-  // }
+  auto conditionFunction =
+    g_conditionFunctionMap.GetConditionFunction(condition.function.data());
 
-  // if (Utils::stricmp(condition.function.data(), "HasSpell") == 0) {
-  //   conditionFunction = [](const MpActor& actor,
-  //                          uint32_t parameter1) -> float {
-  //     auto spelllist = actor.GetSpellList();
-  //     auto it = std::find(spelllist.begin(), spelllist.end(), parameter1);
-  //     if (it != spelllist.end()) {
-  //       return 1.0f;
-  //     }
-  //     return 0.f;
-  //   };
-  // } else if (Utils::stricmp(condition.function.data(), "GetIsRace") == 0) {
-  //   conditionFunction = [](const MpActor& actor,
-  //                          uint32_t parameter1) -> float {
-  //     if (actor.GetRaceId() == parameter1) {
-  //       return 1.0f;
-  //     }
-  //     return 0.f;
-  //   };
-  // } else if (Utils::stricmp(condition.function.data(), "GetItemCount") == 0)
-  // {
-  //   conditionFunction = [](const MpActor& actor,
-  //                          uint32_t parameter1) -> float {
-  //     return
-  //     static_cast<float>(actor.GetInventory().GetItemCount(parameter1));
-  //   };
-  // } else if (Utils::stricmp(condition.function.data(), "WornHasKeyword") ==
-  //            0) {
-  //   conditionFunction = [](const MpActor& actor,
-  //                          uint32_t parameter1) -> float {
-  //     auto& br = actor.GetParent()->GetEspm().GetBrowser();
-  //     PapyrusActor papyrusActor;
-  //     auto aKeyword =
-  //       VarValue(std::make_shared<EspmGameObject>(br.LookupById(parameter1)));
+  const MpActor* runsOn = nullptr;
 
-  //     VarValue res =
-  //       papyrusActor.WornHasKeyword(actor.ToVarValue(), { aKeyword });
-  //     bool resBool = static_cast<bool>(res);
-  //     if (resBool) {
-  //       return 1.0f;
-  //     }
-  //     return 0.f;
-  //   };
-  // } else if (Utils::stricmp(condition.function.data(), "GetEquipped") == 0)
-  // {
-  //   conditionFunction = [](const MpActor& actor,
-  //                          uint32_t parameter1) -> float {
-  //     if (actor.GetEquipment().inv.GetItemCount(parameter1) > 0) {
-  //       return 1.f;
-  //     }
-  //     return 0.f;
-  //   };
-}
-else
-{
-  conditionFunction = [&](const MpActor&, uint32_t) -> float { return 1.0; };
-}
+  if (condition.runsOn == "Subject") {
+    runsOn = &aggressor;
+  } else if (condition.runsOn == "Target") {
+    runsOn = &target;
+  } else {
+    // TODO: other options
+    return false;
+  }
 
-const MpActor* runsOn = nullptr;
+  // TODO: get rid of const_cast
+  float conditionFunctionResult = conditionFunction->Execute(
+    const_cast<MpActor&>(*runsOn), parameter1, parameter2);
 
-if (condition.runsOn == "Subject") {
-  runsOn = &aggressor;
-} else if (condition.runsOn == "Target") {
-  runsOn = &target;
-} else {
-  // TODO: other options
-  return false;
-}
+  float valueToCompareWith = condition.value;
+  const std::string& comparison = condition.comparison;
 
-float conditionFunctionResult = conditionFunction(*runsOn, parameter1);
+  bool comparisonResult =
+    CompareFloats(conditionFunctionResult, valueToCompareWith, comparison);
 
-float valueToCompareWith = condition.value;
-const std::string& comparison = condition.comparison;
-
-bool comparisonResult =
-  CompareFloats(conditionFunctionResult, valueToCompareWith, comparison);
-
-return comparisonResult;
+  return comparisonResult;
 }
 
 bool ConditionsEvaluator::CompareFloats(float a, float b,
@@ -301,18 +245,18 @@ bool ConditionsEvaluator::CompareFloats(float a, float b,
   return false;
 }
 
-uint32_t ConditionsEvaluator::ExtractParameter1(const std::string& parameter1)
+uint32_t ConditionsEvaluator::ExtractParameter(const std::string& parameter)
 {
-  uint32_t parameter1Parsed = 0;
+  uint32_t parameterParsed = 0;
 
-  if (parameter1.find("0x") == 0 || parameter1.find("0X") == 0) {
+  if (parameter.find("0x") == 0 || parameter.find("0X") == 0) {
     std::stringstream ss;
-    ss << std::hex << parameter1.substr(2); // Skip "0x"
-    ss >> parameter1Parsed;
+    ss << std::hex << parameter.substr(2); // Skip "0x"
+    ss >> parameterParsed;
   } else {
-    std::stringstream ss(parameter1);
-    ss >> parameter1Parsed;
+    std::stringstream ss(parameter);
+    ss >> parameterParsed;
   }
 
-  return parameter1Parsed;
+  return parameterParsed;
 }

@@ -1,4 +1,5 @@
 #include "Condition.h"
+#include "condition_functions/ConditionFunctionFactory.h"
 #include <spdlog/spdlog.h>
 
 namespace {
@@ -72,26 +73,18 @@ std::string ConvertRunOnTypeToString(espm::CTDA::RunOnTypeFlags runOnType)
 
 std::string ConvertFunctionIndexToString(uint16_t functionIndex)
 {
-  switch (functionIndex) {
-    case 47:
-      return "GetItemCount";
-    case 69:
-      return "GetIsRace";
-    case 448:
-      return "HasPerk";
-    case 576:
-      return "GetEventData";
-    case 264:
-      return "HasSpell";
-    case 682:
-      return "WornHasKeyword";
-    case 182:
-      return "GetEquipped";
-    default:
-      spdlog::warn("ConvertFunctionIndexToString - Unknown function index: {}",
-                   functionIndex);
-      return "";
+  static auto g_conditionFunctionMap =
+    ConditionFunctionFactory::CreateConditionFunctions();
+
+  auto conditionFunction =
+    g_conditionFunctionMap.GetConditionFunction(functionIndex);
+
+  if (conditionFunction) {
+    return conditionFunction->GetName();
   }
+  spdlog::warn("ConvertFunctionIndexToString - Unknown function index: {}",
+               functionIndex);
+  return "";
 }
 }
 
