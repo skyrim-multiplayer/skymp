@@ -1,4 +1,5 @@
 #pragma once
+#include "ConditionsEvaluator.h" // ConditionsEvaluatorSettings
 #include "FormIndex.h"
 #include "Grid.h"
 #include "GridElement.h"
@@ -256,6 +257,8 @@ public:
     /* Mannequin */
     0x0010760a
   };
+
+  ConditionsEvaluatorSettings conditionsEvaluatorSettings;
 
 private:
   bool AttachEspmRecord(const espm::CombineBrowser& br,

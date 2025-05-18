@@ -511,9 +511,15 @@ bool EvaluateCraftRecipeConditions(MpActor* me,
     }
   };
 
+  static const ConditionsEvaluatorSettings kDefaultSettings;
+
+  auto worldState = me->GetParent();
+
+  const ConditionsEvaluatorSettings& settings =
+    worldState ? worldState->conditionsEvaluatorSettings : kDefaultSettings;
+
   ConditionsEvaluator::EvaluateConditions(
-    me->GetParent()->conditionsEvaluatorSettings,
-    ConditionsEvaluatorCaller::kCraft, conditions, aggressor, target,
+    settings, ConditionsEvaluatorCaller::kCraft, conditions, aggressor, target,
     callback);
 
   return evalRes_;
