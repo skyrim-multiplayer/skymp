@@ -33,35 +33,29 @@ float DamageMultConditionalFormula::CalculateDamage(
   for (auto [key, value] : settings->entries) {
     if (value.physicalDamageMultiplier.has_value()) {
       // TODO
-      bool enableLogging = false;
 
-      std::vector<int> conditionResolutions;
-
-      bool evalRes = ConditionsEvaluator::EvaluateConditions(
-        value.conditions, enableLogging ? &conditionResolutions : nullptr,
-        aggressor, target);
-      if (evalRes) {
-        baseDamage *= *value.physicalDamageMultiplier;
-      }
-
-      if (enableLogging) {
-        std::vector<std::string> strings =
-          ConditionsEvaluator::LogEvaluateConditionsResolution(
-            value.conditions, conditionResolutions, evalRes);
-
+      auto callback = [&](bool evalRes, std::vector<std::string>& strings) {
         if (evalRes) {
-          strings.insert(strings.begin(),
-                         fmt::format("Damage multiplier: {} (key={})",
-                                     *value.physicalDamageMultiplier, key));
-        } else {
-          strings.insert(
-            strings.begin(),
-            fmt::format("Damage multiplier: {} (key={}, evalRes=false)", 1.f,
-                        key));
+          baseDamage *= *value.physicalDamageMultiplier;
         }
 
-        spdlog::info("{}", fmt::join(strings.begin(), strings.end(), "\n"));
-      }
+        if (!strings.empty()) {
+          if (evalRes) {
+            strings.insert(strings.begin(),
+                           fmt::format("Damage multiplier: {} (key={})",
+                                       *value.physicalDamageMultiplier, key));
+          } else {
+            strings.insert(
+              strings.begin(),
+              fmt::format("Damage multiplier: {} (key={}, evalRes=false)", 1.f,
+                          key));
+          }
+        }
+      };
+
+      ConditionsEvaluator::EvaluateConditions(
+        settings, ConditionsEvaluatorCaller::kDamageMultConditionalFormula,
+        value.conditions, aggressor, target, callback);
     }
   }
 

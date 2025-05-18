@@ -7,41 +7,34 @@
 
 #include <sstream>
 
+#include <fmt/format.h>
+#include <fmt/ranges.h>
 #include <spdlog/spdlog.h>
 
 bool ConditionsEvaluator::EvaluateConditions(
   const ConditionsEvaluatorSettings& settings,
   ConditionsEvaluatorCaller caller, const std::vector<Condition>& conditions,
-  std::vector<int>* outConditionResolutions, const MpActor& aggressor,
-  const MpActor& target)
+  const MpActor& aggressor, const MpActor& target,
+  const std::function<void(bool, std::vector<std::string>&)>& callback)
 {
-  bool enableLogging = false;
+  const bool enableLogging = false;
 
   std::vector<int> conditionResolutions;
 
-  bool evalRes = ConditionsEvaluator::EvaluateConditions(
-    value.conditions, enableLogging ? &conditionResolutions : nullptr,
-    aggressor, target);
-  if (evalRes) {
-    baseDamage *= *value.physicalDamageMultiplier;
-  }
+  const bool evalRes = ConditionsEvaluator::EvaluateConditions(
+    conditions, enableLogging ? &conditionResolutions : nullptr, aggressor,
+    target);
+
+  std::vector<std::string> strings;
 
   if (enableLogging) {
-    std::vector<std::string> strings =
-      ConditionsEvaluator::LogEvaluateConditionsResolution(
-        value.conditions, conditionResolutions, evalRes);
+    strings = ConditionsEvaluator::LogEvaluateConditionsResolution(
+      conditions, conditionResolutions, evalRes);
+  }
 
-    if (evalRes) {
-      strings.insert(strings.begin(),
-                     fmt::format("Damage multiplier: {} (key={})",
-                                 *value.physicalDamageMultiplier, key));
-    } else {
-      strings.insert(
-        strings.begin(),
-        fmt::format("Damage multiplier: {} (key={}, evalRes=false)", 1.f,
-                    key));
-    }
+  callback(evalRes, strings);
 
+  if (!strings.empty()) {
     spdlog::info("{}", fmt::join(strings.begin(), strings.end(), "\n"));
   }
 }

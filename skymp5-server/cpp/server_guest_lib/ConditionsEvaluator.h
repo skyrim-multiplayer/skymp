@@ -19,12 +19,11 @@ struct ConditionsEvaluatorSettings
 class ConditionsEvaluator
 {
 public:
-  static bool EvaluateConditions(const ConditionsEvaluatorSettings& settings,
-                                 ConditionsEvaluatorCaller caller,
-                                 const std::vector<Condition>& conditions,
-                                 std::vector<int>* outConditionResolutions,
-                                 const MpActor& aggressor,
-                                 const MpActor& target);
+  static bool EvaluateConditions(
+    const ConditionsEvaluatorSettings& settings,
+    ConditionsEvaluatorCaller caller, const std::vector<Condition>& conditions,
+    const MpActor& aggressor, const MpActor& target,
+    const std::function<void(bool, std::vector<std::string>&)>& callback);
 
 private:
   static bool EvaluateConditionsImpl(const std::vector<Condition>& conditions,
