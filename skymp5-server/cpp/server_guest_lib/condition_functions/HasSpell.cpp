@@ -1,4 +1,6 @@
 #include "HasSpell.h"
+#include "MpActor.h"
+#include <algorithm>
 
 const char* ConditionFunctions::HasSpell::GetName() const
 {

@@ -1,4 +1,5 @@
 #include "GetEquipped.h"
+#include "MpActor.h"
 
 const char* ConditionFunctions::GetEquipped::GetName() const
 {

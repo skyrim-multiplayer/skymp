@@ -29,7 +29,7 @@ struct ConditionsEvaluatorSettings
 class ConditionsEvaluator
 {
 public:
-  static bool EvaluateConditions(
+  static void EvaluateConditions(
     const ConditionsEvaluatorSettings& settings,
     ConditionsEvaluatorCaller caller, const std::vector<Condition>& conditions,
     const MpActor& aggressor, const MpActor& target,

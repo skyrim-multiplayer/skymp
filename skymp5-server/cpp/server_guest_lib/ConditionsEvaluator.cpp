@@ -1,6 +1,6 @@
 #include "ConditionsEvaluator.h"
-#include "JsonInputArchive.h"
 #include "MpActor.h"
+#include "archives/JsonInputArchive.h"
 #include "condition_functions/ConditionFunctionFactory.h"
 #include "papyrus-vm/Utils.h"
 #include <fmt/format.h>
@@ -19,7 +19,7 @@ ConditionsEvaluatorSettings ConditionsEvaluatorSettings::FromJson(
   return valueParsed;
 }
 
-bool ConditionsEvaluator::EvaluateConditions(
+void ConditionsEvaluator::EvaluateConditions(
   const ConditionsEvaluatorSettings& settings,
   ConditionsEvaluatorCaller caller, const std::vector<Condition>& conditions,
   const MpActor& aggressor, const MpActor& target,

@@ -1,4 +1,5 @@
 #include "GetIsRace.h"
+#include "MpActor.h"
 
 const char* ConditionFunctions::GetIsRace::GetName() const
 {

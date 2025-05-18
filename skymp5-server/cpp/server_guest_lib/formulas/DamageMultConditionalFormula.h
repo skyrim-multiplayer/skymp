@@ -8,6 +8,8 @@
 #include "IDamageFormula.h"
 #include <nlohmann/json_fwd.hpp>
 
+class ConditionsEvaluatorSettings;
+
 struct DamageMultConditionalFormulaSettingsValue
 {
   template <class Archive>
@@ -59,5 +61,5 @@ private:
 private:
   std::unique_ptr<IDamageFormula> baseFormula;
   std::optional<DamageMultConditionalFormulaSettings> settings;
-  std::optional<ConditionsEvaluatorSettings> conditionsEvaluatorSettings;
+  std::shared_ptr<ConditionsEvaluatorSettings> conditionsEvaluatorSettings;
 };

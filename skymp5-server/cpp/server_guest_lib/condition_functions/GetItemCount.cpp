@@ -1,4 +1,5 @@
 #include "GetItemCount.h"
+#include "MpActor.h"
 
 const char* ConditionFunctions::GetItemCount::GetName() const
 {

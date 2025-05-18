@@ -1,9 +1,8 @@
 #include "DamageMultConditionalFormula.h"
 
-#include "archives/JsonInputArchive.h"
 #include "ConditionsEvaluator.h"
 #include "MpActor.h"
-
+#include "archives/JsonInputArchive.h"
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <functional>
@@ -15,7 +14,7 @@ DamageMultConditionalFormula::DamageMultConditionalFormula(
   const nlohmann::json& conditionsEvaluatorConfig)
   : baseFormula(std::move(baseFormula_))
   , settings(std::nullopt)
-  , conditionsEvaluatorSettings(std::nullopt)
+  , conditionsEvaluatorSettings(nullptr)
 {
   if (config.is_object()) {
     settings = ParseConfig(config);
@@ -23,7 +22,8 @@ DamageMultConditionalFormula::DamageMultConditionalFormula(
 
   if (conditionsEvaluatorConfig.is_object()) {
     conditionsEvaluatorSettings =
-      ConditionsEvaluatorSettings::FromJson(conditionsEvaluatorConfig);
+      std::make_shared<ConditionsEvaluatorSettings>(
+        ConditionsEvaluatorSettings::FromJson(conditionsEvaluatorConfig));
   }
 }
 
@@ -59,7 +59,8 @@ float DamageMultConditionalFormula::CalculateDamage(
       };
 
       ConditionsEvaluator::EvaluateConditions(
-        conditionsEvaluatorSettings,
+        conditionsEvaluatorSettings ? *conditionsEvaluatorSettings
+                                    : ConditionsEvaluatorSettings(),
         ConditionsEvaluatorCaller::kDamageMultConditionalFormula,
         value.conditions, aggressor, target, callback);
     }
@@ -101,7 +102,8 @@ float DamageMultConditionalFormula::CalculateDamage(
       };
 
       ConditionsEvaluator::EvaluateConditions(
-        conditionsEvaluatorSettings,
+        conditionsEvaluatorSettings ? *conditionsEvaluatorSettings
+                                    : ConditionsEvaluatorSettings(),
         ConditionsEvaluatorCaller::kDamageMultConditionalFormula,
         value.conditions, aggressor, target, callback);
     }

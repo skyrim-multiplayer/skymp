@@ -1,6 +1,6 @@
 #pragma once
 #include "ConditionFunction.h"
-#include "papyrus-vm/Utils.h" // CIMap
+#include "papyrus-vm/CIString.h"
 #include <memory>
 #include <vector>
 

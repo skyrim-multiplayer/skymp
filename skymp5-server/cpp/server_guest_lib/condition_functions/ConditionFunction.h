@@ -1,6 +1,7 @@
 #pragma once
-#include "MpActor.h"
 #include <cstdint>
+
+class MpActor;
 
 class ConditionFunction
 {
