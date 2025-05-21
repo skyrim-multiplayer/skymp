@@ -1,7 +1,7 @@
 #pragma once
+#include "condition_functions/ConditionFunction.h"
 #include "libespm/CTDA.h"
 #include <string>
-#include "condition_functions/ConditionFunction.h"
 
 struct Condition
 {
