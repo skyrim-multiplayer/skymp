@@ -9,6 +9,7 @@
 #include <nlohmann/json_fwd.hpp>
 
 class ConditionsEvaluatorSettings;
+class ConditionFunctionMap;
 
 struct DamageMultConditionalFormulaSettingsValue
 {
@@ -44,7 +45,8 @@ class DamageMultConditionalFormula : public IDamageFormula
 public:
   DamageMultConditionalFormula(
     std::unique_ptr<IDamageFormula> baseFormula_, const nlohmann::json& config,
-    const nlohmann::json& conditionsEvaluatorConfig);
+    const nlohmann::json& conditionsEvaluatorConfig,
+    const std::shared_ptr<ConditionFunctionMap>& conditionFunctionMap_);
 
   [[nodiscard]] float CalculateDamage(const MpActor& aggressor,
                                       const MpActor& target,
@@ -62,4 +64,5 @@ private:
   std::unique_ptr<IDamageFormula> baseFormula;
   std::optional<DamageMultConditionalFormulaSettings> settings;
   std::shared_ptr<ConditionsEvaluatorSettings> conditionsEvaluatorSettings;
+  std::shared_ptr<ConditionFunctionMap> conditionFunctionMap;
 };

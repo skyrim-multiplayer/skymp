@@ -9,6 +9,7 @@
 #include "NiPoint3.h"
 #include "PartOneListener.h"
 #include "Timer.h"
+#include "condition_functions/ConditionFunctionMap.h"
 #include "libespm/Loader.h"
 #include "papyrus-vm/VirtualMachine.h"
 #include "script_objects/MpFormGameObject.h"
@@ -259,6 +260,7 @@ public:
   };
 
   ConditionsEvaluatorSettings conditionsEvaluatorSettings;
+  ConditionFunctionMap conditionFunctionMap;
 
 private:
   bool AttachEspmRecord(const espm::CombineBrowser& br,

@@ -1,7 +1,7 @@
 #include "ConditionsEvaluator.h"
 #include "MpActor.h"
 #include "archives/JsonInputArchive.h"
-#include "condition_functions/ConditionFunctionFactory.h"
+#include "condition_functions/ConditionFunctionMap.h"
 #include "papyrus-vm/Utils.h"
 #include <fmt/format.h>
 #include <fmt/ranges.h>
@@ -20,6 +20,7 @@ ConditionsEvaluatorSettings ConditionsEvaluatorSettings::FromJson(
 }
 
 void ConditionsEvaluator::EvaluateConditions(
+  const ConditionFunctionMap& conditionFunctionMap,
   const ConditionsEvaluatorSettings& settings,
   ConditionsEvaluatorCaller caller, const std::vector<Condition>& conditions,
   const MpActor& aggressor, const MpActor& target,
@@ -43,8 +44,8 @@ void ConditionsEvaluator::EvaluateConditions(
   std::vector<int> conditionResolutions;
 
   const bool evalRes = ConditionsEvaluator::EvaluateConditionsImpl(
-    conditions, enableLogging ? &conditionResolutions : nullptr, aggressor,
-    target);
+    conditionFunctionMap, conditions,
+    enableLogging ? &conditionResolutions : nullptr, aggressor, target);
 
   std::vector<std::string> strings;
 
@@ -61,6 +62,7 @@ void ConditionsEvaluator::EvaluateConditions(
 }
 
 bool ConditionsEvaluator::EvaluateConditionsImpl(
+  const ConditionFunctionMap& conditionFunctionMap,
   const std::vector<Condition>& conditions,
   std::vector<int>* outConditionResolutions, const MpActor& aggressor,
   const MpActor& target)
@@ -76,7 +78,9 @@ bool ConditionsEvaluator::EvaluateConditionsImpl(
 
     if (!good) {
       uint8_t evaluateConditionResult =
-        EvaluateCondition(condition, aggressor, target) ? 1 : 0;
+        EvaluateCondition(conditionFunctionMap, condition, aggressor, target)
+        ? 1
+        : 0;
 
       if (conditionResolutions.size() > i) {
         conditionResolutions[i] = evaluateConditionResult;
@@ -182,33 +186,40 @@ std::vector<std::string> ConditionsEvaluator::LogEvaluateConditionsResolution(
   return res;
 }
 
-bool ConditionsEvaluator::EvaluateCondition(const Condition& condition,
-                                            const MpActor& aggressor,
-                                            const MpActor& target)
+bool ConditionsEvaluator::EvaluateCondition(
+  const ConditionFunctionMap& conditionFunctionMap, const Condition& condition,
+  const MpActor& aggressor, const MpActor& target)
 {
   uint32_t parameter1 = ExtractParameter(condition.parameter1);
   uint32_t parameter2 = ExtractParameter(condition.parameter2);
 
-  static auto g_conditionFunctionMap =
-    ConditionFunctionFactory::CreateConditionFunctions();
-
   auto conditionFunction =
-    g_conditionFunctionMap.GetConditionFunction(condition.function.data());
+    conditionFunctionMap.GetConditionFunction(condition.function.data());
 
-  const MpActor* runsOn = nullptr;
+  MpActor* runsOn = nullptr;
 
   if (condition.runsOn == "Subject") {
-    runsOn = &aggressor;
+    // TODO: get rid of const_cast
+    runsOn = const_cast<MpActor*>(&aggressor);
   } else if (condition.runsOn == "Target") {
-    runsOn = &target;
+    // TODO: get rid of const_cast
+    runsOn = const_cast<MpActor*>(&target);
   } else {
     // TODO: other options
+    // TODO: condier using polymorphism instead of if/else logic
     return false;
   }
 
-  // TODO: get rid of const_cast
-  float conditionFunctionResult = conditionFunction->Execute(
-    const_cast<MpActor&>(*runsOn), parameter1, parameter2);
+  const float conditionFunctionResult = [&]() -> float {
+    if (!conditionFunction) {
+      spdlog::warn("ConditionsEvaluator::EvaluateCondition - Condition "
+                   "function doesn't exist {}",
+                   condition.function);
+      return 0.f;
+    }
+
+    return conditionFunction->Execute(*runsOn, parameter1, parameter2);
+  }();
 
   float valueToCompareWith = condition.value;
   const std::string& comparison = condition.comparison;

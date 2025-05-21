@@ -9,6 +9,7 @@
 #include "PacketHistoryWrapper.h"
 #include "PapyrusUtils.h"
 #include "ScampServerListener.h"
+#include "condition_functions/ConditionFunctionFactory.h"
 #include "database_drivers/DatabaseFactory.h"
 #include "formulas/DamageMultConditionalFormula.h"
 #include "formulas/DamageMultFormula.h"
@@ -334,6 +335,10 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
 
     partOne->SetSendTarget(server.get());
 
+    const auto conditionFunctionMap =
+      ConditionFunctionFactory::CreateConditionFunctions();
+    partOne->worldState.conditionFunctionMap = conditionFunctionMap;
+
     auto sweetPieDamageFormulaSettings =
       serverSettings["sweetPieDamageFormulaSettings"];
 
@@ -359,7 +364,8 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
       std::move(formula), sweetPieSpellDamageFormulaSettings);
     formula = std::make_unique<DamageMultConditionalFormula>(
       std::move(formula), damageMultConditionalFormulaSettings,
-      conditionsEvaluatorSettings);
+      conditionsEvaluatorSettings,
+      std::make_shared<ConditionFunctionMap>(conditionFunctionMap));
     partOne->SetDamageFormula(std::move(formula));
 
     partOne->worldState.AttachScriptStorage(

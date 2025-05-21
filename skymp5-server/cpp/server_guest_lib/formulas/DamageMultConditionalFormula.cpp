@@ -11,10 +11,12 @@
 
 DamageMultConditionalFormula::DamageMultConditionalFormula(
   std::unique_ptr<IDamageFormula> baseFormula_, const nlohmann::json& config,
-  const nlohmann::json& conditionsEvaluatorConfig)
+  const nlohmann::json& conditionsEvaluatorConfig,
+  const std::shared_ptr<ConditionFunctionMap>& conditionFunctionMap_)
   : baseFormula(std::move(baseFormula_))
   , settings(std::nullopt)
   , conditionsEvaluatorSettings(nullptr)
+  , conditionFunctionMap(conditionFunctionMap_)
 {
   if (config.is_object()) {
     settings = ParseConfig(config);
@@ -59,6 +61,7 @@ float DamageMultConditionalFormula::CalculateDamage(
       };
 
       ConditionsEvaluator::EvaluateConditions(
+        conditionFunctionMap ? *conditionFunctionMap : ConditionFunctionMap(),
         conditionsEvaluatorSettings ? *conditionsEvaluatorSettings
                                     : ConditionsEvaluatorSettings(),
         ConditionsEvaluatorCaller::kDamageMultConditionalFormula,
@@ -102,6 +105,7 @@ float DamageMultConditionalFormula::CalculateDamage(
       };
 
       ConditionsEvaluator::EvaluateConditions(
+        conditionFunctionMap ? *conditionFunctionMap : ConditionFunctionMap(),
         conditionsEvaluatorSettings ? *conditionsEvaluatorSettings
                                     : ConditionsEvaluatorSettings(),
         ConditionsEvaluatorCaller::kDamageMultConditionalFormula,
