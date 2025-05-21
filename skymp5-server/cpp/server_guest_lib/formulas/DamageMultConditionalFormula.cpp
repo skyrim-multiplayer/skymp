@@ -39,7 +39,9 @@ float DamageMultConditionalFormula::CalculateDamage(
     return baseDamage;
   }
 
-  for (auto [key, value] : settings->entries) {
+  for (auto& pair : settings->entries) {
+    auto& key = pair.first;
+    auto& value = pair.second;
     if (value.physicalDamageMultiplier.has_value()) {
       auto callback = [&](bool evalRes, std::vector<std::string>& strings) {
         if (evalRes) {
@@ -83,7 +85,9 @@ float DamageMultConditionalFormula::CalculateDamage(
     return baseDamage;
   }
 
-  for (auto [key, value] : settings->entries) {
+  for (auto& pair : settings->entries) {
+    auto& key = pair.first;
+    auto& value = pair.second;
     if (value.magicDamageMultiplier.has_value()) {
       auto callback = [&](bool evalRes, std::vector<std::string>& strings) {
         if (evalRes) {
