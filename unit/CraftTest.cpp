@@ -149,14 +149,15 @@ TEST_CASE("DLC Dragonborn recipes are working", "[Craft][espm]")
   PartOne& p = GetPartOne();
   auto craftService = p.GetActionListener().GetCraftService();
 
-  auto form = craftService->FindRecipe(p.GetEspm().GetBrowser(),
+  auto form = craftService->FindRecipe(std::nullopt, std::nullopt,
+                                       p.GetEspm().GetBrowser(),
                                        Inventory()
                                          .AddItem(0x0005ACE4, 1)
                                          .AddItem(0x0401CD7C, 2)
                                          .AddItem(0x00034CDD, 10),
-                                       0x04037564, nullptr);
-  REQUIRE(form);
-  REQUIRE(form->GetId() == 0x0203d581);
+                                       0x04037564);
+  REQUIRE(form.size() == 1);
+  REQUIRE(form[0].rec->GetId() == 0x0203d581);
 }
 
 TEST_CASE("DLC Hearthfires recipes are working", "[Craft][espm]")
@@ -164,15 +165,16 @@ TEST_CASE("DLC Hearthfires recipes are working", "[Craft][espm]")
   PartOne& p = GetPartOne();
   auto craftService = p.GetActionListener().GetCraftService();
 
-  REQUIRE(craftService->RecipeItemsMatch(
-            p.GetEspm().GetBrowser().GetCombMapping(3),
-            espm::Convert<espm::COBJ>(
-              p.GetEspm().GetBrowser().LookupById(0x0300306d).rec),
-            Inventory().AddItem(0x0005ACE4, 1), 0x300300F) == true);
+  auto recipe = p.GetEspm().GetBrowser().LookupById(0x0300306d);
+  auto inputObjects = Inventory().AddItem(0x0005ACE4, 1);
+  bool matches =
+    craftService->RecipeItemsMatch(recipe, inputObjects, 0x300300F);
 
-  auto form = craftService->FindRecipe(p.GetEspm().GetBrowser(),
-                                       Inventory().AddItem(0x0005ACE4, 1),
-                                       0x300300F, nullptr);
-  REQUIRE(form);
-  REQUIRE(form->GetId() == 0x0200306d);
+  REQUIRE(matches == true);
+
+  auto form = craftService->FindRecipe(
+    std::nullopt, std::nullopt, p.GetEspm().GetBrowser(),
+    Inventory().AddItem(0x0005ACE4, 1), 0x300300F);
+  REQUIRE(form.size() > 0);
+  REQUIRE(form[0].rec->GetId() == 0x0200306d);
 }

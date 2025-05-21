@@ -7,10 +7,10 @@
 #include "WorldState.h"
 #include "gamemode_events/CraftEvent.h"
 #include <algorithm>
-#include <spdlog/spdlog.h>
-#include <vector>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
+#include <spdlog/spdlog.h>
+#include <vector>
 
 CraftService::CraftService(PartOne& partOne_)
   : partOne(partOne_)
@@ -50,23 +50,26 @@ void CraftService::OnCraftItem(const RawMessageData& rawMsgData,
                          workbench.GetFormId());
   }
 
-  // TODO: get all keyword ids and tweak findrecope to support it
-  // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
   std::vector<uint32_t> workbenchKeywordIds =
     workbenchBase.rec->GetKeywordIds(cache);
 
-  auto recipeUsed =
+  auto recipesList =
     FindRecipe(me, workbenchKeywordIds, br, inputObjects, resultObjectId);
 
-  if (!recipeUsed) {
+  if (recipesList.empty()) {
     return spdlog::error(
       "Recipe not found: inputObjects={}, workbenchId={:#x}, "
       "resultObjectId={:#x}",
       inputObjects.ToJson().dump(), workbenchId, resultObjectId);
   }
 
-  UseCraftRecipe(me, recipeUsed, cache, br, espmIdx);
+  if (recipesList.size() > 1) {
+    spdlog::warn("Found more than 1 recipe ({}), using the 1st one",
+                 recipesList.size());
+  }
+
+  UseCraftRecipe(me, reinterpret_cast<const espm::COBJ*>(recipesList[0].rec),
+                 cache, br, recipesList[0].fileIdx);
 }
 
 bool CraftService::RecipeItemsMatch(const espm::LookupResult& lookupRes,
