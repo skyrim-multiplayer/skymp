@@ -62,7 +62,7 @@ TEST_CASE("AddItem doesn't execute for non-privilleged users",
   p.SetUserActor(0, 0xff000000);
   auto& ac = p.worldState.GetFormAt<MpActor>(0xff000000);
 
-  ActionListener::RawMessageData msgData;
+  RawMessageData msgData;
   msgData.userId = 0;
 
   REQUIRE_THROWS_WITH(
@@ -85,7 +85,7 @@ TEST_CASE("AddItem executes", "[ConsoleCommand][espm]")
   ac.SetConsoleCommandsAllowedFlag(true);
   ac.RemoveAllItems();
 
-  ActionListener::RawMessageData msgData;
+  RawMessageData msgData;
   msgData.userId = 0;
 
   p.Messages().clear();
@@ -126,7 +126,7 @@ TEST_CASE("PlaceAtMe executes", "[ConsoleCommand][espm]")
   auto& ac = p.worldState.GetFormAt<MpActor>(0xff000000);
   ac.SetConsoleCommandsAllowedFlag(true);
 
-  ActionListener::RawMessageData msgData;
+  RawMessageData msgData;
   msgData.userId = 0;
 
   p.Messages().clear();
