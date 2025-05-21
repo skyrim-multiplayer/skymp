@@ -1,15 +1,15 @@
 #pragma once
-#include <memory>
 #include "AnimationData.h"
 #include "ConsoleCommands.h"
+#include "CraftService.h"
+#include "Messages.h"
 #include "MpActor.h"
 #include "PartOne.h"
+#include "RawMessageData.h"
+#include "SpellCastData.h"
 #include "UpdateMovementMessage.h" // RunMode
 #include "libespm/Loader.h"
-#include "SpellCastData.h"
-#include "Messages.h"
-#include "RawMessageData.h"
-#include "CraftService.h"
+#include <memory>
 
 class ServerState;
 class WorldState;
@@ -93,6 +93,12 @@ public:
                            const SpellCastData& spellCastData);
 
   virtual void OnUnknown(const RawMessageData& rawMsgData);
+
+  // for CraftTest.cpp
+  const std::shared_ptr<CraftService>& GetCraftService() noexcept
+  {
+    return craftService;
+  }
 
 private:
   void OnSpellHit(MpActor* aggressor, MpObjectReference* targetRef,

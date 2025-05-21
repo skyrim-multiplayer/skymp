@@ -22,7 +22,7 @@ TEST_CASE("Formula takes weapon damage into account", "[TES5DamageFormula]")
 
   ac.SetEquipment(R"({"numChanges": 0, "inv": {"entries": []}})");
 
-  ActionListener::RawMessageData rawMsgData;
+  RawMessageData rawMsgData;
   rawMsgData.userId = 0;
   HitData hitData;
   hitData.target = 0x14;
@@ -44,7 +44,7 @@ TEST_CASE("Damage is reduced based on target's armor", "[TES5DamageFormula]")
   p.SetUserActor(0, 0xff000000);
   auto& ac = p.worldState.GetFormAt<MpActor>(0xff000000);
 
-  ActionListener::RawMessageData rawMsgData;
+  RawMessageData rawMsgData;
   rawMsgData.userId = 0;
   HitData hitData;
   hitData.target = 0x14;
@@ -118,7 +118,7 @@ TEST_CASE("Formula is race-dependent for unarmed attack",
   auto& ac = p.worldState.GetFormAt<MpActor>(0xff000000);
   ac.SetEquipment(R"({"numChanges": 0, "inv": {"entries": []}})");
 
-  ActionListener::RawMessageData rawMsgData;
+  RawMessageData rawMsgData;
   rawMsgData.userId = 0;
   HitData hitData;
   hitData.target = 0x14;
