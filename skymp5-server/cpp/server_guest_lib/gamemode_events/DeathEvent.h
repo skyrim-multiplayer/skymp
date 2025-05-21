@@ -1,5 +1,6 @@
 #pragma once
 #include "GameModeEvent.h"
+#include <cstdint>
 
 class MpActor;
 
