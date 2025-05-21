@@ -36,8 +36,23 @@ void CraftService::OnCraftItem(const RawMessageData& rawMsgData,
                          base.rec->GetType().ToString());
   }
 
-  int espmIdx = 0;
-  auto recipeUsed = FindRecipe(br, inputObjects, resultObjectId, &espmIdx);
+  MpActor* me = partOne.serverState.ActorByUser(rawMsgData.userId);
+  if (!me) {
+    return spdlog::error("Unable to craft without Actor attached");
+  }
+
+  auto workbenchBase = br.LookupById(workbench.GetBaseId());
+
+  if (!workbenchBase.rec) {
+    return spdlog::error("Workbench ref without base object {:x}",
+                         workbench.GetFormId());
+  }
+
+  // TODO: get all keyword ids and tweak findrecope to support it
+  // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+  auto recipeUsed =
+    FindRecipe(me, workbenchKeywordIds, br, inputObjects, resultObjectId);
 
   if (!recipeUsed) {
     return spdlog::error(
@@ -46,25 +61,15 @@ void CraftService::OnCraftItem(const RawMessageData& rawMsgData,
       inputObjects.ToJson().dump(), workbenchId, resultObjectId);
   }
 
-  MpActor* me = partOne.serverState.ActorByUser(rawMsgData.userId);
-  if (!me) {
-    return spdlog::error("Unable to craft without Actor attached");
-  }
-
-  bool evalRes = EvaluateCraftRecipeConditions(me, recipeUsed->GetData(cache));
-
-  if (!evalRes) {
-    return spdlog::error("Craft recipe conditions are not met");
-  }
-
   UseCraftRecipe(me, recipeUsed, cache, br, espmIdx);
 }
 
-bool CraftService::RecipeMatches(const espm::IdMapping* mapping,
-                                 const espm::COBJ* recipe,
-                                 const Inventory& inputObjects,
-                                 uint32_t resultObjectId)
+bool CraftService::RecipeItemsMatch(const espm::LookupResult& lookupRes,
+                                    const Inventory& inputObjects,
+                                    uint32_t resultObjectId)
 {
+  auto recipe = reinterpret_cast<const espm::COBJ*>(lookupRes.rec);
+
   espm::CompressedFieldsCache dummyCache;
   auto recipeData = recipe->GetData(dummyCache);
 
@@ -79,61 +84,93 @@ bool CraftService::RecipeMatches(const espm::IdMapping* mapping,
     return false;
   }
 
-  // In the original game, setting the benchmark keyword to NONE removes the
-  // recipe from all crafting stations.
-  if (recipeData.benchKeywordId == 0) {
-    return false;
-  }
-
   auto thisInputObjects = recipeData.inputObjects;
   for (auto& entry : thisInputObjects) {
-    auto formId = espm::utils::GetMappedId(entry.formId, *mapping);
+    auto formId = lookupRes.ToGlobalId(entry.formId);
     if (inputObjects.GetItemCount(formId) != entry.count) {
       return false;
     }
   }
-  auto formId =
-    espm::utils::GetMappedId(recipeData.outputObjectFormId, *mapping);
+  auto formId = lookupRes.ToGlobalId(recipeData.outputObjectFormId);
   if (formId != resultObjectId) {
     return false;
   }
   return true;
 }
 
-const espm::COBJ* CraftService::FindRecipe(const espm::CombineBrowser& br,
-                                           const Inventory& inputObjects,
-                                           uint32_t resultObjectId,
-                                           int* optionalOutEspmIdx)
+std::vector<espm::LookupResult> CraftService::FindRecipe(
+  std::optional<MpActor*> me, std::optional<uint32_t> workbenchKeywordId,
+  const espm::CombineBrowser& br, const Inventory& inputObjects,
+  uint32_t resultObjectId)
 {
-  std::vector<espm::LookupResult> allRecipes =
-    br.GetDistinctRecordsByType("COBJ");
+  if (allRecipes.empty()) {
+    allRecipes = br.GetDistinctRecordsByType("COBJ");
+  }
 
-  //// 1-st index is espm file index
-  // std::vector<const std::vector<const espm::RecordHeader*>*> allRecipes =
-  //   br.GetRecordsByType("COBJ");
+  std::vector<espm::LookupResult> candidatesConsideredUsable;
 
-  // const espm::COBJ* recipeUsed = nullptr;
+  for (auto& recipe : allRecipes) {
+    if (!RecipeItemsMatch(recipe, inputObjects, resultObjectId)) {
+      continue;
+    }
 
-  //// multiple espm files can modify COBJ record. reverse order to find latest
-  //// record version first
-  // for (size_t i = allRecipes.size() - 1; i != static_cast<size_t>(-1); --i)
-  // {
-  //   auto mapping = br.GetCombMapping(i);
-  //   auto& espmLocalRecipes = allRecipes[i];
-  //   auto it = std::find_if(
-  //     espmLocalRecipes->begin(), espmLocalRecipes->end(),
-  //     [&](const espm::RecordHeader* rec) {
-  //       auto recipe = reinterpret_cast<const espm::COBJ*>(rec);
-  //       return RecipeMatches(mapping, recipe, inputObjects, resultObjectId);
-  //     });
-  //   if (it != espmLocalRecipes->end()) {
-  //     recipeUsed = reinterpret_cast<const espm::COBJ*>(*it);
-  //     if (optionalOutEspmIdx)
-  //       *optionalOutEspmIdx = static_cast<int>(i);
-  //     break;
-  //   }
-  // }
-  // return recipeUsed;
+    spdlog::info("CraftService::FindRecipe - Recipe candidate found: {:x}",
+                 recipe.ToGlobalId(recipe.rec->GetId()));
+
+    const bool canBeUsed =
+      ConsiderRecipeCandidate(me, workbenchKeywordId, recipe);
+    if (canBeUsed) {
+      candidatesConsideredUsable.push_back(recipe);
+      spdlog::info("CraftService::FindRecipe - Recipe candidate usable");
+    } else {
+      spdlog::info("CraftService::FindRecipe - Recipe candidate not usable");
+    }
+  }
+
+  return candidatesConsideredUsable;
+}
+
+bool CraftService::ConsiderRecipeCandidate(
+  std::optional<MpActor*> me, std::optional<uint32_t> workbenchKeywordId,
+  const espm::LookupResult& lookupRes)
+{
+  auto cobj = reinterpret_cast<const espm::COBJ*>(lookupRes.rec);
+  auto cobjData = cobj->GetData(cache);
+
+  bool finalConsiderationResult = true;
+
+  if (me.has_value()) {
+    bool evalRes = EvaluateCraftRecipeConditions(*me, cobjData);
+    if (!evalRes) {
+      spdlog::info("CraftService::ConsiderRecipeCandidate - Craft recipe "
+                   "conditions are not met");
+      finalConsiderationResult = false;
+    }
+  } else {
+    spdlog::info("CraftService::ConsiderRecipeCandidate - Actor not "
+                 "specified, skipping conditions check");
+  }
+
+  if (workbenchKeywordId.has_value()) {
+    auto recipeBenchKeywordId = lookupRes.ToGlobalId(cobjData.benchKeywordId);
+
+    // Note: In the original game, setting the benchmark keyword to NONE
+    // removes the recipe from all crafting stations.
+
+    if (recipeBenchKeywordId != *workbenchKeywordId) {
+      spdlog::info("CraftService::ConsiderRecipeCandidate - Craft recipe "
+                   "workbench keywords don't match: recipe ones {:x} != "
+                   "workbench ones {:x}",
+                   recipeBenchKeywordId, *workbenchKeywordId);
+      finalConsiderationResult = false;
+    }
+
+  } else {
+    spdlog::info("CraftService::ConsiderRecipeCandidate - Workbench keyword "
+                 "id not specified, skipping bench keyword id check");
+  }
+
+  return finalConsiderationResult;
 }
 
 void CraftService::UseCraftRecipe(MpActor* me, const espm::COBJ* recipeUsed,

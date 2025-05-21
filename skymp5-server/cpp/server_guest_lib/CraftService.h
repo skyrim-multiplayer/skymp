@@ -1,6 +1,7 @@
 #pragma once
 #include "libespm/Loader.h"
 #include <cstdint>
+#include <optional>
 #include <vector>
 
 class PartOne;
@@ -18,16 +19,21 @@ public:
                    uint32_t resultObjectId);
 
   // public for CraftTest.cpp
-  bool RecipeMatches(const espm::IdMapping* mapping, const espm::COBJ* recipe,
-                     const Inventory& inputObjects, uint32_t resultObjectId);
+  bool RecipeItemsMatch(const espm::LookupResult& lookupRes,
+                        const Inventory& inputObjects,
+                        uint32_t resultObjectId);
 
   // public for CraftTest.cpp
-  const espm::COBJ* FindRecipe(const espm::CombineBrowser& br,
-                               const Inventory& inputObjects,
-                               uint32_t resultObjectId,
-                               int* optionalOutEspmIdx);
+  std::vector<espm::LookupResult> FindRecipe(
+    std::optional<MpActor*> me, std::optional<uint32_t> workbenchKeywordId,
+    const espm::CombineBrowser& br, const Inventory& inputObjects,
+    uint32_t resultObjectId);
 
 private:
+  bool ConsiderRecipeCandidate(std::optional<MpActor*> me,
+                               std::optional<uint32_t> workbenchKeywordId,
+                               const espm::LookupResult& lookupRes);
+
   void UseCraftRecipe(MpActor* me, const espm::COBJ* recipeUsed,
                       espm::CompressedFieldsCache& cache,
                       const espm::CombineBrowser& br, int espmIdx);
@@ -36,6 +42,6 @@ private:
                                      const espm::COBJ::Data& recipeData);
 
   PartOne& partOne;
-
   std::vector<espm::LookupResult> allRecipes;
+  espm::CompressedFieldsCache cache;
 };

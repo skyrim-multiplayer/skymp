@@ -164,7 +164,7 @@ TEST_CASE("DLC Hearthfires recipes are working", "[Craft][espm]")
   PartOne& p = GetPartOne();
   auto craftService = p.GetActionListener().GetCraftService();
 
-  REQUIRE(craftService->RecipeMatches(
+  REQUIRE(craftService->RecipeItemsMatch(
             p.GetEspm().GetBrowser().GetCombMapping(3),
             espm::Convert<espm::COBJ>(
               p.GetEspm().GetBrowser().LookupById(0x0300306d).rec),
