@@ -1,5 +1,6 @@
 #include "GameModeEvent.h"
 
+#include "ScopedTask.h"
 #include "WorldState.h"
 #include <spdlog/spdlog.h>
 
@@ -10,8 +11,16 @@ bool GameModeEvent::Fire(WorldState* worldState)
     return true;
   }
 
+  const char* eventName = GetName();
+
+  worldState->currentGameModeEventsStack.push_back(this);
+
+  Viet::ScopedTask<std::vector<GameModeEvent*>> stackPopTask(
+    [](std::vector<GameModeEvent*>& stack) { stack.pop_back(); },
+    worldState->currentGameModeEventsStack);
+
   if (spdlog::should_log(spdlog::level::trace)) {
-    spdlog::trace("GameModeEvent::Fire {} {}", GetName(),
+    spdlog::trace("GameModeEvent::Fire {} {}", eventName,
                   GetArgumentsJsonArray());
   }
 
@@ -23,7 +32,7 @@ bool GameModeEvent::Fire(WorldState* worldState)
     };
   }
 
-  spdlog::trace("GameModeEvent::Fire {} {} - isBlocked: {}", GetName(),
+  spdlog::trace("GameModeEvent::Fire {} {} - isBlocked: {}", eventName,
                 GetArgumentsJsonArray(), isBlocked);
 
   if (isBlocked) {

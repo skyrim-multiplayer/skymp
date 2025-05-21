@@ -5,6 +5,23 @@
 Napi::Value PercentagesBinding::Get(Napi::Env env, ScampServer& scampServer,
                                     uint32_t formId)
 {
+  float outHealthPercentageBeforeDeath = 0.f;
+  float outMagickaPercentageBeforeDeath = 0.f;
+  float outStaminaPercentageBeforeDeath = 0.f;
+
+  if (scampServer.IsGameModeInsideDeathEventHandler(
+        formId, &outHealthPercentageBeforeDeath,
+        &outMagickaPercentageBeforeDeath, &outStaminaPercentageBeforeDeath)) {
+    auto percentages = Napi::Object::New(env);
+    percentages.Set("health",
+                    Napi::Number::New(env, outHealthPercentageBeforeDeath));
+    percentages.Set("magicka",
+                    Napi::Number::New(env, outMagickaPercentageBeforeDeath));
+    percentages.Set("stamina",
+                    Napi::Number::New(env, outStaminaPercentageBeforeDeath));
+    return percentages;
+  }
+
   auto& partOne = scampServer.GetPartOne();
 
   auto& actor = partOne->worldState.GetFormAt<MpActor>(formId);
@@ -22,6 +39,13 @@ Napi::Value PercentagesBinding::Get(Napi::Env env, ScampServer& scampServer,
 void PercentagesBinding::Set(Napi::Env env, ScampServer& scampServer,
                              uint32_t formId, Napi::Value newValue)
 {
+  if (scampServer.IsGameModeInsideDeathEventHandler(formId)) {
+    spdlog::warn("PercentagesBinding::Set - cannot set percentages during "
+                 "death event of the same actor {:x}",
+                 formId);
+    return;
+  }
+
   auto& partOne = scampServer.GetPartOne();
 
   auto newPercentages = NapiHelper::ExtractObject(newValue, "newPercentages");
