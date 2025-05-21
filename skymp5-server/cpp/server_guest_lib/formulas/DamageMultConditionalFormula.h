@@ -4,29 +4,12 @@
 #include <unordered_map>
 #include <vector>
 
+#include "Condition.h"
 #include "IDamageFormula.h"
 #include <nlohmann/json_fwd.hpp>
 
-struct DamageMultConditionalFormulaSettingsValueCondition
-{
-  template <class Archive>
-  void Serialize(Archive& archive)
-  {
-    archive.Serialize("function", function)
-      .Serialize("runsOn", runsOn)
-      .Serialize("comparison", comparison)
-      .Serialize("value", value)
-      .Serialize("parameter1", parameter1)
-      .Serialize("logicalOperator", logicalOperator);
-  }
-
-  std::string function;
-  std::string runsOn;
-  std::string comparison; // ==, !=, >, <, >=, <=
-  float value = 0.f;
-  std::string parameter1;      // hex uint32_t
-  std::string logicalOperator; // OR, AND
-};
+class ConditionsEvaluatorSettings;
+class ConditionFunctionMap;
 
 struct DamageMultConditionalFormulaSettingsValue
 {
@@ -40,7 +23,7 @@ struct DamageMultConditionalFormulaSettingsValue
 
   std::optional<float> physicalDamageMultiplier;
   std::optional<float> magicDamageMultiplier;
-  std::vector<DamageMultConditionalFormulaSettingsValueCondition> conditions;
+  std::vector<Condition> conditions;
 };
 
 // TODO: add Serialize method
@@ -60,8 +43,10 @@ struct DamageMultConditionalFormulaSettings
 class DamageMultConditionalFormula : public IDamageFormula
 {
 public:
-  DamageMultConditionalFormula(std::unique_ptr<IDamageFormula> baseFormula_,
-                               const nlohmann::json& config);
+  DamageMultConditionalFormula(
+    std::unique_ptr<IDamageFormula> baseFormula_, const nlohmann::json& config,
+    const nlohmann::json& conditionsEvaluatorConfig,
+    const std::shared_ptr<ConditionFunctionMap>& conditionFunctionMap_);
 
   [[nodiscard]] float CalculateDamage(const MpActor& aggressor,
                                       const MpActor& target,
@@ -75,24 +60,9 @@ private:
   DamageMultConditionalFormulaSettings ParseConfig(
     const nlohmann::json& config) const;
 
-  bool EvaluateConditions(
-    const std::vector<DamageMultConditionalFormulaSettingsValueCondition>&
-      conditions,
-    std::vector<int>* outConditionResolutions, const MpActor& aggressor,
-    const MpActor& target) const;
-
-  std::vector<std::string> LogEvaluateConditionsResolution(
-    const std::vector<DamageMultConditionalFormulaSettingsValueCondition>&
-      conditions,
-    const std::vector<int>& conditionResolutions, bool finalResult) const;
-
-  bool EvaluateCondition(
-    const DamageMultConditionalFormulaSettingsValueCondition& condition,
-    const MpActor& aggressor, const MpActor& target) const;
-
-  bool CompareFloats(float a, float b, const std::string& op) const;
-
 private:
   std::unique_ptr<IDamageFormula> baseFormula;
   std::optional<DamageMultConditionalFormulaSettings> settings;
+  std::shared_ptr<ConditionsEvaluatorSettings> conditionsEvaluatorSettings;
+  std::shared_ptr<ConditionFunctionMap> conditionFunctionMap;
 };

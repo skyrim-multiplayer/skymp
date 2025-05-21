@@ -1,4 +1,5 @@
 #pragma once
+#include "ConditionsEvaluator.h" // ConditionsEvaluatorSettings
 #include "FormIndex.h"
 #include "Grid.h"
 #include "GridElement.h"
@@ -8,6 +9,7 @@
 #include "NiPoint3.h"
 #include "PartOneListener.h"
 #include "Timer.h"
+#include "condition_functions/ConditionFunctionMap.h"
 #include "libespm/Loader.h"
 #include "papyrus-vm/VirtualMachine.h"
 #include "script_objects/MpFormGameObject.h"
@@ -258,6 +260,8 @@ public:
     0x0010760a
   };
 
+  ConditionsEvaluatorSettings conditionsEvaluatorSettings;
+  ConditionFunctionMap conditionFunctionMap;
   std::vector<GameModeEvent*> currentGameModeEventsStack;
 
 private:

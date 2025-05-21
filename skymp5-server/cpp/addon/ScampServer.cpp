@@ -1,6 +1,7 @@
 #include "ScampServer.h"
 
 #include "Bot.h"
+#include "ConditionsEvaluator.h"
 #include "FormCallbacks.h"
 #include "GamemodeApi.h"
 #include "NapiHelper.h"
@@ -8,6 +9,7 @@
 #include "PacketHistoryWrapper.h"
 #include "PapyrusUtils.h"
 #include "ScampServerListener.h"
+#include "condition_functions/ConditionFunctionFactory.h"
 #include "database_drivers/DatabaseFactory.h"
 #include "formulas/DamageMultConditionalFormula.h"
 #include "formulas/DamageMultFormula.h"
@@ -335,6 +337,10 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
 
     partOne->SetSendTarget(server.get());
 
+    const auto conditionFunctionMap =
+      ConditionFunctionFactory::CreateConditionFunctions();
+    partOne->worldState.conditionFunctionMap = conditionFunctionMap;
+
     auto sweetPieDamageFormulaSettings =
       serverSettings["sweetPieDamageFormulaSettings"];
 
@@ -347,6 +353,9 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
     auto damageMultConditionalFormulaSettings =
       serverSettings["damageMultConditionalFormulaSettings"];
 
+    auto conditionsEvaluatorSettings =
+      serverSettings["conditionsEvaluatorSettings"];
+
     std::unique_ptr<IDamageFormula> formula;
     formula = std::make_unique<TES5DamageFormula>();
     formula = std::make_unique<DamageMultFormula>(std::move(formula),
@@ -356,7 +365,9 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
     formula = std::make_unique<SweetPieSpellDamageFormula>(
       std::move(formula), sweetPieSpellDamageFormulaSettings);
     formula = std::make_unique<DamageMultConditionalFormula>(
-      std::move(formula), damageMultConditionalFormulaSettings);
+      std::move(formula), damageMultConditionalFormulaSettings,
+      conditionsEvaluatorSettings,
+      std::make_shared<ConditionFunctionMap>(conditionFunctionMap));
     partOne->SetDamageFormula(std::move(formula));
 
     partOne->worldState.AttachScriptStorage(
@@ -364,6 +375,11 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
 
     partOne->AttachEspm(espm);
     partOne->animationSystem.Init(&partOne->worldState);
+
+    if (conditionsEvaluatorSettings.is_object()) {
+      partOne->worldState.conditionsEvaluatorSettings =
+        ConditionsEvaluatorSettings::FromJson(conditionsEvaluatorSettings);
+    }
 
     this->serverSettings = serverSettings;
     this->logger = logger;

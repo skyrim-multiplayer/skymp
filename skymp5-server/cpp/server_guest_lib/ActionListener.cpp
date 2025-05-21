@@ -1,5 +1,6 @@
 #include "ActionListener.h"
 #include "AnimationSystem.h"
+#include "ConditionsEvaluator.h"
 #include "ConsoleCommands.h"
 #include "CropRegeneration.h"
 #include "DummyMessageOutput.h"
@@ -19,6 +20,7 @@
 #include "gamemode_events/UpdateAppearanceAttemptEvent.h"
 #include "script_objects/EspmGameObject.h"
 #include <fmt/format.h>
+#include <fmt/ranges.h>
 #include <spdlog/spdlog.h>
 #include <unordered_set>
 
@@ -481,6 +483,52 @@ void ActionListener::OnConsoleCommand(
     ConsoleCommands::Execute(*me, consoleCommandName, args);
 }
 
+bool EvaluateCraftRecipeConditions(MpActor* me,
+                                   const espm::COBJ::Data& recipeData)
+{
+  std::vector<Condition> conditions;
+  std::transform(recipeData.conditions.begin(), recipeData.conditions.end(),
+                 std::back_inserter(conditions),
+                 [&](const auto& ctda) { return Condition::FromCtda(ctda); });
+
+  // TODO: aggressor and target terms are not relevant for crafting
+  const MpActor& aggressor = *me;
+  const MpActor& target = *me;
+
+  bool evalRes_ = false;
+
+  auto callback = [&](bool evalRes, std::vector<std::string>& strings) {
+    evalRes_ = evalRes;
+
+    if (!strings.empty()) {
+      if (evalRes) {
+        strings.insert(strings.begin(),
+                       fmt::format("EvaluateConditions result is true"));
+      } else {
+        strings.insert(strings.begin(),
+                       fmt::format("EvaluateConditions result is false"));
+      }
+    }
+  };
+
+  static const ConditionsEvaluatorSettings kDefaultSettings;
+  static const ConditionFunctionMap kEmptyMap;
+
+  auto worldState = me->GetParent();
+
+  const ConditionsEvaluatorSettings& settings =
+    worldState ? worldState->conditionsEvaluatorSettings : kDefaultSettings;
+
+  const ConditionFunctionMap& conditionFunctionMap =
+    worldState ? worldState->conditionFunctionMap : kEmptyMap;
+
+  ConditionsEvaluator::EvaluateConditions(
+    conditionFunctionMap, settings, ConditionsEvaluatorCaller::kCraft,
+    conditions, aggressor, target, callback);
+
+  return evalRes_;
+}
+
 void UseCraftRecipe(MpActor* me, const espm::COBJ* recipeUsed,
                     espm::CompressedFieldsCache& cache,
                     const espm::CombineBrowser& br, int espmIdx)
@@ -490,10 +538,6 @@ void UseCraftRecipe(MpActor* me, const espm::COBJ* recipeUsed,
 
   spdlog::info("Using craft recipe with EDID {} from espm file with index {}",
                recipeUsed->GetEditorId(cache), espmIdx);
-
-  for (auto& condition : recipeData.conditions) {
-    // impl race, item, perk? checks
-  }
 
   std::vector<Inventory::Entry> entries;
   for (auto& entry : recipeData.inputObjects) {
@@ -555,6 +599,12 @@ void ActionListener::OnCraftItem(const RawMessageData& rawMsgData,
   MpActor* me = partOne.serverState.ActorByUser(rawMsgData.userId);
   if (!me) {
     return spdlog::error("Unable to craft without Actor attached");
+  }
+
+  bool evalRes = EvaluateCraftRecipeConditions(me, recipeUsed->GetData(cache));
+
+  if (!evalRes) {
+    return spdlog::error("Craft recipe conditions are not met");
   }
 
   UseCraftRecipe(me, recipeUsed, cache, br, espmIdx);
