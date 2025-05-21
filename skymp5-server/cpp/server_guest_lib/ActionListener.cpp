@@ -1,5 +1,6 @@
 #include "ActionListener.h"
 #include "AnimationSystem.h"
+#include "ConditionsEvaluator.h"
 #include "ConsoleCommands.h"
 #include "CropRegeneration.h"
 #include "DummyMessageOutput.h"
