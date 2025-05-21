@@ -1,14 +1,14 @@
 #include "CraftService.h"
 
-#include <algorithm>
-#include <vector>
 #include "ConditionsEvaluator.h"
-#include "gamemode_events/CraftEvent.h"
+#include "MpActor.h"
 #include "PartOne.h"
 #include "RawMessageData.h"
-#include "MpActor.h"
 #include "WorldState.h"
+#include "gamemode_events/CraftEvent.h"
+#include <algorithm>
 #include <spdlog/spdlog.h>
+#include <vector>
 
 CraftService::CraftService(PartOne& partOne_)
   : partOne(partOne_)
@@ -198,14 +198,19 @@ bool CraftService::EvaluateCraftRecipeConditions(
 
   static const ConditionsEvaluatorSettings kDefaultSettings;
 
+  static const ConditionFunctionMap kEmptyMap;
+
   auto worldState = me->GetParent();
 
   const ConditionsEvaluatorSettings& settings =
     worldState ? worldState->conditionsEvaluatorSettings : kDefaultSettings;
 
+  const ConditionFunctionMap& conditionFunctionMap =
+    worldState ? worldState->conditionFunctionMap : kEmptyMap;
+
   ConditionsEvaluator::EvaluateConditions(
-    settings, ConditionsEvaluatorCaller::kCraft, conditions, aggressor, target,
-    callback);
+    conditionFunctionMap, settings, ConditionsEvaluatorCaller::kCraft,
+    conditions, aggressor, target, callback);
 
   return evalRes_;
 }

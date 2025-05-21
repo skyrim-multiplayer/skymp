@@ -1,6 +1,6 @@
 #pragma once
-#include <cstdint>
 #include "libespm/Loader.h"
+#include <cstdint>
 
 class PartOne;
 class Inventory;
