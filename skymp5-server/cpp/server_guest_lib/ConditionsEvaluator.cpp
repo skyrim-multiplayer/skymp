@@ -210,16 +210,15 @@ bool ConditionsEvaluator::EvaluateCondition(
     return false;
   }
 
-  const float conditionFunctionResult = [&]() -> float {
-    if (!conditionFunction) {
-      spdlog::warn("ConditionsEvaluator::EvaluateCondition - Condition "
-                   "function doesn't exist {}",
-                   condition.function);
-      return 0.f;
-    }
+  if (!conditionFunction) {
+    spdlog::warn("ConditionsEvaluator::EvaluateCondition - Condition function "
+                 "'{}' doesn't exist. Evaluating condition to True",
+                 condition.function);
+    return true;
+  }
 
-    return conditionFunction->Execute(*runsOn, parameter1, parameter2);
-  }();
+  const float conditionFunctionResult =
+    conditionFunction->Execute(*runsOn, parameter1, parameter2);
 
   float valueToCompareWith = condition.value;
   const std::string& comparison = condition.comparison;
