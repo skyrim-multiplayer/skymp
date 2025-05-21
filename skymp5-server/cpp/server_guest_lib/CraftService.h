@@ -25,14 +25,16 @@ public:
 
   // public for CraftTest.cpp
   std::vector<espm::LookupResult> FindRecipe(
-    std::optional<MpActor*> me, std::optional<uint32_t> workbenchKeywordId,
+    std::optional<MpActor*> me,
+    std::optional<std::vector<uint32_t>> workbenchKeywordIds,
     const espm::CombineBrowser& br, const Inventory& inputObjects,
     uint32_t resultObjectId);
 
 private:
-  bool ConsiderRecipeCandidate(std::optional<MpActor*> me,
-                               std::optional<uint32_t> workbenchKeywordId,
-                               const espm::LookupResult& lookupRes);
+  bool ConsiderRecipeCandidate(
+    std::optional<MpActor*> me,
+    std::optional<std::vector<uint32_t>> workbenchKeywordIds,
+    const espm::LookupResult& lookupRes);
 
   void UseCraftRecipe(MpActor* me, const espm::COBJ* recipeUsed,
                       espm::CompressedFieldsCache& cache,

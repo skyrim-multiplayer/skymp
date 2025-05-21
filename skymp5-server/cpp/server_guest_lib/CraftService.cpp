@@ -9,6 +9,8 @@
 #include <algorithm>
 #include <spdlog/spdlog.h>
 #include <vector>
+#include <fmt/format.h>
+#include <fmt/ranges.h>
 
 CraftService::CraftService(PartOne& partOne_)
   : partOne(partOne_)
@@ -50,6 +52,9 @@ void CraftService::OnCraftItem(const RawMessageData& rawMsgData,
 
   // TODO: get all keyword ids and tweak findrecope to support it
   // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+  std::vector<uint32_t> workbenchKeywordIds =
+    workbenchBase.rec->GetKeywordIds(cache);
 
   auto recipeUsed =
     FindRecipe(me, workbenchKeywordIds, br, inputObjects, resultObjectId);
@@ -99,7 +104,8 @@ bool CraftService::RecipeItemsMatch(const espm::LookupResult& lookupRes,
 }
 
 std::vector<espm::LookupResult> CraftService::FindRecipe(
-  std::optional<MpActor*> me, std::optional<uint32_t> workbenchKeywordId,
+  std::optional<MpActor*> me,
+  std::optional<std::vector<uint32_t>> workbenchKeywordIds,
   const espm::CombineBrowser& br, const Inventory& inputObjects,
   uint32_t resultObjectId)
 {
@@ -118,7 +124,7 @@ std::vector<espm::LookupResult> CraftService::FindRecipe(
                  recipe.ToGlobalId(recipe.rec->GetId()));
 
     const bool canBeUsed =
-      ConsiderRecipeCandidate(me, workbenchKeywordId, recipe);
+      ConsiderRecipeCandidate(me, workbenchKeywordIds, recipe);
     if (canBeUsed) {
       candidatesConsideredUsable.push_back(recipe);
       spdlog::info("CraftService::FindRecipe - Recipe candidate usable");
@@ -131,7 +137,8 @@ std::vector<espm::LookupResult> CraftService::FindRecipe(
 }
 
 bool CraftService::ConsiderRecipeCandidate(
-  std::optional<MpActor*> me, std::optional<uint32_t> workbenchKeywordId,
+  std::optional<MpActor*> me,
+  std::optional<std::vector<uint32_t>> workbenchKeywordIds,
   const espm::LookupResult& lookupRes)
 {
   auto cobj = reinterpret_cast<const espm::COBJ*>(lookupRes.rec);
@@ -151,17 +158,27 @@ bool CraftService::ConsiderRecipeCandidate(
                  "specified, skipping conditions check");
   }
 
-  if (workbenchKeywordId.has_value()) {
+  if (workbenchKeywordIds.has_value()) {
     auto recipeBenchKeywordId = lookupRes.ToGlobalId(cobjData.benchKeywordId);
 
     // Note: In the original game, setting the benchmark keyword to NONE
     // removes the recipe from all crafting stations.
 
-    if (recipeBenchKeywordId != *workbenchKeywordId) {
+    bool includes =
+      std::any_of(workbenchKeywordIds->begin(), workbenchKeywordIds->end(),
+                  [&](uint32_t id) { return id == recipeBenchKeywordId; });
+
+    if (!includes) {
+      std::vector<std::string> hexIds;
+      hexIds.reserve(workbenchKeywordIds->size());
+      for (auto id : *workbenchKeywordIds) {
+        hexIds.push_back(fmt::format("{:x}", id));
+      }
+
       spdlog::info("CraftService::ConsiderRecipeCandidate - Craft recipe "
-                   "workbench keywords don't match: recipe ones {:x} != "
-                   "workbench ones {:x}",
-                   recipeBenchKeywordId, *workbenchKeywordId);
+                   "workbench keywords don't match: recipe one {:x} is not in "
+                   "workbench ids {}",
+                   recipeBenchKeywordId, fmt::join(hexIds, ", "));
       finalConsiderationResult = false;
     }
 
