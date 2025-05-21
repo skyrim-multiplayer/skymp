@@ -20,6 +20,7 @@ import {
   printConsole,
   ActorBase,
   FormType,
+  Form,
 } from "skyrimPlatform";
 
 export interface Extra {
@@ -63,10 +64,10 @@ const cropName = (s?: string): string => {
   const max = 128;
   return s.length >= max
     ? s
-        .split("")
-        .filter((x, i) => i < max)
-        .join("")
-        .concat("...")
+      .split("")
+      .filter((x, i) => i < max)
+      .join("")
+      .concat("...")
     : s;
 };
 
@@ -387,12 +388,22 @@ export const applyInventory = (
         queueNiNodeUpdateNeeded = true;
       }
 
-      printConsole(
-        `Adding ${e.baseId} to ${refr
-          .getFormID()
-          .toString(16)} with count ${oneStepCount}`
-      );
-      TESModPlatform.addItemEx(
+      let addItemExArgs: [
+        ObjectReference,
+        Form,
+        number,
+        number,
+        Enchantment | null,
+        number,
+        boolean,
+        number,
+        string,
+        number,
+        Potion | null,
+        number
+      ];
+
+      addItemExArgs = [
         refr,
         f,
         oneStepCount,
@@ -407,7 +418,23 @@ export const applyInventory = (
         e.soul ? e.soul : 0,
         e.poisonId ? Potion.from(Game.getFormEx(e.poisonId)) : null,
         e.poisonCount ? e.poisonCount : 0
+      ];
+
+      const argsToPrint = addItemExArgs.map((arg) => {
+        if (arg instanceof ObjectReference) {
+          return `ObjectReference(${arg.getFormID().toString(16)})`;
+        } else if (arg instanceof Form) {
+          return `Form(${arg.getFormID().toString(16)})`;
+        } else {
+          return JSON.stringify(arg);
+        }
+      });
+
+      printConsole(
+        `TESModPlatform.addItemEx(${argsToPrint.join(", ")})`
       );
+
+      TESModPlatform.addItemEx(...addItemExArgs);
     }
 
     if (queueNiNodeUpdateNeeded) {

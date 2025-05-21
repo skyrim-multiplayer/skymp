@@ -34,6 +34,7 @@ class FormCallbacks;
 class MpChangeForm;
 class ISaveStorage;
 class IScriptStorage;
+class GameModeEvent;
 
 class WorldState
 {
@@ -261,6 +262,7 @@ public:
 
   ConditionsEvaluatorSettings conditionsEvaluatorSettings;
   ConditionFunctionMap conditionFunctionMap;
+  std::vector<GameModeEvent*> currentGameModeEventsStack;
 
 private:
   bool AttachEspmRecord(const espm::CombineBrowser& br,
