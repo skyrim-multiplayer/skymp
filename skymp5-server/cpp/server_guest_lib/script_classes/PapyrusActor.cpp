@@ -214,6 +214,7 @@ VarValue PapyrusActor::SetAlpha(VarValue self,
 
 namespace {
 bool ValidateItemEquipability(const char* papyrusMethodName,
+                              WorldState* worldState,
                               const espm::LookupResult& lookupRes)
 {
   if (!lookupRes.rec) {
@@ -267,7 +268,7 @@ VarValue PapyrusActor::EquipItem(VarValue self,
 
     auto lookupRes = GetRecordPtr(arguments[0]);
 
-    if (!ValidateItemEquipability("EquipItem", lookupRes)) {
+    if (!ValidateItemEquipability("EquipItem", worldState, lookupRes)) {
       return VarValue::None();
     }
 
@@ -287,7 +288,7 @@ VarValue PapyrusActor::EquipItemById(VarValue self,
                                      const std::vector<VarValue>& arguments)
 {
   if (arguments.size() < 5) {
-    spdlog::error("EquipItemById requires at least 2 arguments");
+    spdlog::error("EquipItemById requires at least 5 arguments");
     return VarValue::None();
   }
 
@@ -305,7 +306,7 @@ VarValue PapyrusActor::EquipItemById(VarValue self,
 
   auto lookupRes = GetRecordPtr(arguments[0]);
 
-  if (!ValidateItemEquipability("EquipItemById", lookupRes)) {
+  if (!ValidateItemEquipability("EquipItemById", worldState, lookupRes)) {
     return VarValue::None();
   }
 
