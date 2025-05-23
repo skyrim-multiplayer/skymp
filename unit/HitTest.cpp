@@ -19,7 +19,7 @@ TEST_CASE("OnHit damages target actor based on damage formula", "[Hit]")
   p.SetUserActor(0, 0xff000000);
   auto& ac = p.worldState.GetFormAt<MpActor>(0xff000000);
 
-  ActionListener::RawMessageData rawMsgData;
+  RawMessageData rawMsgData;
   rawMsgData.userId = 0;
   HitData hitData;
   hitData.target = 0x14;
@@ -66,7 +66,7 @@ TEST_CASE("OnHit function sends ChangeValues message with coorect percentages",
   auto& ac = p.worldState.GetFormAt<MpActor>(0xff000000);
   ac.SetEquipment(R"({"inv": {"entries": []}})");
 
-  ActionListener::RawMessageData rawMsgData;
+  RawMessageData rawMsgData;
   rawMsgData.userId = 0;
   HitData hitData;
   hitData.target = 0x14;
@@ -108,7 +108,7 @@ TEST_CASE("OnHit doesn't damage character if it is out of range", "[Hit]")
 {
   PartOne& p = GetPartOne();
   DoConnect(p, 0);
-  ActionListener::RawMessageData rawMsgData;
+  RawMessageData rawMsgData;
   rawMsgData.userId = 0;
 
   const uint32_t aggressor = 0xff000000;
@@ -159,7 +159,7 @@ TEST_CASE("OnHit doesn't damage character if it is out of range", "[Hit]")
 TEST_CASE("Dead actors can't attack", "[Hit]")
 {
   PartOne& p = GetPartOne();
-  ActionListener::RawMessageData rawMsgData;
+  RawMessageData rawMsgData;
 
   const uint32_t aggressor = 0xff000000;
   const uint32_t target = 0xff000001;
@@ -211,7 +211,7 @@ TEST_CASE("checking weapon cooldown", "[Hit]")
   actorValues.staminaPercentage = 1.f;
   ac.SetPercentages(actorValues);
 
-  ActionListener::RawMessageData msgData;
+  RawMessageData msgData;
   msgData.userId = 0;
   HitData hitData;
   hitData.target = 0x14;

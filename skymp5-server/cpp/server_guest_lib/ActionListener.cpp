@@ -1,10 +1,10 @@
 #include "ActionListener.h"
 #include "AnimationSystem.h"
+#include "ConditionsEvaluator.h"
 #include "ConsoleCommands.h"
 #include "CropRegeneration.h"
 #include "DummyMessageOutput.h"
 #include "Exceptions.h"
-#include "FindRecipe.h"
 #include "GetBaseActorValues.h"
 #include "HitData.h"
 #include "MathUtils.h"
@@ -13,12 +13,12 @@
 #include "MsgType.h"
 #include "UserMessageOutput.h"
 #include "WorldState.h"
-#include "gamemode_events/CraftEvent.h"
 #include "gamemode_events/CustomEvent.h"
 #include "gamemode_events/EatItemEvent.h"
 #include "gamemode_events/UpdateAppearanceAttemptEvent.h"
 #include "script_objects/EspmGameObject.h"
 #include <fmt/format.h>
+#include <fmt/ranges.h>
 #include <spdlog/spdlog.h>
 #include <unordered_set>
 
@@ -481,83 +481,12 @@ void ActionListener::OnConsoleCommand(
     ConsoleCommands::Execute(*me, consoleCommandName, args);
 }
 
-void UseCraftRecipe(MpActor* me, const espm::COBJ* recipeUsed,
-                    espm::CompressedFieldsCache& cache,
-                    const espm::CombineBrowser& br, int espmIdx)
-{
-  auto recipeData = recipeUsed->GetData(cache);
-  auto mapping = br.GetCombMapping(espmIdx);
-
-  spdlog::info("Using craft recipe with EDID {} from espm file with index {}",
-               recipeUsed->GetEditorId(cache), espmIdx);
-
-  for (auto& condition : recipeData.conditions) {
-    // impl race, item, perk? checks
-  }
-
-  std::vector<Inventory::Entry> entries;
-  for (auto& entry : recipeData.inputObjects) {
-    auto formId = espm::utils::GetMappedId(entry.formId, *mapping);
-    entries.push_back({ formId, entry.count });
-  }
-
-  auto outputFormId =
-    espm::utils::GetMappedId(recipeData.outputObjectFormId, *mapping);
-
-  if (spdlog::should_log(spdlog::level::info)) {
-    std::string s = fmt::format("User formId={:#x} crafted", me->GetFormId());
-    for (const auto& entry : entries) {
-      s += fmt::format(" -{:#x} x{}", entry.baseId, entry.count);
-    }
-    s += fmt::format(" +{:#x} x{}", outputFormId, recipeData.outputCount);
-    spdlog::info("{}", s);
-  }
-
-  auto recipeId = espm::utils::GetMappedId(recipeUsed->GetId(), *mapping);
-
-  CraftEvent craftEvent(me, outputFormId, recipeData.outputCount, recipeId,
-                        entries);
-
-  craftEvent.Fire(me->GetParent());
-}
-
 void ActionListener::OnCraftItem(const RawMessageData& rawMsgData,
                                  const Inventory& inputObjects,
                                  uint32_t workbenchId, uint32_t resultObjectId)
 {
-  auto& workbench =
-    partOne.worldState.GetFormAt<MpObjectReference>(workbenchId);
-
-  auto& br = partOne.worldState.GetEspm().GetBrowser();
-  auto& cache = partOne.worldState.GetEspmCache();
-  auto base = br.LookupById(workbench.GetBaseId());
-
-  spdlog::info("User {} tries to craft {:#x} on workbench {:#x}",
-               rawMsgData.userId, resultObjectId, workbenchId);
-
-  bool isFurnitureOrActivator =
-    base.rec->GetType() == "FURN" || base.rec->GetType() == "ACTI";
-  if (!isFurnitureOrActivator) {
-    return spdlog::error("Unable to use {} as workbench",
-                         base.rec->GetType().ToString());
-  }
-
-  int espmIdx = 0;
-  auto recipeUsed = FindRecipe(br, inputObjects, resultObjectId, &espmIdx);
-
-  if (!recipeUsed) {
-    return spdlog::error(
-      "Recipe not found: inputObjects={}, workbenchId={:#x}, "
-      "resultObjectId={:#x}",
-      inputObjects.ToJson().dump(), workbenchId, resultObjectId);
-  }
-
-  MpActor* me = partOne.serverState.ActorByUser(rawMsgData.userId);
-  if (!me) {
-    return spdlog::error("Unable to craft without Actor attached");
-  }
-
-  UseCraftRecipe(me, recipeUsed, cache, br, espmIdx);
+  craftService->OnCraftItem(rawMsgData, inputObjects, workbenchId,
+                            resultObjectId);
 }
 
 void ActionListener::OnHostAttempt(const RawMessageData& rawMsgData,

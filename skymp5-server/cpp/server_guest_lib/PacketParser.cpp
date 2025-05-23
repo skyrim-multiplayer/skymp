@@ -56,7 +56,7 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
     throw std::runtime_error("Zero-length message packets are not allowed");
   }
 
-  ActionListener::RawMessageData rawMsgData{
+  RawMessageData rawMsgData{
     data,
     length,
     /*parsed (json)*/ {},

@@ -23,7 +23,7 @@ TEST_CASE("Player attribute percentages are changing correctly",
   p.SetUserActor(0, 0xff000000);
   auto& ac = p.worldState.GetFormAt<MpActor>(0xff000000);
 
-  ActionListener::RawMessageData msgData;
+  RawMessageData msgData;
   msgData.userId = 0;
 
   ChangeValuesMessage msg;
@@ -58,7 +58,7 @@ TEST_CASE("OnChangeValues call is cropping percentage values",
   BaseActorValues baseValues =
     GetBaseActorValues(&p.worldState, baseId, raceId, {});
 
-  ActionListener::RawMessageData msgData;
+  RawMessageData msgData;
   msgData.userId = 0;
 
   ActorValues actorValues;

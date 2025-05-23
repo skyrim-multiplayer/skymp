@@ -1,14 +1,15 @@
 #pragma once
 #include "AnimationData.h"
 #include "ConsoleCommands.h"
+#include "CraftService.h"
+#include "Messages.h"
 #include "MpActor.h"
 #include "PartOne.h"
+#include "RawMessageData.h"
+#include "SpellCastData.h"
 #include "UpdateMovementMessage.h" // RunMode
 #include "libespm/Loader.h"
-
-#include "SpellCastData.h"
-
-#include "Messages.h"
+#include <memory>
 
 class ServerState;
 class WorldState;
@@ -17,17 +18,10 @@ struct ActorValues;
 class ActionListener
 {
 public:
-  struct RawMessageData
-  {
-    Networking::PacketData unparsed = nullptr;
-    size_t unparsedLength = 0;
-    simdjson::dom::element parsed;
-    Networking::UserId userId = Networking::InvalidUserId;
-  };
-
   ActionListener(PartOne& partOne_)
     : partOne(partOne_)
   {
+    craftService = std::make_shared<CraftService>(partOne_);
   }
 
   virtual void OnCustomPacket(const RawMessageData& rawMsgData,
@@ -100,6 +94,12 @@ public:
 
   virtual void OnUnknown(const RawMessageData& rawMsgData);
 
+  // for CraftTest.cpp
+  const std::shared_ptr<CraftService>& GetCraftService() noexcept
+  {
+    return craftService;
+  }
+
 private:
   void OnSpellHit(MpActor* aggressor, MpObjectReference* targetRef,
                   const HitData& hitData);
@@ -120,4 +120,7 @@ private:
                             bool reliable = false);
 
   PartOne& partOne;
+
+  // TODO: inverse dependency
+  std::shared_ptr<CraftService> craftService;
 };
