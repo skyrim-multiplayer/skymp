@@ -316,6 +316,7 @@ VarValue PapyrusActor::EquipItemById(VarValue self,
             SpSnippetFunctionGen::SerializeArguments(arguments).data(),
             actor->GetFormId())
     .Execute(actor, SpSnippetMode::kNoReturnResult);
+  return VarValue::None();
 }
 
 VarValue PapyrusActor::EquipSpell(VarValue self,
