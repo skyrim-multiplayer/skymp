@@ -108,15 +108,15 @@ public:
       return;
     }
 
-    RE::BSSpinLockGuard _{ pManager->updateLock };
+    RE::BSSpinLockGuard _{ pManager->GetRuntimeData().updateLock };
 
-    if (pManager->activeGraph >= pManager->graphs.size()) {
+    if (pManager->GetRuntimeData().activeGraph >= pManager->graphs.size()) {
       return;
     }
 
     const RE::BShkbAnimationGraph* pGraph = actor.formID == 0x14
       ? pManager->graphs[0].get()
-      : pManager->graphs[pManager->activeGraph].get();
+      : pManager->graphs[pManager->GetRuntimeData().activeGraph].get();
 
     if (pGraph == nullptr || pGraph->behaviorGraph == nullptr ||
         pGraph->behaviorGraph->rootGenerator.get() == nullptr ||
@@ -167,15 +167,15 @@ public:
       return false;
     }
 
-    RE::BSSpinLockGuard _{ pManager->updateLock };
+    RE::BSSpinLockGuard _{ pManager->GetRuntimeData().updateLock };
 
-    if (pManager->activeGraph >= pManager->graphs.size()) {
+    if (pManager->GetRuntimeData().activeGraph >= pManager->graphs.size()) {
       return false;
     }
 
     const RE::BShkbAnimationGraph* pGraph = actor.formID == 0x14
       ? pManager->graphs[0].get()
-      : pManager->graphs[pManager->activeGraph].get();
+      : pManager->graphs[pManager->GetRuntimeData().activeGraph].get();
 
     if (pGraph == nullptr || pGraph->behaviorGraph == nullptr ||
         pGraph->behaviorGraph->rootGenerator.get() == nullptr ||

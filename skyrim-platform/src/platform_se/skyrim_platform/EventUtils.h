@@ -19,3 +19,12 @@ inline RE::BSTEventSource<E>* GetEventSource()
 {
   return T::GetSingleton();
 }
+
+#ifdef ENABLE_SKYRIM_AE
+template <class T, class E>
+  requires std::same_as<T, RE::PlayerCharacter>
+inline RE::BSTEventSource<E>* GetEventSource()
+{
+  return nullptr;
+}
+#endif
