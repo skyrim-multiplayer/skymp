@@ -1,4 +1,4 @@
-name: PR Windows Skyrim AE
+name: PR Windows Skyrim VR
 
 on:
   push:
@@ -28,11 +28,11 @@ jobs:
           submodules: 'true'
       - uses: ./.github/actions/pr_base
         with:
-          DESCRIPTION: 'Skyrim Anniversary Edition (1.6)'
-          SKYRIM_SE_FLAG: OFF
-          SP_NEXUS_ARTIFACT_NAME: Skyrim Platform %SP_VERSION% (Anniversary Edition)
+          DESCRIPTION: 'Flatrim'
+          SKYRIM_VR_FLAG: ON
+          SP_NEXUS_ARTIFACT_NAME: Skyrim Platform %SP_VERSION% (VR)
           DEPLOY_BRANCH: ""
-          DIST_ARTIFACT_NAME: dist
-          SERVER_DIST_ARTIFACT_NAME: server-dist
+          DIST_ARTIFACT_NAME: dist-vr
+          SERVER_DIST_ARTIFACT_NAME: server-dist-vr
           SKYMP5_PATCHES_PAT: ${{ secrets.SKYMP5_PATCHES_PAT }}
           NUGET_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -33,29 +33,29 @@ inline REL::Relocation<std::uintptr_t> RenderCursorMenu{ RELOCATION_ID(
 }
 
 namespace EventSource {
-inline constexpr REL::ID ActorKill(REL::Relocate(37390, 38338));
-inline constexpr REL::ID BooksRead(REL::Relocate(17470, 17865));
-inline constexpr REL::ID CriticalHit(REL::Relocate(37726, 38671));
-inline constexpr REL::ID DisarmedEvent(REL::Relocate(37392, 38340));
-inline constexpr REL::ID DragonSoulsGained(REL::Relocate(37571, 38520));
-inline constexpr REL::ID ItemHarvested(REL::Relocate(14704, 14875));
-inline constexpr REL::ID LevelIncrease(REL::Relocate(39247, 40319));
-inline constexpr REL::ID LocationDiscovery(REL::Relocate(40056, 41067));
-inline constexpr REL::ID ShoutAttack(REL::Relocate(40060, 41071));
-inline constexpr REL::ID SkillIncrease(REL::Relocate(39248, 40320));
-inline constexpr REL::ID SoulsTrapped(REL::Relocate(37916, 38873));
-inline constexpr REL::ID SpellsLearned(REL::Relocate(37917, 38874));
+inline REL::ID ActorKill(REL::Relocate(37390, 38338));
+inline REL::ID BooksRead(REL::Relocate(17470, 17865));
+inline REL::ID CriticalHit(REL::Relocate(37726, 38671));
+inline REL::ID DisarmedEvent(REL::Relocate(37392, 38340));
+inline REL::ID DragonSoulsGained(REL::Relocate(37571, 38520));
+inline REL::ID ItemHarvested(REL::Relocate(14704, 14875));
+inline REL::ID LevelIncrease(REL::Relocate(39247, 40319));
+inline REL::ID LocationDiscovery(REL::Relocate(40056, 41067));
+inline REL::ID ShoutAttack(REL::Relocate(40060, 41071));
+inline REL::ID SkillIncrease(REL::Relocate(39248, 40320));
+inline REL::ID SoulsTrapped(REL::Relocate(37916, 38873));
+inline REL::ID SpellsLearned(REL::Relocate(37917, 38874));
 }
 
 namespace BSRenderManager {
-inline constexpr REL::ID Singleton(REL::Relocate(524907, 411393));
+inline REL::ID Singleton(REL::Relocate(524907, 411393));
 }
 
 namespace MenuScreenData {
-inline constexpr REL::ID Singleton(REL::Relocate(517043, 403551));
+inline REL::ID Singleton(REL::Relocate(517043, 403551));
 }
 
-inline constexpr REL::ID WinMain(REL::Relocate(35545, 36544));
+inline REL::ID WinMain(REL::Relocate(35545, 36544));
 
 inline RE::ObjectRefHandle GetInvalidRefHandle()
 {

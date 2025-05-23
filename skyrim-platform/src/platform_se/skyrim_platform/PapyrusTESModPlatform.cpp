@@ -580,37 +580,32 @@ void TESModPlatform::PushWornState(IVM* vm, StackID stackId,
   g_wornLeft = wornLeft;
 }
 
-class MyBSExtraData
-{
-public:
-  MyBSExtraData() = default;
-  virtual ~MyBSExtraData() = default;
-  virtual uint32_t GetType(void) = 0;
-
-  MyBSExtraData* next; // 08
-};
-
-template <RE::ExtraDataType t>
-class MyExtra : public MyBSExtraData
-{
-public:
-  MyExtra() = default;
-
-  virtual ~MyExtra() = default;
-
-  uint32_t GetType() override { return static_cast<uint32_t>(t); }
-};
-
 namespace {
 RE::ExtraDataList* CreateExtraDataList()
 {
-  auto extraList = new RE::ExtraDataList;
+  constexpr size_t kBaseExtraListSizeMax = 24;
+  constexpr size_t kSpinLockSizeMax = 8;
+  constexpr size_t kSizeToMakeAllSkyrimEditionsHappy =
+    kBaseExtraListSizeMax + kSpinLockSizeMax;
 
-  auto p = reinterpret_cast<uint8_t*>(RE::malloc(0x18));
-  for (int i = 0; i < 0x18; ++i) {
-    p[i] = 0;
+  auto extraListMemory =
+    reinterpret_cast<uint8_t*>(RE::malloc(kSizeToMakeAllSkyrimEditionsHappy));
+
+  // SpinLock should enjoy currentThreadId=0 and lock=0
+  // Presence we'll be setting later in this function. So I guess we're happy
+  // with zeros.
+  for (size_t i = 0; i < kSizeToMakeAllSkyrimEditionsHappy; ++i) {
+    extraListMemory[i] = 0;
   }
-  reinterpret_cast<void*&>(extraList->_extraData.GetPresence()) = p;
+
+  RE::ExtraDataList* extraList =
+    reinterpret_cast<RE::ExtraDataList*>(extraListMemory);
+
+  auto presence = reinterpret_cast<uint8_t*>(RE::malloc(0x18));
+  for (int i = 0; i < 0x18; ++i) {
+    presence[i] = 0;
+  }
+  reinterpret_cast<void*&>(extraList->_extraData.GetPresence()) = presence;
 
   return extraList;
 }
@@ -683,38 +678,61 @@ void TESModPlatform::AddItemEx(
     auto extraList_ = reinterpret_cast<void*>(extraList);
 
     if (health > 1) {
-      addExtra(extraList_, static_cast<uint32_t>(RE::ExtraDataType::kHealth),
-               new RE::ExtraHealth(health));
+      auto extra = RE::malloc<RE::ExtraHealth>();
+      if (extra) {
+        ::new (extra) RE::ExtraHealth(health);
+        addExtra(extraList_, static_cast<uint32_t>(RE::ExtraDataType::kHealth),
+                 extra);
+      }
     }
 
     if (enchantment) {
-      addExtra(extraList_,
-               static_cast<uint32_t>(RE::ExtraDataType::kEnchantment),
-               new RE::ExtraEnchantment(enchantment, maxCharge,
-                                        removeEnchantmentOnUnequip));
+      auto extra = RE::malloc<RE::ExtraEnchantment>();
+      if (extra) {
+        ::new (extra) RE::ExtraEnchantment(enchantment, maxCharge,
+                                           removeEnchantmentOnUnequip);
+        addExtra(extraList_,
+                 static_cast<uint32_t>(RE::ExtraDataType::kEnchantment),
+                 extra);
+      }
     }
 
     if (chargePercent > 0) {
-      auto extraCharge = new RE::ExtraCharge;
-      extraCharge->charge = chargePercent;
-      addExtra(extraList_, static_cast<uint32_t>(RE::ExtraDataType::kCharge),
-               extraCharge);
+      auto extra = RE::malloc<RE::ExtraCharge>();
+      if (extra) {
+        ::new (extra) RE::ExtraCharge();
+        extra->charge = chargePercent;
+        addExtra(extraList_, static_cast<uint32_t>(RE::ExtraDataType::kCharge),
+                 extra);
+      }
     }
 
     if (strlen(textDisplayData.data()) > 0) {
-      addExtra(extraList_,
-               static_cast<uint32_t>(RE::ExtraDataType::kTextDisplayData),
-               new RE::ExtraTextDisplayData(textDisplayData.data()));
+      auto extra = RE::malloc<RE::ExtraTextDisplayData>();
+      if (extra) {
+        ::new (extra) RE::ExtraTextDisplayData(textDisplayData.data());
+        addExtra(extraList_,
+                 static_cast<uint32_t>(RE::ExtraDataType::kTextDisplayData),
+                 extra);
+      }
     }
 
     if (soul > 0 && soul <= 5) {
-      addExtra(extraList_, static_cast<uint32_t>(RE::ExtraDataType::kSoul),
-               new RE::ExtraSoul(static_cast<RE::SOUL_LEVEL>(soul)));
+      auto extra = RE::malloc<RE::ExtraSoul>();
+      if (extra) {
+        ::new (extra) RE::ExtraSoul(static_cast<RE::SOUL_LEVEL>(soul));
+        addExtra(extraList_, static_cast<uint32_t>(RE::ExtraDataType::kSoul),
+                 extra);
+      }
     }
 
     if (poison) {
-      addExtra(extraList_, static_cast<uint32_t>(RE::ExtraDataType::kPoison),
-               new RE::ExtraPoison(poison, poisonCount));
+      auto extra = RE::malloc<RE::ExtraPoison>();
+      if (extra) {
+        ::new (extra) RE::ExtraPoison(poison, poisonCount);
+        addExtra(extraList_, static_cast<uint32_t>(RE::ExtraDataType::kPoison),
+                 extra);
+      }
     }
   }
 

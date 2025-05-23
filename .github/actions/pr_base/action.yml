@@ -3,8 +3,8 @@ inputs:
   DESCRIPTION:
     description: "Will be used for artifact names"
     required: true
-  SKYRIM_SE_FLAG:
-    description: "Set to ON if building for Skyrim Special Edition"
+  SKYRIM_VR_FLAG:
+    description: "Set to ON if building for Skyrim VR"
     required: false
     default: OFF
   SP_NEXUS_ARTIFACT_NAME:
@@ -195,7 +195,7 @@ runs:
         $cmake_command_full += "-DBUILD_NODEJS=OFF "
         $cmake_command_full += "$prepare_nexus_archives_arg "
         $cmake_command_full += "-DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} "
-        $cmake_command_full += "-DSKYRIM_SE=${{ inputs.SKYRIM_SE_FLAG }} "
+        $cmake_command_full += "-DSKYRIM_VR=${{ inputs.SKYRIM_VR_FLAG }} "
         $cmake_command_full += "$cppcov_path_arg "
         $cmake_command_full += "--profiling-output cmake-profiling-output "
         $cmake_command_full += "--profiling-format google-trace"
