@@ -212,50 +212,109 @@ VarValue PapyrusActor::SetAlpha(VarValue self,
   return VarValue::None();
 }
 
+namespace {
+bool ValidateItemEquipability(const char* papyrusMethodName,
+                              const espm::LookupResult& lookupRes)
+{
+  if (!lookupRes.rec) {
+    spdlog::error("{} - invalid form", papyrusMethodName);
+    return false;
+  }
+
+  if (!espm::utils::IsItem(lookupRes.rec->GetType())) {
+    spdlog::error("{} - form is not an item", papyrusMethodName);
+    return false;
+  }
+
+  if (espm::utils::Is<espm::LIGH>(lookupRes.rec->GetType())) {
+    auto res = espm::Convert<espm::LIGH>(lookupRes.rec)
+                 ->GetData(worldState->GetEspmCache());
+    bool isTorch = res.data.flags & espm::LIGH::Flags::CanBeCarried;
+    if (!isTorch) {
+      spdlog::error("{} - form is LIGH without CanBeCarried flag",
+                    papyrusMethodName);
+      return false;
+    }
+  }
+
+  return true;
+}
+
+void AddItemIfNotPresent(MpActor* actor, const espm::LookupResult& lookupRes)
+{
+  // If no such item in inventory, add one (this is standard behavior)
+  auto baseId = lookupRes.ToGlobalId(lookupRes.rec->GetId());
+  if (actor->GetInventory().GetItemCount(baseId) == 0) {
+    actor->AddItem(baseId, 1);
+  }
+}
+}
+
 VarValue PapyrusActor::EquipItem(VarValue self,
                                  const std::vector<VarValue>& arguments)
 {
   if (auto actor = GetFormPtr<MpActor>(self)) {
     auto worldState = actor->GetParent();
     if (!worldState) {
-      throw std::runtime_error("EquipItem - no WorldState attached");
+      spdlog::error("EquipItem - no WorldState attached");
+      return VarValue::None();
     }
 
     if (arguments.size() < 1) {
-      throw std::runtime_error("EquipItem requires at least one argument");
+      spdlog::error("EquipItem - invalid argument count");
+      return VarValue::None();
     }
 
     auto lookupRes = GetRecordPtr(arguments[0]);
-    if (!lookupRes.rec) {
-      throw std::runtime_error("EquipItem - invalid form");
+
+    if (!ValidateItemEquipability("EquipItem", lookupRes)) {
+      return VarValue::None();
     }
 
-    if (!espm::utils::IsItem(lookupRes.rec->GetType())) {
-      throw std::runtime_error("EquipItem - form is not an item");
-    }
-
-    if (espm::utils::Is<espm::LIGH>(lookupRes.rec->GetType())) {
-      auto res = espm::Convert<espm::LIGH>(lookupRes.rec)
-                   ->GetData(worldState->GetEspmCache());
-      bool isTorch = res.data.flags & espm::LIGH::Flags::CanBeCarried;
-      if (!isTorch) {
-        throw std::runtime_error(
-          "EquipItem - form is LIGH without CanBeCarried flag");
-      }
-    }
-
-    // If no such item in inventory, add one (this is standard behavior)
-    auto baseId = lookupRes.ToGlobalId(lookupRes.rec->GetId());
-    if (actor->GetInventory().GetItemCount(baseId) == 0) {
-      actor->AddItem(baseId, 1);
-    }
+    AddItemIfNotPresent(actor, lookupRes);
 
     SpSnippet(GetName(), "EquipItem",
               SpSnippetFunctionGen::SerializeArguments(arguments).data(),
               actor->GetFormId())
       .Execute(actor, SpSnippetMode::kNoReturnResult);
+  } else {
+    spdlog::error("EquipItem - invalid actor");
   }
   return VarValue::None();
+}
+
+VarValue PapyrusActor::EquipItemById(VarValue self,
+                                     const std::vector<VarValue>& arguments)
+{
+  if (arguments.size() < 5) {
+    spdlog::error("EquipItemById requires at least 2 arguments");
+    return VarValue::None();
+  }
+
+  auto actor = GetFormPtr<MpActor>(self);
+  if (!actor) {
+    spdlog::error("EquipItemById - invalid actor");
+    return VarValue::None();
+  }
+
+  auto worldState = actor->GetParent();
+  if (!worldState) {
+    spdlog::error("EquipItemById - no WorldState attached");
+    return VarValue::None();
+  }
+
+  auto lookupRes = GetRecordPtr(arguments[0]);
+
+  if (!ValidateItemEquipability("EquipItemById", lookupRes)) {
+    return VarValue::None();
+  }
+
+  AddItemIfNotPresent(actor, lookupRes);
+
+  SpSnippet(GetName(), "EquipItemById",
+            SpSnippetFunctionGen::SerializeArguments(arguments).data(),
+            actor->GetFormId())
+    .Execute(actor, SpSnippetMode::kNoReturnResult);
 }
 
 VarValue PapyrusActor::EquipSpell(VarValue self,
@@ -701,6 +760,7 @@ void PapyrusActor::Register(
             &PapyrusActor::GetActorValuePercentage);
   AddMethod(vm, "SetAlpha", &PapyrusActor::SetAlpha);
   AddMethod(vm, "EquipItem", &PapyrusActor::EquipItem);
+  AddMethod(vm, "EquipItemById", &PapyrusActor::EquipItemById);
   AddMethod(vm, "EquipSpell", &PapyrusActor::EquipSpell);
   AddMethod(vm, "UnequipItem", &PapyrusActor::UnequipItem);
   AddMethod(vm, "SetDontMove", &PapyrusActor::SetDontMove);
