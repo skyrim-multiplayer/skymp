@@ -18,8 +18,6 @@ else()
     message(FATAL_ERROR "Failed to download frontend sources: ${GIT_OUTPUT}")
 endif()
 
-message(STATUS "Downloading Pospelove/auto-merge-action@main (dist/index.js)")
-
 message(STATUS "Downloading ${AUTO_MERGE_REPO}@${AUTO_MERGE_BRANCH} (dist/index.js)")
 
 file(REMOVE_RECURSE ${CMAKE_BINARY_DIR}/auto-merge-action)
@@ -63,14 +61,11 @@ message(STATUS "Installed yarn dependencies for frontend")
 
 message(STATUS "Writing config.js for frontend")
 
-set(FRONT_OUTPUT_PATH "${FRONTEND_JS_DEST_DIR}")
-string(REPLACE "\\" "\\\\" FRONT_OUTPUT_PATH ${FRONT_OUTPUT_PATH})
-set(FRONT_CFG_PATH "${CMAKE_CURRENT_LIST_DIR}/config.js")
-file(WRITE ${FRONT_CFG_PATH} "")
-file(APPEND ${FRONT_CFG_PATH} "module.exports = {\n")
-file(APPEND ${FRONT_CFG_PATH} "  outputPath:\n")
-file(APPEND ${FRONT_CFG_PATH} "    '${FRONT_OUTPUT_PATH}',\n")
-file(APPEND ${FRONT_CFG_PATH} "};\n")
+file(WRITE "${CMAKE_BINARY_DIR}/frontend-sources/config.js" "")
+file(APPEND "${CMAKE_BINARY_DIR}/frontend-sources/config.js" "module.exports = {\n")
+file(APPEND "${CMAKE_BINARY_DIR}/frontend-sources/config.js" "  outputPath:\n")
+file(APPEND "${CMAKE_BINARY_DIR}/frontend-sources/config.js" "    '${FRONTEND_JS_DEST_DIR}',\n")
+file(APPEND "${CMAKE_BINARY_DIR}/frontend-sources/config.js" "};\n")
 
 message(STATUS "Building frontend")
 

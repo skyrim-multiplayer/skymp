@@ -22,9 +22,9 @@ if(BUILD_FRONT)
   set(FRONTEND_REPO_URL "https://${SKYMP5_FRONT_REPO_PAT}:x-oauth-basic@github.com/${FRONTEND_REPO_OWNER}/${FRONTEND_REPO_NAME}.git")
 
   if("$ENV{DEPLOY_BRANCH}" STREQUAL "")
-    set(ENV_INPUT_REPOSITORIES "[{\"owner\": \"skyrim-multiplayer\", \"repo\": \"skymp5-frontend\", \"labels\": [], \"token\": \"${SKYMP5_FRONT_REPO_PAT}\"}]")
+    set(ENV_INPUT_REPOSITORIES "[{\"owner\": \"skyrim-multiplayer\", \"repo\": \"skymp5-front\", \"labels\": [], \"token\": \"${SKYMP5_FRONT_REPO_PAT}\"}]")
   else()
-    set(ENV_INPUT_REPOSITORIES "[{\"owner\": \"skyrim-multiplayer\", \"repo\": \"skymp5-frontend\", \"labels\": [\"merge-to:${DEPLOY_BRANCH}\"], \"token\": \"${SKYMP5_FRONT_REPO_PAT}\"}]")
+    set(ENV_INPUT_REPOSITORIES "[{\"owner\": \"skyrim-multiplayer\", \"repo\": \"skymp5-front\", \"labels\": [\"merge-to:${DEPLOY_BRANCH}\"], \"token\": \"${SKYMP5_FRONT_REPO_PAT}\"}]")
   endif()
 
   # Pass variables to the download script with PRS.
