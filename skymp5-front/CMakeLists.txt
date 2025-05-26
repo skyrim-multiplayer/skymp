@@ -7,7 +7,7 @@ set(FRONTEND_BRANCH main)
 
 if(BUILD_FRONT)
   if(NOT GITHUB_TOKEN_FRONTEND)
-    message(FATAL_ERROR "GITHUB_TOKEN_FRONTEND) is not set. Please set it to your GitHub personal access token.")
+    message(FATAL_ERROR "GITHUB_TOKEN_FRONTEND is not set. Please set it to your GitHub personal access token.")
   endif()
   
   set(FRONTEND_ZIP_URL "https://github.com/${FRONTEND_REPO}/archive/refs/heads/${FRONTEND_BRANCH}.zip")
@@ -19,12 +19,12 @@ if(BUILD_FRONT)
   set(AUTO_MERGE_REPO "Pospelove/auto-merge-action")
   set(AUTO_MERGE_BRANCH "main")
   set(AUTO_MERGE_REPO_URL "https://github.com/${AUTO_MERGE_REPO}.git")
-  set(FRONTEND_REPO_URL "https://${GITHUB_TOKEN_FRONTEND)}:x-oauth-basic@github.com/${FRONTEND_REPO_OWNER}/${FRONTEND_REPO_NAME}.git")
+  set(FRONTEND_REPO_URL "https://${GITHUB_TOKEN_FRONTEND}:x-oauth-basic@github.com/${FRONTEND_REPO_OWNER}/${FRONTEND_REPO_NAME}.git")
 
   if("$ENV{DEPLOY_BRANCH}" STREQUAL "")
-    set(ENV_INPUT_REPOSITORIES "[{\"owner\": \"skyrim-multiplayer\", \"repo\": \"skymp5-frontend\", \"labels\": [], \"token\": \"${GITHUB_TOKEN_FRONTEND)}\"}]")
+    set(ENV_INPUT_REPOSITORIES "[{\"owner\": \"skyrim-multiplayer\", \"repo\": \"skymp5-frontend\", \"labels\": [], \"token\": \"${GITHUB_TOKEN_FRONTEND}\"}]")
   else()
-    set(ENV_INPUT_REPOSITORIES "[{\"owner\": \"skyrim-multiplayer\", \"repo\": \"skymp5-frontend\", \"labels\": [\"merge-to:${DEPLOY_BRANCH}\"], \"token\": \"${GITHUB_TOKEN_FRONTEND)}\"}]")
+    set(ENV_INPUT_REPOSITORIES "[{\"owner\": \"skyrim-multiplayer\", \"repo\": \"skymp5-frontend\", \"labels\": [\"merge-to:${DEPLOY_BRANCH}\"], \"token\": \"${GITHUB_TOKEN_FRONTEND}\"}]")
   endif()
 
   # Pass variables to the download script with PRS.

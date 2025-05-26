@@ -88,7 +88,7 @@ option(BUILD_UNIT_TESTS "Build unit tests (excluded from build when off - workar
 option(INSTALL_CLIENT_DIST "Install the client into SKYRIM_DIR after build" OFF)
 option(BUILD_GAMEMODE "Build gamemode" OFF)
 option(BUILD_CLIENT "Build client" ON)
-option(BUILD_FRONT "Build front" ON)
+option(BUILD_FRONT "Build front" OFF)
 option(BUILD_SKYRIM_PLATFORM "Build Skyrim Platform" ON)
 option(BUILD_SCRIPTS "Build skymp5-scripts and Papyrus scripts in skyrim-platform" ON)
 option(OFFLINE_MODE "Enable offline mode in generated server settings and client settings" ON)
