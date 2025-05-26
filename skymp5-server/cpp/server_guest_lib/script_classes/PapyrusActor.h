@@ -32,8 +32,7 @@ public:
 
   VarValue EquipItem(VarValue self, const std::vector<VarValue>& arguments);
 
-  VarValue EquipItemById(VarValue self,
-                         const std::vector<VarValue>& arguments);
+  VarValue EquipItemEx(VarValue self, const std::vector<VarValue>& arguments);
 
   VarValue EquipSpell(VarValue self, const std::vector<VarValue>& arguments);
 

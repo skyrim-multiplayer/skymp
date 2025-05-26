@@ -284,35 +284,35 @@ VarValue PapyrusActor::EquipItem(VarValue self,
   return VarValue::None();
 }
 
-VarValue PapyrusActor::EquipItemById(VarValue self,
-                                     const std::vector<VarValue>& arguments)
+VarValue PapyrusActor::EquipItemEx(VarValue self,
+                                   const std::vector<VarValue>& arguments)
 {
-  if (arguments.size() < 5) {
-    spdlog::error("EquipItemById requires at least 5 arguments");
+  if (arguments.size() < 4) {
+    spdlog::error("EquipItemEx requires at least 4 arguments");
     return VarValue::None();
   }
 
   auto actor = GetFormPtr<MpActor>(self);
   if (!actor) {
-    spdlog::error("EquipItemById - invalid actor");
+    spdlog::error("EquipItemEx - invalid actor");
     return VarValue::None();
   }
 
   auto worldState = actor->GetParent();
   if (!worldState) {
-    spdlog::error("EquipItemById - no WorldState attached");
+    spdlog::error("EquipItemEx - no WorldState attached");
     return VarValue::None();
   }
 
   auto lookupRes = GetRecordPtr(arguments[0]);
 
-  if (!ValidateItemEquipability("EquipItemById", worldState, lookupRes)) {
+  if (!ValidateItemEquipability("EquipItemEx", worldState, lookupRes)) {
     return VarValue::None();
   }
 
   AddItemIfNotPresent(actor, lookupRes);
 
-  SpSnippet(GetName(), "EquipItemById",
+  SpSnippet(GetName(), "EquipItemEx",
             SpSnippetFunctionGen::SerializeArguments(arguments).data(),
             actor->GetFormId())
     .Execute(actor, SpSnippetMode::kNoReturnResult);
@@ -762,7 +762,7 @@ void PapyrusActor::Register(
             &PapyrusActor::GetActorValuePercentage);
   AddMethod(vm, "SetAlpha", &PapyrusActor::SetAlpha);
   AddMethod(vm, "EquipItem", &PapyrusActor::EquipItem);
-  AddMethod(vm, "EquipItemById", &PapyrusActor::EquipItemById);
+  AddMethod(vm, "EquipItemEx", &PapyrusActor::EquipItemEx);
   AddMethod(vm, "EquipSpell", &PapyrusActor::EquipSpell);
   AddMethod(vm, "UnequipItem", &PapyrusActor::UnequipItem);
   AddMethod(vm, "SetDontMove", &PapyrusActor::SetDontMove);
