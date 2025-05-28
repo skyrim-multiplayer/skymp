@@ -151,7 +151,7 @@ TEST_CASE("Distribution folder must contain all requested files",
                         NormalizePathSeparators(immunePath.string());
                     });
       if (startsWithBasePath && !isImmune) {
-        spdlog::debug("DistContents - Ignoring path: {}", it->string());
+        spdlog::info("DistContents - Ignoring path: {}", it->string());
         it = paths.erase(it);
       } else {
         ++it;
