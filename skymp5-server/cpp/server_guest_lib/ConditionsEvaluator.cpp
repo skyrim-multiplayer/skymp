@@ -249,7 +249,7 @@ std::pair<bool, float> ConditionsEvaluator::EvaluateCondition(
   bool comparisonResult =
     CompareFloats(conditionFunctionResult, valueToCompareWith, comparison);
 
-  return { comparisonResult, valueToCompareWith };
+  return { comparisonResult, conditionFunctionResult };
 }
 
 bool ConditionsEvaluator::CompareFloats(float a, float b,
