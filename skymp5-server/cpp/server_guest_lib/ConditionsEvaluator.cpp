@@ -184,7 +184,7 @@ std::vector<std::string> ConditionsEvaluator::LogEvaluateConditionsResolution(
     s += ' ';
     s += conditions[i].parameter1;
     s += ' ';
-    s += conditionFunctionResults[i];
+    s += std::to_string(conditionFunctionResults[i]);
     s += ' ';
     s += conditions[i].comparison;
     s += ' ';
