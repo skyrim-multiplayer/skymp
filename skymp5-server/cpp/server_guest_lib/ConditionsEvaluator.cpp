@@ -221,6 +221,12 @@ std::pair<bool, float> ConditionsEvaluator::EvaluateCondition(
   } else if (condition.runsOn == "Target") {
     // TODO: get rid of const_cast
     runsOn = const_cast<MpActor*>(&target);
+  } else if (condition.runsOn == "Reference") {
+    // TODO: get rid of const_cast
+    // TODO: fix implementation. must read formId somewhere (uesp is unclear
+    // about that). and use that formId. Why this hotfix works, because we
+    // usually use 0x14 (PlayerRef) as a reference.
+    runsOn = const_cast<MpActor*>(&aggressor);
   } else {
     // TODO: other options
     // TODO: condier using polymorphism instead of if/else logic
