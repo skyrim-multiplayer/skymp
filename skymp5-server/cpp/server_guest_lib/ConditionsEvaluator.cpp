@@ -230,14 +230,15 @@ std::pair<bool, float> ConditionsEvaluator::EvaluateCondition(
   } else {
     // TODO: other options
     // TODO: condier using polymorphism instead of if/else logic
-    return { false, -108.0 };
+    // TODO: consider proper error handling instead of magic -108.f
+    return { false, -108.f };
   }
 
   if (!conditionFunction) {
     spdlog::warn("ConditionsEvaluator::EvaluateCondition - Condition function "
                  "'{}' doesn't exist. Evaluating condition to True",
                  condition.function);
-    return { true, -108.0 };
+    return { true, -108.f };
   }
 
   const float conditionFunctionResult =
