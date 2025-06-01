@@ -17,6 +17,7 @@
     "makeid",
     "libzippp",
     "cpptrace",
+    "antigo",
     "slikenet",
     {
       "name": "mongo-cxx-driver",
