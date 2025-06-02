@@ -638,7 +638,7 @@ void MpActor::SetPercentages(const ActorValues& actorValues,
 
 void MpActor::NetSendChangeValues(
   const ActorValues& actorValues,
-  std::optional<std::vector<espm::ActorValue>> avFilter)
+  const std::optional<std::vector<espm::ActorValue>>& avFilter)
 {
   ChangeValuesMessage message;
   message.idx = GetIdx();
@@ -687,7 +687,7 @@ void MpActor::NetSendChangeValues(
 
 void MpActor::NetSetPercentages(
   const ActorValues& actorValues, MpActor* aggressor,
-  std::optional<std::vector<espm::ActorValue>> avFilter)
+  const std::optional<std::vector<espm::ActorValue>>& avFilter)
 {
   NetSendChangeValues(actorValues, avFilter);
   SetPercentages(actorValues, aggressor);

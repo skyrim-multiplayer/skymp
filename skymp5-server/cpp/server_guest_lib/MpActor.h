@@ -118,7 +118,7 @@ public:
     const std::optional<std::vector<espm::ActorValue>>& avFilter);
   void NetSetPercentages(
     const ActorValues& actorValues, MpActor* aggressor,
-    std::optional<std::vector<espm::ActorValue>> avFilter);
+    const std::optional<std::vector<espm::ActorValue>>& avFilter);
 
   std::chrono::steady_clock::time_point GetLastAttributesPercentagesUpdate();
   std::chrono::steady_clock::time_point GetLastHitTime();
