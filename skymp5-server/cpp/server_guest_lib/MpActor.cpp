@@ -14,7 +14,6 @@
 #include "ServerState.h"
 #include "SpSnippet.h"
 #include "SpSnippetFunctionGen.h"
-#include "SweetPieScript.h"
 #include "TimeUtils.h"
 #include "WorldState.h"
 #include "gamemode_events/DeathEvent.h"
@@ -514,14 +513,6 @@ bool MpActor::OnEquip(uint32_t baseId)
   };
 
   SendPapyrusEvent("OnObjectEquipped", args, std::size(args));
-
-  const auto& espmFiles = GetParent()->espmFiles;
-
-  if (std::any_of(espmFiles.begin(), espmFiles.end(),
-                  [](auto&& element) { return element == "SweetPie.esp"; })) {
-    SweetPieScript SweetPieScript(espmFiles);
-    SweetPieScript.Play(*this, *GetParent(), baseId);
-  }
 
   return true;
 }
