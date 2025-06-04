@@ -18,6 +18,7 @@ interface InvokeAnimOptions {
     isPlayExitAnimAfterwardsEnabled: unknown;
     parentAnimEventName: unknown;
     enablePlayerControlsDelayMs: unknown;
+    preferInterruptAnimAsExitAnimTimeMs: unknown;
 }
 
 // ex AnimDebugService part
@@ -66,6 +67,7 @@ export class SweetCameraEnforcementService extends ClientListener {
         let isPlayExitAnimAfterwardsEnabled = e.message.content["isPlayExitAnimAfterwardsEnabled"];
         let parentAnimEventName = e.message.content["parentAnimEventName"];
         let enablePlayerControlsDelayMs = e.message.content["enablePlayerControlsDelayMs"];
+        let preferInterruptAnimAsExitAnimTimeMs = e.message.content["preferInterruptAnimAsExitAnimTimeMs"];
 
         if (typeof name !== "string") {
             logError(this, "Expected animEventName to be string");
@@ -87,10 +89,11 @@ export class SweetCameraEnforcementService extends ClientListener {
                 ", timeMs=", timeMs,
                 ", isPlayExitAnimAfterwardsEnabled=", isPlayExitAnimAfterwardsEnabled,
                 ", parentAnimEventName=", parentAnimEventName,
-                ", enablePlayerControlsDelayMs=", enablePlayerControlsDelayMs
+                ", enablePlayerControlsDelayMs=", enablePlayerControlsDelayMs,
+                ", preferInterruptAnimAsExitAnimTimeMs=", preferInterruptAnimAsExitAnimTimeMs
             );
 
-            const result = this.tryInvokeAnim(name, { weaponDrawnAllowed, furnitureAllowed, exitAnimName, interruptAnimName, timeMs, isPlayExitAnimAfterwardsEnabled, parentAnimEventName, enablePlayerControlsDelayMs });
+            const result = this.tryInvokeAnim(name, { weaponDrawnAllowed, furnitureAllowed, exitAnimName, interruptAnimName, timeMs, isPlayExitAnimAfterwardsEnabled, parentAnimEventName, enablePlayerControlsDelayMs, preferInterruptAnimAsExitAnimTimeMs });
 
             const message: CustomPacketMessage = {
                 t: MsgType.CustomPacket,
@@ -119,23 +122,42 @@ export class SweetCameraEnforcementService extends ClientListener {
                 logTrace(this, `Forcing third person and disabling player controls`);
                 this.sp.Game.forceThirdPerson();
                 this.sp.Game.disablePlayerControls(true, false, true, false, false, false, false, false, 0);
-                this.currentAnim = { name: ctx.animEventName, options: null };
+                this.currentAnim = { name: ctx.animEventName, options: null, preferInterruptAnimState: null };
                 this.startAntiExploitPolling();
             });
         }
     }
 
     private exitAnim(options: { playExitAnim: boolean, useInterruptAnimAsExitAnim?: boolean, cb?: () => void, enablePlayerControlsDelayMs: unknown }) {
+        // TODO(1): See another TODO(1) in this file
+        let usePlayerControlsDelayMs = true;
 
         if (options.playExitAnim) {
-            const animEventToSend = options.useInterruptAnimAsExitAnim ? (this.interruptAnimName || "IdleStop") : (this.exitAnimName || "IdleForceDefaultState");
+            let useInterruptAnimAsExitAnim = false;
+
+            if (options.useInterruptAnimAsExitAnim) {
+                useInterruptAnimAsExitAnim = true;
+                usePlayerControlsDelayMs = false;
+                logTrace(this, `Using interrupt anim as exit anim: ${this.interruptAnimName}. Reason: useInterruptAnimAsExitAnim is true`);
+            }
+
+            if (this.currentAnim?.preferInterruptAnimState?.prefer) {
+                useInterruptAnimAsExitAnim = true;
+                usePlayerControlsDelayMs = false;
+                logTrace(this, `Using interrupt anim as exit anim: ${this.interruptAnimName}. Reason: preferInterruptAnimState.prefer is true`);
+            }
+
+            const animEventToSend = useInterruptAnimAsExitAnim ? (this.interruptAnimName || "IdleStop") : (this.exitAnimName || "IdleForceDefaultState");
             this.sp.Debug.sendAnimationEvent(this.sp.Game.getPlayer(), animEventToSend);
             logTrace(this, `Sent animation event:`, animEventToSend);
         }
 
         this.currentAnim = null;
 
-        const enablePlayerControlsDelaySeconds = typeof options.enablePlayerControlsDelayMs === "number" && options.enablePlayerControlsDelayMs > 0 && Number.isFinite(options.enablePlayerControlsDelayMs)
+        const enablePlayerControlsDelaySeconds = (typeof options.enablePlayerControlsDelayMs === "number"
+            && options.enablePlayerControlsDelayMs > 0
+            && Number.isFinite(options.enablePlayerControlsDelayMs)
+            && usePlayerControlsDelayMs)
             ? options.enablePlayerControlsDelayMs / 1000
             : 0.5;
         const stopAnimDelaySeconds = enablePlayerControlsDelaySeconds + 0.5;
@@ -229,7 +251,8 @@ export class SweetCameraEnforcementService extends ClientListener {
             timeMs: 0,
             isPlayExitAnimAfterwardsEnabled: true,
             parentAnimEventName: null,
-            enablePlayerControlsDelayMs: null
+            enablePlayerControlsDelayMs: null,
+            preferInterruptAnimAsExitAnimTimeMs: null
         });
     }
 
@@ -300,7 +323,19 @@ export class SweetCameraEnforcementService extends ClientListener {
                 this.sp.Game.disablePlayerControls(true, false, true, false, false, false, false, false, 0);
                 this.sp.Debug.sendAnimationEvent(this.sp.Game.getPlayer(), animEvent);
 
-                this.currentAnim = { name: animEvent, options };
+                let preferInterruptAnimState: { prefer: boolean } | null = null;
+
+                if (typeof options.preferInterruptAnimAsExitAnimTimeMs === "number" && options.preferInterruptAnimAsExitAnimTimeMs > 0 && Number.isFinite(options.preferInterruptAnimAsExitAnimTimeMs)) {
+                    const state = { prefer: true };
+                    logTrace(this, `Prefer interrupt anim as exit anim for ${options.preferInterruptAnimAsExitAnimTimeMs} ms`);
+                    this.sp.Utility.wait(options.preferInterruptAnimAsExitAnimTimeMs / 1000).then(() => {
+                        state.prefer = false;
+                        logTrace(this, `Prefer interrupt anim as exit anim state changed to false`);
+                    });
+                    preferInterruptAnimState = state;
+                }
+
+                this.currentAnim = { name: animEvent, options, preferInterruptAnimState };
                 this.startAntiExploitPolling("no_death");
             }
 
@@ -309,6 +344,7 @@ export class SweetCameraEnforcementService extends ClientListener {
             } else if (Array.isArray(options.parentAnimEventName) && options.parentAnimEventName.includes(this.currentAnimName)) {
                 f();
             } else if (this.needsExitingAnim) {
+                // TODO (1): consider not using enablePlayerControlsDelayMs here, because useInterruptAnimAsExitAnim doesn't need it
                 this.exitAnim({ playExitAnim: true, useInterruptAnimAsExitAnim: true, cb: f, enablePlayerControlsDelayMs: options.enablePlayerControlsDelayMs });
             } else {
                 f();
@@ -338,7 +374,11 @@ export class SweetCameraEnforcementService extends ClientListener {
         return this.currentAnim ? this.currentAnim.name : null;
     }
 
-    private currentAnim: { name: string, options: InvokeAnimOptions | null } | null = null;
+    private currentAnim: {
+        name: string,
+        options: InvokeAnimOptions | null,
+        preferInterruptAnimState: { prefer: boolean } | null
+    } | null = null;
 
     private stopAnimInProgress = false;
     private settings?: AnimDebugSettings;
