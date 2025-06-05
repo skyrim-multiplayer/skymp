@@ -17,6 +17,7 @@
 #include "script_compatibility_policies/PapyrusCompatibilityPolicyFactory.h"
 #include "script_storages/IScriptStorage.h"
 #include <algorithm>
+#include <antigo/Context.h>
 #include <deque>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
@@ -654,6 +655,9 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
 
 bool WorldState::LoadForm(uint32_t formId, std::stringstream* optionalOutTrace)
 {
+  ANTIGO_CONTEXT_INIT(ctx);
+  ctx.AddUnsigned(formId);
+
   auto& br = GetEspm().GetBrowser();
 
   auto lookupRes = br.LookupById(formId);

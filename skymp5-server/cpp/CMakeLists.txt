@@ -116,6 +116,8 @@ endif()
 
 find_package(libzippp REQUIRED)
 
+find_package(antigo REQUIRED)
+
 foreach(target ${VCPKG_DEPENDENT})
   target_include_directories(${target} PUBLIC ${CATCH_INCLUDE_DIR})
   target_include_directories(${target} PUBLIC ${JSON_INCLUDE_DIR})
@@ -123,6 +125,8 @@ foreach(target ${VCPKG_DEPENDENT})
   target_link_libraries(${target} PUBLIC simdjson::simdjson)
 
   target_link_libraries(${target} PUBLIC SLikeNet)
+
+  target_link_libraries(${target} PUBLIC antigo::antigo)
 
   target_link_libraries(${target} PUBLIC ZLIB::ZLIB)
 
