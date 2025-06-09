@@ -71,6 +71,10 @@ public:
       ExtraData::Serialize(archive);
     }
 
+    Entry();
+    Entry(uint32_t baseId_, uint32_t count_,
+          const ExtraData& extraData_ = ExtraData());
+
     uint32_t baseId = 0;
     uint32_t count = 0;
 

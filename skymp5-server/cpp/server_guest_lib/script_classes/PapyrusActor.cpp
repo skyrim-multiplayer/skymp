@@ -311,7 +311,7 @@ VarValue PapyrusActor::EquipItemEx(VarValue self,
   AddItemIfNotPresent(actor, lookupRes);
 
   SpSnippet(GetName(), "EquipItemEx",
-            SpSnippetFunctionGen::SerializeArguments(arguments).data(),
+            SpSnippetFunctionGen::SerializeArguments(arguments),
             actor->GetFormId())
     .Execute(actor, SpSnippetMode::kNoReturnResult);
   return VarValue::None();
