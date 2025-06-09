@@ -274,7 +274,7 @@ void ActionListener::OnUpdateEquipment(
   }
 
   SendToNeighbours(idx, rawMsgData, true);
-  actor->SetEquipment(data.ToJson().dump());
+  actor->SetEquipment(data);
 }
 
 void ActionListener::OnActivate(const RawMessageData& rawMsgData,

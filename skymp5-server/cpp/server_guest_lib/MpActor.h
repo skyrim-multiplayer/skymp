@@ -1,6 +1,7 @@
 #pragma once
 #include "AnimationData.h"
 #include "Appearance.h"
+#include "Equipment.h"
 #include "GetBaseActorValues.h"
 #include "MpObjectReference.h"
 #include "libespm/espm.h"
@@ -37,9 +38,8 @@ public:
 
   std::unique_ptr<const Appearance> GetAppearance() const;
   const std::string& GetAppearanceAsJson();
-  const std::string& GetEquipmentAsJson() const;
   std::string GetLastAnimEventAsJson() const;
-  Equipment GetEquipment() const;
+  const Equipment& GetEquipment() const;
   std::array<std::optional<Inventory::Entry>, 2> GetEquippedWeapon() const;
   uint32_t GetRaceId() const;
   bool IsWeaponDrawn() const;
@@ -59,7 +59,7 @@ public:
 
   void SetRaceMenuOpen(bool isOpen);
   void SetAppearance(const Appearance* newAppearance);
-  void SetEquipment(const std::string& jsonString);
+  void SetEquipment(const Equipment& newEquipment);
 
   void SetHealthRespawnPercentage(float percentage);
   void SetMagickaRespawnPercentage(float percentage);

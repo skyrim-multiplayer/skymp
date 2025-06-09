@@ -180,7 +180,7 @@ void MpActor::EquipBestWeapon()
     newEq.inv.AddItems({ bestEntry });
   }
 
-  SetEquipment(newEq.ToJson().dump());
+  SetEquipment(newEq);
 
   UpdateEquipmentMessage msg;
   msg.data = newEq;
@@ -231,10 +231,10 @@ void MpActor::SetAppearance(const Appearance* newAppearance)
   });
 }
 
-void MpActor::SetEquipment(const std::string& jsonString)
+void MpActor::SetEquipment(const Equipment& newEquipment)
 {
   EditChangeForm(
-    [&](MpChangeForm& changeForm) { changeForm.equipmentDump = jsonString; });
+    [&](MpChangeForm& changeForm) { changeForm.equipment = newEquipment; });
 }
 
 void MpActor::SetHealthRespawnPercentage(float percentage)
@@ -788,11 +788,6 @@ const std::string& MpActor::GetAppearanceAsJson()
   return ChangeForm().appearanceDump;
 }
 
-const std::string& MpActor::GetEquipmentAsJson() const
-{
-  return ChangeForm().equipmentDump;
-}
-
 namespace {
 bool IsValidAnimEventName(const std::string& eventName)
 {
@@ -822,11 +817,9 @@ std::string MpActor::GetLastAnimEventAsJson() const
   return res;
 }
 
-Equipment MpActor::GetEquipment() const
+const Equipment& MpActor::GetEquipment() const
 {
-  simdjson::dom::parser p;
-
-  return Equipment::FromJson(p.parse(GetEquipmentAsJson()).value());
+  return ChangeForm().equipment;
 }
 
 uint32_t MpActor::GetRaceId() const

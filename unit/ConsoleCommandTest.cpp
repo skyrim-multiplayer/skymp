@@ -108,11 +108,11 @@ TEST_CASE("AddItem executes", "[ConsoleCommand][espm]")
   REQUIRE(
     p.Messages()[0].j ==
     nlohmann::json::parse(
-      R"({"inventory":{"entries":[{"baseId":77495,"count":264}]},"type":"setInventory"})"));
+      R"({"inventory":{"entries":[{"baseId":77495,"count":264}]},"t":28})"));
   REQUIRE(
     p.Messages()[1].j ==
     nlohmann::json::parse(
-      R"({"arguments":[{"formId":77495,"type":"weapon"},264,false],"class":"SkympHacks","function":"AddItem","selfId":0,"snippetIdx":4294967295,"type":"spSnippet"})"));
+      R"({"arguments":[{"formId":77495,"type":"weapon"},264,false],"class":"SkympHacks","function":"AddItem","selfId":0,"snippetIdx":4294967295,"t":30})"));
 
   p.DestroyActor(0xff000000);
   DoDisconnect(p, 0);

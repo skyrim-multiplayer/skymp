@@ -39,32 +39,35 @@ TEST_CASE("SetUserActor", "[PartOne]")
   partOne.SetUserActor(0, 0xff000ABC);
   REQUIRE(partOne.GetUserActor(0) == 0xff000ABC);
   REQUIRE(partOne.Messages().size() == 1);
-  REQUIRE(partOne.Messages().at(0).j.dump() ==
-          nlohmann::json{
-            { "type", "createActor" },
-            { "refrId", 0xff000ABC },
-            { "idx", 0 },
-            { "isMe", true },
-            { "props",
-              nlohmann::json{ { "healRate", 0.7 },
-                              { "healRateMult", 100.f },
-                              { "health", 100.f },
-                              { "isHostedByOther", true },
-                              { "learnedSpells", nlohmann::json::array() },
-                              { "magicka", 100.f },
-                              { "magickaRate", 3.f },
-                              { "magickaRateMult", 100.f },
-                              { "stamina", 100.f },
-                              { "staminaRate", 5.f },
-                              { "staminaRateMult", 100.f },
-                              { "healthPercentage", 1.f },
-                              { "staminaPercentage", 1.f },
-                              { "magickaPercentage", 1.f } } },
-            { "transform",
-              nlohmann::json{ { "pos", { 1.f, 2.f, 3.f } },
-                              { "rot", { 0.f, 0.f, 180.f } },
-                              { "worldOrCell", 0x3c } } } }
-            .dump());
+  REQUIRE(partOne.Messages().at(0).message);
+
+  auto createActorMessage =
+    dynamic_cast<CreateActorMessage*>(partOne.Messages().at(0).message.get());
+
+  REQUIRE(createActorMessage);
+  REQUIRE(createActorMessage->refrId == 0xff000ABC);
+  REQUIRE(createActorMessage->idx == 0);
+  REQUIRE(createActorMessage->customPropsJsonDumps.empty());
+  REQUIRE(createActorMessage->isMe == true);
+  REQUIRE(createActorMessage->props.healRate == 0.7f);
+  REQUIRE(createActorMessage->props.healRateMult == 100.f);
+  REQUIRE(createActorMessage->props.health == 100.f);
+  REQUIRE(createActorMessage->props.isHostedByOther == true);
+  REQUIRE(createActorMessage->props.learnedSpells == nlohmann::json::array());
+  REQUIRE(createActorMessage->props.magicka == 100.f);
+  REQUIRE(createActorMessage->props.magickaRate == 3.f);
+  REQUIRE(createActorMessage->props.magickaRateMult == 100.f);
+  REQUIRE(createActorMessage->props.stamina == 100.f);
+  REQUIRE(createActorMessage->props.staminaRate == 5.f);
+  REQUIRE(createActorMessage->props.staminaRateMult == 100.f);
+  REQUIRE(createActorMessage->props.healthPercentage == 1.f);
+  REQUIRE(createActorMessage->props.staminaPercentage == 1.f);
+  REQUIRE(createActorMessage->props.magickaPercentage == 1.f);
+  REQUIRE(createActorMessage->transform.pos ==
+          std::array<float, 3>{ 1.f, 2.f, 3.f });
+  REQUIRE(createActorMessage->transform.rot ==
+          std::array<float, 3>{ 0.f, 0.f, 180.f });
+  REQUIRE(createActorMessage->transform.worldOrCell == 0x3c);
 
   // Trying to destroy actor:
   partOne.DestroyActor(0xff000ABC);

@@ -1,5 +1,7 @@
 #include "TestUtils.hpp"
 
+#include "MsgType.h"
+
 using Catch::Matchers::ContainsSubstring;
 
 TEST_CASE("SetRaceMenuOpen failures", "[PartOne]")
@@ -43,8 +45,9 @@ TEST_CASE("SetRaceMenuOpen", "[PartOne]")
 
   REQUIRE(actor->IsRaceMenuOpen() == true);
   REQUIRE(partOne.Messages().size() == 1);
-  REQUIRE(partOne.Messages()[0].j ==
-          nlohmann::json{ { "type", "setRaceMenuOpen" }, { "open", true } });
+  REQUIRE(
+    partOne.Messages()[0].j ==
+    nlohmann::json{ { "t", MsgType::SetRaceMenuOpen }, { "open", true } });
   REQUIRE(partOne.Messages()[0].userId == 1);
   REQUIRE(partOne.Messages()[0].reliable);
 
@@ -54,8 +57,9 @@ TEST_CASE("SetRaceMenuOpen", "[PartOne]")
 
   partOne.SetRaceMenuOpen(0xff000000, false);
   REQUIRE(partOne.Messages().size() == 2);
-  REQUIRE(partOne.Messages()[1].j ==
-          nlohmann::json{ { "type", "setRaceMenuOpen" }, { "open", false } });
+  REQUIRE(
+    partOne.Messages()[1].j ==
+    nlohmann::json{ { "t", MsgType::SetRaceMenuOpen }, { "open", false } });
   REQUIRE(partOne.Messages()[1].userId == 1);
   REQUIRE(partOne.Messages()[1].reliable);
 

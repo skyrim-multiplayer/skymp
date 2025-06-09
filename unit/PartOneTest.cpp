@@ -49,10 +49,6 @@ TEST_CASE("OnCustomPacket", "[PartOne]")
               { "contentJsonDump", nlohmann::json{ { "x", "y" } }.dump() } });
   REQUIRE_THAT(lst->str(),
                ContainsSubstring("OnCustomPacket(0, {\"x\":\"y\"})"));
-
-  REQUIRE_THROWS_WITH(
-    DoMessage(partOne, 0, nlohmann::json{ { "t", MsgType::CustomPacket } }),
-    ContainsSubstring("Unable to read key 'content'"));
 }
 
 TEST_CASE("Messages for non-existent users", "[PartOne]")

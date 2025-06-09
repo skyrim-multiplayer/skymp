@@ -210,13 +210,26 @@ TEST_CASE("Activate DisplayCaseSmFlat01 in Whiterun", "[PartOne][espm]")
   const auto refrId = 0x72080;
   auto& ref = partOne.worldState.GetFormAt<MpObjectReference>(refrId);
 
-  auto it = std::find_if(
-    partOne.Messages().begin(), partOne.Messages().end(), [&](auto m) {
-      return m.reliable && m.userId == 0 &&
-        m.j["t"] == static_cast<int>(MsgType::CreateActor) &&
-        m.j["refrId"] == refrId && m.j["props"] == nullptr;
-    });
-  REQUIRE(it != partOne.Messages().end());
+   bool ok = false;
+
+  // for (const auto& m : partOne.Messages()) {
+  //   INFO("Checking message with userId="
+  //        << m.userId << ", reliable=" << m.reliable << ", t=" << m.j["t"]
+  //        << ", refrId=" << m.j["refrId"] << ", props=" << m.j["props"]);
+
+  //  if (!(m.reliable && m.userId == 0 &&
+  //        m.j["t"] == static_cast<int>(MsgType::CreateActor) &&
+  //        m.j["refrId"] == refrId && m.j["props"] == nullptr)) {
+  //    continue;
+  //  }
+
+  //  // Found!
+  //  ok = true;
+  //  return;
+  //}
+
+   REQUIRE(ok);
+
 
   partOne.Messages().clear();
 

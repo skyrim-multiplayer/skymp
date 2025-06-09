@@ -44,6 +44,7 @@ public:
   struct Message
   {
     nlohmann::json j;
+    std::shared_ptr<IMessageBase> message;
     Networking::UserId userId = Networking::InvalidUserId;
     bool reliable = false;
   };

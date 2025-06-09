@@ -49,11 +49,7 @@ nlohmann::json MpChangeForm::ToJson(const MpChangeForm& changeForm)
     res["appearanceDump"] = nlohmann::json::parse(changeForm.appearanceDump);
   }
 
-  if (changeForm.equipmentDump.empty()) {
-    res["equipmentDump"] = nullptr;
-  } else {
-    res["equipmentDump"] = nlohmann::json::parse(changeForm.equipmentDump);
-  }
+  res["equipmentDump"] = changeForm.equipment.ToJson();
 
   res["learnedSpells"] = changeForm.learnedSpells.GetLearnedSpells();
 
@@ -218,18 +214,24 @@ MpChangeForm MpChangeForm::JsonToChangeForm(simdjson::dom::element& element)
   }
 
   ReadEx(element, equipmentDump, &jTmp);
-  res.equipmentDump = simdjson::minify(jTmp);
-  if (res.equipmentDump == "null") {
-    res.equipmentDump.clear();
+  std::string eqDump = simdjson::minify(jTmp);
+  if (eqDump == "null") {
+    eqDump.clear();
   } else {
-    auto equipment = nlohmann::json::parse(res.equipmentDump);
+    auto equipment = nlohmann::json::parse(eqDump);
     if (!equipment.contains("numChanges")) {
       equipment["numChanges"] = 0;
-      res.equipmentDump = equipment.dump();
+      eqDump = equipment.dump();
       spdlog::info("MpChangeForm::JsonToChangeForm {} - Missing 'numChanges' "
                    "key, setting to 0",
                    res.formDesc.ToString());
     }
+  }
+
+  if (eqDump.size() > 0) {
+    res.equipment = Equipment::FromJson(nlohmann::json::parse(eqDump));
+  } else {
+    res.equipment = Equipment();
   }
 
   if (element.at_pointer(learnedSpells.GetData()).error() ==

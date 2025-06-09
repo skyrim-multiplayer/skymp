@@ -59,17 +59,20 @@ public:
   void Send(Networking::UserId targetUserId, Networking::PacketData data,
             size_t length, bool reliable) override
   {
+    std::shared_ptr<IMessageBase> message;
+
     auto deserializeResult =
       GetMessageSerializerInstance().Deserialize(data, length);
     nlohmann::json j;
     if (deserializeResult) {
       deserializeResult->message->WriteJson(j);
+      message = std::move(deserializeResult->message);
     } else {
       std::string s(reinterpret_cast<const char*>(data + 1), length - 1);
       j = nlohmann::json::parse(s);
     }
 
-    messages.push_back(PartOne::Message{ j, targetUserId, reliable });
+    messages.push_back(PartOne::Message{ j, message, targetUserId, reliable });
   }
 
   std::vector<PartOne::Message> messages;
