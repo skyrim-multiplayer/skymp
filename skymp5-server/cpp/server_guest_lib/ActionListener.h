@@ -18,16 +18,6 @@ struct ActorValues;
 class ActionListener
 {
 public:
-<<<<<<< HEAD
-  struct RawMessageData
-  {
-    Networking::PacketData unparsed = nullptr;
-    size_t unparsedLength = 0;
-    Networking::UserId userId = Networking::InvalidUserId;
-  };
-
-=======
->>>>>>> main
   ActionListener(PartOne& partOne_)
     : partOne(partOne_)
   {

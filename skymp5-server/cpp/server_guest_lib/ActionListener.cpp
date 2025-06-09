@@ -637,7 +637,9 @@ void ActionListener::OnChangeValues(const RawMessageData& rawMsgData,
 
   MpActor* actor = partOne.serverState.ActorByUser(rawMsgData.userId);
   if (!actor) {
-    throw std::runtime_error("Unable to change values without Actor attached");
+    return spdlog::error(
+      "ActionListener::OnChangeValues - no Actor attached to userId {}",
+      rawMsgData.userId);
   }
 
   if (actor->ShouldSkipRestoration()) {
@@ -879,8 +881,11 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
                            const HitData& hitData_)
 {
   MpActor* myActor = partOne.serverState.ActorByUser(rawMsgData_.userId);
+
   if (!myActor) {
-    throw std::runtime_error("Unable to change values without Actor attached");
+    return spdlog::error(
+      "ActionListener::OnHit - no Actor attached to userId {}",
+      rawMsgData_.userId);
   }
 
   MpActor* aggressor = nullptr;
@@ -997,7 +1002,9 @@ void ActionListener::OnSpellCast(const RawMessageData& rawMsgData,
   MpActor* myActor = partOne.serverState.ActorByUser(rawMsgData.userId);
 
   if (!myActor) {
-    throw std::runtime_error("Unable to change values without Actor attached");
+    return spdlog::error(
+      "ActionListener::OnSpellCast - no Actor attached to userId {}",
+      rawMsgData.userId);
   }
 
   MpActor* caster = nullptr;
@@ -1045,7 +1052,7 @@ void ActionListener::OnSpellCast(const RawMessageData& rawMsgData,
 
   SendToNeighbours(myActor->idx, rawMsgData);
 
-  if (spellCastData.isInterruptCast) {
+  if (spellCastData.interruptCast) {
     return;
   }
 
@@ -1248,13 +1255,17 @@ void ActionListener::SendPapyrusOnHitEvent(MpActor* aggressor,
                                            MpObjectReference* target,
                                            const HitData& hitData)
 {
-  const MpActor* myActor = partOne.serverState.ActorByUser(rawMsgData.userId);
-
-  if (!myActor) {
-    throw std::runtime_error("Unable to change values without Actor attached");
-  }
-
-  SendToNeighbours(myActor->idx, rawMsgData);
+  auto& browser = partOne.worldState.GetEspm().GetBrowser();
+  std::array<VarValue, 7> args;
+  args[0] = VarValue(aggressor->ToGameObject()); // akAgressor
+  args[1] = VarValue(std::make_shared<EspmGameObject>(
+    browser.LookupById(hitData.source)));    // akSource
+  args[2] = VarValue::None();                // akProjectile
+  args[3] = VarValue(hitData.isPowerAttack); // abPowerAttack
+  args[4] = VarValue(hitData.isSneakAttack); // abSneakAttack
+  args[5] = VarValue(hitData.isBashAttack);  // abBashAttack
+  args[6] = VarValue(hitData.isHitBlocked);  // abHitBlocked
+  target->SendPapyrusEvent("OnHit", args.data(), args.size());
 }
 
 void ActionListener::OnSpellCast(const RawMessageData& rawMsgData,
@@ -1263,7 +1274,9 @@ void ActionListener::OnSpellCast(const RawMessageData& rawMsgData,
   MpActor* myActor = partOne.serverState.ActorByUser(rawMsgData.userId);
 
   if (!myActor) {
-    throw std::runtime_error("Unable to change values without Actor attached");
+    return spdlog::error(
+      "ActionListener::OnSpellCast - no Actor attached to userId {}",
+      rawMsgData.userId);
   }
 
   MpActor* caster = nullptr;
