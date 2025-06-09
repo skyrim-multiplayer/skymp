@@ -9,7 +9,7 @@
 
 using Catch::Matchers::ContainsSubstring;
 
-extern espm::Loader l;
+extern espm::Loader& GetEspmLoader();
 
 namespace {
 
@@ -67,7 +67,7 @@ TEST_CASE("GetItemCount/AddItem", "[Papyrus][ObjectReference][espm]")
 
   CreateMpObjectReference(p, 0xff000000);
 
-  EspmGameObject ironSword(l.GetBrowser().LookupById(0x12eb7));
+  EspmGameObject ironSword(GetEspmLoader().GetBrowser().LookupById(0x12eb7));
   auto& refr = p.worldState.GetFormAt<MpObjectReference>(0xff000000);
 
   auto item = VarValue(&ironSword);
@@ -87,7 +87,7 @@ TEST_CASE("RemoveItem", "[Papyrus][ObjectReference][espm]")
   CreateMpObjectReference(p, 0xff000000);
   CreateMpObjectReference(p, 0xff000001);
 
-  EspmGameObject ironSword(l.GetBrowser().LookupById(0x12eb7));
+  EspmGameObject ironSword(GetEspmLoader().GetBrowser().LookupById(0x12eb7));
   auto& refr = p.worldState.GetFormAt<MpObjectReference>(0xff000000);
   auto& refr2 = p.worldState.GetFormAt<MpObjectReference>(0xff000001);
 

@@ -3,7 +3,7 @@
 
 using Catch::Matchers::ContainsSubstring;
 
-extern espm::Loader l;
+extern espm::Loader& GetEspmLoader();
 
 class FakeDamageFormula : public IDamageFormula
 {
@@ -30,7 +30,7 @@ PartOne& GetPartOne()
 
   instance->worldState.AttachScriptStorage(
     std::make_shared<DirectoryScriptStorage>(TEST_PEX_DIR));
-  instance->AttachEspm(&l);
+  instance->AttachEspm(&GetEspmLoader());
 
   instance->worldState.bannedEspmCharacterRaceIds.clear();
 
