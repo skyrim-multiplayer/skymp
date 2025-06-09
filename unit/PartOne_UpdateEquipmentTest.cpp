@@ -16,12 +16,12 @@ TEST_CASE("UpdateEquipment", "[PartOne]")
   partOne.SetUserActor(1, 0xffABCABC);
 
   // createActor should contain equipment
-  REQUIRE(std::find_if(partOne.Messages().begin(), partOne.Messages().end(),
-                       [&](auto m) {
-                         return m.j["type"] == "createActor" &&
-                           m.j["idx"] == 0 && m.reliable && m.userId == 1 &&
-                           m.j["equipment"] == jEquipment["data"];
-                       }) != partOne.Messages().end());
+  auto res = FindRefrMessageIdx<CreateActorMessage>(partOne, 0);
+  REQUIRE(res.filteredMessages.size() == 1);
+  REQUIRE(res.filteredMessages[0].equipment.has_value());
+  REQUIRE(res.filteredMessages[0].equipment->ToJson().dump() ==
+          jEquipment["data"].dump());
+
   partOne.Messages().clear();
 
   DoMessage(partOne, 0, jEquipment);

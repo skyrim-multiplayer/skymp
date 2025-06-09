@@ -100,3 +100,52 @@ public:
 private:
   std::stringstream ss;
 };
+
+namespace {
+template <class Message>
+struct FindRefrMessageResult
+{
+  std::vector<Message> filteredMessages;
+  std::vector<PartOne::Message> filteredMessagesOriginals;
+};
+
+template <class Message>
+inline FindRefrMessageResult<Message> FindRefrMessage(PartOne& partOne,
+                                                      uint32_t expectedRefrId)
+{
+  std::vector<Message> filteredMessages;
+  std::vector<PartOne::Message> filteredMessagesOriginals;
+
+  for (auto& message : partOne.Messages()) {
+    if (auto createActorMessage =
+          dynamic_cast<Message*>(message.message.get())) {
+      if (createActorMessage->refrId == expectedRefrId) {
+        filteredMessages.push_back(*createActorMessage);
+        filteredMessagesOriginals.push_back(message);
+      }
+    }
+  }
+
+  return FindRefrMessageResult{ filteredMessages, filteredMessagesOriginals };
+}
+
+template <class Message>
+inline FindRefrMessageResult<Message> FindRefrMessageIdx(PartOne& partOne,
+                                                         int expectedIdx)
+{
+  std::vector<Message> filteredMessages;
+  std::vector<PartOne::Message> filteredMessagesOriginals;
+
+  for (auto& message : partOne.Messages()) {
+    if (auto createActorMessage =
+          dynamic_cast<Message*>(message.message.get())) {
+      if (createActorMessage->idx == expectedIdx) {
+        filteredMessages.push_back(*createActorMessage);
+        filteredMessagesOriginals.push_back(message);
+      }
+    }
+  }
+
+  return FindRefrMessageResult{ filteredMessages, filteredMessagesOriginals };
+}
+}

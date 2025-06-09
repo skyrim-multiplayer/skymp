@@ -11,10 +11,16 @@ TEST_CASE("SetRaceMenuOpen failures", "[PartOne]")
 
   partOne.CreateActor(0xff000000, { 1.f, 2.f, 3.f }, 180.f, 0x3c);
 
-  REQUIRE_THROWS_WITH(
-    partOne.SetRaceMenuOpen(0xff000000, true),
-    ContainsSubstring(
-      "Actor with id 0xff000000 is not attached to any of users"));
+  REQUIRE(partOne.worldState.GetFormAt<MpObjectReference>(0xff000000)
+            .GetChangeForm()
+            .isRaceMenuOpen == false);
+
+  partOne.SetRaceMenuOpen(0xff000000, true);
+  // warns with "Actor with id 0xff000000 is not attached to any of users" but
+  // sets flag
+  REQUIRE(partOne.worldState.GetFormAt<MpObjectReference>(0xff000000)
+            .GetChangeForm()
+            .isRaceMenuOpen == true);
 
   REQUIRE_THROWS_WITH(
     partOne.SetRaceMenuOpen(0xffffffff, true),
