@@ -35,10 +35,6 @@
       "platform": "windows"
     },
     {
-      "name": "chakracore",
-      "platform": "windows"
-    },
-    {
       "name": "directxtk",
       "platform": "windows"
     },
@@ -65,26 +61,23 @@
     }
   ],
   "features": {
-    "skyrim-se": {
-      "description": "Build platform for Skyrim Special Edition.",
+    "skyrim-flatrim": {
+      "description": "Build platform for Skyrim Special, or Anniversary Edition.",
       "dependencies": [
         {
-          "name": "commonlibse",
-          "platform": "windows"
-        }
-      ]
-    },
-    "skyrim-ae": {
-      "description": "Build platform for Skyrim Anniversary Edition.",
-      "dependencies": [
-        {
-          "name": "commonlibae",
+          "name": "commonlibsse-ng-flatrim",
           "platform": "windows"
         }
       ]
     },
     "skyrim-vr": {
-      "description": "Build platform for Skyrim VR."
+      "description": "Build platform for Skyrim VR.",
+      "dependencies": [
+        {
+          "name": "commonlibsse-ng-vr",
+          "platform": "windows"
+        }
+      ]
     },
     "build-nodejs": {
       "description": "",

@@ -56,7 +56,7 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
     throw std::runtime_error("Zero-length message packets are not allowed");
   }
 
-  ActionListener::RawMessageData rawMsgData{
+  RawMessageData rawMsgData{
     data,
     length,
     userId,
@@ -177,11 +177,7 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
       case MsgType::ChangeValues: {
         auto message =
           reinterpret_cast<ChangeValuesMessage*>(result->message.get());
-        ActorValues actorValues;
-        actorValues.healthPercentage = message->data.health;
-        actorValues.magickaPercentage = message->data.magicka;
-        actorValues.staminaPercentage = message->data.stamina;
-        actionListener.OnChangeValues(rawMsgData, actorValues);
+        actionListener.OnChangeValues(rawMsgData, *message);
         return;
       }
       case MsgType::CustomPacket: {

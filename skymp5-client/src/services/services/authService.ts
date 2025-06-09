@@ -64,7 +64,7 @@ export class AuthService extends ClientListener {
       this.controller.emitter.emit("authAttempt", { authGameData: { local: { profileId: settingsGameData.profileId } } });
     } else {
       logTrace(this, `No offline mode detectted in settings, regular auth needed`);
-      this.isListenBrowserMessage = true;
+      this.setListenBrowserMessage(true, 'authNeeded event received');
 
       this.trigger.authNeededFired = true;
       if (this.trigger.conditionMet) {
@@ -126,6 +126,8 @@ export class AuthService extends ClientListener {
         logTrace(this, 'loginFailedNotLoggedViaDiscord received');
         browserState.loginFailedReason = 'войдите через discord';
         browserState.comment = '';
+        this.setListenBrowserMessage(true, 'loginFailedNotLoggedViaDiscord received');
+        this.loggingStartMoment = 0;
         this.sp.browser.executeJavaScript(new FunctionInfo(this.loginFailedWidgetSetter).getText({ events, browserState, authData: authData }));
         break;
       case 'loginFailedNotInTheDiscordServer':
@@ -134,6 +136,8 @@ export class AuthService extends ClientListener {
         logTrace(this, 'loginFailedNotInTheDiscordServer received');
         browserState.loginFailedReason = 'вступите в discord сервер';
         browserState.comment = '';
+        this.setListenBrowserMessage(true, 'loginFailedNotInTheDiscordServer received');
+        this.loggingStartMoment = 0;
         this.sp.browser.executeJavaScript(new FunctionInfo(this.loginFailedWidgetSetter).getText({ events, browserState, authData: authData }));
         break;
       case 'loginFailedBanned':
@@ -142,6 +146,8 @@ export class AuthService extends ClientListener {
         logTrace(this, 'loginFailedBanned received');
         browserState.loginFailedReason = 'вы забанены';
         browserState.comment = '';
+        this.setListenBrowserMessage(true, 'loginFailedBanned received');
+        this.loggingStartMoment = 0;
         this.sp.browser.executeJavaScript(new FunctionInfo(this.loginFailedWidgetSetter).getText({ events, browserState, authData: authData }));
         break;
       case 'loginFailedIpMismatch':
@@ -150,6 +156,8 @@ export class AuthService extends ClientListener {
         logTrace(this, 'loginFailedIpMismatch received');
         browserState.loginFailedReason = 'что это было?';
         browserState.comment = '';
+        this.setListenBrowserMessage(true, 'loginFailedIpMismatch received');
+        this.loggingStartMoment = 0;
         this.sp.browser.executeJavaScript(new FunctionInfo(this.loginFailedWidgetSetter).getText({ events, browserState, authData: authData }));
         break;
     }
@@ -179,9 +187,6 @@ export class AuthService extends ClientListener {
     catch (e) {
       logError(this, "Failed to call setTimeout");
     }
-
-    // Launch checkLoginState loop
-    this.checkLoginState();
   }
 
   private onBrowserMessage(e: BrowserMessageEvent) {
@@ -200,6 +205,9 @@ export class AuthService extends ClientListener {
         browserState.comment = 'открываем браузер...';
         this.refreshWidgets();
         this.sp.win32.loadUrl(`${settingsService.getMasterUrl()}/api/users/login-discord?state=${this.discordAuthState}`);
+
+        // Launch checkLoginState loop
+        this.checkLoginState();
         break;
       case events.authAttempt:
         if (authData === null) {
@@ -207,6 +215,7 @@ export class AuthService extends ClientListener {
           this.refreshWidgets();
           break;
         }
+
         this.writeAuthDataToDisk(authData);
         this.controller.emitter.emit("authAttempt", { authGameData: { remote: authData } });
 
@@ -270,6 +279,11 @@ export class AuthService extends ClientListener {
 
     const settingsService = this.controller.lookupListener(SettingsService);
     const timersService = this.controller.lookupListener(TimersService);
+
+    // Social engineering protection, don't show the full state
+    const halfDiscordAuthState = this.discordAuthState.slice(0, 16);
+
+    logTrace(this, `Checking login state`, halfDiscordAuthState, '...');
 
     new this.sp.HttpClient(settingsService.getMasterUrl())
       .get("/api/users/login-discord/status?state=" + this.discordAuthState, undefined,
@@ -523,12 +537,12 @@ export class AuthService extends ClientListener {
       this.controller.once("update", () => {
         this.sp.Game.disablePlayerControls(true, true, true, true, true, true, true, true, 0);
       });
-      this.isListenBrowserMessage = true;
+      this.setListenBrowserMessage(true, 'connectionDenied event received');
     }
   }
 
   private handleConnectionAccepted() {
-    this.isListenBrowserMessage = false;
+    this.setListenBrowserMessage(false, 'connectionAccepted event received');
     this.loggingStartMoment = Date.now();
 
     const authData = this.sp.storage[authGameDataStorageKey] as AuthGameData | undefined;
@@ -620,16 +634,17 @@ export class AuthService extends ClientListener {
     this.playerEverSawActualGameplay = true;
   }
 
-  // private showConnectionError() {
-  //   // TODO: unhardcode it or render via browser
-  //   this.sp.printConsole("Server connection failed. This may be caused by one of the following:");
-  //   this.sp.printConsole("1. You are not present on the SkyMP Discord server");
-  //   this.sp.printConsole("2. You have been banned by server admins");
-  //   this.sp.printConsole("3. There is some technical issue. Try linking your Discord account again");
-  //   this.sp.printConsole("If you feel that something is wrong, please contact us on Discord.");
-  // };
+  private isListenBrowserMessage() {
+    return this._isListenBrowserMessage;
+  }
 
-  private isListenBrowserMessage = false;
+  private setListenBrowserMessage(value: boolean, reason: string) {
+    logTrace(this, `setListenBrowserMessage:`, value, `reason:`, reason);
+    this._isListenBrowserMessage = value;
+  }
+
+  private _isListenBrowserMessage = false;
+
   private trigger = {
     authNeededFired: false,
     browserWindowLoadedFired: false,

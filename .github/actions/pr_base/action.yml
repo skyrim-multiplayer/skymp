@@ -3,8 +3,8 @@ inputs:
   DESCRIPTION:
     description: "Will be used for artifact names"
     required: true
-  SKYRIM_SE_FLAG:
-    description: "Set to ON if building for Skyrim Special Edition"
+  SKYRIM_VR_FLAG:
+    description: "Set to ON if building for Skyrim VR"
     required: false
     default: OFF
   SP_NEXUS_ARTIFACT_NAME:
@@ -24,6 +24,13 @@ inputs:
   SKYMP5_PATCHES_PAT:
     description: "PAT for skymp5-patches repository"
     required: true
+  SKYMP5_FRONT_PAT:
+    description: "PAT for skymp5-front repository"
+    required: false
+  BUILD_SKYMP5_FRONT:
+    description: "Set to true if building skymp5-front"
+    required: false
+    default: "false"
   NUGET_GITHUB_TOKEN:
     description: "A GitHub token for GitHub Packages (Nuget)"
     required: false
@@ -193,9 +200,11 @@ runs:
         $cmake_command_full += "$vcpkg_root_arg "
         $cmake_command_full += "-DUNIT_DATA_DIR=skyrim_data_files "
         $cmake_command_full += "-DBUILD_NODEJS=OFF "
+        $cmake_command_full += "-DBUILD_FRONT=${{ inputs.BUILD_SKYMP5_FRONT }} "
+        $cmake_command_full += "-DSKYMP5_FRONT_REPO_PAT=${{ inputs.SKYMP5_FRONT_PAT }} "
         $cmake_command_full += "$prepare_nexus_archives_arg "
         $cmake_command_full += "-DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} "
-        $cmake_command_full += "-DSKYRIM_SE=${{ inputs.SKYRIM_SE_FLAG }} "
+        $cmake_command_full += "-DSKYRIM_VR=${{ inputs.SKYRIM_VR_FLAG }} "
         $cmake_command_full += "$cppcov_path_arg "
         $cmake_command_full += "--profiling-output cmake-profiling-output "
         $cmake_command_full += "--profiling-format google-trace"

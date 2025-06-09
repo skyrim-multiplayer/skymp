@@ -52,6 +52,7 @@ import { KeyboardEventsService } from "./services/services/keyboardEventsService
 import { MagicSyncService } from "./services/services/magicSyncService";
 import { ProfilingService } from "./services/services/profilingService";
 import { SettingsService } from "./services/services/settingsService";
+import { SweetCameraEnforcementService } from "./services/services/sweetCameraEnforcementService";
 
 once("update", () => {
   Utility.setINIBool("bAlwaysActive:General", true);
@@ -89,6 +90,7 @@ const main = () => {
       new SweetTaffySweetCantDropService(sp, controller),
       new SweetTaffyPlayerCombatService(sp, controller),
       new SweetTaffySkillMenuService(sp, controller),
+      new SweetCameraEnforcementService(sp, controller),
       new DisableSkillAdvanceService(sp, controller),
       new DisableFastTravelService(sp, controller),
       new DisableDifficultySelectionService(sp, controller),

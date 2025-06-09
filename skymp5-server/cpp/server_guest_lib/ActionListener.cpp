@@ -1,10 +1,10 @@
 #include "ActionListener.h"
 #include "AnimationSystem.h"
+#include "ConditionsEvaluator.h"
 #include "ConsoleCommands.h"
 #include "CropRegeneration.h"
 #include "DummyMessageOutput.h"
 #include "Exceptions.h"
-#include "FindRecipe.h"
 #include "GetBaseActorValues.h"
 #include "HitData.h"
 #include "MathUtils.h"
@@ -14,12 +14,12 @@
 #include "Overloaded.h"
 #include "UserMessageOutput.h"
 #include "WorldState.h"
-#include "gamemode_events/CraftEvent.h"
 #include "gamemode_events/CustomEvent.h"
 #include "gamemode_events/EatItemEvent.h"
 #include "gamemode_events/UpdateAppearanceAttemptEvent.h"
 #include "script_objects/EspmGameObject.h"
 #include <fmt/format.h>
+#include <fmt/ranges.h>
 #include <spdlog/spdlog.h>
 #include <unordered_set>
 
@@ -486,83 +486,12 @@ void ActionListener::OnConsoleCommand(
     ConsoleCommands::Execute(*me, consoleCommandName, args);
 }
 
-void UseCraftRecipe(MpActor* me, const espm::COBJ* recipeUsed,
-                    espm::CompressedFieldsCache& cache,
-                    const espm::CombineBrowser& br, int espmIdx)
-{
-  auto recipeData = recipeUsed->GetData(cache);
-  auto mapping = br.GetCombMapping(espmIdx);
-
-  spdlog::info("Using craft recipe with EDID {} from espm file with index {}",
-               recipeUsed->GetEditorId(cache), espmIdx);
-
-  for (auto& condition : recipeData.conditions) {
-    // impl race, item, perk? checks
-  }
-
-  std::vector<Inventory::Entry> entries;
-  for (auto& entry : recipeData.inputObjects) {
-    auto formId = espm::utils::GetMappedId(entry.formId, *mapping);
-    entries.push_back({ formId, entry.count });
-  }
-
-  auto outputFormId =
-    espm::utils::GetMappedId(recipeData.outputObjectFormId, *mapping);
-
-  if (spdlog::should_log(spdlog::level::info)) {
-    std::string s = fmt::format("User formId={:#x} crafted", me->GetFormId());
-    for (const auto& entry : entries) {
-      s += fmt::format(" -{:#x} x{}", entry.baseId, entry.count);
-    }
-    s += fmt::format(" +{:#x} x{}", outputFormId, recipeData.outputCount);
-    spdlog::info("{}", s);
-  }
-
-  auto recipeId = espm::utils::GetMappedId(recipeUsed->GetId(), *mapping);
-
-  CraftEvent craftEvent(me, outputFormId, recipeData.outputCount, recipeId,
-                        entries);
-
-  craftEvent.Fire(me->GetParent());
-}
-
 void ActionListener::OnCraftItem(const RawMessageData& rawMsgData,
                                  const Inventory& inputObjects,
                                  uint32_t workbenchId, uint32_t resultObjectId)
 {
-  auto& workbench =
-    partOne.worldState.GetFormAt<MpObjectReference>(workbenchId);
-
-  auto& br = partOne.worldState.GetEspm().GetBrowser();
-  auto& cache = partOne.worldState.GetEspmCache();
-  auto base = br.LookupById(workbench.GetBaseId());
-
-  spdlog::info("User {} tries to craft {:#x} on workbench {:#x}",
-               rawMsgData.userId, resultObjectId, workbenchId);
-
-  bool isFurnitureOrActivator =
-    base.rec->GetType() == "FURN" || base.rec->GetType() == "ACTI";
-  if (!isFurnitureOrActivator) {
-    return spdlog::error("Unable to use {} as workbench",
-                         base.rec->GetType().ToString());
-  }
-
-  int espmIdx = 0;
-  auto recipeUsed = FindRecipe(br, inputObjects, resultObjectId, &espmIdx);
-
-  if (!recipeUsed) {
-    return spdlog::error(
-      "Recipe not found: inputObjects={}, workbenchId={:#x}, "
-      "resultObjectId={:#x}",
-      inputObjects.ToJson().dump(), workbenchId, resultObjectId);
-  }
-
-  MpActor* me = partOne.serverState.ActorByUser(rawMsgData.userId);
-  if (!me) {
-    return spdlog::error("Unable to craft without Actor attached");
-  }
-
-  UseCraftRecipe(me, recipeUsed, cache, br, espmIdx);
+  craftService->OnCraftItem(rawMsgData, inputObjects, workbenchId,
+                            resultObjectId);
 }
 
 void ActionListener::OnHostAttempt(const RawMessageData& rawMsgData,
@@ -679,8 +608,33 @@ void ActionListener::OnCustomEvent(
 }
 
 void ActionListener::OnChangeValues(const RawMessageData& rawMsgData,
-                                    const ActorValues& newActorValues)
+                                    const ChangeValuesMessage& message)
 {
+  // TODO: support partial updates
+  if (!message.data.health.has_value() || !message.data.magicka.has_value() ||
+      !message.data.stamina.has_value()) {
+    const std::string healthStr = message.data.health.has_value()
+      ? std::to_string(*message.data.health)
+      : "null";
+    const std::string magickaStr = message.data.magicka.has_value()
+      ? std::to_string(*message.data.magicka)
+      : "null";
+    const std::string staminaStr = message.data.stamina.has_value()
+      ? std::to_string(*message.data.stamina)
+      : "null";
+
+    spdlog::error("ActionListener::OnChangeValues - health, magicka or "
+                  "stamina is null {} {} {}",
+                  healthStr, magickaStr, staminaStr);
+    return;
+  }
+
+  // TODO: refactor our ActorValues struct
+  ActorValues newActorValues;
+  newActorValues.healthPercentage = *message.data.health;
+  newActorValues.magickaPercentage = *message.data.magicka;
+  newActorValues.staminaPercentage = *message.data.stamina;
+
   MpActor* actor = partOne.serverState.ActorByUser(rawMsgData.userId);
   if (!actor) {
     throw std::runtime_error("Unable to change values without Actor attached");
@@ -696,21 +650,26 @@ void ActionListener::OnChangeValues(const RawMessageData& rawMsgData,
     actor->GetDurationOfAttributesPercentagesUpdate(now).count());
 
   ActorValues currentActorValues = actor->GetActorValues();
-  float health = newActorValues.healthPercentage;
-  float magicka = newActorValues.magickaPercentage;
-  float stamina = newActorValues.staminaPercentage;
+  const float health = newActorValues.healthPercentage;
+  const float magicka = newActorValues.magickaPercentage;
+  const float stamina = newActorValues.staminaPercentage;
 
-  if (newActorValues.healthPercentage != currentActorValues.healthPercentage) {
+  const bool healthChanged =
+    !MathUtils::IsNearlyEqual(currentActorValues.healthPercentage, health);
+  const bool magickaChanged =
+    !MathUtils::IsNearlyEqual(currentActorValues.magickaPercentage, magicka);
+  const bool staminaChanged =
+    !MathUtils::IsNearlyEqual(currentActorValues.staminaPercentage, stamina);
+
+  if (healthChanged) {
     currentActorValues.healthPercentage =
       CropHealthRegeneration(health, timeAfterRegeneration, actor);
   }
-  if (newActorValues.magickaPercentage !=
-      currentActorValues.magickaPercentage) {
+  if (magickaChanged) {
     currentActorValues.magickaPercentage =
       CropMagickaRegeneration(magicka, timeAfterRegeneration, actor);
   }
-  if (newActorValues.staminaPercentage !=
-      currentActorValues.staminaPercentage) {
+  if (staminaChanged) {
     currentActorValues.staminaPercentage =
       CropStaminaRegeneration(stamina, timeAfterRegeneration, actor);
   }
@@ -721,7 +680,18 @@ void ActionListener::OnChangeValues(const RawMessageData& rawMsgData,
                                 newActorValues.magickaPercentage) ||
       !MathUtils::IsNearlyEqual(currentActorValues.staminaPercentage,
                                 newActorValues.staminaPercentage)) {
-    actor->NetSendChangeValues(currentActorValues);
+
+    std::vector<espm::ActorValue> avFilter;
+    if (healthChanged) {
+      avFilter.push_back(espm::ActorValue::Health);
+    }
+    if (magickaChanged) {
+      avFilter.push_back(espm::ActorValue::Magicka);
+    }
+    if (staminaChanged) {
+      avFilter.push_back(espm::ActorValue::Stamina);
+    }
+    actor->NetSendChangeValues(currentActorValues, avFilter);
   }
   actor->SetPercentages(currentActorValues);
 }
@@ -821,6 +791,37 @@ float GetSqrDistanceToBounds(const MpActor& actor, const MpActor& target)
     .SqrLength();
 }
 
+bool IsBowOrCrossbowShot(const HitData& hitData, WorldState* worldState)
+{
+  if (!worldState || !worldState->HasEspm()) {
+    return false;
+  }
+
+  if (hitData.isBashAttack) {
+    return false;
+  }
+
+  auto sourceLookupRes =
+    worldState->GetEspm().GetBrowser().LookupById(hitData.source);
+  if (!sourceLookupRes.rec) {
+    return false;
+  }
+
+  auto source = espm::Convert<espm::WEAP>(sourceLookupRes.rec);
+  if (!source) {
+    return false;
+  }
+
+  auto weapDNAM = source->GetData(worldState->GetEspmCache()).weapDNAM;
+
+  if (weapDNAM->animType != espm::WEAP::AnimType::Bow &&
+      weapDNAM->animType != espm::WEAP::AnimType::Crossbow) {
+    return false;
+  }
+
+  return true;
+}
+
 bool IsDistanceValid(const MpActor& actor, const MpActor& targetActor,
                      const HitData& hitData)
 {
@@ -835,19 +836,9 @@ bool IsDistanceValid(const MpActor& actor, const MpActor& targetActor,
   float reach = GetReach(actor, hitData.source, reachPveHotfixMult);
 
   // For bow/crossbow shots we don't want to check melee radius
-  if (!hitData.isBashAttack) {
+  if (IsBowOrCrossbowShot(hitData, actor.GetParent())) {
     constexpr float kExteriorCellWidthUnits = 4096.f;
-    if (auto worldState = actor.GetParent()) {
-      if (worldState->HasEspm()) {
-        auto weapDNAM =
-          espm::GetData<espm::WEAP>(hitData.source, worldState).weapDNAM;
-        if (weapDNAM->animType == espm::WEAP::AnimType::Bow) {
-          reach = kExteriorCellWidthUnits * 2;
-        } else if (weapDNAM->animType == espm::WEAP::AnimType::Crossbow) {
-          reach = kExteriorCellWidthUnits * 2;
-        }
-      }
-    }
+    reach = kExteriorCellWidthUnits * 2;
   }
 
   return reach * reach > sqrDistance;
@@ -887,7 +878,6 @@ bool ShouldBeBlocked(const MpActor& aggressor, const MpActor& target)
 void ActionListener::OnHit(const RawMessageData& rawMsgData_,
                            const HitData& hitData_)
 {
-  auto currentHitTime = std::chrono::steady_clock::now();
   MpActor* myActor = partOne.serverState.ActorByUser(rawMsgData_.userId);
   if (!myActor) {
     throw std::runtime_error("Unable to change values without Actor attached");
@@ -915,6 +905,44 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
     hitData.target = myActor->GetFormId();
   }
 
+  MpForm* targetForm = partOne.worldState.LookupFormById(hitData.target).get();
+  MpObjectReference* targetRef =
+    targetForm ? targetForm->AsObjectReference() : nullptr;
+  if (!targetRef) {
+    spdlog::error("ActionListener::OnHit - MpObjectReference not found for "
+                  "hitData.target {:x}",
+                  hitData.target);
+    return;
+  }
+
+  const FormDesc& aggressorCellOrWorld = aggressor->GetCellOrWorld();
+  const FormDesc& targetCellOrWorld = targetRef->GetCellOrWorld();
+
+  if (aggressorCellOrWorld != targetCellOrWorld) {
+    const std::vector<std::string>& files = partOne.worldState.espmFiles;
+    spdlog::error(
+      "ActionListener::OnHit - aggressor and targetRef are in different cells "
+      "or world. Aggressor: {:x}, targetRef: {:x}, cellOrWorld of aggressor: "
+      "{:x}, cellOrWorld of targetRef: {:x}",
+      aggressor->GetFormId(), targetRef->GetFormId(),
+      aggressorCellOrWorld.ToFormId(files), targetCellOrWorld.ToFormId(files));
+    return;
+  }
+
+  // TODO: repair IsDistanceValid instead
+  if (!IsBowOrCrossbowShot(hitData, &partOne.worldState)) {
+    const NiPoint3& aggressorPos = aggressor->GetPos();
+    const NiPoint3& targetPos = targetRef->GetPos();
+    constexpr float kExteriorCellWidthUnits = 4096.f;
+    if ((aggressorPos - targetPos).SqrLength() >
+        kExteriorCellWidthUnits * kExteriorCellWidthUnits) {
+      spdlog::error("ActionListener::OnHit - aggressor and targetRef are too "
+                    "distant. Aggressor: {:x}, targetRef: {:x}",
+                    aggressor->GetFormId(), targetRef->GetFormId());
+      return;
+    }
+  }
+
   if (aggressor->IsDead()) {
     spdlog::debug(fmt::format("{:x} actor is dead and can't attack. "
                               "requesting respawn in order to fix death state",
@@ -923,49 +951,189 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
     return;
   }
 
-  if (aggressor->GetEquipment().inv.HasItem(hitData.source) == false &&
-      IsUnarmedAttack(hitData.source) == false) {
+  auto sourceInEspm =
+    partOne.GetEspm().GetBrowser().LookupById(hitData.source);
 
-    if (aggressor->GetInventory().HasItem(hitData.source) == false) {
-      spdlog::debug("{:x} actor has no {:x} weapon and can't attack",
-                    hitData.aggressor, hitData.source);
-    }
-    spdlog::debug(
-      "{:x} weapon is not equipped by {:x} actor and cannot be used",
-      hitData.source, hitData.aggressor);
+  const bool isSourceSpell =
+    sourceInEspm.rec && sourceInEspm.rec->GetType() == espm::SPEL::kType;
+
+  const auto equipment = aggressor->GetEquipment();
+
+  if (isSourceSpell && equipment.IsSpellEquipped(hitData.source)) {
+    OnSpellHit(aggressor, targetRef, hitData);
     return;
   }
 
-  auto refr = std::dynamic_pointer_cast<MpObjectReference>(
-    partOne.worldState.LookupFormById(hitData.target));
-  if (!refr) {
-    spdlog::error("ActionListener::OnHit - MpObjectReference not found for "
-                  "hitData.target {:x}",
-                  hitData.target);
+  const bool isUnarmed = IsUnarmedAttack(hitData.source);
+
+  if (equipment.inv.HasItem(hitData.source) || isUnarmed) {
+    OnWeaponHit(aggressor, targetRef, hitData, isUnarmed);
+    return;
+  }
+
+  if (aggressor->GetInventory().HasItem(hitData.source) == false) {
+    spdlog::debug("{:x} actor has no {:x} weapon and can't attack",
+                  hitData.aggressor, hitData.source);
+  }
+
+  spdlog::debug("{:x} weapon is not equipped by {:x} actor and cannot be used",
+                hitData.source, hitData.aggressor);
+}
+
+void ActionListener::OnUpdateAnimVariables(const RawMessageData& rawMsgData)
+{
+  const MpActor* myActor = partOne.serverState.ActorByUser(rawMsgData.userId);
+
+  if (!myActor) {
+    throw std::runtime_error("Unable to change values without Actor attached");
+  }
+
+  SendToNeighbours(myActor->idx, rawMsgData);
+}
+
+void ActionListener::OnSpellCast(const RawMessageData& rawMsgData,
+                                 const SpellCastData& spellCastData_)
+{
+  MpActor* myActor = partOne.serverState.ActorByUser(rawMsgData.userId);
+
+  if (!myActor) {
+    throw std::runtime_error("Unable to change values without Actor attached");
+  }
+
+  MpActor* caster = nullptr;
+
+  SpellCastData spellCastData = spellCastData_;
+
+  if (spellCastData.caster == 0x14 ||
+      spellCastData.caster == myActor->GetFormId()) {
+    caster = myActor;
+    spellCastData.caster = caster->GetFormId();
+  } else {
+    caster = &partOne.worldState.GetFormAt<MpActor>(spellCastData.caster);
+    const auto it = partOne.worldState.hosters.find(spellCastData.caster);
+
+    if (it == partOne.worldState.hosters.end() ||
+        it->second != myActor->GetFormId()) {
+      spdlog::error(
+        "SendToNeighbours - No permission to send OnSpellCast with "
+        "caster actor {:x}",
+        caster->GetFormId());
+      return;
+    }
+  }
+
+  if (spellCastData.target == 0x14) {
+    spellCastData.target = myActor->GetFormId();
+  }
+
+  if (caster->IsDead()) {
+    spdlog::info(fmt::format("{:x} actor is dead and can't spell cast. "
+                             "requesting respawn in order to fix death state",
+                             caster->GetFormId()));
+    caster->RespawnWithDelay(true);
+    return;
+  }
+
+  const auto equipment = caster->GetEquipment();
+
+  if (equipment.IsSpellEquipped(spellCastData.spell) == false) {
+    spdlog::info("ActionListener::OnSpellCast - spell {0:x} not "
+                 "found in equipment",
+                 spellCastData.spell);
+    return;
+  }
+
+  SendToNeighbours(myActor->idx, rawMsgData);
+
+  if (spellCastData.isInterruptCast) {
     return;
   }
 
   auto& browser = partOne.worldState.GetEspm().GetBrowser();
-  std::array<VarValue, 7> args;
-  args[0] = VarValue(aggressor->ToGameObject()); // akAgressor
-  args[1] = VarValue(std::make_shared<EspmGameObject>(
-    browser.LookupById(hitData.source)));    // akSource
-  args[2] = VarValue::None();                // akProjectile
-  args[3] = VarValue(hitData.isPowerAttack); // abPowerAttack
-  args[4] = VarValue(hitData.isSneakAttack); // abSneakAttack
-  args[5] = VarValue(hitData.isBashAttack);  // abBashAttack
-  args[6] = VarValue(hitData.isHitBlocked);  // abHitBlocked
-  refr->SendPapyrusEvent("OnHit", args.data(), args.size());
 
-  auto targetActorPtr = refr->AsActor();
+  const std::array<VarValue, 1> args{ VarValue(
+    std::make_shared<EspmGameObject>(
+      browser.LookupById(spellCastData.spell))) };
+
+  caster->SendPapyrusEvent("OnSpellCast", args.data(), args.size());
+
+  const auto targetRef = std::dynamic_pointer_cast<MpObjectReference>(
+    partOne.worldState.LookupFormById(spellCastData.target));
+
+  if (!targetRef) {
+    spdlog::info(
+      "ActionListener::OnSpellCast - MpObjectReference not found for "
+      "spellCastData.target {:x}",
+      spellCastData.target);
+    return;
+  }
+
+  // TODO: apply magic effects if this is not a fireball-like spell.
+  // Previous attempt was not successful, so it was deleted.
+}
+
+void ActionListener::OnUnknown(const RawMessageData& rawMsgData)
+{
+  spdlog::error("Got unhandled message: {}",
+                simdjson::minify(rawMsgData.parsed));
+}
+
+void ActionListener::OnSpellHit(MpActor* aggressor,
+                                MpObjectReference* targetRef,
+                                const HitData& hitData)
+{
+  SendPapyrusOnHitEvent(aggressor, targetRef, hitData);
+
+  auto* targetActorPtr = targetRef ? targetRef->AsActor() : nullptr;
+  if (!targetActorPtr) {
+    return; // Not an actor, damage calculation is not needed
+  }
+
+  auto targetActorValues = targetActorPtr->GetChangeForm().actorValues;
+
+  SpellCastData spellCastData{ aggressor->GetFormId(),
+                               targetActorPtr->GetFormId(),
+                               hitData.source,
+                               false,
+                               false,
+                               SpellType::Left };
+
+  float damage =
+    partOne.CalculateDamage(*aggressor, *targetActorPtr, spellCastData);
+  damage = damage <= 0.f ? 0.f : damage;
+
+  targetActorValues.healthPercentage = CalculateCurrentHealthPercentage(
+    *targetActorPtr, damage, targetActorValues.healthPercentage, nullptr);
+
+  static const auto kHealthAvFilter =
+    std::vector<espm::ActorValue>{ espm::ActorValue::Health };
+
+  targetActorPtr->NetSetPercentages(targetActorValues, aggressor,
+                                    kHealthAvFilter);
+
+  spdlog::info("OnSpellHit - Target {0:x} is hit by {1:x} spell on {2} "
+               "damage. By caster: {3:x})",
+               spellCastData.target, spellCastData.spell, damage,
+               spellCastData.caster);
+}
+
+void ActionListener::OnWeaponHit(MpActor* aggressor,
+                                 MpObjectReference* targetRef, HitData hitData,
+                                 [[maybe_unused]] bool isUnarmed)
+{
+  const auto currentHitTime = std::chrono::steady_clock::now();
+
+  SendPapyrusOnHitEvent(aggressor, targetRef, hitData);
+
+  auto* targetActorPtr = targetRef ? targetRef->AsActor() : nullptr;
   if (!targetActorPtr) {
     return; // Not an actor, damage calculation is not needed
   }
 
   auto& targetActor = *targetActorPtr;
 
-  auto lastHitTime = aggressor->GetLastHitTime();
-  std::chrono::duration<float> timePassed = currentHitTime - lastHitTime;
+  const auto lastHitTime = aggressor->GetLastHitTime();
+  const std::chrono::duration<float> timePassed = currentHitTime - lastHitTime;
 
   if (!CanHit(*aggressor, hitData, timePassed)) {
     WorldState* espmProvider = targetActor.GetParent();
@@ -974,7 +1142,7 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
     float expectedAttackTime = (1.1 * (1 / weapDNAM->speed)) -
       (1.1 * (1 / weapDNAM->speed) * (weapDNAM->speed <= 0.75 ? 0.45 : 0.3));
     spdlog::debug(
-      "Target {0:x} is not available for attack due to fast "
+      "OnWeaponHit - Target {0:x} is not available for attack due to fast "
       "attack speed. Weapon: {1:x}. Elapsed time: {2}. Expected attack time: "
       "{3}",
       hitData.target, hitData.source, timePassed.count(), expectedAttackTime);
@@ -1064,16 +1232,21 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData_,
     ? 0.f
     : currentActorValues.healthPercentage;
 
-  targetActor.NetSetPercentages(currentActorValues, aggressor);
+  targetActor.NetSetPercentages(
+    currentActorValues, aggressor,
+    std::vector<espm::ActorValue>{ espm::ActorValue::Health });
   aggressor->SetLastHitTime();
 
-  spdlog::debug("Target {0:x} is hitted by {1} damage. Percentage was: {3}, "
-                "percentage now: {2}, base health: {4})",
-                hitData.target, damage, currentActorValues.healthPercentage,
-                healthPercentage, outBaseHealth);
+  spdlog::debug(
+    "OnWeaponHit - Target {0:x} is hit by {1} damage. Percentage was: {3}, "
+    "percentage now: {2}, base health: {4})",
+    hitData.target, damage, currentActorValues.healthPercentage,
+    healthPercentage, outBaseHealth);
 }
 
-void ActionListener::OnUpdateAnimVariables(const RawMessageData& rawMsgData)
+void ActionListener::SendPapyrusOnHitEvent(MpActor* aggressor,
+                                           MpObjectReference* target,
+                                           const HitData& hitData)
 {
   const MpActor* myActor = partOne.serverState.ActorByUser(rawMsgData.userId);
 

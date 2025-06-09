@@ -1,6 +1,7 @@
 #include "ScampServer.h"
 
 #include "Bot.h"
+#include "ConditionsEvaluator.h"
 #include "FormCallbacks.h"
 #include "GamemodeApi.h"
 #include "NapiHelper.h"
@@ -8,17 +9,21 @@
 #include "PacketHistoryWrapper.h"
 #include "PapyrusUtils.h"
 #include "ScampServerListener.h"
+#include "condition_functions/ConditionFunctionFactory.h"
 #include "database_drivers/DatabaseFactory.h"
+#include "formulas/DamageMultConditionalFormula.h"
 #include "formulas/DamageMultFormula.h"
 #include "formulas/SweetPieDamageFormula.h"
 #include "formulas/SweetPieSpellDamageFormula.h"
 #include "formulas/TES5DamageFormula.h"
+#include "gamemode_events/DeathEvent.h"
 #include "libespm/IterateFields.h"
 #include "papyrus-vm/Utils.h"
 #include "property_bindings/PropertyBindingFactory.h"
 #include "save_storages/SaveStorageFactory.h"
 #include "script_objects/EspmGameObject.h"
 #include "script_storages/ScriptStorageFactory.h"
+#include <algorithm>
 #include <cassert>
 #include <cctype>
 #include <memory>
@@ -177,9 +182,11 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
     auto serverSettings = nlohmann::json::parse(serverSettingsJson);
 
     // TODO: rework parsing with archives?
-    std::string listenHost = serverSettings.contains("listenHost")
-      ? serverSettings.at("listenHost").get<std::string>()
-      : std::string();
+    std::string listenHost;
+    if (auto it = serverSettings.find("listenHost");
+        it != serverSettings.end()) {
+      listenHost = it.value().get<std::string>();
+    }
     uint32_t listenPort = serverSettings.at("port").get<uint32_t>();
     uint32_t maxPlayers = serverSettings.at("maxPlayers").get<uint32_t>();
 
@@ -322,14 +329,17 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
       ? std::string(kNetworkingPasswordPrefix) +
         static_cast<std::string>(serverSettings["password"])
       : std::string(kNetworkingPasswordPrefix);
-    auto realServer = Networking::CreateServer(
-      listenHost.empty() ? nullptr : listenHost.c_str(), listenPort,
-      maxPlayers, password.data());
+    auto realServer = Networking::CreateServer(listenHost.c_str(), listenPort,
+                                               maxPlayers, password.data());
 
     static_assert(kMockServerIdx == 1);
     server = Networking::CreateCombinedServer({ realServer, serverMock });
 
     partOne->SetSendTarget(server.get());
+
+    const auto conditionFunctionMap =
+      ConditionFunctionFactory::CreateConditionFunctions();
+    partOne->worldState.conditionFunctionMap = conditionFunctionMap;
 
     auto sweetPieDamageFormulaSettings =
       serverSettings["sweetPieDamageFormulaSettings"];
@@ -340,6 +350,12 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
     auto damageMultFormulaSettings =
       serverSettings["damageMultFormulaSettings"];
 
+    auto damageMultConditionalFormulaSettings =
+      serverSettings["damageMultConditionalFormulaSettings"];
+
+    auto conditionsEvaluatorSettings =
+      serverSettings["conditionsEvaluatorSettings"];
+
     std::unique_ptr<IDamageFormula> formula;
     formula = std::make_unique<TES5DamageFormula>();
     formula = std::make_unique<DamageMultFormula>(std::move(formula),
@@ -348,6 +364,10 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
       std::move(formula), sweetPieDamageFormulaSettings);
     formula = std::make_unique<SweetPieSpellDamageFormula>(
       std::move(formula), sweetPieSpellDamageFormulaSettings);
+    formula = std::make_unique<DamageMultConditionalFormula>(
+      std::move(formula), damageMultConditionalFormulaSettings,
+      conditionsEvaluatorSettings,
+      std::make_shared<ConditionFunctionMap>(conditionFunctionMap));
     partOne->SetDamageFormula(std::move(formula));
 
     partOne->worldState.AttachScriptStorage(
@@ -355,6 +375,11 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
 
     partOne->AttachEspm(espm);
     partOne->animationSystem.Init(&partOne->worldState);
+
+    if (conditionsEvaluatorSettings.is_object()) {
+      partOne->worldState.conditionsEvaluatorSettings =
+        ConditionsEvaluatorSettings::FromJson(conditionsEvaluatorSettings);
+    }
 
     this->serverSettings = serverSettings;
     this->logger = logger;
@@ -1542,4 +1567,40 @@ Napi::Value ScampServer::SP3DynamicCast(const Napi::CallbackInfo& info)
   } catch (std::exception& e) {
     throw Napi::Error::New(info.Env(), std::string(e.what()));
   }
+}
+
+bool ScampServer::IsGameModeInsideDeathEventHandler(
+  uint32_t dyingFormId, float* outHealthPercentageBeforeDeath,
+  float* outMagickaPercentageBeforeDeath,
+  float* outStaminaPercentageBeforeDeath) const
+{
+  auto& stack = partOne->worldState.currentGameModeEventsStack;
+  auto it = std::find_if(
+    stack.begin(), stack.end(), [dyingFormId](GameModeEvent* event) {
+      auto deathEvent = dynamic_cast<DeathEvent*>(event);
+      return deathEvent && deathEvent->GetDyingActorId() == dyingFormId;
+    });
+
+  if (it == stack.end()) {
+    return false;
+  }
+
+  auto deathEvent = dynamic_cast<DeathEvent*>(*it);
+
+  if (outHealthPercentageBeforeDeath) {
+    *outHealthPercentageBeforeDeath =
+      deathEvent->GetHealthPercentageBeforeDeath();
+  }
+
+  if (outMagickaPercentageBeforeDeath) {
+    *outMagickaPercentageBeforeDeath =
+      deathEvent->GetMagickaPercentageBeforeDeath();
+  }
+
+  if (outStaminaPercentageBeforeDeath) {
+    *outStaminaPercentageBeforeDeath =
+      deathEvent->GetStaminaPercentageBeforeDeath();
+  }
+
+  return true;
 }

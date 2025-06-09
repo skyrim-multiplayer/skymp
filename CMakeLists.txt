@@ -56,13 +56,13 @@ if(NOT "${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}/build")
 endif()
 
 # Bool options (Part 1)
-option(SKYRIM_SE "Legacy Skyrim SE (1.5) build" OFF)
+option(SKYRIM_VR "Skyrim VR (1.4) build" OFF)
 option(BUILD_NODEJS "Build NodeJS port if ON, use a pre-built otherwise" OFF)
 
-if(SKYRIM_SE)
-  list(APPEND VCPKG_MANIFEST_FEATURES "skyrim-se")
+if(SKYRIM_VR)
+  list(APPEND VCPKG_MANIFEST_FEATURES "skyrim-vr")
 else()
-  list(APPEND VCPKG_MANIFEST_FEATURES "skyrim-ae")
+  list(APPEND VCPKG_MANIFEST_FEATURES "skyrim-flatrim")
 endif()
 
 if(BUILD_NODEJS)
@@ -83,23 +83,23 @@ if(MSVC)
 endif()
 
 # Bool options (Part 2)
-option(JS_ENGINE_TRACING_ENABLED "Useful for JsEngine debugging. See JsEngine.h" OFF)
 option(PREPARE_NEXUS_ARCHIVES "Prepare SP and other archives during build or not" OFF)
 option(BUILD_UNIT_TESTS "Build unit tests (excluded from build when off - workaround for #1182)" ON)
 option(INSTALL_CLIENT_DIST "Install the client into SKYRIM_DIR after build" OFF)
 option(BUILD_GAMEMODE "Build gamemode" OFF)
 option(BUILD_CLIENT "Build client" ON)
-option(BUILD_FRONT "Build front" ON)
+option(BUILD_FRONT "Build front" OFF)
 option(BUILD_SKYRIM_PLATFORM "Build Skyrim Platform" ON)
+option(BUILD_SCRIPTS "Build skymp5-scripts and Papyrus scripts in skyrim-platform" ON)
 option(OFFLINE_MODE "Enable offline mode in generated server settings and client settings" ON)
 
-message(STATUS JS_ENGINE_TRACING_ENABLED=${JS_ENGINE_TRACING_ENABLED})
 message(STATUS PREPARE_NEXUS_ARCHIVES=${PREPARE_NEXUS_ARCHIVES})
-message(STATUS SKYRIM_SE=${SKYRIM_SE})
+message(STATUS SKYRIM_VR=${SKYRIM_VR})
 message(STATUS BUILD_UNIT_TESTS=${BUILD_UNIT_TESTS})
 message(STATUS INSTALL_CLIENT_DIST=${INSTALL_CLIENT_DIST})
 message(STATUS BUILD_GAMEMODE=${BUILD_GAMEMODE})
 message(STATUS BUILD_CLIENT=${BUILD_CLIENT})
+message(STATUS BUILD_SCRIPTS=${BUILD_SCRIPTS})
 message(STATUS BUILD_FRONT=${BUILD_FRONT})
 message(STATUS BUILD_SKYRIM_PLATFORM=${BUILD_SKYRIM_PLATFORM})
 message(STATUS OFFLINE_MODE=${OFFLINE_MODE})
@@ -107,12 +107,6 @@ message(STATUS BUILD_NODEJS=${BUILD_NODEJS})
 
 if(PREPARE_NEXUS_ARCHIVES AND EMSCRIPTEN)
   message(FATAL_ERROR "PREPARE_NEXUS_ARCHIVES is not supported on Emscripten")
-endif()
-
-# Note that SkyrimPlatform performance drops significantly with JS_ENGINE_TRACING_ENABLED set to true.
-
-if(JS_ENGINE_TRACING_ENABLED)
-  add_compile_definitions(JS_ENGINE_TRACING_ENABLED)
 endif()
 
 # Path options

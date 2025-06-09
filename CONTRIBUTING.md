@@ -20,7 +20,7 @@ These tools required regardless of your system:
 
 * 64-bit [NodeJS](https://nodejs.org/en/download/) 17.x *(may also work for older versions)*
 * [Yarn](https://yarnpkg.com/getting-started/install): `npm install --global yarn`
-* [CMake 3.18.2](https://cmake.org/download/) or higher
+* [CMake 3.19](https://cmake.org/download/) or higher
 
 ### Windows
 

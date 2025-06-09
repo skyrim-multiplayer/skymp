@@ -1,12 +1,15 @@
 #pragma once
 #include "AnimationData.h"
 #include "ConsoleCommands.h"
+#include "CraftService.h"
+#include "Messages.h"
 #include "MpActor.h"
 #include "PartOne.h"
+#include "RawMessageData.h"
+#include "SpellCastData.h"
 #include "UpdateMovementMessage.h" // RunMode
 #include "libespm/Loader.h"
-
-#include "SpellCastData.h"
+#include <memory>
 
 class ServerState;
 class WorldState;
@@ -15,6 +18,7 @@ struct ActorValues;
 class ActionListener
 {
 public:
+<<<<<<< HEAD
   struct RawMessageData
   {
     Networking::PacketData unparsed = nullptr;
@@ -22,9 +26,12 @@ public:
     Networking::UserId userId = Networking::InvalidUserId;
   };
 
+=======
+>>>>>>> main
   ActionListener(PartOne& partOne_)
     : partOne(partOne_)
   {
+    craftService = std::make_shared<CraftService>(partOne_);
   }
 
   virtual void OnCustomPacket(const RawMessageData& rawMsgData,
@@ -87,7 +94,7 @@ public:
                              const std::vector<std::string>& argsJsonDumps);
 
   virtual void OnChangeValues(const RawMessageData& rawMsgData,
-                              const ActorValues& actorValues);
+                              const ChangeValuesMessage& message);
 
   virtual void OnHit(const RawMessageData& rawMsgData, const HitData& hitData);
 
@@ -96,7 +103,23 @@ public:
   virtual void OnSpellCast(const RawMessageData& rawMsgData,
                            const SpellCastData& spellCastData);
 
+  virtual void OnUnknown(const RawMessageData& rawMsgData);
+
+  // for CraftTest.cpp
+  const std::shared_ptr<CraftService>& GetCraftService() noexcept
+  {
+    return craftService;
+  }
+
 private:
+  void OnSpellHit(MpActor* aggressor, MpObjectReference* targetRef,
+                  const HitData& hitData);
+  void OnWeaponHit(MpActor* aggressor, MpObjectReference* targetRef,
+                   HitData hitData, bool isUnarmed);
+
+  void SendPapyrusOnHitEvent(MpActor* aggressor, MpObjectReference* target,
+                             const HitData& hitData);
+
   // Returns user's actor if there is attached one
   MpActor* SendToNeighbours(uint32_t idx, Networking::UserId userId,
                             Networking::PacketData data, size_t length,
@@ -106,4 +129,7 @@ private:
                             bool reliable = false);
 
   PartOne& partOne;
+
+  // TODO: inverse dependency
+  std::shared_ptr<CraftService> craftService;
 };

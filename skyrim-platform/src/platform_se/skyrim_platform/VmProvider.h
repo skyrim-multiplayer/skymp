@@ -4,7 +4,7 @@
 class VmProvider : public FunctionInfoProvider
 {
 public:
-  VmProvider();
+  static VmProvider& GetSingleton();
 
   // Must also search in base classes
   FunctionInfo* GetFunctionInfo(const std::string& className,
@@ -14,6 +14,8 @@ public:
                      const char* baseClassName) override;
 
 private:
+  VmProvider();
+
   struct Impl;
   std::shared_ptr<Impl> pImpl;
 };

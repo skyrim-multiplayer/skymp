@@ -88,48 +88,7 @@ private:
   SkyrimPlatform_IpcUnsubscribe_Impl ipcUnsubscribe = nullptr;
 };
 
-#ifndef SKYRIMSE
-constexpr SKSE::PluginVersionData GetPluginVersion()
-{
-  constexpr REL::Version kSPTargetRuntimeVersion1170(1, 6, 1170, 0);
-  constexpr REL::Version kSPTargetRuntimeVersion640(1, 6, 640, 0);
-
-  SKSE::PluginVersionData v;
-  v.PluginVersion(Version::ASINT);
-  v.PluginName("SkyrimPlatform");
-  v.AuthorName("SkyMP Team and Contributors");
-  v.UsesAddressLibrary();
-  v.UsesUpdatedStructs();
-  v.CompatibleVersions(
-    { kSPTargetRuntimeVersion1170, kSPTargetRuntimeVersion640 });
-
-  return v;
-};
-#endif
-
 extern "C" {
-
-#ifdef SKYRIMSE
-DLLEXPORT bool SKSEPlugin_Query(const SKSE::QueryInterface* skse,
-                                SKSE::PluginInfo* info)
-{
-  info->infoVersion = SKSE::PluginInfo::kVersion;
-  info->name = "SkyrimPlatform";
-  info->version = Version::ASINT;
-
-  if (skse->IsEditor()) {
-    //_FATALERROR("loaded in editor, marking as incompatible");
-    return false;
-  }
-  return true;
-}
-
-#else
-
-DLLEXPORT constinit SKSE::PluginVersionData SKSEPlugin_Version =
-  GetPluginVersion();
-
-#endif
 
 DLLEXPORT uint32_t SkyrimPlatform_IpcSubscribe(const char* systemName,
                                                IpcMessageCallback callback,

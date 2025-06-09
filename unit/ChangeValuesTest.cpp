@@ -23,14 +23,16 @@ TEST_CASE("Player attribute percentages are changing correctly",
   p.SetUserActor(0, 0xff000000);
   auto& ac = p.worldState.GetFormAt<MpActor>(0xff000000);
 
-  ActionListener::RawMessageData msgData;
+  RawMessageData msgData;
   msgData.userId = 0;
 
-  ActorValues actorValues;
-  actorValues.healthPercentage = 0.75f;
-  actorValues.magickaPercentage = 0.f;
-  actorValues.staminaPercentage = 0.7f;
-  p.GetActionListener().OnChangeValues(msgData, actorValues);
+  ChangeValuesMessage msg;
+  msg.idx = std::nullopt;
+  msg.data.health = 0.75f;
+  msg.data.magicka = 0.f;
+  msg.data.stamina = 0.7f;
+
+  p.GetActionListener().OnChangeValues(msgData, msg);
   auto changeForm = ac.GetChangeForm();
 
   REQUIRE(changeForm.actorValues.healthPercentage == 0.75f);
@@ -56,7 +58,7 @@ TEST_CASE("OnChangeValues call is cropping percentage values",
   BaseActorValues baseValues =
     GetBaseActorValues(&p.worldState, baseId, raceId, {});
 
-  ActionListener::RawMessageData msgData;
+  RawMessageData msgData;
   msgData.userId = 0;
 
   ActorValues actorValues;
@@ -66,10 +68,13 @@ TEST_CASE("OnChangeValues call is cropping percentage values",
   ac.SetPercentages(actorValues);
   auto past = std::chrono::steady_clock::now() - 1s;
   ac.SetLastAttributesPercentagesUpdate(past);
-  actorValues.healthPercentage = 1.f;
-  actorValues.magickaPercentage = 1.f;
-  actorValues.staminaPercentage = 1.f;
-  p.GetActionListener().OnChangeValues(msgData, actorValues);
+
+  ChangeValuesMessage msg;
+  msg.idx = std::nullopt;
+  msg.data.health = 1.f;
+  msg.data.magicka = 1.f;
+  msg.data.stamina = 1.f;
+  p.GetActionListener().OnChangeValues(msgData, msg);
 
   std::chrono::duration<float> elapsedTime =
     std::chrono::steady_clock::now() - past;

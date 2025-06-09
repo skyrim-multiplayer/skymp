@@ -13,12 +13,14 @@
 #include "IsDisabledBinding.h"
 #include "IsOnlineBinding.h"
 #include "IsOpenBinding.h"
+#include "LastAnimEventBinding.h"
 #include "LocationalDataBinding.h"
 #include "NeighborsBinding.h"
 #include "OnlinePlayersBinding.h"
 #include "PercentagesBinding.h"
 #include "PosBinding.h"
 #include "ProfileIdBinding.h"
+#include "RespawnPercentagesBinding.h"
 #include "SpawnDelayBinding.h"
 #include "SpawnPointBinding.h"
 #include "TemplateChainBinding.h"
@@ -53,6 +55,8 @@ PropertyBindingFactory::CreateStandardPropertyBindings()
     std::make_shared<ConsoleCommandsAllowedBinding>();
   result["spawnDelay"] = std::make_shared<SpawnDelayBinding>();
   result["templateChain"] = std::make_shared<TemplateChainBinding>();
+  result["lastAnimEvent"] = std::make_shared<LastAnimEventBinding>();
+  result["respawnPercentages"] = std::make_shared<RespawnPercentagesBinding>();
   return result;
 }
 

@@ -7,6 +7,15 @@ include(${CMAKE_SOURCE_DIR}/cmake/apply_default_settings.cmake)
 if(MSVC)
   include(${CMAKE_SOURCE_DIR}/cmake/add_papyrus_library_ck.cmake)
 
+  add_library(node-embedder-api INTERFACE)
+  find_path(node_INCLUDE_DIR NAMES js_native_api.h PATH_SUFFIXES node-embedder-api node-embedder-api-prebuilt)
+  find_library(libnode_LIBRARY_Debug NAMES libnode PATH_SUFFIXES node-embedder-api node-embedder-api-prebuilt)
+  string(REPLACE "/debug/lib/" "/lib/" libnode_LIBRARY_Release "${libnode_LIBRARY_Debug}")
+  target_link_libraries(node-embedder-api INTERFACE "$<IF:$<CONFIG:Debug>,${libnode_LIBRARY_Debug},${libnode_LIBRARY_Release}>")
+  target_include_directories(node-embedder-api INTERFACE ${node_INCLUDE_DIR})
+
+  message(STATUS "node_INCLUDE_DIR: ${node_INCLUDE_DIR}")
+
   add_library(cef INTERFACE)
   find_library(CEF_LIBRARY_DEBUG libcef_dll_wrapper)
   string(REPLACE "/debug/lib/" "/lib/" CEF_LIBRARY_RELEASE ${CEF_LIBRARY_DEBUG})
@@ -61,6 +70,8 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
   set(ASSET_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/skyrim_platform/assets/template.ess
     ${CMAKE_CURRENT_SOURCE_DIR}/skyrim_platform/assets/cursor.png
+    ${CMAKE_CURRENT_SOURCE_DIR}/skyrim_platform/assets/sp3.js
+    ${CMAKE_CURRENT_SOURCE_DIR}/skyrim_platform/assets/storageProxy.js
   )
   cmrc_add_resource_library(skyrim_plugin_resources ${ASSET_FILES}
     ALIAS assets NAMESPACE skyrim_plugin_resources WHENCE skyrim_platform
@@ -83,6 +94,7 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
     target_include_directories(skyrim_platform PRIVATE "${tilted}")
     target_include_directories(skyrim_platform PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/include)
     target_link_libraries(skyrim_platform PRIVATE papyrus-vm-lib savefile skyrim_plugin_resources ui cef platform_lib viet)
+    target_link_libraries(skyrim_platform PRIVATE node-embedder-api)
     
     find_path(FRIDA_GUM_INCLUDE_DIR NAMES frida-gum.h)
     find_library(FRIDA_GUM_LIBRARY NAMES frida-gum.lib)
@@ -103,14 +115,16 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
     set_target_properties(skyrim_platform_entry PROPERTIES OUTPUT_NAME "SkyrimPlatform")
     target_include_directories(skyrim_platform_entry PRIVATE "${third_party}")
     target_include_directories(skyrim_platform_entry PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/include)
-    target_link_libraries(skyrim_platform_entry PRIVATE CommonLibSSE::CommonLibSSE)
+
+    find_package(CommonLibSSE CONFIG REQUIRED)
+
+    target_commonlibsse_properties(skyrim_platform_entry
+      NAME "SkyrimPlatform"
+      AUTHOR "SkyMP Team and Contributors"
+    )
+
     target_precompile_headers(skyrim_platform_entry	PRIVATE	skyrim_platform_entry/PCH.h)
     apply_default_settings(TARGETS skyrim_platform_entry)
-
-    if(SKYRIM_SE)
-      target_compile_definitions(skyrim_platform PRIVATE SKYRIMSE)
-      target_compile_definitions(skyrim_platform_entry PRIVATE SKYRIMSE)
-    endif()
 
     set_target_properties(skyrim_platform SkyrimPlatformCEF skyrim_platform_entry PROPERTIES
       RUNTIME_OUTPUT_DIRECTORY "bin"
@@ -119,12 +133,14 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
 
     set(DEPENDENCIES_FOR_CUSTOM_TARGETS skyrim_platform SkyrimPlatformCEF skyrim_platform_entry)
 
-    add_papyrus_library_ck(
-      NAME TESModPlatformPsc
-      DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/psc"
-      OUTPUT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/pex"
-      COMPILER_EXECUTABLE_PATH "${SKYRIM_DIR}/Papyrus compiler/PapyrusCompiler.exe"
-    )
+    if(BUILD_SCRIPTS)
+      add_papyrus_library_ck(
+        NAME TESModPlatformPsc
+        DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/psc"
+        OUTPUT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/pex"
+        COMPILER_EXECUTABLE_PATH "${SKYRIM_DIR}/Papyrus compiler/PapyrusCompiler.exe"
+      )
+    endif()
     if(TARGET TESModPlatformPsc)
       add_dependencies(TESModPlatformPsc ${DEPENDENCIES_FOR_CUSTOM_TARGETS})
       list(APPEND DEPENDENCIES_FOR_CUSTOM_TARGETS TESModPlatformPsc)
@@ -219,16 +235,13 @@ if(MSVC)
 
   # skyrim_platform vcpkg deps
 
-  find_package(unofficial-chakracore CONFIG REQUIRED)
-  target_link_libraries(skyrim_platform PUBLIC unofficial::chakracore::chakracore)
+  find_package(unofficial-node-addon-api REQUIRED)
+  target_link_libraries(skyrim_platform PRIVATE unofficial::node-addon-api::node-addon-api)
+  target_compile_definitions(skyrim_platform PRIVATE NAPI_CPP_EXCEPTIONS)
 
   target_link_libraries(skyrim_platform PUBLIC mhook)
 
-  if(SKYRIM_SE)
-    find_package(commonlibse REQUIRED CONFIGS CommonLibSSEConfig.cmake)
-  else()
-    find_package(commonlibae REQUIRED CONFIGS CommonLibSSEConfig.cmake)
-  endif()
+  find_package(CommonLibSSE CONFIG REQUIRED)
 
   find_package(robin_hood REQUIRED)
 

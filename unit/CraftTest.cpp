@@ -1,7 +1,6 @@
 #include "TestUtils.hpp"
 #include <catch2/catch_all.hpp>
 
-#include "FindRecipe.h"
 #include "PacketParser.h"
 
 using Catch::Matchers::ContainsSubstring;
@@ -78,7 +77,7 @@ TEST_CASE("Player is able to craft item", "[Craft][espm]")
   for (auto entry : requiredItemsForNails.entries)
     ac.AddItem(entry.baseId, entry.count);
 
-  ActionListener::RawMessageData msgData;
+  RawMessageData msgData;
   msgData.userId = 0;
 
   // Vanilla item
@@ -130,7 +129,7 @@ TEST_CASE(
 
   const uint32_t wrongResultObject = 0xd8d4e;
 
-  ActionListener::RawMessageData msgData;
+  RawMessageData msgData;
   msgData.userId = 0;
 
   Inventory previousInventory = ac.GetInventory();
@@ -148,28 +147,34 @@ TEST_CASE("DLC Dragonborn recipes are working", "[Craft][espm]")
 {
 
   PartOne& p = GetPartOne();
-  auto form = FindRecipe(p.GetEspm().GetBrowser(),
-                         Inventory()
-                           .AddItem(0x0005ACE4, 1)
-                           .AddItem(0x0401CD7C, 2)
-                           .AddItem(0x00034CDD, 10),
-                         0x04037564);
-  REQUIRE(form);
-  REQUIRE(form->GetId() == 0x0203d581);
+  auto craftService = p.GetActionListener().GetCraftService();
+
+  auto form = craftService->FindRecipe(std::nullopt, std::nullopt,
+                                       p.GetEspm().GetBrowser(),
+                                       Inventory()
+                                         .AddItem(0x0005ACE4, 1)
+                                         .AddItem(0x0401CD7C, 2)
+                                         .AddItem(0x00034CDD, 10),
+                                       0x04037564);
+  REQUIRE(form.size() == 1);
+  REQUIRE(form[0].rec->GetId() == 0x0203d581);
 }
 
 TEST_CASE("DLC Hearthfires recipes are working", "[Craft][espm]")
 {
   PartOne& p = GetPartOne();
+  auto craftService = p.GetActionListener().GetCraftService();
 
-  REQUIRE(RecipeMatches(p.GetEspm().GetBrowser().GetCombMapping(3),
-                        espm::Convert<espm::COBJ>(
-                          p.GetEspm().GetBrowser().LookupById(0x0300306d).rec),
-                        Inventory().AddItem(0x0005ACE4, 1),
-                        0x300300F) == true);
+  auto recipe = p.GetEspm().GetBrowser().LookupById(0x0300306d);
+  auto inputObjects = Inventory().AddItem(0x0005ACE4, 1);
+  bool matches =
+    craftService->RecipeItemsMatch(recipe, inputObjects, 0x300300F);
 
-  auto form = FindRecipe(p.GetEspm().GetBrowser(),
-                         Inventory().AddItem(0x0005ACE4, 1), 0x300300F);
-  REQUIRE(form);
-  REQUIRE(form->GetId() == 0x0200306d);
+  REQUIRE(matches == true);
+
+  auto form = craftService->FindRecipe(
+    std::nullopt, std::nullopt, p.GetEspm().GetBrowser(),
+    Inventory().AddItem(0x0005ACE4, 1), 0x300300F);
+  REQUIRE(form.size() > 0);
+  REQUIRE(form[0].rec->GetId() == 0x0200306d);
 }

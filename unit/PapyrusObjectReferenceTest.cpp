@@ -53,7 +53,7 @@ auto GetDummyMessageData()
 {
   static uint8_t unparsed[] = { Networking::MinPacketId, '{', '}' };
 
-  ActionListener::RawMessageData data;
+  RawMessageData data;
   data.userId = 1;
   data.unparsed = unparsed;
   data.unparsedLength = std::size(unparsed);

@@ -14,7 +14,6 @@
 #include "ServerState.h"
 #include "SpSnippet.h"
 #include "SpSnippetFunctionGen.h"
-#include "SweetPieScript.h"
 #include "TimeUtils.h"
 #include "WorldState.h"
 #include "gamemode_events/DeathEvent.h"
@@ -236,6 +235,27 @@ void MpActor::SetEquipment(const std::string& jsonString)
 {
   EditChangeForm(
     [&](MpChangeForm& changeForm) { changeForm.equipmentDump = jsonString; });
+}
+
+void MpActor::SetHealthRespawnPercentage(float percentage)
+{
+  EditChangeForm([&](MpChangeForm& changeForm) {
+    changeForm.healthRespawnPercentage = percentage;
+  });
+}
+
+void MpActor::SetMagickaRespawnPercentage(float percentage)
+{
+  EditChangeForm([&](MpChangeForm& changeForm) {
+    changeForm.magickaRespawnPercentage = percentage;
+  });
+}
+
+void MpActor::SetStaminaRespawnPercentage(float percentage)
+{
+  EditChangeForm([&](MpChangeForm& changeForm) {
+    changeForm.staminaRespawnPercentage = percentage;
+  });
 }
 
 void MpActor::AddToFaction(Faction faction, bool lazyLoad)
@@ -494,14 +514,6 @@ bool MpActor::OnEquip(uint32_t baseId)
 
   SendPapyrusEvent("OnObjectEquipped", args, std::size(args));
 
-  const auto& espmFiles = GetParent()->espmFiles;
-
-  if (std::any_of(espmFiles.begin(), espmFiles.end(),
-                  [](auto&& element) { return element == "SweetPie.esp"; })) {
-    SweetPieScript SweetPieScript(espmFiles);
-    SweetPieScript.Play(*this, *GetParent(), baseId);
-  }
-
   return true;
 }
 
@@ -615,20 +627,60 @@ void MpActor::SetPercentages(const ActorValues& actorValues,
   SetLastAttributesPercentagesUpdate(std::chrono::steady_clock::now());
 }
 
-void MpActor::NetSendChangeValues(const ActorValues& actorValues)
+void MpActor::NetSendChangeValues(
+  const ActorValues& actorValues,
+  const std::optional<std::vector<espm::ActorValue>>& avFilter)
 {
   ChangeValuesMessage message;
   message.idx = GetIdx();
-  message.data.health = actorValues.healthPercentage;
-  message.data.magicka = actorValues.magickaPercentage;
-  message.data.stamina = actorValues.staminaPercentage;
-  SendToUser(message, true);
+
+  static const std::vector<espm::ActorValue> kDefaultAvFilter = {
+    espm::ActorValue::Health, espm::ActorValue::Magicka,
+    espm::ActorValue::Stamina
+  };
+
+  const std::vector<espm::ActorValue>& avFilterRef =
+    avFilter.has_value() ? *avFilter : kDefaultAvFilter;
+
+  int numUpdatedValues = 0;
+
+  if (avFilterRef.empty()) {
+    // If no filter is provided, send all actor values
+    message.data.health = actorValues.healthPercentage;
+    message.data.magicka = actorValues.magickaPercentage;
+    message.data.stamina = actorValues.staminaPercentage;
+  } else {
+    // Filter actor values based on the provided filter
+    for (const auto& av : avFilterRef) {
+      switch (av) {
+        case espm::ActorValue::Health:
+          message.data.health = actorValues.healthPercentage;
+          numUpdatedValues++;
+          break;
+        case espm::ActorValue::Magicka:
+          message.data.magicka = actorValues.magickaPercentage;
+          numUpdatedValues++;
+          break;
+        case espm::ActorValue::Stamina:
+          message.data.stamina = actorValues.staminaPercentage;
+          numUpdatedValues++;
+          break;
+        default:
+          break;
+      }
+    }
+  }
+
+  if (numUpdatedValues > 0) {
+    SendToUser(message, true);
+  }
 }
 
-void MpActor::NetSetPercentages(const ActorValues& actorValues,
-                                MpActor* aggressor)
+void MpActor::NetSetPercentages(
+  const ActorValues& actorValues, MpActor* aggressor,
+  const std::optional<std::vector<espm::ActorValue>>& avFilter)
 {
-  NetSendChangeValues(actorValues);
+  NetSendChangeValues(actorValues, avFilter);
   SetPercentages(actorValues, aggressor);
 }
 
@@ -827,13 +879,27 @@ int32_t MpActor::GetProfileId() const
   return ChangeForm().profileId;
 }
 
+float MpActor::GetHealthRespawnPercentage() const
+{
+  return ChangeForm().healthRespawnPercentage;
+}
+
+float MpActor::GetMagickaRespawnPercentage() const
+{
+  return ChangeForm().magickaRespawnPercentage;
+}
+
+float MpActor::GetStaminaRespawnPercentage() const
+{
+  return ChangeForm().staminaRespawnPercentage;
+}
+
 void MpActor::SendAndSetDeathState(bool isDead, bool shouldTeleport)
 {
   spdlog::trace(
     "MpActor::SendAndSetDeathState {:x} - isDead: {}, shouldTeleport: {}",
     GetFormId(), isDead, shouldTeleport);
 
-  float attribute = isDead ? 0.f : 1.f;
   auto position = GetSpawnPoint();
 
   auto respawnMsg = GetDeathStateMsg(position, isDead, shouldTeleport);
@@ -841,10 +907,14 @@ void MpActor::SendAndSetDeathState(bool isDead, bool shouldTeleport)
 
   EditChangeForm([&](MpChangeForm& changeForm) {
     changeForm.isDead = isDead;
-    changeForm.actorValues.healthPercentage = attribute;
-    changeForm.actorValues.magickaPercentage = attribute;
-    changeForm.actorValues.staminaPercentage = attribute;
+    changeForm.actorValues.healthPercentage =
+      isDead ? 0.f : GetHealthRespawnPercentage();
+    changeForm.actorValues.magickaPercentage =
+      isDead ? 0.f : GetMagickaRespawnPercentage();
+    changeForm.actorValues.staminaPercentage =
+      isDead ? 0.f : GetStaminaRespawnPercentage();
   });
+
   if (shouldTeleport) {
     SetCellOrWorldObsolete(position.cellOrWorldDesc);
     SetPos(position.pos);
@@ -1115,7 +1185,11 @@ void MpActor::ModifyActorValuePercentage(espm::ActorValue av,
     default:
       return;
   }
-  NetSetPercentages(currentActorValues);
+
+  static MpActor* const kNullAggressor = nullptr;
+
+  NetSetPercentages(currentActorValues, kNullAggressor,
+                    std::vector<espm::ActorValue>{ av });
 }
 
 void MpActor::BeforeDestroy()
@@ -1148,10 +1222,20 @@ void MpActor::Kill(MpActor* killer, bool shouldTeleport)
   spdlog::trace("MpActor::Kill {:x} - killer is {:x}", GetFormId(),
                 killer ? killer->GetFormId() : 0);
 
+  auto& changeForm = ChangeForm();
+  const float healthPercentageBeforeDeath =
+    changeForm.actorValues.healthPercentage;
+  const float magickaPercentageBeforeDeath =
+    changeForm.actorValues.magickaPercentage;
+  const float staminaPercentageBeforeDeath =
+    changeForm.actorValues.staminaPercentage;
+
   // Keep in sync with MpActor::SetIsDead
   SendAndSetDeathState(true, shouldTeleport);
 
-  DeathEvent deathEvent(this, killer);
+  DeathEvent deathEvent(this, killer, healthPercentageBeforeDeath,
+                        magickaPercentageBeforeDeath,
+                        staminaPercentageBeforeDeath);
   deathEvent.Fire(GetParent());
 
   AddDeathItem();
@@ -1340,11 +1424,20 @@ void MpActor::SetIsDead(bool isDead)
 
   if (isDead) {
     if (IsDead() == false) {
+      auto& changeForm = ChangeForm();
+      const float healthPercentageBeforeDeath =
+        changeForm.actorValues.healthPercentage;
+      const float magickaPercentageBeforeDeath =
+        changeForm.actorValues.magickaPercentage;
+      const float staminaPercentageBeforeDeath =
+        changeForm.actorValues.staminaPercentage;
 
       // Keep in sync with MpActor::Kill
       SendAndSetDeathState(isDead, kShouldTeleport);
 
-      DeathEvent deathEvent(this, nullptr);
+      DeathEvent deathEvent(this, nullptr, healthPercentageBeforeDeath,
+                            magickaPercentageBeforeDeath,
+                            staminaPercentageBeforeDeath);
       deathEvent.Fire(GetParent());
 
       AddDeathItem();
@@ -1586,15 +1679,18 @@ void MpActor::SetActorValue(espm::ActorValue actorValue, float value)
     default:
       break;
   }
-  NetSendChangeValues(currentActorValues);
+
+  std::vector<espm::ActorValue> avFilter = { actorValue };
+  NetSendChangeValues(currentActorValues, avFilter);
   EditChangeForm([&](MpChangeForm& changeForm) {
     changeForm.actorValues = currentActorValues;
   });
 }
 
+// TODO: only used in legacy MGEF implementation, remove when MGEF is rewritten
 void MpActor::SetActorValues(const ActorValues& actorValues)
 {
-  NetSendChangeValues(actorValues);
+  NetSendChangeValues(actorValues, std::nullopt);
   EditChangeForm(
     [&](MpChangeForm& changeForm) { changeForm.actorValues = actorValues; });
 }
