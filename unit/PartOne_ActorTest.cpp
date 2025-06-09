@@ -211,7 +211,7 @@ TEST_CASE("Bug with subscription", "[PartOne]")
   partOne.SetUserActor(0, 0xff000000);
 
   REQUIRE(partOne.Messages().size() == 1);
-  REQUIRE(partOne.Messages()[0].j["type"] == "createActor");
+  REQUIRE(partOne.Messages()[0].j["t"] == MsgType::CreateActor);
 }
 
 TEST_CASE("SetUserActor doesn't work with disabled actors", "[PartOne]")
@@ -237,7 +237,7 @@ TEST_CASE("Actor should see its inventory in 'createActor' message",
   partOne.SetUserActor(0, 0xff000000);
 
   REQUIRE(partOne.Messages().size() == 1);
-  REQUIRE(partOne.Messages()[0].j["type"] == "createActor");
+  REQUIRE(partOne.Messages()[0].j["t"] == MsgType::CreateActor);
   REQUIRE(partOne.Messages()[0].j["props"]["inventory"] ==
           Inventory().AddItem(0x12eb7, 3).ToJson());
 }
@@ -254,6 +254,6 @@ TEST_CASE("'isRaceMenuOpen' property should present in 'createActor'",
   partOne.SetUserActor(0, 0xff000000);
 
   REQUIRE(partOne.Messages().size() == 1);
-  REQUIRE(partOne.Messages()[0].j["type"] == "createActor");
+  REQUIRE(partOne.Messages()[0].j["t"] == MsgType::CreateActor);
   REQUIRE(partOne.Messages()[0].j["props"]["isRaceMenuOpen"] == true);
 }

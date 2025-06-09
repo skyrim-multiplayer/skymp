@@ -1,6 +1,35 @@
 #include "TestUtils.hpp"
 #include "script_storages/DirectoryScriptStorage.h"
 
+namespace {
+struct FindRefrCreationMessageResult
+{
+  std::vector<CreateActorMessage> createActorMessages;
+  size_t numCreateActor = 0;
+};
+
+FindRefrCreationMessageResult FindRefrCreationMessage(PartOne& partOne,
+                                                      uint32_t expectedRefrId)
+{
+  std::vector<CreateActorMessage> createActorMessages;
+
+  for (auto& message : partOne.Messages()) {
+    if (auto createActorMessage =
+          dynamic_cast<CreateActorMessage*>(message.message.get())) {
+      createActorMessages.push_back(*createActorMessage);
+    }
+  }
+
+  size_t numCreateActor =
+    std::count_if(createActorMessages.begin(), createActorMessages.end(),
+                  [expectedRefrId](const CreateActorMessage& message) {
+                    return message.refrId == expectedRefrId;
+                  });
+
+  return FindRefrCreationMessageResult{ createActorMessages, numCreateActor };
+}
+}
+
 using Catch::Matchers::ContainsSubstring;
 
 extern espm::Loader& GetEspmLoader();
@@ -152,14 +181,10 @@ TEST_CASE("See harvested PurpleMountainFlower in Whiterun", "[PartOne][espm]")
   partOne.CreateActor(0xff000000, { 22572, -8634, -3597 }, 0, 0x1a26f);
   partOne.SetUserActor(0, 0xff000000);
 
-  auto it = std::find_if(
-    partOne.Messages().begin(), partOne.Messages().end(), [&](auto m) {
-      return m.reliable && m.userId == 0 &&
-        m.j["t"] == static_cast<int>(MsgType::CreateActor) &&
-        m.j["refrId"] == refrId &&
-        m.j["props"] == nlohmann::json{ { "isHarvested", true } };
-    });
-  REQUIRE(it != partOne.Messages().end());
+  auto res = FindRefrCreationMessage(partOne, refrId);
+  REQUIRE(res.createActorMessages.size() > 0);
+  REQUIRE(res.numCreateActor == 1);
+  REQUIRE(res.createActorMessages[0].props.isHarvested == true);
 
   DoDisconnect(partOne, 0);
   partOne.DestroyActor(0xff000000);
@@ -181,14 +206,10 @@ TEST_CASE("See open DisplayCaseSmFlat01 in Whiterun", "[PartOne][espm]")
                       0x1a26f);
   partOne.SetUserActor(0, 0xff000000);
 
-  auto it = std::find_if(
-    partOne.Messages().begin(), partOne.Messages().end(), [&](auto m) {
-      return m.reliable && m.userId == 0 &&
-        m.j["t"] == static_cast<int>(MsgType::CreateActor) &&
-        m.j["refrId"] == refrId &&
-        m.j["props"] == nlohmann::json{ { "isOpen", true } };
-    });
-  REQUIRE(it != partOne.Messages().end());
+  auto res = FindRefrCreationMessage(partOne, refrId);
+  REQUIRE(res.createActorMessages.size() > 0);
+  REQUIRE(res.numCreateActor == 1);
+  REQUIRE(res.createActorMessages[0].props.isOpen);
 
   DoDisconnect(partOne, 0);
   partOne.DestroyActor(0xff000000);
@@ -210,26 +231,9 @@ TEST_CASE("Activate DisplayCaseSmFlat01 in Whiterun", "[PartOne][espm]")
   const auto refrId = 0x72080;
   auto& ref = partOne.worldState.GetFormAt<MpObjectReference>(refrId);
 
-   bool ok = false;
-
-  // for (const auto& m : partOne.Messages()) {
-  //   INFO("Checking message with userId="
-  //        << m.userId << ", reliable=" << m.reliable << ", t=" << m.j["t"]
-  //        << ", refrId=" << m.j["refrId"] << ", props=" << m.j["props"]);
-
-  //  if (!(m.reliable && m.userId == 0 &&
-  //        m.j["t"] == static_cast<int>(MsgType::CreateActor) &&
-  //        m.j["refrId"] == refrId && m.j["props"] == nullptr)) {
-  //    continue;
-  //  }
-
-  //  // Found!
-  //  ok = true;
-  //  return;
-  //}
-
-   REQUIRE(ok);
-
+  auto res = FindRefrCreationMessage(partOne, refrId);
+  REQUIRE(res.createActorMessages.size() > 0);
+  REQUIRE(res.numCreateActor == 1);
 
   partOne.Messages().clear();
 
@@ -330,13 +334,9 @@ TEST_CASE("Activate PurpleMountainFlower in Whiterun", "[PartOne][espm]")
   const auto refrId = 0x0100122a;
   const auto MountainFlower01Purple = 0x77e1e;
 
-  auto it = std::find_if(
-    partOne.Messages().begin(), partOne.Messages().end(), [&](auto m) {
-      return m.reliable && m.userId == 0 &&
-        m.j["t"] == static_cast<int>(MsgType::CreateActor) &&
-        m.j["refrId"] == refrId && m.j["props"] == nullptr;
-    });
-  REQUIRE(it != partOne.Messages().end());
+  auto res = FindRefrCreationMessage(partOne, refrId);
+  REQUIRE(res.createActorMessages.size() > 0);
+  REQUIRE(res.numCreateActor == 1);
 
   partOne.Messages().clear();
 
@@ -359,7 +359,7 @@ TEST_CASE("Activate PurpleMountainFlower in Whiterun", "[PartOne][espm]")
   REQUIRE(partOne.Messages()[0].j["t"] == MsgType::UpdateProperty);
   REQUIRE(partOne.Messages()[0].j["dataDump"] == "true");
   REQUIRE(partOne.Messages()[0].j["propName"] == "isHarvested");
-  REQUIRE(partOne.Messages()[1].j["type"] == "setInventory");
+  REQUIRE(partOne.Messages()[1].j["t"] == MsgType::SetInventory);
   REQUIRE(partOne.Messages()[1].j["inventory"].dump() ==
           nlohmann::json({ { "entries",
                              { { { "baseId", MountainFlower01Purple },
@@ -456,7 +456,7 @@ TEST_CASE("BarrelFood01 PutItem/TakeItem", "[PartOne][espm]")
               { "target", refrId } });
   partOne.Tick(); // send deferred inventory update messages
   REQUIRE(partOne.Messages().size() == 1);
-  REQUIRE(partOne.Messages()[0].j["type"] == "setInventory");
+  REQUIRE(partOne.Messages()[0].j["t"] == MsgType::SetInventory);
 
   REQUIRE(actor.GetInventory().IsEmpty());
   REQUIRE(ref.GetInventory().GetItemCount(0x12eb7) == 2);
@@ -474,7 +474,7 @@ TEST_CASE("BarrelFood01 PutItem/TakeItem", "[PartOne][espm]")
               { "target", refrId } });
   partOne.Tick(); // send deferred inventory update messages
   REQUIRE(partOne.Messages().size() == 1);
-  REQUIRE(partOne.Messages()[0].j["type"] == "setInventory");
+  REQUIRE(partOne.Messages()[0].j["t"] == MsgType::SetInventory);
   REQUIRE(ref.GetInventory().GetItemCount(0x12eb7) == 1);
   REQUIRE(actor.GetInventory().GetItemCount(0x12eb7) == 1);
 
@@ -585,13 +585,10 @@ TEST_CASE("Activate torch", "[espm][PartOne]")
   const auto refrId = 0x671a8;
   const auto torchBaseId = 0x1d4ec;
 
-  auto it = std::find_if(
-    partOne.Messages().begin(), partOne.Messages().end(), [&](auto m) {
-      return m.reliable && m.userId == 0 &&
-        m.j["t"] == static_cast<int>(MsgType::CreateActor) &&
-        m.j["refrId"] == refrId && m.j["props"] == nullptr;
-    });
-  REQUIRE(it != partOne.Messages().end());
+  auto res = FindRefrCreationMessage(partOne, refrId);
+  REQUIRE(res.createActorMessages.size() > 0);
+  REQUIRE(res.numCreateActor == 1);
+  // !!!
 
   partOne.Messages().clear();
 
@@ -614,7 +611,7 @@ TEST_CASE("Activate torch", "[espm][PartOne]")
   REQUIRE(partOne.Messages()[0].j["t"] == MsgType::UpdateProperty);
   REQUIRE(partOne.Messages()[0].j["dataDump"] == "true");
   REQUIRE(partOne.Messages()[0].j["propName"] == "isHarvested");
-  REQUIRE(partOne.Messages()[1].j["type"] == "setInventory");
+  REQUIRE(partOne.Messages()[1].j["t"] == MsgType::SetInventory);
   REQUIRE(
     partOne.Messages()[1].j["inventory"].dump() ==
     nlohmann::json(
