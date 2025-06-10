@@ -87,10 +87,15 @@ runs:
         yarn build
       shell: powershell
 
-    - name: Install tools
+    - name: Install OpenCppCoverage if not present
       if: runner.os == 'Windows'
-      run: choco install opencppcoverage
       shell: powershell
+      run: |
+        if (-not (Get-Command OpenCppCoverage -ErrorAction SilentlyContinue)) {
+          choco install opencppcoverage -y
+        } else {
+          Write-Output "OpenCppCoverage is already installed."
+        }
 
     - name: Move vcpkg submodule to a larger drive
       if: runner.os == 'Windows'
