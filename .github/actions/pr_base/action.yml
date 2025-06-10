@@ -87,14 +87,27 @@ runs:
         yarn build
       shell: powershell
 
-    - name: Install OpenCppCoverage if not present
+    - name: Install OpenCppCoverage if not already installed
       if: runner.os == 'Windows'
       shell: powershell
       run: |
-        if (-not (Get-Command OpenCppCoverage -ErrorAction SilentlyContinue)) {
-          choco install opencppcoverage -y
+        $found = $false
+        foreach ($dir in $env:PATH.Split(';')) {
+          if (Test-Path (Join-Path $dir 'OpenCppCoverage.exe')) {
+            $found = $true
+            break
+          }
+        }
+
+        if (-not $found) {
+          if (Get-Command choco -ErrorAction SilentlyContinue) {
+            choco install opencppcoverage -y
+          } else {
+            Write-Host "OpenCppCoverage not found, and choco is missing."
+            exit 1
+          }
         } else {
-          Write-Output "OpenCppCoverage is already installed."
+          Write-Host "OpenCppCoverage is already installed."
         }
 
     - name: Move vcpkg submodule to a larger drive
