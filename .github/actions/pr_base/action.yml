@@ -115,12 +115,32 @@ runs:
             }
           }
 
-    - name: Move vcpkg submodule to a larger drive
+    - name: Move vcpkg submodule to a larger drive using github-script
       if: runner.os == 'Windows'
-      run: |
-        Remove-Item -Recurse -Force C:/vcpkg
-        Move-Item -Path ./vcpkg C:/vcpkg
-      shell: powershell
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+          const fsp = fs.promises;
+          const path = require('path');
+
+          const targetPath = 'C:\\vcpkg';
+          const sourcePath = path.join(process.env.GITHUB_WORKSPACE, 'vcpkg');
+
+          async function moveVcpkg() {
+            try {
+              if (fs.existsSync(targetPath)) {
+                console.log(`Removing existing ${targetPath}...`);
+                await fsp.rm(targetPath, { recursive: true, force: true });
+              }
+
+              console.log(`Moving ${sourcePath} to ${targetPath}...`);
+              await fsp.rename(sourcePath, targetPath);
+            } catch (err) {
+              core.setFailed(`Error moving vcpkg: ${err.message}`);
+            }
+          }
+          await moveVcpkg();
 
     - name: Bootstrap vcpkg (Windows)
       if: runner.os == 'Windows'
