@@ -231,6 +231,7 @@ export class SendInputsService extends ClientListener {
 
     private sendEquipment(_refrId?: number) {
         if (_refrId) return;
+
         if (this.equipmentChanged) {
             this.equipmentChanged = false;
 

@@ -20,18 +20,26 @@ uint32_t LongToNormal(uint64_t longFormId)
 
 namespace JsonPointers {
 static const JsonPointer t("t"), idx("idx"), content("content"), data("data"),
-  pos("pos"), rot("rot"), isInJumpState("isInJumpState"),
-  isWeapDrawn("isWeapDrawn"), isBlocking("isBlocking"),
-  worldOrCell("worldOrCell"), inv("inv"), caster("caster"), target("target"),
-  snippetIdx("snippetIdx"), returnValue("returnValue"), baseId("baseId"),
-  commandName("commandName"), args("args"), workbench("workbench"),
-  resultObjectId("resultObjectId"), craftInputObjects("craftInputObjects"),
-  remoteId("remoteId"), eventName("eventName"), health("health"),
-  magicka("magicka"), stamina("stamina"), leftSpell("leftSpell"),
-  rightSpell("rightSpell"), voiceSpell("voiceSpell"),
-  instantSpell("instantSpell"), weaponId("weaponId"), ammoId("ammoId"),
-  power("power"), isSunGazing("isSunGazing"),
-  isSecondActivation("isSecondActivation");
+                         pos("pos"), rot("rot"), isInJumpState("isInJumpState")
+                         ,
+                         isWeapDrawn("isWeapDrawn"), isBlocking("isBlocking"),
+                         worldOrCell("worldOrCell"), inv("inv"), caster(
+                           "caster"), target("target"),
+                         snippetIdx("snippetIdx"), returnValue("returnValue"),
+                         baseId("baseId"),
+                         commandName("commandName"), args("args"), workbench(
+                           "workbench"),
+                         resultObjectId("resultObjectId"), craftInputObjects(
+                           "craftInputObjects"),
+                         remoteId("remoteId"), eventName("eventName"), health(
+                           "health"),
+                         magicka("magicka"), stamina("stamina"), leftSpell(
+                           "leftSpell"),
+                         rightSpell("rightSpell"), voiceSpell("voiceSpell"),
+                         instantSpell("instantSpell"), weaponId("weaponId"),
+                         ammoId("ammoId"),
+                         power("power"), isSunGazing("isSunGazing"),
+                         isSecondActivation("isSecondActivation");
 }
 
 struct PacketParser::Impl
@@ -117,6 +125,15 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
         actionListener.OnChangeValues(rawMsgData, *message);
         return;
       }
+      case MsgType::UpdateVoiceChatMessage: {
+        auto message =
+          reinterpret_cast<UpdateVoiceChatMessage*>(result->message.get());
+
+        const VoiceChat& data = message->data;
+
+        actionListener.OnUpdateVoiceChatMessage(rawMsgData, data);
+        return;
+      }
       default: {
         // likel a binary packet, can't just fall back to simdjson parsing
         spdlog::error("PacketParser.cpp doesn't implement MsgType {}",
@@ -141,7 +158,8 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
       simdjson::dom::element content;
       Read(jMessage, JsonPointers::content, &content);
       actionListener.OnCustomPacket(rawMsgData, content);
-    } break;
+    }
+    break;
     case MsgType::UpdateAppearance: {
       uint32_t idx;
       ReadEx(jMessage, JsonPointers::idx, &idx);
@@ -150,7 +168,8 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
 
       actionListener.OnUpdateAppearance(rawMsgData, idx,
                                         Appearance::FromJson(jData));
-    } break;
+    }
+    break;
     case MsgType::Activate: {
       simdjson::dom::element data_;
       ReadEx(jMessage, JsonPointers::data, &data_);
@@ -162,7 +181,8 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
       actionListener.OnActivate(rawMsgData, FormIdCasts::LongToNormal(caster),
                                 FormIdCasts::LongToNormal(target),
                                 isSecondActivation);
-    } break;
+    }
+    break;
     case MsgType::UpdateProperty:
       break;
     case MsgType::PutItem:
@@ -176,7 +196,8 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
       } else {
         actionListener.OnTakeItem(rawMsgData, target, e);
       }
-    } break;
+    }
+    break;
     case MsgType::FinishSpSnippet: {
       uint32_t snippetIdx;
       ReadEx(jMessage, JsonPointers::snippetIdx, &snippetIdx);

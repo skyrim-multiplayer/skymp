@@ -7,6 +7,7 @@
 #include "UpdateEquipmentMessage.h"
 #include "UpdateMovementMessage.h"
 #include "UpdatePropertyMessage.h"
+#include "UpdateVoiceChatMessage.h"
 
 #define REGISTER_MESSAGES                                                     \
   REGISTER_MESSAGE(UpdateMovementMessage)                                     \
@@ -16,4 +17,5 @@
   REGISTER_MESSAGE(TeleportMessage)                                           \
   REGISTER_MESSAGE(UpdatePropertyMessage)                                     \
   REGISTER_MESSAGE(OpenContainerMessage)                                      \
-  REGISTER_MESSAGE(UpdateEquipmentMessage)
+  REGISTER_MESSAGE(UpdateEquipmentMessage)                                    \
+  REGISTER_MESSAGE(UpdateVoiceChatMessage)                                    \

@@ -23,4 +23,5 @@ export enum MsgType {
   PlayerBowShot = 22,
   SpellCast = 23,
   UpdateAnimVariables = 24,
+  UpdateVoiceChatMessage = 25,
 }

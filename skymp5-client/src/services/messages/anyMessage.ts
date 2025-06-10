@@ -33,6 +33,7 @@ import { UpdateEquipmentMessage } from "./updateEquipmentMessage";
 import { UpdateGamemodeDataMessage } from "./updateGameModeDataMessage";
 import { UpdateMovementMessage } from "./updateMovementMessage";
 import { UpdatePropertyMessage } from "./updatePropertyMessage";
+import {UpdateVoiceChatMessage} from "./updateVoiceChatMessage";
 
 export type AnyMessage = ActivateMessage
     | ConsoleCommandMessage
@@ -68,3 +69,4 @@ export type AnyMessage = ActivateMessage
     | DeathStateContainerMessage
     | TeleportMessage2
     | PlayerBowShotMessage
+    | UpdateVoiceChatMessage

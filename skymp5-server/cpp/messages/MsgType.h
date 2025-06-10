@@ -28,6 +28,7 @@ enum class MsgType : uint8_t
   PlayerBowShot = 22,
   SpellCast = 23,
   UpdateAnimVariables = 24,
+  UpdateVoiceChatMessage = 25,
 
   Max
 };

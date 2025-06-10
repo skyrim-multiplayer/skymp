@@ -9,6 +9,8 @@ void MyBrowserProcessHandler::OnBeforeChildProcessLaunch(
 
   command_line->AppendSwitch("enable-media-stream");
   command_line->AppendSwitch("use-fake-ui-for-media-stream");
+  command_line->AppendSwitch("disable-web-security");
+  command_line->AppendSwitch("allow-running-insecure-content");
 }
 
 }  // namespace CEFUtils

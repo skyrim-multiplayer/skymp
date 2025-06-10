@@ -62,6 +62,7 @@ import { logTrace, logError } from '../../logging';
 
 import { SpellCastMessage } from '../messages/spellCastMessage';
 import { UpdateAnimVariablesMessage } from '../messages/updateAnimVariablesMessage';
+import {UpdateVoiceChatMessage} from "../messages/updateVoiceChatMessage";
 
 export const getPcInventory = (): Inventory | undefined => {
   const res = storage['pcInv'];
@@ -116,6 +117,8 @@ export class RemoteServer extends ClientListener {
 
     this.controller.emitter.on("spellCastMessage", (e) => this.onSpellCastMessage(e));
     this.controller.emitter.on("updateAnimVariablesMessage", (e) => this.onUpdateAnimVariablesMessage(e));
+
+    this.controller.emitter.on("updateVoiceChatMessage", (e) => this.onUpdateVoiceChatMessage(e));
 
   }
 
@@ -956,6 +959,26 @@ export class RemoteServer extends ClientListener {
       }
     });
   }
+
+  private onUpdateVoiceChatMessage(event: ConnectionMessage<UpdateVoiceChatMessage>): void {
+    const msg = event.message;
+
+    const id = ("idx" in msg && typeof msg.idx === "number") ? this.getIdManager().getId(msg.idx) : this.getMyActorIndex();
+
+    const form = this.worldModel.forms[id];
+
+
+    if (form === undefined) {
+      logError(this, `onUpdateVoiceChatMessage - Form with idx`, msg.idx, `not found`);
+      return;
+    }
+
+    form.isTalking = msg.data.isTalking;
+
+    logTrace(this, `onUpdateVoiceChatMessage - Form with idx - isTalking`, msg.data.isTalking);
+
+  }
+
 
   private numSetInventory = 0;
 }

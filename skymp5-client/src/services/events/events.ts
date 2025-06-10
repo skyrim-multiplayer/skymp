@@ -38,6 +38,7 @@ import { QueryKeyCodeBindings } from "./queryKeyCodeBindings";
 import { SpellCastMessage } from "../messages/spellCastMessage";
 import { UpdateAnimVariablesMessage } from "../messages/updateAnimVariablesMessage";
 import { AnyRawMessageEvent } from "./anyRawMessageEvent";
+import {UpdateVoiceChatMessage} from "../messages/updateVoiceChatMessage";
 
 type EventTypes = {
     'gameLoad': [GameLoadEvent],
@@ -74,6 +75,7 @@ type EventTypes = {
     'updatePropertyMessage': [ConnectionMessage<UpdatePropertyMessage>],
     'deathStateContainerMessage': [ConnectionMessage<DeathStateContainerMessage>],
     'teleportMessage2': [ConnectionMessage<TeleportMessage2>]
+    'updateVoiceChatMessage': [ConnectionMessage<UpdateVoiceChatMessage>]
 
     'browserWindowLoaded': [BrowserWindowLoadedEvent],
     'authAttempt': [AuthAttemptEvent],
