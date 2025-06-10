@@ -91,33 +91,64 @@ index 0bfdca2..dfd9023 100644
 +
 +More detailed documentation is coming soon. In the meantime you can check [unit tests](https://github.com/nic11/antigo/blob/master/unit/src/ContextTest.cpp).
 diff --git a/src/antigo/impl/OnstackContextImpl.h b/src/antigo/impl/OnstackContextImpl.h
-index 468e7c2..da096cc 100644
+index 468e7c2..07ada00 100644
 --- a/src/antigo/impl/OnstackContextImpl.h
 +++ b/src/antigo/impl/OnstackContextImpl.h
-@@ -5,7 +5,7 @@
- #include <bitset>
+@@ -2,12 +2,9 @@
+ 
+ #include "antigo/Context.h"
+ 
+-#include <bitset>
  #include <cassert>
  #include <cstdint>
 -#include <fmt/format.h>
-+#include <format>
  #include <memory>
- #include <optional>
+-#include <optional>
  #include <variant>
-@@ -41,7 +41,7 @@ std::string Strip(const std::string& s) {
- std::string IntRepresentations(uint64_t val) {
-   std::bitset<64> binaryVal(val);
+ #include <string>
  
--  return fmt::format(
-+  return std::format(
-     "{} | hex: 0x{:x} | bin: {}",
-     val,
-     val,
-@@ -52,7 +52,7 @@ std::string IntRepresentations(uint64_t val) {
- std::string IntRepresentations(int64_t val) {
-   std::bitset<64> binaryVal(val);
+@@ -36,30 +33,6 @@ std::string Strip(const std::string& s) {
+   return s.substr(0, len);
+ }
  
+-// FIXME: should be separate for each size
+-// (uint) uint: 1736811162163836790 | int: 1736811162163836790 | hex: 0x181a648ccab57776 | bin: 0001100000011010011001001000110011001010101101010111011101110110
+-std::string IntRepresentations(uint64_t val) {
+-  std::bitset<64> binaryVal(val);
+-
 -  return fmt::format(
-+  return std::format(
-     "{} | hex as uint: 0x{:x} | bin: {}",
-     val,
-     static_cast<uint64_t>(val),
+-    "{} | hex: 0x{:x} | bin: {}",
+-    val,
+-    val,
+-    binaryVal.to_string()
+-  );
+-}
+-
+-std::string IntRepresentations(int64_t val) {
+-  std::bitset<64> binaryVal(val);
+-
+-  return fmt::format(
+-    "{} | hex as uint: 0x{:x} | bin: {}",
+-    val,
+-    static_cast<uint64_t>(val),
+-    binaryVal.to_string()
+-  );
+-}
+-
+ } // namespace
+ 
+ struct OnstackDataFrame;
+@@ -74,11 +47,11 @@ struct OnstackDataFrame {
+     }
+ 
+     ResolvedMessageEntry operator()(uint64_t v) const {
+-      return {"uint", IntRepresentations(v)};
++      return {"uint", std::to_string(v)};
+     }
+ 
+     ResolvedMessageEntry operator()(int64_t v) const {
+-      return {"int", IntRepresentations(v)};
++      return {"int", std::to_string(v)};
+     }
+ 
+     ResolvedMessageEntry operator()(const std::unique_ptr<OwnedValue>& v) const {
