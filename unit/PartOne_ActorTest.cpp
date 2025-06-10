@@ -119,6 +119,8 @@ TEST_CASE("createActor message contains Appearance", "[PartOne]")
   const Appearance appearance = Appearance::FromJson(jAppearance["data"]);
   partOne.worldState.GetFormAt<MpActor>(0xff000ABC).SetAppearance(&appearance);
 
+  partOne.Messages().clear();
+
   DoConnect(partOne, 1);
   partOne.CreateActor(0xff000FFF, { 100.f, 200.f, 300.f }, 180.f, 0x3c);
   partOne.SetUserActor(1, 0xff000FFF);
@@ -126,8 +128,7 @@ TEST_CASE("createActor message contains Appearance", "[PartOne]")
   auto res = FindRefrMessageIdx<CreateActorMessage>(partOne, 0);
   REQUIRE(res.filteredMessages.size() == 1);
   REQUIRE(res.filteredMessages[0].appearance.has_value());
-  REQUIRE(res.filteredMessages[0].appearance->ToJson() ==
-          jAppearance["data"].dump());
+  REQUIRE(*res.filteredMessages[0].appearance == appearance);
 
   /*REQUIRE_THROWS_WITH(
     doAppearance(), ContainsSubstring("Unable to update appearance, RaceMenu is

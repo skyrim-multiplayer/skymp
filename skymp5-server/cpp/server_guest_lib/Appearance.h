@@ -20,6 +20,17 @@ struct Tint
   std::string texturePath;
   int32_t argb = 0;
   int32_t type = 0;
+
+  friend bool operator==(const Tint& lhs, const Tint& rhs)
+  {
+    return lhs.texturePath == rhs.texturePath && lhs.argb == rhs.argb &&
+      lhs.type == rhs.type;
+  }
+
+  friend bool operator!=(const Tint& lhs, const Tint& rhs)
+  {
+    return !(lhs == rhs);
+  }
 };
 
 struct Appearance
@@ -56,4 +67,19 @@ struct Appearance
   std::vector<float> presets; // facePresets
   std::vector<Tint> tints;
   std::string name;
+
+  friend bool operator==(const Appearance& lhs, const Appearance& rhs)
+  {
+    return lhs.isFemale == rhs.isFemale && lhs.raceId == rhs.raceId &&
+      lhs.weight == rhs.weight && lhs.skinColor == rhs.skinColor &&
+      lhs.hairColor == rhs.hairColor && lhs.headpartIds == rhs.headpartIds &&
+      lhs.headTextureSetId == rhs.headTextureSetId &&
+      lhs.options == rhs.options && lhs.presets == rhs.presets &&
+      lhs.tints == rhs.tints && lhs.name == rhs.name;
+  }
+
+  friend bool operator!=(const Appearance& lhs, const Appearance& rhs)
+  {
+    return !(lhs == rhs);
+  }
 };
