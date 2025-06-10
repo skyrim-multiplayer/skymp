@@ -83,7 +83,7 @@ TEST_CASE("Damage is reduced based on target's armor", "[TES5DamageFormula]")
   Equipment eq2;
 
   for (int i = 0; i < 70; i++) {
-    eq.inv.entries.push_back(repeatativeEntry);
+    eq2.inv.entries.push_back(repeatativeEntry);
   }
 
   // Total rating for worn armor: 10 * 70 = 700
