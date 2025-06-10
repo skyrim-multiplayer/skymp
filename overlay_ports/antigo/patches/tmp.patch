@@ -91,10 +91,10 @@ index 0bfdca2..dfd9023 100644
 +
 +More detailed documentation is coming soon. In the meantime you can check [unit tests](https://github.com/nic11/antigo/blob/master/unit/src/ContextTest.cpp).
 diff --git a/src/antigo/impl/OnstackContextImpl.h b/src/antigo/impl/OnstackContextImpl.h
-index 468e7c2..07ada00 100644
+index 468e7c2..ad6eb1e 100644
 --- a/src/antigo/impl/OnstackContextImpl.h
 +++ b/src/antigo/impl/OnstackContextImpl.h
-@@ -2,12 +2,9 @@
+@@ -2,12 +2,10 @@
  
  #include "antigo/Context.h"
  
@@ -104,10 +104,11 @@ index 468e7c2..07ada00 100644
 -#include <fmt/format.h>
  #include <memory>
 -#include <optional>
++#include <limits>
  #include <variant>
  #include <string>
  
-@@ -36,30 +33,6 @@ std::string Strip(const std::string& s) {
+@@ -36,30 +34,6 @@ std::string Strip(const std::string& s) {
    return s.substr(0, len);
  }
  
@@ -138,7 +139,7 @@ index 468e7c2..07ada00 100644
  } // namespace
  
  struct OnstackDataFrame;
-@@ -74,11 +47,11 @@ struct OnstackDataFrame {
+@@ -74,11 +48,11 @@ struct OnstackDataFrame {
      }
  
      ResolvedMessageEntry operator()(uint64_t v) const {
