@@ -87,28 +87,33 @@ runs:
         yarn build
       shell: powershell
 
-    - name: Install OpenCppCoverage if not already installed
+    - name: Check and install OpenCppCoverage using github-script
       if: runner.os == 'Windows'
-      shell: powershell
-      run: |
-        $found = $false
-        foreach ($dir in $env:PATH.Split(';')) {
-          if (Test-Path (Join-Path $dir 'OpenCppCoverage.exe')) {
-            $found = $true
-            break
-          }
-        }
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const { execSync } = require('child_process');
+          const fs = require('fs');
 
-        if (-not $found) {
-          if (Get-Command choco -ErrorAction SilentlyContinue) {
-            choco install opencppcoverage -y
+          const coveragePath = 'C:\\Program Files\\OpenCppCoverage\\OpenCppCoverage.exe';
+
+          if (fs.existsSync(coveragePath)) {
+            console.log('OpenCppCoverage is already installed.');
           } else {
-            Write-Host "OpenCppCoverage not found, and choco is missing."
-            exit 1
+            try {
+              execSync('choco --version', { stdio: 'ignore' });
+            } catch (error) {
+              core.setFailed('OpenCppCoverage not found, and choco is missing.');
+              return;
+            }
+
+            try {
+              console.log('Installing OpenCppCoverage using choco...');
+              execSync('choco install opencppcoverage -y', { stdio: 'inherit' });
+            } catch (installError) {
+              core.setFailed(`Failed to install OpenCppCoverage: ${installError.message}`);
+            }
           }
-        } else {
-          Write-Host "OpenCppCoverage is already installed."
-        }
 
     - name: Move vcpkg submodule to a larger drive
       if: runner.os == 'Windows'
