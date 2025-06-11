@@ -1,4 +1,5 @@
 #include "Equipment.h"
+#include "archives/JsonInputArchive.h"
 #include "archives/JsonOutputArchive.h"
 #include "archives/SimdJsonInputArchive.h"
 
@@ -18,6 +19,14 @@ nlohmann::json Equipment::ToJson() const
 Equipment Equipment::FromJson(const simdjson::dom::element& element)
 {
   SimdJsonInputArchive ar(element);
+  Equipment res;
+  res.Serialize(ar);
+  return res;
+}
+
+Equipment Equipment::FromJson(const nlohmann::json& element)
+{
+  JsonInputArchive ar(element);
   Equipment res;
   res.Serialize(ar);
   return res;

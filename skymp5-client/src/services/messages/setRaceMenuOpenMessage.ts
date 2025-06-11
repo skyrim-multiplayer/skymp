@@ -1,4 +1,6 @@
+import { MsgType } from "../../messages";
+
 export interface SetRaceMenuOpenMessage {
-    type: "setRaceMenuOpen";
+    t: MsgType.SetRaceMenuOpen;
     open: boolean;
 }

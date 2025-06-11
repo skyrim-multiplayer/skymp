@@ -4,11 +4,11 @@
 #include "script_classes/PapyrusFormList.h"
 #include "script_objects/EspmGameObject.h"
 
-extern espm::Loader l;
+extern espm::Loader& GetEspmLoader();
 
 TEST_CASE("GetSize/GetAt", "[Papyrus][FormList][espm]")
 {
-  auto& br = l.GetBrowser();
+  auto& br = GetEspmLoader().GetBrowser();
 
   auto record = br.LookupById(0x21e81);
 

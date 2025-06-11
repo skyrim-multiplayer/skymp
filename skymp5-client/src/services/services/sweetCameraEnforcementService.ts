@@ -2,7 +2,6 @@ import { MsgType } from "../../messages";
 import { logTrace, logError } from "../../logging";
 import { ConnectionMessage } from "../events/connectionMessage";
 import { CustomPacketMessage } from "../messages/customPacketMessage";
-import { CustomPacketMessage2 } from "../messages/customPacketMessage2";
 import { AnimDebugSettings } from "../messages_settings/animDebugSettings";
 import { ClientListener, CombinedController, Sp } from "./clientListener";
 import { ButtonEvent, CameraStateChangedEvent, DxScanCode, Menu, Message } from "skyrimPlatform";
@@ -47,27 +46,40 @@ export class SweetCameraEnforcementService extends ClientListener {
             }, playerId, playerId);
 
             this.controller.on("buttonEvent", (e) => this.onButtonEvent(e));
-            this.controller.emitter.on("customPacketMessage2", (e) => this.onCustomPacketMessage2(e));
+            this.controller.emitter.on("customPacketMessage", (e) => this.onCustomPacketMessage2(e));
         }
     }
 
-    private onCustomPacketMessage2(e: ConnectionMessage<CustomPacketMessage2>) {
-        if (e.message.content["customPacketType"] !== "invokeAnim") return;
+    private onCustomPacketMessage2(e: ConnectionMessage<CustomPacketMessage>) {
+        let content: Record<string, unknown> = {};
+
+        try {
+            content = JSON.parse(e.message.contentJsonDump);
+        }
+        catch (err) {
+            if (err instanceof SyntaxError) {
+                logError(this, "Failed to parse custom packet contentJsonDump:", e.message.contentJsonDump, "Error:", err);
+                return;
+            }
+            throw err;
+        }
+
+        if (content["customPacketType"] !== "invokeAnim") return;
 
         logTrace(this, "Received custom packet with customPacketType invokeAnim");
 
-        const name = e.message.content["animEventName"];
-        const requestId = e.message.content["requestId"];
+        const name = content["animEventName"];
+        const requestId = content["requestId"];
 
-        let weaponDrawnAllowed = e.message.content["weaponDrawnAllowed"];
-        let furnitureAllowed = e.message.content["furnitureAllowed"];
-        let exitAnimName = e.message.content["exitAnimName"];
-        let interruptAnimName = e.message.content["interruptAnimName"];
-        let timeMs = e.message.content["timeMs"];
-        let isPlayExitAnimAfterwardsEnabled = e.message.content["isPlayExitAnimAfterwardsEnabled"];
-        let parentAnimEventName = e.message.content["parentAnimEventName"];
-        let enablePlayerControlsDelayMs = e.message.content["enablePlayerControlsDelayMs"];
-        let preferInterruptAnimAsExitAnimTimeMs = e.message.content["preferInterruptAnimAsExitAnimTimeMs"];
+        let weaponDrawnAllowed = content["weaponDrawnAllowed"];
+        let furnitureAllowed = content["furnitureAllowed"];
+        let exitAnimName = content["exitAnimName"];
+        let interruptAnimName = content["interruptAnimName"];
+        let timeMs = content["timeMs"];
+        let isPlayExitAnimAfterwardsEnabled = content["isPlayExitAnimAfterwardsEnabled"];
+        let parentAnimEventName = content["parentAnimEventName"];
+        let enablePlayerControlsDelayMs = content["enablePlayerControlsDelayMs"];
+        let preferInterruptAnimAsExitAnimTimeMs = content["preferInterruptAnimAsExitAnimTimeMs"];
 
         if (typeof name !== "string") {
             logError(this, "Expected animEventName to be string");
@@ -97,10 +109,10 @@ export class SweetCameraEnforcementService extends ClientListener {
 
             const message: CustomPacketMessage = {
                 t: MsgType.CustomPacket,
-                content: {
+                contentJsonDump: JSON.stringify({
                     customPacketType: "invokeAnimResult",
                     result, requestId
-                }
+                })
             };
 
             this.controller.emitter.emit("sendMessage", {

@@ -2,12 +2,7 @@ import { MsgType } from "../../messages";
 
 export interface CustomPacketMessage {
     t: MsgType.CustomPacket,
-    content: LoginWithSkympIo | InvokeAnimResult
-}
-
-interface LoginWithSkympIo {
-    customPacketType: "loginWithSkympIo",
-    gameData: Record<string, unknown>
+    contentJsonDump: string
 }
 
 interface InvokeAnimResult {

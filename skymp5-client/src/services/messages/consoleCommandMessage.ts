@@ -7,5 +7,5 @@ export interface ConsoleCommandMessage {
 
 interface ConsoleCommandMessageData {
     commandName: string;
-    args: unknown[];
+    args: Array<number | string>;
 }

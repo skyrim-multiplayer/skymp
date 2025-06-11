@@ -11,7 +11,7 @@ VarValue IPapyrusClassBase::ExecuteSpSnippetAndGetPromise(
         policy->GetDefaultActor(script, name, self.GetMetaStackId())) {
     auto s = SpSnippetFunctionGen::SerializeArguments(arguments, actor);
     auto promise =
-      SpSnippet(script, name, s.data(),
+      SpSnippet(script, name, s,
                 method ? SpSnippetFunctionGen::GetFormId(self) : 0)
         .Execute(actor, mode);
     if (mode == SpSnippetMode::kReturnResult) {

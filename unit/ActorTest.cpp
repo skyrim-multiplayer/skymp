@@ -10,13 +10,11 @@ TEST_CASE(
   Appearance appearance;
   appearance.raceId = 0x123;
   actor.SetAppearance(&appearance);
-  actor.SetEquipment(R"({"numChanges": 0, "inv": {"entries":[]}})");
+  actor.SetEquipment(Equipment());
   actor.SetRaceMenuOpen(true);
 
   REQUIRE(actor.GetChangeForm().appearanceDump == appearance.ToJson());
-  REQUIRE(
-    nlohmann::json::parse(actor.GetChangeForm().equipmentDump) ==
-    nlohmann::json::parse(R"({"numChanges": 0, "inv": {"entries":[]}})"));
+  REQUIRE(actor.GetChangeForm().equipment == Equipment());
   REQUIRE(actor.GetChangeForm().isRaceMenuOpen == true);
 }
 
@@ -24,9 +22,18 @@ TEST_CASE("Actor should load be able to load appearance, equipment, "
           "isRaceMenuOpen and other properties from changeform",
           "[Actor]")
 {
+  const auto kExtraWornTrue = [] {
+    Inventory::ExtraData extra;
+    extra.worn_ = true;
+    return extra;
+  }();
+
+  Equipment eq;
+  eq.inv.entries.push_back(Inventory::Entry(0x12eb7, 1, kExtraWornTrue));
+
   MpChangeForm changeForm;
   changeForm.isRaceMenuOpen = true;
-  changeForm.equipmentDump = R"({"inv": {"entries":[]}})";
+  changeForm.equipment = eq;
   changeForm.appearanceDump = Appearance().ToJson();
   changeForm.recType = MpChangeForm::ACHR;
   changeForm.actorValues.healthPercentage = 1.0f;
@@ -44,7 +51,7 @@ TEST_CASE("Actor should load be able to load appearance, equipment, "
   actor.ApplyChangeForm(changeForm);
 
   REQUIRE(actor.GetChangeForm().isRaceMenuOpen == true);
-  REQUIRE(actor.GetChangeForm().equipmentDump == R"({"inv": {"entries":[]}})");
+  REQUIRE(actor.GetChangeForm().equipment == eq);
   REQUIRE(actor.GetChangeForm().appearanceDump == Appearance().ToJson());
   REQUIRE(actor.GetChangeForm().actorValues.healthPercentage == 1.0f);
   REQUIRE(actor.GetChangeForm().actorValues.magickaPercentage == 0.9f);

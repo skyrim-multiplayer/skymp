@@ -1,5 +1,7 @@
+import { MsgType } from "../../messages";
+
 export interface SpSnippetMessage {
-    type: "spSnippet";
+    t: MsgType.SpSnippet;
     class: string;
     function: string;
     arguments: any[];

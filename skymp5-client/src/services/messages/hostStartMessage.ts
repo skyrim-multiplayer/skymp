@@ -1,4 +1,6 @@
+import { MsgType } from "../../messages";
+
 export interface HostStartMessage {
-    type: "hostStart";
+    t: MsgType.HostStart;
     target: number;
 }

@@ -6,6 +6,18 @@
 #include <spdlog/spdlog.h>
 #include <tuple>
 
+Inventory::Entry::Entry()
+{
+}
+
+Inventory::Entry::Entry(uint32_t baseId_, uint32_t count_,
+                        const ExtraData& extraData_)
+  : baseId(baseId_)
+  , count(count_)
+  , ExtraData(extraData_)
+{
+}
+
 Inventory::Entry Inventory::Entry::FromJson(const simdjson::dom::element& e)
 {
   std::string minifiedDump = simdjson::minify(e);

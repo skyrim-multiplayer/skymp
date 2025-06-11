@@ -45,7 +45,7 @@ export class MagicSyncService extends ClientListener {
                 return;
             }
 
-            const animVariables = getAnimationVariablesFromActor(ac.getFormID());
+            const animVariables = this.getAnimationVariablesFromActorConverted(ac.getFormID());
 
             this.controller.emitter.emit("sendMessage", {
                 message: { t: MsgType.UpdateAnimVariables, data: this.getUpdateAnimVariablesEventData(ac, animVariables) },
@@ -81,7 +81,7 @@ export class MagicSyncService extends ClientListener {
 
             let msg: SpellCastMsgData = this.lastSpellCastEventMsg;
             msg.interruptCast = true;
-            msg.actorAnimationVariables = getAnimationVariablesFromActor(remoteIdToLocalId(this.lastSpellCastEventMsg.caster));
+            msg.actorAnimationVariables = this.getAnimationVariablesFromActorConverted(remoteIdToLocalId(this.lastSpellCastEventMsg.caster));
 
             this.controller.emitter.emit("sendMessage", {
                 message: { t: MsgType.SpellCast, data: msg },
@@ -106,9 +106,21 @@ export class MagicSyncService extends ClientListener {
             aimAngle: e.aimAngle,
             // @ts-expect-error (TODO: Remove in 2.10.0)
             aimHeading: e.aimHeading,
-            actorAnimationVariables: getAnimationVariablesFromActor(e.caster.getFormID()),
+            actorAnimationVariables: this.getAnimationVariablesFromActorConverted(e.caster.getFormID()),
         }
         return spellCastData;
+    }
+
+    private getAnimationVariablesFromActorConverted(actorId: number) {
+        const animVars = getAnimationVariablesFromActor(actorId);
+        const booleans: ArrayBuffer = animVars.booleans;
+        const floats: ArrayBuffer = animVars.floats;
+        const integers: ArrayBuffer = animVars.integers;
+        return { 
+            booleans: Array.from(new Uint8Array(booleans)),
+            floats: Array.from(new Uint8Array(floats)),
+            integers: Array.from(new Uint8Array(integers)),
+        }
     }
 
     private getUpdateAnimVariablesEventData(ac: Actor, animVariables: ActorAnimationVariables): UpdateAnimVariablesMessageMsgData {

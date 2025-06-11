@@ -22,7 +22,7 @@ Variable CallNative::AnySafeToVariable(const CallNative::AnySafe& v,
     return res;
   }
   return std::visit(
-    overloaded{
+    Viet::Overloaded{
       [&](double f) {
         Variable res;
         treatNumberAsInt ? res.SetSInt((int)floor(f)) : res.SetFloat((float)f);

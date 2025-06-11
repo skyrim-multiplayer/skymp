@@ -23,4 +23,15 @@ export enum MsgType {
   PlayerBowShot = 22,
   SpellCast = 23,
   UpdateAnimVariables = 24,
+
+  // ex-strings
+  DestroyActor = 25,
+  HostStart = 26,
+  HostStop = 27,
+  SetInventory = 28,
+  SetRaceMenuOpen = 29,
+  SpSnippet = 30,
+  Teleport2 = 31,
+  UpdateGamemodeData = 32,
+  CreateActor = 33
 }
