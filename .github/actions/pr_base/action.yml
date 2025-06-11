@@ -134,6 +134,7 @@ runs:
               if (err.code === 'EXDEV') {
                 console.log('Falling back to copy and delete due to cross-device link error.');
                 await fsp.cp(sourcePath_, targetPath_, { recursive: true });
+                await fsp.rm(sourcePath_, { recursive: true, force: true });
               }
               else {
                 throw err;
