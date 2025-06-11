@@ -14,7 +14,6 @@
 #include "ServerState.h"
 #include "SpSnippet.h"
 #include "SpSnippetFunctionGen.h"
-#include "SweetPieScript.h"
 #include "TimeUtils.h"
 #include "WorldState.h"
 #include "gamemode_events/DeathEvent.h"
@@ -515,14 +514,6 @@ bool MpActor::OnEquip(uint32_t baseId)
 
   SendPapyrusEvent("OnObjectEquipped", args, std::size(args));
 
-  const auto& espmFiles = GetParent()->espmFiles;
-
-  if (std::any_of(espmFiles.begin(), espmFiles.end(),
-                  [](auto&& element) { return element == "SweetPie.esp"; })) {
-    SweetPieScript SweetPieScript(espmFiles);
-    SweetPieScript.Play(*this, *GetParent(), baseId);
-  }
-
   return true;
 }
 
@@ -636,32 +627,60 @@ void MpActor::SetPercentages(const ActorValues& actorValues,
   SetLastAttributesPercentagesUpdate(std::chrono::steady_clock::now());
 }
 
-void MpActor::NetSendChangeValues(const ActorValues& actorValues,
-                                  std::optional<espm::ActorValue> av)
+void MpActor::NetSendChangeValues(
+  const ActorValues& actorValues,
+  const std::optional<std::vector<espm::ActorValue>>& avFilter)
 {
   ChangeValuesMessage message;
   message.idx = GetIdx();
 
-  if (av.has_value() && *av == espm::ActorValue::Health) {
+  static const std::vector<espm::ActorValue> kDefaultAvFilter = {
+    espm::ActorValue::Health, espm::ActorValue::Magicka,
+    espm::ActorValue::Stamina
+  };
+
+  const std::vector<espm::ActorValue>& avFilterRef =
+    avFilter.has_value() ? *avFilter : kDefaultAvFilter;
+
+  int numUpdatedValues = 0;
+
+  if (avFilterRef.empty()) {
+    // If no filter is provided, send all actor values
     message.data.health = actorValues.healthPercentage;
-  } else if (av.has_value() && *av == espm::ActorValue::Magicka) {
     message.data.magicka = actorValues.magickaPercentage;
-  } else if (av.has_value() && *av == espm::ActorValue::Stamina) {
     message.data.stamina = actorValues.staminaPercentage;
   } else {
-    message.data.health = actorValues.healthPercentage;
-    message.data.magicka = actorValues.magickaPercentage;
-    message.data.stamina = actorValues.staminaPercentage;
+    // Filter actor values based on the provided filter
+    for (const auto& av : avFilterRef) {
+      switch (av) {
+        case espm::ActorValue::Health:
+          message.data.health = actorValues.healthPercentage;
+          numUpdatedValues++;
+          break;
+        case espm::ActorValue::Magicka:
+          message.data.magicka = actorValues.magickaPercentage;
+          numUpdatedValues++;
+          break;
+        case espm::ActorValue::Stamina:
+          message.data.stamina = actorValues.staminaPercentage;
+          numUpdatedValues++;
+          break;
+        default:
+          break;
+      }
+    }
   }
 
-  SendToUser(message, true);
+  if (numUpdatedValues > 0) {
+    SendToUser(message, true);
+  }
 }
 
-void MpActor::NetSetPercentages(const ActorValues& actorValues,
-                                MpActor* aggressor,
-                                std::optional<espm::ActorValue> av)
+void MpActor::NetSetPercentages(
+  const ActorValues& actorValues, MpActor* aggressor,
+  const std::optional<std::vector<espm::ActorValue>>& avFilter)
 {
-  NetSendChangeValues(actorValues, av);
+  NetSendChangeValues(actorValues, avFilter);
   SetPercentages(actorValues, aggressor);
 }
 
@@ -1169,7 +1188,8 @@ void MpActor::ModifyActorValuePercentage(espm::ActorValue av,
 
   static MpActor* const kNullAggressor = nullptr;
 
-  NetSetPercentages(currentActorValues, kNullAggressor, av);
+  NetSetPercentages(currentActorValues, kNullAggressor,
+                    std::vector<espm::ActorValue>{ av });
 }
 
 void MpActor::BeforeDestroy()
@@ -1659,15 +1679,18 @@ void MpActor::SetActorValue(espm::ActorValue actorValue, float value)
     default:
       break;
   }
-  NetSendChangeValues(currentActorValues);
+
+  std::vector<espm::ActorValue> avFilter = { actorValue };
+  NetSendChangeValues(currentActorValues, avFilter);
   EditChangeForm([&](MpChangeForm& changeForm) {
     changeForm.actorValues = currentActorValues;
   });
 }
 
+// TODO: only used in legacy MGEF implementation, remove when MGEF is rewritten
 void MpActor::SetActorValues(const ActorValues& actorValues)
 {
-  NetSendChangeValues(actorValues);
+  NetSendChangeValues(actorValues, std::nullopt);
   EditChangeForm(
     [&](MpChangeForm& changeForm) { changeForm.actorValues = actorValues; });
 }

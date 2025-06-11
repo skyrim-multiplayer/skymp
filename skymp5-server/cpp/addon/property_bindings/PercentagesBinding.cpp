@@ -1,4 +1,5 @@
 #include "PercentagesBinding.h"
+#include "MathUtils.h"
 #include "NapiHelper.h"
 #include <cmath>
 
@@ -94,5 +95,22 @@ void PercentagesBinding::Set(Napi::Env env, ScampServer& scampServer,
     }
   }
 
-  actor.NetSetPercentages(actorValues);
+  const ActorValues oldActorValues = actor.GetActorValues();
+
+  std::vector<espm::ActorValue> avFilter;
+
+  if (!MathUtils::IsNearlyEqual(oldActorValues.healthPercentage,
+                                actorValues.healthPercentage)) {
+    avFilter.push_back(espm::ActorValue::Health);
+  }
+  if (!MathUtils::IsNearlyEqual(oldActorValues.magickaPercentage,
+                                actorValues.magickaPercentage)) {
+    avFilter.push_back(espm::ActorValue::Magicka);
+  }
+  if (!MathUtils::IsNearlyEqual(oldActorValues.staminaPercentage,
+                                actorValues.staminaPercentage)) {
+    avFilter.push_back(espm::ActorValue::Stamina);
+  }
+
+  actor.NetSetPercentages(actorValues, nullptr, avFilter);
 }

@@ -638,21 +638,26 @@ void ActionListener::OnChangeValues(const RawMessageData& rawMsgData,
     actor->GetDurationOfAttributesPercentagesUpdate(now).count());
 
   ActorValues currentActorValues = actor->GetActorValues();
-  float health = newActorValues.healthPercentage;
-  float magicka = newActorValues.magickaPercentage;
-  float stamina = newActorValues.staminaPercentage;
+  const float health = newActorValues.healthPercentage;
+  const float magicka = newActorValues.magickaPercentage;
+  const float stamina = newActorValues.staminaPercentage;
 
-  if (newActorValues.healthPercentage != currentActorValues.healthPercentage) {
+  const bool healthChanged =
+    !MathUtils::IsNearlyEqual(currentActorValues.healthPercentage, health);
+  const bool magickaChanged =
+    !MathUtils::IsNearlyEqual(currentActorValues.magickaPercentage, magicka);
+  const bool staminaChanged =
+    !MathUtils::IsNearlyEqual(currentActorValues.staminaPercentage, stamina);
+
+  if (healthChanged) {
     currentActorValues.healthPercentage =
       CropHealthRegeneration(health, timeAfterRegeneration, actor);
   }
-  if (newActorValues.magickaPercentage !=
-      currentActorValues.magickaPercentage) {
+  if (magickaChanged) {
     currentActorValues.magickaPercentage =
       CropMagickaRegeneration(magicka, timeAfterRegeneration, actor);
   }
-  if (newActorValues.staminaPercentage !=
-      currentActorValues.staminaPercentage) {
+  if (staminaChanged) {
     currentActorValues.staminaPercentage =
       CropStaminaRegeneration(stamina, timeAfterRegeneration, actor);
   }
@@ -663,7 +668,18 @@ void ActionListener::OnChangeValues(const RawMessageData& rawMsgData,
                                 newActorValues.magickaPercentage) ||
       !MathUtils::IsNearlyEqual(currentActorValues.staminaPercentage,
                                 newActorValues.staminaPercentage)) {
-    actor->NetSendChangeValues(currentActorValues);
+
+    std::vector<espm::ActorValue> avFilter;
+    if (healthChanged) {
+      avFilter.push_back(espm::ActorValue::Health);
+    }
+    if (magickaChanged) {
+      avFilter.push_back(espm::ActorValue::Magicka);
+    }
+    if (staminaChanged) {
+      avFilter.push_back(espm::ActorValue::Stamina);
+    }
+    actor->NetSendChangeValues(currentActorValues, avFilter);
   }
   actor->SetPercentages(currentActorValues);
 }
@@ -1077,7 +1093,11 @@ void ActionListener::OnSpellHit(MpActor* aggressor,
   targetActorValues.healthPercentage = CalculateCurrentHealthPercentage(
     *targetActorPtr, damage, targetActorValues.healthPercentage, nullptr);
 
-  targetActorPtr->NetSetPercentages(targetActorValues, aggressor);
+  static const auto kHealthAvFilter =
+    std::vector<espm::ActorValue>{ espm::ActorValue::Health };
+
+  targetActorPtr->NetSetPercentages(targetActorValues, aggressor,
+                                    kHealthAvFilter);
 
   spdlog::info("OnSpellHit - Target {0:x} is hit by {1:x} spell on {2} "
                "damage. By caster: {3:x})",
@@ -1200,7 +1220,9 @@ void ActionListener::OnWeaponHit(MpActor* aggressor,
     ? 0.f
     : currentActorValues.healthPercentage;
 
-  targetActor.NetSetPercentages(currentActorValues, aggressor);
+  targetActor.NetSetPercentages(
+    currentActorValues, aggressor,
+    std::vector<espm::ActorValue>{ espm::ActorValue::Health });
   aggressor->SetLastHitTime();
 
   spdlog::debug(

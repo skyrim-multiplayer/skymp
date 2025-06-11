@@ -4,6 +4,7 @@
 #include <nlohmann/json_fwd.hpp>
 #include <string>
 #include <vector>
+#include <utility>
 
 class MpActor;
 class ConditionFunctionMap;
@@ -41,14 +42,16 @@ private:
   static bool EvaluateConditionsImpl(
     const ConditionFunctionMap& conditionFunctionMap,
     const std::vector<Condition>& conditions,
-    std::vector<int>* outConditionResolutions, const MpActor& aggressor,
+    std::vector<int>* outConditionResolutions,
+    std::vector<float>* outConditionFunctionResults, const MpActor& aggressor,
     const MpActor& target);
 
   static std::vector<std::string> LogEvaluateConditionsResolution(
     const std::vector<Condition>& conditions,
-    const std::vector<int>& conditionResolutions, bool finalResult);
+    const std::vector<int>& conditionResolutions,
+    const std::vector<float>& conditionFunctionResults, bool finalResult);
 
-  static bool EvaluateCondition(
+  static std::pair<bool, float> EvaluateCondition(
     const ConditionFunctionMap& conditionFunctionMap,
     const Condition& condition, const MpActor& aggressor,
     const MpActor& target);
