@@ -127,6 +127,20 @@ runs:
           const targetPath = 'C:\\vcpkg';
           const sourcePath = path.join(process.env.GITHUB_WORKSPACE, 'vcpkg');
 
+          async function moveWithFallback(sourcePath_, targetPath_) {
+            try {
+              await fsp.rename(sourcePath_, targetPath_);
+            } catch (err) {
+              if (err.code === 'EXDEV') {
+                console.log('Falling back to copy and delete due to cross-device link error.');
+                await fsp.cp(sourcePath_, targetPath_, { recursive: true });
+              }
+              else {
+                throw err;
+              }
+            }
+          }
+
           async function moveVcpkg() {
             try {
               if (fs.existsSync(targetPath)) {
@@ -135,7 +149,8 @@ runs:
               }
 
               console.log(`Moving ${sourcePath} to ${targetPath}...`);
-              await fsp.rename(sourcePath, targetPath);
+              await moveWithFallback(sourcePath, targetPath);
+              console.log(`Successfully moved vcpkg to ${targetPath}`);
             } catch (err) {
               core.setFailed(`Error moving vcpkg: ${err.message}`);
             }
