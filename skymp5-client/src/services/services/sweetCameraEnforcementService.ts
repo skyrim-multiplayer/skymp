@@ -230,7 +230,11 @@ export class SweetCameraEnforcementService extends ClientListener {
         }
         else {
             if (this.needsExitingAnim) {
-                this.sp.Debug.notification("Пробел, чтобы выйти из анимации");
+                const intervalMs = this.settings?.exitAnimNotificationIntervalMs;
+                if (!intervalMs || (Date.now() - this.lastNotificationMoment) >= intervalMs) {
+                    this.lastNotificationMoment = Date.now();
+                    this.sp.Debug.notification("Пробел, чтобы выйти из анимации");
+                }
             }
         }
 
@@ -385,5 +389,6 @@ export class SweetCameraEnforcementService extends ClientListener {
     private exitAnimName: string | null = null;
     private interruptAnimName: string | null = null;
     private tryInvokeAnimCount: number = 0;
+    private lastNotificationMoment: number = 0;
     private readonly tryInvokeAnimCountMax: number = 1000000000;
 }
