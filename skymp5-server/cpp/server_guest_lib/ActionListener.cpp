@@ -231,32 +231,34 @@ void ActionListener::OnUpdateEquipment(
     return;
   }
 
+  bool isAllowed = true;
+
   if (leftSpell > 0 && !actor->IsSpellLearned(leftSpell)) {
     spdlog::debug(
       "OnUpdateEquipment result false. Spell with id ({}) not learned",
       leftSpell);
-    return;
+    isAllowed = false;
   }
 
   if (rightSpell > 0 && !actor->IsSpellLearned(rightSpell)) {
     spdlog::debug(
       "OnUpdateEquipment result false. Spell with id ({}) not learned",
-      leftSpell);
-    return;
+      rightSpell);
+    isAllowed = false;
   }
 
   if (voiceSpell > 0 && !actor->IsSpellLearned(voiceSpell)) {
     spdlog::debug(
       "OnUpdateEquipment result false. Spell with id ({}) not learned",
-      leftSpell);
-    return;
+      voiceSpell);
+    isAllowed = false;
   }
 
   if (instantSpell > 0 && !actor->IsSpellLearned(instantSpell)) {
     spdlog::debug(
       "OnUpdateEquipment result false. Spell with id ({}) not learned",
-      leftSpell);
-    return;
+      instantSpell);
+    isAllowed = false;
   }
 
   const auto& inventory = actor->GetInventory();
@@ -267,12 +269,19 @@ void ActionListener::OnUpdateEquipment(
         "OnUpdateEquipment result false. The inventory does not contain item "
         "with id {:x}",
         entry.baseId);
-      return;
+      isAllowed = false;
+      break;
     }
   }
 
-  SendToNeighbours(idx, rawMsgData, true);
-  actor->SetEquipment(data.ToJson().dump());
+  if (isAllowed) {
+    SendToNeighbours(idx, rawMsgData, true);
+    actor->SetEquipment(data.ToJson().dump());
+  }
+
+  UpdateEquipmentAttemptEvent updateEquipmentAttemptEvent(actor, data,
+                                                          isAllowed);
+  updateEquipmentAttemptEvent.Fire(actor->GetParent());
 }
 
 void ActionListener::OnActivate(const RawMessageData& rawMsgData,
