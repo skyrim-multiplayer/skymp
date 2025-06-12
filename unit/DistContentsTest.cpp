@@ -74,6 +74,10 @@ auto GetExpectedPaths(const nlohmann::json& j)
   configurationTags.insert("SkyrimAE");
 #endif
 
+#ifdef WITH_UI_FRONT
+  configurationTags.insert("UI");
+#endif
+
   if (getenv("CI")) {
     configurationTags.insert("CI");
   }
