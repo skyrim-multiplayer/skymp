@@ -1,11 +1,11 @@
 vcpkg_from_github(
   OUT_SOURCE_PATH SOURCE_PATH
   REPO nic11/antigo
-  REF df74670a2d1314bf1f9e38eb46f1c4fae4a88cef
-  SHA512 ea565de2e4c184be1580ab5928a24964d605d259673baa27c98b879b156effdf697f6c73b5ab276171aa72b575d234364414c1f310649a05e7fa169fb0ccd58d
+  REF da15297955935da32e455fc1ca2a12faf564caae
+  SHA512 1d94bc13e05a6572fce3295d3e0c8ae8b16d2ba2b08e5d13b69a0816dba61d28ee16c3fec92ea65b375ce1753063c0f22379a075770702d938f8234d921570c3
   HEAD_REF master
-  PATCHES
-    patches/tmp.patch
+  # PATCHES
+  #   patches/tmp.patch
 )
 
 vcpkg_configure_cmake(SOURCE_PATH ${SOURCE_PATH})
