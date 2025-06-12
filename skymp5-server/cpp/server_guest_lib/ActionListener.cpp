@@ -16,6 +16,7 @@
 #include "gamemode_events/CustomEvent.h"
 #include "gamemode_events/EatItemEvent.h"
 #include "gamemode_events/UpdateAppearanceAttemptEvent.h"
+#include "gamemode_events/UpdateEquipmentAttemptEvent.h"
 #include "script_objects/EspmGameObject.h"
 #include <fmt/format.h>
 #include <fmt/ranges.h>
