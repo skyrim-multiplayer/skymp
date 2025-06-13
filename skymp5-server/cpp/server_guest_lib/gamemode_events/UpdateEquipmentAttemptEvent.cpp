@@ -22,7 +22,7 @@ std::string UpdateEquipmentAttemptEvent::GetArgumentsJsonArray() const
   result += "[";
   result += std::to_string(actor->GetFormId());
   result += ",";
-  result += equipment.ToJson();
+  result += equipment.ToJson().dump();
   result += ",";
   result += isAllowed ? "true" : "false";
   result += "]";
