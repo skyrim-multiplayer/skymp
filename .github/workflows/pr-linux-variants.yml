@@ -24,7 +24,7 @@ jobs:
             # Distros that our contributors are likely to run
             - ubuntu-2204
             - ubuntu-2404
-            # - ubuntu-2504  # latest non-LTS
+            - ubuntu-2504  # latest non-LTS
             - debian-12
             - archlinux
 
