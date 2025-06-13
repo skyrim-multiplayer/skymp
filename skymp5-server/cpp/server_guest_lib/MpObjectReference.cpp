@@ -1181,7 +1181,9 @@ void MpObjectReference::ApplyChangeForm(const MpChangeForm& changeForm)
   ANTIGO_CONTEXT_INIT(ctx);
 
   if (pImpl->setPropertyCalled) {
-    GetParent()->logger->critical("ApplyChangeForm called after SetProperty\n{}", ctx.Resolve().ToString());
+    GetParent()->logger->critical(
+      "ApplyChangeForm called after SetProperty\n{}",
+      ctx.Resolve().ToString());
     std::terminate();
   }
 

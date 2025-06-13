@@ -25,8 +25,8 @@
 #include "script_storages/ScriptStorageFactory.h"
 #include <algorithm>
 #include <antigo/Context.h>
-#include <antigo/ResolvedContext.h>
 #include <antigo/ExecutionData.h>
+#include <antigo/ResolvedContext.h>
 #include <cassert>
 #include <cctype>
 #include <memory>
