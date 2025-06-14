@@ -1,4 +1,4 @@
-import { Actor, ActorBase, createText, destroyText, Form, FormType, Game, Keyword, NetImmerse, ObjectReference, once, printConsole, setTextPos, setTextString, storage, TESModPlatform, Utility, worldPointToScreenPoint } from "skyrimPlatform";
+import { Actor, ActorBase, createText, destroyText, Form, FormType, Game, Keyword, NetImmerse, ObjectReference, once, printConsole, setTextPos, setTextSize, setTextString, storage, TESModPlatform, Utility, worldPointToScreenPoint } from "skyrimPlatform";
 import { setDefaultAnimsDisabled, applyAnimation, AnimationApplyState } from "../sync/animation";
 import { Appearance, applyAppearance } from "../sync/appearance";
 import { isBadMenuShown, applyEquipment } from "../sync/equipment";
@@ -47,7 +47,7 @@ export class FormView {
           )} => ${model.movement.worldOrCell.toString(16)}`
         );
         this.lastWorldOrCell = model.movement.worldOrCell;
-        this.destroy();
+        this.destroy(model);
         this.refrId = 0;
         this.appearanceBasedBaseId = 0;
         return;
@@ -70,7 +70,7 @@ export class FormView {
         worldOrCell !== 0 &&
         model.movement.worldOrCell !== worldOrCell
       ) {
-        this.destroy();
+        this.destroy(model);
         this.refrId = 0;
         return;
       }
@@ -119,7 +119,7 @@ export class FormView {
       model.refrId && model.refrId < 0xff000000 ? model.refrId : undefined;
     if (refId) {
       if (this.refrId !== refId) {
-        this.destroy();
+        this.destroy(model);
         this.refrId = model.refrId as number;
         this.ready = true;
         const refr = ObjectReference.from(Game.getFormEx(this.refrId));
@@ -157,7 +157,7 @@ export class FormView {
       }
 
       if (respawnRequired) {
-        this.destroy();
+        this.destroy(model);
 
         const player = Game.getPlayer() as Actor;
 
@@ -308,7 +308,7 @@ export class FormView {
     }
   }
 
-  destroy(): void {
+  destroy(model?: FormModel): void {
     this.isOnScreen = false;
     this.spawnMoment = 0;
     const refrId = this.refrId;
@@ -325,7 +325,7 @@ export class FormView {
     })
 
     this.localImmortal = false;
-    this.removeNickname();
+    this.removeNickname(model);
   }
 
   private lastHarvestedApply = 0;
@@ -428,7 +428,7 @@ export class FormView {
           } catch (e) {
             if (e instanceof RespawnNeededError) {
               this.lastWorldOrCell = model.movement.worldOrCell;
-              this.destroy();
+              this.destroy(model);
               this.refrId = 0;
               this.appearanceBasedBaseId = 0;
               return;
@@ -559,16 +559,33 @@ export class FormView {
         const textYPos = Math.round((1 - headScreenPos[1]) * resolution.height);
 
         if (!this.textNameId) {
-          this.textNameId = createText(textXPos, textYPos, model.appearance.name, [255, 255, 255, 1]);
+          this.textNameId = createText(textXPos, textYPos, refr.getDisplayName(), [1, 1, 1, 0.8]);
+          setTextSize(this.textNameId, 0.5);
+          let storageNickname = typeof storage["idTextNickname"] === 'object' ? storage["idTextNickname"] as { [refrId: number]: number } : null;
+          if (storageNickname === null && model.refrId) {
+            storage["idTextNickname"] = { [model.refrId]: this.textNameId };
+          } else if (storageNickname !== null && model.refrId) {
+            storageNickname[model.refrId] = this.textNameId;
+            storage["idTextNickname"] = storageNickname;
+          }
         } else {
-          setTextString(this.textNameId, headScreenPos[2] >= 0 ? model.appearance.name : "");
-          setTextPos(this.textNameId, textXPos, textYPos);
+          const deleteNickname = headScreenPos[2] < 0;
+          if (deleteNickname) {
+            this.removeNickname(model);
+          }
+          if (this.textNameId) {
+            setTextPos(this.textNameId, textXPos, textYPos);
+            let storageNickname = typeof storage["idTextNickname"] === 'object' ? storage["idTextNickname"] as { [refrId: number]: number } : null;
+            if (storageNickname) {
+              printConsole(`storage: ${JSON.stringify(storageNickname)}`);
+            }
+          }
         }
       } else {
-        this.removeNickname();
+        this.removeNickname(model);
       }
     } else {
-      this.removeNickname();
+      this.removeNickname(model);
     }
   }
 
@@ -579,10 +596,17 @@ export class FormView {
     return actor.wornHasKeyword(keyword);
   }
 
-  private removeNickname() {
+  private removeNickname(model?: FormModel) {
     if (this.textNameId) {
       destroyText(this.textNameId);
       this.textNameId = undefined;
+      if (model) {
+        let storageNickname = typeof storage["idTextNickname"] === 'object' ? storage["idTextNickname"] as { [refrId: number]: number } : null;
+        if (storageNickname !== null && model.refrId) {
+          delete storageNickname[model.refrId];
+          storage["idTextNickname"] = storageNickname;
+        }
+      }
     }
   }
 
