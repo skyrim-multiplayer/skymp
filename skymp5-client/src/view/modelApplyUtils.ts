@@ -99,7 +99,6 @@ export class ModelApplyUtils {
   static applyModelNodeTextureSet(refr: ObjectReference, setNodeTextureSet?: Record<string, number>) {
     if (setNodeTextureSet) {
       for (const key in setNodeTextureSet) {
-        if (!refr.hasNode(key)) continue;
         const textureSetId = setNodeTextureSet[key];
         const firstPerson = false;
 
@@ -117,10 +116,8 @@ export class ModelApplyUtils {
   static applyModelNodeScale(refr: ObjectReference, setNodeScale?: Record<string, number>) {
     if (setNodeScale) {
       for (const key in setNodeScale) {
-        if (!refr.hasNode(key)) continue;
         const scale = setNodeScale[key];
         const firstPerson = false;
-        if (NetImmerse.getNodeScale(refr, key, firstPerson) === scale) continue;
         NetImmerse.setNodeScale(refr, key, scale, firstPerson);
         logTrace("ModelApplyUtils", refr.getFormID().toString(16), `Applied node scale`, scale, `to`, key);
       }
