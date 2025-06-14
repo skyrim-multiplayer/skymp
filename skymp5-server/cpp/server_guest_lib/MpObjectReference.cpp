@@ -28,6 +28,8 @@
 #include "papyrus-vm/VirtualMachine.h"
 #include "script_objects/EspmGameObject.h"
 #include "script_storages/IScriptStorage.h"
+#include <antigo/Context.h>
+#include <antigo/ResolvedContext.h>
 #include <map>
 #include <numeric>
 #include <optional>
@@ -1176,8 +1178,12 @@ MpChangeForm MpObjectReference::GetChangeForm() const
 
 void MpObjectReference::ApplyChangeForm(const MpChangeForm& changeForm)
 {
+  ANTIGO_CONTEXT_INIT(ctx);
+
   if (pImpl->setPropertyCalled) {
-    GetParent()->logger->critical("ApplyChangeForm called after SetProperty");
+    GetParent()->logger->critical(
+      "ApplyChangeForm called after SetProperty\n{}",
+      ctx.Resolve().ToString());
     std::terminate();
   }
 
