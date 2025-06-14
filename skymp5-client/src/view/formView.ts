@@ -47,7 +47,7 @@ export class FormView {
           )} => ${model.movement.worldOrCell.toString(16)}`
         );
         this.lastWorldOrCell = model.movement.worldOrCell;
-        this.destroy(model);
+        this.destroy();
         this.refrId = 0;
         this.appearanceBasedBaseId = 0;
         return;
@@ -70,7 +70,7 @@ export class FormView {
         worldOrCell !== 0 &&
         model.movement.worldOrCell !== worldOrCell
       ) {
-        this.destroy(model);
+        this.destroy();
         this.refrId = 0;
         return;
       }
@@ -119,7 +119,7 @@ export class FormView {
       model.refrId && model.refrId < 0xff000000 ? model.refrId : undefined;
     if (refId) {
       if (this.refrId !== refId) {
-        this.destroy(model);
+        this.destroy();
         this.refrId = model.refrId as number;
         this.ready = true;
         const refr = ObjectReference.from(Game.getFormEx(this.refrId));
@@ -157,7 +157,7 @@ export class FormView {
       }
 
       if (respawnRequired) {
-        this.destroy(model);
+        this.destroy();
 
         const player = Game.getPlayer() as Actor;
 
@@ -308,7 +308,7 @@ export class FormView {
     }
   }
 
-  destroy(model?: FormModel): void {
+  destroy(): void {
     this.isOnScreen = false;
     this.spawnMoment = 0;
     const refrId = this.refrId;
@@ -325,7 +325,7 @@ export class FormView {
     })
 
     this.localImmortal = false;
-    this.removeNickname(model);
+    this.removeNickname();
   }
 
   private lastHarvestedApply = 0;
@@ -428,7 +428,7 @@ export class FormView {
           } catch (e) {
             if (e instanceof RespawnNeededError) {
               this.lastWorldOrCell = model.movement.worldOrCell;
-              this.destroy(model);
+              this.destroy();
               this.refrId = 0;
               this.appearanceBasedBaseId = 0;
               return;
@@ -571,7 +571,7 @@ export class FormView {
         } else {
           const deleteNickname = headScreenPos[2] < 0;
           if (deleteNickname) {
-            this.removeNickname(model);
+            this.removeNickname();
           }
           if (this.textNameId) {
             setTextPos(this.textNameId, textXPos, textYPos);
@@ -582,10 +582,10 @@ export class FormView {
           }
         }
       } else {
-        this.removeNickname(model);
+        this.removeNickname();
       }
     } else {
-      this.removeNickname(model);
+      this.removeNickname();
     }
   }
 
@@ -596,16 +596,15 @@ export class FormView {
     return actor.wornHasKeyword(keyword);
   }
 
-  private removeNickname(model?: FormModel) {
+  private removeNickname() {
     if (this.textNameId) {
       destroyText(this.textNameId);
       this.textNameId = undefined;
-      if (model) {
-        let storageNickname = typeof storage["idTextNickname"] === 'object' ? storage["idTextNickname"] as { [refrId: number]: number } : null;
-        if (storageNickname !== null && model.refrId) {
-          delete storageNickname[model.refrId];
-          storage["idTextNickname"] = storageNickname;
-        }
+
+      let storageNickname = typeof storage["idTextNickname"] === 'object' ? storage["idTextNickname"] as { [refrId: number]: number } : null;
+      if (storageNickname !== null && this.remoteRefrId) {
+        delete storageNickname[this.remoteRefrId];
+        storage["idTextNickname"] = storageNickname;
       }
     }
   }
