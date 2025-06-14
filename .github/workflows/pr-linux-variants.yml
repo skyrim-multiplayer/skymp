@@ -182,7 +182,7 @@ jobs:
             with:
               name: ${{matrix.base_system}}_vcpkg_logs
               path: |
-                ${{github.workspace}}/build/vcpkg-bootstrap.log
+                ${{github.workspace}}/build/vcpkg-*.log
                 ${{github.workspace}}/vcpkg/buildtrees/**/*.log
 
           - name: Upload compile_commands.json

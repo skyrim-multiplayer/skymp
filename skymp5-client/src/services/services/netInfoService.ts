@@ -142,7 +142,7 @@ class NetInfoTexts {
     setTextSize(this.sentPacketAmountTextId, 0.5);
     setTextSize(this.localPositionLagStaticTextId, 0.5);
     setTextSize(this.localPositionLagAmountTextId, 0.5);
-   }
+  }
 
   public clear(): void {
     this.sp.destroyText(this.connectionStaticTextId);
