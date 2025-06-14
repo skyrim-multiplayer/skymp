@@ -1,4 +1,4 @@
-import { Actor, ActorBase, createText, destroyText, Form, FormType, Game, Keyword, NetImmerse, ObjectReference, once, printConsole, setTextPos, setTextString, storage, TESModPlatform, Utility, worldPointToScreenPoint } from "skyrimPlatform";
+import { Actor, ActorBase, createText, destroyText, Form, FormType, Game, Keyword, NetImmerse, ObjectReference, once, printConsole, setTextPos, setTextSize, setTextString, storage, TESModPlatform, Utility, worldPointToScreenPoint } from "skyrimPlatform";
 import { setDefaultAnimsDisabled, applyAnimation, AnimationApplyState } from "../sync/animation";
 import { Appearance, applyAppearance } from "../sync/appearance";
 import { isBadMenuShown, applyEquipment } from "../sync/equipment";
@@ -559,10 +559,27 @@ export class FormView {
         const textYPos = Math.round((1 - headScreenPos[1]) * resolution.height);
 
         if (!this.textNameId) {
-          this.textNameId = createText(textXPos, textYPos, model.appearance.name, [255, 255, 255, 1]);
+          this.textNameId = createText(textXPos, textYPos, refr.getDisplayName(), [1, 1, 1, 0.8]);
+          setTextSize(this.textNameId, 0.5);
+          let storageNickname = typeof storage["idTextNickname"] === 'object' ? storage["idTextNickname"] as { [refrId: number]: number } : null;
+          if (storageNickname === null && model.refrId) {
+            storage["idTextNickname"] = { [model.refrId]: this.textNameId };
+          } else if (storageNickname !== null && model.refrId) {
+            storageNickname[model.refrId] = this.textNameId;
+            storage["idTextNickname"] = storageNickname;
+          }
         } else {
-          setTextString(this.textNameId, headScreenPos[2] >= 0 ? model.appearance.name : "");
-          setTextPos(this.textNameId, textXPos, textYPos);
+          const deleteNickname = headScreenPos[2] < 0;
+          if (deleteNickname) {
+            this.removeNickname();
+          }
+          if (this.textNameId) {
+            setTextPos(this.textNameId, textXPos, textYPos);
+            let storageNickname = typeof storage["idTextNickname"] === 'object' ? storage["idTextNickname"] as { [refrId: number]: number } : null;
+            if (storageNickname) {
+              printConsole(`storage: ${JSON.stringify(storageNickname)}`);
+            }
+          }
         }
       } else {
         this.removeNickname();
@@ -583,6 +600,13 @@ export class FormView {
     if (this.textNameId) {
       destroyText(this.textNameId);
       this.textNameId = undefined;
+
+      // TODO: move this logic to a separate service
+      let storageNickname = typeof storage["idTextNickname"] === 'object' ? storage["idTextNickname"] as { [refrId: number]: number } : null;
+      if (storageNickname !== null && this.remoteRefrId) {
+        delete storageNickname[this.remoteRefrId];
+        storage["idTextNickname"] = storageNickname;
+      }
     }
   }
 
