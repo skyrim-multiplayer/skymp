@@ -558,9 +558,11 @@ export class FormView {
         const textXPos = Math.round(headScreenPos[0] * resolution.width);
         const textYPos = Math.round((1 - headScreenPos[1]) * resolution.height);
 
-        if (!this.textNameId) {
+        if (!this.textNameId && headScreenPos[2] > 0) {
           this.textNameId = createText(textXPos, textYPos, refr.getDisplayName(), [1, 1, 1, 0.8]);
           setTextSize(this.textNameId, 0.5);
+
+          // TODO: move this logic to a separate service
           let storageNickname = typeof storage["idTextNickname"] === 'object' ? storage["idTextNickname"] as { [refrId: number]: number } : null;
           if (storageNickname === null && model.refrId) {
             storage["idTextNickname"] = { [model.refrId]: this.textNameId };
