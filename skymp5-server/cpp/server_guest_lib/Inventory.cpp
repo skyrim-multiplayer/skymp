@@ -2,6 +2,8 @@
 #include "archives/JsonInputArchive.h"
 #include "archives/JsonOutputArchive.h"
 #include "archives/SimdJsonInputArchive.h"
+#include "archives/NapiOutputArchive.h"
+#include <napi.h>
 #include <fmt/format.h>
 #include <spdlog/spdlog.h>
 #include <tuple>
@@ -190,4 +192,12 @@ Inventory Inventory::FromJson(const nlohmann::json& j)
   Inventory res;
   res.Serialize(ar);
   return res;
+}
+
+Napi::Value Inventory::ToNapiObject() const
+{
+  auto env = jsEngine;
+  NapiOutputArchive ar();
+  const_cast<Inventory*>(this)->Serialize(ar);
+  return ar.extract_output();
 }
