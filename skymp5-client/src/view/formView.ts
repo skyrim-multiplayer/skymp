@@ -601,6 +601,7 @@ export class FormView {
       destroyText(this.textNameId);
       this.textNameId = undefined;
 
+      // TODO: move this logic to a separate service
       let storageNickname = typeof storage["idTextNickname"] === 'object' ? storage["idTextNickname"] as { [refrId: number]: number } : null;
       if (storageNickname !== null && this.remoteRefrId) {
         delete storageNickname[this.remoteRefrId];

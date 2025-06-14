@@ -15,11 +15,11 @@ export class FormViewArray {
   }
 
 
-  destroyForm(i: number, model?: WorldModel) {
+  destroyForm(i: number) {
     const formView = this.formViews[i];
     if (formView === undefined) return;
 
-    formView.destroy(model?.forms[i]);
+    formView.destroy();
     this.formViews[i] = undefined;
   }
 
@@ -40,7 +40,7 @@ export class FormViewArray {
       const form = forms[i];
 
       if (!form || (model.playerCharacterFormIdx === i && !showMe)) {
-        this.destroyForm(i, model);
+        this.destroyForm(i);
         continue;
       }
 
@@ -79,7 +79,7 @@ export class FormViewArray {
   syncFormView(model: WorldModel, showMe: boolean,) {
     for (let i = 0; i < model.forms.length; ++i) {
       if (!model.forms[i] || (model.playerCharacterFormIdx === i && !showMe)) {
-        this.destroyForm(i, model);
+        this.destroyForm(i);
         continue;
       }
     }
