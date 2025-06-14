@@ -38,6 +38,8 @@ import { QueryKeyCodeBindings } from "./queryKeyCodeBindings";
 import { SpellCastMessage } from "../messages/spellCastMessage";
 import { UpdateAnimVariablesMessage } from "../messages/updateAnimVariablesMessage";
 import { AnyRawMessageEvent } from "./anyRawMessageEvent";
+import { NicknameCreateEvent } from "./nicknameCreateEvent";
+import { NicknameDestroyEvent } from "./nicknameDestroyEvent";
 
 type EventTypes = {
     'gameLoad': [GameLoadEvent],
@@ -82,7 +84,9 @@ type EventTypes = {
     'anyRawMessage': [AnyRawMessageEvent],
     'newLocalLagValueCalculated': [NewLocalLagValueCalculatedEvent],
     'queryBlockSetInventoryEvent': [QueryBlockSetInventoryEvent],
-    'queryKeyCodeBindings': [QueryKeyCodeBindings]
+    'queryKeyCodeBindings': [QueryKeyCodeBindings],
+    'nicknameCreate': [NicknameCreateEvent],
+    'nicknameDestroy': [NicknameDestroyEvent]
 }
 
 // https://blog.makerx.com.au/a-type-safe-event-emitter-in-node-js/
