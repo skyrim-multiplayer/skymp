@@ -561,15 +561,10 @@ export class FormView {
         if (!this.textNameId && headScreenPos[2] > 0) {
           this.textNameId = createText(textXPos, textYPos, refr.getDisplayName(), [1, 1, 1, 0.8]);
           setTextSize(this.textNameId, 0.5);
-
-          // TODO: move this logic to a separate service
-          let storageNickname = typeof storage["idTextNickname"] === 'object' ? storage["idTextNickname"] as { [refrId: number]: number } : null;
-          if (storageNickname === null && model.refrId) {
-            storage["idTextNickname"] = { [model.refrId]: this.textNameId };
-          } else if (storageNickname !== null && model.refrId) {
-            storageNickname[model.refrId] = this.textNameId;
-            storage["idTextNickname"] = storageNickname;
-          }
+          SpApiInteractor.getControllerInstance().emitter.emit("nicknameCreate", {
+            remoteRefrId: this.getRemoteRefrId(),
+            textId: this.textNameId
+          });
         } else {
           const deleteNickname = headScreenPos[2] < 0;
           if (deleteNickname) {
@@ -577,10 +572,6 @@ export class FormView {
           }
           if (this.textNameId) {
             setTextPos(this.textNameId, textXPos, textYPos);
-            let storageNickname = typeof storage["idTextNickname"] === 'object' ? storage["idTextNickname"] as { [refrId: number]: number } : null;
-            if (storageNickname) {
-              printConsole(`storage: ${JSON.stringify(storageNickname)}`);
-            }
           }
         }
       } else {
@@ -600,15 +591,12 @@ export class FormView {
 
   private removeNickname() {
     if (this.textNameId) {
+      SpApiInteractor.getControllerInstance().emitter.emit("nicknameDestroy", {
+        remoteRefrId: this.getRemoteRefrId(),
+        textId: this.textNameId
+      });
       destroyText(this.textNameId);
       this.textNameId = undefined;
-
-      // TODO: move this logic to a separate service
-      let storageNickname = typeof storage["idTextNickname"] === 'object' ? storage["idTextNickname"] as { [refrId: number]: number } : null;
-      if (storageNickname !== null && this.remoteRefrId) {
-        delete storageNickname[this.remoteRefrId];
-        storage["idTextNickname"] = storageNickname;
-      }
     }
   }
 
