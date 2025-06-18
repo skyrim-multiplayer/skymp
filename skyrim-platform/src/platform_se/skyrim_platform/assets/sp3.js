@@ -171,7 +171,7 @@
     console.log({ classes })
 
     classes.forEach(className => {
-      const baseClassName = api._sp3GetBaseClass(className);
+      const baseClassName = prettifyUpperCase(api._sp3GetBaseClass(className));
       let staticFunctions = api._sp3ListStaticFunctions(className);
       const methods = api._sp3ListMethods(className);
 

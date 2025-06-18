@@ -24,6 +24,9 @@
 #include "script_objects/EspmGameObject.h"
 #include "script_storages/ScriptStorageFactory.h"
 #include <algorithm>
+#include <antigo/Context.h>
+#include <antigo/ExecutionData.h>
+#include <antigo/ResolvedContext.h>
 #include <cassert>
 #include <cctype>
 #include <memory>
@@ -438,6 +441,8 @@ Napi::Value ScampServer::AttachSaveStorage(const Napi::CallbackInfo& info)
 
 Napi::Value ScampServer::Tick(const Napi::CallbackInfo& info)
 {
+  ANTIGO_CONTEXT_INIT(ctx);
+
   try {
     tickEnv = info.Env();
 
@@ -446,15 +451,31 @@ Napi::Value ScampServer::Tick(const Napi::CallbackInfo& info)
       try {
         server->Tick(PartOne::HandlePacket, partOne.get());
         tickFinished = true;
-      } catch (std::exception& e) {
+      } catch (const std::exception& e) {
         logger->error("{}", e.what());
+        while (antigo::HasExceptionWitness()) {
+          auto w = antigo::PopExceptionWitness();
+          logger->error(w.ToString());
+        }
       }
     }
 
     partOne->Tick();
-  } catch (std::exception& e) {
+  } catch (const std::exception& e) {
+    std::string msg = e.what();
+    while (antigo::HasExceptionWitness()) {
+      auto w = antigo::PopExceptionWitness();
+      msg += '\n';
+      msg += w.ToString();
+    }
     throw Napi::Error::New(info.Env(), std::string(e.what()));
   }
+
+  while (antigo::HasExceptionWitnessOrphan()) {
+    auto w = antigo::PopExceptionWitnessOrphan();
+    logger->error(w.ToString());
+  }
+
   return info.Env().Undefined();
 }
 
@@ -891,9 +912,14 @@ Napi::Value ScampServer::MakeEventSource(const Napi::CallbackInfo& info)
 
 Napi::Value ScampServer::Get(const Napi::CallbackInfo& info)
 {
+  ANTIGO_CONTEXT_INIT(ctx);
+
   try {
     auto formId = NapiHelper::ExtractUInt32(info[0], "formId");
     auto propertyName = NapiHelper::ExtractString(info[1], "propertyName");
+
+    ctx.AddUnsigned(formId);
+    ctx.AddLambdaWithOwned([propertyName]() { return propertyName; });
 
     static auto g_standardPropertyBindings =
       PropertyBindingFactory().CreateStandardPropertyBindings();

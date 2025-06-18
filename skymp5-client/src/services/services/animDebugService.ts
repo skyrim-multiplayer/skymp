@@ -1,7 +1,7 @@
 import { logTrace, logError } from "../../logging";
 import { AnimDebugSettings } from "../messages_settings/animDebugSettings";
 import { ClientListener, CombinedController, Sp } from "./clientListener";
-import { ButtonEvent, CameraStateChangedEvent, DxScanCode, Menu } from "skyrimPlatform";
+import { ButtonEvent, CameraStateChangedEvent, DxScanCode, Menu, setTextSize } from "skyrimPlatform";
 
 const playerId = 0x14;
 
@@ -70,6 +70,7 @@ class AnimQueueCollection {
     this.list = new Array<AnimListItem>(arrayLength);
     for (let idx = 0; idx < arrayLength; ++idx) {
       this.list[idx] = { name: "", textId: sp.createText(startPos.x, y, "", animationSucceededTextColor), color: animationSucceededTextColor };
+      setTextSize(this.list[idx].textId, 0.5);
       y += yPosDelta;
     }
   }

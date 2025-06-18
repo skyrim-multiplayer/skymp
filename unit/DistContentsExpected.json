@@ -6,8 +6,6 @@
       "client/Data/Platform/Plugins/skymp5-client.js",
       "client/Data/Platform/Plugins/skymp5-client-settings.txt",
       "server/data/scripts/ActiveMagicEffect.pex",
-      "client/Data/Platform/UI/build.js",
-      "client/Data/Platform/UI/index.html",
       "server/dist_back/skymp5-server.js",
       "server/dist_back/skymp5-server.js.map",
       "server/gamemode.js",
@@ -15,6 +13,15 @@
       "server/scam_native.node",
       "server/server-settings.json",
       "server/yarn.lock"
+    ]
+  },
+  {
+    "configurationTags": [
+      "UI"
+    ],
+    "expectedFiles": [
+      "client/Data/Platform/UI/build.js",
+      "client/Data/Platform/UI/index.html"
     ]
   },
   {
