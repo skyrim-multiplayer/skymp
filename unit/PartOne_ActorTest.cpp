@@ -53,7 +53,7 @@ TEST_CASE("SetUserActor", "[PartOne]")
   REQUIRE(createActorMessage->props.healRateMult == 100.f);
   REQUIRE(createActorMessage->props.health == 100.f);
   REQUIRE(createActorMessage->props.isHostedByOther == true);
-  REQUIRE(createActorMessage->props.learnedSpells == nlohmann::json::array());
+  REQUIRE(createActorMessage->props.learnedSpells == std::vector<uint32_t>());
   REQUIRE(createActorMessage->props.magicka == 100.f);
   REQUIRE(createActorMessage->props.magickaRate == 3.f);
   REQUIRE(createActorMessage->props.magickaRateMult == 100.f);
