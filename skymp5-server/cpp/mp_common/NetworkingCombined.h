@@ -22,7 +22,7 @@ public:
     // See also login.ts
     uint32_t id0;
     bool id0CreateSuccess = makeId->CreateID(id0);
-    if (id0 != 0 || !id0CreateSuccess) {
+    if (!id0CreateSuccess || id0 != 0) {
       std::terminate();
     }
 
