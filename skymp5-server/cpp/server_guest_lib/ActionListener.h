@@ -27,11 +27,8 @@ public:
   virtual void OnCustomPacket(const RawMessageData& rawMsgData,
                               simdjson::dom::element& content);
 
-  virtual void OnUpdateMovement(const RawMessageData& rawMsgData, uint32_t idx,
-                                const NiPoint3& pos, const NiPoint3& rot,
-                                bool isInJumpState, bool isWeapDrawn,
-                                bool isBlocking, uint32_t worldOrCell,
-                                const std::string& runMode);
+  virtual void OnUpdateMovement(const RawMessageData& rawMsgData,
+                                const UpdateMovementMessage& msg);
 
   virtual void OnUpdateAnimation(const RawMessageData& rawMsgData,
                                  uint32_t idx,

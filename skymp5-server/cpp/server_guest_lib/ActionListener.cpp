@@ -102,14 +102,9 @@ void ActionListener::OnCustomPacket(const RawMessageData& rawMsgData,
     listener->OnCustomPacket(rawMsgData.userId, content);
 }
 
-void ActionListener::OnUpdateMovement(const RawMessageData& rawMsgData,
-                                      uint32_t idx, const NiPoint3& pos,
-                                      const NiPoint3& rot, bool isInJumpState,
-                                      bool isWeapDrawn, bool isBlocking,
-                                      uint32_t worldOrCell,
-                                      const std::string& runMode)
+void ActionListener::OnUpdateMovement(const RawMessageData& rawMsgData, const UpdateMovementMessage& msg)
 {
-  auto actor = SendToNeighbours(idx, rawMsgData);
+  auto actor = SendToNeighbours(msg.idx, rawMsgData);
   if (actor) {
     DummyMessageOutput msgOutputDummy;
     UserMessageOutput msgOutput(partOne.GetSendTarget(), rawMsgData.userId);
@@ -133,45 +128,40 @@ void ActionListener::OnUpdateMovement(const RawMessageData& rawMsgData,
 
     if (!MovementValidation::Validate(
           currentPos, currentRot, currentCellOrWorld,
-          teleportFlag ? reallyWrongPos : pos,
-          FormDesc::FromFormId(worldOrCell, espmFiles),
+          teleportFlag ? reallyWrongPos : NiPoint3{msg.data.pos[0], msg.data.pos[1], msg.data.pos[2]},
+          FormDesc::FromFormId(msg.data.worldOrCell, espmFiles),
           isMe ? static_cast<IMessageOutput&>(msgOutput)
                : static_cast<IMessageOutput&>(msgOutputDummy),
           espmFiles)) {
       return;
     }
 
-    if (!isBlocking) {
+    if (!msg.data.isBlocking) {
       actor->IncreaseBlockCount();
     } else {
       actor->ResetBlockCount();
     }
 
-    actor->SetPos(pos, SetPosMode::CalledByUpdateMovement);
-    actor->SetAngle(rot, SetAngleMode::CalledByUpdateMovement);
-    actor->SetAnimationVariableBool(
-      AnimationVariableBool::kVariable_bInJumpState, isInJumpState);
-    actor->SetAnimationVariableBool(
-      AnimationVariableBool::kVariable__skymp_isWeapDrawn, isWeapDrawn);
-    actor->SetAnimationVariableBool(
-      AnimationVariableBool::kVariable_IsBlocking, isBlocking);
+    actor->SetPos(NiPoint3{msg.data.pos[0], msg.data.pos[1], msg.data.pos[2]}, SetPosMode::CalledByUpdateMovement);
+    actor->SetAngle(NiPoint3{msg.data.rot[0], msg.data.rot[1], msg.data.rot[2]}, SetAngleMode::CalledByUpdateMovement);
+    actor->SetAnimationVariableBool(AnimationVariableBool::kVariable_bInJumpState, msg.data.isInJumpState);
+    actor->SetAnimationVariableBool(AnimationVariableBool::kVariable__skymp_isWeapDrawn, msg.data.isWeapDrawn);
+    actor->SetAnimationVariableBool(AnimationVariableBool::kVariable_IsBlocking, msg.data.isBlocking);
 
     if (actor->GetBlockCount() == 5) {
       actor->SetIsBlockActive(false);
       actor->ResetBlockCount();
     }
 
-    if (runMode != "Standing") {
-      // otherwise, people will slide in anims after quitting furniture
+    if (msg.data.runMode != "Standing") {
       actor->SetLastAnimEvent(std::nullopt);
     }
 
-    if (partOne.worldState.lastMovUpdateByIdx.size() <= idx) {
-      auto newSize = static_cast<size_t>(idx) + 1;
+    if (partOne.worldState.lastMovUpdateByIdx.size() <= msg.idx) {
+      auto newSize = static_cast<size_t>(msg.idx) + 1;
       partOne.worldState.lastMovUpdateByIdx.resize(newSize);
     }
-    partOne.worldState.lastMovUpdateByIdx[idx] =
-      std::chrono::system_clock::now();
+    partOne.worldState.lastMovUpdateByIdx[msg.idx] = std::chrono::system_clock::now();
   }
 }
 
