@@ -145,24 +145,12 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
       case MsgType::UpdateAnimation: {
         auto message =
           reinterpret_cast<UpdateAnimationMessage*>(result->message.get());
-        AnimationData animationData;
-        animationData.animEventName = message->data.animEventName;
-        animationData.numChanges = message->data.numChanges;
         actionListener.OnUpdateAnimation(rawMsgData, *message);
         return;
       }
       case MsgType::UpdateEquipment: {
         auto message =
           reinterpret_cast<UpdateEquipmentMessage*>(result->message.get());
-        auto idx = message->idx;
-
-        const Equipment& data = message->data;
-        const Inventory& inv = data.inv;
-        uint32_t leftSpell = data.leftSpell.value_or(0);
-        uint32_t rightSpell = data.rightSpell.value_or(0);
-        uint32_t voiceSpell = data.voiceSpell.value_or(0);
-        uint32_t instantSpell = data.instantSpell.value_or(0);
-
         actionListener.OnUpdateEquipment(rawMsgData, *message);
         return;
       }
@@ -185,8 +173,6 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
       case MsgType::UpdateAppearance: {
         auto message =
           reinterpret_cast<UpdateAppearanceMessage*>(result->message.get());
-        const uint32_t idx = message->idx;
-        const Appearance& data = *message->data;
         actionListener.OnUpdateAppearance(rawMsgData, *message);
         return;
       }
