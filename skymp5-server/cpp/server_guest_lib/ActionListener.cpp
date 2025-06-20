@@ -27,6 +27,7 @@
 #include "HostStartMessage.h"
 #include "HostStopMessage.h"
 #include "UpdateEquipmentMessage.h"
+#include "SpSnippet.h"
 
 MpActor* ActionListener::SendToNeighbours(uint32_t idx,
                                           Networking::UserId userId,
@@ -293,153 +294,96 @@ void ActionListener::OnActivate(const RawMessageData& rawMsgData, const Activate
   }
 }
 
-void ActionListener::OnPutItem(const RawMessageData& rawMsgData,
-                               uint32_t target, const Inventory::Entry& entry)
+void ActionListener::OnPutItem(const RawMessageData& rawMsgData, const PutItemMessage& msg)
 {
   MpActor* actor = partOne.serverState.ActorByUser(rawMsgData.userId);
-  auto& ref = partOne.worldState.GetFormAt<MpObjectReference>(target);
-
+  auto& ref = partOne.worldState.GetFormAt<MpObjectReference>(msg.target);
   if (!actor)
     return;
-
   auto worldState = actor->GetParent();
   if (!worldState) {
     return spdlog::error("No WorldState attached");
   }
-
-  if (worldState->HasKeyword(entry.baseId, "SweetCantDrop")) {
-    return spdlog::error("Attempt to put SweetCantDrop item {:x}",
-                         actor->GetFormId());
+  if (worldState->HasKeyword(msg.baseId, "SweetCantDrop")) {
+    return spdlog::error("Attempt to put SweetCantDrop item {:x}", actor->GetFormId());
   }
-
+  Inventory::Entry entry;
+  entry.baseId = msg.baseId;
+  entry.count = msg.count;
+  static_cast<Inventory::ExtraData&>(entry) = static_cast<const Inventory::ExtraData&>(msg);
   ref.PutItem(*actor, entry);
 }
 
-void ActionListener::OnTakeItem(const RawMessageData& rawMsgData,
-                                uint32_t target, const Inventory::Entry& entry)
+void ActionListener::OnTakeItem(const RawMessageData& rawMsgData, const TakeItemMessage& msg)
 {
   MpActor* actor = partOne.serverState.ActorByUser(rawMsgData.userId);
-  auto& ref = partOne.worldState.GetFormAt<MpObjectReference>(target);
-
+  auto& ref = partOne.worldState.GetFormAt<MpObjectReference>(msg.target);
   if (!actor)
     return;
-
   auto worldState = actor->GetParent();
   if (!worldState) {
     return spdlog::error("No WorldState attached");
   }
-
-  if (worldState->HasKeyword(entry.baseId, "SweetCantDrop")) {
-    return spdlog::error("Attempt to take SweetCantDrop item {:x}",
-                         actor->GetFormId());
+  if (worldState->HasKeyword(msg.baseId, "SweetCantDrop")) {
+    return spdlog::error("Attempt to take SweetCantDrop item {:x}", actor->GetFormId());
   }
-
+  Inventory::Entry entry;
+  entry.baseId = msg.baseId;
+  entry.count = msg.count;
+  static_cast<Inventory::ExtraData&>(entry) = static_cast<const Inventory::ExtraData&>(msg);
   ref.TakeItem(*actor, entry);
 }
 
-void ActionListener::OnDropItem(const RawMessageData& rawMsgData,
-                                uint32_t baseId, const Inventory::Entry& entry)
+void ActionListener::OnDropItem(const RawMessageData& rawMsgData, const DropItemMessage& msg)
 {
   MpActor* ac = partOne.serverState.ActorByUser(rawMsgData.userId);
   if (!ac) {
-    return spdlog::error("Unable to drop an item from user with id: {}.",
-                         rawMsgData.userId);
+    return spdlog::error("Unable to drop an item from user with id: {}.", rawMsgData.userId);
   }
-
   auto worldState = ac->GetParent();
   if (!worldState) {
     return spdlog::error("No WorldState attached");
   }
-
-  if (worldState->HasKeyword(entry.baseId, "SweetCantDrop")) {
-    return spdlog::error("Attempt to drop SweetCantDrop item {:x}",
-                         ac->GetFormId());
+  if (worldState->HasKeyword(static_cast<uint32_t>(msg.baseId), "SweetCantDrop")) {
+    return spdlog::error("Attempt to drop SweetCantDrop item {:x}", ac->GetFormId());
   }
-
-  ac->DropItem(baseId, entry);
+  Inventory::Entry entry;
+  entry.baseId = static_cast<uint32_t>(msg.baseId);
+  entry.count = msg.count;
+  ac->DropItem(static_cast<uint32_t>(msg.baseId), entry);
 }
 
-void ActionListener::OnPlayerBowShot(const RawMessageData& rawMsgData,
-                                     uint32_t weaponId, uint32_t ammoId,
-                                     float power, bool isSunGazing)
+void ActionListener::OnPlayerBowShot(const RawMessageData& rawMsgData, const PlayerBowShotMessage& msg)
 {
   MpActor* ac = partOne.serverState.ActorByUser(rawMsgData.userId);
   if (!ac) {
-    return spdlog::error("Unable to shot from user with id: {}.",
-                         rawMsgData.userId);
+    return spdlog::error("Unable to shot from user with id: {}.", rawMsgData.userId);
   }
-
   auto worldState = ac->GetParent();
-
   if (!worldState) {
     return;
   }
-
-  auto ammoLookupRes = worldState->GetEspm().GetBrowser().LookupById(ammoId);
-
+  auto ammoLookupRes = worldState->GetEspm().GetBrowser().LookupById(msg.ammoId);
   if (!ammoLookupRes.rec) {
-    return spdlog::error("ActionListener::OnPlayerBowShot {:x} - unable to "
-                         "find espm record for {:x}",
-                         ac->GetFormId(), ammoId);
+    return spdlog::error("ActionListener::OnPlayerBowShot {:x} - unable to find espm record for {:x}", ac->GetFormId(), msg.ammoId);
   }
-
   if (ammoLookupRes.rec->GetType().ToString() != "AMMO") {
-    return spdlog::error(
-      "ActionListener::OnPlayerBowShot {:x} - unable to shot not an ammo {:x}",
-      ac->GetFormId(), ammoId);
+    return spdlog::error("ActionListener::OnPlayerBowShot {:x} - unable to shot not an ammo {:x}", ac->GetFormId(), msg.ammoId);
   }
-
-  ac->RemoveItem(ammoId, 1, nullptr);
+  ac->RemoveItem(msg.ammoId, 1, nullptr);
 }
 
-namespace {
-
-VarValue VarValueFromSpSnippetReturnValue(
-  const std::optional<std::variant<bool, double, std::string>>& returnValue)
-{
-  static const auto kKey = JsonPointer("returnValue");
-
-  if (!returnValue) {
-    return VarValue::None();
-  }
-
-  return std::visit(
-    Viet::Overloaded{
-      [&](bool v) { return VarValue(v); },
-      [&](double v) {
-        // TODO: consider removing std::floor and logs after careful test
-        // because Papyrus VM should support mixed arithmetics, so we can
-        // always pass double
-        auto rounded = static_cast<int32_t>(std::floor(v));
-        if (std::abs(std::floor(v) - v) >
-            std::numeric_limits<double>::epsilon()) {
-          spdlog::error(
-            "VarValueFromSpSnippetReturnValue - Floating point values are not "
-            "yet supported, rounding down ({} -> {})",
-            v, rounded);
-        }
-        return VarValue(rounded);
-      },
-      [&](const std::string& v) { return VarValue(v); } },
-    *returnValue);
-}
-
-}
-void ActionListener::OnFinishSpSnippet(
-  const RawMessageData& rawMsgData, uint32_t snippetIdx,
-  const std::optional<std::variant<bool, double, std::string>>& returnValue)
+void ActionListener::OnFinishSpSnippet(const RawMessageData& rawMsgData, const FinishSpSnippetMessage& msg)
 {
   MpActor* actor = partOne.serverState.ActorByUser(rawMsgData.userId);
   if (!actor)
     throw std::runtime_error(
       "Unable to finish SpSnippet: No Actor found for user " +
       std::to_string(rawMsgData.userId));
-
-  actor->ResolveSnippet(snippetIdx,
-                        VarValueFromSpSnippetReturnValue(returnValue));
+  actor->ResolveSnippet(static_cast<uint32_t>(msg.snippetIdx), SpSnippet::VarValueFromSpSnippetReturnValue(msg.returnValue));
 }
 
-void ActionListener::OnEquip(const RawMessageData& rawMsgData, uint32_t baseId)
+void ActionListener::OnEquip(const RawMessageData& rawMsgData, const OnEquipMessage& msg)
 {
   MpActor* actor = partOne.serverState.ActorByUser(rawMsgData.userId);
   if (!actor) {
@@ -447,105 +391,77 @@ void ActionListener::OnEquip(const RawMessageData& rawMsgData, uint32_t baseId)
       "Unable to finish SpSnippet: No Actor found for user " +
       std::to_string(rawMsgData.userId));
   }
-
-  std::ignore = actor->OnEquip(baseId);
+  std::ignore = actor->OnEquip(msg.baseId);
 }
 
-void ActionListener::OnConsoleCommand(
-  const RawMessageData& rawMsgData, const std::string& consoleCommandName,
-  const std::vector<ConsoleCommands::Argument>& args)
+void ActionListener::OnConsoleCommand(const RawMessageData& rawMsgData, const ConsoleCommandMessage& msg)
 {
   MpActor* me = partOne.serverState.ActorByUser(rawMsgData.userId);
-  if (me)
-    ConsoleCommands::Execute(*me, consoleCommandName, args);
+  if (me) {
+    std::vector<ConsoleCommands::Argument> consoleArgs;
+    consoleArgs.resize(msg.data.args.size());
+    for (size_t i = 0; i < msg.data.args.size(); i++) {
+      consoleArgs[i] = ConsoleCommands::Argument(msg.data.args[i]);
+    }
+    ConsoleCommands::Execute(*me, msg.data.commandName, consoleArgs);
+  }
 }
 
-void ActionListener::OnCraftItem(const RawMessageData& rawMsgData,
-                                 const Inventory& inputObjects,
-                                 uint32_t workbenchId, uint32_t resultObjectId)
+void ActionListener::OnCraftItem(const RawMessageData& rawMsgData, const CraftItemMessage& msg)
 {
-  craftService->OnCraftItem(rawMsgData, inputObjects, workbenchId,
-                            resultObjectId);
+  craftService->OnCraftItem(rawMsgData, msg.data.craftInputObjects, msg.data.workbench, msg.data.resultObjectId);
 }
 
-void ActionListener::OnHostAttempt(const RawMessageData& rawMsgData,
-                                   uint32_t remoteId)
+void ActionListener::OnHostAttempt(const RawMessageData& rawMsgData, const HostMessage& msg)
 {
   MpActor* me = partOne.serverState.ActorByUser(rawMsgData.userId);
   if (!me) {
     throw std::runtime_error("Unable to host without actor attached");
   }
-
-  auto& remote = partOne.worldState.GetFormAt<MpObjectReference>(remoteId);
-
+  auto& remote = partOne.worldState.GetFormAt<MpObjectReference>(static_cast<uint32_t>(msg.remoteId));
   auto user = partOne.serverState.UserByActor(remote.AsActor());
   if (user != Networking::InvalidUserId) {
     return;
   }
-
-  auto& hoster = partOne.worldState.hosters[remoteId];
+  auto& hoster = partOne.worldState.hosters[static_cast<uint32_t>(msg.remoteId)];
   const uint32_t prevHoster = hoster;
-
   auto remoteIdx = remote.GetIdx();
-
   std::optional<std::chrono::system_clock::time_point> lastRemoteUpdate;
   if (partOne.worldState.lastMovUpdateByIdx.size() > remoteIdx) {
     lastRemoteUpdate = partOne.worldState.lastMovUpdateByIdx[remoteIdx];
   }
-
   const auto hostResetTimeout = std::chrono::seconds(2);
-
-  if (hoster == 0 || !lastRemoteUpdate ||
-      std::chrono::system_clock::now() - *lastRemoteUpdate >
-        hostResetTimeout) {
-    partOne.GetLogger().info("Hoster changed from {0:x} to {0:x}", prevHoster,
-                             me->GetFormId());
+  if (hoster == 0 || !lastRemoteUpdate || std::chrono::system_clock::now() - *lastRemoteUpdate > hostResetTimeout) {
+    partOne.GetLogger().info("Hoster changed from {0:x} to {0:x}", prevHoster, me->GetFormId());
     hoster = me->GetFormId();
     remote.UpdateHoster(hoster);
-
-    // Prevents too fast host switch
-    partOne.worldState.lastMovUpdateByIdx[remoteIdx] =
-      std::chrono::system_clock::now();
-
+    partOne.worldState.lastMovUpdateByIdx[remoteIdx] = std::chrono::system_clock::now();
     auto remoteAsActor = remote.AsActor();
-
     if (remoteAsActor) {
       remoteAsActor->EquipBestWeapon();
     }
-
     uint64_t longFormId = remote.GetFormId();
     if (remoteAsActor && longFormId < 0xff000000) {
       longFormId += 0x100000000;
     }
-
     HostStartMessage message;
     message.target = longFormId;
     partOne.GetSendTarget().Send(rawMsgData.userId, message, true);
-
-    // Otherwise, health percentage would remain unsynced until someone hits
-    // npc
     auto formId = remote.GetFormId();
-    partOne.worldState.SetTimer(std::chrono::seconds(1))
-      .Then([this, formId](Viet::Void) {
-        // Check if form is still here
-        auto& remote = partOne.worldState.GetFormAt<MpActor>(formId);
-
-        auto changeForm = remote.GetChangeForm();
-
-        ChangeValuesMessage msg;
-        msg.idx = remote.GetIdx();
-        msg.data.health = changeForm.actorValues.healthPercentage;
-        msg.data.magicka = changeForm.actorValues.magickaPercentage;
-        msg.data.stamina = changeForm.actorValues.staminaPercentage;
-        remote.SendToUser(msg, true); // in fact sends to hoster
-      });
-
+    partOne.worldState.SetTimer(std::chrono::seconds(1)).Then([this, formId](Viet::Void) {
+      auto& remote = partOne.worldState.GetFormAt<MpActor>(formId);
+      auto changeForm = remote.GetChangeForm();
+      ChangeValuesMessage msg;
+      msg.idx = remote.GetIdx();
+      msg.data.health = changeForm.actorValues.healthPercentage;
+      msg.data.magicka = changeForm.actorValues.magickaPercentage;
+      msg.data.stamina = changeForm.actorValues.staminaPercentage;
+      remote.SendToUser(msg, true);
+    });
     auto& prevHosterForm = partOne.worldState.LookupFormById(prevHoster);
-    if (MpActor* prevHosterActor =
-          prevHosterForm ? prevHosterForm->AsActor() : nullptr) {
+    if (MpActor* prevHosterActor = prevHosterForm ? prevHosterForm->AsActor() : nullptr) {
       auto prevHosterUser = partOne.serverState.UserByActor(prevHosterActor);
-      if (prevHosterUser != Networking::InvalidUserId &&
-          prevHosterUser != rawMsgData.userId) {
+      if (prevHosterUser != Networking::InvalidUserId && prevHosterUser != rawMsgData.userId) {
         HostStopMessage message;
         message.target = longFormId;
         partOne.GetSendTarget().Send(prevHosterUser, message, true);
@@ -554,47 +470,39 @@ void ActionListener::OnHostAttempt(const RawMessageData& rawMsgData,
   }
 }
 
-void ActionListener::OnCustomEvent(
-  const RawMessageData& rawMsgData, const char* eventName,
-  const std::vector<std::string>& argsJsonDumps)
+void ActionListener::OnCustomEvent(const RawMessageData& rawMsgData, const CustomEventMessage& msg)
 {
   auto ac = partOne.serverState.ActorByUser(rawMsgData.userId);
   if (!ac) {
     return;
   }
-
-  if (eventName[0] != '_') {
+  if (msg.eventName.empty() || msg.eventName[0] != '_') {
     return;
   }
-
   nlohmann::json jsonArray = nlohmann::json::array();
-
-  for (auto& arg : argsJsonDumps) {
+  for (auto& arg : msg.argsJsonDumps) {
     jsonArray.push_back(nlohmann::json::parse(arg));
   }
-
   const std::string jsonArrayDump = jsonArray.dump();
-
   for (auto& listener : partOne.GetListeners()) {
-    CustomEvent customEvent(ac->GetFormId(), eventName, jsonArrayDump);
+    CustomEvent customEvent(ac->GetFormId(), msg.eventName, jsonArrayDump);
     listener->OnMpApiEvent(customEvent);
   }
 }
 
-void ActionListener::OnChangeValues(const RawMessageData& rawMsgData,
-                                    const ChangeValuesMessage& message)
+void ActionListener::OnChangeValues(const RawMessageData& rawMsgData, const ChangeValuesMessage& msg)
 {
   // TODO: support partial updates
-  if (!message.data.health.has_value() || !message.data.magicka.has_value() ||
-      !message.data.stamina.has_value()) {
-    const std::string healthStr = message.data.health.has_value()
-      ? std::to_string(*message.data.health)
+  if (!msg.data.health.has_value() || !msg.data.magicka.has_value() ||
+      !msg.data.stamina.has_value()) {
+    const std::string healthStr = msg.data.health.has_value()
+      ? std::to_string(*msg.data.health)
       : "null";
-    const std::string magickaStr = message.data.magicka.has_value()
-      ? std::to_string(*message.data.magicka)
+    const std::string magickaStr = msg.data.magicka.has_value()
+      ? std::to_string(*msg.data.magicka)
       : "null";
-    const std::string staminaStr = message.data.stamina.has_value()
-      ? std::to_string(*message.data.stamina)
+    const std::string staminaStr = msg.data.stamina.has_value()
+      ? std::to_string(*msg.data.stamina)
       : "null";
 
     spdlog::error("ActionListener::OnChangeValues - health, magicka or "
@@ -605,9 +513,9 @@ void ActionListener::OnChangeValues(const RawMessageData& rawMsgData,
 
   // TODO: refactor our ActorValues struct
   ActorValues newActorValues;
-  newActorValues.healthPercentage = *message.data.health;
-  newActorValues.magickaPercentage = *message.data.magicka;
-  newActorValues.staminaPercentage = *message.data.stamina;
+  newActorValues.healthPercentage = *msg.data.health;
+  newActorValues.magickaPercentage = *msg.data.magicka;
+  newActorValues.staminaPercentage = *msg.data.stamina;
 
   MpActor* actor = partOne.serverState.ActorByUser(rawMsgData.userId);
   if (!actor) {
@@ -851,20 +759,19 @@ bool ShouldBeBlocked(const MpActor& aggressor, const MpActor& target)
 }
 }
 
-void ActionListener::OnHit(const RawMessageData& rawMsgData_,
-                           const HitData& hitData_)
+void ActionListener::OnHit(const RawMessageData& rawMsgData, const HitMessage& msg)
 {
-  MpActor* myActor = partOne.serverState.ActorByUser(rawMsgData_.userId);
+  MpActor* myActor = partOne.serverState.ActorByUser(rawMsgData.userId);
 
   if (!myActor) {
     return spdlog::error(
       "ActionListener::OnHit - no Actor attached to userId {}",
-      rawMsgData_.userId);
+      rawMsgData.userId);
   }
 
   MpActor* aggressor = nullptr;
 
-  HitData hitData = hitData_;
+  HitData hitData = msg.data;
   if (hitData.aggressor == 0x14) {
     aggressor = myActor;
     hitData.aggressor = aggressor->GetFormId();
@@ -970,8 +877,7 @@ void ActionListener::OnUpdateAnimVariables(const RawMessageData& rawMsgData)
   SendToNeighbours(myActor->idx, rawMsgData);
 }
 
-void ActionListener::OnSpellCast(const RawMessageData& rawMsgData,
-                                 const SpellCastData& spellCastData_)
+void ActionListener::OnSpellCast(const RawMessageData& rawMsgData, const SpellCastMessage& msg)
 {
   MpActor* myActor = partOne.serverState.ActorByUser(rawMsgData.userId);
 
@@ -981,7 +887,7 @@ void ActionListener::OnSpellCast(const RawMessageData& rawMsgData,
 
   MpActor* caster = nullptr;
 
-  SpellCastData spellCastData = spellCastData_;
+  SpellCastData spellCastData = msg.data;
 
   if (spellCastData.caster == 0x14 ||
       spellCastData.caster == myActor->GetFormId()) {

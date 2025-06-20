@@ -84,53 +84,35 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
       case MsgType::ConsoleCommand: {
         auto message =
           reinterpret_cast<ConsoleCommandMessage*>(result->message.get());
-
-        std::vector<ConsoleCommands::Argument> consoleArgs;
-        consoleArgs.resize(message->data.args.size());
-        for (size_t i = 0; i < message->data.args.size(); i++) {
-          consoleArgs[i] = ConsoleCommands::Argument(message->data.args[i]);
-        }
-
-        actionListener.OnConsoleCommand(rawMsgData, message->data.commandName,
-                                        consoleArgs);
+        actionListener.OnConsoleCommand(rawMsgData, *message);
         return;
       }
       case MsgType::CraftItem: {
         auto message =
           reinterpret_cast<CraftItemMessage*>(result->message.get());
-        actionListener.OnCraftItem(rawMsgData, message->data.craftInputObjects,
-                                   message->data.workbench,
-                                   message->data.resultObjectId);
+        actionListener.OnCraftItem(rawMsgData, *message);
         return;
       }
       case MsgType::CustomEvent: {
         auto message =
           reinterpret_cast<CustomEventMessage*>(result->message.get());
-        actionListener.OnCustomEvent(rawMsgData, message->eventName.data(),
-                                     message->argsJsonDumps);
+        actionListener.OnCustomEvent(rawMsgData, *message);
         return;
       }
       case MsgType::DropItem: {
         auto message =
           reinterpret_cast<DropItemMessage*>(result->message.get());
-
-        Inventory::Entry entry;
-        entry.baseId = FormIdCasts::LongToNormal(message->baseId);
-        entry.count = message->count;
-
-        actionListener.OnDropItem(
-          rawMsgData, FormIdCasts::LongToNormal(message->baseId), entry);
+        actionListener.OnDropItem(rawMsgData, *message);
         return;
       }
       case MsgType::OnHit: {
         auto message = reinterpret_cast<HitMessage*>(result->message.get());
-        actionListener.OnHit(rawMsgData, message->data);
+        actionListener.OnHit(rawMsgData, *message);
         return;
       }
       case MsgType::Host: {
         auto message = reinterpret_cast<HostMessage*>(result->message.get());
-        actionListener.OnHostAttempt(
-          rawMsgData, FormIdCasts::LongToNormal(message->remoteId));
+        actionListener.OnHostAttempt(rawMsgData, *message);
         return;
       }
       case MsgType::UpdateMovement: {
@@ -179,57 +161,31 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
       case MsgType::PutItem: {
         auto message =
           reinterpret_cast<PutItemMessage*>(result->message.get());
-        const auto& extra = static_cast<Inventory::ExtraData&>(*message);
-        const uint32_t baseId = message->baseId;
-        const uint32_t count = message->count;
-        const uint32_t target = message->target;
-
-        Inventory::Entry entry;
-        entry.baseId = baseId;
-        entry.count = count;
-        static_cast<Inventory::ExtraData&>(entry) = extra;
-
-        entry.SetWorn(Inventory::Worn::None);
-
-        actionListener.OnPutItem(rawMsgData, target, entry);
+        actionListener.OnPutItem(rawMsgData, *message);
         return;
       }
       case MsgType::TakeItem: {
         auto message =
           reinterpret_cast<TakeItemMessage*>(result->message.get());
-        const auto& extra = static_cast<Inventory::ExtraData&>(*message);
-        const uint32_t baseId = message->baseId;
-        const uint32_t count = message->count;
-        const uint32_t target = message->target;
-
-        Inventory::Entry entry;
-        entry.baseId = baseId;
-        entry.count = count;
-        static_cast<Inventory::ExtraData&>(entry) = extra;
-
-        actionListener.OnTakeItem(rawMsgData, target, entry);
+        actionListener.OnTakeItem(rawMsgData, *message);
         return;
       }
       case MsgType::FinishSpSnippet: {
         auto message =
           reinterpret_cast<FinishSpSnippetMessage*>(result->message.get());
-        const std::optional<std::variant<bool, double, std::string>>&
-          returnValue = message->returnValue;
-        const uint32_t snippetIdx = static_cast<uint32_t>(message->snippetIdx);
-
-        actionListener.OnFinishSpSnippet(rawMsgData, snippetIdx, returnValue);
+        actionListener.OnFinishSpSnippet(rawMsgData, *message);
         return;
       }
       case MsgType::OnEquip: {
         auto message =
           reinterpret_cast<OnEquipMessage*>(result->message.get());
-        actionListener.OnEquip(rawMsgData, message->baseId);
+        actionListener.OnEquip(rawMsgData, *message);
         return;
       }
       case MsgType::SpellCast: {
         auto message =
           reinterpret_cast<SpellCastMessage*>(result->message.get());
-        actionListener.OnSpellCast(rawMsgData, message->data);
+        actionListener.OnSpellCast(rawMsgData, *message);
         return;
       }
       case MsgType::UpdateAnimVariables: {
@@ -239,9 +195,7 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
       case MsgType::PlayerBowShot: {
         auto message =
           reinterpret_cast<PlayerBowShotMessage*>(result->message.get());
-        actionListener.OnPlayerBowShot(rawMsgData, message->weaponId,
-                                       message->ammoId, message->power,
-                                       message->isSunGazing);
+        actionListener.OnPlayerBowShot(rawMsgData, *message);
         break;
       }
       default: {

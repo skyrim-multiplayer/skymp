@@ -36,49 +36,31 @@ public:
 
   virtual void OnActivate(const RawMessageData& rawMsgData, const ActivateMessage& msg);
 
-  virtual void OnPutItem(const RawMessageData& rawMsgData, uint32_t target,
-                         const Inventory::Entry& entry);
+  virtual void OnPutItem(const RawMessageData& rawMsgData, const PutItemMessage& msg);
+  virtual void OnTakeItem(const RawMessageData& rawMsgData, const TakeItemMessage& msg);
+  virtual void OnDropItem(const RawMessageData& rawMsgData, const DropItemMessage& msg);
 
-  virtual void OnTakeItem(const RawMessageData& rawMsgData, uint32_t target,
-                          const Inventory::Entry& entry);
+  virtual void OnPlayerBowShot(const RawMessageData& rawMsgData, const PlayerBowShotMessage& msg);
 
-  virtual void OnDropItem(const RawMessageData& rawMsgdata, uint32_t baseId,
-                          const Inventory::Entry& entry);
+  virtual void OnFinishSpSnippet(const RawMessageData& rawMsgData, const FinishSpSnippetMessage& msg);
 
-  virtual void OnPlayerBowShot(const RawMessageData& rawMsgdata,
-                               uint32_t weaponId, uint32_t ammoId, float power,
-                               bool isSunGazing);
+  virtual void OnEquip(const RawMessageData& rawMsgData, const OnEquipMessage& msg);
 
-  virtual void OnFinishSpSnippet(
-    const RawMessageData& rawMsgData, uint32_t snippetIdx,
-    const std::optional<std::variant<bool, double, std::string>>& returnValue);
+  virtual void OnConsoleCommand(const RawMessageData& rawMsgData, const ConsoleCommandMessage& msg);
 
-  virtual void OnEquip(const RawMessageData& rawMsgData, uint32_t baseId);
+  virtual void OnCraftItem(const RawMessageData& rawMsgData, const CraftItemMessage& msg);
 
-  virtual void OnConsoleCommand(
-    const RawMessageData& rawMsgData, const std::string& consoleCommandName,
-    const std::vector<ConsoleCommands::Argument>& args);
+  virtual void OnHostAttempt(const RawMessageData& rawMsgData, const HostMessage& msg);
 
-  virtual void OnCraftItem(const RawMessageData& rawMsgData,
-                           const Inventory& inputObjects, uint32_t workbenchId,
-                           uint32_t resultObjectId);
+  virtual void OnCustomEvent(const RawMessageData& rawMsgData, const CustomEventMessage& msg);
 
-  virtual void OnHostAttempt(const RawMessageData& rawMsgData,
-                             uint32_t remoteId);
+  virtual void OnChangeValues(const RawMessageData& rawMsgData, const ChangeValuesMessage& msg);
 
-  virtual void OnCustomEvent(const RawMessageData& rawMsgData,
-                             const char* eventName,
-                             const std::vector<std::string>& argsJsonDumps);
+  virtual void OnHit(const RawMessageData& rawMsgData, const HitMessage& msg);
 
-  virtual void OnChangeValues(const RawMessageData& rawMsgData,
-                              const ChangeValuesMessage& message);
+  virtual void OnUpdateAnimVariables(const RawMessageData& rawMsgData); // No struct found, keep as is
 
-  virtual void OnHit(const RawMessageData& rawMsgData, const HitData& hitData);
-
-  virtual void OnUpdateAnimVariables(const RawMessageData& rawMsgData);
-
-  virtual void OnSpellCast(const RawMessageData& rawMsgData,
-                           const SpellCastData& spellCastData);
+  virtual void OnSpellCast(const RawMessageData& rawMsgData, const SpellCastMessage& msg);
 
   virtual void OnUnknown(const RawMessageData& rawMsgData);
 
