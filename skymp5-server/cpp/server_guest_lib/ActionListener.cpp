@@ -311,6 +311,7 @@ void ActionListener::OnPutItem(const RawMessageData& rawMsgData, const PutItemMe
   entry.baseId = msg.baseId;
   entry.count = msg.count;
   static_cast<Inventory::ExtraData&>(entry) = static_cast<const Inventory::ExtraData&>(msg);
+  entry.SetWorn(Inventory::Worn::None);
   ref.PutItem(*actor, entry);
 }
 
