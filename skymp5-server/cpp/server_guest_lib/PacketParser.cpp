@@ -148,8 +148,7 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
         AnimationData animationData;
         animationData.animEventName = message->data.animEventName;
         animationData.numChanges = message->data.numChanges;
-        actionListener.OnUpdateAnimation(rawMsgData, message->idx,
-                                         animationData);
+        actionListener.OnUpdateAnimation(rawMsgData, *message);
         return;
       }
       case MsgType::UpdateEquipment: {
@@ -164,8 +163,7 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
         uint32_t voiceSpell = data.voiceSpell.value_or(0);
         uint32_t instantSpell = data.instantSpell.value_or(0);
 
-        actionListener.OnUpdateEquipment(rawMsgData, idx, data, inv, leftSpell,
-                                         rightSpell, voiceSpell, instantSpell);
+        actionListener.OnUpdateEquipment(rawMsgData, *message);
         return;
       }
       case MsgType::ChangeValues: {
@@ -189,7 +187,7 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
           reinterpret_cast<UpdateAppearanceMessage*>(result->message.get());
         const uint32_t idx = message->idx;
         const Appearance& data = *message->data;
-        actionListener.OnUpdateAppearance(rawMsgData, idx, data);
+        actionListener.OnUpdateAppearance(rawMsgData, *message);
         return;
       }
       case MsgType::UpdateProperty: {

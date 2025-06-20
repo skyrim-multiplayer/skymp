@@ -30,18 +30,9 @@ public:
   virtual void OnUpdateMovement(const RawMessageData& rawMsgData,
                                 const UpdateMovementMessage& msg);
 
-  virtual void OnUpdateAnimation(const RawMessageData& rawMsgData,
-                                 uint32_t idx,
-                                 const AnimationData& animationData);
-
-  virtual void OnUpdateAppearance(const RawMessageData& rawMsgData,
-                                  uint32_t idx, const Appearance& appearance);
-
-  virtual void OnUpdateEquipment(const RawMessageData& rawMsgData,
-                                 uint32_t idx, const Equipment& data,
-                                 const Inventory& equipmentInv,
-                                 uint32_t leftSpell, uint32_t rightSpell,
-                                 uint32_t voiceSpell, uint32_t instantSpell);
+  virtual void OnUpdateAnimation(const RawMessageData& rawMsgData, const UpdateAnimationMessage& msg);
+  virtual void OnUpdateAppearance(const RawMessageData& rawMsgData, const UpdateAppearanceMessage& msg);
+  virtual void OnUpdateEquipment(const RawMessageData& rawMsgData, const UpdateEquipmentMessage& msg);
 
   virtual void OnActivate(const RawMessageData& rawMsgData, uint32_t caster,
                           uint32_t target, bool isSecondActivation);

@@ -165,16 +165,14 @@ void ActionListener::OnUpdateMovement(const RawMessageData& rawMsgData, const Up
   }
 }
 
-void ActionListener::OnUpdateAnimation(const RawMessageData& rawMsgData,
-                                       uint32_t idx,
-                                       const AnimationData& animationData)
+void ActionListener::OnUpdateAnimation(const RawMessageData& rawMsgData, const UpdateAnimationMessage& msg)
 {
   MpActor* myActor = partOne.serverState.ActorByUser(rawMsgData.userId);
   if (!myActor) {
     return;
   }
 
-  auto targetActor = SendToNeighbours(idx, rawMsgData);
+  auto targetActor = SendToNeighbours(msg.idx, rawMsgData);
 
   if (!targetActor) {
     return;
@@ -185,17 +183,14 @@ void ActionListener::OnUpdateAnimation(const RawMessageData& rawMsgData,
     return;
   }
 
-  partOne.animationSystem.Process(targetActor, animationData);
-  targetActor->SetLastAnimEvent(animationData);
+  partOne.animationSystem.Process(targetActor, msg.data);
+  targetActor->SetLastAnimEvent(msg.data);
 }
 
-void ActionListener::OnUpdateAppearance(const RawMessageData& rawMsgData,
-                                        uint32_t idx,
-                                        const Appearance& appearance)
-{ // TODO: validate
-
+void ActionListener::OnUpdateAppearance(const RawMessageData& rawMsgData, const UpdateAppearanceMessage& msg)
+{
   MpActor* actor = partOne.serverState.ActorByUser(rawMsgData.userId);
-  if (!actor) {
+  if (!actor || !msg.data.has_value()) {
     return;
   }
 
@@ -203,77 +198,58 @@ void ActionListener::OnUpdateAppearance(const RawMessageData& rawMsgData,
 
   if (isAllowed) {
     actor->SetRaceMenuOpen(false);
-    actor->SetAppearance(&appearance);
-    SendToNeighbours(idx, rawMsgData, true);
+    actor->SetAppearance(&msg.data.value());
+    SendToNeighbours(msg.idx, rawMsgData, true);
   }
 
-  UpdateAppearanceAttemptEvent updateAppearanceAttemptEvent(actor, appearance,
-                                                            isAllowed);
+  UpdateAppearanceAttemptEvent updateAppearanceAttemptEvent(actor, msg.data.value(), isAllowed);
   updateAppearanceAttemptEvent.Fire(actor->GetParent());
 }
 
-void ActionListener::OnUpdateEquipment(
-  const RawMessageData& rawMsgData, const uint32_t idx, const Equipment& data,
-  const Inventory& equipmentInv, const uint32_t leftSpell,
-  const uint32_t rightSpell, const uint32_t voiceSpell,
-  const uint32_t instantSpell)
+void ActionListener::OnUpdateEquipment(const RawMessageData& rawMsgData, const UpdateEquipmentMessage& msg)
 {
   MpActor* actor = partOne.serverState.ActorByUser(rawMsgData.userId);
-
   if (!actor) {
     return;
   }
 
   bool isAllowed = true;
+  const Equipment& data = msg.data;
+  const Inventory& equipmentInv = data.inv;
+  uint32_t leftSpell = data.leftSpell.value_or(0);
+  uint32_t rightSpell = data.rightSpell.value_or(0);
+  uint32_t voiceSpell = data.voiceSpell.value_or(0);
+  uint32_t instantSpell = data.instantSpell.value_or(0);
 
   if (leftSpell > 0 && !actor->IsSpellLearned(leftSpell)) {
-    spdlog::debug(
-      "OnUpdateEquipment result false. Spell with id ({}) not learned",
-      leftSpell);
+    spdlog::debug("OnUpdateEquipment result false. Spell with id ({}) not learned", leftSpell);
     isAllowed = false;
   }
-
   if (rightSpell > 0 && !actor->IsSpellLearned(rightSpell)) {
-    spdlog::debug(
-      "OnUpdateEquipment result false. Spell with id ({}) not learned",
-      rightSpell);
+    spdlog::debug("OnUpdateEquipment result false. Spell with id ({}) not learned", rightSpell);
     isAllowed = false;
   }
-
   if (voiceSpell > 0 && !actor->IsSpellLearned(voiceSpell)) {
-    spdlog::debug(
-      "OnUpdateEquipment result false. Spell with id ({}) not learned",
-      voiceSpell);
+    spdlog::debug("OnUpdateEquipment result false. Spell with id ({}) not learned", voiceSpell);
     isAllowed = false;
   }
-
   if (instantSpell > 0 && !actor->IsSpellLearned(instantSpell)) {
-    spdlog::debug(
-      "OnUpdateEquipment result false. Spell with id ({}) not learned",
-      instantSpell);
+    spdlog::debug("OnUpdateEquipment result false. Spell with id ({}) not learned", instantSpell);
     isAllowed = false;
   }
-
   const auto& inventory = actor->GetInventory();
-
   for (auto& entry : equipmentInv.entries) {
     if (!inventory.HasItem(entry.baseId)) {
-      spdlog::debug(
-        "OnUpdateEquipment result false. The inventory does not contain item "
-        "with id {:x}",
-        entry.baseId);
+      spdlog::debug("OnUpdateEquipment result false. The inventory does not contain item with id {:x}", entry.baseId);
       isAllowed = false;
       break;
     }
   }
-
   if (isAllowed) {
-    SendToNeighbours(idx, rawMsgData, true);
+    SendToNeighbours(msg.idx, rawMsgData, true);
     actor->SetEquipment(data);
   }
-
-  UpdateEquipmentAttemptEvent updateEquipmentAttemptEvent(actor, data,
-                                                          isAllowed);
+  UpdateEquipmentAttemptEvent updateEquipmentAttemptEvent(actor, data, isAllowed);
   updateEquipmentAttemptEvent.Fire(actor->GetParent());
 }
 
