@@ -34,8 +34,7 @@ public:
   virtual void OnUpdateAppearance(const RawMessageData& rawMsgData, const UpdateAppearanceMessage& msg);
   virtual void OnUpdateEquipment(const RawMessageData& rawMsgData, const UpdateEquipmentMessage& msg);
 
-  virtual void OnActivate(const RawMessageData& rawMsgData, uint32_t caster,
-                          uint32_t target, bool isSecondActivation);
+  virtual void OnActivate(const RawMessageData& rawMsgData, const ActivateMessage& msg);
 
   virtual void OnPutItem(const RawMessageData& rawMsgData, uint32_t target,
                          const Inventory::Entry& entry);

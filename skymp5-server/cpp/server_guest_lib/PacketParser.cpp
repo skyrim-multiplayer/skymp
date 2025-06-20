@@ -78,10 +78,7 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
       case MsgType::Activate: {
         auto message =
           reinterpret_cast<ActivateMessage*>(result->message.get());
-        actionListener.OnActivate(
-          rawMsgData, FormIdCasts::LongToNormal(message->data.caster),
-          FormIdCasts::LongToNormal(message->data.target),
-          message->data.isSecondActivation);
+        actionListener.OnActivate(rawMsgData, *message);
         return;
       }
       case MsgType::ConsoleCommand: {

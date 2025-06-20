@@ -253,9 +253,7 @@ void ActionListener::OnUpdateEquipment(const RawMessageData& rawMsgData, const U
   updateEquipmentAttemptEvent.Fire(actor->GetParent());
 }
 
-void ActionListener::OnActivate(const RawMessageData& rawMsgData,
-                                uint32_t caster, uint32_t target,
-                                bool isSecondActivation)
+void ActionListener::OnActivate(const RawMessageData& rawMsgData, const ActivateMessage& msg)
 {
   if (!partOne.HasEspm())
     throw std::runtime_error("No loaded esm or esp files are found");
@@ -264,31 +262,31 @@ void ActionListener::OnActivate(const RawMessageData& rawMsgData,
   if (!ac)
     throw std::runtime_error("Can't do this without Actor attached");
 
-  auto it = partOne.worldState.hosters.find(caster);
+  auto it = partOne.worldState.hosters.find(static_cast<uint32_t>(msg.data.caster));
   auto hosterId = it == partOne.worldState.hosters.end() ? 0 : it->second;
 
-  if (caster != 0x14) {
+  if (msg.data.caster != 0x14) {
     if (hosterId != ac->GetFormId()) {
       std::stringstream ss;
-      ss << std::hex << "Bad hoster is attached to caster 0x" << caster
+      ss << std::hex << "Bad hoster is attached to caster 0x" << msg.data.caster
          << ", expected 0x" << ac->GetFormId() << ", but found 0x" << hosterId;
       throw std::runtime_error(ss.str());
     }
   }
 
   auto targetPtr = std::dynamic_pointer_cast<MpObjectReference>(
-    partOne.worldState.LookupFormById(target));
+    partOne.worldState.LookupFormById(static_cast<uint32_t>(msg.data.target)));
   if (!targetPtr)
     return;
 
   constexpr bool kDefaultProcessingOnlyFalse = false;
   targetPtr->Activate(
-    caster == 0x14 ? *ac
-                   : partOne.worldState.GetFormAt<MpObjectReference>(caster),
-    kDefaultProcessingOnlyFalse, isSecondActivation);
+    msg.data.caster == 0x14 ? *ac
+                   : partOne.worldState.GetFormAt<MpObjectReference>(static_cast<uint32_t>(msg.data.caster)),
+    kDefaultProcessingOnlyFalse, msg.data.isSecondActivation);
   if (hosterId) {
     auto actor = std::dynamic_pointer_cast<MpActor>(
-      partOne.worldState.LookupFormById(caster));
+      partOne.worldState.LookupFormById(static_cast<uint32_t>(msg.data.caster)));
     if (actor) {
       actor->EquipBestWeapon();
     }
