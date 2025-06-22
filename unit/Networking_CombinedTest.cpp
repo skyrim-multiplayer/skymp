@@ -31,13 +31,13 @@ TEST_CASE("Combined: connect/dsconnect", "[Networking]")
   auto cl1 = s1->CreateClient().first;
   auto cl2 = s2->CreateClient().first;
   svr->Tick(tickCb, nullptr);
-  REQUIRE(connected == std::vector<UserId>({ 0, 1 }));
+  REQUIRE(connected == std::vector<UserId>({ 1, 2 }));
   REQUIRE(disconnected == std::vector<UserId>());
 
   cl1.reset();
   cl2.reset();
   svr->Tick(tickCb, nullptr);
-  REQUIRE(disconnected == std::vector<UserId>({ 0, 1 }));
+  REQUIRE(disconnected == std::vector<UserId>({ 1, 2 }));
 }
 
 TEST_CASE("Combined: order of disconnection", "[Networking]")
@@ -61,7 +61,7 @@ TEST_CASE("Combined: order of disconnection", "[Networking]")
   c1.reset();
   c0.reset();
   svr->Tick(tickCb, nullptr);
-  REQUIRE(disconnected == std::vector<UserId>({ 1, 0, 3, 2 }));
+  REQUIRE(disconnected == std::vector<UserId>({ 2, 1, 4, 3 }));
 }
 
 TEST_CASE("Combined: ids are freed", "[Networking]")
@@ -81,8 +81,8 @@ TEST_CASE("Combined: ids are freed", "[Networking]")
     svr->Tick(tickCb, nullptr);
   }
 
-  REQUIRE(connected == std::vector<Networking::UserId>({ 0, 0, 0 }));
-  REQUIRE(disconnected == std::vector<Networking::UserId>({ 0, 0, 0 }));
+  REQUIRE(connected == std::vector<Networking::UserId>({ 1, 1, 1 }));
+  REQUIRE(disconnected == std::vector<Networking::UserId>({ 1, 1, 1 }));
 }
 
 TEST_CASE("Combined: Messages from clients are received")
@@ -98,7 +98,7 @@ TEST_CASE("Combined: Messages from clients are received")
   svr->Tick(tickCb, nullptr);
 
   REQUIRE(messages.size() == 1);
-  REQUIRE(messages[0].first == 0);
+  REQUIRE(messages[0].first == 1);
   REQUIRE(messages[0].second == "dd");
 }
 
@@ -115,7 +115,7 @@ TEST_CASE("Combined: Messages are transferred to clients")
   DECLARE_CB;
 
   svr->Tick(tickCb, nullptr);
-  svr->Send(1, (PacketData) "df", 2, true);
+  svr->Send(2, (PacketData) "df", 2, true);
 
   static bool received = false;
   cl1->Tick(
