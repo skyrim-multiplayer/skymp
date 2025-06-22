@@ -489,7 +489,7 @@ export class AuthService extends ClientListener {
         // },
         {
           type: "button",
-          text: authData ? "сменить аккаунт" : "войти через discord",
+          text: authData ? "сменить аккаунт" : "войти через skymp",
           tags: [/*"ELEMENT_SAME_LINE"*/],
           click: () => window.skyrimPlatform.sendMessage(events.openDiscordOauth),
           hint: "Вы можете войти или поменять аккаунт",
