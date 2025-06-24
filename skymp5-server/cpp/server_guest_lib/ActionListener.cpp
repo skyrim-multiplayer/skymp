@@ -28,6 +28,8 @@
 #include "HostStopMessage.h"
 #include "UpdateEquipmentMessage.h"
 #include "SpSnippet.h"
+#include "UpdateAnimVariablesMessage.h"
+#include "CustomPacketMessage.h"
 
 MpActor* ActionListener::SendToNeighbours(uint32_t idx,
                                           Networking::UserId userId,
@@ -96,11 +98,13 @@ MpActor* ActionListener::SendToNeighbours(uint32_t idx,
                           rawMsgData.unparsedLength, reliable);
 }
 
-void ActionListener::OnCustomPacket(const RawMessageData& rawMsgData,
-                                    simdjson::dom::element& content)
+void ActionListener::OnCustomPacket(const RawMessageData& rawMsgData, const CustomPacketMessage& msg)
 {
-  for (auto& listener : partOne.GetListeners())
+  simdjson::dom::parser parser;
+  auto content = parser.parse(msg.contentJsonDump).value();
+  for (auto& listener : partOne.GetListeners()) {
     listener->OnCustomPacket(rawMsgData.userId, content);
+  }
 }
 
 void ActionListener::OnUpdateMovement(const RawMessageData& rawMsgData, const UpdateMovementMessage& msg)
@@ -867,14 +871,12 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData, const HitMessage& m
                 hitData.source, hitData.aggressor);
 }
 
-void ActionListener::OnUpdateAnimVariables(const RawMessageData& rawMsgData)
+void ActionListener::OnUpdateAnimVariables(const RawMessageData& rawMsgData, const UpdateAnimVariablesMessage& msg)
 {
   const MpActor* myActor = partOne.serverState.ActorByUser(rawMsgData.userId);
-
   if (!myActor) {
     throw std::runtime_error("Unable to change values without Actor attached");
   }
-
   SendToNeighbours(myActor->idx, rawMsgData);
 }
 

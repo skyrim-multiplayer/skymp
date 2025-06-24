@@ -7,7 +7,6 @@
 #include "PartOne.h"
 #include "RawMessageData.h"
 #include "SpellCastData.h"
-#include "UpdateMovementMessage.h" // RunMode
 #include "libespm/Loader.h"
 #include <memory>
 
@@ -24,8 +23,7 @@ public:
     craftService = std::make_shared<CraftService>(partOne_);
   }
 
-  virtual void OnCustomPacket(const RawMessageData& rawMsgData,
-                              simdjson::dom::element& content);
+  virtual void OnCustomPacket(const RawMessageData& rawMsgData, const CustomPacketMessage& msg);
 
   virtual void OnUpdateMovement(const RawMessageData& rawMsgData,
                                 const UpdateMovementMessage& msg);
@@ -58,7 +56,7 @@ public:
 
   virtual void OnHit(const RawMessageData& rawMsgData, const HitMessage& msg);
 
-  virtual void OnUpdateAnimVariables(const RawMessageData& rawMsgData); // No struct found, keep as is
+  virtual void OnUpdateAnimVariables(const RawMessageData& rawMsgData, const UpdateAnimVariablesMessage& msg);
 
   virtual void OnSpellCast(const RawMessageData& rawMsgData, const SpellCastMessage& msg);
 

@@ -18,22 +18,6 @@ uint32_t LongToNormal(uint64_t longFormId)
 }
 }
 
-namespace JsonPointers {
-static const JsonPointer t("t"), idx("idx"), content("content"), data("data"),
-  pos("pos"), rot("rot"), isInJumpState("isInJumpState"),
-  isWeapDrawn("isWeapDrawn"), isBlocking("isBlocking"),
-  worldOrCell("worldOrCell"), inv("inv"), caster("caster"), target("target"),
-  snippetIdx("snippetIdx"), returnValue("returnValue"), baseId("baseId"),
-  commandName("commandName"), args("args"), workbench("workbench"),
-  resultObjectId("resultObjectId"), craftInputObjects("craftInputObjects"),
-  remoteId("remoteId"), eventName("eventName"), health("health"),
-  magicka("magicka"), stamina("stamina"), leftSpell("leftSpell"),
-  rightSpell("rightSpell"), voiceSpell("voiceSpell"),
-  instantSpell("instantSpell"), weaponId("weaponId"), ammoId("ammoId"),
-  power("power"), isSunGazing("isSunGazing"),
-  isSecondActivation("isSecondActivation");
-}
-
 struct PacketParser::Impl
 {
   simdjson::dom::parser simdjsonParser;
@@ -140,13 +124,8 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
         return;
       }
       case MsgType::CustomPacket: {
-        auto message =
-          reinterpret_cast<CustomPacketMessage*>(result->message.get());
-        auto parsedContent = pImpl->simdjsonParser
-                               .parse(message->contentJsonDump.data(),
-                                      message->contentJsonDump.size())
-                               .value();
-        actionListener.OnCustomPacket(rawMsgData, parsedContent);
+        auto message = reinterpret_cast<CustomPacketMessage*>(result->message.get());
+        actionListener.OnCustomPacket(rawMsgData, *message);
         return;
       }
       case MsgType::UpdateAppearance: {
@@ -189,7 +168,8 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
         return;
       }
       case MsgType::UpdateAnimVariables: {
-        actionListener.OnUpdateAnimVariables(rawMsgData);
+        auto message = reinterpret_cast<UpdateAnimVariablesMessage*>(result->message.get());
+        actionListener.OnUpdateAnimVariables(rawMsgData, *message);
         return;
       }
       case MsgType::PlayerBowShot: {
