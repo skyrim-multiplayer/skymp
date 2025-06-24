@@ -87,9 +87,13 @@ struct ExtendedVariantStruct
 };
 
 using NestedVariant = std::variant<int, std::variant<std::string, double>>;
-struct NestedVariantStruct {
+struct NestedVariantStruct
+{
   template <class Archive>
-  void Serialize(Archive& archive) { archive.Serialize("args", args); }
+  void Serialize(Archive& archive)
+  {
+    archive.Serialize("args", args);
+  }
   std::vector<NestedVariant> args;
 };
 
@@ -108,7 +112,8 @@ TEST_CASE("BitStreamArchive variant - extended types and edge cases",
   extStruct.Serialize(archive);
 
   SLNet::BitStream streamRead;
-  streamRead.Write(reinterpret_cast<const char*>(stream.GetData()), stream.GetNumberOfBytesUsed());
+  streamRead.Write(reinterpret_cast<const char*>(stream.GetData()),
+                   stream.GetNumberOfBytesUsed());
   ExtendedVariantStruct extStructRead;
   BitStreamInputArchive archiveRead(streamRead);
   extStructRead.Serialize(archiveRead);
@@ -126,7 +131,8 @@ TEST_CASE("BitStreamArchive variant - extended types and edge cases",
   nestedStruct.Serialize(archive2);
 
   SLNet::BitStream stream2Read;
-  stream2Read.Write(reinterpret_cast<const char*>(stream2.GetData()), stream2.GetNumberOfBytesUsed());
+  stream2Read.Write(reinterpret_cast<const char*>(stream2.GetData()),
+                    stream2.GetNumberOfBytesUsed());
   NestedVariantStruct nestedStructRead;
   BitStreamInputArchive archive2Read(stream2Read);
   nestedStructRead.Serialize(archive2Read);
