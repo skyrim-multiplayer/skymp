@@ -21,6 +21,12 @@ ConsoleCommands::Argument::Argument(const std::string& str)
   data = str;
 }
 
+ConsoleCommands::Argument::Argument(
+  const std::variant<int64_t, std::string>& data_)
+{
+  data = data_;
+}
+
 bool ConsoleCommands::Argument::IsInteger() const noexcept
 {
   return data.index() == 0;

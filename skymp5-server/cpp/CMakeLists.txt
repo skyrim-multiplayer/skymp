@@ -11,6 +11,7 @@ if(WIN32)
   list(APPEND src "${CMAKE_SOURCE_DIR}/.clang-format")
   add_library(MpClientPlugin SHARED ${src})
   target_link_libraries(MpClientPlugin PUBLIC mp_common)
+  target_link_libraries(MpClientPlugin PUBLIC server_guest_lib) # For Inventory.cpp, required by messages
   set_target_properties(MpClientPlugin PROPERTIES OUTPUT_NAME "MpClientPlugin")
   apply_default_settings(TARGETS MpClientPlugin)
   list(APPEND VCPKG_DEPENDENT MpClientPlugin)

@@ -1,6 +1,7 @@
 import { ObjectReference, Actor, Game, FormType, TextureSet, NetImmerse } from "skyrimPlatform";
 import { Inventory, applyInventory } from "../sync/inventory";
 import { logError, logTrace } from "../logging";
+import { SetNodeScaleEntry, SetNodeTextureSetEntry } from "src/services/messages/createActorMessage";
 
 // For 0xff000000+ used from FormView
 // For objects from master files used directly from remoteServer.ts
@@ -96,31 +97,29 @@ export class ModelApplyUtils {
     }
   }
 
-  static applyModelNodeTextureSet(refr: ObjectReference, setNodeTextureSet?: Record<string, number>) {
+  static applyModelNodeTextureSet(refr: ObjectReference, setNodeTextureSet?: SetNodeTextureSetEntry[]) {
     if (setNodeTextureSet) {
-      for (const key in setNodeTextureSet) {
-        const textureSetId = setNodeTextureSet[key];
+      setNodeTextureSet.forEach(element => {
         const firstPerson = false;
 
-        const textureSet = TextureSet.from(Game.getFormEx(textureSetId));
+        const textureSet = TextureSet.from(Game.getFormEx(element.textureSetId));
         if (textureSet !== null) {
-          NetImmerse.setNodeTextureSet(refr, key, textureSet, firstPerson);
-          logTrace("ModelApplyUtils", refr.getFormID().toString(16), `Applied texture set`, textureSetId.toString(16), `to`, key);
+          NetImmerse.setNodeTextureSet(refr, element.nodeName, textureSet, firstPerson);
+          logTrace("ModelApplyUtils", refr.getFormID().toString(16), `Applied texture set`, element.textureSetId.toString(16), `to`, element.nodeName);
         } else {
-          logError("ModelApplyUtils", refr.getFormID().toString(16), `Failed to apply texture set`, textureSetId.toString(16), `to`, key);
+          logError("ModelApplyUtils", refr.getFormID().toString(16), `Failed to apply texture set`, element.textureSetId.toString(16), `to`, element.nodeName);
         }
-      }
+      });
     }
   }
 
-  static applyModelNodeScale(refr: ObjectReference, setNodeScale?: Record<string, number>) {
+  static applyModelNodeScale(refr: ObjectReference, setNodeScale?: SetNodeScaleEntry[]) {
     if (setNodeScale) {
-      for (const key in setNodeScale) {
-        const scale = setNodeScale[key];
+      setNodeScale.forEach(element => {
         const firstPerson = false;
-        NetImmerse.setNodeScale(refr, key, scale, firstPerson);
-        logTrace("ModelApplyUtils", refr.getFormID().toString(16), `Applied node scale`, scale, `to`, key);
-      }
+        NetImmerse.setNodeScale(refr, element.nodeName, element.scale, firstPerson);
+        logTrace("ModelApplyUtils", refr.getFormID().toString(16), `Applied node scale`, element.scale, `to`, element.nodeName);
+      });
     }
   }
 }

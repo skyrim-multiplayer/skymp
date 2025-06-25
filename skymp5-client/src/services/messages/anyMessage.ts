@@ -1,12 +1,11 @@
 
 import { ActivateMessage } from "./activateMessage";
-import { ChangeValuesMessage } from "./changeValues";
+import { ChangeValuesMessage } from "./changeValuesMessage";
 import { ConsoleCommandMessage } from "./consoleCommandMessage";
 import { CraftItemMessage } from "./craftItemMessage";
 import { CreateActorMessage } from "./createActorMessage";
 import { CustomEventMessage } from "./customEventMessage";
 import { CustomPacketMessage } from "./customPacketMessage";
-import { CustomPacketMessage2 } from "./customPacketMessage2";
 import { DeathStateContainerMessage } from "./deathStateContainerMessage";
 import { DestroyActorMessage } from "./destroyActorMessage";
 import { DropItemMessage } from "./dropItemMessage";
@@ -59,7 +58,6 @@ export type AnyMessage = ActivateMessage
     | HostStopMessage
     | SetInventoryMessage
     | CreateActorMessage
-    | CustomPacketMessage2
     | DestroyActorMessage
     | SetRaceMenuOpenMessage
     | SpSnippetMessage

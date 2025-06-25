@@ -11,6 +11,14 @@ PartOne& GetPartOne();
 extern espm::Loader l;
 using namespace std::chrono_literals;
 
+namespace {
+const auto kExtraWornTrue = [] {
+  Inventory::ExtraData extra;
+  extra.worn_ = true;
+  return extra;
+}();
+}
+
 TEST_CASE("OnHit damages target actor based on damage formula", "[Hit]")
 {
   PartOne& p = GetPartOne();
@@ -26,20 +34,10 @@ TEST_CASE("OnHit damages target actor based on damage formula", "[Hit]")
   hitData.aggressor = 0x14;
   hitData.source = 0x0001397E; // iron dagger 4 damage, id = 80254
   ac.AddItem(hitData.source, 1);
-  ac.SetEquipment(R"(
-    {
-      "numChanges": 0,
-      "inv": {
-        "entries": [
-          {
-            "baseId": 80254,
-            "count": 1,
-            "worn": true
-          }
-        ]
-      }
-    }
-  )");
+
+  Equipment eq;
+  eq.inv.entries.push_back(Inventory::Entry(80254, 1, kExtraWornTrue));
+  ac.SetEquipment(eq);
 
   auto past = std::chrono::steady_clock::now() - 10s;
   ac.SetLastHitTime(past);
@@ -64,7 +62,7 @@ TEST_CASE("OnHit function sends ChangeValues message with coorect percentages",
   p.CreateActor(0xff000000, { 0, 0, 0 }, 0, 0x3c);
   p.SetUserActor(0, 0xff000000);
   auto& ac = p.worldState.GetFormAt<MpActor>(0xff000000);
-  ac.SetEquipment(R"({"inv": {"entries": []}})");
+  ac.SetEquipment(Equipment());
 
   RawMessageData rawMsgData;
   rawMsgData.userId = 0;
@@ -73,20 +71,10 @@ TEST_CASE("OnHit function sends ChangeValues message with coorect percentages",
   hitData.aggressor = 0x14;
   hitData.source = 0x0001397E; // iron dagger 4 damage
   ac.AddItem(hitData.source, 1);
-  ac.SetEquipment(R"(
-    {
-      "numChanges": 0,
-      "inv": {
-        "entries": [
-          {
-            "baseId": 80254,
-            "count": 1,
-            "worn": true
-          }
-        ]
-      }
-    }
-  )");
+
+  Equipment eq;
+  eq.inv.entries.push_back(Inventory::Entry(80254, 1, kExtraWornTrue));
+  ac.SetEquipment(eq);
 
   p.Messages().clear();
   auto past = std::chrono::steady_clock::now() - 4s;
@@ -218,20 +206,10 @@ TEST_CASE("checking weapon cooldown", "[Hit]")
   hitData.aggressor = 0x14;
   hitData.source = 0x0001397E;
   ac.AddItem(hitData.source, 1);
-  ac.SetEquipment(R"(
-    {
-      "numChanges": 0,
-      "inv": {
-        "entries": [
-          {
-            "baseId": 80254,
-            "count": 1,
-            "worn": true
-          }
-        ]
-      }
-    }
-  )");
+
+  Equipment eq;
+  eq.inv.entries.push_back(Inventory::Entry(80254, 1, kExtraWornTrue));
+  ac.SetEquipment(eq);
 
   auto past = std::chrono::steady_clock::now() - 300ms;
 

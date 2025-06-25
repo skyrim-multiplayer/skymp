@@ -6,14 +6,13 @@
 #include <cstdint>
 #include <fmt/format.h>
 
+#include "CreateActorMessage.h"
+
 struct BaseActorValues : public ActorValues
 {
-  using PropertiesVisitor =
-    std::function<void(const char* propName, const char* jsonValue)>;
-
-  void VisitBaseActorValues(BaseActorValues& baseActorValues,
-                            MpChangeForm& changeForm,
-                            const PropertiesVisitor& visitor);
+  void VisitBaseActorValuesAndPercentages(BaseActorValues& baseActorValues,
+                                          MpChangeForm& changeForm,
+                                          CreateActorMessage& message);
 };
 
 BaseActorValues GetBaseActorValues(WorldState* worldState, uint32_t baseId,

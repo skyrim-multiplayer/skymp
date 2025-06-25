@@ -32,11 +32,23 @@ export class SpSnippetService extends ClientListener {
             res = null;
           }
 
-          const message: FinishSpSnippetMessage = {
-            t: MsgType.FinishSpSnippet,
-            returnValue: res,
-            snippetIdx: msg.snippetIdx,
+          if (res !== null
+            && typeof res !== "number"
+            && typeof res !== "string"
+            && typeof res !== "boolean") {
+            logError(this, `Unsupported SpSnippet result type '${typeof res}'`)
+            return;
           }
+
+          const message: FinishSpSnippetMessage = res === null ? {
+            t: MsgType.FinishSpSnippet,
+            snippetIdx: msg.snippetIdx
+          }
+            : {
+              t: MsgType.FinishSpSnippet,
+              returnValue: res,
+              snippetIdx: msg.snippetIdx,
+            }
 
           this.controller.emitter.emit("sendMessage", {
             message: message,
@@ -49,7 +61,7 @@ export class SpSnippetService extends ClientListener {
     });
   }
 
-  private async run(snippet: SpSnippetMessage): Promise<any> {
+  private async run(snippet: SpSnippetMessage): Promise<unknown> {
     const functionLowerCase = snippet.function.toLowerCase();
     const classLowerCase = snippet.class.toLowerCase();
 
@@ -164,7 +176,7 @@ export class SpSnippetService extends ClientListener {
     return arg;
   };
 
-  private async runMethod(snippet: SpSnippetMessage): Promise<any> {
+  private async runMethod(snippet: SpSnippetMessage): Promise<unknown> {
     const selfId = remoteIdToLocalId(snippet.selfId);
     const self = this.sp.Game.getFormEx(selfId);
     if (!self)
@@ -196,7 +208,7 @@ export class SpSnippetService extends ClientListener {
     );
   };
 
-  private async runStatic(snippet: SpSnippetMessage): Promise<any> {
+  private async runStatic(snippet: SpSnippetMessage): Promise<unknown> {
     const papyrusClass = this.spAny[snippet.class];
     return await papyrusClass[snippet.function](
       ...snippet.arguments.map((arg) => this.deserializeArg(arg))

@@ -9,7 +9,7 @@
 
 using Catch::Matchers::ContainsSubstring;
 
-extern espm::Loader l;
+extern espm::Loader& GetEspmLoader();
 
 namespace {
 
@@ -51,13 +51,11 @@ TestReference& CreateMpObjectReference(PartOne& partOne, uint32_t id)
 
 auto GetDummyMessageData()
 {
-  static simdjson::dom::parser parser;
   static uint8_t unparsed[] = { Networking::MinPacketId, '{', '}' };
 
   RawMessageData data;
   data.userId = 1;
   data.unparsed = unparsed;
-  data.parsed = parser.parse(std::string("{}")).value();
   data.unparsedLength = std::size(unparsed);
   return data;
 };
@@ -69,7 +67,7 @@ TEST_CASE("GetItemCount/AddItem", "[Papyrus][ObjectReference][espm]")
 
   CreateMpObjectReference(p, 0xff000000);
 
-  EspmGameObject ironSword(l.GetBrowser().LookupById(0x12eb7));
+  EspmGameObject ironSword(GetEspmLoader().GetBrowser().LookupById(0x12eb7));
   auto& refr = p.worldState.GetFormAt<MpObjectReference>(0xff000000);
 
   auto item = VarValue(&ironSword);
@@ -89,7 +87,7 @@ TEST_CASE("RemoveItem", "[Papyrus][ObjectReference][espm]")
   CreateMpObjectReference(p, 0xff000000);
   CreateMpObjectReference(p, 0xff000001);
 
-  EspmGameObject ironSword(l.GetBrowser().LookupById(0x12eb7));
+  EspmGameObject ironSword(GetEspmLoader().GetBrowser().LookupById(0x12eb7));
   auto& refr = p.worldState.GetFormAt<MpObjectReference>(0xff000000);
   auto& refr2 = p.worldState.GetFormAt<MpObjectReference>(0xff000001);
 
