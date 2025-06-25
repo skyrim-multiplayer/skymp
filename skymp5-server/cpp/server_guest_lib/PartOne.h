@@ -21,6 +21,7 @@
 
 using ProfileId = int32_t;
 class ActionListener;
+class MessageSerializer;
 
 class PartOneSendTargetWrapper : public Networking::ISendTarget
 {
@@ -117,6 +118,8 @@ public:
 
   void SendHostStop(Networking::UserId badHosterUserId,
                     MpObjectReference& remote);
+
+  static MessageSerializer& GetMessageSerializerInstance();
 
 private:
   void Init();

@@ -5,6 +5,8 @@
 #include <nlohmann/json.hpp>
 #include <string>
 
+#include "TeleportMessage.h"
+
 bool MovementValidation::Validate(const NiPoint3& currentPos,
                                   const NiPoint3& currentRot,
                                   const FormDesc& currentCellOrWorld,
@@ -16,15 +18,13 @@ bool MovementValidation::Validate(const NiPoint3& currentPos,
   float maxDistance = 4096;
   if (currentCellOrWorld != newCellOrWorld ||
       (currentPos - newPos).Length() >= maxDistance) {
-    std::string s;
-    s += Networking::MinPacketId;
-    s += nlohmann::json{
-      { "type", "teleport" },
-      { "pos", { currentPos[0], currentPos[1], currentPos[2] } },
-      { "rot", { currentRot[0], currentRot[1], currentRot[2] } },
-      { "worldOrCell", currentCellOrWorld.ToFormId(espmFiles) }
-    }.dump();
-    tgt.Send(reinterpret_cast<uint8_t*>(s.data()), s.length(), true);
+
+    TeleportMessage msg;
+    msg.pos = { newPos[0], newPos[1], newPos[2] };
+    msg.rot = { currentRot[0], currentRot[1], currentRot[2] };
+    msg.worldOrCell = currentCellOrWorld.ToFormId(espmFiles);
+    tgt.Send(msg, true);
+
     return false;
   }
   return true;
