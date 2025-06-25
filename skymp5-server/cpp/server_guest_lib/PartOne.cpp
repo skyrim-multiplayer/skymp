@@ -91,7 +91,7 @@ struct PartOne::Impl
   FakeSendTarget fakeSendTarget;
 
   GamemodeApi::State gamemodeApiState;
-  std::string updateGamemodeDataMsg;
+  std::vector<uint8_t> updateGamemodeDataMsg;
 };
 
 PartOne::PartOne(Networking::ISendTarget* sendTarget)
@@ -534,6 +534,9 @@ void PartOne::NotifyGamemodeApiStateChanged(
   }
 
   pImpl->gamemodeApiState = newState;
+  pImpl->updateGamemodeDataMsg.resize(stream.GetNumberOfBytesUsed());
+  std::copy(stream.GetData(), stream.GetData() + stream.GetNumberOfBytesUsed(),
+            pImpl->updateGamemodeDataMsg.begin());
 }
 
 void PartOne::SetPacketHistoryRecording(Networking::UserId userId, bool enable)
