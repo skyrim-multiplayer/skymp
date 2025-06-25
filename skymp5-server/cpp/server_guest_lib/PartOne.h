@@ -118,7 +118,7 @@ public:
 
   void SendHostStop(Networking::UserId badHosterUserId,
                     MpObjectReference& remote);
-              
+
   static MessageSerializer& GetMessageSerializerInstance();
 
 private:
