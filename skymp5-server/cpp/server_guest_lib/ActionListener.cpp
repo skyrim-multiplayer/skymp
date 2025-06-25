@@ -112,7 +112,8 @@ void ActionListener::OnUpdateMovement(const RawMessageData& rawMsgData,
   auto actor = SendToNeighbours(idx, rawMsgData);
   if (actor) {
     DummyMessageOutput msgOutputDummy;
-    UserMessageOutput msgOutput(partOne.GetSendTarget(), rawMsgData.userId);
+    UserMessageOutput msgOutput(PartOne::GetMessageSerializerInstance(),
+                                partOne.GetSendTarget(), rawMsgData.userId);
 
     bool isMe = partOne.serverState.ActorByUser(rawMsgData.userId) == actor;
 
