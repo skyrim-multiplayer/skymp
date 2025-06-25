@@ -984,6 +984,6 @@ void PartOne::TickDeferredMessages()
 MessageSerializer& PartOne::GetMessageSerializerInstance()
 {
   static auto g_serializer =
-    MessageSerializerFactory::CreateMessageSerializer({});
+    MessageSerializerFactory::CreateMessageSerializer;
   return *g_serializer;
 }
