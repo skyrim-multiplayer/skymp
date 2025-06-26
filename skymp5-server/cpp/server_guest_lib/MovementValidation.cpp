@@ -22,7 +22,7 @@ bool Validate(PartOne& partOne, const NiPoint3& currentPos,
       (currentPos - newPos).SqrLength() >= kSqrMaxDistance) {
 
     // Not doing this to any NPCs at this moment, yet we might consider to
-    bool isMe = partOne.serverState.ActorByUser(userId) == actor;
+    bool isMe = actor && partOne.serverState.ActorByUser(userId) == actor;
     if (isMe) {
       TeleportMessage2 msg;
       msg.pos = { currentPos[0], currentPos[1], currentPos[2] };
