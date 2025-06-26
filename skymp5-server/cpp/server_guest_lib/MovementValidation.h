@@ -6,10 +6,12 @@
 #include <string>
 #include <vector>
 
+class MpActor;
+
 namespace MovementValidation {
-bool Validate(const NiPoint3& currentPos, const NiPoint3& currentRot,
-              const FormDesc& currentCellOrWorld, const NiPoint3& newPos,
-              const FormDesc& newCellOrWorld, Networking::UserId userId,
-              PartOneSendTargetWrapper& sendTarget,
+bool Validate(PartOne& partOne, const NiPoint3& currentPos,
+              const NiPoint3& currentRot, const FormDesc& currentCellOrWorld,
+              const NiPoint3& newPos, const FormDesc& newCellOrWorld,
+              Networking::UserId userId, MpActor* actor,
               const std::vector<std::string>& espmFiles);
 }
