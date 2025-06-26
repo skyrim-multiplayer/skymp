@@ -3,7 +3,6 @@
 #include "ConditionsEvaluator.h"
 #include "ConsoleCommands.h"
 #include "CropRegeneration.h"
-#include "DummyMessageOutput.h"
 #include "Exceptions.h"
 #include "GetBaseActorValues.h"
 #include "HitData.h"
@@ -12,7 +11,6 @@
 #include "MpObjectReference.h"
 #include "MsgType.h"
 #include "Overloaded.h"
-#include "UserMessageOutput.h"
 #include "WorldState.h"
 #include "gamemode_events/CustomEvent.h"
 #include "gamemode_events/EatItemEvent.h"
@@ -111,10 +109,6 @@ void ActionListener::OnUpdateMovement(const RawMessageData& rawMsgData,
 {
   auto actor = SendToNeighbours(idx, rawMsgData);
   if (actor) {
-    DummyMessageOutput msgOutputDummy;
-    UserMessageOutput msgOutput(PartOne::GetMessageSerializerInstance(),
-                                partOne.GetSendTarget(), rawMsgData.userId);
-
     bool isMe = partOne.serverState.ActorByUser(rawMsgData.userId) == actor;
 
     bool teleportFlag = actor->GetTeleportFlag();
@@ -136,8 +130,8 @@ void ActionListener::OnUpdateMovement(const RawMessageData& rawMsgData,
           currentPos, currentRot, currentCellOrWorld,
           teleportFlag ? reallyWrongPos : pos,
           FormDesc::FromFormId(worldOrCell, espmFiles),
-          isMe ? static_cast<IMessageOutput&>(msgOutput)
-               : static_cast<IMessageOutput&>(msgOutputDummy),
+          rawMsgData.userId,
+          partOne.GetSendTarget(),
           espmFiles)) {
       return;
     }
