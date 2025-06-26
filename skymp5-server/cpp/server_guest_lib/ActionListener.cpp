@@ -109,12 +109,10 @@ void ActionListener::OnUpdateMovement(const RawMessageData& rawMsgData,
 {
   auto actor = SendToNeighbours(idx, rawMsgData);
   if (actor) {
-    bool isMe = partOne.serverState.ActorByUser(rawMsgData.userId) == actor;
-
     bool teleportFlag = actor->GetTeleportFlag();
     actor->SetTeleportFlag(false);
 
-    static const NiPoint3 reallyWrongPos = {
+    static const NiPoint3 kInfinityPos = {
       std::numeric_limits<float>::infinity(),
       std::numeric_limits<float>::infinity(),
       std::numeric_limits<float>::infinity()
@@ -127,10 +125,10 @@ void ActionListener::OnUpdateMovement(const RawMessageData& rawMsgData,
     const auto& currentCellOrWorld = actor->GetCellOrWorld();
 
     if (!MovementValidation::Validate(
-          currentPos, currentRot, currentCellOrWorld,
-          teleportFlag ? reallyWrongPos : pos,
+          partOne, currentPos, currentRot, currentCellOrWorld,
+          teleportFlag ? kInfinityPos : pos,
           FormDesc::FromFormId(worldOrCell, espmFiles), rawMsgData.userId,
-          partOne.GetSendTarget(), espmFiles)) {
+          actor, espmFiles)) {
       return;
     }
 
