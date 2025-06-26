@@ -129,10 +129,8 @@ void ActionListener::OnUpdateMovement(const RawMessageData& rawMsgData,
     if (!MovementValidation::Validate(
           currentPos, currentRot, currentCellOrWorld,
           teleportFlag ? reallyWrongPos : pos,
-          FormDesc::FromFormId(worldOrCell, espmFiles),
-          rawMsgData.userId,
-          partOne.GetSendTarget(),
-          espmFiles)) {
+          FormDesc::FromFormId(worldOrCell, espmFiles), rawMsgData.userId,
+          partOne.GetSendTarget(), espmFiles)) {
       return;
     }
 
