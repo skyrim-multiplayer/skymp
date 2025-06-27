@@ -104,7 +104,7 @@ else()
 endif()
 
 # Commit the changes locally
-# git add . && git commit -m "Gather PRs"
+# git add . && git commit -m "Gather PRs" --no-verify
 
 message(STATUS "Commit the changes locally")
 
@@ -121,7 +121,7 @@ else()
 endif()
 
 execute_process(
-    COMMAND git commit -m "Gather PRs"
+    COMMAND git commit -m "Gather PRs" --no-verify
     RESULT_VARIABLE GIT_COMMIT_RESULT
     OUTPUT_VARIABLE GIT_COMMIT_OUTPUT
 )

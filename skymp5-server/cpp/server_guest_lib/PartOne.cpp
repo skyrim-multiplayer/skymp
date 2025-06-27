@@ -18,15 +18,7 @@
 #include "DestroyActorMessage.h"
 #include "HostStopMessage.h"
 #include "SetRaceMenuOpenMessage.h"
-
-namespace {
-MessageSerializer& GetMessageSerializerInstance()
-{
-  static auto g_serializer =
-    MessageSerializerFactory::CreateMessageSerializer();
-  return *g_serializer;
-}
-}
+#include "UpdateGameModeDataMessage.h"
 
 PartOneSendTargetWrapper::PartOneSendTargetWrapper(
   Networking::ISendTarget& underlyingSendTarget_)
@@ -46,7 +38,7 @@ void PartOneSendTargetWrapper::Send(Networking::UserId targetUserId,
 {
   SLNet::BitStream stream;
 
-  GetMessageSerializerInstance().Serialize(message, stream);
+  PartOne::GetMessageSerializerInstance().Serialize(message, stream);
 
   Send(targetUserId,
        reinterpret_cast<Networking::PacketData>(stream.GetData()),
@@ -62,7 +54,7 @@ public:
     std::shared_ptr<IMessageBase> message;
 
     auto deserializeResult =
-      GetMessageSerializerInstance().Deserialize(data, length);
+      PartOne::GetMessageSerializerInstance().Deserialize(data, length);
     nlohmann::json j;
     if (deserializeResult) {
       deserializeResult->message->WriteJson(j);
@@ -99,7 +91,7 @@ struct PartOne::Impl
   FakeSendTarget fakeSendTarget;
 
   GamemodeApi::State gamemodeApiState;
-  std::string updateGamemodeDataMsg;
+  std::vector<uint8_t> updateGamemodeDataMsg;
 };
 
 PartOne::PartOne(Networking::ISendTarget* sendTarget)
@@ -503,38 +495,48 @@ float PartOne::CalculateDamage(const MpActor& aggressor, const MpActor& target,
 void PartOne::NotifyGamemodeApiStateChanged(
   const GamemodeApi::State& newState) noexcept
 {
-  nlohmann::json j{ { "type", "updateGamemodeData" },
-                    { "eventSources", nlohmann::json::object() },
-                    { "updateOwnerFunctions", nlohmann::json::object() } };
+  UpdateGameModeDataMessage msg;
+
   for (auto [eventName, eventSourceInfo] : newState.createdEventSources) {
-    j["eventSources"][eventName] = eventSourceInfo.functionBody;
+    msg.eventSources.push_back({ eventName, eventSourceInfo.functionBody });
   }
+
   for (auto [propertyName, propertyInfo] : newState.createdProperties) {
+    GamemodeValuePair updateOwnerFunctionsEntry;
+    updateOwnerFunctionsEntry.name = propertyName;
+    updateOwnerFunctionsEntry.content =
+      propertyInfo.isVisibleByOwner ? propertyInfo.updateOwner : "";
+    msg.updateOwnerFunctions.push_back(updateOwnerFunctionsEntry);
+
     //  From docs: isVisibleByNeighbors considered to be always false for
     //  properties with `isVisibleByOwner == false`, in that case, actual
     //  flag value is ignored.
+
     const bool actuallyVisibleByNeighbor =
       propertyInfo.isVisibleByNeighbors && propertyInfo.isVisibleByOwner;
 
-    j["updateOwnerFunctions"][propertyName] =
-      propertyInfo.isVisibleByOwner ? propertyInfo.updateOwner : "";
-    j["updateNeighborFunctions"][propertyName] =
+    GamemodeValuePair updateNeighborFunctionsEntry;
+    updateNeighborFunctionsEntry.name = propertyName;
+    updateNeighborFunctionsEntry.content =
       actuallyVisibleByNeighbor ? propertyInfo.updateNeighbor : "";
+    msg.updateNeighborFunctions.push_back(updateNeighborFunctionsEntry);
   }
 
-  std::string m;
-  m += Networking::MinPacketId;
-  m += j.dump();
-  pImpl->updateGamemodeDataMsg = m;
+  SLNet::BitStream stream;
+  GetMessageSerializerInstance().Serialize(msg, stream);
 
   for (Networking::UserId i = 0; i <= serverState.maxConnectedId; ++i) {
-    if (!serverState.IsConnected(i))
-      continue;
-    GetSendTarget().Send(i, reinterpret_cast<Networking::PacketData>(m.data()),
-                         m.size(), true);
+    if (serverState.IsConnected(i)) {
+      GetSendTarget().Send(
+        i, reinterpret_cast<Networking::PacketData>(stream.GetData()),
+        stream.GetNumberOfBytesUsed(), true);
+    }
   }
 
   pImpl->gamemodeApiState = newState;
+  pImpl->updateGamemodeDataMsg.resize(stream.GetNumberOfBytesUsed());
+  std::copy(stream.GetData(), stream.GetData() + stream.GetNumberOfBytesUsed(),
+            pImpl->updateGamemodeDataMsg.begin());
 }
 
 void PartOne::SetPacketHistoryRecording(Networking::UserId userId, bool enable)
@@ -980,4 +982,11 @@ void PartOne::TickDeferredMessages()
       channel.clear();
     }
   }
+}
+
+MessageSerializer& PartOne::GetMessageSerializerInstance()
+{
+  static auto g_serializer =
+    MessageSerializerFactory::CreateMessageSerializer();
+  return *g_serializer;
 }

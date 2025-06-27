@@ -3,7 +3,6 @@
 #include "ConditionsEvaluator.h"
 #include "ConsoleCommands.h"
 #include "CropRegeneration.h"
-#include "DummyMessageOutput.h"
 #include "Exceptions.h"
 #include "GetBaseActorValues.h"
 #include "HitData.h"
@@ -12,7 +11,6 @@
 #include "MpObjectReference.h"
 #include "MsgType.h"
 #include "Overloaded.h"
-#include "UserMessageOutput.h"
 #include "WorldState.h"
 #include "gamemode_events/CustomEvent.h"
 #include "gamemode_events/EatItemEvent.h"
@@ -111,15 +109,10 @@ void ActionListener::OnUpdateMovement(const RawMessageData& rawMsgData, const Up
 {
   auto actor = SendToNeighbours(msg.idx, rawMsgData);
   if (actor) {
-    DummyMessageOutput msgOutputDummy;
-    UserMessageOutput msgOutput(partOne.GetSendTarget(), rawMsgData.userId);
-
-    bool isMe = partOne.serverState.ActorByUser(rawMsgData.userId) == actor;
-
     bool teleportFlag = actor->GetTeleportFlag();
     actor->SetTeleportFlag(false);
 
-    static const NiPoint3 reallyWrongPos = {
+    static const NiPoint3 kInfinityPos = {
       std::numeric_limits<float>::infinity(),
       std::numeric_limits<float>::infinity(),
       std::numeric_limits<float>::infinity()
@@ -131,13 +124,22 @@ void ActionListener::OnUpdateMovement(const RawMessageData& rawMsgData, const Up
     const auto& currentRot = actor->GetAngle();
     const auto& currentCellOrWorld = actor->GetCellOrWorld();
 
-    if (!MovementValidation::Validate(
-          currentPos, currentRot, currentCellOrWorld,
-          teleportFlag ? reallyWrongPos : NiPoint3{msg.data.pos[0], msg.data.pos[1], msg.data.pos[2]},
-          FormDesc::FromFormId(msg.data.worldOrCell, espmFiles),
-          isMe ? static_cast<IMessageOutput&>(msgOutput)
-               : static_cast<IMessageOutput&>(msgOutputDummy),
-          espmFiles)) {
+    // if (!MovementValidation::Validate(
+    //       currentPos, currentRot, currentCellOrWorld,
+    //       teleportFlag ? reallyWrongPos : NiPoint3{msg.data.pos[0], msg.data.pos[1], msg.data.pos[2]},
+    //       FormDesc::FromFormId(msg.data.worldOrCell, espmFiles),
+    //       isMe ? static_cast<IMessageOutput&>(msgOutput)
+    //            : static_cast<IMessageOutput&>(msgOutputDummy),
+    //       espmFiles)) {
+    //       partOne, currentPos, currentRot, currentCellOrWorld,
+    //       teleportFlag ? kInfinityPos : pos,
+    //       FormDesc::FromFormId(worldOrCell, espmFiles), rawMsgData.userId,
+    //       actor, espmFiles)) {
+    //   return;
+    // }
+
+    if (!MovementValidation::Validate(partOne, currentPos, currentRot, currentCellOrWorld, teleportFlag ? kInfinityPos : NiPoint3{msg.data.pos[0], msg.data.pos[1], msg.data.pos[2]}, 
+        FormDesc::FromFormId(msg.data.worldOrCell, espmFiles), rawMsgData.userId, actor, espmFiles)) {
       return;
     }
 
@@ -449,9 +451,13 @@ void ActionListener::OnHostAttempt(const RawMessageData& rawMsgData, const HostM
     if (remoteAsActor && longFormId < 0xff000000) {
       longFormId += 0x100000000;
     }
+
     HostStartMessage message;
     message.target = longFormId;
     partOne.GetSendTarget().Send(rawMsgData.userId, message, true);
+
+    // Otherwise, health percentage would remain unsynced until someone hits
+    // npc
     auto formId = remote.GetFormId();
     partOne.worldState.SetTimer(std::chrono::seconds(1)).Then([this, formId](Viet::Void) {
       auto& remote = partOne.worldState.GetFormAt<MpActor>(formId);
@@ -484,11 +490,15 @@ void ActionListener::OnCustomEvent(const RawMessageData& rawMsgData, const Custo
   if (msg.eventName.empty() || msg.eventName[0] != '_') {
     return;
   }
+
   nlohmann::json jsonArray = nlohmann::json::array();
+
   for (auto& arg : msg.argsJsonDumps) {
     jsonArray.push_back(nlohmann::json::parse(arg));
   }
+
   const std::string jsonArrayDump = jsonArray.dump();
+
   for (auto& listener : partOne.GetListeners()) {
     CustomEvent customEvent(ac->GetFormId(), msg.eventName, jsonArrayDump);
     listener->OnMpApiEvent(customEvent);

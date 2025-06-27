@@ -19,6 +19,9 @@ namespace DiscordErrors {
   export const unknownMember = 10007;
 }
 
+// See also NetworkingCombined.h
+// In NetworkingCombined.h, we implement a hack to prevent the soul-transmission bug
+// TODO: reimplement Login system. Preferably, in C++ with clear data flow.
 export class Login implements System {
   systemName = "Login";
 

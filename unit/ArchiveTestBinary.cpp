@@ -87,9 +87,13 @@ struct ExtendedVariantStruct
 };
 
 using NestedVariant = std::variant<int, std::variant<std::string, double>>;
-struct NestedVariantStruct {
+struct NestedVariantStruct
+{
   template <class Archive>
-  void Serialize(Archive& archive) { archive.Serialize("args", args); }
+  void Serialize(Archive& archive)
+  {
+    archive.Serialize("args", args);
+  }
   std::vector<NestedVariant> args;
 };
 
