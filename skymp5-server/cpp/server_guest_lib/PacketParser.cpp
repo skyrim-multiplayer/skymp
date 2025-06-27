@@ -11,13 +11,6 @@
 #include <simdjson.h>
 #include <slikenet/BitStream.h>
 
-namespace FormIdCasts {
-uint32_t LongToNormal(uint64_t longFormId)
-{
-  return static_cast<uint32_t>(longFormId % 0x100000000);
-}
-}
-
 struct PacketParser::Impl
 {
   simdjson::dom::parser simdjsonParser;
