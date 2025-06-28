@@ -173,7 +173,7 @@ void PapyrusGame::RaceMenuHelper(VarValue& self, const char* funcName,
   if (auto actor = compatibilityPolicy->GetDefaultActor(
         GetName(), funcName, self.GetMetaStackId())) {
     actor->SetRaceMenuOpen(true);
-    SpSnippet(GetName(), funcName, serializedArgs.data())
+    SpSnippet(GetName(), funcName, serializedArgs)
       .Execute(actor, SpSnippetMode::kNoReturnResult);
   }
 }

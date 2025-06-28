@@ -14,9 +14,8 @@ import { HostStartMessage } from "../messages/hostStartMessage";
 import { HostStopMessage } from "../messages/hostStopMessage";
 import { SetInventoryMessage } from "../messages/setInventoryMessage";
 import { OpenContainerMessage } from "../messages/openContainerMessage";
-import { ChangeValuesMessage } from "../messages/changeValues";
+import { ChangeValuesMessage } from "../messages/changeValuesMessage";
 import { CreateActorMessage } from "../messages/createActorMessage";
-import { CustomPacketMessage2 } from "../messages/customPacketMessage2";
 import { DestroyActorMessage } from "../messages/destroyActorMessage";
 import { SetRaceMenuOpenMessage } from "../messages/setRaceMenuOpenMessage";
 import { SpSnippetMessage } from "../messages/spSnippetMessage";
@@ -37,7 +36,11 @@ import { QueryBlockSetInventoryEvent } from "./queryBlockSetInventoryEvent";
 import { QueryKeyCodeBindings } from "./queryKeyCodeBindings";
 import { SpellCastMessage } from "../messages/spellCastMessage";
 import { UpdateAnimVariablesMessage } from "../messages/updateAnimVariablesMessage";
+import { CustomPacketMessage } from "../messages/customPacketMessage";
+
 import { AnyRawMessageEvent } from "./anyRawMessageEvent";
+import { NicknameCreateEvent } from "./nicknameCreateEvent";
+import { NicknameDestroyEvent } from "./nicknameDestroyEvent";
 
 type EventTypes = {
     'gameLoad': [GameLoadEvent],
@@ -66,14 +69,14 @@ type EventTypes = {
     'hostStopMessage': [ConnectionMessage<HostStopMessage>],
     'setInventoryMessage': [ConnectionMessage<SetInventoryMessage>],
     'createActorMessage': [ConnectionMessage<CreateActorMessage>],
-    'customPacketMessage2': [ConnectionMessage<CustomPacketMessage2>],
     'destroyActorMessage': [ConnectionMessage<DestroyActorMessage>],
     'setRaceMenuOpenMessage': [ConnectionMessage<SetRaceMenuOpenMessage>],
     'spSnippetMessage': [ConnectionMessage<SpSnippetMessage>],
     'updateGamemodeDataMessage': [ConnectionMessage<UpdateGamemodeDataMessage>],
     'updatePropertyMessage': [ConnectionMessage<UpdatePropertyMessage>],
     'deathStateContainerMessage': [ConnectionMessage<DeathStateContainerMessage>],
-    'teleportMessage2': [ConnectionMessage<TeleportMessage2>]
+    'teleportMessage2': [ConnectionMessage<TeleportMessage2>],
+    'customPacketMessage': [ConnectionMessage<CustomPacketMessage>]
 
     'browserWindowLoaded': [BrowserWindowLoadedEvent],
     'authAttempt': [AuthAttemptEvent],
@@ -82,7 +85,9 @@ type EventTypes = {
     'anyRawMessage': [AnyRawMessageEvent],
     'newLocalLagValueCalculated': [NewLocalLagValueCalculatedEvent],
     'queryBlockSetInventoryEvent': [QueryBlockSetInventoryEvent],
-    'queryKeyCodeBindings': [QueryKeyCodeBindings]
+    'queryKeyCodeBindings': [QueryKeyCodeBindings],
+    'nicknameCreate': [NicknameCreateEvent],
+    'nicknameDestroy': [NicknameDestroyEvent]
 }
 
 // https://blog.makerx.com.au/a-type-safe-event-emitter-in-node-js/

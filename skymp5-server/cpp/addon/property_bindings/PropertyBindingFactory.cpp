@@ -20,6 +20,7 @@
 #include "PercentagesBinding.h"
 #include "PosBinding.h"
 #include "ProfileIdBinding.h"
+#include "RespawnPercentagesBinding.h"
 #include "SpawnDelayBinding.h"
 #include "SpawnPointBinding.h"
 #include "TemplateChainBinding.h"
@@ -55,6 +56,7 @@ PropertyBindingFactory::CreateStandardPropertyBindings()
   result["spawnDelay"] = std::make_shared<SpawnDelayBinding>();
   result["templateChain"] = std::make_shared<TemplateChainBinding>();
   result["lastAnimEvent"] = std::make_shared<LastAnimEventBinding>();
+  result["respawnPercentages"] = std::make_shared<RespawnPercentagesBinding>();
   return result;
 }
 

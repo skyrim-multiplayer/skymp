@@ -20,9 +20,9 @@ struct ChangeValuesMessage : public MessageBase<ChangeValuesMessage>
     }
 
     // percentages
-    float health = 0;
-    float magicka = 0;
-    float stamina = 0;
+    std::optional<float> health;
+    std::optional<float> magicka;
+    std::optional<float> stamina;
   };
 
   template <class Archive>

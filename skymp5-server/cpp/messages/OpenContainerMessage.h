@@ -1,7 +1,6 @@
 #pragma once
 #include "MessageBase.h"
 #include "MsgType.h"
-#include <array>
 #include <type_traits>
 
 struct OpenContainerMessage : public MessageBase<OpenContainerMessage>

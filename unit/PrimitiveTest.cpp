@@ -4,7 +4,7 @@
 #include "Primitive.h"
 #include "libespm/Loader.h"
 
-extern espm::Loader l;
+extern espm::Loader& GetEspmLoader();
 
 std::string Str(NiPoint3 p)
 {
@@ -16,7 +16,7 @@ std::string Str(NiPoint3 p)
 
 TEST_CASE("GetPrimitiveVertices", "[primitive][espm]")
 {
-  auto& br = l.GetBrowser();
+  auto& br = GetEspmLoader().GetBrowser();
   auto refr = espm::Convert<espm::REFR>(br.LookupById(0xeeb).rec);
   REQUIRE(refr);
 
@@ -33,7 +33,7 @@ TEST_CASE("GetPrimitiveVertices", "[primitive][espm]")
 
 TEST_CASE("IsInsidePrimitive", "[primitive][espm]")
 {
-  auto& br = l.GetBrowser();
+  auto& br = GetEspmLoader().GetBrowser();
   auto refr = espm::Convert<espm::REFR>(br.LookupById(0xeeb).rec);
   REQUIRE(refr);
 

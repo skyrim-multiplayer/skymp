@@ -89,8 +89,16 @@ void ReadBookEvent::OnFireBlocked(WorldState* worldState)
 
   std::vector<VarValue> arguments = { aSpell };
 
+  if (actor->IsSpellLearned(spellOrSkillFormId)) {
+    spdlog::info(
+      "ReadBookEvent::OnFireBlocked - Actor {:x} reading book {:x}: "
+      "Spell already learned {:x}, not executing RemoveSpell SpSnippet",
+      actor->GetFormId(), baseId, spellOrSkillFormId);
+    return;
+  }
+
   SpSnippet("Actor", "RemoveSpell",
-            SpSnippetFunctionGen::SerializeArguments(arguments).data(),
+            SpSnippetFunctionGen::SerializeArguments(arguments),
             actor->GetFormId())
     .Execute(actor, SpSnippetMode::kNoReturnResult);
 }

@@ -1,6 +1,7 @@
 #pragma once
 #include "AnimationData.h"
 #include "Appearance.h"
+#include "Equipment.h"
 #include "GetBaseActorValues.h"
 #include "MpObjectReference.h"
 #include "libespm/espm.h"
@@ -37,9 +38,8 @@ public:
 
   std::unique_ptr<const Appearance> GetAppearance() const;
   const std::string& GetAppearanceAsJson();
-  const std::string& GetEquipmentAsJson() const;
   std::string GetLastAnimEventAsJson() const;
-  Equipment GetEquipment() const;
+  const Equipment& GetEquipment() const;
   std::array<std::optional<Inventory::Entry>, 2> GetEquippedWeapon() const;
   uint32_t GetRaceId() const;
   bool IsWeaponDrawn() const;
@@ -50,12 +50,20 @@ public:
   const ActiveMagicEffectsMap& GetActiveMagicEffects() const;
   int32_t GetProfileId() const;
 
+  float GetHealthRespawnPercentage() const;
+  float GetMagickaRespawnPercentage() const;
+  float GetStaminaRespawnPercentage() const;
+
   bool ShouldSkipRestoration() const noexcept;
   void UpdateNextRestorationTime(std::chrono::seconds duration) noexcept;
 
   void SetRaceMenuOpen(bool isOpen);
   void SetAppearance(const Appearance* newAppearance);
-  void SetEquipment(const std::string& jsonString);
+  void SetEquipment(const Equipment& newEquipment);
+
+  void SetHealthRespawnPercentage(float percentage);
+  void SetMagickaRespawnPercentage(float percentage);
+  void SetStaminaRespawnPercentage(float percentage);
 
   void AddToFaction(Faction faction, bool lazyLoad = true);
   bool IsInFaction(FormDesc factionForm, bool lazyLoad = true);
@@ -63,12 +71,12 @@ public:
                                    bool lazyLoad = true);
   void RemoveFromFaction(FormDesc factionForm, bool lazyLoad = true);
 
-  void VisitProperties(const PropertiesVisitor& visitor,
+  void VisitProperties(CreateActorMessage& message,
                        VisitPropertiesMode mode) override;
   void Disable() override;
 
   void SendToUser(const IMessageBase& message, bool reliable);
-  void SendToUserDeferred(const void* data, size_t size, bool reliable,
+  void SendToUserDeferred(const IMessageBase& message, bool reliable,
                           int deferredChannelId,
                           bool overwritePreviousChannelMessages);
 
@@ -105,9 +113,12 @@ public:
   void ResolveSnippet(uint32_t snippetIdx, VarValue v);
   void SetPercentages(const ActorValues& actorValues,
                       MpActor* aggressor = nullptr);
-  void NetSendChangeValues(const ActorValues& actorValues);
-  void NetSetPercentages(const ActorValues& actorValues,
-                         MpActor* aggressor = nullptr);
+  void NetSendChangeValues(
+    const ActorValues& actorValues,
+    const std::optional<std::vector<espm::ActorValue>>& avFilter);
+  void NetSetPercentages(
+    const ActorValues& actorValues, MpActor* aggressor,
+    const std::optional<std::vector<espm::ActorValue>>& avFilter);
 
   std::chrono::steady_clock::time_point GetLastAttributesPercentagesUpdate();
   std::chrono::steady_clock::time_point GetLastHitTime();
@@ -136,6 +147,9 @@ public:
   void RestoreActorValue(espm::ActorValue av, float value);
   void DamageActorValue(espm::ActorValue av, float value);
   void SetActorValue(espm::ActorValue actorValue, float value);
+
+  // TODO: only used in legacy MGEF implementation, remove when MGEF is
+  // rewritten
   void SetActorValues(const ActorValues& actorValues);
 
   BaseActorValues GetBaseValues();

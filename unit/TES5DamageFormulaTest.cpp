@@ -8,6 +8,19 @@
 #include "formulas/TES5DamageFormula.h"
 #include "libespm/Loader.h"
 
+namespace {
+const auto kExtraWornTrue = [] {
+  Inventory::ExtraData extra;
+  extra.worn_ = true;
+  return extra;
+}();
+const auto kExtraWornFalse = [] {
+  Inventory::ExtraData extra;
+  extra.worn_ = false;
+  return extra;
+}();
+}
+
 PartOne& GetPartOne();
 extern espm::Loader l;
 using namespace std::chrono_literals;
@@ -20,9 +33,9 @@ TEST_CASE("Formula takes weapon damage into account", "[TES5DamageFormula]")
   p.SetUserActor(0, 0xff000000);
   auto& ac = p.worldState.GetFormAt<MpActor>(0xff000000);
 
-  ac.SetEquipment(R"({"numChanges": 0, "inv": {"entries": []}})");
+  ac.SetEquipment(Equipment());
 
-  ActionListener::RawMessageData rawMsgData;
+  RawMessageData rawMsgData;
   rawMsgData.userId = 0;
   HitData hitData;
   hitData.target = 0x14;
@@ -44,7 +57,7 @@ TEST_CASE("Damage is reduced based on target's armor", "[TES5DamageFormula]")
   p.SetUserActor(0, 0xff000000);
   auto& ac = p.worldState.GetFormAt<MpActor>(0xff000000);
 
-  ActionListener::RawMessageData rawMsgData;
+  RawMessageData rawMsgData;
   rawMsgData.userId = 0;
   HitData hitData;
   hitData.target = 0x14;
@@ -55,48 +68,26 @@ TEST_CASE("Damage is reduced based on target's armor", "[TES5DamageFormula]")
   // 77387 = 0x12e4b: Iron Boots, rating = 10
   // 77389 = 0x12e4d: Iron Helmet, rating = 15
   // Total rating for worn armor: 10 + 10 = 20
-  ac.SetEquipment(R"(
-    {
-      "numChanges": 0,
-      "inv": {
-        "entries": [
-          {
-            "baseId": 77382,
-            "count": 1,
-            "worn": true
-          },
-          {
-            "baseId": 77387,
-            "count": 1,
-            "worn": true
-          },
-          {
-            "baseId": 77389,
-            "count": 1,
-            "worn": false
-          }
-        ]
-      }
-    }
-  )");
+
+  Equipment eq;
+  eq.inv.entries.push_back(Inventory::Entry(77382, 1, kExtraWornTrue));
+  eq.inv.entries.push_back(Inventory::Entry(77387, 1, kExtraWornTrue));
+  eq.inv.entries.push_back(Inventory::Entry(77389, 1, kExtraWornFalse));
+  ac.SetEquipment(eq);
 
   TES5DamageFormula formula{};
   // 4 * 0.01 * (100 - 20 * .12) = 3,904
   REQUIRE(formula.CalculateDamage(ac, ac, hitData) == 3.903999805f);
 
-  std::string s = R"({
-            "baseId": 77382,
-            "count": 1,
-            "worn": true
-          })";
-  std::string entri = R"(,)" + s;
+  auto repeatativeEntry = Inventory::Entry(77382, 1, kExtraWornTrue);
+  Equipment eq2;
 
-  for (int i = 0; i < 69; i++) {
-    s += entri;
+  for (int i = 0; i < 70; i++) {
+    eq2.inv.entries.push_back(repeatativeEntry);
   }
 
   // Total rating for worn armor: 10 * 70 = 700
-  ac.SetEquipment(R"({"numChanges": 0, "inv": {"entries": [)" + s + R"(]}})");
+  ac.SetEquipment(eq2);
 
   // Armor rating is 700 * 0.12% = 84%
   // But fMaxArmorRating = 80%
@@ -116,9 +107,9 @@ TEST_CASE("Formula is race-dependent for unarmed attack",
   p.SetUserActor(0, 0xff000000);
   // Nord bu default
   auto& ac = p.worldState.GetFormAt<MpActor>(0xff000000);
-  ac.SetEquipment(R"({"numChanges": 0, "inv": {"entries": []}})");
+  ac.SetEquipment(Equipment());
 
-  ActionListener::RawMessageData rawMsgData;
+  RawMessageData rawMsgData;
   rawMsgData.userId = 0;
   HitData hitData;
   hitData.target = 0x14;

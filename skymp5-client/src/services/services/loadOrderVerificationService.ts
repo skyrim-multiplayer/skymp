@@ -1,4 +1,4 @@
-import { Game, Utility, HttpClient, printConsole, createText } from "skyrimPlatform";
+import { Game, Utility, HttpClient, printConsole, createText, setTextSize } from "skyrimPlatform";
 import { getScreenResolution } from "../../view/formView";
 import { ClientListener, CombinedController, Sp } from "./clientListener";
 import { Mod } from "../messages_http/serverManifest";
@@ -102,6 +102,7 @@ export class LoadOrderVerificationService extends ClientListener {
     const { width, height } = getScreenResolution();
     this.resetText();
     const statusTextId = createText(width / 2, height / 2, text, color);
+    setTextSize(statusTextId, 0.5);
     this.setState({ statusTextId });
     if (clearDelay) {
       Utility.wait(clearDelay).then(() => this.resetText());

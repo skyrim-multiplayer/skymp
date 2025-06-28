@@ -3,6 +3,7 @@
 #include <algorithm>
 
 #include "libespm/RecordHeaderAccess.h"
+#include <algorithm>
 
 namespace espm {
 

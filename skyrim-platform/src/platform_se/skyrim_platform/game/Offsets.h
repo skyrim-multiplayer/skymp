@@ -9,92 +9,58 @@ namespace Offsets {
 const uintptr_t BaseAddress = Offsets::BaseAddress;
 
 namespace Hooks {
-#ifdef SKYRIMSE
-inline REL::Relocation<std::uintptr_t> VPrint{ REL::ID(50180), 0x163 };
-inline REL::Relocation<std::uintptr_t> FrameUpdate{ REL::ID(35565), 0x53 };
-inline REL::Relocation<std::uintptr_t> SendEvent{ REL::ID(98077) };
-inline REL::Relocation<std::uintptr_t> DrawSheatheWeaponPC{ REL::ID(40232) };
-inline REL::Relocation<std::uintptr_t> DrawSheatheWeaponActor{ REL::ID(
-  36289) };
-inline REL::Relocation<std::uintptr_t> SendAnimation{ REL::ID(37020) };
-inline REL::Relocation<std::uintptr_t> QueueNinodeUpdate{ REL::ID(39181) };
-inline REL::Relocation<std::uintptr_t> ApplyMasksToRenderTargets{ REL::ID(
-  26454) };
-inline REL::Relocation<std::uintptr_t> RenderCursorMenu{ REL::ID(32867) };
-#else
-inline REL::Relocation<std::uintptr_t> VPrint{ REL::ID(51110), 0x300 };
-inline REL::Relocation<std::uintptr_t> FrameUpdate{ REL::ID(36564), 0x6e };
-inline REL::Relocation<std::uintptr_t> SendEvent{ REL::ID(104800) };
-inline REL::Relocation<std::uintptr_t> DrawSheatheWeaponPC{ REL::ID(41235) };
-inline REL::Relocation<std::uintptr_t> DrawSheatheWeaponActor{ REL::ID(
-  37279) };
-inline REL::Relocation<std::uintptr_t> SendAnimation{ REL::ID(38048) };
-inline REL::Relocation<std::uintptr_t> QueueNinodeUpdate{ REL::ID(40255) };
-inline REL::Relocation<std::uintptr_t> ApplyMasksToRenderTargets{ REL::ID(
-  27040) };
-inline REL::Relocation<std::uintptr_t> RenderCursorMenu{ REL::ID(33632) };
-#endif
+inline REL::Relocation<std::uintptr_t> VPrint{
+  RELOCATION_ID(50180, 51110), REL::VariantOffset(0x163, 0x300, 0x163)
+};
+inline REL::Relocation<std::uintptr_t> FrameUpdate{
+  RELOCATION_ID(35565, 36564), REL::VariantOffset(0x53, 0x6e, 0x68)
+};
+inline REL::Relocation<std::uintptr_t> SendEvent{ RELOCATION_ID(98077,
+                                                                104800) };
+inline REL::Relocation<std::uintptr_t> DrawSheatheWeaponPC{ RELOCATION_ID(
+  40232, 41235) };
+inline REL::Relocation<std::uintptr_t> DrawSheatheWeaponActor{ RELOCATION_ID(
+  36289, 37279) };
+inline REL::Relocation<std::uintptr_t> SendAnimation{ RELOCATION_ID(37020,
+                                                                    38048) };
+inline REL::Relocation<std::uintptr_t> QueueNinodeUpdate{ RELOCATION_ID(
+  39181, 40255) };
+inline REL::Relocation<std::uintptr_t> ApplyMasksToRenderTargets{
+  RELOCATION_ID(26454, 27040)
+};
+inline REL::Relocation<std::uintptr_t> RenderCursorMenu{ RELOCATION_ID(
+  32867, 33632) };
 }
 
 namespace EventSource {
-#ifdef SKYRIMSE
-inline constexpr REL::ID ActorKill(37390);
-inline constexpr REL::ID BooksRead(17470);
-inline constexpr REL::ID CriticalHit(37726);
-inline constexpr REL::ID DisarmedEvent(37392);
-inline constexpr REL::ID DragonSoulsGained(37571);
-inline constexpr REL::ID ItemHarvested(14704);
-inline constexpr REL::ID LevelIncrease(39247);
-inline constexpr REL::ID LocationDiscovery(40056);
-inline constexpr REL::ID ShoutAttack(40060);
-inline constexpr REL::ID SkillIncrease(39248);
-inline constexpr REL::ID SoulsTrapped(37916);
-inline constexpr REL::ID SpellsLearned(37917);
-#else
-inline constexpr REL::ID ActorKill(38338);
-inline constexpr REL::ID BooksRead(17865);
-inline constexpr REL::ID CriticalHit(38671);
-inline constexpr REL::ID DisarmedEvent(38340);
-inline constexpr REL::ID DragonSoulsGained(38520);
-inline constexpr REL::ID ItemHarvested(14875);
-inline constexpr REL::ID LevelIncrease(40319);
-inline constexpr REL::ID LocationDiscovery(41067);
-inline constexpr REL::ID ShoutAttack(41071);
-inline constexpr REL::ID SkillIncrease(40320);
-inline constexpr REL::ID SoulsTrapped(38873);
-inline constexpr REL::ID SpellsLearned(38874);
-#endif
+inline REL::ID ActorKill(REL::Relocate(37390, 38338));
+inline REL::ID BooksRead(REL::Relocate(17470, 17865));
+inline REL::ID CriticalHit(REL::Relocate(37726, 38671));
+inline REL::ID DisarmedEvent(REL::Relocate(37392, 38340));
+inline REL::ID DragonSoulsGained(REL::Relocate(37571, 38520));
+inline REL::ID ItemHarvested(REL::Relocate(14704, 14875));
+inline REL::ID LevelIncrease(REL::Relocate(39247, 40319));
+inline REL::ID LocationDiscovery(REL::Relocate(40056, 41067));
+inline REL::ID ShoutAttack(REL::Relocate(40060, 41071));
+inline REL::ID SkillIncrease(REL::Relocate(39248, 40320));
+inline REL::ID SoulsTrapped(REL::Relocate(37916, 38873));
+inline REL::ID SpellsLearned(REL::Relocate(37917, 38874));
 }
 
 namespace BSRenderManager {
-#ifdef SKYRIMSE
-inline constexpr REL::ID Singleton(524907);
-#else
-inline constexpr REL::ID Singleton(411393);
-#endif
+inline REL::ID Singleton(REL::Relocate(524907, 411393));
 }
 
 namespace MenuScreenData {
-#ifdef SKYRIMSE
-inline constexpr REL::ID Singleton(517043);
-#else
-inline constexpr REL::ID Singleton(403551);
-#endif
+inline REL::ID Singleton(REL::Relocate(517043, 403551));
 }
 
-#ifdef SKYRIMSE
-inline constexpr REL::ID WinMain(35545);
-#else
-inline constexpr REL::ID WinMain(36544);
-#endif
+inline REL::ID WinMain(REL::Relocate(35545, 36544));
 
 inline RE::ObjectRefHandle GetInvalidRefHandle()
 {
-#ifdef SKYRIMSE
-  REL::Relocation<RE::ObjectRefHandle*> handle{ REL::ID(514164) };
-#else
-  REL::Relocation<RE::ObjectRefHandle*> handle{ REL::ID(400312) };
-#endif
+  REL::Relocation<RE::ObjectRefHandle*> handle{ REL::ID(
+    REL::Relocate(514164, 400312)) };
   return *handle;
 }
 
@@ -105,11 +71,7 @@ inline RE::ObjectRefHandle GetInvalidRefHandle()
 inline float Unknown(void* unk1, void* unk2, RE::TESObjectREFR* obj)
 {
   using func_t = decltype(&Unknown); // 55622
-#ifdef SKYRIMSE
-  REL::Relocation<func_t> func{ REL::ID(55622) };
-#else
-  REL::Relocation<func_t> func{ REL::ID(56151) };
-#endif
+  REL::Relocation<func_t> func{ REL::ID(REL::Relocate(55622, 56151)) };
   return func(unk1, unk2, obj);
 }
 
@@ -117,11 +79,7 @@ inline void PushActorAway(void* vm, StackID stackId, RE::Actor* self,
                           RE::Actor* targetActor, float magnitude)
 {
   using func_t = decltype(&PushActorAway);
-#ifdef SKYRIMSE
-  REL::Relocation<func_t> func{ REL::ID(55682) };
-#else
-  REL::Relocation<func_t> func{ REL::ID(56213) };
-#endif
+  REL::Relocation<func_t> func{ REL::ID(REL::Relocate(55682, 56213)) };
   func(vm, stackId, self, targetActor, magnitude);
 }
 
@@ -141,12 +99,7 @@ public:
     using func_t =
       decltype(&TESDataHandlerExtension::CreateReferenceAtLocationImpl);
 
-    int id;
-#ifdef SKYRIMSE
-    id = 13625;
-#else
-    id = 13723;
-#endif
+    int id = REL::Relocate(13625, 13723);
 
     REL::Relocation<func_t> func{ REL::ID(id) };
     return func(this, a_base, a_location, a_rotation, a_targetCell,

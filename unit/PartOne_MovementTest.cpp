@@ -91,17 +91,17 @@ TEST_CASE("UpdateMovement", "[PartOne]")
   // streaming)
   REQUIRE(std::find_if(partOne.Messages().begin(), partOne.Messages().end(),
                        [&](auto m) {
-                         return m.j["type"] == "createActor" &&
+                         return m.j["t"] == MsgType::CreateActor &&
                            m.j["idx"] == 1 && m.reliable && m.userId == 0;
                        }) != partOne.Messages().end());
   REQUIRE(std::find_if(partOne.Messages().begin(), partOne.Messages().end(),
                        [&](auto m) {
-                         return m.j["type"] == "createActor" &&
+                         return m.j["t"] == MsgType::CreateActor &&
                            m.j["idx"] == 0 && m.reliable && m.userId == 1;
                        }) != partOne.Messages().end());
   REQUIRE(std::find_if(partOne.Messages().begin(), partOne.Messages().end(),
                        [&](auto m) {
-                         return m.j["type"] == "createActor" &&
+                         return m.j["t"] == MsgType::CreateActor &&
                            m.j["idx"] == 1 && m.reliable && m.userId == 1;
                        }) != partOne.Messages().end());
 
@@ -124,12 +124,12 @@ TEST_CASE("UpdateMovement", "[PartOne]")
   REQUIRE(partOne.Messages().size() == 2);
   REQUIRE(std::find_if(partOne.Messages().begin(), partOne.Messages().end(),
                        [&](auto m) {
-                         return m.j["type"] == "destroyActor" &&
+                         return m.j["t"] == MsgType::DestroyActor &&
                            m.j["idx"] == 1 && m.reliable && m.userId == 0;
                        }) != partOne.Messages().end());
   REQUIRE(std::find_if(partOne.Messages().begin(), partOne.Messages().end(),
                        [&](auto m) {
-                         return m.j["type"] == "destroyActor" &&
+                         return m.j["t"] == MsgType::DestroyActor &&
                            m.j["idx"] == 0 && m.reliable && m.userId == 1;
                        }) != partOne.Messages().end());
 }

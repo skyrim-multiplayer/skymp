@@ -1,0 +1,12 @@
+diff --git a/include/RE/V/Variable.h b/include/RE/V/Variable.h
+index 4ad96f25..7e5b196e 100644
+--- a/include/RE/V/Variable.h
++++ b/include/RE/V/Variable.h
+@@ -87,6 +87,7 @@ namespace RE
+ 			void Cleanup();
+ 			void Assign(const Variable& a_rhs);
+ 
++		public:
+ 			// members
+ 			TypeInfo varType;  // 00
+ 			Value    value;    // 08

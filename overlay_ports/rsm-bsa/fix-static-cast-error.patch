@@ -1,0 +1,29 @@
+From a4d1801fcdf1dabdb3aa86cd69f03d225e1b2dd2 Mon Sep 17 00:00:00 2001
+From: Roman Nikonov <code@nic11.xyz>
+Date: Sun, 13 Apr 2025 17:27:17 +0200
+Subject: [PATCH] fix static_cast compilation error
+
+.../src/bsa/fo4.cpp:680:4: error: static_cast from 'uint8_t *' (aka 'unsigned char *') to 'const std::byte *' is not allowed
+  680 |                         static_cast<const std::byte*>(blob.GetBufferPointer()),
+      |                         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+1 error generated.
+---
+ src/bsa/fo4.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/bsa/fo4.cpp b/src/bsa/fo4.cpp
+index 5484f13..2d9bbf3 100644
+--- a/src/bsa/fo4.cpp
++++ b/src/bsa/fo4.cpp
+@@ -677,7 +677,7 @@ namespace bsa::fo4
+ 		}
+ 
+ 		a_out.write_bytes({ //
+-			static_cast<const std::byte*>(blob.GetBufferPointer()),
++			reinterpret_cast<const std::byte*>(blob.GetBufferPointer()),
+ 			blob.GetBufferSize() });
+ 		std::vector<std::byte> buffer;
+ 		for (const auto& chunk : *this) {
+-- 
+2.49.0
+

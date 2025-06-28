@@ -16,7 +16,7 @@ public:
   }
 
   std::string ToString(char delimiter = ':') const;
-  static FormDesc FromString(std::string str, char delimiter = ':');
+  static FormDesc FromString(const std::string& str, char delimiter = ':');
 
   uint32_t ToFormId(const std::vector<std::string>& files) const;
   static FormDesc FromFormId(uint32_t formId,

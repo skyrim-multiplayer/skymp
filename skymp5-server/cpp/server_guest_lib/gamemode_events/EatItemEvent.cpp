@@ -36,7 +36,7 @@ void EatItemEvent::OnFireSuccess(WorldState* worldState)
   if (isAlchemyItem) {
     effects = espm::GetData<espm::ALCH>(baseId, worldState).effects;
   } else if (isIngredient) {
-    effects = espm::GetData<espm::INGR>(baseId, worldState).effects;
+    // effects = espm::GetData<espm::INGR>(baseId, worldState).effects;
   } else {
     return;
   }

@@ -42,6 +42,10 @@ if(BUILD_UNIT_TESTS AND NOT EMSCRIPTEN)
     target_compile_definitions(unit PRIVATE SKYRIM_SE=1)
   endif()
 
+  if(BUILD_FRONT)
+    target_compile_definitions(unit PRIVATE WITH_UI_FRONT=1)
+  endif()
+
   target_compile_definitions(unit PRIVATE
     TEST_PEX_DIR=\"${CMAKE_CURRENT_SOURCE_DIR}/papyrus_test_files/standard_scripts\"
     BUILT_PEX_DIR=\"${CMAKE_CURRENT_SOURCE_DIR}/papyrus_test_files/pex\"

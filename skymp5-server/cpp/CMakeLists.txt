@@ -11,6 +11,7 @@ if(WIN32)
   list(APPEND src "${CMAKE_SOURCE_DIR}/.clang-format")
   add_library(MpClientPlugin SHARED ${src})
   target_link_libraries(MpClientPlugin PUBLIC mp_common)
+  target_link_libraries(MpClientPlugin PUBLIC server_guest_lib) # For Inventory.cpp, required by messages
   set_target_properties(MpClientPlugin PROPERTIES OUTPUT_NAME "MpClientPlugin")
   apply_default_settings(TARGETS MpClientPlugin)
   list(APPEND VCPKG_DEPENDENT MpClientPlugin)
@@ -116,6 +117,8 @@ endif()
 
 find_package(libzippp REQUIRED)
 
+find_package(antigo REQUIRED)
+
 foreach(target ${VCPKG_DEPENDENT})
   target_include_directories(${target} PUBLIC ${CATCH_INCLUDE_DIR})
   target_include_directories(${target} PUBLIC ${JSON_INCLUDE_DIR})
@@ -123,6 +126,8 @@ foreach(target ${VCPKG_DEPENDENT})
   target_link_libraries(${target} PUBLIC simdjson::simdjson)
 
   target_link_libraries(${target} PUBLIC SLikeNet)
+
+  target_link_libraries(${target} PUBLIC antigo::antigo)
 
   target_link_libraries(${target} PUBLIC ZLIB::ZLIB)
 

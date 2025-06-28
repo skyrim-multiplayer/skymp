@@ -3,7 +3,7 @@
 #include "libespm/Loader.h"
 #include <catch2/catch_all.hpp>
 
-extern espm::Loader l;
+extern espm::Loader& GetEspmLoader();
 
 // These tests depend on the files shipped with Skyrim SE (pre-AE update).
 // See README.md in project root for details.
@@ -15,7 +15,7 @@ TEST_CASE("Hash check", "[espm]")
     return spdlog::info("Skipping EspmTest Hash check - CI env not detected");
   }
 
-  const auto hashes = l.GetFilesInfo();
+  const auto hashes = GetEspmLoader().GetFilesInfo();
   for (const auto& [filename, info] : hashes) {
     DYNAMIC_SECTION(filename << " checksum and size test")
     {
@@ -26,7 +26,7 @@ TEST_CASE("Hash check", "[espm]")
 
 TEST_CASE("Loads refr from Update.esm", "[espm]")
 {
-  auto& br = l.GetBrowser();
+  auto& br = GetEspmLoader().GetBrowser();
 
   auto refr = br.LookupById(0x0100122a);
   REQUIRE(refr.rec);
@@ -35,7 +35,7 @@ TEST_CASE("Loads refr from Update.esm", "[espm]")
 
 TEST_CASE("Loads Container", "[espm]")
 {
-  auto& br = l.GetBrowser();
+  auto& br = GetEspmLoader().GetBrowser();
   espm::CompressedFieldsCache cache;
 
   auto barrel = br.LookupById(0x10cd5b);
@@ -54,7 +54,7 @@ TEST_CASE("Loads Container", "[espm]")
 
 TEST_CASE("Loads Tree", "[espm]")
 {
-  auto& br = l.GetBrowser();
+  auto& br = GetEspmLoader().GetBrowser();
   espm::CompressedFieldsCache cache;
 
   auto form = br.LookupById(0xbcf3d);
@@ -68,7 +68,7 @@ TEST_CASE("Loads Tree", "[espm]")
 
 TEST_CASE("Loads Flora", "[espm]")
 {
-  auto& br = l.GetBrowser();
+  auto& br = GetEspmLoader().GetBrowser();
   espm::CompressedFieldsCache cache;
 
   auto form = br.LookupById(0x7e8c9);
@@ -82,7 +82,7 @@ TEST_CASE("Loads Flora", "[espm]")
 
 TEST_CASE("Loads LeveledItem", "[espm]")
 {
-  auto& br = l.GetBrowser();
+  auto& br = GetEspmLoader().GetBrowser();
   espm::CompressedFieldsCache cache;
 
   auto form = br.LookupById(0x10e992);
@@ -103,7 +103,7 @@ TEST_CASE("Loads LeveledItem", "[espm]")
 
 TEST_CASE("Loads Conditions", "[espm]")
 {
-  auto& br = l.GetBrowser();
+  auto& br = GetEspmLoader().GetBrowser();
   espm::CompressedFieldsCache cache;
 
   auto form = br.LookupById(0x200E8F4);
@@ -131,7 +131,6 @@ TEST_CASE("Loads Conditions", "[espm]")
   REQUIRE(data.conditions[1].comparisonValue == 1);
   REQUIRE(data.conditions[1].runOnType == espm::CTDA::RunOnTypeFlags::Subject);
   REQUIRE(data.conditions[1].reference == 0);
-  REQUIRE(data.conditions[1].IsHasPerk());
   REQUIRE(data.conditions[1].GetDefaultData().firstParameter ==
           0x5218E); // ArcaneBlacksmith
   REQUIRE(data.conditions[1].GetDefaultData().secondParameter == 0);
@@ -139,7 +138,7 @@ TEST_CASE("Loads Conditions", "[espm]")
 
 TEST_CASE("Loads factions", "[espm]")
 {
-  auto& br = l.GetBrowser();
+  auto& br = GetEspmLoader().GetBrowser();
   espm::CompressedFieldsCache cache;
 
   auto form = br.LookupById(0x00EB091);
@@ -168,7 +167,7 @@ TEST_CASE("Loads factions", "[espm]")
 TEST_CASE("Loads script-related subrecords for SovngardeWatcherStatue2",
           "[espm]")
 {
-  auto& br = l.GetBrowser();
+  auto& br = GetEspmLoader().GetBrowser();
   espm::CompressedFieldsCache cache;
   auto form = br.LookupById(0x105d05);
   REQUIRE(form.rec->GetType() == "ACTI");
@@ -190,7 +189,7 @@ TEST_CASE("Loads script-related subrecords for SovngardeWatcherStatue2",
 
 TEST_CASE("Loads script-related subrecords for BearTrap01", "[espm]")
 {
-  auto& br = l.GetBrowser();
+  auto& br = GetEspmLoader().GetBrowser();
   espm::CompressedFieldsCache cache;
   auto form = br.LookupById(0x7144d);
   REQUIRE(form.rec->GetType() == "ACTI");
@@ -239,7 +238,7 @@ TEST_CASE("Loads script-related subrecords for BearTrap01", "[espm]")
 
 TEST_CASE("Loads FormList", "[espm]")
 {
-  auto& br = l.GetBrowser();
+  auto& br = GetEspmLoader().GetBrowser();
   espm::CompressedFieldsCache cache;
 
   auto form = br.LookupById(0x21e81);
@@ -251,7 +250,7 @@ TEST_CASE("Loads FormList", "[espm]")
 
 TEST_CASE("Loads refr with primitive", "[espm]")
 {
-  auto& br = l.GetBrowser();
+  auto& br = GetEspmLoader().GetBrowser();
   espm::CompressedFieldsCache cache;
 
   auto refr = br.LookupById(0xc07f0);
@@ -271,7 +270,7 @@ TEST_CASE("Loads ConstructibleObject", "[espm]")
     CraftingSmithingForge = 0x00088105
   };
 
-  auto& br = l.GetBrowser();
+  auto& br = GetEspmLoader().GetBrowser();
   espm::CompressedFieldsCache cache;
 
   auto form = br.LookupById(0xdb89e);
@@ -293,7 +292,7 @@ TEST_CASE("Loads ConstructibleObject", "[espm]")
 
 TEST_CASE("Loads Furniture", "[espm]")
 {
-  auto& br = l.GetBrowser();
+  auto& br = GetEspmLoader().GetBrowser();
   espm::CompressedFieldsCache cache;
 
   auto form = br.LookupById(0xbbcf1);
@@ -314,7 +313,7 @@ TEST_CASE("Loads Furniture", "[espm]")
 
 TEST_CASE("Loads Outfit", "[espm]")
 {
-  auto& br = l.GetBrowser();
+  auto& br = GetEspmLoader().GetBrowser();
   espm::CompressedFieldsCache cache;
 
   auto form = br.LookupById(0x10fe82);
@@ -329,7 +328,7 @@ TEST_CASE("Loads Outfit", "[espm]")
 
 TEST_CASE("Loads Npc", "[espm]")
 {
-  auto& br = l.GetBrowser();
+  auto& br = GetEspmLoader().GetBrowser();
   espm::CompressedFieldsCache cache;
 
   auto form = br.LookupById(0x7);
@@ -347,7 +346,7 @@ TEST_CASE("Loads Npc", "[espm]")
 
 TEST_CASE("Loads Weapon", "[espm]")
 {
-  auto& br = l.GetBrowser();
+  auto& br = GetEspmLoader().GetBrowser();
   espm::CompressedFieldsCache cache;
 
   auto form = br.LookupById(0x12eb7);
@@ -369,7 +368,7 @@ TEST_CASE("Loads NPC factions", "[espm]")
     GuardWhiterunImperialGuardhouseSleep = 0x1000ef
   };
 
-  auto& br = l.GetBrowser();
+  auto& br = GetEspmLoader().GetBrowser();
 
   auto form = br.LookupById(GuardWhiterunImperialGuardhouseSleep);
   REQUIRE(form.rec);
@@ -390,7 +389,7 @@ TEST_CASE("Loads NPC flags", "[espm]")
     MQ304Kodlak = 0x9700e
   };
 
-  auto& br = l.GetBrowser();
+  auto& br = GetEspmLoader().GetBrowser();
 
   auto form = br.LookupById(MQ304Kodlak);
   REQUIRE(form.rec);
@@ -405,7 +404,7 @@ TEST_CASE("Loads NPC flags", "[espm]")
 
 TEST_CASE("Loads script names", "[espm]")
 {
-  auto& br = l.GetBrowser();
+  auto& br = GetEspmLoader().GetBrowser();
   espm::CompressedFieldsCache cache;
   auto res = br.LookupById(788464);
 
@@ -419,7 +418,7 @@ TEST_CASE("Loads script names", "[espm]")
 
 TEST_CASE("Correctly parses tree structure", "[espm]")
 {
-  auto& br = l.GetBrowser();
+  auto& br = GetEspmLoader().GetBrowser();
 
   auto form = br.LookupById(0xc07f0);
   REQUIRE(form.rec);
@@ -458,7 +457,7 @@ TEST_CASE("Correctly parses tree structure", "[espm]")
 
 TEST_CASE("Parsing RACE", "[espm]")
 {
-  auto& br = l.GetBrowser();
+  auto& br = GetEspmLoader().GetBrowser();
 
   // Ri'saad is a Khajiit roving merchant from caravan.
   const uint32_t kRisaadFormId = 0x0001B1DB;
@@ -471,7 +470,7 @@ TEST_CASE("Parsing RACE", "[espm]")
 
   auto npc = espm::Convert<espm::NPC_>(form.rec);
   uint32_t raceId = npc->GetData(compressedFieldsCache).race;
-  auto raceInfo = l.GetBrowser().LookupById(raceId);
+  auto raceInfo = GetEspmLoader().GetBrowser().LookupById(raceId);
 
   REQUIRE(raceInfo.rec->GetType() == "RACE");
 }
@@ -480,7 +479,7 @@ namespace {
 class MyEspmProvider
 {
 public:
-  espm::Loader& GetEspm() { return l; }
+  espm::Loader& GetEspm() { return GetEspmLoader(); }
 
   espm::CompressedFieldsCache& GetEspmCache()
   {

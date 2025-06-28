@@ -158,17 +158,17 @@ void TESModPlatform::SetWeaponDrawnMode(IVM* vm, StackID stackId,
 
   if (g_nativeCallRequirements.gameThrQ) {
     auto formId = actor->formID;
-    g_nativeCallRequirements.gameThrQ->AddTask([=] {
+    g_nativeCallRequirements.gameThrQ->AddTask([=](Viet::Void) {
       if (RE::TESForm::LookupByID<RE::Actor>(formId) != actor) {
         return;
       }
 
-      if (!actor->IsWeaponDrawn() &&
+      if (!actor->AsActorState()->IsWeaponDrawn() &&
           weapDrawnMode == WEAP_DRAWN_MODE_ALWAYS_TRUE) {
         actor->DrawWeaponMagicHands(true);
       }
 
-      if (actor->IsWeaponDrawn() &&
+      if (actor->AsActorState()->IsWeaponDrawn() &&
           weapDrawnMode == WEAP_DRAWN_MODE_ALWAYS_FALSE) {
         actor->DrawWeaponMagicHands(false);
       }
@@ -464,14 +464,14 @@ void TESModPlatform::ResizeTintsArray(IVM* vm, StackID stackId,
     return;
   }
 
-  auto prevSize = pc->tintMasks.size();
+  auto prevSize = pc->GetTintList()->size();
 
   if (newSize < 0 || newSize > 1024 || newSize == prevSize) {
     return;
   }
 
-  pc->tintMasks.resize(newSize);
-  for (auto& mask : pc->tintMasks) {
+  pc->GetTintList()->resize(newSize);
+  for (auto& mask : *pc->GetTintList()) {
     mask = (RE::TintMask*)new ::TintMask;
   }
 }
@@ -491,7 +491,7 @@ void TESModPlatform::ClearTintMasks(IVM* vm, StackID stackId,
 {
   if (!targetActor) {
     auto pc = RE::PlayerCharacter::GetSingleton();
-    return pc->tintMasks.clear();
+    return pc->GetTintList()->clear();
   }
 
   if (targetActor->formID < 0xff000000) {
@@ -537,7 +537,7 @@ void TESModPlatform::PushTintMask(RE::BSScript::IVirtualMachine* vm,
   newTm->tintType = type;
 
   if (targetActor == nullptr) {
-    auto targetArray = &RE::PlayerCharacter::GetSingleton()->tintMasks;
+    auto targetArray = RE::PlayerCharacter::GetSingleton()->GetTintList();
     auto n = targetArray->size();
     targetArray->resize(1 + n);
     if (targetArray->size() == 1 + n) {
@@ -580,37 +580,32 @@ void TESModPlatform::PushWornState(IVM* vm, StackID stackId,
   g_wornLeft = wornLeft;
 }
 
-class MyBSExtraData
-{
-public:
-  MyBSExtraData() = default;
-  virtual ~MyBSExtraData() = default;
-  virtual uint32_t GetType(void) = 0;
-
-  MyBSExtraData* next; // 08
-};
-
-template <RE::ExtraDataType t>
-class MyExtra : public MyBSExtraData
-{
-public:
-  MyExtra() = default;
-
-  virtual ~MyExtra() = default;
-
-  uint32_t GetType() override { return static_cast<uint32_t>(t); }
-};
-
 namespace {
 RE::ExtraDataList* CreateExtraDataList()
 {
-  auto extraList = new RE::ExtraDataList;
+  constexpr size_t kBaseExtraListSizeMax = 24;
+  constexpr size_t kSpinLockSizeMax = 8;
+  constexpr size_t kSizeToMakeAllSkyrimEditionsHappy =
+    kBaseExtraListSizeMax + kSpinLockSizeMax;
 
-  auto p = reinterpret_cast<uint8_t*>(RE::malloc(0x18));
-  for (int i = 0; i < 0x18; ++i) {
-    p[i] = 0;
+  auto extraListMemory =
+    reinterpret_cast<uint8_t*>(RE::malloc(kSizeToMakeAllSkyrimEditionsHappy));
+
+  // SpinLock should enjoy currentThreadId=0 and lock=0
+  // Presence we'll be setting later in this function. So I guess we're happy
+  // with zeros.
+  for (size_t i = 0; i < kSizeToMakeAllSkyrimEditionsHappy; ++i) {
+    extraListMemory[i] = 0;
   }
-  reinterpret_cast<void*&>(extraList->_extraData.presence) = p;
+
+  RE::ExtraDataList* extraList =
+    reinterpret_cast<RE::ExtraDataList*>(extraListMemory);
+
+  auto presence = reinterpret_cast<uint8_t*>(RE::malloc(0x18));
+  for (int i = 0; i < 0x18; ++i) {
+    presence[i] = 0;
+  }
+  reinterpret_cast<void*&>(extraList->_extraData.GetPresence()) = presence;
 
   return extraList;
 }
@@ -644,11 +639,11 @@ void TESModPlatform::AddItemEx(
       return false;
     }
 
-    RE::BSWriteLockGuard locker(this_->_lock);
-    auto* next = this_->_extraData.data;
-    this_->_extraData.data = toAdd;
+    RE::BSWriteLockGuard locker(this_->GetLock());
+    auto* next = this_->_extraData.GetData();
+    this_->_extraData.GetData() = toAdd;
     toAdd->next = next;
-    markType(this_->_extraData.presence, extraType, false);
+    markType(this_->_extraData.GetPresence(), extraType, false);
     return true;
   };
 
@@ -683,42 +678,65 @@ void TESModPlatform::AddItemEx(
     auto extraList_ = reinterpret_cast<void*>(extraList);
 
     if (health > 1) {
-      addExtra(extraList_, static_cast<uint32_t>(RE::ExtraDataType::kHealth),
-               new RE::ExtraHealth(health));
+      auto extra = RE::malloc<RE::ExtraHealth>();
+      if (extra) {
+        ::new (extra) RE::ExtraHealth(health);
+        addExtra(extraList_, static_cast<uint32_t>(RE::ExtraDataType::kHealth),
+                 extra);
+      }
     }
 
     if (enchantment) {
-      addExtra(extraList_,
-               static_cast<uint32_t>(RE::ExtraDataType::kEnchantment),
-               new RE::ExtraEnchantment(enchantment, maxCharge,
-                                        removeEnchantmentOnUnequip));
+      auto extra = RE::malloc<RE::ExtraEnchantment>();
+      if (extra) {
+        ::new (extra) RE::ExtraEnchantment(enchantment, maxCharge,
+                                           removeEnchantmentOnUnequip);
+        addExtra(extraList_,
+                 static_cast<uint32_t>(RE::ExtraDataType::kEnchantment),
+                 extra);
+      }
     }
 
     if (chargePercent > 0) {
-      auto extraCharge = new RE::ExtraCharge;
-      extraCharge->charge = chargePercent;
-      addExtra(extraList_, static_cast<uint32_t>(RE::ExtraDataType::kCharge),
-               extraCharge);
+      auto extra = RE::malloc<RE::ExtraCharge>();
+      if (extra) {
+        ::new (extra) RE::ExtraCharge();
+        extra->charge = chargePercent;
+        addExtra(extraList_, static_cast<uint32_t>(RE::ExtraDataType::kCharge),
+                 extra);
+      }
     }
 
     if (strlen(textDisplayData.data()) > 0) {
-      addExtra(extraList_,
-               static_cast<uint32_t>(RE::ExtraDataType::kTextDisplayData),
-               new RE::ExtraTextDisplayData(textDisplayData.data()));
+      auto extra = RE::malloc<RE::ExtraTextDisplayData>();
+      if (extra) {
+        ::new (extra) RE::ExtraTextDisplayData(textDisplayData.data());
+        addExtra(extraList_,
+                 static_cast<uint32_t>(RE::ExtraDataType::kTextDisplayData),
+                 extra);
+      }
     }
 
     if (soul > 0 && soul <= 5) {
-      addExtra(extraList_, static_cast<uint32_t>(RE::ExtraDataType::kSoul),
-               new RE::ExtraSoul(static_cast<RE::SOUL_LEVEL>(soul)));
+      auto extra = RE::malloc<RE::ExtraSoul>();
+      if (extra) {
+        ::new (extra) RE::ExtraSoul(static_cast<RE::SOUL_LEVEL>(soul));
+        addExtra(extraList_, static_cast<uint32_t>(RE::ExtraDataType::kSoul),
+                 extra);
+      }
     }
 
     if (poison) {
-      addExtra(extraList_, static_cast<uint32_t>(RE::ExtraDataType::kPoison),
-               new RE::ExtraPoison(poison, poisonCount));
+      auto extra = RE::malloc<RE::ExtraPoison>();
+      if (extra) {
+        ::new (extra) RE::ExtraPoison(poison, poisonCount);
+        addExtra(extraList_, static_cast<uint32_t>(RE::ExtraDataType::kPoison),
+                 extra);
+      }
     }
   }
 
-  g_nativeCallRequirements.gameThrQ->AddTask([=] {
+  g_nativeCallRequirements.gameThrQ->AddTask([=](Viet::Void) {
     if (containerRefr != RE::TESForm::LookupByID<RE::TESObjectREFR>(refrId))
       return;
 
@@ -771,13 +789,13 @@ void TESModPlatform::AddItemEx(
         }
 
         if (countDelta > 0) {
-          g_nativeCallRequirements.gameThrQ->AddTask([=] {
+          g_nativeCallRequirements.gameThrQ->AddTask([=](Viet::Void) {
             if (actor != (void*)RE::TESForm::LookupByID(refrId))
               return;
             s->EquipObject(actor, boundObject, extraList, 1, slot);
           });
         } else if (countDelta < 0)
-          g_nativeCallRequirements.gameThrQ->AddTask([=] {
+          g_nativeCallRequirements.gameThrQ->AddTask([=](Viet::Void) {
             if (actor != (void*)RE::TESForm::LookupByID(refrId))
               return;
             s->UnequipObject(actor, boundObject, extraList, 1, slot);
@@ -795,11 +813,12 @@ void TESModPlatform::UpdateEquipment(IVM* vm, StackID stackId,
                                      RE::TESForm* item, bool leftHand)
 {
 
-  if (!actor || !actor->currentProcess) {
+  if (!actor || !actor->GetActorRuntimeData().currentProcess) {
     return;
   }
-  auto ref = leftHand ? actor->currentProcess->GetEquippedLeftHand()
-                      : actor->currentProcess->GetEquippedRightHand();
+  auto ref = leftHand
+    ? actor->GetActorRuntimeData().currentProcess->GetEquippedLeftHand()
+    : actor->GetActorRuntimeData().currentProcess->GetEquippedRightHand();
   const auto backup = ref;
 
   ref = item;
