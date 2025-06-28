@@ -7,7 +7,6 @@
 #include "PartOne.h"
 #include "RawMessageData.h"
 #include "SpellCastData.h"
-#include "UpdateMovementMessage.h" // RunMode
 #include "libespm/Loader.h"
 #include <memory>
 
@@ -25,73 +24,59 @@ public:
   }
 
   virtual void OnCustomPacket(const RawMessageData& rawMsgData,
-                              simdjson::dom::element& content);
+                              const CustomPacketMessage& msg);
 
-  virtual void OnUpdateMovement(const RawMessageData& rawMsgData, uint32_t idx,
-                                const NiPoint3& pos, const NiPoint3& rot,
-                                bool isInJumpState, bool isWeapDrawn,
-                                bool isBlocking, uint32_t worldOrCell,
-                                const std::string& runMode);
+  virtual void OnUpdateMovement(const RawMessageData& rawMsgData,
+                                const UpdateMovementMessage& msg);
 
   virtual void OnUpdateAnimation(const RawMessageData& rawMsgData,
-                                 uint32_t idx,
-                                 const AnimationData& animationData);
-
+                                 const UpdateAnimationMessage& msg);
   virtual void OnUpdateAppearance(const RawMessageData& rawMsgData,
-                                  uint32_t idx, const Appearance& appearance);
-
+                                  const UpdateAppearanceMessage& msg);
   virtual void OnUpdateEquipment(const RawMessageData& rawMsgData,
-                                 uint32_t idx, const Equipment& data,
-                                 const Inventory& equipmentInv,
-                                 uint32_t leftSpell, uint32_t rightSpell,
-                                 uint32_t voiceSpell, uint32_t instantSpell);
+                                 const UpdateEquipmentMessage& msg);
 
-  virtual void OnActivate(const RawMessageData& rawMsgData, uint32_t caster,
-                          uint32_t target, bool isSecondActivation);
+  virtual void OnActivate(const RawMessageData& rawMsgData,
+                          const ActivateMessage& msg);
 
-  virtual void OnPutItem(const RawMessageData& rawMsgData, uint32_t target,
-                         const Inventory::Entry& entry);
+  virtual void OnPutItem(const RawMessageData& rawMsgData,
+                         const PutItemMessage& msg);
+  virtual void OnTakeItem(const RawMessageData& rawMsgData,
+                          const TakeItemMessage& msg);
+  virtual void OnDropItem(const RawMessageData& rawMsgData,
+                          const DropItemMessage& msg);
 
-  virtual void OnTakeItem(const RawMessageData& rawMsgData, uint32_t target,
-                          const Inventory::Entry& entry);
+  virtual void OnPlayerBowShot(const RawMessageData& rawMsgData,
+                               const PlayerBowShotMessage& msg);
 
-  virtual void OnDropItem(const RawMessageData& rawMsgdata, uint32_t baseId,
-                          const Inventory::Entry& entry);
+  virtual void OnFinishSpSnippet(const RawMessageData& rawMsgData,
+                                 const FinishSpSnippetMessage& msg);
 
-  virtual void OnPlayerBowShot(const RawMessageData& rawMsgdata,
-                               uint32_t weaponId, uint32_t ammoId, float power,
-                               bool isSunGazing);
+  virtual void OnEquip(const RawMessageData& rawMsgData,
+                       const OnEquipMessage& msg);
 
-  virtual void OnFinishSpSnippet(
-    const RawMessageData& rawMsgData, uint32_t snippetIdx,
-    const std::optional<std::variant<bool, double, std::string>>& returnValue);
-
-  virtual void OnEquip(const RawMessageData& rawMsgData, uint32_t baseId);
-
-  virtual void OnConsoleCommand(
-    const RawMessageData& rawMsgData, const std::string& consoleCommandName,
-    const std::vector<ConsoleCommands::Argument>& args);
+  virtual void OnConsoleCommand(const RawMessageData& rawMsgData,
+                                const ConsoleCommandMessage& msg);
 
   virtual void OnCraftItem(const RawMessageData& rawMsgData,
-                           const Inventory& inputObjects, uint32_t workbenchId,
-                           uint32_t resultObjectId);
+                           const CraftItemMessage& msg);
 
   virtual void OnHostAttempt(const RawMessageData& rawMsgData,
-                             uint32_t remoteId);
+                             const HostMessage& msg);
 
   virtual void OnCustomEvent(const RawMessageData& rawMsgData,
-                             const char* eventName,
-                             const std::vector<std::string>& argsJsonDumps);
+                             const CustomEventMessage& msg);
 
   virtual void OnChangeValues(const RawMessageData& rawMsgData,
-                              const ChangeValuesMessage& message);
+                              const ChangeValuesMessage& msg);
 
-  virtual void OnHit(const RawMessageData& rawMsgData, const HitData& hitData);
+  virtual void OnHit(const RawMessageData& rawMsgData, const HitMessage& msg);
 
-  virtual void OnUpdateAnimVariables(const RawMessageData& rawMsgData);
+  virtual void OnUpdateAnimVariables(const RawMessageData& rawMsgData,
+                                     const UpdateAnimVariablesMessage& msg);
 
   virtual void OnSpellCast(const RawMessageData& rawMsgData,
-                           const SpellCastData& spellCastData);
+                           const SpellCastMessage& msg);
 
   virtual void OnUnknown(const RawMessageData& rawMsgData);
 

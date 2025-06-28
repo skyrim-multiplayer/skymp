@@ -1,4 +1,5 @@
 #include "ActionListener.h"
+#include "OnEquipMessage.h"
 #include "TestUtils.hpp"
 #include <catch2/catch_all.hpp>
 #include <chrono>
@@ -23,7 +24,9 @@ TEST_CASE("Potions restore health", "[Restoration]")
   RawMessageData rawMsgData;
   rawMsgData.userId = 0;
 
-  p.GetActionListener().OnEquip(rawMsgData, 0x3EAE3);
+  OnEquipMessage msg;
+  msg.baseId = 0x3EAE3;
+  p.GetActionListener().OnEquip(rawMsgData, msg);
 
   std::chrono::duration<float> timeDuration =
     ac.GetLastAttributesPercentagesUpdate() - std::chrono::steady_clock::now();

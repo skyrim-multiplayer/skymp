@@ -1,8 +1,11 @@
 #include "SpSnippet.h"
 
+#include "../../viet/include/Overloaded.h"
 #include "MpActor.h"
 #include "NetworkingInterface.h" // Format
 #include "SpSnippetMessage.h"
+#include <cmath>
+#include <spdlog/spdlog.h>
 
 SpSnippet::SpSnippet(
   const char* cl_, const char* func_,
@@ -51,4 +54,28 @@ Viet::Promise<VarValue> SpSnippet::Execute(MpActor* actor, SpSnippetMode mode)
   actor->SendToUserDeferred(message, true, kChannelSpSnippet, false);
 
   return promise;
+}
+
+VarValue SpSnippet::VarValueFromSpSnippetReturnValue(
+  const std::optional<std::variant<bool, double, std::string>>& returnValue)
+{
+  if (!returnValue) {
+    return VarValue::None();
+  }
+  return std::visit(
+    Viet::Overloaded{
+      [&](bool v) { return VarValue(v); },
+      [&](double v) {
+        auto rounded = static_cast<int32_t>(std::floor(v));
+        if (std::abs(std::floor(v) - v) >
+            std::numeric_limits<double>::epsilon()) {
+          spdlog::error(
+            "VarValueFromSpSnippetReturnValue - Floating point values are not "
+            "yet supported, rounding down ({} -> {})",
+            v, rounded);
+        }
+        return VarValue(rounded);
+      },
+      [&](const std::string& v) { return VarValue(v); } },
+    *returnValue);
 }
