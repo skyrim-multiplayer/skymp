@@ -1,9 +1,9 @@
 #include "SpSnippet.h"
 
+#include "../../viet/include/Overloaded.h"
 #include "MpActor.h"
 #include "NetworkingInterface.h" // Format
 #include "SpSnippetMessage.h"
-#include "../../viet/include/Overloaded.h"
 #include <cmath>
 #include <spdlog/spdlog.h>
 
@@ -56,7 +56,8 @@ Viet::Promise<VarValue> SpSnippet::Execute(MpActor* actor, SpSnippetMode mode)
   return promise;
 }
 
-VarValue SpSnippet::VarValueFromSpSnippetReturnValue(const std::optional<std::variant<bool, double, std::string>>& returnValue)
+VarValue SpSnippet::VarValueFromSpSnippetReturnValue(
+  const std::optional<std::variant<bool, double, std::string>>& returnValue)
 {
   if (!returnValue) {
     return VarValue::None();
@@ -66,7 +67,8 @@ VarValue SpSnippet::VarValueFromSpSnippetReturnValue(const std::optional<std::va
       [&](bool v) { return VarValue(v); },
       [&](double v) {
         auto rounded = static_cast<int32_t>(std::floor(v));
-        if (std::abs(std::floor(v) - v) > std::numeric_limits<double>::epsilon()) {
+        if (std::abs(std::floor(v) - v) >
+            std::numeric_limits<double>::epsilon()) {
           spdlog::error(
             "VarValueFromSpSnippetReturnValue - Floating point values are not "
             "yet supported, rounding down ({} -> {})",

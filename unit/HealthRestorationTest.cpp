@@ -1,8 +1,8 @@
 #include "ActionListener.h"
+#include "OnEquipMessage.h"
 #include "TestUtils.hpp"
 #include <catch2/catch_all.hpp>
 #include <chrono>
-#include "OnEquipMessage.h"
 
 PartOne& GetPartOne();
 

@@ -1,8 +1,8 @@
 #include "TestUtils.hpp"
 #include <catch2/catch_all.hpp>
 
-#include "PacketParser.h"
 #include "CraftItemMessage.h"
+#include "PacketParser.h"
 
 using Catch::Matchers::ContainsSubstring;
 

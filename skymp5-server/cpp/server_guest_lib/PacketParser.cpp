@@ -117,7 +117,8 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
         return;
       }
       case MsgType::CustomPacket: {
-        auto message = reinterpret_cast<CustomPacketMessage*>(result->message.get());
+        auto message =
+          reinterpret_cast<CustomPacketMessage*>(result->message.get());
         actionListener.OnCustomPacket(rawMsgData, *message);
         return;
       }
@@ -161,7 +162,8 @@ void PacketParser::TransformPacketIntoAction(Networking::UserId userId,
         return;
       }
       case MsgType::UpdateAnimVariables: {
-        auto message = reinterpret_cast<UpdateAnimVariablesMessage*>(result->message.get());
+        auto message =
+          reinterpret_cast<UpdateAnimVariablesMessage*>(result->message.get());
         actionListener.OnUpdateAnimVariables(rawMsgData, *message);
         return;
       }

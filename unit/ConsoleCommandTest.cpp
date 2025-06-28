@@ -1,8 +1,8 @@
 #include "TestUtils.hpp"
 #include <catch2/catch_all.hpp>
 
-#include "PacketParser.h"
 #include "ConsoleCommandMessage.h"
+#include "PacketParser.h"
 
 using Catch::Matchers::ContainsSubstring;
 
@@ -18,9 +18,8 @@ TEST_CASE("ConsoleCommand packet is parsed", "[ConsoleCommand]")
     {
     }
 
-    void OnConsoleCommand(
-      const RawMessageData& rawMsgData_,
-      const ConsoleCommandMessage& msg_) override
+    void OnConsoleCommand(const RawMessageData& rawMsgData_,
+                          const ConsoleCommandMessage& msg_) override
     {
       rawMsgData = rawMsgData_;
       commandName = msg_.data.commandName;
@@ -46,10 +45,9 @@ TEST_CASE("ConsoleCommand packet is parsed", "[ConsoleCommand]")
     122, reinterpret_cast<Networking::PacketData>(msg.data()), msg.size(),
     listener);
 
-  REQUIRE(
-    listener.args ==
-    std::vector<std::variant<int64_t, std::string>>{
-      int64_t(0x14), int64_t(0x12eb7), int64_t(0x1) });
+  REQUIRE(listener.args ==
+          std::vector<std::variant<int64_t, std::string>>{
+            int64_t(0x14), int64_t(0x12eb7), int64_t(0x1) });
   REQUIRE(listener.commandName == "additem");
   REQUIRE(listener.rawMsgData.userId == 122);
 }
@@ -69,7 +67,7 @@ TEST_CASE("AddItem doesn't execute for non-privilleged users",
 
   ConsoleCommandMessage msg;
   msg.data.commandName = "additem";
-  msg.data.args = {int64_t(0x14), int64_t(0x12eb7), int64_t(0x108)};
+  msg.data.args = { int64_t(0x14), int64_t(0x12eb7), int64_t(0x108) };
   REQUIRE_THROWS_WITH(
     p.GetActionListener().OnConsoleCommand(msgData, msg),
     ContainsSubstring("Not enough permissions to use this command"));
@@ -95,7 +93,7 @@ TEST_CASE("AddItem executes", "[ConsoleCommand][espm]")
   p.Messages().clear();
   ConsoleCommandMessage msg;
   msg.data.commandName = "additem";
-  msg.data.args = {int64_t(0x14), int64_t(0x12eb7), int64_t(0x108)};
+  msg.data.args = { int64_t(0x14), int64_t(0x12eb7), int64_t(0x108) };
   p.GetActionListener().OnConsoleCommand(msgData, msg);
 
   p.Tick(); // send deferred messages
@@ -138,7 +136,7 @@ TEST_CASE("PlaceAtMe executes", "[ConsoleCommand][espm]")
   p.Messages().clear();
   ConsoleCommandMessage msg2;
   msg2.data.commandName = "placeatme";
-  msg2.data.args = {int64_t(0x14), int64_t(EncGiant01)};
+  msg2.data.args = { int64_t(0x14), int64_t(EncGiant01) };
   p.GetActionListener().OnConsoleCommand(msgData, msg2);
 
   auto& refr = p.worldState.GetFormAt<MpActor>(0xff000001);

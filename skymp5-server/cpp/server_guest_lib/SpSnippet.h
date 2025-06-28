@@ -25,7 +25,8 @@ public:
 
   Viet::Promise<VarValue> Execute(MpActor* actor, SpSnippetMode mode);
 
-  static VarValue VarValueFromSpSnippetReturnValue(const std::optional<std::variant<bool, double, std::string>>& returnValue);
+  static VarValue VarValueFromSpSnippetReturnValue(
+    const std::optional<std::variant<bool, double, std::string>>& returnValue);
 
 private:
   const char* const cl;
