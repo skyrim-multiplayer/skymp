@@ -1,5 +1,4 @@
 #include "Appearance.h"
-#include "JsonUtils.h"
 #include "archives/JsonInputArchive.h"
 #include "archives/JsonOutputArchive.h"
 #include "archives/SimdJsonInputArchive.h"

@@ -1,12 +1,13 @@
 #pragma once
-#include "../server_guest_lib/AnimationData.h"
-#include "../server_guest_lib/Appearance.h"
-#include "../server_guest_lib/Equipment.h"
-#include "../server_guest_lib/Inventory.h"
 #include "MessageBase.h"
 #include "MsgType.h"
 #include <map>
 #include <type_traits>
+
+#include "AnimationData.h"
+#include "Appearance.h"
+#include "Equipment.h"
+#include "Inventory.h"
 
 struct Transform
 {

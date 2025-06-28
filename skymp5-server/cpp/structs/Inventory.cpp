@@ -2,8 +2,6 @@
 #include "archives/JsonInputArchive.h"
 #include "archives/JsonOutputArchive.h"
 #include "archives/SimdJsonInputArchive.h"
-#include <fmt/format.h>
-#include <spdlog/spdlog.h>
 #include <tuple>
 
 Inventory::Entry::Entry()
@@ -63,8 +61,8 @@ void Inventory::Entry::SetWorn(Inventory::Worn worn)
       wornLeft = true;
       break;
     default:
-      spdlog::warn("Inventory::SetWorn: unknown worn value {}",
-                   static_cast<int>(worn));
+      // TODO: consider logging an error or throwing an exception. but we can't
+      // link spdlog here in structs lib
       worn_ = false;
       wornLeft = false;
       break;

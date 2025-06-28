@@ -1,6 +1,5 @@
 #pragma once
 
-#include "../server_guest_lib/Equipment.h"
 #include "MessageBase.h"
 #include "MsgType.h"
 #include <cstdint>
@@ -8,6 +7,8 @@
 #include <optional>
 #include <string>
 #include <type_traits>
+
+#include "Equipment.h"
 
 struct UpdateEquipmentMessage : public MessageBase<UpdateEquipmentMessage>
 {

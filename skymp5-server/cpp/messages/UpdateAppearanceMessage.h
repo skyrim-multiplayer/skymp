@@ -1,11 +1,12 @@
 #pragma once
 
-#include "../server_guest_lib/Appearance.h"
 #include "MessageBase.h"
 #include "MsgType.h"
 #include <cstdint>
 #include <optional>
 #include <type_traits>
+
+#include "Appearance.h"
 
 struct UpdateAppearanceMessage : public MessageBase<UpdateAppearanceMessage>
 {
