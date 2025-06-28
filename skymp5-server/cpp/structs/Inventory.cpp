@@ -1,9 +1,5 @@
 #include "Inventory.h"
-#include "archives/JsonInputArchive.h"
-#include "archives/JsonOutputArchive.h"
-#include "archives/SimdJsonInputArchive.h"
-#include <fmt/format.h>
-#include <spdlog/spdlog.h>
+#include <sstream>
 #include <tuple>
 
 Inventory::Entry::Entry()
@@ -16,17 +12,6 @@ Inventory::Entry::Entry(uint32_t baseId_, uint32_t count_,
   , count(count_)
   , ExtraData(extraData_)
 {
-}
-
-Inventory::Entry Inventory::Entry::FromJson(const simdjson::dom::element& e)
-{
-  std::string minifiedDump = simdjson::minify(e);
-  nlohmann::json j = nlohmann::json::parse(minifiedDump);
-
-  Entry res;
-  JsonInputArchive ar(j);
-  res.Serialize(ar);
-  return res;
 }
 
 Inventory::Worn Inventory::Entry::GetWorn() const
@@ -63,8 +48,8 @@ void Inventory::Entry::SetWorn(Inventory::Worn worn)
       wornLeft = true;
       break;
     default:
-      spdlog::warn("Inventory::SetWorn: unknown worn value {}",
-                   static_cast<int>(worn));
+      // TODO: consider logging an error or throwing an exception. but we can't
+      // link spdlog here in structs lib
       worn_ = false;
       wornLeft = false;
       break;
@@ -129,10 +114,11 @@ Inventory& Inventory::RemoveItems(const std::vector<Entry>& entries)
     }
 
     if (totalRemoved != e.count) {
-      throw std::runtime_error(
-        fmt::format("Source inventory doesn't have enough {:#x} ({} is "
-                    "required while {} present)",
-                    e.baseId, e.count, totalRemoved));
+      std::stringstream ss;
+      ss << "Source inventory doesn't have enough " << std::hex << e.baseId
+         << '(' << std::dec << e.count << " is required while " << totalRemoved
+         << " present)";
+      throw std::runtime_error(ss.str());
     }
 
     // remove empty entries
@@ -179,27 +165,4 @@ uint32_t Inventory::GetTotalItemCount() const
 bool Inventory::IsEmpty() const
 {
   return entries.empty();
-}
-
-nlohmann::json Inventory::ToJson() const
-{
-  JsonOutputArchive ar;
-  const_cast<Inventory*>(this)->Serialize(ar);
-  return std::move(ar.j);
-}
-
-Inventory Inventory::FromJson(const simdjson::dom::element& element)
-{
-  SimdJsonInputArchive ar(element);
-  Inventory res;
-  res.Serialize(ar);
-  return res;
-}
-
-Inventory Inventory::FromJson(const nlohmann::json& j)
-{
-  JsonInputArchive ar(j);
-  Inventory res;
-  res.Serialize(ar);
-  return res;
 }

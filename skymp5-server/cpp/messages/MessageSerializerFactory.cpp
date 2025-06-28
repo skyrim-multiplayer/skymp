@@ -2,12 +2,10 @@
 #include "Messages.h"
 #include "MinPacketId.h"
 #include "MsgType.h"
-#include <fmt/format.h>
-#include <fmt/ranges.h>
 #include <nlohmann/json.hpp>
 #include <simdjson.h>
 #include <slikenet/BitStream.h>
-#include <spdlog/spdlog.h>
+#include <sstream>
 #include <stdexcept>
 
 namespace {

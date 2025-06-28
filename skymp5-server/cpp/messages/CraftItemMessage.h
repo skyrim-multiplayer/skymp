@@ -1,8 +1,9 @@
 #pragma once
-#include "../server_guest_lib/Inventory.h"
 #include "MessageBase.h"
 #include "MsgType.h"
 #include <type_traits>
+
+#include "Inventory.h"
 
 struct CraftItemMessage : public MessageBase<CraftItemMessage>
 {

@@ -3,6 +3,17 @@ enable_testing()
 include(${CMAKE_SOURCE_DIR}/cmake/apply_default_settings.cmake)
 
 #
+# structs
+#
+
+file(GLOB_RECURSE src "${CMAKE_CURRENT_SOURCE_DIR}/structs/*")
+list(APPEND src "${CMAKE_SOURCE_DIR}/.clang-format")
+add_library(structs STATIC ${src})
+target_include_directories(structs PUBLIC "${CMAKE_CURRENT_LIST_DIR}/structs")
+apply_default_settings(TARGETS structs)
+list(APPEND VCPKG_DEPENDENT_NO_SPDLOG structs)
+
+#
 # MpClientPlugin
 #
 
@@ -10,11 +21,10 @@ if(WIN32)
   file(GLOB_RECURSE src "client/*")
   list(APPEND src "${CMAKE_SOURCE_DIR}/.clang-format")
   add_library(MpClientPlugin SHARED ${src})
-  target_link_libraries(MpClientPlugin PUBLIC mp_common)
-  target_link_libraries(MpClientPlugin PUBLIC server_guest_lib) # For Inventory.cpp, required by messages
+  target_link_libraries(MpClientPlugin PUBLIC mp_common messages)
   set_target_properties(MpClientPlugin PROPERTIES OUTPUT_NAME "MpClientPlugin")
   apply_default_settings(TARGETS MpClientPlugin)
-  list(APPEND VCPKG_DEPENDENT MpClientPlugin)
+  list(APPEND VCPKG_DEPENDENT_NO_SPDLOG MpClientPlugin)
 
   # Not mistake that skyrim-platform depends on MpClientPlugin
   # skyrim-platform is a logical target that invokes dev_service
@@ -33,8 +43,9 @@ target_include_directories(messages PUBLIC "${CMAKE_CURRENT_LIST_DIR}/messages")
 target_link_libraries(messages PUBLIC viet)
 target_link_libraries(messages PUBLIC papyrus-vm-lib) # Utils.h: stricmp
 target_link_libraries(messages PUBLIC serialization)
+target_link_libraries(messages PUBLIC structs)
 apply_default_settings(TARGETS messages)
-list(APPEND VCPKG_DEPENDENT messages)
+list(APPEND VCPKG_DEPENDENT_NO_SPDLOG messages)
 
 #
 # mp_common
@@ -47,7 +58,7 @@ target_compile_definitions(mp_common PUBLIC MAX_PLAYERS=1000)
 target_include_directories(mp_common PUBLIC "${CMAKE_CURRENT_LIST_DIR}/mp_common")
 target_link_libraries(mp_common PUBLIC messages viet)
 apply_default_settings(TARGETS mp_common)
-list(APPEND VCPKG_DEPENDENT mp_common)
+list(APPEND VCPKG_DEPENDENT_NO_SPDLOG mp_common)
 if(WIN32)
   target_link_libraries(mp_common PUBLIC ws2_32.lib)
 endif()
@@ -73,7 +84,7 @@ add_library(server_guest_lib STATIC ${src})
 target_include_directories(server_guest_lib PUBLIC "${CMAKE_CURRENT_LIST_DIR}/server_guest_lib")
 apply_default_settings(TARGETS server_guest_lib)
 list(APPEND VCPKG_DEPENDENT server_guest_lib)
-target_link_libraries(server_guest_lib PUBLIC viet mp_common espm papyrus-vm-lib geo serialization)
+target_link_libraries(server_guest_lib PUBLIC viet mp_common structs espm papyrus-vm-lib geo serialization)
 
 #
 # localization-provider
@@ -119,10 +130,16 @@ find_package(libzippp REQUIRED)
 
 find_package(antigo REQUIRED)
 
-foreach(target ${VCPKG_DEPENDENT})
+set(VCPKG_DEPENDENT_ALL ${VCPKG_DEPENDENT} ${VCPKG_DEPENDENT_NO_SPDLOG})
+foreach(target ${VCPKG_DEPENDENT_ALL})
   target_include_directories(${target} PUBLIC ${CATCH_INCLUDE_DIR})
   target_include_directories(${target} PUBLIC ${JSON_INCLUDE_DIR})
-  target_link_libraries(${target} PUBLIC spdlog::spdlog)
+
+  # if in VCPKG_DEPENDENT_NO_SPDLOG then we don't link spdlog
+  if(NOT target IN_LIST VCPKG_DEPENDENT_NO_SPDLOG)
+    target_link_libraries(${target} PUBLIC spdlog::spdlog)
+  endif()
+
   target_link_libraries(${target} PUBLIC simdjson::simdjson)
 
   target_link_libraries(${target} PUBLIC SLikeNet)

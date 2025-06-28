@@ -1,10 +1,11 @@
 #pragma once
-#include "../server_guest_lib/AnimationData.h"
 #include "MessageBase.h"
 #include "MsgType.h"
 #include <cstdint>
 #include <string>
 #include <type_traits>
+
+#include "AnimationData.h"
 
 struct UpdateAnimationMessage : public MessageBase<UpdateAnimationMessage>
 {

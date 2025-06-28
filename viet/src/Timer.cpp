@@ -5,7 +5,6 @@
 #include <deque>
 #include <limits>
 #include <memory>
-#include <spdlog/spdlog.h>
 #include <utility>
 
 namespace Viet {
@@ -74,7 +73,6 @@ Promise<Void> Timer::Set(const std::chrono::system_clock::time_point& endTime,
   uint32_t timerId;
   bool created = pImpl->idGenerator->CreateID(timerId);
   if (!created) {
-    spdlog::critical("MakeID was not able to Create Id for a timer");
     std::terminate();
   }
   pImpl->timers.push_front({ timerId, promise, endTime });
