@@ -5,7 +5,7 @@
 #include "MsgType.h"
 #include <nlohmann/json.hpp>
 #include <slikenet/BitStream.h>
-#include <spdlog/spdlog.h>
+// #include <spdlog/spdlog.h>
 #include <tuple>
 #include <vector>
 
@@ -33,8 +33,11 @@ void MpClientPlugin::CreateClient(State& state, const char* targetHostname,
 
     password = kNetworkingPasswordPrefix + password;
   } catch (std::exception& e) {
-    spdlog::warn("Unable to read password from '{}', will use standard '{}'",
-                 kPasswordPath, password.data());
+    // TODO: enable logging back once we'll be able to use spdlog in
+    // MpClientPlugin. ATM we can't use spdlog.dll here
+
+    // spdlog::warn("Unable to read password from '{}', will use standard
+    // '{}'", kPasswordPath, password.data());
   }
   state.cl = Networking::CreateClient(targetHostname, targetPort, kTimeoutMs,
                                       password.data());
