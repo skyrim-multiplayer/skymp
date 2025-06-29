@@ -319,6 +319,8 @@ export class SweetCameraEnforcementService extends ClientListener {
 
         if (player.isWeaponDrawn() && !options.weaponDrawnAllowed) return { success: false, reason: "weapon_drawn" };
 
+        if (player.getAnimationVariableBool("bInJumpState")) return { success: false, reason: "jump_state" };
+
         if (this.sp.Ui.isMenuOpen(Menu.Favorites)) return { success: false, reason: "favorites_menu_open" };
         if (this.sp.Ui.isMenuOpen(Menu.Console)) return { success: false, reason: "console_menu_open" };
 
