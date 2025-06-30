@@ -34,15 +34,6 @@
   },
   {
     "configurationTags": [
-      "Win32"
-    ],
-    "expectedFiles": [
-      "server/fmt.dll",
-      "server/spdlog.dll"
-    ]
-  },
-  {
-    "configurationTags": [
       "Unix"
     ],
     "expectedFiles": [
@@ -178,7 +169,6 @@
       "client/Data/Platform/Distribution/CEF/resources.pak",
       "client/Data/Platform/Distribution/RuntimeDependencies/chrome_elf.dll",
       "client/Data/Platform/Distribution/RuntimeDependencies/d3dcompiler_47.dll",
-      "client/Data/Platform/Distribution/RuntimeDependencies/fmt.dll",
       "client/Data/Platform/Distribution/RuntimeDependencies/icudtl.dat",
       "client/Data/Platform/Distribution/RuntimeDependencies/libcef.dll",
       "client/Data/Platform/Distribution/RuntimeDependencies/libEGL.dll",
@@ -187,7 +177,6 @@
       "client/Data/Platform/Distribution/RuntimeDependencies/libGLESv2.dll",
       "client/Data/Platform/Distribution/RuntimeDependencies/SkyrimPlatformCEF.exe.hidden",
       "client/Data/Platform/Distribution/RuntimeDependencies/SkyrimPlatformImpl.dll",
-      "client/Data/Platform/Distribution/RuntimeDependencies/spdlog.dll",
       "client/Data/Platform/Distribution/RuntimeDependencies/snapshot_blob.bin",
       "client/Data/Platform/Distribution/RuntimeDependencies/v8_context_snapshot.bin",
       "client/Data/Platform/Distribution/RuntimeDependencies/libnode.dll",

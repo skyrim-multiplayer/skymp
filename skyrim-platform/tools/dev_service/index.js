@@ -3,10 +3,8 @@ let path = require("path");
 let game = require("./game");
 
 // Keep this in sync with triplet file overlay_triplets\x64-windows-sp.cmake or similar
-const requiredVcpkgDlls = [
-  "spdlog.dll",
-  "fmt.dll"
-];
+// Note: at this moment, this list is empty. it was "spdlog" and "fmt" before, but now we use static linking for them.
+const requiredVcpkgDlls = [];
 
 const requiredVcpkgDllsNodeJs = "libnode.dll";
 
