@@ -1,6 +1,8 @@
 #pragma once
 #include "concepts/Concepts.h"
+#include <algorithm>
 #include <nlohmann/json.hpp>
+#include <variant>
 #include <vector>
 
 class JsonOutputArchive
@@ -49,6 +51,21 @@ public:
   JsonOutputArchive& Serialize(const char* key, const T& value)
   {
     j[key] = value;
+    return *this;
+  }
+
+  template <typename... Types>
+  JsonOutputArchive& Serialize(const char* key,
+                               const std::variant<Types...>& value)
+  {
+    auto serializeVisitor = [&](auto& v) {
+      JsonOutputArchive childArchive;
+      childArchive.Serialize("element", v);
+      return childArchive.j["element"];
+    };
+
+    j[key] = std::visit(serializeVisitor, value);
+
     return *this;
   }
 

@@ -2,7 +2,6 @@ import { MsgType } from "../../messages";
 import { logTrace, logError } from "../../logging";
 import { ConnectionMessage } from "../events/connectionMessage";
 import { CustomPacketMessage } from "../messages/customPacketMessage";
-import { CustomPacketMessage2 } from "../messages/customPacketMessage2";
 import { AnimDebugSettings } from "../messages_settings/animDebugSettings";
 import { ClientListener, CombinedController, Sp } from "./clientListener";
 import { ButtonEvent, CameraStateChangedEvent, DxScanCode, Menu, Message } from "skyrimPlatform";
@@ -47,27 +46,40 @@ export class SweetCameraEnforcementService extends ClientListener {
             }, playerId, playerId);
 
             this.controller.on("buttonEvent", (e) => this.onButtonEvent(e));
-            this.controller.emitter.on("customPacketMessage2", (e) => this.onCustomPacketMessage2(e));
+            this.controller.emitter.on("customPacketMessage", (e) => this.onCustomPacketMessage2(e));
         }
     }
 
-    private onCustomPacketMessage2(e: ConnectionMessage<CustomPacketMessage2>) {
-        if (e.message.content["customPacketType"] !== "invokeAnim") return;
+    private onCustomPacketMessage2(e: ConnectionMessage<CustomPacketMessage>) {
+        let content: Record<string, unknown> = {};
+
+        try {
+            content = JSON.parse(e.message.contentJsonDump);
+        }
+        catch (err) {
+            if (err instanceof SyntaxError) {
+                logError(this, "Failed to parse custom packet contentJsonDump:", e.message.contentJsonDump, "Error:", err);
+                return;
+            }
+            throw err;
+        }
+
+        if (content["customPacketType"] !== "invokeAnim") return;
 
         logTrace(this, "Received custom packet with customPacketType invokeAnim");
 
-        const name = e.message.content["animEventName"];
-        const requestId = e.message.content["requestId"];
+        const name = content["animEventName"];
+        const requestId = content["requestId"];
 
-        let weaponDrawnAllowed = e.message.content["weaponDrawnAllowed"];
-        let furnitureAllowed = e.message.content["furnitureAllowed"];
-        let exitAnimName = e.message.content["exitAnimName"];
-        let interruptAnimName = e.message.content["interruptAnimName"];
-        let timeMs = e.message.content["timeMs"];
-        let isPlayExitAnimAfterwardsEnabled = e.message.content["isPlayExitAnimAfterwardsEnabled"];
-        let parentAnimEventName = e.message.content["parentAnimEventName"];
-        let enablePlayerControlsDelayMs = e.message.content["enablePlayerControlsDelayMs"];
-        let preferInterruptAnimAsExitAnimTimeMs = e.message.content["preferInterruptAnimAsExitAnimTimeMs"];
+        let weaponDrawnAllowed = content["weaponDrawnAllowed"];
+        let furnitureAllowed = content["furnitureAllowed"];
+        let exitAnimName = content["exitAnimName"];
+        let interruptAnimName = content["interruptAnimName"];
+        let timeMs = content["timeMs"];
+        let isPlayExitAnimAfterwardsEnabled = content["isPlayExitAnimAfterwardsEnabled"];
+        let parentAnimEventName = content["parentAnimEventName"];
+        let enablePlayerControlsDelayMs = content["enablePlayerControlsDelayMs"];
+        let preferInterruptAnimAsExitAnimTimeMs = content["preferInterruptAnimAsExitAnimTimeMs"];
 
         if (typeof name !== "string") {
             logError(this, "Expected animEventName to be string");
@@ -97,10 +109,10 @@ export class SweetCameraEnforcementService extends ClientListener {
 
             const message: CustomPacketMessage = {
                 t: MsgType.CustomPacket,
-                content: {
+                contentJsonDump: JSON.stringify({
                     customPacketType: "invokeAnimResult",
                     result, requestId
-                }
+                })
             };
 
             this.controller.emitter.emit("sendMessage", {
@@ -230,7 +242,11 @@ export class SweetCameraEnforcementService extends ClientListener {
         }
         else {
             if (this.needsExitingAnim) {
-                this.sp.Debug.notification("Пробел, чтобы выйти из анимации");
+                const intervalMs = this.settings?.exitAnimNotificationIntervalMs;
+                if (!intervalMs || (Date.now() - this.lastNotificationMoment) >= intervalMs) {
+                    this.lastNotificationMoment = Date.now();
+                    this.sp.Debug.notification("Пробел, чтобы выйти из анимации");
+                }
             }
         }
 
@@ -242,18 +258,18 @@ export class SweetCameraEnforcementService extends ClientListener {
 
         if (!animEvent) return;
 
-        //logTrace(this, "Starting anims from keyboard is disabled in this version")
-        this.tryInvokeAnim(animEvent, {
-            weaponDrawnAllowed: false,
-            furnitureAllowed: false,
-            exitAnimName: null,
-            interruptAnimName: null,
-            timeMs: 0,
-            isPlayExitAnimAfterwardsEnabled: true,
-            parentAnimEventName: null,
-            enablePlayerControlsDelayMs: null,
-            preferInterruptAnimAsExitAnimTimeMs: null
-        });
+        logTrace(this, "Starting anims from keyboard is disabled in this version")
+        // this.tryInvokeAnim(animEvent, {
+        //     weaponDrawnAllowed: false,
+        //     furnitureAllowed: false,
+        //     exitAnimName: null,
+        //     interruptAnimName: null,
+        //     timeMs: 0,
+        //     isPlayExitAnimAfterwardsEnabled: true,
+        //     parentAnimEventName: null,
+        //     enablePlayerControlsDelayMs: null,
+        //     preferInterruptAnimAsExitAnimTimeMs: null
+        // });
     }
 
     private tryInvokeAnim(animEvent: string, options: InvokeAnimOptions): { success: boolean, reason?: string } {
@@ -302,6 +318,8 @@ export class SweetCameraEnforcementService extends ClientListener {
         if (!player) return { success: false, reason: "player_not_found" };
 
         if (player.isWeaponDrawn() && !options.weaponDrawnAllowed) return { success: false, reason: "weapon_drawn" };
+
+        if (player.getAnimationVariableBool("bInJumpState")) return { success: false, reason: "jump_state" };
 
         if (this.sp.Ui.isMenuOpen(Menu.Favorites)) return { success: false, reason: "favorites_menu_open" };
         if (this.sp.Ui.isMenuOpen(Menu.Console)) return { success: false, reason: "console_menu_open" };
@@ -385,5 +403,6 @@ export class SweetCameraEnforcementService extends ClientListener {
     private exitAnimName: string | null = null;
     private interruptAnimName: string | null = null;
     private tryInvokeAnimCount: number = 0;
+    private lastNotificationMoment: number = 0;
     private readonly tryInvokeAnimCountMax: number = 1000000000;
 }

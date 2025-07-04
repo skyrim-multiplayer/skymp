@@ -1,6 +1,7 @@
 #pragma once
 #include "AnimationSystem.h"
 #include "GamemodeApi.h"
+#include "HitData.h"
 #include "MpActor.h"
 #include "Networking.h"
 #include "NiPoint3.h"
@@ -20,8 +21,23 @@
 
 using ProfileId = int32_t;
 class ActionListener;
+class MessageSerializer;
 
-struct HitData;
+class PartOneSendTargetWrapper : public Networking::ISendTarget
+{
+public:
+  explicit PartOneSendTargetWrapper(
+    Networking::ISendTarget& underlyingSendTarget_);
+
+  void Send(Networking::UserId targetUserId, Networking::PacketData data,
+            size_t length, bool reliable) override;
+
+  void Send(Networking::UserId targetUserId, const IMessageBase& message,
+            bool reliable);
+
+private:
+  Networking::ISendTarget& underlyingSendTarget;
+};
 
 class PartOne
 {
@@ -29,6 +45,7 @@ public:
   struct Message
   {
     nlohmann::json j;
+    std::shared_ptr<IMessageBase> message;
     Networking::UserId userId = Networking::InvalidUserId;
     bool reliable = false;
   };
@@ -82,7 +99,7 @@ public:
   ServerState serverState;
   AnimationSystem animationSystem;
 
-  Networking::ISendTarget& GetSendTarget() const;
+  PartOneSendTargetWrapper& GetSendTarget() const;
 
   float CalculateDamage(const MpActor& aggressor, const MpActor& target,
                         const HitData& hitData) const;
@@ -101,6 +118,8 @@ public:
 
   void SendHostStop(Networking::UserId badHosterUserId,
                     MpObjectReference& remote);
+
+  static MessageSerializer& GetMessageSerializerInstance();
 
 private:
   void Init();

@@ -36,7 +36,7 @@ TEST_CASE("Notification", "[Papyrus][Debug]")
   REQUIRE(p.Messages()[1].userId == 3);
   REQUIRE(p.Messages()[1].reliable);
   REQUIRE(p.Messages()[1].j ==
-          nlohmann::json{ { "type", "spSnippet" },
+          nlohmann::json{ { "t", 30 },
                           { "snippetIdx", 4294967295 },
                           { "selfId", 0 },
                           { "class", "Debug" },
@@ -45,7 +45,7 @@ TEST_CASE("Notification", "[Papyrus][Debug]")
   REQUIRE(p.Messages()[2].userId == 3);
   REQUIRE(p.Messages()[2].reliable);
   REQUIRE(p.Messages()[2].j ==
-          nlohmann::json{ { "type", "spSnippet" },
+          nlohmann::json{ { "t", 30 },
                           { "snippetIdx", 4294967295 },
                           { "selfId", 0 },
                           { "class", "Debug" },

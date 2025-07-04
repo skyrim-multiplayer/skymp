@@ -9,4 +9,5 @@ export interface AnimDebugSettings {
   isActive?: boolean;
   textOutput?: AnimTextOutput,
   animKeys?: { [index: number]: string | undefined };
+  exitAnimNotificationIntervalMs?: number;
 }

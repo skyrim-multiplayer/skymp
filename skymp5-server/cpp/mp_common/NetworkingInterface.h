@@ -60,28 +60,4 @@ public:
 
   virtual std::string GetIp(UserId userId) const = 0;
 };
-
-template <class FormatCallback, class... Ts>
-inline void Format(const FormatCallback& cb, const char* format, Ts... args)
-{
-  auto textSize = (size_t)snprintf(nullptr, 0, format, args...);
-
-  const auto n = textSize + sizeof('\0') + sizeof(MinPacketId);
-  std::vector<char> buf(n);
-
-  buf[0] = MinPacketId;
-  auto len = (size_t)snprintf(buf.data() + 1, n - 1, format, args...);
-
-  cb(reinterpret_cast<Networking::PacketData>(buf.data()), len + 1);
-}
-
-template <class... Ts>
-inline void SendFormatted(Networking::ISendTarget* sendTarget,
-                          Networking::UserId userId, const char* format,
-                          Ts... args)
-{
-  Format([&](Networking::PacketData data,
-             size_t length) { sendTarget->Send(userId, data, length, true); },
-         format, args...);
-}
 }

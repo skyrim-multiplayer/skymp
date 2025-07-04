@@ -100,3 +100,70 @@ public:
 private:
   std::stringstream ss;
 };
+
+namespace {
+template <class Message>
+struct FindRefrMessageResult
+{
+  std::vector<Message> filteredMessages;
+  std::vector<PartOne::Message> filteredMessagesOriginals;
+
+  FindRefrMessageResult(
+    const std::vector<Message>& filteredMessages,
+    const std::vector<PartOne::Message>& filteredMessagesOriginals)
+    : filteredMessages(filteredMessages)
+    , filteredMessagesOriginals(filteredMessagesOriginals)
+  {
+  }
+};
+
+// Deduction guide for C++17 and later
+#if __cplusplus >= 201703L
+// This allows: FindRefrMessageResult{vec1, vec2} to deduce Message type
+// (vec1: std::vector<Message>, vec2: std::vector<PartOne::Message>)
+template <class Message>
+FindRefrMessageResult(const std::vector<Message>&,
+                      const std::vector<PartOne::Message>&)
+  -> FindRefrMessageResult<Message>;
+#endif
+
+template <class Message>
+inline FindRefrMessageResult<Message> FindRefrMessage(PartOne& partOne,
+                                                      uint32_t expectedRefrId)
+{
+  std::vector<Message> filteredMessages;
+  std::vector<PartOne::Message> filteredMessagesOriginals;
+
+  for (auto& message : partOne.Messages()) {
+    if (auto createActorMessage =
+          dynamic_cast<Message*>(message.message.get())) {
+      if (createActorMessage->refrId == expectedRefrId) {
+        filteredMessages.push_back(*createActorMessage);
+        filteredMessagesOriginals.push_back(message);
+      }
+    }
+  }
+
+  return FindRefrMessageResult{ filteredMessages, filteredMessagesOriginals };
+}
+
+template <class Message>
+inline FindRefrMessageResult<Message> FindRefrMessageIdx(PartOne& partOne,
+                                                         int expectedIdx)
+{
+  std::vector<Message> filteredMessages;
+  std::vector<PartOne::Message> filteredMessagesOriginals;
+
+  for (auto& message : partOne.Messages()) {
+    if (auto createActorMessage =
+          dynamic_cast<Message*>(message.message.get())) {
+      if (createActorMessage->idx == expectedIdx) {
+        filteredMessages.push_back(*createActorMessage);
+        filteredMessagesOriginals.push_back(message);
+      }
+    }
+  }
+
+  return FindRefrMessageResult{ filteredMessages, filteredMessagesOriginals };
+}
+}

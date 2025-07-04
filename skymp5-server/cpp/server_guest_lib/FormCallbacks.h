@@ -13,9 +13,8 @@ public:
   using SendToUserFn = std::function<void(
     MpActor* actor, const IMessageBase& message, bool reliable)>;
 
-  // TODO: use MessageBase instead of raw data
   using SendToUserDeferredFn = std::function<void(
-    MpActor* actor, const void* data, size_t size, bool reliable,
+    MpActor* actor, const IMessageBase& message, bool reliable,
     int deferredChannelId, bool overwritePreviousChannelMessages)>;
 
   SubscribeCallback subscribe, unsubscribe;
@@ -25,6 +24,6 @@ public:
   static FormCallbacks DoNothing()
   {
     return { [](auto, auto) {}, [](auto, auto) {}, [](auto, auto&, auto) {},
-             [](auto, auto, auto, auto, auto, auto) {} };
+             [](auto, auto&, auto, auto, auto) {} };
   }
 };

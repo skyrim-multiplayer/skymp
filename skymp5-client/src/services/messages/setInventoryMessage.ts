@@ -1,6 +1,7 @@
 import { Inventory } from "skyrimPlatform";
+import { MsgType } from "../../messages";
 
 export interface SetInventoryMessage {
-    type: "setInventory";
+    t: MsgType.SetInventory;
     inventory: Inventory;
 }

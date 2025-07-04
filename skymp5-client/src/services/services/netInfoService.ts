@@ -1,3 +1,4 @@
+import { setTextSize } from "skyrimPlatform";
 import { logTrace, logError } from "../../logging";
 import { ConnectionMessage } from "../events/connectionMessage";
 import { NewLocalLagValueCalculatedEvent } from "../events/newLocalLagValueCalculatedEvent";
@@ -132,7 +133,16 @@ class NetInfoTexts {
     public readonly sentPacketAmountTextId = sp.createText(250, 430, "", [255, 255, 255, 1]),
     public readonly localPositionLagStaticTextId = sp.createText(90, 470, "local lag:", [255, 255, 255, 1]),
     public readonly localPositionLagAmountTextId = sp.createText(250, 470, "", [255, 255, 255, 1]),
-  ) { }
+  ) {
+    setTextSize(this.connectionStaticTextId, 0.5);
+    setTextSize(this.connectionStateTextId, 0.5);
+    setTextSize(this.receivedPacketStaticTextId, 0.5);
+    setTextSize(this.receivedPacketAmountTextId, 0.5);
+    setTextSize(this.sentPacketStaticTextId, 0.5);
+    setTextSize(this.sentPacketAmountTextId, 0.5);
+    setTextSize(this.localPositionLagStaticTextId, 0.5);
+    setTextSize(this.localPositionLagAmountTextId, 0.5);
+  }
 
   public clear(): void {
     this.sp.destroyText(this.connectionStaticTextId);

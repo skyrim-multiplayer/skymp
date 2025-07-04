@@ -112,7 +112,7 @@ Napi::Value SP3NativeValueCasts::NativeValueToJsValue(
     return env.Null();
   }
   return std::visit(
-    overloaded{
+    Viet::Overloaded{
       [env](double v) -> Napi::Value { return Napi::Number::New(env, v); },
       [env](bool v) -> Napi::Value { return Napi::Boolean::New(env, v); },
       [env](const std::string& v) -> Napi::Value {

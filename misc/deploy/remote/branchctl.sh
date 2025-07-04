@@ -32,7 +32,7 @@ docker run -d --restart=always --name="skymp-server-$branch" --network=host \
     -u "`id -u`:`id -g`" \
     --cpu-period=50000 --cpu-quota=$(( 50000 * 6 )) \
     --cap-add=SYS_PTRACE \
-    skymp/skymp-runtime-base:98c0c68 ./run.sh
+    skymp/skymp-runtime-base:55d7d7d ./run.sh
 # ^ limited to 6 CPU cores: https://stackoverflow.com/a/41552172
 
 # This looks a bit ugly, but apparently is more fault-tolerant than older version:

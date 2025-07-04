@@ -3,13 +3,21 @@
 #include <chrono>
 
 #include "GetBaseActorValues.h"
-#include "HitData.h"
+#include "HitMessage.h"
 #include "PacketParser.h"
 #include "libespm/Loader.h"
 
 PartOne& GetPartOne();
 extern espm::Loader l;
 using namespace std::chrono_literals;
+
+namespace {
+const auto kExtraWornTrue = [] {
+  Inventory::ExtraData extra;
+  extra.worn_ = true;
+  return extra;
+}();
+}
 
 TEST_CASE("OnHit damages target actor based on damage formula", "[Hit]")
 {
@@ -21,30 +29,20 @@ TEST_CASE("OnHit damages target actor based on damage formula", "[Hit]")
 
   RawMessageData rawMsgData;
   rawMsgData.userId = 0;
-  HitData hitData;
-  hitData.target = 0x14;
-  hitData.aggressor = 0x14;
-  hitData.source = 0x0001397E; // iron dagger 4 damage, id = 80254
-  ac.AddItem(hitData.source, 1);
-  ac.SetEquipment(R"(
-    {
-      "numChanges": 0,
-      "inv": {
-        "entries": [
-          {
-            "baseId": 80254,
-            "count": 1,
-            "worn": true
-          }
-        ]
-      }
-    }
-  )");
+  HitMessage hitMsg;
+  hitMsg.data.target = 0x14;
+  hitMsg.data.aggressor = 0x14;
+  hitMsg.data.source = 0x0001397E; // iron dagger 4 damage, id = 80254
+  ac.AddItem(hitMsg.data.source, 1);
+
+  Equipment eq;
+  eq.inv.entries.push_back(Inventory::Entry(80254, 1, kExtraWornTrue));
+  ac.SetEquipment(eq);
 
   auto past = std::chrono::steady_clock::now() - 10s;
   ac.SetLastHitTime(past);
   p.Messages().clear();
-  p.GetActionListener().OnHit(rawMsgData, hitData);
+  p.GetActionListener().OnHit(rawMsgData, hitMsg);
 
   REQUIRE(p.Messages().size() == 1);
   auto changeForm = ac.GetChangeForm();
@@ -64,34 +62,24 @@ TEST_CASE("OnHit function sends ChangeValues message with coorect percentages",
   p.CreateActor(0xff000000, { 0, 0, 0 }, 0, 0x3c);
   p.SetUserActor(0, 0xff000000);
   auto& ac = p.worldState.GetFormAt<MpActor>(0xff000000);
-  ac.SetEquipment(R"({"inv": {"entries": []}})");
+  ac.SetEquipment(Equipment());
 
   RawMessageData rawMsgData;
   rawMsgData.userId = 0;
-  HitData hitData;
-  hitData.target = 0x14;
-  hitData.aggressor = 0x14;
-  hitData.source = 0x0001397E; // iron dagger 4 damage
-  ac.AddItem(hitData.source, 1);
-  ac.SetEquipment(R"(
-    {
-      "numChanges": 0,
-      "inv": {
-        "entries": [
-          {
-            "baseId": 80254,
-            "count": 1,
-            "worn": true
-          }
-        ]
-      }
-    }
-  )");
+  HitMessage hitMsg;
+  hitMsg.data.target = 0x14;
+  hitMsg.data.aggressor = 0x14;
+  hitMsg.data.source = 0x0001397E; // iron dagger 4 damage
+  ac.AddItem(hitMsg.data.source, 1);
+
+  Equipment eq;
+  eq.inv.entries.push_back(Inventory::Entry(80254, 1, kExtraWornTrue));
+  ac.SetEquipment(eq);
 
   p.Messages().clear();
   auto past = std::chrono::steady_clock::now() - 4s;
   ac.SetLastHitTime(past);
-  p.GetActionListener().OnHit(rawMsgData, hitData);
+  p.GetActionListener().OnHit(rawMsgData, hitMsg);
 
   REQUIRE(p.Messages().size() == 1);
   nlohmann::json message = p.Messages()[0].j;
@@ -121,10 +109,10 @@ TEST_CASE("OnHit doesn't damage character if it is out of range", "[Hit]")
   p.CreateActor(target, { 0, 0, 0 }, 0, 0x3c);
   auto& acTarget = p.worldState.GetFormAt<MpActor>(target);
 
-  HitData hitData;
-  hitData.target = target;
-  hitData.aggressor = 0x14;
-  hitData.source = 0x0001397E;
+  HitMessage hitMsg;
+  hitMsg.data.target = target;
+  hitMsg.data.aggressor = 0x14;
+  hitMsg.data.source = 0x0001397E;
 
   int16_t face =
     espm::GetData<espm::NPC_>(acAggressor.GetBaseId(), &p.worldState)
@@ -146,7 +134,7 @@ TEST_CASE("OnHit doesn't damage character if it is out of range", "[Hit]")
   auto past = std::chrono::steady_clock::now() - 2s;
   acTarget.SetLastHitTime(past);
   acAggressor.SetLastHitTime(past);
-  p.GetActionListener().OnHit(rawMsgData, hitData);
+  p.GetActionListener().OnHit(rawMsgData, hitMsg);
 
   auto changeForm = acTarget.GetChangeForm();
   REQUIRE(changeForm.actorValues.healthPercentage == 0.1f);
@@ -171,10 +159,10 @@ TEST_CASE("Dead actors can't attack", "[Hit]")
   p.SetUserActor(0, aggressor);
   rawMsgData.userId = 0;
 
-  HitData hitData;
-  hitData.target = target;
-  hitData.aggressor = 0x14;
-  hitData.source = 0x0001397E;
+  HitMessage hitMsg;
+  hitMsg.data.target = target;
+  hitMsg.data.aggressor = 0x14;
+  hitMsg.data.source = 0x0001397E;
 
   auto& acTarget = p.worldState.GetFormAt<MpActor>(target);
   ActorValues actorValues;
@@ -187,7 +175,7 @@ TEST_CASE("Dead actors can't attack", "[Hit]")
   acAggressor.Kill();
   REQUIRE(acAggressor.IsDead() == true);
 
-  p.GetActionListener().OnHit(rawMsgData, hitData);
+  p.GetActionListener().OnHit(rawMsgData, hitMsg);
 
   REQUIRE(acTarget.GetChangeForm().actorValues.healthPercentage == 0.2f);
 
@@ -213,31 +201,21 @@ TEST_CASE("checking weapon cooldown", "[Hit]")
 
   RawMessageData msgData;
   msgData.userId = 0;
-  HitData hitData;
-  hitData.target = 0x14;
-  hitData.aggressor = 0x14;
-  hitData.source = 0x0001397E;
-  ac.AddItem(hitData.source, 1);
-  ac.SetEquipment(R"(
-    {
-      "numChanges": 0,
-      "inv": {
-        "entries": [
-          {
-            "baseId": 80254,
-            "count": 1,
-            "worn": true
-          }
-        ]
-      }
-    }
-  )");
+  HitMessage hitMsg;
+  hitMsg.data.target = 0x14;
+  hitMsg.data.aggressor = 0x14;
+  hitMsg.data.source = 0x0001397E;
+  ac.AddItem(hitMsg.data.source, 1);
+
+  Equipment eq;
+  eq.inv.entries.push_back(Inventory::Entry(80254, 1, kExtraWornTrue));
+  ac.SetEquipment(eq);
 
   auto past = std::chrono::steady_clock::now() - 300ms;
 
   ac.SetLastHitTime(past);
   p.Messages().clear();
-  p.GetActionListener().OnHit(msgData, hitData);
+  p.GetActionListener().OnHit(msgData, hitMsg);
 
   auto current = ac.GetLastHitTime();
   std::chrono::duration<float> duration = current - past;
@@ -250,7 +228,7 @@ TEST_CASE("checking weapon cooldown", "[Hit]")
   past = std::chrono::steady_clock::now() - 3s;
   ac.SetLastHitTime(past);
   p.Messages().clear();
-  p.GetActionListener().OnHit(msgData, hitData);
+  p.GetActionListener().OnHit(msgData, hitMsg);
   current = ac.GetLastHitTime();
   duration = current - past;
   passedTime = duration.count();

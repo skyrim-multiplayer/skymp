@@ -86,13 +86,15 @@ public:
   ActiveMagicEffectsMap activeMagicEffects;
   bool consoleCommandsAllowed = false;
 
-  // 'appearanceDump' and 'equipmentDump' can be empty. it means nullopt.
-  // "unexisting" equipment and equipment with zero entries are different
+  // 'appearanceDump' can be empty. it means nullopt.
+  // "unexisting" appearance and appearance with zero entries are different
   // values in skymp due to poor design
-  std::string appearanceDump, equipmentDump;
+  std::string appearanceDump;
 
-  // TODO: inconsistency! save not only percentages but whole structure OR have
-  // only percentages in change form struct
+  Equipment equipment;
+
+  // TODO: inconsistency! save not only percentages but whole structure OR
+  // have only percentages in change form struct
   ActorValues actorValues;
 
   float healthRespawnPercentage = 1.f;
@@ -137,7 +139,7 @@ public:
       angle.y, angle.z, worldOrCellDesc, inv.ToJson(), isHarvested, isOpen,
       baseContainerAdded, nextRelootDatetime, isDisabled, profileId, isDeleted,
       count, isRaceMenuOpen, isDead, consoleCommandsAllowed, appearanceDump,
-      equipmentDump, actorValues.ToTuple(), healthRespawnPercentage,
+      equipment.ToJson(), actorValues.ToTuple(), healthRespawnPercentage,
       magickaRespawnPercentage, staminaRespawnPercentage, spawnPoint,
       dynamicFields, spawnDelay, learnedSpells, templateChain, lastAnimation,
       setNodeTextureSet, setNodeScale, displayName);

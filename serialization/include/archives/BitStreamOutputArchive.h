@@ -1,5 +1,6 @@
 #pragma once
 #include "concepts/Concepts.h"
+#include <algorithm>
 #include <optional>
 #include <slikenet/BitStream.h>
 #include <stdexcept>
@@ -81,6 +82,21 @@ public:
   {
     SerializationUtil::WriteToBitStream(bs, value);
     // spdlog::info("!!! serialized arithmetic {} {}", key, value);
+    return *this;
+  }
+
+  template <typename... Types>
+  BitStreamOutputArchive& Serialize(const char* key,
+                                    std::variant<Types...>& value)
+  {
+    uint32_t typeIndex = static_cast<uint32_t>(value.index());
+
+    Serialize("typeIndex", typeIndex);
+
+    auto serializeVisitor = [&](auto& v) { Serialize("value", v); };
+
+    std::visit(serializeVisitor, value);
+
     return *this;
   }
 

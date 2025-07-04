@@ -333,4 +333,64 @@ TEST_CASE("SimdJsonArchive custom", "[Archives] [Serialization]")
   REQUIRE(obj.baz == obj2.baz);
 }
 
+TEST_CASE("SimdJsonArchive variant - extended types and edge cases",
+          "[Archives] [Serialization]")
+{
+  // Extended variant with more types (removed std::nullptr_t)
+  using ExtendedJsonTestParam =
+    std::variant<bool, int8_t, uint8_t, int16_t, uint16_t, int32_t, uint32_t,
+                 int64_t, uint64_t, float, double, std::string>;
+  ExtendedJsonTestParam param;
+
+  // Test all types
+  param = true;
+  REQUIRE(std::get<bool>(
+            ParseWithSimdInputArchive<ExtendedJsonTestParam>("true")) == true);
+  param = 123;
+  auto parsed = ParseWithSimdInputArchive<ExtendedJsonTestParam>("123");
+  bool foundInt = false;
+  std::visit(
+    [&](auto&& val) {
+      using T = std::decay_t<decltype(val)>;
+      if constexpr (std::is_integral_v<T>) {
+        REQUIRE(static_cast<int64_t>(val) == 123);
+        foundInt = true;
+      }
+    },
+    parsed);
+  REQUIRE(foundInt);
+  param = 3.14;
+  auto parsedFloat = ParseWithSimdInputArchive<ExtendedJsonTestParam>("3.14");
+  bool foundFloat = false;
+  std::visit(
+    [&](auto&& val) {
+      using T = std::decay_t<decltype(val)>;
+      if constexpr (std::is_same_v<T, float> || std::is_same_v<T, double>) {
+        REQUIRE(std::abs(static_cast<double>(val) - 3.14) < 1e-6);
+        foundFloat = true;
+      }
+    },
+    parsedFloat);
+  REQUIRE(foundFloat);
+  param = "test";
+  REQUIRE(std::get<std::string>(
+            ParseWithSimdInputArchive<ExtendedJsonTestParam>("\"test\"")) ==
+          "test");
+
+  // Nested variant
+  using NestedVariant = std::variant<int, std::variant<std::string, double>>;
+  nlohmann::json j = std::string("nested");
+  auto nested =
+    ParseWithSimdInputArchive<NestedVariant>(nlohmann::to_string(j));
+  REQUIRE(std::holds_alternative<std::variant<std::string, double>>(nested));
+  REQUIRE(std::get<std::string>(
+            std::get<std::variant<std::string, double>>(nested)) == "nested");
+
+  j = 2.71;
+  nested = ParseWithSimdInputArchive<NestedVariant>(nlohmann::to_string(j));
+  REQUIRE(std::holds_alternative<std::variant<std::string, double>>(nested));
+  REQUIRE(std::get<double>(
+            std::get<std::variant<std::string, double>>(nested)) == 2.71);
+}
+
 // TODO(#2250): test structures such as set or list?

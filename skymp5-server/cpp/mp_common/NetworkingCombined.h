@@ -17,7 +17,15 @@ public:
   ServerCombined(const Networking::ServersVec& childs_)
     : childs(childs_)
   {
-    makeId.reset(new MakeID(std::numeric_limits<uint32_t>::max()));
+    makeId = std::make_unique<MakeID>(std::numeric_limits<uint32_t>::max());
+
+    // See also login.ts
+    uint32_t id0;
+    bool id0CreateSuccess = makeId->CreateID(id0);
+    if (!id0CreateSuccess || id0 != 0) {
+      std::terminate();
+    }
+
     childData.resize(childs_.size());
   }
 

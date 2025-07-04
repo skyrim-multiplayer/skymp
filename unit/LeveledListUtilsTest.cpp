@@ -8,7 +8,7 @@
 #include <spdlog/spdlog.h>
 #include <thread>
 
-extern espm::Loader l;
+extern espm::Loader& GetEspmLoader();
 
 using namespace std::chrono_literals;
 
@@ -36,19 +36,19 @@ TEST_CASE("Bug", "[espm]")
     }
   }).detach();
 
-  auto chest =
-    espm::Convert<espm::CONT>(l.GetBrowser().LookupById(chestId).rec);
+  auto chest = espm::Convert<espm::CONT>(
+    GetEspmLoader().GetBrowser().LookupById(chestId).rec);
   auto objects = chest->GetData(dummyCache).objects;
   std::vector<espm::LookupResult> leveled;
   for (auto obj : objects) {
-    leveled.push_back(l.GetBrowser().LookupById(obj.formId));
+    leveled.push_back(GetEspmLoader().GetBrowser().LookupById(obj.formId));
   }
 
   for (auto lvli : leveled) {
     for (int i = 0; i < 100; ++i) {
       const int pcLevel = 1, count = 1;
       auto result = LeveledListUtils::EvaluateListRecurse(
-        l.GetBrowser(), lvli, count, pcLevel, nullptr);
+        GetEspmLoader().GetBrowser(), lvli, count, pcLevel, nullptr);
     }
   }
   finished = true;
@@ -58,7 +58,7 @@ TEST_CASE("Evaluate LItemFoodCabbage75", "[espm]")
 {
   auto LItemFoodCabbage75 = 0x10bf6a;
   auto FoodCabbage = 0x64b3f;
-  auto& br = l.GetBrowser();
+  auto& br = GetEspmLoader().GetBrowser();
   auto leveledList = br.LookupById(LItemFoodCabbage75);
 
   int totalItems = 0;
@@ -81,7 +81,7 @@ TEST_CASE("Evaluate recurse LItemFoodCabbage", "[espm]")
 {
   auto LItemFoodCabbage = 0x10bf6e;
   auto FoodCabbage = 0x64b3f;
-  auto& br = l.GetBrowser();
+  auto& br = GetEspmLoader().GetBrowser();
   auto leveledList = br.LookupById(LItemFoodCabbage);
 
   for (int i = 0; i < 100; i++) {
@@ -101,7 +101,7 @@ TEST_CASE("Evaluate LootGoldChange25", "[espm]")
 {
   auto LootGoldChange25 = 0x4f78d;
   auto Gold001 = 0xf;
-  auto& br = l.GetBrowser();
+  auto& br = GetEspmLoader().GetBrowser();
   auto leveledList = br.LookupById(LootGoldChange25);
 
   int n[10] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
@@ -128,7 +128,7 @@ TEST_CASE("Evaluate LootGoldChange25", "[espm]")
 TEST_CASE("Evaluate DeathItemDraugr", "[espm]")
 {
   auto DeathItemDraugr = 0x3ad7f;
-  auto& br = l.GetBrowser();
+  auto& br = GetEspmLoader().GetBrowser();
   auto leveledList = br.LookupById(DeathItemDraugr);
 
   auto res = LeveledListUtils::EvaluateList(br, leveledList);
@@ -138,7 +138,7 @@ TEST_CASE("Evaluate DeathItemDraugr", "[espm]")
 TEST_CASE("Evaluate LItemWeaponDaggerTown", "[espm]")
 {
   auto LItemWeaponDaggerTown = 0x17177;
-  auto& br = l.GetBrowser();
+  auto& br = GetEspmLoader().GetBrowser();
   auto leveledList = br.LookupById(LItemWeaponDaggerTown);
 
   // Normally this leveled list returns one of daggers (iron, steel, etc)
@@ -165,7 +165,7 @@ TEST_CASE("Evaluate LItemWeaponDaggerTown", "[espm]")
 TEST_CASE("Evaluate LCharHorse", "[espm]")
 {
   auto LCharHorse = 0x68d6f;
-  auto& br = l.GetBrowser();
+  auto& br = GetEspmLoader().GetBrowser();
   auto leveledList = br.LookupById(LCharHorse);
 
   std::map<uint32_t, uint32_t> results;
@@ -192,7 +192,7 @@ TEST_CASE("Evaluate LCharHorse", "[espm]")
 TEST_CASE("Evaluate LvlHorse template", "[espm]")
 {
   auto LvlHorse = 0x68d71;
-  auto& br = l.GetBrowser();
+  auto& br = GetEspmLoader().GetBrowser();
   auto horse = br.LookupById(LvlHorse);
 
   std::map<uint32_t, uint32_t> results;
@@ -219,7 +219,7 @@ TEST_CASE("Evaluate LvlHorse template", "[espm]")
 TEST_CASE("Evaluate LvlMudcrab template", "[espm]")
 {
   auto LvlMudcrab = 0x8cacc;
-  auto& br = l.GetBrowser();
+  auto& br = GetEspmLoader().GetBrowser();
   auto mudcrab = br.LookupById(LvlMudcrab);
 
   std::map<uint32_t, uint32_t> countByFormId;

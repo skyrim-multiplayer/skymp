@@ -1,6 +1,7 @@
 #include "TestUtils.hpp"
 #include <catch2/catch_all.hpp>
 
+#include "CraftItemMessage.h"
 #include "PacketParser.h"
 
 using Catch::Matchers::ContainsSubstring;
@@ -18,13 +19,12 @@ TEST_CASE("CraftItem packet is parsed", "[Craft][espm]")
     }
 
     void OnCraftItem(const RawMessageData& rawMsgData_,
-                     const Inventory& inputObjects_, uint32_t workbenchId_,
-                     uint32_t resultObjectId_) override
+                     const CraftItemMessage& msg_) override
     {
       rawMsgData = rawMsgData_;
-      inputObjects = inputObjects_;
-      workbenchId = workbenchId_;
-      resultObjectId = resultObjectId_;
+      inputObjects = msg_.data.craftInputObjects;
+      workbenchId = msg_.data.workbench;
+      resultObjectId = msg_.data.resultObjectId;
     }
 
     RawMessageData rawMsgData;
@@ -82,14 +82,20 @@ TEST_CASE("Player is able to craft item", "[Craft][espm]")
 
   // Vanilla item
   REQUIRE(ac.GetInventory().GetItemCount(0x1398a) == 0);
-  p.GetActionListener().OnCraftItem(msgData, requiredItems, workbenchId,
-                                    0x1398a);
+  CraftItemMessage msg1;
+  msg1.data.craftInputObjects = requiredItems;
+  msg1.data.workbench = workbenchId;
+  msg1.data.resultObjectId = 0x1398a;
+  p.GetActionListener().OnCraftItem(msgData, msg1);
   REQUIRE(ac.GetInventory().GetItemCount(0x1398a) == 1);
 
   // Hearthfires item (nails)
   REQUIRE(ac.GetInventory().GetItemCount(0x300300f) == 0);
-  p.GetActionListener().OnCraftItem(msgData, requiredItemsForNails,
-                                    workbenchId, 0x300300f);
+  CraftItemMessage msg2;
+  msg2.data.craftInputObjects = requiredItemsForNails;
+  msg2.data.workbench = workbenchId;
+  msg2.data.resultObjectId = 0x300300f;
+  p.GetActionListener().OnCraftItem(msgData, msg2);
   REQUIRE(ac.GetInventory().GetItemCount(0x300300f) == 10);
 
   REQUIRE(ac.GetInventory().GetItemCount(0x5ace4) == 0);
@@ -135,8 +141,11 @@ TEST_CASE(
   Inventory previousInventory = ac.GetInventory();
 
   // Must result in "Recipe not found" in logs
-  p.GetActionListener().OnCraftItem(msgData, requiredItems, workbenchId,
-                                    wrongResultObject);
+  CraftItemMessage msg3;
+  msg3.data.craftInputObjects = requiredItems;
+  msg3.data.workbench = workbenchId;
+  msg3.data.resultObjectId = wrongResultObject;
+  p.GetActionListener().OnCraftItem(msgData, msg3);
 
   Inventory newInventory = ac.GetInventory();
 

@@ -1,8 +1,8 @@
 #pragma once
+#include "HitData.h"
+#include "SpellCastData.h"
 
 class MpActor;
-struct HitData;
-struct SpellCastData;
 
 class IDamageFormula
 {

@@ -1,6 +1,7 @@
 #include "TestUtils.hpp"
 #include <catch2/catch_all.hpp>
 
+#include "ConsoleCommandMessage.h"
 #include "PacketParser.h"
 
 using Catch::Matchers::ContainsSubstring;
@@ -17,19 +18,17 @@ TEST_CASE("ConsoleCommand packet is parsed", "[ConsoleCommand]")
     {
     }
 
-    void OnConsoleCommand(
-      const RawMessageData& rawMsgData_,
-      const std::string& consoleCommandName_,
-      const std::vector<ConsoleCommands::Argument>& args_) override
+    void OnConsoleCommand(const RawMessageData& rawMsgData_,
+                          const ConsoleCommandMessage& msg_) override
     {
       rawMsgData = rawMsgData_;
-      consoleCommandName = consoleCommandName_;
-      args = args_;
+      commandName = msg_.data.commandName;
+      args = msg_.data.args;
     }
 
     RawMessageData rawMsgData;
-    std::string consoleCommandName;
-    std::vector<ConsoleCommands::Argument> args;
+    std::string commandName;
+    std::vector<std::variant<int64_t, std::string>> args;
   };
 
   nlohmann::json j{ { "t", MsgType::ConsoleCommand },
@@ -47,8 +46,9 @@ TEST_CASE("ConsoleCommand packet is parsed", "[ConsoleCommand]")
     listener);
 
   REQUIRE(listener.args ==
-          std::vector<ConsoleCommands::Argument>({ 0x14, 0x12eb7, 0x1 }));
-  REQUIRE(listener.consoleCommandName == "additem");
+          std::vector<std::variant<int64_t, std::string>>{
+            int64_t(0x14), int64_t(0x12eb7), int64_t(0x1) });
+  REQUIRE(listener.commandName == "additem");
   REQUIRE(listener.rawMsgData.userId == 122);
 }
 
@@ -65,9 +65,11 @@ TEST_CASE("AddItem doesn't execute for non-privilleged users",
   RawMessageData msgData;
   msgData.userId = 0;
 
+  ConsoleCommandMessage msg;
+  msg.data.commandName = "additem";
+  msg.data.args = { int64_t(0x14), int64_t(0x12eb7), int64_t(0x108) };
   REQUIRE_THROWS_WITH(
-    p.GetActionListener().OnConsoleCommand(msgData, "additem",
-                                           { 0x14, 0x12eb7, 0x108 }),
+    p.GetActionListener().OnConsoleCommand(msgData, msg),
     ContainsSubstring("Not enough permissions to use this command"));
 
   p.DestroyActor(0xff000000);
@@ -89,8 +91,10 @@ TEST_CASE("AddItem executes", "[ConsoleCommand][espm]")
   msgData.userId = 0;
 
   p.Messages().clear();
-  p.GetActionListener().OnConsoleCommand(msgData, "additem",
-                                         { 0x14, 0x12eb7, 0x108 });
+  ConsoleCommandMessage msg;
+  msg.data.commandName = "additem";
+  msg.data.args = { int64_t(0x14), int64_t(0x12eb7), int64_t(0x108) };
+  p.GetActionListener().OnConsoleCommand(msgData, msg);
 
   p.Tick(); // send deferred messages
 
@@ -101,11 +105,11 @@ TEST_CASE("AddItem executes", "[ConsoleCommand][espm]")
   REQUIRE(
     p.Messages()[0].j ==
     nlohmann::json::parse(
-      R"({"inventory":{"entries":[{"baseId":77495,"count":264}]},"type":"setInventory"})"));
+      R"({"inventory":{"entries":[{"baseId":77495,"count":264}]},"t":28})"));
   REQUIRE(
     p.Messages()[1].j ==
     nlohmann::json::parse(
-      R"({"arguments":[{"formId":77495,"type":"weapon"},264,false],"class":"SkympHacks","function":"AddItem","selfId":0,"snippetIdx":4294967295,"type":"spSnippet"})"));
+      R"({"arguments":[{"formId":77495,"type":"weapon"},264,false],"class":"SkympHacks","function":"AddItem","selfId":0,"snippetIdx":4294967295,"t":30})"));
 
   p.DestroyActor(0xff000000);
   DoDisconnect(p, 0);
@@ -130,8 +134,10 @@ TEST_CASE("PlaceAtMe executes", "[ConsoleCommand][espm]")
   msgData.userId = 0;
 
   p.Messages().clear();
-  p.GetActionListener().OnConsoleCommand(msgData, "placeatme",
-                                         { 0x14, EncGiant01 });
+  ConsoleCommandMessage msg2;
+  msg2.data.commandName = "placeatme";
+  msg2.data.args = { int64_t(0x14), int64_t(EncGiant01) };
+  p.GetActionListener().OnConsoleCommand(msgData, msg2);
 
   auto& refr = p.worldState.GetFormAt<MpActor>(0xff000001);
   REQUIRE(refr.GetBaseId() == EncGiant01);
