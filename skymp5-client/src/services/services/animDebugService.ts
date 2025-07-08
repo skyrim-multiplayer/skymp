@@ -16,8 +16,7 @@ export class AnimDebugService extends ClientListener {
       logTrace(this, `Destroying old AnimQueueCollection`);
       try {
         (this.sp.storage[AnimQueueCollection.Name] as AnimQueueCollection).clearSPText();
-      }
-      catch (e) {
+      } catch (e) {
         logError(this, `Failed to destroy old AnimQueueCollection:`, e);
       }
     }

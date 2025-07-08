@@ -4,7 +4,7 @@ import { ConnectionMessage } from "../events/connectionMessage";
 import { CustomPacketMessage } from "../messages/customPacketMessage";
 import { AnimDebugSettings } from "../messages_settings/animDebugSettings";
 import { ClientListener, CombinedController, Sp } from "./clientListener";
-import { ButtonEvent, CameraStateChangedEvent, DxScanCode, Menu, Message } from "skyrimPlatform";
+import { ButtonEvent, DxScanCode, Menu } from "skyrimPlatform";
 
 const playerId = 0x14;
 
@@ -35,8 +35,7 @@ export class SweetCameraEnforcementService extends ClientListener {
 
         if (!hasSweetPie) {
             logTrace(this, "SweetTaffy features disabled");
-        }
-        else {
+        } else {
             logTrace(this, "SweetTaffy features enabled");
         }
 
@@ -49,7 +48,7 @@ export class SweetCameraEnforcementService extends ClientListener {
                 leave: (ctx) => {
                     self.onSendAnimationEventLeave(ctx);
                     self.onSendExitAnimationEventLeave(ctx); // Tracking the successful launch of the exit animation
-                }
+                },
             }, playerId, playerId);
 
             this.controller.on("buttonEvent", (e) => this.onButtonEvent(e));
@@ -62,8 +61,7 @@ export class SweetCameraEnforcementService extends ClientListener {
 
         try {
             content = JSON.parse(e.message.contentJsonDump);
-        }
-        catch (err) {
+        } catch (err) {
             if (err instanceof SyntaxError) {
                 logError(this, "Failed to parse custom packet contentJsonDump:", e.message.contentJsonDump, "Error:", err);
                 return;
@@ -71,7 +69,9 @@ export class SweetCameraEnforcementService extends ClientListener {
             throw err;
         }
 
-        if (content["customPacketType"] !== "invokeAnim") return;
+        if (content["customPacketType"] !== "invokeAnim") {
+            return;
+        }
 
         logTrace(this, "Received custom packet with customPacketType invokeAnim");
 
@@ -109,7 +109,7 @@ export class SweetCameraEnforcementService extends ClientListener {
                 ", isPlayExitAnimAfterwardsEnabled=", isPlayExitAnimAfterwardsEnabled,
                 ", parentAnimEventName=", parentAnimEventName,
                 ", enablePlayerControlsDelayMs=", enablePlayerControlsDelayMs,
-                ", preferInterruptAnimAsExitAnimTimeMs=", preferInterruptAnimAsExitAnimTimeMs
+                ", preferInterruptAnimAsExitAnimTimeMs=", preferInterruptAnimAsExitAnimTimeMs,
             );
 
             const result = this.tryInvokeAnim(name, { weaponDrawnAllowed, furnitureAllowed, exitAnimName, interruptAnimName, timeMs, isPlayExitAnimAfterwardsEnabled, parentAnimEventName, enablePlayerControlsDelayMs, preferInterruptAnimAsExitAnimTimeMs });
@@ -118,13 +118,13 @@ export class SweetCameraEnforcementService extends ClientListener {
                 t: MsgType.CustomPacket,
                 contentJsonDump: JSON.stringify({
                     customPacketType: "invokeAnimResult",
-                    result, requestId
+                    result, requestId,
                 })
             };
 
             this.controller.emitter.emit("sendMessage", {
                 message,
-                reliability: "reliable"
+                reliability: "reliable",
             });
         });
     }
@@ -134,9 +134,13 @@ export class SweetCameraEnforcementService extends ClientListener {
         if (animLowerCase.startsWith("idle") && !animLowerCase.startsWith("idleforcedefaultstate")) {
             this.controller.once("update", () => {
                 // This is only for player.playidle
-                if (!this.sp.Ui.isMenuOpen(Menu.Console)) return;
+                if (!this.sp.Ui.isMenuOpen(Menu.Console)) {
+                    return;
+                }
 
-                if (this.sp.Game.getPlayer()?.getFurnitureReference()) return;
+                if (this.sp.Game.getPlayer()?.getFurnitureReference()) {
+                    return;
+                }
 
                 logTrace(this, `Forcing third person and disabling player controls`);
                 this.sp.Game.forceThirdPerson();
@@ -169,9 +173,7 @@ export class SweetCameraEnforcementService extends ClientListener {
             this.exitAnimEvent = animEventToSend;
             this.optionsCache = options;
             logTrace(this, `Sent animation event:`, animEventToSend);
-
         } else {
-
             this.currentAnim = null;
             const enablePlayerControlsDelaySeconds = (typeof options.enablePlayerControlsDelayMs === "number"
                 && options.enablePlayerControlsDelayMs > 0
@@ -193,7 +195,6 @@ export class SweetCameraEnforcementService extends ClientListener {
                 }
             });
         }
-
     }
 
     private onSendExitAnimationEventLeave(ctx: { animEventName: string, animationSucceeded: boolean }) {
@@ -271,23 +272,22 @@ export class SweetCameraEnforcementService extends ClientListener {
 
     private onButtonEvent(e: ButtonEvent) {
         // TODO: de-hardcode controls
-        if (e.isPressed) return;
+        if (e.isPressed) {
+            return;
+        }
         if (e.code === DxScanCode.Spacebar
-            || e.code === DxScanCode.W
-            || e.code === DxScanCode.A
-            || e.code === DxScanCode.S
-            || e.code === DxScanCode.D) {
-
+                || e.code === DxScanCode.W
+                || e.code === DxScanCode.A
+                || e.code === DxScanCode.S
+                || e.code === DxScanCode.D) {
             if (this.needsExitingAnim) {
                 if (this.currentAnim?.options) {
                     this.exitAnim({ playExitAnim: true, enablePlayerControlsDelayMs: this.currentAnim.options.enablePlayerControlsDelayMs });
-                }
-                else {
+                } else {
                     this.exitAnim({ playExitAnim: true, enablePlayerControlsDelayMs: undefined });
                 }
             }
-        }
-        else {
+        } else {
             if (this.needsExitingAnim) {
                 const intervalMs = this.settings?.exitAnimNotificationIntervalMs;
                 if (!intervalMs || (Date.now() - this.lastNotificationMoment) >= intervalMs) {
@@ -297,13 +297,19 @@ export class SweetCameraEnforcementService extends ClientListener {
             }
         }
 
-        if (!e.isUp) return;
+        if (!e.isUp) {
+            return;
+        }
 
-        if (!this.settings || !this.settings.animKeys) return;
+        if (!this.settings || !this.settings.animKeys) {
+            return;
+        }
 
         const animEvent = this.settings.animKeys[e.code];
 
-        if (!animEvent) return;
+        if (!animEvent) {
+            return;
+        }
 
         logTrace(this, "Starting anims from keyboard is disabled in this version")
         // this.tryInvokeAnim(animEvent, {
@@ -315,7 +321,7 @@ export class SweetCameraEnforcementService extends ClientListener {
         //     isPlayExitAnimAfterwardsEnabled: true,
         //     parentAnimEventName: null,
         //     enablePlayerControlsDelayMs: null,
-        //     preferInterruptAnimAsExitAnimTimeMs: null
+        //     preferInterruptAnimAsExitAnimTimeMs: null,
         // });
     }
 
@@ -329,15 +335,13 @@ export class SweetCameraEnforcementService extends ClientListener {
 
         if (typeof options.exitAnimName === "string") {
             this.exitAnimName = options.exitAnimName;
-        }
-        else {
+        } else {
             this.exitAnimName = null;
         }
 
         if (typeof options.interruptAnimName === "string") {
             this.interruptAnimName = options.interruptAnimName;
-        }
-        else {
+        } else {
             this.interruptAnimName = null;
         }
 
@@ -362,35 +366,54 @@ export class SweetCameraEnforcementService extends ClientListener {
 
         const player = this.sp.Game.getPlayer();
 
-        if (!player) return { success: false, reason: "player_not_found" };
+        if (!player) {
+            return { success: false, reason: "player_not_found" };
+        }
 
-        if (player.isWeaponDrawn() && !options.weaponDrawnAllowed) return { success: false, reason: "weapon_drawn" };
+        if (player.isWeaponDrawn() && !options.weaponDrawnAllowed) {
+            return { success: false, reason: "weapon_drawn" };
+        }
 
-        if (player.getAnimationVariableBool("bInJumpState")) return { success: false, reason: "jump_state" };
+        if (player.getAnimationVariableBool("bInJumpState")) {
+            return { success: false, reason: "jump_state" };
+        }
 
-        if (this.sp.Ui.isMenuOpen(Menu.Favorites)) return { success: false, reason: "favorites_menu_open" };
-        if (this.sp.Ui.isMenuOpen(Menu.Console)) return { success: false, reason: "console_menu_open" };
+        if (this.sp.Ui.isMenuOpen(Menu.Favorites)) {
+            return { success: false, reason: "favorites_menu_open" };
+        }
+        if (this.sp.Ui.isMenuOpen(Menu.Console)) {
+            return { success: false, reason: "console_menu_open" };
+        }
 
-        if (this.stopAnimInProgress) return { success: false, reason: "busy_stopping_anim" };
+        if (this.stopAnimInProgress) {
+            return { success: false, reason: "busy_stopping_anim" };
+        }
 
-        if (player.getFurnitureReference() && !options.furnitureAllowed) return { success: false, reason: "player_in_furniture" };
-        if (player.isSneaking()) return { success: false, reason: "player_sneaking" };
-        if (player.isSwimming()) return { success: false, reason: "player_swimming" };
+        if (player.getFurnitureReference() && !options.furnitureAllowed) {
+            return { success: false, reason: "player_in_furniture" };
+        }
+        if (player.isSneaking()) {
+            return { success: false, reason: "player_sneaking" };
+        }
+        if (player.isSwimming()) {
+            return { success: false, reason: "player_swimming" };
+        }
 
         if (animEvent.toLowerCase() === "idleforcedefaultstate") {
             if (this.needsExitingAnim) {
                 this.exitAnim({ playExitAnim: true, enablePlayerControlsDelayMs: undefined });
             }
-        }
-        else {
-            const f = () => {
+        } else {
+            const doInvoke = () => {
                 this.sp.Game.forceThirdPerson();
                 this.sp.Game.disablePlayerControls(true, false, true, false, false, false, false, false, 0);
                 this.sp.Debug.sendAnimationEvent(this.sp.Game.getPlayer(), animEvent);
 
                 let preferInterruptAnimState: { prefer: boolean } | null = null;
 
-                if (typeof options.preferInterruptAnimAsExitAnimTimeMs === "number" && options.preferInterruptAnimAsExitAnimTimeMs > 0 && Number.isFinite(options.preferInterruptAnimAsExitAnimTimeMs)) {
+                if (typeof options.preferInterruptAnimAsExitAnimTimeMs === "number"
+                        && options.preferInterruptAnimAsExitAnimTimeMs > 0
+                        && Number.isFinite(options.preferInterruptAnimAsExitAnimTimeMs)) {
                     const state = { prefer: true };
                     logTrace(this, `Prefer interrupt anim as exit anim for ${options.preferInterruptAnimAsExitAnimTimeMs} ms`);
                     this.sp.Utility.wait(options.preferInterruptAnimAsExitAnimTimeMs / 1000).then(() => {
@@ -405,18 +428,18 @@ export class SweetCameraEnforcementService extends ClientListener {
             }
 
             if (typeof options.parentAnimEventName === "string" && this.currentAnimName === options.parentAnimEventName) {
-                f();
+                doInvoke();
             } else if (Array.isArray(options.parentAnimEventName) && options.parentAnimEventName.includes(this.currentAnimName)) {
-                f();
+                doInvoke();
             } else if (this.needsExitingAnim) {
                 // TODO (1): consider not using enablePlayerControlsDelayMs here, because useInterruptAnimAsExitAnim doesn't need it
-                this.optionCb = f;
+                this.optionCb = doInvoke;
                 this.exitAnim({ playExitAnim: true, useInterruptAnimAsExitAnim: true, enablePlayerControlsDelayMs: options.enablePlayerControlsDelayMs });
             } else {
-                f();
+                doInvoke();
             }
 
-            logTrace(this, `Sent animation event: ${animEvent} `);
+            logTrace(this, `Sent animation event: ${animEvent}`);
         }
 
         return { success: true };
@@ -443,7 +466,7 @@ export class SweetCameraEnforcementService extends ClientListener {
     private currentAnim: {
         name: string,
         options: InvokeAnimOptions | null,
-        preferInterruptAnimState: { prefer: boolean } | null
+        preferInterruptAnimState: { prefer: boolean } | null,
     } | null = null;
 
     private stopAnimInProgress = false;
@@ -457,5 +480,4 @@ export class SweetCameraEnforcementService extends ClientListener {
     private optionsCache: ExitAnimOptions | undefined = undefined;
     private optionCb: (() => void) | undefined = undefined;
     private usePlayerControlsDelayMs: boolean = true;
-
 }

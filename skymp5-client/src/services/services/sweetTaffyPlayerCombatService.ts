@@ -24,10 +24,6 @@ interface WeaponTimings {
   crossbow: [number, number];
 }
 
-interface SweetTaffyPlayerCombatServiceSettings {
-  weaponTimings?: WeaponTimings;
-}
-
 type AttackType = "Std" | "Power" | "Jump" | "Bow" | "Crossbow";
 
 // TODO: move to config
@@ -47,8 +43,7 @@ export class SweetTaffyPlayerCombatService extends ClientListener {
 
     if (!this.hasSweetPie()) {
       logTrace(this, "SweetTaffy features disabled");
-    }
-    else {
+    } else {
       logTrace(this, "SweetTaffy features enabled");
     }
 
@@ -256,7 +251,7 @@ export class SweetTaffyPlayerCombatService extends ClientListener {
       warhammer: [0, 70],
       bow: [0, 70],
       staff: [0, 70],
-      crossbow: [0, 70]
+      crossbow: [0, 70],
     };
   }
 
@@ -285,7 +280,7 @@ export class SweetTaffyPlayerCombatService extends ClientListener {
       warhammer: [0, 0],
       bow: [0, 0],
       staff: [0, 0],
-      crossbow: [0, 0]
+      crossbow: [0, 0],
     };
     weaponTimingsResult.fist = this.getAndValidateTimingsConfigKey("fist", weaponTimings);
     weaponTimingsResult.sword = this.getAndValidateTimingsConfigKey("sword", weaponTimings);

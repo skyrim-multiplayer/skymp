@@ -21,12 +21,13 @@ export class PlayerBowShotService extends ClientListener {
                 enter(ctx) {
                 },
                 leave(ctx) {
-                    if (!ctx.animationSucceeded) return;
+                    if (!ctx.animationSucceeded) {
+                        return;
+                    }
 
                     if (ctx.animEventName === "crossbowAttackStart") {
                         _this.score = 1;
-                    }
-                    else if (ctx.animEventName === "attackRelease") {
+                    } else if (ctx.animEventName === "attackRelease") {
                         if (_this.score === 1) {
                             _this.controller.once("update", () => { _this.onPlayerCrossbowShot() });
                             _this.score = 0;
@@ -43,8 +44,7 @@ export class PlayerBowShotService extends ClientListener {
         if (Date.now() < this.inventoryUnblockMoment) {
             logTrace(this, "Blocked inventory operation");
             e.block();
-        }
-        else {
+        } else {
             logTrace(this, "Not blocked inventory operation");
         }
     }

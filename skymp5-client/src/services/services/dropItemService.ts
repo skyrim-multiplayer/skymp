@@ -47,8 +47,7 @@ export class DropItemService extends ClientListener {
                 )?.getFormID();
                 if (refrId) {
                     set.add(refrId);
-                }
-                else {
+                } else {
                     break;
                 }
             }
@@ -66,9 +65,9 @@ export class DropItemService extends ClientListener {
                         ref.delete();
                         ++numFound;
                         logTrace(this, "Found and deleted reference " + refrId.toString(16));
-                    }
-                    else
+                    } else {
                         logTrace(this, "Found reference " + refrId.toString(16) + " but it's protected");
+                    }
                 }
             });
 
@@ -80,7 +79,7 @@ export class DropItemService extends ClientListener {
             const count = e.numItems;
             this.controller.emitter.emit("sendMessage", {
                 message: {
-                    t, baseId, count
+                    t, baseId, count,
                 },
                 reliability: "reliable"
             });

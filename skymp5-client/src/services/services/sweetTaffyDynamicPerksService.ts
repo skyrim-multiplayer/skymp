@@ -12,8 +12,7 @@ export class SweetTaffyDynamicPerksService extends ClientListener {
 
     if (!this.hasSweetPie()) {
       logTrace(this, "SweetTaffy features disabled");
-    }
-    else {
+    } else {
       logTrace(this, "SweetTaffy features enabled");
     }
 

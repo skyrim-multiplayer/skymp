@@ -126,8 +126,7 @@ const runChecks = (files, { lintOnly = false }) => {
           if (lintOnly) {
             console.error(`Error in ${check.name}:`, err);
             process.exit(1);
-          }
-          else {
+          } else {
             throw err;
           }
         }

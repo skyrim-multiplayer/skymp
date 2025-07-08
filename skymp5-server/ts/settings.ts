@@ -185,8 +185,7 @@ async function fetchServerSettings(): Promise<any> {
   if (readDump && readDump["_meta_"] === dumpFileNameSuffix && readDump["_sha512_"] === expectedSha512) {
     console.log(`Loading settings dump from ${dumpFileName}`);
     serverSettings = JSON.parse(fs.readFileSync(dumpFileName, 'utf-8'));
-  }
-  else {
+  } else {
     for (let i = 0; i < additionalServerSettings.length; ++i) {
 
       const { repo, ref, token, pathRegex } = serverSettingsFile.additionalServerSettings[i];
@@ -232,12 +231,10 @@ async function fetchServerSettings(): Promise<any> {
               console.log(`Merging "${file.path}"`);
 
               serverSettings = lodash.merge(serverSettings, jsonContent);
-            }
-            else {
+            } else {
               throw new Error(`Expected content to be an array (${file.path})`);
             }
-          }
-          else {
+          } else {
             console.log(`Ignoring "${file.path}"`);
           }
         }
@@ -256,16 +253,13 @@ async function fetchServerSettings(): Promise<any> {
           for (const item of fileData.data) {
             if (item.type === "file") {
               await onFile(item);
-            }
-            else if (item.type === "dir") {
+            } else if (item.type === "dir") {
               await onDir(item);
-            }
-            else {
+            } else {
               console.warn(`Skipping unsupported item type ${item.type} (${item.path})`);
             }
           }
-        }
-        else {
+        } else {
           throw new Error(`Expected data to be an array (${file.path})`);
         }
       }
@@ -274,16 +268,13 @@ async function fetchServerSettings(): Promise<any> {
         for (const item of data) {
           if (item.type === "file") {
             await onFile(item);
-          }
-          else if (item.type === "dir") {
+          } else if (item.type === "dir") {
             await onDir(item);
-          }
-          else {
+          } else {
             console.warn(`Skipping unsupported item type ${item.type} (${item.path})`);
           }
         }
-      }
-      else {
+      } else {
         throw new Error(`Expected data to be an array (root)`);
       }
 

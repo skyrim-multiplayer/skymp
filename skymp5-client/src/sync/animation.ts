@@ -143,12 +143,16 @@ export const applyAnimation = (
   const ac = Actor.from(refr);
 
   if (anim.animEventName === "SkympFakeEquip") {
-    if (ac) applyWeapDrawn(ac, true);
+    if (ac) {
+      applyWeapDrawn(ac, true);
+    }
     return;
   }
 
   if (anim.animEventName === "SkympFakeUnequip") {
-    if (ac) applyWeapDrawn(ac, false);
+    if (ac) {
+      applyWeapDrawn(ac, false);
+    }
     return;
   }
 
@@ -157,8 +161,7 @@ export const applyAnimation = (
       if (storage["animationFunc1Set"] === true) {
         // @ts-ignore
         storage["animationFunc1"](ac);
-      }
-      else {
+      } else {
         ac.pushActorAway(ac, 0);
         ac.setActorValue("Variable10", -1000);
       }
@@ -178,7 +181,9 @@ export const applyAnimation = (
     const refrId = refr.getFormID();
     Utility.wait(1).then(() => {
       const ac = Actor.from(Game.getFormEx(refrId));
-      if (ac) ac.setActorValue("Variable10", 1000);
+      if (ac) {
+        ac.setActorValue("Variable10", 1000);
+      }
     });
   }
 
@@ -195,8 +200,11 @@ export const setDefaultAnimsDisabled = (
   refrId: number,
   disabled: boolean
 ): void => {
-  if (disabled) refsWithDefaultAnimsDisabled.add(refrId);
-  else refsWithDefaultAnimsDisabled.delete(refrId);
+  if (disabled) {
+    refsWithDefaultAnimsDisabled.add(refrId);
+  } else {
+    refsWithDefaultAnimsDisabled.delete(refrId);
+  }
 };
 
 export class AnimationSource {
@@ -222,12 +230,20 @@ export class AnimationSource {
   }
 
   filterMovement(mov: Movement): Movement {
-    if (this.weapDrawnBlocker >= Date.now()) mov.isWeapDrawn = true;
-    if (this.weapNonDrawnBlocker >= Date.now()) mov.isWeapDrawn = false;
+    if (this.weapDrawnBlocker >= Date.now()) {
+      mov.isWeapDrawn = true;
+    }
+    if (this.weapNonDrawnBlocker >= Date.now()) {
+      mov.isWeapDrawn = false;
+    }
 
-    if (this.sneakBlocker === mov.isSneaking) this.sneakBlocker = null;
-    else if (this.sneakBlocker === true) mov.isSneaking = true;
-    else if (this.sneakBlocker === false) mov.isSneaking = false;
+    if (this.sneakBlocker === mov.isSneaking) {
+      this.sneakBlocker = null;
+    } else if (this.sneakBlocker === true) {
+      mov.isSneaking = true;
+    } else if (this.sneakBlocker === false) {
+      mov.isSneaking = false;
+    }
 
     return mov;
   }

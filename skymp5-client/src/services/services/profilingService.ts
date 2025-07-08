@@ -28,8 +28,7 @@ export class ProfilingService extends ClientListener {
             session.post('Profiler.enable', (err: Error | null) => {
                 if (err) {
                     reject(err);
-                }
-                else {
+                } else {
                     resolve(undefined);
                 }
             });
@@ -39,8 +38,7 @@ export class ProfilingService extends ClientListener {
             session.post('Profiler.start', (err: Error | null) => {
                 if (err) {
                     reject(err);
-                }
-                else {
+                } else {
                     resolve(undefined);
                 }
             });

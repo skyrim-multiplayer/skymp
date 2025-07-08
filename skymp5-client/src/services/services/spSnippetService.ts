@@ -8,7 +8,6 @@ import { ClientListener, CombinedController, Sp } from "./clientListener";
 import { remoteIdToLocalId } from '../../view/worldViewMisc';
 import { logError, logTrace } from "../../logging";
 import { WorldView } from "../../view/worldView";
-import { RemoteServer } from "./remoteServer";
 
 export class SpSnippetService extends ClientListener {
   constructor(private sp: Sp, private controller: CombinedController) {
@@ -70,7 +69,6 @@ export class SpSnippetService extends ClientListener {
       if (functionLowerCase === "setdisplayname") {
         let newName = snippet.arguments[0];
         if (typeof newName === "string") {
-
           const selfId = remoteIdToLocalId(snippet.selfId);
           const self = this.sp.ObjectReference.from(this.sp.Game.getFormEx(selfId));
 
@@ -79,12 +77,10 @@ export class SpSnippetService extends ClientListener {
           if (replaceValue !== undefined) {
             newName = newName.replace(/%original_name%/g, replaceValue);
             snippet.arguments[0] = newName;
-          }
-          else {
+          } else {
             logError(this, "Couldn't get a replaceValue for SetDisplayName, snippet.selfId was", snippet.selfId.toString(16));
           }
-        }
-        else {
+        } else {
           logError(this, "Encountered SetDisplayName with non-string argument", newName);
         }
       }
@@ -126,24 +122,20 @@ export class SpSnippetService extends ClientListener {
           const name = form.getName();
           if (name.trim() === "") {
             logTrace(this, "Sound will not be played because item has no name")
-          }
-          else {
+          } else {
             sound.play(this.sp.Game.getPlayer());
           }
-        }
-        else {
+        } else {
           logError(this, "Unable to find sound with id " + soundId.toString(16));
         }
 
         if (count <= 0) {
           logError(this, "Positive count expected, got " + count.toString());
-        }
-        else {
+        } else {
           const name = form.getName();
           if (name.trim() === "") {
             logTrace(this, "Notification will not be shown because item has no name")
-          }
-          else {
+          } else {
             this.sp.Debug.notification(sign + " " + name + " (" + count + ")");
           }
           logTrace(this, sign + " " + name + " (" + count + ")");
@@ -181,7 +173,7 @@ export class SpSnippetService extends ClientListener {
     const self = this.sp.Game.getFormEx(selfId);
     if (!self)
       throw new Error(
-        `Unable to find form with id ${selfId.toString(16)}`
+        `Unable to find form with id ${selfId.toString(16)}`,
       );
     let cl = this.spAny[snippet.class];
     if (!cl) {
@@ -199,19 +191,19 @@ export class SpSnippetService extends ClientListener {
     const selfCasted = cl.from(self);
     if (!selfCasted)
       throw new Error(
-        `Form ${selfId.toString(16)} is not instance of ${snippet.class}, form type is ${self.getType()}`
+        `Form ${selfId.toString(16)} is not instance of ${snippet.class}, form type is ${self.getType()}`,
       );
     const f = selfCasted[snippet.function];
     return await f.apply(
       selfCasted,
-      snippet.arguments.map((arg) => this.deserializeArg(arg))
+      snippet.arguments.map((arg) => this.deserializeArg(arg)),
     );
   };
 
   private async runStatic(snippet: SpSnippetMessage): Promise<unknown> {
     const papyrusClass = this.spAny[snippet.class];
     return await papyrusClass[snippet.function](
-      ...snippet.arguments.map((arg) => this.deserializeArg(arg))
+      ...snippet.arguments.map((arg) => this.deserializeArg(arg)),
     );
   };
 

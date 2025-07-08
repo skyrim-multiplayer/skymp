@@ -267,8 +267,7 @@ export class RemoteServer extends ClientListener {
       const actor = Actor.from(refr);
       if (actor /*&& actor.getFormID() === 0x14*/) {
         ragdollService.safeRemoveRagdollFromWorld(actor, removeRagdollCallback);
-      }
-      else {
+      } else {
         removeRagdollCallback();
       }
     });
@@ -322,8 +321,7 @@ export class RemoteServer extends ClientListener {
 
               if (replaceValue !== undefined) {
                 displayName = displayName.replace(/%original_name%/g, replaceValue);
-              }
-              else {
+              } else {
                 logError(this, "Couldn't get a replaceValue for SetDisplayName, refr.getFormID() was", refr.getFormID().toString(16));
               }
 
@@ -401,12 +399,10 @@ export class RemoteServer extends ClientListener {
       let parsed: unknown;
       try {
         parsed = JSON.parse(element.propValueJsonDump);
-      }
-      catch (e) {
+      } catch (e) {
         if (e instanceof SyntaxError) {
           logError(this, "createActor", msg.refrId?.toString(16), "failed to parse custom prop", element.propName, element.propValueJsonDump, e.message);
-        }
-        else {
+        } else {
           throw e;
         }
       }
@@ -917,8 +913,7 @@ export class RemoteServer extends ClientListener {
         if (e instanceof SyntaxError) {
           logError(this, 'extractUpdatePropertyMessageData - Failed to parse dataDump', updatePropertyMessage.dataDump);
           return;
-        }
-        else {
+        } else {
           throw e;
         }
       }

@@ -12,8 +12,7 @@ module.exports = {
       if (!gameStillRunning) break;
       try {
         childProcess.execSync(`taskkill /im ${appName} /f`);
-      }
-      catch(e) {
+      } catch(e) {
         // ...
       }
     }

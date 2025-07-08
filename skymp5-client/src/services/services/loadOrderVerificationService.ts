@@ -1,4 +1,4 @@
-import { Game, Utility, HttpClient, printConsole, createText, setTextSize } from "skyrimPlatform";
+import { Game, Utility, printConsole, createText, setTextSize } from "skyrimPlatform";
 import { getScreenResolution } from "../../view/formView";
 import { ClientListener, CombinedController, Sp } from "./clientListener";
 import { Mod } from "../messages_http/serverManifest";
@@ -70,7 +70,7 @@ export class LoadOrderVerificationService extends ClientListener {
         }
         this.updateText(
           'LOAD ORDER ERROR!\nCheck console for details.',
-          [255, 0, 0, 1]
+          [255, 0, 0, 1],
         );
       });
   };
@@ -133,18 +133,13 @@ export class LoadOrderVerificationService extends ClientListener {
   private getFileInfoSafe(filename: string) {
     try {
       return this.sp.getFileInfo(filename);
-    }
-    catch (e) {
-      // InvalidArgumentException.h, Skyrim Platform
-      const searchString = 'is not a valid argument';
-
+    } catch (e) {
       const message = (e as Record<string, unknown>).message;
 
       if (typeof message === "string" && message.includes('is not a valid argument')) {
         logTrace(this, `Failed to get file info for`, filename);
         return { crc32: 0, size: 0 };
-      }
-      else {
+      } else {
         throw e;
       }
     }

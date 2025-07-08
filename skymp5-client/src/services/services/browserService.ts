@@ -35,8 +35,7 @@ export class BrowserService extends ClientListener {
       this.sp.browser.setFocused(newState);
       if (newState) {
         this.sp.browser.executeJavaScript(focusEventString);
-      }
-      else {
+      } else {
         this.sp.browser.executeJavaScript(unfocusEventString);
       }
     }

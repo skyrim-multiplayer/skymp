@@ -16,8 +16,7 @@ export class NetInfoService extends ClientListener {
       logTrace(this, `Destroying old NetInfoTexts`);
       try {
         (this.sp.storage[NetInfoTexts.Name] as NetInfoTexts)?.clear();
-      }
-      catch (e) {
+      } catch (e) {
         logError(this, `Failed to destroy old NetInfoTexts:`, e);
       }
     }

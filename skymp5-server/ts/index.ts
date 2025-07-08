@@ -46,17 +46,14 @@ function requireTemp(module: string) {
     fs.writeFileSync(tempPath, contents);
 
     require(tempPath);
-  }
-  catch (e) {
+  } catch (e) {
     console.error(e.stack);
-  }
-  finally {
+  } finally {
     try {
       if (tmpDir) {
         fs.rmSync(tmpDir, { recursive: true });
       }
-    }
-    catch (e) {
+    } catch (e) {
       console.error(`An error has occurred while removing the temp folder at ${tmpDir}. Please remove it manually. Error: ${e}`);
     }
   }
@@ -169,7 +166,7 @@ const setupGamemode = (server: any, gamemodePath: string) => {
     const n = numReloads.n;
     setTimeout(
       () => (n === numReloads.n ? reloadGamemode() : undefined),
-      1000
+      1000,
     );
   };
 
@@ -289,8 +286,7 @@ const main = async () => {
   // It's important to call this before gamemode
   try {
     server.attachSaveStorage();
-  }
-  catch (e) {
+  } catch (e) {
     console.error(e);
     console.error(`Stopping the server due to the previous error`);
     process.exit(-1);
