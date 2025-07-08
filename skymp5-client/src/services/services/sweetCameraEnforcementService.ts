@@ -8,6 +8,12 @@ import { ButtonEvent, CameraStateChangedEvent, DxScanCode, Menu, Message } from 
 
 const playerId = 0x14;
 
+interface AnimOptions {
+    playExitAnim: boolean;
+    useInterruptAnimAsExitAnim?: boolean;
+    enablePlayerControlsDelayMs: unknown;
+}
+
 interface InvokeAnimOptions {
     weaponDrawnAllowed: unknown;
     furnitureAllowed: unknown;
@@ -42,6 +48,7 @@ export class SweetCameraEnforcementService extends ClientListener {
                 enter: (ctx) => { },
                 leave: (ctx) => {
                     self.onSendAnimationEventLeave(ctx);
+                    self.onSendExitAnimationEventLeave(ctx); // Tracking the successful launch of the exit animation
                 }
             }, playerId, playerId);
 
@@ -140,50 +147,89 @@ export class SweetCameraEnforcementService extends ClientListener {
         }
     }
 
-    private exitAnim(options: { playExitAnim: boolean, useInterruptAnimAsExitAnim?: boolean, cb?: () => void, enablePlayerControlsDelayMs: unknown }) {
+    private exitAnim(options: { playExitAnim: boolean, useInterruptAnimAsExitAnim?: boolean, enablePlayerControlsDelayMs: unknown }) {
         // TODO(1): See another TODO(1) in this file
-        let usePlayerControlsDelayMs = true;
-
         if (options.playExitAnim) {
             let useInterruptAnimAsExitAnim = false;
 
             if (options.useInterruptAnimAsExitAnim) {
                 useInterruptAnimAsExitAnim = true;
-                usePlayerControlsDelayMs = false;
+                this.usePlayerControlsDelayMs = false;
                 logTrace(this, `Using interrupt anim as exit anim: ${this.interruptAnimName}. Reason: useInterruptAnimAsExitAnim is true`);
             }
 
             if (this.currentAnim?.preferInterruptAnimState?.prefer) {
                 useInterruptAnimAsExitAnim = true;
-                usePlayerControlsDelayMs = false;
+                this.usePlayerControlsDelayMs = false;
                 logTrace(this, `Using interrupt anim as exit anim: ${this.interruptAnimName}. Reason: preferInterruptAnimState.prefer is true`);
             }
 
             const animEventToSend = useInterruptAnimAsExitAnim ? (this.interruptAnimName || "IdleStop") : (this.exitAnimName || "IdleForceDefaultState");
             this.sp.Debug.sendAnimationEvent(this.sp.Game.getPlayer(), animEventToSend);
+            this.exitAnimEvent = animEventToSend;
+            this.optionsCache = options;
             logTrace(this, `Sent animation event:`, animEventToSend);
+
+        } else {
+
+            this.currentAnim = null;
+            const enablePlayerControlsDelaySeconds = (typeof options.enablePlayerControlsDelayMs === "number"
+                && options.enablePlayerControlsDelayMs > 0
+                && Number.isFinite(options.enablePlayerControlsDelayMs)
+                && this.usePlayerControlsDelayMs)
+                ? options.enablePlayerControlsDelayMs / 1000
+                : 0.5;
+            const stopAnimDelaySeconds = enablePlayerControlsDelaySeconds + 0.5;
+
+            this.stopAnimInProgress = true;
+            this.sp.Utility.wait(enablePlayerControlsDelaySeconds).then(() => {
+                this.sp.Game.enablePlayerControls(true, false, true, false, false, false, false, false, 0);
+            });
+            this.sp.Utility.wait(stopAnimDelaySeconds).then(() => {
+                this.stopAnimInProgress = false;
+                if (this.optionCb) {
+                    this.optionCb();
+                    this.optionCb = undefined;
+                }
+            });
         }
 
-        this.currentAnim = null;
+    }
 
-        const enablePlayerControlsDelaySeconds = (typeof options.enablePlayerControlsDelayMs === "number"
-            && options.enablePlayerControlsDelayMs > 0
-            && Number.isFinite(options.enablePlayerControlsDelayMs)
-            && usePlayerControlsDelayMs)
-            ? options.enablePlayerControlsDelayMs / 1000
-            : 0.5;
-        const stopAnimDelaySeconds = enablePlayerControlsDelaySeconds + 0.5;
+    private onSendExitAnimationEventLeave(ctx: { animEventName: string, animationSucceeded: boolean }) {
+        if (ctx.animationSucceeded && this.exitAnimEvent && this.optionsCache && ctx.animEventName === this.exitAnimEvent) {
+            
+            this.currentAnim = null;
+            const enablePlayerControlsDelaySeconds = (typeof this.optionsCache.enablePlayerControlsDelayMs === "number"
+                && this.optionsCache.enablePlayerControlsDelayMs > 0
+                && Number.isFinite(this.optionsCache.enablePlayerControlsDelayMs)
+                && this.usePlayerControlsDelayMs)
+                ? this.optionsCache.enablePlayerControlsDelayMs / 1000
+                : 0.5;
+            const stopAnimDelaySeconds = enablePlayerControlsDelaySeconds + 0.5;
 
-        this.stopAnimInProgress = true;
-        this.sp.Utility.wait(enablePlayerControlsDelaySeconds).then(() => {
-            this.sp.Game.enablePlayerControls(true, false, true, false, false, false, false, false, 0);
-        });
-        this.sp.Utility.wait(stopAnimDelaySeconds).then(() => {
-            this.stopAnimInProgress = false;
-            if (options.cb) {
-                options.cb();
+            this.stopAnimInProgress = true;
+            this.optionsCache = undefined;
+            this.exitAnimEvent = undefined;
+            this.usePlayerControlsDelayMs = true;
+
+            this.sp.Utility.wait(enablePlayerControlsDelaySeconds).then(() => {
+                this.sp.Game.enablePlayerControls(true, false, true, false, false, false, false, false, 0);
+            });
+            this.sp.Utility.wait(stopAnimDelaySeconds).then(() => {
+                this.stopAnimInProgress = false;
+                if (this.optionCb) {
+                    this.optionCb();
+                    this.optionCb = undefined;
+                }
+            });
+        } else {
+            this.optionsCache = undefined;
+            this.exitAnimEvent = undefined;
+            if (this.optionCb) {
+                this.optionCb = undefined;
             }
-        });
+        }
     }
 
     private startAntiExploitPolling(mode: "no_death" | "death" = "death") {
@@ -225,6 +271,7 @@ export class SweetCameraEnforcementService extends ClientListener {
 
     private onButtonEvent(e: ButtonEvent) {
         // TODO: de-hardcode controls
+        if (e.isPressed) return;
         if (e.code === DxScanCode.Spacebar
             || e.code === DxScanCode.W
             || e.code === DxScanCode.A
@@ -363,7 +410,8 @@ export class SweetCameraEnforcementService extends ClientListener {
                 f();
             } else if (this.needsExitingAnim) {
                 // TODO (1): consider not using enablePlayerControlsDelayMs here, because useInterruptAnimAsExitAnim doesn't need it
-                this.exitAnim({ playExitAnim: true, useInterruptAnimAsExitAnim: true, cb: f, enablePlayerControlsDelayMs: options.enablePlayerControlsDelayMs });
+                this.optionCb = f;
+                this.exitAnim({ playExitAnim: true, useInterruptAnimAsExitAnim: true, enablePlayerControlsDelayMs: options.enablePlayerControlsDelayMs });
             } else {
                 f();
             }
@@ -405,4 +453,9 @@ export class SweetCameraEnforcementService extends ClientListener {
     private tryInvokeAnimCount: number = 0;
     private lastNotificationMoment: number = 0;
     private readonly tryInvokeAnimCountMax: number = 1000000000;
+    private exitAnimEvent: string | undefined = undefined;
+    private optionsCache: AnimOptions | undefined = undefined;
+    private optionCb: (() => void) | undefined = undefined;
+    private usePlayerControlsDelayMs: boolean = true;
+
 }
