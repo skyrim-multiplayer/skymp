@@ -8,12 +8,6 @@ import { ButtonEvent, CameraStateChangedEvent, DxScanCode, Menu, Message } from 
 
 const playerId = 0x14;
 
-interface AnimOptions {
-    playExitAnim: boolean;
-    useInterruptAnimAsExitAnim?: boolean;
-    enablePlayerControlsDelayMs: unknown;
-}
-
 interface InvokeAnimOptions {
     weaponDrawnAllowed: unknown;
     furnitureAllowed: unknown;
@@ -24,6 +18,12 @@ interface InvokeAnimOptions {
     parentAnimEventName: unknown;
     enablePlayerControlsDelayMs: unknown;
     preferInterruptAnimAsExitAnimTimeMs: unknown;
+}
+
+interface ExitAnimOptions {
+    playExitAnim: boolean;
+    useInterruptAnimAsExitAnim?: boolean;
+    enablePlayerControlsDelayMs: unknown;
 }
 
 // ex AnimDebugService part
@@ -147,7 +147,7 @@ export class SweetCameraEnforcementService extends ClientListener {
         }
     }
 
-    private exitAnim(options: { playExitAnim: boolean, useInterruptAnimAsExitAnim?: boolean, enablePlayerControlsDelayMs: unknown }) {
+    private exitAnim(options: ExitAnimOptions) {
         // TODO(1): See another TODO(1) in this file
         if (options.playExitAnim) {
             let useInterruptAnimAsExitAnim = false;
@@ -454,7 +454,7 @@ export class SweetCameraEnforcementService extends ClientListener {
     private lastNotificationMoment: number = 0;
     private readonly tryInvokeAnimCountMax: number = 1000000000;
     private exitAnimEvent: string | undefined = undefined;
-    private optionsCache: AnimOptions | undefined = undefined;
+    private optionsCache: ExitAnimOptions | undefined = undefined;
     private optionCb: (() => void) | undefined = undefined;
     private usePlayerControlsDelayMs: boolean = true;
 
