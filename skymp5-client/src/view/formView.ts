@@ -1,5 +1,5 @@
 import { Actor, ActorBase, createText, destroyText, Form, FormType, Game, Keyword, NetImmerse, ObjectReference, once, printConsole, setTextPos, setTextSize, setTextString, storage, TESModPlatform, Utility, worldPointToScreenPoint } from "skyrimPlatform";
-import { setDefaultAnimsDisabled, applyAnimation, AnimationApplyState } from "../sync/animation";
+import { setDefaultAnimsDisabled, applyAnimation } from "../sync/animation";
 import { Appearance, applyAppearance } from "../sync/appearance";
 import { isBadMenuShown, applyEquipment } from "../sync/equipment";
 import { RespawnNeededError } from "../lib/errors";
@@ -123,7 +123,9 @@ export class FormView {
         const refr = ObjectReference.from(Game.getFormEx(this.refrId));
         if (refr) {
           const base = refr.getBaseObject();
-          if (base) ObjectReferenceEx.dealWithRef(refr, base);
+          if (base) {
+            ObjectReferenceEx.dealWithRef(refr, base);
+          }
         }
       }
     } else {
@@ -288,7 +290,9 @@ export class FormView {
       this.refrId = (refr as ObjectReference).getFormID();
     }
 
-    if (!this.ready) return;
+    if (!this.ready) {
+      return;
+    }
 
     const refr = ObjectReference.from(Game.getFormEx(this.refrId));
     if (refr) {
@@ -313,7 +317,9 @@ export class FormView {
     once("update", () => {
       if (refrId >= 0xff000000) {
         const refr = ObjectReference.from(Game.getFormEx(refrId));
-        if (refr) refr.delete();
+        if (refr) {
+          refr.delete();
+        }
         SpApiInteractor.getControllerInstance().lookupListener(WorldCleanerService).modWcProtection(refrId, -1);
         const ac = Actor.from(refr);
         if (ac) {
@@ -582,7 +588,9 @@ export class FormView {
 
   private isSweetHidePerson(refr: ObjectReference): boolean {
     const actor = Actor.from(refr)
-    if (!actor) return false;
+    if (!actor) {
+      return false;
+    }
     const keyword = Keyword.getKeyword('SweetHidePerson');
     return actor.wornHasKeyword(keyword);
   }
@@ -607,7 +615,9 @@ export class FormView {
   }
 
   private getLeveledBase(templateChain: number[] | undefined): number {
-    if (templateChain === undefined) return 0;
+    if (templateChain === undefined) {
+      return 0;
+    }
 
     const str = templateChain.join(',');
 

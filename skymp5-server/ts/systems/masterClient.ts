@@ -18,7 +18,10 @@ export class MasterClient implements System {
   ) { }
 
   async initAsync(): Promise<void> {
-    if (!this.masterUrl) return this.log("No master server specified");
+    if (!this.masterUrl) {
+      this.log("No master server specified");
+      return;
+    }
 
     this.log(`Using master server on ${this.masterUrl}`);
 
@@ -31,7 +34,9 @@ export class MasterClient implements System {
   }
 
   async updateAsync(ctx: SystemContext): Promise<void> {
-    if (this.offlineMode) return;
+    if (this.offlineMode) {
+      return;
+    }
 
     await new Promise((r) => setTimeout(r, this.updateIntervalMs));
 

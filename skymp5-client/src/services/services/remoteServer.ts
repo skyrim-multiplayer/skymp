@@ -78,18 +78,24 @@ const setPcInventory = (inv: Inventory): void => {
 
 let pcInvLastApply = 0;
 on('update', () => {
-  if (isBadMenuShown()) return;
+  if (isBadMenuShown()) {
+    return;
+  }
   if (Date.now() - pcInvLastApply > 5000) {
     pcInvLastApply = Date.now();
     const pcInv = getPcInventory();
-    if (pcInv) applyInventory(Game.getPlayer()!, pcInv, false, true);
+    if (pcInv) {
+      applyInventory(Game.getPlayer()!, pcInv, false, true);
+    }
   }
 });
 
 const unequipIronHelmet = () => {
   const ironHelment = Armor.from(Game.getFormEx(0x00012e4d));
   const pl = Game.getPlayer();
-  if (pl) pl.unequipItem(ironHelment, false, true);
+  if (pl) {
+    pl.unequipItem(ironHelment, false, true);
+  }
 };
 
 export class RemoteServer extends ClientListener {
@@ -305,7 +311,9 @@ export class RemoteServer extends ClientListener {
                 for (let i = 0; i < 5; i++) {
                   // retry. pillars in bleakfalls are not reliable for some reason
                   let res2 = ObjectReference.from(Game.getFormEx(refrid))?.playAnimation(animation);
-                  if (res2) break;
+                  if (res2) {
+                    break;
+                  }
                   await Utility.wait(2);
                 }
               })();
@@ -498,7 +506,9 @@ export class RemoteServer extends ClientListener {
               );
               await Utility.wait(1);
               const pl = Game.getPlayer();
-              if (!pl) break;
+              if (!pl) {
+                break;
+              }
               const pos = [
                 pl.getPositionX(),
                 pl.getPositionY(),
@@ -618,8 +628,12 @@ export class RemoteServer extends ClientListener {
     // Shrink to fit
     while (1) {
       const length = this.worldModel.forms.length;
-      if (!length) break;
-      if (this.worldModel.forms[length - 1]) break;
+      if (!length) {
+        break;
+      }
+      if (this.worldModel.forms[length - 1]) {
+        break;
+      }
       this.worldModel.forms.length = length - 1;
     }
 
@@ -811,7 +825,9 @@ export class RemoteServer extends ClientListener {
       const id = this.getIdManager().getId(msg.idx);
       const refr = id === this.getMyActorIndex() ? Game.getPlayer() : getObjectReference(id);
       const ac = Actor.from(refr);
-      if (!ac) return;
+      if (!ac) {
+        return;
+      }
 
       const { health, stamina, magicka } = msg.data;
       if (typeof health === "number") {
@@ -927,7 +943,9 @@ export class RemoteServer extends ClientListener {
 
     once('update', () => {
       const ac = Actor.from(Game.getFormEx(remoteIdToLocalId(msg.data.caster)));
-      if (!ac) return;
+      if (!ac) {
+        return;
+      }
 
       const actorAnimationVariables: ActorAnimationVariables = {
         booleans: new Uint8Array(msg.data.actorAnimationVariables.booleans),
@@ -953,7 +971,9 @@ export class RemoteServer extends ClientListener {
 
     once('update', () => {
       const ac = Actor.from(Game.getFormEx(remoteIdToLocalId(msg.data.actorRemoteId)));
-      if (!ac) return;
+      if (!ac) {
+        return;
+      }
 
       const actorAnimationVariables: ActorAnimationVariables = {
         booleans: new Uint8Array(msg.data.actorAnimationVariables.booleans),

@@ -125,7 +125,9 @@ const setupGamemode = (server: any, gamemodePath: string) => {
   const clear = () => server.clear();
 
   const toAbsolute = (p: string) => {
-    if (path.isAbsolute(p)) return p;
+    if (path.isAbsolute(p)) {
+      return p;
+    }
     return path.resolve("", p);
   };
 
@@ -226,7 +228,9 @@ const main = async () => {
   })();
 
   for (const system of systems) {
-    if (system.initAsync) await system.initAsync(ctx);
+    if (system.initAsync) {
+      await system.initAsync(ctx);
+    }
     log(`Initialized ${system.systemName}`);
     if (system.updateAsync)
       (async () => {
@@ -245,7 +249,9 @@ const main = async () => {
     log("connect", userId);
     for (const system of systems) {
       try {
-        if (system.connect) system.connect(userId, ctx);
+        if (system.connect) {
+          system.connect(userId, ctx);
+        }
       } catch (e) {
         console.error(e);
       }
@@ -256,7 +262,9 @@ const main = async () => {
     log("disconnect", userId);
     for (const system of systems) {
       try {
-        if (system.disconnect) system.disconnect(userId, ctx);
+        if (system.disconnect) {
+          system.disconnect(userId, ctx);
+        }
       } catch (e) {
         console.error(e);
       }

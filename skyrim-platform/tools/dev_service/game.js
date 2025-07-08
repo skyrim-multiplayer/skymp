@@ -9,7 +9,9 @@ module.exports = {
       let appName = 'SkyrimSE.exe';
       let gameStillRunning = tasklist.indexOf(appName) !== -1;
 
-      if (!gameStillRunning) break;
+      if (!gameStillRunning) {
+        break;
+      }
       try {
         childProcess.execSync(`taskkill /im ${appName} /f`);
       } catch(e) {

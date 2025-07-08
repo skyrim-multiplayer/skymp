@@ -53,7 +53,9 @@ export class TimeService extends ClientListener {
     }
 
     private onUpdate() {
-        if (Date.now() - this.lastTimeUpd <= 2000) return;
+        if (Date.now() - this.lastTimeUpd <= 2000) {
+          return;
+        }
         this.lastTimeUpd = Date.now();
         this.every2seconds();
     }

@@ -69,7 +69,9 @@ export class Settings {
       'offlineMode',
       'discordAuth',
     ].forEach((prop) => {
-      if (settings[prop]) (this as Record<string, unknown>)[prop] = settings[prop];
+      if (settings[prop]) {
+        (this as Record<string, unknown>)[prop] = settings[prop];
+      }
     });
 
     this.allSettings = settings;

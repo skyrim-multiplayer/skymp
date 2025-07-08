@@ -8,7 +8,9 @@ export const tryHost = (targetRemoteId: number): void => {
 
 export const nextHostAttempt = (): number | undefined => {
   const arr = storage["hostAttempts"] as Array<number>;
-  if (arr.length === 0) return undefined;
+  if (arr.length === 0) {
+    return undefined;
+  }
   return arr.shift();
 };
 

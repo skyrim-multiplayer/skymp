@@ -95,7 +95,9 @@ export class GamemodeUpdateService extends ClientListener {
                 const f = this.updateNeighborFunctions[key];
                 // Actually, 'f' should always be a valid function, but who knows
                 try {
-                    if (f) f(this.updateNeighborCtx);
+                    if (f) {
+                        f(this.updateNeighborCtx);
+                    }
                 } catch (e) {
                     logTrace(this, `updateNeighbor`, key, '-', e);
                 }
@@ -164,25 +166,35 @@ export class GamemodeUpdateService extends ClientListener {
         }
         const funcs = this.sp.storage["updateOwnerFunctions"];
 
-        if (this.sp.storage["ownerModelSet"] !== true) return;
+        if (this.sp.storage["ownerModelSet"] !== true) {
+            return;
+        }
 
         const ownerModel = this.sp.storage["ownerModel"] as FormModel;
 
         for (const propName of keys) {
             const f = (funcs as Record<string, any>)[propName];
             // Actually, must always be a valid funciton, but who knows
-            if (!f) continue;
+            if (!f) {
+                continue;
+            }
 
             this.updateOwnerCtx._model = ownerModel;
-            if (!this.updateOwnerCtx._model) continue;
+            if (!this.updateOwnerCtx._model) {
+                continue;
+            }
 
             this.updateOwnerCtx.value = (this.updateOwnerCtx._model as Record<string, unknown>)[propName];
-            if (this.updateOwnerCtx.value === undefined) continue;
+            if (this.updateOwnerCtx.value === undefined) {
+                continue;
+            }
 
             this.updateOwnerCtx.refr = playerRef;
             this.updateOwnerCtx._model = ownerModel;
             try {
-                if (f) f(this.updateOwnerCtx);
+                if (f) {
+                    f(this.updateOwnerCtx);
+                }
             } catch (e) {
                 logTrace(this, `updateOwner`, propName, '-', e);
             }

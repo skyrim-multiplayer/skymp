@@ -11,12 +11,16 @@ class PlayerCharacterSpeedCalculator {
   }
 
   static getSpeed(currentPos: NiPoint3, worldOrCell: number) {
-    if (this.lastPcPosCheck === -1) return 0;
+    if (this.lastPcPosCheck === -1) {
+      return 0;
+    }
 
     const timeDeltaSec = (Date.now() - this.lastPcPosCheck) / 1000;
     if (timeDeltaSec > 5) return 0; // Too inaccurate
     if (timeDeltaSec === 0) return 0; // Division by zero
-    if (worldOrCell !== this.lastPcWorldOrCell) return 0;
+    if (worldOrCell !== this.lastPcWorldOrCell) {
+      return 0;
+    }
 
     const distance = ObjectReferenceEx.getDistance(currentPos, this.lastPcPos);
     return distance / timeDeltaSec;
@@ -64,7 +68,9 @@ export const getMovement = (refr: ObjectReference, form?: FormModel): Movement =
     PlayerCharacterSpeedCalculator.savePosition(pos, w);
 
     // It's unrealistic speed. It still may happen due to teleports
-    if (speed > 2000) speed = 0;
+    if (speed > 2000) {
+      speed = 0;
+    }
   }
 
   const worldOrCell = refr.getWorldSpace() || refr.getParentCell();
@@ -92,10 +98,14 @@ const isSneaking = (ac: Actor) =>
   ac.isSneaking() || ac.getAnimationVariableBool("IsSneaking");
 
 const getRunMode = (ac: Actor): RunMode => {
-  if (ac.isSprinting()) return "Sprinting";
+  if (ac.isSprinting()) {
+    return "Sprinting";
+  }
 
   const speed = ac.getAnimationVariableFloat("SpeedSampled");
-  if (!speed) return "Standing";
+  if (!speed) {
+    return "Standing";
+  }
 
   const furniture = ac.getFurnitureReference();
   if (furniture !== null) return "Standing"; // TODO: Sitting?
@@ -105,7 +115,9 @@ const getRunMode = (ac: Actor): RunMode => {
     if (!TESModPlatform.isPlayerRunningEnabled() || speed < 150)
       isRunning = false;
   } else {
-    if (!ac.isRunning() || speed < 150) isRunning = false;
+    if (!ac.isRunning() || speed < 150) {
+      isRunning = false;
+    }
   }
 
   if (ac.getAnimationVariableFloat("IsBlocking")) {
@@ -114,7 +126,9 @@ const getRunMode = (ac: Actor): RunMode => {
 
   const carryWeight = ac.getActorValue("CarryWeight");
   const totalItemWeight = ac.getTotalItemWeight();
-  if (carryWeight < totalItemWeight) isRunning = false;
+  if (carryWeight < totalItemWeight) {
+    isRunning = false;
+  }
 
   return isRunning ? "Running" : "Walking";
 };

@@ -29,7 +29,9 @@ export class AnimDebugService extends ClientListener {
       }
     }, playerId, playerId);
 
-    if (!this.settings || !this.settings.isActive) return;
+    if (!this.settings || !this.settings.isActive) {
+      return;
+    }
 
     if (this.settings.textOutput?.isActive) {
       this.queue = new AnimQueueCollection(this.sp, this.settings);
@@ -38,7 +40,9 @@ export class AnimDebugService extends ClientListener {
   }
 
   private onSendAnimationEventLeave(ctx: { animEventName: string, animationSucceeded: boolean }) {
-    if (this.queue === undefined) return;
+    if (this.queue === undefined) {
+      return;
+    }
 
     this.queue.push(ctx.animEventName, ctx.animationSucceeded ? animationSucceededTextColor : animationNotSucceededTextColor);
   }
@@ -77,7 +81,9 @@ class AnimQueueCollection {
   private readonly list: Array<AnimListItem>;
 
   public clearSPText(): void {
-    if (this.list.length === 0) return;
+    if (this.list.length === 0) {
+      return;
+    }
     this.list.forEach(item => this.sp.destroyText(item.textId));
   }
 

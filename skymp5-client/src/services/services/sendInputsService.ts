@@ -103,7 +103,9 @@ export class SendInputsService extends ClientListener {
 
     private sendMovement(_refrId?: number, form?: FormModel) {
         const owner = this.getInputOwner(_refrId);
-        if (!owner) return;
+        if (!owner) {
+          return;
+        }
 
         const refrIdStr = `${_refrId}`;
         const sendMovementRateMs = 130;
@@ -125,10 +127,14 @@ export class SendInputsService extends ClientListener {
 
     private sendActorValuePercentage(_refrId?: number, form?: FormModel) {
         const canSend = form && (form.isDead ?? false) === false;
-        if (!canSend) return;
+        if (!canSend) {
+          return;
+        }
 
         const owner = this.getInputOwner(_refrId);
-        if (!owner) return;
+        if (!owner) {
+          return;
+        }
 
         const av = getActorValues(this.sp.Game.getPlayer() as Actor);
         const currentTime = Date.now();
@@ -172,7 +178,9 @@ export class SendInputsService extends ClientListener {
 
     private sendAnimation(_refrId?: number) {
         const owner = this.getInputOwner(_refrId);
-        if (!owner) return;
+        if (!owner) {
+          return;
+        }
 
         // Extermly important that it's a local id since AnimationSource depends on it
         const refrIdStr = owner.getFormID().toString(16);
@@ -207,7 +215,9 @@ export class SendInputsService extends ClientListener {
     }
 
     private sendAppearance(_refrId?: number) {
-        if (_refrId) return;
+        if (_refrId) {
+          return;
+        }
         const shown = this.sp.Ui.isMenuOpen('RaceSex Menu');
         if (shown != this.isRaceSexMenuShown) {
             this.isRaceSexMenuShown = shown;
@@ -230,7 +240,9 @@ export class SendInputsService extends ClientListener {
     }
 
     private sendEquipment(_refrId?: number) {
-        if (_refrId) return;
+        if (_refrId) {
+          return;
+        }
         if (this.equipmentChanged) {
             this.equipmentChanged = false;
 
@@ -255,7 +267,9 @@ export class SendInputsService extends ClientListener {
 
     private sendHostAttempts() {
         const remoteId = nextHostAttempt();
-        if (!remoteId) return;
+        if (!remoteId) {
+          return;
+        }
 
         this.controller.emitter.emit("sendMessage", {
             message: {

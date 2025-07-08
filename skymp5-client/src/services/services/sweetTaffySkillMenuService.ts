@@ -17,9 +17,13 @@ export class SweetTaffySkillMenuService extends ClientListener {
     }
 
     private onActivate(event: ActivateEvent) {
-        if (!this.hasSweetPie()) return;
+        if (!this.hasSweetPie()) {
+          return;
+        }
 
-        if (!this.altars.includes(event.target.getBaseObject()?.getFormID() || -1)) return;
+        if (!this.altars.includes(event.target.getBaseObject()?.getFormID() || -1)) {
+          return;
+        }
 
         browser.setFocused(true);
 

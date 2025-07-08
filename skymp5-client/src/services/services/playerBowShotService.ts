@@ -64,7 +64,9 @@ export class PlayerBowShotService extends ClientListener {
 
     private onPlayerCrossbowShot() {
         const actor = this.sp.Game.getPlayer();
-        if (actor === null) return;
+        if (actor === null) {
+          return;
+        }
 
         const crossbow = actor.getEquippedWeapon(false);
 

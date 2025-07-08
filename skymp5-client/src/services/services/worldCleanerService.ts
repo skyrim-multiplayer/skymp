@@ -22,7 +22,9 @@ export class WorldCleanerService extends ClientListener {
 
   private onGameLoad() {
     let player = this.sp.Game.getPlayer();
-    if (!player) return;
+    if (!player) {
+      return;
+    }
 
     this.initialPos = ObjectReferenceEx.getPos(player);
     this.initialCellOrWorld = ObjectReferenceEx.getWorldOrCell(player);
@@ -34,7 +36,9 @@ export class WorldCleanerService extends ClientListener {
 
   private processOneActor() {
     const pc = this.sp.Game.getPlayer();
-    if (pc === null) return;
+    if (pc === null) {
+      return;
+    }
 
     const actor = this.sp.Game.findRandomActor(
       pc.getPositionX(),
@@ -42,14 +46,20 @@ export class WorldCleanerService extends ClientListener {
       pc.getPositionZ(),
       8192
     );
-    if (actor === null) return;
+    if (actor === null) {
+      return;
+    }
 
     const actorId = actor.getFormID();
 
     const currentProtection = this.protection.get(actorId) || 0;
-    if (currentProtection > 0) return;
+    if (currentProtection > 0) {
+      return;
+    }
 
-    if (actorId === 0x14 || actor.isDisabled() || actor.isDeleted()) return;
+    if (actorId === 0x14 || actor.isDisabled() || actor.isDeleted()) {
+      return;
+    }
 
     if (this.isActorInDialogue(actor)) {
       // Deleting actor in dialogue crashes Skyrim
@@ -75,7 +85,9 @@ export class WorldCleanerService extends ClientListener {
     if (actorId < 0xff000000 && actor.getRace()?.getFormID() === chickenRace) {
       if (this.initialPos && ObjectReferenceEx.getDistanceNoZ(pos, this.initialPos) < 4096) {
         if (cellOrWorld === this.initialCellOrWorld) {
-          if (this.isActorInDialogue(actor)) return;
+          if (this.isActorInDialogue(actor)) {
+            return;
+          }
           logTrace(this, `Deleting chicken anomaly`, actorId.toString(16));
           actor.killSilent(null);
           actor.blockActivation(true);
@@ -88,7 +100,9 @@ export class WorldCleanerService extends ClientListener {
 
     actor.disable(false).then(() => {
       const ac = this.sp.Actor.from(this.sp.Game.getFormEx(actorId));
-      if (!ac || this.isActorInDialogue(ac)) return;
+      if (!ac || this.isActorInDialogue(ac)) {
+        return;
+      }
       ac.delete();
     });
   }

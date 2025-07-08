@@ -37,7 +37,9 @@ export class NetworkingService extends ClientListener {
       : remoteServer.getWorldModel().playerCharacterFormIdx;
 
     // fixes "can't get property idx of null or undefined"
-    if (!remoteServer.getWorldModel().forms[idxInModel]) return;
+    if (!remoteServer.getWorldModel().forms[idxInModel]) {
+      return;
+    }
 
     // @ts-ignore
     e.message.idx = remoteServer.getWorldModel().forms[idxInModel].idx;

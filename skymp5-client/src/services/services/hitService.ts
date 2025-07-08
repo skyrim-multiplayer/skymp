@@ -29,7 +29,9 @@ export class HitService extends ClientListener {
                 }
             }
 
-            if (!alreadyHosted) return;
+            if (!alreadyHosted) {
+              return;
+            }
         }
 
         const base = e.target.getBaseObject();

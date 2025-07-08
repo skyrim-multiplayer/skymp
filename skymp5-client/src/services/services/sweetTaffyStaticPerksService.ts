@@ -15,7 +15,9 @@ export class SweetTaffyStaticPerksService extends ClientListener {
     }
 
     private onceUpdate() {
-        if (!this.hasSweetPie()) return;
+        if (!this.hasSweetPie()) {
+            return;
+        }
 
         this.addStaticPerksToThePlayer();
     }

@@ -13,7 +13,9 @@ import { SpApiInteractor } from "../services/spApiInteractor";
 const sqr = (x: number) => x * x;
 
 export const applyMovement = (refr: ObjectReference, m: Movement, isMyClone?: boolean): void => {
-  if (teleportIfNeed(refr, m)) return;
+  if (teleportIfNeed(refr, m)) {
+    return;
+  }
 
   // Z axis isn't useful here
   const acX = refr.getPositionX();
@@ -27,7 +29,9 @@ export const applyMovement = (refr: ObjectReference, m: Movement, isMyClone?: bo
   translateTo(refr, m);
 
   const ac = Actor.from(refr);
-  if (!ac) return;
+  if (!ac) {
+    return;
+  }
 
   let lookAt = null;
   if (m.lookAt) {
@@ -66,7 +70,9 @@ export const applyMovement = (refr: ObjectReference, m: Movement, isMyClone?: bo
 
 const keepOffsetFromActor = (ac: Actor, m: Movement) => {
   let offsetAngle = m.rot[2] - ac.getAngleZ();
-  if (Math.abs(offsetAngle) < 5) offsetAngle = 0;
+  if (Math.abs(offsetAngle) < 5) {
+    offsetAngle = 0;
+  }
 
   if (m.runMode === "Standing") {
     return ac.keepOffsetFromActor(ac, 0, 0, 0, 0, 0, offsetAngle, 1, 1);
@@ -86,7 +92,7 @@ const keepOffsetFromActor = (ac: Actor, m: Movement) => {
     0,
     offsetAngle,
     m.runMode === "Walking" ? 2048 : 1,
-    1
+    1,
   );
 };
 
@@ -129,7 +135,9 @@ export const applyWeapDrawn = (ac: Actor, isWeapDrawn: boolean): void => {
 
 const applyHealthPercentage = (ac: Actor, healthPercentage: number) => {
   const currentPercentage = ac.getActorValuePercentage('health');
-  if (currentPercentage === healthPercentage) return;
+  if (currentPercentage === healthPercentage) {
+    return;
+  }
 
   const currentMax = ac.getBaseActorValue('health');
   const deltaPercentage = healthPercentage - currentPercentage;
@@ -178,7 +186,9 @@ const translateTo = (refr: ObjectReference, m: Movement) => {
     Actor.from(refr)?.getSitState() === 3
   ) {
     const actor = Actor.from(refr);
-    if (actor && actor.getActorValue("Variable10") < -999) return;
+    if (actor && actor.getActorValue("Variable10") < -999) {
+      return;
+    }
 
     if (!actor || !actor.isDead()) {
       refr.translateTo(

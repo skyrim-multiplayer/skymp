@@ -6,7 +6,9 @@ import { RemoteServer } from "../services/services/remoteServer";
 export const getViewFromStorage = (): WorldView | undefined => {
   const res = storage["view"] as WorldView;
   // can't use instanceof here because each hot reload creates a new class
-  if (typeof res === "object") return res;
+  if (typeof res === "object") {
+    return res;
+  }
   return undefined;
 };
 
@@ -17,9 +19,13 @@ export const localIdToRemoteId = (localFormId: number, newCast: boolean = false)
 
   if (localFormId >= 0xff000000) {
     const view = getViewFromStorage();
-    if (!view) return 0;
+    if (!view) {
+      return 0;
+    }
     localFormId = view.getRemoteRefrId(localFormId);
-    if (!localFormId) return 0;
+    if (!localFormId) {
+      return 0;
+    }
     // serverside ids are 64bit
     if (localFormId >= 0x100000000) {
       localFormId -= 0x100000000;
@@ -31,9 +37,13 @@ export const localIdToRemoteId = (localFormId: number, newCast: boolean = false)
 export const remoteIdToLocalId = (remoteFormId: number): number => {
   if (remoteFormId >= 0xff000000) {
     const view = getViewFromStorage();
-    if (!view) return 0;
+    if (!view) {
+      return 0;
+    }
     remoteFormId = view.getLocalRefrId(remoteFormId);
-    if (!remoteFormId) return 0;
+    if (!remoteFormId) {
+      return 0;
+    }
   }
   return remoteFormId;
 };

@@ -55,6 +55,8 @@ export class Spawn implements System {
 
   disconnect(userId: number, ctx: SystemContext): void {
     const actorId = ctx.svr.getUserActor(userId);
-    if (actorId !== 0) ctx.svr.setEnabled(actorId, false);
+    if (actorId !== 0) {
+      ctx.svr.setEnabled(actorId, false);
+    }
   }
 }

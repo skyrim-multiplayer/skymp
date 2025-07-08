@@ -124,7 +124,9 @@ export const applyAnimation = (
   anim: Animation,
   state: AnimationApplyState
 ): void => {
-  if (state.lastNumChanges === anim.numChanges) return;
+  if (state.lastNumChanges === anim.numChanges) {
+    return;
+  }
   state.lastNumChanges = anim.numChanges;
 
   if (state.useAnimOverrides) {
@@ -254,7 +256,9 @@ export class AnimationSource {
   }
 
   private onSendAnimationEvent(animEventName: string) {
-    if (ignoredAnims.has(animEventName)) return;
+    if (ignoredAnims.has(animEventName)) {
+      return;
+    }
 
     const lower = animEventName.toLowerCase();
 
@@ -320,7 +324,9 @@ export const setupHooks = (): void => {
       }
 
       // Disable idle animations for 0xff actors
-      if (ctx.selfId < 0xff000000) return;
+      if (ctx.selfId < 0xff000000) {
+        return;
+      }
       if (isIdle(ctx.animEventName)) {
         const i = allowedIdles.findIndex((pair) => {
           return pair[0] === ctx.selfId && pair[1] === ctx.animEventName;
