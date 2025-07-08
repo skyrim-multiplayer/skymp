@@ -4,7 +4,9 @@ import { ObjectReferenceEx } from "../extensions/objectReferenceEx";
 export class PlayerCharacterDataHolder {
   static updateData() {
     const player = Game.getPlayer();
-    if (!player) return;
+    if (!player) {
+      return;
+    }
     
     this.inJumpState = player.getAnimationVariableBool("bInJumpState");
     this.worldOrCell = ObjectReferenceEx.getWorldOrCell(player);

@@ -117,7 +117,9 @@ export class WorldView extends ClientListener {
 
     // skip 50% of updates if specified in the settings
     state.counter = !state.counter;
-    if (state.counter && skipUpdates) return;
+    if (state.counter && skipUpdates) {
+      return;
+    }
 
     state.formViews.resize(model.forms.length);
 

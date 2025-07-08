@@ -22,10 +22,14 @@ export class ActivationService extends ClientListener {
         let caster = e.caster ? e.caster.getFormID() : 0;
         let target = e.target ? e.target.getFormID() : 0;
 
-        if (!target || !caster) return;
+        if (!target || !caster) {
+          return;
+        }
 
         // Actors never have non-ff ids locally in skymp
-        if (caster !== 0x14 && caster < 0xff000000) return;
+        if (caster !== 0x14 && caster < 0xff000000) {
+          return;
+        }
 
         target = localIdToRemoteId(target);
         if (!target) {

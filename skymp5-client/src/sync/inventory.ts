@@ -50,16 +50,22 @@ export interface Inventory {
 
 // 'loxsword (Legendary)' => 'loxsword'
 const getRealName = (s?: string): string => {
-  if (!s) return s as string;
+  if (!s) {
+    return s as string;
+  }
 
   const arr = s.split(" ");
-  if (arr.length && arr[arr.length - 1].match(/^\(.*\)$/)) arr.pop();
+  if (arr.length && arr[arr.length - 1].match(/^\(.*\)$/)) {
+    arr.pop();
+  }
   return arr.join(" ");
 };
 
 // 'aaaaaaaaaaaaaaaa' => 'aaa...'
 const cropName = (s?: string): string => {
-  if (!s) return s as string;
+  if (!s) {
+    return s as string;
+  }
 
   const max = 128;
   return s.length >= max
@@ -88,7 +94,9 @@ const checkIfNameIsGeneratedByGame = (
 const namesEqual = (a: Entry, b: Entry): boolean => {
   const aStr = a.name || "";
   const bStr = b.name || "";
-  if (cropName(getRealName(aStr)) === cropName(getRealName(bStr))) return true;
+  if (cropName(getRealName(aStr)) === cropName(getRealName(bStr))) {
+    return true;
+  }
 
   if (a.baseId === b.baseId) {
     const form = Game.getFormEx(a.baseId);
@@ -216,7 +224,9 @@ const getExtraContainerChangesAsInventory = (
       entry.count -= e.count;
     });
 
-    if (entry.count !== 0) entries.push(entry);
+    if (entry.count !== 0) {
+      entries.push(entry);
+    }
   });
 
   let res: Inventory = { entries };
@@ -400,7 +410,7 @@ export const applyInventory = (
         string,
         number,
         Potion | null,
-        number
+        number,
       ];
 
       addItemExArgs = [

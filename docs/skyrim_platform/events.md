@@ -46,7 +46,9 @@ hooks.sendAnimationEvent.add({
     printConsole(ctx.animEventName);
   },
   leave(ctx) {
-    if (ctx.animationSucceeded) printConsole(ctx.selfId);
+    if (ctx.animationSucceeded) {
+      printConsole(ctx.selfId);
+    }
   }
 });
 ```
@@ -106,7 +108,9 @@ export let main = () => {
   });
   
   on('effectFinish', () => {
-    if (id) hooks.sendAnimationEvent.remove(id);
+    if (id) {
+      hooks.sendAnimationEvent.remove(id);
+    }
   });
 };
 

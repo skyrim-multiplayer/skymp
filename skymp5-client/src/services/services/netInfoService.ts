@@ -16,13 +16,14 @@ export class NetInfoService extends ClientListener {
       logTrace(this, `Destroying old NetInfoTexts`);
       try {
         (this.sp.storage[NetInfoTexts.Name] as NetInfoTexts)?.clear();
-      }
-      catch (e) {
+      } catch (e) {
         logError(this, `Failed to destroy old NetInfoTexts:`, e);
       }
     }
 
-    if (!this.isEnabled()) return;
+    if (!this.isEnabled()) {
+      return;
+    }
 
     this.textIds = new NetInfoTexts(this.sp);
     this.sp.storage[NetInfoTexts.Name] = this.textIds;
@@ -52,7 +53,9 @@ export class NetInfoService extends ClientListener {
   }
 
   private onUpdate() {
-    if (this.textIds === undefined) return;
+    if (this.textIds === undefined) {
+      return;
+    }
 
     this.dt += Date.now() - this.lastDt;
     this.lastDt = Date.now();
@@ -68,7 +71,9 @@ export class NetInfoService extends ClientListener {
 
     this.sp.setTextString(this.textIds.localPositionLagAmountTextId, `${units} units (~${meters} m)`);
 
-    if (this.delayMs > this.dt) return;
+    if (this.delayMs > this.dt) {
+      return;
+    }
 
     this.sp.setTextString(this.textIds.receivedPacketAmountTextId, `${Math.round(this.getAndClearReceivedPacketCount())}`);
     this.sp.setTextString(this.textIds.sentPacketAmountTextId, `${Math.round(this.getAndClearSentPacketCount())}`);

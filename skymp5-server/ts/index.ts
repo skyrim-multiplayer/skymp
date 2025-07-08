@@ -46,17 +46,14 @@ function requireTemp(module: string) {
     fs.writeFileSync(tempPath, contents);
 
     require(tempPath);
-  }
-  catch (e) {
+  } catch (e) {
     console.error(e.stack);
-  }
-  finally {
+  } finally {
     try {
       if (tmpDir) {
         fs.rmSync(tmpDir, { recursive: true });
       }
-    }
-    catch (e) {
+    } catch (e) {
       console.error(`An error has occurred while removing the temp folder at ${tmpDir}. Please remove it manually. Error: ${e}`);
     }
   }
@@ -128,7 +125,9 @@ const setupGamemode = (server: any, gamemodePath: string) => {
   const clear = () => server.clear();
 
   const toAbsolute = (p: string) => {
-    if (path.isAbsolute(p)) return p;
+    if (path.isAbsolute(p)) {
+      return p;
+    }
     return path.resolve("", p);
   };
 
@@ -169,7 +168,7 @@ const setupGamemode = (server: any, gamemodePath: string) => {
     const n = numReloads.n;
     setTimeout(
       () => (n === numReloads.n ? reloadGamemode() : undefined),
-      1000
+      1000,
     );
   };
 
@@ -229,7 +228,9 @@ const main = async () => {
   })();
 
   for (const system of systems) {
-    if (system.initAsync) await system.initAsync(ctx);
+    if (system.initAsync) {
+      await system.initAsync(ctx);
+    }
     log(`Initialized ${system.systemName}`);
     if (system.updateAsync)
       (async () => {
@@ -248,7 +249,9 @@ const main = async () => {
     log("connect", userId);
     for (const system of systems) {
       try {
-        if (system.connect) system.connect(userId, ctx);
+        if (system.connect) {
+          system.connect(userId, ctx);
+        }
       } catch (e) {
         console.error(e);
       }
@@ -259,7 +262,9 @@ const main = async () => {
     log("disconnect", userId);
     for (const system of systems) {
       try {
-        if (system.disconnect) system.disconnect(userId, ctx);
+        if (system.disconnect) {
+          system.disconnect(userId, ctx);
+        }
       } catch (e) {
         console.error(e);
       }
@@ -289,8 +294,7 @@ const main = async () => {
   // It's important to call this before gamemode
   try {
     server.attachSaveStorage();
-  }
-  catch (e) {
+  } catch (e) {
     console.error(e);
     console.error(`Stopping the server due to the previous error`);
     process.exit(-1);

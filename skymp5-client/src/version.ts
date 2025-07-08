@@ -14,7 +14,9 @@ export const verifyVersion = (): void => {
     );
     Utility.waitMenuMode(0.5).then(() => {
       on('update', () => {
-        if (!Ui.isMenuOpen('MessageBoxMenu')) Game.quitToMainMenu();
+        if (!Ui.isMenuOpen('MessageBoxMenu')) {
+          Game.quitToMainMenu();
+        }
       });
     });
   }

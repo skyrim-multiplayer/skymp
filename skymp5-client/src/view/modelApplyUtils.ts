@@ -36,7 +36,9 @@ export class ModelApplyUtils {
 
   static applyModelIsDisabled(refr: ObjectReference, disabled: boolean): void {
     const wasDisabled: boolean = refr.isDisabled();
-    if (wasDisabled == disabled) return;
+    if (wasDisabled == disabled) {
+      return;
+    }
 
     if (disabled) {
       refr.disable(false);
@@ -59,7 +61,7 @@ export class ModelApplyUtils {
                 refr.getPositionX(),
                 refr.getPositionY(),
                 refr.getPositionZ(),
-                10000
+                10000,
               );
               if (ac && ac.getFormID() !== 0x14) {
                 break;
@@ -73,7 +75,9 @@ export class ModelApplyUtils {
             const id = refr.getFormID();
             refr.disable(false).then(() => {
               const restoredRefr = ObjectReference.from(Game.getFormEx(id));
-              if (restoredRefr) restoredRefr.enable(false);
+              if (restoredRefr) {
+                restoredRefr.enable(false);
+              }
             });
           }
         }

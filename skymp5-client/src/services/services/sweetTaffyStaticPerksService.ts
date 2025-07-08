@@ -7,8 +7,7 @@ export class SweetTaffyStaticPerksService extends ClientListener {
 
         if (!this.hasSweetPie()) {
             logTrace(this, "SweetTaffy features disabled");
-        }
-        else {
+        } else {
             logTrace(this, "SweetTaffy features enabled");
         }
 
@@ -16,7 +15,9 @@ export class SweetTaffyStaticPerksService extends ClientListener {
     }
 
     private onceUpdate() {
-        if (!this.hasSweetPie()) return;
+        if (!this.hasSweetPie()) {
+            return;
+        }
 
         this.addStaticPerksToThePlayer();
     }

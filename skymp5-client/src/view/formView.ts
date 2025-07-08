@@ -1,5 +1,5 @@
 import { Actor, ActorBase, createText, destroyText, Form, FormType, Game, Keyword, NetImmerse, ObjectReference, once, printConsole, setTextPos, setTextSize, setTextString, storage, TESModPlatform, Utility, worldPointToScreenPoint } from "skyrimPlatform";
-import { setDefaultAnimsDisabled, applyAnimation, AnimationApplyState } from "../sync/animation";
+import { setDefaultAnimsDisabled, applyAnimation } from "../sync/animation";
 import { Appearance, applyAppearance } from "../sync/appearance";
 import { isBadMenuShown, applyEquipment } from "../sync/equipment";
 import { RespawnNeededError } from "../lib/errors";
@@ -97,14 +97,12 @@ export class FormView {
             refr?.getBaseObject()?.setName(model.appearance.name);
             refr?.setDisplayName(model.appearance.name, true);
             printConsole("Appearance updated, changing name inplace");
-          }
-          else {
+          } else {
             // Force re-apply appearance on the next getAppearanceBasedBase call
             this.appearanceBasedBaseId = 0;
             printConsole("Appearance updated");
           }
-        }
-        else {
+        } else {
           // Force re-apply appearance on the next getAppearanceBasedBase call
           this.appearanceBasedBaseId = 0;
           printConsole("Appearance updated");
@@ -125,7 +123,9 @@ export class FormView {
         const refr = ObjectReference.from(Game.getFormEx(this.refrId));
         if (refr) {
           const base = refr.getBaseObject();
-          if (base) ObjectReferenceEx.dealWithRef(refr, base);
+          if (base) {
+            ObjectReferenceEx.dealWithRef(refr, base);
+          }
         }
       }
     } else {
@@ -139,20 +139,24 @@ export class FormView {
 
       // TODO: getLeveledBase crashes too often ATM
       let base = null; //Game.getFormEx(this.getLeveledBase(templateChain));
-      if (base === null) base = Game.getFormEx(model.baseId || NaN);
-      if (base === null) base = Game.getFormEx(this.getAppearanceBasedBase());
-      if (base === null) return;
+      if (base === null) {
+        base = Game.getFormEx(model.baseId || NaN);
+      }
+      if (base === null) {
+        base = Game.getFormEx(this.getAppearanceBasedBase());
+      }
+      if (base === null) {
+        return;
+      }
 
       let refr = ObjectReference.from(Game.getFormEx(this.refrId));
 
       let respawnRequired = false;
       if (!refr) {
         respawnRequired = true;
-      }
-      else if (!refr.getBaseObject()) {
+      } else if (!refr.getBaseObject()) {
         respawnRequired = true;
-      }
-      else if ((refr.getBaseObject() as Form).getFormID() !== base.getFormID()) {
+      } else if ((refr.getBaseObject() as Form).getFormID() !== base.getFormID()) {
         respawnRequired = true;
       }
 
@@ -202,8 +206,7 @@ export class FormView {
 
         if (model.movement) {
           refr = spawnMethod.spawn(base, model.movement.pos, model.movement.rot);
-        }
-        else {
+        } else {
           printConsole("model.movement was " + model.movement);
         }
 
@@ -215,8 +218,7 @@ export class FormView {
             model.movement?.rot[1] || 0,
             model.movement?.rot[2] || 0
           );
-        }
-        else {
+        } else {
           const race = Actor.from(refr)?.getRace()?.getFormID();
           const draugrRace = 0xd53;
           const falmerRace = 0x131f4;
@@ -266,8 +268,7 @@ export class FormView {
         if (model.movement) {
           spawnPos = model.movement.pos;
           // printConsole("Spawn NPC at movement.pos");
-        }
-        else {
+        } else {
           spawnPos = ObjectReferenceEx.getPos(Game.getPlayer() as Actor);
           printConsole("Spawn NPC at player pos");
         }
@@ -277,8 +278,7 @@ export class FormView {
             this.ready = true;
             this.spawnMoment = Date.now();
           });
-        }
-        else {
+        } else {
           printConsole("Unable to triggerSpawnProcess for null refr");
         }
 
@@ -290,7 +290,9 @@ export class FormView {
       this.refrId = (refr as ObjectReference).getFormID();
     }
 
-    if (!this.ready) return;
+    if (!this.ready) {
+      return;
+    }
 
     const refr = ObjectReference.from(Game.getFormEx(this.refrId));
     if (refr) {
@@ -315,7 +317,9 @@ export class FormView {
     once("update", () => {
       if (refrId >= 0xff000000) {
         const refr = ObjectReference.from(Game.getFormEx(refrId));
-        if (refr) refr.delete();
+        if (refr) {
+          refr.delete();
+        }
         SpApiInteractor.getControllerInstance().lookupListener(WorldCleanerService).modWcProtection(refrId, -1);
         const ac = Actor.from(refr);
         if (ac) {
@@ -584,7 +588,9 @@ export class FormView {
 
   private isSweetHidePerson(refr: ObjectReference): boolean {
     const actor = Actor.from(refr)
-    if (!actor) return false;
+    if (!actor) {
+      return false;
+    }
     const keyword = Keyword.getKeyword('SweetHidePerson');
     return actor.wornHasKeyword(keyword);
   }
@@ -609,7 +615,9 @@ export class FormView {
   }
 
   private getLeveledBase(templateChain: number[] | undefined): number {
-    if (templateChain === undefined) return 0;
+    if (templateChain === undefined) {
+      return 0;
+    }
 
     const str = templateChain.join(',');
 

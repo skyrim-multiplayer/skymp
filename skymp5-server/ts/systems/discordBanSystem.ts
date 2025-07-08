@@ -35,8 +35,7 @@ export class DiscordBanSystem implements System {
 
         try {
             await client.login(discordAuth.botToken);
-        }
-        catch (e) {
+        } catch (e) {
             return console.error(`Error logging in Discord client: ${e}`);
         }
 

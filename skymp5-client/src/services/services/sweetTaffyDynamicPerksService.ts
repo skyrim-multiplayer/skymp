@@ -12,8 +12,7 @@ export class SweetTaffyDynamicPerksService extends ClientListener {
 
     if (!this.hasSweetPie()) {
       logTrace(this, "SweetTaffy features disabled");
-    }
-    else {
+    } else {
       logTrace(this, "SweetTaffy features enabled");
     }
 
@@ -23,7 +22,9 @@ export class SweetTaffyDynamicPerksService extends ClientListener {
   }
 
   private onContainerChanged(e: ContainerChangedEvent) {
-    if (!this.hasSweetPie()) return;
+    if (!this.hasSweetPie()) {
+      return;
+    }
 
     if (e.oldContainer && e.newContainer) {
       if (e.newContainer.getFormID() === 0x14 && e.numItems > 0) {
@@ -36,7 +37,9 @@ export class SweetTaffyDynamicPerksService extends ClientListener {
   }
 
   private onSetInventoryMessage(e: ConnectionMessage<SetInventoryMessage>) {
-    if (!this.hasSweetPie()) return;
+    if (!this.hasSweetPie()) {
+      return;
+    }
 
     const entries = e.message.inventory.entries;
 
@@ -51,9 +54,13 @@ export class SweetTaffyDynamicPerksService extends ClientListener {
   }
 
   private onCreateActorMessage(e: ConnectionMessage<CreateActorMessage>) {
-    if (!this.hasSweetPie()) return;
+    if (!this.hasSweetPie()) {
+      return;
+    }
 
-    if (!e.message.isMe) return;
+    if (!e.message.isMe) {
+      return;
+    }
 
     const entries = e.message.props?.inventory?.entries;
     if (entries === undefined) {
@@ -72,11 +79,17 @@ export class SweetTaffyDynamicPerksService extends ClientListener {
   }
 
   private handlePlayerInventoryChanged(entry: BasicEntry): void {
-    if (!this.hasSweetPie()) return;
+    if (!this.hasSweetPie()) {
+      return;
+    }
 
     const item = this.sp.Game.getFormEx(entry.baseId);
-    if (!item) return;
-    if (entry.count <= 0) return;
+    if (!item) {
+      return;
+    }
+    if (entry.count <= 0) {
+      return;
+    }
 
     const perkIds = this.getPerkIdsByKeyword(item);
     if (perkIds) {

@@ -26,7 +26,9 @@ export class ContainersService extends ClientListener {
             ) {
                 const lastInvService = this.controller.lookupListener(LastInvService);
 
-                if (!lastInvService.lastInv) lastInvService.lastInv = getPcInventory();
+                if (!lastInvService.lastInv) {
+                    lastInvService.lastInv = getPcInventory();
+                }
                 if (lastInvService.lastInv) {
                     const newInv = getInventory(this.sp.Game.getPlayer() as Actor);
 

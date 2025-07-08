@@ -22,7 +22,7 @@ This makes it possible to add and remove hooks dynamically based on [new events]
 For example, you could hook player animations under a spell:
 
 ```typescript
-var id;
+let id;
 
 export let main = () => {
   on('effectStart', () => {
@@ -30,7 +30,9 @@ export let main = () => {
   });
   
   on('effectFinish', () => {
-    if (id) hooks.sendAnimationEvent.remove(id);
+    if (id) {
+      hooks.sendAnimationEvent.remove(id);
+    }
   });
 };
 

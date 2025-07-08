@@ -111,11 +111,10 @@ const main = () => {
       new KeyboardEventsService(sp, controller),
       new MagicSyncService(sp, controller),
       new ProfilingService(sp, controller),
-      new SweetTaffyNicknamesService(sp, controller)
+      new SweetTaffyNicknamesService(sp, controller),
     ];
     SpApiInteractor.setup(listeners);
-  }
-  catch (e) {
+  } catch (e) {
     // TODO: handle setup failure. will output to game console by default
     throw e;
   }

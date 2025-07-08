@@ -8,17 +8,21 @@ export class SpawnProcess {
     appearance: Appearance | null,
     pos: NiPoint3,
     refrId: number,
-    private callback: () => void
+    private callback: () => void,
   ) {
     const refr = ObjectReference.from(Game.getFormEx(refrId));
-    if (!refr || refr.getFormID() !== refrId) return;
+    if (!refr || refr.getFormID() !== refrId) {
+      return;
+    }
 
     refr.setPosition(...pos).then(() => this.enable(appearance, refrId));
   }
 
   private enable(appearance: Appearance | null, refrId: number) {
     const refr = ObjectReference.from(Game.getFormEx(refrId));
-    if (!refr || refr.getFormID() !== refrId) return;
+    if (!refr || refr.getFormID() !== refrId) {
+      return;
+    }
 
     const ac = Actor.from(refr);
     if (ac && appearance) {
@@ -29,7 +33,9 @@ export class SpawnProcess {
 
   private resurrect(refrId: number) {
     const refr = ObjectReference.from(Game.getFormEx(refrId));
-    if (!refr || refr.getFormID() !== refrId) return;
+    if (!refr || refr.getFormID() !== refrId) {
+      return;
+    }
 
     const ac = Actor.from(refr);
     if (ac) {

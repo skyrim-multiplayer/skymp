@@ -19,10 +19,14 @@ export class CraftService extends ClientListener {
         const oldContainerId = e.oldContainer ? e.oldContainer.getFormID() : 0;
         const newContainerId = e.newContainer ? e.newContainer.getFormID() : 0;
         const baseObjId = e.baseObj ? e.baseObj.getFormID() : 0;
-        if (oldContainerId !== 0x14 && newContainerId !== 0x14) return;
+        if (oldContainerId !== 0x14 && newContainerId !== 0x14) {
+          return;
+        }
 
         const furnitureRef = (this.sp.Game.getPlayer() as Actor).getFurnitureReference();
-        if (!furnitureRef) return;
+        if (!furnitureRef) {
+          return;
+        }
 
         const furnitureId = furnitureRef.getFormID();
 

@@ -124,7 +124,9 @@ export const applyAnimation = (
   anim: Animation,
   state: AnimationApplyState
 ): void => {
-  if (state.lastNumChanges === anim.numChanges) return;
+  if (state.lastNumChanges === anim.numChanges) {
+    return;
+  }
   state.lastNumChanges = anim.numChanges;
 
   if (state.useAnimOverrides) {
@@ -143,12 +145,16 @@ export const applyAnimation = (
   const ac = Actor.from(refr);
 
   if (anim.animEventName === "SkympFakeEquip") {
-    if (ac) applyWeapDrawn(ac, true);
+    if (ac) {
+      applyWeapDrawn(ac, true);
+    }
     return;
   }
 
   if (anim.animEventName === "SkympFakeUnequip") {
-    if (ac) applyWeapDrawn(ac, false);
+    if (ac) {
+      applyWeapDrawn(ac, false);
+    }
     return;
   }
 
@@ -157,8 +163,7 @@ export const applyAnimation = (
       if (storage["animationFunc1Set"] === true) {
         // @ts-ignore
         storage["animationFunc1"](ac);
-      }
-      else {
+      } else {
         ac.pushActorAway(ac, 0);
         ac.setActorValue("Variable10", -1000);
       }
@@ -178,7 +183,9 @@ export const applyAnimation = (
     const refrId = refr.getFormID();
     Utility.wait(1).then(() => {
       const ac = Actor.from(Game.getFormEx(refrId));
-      if (ac) ac.setActorValue("Variable10", 1000);
+      if (ac) {
+        ac.setActorValue("Variable10", 1000);
+      }
     });
   }
 
@@ -195,8 +202,11 @@ export const setDefaultAnimsDisabled = (
   refrId: number,
   disabled: boolean
 ): void => {
-  if (disabled) refsWithDefaultAnimsDisabled.add(refrId);
-  else refsWithDefaultAnimsDisabled.delete(refrId);
+  if (disabled) {
+    refsWithDefaultAnimsDisabled.add(refrId);
+  } else {
+    refsWithDefaultAnimsDisabled.delete(refrId);
+  }
 };
 
 export class AnimationSource {
@@ -222,12 +232,20 @@ export class AnimationSource {
   }
 
   filterMovement(mov: Movement): Movement {
-    if (this.weapDrawnBlocker >= Date.now()) mov.isWeapDrawn = true;
-    if (this.weapNonDrawnBlocker >= Date.now()) mov.isWeapDrawn = false;
+    if (this.weapDrawnBlocker >= Date.now()) {
+      mov.isWeapDrawn = true;
+    }
+    if (this.weapNonDrawnBlocker >= Date.now()) {
+      mov.isWeapDrawn = false;
+    }
 
-    if (this.sneakBlocker === mov.isSneaking) this.sneakBlocker = null;
-    else if (this.sneakBlocker === true) mov.isSneaking = true;
-    else if (this.sneakBlocker === false) mov.isSneaking = false;
+    if (this.sneakBlocker === mov.isSneaking) {
+      this.sneakBlocker = null;
+    } else if (this.sneakBlocker === true) {
+      mov.isSneaking = true;
+    } else if (this.sneakBlocker === false) {
+      mov.isSneaking = false;
+    }
 
     return mov;
   }
@@ -238,7 +256,9 @@ export class AnimationSource {
   }
 
   private onSendAnimationEvent(animEventName: string) {
-    if (ignoredAnims.has(animEventName)) return;
+    if (ignoredAnims.has(animEventName)) {
+      return;
+    }
 
     const lower = animEventName.toLowerCase();
 
@@ -304,7 +324,9 @@ export const setupHooks = (): void => {
       }
 
       // Disable idle animations for 0xff actors
-      if (ctx.selfId < 0xff000000) return;
+      if (ctx.selfId < 0xff000000) {
+        return;
+      }
       if (isIdle(ctx.animEventName)) {
         const i = allowedIdles.findIndex((pair) => {
           return pair[0] === ctx.selfId && pair[1] === ctx.animEventName;

@@ -2,7 +2,6 @@ import { System, Log, Content, SystemContext } from "./system";
 import { Settings } from "../settings";
 import * as fetchRetry from "fetch-retry";
 
-const loginFailedNotLoggedViaDiscord = JSON.stringify({ customPacketType: "loginFailedNotLoggedViaDiscord" });
 const loginFailedNotInTheDiscordServer = JSON.stringify({ customPacketType: "loginFailedNotInTheDiscordServer" });
 const loginFailedBanned = JSON.stringify({ customPacketType: "loginFailedBanned" });
 const loginFailedIpMismatch = JSON.stringify({ customPacketType: "loginFailedIpMismatch" });
@@ -85,9 +84,11 @@ export class Login implements System {
     userId: number,
     type: string,
     content: Content,
-    ctx: SystemContext
+    ctx: SystemContext,
   ): void {
-    if (type !== "loginWithSkympIo") return;
+    if (type !== "loginWithSkympIo") {
+      return;
+    }
 
     const ip = ctx.svr.getUserIp(userId);
     console.log(`Connecting a user ${userId} with ip ${ip}`);

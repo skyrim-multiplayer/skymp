@@ -37,7 +37,9 @@ export class NetworkingService extends ClientListener {
       : remoteServer.getWorldModel().playerCharacterFormIdx;
 
     // fixes "can't get property idx of null or undefined"
-    if (!remoteServer.getWorldModel().forms[idxInModel]) return;
+    if (!remoteServer.getWorldModel().forms[idxInModel]) {
+      return;
+    }
 
     // @ts-ignore
     e.message.idx = remoteServer.getWorldModel().forms[idxInModel].idx;
@@ -90,12 +92,10 @@ export class NetworkingService extends ClientListener {
           if (rawContent === null) {
             msgAny = {} as AnyMessage;
             logError(this, "null rawContent");
-          }
-          else if ((new Uint8Array(rawContent as unknown as ArrayBuffer)[0]) === 0x7b) {
+          } else if ((new Uint8Array(rawContent as unknown as ArrayBuffer)[0]) === 0x7b) {
             // assume json
             msgAny = JSON.parse(this.sp.decodeUtf8(rawContent as unknown as ArrayBuffer));
-          }
-          else {
+          } else {
             // assume raw
             const event = { rawContent: rawContent as unknown as ArrayBuffer};
             return this.controller.emitter.emit("anyRawMessage", event);
@@ -105,108 +105,87 @@ export class NetworkingService extends ClientListener {
             const event = { message: msgAny };
             this.controller.emitter.emit("openContainerMessage", event);
             this.controller.emitter.emit("anyMessage", event);
-          }
-          else if (msgAny.t === MsgType.UpdateMovement) {
+          } else if (msgAny.t === MsgType.UpdateMovement) {
             const event = { message: msgAny };
             this.controller.emitter.emit("updateMovementMessage", event)
             this.controller.emitter.emit("anyMessage", event);
-          }
-          else if (msgAny.t === MsgType.UpdateAnimation) {
+          } else if (msgAny.t === MsgType.UpdateAnimation) {
             const event = { message: msgAny };
             this.controller.emitter.emit("updateAnimationMessage", event);
             this.controller.emitter.emit("anyMessage", event);
-          }
-          else if (msgAny.t === MsgType.UpdateEquipment) {
+          } else if (msgAny.t === MsgType.UpdateEquipment) {
             const event = { message: msgAny };
             this.controller.emitter.emit("updateEquipmentMessage", event);
             this.controller.emitter.emit("anyMessage", event);
-          }
-          else if (msgAny.t === MsgType.ChangeValues) {
+          } else if (msgAny.t === MsgType.ChangeValues) {
             const event = { message: msgAny };
             this.controller.emitter.emit("changeValuesMessage", event);
             this.controller.emitter.emit("anyMessage", event);
-          }
-          else if (msgAny.t === MsgType.SpellCast) {
+          } else if (msgAny.t === MsgType.SpellCast) {
             const event = { message: msgAny };
             this.controller.emitter.emit("spellCastMessage", event);
             this.controller.emitter.emit("anyMessage", event);
-          }
-          else if (msgAny.t === MsgType.UpdateAnimVariables) {
+          } else if (msgAny.t === MsgType.UpdateAnimVariables) {
             const event = { message: msgAny };
             this.controller.emitter.emit("updateAnimVariablesMessage", event);
             this.controller.emitter.emit("anyMessage", event);
-          }
-          else if (msgAny.t === MsgType.UpdateAppearance) {
+          } else if (msgAny.t === MsgType.UpdateAppearance) {
             const event = { message: msgAny };
             this.controller.emitter.emit("updateAppearanceMessage", event);
             this.controller.emitter.emit("anyMessage", event);
-          }
-          else if (msgAny.t === MsgType.Teleport) {
+          } else if (msgAny.t === MsgType.Teleport) {
             const event = { message: msgAny };
             this.controller.emitter.emit("teleportMessage", event);
             this.controller.emitter.emit("anyMessage", event);
-          }
-          else if (msgAny.t === MsgType.UpdateProperty) {
+          } else if (msgAny.t === MsgType.UpdateProperty) {
             const event = { message: msgAny };
             this.controller.emitter.emit("updatePropertyMessage", event);
             this.controller.emitter.emit("anyMessage", event);
-          }
-          else if (msgAny.t === MsgType.DeathStateContainer) {
+          } else if (msgAny.t === MsgType.DeathStateContainer) {
             const event = { message: msgAny };
             this.controller.emitter.emit("deathStateContainerMessage", event);
             this.controller.emitter.emit("anyMessage", event);
-          }
-          else if (msgAny.t === MsgType.CreateActor) {
+          } else if (msgAny.t === MsgType.CreateActor) {
             const event = { message: msgAny };
             this.controller.emitter.emit("createActorMessage", event);
             this.controller.emitter.emit("anyMessage", event);
-          }
-          else if (msgAny.t === MsgType.CustomPacket) {
+          } else if (msgAny.t === MsgType.CustomPacket) {
             const event = { message: msgAny };
             this.controller.emitter.emit("customPacketMessage", event);
             this.controller.emitter.emit("anyMessage", event);
-          }
-          else if (msgAny.t === MsgType.DestroyActor) {
+          } else if (msgAny.t === MsgType.DestroyActor) {
             const event = { message: msgAny };
             this.controller.emitter.emit("destroyActorMessage", event);
             this.controller.emitter.emit("anyMessage", event);
-          }
-          else if (msgAny.t === MsgType.HostStart) {
+          } else if (msgAny.t === MsgType.HostStart) {
             const event = { message: msgAny };
             this.controller.emitter.emit("hostStartMessage", event);
             this.controller.emitter.emit("anyMessage", event);
-          }
-          else if (msgAny.t === MsgType.HostStop) {
+          } else if (msgAny.t === MsgType.HostStop) {
             const event = { message: msgAny };
             this.controller.emitter.emit("hostStopMessage", event);
             this.controller.emitter.emit("anyMessage", event);
-          }
-          else if (msgAny.t === MsgType.SetInventory) {
+          } else if (msgAny.t === MsgType.SetInventory) {
             const event = { message: msgAny };
             this.controller.emitter.emit("setInventoryMessage", event);
             this.controller.emitter.emit("anyMessage", event);
-          }
-          else if (msgAny.t === MsgType.SetRaceMenuOpen) {
+          } else if (msgAny.t === MsgType.SetRaceMenuOpen) {
             const event = { message: msgAny };
             this.controller.emitter.emit("setRaceMenuOpenMessage", event);
             this.controller.emitter.emit("anyMessage", event);
-          }
-          else if (msgAny.t === MsgType.SpSnippet) {
+          } else if (msgAny.t === MsgType.SpSnippet) {
             const event = { message: msgAny };
             this.controller.emitter.emit("spSnippetMessage", event);
             this.controller.emitter.emit("anyMessage", event);
-          }
-          else if (msgAny.t === MsgType.UpdateGamemodeData) {
+          } else if (msgAny.t === MsgType.UpdateGamemodeData) {
             const event = { message: msgAny };
             this.controller.emitter.emit("updateGamemodeDataMessage", event);
             this.controller.emitter.emit("anyMessage", event);
-          }
-          else if (msgAny.t === MsgType.Teleport2) {
+          } else if (msgAny.t === MsgType.Teleport2) {
             const event = { message: msgAny };
             this.controller.emitter.emit("teleportMessage2", event);
             this.controller.emitter.emit("anyMessage", event);
-          }
-          else {
+          } else {
             // throw new NeverError(msgAny);
             throw new Error("Unhandled MsgType " + msgAny.t);
           }
@@ -222,8 +201,7 @@ export class NetworkingService extends ClientListener {
 
     if (this.serverAddress.hostName !== "" && this.serverAddress.port !== 0) {
       this.sp.mpClientPlugin.createClient(hostName, port);
-    }
-    else {
+    } else {
       logError(this, "createClientSafe failed");
     }
   }

@@ -10,7 +10,7 @@ interface Timer {
 
 enum ProcessMethodType {
   update = "update",
-  tick = "tick"
+  tick = "tick",
 }
 
 export class TimersService extends ClientListener {
@@ -46,7 +46,9 @@ export class TimersService extends ClientListener {
       return;
     }
 
-    if (id <= 0 || id > this.timersArr.length) return;
+    if (id <= 0 || id > this.timersArr.length) {
+      return;
+    }
     this.timersArr[id - 1] = null;
     return;
   }
@@ -69,7 +71,9 @@ export class TimersService extends ClientListener {
       return;
     }
 
-    if (id <= 0 || id > this.intervalsArr.length) return;
+    if (id <= 0 || id > this.intervalsArr.length) {
+      return;
+    }
     this.intervalsArr[id - 1] = null;
     return;
   }
@@ -89,7 +93,9 @@ export class TimersService extends ClientListener {
     }
 
     try {
-      if (this.sp.Game.getPlayer()!) { };
+      if (this.sp.Game.getPlayer()!) {
+        // FIXME(GM-1008)
+      }
       this.setProcessMethod(ProcessMethodType.update);
     } catch {
       this.setProcessMethod(ProcessMethodType.tick);
@@ -148,7 +154,6 @@ export class TimersService extends ClientListener {
 
       this.setProcessMethod(ProcessMethodType.tick);
     }
-
   }
 
   private onPreLoadGame() {

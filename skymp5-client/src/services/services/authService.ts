@@ -88,8 +88,7 @@ export class AuthService extends ClientListener {
         logTrace(this, `Received createActorMessage for self, resetting widgets`);
         this.sp.browser.executeJavaScript('window.skyrimPlatform.widgets.set([]);');
         this.authDialogOpen = false;
-      }
-      else {
+      } else {
         logTrace(this, `Received createActorMessage for self, but auth dialog was not open so not resetting widgets`);
       }
     }
@@ -109,8 +108,7 @@ export class AuthService extends ClientListener {
       if (e instanceof SyntaxError) {
         logError(this, "onCustomPacketMessage failed to parse JSON", e.message, "json:", msg.contentJsonDump);
         return;
-      }
-      else {
+      } else {
         throw e;
       }
     }
@@ -183,8 +181,7 @@ export class AuthService extends ClientListener {
       timersService.setTimeout(() => {
         logTrace(this, "Test timeout fired");
       }, 1);
-    }
-    catch (e) {
+    } catch (e) {
       logError(this, "Failed to call setTimeout");
     }
   }
@@ -375,8 +372,7 @@ export class AuthService extends ClientListener {
         // @ts-expect-error (TODO: Remove in 2.10.0)
         "PluginsNoLoad"
       );
-    }
-    catch (e) {
+    } catch (e) {
       logError(this, `Error writing`, this.pluginAuthDataName, `to disk:`, e, `, will not remember user`);
     }
   };
@@ -599,8 +595,7 @@ export class AuthService extends ClientListener {
         this.loggingStartMoment = 0;
         this.controller.lookupListener(NetworkingService).reconnect();
         // TODO: should we prompt user to relogin?
-      }
-      else {
+      } else {
         logTrace(this, 'Player never saw actual gameplay, showing login dialog');
         this.loggingStartMoment = 0;
         this.authAttemptProgressIndicator = false;

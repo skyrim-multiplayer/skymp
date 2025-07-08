@@ -5,10 +5,14 @@ import { FormTypeEx } from "./formTypeEx";
 export class ObjectReferenceEx {
   static getWorldOrCell(self: ObjectReference): number {
     let world = self.getWorldSpace();
-    if (world) return world.getFormID();
+    if (world) {
+      return world.getFormID();
+    }
 
     let cell = self.getParentCell();
-    if (cell) return cell.getFormID();
+    if (cell) {
+      return cell.getFormID();
+    }
 
     return 0;
   }

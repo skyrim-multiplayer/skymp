@@ -57,7 +57,9 @@ export const getAppearance = (actor: Actor): Appearance => {
   const numHeadparts = base.getNumHeadParts();
   for (let i = 0; i < numHeadparts; ++i) {
     const part = base.getNthHeadPart(i);
-    if (part) newAppearance.headpartIds.push(part.getFormID());
+    if (part) {
+      newAppearance.headpartIds.push(part.getFormID());
+    }
   }
 
   for (let i = 0; i < newAppearance.options.length; ++i) {
@@ -87,7 +89,9 @@ export const getAppearance = (actor: Actor): Appearance => {
 const isVisible = (argb: number) => argb > 0x00ffffff || argb < 0;
 
 export const applyTints = (actor: Actor | null, appearance: Appearance): void => {
-  if (!appearance) throw new Error("null appearance has been passed to applyTints");
+  if (!appearance) {
+    throw new Error("null appearance has been passed to applyTints");
+  }
 
   const tints = appearance.tints.filter((t) => isVisible(t.argb));
 
@@ -126,7 +130,9 @@ const applyAppearanceCommon = (appearance: Appearance, npc: ActorBase): void => 
     .filter((headpart) => !!headpart);
 
   TESModPlatform.setNpcSex(npc, appearance.isFemale ? 1 : 0);
-  if (race) TESModPlatform.setNpcRace(npc, race);
+  if (race) {
+    TESModPlatform.setNpcRace(npc, race);
+  }
   npc.setWeight(appearance.weight);
   TESModPlatform.setNpcSkinColor(npc, appearance.skinColor);
   TESModPlatform.setNpcHairColor(npc, appearance.hairColor);
@@ -146,7 +152,9 @@ const applyAppearanceCommon = (appearance: Appearance, npc: ActorBase): void => 
 
 export const applyAppearance = (appearance: Appearance): ActorBase => {
   const npc: ActorBase = TESModPlatform.createNpc() as ActorBase;
-  if (!npc) throw new Error("createNpc returned null");
+  if (!npc) {
+    throw new Error("createNpc returned null");
+  }
   applyAppearanceCommon(appearance, npc);
   return npc;
 };
@@ -154,7 +162,7 @@ export const applyAppearance = (appearance: Appearance): ActorBase => {
 export const applyAppearanceToPlayer = (appearance: Appearance): void => {
   applyAppearanceCommon(
     appearance,
-    ActorBase.from((Game.getPlayer() as Actor).getBaseObject()) as ActorBase
+    ActorBase.from((Game.getPlayer() as Actor).getBaseObject()) as ActorBase,
   );
   applyTints(null, appearance);
   (Game.getPlayer() as Actor).queueNiNodeUpdate();

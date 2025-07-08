@@ -70,8 +70,7 @@ const removeUnnecessaryExtra = (inv: Inventory, ignoreAmmo: boolean): Inventory 
       r.chargePercent = r.maxCharge;
       if (ignoreAmmo) {
         r.count = Ammo.from(Game.getFormEx(x.baseId)) ? r.count : 1;
-      }
-      else {
+      } else {
         r.count = Ammo.from(Game.getFormEx(x.baseId)) ? 1000 : 1;
       }
       delete r.name;

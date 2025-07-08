@@ -60,7 +60,9 @@ export class DeathService extends ClientListener {
     this.sp.hooks.sendAnimationEvent.add(
       {
         enter: (ctx) => {
-          if (this.allowedPlayerAnimations === null) return;
+          if (this.allowedPlayerAnimations === null) {
+            return;
+          }
           if (!this.allowedPlayerAnimations.includes(ctx.animEventName)) {
             ctx.animEventName = "";
           }
@@ -73,7 +75,9 @@ export class DeathService extends ClientListener {
   }
 
   private applyDeathState = (actor: Actor, isDead: boolean) => {
-    if (actor.isDead() === isDead && this.isPlayer(actor) === false) return;
+    if (actor.isDead() === isDead && this.isPlayer(actor) === false) {
+      return;
+    }
     if (isDead === true) {
       this.killActor(actor, null);
     } else {
@@ -118,7 +122,9 @@ export class DeathService extends ClientListener {
     const ragdollService = this.controller.lookupListener(RagdollService);
     ragdollService.safeRemoveRagdollFromWorld(act, () => {
       const actor = Actor.from(this.sp.Game.getFormEx(formId));
-      if (!actor) return;
+      if (!actor) {
+        return;
+      }
       // TODO: should use actor variable instead of getPlayer?
       // TODO: use different iGetUpType if ressurecting under water
       this.sp.Game.getPlayer()!.setAnimationVariableInt("iGetUpType", 1);

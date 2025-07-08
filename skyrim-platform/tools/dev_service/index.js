@@ -14,7 +14,9 @@ function writeFileSyncRecursive(filename, content, charset) {
     .slice(0, -1)
     .reduce((last, folder) => {
       let folderPath = last ? last + path.sep + folder : folder;
-      if (!fs.existsSync(folderPath)) fs.mkdirSync(folderPath);
+      if (!fs.existsSync(folderPath)) {
+        fs.mkdirSync(folderPath);
+      }
       return folderPath;
     });
 

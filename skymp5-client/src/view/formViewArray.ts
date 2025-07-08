@@ -16,7 +16,9 @@ export class FormViewArray {
 
   destroyForm(i: number) {
     const formView = this.formViews[i];
-    if (formView === undefined) return;
+    if (formView === undefined) {
+      return;
+    }
 
     formView.destroy();
     this.formViews[i] = undefined;
