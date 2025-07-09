@@ -229,13 +229,109 @@
 // }
 
 namespace FunctionsDumpFormat {
+
+struct ValueType
+{
+  template <class Archive>
+  void Serialize(Archive& archive)
+  {
+    archive.Serialize(objectTypeName).Serialize(rawType);
+  }
+
+  std::optional<std::string> objectTypeName;
+  std::string rawType;
+};
+
+struct FunctionArgument
+{
+  template <class Archive>
+  void Serialize(Archive& archive)
+  {
+    archive.Serialize(name).Serialize(type);
+  }
+
+  std::string name;
+  ValueType type;
+};
+
+struct Function
+{
+  Function() = default;
+
+  explicit Function(RE::BSScript::IFunction* function, uintptr_t moduleBase,
+                    uintptr_t funcOffset)
+  {
+    auto nativeFunction =
+      reinterpret_cast<RE::BSScript::NF_util::NativeFunctionBase*>(function);
+
+    isLatent = nativeFunction->GetIsLatent();
+    name = nativeFunction->GetName();
+    offset = funcOffset;
+  }
+
+  template <class Archive>
+  void Serialize(Archive& archive)
+  {
+    archive.Serialize(arguments)
+      .Serialize(isLatent)
+      .Serialize(name)
+      .Serialize(offset)
+      .Serialize(returnType)
+      .Serialize(useLongSignature);
+  }
+
+  std::vector<FunctionArgument> arguments;
+  bool isLatent = false;
+  std::string name;
+  uint32_t offset = 0;
+  ValueType returnType;
+  bool useLongSignature = false;
+};
+
 struct Type
 {
+  template <class Archive>
+  void Serialize(Archive& archive)
+  {
+    archive.Serialize(globalFunctions)
+      .Serialize(memberFunctions)
+      .Serialize(parent);
+  }
+
+  std::vector<Function> globalFunctions;
+  std::vector<Function> memberFunctions;
+  std::string parent;
 };
 
 struct Root
 {
-  std::vector<Type> types;
+  Root() = default;
+
+  explicit Root(const std::vector<
+                std::tuple<std::string, std::string, RE::BSScript::IFunction*,
+                           uintptr_t, uintptr_t>>& data)
+  {
+    for (auto [className, functionName, function, moduleBase, funcOffset] :
+         data) {
+      auto& type = types[className];
+
+      Function functionDump(function, moduleBase, funcOffset);
+
+      if (function->GetIsStatic()) {
+        type.globalFunctions.push_back(functionDump);
+      } else {
+        type.memberFunctions.push_back(functionDump);
+      }
+    }
+  }
+
+  template <class Archive>
+  void Serialize(Archive& archive)
+  {
+    archive.Serialize(types);
+  }
+
+  std::map<std::string, Type> types;
 };
 }
 
@@ -250,9 +346,9 @@ void DumpFunctions::Run()
 }
 
 void DumpFunctions::RunImpl(
-  const std::vector<
-    std::tuple<std::string, std::string, RE::BSScript::IFunction*>>& data)
+  const std::vector<std::tuple<
+    std::string, std::string, RE::BSScript::IFunction*, uintptr_t, uintptr_t>>&
+    data)
 {
-  for (auto [className, functionName, function] : data) {
-  }
+  FunctionsDumpFormat::Root root(data);
 }

@@ -54,6 +54,7 @@ public:
     return *this;
   }
 
+
   template <typename... Types>
   JsonOutputArchive& Serialize(const char* key,
                                const std::variant<Types...>& value)
@@ -66,6 +67,19 @@ public:
 
     j[key] = std::visit(serializeVisitor, value);
 
+    return *this;
+  }
+
+  template <typename K, typename V>
+  JsonOutputArchive& Serialize(const char* key, const std::map<K, V>& value)
+  {
+    nlohmann::json obj = nlohmann::json::object();
+    for (const auto& [k, v] : value) {
+      JsonOutputArchive childArchive;
+      childArchive.Serialize("element", v);
+      obj[k] = childArchive.j["element"];
+    }
+    j[key] = obj;
     return *this;
   }
 

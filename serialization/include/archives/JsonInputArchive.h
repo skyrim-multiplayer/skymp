@@ -135,6 +135,23 @@ public:
     return *this;
   }
 
+  template <typename K, typename V>
+  JsonInputArchive& Serialize(const char* key, std::map<K, V>& value)
+  {
+    value.clear();
+    const auto& obj = j.at(key);
+    for (auto it = obj.begin(); it != obj.end(); ++it) {
+      K k = it.key();
+      V v;
+      nlohmann::json childArchiveInput = nlohmann::json::object();
+      childArchiveInput["element"] = it.value();
+      JsonInputArchive childArchive(childArchiveInput);
+      childArchive.Serialize("element", v);
+      value.emplace(k, std::move(v));
+    }
+    return *this;
+  }
+
   template <NoneOfTheAbove T>
   JsonInputArchive& Serialize(const char* key, T& value)
   {

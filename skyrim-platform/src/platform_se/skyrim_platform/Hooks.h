@@ -13,7 +13,8 @@ void write_thunk_call(std::uintptr_t a_src)
 
 void Install();
 
-std::vector<std::tuple<std::string, std::string, RE::BSScript::IFunction*>>
+std::vector<std::tuple<std::string, std::string, RE::BSScript::IFunction*,
+                       uintptr_t, uintptr_t>>
 GetBoundNatives();
 
 }

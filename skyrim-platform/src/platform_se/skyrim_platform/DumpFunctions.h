@@ -9,5 +9,6 @@ public:
 private:
   static void RunImpl(
     const std::vector<
-      std::tuple<std::string, std::string, RE::BSScript::IFunction*>>& data);
+      std::tuple<std::string, std::string, RE::BSScript::IFunction*, uintptr_t,
+                 uintptr_t>>& data);
 };
