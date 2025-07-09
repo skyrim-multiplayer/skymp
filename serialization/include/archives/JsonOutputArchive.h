@@ -54,7 +54,6 @@ public:
     return *this;
   }
 
-
   template <typename... Types>
   JsonOutputArchive& Serialize(const char* key,
                                const std::variant<Types...>& value)
@@ -70,8 +69,8 @@ public:
     return *this;
   }
 
-  template <typename K, typename V>
-  JsonOutputArchive& Serialize(const char* key, const std::map<K, V>& value)
+  template <Map T>
+  JsonOutputArchive& Serialize(const char* key, const T& value)
   {
     nlohmann::json obj = nlohmann::json::object();
     for (const auto& [k, v] : value) {
