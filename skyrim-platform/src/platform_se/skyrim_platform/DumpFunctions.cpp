@@ -35,6 +35,7 @@ std::string FindModuleName(uintptr_t moduleBase)
   return std::string();
 }
 
+// TODO: consider switching to TypeInfo::TypeAsString (CommonLibSSE-NG)
 std::string RawTypeToString(TypeInfo::RawType raw)
 {
   switch (raw) {
@@ -85,10 +86,12 @@ struct ValueType
   void Serialize(Archive& archive)
   {
     archive.Serialize("objectTypeName", objectTypeName)
-      .Serialize("rawType", rawType);
+      .Serialize("rawType", rawType)
+      .Serialize("pexTypeName", pexTypeName);
   }
 
   std::optional<std::string> objectTypeName;
+  std::optional<std::string> pexTypeName;
   std::string rawType;
 };
 
@@ -141,29 +144,32 @@ struct Function
     moduleName = FindModuleName(moduleBase);
   }
 
-  void EnrichArgumentNames(const Object& pexScriptObject)
+  void EnrichValueNamesAndTypes(const Object& pexScriptObject)
   {
-    for (size_t i = 0; i < arguments.size(); ++i) {
-      auto stateIt = std::find_if(
-        pexScriptObject.states.begin(), pexScriptObject.states.end(),
-        [&](const auto& state) { return state.name.empty(); });
-      if (stateIt == pexScriptObject.states.end()) {
-        throw std::runtime_error("Unable to find state in pex object");
-      }
+    auto stateIt = std::find_if(
+      pexScriptObject.states.begin(), pexScriptObject.states.end(),
+      [&](const auto& state) { return state.name.empty(); });
+    if (stateIt == pexScriptObject.states.end()) {
+      throw std::runtime_error("Unable to find state in pex object");
+    }
 
-      auto funcIt =
-        std::find_if(stateIt->functions.begin(), stateIt->functions.end(),
-                     [&](const auto& pexF) {
-                       return !Utils::stricmp(pexF.name.data(), name.data());
-                     });
-      if (funcIt == stateIt->functions.end()) {
-        throw std::runtime_error("Unable to find " + name + " in pex");
-      }
+    auto funcIt =
+      std::find_if(stateIt->functions.begin(), stateIt->functions.end(),
+                   [&](const auto& pexF) {
+                     return !Utils::stricmp(pexF.name.data(), name.data());
+                   });
+    if (funcIt == stateIt->functions.end()) {
+      throw std::runtime_error("Unable to find " + name + " in pex");
+    }
 
-      size_t n = std::min(funcIt->function.params.size(), arguments.size());
-      for (size_t i = 0; i < n; ++i) {
-        arguments.at(i).name = funcIt->function.params[i].name;
-      }
+    // Enrich return type
+    returnType.pexTypeName = funcIt->function.returnType;
+
+    // Enrich arguments
+    size_t n = std::min(funcIt->function.params.size(), arguments.size());
+    for (size_t i = 0; i < n; ++i) {
+      arguments.at(i).name = funcIt->function.params[i].name;
+      arguments.at(i).type.pexTypeName = funcIt->function.params[i].type;
     }
   }
 
@@ -239,7 +245,7 @@ struct Root
             return !Utils::stricmp(obj.NameIndex.data(), classNameCstr);
           });
         if (pexObjectIterator != pex->objectTable.end()) {
-          functionDump.EnrichArgumentNames(*pexObjectIterator);
+          functionDump.EnrichValueNamesAndTypes(*pexObjectIterator);
         } else {
           throw std::runtime_error(
             "pexObjectIterator was pex->objectTable.end()");
