@@ -305,23 +305,4 @@ void DumpFunctions::RunImpl(
   std::filesystem::create_directories(dir);
   auto p = dir / "FunctionsDump.txt";
   std::ofstream(p) << archive.j.dump(2);
-
-  typedef void* (*Game_GetPlayer_t)(void* staticFunctionTag);
-  typedef float (*Game_GetActorValuePercentage)(
-    void* vm, uint32_t stackId, void* actor,
-    const RE::BSFixedString& asValueName);
-
-  Game_GetPlayer_t getPlayer = reinterpret_cast<Game_GetPlayer_t>(
-    reinterpret_cast<uint64_t>(GetModuleHandle(NULL)) + 10537904);
-
-  Game_GetActorValuePercentage getActorValuePercentage =
-    reinterpret_cast<Game_GetActorValuePercentage>(
-      reinterpret_cast<uint64_t>(GetModuleHandle(NULL)) + 10388464);
-
-  void* playerRef = getPlayer(nullptr);
-
-  static const RE::BSFixedString kHealth = "Health";
-  float health = getActorValuePercentage(0, 0, playerRef, kHealth);
-
-  RE::ConsoleLog::GetSingleton()->Print("Health percentage %f", health);
 }
