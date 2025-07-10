@@ -79,10 +79,10 @@ void HookVirtualMachineBind()
 void BindNativeMethod(RE::BSScript::Internal::VirtualMachine* thisArg,
                       RE::BSScript::IFunction* func)
 {
-  while (!IsDebuggerPresent()) {
+  /*while (!IsDebuggerPresent()) {
 
     Sleep(1);
-  }
+  }*/
 
   std::stringstream memory;
 
