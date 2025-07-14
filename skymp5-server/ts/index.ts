@@ -218,6 +218,14 @@ const main = async () => {
 
   (async () => {
     while (1) {
+      if ((server as any).beforeTick) {
+        try {
+          (server as any).beforeTick();
+        } catch (e) {
+          console.error(`in server.beforeTick:\n${e.stack}`);
+        }
+      }
+
       try {
         server.tick();
         await new Promise((r) => setTimeout(r, 1));
