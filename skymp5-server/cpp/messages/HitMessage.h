@@ -19,7 +19,7 @@ struct HitMessage : public MessageBase<HitMessage>
     template <class Archive>
     void Serialize(Archive& archive)
     {
-      archive.Serialize("taggressor", aggressor)
+      archive.Serialize("aggressor", aggressor)
         .Serialize("isBashAttack", isBashAttack)
         .Serialize("isHitBlocked", isHitBlocked)
         .Serialize("isPowerAttack", isPowerAttack)
