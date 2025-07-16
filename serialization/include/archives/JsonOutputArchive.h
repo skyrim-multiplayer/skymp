@@ -69,6 +69,19 @@ public:
     return *this;
   }
 
+  template <Map T>
+  JsonOutputArchive& Serialize(const char* key, const T& value)
+  {
+    nlohmann::json obj = nlohmann::json::object();
+    for (const auto& [k, v] : value) {
+      JsonOutputArchive childArchive;
+      childArchive.Serialize("element", v);
+      obj[k] = childArchive.j["element"];
+    }
+    j[key] = obj;
+    return *this;
+  }
+
   template <NoneOfTheAbove T>
   JsonOutputArchive& Serialize(const char* key, const T& value)
   {
