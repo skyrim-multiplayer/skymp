@@ -1,4 +1,4 @@
-#include "FunctionsDumpFormat.h"
+#include "FunctionsDumpFactory.h"
 #include "DumpFunctions.h"
 
 #include <psapi.h>
@@ -7,7 +7,7 @@
 #include "papyrus-vm/Reader.h"
 #include "papyrus-vm/Utils.h" // Utils::stricmp
 
-std::string FunctionsDumpFormat::FindModuleName(uintptr_t moduleBase)
+std::string FunctionsDumpFactory::FindModuleName(uintptr_t moduleBase)
 {
   HMODULE hMods[1024];
   DWORD cbNeeded;
@@ -16,7 +16,10 @@ std::string FunctionsDumpFormat::FindModuleName(uintptr_t moduleBase)
   if (EnumProcessModules(hProcess, hMods, sizeof(hMods), &cbNeeded)) {
     for (unsigned int i = 0; i < (cbNeeded / sizeof(HMODULE)); i++) {
       if ((uintptr_t)hMods[i] == moduleBase) {
-        char szModName[MAX_PATH];
+        // TODO: consider GetModuleFileNameExA till it stops truncate. afaik
+        // there is no other way to get szModName buffer size before allocating
+        // it. MAX_PATH is not good for post Windows 10 systems.
+        char szModName[8912];
         if (GetModuleFileNameExA(hProcess, hMods[i], szModName,
                                  sizeof(szModName))) {
           return std::string(szModName);
@@ -29,7 +32,7 @@ std::string FunctionsDumpFormat::FindModuleName(uintptr_t moduleBase)
 }
 
 // TODO: consider switching to TypeInfo::TypeAsString (CommonLibSSE-NG)
-std::string FunctionsDumpFormat::RawTypeToString(
+std::string FunctionsDumpFactory::RawTypeToString(
   RE::BSScript::TypeInfo::RawType raw)
 {
   switch (raw) {
@@ -61,53 +64,63 @@ std::string FunctionsDumpFormat::RawTypeToString(
   return "";
 }
 
-FunctionsDumpFormat::ValueType::ValueType(
+FunctionsDumpFormat::ValueType FunctionsDumpFactory::MakeValueType(
   const RE::BSScript::TypeInfo& typeInfo)
 {
+  FunctionsDumpFormat::ValueType result;
+
   RE::BSScript::TypeInfo::RawType unmangled = typeInfo.GetUnmangledRawType();
 
   if (unmangled == TypeInfo::RawType::kObject) {
-    objectTypeName = typeInfo.GetTypeInfo()->GetName();
+    result.objectTypeName = typeInfo.GetTypeInfo()->GetName();
   }
 
-  rawType = RawTypeToString(unmangled);
+  result.rawType = RawTypeToString(unmangled);
+
+  return result;
 }
 
-FunctionsDumpFormat::FunctionArgument::FunctionArgument(
-  const RE::BSFixedString& name_, const RE::BSScript::TypeInfo& type_)
+FunctionsDumpFormat::FunctionArgument
+FunctionsDumpFactory::MakeFunctionArgument(const RE::BSFixedString& name_,
+                                           const RE::BSScript::TypeInfo& type_)
 {
-  name = name_;
-  type = ValueType(type_);
+  FunctionsDumpFormat::FunctionArgument result;
+  result.name = name_;
+  result.type = MakeValueType(type_);
+  return result;
 }
 
-FunctionsDumpFormat::Function::Function(RE::BSScript::IFunction* function,
-                                        uintptr_t moduleBase,
-                                        uintptr_t funcOffset,
-                                        uintptr_t isLongSignature)
+FunctionsDumpFormat::Function FunctionsDumpFactory::MakeFunction(
+  RE::BSScript::IFunction* function, uintptr_t moduleBase,
+  uintptr_t funcOffset, uintptr_t isLongSignature)
 {
+  FunctionsDumpFormat::Function result;
+
   auto nativeFunction =
     reinterpret_cast<RE::BSScript::NF_util::NativeFunctionBase*>(function);
 
   uint32_t paramCount = function->GetParamCount();
-  arguments.resize(paramCount);
+  result.arguments.resize(paramCount);
 
   for (uint32_t i = 0; i < paramCount; ++i) {
     RE::BSFixedString nameOut;
     RE::BSScript::TypeInfo typeOut;
     function->GetParam(i, nameOut, typeOut);
-    arguments[i] = FunctionArgument(nameOut, typeOut);
+    result.arguments[i] = MakeFunctionArgument(nameOut, typeOut);
   }
 
-  isLatent = nativeFunction->GetIsLatent();
-  name = nativeFunction->GetName();
-  offset = funcOffset;
-  returnType = ValueType(nativeFunction->GetReturnType());
-  useLongSignature = isLongSignature != 0;
-  moduleName = FindModuleName(moduleBase);
+  result.isLatent = nativeFunction->GetIsLatent();
+  result.name = nativeFunction->GetName();
+  result.offset = funcOffset;
+  result.returnType = MakeValueType(nativeFunction->GetReturnType());
+  result.useLongSignature = isLongSignature != 0;
+  result.moduleName = FindModuleName(moduleBase);
+
+  return result;
 }
 
-void FunctionsDumpFormat::Function::EnrichValueNamesAndTypes(
-  const Object& pexScriptObject)
+void FunctionsDumpFactory::EnrichValueNamesAndTypes(
+  FunctionsDumpFormat::Function& function, const Object& pexScriptObject)
 {
   auto stateIt =
     std::find_if(pexScriptObject.states.begin(), pexScriptObject.states.end(),
@@ -116,38 +129,42 @@ void FunctionsDumpFormat::Function::EnrichValueNamesAndTypes(
     throw std::runtime_error("Unable to find state in pex object");
   }
 
-  auto funcIt =
-    std::find_if(stateIt->functions.begin(), stateIt->functions.end(),
-                 [&](const auto& pexF) {
-                   return !Utils::stricmp(pexF.name.data(), name.data());
-                 });
+  auto funcIt = std::find_if(stateIt->functions.begin(),
+                             stateIt->functions.end(), [&](const auto& pexF) {
+                               return !Utils::stricmp(pexF.name.data(),
+                                                      function.name.data());
+                             });
   if (funcIt == stateIt->functions.end()) {
-    throw std::runtime_error("Unable to find " + name + " in pex");
+    throw std::runtime_error("Unable to find " + function.name + " in pex");
   }
 
   // Enrich return type
-  returnType.pexTypeName = funcIt->function.returnType;
+  function.returnType.pexTypeName = funcIt->function.returnType;
 
   // Enrich arguments
-  size_t n = std::min(funcIt->function.params.size(), arguments.size());
+  size_t n =
+    std::min(funcIt->function.params.size(), function.arguments.size());
   for (size_t i = 0; i < n; ++i) {
-    arguments.at(i).name = funcIt->function.params[i].name;
-    arguments.at(i).type.pexTypeName = funcIt->function.params[i].type;
+    function.arguments.at(i).name = funcIt->function.params[i].name;
+    function.arguments.at(i).type.pexTypeName =
+      funcIt->function.params[i].type;
   }
 }
 
-FunctionsDumpFormat::Root::Root(
+FunctionsDumpFormat::Root FunctionsDumpFactory::Create(
   const std::vector<
     std::tuple<std::string, std::string, RE::BSScript::IFunction*, uintptr_t,
                uintptr_t, uintptr_t>>& data,
   const std::vector<std::shared_ptr<PexScript>>& pexScripts)
 {
+  FunctionsDumpFormat::Root result;
+
   auto pexScriptIterator = pexScripts.end();
   std::optional<std::string> pexClassName;
 
   for (auto [className, functionName, function, moduleBase, funcOffset,
              isLongSignature] : data) {
-    auto& type = types[className];
+    auto& type = result.types[className];
 
     if (pexClassName != className) {
       pexClassName = className;
@@ -158,7 +175,8 @@ FunctionsDumpFormat::Root::Root(
         });
     }
 
-    Function functionDump(function, moduleBase, funcOffset, isLongSignature);
+    FunctionsDumpFormat::Function functionDump =
+      MakeFunction(function, moduleBase, funcOffset, isLongSignature);
 
     if (pexScriptIterator != pexScripts.end()) {
       auto& pex = (*pexScriptIterator);
@@ -169,7 +187,7 @@ FunctionsDumpFormat::Root::Root(
           return !Utils::stricmp(obj.NameIndex.data(), classNameCstr);
         });
       if (pexObjectIterator != pex->objectTable.end()) {
-        functionDump.EnrichValueNamesAndTypes(*pexObjectIterator);
+        EnrichValueNamesAndTypes(functionDump, *pexObjectIterator);
       } else {
         throw std::runtime_error(
           "pexObjectIterator was pex->objectTable.end()");
@@ -182,4 +200,6 @@ FunctionsDumpFormat::Root::Root(
       type.memberFunctions.push_back(functionDump);
     }
   }
+
+  return result;
 }

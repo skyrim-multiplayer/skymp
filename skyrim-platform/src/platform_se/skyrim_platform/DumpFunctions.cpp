@@ -10,7 +10,7 @@
 #include <set>
 #include <stdexcept>
 
-#include "FunctionsDumpFormat.h"
+#include "FunctionsDumpFactory.h"
 
 void DumpFunctions::Run()
 {
@@ -38,7 +38,8 @@ void DumpFunctions::RunImpl(
   std::vector<std::shared_ptr<PexScript>> pexScripts =
     pexReader.GetSourceStructures();
 
-  FunctionsDumpFormat::Root root(data, pexScripts);
+  FunctionsDumpFormat::Root root =
+    FunctionsDumpFactory::Create(data, pexScripts);
 
   JsonOutputArchive archive;
   root.Serialize(archive);
