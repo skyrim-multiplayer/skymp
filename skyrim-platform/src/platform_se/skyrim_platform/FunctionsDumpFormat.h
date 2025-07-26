@@ -1,20 +1,10 @@
 #include <string>
 
-#include "papyrus-vm/Reader.h"
-#include "papyrus-vm/Utils.h" // Utils::stricmp
-
 namespace FunctionsDumpFormat {
-
-std::string FindModuleName(uintptr_t moduleBase);
-
-// TODO: consider switching to TypeInfo::TypeAsString (CommonLibSSE-NG)
-std::string RawTypeToString(TypeInfo::RawType raw);
 
 struct ValueType
 {
   ValueType() = default;
-
-  explicit ValueType(const RE::BSScript::TypeInfo& typeInfo);
 
   template <class Archive>
   void Serialize(Archive& archive)
@@ -33,9 +23,6 @@ struct FunctionArgument
 {
   FunctionArgument() = default;
 
-  explicit FunctionArgument(const RE::BSFixedString& name_,
-                            const RE::BSScript::TypeInfo& type_);
-
   template <class Archive>
   void Serialize(Archive& archive)
   {
@@ -49,11 +36,6 @@ struct FunctionArgument
 struct Function
 {
   Function() = default;
-
-  explicit Function(RE::BSScript::IFunction* function, uintptr_t moduleBase,
-                    uintptr_t funcOffset, uintptr_t isLongSignature);
-
-  void EnrichValueNamesAndTypes(const Object& pexScriptObject);
 
   template <class Archive>
   void Serialize(Archive& archive)
@@ -94,12 +76,6 @@ struct Type
 struct Root
 {
   Root() = default;
-
-  explicit Root(
-    const std::vector<
-      std::tuple<std::string, std::string, RE::BSScript::IFunction*, uintptr_t,
-                 uintptr_t, uintptr_t>>& data,
-    const std::vector<std::shared_ptr<PexScript>>& pexScripts);
 
   template <class Archive>
   void Serialize(Archive& archive)
