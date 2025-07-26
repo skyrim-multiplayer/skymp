@@ -7,7 +7,7 @@ public:
   static VmProvider& GetSingleton();
 
   // Must also search in base classes
-  FunctionInfo* GetFunctionInfo(const std::string& className,
+  FunctionInfo_* GetFunctionInfo(const std::string& className,
                                 const std::string& funcName) override;
 
   bool IsDerivedFrom(const char* derivedClassName,

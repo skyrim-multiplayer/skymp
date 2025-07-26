@@ -45,7 +45,7 @@ struct FindFunctionCache
 {
   std::unordered_map<
     std::string,
-    std::unordered_map<std::string, std::unique_ptr<FunctionInfo>>>
+    std::unordered_map<std::string, std::unique_ptr<FunctionInfo_>>>
     funcByFullName;
 };
 
@@ -82,7 +82,7 @@ FunctionFindResult FindFunction(const RE::BSScript::ObjectTypeInfo* classInfo,
   return res;
 }
 
-class VmFunctionInfo : public FunctionInfo
+class VmFunctionInfo : public FunctionInfo_
 {
 public:
   VmFunctionInfo(const FunctionFindResult& r_)
@@ -157,7 +157,8 @@ private:
   }
 };
 
-const std::unique_ptr<FunctionInfo>& FindFunction(FindFunctionCache& cache,
+const std::unique_ptr<FunctionInfo_>& FindFunction(
+  FindFunctionCache& cache,
                                                   const std::string& className,
                                                   const std::string& funcName)
 {
@@ -206,7 +207,7 @@ VmProvider& VmProvider::GetSingleton()
   return g_instance;
 }
 
-FunctionInfo* VmProvider::GetFunctionInfo(const std::string& className,
+FunctionInfo_* VmProvider::GetFunctionInfo(const std::string& className,
                                           const std::string& funcName)
 {
   return ::FindFunction(pImpl->findFunctionCache, className, funcName).get();
