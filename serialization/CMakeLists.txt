@@ -2,7 +2,7 @@ project(serialization)
 
 include(${CMAKE_SOURCE_DIR}/cmake/apply_default_settings.cmake)
 
-file(GLOB serialization_SRC "include/*.h" "src/*.cpp" "src/*.h")
+file(GLOB_RECURSE serialization_SRC "include/*.h" "src/*.cpp" "src/*.h")
 add_library(serialization STATIC ${serialization_SRC})
 target_include_directories(serialization PUBLIC ${CMAKE_CURRENT_LIST_DIR}/include)
 target_include_directories(serialization PUBLIC ${CMAKE_CURRENT_LIST_DIR}/src)
