@@ -45,11 +45,11 @@ std::vector<std::string> SP3ListStaticFunctionsImpl(
   auto boundNatives = Hooks::GetBoundNatives();
   std::vector<std::string> staticFunctions;
 
-  for (auto [classNameOfFunc, funcName, func] : boundNatives) {
+  for (auto [classNameOfFunc, funcName, func, _, __, ___] : boundNatives) {
     if (!stricmp(classNameOfFunc.data(), className.data())) {
 
       auto& vmProvider = VmProvider::GetSingleton();
-      FunctionInfo* functionInfo =
+      FunctionInfo_* functionInfo =
         vmProvider.GetFunctionInfo(className, funcName);
 
       if (functionInfo && functionInfo->IsGlobal()) {
@@ -66,11 +66,11 @@ std::vector<std::string> SP3ListMethodsImpl(const std::string& className)
   std::vector<std::string> methods;
   auto boundNatives = Hooks::GetBoundNatives();
 
-  for (auto [classNameOfFunc, funcName, func] : boundNatives) {
+  for (auto [classNameOfFunc, funcName, func, _, __, ___] : boundNatives) {
     if (!stricmp(classNameOfFunc.data(), className.data())) {
 
       auto& vmProvider = VmProvider::GetSingleton();
-      FunctionInfo* functionInfo =
+      FunctionInfo_* functionInfo =
         vmProvider.GetFunctionInfo(className, funcName);
 
       if (functionInfo && !functionInfo->IsGlobal()) {
@@ -145,7 +145,7 @@ Napi::Value Sp3Api::SP3ListClasses(const Napi::CallbackInfo& info)
   auto boundNatives = Hooks::GetBoundNatives();
 
   std::set<std::string> classes;
-  for (auto [className, funcName, func] : boundNatives) {
+  for (auto [className, funcName, func, _, __, ___] : boundNatives) {
     classes.insert(className);
   }
 
@@ -320,7 +320,7 @@ Napi::Value Sp3Api::SP3GetFunctionImplementation(
       // TODO: handle promises here (like on ObjectReference.disable)
       if (jsRes.IsObject()) {
         auto& vmProvider = VmProvider::GetSingleton();
-        FunctionInfo* functionInfo =
+        FunctionInfo_* functionInfo =
           vmProvider.GetFunctionInfo(className, functionName);
         if (functionInfo) {
           const char* returnType = functionInfo->GetReturnType().className;

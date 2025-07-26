@@ -1,6 +1,6 @@
 #pragma once
 
-class FunctionInfo
+class FunctionInfo_
 {
 public:
   struct ValueType
@@ -9,7 +9,7 @@ public:
     const char* className = "";
   };
 
-  virtual ~FunctionInfo() = default;
+  virtual ~FunctionInfo_() = default;
 
   virtual size_t GetParamCount() = 0;
   virtual ValueType GetReturnType() = 0;
@@ -26,7 +26,7 @@ class FunctionInfoProvider
 public:
   virtual ~FunctionInfoProvider() = default;
 
-  virtual FunctionInfo* GetFunctionInfo(const std::string& className,
+  virtual FunctionInfo_* GetFunctionInfo(const std::string& className,
                                         const std::string& funcName) = 0;
 
   virtual bool IsDerivedFrom(const char* derivedClassName,
