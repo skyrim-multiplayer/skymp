@@ -93,7 +93,7 @@ void BindNativeMethod(RE::BSScript::Internal::VirtualMachine* thisArg,
   auto skse = (uintptr_t)GetModuleHandleA("skse64_1_6_1170.dll");
 
   uintptr_t isLongSignature =
-    moduleBase == skse ? *reinterpret_cast<uintptr_t*>(raw + 0x58) : 0;
+    moduleBase == skse ? *reinterpret_cast<uint8_t*>(raw + 0x58) : 0;
 
   const char* funcName = func ? func->GetName().data() : "<null func>";
   const char* className =
