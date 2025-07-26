@@ -1,4 +1,8 @@
+#pragma once
 #include <string>
+#include <optional>
+#include <vector>
+#include <map>
 
 namespace FunctionsDumpFormat {
 
