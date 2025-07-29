@@ -137,8 +137,9 @@ public:
   void ForceSubscriptionsUpdate();
   void SetPrimitive(const NiPoint3& boundsDiv2);
   void UpdateHoster(uint32_t newHosterId);
-  void SetProperty(const std::string& propertyName, nlohmann::json newValue,
-                   bool isVisibleByOwner, bool isVisibleByNeighbor);
+  void SetPropertyValueDump(const std::string& propertyName,
+                            const std::string& valueDump,
+                            bool isVisibleByOwner, bool isVisibleByNeighbor);
   void SetTeleportFlag(bool value);
   void SetPosAndAngleSilent(const NiPoint3& pos, const NiPoint3& rot);
   void Delete();
@@ -262,12 +263,12 @@ private:
 
 protected:
   void BeforeDestroy() override;
-  UpdatePropertyMessage CreatePropertyMessage(MpObjectReference* self,
+  UpdatePropertyMessage CreatePropertyMessage_(MpObjectReference* self,
                                               const char* name,
-                                              const nlohmann::json& value);
-  UpdatePropertyMessage PreparePropertyMessage(MpObjectReference* self,
+                                              const std::string& valueDump);
+  UpdatePropertyMessage PreparePropertyMessage_(MpObjectReference* self,
                                                const char* name,
-                                               const nlohmann::json& value);
+                                               const std::string& valueDump);
 
   const std::shared_ptr<FormCallbacks> callbacks;
 };

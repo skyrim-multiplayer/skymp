@@ -43,12 +43,12 @@ Napi::Value CustomPropertyBinding::Get(Napi::Env env, ScampServer& scampServer,
   auto& refr = partOne->worldState.GetFormAt<MpObjectReference>(formId);
 
   if (isPrivate) {
-    return NapiHelper::ParseJson(env,
-                                 refr.GetDynamicFields().Get(propertyName));
+    return NapiHelper::ParseJson(
+      env, refr.GetDynamicFields().GetValueDump(propertyName));
   } else {
     EnsurePropertyExists(scampServer.GetGamemodeApiState(), propertyName);
-    return NapiHelper::ParseJson(env,
-                                 refr.GetDynamicFields().Get(propertyName));
+    return NapiHelper::ParseJson(
+      env, refr.GetDynamicFields().GetValueDump(propertyName));
   }
 }
 
@@ -62,16 +62,16 @@ void CustomPropertyBinding::Set(Napi::Env env, ScampServer& scampServer,
   auto& state = scampServer.GetGamemodeApiState();
 
   auto newValueDump = NapiHelper::Stringify(env, newValue);
-  auto newValueJson = nlohmann::json::parse(newValueDump);
 
   if (isPrivate) {
-    refr.SetProperty(propertyName, newValueJson, false, false);
+    refr.SetPropertyValueDump(propertyName, newValueDump, false, false);
     if (isPrivateIndexed) {
       refr.RegisterPrivateIndexedProperty(propertyName, newValueDump);
     }
     return;
   }
   auto it = EnsurePropertyExists(state, propertyName);
-  refr.SetProperty(propertyName, newValueJson, it->second.isVisibleByOwner,
-                   it->second.isVisibleByNeighbors);
+  refr.SetPropertyValueDump(propertyName, newValueDump,
+                            it->second.isVisibleByOwner,
+                            it->second.isVisibleByNeighbors);
 }

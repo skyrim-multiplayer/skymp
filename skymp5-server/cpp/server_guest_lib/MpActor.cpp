@@ -919,7 +919,8 @@ DeathStateContainerMessage MpActor::GetDeathStateMsg(
   const LocationalData& position, bool isDead, bool shouldTeleport)
 {
   DeathStateContainerMessage res;
-  res.tIsDead = PreparePropertyMessage(this, "isDead", isDead);
+  res.tIsDead =
+    PreparePropertyMessage_(this, "isDead", isDead ? "true" : "false");
 
   if (shouldTeleport) {
     res.tTeleport = TeleportMessage();
