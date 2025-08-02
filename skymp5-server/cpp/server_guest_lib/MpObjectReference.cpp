@@ -42,14 +42,14 @@
 
 constexpr uint32_t kPlayerCharacterLevel = 1;
 
-UpdatePropertyMessage MpObjectReference::CreatePropertyMessage(
-  MpObjectReference* self, const char* name, const nlohmann::json& value)
+UpdatePropertyMessage MpObjectReference::CreatePropertyMessage_(
+  MpObjectReference* self, const char* name, const std::string& valueDump)
 {
-  return PreparePropertyMessage(self, name, value);
+  return PreparePropertyMessage_(self, name, valueDump);
 }
 
-UpdatePropertyMessage MpObjectReference::PreparePropertyMessage(
-  MpObjectReference* self, const char* name, const nlohmann::json& value)
+UpdatePropertyMessage MpObjectReference::PreparePropertyMessage_(
+  MpObjectReference* self, const char* name, const std::string& valueDump)
 {
   UpdatePropertyMessage res;
 
@@ -64,7 +64,7 @@ UpdatePropertyMessage MpObjectReference::PreparePropertyMessage(
   res.idx = self->GetIdx();
   res.propName = name;
   res.refrId = self->GetFormId();
-  res.dataDump = value.dump();
+  res.dataDump = valueDump;
 
   // See 'perf: improve game framerate #1186'
   // Client needs to know if it is DOOR or not
@@ -426,11 +426,11 @@ void MpObjectReference::VisitProperties(CreateActorMessage& message,
 
   // Property flags (isVisibleByOwner, isVisibleByNeighbor) are expected to be
   // checked by a caller (PartOne.cpp in this case)
-  ChangeForm().dynamicFields.ForEach(
-    [&](const std::string& propName, const nlohmann::json& propValue) {
+  ChangeForm().dynamicFields.ForEachValueDump(
+    [&](const std::string& propName, const std::string& valueDump) {
       CustomPropsEntry customPropsEntry;
       customPropsEntry.propName = propName;
-      customPropsEntry.propValueJsonDump = propValue.dump();
+      customPropsEntry.propValueJsonDump = valueDump;
       message.customPropsJsonDumps.push_back(customPropsEntry);
     });
 }
@@ -611,8 +611,9 @@ void MpObjectReference::SetHarvested(bool harvested)
       changeForm.isHarvested = harvested;
     });
     SendMessageToActorListeners(
-      CreatePropertyMessage(this, "isHarvested", /*value=*/harvested),
-      /*reliable=*/true);
+      CreatePropertyMessage_(this, "isHarvested",
+                             harvested ? "true" : "false"),
+      true);
   }
 }
 
@@ -622,8 +623,7 @@ void MpObjectReference::SetOpen(bool open)
     EditChangeForm(
       [&](MpChangeFormREFR& changeForm) { changeForm.isOpen = open; });
     SendMessageToActorListeners(
-      CreatePropertyMessage(this, "isOpen", /*value=*/open),
-      /*reliable=*/true);
+      CreatePropertyMessage_(this, "isOpen", open ? "true" : "false"), true);
   }
 }
 
@@ -730,31 +730,31 @@ void MpObjectReference::SetPrimitive(const NiPoint3& boundsDiv2)
 
 void MpObjectReference::UpdateHoster(uint32_t newHosterId)
 {
-  auto hostedMsg = CreatePropertyMessage(this, "isHostedByOther", true);
-  auto notHostedMsg = CreatePropertyMessage(this, "isHostedByOther", false);
+  auto hostedMsg = CreatePropertyMessage_(this, "isHostedByOther", "true");
+  auto notHostedMsg = CreatePropertyMessage_(this, "isHostedByOther", "false");
   for (auto listener : this->GetActorListeners()) {
     if (newHosterId != 0 && newHosterId != listener->GetFormId()) {
-      listener->SendToUser(hostedMsg, /*reliable=*/true);
+      listener->SendToUser(hostedMsg, true);
     } else {
-      listener->SendToUser(notHostedMsg, /*reliable=*/true);
+      listener->SendToUser(notHostedMsg, true);
     }
   }
 }
 
-void MpObjectReference::SetProperty(const std::string& propertyName,
-                                    nlohmann::json newValue,
-                                    bool isVisibleByOwner,
-                                    bool isVisibleByNeighbor)
+void MpObjectReference::SetPropertyValueDump(const std::string& propertyName,
+                                             const std::string& valueDump,
+                                             bool isVisibleByOwner,
+                                             bool isVisibleByNeighbor)
 {
-  auto msg = CreatePropertyMessage(this, propertyName.c_str(), newValue);
+  auto msg = CreatePropertyMessage_(this, propertyName.c_str(), valueDump);
   EditChangeForm([&](MpChangeFormREFR& changeForm) {
-    changeForm.dynamicFields.Set(propertyName, std::move(newValue));
+    changeForm.dynamicFields.SetValueDump(propertyName, valueDump);
   });
   if (isVisibleByNeighbor) {
-    SendMessageToActorListeners(msg, /*reliable=*/true);
+    SendMessageToActorListeners(msg, true);
   } else if (isVisibleByOwner) {
     if (auto ac = AsActor()) {
-      ac->SendToUser(msg, /*reliable=*/true);
+      ac->SendToUser(msg, true);
     }
   }
   pImpl->setPropertyCalled = true;
@@ -946,7 +946,7 @@ void MpObjectReference::RegisterPrivateIndexedProperty(
   };
 
   auto currentValueStringified =
-    ChangeForm().dynamicFields.Get(propertyName).dump();
+    ChangeForm().dynamicFields.GetValueDump(propertyName);
   auto formId = GetFormId();
   if (!isNull(currentValueStringified)) {
     auto key = worldState->MakePrivateIndexedPropertyMapKey(
@@ -958,8 +958,8 @@ void MpObjectReference::RegisterPrivateIndexedProperty(
   }
 
   EditChangeForm([&](MpChangeFormREFR& changeForm) {
-    auto propertyValue = nlohmann::json::parse(propertyValueStringified);
-    changeForm.dynamicFields.Set(propertyName, propertyValue);
+    changeForm.dynamicFields.SetValueDump(propertyName,
+                                          propertyValueStringified);
   });
 
   if (!isNull(propertyValueStringified)) {
@@ -1207,12 +1207,12 @@ void MpObjectReference::ApplyChangeForm(const MpChangeForm& changeForm)
     RegisterProfileId(changeForm.profileId);
   }
 
-  changeForm.dynamicFields.ForEach(
-    [&](const std::string& propertyName, const nlohmann::json& value) {
+  changeForm.dynamicFields.ForEachValueDump(
+    [&](const std::string& propertyName, const std::string& valueDump) {
       static const std::string kPrefix = GetPropertyPrefixPrivateIndexed();
       bool startsWith = propertyName.compare(0, kPrefix.size(), kPrefix) == 0;
       if (startsWith) {
-        RegisterPrivateIndexedProperty(propertyName, value.dump());
+        RegisterPrivateIndexedProperty(propertyName, valueDump);
       }
     });
 
@@ -1504,8 +1504,9 @@ void MpObjectReference::ProcessActivateNormal(
       }
       SetOpen(true);
       actorActivator->SendToUser(
-        CreatePropertyMessage(this, "inventory", GetInventory().ToJson()),
-        /*reliable=*/true);
+        CreatePropertyMessage_(this, "inventory",
+                               GetInventory().ToJson().dump()),
+        true);
       activationSource.SendOpenContainer(GetFormId());
 
       this->occupant = actorActivator;

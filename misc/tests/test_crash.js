@@ -1,5 +1,4 @@
 const assert = require("node:assert");
-const fs = require("node:fs");
 
 const main = async () => {
   // instead of [0,0,0] there should be only angleZ

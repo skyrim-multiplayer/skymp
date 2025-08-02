@@ -2,20 +2,23 @@
 
 #include <unordered_map>
 
-void DynamicFields::Set(const std::string& propName, nlohmann::json value)
+void DynamicFields::SetValueDump(const std::string& propName,
+                                 const std::string& valueDump)
 {
   jsonCache.reset();
-  props[propName] = std::move(value);
+  propDumps[propName] = valueDump;
 }
 
-const nlohmann::json& DynamicFields::Get(const std::string& propName) const
+const std::string& DynamicFields::GetValueDump(
+  const std::string& propName) const
 {
-  static const auto kNull = nlohmann::json();
+  static const auto kNull = std::string("null");
 
-  auto it = props.find(propName);
-  if (it == props.end()) {
+  auto it = propDumps.find(propName);
+  if (it == propDumps.end()) {
     return kNull;
   }
+
   return it->second;
 }
 
@@ -25,21 +28,26 @@ const nlohmann::json& DynamicFields::GetAsJson() const
 
     auto obj = nlohmann::json::object();
 
-    for (auto& [key, v] : props) {
-      obj[key] = v;
+    for (auto& [key, valueDump] : propDumps) {
+      obj[key] = nlohmann::json::parse(valueDump);
     }
 
     jsonCache = std::move(obj);
   }
+
   return *jsonCache;
 }
 
 DynamicFields DynamicFields::FromJson(const nlohmann::json& j)
 {
   DynamicFields res;
+
+  res.jsonCache = j;
+
   for (auto it = j.begin(); it != j.end(); ++it) {
-    res.props[it.key()] = it.value();
+    res.propDumps[it.key()] = it.value().dump();
   }
+
   return res;
 }
 

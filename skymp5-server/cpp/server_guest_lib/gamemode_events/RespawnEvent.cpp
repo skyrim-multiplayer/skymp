@@ -28,6 +28,5 @@ void RespawnEvent::OnFireSuccess(WorldState*)
 
   // TODO: should probably not sending to ourselves. see also RespawnTest.cpp
   actor->SendMessageToActorListeners(
-    actor->CreatePropertyMessage(actor, "isDead", /*value=*/false),
-    /*reliable=*/true);
+    actor->CreatePropertyMessage_(actor, "isDead", "false"), true);
 }
