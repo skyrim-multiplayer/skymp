@@ -11,7 +11,7 @@ jobs:
             uses: fernandrone/linelint@0.0.6
             id: linelint
           - name: Ensure files use LF line endings instead of CRLF
-            uses: erclu/check-crlf@v1
+            uses: erclu/check-crlf@c77fda0a97ea8944aba5f72796b9e937e7d1611c
           - name: Run clang-format style check for C/C++ programs.
             uses: jidicula/clang-format-action@v4.9.0
             with:
