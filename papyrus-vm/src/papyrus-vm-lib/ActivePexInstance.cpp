@@ -639,7 +639,7 @@ void ActivePexInstance::ExecuteOpCode(
         if ((indexType == VarValue::kType_Integer ||
              indexType == VarValue::kType_Float) &&
             index >= 0 && index < (*args[0]).pArray->size()) {
-          (*args[0]).pArray->at(index) = *args[2];
+          (*args[0]).pArray->operator[](index) = *args[2];
         } else {
           spdlog::error("OpcodesImplementation::Opcodes::op_Array_SetElement "
                         "- Invalid array index");
