@@ -34,6 +34,11 @@
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <sstream>
 
+enum class CallType {
+  Method,
+  Global
+};
+
 namespace {
 
 constexpr size_t kMockServerIdx = 1;
@@ -1190,7 +1195,7 @@ Napi::Value ScampServer::GetIdFromDesc(const Napi::CallbackInfo& info)
 
 namespace {
 VarValue CallPapyrusFunctionImpl(const std::shared_ptr<PartOne>& partOne,
-                                 int callType, const std::string& className,
+                                 CallType callType, const std::string& className,
                                  const std::string& functionName,
                                  const VarValue& self,
                                  std::vector<VarValue>& args)
@@ -1200,7 +1205,7 @@ VarValue CallPapyrusFunctionImpl(const std::shared_ptr<PartOne>& partOne,
   VarValue res;
 
   auto& vm = partOne->worldState.GetPapyrusVm();
-  if (callType == 'meth') {
+  if (callType == CallType::Method) {
     if (self.GetType() == VarValue::Type::kType_Object) {
       res = vm.CallMethod(static_cast<IGameObject*>(self), functionName.data(),
                           args);
@@ -1209,7 +1214,7 @@ VarValue CallPapyrusFunctionImpl(const std::shared_ptr<PartOne>& partOne,
         "Can't call Papyrus method on non-object self '" + self.ToString() +
         "'");
     }
-  } else if (callType == 'glob') {
+  } else if (callType == CallType::Global) {
     res = vm.CallStatic(className, functionName, args);
   } else {
     throw std::runtime_error(
@@ -1247,18 +1252,18 @@ Napi::Value ScampServer::CallPapyrusFunction(const Napi::CallbackInfo& info)
         arr.Get(i), treatNumberAsInt, partOne->worldState);
     }
 
-    int callTypeInt = 0;
+    CallType callTypeEnum;
 
     if (callType == "method") {
-      callTypeInt = 'meth';
+      callTypeEnum = CallType::Method;
     } else if (callType == "global") {
-      callTypeInt = 'glob';
+      callTypeEnum = CallType::Global;
     } else {
       throw std::runtime_error("Unknown call type '" + callType +
                                "', expected one of ['method', 'global']");
     }
 
-    auto res = CallPapyrusFunctionImpl(partOne, callTypeInt, className,
+    auto res = CallPapyrusFunctionImpl(partOne, callTypeEnum, className,
                                        functionName, self, args);
 
     return PapyrusUtils::GetJsValueFromPapyrusValue(
@@ -1524,7 +1529,7 @@ Napi::Value ScampServer::SP3GetFunctionImplementation(
           : PapyrusUtils::GetPapyrusValueFromJsValue(jsThis, false,
                                                      partOne->worldState);
 
-        int callType = jsThis.IsUndefined() ? 'glob' : 'meth';
+        CallType callType = jsThis.IsUndefined() ? CallType::Global : CallType::Method;
 
         VarValue res = CallPapyrusFunctionImpl(partOne, callType, className,
                                                functionName, self, args);
