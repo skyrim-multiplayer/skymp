@@ -109,6 +109,8 @@ PartOne::PartOne(std::shared_ptr<Listener> listener,
   Init();
   AddListener(listener);
   SetSendTarget(sendTarget);
+
+  pImpl->craftService = std::make_shared<CraftService>(*this);
 }
 
 PartOne::~PartOne()
