@@ -190,8 +190,6 @@ private:
   void HandleMessagePacket(Networking::UserId userId,
                            Networking::PacketData data, size_t length);
 
-  void InitActionListener();
-
   void TickPacketHistoryPlaybacks();
   void TickDeferredMessages();
 

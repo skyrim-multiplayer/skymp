@@ -101,6 +101,7 @@ PartOne::PartOne(Networking::ISendTarget* sendTarget)
   SetSendTarget(sendTarget);
 
   pImpl->craftService = std::make_shared<CraftService>(*this);
+  pImpl->actionListener = std::make_shared<ActionListener>(*this);
 }
 
 PartOne::PartOne(std::shared_ptr<Listener> listener,
@@ -111,6 +112,7 @@ PartOne::PartOne(std::shared_ptr<Listener> listener,
   SetSendTarget(sendTarget);
 
   pImpl->craftService = std::make_shared<CraftService>(*this);
+  pImpl->actionListener = std::make_shared<ActionListener>(*this);
 }
 
 PartOne::~PartOne()
@@ -698,7 +700,6 @@ FormCallbacks PartOne::CreateFormCallbacks()
 
 ActionListener& PartOne::GetActionListener()
 {
-  InitActionListener();
   return *pImpl->actionListener;
 }
 
@@ -886,8 +887,6 @@ void PartOne::HandleMessagePacket(Networking::UserId userId,
     pImpl->packetParser = std::make_shared<PacketParser>();
   }
 
-  InitActionListener();
-
   auto& userInfo = serverState.userInfo[userId];
   if (userInfo && userInfo->isPacketHistoryRecording) {
     if (!userInfo->packetHistoryStartTime) {
@@ -916,13 +915,6 @@ void PartOne::HandleMessagePacket(Networking::UserId userId,
   }
 
   pImpl->packetParser->TransformPacketIntoAction(userId, data, length, *this);
-}
-
-void PartOne::InitActionListener()
-{
-  if (!pImpl->actionListener) {
-    pImpl->actionListener = std::make_shared<ActionListener>(*this);
-  }
 }
 
 void PartOne::TickPacketHistoryPlaybacks()
