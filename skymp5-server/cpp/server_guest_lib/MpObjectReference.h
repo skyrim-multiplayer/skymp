@@ -223,8 +223,7 @@ private:
   void AddContainerObject(const espm::CONT::ContainerObject& containerObject,
                           std::map<uint32_t, uint32_t>* itemsToAdd);
   void InitScripts();
-  void MoveOnGrid(GridImpl<MpObjectReference*>& grid);
-  void InitListenersAndEmitters();
+  GridDiff<MpObjectReference*> MoveOnGrid(GridImpl<MpObjectReference*>& grid);
   void SendOpenContainer(uint32_t refId);
   void CheckInteractionAbility(MpObjectReference& ac);
   bool IsLocationSavingNeeded() const;
@@ -235,11 +234,7 @@ private:
                                        float occupationReach);
 
   bool everSubscribedOrListened = false;
-  std::unique_ptr<std::set<MpObjectReference*>> listeners;
   std::vector<MpActor*> actorListenerArray;
-
-  // Should be empty for non-actor refs
-  std::unique_ptr<std::set<MpObjectReference*>> emitters;
 
   // The following keys were originally formIds, but changed to pointers for
   // the sake of performance. Luckily, the server never releases objects, so

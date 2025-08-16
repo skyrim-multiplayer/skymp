@@ -11,6 +11,13 @@
 #include <utility>
 
 template <class T>
+struct GridDiff
+{
+  std::set<T> added;
+  std::set<T> removed;
+};
+
+template <class T>
 class GridImpl
 {
 public:
@@ -25,6 +32,42 @@ public:
       obj.active = true;
       obj.coords = { x, y };
     }
+  }
+
+  GridDiff<T> MoveWithDiff(const T& id, int16_t x, int16_t y)
+  {
+    auto& obj = objects[id];
+    GridDiff<T> diff;
+
+    if (obj.coords != std::make_pair(x, y)) {
+      auto to = std::make_pair(x, y);
+      
+      // Get neighbors before move
+      std::set<T> oldNeighbors;
+      if (obj.active) {
+        oldNeighbors = GetNeighboursByPosition(obj.coords.first, obj.coords.second);
+        oldNeighbors.erase(id); // Remove self
+      }
+      
+      // Perform the move
+      this->MoveImpl(id, obj.active ? &obj.coords : nullptr, &to);
+      obj.active = true;
+      obj.coords = { x, y };
+      
+      // Get neighbors after move
+      auto newNeighbors = GetNeighboursByPosition(x, y);
+      newNeighbors.erase(id); // Remove self
+      
+      // Calculate diff
+      std::set_difference(newNeighbors.begin(), newNeighbors.end(),
+                          oldNeighbors.begin(), oldNeighbors.end(),
+                          std::inserter(diff.added, diff.added.begin()));
+      std::set_difference(oldNeighbors.begin(), oldNeighbors.end(),
+                          newNeighbors.begin(), newNeighbors.end(),
+                          std::inserter(diff.removed, diff.removed.begin()));
+    }
+    
+    return diff;
   }
 
   std::pair<int16_t, int16_t> GetPos(const T& id) const

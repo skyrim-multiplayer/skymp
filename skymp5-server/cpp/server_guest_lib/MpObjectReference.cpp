@@ -684,32 +684,23 @@ void MpObjectReference::ForceSubscriptionsUpdate()
   if (!worldState || IsDisabled()) {
     return;
   }
-  InitListenersAndEmitters();
 
   auto worldOrCell = GetCellOrWorld().ToFormId(worldState->espmFiles);
-
   auto& gridInfo = worldState->grids[worldOrCell];
-  MoveOnGrid(*gridInfo.grid);
+  
+  // Use MoveOnGrid to get the diff directly
+  auto diff = MoveOnGrid(*gridInfo.grid);
 
-  auto& was = *this->listeners;
-  auto pos = GetGridPos(GetPos());
-  auto& now =
-    worldState->GetNeighborsByPosition(worldOrCell, pos.first, pos.second);
-
-  std::vector<MpObjectReference*> toRemove;
-  std::set_difference(was.begin(), was.end(), now.begin(), now.end(),
-                      std::inserter(toRemove, toRemove.begin()));
-  for (auto listener : toRemove) {
+  // Process removed listeners
+  for (auto listener : diff.removed) {
     Unsubscribe(this, listener);
     // Unsubscribe from self is NEEDED. See comment below
     if (this != listener)
       Unsubscribe(listener, this);
   }
 
-  std::vector<MpObjectReference*> toAdd;
-  std::set_difference(now.begin(), now.end(), was.begin(), was.end(),
-                      std::inserter(toAdd, toAdd.begin()));
-  for (auto listener : toAdd) {
+  // Process added listeners
+  for (auto listener : diff.added) {
     Subscribe(this, listener);
     // Note: Self-subscription is OK this check is performed as we don't want
     // to self-subscribe twice! We have already been subscribed to self in
@@ -991,16 +982,13 @@ void MpObjectReference::Subscribe(MpObjectReference* emitter,
 
   const bool hasPrimitive = emitter->HasPrimitive();
 
-  emitter->InitListenersAndEmitters();
-  listener->InitListenersAndEmitters();
-
-  auto [it, inserted] = emitter->listeners->insert(listener);
-
-  if (actorListener && inserted) {
-    emitter->actorListenerArray.push_back(actorListener);
+  // Add actor listener to array if it's a new subscription
+  if (actorListener) {
+    auto& array = emitter->actorListenerArray;
+    if (std::find(array.begin(), array.end(), actorListener) == array.end()) {
+      array.push_back(actorListener);
+    }
   }
-
-  listener->emitters->insert(emitter);
 
   if (!hasPrimitive) {
     emitter->callbacks->subscribe(emitter, listener);
@@ -1031,16 +1019,13 @@ void MpObjectReference::Unsubscribe(MpObjectReference* emitter,
     emitter->callbacks->unsubscribe(emitter, listener);
   }
 
-  size_t numElementsErased = emitter->listeners->erase(listener);
-
-  if (actorListener && numElementsErased > 0) {
+  // Remove actor listener from array
+  if (actorListener) {
     emitter->actorListenerArray.erase(
       std::remove(emitter->actorListenerArray.begin(),
                   emitter->actorListenerArray.end(), actorListener),
       emitter->actorListenerArray.end());
   }
-
-  listener->emitters->erase(emitter);
 
   if (listener->emittersWithPrimitives && hasPrimitive) {
     listener->emittersWithPrimitives->erase(emitter);
@@ -1098,7 +1083,20 @@ void MpObjectReference::SetDisplayName(
 const std::set<MpObjectReference*>& MpObjectReference::GetListeners() const
 {
   static const std::set<MpObjectReference*> kEmptyListeners;
-  return listeners ? *listeners : kEmptyListeners;
+  
+  if (!everSubscribedOrListened || IsDisabled()) {
+    return kEmptyListeners;
+  }
+  
+  auto worldState = GetParent();
+  if (!worldState) {
+    return kEmptyListeners;
+  }
+  
+  auto worldOrCell = GetCellOrWorld().ToFormId(worldState->espmFiles);
+  auto pos = GetGridPos(GetPos());
+  
+  return worldState->GetNeighborsByPosition(worldOrCell, pos.first, pos.second);
 }
 
 const std::vector<MpActor*>& MpObjectReference::GetActorListeners()
@@ -1110,7 +1108,20 @@ const std::vector<MpActor*>& MpObjectReference::GetActorListeners()
 const std::set<MpObjectReference*>& MpObjectReference::GetEmitters() const
 {
   static const std::set<MpObjectReference*> kEmptyEmitters;
-  return emitters ? *emitters : kEmptyEmitters;
+  
+  if (!everSubscribedOrListened || IsDisabled()) {
+    return kEmptyEmitters;
+  }
+  
+  auto worldState = GetParent();
+  if (!worldState) {
+    return kEmptyEmitters;
+  }
+  
+  auto worldOrCell = GetCellOrWorld().ToFormId(worldState->espmFiles);
+  auto pos = GetGridPos(GetPos());
+  
+  return worldState->GetNeighborsByPosition(worldOrCell, pos.first, pos.second);
 }
 
 void MpObjectReference::RequestReloot(
@@ -1819,20 +1830,12 @@ void MpObjectReference::InitScripts()
   }
 }
 
-void MpObjectReference::MoveOnGrid(GridImpl<MpObjectReference*>& grid)
+GridDiff<MpObjectReference*> MpObjectReference::MoveOnGrid(GridImpl<MpObjectReference*>& grid)
 {
   auto newGridPos = GetGridPos(GetPos());
-  grid.Move(this, newGridPos.first, newGridPos.second);
+  return grid.MoveWithDiff(this, newGridPos.first, newGridPos.second);
 }
 
-void MpObjectReference::InitListenersAndEmitters()
-{
-  if (!listeners) {
-    listeners.reset(new std::set<MpObjectReference*>);
-    emitters.reset(new std::set<MpObjectReference*>);
-    actorListenerArray.clear();
-  }
-}
 
 void MpObjectReference::SendInventoryUpdate()
 {
