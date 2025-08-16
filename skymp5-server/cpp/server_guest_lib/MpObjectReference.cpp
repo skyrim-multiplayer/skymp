@@ -688,7 +688,6 @@ void MpObjectReference::ForceSubscriptionsUpdate()
   auto worldOrCell = GetCellOrWorld().ToFormId(worldState->espmFiles);
   auto& gridInfo = worldState->grids[worldOrCell];
   
-  // Use MoveOnGrid to get the diff directly
   auto diff = MoveOnGrid(*gridInfo.grid);
 
   // Process removed listeners
@@ -1107,21 +1106,7 @@ const std::vector<MpActor*>& MpObjectReference::GetActorListeners()
 
 const std::set<MpObjectReference*>& MpObjectReference::GetEmitters() const
 {
-  static const std::set<MpObjectReference*> kEmptyEmitters;
-  
-  if (!everSubscribedOrListened || IsDisabled()) {
-    return kEmptyEmitters;
-  }
-  
-  auto worldState = GetParent();
-  if (!worldState) {
-    return kEmptyEmitters;
-  }
-  
-  auto worldOrCell = GetCellOrWorld().ToFormId(worldState->espmFiles);
-  auto pos = GetGridPos(GetPos());
-  
-  return worldState->GetNeighborsByPosition(worldOrCell, pos.first, pos.second);
+  return GetListeners();
 }
 
 void MpObjectReference::RequestReloot(

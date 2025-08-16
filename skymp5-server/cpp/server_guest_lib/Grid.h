@@ -3,8 +3,10 @@
 
 #pragma once
 #include "DSLine.h"
+#include <algorithm>
 #include <cassert>
 #include <cstdint>
+#include <iterator>
 #include <set>
 #include <stdexcept>
 #include <unordered_map>
@@ -46,7 +48,6 @@ public:
       std::set<T> oldNeighbors;
       if (obj.active) {
         oldNeighbors = GetNeighboursByPosition(obj.coords.first, obj.coords.second);
-        oldNeighbors.erase(id); // Remove self
       }
       
       // Perform the move
@@ -56,7 +57,6 @@ public:
       
       // Get neighbors after move
       auto newNeighbors = GetNeighboursByPosition(x, y);
-      newNeighbors.erase(id); // Remove self
       
       // Calculate diff
       std::set_difference(newNeighbors.begin(), newNeighbors.end(),
