@@ -1,8 +1,9 @@
 #pragma once
-#include "ActionListener.h"
 #include "NetworkingInterface.h" // UserId, PacketData
 #include <cstdint>
 #include <memory>
+
+class PartOne;
 
 class PacketParser
 {
@@ -11,7 +12,7 @@ public:
   void TransformPacketIntoAction(Networking::UserId userId,
                                  Networking::PacketData packetData,
                                  size_t packetLength,
-                                 ActionListener& actionListener);
+                                 PartOne& partOne);
 
 private:
   struct Impl;

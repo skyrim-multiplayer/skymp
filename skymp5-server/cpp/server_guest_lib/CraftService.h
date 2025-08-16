@@ -1,4 +1,8 @@
 #pragma once
+#include "CraftItemMessage.h"
+#include "MessageEvent.h"
+#include "ServiceBase.h"
+
 #include "libespm/Loader.h"
 #include <cstdint>
 #include <optional>
@@ -9,14 +13,12 @@ class Inventory;
 struct RawMessageData;
 class MpActor;
 
-class CraftService
+class CraftService : public ServiceBase<CraftService>
 {
 public:
   explicit CraftService(PartOne& partOne_);
 
-  void OnCraftItem(const RawMessageData& rawMsgData,
-                   const Inventory& inputObjects, uint32_t workbenchId,
-                   uint32_t resultObjectId);
+  void OnCraftItem(const MessageEvent<CraftItemMessage> &event);
 
   // public for CraftTest.cpp
   bool RecipeItemsMatch(const espm::LookupResult& lookupRes,

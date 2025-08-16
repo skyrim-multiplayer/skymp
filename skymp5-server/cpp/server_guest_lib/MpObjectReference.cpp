@@ -181,7 +181,6 @@ public:
   std::unique_ptr<ScriptState> scriptState;
   AnimGraphHolder animGraphHolder;
   std::optional<PrimitiveData> primitive;
-  bool teleportFlag = false;
   bool setPropertyCalled = false;
 };
 
@@ -360,11 +359,6 @@ bool MpObjectReference::HasScript(const char* name) const
 bool MpObjectReference::IsActivationBlocked() const
 {
   return activationBlocked;
-}
-
-bool MpObjectReference::GetTeleportFlag() const
-{
-  return pImpl->teleportFlag;
 }
 
 void MpObjectReference::VisitProperties(CreateActorMessage& message,
@@ -748,11 +742,6 @@ void MpObjectReference::SetPropertyValueDump(const std::string& propertyName,
     }
   }
   pImpl->setPropertyCalled = true;
-}
-
-void MpObjectReference::SetTeleportFlag(bool value)
-{
-  pImpl->teleportFlag = value;
 }
 
 void MpObjectReference::SetPosAndAngleSilent(const NiPoint3& pos,

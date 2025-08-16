@@ -2,10 +2,12 @@
 #include "AnimationSystem.h"
 #include "GamemodeApi.h"
 #include "HitData.h"
+#include "MessageEvent.h"
 #include "MpActor.h"
 #include "Networking.h"
 #include "NiPoint3.h"
 #include "PartOneListener.h"
+#include "RawMessageData.h"
 #include "ServerState.h"
 #include "SpellCastData.h"
 #include "WorldState.h"
@@ -19,9 +21,32 @@
 #include <spdlog/logger.h>
 #include <unordered_map>
 
+#include "sigslot/signal.hpp"
+#include "../messages/CraftItemMessage.h"
+#include "../messages/CustomPacketMessage.h"
+#include "../messages/UpdateMovementMessage.h"
+#include "../messages/UpdateAnimationMessage.h"
+#include "../messages/UpdateAppearanceMessage.h"
+#include "../messages/UpdateEquipmentMessage.h"
+#include "../messages/ActivateMessage.h"
+#include "../messages/PutItemMessage.h"
+#include "../messages/TakeItemMessage.h"
+#include "../messages/DropItemMessage.h"
+#include "../messages/PlayerBowShotMessage.h"
+#include "../messages/FinishSpSnippetMessage.h"
+#include "../messages/OnEquipMessage.h"
+#include "../messages/ConsoleCommandMessage.h"
+#include "../messages/HostMessage.h"
+#include "../messages/CustomEventMessage.h"
+#include "../messages/ChangeValuesMessage.h"
+#include "../messages/HitMessage.h"
+#include "../messages/UpdateAnimVariablesMessage.h"
+#include "../messages/SpellCastMessage.h"
+
 using ProfileId = int32_t;
 class ActionListener;
 class MessageSerializer;
+class CraftService;
 
 class PartOneSendTargetWrapper : public Networking::ISendTarget
 {
@@ -39,7 +64,33 @@ private:
   Networking::ISendTarget& underlyingSendTarget;
 };
 
-class PartOne
+class PartOneEvents
+{
+public:
+  sigslot::signal<MessageEvent<CraftItemMessage>> onCraftItemMessage;
+  sigslot::signal<MessageEvent<CustomPacketMessage>> onCustomPacketMessage;
+  sigslot::signal<MessageEvent<UpdateMovementMessage>> onUpdateMovementMessage;
+  sigslot::signal<MessageEvent<UpdateAnimationMessage>> onUpdateAnimationMessage;
+  sigslot::signal<MessageEvent<UpdateAppearanceMessage>> onUpdateAppearanceMessage;
+  sigslot::signal<MessageEvent<UpdateEquipmentMessage>> onUpdateEquipmentMessage;
+  sigslot::signal<MessageEvent<ActivateMessage>> onActivateMessage;
+  sigslot::signal<MessageEvent<PutItemMessage>> onPutItemMessage;
+  sigslot::signal<MessageEvent<TakeItemMessage>> onTakeItemMessage;
+  sigslot::signal<MessageEvent<DropItemMessage>> onDropItemMessage;
+  sigslot::signal<MessageEvent<PlayerBowShotMessage>> onPlayerBowShotMessage;
+  sigslot::signal<MessageEvent<FinishSpSnippetMessage>> onFinishSpSnippetMessage;
+  sigslot::signal<MessageEvent<OnEquipMessage>> onOnEquipMessage;
+  sigslot::signal<MessageEvent<ConsoleCommandMessage>> onConsoleCommandMessage;
+  sigslot::signal<MessageEvent<HostMessage>> onHostMessage;
+  sigslot::signal<MessageEvent<CustomEventMessage>> onCustomEventMessage;
+  sigslot::signal<MessageEvent<ChangeValuesMessage>> onChangeValuesMessage;
+  sigslot::signal<MessageEvent<HitMessage>> onHitMessage;
+  sigslot::signal<MessageEvent<UpdateAnimVariablesMessage>> onUpdateAnimVariablesMessage;
+  sigslot::signal<MessageEvent<SpellCastMessage>> onSpellCastMessage;
+  sigslot::signal<const RawMessageData&> onUnknownMessage;
+};
+
+class PartOne : public PartOneEvents
 {
 public:
   struct Message
@@ -66,6 +117,9 @@ public:
   ActionListener& GetActionListener();
   const std::vector<std::shared_ptr<Listener>>& GetListeners() const;
   std::vector<Message>& Messages();
+
+  // for CraftTest.cpp
+  std::shared_ptr<CraftService> GetCraftService() const noexcept;
 
   // API
   uint32_t CreateActor(uint32_t formId, const NiPoint3& pos, float angleZ,

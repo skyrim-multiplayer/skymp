@@ -110,7 +110,6 @@ public:
   FormCallbacks GetCallbacks() const;
   bool HasScript(const char* name) const;
   bool IsActivationBlocked() const;
-  bool GetTeleportFlag() const;
 
   virtual void VisitProperties(CreateActorMessage& message,
                                VisitPropertiesMode mode);
@@ -140,7 +139,6 @@ public:
   void SetPropertyValueDump(const std::string& propertyName,
                             const std::string& valueDump,
                             bool isVisibleByOwner, bool isVisibleByNeighbor);
-  void SetTeleportFlag(bool value);
   void SetPosAndAngleSilent(const NiPoint3& pos, const NiPoint3& rot);
   void Delete();
   void SetCount(uint32_t count);

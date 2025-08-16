@@ -83,6 +83,7 @@ struct PartOne::Impl
 
   std::shared_ptr<PacketParser> packetParser;
   std::shared_ptr<ActionListener> actionListener;
+  std::shared_ptr<CraftService> craftService;
 
   std::shared_ptr<spdlog::logger> logger;
 
@@ -98,6 +99,8 @@ PartOne::PartOne(Networking::ISendTarget* sendTarget)
 {
   Init();
   SetSendTarget(sendTarget);
+
+  pImpl->craftService = std::make_shared<CraftService>(*this);
 }
 
 PartOne::PartOne(std::shared_ptr<Listener> listener,
@@ -708,6 +711,11 @@ std::vector<PartOne::Message>& PartOne::Messages()
   return pImpl->fakeSendTarget.messages;
 }
 
+std::shared_ptr<CraftService> PartOne::GetCraftService() const noexcept
+{
+  return pImpl->craftService;
+}
+
 void PartOne::Init()
 {
   pImpl.reset(new Impl);
@@ -905,8 +913,7 @@ void PartOne::HandleMessagePacket(Networking::UserId userId,
     return;
   }
 
-  pImpl->packetParser->TransformPacketIntoAction(userId, data, length,
-                                                 *pImpl->actionListener);
+  pImpl->packetParser->TransformPacketIntoAction(userId, data, length, *this);
 }
 
 void PartOne::InitActionListener()
@@ -937,8 +944,7 @@ void PartOne::TickPacketHistoryPlaybacks()
         spdlog::error("Packet history buffer is corrupted");
       } else {
         pImpl->packetParser->TransformPacketIntoAction(
-          userId, &packetHistory.buffer[packet.offset], packet.length,
-          *pImpl->actionListener);
+          userId, &packetHistory.buffer[packet.offset], packet.length, *this);
       }
       packetHistory.packets.pop_front();
     }
