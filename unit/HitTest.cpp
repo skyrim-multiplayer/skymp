@@ -24,6 +24,7 @@ TEST_CASE("OnHit damages target actor based on damage formula", "[Hit]")
 {
   PartOne& p = GetPartOne();
   DoConnect(p, 0);
+  p.GetActionListener(); // Initialize ActionListener
   p.CreateActor(0xff000000, { 0, 0, 0 }, 0, 0x3c);
   p.SetUserActor(0, 0xff000000);
   auto& ac = p.worldState.GetFormAt<MpActor>(0xff000000);
@@ -60,6 +61,7 @@ TEST_CASE("OnHit function sends ChangeValues message with coorect percentages",
 {
   PartOne& p = GetPartOne();
   DoConnect(p, 0);
+  p.GetActionListener(); // Initialize ActionListener
   p.CreateActor(0xff000000, { 0, 0, 0 }, 0, 0x3c);
   p.SetUserActor(0, 0xff000000);
   auto& ac = p.worldState.GetFormAt<MpActor>(0xff000000);
@@ -189,6 +191,7 @@ TEST_CASE("checking weapon cooldown", "[Hit]")
 {
   PartOne& p = GetPartOne();
   DoConnect(p, 0);
+  p.GetActionListener(); // Initialize ActionListener
   p.CreateActor(0xff000000, { 0, 0, 0 }, 0, 0x3c);
   p.SetUserActor(0, 0xff000000);
 
