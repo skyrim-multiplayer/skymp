@@ -1,5 +1,6 @@
 #include "PartOne.h"
 #include "ActionListener.h"
+#include "GridService.h"
 #include "Exceptions.h"
 #include "FormCallbacks.h"
 #include "IdManager.h"
@@ -84,6 +85,7 @@ struct PartOne::Impl
   std::shared_ptr<PacketParser> packetParser;
   std::shared_ptr<ActionListener> actionListener;
   std::shared_ptr<CraftService> craftService;
+  std::shared_ptr<GridService> gridService;
 
   std::shared_ptr<spdlog::logger> logger;
 
@@ -102,6 +104,8 @@ PartOne::PartOne(Networking::ISendTarget* sendTarget)
 
   pImpl->craftService = std::make_shared<CraftService>(*this);
   pImpl->actionListener = std::make_shared<ActionListener>(*this);
+  pImpl->gridService = std::make_shared<GridService>(*this);
+  worldState.SetGridService(pImpl->gridService.get());
 }
 
 PartOne::PartOne(std::shared_ptr<Listener> listener,
@@ -113,6 +117,8 @@ PartOne::PartOne(std::shared_ptr<Listener> listener,
 
   pImpl->craftService = std::make_shared<CraftService>(*this);
   pImpl->actionListener = std::make_shared<ActionListener>(*this);
+  pImpl->gridService = std::make_shared<GridService>(*this);
+  worldState.SetGridService(pImpl->gridService.get());
 }
 
 PartOne::~PartOne()
@@ -717,6 +723,11 @@ std::vector<PartOne::Message>& PartOne::Messages()
 std::shared_ptr<CraftService> PartOne::GetCraftService() const noexcept
 {
   return pImpl->craftService;
+}
+
+GridService& PartOne::GetGridService()
+{
+  return *pImpl->gridService;
 }
 
 void PartOne::Init()

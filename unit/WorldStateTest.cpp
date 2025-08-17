@@ -1,3 +1,4 @@
+#include "GridService.h"
 #include "WorldState.h"
 #include "FormCallbacks.h"
 #include "MpActor.h"
@@ -70,7 +71,7 @@ TEST_CASE("Load ChangeForm of created Actor with isDisabled=true",
   REQUIRE(refr.IsDisabled());
 
   // Disabled actors should not pollute grids during load process
-  REQUIRE(worldState.GetGrids().count(0xdead) == 0);
+  REQUIRE(worldState.GetGridService().GetGrids().count(0xdead) == 0);
 }
 
 TEST_CASE("Load ChangeForm of created Actor with profileId", "[WorldState]")
@@ -88,7 +89,7 @@ TEST_CASE("Load ChangeForm of created Actor with profileId", "[WorldState]")
   REQUIRE(worldState.GetActorsByProfileId(100).empty());
   worldState.LoadChangeForm(changeForm, FormCallbacks::DoNothing());
 
-  REQUIRE(worldState.GetGrids().count(0xdead) == 0);
+  REQUIRE(worldState.GetGridService().GetGrids().count(0xdead) == 0);
   REQUIRE(worldState.GetActorsByProfileId(100) ==
           std::set<uint32_t>({ 0xff000000 }));
 }

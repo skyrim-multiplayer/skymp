@@ -1,4 +1,5 @@
 #include "WorldState.h"
+#include "GridService.h"
 #include "EvaluateTemplate.h"
 #include "FormCallbacks.h"
 #include "LeveledListUtils.h"
@@ -70,7 +71,9 @@ WorldState::WorldState()
 void WorldState::Clear()
 {
   forms.clear();
-  grids.clear();
+  if (gridService) {
+    gridService->Clear();
+  }
   formIdxManager.reset();
 }
 
@@ -834,6 +837,10 @@ void WorldState::SendPapyrusEvent(MpForm* form, const char* eventName,
 const std::set<MpObjectReference*>& WorldState::GetNeighborsByPosition(
   uint32_t cellOrWorld, int16_t cellX, int16_t cellY)
 {
+  if (!gridService) {
+    throw std::runtime_error("GridService not set");
+  }
+
   if (espm && !pImpl->chunkLoadingInProgress) {
     Viet::ScopedTask<bool> task([](bool& st) { st = false; },
                                 pImpl->chunkLoadingInProgress);
@@ -842,7 +849,7 @@ const std::set<MpObjectReference*>& WorldState::GetNeighborsByPosition(
     auto& br = espm->GetBrowser();
     for (int16_t x = cellX - 1; x <= cellX + 1; ++x) {
       for (int16_t y = cellY - 1; y <= cellY + 1; ++y) {
-        const bool loaded = grids[cellOrWorld].loadedChunks[x][y];
+        const bool loaded = gridService->IsChunkLoaded(cellOrWorld, x, y);
         if (!loaded) {
           for (size_t i = 0; i < espmFiles.size(); ++i) {
             auto combMapping = br.GetCombMapping(i);
@@ -857,17 +864,25 @@ const std::set<MpObjectReference*>& WorldState::GetNeighborsByPosition(
               LoadForm(mappedId);
             }
           }
-          // Do not keep "loaded" reference here since LoadForm would
-          // invalidate this reference
-          grids[cellOrWorld].loadedChunks[x][y] = true;
+          gridService->SetChunkLoaded(cellOrWorld, x, y, true);
         }
       }
     }
   }
+  return gridService->GetNeighborsByPosition(cellOrWorld, cellX, cellY);
+}
 
-  auto& neighbours =
-    grids[cellOrWorld].grid->GetNeighboursByPosition(cellX, cellY);
-  return neighbours;
+void WorldState::SetGridService(GridService* gridService_)
+{
+  gridService = gridService_;
+}
+
+GridService& WorldState::GetGridService()
+{
+  if (!gridService) {
+    throw std::runtime_error("GridService not set");
+  }
+  return *gridService;
 }
 
 std::shared_ptr<std::vector<uint32_t>> WorldState::GetAllForms(

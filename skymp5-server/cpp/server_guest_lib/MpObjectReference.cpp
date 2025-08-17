@@ -1,6 +1,7 @@
 #include "MpObjectReference.h"
 #include "ChangeFormGuard.h"
 #include "EvaluateTemplate.h"
+#include "GridService.h"
 #include "FormCallbacks.h"
 #include "GetWeightFromRecord.h"
 #include "Inventory.h"
@@ -680,9 +681,8 @@ void MpObjectReference::ForceSubscriptionsUpdate()
   }
 
   auto worldOrCell = GetCellOrWorld().ToFormId(worldState->espmFiles);
-  auto& gridInfo = worldState->grids[worldOrCell];
-  
-  auto diff = MoveOnGrid(*gridInfo.grid);
+  auto newGridPos = GetGridPos(GetPos());
+  auto diff = worldState->GetGridService().MoveObjectReference(this, worldOrCell, newGridPos.first, newGridPos.second);
 
   // Process removed listeners
   for (auto listener : diff.removed) {
@@ -1249,10 +1249,7 @@ void MpObjectReference::SetCellOrWorldObsolete(const FormDesc& newWorldOrCell)
     ChangeForm().worldOrCellDesc.ToFormId(worldState->espmFiles);
 
   everSubscribedOrListened = false;
-  auto gridIterator = worldState->grids.find(worldOrCell);
-  if (gridIterator != worldState->grids.end()) {
-    gridIterator->second.grid->Forget(this);
-  }
+  worldState->GetGridService().ForgetObjectReference(this, worldOrCell);
 
   EditChangeForm([&](MpChangeFormREFR& changeForm) {
     changeForm.worldOrCellDesc = newWorldOrCell;
@@ -1273,12 +1270,6 @@ void MpObjectReference::VisitNeighbours(const Visitor& visitor)
   auto worldOrCell =
     ChangeForm().worldOrCellDesc.ToFormId(worldState->espmFiles);
 
-  auto gridIterator = worldState->grids.find(worldOrCell);
-  if (gridIterator == worldState->grids.end()) {
-    return;
-  }
-
-  auto& grid = gridIterator->second;
   auto pos = GetGridPos(GetPos());
   auto& neighbours =
     worldState->GetNeighborsByPosition(worldOrCell, pos.first, pos.second);
@@ -1667,10 +1658,7 @@ bool MpObjectReference::CheckIfObjectCanStartOccupyThis(
 void MpObjectReference::RemoveFromGridAndUnsubscribeAll()
 {
   auto worldOrCell = GetCellOrWorld().ToFormId(GetParent()->espmFiles);
-  auto gridIterator = GetParent()->grids.find(worldOrCell);
-  if (gridIterator != GetParent()->grids.end()) {
-    gridIterator->second.grid->Forget(this);
-  }
+  GetParent()->GetGridService().ForgetObjectReference(this, worldOrCell);
 
   auto listenersCopy = GetListeners();
   for (auto listener : listenersCopy) {
@@ -1804,11 +1792,6 @@ void MpObjectReference::InitScripts()
   }
 }
 
-GridDiff<MpObjectReference*> MpObjectReference::MoveOnGrid(GridImpl<MpObjectReference*>& grid)
-{
-  auto newGridPos = GetGridPos(GetPos());
-  return grid.MoveWithDiff(this, newGridPos.first, newGridPos.second);
-}
 
 
 void MpObjectReference::SendInventoryUpdate()

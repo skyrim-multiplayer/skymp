@@ -31,7 +31,7 @@ TEST_CASE("CraftItem packet is parsed", "[Craft][espm]")
   nlohmann::json j{
     { "t", MsgType::CraftItem },
     { "data",
-      { { "workbench", 0xdeadbeef },
+      { { "workbench", 0x1ad6e },
         { "resultObjectId", 0x123 },
         { "craftInputObjects", Inventory().AddItem(0x12eb7, 1).ToJson() } } }
   };
@@ -43,7 +43,7 @@ TEST_CASE("CraftItem packet is parsed", "[Craft][espm]")
     122, reinterpret_cast<Networking::PacketData>(msg.data()), msg.size(),
     partOne);
 
-  REQUIRE(testData.workbenchId == 0xdeadbeef);
+  REQUIRE(testData.workbenchId == 0x1ad6e);
   REQUIRE(testData.resultObjectId == 0x123);
   REQUIRE(testData.inputObjects == Inventory().AddItem(0x12eb7, 1));
   REQUIRE(testData.rawMsgData.userId == 122);

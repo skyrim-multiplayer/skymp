@@ -47,6 +47,7 @@ using ProfileId = int32_t;
 class ActionListener;
 class MessageSerializer;
 class CraftService;
+class GridService;
 
 class PartOneSendTargetWrapper : public Networking::ISendTarget
 {
@@ -120,6 +121,8 @@ public:
 
   // for CraftTest.cpp
   std::shared_ptr<CraftService> GetCraftService() const noexcept;
+  
+  GridService& GetGridService();
 
   // API
   uint32_t CreateActor(uint32_t formId, const NiPoint3& pos, float angleZ,

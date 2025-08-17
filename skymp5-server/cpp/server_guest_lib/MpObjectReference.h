@@ -221,7 +221,6 @@ private:
   void AddContainerObject(const espm::CONT::ContainerObject& containerObject,
                           std::map<uint32_t, uint32_t>* itemsToAdd);
   void InitScripts();
-  GridDiff<MpObjectReference*> MoveOnGrid(GridImpl<MpObjectReference*>& grid);
   void SendOpenContainer(uint32_t refId);
   void CheckInteractionAbility(MpObjectReference& ac);
   bool IsLocationSavingNeeded() const;
