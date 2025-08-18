@@ -1,3 +1,5 @@
+cmake_minimum_required(VERSION 3.18)
+
 project(nodelib C)
 
 add_custom_target(nodelib ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/node.lib)

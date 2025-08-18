@@ -617,14 +617,33 @@ void ActivePexInstance::ExecuteOpCode(
       break;
     case OpcodesImplementation::Opcodes::op_Array_GetElement:
       if ((*args[1]).pArray != nullptr) {
-        *args[0] = (*args[1]).pArray->at((int32_t)(*args[2]));
+        const int index = static_cast<int>(*args[2]);
+        const auto indexType = (*args[2]).GetType();
+        if ((indexType == VarValue::kType_Integer ||
+             indexType == VarValue::kType_Float) &&
+            index >= 0 && index < (*args[1]).pArray->size()) {
+          *args[0] = (*args[1]).pArray->operator[](index);
+        } else {
+          *args[0] = VarValue::None();
+          spdlog::error("OpcodesImplementation::Opcodes::op_Array_GetElement "
+                        "- Invalid array index");
+        }
       } else {
         *args[0] = VarValue::None();
       }
       break;
     case OpcodesImplementation::Opcodes::op_Array_SetElement:
       if ((*args[0]).pArray != nullptr) {
-        (*args[0]).pArray->at((int32_t)(*args[1])) = *args[2];
+        const int index = static_cast<int>(*args[1]);
+        const auto indexType = (*args[1]).GetType();
+        if ((indexType == VarValue::kType_Integer ||
+             indexType == VarValue::kType_Float) &&
+            index >= 0 && index < (*args[0]).pArray->size()) {
+          (*args[0]).pArray->operator[](index) = *args[2];
+        } else {
+          spdlog::error("OpcodesImplementation::Opcodes::op_Array_SetElement "
+                        "- Invalid array index");
+        }
       } else {
         spdlog::error("OpcodesImplementation::Opcodes::op_Array_SetElement - "
                       "null array passed");
