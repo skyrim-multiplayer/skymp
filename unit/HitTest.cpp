@@ -4,6 +4,7 @@
 
 #include "GetBaseActorValues.h"
 #include "HitMessage.h"
+#include "MessageEvent.h"
 #include "PacketParser.h"
 #include "libespm/Loader.h"
 
@@ -42,7 +43,7 @@ TEST_CASE("OnHit damages target actor based on damage formula", "[Hit]")
   auto past = std::chrono::steady_clock::now() - 10s;
   ac.SetLastHitTime(past);
   p.Messages().clear();
-  p.GetActionListener().OnHit(rawMsgData, hitMsg);
+  p.onHitMessage(MessageEvent<HitMessage>{rawMsgData, hitMsg});
 
   REQUIRE(p.Messages().size() == 1);
   auto changeForm = ac.GetChangeForm();
@@ -79,7 +80,7 @@ TEST_CASE("OnHit function sends ChangeValues message with coorect percentages",
   p.Messages().clear();
   auto past = std::chrono::steady_clock::now() - 4s;
   ac.SetLastHitTime(past);
-  p.GetActionListener().OnHit(rawMsgData, hitMsg);
+  p.onHitMessage(MessageEvent<HitMessage>{rawMsgData, hitMsg});
 
   REQUIRE(p.Messages().size() == 1);
   nlohmann::json message = p.Messages()[0].j;
@@ -134,7 +135,7 @@ TEST_CASE("OnHit doesn't damage character if it is out of range", "[Hit]")
   auto past = std::chrono::steady_clock::now() - 2s;
   acTarget.SetLastHitTime(past);
   acAggressor.SetLastHitTime(past);
-  p.GetActionListener().OnHit(rawMsgData, hitMsg);
+  p.onHitMessage(MessageEvent<HitMessage>{rawMsgData, hitMsg});
 
   auto changeForm = acTarget.GetChangeForm();
   REQUIRE(changeForm.actorValues.healthPercentage == 0.1f);
@@ -175,7 +176,7 @@ TEST_CASE("Dead actors can't attack", "[Hit]")
   acAggressor.Kill();
   REQUIRE(acAggressor.IsDead() == true);
 
-  p.GetActionListener().OnHit(rawMsgData, hitMsg);
+  p.onHitMessage(MessageEvent<HitMessage>{rawMsgData, hitMsg});
 
   REQUIRE(acTarget.GetChangeForm().actorValues.healthPercentage == 0.2f);
 
@@ -215,7 +216,7 @@ TEST_CASE("checking weapon cooldown", "[Hit]")
 
   ac.SetLastHitTime(past);
   p.Messages().clear();
-  p.GetActionListener().OnHit(msgData, hitMsg);
+  p.onHitMessage(MessageEvent<HitMessage>{msgData, hitMsg});
 
   auto current = ac.GetLastHitTime();
   std::chrono::duration<float> duration = current - past;
@@ -228,7 +229,7 @@ TEST_CASE("checking weapon cooldown", "[Hit]")
   past = std::chrono::steady_clock::now() - 3s;
   ac.SetLastHitTime(past);
   p.Messages().clear();
-  p.GetActionListener().OnHit(msgData, hitMsg);
+  p.onHitMessage(MessageEvent<HitMessage>{msgData, hitMsg});
   current = ac.GetLastHitTime();
   duration = current - past;
   passedTime = duration.count();

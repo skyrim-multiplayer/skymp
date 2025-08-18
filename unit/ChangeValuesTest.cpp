@@ -3,6 +3,7 @@
 #include <chrono>
 
 #include "GetBaseActorValues.h"
+#include "MessageEvent.h"
 #include "PacketParser.h"
 #include "libespm/Loader.h"
 
@@ -32,7 +33,7 @@ TEST_CASE("Player attribute percentages are changing correctly",
   msg.data.magicka = 0.f;
   msg.data.stamina = 0.7f;
 
-  p.GetActionListener().OnChangeValues(msgData, msg);
+  p.onChangeValuesMessage(MessageEvent<ChangeValuesMessage>{msgData, msg});
   auto changeForm = ac.GetChangeForm();
 
   REQUIRE(changeForm.actorValues.healthPercentage == 0.75f);
@@ -74,7 +75,7 @@ TEST_CASE("OnChangeValues call is cropping percentage values",
   msg.data.health = 1.f;
   msg.data.magicka = 1.f;
   msg.data.stamina = 1.f;
-  p.GetActionListener().OnChangeValues(msgData, msg);
+  p.onChangeValuesMessage(MessageEvent<ChangeValuesMessage>{msgData, msg});
 
   std::chrono::duration<float> elapsedTime =
     std::chrono::steady_clock::now() - past;

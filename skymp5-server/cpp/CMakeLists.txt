@@ -119,7 +119,11 @@ find_package(libzippp REQUIRED)
 
 find_package(antigo REQUIRED)
 
+find_package(PalSigslot CONFIG REQUIRED)
+
 foreach(target ${VCPKG_DEPENDENT})
+  target_link_libraries(${target} PUBLIC Pal::Sigslot)
+
   target_include_directories(${target} PUBLIC ${CATCH_INCLUDE_DIR})
   target_include_directories(${target} PUBLIC ${JSON_INCLUDE_DIR})
   target_link_libraries(${target} PUBLIC spdlog::spdlog)

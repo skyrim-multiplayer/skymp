@@ -19,6 +19,7 @@
     "cpptrace",
     "antigo",
     "slikenet",
+    "palsigslot",
     {
       "name": "mongo-cxx-driver",
       "platform": "!emscripten"

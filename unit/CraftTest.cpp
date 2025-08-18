@@ -2,6 +2,8 @@
 #include <catch2/catch_all.hpp>
 
 #include "CraftItemMessage.h"
+#include "CraftService.h"
+#include "MessageEvent.h"
 #include "PacketParser.h"
 
 using Catch::Matchers::ContainsSubstring;
@@ -10,50 +12,41 @@ PartOne& GetPartOne();
 
 TEST_CASE("CraftItem packet is parsed", "[Craft][espm]")
 {
-  class MyActionListener : public ActionListener
-  {
-  public:
-    MyActionListener()
-      : ActionListener(GetPartOne())
-    {
-    }
-
-    void OnCraftItem(const RawMessageData& rawMsgData_,
-                     const CraftItemMessage& msg_) override
-    {
-      rawMsgData = rawMsgData_;
-      inputObjects = msg_.data.craftInputObjects;
-      workbenchId = msg_.data.workbench;
-      resultObjectId = msg_.data.resultObjectId;
-    }
-
+  struct TestData {
     RawMessageData rawMsgData;
     Inventory inputObjects;
     uint32_t workbenchId = 0;
     uint32_t resultObjectId = 0;
-  };
+  } testData;
+
+  auto& partOne = GetPartOne();
+  
+  auto connection = partOne.onCraftItemMessage.connect([&testData](const MessageEvent<CraftItemMessage>& event) {
+    testData.rawMsgData = event.rawMsgData;
+    testData.inputObjects = event.message.data.craftInputObjects;
+    testData.workbenchId = event.message.data.workbench;
+    testData.resultObjectId = event.message.data.resultObjectId;
+  });
 
   nlohmann::json j{
     { "t", MsgType::CraftItem },
     { "data",
-      { { "workbench", 0xdeadbeef },
+      { { "workbench", 0x1ad6e },
         { "resultObjectId", 0x123 },
         { "craftInputObjects", Inventory().AddItem(0x12eb7, 1).ToJson() } } }
   };
 
   auto msg = MakeMessage(j);
 
-  MyActionListener listener;
-
   PacketParser p;
   p.TransformPacketIntoAction(
     122, reinterpret_cast<Networking::PacketData>(msg.data()), msg.size(),
-    listener);
+    partOne);
 
-  REQUIRE(listener.workbenchId == 0xdeadbeef);
-  REQUIRE(listener.resultObjectId == 0x123);
-  REQUIRE(listener.inputObjects == Inventory().AddItem(0x12eb7, 1));
-  REQUIRE(listener.rawMsgData.userId == 122);
+  REQUIRE(testData.workbenchId == 0x1ad6e);
+  REQUIRE(testData.resultObjectId == 0x123);
+  REQUIRE(testData.inputObjects == Inventory().AddItem(0x12eb7, 1));
+  REQUIRE(testData.rawMsgData.userId == 122);
 }
 
 TEST_CASE("Player is able to craft item", "[Craft][espm]")
@@ -86,7 +79,7 @@ TEST_CASE("Player is able to craft item", "[Craft][espm]")
   msg1.data.craftInputObjects = requiredItems;
   msg1.data.workbench = workbenchId;
   msg1.data.resultObjectId = 0x1398a;
-  p.GetActionListener().OnCraftItem(msgData, msg1);
+  p.onCraftItemMessage(MessageEvent<CraftItemMessage>{msgData, msg1});
   REQUIRE(ac.GetInventory().GetItemCount(0x1398a) == 1);
 
   // Hearthfires item (nails)
@@ -95,7 +88,7 @@ TEST_CASE("Player is able to craft item", "[Craft][espm]")
   msg2.data.craftInputObjects = requiredItemsForNails;
   msg2.data.workbench = workbenchId;
   msg2.data.resultObjectId = 0x300300f;
-  p.GetActionListener().OnCraftItem(msgData, msg2);
+  p.onCraftItemMessage(MessageEvent<CraftItemMessage>{msgData, msg2});
   REQUIRE(ac.GetInventory().GetItemCount(0x300300f) == 10);
 
   REQUIRE(ac.GetInventory().GetItemCount(0x5ace4) == 0);
@@ -145,7 +138,7 @@ TEST_CASE(
   msg3.data.craftInputObjects = requiredItems;
   msg3.data.workbench = workbenchId;
   msg3.data.resultObjectId = wrongResultObject;
-  p.GetActionListener().OnCraftItem(msgData, msg3);
+  p.onCraftItemMessage(MessageEvent<CraftItemMessage>{msgData, msg3});
 
   Inventory newInventory = ac.GetInventory();
 
@@ -156,7 +149,7 @@ TEST_CASE("DLC Dragonborn recipes are working", "[Craft][espm]")
 {
 
   PartOne& p = GetPartOne();
-  auto craftService = p.GetActionListener().GetCraftService();
+  auto craftService = p.GetCraftService();
 
   auto form = craftService->FindRecipe(std::nullopt, std::nullopt,
                                        p.GetEspm().GetBrowser(),
@@ -172,7 +165,7 @@ TEST_CASE("DLC Dragonborn recipes are working", "[Craft][espm]")
 TEST_CASE("DLC Hearthfires recipes are working", "[Craft][espm]")
 {
   PartOne& p = GetPartOne();
-  auto craftService = p.GetActionListener().GetCraftService();
+  auto craftService = p.GetCraftService();
 
   auto recipe = p.GetEspm().GetBrowser().LookupById(0x0300306d);
   auto inputObjects = Inventory().AddItem(0x0005ACE4, 1);

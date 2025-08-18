@@ -1,6 +1,7 @@
 #include "MpObjectReference.h"
 #include "ChangeFormGuard.h"
 #include "EvaluateTemplate.h"
+#include "GridService.h"
 #include "FormCallbacks.h"
 #include "GetWeightFromRecord.h"
 #include "Inventory.h"
@@ -181,7 +182,6 @@ public:
   std::unique_ptr<ScriptState> scriptState;
   AnimGraphHolder animGraphHolder;
   std::optional<PrimitiveData> primitive;
-  bool teleportFlag = false;
   bool setPropertyCalled = false;
 };
 
@@ -360,11 +360,6 @@ bool MpObjectReference::HasScript(const char* name) const
 bool MpObjectReference::IsActivationBlocked() const
 {
   return activationBlocked;
-}
-
-bool MpObjectReference::GetTeleportFlag() const
-{
-  return pImpl->teleportFlag;
 }
 
 void MpObjectReference::VisitProperties(CreateActorMessage& message,
@@ -684,32 +679,21 @@ void MpObjectReference::ForceSubscriptionsUpdate()
   if (!worldState || IsDisabled()) {
     return;
   }
-  InitListenersAndEmitters();
 
   auto worldOrCell = GetCellOrWorld().ToFormId(worldState->espmFiles);
+  auto newGridPos = GetGridPos(GetPos());
+  auto diff = worldState->GetGridService().MoveObjectReference(this, worldOrCell, newGridPos.first, newGridPos.second);
 
-  auto& gridInfo = worldState->grids[worldOrCell];
-  MoveOnGrid(*gridInfo.grid);
-
-  auto& was = *this->listeners;
-  auto pos = GetGridPos(GetPos());
-  auto& now =
-    worldState->GetNeighborsByPosition(worldOrCell, pos.first, pos.second);
-
-  std::vector<MpObjectReference*> toRemove;
-  std::set_difference(was.begin(), was.end(), now.begin(), now.end(),
-                      std::inserter(toRemove, toRemove.begin()));
-  for (auto listener : toRemove) {
+  // Process removed listeners
+  for (auto listener : diff.removed) {
     Unsubscribe(this, listener);
     // Unsubscribe from self is NEEDED. See comment below
     if (this != listener)
       Unsubscribe(listener, this);
   }
 
-  std::vector<MpObjectReference*> toAdd;
-  std::set_difference(now.begin(), now.end(), was.begin(), was.end(),
-                      std::inserter(toAdd, toAdd.begin()));
-  for (auto listener : toAdd) {
+  // Process added listeners
+  for (auto listener : diff.added) {
     Subscribe(this, listener);
     // Note: Self-subscription is OK this check is performed as we don't want
     // to self-subscribe twice! We have already been subscribed to self in
@@ -758,11 +742,6 @@ void MpObjectReference::SetPropertyValueDump(const std::string& propertyName,
     }
   }
   pImpl->setPropertyCalled = true;
-}
-
-void MpObjectReference::SetTeleportFlag(bool value)
-{
-  pImpl->teleportFlag = value;
 }
 
 void MpObjectReference::SetPosAndAngleSilent(const NiPoint3& pos,
@@ -991,16 +970,13 @@ void MpObjectReference::Subscribe(MpObjectReference* emitter,
 
   const bool hasPrimitive = emitter->HasPrimitive();
 
-  emitter->InitListenersAndEmitters();
-  listener->InitListenersAndEmitters();
-
-  auto [it, inserted] = emitter->listeners->insert(listener);
-
-  if (actorListener && inserted) {
-    emitter->actorListenerArray.push_back(actorListener);
+  // Add actor listener to array if it's a new subscription
+  if (actorListener) {
+    auto& array = emitter->actorListenerArray;
+    if (std::find(array.begin(), array.end(), actorListener) == array.end()) {
+      array.push_back(actorListener);
+    }
   }
-
-  listener->emitters->insert(emitter);
 
   if (!hasPrimitive) {
     emitter->callbacks->subscribe(emitter, listener);
@@ -1031,16 +1007,13 @@ void MpObjectReference::Unsubscribe(MpObjectReference* emitter,
     emitter->callbacks->unsubscribe(emitter, listener);
   }
 
-  size_t numElementsErased = emitter->listeners->erase(listener);
-
-  if (actorListener && numElementsErased > 0) {
+  // Remove actor listener from array
+  if (actorListener) {
     emitter->actorListenerArray.erase(
       std::remove(emitter->actorListenerArray.begin(),
                   emitter->actorListenerArray.end(), actorListener),
       emitter->actorListenerArray.end());
   }
-
-  listener->emitters->erase(emitter);
 
   if (listener->emittersWithPrimitives && hasPrimitive) {
     listener->emittersWithPrimitives->erase(emitter);
@@ -1098,7 +1071,20 @@ void MpObjectReference::SetDisplayName(
 const std::set<MpObjectReference*>& MpObjectReference::GetListeners() const
 {
   static const std::set<MpObjectReference*> kEmptyListeners;
-  return listeners ? *listeners : kEmptyListeners;
+  
+  if (!everSubscribedOrListened || IsDisabled()) {
+    return kEmptyListeners;
+  }
+  
+  auto worldState = GetParent();
+  if (!worldState) {
+    return kEmptyListeners;
+  }
+  
+  auto worldOrCell = GetCellOrWorld().ToFormId(worldState->espmFiles);
+  auto pos = GetGridPos(GetPos());
+  
+  return worldState->GetNeighborsByPosition(worldOrCell, pos.first, pos.second);
 }
 
 const std::vector<MpActor*>& MpObjectReference::GetActorListeners()
@@ -1109,8 +1095,7 @@ const std::vector<MpActor*>& MpObjectReference::GetActorListeners()
 
 const std::set<MpObjectReference*>& MpObjectReference::GetEmitters() const
 {
-  static const std::set<MpObjectReference*> kEmptyEmitters;
-  return emitters ? *emitters : kEmptyEmitters;
+  return GetListeners();
 }
 
 void MpObjectReference::RequestReloot(
@@ -1264,10 +1249,7 @@ void MpObjectReference::SetCellOrWorldObsolete(const FormDesc& newWorldOrCell)
     ChangeForm().worldOrCellDesc.ToFormId(worldState->espmFiles);
 
   everSubscribedOrListened = false;
-  auto gridIterator = worldState->grids.find(worldOrCell);
-  if (gridIterator != worldState->grids.end()) {
-    gridIterator->second.grid->Forget(this);
-  }
+  worldState->GetGridService().ForgetObjectReference(this, worldOrCell);
 
   EditChangeForm([&](MpChangeFormREFR& changeForm) {
     changeForm.worldOrCellDesc = newWorldOrCell;
@@ -1288,12 +1270,6 @@ void MpObjectReference::VisitNeighbours(const Visitor& visitor)
   auto worldOrCell =
     ChangeForm().worldOrCellDesc.ToFormId(worldState->espmFiles);
 
-  auto gridIterator = worldState->grids.find(worldOrCell);
-  if (gridIterator == worldState->grids.end()) {
-    return;
-  }
-
-  auto& grid = gridIterator->second;
   auto pos = GetGridPos(GetPos());
   auto& neighbours =
     worldState->GetNeighborsByPosition(worldOrCell, pos.first, pos.second);
@@ -1682,10 +1658,7 @@ bool MpObjectReference::CheckIfObjectCanStartOccupyThis(
 void MpObjectReference::RemoveFromGridAndUnsubscribeAll()
 {
   auto worldOrCell = GetCellOrWorld().ToFormId(GetParent()->espmFiles);
-  auto gridIterator = GetParent()->grids.find(worldOrCell);
-  if (gridIterator != GetParent()->grids.end()) {
-    gridIterator->second.grid->Forget(this);
-  }
+  GetParent()->GetGridService().ForgetObjectReference(this, worldOrCell);
 
   auto listenersCopy = GetListeners();
   for (auto listener : listenersCopy) {
@@ -1819,20 +1792,7 @@ void MpObjectReference::InitScripts()
   }
 }
 
-void MpObjectReference::MoveOnGrid(GridImpl<MpObjectReference*>& grid)
-{
-  auto newGridPos = GetGridPos(GetPos());
-  grid.Move(this, newGridPos.first, newGridPos.second);
-}
 
-void MpObjectReference::InitListenersAndEmitters()
-{
-  if (!listeners) {
-    listeners.reset(new std::set<MpObjectReference*>);
-    emitters.reset(new std::set<MpObjectReference*>);
-    actorListenerArray.clear();
-  }
-}
 
 void MpObjectReference::SendInventoryUpdate()
 {

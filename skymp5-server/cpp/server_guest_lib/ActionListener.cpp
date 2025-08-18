@@ -11,6 +11,7 @@
 #include "MpObjectReference.h"
 #include "MsgType.h"
 #include "Overloaded.h"
+#include "PartOne.h"
 #include "WorldState.h"
 #include "gamemode_events/CustomEvent.h"
 #include "gamemode_events/EatItemEvent.h"
@@ -28,6 +29,32 @@
 #include "SpSnippet.h"
 #include "UpdateAnimVariablesMessage.h"
 #include "UpdateEquipmentMessage.h"
+
+ActionListener::ActionListener(PartOne& partOne_)
+  : partOne(partOne_)
+{
+  On(partOne.onCustomPacketMessage, &ActionListener::OnCustomPacket);
+  On(partOne.onUpdateMovementMessage, &ActionListener::OnUpdateMovement);
+  On(partOne.onUpdateAnimationMessage, &ActionListener::OnUpdateAnimation);
+  On(partOne.onUpdateAppearanceMessage, &ActionListener::OnUpdateAppearance);
+  On(partOne.onUpdateEquipmentMessage, &ActionListener::OnUpdateEquipment);
+  On(partOne.onActivateMessage, &ActionListener::OnActivate);
+  On(partOne.onPutItemMessage, &ActionListener::OnPutItem);
+  On(partOne.onTakeItemMessage, &ActionListener::OnTakeItem);
+  On(partOne.onDropItemMessage, &ActionListener::OnDropItem);
+  On(partOne.onPlayerBowShotMessage, &ActionListener::OnPlayerBowShot);
+  On(partOne.onFinishSpSnippetMessage, &ActionListener::OnFinishSpSnippet);
+  On(partOne.onOnEquipMessage, &ActionListener::OnEquip);
+  On(partOne.onConsoleCommandMessage, &ActionListener::OnConsoleCommand);
+  On(partOne.onCraftItemMessage, &ActionListener::OnCraftItem);
+  On(partOne.onHostMessage, &ActionListener::OnHostAttempt);
+  On(partOne.onCustomEventMessage, &ActionListener::OnCustomEvent);
+  On(partOne.onChangeValuesMessage, &ActionListener::OnChangeValues);
+  On(partOne.onHitMessage, &ActionListener::OnHit);
+  On(partOne.onUpdateAnimVariablesMessage, &ActionListener::OnUpdateAnimVariables);
+  On(partOne.onSpellCastMessage, &ActionListener::OnSpellCast);
+  On(partOne.onUnknownMessage, &ActionListener::OnUnknown);
+}
 
 namespace FormIdCasts {
 uint32_t LongToNormal(uint64_t longFormId)
@@ -103,9 +130,11 @@ MpActor* ActionListener::SendToNeighbours(uint32_t idx,
                           rawMsgData.unparsedLength, reliable);
 }
 
-void ActionListener::OnCustomPacket(const RawMessageData& rawMsgData,
-                                    const CustomPacketMessage& msg)
+void ActionListener::OnCustomPacket(const MessageEvent<CustomPacketMessage>& event)
 {
+  const RawMessageData& rawMsgData = event.rawMsgData;
+  const CustomPacketMessage& msg = event.message;
+  
   simdjson::dom::parser parser;
   auto content = parser.parse(msg.contentJsonDump).value();
   for (auto& listener : partOne.GetListeners()) {
@@ -113,20 +142,13 @@ void ActionListener::OnCustomPacket(const RawMessageData& rawMsgData,
   }
 }
 
-void ActionListener::OnUpdateMovement(const RawMessageData& rawMsgData,
-                                      const UpdateMovementMessage& msg)
+void ActionListener::OnUpdateMovement(const MessageEvent<UpdateMovementMessage>& event)
 {
+  const RawMessageData& rawMsgData = event.rawMsgData;
+  const UpdateMovementMessage& msg = event.message;
+  
   auto actor = SendToNeighbours(msg.idx, rawMsgData);
   if (actor) {
-    bool teleportFlag = actor->GetTeleportFlag();
-    actor->SetTeleportFlag(false);
-
-    static const NiPoint3 kInfinityPos = {
-      std::numeric_limits<float>::infinity(),
-      std::numeric_limits<float>::infinity(),
-      std::numeric_limits<float>::infinity()
-    };
-
     auto& espmFiles = actor->GetParent()->espmFiles;
 
     const auto& currentPos = actor->GetPos();
@@ -135,9 +157,7 @@ void ActionListener::OnUpdateMovement(const RawMessageData& rawMsgData,
 
     if (!MovementValidation::Validate(
           partOne, currentPos, currentRot, currentCellOrWorld,
-          teleportFlag
-            ? kInfinityPos
-            : NiPoint3{ msg.data.pos[0], msg.data.pos[1], msg.data.pos[2] },
+          NiPoint3{ msg.data.pos[0], msg.data.pos[1], msg.data.pos[2] },
           FormDesc::FromFormId(msg.data.worldOrCell, espmFiles),
           rawMsgData.userId, actor, espmFiles)) {
       return;
@@ -181,9 +201,11 @@ void ActionListener::OnUpdateMovement(const RawMessageData& rawMsgData,
   }
 }
 
-void ActionListener::OnUpdateAnimation(const RawMessageData& rawMsgData,
-                                       const UpdateAnimationMessage& msg)
+void ActionListener::OnUpdateAnimation(const MessageEvent<UpdateAnimationMessage>& event)
 {
+  const RawMessageData& rawMsgData = event.rawMsgData;
+  const UpdateAnimationMessage& msg = event.message;
+  
   MpActor* myActor = partOne.serverState.ActorByUser(rawMsgData.userId);
   if (!myActor) {
     return;
@@ -204,9 +226,11 @@ void ActionListener::OnUpdateAnimation(const RawMessageData& rawMsgData,
   targetActor->SetLastAnimEvent(msg.data);
 }
 
-void ActionListener::OnUpdateAppearance(const RawMessageData& rawMsgData,
-                                        const UpdateAppearanceMessage& msg)
+void ActionListener::OnUpdateAppearance(const MessageEvent<UpdateAppearanceMessage>& event)
 {
+  const RawMessageData& rawMsgData = event.rawMsgData;
+  const UpdateAppearanceMessage& msg = event.message;
+  
   MpActor* actor = partOne.serverState.ActorByUser(rawMsgData.userId);
   if (!actor || !msg.data.has_value()) {
     return;
@@ -225,9 +249,11 @@ void ActionListener::OnUpdateAppearance(const RawMessageData& rawMsgData,
   updateAppearanceAttemptEvent.Fire(actor->GetParent());
 }
 
-void ActionListener::OnUpdateEquipment(const RawMessageData& rawMsgData,
-                                       const UpdateEquipmentMessage& msg)
+void ActionListener::OnUpdateEquipment(const MessageEvent<UpdateEquipmentMessage>& event)
 {
+  const RawMessageData& rawMsgData = event.rawMsgData;
+  const UpdateEquipmentMessage& msg = event.message;
+  
   MpActor* actor = partOne.serverState.ActorByUser(rawMsgData.userId);
   if (!actor) {
     return;
@@ -290,9 +316,11 @@ void ActionListener::OnUpdateEquipment(const RawMessageData& rawMsgData,
   updateEquipmentAttemptEvent.Fire(actor->GetParent());
 }
 
-void ActionListener::OnActivate(const RawMessageData& rawMsgData,
-                                const ActivateMessage& msg)
+void ActionListener::OnActivate(const MessageEvent<ActivateMessage>& event)
 {
+  const RawMessageData& rawMsgData = event.rawMsgData;
+  const ActivateMessage& msg = event.message;
+  
   if (!partOne.HasEspm())
     throw std::runtime_error("No loaded esm or esp files are found");
 
@@ -335,9 +363,11 @@ void ActionListener::OnActivate(const RawMessageData& rawMsgData,
   }
 }
 
-void ActionListener::OnPutItem(const RawMessageData& rawMsgData,
-                               const PutItemMessage& msg)
+void ActionListener::OnPutItem(const MessageEvent<PutItemMessage>& event)
 {
+  const RawMessageData& rawMsgData = event.rawMsgData;
+  const PutItemMessage& msg = event.message;
+  
   MpActor* actor = partOne.serverState.ActorByUser(rawMsgData.userId);
   if (!actor) {
     return;
@@ -365,9 +395,11 @@ void ActionListener::OnPutItem(const RawMessageData& rawMsgData,
   ref.PutItem(*actor, entry);
 }
 
-void ActionListener::OnTakeItem(const RawMessageData& rawMsgData,
-                                const TakeItemMessage& msg)
+void ActionListener::OnTakeItem(const MessageEvent<TakeItemMessage>& event)
 {
+  const RawMessageData& rawMsgData = event.rawMsgData;
+  const TakeItemMessage& msg = event.message;
+  
   MpActor* actor = partOne.serverState.ActorByUser(rawMsgData.userId);
   if (!actor) {
     return;
@@ -394,9 +426,11 @@ void ActionListener::OnTakeItem(const RawMessageData& rawMsgData,
   ref.TakeItem(*actor, entry);
 }
 
-void ActionListener::OnDropItem(const RawMessageData& rawMsgData,
-                                const DropItemMessage& msg)
+void ActionListener::OnDropItem(const MessageEvent<DropItemMessage>& event)
 {
+  const RawMessageData& rawMsgData = event.rawMsgData;
+  const DropItemMessage& msg = event.message;
+  
   uint32_t baseId = FormIdCasts::LongToNormal(msg.baseId);
   MpActor* ac = partOne.serverState.ActorByUser(rawMsgData.userId);
   if (!ac) {
@@ -421,9 +455,11 @@ void ActionListener::OnDropItem(const RawMessageData& rawMsgData,
   ac->DropItem(baseId, entry);
 }
 
-void ActionListener::OnPlayerBowShot(const RawMessageData& rawMsgData,
-                                     const PlayerBowShotMessage& msg)
+void ActionListener::OnPlayerBowShot(const MessageEvent<PlayerBowShotMessage>& event)
 {
+  const RawMessageData& rawMsgData = event.rawMsgData;
+  const PlayerBowShotMessage& msg = event.message;
+  
   MpActor* ac = partOne.serverState.ActorByUser(rawMsgData.userId);
   if (!ac) {
     return spdlog::error("Unable to shot from user with id: {}.",
@@ -452,9 +488,11 @@ void ActionListener::OnPlayerBowShot(const RawMessageData& rawMsgData,
   ac->RemoveItem(msg.ammoId, 1, nullptr);
 }
 
-void ActionListener::OnFinishSpSnippet(const RawMessageData& rawMsgData,
-                                       const FinishSpSnippetMessage& msg)
+void ActionListener::OnFinishSpSnippet(const MessageEvent<FinishSpSnippetMessage>& event)
 {
+  const RawMessageData& rawMsgData = event.rawMsgData;
+  const FinishSpSnippetMessage& msg = event.message;
+  
   MpActor* actor = partOne.serverState.ActorByUser(rawMsgData.userId);
   if (!actor) {
     throw std::runtime_error(
@@ -467,9 +505,11 @@ void ActionListener::OnFinishSpSnippet(const RawMessageData& rawMsgData,
     SpSnippet::VarValueFromSpSnippetReturnValue(msg.returnValue));
 }
 
-void ActionListener::OnEquip(const RawMessageData& rawMsgData,
-                             const OnEquipMessage& msg)
+void ActionListener::OnEquip(const MessageEvent<OnEquipMessage>& event)
 {
+  const RawMessageData& rawMsgData = event.rawMsgData;
+  const OnEquipMessage& msg = event.message;
+  
   MpActor* actor = partOne.serverState.ActorByUser(rawMsgData.userId);
   if (!actor) {
     throw std::runtime_error(
@@ -480,9 +520,11 @@ void ActionListener::OnEquip(const RawMessageData& rawMsgData,
   std::ignore = actor->OnEquip(msg.baseId);
 }
 
-void ActionListener::OnConsoleCommand(const RawMessageData& rawMsgData,
-                                      const ConsoleCommandMessage& msg)
+void ActionListener::OnConsoleCommand(const MessageEvent<ConsoleCommandMessage>& event)
 {
+  const RawMessageData& rawMsgData = event.rawMsgData;
+  const ConsoleCommandMessage& msg = event.message;
+  
   MpActor* me = partOne.serverState.ActorByUser(rawMsgData.userId);
   if (me) {
     std::vector<ConsoleCommands::Argument> consoleArgs;
@@ -494,16 +536,15 @@ void ActionListener::OnConsoleCommand(const RawMessageData& rawMsgData,
   }
 }
 
-void ActionListener::OnCraftItem(const RawMessageData& rawMsgData,
-                                 const CraftItemMessage& msg)
+void ActionListener::OnCraftItem(const MessageEvent<CraftItemMessage>& event)
 {
-  craftService->OnCraftItem(rawMsgData, msg.data.craftInputObjects,
-                            msg.data.workbench, msg.data.resultObjectId);
 }
 
-void ActionListener::OnHostAttempt(const RawMessageData& rawMsgData,
-                                   const HostMessage& msg)
+void ActionListener::OnHostAttempt(const MessageEvent<HostMessage>& event)
 {
+  const RawMessageData& rawMsgData = event.rawMsgData;
+  const HostMessage& msg = event.message;
+  
   uint32_t remoteId = FormIdCasts::LongToNormal(msg.remoteId);
 
   MpActor* me = partOne.serverState.ActorByUser(rawMsgData.userId);
@@ -588,9 +629,11 @@ void ActionListener::OnHostAttempt(const RawMessageData& rawMsgData,
   }
 }
 
-void ActionListener::OnCustomEvent(const RawMessageData& rawMsgData,
-                                   const CustomEventMessage& msg)
+void ActionListener::OnCustomEvent(const MessageEvent<CustomEventMessage>& event)
 {
+  const RawMessageData& rawMsgData = event.rawMsgData;
+  const CustomEventMessage& msg = event.message;
+  
   auto ac = partOne.serverState.ActorByUser(rawMsgData.userId);
   if (!ac) {
     return;
@@ -613,9 +656,10 @@ void ActionListener::OnCustomEvent(const RawMessageData& rawMsgData,
   }
 }
 
-void ActionListener::OnChangeValues(const RawMessageData& rawMsgData,
-                                    const ChangeValuesMessage& msg)
+void ActionListener::OnChangeValues(const MessageEvent<ChangeValuesMessage>& event)
 {
+  const RawMessageData& rawMsgData = event.rawMsgData;
+  const ChangeValuesMessage& msg = event.message;
   // TODO: support partial updates
   if (!msg.data.health.has_value() || !msg.data.magicka.has_value() ||
       !msg.data.stamina.has_value()) {
@@ -882,9 +926,11 @@ bool ShouldBeBlocked(const MpActor& aggressor, const MpActor& target)
 }
 }
 
-void ActionListener::OnHit(const RawMessageData& rawMsgData,
-                           const HitMessage& msg)
+void ActionListener::OnHit(const MessageEvent<HitMessage>& event)
 {
+  const RawMessageData& rawMsgData = event.rawMsgData;
+  const HitMessage& msg = event.message;
+  
   MpActor* myActor = partOne.serverState.ActorByUser(rawMsgData.userId);
 
   if (!myActor) {
@@ -990,9 +1036,11 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData,
                 hitData.source, hitData.aggressor);
 }
 
-void ActionListener::OnUpdateAnimVariables(
-  const RawMessageData& rawMsgData, const UpdateAnimVariablesMessage& msg)
+void ActionListener::OnUpdateAnimVariables(const MessageEvent<UpdateAnimVariablesMessage>& event)
 {
+  const RawMessageData& rawMsgData = event.rawMsgData;
+  const UpdateAnimVariablesMessage& msg = event.message;
+  
   const MpActor* myActor = partOne.serverState.ActorByUser(rawMsgData.userId);
   if (!myActor) {
     throw std::runtime_error("Unable to change values without Actor attached");
@@ -1001,9 +1049,11 @@ void ActionListener::OnUpdateAnimVariables(
   SendToNeighbours(myActor->idx, rawMsgData);
 }
 
-void ActionListener::OnSpellCast(const RawMessageData& rawMsgData,
-                                 const SpellCastMessage& msg)
+void ActionListener::OnSpellCast(const MessageEvent<SpellCastMessage>& event)
 {
+  const RawMessageData& rawMsgData = event.rawMsgData;
+  const SpellCastMessage& msg = event.message;
+  
   MpActor* myActor = partOne.serverState.ActorByUser(rawMsgData.userId);
 
   if (!myActor) {
