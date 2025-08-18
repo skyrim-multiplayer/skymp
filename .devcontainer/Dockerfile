@@ -1,5 +1,13 @@
 FROM --platform=linux/amd64 mcr.microsoft.com/devcontainers/javascript-node:22
 
+# Tip for maintainers: Updating Vcpkg Binary Cache
+# 1. remove "clear;" from "export VCPKG_BINARY_SOURCES=..." below
+# 2. Re-build devcontainer
+# 3. Run CMake
+# 4. scp ~/.cache/vcpkg/archives/*/*.zip codespaces-vcpkg-binary-cache@storage.bunnycdn.com:/
+
+ENV VCPKG_BINARY_SOURCES="clear;http,https://codespaces-vcpkg-binary-cache.b-cdn.net/{sha}.zip,read"
+
 RUN \
   curl -fsSL https://dl.yarnpkg.com/debian/pubkey.gpg | gpg --dearmor > /usr/share/keyrings/yarnkey.gpg \
   && echo "deb [signed-by=/usr/share/keyrings/yarnkey.gpg] https://dl.yarnpkg.com/debian stable main" > /etc/apt/sources.list.d/yarn.list \
@@ -7,20 +15,18 @@ RUN \
   && echo 'deb [signed-by=/usr/share/keyrings/kitware-archive-keyring.gpg] https://apt.kitware.com/ubuntu/ jammy main' > /etc/apt/sources.list.d/kitware.list \
   && apt-get update \
   && apt-get install -y \
-    nodejs \
+    cmake=4.1.0-0kitware1ubuntu22.04.1 \
+    clang-15=1:15.0.6-4+b1 \
+    clang-format-15=1:15.0.6-4+b1 \
+    ninja-build=1.11.1-2~deb12u1 \
     yarn \
     libicu-dev \
     git \
-    cmake \
     curl \
     unzip \
     tar \
     make \
     zip \
     pkg-config \
-    cmake \
-    clang-15 \
-    clang-format-15 \
-    ninja-build \
   && rm -rf /var/lib/apt/lists/* \
   && mv /usr/bin/clang-format-15 /usr/bin/clang-format
