@@ -8,11 +8,14 @@
 #include <catch2/catch_all.hpp>
 #include <nlohmann/json.hpp>
 
+extern PartOne& GetPartOne();
+
 using Catch::Matchers::ContainsSubstring;
 
 TEST_CASE("AddForm failures", "[WorldState]")
 {
-  WorldState worldState;
+  auto& partOne = GetPartOne();
+  auto& worldState = partOne.worldState;
   worldState.AddForm(std::unique_ptr<MpForm>(new MpForm), 0xff000000);
   REQUIRE_THROWS_WITH(
     worldState.AddForm(std::unique_ptr<MpForm>(new MpForm), 0xff000000),
@@ -21,7 +24,8 @@ TEST_CASE("AddForm failures", "[WorldState]")
 
 TEST_CASE("DestroyForm failures", "[WorldState]")
 {
-  WorldState worldState;
+  auto& partOne = GetPartOne();
+  auto& worldState = partOne.worldState;
   REQUIRE_THROWS_WITH(
     worldState.DestroyForm(0x12345678),
     ContainsSubstring("Form with id 12345678 doesn't exist"));
@@ -34,7 +38,8 @@ TEST_CASE("DestroyForm failures", "[WorldState]")
 
 TEST_CASE("Load ChangeForm of created Actor", "[WorldState]")
 {
-  WorldState worldState;
+  auto& partOne = GetPartOne();
+  auto& worldState = partOne.worldState;
   worldState.espmFiles = { "Morrowind.esm", "Tribunal.esm" };
 
   MpChangeForm changeForm;
@@ -56,7 +61,8 @@ TEST_CASE("Load ChangeForm of created Actor", "[WorldState]")
 TEST_CASE("Load ChangeForm of created Actor with isDisabled=true",
           "[WorldState]")
 {
-  WorldState worldState;
+  auto& partOne = GetPartOne();
+  auto& worldState = partOne.worldState;
   worldState.espmFiles = { "Morrowind.esm", "Tribunal.esm" };
 
   MpChangeForm changeForm;
@@ -76,7 +82,8 @@ TEST_CASE("Load ChangeForm of created Actor with isDisabled=true",
 
 TEST_CASE("Load ChangeForm of created Actor with profileId", "[WorldState]")
 {
-  WorldState worldState;
+  auto& partOne = GetPartOne();
+  auto& worldState = partOne.worldState;
   worldState.espmFiles = { "Morrowind.esm", "Tribunal.esm" };
 
   MpChangeForm changeForm;
@@ -96,7 +103,8 @@ TEST_CASE("Load ChangeForm of created Actor with profileId", "[WorldState]")
 
 TEST_CASE("Load ChangeForm of modified object", "[WorldState]")
 {
-  WorldState worldState;
+  auto& partOne = GetPartOne();
+  auto& worldState = partOne.worldState;
   worldState.espmFiles = { "Skyrim.esm" };
 
   MpChangeForm changeForm;
@@ -123,7 +131,8 @@ TEST_CASE("Load ChangeForm of modified object", "[WorldState]")
 TEST_CASE("Load ChangeForm of modified object with changed baseType",
           "[WorldState]")
 {
-  WorldState worldState;
+  auto& partOne = GetPartOne();
+  auto& worldState = partOne.worldState;
   worldState.espmFiles = { "Skyrim.esm" };
   auto newRefr = new MpObjectReference(
     LocationalData(), FormCallbacks::DoNothing(), 0x0000ded0, "STAT");
@@ -143,8 +152,6 @@ TEST_CASE("Load ChangeForm of modified object with changed baseType",
   //   ContainsSubstring("Anomally, baseId should never change (ded0 =>
   //   abcd)"));
 }
-
-extern PartOne& GetPartOne();
 
 TEST_CASE("Loads VirtualMachine with all scripts", "[WorldState]")
 {
