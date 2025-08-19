@@ -7,6 +7,18 @@ on:
     push:
         branches:
           - main
+    workflow_dispatch:
+        inputs:
+            with_regular:
+                type: boolean
+                description: Only main setup (vcpkg-deps)
+                required: true
+                default: false
+            with_extra:
+                type: boolean
+                description: With extra checks (other Ubuntu versions, Debian, Arch, etc)
+                required: true
+                default: true
 
 env:
     BUILD_TYPE: RelWithDebInfo
@@ -30,6 +42,15 @@ jobs:
 
             # TODO(#2280): add Fedora
             # TODO(#2280): test gcc build, test build w/o ninja
+
+        if: |
+            (github.event_name != 'workflow_dispatch' && matrix.base_system == 'ubuntu-vcpg-deps') ||
+            (github.event_name == 'workflow_dispatch' &&
+                (
+                    (matrix.base_system == 'ubuntu-vcpg-deps' && github.event.inputs.with_regular) ||
+                    (matrix.base_system != 'ubuntu-vcpg-deps' && github.event.inputs.with_extra)
+                )
+            )
 
         runs-on: ubuntu-latest
         steps:
