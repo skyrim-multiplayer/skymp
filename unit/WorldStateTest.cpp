@@ -1,6 +1,6 @@
-#include "GridService.h"
 #include "WorldState.h"
 #include "FormCallbacks.h"
+#include "GridService.h"
 #include "MpActor.h"
 #include "MpForm.h"
 #include "MsgType.h"
@@ -40,13 +40,12 @@ TEST_CASE("Load ChangeForm of created Actor", "[WorldState]")
 {
   auto& partOne = GetPartOne();
   auto& worldState = partOne.worldState;
-  worldState.espmFiles = { "Morrowind.esm", "Tribunal.esm" };
 
   MpChangeForm changeForm;
   changeForm.recType = MpChangeForm::ACHR;
   changeForm.position = { 1, 2, 3 };
   changeForm.worldOrCellDesc = FormDesc::Tamriel();
-  changeForm.baseDesc = { 0xabcd, "Tribunal.esm" };
+  changeForm.baseDesc = { 0x7, "Skyrim.esm" };
 
   worldState.LoadChangeForm(changeForm, FormCallbacks::DoNothing());
 
@@ -55,7 +54,7 @@ TEST_CASE("Load ChangeForm of created Actor", "[WorldState]")
   REQUIRE(refr.GetChangeForm().formDesc.ToString() == "0");
   REQUIRE(refr.GetPos() == NiPoint3{ 1, 2, 3 });
   REQUIRE(refr.GetCellOrWorld() == FormDesc::Tamriel());
-  REQUIRE(refr.GetBaseId() == 0x0100abcd);
+  REQUIRE(refr.GetBaseId() == 0x7);
 }
 
 TEST_CASE("Load ChangeForm of created Actor with isDisabled=true",
@@ -63,12 +62,11 @@ TEST_CASE("Load ChangeForm of created Actor with isDisabled=true",
 {
   auto& partOne = GetPartOne();
   auto& worldState = partOne.worldState;
-  worldState.espmFiles = { "Morrowind.esm", "Tribunal.esm" };
 
   MpChangeForm changeForm;
   changeForm.recType = MpChangeForm::ACHR;
-  changeForm.worldOrCellDesc = FormDesc::FromString("dead:Morrowind.esm");
-  changeForm.baseDesc = { 0xabcd, "Tribunal.esm" };
+  changeForm.worldOrCellDesc = FormDesc::FromString("3c:Skyrim.esm");
+  changeForm.baseDesc = { 0x00000007, "Skyrim.esm" };
   changeForm.isDisabled = true;
 
   worldState.LoadChangeForm(changeForm, FormCallbacks::DoNothing());
@@ -77,50 +75,54 @@ TEST_CASE("Load ChangeForm of created Actor with isDisabled=true",
   REQUIRE(refr.IsDisabled());
 
   // Disabled actors should not pollute grids during load process
-  REQUIRE(worldState.GetGridService().GetGrids().count(0xdead) == 0);
+  REQUIRE(worldState.GetGridService().GetGrids().count(0x3c) == 0);
 }
 
 TEST_CASE("Load ChangeForm of created Actor with profileId", "[WorldState]")
 {
   auto& partOne = GetPartOne();
   auto& worldState = partOne.worldState;
-  worldState.espmFiles = { "Morrowind.esm", "Tribunal.esm" };
 
   MpChangeForm changeForm;
   changeForm.recType = MpChangeForm::ACHR;
-  changeForm.worldOrCellDesc = FormDesc::FromString("dead:Morrowind.esm");
-  changeForm.baseDesc = { 0xabcd, "Tribunal.esm" };
+  changeForm.worldOrCellDesc = FormDesc::FromString("3c:Skyrim.esm");
+  changeForm.baseDesc = { 0x7, "Skyrim.esm" };
   changeForm.isDisabled = true;
   changeForm.profileId = 100;
+  changeForm.formDesc =
+    FormDesc::FromFormId(0xff000000, partOne.worldState.espmFiles);
 
   REQUIRE(worldState.GetActorsByProfileId(100).empty());
   worldState.LoadChangeForm(changeForm, FormCallbacks::DoNothing());
 
-  REQUIRE(worldState.GetGridService().GetGrids().count(0xdead) == 0);
+  REQUIRE(worldState.GetGridService().GetGrids().count(0x3c) == 0);
   REQUIRE(worldState.GetActorsByProfileId(100) ==
           std::set<uint32_t>({ 0xff000000 }));
 }
 
 TEST_CASE("Load ChangeForm of modified object", "[WorldState]")
 {
+  constexpr uint32_t kBarrelInWhiterun = 0x4cc2d;
+
   auto& partOne = GetPartOne();
   auto& worldState = partOne.worldState;
-  worldState.espmFiles = { "Skyrim.esm" };
 
   MpChangeForm changeForm;
-  changeForm.formDesc = { 0xeeee, "Skyrim.esm" };
+  changeForm.formDesc = { kBarrelInWhiterun, "Skyrim.esm" };
   changeForm.position = { 1, 2, 3 };
   changeForm.worldOrCellDesc = FormDesc::Tamriel();
   changeForm.baseDesc = { 0xabcd, "Skyrim.esm" };
 
   auto newRefr = new MpObjectReference(
     LocationalData(), FormCallbacks::DoNothing(), 0x0000abcd, "STAT");
-  worldState.AddForm(std::unique_ptr<MpObjectReference>(newRefr), 0xeeee);
+  worldState.AddForm(std::unique_ptr<MpObjectReference>(newRefr),
+                     kBarrelInWhiterun);
 
   worldState.LoadChangeForm(changeForm, FormCallbacks::DoNothing());
-  auto& refr = worldState.GetFormAt<MpObjectReference>(0xeeee);
-  REQUIRE(refr.GetFormId() == 0xeeee);
-  REQUIRE(refr.GetChangeForm().formDesc.ToString() == "eeee:Skyrim.esm");
+  auto& refr = worldState.GetFormAt<MpObjectReference>(kBarrelInWhiterun);
+  REQUIRE(refr.GetFormId() == kBarrelInWhiterun);
+  REQUIRE(refr.GetChangeForm().formDesc.ToString() ==
+          FormDesc({ kBarrelInWhiterun, "Skyrim.esm" }).ToString());
   REQUIRE(refr.GetPos() == NiPoint3{ 1, 2, 3 });
   REQUIRE(refr.GetCellOrWorld() == FormDesc::Tamriel());
   REQUIRE(refr.GetBaseId() == 0x0000abcd);
@@ -131,26 +133,26 @@ TEST_CASE("Load ChangeForm of modified object", "[WorldState]")
 TEST_CASE("Load ChangeForm of modified object with changed baseType",
           "[WorldState]")
 {
+  constexpr auto kBarrelInWhiterun = 0x0004cc2d;
+  constexpr auto kBarrelInWhiterunBase = 0x00000845;
+  constexpr auto kBarrelInWhiterunBaseNew = 0x00000007;
+
   auto& partOne = GetPartOne();
   auto& worldState = partOne.worldState;
-  worldState.espmFiles = { "Skyrim.esm" };
-  auto newRefr = new MpObjectReference(
-    LocationalData(), FormCallbacks::DoNothing(), 0x0000ded0, "STAT");
-  worldState.AddForm(std::unique_ptr<MpObjectReference>(newRefr), 0xeeee);
 
   MpChangeForm changeForm;
-  changeForm.formDesc = { 0xeeee, "Skyrim.esm" };
-  changeForm.baseDesc = { 0xabcd, "Skyrim.esm" };
+  changeForm.formDesc = { kBarrelInWhiterun, "Skyrim.esm" };
+  changeForm.baseDesc = { kBarrelInWhiterunBaseNew, "Skyrim.esm" };
+  changeForm.inv.AddItem(0x00012eb7, 1);
 
   worldState.LoadChangeForm(changeForm, FormCallbacks::DoNothing());
 
-  // Currently, baseId is not changed. I'm not sure if it should be changed.
-  REQUIRE(newRefr->GetBaseId() == 0x0000ded0);
+  // Expected to ignore baseId change
+  auto& refr = worldState.GetFormAt<MpObjectReference>(kBarrelInWhiterun);
+  REQUIRE(refr.GetBaseId() == kBarrelInWhiterunBase);
 
-  // REQUIRE_THROWS_WITH(
-  //   worldState.LoadChangeForm(changeForm, FormCallbacks::DoNothing()),
-  //   ContainsSubstring("Anomally, baseId should never change (ded0 =>
-  //   abcd)"));
+  // But inventory and other fields still load
+  REQUIRE(refr.GetInventory().GetItemCount(0x00012eb7) == 1);
 }
 
 TEST_CASE("Loads VirtualMachine with all scripts", "[WorldState]")
