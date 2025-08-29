@@ -35,9 +35,6 @@ public:
   void Tick();
 
 private:
-  void AcquireEnvAndCallImpl(const std::function<void(Napi::Env)>& f,
-                             const char* comment);
-
   JsEngine();
 
   std::string GetError();

@@ -39,16 +39,60 @@ JsEngine::~JsEngine()
 void JsEngine::AcquireEnvAndCall(const std::function<void(Napi::Env)>& f,
                                  const char* comment)
 {
-  uint32_t n = 0;
+  std::lock_guard l(pImpl->m);
 
-  AcquireEnvAndCallImpl(
-    [&](Napi::Env env) {
-      ++n;
-      if (n == 1) {
-        f(env);
-      }
-    },
-    comment);
+  Viet::ScopedTask<int> task([](int& depth) { depth--; }, pImpl->depth);
+  pImpl->depth++;
+
+  Viet::ScopedTask<std::stack<std::function<void(Napi::Env)>>> task2(
+    [](auto& preparedFunctionsStack) { preparedFunctionsStack.pop(); },
+    pImpl->preparedFunctionsStack);
+  pImpl->preparedFunctionsStack.push(f);
+
+  if (pImpl->depth > 1) {
+    return f(*pImpl->retrievedEnv);
+  }
+
+  if (!pImpl->nodeInstance) {
+    spdlog::error("JsEngine::AcquireEnvAndCall() - NodeInstance is nullptr");
+    return;
+  }
+
+  pImpl->nodeInstance->ClearJavaScriptError();
+
+  std::string jsSrc = R"(
+    try {
+      skyrimPlatformNativeAddon.callPreparedFunction(%%%%);
+    } catch (e) { 
+      reportError(e.toString())
+    }
+  )";
+  std::string from = "%%%%";
+
+  size_t pos = jsSrc.find(from);
+  if (pos != std::string::npos) {
+    jsSrc.replace(pos, from.length(), nlohmann::json(comment).dump());
+  }
+
+  int executeScriptResult =
+    pImpl->nodeInstance->ExecuteScript(pImpl->env, jsSrc.data());
+
+  if (executeScriptResult != 0) {
+    spdlog::error(
+      "JsEngine::AcquireEnvAndCall() - Failed to execute script: {}",
+      GetError());
+    return;
+  }
+
+  std::string javaScriptError = pImpl->nodeInstance->GetJavaScriptError();
+  pImpl->nodeInstance->ClearJavaScriptError();
+
+  if (!javaScriptError.empty()) {
+    spdlog::error(
+      "JsEngine::AcquireEnvAndCall() - Rethrowing JavaScript error: {}",
+      javaScriptError);
+    throw std::runtime_error(javaScriptError);
+  }
 }
 
 Napi::Value JsEngine::RunScript(Napi::Env env, const std::string& src,
@@ -84,65 +128,6 @@ void JsEngine::Tick()
   }
 
   pImpl->nodeInstance->Tick(pImpl->env);
-}
-
-void JsEngine::AcquireEnvAndCallImpl(const std::function<void(Napi::Env)>& f,
-                                     const char* comment)
-{
-  std::lock_guard l(pImpl->m);
-
-  Viet::ScopedTask<int> task([](int& depth) { depth--; }, pImpl->depth);
-  pImpl->depth++;
-
-  Viet::ScopedTask<std::stack<std::function<void(Napi::Env)>>> task2(
-    [](auto& preparedFunctionsStack) { preparedFunctionsStack.pop(); },
-    pImpl->preparedFunctionsStack);
-  pImpl->preparedFunctionsStack.push(f);
-
-  if (pImpl->depth > 1) {
-    return f(*pImpl->retrievedEnv);
-  }
-
-  if (!pImpl->nodeInstance) {
-    spdlog::error("JsEngine::AcquireEnvAndCallImpl() - NodeInstance is nullptr");
-    return;
-  }
-
-  pImpl->nodeInstance->ClearJavaScriptError();
-
-  std::string jsSrc = R"(
-    try {
-      skyrimPlatformNativeAddon.callPreparedFunction(%%%%);
-    } catch (e) { 
-      reportError(e.toString())
-    }
-  )";
-  std::string from = "%%%%";
-
-  size_t pos = jsSrc.find(from);
-  if (pos != std::string::npos) {
-    jsSrc.replace(pos, from.length(), nlohmann::json(comment).dump());
-  }
-
-  int executeScriptResult =
-    pImpl->nodeInstance->ExecuteScript(pImpl->env, jsSrc.data());
-
-  if (executeScriptResult != 0) {
-    spdlog::error(
-      "JsEngine::AcquireEnvAndCallImpl() - Failed to execute script: {}",
-      GetError());
-    return;
-  }
-
-  std::string javaScriptError = pImpl->nodeInstance->GetJavaScriptError();
-  pImpl->nodeInstance->ClearJavaScriptError();
-
-  if (!javaScriptError.empty()) {
-    spdlog::error(
-      "JsEngine::AcquireEnvAndCallImpl() - Rethrowing JavaScript error: {}",
-      javaScriptError);
-    throw std::runtime_error(javaScriptError);
-  }
 }
 
 JsEngine::JsEngine()
