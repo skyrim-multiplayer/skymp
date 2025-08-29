@@ -178,8 +178,13 @@ void OnSendAnimationEventEnter(GumInvocationContext* ic)
   if (str == "") {
     return;
   }
-  OutputDebugString(str.c_str());
-  OutputDebugStringA("\n");
+
+  if (str.find("attack") != str.npos || str.find("Attack") != str.npos ||
+      str.find("ATTACK") != str.npos) {
+    spdlog::warn("!!! OnSendAnimationEventEnter {} {:x}", str,
+                 formId);
+  }
+
   EventsApi::SendAnimationEventEnter(formId, str);
   if (str != *animEventName) {
     auto fs =

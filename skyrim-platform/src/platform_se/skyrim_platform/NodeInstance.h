@@ -19,6 +19,8 @@ public:
   const char* GetJavaScriptError();
   void ClearJavaScriptError();
 
+  void* CreateNapiEnv();
+
 private:
   int NodeMain(int argc, char** argv);
 

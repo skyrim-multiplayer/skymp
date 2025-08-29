@@ -48,12 +48,9 @@ void OnUpdate(IVM* vm, StackID stackId)
 
   g_nativeCallRequirements.stackId = stackId;
   g_nativeCallRequirements.vm = vm;
-  SkyrimPlatform::GetSingleton()->PrepareWorker();
-  SkyrimPlatform::GetSingleton()->Push([=](Napi::Env env) {
+  SkyrimPlatform::GetSingleton()->RunTask([=](Napi::Env env) {
     SkyrimPlatform::GetSingleton()->JsTick(env, true);
-    SkyrimPlatform::GetSingleton()->StopWorker();
   });
-  SkyrimPlatform::GetSingleton()->StartWorker();
   g_nativeCallRequirements.gameThrQ->Update(Viet::Void());
   g_nativeCallRequirements.stackId = std::numeric_limits<StackID>::max();
   g_nativeCallRequirements.vm = nullptr;

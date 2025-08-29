@@ -1,7 +1,18 @@
 #pragma once
 
 class Handler;
-struct HandlerInfoPerThread;
+
+struct HandlerInvocationInfo
+{
+  std::shared_ptr<Napi::Reference<Napi::Object>> storage, context;
+  bool matchesCondition = false;
+};
+
+struct HookInvocationInfo //: public HandlerInvocationInfo
+{
+  std::unordered_map<Handler*, HandlerInvocationInfo>
+  handlersInvocationInfo;
+};
 
 class Hook
 {
@@ -25,20 +36,25 @@ public:
   void Leave(bool succeeded);
 
 private:
-  void HandleEnter(DWORD owningThread, uint32_t selfId, std::string& eventName,
-                   const Napi::Env& env);
+  void SendPapyrusEventHandleEnter(uint32_t selfId, std::string& eventName);
 
-  void PrepareContext(HandlerInfoPerThread& h, const Napi::Env& env);
+  void HandleEnter(HookInvocationInfo& hookInvocationInfo, uint32_t selfId,
+                   std::string& eventName, const Napi::Env& env);
+  void HandleLeave(HookInvocationInfo& hookInvocationInfo, bool succeeded,
+                   Napi::Env env);
 
-  void ClearContextStorage(HandlerInfoPerThread& h, Napi::Env env);
+  void PrepareContext(HandlerInvocationInfo& handlerInvocationInfo,
+                      const Napi::Env& env);
 
-  void HandleLeave(DWORD owningThread, bool succeeded, Napi::Env env);
+  void ClearContextStorage(HandlerInvocationInfo& handlerInvocationInfo,
+                           Napi::Env env);
 
   const std::string hookName;
   const std::string eventNameVariableName;
   const std::optional<std::string> succeededVariableName;
-  std::set<DWORD> inProgressThreads;
+
   std::map<uint32_t, std::shared_ptr<Handler>> handlers;
-  uint32_t hCounter = 0;
+  uint32_t nextHandlerId = 0;
+
   std::atomic<int> addRemoveBlocker = 0;
 };

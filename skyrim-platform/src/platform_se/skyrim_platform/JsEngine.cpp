@@ -1,7 +1,9 @@
 #include "JsEngine.h"
 #include <spdlog/spdlog.h>
+#include <stack>
 
 #include "NodeInstance.h"
+#include "ScopedTask.h"
 
 struct JsEngine::Impl
 {
@@ -14,7 +16,12 @@ struct JsEngine::Impl
 
   std::unique_ptr<NodeInstance> nodeInstance;
 
-  std::function<void(Napi::Env)> preparedFunction;
+  std::stack<std::function<void(Napi::Env)>> preparedFunctionsStack;
+  int depth = 0;
+
+  std::optional<Napi::Env> retrievedEnv;
+
+  std::recursive_mutex m;
 };
 
 JsEngine* JsEngine::GetSingleton()
@@ -29,49 +36,19 @@ JsEngine::~JsEngine()
   delete pImpl;
 }
 
-void JsEngine::AcquireEnvAndCall(const std::function<void(Napi::Env)>& f)
+void JsEngine::AcquireEnvAndCall(const std::function<void(Napi::Env)>& f,
+                                 const char* comment)
 {
-  // spdlog::info("JsEngine::AcquireEnvAndCall()");
+  uint32_t n = 0;
 
-  if (!pImpl->nodeInstance) {
-    spdlog::error("JsEngine::AcquireEnvAndCall() - NodeInstance is nullptr");
-    return;
-  }
-
-  // napi_env env = reinterpret_cast<napi_env>(pImpl->env);
-  // Napi::Env cppEnv = Napi::Env(env);
-  // f(cppEnv);
-
-  pImpl->preparedFunction = f;
-
-  pImpl->nodeInstance->ClearJavaScriptError();
-
-  int executeScriptResult = pImpl->nodeInstance->ExecuteScript(pImpl->env, R"(
-    try {
-      skyrimPlatformNativeAddon.callPreparedFunction();
-    } catch (e) { 
-      reportError(e.toString())
-    }
-  )");
-
-  if (executeScriptResult != 0) {
-    spdlog::error(
-      "JsEngine::AcquireEnvAndCall() - Failed to execute script: {}",
-      GetError());
-    return;
-  }
-
-  std::string javaScriptError = pImpl->nodeInstance->GetJavaScriptError();
-  pImpl->nodeInstance->ClearJavaScriptError();
-
-  if (!javaScriptError.empty()) {
-    spdlog::error(
-      "JsEngine::AcquireEnvAndCall() - Rethrowing JavaScript error: {}",
-      javaScriptError);
-    throw std::runtime_error(javaScriptError);
-  }
-
-  // spdlog::info("JsEngine::AcquireEnvAndCall() - Leave");
+  AcquireEnvAndCallImpl(
+    [&](Napi::Env env) {
+      ++n;
+      if (n == 1) {
+        f(env);
+      }
+    },
+    comment);
 }
 
 Napi::Value JsEngine::RunScript(Napi::Env env, const std::string& src,
@@ -107,6 +84,74 @@ void JsEngine::Tick()
   }
 
   pImpl->nodeInstance->Tick(pImpl->env);
+}
+
+void JsEngine::AcquireEnvAndCallImpl(const std::function<void(Napi::Env)>& f,
+                                     const char* comment)
+{
+  std::lock_guard l(pImpl->m);
+
+  Viet::ScopedTask<int> task([](int& depth) { depth--; }, pImpl->depth);
+  pImpl->depth++;
+
+  Viet::ScopedTask<std::stack<std::function<void(Napi::Env)>>> task2(
+    [](auto& preparedFunctionsStack) { preparedFunctionsStack.pop(); },
+    pImpl->preparedFunctionsStack);
+  pImpl->preparedFunctionsStack.push(f);
+
+  if (pImpl->depth > 1) {
+    return f(*pImpl->retrievedEnv);
+  }
+
+  if (!pImpl->nodeInstance) {
+    spdlog::error("JsEngine::AcquireEnvAndCall() - NodeInstance is nullptr");
+    return;
+  }
+
+  /*if (pImpl->retrievedEnv.has_value()) {
+    f(*pImpl->retrievedEnv);
+    return;
+  }*/
+
+  ///// pImpl->preparedFunction = f;
+
+  pImpl->nodeInstance->ClearJavaScriptError();
+
+  std::string jsSrc = R"(
+    try {
+      skyrimPlatformNativeAddon.callPreparedFunction(%%%%);
+    } catch (e) { 
+      reportError(e.toString())
+    }
+  )";
+  std::string from = "%%%%";
+
+  size_t pos = jsSrc.find(from);
+  if (pos != std::string::npos) {
+    jsSrc.replace(pos, from.length(), nlohmann::json(comment).dump());
+  }
+
+  int executeScriptResult =
+    pImpl->nodeInstance->ExecuteScript(pImpl->env, jsSrc.data());
+
+  if (executeScriptResult != 0) {
+    spdlog::error(
+      "JsEngine::AcquireEnvAndCall() - Failed to execute script: {}",
+      GetError());
+    return;
+  }
+
+  std::string javaScriptError = pImpl->nodeInstance->GetJavaScriptError();
+  pImpl->nodeInstance->ClearJavaScriptError();
+
+  if (!javaScriptError.empty()) {
+    spdlog::error(
+      "JsEngine::AcquireEnvAndCall() - Rethrowing JavaScript error: {}",
+      javaScriptError);
+    throw std::runtime_error(javaScriptError);
+  }
+
+  // spdlog::info("JsEngine::AcquireEnvAndCall() - Leave");
 }
 
 JsEngine::JsEngine()
@@ -197,13 +242,20 @@ Napi::Value CallPreparedFunction(const Napi::CallbackInfo& info)
 {
   // spdlog::info("CallPreparedFunction()");
 
-  auto f = JsEngine::GetSingleton()->pImpl->preparedFunction;
-  JsEngine::GetSingleton()->pImpl->preparedFunction = nullptr;
+  JsEngine::GetSingleton()->pImpl->retrievedEnv = info.Env();
+
+  // auto f = JsEngine::GetSingleton()->pImpl->preparedFunction;
+  // JsEngine::GetSingleton()->pImpl->preparedFunction = nullptr;
+
+  auto f = JsEngine::GetSingleton()->pImpl->preparedFunctionsStack.top();
 
   if (f) {
     f(info.Env());
   } else {
-    spdlog::error("CallPreparedFunction() - Prepared function is not set");
+    auto comment = static_cast<std::string>(info[0].ToString());
+    spdlog::error(
+      "CallPreparedFunction() - Prepared function is not set, comment={}",
+      comment);
   }
 
   return info.Env().Undefined();

@@ -129,6 +129,8 @@ export const applyAnimation = (
   }
   state.lastNumChanges = anim.numChanges;
 
+  printConsole("applyAnimation " + anim.animEventName);
+
   if (state.useAnimOverrides) {
     const animOverride = animOverridesLowerCase[anim.animEventName.toLowerCase()];
     if (animOverride !== undefined) {
@@ -173,7 +175,9 @@ export const applyAnimation = (
 
   if (refsWithDefaultAnimsDisabled.has(refr.getFormID())) {
     if (animEventNameLowerCase.includes("attack")) {
-      allowedAnims.add(refr.getFormID() + ":" + anim.animEventName);
+      const animKey = refr.getFormID() + ":" + anim.animEventName;
+      allowedAnims.add(animKey);
+      printConsole("add anim key " + animKey);
     }
   }
 
@@ -304,15 +308,20 @@ const ignoredAnims = new Set<string>([
 ]);
 
 export const setupHooks = (): void => {
-  hooks.sendAnimationEvent.add({
+  const hookId = hooks.sendAnimationEvent.add({
     enter: (ctx) => {
+      if (ctx.animEventName.toLowerCase().includes("attack")) {
+        printConsole("!!! ctx.animEventName", ctx.animEventName, ctx.selfId.toString());
+      }
+
       if (refsWithDefaultAnimsDisabled.has(ctx.selfId)) {
         if (ctx.animEventName.toLowerCase().includes("attack")) {
           const animKey = ctx.selfId + ":" + ctx.animEventName;
           if (allowedAnims.has(animKey)) {
+            printConsole(hookId + " pass anim " + ctx.animEventName + "; Deleting anim key = ", animKey);
             allowedAnims.delete(animKey);
           } else {
-            printConsole("block anim " + ctx.animEventName);
+            printConsole(hookId + " block anim " + ctx.animEventName + " anim key = ", animKey);
             return (ctx.animEventName = "");
           }
         }
@@ -336,4 +345,6 @@ export const setupHooks = (): void => {
     },
     leave: () => { },
   });
+
+  printConsole("!!! hookId", hookId);
 };

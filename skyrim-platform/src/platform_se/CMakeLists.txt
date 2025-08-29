@@ -153,6 +153,7 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
       string(APPEND def "${source_path} ")
     endforeach()
     target_compile_definitions(skyrim_platform PUBLIC PAPYRUS_SOURCES=\"${def}\")
+    target_compile_definitions(skyrim_platform PUBLIC NODE_WANT_INTERNALS=1)
 
     # cef_dir.txt is used by dev_service in any mode
     file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/cef_dir.txt "${CEF_SHARE}")

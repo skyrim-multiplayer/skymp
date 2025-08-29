@@ -296,15 +296,15 @@ CallNative::AnySafe CallNative::CallNativeSafe(Arguments& args_)
   stackIterator->second->top->self = AnySafeToVariable(self);
   stackIterator->second->top->size = numArgs;
 
-  bool isSendAnimEvent = (!stricmp(className.data(), "Debug") &&
-                          !stricmp(classFunc.data(), "sendAnimationEvent"));
-  if (isSendAnimEvent) {
-    std::vector<AnySafe> _args;
-    for (auto it = args; it < args + numArgs; it++)
-      _args.push_back(*it);
-    gameThrQ.AddTask([=](Viet::Void) { SendAnimationEvent::Run(_args); });
-    return ObjectPtr();
-  }
+  //bool isSendAnimEvent = (!stricmp(className.data(), "Debug") &&
+  //                        !stricmp(classFunc.data(), "sendAnimationEvent"));
+  //if (isSendAnimEvent) {
+  //  std::vector<AnySafe> _args;
+  //  for (auto it = args; it < args + numArgs; it++)
+  //    _args.push_back(*it);
+  //  gameThrQ.AddTask([=](Viet::Void) { SendAnimationEvent::Run(_args); });
+  //  return ObjectPtr();
+  //}
 
   bool isClearDestruction = (!stricmp(className.data(), "ObjectReference") &&
                              !stricmp(classFunc.data(), "ClearDestruction"));

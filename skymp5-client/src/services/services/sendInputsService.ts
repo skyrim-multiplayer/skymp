@@ -8,7 +8,7 @@ import { getMovement } from "../../sync/movementGet";
 import * as worldViewMisc from "../../view/worldViewMisc";
 
 import { Animation, AnimationSource } from "../../sync/animation";
-import { Actor, EquipEvent, FormType } from "skyrimPlatform";
+import { Actor, EquipEvent, FormType, printConsole } from "skyrimPlatform";
 import { getAppearance } from "../../sync/appearance";
 import { ActorValues, getActorValues } from "../../sync/actorvalues";
 import { getEquipment } from "../../sync/equipment";
@@ -210,6 +210,7 @@ export class SendInputsService extends ClientListener {
                     message,
                     reliability: "unreliable"
                 });
+                printConsole("send anim packet", message.data.animEventName)
             }
         }
     }

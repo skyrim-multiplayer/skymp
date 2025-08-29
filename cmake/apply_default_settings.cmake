@@ -19,6 +19,7 @@ function(apply_default_settings)
         /wd4551 # disable non critical frida warning
         /wd5104 # disable non critical winsdk warning
         /wd5105 # TODO: investigate and fix
+        /wd4267
         /MP
         /utf-8	# Set Source and Executable character sets to UTF-8
         /Zi	# Debug Information Format
