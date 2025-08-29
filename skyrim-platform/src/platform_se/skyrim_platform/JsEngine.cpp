@@ -104,7 +104,7 @@ void JsEngine::AcquireEnvAndCallImpl(const std::function<void(Napi::Env)>& f,
   }
 
   if (!pImpl->nodeInstance) {
-    spdlog::error("JsEngine::AcquireEnvAndCall() - NodeInstance is nullptr");
+    spdlog::error("JsEngine::AcquireEnvAndCallImpl() - NodeInstance is nullptr");
     return;
   }
 
@@ -129,7 +129,7 @@ void JsEngine::AcquireEnvAndCallImpl(const std::function<void(Napi::Env)>& f,
 
   if (executeScriptResult != 0) {
     spdlog::error(
-      "JsEngine::AcquireEnvAndCall() - Failed to execute script: {}",
+      "JsEngine::AcquireEnvAndCallImpl() - Failed to execute script: {}",
       GetError());
     return;
   }
@@ -139,12 +139,10 @@ void JsEngine::AcquireEnvAndCallImpl(const std::function<void(Napi::Env)>& f,
 
   if (!javaScriptError.empty()) {
     spdlog::error(
-      "JsEngine::AcquireEnvAndCall() - Rethrowing JavaScript error: {}",
+      "JsEngine::AcquireEnvAndCallImpl() - Rethrowing JavaScript error: {}",
       javaScriptError);
     throw std::runtime_error(javaScriptError);
   }
-
-  // spdlog::info("JsEngine::AcquireEnvAndCall() - Leave");
 }
 
 JsEngine::JsEngine()
