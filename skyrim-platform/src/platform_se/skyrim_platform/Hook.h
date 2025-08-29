@@ -8,7 +8,7 @@ struct HandlerInvocationInfo
   bool matchesCondition = false;
 };
 
-struct HookInvocationInfo //: public HandlerInvocationInfo
+struct HookInvocationInfo
 {
   std::unordered_map<Handler*, HandlerInvocationInfo>
   handlersInvocationInfo;

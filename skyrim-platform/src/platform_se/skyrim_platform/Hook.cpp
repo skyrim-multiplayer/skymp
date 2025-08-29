@@ -147,92 +147,18 @@ void Hook::SendPapyrusEventHandleEnter(uint32_t selfId, std::string& eventName)
     });*/
 }
 
-// void Hook::Enter(uint32_t selfId, std::string& eventName)
-//{
-//   addRemoveBlocker++;
-//   DWORD owningThread = GetCurrentThreadId();
-//
-//   if (hookName == "sendPapyrusEvent") {
-//     bool anyMatch = false;
-//     for (auto& hp : handlers) {
-//       auto* h = hp.second.get();
-//       if (h->Matches(selfId, eventName)) {
-//         anyMatch = true;
-//         break;
-//       }
-//     }
-//     if (!anyMatch) {
-//       return;
-//     }
-//
-//     return SkyrimPlatform::GetSingleton()->AddUpdateTask(
-//       [this, owningThread, selfId, eventName](Napi::Env env) {
-//         std::string s = eventName;
-//         HandleEnter(owningThread, selfId, s, env);
-//       });
-//   }
-//
-//   auto f = [&](Napi::Env env) {
-//     try {
-//       if (inProgressThreads.count(owningThread))
-//         throw std::runtime_error("'" + hookName + "' is already
-//         processing");
-//       inProgressThreads.insert(owningThread);
-//       HandleEnter(owningThread, selfId, eventName, env);
-//     } catch (std::exception& e) {
-//       auto err = std::string(e.what()) + " (while performing enter on '" +
-//         hookName + "')";
-//       SkyrimPlatform::GetSingleton()->AddUpdateTask(
-//         [err](Napi::Env) { throw std::runtime_error(err); });
-//     }
-//   };
-//   JsEngine::GetSingleton()->AcquireEnvAndCall(f, "HookEnter");
-//   addRemoveBlocker--;
-// }
-//
-// void Hook::Leave(bool succeeded)
-//{
-//   addRemoveBlocker++;
-//   DWORD owningThread = GetCurrentThreadId();
-//
-//   if (hookName == "sendPapyrusEvent") {
-//     return;
-//   }
-//
-//   auto f = [&](Napi::Env env) {
-//     try {
-//       if (!inProgressThreads.count(owningThread))
-//         throw std::runtime_error("'" + hookName + "' is not processing");
-//       inProgressThreads.erase(owningThread);
-//       HandleLeave(owningThread, succeeded, env);
-//
-//     } catch (std::exception& e) {
-//       std::string what = e.what();
-//       SkyrimPlatform::GetSingleton()->AddUpdateTask([what](Napi::Env) {
-//         throw std::runtime_error(what + " (in SendAnimationEventLeave)");
-//       });
-//     }
-//   };
-//
-//   JsEngine::GetSingleton()->AcquireEnvAndCall(f, "HookLeave");
-//   addRemoveBlocker--;
-// }
 
 void Hook::HandleEnter(HookInvocationInfo& hookInvocationInfo, uint32_t selfId,
                        std::string& eventName, const Napi::Env& env)
 {
-  // spdlog::warn("!!! HANDLE ENTER BEGIN {}", eventName);
-
   for (auto& hp : handlers) {
     const auto hId = hp.first;
     Handler* h = hp.second.get();
 
     auto& handlerInvocationInfo = hookInvocationInfo.handlersInvocationInfo[h];
-    /// auto& handlerInvocationInfo = hookInvocationInfo;
 
     handlerInvocationInfo.matchesCondition = h->Matches(selfId, eventName);
     if (!handlerInvocationInfo.matchesCondition) {
-      // spdlog::warn("!!! HANDLE ENTER {} -> CONDITION UNMATCHED", hId);
       continue;
     }
 
@@ -251,13 +177,8 @@ void Hook::HandleEnter(HookInvocationInfo& hookInvocationInfo, uint32_t selfId,
       handlerInvocationInfo.context->Value().As<Napi::Object>().Get(
         eventNameVariableName);
 
-    // spdlog::warn("!!! HANDLE ENTER {} -> {} => {}", hId, eventName,
-    //              updatedEventName.As<Napi::String>().Utf8Value());
-
     eventName = updatedEventName.As<Napi::String>().Utf8Value();
   }
-
-  // spdlog::warn("!!! HANDLE ENTER END");
 }
 
 void Hook::HandleLeave(HookInvocationInfo& hookInvocationInfo, bool succeeded,
@@ -267,7 +188,6 @@ void Hook::HandleLeave(HookInvocationInfo& hookInvocationInfo, bool succeeded,
     Handler* h = hp.second.get();
 
     auto& handlerInvocationInfo = hookInvocationInfo.handlersInvocationInfo[h];
-    /// auto& handlerInvocationInfo = hookInvocationInfo;
 
     if (!handlerInvocationInfo.matchesCondition) {
       continue;

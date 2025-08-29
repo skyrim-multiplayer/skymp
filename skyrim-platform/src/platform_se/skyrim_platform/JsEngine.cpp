@@ -108,13 +108,6 @@ void JsEngine::AcquireEnvAndCallImpl(const std::function<void(Napi::Env)>& f,
     return;
   }
 
-  /*if (pImpl->retrievedEnv.has_value()) {
-    f(*pImpl->retrievedEnv);
-    return;
-  }*/
-
-  ///// pImpl->preparedFunction = f;
-
   pImpl->nodeInstance->ClearJavaScriptError();
 
   std::string jsSrc = R"(
@@ -243,9 +236,6 @@ Napi::Value CallPreparedFunction(const Napi::CallbackInfo& info)
   // spdlog::info("CallPreparedFunction()");
 
   JsEngine::GetSingleton()->pImpl->retrievedEnv = info.Env();
-
-  // auto f = JsEngine::GetSingleton()->pImpl->preparedFunction;
-  // JsEngine::GetSingleton()->pImpl->preparedFunction = nullptr;
 
   auto f = JsEngine::GetSingleton()->pImpl->preparedFunctionsStack.top();
 

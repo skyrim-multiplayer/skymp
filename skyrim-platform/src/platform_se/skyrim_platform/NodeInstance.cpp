@@ -11,8 +11,6 @@
 #include <env-inl.h>
 #include <env.h>
 
-#include <js_native_api_v8.h>
-
 #include "NodeInstance.h"
 
 using namespace node;
@@ -300,9 +298,4 @@ const char* NodeInstance::GetJavaScriptError()
 void NodeInstance::ClearJavaScriptError()
 {
   g_javaScriptError.clear();
-}
-
-void* NodeInstance::CreateNapiEnv()
-{
-  return nullptr;
 }
