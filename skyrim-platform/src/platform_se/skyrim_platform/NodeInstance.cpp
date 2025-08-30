@@ -48,7 +48,6 @@ void RegisterReportError(Isolate* isolate, Local<Context> context)
 
 struct NodeInstance::Impl
 {
-  std::map<void*, std::shared_ptr<Isolate::CreateParams>> createParamsMap;
   std::map<void*, Isolate*> isolatesMap;
   std::map<void*, v8::Persistent<v8::Context>> contextsMap;
   std::unique_ptr<MultiIsolatePlatform> platform;
@@ -96,29 +95,14 @@ int NodeInstance::Init(int argc, char** argv)
 
 int NodeInstance::CreateEnvironment(int argc, char** argv, void** outEnv)
 {
-  // Create a v8::Platform instance. `MultiIsolatePlatform::Create()` is a way
-  // to create a v8::Platform instance that Node.js can use when creating
-  // Worker threads. When no `MultiIsolatePlatform` instance is present,
-  // Worker threads are disabled.
   pImpl->platform = MultiIsolatePlatform::Create(4);
   V8::InitializePlatform(pImpl->platform.get());
   V8::Initialize();
 
-  // Setup V8 isolate and context
-  // auto create_params = std::make_shared<Isolate::CreateParams>();
-  // create_params->array_buffer_allocator =
-  //   v8::ArrayBuffer::Allocator::NewDefaultAllocator();
-  // Isolate* isolate = Isolate::New(*create_params);
-  Isolate* isolate = Isolate::Allocate();
-  pImpl->platform->RegisterIsolate(isolate, uv_default_loop());
-  auto create_params = std::make_shared<Isolate::CreateParams>();
-
   std::shared_ptr<node::ArrayBufferAllocator> allocator =
     node::ArrayBufferAllocator::Create();
-  isolate = NewIsolate(allocator, uv_default_loop(), pImpl->platform.get());
-
-  // register the isolate with the platform
-  // platform->RegisterIsolate(isolate, uv_default_loop());
+  Isolate* isolate =
+    NewIsolate(allocator, uv_default_loop(), pImpl->platform.get());
 
   {
     // Setup scope and context
@@ -145,7 +129,7 @@ int NodeInstance::CreateEnvironment(int argc, char** argv, void** outEnv)
                           "+ '/'); globalThis.require = publicRequire;",
                           nullptr);
 
-    pImpl->createParamsMap[env] = create_params;
+    /// pImpl->createParamsMap[env] = create_params;
     pImpl->contextsMap[env].Reset(isolate,
                                   context); // Promote to Persistent and store
     pImpl->isolatesMap[env] = isolate;
@@ -179,17 +163,6 @@ int NodeInstance::DestroyEnvironment(void* env)
     isolate = nullptr;  // Null out the reference to avoid dangling pointers
   }
 
-  // Step 3: Optionally close the libuv loop if you're using one
-  // For example:
-  // uv_loop_close(uv_default_loop());  // Only if you created your own loop
-
-  auto create_params = pImpl->createParamsMap[env];
-
-  if (create_params) {
-    delete create_params->array_buffer_allocator;
-  }
-
-  pImpl->createParamsMap.erase(env);
   pImpl->contextsMap.erase(env);
   pImpl->isolatesMap.erase(env);
 
