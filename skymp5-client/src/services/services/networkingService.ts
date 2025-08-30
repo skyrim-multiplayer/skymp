@@ -11,7 +11,7 @@ import { SendRawMessageEvent } from "../events/sendRawMessageEvent";
 export class NetworkingService extends ClientListener {
   constructor(private sp: Sp, private controller: CombinedController) {
     super();
-    this.controller.on("tick", () => this.onTick());
+    this.controller.emitter.on("universalTick", (e) => this.onUniversalTick());
 
     this.controller.emitter.on("sendMessage", (e) => this.onSendMessage(e));
     this.controller.emitter.on("sendRawMessage", (e) => this.onSendRawMessage(e));
@@ -66,7 +66,7 @@ export class NetworkingService extends ClientListener {
     return this.sp.mpClientPlugin.isConnected();
   }
 
-  private onTick() {
+  private onUniversalTick() {
     this.sp.mpClientPlugin.tick((packetType, rawContent, error) => {
       switch (packetType) {
         case "connectionAccepted":
