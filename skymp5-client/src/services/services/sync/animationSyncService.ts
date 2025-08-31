@@ -7,6 +7,12 @@ import { getObjectReference } from "../../../view/worldViewMisc";
 import { FormViewFirstApplyAllEvent } from "../../../services/events/formViewFirstApplyAllEvent";
 import { UniversalTickService } from "../universalTickService";
 import { ConnectionMessage } from "../../../services/events/connectionMessage";
+import { printConsole, SendAnimationEventHook } from "skyrimPlatform";
+import { MsgType } from "../../../messages";
+import { MessageWithRefrId } from "../../../services/events/sendMessageWithRefrIdEvent";
+
+// TODO: refactor this out
+import * as worldViewMisc from "../../../view/worldViewMisc";
 
 export class AnimationSyncService extends ClientListener {
 
@@ -17,6 +23,73 @@ export class AnimationSyncService extends ClientListener {
         this.controller.emitter.on("formViewFirstApplyAll", (e) => this.onFormViewFirstApplyAll(e));
 
         this.controller.on("tick", () => this.onTick());
+
+        this.sp.hooks.sendAnimationEvent.add({
+            enter: () => { },
+            leave: (ctx) => { this.onSendAnimationEventLeave(ctx); },
+        });
+    }
+
+    private onSendAnimationEventLeave(ctx: SendAnimationEventHook.LeaveContext) {
+        const hostedUnknown = this.sp.storage['hosted'];
+        const hosted: unknown[] = Array.isArray(hostedUnknown) ? hostedUnknown : [];
+        const _refrId: number | undefined = ctx.selfId === 0x14 ? undefined : worldViewMisc.localIdToRemoteId(ctx.selfId);
+
+        // Do not further process if not us and not our hosted refrs
+        if (_refrId === 0) {
+            // localIdToRemoteId returns 0 for unknown refs
+            return;
+        }
+        if (typeof _refrId === "number" && !hosted.includes(_refrId) && !hosted.includes(_refrId + 0x100000000)) {
+            return;
+        }
+
+        let animEventName = ctx.animEventName;
+
+        // Skip non-successful animations
+        if (!ctx.animationSucceeded) {
+            // Workaround, see carryAnimSystem.ts in gamemode
+            // Case-sensetive check here for better performance
+            if (animEventName !== "OffsetCarryBasketStart") {
+                return;
+            }
+        }
+
+        if (animEventName === "moveStart"
+            || animEventName === "moveStop"
+            || animEventName === "turnStop"
+            || animEventName === "CyclicCrossBlend"
+            || animEventName === "CyclicFreeze"
+            || animEventName === "TurnLeft"
+            || animEventName === "TurnRight") {
+            return;
+        }
+
+        const lower = animEventName.toLowerCase();
+
+        const isTorchEvent = lower.includes("torch");
+        if (lower.includes("unequip") && !isTorchEvent) {
+            animEventName = "SkympFakeUnequip";
+        } else if (lower.includes("equip") && !isTorchEvent) {
+            animEventName = "SkympFakeEquip";
+        }
+
+        // Drink potion anim from this mod https://www.nexusmods.com/skyrimspecialedition/mods/97660
+        if (animEventName !== '' && !animEventName.startsWith("DrinkPotion_")) {
+            //this.updateActorValuesAfterAnimation(animEventName);
+            const message: MessageWithRefrId<UpdateAnimationMessage> = {
+                t: MsgType.UpdateAnimation,
+                data: {
+                    animEventName: animEventName,
+                    numChanges: 0
+                },
+                _refrId
+            };
+            this.controller.emitter.emit("sendMessageWithRefrId", {
+                message,
+                reliability: "unreliable"
+            });
+        }
     }
 
     private onTick() {
@@ -59,7 +132,7 @@ export class AnimationSyncService extends ClientListener {
         // Apply immediately
         const apply = () => {
             const id = ("idx" in msg && typeof msg.idx === "number") ? idManager.getId(msg.idx) : remoteServer.getMyActorIndex();
-            const refr = /*id === remoteServer.getMyActorIndex() ? this.sp.Game.getPlayer() :*/ getObjectReference(id);
+            const refr = getObjectReference(id);
             const actor = this.sp.Actor.from(refr);
 
             if (!actor) {
