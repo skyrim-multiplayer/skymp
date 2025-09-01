@@ -11,6 +11,7 @@ import { ChangeValuesMessage } from "../../../services/messages/changeValuesMess
 import { DeathService } from "../deathService";
 import { SendInputsService } from "../sendInputsService";
 
+// TODO: port onChangeValuesMessage here from RemoteServer
 export class ActorValuesSyncService extends ClientListener {
 
     constructor(private sp: Sp, private controller: CombinedController) {
