@@ -147,7 +147,6 @@ void Hook::SendPapyrusEventHandleEnter(uint32_t selfId, std::string& eventName)
     });*/
 }
 
-
 void Hook::HandleEnter(HookInvocationInfo& hookInvocationInfo, uint32_t selfId,
                        std::string& eventName, const Napi::Env& env)
 {

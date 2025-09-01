@@ -5,20 +5,46 @@
 #include "NodeInstance.h"
 #include "ScopedTask.h"
 
+namespace {
+enum V8ScriptId : uint16_t
+{
+  V8SCRIPT_INIT_SKYRIM_PLATFORM,
+  V8SCRIPT_CALL_PREPARED_FUNCTION,
+};
+
+constexpr auto kInitSkyrimPlatformScript = R"(
+    try {
+      const nodeProcess = require('node:process');
+      const module = { exports: {} };
+
+      nodeProcess.dlopen(module, 'Data/Platform/Distribution/RuntimeDependencies/SkyrimPlatformImpl.dll');
+
+      globalThis.skyrimPlatformNativeAddon = module.exports;
+    } catch (e) { 
+      reportError(e.toString());
+    }
+  )";
+
+constexpr auto kCallPreparedFunctionSсript = R"(
+    try {
+      skyrimPlatformNativeAddon.callPreparedFunction();
+    } catch (e) { 
+      reportError(e.toString());
+    }
+  )";
+}
+
 struct JsEngine::Impl
 {
   void* env = nullptr;
 
   std::vector<char*> argv;
   int argc = 0;
-
   char nodejsArgv0[5] = "node";
 
   std::unique_ptr<NodeInstance> nodeInstance;
-
   std::stack<std::function<void(Napi::Env)>> preparedFunctionsStack;
   int depth = 0;
-
   std::optional<Napi::Env> retrievedEnv;
 
   std::recursive_mutex m;
@@ -60,22 +86,8 @@ void JsEngine::AcquireEnvAndCall(const std::function<void(Napi::Env)>& f,
 
   pImpl->nodeInstance->ClearJavaScriptError();
 
-  std::string jsSrc = R"(
-    try {
-      skyrimPlatformNativeAddon.callPreparedFunction(%%%%);
-    } catch (e) { 
-      reportError(e.toString())
-    }
-  )";
-  std::string from = "%%%%";
-
-  size_t pos = jsSrc.find(from);
-  if (pos != std::string::npos) {
-    jsSrc.replace(pos, from.length(), nlohmann::json(comment).dump());
-  }
-
-  int executeScriptResult =
-    pImpl->nodeInstance->ExecuteScript(pImpl->env, jsSrc.data());
+  int executeScriptResult = pImpl->nodeInstance->ExecuteScript(
+    pImpl->env, V8SCRIPT_CALL_PREPARED_FUNCTION);
 
   if (executeScriptResult != 0) {
     spdlog::error(
@@ -166,25 +178,41 @@ JsEngine::JsEngine()
 
   spdlog::info("JsEngine::JsEngine() - Environment created");
 
-  spdlog::info("JsEngine::JsEngine() - Executing script");
+  spdlog::info(
+    "JsEngine::JsEngine() - Copmpiling script V8SCRIPT_INIT_SKYRIM_PLATFORM");
 
   pImpl->nodeInstance->ClearJavaScriptError();
 
-  int executeResult = pImpl->nodeInstance->ExecuteScript(pImpl->env, R"(
-    try {
-      const nodeProcess = require('node:process');
-      const module = { exports: {} };
-      //require('./scam_native.node');
-      nodeProcess.dlopen(module, 'Data/Platform/Distribution/RuntimeDependencies/SkyrimPlatformImpl.dll');
+  int compileResult = pImpl->nodeInstance->CompileScript(
+    pImpl->env, kInitSkyrimPlatformScript, V8SCRIPT_INIT_SKYRIM_PLATFORM);
+  if (compileResult != 0) {
+    spdlog::error("JsEngine::JsEngine() - Failed to compile script: {}",
+                  GetError());
+    pImpl->nodeInstance.reset();
+    return;
+  }
 
-      //module.exports.helloAddon();
+  spdlog::info("JsEngine::JsEngine() - Copmpiling script "
+               "V8SCRIPT_CALL_PREPARED_FUNCTION");
 
-      globalThis.skyrimPlatformNativeAddon = module.exports;
-    } catch (e) { 
-      reportError(e.toString())
-    }
-  )");
+  pImpl->nodeInstance->ClearJavaScriptError();
 
+  compileResult = pImpl->nodeInstance->CompileScript(
+    pImpl->env, kCallPreparedFunctionSсript, V8SCRIPT_CALL_PREPARED_FUNCTION);
+  if (compileResult != 0) {
+    spdlog::error("JsEngine::JsEngine() - Failed to compile script: {}",
+                  GetError());
+    pImpl->nodeInstance.reset();
+    return;
+  }
+
+  spdlog::info(
+    "JsEngine::JsEngine() - Executing script V8SCRIPT_INIT_SKYRIM_PLATFORM");
+
+  pImpl->nodeInstance->ClearJavaScriptError();
+
+  int executeResult = pImpl->nodeInstance->ExecuteScript(
+    pImpl->env, V8SCRIPT_INIT_SKYRIM_PLATFORM);
   if (executeResult != 0) {
     spdlog::error("JsEngine::JsEngine() - Failed to execute script: {}",
                   GetError());
@@ -193,7 +221,10 @@ JsEngine::JsEngine()
   }
 
   std::string javaScriptError = pImpl->nodeInstance->GetJavaScriptError();
-  spdlog::info("JsEngine::JsEngine() - JavaScript error: {}", javaScriptError);
+  if (!javaScriptError.empty()) {
+    spdlog::info("JsEngine::JsEngine() - JavaScript error: {}",
+                 javaScriptError);
+  }
   pImpl->nodeInstance->ClearJavaScriptError();
 
   spdlog::info("JsEngine::JsEngine() - Script executed");
@@ -216,8 +247,6 @@ std::string JsEngine::GetError()
 
 Napi::Value CallPreparedFunction(const Napi::CallbackInfo& info)
 {
-  // spdlog::info("CallPreparedFunction()");
-
   JsEngine::GetSingleton()->pImpl->retrievedEnv = info.Env();
 
   auto f = JsEngine::GetSingleton()->pImpl->preparedFunctionsStack.top();
@@ -225,10 +254,7 @@ Napi::Value CallPreparedFunction(const Napi::CallbackInfo& info)
   if (f) {
     f(info.Env());
   } else {
-    auto comment = static_cast<std::string>(info[0].ToString());
-    spdlog::error(
-      "CallPreparedFunction() - Prepared function is not set, comment={}",
-      comment);
+    spdlog::error("CallPreparedFunction() - Prepared function is not set");
   }
 
   return info.Env().Undefined();

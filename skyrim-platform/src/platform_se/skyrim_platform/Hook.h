@@ -10,8 +10,7 @@ struct HandlerInvocationInfo
 
 struct HookInvocationInfo
 {
-  std::unordered_map<Handler*, HandlerInvocationInfo>
-  handlersInvocationInfo;
+  std::unordered_map<Handler*, HandlerInvocationInfo> handlersInvocationInfo;
 };
 
 class Hook

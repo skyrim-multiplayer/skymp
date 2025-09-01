@@ -50,6 +50,7 @@ struct NodeInstance::Impl
 {
   std::map<void*, Isolate*> isolatesMap;
   std::map<void*, v8::Persistent<v8::Context>> contextsMap;
+  std::vector<std::unique_ptr<v8::Persistent<v8::Script>>> compiledScripts;
   std::unique_ptr<MultiIsolatePlatform> platform;
   std::string error;
 };
@@ -191,15 +192,11 @@ int NodeInstance::Tick(void* env)
   return 0; // Success
 }
 
-int NodeInstance::ExecuteScript(void* env, const char* script)
+int NodeInstance::CompileScript(void* env, const char* script,
+                                uint16_t scriptId)
 {
-  if (!env) {
-    pImpl->error = "No env";
-    return -1;
-  }
-
-  if (!script) {
-    pImpl->error = "No script";
+  if (!env || !script) {
+    pImpl->error = "Invalid arguments";
     return -1;
   }
 
@@ -216,11 +213,10 @@ int NodeInstance::ExecuteScript(void* env, const char* script)
   Local<Context> context = contextPersistent.Get(isolate);
   Context::Scope context_scope(context);
 
+  TryCatch try_catch(isolate);
+
   Local<String> source = String::NewFromUtf8(isolate, script).ToLocalChecked();
   Local<Script> compiled_script;
-
-  // Use TryCatch to handle any exceptions that might occur
-  TryCatch try_catch(isolate);
 
   if (!Script::Compile(context, source).ToLocal(&compiled_script)) {
     String::Utf8Value error(isolate, try_catch.Exception());
@@ -228,17 +224,49 @@ int NodeInstance::ExecuteScript(void* env, const char* script)
     return -1;
   }
 
-  // Execute script and catch potential runtime exceptions
-  MaybeLocal<Value> maybeResult = compiled_script->Run(context);
+  if (pImpl->compiledScripts.size() <= scriptId) {
+    pImpl->compiledScripts.resize(scriptId + 1);
+  }
+  pImpl->compiledScripts[scriptId] =
+    std::make_unique<v8::Persistent<v8::Script>>();
+  pImpl->compiledScripts[scriptId]->Reset(isolate, compiled_script);
 
-  if (!maybeResult.IsEmpty()) {
-    Local<Value> result;
-    if (!maybeResult.ToLocal(&result)) {
-      String::Utf8Value error(isolate, try_catch.Exception());
-      pImpl->error = *error ? *error : "Unknown runtime error";
-      return -1;
-    }
-  } else {
+  pImpl->error = "Success";
+  return 0;
+}
+
+int NodeInstance::ExecuteScript(void* env, uint16_t scriptId)
+{
+  if (!env) {
+    pImpl->error = "Invalid arguments";
+    return -1;
+  }
+
+  Isolate* isolate = pImpl->isolatesMap[env];
+  if (!isolate) {
+    pImpl->error = "No isolate";
+    return -1;
+  }
+
+  if (pImpl->compiledScripts.size() <= static_cast<size_t>(scriptId) ||
+      !pImpl->compiledScripts[scriptId]) {
+    pImpl->error = "Script with id " + std::to_string(scriptId) + " not found";
+    return -1;
+  }
+
+  Isolate::Scope isolate_scope(isolate);
+  HandleScope handle_scope(isolate);
+
+  auto& contextPersistent = pImpl->contextsMap[env];
+  Local<Context> context = contextPersistent.Get(isolate);
+  Context::Scope context_scope(context);
+
+  TryCatch try_catch(isolate);
+
+  Local<Script> compiledScript =
+    pImpl->compiledScripts[scriptId]->Get(isolate);
+
+  if (compiledScript->Run(context).IsEmpty()) {
     String::Utf8Value error(isolate, try_catch.Exception());
     pImpl->error = *error ? *error : "Unknown runtime error";
     return -1;
