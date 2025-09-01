@@ -4,7 +4,6 @@ import {
   Debug,
   hooks,
   Actor,
-  printConsole,
   Utility,
   Game,
   storage,
@@ -171,7 +170,6 @@ export const applyAnimation = (
     }
   }
 
-  printConsole("!!!! Play anim " + anim.animEventName);
   Debug.sendAnimationEvent(refr, anim.animEventName);
 
   if (anim.animEventName === "GetUpBegin") {
