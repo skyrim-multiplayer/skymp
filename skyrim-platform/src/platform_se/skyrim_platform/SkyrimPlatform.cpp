@@ -80,7 +80,8 @@ public:
   {
     try {
       GetJsEngine()->AcquireEnvAndCall(
-        [this](Napi::Env env) { TickImpl(env); });
+        [this](Napi::Env env) { TickImpl(env); },
+        "CommonExecutionListener_Tick");
     } catch (const std::exception& e) {
       ExceptionPrinter::Print(e);
     }
@@ -90,7 +91,8 @@ public:
   {
     try {
       GetJsEngine()->AcquireEnvAndCall(
-        [this](Napi::Env env) { UpdateImpl(env); });
+        [this](Napi::Env env) { UpdateImpl(env); },
+        "CommonExecutionListener_Update");
     } catch (const std::exception& e) {
       ExceptionPrinter::Print(e);
     }
@@ -366,33 +368,12 @@ private:
 };
 }
 
-typedef asio::executor_work_guard<asio::io_context::executor_type> SPWorkGuard;
-
 struct SkyrimPlatform::Impl
 {
   std::shared_ptr<CommonExecutionListener> commonExecutionListener;
   std::shared_ptr<BrowserApi::State> browserApiState;
   std::vector<std::shared_ptr<TickListener>> tickListeners;
   Viet::TaskQueue<Napi::Env> tickTasks, updateTasks;
-  ThreadPoolWrapper pool;
-
-  // Stuff needed to push functions from js to game thread
-  asio::io_context ioContext;
-  std::mutex syncLock;
-  std::condition_variable conditionalVariable;
-  bool complete;
-  std::shared_ptr<SPWorkGuard> workGuard;
-  void RunInIOContext(RE::BSTSmartPointer<RE::BSScript::IFunction> fPtr,
-                      const RE::BSTSmartPointer<RE::BSScript::Stack>& stack,
-                      RE::BSScript::ErrorLogger* logger,
-                      RE::BSScript::Internal::VirtualMachine* vm,
-                      RE::BSScript::IFunction::CallResult* ret)
-  {
-    *ret = fPtr->Call(stack, logger, vm, false);
-    std::lock_guard<std::mutex> lock(syncLock);
-    complete = true;
-    conditionalVariable.notify_all();
-  }
 };
 
 SkyrimPlatform::SkyrimPlatform()
@@ -405,7 +386,6 @@ SkyrimPlatform::SkyrimPlatform()
 
   pImpl->tickListeners.push_back(std::make_shared<HelloTickListener>());
   pImpl->tickListeners.push_back(pImpl->commonExecutionListener);
-  pImpl->complete = false;
 }
 
 SkyrimPlatform* SkyrimPlatform::GetSingleton()
@@ -448,20 +428,29 @@ void SkyrimPlatform::AddUpdateTask(const std::function<void(Napi::Env)>& f)
   pImpl->updateTasks.AddTask(f);
 }
 
-void SkyrimPlatform::PushAndWait(const std::function<void(Napi::Env)>& f)
+void SkyrimPlatform::RunTask(const std::function<void(Napi::Env)>& f)
 {
-  pImpl->pool.PushAndWait([this, f] {
-    auto engine = pImpl->commonExecutionListener->GetJsEngine();
-    engine->AcquireEnvAndCall(f);
-  });
+  auto engine = pImpl->commonExecutionListener->GetJsEngine();
+  engine->AcquireEnvAndCall(f, "SkyrimPlatform_RunTask");
 }
 
-void SkyrimPlatform::Push(const std::function<void(Napi::Env)>& f)
+std::future<void> SkyrimPlatform::QueueTask(
+  const std::function<void(Napi::Env env)>& task)
 {
-  pImpl->pool.Push([this, f] {
-    auto engine = pImpl->commonExecutionListener->GetJsEngine();
-    engine->AcquireEnvAndCall(f);
+  std::shared_ptr<std::promise<void>> promise =
+    std::make_shared<std::promise<void>>();
+  std::future<void> future = promise->get_future();
+
+  pImpl->tickTasks.AddTask([task, promise](Napi::Env env) {
+    try {
+      task(env);
+      promise->set_value();
+    } catch (...) {
+      promise->set_exception(std::current_exception());
+    }
   });
+
+  return future;
 }
 
 void SkyrimPlatform::PushToWorkerAndWait(
@@ -471,30 +460,5 @@ void SkyrimPlatform::PushToWorkerAndWait(
   RE::BSScript::Internal::VirtualMachine* vm,
   RE::BSScript::IFunction::CallResult* ret)
 {
-  std::unique_lock<std::mutex> lock(pImpl->syncLock);
-  pImpl->complete = false;
-  asio::post(
-    pImpl->ioContext.get_executor(),
-    std::bind(&Impl::RunInIOContext, pImpl, fPtr, stack, logger, vm, ret));
-  pImpl->conditionalVariable.wait(
-    lock, [] { return SkyrimPlatform::GetSingleton()->pImpl->complete; });
-}
-
-void SkyrimPlatform::PrepareWorker()
-{
-  if (pImpl->ioContext.stopped()) {
-    pImpl->ioContext.restart();
-  }
-  pImpl->workGuard =
-    std::make_shared<SPWorkGuard>(pImpl->ioContext.get_executor());
-}
-
-void SkyrimPlatform::StartWorker()
-{
-  pImpl->ioContext.run();
-}
-
-void SkyrimPlatform::StopWorker()
-{
-  pImpl->ioContext.stop();
+  *ret = fPtr->Call(stack, logger, vm, false);
 }

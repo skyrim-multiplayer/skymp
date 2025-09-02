@@ -54,6 +54,9 @@ import { ProfilingService } from "./services/services/profilingService";
 import { SettingsService } from "./services/services/settingsService";
 import { SweetCameraEnforcementService } from "./services/services/sweetCameraEnforcementService";
 import { SweetTaffyNicknamesService } from "./services/services/sweetTaffyNicknamesService";
+import { UniversalTickService } from "./services/services/universalTickService";
+import { AnimationSyncService } from "./services/services/sync/animationSyncService";
+import { ActorValuesSyncService } from "./services/services/sync/actorValuesSyncService";
 
 once("update", () => {
   Utility.setINIBool("bAlwaysActive:General", true);
@@ -112,6 +115,9 @@ const main = () => {
       new MagicSyncService(sp, controller),
       new ProfilingService(sp, controller),
       new SweetTaffyNicknamesService(sp, controller),
+      new UniversalTickService(sp, controller),
+      new AnimationSyncService(sp, controller),
+      new ActorValuesSyncService(sp, controller),
     ];
     SpApiInteractor.setup(listeners);
   } catch (e) {

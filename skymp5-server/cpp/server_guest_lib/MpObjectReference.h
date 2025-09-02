@@ -264,11 +264,11 @@ private:
 protected:
   void BeforeDestroy() override;
   UpdatePropertyMessage CreatePropertyMessage_(MpObjectReference* self,
-                                              const char* name,
-                                              const std::string& valueDump);
-  UpdatePropertyMessage PreparePropertyMessage_(MpObjectReference* self,
                                                const char* name,
                                                const std::string& valueDump);
+  UpdatePropertyMessage PreparePropertyMessage_(MpObjectReference* self,
+                                                const char* name,
+                                                const std::string& valueDump);
 
   const std::shared_ptr<FormCallbacks> callbacks;
 };

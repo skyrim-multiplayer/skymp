@@ -25,7 +25,8 @@ public:
 
   ~JsEngine();
 
-  void AcquireEnvAndCall(const std::function<void(Napi::Env)>& f);
+  void AcquireEnvAndCall(const std::function<void(Napi::Env)>& f,
+                         const char* comment);
   Napi::Value RunScript(Napi::Env env, const std::string& src,
                         const std::string&);
   void ResetContext(Viet::TaskQueue<Napi::Env>&);

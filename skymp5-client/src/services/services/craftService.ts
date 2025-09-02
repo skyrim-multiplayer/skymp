@@ -9,6 +9,7 @@ import { logTrace, logError } from "../../logging";
 
 type FurnitureId = number;
 
+// TODO: https://www.reddit.com/r/skyrimmods/comments/nbv0i9/skse_ui_script_and_skyui_path_targets_for_uigetint/
 export class CraftService extends ClientListener {
     constructor(private sp: Sp, private controller: CombinedController) {
         super();

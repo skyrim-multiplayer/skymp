@@ -7,22 +7,15 @@ import { getMovement } from "../../sync/movementGet";
 // TODO: refactor this out
 import * as worldViewMisc from "../../view/worldViewMisc";
 
-import { Animation, AnimationSource } from "../../sync/animation";
 import { Actor, EquipEvent, FormType } from "skyrimPlatform";
 import { getAppearance } from "../../sync/appearance";
-import { ActorValues, getActorValues } from "../../sync/actorvalues";
 import { getEquipment } from "../../sync/equipment";
 import { nextHostAttempt } from "../../view/hostAttempts";
-import { SkympClient } from "./skympClient";
 import { MessageWithRefrId } from "../events/sendMessageWithRefrIdEvent";
 import { UpdateMovementMessage } from "../messages/updateMovementMessage";
-import { ChangeValuesMessage } from "../messages/changeValuesMessage";
-import { UpdateAnimationMessage } from "../messages/updateAnimationMessage";
 import { UpdateEquipmentMessage } from "../messages/updateEquipmentMessage";
 import { UpdateAppearanceMessage } from "../messages/updateAppearanceMessage";
 import { RemoteServer } from "./remoteServer";
-import { DeathService } from "./deathService";
-import { logTrace } from "../../logging";
 
 const playerFormId = 0x14;
 
@@ -93,10 +86,8 @@ export class SendInputsService extends ClientListener {
         targets.forEach((target) => {
             const targetFormModel = target ? this.getForm(target, world) : this.getForm(undefined, world);
             this.sendMovement(target, targetFormModel);
-            this.sendAnimation(target);
             this.sendAppearance(target);
             this.sendEquipment(target);
-            this.sendActorValuePercentage(target, targetFormModel);
         });
         this.sendHostAttempts();
     }
@@ -122,95 +113,6 @@ export class SendInputsService extends ClientListener {
                 reliability: "unreliable"
             });
             this.lastSendMovementMoment.set(refrIdStr, now);
-        }
-    }
-
-    private sendActorValuePercentage(_refrId?: number, form?: FormModel) {
-        const canSend = form && (form.isDead ?? false) === false;
-        if (!canSend) {
-          return;
-        }
-
-        const owner = this.getInputOwner(_refrId);
-        if (!owner) {
-          return;
-        }
-
-        const av = getActorValues(this.sp.Game.getPlayer() as Actor);
-        const currentTime = Date.now();
-        if (
-            this.actorValuesNeedUpdate === false &&
-            this.prevValues.health === av.health &&
-            this.prevValues.stamina === av.stamina &&
-            this.prevValues.magicka === av.magicka
-        ) {
-            return;
-        }
-
-
-        if (
-            currentTime - this.prevActorValuesUpdateTime < 2000 &&
-            this.actorValuesNeedUpdate === false
-        ) {
-            return;
-        }
-
-        const deathService = this.controller.lookupListener(DeathService);
-        if (deathService.isBusy()) {
-            logTrace(this, "Not sending actor values, death service is busy");
-            return;
-        }
-
-        const message: MessageWithRefrId<ChangeValuesMessage> = {
-            t: MsgType.ChangeValues,
-            data: av,
-            _refrId
-        };
-        this.controller.emitter.emit("sendMessageWithRefrId", {
-            message,
-            reliability: "unreliable"
-        });
-        this.actorValuesNeedUpdate = false;
-        this.prevValues = av;
-        this.prevActorValuesUpdateTime = currentTime;
-
-    }
-
-    private sendAnimation(_refrId?: number) {
-        const owner = this.getInputOwner(_refrId);
-        if (!owner) {
-          return;
-        }
-
-        // Extermly important that it's a local id since AnimationSource depends on it
-        const refrIdStr = owner.getFormID().toString(16);
-
-        let animSource = this.playerAnimSource.get(refrIdStr);
-        if (!animSource) {
-            animSource = new AnimationSource(owner);
-            this.playerAnimSource.set(refrIdStr, animSource);
-        }
-        const anim = animSource.getAnimation();
-
-        const lastAnimationSent = this.lastAnimationSent.get(refrIdStr);
-        if (
-            !lastAnimationSent ||
-            anim.numChanges !== lastAnimationSent.numChanges
-        ) {
-            // Drink potion anim from this mod https://www.nexusmods.com/skyrimspecialedition/mods/97660
-            if (anim.animEventName !== '' && !anim.animEventName.startsWith("DrinkPotion_")) {
-                this.lastAnimationSent.set(refrIdStr, anim);
-                this.updateActorValuesAfterAnimation(anim.animEventName);
-                const message: MessageWithRefrId<UpdateAnimationMessage> = {
-                    t: MsgType.UpdateAnimation,
-                    data: anim,
-                    _refrId
-                };
-                this.controller.emitter.emit("sendMessageWithRefrId", {
-                    message,
-                    reliability: "unreliable"
-                });
-            }
         }
     }
 
@@ -280,27 +182,17 @@ export class SendInputsService extends ClientListener {
         });
     }
 
-    private getInputOwner(_refrId?: number) {
+    getInputOwner(_refrId?: number) {
         return _refrId
             ? this.sp.Actor.from(this.sp.Game.getFormEx(worldViewMisc.remoteIdToLocalId(_refrId)))
             : this.sp.Game.getPlayer();
     }
 
-    private getForm(refrId: number | undefined, world: WorldModel): FormModel | undefined {
+    getForm(refrId: number | undefined, world: WorldModel): FormModel | undefined {
         const form = refrId
             ? world?.forms.find((f) => f?.refrId === refrId)
             : world.forms[world.playerCharacterFormIdx];
         return form;
-    }
-
-    private updateActorValuesAfterAnimation(animName: string) {
-        if (
-            animName === 'JumpLand' ||
-            animName === 'JumpLandDirectional' ||
-            animName === 'DeathAnim'
-        ) {
-            this.actorValuesNeedUpdate = true;
-        }
     }
 
     private get singlePlayerService() {
@@ -308,12 +200,7 @@ export class SendInputsService extends ClientListener {
     }
 
     private lastSendMovementMoment = new Map<string, number>();
-    private playerAnimSource = new Map<string, AnimationSource>(); // TODO: make service
-    private lastAnimationSent = new Map<string, Animation>();
-    private actorValuesNeedUpdate = false;
     private isRaceSexMenuShown = false;
     private equipmentChanged = false;
     private numEquipmentChanges = 0;
-    private prevValues: ActorValues = { health: 0, stamina: 0, magicka: 0 };
-    private prevActorValuesUpdateTime = 0;
 }
