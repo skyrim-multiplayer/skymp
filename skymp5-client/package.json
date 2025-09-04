@@ -18,7 +18,7 @@
   },
   "keywords": [
     "skyrim",
-    "skryim platform"
+    "skyrim platform"
   ],
   "dependencies": {
     "@skyrim-platform/skyrim-platform": "2.8.0",
