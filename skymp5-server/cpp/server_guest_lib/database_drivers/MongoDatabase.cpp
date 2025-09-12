@@ -84,7 +84,7 @@ std::vector<std::optional<MpChangeForm>>&& MongoDatabase::UpsertImpl(
       filter["formDesc"] = changeForm->formDesc.ToString();
 
       auto upd = nlohmann::json::object();
-      upd["$set"] = jChangeForm;
+      upd["$set"] = SanitizeJson(jChangeForm);
 
       bulk.append(mongocxx::model::update_one(
                     { std::move(bsoncxx::from_json(filter.dump())),
@@ -212,13 +212,25 @@ void MongoDatabase::Iterate(const IterateCallback& iterateCallback)
 
     auto documentsJsonArray = threadsDocumentsJsonArray[i];
 
-    simdjson::dom::parser p;
+    simdjson::dom::parser p, p2;
     auto allDocs = p.parse(documentsJsonArray).value();
 
     auto documentAsArray = allDocs.get_array();
 
     for (auto document : documentAsArray) {
-      auto changeForm = MpChangeForm::JsonToChangeForm(document);
+      std::optional<nlohmann::json> restoredDocument =
+        RestoreSanitizedJson(document);
+
+      MpChangeFormREFR changeForm;
+
+      if (restoredDocument.has_value()) {
+        std::string restoredDocumentDump = restoredDocument->dump();
+        auto restoredDocumentSimdjson =
+          p2.parse(restoredDocumentDump.data()).value();
+        changeForm = MpChangeForm::JsonToChangeForm(restoredDocumentSimdjson);
+      } else {
+        changeForm = MpChangeForm::JsonToChangeForm(document);
+      }
 
       iterateCallback(changeForm);
 
@@ -301,6 +313,17 @@ std::string MongoDatabase::Sha256(const std::string& str)
   uint8_t hash[SHA256_DIGEST_LENGTH];
   SHA256(reinterpret_cast<const uint8_t*>(str.data()), str.size(), hash);
   return BytesToHexString(hash, SHA256_DIGEST_LENGTH);
+}
+
+nlohmann::json MongoDatabase::SanitizeJson(const nlohmann::json& j)
+{
+  // TODO
+}
+
+std::optional<nlohmann::json> MongoDatabase::RestoreSanitizedJson(
+  simdjson::dom::element& jSanitized)
+{
+  // TODO
 }
 
 #endif // #ifndef NO_MONGO

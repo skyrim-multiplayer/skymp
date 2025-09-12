@@ -19,6 +19,10 @@ private:
   std::string BytesToHexString(const uint8_t* bytes, size_t length);
   std::string Sha256(const std::string& str);
 
+  nlohmann::json SanitizeJson(const nlohmann::json& j);
+  std::optional<nlohmann::json> RestoreSanitizedJson(
+    simdjson::dom::element& jSanitized);
+
   struct Impl;
   std::shared_ptr<Impl> pImpl;
 };
