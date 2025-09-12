@@ -20,7 +20,7 @@
 #include <mutex>
 #include <nlohmann/json.hpp>
 #include <openssl/sha.h>
-#include <simdjson.h> // For simdjson::dom::element
+#include <simdjson.h>
 #include <spdlog/spdlog.h>
 #include <thread>
 #include <vector>
