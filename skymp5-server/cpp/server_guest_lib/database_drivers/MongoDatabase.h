@@ -23,8 +23,8 @@ private:
   std::optional<std::string> SanitizeKey(const std::string& key);
   nlohmann::json SanitizeJsonRecursive(const nlohmann::json& j);
   nlohmann::json RestoreSanitizedJsonRecursive(simdjson::dom::element element,
-                                               bool& restored)
+                                               bool& restored);
 
-    struct Impl;
+  struct Impl;
   std::shared_ptr<Impl> pImpl;
 };
