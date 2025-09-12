@@ -1,6 +1,8 @@
 #pragma once
 #include "IDatabase.h"
 #include <memory>
+#include <nlohmann/json.hpp>
+#include <simdjson.h>
 
 class IKeySanitizer
 {
