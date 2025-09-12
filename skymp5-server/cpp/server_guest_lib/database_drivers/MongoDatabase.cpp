@@ -88,7 +88,7 @@ std::vector<std::optional<MpChangeForm>>&& MongoDatabase::UpsertImpl(
       filter["formDesc"] = changeForm->formDesc.ToString();
 
       auto upd = nlohmann::json::object();
-      upd["$set"] = SanitizeJson(jChangeForm);
+      upd["$set"] = SanitizeJsonRecursive(jChangeForm);
 
       bulk.append(mongocxx::model::update_one(
                     { std::move(bsoncxx::from_json(filter.dump())),
@@ -222,12 +222,13 @@ void MongoDatabase::Iterate(const IterateCallback& iterateCallback)
     auto documentAsArray = allDocs.get_array();
 
     for (auto document : documentAsArray) {
-      std::optional<nlohmann::json> restoredDocument =
-        RestoreSanitizedJson(document);
+      bool restored = false;
+      nlohmann::json restoredDocument =
+        RestoreSanitizedJsonRecursive(jSanitized, restored);
 
       MpChangeFormREFR changeForm;
 
-      if (restoredDocument.has_value()) {
+      if (restored) {
         std::string restoredDocumentDump = restoredDocument->dump();
         auto restoredDocumentSimdjson = p2.parse(restoredDocumentDump).value();
         changeForm = MpChangeForm::JsonToChangeForm(restoredDocumentSimdjson);
@@ -318,36 +319,7 @@ std::string MongoDatabase::Sha256(const std::string& str)
   return BytesToHexString(hash, SHA256_DIGEST_LENGTH);
 }
 
-// Anonymous namespace for helper functions local to this file
-namespace {
-
-const std::string kBase64Chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-                                 "abcdefghijklmnopqrstuvwxyz"
-                                 "0123456789+/";
-
-std::string Base64Encode(const std::string& in)
-{
-  std::string out;
-  int val = 0;
-  int valb = -6;
-  for (unsigned char c : in) {
-    val = (val << 8) + c;
-    valb += 8;
-    while (valb >= 0) {
-      out.push_back(kBase64Chars[(val >> valb) & 0x3F]);
-      valb -= 6;
-    }
-  }
-  if (valb > -6) {
-    out.push_back(kBase64Chars[((val << 8) >> (valb + 8)) & 0x3F]);
-  }
-  while (out.size() % 4) {
-    out.push_back('=');
-  }
-  return out;
-}
-
-nlohmann::json SanitizeJsonRecursive(const nlohmann::json& j)
+nlohmann::json MongoDatabase::SanitizeJsonRecursive(const nlohmann::json& j)
 {
   if (j.is_object()) {
     nlohmann::json sanitizedObj = nlohmann::json::object();
@@ -382,8 +354,8 @@ nlohmann::json SanitizeJsonRecursive(const nlohmann::json& j)
   return j;
 }
 
-nlohmann::json RestoreSanitizedJsonRecursive(simdjson::dom::element element,
-                                             bool& restored)
+nlohmann::json MongoDatabase::RestoreSanitizedJsonRecursive(
+  simdjson::dom::element element, bool& restored)
 {
   switch (element.type()) {
     case simdjson::dom::element_type::OBJECT: {
@@ -442,24 +414,6 @@ nlohmann::json RestoreSanitizedJsonRecursive(simdjson::dom::element element,
     default:
       return nullptr;
   }
-}
-
-} // namespace
-
-nlohmann::json MongoDatabase::SanitizeJson(const nlohmann::json& j)
-{
-  return SanitizeJsonRecursive(j);
-}
-
-std::optional<nlohmann::json> MongoDatabase::RestoreSanitizedJson(
-  simdjson::dom::element& jSanitized)
-{
-  bool restored = false;
-  nlohmann::json result = RestoreSanitizedJsonRecursive(jSanitized, restored);
-  if (restored) {
-    return result;
-  }
-  return std::nullopt;
 }
 
 #endif // #ifndef NO_MONGO
