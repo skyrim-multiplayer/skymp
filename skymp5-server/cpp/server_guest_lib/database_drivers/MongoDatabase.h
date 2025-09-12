@@ -2,11 +2,34 @@
 #include "IDatabase.h"
 #include <memory>
 
-class MongoDatabase : public IDatabase
+class IKeySanitizer
+{
+public:
+  virtual const std::string& GetEncKeysKey() const noexcept = 0;
+  virtual const std::string& GetEncPrefix() const noexcept = 0;
+  virtual std::optional<std::string> SanitizeKey(const std::string& key) = 0;
+  virtual nlohmann::json SanitizeJsonRecursive(const nlohmann::json& j) = 0;
+  virtual nlohmann::json RestoreSanitizedJsonRecursive(
+    simdjson::dom::element element, bool& restored) = 0;
+};
+
+class MongoDatabase
+  : public IDatabase
+  , public IKeySanitizer
 {
 public:
   MongoDatabase(std::string uri_, std::string name_);
+
+  // IDatabase
   void Iterate(const IterateCallback& iterateCallback) override;
+
+  // IKeySanitizer
+  const std::string& GetEncKeysKey() const noexcept override;
+  const std::string& GetEncPrefix() const noexcept override;
+  std::optional<std::string> SanitizeKey(const std::string& key) override;
+  nlohmann::json SanitizeJsonRecursive(const nlohmann::json& j) override;
+  nlohmann::json RestoreSanitizedJsonRecursive(simdjson::dom::element element,
+                                               bool& restored) override;
 
 private:
   std::vector<std::optional<MpChangeForm>>&& UpsertImpl(
@@ -19,13 +42,6 @@ private:
 
   std::string BytesToHexString(const uint8_t* bytes, size_t length);
   std::string Sha256(const std::string& str);
-
-  const std::string& GetEncKeysKey() const noexcept;
-  const std::string& GetEncPrefix() const noexcept;
-  std::optional<std::string> SanitizeKey(const std::string& key);
-  nlohmann::json SanitizeJsonRecursive(const nlohmann::json& j);
-  nlohmann::json RestoreSanitizedJsonRecursive(simdjson::dom::element element,
-                                               bool& restored);
 
   struct Impl;
   std::shared_ptr<Impl> pImpl;

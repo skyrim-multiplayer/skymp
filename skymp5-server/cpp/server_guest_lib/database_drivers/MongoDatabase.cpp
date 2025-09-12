@@ -333,10 +333,12 @@ const std::string& MongoDatabase::GetEncPrefix() const noexcept
 
 std::optional<std::string> MongoDatabase::SanitizeKey(const std::string& key)
 {
+  auto nullCharacterIterator = std::find(key.begin(), key.end(), '\0');
+
   // MongoDB banned these characters in keys
   if (key.find('.') != std::string::npos ||
       key.find('$') != std::string::npos ||
-      key.find('\0') != std::string::npos) {
+      nullCharacterIterator != key.end()) {
     return GetEncPrefix() + Sha256(key);
   }
 
