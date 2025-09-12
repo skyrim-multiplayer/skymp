@@ -224,12 +224,12 @@ void MongoDatabase::Iterate(const IterateCallback& iterateCallback)
     for (auto document : documentAsArray) {
       bool restored = false;
       nlohmann::json restoredDocument =
-        RestoreSanitizedJsonRecursive(jSanitized, restored);
+        RestoreSanitizedJsonRecursive(document, restored);
 
       MpChangeFormREFR changeForm;
 
       if (restored) {
-        std::string restoredDocumentDump = restoredDocument->dump();
+        std::string restoredDocumentDump = restoredDocument.dump();
         auto restoredDocumentSimdjson = p2.parse(restoredDocumentDump).value();
         changeForm = MpChangeForm::JsonToChangeForm(restoredDocumentSimdjson);
       } else {
