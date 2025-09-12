@@ -16,8 +16,10 @@ private:
   int GetDocumentCount();
   std::optional<std::string> GetCombinedErrorOrNull(
     const std::vector<std::optional<std::string>>& errorList);
+
   std::string BytesToHexString(const uint8_t* bytes, size_t length);
   std::string Sha256(const std::string& str);
+
   const std::string& GetEncKeysKey() const noexcept;
   const std::string& GetEncPrefix() const noexcept;
   std::optional<std::string> SanitizeKey(const std::string& key);
