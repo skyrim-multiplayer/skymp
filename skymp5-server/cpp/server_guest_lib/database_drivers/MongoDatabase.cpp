@@ -319,6 +319,41 @@ std::string MongoDatabase::Sha256(const std::string& str)
   return BytesToHexString(hash, SHA256_DIGEST_LENGTH);
 }
 
+const std::string& MongoDatabase::GetEncKeysKey() const noexcept
+{
+  static const std::string kEncKeysKey = "_enc_keys";
+  return kEncKeysKey;
+}
+
+const std::string& MongoDatabase::GetEncPrefix() const noexcept
+{
+  static const std::string kEncHashPrefix = "_enc_hash_";
+  return kEncHashPrefix;
+}
+
+std::optional<std::string> MongoDatabase::SanitizeKey(const std::string& key)
+{
+  // MongoDB banned these characters in keys
+  if (key.find('.') != std::string::npos ||
+      key.find('$') != std::string::npos ||
+      key.find('\0') != std::string::npos) {
+    return GetEncPrefix() + Sha256(key);
+  }
+
+  // Empty keys are also banned
+  if (key.empty()) {
+    return GetEncPrefix() + Sha256(key);
+  }
+
+  // Avoid collisions in case one tries to use GetEncPrefix() + sha256(key) as
+  // another key
+  if (key.starts_with(GetEncPrefix())) {
+    return GetEncPrefix() + Sha256(key);
+  }
+
+  return std::nullopt;
+}
+
 nlohmann::json MongoDatabase::SanitizeJsonRecursive(const nlohmann::json& j)
 {
   if (j.is_object()) {
@@ -326,19 +361,17 @@ nlohmann::json MongoDatabase::SanitizeJsonRecursive(const nlohmann::json& j)
     nlohmann::json encodedKeysMap = nlohmann::json::object();
 
     for (auto& [key, value] : j.items()) {
-      std::string newKey = key;
-      // Check for forbidden characters in MongoDB keys
-      if (key.find('.') != std::string::npos ||
-          key.find('$') != std::string::npos ||
-          key.find('\0') != std::string::npos) {
-        newKey = Base64Encode(key);
-        encodedKeysMap[newKey] = key;
+      std::optional<std::string> newKey = SanitizeKey(key);
+      if (newKey.has_value()) {
+        encodedKeysMap[*newKey] = key;
+        sanitizedObj[*newKey] = SanitizeJsonRecursive(value);
+      } else {
+        sanitizedObj[key] = SanitizeJsonRecursive(value);
       }
-      sanitizedObj[newKey] = SanitizeJsonRecursive(value);
     }
 
     if (!encodedKeysMap.empty()) {
-      sanitizedObj["__encoded_keys__"] = encodedKeysMap;
+      sanitizedObj[GetEncKeysKey()] = encodedKeysMap;
     }
     return sanitizedObj;
   }
@@ -363,7 +396,7 @@ nlohmann::json MongoDatabase::RestoreSanitizedJsonRecursive(
       simdjson::dom::object obj = element.get_object();
 
       std::map<std::string, std::string> keyMap;
-      auto encodedKeysField = obj["__encoded_keys__"];
+      auto encodedKeysField = obj[GetEncKeysKey()];
       if (!encodedKeysField.error() &&
           encodedKeysField.type() == simdjson::dom::element_type::OBJECT) {
         restored = true;
@@ -375,7 +408,7 @@ nlohmann::json MongoDatabase::RestoreSanitizedJsonRecursive(
 
       for (auto field : obj) {
         std::string_view key_sv = field.key;
-        if (key_sv == "__encoded_keys__") {
+        if (key_sv == GetEncKeysKey()) {
           continue;
         }
 
