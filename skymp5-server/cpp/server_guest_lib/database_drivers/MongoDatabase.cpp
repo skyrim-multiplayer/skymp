@@ -15,11 +15,15 @@
 #  include <mongocxx/uri.hpp>
 #endif
 
+#include <atomic>
+#include <map>
 #include <mutex>
 #include <nlohmann/json.hpp>
 #include <openssl/sha.h>
+#include <simdjson.h> // For simdjson::dom::element
 #include <spdlog/spdlog.h>
 #include <thread>
+#include <vector>
 
 struct MongoDatabase::Impl
 {
@@ -225,8 +229,7 @@ void MongoDatabase::Iterate(const IterateCallback& iterateCallback)
 
       if (restoredDocument.has_value()) {
         std::string restoredDocumentDump = restoredDocument->dump();
-        auto restoredDocumentSimdjson =
-          p2.parse(restoredDocumentDump.data()).value();
+        auto restoredDocumentSimdjson = p2.parse(restoredDocumentDump).value();
         changeForm = MpChangeForm::JsonToChangeForm(restoredDocumentSimdjson);
       } else {
         changeForm = MpChangeForm::JsonToChangeForm(document);
@@ -315,15 +318,148 @@ std::string MongoDatabase::Sha256(const std::string& str)
   return BytesToHexString(hash, SHA256_DIGEST_LENGTH);
 }
 
+// Anonymous namespace for helper functions local to this file
+namespace {
+
+const std::string kBase64Chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                                 "abcdefghijklmnopqrstuvwxyz"
+                                 "0123456789+/";
+
+std::string Base64Encode(const std::string& in)
+{
+  std::string out;
+  int val = 0;
+  int valb = -6;
+  for (unsigned char c : in) {
+    val = (val << 8) + c;
+    valb += 8;
+    while (valb >= 0) {
+      out.push_back(kBase64Chars[(val >> valb) & 0x3F]);
+      valb -= 6;
+    }
+  }
+  if (valb > -6) {
+    out.push_back(kBase64Chars[((val << 8) >> (valb + 8)) & 0x3F]);
+  }
+  while (out.size() % 4) {
+    out.push_back('=');
+  }
+  return out;
+}
+
+nlohmann::json SanitizeJsonRecursive(const nlohmann::json& j)
+{
+  if (j.is_object()) {
+    nlohmann::json sanitizedObj = nlohmann::json::object();
+    nlohmann::json encodedKeysMap = nlohmann::json::object();
+
+    for (auto& [key, value] : j.items()) {
+      std::string newKey = key;
+      // Check for forbidden characters in MongoDB keys
+      if (key.find('.') != std::string::npos ||
+          key.find('$') != std::string::npos ||
+          key.find('\0') != std::string::npos) {
+        newKey = Base64Encode(key);
+        encodedKeysMap[newKey] = key;
+      }
+      sanitizedObj[newKey] = SanitizeJsonRecursive(value);
+    }
+
+    if (!encodedKeysMap.empty()) {
+      sanitizedObj["__encoded_keys__"] = encodedKeysMap;
+    }
+    return sanitizedObj;
+  }
+
+  if (j.is_array()) {
+    nlohmann::json sanitizedArr = nlohmann::json::array();
+    for (const auto& item : j) {
+      sanitizedArr.push_back(SanitizeJsonRecursive(item));
+    }
+    return sanitizedArr;
+  }
+
+  return j;
+}
+
+nlohmann::json RestoreSanitizedJsonRecursive(simdjson::dom::element element,
+                                             bool& restored)
+{
+  switch (element.type()) {
+    case simdjson::dom::element_type::OBJECT: {
+      nlohmann::json restoredObj = nlohmann::json::object();
+      simdjson::dom::object obj = element.get_object();
+
+      std::map<std::string, std::string> keyMap;
+      auto encodedKeysField = obj["__encoded_keys__"];
+      if (!encodedKeysField.error() &&
+          encodedKeysField.type() == simdjson::dom::element_type::OBJECT) {
+        restored = true;
+        for (auto field : encodedKeysField.get_object()) {
+          keyMap[std::string(field.key)] =
+            std::string(field.value.get_string().value());
+        }
+      }
+
+      for (auto field : obj) {
+        std::string_view key_sv = field.key;
+        if (key_sv == "__encoded_keys__") {
+          continue;
+        }
+
+        std::string restoredKey(key_sv);
+        auto it = keyMap.find(restoredKey);
+        if (it != keyMap.end()) {
+          restoredKey = it->second;
+        }
+
+        restoredObj[restoredKey] =
+          RestoreSanitizedJsonRecursive(field.value, restored);
+      }
+      return restoredObj;
+    }
+
+    case simdjson::dom::element_type::ARRAY: {
+      nlohmann::json restoredArr = nlohmann::json::array();
+      for (simdjson::dom::element child : element.get_array()) {
+        restoredArr.push_back(RestoreSanitizedJsonRecursive(child, restored));
+      }
+      return restoredArr;
+    }
+
+    case simdjson::dom::element_type::STRING:
+      return std::string(element.get_string().value());
+    case simdjson::dom::element_type::INT64:
+      return element.get_int64().value();
+    case simdjson::dom::element_type::UINT64:
+      return element.get_uint64().value();
+    case simdjson::dom::element_type::DOUBLE:
+      return element.get_double().value();
+    case simdjson::dom::element_type::BOOL:
+      return element.get_bool().value();
+    case simdjson::dom::element_type::NULL_VALUE:
+      return nullptr;
+    default:
+      return nullptr;
+  }
+}
+
+} // namespace
+
 nlohmann::json MongoDatabase::SanitizeJson(const nlohmann::json& j)
 {
-  // TODO
+  return SanitizeJsonRecursive(j);
 }
 
 std::optional<nlohmann::json> MongoDatabase::RestoreSanitizedJson(
   simdjson::dom::element& jSanitized)
 {
-  // TODO
+  bool restored = false;
+  nlohmann::json result = RestoreSanitizedJsonRecursive(jSanitized, restored);
+  if (restored) {
+    return result;
+  }
+  return std::nullopt;
 }
 
 #endif // #ifndef NO_MONGO
