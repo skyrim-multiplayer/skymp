@@ -1839,7 +1839,7 @@ void MpActor::RemoveAllMagicEffects()
     EditChangeForm(
       [](MpChangeForm& changeForm) { changeForm.activeMagicEffects.Clear(); });
   } catch (std::exception& e) {
-    spdlog::error("MpActor::RemoveMagicEffect {:x} - {}", GetFormId(),
+    spdlog::error("MpActor::RemoveAllMagicEffects {:x} - {}", GetFormId(),
                   e.what());
   }
 }
