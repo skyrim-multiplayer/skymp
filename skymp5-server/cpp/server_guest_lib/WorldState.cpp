@@ -133,7 +133,7 @@ void WorldState::AddForm(std::unique_ptr<MpForm> form, uint32_t formId,
   auto it = forms.insert({ formId, std::move(form) }).first;
 
   if (optionalChangeFormToApply) {
-    auto refr = dynamic_cast<MpObjectReference*>(it->second.get());
+    auto refr = it->second->AsObjectReference();
     if (!refr) {
       forms.erase(it); // Rollback changes due to exception
       throw std::runtime_error(
