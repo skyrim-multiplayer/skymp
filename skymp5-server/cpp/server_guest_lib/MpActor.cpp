@@ -1814,24 +1814,34 @@ void MpActor::ApplyMagicEffects(std::vector<espm::Effects::Effect>& effects,
   }
 }
 
-void MpActor::RemoveMagicEffect(const espm::ActorValue actorValue) noexcept
+void MpActor::RemoveMagicEffect(const espm::ActorValue actorValue)
 {
-  const ActorValues baseActorValues = GetBaseActorValues(
-    GetParent(), GetBaseId(), GetRaceId(), ChangeForm().templateChain);
-  const float baseActorValue = baseActorValues.GetValue(actorValue);
-  SetActorValue(actorValue, baseActorValue);
-  EditChangeForm([actorValue](MpChangeForm& changeForm) {
-    changeForm.activeMagicEffects.Remove(actorValue);
-  });
+  try {
+    const ActorValues baseActorValues = GetBaseActorValues(
+      GetParent(), GetBaseId(), GetRaceId(), ChangeForm().templateChain);
+    const float baseActorValue = baseActorValues.GetValue(actorValue);
+    SetActorValue(actorValue, baseActorValue);
+    EditChangeForm([actorValue](MpChangeForm& changeForm) {
+      changeForm.activeMagicEffects.Remove(actorValue);
+    });
+  } catch (std::exception& e) {
+    spdlog::error("MpActor::RemoveMagicEffect {:x} - {}", GetFormId(),
+                  e.what());
+  }
 }
 
-void MpActor::RemoveAllMagicEffects() noexcept
+void MpActor::RemoveAllMagicEffects()
 {
-  const ActorValues baseActorValues = GetBaseActorValues(
-    GetParent(), GetBaseId(), GetRaceId(), ChangeForm().templateChain);
-  SetActorValues(baseActorValues);
-  EditChangeForm(
-    [](MpChangeForm& changeForm) { changeForm.activeMagicEffects.Clear(); });
+  try {
+    const ActorValues baseActorValues = GetBaseActorValues(
+      GetParent(), GetBaseId(), GetRaceId(), ChangeForm().templateChain);
+    SetActorValues(baseActorValues);
+    EditChangeForm(
+      [](MpChangeForm& changeForm) { changeForm.activeMagicEffects.Clear(); });
+  } catch (std::exception& e) {
+    spdlog::error("MpActor::RemoveAllMagicEffects {:x} - {}", GetFormId(),
+                  e.what());
+  }
 }
 
 void MpActor::ReapplyMagicEffects()
