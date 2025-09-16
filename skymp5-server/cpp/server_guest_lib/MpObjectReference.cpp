@@ -1183,7 +1183,7 @@ void MpObjectReference::ApplyChangeForm(const MpChangeForm& changeForm)
     GetParent()->logger->critical(
       "ApplyChangeForm called after SetProperty\n{}",
       ctx.Resolve().ToString());
-    std::terminate();
+    // std::terminate();
   }
 
   blockSaving = true;
