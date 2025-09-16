@@ -15,12 +15,16 @@
 CraftService::CraftService(PartOne& partOne_)
   : partOne(partOne_)
 {
+  On(partOne.onCraftItemMessage, &CraftService::OnCraftItem);
 }
 
-void CraftService::OnCraftItem(const RawMessageData& rawMsgData,
-                               const Inventory& inputObjects,
-                               uint32_t workbenchId, uint32_t resultObjectId)
+void CraftService::OnCraftItem(const MessageEvent<CraftItemMessage> &event)
 {
+  const RawMessageData &rawMsgData = event.rawMsgData;
+  const uint32_t workbenchId = event.message.data.workbench;
+  const Inventory &inputObjects = event.message.data.craftInputObjects;
+  const uint32_t resultObjectId = event.message.data.resultObjectId;
+
   auto& workbench =
     partOne.worldState.GetFormAt<MpObjectReference>(workbenchId);
 

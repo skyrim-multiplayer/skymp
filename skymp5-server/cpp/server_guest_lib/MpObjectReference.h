@@ -110,7 +110,6 @@ public:
   FormCallbacks GetCallbacks() const;
   bool HasScript(const char* name) const;
   bool IsActivationBlocked() const;
-  bool GetTeleportFlag() const;
 
   virtual void VisitProperties(CreateActorMessage& message,
                                VisitPropertiesMode mode);
@@ -140,7 +139,6 @@ public:
   void SetPropertyValueDump(const std::string& propertyName,
                             const std::string& valueDump,
                             bool isVisibleByOwner, bool isVisibleByNeighbor);
-  void SetTeleportFlag(bool value);
   void SetPosAndAngleSilent(const NiPoint3& pos, const NiPoint3& rot);
   void Delete();
   void SetCount(uint32_t count);
@@ -223,8 +221,6 @@ private:
   void AddContainerObject(const espm::CONT::ContainerObject& containerObject,
                           std::map<uint32_t, uint32_t>* itemsToAdd);
   void InitScripts();
-  void MoveOnGrid(GridImpl<MpObjectReference*>& grid);
-  void InitListenersAndEmitters();
   void SendOpenContainer(uint32_t refId);
   void CheckInteractionAbility(MpObjectReference& ac);
   bool IsLocationSavingNeeded() const;
@@ -235,11 +231,7 @@ private:
                                        float occupationReach);
 
   bool everSubscribedOrListened = false;
-  std::unique_ptr<std::set<MpObjectReference*>> listeners;
   std::vector<MpActor*> actorListenerArray;
-
-  // Should be empty for non-actor refs
-  std::unique_ptr<std::set<MpObjectReference*>> emitters;
 
   // The following keys were originally formIds, but changed to pointers for
   // the sake of performance. Luckily, the server never releases objects, so

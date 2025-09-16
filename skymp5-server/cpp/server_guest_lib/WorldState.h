@@ -35,6 +35,7 @@ class MpChangeForm;
 class ISaveStorage;
 class IScriptStorage;
 class GameModeEvent;
+class GridService;
 
 class WorldState
 {
@@ -216,9 +217,9 @@ public:
 
   // Utility function to check if the provided baseId has the certain keyword
   bool HasKeyword(uint32_t baseId, const char* keyword);
-
-  // Only for tests
-  auto& GetGrids() { return grids; }
+  
+  void SetGridService(GridService* gridService_);
+  GridService& GetGridService();
 
   void SetNpcSettings(
     std::unordered_map<std::string, NpcSettingsEntry>&& settings);
@@ -280,19 +281,12 @@ private:
   [[nodiscard]] bool IsRelootForbidden(std::string type) const noexcept;
 
 private:
-  struct GridInfo
-  {
-    std::shared_ptr<GridImpl<MpObjectReference*>> grid =
-      std::make_shared<GridImpl<MpObjectReference*>>();
-    std::map<int16_t, std::map<int16_t, bool>> loadedChunks;
-  };
-
   std::unordered_map<uint32_t, std::shared_ptr<MpForm>> forms;
   std::unordered_map<std::string, size_t> loadOrderMap;
-  std::unordered_map<uint32_t, GridInfo> grids;
   std::unique_ptr<MakeID> formIdxManager;
   std::vector<MpObjectReference*> refrByIdxUnreliable;
   espm::Loader* espm = nullptr;
+  GridService* gridService = nullptr;
   FormCallbacksFactory formCallbacksFactory;
   std::unique_ptr<espm::CompressedFieldsCache> espmCache;
 

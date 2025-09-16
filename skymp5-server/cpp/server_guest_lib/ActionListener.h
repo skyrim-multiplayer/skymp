@@ -2,89 +2,47 @@
 #include "AnimationData.h"
 #include "ConsoleCommands.h"
 #include "CraftService.h"
+#include "HitData.h"
 #include "Messages.h"
+#include "MessageEvent.h"
 #include "MpActor.h"
-#include "PartOne.h"
 #include "RawMessageData.h"
+#include "ServiceBase.h"
 #include "SpellCastData.h"
 #include "libespm/Loader.h"
 #include <memory>
 
+class PartOne;
 class ServerState;
 class WorldState;
 struct ActorValues;
 
-class ActionListener
+class ActionListener : public ServiceBase<ActionListener>
 {
 public:
-  ActionListener(PartOne& partOne_)
-    : partOne(partOne_)
-  {
-    craftService = std::make_shared<CraftService>(partOne_);
-  }
+  explicit ActionListener(PartOne& partOne_);
 
-  virtual void OnCustomPacket(const RawMessageData& rawMsgData,
-                              const CustomPacketMessage& msg);
-
-  virtual void OnUpdateMovement(const RawMessageData& rawMsgData,
-                                const UpdateMovementMessage& msg);
-
-  virtual void OnUpdateAnimation(const RawMessageData& rawMsgData,
-                                 const UpdateAnimationMessage& msg);
-  virtual void OnUpdateAppearance(const RawMessageData& rawMsgData,
-                                  const UpdateAppearanceMessage& msg);
-  virtual void OnUpdateEquipment(const RawMessageData& rawMsgData,
-                                 const UpdateEquipmentMessage& msg);
-
-  virtual void OnActivate(const RawMessageData& rawMsgData,
-                          const ActivateMessage& msg);
-
-  virtual void OnPutItem(const RawMessageData& rawMsgData,
-                         const PutItemMessage& msg);
-  virtual void OnTakeItem(const RawMessageData& rawMsgData,
-                          const TakeItemMessage& msg);
-  virtual void OnDropItem(const RawMessageData& rawMsgData,
-                          const DropItemMessage& msg);
-
-  virtual void OnPlayerBowShot(const RawMessageData& rawMsgData,
-                               const PlayerBowShotMessage& msg);
-
-  virtual void OnFinishSpSnippet(const RawMessageData& rawMsgData,
-                                 const FinishSpSnippetMessage& msg);
-
-  virtual void OnEquip(const RawMessageData& rawMsgData,
-                       const OnEquipMessage& msg);
-
-  virtual void OnConsoleCommand(const RawMessageData& rawMsgData,
-                                const ConsoleCommandMessage& msg);
-
-  virtual void OnCraftItem(const RawMessageData& rawMsgData,
-                           const CraftItemMessage& msg);
-
-  virtual void OnHostAttempt(const RawMessageData& rawMsgData,
-                             const HostMessage& msg);
-
-  virtual void OnCustomEvent(const RawMessageData& rawMsgData,
-                             const CustomEventMessage& msg);
-
-  virtual void OnChangeValues(const RawMessageData& rawMsgData,
-                              const ChangeValuesMessage& msg);
-
-  virtual void OnHit(const RawMessageData& rawMsgData, const HitMessage& msg);
-
-  virtual void OnUpdateAnimVariables(const RawMessageData& rawMsgData,
-                                     const UpdateAnimVariablesMessage& msg);
-
-  virtual void OnSpellCast(const RawMessageData& rawMsgData,
-                           const SpellCastMessage& msg);
-
-  virtual void OnUnknown(const RawMessageData& rawMsgData);
-
-  // for CraftTest.cpp
-  const std::shared_ptr<CraftService>& GetCraftService() noexcept
-  {
-    return craftService;
-  }
+  void OnCustomPacket(const MessageEvent<CustomPacketMessage>& event);
+  void OnUpdateMovement(const MessageEvent<UpdateMovementMessage>& event);
+  void OnUpdateAnimation(const MessageEvent<UpdateAnimationMessage>& event);
+  void OnUpdateAppearance(const MessageEvent<UpdateAppearanceMessage>& event);
+  void OnUpdateEquipment(const MessageEvent<UpdateEquipmentMessage>& event);
+  void OnActivate(const MessageEvent<ActivateMessage>& event);
+  void OnPutItem(const MessageEvent<PutItemMessage>& event);
+  void OnTakeItem(const MessageEvent<TakeItemMessage>& event);
+  void OnDropItem(const MessageEvent<DropItemMessage>& event);
+  void OnPlayerBowShot(const MessageEvent<PlayerBowShotMessage>& event);
+  void OnFinishSpSnippet(const MessageEvent<FinishSpSnippetMessage>& event);
+  void OnEquip(const MessageEvent<OnEquipMessage>& event);
+  void OnConsoleCommand(const MessageEvent<ConsoleCommandMessage>& event);
+  void OnCraftItem(const MessageEvent<CraftItemMessage>& event);
+  void OnHostAttempt(const MessageEvent<HostMessage>& event);
+  void OnCustomEvent(const MessageEvent<CustomEventMessage>& event);
+  void OnChangeValues(const MessageEvent<ChangeValuesMessage>& event);
+  void OnHit(const MessageEvent<HitMessage>& event);
+  void OnUpdateAnimVariables(const MessageEvent<UpdateAnimVariablesMessage>& event);
+  void OnSpellCast(const MessageEvent<SpellCastMessage>& event);
+  void OnUnknown(const RawMessageData& rawMsgData);
 
 private:
   void OnSpellHit(MpActor* aggressor, MpObjectReference* targetRef,
@@ -104,7 +62,4 @@ private:
                             bool reliable = false);
 
   PartOne& partOne;
-
-  // TODO: inverse dependency
-  std::shared_ptr<CraftService> craftService;
 };
