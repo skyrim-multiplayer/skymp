@@ -410,8 +410,7 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
     }
 
     if (auto it = serverSettings.find("privateKey"); it != serverSettings.end()) {
-      auto pkey = std::make_shared<OpenSSLPrivkey>(it.value().get<std::string>());
-      partOne->sslSigner = std::make_shared<OpenSSLSigner>(pkey);
+      partOne->SetPrivateKey(it.value().get<std::string>());
     }
 
     auto res =

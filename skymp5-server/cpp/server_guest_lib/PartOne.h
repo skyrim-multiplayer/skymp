@@ -20,7 +20,6 @@
 using ProfileId = int32_t;
 class ActionListener;
 class MessageSerializer;
-class OpenSSLSigner;
 
 class PartOneSendTargetWrapper : public Networking::ISendTarget
 {
@@ -109,6 +108,8 @@ public:
   void NotifyGamemodeApiStateChanged(
     const GamemodeApi::State& newState) noexcept;
 
+  void SetPrivateKey(const std::string& pkeyPem);
+
   void SetPacketHistoryRecording(Networking::UserId userId, bool value);
   PacketHistory GetPacketHistory(Networking::UserId userId);
   void ClearPacketHistory(Networking::UserId userId);
@@ -119,8 +120,6 @@ public:
                     MpObjectReference& remote);
 
   static MessageSerializer& GetMessageSerializerInstance();
-
-  std::shared_ptr<OpenSSLSigner> sslSigner;
 
 private:
   void Init();

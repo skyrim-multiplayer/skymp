@@ -90,6 +90,7 @@ struct PartOne::Impl
 
   GamemodeApi::State gamemodeApiState;
   std::vector<uint8_t> updateGamemodeDataMsg;
+  std::shared_ptr<OpenSSLSigner> sslSigner;  // nullptr if no private key set
 };
 
 PartOne::PartOne(Networking::ISendTarget* sendTarget)
@@ -532,8 +533,8 @@ void PartOne::NotifyGamemodeApiStateChanged(
     toSign.AppendNul(updateNeighborFunctionsEntry.content);
   }
 
-  if (sslSigner != nullptr) {
-    msg.signature = sslSigner->SignB64(toSign.buf.data(), toSign.buf.size());
+  if (pImpl->sslSigner != nullptr) {
+    msg.signature = pImpl->sslSigner->SignB64(toSign.buf.data(), toSign.buf.size());
   }
 
   SLNet::BitStream stream;
@@ -551,6 +552,12 @@ void PartOne::NotifyGamemodeApiStateChanged(
   pImpl->updateGamemodeDataMsg.resize(stream.GetNumberOfBytesUsed());
   std::copy(stream.GetData(), stream.GetData() + stream.GetNumberOfBytesUsed(),
             pImpl->updateGamemodeDataMsg.begin());
+}
+
+void PartOne::SetPrivateKey(const std::string& pkeyPem)
+{
+  auto pkey = std::make_shared<OpenSSLPrivkey>(pkeyPem);
+  pImpl->sslSigner = std::make_shared<OpenSSLSigner>(pkey);
 }
 
 void PartOne::SetPacketHistoryRecording(Networking::UserId userId, bool enable)
