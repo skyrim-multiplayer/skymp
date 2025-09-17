@@ -1,7 +1,7 @@
 #pragma once
 #include "MessageBase.h"
 #include "MsgType.h"
-#include <array>
+#include <string>
 #include <type_traits>
 
 struct GamemodeValuePair
@@ -35,4 +35,5 @@ struct UpdateGameModeDataMessage
   std::vector<GamemodeValuePair> eventSources;
   std::vector<GamemodeValuePair> updateOwnerFunctions;
   std::vector<GamemodeValuePair> updateNeighborFunctions;
+  std::string signature;
 };
