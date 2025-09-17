@@ -1,16 +1,7 @@
 #include "PartOne.h"
-#include "ActionListener.h"
-#include "Exceptions.h"
-#include "FormCallbacks.h"
-#include "IdManager.h"
-#include "JsonUtils.h"
-#include "MessageSerializerFactory.h"
-#include "MsgType.h"
-#include "PacketParser.h"
 #include <array>
 #include <cassert>
 #include <chrono>
-#include <type_traits>
 #include <vector>
 
 #include "CreateActorMessage.h"
@@ -19,6 +10,12 @@
 #include "HostStopMessage.h"
 #include "SetRaceMenuOpenMessage.h"
 #include "UpdateGameModeDataMessage.h"
+
+#include "ActionListener.h"
+#include "FormCallbacks.h"
+#include "MessageSerializerFactory.h"
+#include "PacketParser.h"
+#include "OpenSslSigner.h"
 
 PartOneSendTargetWrapper::PartOneSendTargetWrapper(
   Networking::ISendTarget& underlyingSendTarget_)
@@ -492,18 +489,10 @@ float PartOne::CalculateDamage(const MpActor& aggressor, const MpActor& target,
                                                spellCastData);
 }
 
-namespace {
-void Sign(UpdateGameModeDataMessage& msg, std::string signingPrivkey)
-{
-  ;
-}
-}
-
 void PartOne::NotifyGamemodeApiStateChanged(
   const GamemodeApi::State& newState) noexcept
 {
   UpdateGameModeDataMessage msg;
-  //msg.signingPubkey = ...;
 
   for (auto [eventName, eventSourceInfo] : newState.createdEventSources) {
     msg.eventSources.push_back({ eventName, eventSourceInfo.functionBody });
@@ -535,8 +524,6 @@ void PartOne::NotifyGamemodeApiStateChanged(
 
   for (Networking::UserId i = 0; i <= serverState.maxConnectedId; ++i) {
     if (serverState.IsConnected(i)) {
-      // XXX sign in send? sign just here?
-      // XXX client: recv require signed flag for some messages?
       GetSendTarget().Send(
         i, reinterpret_cast<Networking::PacketData>(stream.GetData()),
         stream.GetNumberOfBytesUsed(), true);
