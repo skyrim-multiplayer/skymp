@@ -1,8 +1,8 @@
 #pragma once
 
+#include <memory>
 #include <stdexcept>
 #include <string>
-#include <memory>
 #include <type_traits>
 #include <variant>
 #include <vector>
@@ -13,21 +13,25 @@ typedef struct evp_md_ctx_st EVP_MD_CTX;
 
 namespace impl {
 template <class T>
-struct OpenSSLDeleter {
-  using FreeCbIntT = int(*)(T*);
-  using FreeCbVoidT = void(*)(T*);
+struct OpenSSLDeleter
+{
+  using FreeCbIntT = int (*)(T*);
+  using FreeCbVoidT = void (*)(T*);
   std::variant<FreeCbIntT, FreeCbVoidT> freeCb;
 
-  void operator()(T* ptr) const {
-    std::visit([ptr](auto cb) {
-      if constexpr (std::is_same_v<decltype(cb(ptr)), int>) {
-        if (cb(ptr) <= 0) {
-          throw std::runtime_error("dealloc failed");
+  void operator()(T* ptr) const
+  {
+    std::visit(
+      [ptr](auto cb) {
+        if constexpr (std::is_same_v<decltype(cb(ptr)), int>) {
+          if (cb(ptr) <= 0) {
+            throw std::runtime_error("dealloc failed");
+          }
+        } else {
+          cb(ptr);
         }
-      } else {
-        cb(ptr);
-      }
-    }, freeCb);
+      },
+      freeCb);
   }
 };
 
@@ -35,19 +39,19 @@ template <class T>
 using OpenSSLUniquePtr = std::unique_ptr<T, OpenSSLDeleter<T>>;
 } // namespace impl
 
-class OpenSSLPrivkey {
+class OpenSSLPrivkey
+{
 public:
   explicit OpenSSLPrivkey(const std::string& pkeyPem);
 
-  EVP_PKEY* GetWrapped() {
-    return pkey.get();
-  }
+  EVP_PKEY* GetWrapped() { return pkey.get(); }
 
 private:
   impl::OpenSSLUniquePtr<EVP_PKEY> pkey;
 };
 
-class OpenSSLSigner {
+class OpenSSLSigner
+{
 public:
   explicit OpenSSLSigner(std::shared_ptr<OpenSSLPrivkey> pkey_);
 
@@ -58,7 +62,8 @@ private:
   impl::OpenSSLUniquePtr<EVP_MD_CTX> sslMdCtx;
 };
 
-struct CharBuf {
+struct CharBuf
+{
   std::vector<unsigned char> buf;
 
   void Append(std::string_view sv);

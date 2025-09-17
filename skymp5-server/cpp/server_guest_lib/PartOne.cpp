@@ -15,8 +15,8 @@
 #include "ActionListener.h"
 #include "FormCallbacks.h"
 #include "MessageSerializerFactory.h"
-#include "PacketParser.h"
 #include "OpenSSLSigner.h"
+#include "PacketParser.h"
 
 PartOneSendTargetWrapper::PartOneSendTargetWrapper(
   Networking::ISendTarget& underlyingSendTarget_)
@@ -90,7 +90,7 @@ struct PartOne::Impl
 
   GamemodeApi::State gamemodeApiState;
   std::vector<uint8_t> updateGamemodeDataMsg;
-  std::shared_ptr<OpenSSLSigner> sslSigner;  // nullptr if no private key set
+  std::shared_ptr<OpenSSLSigner> sslSigner; // nullptr if no private key set
 };
 
 PartOne::PartOne(Networking::ISendTarget* sendTarget)
@@ -534,7 +534,8 @@ void PartOne::NotifyGamemodeApiStateChanged(
   }
 
   if (pImpl->sslSigner != nullptr) {
-    msg.signature = pImpl->sslSigner->SignB64(toSign.buf.data(), toSign.buf.size());
+    msg.signature =
+      pImpl->sslSigner->SignB64(toSign.buf.data(), toSign.buf.size());
   }
 
   SLNet::BitStream stream;

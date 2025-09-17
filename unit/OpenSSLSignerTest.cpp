@@ -13,6 +13,9 @@ MC4CAQAwBQYDK2VwBCIEIILh6zzNPCOMUWMvW4QXXXPPWbyJoNL8ggkqiD+2mZdp
 
   std::string tbs = "I like cookies";
 
-  OpenSSLSigner s{testKey};
-  REQUIRE(s.SignB64(reinterpret_cast<unsigned char*>(tbs.data()), tbs.size()) == "BFdl4Qk5XljZXWnOrcIPELaKXVYostRhJ4M7+lHUnRlUyenM5wwZabqKmYXp8Ob1GljNmBBMGCUzc8eyA3fSBA==");
+  OpenSSLSigner s{ testKey };
+  REQUIRE(
+    s.SignB64(reinterpret_cast<unsigned char*>(tbs.data()), tbs.size()) ==
+    "BFdl4Qk5XljZXWnOrcIPELaKXVYostRhJ4M7+"
+    "lHUnRlUyenM5wwZabqKmYXp8Ob1GljNmBBMGCUzc8eyA3fSBA==");
 }
