@@ -1,16 +1,12 @@
 #pragma once
 
-// XXX rename file
-
 #include <stdexcept>
 #include <string>
 #include <memory>
 #include <type_traits>
 #include <variant>
-#include <vector>
 
 // openssl
-typedef struct bio_st BIO;
 typedef struct evp_pkey_st EVP_PKEY;
 typedef struct evp_md_ctx_st EVP_MD_CTX;
 
