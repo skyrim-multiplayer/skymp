@@ -497,7 +497,8 @@ void PartOne::NotifyGamemodeApiStateChanged(
   UpdateGameModeDataMessage msg;
 
   for (auto [eventName, eventSourceInfo] : newState.createdEventSources) {
-    msg.eventSources.push_back({ eventName, SignedJS(eventSourceInfo.functionBody) });
+    msg.eventSources.push_back(
+      { eventName, SignedJS(eventSourceInfo.functionBody) });
   }
 
   for (auto [propertyName, propertyInfo] : newState.createdProperties) {
@@ -550,7 +551,8 @@ std::string PartOne::SignedJS(std::string src) const
     src += "\n// sig:n/a";
     return src;
   }
-  auto sig = pImpl->sslSigner->SignB64(reinterpret_cast<const unsigned char*>(src.c_str()), src.length());
+  auto sig = pImpl->sslSigner->SignB64(
+    reinterpret_cast<const unsigned char*>(src.c_str()), src.length());
   src += "\n// sig:0,";
   src += sig;
   return src;
