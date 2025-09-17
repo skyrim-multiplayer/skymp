@@ -1,4 +1,3 @@
-#include "TestUtils.hpp"
 #include <catch2/catch_all.hpp>
 #include <memory>
 
@@ -14,5 +13,5 @@ MC4CAQAwBQYDK2VwBCIEIILh6zzNPCOMUWMvW4QXXXPPWbyJoNL8ggkqiD+2mZdp
 
   OpenSSLSigner s{testKey};
   s.Update("I like cookies");
-  REQUIRE(s.ExtractBase64() == "");
+  REQUIRE(s.ExtractBase64() == "BFdl4Qk5XljZXWnOrcIPELaKXVYostRhJ4M7+lHUnRlUyenM5wwZabqKmYXp8Ob1GljNmBBMGCUzc8eyA3fSBA==");
 }

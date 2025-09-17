@@ -65,9 +65,10 @@ OpenSSLSigner::OpenSSLSigner(std::shared_ptr<OpenSSLPrivkey> pkey_)
 }
 
 void OpenSSLSigner::Update(const char* data, size_t len) {
-  if (EVP_DigestSignUpdate(sslMdCtx.get(), data, len) <= 0) {
-    OpenSSLThrow("failed to update signature");
-  }
+  // if (EVP_DigestSignUpdate(sslMdCtx.get(), data, len) <= 0) {
+  //   OpenSSLThrow("failed to update signature");
+  // }
+  input.insert(input.end(), data, data + len);
 }
 
 void OpenSSLSigner::Update(std::string_view sv) {
@@ -76,11 +77,17 @@ void OpenSSLSigner::Update(std::string_view sv) {
 
 std::string OpenSSLSigner::ExtractBase64() {
   size_t sigLen;
-  if (EVP_DigestSignFinal(sslMdCtx.get(), nullptr, &sigLen) <= 0) {
+  // if (EVP_DigestSignFinal(sslMdCtx.get(), nullptr, &sigLen) <= 0) {
+  //   OpenSSLThrow("failed to get signature len");
+  // }
+  if (EVP_DigestSign(sslMdCtx.get(), nullptr, &sigLen, input.data(), input.size()) <= 0) {
     OpenSSLThrow("failed to get signature len");
   }
   std::vector<unsigned char> sig(sigLen);
-  if (EVP_DigestSignFinal(sslMdCtx.get(), sig.data(), &sigLen) <= 0) {
+  // if (EVP_DigestSignFinal(sslMdCtx.get(), sig.data(), &sigLen) <= 0) {
+  //   OpenSSLThrow("failed to get signature");
+  // }
+  if (EVP_DigestSign(sslMdCtx.get(), sig.data(), &sigLen, input.data(), input.size()) <= 0) {
     OpenSSLThrow("failed to get signature");
   }
   return Base64Encode(sig.data(), sig.size());

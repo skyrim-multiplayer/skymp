@@ -7,6 +7,7 @@
 #include <memory>
 #include <type_traits>
 #include <variant>
+#include <vector>
 
 // openssl
 typedef struct bio_st BIO;
@@ -61,5 +62,6 @@ public:
 private:
   std::shared_ptr<OpenSSLPrivkey> pkey;
   impl::OpenSSLUniquePtr<EVP_MD_CTX> sslMdCtx;
+  std::vector<unsigned char> input;
   // impl::OpenSSLUniquePtr<>
 };
