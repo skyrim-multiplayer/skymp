@@ -492,10 +492,18 @@ float PartOne::CalculateDamage(const MpActor& aggressor, const MpActor& target,
                                                spellCastData);
 }
 
+namespace {
+void Sign(UpdateGameModeDataMessage& msg, std::string signingPrivkey)
+{
+  ;
+}
+}
+
 void PartOne::NotifyGamemodeApiStateChanged(
   const GamemodeApi::State& newState) noexcept
 {
   UpdateGameModeDataMessage msg;
+  //msg.signingPubkey = ...;
 
   for (auto [eventName, eventSourceInfo] : newState.createdEventSources) {
     msg.eventSources.push_back({ eventName, eventSourceInfo.functionBody });
@@ -527,6 +535,8 @@ void PartOne::NotifyGamemodeApiStateChanged(
 
   for (Networking::UserId i = 0; i <= serverState.maxConnectedId; ++i) {
     if (serverState.IsConnected(i)) {
+      // XXX sign in send? sign just here?
+      // XXX client: recv require signed flag for some messages?
       GetSendTarget().Send(
         i, reinterpret_cast<Networking::PacketData>(stream.GetData()),
         stream.GetNumberOfBytesUsed(), true);
