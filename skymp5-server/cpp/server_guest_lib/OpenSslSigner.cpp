@@ -50,10 +50,10 @@ std::string Base64Encode(const unsigned char* data, size_t dataLen) {
 } // namespace
 
 OpenSSLPrivkey::OpenSSLPrivkey(const std::string& pkeyPem) {
-  auto bio = OpenSSLPtrWrap(BIO_new_mem_buf(pkeyPem.c_str(), pkeyPem.length()), BIO_free);
-  pkey = OpenSSLPtrWrap(PEM_read_bio_PrivateKey(bio.get(), nullptr, nullptr, nullptr), EVP_PKEY_free);
+  auto bio = OpenSSLPtrWrap(BIO_new_mem_buf(pkeyPem.c_str(), pkeyPem.length()), BIO_free, "could not allocatte io buffer for pkey");
+  pkey = OpenSSLPtrWrap(PEM_read_bio_PrivateKey(bio.get(), nullptr, nullptr, nullptr), EVP_PKEY_free, "could not parse pkey");
   if (EVP_PKEY_get_id(pkey.get()) != EVP_PKEY_ED25519) {
-    throw std::runtime_error("expected ed25519 key");
+    throw std::runtime_error("expected Ed25519 key");
   }
 }
 
