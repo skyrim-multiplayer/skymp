@@ -54,14 +54,9 @@ class OpenSSLSigner {
 public:
   explicit OpenSSLSigner(std::shared_ptr<OpenSSLPrivkey> pkey_);
 
-  void Update(const char* data, size_t len);
-  void Update(std::string_view sv);
-
-  std::string ExtractBase64();
+  std::string SignB64(const unsigned char* data, size_t len);
 
 private:
   std::shared_ptr<OpenSSLPrivkey> pkey;
   impl::OpenSSLUniquePtr<EVP_MD_CTX> sslMdCtx;
-  std::vector<unsigned char> input;
-  // impl::OpenSSLUniquePtr<>
 };
