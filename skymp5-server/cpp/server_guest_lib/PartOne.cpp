@@ -2,6 +2,7 @@
 #include <array>
 #include <cassert>
 #include <chrono>
+#include <string>
 #include <vector>
 
 #include "CreateActorMessage.h"
@@ -15,7 +16,7 @@
 #include "FormCallbacks.h"
 #include "MessageSerializerFactory.h"
 #include "PacketParser.h"
-#include "OpenSslSigner.h"
+#include "OpenSSLSigner.h"
 
 PartOneSendTargetWrapper::PartOneSendTargetWrapper(
   Networking::ISendTarget& underlyingSendTarget_)
@@ -493,17 +494,27 @@ void PartOne::NotifyGamemodeApiStateChanged(
   const GamemodeApi::State& newState) noexcept
 {
   UpdateGameModeDataMessage msg;
+  // std::vector<unsigned char> toSign;
+  CharBuf toSign;
 
+  toSign.AppendNul("eventSources");
+  toSign.AppendNul(std::to_string(newState.createdEventSources.size()));
   for (auto [eventName, eventSourceInfo] : newState.createdEventSources) {
     msg.eventSources.push_back({ eventName, eventSourceInfo.functionBody });
+    toSign.AppendNul(eventName);
+    toSign.AppendNul(eventSourceInfo.functionBody);
   }
 
+  toSign.AppendNul("properties");
+  toSign.AppendNul(std::to_string(newState.createdProperties.size()));
   for (auto [propertyName, propertyInfo] : newState.createdProperties) {
     GamemodeValuePair updateOwnerFunctionsEntry;
     updateOwnerFunctionsEntry.name = propertyName;
     updateOwnerFunctionsEntry.content =
       propertyInfo.isVisibleByOwner ? propertyInfo.updateOwner : "";
     msg.updateOwnerFunctions.push_back(updateOwnerFunctionsEntry);
+    toSign.AppendNul(updateOwnerFunctionsEntry.name);
+    toSign.AppendNul(updateOwnerFunctionsEntry.content);
 
     //  From docs: isVisibleByNeighbors considered to be always false for
     //  properties with `isVisibleByOwner == false`, in that case, actual
@@ -517,6 +528,12 @@ void PartOne::NotifyGamemodeApiStateChanged(
     updateNeighborFunctionsEntry.content =
       actuallyVisibleByNeighbor ? propertyInfo.updateNeighbor : "";
     msg.updateNeighborFunctions.push_back(updateNeighborFunctionsEntry);
+    toSign.AppendNul(updateNeighborFunctionsEntry.name);
+    toSign.AppendNul(updateNeighborFunctionsEntry.content);
+  }
+
+  if (sslSigner != nullptr) {
+    msg.signature = sslSigner->SignB64(toSign.buf.data(), toSign.buf.size());
   }
 
   SLNet::BitStream stream;

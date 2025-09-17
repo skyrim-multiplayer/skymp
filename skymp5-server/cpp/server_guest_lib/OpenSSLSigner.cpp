@@ -75,3 +75,16 @@ std::string OpenSSLSigner::SignB64(const unsigned char* data, size_t len) {
   }
   return Base64Encode(sig.data(), sig.size());
 }
+
+void CharBuf::Append(std::string_view sv) {
+  buf.insert(buf.end(), sv.begin(), sv.end());
+}
+
+void CharBuf::Append(char c) {
+  buf.push_back(c);
+}
+
+void CharBuf::AppendNul(std::string_view sv) {
+  buf.insert(buf.end(), sv.begin(), sv.end());
+  buf.push_back('\0');
+}

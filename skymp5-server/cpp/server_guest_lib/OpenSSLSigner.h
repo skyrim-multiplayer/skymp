@@ -5,6 +5,7 @@
 #include <memory>
 #include <type_traits>
 #include <variant>
+#include <vector>
 
 // openssl
 typedef struct evp_pkey_st EVP_PKEY;
@@ -55,4 +56,12 @@ public:
 private:
   std::shared_ptr<OpenSSLPrivkey> pkey;
   impl::OpenSSLUniquePtr<EVP_MD_CTX> sslMdCtx;
+};
+
+struct CharBuf {
+  std::vector<unsigned char> buf;
+
+  void Append(std::string_view sv);
+  void Append(char c);
+  void AppendNul(std::string_view sv);
 };

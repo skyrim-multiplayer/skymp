@@ -3,7 +3,6 @@
 #include "GamemodeApi.h"
 #include "HitData.h"
 #include "MpActor.h"
-#include "Networking.h"
 #include "NiPoint3.h"
 #include "PartOneListener.h"
 #include "ServerState.h"
@@ -17,11 +16,11 @@
 #include <set>
 #include <simdjson.h>
 #include <spdlog/logger.h>
-#include <unordered_map>
 
 using ProfileId = int32_t;
 class ActionListener;
 class MessageSerializer;
+class OpenSSLSigner;
 
 class PartOneSendTargetWrapper : public Networking::ISendTarget
 {
@@ -120,6 +119,8 @@ public:
                     MpObjectReference& remote);
 
   static MessageSerializer& GetMessageSerializerInstance();
+
+  std::shared_ptr<OpenSSLSigner> sslSigner;
 
 private:
   void Init();

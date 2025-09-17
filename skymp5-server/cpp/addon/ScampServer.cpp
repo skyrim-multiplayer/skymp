@@ -6,6 +6,7 @@
 #include "GamemodeApi.h"
 #include "NapiHelper.h"
 #include "NetworkingCombined.h"
+#include "OpenSSLSigner.h"
 #include "PacketHistoryWrapper.h"
 #include "PapyrusUtils.h"
 #include "ScampServerListener.h"
@@ -406,6 +407,11 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
     if (it != serverSettings.end() && (*it).is_array()) {
       partOne->worldState.SetForbiddenRelootTypes(
         (*it).get<std::set<std::string>>());
+    }
+
+    if (auto it = serverSettings.find("privateKey"); it != serverSettings.end()) {
+      auto pkey = std::make_shared<OpenSSLPrivkey>(it.value().get<std::string>());
+      partOne->sslSigner = std::make_shared<OpenSSLSigner>(pkey);
     }
 
     auto res =
