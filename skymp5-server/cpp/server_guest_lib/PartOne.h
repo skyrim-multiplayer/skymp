@@ -141,6 +141,8 @@ private:
   void TickPacketHistoryPlaybacks();
   void TickDeferredMessages();
 
+  std::string SignedJS(std::string src) const;
+
   struct Impl;
   std::shared_ptr<Impl> pImpl;
 };

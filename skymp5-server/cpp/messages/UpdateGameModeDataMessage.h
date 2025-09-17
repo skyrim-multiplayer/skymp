@@ -29,12 +29,10 @@ struct UpdateGameModeDataMessage
     archive.Serialize("t", kMsgType)
       .Serialize("eventSources", eventSources)
       .Serialize("updateOwnerFunctions", updateOwnerFunctions)
-      .Serialize("updateNeighborFunctions", updateNeighborFunctions)
-      .Serialize("signature", signature);
+      .Serialize("updateNeighborFunctions", updateNeighborFunctions);
   }
 
   std::vector<GamemodeValuePair> eventSources;
   std::vector<GamemodeValuePair> updateOwnerFunctions;
   std::vector<GamemodeValuePair> updateNeighborFunctions;
-  std::string signature;
 };

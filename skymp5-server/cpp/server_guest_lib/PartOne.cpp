@@ -495,27 +495,17 @@ void PartOne::NotifyGamemodeApiStateChanged(
   const GamemodeApi::State& newState) noexcept
 {
   UpdateGameModeDataMessage msg;
-  // std::vector<unsigned char> toSign;
-  CharBuf toSign;
 
-  toSign.AppendNul("eventSources");
-  toSign.AppendNul(std::to_string(newState.createdEventSources.size()));
   for (auto [eventName, eventSourceInfo] : newState.createdEventSources) {
-    msg.eventSources.push_back({ eventName, eventSourceInfo.functionBody });
-    toSign.AppendNul(eventName);
-    toSign.AppendNul(eventSourceInfo.functionBody);
+    msg.eventSources.push_back({ eventName, SignedJS(eventSourceInfo.functionBody) });
   }
 
-  toSign.AppendNul("properties");
-  toSign.AppendNul(std::to_string(newState.createdProperties.size()));
   for (auto [propertyName, propertyInfo] : newState.createdProperties) {
     GamemodeValuePair updateOwnerFunctionsEntry;
     updateOwnerFunctionsEntry.name = propertyName;
     updateOwnerFunctionsEntry.content =
-      propertyInfo.isVisibleByOwner ? propertyInfo.updateOwner : "";
+      SignedJS(propertyInfo.isVisibleByOwner ? propertyInfo.updateOwner : "");
     msg.updateOwnerFunctions.push_back(updateOwnerFunctionsEntry);
-    toSign.AppendNul(updateOwnerFunctionsEntry.name);
-    toSign.AppendNul(updateOwnerFunctionsEntry.content);
 
     //  From docs: isVisibleByNeighbors considered to be always false for
     //  properties with `isVisibleByOwner == false`, in that case, actual
@@ -527,15 +517,8 @@ void PartOne::NotifyGamemodeApiStateChanged(
     GamemodeValuePair updateNeighborFunctionsEntry;
     updateNeighborFunctionsEntry.name = propertyName;
     updateNeighborFunctionsEntry.content =
-      actuallyVisibleByNeighbor ? propertyInfo.updateNeighbor : "";
+      SignedJS(actuallyVisibleByNeighbor ? propertyInfo.updateNeighbor : "");
     msg.updateNeighborFunctions.push_back(updateNeighborFunctionsEntry);
-    toSign.AppendNul(updateNeighborFunctionsEntry.name);
-    toSign.AppendNul(updateNeighborFunctionsEntry.content);
-  }
-
-  if (pImpl->sslSigner != nullptr) {
-    msg.signature =
-      pImpl->sslSigner->SignB64(toSign.buf.data(), toSign.buf.size());
   }
 
   SLNet::BitStream stream;
@@ -559,6 +542,18 @@ void PartOne::SetPrivateKey(const std::string& pkeyPem)
 {
   auto pkey = std::make_shared<OpenSSLPrivkey>(pkeyPem);
   pImpl->sslSigner = std::make_shared<OpenSSLSigner>(pkey);
+}
+
+std::string PartOne::SignedJS(std::string src) const
+{
+  if (!pImpl->sslSigner) {
+    src += "\n// sig:n/a";
+    return src;
+  }
+  auto sig = pImpl->sslSigner->SignB64(reinterpret_cast<const unsigned char*>(src.c_str()), src.length());
+  src += "\n// sig:0,";
+  src += sig;
+  return src;
 }
 
 void PartOne::SetPacketHistoryRecording(Networking::UserId userId, bool enable)
