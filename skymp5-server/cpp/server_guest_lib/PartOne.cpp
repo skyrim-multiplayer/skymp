@@ -547,13 +547,18 @@ void PartOne::SetPrivateKey(const std::string& pkeyPem)
 
 std::string PartOne::SignedJS(std::string src) const
 {
-  if (!pImpl->sslSigner) {
-    src += "\n// sig:n/a";
+  if (src.empty()) {
     return src;
   }
+
+  if (!pImpl->sslSigner) {
+    src += "\n// skymp:sig:n/a";
+    return src;
+  }
+
   auto sig = pImpl->sslSigner->SignB64(
     reinterpret_cast<const unsigned char*>(src.c_str()), src.length());
-  src += "\n// sig:0,";
+  src += "\n// skymp:sig:y:v1,";
   src += sig;
   return src;
 }

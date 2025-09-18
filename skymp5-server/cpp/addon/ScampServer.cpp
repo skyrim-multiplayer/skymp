@@ -409,9 +409,9 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
         (*it).get<std::set<std::string>>());
     }
 
-    if (auto it = serverSettings.find("privateKey");
+    if (auto it = serverSettings.find("serverKey");
         it != serverSettings.end()) {
-      partOne->SetPrivateKey(it.value().get<std::string>());
+      partOne->SetPrivateKey(it.value()["priv"].get<std::string>());
     }
 
     auto res =
