@@ -58,7 +58,7 @@ OpenSSLPrivkey::OpenSSLPrivkey(const std::string& pkeyPem)
 {
   auto bio =
     OpenSSLPtrWrap(BIO_new_mem_buf(pkeyPem.c_str(), pkeyPem.length()),
-                   BIO_free, "could not allocatte io buffer for pkey");
+                   BIO_free, "could not allocate io buffer for pkey");
   pkey = OpenSSLPtrWrap(
     PEM_read_bio_PrivateKey(bio.get(), nullptr, nullptr, nullptr),
     EVP_PKEY_free, "could not parse pkey");
