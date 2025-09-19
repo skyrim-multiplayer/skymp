@@ -10,6 +10,7 @@ import { GamemodeApiEventSourceCtx } from "../messages_gamemode/gamemodeApiEvent
 // Sligthly different types
 import * as skyrimPlatform from "skyrimPlatform";
 import { logError, logTrace } from "../../logging";
+import { SettingsService } from "./settingsService";
 
 export class GamemodeEventSourceService extends ClientListener {
     constructor(private sp: Sp, private controller: CombinedController) {
@@ -51,9 +52,10 @@ export class GamemodeEventSourceService extends ClientListener {
             });
         }
 
+        const ssvc = this.controller.lookupListener(SettingsService);
         eventNames.forEach((eventName) => {
             try {
-                const fn = new Function('ctx', eventSourcesRecord[eventName]!);
+                const fn = new Function('ctx', ssvc.verifyServerJS(eventSourcesRecord[eventName]!));
                 const ctx: GamemodeApiEventSourceCtx = {
                     refr: undefined,
                     value: undefined,

@@ -1,7 +1,7 @@
 #pragma once
 #include "MessageBase.h"
 #include "MsgType.h"
-#include <array>
+#include <string>
 #include <type_traits>
 
 struct GamemodeValuePair
