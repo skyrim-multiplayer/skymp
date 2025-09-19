@@ -4,6 +4,8 @@ import { ClientListener, CombinedController, Sp } from "./clientListener";
 import { Mod, ServerManifest } from "../messages_http/serverManifest";
 import { TimersService } from "./timersService";
 
+import { verify } from 'node:crypto';
+
 interface IHttpClientWithCallback {
   get(path: string, options?: { headers?: HttpHeaders }): Promise<HttpResponse>;
   post(path: string, options: { body: string, contentType: string, headers?: HttpHeaders }): Promise<HttpResponse>;
@@ -137,10 +139,53 @@ export class SettingsService extends ClientListener {
     return [];
   };
 
+  public verifyServerJS(src: string): string {
+    const sec = this.sp.settings["skymp5-client"]["server-sec"] as any;
+    if (!sec?.pubkeys) {
+      return src;
+    }
+    const lastLineStart = src.lastIndexOf('\n') + 1;
+    const sigPrefix = '// skymp:sig:y:';
+    if (lastLineStart === 0 || !src.substring(lastLineStart).startsWith(sigPrefix)) {
+      throw new Error('sig not found');
+    }
+    const [keyId, sig] = src.substring(lastLineStart + sigPrefix.length).split(',');
+    if (!isAlphaNumeric(keyId)) {
+      throw new Error('malformed key id');
+    }
+    const key = sec.pubkeys[keyId];
+    if (!key) {
+      throw new Error('unknown key');
+    }
+    if (!verify(null, toArrayBufferView(src.substring(0, lastLineStart - 1), 'utf8'), key, toArrayBufferView(sig, 'base64'))) {
+      throw new Error('bad signature');
+    }
+    return src;
+  }
+
   private normalizeUrl(url: string) {
     if (url.endsWith('/')) {
       return url.slice(0, url.length - 1);
     }
     return url;
   };
+}
+
+function isAlphaNumeric(str: string) {
+  for (let i = 0, len = str.length; i < len; i++) {
+    let code = str.charCodeAt(i);
+    if (!(
+      (97 <= code && code <= 122) ||
+      (65 <= code && code <= 90) ||
+      (48 <= code && code <= 57)
+    )) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function toArrayBufferView(str: string, enc: NodeJS.BufferEncoding): NodeJS.ArrayBufferView {
+  const buf = Buffer.from(str, enc);
+  return new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength);
 }

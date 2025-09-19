@@ -15,6 +15,7 @@ import { GamemodeApiCtx } from "../messages_gamemode/gamemodeApiCtx";
 // Sligthly different types
 import * as skyrimPlatform from "skyrimPlatform";
 import { logError, logTrace } from "../../logging";
+import { SettingsService } from "./settingsService";
 
 export class GamemodeUpdateService extends ClientListener {
     constructor(private sp: Sp, private controller: CombinedController) {
@@ -210,6 +211,7 @@ export class GamemodeUpdateService extends ClientListener {
         storageVar: string,
         functionSources: GamemodeValuePair[],
     ) {
+        const ssvc = this.controller.lookupListener(SettingsService);
         let functionSourcesRecord: Record<string, string | undefined> = {};
         functionSources.forEach(pair => functionSourcesRecord[pair.name] = pair.content);
 
@@ -219,7 +221,7 @@ export class GamemodeUpdateService extends ClientListener {
             try {
                 (this.sp.storage[storageVar] as any)[propName] = new Function(
                     'ctx',
-                    (this.sp.storage[storageVar] as any)[propName],
+                    ssvc.verifyServerJS((this.sp.storage[storageVar] as any)[propName]),
                 );
                 const emptyFunction = functionSourcesRecord[propName] === '';
                 if (emptyFunction) {
