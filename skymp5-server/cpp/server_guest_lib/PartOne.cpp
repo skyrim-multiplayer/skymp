@@ -558,7 +558,7 @@ std::string PartOne::SignedJS(std::string src) const
 
   auto sig = pImpl->sslSigner->SignB64(
     reinterpret_cast<const unsigned char*>(src.c_str()), src.length());
-  src += "\n// skymp:sig:y:v1,";
+  src += "\n// skymp:sig:y:v1:CPP";
   src += sig;
   return src;
 }

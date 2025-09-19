@@ -149,7 +149,7 @@ export class SettingsService extends ClientListener {
     if (lastLineStart === 0 || !src.substring(lastLineStart).startsWith(sigPrefix)) {
       throw new Error('sig not found');
     }
-    const [keyId, sig] = src.substring(lastLineStart + sigPrefix.length).split(',');
+    const [keyId, sig] = src.substring(lastLineStart + sigPrefix.length).split(':');
     if (!isAlphaNumeric(keyId)) {
       throw new Error('malformed key id');
     }
