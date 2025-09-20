@@ -32,10 +32,7 @@ export class ServerJsVerificationService extends ClientListener {
     if (lastLineStart === 0 || !src.substring(lastLineStart).startsWith(sigPrefix)) {
       return { src: null, error: 'no signature found' };
     }
-<<<<<<< Updated upstream
-=======
 
->>>>>>> Stashed changes
     const [keyId, sig] = src.substring(lastLineStart + sigPrefix.length).split(':');
     if (!this.isAlphaNumeric(keyId)) {
       return { src: null, error: 'malformed key id' };

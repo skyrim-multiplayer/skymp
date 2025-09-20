@@ -45,24 +45,10 @@ export class SettingsService extends ClientListener {
     return new HttpClient(masterApiBaseUrl) as IHttpClientWithCallback;
   }
 
-<<<<<<< Updated upstream
-  // have to use callbacks here: promises don't work in the main menu
-  public getTargetPeer(callback: TargetPeerCallback) {
-    if (this.targetPeerCached) {
-      const targetPeerCached = this.targetPeerCached;
-      this.controller.once('tick', () => callback(targetPeerCached));
-      return;
-    }
-
-    this.targetPeerCallbacks.push(callback);
-    if (this.targetPeerCallbacks.length > 1) {
-      return;
-=======
   public getTargetPeer(callback?: TargetPeerCallback): { targetPeerCached: TargetPeer | null } {
     if (this.targetPeerCache) {
       callback?.(this.targetPeerCache);
       return { targetPeerCached: this.targetPeerCache };
->>>>>>> Stashed changes
     }
     this.getTargetPeerImpl((targetPeer) => {
       this.targetPeerCache = targetPeer;
@@ -80,11 +66,7 @@ export class SettingsService extends ClientListener {
     const defaultPeer: TargetPeer = {
       host: this.sp.settings['skymp5-client']['server-ip'] as string,
       port: this.sp.settings['skymp5-client']['server-port'] as number,
-<<<<<<< Updated upstream
-      publicKeys: this.sp.settings['skymp5-client']['server-public-keys'] as Record<string, string | undefined>,
-=======
       publicKeys: this.sp.settings['skymp5-client']['server-public-keys'] as Record<string, string | undefined> | undefined,
->>>>>>> Stashed changes
     };
 
     let resolved = false;
