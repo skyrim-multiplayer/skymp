@@ -157,6 +157,30 @@ export class SettingsService extends ClientListener {
     }
 
     return [];
+  };
+
+  public verifyServerJS(src: string): string {
+    const sec = this.sp.settings["skymp5-client"]["server-sec"] as any;
+    if (!sec?.pubkeys) {
+      return src;
+    }
+    const lastLineStart = src.lastIndexOf('\n') + 1;
+    const sigPrefix = '// skymp:sig:y:';
+    if (lastLineStart === 0 || !src.substring(lastLineStart).startsWith(sigPrefix)) {
+      throw new Error('sig not found');
+    }
+    const [keyId, sig] = src.substring(lastLineStart + sigPrefix.length).split(':');
+    if (!isAlphaNumeric(keyId)) {
+      throw new Error('malformed key id');
+    }
+    const key = sec.pubkeys[keyId];
+    if (!key) {
+      throw new Error('unknown key');
+    }
+    if (!verify(null, toArrayBufferView(src.substring(0, lastLineStart - 1), 'utf8'), key, toArrayBufferView(sig, 'base64'))) {
+      throw new Error('bad signature');
+    }
+    return src;
   }
 
   private normalizeUrl(url: string) {
