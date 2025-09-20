@@ -108,7 +108,7 @@ public:
   void NotifyGamemodeApiStateChanged(
     const GamemodeApi::State& newState) noexcept;
 
-  void SetPrivateKey(const std::string& pkeyPem);
+  void SetPrivateKey(const std::string& keyId, const std::string& pkeyPem);
 
   void SetPacketHistoryRecording(Networking::UserId userId, bool value);
   PacketHistory GetPacketHistory(Networking::UserId userId);
