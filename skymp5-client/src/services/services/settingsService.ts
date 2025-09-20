@@ -4,8 +4,6 @@ import { ClientListener, CombinedController, Sp } from "./clientListener";
 import { Mod, ServerManifest } from "../messages_http/serverManifest";
 import { TimersService } from "./timersService";
 
-import { verify } from 'node:crypto';
-
 interface IHttpClientWithCallback {
   get(path: string, options?: { headers?: HttpHeaders }): Promise<HttpResponse>;
   post(path: string, options: { body: string, contentType: string, headers?: HttpHeaders }): Promise<HttpResponse>;
@@ -16,7 +14,10 @@ interface IHttpClientWithCallback {
 export interface TargetPeer {
   host: string;
   port: number;
+  publicKeys?: Record<string, string | undefined>;
 }
+
+type TargetPeerCallback = (targetPeer: TargetPeer) => void;
 
 export class SettingsService extends ClientListener {
   constructor(private sp: Sp, private controller: CombinedController) {
@@ -44,7 +45,17 @@ export class SettingsService extends ClientListener {
   }
 
   // have to use callbacks here: promises don't work in the main menu
-  public getTargetPeer(callback: (targetPeer: TargetPeer) => void) {
+  public getTargetPeer(callback: TargetPeerCallback) {
+    if (this.targetPeerCached) {
+      const targetPeerCached = this.targetPeerCached;
+      this.controller.once('tick', () => callback(targetPeerCached));
+      return;
+    }
+    if (this.targetPeerCallbacks.length > 0) {
+      this.targetPeerCallbacks.push(callback);
+      return;
+    }
+
     const masterApiClient = this.makeMasterApiClient();
     const masterKey = this.getServerMasterKey();
 
@@ -52,6 +63,7 @@ export class SettingsService extends ClientListener {
     const defaultPeer: TargetPeer = {
       host: this.sp.settings['skymp5-client']['server-ip'] as string,
       port: this.sp.settings['skymp5-client']['server-port'] as number,
+      publicKeys: this.sp.settings['skymp5-client']['server-keys'] as Record<string, string | undefined>,
     };
 
     let resolved = false;
@@ -95,7 +107,9 @@ export class SettingsService extends ClientListener {
         }
         resolved = true;
 
-        callback(targetPeer);
+        for (const cb of this.targetPeerCallbacks) {
+          cb(targetPeer);
+        }
       },
       reject: (err: unknown) => {
         if (resolved) {
@@ -104,11 +118,17 @@ export class SettingsService extends ClientListener {
         resolved = true;
 
         printConsole(`Server info request failed, falling back; error: ${err}`);
-        callback(defaultPeer);
+        for (const cb of this.targetPeerCallbacks) {
+          cb(defaultPeer);
+        }
       },
     };
 
     states.start();
+  }
+
+  public getCachedTargetPeer(): TargetPeer | undefined {
+    return this.targetPeerCached;
   }
 
   public async getServerMods(): Promise<Mod[]> {
@@ -137,30 +157,6 @@ export class SettingsService extends ClientListener {
     }
 
     return [];
-  };
-
-  public verifyServerJS(src: string): string {
-    const sec = this.sp.settings["skymp5-client"]["server-sec"] as any;
-    if (!sec?.pubkeys) {
-      return src;
-    }
-    const lastLineStart = src.lastIndexOf('\n') + 1;
-    const sigPrefix = '// skymp:sig:y:';
-    if (lastLineStart === 0 || !src.substring(lastLineStart).startsWith(sigPrefix)) {
-      throw new Error('sig not found');
-    }
-    const [keyId, sig] = src.substring(lastLineStart + sigPrefix.length).split(',');
-    if (!isAlphaNumeric(keyId)) {
-      throw new Error('malformed key id');
-    }
-    const key = sec.pubkeys[keyId];
-    if (!key) {
-      throw new Error('unknown key');
-    }
-    if (!verify(null, toArrayBufferView(src.substring(0, lastLineStart - 1), 'utf8'), key, toArrayBufferView(sig, 'base64'))) {
-      throw new Error('bad signature');
-    }
-    return src;
   }
 
   private normalizeUrl(url: string) {
@@ -168,24 +164,8 @@ export class SettingsService extends ClientListener {
       return url.slice(0, url.length - 1);
     }
     return url;
-  };
-}
-
-function isAlphaNumeric(str: string) {
-  for (let i = 0, len = str.length; i < len; i++) {
-    let code = str.charCodeAt(i);
-    if (!(
-      (97 <= code && code <= 122) ||
-      (65 <= code && code <= 90) ||
-      (48 <= code && code <= 57)
-    )) {
-      return false;
-    }
   }
-  return true;
-}
 
-function toArrayBufferView(str: string, enc: NodeJS.BufferEncoding): NodeJS.ArrayBufferView {
-  const buf = Buffer.from(str, enc);
-  return new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength);
+  private targetPeerCached?: TargetPeer;
+  private targetPeerCallbacks: TargetPeerCallback[] = [];
 }
