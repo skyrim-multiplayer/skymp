@@ -6,7 +6,6 @@
 #include "GamemodeApi.h"
 #include "NapiHelper.h"
 #include "NetworkingCombined.h"
-#include "OpenSSLSigner.h"
 #include "PacketHistoryWrapper.h"
 #include "PapyrusUtils.h"
 #include "ScampServerListener.h"
@@ -22,7 +21,6 @@
 #include "papyrus-vm/Utils.h"
 #include "property_bindings/PropertyBindingFactory.h"
 #include "save_storages/SaveStorageFactory.h"
-#include "script_objects/EspmGameObject.h"
 #include "script_storages/ScriptStorageFactory.h"
 #include <algorithm>
 #include <antigo/Context.h>
