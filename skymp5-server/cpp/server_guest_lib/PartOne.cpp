@@ -563,7 +563,6 @@ std::string PartOne::SignedJS(std::string src) const
   auto sig = pImpl->sslSigner->SignB64(
     reinterpret_cast<const unsigned char*>(src.c_str()), src.length());
   src += fmt::format("\n// skymp:sig:y:{},{}", pImpl->sslSignerKeyAlias, sig);
-  src += sig;
   return src;
 }
 
