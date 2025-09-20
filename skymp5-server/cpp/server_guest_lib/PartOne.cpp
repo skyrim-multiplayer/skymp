@@ -92,7 +92,7 @@ struct PartOne::Impl
   std::vector<uint8_t> updateGamemodeDataMsg;
 
   std::shared_ptr<OpenSSLSigner> sslSigner; // nullptr if no private key set
-  std::string sslSignerKeyAlias; // empty string
+  std::string sslSignerKeyAlias;            // empty string
 };
 
 PartOne::PartOne(Networking::ISendTarget* sendTarget)
@@ -541,7 +541,8 @@ void PartOne::NotifyGamemodeApiStateChanged(
             pImpl->updateGamemodeDataMsg.begin());
 }
 
-void PartOne::SetPrivateKey(const std::string& keyAlias, const std::string& pkeyPem)
+void PartOne::SetPrivateKey(const std::string& keyAlias,
+                            const std::string& pkeyPem)
 {
   auto pkey = std::make_shared<OpenSSLPrivateKey>(pkeyPem);
   pImpl->sslSigner = std::make_shared<OpenSSLSigner>(pkey);

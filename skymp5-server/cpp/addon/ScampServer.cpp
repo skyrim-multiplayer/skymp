@@ -412,7 +412,8 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
     if (auto it = serverSettings.find("serverKey");
         it != serverSettings.end()) {
       auto serverKey = it.value();
-      partOne->SetPrivateKey(serverKey["alias"].get<std::string>(), serverKey["private"].get<std::string>());
+      partOne->SetPrivateKey(serverKey["alias"].get<std::string>(),
+                             serverKey["private"].get<std::string>());
     }
 
     auto res =

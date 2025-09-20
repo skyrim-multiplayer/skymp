@@ -18,8 +18,7 @@ void OpenSSLThrow(std::string_view msgUser)
 {
   ANTIGO_CONTEXT_INIT(ctx);
   std::string msgSsl;
-  auto callback = [](const char* str, size_t len, void* u) -> int
-  {
+  auto callback = [](const char* str, size_t len, void* u) -> int {
     auto& msgSsl = *reinterpret_cast<std::string*>(u);
     msgSsl.insert(msgSsl.end(), str, str + len);
     return len;
@@ -39,7 +38,8 @@ auto OpenSSLPtrWrap(T* ptr, F cb,
   if (ptr == nullptr) {
     OpenSSLThrow(msg);
   }
-  return OpenSSLSignerImpl::UniquePtrWithDeleter<T>(ptr, OpenSSLSignerImpl::Deleter<T>{ cb });
+  return OpenSSLSignerImpl::UniquePtrWithDeleter<T>(
+    ptr, OpenSSLSignerImpl::Deleter<T>{ cb });
 }
 
 std::string Base64Encode(const unsigned char* data, size_t dataLen)
@@ -58,9 +58,8 @@ std::string Base64Encode(const unsigned char* data, size_t dataLen)
 
 OpenSSLPrivateKey::OpenSSLPrivateKey(const std::string& pkeyPem)
 {
-  auto bio =
-    OpenSSLPtrWrap(BIO_new_mem_buf(pkeyPem.c_str(), pkeyPem.length()),
-                   BIO_free, "could not allocate io buffer for pkey");
+  auto bio = OpenSSLPtrWrap(BIO_new_mem_buf(pkeyPem.c_str(), pkeyPem.length()),
+                            BIO_free, "could not allocate io buffer for pkey");
   pkey = OpenSSLPtrWrap(
     PEM_read_bio_PrivateKey(bio.get(), nullptr, nullptr, nullptr),
     EVP_PKEY_free, "could not parse pkey");
