@@ -5,7 +5,7 @@
 
 TEST_CASE("OpenSSLSigner")
 {
-  auto testKey = std::make_shared<OpenSSLPrivkey>(R"(
+  auto testKey = std::make_shared<OpenSSLPrivateKey>(R"(
 -----BEGIN PRIVATE KEY-----
 MC4CAQAwBQYDK2VwBCIEIILh6zzNPCOMUWMvW4QXXXPPWbyJoNL8ggkqiD+2mZdp
 -----END PRIVATE KEY-----

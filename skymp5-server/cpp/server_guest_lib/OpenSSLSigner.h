@@ -5,15 +5,14 @@
 #include <string>
 #include <type_traits>
 #include <variant>
-#include <vector>
 
 // openssl
 typedef struct evp_pkey_st EVP_PKEY;
 typedef struct evp_md_ctx_st EVP_MD_CTX;
 
-namespace impl {
+namespace OpenSSLSignerImpl {
 template <class T>
-struct OpenSSLDeleter
+struct Deleter
 {
   using FreeCbIntT = int (*)(T*);
   using FreeCbVoidT = void (*)(T*);
@@ -36,37 +35,28 @@ struct OpenSSLDeleter
 };
 
 template <class T>
-using OpenSSLUniquePtr = std::unique_ptr<T, OpenSSLDeleter<T>>;
-} // namespace impl
+using UniquePtrWithDeleter = std::unique_ptr<T, Deleter<T>>;
+} // namespace OpenSSLSignerImpl
 
-class OpenSSLPrivkey
+class OpenSSLPrivateKey
 {
 public:
-  explicit OpenSSLPrivkey(const std::string& pkeyPem);
+  explicit OpenSSLPrivateKey(const std::string& pkeyPem);
 
   EVP_PKEY* GetWrapped() { return pkey.get(); }
 
 private:
-  impl::OpenSSLUniquePtr<EVP_PKEY> pkey;
+  OpenSSLSignerImpl::UniquePtrWithDeleter<EVP_PKEY> pkey;
 };
 
 class OpenSSLSigner
 {
 public:
-  explicit OpenSSLSigner(std::shared_ptr<OpenSSLPrivkey> pkey_);
+  explicit OpenSSLSigner(std::shared_ptr<OpenSSLPrivateKey> pkey_);
 
   std::string SignB64(const unsigned char* data, size_t len);
 
 private:
-  std::shared_ptr<OpenSSLPrivkey> pkey;
-  impl::OpenSSLUniquePtr<EVP_MD_CTX> sslMdCtx;
-};
-
-struct CharBuf
-{
-  std::vector<unsigned char> buf;
-
-  void Append(std::string_view sv);
-  void Append(char c);
-  void AppendNul(std::string_view sv);
+  std::shared_ptr<OpenSSLPrivateKey> pkey;
+  OpenSSLSignerImpl::UniquePtrWithDeleter<EVP_MD_CTX> sslMdCtx;
 };

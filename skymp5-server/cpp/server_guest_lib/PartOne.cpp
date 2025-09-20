@@ -541,7 +541,7 @@ void PartOne::NotifyGamemodeApiStateChanged(
 
 void PartOne::SetPrivateKey(const std::string& pkeyPem)
 {
-  auto pkey = std::make_shared<OpenSSLPrivkey>(pkeyPem);
+  auto pkey = std::make_shared<OpenSSLPrivateKey>(pkeyPem);
   pImpl->sslSigner = std::make_shared<OpenSSLSigner>(pkey);
 }
 
