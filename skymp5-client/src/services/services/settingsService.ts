@@ -51,8 +51,9 @@ export class SettingsService extends ClientListener {
       this.controller.once('tick', () => callback(targetPeerCached));
       return;
     }
-    if (this.targetPeerCallbacks.length > 0) {
-      this.targetPeerCallbacks.push(callback);
+
+    this.targetPeerCallbacks.push(callback);
+    if (this.targetPeerCallbacks.length > 1) {
       return;
     }
 
@@ -63,7 +64,7 @@ export class SettingsService extends ClientListener {
     const defaultPeer: TargetPeer = {
       host: this.sp.settings['skymp5-client']['server-ip'] as string,
       port: this.sp.settings['skymp5-client']['server-port'] as number,
-      publicKeys: this.sp.settings['skymp5-client']['server-keys'] as Record<string, string | undefined>,
+      publicKeys: this.sp.settings['skymp5-client']['server-public-keys'] as Record<string, string | undefined>,
     };
 
     let resolved = false;
