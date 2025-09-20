@@ -55,10 +55,18 @@ export class GamemodeEventSourceService extends ClientListener {
         const serverJsVerificationService = this.controller.lookupListener(ServerJsVerificationService);
 
         eventNames.forEach((eventName) => {
+
+            const result = serverJsVerificationService.verifyServerJs(eventSourcesRecord[eventName]!);
+
+            if (result.src === null) {
+                logError(this, `'eventSources`, eventName, 'Verification failed:', result.error);
+                return;
+            }
+
             try {
                 const fn = new Function(
                     'ctx',
-                    serverJsVerificationService.verifyServerJs(eventSourcesRecord[eventName]!),
+                    result.src,
                 );
 
                 const ctx: GamemodeApiEventSourceCtx = {

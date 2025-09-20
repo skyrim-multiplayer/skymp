@@ -220,10 +220,19 @@ export class GamemodeUpdateService extends ClientListener {
         this.sp.storage[storageVar] = functionSourcesRecord;
 
         for (const propName of Object.keys(functionSourcesRecord)) {
+
+            const result = serverJsVerificationService.verifyServerJs((this.sp.storage[storageVar] as any)[propName]);
+
+            if (result.src === null) {
+                logError(this, storageVar, propName, 'Verification failed:', result.error);
+                delete (this.sp.storage[storageVar] as any)[propName];
+                continue;
+            }
+
             try {
                 (this.sp.storage[storageVar] as any)[propName] = new Function(
                     'ctx',
-                    serverJsVerificationService.verifyServerJs((this.sp.storage[storageVar] as any)[propName]),
+                    result.src,
                 );
                 const emptyFunction = functionSourcesRecord[propName] === '';
                 if (emptyFunction) {
@@ -233,7 +242,7 @@ export class GamemodeUpdateService extends ClientListener {
                     logTrace(this, storageVar, propName, 'Added');
                 }
             } catch (e) {
-                logTrace(this, storageVar, propName, e);
+                logError(this, storageVar, propName, e);
             }
         }
         this.sp.storage[`${storageVar}_keys`] = Object.keys(this.sp.storage[storageVar] as any);

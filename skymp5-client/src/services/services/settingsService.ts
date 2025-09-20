@@ -3,6 +3,7 @@ import { AuthService } from "./authService";
 import { ClientListener, CombinedController, Sp } from "./clientListener";
 import { Mod, ServerManifest } from "../messages_http/serverManifest";
 import { TimersService } from "./timersService";
+import { logTrace } from "../../logging";
 
 interface IHttpClientWithCallback {
   get(path: string, options?: { headers?: HttpHeaders }): Promise<HttpResponse>;
@@ -17,7 +18,7 @@ export interface TargetPeer {
   publicKeys?: Record<string, string | undefined>;
 }
 
-type TargetPeerCallback = (targetPeer: TargetPeer) => void;
+export type TargetPeerCallback = (targetPeer: TargetPeer) => void;
 
 export class SettingsService extends ClientListener {
   constructor(private sp: Sp, private controller: CombinedController) {
@@ -44,6 +45,7 @@ export class SettingsService extends ClientListener {
     return new HttpClient(masterApiBaseUrl) as IHttpClientWithCallback;
   }
 
+<<<<<<< Updated upstream
   // have to use callbacks here: promises don't work in the main menu
   public getTargetPeer(callback: TargetPeerCallback) {
     if (this.targetPeerCached) {
@@ -55,8 +57,22 @@ export class SettingsService extends ClientListener {
     this.targetPeerCallbacks.push(callback);
     if (this.targetPeerCallbacks.length > 1) {
       return;
+=======
+  public getTargetPeer(callback?: TargetPeerCallback): { targetPeerCached: TargetPeer | null } {
+    if (this.targetPeerCache) {
+      callback?.(this.targetPeerCache);
+      return { targetPeerCached: this.targetPeerCache };
+>>>>>>> Stashed changes
     }
+    this.getTargetPeerImpl((targetPeer) => {
+      this.targetPeerCache = targetPeer;
+      callback?.(targetPeer);
+    });
+    return { targetPeerCached: null };
+  }
 
+  // have to use callbacks here: promises don't work in the main menu
+  private getTargetPeerImpl(callback: TargetPeerCallback) {
     const masterApiClient = this.makeMasterApiClient();
     const masterKey = this.getServerMasterKey();
 
@@ -64,7 +80,11 @@ export class SettingsService extends ClientListener {
     const defaultPeer: TargetPeer = {
       host: this.sp.settings['skymp5-client']['server-ip'] as string,
       port: this.sp.settings['skymp5-client']['server-port'] as number,
+<<<<<<< Updated upstream
       publicKeys: this.sp.settings['skymp5-client']['server-public-keys'] as Record<string, string | undefined>,
+=======
+      publicKeys: this.sp.settings['skymp5-client']['server-public-keys'] as Record<string, string | undefined> | undefined,
+>>>>>>> Stashed changes
     };
 
     let resolved = false;
@@ -108,9 +128,14 @@ export class SettingsService extends ClientListener {
         }
         resolved = true;
 
-        for (const cb of this.targetPeerCallbacks) {
-          cb(targetPeer);
-        }
+        logTrace(this, `Resolved target peer`, targetPeer);
+
+        const enrichedTargetPeer = { ...targetPeer };
+        enrichedTargetPeer.publicKeys = { ...defaultPeer.publicKeys, ...targetPeer.publicKeys };
+
+        logTrace(this, `Enriched target peer`, enrichedTargetPeer);
+
+        callback(enrichedTargetPeer);
       },
       reject: (err: unknown) => {
         if (resolved) {
@@ -118,18 +143,12 @@ export class SettingsService extends ClientListener {
         }
         resolved = true;
 
-        printConsole(`Server info request failed, falling back; error: ${err}`);
-        for (const cb of this.targetPeerCallbacks) {
-          cb(defaultPeer);
-        }
+        logTrace(this, `Server info request failed, falling back to`, defaultPeer, `; error:`, err);
+        callback(defaultPeer);
       },
     };
 
     states.start();
-  }
-
-  public getCachedTargetPeer(): TargetPeer | undefined {
-    return this.targetPeerCached;
   }
 
   public async getServerMods(): Promise<Mod[]> {
@@ -158,15 +177,14 @@ export class SettingsService extends ClientListener {
     }
 
     return [];
-  }
+  };
 
   private normalizeUrl(url: string) {
     if (url.endsWith('/')) {
       return url.slice(0, url.length - 1);
     }
     return url;
-  }
+  };
 
-  private targetPeerCached?: TargetPeer;
-  private targetPeerCallbacks: TargetPeerCallback[] = [];
+  private targetPeerCache: TargetPeer | null = null;
 }

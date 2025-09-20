@@ -1,35 +1,58 @@
 import { verify } from 'node:crypto';
 import { ClientListener, CombinedController, Sp } from './clientListener';
 import { SettingsService } from './settingsService';
+import { logTrace } from '../../logging';
 
 export class ServerJsVerificationService extends ClientListener {
   constructor(private sp: Sp, private controller: CombinedController) {
     super();
   }
 
-  public verifyServerJs(src: string): string {
-    const pubkeys = this.controller.lookupListener(SettingsService).getCachedTargetPeer()?.publicKeys;
-    if (!pubkeys) {
-      return src;
+  public verifyServerJs(src: string): { src: string, error: null } | { src: null, error: string } {
+    if (!src) {
+      logTrace(this, 'Empty server JS, skipping verification');
+      return { src, error: null };
     }
+
+    const settingsService = this.controller.lookupListener(SettingsService);
+
+    const getTargetPeerResult = settingsService.getTargetPeer();
+    if (!getTargetPeerResult.targetPeerCached) {
+      return { src: null, error: 'target peer not ready' };
+    }
+
+    const publicKeys = getTargetPeerResult.targetPeerCached.publicKeys;
+    if (!publicKeys) {
+      logTrace(this, 'No public keys configured, skipping server JS verification');
+      return { src, error: null };
+    }
+
     const lastLineStart = src.lastIndexOf('\n') + 1;
     const sigPrefix = '// skymp:sig:y:';
     if (lastLineStart === 0 || !src.substring(lastLineStart).startsWith(sigPrefix)) {
-      throw new Error('sig not found');
+      return { src: null, error: 'no signature found' };
     }
+<<<<<<< Updated upstream
+=======
+
+>>>>>>> Stashed changes
     const [keyId, sig] = src.substring(lastLineStart + sigPrefix.length).split(':');
     if (!this.isAlphaNumeric(keyId)) {
-      throw new Error('malformed key id');
+      return { src: null, error: 'malformed key id' };
     }
-    const key = pubkeys[keyId];
+
+    const key = publicKeys[keyId];
     if (!key) {
-      throw new Error('unknown key');
+      return { src: null, error: 'unknown key' };
     }
+
     const toVerify = this.toArrayBufferView(src.substring(0, lastLineStart - 1), 'utf8');
     if (!verify(null, toVerify, key, this.toArrayBufferView(sig, 'base64'))) {
-      throw new Error('bad signature');
+      return { src: null, error: 'bad signature' };
     }
-    return src;
+
+    logTrace(this, `Server JS verified with key ${keyId}`);
+    return { src, error: null };
   }
 
   private isAlphaNumeric(str: string) {
