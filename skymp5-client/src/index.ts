@@ -57,6 +57,7 @@ import { SweetTaffyNicknamesService } from "./services/services/sweetTaffyNickna
 import { UniversalTickService } from "./services/services/universalTickService";
 import { AnimationSyncService } from "./services/services/sync/animationSyncService";
 import { ActorValuesSyncService } from "./services/services/sync/actorValuesSyncService";
+import { ServerJsVerificationService } from "./services/services/serverJsVerificationService";
 
 once("update", () => {
   Utility.setINIBool("bAlwaysActive:General", true);
@@ -118,6 +119,7 @@ const main = () => {
       new UniversalTickService(sp, controller),
       new AnimationSyncService(sp, controller),
       new ActorValuesSyncService(sp, controller),
+      new ServerJsVerificationService(sp, controller),
     ];
     SpApiInteractor.setup(listeners);
   } catch (e) {

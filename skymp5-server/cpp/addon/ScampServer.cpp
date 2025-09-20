@@ -21,7 +21,6 @@
 #include "papyrus-vm/Utils.h"
 #include "property_bindings/PropertyBindingFactory.h"
 #include "save_storages/SaveStorageFactory.h"
-#include "script_objects/EspmGameObject.h"
 #include "script_storages/ScriptStorageFactory.h"
 #include <algorithm>
 #include <antigo/Context.h>
@@ -406,6 +405,13 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
     if (it != serverSettings.end() && (*it).is_array()) {
       partOne->worldState.SetForbiddenRelootTypes(
         (*it).get<std::set<std::string>>());
+    }
+
+    if (auto it = serverSettings.find("serverKey");
+        it != serverSettings.end()) {
+      auto serverKey = it.value();
+      partOne->SetPrivateKey(serverKey["alias"].get<std::string>(),
+                             serverKey["private"].get<std::string>());
     }
 
     auto res =

@@ -15,6 +15,8 @@ import { GamemodeApiCtx } from "../messages_gamemode/gamemodeApiCtx";
 // Sligthly different types
 import * as skyrimPlatform from "skyrimPlatform";
 import { logError, logTrace } from "../../logging";
+import { SettingsService } from "./settingsService";
+import { ServerJsVerificationService } from "./serverJsVerificationService";
 
 export class GamemodeUpdateService extends ClientListener {
     constructor(private sp: Sp, private controller: CombinedController) {
@@ -210,16 +212,27 @@ export class GamemodeUpdateService extends ClientListener {
         storageVar: string,
         functionSources: GamemodeValuePair[],
     ) {
+        const serverJsVerificationService = this.controller.lookupListener(ServerJsVerificationService);
+
         let functionSourcesRecord: Record<string, string | undefined> = {};
         functionSources.forEach(pair => functionSourcesRecord[pair.name] = pair.content);
 
         this.sp.storage[storageVar] = functionSourcesRecord;
 
         for (const propName of Object.keys(functionSourcesRecord)) {
+
+            const result = serverJsVerificationService.verifyServerJs((this.sp.storage[storageVar] as any)[propName]);
+
+            if (result.src === null) {
+                logError(this, storageVar, propName, 'Verification failed:', result.error);
+                delete (this.sp.storage[storageVar] as any)[propName];
+                continue;
+            }
+
             try {
                 (this.sp.storage[storageVar] as any)[propName] = new Function(
                     'ctx',
-                    (this.sp.storage[storageVar] as any)[propName],
+                    result.src,
                 );
                 const emptyFunction = functionSourcesRecord[propName] === '';
                 if (emptyFunction) {
@@ -229,7 +242,7 @@ export class GamemodeUpdateService extends ClientListener {
                     logTrace(this, storageVar, propName, 'Added');
                 }
             } catch (e) {
-                logTrace(this, storageVar, propName, e);
+                logError(this, storageVar, propName, e);
             }
         }
         this.sp.storage[`${storageVar}_keys`] = Object.keys(this.sp.storage[storageVar] as any);

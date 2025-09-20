@@ -1,16 +1,8 @@
 #include "PartOne.h"
-#include "ActionListener.h"
-#include "Exceptions.h"
-#include "FormCallbacks.h"
-#include "IdManager.h"
-#include "JsonUtils.h"
-#include "MessageSerializerFactory.h"
-#include "MsgType.h"
-#include "PacketParser.h"
 #include <array>
 #include <cassert>
 #include <chrono>
-#include <type_traits>
+#include <string>
 #include <vector>
 
 #include "CreateActorMessage.h"
@@ -19,6 +11,12 @@
 #include "HostStopMessage.h"
 #include "SetRaceMenuOpenMessage.h"
 #include "UpdateGameModeDataMessage.h"
+
+#include "ActionListener.h"
+#include "FormCallbacks.h"
+#include "MessageSerializerFactory.h"
+#include "OpenSSLSigner.h"
+#include "PacketParser.h"
 
 PartOneSendTargetWrapper::PartOneSendTargetWrapper(
   Networking::ISendTarget& underlyingSendTarget_)
@@ -92,6 +90,9 @@ struct PartOne::Impl
 
   GamemodeApi::State gamemodeApiState;
   std::vector<uint8_t> updateGamemodeDataMsg;
+
+  std::shared_ptr<OpenSSLSigner> sslSigner; // nullptr if no private key set
+  std::string sslSignerKeyAlias;            // empty string
 };
 
 PartOne::PartOne(Networking::ISendTarget* sendTarget)
@@ -498,14 +499,15 @@ void PartOne::NotifyGamemodeApiStateChanged(
   UpdateGameModeDataMessage msg;
 
   for (auto [eventName, eventSourceInfo] : newState.createdEventSources) {
-    msg.eventSources.push_back({ eventName, eventSourceInfo.functionBody });
+    msg.eventSources.push_back(
+      { eventName, SignedJS(eventSourceInfo.functionBody) });
   }
 
   for (auto [propertyName, propertyInfo] : newState.createdProperties) {
     GamemodeValuePair updateOwnerFunctionsEntry;
     updateOwnerFunctionsEntry.name = propertyName;
     updateOwnerFunctionsEntry.content =
-      propertyInfo.isVisibleByOwner ? propertyInfo.updateOwner : "";
+      SignedJS(propertyInfo.isVisibleByOwner ? propertyInfo.updateOwner : "");
     msg.updateOwnerFunctions.push_back(updateOwnerFunctionsEntry);
 
     //  From docs: isVisibleByNeighbors considered to be always false for
@@ -518,7 +520,7 @@ void PartOne::NotifyGamemodeApiStateChanged(
     GamemodeValuePair updateNeighborFunctionsEntry;
     updateNeighborFunctionsEntry.name = propertyName;
     updateNeighborFunctionsEntry.content =
-      actuallyVisibleByNeighbor ? propertyInfo.updateNeighbor : "";
+      SignedJS(actuallyVisibleByNeighbor ? propertyInfo.updateNeighbor : "");
     msg.updateNeighborFunctions.push_back(updateNeighborFunctionsEntry);
   }
 
@@ -537,6 +539,31 @@ void PartOne::NotifyGamemodeApiStateChanged(
   pImpl->updateGamemodeDataMsg.resize(stream.GetNumberOfBytesUsed());
   std::copy(stream.GetData(), stream.GetData() + stream.GetNumberOfBytesUsed(),
             pImpl->updateGamemodeDataMsg.begin());
+}
+
+void PartOne::SetPrivateKey(const std::string& keyAlias,
+                            const std::string& pkeyPem)
+{
+  auto pkey = std::make_shared<OpenSSLPrivateKey>(pkeyPem);
+  pImpl->sslSigner = std::make_shared<OpenSSLSigner>(pkey);
+  pImpl->sslSignerKeyAlias = keyAlias;
+}
+
+std::string PartOne::SignedJS(std::string src) const
+{
+  if (src.empty()) {
+    return src;
+  }
+
+  if (!pImpl->sslSigner) {
+    src += "\n// skymp:sig:n/a";
+    return src;
+  }
+
+  auto sig = pImpl->sslSigner->SignB64(
+    reinterpret_cast<const unsigned char*>(src.c_str()), src.length());
+  src += fmt::format("\n// skymp:sig:y:CPP{}:{}", pImpl->sslSignerKeyAlias, sig);
+  return src;
 }
 
 void PartOne::SetPacketHistoryRecording(Networking::UserId userId, bool enable)

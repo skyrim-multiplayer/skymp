@@ -3,7 +3,6 @@
 #include "GamemodeApi.h"
 #include "HitData.h"
 #include "MpActor.h"
-#include "Networking.h"
 #include "NiPoint3.h"
 #include "PartOneListener.h"
 #include "ServerState.h"
@@ -17,7 +16,6 @@
 #include <set>
 #include <simdjson.h>
 #include <spdlog/logger.h>
-#include <unordered_map>
 
 using ProfileId = int32_t;
 class ActionListener;
@@ -110,6 +108,8 @@ public:
   void NotifyGamemodeApiStateChanged(
     const GamemodeApi::State& newState) noexcept;
 
+  void SetPrivateKey(const std::string& keyId, const std::string& pkeyPem);
+
   void SetPacketHistoryRecording(Networking::UserId userId, bool value);
   PacketHistory GetPacketHistory(Networking::UserId userId);
   void ClearPacketHistory(Networking::UserId userId);
@@ -140,6 +140,8 @@ private:
 
   void TickPacketHistoryPlaybacks();
   void TickDeferredMessages();
+
+  std::string SignedJS(std::string src) const;
 
   struct Impl;
   std::shared_ptr<Impl> pImpl;

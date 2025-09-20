@@ -3,6 +3,7 @@ import { AuthService } from "./authService";
 import { ClientListener, CombinedController, Sp } from "./clientListener";
 import { Mod, ServerManifest } from "../messages_http/serverManifest";
 import { TimersService } from "./timersService";
+import { logTrace } from "../../logging";
 
 interface IHttpClientWithCallback {
   get(path: string, options?: { headers?: HttpHeaders }): Promise<HttpResponse>;
@@ -14,7 +15,10 @@ interface IHttpClientWithCallback {
 export interface TargetPeer {
   host: string;
   port: number;
+  publicKeys?: Record<string, string | undefined>;
 }
+
+export type TargetPeerCallback = (targetPeer: TargetPeer) => void;
 
 export class SettingsService extends ClientListener {
   constructor(private sp: Sp, private controller: CombinedController) {
@@ -41,8 +45,20 @@ export class SettingsService extends ClientListener {
     return new HttpClient(masterApiBaseUrl) as IHttpClientWithCallback;
   }
 
+  public getTargetPeer(callback?: TargetPeerCallback): { targetPeerCached: TargetPeer | null } {
+    if (this.targetPeerCache) {
+      callback?.(this.targetPeerCache);
+      return { targetPeerCached: this.targetPeerCache };
+    }
+    this.getTargetPeerImpl((targetPeer) => {
+      this.targetPeerCache = targetPeer;
+      callback?.(targetPeer);
+    });
+    return { targetPeerCached: null };
+  }
+
   // have to use callbacks here: promises don't work in the main menu
-  public getTargetPeer(callback: (targetPeer: TargetPeer) => void) {
+  private getTargetPeerImpl(callback: TargetPeerCallback) {
     const masterApiClient = this.makeMasterApiClient();
     const masterKey = this.getServerMasterKey();
 
@@ -50,6 +66,7 @@ export class SettingsService extends ClientListener {
     const defaultPeer: TargetPeer = {
       host: this.sp.settings['skymp5-client']['server-ip'] as string,
       port: this.sp.settings['skymp5-client']['server-port'] as number,
+      publicKeys: this.sp.settings['skymp5-client']['server-public-keys'] as Record<string, string | undefined> | undefined,
     };
 
     let resolved = false;
@@ -93,7 +110,14 @@ export class SettingsService extends ClientListener {
         }
         resolved = true;
 
-        callback(targetPeer);
+        logTrace(this, `Resolved target peer`, targetPeer);
+
+        const enrichedTargetPeer = { ...targetPeer };
+        enrichedTargetPeer.publicKeys = { ...defaultPeer.publicKeys, ...targetPeer.publicKeys };
+
+        logTrace(this, `Enriched target peer`, enrichedTargetPeer);
+
+        callback(enrichedTargetPeer);
       },
       reject: (err: unknown) => {
         if (resolved) {
@@ -101,7 +125,7 @@ export class SettingsService extends ClientListener {
         }
         resolved = true;
 
-        printConsole(`Server info request failed, falling back; error: ${err}`);
+        logTrace(this, `Server info request failed, falling back to`, defaultPeer, `; error:`, err);
         callback(defaultPeer);
       },
     };
@@ -143,4 +167,6 @@ export class SettingsService extends ClientListener {
     }
     return url;
   };
+
+  private targetPeerCache: TargetPeer | null = null;
 }
