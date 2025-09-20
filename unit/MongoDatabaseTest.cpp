@@ -2,11 +2,34 @@
 #include "TestUtils.hpp"
 #include <catch2/catch_test_macros.hpp>
 #include <nlohmann/json.hpp>
+#include <openssl/sha.h>
 #include <simdjson.h>
+
+namespace MongoDatabaseTestUtils {
+std::string BytesToHexString(const uint8_t* bytes, size_t length)
+{
+  static constexpr auto kHexDigits = "0123456789abcdef";
+
+  std::string hexStr(length * 2, ' ');
+  for (size_t i = 0; i < length; ++i) {
+    hexStr[2 * i] = kHexDigits[(bytes[i] >> 4) & 0xF];
+    hexStr[2 * i + 1] = kHexDigits[bytes[i] & 0xF];
+  }
+
+  return hexStr;
+}
+
+std::string Sha256(const std::string& str)
+{
+  uint8_t hash[SHA256_DIGEST_LENGTH];
+  SHA256(reinterpret_cast<const uint8_t*>(str.data()), str.size(), hash);
+  return BytesToHexString(hash, SHA256_DIGEST_LENGTH);
+}
+}
 
 TEST_CASE("MongoDatabase Key and JSON Sanitization", "[MongoDatabase]")
 {
-  JsonSanitizer sanitizer({ '\0', '$', '.' });
+  JsonSanitizer sanitizer({ '\0', '$', '.' }, MongoDatabaseTestUtils::Sha256);
 
   simdjson::dom::parser parser;
 

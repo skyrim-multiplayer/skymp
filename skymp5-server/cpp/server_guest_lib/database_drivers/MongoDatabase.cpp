@@ -67,7 +67,9 @@ MongoDatabase::MongoDatabase(const std::string& uri_, const std::string& name_)
 
   pImpl.reset(new Impl{ uri_, name_ });
   pImpl->pool.reset(new mongocxx::pool(mongocxx::uri(pImpl->uri.data())));
-  pImpl->jsonSanitizer.reset(new JsonSanitizer(kBannedCharactersMongo5));
+  pImpl->jsonSanitizer.reset(
+    new JsonSanitizer(kBannedCharactersMongo5,
+                      [this](const std::string& str) { return Sha256(str); }));
 }
 
 std::vector<std::optional<MpChangeForm>>&& MongoDatabase::UpsertImpl(

@@ -1,4 +1,5 @@
 #pragma once
+#include <functional>
 #include <nlohmann/json.hpp>
 #include <optional>
 #include <simdjson.h>
@@ -8,7 +9,9 @@
 class JsonSanitizer
 {
 public:
-  explicit JsonSanitizer(const std::vector<char>& bannedCharacters_);
+  explicit JsonSanitizer(
+    const std::vector<char>& bannedCharacters_,
+    const std::function<std::string(const std::string&)>& hashFunction_);
 
   const std::string& GetEncKeysKey() const noexcept;
   const std::string& GetEncPrefix() const noexcept;
@@ -20,4 +23,5 @@ public:
 
 private:
   const std::vector<char> bannedCharacters;
+  const std::function<std::string(const std::string&)> hashFunction;
 };

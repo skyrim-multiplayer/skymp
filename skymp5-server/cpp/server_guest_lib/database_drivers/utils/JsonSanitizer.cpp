@@ -1,7 +1,10 @@
 #include "JsonSanitizer.h"
 
-JsonSanitizer::JsonSanitizer(const std::vector<char>& bannedCharacters_)
+JsonSanitizer::JsonSanitizer(
+  const std::vector<char>& bannedCharacters_,
+  const std::function<std::string(const std::string&)>& hashFunction_)
   : bannedCharacters(bannedCharacters_)
+  , hashFunction(hashFunction_)
 {
 }
 
@@ -22,19 +25,19 @@ std::optional<std::string> JsonSanitizer::SanitizeKey(const std::string& key)
   for (char character : bannedCharacters) {
     auto it = std::find(key.begin(), key.end(), character);
     if (it != key.end()) {
-      return GetEncPrefix() + Sha256(key);
+      return GetEncPrefix() + hashFunction(key);
     }
   }
 
   // Empty keys are banned by MongoDB
   if (key.empty()) {
-    return GetEncPrefix() + Sha256(key);
+    return GetEncPrefix() + hashFunction(key);
   }
 
-  // Avoid collisions in case one tries to use GetEncPrefix() + sha256(key) as
-  // another key
+  // Avoid collisions in case one tries to use GetEncPrefix() +
+  // hashFunction(key) as another key
   if (key.starts_with(GetEncPrefix())) {
-    return GetEncPrefix() + Sha256(key);
+    return GetEncPrefix() + hashFunction(key);
   }
 
   return std::nullopt;
