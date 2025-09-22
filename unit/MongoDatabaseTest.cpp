@@ -27,7 +27,33 @@ std::string Sha256(const std::string& str)
 }
 }
 
-TEST_CASE("MongoDatabase Key and JSON Sanitization", "[MongoDatabase]")
+TEST_CASE("JsonSanitizer can restore documents sanitized by an old sanitizer",
+          "[MongoDatabase]")
+{
+  JsonSanitizer sanitizerOld({ '\0', '$', '.' },
+                             MongoDatabaseTestUtils::Sha256);
+  JsonSanitizer sanitizerNew({ '\0' }, MongoDatabaseTestUtils::Sha256);
+
+  simdjson::dom::parser parser;
+
+  nlohmann::json original = { { "key.with.dot", "value1" },
+                              { "$key_with_dollar", 42 },
+                              { "valid_key", "value3" } };
+
+  nlohmann::json sanitizedByOld = sanitizerOld.SanitizeJsonRecursive(original);
+
+  std::string sanitizedStr = sanitizedByOld.dump();
+  simdjson::dom::element element = parser.parse(sanitizedStr).value();
+
+  bool wasRestored = false;
+  nlohmann::json restoredByNew =
+    sanitizerNew.RestoreSanitizedJsonRecursive(element, wasRestored);
+
+  REQUIRE(restoredByNew == original);
+  REQUIRE(wasRestored == true);
+}
+
+TEST_CASE("JsonSanitizer Key and JSON Sanitization", "[MongoDatabase]")
 {
   JsonSanitizer sanitizer({ '\0', '$', '.' }, MongoDatabaseTestUtils::Sha256);
 
