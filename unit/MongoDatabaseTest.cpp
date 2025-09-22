@@ -2,45 +2,64 @@
 #include "TestUtils.hpp"
 #include <catch2/catch_test_macros.hpp>
 #include <nlohmann/json.hpp>
+#include <openssl/sha.h>
 #include <simdjson.h>
+
+namespace MongoDatabaseTestUtils {
+std::string BytesToHexString(const uint8_t* bytes, size_t length)
+{
+  static constexpr auto kHexDigits = "0123456789abcdef";
+
+  std::string hexStr(length * 2, ' ');
+  for (size_t i = 0; i < length; ++i) {
+    hexStr[2 * i] = kHexDigits[(bytes[i] >> 4) & 0xF];
+    hexStr[2 * i + 1] = kHexDigits[bytes[i] & 0xF];
+  }
+
+  return hexStr;
+}
+
+std::string Sha256(const std::string& str)
+{
+  uint8_t hash[SHA256_DIGEST_LENGTH];
+  SHA256(reinterpret_cast<const uint8_t*>(str.data()), str.size(), hash);
+  return BytesToHexString(hash, SHA256_DIGEST_LENGTH);
+}
+}
 
 TEST_CASE("MongoDatabase Key and JSON Sanitization", "[MongoDatabase]")
 {
-  // A dummy instance is needed to call the non-static member functions.
-  // The functions being tested do not rely on an active database connection.
-  // We provide a syntactically valid URI to prevent the constructor from
-  // throwing.
-  MongoDatabase db("mongodb://127.0.0.1:27017", "testdb");
+  JsonSanitizer sanitizer({ '\0', '$', '.' }, MongoDatabaseTestUtils::Sha256);
 
   simdjson::dom::parser parser;
 
   SECTION("SanitizeKey correctly identifies keys that need sanitization")
   {
     // Valid keys should not be sanitized
-    REQUIRE(db.SanitizeKey("validKey") == std::nullopt);
-    REQUIRE(db.SanitizeKey("valid_key_123") == std::nullopt);
+    REQUIRE(sanitizer.SanitizeKey("validKey") == std::nullopt);
+    REQUIRE(sanitizer.SanitizeKey("valid_key_123") == std::nullopt);
 
     // Keys with banned characters ('.', '$', '\0') must be sanitized
-    REQUIRE(db.SanitizeKey("key.with.dot").has_value());
-    REQUIRE(db.SanitizeKey("$key_with_dollar").has_value());
+    REQUIRE(sanitizer.SanitizeKey("key.with.dot").has_value());
+    REQUIRE(sanitizer.SanitizeKey("$key_with_dollar").has_value());
 
     std::string keyWithNull = "key!with_null";
     keyWithNull[3] = '\0';
-    REQUIRE(db.SanitizeKey(keyWithNull).has_value());
+    REQUIRE(sanitizer.SanitizeKey(keyWithNull).has_value());
 
     // Empty keys must be sanitized
-    REQUIRE(db.SanitizeKey("").has_value());
+    REQUIRE(sanitizer.SanitizeKey("").has_value());
 
     // Keys that start with the reserved prefix must be sanitized to avoid
     // collision
-    std::string prefixKey = db.GetEncPrefix() + "some_hash_value";
-    REQUIRE(db.SanitizeKey(prefixKey).has_value());
+    std::string prefixKey = sanitizer.GetEncPrefix() + "some_hash_value";
+    REQUIRE(sanitizer.SanitizeKey(prefixKey).has_value());
 
     // Ensure sanitization is deterministic and produces different hashes for
     // different keys
-    auto hash1 = db.SanitizeKey("key.with.dot");
-    auto hash2 = db.SanitizeKey("$key_with_dollar");
-    auto hash3 = db.SanitizeKey("key.with.dot");
+    auto hash1 = sanitizer.SanitizeKey("key.with.dot");
+    auto hash2 = sanitizer.SanitizeKey("$key_with_dollar");
+    auto hash3 = sanitizer.SanitizeKey("key.with.dot");
     REQUIRE(hash1 != hash2);
     REQUIRE(hash1 == hash3);
   }
@@ -51,7 +70,7 @@ TEST_CASE("MongoDatabase Key and JSON Sanitization", "[MongoDatabase]")
     auto perform_round_trip_check = [&](const nlohmann::json& original,
                                         bool expect_restoration) {
       // 1. Sanitize the original JSON
-      nlohmann::json sanitized = db.SanitizeJsonRecursive(original);
+      nlohmann::json sanitized = sanitizer.SanitizeJsonRecursive(original);
 
       // 2. Convert to string and parse with simdjson, as required by the
       // Restore function
@@ -61,7 +80,7 @@ TEST_CASE("MongoDatabase Key and JSON Sanitization", "[MongoDatabase]")
       // 3. Restore the sanitized JSON
       bool was_restored = false;
       nlohmann::json restored =
-        db.RestoreSanitizedJsonRecursive(element, was_restored);
+        sanitizer.RestoreSanitizedJsonRecursive(element, was_restored);
 
       // 4. Verify the restored JSON matches the original and the restoration
       // flag is correct
@@ -109,7 +128,7 @@ TEST_CASE("MongoDatabase Key and JSON Sanitization", "[MongoDatabase]")
 
     SECTION("JSON with a key that starts with the reserved prefix")
     {
-      std::string reserved_key = db.GetEncPrefix() + "some_value";
+      std::string reserved_key = sanitizer.GetEncPrefix() + "some_value";
       nlohmann::json original = {
         { reserved_key, "this key should also be sanitized and restored" }
       };
@@ -134,22 +153,22 @@ TEST_CASE("MongoDatabase Key and JSON Sanitization", "[MongoDatabase]")
     SECTION("Verify the structure of a sanitized object")
     {
       nlohmann::json original = { { "a.b", 1 }, { "c", 2 } };
-      nlohmann::json sanitized = db.SanitizeJsonRecursive(original);
+      nlohmann::json sanitized = sanitizer.SanitizeJsonRecursive(original);
 
       // It should contain the original valid key 'c'
       REQUIRE(sanitized.contains("c"));
       REQUIRE(sanitized["c"] == 2);
 
       // It should contain the special map for encoded keys
-      REQUIRE(sanitized.contains(db.GetEncKeysKey()));
-      nlohmann::json enc_keys = sanitized[db.GetEncKeysKey()];
+      REQUIRE(sanitized.contains(sanitizer.GetEncKeysKey()));
+      nlohmann::json enc_keys = sanitized[sanitizer.GetEncKeysKey()];
       REQUIRE(enc_keys.is_object());
       REQUIRE(enc_keys.size() == 1);
 
       // Find the hashed key and verify its mapping and value
       std::string hashed_key;
       for (auto& [key, value] : sanitized.items()) {
-        if (key.starts_with(db.GetEncPrefix())) {
+        if (key.starts_with(sanitizer.GetEncPrefix())) {
           hashed_key = key;
           break;
         }
