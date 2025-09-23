@@ -4,6 +4,7 @@
 #include <chrono>
 #include <string>
 #include <vector>
+#include <cpptrace/cpptrace.hpp>
 
 #include "CreateActorMessage.h"
 #include "CustomPacketMessage.h"
@@ -496,6 +497,7 @@ float PartOne::CalculateDamage(const MpActor& aggressor, const MpActor& target,
 void PartOne::NotifyGamemodeApiStateChanged(
   const GamemodeApi::State& newState) noexcept
 {
+  spdlog::warn("!!!!! NotifyGamemodeApiStateChanged called {}", cpptrace::generate_trace().to_string());
   UpdateGameModeDataMessage msg;
 
   for (auto [eventName, eventSourceInfo] : newState.createdEventSources) {
