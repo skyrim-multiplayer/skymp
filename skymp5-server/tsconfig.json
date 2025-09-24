@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "noImplicitAny": true,
+    "strict": true,
     "allowJs": true,
     "module": "commonjs",
     "esModuleInterop": true,
@@ -13,7 +13,10 @@
     "paths": {
       "*": ["node_modules/*", "src/types/*"]
     },
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true
   },
   "include": ["ts"]
 }
