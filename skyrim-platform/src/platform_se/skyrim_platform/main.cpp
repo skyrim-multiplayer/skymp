@@ -1,3 +1,6 @@
+#include <NirnLabUIPlatformAPI/API.h>
+
+#include "BrowserApiNirnLab.h"
 #include "CallNativeApi.h"
 #include "ConsoleApi.h"
 #include "DumpFunctions.h"
@@ -16,7 +19,14 @@
 #include "TPRenderSystemD3D11.h"
 #include "TextsCollection.h"
 
+#define KEK_DEBUG(...) do { \
+    const auto ss = fmt::format(__VA_ARGS__); \
+    MessageBox(nullptr, ss.c_str(), "debug", MB_OK); \
+  } while (0)
+
 extern CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
+
+bool g_canUseAPI = false;
 
 void GetTextsToDraw(TextToDrawCallback callback)
 {
@@ -63,8 +73,13 @@ void InitLog()
   }
 
   *path /= "skyrim-platform.log"sv;
+
+  //DialogBox(GetModuleHandle(nullptr), 0, )
+  const auto pathStr = path->string();
+  KEK_DEBUG("{}", pathStr);
+
   auto sink =
-    std::make_shared<spdlog::sinks::basic_file_sink_mt>(path->string(), true);
+    std::make_shared<spdlog::sinks::basic_file_sink_mt>(pathStr, true);
 
   auto log = std::make_shared<spdlog::logger>("global log", std::move(sink));
 
@@ -118,6 +133,8 @@ DLLEXPORT void SkyrimPlatform_IpcSend_Impl(const char* systemName,
   return IPC::Send(systemName, data, length);
 }
 
+//MessageBox(GetForegroundWindow(), ss.c_str(), "debug", MB_OK); \
+
 DLLEXPORT bool SKSEAPI SKSEPlugin_Load_Impl(const SKSE::LoadInterface* skse)
 {
   InitLog();
@@ -143,7 +160,13 @@ DLLEXPORT bool SKSEAPI SKSEPlugin_Load_Impl(const SKSE::LoadInterface* skse)
     return false;
   }
 
-  messagingInterface->RegisterListener(EventHandler::HandleSKSEMessage);
+  //KEK_DEBUG("hi new {}", __LINE__);
+
+  SKSE::GetMessagingInterface()->RegisterListener(
+    [](SKSE::MessagingInterface::Message* a_msg) {
+      EventHandler::HandleSKSEMessage(a_msg);
+      BrowserApiNirnLab::GetInstance().HandleSkseMessage(a_msg);
+    });
 
   Hooks::Install();
   Frida::InstallHooks();
@@ -411,6 +434,15 @@ public:
 
   bool BeginMain() override
   {
+    /*
+     *
+[Browser]
+
+; dasgbrvji
+Backend = nirnlab
+     *
+     */
+
     inputConverter = std::make_shared<InputConverter>();
     myInputListener = std::make_shared<MyInputListener>();
 
@@ -510,8 +542,10 @@ public:
 
     overlayService =
       std::make_shared<OverlayService>(onProcessMessage, obtainTextsToDraw);
+
     myInputListener->Init(overlayService, inputConverter);
     SkyrimPlatform::GetSingleton()->SetOverlayService(overlayService);
+
     renderSystem = std::make_shared<RenderSystemD3D11>(*overlayService);
 
     auto manager = RE::BSRenderManager::GetSingleton();
