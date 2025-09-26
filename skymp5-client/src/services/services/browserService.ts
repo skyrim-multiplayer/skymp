@@ -30,7 +30,7 @@ export class BrowserService extends ClientListener {
     if (e.isDown([DxScanCode.F2])) {
       this.sp.browser.setVisible(!this.sp.browser.isVisible());
     }
-    if (e.isDown([DxScanCode.F6])) {
+    if (this.badMenusOpen.size === 0 && e.isDown([DxScanCode.F6])) {
       const newState = !this.sp.browser.isFocused();
       this.sp.browser.setFocused(newState);
       if (newState) {
@@ -39,11 +39,9 @@ export class BrowserService extends ClientListener {
         this.sp.browser.executeJavaScript(unfocusEventString);
       }
     }
-    if (e.isDown([DxScanCode.Enter])) {
-      if (this.badMenusOpen.size === 0) {
-        this.sp.browser.setFocused(true);
-        this.sp.browser.executeJavaScript(focusEventString);
-      }
+    if (this.badMenusOpen.size === 0 && e.isDown([DxScanCode.Enter])) {
+      this.sp.browser.setFocused(true);
+      this.sp.browser.executeJavaScript(focusEventString);
     }
     if (e.isDown([DxScanCode.Escape])) {
       if (this.sp.browser.isFocused()) {

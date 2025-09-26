@@ -1,7 +1,10 @@
+#include <NirnLabUIPlatformAPI/API.h>
+
 #include "BrowserApi.h"
 #include "NullPointerException.h"
 
 namespace {
+
 thread_local bool g_cursorIsOpenByFocus = false;
 
 static std::shared_ptr<BrowserApi::State> g_browserApiState;
