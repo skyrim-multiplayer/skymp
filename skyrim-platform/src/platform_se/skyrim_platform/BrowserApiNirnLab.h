@@ -11,8 +11,25 @@ public:
   static void HandleNirnLabMessage(SKSE::MessagingInterface::Message* a_msg);
   static BrowserApiNirnLab& GetInstance();
 
+  Napi::Value GetBackend(const Napi::CallbackInfo& info);
+  Napi::Value SetVisible(const Napi::CallbackInfo& info);
+  Napi::Value IsVisible(const Napi::CallbackInfo& info);
+  Napi::Value SetFocused(const Napi::CallbackInfo& info);
+  Napi::Value IsFocused(const Napi::CallbackInfo& info);
+  Napi::Value LoadUrl(const Napi::CallbackInfo& info);
+  Napi::Value GetToken(const Napi::CallbackInfo& info);
+  Napi::Value ExecuteJavaScript(const Napi::CallbackInfo& info);
+
 private:
-  static std::unique_ptr<BrowserApiNirnLab> g_instance;
+  BrowserApiNirnLab() = default;
+
+  void UpdateVisible();
+  void UpdateFocused();
+  void UpdateUrl();
+  void UpdateJs();
+  void UpdateAll();
+  void ApiInit();
+
   struct NirnLabApiHolder
   {
     bool versionChecked = false;
@@ -24,27 +41,11 @@ private:
   };
 
   NirnLabApiHolder api;
-  NL::CEF::IBrowser* browser;
-
-  bool wantedIsVisible;
-  bool wantedIsFocused;
+  NL::CEF::IBrowser* browser = nullptr;
+  bool wantedIsVisible = false;
+  bool wantedIsFocused = false;
   std::string wantedUrl;
   std::deque<std::string> jsExecQueue;
 
-private:
-  Napi::Value GetBackend(const Napi::CallbackInfo& info);
-  Napi::Value SetVisible(const Napi::CallbackInfo& info);
-  Napi::Value IsVisible(const Napi::CallbackInfo& info);
-  Napi::Value SetFocused(const Napi::CallbackInfo& info);
-  Napi::Value IsFocused(const Napi::CallbackInfo& info);
-  Napi::Value LoadUrl(const Napi::CallbackInfo& info);
-  Napi::Value GetToken(const Napi::CallbackInfo& info);
-  Napi::Value ExecuteJavaScript(const Napi::CallbackInfo& info);
-
-  void UpdateVisible();
-  void UpdateFocused();
-  void UpdateUrl();
-  void UpdateJs();
-  void UpdateAll();
-  void ApiInit();
+  static std::unique_ptr<BrowserApiNirnLab> g_instance;
 };

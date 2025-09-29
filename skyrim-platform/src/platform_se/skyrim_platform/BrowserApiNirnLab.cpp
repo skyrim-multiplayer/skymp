@@ -103,7 +103,7 @@ Napi::Value BrowserApiNirnLab::IsVisible(const Napi::CallbackInfo& info)
   return Napi::Boolean::New(info.Env(), wantedIsVisible);
 }
 
-Napi::Value BrowserApiNirnLab ::SetFocused(const Napi::CallbackInfo& info)
+Napi::Value BrowserApiNirnLab::SetFocused(const Napi::CallbackInfo& info)
 {
   wantedIsFocused = NapiHelper::ExtractBoolean(info[0], "isFocused");
   logger::info("SetFocused {}", wantedIsFocused);
@@ -172,14 +172,12 @@ void BrowserApiNirnLab::UpdateUrl()
   }
 }
 
-void BrowserApiNirnLab ::UpdateJs()
+void BrowserApiNirnLab::UpdateJs()
 {
-  // logger::info("update js");
   if (!browser) {
     return;
   }
   while (!jsExecQueue.empty()) {
-    // logger::info("real exec js {}", jsExecQueue.front());
     browser->ExecuteJavaScript(jsExecQueue.front().c_str());
     jsExecQueue.pop_front();
   }
