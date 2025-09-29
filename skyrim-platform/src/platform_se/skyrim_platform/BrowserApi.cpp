@@ -25,7 +25,9 @@ Napi::Value BrowserApi::SetVisible(const Napi::CallbackInfo& info)
   } else if (backendName == "nirnlab") {
     return BrowserApiNirnLab::GetInstance().SetVisible(info);
   } else {
-        throw std::runtime_error("Bad BackendName in SkyrimPlatform.ini: '" + backendName + "'. Must be one of auto/tilted/nirnlab";
+    throw std::runtime_error("Bad BackendName in SkyrimPlatform.ini: '" +
+                             backendName +
+                             "'. Must be one of auto/tilted/nirnlab");
   }
 }
 
@@ -38,11 +40,13 @@ Napi::Value BrowserApi::IsVisible(const Napi::CallbackInfo& info)
     settings->GetString("Browser", "BackendName", "auto");
 
   if (backendName == "auto" || backendName == "tilted") {
-        return BrowserApiTilted::IsVisible(info);
+    return BrowserApiTilted::IsVisible(info);
   } else if (backendName == "nirnlab") {
-        return BrowserApiNirnLab::GetInstance().IsVisible(info);
+    return BrowserApiNirnLab::GetInstance().IsVisible(info);
   } else {
-        throw std::runtime_error("Bad BackendName in SkyrimPlatform.ini: '" + backendName + "'. Must be one of auto/tilted/nirnlab";
+    throw std::runtime_error("Bad BackendName in SkyrimPlatform.ini: '" +
+                             backendName +
+                             "'. Must be one of auto/tilted/nirnlab");
   }
 }
 
@@ -55,11 +59,13 @@ Napi::Value BrowserApi::SetFocused(const Napi::CallbackInfo& info)
     settings->GetString("Browser", "BackendName", "auto");
 
   if (backendName == "auto" || backendName == "tilted") {
-        return BrowserApiTilted::SetFocused(info);
+    return BrowserApiTilted::SetFocused(info);
   } else if (backendName == "nirnlab") {
-        return BrowserApiNirnLab::GetInstance().SetFocused(info);
+    return BrowserApiNirnLab::GetInstance().SetFocused(info);
   } else {
-        throw std::runtime_error("Bad BackendName in SkyrimPlatform.ini: '" + backendName + "'. Must be one of auto/tilted/nirnlab";
+    throw std::runtime_error("Bad BackendName in SkyrimPlatform.ini: '" +
+                             backendName +
+                             "'. Must be one of auto/tilted/nirnlab");
   }
 }
 
@@ -72,11 +78,13 @@ Napi::Value BrowserApi::IsFocused(const Napi::CallbackInfo& info)
     settings->GetString("Browser", "BackendName", "auto");
 
   if (backendName == "auto" || backendName == "tilted") {
-        return BrowserApiTilted::IsFocused(info);
+    return BrowserApiTilted::IsFocused(info);
   } else if (backendName == "nirnlab") {
-        return BrowserApiNirnLab::GetInstance().IsFocused(info);
+    return BrowserApiNirnLab::GetInstance().IsFocused(info);
   } else {
-        throw std::runtime_error("Bad BackendName in SkyrimPlatform.ini: '" + backendName + "'. Must be one of auto/tilted/nirnlab";
+    throw std::runtime_error("Bad BackendName in SkyrimPlatform.ini: '" +
+                             backendName +
+                             "'. Must be one of auto/tilted/nirnlab");
   }
 }
 
@@ -89,11 +97,13 @@ Napi::Value BrowserApi::LoadUrl(const Napi::CallbackInfo& info)
     settings->GetString("Browser", "BackendName", "auto");
 
   if (backendName == "auto" || backendName == "tilted") {
-        return BrowserApiTilted::LoadUrl(info);
+    return BrowserApiTilted::LoadUrl(info);
   } else if (backendName == "nirnlab") {
-        return BrowserApiNirnLab::GetInstance().LoadUrl(info);
+    return BrowserApiNirnLab::GetInstance().LoadUrl(info);
   } else {
-        throw std::runtime_error("Bad BackendName in SkyrimPlatform.ini: '" + backendName + "'. Must be one of auto/tilted/nirnlab";
+    throw std::runtime_error("Bad BackendName in SkyrimPlatform.ini: '" +
+                             backendName +
+                             "'. Must be one of auto/tilted/nirnlab");
   }
 }
 
@@ -106,11 +116,13 @@ Napi::Value BrowserApi::GetToken(const Napi::CallbackInfo& info)
     settings->GetString("Browser", "BackendName", "auto");
 
   if (backendName == "auto" || backendName == "tilted") {
-        return BrowserApiTilted::GetToken(info);
+    return BrowserApiTilted::GetToken(info);
   } else if (backendName == "nirnlab") {
-        return BrowserApiNirnLab::GetInstance().GetToken(info);
+    return BrowserApiNirnLab::GetInstance().GetToken(info);
   } else {
-        throw std::runtime_error("Bad BackendName in SkyrimPlatform.ini: '" + backendName + "'. Must be one of auto/tilted/nirnlab";
+    throw std::runtime_error("Bad BackendName in SkyrimPlatform.ini: '" +
+                             backendName +
+                             "'. Must be one of auto/tilted/nirnlab");
   }
 }
 
@@ -123,11 +135,13 @@ Napi::Value BrowserApi::ExecuteJavaScript(const Napi::CallbackInfo& info)
     settings->GetString("Browser", "BackendName", "auto");
 
   if (backendName == "auto" || backendName == "tilted") {
-        return BrowserApiTilted::ExecuteJavaScript(info);
+    return BrowserApiTilted::ExecuteJavaScript(info);
   } else if (backendName == "nirnlab") {
-        return BrowserApiNirnLab::GetInstance().ExecuteJavaScript(info);
+    return BrowserApiNirnLab::GetInstance().ExecuteJavaScript(info);
   } else {
-        throw std::runtime_error("Bad BackendName in SkyrimPlatform.ini: '" + backendName + "'. Must be one of auto/tilted/nirnlab";
+    throw std::runtime_error("Bad BackendName in SkyrimPlatform.ini: '" +
+                             backendName +
+                             "'. Must be one of auto/tilted/nirnlab");
   }
 }
 

@@ -19,14 +19,7 @@
 #include "TPRenderSystemD3D11.h"
 #include "TextsCollection.h"
 
-#define KEK_DEBUG(...) do { \
-    const auto ss = fmt::format(__VA_ARGS__); \
-    MessageBox(nullptr, ss.c_str(), "debug", MB_OK); \
-  } while (0)
-
 extern CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
-
-bool g_canUseAPI = false;
 
 void GetTextsToDraw(TextToDrawCallback callback)
 {
@@ -74,9 +67,7 @@ void InitLog()
 
   *path /= "skyrim-platform.log"sv;
 
-  //DialogBox(GetModuleHandle(nullptr), 0, )
   const auto pathStr = path->string();
-  KEK_DEBUG("{}", pathStr);
 
   auto sink =
     std::make_shared<spdlog::sinks::basic_file_sink_mt>(pathStr, true);
@@ -159,8 +150,6 @@ DLLEXPORT bool SKSEAPI SKSEPlugin_Load_Impl(const SKSE::LoadInterface* skse)
     logger::critical("QueryInterface failed for MessagingInterface");
     return false;
   }
-
-  //KEK_DEBUG("hi new {}", __LINE__);
 
   SKSE::GetMessagingInterface()->RegisterListener(
     [](SKSE::MessagingInterface::Message* a_msg) {
