@@ -1,7 +1,7 @@
 #include "SkyrimPlatform.h"
-#include "BrowserApi.h"    // APIs for register in CommonExecutionListener
-#include "BrowserApiNirnLab.h"  // APIs for register in CommonExecutionListener
-#include "CallNativeApi.h" // CallNativeApi::NativeCallRequirements
+#include "BrowserApi.h"        // APIs for register in CommonExecutionListener
+#include "BrowserApiNirnLab.h" // APIs for register in CommonExecutionListener
+#include "CallNativeApi.h"     // CallNativeApi::NativeCallRequirements
 #include "CameraApi.h"
 #include "ConsoleApi.h" // CommonExecutionListener
 #include "ConstEnumApi.h"
@@ -284,8 +284,8 @@ private:
       ConsoleApi::Register(env, e);
       DevApi::Register(env, e, {}, GetFileDirs());
       EventsApi::Register(env, e);
-      //BrowserApi::Register(env, e, browserApiState);
-      BrowserApiNirnLab::Register(env, e);
+      BrowserApi::Register(env, e, browserApiState);
+      // BrowserApiNirnLab::Register(env, e);
       Win32Api::Register(env, e);
       FileInfoApi::Register(env, e);
       TextApi::Register(env, e);
