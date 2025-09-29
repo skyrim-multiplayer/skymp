@@ -285,7 +285,6 @@ private:
       DevApi::Register(env, e, {}, GetFileDirs());
       EventsApi::Register(env, e);
       BrowserApi::Register(env, e, browserApiState);
-      // BrowserApiNirnLab::Register(env, e);
       Win32Api::Register(env, e);
       FileInfoApi::Register(env, e);
       TextApi::Register(env, e);

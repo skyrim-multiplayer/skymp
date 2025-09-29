@@ -56,10 +56,16 @@ void OverlayService::Create(RenderSystemD3D11* apRenderSystem)
   auto renderProvider = std::make_unique<D3D11RenderProvider>(apRenderSystem);
   overlay = new MyChromiumApp(std::move(renderProvider), onProcessMessage);
 
-  auto chromiumEnabled =
+  bool chromiumEnabled =
     Settings::GetPlatformSettings()->GetBool("Debug", "ChromiumEnabled", true);
 
-  overlay->Initialize(chromiumEnabled);
+  auto settings = Settings::GetPlatformSettings();
+  std::string backendName =
+    settings->GetString("Browser", "BackendName", "auto");
+
+  bool tilted = backendName == "auto" || backendName == "tilted";
+
+  overlay->Initialize(chromiumEnabled && tilted);
   overlay->GetClient()->Create();
 }
 

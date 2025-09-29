@@ -423,15 +423,6 @@ public:
 
   bool BeginMain() override
   {
-    /*
-     *
-[Browser]
-
-; dasgbrvji
-Backend = nirnlab
-     *
-     */
-
     inputConverter = std::make_shared<InputConverter>();
     myInputListener = std::make_shared<MyInputListener>();
 
