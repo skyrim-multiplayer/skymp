@@ -4,56 +4,6 @@
 #include "NapiHelper.h"
 #include "SkyrimPlatform.h"
 
-void BrowserApiNirnLab::Register(Napi::Env env, Napi::Object& exports)
-{
-  auto browser = Napi::Object::New(env);
-
-  browser.Set(
-    "getBackend",
-    Napi::Function::New(
-      env, NapiHelper::WrapCppExceptions([](const Napi::CallbackInfo& info) {
-        return BrowserApiNirnLab::GetInstance().GetBackend(info);
-      })));
-
-  browser.Set(
-    "setVisible",
-    Napi::Function::New(
-      env, NapiHelper::WrapCppExceptions([](const Napi::CallbackInfo& info) {
-        return BrowserApiNirnLab::GetInstance().SetVisible(info);
-      })));
-  browser.Set(
-    "isVisible",
-    Napi::Function::New(
-      env, NapiHelper::WrapCppExceptions([](const Napi::CallbackInfo& info) {
-        return BrowserApiNirnLab::GetInstance().IsVisible(info);
-      })));
-  browser.Set(
-    "setFocused",
-    Napi::Function::New(
-      env, NapiHelper::WrapCppExceptions([](const Napi::CallbackInfo& info) {
-        return BrowserApiNirnLab::GetInstance().SetFocused(info);
-      })));
-  browser.Set(
-    "isFocused",
-    Napi::Function::New(
-      env, NapiHelper::WrapCppExceptions([](const Napi::CallbackInfo& info) {
-        return BrowserApiNirnLab::GetInstance().IsFocused(info);
-      })));
-  browser.Set(
-    "loadUrl",
-    Napi::Function::New(
-      env, NapiHelper::WrapCppExceptions([](const Napi::CallbackInfo& info) {
-        return BrowserApiNirnLab::GetInstance().LoadUrl(info);
-      })));
-  browser.Set(
-    "executeJavaScript",
-    Napi::Function::New(
-      env, NapiHelper::WrapCppExceptions([](const Napi::CallbackInfo& info) {
-        return BrowserApiNirnLab::GetInstance().ExecuteJavaScript(info);
-      })));
-  exports.Set("browser", browser);
-}
-
 void BrowserApiNirnLab::HandleSkseMessage(
   SKSE::MessagingInterface::Message* a_msg)
 {
@@ -282,7 +232,7 @@ void BrowserApiNirnLab::ApiInit()
     logger::error("browser init failed: InvalidBrowserRefHandle");
     return;
   }
-  if (browser == nullptr) {
+  if (!browser) {
     logger::error("browser init failed: browser is nullptr");
     return;
   }

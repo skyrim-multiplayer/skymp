@@ -30,16 +30,25 @@ private:
   RenderSystemD3D11* m_pRenderSystem;
 };
 
+static OverlayService* g_overlayService = nullptr;
+
 OverlayService::OverlayService(
   std::shared_ptr<ProcessMessageListener> onProcessMessage_,
   const ObtainTextsToDrawFunction& obtainTextsToDraw_)
   : onProcessMessage(onProcessMessage_)
   , obtainTextsToDraw(obtainTextsToDraw_)
 {
+  g_overlayService = this;
 }
 
 OverlayService::~OverlayService() noexcept
 {
+  g_overlayService = nullptr;
+}
+
+static OverlayService::OverlayService* GetInstance()
+{
+  return g_overlayService;
 }
 
 void OverlayService::Create(RenderSystemD3D11* apRenderSystem)

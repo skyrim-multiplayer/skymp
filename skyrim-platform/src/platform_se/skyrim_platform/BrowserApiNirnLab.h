@@ -7,10 +7,7 @@
 class BrowserApiNirnLab
 {
 public:
-  // TODO: make non-static
-  static void Register(Napi::Env env, Napi::Object& exports);
   void HandleSkseMessage(SKSE::MessagingInterface::Message* a_msg);
-  // ???
   static void HandleNirnLabMessage(SKSE::MessagingInterface::Message* a_msg);
   static BrowserApiNirnLab& GetInstance();
 
@@ -23,22 +20,11 @@ private:
 
     bool Ready() const { return api != nullptr && versionChecked; }
 
-    NL::UI::IUIPlatformAPI* operator->() const
-    {
-      // if (api == nullptr) {
-      //   throw std::runtime_error("NirnLab UI API is not ready");
-      // }
-      // if (!versionChecked) {
-      //   throw std::runtime_error("NirnLab UI API version mismatch");
-      // }
-      // return versionChecked ? api : nullptr;
-      return api;
-    }
+    NL::UI::IUIPlatformAPI* operator->() const { return api; }
   };
 
   NirnLabApiHolder api;
   NL::CEF::IBrowser* browser;
-  // NL::UI::IUIPlatformAPI* api;
 
   bool wantedIsVisible;
   bool wantedIsFocused;

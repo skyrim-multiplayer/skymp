@@ -14,9 +14,6 @@ enum class Section
   Debug,
 };
 
-/**
- * TODO: add array support for config files
- */
 class File
 {
 public:
