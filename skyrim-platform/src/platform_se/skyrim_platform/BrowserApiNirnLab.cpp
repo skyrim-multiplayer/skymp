@@ -59,24 +59,21 @@ void BrowserApiNirnLab::HandleSkseMessage(
 {
   logger::info("skse message type {}", a_msg->type);
   switch (a_msg->type) {
-    case SKSE::MessagingInterface::kPostPostLoad:
+    case SKSE::MessagingInterface::kPostPostLoad: {
       SKSE::GetMessagingInterface()->RegisterListener(
         NL::UI::LibVersion::PROJECT_NAME, HandleNirnLabMessage);
       // All plugins are loaded. Request lib version.
       SKSE::GetMessagingInterface()->Dispatch(
         NL::UI::APIMessageType::RequestVersion, nullptr, 0,
         NL::UI::LibVersion::PROJECT_NAME);
-      break;
-    case SKSE::MessagingInterface::kInputLoaded:
-      // if (g_canUseAPI) {
-      {
-        NL::UI::Settings defaultSettings;
-        // API version is ok. Request interface.
-        SKSE::GetMessagingInterface()->Dispatch(
-          NL::UI::APIMessageType::RequestAPI, &defaultSettings,
-          sizeof(defaultSettings), NL::UI::LibVersion::PROJECT_NAME);
-      }
-      break;
+    } break;
+    case SKSE::MessagingInterface::kInputLoaded: {
+      NL::UI::Settings defaultSettings;
+      // API version is ok. Request interface.
+      SKSE::GetMessagingInterface()->Dispatch(
+        NL::UI::APIMessageType::RequestAPI, &defaultSettings,
+        sizeof(defaultSettings), NL::UI::LibVersion::PROJECT_NAME);
+    } break;
     default:
       break;
   }
@@ -92,9 +89,6 @@ void BrowserApiNirnLab::HandleNirnLabMessage(
     case NL::UI::APIMessageType::ResponseVersion: {
       const auto versionInfo =
         reinterpret_cast<NL::UI::ResponseVersionMessage*>(a_msg->data);
-      if (auto c = RE::ConsoleLog::GetSingleton()) {
-        c->Print("eba version");
-      }
       spdlog::info(
         "NirnLabUIPlatform version: {}.{}",
         NL::UI::LibVersion::GetMajorVersion(versionInfo->libVersion),
@@ -105,7 +99,6 @@ void BrowserApiNirnLab::HandleNirnLabMessage(
       // If the major version is different from ours, then using the API
       // may cause problems
       if (majorAPIVersion != NL::UI::APIVersion::MAJOR) {
-        // g_canUseAPI = false;
         spdlog::error(
           "Can't using this API version of NirnLabUIPlatform. We have "
           "{}.{} and installed is {}.{}",
@@ -113,7 +106,6 @@ void BrowserApiNirnLab::HandleNirnLabMessage(
           NL::UI::APIVersion::GetMajorVersion(versionInfo->apiVersion),
           NL::UI::APIVersion::GetMinorVersion(versionInfo->apiVersion));
       } else {
-        // g_canUseAPI = true;
         self.api.versionChecked = true;
         spdlog::info(
           "API version is ok. We have {}.{} and installed is {}.{}",
@@ -125,33 +117,9 @@ void BrowserApiNirnLab::HandleNirnLabMessage(
       break;
     }
     case NL::UI::APIMessageType::ResponseAPI: {
-      // auto api =
       self.api.api =
         reinterpret_cast<NL::UI::ResponseAPIMessage*>(a_msg->data)->API;
       self.ApiInit();
-      // if (api == nullptr) {
-      //   spdlog::error("browser init failed: API received is nullptr");
-      //   break;
-      // }
-      // NL::CEF::IBrowser* browser;
-      // const NL::UI::IUIPlatformAPI::BrowserRefHandle browserHandle =
-      //   api->AddOrGetBrowser(
-      //   "YOYO", nullptr, 0, "file:///Data/Platform/UI/index.html", browser);
-      // if (browserHandle ==
-      //     NL::UI::IUIPlatformAPI::InvalidBrowserRefHandle) {
-      //   spdlog::error("browser init failed: InvalidBrowserRefHandle");
-      //   return;
-      // }
-      // if (browser == nullptr) {
-      //   spdlog::error("browser init failed: browser is nullptr");
-      //   return;
-      // }
-      // browser->ToggleBrowserFocusByKeys(RE::BSKeyboardDevice::Keys::kF6,
-      //                                    0);
-      // browser->ToggleBrowserVisibleByKeys(RE::BSKeyboardDevice::Keys::kF7,
-      //                                    0);
-      // browser->SetBrowserVisible(true);
-      // browser->SetBrowserFocused(true);
       break;
     }
     default:
@@ -198,7 +166,7 @@ Napi::Value BrowserApiNirnLab::IsFocused(const Napi::CallbackInfo& info)
   return Napi::Boolean::New(info.Env(), wantedIsFocused);
 }
 
-Napi::Value BrowserApiNirnLab ::LoadUrl(const Napi::CallbackInfo& info)
+Napi::Value BrowserApiNirnLab::LoadUrl(const Napi::CallbackInfo& info)
 {
   wantedUrl = NapiHelper::ExtractString(info[0], "url");
   logger::info("LoadUrl {}", wantedUrl);
@@ -222,7 +190,7 @@ Napi::Value BrowserApiNirnLab::ExecuteJavaScript(
         c = ' ';
       }
     }
-    logger::info("JS {}", d);
+    logger::info("JS {} ...", d);
   }
   jsExecQueue.push_back(src);
   UpdateJs();
@@ -252,7 +220,6 @@ void BrowserApiNirnLab::UpdateUrl()
   if (!browser) {
     return;
   }
-  // browser->SetUrl
 }
 
 void BrowserApiNirnLab ::UpdateJs()
@@ -281,12 +248,12 @@ void BrowserApiNirnLab::ApiInit()
   if (!api.Ready()) {
     return;
   }
+
   NL::JS::JSFuncInfo callback{
     .objectName = "skyrimPlatform",
     .funcName = "sendMessage",
     .callbackData = {
       .callback = [](const char** a_args, int a_argsCount) {
-        //logger::info("sendMessage 2 {}", fmt::join(a_args, a_args + a_argsCount, " | "));
         std::vector<std::string> args{a_args, a_args + a_argsCount};
         SkyrimPlatform::GetSingleton()->AddTickTask(
           [args = std::move(args)](Napi::Env env) {
@@ -305,8 +272,11 @@ void BrowserApiNirnLab::ApiInit()
     },
   };
   auto callbackPtr = &callback;
+
+  constexpr auto kNirnlabBrowserName = "SkyrimPlatform_Default";
+
   const NL::UI::IUIPlatformAPI::BrowserRefHandle browserHandle =
-    api->AddOrGetBrowser("YOYO", &callbackPtr, 1,
+    api->AddOrGetBrowser(kNirnlabBrowserName, &callbackPtr, 1,
                          "file:///Data/Platform/UI/index.html", browser);
   if (browserHandle == NL::UI::IUIPlatformAPI::InvalidBrowserRefHandle) {
     logger::error("browser init failed: InvalidBrowserRefHandle");
@@ -317,8 +287,5 @@ void BrowserApiNirnLab::ApiInit()
     return;
   }
 
-  UpdateVisible();
-  UpdateFocused();
-  UpdateUrl();
-  UpdateJs();
+  UpdateAll();
 }
