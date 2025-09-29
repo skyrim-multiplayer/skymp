@@ -15,13 +15,11 @@
 #  include <mongocxx/uri.hpp>
 #endif
 
-#include <atomic>
-#include <map>
 #include <mutex>
+#include <nlohmann/json.hpp>
 #include <openssl/sha.h>
 #include <spdlog/spdlog.h>
 #include <thread>
-#include <vector>
 
 struct MongoDatabase::Impl
 {
@@ -86,7 +84,7 @@ std::vector<std::optional<MpChangeForm>>&& MongoDatabase::UpsertImpl(
       filter["formDesc"] = changeForm->formDesc.ToString();
 
       auto upd = nlohmann::json::object();
-      upd["$set"] = SanitizeJsonRecursive(jChangeForm);
+      upd["$set"] = jChangeForm;
 
       bulk.append(mongocxx::model::update_one(
                     { std::move(bsoncxx::from_json(filter.dump())),
@@ -214,25 +212,13 @@ void MongoDatabase::Iterate(const IterateCallback& iterateCallback)
 
     auto documentsJsonArray = threadsDocumentsJsonArray[i];
 
-    simdjson::dom::parser p, p2;
+    simdjson::dom::parser p;
     auto allDocs = p.parse(documentsJsonArray).value();
 
     auto documentAsArray = allDocs.get_array();
 
     for (auto document : documentAsArray) {
-      bool restored = false;
-      nlohmann::json restoredDocument =
-        RestoreSanitizedJsonRecursive(document, restored);
-
-      MpChangeFormREFR changeForm;
-
-      if (restored) {
-        std::string restoredDocumentDump = restoredDocument.dump();
-        auto restoredDocumentSimdjson = p2.parse(restoredDocumentDump).value();
-        changeForm = MpChangeForm::JsonToChangeForm(restoredDocumentSimdjson);
-      } else {
-        changeForm = MpChangeForm::JsonToChangeForm(document);
-      }
+      auto changeForm = MpChangeForm::JsonToChangeForm(document);
 
       iterateCallback(changeForm);
 
@@ -315,138 +301,6 @@ std::string MongoDatabase::Sha256(const std::string& str)
   uint8_t hash[SHA256_DIGEST_LENGTH];
   SHA256(reinterpret_cast<const uint8_t*>(str.data()), str.size(), hash);
   return BytesToHexString(hash, SHA256_DIGEST_LENGTH);
-}
-
-const std::string& MongoDatabase::GetEncKeysKey() const noexcept
-{
-  static const std::string kEncKeysKey = "_enc_keys";
-  return kEncKeysKey;
-}
-
-const std::string& MongoDatabase::GetEncPrefix() const noexcept
-{
-  static const std::string kEncHashPrefix = "_enc_hash_";
-  return kEncHashPrefix;
-}
-
-std::optional<std::string> MongoDatabase::SanitizeKey(const std::string& key)
-{
-  auto nullCharacterIterator = std::find(key.begin(), key.end(), '\0');
-
-  // MongoDB banned these characters in keys
-  if (key.find('.') != std::string::npos ||
-      key.find('$') != std::string::npos ||
-      nullCharacterIterator != key.end()) {
-    return GetEncPrefix() + Sha256(key);
-  }
-
-  // Empty keys are also banned
-  if (key.empty()) {
-    return GetEncPrefix() + Sha256(key);
-  }
-
-  // Avoid collisions in case one tries to use GetEncPrefix() + sha256(key) as
-  // another key
-  if (key.starts_with(GetEncPrefix())) {
-    return GetEncPrefix() + Sha256(key);
-  }
-
-  return std::nullopt;
-}
-
-nlohmann::json MongoDatabase::SanitizeJsonRecursive(const nlohmann::json& j)
-{
-  if (j.is_object()) {
-    nlohmann::json sanitizedObj = nlohmann::json::object();
-    nlohmann::json encodedKeysMap = nlohmann::json::object();
-
-    for (auto& [key, value] : j.items()) {
-      std::optional<std::string> newKey = SanitizeKey(key);
-      if (newKey.has_value()) {
-        encodedKeysMap[*newKey] = key;
-        sanitizedObj[*newKey] = SanitizeJsonRecursive(value);
-      } else {
-        sanitizedObj[key] = SanitizeJsonRecursive(value);
-      }
-    }
-
-    if (!encodedKeysMap.empty()) {
-      sanitizedObj[GetEncKeysKey()] = encodedKeysMap;
-    }
-    return sanitizedObj;
-  }
-
-  if (j.is_array()) {
-    nlohmann::json sanitizedArr = nlohmann::json::array();
-    for (const auto& item : j) {
-      sanitizedArr.push_back(SanitizeJsonRecursive(item));
-    }
-    return sanitizedArr;
-  }
-
-  return j;
-}
-
-nlohmann::json MongoDatabase::RestoreSanitizedJsonRecursive(
-  simdjson::dom::element element, bool& restored)
-{
-  switch (element.type()) {
-    case simdjson::dom::element_type::OBJECT: {
-      nlohmann::json restoredObj = nlohmann::json::object();
-      simdjson::dom::object obj = element.get_object();
-
-      std::map<std::string, std::string> keyMap;
-      auto encodedKeysField = obj[GetEncKeysKey()];
-      if (!encodedKeysField.error() &&
-          encodedKeysField.type() == simdjson::dom::element_type::OBJECT) {
-        restored = true;
-        for (auto field : encodedKeysField.get_object()) {
-          keyMap[std::string(field.key)] =
-            std::string(field.value.get_string().value());
-        }
-      }
-
-      for (auto field : obj) {
-        std::string_view key_sv = field.key;
-        if (key_sv == GetEncKeysKey()) {
-          continue;
-        }
-
-        std::string restoredKey(key_sv);
-        auto it = keyMap.find(restoredKey);
-        if (it != keyMap.end()) {
-          restoredKey = it->second;
-        }
-
-        restoredObj[restoredKey] =
-          RestoreSanitizedJsonRecursive(field.value, restored);
-      }
-      return restoredObj;
-    }
-
-    case simdjson::dom::element_type::ARRAY: {
-      nlohmann::json restoredArr = nlohmann::json::array();
-      for (simdjson::dom::element child : element.get_array()) {
-        restoredArr.push_back(RestoreSanitizedJsonRecursive(child, restored));
-      }
-      return restoredArr;
-    }
-
-    case simdjson::dom::element_type::STRING:
-      return std::string(element.get_string().value());
-    case simdjson::dom::element_type::INT64:
-      return element.get_int64().value();
-    case simdjson::dom::element_type::UINT64:
-      return element.get_uint64().value();
-    case simdjson::dom::element_type::DOUBLE:
-      return element.get_double().value();
-    case simdjson::dom::element_type::BOOL:
-      return element.get_bool().value();
-    case simdjson::dom::element_type::NULL_VALUE:
-      return nullptr;
-    default:
-      return nullptr;
-  }
 }
 
 #endif // #ifndef NO_MONGO

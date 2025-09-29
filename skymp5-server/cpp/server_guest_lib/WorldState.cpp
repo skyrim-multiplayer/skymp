@@ -719,21 +719,22 @@ void WorldState::TickSaveStorage(const std::chrono::system_clock::time_point&)
         continue;
       }
 
-      MpForm* form = LookupFormByIdx(static_cast<int>(i));
-      MpObjectReference* refr = form ? form->AsObjectReference() : nullptr;
-      if (!refr) {
+      // TODO: remove reinterpret_cast
+      MpObjectReference* form = reinterpret_cast<MpObjectReference*>(
+        LookupFormByIdx(static_cast<int>(i)));
+      if (!form) {
         continue;
       }
 
       auto formId = changeForm->formDesc.ToFormId(espmFiles);
 
-      if (refr->GetFormId() != formId) {
+      if (form->GetFormId() != formId) {
         spdlog::error("TickSaveStorage - formIds not matching {:x} <=> {:x}",
-                      refr->GetFormId(), formId);
+                      form->GetFormId(), formId);
         continue;
       }
 
-      RequestSave(*refr);
+      RequestSave(*form);
       numRequested++;
     }
 
