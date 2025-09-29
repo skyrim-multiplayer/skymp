@@ -1,79 +1,74 @@
 #include "BrowserApiNirnLab.h"
 
 #include "EventsApi.h"
-#include "SkyrimPlatform.h"
 #include "NapiHelper.h"
-
-#define KEK_DEBUG(...) do { \
-    const auto ss = fmt::format(__VA_ARGS__); \
-    MessageBox(nullptr, ss.c_str(), "debug", MB_OK); \
-  } while (0)
+#include "SkyrimPlatform.h"
 
 void BrowserApiNirnLab::Register(Napi::Env env, Napi::Object& exports)
 {
   auto browser = Napi::Object::New(env);
 
-  {
-    auto backend = Napi::Object::New(env);
-    backend.Set("name", "nirnlab-ui-platform");
+  browser.Set(
+    "getBackend",
+    Napi::Function::New(
+      env, NapiHelper::WrapCppExceptions([](const Napi::CallbackInfo& info) {
+        return BrowserApiNirnLab::GetInstance().GetBackend(info);
+      })));
 
-    browser.Set("backend", backend);
-
-    browser.Set(
-      "setVisible",
-      Napi::Function::New(
-        env, NapiHelper::WrapCppExceptions([](const Napi::CallbackInfo& info) {
-          return BrowserApiNirnLab::GetInstance().SetVisible(info);
-        })));
-    browser.Set(
-      "isVisible",
-      Napi::Function::New(
-        env, NapiHelper::WrapCppExceptions([](const Napi::CallbackInfo& info) {
-          return BrowserApiNirnLab::GetInstance().IsVisible(info);
-        })));
-    browser.Set(
-      "setFocused",
-      Napi::Function::New(
-        env, NapiHelper::WrapCppExceptions([](const Napi::CallbackInfo& info) {
-          return BrowserApiNirnLab::GetInstance().SetFocused(info);
-        })));
-    browser.Set(
-      "isFocused",
-      Napi::Function::New(
-        env, NapiHelper::WrapCppExceptions([](const Napi::CallbackInfo& info) {
-          return BrowserApiNirnLab::GetInstance().IsFocused(info);
-        })));
-    browser.Set(
-      "loadUrl",
-      Napi::Function::New(
-        env, NapiHelper::WrapCppExceptions([](const Napi::CallbackInfo& info) {
-          return BrowserApiNirnLab::GetInstance().LoadUrl(info);
-        })));
-    browser.Set(
-      "executeJavaScript",
-      Napi::Function::New(
-        env, NapiHelper::WrapCppExceptions([](const Napi::CallbackInfo& info) {
-          return BrowserApiNirnLab::GetInstance().ExecuteJavaScript(info);
-        })));
-    exports.Set("browser", browser);
-  }
+  browser.Set(
+    "setVisible",
+    Napi::Function::New(
+      env, NapiHelper::WrapCppExceptions([](const Napi::CallbackInfo& info) {
+        return BrowserApiNirnLab::GetInstance().SetVisible(info);
+      })));
+  browser.Set(
+    "isVisible",
+    Napi::Function::New(
+      env, NapiHelper::WrapCppExceptions([](const Napi::CallbackInfo& info) {
+        return BrowserApiNirnLab::GetInstance().IsVisible(info);
+      })));
+  browser.Set(
+    "setFocused",
+    Napi::Function::New(
+      env, NapiHelper::WrapCppExceptions([](const Napi::CallbackInfo& info) {
+        return BrowserApiNirnLab::GetInstance().SetFocused(info);
+      })));
+  browser.Set(
+    "isFocused",
+    Napi::Function::New(
+      env, NapiHelper::WrapCppExceptions([](const Napi::CallbackInfo& info) {
+        return BrowserApiNirnLab::GetInstance().IsFocused(info);
+      })));
+  browser.Set(
+    "loadUrl",
+    Napi::Function::New(
+      env, NapiHelper::WrapCppExceptions([](const Napi::CallbackInfo& info) {
+        return BrowserApiNirnLab::GetInstance().LoadUrl(info);
+      })));
+  browser.Set(
+    "executeJavaScript",
+    Napi::Function::New(
+      env, NapiHelper::WrapCppExceptions([](const Napi::CallbackInfo& info) {
+        return BrowserApiNirnLab::GetInstance().ExecuteJavaScript(info);
+      })));
+  exports.Set("browser", browser);
 }
 
-void BrowserApiNirnLab::HandleSkseMessage(SKSE::MessagingInterface::Message* a_msg)
+void BrowserApiNirnLab::HandleSkseMessage(
+  SKSE::MessagingInterface::Message* a_msg)
 {
   logger::info("skse message type {}", a_msg->type);
   switch (a_msg->type) {
     case SKSE::MessagingInterface::kPostPostLoad:
       SKSE::GetMessagingInterface()->RegisterListener(
-        NL::UI::LibVersion::PROJECT_NAME,
-        HandleNirnLabMessage);
+        NL::UI::LibVersion::PROJECT_NAME, HandleNirnLabMessage);
       // All plugins are loaded. Request lib version.
       SKSE::GetMessagingInterface()->Dispatch(
         NL::UI::APIMessageType::RequestVersion, nullptr, 0,
         NL::UI::LibVersion::PROJECT_NAME);
       break;
     case SKSE::MessagingInterface::kInputLoaded:
-      //if (g_canUseAPI) {
+      // if (g_canUseAPI) {
       {
         NL::UI::Settings defaultSettings;
         // API version is ok. Request interface.
@@ -87,7 +82,8 @@ void BrowserApiNirnLab::HandleSkseMessage(SKSE::MessagingInterface::Message* a_m
   }
 }
 
-void BrowserApiNirnLab::HandleNirnLabMessage(SKSE::MessagingInterface::Message* a_msg)
+void BrowserApiNirnLab::HandleNirnLabMessage(
+  SKSE::MessagingInterface::Message* a_msg)
 {
   auto& self = BrowserApiNirnLab::GetInstance();
   spdlog::info("Received message({}) from \"{}\"", a_msg->type,
@@ -129,7 +125,7 @@ void BrowserApiNirnLab::HandleNirnLabMessage(SKSE::MessagingInterface::Message* 
       break;
     }
     case NL::UI::APIMessageType::ResponseAPI: {
-      //auto api =
+      // auto api =
       self.api.api =
         reinterpret_cast<NL::UI::ResponseAPIMessage*>(a_msg->data)->API;
       self.ApiInit();
@@ -150,12 +146,12 @@ void BrowserApiNirnLab::HandleNirnLabMessage(SKSE::MessagingInterface::Message* 
       //   spdlog::error("browser init failed: browser is nullptr");
       //   return;
       // }
-      //browser->ToggleBrowserFocusByKeys(RE::BSKeyboardDevice::Keys::kF6,
+      // browser->ToggleBrowserFocusByKeys(RE::BSKeyboardDevice::Keys::kF6,
       //                                    0);
-      //browser->ToggleBrowserVisibleByKeys(RE::BSKeyboardDevice::Keys::kF7,
+      // browser->ToggleBrowserVisibleByKeys(RE::BSKeyboardDevice::Keys::kF7,
       //                                    0);
-      //browser->SetBrowserVisible(true);
-      //browser->SetBrowserFocused(true);
+      // browser->SetBrowserVisible(true);
+      // browser->SetBrowserFocused(true);
       break;
     }
     default:
@@ -167,6 +163,13 @@ BrowserApiNirnLab& BrowserApiNirnLab::GetInstance()
 {
   static BrowserApiNirnLab g_inst;
   return g_inst;
+}
+
+Napi::Value BrowserApiNirnLab::GetBackend(const Napi::CallbackInfo& info)
+{
+  auto result = Napi::Object::New(info.Env());
+  result.Set("name", Napi::String::New(info.Env(), "nirnlab"));
+  return result;
 }
 
 Napi::Value BrowserApiNirnLab::SetVisible(const Napi::CallbackInfo& info)
@@ -249,17 +252,17 @@ void BrowserApiNirnLab::UpdateUrl()
   if (!browser) {
     return;
   }
-  //browser->SetUrl
+  // browser->SetUrl
 }
 
 void BrowserApiNirnLab ::UpdateJs()
 {
-  //logger::info("update js");
+  // logger::info("update js");
   if (!browser) {
     return;
   }
   while (!jsExecQueue.empty()) {
-    //logger::info("real exec js {}", jsExecQueue.front());
+    // logger::info("real exec js {}", jsExecQueue.front());
     browser->ExecuteJavaScript(jsExecQueue.front().c_str());
     jsExecQueue.pop_front();
   }
@@ -303,10 +306,9 @@ void BrowserApiNirnLab::ApiInit()
   };
   auto callbackPtr = &callback;
   const NL::UI::IUIPlatformAPI::BrowserRefHandle browserHandle =
-    api->AddOrGetBrowser(
-    "YOYO", &callbackPtr, 1, "file:///Data/Platform/UI/index.html", browser);
-  if (browserHandle ==
-      NL::UI::IUIPlatformAPI::InvalidBrowserRefHandle) {
+    api->AddOrGetBrowser("YOYO", &callbackPtr, 1,
+                         "file:///Data/Platform/UI/index.html", browser);
+  if (browserHandle == NL::UI::IUIPlatformAPI::InvalidBrowserRefHandle) {
     logger::error("browser init failed: InvalidBrowserRefHandle");
     return;
   }

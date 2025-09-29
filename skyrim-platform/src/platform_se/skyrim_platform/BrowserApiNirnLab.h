@@ -21,18 +21,17 @@ private:
     bool versionChecked = false;
     NL::UI::IUIPlatformAPI* api = nullptr;
 
-    bool Ready() const {
-      return api != nullptr && versionChecked;
-    }
+    bool Ready() const { return api != nullptr && versionChecked; }
 
-    NL::UI::IUIPlatformAPI* operator->() const {
+    NL::UI::IUIPlatformAPI* operator->() const
+    {
       // if (api == nullptr) {
       //   throw std::runtime_error("NirnLab UI API is not ready");
       // }
       // if (!versionChecked) {
       //   throw std::runtime_error("NirnLab UI API version mismatch");
       // }
-      //return versionChecked ? api : nullptr;
+      // return versionChecked ? api : nullptr;
       return api;
     }
   };
@@ -40,13 +39,14 @@ private:
   NirnLabApiHolder api;
   NL::CEF::IBrowser* browser;
   // NL::UI::IUIPlatformAPI* api;
-  
+
   bool wantedIsVisible;
   bool wantedIsFocused;
   std::string wantedUrl;
   std::deque<std::string> jsExecQueue;
 
 private:
+  Napi::Value GetBackend(const Napi::CallbackInfo& info);
   Napi::Value SetVisible(const Napi::CallbackInfo& info);
   Napi::Value IsVisible(const Napi::CallbackInfo& info);
   Napi::Value SetFocused(const Napi::CallbackInfo& info);
@@ -55,7 +55,6 @@ private:
   Napi::Value GetToken(const Napi::CallbackInfo& info);
   Napi::Value ExecuteJavaScript(const Napi::CallbackInfo& info);
 
-private:
   void UpdateVisible();
   void UpdateFocused();
   void UpdateUrl();
