@@ -11,7 +11,6 @@ public:
   static void HandleNirnLabMessage(SKSE::MessagingInterface::Message* a_msg);
   static BrowserApiNirnLab& GetInstance();
 
-  Napi::Value GetBackend(const Napi::CallbackInfo& info);
   Napi::Value SetVisible(const Napi::CallbackInfo& info);
   Napi::Value IsVisible(const Napi::CallbackInfo& info);
   Napi::Value SetFocused(const Napi::CallbackInfo& info);

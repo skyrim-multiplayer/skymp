@@ -83,13 +83,6 @@ BrowserApiNirnLab& BrowserApiNirnLab::GetInstance()
   return g_inst;
 }
 
-Napi::Value BrowserApiNirnLab::GetBackend(const Napi::CallbackInfo& info)
-{
-  auto result = Napi::Object::New(info.Env());
-  result.Set("name", Napi::String::New(info.Env(), "nirnlab"));
-  return result;
-}
-
 Napi::Value BrowserApiNirnLab::SetVisible(const Napi::CallbackInfo& info)
 {
   wantedIsVisible = NapiHelper::ExtractBoolean(info[0], "isVisible");

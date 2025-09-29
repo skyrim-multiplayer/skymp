@@ -12,6 +12,29 @@ void CheckIfChromiumEnabled()
 }
 }
 
+Napi::Value BrowserApi::GetBackend(const Napi::CallbackInfo& info)
+{
+  CheckIfChromiumEnabled();
+
+  auto settings = Settings::GetPlatformSettings();
+  std::string backendName =
+    settings->GetString("Browser", "BackendName", "auto");
+
+  if (backendName == "auto" || backendName == "tilted") {
+    auto result = Napi::Object::New(info.Env());
+    result.Set("name", Napi::String::New(info.Env(), "nirnlab"));
+    return result;
+  } else if (backendName == "nirnlab") {
+    auto result = Napi::Object::New(info.Env());
+    result.Set("name", Napi::String::New(info.Env(), "nirnlab"));
+    return result;
+  } else {
+    throw std::runtime_error("Bad BackendName in SkyrimPlatform.ini: '" +
+                             backendName +
+                             "'. Must be one of auto/tilted/nirnlab");
+  }
+}
+
 Napi::Value BrowserApi::SetVisible(const Napi::CallbackInfo& info)
 {
   CheckIfChromiumEnabled();
@@ -148,6 +171,9 @@ Napi::Value BrowserApi::ExecuteJavaScript(const Napi::CallbackInfo& info)
 void BrowserApi::Register(Napi::Env env, Napi::Object& exports)
 {
   auto browser = Napi::Object::New(env);
+  browser.Set(
+    "getBackend",
+    Napi::Function::New(env, NapiHelper::WrapCppExceptions(GetBackend)));
   browser.Set(
     "setVisible",
     Napi::Function::New(env, NapiHelper::WrapCppExceptions(SetVisible)));
