@@ -10,6 +10,7 @@ public:
 
   virtual const char* GetName() const = 0;
 
+  // https://en.uesp.net/wiki/Skyrim_Mod:Function_Indices
   virtual uint16_t GetFunctionIndex() const = 0;
 
   virtual float Execute(MpActor& actor, uint32_t parameter1,
