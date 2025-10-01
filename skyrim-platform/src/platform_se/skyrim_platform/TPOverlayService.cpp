@@ -46,7 +46,7 @@ OverlayService::~OverlayService() noexcept
   g_overlayService = nullptr;
 }
 
-static OverlayService* OverlayService::GetInstance()
+OverlayService* OverlayService::GetInstance()
 {
   return g_overlayService;
 }
