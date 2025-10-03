@@ -18,6 +18,8 @@ struct OverlayService
                  const ObtainTextsToDrawFunction& obtainTextsToDraw_);
   ~OverlayService() noexcept;
 
+  static OverlayService* GetInstance();
+
   TP_NOCOPYMOVE(OverlayService);
 
   void Create(RenderSystemD3D11* apRenderSystem);

@@ -37,6 +37,9 @@ std::unique_ptr<Settings::File> Settings::GetPlatformSettings()
                     "Data/Platform/Plugins;Data/Platform/PluginsDev",
                     "; List of plugin folders to load plugins from");
 
+    file->SetString("Browser", "BackendName", "auto",
+                    "; Browser backend name: tilted/nirnlab/auto");
+
     file->Save();
   }
 

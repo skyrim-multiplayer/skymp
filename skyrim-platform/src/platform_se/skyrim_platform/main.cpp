@@ -1,3 +1,6 @@
+#include <NirnLabUIPlatformAPI/API.h>
+
+#include "BrowserApiNirnLab.h"
 #include "CallNativeApi.h"
 #include "ConsoleApi.h"
 #include "DumpFunctions.h"
@@ -63,8 +66,11 @@ void InitLog()
   }
 
   *path /= "skyrim-platform.log"sv;
+
+  const auto pathStr = path->string();
+
   auto sink =
-    std::make_shared<spdlog::sinks::basic_file_sink_mt>(path->string(), true);
+    std::make_shared<spdlog::sinks::basic_file_sink_mt>(pathStr, true);
 
   auto log = std::make_shared<spdlog::logger>("global log", std::move(sink));
 
@@ -118,6 +124,8 @@ DLLEXPORT void SkyrimPlatform_IpcSend_Impl(const char* systemName,
   return IPC::Send(systemName, data, length);
 }
 
+//MessageBox(GetForegroundWindow(), ss.c_str(), "debug", MB_OK); \
+
 DLLEXPORT bool SKSEAPI SKSEPlugin_Load_Impl(const SKSE::LoadInterface* skse)
 {
   InitLog();
@@ -143,7 +151,11 @@ DLLEXPORT bool SKSEAPI SKSEPlugin_Load_Impl(const SKSE::LoadInterface* skse)
     return false;
   }
 
-  messagingInterface->RegisterListener(EventHandler::HandleSKSEMessage);
+  SKSE::GetMessagingInterface()->RegisterListener(
+    [](SKSE::MessagingInterface::Message* a_msg) {
+      EventHandler::HandleSKSEMessage(a_msg);
+      BrowserApiNirnLab::GetInstance().HandleSkseMessage(a_msg);
+    });
 
   Hooks::Install();
   Frida::InstallHooks();
@@ -510,8 +522,10 @@ public:
 
     overlayService =
       std::make_shared<OverlayService>(onProcessMessage, obtainTextsToDraw);
+
     myInputListener->Init(overlayService, inputConverter);
     SkyrimPlatform::GetSingleton()->SetOverlayService(overlayService);
+
     renderSystem = std::make_shared<RenderSystemD3D11>(*overlayService);
 
     auto manager = RE::BSRenderManager::GetSingleton();

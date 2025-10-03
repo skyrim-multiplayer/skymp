@@ -1,0 +1,25 @@
+diff --git a/src/UIPlatform/NirnLabUIPlatformAPI/API.h b/src/UIPlatform/NirnLabUIPlatformAPI/API.h
+index b8aa5b7..bae43b3 100644
+--- a/src/UIPlatform/NirnLabUIPlatformAPI/API.h
++++ b/src/UIPlatform/NirnLabUIPlatformAPI/API.h
+@@ -10,6 +10,11 @@
+ #include "IBrowser.h"
+ #include "Settings.h"
+ 
++#ifndef NameOf
++#define NameOf(x) #x
++#define NL_DO_MACRO_CLEANUP
++#endif
++
+ namespace NL::UI
+ {
+     class IUIPlatformAPI
+@@ -160,3 +165,8 @@ namespace NL::UI
+         return funcPtr(a_outApi, a_settings, a_requestLibVersion, a_requestLibName);
+     }
+ }
++
++#ifndef NL_DO_MACRO_CLEANUP
++#undef NameOf
++#undef NL_DO_MACRO_CLEANUP
++#endif
