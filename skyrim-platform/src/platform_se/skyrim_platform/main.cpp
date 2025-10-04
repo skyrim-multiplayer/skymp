@@ -524,7 +524,6 @@ public:
       std::make_shared<OverlayService>(onProcessMessage, obtainTextsToDraw);
 
     myInputListener->Init(overlayService, inputConverter);
-    SkyrimPlatform::GetSingleton()->SetOverlayService(overlayService);
 
     renderSystem = std::make_shared<RenderSystemD3D11>(*overlayService);
 

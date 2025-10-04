@@ -409,12 +409,6 @@ void SkyrimPlatform::JsTick(Napi::Env env, bool gameFunctionsAvailable)
   }
 }
 
-void SkyrimPlatform::SetOverlayService(
-  std::shared_ptr<OverlayService> overlayService)
-{
-  //pImpl->browserApiState->overlayService = overlayService;
-}
-
 void SkyrimPlatform::AddTickTask(const std::function<void(Napi::Env)>& f)
 {
   pImpl->tickTasks.AddTask(f);

@@ -9,7 +9,6 @@ public:
   static SkyrimPlatform* GetSingleton();
 
   void JsTick(Napi::Env env, bool gameFunctionsAvailable);
-  void SetOverlayService(std::shared_ptr<OverlayService> overlayService);
   void AddTickTask(const std::function<void(Napi::Env env)>& f);
   void AddUpdateTask(const std::function<void(Napi::Env env)>& f);
 

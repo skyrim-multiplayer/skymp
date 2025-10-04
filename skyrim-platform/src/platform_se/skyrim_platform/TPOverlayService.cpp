@@ -38,6 +38,9 @@ OverlayService::OverlayService(
   : onProcessMessage(onProcessMessage_)
   , obtainTextsToDraw(obtainTextsToDraw_)
 {
+  if (g_overlayService != nullptr) {
+    throw std::runtime_error("OverlayService must be created only once");
+  }
   g_overlayService = this;
 }
 
