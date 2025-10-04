@@ -150,12 +150,10 @@ void BrowserApiNirnLab::UpdateVisible()
 
 void BrowserApiNirnLab::UpdateFocused()
 {
-  logger::info("UpdateFocused()");
   if (!browser) {
     return;
   }
   browser->SetBrowserFocused(wantedIsFocused);
-  logger::info("UpdateFocused() done -> {}", wantedIsFocused);
 }
 
 void BrowserApiNirnLab::UpdateUrl()
