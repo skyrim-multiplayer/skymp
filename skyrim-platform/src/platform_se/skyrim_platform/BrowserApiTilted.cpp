@@ -2,6 +2,7 @@
 
 #include "BrowserApiTilted.h"
 #include "NullPointerException.h"
+#include "TPOverlayService.h"
 
 namespace {
 
