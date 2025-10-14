@@ -410,7 +410,7 @@ VarValue PapyrusActor::WornHasKeyword(VarValue self,
 
     const std::vector<Inventory::Entry>& entries =
       actor->GetEquipment().inv.entries;
-    WorldState* worldState = compatibilityPolicy->GetWorldState();
+    WorldState* worldState = actor->GetParent();
     for (const auto& entry : entries) {
       if (entry.GetWorn() != Inventory::Worn::None) {
         const espm::LookupResult res =
