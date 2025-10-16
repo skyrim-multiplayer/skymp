@@ -74,6 +74,11 @@ export class SettingsService extends ClientListener {
     const states = {
       start: () => {
         try {
+          if (this.sp.settings['skymp5-client']['server-info-ignore'] as boolean) {
+            logTrace(this, 'Skipping serverinfo request due to server-info-ignore in config');
+            states.resolve(defaultPeer);
+            return;
+          }
           this.controller.lookupListener(TimersService).setTimeout(
             () => states.reject(new Error('getTargetPeer: serverinfo request timed out')),
             serverInfoRequestTimeoutMs,
