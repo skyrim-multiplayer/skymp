@@ -233,21 +233,38 @@ void BrowserApi::Register(Napi::Env env, Napi::Object& exports)
       })));
     browser.Set(
       "setVisible",
-      Napi::Function::New(env, NapiHelper::WrapCppExceptions(std::bind_front(&BrowserApiNirnLab::SetVisible, BrowserApiNirnLab::GetInstance()))));
+      Napi::Function::New(env, NapiHelper::WrapCppExceptions([](const Napi::CallbackInfo& info) {
+        return BrowserApiNirnLab::GetInstance().SetVisible(info);
+      })));
     browser.Set(
       "isVisible",
-      Napi::Function::New(env, NapiHelper::WrapCppExceptions(std::bind_front(&BrowserApiNirnLab::IsVisible, BrowserApiNirnLab::GetInstance()))));
+      //Napi::Function::New(env, NapiHelper::WrapCppExceptions(std::bind_front(&BrowserApiNirnLab::IsVisible, BrowserApiNirnLab::GetInstance()))));
+      Napi::Function::New(env, NapiHelper::WrapCppExceptions([](const Napi::CallbackInfo& info) {
+        return BrowserApiNirnLab::GetInstance().IsVisible(info);
+      })));
     browser.Set(
       "setFocused",
-      Napi::Function::New(env, NapiHelper::WrapCppExceptions(std::bind_front(&BrowserApiNirnLab::SetFocused, BrowserApiNirnLab::GetInstance()))));
+      //Napi::Function::New(env, NapiHelper::WrapCppExceptions(std::bind_front(&BrowserApiNirnLab::SetFocused, BrowserApiNirnLab::GetInstance()))));
+      Napi::Function::New(env, NapiHelper::WrapCppExceptions([](const Napi::CallbackInfo& info) {
+        return BrowserApiNirnLab::GetInstance().SetFocused(info);
+      })));
     browser.Set(
       "isFocused",
-      Napi::Function::New(env, NapiHelper::WrapCppExceptions(std::bind_front(&BrowserApiNirnLab::IsFocused, BrowserApiNirnLab::GetInstance()))));
+      //Napi::Function::New(env, NapiHelper::WrapCppExceptions(std::bind_front(&BrowserApiNirnLab::IsFocused, BrowserApiNirnLab::GetInstance()))));
+      Napi::Function::New(env, NapiHelper::WrapCppExceptions([](const Napi::CallbackInfo& info) {
+        return BrowserApiNirnLab::GetInstance().IsFocused(info);
+      })));
     browser.Set(
       "loadUrl",
-      Napi::Function::New(env, NapiHelper::WrapCppExceptions(std::bind_front(&BrowserApiNirnLab::LoadUrl, BrowserApiNirnLab::GetInstance()))));
+      //Napi::Function::New(env, NapiHelper::WrapCppExceptions(std::bind_front(&BrowserApiNirnLab::LoadUrl, BrowserApiNirnLab::GetInstance()))));
+      Napi::Function::New(env, NapiHelper::WrapCppExceptions([](const Napi::CallbackInfo& info) {
+        return BrowserApiNirnLab::GetInstance().LoadUrl(info);
+      })));
     browser.Set("executeJavaScript",
-      Napi::Function::New(env, NapiHelper::WrapCppExceptions(std::bind_front(&BrowserApiNirnLab::ExecuteJavaScript, BrowserApiNirnLab::GetInstance()))));
+      //Napi::Function::New(env, NapiHelper::WrapCppExceptions(std::bind_front(&BrowserApiNirnLab::ExecuteJavaScript, BrowserApiNirnLab::GetInstance()))));
+      Napi::Function::New(env, NapiHelper::WrapCppExceptions([](const Napi::CallbackInfo& info) {
+        return BrowserApiNirnLab::GetInstance().ExecuteJavaScript(info);
+      })));
   } else {
     throw std::runtime_error("Bad BackendName in SkyrimPlatform.ini: '" +
                              backendName +
