@@ -10,10 +10,14 @@
 #include <stdexcept>
 #include <string>
 
+// clang-format off
+// clang-format 15 does weird stuff to concepts
+// TODO: update clang
 template <typename F>
 concept NapiHandler = requires(F f, const Napi::CallbackInfo& info) {
   { f(info) } -> std::convertible_to<Napi::Value>;
 };
+// clang-format on
 
 // TODO: Stringify/ToString mismatch in error handling
 // TODO: Stringify might not be the best printer for all types, because not all
