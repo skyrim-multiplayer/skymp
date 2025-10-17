@@ -4,16 +4,5 @@
 #include "NapiHelper.h"
 
 namespace BrowserApi {
-
-Napi::Value GetBackend(const Napi::CallbackInfo& info);
-
-Napi::Value SetVisible(const Napi::CallbackInfo& info);
-Napi::Value IsVisible(const Napi::CallbackInfo& info);
-Napi::Value SetFocused(const Napi::CallbackInfo& info);
-Napi::Value IsFocused(const Napi::CallbackInfo& info);
-Napi::Value LoadUrl(const Napi::CallbackInfo& info);
-Napi::Value GetToken(const Napi::CallbackInfo& info);
-Napi::Value ExecuteJavaScript(const Napi::CallbackInfo& info);
-
 void Register(Napi::Env env, Napi::Object& exports);
 }
