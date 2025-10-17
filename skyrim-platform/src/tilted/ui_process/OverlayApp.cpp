@@ -17,7 +17,7 @@ CefRefPtr<CefRenderProcessHandler> MyChromiumApp::GetRenderProcessHandler()
 void ExitCheck(CefRefPtr<CefCommandLine> apArgs)
 {
   const auto pid = apArgs->GetSwitchValue("pid");
-  const DWORD parentId = std::stoul(pid.ToString());
+  const DWORD parentId = std::stoul(pid.c_str());
 
   Sleep(5000);
 
