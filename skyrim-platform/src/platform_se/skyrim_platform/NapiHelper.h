@@ -12,7 +12,6 @@
 
 template <typename F>
 concept NapiHandler = requires(F f, const Napi::CallbackInfo& info) {
-    // Callable with the exact argument type
     { f(info) } -> std::convertible_to<Napi::Value>;
 };
 
@@ -275,7 +274,7 @@ public:
   WrapCppExceptions(
     F originalFunc)
   {
-    return [originalFunc](const Napi::CallbackInfo& info) mutable {
+    return [originalFunc](const Napi::CallbackInfo& info) {
       try {
         return originalFunc(info);
       } catch (std::exception& e) {
