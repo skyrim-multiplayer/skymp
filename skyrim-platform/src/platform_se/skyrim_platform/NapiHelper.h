@@ -10,6 +10,12 @@
 #include <stdexcept>
 #include <string>
 
+template <typename F>
+concept NapiHandler = requires(F f, const Napi::CallbackInfo& info) {
+    // Callable with the exact argument type
+    { f(info) } -> std::convertible_to<Napi::Value>;
+};
+
 // TODO: Stringify/ToString mismatch in error handling
 // TODO: Stringify might not be the best printer for all types, because not all
 // are JSON-serializable
@@ -266,9 +272,10 @@ public:
 
   // TODO: std::function originalFunc should be optimized out by introducing a
   // template parameter
+  template <NapiHandler F>
   static std::function<Napi::Value(const Napi::CallbackInfo& info)>
   WrapCppExceptions(
-    std::function<Napi::Value(const Napi::CallbackInfo& info)> originalFunc)
+    F originalFunc)
   {
     return [originalFunc](const Napi::CallbackInfo& info) {
       try {
