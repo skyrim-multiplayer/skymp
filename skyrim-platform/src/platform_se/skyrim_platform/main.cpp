@@ -124,8 +124,6 @@ DLLEXPORT void SkyrimPlatform_IpcSend_Impl(const char* systemName,
   return IPC::Send(systemName, data, length);
 }
 
-//MessageBox(GetForegroundWindow(), ss.c_str(), "debug", MB_OK); \
-
 DLLEXPORT bool SKSEAPI SKSEPlugin_Load_Impl(const SKSE::LoadInterface* skse)
 {
   InitLog();
