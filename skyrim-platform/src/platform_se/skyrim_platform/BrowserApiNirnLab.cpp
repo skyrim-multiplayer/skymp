@@ -1,5 +1,7 @@
 #include "BrowserApiNirnLab.h"
 
+#include <NirnLabUIPlatformAPI/API.h>
+
 #include "EventsApi.h"
 #include "NapiHelper.h"
 #include "SkyrimPlatform.h"

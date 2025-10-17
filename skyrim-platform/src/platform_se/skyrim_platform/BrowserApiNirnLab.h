@@ -2,7 +2,13 @@
 
 #include <deque>
 
-#include "NirnLabUIPlatformAPI/API.h"
+namespace NL::UI {
+class IUIPlatformAPI;
+}
+
+namespace NL::CEF {
+class IBrowser;
+}
 
 class BrowserApiNirnLab
 {
