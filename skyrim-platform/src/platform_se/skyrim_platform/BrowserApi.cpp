@@ -194,7 +194,6 @@ void BrowserApi::Register(Napi::Env env, Napi::Object& exports)
 
   auto browser = Napi::Object::New(env);
   if (backendName == "auto" || backendName == "tilted") {
-    //return BrowserApiTilted::ExecuteJavaScript(info);
     logger::info("using Tilted UI (legacy) backend for browser");
     browser.Set(
       "getBackend",
@@ -232,23 +231,21 @@ void BrowserApi::Register(Napi::Env env, Napi::Object& exports)
       })));
     browser.Set(
       "setVisible",
-      Napi::Function::New(env, NapiHelper::WrapCppExceptions(SetVisible)));
+      Napi::Function::New(env, NapiHelper::WrapCppExceptions(std::bind_front(&BrowserApiNirnLab::SetVisible, BrowserApiNirnLab::GetInstance()))));
     browser.Set(
       "isVisible",
-      Napi::Function::New(env, NapiHelper::WrapCppExceptions(IsVisible)));
+      Napi::Function::New(env, NapiHelper::WrapCppExceptions(std::bind_front(&BrowserApiNirnLab::IsVisible, BrowserApiNirnLab::GetInstance()))));
     browser.Set(
       "setFocused",
-      Napi::Function::New(env, NapiHelper::WrapCppExceptions(SetFocused)));
+      Napi::Function::New(env, NapiHelper::WrapCppExceptions(std::bind_front(&BrowserApiNirnLab::SetFocused, BrowserApiNirnLab::GetInstance()))));
     browser.Set(
       "isFocused",
-      Napi::Function::New(env, NapiHelper::WrapCppExceptions(IsFocused)));
+      Napi::Function::New(env, NapiHelper::WrapCppExceptions(std::bind_front(&BrowserApiNirnLab::IsFocused, BrowserApiNirnLab::GetInstance()))));
     browser.Set(
       "loadUrl",
-      Napi::Function::New(env, NapiHelper::WrapCppExceptions(LoadUrl)));
+      Napi::Function::New(env, NapiHelper::WrapCppExceptions(std::bind_front(&BrowserApiNirnLab::LoadUrl, BrowserApiNirnLab::GetInstance()))));
     browser.Set("executeJavaScript",
-                Napi::Function::New(
-                  env, NapiHelper::WrapCppExceptions(ExecuteJavaScript)));
-    //return BrowserApiNirnLab::GetInstance().ExecuteJavaScript(info);
+      Napi::Function::New(env, NapiHelper::WrapCppExceptions(std::bind_front(&BrowserApiNirnLab::ExecuteJavaScript, BrowserApiNirnLab::GetInstance()))));
   } else {
     throw std::runtime_error("Bad BackendName in SkyrimPlatform.ini: '" +
                              backendName +

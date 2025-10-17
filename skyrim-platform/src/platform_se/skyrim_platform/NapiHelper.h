@@ -270,14 +270,12 @@ public:
     return static_cast<std::string>(result.As<Napi::String>());
   }
 
-  // TODO: std::function originalFunc should be optimized out by introducing a
-  // template parameter
   template <NapiHandler F>
   static std::function<Napi::Value(const Napi::CallbackInfo& info)>
   WrapCppExceptions(
     F originalFunc)
   {
-    return [originalFunc](const Napi::CallbackInfo& info) {
+    return [originalFunc](const Napi::CallbackInfo& info) mutable {
       try {
         return originalFunc(info);
       } catch (std::exception& e) {
