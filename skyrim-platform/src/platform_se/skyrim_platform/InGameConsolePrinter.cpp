@@ -31,7 +31,6 @@ void InGameConsolePrinter::Print(const Napi::CallbackInfo& info)
 
   const char* prefix = ConsoleApi::GetScriptPrefix();
   console->Print("%s%s", prefix, s.data());
-  logger::info("console: {}{}", prefix, s.data());
 }
 
 void InGameConsolePrinter::PrintRaw(const char* str)
@@ -41,5 +40,4 @@ void InGameConsolePrinter::PrintRaw(const char* str)
     throw NullPointerException("console");
 
   console->Print(str);
-  logger::info("console raw: {}", str);
 }

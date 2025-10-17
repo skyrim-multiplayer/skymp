@@ -2,11 +2,9 @@
 #include "BrowserApiNirnLab.h"
 #include "BrowserApiTilted.h"
 
-#include <cpptrace/cpptrace.hpp>
-
 void BrowserApi::Register(Napi::Env env, Napi::Object& exports)
 {
-  logger::info("register {}", cpptrace::generate_trace().to_string());
+  logger::info("register");
 
   auto settings = Settings::GetPlatformSettings();
   std::string backendName =

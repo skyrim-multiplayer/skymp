@@ -259,7 +259,4 @@ if(MSVC)
 
   find_package(OpenSSL REQUIRED)
   target_link_libraries(skyrim_platform PUBLIC OpenSSL::SSL OpenSSL::Crypto)
-
-  find_package(cpptrace CONFIG REQUIRED)
-  target_link_libraries(skyrim_platform PUBLIC cpptrace::cpptrace)
 endif()
