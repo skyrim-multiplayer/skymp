@@ -12,7 +12,7 @@
 
 template <typename F>
 concept NapiHandler = requires(F f, const Napi::CallbackInfo& info) {
-    { f(info) } -> std::convertible_to<Napi::Value>;
+  { f(info) } -> std::convertible_to<Napi::Value>;
 };
 
 // TODO: Stringify/ToString mismatch in error handling
@@ -271,8 +271,7 @@ public:
 
   template <NapiHandler F>
   static std::function<Napi::Value(const Napi::CallbackInfo& info)>
-  WrapCppExceptions(
-    F originalFunc)
+  WrapCppExceptions(F originalFunc)
   {
     return [originalFunc](const Napi::CallbackInfo& info) {
       try {

@@ -378,8 +378,7 @@ SkyrimPlatform::SkyrimPlatform()
 {
   pImpl = std::make_shared<Impl>();
 
-  pImpl->commonExecutionListener =
-    std::make_shared<CommonExecutionListener>();
+  pImpl->commonExecutionListener = std::make_shared<CommonExecutionListener>();
 
   pImpl->tickListeners.push_back(std::make_shared<HelloTickListener>());
   pImpl->tickListeners.push_back(pImpl->commonExecutionListener);
