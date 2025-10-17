@@ -10,6 +10,15 @@
 #include <stdexcept>
 #include <string>
 
+// clang-format off
+// clang-format 15 does weird stuff to concepts
+// TODO: update clang
+template <typename F>
+concept NapiHandler = requires(F f, const Napi::CallbackInfo& info) {
+  { f(info) } -> std::convertible_to<Napi::Value>;
+};
+// clang-format on
+
 // TODO: Stringify/ToString mismatch in error handling
 // TODO: Stringify might not be the best printer for all types, because not all
 // are JSON-serializable
@@ -264,11 +273,9 @@ public:
     return static_cast<std::string>(result.As<Napi::String>());
   }
 
-  // TODO: std::function originalFunc should be optimized out by introducing a
-  // template parameter
+  template <NapiHandler F>
   static std::function<Napi::Value(const Napi::CallbackInfo& info)>
-  WrapCppExceptions(
-    std::function<Napi::Value(const Napi::CallbackInfo& info)> originalFunc)
+  WrapCppExceptions(F originalFunc)
   {
     return [originalFunc](const Napi::CallbackInfo& info) {
       try {
