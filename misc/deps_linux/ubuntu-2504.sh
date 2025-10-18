@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# TODO: enable clang 20
+
 # Scroll down for the list of packages
 
 # testing the latest non-LTS Ubuntu as well
@@ -8,7 +10,7 @@ set -e
 
 if [[ "$1" == "--get-image-uri" ]]; then
   # This is the image that we'll use in our CI for testing build for this distro
-  echo 'ubuntu:noble'
+  echo 'ubuntu:plucky'
   exit
 fi
 
