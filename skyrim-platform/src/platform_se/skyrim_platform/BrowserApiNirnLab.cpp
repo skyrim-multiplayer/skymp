@@ -52,7 +52,7 @@ void BrowserApiNirnLab::HandleNirnLabMessage(
       // may cause problems
       if (majorAPIVersion != NL::UI::APIVersion::MAJOR) {
         spdlog::error(
-          "Can't using this API version of NirnLabUIPlatform. We have "
+          "Can't use this API version of NirnLabUIPlatform. We have "
           "{}.{} and installed is {}.{}",
           NL::UI::APIVersion::MAJOR, NL::UI::APIVersion::MINOR,
           NL::UI::APIVersion::GetMajorVersion(versionInfo->apiVersion),
