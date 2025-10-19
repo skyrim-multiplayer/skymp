@@ -12,7 +12,7 @@ uint16_t ConditionFunctions::IsWeaponOut::GetFunctionIndex() const
 }
 
 float ConditionFunctions::IsWeaponOut::Execute(
-  MpActor& actor, uint32_t parameter1, [[maybe_unused]] uint32_t parameter2)
+  MpActor& actor, uint32_t parameter1, [[maybe_unused]] uint32_t parameter2, const ConditionEvaluatorContext&)
 {
   if (!actor.IsWeaponDrawn()) {
     return 0.f;
@@ -30,7 +30,7 @@ float ConditionFunctions::IsWeaponOut::Execute(
       continue;
     }
 
-    if (lookupRes.rec->GetType() != espm::WEAP::kType) {
+    if (lookupRes.rec->GetType().ToString() != espm::WEAP::kType) {
       continue;
     }
 

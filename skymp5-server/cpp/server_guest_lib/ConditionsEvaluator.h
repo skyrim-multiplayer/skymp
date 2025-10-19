@@ -28,6 +28,11 @@ struct ConditionsEvaluatorSettings
   std::vector<std::string> callersToLog;
 };
 
+struct ConditionEvaluatorContext
+{
+  std::optional<uint32_t> hitSourceFormId;
+};
+
 class ConditionsEvaluator
 {
 public:
@@ -36,7 +41,8 @@ public:
     const ConditionsEvaluatorSettings& settings,
     ConditionsEvaluatorCaller caller, const std::vector<Condition>& conditions,
     const MpActor& aggressor, const MpActor& target,
-    const std::function<void(bool, std::vector<std::string>&)>& callback);
+    const std::function<void(bool, std::vector<std::string>&)>& callback,
+    const ConditionEvaluatorContext &context = ConditionEvaluatorContext());
 
 private:
   static bool EvaluateConditionsImpl(
