@@ -62,12 +62,15 @@ float DamageMultConditionalFormula::CalculateDamage(
         }
       };
 
+      ConditionEvaluatorContext context;
+      context.hitSourceFormId = hitData.source;
+
       ConditionsEvaluator::EvaluateConditions(
         conditionFunctionMap ? *conditionFunctionMap : ConditionFunctionMap(),
         conditionsEvaluatorSettings ? *conditionsEvaluatorSettings
                                     : ConditionsEvaluatorSettings(),
         ConditionsEvaluatorCaller::kDamageMultConditionalFormula,
-        value.conditions, aggressor, target, callback);
+        value.conditions, aggressor, target, callback, context);
     }
   }
 

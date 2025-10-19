@@ -50,7 +50,7 @@ private:
     const std::vector<Condition>& conditions,
     std::vector<int>* outConditionResolutions,
     std::vector<float>* outConditionFunctionResults, const MpActor& aggressor,
-    const MpActor& target);
+    const MpActor& target, const ConditionEvaluatorContext &context);
 
   static std::vector<std::string> LogEvaluateConditionsResolution(
     const std::vector<Condition>& conditions,
@@ -60,7 +60,7 @@ private:
   static std::pair<bool, float> EvaluateCondition(
     const ConditionFunctionMap& conditionFunctionMap,
     const Condition& condition, const MpActor& aggressor,
-    const MpActor& target);
+    const MpActor& target, const ConditionEvaluatorContext& context);
 
   static bool CompareFloats(float a, float b, const std::string& op);
 
