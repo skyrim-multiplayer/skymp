@@ -30,16 +30,28 @@ private:
   RenderSystemD3D11* m_pRenderSystem;
 };
 
+static OverlayService* g_overlayService = nullptr;
+
 OverlayService::OverlayService(
   std::shared_ptr<ProcessMessageListener> onProcessMessage_,
   const ObtainTextsToDrawFunction& obtainTextsToDraw_)
   : onProcessMessage(onProcessMessage_)
   , obtainTextsToDraw(obtainTextsToDraw_)
 {
+  if (g_overlayService != nullptr) {
+    throw std::runtime_error("OverlayService must be created only once");
+  }
+  g_overlayService = this;
 }
 
 OverlayService::~OverlayService() noexcept
 {
+  g_overlayService = nullptr;
+}
+
+OverlayService* OverlayService::GetInstance()
+{
+  return g_overlayService;
 }
 
 void OverlayService::Create(RenderSystemD3D11* apRenderSystem)
@@ -47,10 +59,16 @@ void OverlayService::Create(RenderSystemD3D11* apRenderSystem)
   auto renderProvider = std::make_unique<D3D11RenderProvider>(apRenderSystem);
   overlay = new MyChromiumApp(std::move(renderProvider), onProcessMessage);
 
-  auto chromiumEnabled =
+  bool chromiumEnabled =
     Settings::GetPlatformSettings()->GetBool("Debug", "ChromiumEnabled", true);
 
-  overlay->Initialize(chromiumEnabled);
+  auto settings = Settings::GetPlatformSettings();
+  std::string backendName =
+    settings->GetString("Browser", "BackendName", "auto");
+
+  bool tilted = backendName == "auto" || backendName == "tilted";
+
+  overlay->Initialize(chromiumEnabled && tilted);
   overlay->GetClient()->Create();
 }
 

@@ -48,6 +48,10 @@
       "platform": "windows"
     },
     {
+      "name": "nirnlab-ui-platform-headers",
+      "platform": "windows"
+    },
+    {
       "name": "asio",
       "platform": "windows"
     },

@@ -70,9 +70,8 @@ class CommonExecutionListener : public TickListener
   friend class SkyrimPlatform;
 
 public:
-  CommonExecutionListener(std::shared_ptr<BrowserApi::State> browserApiState_)
+  CommonExecutionListener()
     : nativeCallRequirements(g_nativeCallRequirements)
-    , browserApiState(browserApiState_)
   {
   }
 
@@ -283,7 +282,7 @@ private:
       ConsoleApi::Register(env, e);
       DevApi::Register(env, e, {}, GetFileDirs());
       EventsApi::Register(env, e);
-      BrowserApi::Register(env, e, browserApiState);
+      BrowserApi::Register(env, e);
       Win32Api::Register(env, e);
       FileInfoApi::Register(env, e);
       TextApi::Register(env, e);
@@ -360,7 +359,6 @@ private:
   CallNativeApi::NativeCallRequirements& nativeCallRequirements;
   std::unordered_map<std::string, std::string> settingsByPluginName;
   std::unique_ptr<Napi::Reference<Napi::Object>> settingsByPluginNameCache;
-  std::shared_ptr<BrowserApi::State> browserApiState;
   std::function<Napi::Value(const Napi::CallbackInfo& info)> getSettings,
     setSettings;
   mutable std::unique_ptr<std::vector<std::filesystem::path>> pluginFolders;
@@ -371,7 +369,6 @@ private:
 struct SkyrimPlatform::Impl
 {
   std::shared_ptr<CommonExecutionListener> commonExecutionListener;
-  std::shared_ptr<BrowserApi::State> browserApiState;
   std::vector<std::shared_ptr<TickListener>> tickListeners;
   Viet::TaskQueue<Napi::Env> tickTasks, updateTasks;
 };
@@ -379,10 +376,8 @@ struct SkyrimPlatform::Impl
 SkyrimPlatform::SkyrimPlatform()
 {
   pImpl = std::make_shared<Impl>();
-  pImpl->browserApiState = std::make_shared<BrowserApi::State>();
 
-  pImpl->commonExecutionListener =
-    std::make_shared<CommonExecutionListener>(pImpl->browserApiState);
+  pImpl->commonExecutionListener = std::make_shared<CommonExecutionListener>();
 
   pImpl->tickListeners.push_back(std::make_shared<HelloTickListener>());
   pImpl->tickListeners.push_back(pImpl->commonExecutionListener);
@@ -410,12 +405,6 @@ void SkyrimPlatform::JsTick(Napi::Env env, bool gameFunctionsAvailable)
   } catch (const std::exception& e) {
     ExceptionPrinter::Print(e);
   }
-}
-
-void SkyrimPlatform::SetOverlayService(
-  std::shared_ptr<OverlayService> overlayService)
-{
-  pImpl->browserApiState->overlayService = overlayService;
 }
 
 void SkyrimPlatform::AddTickTask(const std::function<void(Napi::Env)>& f)
