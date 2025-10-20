@@ -1,11 +1,19 @@
+#include <filesystem>
+#include <fstream>
+#include <random>
+#include <string>
+
+#include <spdlog/spdlog.h>
+
 #include <DInputHook.hpp>
 #include <Filesystem.hpp>
 #include <MyChromiumApp.h>
-#include <filesystem>
-#include <fstream>
 
-#include <random>
-#include <string>
+#define KEK_DEBUG(...) do { \
+    const auto ss = fmt::format(__VA_ARGS__); \
+    MessageBox(nullptr, ss.c_str(), "debug", MB_OK); \
+  } while (0)
+
 
 // https://stackoverflow.com/questions/440133/how-do-i-create-a-random-alpha-numeric-string-in-c
 namespace {
@@ -83,6 +91,19 @@ void MyChromiumApp::Initialize(bool initChromium) noexcept
   auto ceftempPath = std::filesystem::temp_directory_path() /
     L"Skyrim Platform" / (L"CEFTemp" + std::to_wstring(hash));
   auto logPath = ceftempPath / L"cef_debug.log";
+  spdlog::info("{}:{}: pid={}", __FILE__, __LINE__, GetCurrentProcessId());
+  spdlog::info("browser (tilted): cache path is {}", ceftempPath.string());
+  spdlog::info("browser (tilted): debug log path is {}", logPath.string());
+
+  auto showError = [&](std::string msg) {
+    msg += "\nPossible reasons:";
+    msg += "\n1. Installed Skyrim Together. It conflicts with Skyrim Platform";
+    msg += "\n2. Installed Nirnlab UI - move SKSE/Plugins/NirnLabUIPlugin.dll somewhere else if it exists";
+    msg += "\nTry checking these logs:";
+    msg += "\n- Documents/My Games/Skyrim.INI/SKSE/skyrim-platform.log";
+    msg += "\n- " + logPath.string();
+    MessageBoxA(0, msg.c_str(), "Error", MB_ICONERROR);
+  };
 
   CefString(&settings.log_file).FromWString(logPath.wstring());
   CefString(&settings.cache_path).FromWString(ceftempPath.wstring());
@@ -97,10 +118,7 @@ void MyChromiumApp::Initialize(bool initChromium) noexcept
                  "locales");
 
   if (!CefInitialize(args, settings, this, nullptr)) {
-    MessageBoxA(0,
-                "CefInitialize failed (You probably have Skyrim Together "
-                "installed, SP isn't compatible with it)",
-                "Error", MB_ICONERROR);
+    showError("CefInitialize failed");
   }
 
   CefBrowserSettings browserSettings{};
@@ -114,10 +132,7 @@ void MyChromiumApp::Initialize(bool initChromium) noexcept
                                      L"file:///Data/Platform/UI/index.html",
                                      browserSettings, nullptr, nullptr)) {
 
-    MessageBoxA(0,
-                "CreateBrowser failed (You probably have Skyrim Together "
-                "installed, SP isn't compatible with it)",
-                "Error", MB_ICONERROR);
+    showError("CreateBrowser failed");
   }
 }
 
