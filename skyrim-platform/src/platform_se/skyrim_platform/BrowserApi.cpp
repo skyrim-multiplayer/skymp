@@ -2,17 +2,38 @@
 #include "BrowserApiNirnLab.h"
 #include "BrowserApiTilted.h"
 
-void BrowserApi::Register(Napi::Env env, Napi::Object& exports)
+BrowserApi::Backend BrowserApi::GetBackend()
 {
-  logger::info("register");
+  static std::optional<Backend> g_backend;
+  if (g_backend) {
+    return *g_backend;
+  }
 
   auto settings = Settings::GetPlatformSettings();
   std::string backendName =
     settings->GetString("Browser", "BackendName", "auto");
+  if (backendName == "auto") {
+    logger::info("browser backend: config value is auto. Auto mode not implemented yet, falling back to Tilted UI (legacy)");
+    g_backend = Backend::kTilted;
+  } else if (backendName == "tilted") {
+    logger::info("browser backend: config value is tilted, using Tilted UI (legacy)");
+    g_backend = Backend::kTilted;
+  } else if (backendName == "nirnlab") {
+    logger::info("browser backend: config value is nirnlab, using NirnLab UI Platform");
+    g_backend = Backend::kNirnlab;
+  } else {
+    throw std::runtime_error("invalid BackendName in SkyrimPlatform.ini: must be auto/tilted/nirnlab");
+  }
+  return *g_backend;
+}
+
+void BrowserApi::Register(Napi::Env env, Napi::Object& exports)
+{
+  logger::info("registering browser api");
 
   auto browser = Napi::Object::New(env);
-  if (backendName == "auto" || backendName == "tilted") {
-    logger::info("using Tilted UI (legacy) backend for browser");
+  switch (GetBackend()) {
+  case Backend::kTilted:
     browser.Set(
       "getBackend",
       Napi::Function::New(
@@ -45,8 +66,8 @@ void BrowserApi::Register(Napi::Env env, Napi::Object& exports)
                 Napi::Function::New(env,
                                     NapiHelper::WrapCppExceptions(
                                       BrowserApiTilted::ExecuteJavaScript)));
-  } else if (backendName == "nirnlab") {
-    logger::info("using NirnLab UI Platform backend for browser");
+    break;
+  case Backend::kNirnlab:
     browser.Set(
       "getBackend",
       Napi::Function::New(
@@ -91,10 +112,7 @@ void BrowserApi::Register(Napi::Env env, Napi::Object& exports)
         env, NapiHelper::WrapCppExceptions([](const Napi::CallbackInfo& info) {
           return BrowserApiNirnLab::GetInstance().ExecuteJavaScript(info);
         })));
-  } else {
-    throw std::runtime_error("Bad BackendName in SkyrimPlatform.ini: '" +
-                             backendName +
-                             "'. Must be one of auto/tilted/nirnlab");
+    break;
   }
   exports.Set("browser", browser);
 }
