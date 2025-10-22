@@ -67,6 +67,8 @@ void DX11RenderHandler::Render(
     }
   }
 
+  // obtainTextsToDraw is expected to do nothing if IsVisible is set to false
+  // NB: this code is active even if browser backend is nirnlab (for now)
   obtainTextsToDraw([&](const TextToDraw& textToDraw) {
     static_assert(
       std::is_same_v<std::decay_t<decltype(textToDraw.string.c_str()[0])>,

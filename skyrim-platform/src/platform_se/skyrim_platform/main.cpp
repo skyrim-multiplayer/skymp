@@ -523,6 +523,8 @@ public:
 
     ObtainTextsToDrawFunction obtainTextsToDraw = GetTextsToDraw;
 
+    // NB: overlayService is related to the tilted browser backend.
+    // Even so, it's currently used to render texts even if nirnlab is selected
     overlayService =
       std::make_shared<OverlayService>(onProcessMessage, obtainTextsToDraw);
 
