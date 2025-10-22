@@ -9,12 +9,6 @@
 #include <Filesystem.hpp>
 #include <MyChromiumApp.h>
 
-#define KEK_DEBUG(...)                                                        \
-  do {                                                                        \
-    const auto ss = fmt::format(__VA_ARGS__);                                 \
-    MessageBox(nullptr, ss.c_str(), "debug", MB_OK);                          \
-  } while (0)
-
 // https://stackoverflow.com/questions/440133/how-do-i-create-a-random-alpha-numeric-string-in-c
 namespace {
 std::string random_string(std::string::size_type length)
@@ -91,7 +85,6 @@ void MyChromiumApp::Initialize(bool initChromium) noexcept
   auto ceftempPath = std::filesystem::temp_directory_path() /
     L"Skyrim Platform" / (L"CEFTemp" + std::to_wstring(hash));
   auto logPath = ceftempPath / L"cef_debug.log";
-  spdlog::info("{}:{}: pid={}", __FILE__, __LINE__, GetCurrentProcessId());
   spdlog::info("browser (tilted): cache path is {}", ceftempPath.string());
   spdlog::info("browser (tilted): debug log path is {}", logPath.string());
 
