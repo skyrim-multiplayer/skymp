@@ -32,7 +32,6 @@ DX11RenderHandler::~DX11RenderHandler() = default;
 void DX11RenderHandler::Render(
   const ObtainTextsToDrawFunction& obtainTextsToDraw)
 {
-  spdlog::info("Render {}", __LINE__);
   // We need contexts first
   if (!m_pImmediateContext || !m_pContext) {
     Create();
@@ -40,7 +39,6 @@ void DX11RenderHandler::Render(
     if (!m_pImmediateContext || !m_pContext)
       return;
   }
-  spdlog::info("Render {}", __LINE__);
 
   // First of all we flush our deferred context in case we have updated the
   // texture
@@ -59,7 +57,6 @@ void DX11RenderHandler::Render(
   m_pSpriteBatch->Begin(DirectX::SpriteSortMode_Deferred,
                         m_pStates->NonPremultiplied());
 
-  spdlog::info("Render {}", __LINE__);
   if (Visible()) {
     std::unique_lock<std::mutex> _(m_textureLock);
 
@@ -70,10 +67,8 @@ void DX11RenderHandler::Render(
     }
   }
 
-  spdlog::info("Render {}", __LINE__);
-  if (true) {
+
     obtainTextsToDraw([&](const TextToDraw& textToDraw) {
-      // XXX
       static_assert(
         std::is_same_v<std::decay_t<decltype(textToDraw.string.c_str()[0])>,
                        wchar_t>);
@@ -99,7 +94,6 @@ void DX11RenderHandler::Render(
                        textToDraw.rotation, origin, textToDraw.size,
                        textToDraw.effects, textToDraw.layerDepth);
     });
-  }
 
   bool& focusFlag = CEFUtils::DInputHook::ChromeFocus();
 
@@ -123,29 +117,23 @@ void DX11RenderHandler::Reset()
 
 void DX11RenderHandler::Create()
 {
-  spdlog::info("Create {}", __LINE__);
   const auto hr = m_pRenderer->GetSwapChain()->GetDevice(
     IID_ID3D11Device,
     reinterpret_cast<void**>(m_pDevice.ReleaseAndGetAddressOf()));
-  spdlog::info("Create {}", __LINE__);
 
   if (FAILED(hr))
     return;
-  spdlog::info("Create {}", __LINE__);
 
   m_pDevice->GetImmediateContext(m_pImmediateContext.ReleaseAndGetAddressOf());
-  spdlog::info("Create {}", __LINE__);
 
   if (!m_pImmediateContext)
     return;
-  spdlog::info("Create {}", __LINE__);
 
   GetRenderTargetSize();
 
   if (FAILED(m_pDevice->CreateDeferredContext(
         0, m_pContext.ReleaseAndGetAddressOf())))
     return;
-  spdlog::info("Create {}", __LINE__);
 
   m_pSpriteBatch =
     std::make_unique<DirectX::SpriteBatch>(m_pImmediateContext.Get());

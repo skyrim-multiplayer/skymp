@@ -10,5 +10,6 @@ enum class Backend
   kNirnlab = 2,
 };
 Backend GetBackend();
+bool IsVisible();
 void Register(Napi::Env env, Napi::Object& exports);
 }

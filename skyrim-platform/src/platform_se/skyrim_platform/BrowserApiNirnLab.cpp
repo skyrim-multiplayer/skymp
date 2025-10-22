@@ -99,6 +99,11 @@ Napi::Value BrowserApiNirnLab::IsVisible(const Napi::CallbackInfo& info)
   return Napi::Boolean::New(info.Env(), wantedIsVisible);
 }
 
+bool BrowserApiNirnLab::IsVisible()
+{
+  return wantedIsVisible;
+}
+
 Napi::Value BrowserApiNirnLab::SetFocused(const Napi::CallbackInfo& info)
 {
   wantedIsFocused = NapiHelper::ExtractBoolean(info[0], "isFocused");

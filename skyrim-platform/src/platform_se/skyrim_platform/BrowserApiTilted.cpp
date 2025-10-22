@@ -31,10 +31,15 @@ Napi::Value BrowserApiTilted::SetVisible(const Napi::CallbackInfo& info)
   return info.Env().Undefined();
 }
 
-Napi::Value BrowserApiTilted::IsVisible(const Napi::CallbackInfo& info)
+Napi::Value BrowserApiTilted::IsVisibleJS(const Napi::CallbackInfo& info)
 {
   return Napi::Boolean::New(info.Env(),
-                            CEFUtils::DX11RenderHandler::Visible());
+      IsVisible());
+}
+
+bool IsVisible()
+{
+  return CEFUtils::DX11RenderHandler::Visible();
 }
 
 Napi::Value BrowserApiTilted::SetFocused(const Napi::CallbackInfo& info)

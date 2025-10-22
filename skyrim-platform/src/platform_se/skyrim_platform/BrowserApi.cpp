@@ -2,7 +2,8 @@
 #include "BrowserApiNirnLab.h"
 #include "BrowserApiTilted.h"
 
-BrowserApi::Backend BrowserApi::GetBackend()
+namespace BrowserApi {
+Backend GetBackend()
 {
   static std::optional<Backend> g_backend;
   if (g_backend) {
@@ -27,7 +28,18 @@ BrowserApi::Backend BrowserApi::GetBackend()
   return *g_backend;
 }
 
-void BrowserApi::Register(Napi::Env env, Napi::Object& exports)
+bool IsVisible() {
+  switch (GetBackend()) {
+  case Backend::kTilted:
+    return BrowserApiTilted::IsVisible();
+  case Backend::kNirnlab:
+    return BrowserApiNirnLab::GetInstance().IsVisible();
+  }
+  // can't reach this place (exception would've thrown), yet the compiler complains
+  std::terminate("BrowserApi::IsVisible: invalid enum value");
+}
+
+void Register(Napi::Env env, Napi::Object& exports)
 {
   logger::info("registering browser api");
 
@@ -49,7 +61,7 @@ void BrowserApi::Register(Napi::Env env, Napi::Object& exports)
     browser.Set(
       "isVisible",
       Napi::Function::New(
-        env, NapiHelper::WrapCppExceptions(BrowserApiTilted::IsVisible)));
+        env, NapiHelper::WrapCppExceptions(BrowserApiTilted::IsVisibleJS)));
     browser.Set(
       "setFocused",
       Napi::Function::New(
@@ -116,3 +128,4 @@ void BrowserApi::Register(Napi::Env env, Napi::Object& exports)
   }
   exports.Set("browser", browser);
 }
+}  // namespace BrowserApi

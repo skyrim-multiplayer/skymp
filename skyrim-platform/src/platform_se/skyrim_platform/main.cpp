@@ -1,5 +1,6 @@
 #include <NirnLabUIPlatformAPI/API.h>
 
+#include "BrowserApi.h"
 #include "BrowserApiNirnLab.h"
 #include "CallNativeApi.h"
 #include "ConsoleApi.h"
@@ -23,6 +24,10 @@ extern CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
 
 void GetTextsToDraw(TextToDrawCallback callback)
 {
+  if (!BrowserApi::IsVisible()) {
+    return;
+  }
+
   auto text = &TextsCollection::GetSingleton();
 
   for (const auto& a : TextsCollection::GetSingleton().GetCreatedTexts()) {
