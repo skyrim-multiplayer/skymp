@@ -37,7 +37,7 @@ Napi::Value BrowserApiTilted::IsVisibleJS(const Napi::CallbackInfo& info)
       IsVisible());
 }
 
-bool IsVisible()
+bool BrowserApiTilted::IsVisible()
 {
   return CEFUtils::DX11RenderHandler::Visible();
 }

@@ -36,7 +36,7 @@ bool IsVisible() {
     return BrowserApiNirnLab::GetInstance().IsVisible();
   }
   // can't reach this place (exception would've thrown), yet the compiler complains
-  std::terminate("BrowserApi::IsVisible: invalid enum value");
+  return false;
 }
 
 void Register(Napi::Env env, Napi::Object& exports)
