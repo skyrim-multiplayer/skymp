@@ -33,8 +33,7 @@ Napi::Value BrowserApiTilted::SetVisible(const Napi::CallbackInfo& info)
 
 Napi::Value BrowserApiTilted::IsVisibleJS(const Napi::CallbackInfo& info)
 {
-  return Napi::Boolean::New(info.Env(),
-      IsVisible());
+  return Napi::Boolean::New(info.Env(), IsVisible());
 }
 
 bool BrowserApiTilted::IsVisible()

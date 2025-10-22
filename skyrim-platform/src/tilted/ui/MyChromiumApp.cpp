@@ -9,11 +9,11 @@
 #include <Filesystem.hpp>
 #include <MyChromiumApp.h>
 
-#define KEK_DEBUG(...) do { \
-    const auto ss = fmt::format(__VA_ARGS__); \
-    MessageBox(nullptr, ss.c_str(), "debug", MB_OK); \
+#define KEK_DEBUG(...)                                                        \
+  do {                                                                        \
+    const auto ss = fmt::format(__VA_ARGS__);                                 \
+    MessageBox(nullptr, ss.c_str(), "debug", MB_OK);                          \
   } while (0)
-
 
 // https://stackoverflow.com/questions/440133/how-do-i-create-a-random-alpha-numeric-string-in-c
 namespace {
@@ -98,7 +98,8 @@ void MyChromiumApp::Initialize(bool initChromium) noexcept
   auto showError = [&](std::string msg) {
     msg += "\nPossible reasons:";
     msg += "\n1. Installed Skyrim Together. It conflicts with Skyrim Platform";
-    msg += "\n2. Installed Nirnlab UI - move SKSE/Plugins/NirnLabUIPlugin.dll somewhere else if it exists";
+    msg += "\n2. Installed Nirnlab UI - move SKSE/Plugins/NirnLabUIPlugin.dll "
+           "somewhere else if it exists";
     msg += "\nTry checking these logs:";
     msg += "\n- Documents/My Games/Skyrim.INI/SKSE/skyrim-platform.log";
     msg += "\n- " + logPath.string();

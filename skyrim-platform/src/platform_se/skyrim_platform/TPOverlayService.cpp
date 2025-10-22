@@ -61,7 +61,8 @@ void OverlayService::Create(RenderSystemD3D11* apRenderSystem)
   auto renderProvider = std::make_unique<D3D11RenderProvider>(apRenderSystem);
   overlay = new MyChromiumApp(std::move(renderProvider), onProcessMessage);
 
-  overlay->Initialize(BrowserApi::GetBackend() == BrowserApi::Backend::kTilted);
+  overlay->Initialize(BrowserApi::GetBackend() ==
+                      BrowserApi::Backend::kTilted);
   overlay->GetClient()->Create();
 }
 

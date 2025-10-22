@@ -24,8 +24,8 @@ void BrowserApiNirnLab::HandleSkseMessage(
       settings.remoteDebuggingPort = 9000;
       // API version is ok. Request interface.
       SKSE::GetMessagingInterface()->Dispatch(
-        NL::UI::APIMessageType::RequestAPI, &settings,
-        sizeof(settings), NL::UI::LibVersion::PROJECT_NAME);
+        NL::UI::APIMessageType::RequestAPI, &settings, sizeof(settings),
+        NL::UI::LibVersion::PROJECT_NAME);
     } break;
     default:
       break;
