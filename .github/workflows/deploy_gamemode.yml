@@ -36,6 +36,7 @@ jobs:
           repository: skyrim-multiplayer/skymp5-gamemode
           token: ${{ secrets.SKYMP5_GAMEMODE_PAT }}
           fetch-depth: 0
+          persist-credentials: false
 
       - uses: actions/checkout@v4
         with:
