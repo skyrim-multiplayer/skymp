@@ -67,34 +67,34 @@ void DX11RenderHandler::Render(
     }
   }
 
-  if (Visible()) {
-    obtainTextsToDraw([&](const TextToDraw& textToDraw) {
-      static_assert(
-        std::is_same_v<std::decay_t<decltype(textToDraw.string.c_str()[0])>,
-                       wchar_t>);
+  // obtainTextsToDraw is expected to do nothing if IsVisible is set to false
+  // NB: this code is active even if browser backend is nirnlab (for now)
+  obtainTextsToDraw([&](const TextToDraw& textToDraw) {
+    static_assert(
+      std::is_same_v<std::decay_t<decltype(textToDraw.string.c_str()[0])>,
+                     wchar_t>);
 
-      std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> conv;
+    std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> conv;
 
-      auto& font = m_pFonts[conv.to_bytes(textToDraw.fontName)];
+    auto& font = m_pFonts[conv.to_bytes(textToDraw.fontName)];
 
-      if (!font)
-        return;
+    if (!font)
+      return;
 
-      auto origin = DirectX::SimpleMath::Vector2(
-                      font->MeasureString(textToDraw.string.c_str())) /
-        2;
+    auto origin = DirectX::SimpleMath::Vector2(
+                    font->MeasureString(textToDraw.string.c_str())) /
+      2;
 
-      DirectX::XMVECTORF32 color = { static_cast<float>(textToDraw.color[0]),
-                                     static_cast<float>(textToDraw.color[1]),
-                                     static_cast<float>(textToDraw.color[2]),
-                                     static_cast<float>(textToDraw.color[3]) };
+    DirectX::XMVECTORF32 color = { static_cast<float>(textToDraw.color[0]),
+                                   static_cast<float>(textToDraw.color[1]),
+                                   static_cast<float>(textToDraw.color[2]),
+                                   static_cast<float>(textToDraw.color[3]) };
 
-      font->DrawString(m_pSpriteBatch.get(), textToDraw.string.c_str(),
-                       DirectX::XMFLOAT2(textToDraw.x, textToDraw.y), color,
-                       textToDraw.rotation, origin, textToDraw.size,
-                       textToDraw.effects, textToDraw.layerDepth);
-    });
-  }
+    font->DrawString(m_pSpriteBatch.get(), textToDraw.string.c_str(),
+                     DirectX::XMFLOAT2(textToDraw.x, textToDraw.y), color,
+                     textToDraw.rotation, origin, textToDraw.size,
+                     textToDraw.effects, textToDraw.layerDepth);
+  });
 
   bool& focusFlag = CEFUtils::DInputHook::ChromeFocus();
 

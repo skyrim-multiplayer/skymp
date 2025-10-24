@@ -20,11 +20,12 @@ void BrowserApiNirnLab::HandleSkseMessage(
         NL::UI::LibVersion::PROJECT_NAME);
     } break;
     case SKSE::MessagingInterface::kInputLoaded: {
-      NL::UI::Settings defaultSettings;
+      NL::UI::Settings settings;
+      settings.remoteDebuggingPort = 9000;
       // API version is ok. Request interface.
       SKSE::GetMessagingInterface()->Dispatch(
-        NL::UI::APIMessageType::RequestAPI, &defaultSettings,
-        sizeof(defaultSettings), NL::UI::LibVersion::PROJECT_NAME);
+        NL::UI::APIMessageType::RequestAPI, &settings, sizeof(settings),
+        NL::UI::LibVersion::PROJECT_NAME);
     } break;
     default:
       break;
@@ -98,6 +99,11 @@ Napi::Value BrowserApiNirnLab::IsVisible(const Napi::CallbackInfo& info)
   return Napi::Boolean::New(info.Env(), wantedIsVisible);
 }
 
+bool BrowserApiNirnLab::IsVisible()
+{
+  return wantedIsVisible;
+}
+
 Napi::Value BrowserApiNirnLab::SetFocused(const Napi::CallbackInfo& info)
 {
   wantedIsFocused = NapiHelper::ExtractBoolean(info[0], "isFocused");
@@ -163,6 +169,7 @@ void BrowserApiNirnLab::UpdateUrl()
   if (!browser) {
     return;
   }
+  browser->LoadBrowserURL(wantedUrl.c_str(), false);
 }
 
 void BrowserApiNirnLab::UpdateJs()

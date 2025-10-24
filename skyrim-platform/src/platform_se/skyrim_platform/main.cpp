@@ -1,5 +1,6 @@
 #include <NirnLabUIPlatformAPI/API.h>
 
+#include "BrowserApi.h"
 #include "BrowserApiNirnLab.h"
 #include "CallNativeApi.h"
 #include "ConsoleApi.h"
@@ -23,6 +24,10 @@ extern CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
 
 void GetTextsToDraw(TextToDrawCallback callback)
 {
+  if (!BrowserApi::IsVisible()) {
+    return;
+  }
+
   auto text = &TextsCollection::GetSingleton();
 
   for (const auto& a : TextsCollection::GetSingleton().GetCreatedTexts()) {
@@ -518,6 +523,8 @@ public:
 
     ObtainTextsToDrawFunction obtainTextsToDraw = GetTextsToDraw;
 
+    // NB: overlayService is related to the tilted browser backend.
+    // Even so, it's currently used to render texts even if nirnlab is selected
     overlayService =
       std::make_shared<OverlayService>(onProcessMessage, obtainTextsToDraw);
 

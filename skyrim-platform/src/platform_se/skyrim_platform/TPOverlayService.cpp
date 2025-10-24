@@ -1,4 +1,6 @@
 #include "TPOverlayService.h"
+
+#include "BrowserApi.h"
 #include "Settings.h"
 #include "TPRenderSystemD3D11.h"
 
@@ -59,16 +61,8 @@ void OverlayService::Create(RenderSystemD3D11* apRenderSystem)
   auto renderProvider = std::make_unique<D3D11RenderProvider>(apRenderSystem);
   overlay = new MyChromiumApp(std::move(renderProvider), onProcessMessage);
 
-  bool chromiumEnabled =
-    Settings::GetPlatformSettings()->GetBool("Debug", "ChromiumEnabled", true);
-
-  auto settings = Settings::GetPlatformSettings();
-  std::string backendName =
-    settings->GetString("Browser", "BackendName", "auto");
-
-  bool tilted = backendName == "auto" || backendName == "tilted";
-
-  overlay->Initialize(chromiumEnabled && tilted);
+  overlay->Initialize(BrowserApi::GetBackend() ==
+                      BrowserApi::Backend::kTilted);
   overlay->GetClient()->Create();
 }
 
