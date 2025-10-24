@@ -6,8 +6,9 @@
 namespace BrowserApi {
 enum class Backend
 {
+  kOff = 0,
   kTilted = 1,
-  kNirnlab = 2,
+  kNirnLab = 2,
 };
 Backend GetBackend();
 bool IsVisible();

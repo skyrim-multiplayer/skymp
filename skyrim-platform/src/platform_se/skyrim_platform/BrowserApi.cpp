@@ -11,9 +11,20 @@ Backend GetBackend()
   }
 
   auto settings = Settings::GetPlatformSettings();
+  bool chromiumEnabled = settings->GetBool("Debug", "ChromiumEnabled", true);
+  if (!chromiumEnabled) {
+    logger::info("browser backend: Debug.ChromiumEnabled is false, treating "
+                 "as backend = off");
+    g_backend = Backend::kOff;
+    return *g_backend;
+  }
+
   std::string backendName =
     settings->GetString("Browser", "BackendName", "auto");
-  if (backendName == "auto") {
+  if (backendName == "off") {
+    logger::info("browser backend: config value is off, browser disabled");
+    g_backend = Backend::kOff;
+  } else if (backendName == "auto") {
     logger::info("browser backend: config value is auto. Auto mode not "
                  "implemented yet, falling back to Tilted UI (legacy)");
     g_backend = Backend::kTilted;
@@ -24,7 +35,7 @@ Backend GetBackend()
   } else if (backendName == "nirnlab") {
     logger::info(
       "browser backend: config value is nirnlab, using NirnLab UI Platform");
-    g_backend = Backend::kNirnlab;
+    g_backend = Backend::kNirnLab;
   } else {
     throw std::runtime_error("invalid BackendName in SkyrimPlatform.ini: must "
                              "be auto/tilted/nirnlab");
@@ -35,9 +46,11 @@ Backend GetBackend()
 bool IsVisible()
 {
   switch (GetBackend()) {
+    case Backend::kOff:
+      return false;
     case Backend::kTilted:
       return BrowserApiTilted::IsVisible();
-    case Backend::kNirnlab:
+    case Backend::kNirnLab:
       return BrowserApiNirnLab::GetInstance().IsVisible();
   }
   // can't reach this place (exception would've thrown), yet the compiler
@@ -51,6 +64,34 @@ void Register(Napi::Env env, Napi::Object& exports)
 
   auto browser = Napi::Object::New(env);
   switch (GetBackend()) {
+    case Backend::kOff:
+      browser.Set(
+        "getBackend",
+        Napi::Function::New(
+          env,
+          NapiHelper::WrapCppExceptions([](const Napi::CallbackInfo& info) {
+            auto result = Napi::Object::New(info.Env());
+            result.Set("name", Napi::String::New(info.Env(), "off"));
+            return result;
+          })));
+      browser.Set("setVisible",
+                  Napi::Function::New(env, [](const Napi::CallbackInfo&) {}));
+      browser.Set("isVisible",
+                  Napi::Function::New(env, [](const Napi::CallbackInfo& info) {
+                    return Napi::Boolean::New(info.Env(), false);
+                  }));
+      browser.Set("setFocused",
+                  Napi::Function::New(env, [](const Napi::CallbackInfo&) {}));
+      browser.Set("isFocused",
+                  Napi::Function::New(env, [](const Napi::CallbackInfo& info) {
+                    return Napi::Boolean::New(info.Env(), false);
+                  }));
+      browser.Set("loadUrl",
+                  Napi::Function::New(env, [](const Napi::CallbackInfo& info) {
+                    return Napi::Boolean::New(info.Env(), false);
+                  }));
+      browser.Set("executeJavaScript",
+                  Napi::Function::New(env, [](const Napi::CallbackInfo&) {}));
     case Backend::kTilted:
       browser.Set(
         "getBackend",
@@ -86,7 +127,7 @@ void Register(Napi::Env env, Napi::Object& exports)
                                       NapiHelper::WrapCppExceptions(
                                         BrowserApiTilted::ExecuteJavaScript)));
       break;
-    case Backend::kNirnlab:
+    case Backend::kNirnLab:
       browser.Set(
         "getBackend",
         Napi::Function::New(
