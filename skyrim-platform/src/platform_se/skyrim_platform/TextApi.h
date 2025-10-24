@@ -11,6 +11,11 @@ Napi::Value CreateText(const Napi::CallbackInfo& info);
 Napi::Value DestroyText(const Napi::CallbackInfo& info);
 Napi::Value DestroyAllTexts(const Napi::CallbackInfo& info);
 
+namespace TextsVisibility {
+enum Value;
+} // namespace TextsVisibility
+
+Napi::Value SetTextsVisibility(const Napi::CallbackInfo& info);
 Napi::Value SetTextPos(const Napi::CallbackInfo& info);
 Napi::Value SetTextString(const Napi::CallbackInfo& info);
 Napi::Value SetTextColor(const Napi::CallbackInfo& info);
@@ -21,6 +26,8 @@ Napi::Value SetTextDepth(const Napi::CallbackInfo& info);
 Napi::Value SetTextEffect(const Napi::CallbackInfo& info);
 Napi::Value SetTextOrigin(const Napi::CallbackInfo& info);
 
+TextsVisibility::Value GetTextsVisibility();
+Napi::Value GetTextsVisibilityJS(const Napi::CallbackInfo& info);
 Napi::Value GetTextPos(const Napi::CallbackInfo& info);
 Napi::Value GetTextString(const Napi::CallbackInfo& info);
 Napi::Value GetTextColor(const Napi::CallbackInfo& info);
@@ -32,4 +39,43 @@ Napi::Value GetTextEffect(const Napi::CallbackInfo& info);
 Napi::Value GetTextOrigin(const Napi::CallbackInfo& info);
 
 Napi::Value GetNumCreatedTexts(const Napi::CallbackInfo& info);
+
+namespace TextsVisibility {
+enum Value
+{
+  kInheritBrowser,
+  kOff,
+  kOn,
+};
+
+TextsVisibility g_value = Value::kInheritBrowser;
+
+inline std::string_view ToString(Value visibility)
+{
+  switch (visibility) {
+    case TextsVisibility::kInheritBrowser:
+      return "inheritBrowser";
+    case TextsVisibility::kOff:
+      return "off";
+    case TextsVisibility::kOn:
+      return "on";
+  }
+  // unreachable, but compiler complains
+  // return "";
 }
+
+inline Value FromString(std::string_view s)
+{
+  if (s == "inheritBrowser") {
+    return kInheritBrowser;
+  }
+  if (s == "off") {
+    return kOff;
+  }
+  if (s == "on") {
+    return kOn;
+  }
+  throw std::runtime_error("TextsVisibility: invalid enum value");
+}
+} // namespace TextsVisibility
+} // namespace TextApi
