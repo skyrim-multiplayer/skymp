@@ -5,7 +5,8 @@
 
 namespace BrowserApiTilted {
 Napi::Value SetVisible(const Napi::CallbackInfo& info);
-Napi::Value IsVisible(const Napi::CallbackInfo& info);
+Napi::Value IsVisibleJS(const Napi::CallbackInfo& info);
+bool IsVisible();
 Napi::Value SetFocused(const Napi::CallbackInfo& info);
 Napi::Value IsFocused(const Napi::CallbackInfo& info);
 Napi::Value LoadUrl(const Napi::CallbackInfo& info);

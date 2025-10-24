@@ -1,5 +1,6 @@
 #include <NirnLabUIPlatformAPI/API.h>
 
+#include "BrowserApi.h"
 #include "BrowserApiNirnLab.h"
 #include "CallNativeApi.h"
 #include "ConsoleApi.h"
@@ -17,12 +18,27 @@
 #include "SkyrimPlatform.h"
 #include "TPOverlayService.h"
 #include "TPRenderSystemD3D11.h"
+#include "TextsApi.h"
 #include "TextsCollection.h"
 
 extern CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
 
 void GetTextsToDraw(TextToDrawCallback callback)
 {
+  switch (TextsApi::GetTextsVisibility()) {
+    case TextsApi::kInheritBrowser:
+      if (!BrowserApi::IsVisible()) {
+        return;
+      }
+      // pass
+      break;
+    case TextsApi::kOff:
+      return;
+    case TextsApi::kInheritBrowser:
+      // pass
+      break;
+  }
+
   auto text = &TextsCollection::GetSingleton();
 
   for (const auto& a : TextsCollection::GetSingleton().GetCreatedTexts()) {
@@ -518,6 +534,8 @@ public:
 
     ObtainTextsToDrawFunction obtainTextsToDraw = GetTextsToDraw;
 
+    // NB: overlayService is related to the tilted browser backend.
+    // Even so, it's currently used to render texts even if nirnlab is selected
     overlayService =
       std::make_shared<OverlayService>(onProcessMessage, obtainTextsToDraw);
 

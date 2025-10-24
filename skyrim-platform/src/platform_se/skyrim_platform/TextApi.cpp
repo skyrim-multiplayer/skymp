@@ -49,6 +49,13 @@ Napi::Value TextApi::DestroyAllTexts(const Napi::CallbackInfo& info)
   return info.Env().Undefined();
 }
 
+Napi::Value SetTextsVisibility(const Napi::CallbackInfo& info)
+{
+  TextsVisibility::g_value = TextsVisibility::FromString(
+    NapiHelper::ExtractString(info[0], "visibility"));
+  return info.Env().Undefined();
+}
+
 Napi::Value TextApi::SetTextPos(const Napi::CallbackInfo& info)
 {
   auto textId = NapiHelper::ExtractInt32(info[0], "textId");
@@ -176,6 +183,16 @@ Napi::Value TextApi::GetTextPos(const Napi::CallbackInfo& info)
   return jsArray;
 }
 
+TextsVisibility::Value GetTextsVisibility()
+{
+  return TextsVisibility::g_value;
+}
+
+Napi::Value GetTextsVisibilityJS(const Napi::CallbackInfo& info)
+{
+  return ToString(GetTextsVisibility());
+}
+
 Napi::Value TextApi::GetTextString(const Napi::CallbackInfo& info)
 {
   const auto& str = TextsCollection::GetSingleton().GetTextString(
@@ -271,6 +288,9 @@ void Register(Napi::Env env, Napi::Object& exports)
     "destroyAllTexts",
     Napi::Function::New(env, NapiHelper::WrapCppExceptions(DestroyAllTexts)));
 
+  exports.Set("setTextsVisibility",
+              Napi::Function::New(
+                env, NapiHelper::WrapCppExceptions(SetTextsVisibility)));
   exports.Set(
     "setTextPos",
     Napi::Function::New(env, NapiHelper::WrapCppExceptions(SetTextPos)));
@@ -299,6 +319,9 @@ void Register(Napi::Env env, Napi::Object& exports)
     "setTextOrigin",
     Napi::Function::New(env, NapiHelper::WrapCppExceptions(SetTextOrigin)));
 
+  exports.Set("getTextsVisibility",
+              Napi::Function::New(
+                env, NapiHelper::WrapCppExceptions(GetTextsVisibilityJS)));
   exports.Set(
     "getTextPos",
     Napi::Function::New(env, NapiHelper::WrapCppExceptions(GetTextPos)));
