@@ -28,6 +28,11 @@ struct ConditionsEvaluatorSettings
   std::vector<std::string> callersToLog;
 };
 
+struct ConditionEvaluatorContext
+{
+  std::optional<uint32_t> hitSourceFormId;
+};
+
 class ConditionsEvaluator
 {
 public:
@@ -36,7 +41,8 @@ public:
     const ConditionsEvaluatorSettings& settings,
     ConditionsEvaluatorCaller caller, const std::vector<Condition>& conditions,
     const MpActor& aggressor, const MpActor& target,
-    const std::function<void(bool, std::vector<std::string>&)>& callback);
+    const std::function<void(bool, std::vector<std::string>&)>& callback,
+    const ConditionEvaluatorContext &context = ConditionEvaluatorContext());
 
 private:
   static bool EvaluateConditionsImpl(
@@ -44,7 +50,7 @@ private:
     const std::vector<Condition>& conditions,
     std::vector<int>* outConditionResolutions,
     std::vector<float>* outConditionFunctionResults, const MpActor& aggressor,
-    const MpActor& target);
+    const MpActor& target, const ConditionEvaluatorContext &context);
 
   static std::vector<std::string> LogEvaluateConditionsResolution(
     const std::vector<Condition>& conditions,
@@ -54,7 +60,7 @@ private:
   static std::pair<bool, float> EvaluateCondition(
     const ConditionFunctionMap& conditionFunctionMap,
     const Condition& condition, const MpActor& aggressor,
-    const MpActor& target);
+    const MpActor& target, const ConditionEvaluatorContext& context);
 
   static bool CompareFloats(float a, float b, const std::string& op);
 

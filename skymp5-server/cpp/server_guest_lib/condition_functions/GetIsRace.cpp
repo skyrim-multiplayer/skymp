@@ -12,7 +12,7 @@ uint16_t ConditionFunctions::GetIsRace::GetFunctionIndex() const
 }
 
 float ConditionFunctions::GetIsRace::Execute(
-  MpActor& actor, uint32_t parameter1, [[maybe_unused]] uint32_t parameter2)
+  MpActor& actor, uint32_t parameter1, [[maybe_unused]] uint32_t parameter2, const ConditionEvaluatorContext&)
 {
   if (actor.GetRaceId() == parameter1) {
     return 1.0f;

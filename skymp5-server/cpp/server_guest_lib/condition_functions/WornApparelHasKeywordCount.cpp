@@ -35,8 +35,10 @@ float ConditionFunctions::WornApparelHasKeywordCount::Execute(
     std::vector<uint32_t> keywordIds =
       res.rec->GetKeywordIds(worldState->GetEspmCache());
 
-    if (std::find(keywordIds.begin(), keywordIds.end(), parameter1) !=
-        keywordIds.end()) {
+    if (std::any_of(keywordIds.begin(), keywordIds.end(),
+                    [&](uint32_t keywordId) {
+                      return res.ToGlobalId(keywordId) == parameter1;
+                    })) {
       ++count;
     }
   }

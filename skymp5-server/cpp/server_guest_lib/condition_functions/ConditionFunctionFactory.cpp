@@ -11,6 +11,9 @@
 #include "WornApparelHasKeywordCount.h"
 #include "WornHasKeyword.h"
 
+#include "SkympGetIsWeaponHitSource.h"
+#include "SkympGetWeaponHitSourceHasKeyword.h"
+
 ConditionFunctionMap ConditionFunctionFactory::CreateConditionFunctions()
 {
   ConditionFunctionMap res;
@@ -35,6 +38,11 @@ ConditionFunctionMap ConditionFunctionFactory::CreateConditionFunctions()
     std::make_shared<ConditionFunctions::SpellHasKeyword>());
   res.RegisterConditionFunction(
     std::make_shared<ConditionFunctions::WornApparelHasKeywordCount>());
+
+  res.RegisterConditionFunction(
+    std::make_shared<ConditionFunctions::SkympGetIsWeaponHitSource>());
+  res.RegisterConditionFunction(
+    std::make_shared<ConditionFunctions::SkympGetWeaponHitSourceHasKeyword>());
 
   return res;
 }
