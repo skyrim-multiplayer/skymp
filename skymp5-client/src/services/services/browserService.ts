@@ -4,7 +4,7 @@ import { FormView } from "../../view/formView";
 import { QueryKeyCodeBindings } from "../events/queryKeyCodeBindings";
 
 import { ClientListener, CombinedController, Sp } from "./clientListener";
-import { BrowserMessageEvent, DxScanCode, Menu, MenuCloseEvent, MenuOpenEvent } from "skyrimPlatform";
+import { BrowserMessageEvent, DxScanCode, Menu, MenuCloseEvent, MenuOpenEvent, TextsVisibility } from "skyrimPlatform";
 
 const unfocusEventString = `window.dispatchEvent(new CustomEvent('skymp5-client:browserUnfocused', {}))`;
 const focusEventString = `window.dispatchEvent(new CustomEvent('skymp5-client:browserFocused', {}))`;
@@ -24,6 +24,16 @@ export class BrowserService extends ClientListener {
 
   // TODO: keycodes should be configurable
   private onQueryKeyCodeBindings(e: QueryKeyCodeBindings) {
+    if (e.isDown([DxScanCode.N])) {
+      const cur = this.sp.getTextsVisibility();
+      const nxt = ({
+        'inheritBrowser': 'off',
+        'off': 'on',
+        'on': 'inheritBrowser',
+      } as Record<TextsVisibility, TextsVisibility>)[cur];
+      this.sp.Debug.notification(`${cur} -> ${nxt}`);
+      this.sp.setTextsVisibility(nxt);
+    }
     if (e.isDown([DxScanCode.F1])) {
       FormView.isDisplayingNicknames = !FormView.isDisplayingNicknames;
     }
