@@ -9,9 +9,8 @@ export interface ClientListenerEvents {
 // thse are only available in the git version, so we augment the module
 // TODO: use typings from the current codebase, not npm module
 declare module "skyrimPlatform" {
-    type TextsVisibility = 'inheritBrowser' | 'off' | 'on';
-    function setTextsVisibility(visibility: TextsVisibility): void;
-    function getTextsVisibility(): TextsVisibility;
+    function setTextsVisibility(visibility: 'inheritBrowser' | 'off' | 'on'): void;
+    function getTextsVisibility(): 'inheritBrowser' | 'off' | 'on';
 }
 
 export type Sp = Omit<typeof sp, "on" | "once">;
