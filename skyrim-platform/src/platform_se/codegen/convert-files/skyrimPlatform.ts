@@ -1558,7 +1558,7 @@ export declare function destroyAllTexts(): void;
 
 export type TextsVisibility = 'inheritBrowser' | 'off' | 'on';
 
-export declare function setTextsVisibility(visibility: boolean): void;
+export declare function setTextsVisibility(visibility: TextsVisibility): void;
 export declare function setTextPos(textId: number, xPos: number, yPos: number): void;
 export declare function setTextString(textId: number, text: string): void;
 export declare function setTextColor(textId: number, color: number[]): void;
@@ -1569,7 +1569,7 @@ export declare function setTextDepth(textId: number, depth: number): void;
 export declare function setTextEffect(textId: number, effect: number): void;
 export declare function setTextOrigin(textId: number, origin: number[]): void;
 
-export declare function getTextsVisibility(): boolean;
+export declare function getTextsVisibility(): TextsVisibility;
 export declare function getTextPos(textId: number): number[];
 export declare function getTextString(textId: number): string;
 export declare function getTextColor(textId: number): number[];
