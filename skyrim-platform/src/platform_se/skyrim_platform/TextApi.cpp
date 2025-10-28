@@ -51,7 +51,7 @@ Napi::Value TextApi::DestroyAllTexts(const Napi::CallbackInfo& info)
 
 Napi::Value SetTextsVisibility(const Napi::CallbackInfo& info)
 {
-  TextsVisibility::g_value = TextsVisibility::FromString(
+  TextsVisibility::Ref() = TextsVisibility::FromString(
     NapiHelper::ExtractString(info[0], "visibility"));
   return info.Env().Undefined();
 }
@@ -185,12 +185,12 @@ Napi::Value TextApi::GetTextPos(const Napi::CallbackInfo& info)
 
 TextsVisibility::Value GetTextsVisibility()
 {
-  return TextsVisibility::g_value;
+  return TextsVisibility::Ref();
 }
 
 Napi::Value GetTextsVisibilityJS(const Napi::CallbackInfo& info)
 {
-  return ToString(GetTextsVisibility());
+  return Napi::String::New(info.Env(), ToString(GetTextsVisibility()));
 }
 
 Napi::Value TextApi::GetTextString(const Napi::CallbackInfo& info)

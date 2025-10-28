@@ -48,9 +48,13 @@ enum Value
   kOn,
 };
 
-TextsVisibility g_value = Value::kInheritBrowser;
+inline Value& Ref()
+{
+  static Value g_value = Value::kInheritBrowser;
+  return g_value;
+}
 
-inline std::string_view ToString(Value visibility)
+inline std::string_view ToStringView(Value visibility)
 {
   switch (visibility) {
     case TextsVisibility::kInheritBrowser:
@@ -59,9 +63,14 @@ inline std::string_view ToString(Value visibility)
       return "off";
     case TextsVisibility::kOn:
       return "on";
+    default:
+      std::terminate(); // unhandled value
   }
-  // unreachable, but compiler complains
-  // return "";
+}
+
+inline std::string ToString(Value visibility)
+{
+  return std::string{ToStringView(visibility)};
 }
 
 inline Value FromString(std::string_view s)
