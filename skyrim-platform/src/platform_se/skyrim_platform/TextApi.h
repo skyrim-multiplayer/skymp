@@ -70,7 +70,7 @@ inline std::string_view ToStringView(Value visibility)
 
 inline std::string ToString(Value visibility)
 {
-  return std::string{ToStringView(visibility)};
+  return std::string{ ToStringView(visibility) };
 }
 
 inline Value FromString(std::string_view s)
