@@ -4,10 +4,12 @@ import { FormView } from "../../view/formView";
 import { QueryKeyCodeBindings } from "../events/queryKeyCodeBindings";
 
 import { ClientListener, CombinedController, Sp } from "./clientListener";
-import { BrowserMessageEvent, DxScanCode, Menu, MenuCloseEvent, MenuOpenEvent, TextsVisibility } from "skyrimPlatform";
+import { BrowserMessageEvent, DxScanCode, Menu, MenuCloseEvent, MenuOpenEvent } from "skyrimPlatform";
 
 const unfocusEventString = `window.dispatchEvent(new CustomEvent('skymp5-client:browserUnfocused', {}))`;
 const focusEventString = `window.dispatchEvent(new CustomEvent('skymp5-client:browserFocused', {}))`;
+
+type TextsVisibility = 'inheritBrowser' | 'off' | 'on';
 
 export class BrowserService extends ClientListener {
   constructor(private sp: Sp, private controller: CombinedController) {
