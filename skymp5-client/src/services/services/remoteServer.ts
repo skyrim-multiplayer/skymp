@@ -336,6 +336,10 @@ export class RemoteServer extends ClientListener {
               logTrace(this, `calling setDisplayName`, displayName, `for`, refr.getFormID().toString(16));
             }
           }
+          if (msg.isDead && !msg.isMe) {
+            const ac = Actor.from(refr);
+            ac?.forceAddRagdollToWorld();
+          }
         } else {
           logError(this, 'Failed to apply model to', refrId.toString(16));
         }
@@ -615,6 +619,12 @@ export class RemoteServer extends ClientListener {
         });
       });
     }
+    if (!msg.isMe && msg.isDead && msg.refrId !== undefined) {
+      once('update', () => {
+        const actor = Actor.from(Game.getFormEx(msg.refrId!));
+        actor?.forceAddRagdollToWorld();
+      });
+    }
   }
 
   private onDestroyActorMessage(event: ConnectionMessage<DestroyActorMessage>): void {
@@ -777,6 +787,10 @@ export class RemoteServer extends ClientListener {
           ? Game.getPlayer()!
           : Actor.from(Game.getFormEx(remoteIdToLocalId(form.refrId ?? 0)));
       if (actor) {
+        if (msgData === true && id !== this.getWorldModel().playerCharacterFormIdx) {
+          // Ensure ragdoll exists if actor died offscreen
+          Actor.from(actor)?.forceAddRagdollToWorld();
+        }
         try {
           this.controller.emitter.emit("applyDeathStateEvent", {
             actor: actor,
