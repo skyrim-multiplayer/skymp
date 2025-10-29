@@ -18,14 +18,30 @@
 #include "SkyrimPlatform.h"
 #include "TPOverlayService.h"
 #include "TPRenderSystemD3D11.h"
+#include "TextApi.h"
 #include "TextsCollection.h"
 
 extern CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
 
 void GetTextsToDraw(TextToDrawCallback callback)
 {
-  if (!BrowserApi::IsVisible()) {
-    return;
+  switch (TextApi::GetTextsVisibility()) {
+    case TextApi::TextsVisibility::kInheritBrowser:
+      if (!BrowserApi::IsVisible()) {
+        // skip
+        return;
+      }
+      // pass
+      break;
+    case TextApi::TextsVisibility::kOff:
+      // skip
+      return;
+    case TextApi::TextsVisibility::kOn:
+      // pass
+      break;
+    default:
+      // unhandled value
+      return;
   }
 
   auto text = &TextsCollection::GetSingleton();
