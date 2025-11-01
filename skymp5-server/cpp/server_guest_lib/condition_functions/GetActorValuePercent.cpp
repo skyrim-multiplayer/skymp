@@ -12,7 +12,8 @@ uint16_t ConditionFunctions::GetActorValuePercent::GetFunctionIndex() const
 }
 
 float ConditionFunctions::GetActorValuePercent::Execute(
-  MpActor& actor, uint32_t parameter1, [[maybe_unused]] uint32_t parameter2, const ConditionEvaluatorContext&)
+  MpActor& actor, uint32_t parameter1, [[maybe_unused]] uint32_t parameter2,
+  const ConditionEvaluatorContext&)
 {
   constexpr uint32_t kHealthActorValueId = 0x000003E8;
   constexpr uint32_t kMagickaActorValueId = 0x000003E9;

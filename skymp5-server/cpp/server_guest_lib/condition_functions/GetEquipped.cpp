@@ -12,7 +12,8 @@ uint16_t ConditionFunctions::GetEquipped::GetFunctionIndex() const
 }
 
 float ConditionFunctions::GetEquipped::Execute(
-  MpActor& actor, uint32_t parameter1, [[maybe_unused]] uint32_t parameter2, const ConditionEvaluatorContext&)
+  MpActor& actor, uint32_t parameter1, [[maybe_unused]] uint32_t parameter2,
+  const ConditionEvaluatorContext&)
 {
   if (actor.GetEquipment().inv.GetItemCount(parameter1) > 0) {
     return 1.f;

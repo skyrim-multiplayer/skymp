@@ -2,10 +2,10 @@
 #include "Condition.h"
 #include <functional>
 #include <nlohmann/json_fwd.hpp>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
-#include <optional>
 
 class MpActor;
 class ConditionFunctionMap;
@@ -43,7 +43,7 @@ public:
     ConditionsEvaluatorCaller caller, const std::vector<Condition>& conditions,
     const MpActor& aggressor, const MpActor& target,
     const std::function<void(bool, std::vector<std::string>&)>& callback,
-    const ConditionEvaluatorContext &context = ConditionEvaluatorContext());
+    const ConditionEvaluatorContext& context = ConditionEvaluatorContext());
 
 private:
   static bool EvaluateConditionsImpl(
@@ -51,7 +51,7 @@ private:
     const std::vector<Condition>& conditions,
     std::vector<int>* outConditionResolutions,
     std::vector<float>* outConditionFunctionResults, const MpActor& aggressor,
-    const MpActor& target, const ConditionEvaluatorContext &context);
+    const MpActor& target, const ConditionEvaluatorContext& context);
 
   static std::vector<std::string> LogEvaluateConditionsResolution(
     const std::vector<Condition>& conditions,
