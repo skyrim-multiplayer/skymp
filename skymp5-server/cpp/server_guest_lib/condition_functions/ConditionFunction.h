@@ -2,6 +2,7 @@
 #include <cstdint>
 
 class MpActor;
+struct ConditionEvaluatorContext;
 
 class ConditionFunction
 {
@@ -14,5 +15,6 @@ public:
   virtual uint16_t GetFunctionIndex() const = 0;
 
   virtual float Execute(MpActor& actor, uint32_t parameter1,
-                        uint32_t parameter2) = 0;
+                        uint32_t parameter2,
+                        const ConditionEvaluatorContext& context) = 0;
 };
