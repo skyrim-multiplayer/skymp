@@ -12,7 +12,8 @@ uint16_t ConditionFunctions::IsWeaponMagicOut::GetFunctionIndex() const
 }
 
 float ConditionFunctions::IsWeaponMagicOut::Execute(
-  MpActor& actor, uint32_t parameter1, [[maybe_unused]] uint32_t parameter2, const ConditionEvaluatorContext&)
+  MpActor& actor, uint32_t parameter1, [[maybe_unused]] uint32_t parameter2,
+  const ConditionEvaluatorContext&)
 {
   if (!actor.IsWeaponDrawn()) {
     return 0.f;
