@@ -12,7 +12,8 @@ uint16_t ConditionFunctions::SpellHasKeyword::GetFunctionIndex() const
 }
 
 float ConditionFunctions::SpellHasKeyword::Execute(
-  MpActor& actor, uint32_t parameter1, [[maybe_unused]] uint32_t parameter2)
+  MpActor& actor, uint32_t parameter1, [[maybe_unused]] uint32_t parameter2,
+  const ConditionEvaluatorContext&)
 {
   return 0.0f; // TODO
 }
