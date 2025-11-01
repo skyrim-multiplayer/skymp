@@ -1,0 +1,13 @@
+{
+  "name": "nirnlab-ui-platform-headers",
+  "version": "2.2",
+  "description": "UI platform for Skyrim with CEF (Chromium Embedded Framework) integration and more",
+  "homepage": "https://github.com/kkEngine/NirnLabUIPlatform",
+  "license": "MIT",
+  "dependencies": [
+    {
+      "name": "vcpkg-cmake",
+      "host": true
+    }
+  ]
+}

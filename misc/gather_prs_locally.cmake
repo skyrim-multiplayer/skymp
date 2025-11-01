@@ -27,6 +27,42 @@ else()
     message(FATAL_ERROR "Failed to download ${AUTO_MERGE_REPO}@${AUTO_MERGE_BRANCH}: ${GIT_AM_OUTPUT}")
 endif()
 
+# if branch is main, then do git switch -c gather-prs-<timestamp>
+
+execute_process(
+    COMMAND git branch --show-current
+    OUTPUT_VARIABLE CURRENT_BRANCH
+    RESULT_VARIABLE GIT_BRANCH_RESULT
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
+if(NOT GIT_BRANCH_RESULT EQUAL 0)
+    message(FATAL_ERROR "Failed to get the current branch: ${GIT_BRANCH_RESULT} ${CURRENT_BRANCH}")
+endif()
+
+message(STATUS "Current branch: ${CURRENT_BRANCH}")
+
+if("${CURRENT_BRANCH}" STREQUAL main)
+    message(STATUS "Main branch detected. Switching to a temporary branch")
+
+    string(TIMESTAMP TIMESTAMP "%Y%m%d%H%M%S")
+    set(TEMP_BRANCH "gather-prs-${TIMESTAMP}")
+
+    execute_process(
+        COMMAND git switch -c ${TEMP_BRANCH}
+        RESULT_VARIABLE GIT_SWITCH_RESULT
+        OUTPUT_VARIABLE GIT_SWITCH_OUTPUT
+    )
+
+    if(GIT_SWITCH_RESULT EQUAL 0)
+        message(STATUS "Switched to a temporary branch ${TEMP_BRANCH}")
+    else()
+        message(FATAL_ERROR "Failed to switch to a temporary branch: ${GIT_SWITCH_OUTPUT}")
+    endif()
+else()
+    message(FATAL_ERROR "Not a main branch, please switch to main and run the script again")
+endif()
+
 message(STATUS "Run Pospelove/auto-merge-action@main (dist/index.js)")
 
 # Execute the NodeJS script
@@ -55,6 +91,7 @@ set(ENV_INPUT_REPOSITORIES "
 
 set(ENV{INPUT_REPOSITORIES} "${ENV_INPUT_REPOSITORIES}")
 set(ENV{INPUT_PATH} ${CMAKE_SOURCE_DIR})
+set(ENV{INPUT_SKIP-GIT-CONFIG} "true")
 execute_process(
     COMMAND node ${PSEUDO_BINARY_DIR}/auto-merge-action/dist/index.js
     RESULT_VARIABLE NODE_RESULT
@@ -67,67 +104,22 @@ else()
     message(FATAL_ERROR "Failed to run Pospelove/auto-merge-action@main: ${NODE_OUTPUT}")
 endif()
 
-# if branch is main, then do git switch -c gather-prs-<timestamp>
+# Verify no active changes present
+
+message(STATUS "Verifying no active changes")
 
 execute_process(
-    COMMAND git branch --show-current
-    OUTPUT_VARIABLE CURRENT_BRANCH
-    RESULT_VARIABLE GIT_COMMIT_RESULT
-    OUTPUT_STRIP_TRAILING_WHITESPACE
+    COMMAND git status --porcelain
+    RESULT_VARIABLE GIT_STATUS_RESULT
+    OUTPUT_VARIABLE GIT_STATUS_OUTPUT
 )
 
-if(NOT GIT_COMMIT_RESULT EQUAL 0)
-    message(FATAL_ERROR "Failed to get the current branch: ${GIT_COMMIT_RESULT} ${CURRENT_BRANCH}")
-endif()
-
-message(STATUS "Current branch: ${CURRENT_BRANCH}")
-
-if("${CURRENT_BRANCH}" STREQUAL main)
-    message(STATUS "Main branch detected. Switching to a temporary branch")
-
-    string(TIMESTAMP TIMESTAMP "%Y%m%d%H%M%S")
-    set(TEMP_BRANCH "gather-prs-${TIMESTAMP}")
-
-    execute_process(
-        COMMAND git switch -c ${TEMP_BRANCH}
-        RESULT_VARIABLE GIT_SWITCH_RESULT
-        OUTPUT_VARIABLE GIT_SWITCH_OUTPUT
-    )
-
-    if(GIT_SWITCH_RESULT EQUAL 0)
-        message(STATUS "Switched to a temporary branch ${TEMP_BRANCH}")
+if(GIT_STATUS_RESULT EQUAL 0)
+    if("${GIT_STATUS_OUTPUT}" STREQUAL "")
+        message(STATUS "Verified: No active changes present")
     else()
-        message(FATAL_ERROR "Failed to switch to a temporary branch: ${GIT_SWITCH_OUTPUT}")
+        message(FATAL_ERROR "Active changes detected:\n${GIT_STATUS_OUTPUT}")
     endif()
 else()
-    message(FATAL_ERROR "Not a main branch, please switch to main and run the script again")
-endif()
-
-# Commit the changes locally
-# git add . && git commit -m "Gather PRs" --no-verify
-
-message(STATUS "Commit the changes locally")
-
-execute_process(
-    COMMAND git add .
-    RESULT_VARIABLE GIT_ADD_RESULT
-    OUTPUT_VARIABLE GIT_ADD_OUTPUT
-)
-
-if(GIT_ADD_RESULT EQUAL 0)
-    message(STATUS "Added changes to the index")
-else()
-    message(FATAL_ERROR "Failed to add changes to the index: ${GIT_ADD_OUTPUT}")
-endif()
-
-execute_process(
-    COMMAND git commit -m "Gather PRs" --no-verify
-    RESULT_VARIABLE GIT_COMMIT_RESULT
-    OUTPUT_VARIABLE GIT_COMMIT_OUTPUT
-)
-
-if(GIT_COMMIT_RESULT EQUAL 0)
-    message(STATUS "Committed the changes")
-else()
-    message(FATAL_ERROR "Failed to commit the changes: ${GIT_COMMIT_OUTPUT}")
+    message(FATAL_ERROR "Failed to check git status: ${GIT_STATUS_OUTPUT}")
 endif()

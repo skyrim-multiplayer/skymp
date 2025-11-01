@@ -2,6 +2,9 @@
 
 report_fail() {
   ./misc/deploy/call_webhook.sh "Something went wrong, please see GitHub logs for details"
+  if [ "" != "$DEPLOY_CANARY_FILE" ]; then
+    echo failure | run_remote "tee '$DEPLOY_CANARY_FILE'"
+  fi
   exit 1
 }
 trap report_fail ERR
@@ -76,3 +79,6 @@ get_ip_port() {
 ip_port="`run_remote cat "$remote_branch_dir/server/server-settings.json" | get_ip_port`"
 
 ./misc/deploy/call_webhook.sh "Finished successfully. Connect to: $ip_port"
+if [ "" != "$DEPLOY_CANARY_FILE" ]; then
+  echo success | run_remote "tee '$DEPLOY_CANARY_FILE'"
+fi

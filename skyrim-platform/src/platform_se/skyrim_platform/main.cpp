@@ -1,3 +1,7 @@
+#include <NirnLabUIPlatformAPI/API.h>
+
+#include "BrowserApi.h"
+#include "BrowserApiNirnLab.h"
 #include "CallNativeApi.h"
 #include "ConsoleApi.h"
 #include "DumpFunctions.h"
@@ -14,12 +18,32 @@
 #include "SkyrimPlatform.h"
 #include "TPOverlayService.h"
 #include "TPRenderSystemD3D11.h"
+#include "TextApi.h"
 #include "TextsCollection.h"
 
 extern CallNativeApi::NativeCallRequirements g_nativeCallRequirements;
 
 void GetTextsToDraw(TextToDrawCallback callback)
 {
+  switch (TextApi::GetTextsVisibility()) {
+    case TextApi::TextsVisibility::kInheritBrowser:
+      if (!BrowserApi::IsVisible()) {
+        // skip
+        return;
+      }
+      // pass
+      break;
+    case TextApi::TextsVisibility::kOff:
+      // skip
+      return;
+    case TextApi::TextsVisibility::kOn:
+      // pass
+      break;
+    default:
+      // unhandled value
+      return;
+  }
+
   auto text = &TextsCollection::GetSingleton();
 
   for (const auto& a : TextsCollection::GetSingleton().GetCreatedTexts()) {
@@ -63,8 +87,11 @@ void InitLog()
   }
 
   *path /= "skyrim-platform.log"sv;
+
+  const auto pathStr = path->string();
+
   auto sink =
-    std::make_shared<spdlog::sinks::basic_file_sink_mt>(path->string(), true);
+    std::make_shared<spdlog::sinks::basic_file_sink_mt>(pathStr, true);
 
   auto log = std::make_shared<spdlog::logger>("global log", std::move(sink));
 
@@ -143,7 +170,11 @@ DLLEXPORT bool SKSEAPI SKSEPlugin_Load_Impl(const SKSE::LoadInterface* skse)
     return false;
   }
 
-  messagingInterface->RegisterListener(EventHandler::HandleSKSEMessage);
+  SKSE::GetMessagingInterface()->RegisterListener(
+    [](SKSE::MessagingInterface::Message* a_msg) {
+      EventHandler::HandleSKSEMessage(a_msg);
+      BrowserApiNirnLab::GetInstance().HandleSkseMessage(a_msg);
+    });
 
   Hooks::Install();
   Frida::InstallHooks();
@@ -508,10 +539,13 @@ public:
 
     ObtainTextsToDrawFunction obtainTextsToDraw = GetTextsToDraw;
 
+    // NB: overlayService is related to the tilted browser backend.
+    // Even so, it's currently used to render texts even if nirnlab is selected
     overlayService =
       std::make_shared<OverlayService>(onProcessMessage, obtainTextsToDraw);
+
     myInputListener->Init(overlayService, inputConverter);
-    SkyrimPlatform::GetSingleton()->SetOverlayService(overlayService);
+
     renderSystem = std::make_shared<RenderSystemD3D11>(*overlayService);
 
     auto manager = RE::BSRenderManager::GetSingleton();
