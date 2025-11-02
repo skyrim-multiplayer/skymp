@@ -9,7 +9,7 @@ public:
 
   uint16_t GetFunctionIndex() const override;
 
-  float Execute(MpActor& actor, uint32_t parameter1,
-                uint32_t parameter2) override;
+  float Execute(MpActor& actor, uint32_t parameter1, uint32_t parameter2,
+                const ConditionEvaluatorContext& context) override;
 };
 }

@@ -24,7 +24,8 @@ void ConditionsEvaluator::EvaluateConditions(
   const ConditionsEvaluatorSettings& settings,
   ConditionsEvaluatorCaller caller, const std::vector<Condition>& conditions,
   const MpActor& aggressor, const MpActor& target,
-  const std::function<void(bool, std::vector<std::string>&)>& callback)
+  const std::function<void(bool, std::vector<std::string>&)>& callback,
+  const ConditionEvaluatorContext& context)
 {
   bool enableLogging = false;
 
@@ -47,7 +48,8 @@ void ConditionsEvaluator::EvaluateConditions(
   const bool evalRes = ConditionsEvaluator::EvaluateConditionsImpl(
     conditionFunctionMap, conditions,
     enableLogging ? &conditionResolutions : nullptr,
-    enableLogging ? &conditionFunctionResults : nullptr, aggressor, target);
+    enableLogging ? &conditionFunctionResults : nullptr, aggressor, target,
+    context);
 
   std::vector<std::string> strings;
 
@@ -68,7 +70,7 @@ bool ConditionsEvaluator::EvaluateConditionsImpl(
   const std::vector<Condition>& conditions,
   std::vector<int>* outConditionResolutions,
   std::vector<float>* outConditionFunctionResults, const MpActor& aggressor,
-  const MpActor& target)
+  const MpActor& target, const ConditionEvaluatorContext& context)
 {
   auto conditionResolutions = outConditionResolutions
     ? std::vector<int>(conditions.size(), -1)
@@ -84,8 +86,8 @@ bool ConditionsEvaluator::EvaluateConditionsImpl(
     const auto& condition = conditions[i];
 
     if (!good) {
-      std::pair<bool, float> pair =
-        EvaluateCondition(conditionFunctionMap, condition, aggressor, target);
+      std::pair<bool, float> pair = EvaluateCondition(
+        conditionFunctionMap, condition, aggressor, target, context);
 
       uint8_t evaluateConditionResult = pair.first ? 1 : 0;
 
@@ -106,6 +108,11 @@ bool ConditionsEvaluator::EvaluateConditionsImpl(
         if (outConditionResolutions) {
           std::swap(conditionResolutions, *outConditionResolutions);
         }
+
+        if (outConditionFunctionResults) {
+          std::swap(conditionFunctionResults, *outConditionFunctionResults);
+        }
+
         return false;
       }
       good = false;
@@ -205,7 +212,8 @@ std::vector<std::string> ConditionsEvaluator::LogEvaluateConditionsResolution(
 
 std::pair<bool, float> ConditionsEvaluator::EvaluateCondition(
   const ConditionFunctionMap& conditionFunctionMap, const Condition& condition,
-  const MpActor& aggressor, const MpActor& target)
+  const MpActor& aggressor, const MpActor& target,
+  const ConditionEvaluatorContext& context)
 {
   uint32_t parameter1 = ExtractParameter(condition.parameter1);
   uint32_t parameter2 = ExtractParameter(condition.parameter2);
@@ -242,7 +250,7 @@ std::pair<bool, float> ConditionsEvaluator::EvaluateCondition(
   }
 
   const float conditionFunctionResult =
-    conditionFunction->Execute(*runsOn, parameter1, parameter2);
+    conditionFunction->Execute(*runsOn, parameter1, parameter2, context);
 
   float valueToCompareWith = condition.value;
   const std::string& comparison = condition.comparison;

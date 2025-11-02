@@ -1862,22 +1862,68 @@ void MpActor::ReapplyMagicEffects()
 std::array<std::optional<Inventory::Entry>, 2> MpActor::GetEquippedWeapon()
   const
 {
-  std::array<std::optional<Inventory::Entry>, 2> wornWeaponEntries;
+  std::array<std::optional<Inventory::Entry>, 2> wornEntries;
   // 0 -> left hand, 1 -> right hand
   auto& espmBrowser = GetParent()->GetEspm().GetBrowser();
   for (const auto& entry : GetEquipment().inv.entries) {
     if (entry.GetWorn() != Inventory::Worn::None) {
       espm::LookupResult res = espmBrowser.LookupById(entry.baseId);
-      auto* weaponRecord = espm::Convert<espm::WEAP>(res.rec);
-      if (weaponRecord) {
+      auto* record = espm::Convert<espm::WEAP>(res.rec);
+      if (record) {
         if (entry.GetWorn() == Inventory::Worn::Left) {
-          wornWeaponEntries[0] = std::move(entry);
+          wornEntries[0] = std::move(entry);
         }
         if (entry.GetWorn() == Inventory::Worn::Right) {
-          wornWeaponEntries[1] = std::move(entry);
+          wornEntries[1] = std::move(entry);
         }
       }
     }
   }
-  return wornWeaponEntries;
+  return wornEntries;
+}
+
+std::array<std::optional<Inventory::Entry>, 2> MpActor::GetEquippedScroll()
+  const
+{
+  std::array<std::optional<Inventory::Entry>, 2> wornEntries;
+  // 0 -> left hand, 1 -> right hand
+  auto& espmBrowser = GetParent()->GetEspm().GetBrowser();
+  for (const auto& entry : GetEquipment().inv.entries) {
+    if (entry.GetWorn() != Inventory::Worn::None) {
+      espm::LookupResult res = espmBrowser.LookupById(entry.baseId);
+      auto* record = espm::Convert<espm::SCRL>(res.rec);
+      if (record) {
+        if (entry.GetWorn() == Inventory::Worn::Left) {
+          wornEntries[0] = std::move(entry);
+        }
+        if (entry.GetWorn() == Inventory::Worn::Right) {
+          wornEntries[1] = std::move(entry);
+        }
+      }
+    }
+  }
+  return wornEntries;
+}
+
+std::array<std::optional<Inventory::Entry>, 2> MpActor::GetEquippedLight()
+  const
+{
+  std::array<std::optional<Inventory::Entry>, 2> wornEntries;
+  // 0 -> left hand, 1 -> right hand
+  auto& espmBrowser = GetParent()->GetEspm().GetBrowser();
+  for (const auto& entry : GetEquipment().inv.entries) {
+    if (entry.GetWorn() != Inventory::Worn::None) {
+      espm::LookupResult res = espmBrowser.LookupById(entry.baseId);
+      auto* record = espm::Convert<espm::LIGH>(res.rec);
+      if (record) {
+        if (entry.GetWorn() == Inventory::Worn::Left) {
+          wornEntries[0] = std::move(entry);
+        }
+        if (entry.GetWorn() == Inventory::Worn::Right) {
+          wornEntries[1] = std::move(entry);
+        }
+      }
+    }
+  }
+  return wornEntries;
 }

@@ -1,6 +1,7 @@
 #include "ConditionFunctionMap.h"
 
 #include <fmt/format.h>
+#include <optional>
 #include <stdexcept>
 
 void ConditionFunctionMap::RegisterConditionFunction(
@@ -22,22 +23,28 @@ void ConditionFunctionMap::RegisterConditionFunction(
       fmt::format("Condition function with name '{}' already exists", name));
   }
 
-  bool isDuplicateIndex =
-    function->GetFunctionIndex() < conditionFunctionByIndex.size() &&
-    conditionFunctionByIndex[function->GetFunctionIndex()] != nullptr;
+  const uint16_t functionIndexRaw = function->GetFunctionIndex();
+  const std::optional<uint16_t> functionIndex =
+    functionIndexRaw != std::numeric_limits<uint16_t>::max()
+    ? std::make_optional(functionIndexRaw)
+    : std::nullopt;
+
+  bool isDuplicateIndex = functionIndex &&
+    *functionIndex < conditionFunctionByIndex.size() &&
+    conditionFunctionByIndex[*functionIndex] != nullptr;
   if (isDuplicateIndex) {
-    throw std::runtime_error(
-      fmt::format("Condition function with index '{}' already exists",
-                  function->GetFunctionIndex()));
+    throw std::runtime_error(fmt::format(
+      "Condition function with index '{}' already exists", *functionIndex));
   }
 
   conditionFunctionByName[name] = function;
 
-  uint16_t functionIndex = function->GetFunctionIndex();
-  if (functionIndex >= conditionFunctionByIndex.size()) {
-    conditionFunctionByIndex.resize(functionIndex + 1);
+  if (functionIndex) {
+    if (*functionIndex >= conditionFunctionByIndex.size()) {
+      conditionFunctionByIndex.resize(*functionIndex + 1);
+    }
+    conditionFunctionByIndex[*functionIndex] = function;
   }
-  conditionFunctionByIndex[functionIndex] = function;
 
   conditionFunctions.push_back(function);
 }

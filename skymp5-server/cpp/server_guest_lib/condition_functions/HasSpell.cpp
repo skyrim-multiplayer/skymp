@@ -13,7 +13,8 @@ uint16_t ConditionFunctions::HasSpell::GetFunctionIndex() const
 }
 
 float ConditionFunctions::HasSpell::Execute(
-  MpActor& actor, uint32_t parameter1, [[maybe_unused]] uint32_t parameter2)
+  MpActor& actor, uint32_t parameter1, [[maybe_unused]] uint32_t parameter2,
+  const ConditionEvaluatorContext&)
 {
   auto spelllist = actor.GetSpellList();
   auto it = std::find(spelllist.begin(), spelllist.end(), parameter1);
