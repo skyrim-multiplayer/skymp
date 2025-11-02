@@ -63,7 +63,7 @@ float DamageMultConditionalFormula::CalculateDamage(
       };
 
       ConditionEvaluatorContext context;
-      context.hitSourceFormId = hitData.source;
+      context.damageSourceFormId = hitData.source;
 
       ConditionsEvaluator::EvaluateConditions(
         conditionFunctionMap ? *conditionFunctionMap : ConditionFunctionMap(),
@@ -111,12 +111,15 @@ float DamageMultConditionalFormula::CalculateDamage(
         }
       };
 
+      ConditionEvaluatorContext context;
+      context.damageSourceFormId = spellCastData.spell;
+
       ConditionsEvaluator::EvaluateConditions(
         conditionFunctionMap ? *conditionFunctionMap : ConditionFunctionMap(),
         conditionsEvaluatorSettings ? *conditionsEvaluatorSettings
                                     : ConditionsEvaluatorSettings(),
         ConditionsEvaluatorCaller::kDamageMultConditionalFormula,
-        value.conditions, aggressor, target, callback);
+        value.conditions, aggressor, target, callback, context);
     }
   }
 

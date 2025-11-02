@@ -31,7 +31,7 @@ struct ConditionsEvaluatorSettings
 
 struct ConditionEvaluatorContext
 {
-  std::optional<uint32_t> hitSourceFormId;
+  std::optional<uint32_t> damageSourceFormId;
 };
 
 class ConditionsEvaluator
