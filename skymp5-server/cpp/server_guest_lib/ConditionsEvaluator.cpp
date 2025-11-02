@@ -108,6 +108,11 @@ bool ConditionsEvaluator::EvaluateConditionsImpl(
         if (outConditionResolutions) {
           std::swap(conditionResolutions, *outConditionResolutions);
         }
+
+        if (outConditionFunctionResults) {
+          std::swap(conditionFunctionResults, *outConditionFunctionResults);
+        }
+
         return false;
       }
       good = false;
