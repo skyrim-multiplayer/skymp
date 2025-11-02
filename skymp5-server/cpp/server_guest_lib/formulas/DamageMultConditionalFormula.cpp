@@ -176,7 +176,10 @@ DamageMultConditionalFormulaSettings::FromJson(const nlohmann::json& j)
         ss >> parameter1;
       }
 
-      if (parameter1 == 0) {
+      const bool parsingFailed = parameter1 == 0 &&
+        condition.parameter1 != "0" && condition.parameter1 != "0x0" &&
+        condition.parameter1 != "0X0";
+      if (parsingFailed) {
         throw std::runtime_error(fmt::format(
           "Invalid parameter1 value: {} (key={}, condition index={})",
           condition.parameter1, key, i));
