@@ -2,7 +2,7 @@
 #include "ConditionFunction.h"
 
 namespace ConditionFunctions {
-class SkympGetIsWeaponHitSource : public ConditionFunction
+class SkympGetDamageSourceHasKeyword : public ConditionFunction
 {
 public:
   const char* GetName() const override;

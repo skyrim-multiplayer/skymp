@@ -1,40 +1,39 @@
-#include "SkympGetWeaponHitSourceHasKeyword.h"
+#include "SkympGetDamageSourceHasKeyword.h"
 #include "MpActor.h"
 
-const char* ConditionFunctions::SkympGetWeaponHitSourceHasKeyword::GetName()
-  const
+const char* ConditionFunctions::SkympGetDamageSourceHasKeyword::GetName() const
 {
-  return "SkympGetWeaponHitSourceHasKeyword";
+  return "SkympGetDamageSourceHasKeyword";
 }
 
-uint16_t
-ConditionFunctions::SkympGetWeaponHitSourceHasKeyword::GetFunctionIndex() const
+uint16_t ConditionFunctions::SkympGetDamageSourceHasKeyword::GetFunctionIndex()
+  const
 {
   return std::numeric_limits<uint16_t>::max();
 }
 
-float ConditionFunctions::SkympGetWeaponHitSourceHasKeyword::Execute(
+float ConditionFunctions::SkympGetDamageSourceHasKeyword::Execute(
   MpActor& actor, uint32_t parameter1, [[maybe_unused]] uint32_t parameter2,
   const ConditionEvaluatorContext& context)
 {
-  if (context.hitSourceFormId.has_value()) {
+  if (context.damageSourceFormId.has_value()) {
     auto& br = actor.GetParent()->GetEspm().GetBrowser();
     espm::LookupResult keyword = br.LookupById(parameter1);
 
     if (!keyword.rec) {
-      spdlog::warn("SkympGetWeaponHitSourceHasKeyword::Execute - keyword with "
+      spdlog::warn("SkympGetDamageSourceHasKeyword::Execute - keyword with "
                    "formId {:x} not found",
                    parameter1);
       return 0.f;
     }
 
-    espm::LookupResult hitSource = br.LookupById(*context.hitSourceFormId);
+    espm::LookupResult hitSource = br.LookupById(*context.damageSourceFormId);
 
     if (!hitSource.rec) {
-      if (*context.hitSourceFormId != 0) {
-        spdlog::warn("SkympGetWeaponHitSourceHasKeyword::Execute - hit source "
+      if (*context.damageSourceFormId != 0) {
+        spdlog::warn("SkympGetDamageSourceHasKeyword::Execute - damage source "
                      "with formId {:x} not found",
-                     *context.hitSourceFormId);
+                     *context.damageSourceFormId);
       }
       return 0.f;
     }

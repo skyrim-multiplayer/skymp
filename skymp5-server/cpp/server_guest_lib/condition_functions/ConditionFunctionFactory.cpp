@@ -15,8 +15,8 @@
 #include "IsBlocking.h"
 #include "IsInInterior.h"
 
-#include "SkympGetIsWeaponHitSource.h"
-#include "SkympGetWeaponHitSourceHasKeyword.h"
+#include "SkympGetDamageSourceHasKeyword.h"
+#include "SkympGetIsDamageSource.h"
 
 ConditionFunctionMap ConditionFunctionFactory::CreateConditionFunctions()
 {
@@ -51,9 +51,9 @@ ConditionFunctionMap ConditionFunctionFactory::CreateConditionFunctions()
     std::make_shared<ConditionFunctions::IsBlocking>());
 
   res.RegisterConditionFunction(
-    std::make_shared<ConditionFunctions::SkympGetIsWeaponHitSource>());
+    std::make_shared<ConditionFunctions::SkympGetDamageSourceHasKeyword>());
   res.RegisterConditionFunction(
-    std::make_shared<ConditionFunctions::SkympGetWeaponHitSourceHasKeyword>());
+    std::make_shared<ConditionFunctions::SkympGetIsDamageSource>());
 
   return res;
 }
