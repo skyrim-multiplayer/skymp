@@ -40,6 +40,7 @@ message(STATUS "Run Pospelove/auto-merge-action@main (dist/index.js)")
 # Execute the NodeJS script
 set(ENV{INPUT_REPOSITORIES} "${ENV_INPUT_REPOSITORIES}")
 set(ENV{INPUT_PATH} ${CMAKE_BINARY_DIR}/gamemode-sources)
+set(ENV{INPUT_GENERATE-BUILD-METADATA} true)
 execute_process(
     COMMAND node ${CMAKE_BINARY_DIR}/auto-merge-action/dist/index.js
     RESULT_VARIABLE NODE_RESULT

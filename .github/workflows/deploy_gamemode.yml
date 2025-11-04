@@ -67,6 +67,7 @@ jobs:
                 "token": "${{ secrets.SKYMP5_GAMEMODE_PAT }}"
               }
             ]
+          generate-build-metadata: true
 
       - run: yarn
       - run: yarn build
