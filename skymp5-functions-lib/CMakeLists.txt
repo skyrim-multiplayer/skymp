@@ -16,8 +16,8 @@ if(BUILD_GAMEMODE)
   set(GAMEMODE_JS_DEST_DIR "${CMAKE_BINARY_DIR}/dist/server")
 
   set(DEPLOY_BRANCH "$ENV{DEPLOY_BRANCH}")
-  set(AUTO_MERGE_REPO "nic11/auto-merge-action")
-  set(AUTO_MERGE_BRANCH "my")
+  set(AUTO_MERGE_REPO "Pospelove/auto-merge-action")
+  set(AUTO_MERGE_BRANCH "main")
   set(AUTO_MERGE_REPO_URL "https://github.com/${AUTO_MERGE_REPO}.git")
   set(GAMEMODE_REPO_URL "https://${GITHUB_TOKEN}:x-oauth-basic@github.com/${GAMEMODE_REPO_OWNER}/${GAMEMODE_REPO_NAME}.git")
 
