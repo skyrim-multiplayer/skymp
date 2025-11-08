@@ -1,6 +1,6 @@
 name: Deploy
 
-on:    
+on:
     repository_dispatch:
         types: [deploy]
     workflow_dispatch:
@@ -54,7 +54,7 @@ jobs:
                 submodules: recursive
                 fetch-depth: 0
                 persist-credentials: false
-        
+
           - name: Gather PRs
             if: ${{env.DEPLOY_ACTION == 'deploy'}}
             uses: Pospelove/auto-merge-action@main
@@ -107,7 +107,10 @@ jobs:
                 options: |
                     -v ${{github.workspace}}:/src
                     -u skymp
-                    -e CI=true
+                    -e CI
+                    -e GITHUB_SERVER_URL
+                    -e GITHUB_REPOSITORY
+                    -e GITHUB_RUN_ID
                     -e DEPLOY_BRANCH=${{ env.DEPLOY_BRANCH }}
                 run: |
                     cd /src \
@@ -132,6 +135,11 @@ jobs:
                 options: |
                     -v ${{github.workspace}}:/src
                     -u skymp
+                    -e CI
+                    -e GITHUB_SERVER_URL
+                    -e GITHUB_REPOSITORY
+                    -e GITHUB_RUN_ID
+                    -e DEPLOY_BRANCH=${{ env.DEPLOY_BRANCH }}
                 run: |
                     cd /src \
                     && ./build.sh --build

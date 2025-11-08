@@ -74,6 +74,11 @@ jobs:
                 -v ${{github.workspace}}:/src
                 -w /src
                 -u skymp
+                -e CI
+                -e GITHUB_SERVER_URL
+                -e GITHUB_REPOSITORY
+                -e GITHUB_RUN_ID
+                -e DEPLOY_BRANCH=${{ env.DEPLOY_BRANCH }}
               run: |
                 print_info_unsafe() {
                   echo .
@@ -170,6 +175,11 @@ jobs:
                 options: |
                     -v ${{github.workspace}}:/src
                     -u skymp
+                    -e CI
+                    -e GITHUB_SERVER_URL
+                    -e GITHUB_REPOSITORY
+                    -e GITHUB_RUN_ID
+                    -e DEPLOY_BRANCH=${{ env.DEPLOY_BRANCH }}
                 run: |
                     cd /src \
                     && ./build.sh --configure \
@@ -198,6 +208,11 @@ jobs:
                 options: |
                     -v ${{github.workspace}}:/src
                     -u skymp
+                    -e CI
+                    -e GITHUB_SERVER_URL
+                    -e GITHUB_REPOSITORY
+                    -e GITHUB_RUN_ID
+                    -e DEPLOY_BRANCH=${{ env.DEPLOY_BRANCH }}
                 run: |
                     cd /src \
                     && ./build.sh --build
@@ -275,6 +290,11 @@ jobs:
                 options: |
                     -v ${{github.workspace}}:/src
                     -u skymp
+                    -e CI
+                    -e GITHUB_SERVER_URL
+                    -e GITHUB_REPOSITORY
+                    -e GITHUB_RUN_ID
+                    -e DEPLOY_BRANCH=${{ env.DEPLOY_BRANCH }}
                 run: |
                     cd /src/build \
                     && ctest -C ${{env.BUILD_TYPE}} --verbose --output-on-failure
