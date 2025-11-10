@@ -20,10 +20,11 @@ SpSnippet::SpSnippet(
 {
 }
 
-Viet::Promise<VarValue> SpSnippet::Execute(MpActor* actor, SpSnippetMode mode)
+Viet::Promise<VarValue> SpSnippet::Execute(MpActor* actorExecutor,
+                                           SpSnippetMode mode)
 {
-  auto worldState = actor->GetParent();
-  if (!actor->IsCreatedAsPlayer()) {
+  auto worldState = actorExecutor->GetParent();
+  if (!actorExecutor->IsCreatedAsPlayer()) {
     // Return promise that never resolves in this case
     // TODO: somehow detect user instead as this breaks potential feature of
     // transferring user into an npc actor
@@ -33,25 +34,28 @@ Viet::Promise<VarValue> SpSnippet::Execute(MpActor* actor, SpSnippetMode mode)
   Viet::Promise<VarValue> promise;
 
   const uint32_t snippetIdx = mode == SpSnippetMode::kReturnResult
-    ? actor->NextSnippetIndex(promise)
+    ? actorExecutor->NextSnippetIndex(promise)
     : std::numeric_limits<uint32_t>::max();
 
   // Player character is always 0x14 on client, but 0xff000000+ in our server
   // See also SpSnippetFunctionGen.cpp
-  auto targetSelfId =
-    (selfId < 0xff000000 || selfId != actor->GetFormId()) ? selfId : 0x14;
+  const uint32_t targetSelfId =
+    (selfId < 0xff000000 || selfId != actorExecutor->GetFormId()) ? selfId
+                                                                  : 0x14;
+
+  const uint64_t targetSelfIdLong = MakeLongFormId(worldState, targetSelfId);
 
   SpSnippetMessage message;
   message.class_ = cl;
   message.function = func;
   message.arguments = args;
-  message.selfId = targetSelfId;
+  message.selfId = targetSelfIdLong;
   message.snippetIdx = static_cast<int64_t>(snippetIdx);
 
   // TODO: change to SendToUser, probably was deferred only for ability to send
   // text packets
   constexpr int kChannelSpSnippet = 1;
-  actor->SendToUserDeferred(message, true, kChannelSpSnippet, false);
+  actorExecutor->SendToUserDeferred(message, true, kChannelSpSnippet, false);
 
   return promise;
 }
@@ -78,4 +82,20 @@ VarValue SpSnippet::VarValueFromSpSnippetReturnValue(
       },
       [&](const std::string& v) { return VarValue(v); } },
     *returnValue);
+}
+
+uint64_t SpSnippet::MakeLongFormId(WorldState* worldState, uint32_t formId)
+{
+  if (formId == 0x14 || formId >= 0xff000000) {
+    return static_cast<uint64_t>(formId);
+  }
+
+  const std::shared_ptr<MpForm>& form =
+    worldState->LookupFormByIdNoLoad(formId);
+  auto actor = form ? form->AsActor() : nullptr;
+  if (!actor) {
+    return static_cast<uint64_t>(formId);
+  }
+
+  return static_cast<uint64_t>(formId) + 0x100000000;
 }

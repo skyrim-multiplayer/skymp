@@ -185,7 +185,7 @@ export class SpSnippetService extends ClientListener {
       }
     }
     if (!cl) {
-      throw new Error(`runMethod - Class ${snippet.class} not found, found`);
+      throw new Error(`runMethod - Class ${snippet.class} not found`);
     }
 
     const selfCasted = cl.from(self);

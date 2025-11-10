@@ -8,6 +8,7 @@
 #include <variant>
 
 class MpActor;
+class WorldState;
 
 enum class SpSnippetMode
 {
@@ -21,12 +22,15 @@ public:
   SpSnippet(const char* cl_, const char* func_,
             const std::vector<std::optional<std::variant<
               bool, double, std::string, SpSnippetObjectArgument>>>& args_,
-            uint32_t selfId_ = 0);
+            uint32_t selfId_ = 0 /*zero indicates static function call*/);
 
-  Viet::Promise<VarValue> Execute(MpActor* actor, SpSnippetMode mode);
+  // actorExecutor will be used to detect userId to execute SpSnippet on
+  Viet::Promise<VarValue> Execute(MpActor* actorExecutor, SpSnippetMode mode);
 
   static VarValue VarValueFromSpSnippetReturnValue(
     const std::optional<std::variant<bool, double, std::string>>& returnValue);
+
+  static uint64_t MakeLongFormId(WorldState* worldState, uint32_t formId);
 
 private:
   const char* const cl;

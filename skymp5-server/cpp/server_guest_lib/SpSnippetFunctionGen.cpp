@@ -33,6 +33,14 @@ std::vector<std::optional<
 SpSnippetFunctionGen::SerializeArguments(
   const std::vector<VarValue>& arguments, MpActor* actor)
 {
+  auto worldState = actor->GetParent();
+
+  if (!worldState) {
+    spdlog::error(
+      "SpSnippetFunctionGen::SerializeArguments - worldState was nullptr");
+    return {};
+  }
+
   std::vector<std::optional<
     std::variant<bool, double, std::string, SpSnippetObjectArgument>>>
     result;
@@ -54,7 +62,7 @@ SpSnippetFunctionGen::SerializeArguments(
         auto type = obj ? obj->GetParentNativeScript() : "";
 
         SpSnippetObjectArgument objectArg;
-        objectArg.formId = formId;
+        objectArg.formId = SpSnippet::MakeLongFormId(worldState, formId);
         objectArg.type = type;
         result.push_back(objectArg);
         break;
