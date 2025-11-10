@@ -169,9 +169,10 @@ VarValue PapyrusGame::GetCameraState(VarValue self,
 void PapyrusGame::RaceMenuHelper(VarValue& self, const char* funcName,
                                  const std::vector<VarValue>& arguments)
 {
-  auto serializedArgs = SpSnippetFunctionGen::SerializeArguments(arguments);
   if (auto actor = compatibilityPolicy->GetDefaultActor(
         GetName(), funcName, self.GetMetaStackId())) {
+    auto serializedArgs =
+      SpSnippetFunctionGen::SerializeArguments(arguments, actor->GetParent());
     actor->SetRaceMenuOpen(true);
     SpSnippet(GetName(), funcName, serializedArgs)
       .Execute(actor, SpSnippetMode::kNoReturnResult);

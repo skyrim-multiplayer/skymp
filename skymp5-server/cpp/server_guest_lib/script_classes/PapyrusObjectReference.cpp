@@ -166,7 +166,8 @@ VarValue PapyrusObjectReference::AddItem(
   if (runSkympHacks) {
     if (!silent && count > 0) {
       if (auto actor = selfRefr->AsActor()) {
-        auto args = SpSnippetFunctionGen::SerializeArguments(arguments);
+        auto args = SpSnippetFunctionGen::SerializeArguments(
+          arguments, actor->GetParent());
         (void)SpSnippet("SkympHacks", "AddItem", args)
           .Execute(actor, SpSnippetMode::kNoReturnResult);
       }
@@ -261,7 +262,8 @@ VarValue PapyrusObjectReference::RemoveItem(
   if (runSkympHacks) {
     if (!silent && count > 0) {
       if (auto actor = selfRefr->AsActor()) {
-        auto args = SpSnippetFunctionGen::SerializeArguments(arguments);
+        auto args = SpSnippetFunctionGen::SerializeArguments(
+          arguments, actor->GetParent());
         (void)SpSnippet("SkympHacks", "RemoveItem", args)
           .Execute(actor, SpSnippetMode::kNoReturnResult);
       }
@@ -344,18 +346,19 @@ VarValue PapyrusObjectReference::GetAnimationVariableBool(
   return VarValue(false);
 }
 
-namespace {
-void PlaceAtMeSpSnippet(MpObjectReference* self,
-                        const std::vector<VarValue>& arguments)
-{
-  auto funcName = "PlaceAtMe";
-  auto serializedArgs = SpSnippetFunctionGen::SerializeArguments(arguments);
-  for (auto listener : self->GetActorListeners()) {
-    SpSnippet("ObjectReference", funcName, serializedArgs, self->GetFormId())
-      .Execute(listener, SpSnippetMode::kNoReturnResult);
-  }
-}
-}
+// namespace {
+// void PlaceAtMeSpSnippet(MpObjectReference* self,
+//                         const std::vector<VarValue>& arguments)
+//{
+//   auto funcName = "PlaceAtMe";
+//   auto serializedArgs = SpSnippetFunctionGen::SerializeArguments(arguments);
+//   for (auto listener : self->GetActorListeners()) {
+//     SpSnippet("ObjectReference", funcName, serializedArgs,
+//     self->GetFormId())
+//       .Execute(listener, SpSnippetMode::kNoReturnResult);
+//   }
+// }
+// }
 
 VarValue PapyrusObjectReference::PlaceAtMe(
   VarValue self, const std::vector<VarValue>& arguments)
@@ -444,9 +447,10 @@ VarValue PapyrusObjectReference::Enable(VarValue self,
     selfRefr->Enable();
   }
 
-  if (selfRefr->IsEspmForm() && !selfRefr->AsActor()) {
+  if (selfRefr && selfRefr->IsEspmForm() && !selfRefr->AsActor()) {
     auto funcName = "Enable";
-    auto serializedArgs = SpSnippetFunctionGen::SerializeArguments(arguments);
+    auto serializedArgs = SpSnippetFunctionGen::SerializeArguments(
+      arguments, selfRefr->GetParent());
     for (auto listener : selfRefr->GetActorListeners()) {
       SpSnippet(GetName(), funcName, serializedArgs, selfRefr->GetFormId())
         .Execute(listener, SpSnippetMode::kNoReturnResult);
@@ -464,9 +468,10 @@ VarValue PapyrusObjectReference::Disable(
     selfRefr->Disable();
   }
 
-  if (selfRefr->IsEspmForm() && !selfRefr->AsActor()) {
+  if (selfRefr && selfRefr->IsEspmForm() && !selfRefr->AsActor()) {
     auto funcName = "Disable";
-    auto serializedArgs = SpSnippetFunctionGen::SerializeArguments(arguments);
+    auto serializedArgs = SpSnippetFunctionGen::SerializeArguments(
+      arguments, selfRefr->GetParent());
     for (auto listener : selfRefr->GetActorListeners()) {
       SpSnippet(GetName(), funcName, serializedArgs, selfRefr->GetFormId())
         .Execute(listener, SpSnippetMode::kNoReturnResult);
@@ -575,7 +580,8 @@ VarValue PapyrusObjectReference::SetPosition(
       selfRefr->GetAngle());
     selfRefr->ForceSubscriptionsUpdate();
     auto funcName = "SetPosition";
-    auto serializedArgs = SpSnippetFunctionGen::SerializeArguments(arguments);
+    auto serializedArgs = SpSnippetFunctionGen::SerializeArguments(
+      arguments, selfRefr->GetParent());
     for (auto listener : selfRefr->GetActorListeners()) {
       SpSnippet(GetName(), funcName, serializedArgs, selfRefr->GetFormId())
         .Execute(listener, SpSnippetMode::kNoReturnResult);
@@ -613,7 +619,8 @@ VarValue PapyrusObjectReference::PlayAnimation(
     selfRefr->SetLastAnimation(animation);
 
     auto funcName = "PlayAnimation";
-    auto serializedArgs = SpSnippetFunctionGen::SerializeArguments(arguments);
+    auto serializedArgs = SpSnippetFunctionGen::SerializeArguments(
+      arguments, selfRefr->GetParent());
     for (auto listener : selfRefr->GetActorListeners()) {
       SpSnippet(GetName(), funcName, serializedArgs, selfRefr->GetFormId())
         .Execute(listener, SpSnippetMode::kNoReturnResult);
@@ -634,7 +641,8 @@ VarValue PapyrusObjectReference::PlayAnimationAndWait(
     selfRefr->SetLastAnimation(animation);
 
     auto funcName = "PlayAnimationAndWait";
-    auto serializedArgs = SpSnippetFunctionGen::SerializeArguments(arguments);
+    auto serializedArgs = SpSnippetFunctionGen::SerializeArguments(
+      arguments, selfRefr->GetParent());
 
     std::vector<Viet::Promise<VarValue>> promises;
 
@@ -676,7 +684,8 @@ VarValue PapyrusObjectReference::PlayGamebryoAnimation(
         "PlayGamebryoAnimation requires at least 3 arguments");
     }
     auto funcName = "PlayGamebryoAnimation";
-    auto serializedArgs = SpSnippetFunctionGen::SerializeArguments(arguments);
+    auto serializedArgs = SpSnippetFunctionGen::SerializeArguments(
+      arguments, selfRefr->GetParent());
     for (auto listener : selfRefr->GetActorListeners()) {
       SpSnippet(GetName(), funcName, serializedArgs, selfRefr->GetFormId())
         .Execute(listener, SpSnippetMode::kNoReturnResult);
@@ -877,7 +886,8 @@ VarValue PapyrusObjectReference::SetDisplayName(
     std::ignore = force;
 
     auto funcName = "SetDisplayName";
-    auto serializedArgs = SpSnippetFunctionGen::SerializeArguments(arguments);
+    auto serializedArgs = SpSnippetFunctionGen::SerializeArguments(
+      arguments, selfRefr->GetParent());
     for (auto listener : selfRefr->GetActorListeners()) {
       SpSnippet(GetName(), funcName, serializedArgs, selfRefr->GetFormId())
         .Execute(listener, SpSnippetMode::kNoReturnResult);

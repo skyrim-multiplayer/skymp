@@ -42,15 +42,17 @@ void PapyrusEffectBase::Helper(VarValue& self, const char* funcName,
     }
     if (auto actorForm = GetFormPtr<MpObjectReference>(arguments[0])) {
       for (auto listener : actorForm->GetActorListeners()) {
-        SpSnippet(
-          GetName(), funcName,
-          SpSnippetFunctionGen::SerializeArguments(arguments, listener),
-          selfRec.ToGlobalId(selfRec.rec->GetId()))
+        SpSnippet(GetName(), funcName,
+                  SpSnippetFunctionGen::SerializeArguments(
+                    arguments, actorForm->GetParent(), listener),
+                  selfRec.ToGlobalId(selfRec.rec->GetId()))
           .Execute(listener, SpSnippetMode::kNoReturnResult);
+
         // Workaround to use this function on player clone
         if (actorForm->GetFormId() == listener->GetFormId()) {
           SpSnippet(GetName(), funcName,
-                    SpSnippetFunctionGen::SerializeArguments(arguments),
+                    SpSnippetFunctionGen::SerializeArguments(
+                      arguments, actorForm->GetParent()),
                     selfRec.ToGlobalId(selfRec.rec->GetId()))
             .Execute(listener, SpSnippetMode::kNoReturnResult);
         }

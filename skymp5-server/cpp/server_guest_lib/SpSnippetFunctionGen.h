@@ -11,7 +11,7 @@ public:
   static std::vector<std::optional<
     std::variant<bool, double, std::string, SpSnippetObjectArgument>>>
   SerializeArguments(const std::vector<VarValue>& arguments,
-                     MpActor* actor = nullptr);
+                     WorldState* worldState, MpActor* optionalActor = nullptr);
 
   static uint32_t GetFormId(const VarValue& varValue);
 };

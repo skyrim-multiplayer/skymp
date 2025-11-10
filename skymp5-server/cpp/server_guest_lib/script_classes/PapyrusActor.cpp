@@ -95,7 +95,8 @@ VarValue PapyrusActor::SetActorValue(VarValue self,
 
     auto it = actor->GetParent()->hosters.find(actor->GetFormId());
 
-    auto serializedArgs = SpSnippetFunctionGen::SerializeArguments(arguments);
+    auto serializedArgs =
+      SpSnippetFunctionGen::SerializeArguments(arguments, actor->GetParent());
 
     // spsnippet don't support auto sending to host. so determining current
     // hoster explicitly
@@ -201,7 +202,8 @@ VarValue PapyrusActor::SetAlpha(VarValue self,
     // TODO: Make normal sync for this. For now using workaround to inform
     // neigbours by sending papyrus functions to them.
     auto funcName = "SetAlpha";
-    auto serializedArgs = SpSnippetFunctionGen::SerializeArguments(arguments);
+    auto serializedArgs = SpSnippetFunctionGen::SerializeArguments(
+      arguments, selfRefr->GetParent());
     for (auto listener : selfRefr->GetActorListeners()) {
       SpSnippet(GetName(), funcName, serializedArgs, selfRefr->GetFormId())
         .Execute(listener, SpSnippetMode::kNoReturnResult);
@@ -272,9 +274,10 @@ VarValue PapyrusActor::EquipItem(VarValue self,
 
     AddItemIfNotPresent(actor, lookupRes);
 
-    SpSnippet(GetName(), "EquipItem",
-              SpSnippetFunctionGen::SerializeArguments(arguments),
-              actor->GetFormId())
+    SpSnippet(
+      GetName(), "EquipItem",
+      SpSnippetFunctionGen::SerializeArguments(arguments, actor->GetParent()),
+      actor->GetFormId())
       .Execute(actor, SpSnippetMode::kNoReturnResult);
   } else {
     spdlog::error("EquipItem - invalid actor");
@@ -310,9 +313,10 @@ VarValue PapyrusActor::EquipItemEx(VarValue self,
 
   AddItemIfNotPresent(actor, lookupRes);
 
-  SpSnippet(GetName(), "EquipItemEx",
-            SpSnippetFunctionGen::SerializeArguments(arguments),
-            actor->GetFormId())
+  SpSnippet(
+    GetName(), "EquipItemEx",
+    SpSnippetFunctionGen::SerializeArguments(arguments, actor->GetParent()),
+    actor->GetFormId())
     .Execute(actor, SpSnippetMode::kNoReturnResult);
   return VarValue::None();
 }
@@ -343,9 +347,10 @@ VarValue PapyrusActor::EquipSpell(VarValue self,
       actor->AddSpell(baseId);
     }
 
-    SpSnippet(GetName(), "EquipSpell",
-              SpSnippetFunctionGen::SerializeArguments(arguments),
-              actor->GetFormId())
+    SpSnippet(
+      GetName(), "EquipSpell",
+      SpSnippetFunctionGen::SerializeArguments(arguments, actor->GetParent()),
+      actor->GetFormId())
       .Execute(actor, SpSnippetMode::kNoReturnResult);
   }
 
@@ -361,9 +366,10 @@ VarValue PapyrusActor::UnequipItem(VarValue self,
   }
 
   if (auto actor = GetFormPtr<MpActor>(self)) {
-    SpSnippet(GetName(), "UnequipItem",
-              SpSnippetFunctionGen::SerializeArguments(arguments),
-              actor->GetFormId())
+    SpSnippet(
+      GetName(), "UnequipItem",
+      SpSnippetFunctionGen::SerializeArguments(arguments, actor->GetParent()),
+      actor->GetFormId())
       .Execute(actor, SpSnippetMode::kNoReturnResult);
   }
   return VarValue::None();
@@ -376,9 +382,10 @@ VarValue PapyrusActor::SetDontMove(VarValue self,
     if (arguments.size() < 1) {
       throw std::runtime_error("SetDontMove requires at least one argument");
     }
-    SpSnippet(GetName(), "SetDontMove",
-              SpSnippetFunctionGen::SerializeArguments(arguments),
-              actor->GetFormId())
+    SpSnippet(
+      GetName(), "SetDontMove",
+      SpSnippetFunctionGen::SerializeArguments(arguments, actor->GetParent()),
+      actor->GetFormId())
       .Execute(actor, SpSnippetMode::kNoReturnResult);
   }
   return VarValue::None();
@@ -579,7 +586,8 @@ VarValue PapyrusActor::AddSpell(VarValue self,
       actor->AddSpell(spellId);
 
       SpSnippet(GetName(), "AddSpell",
-                SpSnippetFunctionGen::SerializeArguments(arguments),
+                SpSnippetFunctionGen::SerializeArguments(arguments,
+                                                         actor->GetParent()),
                 actor->GetFormId())
         .Execute(actor, SpSnippetMode::kNoReturnResult);
 
@@ -621,7 +629,8 @@ VarValue PapyrusActor::RemoveSpell(VarValue self,
       actor->RemoveSpell(spellId);
 
       SpSnippet(GetName(), "RemoveSpell",
-                SpSnippetFunctionGen::SerializeArguments(arguments),
+                SpSnippetFunctionGen::SerializeArguments(arguments,
+                                                         actor->GetParent()),
                 actor->GetFormId())
         .Execute(actor, SpSnippetMode::kNoReturnResult);
 
