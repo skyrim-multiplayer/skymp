@@ -1130,6 +1130,9 @@ void ActionListener::OnWeaponHit(MpActor* aggressor,
                                  MpObjectReference* targetRef, HitData hitData,
                                  [[maybe_unused]] bool isUnarmed)
 {
+  constexpr auto maxTargetsPerSwing = 3;
+  const auto swingWindow = std::chrono::milliseconds(200);
+
   const auto currentHitTime = std::chrono::steady_clock::now();
 
   SendPapyrusOnHitEvent(aggressor, targetRef, hitData);
@@ -1144,17 +1147,32 @@ void ActionListener::OnWeaponHit(MpActor* aggressor,
   const auto lastHitTime = aggressor->GetLastHitTime();
   const std::chrono::duration<float> timePassed = currentHitTime - lastHitTime;
 
-  if (!CanHit(*aggressor, hitData, timePassed)) {
-    WorldState* espmProvider = targetActor.GetParent();
-    auto weapDNAM =
-      espm::GetData<espm::WEAP>(hitData.source, espmProvider).weapDNAM;
-    float expectedAttackTime = (1.1 * (1 / weapDNAM->speed)) -
-      (1.1 * (1 / weapDNAM->speed) * (weapDNAM->speed <= 0.75 ? 0.45 : 0.3));
-    spdlog::debug(
-      "OnWeaponHit - Target {0:x} is not available for attack due to fast "
-      "attack speed. Weapon: {1:x}. Elapsed time: {2}. Expected attack time: "
-      "{3}",
-      hitData.target, hitData.source, timePassed.count(), expectedAttackTime);
+  if (timePassed >= swingWindow) {
+    if (!CanHit(*aggressor, hitData, timePassed)) {
+      WorldState* espmProvider = targetActor.GetParent();
+      auto weapDNAM =
+        espm::GetData<espm::WEAP>(hitData.source, espmProvider).weapDNAM;
+      float expectedAttackTime = (1.1 * (1 / weapDNAM->speed)) -
+        (1.1 * (1 / weapDNAM->speed) *
+         (weapDNAM->speed <= 0.75 ? 0.45 : 0.3));
+      spdlog::debug("OnWeaponHit - Target {0:x} is not available for attack "
+                    "due to fast "
+                    "attack speed. Weapon: {1:x}. Elapsed time: {2}. Expected "
+                    "attack time: "
+                    "{3}",
+                    hitData.target, hitData.source, timePassed.count(),
+                    expectedAttackTime);
+      return;
+    }
+    aggressor->ClearHitTargets();
+    aggressor->SetLastHitTime();
+  }
+
+  if (aggressor->GetHitTargetsCount() >= maxTargetsPerSwing) {
+    return;
+  }
+
+  if (!aggressor->AddHitTarget(targetActor.GetFormId())) {
     return;
   }
 
@@ -1244,7 +1262,6 @@ void ActionListener::OnWeaponHit(MpActor* aggressor,
   targetActor.NetSetPercentages(
     currentActorValues, aggressor,
     std::vector<espm::ActorValue>{ espm::ActorValue::Health });
-  aggressor->SetLastHitTime();
 
   spdlog::debug(
     "OnWeaponHit - Target {0:x} is hit by {1} damage. Percentage was: {3}, "

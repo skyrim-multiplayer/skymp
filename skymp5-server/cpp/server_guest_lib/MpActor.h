@@ -9,6 +9,7 @@
 #include <memory>
 #include <optional>
 #include <set>
+#include <unordered_set>
 
 #include "DeathStateContainerMessage.h"
 
@@ -81,6 +82,10 @@ public:
   void SendToUserDeferred(const IMessageBase& message, bool reliable,
                           int deferredChannelId,
                           bool overwritePreviousChannelMessages);
+
+  void ClearHitTargets();
+  bool AddHitTarget(uint32_t formId);
+  size_t GetHitTargetsCount() const;
 
   [[nodiscard]] bool OnEquip(uint32_t baseId);
 

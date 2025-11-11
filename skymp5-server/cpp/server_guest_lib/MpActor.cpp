@@ -32,6 +32,7 @@
 #include <optional>
 #include <random>
 #include <string>
+#include <unordered_set>
 
 #include "ChangeValuesMessage.h"
 #include "TeleportMessage.h"
@@ -77,6 +78,8 @@ struct MpActor::Impl
 
   // this is a hot fix attempt to make permanent restoration potions work
   std::chrono::system_clock::time_point nextRestorationTime{};
+
+  std::unordered_set<uint32_t> hitTargets;
 };
 
 namespace {
@@ -122,6 +125,21 @@ void MpActor::ResetBlockCount() noexcept
 uint32_t MpActor::GetBlockCount() const noexcept
 {
   return pImpl->blockActiveCount;
+}
+
+void MpActor::ClearHitTargets()
+{
+  pImpl->hitTargets.clear();
+}
+
+bool MpActor::AddHitTarget(uint32_t formId)
+{
+  return pImpl->hitTargets.insert(formId).second;
+}
+
+size_t MpActor::GetHitTargetsCount() const
+{
+  return pImpl->hitTargets.size();
 }
 
 bool MpActor::GetConsoleCommandsAllowedFlag() const
