@@ -31,8 +31,15 @@ uint32_t SpSnippetFunctionGen::GetFormId(const VarValue& varValue)
 std::vector<std::optional<
   std::variant<bool, double, std::string, SpSnippetObjectArgument>>>
 SpSnippetFunctionGen::SerializeArguments(
-  const std::vector<VarValue>& arguments, MpActor* actor)
+  const std::vector<VarValue>& arguments, WorldState* worldState,
+  MpActor* optionalActor)
 {
+  if (!worldState) {
+    spdlog::error(
+      "SpSnippetFunctionGen::SerializeArguments - worldState was nullptr");
+    return {};
+  }
+
   std::vector<std::optional<
     std::variant<bool, double, std::string, SpSnippetObjectArgument>>>
     result;
@@ -46,15 +53,15 @@ SpSnippetFunctionGen::SerializeArguments(
         // Player character is always 0x14 on client, but 0xff000000+ in our
         // server
         // See also SpSnippet.cpp
-        if (actor && formId >= 0xff000000) {
-          formId = formId != actor->GetFormId() ? formId : 0x14;
+        if (optionalActor && formId >= 0xff000000) {
+          formId = formId != optionalActor->GetFormId() ? formId : 0x14;
         }
 
         auto obj = static_cast<IGameObject*>(arg);
         auto type = obj ? obj->GetParentNativeScript() : "";
 
         SpSnippetObjectArgument objectArg;
-        objectArg.formId = formId;
+        objectArg.formId = SpSnippet::MakeLongFormId(worldState, formId);
         objectArg.type = type;
         result.push_back(objectArg);
         break;
