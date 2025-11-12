@@ -1,3 +1,4 @@
+#include <cwctype>
 #include <filesystem>
 #include <fstream>
 #include <random>
@@ -29,6 +30,24 @@ std::string random_string(std::string::size_type length)
     s += chrs[pick(rg)];
 
   return s;
+}
+
+std::string PathVerifyNoIncompatibleEntries()
+{
+  std::vector<char> pathBuf;
+  pathBuf.resize(GetEnvironmentVariableA("PATH", nullptr, 0));
+  size_t pathLen = GetEnvironmentVariableA("PATH", &pathBuf[0],
+                                           static_cast<DWORD>(pathBuf.size()));
+  std::transform(pathBuf.begin(), pathBuf.end(), pathBuf.begin(),
+                 [](auto c) { return std::tolower(c, std::locale()); });
+  std::string_view pathSv =
+    std::string_view{ pathBuf.begin(), pathBuf.begin() + pathLen };
+
+  bool nirnLabPresent = pathSv.find("nirnlab") != std::wstring::npos;
+  if (nirnLabPresent) {
+    return fmt::format("nirnlab substring present in PATH: {}", pathSv);
+  }
+  return "";
 }
 }
 
@@ -111,8 +130,15 @@ void MyChromiumApp::Initialize(bool initChromium) noexcept
     .FromWString(currentPath / "Data" / "Platform" / "Distribution" / "CEF" /
                  "locales");
 
+  if (auto msg = PathVerifyNoIncompatibleEntries(); !msg.empty()) {
+    showError(
+      "Your PATH environment variable contains incompatible entries\n" + msg);
+    return;
+  }
+
   if (!CefInitialize(args, settings, this, nullptr)) {
     showError("CefInitialize failed");
+    return;
   }
 
   CefBrowserSettings browserSettings{};
