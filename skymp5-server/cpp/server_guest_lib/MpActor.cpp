@@ -456,7 +456,8 @@ MpActor& MpActor::GetActorToSendTo()
   if (isOffline && worldState) {
     auto hosterIterator = worldState->hosters.find(GetFormId());
     if (hosterIterator != worldState->hosters.end()) {
-      auto& hosterForm = worldState->LookupFormByIdNoLoad(hosterIterator->second);
+      auto& hosterForm =
+        worldState->LookupFormByIdNoLoad(hosterIterator->second);
       if (hosterForm) {
         if (auto hosterActor = hosterForm->AsActor()) {
           // Send messages such as Teleport, ChangeValues to our host
