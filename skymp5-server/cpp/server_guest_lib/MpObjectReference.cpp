@@ -734,9 +734,9 @@ void MpObjectReference::UpdateHoster(uint32_t newHosterId)
   auto notHostedMsg = CreatePropertyMessage_(this, "isHostedByOther", "false");
   for (auto listener : this->GetActorListeners()) {
     if (newHosterId != 0 && newHosterId != listener->GetFormId()) {
-      listener->SendToUser(hostedMsg, true);
+      listener->GetActorToSendTo().SendToUser(hostedMsg, true);
     } else {
-      listener->SendToUser(notHostedMsg, true);
+      listener->GetActorToSendTo().SendToUser(notHostedMsg, true);
     }
   }
 }
@@ -754,7 +754,7 @@ void MpObjectReference::SetPropertyValueDump(const std::string& propertyName,
     SendMessageToActorListeners(msg, true);
   } else if (isVisibleByOwner) {
     if (auto ac = AsActor()) {
-      ac->SendToUser(msg, true);
+      ac->GetActorToSendTo().SendToUser(msg, true);
     }
   }
   pImpl->setPropertyCalled = true;
@@ -1481,7 +1481,7 @@ void MpObjectReference::ProcessActivateNormal(
       msg.worldOrCell = teleportWorldOrCell;
 
       if (actorActivator) {
-        actorActivator->SendToUser(msg, true);
+        actorActivator->GetActorToSendTo().SendToUser(msg, true);
       }
 
       activationSource.SetCellOrWorldObsolete(
@@ -1503,7 +1503,7 @@ void MpObjectReference::ProcessActivateNormal(
         this->occupant->RemoveEventSink(this->occupantDisableSink);
       }
       SetOpen(true);
-      actorActivator->SendToUser(
+      actorActivator->GetActorToSendTo().SendToUser(
         CreatePropertyMessage_(this, "inventory",
                                GetInventory().ToJson().dump()),
         true);
@@ -1851,7 +1851,7 @@ void MpObjectReference::SendOpenContainer(uint32_t targetId)
   if (actor) {
     OpenContainerMessage msg;
     msg.target = targetId;
-    actor->SendToUser(msg, true);
+    actor->GetActorToSendTo().SendToUser(msg, true);
   }
 }
 
@@ -2012,7 +2012,7 @@ void MpObjectReference::SendMessageToActorListeners(const IMessageBase& msg,
                                                     bool reliable) const
 {
   for (auto listener : GetActorListeners()) {
-    listener->SendToUser(msg, true);
+    listener->GetActorToSendTo().SendToUser(msg, true);
   }
 }
 

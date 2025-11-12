@@ -84,6 +84,11 @@ public:
 
   Networking::UserId GetUserId() const;
 
+  // Returns the actor to send messages to, considering hosters.
+  // If this actor is offline and has a hoster, returns the hoster.
+  // Otherwise returns this actor.
+  MpActor& GetActorToSendTo();
+
   [[nodiscard]] bool OnEquip(uint32_t baseId);
 
   // TODO: consider removing the entire DestroyEventSink feature because it's
