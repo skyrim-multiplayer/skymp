@@ -1,6 +1,7 @@
 #include "BrowserApiNirnLab.h"
 
 #include <NirnLabUIPlatformAPI/API.h>
+#include <NirnLabUIPlatformAPI/SKSELoader.h>
 
 #include "EventsApi.h"
 #include "NapiHelper.h"
@@ -10,74 +11,19 @@ void BrowserApiNirnLab::HandleSkseMessage(
   SKSE::MessagingInterface::Message* a_msg)
 {
   logger::info("skse message type {}", a_msg->type);
-  switch (a_msg->type) {
-    case SKSE::MessagingInterface::kPostPostLoad: {
-      SKSE::GetMessagingInterface()->RegisterListener(
-        NL::UI::LibVersion::PROJECT_NAME, HandleNirnLabMessage);
-      // All plugins are loaded. Request lib version.
-      SKSE::GetMessagingInterface()->Dispatch(
-        NL::UI::APIMessageType::RequestVersion, nullptr, 0,
-        NL::UI::LibVersion::PROJECT_NAME);
-    } break;
-    case SKSE::MessagingInterface::kInputLoaded: {
-      NL::UI::Settings settings;
-      settings.remoteDebuggingPort = 9000;
-      // API version is ok. Request interface.
-      SKSE::GetMessagingInterface()->Dispatch(
-        NL::UI::APIMessageType::RequestAPI, &settings, sizeof(settings),
-        NL::UI::LibVersion::PROJECT_NAME);
-    } break;
-    default:
-      break;
-  }
+  NL::UI::Settings settings;
+  settings.remoteDebuggingPort = 9000;
+  NL::UI::SKSELoader::ProcessSKSEMessage(a_msg, &settings);
 }
 
-void BrowserApiNirnLab::HandleNirnLabMessage(
-  SKSE::MessagingInterface::Message* a_msg)
+BrowserApiNirnLab::BrowserApiNirnLab()
 {
-  auto& self = BrowserApiNirnLab::GetInstance();
-  spdlog::info("Received message({}) from \"{}\"", a_msg->type,
-               a_msg->sender ? a_msg->sender : "nullptr");
-  switch (a_msg->type) {
-    case NL::UI::APIMessageType::ResponseVersion: {
-      const auto versionInfo =
-        reinterpret_cast<NL::UI::ResponseVersionMessage*>(a_msg->data);
-      spdlog::info(
-        "NirnLabUIPlatform version: {}.{}",
-        NL::UI::LibVersion::GetMajorVersion(versionInfo->libVersion),
-        NL::UI::LibVersion::GetMinorVersion(versionInfo->libVersion));
-
-      const auto majorAPIVersion =
-        NL::UI::APIVersion::GetMajorVersion(versionInfo->apiVersion);
-      // If the major version is different from ours, then using the API
-      // may cause problems
-      if (majorAPIVersion != NL::UI::APIVersion::MAJOR) {
-        spdlog::error(
-          "Can't use this API version of NirnLabUIPlatform. We have "
-          "{}.{} and installed is {}.{}",
-          NL::UI::APIVersion::MAJOR, NL::UI::APIVersion::MINOR,
-          NL::UI::APIVersion::GetMajorVersion(versionInfo->apiVersion),
-          NL::UI::APIVersion::GetMinorVersion(versionInfo->apiVersion));
-      } else {
-        self.api.versionChecked = true;
-        spdlog::info(
-          "API version is ok. We have {}.{} and installed is {}.{}",
-          NL::UI::APIVersion::MAJOR, NL::UI::APIVersion::MINOR,
-          NL::UI::APIVersion::GetMajorVersion(versionInfo->apiVersion),
-          NL::UI::APIVersion::GetMinorVersion(versionInfo->apiVersion));
-        self.ApiInit();
-      }
-      break;
-    }
-    case NL::UI::APIMessageType::ResponseAPI: {
-      self.api.api =
-        reinterpret_cast<NL::UI::ResponseAPIMessage*>(a_msg->data)->API;
+  NL::UI::SKSELoader::GetUIPlatformAPIWithVersionCheck(
+    [](NL::UI::IUIPlatformAPI* receivedApi) {
+      auto& self = GetInstance();
+      self.api = receivedApi;
       self.ApiInit();
-      break;
-    }
-    default:
-      break;
-  }
+    });
 }
 
 BrowserApiNirnLab& BrowserApiNirnLab::GetInstance()
@@ -193,8 +139,9 @@ void BrowserApiNirnLab::UpdateAll()
 
 void BrowserApiNirnLab::ApiInit()
 {
-  if (!api.Ready()) {
-    return;
+  if (api == nullptr) {
+    throw std::runtime_error(
+      "BrowserApiNirnLab::ApiInit: api must not be null here");
   }
 
   NL::JS::JSFuncInfo callback{
