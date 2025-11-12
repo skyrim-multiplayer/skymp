@@ -82,6 +82,8 @@ public:
                           int deferredChannelId,
                           bool overwritePreviousChannelMessages);
 
+  Networking::UserId GetUserId() const;
+
   [[nodiscard]] bool OnEquip(uint32_t baseId);
 
   // TODO: consider removing the entire DestroyEventSink feature because it's

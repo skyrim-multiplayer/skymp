@@ -436,6 +436,15 @@ void MpActor::SendToUserDeferred(const IMessageBase& message, bool reliable,
   }
 }
 
+Networking::UserId MpActor::GetUserId() const
+{
+  if (callbacks->getUserId) {
+    return callbacks->getUserId(const_cast<MpActor*>(this));
+  } else {
+    throw std::runtime_error("getUserId is nullptr");
+  }
+}
+
 bool MpActor::OnEquip(uint32_t baseId)
 {
   const auto& espm = GetParent()->GetEspm();

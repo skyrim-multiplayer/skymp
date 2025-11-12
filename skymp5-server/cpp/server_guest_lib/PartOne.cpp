@@ -716,7 +716,12 @@ FormCallbacks PartOne::CreateFormCallbacks()
       }
     };
 
-  return { subscribe, unsubscribe, sendToUser, sendToUserDeferred };
+  FormCallbacks::GetUserIdFn getUserId =
+    [this, st](MpActor* actor) -> Networking::UserId {
+    return st->UserByActor(actor);
+  };
+
+  return { subscribe, unsubscribe, sendToUser, sendToUserDeferred, getUserId };
 }
 
 ActionListener& PartOne::GetActionListener()
