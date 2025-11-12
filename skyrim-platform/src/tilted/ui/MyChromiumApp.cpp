@@ -131,6 +131,7 @@ void MyChromiumApp::Initialize(bool initChromium) noexcept
                  "locales");
 
   if (auto msg = PathVerifyNoIncompatibleEntries(); !msg.empty()) {
+    spdlog::error(msg);
     showError(
       "Your PATH environment variable contains incompatible entries\n" + msg);
     return;
