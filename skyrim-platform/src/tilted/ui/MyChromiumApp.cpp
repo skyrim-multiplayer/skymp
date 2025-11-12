@@ -36,6 +36,11 @@ std::string PathVerifyNoIncompatibleEntries()
 {
   std::vector<char> pathBuf;
   pathBuf.resize(GetEnvironmentVariableA("PATH", nullptr, 0));
+  if (pathBuf.empty()) {
+    return fmt::format(
+      "GetEnvironmentVariableA(PATH) failed: win32 error code {}",
+      GetLastError());
+  }
   size_t pathLen = GetEnvironmentVariableA("PATH", &pathBuf[0],
                                            static_cast<DWORD>(pathBuf.size()));
   std::transform(pathBuf.begin(), pathBuf.end(), pathBuf.begin(),
@@ -43,7 +48,7 @@ std::string PathVerifyNoIncompatibleEntries()
   std::string_view pathSv =
     std::string_view{ pathBuf.begin(), pathBuf.begin() + pathLen };
 
-  bool nirnLabPresent = pathSv.find("nirnlab") != std::wstring::npos;
+  bool nirnLabPresent = pathSv.find("nirnlab") != std::string_view::npos;
   if (nirnLabPresent) {
     return fmt::format("nirnlab substring present in PATH: {}", pathSv);
   }
