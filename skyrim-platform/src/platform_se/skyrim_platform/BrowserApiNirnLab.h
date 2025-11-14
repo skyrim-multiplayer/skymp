@@ -14,7 +14,6 @@ class BrowserApiNirnLab
 {
 public:
   void HandleSkseMessage(SKSE::MessagingInterface::Message* a_msg);
-  static void HandleNirnLabMessage(SKSE::MessagingInterface::Message* a_msg);
   static BrowserApiNirnLab& GetInstance();
 
   Napi::Value SetVisible(const Napi::CallbackInfo& info);
@@ -27,7 +26,7 @@ public:
   Napi::Value ExecuteJavaScript(const Napi::CallbackInfo& info);
 
 private:
-  BrowserApiNirnLab() = default;
+  BrowserApiNirnLab();
 
   void UpdateVisible();
   void UpdateFocused();
@@ -36,17 +35,7 @@ private:
   void UpdateAll();
   void ApiInit();
 
-  struct NirnLabApiHolder
-  {
-    bool versionChecked = false;
-    NL::UI::IUIPlatformAPI* api = nullptr;
-
-    bool Ready() const { return api != nullptr && versionChecked; }
-
-    NL::UI::IUIPlatformAPI* operator->() const { return api; }
-  };
-
-  NirnLabApiHolder api;
+  NL::UI::IUIPlatformAPI* api = nullptr;
   NL::CEF::IBrowser* browser = nullptr;
   bool wantedIsVisible = false;
   bool wantedIsFocused = false;
