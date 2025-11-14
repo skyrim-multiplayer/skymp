@@ -29,7 +29,6 @@ float ConditionFunctions::GetEquipped::Execute(
             return 1.f;
         }
       
-        return 0.f;
     }
     return 0.f;
 }
