@@ -297,7 +297,7 @@ runs:
 
           // Build the full command
           let cmakeArgs = [
-            '-B ${{github.workspace}}/build',
+            '-B /home/runner/work/skymp/skymp/build',
             vcpkgChainloadArg,
             vcpkgTripletArg,
             vcpkgRootArg,
@@ -312,6 +312,13 @@ runs:
             '--profiling-output cmake-profiling-output',
             '--profiling-format google-trace'
           ].filter(arg => arg !== ''); // Remove empty args
+          
+          // For Emscripten, we need to specify the build tool
+          if (isEmscripten) {
+            cmakeArgs.push('-G', 'Unix Makefiles');
+            // Make sure we have make available for Emscripten builds
+            env.CMAKE_MAKE_PROGRAM = 'make';
+          }
 
           const fullCommand = `${cmakeCommand} ${cmakeArgs.join(' ')}`;
           console.log(`Executing: ${fullCommand}`);
