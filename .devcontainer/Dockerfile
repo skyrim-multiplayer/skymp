@@ -1,12 +1,10 @@
 FROM --platform=linux/amd64 mcr.microsoft.com/devcontainers/javascript-node:22-bookworm
 
 # Tip for maintainers: Updating Vcpkg Binary Cache
-# 1. remove "clear;" from "export VCPKG_BINARY_SOURCES=..." below
-# 2. Re-build devcontainer
-# 3. Run CMake
-# 4. scp ~/.cache/vcpkg/archives/*/*.zip codespaces-vcpkg-binary-cache@storage.bunnycdn.com:/
+# 1. Run CMake
+# 2. scp ~/.cache/vcpkg/archives/*/*.zip codespaces-vcpkg-binary-cache@storage.bunnycdn.com:/
 
-ENV VCPKG_BINARY_SOURCES="clear;http,https://codespaces-vcpkg-binary-cache.b-cdn.net/{sha}.zip,read"
+ENV VCPKG_BINARY_SOURCES="http,https://codespaces-vcpkg-binary-cache.b-cdn.net/{sha}.zip,read"
 
 RUN \
   curl -fsSL https://dl.yarnpkg.com/debian/pubkey.gpg | gpg --dearmor > /usr/share/keyrings/yarnkey.gpg \
