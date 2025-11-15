@@ -1128,11 +1128,10 @@ bool ActivePexInstance::HasChild(ActivePexInstance* script,
   return false;
 }
 
-// TODO: optimize "name" to be passed by a const char * instead of std::string
 VarValue& ActivePexInstance::GetVariableValueByName(std::vector<Local>* locals,
-                                                    std::string name)
+                                                    const char* name)
 {
-  if (name == "self") {
+  if (!Utils::stricmp("self", name)) {
     return activeInstanceOwner;
   }
 
@@ -1145,8 +1144,7 @@ VarValue& ActivePexInstance::GetVariableValueByName(std::vector<Local>* locals,
 
   try {
     if (variables)
-      if (auto var =
-            variables->GetVariableByName(name.data(), *sourcePex.fn()))
+      if (auto var = variables->GetVariableByName(name, *sourcePex.fn()))
         return *var;
   } catch (std::exception& e) {
     spdlog::error("ActivePexInstance::GetVariableValueByName - "
