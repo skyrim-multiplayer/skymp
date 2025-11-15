@@ -1,0 +1,16 @@
+--- a/src/antigo/impl/OnstackContextImpl.h
++++ b/src/antigo/impl/OnstackContextImpl.h
+@@ -118,7 +118,12 @@ class OnstackContextImpl : public BaseContextImpl {
+   }
+ 
+  private:
+-  static_assert(sizeof(const void*) == sizeof(uint64_t));
++  // Use uintptr_t which matches pointer size on all platforms
++  #ifdef __EMSCRIPTEN__
++  static_assert(sizeof(const void*) == sizeof(uint32_t));
++  #else  
++  static_assert(sizeof(const void*) == sizeof(uint64_t));
++  #endif
+ 
+   std::array<char, MaxValueSize> data_;
+   void* next_;
