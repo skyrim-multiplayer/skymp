@@ -261,6 +261,7 @@ runs:
           const isWindows = process.platform === 'win32';
           
           // Setup Emscripten if needed
+          let env = process.env;
           if (isEmscripten) {
             console.log('Setting up Emscripten...');
             execSync('git clone --depth 1 https://github.com/emscripten-core/emsdk.git', { stdio: 'inherit' });
@@ -268,19 +269,24 @@ runs:
             const emsdkPath = path.join(process.cwd(), 'emsdk');
             execSync('./emsdk install 3.1.64', { cwd: emsdkPath, stdio: 'inherit' });
             execSync('./emsdk activate 3.1.64', { cwd: emsdkPath, stdio: 'inherit' });
+            
+            // Get Emscripten environment variables
+            const emsdkEnvPath = path.join(emsdkPath, 'upstream', 'emscripten');
+            
+            // Set up environment for Emscripten
+            env = { ...process.env };
+            env.EMSDK = emsdkPath;
+            env.EMSDK_NODE = path.join(emsdkPath, 'node', '22.16.0_64bit', 'bin', 'node');
+            env.PATH = `${emsdkPath}:${emsdkEnvPath}:${env.PATH}`;
+            
+            console.log('Emscripten environment configured:');
+            console.log('EMSDK:', env.EMSDK);
+            console.log('EMSDK_NODE:', env.EMSDK_NODE);
+            console.log('PATH includes:', `${emsdkPath}:${emsdkEnvPath}`);
           }
 
-          // Build CMake command - for Emscripten, we need to source the environment in the same command
-          let cmakeCommand;
-          if (isEmscripten) {
-            if (isWindows) {
-              cmakeCommand = 'cd emsdk && emsdk_env.bat && cd .. && emcmake cmake';
-            } else {
-              cmakeCommand = 'source ./emsdk/emsdk_env.sh && emcmake cmake';
-            }
-          } else {
-            cmakeCommand = 'cmake';
-          }
+          // Build CMake command
+          const cmakeCommand = isEmscripten ? 'emcmake cmake' : 'cmake';
           
           // Determine arguments based on platform and configuration
           const cppcovPathArg = isWindows ? '-DCPPCOV_PATH="C:\\Program Files\\OpenCppCoverage"' : '-DCPPCOV_PATH=OFF';
@@ -310,12 +316,7 @@ runs:
           const fullCommand = `${cmakeCommand} ${cmakeArgs.join(' ')}`;
           console.log(`Executing: ${fullCommand}`);
           
-          if (isEmscripten && !isWindows) {
-            // For Emscripten on Linux/macOS, we need to use bash shell to source the environment
-            execSync(fullCommand, { stdio: 'inherit', shell: '/bin/bash' });
-          } else {
-            execSync(fullCommand, { stdio: 'inherit' });
-          }
+          execSync(fullCommand, { stdio: 'inherit', env: env });
 
     - name: Upload vcpkg logs (non-Windows)
       if: ${{ always() && runner.os != 'Windows' }}
