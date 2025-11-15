@@ -315,7 +315,7 @@ runs:
           
           // For Emscripten, we need to specify the build tool
           if (isEmscripten) {
-            cmakeArgs.push('-G', 'Unix Makefiles');
+            cmakeArgs.push('-G "Unix Makefiles"');
             // Make sure we have make available for Emscripten builds
             env.CMAKE_MAKE_PROGRAM = 'make';
           }
