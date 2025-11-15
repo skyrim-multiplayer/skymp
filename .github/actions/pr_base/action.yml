@@ -297,7 +297,7 @@ runs:
 
           // Build the full command
           let cmakeArgs = [
-            '-B /home/runner/work/skymp/skymp/build',
+            '-B ${{ github.workspace }}/build',
             vcpkgChainloadArg,
             vcpkgTripletArg,
             vcpkgRootArg,
