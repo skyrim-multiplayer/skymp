@@ -12,23 +12,14 @@ uint16_t ConditionFunctions::GetEquipped::GetFunctionIndex() const
 }
 
 float ConditionFunctions::GetEquipped::Execute(
-    MpActor& actor, uint32_t parameter1, [[maybe_unused]] uint32_t parameter2,
-    const ConditionEvaluatorContext&)
+  MpActor& actor, uint32_t parameter1, [[maybe_unused]] uint32_t parameter2,
+  const ConditionEvaluatorContext&)
 {
-    if (actor.GetEquipment().inv.GetItemCount(parameter1) == 0) {
-        return 0.f;
+  for (auto& entry : actor.GetEquipment().inv.entries) {
+    if (entry.baseId == parameter1 &&
+        entry.GetWorn() != Inventory::Worn::None) {
+      return 1.f;
     }
-  
-    for (auto& entry : actor.GetEquipment().inv.entries) {
-
-        if (entry.baseId != parameter1) {
-            continue;
-        }
-      
-        if (entry.GetWorn() != Inventory::Worn::None) {
-            return 1.f;
-        }
-      
-    }
-    return 0.f;
+  }
+  return 0.f;
 }
