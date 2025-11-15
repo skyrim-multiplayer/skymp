@@ -21,8 +21,8 @@ env:
 
 jobs:
   build:
-    # MacOS has powershell
-    runs-on: macos-14
+    # Linux is cheaper and better for Emscripten
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:

@@ -65,27 +65,36 @@ runs:
     
     - name: Get Git SHA Before Gather
       id: repo_sha
-      shell: powershell
-      run: |
-        $sha = git rev-parse HEAD
-        echo "sha=$sha" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const { execSync } = require('child_process');
+          const sha = execSync('git rev-parse HEAD', { encoding: 'utf8' }).trim();
+          core.exportVariable('sha', sha);
 
     - name: Commit gathered PRs
       if: ${{ inputs.DEPLOY_BRANCH != '' }}
-      run: |
-        # fake user for bot
-        git config --global user.email "skyrim_multiplayer_bot@users.noreply.github.com"
-        git config --global user.name "Skyrim Multiplayer Bot"
-        git add .
-        git commit -m "Merge PRs ${{inputs.DEPLOY_BRANCH}}"
-      shell: powershell
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const { execSync } = require('child_process');
+          
+          // fake user for bot
+          execSync('git config --global user.email "skyrim_multiplayer_bot@users.noreply.github.com"');
+          execSync('git config --global user.name "Skyrim Multiplayer Bot"');
+          execSync('git add .');
+          execSync('git commit -m "Merge PRs ${{inputs.DEPLOY_BRANCH}}"');
 
     - name: Early build skymp5-client
-      run: |
-        cd ${{github.workspace}}/skymp5-client
-        yarn
-        yarn build
-      shell: powershell
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const { execSync } = require('child_process');
+          const path = require('path');
+          
+          const clientPath = path.join('${{github.workspace}}', 'skymp5-client');
+          execSync('yarn', { cwd: clientPath, stdio: 'inherit' });
+          execSync('yarn build', { cwd: clientPath, stdio: 'inherit' });
 
     - name: Check and install OpenCppCoverage using github-script
       if: runner.os == 'Windows'
@@ -170,8 +179,12 @@ runs:
 
     - name: Debug - free space
       if: runner.os == 'Windows'
-      run: Get-PSDrive
-      shell: powershell
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const { execSync } = require('child_process');
+          const output = execSync('Get-PSDrive', { encoding: 'utf8', shell: 'powershell' });
+          console.log(output);
 
     - uses: actions/github-script@v6
       with:
@@ -179,34 +192,33 @@ runs:
           core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
           core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
 
-    - name: Setup NuGet Credentials (PowerShell)
+    - name: Setup NuGet Credentials
       if: runner.os == 'Windows'
-      shell: powershell
-      run: |
-        if (-not ($env:VCPKG_BINARY_SOURCES -like '*nuget*')) {
-          Write-Host "Skipping NuGet setup because VCPKG_BINARY_SOURCES does not contain 'nuget'."
-          exit 0
-        }
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const { execSync } = require('child_process');
+          
+          const vcpkgBinarySources = process.env.VCPKG_BINARY_SOURCES || '';
+          if (!vcpkgBinarySources.includes('nuget')) {
+            console.log('Skipping NuGet setup because VCPKG_BINARY_SOURCES does not contain "nuget".');
+            return;
+          }
 
-        $nugetPath = & 'C:\vcpkg\vcpkg.exe' fetch nuget | Select-Object -Last 1
+          const nugetPath = execSync('C:\\vcpkg\\vcpkg.exe fetch nuget', { encoding: 'utf8' })
+            .trim().split('\n').pop();
 
-        if ("${{ github.event_name }}" -eq "pull_request") {
-          Write-Host "Pull request detected. Adding NuGet source for actor."
-          & $nugetPath sources add `
-            -source "https://nuget.pkg.github.com/${{ github.actor }}/index.json" `
-            -storepasswordincleartext `
-            -name "GitHub" `
-            -username "${{ github.actor }}" `
-            -password "${{ inputs.NUGET_GITHUB_TOKEN }}"
-        } else {
-          Write-Host "Non-pull request event detected. Adding default NuGet source."
-          & $nugetPath sources add `
-            -source "https://nuget.pkg.github.com/skyrim-multiplayer/index.json" `
-            -storepasswordincleartext `
-            -name "GitHub" `
-            -username "skyrim-multiplayer" `
-            -password "${{ inputs.NUGET_GITHUB_TOKEN }}"
-        }
+          const eventName = '${{ github.event_name }}';
+          const actor = '${{ github.actor }}';
+          const token = '${{ inputs.NUGET_GITHUB_TOKEN }}';
+          
+          if (eventName === 'pull_request') {
+            console.log('Pull request detected. Adding NuGet source for actor.');
+            execSync(`"${nugetPath}" sources add -source "https://nuget.pkg.github.com/${actor}/index.json" -storepasswordincleartext -name "GitHub" -username "${actor}" -password "${token}"`);
+          } else {
+            console.log('Non-pull request event detected. Adding default NuGet source.');
+            execSync(`"${nugetPath}" sources add -source "https://nuget.pkg.github.com/skyrim-multiplayer/index.json" -storepasswordincleartext -name "GitHub" -username "skyrim-multiplayer" -password "${token}"`);
+          }
 
     # Download Skyrim SE data files
     - uses: suisei-cn/actions-download-file@v1
@@ -239,42 +251,64 @@ runs:
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
       # Outputs profiling data in Google Trace Format, which can be parsed by the about:tracing tab of Google Chrome or using a plugin for a tool like Trace Compass.
-      run: |
-        if ('${{ inputs.EMSCRIPTEN }}' -eq 'true') {
-          git clone --depth 1 https://github.com/emscripten-core/emsdk.git
-          cd emsdk
-          ./emsdk install 3.1.64
-          ./emsdk activate 3.1.64
-          . .\emsdk_env.ps1
-          cd ..
-        }
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const { execSync } = require('child_process');
+          const path = require('path');
+          
+          const isEmscripten = '${{ inputs.EMSCRIPTEN }}' === 'true';
+          const isWindows = process.platform === 'win32';
+          
+          // Setup Emscripten if needed
+          if (isEmscripten) {
+            console.log('Setting up Emscripten...');
+            execSync('git clone --depth 1 https://github.com/emscripten-core/emsdk.git', { stdio: 'inherit' });
+            
+            const emsdkPath = path.join(process.cwd(), 'emsdk');
+            execSync('./emsdk install 3.1.64', { cwd: emsdkPath, stdio: 'inherit' });
+            execSync('./emsdk activate 3.1.64', { cwd: emsdkPath, stdio: 'inherit' });
+            
+            // Source the environment
+            if (isWindows) {
+              execSync('.\\emsdk_env.bat', { cwd: emsdkPath, stdio: 'inherit' });
+            } else {
+              execSync('source ./emsdk_env.sh', { cwd: emsdkPath, stdio: 'inherit', shell: '/bin/bash' });
+            }
+          }
 
-        $cmake_command = if ('${{ inputs.EMSCRIPTEN }}' -eq 'true') { "emcmake cmake" } else { "cmake" }
+          // Build CMake command
+          const cmakeCommand = isEmscripten ? 'emcmake cmake' : 'cmake';
+          
+          // Determine arguments based on platform and configuration
+          const cppcovPathArg = isWindows ? '-DCPPCOV_PATH="C:\\Program Files\\OpenCppCoverage"' : '-DCPPCOV_PATH=OFF';
+          const vcpkgRootArg = isWindows ? '-DVCPKG_ROOT=C:/vcpkg' : '-DVCPKG_ROOT=${{github.workspace}}/vcpkg';
+          const vcpkgChainloadArg = isEmscripten ? '-DVCPKG_CHAINLOAD_TOOLCHAIN_FILE=${{github.workspace}}/emsdk/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake' : '';
+          const vcpkgTripletArg = isEmscripten ? '-DVCPKG_TARGET_TRIPLET=wasm32-emscripten' : '';
+          const prepareNexusArg = '${{ inputs.SP_NEXUS_ARTIFACT_NAME}}' === 'nope' ? '-DPREPARE_NEXUS_ARCHIVES=OFF' : '-DPREPARE_NEXUS_ARCHIVES=ON';
 
-        $cppcov_path_arg = if ($env:RUNNER_OS -eq 'Windows') { '-DCPPCOV_PATH="C:\Program Files\OpenCppCoverage"' } else { '-DCPPCOV_PATH=OFF' }
-        $vcpkg_root_arg = if ($env:RUNNER_OS -eq 'Windows') { '-DVCPKG_ROOT=C:/vcpkg' } else { '-DVCPKG_ROOT="${{github.workspace}}/vcpkg"' }
-        $vcpkg_chainload_toolchain_arg = if ('${{ inputs.EMSCRIPTEN }}' -eq 'true') { '-DVCPKG_CHAINLOAD_TOOLCHAIN_FILE="${{github.workspace}}/emsdk/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake"' } else { '' }
-        $vcpkg_triplet_arg = if ('${{ inputs.EMSCRIPTEN }}' -eq 'true') { '-DVCPKG_TARGET_TRIPLET=wasm32-emscripten' } else { '' }
-        $prepare_nexus_archives_arg = if ('${{ inputs.SP_NEXUS_ARTIFACT_NAME}}' -eq 'nope') { '-DPREPARE_NEXUS_ARCHIVES=OFF' } else { '-DPREPARE_NEXUS_ARCHIVES=ON' }
+          // Build the full command
+          let cmakeArgs = [
+            '-B ${{github.workspace}}/build',
+            vcpkgChainloadArg,
+            vcpkgTripletArg,
+            vcpkgRootArg,
+            '-DUNIT_DATA_DIR=skyrim_data_files',
+            '-DBUILD_NODEJS=OFF',
+            '-DBUILD_FRONT=${{ inputs.BUILD_SKYMP5_FRONT }}',
+            '-DSKYMP5_FRONT_REPO_PAT=${{ inputs.SKYMP5_FRONT_PAT }}',
+            prepareNexusArg,
+            '-DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}',
+            '-DSKYRIM_VR=${{ inputs.SKYRIM_VR_FLAG }}',
+            cppcovPathArg,
+            '--profiling-output cmake-profiling-output',
+            '--profiling-format google-trace'
+          ].filter(arg => arg !== ''); // Remove empty args
 
-        $cmake_command_full = "$cmake_command "
-        $cmake_command_full += "-B ${{github.workspace}}/build "
-        $cmake_command_full += "$vcpkg_chainload_toolchain_arg "
-        $cmake_command_full += "$vcpkg_triplet_arg "
-        $cmake_command_full += "$vcpkg_root_arg "
-        $cmake_command_full += "-DUNIT_DATA_DIR=skyrim_data_files "
-        $cmake_command_full += "-DBUILD_NODEJS=OFF "
-        $cmake_command_full += "-DBUILD_FRONT=${{ inputs.BUILD_SKYMP5_FRONT }} "
-        $cmake_command_full += "-DSKYMP5_FRONT_REPO_PAT=${{ inputs.SKYMP5_FRONT_PAT }} "
-        $cmake_command_full += "$prepare_nexus_archives_arg "
-        $cmake_command_full += "-DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} "
-        $cmake_command_full += "-DSKYRIM_VR=${{ inputs.SKYRIM_VR_FLAG }} "
-        $cmake_command_full += "$cppcov_path_arg "
-        $cmake_command_full += "--profiling-output cmake-profiling-output "
-        $cmake_command_full += "--profiling-format google-trace"
-
-        Invoke-Expression $cmake_command_full
-      shell: powershell
+          const fullCommand = `${cmakeCommand} ${cmakeArgs.join(' ')}`;
+          console.log(`Executing: ${fullCommand}`);
+          
+          execSync(fullCommand, { stdio: 'inherit' });
 
     - name: Upload vcpkg logs (non-Windows)
       if: ${{ always() && runner.os != 'Windows' }}
@@ -288,21 +322,55 @@ runs:
     # actions/upload-artifact will not work for C:/vcpkg because it's not under github.workspace
     - name: Prepare vcpkg logs (Windows)
       if: ${{ always() && runner.os == 'Windows' }}
-      shell: powershell
-      run: |
-        $logDir = "${{ github.workspace }}\vcpkg_logs"
-        
-        New-Item -ItemType Directory -Path $logDir -Force | Out-Null
-        
-        $sourceDir = "C:\vcpkg\buildtrees"
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+          const path = require('path');
 
-        Get-ChildItem -Path $sourceDir -Filter "*.log" -Recurse | ForEach-Object {
-          $relativePath = $_.FullName.Substring($sourceDir.Length).TrimStart('\')
-          $destinationPath = Join-Path -Path $logDir -ChildPath $relativePath
+          const logDir = path.join('${{ github.workspace }}', 'vcpkg_logs');
+          const sourceDir = 'C:\\vcpkg\\buildtrees';
 
-          New-Item -ItemType Directory -Path (Split-Path -Parent $destinationPath) -Force | Out-Null
-          Copy-Item -Path $_.FullName -Destination $destinationPath -Force
-        }
+          // Create log directory
+          if (!fs.existsSync(logDir)) {
+            fs.mkdirSync(logDir, { recursive: true });
+          }
+
+          // Function to recursively find .log files
+          function findLogFiles(dir) {
+            const files = [];
+            const items = fs.readdirSync(dir, { withFileTypes: true });
+            
+            for (const item of items) {
+              const fullPath = path.join(dir, item.name);
+              if (item.isDirectory()) {
+                files.push(...findLogFiles(fullPath));
+              } else if (item.isFile() && item.name.endsWith('.log')) {
+                files.push(fullPath);
+              }
+            }
+            
+            return files;
+          }
+
+          // Copy log files
+          if (fs.existsSync(sourceDir)) {
+            const logFiles = findLogFiles(sourceDir);
+            
+            for (const logFile of logFiles) {
+              const relativePath = path.relative(sourceDir, logFile);
+              const destinationPath = path.join(logDir, relativePath);
+              
+              // Create destination directory
+              const destinationDir = path.dirname(destinationPath);
+              if (!fs.existsSync(destinationDir)) {
+                fs.mkdirSync(destinationDir, { recursive: true });
+              }
+              
+              // Copy file
+              fs.copyFileSync(logFile, destinationPath);
+            }
+          }
 
 
     - name: Upload vcpkg logs (Windows)
@@ -321,8 +389,11 @@ runs:
 
     - name: Build
       # Build your program with the given configuration
-      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
-      shell: powershell
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const { execSync } = require('child_process');
+          execSync('cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}', { stdio: 'inherit' });
 
     # before running tests, because of dist check test
     - name: Compile metadata into public format
@@ -363,11 +434,19 @@ runs:
           fs.writeFileSync(outFilePath, JSON.stringify(res, null, 2));
 
     - name: Test
-      working-directory: ${{github.workspace}}/build
       # Execute tests defined by the CMake configuration.  
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
-      run: ctest -C ${{env.BUILD_TYPE}} --verbose # --output-on-failure
-      shell: powershell
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const { execSync } = require('child_process');
+          const path = require('path');
+          
+          const buildDir = path.join('${{github.workspace}}', 'build');
+          execSync('ctest -C ${{env.BUILD_TYPE}} --verbose', { 
+            cwd: buildDir, 
+            stdio: 'inherit' 
+          });
 
     - uses: actions/upload-artifact@v4
       with:
@@ -391,18 +470,22 @@ runs:
 
     - name: Extract SP Version Number
       if: ${{ inputs.SP_NEXUS_ARTIFACT_NAME != 'nope' }}
-      run: |
-        $version = (Get-Content ./skyrim-platform/package.json | ConvertFrom-Json).version
-        echo "VERSION=$version" | Out-File -Append -FilePath $env:GITHUB_ENV
-      shell: powershell
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+          const packageJson = JSON.parse(fs.readFileSync('./skyrim-platform/package.json', 'utf8'));
+          const version = packageJson.version;
+          core.exportVariable('VERSION', version);
 
     - name: Replace %SP_VERSION% with actual version in artifact name
       if: ${{ inputs.SP_NEXUS_ARTIFACT_NAME != 'nope' }}
-      run: |
-        $artifactName = "${{ inputs.SP_NEXUS_ARTIFACT_NAME }}"
-        $artifactName = $artifactName.Replace("%SP_VERSION%", "${{ env.VERSION }}")
-        echo "SP_NEXUS_ARTIFACT_NAME=$artifactName" | Out-File -Append -FilePath $env:GITHUB_ENV
-      shell: powershell
+      uses: actions/github-script@v6
+      with:
+        script: |
+          let artifactName = '${{ inputs.SP_NEXUS_ARTIFACT_NAME }}';
+          artifactName = artifactName.replace('%SP_VERSION%', '${{ env.VERSION }}');
+          core.exportVariable('SP_NEXUS_ARTIFACT_NAME', artifactName);
       
     - uses: actions/upload-artifact@v4
       if: ${{ inputs.SP_NEXUS_ARTIFACT_NAME != 'nope' }}
@@ -419,8 +502,12 @@ runs:
 
     - name: Debug - free space
       if: runner.os == 'Windows'
-      run: Get-PSDrive
-      shell: powershell
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const { execSync } = require('child_process');
+          const output = execSync('Get-PSDrive', { encoding: 'utf8', shell: 'powershell' });
+          console.log(output);
 
     - uses: actions/upload-artifact@v4
       with:
