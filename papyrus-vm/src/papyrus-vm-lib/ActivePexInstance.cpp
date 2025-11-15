@@ -1128,17 +1128,16 @@ bool ActivePexInstance::HasChild(ActivePexInstance* script,
   return false;
 }
 
-// TODO: optimize "name" to be passed by a const char * instead of std::string
 VarValue& ActivePexInstance::GetVariableValueByName(std::vector<Local>* locals,
-                                                    std::string name)
+                                                    const char* name)
 {
-  if (name == "self") {
+  if (!Utils::stricmp(name, "self")) {
     return activeInstanceOwner;
   }
 
   if (locals)
     for (auto& var : *locals) {
-      if (var.first == name) {
+      if (!Utils::stricmp(var.first.data(), name)) {
         return var.second;
       }
     }
@@ -1146,7 +1145,7 @@ VarValue& ActivePexInstance::GetVariableValueByName(std::vector<Local>* locals,
   try {
     if (variables)
       if (auto var =
-            variables->GetVariableByName(name.data(), *sourcePex.fn()))
+            variables->GetVariableByName(name, *sourcePex.fn()))
         return *var;
   } catch (std::exception& e) {
     spdlog::error("ActivePexInstance::GetVariableValueByName - "
@@ -1161,7 +1160,7 @@ VarValue& ActivePexInstance::GetVariableValueByName(std::vector<Local>* locals,
   }
 
   for (auto& _name : identifiersValueNameCache) {
-    if ((const char*)(*_name) == name) {
+    if (!Utils::stricmp((const char*)(*_name), name)) {
       return *_name;
     }
   }
@@ -1174,7 +1173,7 @@ VarValue& ActivePexInstance::GetVariableValueByName(std::vector<Local>* locals,
   }
 
   for (auto& _string : sourcePex.fn()->stringTable.GetStorage()) {
-    if (_string == name) {
+    if (!Utils::stricmp(_string.data(), name)) {
       auto stringTableValue = std::make_shared<VarValue>(name);
 
       identifiersValueNameCache.push_back(stringTableValue);
@@ -1184,7 +1183,7 @@ VarValue& ActivePexInstance::GetVariableValueByName(std::vector<Local>* locals,
 
   for (auto& _string :
        parentInstance->sourcePex.fn()->stringTable.GetStorage()) {
-    if (_string == name) {
+    if (!Utils::stricmp(_string.data(), name)) {
       auto stringTableParentValue = std::make_shared<VarValue>(name);
 
       identifiersValueNameCache.push_back(stringTableParentValue);

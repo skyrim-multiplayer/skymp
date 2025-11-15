@@ -34,7 +34,7 @@ public:
                                  std::string stateName) const;
 
   VarValue& GetVariableValueByName(std::vector<Local>* optional,
-                                   std::string name);
+                                   const char* name);
 
   VarValue& GetIndentifierValue(std::vector<Local>& locals, VarValue& value,
                                 bool treatStringsAsIdentifiers = false);
