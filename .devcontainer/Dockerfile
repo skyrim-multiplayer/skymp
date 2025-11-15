@@ -1,4 +1,4 @@
-FROM --platform=linux/amd64 mcr.microsoft.com/devcontainers/javascript-node:22
+FROM --platform=linux/amd64 mcr.microsoft.com/devcontainers/javascript-node:22-bookworm
 
 # Tip for maintainers: Updating Vcpkg Binary Cache
 # 1. remove "clear;" from "export VCPKG_BINARY_SOURCES=..." below
@@ -15,7 +15,7 @@ RUN \
   && echo 'deb [signed-by=/usr/share/keyrings/kitware-archive-keyring.gpg] https://apt.kitware.com/ubuntu/ jammy main' > /etc/apt/sources.list.d/kitware.list \
   && apt-get update \
   && apt-get install -y \
-    cmake=4.1.0-0kitware1ubuntu22.04.1 \
+    cmake \
     clang-15=1:15.0.6-4+b1 \
     clang-format-15=1:15.0.6-4+b1 \
     ninja-build=1.11.1-2~deb12u1 \
