@@ -1,18 +1,18 @@
-#include "WornApparelHasKeywordCount.h"
+#include "SkympWornHasKeywordCount.h"
 #include "MpActor.h"
 
-const char* ConditionFunctions::WornApparelHasKeywordCount::GetName() const
+const char* ConditionFunctions::SkympWornHasKeywordCount::GetName() const
 {
-  return "WornApparelHasKeywordCount";
+  return "SkympWornHasKeywordCount";
 }
 
-uint16_t ConditionFunctions::WornApparelHasKeywordCount::GetFunctionIndex()
+uint16_t ConditionFunctions::SkympWornHasKeywordCount::GetFunctionIndex()
   const
 {
-  return 722;
+  return std::numeric_limits<uint16_t>::max();
 }
 
-float ConditionFunctions::WornApparelHasKeywordCount::Execute(
+float ConditionFunctions::SkympWornHasKeywordCount::Execute(
   MpActor& actor, uint32_t parameter1, [[maybe_unused]] uint32_t parameter2,
   const ConditionEvaluatorContext&)
 {
@@ -32,23 +32,7 @@ float ConditionFunctions::WornApparelHasKeywordCount::Execute(
     if (!res.rec) {
       continue;
     }
-
-    if (!res.rec || res.rec->GetType() != espm::ARMO::kType) {
-      continue;
-    }
-
-    auto data = espm::GetData<espm::ARMO>(entry.baseId, worldState);
     
-    uint32_t slot = data.equipSlotId;
-    bool isArmorPiece = slot == 31 || // hair
-      slot == 32 ||                   // body
-      slot == 33 ||                   // hands
-      slot == 37;                     // feet
-
-    if (!isArmorPiece) {
-      continue;
-    }
-
     std::vector<uint32_t> keywordIds =
       res.rec->GetKeywordIds(worldState->GetEspmCache());
 

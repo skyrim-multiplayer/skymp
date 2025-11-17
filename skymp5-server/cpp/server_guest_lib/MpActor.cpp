@@ -1927,3 +1927,29 @@ std::array<std::optional<Inventory::Entry>, 2> MpActor::GetEquippedLight()
   }
   return wornEntries;
 }
+
+std::array<std::optional<Inventory::Entry>, 2> MpActor::GetEquippedShield()
+  const
+{
+  std::array<std::optional<Inventory::Entry>, 2> wornEntries;
+  // 0 -> left hand, 1 -> right hand
+  auto& espmBrowser = GetParent()->GetEspm().GetBrowser();
+  for (const auto& entry : GetEquipment().inv.entries) {
+    if (entry.GetWorn() != Inventory::Worn::None) {
+      espm::LookupResult res = espmBrowser.LookupById(entry.baseId);
+      auto* record = espm::Convert<espm::ARMO>(res.rec);
+      if (record) {
+        auto data = record->GetData(espmBrowser);
+        bool isShield = data.equipSlotId == 39;
+
+        if (entry.GetWorn() == Inventory::Worn::Left && isShield) {
+          wornEntries[0] = std::move(entry);
+        }
+        if (entry.GetWorn() == Inventory::Worn::Right && isShield) { // In vanilla Skyrim, the shield cannot be in the right hand.
+          wornEntries[1] = std::move(entry);
+        }
+      }
+    }
+  }
+  return wornEntries;
+}
