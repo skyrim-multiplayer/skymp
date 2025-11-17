@@ -21,6 +21,14 @@ ARMO::Data ARMO::GetData(CompressedFieldsCache& compressedFieldsCache) const
         result.baseRatingX100 = *reinterpret_cast<const uint32_t*>(data);
       } else if (!std::memcmp(type, "ETYP", 4)) {
         result.equipSlotId = *reinterpret_cast<const uint32_t*>(data);
+      } else if (!std::memcmp(type, "BODT", 4) && dataSize >= 8) {
+        result.hasBODT = true;
+        result.BODT_flags = *reinterpret_cast<const uint32_t*>(data);
+        result.BODT_skill = *reinterpret_cast<const uint32_t*>(data + 4);
+      } else if (!std::memcmp(type, "BOD2", 4) && dataSize >= 8) {
+        result.hasBOD2 = true;
+        result.BOD2_flags = *reinterpret_cast<const uint32_t*>(data);
+        result.BOD2_skill = *reinterpret_cast<const uint32_t*>(data + 4);
       }
     },
     compressedFieldsCache);
