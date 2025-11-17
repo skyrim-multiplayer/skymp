@@ -1934,12 +1934,14 @@ std::array<std::optional<Inventory::Entry>, 2> MpActor::GetEquippedShield()
   std::array<std::optional<Inventory::Entry>, 2> wornEntries;
   // 0 -> left hand, 1 -> right hand
   auto& espmBrowser = GetParent()->GetEspm().GetBrowser();
+  auto& espmCache   = GetParent()->GetEspmCache();
+
   for (const auto& entry : GetEquipment().inv.entries) {
     if (entry.GetWorn() != Inventory::Worn::None) {
       espm::LookupResult res = espmBrowser.LookupById(entry.baseId);
       auto* record = espm::Convert<espm::ARMO>(res.rec);
       if (record) {
-        auto data = record->GetData(espmBrowser);
+        auto data = record->GetData(espmCache);
         bool isShield = data.equipSlotId == 39;
 
         if (entry.GetWorn() == Inventory::Worn::Left && isShield) {
