@@ -1935,6 +1935,7 @@ std::array<std::optional<Inventory::Entry>, 2> MpActor::GetEquippedShield()
   // 0 -> left hand, 1 -> right hand
   auto& espmBrowser = GetParent()->GetEspm().GetBrowser();
   auto& espmCache   = GetParent()->GetEspmCache();
+  constexpr uint32_t BOD_SHIELD = 0x00000200;
 
   for (const auto& entry : GetEquipment().inv.entries) {
     if (entry.GetWorn() != Inventory::Worn::None) {
@@ -1942,12 +1943,24 @@ std::array<std::optional<Inventory::Entry>, 2> MpActor::GetEquippedShield()
       auto* record = espm::Convert<espm::ARMO>(res.rec);
       if (record) {
         auto data = record->GetData(espmCache);
-        bool isShield = data.equipSlotId == 39;
+        bool isShield = false;
 
-        if (entry.GetWorn() == Inventory::Worn::Left && isShield) {
+        if (data.hasBOD2) {
+            isShield = (data.BOD2_flags & BOD_SHIELD) != 0;
+        } else if (data.hasBODT) {
+            isShield = (data.BODT_flags & BOD_SHIELD) != 0;
+        } else {
+            continue;
+        }
+
+        if (!isShield) {
+            continue;
+        }
+
+        if (entry.GetWorn() == Inventory::Worn::Left) {
           wornEntries[0] = std::move(entry);
         }
-        if (entry.GetWorn() == Inventory::Worn::Right && isShield) { // In vanilla Skyrim, the shield cannot be in the right hand.
+        if (entry.GetWorn() == Inventory::Worn::Right) { // In vanilla Skyrim, the shield cannot be in the right hand.
           wornEntries[1] = std::move(entry);
         }
       }
