@@ -1957,12 +1957,10 @@ std::array<std::optional<Inventory::Entry>, 2> MpActor::GetEquippedShield()
             continue;
         }
 
-        if (entry.GetWorn() == Inventory::Worn::Left) {
+        if (entry.GetWorn() == Inventory::Worn::Right) { // In Skyrim, in the equipment data, the shield has the worn flag and not the wornLeft, although it is actually in the left hand.
           wornEntries[0] = std::move(entry);
         }
-        if (entry.GetWorn() == Inventory::Worn::Right) { // In vanilla Skyrim, the shield cannot be in the right hand.
-          wornEntries[1] = std::move(entry);
-        }
+
       }
     }
   }
