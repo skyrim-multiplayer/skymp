@@ -32,7 +32,7 @@ float ConditionFunctions::SkympWornExtendedApparelHasKeywordCount::Execute(
     if (!res.rec) {
       continue;
     }
-    if (!res.rec || res.rec->GetType() != espm::ARMO::kType) {
+    if (res.rec->GetType() != espm::ARMO::kType) {
       continue;
     }
     
