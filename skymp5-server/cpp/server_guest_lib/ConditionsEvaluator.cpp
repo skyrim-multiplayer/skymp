@@ -290,16 +290,18 @@ bool ConditionsEvaluator::CompareFloats(float a, float b,
 
 uint32_t ConditionsEvaluator::ExtractParameter(const std::string& parameter)
 {
-  uint32_t parameterParsed = 0;
+  const char* str = parameter.c_str();
+  char* end;
+  int base = 10;
 
-  if (parameter.find("0x") == 0 || parameter.find("0X") == 0) {
-    std::stringstream ss;
-    ss << std::hex << parameter.substr(2); // Skip "0x"
-    ss >> parameterParsed;
-  } else {
-    std::stringstream ss(parameter);
-    ss >> parameterParsed;
+  if (parameter.length() > 2 && str[0] == '0') {
+    if (str[1] == 'x' || str[1] == 'X') {
+      base = 16;
+    } else if (str[1] == 'b' || str[1] == 'B') {
+      base = 2;
+      str += 2; // strtoul doesn't skip 0b automatically
+    }
   }
 
-  return parameterParsed;
+  return static_cast<uint32_t>(std::strtoul(str, &end, base));
 }
