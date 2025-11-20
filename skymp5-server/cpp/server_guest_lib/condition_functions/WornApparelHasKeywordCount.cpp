@@ -22,13 +22,12 @@ float ConditionFunctions::WornApparelHasKeywordCount::Execute(
 
   size_t count = 0;
 
-  constexpr uint32_t BOD_HAIR = 0x00000002;
-  constexpr uint32_t BOD_BODY = 0x00000004;
-  constexpr uint32_t BOD_HANDS = 0x00000008;
-  constexpr uint32_t BOD_FEET = 0x00000080;
-  
-  constexpr uint32_t ARMOR_BITS = 
-      BOD_FEET | BOD_HAIR | BOD_BODY | BOD_HANDS;
+  constexpr uint32_t kBodHair = 0x00000002;
+  constexpr uint32_t kBodBody = 0x00000004;
+  constexpr uint32_t kBodHands = 0x00000008;
+  constexpr uint32_t kBodFeet = 0x00000080;
+
+  constexpr uint32_t kArmorBits = kBodFeet | kBodHair | kBodBody | kBodHands;
 
   for (auto& entry : equipment.inv.entries) {
     if (entry.GetWorn() == Inventory::Worn::None) {
@@ -42,16 +41,16 @@ float ConditionFunctions::WornApparelHasKeywordCount::Execute(
     }
 
     auto data = espm::GetData<espm::ARMO>(entry.baseId, worldState);
-    
-    bool isArmorPiece = false;
-    if (data.hasBOD2 && (data.BOD2_flags & ARMOR_BITS)) {
-        isArmorPiece = true;
-    } else if (data.hasBODT && (data.BODT_flags & ARMOR_BITS)) {
-        isArmorPiece = true;
+
+    bool isApparel = false;
+    if (data.hasBOD2 && (data.BOD2_flags & kArmorBits)) {
+      isApparel = true;
+    } else if (data.hasBODT && (data.BODT_flags & kArmorBits)) {
+      isApparel = true;
     }
 
-    if (!isArmorPiece) {
-        continue;
+    if (!isApparel) {
+      continue;
     }
 
     std::vector<uint32_t> keywordIds =

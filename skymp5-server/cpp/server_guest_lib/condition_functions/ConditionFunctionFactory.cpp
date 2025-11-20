@@ -2,22 +2,20 @@
 
 #include "GetActorValuePercent.h"
 #include "GetEquipped.h"
+#include "GetEquippedItemType.h"
 #include "GetIsRace.h"
 #include "GetItemCount.h"
 #include "HasSpell.h"
+#include "IsBlocking.h"
+#include "IsInInterior.h"
 #include "IsWeaponMagicOut.h"
 #include "IsWeaponOut.h"
 #include "SpellHasKeyword.h"
 #include "WornApparelHasKeywordCount.h"
 #include "WornHasKeyword.h"
 
-#include "GetEquippedItemType.h"
-#include "IsBlocking.h"
-#include "IsInInterior.h"
-
 #include "SkympGetDamageSourceHasKeyword.h"
 #include "SkympGetIsDamageSource.h"
-#include "SkympWornExtendedApparelHasKeywordCount.h"
 #include "SkympWornHasKeywordCount.h"
 
 ConditionFunctionMap ConditionFunctionFactory::CreateConditionFunctions()
@@ -43,8 +41,7 @@ ConditionFunctionMap ConditionFunctionFactory::CreateConditionFunctions()
   res.RegisterConditionFunction(
     std::make_shared<ConditionFunctions::SpellHasKeyword>());
   res.RegisterConditionFunction(
-    std::make_shared<ConditionFunctions::WornApparelHasKeywordCount>()); // Repeats the features of the original condition - "does not count shields or amulets/necklaces"
-
+    std::make_shared<ConditionFunctions::WornApparelHasKeywordCount>());
   res.RegisterConditionFunction(
     std::make_shared<ConditionFunctions::IsInInterior>());
   res.RegisterConditionFunction(
@@ -57,9 +54,7 @@ ConditionFunctionMap ConditionFunctionFactory::CreateConditionFunctions()
   res.RegisterConditionFunction(
     std::make_shared<ConditionFunctions::SkympGetIsDamageSource>());
   res.RegisterConditionFunction(
-    std::make_shared<ConditionFunctions::SkympWornExtendedApparelHasKeywordCount>()); // Checks any form with the ARMO type
-  res.RegisterConditionFunction(
-    std::make_shared<ConditionFunctions::SkympWornHasKeywordCount>()); // Checks any form
+    std::make_shared<ConditionFunctions::SkympWornHasKeywordCount>());
 
   return res;
 }

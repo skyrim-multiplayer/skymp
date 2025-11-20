@@ -6,8 +6,7 @@ const char* ConditionFunctions::SkympWornHasKeywordCount::GetName() const
   return "SkympWornHasKeywordCount";
 }
 
-uint16_t ConditionFunctions::SkympWornHasKeywordCount::GetFunctionIndex()
-  const
+uint16_t ConditionFunctions::SkympWornHasKeywordCount::GetFunctionIndex() const
 {
   return std::numeric_limits<uint16_t>::max();
 }
@@ -32,16 +31,40 @@ float ConditionFunctions::SkympWornHasKeywordCount::Execute(
     if (!res.rec) {
       continue;
     }
-    
+
     std::vector<uint32_t> keywordIds =
       res.rec->GetKeywordIds(worldState->GetEspmCache());
 
-    if (std::any_of(keywordIds.begin(), keywordIds.end(),
-                    [&](uint32_t keywordId) {
-                      return res.ToGlobalId(keywordId) == parameter1;
-                    })) {
-      ++count;
+    if (!std::any_of(keywordIds.begin(), keywordIds.end(),
+                     [&](uint32_t keywordId) {
+                       return res.ToGlobalId(keywordId) == parameter1;
+                     })) {
+      continue;
     }
+
+    // If non-zero, treat it as a mask for body parts to check
+    if (parameter2 != 0) {
+
+      // Only consider ARMO records for body part flag checking
+      if (res.rec->GetType() != espm::ARMO::kType) {
+        continue;
+      }
+
+      auto data = espm::GetData<espm::ARMO>(entry.baseId, worldState);
+
+      uint32_t bodyPartFlags = 0;
+      if (data.hasBOD2) {
+        bodyPartFlags = data.BOD2_flags;
+      } else if (data.hasBODT) {
+        bodyPartFlags = data.BODT_flags;
+      }
+
+      if ((bodyPartFlags & parameter2) == 0) {
+        continue;
+      }
+    }
+
+    ++count;
   }
 
   return static_cast<float>(count);
