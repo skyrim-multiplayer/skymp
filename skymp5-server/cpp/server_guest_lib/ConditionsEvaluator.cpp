@@ -288,8 +288,7 @@ bool ConditionsEvaluator::CompareFloats(float a, float b,
   return false;
 }
 
-uint32_t ConditionsEvaluator::ExtractParameter(
-  const std::string& parameter)
+uint32_t ConditionsEvaluator::ExtractParameter(const std::string& parameter)
 {
   const char* str = parameter.c_str();
   char* end;
