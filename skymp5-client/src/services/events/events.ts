@@ -42,9 +42,6 @@ import { AnyRawMessageEvent } from "./anyRawMessageEvent";
 import { NicknameCreateEvent } from "./nicknameCreateEvent";
 import { NicknameDestroyEvent } from "./nicknameDestroyEvent";
 
-import { FormViewFirstApplyAllEvent } from "./formViewFirstApplyAllEvent";
-import { UniversalTickEvent } from "./universalTickEvent";
-
 type EventTypes = {
     'gameLoad': [GameLoadEvent],
 
@@ -90,10 +87,7 @@ type EventTypes = {
     'queryBlockSetInventoryEvent': [QueryBlockSetInventoryEvent],
     'queryKeyCodeBindings': [QueryKeyCodeBindings],
     'nicknameCreate': [NicknameCreateEvent],
-    'nicknameDestroy': [NicknameDestroyEvent],
-
-    'formViewFirstApplyAll': [FormViewFirstApplyAllEvent],
-    'universalTick': [UniversalTickEvent],
+    'nicknameDestroy': [NicknameDestroyEvent]
 }
 
 // https://blog.makerx.com.au/a-type-safe-event-emitter-in-node-js/

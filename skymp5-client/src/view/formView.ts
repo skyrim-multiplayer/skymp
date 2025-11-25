@@ -4,7 +4,7 @@ import { Appearance, applyAppearance } from "../sync/appearance";
 import { isBadMenuShown, applyEquipment } from "../sync/equipment";
 import { RespawnNeededError } from "../lib/errors";
 import { FormModel } from "./model";
-import { applyMovementAutoSelect } from "../sync/movementApplyAutoSelect";
+import { applyMovement } from "../sync/movementApply";
 import { SpawnProcess } from "./spawnProcess";
 import { ObjectReferenceEx } from "../extensions/objectReferenceEx";
 import { PlayerCharacterDataHolder } from "./playerCharacterDataHolder";
@@ -261,7 +261,6 @@ export class FormView {
         // TODO: reset all states?
         this.eqState = this.getDefaultEquipState();
         this.animState = this.getDefaultAnimState();
-        this.formViewFirstApplyAllSent = false;
 
         this.ready = false;
 
@@ -335,12 +334,8 @@ export class FormView {
 
   private lastHarvestedApply = 0;
   private lastOpenApply = 0;
-
-  // TODO: consider updating those vars on respawn, looks like a bug
   private isSetNodeTextureSetApplied = false;
   private isSetNodeScaleApplied = false;
-
-  private formViewFirstApplyAllSent = false;
 
   private applyAll(refr: ObjectReference, model: FormModel) {
     let forcedWeapDrawn: boolean | null = null;
@@ -358,23 +353,13 @@ export class FormView {
       this.lastOpenApply = now;
       ModelApplyUtils.applyModelIsOpen(refr, !!model.isOpen);
     }
-
-    if (!this.formViewFirstApplyAllSent && refr.is3DLoaded()) {
-      SpApiInteractor.getControllerInstance().emitter.emit("formViewFirstApplyAll", {
-        model: model,
-        refr: refr
-      });
-      this.formViewFirstApplyAllSent = true;
-
-      if (!this.isSetNodeScaleApplied) {
-        this.isSetNodeScaleApplied = true;
-        ModelApplyUtils.applyModelNodeScale(refr, model.setNodeScale);
-      }
-
-      if (!this.isSetNodeTextureSetApplied) {
-        this.isSetNodeTextureSetApplied = true;
-        ModelApplyUtils.applyModelNodeTextureSet(refr, model.setNodeTextureSet);
-      }
+    if (!this.isSetNodeScaleApplied) {
+      this.isSetNodeScaleApplied = true;
+      ModelApplyUtils.applyModelNodeScale(refr, model.setNodeScale);
+    }
+    if (!this.isSetNodeTextureSetApplied) {
+      this.isSetNodeTextureSetApplied = true;
+      ModelApplyUtils.applyModelNodeTextureSet(refr, model.setNodeTextureSet);
     }
 
     if (
@@ -443,7 +428,7 @@ export class FormView {
             model.movement.isWeapDrawn = forcedWeapDrawn;
           }
           try {
-            applyMovementAutoSelect(refr, model.movement, !!model.isMyClone);
+            applyMovement(refr, model.movement, !!model.isMyClone);
           } catch (e) {
             if (e instanceof RespawnNeededError) {
               this.lastWorldOrCell = model.movement.worldOrCell;
@@ -487,13 +472,13 @@ export class FormView {
       }
     }
 
-    // if (refr.is3DLoaded()) {
-    //   if (model.animation) {
-    //     applyAnimation(refr, model.animation, this.animState);
-    //   }
-    //   // Use them only once, for spawning actors with correct animations
-    //   this.animState.useAnimOverrides = false;
-    // }
+    if (refr.is3DLoaded()) {
+      if (model.animation) {
+        applyAnimation(refr, model.animation, this.animState);
+      }
+      // Use them only once, for spawning actors with correct animations
+      this.animState.useAnimOverrides = false;
+    }
 
 
     if (model.appearance) {

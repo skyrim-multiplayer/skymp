@@ -4,6 +4,7 @@ import {
   Debug,
   hooks,
   Actor,
+  printConsole,
   Utility,
   Game,
   storage,
@@ -24,6 +25,7 @@ export interface Animation {
 }
 
 export interface AnimationApplyState {
+  lastNumChanges: number;
   useAnimOverrides: boolean;
 }
 
@@ -122,6 +124,11 @@ export const applyAnimation = (
   anim: Animation,
   state: AnimationApplyState
 ): void => {
+  if (state.lastNumChanges === anim.numChanges) {
+    return;
+  }
+  state.lastNumChanges = anim.numChanges;
+
   if (state.useAnimOverrides) {
     const animOverride = animOverridesLowerCase[anim.animEventName.toLowerCase()];
     if (animOverride !== undefined) {
@@ -224,9 +231,28 @@ export class AnimationSource {
     });
   }
 
-  getAnimation(): Animation & { time: number } {
-    const { numChanges, animEventName, time } = this;
-    return { numChanges, animEventName, time };
+  filterMovement(mov: Movement): Movement {
+    if (this.weapDrawnBlocker >= Date.now()) {
+      mov.isWeapDrawn = true;
+    }
+    if (this.weapNonDrawnBlocker >= Date.now()) {
+      mov.isWeapDrawn = false;
+    }
+
+    if (this.sneakBlocker === mov.isSneaking) {
+      this.sneakBlocker = null;
+    } else if (this.sneakBlocker === true) {
+      mov.isSneaking = true;
+    } else if (this.sneakBlocker === false) {
+      mov.isSneaking = false;
+    }
+
+    return mov;
+  }
+
+  getAnimation(): Animation {
+    const { numChanges, animEventName } = this;
+    return { numChanges, animEventName };
   }
 
   private onSendAnimationEvent(animEventName: string) {
@@ -238,21 +264,33 @@ export class AnimationSource {
 
     const isTorchEvent = lower.includes("torch");
     if (animEventName.toLowerCase().includes("unequip") && !isTorchEvent) {
+      this.weapNonDrawnBlocker = Date.now() + 300;
       animEventName = "SkympFakeUnequip";
     } else if (animEventName.toLowerCase().includes("equip") && !isTorchEvent) {
+      this.weapDrawnBlocker = Date.now() + 300;
       animEventName = "SkympFakeEquip";
+    }
+
+    if (animEventName === "SneakStart") {
+      this.sneakBlocker = true;
+      return;
+    }
+    if (animEventName === "SneakStop") {
+      this.sneakBlocker = false;
+      return;
     }
 
     this.numChanges++;
     this.animEventName = animEventName;
-    this.time = Date.now();
   }
 
   private refrId = 0;
   private numChanges = 0;
   private animEventName = "";
 
-  private time = 0;
+  private weapNonDrawnBlocker = 0;
+  private weapDrawnBlocker = 0;
+  private sneakBlocker: boolean | null = null;
 }
 
 const ignoredAnims = new Set<string>([
@@ -274,6 +312,7 @@ export const setupHooks = (): void => {
           if (allowedAnims.has(animKey)) {
             allowedAnims.delete(animKey);
           } else {
+            printConsole("block anim " + ctx.animEventName);
             return (ctx.animEventName = "");
           }
         }

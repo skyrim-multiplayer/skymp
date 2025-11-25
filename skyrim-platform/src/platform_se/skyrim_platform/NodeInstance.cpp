@@ -48,9 +48,9 @@ void RegisterReportError(Isolate* isolate, Local<Context> context)
 
 struct NodeInstance::Impl
 {
+  std::map<void*, std::shared_ptr<Isolate::CreateParams>> createParamsMap;
   std::map<void*, Isolate*> isolatesMap;
   std::map<void*, v8::Persistent<v8::Context>> contextsMap;
-  std::vector<std::unique_ptr<v8::Persistent<v8::Script>>> compiledScripts;
   std::unique_ptr<MultiIsolatePlatform> platform;
   std::string error;
 };
@@ -96,14 +96,29 @@ int NodeInstance::Init(int argc, char** argv)
 
 int NodeInstance::CreateEnvironment(int argc, char** argv, void** outEnv)
 {
+  // Create a v8::Platform instance. `MultiIsolatePlatform::Create()` is a way
+  // to create a v8::Platform instance that Node.js can use when creating
+  // Worker threads. When no `MultiIsolatePlatform` instance is present,
+  // Worker threads are disabled.
   pImpl->platform = MultiIsolatePlatform::Create(4);
   V8::InitializePlatform(pImpl->platform.get());
   V8::Initialize();
 
+  // Setup V8 isolate and context
+  // auto create_params = std::make_shared<Isolate::CreateParams>();
+  // create_params->array_buffer_allocator =
+  //   v8::ArrayBuffer::Allocator::NewDefaultAllocator();
+  // Isolate* isolate = Isolate::New(*create_params);
+  Isolate* isolate = Isolate::Allocate();
+  pImpl->platform->RegisterIsolate(isolate, uv_default_loop());
+  auto create_params = std::make_shared<Isolate::CreateParams>();
+
   std::shared_ptr<node::ArrayBufferAllocator> allocator =
     node::ArrayBufferAllocator::Create();
-  Isolate* isolate =
-    NewIsolate(allocator, uv_default_loop(), pImpl->platform.get());
+  isolate = NewIsolate(allocator, uv_default_loop(), pImpl->platform.get());
+
+  // register the isolate with the platform
+  // platform->RegisterIsolate(isolate, uv_default_loop());
 
   {
     // Setup scope and context
@@ -130,7 +145,7 @@ int NodeInstance::CreateEnvironment(int argc, char** argv, void** outEnv)
                           "+ '/'); globalThis.require = publicRequire;",
                           nullptr);
 
-    /// pImpl->createParamsMap[env] = create_params;
+    pImpl->createParamsMap[env] = create_params;
     pImpl->contextsMap[env].Reset(isolate,
                                   context); // Promote to Persistent and store
     pImpl->isolatesMap[env] = isolate;
@@ -164,6 +179,17 @@ int NodeInstance::DestroyEnvironment(void* env)
     isolate = nullptr;  // Null out the reference to avoid dangling pointers
   }
 
+  // Step 3: Optionally close the libuv loop if you're using one
+  // For example:
+  // uv_loop_close(uv_default_loop());  // Only if you created your own loop
+
+  auto create_params = pImpl->createParamsMap[env];
+
+  if (create_params) {
+    delete create_params->array_buffer_allocator;
+  }
+
+  pImpl->createParamsMap.erase(env);
   pImpl->contextsMap.erase(env);
   pImpl->isolatesMap.erase(env);
 
@@ -192,11 +218,15 @@ int NodeInstance::Tick(void* env)
   return 0; // Success
 }
 
-int NodeInstance::CompileScript(void* env, const char* script,
-                                uint16_t scriptId)
+int NodeInstance::ExecuteScript(void* env, const char* script)
 {
-  if (!env || !script) {
-    pImpl->error = "Invalid arguments";
+  if (!env) {
+    pImpl->error = "No env";
+    return -1;
+  }
+
+  if (!script) {
+    pImpl->error = "No script";
     return -1;
   }
 
@@ -213,10 +243,11 @@ int NodeInstance::CompileScript(void* env, const char* script,
   Local<Context> context = contextPersistent.Get(isolate);
   Context::Scope context_scope(context);
 
-  TryCatch try_catch(isolate);
-
   Local<String> source = String::NewFromUtf8(isolate, script).ToLocalChecked();
   Local<Script> compiled_script;
+
+  // Use TryCatch to handle any exceptions that might occur
+  TryCatch try_catch(isolate);
 
   if (!Script::Compile(context, source).ToLocal(&compiled_script)) {
     String::Utf8Value error(isolate, try_catch.Exception());
@@ -224,49 +255,15 @@ int NodeInstance::CompileScript(void* env, const char* script,
     return -1;
   }
 
-  if (pImpl->compiledScripts.size() <= scriptId) {
-    pImpl->compiledScripts.resize(scriptId + 1);
-  }
-  pImpl->compiledScripts[scriptId] =
-    std::make_unique<v8::Persistent<v8::Script>>();
-  pImpl->compiledScripts[scriptId]->Reset(isolate, compiled_script);
-
-  pImpl->error = "Success";
-  return 0;
-}
-
-int NodeInstance::ExecuteScript(void* env, uint16_t scriptId)
-{
-  if (!env) {
-    pImpl->error = "Invalid arguments";
-    return -1;
-  }
-
-  Isolate* isolate = pImpl->isolatesMap[env];
-  if (!isolate) {
-    pImpl->error = "No isolate";
-    return -1;
-  }
-
-  if (pImpl->compiledScripts.size() <= static_cast<size_t>(scriptId) ||
-      !pImpl->compiledScripts[scriptId]) {
-    pImpl->error = "Script with id " + std::to_string(scriptId) + " not found";
-    return -1;
-  }
-
-  Isolate::Scope isolate_scope(isolate);
-  HandleScope handle_scope(isolate);
-
-  auto& contextPersistent = pImpl->contextsMap[env];
-  Local<Context> context = contextPersistent.Get(isolate);
-  Context::Scope context_scope(context);
-
-  TryCatch try_catch(isolate);
-
-  Local<Script> compiledScript =
-    pImpl->compiledScripts[scriptId]->Get(isolate);
-
-  if (compiledScript->Run(context).IsEmpty()) {
+  // Execute script and catch potential runtime exceptions
+  if (!compiled_script->Run(context).IsEmpty()) {
+    Local<Value> result;
+    if (!compiled_script->Run(context).ToLocal(&result)) {
+      String::Utf8Value error(isolate, try_catch.Exception());
+      pImpl->error = *error ? *error : "Unknown runtime error";
+      return -1;
+    }
+  } else {
     String::Utf8Value error(isolate, try_catch.Exception());
     pImpl->error = *error ? *error : "Unknown runtime error";
     return -1;

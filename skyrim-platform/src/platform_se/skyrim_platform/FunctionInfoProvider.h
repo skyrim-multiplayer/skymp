@@ -27,7 +27,7 @@ public:
   virtual ~FunctionInfoProvider() = default;
 
   virtual FunctionInfo_* GetFunctionInfo(const std::string& className,
-                                         const std::string& funcName) = 0;
+                                        const std::string& funcName) = 0;
 
   virtual bool IsDerivedFrom(const char* derivedClassName,
                              const char* baseClassName) = 0;
