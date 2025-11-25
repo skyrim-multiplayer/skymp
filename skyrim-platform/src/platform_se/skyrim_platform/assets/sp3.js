@@ -24,6 +24,28 @@
     return getAliasNameImpl(className, "SP3_CLASS_ALIASES", "x");
   }
 
+
+  // function getAliasesForMethods(methods) {
+  //   const nodeProcess = require("node:process");
+  //   if (nodeProcess.env.SP3_HAS_ALIASES === "true") {
+  //     const aliases = nodeProcess.env.SP3_ALIASES.split(",");
+
+  //     const aliasesLowerCase = aliases.map(alias => alias.toLowerCase());
+  //     const methodsLowerCase = methods.map(method => method.toLowerCase());
+
+  //     const resultAliases = [];
+  //     methodsLowerCase.forEach(method => {
+  //       const indexInAliases = aliasesLowerCase.findIndex(alias => alias === method);
+  //       const aliasName = 'y' + indexInAliases;
+  //     });
+  //   }
+  //   return [];
+  // }
+
+  // function getAliasesForStatics(statics) {
+  //   return [];
+  // }
+
   function prettifyImpl(name, func) {
     let firstChar = func(name.charAt(0));
     name = name.slice(1);
@@ -123,6 +145,9 @@
     api._sp3RegisterWrapObjectFunction((obj) => {
       const _sp3ObjectType = obj._sp3ObjectType;
       const ctor = sp[_sp3ObjectType];
+      if (!ctor) {
+        skyrimPlatform.printConsole("!!WRAPPER!!", _sp3ObjectType, JSON.stringify(obj));
+      }
       spPrivate.isCtorEnabled = true;
       const resWithClass = new ctor();
       spPrivate.isCtorEnabled = false;
@@ -143,6 +168,8 @@
       sortClassesByInheritance(api._sp3ListClasses(), api)
         .map(className => prettifyUpperCase(className));
 
+    console.log({ classes })
+
     classes.forEach(className => {
       const baseClassName = prettifyUpperCase(api._sp3GetBaseClass(className));
       let staticFunctions = api._sp3ListStaticFunctions(className);
@@ -151,6 +178,8 @@
       const nStaticsBefore = staticFunctions.length;
       staticFunctions = staticFunctions.filter(f => f.toLowerCase() !== "getplayer");
       const nStaticsAfter = staticFunctions.length;
+
+      console.log({ className, baseClassName, staticFunctions, methods: JSON.stringify(methods) })
 
       sanitizeClassNameBeforeEval(className);
 
@@ -187,6 +216,9 @@
             }
             const _sp3ObjectType = resWithoutClass._sp3ObjectType;
             const ctor = sp[_sp3ObjectType];
+            if (!ctor) {
+              skyrimPlatform.printConsole("!!METHOD!" + className + "." + method, _sp3ObjectType, JSON.stringify(resWithoutClass));
+            }
             spPrivate.isCtorEnabled = true;
             const resWithClass = new ctor();
             spPrivate.isCtorEnabled = false;
@@ -232,6 +264,9 @@
               }
               const _sp3ObjectType = resWithoutClass._sp3ObjectType;
               const ctor = sp[_sp3ObjectType];
+              if (!ctor) {
+                skyrimPlatform.printConsole("!!STATIC!" + className + "." + staticFunction, _sp3ObjectType, JSON.stringify(resWithoutClass));
+              }
               spPrivate.isCtorEnabled = true;
               const resWithClass = new ctor();
               spPrivate.isCtorEnabled = false;

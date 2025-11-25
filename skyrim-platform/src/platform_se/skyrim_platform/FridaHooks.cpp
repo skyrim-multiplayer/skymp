@@ -178,6 +178,8 @@ void OnSendAnimationEventEnter(GumInvocationContext* ic)
   if (str == "") {
     return;
   }
+  OutputDebugString(str.c_str());
+  OutputDebugStringA("\n");
   EventsApi::SendAnimationEventEnter(formId, str);
   if (str != *animEventName) {
     auto fs =

@@ -8,7 +8,7 @@ public:
 
   // Must also search in base classes
   FunctionInfo_* GetFunctionInfo(const std::string& className,
-                                 const std::string& funcName) override;
+                                const std::string& funcName) override;
 
   bool IsDerivedFrom(const char* derivedClassName,
                      const char* baseClassName) override;
