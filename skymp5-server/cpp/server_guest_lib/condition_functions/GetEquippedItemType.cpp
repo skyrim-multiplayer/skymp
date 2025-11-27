@@ -28,7 +28,6 @@ float ConditionFunctions::GetEquippedItemType::Execute(
   auto equippedLight = actor.GetEquippedLight();
   auto equippedShield = actor.GetEquippedShield();
 
-
   static const std::optional<Inventory::Entry> kHandNull = std::nullopt;
 
   // Check weapons
