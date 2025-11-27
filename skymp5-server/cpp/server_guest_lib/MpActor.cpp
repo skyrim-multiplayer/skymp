@@ -1927,3 +1927,43 @@ std::array<std::optional<Inventory::Entry>, 2> MpActor::GetEquippedLight()
   }
   return wornEntries;
 }
+
+std::array<std::optional<Inventory::Entry>, 2> MpActor::GetEquippedShield()
+  const
+{
+  std::array<std::optional<Inventory::Entry>, 2> wornEntries;
+  // 0 -> left hand, 1 -> right hand
+  auto& espmBrowser = GetParent()->GetEspm().GetBrowser();
+  auto& espmCache = GetParent()->GetEspmCache();
+  constexpr uint32_t kBodShield = 0x00000200;
+
+  for (const auto& entry : GetEquipment().inv.entries) {
+    if (entry.GetWorn() != Inventory::Worn::None) {
+      espm::LookupResult res = espmBrowser.LookupById(entry.baseId);
+      auto* record = espm::Convert<espm::ARMO>(res.rec);
+      if (record) {
+        auto data = record->GetData(espmCache);
+        bool isShield = false;
+
+        if (data.bod2.present) {
+          isShield = (data.bod2.bodyPartFlags & kBodShield) != 0;
+        } else if (data.bodt.present) {
+          isShield = (data.bodt.bodyPartFlags & kBodShield) != 0;
+        } else {
+          continue;
+        }
+
+        if (!isShield) {
+          continue;
+        }
+
+        // In Skyrim, in the equipment data, the shield has the worn flag and
+        // not the wornLeft, although it is actually in the left hand.
+        if (entry.GetWorn() == Inventory::Worn::Right) {
+          wornEntries[0] = std::move(entry);
+        }
+      }
+    }
+  }
+  return wornEntries;
+}
