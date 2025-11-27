@@ -58,7 +58,7 @@ float ConditionFunctions::SpellHasKeyword::Execute(
     spell.rec->GetKeywordIds(worldState->GetEspmCache());
 
   if (std::any_of(keywordIds.begin(), keywordIds.end(), [&](uint32_t id) {
-        return spell.ToGlobalId(id) == parameter2;
+        return spell.ToGlobalId(id) == keywordId;
       })) {
     return 1.f;
   }
