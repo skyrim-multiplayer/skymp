@@ -33,7 +33,8 @@
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <sstream>
 
-enum class CallType {
+enum class CallType
+{
   Method,
   Global
 };
@@ -1201,7 +1202,8 @@ Napi::Value ScampServer::GetIdFromDesc(const Napi::CallbackInfo& info)
 
 namespace {
 VarValue CallPapyrusFunctionImpl(const std::shared_ptr<PartOne>& partOne,
-                                 CallType callType, const std::string& className,
+                                 CallType callType,
+                                 const std::string& className,
                                  const std::string& functionName,
                                  const VarValue& self,
                                  std::vector<VarValue>& args)
@@ -1535,7 +1537,8 @@ Napi::Value ScampServer::SP3GetFunctionImplementation(
           : PapyrusUtils::GetPapyrusValueFromJsValue(jsThis, false,
                                                      partOne->worldState);
 
-        CallType callType = jsThis.IsUndefined() ? CallType::Global : CallType::Method;
+        CallType callType =
+          jsThis.IsUndefined() ? CallType::Global : CallType::Method;
 
         VarValue res = CallPapyrusFunctionImpl(partOne, callType, className,
                                                functionName, self, args);
