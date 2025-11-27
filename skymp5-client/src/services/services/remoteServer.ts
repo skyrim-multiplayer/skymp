@@ -107,6 +107,7 @@ export class RemoteServer extends ClientListener {
     this.controller.emitter.on("setInventoryMessage", (e) => this.onSetInventoryMessage(e));
     this.controller.emitter.on("openContainerMessage", (e) => this.onOpenContainerMessage(e));
     this.controller.emitter.on("updateMovementMessage", (e) => this.onUpdateMovementMessage(e));
+    this.controller.emitter.on("updateAnimationMessage", (e) => this.onUpdateAnimationMessage(e));
     this.controller.emitter.on("updateEquipmentMessage", (e) => this.onUpdateEquipmentMessage(e));
     this.controller.emitter.on("changeValuesMessage", (e) => this.onChangeValuesMessage(e));
     this.controller.emitter.on("updateAppearanceMessage", (e) => this.onUpdateAppearanceMessage(e));
@@ -664,6 +665,21 @@ export class RemoteServer extends ClientListener {
       form.numMovementChanges = 0;
     }
     form.numMovementChanges++;
+  }
+
+  private onUpdateAnimationMessage(event: ConnectionMessage<UpdateAnimationMessage>): void {
+    const msg = event.message;
+
+    const i = this.getIdManager().getId(msg.idx);
+
+    const form = this.worldModel.forms[i];
+
+    if (form === undefined) {
+      logError(this, `onUpdateAnimationMessage - Form with idx`, msg.idx, `not found`);
+      return;
+    }
+
+    form.animation = msg.data;
   }
 
   private onUpdateAppearanceMessage(event: ConnectionMessage<UpdateAppearanceMessage>): void {

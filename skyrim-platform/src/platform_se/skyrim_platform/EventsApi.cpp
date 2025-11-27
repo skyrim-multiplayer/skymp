@@ -38,6 +38,7 @@ void EventsApi::SendEvent(const char* eventName,
   auto cbObjMap = manager->GetCallbackObjMap(eventName);
 
   if (!cbObjMap || cbObjMap->empty()) {
+    logger::trace("Failed to retrieve callback map or the map is empty.");
     return;
   }
 
