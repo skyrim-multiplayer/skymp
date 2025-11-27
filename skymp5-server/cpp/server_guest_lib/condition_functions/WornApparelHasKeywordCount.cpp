@@ -43,9 +43,9 @@ float ConditionFunctions::WornApparelHasKeywordCount::Execute(
     auto data = espm::GetData<espm::ARMO>(entry.baseId, worldState);
 
     bool isApparel = false;
-    if (data.hasBOD2 && (data.BOD2_flags & kArmorBits)) {
+    if (data.bod2.present && (data.bod2.bodyPartFlags & kArmorBits)) {
       isApparel = true;
-    } else if (data.hasBODT && (data.BODT_flags & kArmorBits)) {
+    } else if (data.bodt.present && (data.bodt.bodyPartFlags & kArmorBits)) {
       isApparel = true;
     }
 

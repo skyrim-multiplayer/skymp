@@ -53,10 +53,10 @@ float ConditionFunctions::SkympWornHasKeywordCount::Execute(
       auto data = espm::GetData<espm::ARMO>(entry.baseId, worldState);
 
       uint32_t bodyPartFlags = 0;
-      if (data.hasBOD2) {
-        bodyPartFlags = data.BOD2_flags;
-      } else if (data.hasBODT) {
-        bodyPartFlags = data.BODT_flags;
+      if (data.bod2.present) {
+        bodyPartFlags = data.bod2.bodyPartFlags;
+      } else if (data.bodt.present) {
+        bodyPartFlags = data.bodt.bodyPartFlags;
       }
 
       if ((bodyPartFlags & parameter2) == 0) {

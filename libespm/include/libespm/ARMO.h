@@ -18,13 +18,12 @@ public:
     uint32_t enchantmentFormId = 0;
     uint32_t equipSlotId = 0; // only for shields
 
-    bool hasBODT = false;
-    uint32_t BODT_flags = 0;
-    uint32_t BODT_skill = 0;
-
-    bool hasBOD2 = false;
-    uint32_t BOD2_flags = 0;
-    uint32_t BOD2_skill = 0;
+    struct
+    {
+      bool present = false;
+      uint32_t bodyPartFlags = 0;
+      uint32_t skill = 0;
+    } bodt, bod2;
   };
 
   Data GetData(CompressedFieldsCache& compressedFieldsCache) const;
