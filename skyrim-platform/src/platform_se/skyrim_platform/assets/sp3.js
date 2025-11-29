@@ -103,14 +103,42 @@
       sp = {};
     }
 
-    // TODO: de-duplicate other wrap code from this file
-    api._sp3RegisterWrapObjectFunction((obj) => {
-      const _sp3ObjectType = obj._sp3ObjectType;
-      const ctor = sp[_sp3ObjectType];
+    // Helper: Wraps a raw object with its class prototype
+    const wrapObject = (obj) => {
+      if (obj === null || typeof obj !== "object") {
+        return obj;
+      }
+      const ctor = sp[obj._sp3ObjectType];
       const resWithClass = Object.create(ctor.prototype);
       assign(resWithClass, obj);
       return resWithClass;
-    });
+    };
+
+    // Helper: Generic Function Handler (handles both static and instance)
+    const createWrapperFunction = (impl, isStatic) => {
+      return function (...args) {
+        // For instance methods, bind 'this'. For static, call directly.
+        const resWithoutClass = isStatic ? impl(...args) : impl.bind(this)(...args);
+
+        if (resWithoutClass instanceof Promise) {
+          // Preserve metadata potentially attached to the Promise object itself
+          let tmp = resWithoutClass._sp3ObjectType;
+
+          return new Promise((resolve, reject) => {
+            resWithoutClass.then((res) => {
+              if (res !== null && typeof res === "object" && tmp) {
+                res._sp3ObjectType = tmp;
+              }
+              resolve(wrapObject(res));
+            }).catch(reject);
+          });
+        }
+
+        return wrapObject(resWithoutClass);
+      };
+    };
+
+    api._sp3RegisterWrapObjectFunction(wrapObject);
 
     const classes =
       sortClassesByInheritance(api._sp3ListClasses(), api)
@@ -138,79 +166,22 @@
 
       f.prototype.constructor = f;
 
+      // Register Instance Methods
       methods.concat(methods.map(prettify)).forEach(method => {
         const impl = api._sp3GetFunctionImplementation(sp, className, method);
-
-        const methodFinal = function () {
-          let f = (resWithoutClass) => {
-            if (resWithoutClass === null || typeof resWithoutClass !== "object") {
-              return resWithoutClass;
-            }
-            const _sp3ObjectType = resWithoutClass._sp3ObjectType;
-            const ctor = sp[_sp3ObjectType];
-            const resWithClass = Object.create(ctor.prototype);
-            assign(resWithClass, resWithoutClass);
-            return resWithClass;
-          };
-
-          let resWithoutClass = impl.bind(this)(...arguments);
-
-          if (resWithoutClass instanceof Promise) {
-            let tmp = resWithoutClass._sp3ObjectType;
-
-            return new Promise((resolve, reject) => {
-              resWithoutClass.then((res) => {
-                if (res !== null && typeof res === "object" && tmp) {
-                  res._sp3ObjectType = tmp;
-                }
-                resolve(f(res));
-              }).catch(reject);
-            });
-          }
-
-          return f(resWithoutClass);
-        };
+        const methodFinal = createWrapperFunction(impl, false);
 
         f.prototype[method] = methodFinal;
         f.prototype[getFunctionAliasName(method) || method] = methodFinal;
       });
 
+      // Register Static Functions
       staticFunctions
         .concat(staticFunctions.map(prettify))
         .concat(nStaticsBefore !== nStaticsAfter ? ["getPlayer", "GetPlayer"] : [])
         .forEach(staticFunction => {
-
           const impl = api._sp3GetFunctionImplementation(sp, className, staticFunction);
-
-          const staticFunctionFinal = function () {
-            let f = (resWithoutClass) => {
-              if (resWithoutClass === null || typeof resWithoutClass !== "object") {
-                return resWithoutClass;
-              }
-              const _sp3ObjectType = resWithoutClass._sp3ObjectType;
-              const ctor = sp[_sp3ObjectType];
-              const resWithClass = Object.create(ctor.prototype);
-              assign(resWithClass, resWithoutClass);
-              return resWithClass;
-            };
-
-            let resWithoutClass = impl(...arguments);
-
-            if (resWithoutClass instanceof Promise) {
-              let tmp = resWithoutClass._sp3ObjectType;
-
-              return new Promise(resolve => {
-                resWithoutClass.then((res) => {
-                  if (res !== null && typeof res === "object" && tmp) {
-                    res._sp3ObjectType = tmp;
-                  }
-                  resolve(f(res));
-                });
-              });
-            }
-
-            return f(resWithoutClass);
-          };
+          const staticFunctionFinal = createWrapperFunction(impl, true);
 
           f[staticFunction] = staticFunctionFinal;
           f[getFunctionAliasName(staticFunction) || staticFunction] = staticFunctionFinal;
