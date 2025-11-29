@@ -1,6 +1,11 @@
 (api, sp) => {
   const nodeProcess = require("node:process");
 
+  const compatibilityConfig = {
+    staticRenames: { "getplayer": ["getPlayer", "GetPlayer"] },
+    uppercaseAliases: ["Spell", "Weapon"],
+  };
+
   function getAliasNameImpl(originalName, envName, character) {
     if (!nodeProcess.env[envName]) {
       return null;
@@ -149,9 +154,15 @@
       let staticFunctions = api._sp3ListStaticFunctions(className);
       const methods = api._sp3ListMethods(className);
 
-      const nStaticsBefore = staticFunctions.length;
-      staticFunctions = staticFunctions.filter(f => f.toLowerCase() !== "getplayer");
-      const nStaticsAfter = staticFunctions.length;
+      const staticOverrides = new Set();
+      staticFunctions = staticFunctions.filter(f => {
+        const replacement = compatibilityConfig.staticRenames[f.toLowerCase()];
+        if (replacement) {
+          replacement.forEach(r => staticOverrides.add(r));
+          return false;
+        }
+        return true;
+      });
 
       // The "Computed Property Name" trick is used to create a named function dynamically
       const f = {
@@ -178,7 +189,7 @@
       // Register Static Functions
       staticFunctions
         .concat(staticFunctions.map(prettify))
-        .concat(nStaticsBefore !== nStaticsAfter ? ["getPlayer", "GetPlayer"] : [])
+        .concat(Array.from(staticOverrides))
         .forEach(staticFunction => {
           const impl = api._sp3GetFunctionImplementation(sp, className, staticFunction);
           const staticFunctionFinal = createWrapperFunction(impl, true);
@@ -200,12 +211,11 @@
       sp[getClassAliasName(className) || className] = f;
     });
 
-    if (sp["Spell"]) {
-      sp["SPELL"] = sp["Spell"];
-    }
-    if (sp["Weapon"]) {
-      sp["WEAPON"] = sp["Weapon"];
-    }
+    compatibilityConfig.uppercaseAliases.forEach(alias => {
+      if (sp[alias]) {
+        sp[alias.toUpperCase()] = sp[alias];
+      }
+    });
 
     return sp;
   }

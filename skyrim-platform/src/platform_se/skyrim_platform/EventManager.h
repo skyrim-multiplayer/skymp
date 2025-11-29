@@ -1,11 +1,12 @@
 #pragma once
+#pragma once
 #include "EventHandler.h"
 
 struct EventHandle
 {
-  EventHandle(uintptr_t _uid, const std::string& _eventName)
-    : uid(_uid)
-    , eventName(_eventName)
+  EventHandle(uintptr_t uid_, const std::string& eventName_)
+    : uid(uid_)
+    , eventName(eventName_)
   {
   }
 
@@ -13,24 +14,35 @@ struct EventHandle
   const std::string eventName;
 };
 
-struct SinkObject
+class SinkObject
 {
-  SinkObject(const ::Sink* _sink, std::vector<std::string_view>& _linkedEvents)
-    : sink(_sink)
-    , linkedEvents(_linkedEvents)
+public:
+  SinkObject(const ::Sink* sink_,
+             const std::vector<std::string>& linkedEvents_)
+    : sink(sink_)
+    , linkedEvents(linkedEvents_)
   {
   }
+
+  const ::Sink* GetSink() const { return sink; }
+
+  const std::vector<std::string>& GetLinkedEvents() const
+  {
+    return linkedEvents;
+  }
+
+private:
   const ::Sink* sink;
-  const std::vector<std::string_view> linkedEvents;
+  std::vector<std::string> linkedEvents;
 };
 
 struct CallbackObject
 {
   CallbackObject(
-    const std::shared_ptr<Napi::Reference<Napi::Function>>& _callback,
-    bool _runOnce)
-    : callback(_callback)
-    , runOnce(_runOnce)
+    const std::shared_ptr<Napi::Reference<Napi::Function>>& callback_,
+    bool runOnce_)
+    : callback(callback_)
+    , runOnce(runOnce_)
   {
   }
 
@@ -42,17 +54,17 @@ using CallbackObjMap = robin_hood::unordered_map<uintptr_t, CallbackObject>;
 
 struct EventState
 {
-  explicit EventState(const SinkObject* _sink)
-    : sinkObj(_sink)
+  explicit EventState(const std::optional<SinkObject>& sinkObj_)
+    : sinkObj(sinkObj_)
   {
     callbacks.reserve(5);
   }
 
-  const SinkObject* sinkObj;
+  std::optional<SinkObject> sinkObj;
   CallbackObjMap callbacks;
 };
 
-using EventMap = robin_hood::unordered_map<std::string_view, EventState*>;
+using EventMap = robin_hood::unordered_map<std::string, EventState>;
 
 class EventManager
 {
@@ -71,19 +83,21 @@ public:
     const std::shared_ptr<Napi::Reference<Napi::Function>>& callback,
     bool runOnce);
 
-  void Unsubscribe(uintptr_t uid, const std::string_view& eventName);
+  void Unsubscribe(uintptr_t uid, const std::string& eventName);
 
   void ClearCallbacks();
 
-  CallbackObjMap* GetCallbackObjMap(const char* eventName);
+  const CallbackObjMap& GetCallbackObjMap(const char* eventName);
 
-  void EmplaceEvent(const std::string_view& name,
-                    EventState* state = new EventState(nullptr));
+  void EmplaceEvent(const std::string& name,
+                    const EventState& state = EventState{ std::nullopt });
 
-  EventMap* GetEventMap();
+  EventMap& GetEventMap();
 
 private:
-  // last i checked we had ~97 events
+  void DeactivateEventSinkIfNeeded(EventState& state,
+                                   const std::string& eventName);
+
   EventManager() { events.reserve(100); }
   EventManager(const EventManager&) = delete;
   EventManager(EventManager&&) = delete;
