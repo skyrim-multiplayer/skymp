@@ -1,5 +1,4 @@
 #pragma once
-#pragma once
 #include "EventHandler.h"
 
 struct EventHandle
