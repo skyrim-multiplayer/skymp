@@ -120,7 +120,7 @@ void EventManager::Unsubscribe(uintptr_t uid, const std::string& eventName)
 
 void EventManager::ClearCallbacks()
 {
-  for (auto [eventName, state] : events) {
+  for (auto& [eventName, state] : events) {
     state.callbacks.clear();
   }
 
