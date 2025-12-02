@@ -2,7 +2,7 @@ vcpkg_from_github(
   OUT_SOURCE_PATH SOURCE_PATH
   REPO kkEngine/NirnLabUIPlatform
   REF 21c1adaa719245e039566f2426bc7cd546005677  # ver3.1PR + a few commits, will likely be tagged as ver3.1
-  SHA512 03dd9dff0e43bee963fbe53ceb7407863acfd592b4bc3f87d5aace3687a85cec83f8b37fba150821a0cac16e40a8b5144c0060e507a1a2f94a5fa1bfb69db355
+  SHA512 7acc44e6af661b10a1082fe5a82ddbe0276912d04622c2295c2c3cd61be27e24b14764d4c0c2b767b9ad8bc567a0d57ccba7712067601a9b1595383cd7e2420e
   HEAD_REF main
 )
 
