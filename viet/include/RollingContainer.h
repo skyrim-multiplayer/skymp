@@ -1,10 +1,9 @@
 #pragma once
-#include <vector>
 #include <cstddef>
 #include <cstdint>
+#include <vector>
 
-namespace Viet
-{
+namespace Viet {
 template <class T, size_t MaxLogicalIndex = 0x1FFFFFFFFFFFFF>
 class RollingContainer
 {
