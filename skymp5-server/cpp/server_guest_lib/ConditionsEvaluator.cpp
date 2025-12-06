@@ -143,9 +143,9 @@ std::vector<std::string> ConditionsEvaluator::LogEvaluateConditionsResolution(
     return std::vector<std::string>();
   }
 
-  auto GetAlphabetChar = [](size_t index) -> std::string {
+  auto getAlphabetChar = [](size_t index) -> std::string {
     // 1. Determine the letter (ALWAYS A-Z)
-    char letter = 'A' + (char)(index % 26);
+    char letter = 'A' + static_cast<char>(index % 26);
     
     std::string res(1, letter);
 
@@ -189,7 +189,7 @@ std::vector<std::string> ConditionsEvaluator::LogEvaluateConditionsResolution(
       }
     }
 
-    s += GetAlphabetChar(alphabetCharCounter);
+    s += getAlphabetChar(alphabetCharCounter);
     ++alphabetCharCounter;
 
     if (i != conditions.size() - 1) {
@@ -211,7 +211,7 @@ std::vector<std::string> ConditionsEvaluator::LogEvaluateConditionsResolution(
 
   for (size_t i = 0; i < conditions.size(); ++i) {
     s.clear();
-    s += GetAlphabetChar(alphabetCharCounter);
+    s += getAlphabetChar(alphabetCharCounter);
     s += ": ";
     s += conditions[i].function;
     s += ' ';
