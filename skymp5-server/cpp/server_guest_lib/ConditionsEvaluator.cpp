@@ -175,7 +175,6 @@ std::vector<std::string> ConditionsEvaluator::LogEvaluateConditionsResolution(
   }
 
   size_t currentGroupStart = 0;
-  size_t alphabetCharCounter = 0;
 
   for (size_t i = 0; i < conditions.size(); ++i) {
     if (groupStarts.size() > currentGroupStart &&
@@ -189,8 +188,7 @@ std::vector<std::string> ConditionsEvaluator::LogEvaluateConditionsResolution(
       }
     }
 
-    s += getAlphabetChar(alphabetCharCounter);
-    ++alphabetCharCounter;
+    s += getAlphabetChar(i);
 
     if (i != conditions.size() - 1) {
       s += conditions[i].logicalOperator == "AND" ? " " : " | ";
@@ -207,11 +205,9 @@ std::vector<std::string> ConditionsEvaluator::LogEvaluateConditionsResolution(
 
   res.push_back("Condition resolutions:");
 
-  alphabetCharCounter = 0;
-
   for (size_t i = 0; i < conditions.size(); ++i) {
     s.clear();
-    s += getAlphabetChar(alphabetCharCounter);
+    s += getAlphabetChar(i);
     s += ": ";
     s += conditions[i].function;
     s += ' ';
@@ -231,8 +227,6 @@ std::vector<std::string> ConditionsEvaluator::LogEvaluateConditionsResolution(
       s += "unknown";
     }
     res.push_back(s);
-
-    ++alphabetCharCounter;
   }
 
   return res;
