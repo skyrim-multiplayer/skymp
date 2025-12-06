@@ -17,7 +17,7 @@ std::function<CallNativeApi::NativeCallRequirements()>
 
 std::shared_ptr<Napi::FunctionReference> g_wrapObjectFunction;
 
-std::string GetSp3Js(const char* pathInAssets)
+std::string GetEmbeddedJavaScriptSources(const char* pathInAssets)
 {
   cmrc::file file;
   try {
@@ -124,7 +124,8 @@ void Sp3Api::Register(Napi::Env env, Napi::Object& exports,
 
   {
     constexpr auto kPathInAssets = "assets/sp3.js";
-    std::string sp3SourceCode = sp3api::internal::GetSp3Js(kPathInAssets);
+    std::string sp3SourceCode =
+      sp3api::internal::GetEmbeddedJavaScriptSources(kPathInAssets);
     Napi::Value createSkyrimPlatform =
       NapiHelper::RunScript(env, sp3SourceCode);
 
@@ -133,7 +134,8 @@ void Sp3Api::Register(Napi::Env env, Napi::Object& exports,
 
   {
     constexpr auto kPathInAssets = "assets/storageProxy.js";
-    std::string src = sp3api::internal::GetSp3Js(kPathInAssets);
+    std::string src =
+      sp3api::internal::GetEmbeddedJavaScriptSources(kPathInAssets);
     Napi::Value initStorageProxy = NapiHelper::RunScript(env, src);
 
     initStorageProxy.As<Napi::Function>().Call({ exports });
@@ -285,55 +287,57 @@ Napi::Value Sp3Api::SP3GetFunctionImplementation(
     return Napi::Function::New(info.Env(), functionImplementationWrapped);
   }
 
-  auto functionImplementation =
-    [className, functionName](const Napi::CallbackInfo& info) {
-      if (!sp3api::internal::g_getNativeCallRequirements) {
-        throw NullPointerException(
-          "sp3api::internal::g_getNativeCallRequirements");
+  auto functionImplementation = [className, functionName](
+                                  const Napi::CallbackInfo& info) {
+    if (!sp3api::internal::g_getNativeCallRequirements) {
+      throw NullPointerException(
+        "sp3api::internal::g_getNativeCallRequirements");
+    }
+
+    std::vector<Napi::Value> args = { Napi::String::New(info.Env(), className),
+                                      Napi::String::New(info.Env(),
+                                                        functionName) };
+    args.reserve(16);
+
+    Napi::Value jsThis = info.This();
+
+    // Hack to detect that this arg refers to class not to an object, so
+    // it's a static call
+    if (jsThis.IsObject()) {
+      if (jsThis.As<Napi::Object>()
+            .Get(SP3NativeValueCasts::kSkyrimPlatformIndexInPoolProperty)
+            .IsUndefined()) {
+        jsThis = info.Env().Undefined();
       }
+    }
 
-      std::vector<Napi::Value> args;
-      args.push_back(Napi::String::New(info.Env(), className));
-      args.push_back(Napi::String::New(info.Env(), functionName));
+    args.push_back(jsThis);
 
-      Napi::Value jsThis = info.This();
+    for (size_t i = 0; i < info.Length(); i++) {
+      args.push_back(info[i]);
+    }
 
-      // Hack to detect that this arg refers to class not to an object, so
-      // it's a static call
-      if (jsThis.IsObject()) {
-        if (jsThis.As<Napi::Object>()
-              .Get(SP3NativeValueCasts::kSkyrimPlatformIndexInPoolProperty)
-              .IsUndefined()) {
-          jsThis = info.Env().Undefined();
-        }
+    auto jsRes = CallNativeApi::CallNative(
+      info.Env(), args, sp3api::internal::g_getNativeCallRequirements);
+
+    // Promise is also an object. Creating a property on a Promise instance
+    // is valid. It likely causes de-optimization though
+    if (jsRes.IsObject()) {
+      auto& vmProvider = VmProvider::GetSingleton();
+      FunctionInfo_* functionInfo =
+        vmProvider.GetFunctionInfo(className, functionName);
+      if (functionInfo) {
+        const char* returnType = functionInfo->GetReturnType().className;
+        jsRes.As<Napi::Object>().Set("_sp3ObjectType", returnType);
+      } else {
+        spdlog::warn("Sp3Api::SP3GetFunctionImplementation - FunctionInfo "
+                     "not found for {}.{}",
+                     className, functionName);
       }
+    }
 
-      args.push_back(jsThis);
-
-      for (size_t i = 0; i < info.Length(); i++) {
-        args.push_back(info[i]);
-      }
-
-      auto jsRes = CallNativeApi::CallNative(
-        info.Env(), args, sp3api::internal::g_getNativeCallRequirements);
-
-      // TODO: handle promises here (like on ObjectReference.disable)
-      if (jsRes.IsObject()) {
-        auto& vmProvider = VmProvider::GetSingleton();
-        FunctionInfo_* functionInfo =
-          vmProvider.GetFunctionInfo(className, functionName);
-        if (functionInfo) {
-          const char* returnType = functionInfo->GetReturnType().className;
-          jsRes.As<Napi::Object>().Set("_sp3ObjectType", returnType);
-        } else {
-          spdlog::warn("Sp3Api::SP3GetFunctionImplementation - FunctionInfo "
-                       "not found for {}.{}",
-                       className, functionName);
-        }
-      }
-
-      return jsRes;
-    };
+    return jsRes;
+  };
 
   auto functionImplementationWrapped =
     NapiHelper::WrapCppExceptions(functionImplementation);

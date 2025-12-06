@@ -8,11 +8,13 @@
 #include "InvalidArgumentException.h"
 #include "JsUtils.h"
 #include "NullPointerException.h"
+#include "ScopedTask.h"
 #include "SkyrimPlatform.h"
 #include "ThreadPoolWrapper.h"
 
-struct EventsGlobalState
+class EventsGlobalState
 {
+public:
   EventsGlobalState()
   {
     sendAnimationEvent.reset(
@@ -21,11 +23,6 @@ struct EventsGlobalState
       new Hook("sendPapyrusEvent", "papyrusEventName", std::nullopt));
   }
 
-  using Callbacks =
-    std::map<std::string,
-             std::vector<std::shared_ptr<Napi::Reference<Napi::Function>>>>;
-  Callbacks callbacks;
-  Callbacks callbacksOnce;
   std::shared_ptr<Hook> sendAnimationEvent;
   std::shared_ptr<Hook> sendPapyrusEvent;
 } g;
@@ -35,17 +32,16 @@ void EventsApi::SendEvent(const char* eventName,
 {
   auto manager = EventManager::GetSingleton();
 
-  auto cbObjMap = manager->GetCallbackObjMap(eventName);
+  const CallbackObjMap& cbObjMap = manager->GetCallbackObjMap(eventName);
 
-  if (!cbObjMap || cbObjMap->empty()) {
-    return;
-  }
-
+  // TODO: use container with pre-allocated space
+  // Global vars aren't helpful, because SendEvent can be made recursive in the
+  // future.
   std::vector<uintptr_t> callbacksToUnsubscribe;
   std::vector<CallbackObject> callbacksToCall;
 
   // 1. Collect all callbacks and remember "runOnce" callbacks
-  for (const auto& [uid, cb] : *cbObjMap) {
+  for (const auto& [uid, cb] : cbObjMap) {
     callbacksToCall.push_back(cb);
     if (cb.runOnce) {
       callbacksToUnsubscribe.push_back(uid);
@@ -53,12 +49,12 @@ void EventsApi::SendEvent(const char* eventName,
   }
 
   // 2. Make sure that "runOnce" callbacks will never be called again
-  for (auto uid : callbacksToUnsubscribe) {
+  for (uintptr_t uid : callbacksToUnsubscribe) {
     manager->Unsubscribe(uid, eventName);
   }
 
   // 3. Finally, call the callbacks
-  for (auto& cb : callbacksToCall) {
+  for (CallbackObject& cb : callbacksToCall) {
     try {
       Napi::Function callback = cb.callback->Value().As<Napi::Function>();
       callback.Call(arguments);
