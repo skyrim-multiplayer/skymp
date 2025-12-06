@@ -135,6 +135,31 @@ std::vector<std::string> ConditionsEvaluator::LogEvaluateConditionsResolution(
   const std::vector<int>& conditionResolutions,
   const std::vector<float>& conditionFunctionResults, bool finalResult)
 {
+  if (conditions.size() != conditionResolutions.size() ||
+      conditions.size() != conditionFunctionResults.size()) {
+    spdlog::error(
+      "ConditionsEvaluator::LogEvaluateConditionsResolution - Mismatched conditions and results sizes: {} != {} != {}",
+      conditions.size(), conditionResolutions.size(), conditionFunctionResults.size());
+    return std::vector<std::string>();
+  }
+
+  auto GetAlphabetChar = [](size_t index) -> std::string {
+    // 1. Determine the letter (ALWAYS A-Z)
+    char letter = 'A' + (char)(index % 26);
+    
+    std::string res(1, letter);
+
+    // 2. Determine the cycle number (Empty, then 1, 2, 3...)
+    // 0-25 (A-Z)   -> 0 (Do nothing)
+    // 26-51 (A1-Z1) -> 1 (Add "1")
+    // 52-77 (A2-Z2) -> 2 (Add "2")
+    if (index >= 26) {
+      res += std::to_string(index / 26);
+    }
+
+    return res;
+  };
+
   std::vector<std::string> res;
 
   std::string s;
@@ -150,21 +175,22 @@ std::vector<std::string> ConditionsEvaluator::LogEvaluateConditionsResolution(
   }
 
   size_t currentGroupStart = 0;
-  char nextAlphabetChar = 'A';
+  size_t alphabetCharCounter = 0;
 
   for (size_t i = 0; i < conditions.size(); ++i) {
     if (groupStarts.size() > currentGroupStart &&
         groupStarts[currentGroupStart] == i) {
-      currentGroupStart = i + 1;
+      ++currentGroupStart;
       if (s.empty()) {
         s += "(";
       } else {
-        s.pop_back();
+        s.pop_back(); // remove last space
         s += ") & (";
       }
     }
 
-    s += nextAlphabetChar++;
+    s += GetAlphabetChar(alphabetCharCounter);
+    ++alphabetCharCounter;
 
     if (i != conditions.size() - 1) {
       s += conditions[i].logicalOperator == "AND" ? " " : " | ";
@@ -181,11 +207,11 @@ std::vector<std::string> ConditionsEvaluator::LogEvaluateConditionsResolution(
 
   res.push_back("Condition resolutions:");
 
-  nextAlphabetChar = 'A';
+  alphabetCharCounter = 0;
 
   for (size_t i = 0; i < conditions.size(); ++i) {
     s.clear();
-    s += nextAlphabetChar++;
+    s += GetAlphabetChar(alphabetCharCounter);
     s += ": ";
     s += conditions[i].function;
     s += ' ';
@@ -205,6 +231,8 @@ std::vector<std::string> ConditionsEvaluator::LogEvaluateConditionsResolution(
       s += "unknown";
     }
     res.push_back(s);
+
+    ++alphabetCharCounter;
   }
 
   return res;
