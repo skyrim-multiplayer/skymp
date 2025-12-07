@@ -137,16 +137,17 @@ std::vector<std::string> ConditionsEvaluator::LogEvaluateConditionsResolution(
 {
   if (conditions.size() != conditionResolutions.size() ||
       conditions.size() != conditionFunctionResults.size()) {
-    spdlog::error(
-      "ConditionsEvaluator::LogEvaluateConditionsResolution - Mismatched conditions and results sizes: {} != {} != {}",
-      conditions.size(), conditionResolutions.size(), conditionFunctionResults.size());
+    spdlog::error("ConditionsEvaluator::LogEvaluateConditionsResolution - "
+                  "Mismatched conditions and results sizes: {} != {} != {}",
+                  conditions.size(), conditionResolutions.size(),
+                  conditionFunctionResults.size());
     return std::vector<std::string>();
   }
 
   auto getAlphabetChar = [](size_t index) -> std::string {
     // 1. Determine the letter (ALWAYS A-Z)
     char letter = 'A' + static_cast<char>(index % 26);
-    
+
     std::string res(1, letter);
 
     // 2. Determine the cycle number (Empty, then 1, 2, 3...)
