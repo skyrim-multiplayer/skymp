@@ -11,8 +11,9 @@ void BrowserApiNirnLab::HandleSkseMessage(
   SKSE::MessagingInterface::Message* a_msg)
 {
   logger::info("skse message type {}", a_msg->type);
-  NL::UI::Settings settings;
+  NL::UI::Settings settings{};
   settings.remoteDebuggingPort = 9000;
+  // settings....mainmenu = false;
   NL::UI::SKSELoader::ProcessSKSEMessage(a_msg, &settings);
 }
 
