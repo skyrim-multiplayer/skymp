@@ -923,9 +923,12 @@ void PartOne::HandleMessagePacket(Networking::UserId userId,
                                   Networking::PacketData data, size_t length)
 {
   if (!serverState.IsConnected(userId)) {
-    throw std::runtime_error("User with id " + std::to_string(userId) +
-                             " doesn't exist");
+    spdlog::error("PartOne::HandleMessagePacket - received Message packet "
+                  "from non-existing user {}, ignoring",
+                  userId);
+    return;
   }
+
   if (!pImpl->packetParser) {
     pImpl->packetParser = std::make_shared<PacketParser>();
   }
