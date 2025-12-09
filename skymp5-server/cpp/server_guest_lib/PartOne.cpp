@@ -93,6 +93,7 @@ struct PartOne::Impl
 
   std::shared_ptr<OpenSSLSigner> sslSigner; // nullptr if no private key set
   std::string sslSignerKeyAlias;            // empty string
+  bool enableGamemodeDataUpdatesBroadcast = false;
 };
 
 PartOne::PartOne(Networking::ISendTarget* sendTarget)
@@ -447,6 +448,8 @@ void PartOne::HandlePacket(void* partOneInstance, Networking::UserId userId,
     case Networking::PacketType::ServerSideUserDisconnect: {
       ScopedTask t([userId, this_] {
         if (auto actor = this_->serverState.ActorByUser(userId)) {
+          // TODO: apply dependency inversion here: connection handling code
+          // should not depend on animation system
           this_->animationSystem.ClearInfo(actor);
         }
         this_->serverState.Disconnect(userId);
@@ -500,14 +503,14 @@ void PartOne::NotifyGamemodeApiStateChanged(
 
   for (auto [eventName, eventSourceInfo] : newState.createdEventSources) {
     msg.eventSources.push_back(
-      { eventName, SignedJS(eventSourceInfo.functionBody) });
+      { eventName, SignJavaScriptSources(eventSourceInfo.functionBody) });
   }
 
   for (auto [propertyName, propertyInfo] : newState.createdProperties) {
     GamemodeValuePair updateOwnerFunctionsEntry;
     updateOwnerFunctionsEntry.name = propertyName;
-    updateOwnerFunctionsEntry.content =
-      SignedJS(propertyInfo.isVisibleByOwner ? propertyInfo.updateOwner : "");
+    updateOwnerFunctionsEntry.content = SignJavaScriptSources(
+      propertyInfo.isVisibleByOwner ? propertyInfo.updateOwner : "");
     msg.updateOwnerFunctions.push_back(updateOwnerFunctionsEntry);
 
     //  From docs: isVisibleByNeighbors considered to be always false for
@@ -519,20 +522,29 @@ void PartOne::NotifyGamemodeApiStateChanged(
 
     GamemodeValuePair updateNeighborFunctionsEntry;
     updateNeighborFunctionsEntry.name = propertyName;
-    updateNeighborFunctionsEntry.content =
-      SignedJS(actuallyVisibleByNeighbor ? propertyInfo.updateNeighbor : "");
+    updateNeighborFunctionsEntry.content = SignJavaScriptSources(
+      actuallyVisibleByNeighbor ? propertyInfo.updateNeighbor : "");
     msg.updateNeighborFunctions.push_back(updateNeighborFunctionsEntry);
   }
 
   SLNet::BitStream stream;
   GetMessageSerializerInstance().Serialize(msg, stream);
 
-  for (Networking::UserId i = 0; i <= serverState.maxConnectedId; ++i) {
-    if (serverState.IsConnected(i)) {
-      GetSendTarget().Send(
-        i, reinterpret_cast<Networking::PacketData>(stream.GetData()),
-        stream.GetNumberOfBytesUsed(), true);
+  if (pImpl->enableGamemodeDataUpdatesBroadcast) {
+    spdlog::info("PartOne::NotifyGamemodeApiStateChanged - sending gamemode "
+                 "data update to all connected users");
+    auto& currentSendTarget = GetSendTarget();
+    for (size_t i = 0, n = serverState.maxConnectedId; i <= n; ++i) {
+      Networking::UserId userId = static_cast<Networking::UserId>(i);
+      if (serverState.IsConnected(userId)) {
+        currentSendTarget.Send(
+          userId, reinterpret_cast<Networking::PacketData>(stream.GetData()),
+          stream.GetNumberOfBytesUsed(), true);
+      }
     }
+  } else {
+    spdlog::info("PartOne::NotifyGamemodeApiStateChanged - skipping gamemode "
+                 "data update send, clientsided hot-reload is disabled");
   }
 
   pImpl->gamemodeApiState = newState;
@@ -549,22 +561,26 @@ void PartOne::SetPrivateKey(const std::string& keyAlias,
   pImpl->sslSignerKeyAlias = keyAlias;
 }
 
-std::string PartOne::SignedJS(std::string src) const
+void PartOne::EnableGamemodeDataUpdatesBroadcast(bool enable)
+{
+  pImpl->enableGamemodeDataUpdatesBroadcast = enable;
+}
+
+std::string PartOne::SignJavaScriptSources(const std::string& src) const
 {
   if (src.empty()) {
     return src;
   }
 
   if (!pImpl->sslSigner) {
-    src += "\n// skymp:sig:n/a";
-    return src;
+    return src + "\n// skymp:sig:n/a";
   }
 
-  auto sig = pImpl->sslSigner->SignB64(
+  std::string signature = pImpl->sslSigner->SignB64(
     reinterpret_cast<const unsigned char*>(src.c_str()), src.length());
-  src +=
-    fmt::format("\n// skymp:sig:y:CPP{}:{}", pImpl->sslSignerKeyAlias, sig);
-  return src;
+  return src +
+    fmt::format("\n// skymp:sig:y:CPP{}:{}", pImpl->sslSignerKeyAlias,
+                signature);
 }
 
 void PartOne::SetPacketHistoryRecording(Networking::UserId userId, bool enable)
@@ -885,6 +901,7 @@ void PartOne::AddUser(Networking::UserId userId, UserType type,
   for (auto& listener : worldState.listeners)
     listener->OnConnect(userId);
 
+  // Save CPU time by not serializing UpdateGamemodeDataMessage each time
   if (!pImpl->updateGamemodeDataMsg.empty()) {
     GetSendTarget().Send(userId,
                          reinterpret_cast<Networking::PacketData>(
@@ -985,8 +1002,8 @@ void PartOne::TickPacketHistoryPlaybacks()
 
 void PartOne::TickDeferredMessages()
 {
-  for (Networking::UserId userId = 0; userId <= serverState.maxConnectedId;
-       ++userId) {
+  for (size_t i = 0, n = serverState.maxConnectedId; i <= n; ++i) {
+    Networking::UserId userId = static_cast<Networking::UserId>(i);
     auto& userInfo = serverState.userInfo[userId];
     if (!userInfo) {
       continue;

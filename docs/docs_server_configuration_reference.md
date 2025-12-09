@@ -422,3 +422,15 @@ If "damageMultFormulaSettings" is not present, the server will use some default 
   // ...
 }
 ```
+
+## enableGamemodeDataUpdatesBroadcast
+
+A boolean setting that enables or disables broadcasting gamemode data updates to all connected users. When set to `true`, the server will send gamemode data updates to all clients. Default is `false`.
+
+```json5
+{
+  // ...
+  "enableGamemodeDataUpdatesBroadcast": true
+  // ...
+}
+```
