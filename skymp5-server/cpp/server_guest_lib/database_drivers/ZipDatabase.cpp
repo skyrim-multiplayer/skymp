@@ -6,7 +6,6 @@
 #include <filesystem>
 #include <fstream>
 #include <nlohmann/json.hpp>
-#include <zlib.h>
 
 struct ZipDatabase::Impl
 {
