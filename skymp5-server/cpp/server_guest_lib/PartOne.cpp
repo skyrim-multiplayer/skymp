@@ -501,6 +501,10 @@ void PartOne::NotifyGamemodeApiStateChanged(
 {
   UpdateGameModeDataMessage msg;
 
+  msg.eventSources.reserve(newState.createdEventSources.size());
+  msg.updateOwnerFunctions.reserve(newState.createdProperties.size());
+  msg.updateNeighborFunctions.reserve(newState.createdProperties.size());
+
   for (auto [eventName, eventSourceInfo] : newState.createdEventSources) {
     msg.eventSources.push_back(
       { eventName, SignJavaScriptSources(eventSourceInfo.functionBody) });
@@ -543,6 +547,8 @@ void PartOne::NotifyGamemodeApiStateChanged(
       }
     }
   } else {
+    // Intentionally skipped to avoid client instability. See
+    // 'enableGamemodeDataUpdatesBroadcast' in server docs.
     spdlog::info("PartOne::NotifyGamemodeApiStateChanged - skipping gamemode "
                  "data update send, clientsided hot-reload is disabled");
   }
