@@ -26,5 +26,8 @@ RUN \
     make \
     zip \
     pkg-config \
+    flex \
+    bison \
+    autoconf \
   && rm -rf /var/lib/apt/lists/* \
   && mv /usr/bin/clang-format-15 /usr/bin/clang-format
