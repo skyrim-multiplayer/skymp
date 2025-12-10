@@ -6,16 +6,6 @@
 #include <filesystem>
 #include <fstream>
 #include <nlohmann/json.hpp>
-#include <zlib.h>
-
-namespace {
-inline uint32_t ZlibGetCRC32Checksum(const void* readBuffer, z_size_t length)
-{
-  uLong hash = crc32_z(0L, Z_NULL, 0);
-  hash = crc32_z(hash, static_cast<const Bytef*>(readBuffer), length);
-  return static_cast<uint32_t>(hash);
-}
-}
 
 struct ZipDatabase::Impl
 {
