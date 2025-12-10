@@ -41,6 +41,9 @@ RUN \
     make \
     zip \
     pkg-config \
+    flex \
+    bison \
+    autoconf \
     cmake \
     clang-15 \
     clang-format-15 \
