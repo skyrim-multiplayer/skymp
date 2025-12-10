@@ -1,6 +1,12 @@
 (api, sp) => {
+  const nodeProcess = require("node:process");
+
+  const compatibilityConfig = {
+    staticRenames: { "getplayer": ["getPlayer", "GetPlayer"] },
+    uppercaseAliases: ["Spell", "Weapon"],
+  };
+
   function getAliasNameImpl(originalName, envName, character) {
-    const nodeProcess = require("node:process");
     if (!nodeProcess.env[envName]) {
       return null;
     }
@@ -49,95 +55,95 @@
   };
 
   function sortClassesByInheritance(classes, api) {
-    let classesSorted = new Array;
+    const sorted = [];
+    const visited = new Set();
+    const recursionStack = new Set();
 
-    while (classes.length > 0) {
-      let stack = [classes.shift()];
-      let baseClass = stack[0];
-      while (baseClass) {
-        baseClass = api._sp3GetBaseClass(baseClass);
-        if (baseClass) {
-          stack.push(baseClass);
+    for (const startClass of classes) {
+      if (visited.has(startClass)) {
+        continue;
+      }
+
+      const stack = [startClass];
+      recursionStack.add(startClass);
+
+      while (stack.length > 0) {
+        const current = stack[stack.length - 1];
+        const base = api._sp3GetBaseClass(current);
+
+        if (base && !visited.has(base)) {
+          if (recursionStack.has(base)) {
+            throw new Error(`Circular dependency detected: ${current} -> ${base}`);
+          }
+          stack.push(base);
+          recursionStack.add(base);
+        } else {
+          stack.pop();
+          recursionStack.delete(current);
+          if (!visited.has(current)) {
+            visited.add(current);
+            sorted.push(current);
+          }
         }
       }
-      stack.reverse();
-      for (let i = 0; i < stack.length; i++) {
-        if (!classesSorted.includes(stack[i])) {
-          classesSorted.push(stack[i]);
-        }
-      }
-      classes = classes.filter(c => !stack.includes(c));
     }
 
-    return classesSorted;
+    return sorted;
   }
 
-  // While SP3 backend is trusted, it's better to be safe than sorry
-  function sanitizeClassNameBeforeEval(className) {
-    const alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-";
-
-    const needThrowSecurityError = className.split("").some(ch => !alphabet.includes(ch));
-
-    if (needThrowSecurityError) {
-      const classNameBase64 = Buffer.from(className).toString("base64");
-      throw new Error("sanitizeClassNameBeforeEval - Invalid class name (base64-encoded): " + classNameBase64);
-    }
-  }
-
-  // for each argument if creeationTickId is set, verify it's the same as the current tick id
-  // if not, throw an error
-  function verifyTickIds(api, args, spPrivate, className, functionName) {
-    const creationTickIds = args.map(arg => spPrivate.creationTickIds.get(arg)).filter(Boolean);
-    const currentTickId = api._sp3GetCurrentTickId();
-    if (creationTickIds.some(creationTickId => creationTickId !== currentTickId)) {
-      throw new Error(`An expired object passed to ${className}.${functionName}`);
-    }
-  }
-
-  let assign = (targetObject, sourceObject) => {
-    if (sourceObject.desc !== undefined) {
-      // Server-side/gamemode raw objects have desc and type properties
+  // Server-side/gamemode raw objects have desc and type properties
+  // Client-side objects have _skyrimPlatform_indexInPool property starting with SP3 Update in 2024
+  // In previous version, they were completely native objects, without javascript properties
+  const assign = (targetObject, sourceObject) => {
+    if (sourceObject._skyrimPlatform_indexInPool !== undefined) {
+      targetObject._skyrimPlatform_indexInPool = sourceObject._skyrimPlatform_indexInPool;
+    } else if (sourceObject.desc !== undefined) {
       targetObject.desc = sourceObject.desc;
       targetObject.type = sourceObject.type;
-
-      // Never check it in runtime again
-      assign = (targetObject, sourceObject) => {
-        targetObject.desc = sourceObject.desc;
-        targetObject.type = sourceObject.type;
-      };
-
-    } else if (sourceObject._skyrimPlatform_indexInPool !== undefined) {
-      // Client-side objects have _skyrimPlatform_indexInPool property starting with SP3 Update in 2024
-      // In previous version, they were completely native objects, without javascript properties
-      targetObject._skyrimPlatform_indexInPool = sourceObject._skyrimPlatform_indexInPool;
-
-      // Never check it in runtime again
-      assign = (targetObject, sourceObject) => {
-        targetObject._skyrimPlatform_indexInPool = sourceObject._skyrimPlatform_indexInPool;
-      };
     }
   }
 
   function createSkyrimPlatform(api, sp) {
-    // TODO: de-duplicate other wrap code from this file
-    api._sp3RegisterWrapObjectFunction((obj) => {
-      const _sp3ObjectType = obj._sp3ObjectType;
-      const ctor = sp[_sp3ObjectType];
-      spPrivate.isCtorEnabled = true;
-      const resWithClass = new ctor();
-      spPrivate.isCtorEnabled = false;
-      assign(resWithClass, obj);
-      return resWithClass;
-    });
-
     if (!sp) {
       sp = {};
     }
 
-    const spPrivate = {
-      isCtorEnabled: false,
-      creationTickIds: new WeakMap()
+    // Helper: Wraps a raw object with its class prototype
+    const wrapObject = (obj) => {
+      if (obj === null || typeof obj !== "object") {
+        return obj;
+      }
+      const ctor = sp[obj._sp3ObjectType];
+      const resWithClass = Object.create(ctor.prototype);
+      assign(resWithClass, obj);
+      return resWithClass;
     };
+
+    // Helper: Generic Function Handler (handles both static and instance)
+    const createWrapperFunction = (impl, isStatic) => {
+      return function (...args) {
+        // For instance methods, bind 'this'. For static, call directly.
+        const resWithoutClass = isStatic ? impl(...args) : impl.bind(this)(...args);
+
+        if (resWithoutClass instanceof Promise) {
+          // Preserve metadata potentially attached to the Promise object itself
+          let tmp = resWithoutClass._sp3ObjectType;
+
+          return new Promise((resolve, reject) => {
+            resWithoutClass.then((res) => {
+              if (res !== null && typeof res === "object" && tmp) {
+                res._sp3ObjectType = tmp;
+              }
+              resolve(wrapObject(res));
+            }).catch(reject);
+          });
+        }
+
+        return wrapObject(resWithoutClass);
+      };
+    };
+
+    api._sp3RegisterWrapObjectFunction(wrapObject);
 
     const classes =
       sortClassesByInheritance(api._sp3ListClasses(), api)
@@ -148,25 +154,22 @@
       let staticFunctions = api._sp3ListStaticFunctions(className);
       const methods = api._sp3ListMethods(className);
 
-      const nStaticsBefore = staticFunctions.length;
-      staticFunctions = staticFunctions.filter(f => f.toLowerCase() !== "getplayer");
-      const nStaticsAfter = staticFunctions.length;
-
-      sanitizeClassNameBeforeEval(className);
-
-      const onConstruct = (resWithClass) => {
-        if (!spPrivate.isCtorEnabled) {
-          throw new Error(`Direct construction of ${className} is not allowed`);
+      const staticOverrides = new Set();
+      staticFunctions = staticFunctions.filter(f => {
+        const replacement = compatibilityConfig.staticRenames[f.toLowerCase()];
+        if (replacement) {
+          replacement.forEach(r => staticOverrides.add(r));
+          return false;
         }
+        return true;
+      });
 
-        spPrivate.creationTickIds.set(resWithClass, api._sp3GetCurrentTickId());
-      };
-
-      const f = eval(`
-            (function ${className}() {
-              onConstruct(this);  
-            })
-          `);
+      // The "Computed Property Name" trick is used to create a named function dynamically
+      const f = {
+        [className]: function () {
+          throw new Error(`Direct construction of ${className} is not allowed. Use .from() or static methods.`);
+        }
+      }[className];
 
       if (baseClassName !== "") {
         f.prototype = Object.create(sp[baseClassName].prototype);
@@ -174,99 +177,30 @@
 
       f.prototype.constructor = f;
 
+      // Register Instance Methods
       methods.concat(methods.map(prettify)).forEach(method => {
         const impl = api._sp3GetFunctionImplementation(sp, className, method);
-
-        const methodFinal = function () {
-          verifyTickIds(api, [this], spPrivate, className, method);
-          verifyTickIds(api, Array.from(arguments), spPrivate, className, method);
-
-          let f = (resWithoutClass) => {
-            if (resWithoutClass === null || typeof resWithoutClass !== "object") {
-              return resWithoutClass;
-            }
-            const _sp3ObjectType = resWithoutClass._sp3ObjectType;
-            const ctor = sp[_sp3ObjectType];
-            spPrivate.isCtorEnabled = true;
-            const resWithClass = new ctor();
-            spPrivate.isCtorEnabled = false;
-            assign(resWithClass, resWithoutClass);
-            return resWithClass;
-          };
-
-          let resWithoutClass = impl.bind(this)(...arguments);
-
-          if (resWithoutClass instanceof Promise) {
-            let tmp = resWithoutClass._sp3ObjectType;
-
-            return new Promise(resolve => {
-              resWithoutClass.then((res) => {
-                if (res !== null && typeof res === "object" && tmp) {
-                  res._sp3ObjectType = tmp;
-                }
-                resolve(f(res));
-              });
-            });
-          }
-
-          return f(resWithoutClass);
-        };
+        const methodFinal = createWrapperFunction(impl, false);
 
         f.prototype[method] = methodFinal;
         f.prototype[getFunctionAliasName(method) || method] = methodFinal;
       });
 
+      // Register Static Functions
       staticFunctions
         .concat(staticFunctions.map(prettify))
-        .concat(nStaticsBefore !== nStaticsAfter ? ["getPlayer", "GetPlayer"] : [])
+        .concat(Array.from(staticOverrides))
         .forEach(staticFunction => {
-
           const impl = api._sp3GetFunctionImplementation(sp, className, staticFunction);
-
-          const staticFunctionFinal = function () {
-            verifyTickIds(api, Array.from(arguments), spPrivate, className, staticFunction);
-
-            let f = (resWithoutClass) => {
-              if (resWithoutClass === null || typeof resWithoutClass !== "object") {
-                return resWithoutClass;
-              }
-              const _sp3ObjectType = resWithoutClass._sp3ObjectType;
-              const ctor = sp[_sp3ObjectType];
-              spPrivate.isCtorEnabled = true;
-              const resWithClass = new ctor();
-              spPrivate.isCtorEnabled = false;
-              assign(resWithClass, resWithoutClass);
-              return resWithClass;
-            };
-
-            let resWithoutClass = impl(...arguments);
-
-            if (resWithoutClass instanceof Promise) {
-              let tmp = resWithoutClass._sp3ObjectType;
-
-              return new Promise(resolve => {
-                resWithoutClass.then((res) => {
-                  if (res !== null && typeof res === "object" && tmp) {
-                    res._sp3ObjectType = tmp;
-                  }
-                  resolve(f(res));
-                });
-              });
-            }
-
-            return f(resWithoutClass);
-          };
+          const staticFunctionFinal = createWrapperFunction(impl, true);
 
           f[staticFunction] = staticFunctionFinal;
           f[getFunctionAliasName(staticFunction) || staticFunction] = staticFunctionFinal;
         });
 
       f["from"] = function (obj) {
-        verifyTickIds(api, [obj], spPrivate, className, "from");
         if (api._sp3DynamicCast(obj, className)) {
-          spPrivate.isCtorEnabled = true;
-          const resWithClass = new f();
-          spPrivate.isCtorEnabled = false;
+          const resWithClass = Object.create(f.prototype);
           assign(resWithClass, obj);
           return resWithClass;
         }
@@ -277,12 +211,11 @@
       sp[getClassAliasName(className) || className] = f;
     });
 
-    if (sp["Spell"]) {
-      sp["SPELL"] = sp["Spell"];
-    }
-    if (sp["Weapon"]) {
-      sp["WEAPON"] = sp["Weapon"];
-    }
+    compatibilityConfig.uppercaseAliases.forEach(alias => {
+      if (sp[alias]) {
+        sp[alias.toUpperCase()] = sp[alias];
+      }
+    });
 
     return sp;
   }

@@ -146,16 +146,6 @@ void TESModPlatform::BlockMoveRefrToPosition(bool blocked)
   moveRefrBlocked = blocked;
 }
 
-extern "C" {
-__declspec(dllexport) void SkyrimPlatform_SetWeaponDrawnMode(
-  IVM* vm, StackID stackId, RE::StaticFunctionTag* tag, RE::Actor* actor,
-  int32_t weapDrawnMode)
-{
-  return TESModPlatform::SetWeaponDrawnMode(vm, stackId, tag, actor,
-                                            weapDrawnMode);
-}
-}
-
 void TESModPlatform::SetWeaponDrawnMode(IVM* vm, StackID stackId,
                                         RE::StaticFunctionTag*,
                                         RE::Actor* actor,

@@ -1,6 +1,6 @@
 {
   "name": "nirnlab-ui-platform-headers",
-  "version-string": "3.0PR",
+  "version": "3.1",
   "description": "UI platform for Skyrim with CEF (Chromium Embedded Framework) integration and more",
   "homepage": "https://github.com/kkEngine/NirnLabUIPlatform",
   "license": "MIT",

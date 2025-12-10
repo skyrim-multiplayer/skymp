@@ -26,6 +26,7 @@ float ConditionFunctions::GetEquippedItemType::Execute(
   auto equippedWeapon = actor.GetEquippedWeapon();
   auto equippedScroll = actor.GetEquippedScroll();
   auto equippedLight = actor.GetEquippedLight();
+  auto equippedShield = actor.GetEquippedShield();
 
   static const std::optional<Inventory::Entry> kHandNull = std::nullopt;
 
@@ -89,6 +90,15 @@ float ConditionFunctions::GetEquippedItemType::Execute(
 
   if (rightSpell && *rightSpell > 0 && parameter1 == 1) {
     return kMagicSpellTypeValue;
+  }
+
+  // Check shields
+  const std::optional<Inventory::Entry>& shieldHand =
+    parameter1 < equippedShield.size() ? equippedShield[parameter1]
+                                       : kHandNull;
+
+  if (shieldHand) {
+    return kShieldTypeValue;
   }
 
   return 0.f;

@@ -135,6 +135,32 @@ std::vector<std::string> ConditionsEvaluator::LogEvaluateConditionsResolution(
   const std::vector<int>& conditionResolutions,
   const std::vector<float>& conditionFunctionResults, bool finalResult)
 {
+  if (conditions.size() != conditionResolutions.size() ||
+      conditions.size() != conditionFunctionResults.size()) {
+    spdlog::error("ConditionsEvaluator::LogEvaluateConditionsResolution - "
+                  "Mismatched conditions and results sizes: {} != {} != {}",
+                  conditions.size(), conditionResolutions.size(),
+                  conditionFunctionResults.size());
+    return std::vector<std::string>();
+  }
+
+  auto getAlphabetChar = [](size_t index) -> std::string {
+    // 1. Determine the letter (ALWAYS A-Z)
+    char letter = 'A' + static_cast<char>(index % 26);
+
+    std::string res(1, letter);
+
+    // 2. Determine the cycle number (Empty, then 1, 2, 3...)
+    // 0-25 (A-Z)   -> 0 (Do nothing)
+    // 26-51 (A1-Z1) -> 1 (Add "1")
+    // 52-77 (A2-Z2) -> 2 (Add "2")
+    if (index >= 26) {
+      res += std::to_string(index / 26);
+    }
+
+    return res;
+  };
+
   std::vector<std::string> res;
 
   std::string s;
@@ -150,21 +176,20 @@ std::vector<std::string> ConditionsEvaluator::LogEvaluateConditionsResolution(
   }
 
   size_t currentGroupStart = 0;
-  char nextAlphabetChar = 'A';
 
   for (size_t i = 0; i < conditions.size(); ++i) {
     if (groupStarts.size() > currentGroupStart &&
         groupStarts[currentGroupStart] == i) {
-      currentGroupStart = i + 1;
+      ++currentGroupStart;
       if (s.empty()) {
         s += "(";
       } else {
-        s.pop_back();
+        s.pop_back(); // remove last space
         s += ") & (";
       }
     }
 
-    s += nextAlphabetChar++;
+    s += getAlphabetChar(i);
 
     if (i != conditions.size() - 1) {
       s += conditions[i].logicalOperator == "AND" ? " " : " | ";
@@ -181,11 +206,9 @@ std::vector<std::string> ConditionsEvaluator::LogEvaluateConditionsResolution(
 
   res.push_back("Condition resolutions:");
 
-  nextAlphabetChar = 'A';
-
   for (size_t i = 0; i < conditions.size(); ++i) {
     s.clear();
-    s += nextAlphabetChar++;
+    s += getAlphabetChar(i);
     s += ": ";
     s += conditions[i].function;
     s += ' ';
@@ -290,16 +313,18 @@ bool ConditionsEvaluator::CompareFloats(float a, float b,
 
 uint32_t ConditionsEvaluator::ExtractParameter(const std::string& parameter)
 {
-  uint32_t parameterParsed = 0;
+  const char* str = parameter.c_str();
+  char* end;
+  int base = 10;
 
-  if (parameter.find("0x") == 0 || parameter.find("0X") == 0) {
-    std::stringstream ss;
-    ss << std::hex << parameter.substr(2); // Skip "0x"
-    ss >> parameterParsed;
-  } else {
-    std::stringstream ss(parameter);
-    ss >> parameterParsed;
+  if (parameter.length() > 2 && str[0] == '0') {
+    if (str[1] == 'x' || str[1] == 'X') {
+      base = 16;
+    } else if (str[1] == 'b' || str[1] == 'B') {
+      base = 2;
+      str += 2; // strtoul doesn't skip 0b automatically
+    }
   }
 
-  return parameterParsed;
+  return static_cast<uint32_t>(std::strtoul(str, &end, base));
 }

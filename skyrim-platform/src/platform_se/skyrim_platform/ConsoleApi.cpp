@@ -340,7 +340,7 @@ bool ConsoleComand_Execute(const RE::SCRIPT_PARAMETER* paramInfo,
     }
   };
 
-  SkyrimPlatform::GetSingleton()->RunTask(func);
+  SkyrimPlatform::GetSingleton()->PushAndWait(func);
   if (iterator)
     iterator->second.execute(paramInfo, scriptData, thisObj, containingObj,
                              scriptObj, locals, result, opcodeOffsetPtr);

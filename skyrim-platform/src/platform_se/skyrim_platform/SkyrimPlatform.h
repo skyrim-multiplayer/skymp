@@ -1,8 +1,6 @@
 #pragma once
 #include "TPOverlayService.h"
 
-#include <future>
-
 class SkyrimPlatform
 {
 public:
@@ -11,19 +9,17 @@ public:
   void JsTick(Napi::Env env, bool gameFunctionsAvailable);
   void AddTickTask(const std::function<void(Napi::Env env)>& f);
   void AddUpdateTask(const std::function<void(Napi::Env env)>& f);
-
-  // Must be called in main game thread
-  void RunTask(const std::function<void(Napi::Env env)>& task);
-
-  // Must be called from non-main game thread (i.e. Anim event hook)
-  std::future<void> QueueTask(const std::function<void(Napi::Env env)>& task);
-
+  void PushAndWait(const std::function<void(Napi::Env env)>& task);
+  void Push(const std::function<void(Napi::Env env)>& task);
   void PushToWorkerAndWait(
     RE::BSTSmartPointer<RE::BSScript::IFunction> fPtr,
     const RE::BSTSmartPointer<RE::BSScript::Stack>& stack,
     RE::BSScript::ErrorLogger* logger,
     RE::BSScript::Internal::VirtualMachine* vm,
     RE::BSScript::IFunction::CallResult* ret);
+  void PrepareWorker();
+  void StartWorker();
+  void StopWorker();
 
 private:
   SkyrimPlatform();

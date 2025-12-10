@@ -43,6 +43,7 @@ public:
   std::array<std::optional<Inventory::Entry>, 2> GetEquippedWeapon() const;
   std::array<std::optional<Inventory::Entry>, 2> GetEquippedScroll() const;
   std::array<std::optional<Inventory::Entry>, 2> GetEquippedLight() const;
+  std::array<std::optional<Inventory::Entry>, 2> GetEquippedShield() const;
   uint32_t GetRaceId() const;
   bool IsWeaponDrawn() const;
   espm::ObjectBounds GetBounds() const;

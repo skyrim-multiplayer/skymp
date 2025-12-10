@@ -22,6 +22,13 @@ float ConditionFunctions::WornApparelHasKeywordCount::Execute(
 
   size_t count = 0;
 
+  constexpr uint32_t kBodHair = 0x00000002;
+  constexpr uint32_t kBodBody = 0x00000004;
+  constexpr uint32_t kBodHands = 0x00000008;
+  constexpr uint32_t kBodFeet = 0x00000080;
+
+  constexpr uint32_t kArmorBits = kBodFeet | kBodHair | kBodBody | kBodHands;
+
   for (auto& entry : equipment.inv.entries) {
     if (entry.GetWorn() == Inventory::Worn::None) {
       continue;
@@ -29,7 +36,20 @@ float ConditionFunctions::WornApparelHasKeywordCount::Execute(
 
     const espm::LookupResult res =
       worldState->GetEspm().GetBrowser().LookupById(entry.baseId);
-    if (!res.rec) {
+    if (!res.rec || res.rec->GetType() != espm::ARMO::kType) {
+      continue;
+    }
+
+    auto data = espm::GetData<espm::ARMO>(entry.baseId, worldState);
+
+    bool isApparel = false;
+    if (data.bod2.present && (data.bod2.bodyPartFlags & kArmorBits)) {
+      isApparel = true;
+    } else if (data.bodt.present && (data.bodt.bodyPartFlags & kArmorBits)) {
+      isApparel = true;
+    }
+
+    if (!isApparel) {
       continue;
     }
 

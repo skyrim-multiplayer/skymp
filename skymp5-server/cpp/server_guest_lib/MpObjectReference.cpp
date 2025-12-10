@@ -495,7 +495,7 @@ void MpObjectReference::Activate(MpObjectReference& activationSource,
         defaultProcessingOnly);
     }
 
-    if (!defaultProcessingOnly) {
+    if (!defaultProcessingOnly && !activationBlockedByMpApi) {
       auto arg = activationSource.ToVarValue();
       SendPapyrusEvent("OnActivate", &arg, 1);
     }
