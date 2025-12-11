@@ -60,7 +60,7 @@ float ConditionFunctions::SpellHasKeyword::Execute(
                    "kCastingSourceInstant (not yet supported)");
       break; // Not yet supported
     default:
-      spdlog::info("ConditionFunctions::SpellHasKeyword::Execute - unknown "
+      spdlog::warn("ConditionFunctions::SpellHasKeyword::Execute - unknown "
                    "castingSource={}",
                    castingSource);
       break;
@@ -78,7 +78,7 @@ float ConditionFunctions::SpellHasKeyword::Execute(
 
   espm::LookupResult spellLookup = br.LookupById(*spellToCheck);
   if (!spellLookup.rec) {
-    spdlog::info("ConditionFunctions::SpellHasKeyword::Execute - spell record "
+    spdlog::warn("ConditionFunctions::SpellHasKeyword::Execute - spell record "
                  "not found for ID={:x}, returning 0",
                  *spellToCheck);
     return 0.f;
@@ -86,7 +86,7 @@ float ConditionFunctions::SpellHasKeyword::Execute(
 
   const espm::SPEL* spellRecord = espm::Convert<espm::SPEL>(spellLookup.rec);
   if (!spellRecord) {
-    spdlog::info("ConditionFunctions::SpellHasKeyword::Execute - record "
+    spdlog::warn("ConditionFunctions::SpellHasKeyword::Execute - record "
                  "{:x} is not a SPEL, returning 0",
                  *spellToCheck);
     return 0.f;
@@ -107,7 +107,7 @@ float ConditionFunctions::SpellHasKeyword::Execute(
     uint32_t globalEffectId = spellLookup.ToGlobalId(effect.effectFormId);
     espm::LookupResult mgefLookup = br.LookupById(globalEffectId);
     if (!mgefLookup.rec) {
-      spdlog::info("ConditionFunctions::SpellHasKeyword::Execute - MGEF "
+      spdlog::warn("ConditionFunctions::SpellHasKeyword::Execute - MGEF "
                    "record not found for ID={:x}",
                    globalEffectId);
       continue;
