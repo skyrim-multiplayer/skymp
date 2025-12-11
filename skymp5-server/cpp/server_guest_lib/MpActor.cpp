@@ -53,8 +53,8 @@ struct MpActor::Impl
   bool isRespawning = false;
   bool isBlockActive = false;
   std::chrono::steady_clock::time_point lastAttributesUpdateTimePoint;
-  std::list<std::pair<uint32_t, std::chrono::steady_clock::time_point>>
-    lastHitTimes;
+  std::vector<std::pair<uint32_t, std::chrono::steady_clock::time_point>>
+    lastHitTimesLRU;
   using RestorationTimePoints =
     std::unordered_map<espm::ActorValue,
                        std::chrono::steady_clock::time_point>;
@@ -695,13 +695,13 @@ std::chrono::steady_clock::time_point MpActor::GetLastHitTime(
   std::optional<uint32_t> targetId) const
 {
   if (!targetId) {
-    if (pImpl->lastHitTimes.empty()) {
+    if (pImpl->lastHitTimesLRU.empty()) {
       return std::chrono::steady_clock::time_point();
     }
-    return pImpl->lastHitTimes.back().second;
+    return pImpl->lastHitTimesLRU.back().second;
   }
 
-  for (const auto& entry : pImpl->lastHitTimes) {
+  for (const auto& entry : pImpl->lastHitTimesLRU) {
     if (entry.first == *targetId) {
       return entry.second;
     }
@@ -720,17 +720,35 @@ void MpActor::SetLastHitTime(uint32_t targetId,
 {
   constexpr size_t kMaxHitMemory = 16;
 
-  for (auto& entry : pImpl->lastHitTimes) {
+  for (auto it = pImpl->lastHitTimesLRU.begin(); it != pImpl->lastHitTimesLRU.end();
+       ++it) {
+    auto entry = *it;
     if (entry.first == targetId) {
       entry.second = timePoint;
+      pImpl->lastHitTimesLRU.erase(it);
+      pImpl->lastHitTimesLRU.push_back(entry);
       return;
     }
   }
 
-  if (pImpl->lastHitTimes.size() >= kMaxHitMemory) {
-    pImpl->lastHitTimes.pop_front();
+  if (pImpl->lastHitTimesLRU.size() >= kMaxHitMemory) {
+    pImpl->lastHitTimesLRU.erase(pImpl->lastHitTimesLRU.begin());
   }
-  pImpl->lastHitTimes.push_back({ targetId, timePoint });
+  pImpl->lastHitTimesLRU.push_back({ targetId, timePoint });
+}
+
+size_t MpActor::CountRecentHits(std::chrono::duration<float> timeWindow) const
+{
+  size_t count = 0;
+  if (pImpl->lastHitTimesLRU.size() > 0) {
+    const auto now = std::chrono::steady_clock::now();
+    for (const auto& entry : pImpl->lastHitTimesLRU) {
+      if (now - entry.second < timeWindow) {
+        count++;
+      }
+    }
+  }
+  return count;
 }
 
 std::chrono::duration<float> MpActor::GetDurationOfAttributesPercentagesUpdate(
@@ -1995,16 +2013,3 @@ std::array<std::optional<Inventory::Entry>, 2> MpActor::GetEquippedShield()
   return wornEntries;
 }
 
-size_t MpActor::CountRecentHits(std::chrono::duration<float> timeWindow) const
-{
-  size_t count = 0;
-  if (pImpl->lastHitTimes.size() > 0) {
-    const auto now = std::chrono::steady_clock::now();
-    for (const auto& entry : pImpl->lastHitTimes) {
-      if (now - entry.second < timeWindow) {
-        count++;
-      }
-    }
-  }
-  return count;
-}
