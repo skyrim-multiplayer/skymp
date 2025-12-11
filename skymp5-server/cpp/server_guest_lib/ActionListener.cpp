@@ -1155,6 +1155,18 @@ void ActionListener::OnWeaponHit(MpActor* aggressor,
     spdlog::info("Splash attack detected from aggressor {:x} to target {:x}",
                  aggressor->GetFormId(), targetActor.GetFormId());
 
+    // Check if THIS specific target was hit recently
+    auto lastHitSpecific = aggressor->GetLastHitTime(targetActor.GetFormId());
+    std::chrono::duration<float> timeSinceSpecific = currentHitTime - lastHitSpecific;
+    
+    // If the specific target was hit faster than the splash window
+    if (timeSinceSpecific.count() < kSplashTimeWindow) {
+      spdlog::warn("Splash attack from {:x} to {:x} ignored, target hit "
+                   "too recently",
+                   aggressor->GetFormId(), targetActor.GetFormId());
+      return; 
+    }
+
     if (aggressor->CountRecentHits(
           std::chrono::duration<float>(kSplashTimeWindow)) >=
         kMaxSplashTargets) {
