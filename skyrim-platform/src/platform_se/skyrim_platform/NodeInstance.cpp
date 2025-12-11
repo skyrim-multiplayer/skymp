@@ -255,15 +255,9 @@ int NodeInstance::ExecuteScript(void* env, const char* script)
     return -1;
   }
 
-  // Execute script and catch potential runtime exceptions
-  if (!compiled_script->Run(context).IsEmpty()) {
-    Local<Value> result;
-    if (!compiled_script->Run(context).ToLocal(&result)) {
-      String::Utf8Value error(isolate, try_catch.Exception());
-      pImpl->error = *error ? *error : "Unknown runtime error";
-      return -1;
-    }
-  } else {
+  Local<Value> result;
+
+  if (!compiled_script->Run(context).ToLocal(&result)) {
     String::Utf8Value error(isolate, try_catch.Exception());
     pImpl->error = *error ? *error : "Unknown runtime error";
     return -1;
