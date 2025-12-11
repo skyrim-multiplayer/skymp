@@ -1141,17 +1141,17 @@ void ActionListener::OnWeaponHit(MpActor* aggressor,
 
   auto& targetActor = *targetActorPtr;
 
-  const auto lastHitTime = aggressor->GetLastHitTime(targetActor.GetFormId());
   const auto lastHitTimeAnyTarget = aggressor->GetLastHitTime(std::nullopt);
-  const std::chrono::duration<float> timePassed = currentHitTime - lastHitTime;
   const std::chrono::duration<float> timePassedAnyTarget =
     currentHitTime - lastHitTimeAnyTarget;
 
-  // Splash attack detection. Non-vanilla feature, fixes anticheat-vs-mod issues
   constexpr float kSplashTimeWindow = 0.1f;
   constexpr size_t kMaxSplashTargets = 4;
 
-  if (timePassedAnyTarget.count() < kSplashTimeWindow) {
+  // Splash attack detection. Non-vanilla feature, fixes anticheat-vs-mod issues
+  const bool isSplash = timePassedAnyTarget.count() < kSplashTimeWindow;
+
+  if (isSplash) {
     spdlog::info("Splash attack detected from aggressor {:x} to target {:x}",
                  aggressor->GetFormId(), targetActor.GetFormId());
 
@@ -1163,9 +1163,7 @@ void ActionListener::OnWeaponHit(MpActor* aggressor,
                    aggressor->GetFormId(), targetActor.GetFormId());
       return;
     }
-  }
-
-  if (!CanHit(*aggressor, hitData, timePassed)) {
+  } else if (!CanHit(*aggressor, hitData, timePassedAnyTarget)) {
     WorldState* espmProvider = targetActor.GetParent();
     auto weapDNAM =
       espm::GetData<espm::WEAP>(hitData.source, espmProvider).weapDNAM;
@@ -1175,7 +1173,7 @@ void ActionListener::OnWeaponHit(MpActor* aggressor,
       "OnWeaponHit - Target {0:x} is not available for attack due to fast "
       "attack speed. Weapon: {1:x}. Elapsed time: {2}. Expected attack time: "
       "{3}",
-      hitData.target, hitData.source, timePassed.count(), expectedAttackTime);
+      hitData.target, hitData.source, timePassedAnyTarget.count(), expectedAttackTime);
     return;
   }
 
