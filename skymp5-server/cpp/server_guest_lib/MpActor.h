@@ -132,8 +132,7 @@ public:
     std::chrono::steady_clock::time_point timePoint =
       std::chrono::steady_clock::now());
   void SetLastHitTime(uint32_t targetId,
-                      std::chrono::steady_clock::time_point timePoint =
-                        std::chrono::steady_clock::now());
+                      std::chrono::steady_clock::time_point timePoint);
 
   std::chrono::duration<float> GetDurationOfAttributesPercentagesUpdate(
     std::chrono::steady_clock::time_point now);

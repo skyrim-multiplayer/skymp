@@ -1275,7 +1275,7 @@ void ActionListener::OnWeaponHit(MpActor* aggressor,
   targetActor.NetSetPercentages(
     currentActorValues, aggressor,
     std::vector<espm::ActorValue>{ espm::ActorValue::Health });
-  aggressor->SetLastHitTime(targetActor.GetFormId());
+  aggressor->SetLastHitTime(targetActor.GetFormId(), currentHitTime);
 
   spdlog::debug(
     "OnWeaponHit - Target {0:x} is hit by {1} damage. Percentage was: {3}, "

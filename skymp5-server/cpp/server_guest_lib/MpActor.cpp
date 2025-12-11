@@ -720,21 +720,23 @@ void MpActor::SetLastHitTime(uint32_t targetId,
 {
   constexpr size_t kMaxHitMemory = 16;
 
-  for (auto it = pImpl->lastHitTimesLRU.begin(); it != pImpl->lastHitTimesLRU.end();
-       ++it) {
-    auto entry = *it;
-    if (entry.first == targetId) {
-      entry.second = timePoint;
-      pImpl->lastHitTimesLRU.erase(it);
-      pImpl->lastHitTimesLRU.push_back(entry);
-      return;
-    }
-  }
+  auto& hits = pImpl->lastHitTimesLRU;
 
-  if (pImpl->lastHitTimesLRU.size() >= kMaxHitMemory) {
-    pImpl->lastHitTimesLRU.erase(pImpl->lastHitTimesLRU.begin());
+  auto it = std::find_if(hits.begin(), hits.end(), 
+    [targetId](const auto& entry) { return entry.first == targetId; });
+
+  if (it != hits.end()) {
+    it->second = timePoint;
+    std::rotate(it, it + 1, hits.end());
+    return;
+}
+
+  if (kMaxHitMemory > 0) {
+    if (pImpl->lastHitTimesLRU.size() >= kMaxHitMemory) {
+      pImpl->lastHitTimesLRU.erase(pImpl->lastHitTimesLRU.begin());
+    }
+    pImpl->lastHitTimesLRU.push_back({ targetId, timePoint });
   }
-  pImpl->lastHitTimesLRU.push_back({ targetId, timePoint });
 }
 
 size_t MpActor::CountRecentHits(std::chrono::duration<float> timeWindow) const
