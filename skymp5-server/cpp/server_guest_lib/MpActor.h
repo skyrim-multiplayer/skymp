@@ -124,12 +124,16 @@ public:
     const std::optional<std::vector<espm::ActorValue>>& avFilter);
 
   std::chrono::steady_clock::time_point GetLastAttributesPercentagesUpdate();
-  std::chrono::steady_clock::time_point GetLastHitTime();
+  std::chrono::steady_clock::time_point GetLastHitTime(
+    std::optional<uint32_t> targetId) const;
+
+  size_t CountRecentHits(std::chrono::duration<float> timeWindow) const;
 
   void SetLastAttributesPercentagesUpdate(
     std::chrono::steady_clock::time_point timePoint =
       std::chrono::steady_clock::now());
-  void SetLastHitTime(std::chrono::steady_clock::time_point timePoint =
+  void SetLastHitTime(uint32_t targetId,
+                      std::chrono::steady_clock::time_point timePoint =
                         std::chrono::steady_clock::now());
 
   std::chrono::duration<float> GetDurationOfAttributesPercentagesUpdate(

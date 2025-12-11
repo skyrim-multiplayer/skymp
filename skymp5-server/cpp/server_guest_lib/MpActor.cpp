@@ -52,8 +52,9 @@ struct MpActor::Impl
   uint32_t respawnTimerIndex = 0;
   bool isRespawning = false;
   bool isBlockActive = false;
-  std::chrono::steady_clock::time_point lastAttributesUpdateTimePoint,
-    lastHitTimePoint;
+  std::chrono::steady_clock::time_point lastAttributesUpdateTimePoint;
+  std::list<std::pair<uint32_t, std::chrono::steady_clock::time_point>>
+    lastHitTimes;
   using RestorationTimePoints =
     std::unordered_map<espm::ActorValue,
                        std::chrono::steady_clock::time_point>;
@@ -690,9 +691,22 @@ MpActor::GetLastAttributesPercentagesUpdate()
   return pImpl->lastAttributesUpdateTimePoint;
 }
 
-std::chrono::steady_clock::time_point MpActor::GetLastHitTime()
+std::chrono::steady_clock::time_point MpActor::GetLastHitTime(
+  std::optional<uint32_t> targetId) const
 {
-  return pImpl->lastHitTimePoint;
+  if (!targetId) {
+    if (pImpl->lastHitTimes.empty()) {
+      return std::chrono::steady_clock::time_point();
+    }
+    return pImpl->lastHitTimes.back().second;
+  }
+
+  for (const auto& entry : pImpl->lastHitTimes) {
+    if (entry.first == *targetId) {
+      return entry.second;
+    }
+  }
+  return std::chrono::steady_clock::time_point();
 }
 
 void MpActor::SetLastAttributesPercentagesUpdate(
@@ -701,9 +715,22 @@ void MpActor::SetLastAttributesPercentagesUpdate(
   pImpl->lastAttributesUpdateTimePoint = timePoint;
 }
 
-void MpActor::SetLastHitTime(std::chrono::steady_clock::time_point timePoint)
+void MpActor::SetLastHitTime(uint32_t targetId,
+                             std::chrono::steady_clock::time_point timePoint)
 {
-  pImpl->lastHitTimePoint = timePoint;
+  constexpr size_t kMaxHitMemory = 16;
+
+  for (auto& entry : pImpl->lastHitTimes) {
+    if (entry.first == targetId) {
+      entry.second = timePoint;
+      return;
+    }
+  }
+
+  if (pImpl->lastHitTimes.size() >= kMaxHitMemory) {
+    pImpl->lastHitTimes.pop_front();
+  }
+  pImpl->lastHitTimes.push_back({ targetId, timePoint });
 }
 
 std::chrono::duration<float> MpActor::GetDurationOfAttributesPercentagesUpdate(
@@ -1966,4 +1993,18 @@ std::array<std::optional<Inventory::Entry>, 2> MpActor::GetEquippedShield()
     }
   }
   return wornEntries;
+}
+
+size_t MpActor::CountRecentHits(std::chrono::duration<float> timeWindow) const
+{
+  size_t count = 0;
+  if (pImpl->lastHitTimes.size() > 0) {
+    const auto now = std::chrono::steady_clock::now();
+    for (const auto& entry : pImpl->lastHitTimes) {
+      if (now - entry.second < timeWindow) {
+        count++;
+      }
+    }
+  }
+  return count;
 }

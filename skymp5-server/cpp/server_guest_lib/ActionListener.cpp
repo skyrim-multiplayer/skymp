@@ -1141,8 +1141,29 @@ void ActionListener::OnWeaponHit(MpActor* aggressor,
 
   auto& targetActor = *targetActorPtr;
 
-  const auto lastHitTime = aggressor->GetLastHitTime();
+  const auto lastHitTime = aggressor->GetLastHitTime(targetActor.GetFormId());
+  const auto lastHitTimeAnyTarget = aggressor->GetLastHitTime(std::nullopt);
   const std::chrono::duration<float> timePassed = currentHitTime - lastHitTime;
+  const std::chrono::duration<float> timePassedAnyTarget =
+    currentHitTime - lastHitTimeAnyTarget;
+
+  // Splash attack detection. Non-vanilla feature, fixes anticheat-vs-mod issues
+  constexpr float kSplashTimeWindow = 0.1f;
+  constexpr size_t kMaxSplashTargets = 4;
+
+  if (timePassedAnyTarget.count() < kSplashTimeWindow) {
+    spdlog::info("Splash attack detected from aggressor {:x} to target {:x}",
+                 aggressor->GetFormId(), targetActor.GetFormId());
+
+    if (aggressor->CountRecentHits(
+          std::chrono::duration<float>(kSplashTimeWindow)) >=
+        kMaxSplashTargets) {
+      spdlog::warn("Splash attack from {:x} to {:x} ignored, too many "
+                   "targets hit recently",
+                   aggressor->GetFormId(), targetActor.GetFormId());
+      return;
+    }
+  }
 
   if (!CanHit(*aggressor, hitData, timePassed)) {
     WorldState* espmProvider = targetActor.GetParent();
@@ -1244,7 +1265,7 @@ void ActionListener::OnWeaponHit(MpActor* aggressor,
   targetActor.NetSetPercentages(
     currentActorValues, aggressor,
     std::vector<espm::ActorValue>{ espm::ActorValue::Health });
-  aggressor->SetLastHitTime();
+  aggressor->SetLastHitTime(targetActor.GetFormId());
 
   spdlog::debug(
     "OnWeaponHit - Target {0:x} is hit by {1} damage. Percentage was: {3}, "
