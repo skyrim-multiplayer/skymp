@@ -23,7 +23,7 @@ public:
 
 private:
   struct Impl;
-  std::unique_ptr<Impl, void (*)(Impl*)> pImpl;
+  std::shared_ptr<Impl> pImpl;
 
   static void SaverThreadMain(Impl*);
 };
