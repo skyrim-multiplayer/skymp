@@ -26,4 +26,10 @@ private:
   std::shared_ptr<Impl> pImpl;
 
   static void SaverThreadMain(Impl*);
+
+  AsyncSaveStorage(const AsyncSaveStorage&) = delete;
+  AsyncSaveStorage& operator=(const AsyncSaveStorage&) = delete;
+
+  AsyncSaveStorage(AsyncSaveStorage&&) = delete;
+  AsyncSaveStorage& operator=(AsyncSaveStorage&&) = delete;
 };
