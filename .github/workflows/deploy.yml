@@ -142,7 +142,7 @@ jobs:
                 DEPLOY_TARGET_HOST: ${{secrets.DEPLOY_TARGET_HOST_06_2024_A}}
                 DEPLOY_TARGET_USER: ${{secrets.DEPLOY_TARGET_USER_06_2024_A}}
                 DEPLOY_SSH_PRIVATE_KEY: ${{secrets.DEPLOY_SSH_PRIVATE_KEY_06_2024_A}}
-                DEPLOY_SSH_KNOWN_HOSTS: ${{secrets.DEPLOY_SSH_KNOWN_HOSTS_06_2024_A}}
+                #DEPLOY_SSH_KNOWN_HOSTS: ${{secrets.DEPLOY_SSH_KNOWN_HOSTS_06_2024_A}}
                 DEPLOY_SSH_PASSWORD: ${{secrets.DEPLOY_SSH_PASSWORD}}
             run: |
                 ./misc/deploy/push_branch_to_server.sh

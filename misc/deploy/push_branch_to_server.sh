@@ -16,25 +16,30 @@ echo "${DEPLOY_TARGET_HOST:?}" > /dev/null
 echo "${DEPLOY_TARGET_USER:?}" > /dev/null
 echo "${DEPLOY_ACTION:?}" > /dev/null
 echo "${DEPLOY_BRANCH:?}" > /dev/null
-echo "${DEPLOY_SSH_KNOWN_HOSTS:?}" > /dev/null
 
 if [[ "$CI" != "" ]]; then
   sudo chmod -R 777 .
 fi
 
-touch ssh_known_hosts
-chmod 600 ssh_known_hosts
-echo "$DEPLOY_SSH_KNOWN_HOSTS" > ssh_known_hosts
+SSH_OPTS=""
+if [ -n "$DEPLOY_SSH_KNOWN_HOSTS" ]; then
+  touch ssh_known_hosts
+  chmod 600 ssh_known_hosts
+  echo "$DEPLOY_SSH_KNOWN_HOSTS" > ssh_known_hosts
+  SSH_OPTS="-o UserKnownHostsFile=ssh_known_hosts"
+else
+  SSH_OPTS="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+fi
 
 if [ -n "$DEPLOY_SSH_PASSWORD" ]; then
   export SSHPASS="$DEPLOY_SSH_PASSWORD"
-  remote_shell="sshpass -e ssh -o UserKnownHostsFile=ssh_known_hosts"
+  remote_shell="sshpass -e ssh $SSH_OPTS"
 else
   echo "${DEPLOY_SSH_PRIVATE_KEY:?}" > /dev/null
   touch ssh_id
   chmod 600 ssh_id
   echo "$DEPLOY_SSH_PRIVATE_KEY" > ssh_id
-  remote_shell="ssh -i ssh_id -o UserKnownHostsFile=ssh_known_hosts"
+  remote_shell="ssh -i ssh_id $SSH_OPTS"
 fi
 remote_server_connstr="$DEPLOY_TARGET_USER@$DEPLOY_TARGET_HOST"
 
