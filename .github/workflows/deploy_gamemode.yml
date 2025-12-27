@@ -101,8 +101,8 @@ jobs:
           rsync --rsh="$remote_shell" -vazPh --checksum \
             ./build/gamemode.js "$remote_server_connstr:$remote_dir/"
         env:
-          DEPLOY_TARGET_HOST: ${{secrets.DEPLOY_TARGET_HOST_06_2024}}
-          DEPLOY_TARGET_USER: ${{secrets.DEPLOY_TARGET_USER_06_2024}}
+          DEPLOY_SSH_PRIVATE_KEY: ${{secrets.DEPLOY_SSH_PRIVATE_KEY_06_2024}}
+          DEPLOY_SSH_KNOWN_HOSTS: ${{secrets.DEPLOY_SSH_KNOWN_HOSTS_06_2024}}
           HOST_SWEETPIE: ${{secrets.DEPLOY_TARGET_HOST_12_2025}}
           USER_SWEETPIE: ${{secrets.DEPLOY_TARGET_USER_12_2025}}
           HOST_INDEV: ${{secrets.DEPLOY_TARGET_HOST_06_2024}}
