@@ -414,6 +414,12 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
                              serverKey["private"].get<std::string>());
     }
 
+    if (auto it = serverSettings.find("enableGamemodeDataUpdatesBroadcast");
+        it != serverSettings.end()) {
+      bool enableBroadcast = it.value().get<bool>();
+      partOne->EnableGamemodeDataUpdatesBroadcast(enableBroadcast);
+    }
+
     auto res =
       NapiHelper::RunScript(Env(),
                             "let require = global.require || "
