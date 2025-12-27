@@ -86,6 +86,14 @@ jobs:
           echo "$DEPLOY_SSH_PRIVATE_KEY" > ssh_id
           echo "$DEPLOY_SSH_KNOWN_HOSTS" > ssh_known_hosts
 
+          if [ "$DEPLOY_BRANCH" = "sweetpie" ]; then
+              export DEPLOY_TARGET_HOST="$HOST_SWEETPIE"
+              export DEPLOY_TARGET_USER="$USER_SWEETPIE"
+          else
+              export DEPLOY_TARGET_HOST="$HOST_INDEV"
+              export DEPLOY_TARGET_USER="$USER_INDEV"
+          fi
+
           remote_server_connstr="$DEPLOY_TARGET_USER@$DEPLOY_TARGET_HOST"
           remote_dir="~/skymp-server-${{ github.event.inputs.branch }}/server/"
 
@@ -95,8 +103,10 @@ jobs:
         env:
           DEPLOY_TARGET_HOST: ${{secrets.DEPLOY_TARGET_HOST_06_2024}}
           DEPLOY_TARGET_USER: ${{secrets.DEPLOY_TARGET_USER_06_2024}}
-          DEPLOY_SSH_PRIVATE_KEY: ${{secrets.DEPLOY_SSH_PRIVATE_KEY_06_2024}}
-          DEPLOY_SSH_KNOWN_HOSTS: ${{secrets.DEPLOY_SSH_KNOWN_HOSTS_06_2024}}
+          HOST_SWEETPIE: ${{secrets.DEPLOY_TARGET_HOST_12_2025}}
+          USER_SWEETPIE: ${{secrets.DEPLOY_TARGET_USER_12_2025}}
+          HOST_INDEV: ${{secrets.DEPLOY_TARGET_HOST_06_2024}}
+          USER_INDEV: ${{secrets.DEPLOY_TARGET_USER_06_2024}}
 
       - name: Notify failure
         env:
