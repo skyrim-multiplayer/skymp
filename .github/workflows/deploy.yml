@@ -65,7 +65,8 @@ jobs:
                         {
                             "owner": "skyrim-multiplayer",
                             "repo": "skymp",
-                            "labels": ["merge-to:${{env.DEPLOY_BRANCH}}"]
+                            "labels": ["merge-to:${{env.DEPLOY_BRANCH}}"],
+                            "token": "${{secrets.SKYMP5_PATCHES_PAT}}"
                         },
                         {
                             "owner": "skyrim-multiplayer",
