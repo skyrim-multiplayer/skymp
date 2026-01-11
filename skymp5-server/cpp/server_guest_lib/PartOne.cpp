@@ -500,14 +500,14 @@ void PartOne::NotifyGamemodeApiStateChanged(
 
   for (auto [eventName, eventSourceInfo] : newState.createdEventSources) {
     msg.eventSources.push_back(
-      { eventName, SignedJS(eventSourceInfo.functionBody) });
+      { eventName, eventSourceInfo.functionBody });
   }
 
   for (auto [propertyName, propertyInfo] : newState.createdProperties) {
     GamemodeValuePair updateOwnerFunctionsEntry;
     updateOwnerFunctionsEntry.name = propertyName;
     updateOwnerFunctionsEntry.content =
-      SignedJS(propertyInfo.isVisibleByOwner ? propertyInfo.updateOwner : "");
+      (propertyInfo.isVisibleByOwner ? propertyInfo.updateOwner : "");
     msg.updateOwnerFunctions.push_back(updateOwnerFunctionsEntry);
 
     //  From docs: isVisibleByNeighbors considered to be always false for
@@ -520,7 +520,7 @@ void PartOne::NotifyGamemodeApiStateChanged(
     GamemodeValuePair updateNeighborFunctionsEntry;
     updateNeighborFunctionsEntry.name = propertyName;
     updateNeighborFunctionsEntry.content =
-      SignedJS(actuallyVisibleByNeighbor ? propertyInfo.updateNeighbor : "");
+      (actuallyVisibleByNeighbor ? propertyInfo.updateNeighbor : "");
     msg.updateNeighborFunctions.push_back(updateNeighborFunctionsEntry);
   }
 
