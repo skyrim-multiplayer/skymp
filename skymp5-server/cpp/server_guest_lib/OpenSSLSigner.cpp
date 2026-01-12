@@ -14,12 +14,6 @@ bool IsSodiumInited() {
     return sodium_init() >= 0;
 }
 
-void SodiumCheck(int res, const char* msg) {
-    if (res != 0) {
-        throw std::runtime_error("sodium error: "s + msg);
-    }
-}
-
 std::vector<unsigned char> Base64Decode(std::string_view input) {
     // Remove newlines if any
     std::string clean;
