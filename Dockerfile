@@ -11,7 +11,7 @@ RUN \
   apt-get update && apt-get install -y curl \
   && curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
   && apt-get update \
-  && apt-get install -y nodejs yarn gdb \
+  && apt-get install -y nodejs gdb \
   && rm -rf /var/lib/apt/lists/*
 
 RUN useradd -m skymp
