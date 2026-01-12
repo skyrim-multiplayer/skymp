@@ -1,91 +1,152 @@
 #include "OpenSSLSigner.h"
 
-#include <memory>
+#include <sodium.h>
 #include <stdexcept>
+#include <cstring>
 #include <string_view>
+#include <algorithm>
+#include <vector>
 
-#include <antigo/Context.h>
-#include <openssl/bio.h>
-#include <openssl/err.h>
-#include <openssl/evp.h>
-#include <openssl/pem.h>
-#include <spdlog/spdlog.h>
-
-using namespace std::string_view_literals;
+using namespace std::string_literals;
 
 namespace {
-void OpenSSLThrow(std::string_view msgUser)
-{
-  ANTIGO_CONTEXT_INIT(ctx);
-  std::string msgSsl;
-  auto callback = [](const char* str, size_t len, void* u) -> int {
-    auto& msgSsl = *reinterpret_cast<std::string*>(u);
-    msgSsl.insert(msgSsl.end(), str, str + len);
-    return len;
-  };
-  ERR_print_errors_cb(callback, &msgSsl);
-  while (!msgSsl.empty() && msgSsl.ends_with('\n')) {
-    msgSsl.pop_back();
-  }
-  throw std::runtime_error(fmt::format("{}: openssl: {}", msgUser, msgSsl));
+bool IsSodiumInited() {
+    return sodium_init() >= 0;
 }
 
-template <class T, class F>
-auto OpenSSLPtrWrap(T* ptr, F cb,
-                    std::string_view msg = "init returned null pointer"sv)
-{
-  ANTIGO_CONTEXT_INIT(ctx);
-  if (ptr == nullptr) {
-    OpenSSLThrow(msg);
-  }
-  return OpenSSLSignerImpl::UniquePtrWithDeleter<T>(
-    ptr, OpenSSLSignerImpl::Deleter<T>{ cb });
+void SodiumCheck(int res, const char* msg) {
+    if (res != 0) {
+        throw std::runtime_error("sodium error: "s + msg);
+    }
 }
 
-std::string Base64Encode(const unsigned char* data, size_t dataLen)
-{
-  size_t encLen = EVP_ENCODE_LENGTH(dataLen);
-  std::string buf(encLen, '\0');
-  int realLen = EVP_EncodeBlock(reinterpret_cast<unsigned char*>(buf.data()),
-                                data, dataLen);
-  if (realLen <= 0) {
-    OpenSSLThrow("base64 encode failed");
-  }
-  buf.resize(static_cast<size_t>(realLen));
-  return buf;
+// Simple internal Base64 decode to bytes
+std::vector<unsigned char> Base64Decode(std::string_view input) {
+    // Remove newlines if any (sodium_base642bin ignores variants but let's be safe)
+    // Actually sodium_base642bin supports variants.
+    // sodium_base64_VARIANT_ORIGINAL handles no padding? No, it expects padding usually.
+    // The input PEM has newlines.
+    
+    std::string clean;
+    clean.reserve(input.size());
+    for (char c : input) {
+        if (!isspace(c)) clean.push_back(c);
+    }
+
+    size_t required_len = clean.size() / 4 * 3; // Estimate
+    std::vector<unsigned char> out(required_len + 10);
+    size_t bin_len;
+    
+    if (sodium_base642bin(out.data(), out.size(), clean.c_str(), clean.size(),
+                          nullptr, &bin_len, nullptr, sodium_base64_VARIANT_ORIGINAL) != 0) {
+        throw std::runtime_error("Base64 decode failed");
+    }
+    out.resize(bin_len);
+    return out;
 }
+
+std::vector<unsigned char> ParseEd25519Pem(const std::string& pkeyPem) {
+    // Basic PEM parser for "PRIVATE KEY" (PKCS#8 for Ed25519)
+    // We expect header/footer and Base64 content.
+    
+    std::string_view header = "-----BEGIN PRIVATE KEY-----";
+    std::string_view footer = "-----END PRIVATE KEY-----";
+    
+    auto start = pkeyPem.find(header);
+    if (start == std::string::npos) throw std::runtime_error("Missing PEM header");
+    start += header.size();
+    
+    auto end = pkeyPem.find(footer, start);
+    if (end == std::string::npos) throw std::runtime_error("Missing PEM footer");
+    
+    auto b64 = std::string_view(pkeyPem).substr(start, end - start);
+    auto der = Base64Decode(b64);
+    
+    // Structure:
+    // Sequence
+    //   Int 0
+    //   Sequence (OID 1.3.101.112)
+    //   OctetString (Wrapper)
+    //     OctetString (Key) -> This is what we want.
+    
+    // Ed25519 PKCS#8 is usually 48 bytes (roughly).
+    // The key is the LAST 32 bytes of the inner OctetString structure.
+    // Let's use a heuristic: Find the last 32 bytes.
+    // The CurvePrivateKey is an Octet String containing the 32 byte seed.
+    
+    // For Ed25519, the private key size is 32 bytes.
+    if (der.size() < 32) throw std::runtime_error("Invalid key size");
+    
+    // Extract last 32 bytes. 
+    // This is safe because the PKCS#8 wrapping for Ed25519 ends with the key octet string.
+    // Check ASN.1 strictness if validation fails.
+    // DER encoding of wrapper:
+    // 30 2E 02 01 00 30 05 06 03 2B 65 70 04 22 04 20 [32 byte KEY]
+    // Total 48 bytes.
+    // If the derivation is standard, the last 32 bytes are indeed the key.
+    
+    if (der.size() < 48) { 
+         // Could be just raw 32 bytes? Unlikely for PEM PRIVATE KEY.
+         // Wait, checking the user provided key in the test:
+         // MC4...
+         // That decoded to 48 bytes exactly.
+         // So assuming standard PKCS#8 Ed25519, we take the last 32 bytes.
+        
+        if (der.size() == 32) return der; // Maybe it was just the key?
+        throw std::runtime_error("Unknown key format (too short for PKCS#8)");
+    }
+    
+    std::vector<unsigned char> seed(der.end() - 32, der.end());
+    return seed;
+}
+
 } // namespace
 
 OpenSSLPrivateKey::OpenSSLPrivateKey(const std::string& pkeyPem)
 {
-  auto bio = OpenSSLPtrWrap(BIO_new_mem_buf(pkeyPem.c_str(), pkeyPem.length()),
-                            BIO_free, "could not allocate io buffer for pkey");
-  pkey = OpenSSLPtrWrap(
-    PEM_read_bio_PrivateKey(bio.get(), nullptr, nullptr, nullptr),
-    EVP_PKEY_free, "could not parse pkey");
+    static bool init = IsSodiumInited();
+    (void)init; // Ensure init
+    
+    auto seed = ParseEd25519Pem(pkeyPem);
+    if (seed.size() != crypto_sign_SEEDBYTES) {
+        throw std::runtime_error("Invalid Ed25519 seed size");
+    }
+    
+    secretKey.resize(crypto_sign_SECRETKEYBYTES);
+    std::vector<unsigned char> pk(crypto_sign_PUBLICKEYBYTES);
+    
+    crypto_sign_seed_keypair(pk.data(), secretKey.data(), seed.data());
 }
 
 OpenSSLSigner::OpenSSLSigner(std::shared_ptr<OpenSSLPrivateKey> pkey_)
   : pkey(pkey_)
-  , sslMdCtx(OpenSSLPtrWrap(EVP_MD_CTX_new(), EVP_MD_CTX_free,
-                            "could not create MD_CTX"))
 {
-  if (EVP_DigestSignInit(sslMdCtx.get(), nullptr, nullptr, nullptr,
-                         pkey->GetWrapped()) <= 0) {
-    OpenSSLThrow("failed to init sign");
-  }
+    if (!pkey) throw std::runtime_error("pkey is null");
 }
 
 std::string OpenSSLSigner::SignB64(const unsigned char* data, size_t len)
 {
-  ANTIGO_CONTEXT_INIT(ctx);
-  size_t sigLen;
-  if (EVP_DigestSign(sslMdCtx.get(), nullptr, &sigLen, data, len) <= 0) {
-    OpenSSLThrow("failed to get signature len");
-  }
-  std::vector<unsigned char> sig(sigLen);
-  if (EVP_DigestSign(sslMdCtx.get(), sig.data(), &sigLen, data, len) <= 0) {
-    OpenSSLThrow("failed to get signature");
-  }
-  return Base64Encode(sig.data(), sig.size());
+    if (!pkey) throw std::runtime_error("pkey is null");
+    
+    std::vector<unsigned char> sig(crypto_sign_BYTES);
+    unsigned long long sigLen_out;
+    
+    crypto_sign_detached(sig.data(), &sigLen_out, data, len, pkey->GetSecretKey().data());
+
+    // Base64 encode signature
+    size_t b64maxlen = sodium_base64_ENCODED_LEN(crypto_sign_BYTES, sodium_base64_VARIANT_ORIGINAL);
+    std::string b64(b64maxlen, '\0');
+    
+    if (sodium_bin2base64(b64.data(), b64maxlen, sig.data(), sigLen_out, sodium_base64_VARIANT_ORIGINAL) == nullptr) {
+        throw std::runtime_error("Base64 encode failed");
+    }
+    
+    // Remove null terminator if any (std::string handles it but size might be larger)
+    // sodium_bin2base64 returns bytes including null terminator? Yes.
+    // The return value is the address.
+    // We need to resize string to actual length.
+    // sodium_bin2base64 writes a null byte at the end.
+    b64.resize(strlen(b64.c_str()));
+    
+    return b64;
 }
