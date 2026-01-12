@@ -10,9 +10,6 @@
 using namespace std::string_literals;
 
 namespace {
-bool IsSodiumInited() {
-    return sodium_init() >= 0;
-}
 
 std::vector<unsigned char> Base64Decode(std::string_view input) {
     // Remove newlines if any
@@ -55,23 +52,23 @@ std::vector<unsigned char> ParseEd25519Pem(const std::string& pkeyPem) {
     // The structure typically involves an algorithm identifier and the key octet string.
     // For Ed25519, the private key seed is the last 32 bytes of the 48-byte structure.
 
-    if (der.size() < 32) throw std::runtime_error("Invalid key size");
-    
-    if (der.size() < 48) { 
-        if (der.size() == 32) return der; // Raw key
-        throw std::runtime_error("Unknown key format (too short for PKCS#8)");
+    if (der.size() == 48) {
+        return std::vector<unsigned char>(der.end() - 32, der.end());
+    } else if (der.size() == 32) {
+        return der;
+    } else {
+        throw std::runtime_error("Unsupported PEM key size or format. Expected 48-byte PKCS#8 Ed25519.");
     }
-    
-    std::vector<unsigned char> seed(der.end() - 32, der.end());
-    return seed;
 }
 
 } // namespace
 
 OpenSSLPrivateKey::OpenSSLPrivateKey(const std::string& pkeyPem)
 {
-    static bool init = IsSodiumInited();
-    (void)init; // Ensure init
+    static bool g_initStatus = (sodium_init() >= 0);
+    if (!g_initStatus) {
+        throw std::runtime_error("libsodium initialization failed");
+    }
     
     auto seed = ParseEd25519Pem(pkeyPem);
     if (seed.size() != crypto_sign_SEEDBYTES) {
