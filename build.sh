@@ -35,9 +35,20 @@ fi
 
 # TODO(#2280): reverse the order or use [[ ]] ?
 if [ "$1" = "--configure" ]; then
-  shift && \
-    cd build && \
-    exec cmake -G "Ninja" .. -DCMAKE_EXPORT_COMPILE_COMMANDS=ON "$@"
+  shift && cd build || exit 1
+  cmake -G "Ninja" .. -DCMAKE_EXPORT_COMPILE_COMMANDS=ON "$@"
+  ret=$?
+  if [ $ret -ne 0 ]; then
+    echo "Configure failed. Printing logs..."
+    if [ -f "vcpkg-manifest-install.log" ]; then
+      echo "====== vcpkg-manifest-install.log ======"
+      cat "vcpkg-manifest-install.log"
+    fi
+    if [ -d "../vcpkg/buildtrees" ]; then
+      find "../vcpkg/buildtrees" -name "*.log" -exec echo "====== {} ======" \; -exec cat {} \;
+    fi
+    exit $ret
+  fi
 elif [ "$1" = "--build" ]; then
   shift && \
     cd build && \
