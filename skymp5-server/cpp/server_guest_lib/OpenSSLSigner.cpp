@@ -106,12 +106,7 @@ std::string OpenSSLSigner::SignB64(const unsigned char* data, size_t len)
     if (sodium_bin2base64(b64.data(), b64maxlen, sig.data(), sigLen_out, sodium_base64_VARIANT_ORIGINAL) == nullptr) {
         throw std::runtime_error("Base64 encode failed");
     }
-    
-    // Remove null terminator if any (std::string handles it but size might be larger)
-    // sodium_bin2base64 returns bytes including null terminator? Yes.
-    // The return value is the address.
-    // We need to resize string to actual length.
-    // sodium_bin2base64 writes a null byte at the end.
+
     b64.resize(strlen(b64.c_str()));
     
     return b64;
