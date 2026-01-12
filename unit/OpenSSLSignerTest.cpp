@@ -31,11 +31,11 @@ MC4CAQAwBQYDK2VwBCIEIILh6zzNPCOMUWMvW4QXXXPPWbyJoNL8ggkqiD+2mZdp
 
 TEST_CASE("OpenSSLSigner Invalid Key Size")
 {
-  std::string badPem = 
-    "-----BEGIN PRIVATE KEY-----\n"
-    "AAAA\n"
-    "-----END PRIVATE KEY-----";
-    
-  REQUIRE_THROWS_WITH(std::make_shared<OpenSSLPrivateKey>(badPem), 
+  std::string badPem = "-----BEGIN PRIVATE KEY-----\n"
+                       "AAAA\n"
+                       "-----END PRIVATE KEY-----";
+
+  REQUIRE_THROWS_WITH(
+    std::make_shared<OpenSSLPrivateKey>(badPem),
     "Unsupported PEM key size or format. Expected 48-byte PKCS#8 Ed25519.");
 }
