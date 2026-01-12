@@ -31,7 +31,6 @@ RUN \
   && apt-get install -y \
     nodejs \
     yarn \
-    python2 \
     libicu-dev \
     git \
     cmake \
@@ -45,8 +44,8 @@ RUN \
     bison \
     autoconf \
     cmake \
-    clang-15 \
-    clang-format-15 \
+    clang-20 \
+    clang-format-20 \
     ninja-build \
   && rm -rf /var/lib/apt/lists/*
 
