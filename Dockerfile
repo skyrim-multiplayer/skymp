@@ -11,7 +11,7 @@ RUN \
   apt-get update && apt-get install -y curl \
   && curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
   && apt-get update \
-  && apt-get install -y nodejs yarn gdb \
+  && apt-get install -y nodejs gdb \
   && rm -rf /var/lib/apt/lists/*
 
 RUN useradd -m skymp
@@ -31,7 +31,6 @@ RUN \
   && apt-get install -y \
     nodejs \
     yarn \
-    python2 \
     libicu-dev \
     git \
     cmake \
@@ -44,11 +43,18 @@ RUN \
     flex \
     bison \
     autoconf \
+    automake \
+    libtool \
     cmake \
-    clang-15 \
-    clang-format-15 \
+    clang-20 \
+    clang-format-20 \
     ninja-build \
+    build-essential \
   && rm -rf /var/lib/apt/lists/*
+
+RUN ln -s /usr/bin/clang-20 /usr/bin/clang \
+ && ln -s /usr/bin/clang++-20 /usr/bin/clang++ \
+ && ln -s /usr/bin/clang-cpp-20 /usr/bin/clang-cpp
 
 
 # Intermediate image to build
@@ -58,14 +64,26 @@ FROM skymp-build-base AS skymp-vcpkg-deps-builder
 ARG VCPKG_URL
 ARG VCPKG_COMMIT
 
-COPY --chown=skymp:skymp . /src
+# 1. Set the working directory
+WORKDIR /src
 
+# 2. Copy files and set ownership of the copied files
+COPY --chown=skymp:skymp . .
+
+# 3. Explicitly fix ownership of the /src directory itself
+# This ensures skymp can create new folders (like 'vcpkg') inside it
+USER root
+RUN chown skymp:skymp /src
+
+# 4. Now switch to the non-root user
 USER skymp
 
-RUN  cd /src \
-  && git clone "$VCPKG_URL" vcpkg \
-  && git -C vcpkg checkout "$VCPKG_COMMIT" \
-  && ./build.sh --configure
+# 5. Run the build commands
+RUN git clone "$VCPKG_URL" vcpkg \
+ && git -C vcpkg checkout "$VCPKG_COMMIT" \
+ && chmod +x build.sh \
+ && sed -i 's/\r$//' build.sh \
+ && ./build.sh --configure
 
 
 # Image that runs in CI. It contains vcpkg cache to speedup the build.
