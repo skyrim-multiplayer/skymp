@@ -27,12 +27,13 @@ fi
 docker rm "skymp-server-$branch" || true
 
 docker run -d --restart=always --name="skymp-server-$branch" --network=host \
+    -e NODE_OPTIONS="--openssl-legacy-provider" \
     -v "/var/crash:/var/crash" \
     -v "$PWD/server:/work" --workdir=/work \
     -u "`id -u`:`id -g`" \
     --cpu-period=50000 --cpu-quota=$(( 50000 * 6 )) \
     --cap-add=SYS_PTRACE \
-    skymp/skymp-runtime-base:6f62bce ./run.sh
+    skymp/skymp-runtime-base:9acba19 ./run.sh
 # ^ limited to 6 CPU cores: https://stackoverflow.com/a/41552172
 
 # This looks a bit ugly, but apparently is more fault-tolerant than older version:
