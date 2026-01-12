@@ -20,13 +20,8 @@ void SodiumCheck(int res, const char* msg) {
     }
 }
 
-// Simple internal Base64 decode to bytes
 std::vector<unsigned char> Base64Decode(std::string_view input) {
-    // Remove newlines if any (sodium_base642bin ignores variants but let's be safe)
-    // Actually sodium_base642bin supports variants.
-    // sodium_base64_VARIANT_ORIGINAL handles no padding? No, it expects padding usually.
-    // The input PEM has newlines.
-    
+    // Remove newlines if any
     std::string clean;
     clean.reserve(input.size());
     for (char c : input) {
@@ -62,37 +57,14 @@ std::vector<unsigned char> ParseEd25519Pem(const std::string& pkeyPem) {
     auto b64 = std::string_view(pkeyPem).substr(start, end - start);
     auto der = Base64Decode(b64);
     
-    // Structure:
-    // Sequence
-    //   Int 0
-    //   Sequence (OID 1.3.101.112)
-    //   OctetString (Wrapper)
-    //     OctetString (Key) -> This is what we want.
-    
-    // Ed25519 PKCS#8 is usually 48 bytes (roughly).
-    // The key is the LAST 32 bytes of the inner OctetString structure.
-    // Let's use a heuristic: Find the last 32 bytes.
-    // The CurvePrivateKey is an Octet String containing the 32 byte seed.
-    
-    // For Ed25519, the private key size is 32 bytes.
+    // Parse PKCS#8 structure for Ed25519.
+    // The structure typically involves an algorithm identifier and the key octet string.
+    // For Ed25519, the private key seed is the last 32 bytes of the 48-byte structure.
+
     if (der.size() < 32) throw std::runtime_error("Invalid key size");
     
-    // Extract last 32 bytes. 
-    // This is safe because the PKCS#8 wrapping for Ed25519 ends with the key octet string.
-    // Check ASN.1 strictness if validation fails.
-    // DER encoding of wrapper:
-    // 30 2E 02 01 00 30 05 06 03 2B 65 70 04 22 04 20 [32 byte KEY]
-    // Total 48 bytes.
-    // If the derivation is standard, the last 32 bytes are indeed the key.
-    
     if (der.size() < 48) { 
-         // Could be just raw 32 bytes? Unlikely for PEM PRIVATE KEY.
-         // Wait, checking the user provided key in the test:
-         // MC4...
-         // That decoded to 48 bytes exactly.
-         // So assuming standard PKCS#8 Ed25519, we take the last 32 bytes.
-        
-        if (der.size() == 32) return der; // Maybe it was just the key?
+        if (der.size() == 32) return der; // Raw key
         throw std::runtime_error("Unknown key format (too short for PKCS#8)");
     }
     
