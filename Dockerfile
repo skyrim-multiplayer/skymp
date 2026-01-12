@@ -1,6 +1,6 @@
 # Image used as runtime base for a game server.
 # Contains a minimal subset of stuff needed for running (and debugging, if needed) the server.
-FROM ubuntu:jammy AS skymp-runtime-base
+FROM ubuntu:25.10 AS skymp-runtime-base
 
 # Prevent apt-get from asking us about timezone
 # London is not always UTC+0:00
