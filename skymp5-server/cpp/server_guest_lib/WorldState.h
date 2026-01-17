@@ -8,12 +8,12 @@
 #include "MpObjectReference.h"
 #include "NiPoint3.h"
 #include "PartOneListener.h"
-#include "Timer.h"
 #include "condition_functions/ConditionFunctionMap.h"
 #include "libespm/Loader.h"
 #include "papyrus-vm/VirtualMachine.h"
 #include "script_objects/MpFormGameObject.h"
 #include <MakeID.h>
+#include <Timer.h>
 #include <algorithm>
 #include <chrono>
 #include <functional>
@@ -32,6 +32,7 @@
 class MpActor;
 class FormCallbacks;
 class MpChangeForm;
+template <typename T, typename FormDescType>
 class ISaveStorage;
 class IScriptStorage;
 class GameModeEvent;
@@ -62,7 +63,8 @@ public:
 
   void AttachEspm(espm::Loader* espm,
                   const FormCallbacksFactory& formCallbacksFactory);
-  void AttachSaveStorage(std::shared_ptr<ISaveStorage> saveStorage);
+  void AttachSaveStorage(
+    std::shared_ptr<ISaveStorage<MpChangeForm, FormDesc>> saveStorage);
   void AttachScriptStorage(std::shared_ptr<IScriptStorage> scriptStorage);
 
   void AddForm(std::unique_ptr<MpForm> form, uint32_t formId,

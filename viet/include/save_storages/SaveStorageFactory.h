@@ -1,4 +1,5 @@
 #pragma once
+#include "AsyncSaveStorage.h"
 #include "ISaveStorage.h"
 #include "database_drivers/IDatabase.h"
 #include <memory>
@@ -7,6 +8,10 @@
 class SaveStorageFactory
 {
 public:
-  static std::shared_ptr<ISaveStorage> Create(
-    std::shared_ptr<IDatabase> db, std::shared_ptr<spdlog::logger> logger);
+  template <typename T, typename FormDescType>
+  static std::shared_ptr<ISaveStorage<T, FormDescType>> Create(
+    std::shared_ptr<IDatabase<T>> db, std::shared_ptr<spdlog::logger> logger)
+  {
+    return std::make_shared<AsyncSaveStorage<T, FormDescType>>(db, logger);
+  }
 };

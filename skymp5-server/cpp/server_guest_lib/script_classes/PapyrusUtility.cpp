@@ -1,7 +1,7 @@
 #include "PapyrusUtility.h"
 
-#include "TimeUtils.h"
 #include "WorldState.h"
+#include <TimeUtils.h>
 #include <chrono>
 #include <random>
 
