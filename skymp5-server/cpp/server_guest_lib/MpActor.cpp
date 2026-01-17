@@ -14,7 +14,6 @@
 #include "ServerState.h"
 #include "SpSnippet.h"
 #include "SpSnippetFunctionGen.h"
-#include "TimeUtils.h"
 #include "WorldState.h"
 #include "gamemode_events/DeathEvent.h"
 #include "gamemode_events/DropItemEvent.h"
@@ -25,6 +24,7 @@
 #include "papyrus-vm/Utils.h"
 #include "script_objects/EspmGameObject.h"
 #include <NiPoint3.h>
+#include <TimeUtils.h>
 #include <algorithm>
 #include <atomic>
 #include <chrono>

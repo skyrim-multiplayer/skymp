@@ -1,8 +1,9 @@
 #pragma once
-#include "IDatabase.h"
+#include "MpChangeForms.h"
+#include <database_drivers/IDatabase.h>
 #include <spdlog/spdlog.h>
 
-class FileDatabase : public IDatabase
+class FileDatabase : public IDatabase<MpChangeForm>
 {
 public:
   FileDatabase(std::string directory_,

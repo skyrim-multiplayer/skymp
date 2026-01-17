@@ -1,12 +1,13 @@
 #include "TestUtils.hpp"
 
+#include "FormDesc.h"
 #include "MpChangeForms.h"
 #include "database_drivers/FileDatabase.h"
 #include "database_drivers/ZipDatabase.h"
 #include "save_storages/AsyncSaveStorage.h"
 #include <filesystem>
 
-std::shared_ptr<ISaveStorage> MakeSaveStorageFile()
+std::shared_ptr<ISaveStorage<MpChangeForm, FormDesc>> MakeSaveStorageFile()
 {
   auto directory = "unit/data";
 
@@ -14,12 +15,12 @@ std::shared_ptr<ISaveStorage> MakeSaveStorageFile()
     std::filesystem::remove_all(directory);
   }
 
-  return std::make_shared<AsyncSaveStorage>(
+  return std::make_shared<AsyncSaveStorage<MpChangeForm, FormDesc>>(
     std::make_shared<FileDatabase>(directory, spdlog::default_logger()),
     spdlog::default_logger(), "file");
 }
 
-std::shared_ptr<ISaveStorage> MakeSaveStorageZip()
+std::shared_ptr<ISaveStorage<MpChangeForm, FormDesc>> MakeSaveStorageZip()
 {
   auto archivePath = "world.zip";
 
@@ -27,12 +28,13 @@ std::shared_ptr<ISaveStorage> MakeSaveStorageZip()
     std::filesystem::remove(archivePath);
   }
 
-  return std::make_shared<AsyncSaveStorage>(
+  return std::make_shared<AsyncSaveStorage<MpChangeForm, FormDesc>>(
     std::make_shared<ZipDatabase>(archivePath, spdlog::default_logger()),
     spdlog::default_logger(), "zip");
 }
 
-std::vector<std::shared_ptr<ISaveStorage>> MakeSaveStorages()
+std::vector<std::shared_ptr<ISaveStorage<MpChangeForm, FormDesc>>>
+MakeSaveStorages()
 {
   return { MakeSaveStorageFile(), MakeSaveStorageZip() };
 }
@@ -44,7 +46,7 @@ MpChangeForm CreateChangeForm(const char* descStr)
   return res;
 }
 
-void UpsertSync(ISaveStorage& st,
+void UpsertSync(ISaveStorage<MpChangeForm, FormDesc>& st,
                 std::vector<std::optional<MpChangeForm>> changeForms)
 {
   bool finished = false;
@@ -60,7 +62,8 @@ void UpsertSync(ISaveStorage& st,
   }
 }
 
-void WaitForNextUpsert(ISaveStorage& st, WorldState& wst)
+void WaitForNextUpsert(ISaveStorage<MpChangeForm, FormDesc>& st,
+                       WorldState& wst)
 {
   uint32_t n = st.GetNumFinishedUpserts();
 

@@ -1,11 +1,12 @@
 #pragma once
-#include "IDatabase.h"
+#include "MpChangeForms.h"
+#include <database_drivers/IDatabase.h>
 #include <memory>
 #include <spdlog/spdlog.h>
 
 class DatabaseFactory
 {
 public:
-  static std::shared_ptr<IDatabase> Create(
+  static std::shared_ptr<IDatabase<MpChangeForm>> Create(
     nlohmann::json settings, std::shared_ptr<spdlog::logger> logger);
 };
