@@ -664,10 +664,11 @@ VarValue PapyrusObjectReference::PlayAnimationAndWait(
     auto timerPromise = selfRefr->GetParent()->SetTimer(time);
     auto resultPromise = Viet::Promise<VarValue>();
     timerPromise
-      .Then([resultPromise](Viet::Void) {
+      .Then([resultPromise](Viet::Void) mutable {
         resultPromise.Resolve(VarValue::None());
       })
-      .Catch([resultPromise](const char* e) { resultPromise.Reject(e); });
+      .Catch(
+        [resultPromise](const char* e) mutable { resultPromise.Reject(e); });
     promises.push_back(resultPromise);
 
     return VarValue(Viet::Promise<VarValue>::Race(promises));
