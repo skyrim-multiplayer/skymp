@@ -67,7 +67,7 @@ std::vector<std::optional<MpChangeForm>>&& FileDatabase::UpsertImpl(
     outNumUpserted = nUpserted;
     return std::move(changeForms);
   } catch (std::exception& e) {
-    throw UpsertFailedException(std::move(changeForms), e.what());
+    throw Viet::UpsertFailedException(std::move(changeForms), e.what());
   }
 }
 

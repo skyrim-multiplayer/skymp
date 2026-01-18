@@ -452,7 +452,7 @@ Napi::Value ScampServer::AttachSaveStorage(const Napi::CallbackInfo& info)
   try {
     auto db = DatabaseFactory::Create(serverSettings, logger);
     auto saveStorage =
-      SaveStorageFactory::Create<MpChangeForm, FormDesc>(db, logger);
+      Viet::SaveStorageFactory::Create<MpChangeForm, FormDesc>(db, logger);
     partOne->AttachSaveStorage(saveStorage);
   } catch (std::exception& e) {
     throw Napi::Error::New(info.Env(), (std::string)e.what());

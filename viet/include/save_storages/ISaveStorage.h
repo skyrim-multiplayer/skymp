@@ -6,6 +6,8 @@
 #include <string>
 #include <vector>
 
+namespace Viet {
+
 template <typename T, typename FormDescType>
 class ISaveStorage
 {
@@ -56,4 +58,6 @@ inline std::map<FormDescType, T> FindAllSync(
     [&](const T& changeForm) { res[changeForm.formDesc] = changeForm; });
   return res;
 }
+}
+
 }

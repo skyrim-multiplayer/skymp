@@ -86,7 +86,7 @@ public:
 
   void AttachEspm(espm::Loader* espm);
   void AttachSaveStorage(
-    std::shared_ptr<ISaveStorage<MpChangeForm, FormDesc>> saveStorage);
+    std::shared_ptr<Viet::ISaveStorage<MpChangeForm, FormDesc>> saveStorage);
   espm::Loader& GetEspm() const;
   bool HasEspm() const;
   void AttachLogger(std::shared_ptr<spdlog::logger> logger);

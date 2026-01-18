@@ -4,6 +4,8 @@
 #include <stdexcept>
 #include <vector>
 
+namespace Viet {
+
 template <typename T>
 class UpsertFailedException : public std::runtime_error
 {
@@ -66,3 +68,5 @@ protected:
 
   std::vector<std::optional<T>> recycledChangeFormsBuffer;
 };
+
+}

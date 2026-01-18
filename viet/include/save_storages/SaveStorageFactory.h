@@ -5,6 +5,8 @@
 #include <memory>
 #include <spdlog/spdlog.h>
 
+namespace Viet {
+
 class SaveStorageFactory
 {
 public:
@@ -15,3 +17,5 @@ public:
     return std::make_shared<AsyncSaveStorage<T, FormDescType>>(db, logger);
   }
 };
+
+}

@@ -3,7 +3,7 @@
 #include <database_drivers/IDatabase.h>
 #include <spdlog/spdlog.h>
 
-class ZipDatabase : public IDatabase<MpChangeForm>
+class ZipDatabase : public Viet::IDatabase<MpChangeForm>
 {
 public:
   ZipDatabase(std::string filePath_, std::shared_ptr<spdlog::logger> logger_);

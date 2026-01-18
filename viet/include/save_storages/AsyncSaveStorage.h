@@ -8,6 +8,8 @@
 #include <spdlog/logger.h>
 #include <thread>
 
+namespace Viet {
+
 template <typename T, typename FormDescType>
 class AsyncSaveStorage : public ISaveStorage<T, FormDescType>
 {
@@ -199,3 +201,5 @@ private:
   AsyncSaveStorage(AsyncSaveStorage&&) = delete;
   AsyncSaveStorage& operator=(AsyncSaveStorage&&) = delete;
 };
+
+}

@@ -32,8 +32,10 @@
 class MpActor;
 class FormCallbacks;
 class MpChangeForm;
+namespace Viet {
 template <typename T, typename FormDescType>
 class ISaveStorage;
+}
 class IScriptStorage;
 class GameModeEvent;
 
@@ -64,7 +66,7 @@ public:
   void AttachEspm(espm::Loader* espm,
                   const FormCallbacksFactory& formCallbacksFactory);
   void AttachSaveStorage(
-    std::shared_ptr<ISaveStorage<MpChangeForm, FormDesc>> saveStorage);
+    std::shared_ptr<Viet::ISaveStorage<MpChangeForm, FormDesc>> saveStorage);
   void AttachScriptStorage(std::shared_ptr<IScriptStorage> scriptStorage);
 
   void AddForm(std::unique_ptr<MpForm> form, uint32_t formId,

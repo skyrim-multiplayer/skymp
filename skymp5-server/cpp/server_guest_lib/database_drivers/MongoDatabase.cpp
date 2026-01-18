@@ -109,7 +109,7 @@ std::vector<std::optional<MpChangeForm>>&& MongoDatabase::UpsertImpl(
 
     return std::move(changeForms);
   } catch (std::exception& e) {
-    throw UpsertFailedException(std::move(changeForms), e.what());
+    throw Viet::UpsertFailedException(std::move(changeForms), e.what());
   }
 }
 
@@ -322,7 +322,8 @@ std::string MongoDatabase::BytesToHexString(const uint8_t* bytes,
 std::string MongoDatabase::Sha256(const std::string& str)
 {
   unsigned char hash[crypto_hash_sha256_BYTES];
-  crypto_hash_sha256(hash, reinterpret_cast<const unsigned char*>(str.data()), str.size());
+  crypto_hash_sha256(hash, reinterpret_cast<const unsigned char*>(str.data()),
+                     str.size());
   return BytesToHexString(hash, crypto_hash_sha256_BYTES);
 }
 
