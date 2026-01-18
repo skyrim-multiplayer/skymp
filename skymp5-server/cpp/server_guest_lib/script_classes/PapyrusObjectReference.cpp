@@ -670,7 +670,7 @@ VarValue PapyrusObjectReference::PlayAnimationAndWait(
       .Catch([resultPromise](const char* e) { resultPromise.Reject(e); });
     promises.push_back(resultPromise);
 
-    return VarValue(Viet::Promise<VarValue>::Any(promises));
+    return VarValue(Viet::Promise<VarValue>::Race(promises));
   }
   return VarValue::None();
 }

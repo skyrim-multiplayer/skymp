@@ -98,7 +98,7 @@ public:
     return res;
   }
 
-  static Promise<T> Any(const std::vector<Promise<T>>& promises)
+  static Promise<T> Race(const std::vector<Promise<T>>& promises)
   {
     Promise<T> res;
 
