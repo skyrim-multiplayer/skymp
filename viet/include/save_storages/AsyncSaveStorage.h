@@ -139,59 +139,64 @@ private:
 
   std::shared_ptr<Impl> pImpl;
 
+  static void ProcessUpserts(Impl* pImpl)
+  {
+    try {
+
+      decltype(pImpl->share3.upsertTasks) tasks;
+      {
+        std::lock_guard l(pImpl->share3.m);
+        tasks = std::move(pImpl->share3.upsertTasks);
+        pImpl->share3.upsertTasks.clear();
+      }
+
+      std::vector<std::function<void()>> callbacksToFire;
+      std::vector<std::vector<std::optional<T>>> recycledChangeFormsBuffers;
+
+      {
+        std::lock_guard l(pImpl->share.m);
+        auto start = std::chrono::high_resolution_clock::now();
+        size_t numChangeForms = 0;
+        for (auto& t : tasks) {
+          numChangeForms +=
+            pImpl->share.dbImpl->Upsert(std::move(t.changeForms));
+          t.changeForms.clear();
+          callbacksToFire.push_back(t.callback);
+
+          std::vector<std::optional<T>> tmp;
+          if (pImpl->share.dbImpl->GetRecycledChangeFormsBuffer(tmp)) {
+            recycledChangeFormsBuffers.push_back(std::move(tmp));
+          }
+        }
+        if (numChangeForms > 0 && pImpl->logger) {
+          auto end = std::chrono::high_resolution_clock::now();
+          std::chrono::duration<double, std::milli> elapsed = end - start;
+          pImpl->logger->trace("Saved {} ChangeForms in {} ms", numChangeForms,
+                               elapsed.count());
+        }
+      }
+
+      {
+        std::lock_guard l(pImpl->share4.m);
+        for (auto& cb : callbacksToFire) {
+          pImpl->share4.upsertCallbacksToFire.push_back(cb);
+        }
+        for (auto& buf : recycledChangeFormsBuffers) {
+          pImpl->share4.recycledChangeFormsBuffers.push_back(std::move(buf));
+        }
+      }
+    } catch (...) {
+      std::lock_guard l(pImpl->share2.m);
+      auto exceptionPtr = std::current_exception();
+      pImpl->share2.exceptions.push_back(exceptionPtr);
+    }
+  }
+
   static void SaverThreadMain(Impl* pImpl)
   {
     while (!pImpl->destroyed) {
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
-      try {
-
-        decltype(pImpl->share3.upsertTasks) tasks;
-        {
-          std::lock_guard l(pImpl->share3.m);
-          tasks = std::move(pImpl->share3.upsertTasks);
-          pImpl->share3.upsertTasks.clear();
-        }
-
-        std::vector<std::function<void()>> callbacksToFire;
-        std::vector<std::vector<std::optional<T>>> recycledChangeFormsBuffers;
-
-        {
-          std::lock_guard l(pImpl->share.m);
-          auto start = std::chrono::high_resolution_clock::now();
-          size_t numChangeForms = 0;
-          for (auto& t : tasks) {
-            numChangeForms +=
-              pImpl->share.dbImpl->Upsert(std::move(t.changeForms));
-            t.changeForms.clear();
-            callbacksToFire.push_back(t.callback);
-
-            std::vector<std::optional<T>> tmp;
-            if (pImpl->share.dbImpl->GetRecycledChangeFormsBuffer(tmp)) {
-              recycledChangeFormsBuffers.push_back(std::move(tmp));
-            }
-          }
-          if (numChangeForms > 0 && pImpl->logger) {
-            auto end = std::chrono::high_resolution_clock::now();
-            std::chrono::duration<double, std::milli> elapsed = end - start;
-            pImpl->logger->trace("Saved {} ChangeForms in {} ms",
-                                 numChangeForms, elapsed.count());
-          }
-        }
-
-        {
-          std::lock_guard l(pImpl->share4.m);
-          for (auto& cb : callbacksToFire) {
-            pImpl->share4.upsertCallbacksToFire.push_back(cb);
-          }
-          for (auto& buf : recycledChangeFormsBuffers) {
-            pImpl->share4.recycledChangeFormsBuffers.push_back(std::move(buf));
-          }
-        }
-      } catch (...) {
-        std::lock_guard l(pImpl->share2.m);
-        auto exceptionPtr = std::current_exception();
-        pImpl->share2.exceptions.push_back(exceptionPtr);
-      }
+      ProcessUpserts(pImpl);
     }
   }
 
