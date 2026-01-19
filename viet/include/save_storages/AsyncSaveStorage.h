@@ -142,7 +142,6 @@ private:
   static void ProcessUpserts(Impl* pImpl)
   {
     try {
-
       decltype(pImpl->share3.upsertTasks) tasks;
       {
         std::lock_guard l(pImpl->share3.m);
