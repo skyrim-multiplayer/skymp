@@ -1,8 +1,8 @@
 #include "ZipDatabase.h"
 
-#include "FileUtils.h"
-#include "MappedBuffer.h"
 #include "libzippp/libzippp.h"
+#include <FileUtils.h>
+#include <MappedBuffer.h>
 #include <filesystem>
 #include <fstream>
 #include <nlohmann/json.hpp>
@@ -64,7 +64,7 @@ std::vector<std::optional<MpChangeForm>>&& ZipDatabase::UpsertImpl(
 
     return std::move(changeForms);
   } catch (std::exception& e) {
-    throw UpsertFailedException(std::move(changeForms), e.what());
+    throw Viet::UpsertFailedException(std::move(changeForms), e.what());
   }
 }
 

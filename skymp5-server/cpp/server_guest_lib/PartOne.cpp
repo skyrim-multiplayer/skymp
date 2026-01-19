@@ -320,7 +320,8 @@ void PartOne::AttachEspm(espm::Loader* espm)
   worldState.AttachEspm(espm, [this] { return CreateFormCallbacks(); });
 }
 
-void PartOne::AttachSaveStorage(std::shared_ptr<ISaveStorage> saveStorage)
+void PartOne::AttachSaveStorage(
+  std::shared_ptr<Viet::ISaveStorage<MpChangeForm, FormDesc>> saveStorage)
 {
   worldState.AttachSaveStorage(saveStorage);
 

@@ -1,11 +1,12 @@
 #pragma once
-#include "IDatabase.h"
+#include "MpChangeForms.h"
 #include "utils/JsonSanitizer.h"
+#include <database_drivers/IDatabase.h>
 #include <memory>
 #include <nlohmann/json.hpp>
 #include <simdjson.h>
 
-class MongoDatabase : public IDatabase
+class MongoDatabase : public Viet::IDatabase<MpChangeForm>
 {
 public:
   MongoDatabase(const std::string& uri_, const std::string& name_);

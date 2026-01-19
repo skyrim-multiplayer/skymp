@@ -11,9 +11,7 @@
 #include "MpChangeForms.h"
 #include "MsgType.h"
 #include "Primitive.h"
-#include "ScopedTask.h"
 #include "ScriptVariablesHolder.h"
-#include "TimeUtils.h"
 #include "UpdatePropertyMessage.h"
 #include "WorldState.h"
 #include "gamemode_events/ActivateEvent.h"
@@ -28,6 +26,8 @@
 #include "papyrus-vm/VirtualMachine.h"
 #include "script_objects/EspmGameObject.h"
 #include "script_storages/IScriptStorage.h"
+#include <ScopedTask.h>
+#include <TimeUtils.h>
 #include <antigo/Context.h>
 #include <antigo/ResolvedContext.h>
 #include <map>
