@@ -27,7 +27,6 @@ fi
 docker rm "skymp-server-$branch" || true
 
 docker run -d --restart=always --name="skymp-server-$branch" --network=host \
-    -e NODE_OPTIONS="--openssl-legacy-provider" \
     -v "/var/crash:/var/crash" \
     -v "$PWD/server:/work" --workdir=/work \
     -u "`id -u`:`id -g`" \
