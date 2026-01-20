@@ -54,6 +54,13 @@ public:
     pImpl->share3.upsertTasks.push_back({ std::move(changeForms), cb });
   }
 
+  void Iterate(const IterateCallback& cb,
+               const std::optional<std::vector<FormDescType>>& filter) override
+  {
+    std::lock_guard l(pImpl->share4.m);
+    pImpl->share4.iterateTasks.push_back({ filter, cb });
+  }
+
   uint32_t GetNumFinishedUpserts() const override
   {
     return pImpl->numFinishedUpserts;
@@ -70,6 +77,7 @@ public:
       }
     }
 
+    // TODO: consider protecting against throwing callbacks
     decltype(pImpl->share4.upsertCallbacksToFire) upsertCallbacksToFire;
     {
       std::lock_guard l(pImpl->share4.m);
@@ -78,6 +86,17 @@ public:
     }
     for (auto& cb : upsertCallbacksToFire) {
       pImpl->numFinishedUpserts++;
+      cb();
+    }
+
+    // TODO: consider protecting against throwing callbacks
+    decltype(pImpl->share5.iterateCallbacksToFire) iterateCallbacksToFire;
+    {
+      std::lock_guard l(pImpl->share5.m);
+      iterateCallbacksToFire = std::move(pImpl->share5.iterateCallbacksToFire);
+      pImpl->share5.iterateCallbacksToFire.clear();
+    }
+    for (auto& cb : iterateCallbacksToFire) {
       cb();
     }
   }
