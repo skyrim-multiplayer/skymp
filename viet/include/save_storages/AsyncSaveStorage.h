@@ -57,8 +57,8 @@ public:
   void Iterate(const IterateCallback& cb,
                const std::optional<std::vector<FormDescType>>& filter) override
   {
-    std::lock_guard l(pImpl->share4.m);
-    pImpl->share4.iterateTasks.push_back({ filter, cb });
+    std::lock_guard l(pImpl->share6.m);
+    pImpl->share6.iterateTasks.push_back({ filter, cb });
   }
 
   uint32_t GetNumFinishedUpserts() const override
@@ -154,12 +154,6 @@ private:
 
     struct
     {
-      std::vector<IterateTask> iterateTasks;
-      std::mutex m;
-    } share4;
-
-    struct
-    {
       std::vector<std::function<void()>> upsertCallbacksToFire;
       std::list<std::vector<std::optional<T>>> recycledChangeFormsBuffers;
       std::mutex m;
@@ -170,6 +164,12 @@ private:
       std::vector<std::function<void()>> iterateCallbacksToFire;
       std::mutex m;
     } share5;
+
+    struct
+    {
+      std::vector<IterateTask> iterateTasks;
+      std::mutex m;
+    } share6;
 
     std::unique_ptr<std::thread> thr;
     std::atomic<bool> destroyed = false;
@@ -233,11 +233,11 @@ private:
   static void ProcessIterates(Impl* pImpl)
   {
     try {
-      decltype(pImpl->share4.iterateTasks) tasks;
+      decltype(pImpl->share6.iterateTasks) tasks;
       {
-        std::lock_guard l(pImpl->share4.m);
-        tasks = std::move(pImpl->share4.iterateTasks);
-        pImpl->share4.iterateTasks.clear();
+        std::lock_guard l(pImpl->share6.m);
+        tasks = std::move(pImpl->share6.iterateTasks);
+        pImpl->share6.iterateTasks.clear();
       }
 
       std::vector<std::function<void()>> callbacksToFire;
