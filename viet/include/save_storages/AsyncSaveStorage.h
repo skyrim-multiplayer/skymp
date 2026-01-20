@@ -18,6 +18,8 @@ public:
     typename ISaveStorage<T, FormDescType>::IterateSyncCallback;
   using UpsertCallback =
     typename ISaveStorage<T, FormDescType>::UpsertCallback;
+  using IterateCallback =
+    typename ISaveStorage<T, FormDescType>::IterateCallback;
 
   // logger must support multithreaded writing
   AsyncSaveStorage(const std::shared_ptr<IDatabase<T>>& dbImpl,
@@ -104,6 +106,12 @@ private:
       std::function<void()> callback;
     };
 
+    struct IterateTask
+    {
+      std::optional<std::vector<FormDescType>> filter;
+      IterateCallback callback;
+    };
+
     std::shared_ptr<spdlog::logger> logger;
     std::string name;
 
@@ -127,10 +135,22 @@ private:
 
     struct
     {
+      std::vector<IterateTask> iterateTasks;
+      std::mutex m;
+    } share4;
+
+    struct
+    {
       std::vector<std::function<void()>> upsertCallbacksToFire;
       std::list<std::vector<std::optional<T>>> recycledChangeFormsBuffers;
       std::mutex m;
     } share4;
+
+    struct
+    {
+      std::vector<std::function<void()>> iterateCallbacksToFire;
+      std::mutex m;
+    } share5;
 
     std::unique_ptr<std::thread> thr;
     std::atomic<bool> destroyed = false;
@@ -191,11 +211,50 @@ private:
     }
   }
 
+  static void ProcessIterates(Impl* pImpl)
+  {
+    try {
+      decltype(pImpl->share4.iterateTasks) tasks;
+      {
+        std::lock_guard l(pImpl->share4.m);
+        tasks = std::move(pImpl->share4.iterateTasks);
+        pImpl->share4.iterateTasks.clear();
+      }
+
+      std::vector<std::function<void()>> callbacksToFire;
+      {
+        std::lock_guard l(pImpl->share.m);
+        for (auto& t : tasks) {
+          std::vector<T> buffer;
+          pImpl->share.dbImpl->Iterate(
+            [&](const T& changeForm) { buffer.push_back(changeForm); },
+            t.filter);
+          std::function<void()> callback =
+            [cb = t.callback, buf = std::move(buffer)]() { cb(buf); };
+          callbacksToFire.push_back(callback);
+        }
+      }
+
+      {
+        std::lock_guard l2(pImpl->share5.m);
+        for (auto& callback : callbacksToFire) {
+          pImpl->share5.iterateCallbacksToFire.push_back(callback);
+        }
+      }
+
+    } catch (...) {
+      std::lock_guard l(pImpl->share2.m);
+      auto exceptionPtr = std::current_exception();
+      pImpl->share2.exceptions.push_back(exceptionPtr);
+    }
+  }
+
   static void SaverThreadMain(Impl* pImpl)
   {
     while (!pImpl->destroyed) {
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
       ProcessUpserts(pImpl);
+      ProcessIterates(pImpl);
     }
   }
 

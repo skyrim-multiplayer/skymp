@@ -14,6 +14,7 @@ class ISaveStorage
 public:
   using IterateSyncCallback = std::function<void(const T&)>;
   using UpsertCallback = std::function<void()>;
+  using IterateCallback = std::function<void(const std::vector<T>&)>;
 
   virtual ~ISaveStorage() = default;
 

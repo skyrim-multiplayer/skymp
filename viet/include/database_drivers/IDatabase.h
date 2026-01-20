@@ -45,7 +45,8 @@ public:
     return numUpserted;
   }
 
-  virtual void Iterate(const IterateCallback& iterateCallback) = 0;
+  virtual void Iterate(const IterateCallback& iterateCallback,
+                       std::optional<std::vector<T>> filter) = 0;
 
   bool GetRecycledChangeFormsBuffer(std::vector<std::optional<T>>& changeForms)
   {
