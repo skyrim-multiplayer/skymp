@@ -128,6 +128,9 @@ void MongoDatabase::Iterate(const IterateCallback& iterateCallback,
       filterArr.push_back(desc.ToString());
     }
     filterJson["formDesc"] = { { "$in", std::move(filterArr) } };
+    spdlog::info("Filtering Iterate with {} formDescs", filter->size());
+  } else {
+    spdlog::info("No filtering for Iterate");
   }
   const std::string filterJsonStr = filterJson.dump();
 
