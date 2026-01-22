@@ -6,7 +6,7 @@
 
 namespace {
 size_t CountChangeForms(
-  std::shared_ptr<Viet::IDatabase<MpChangeForm>> database)
+  std::shared_ptr<Viet::IDatabase<MpChangeForm, FormDesc>> database)
 {
   size_t n = 0;
   database->Iterate([&](const MpChangeForm&) { ++n; }, std::nullopt);
@@ -16,15 +16,15 @@ size_t CountChangeForms(
 
 struct MigrationDatabase::Impl
 {
-  std::shared_ptr<Viet::IDatabase<MpChangeForm>> newDatabase;
-  std::shared_ptr<Viet::IDatabase<MpChangeForm>> oldDatabase;
+  std::shared_ptr<Viet::IDatabase<MpChangeForm, FormDesc>> newDatabase;
+  std::shared_ptr<Viet::IDatabase<MpChangeForm, FormDesc>> oldDatabase;
   std::function<void()> exit;
   std::function<void()> terminate;
 };
 
 MigrationDatabase::MigrationDatabase(
-  std::shared_ptr<Viet::IDatabase<MpChangeForm>> newDatabase,
-  std::shared_ptr<Viet::IDatabase<MpChangeForm>> oldDatabase,
+  std::shared_ptr<Viet::IDatabase<MpChangeForm, FormDesc>> newDatabase,
+  std::shared_ptr<Viet::IDatabase<MpChangeForm, FormDesc>> oldDatabase,
   std::function<void()> exit, std::function<void()> terminate)
 {
   pImpl.reset(new Impl{ newDatabase, oldDatabase, exit });
@@ -124,9 +124,8 @@ std::vector<std::optional<MpChangeForm>>&& MigrationDatabase::UpsertImpl(
   return std::move(changeForms);
 }
 
-void MigrationDatabase::Iterate(
-  const IterateCallback& iterateCallback,
-  std::optional<std::vector<MpChangeForm>> filter)
+void MigrationDatabase::Iterate(const IterateCallback& iterateCallback,
+                                std::optional<std::vector<FormDesc>> filter)
 {
   spdlog::error("MigrationDatabase::Iterate - should never be reached");
   pImpl->terminate();

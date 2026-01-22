@@ -51,7 +51,7 @@ std::vector<std::optional<MpChangeForm>>&& MongoDatabase::UpsertImpl(
 }
 
 void MongoDatabase::Iterate(const IterateCallback&,
-                            std::optional<std::vector<MpChangeForm>>)
+                            std::optional<std::vector<FormDesc>>)
 {
 }
 
@@ -115,7 +115,7 @@ std::vector<std::optional<MpChangeForm>>&& MongoDatabase::UpsertImpl(
 }
 
 void MongoDatabase::Iterate(const IterateCallback& iterateCallback,
-                            std::optional<std::vector<MpChangeForm>> filter)
+                            std::optional<std::vector<FormDesc>> filter)
 {
   constexpr int kBatchSize = 1001;
   mongocxx::options::find findOptions;

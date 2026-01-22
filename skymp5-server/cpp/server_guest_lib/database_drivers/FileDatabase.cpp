@@ -72,7 +72,7 @@ std::vector<std::optional<MpChangeForm>>&& FileDatabase::UpsertImpl(
 }
 
 void FileDatabase::Iterate(const IterateCallback& iterateCallback,
-                           std::optional<std::vector<MpChangeForm>> filter)
+                           std::optional<std::vector<FormDesc>> filter)
 {
   auto p = pImpl->changeFormsDirectory;
 

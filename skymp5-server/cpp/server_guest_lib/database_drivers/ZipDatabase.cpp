@@ -69,7 +69,7 @@ std::vector<std::optional<MpChangeForm>>&& ZipDatabase::UpsertImpl(
 }
 
 void ZipDatabase::Iterate(const IterateCallback& iterateCallback,
-                          std::optional<std::vector<MpChangeForm>> filter)
+                          std::optional<std::vector<FormDesc>> filter)
 {
   auto filePathAbsolute = std::filesystem::absolute(pImpl->filePath).string();
 

@@ -6,14 +6,14 @@
 #include <nlohmann/json.hpp>
 #include <simdjson.h>
 
-class MongoDatabase : public Viet::IDatabase<MpChangeForm>
+class MongoDatabase : public Viet::IDatabase<MpChangeForm, FormDesc>
 {
 public:
   MongoDatabase(const std::string& uri_, const std::string& name_);
 
   // IDatabase
   void Iterate(const IterateCallback& iterateCallback,
-               std::optional<std::vector<MpChangeForm>> filter) override;
+               std::optional<std::vector<FormDesc>> filter) override;
 
 private:
   std::vector<std::optional<MpChangeForm>>&& UpsertImpl(

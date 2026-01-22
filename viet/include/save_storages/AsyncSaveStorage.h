@@ -22,7 +22,7 @@ public:
     typename ISaveStorage<T, FormDescType>::IterateCallback;
 
   // logger must support multithreaded writing
-  AsyncSaveStorage(const std::shared_ptr<IDatabase<T>>& dbImpl,
+  AsyncSaveStorage(const std::shared_ptr<IDatabase<T, FormDescType>>& dbImpl,
                    std::shared_ptr<spdlog::logger> logger = nullptr,
                    std::string name = "")
     : pImpl(std::make_shared<Impl>())
@@ -44,7 +44,7 @@ public:
   void IterateSync(const IterateSyncCallback& cb) override
   {
     std::lock_guard l(pImpl->share.m);
-    pImpl->share.dbImpl->Iterate(cb);
+    pImpl->share.dbImpl->Iterate(cb, std::nullopt);
   }
 
   void Upsert(std::vector<std::optional<T>>&& changeForms,
@@ -136,7 +136,7 @@ private:
 
     struct
     {
-      std::shared_ptr<IDatabase<T>> dbImpl;
+      std::shared_ptr<IDatabase<T, FormDescType>> dbImpl;
       std::mutex m;
     } share;
 
