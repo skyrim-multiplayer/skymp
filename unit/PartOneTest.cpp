@@ -1,4 +1,7 @@
 #include "TestUtils.hpp"
+#include <spdlog/sinks/ostream_sink.h>
+#include <spdlog/spdlog.h>
+#include <sstream>
 
 using Catch::Matchers::ContainsSubstring;
 
@@ -53,31 +56,56 @@ TEST_CASE("OnCustomPacket", "[PartOne]")
 
 TEST_CASE("Messages for non-existent users", "[PartOne]")
 {
+  struct LoggerGuard
+  {
+    std::shared_ptr<spdlog::logger> old;
+    LoggerGuard() { old = spdlog::default_logger(); }
+    ~LoggerGuard() { spdlog::set_default_logger(old); }
+  } guard;
+
+  std::ostringstream oss;
+  auto oss_sink = std::make_shared<spdlog::sinks::ostream_sink_mt>(oss);
+  auto logger = std::make_shared<spdlog::logger>("test", oss_sink);
+  logger->set_pattern("%v");
+  logger->set_level(spdlog::level::err);
+  spdlog::set_default_logger(logger);
+
   PartOne partOne;
 
-  REQUIRE_THROWS_WITH(
-    DoMessage(partOne, 0,
-              nlohmann::json{ { "t", MsgType::CustomPacket },
-                              { "contentJsonDump",
-                                nlohmann::json{ { "x", "y" } }.dump() } }),
-    ContainsSubstring("User with id 0 doesn't exist"));
+  DoMessage(partOne, 0,
+            nlohmann::json{
+              { "t", MsgType::CustomPacket },
+              { "contentJsonDump", nlohmann::json{ { "x", "y" } }.dump() } });
+
+  REQUIRE_THAT(
+    oss.str(),
+    ContainsSubstring("PartOne::HandleMessagePacket - received "
+                      "Message packet from non-existing user 0, ignoring"));
+
+  // Check valid case
+  oss.str("");
+  oss.clear();
 
   DoConnect(partOne, 0);
 
-  REQUIRE_NOTHROW(
-    DoMessage(partOne, 0,
-              nlohmann::json{ { "t", MsgType::CustomPacket },
-                              { "contentJsonDump",
-                                nlohmann::json{ { "x", "y" } }.dump() } }));
+  DoMessage(partOne, 0,
+            nlohmann::json{
+              { "t", MsgType::CustomPacket },
+              { "contentJsonDump", nlohmann::json{ { "x", "y" } }.dump() } });
+
+  REQUIRE(oss.str().empty());
 
   DoDisconnect(partOne, 0);
 
-  REQUIRE_THROWS_WITH(
-    DoMessage(partOne, 0,
-              nlohmann::json{ { "t", MsgType::CustomPacket },
-                              { "contentJsonDump",
-                                nlohmann::json{ { "x", "y" } }.dump() } }),
-    ContainsSubstring("User with id 0 doesn't exist"));
+  DoMessage(partOne, 0,
+            nlohmann::json{
+              { "t", MsgType::CustomPacket },
+              { "contentJsonDump", nlohmann::json{ { "x", "y" } }.dump() } });
+
+  REQUIRE_THAT(
+    oss.str(),
+    ContainsSubstring("PartOne::HandleMessagePacket - received "
+                      "Message packet from non-existing user 0, ignoring"));
 }
 
 TEST_CASE("Disconnect event sent before user actually disconnects",

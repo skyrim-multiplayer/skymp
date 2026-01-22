@@ -1,8 +1,8 @@
-import init, { format } from "@wasm-fmt/clang-format";
 import fs from "fs";
 import path from "path";
 import simpleGit from "simple-git";
 import { execSync } from "child_process";
+import { getClangFormatPath } from "./deps.js";
 
 /**
  * Utility: Recursively find all files in a directory.
@@ -24,13 +24,13 @@ const findFiles = (dir, fileList = []) => {
  * Check Registry: Define custom checks here.
  * Each check should implement `lint` and `fix` methods.
  */
-const checks = [
+const getChecks = (clangFormatPath) => [
   {
     name: "Clang Format",
     appliesTo: (file) => [".cpp", ".h", ".hpp", ".cxx", ".cc"].some((ext) => file.endsWith(ext)),
     lint: (file) => {
-      // Example: Use clang-format to lint
-      const lintCommand = `clang-format --dry-run --Werror ${file}`;
+      // Use clang-format to lint
+      const lintCommand = `"${clangFormatPath}" --dry-run --Werror "${file}"`;
       try {
         execSync(lintCommand, { stdio: "inherit" });
         console.log(`[PASS] ${file}`);
@@ -42,7 +42,7 @@ const checks = [
     },
     fix: (file) => {
       // Use clang-format to autofix
-      const fixCommand = `clang-format -i ${file}`;
+      const fixCommand = `"${clangFormatPath}" -i "${file}"`;
       execSync(fixCommand, { stdio: "inherit" });
       console.log(`[FIXED] ${file}`);
     },
@@ -100,7 +100,9 @@ const checks = [
 /**
  * Core: Run checks (lint or fix) on given files.
  */
-const runChecks = (files, { lintOnly = false }) => {
+const runChecks = (files, { lintOnly = false, clangFormatPath }) => {
+  const checks = getChecks(clangFormatPath);
+  
   const filesToCheck = files.filter((file) =>
     checks.some((check) => check.appliesTo(file))
   );
@@ -145,7 +147,7 @@ const runChecks = (files, { lintOnly = false }) => {
  * CLI Entry Point
  */
 (async () => {
-  await init();
+  const clangFormatPath = await getClangFormatPath();
 
   const args = process.argv.slice(2);
   const lintOnly = args.includes("--lint");
@@ -167,7 +169,7 @@ const runChecks = (files, { lintOnly = false }) => {
         .filter((file) => fs.existsSync(file)); // Exclude deleted files
     }
 
-    runChecks(files, { lintOnly });
+    runChecks(files, { lintOnly, clangFormatPath });
 
     if (!lintOnly && !allFiles) {
       files.forEach((file) => execSync(`git add ${file}`));

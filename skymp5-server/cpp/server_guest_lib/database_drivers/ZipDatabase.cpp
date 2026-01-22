@@ -1,21 +1,11 @@
 #include "ZipDatabase.h"
 
-#include "FileUtils.h"
-#include "MappedBuffer.h"
 #include "libzippp/libzippp.h"
+#include <FileUtils.h>
+#include <MappedBuffer.h>
 #include <filesystem>
 #include <fstream>
 #include <nlohmann/json.hpp>
-#include <zlib.h>
-
-namespace {
-inline uint32_t ZlibGetCRC32Checksum(const void* readBuffer, z_size_t length)
-{
-  uLong hash = crc32_z(0L, Z_NULL, 0);
-  hash = crc32_z(hash, static_cast<const Bytef*>(readBuffer), length);
-  return static_cast<uint32_t>(hash);
-}
-}
 
 struct ZipDatabase::Impl
 {
@@ -74,7 +64,7 @@ std::vector<std::optional<MpChangeForm>>&& ZipDatabase::UpsertImpl(
 
     return std::move(changeForms);
   } catch (std::exception& e) {
-    throw UpsertFailedException(std::move(changeForms), e.what());
+    throw Viet::UpsertFailedException(std::move(changeForms), e.what());
   }
 }
 

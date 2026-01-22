@@ -677,8 +677,9 @@ void ActionListener::OnChangeValues(const RawMessageData& rawMsgData,
       CropMagickaRegeneration(magicka, timeAfterRegeneration, actor);
   }
   if (staminaChanged) {
-    currentActorValues.staminaPercentage =
-      CropStaminaRegeneration(stamina, timeAfterRegeneration, actor);
+    // currentActorValues.staminaPercentage =
+    //   CropStaminaRegeneration(stamina, timeAfterRegeneration, actor);
+    currentActorValues.staminaPercentage = stamina;
   }
 
   if (!MathUtils::IsNearlyEqual(currentActorValues.healthPercentage,

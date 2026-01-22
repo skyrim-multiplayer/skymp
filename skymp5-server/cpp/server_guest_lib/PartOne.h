@@ -1,8 +1,10 @@
 #pragma once
 #include "AnimationSystem.h"
+#include "FormDesc.h"
 #include "GamemodeApi.h"
 #include "HitData.h"
 #include "MpActor.h"
+#include "MpChangeForms.h"
 #include "NiPoint3.h"
 #include "PartOneListener.h"
 #include "ServerState.h"
@@ -10,9 +12,9 @@
 #include "WorldState.h"
 #include "formulas/IDamageFormula.h"
 #include "libespm/Loader.h"
-#include "save_storages/ISaveStorage.h"
 #include <memory>
 #include <nlohmann/json.hpp>
+#include <save_storages/ISaveStorage.h>
 #include <set>
 #include <simdjson.h>
 #include <spdlog/logger.h>
@@ -83,7 +85,8 @@ public:
   void SetEnabled(uint32_t actorFormId, bool enabled);
 
   void AttachEspm(espm::Loader* espm);
-  void AttachSaveStorage(std::shared_ptr<ISaveStorage> saveStorage);
+  void AttachSaveStorage(
+    std::shared_ptr<Viet::ISaveStorage<MpChangeForm, FormDesc>> saveStorage);
   espm::Loader& GetEspm() const;
   bool HasEspm() const;
   void AttachLogger(std::shared_ptr<spdlog::logger> logger);
@@ -109,6 +112,8 @@ public:
     const GamemodeApi::State& newState) noexcept;
 
   void SetPrivateKey(const std::string& keyId, const std::string& pkeyPem);
+
+  void EnableGamemodeDataUpdatesBroadcast(bool enable);
 
   void SetPacketHistoryRecording(Networking::UserId userId, bool value);
   PacketHistory GetPacketHistory(Networking::UserId userId);
@@ -141,7 +146,7 @@ private:
   void TickPacketHistoryPlaybacks();
   void TickDeferredMessages();
 
-  std::string SignedJS(std::string src) const;
+  std::string SignJavaScriptSources(const std::string& src) const;
 
   struct Impl;
   std::shared_ptr<Impl> pImpl;

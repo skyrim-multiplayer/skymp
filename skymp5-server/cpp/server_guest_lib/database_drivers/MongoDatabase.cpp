@@ -18,7 +18,7 @@
 #include <atomic>
 #include <map>
 #include <mutex>
-#include <openssl/sha.h>
+#include <sodium.h>
 #include <spdlog/spdlog.h>
 #include <thread>
 #include <vector>
@@ -109,7 +109,7 @@ std::vector<std::optional<MpChangeForm>>&& MongoDatabase::UpsertImpl(
 
     return std::move(changeForms);
   } catch (std::exception& e) {
-    throw UpsertFailedException(std::move(changeForms), e.what());
+    throw Viet::UpsertFailedException(std::move(changeForms), e.what());
   }
 }
 
@@ -321,9 +321,10 @@ std::string MongoDatabase::BytesToHexString(const uint8_t* bytes,
 
 std::string MongoDatabase::Sha256(const std::string& str)
 {
-  uint8_t hash[SHA256_DIGEST_LENGTH];
-  SHA256(reinterpret_cast<const uint8_t*>(str.data()), str.size(), hash);
-  return BytesToHexString(hash, SHA256_DIGEST_LENGTH);
+  unsigned char hash[crypto_hash_sha256_BYTES];
+  crypto_hash_sha256(hash, reinterpret_cast<const unsigned char*>(str.data()),
+                     str.size());
+  return BytesToHexString(hash, crypto_hash_sha256_BYTES);
 }
 
 #endif // #ifndef NO_MONGO

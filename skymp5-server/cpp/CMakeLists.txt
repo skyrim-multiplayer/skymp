@@ -108,7 +108,7 @@ if(NOT EMSCRIPTEN)
   find_package(mongoc-1.0 CONFIG REQUIRED)
 endif()
 
-find_package(OpenSSL REQUIRED)
+find_package(unofficial-sodium CONFIG REQUIRED)
 
 # MacOS not supported by rsm-bsa
 if(NOT APPLE AND NOT EMSCRIPTEN)
@@ -137,7 +137,7 @@ foreach(target ${VCPKG_DEPENDENT})
     target_compile_definitions(${target} PUBLIC NO_MONGO=1)
   endif()
 
-  target_link_libraries(${target} PUBLIC OpenSSL::SSL OpenSSL::Crypto)
+  target_link_libraries(${target} PUBLIC unofficial-sodium::sodium)
 
   if(TARGET bsa::bsa)
     target_link_libraries(${target} PUBLIC bsa::bsa)

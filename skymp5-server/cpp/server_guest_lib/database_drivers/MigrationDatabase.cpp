@@ -5,7 +5,8 @@
 #include <spdlog/spdlog.h>
 
 namespace {
-size_t CountChangeForms(std::shared_ptr<IDatabase> database)
+size_t CountChangeForms(
+  std::shared_ptr<Viet::IDatabase<MpChangeForm>> database)
 {
   size_t n = 0;
   database->Iterate([&](const MpChangeForm&) { ++n; });
@@ -15,16 +16,16 @@ size_t CountChangeForms(std::shared_ptr<IDatabase> database)
 
 struct MigrationDatabase::Impl
 {
-  std::shared_ptr<IDatabase> newDatabase;
-  std::shared_ptr<IDatabase> oldDatabase;
+  std::shared_ptr<Viet::IDatabase<MpChangeForm>> newDatabase;
+  std::shared_ptr<Viet::IDatabase<MpChangeForm>> oldDatabase;
   std::function<void()> exit;
   std::function<void()> terminate;
 };
 
-MigrationDatabase::MigrationDatabase(std::shared_ptr<IDatabase> newDatabase,
-                                     std::shared_ptr<IDatabase> oldDatabase,
-                                     std::function<void()> exit,
-                                     std::function<void()> terminate)
+MigrationDatabase::MigrationDatabase(
+  std::shared_ptr<Viet::IDatabase<MpChangeForm>> newDatabase,
+  std::shared_ptr<Viet::IDatabase<MpChangeForm>> oldDatabase,
+  std::function<void()> exit, std::function<void()> terminate)
 {
   pImpl.reset(new Impl{ newDatabase, oldDatabase, exit });
 

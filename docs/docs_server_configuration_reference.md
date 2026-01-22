@@ -422,3 +422,17 @@ If "damageMultFormulaSettings" is not present, the server will use some default 
   // ...
 }
 ```
+
+## enableGamemodeDataUpdatesBroadcast
+
+A boolean setting that controls hot-reloading behavior for connected clients.
+
+* `false` (Default): Updates to gamemode scripts are applied to the server state but **not** broadcast to currently connected players. Existing players must re-login to receive the update. This ensures client stability if scripts do not support hot-reloading.
+* `true`: Updates are immediately broadcast to all connected clients. Useful for local development, but may cause desync or client errors if the scripts are not designed to be re-applied at runtime.
+
+```json5
+{
+  // ...
+  "enableGamemodeDataUpdatesBroadcast": false
+  // ...
+}

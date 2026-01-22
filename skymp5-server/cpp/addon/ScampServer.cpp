@@ -3,14 +3,15 @@
 #include "Bot.h"
 #include "ConditionsEvaluator.h"
 #include "FormCallbacks.h"
+#include "FormDesc.h"
 #include "GamemodeApi.h"
+#include "MpChangeForms.h"
 #include "NapiHelper.h"
 #include "NetworkingCombined.h"
 #include "PacketHistoryWrapper.h"
 #include "PapyrusUtils.h"
 #include "ScampServerListener.h"
 #include "condition_functions/ConditionFunctionFactory.h"
-#include "database_drivers/DatabaseFactory.h"
 #include "formulas/DamageMultConditionalFormula.h"
 #include "formulas/DamageMultFormula.h"
 #include "formulas/SweetPieDamageFormula.h"
@@ -20,7 +21,6 @@
 #include "libespm/IterateFields.h"
 #include "papyrus-vm/Utils.h"
 #include "property_bindings/PropertyBindingFactory.h"
-#include "save_storages/SaveStorageFactory.h"
 #include "script_storages/ScriptStorageFactory.h"
 #include <algorithm>
 #include <antigo/Context.h>
@@ -28,8 +28,10 @@
 #include <antigo/ResolvedContext.h>
 #include <cassert>
 #include <cctype>
+#include <database_drivers/DatabaseFactory.h>
 #include <memory>
 #include <napi.h>
+#include <save_storages/SaveStorageFactory.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <sstream>
 
@@ -414,6 +416,12 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
                              serverKey["private"].get<std::string>());
     }
 
+    if (auto it = serverSettings.find("enableGamemodeDataUpdatesBroadcast");
+        it != serverSettings.end()) {
+      bool enableBroadcast = it.value().get<bool>();
+      partOne->EnableGamemodeDataUpdatesBroadcast(enableBroadcast);
+    }
+
     auto res =
       NapiHelper::RunScript(Env(),
                             "let require = global.require || "
@@ -443,7 +451,8 @@ Napi::Value ScampServer::AttachSaveStorage(const Napi::CallbackInfo& info)
 {
   try {
     auto db = DatabaseFactory::Create(serverSettings, logger);
-    auto saveStorage = SaveStorageFactory::Create(db, logger);
+    auto saveStorage =
+      Viet::SaveStorageFactory::Create<MpChangeForm, FormDesc>(db, logger);
     partOne->AttachSaveStorage(saveStorage);
   } catch (std::exception& e) {
     throw Napi::Error::New(info.Env(), (std::string)e.what());
