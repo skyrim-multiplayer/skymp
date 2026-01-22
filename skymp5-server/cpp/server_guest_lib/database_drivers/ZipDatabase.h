@@ -9,7 +9,8 @@ public:
   ZipDatabase(std::string filePath_, std::shared_ptr<spdlog::logger> logger_);
   ~ZipDatabase();
 
-  void Iterate(const IterateCallback& iterateCallback) override;
+  void Iterate(const IterateCallback& iterateCallback,
+               std::optional<std::vector<MpChangeForm>> filter) override;
 
 private:
   std::vector<std::optional<MpChangeForm>>&& UpsertImpl(

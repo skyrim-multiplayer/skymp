@@ -27,7 +27,8 @@ inline std::set<MpChangeForm> GetAllChangeForms(
   std::shared_ptr<Viet::IDatabase<MpChangeForm>> db)
 {
   std::set<MpChangeForm> res;
-  db->Iterate([&](const MpChangeForm& changeForm) { res.insert(changeForm); });
+  db->Iterate([&](const MpChangeForm& changeForm) { res.insert(changeForm); },
+              std::nullopt);
   return res;
 }
 

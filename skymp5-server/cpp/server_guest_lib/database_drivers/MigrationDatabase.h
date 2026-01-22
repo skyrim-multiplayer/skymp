@@ -10,7 +10,8 @@ public:
     std::shared_ptr<Viet::IDatabase<MpChangeForm>> oldDatabase,
     std::function<void()> exit = [] { std::exit(0); },
     std::function<void()> terminate = [] { std::terminate(); });
-  void Iterate(const IterateCallback& iterateCallback) override;
+  void Iterate(const IterateCallback& iterateCallback,
+               std::optional<std::vector<MpChangeForm>> filter) override;
 
 private:
   std::vector<std::optional<MpChangeForm>>&& UpsertImpl(

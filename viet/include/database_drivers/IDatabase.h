@@ -26,7 +26,7 @@ private:
   const std::vector<std::optional<T>> affectedForms;
 };
 
-template <typename T>
+template <typename T, typename FormDescType>
 class IDatabase
 {
 public:
@@ -46,7 +46,7 @@ public:
   }
 
   virtual void Iterate(const IterateCallback& iterateCallback,
-                       std::optional<std::vector<T>> filter) = 0;
+                       std::optional<std::vector<FormDescType>> filter) = 0;
 
   bool GetRecycledChangeFormsBuffer(std::vector<std::optional<T>>& changeForms)
   {

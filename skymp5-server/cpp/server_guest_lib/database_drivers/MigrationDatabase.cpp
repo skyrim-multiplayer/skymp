@@ -9,7 +9,7 @@ size_t CountChangeForms(
   std::shared_ptr<Viet::IDatabase<MpChangeForm>> database)
 {
   size_t n = 0;
-  database->Iterate([&](const MpChangeForm&) { ++n; });
+  database->Iterate([&](const MpChangeForm&) { ++n; }, std::nullopt);
   return n;
 }
 }
@@ -57,23 +57,25 @@ MigrationDatabase::MigrationDatabase(
 
   uint32_t counter = 0;
 
-  oldDatabase->Iterate([&](const MpChangeForm& changeForm) {
-    changeForms.push_back(changeForm);
-    ++counter;
-    if (counter <= 100) {
-      if (counter % 10 == 0) {
-        spdlog::info("MigrationDatabase: prepared {} changeforms", counter);
+  oldDatabase->Iterate(
+    [&](const MpChangeForm& changeForm) {
+      changeForms.push_back(changeForm);
+      ++counter;
+      if (counter <= 100) {
+        if (counter % 10 == 0) {
+          spdlog::info("MigrationDatabase: prepared {} changeforms", counter);
+        }
+      } else if (counter <= 1000) {
+        if (counter % 100 == 0) {
+          spdlog::info("MigrationDatabase: prepared {} changeforms", counter);
+        }
+      } else {
+        if (counter % 1000 == 0) {
+          spdlog::info("MigrationDatabase: prepared {} changeforms", counter);
+        }
       }
-    } else if (counter <= 1000) {
-      if (counter % 100 == 0) {
-        spdlog::info("MigrationDatabase: prepared {} changeforms", counter);
-      }
-    } else {
-      if (counter % 1000 == 0) {
-        spdlog::info("MigrationDatabase: prepared {} changeforms", counter);
-      }
-    }
-  });
+    },
+    std::nullopt);
 
   spdlog::info("MigrationDatabase: upserting {} changeforms into the new "
                "database, this may take time",
@@ -122,7 +124,9 @@ std::vector<std::optional<MpChangeForm>>&& MigrationDatabase::UpsertImpl(
   return std::move(changeForms);
 }
 
-void MigrationDatabase::Iterate(const IterateCallback& iterateCallback)
+void MigrationDatabase::Iterate(
+  const IterateCallback& iterateCallback,
+  std::optional<std::vector<MpChangeForm>> filter)
 {
   spdlog::error("MigrationDatabase::Iterate - should never be reached");
   pImpl->terminate();
