@@ -6,6 +6,7 @@
 #include <filesystem>
 #include <fstream>
 #include <nlohmann/json.hpp>
+#include <unordered_set>
 
 struct ZipDatabase::Impl
 {
@@ -82,6 +83,14 @@ void ZipDatabase::Iterate(const IterateCallback& iterateCallback,
 
   simdjson::dom::parser p;
 
+  std::optional<std::unordered_set<std::string>> filterSet;
+  if (filter) {
+    std::unordered_set<std::string>& value = filterSet.emplace();
+    for (const auto& desc : *filter) {
+      value.insert(desc.ToString());
+    }
+  }
+
   for (it = entries.begin(); it != entries.end(); ++it) {
     libzippp::ZipEntry entry = *it;
     std::string name = entry.getName();
@@ -91,7 +100,16 @@ void ZipDatabase::Iterate(const IterateCallback& iterateCallback,
 
     try {
       auto result = p.parse(textData).value();
-      iterateCallback(MpChangeForm::JsonToChangeForm(result));
+      auto changeForm = MpChangeForm::JsonToChangeForm(result);
+
+      if (filterSet) {
+        if (filterSet->find(changeForm.formDesc.ToString()) ==
+            filterSet->end()) {
+          continue;
+        }
+      }
+
+      iterateCallback(changeForm);
     } catch (std::exception& e) {
       pImpl->logger->error("Parsing or loading of {} failed with {}", name,
                            e.what());

@@ -1,6 +1,7 @@
 #include "FileDatabase.h"
 #include <filesystem>
 #include <fstream>
+#include <unordered_set>
 
 struct FileDatabase::Impl
 {
@@ -82,6 +83,14 @@ void FileDatabase::Iterate(const IterateCallback& iterateCallback,
     return;
   }
 
+  std::optional<std::unordered_set<std::string>> filterSet;
+  if (filter) {
+    std::unordered_set<std::string>& value = filterSet.emplace();
+    for (const auto& desc : *filter) {
+      value.insert(desc.ToString());
+    }
+  }
+
   for (auto& entry : std::filesystem::directory_iterator(p)) {
     try {
       if (entry.path().extension() != ".json") {
@@ -93,7 +102,16 @@ void FileDatabase::Iterate(const IterateCallback& iterateCallback,
                            std::istreambuf_iterator<char>());
 
       auto result = parser.parse(jsonDump).value();
-      iterateCallback(MpChangeForm::JsonToChangeForm(result));
+      auto changeForm = MpChangeForm::JsonToChangeForm(result);
+
+      if (filterSet) {
+        if (filterSet->find(changeForm.formDesc.ToString()) ==
+            filterSet->end()) {
+          continue;
+        }
+      }
+
+      iterateCallback(changeForm);
     } catch (std::exception& e) {
       pImpl->logger->error("Parsing of {} failed with {}",
                            entry.path().string(), e.what());

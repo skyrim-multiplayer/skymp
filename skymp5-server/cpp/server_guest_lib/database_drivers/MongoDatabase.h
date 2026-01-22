@@ -20,7 +20,7 @@ private:
     std::vector<std::optional<MpChangeForm>>&& changeForms,
     size_t& outNumUpserted) override;
 
-  int GetDocumentCount();
+  int GetDocumentCount(const std::string& filterJson = "{}");
   std::optional<std::string> GetCombinedErrorOrNull(
     const std::vector<std::optional<std::string>>& errorList);
 

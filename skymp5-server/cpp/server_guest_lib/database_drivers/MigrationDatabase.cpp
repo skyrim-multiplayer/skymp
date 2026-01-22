@@ -124,8 +124,8 @@ std::vector<std::optional<MpChangeForm>>&& MigrationDatabase::UpsertImpl(
   return std::move(changeForms);
 }
 
-void MigrationDatabase::Iterate(const IterateCallback& iterateCallback,
-                                std::optional<std::vector<FormDesc>> filter)
+void MigrationDatabase::Iterate(const IterateCallback&,
+                                std::optional<std::vector<FormDesc>>)
 {
   spdlog::error("MigrationDatabase::Iterate - should never be reached");
   pImpl->terminate();

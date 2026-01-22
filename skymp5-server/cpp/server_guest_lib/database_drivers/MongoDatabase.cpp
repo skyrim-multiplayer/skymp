@@ -121,7 +121,17 @@ void MongoDatabase::Iterate(const IterateCallback& iterateCallback,
   mongocxx::options::find findOptions;
   findOptions.batch_size(kBatchSize);
 
-  auto totalDocuments = GetDocumentCount();
+  nlohmann::json filterJson = nlohmann::json::object();
+  if (filter) {
+    auto filterArr = nlohmann::json::array();
+    for (const auto& desc : *filter) {
+      filterArr.push_back(desc.ToString());
+    }
+    filterJson["formDesc"] = { { "$in", std::move(filterArr) } };
+  }
+  const std::string filterJsonStr = filterJson.dump();
+
+  int totalDocuments = GetDocumentCount(filterJsonStr);
 
   int numParts = std::min(totalDocuments, 100);
 
@@ -172,7 +182,7 @@ void MongoDatabase::Iterate(const IterateCallback& iterateCallback,
 
       auto f = [i, skip, limit, &totalDocumentsProcessed, &iterateCallback,
                 &threadsSuccess, &threadsErrors, &threadsDocumentsJsonArray,
-                findOptions, this] {
+                findOptions, filterJsonStr, this] {
         try {
           simdjson::dom::parser p;
 
@@ -185,7 +195,8 @@ void MongoDatabase::Iterate(const IterateCallback& iterateCallback,
           options.skip(skip);
           options.limit(limit);
 
-          auto cursor = collection.find({}, options);
+          auto cursor =
+            collection.find(bsoncxx::from_json(filterJsonStr), options);
 
           for (auto& documentView : cursor) {
             threadsDocumentsJsonArray[i] +=
@@ -265,13 +276,13 @@ void MongoDatabase::Iterate(const IterateCallback& iterateCallback,
   }
 }
 
-int MongoDatabase::GetDocumentCount()
+int MongoDatabase::GetDocumentCount(const std::string& filterJson)
 {
   mongocxx::v_noabi::pool::entry poolEntry = pImpl->pool->acquire();
   mongocxx::v_noabi::collection collection =
     poolEntry->database(pImpl->name).collection(pImpl->collectionName);
 
-  return collection.count_documents({});
+  return collection.count_documents(bsoncxx::from_json(filterJson));
 }
 
 std::optional<std::string> MongoDatabase::GetCombinedErrorOrNull(
