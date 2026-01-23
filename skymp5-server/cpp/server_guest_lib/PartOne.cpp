@@ -94,6 +94,8 @@ struct PartOne::Impl
   std::shared_ptr<OpenSSLSigner> sslSigner; // nullptr if no private key set
   std::string sslSignerKeyAlias;            // empty string
   bool enableGamemodeDataUpdatesBroadcast = false;
+
+  PartOne::OnActorStreamIn onActorStreamIn;
 };
 
 PartOne::PartOne(Networking::ISendTarget* sendTarget)
@@ -312,6 +314,11 @@ void PartOne::SetEnabled(uint32_t actorFormId, bool enabled)
 {
   auto& ac = worldState.GetFormAt<MpActor>(actorFormId);
   enabled ? ac.Enable() : ac.Disable();
+}
+
+void PartOne::SetOnActorStreamIn(OnActorStreamIn callback)
+{
+  pImpl->onActorStreamIn = callback;
 }
 
 void PartOne::AttachEspm(espm::Loader* espm)
@@ -800,8 +807,9 @@ void PartOne::Init()
       message.appearance = appearance
         ? std::optional<Appearance>(*appearance)
         : std::optional<Appearance>(std::nullopt);
-      if (message.appearance.has_value() && emitter != listener) {
-        message.appearance->name = "Stranger"; // hide names of other players
+
+      if (pImpl->onActorStreamIn) {
+        pImpl->onActorStreamIn(*emitterAsActor, *listener, message);
       }
     }
 
