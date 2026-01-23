@@ -807,9 +807,8 @@ void PartOne::Init()
       message.appearance = appearance
         ? std::optional<Appearance>(*appearance)
         : std::optional<Appearance>(std::nullopt);
-
-      if (pImpl->onActorStreamIn) {
-        pImpl->onActorStreamIn(*emitterAsActor, *listener, message);
+      if (message.appearance.has_value() && emitter != listener) {
+        message.appearance->name = "Stranger"; // hide names of other players
       }
     }
 

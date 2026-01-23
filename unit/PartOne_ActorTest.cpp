@@ -125,6 +125,7 @@ TEST_CASE("createActor message contains Appearance", "[PartOne]")
   partOne.CreateActor(0xff000FFF, { 100.f, 200.f, 300.f }, 180.f, 0x3c);
   partOne.SetUserActor(1, 0xff000FFF);
 
+  // here
   auto res = FindRefrMessageIdx<CreateActorMessage>(partOne, 0);
   REQUIRE(res.filteredMessages.size() == 1);
   REQUIRE(res.filteredMessages[0].appearance.has_value());
