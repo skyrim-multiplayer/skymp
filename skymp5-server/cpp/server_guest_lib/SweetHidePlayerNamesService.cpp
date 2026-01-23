@@ -5,11 +5,18 @@
 SweetHidePlayerNamesService::SweetHidePlayerNamesService(PartOne& partOne_)
   : partOne(partOne_)
 {
-  partOne.SetOnActorStreamIn([](const MpActor& emitter,
-                                const MpObjectReference& listener,
-                                CreateActorMessage& message) {
-    if (message.appearance.has_value() && &emitter != &listener) {
-      message.appearance->name = "Stranger";
-    }
+  partOne.SetOnActorStreamIn([this](const MpActor& emitter,
+                                    const MpObjectReference& listener,
+                                    CreateActorMessage& message) {
+    this->OnActorStreamIn(emitter, listener, message);
   });
+}
+
+void SweetHidePlayerNamesService::OnActorStreamIn(
+  const MpActor& emitter, const MpObjectReference& listener,
+  CreateActorMessage& message)
+{
+  if (message.appearance.has_value() && &emitter != &listener) {
+    message.appearance->name = "Stranger";
+  }
 }
