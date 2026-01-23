@@ -180,6 +180,8 @@ private:
 
   static void ProcessUpserts(Impl* pImpl)
   {
+    // TODO: exception in dbImpl->Upsert must not delete tasks that are not yet
+    // processed
     try {
       decltype(pImpl->share3.upsertTasks) tasks;
       {
@@ -232,6 +234,8 @@ private:
 
   static void ProcessIterates(Impl* pImpl)
   {
+    // TODO: exception in dbImpl->Upsert must not delete tasks that are not yet
+    // processed
     try {
       decltype(pImpl->share6.iterateTasks) tasks;
       {

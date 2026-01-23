@@ -75,46 +75,52 @@ std::vector<std::optional<MpChangeForm>>&& FileDatabase::UpsertImpl(
 void FileDatabase::Iterate(const IterateCallback& iterateCallback,
                            std::optional<std::vector<FormDesc>> filter)
 {
-  auto p = pImpl->changeFormsDirectory;
+  try {
 
-  simdjson::dom::parser parser;
+    auto p = pImpl->changeFormsDirectory;
 
-  if (!std::filesystem::exists(p)) {
-    return;
-  }
+    simdjson::dom::parser parser;
 
-  std::optional<std::unordered_set<std::string>> filterSet;
-  if (filter) {
-    std::unordered_set<std::string>& value = filterSet.emplace();
-    for (const auto& desc : *filter) {
-      value.insert(desc.ToString());
+    if (!std::filesystem::exists(p)) {
+      return;
     }
-  }
 
-  for (auto& entry : std::filesystem::directory_iterator(p)) {
-    try {
-      if (entry.path().extension() != ".json") {
-        continue;
+    std::optional<std::unordered_set<std::string>> filterSet;
+    if (filter) {
+      std::unordered_set<std::string>& value = filterSet.emplace();
+      for (const auto& desc : *filter) {
+        value.insert(desc.ToString());
       }
+    }
 
-      std::ifstream t(entry.path());
-      std::string jsonDump((std::istreambuf_iterator<char>(t)),
-                           std::istreambuf_iterator<char>());
-
-      auto result = parser.parse(jsonDump).value();
-      auto changeForm = MpChangeForm::JsonToChangeForm(result);
-
-      if (filterSet) {
-        if (filterSet->find(changeForm.formDesc.ToString()) ==
-            filterSet->end()) {
+    for (auto& entry : std::filesystem::directory_iterator(p)) {
+      try {
+        if (entry.path().extension() != ".json") {
           continue;
         }
-      }
 
-      iterateCallback(changeForm);
-    } catch (std::exception& e) {
-      pImpl->logger->error("Parsing of {} failed with {}",
-                           entry.path().string(), e.what());
+        std::ifstream t(entry.path());
+        std::string jsonDump((std::istreambuf_iterator<char>(t)),
+                             std::istreambuf_iterator<char>());
+
+        auto result = parser.parse(jsonDump).value();
+        auto changeForm = MpChangeForm::JsonToChangeForm(result);
+
+        if (filterSet) {
+          if (filterSet->find(changeForm.formDesc.ToString()) ==
+              filterSet->end()) {
+            continue;
+          }
+        }
+
+        iterateCallback(changeForm);
+      } catch (std::exception& e) {
+        pImpl->logger->error("Parsing of {} failed with {}",
+                             entry.path().string(), e.what());
+      }
     }
+
+  } catch (std::exception& e) {
+    throw Viet::IterateFailedException<FormDesc>(std::move(filter), e.what());
   }
 }
