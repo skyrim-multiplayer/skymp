@@ -5,6 +5,8 @@ using Catch::Matchers::ContainsSubstring;
 TEST_CASE("SweetHidePlayerNames Service Integration", "[SweetHide]")
 {
   PartOne partOne;
+  partOne.worldState.espmFiles.push_back("SweetPie.esp");
+  partOne.GetActionListener();
 
   // Setup User 0 with "Oberyn"
   DoConnect(partOne, 0);

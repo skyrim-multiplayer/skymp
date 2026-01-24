@@ -16,6 +16,8 @@ void SweetHidePlayerNamesService::OnActorStreamIn(
   const MpActor& emitter, const MpObjectReference& listener,
   CreateActorMessage& message)
 {
+  if (!partOne.worldState.HasEspmFile("SweetPie.esp"))
+    return;
   if (message.appearance.has_value() && &emitter != &listener) {
     message.appearance->name = "Stranger";
   }
