@@ -6,46 +6,6 @@
 
 namespace Viet {
 
-template <typename T>
-class UpsertFailedException : public std::runtime_error
-{
-public:
-  UpsertFailedException(std::vector<std::optional<T>>&& affectedForms_,
-                        std::string what)
-    : runtime_error(what)
-    , affectedForms(affectedForms_)
-  {
-  }
-
-  const std::vector<std::optional<T>>& GetAffectedForms() const noexcept
-  {
-    return affectedForms;
-  }
-
-private:
-  const std::vector<std::optional<T>> affectedForms;
-};
-
-template <typename FormDescType>
-class IterateFailedException : public std::runtime_error
-{
-public:
-  IterateFailedException(std::optional<std::vector<FormDescType>>&& filter_,
-                         std::string what)
-    : runtime_error(what)
-    , filter(std::move(filter_))
-  {
-  }
-
-  const std::optional<std::vector<FormDescType>>& GetFilter() const noexcept
-  {
-    return filter;
-  }
-
-private:
-  const std::optional<std::vector<FormDescType>> filter;
-};
-
 template <typename T, typename FormDescType>
 class IDatabase
 {
