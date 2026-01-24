@@ -6,6 +6,7 @@
 #include <list>
 #include <mutex>
 #include <spdlog/logger.h>
+#include <stdexcept>
 #include <thread>
 
 namespace Viet {
@@ -21,7 +22,6 @@ public:
   using IterateCallback =
     typename ISaveStorage<T, FormDescType>::IterateCallback;
 
-  template <typename T>
   class UpsertFailedException : public std::runtime_error
   {
   public:
@@ -41,7 +41,6 @@ public:
     const std::vector<std::optional<T>> affectedForms;
   };
 
-  template <typename FormDescType>
   class IterateFailedException : public std::runtime_error
   {
   public:

@@ -1,7 +1,6 @@
 #pragma once
 #include <functional>
 #include <optional>
-#include <stdexcept>
 #include <vector>
 
 namespace Viet {
