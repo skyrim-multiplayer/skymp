@@ -1,6 +1,7 @@
 #include "FileDatabase.h"
 #include <filesystem>
 #include <fstream>
+#include <save_storages/AsyncSaveStorage.h>
 #include <unordered_set>
 
 struct FileDatabase::Impl
@@ -68,7 +69,9 @@ std::vector<std::optional<MpChangeForm>>&& FileDatabase::UpsertImpl(
     outNumUpserted = nUpserted;
     return std::move(changeForms);
   } catch (std::exception& e) {
-    throw Viet::UpsertFailedException(std::move(changeForms), e.what());
+    throw Viet::AsyncSaveStorage<
+      MpChangeForm, FormDesc>::UpsertFailedException(std::move(changeForms),
+                                                     e.what());
   }
 }
 
@@ -121,6 +124,8 @@ void FileDatabase::Iterate(const IterateCallback& iterateCallback,
     }
 
   } catch (std::exception& e) {
-    throw Viet::IterateFailedException<FormDesc>(std::move(filter), e.what());
+    throw Viet::AsyncSaveStorage<
+      MpChangeForm, FormDesc>::IterateFailedException(std::move(filter),
+                                                      e.what());
   }
 }

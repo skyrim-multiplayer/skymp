@@ -6,6 +6,7 @@
 #include <filesystem>
 #include <fstream>
 #include <nlohmann/json.hpp>
+#include <save_storages/AsyncSaveStorage.h>
 #include <unordered_set>
 
 struct ZipDatabase::Impl
@@ -65,7 +66,9 @@ std::vector<std::optional<MpChangeForm>>&& ZipDatabase::UpsertImpl(
 
     return std::move(changeForms);
   } catch (std::exception& e) {
-    throw Viet::UpsertFailedException(std::move(changeForms), e.what());
+    throw Viet::AsyncSaveStorage<
+      MpChangeForm, FormDesc>::UpsertFailedException(std::move(changeForms),
+                                                     e.what());
   }
 }
 
@@ -120,6 +123,8 @@ void ZipDatabase::Iterate(const IterateCallback& iterateCallback,
     }
 
   } catch (std::exception& e) {
-    throw Viet::IterateFailedException<FormDesc>(std::move(filter), e.what());
+    throw Viet::AsyncSaveStorage<
+      MpChangeForm, FormDesc>::IterateFailedException(std::move(filter),
+                                                      e.what());
   }
 }

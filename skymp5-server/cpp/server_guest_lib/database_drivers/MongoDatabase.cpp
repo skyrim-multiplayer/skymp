@@ -1,6 +1,7 @@
 #include "MongoDatabase.h"
 
 #include "JsonUtils.h"
+#include <save_storages/AsyncSaveStorage.h>
 
 #ifndef NO_MONGO
 #  include <bsoncxx/builder/stream/document.hpp>
@@ -110,7 +111,9 @@ std::vector<std::optional<MpChangeForm>>&& MongoDatabase::UpsertImpl(
 
     return std::move(changeForms);
   } catch (std::exception& e) {
-    throw Viet::UpsertFailedException(std::move(changeForms), e.what());
+    throw Viet::AsyncSaveStorage<
+      MpChangeForm, FormDesc>::UpsertFailedException(std::move(changeForms),
+                                                     e.what());
   }
 }
 
@@ -285,7 +288,9 @@ void MongoDatabase::Iterate(const IterateCallback& iterateCallback,
     }
 
   } catch (std::exception& e) {
-    throw Viet::IterateFailedException<FormDesc>(std::move(filter), e.what());
+    throw Viet::AsyncSaveStorage<
+      MpChangeForm, FormDesc>::IterateFailedException(std::move(filter),
+                                                      e.what());
   }
 }
 
