@@ -11,3 +11,7 @@ export interface AnimDebugSettings {
   animKeys?: { [index: number]: string | undefined };
   exitAnimNotificationIntervalMs?: number;
 }
+
+export interface DatetimeOverlaySettings {
+  isActive?: boolean;
+}
