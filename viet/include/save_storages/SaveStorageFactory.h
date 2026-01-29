@@ -12,7 +12,8 @@ class SaveStorageFactory
 public:
   template <typename T, typename FormDescType>
   static std::shared_ptr<ISaveStorage<T, FormDescType>> Create(
-    std::shared_ptr<IDatabase<T>> db, std::shared_ptr<spdlog::logger> logger)
+    std::shared_ptr<IDatabase<T, FormDescType>> db,
+    std::shared_ptr<spdlog::logger> logger)
   {
     return std::make_shared<AsyncSaveStorage<T, FormDescType>>(db, logger);
   }
