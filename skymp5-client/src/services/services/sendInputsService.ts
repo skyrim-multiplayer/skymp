@@ -8,7 +8,7 @@ import { getMovement } from "../../sync/movementGet";
 import * as worldViewMisc from "../../view/worldViewMisc";
 
 import { Animation, AnimationSource } from "../../sync/animation";
-import { Actor, EquipEvent, FormType } from "skyrimPlatform";
+import { Actor, EquipEvent, FormType, printConsole } from "skyrimPlatform";
 import { getAppearance } from "../../sync/appearance";
 import { ActorValues, getActorValues } from "../../sync/actorvalues";
 import { getEquipment } from "../../sync/equipment";
@@ -39,6 +39,15 @@ export class SendInputsService extends ClientListener {
     private onUpdate() {
         if (!this.singlePlayerService.isSinglePlayer) {
             this.sendInputs();
+
+            const player = this.sp.Game.getPlayer()!;
+            const isPlayerCasting = player.getAnimationVariableBool("IsCastingRight")
+                || player.getAnimationVariableBool("IsCastingLeft")
+                || player.getAnimationVariableBool("IsCastingDual");
+
+            if (isPlayerCasting) {
+                this.prevCastingDetectedTime = Date.now();
+            }
         }
     }
 
@@ -151,6 +160,16 @@ export class SendInputsService extends ClientListener {
         if (
             currentTime - this.prevActorValuesUpdateTime < 2000 &&
             this.actorValuesNeedUpdate === false
+        ) {
+            return;
+        }
+
+        // Delaying actor values update due to casting
+        // TODO: use partial updates for actor values once server finally supports it
+        // i.e. keep sending health and stamina during casting, but delay magicka update
+        if (
+            currentTime - this.prevCastingDetectedTime < 500 &&
+            av.health > 0 // don't delay death actor value update
         ) {
             return;
         }
@@ -316,4 +335,5 @@ export class SendInputsService extends ClientListener {
     private numEquipmentChanges = 0;
     private prevValues: ActorValues = { health: 0, stamina: 0, magicka: 0 };
     private prevActorValuesUpdateTime = 0;
+    private prevCastingDetectedTime = 0;
 }
