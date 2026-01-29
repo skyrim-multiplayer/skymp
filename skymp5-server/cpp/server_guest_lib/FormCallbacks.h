@@ -1,5 +1,6 @@
 #pragma once
 #include "MessageBase.h"
+#include "NetworkingInterface.h"
 #include <functional>
 
 class MpObjectReference;
@@ -17,13 +18,17 @@ public:
     MpActor* actor, const IMessageBase& message, bool reliable,
     int deferredChannelId, bool overwritePreviousChannelMessages)>;
 
+  using GetUserIdFn = std::function<Networking::UserId(MpActor* actor)>;
+
   SubscribeCallback subscribe, unsubscribe;
   SendToUserFn sendToUser;
   SendToUserDeferredFn sendToUserDeferred;
+  GetUserIdFn getUserId;
 
   static FormCallbacks DoNothing()
   {
     return { [](auto, auto) {}, [](auto, auto) {}, [](auto, auto&, auto) {},
-             [](auto, auto&, auto, auto, auto) {} };
+             [](auto, auto&, auto, auto, auto) {},
+             [](auto) { return Networking::InvalidUserId; } };
   }
 };
