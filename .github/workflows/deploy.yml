@@ -142,8 +142,8 @@ jobs:
                 DEPLOY_STATUS_WEBHOOK: ${{secrets.DEPLOY_STATUS_WEBHOOK}}
                 DEPLOY_SSH_PRIVATE_KEY: ${{secrets.DEPLOY_SSH_PRIVATE_KEY_06_2024}}
                 DEPLOY_SSH_KNOWN_HOSTS: ${{secrets.DEPLOY_SSH_KNOWN_HOSTS_06_2024}}
-                HOST_SWEETPIE: ${{secrets.DEPLOY_TARGET_HOST_12_2025}}
-                USER_SWEETPIE: ${{secrets.DEPLOY_TARGET_USER_12_2025}}
+                HOST_SWEETPIE: ${{secrets.DEPLOY_TARGET_HOST_06_2024}}
+                USER_SWEETPIE: ${{secrets.DEPLOY_TARGET_USER_06_2024}}
                 HOST_INDEV: ${{secrets.DEPLOY_TARGET_HOST_06_2024}}
                 USER_INDEV: ${{secrets.DEPLOY_TARGET_USER_06_2024}}
             run: |
