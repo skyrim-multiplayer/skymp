@@ -7,6 +7,7 @@
 #include "PartOne.h"
 #include "RawMessageData.h"
 #include "SpellCastData.h"
+#include "SweetHidePlayerNamesService.h"
 #include "libespm/Loader.h"
 #include <memory>
 
@@ -21,6 +22,8 @@ public:
     : partOne(partOne_)
   {
     craftService = std::make_shared<CraftService>(partOne_);
+    sweetHidePlayerNamesService =
+      std::make_shared<SweetHidePlayerNamesService>(partOne_);
   }
 
   virtual void OnCustomPacket(const RawMessageData& rawMsgData,
@@ -107,4 +110,5 @@ private:
 
   // TODO: inverse dependency
   std::shared_ptr<CraftService> craftService;
+  std::shared_ptr<SweetHidePlayerNamesService> sweetHidePlayerNamesService;
 };
