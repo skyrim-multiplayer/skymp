@@ -12,6 +12,7 @@
 #include "WorldState.h"
 #include "formulas/IDamageFormula.h"
 #include "libespm/Loader.h"
+#include <functional>
 #include <memory>
 #include <nlohmann/json.hpp>
 #include <save_storages/ISaveStorage.h>
@@ -83,6 +84,11 @@ public:
   uint32_t GetActorCellOrWorld(uint32_t actorFormId);
   const std::set<uint32_t>& GetActorsByProfileId(ProfileId profileId);
   void SetEnabled(uint32_t actorFormId, bool enabled);
+
+  using OnActorStreamIn = std::function<void(const MpActor& emitter,
+                                             const MpObjectReference& listener,
+                                             CreateActorMessage& message)>;
+  void SetOnActorStreamIn(OnActorStreamIn callback);
 
   void AttachEspm(espm::Loader* espm);
   void AttachSaveStorage(
