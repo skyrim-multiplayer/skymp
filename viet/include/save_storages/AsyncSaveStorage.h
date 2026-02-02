@@ -63,12 +63,17 @@ public:
   // logger must support multithreaded writing
   AsyncSaveStorage(const std::shared_ptr<IDatabase<T, FormDescType>>& dbImpl,
                    std::shared_ptr<spdlog::logger> logger = nullptr,
-                   std::string name = "")
+                   std::string name = "",
+                   std::optional<uint32_t> sleepTimeMs = std::nullopt)
     : pImpl(std::make_shared<Impl>())
   {
     pImpl->name = std::move(name);
     pImpl->logger = logger;
     pImpl->share.dbImpl = dbImpl;
+
+    if (sleepTimeMs.has_value()) {
+      pImpl->sleepTimeMs = *sleepTimeMs;
+    }
 
     auto p = this->pImpl.get();
     pImpl->thr = std::make_unique<std::thread>([p] { SaverThreadMain(p); });
@@ -213,6 +218,7 @@ private:
     std::unique_ptr<std::thread> thr;
     std::atomic<bool> destroyed = false;
     uint32_t numFinishedUpserts = 0;
+    uint32_t sleepTimeMs = 100;
   };
 
   std::shared_ptr<Impl> pImpl;
