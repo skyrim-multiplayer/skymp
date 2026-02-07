@@ -116,6 +116,7 @@ public:
   void ResolveSnippet(uint32_t snippetIdx, VarValue v);
   void SetPercentages(const ActorValues& actorValues,
                       MpActor* aggressor = nullptr);
+  void SetPercentage(espm::ActorValue av, float percentage);
   void NetSendChangeValues(
     const ActorValues& actorValues,
     const std::optional<std::vector<espm::ActorValue>>& avFilter);
