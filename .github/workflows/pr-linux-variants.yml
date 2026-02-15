@@ -68,7 +68,7 @@ jobs:
 
           - name: Debug - check build tools
             run:
-              docker run --rm -v "${{ github.workspace }}:/src" -w /src -u skymp bash -c "$script"
+              docker run --rm -v "${{ github.workspace }}:/src" -w /src -u skymp localhost/buildimage bash -c "$script"
             env:
               script: |
                 print_info_unsafe() {
