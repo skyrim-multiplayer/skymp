@@ -1,8 +1,12 @@
 import fs from "fs";
 import path from "path";
 import simpleGit from "simple-git";
-import { execSync } from "child_process";
+import { execSync, spawnSync } from "child_process";
 import { getClangFormatPath } from "./deps.js";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 /**
  * Utility: Recursively find all files in a directory.
@@ -24,31 +28,49 @@ const findFiles = (dir, fileList = []) => {
  * Check Registry: Define custom checks here.
  * Each check should implement `lint` and `fix` methods.
  */
-const getChecks = (clangFormatPath) => [
+const getChecks = () => [
   {
     name: "Clang Format",
+    checkDeps: (deps) => deps.clangFormatPath !== undefined,
     appliesTo: (file) => [".cpp", ".h", ".hpp", ".cxx", ".cc"].some((ext) => file.endsWith(ext)),
-    lint: (file) => {
-      // Use clang-format to lint
-      const lintCommand = `"${clangFormatPath}" --dry-run --Werror "${file}"`;
-      try {
-        execSync(lintCommand, { stdio: "inherit" });
-        console.log(`[PASS] ${file}`);
-        return true;
-      } catch (error) {
+    lint: (file, deps) => {
+      const result = spawnSync(deps.clangFormatPath, ["--dry-run", "--Werror", file], { stdio: "inherit" });
+
+      if (result.error || result.status !== 0) {
         console.error(`[FAIL] ${file}`);
         return false;
       }
+
+      console.log(`[PASS] ${file}`);
+      return true;
     },
+    // lint: (file) => {
+    //   // Use clang-format to lint
+    //   const lintCommand = `"${clangFormatPath}" --dry-run --Werror "${file}"`;
+    //   try {
+    //     execSync(lintCommand, { stdio: "inherit" });
+    //     console.log(`[PASS] ${file}`);
+    //     return true;
+    //   } catch (error) {
+    //     console.error(`[FAIL] ${file}`);
+    //     return false;
+    //   }
+    // },
     fix: (file) => {
-      // Use clang-format to autofix
-      const fixCommand = `"${clangFormatPath}" -i "${file}"`;
+      const result = spawnSync(deps.clangFormatPath, ["-i", file], { stdio: "inherit" });
+
+      if (result.error || result.status !== 0) {
+        console.error(`[FAIL] ${file}`);
+        return false;
+      }
+
       execSync(fixCommand, { stdio: "inherit" });
       console.log(`[FIXED] ${file}`);
     },
   },
   {
     name: "Header/TypeScript Pair Check",
+    checkDeps: (deps) => true,
     // Applies to files that reside in the specified parent directories
     appliesTo: (file) => {
       const serverDir = "skymp5-server/cpp/messages";
@@ -101,7 +123,8 @@ const getChecks = (clangFormatPath) => [
  * Core: Run checks (lint or fix) on given files.
  */
 const runChecks = (files, { lintOnly = false, clangFormatPath }) => {
-  const checks = getChecks(clangFormatPath);
+  const checks = getChecks();
+  const deps = { clangFormatPath };
   
   const filesToCheck = files.filter((file) =>
     checks.some((check) => check.appliesTo(file))
@@ -116,21 +139,25 @@ const runChecks = (files, { lintOnly = false, clangFormatPath }) => {
 
   let fail = false;
 
-  filesToCheck.forEach((file) => {
-    checks.forEach((check) => {
-      if (check.appliesTo(file)) {
-        try {
-          const res = lintOnly ? check.lint(file) : check.fix(file);
-          if (res === false) {
-            fail = true;
-          }
-        } catch (err) {
-          if (lintOnly) {
-            console.error(`Error in ${check.name}:`, err);
-            process.exit(1);
-          } else {
-            throw err;
-          }
+  checks.forEach((check) => {
+    if (!check.checkDeps(deps)) {
+      console.warn(`Skipped ${check.name}: failed deps check`);
+    }
+    filesToCheck.forEach((file) => {
+      if (!check.appliesTo(file)) {
+        return;
+      }
+      try {
+        const res = lintOnly ? check.lint(file, deps) : check.fix(file, deps);
+        if (res === false) {
+          fail = true;
+        }
+      } catch (err) {
+        if (lintOnly) {
+          console.error(`Error in ${check.name}:`, err);
+          process.exit(1);
+        } else {
+          throw err;
         }
       }
     });
@@ -152,13 +179,14 @@ const runChecks = (files, { lintOnly = false, clangFormatPath }) => {
   const args = process.argv.slice(2);
   const lintOnly = args.includes("--lint");
   const allFiles = args.includes("--all");
+  const shouldAdd = args.includes("--add");
 
   try {
     let files = [];
 
     if (allFiles) {
       console.log("Processing all files in the repository...");
-      files = findFiles(process.cwd());
+      files = findFiles(path.resolve(path.join(__dirname, '..', '..')));
     } else {
       console.log("Processing staged files...");
       const git = simpleGit();
@@ -171,8 +199,16 @@ const runChecks = (files, { lintOnly = false, clangFormatPath }) => {
 
     runChecks(files, { lintOnly, clangFormatPath });
 
-    if (!lintOnly && !allFiles) {
+    if (files.length === 0) {
+      console.log('No files were processed.');
+      process.exit(0);
+    }
+
+    if (shouldAdd) {
       files.forEach((file) => execSync(`git add ${file}`));
+    } else {
+      console.log('Files were processed, but not added. To add next time, use --add. To add this time, run:');
+      console.log(`git add ${files.join(' ')}`);
     }
   } catch (err) {
     console.error("Error during processing:", err.message);
