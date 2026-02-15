@@ -12,16 +12,15 @@ const __dirname = path.dirname(__filename);
  * Utility: Recursively find all files in a directory.
  */
 const findFiles = (dir, fileList = []) => {
-  const files = fs.readdirSync(dir);
-  files.forEach((file) => {
-    const fullPath = path.join(dir, file);
-    if (fs.statSync(fullPath).isDirectory()) {
-      findFiles(fullPath, fileList);
-    } else {
-      fileList.push(fullPath);
-    }
-  });
-  return fileList;
+  const childResult = spawnSync('git', ['ls-files', dir, '-z'], { encoding: 'utf-8' });
+  if (childResult.error) {
+    throw error;
+  }
+  if (childResult.status !== 0) {
+    console.error(`Failed to list files: git exited with ${childResult.status}`);
+    return [];
+  }
+  return childResult.stdout.split('\0').filter((file) => file.length > 0).map((file) => path.resolve(file));
 };
 
 /**
