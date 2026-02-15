@@ -92,32 +92,25 @@ jobs:
 
           - name: Prepare for build
             if: ${{env.DEPLOY_ACTION == 'deploy'}}
-            uses: addnab/docker-run-action@v3
-            with:
-                image: ${{ env.SKYMP_VCPKG_DEPS_IMAGE }}
-                options: |
-                    -v ${{github.workspace}}:/src
-                run: |
+            run: |
+                docker run --rm -v "${{ github.workspace }}:/src" \
+                    ${{ env.SKYMP_VCPKG_DEPS_IMAGE }} \
                     chown -R skymp:skymp /src
 
           - name: CMake Configure
             if: ${{env.DEPLOY_ACTION == 'deploy'}}
-            uses: addnab/docker-run-action@v3
-            with:
-                image: ${{ env.SKYMP_VCPKG_DEPS_IMAGE }}
-                options: |
-                    -v ${{github.workspace}}:/src
-                    -u skymp
-                    -e CI=true
-                    -e DEPLOY_BRANCH=${{ env.DEPLOY_BRANCH }}
-                run: |
-                    cd /src \
-                    && ./build.sh --configure \
-                       -DBUILD_UNIT_TESTS=OFF \
-                       -DBUILD_GAMEMODE=ON \
-                       -DOFFLINE_MODE=OFF \
-                       -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
-                       -DGITHUB_TOKEN=${{env.GAMEMODE_GITHUB_TOKEN}}
+            run: |
+                docker run --rm -v "${{ github.workspace }}:/src" -w "/src" \
+                    -u skymp \
+                    -e CI=true \
+                    -e DEPLOY_BRANCH=${{ env.DEPLOY_BRANCH }} \
+                    ${{ env.SKYMP_VCPKG_DEPS_IMAGE }} \
+                        ./build.sh --configure \
+                            -DBUILD_UNIT_TESTS=OFF \
+                            -DBUILD_GAMEMODE=ON \
+                            -DOFFLINE_MODE=OFF \
+                            -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
+                            -DGITHUB_TOKEN=${{env.GAMEMODE_GITHUB_TOKEN}}
 
           - name: Upload compile_commands.json
             uses: actions/upload-artifact@v4
@@ -127,15 +120,13 @@ jobs:
 
           - name: Build
             if: ${{env.DEPLOY_ACTION == 'deploy'}}
-            uses: addnab/docker-run-action@v3
-            with:
-                image: ${{ env.SKYMP_VCPKG_DEPS_IMAGE }}
-                options: |
-                    -v ${{github.workspace}}:/src
-                    -u skymp
-                run: |
-                    cd /src \
-                    && ./build.sh --build
+            run: |
+                docker run --rm -v "${{ github.workspace }}:/src" -w "/src" \
+                    -u skymp \
+                    -e CI=true \
+                    -e DEPLOY_BRANCH=${{ env.DEPLOY_BRANCH }} \
+                    ${{ env.SKYMP_VCPKG_DEPS_IMAGE }} \
+                        ./build.sh --build
 
           - name: Deploy
             env:
