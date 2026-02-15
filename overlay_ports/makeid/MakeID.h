@@ -74,8 +74,8 @@ memory since IDs can remain the same even if the underlying storage changed.
 
 */
 
-#include <cstdint> // uint32_t
 #include <cstdio> // For printf(). Remove if you don't need the PrintRanges() function (mostly for debugging anyway).
+#include <cstdint> // uint32_t
 #include <cstdlib>
 #include <cstring>
 

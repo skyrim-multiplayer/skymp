@@ -28,7 +28,7 @@ public:
   {
   public:
     CombineError(const std::string& str)
-      : logic_error(str) {};
+      : logic_error(str){};
   };
 
   void AddSource(Browser* src, const char* fileName) noexcept;

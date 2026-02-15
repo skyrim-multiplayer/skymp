@@ -6,7 +6,7 @@ namespace espm {
 
 BrowserInfo::BrowserInfo(const CombineBrowser* parent_, uint8_t fileIdx_)
   : parent(parent_)
-  , fileIdx(fileIdx_) {};
+  , fileIdx(fileIdx_){};
 
 uint32_t BrowserInfo::ToGlobalId(uint32_t rawId) const noexcept
 {
