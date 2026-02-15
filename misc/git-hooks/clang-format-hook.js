@@ -43,18 +43,6 @@ const getChecks = () => [
       console.log(`[PASS] ${file}`);
       return true;
     },
-    // lint: (file) => {
-    //   // Use clang-format to lint
-    //   const lintCommand = `"${clangFormatPath}" --dry-run --Werror "${file}"`;
-    //   try {
-    //     execSync(lintCommand, { stdio: "inherit" });
-    //     console.log(`[PASS] ${file}`);
-    //     return true;
-    //   } catch (error) {
-    //     console.error(`[FAIL] ${file}`);
-    //     return false;
-    //   }
-    // },
     fix: (file) => {
       const result = spawnSync(deps.clangFormatPath, ["-i", file], { stdio: "inherit" });
 
