@@ -33,7 +33,12 @@ const getChecks = () => [
   {
     name: "Clang Format",
     checkDeps: (deps) => deps.clangFormatPath !== undefined,
-    appliesTo: (file) => [".cpp", ".h", ".hpp", ".cxx", ".cc"].some((ext) => file.endsWith(ext)),
+    appliesTo: (file) => {
+      if (file.startsWith(path.join(REPO_ROOT, 'overlay_ports'))) {
+        return false;
+      }
+      return [".cpp", ".h", ".hpp", ".cxx", ".cc"].some((ext) => file.endsWith(ext));
+    },
     lint: (file, deps) => {
       const result = spawnSync(deps.clangFormatPath, ["--dry-run", "--Werror", file], { stdio: "inherit" });
 
