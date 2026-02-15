@@ -150,13 +150,13 @@ jobs:
               target: ${{github.workspace}}/skyrim_data_files/
 
           - name: Prepare
-            run:
+            run: |
               docker run --rm -v "${{ github.workspace }}:/src" -w /src -u skymp localhost/buildimage \
                 chown -R skymp:skymp /src
 
           - name: CMake Configure
             id: cmake_configure
-            run:
+            run: |
               docker run --rm -v "${{ github.workspace }}:/src" -w /src -u skymp \
                 ./build.sh --configure \
                 -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
@@ -178,12 +178,12 @@ jobs:
                 path: ${{github.workspace}}/build/compile_commands.json
 
           - name: Build
-            run:
+            run: |
               docker run --rm -v "${{ github.workspace }}:/src" -w /src -u skymp localhost/buildimage \
                 ./build.sh --build
 
           - name: Prepare dist.tar.gz
-            run:
+            run: |
               docker run --rm -v "${{ github.workspace }}:/src" -w /src/build -u skymp localhost/buildimage \
                 tar czvf dist.tar.gz dist
 
@@ -243,6 +243,6 @@ jobs:
               path: skyrim-platform/src/platform_se/skyrim_platform/ConstEnumApi.cpp
 
           - name: Test
-            run:
+            run: |
               docker run --rm -v "${{ github.workspace }}:/src" -w /src/build -u skymp localhost/buildimage \
                 ctest -C ${{env.BUILD_TYPE}} --verbose --output-on-failure
