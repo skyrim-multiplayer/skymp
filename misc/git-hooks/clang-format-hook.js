@@ -43,7 +43,7 @@ const getChecks = () => [
       console.log(`[PASS] ${file}`);
       return true;
     },
-    fix: (file) => {
+    fix: (file, deps) => {
       const result = spawnSync(deps.clangFormatPath, ["-i", file], { stdio: "inherit" });
 
       if (result.error || result.status !== 0) {
@@ -51,7 +51,6 @@ const getChecks = () => [
         return false;
       }
 
-      execSync(fixCommand, { stdio: "inherit" });
       console.log(`[FIXED] ${file}`);
     },
   },
