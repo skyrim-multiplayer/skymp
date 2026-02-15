@@ -7,13 +7,14 @@ jobs:
         steps:
           - name: Checkout
             uses: actions/checkout@v4
+
+          # TODO: move to JS
           - name: Ensure files terminated with one LF
             uses: fernandrone/linelint@0.0.6
             id: linelint
+
           - name: Ensure files use LF line endings instead of CRLF
             uses: erclu/check-crlf@c77fda0a97ea8944aba5f72796b9e937e7d1611c
-          - name: Run clang-format style check for C/C++ programs.
-            uses: jidicula/clang-format-action@v4.9.0
-            with:
-              clang-format-version: '15'
-              exclude-regex: '(.*overlay_ports.*)|(.*skyrim-platform/src/platform_se/skyrim_platform/Concepts.h)|(.*serialization/include/concepts/.*)|(.*third_party.*)'
+
+          - name: Run linters via JS
+            run: cd "${{ github.workspace }}/misc/git-hooks" && yarn && node ./clang-format-hook.js --lint --all
