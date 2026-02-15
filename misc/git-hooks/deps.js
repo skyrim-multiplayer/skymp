@@ -2,10 +2,11 @@ import fs from 'fs';
 import path from 'path';
 import https from 'https';
 import crypto from 'crypto';
-import { exec, execSync } from 'child_process';
+import { exec, execSync, spawnSync } from 'child_process';
 import os from 'os';
 import { fileURLToPath } from 'url';
 import Stream from 'stream';
+import { ensureCleanExit } from './util.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -20,21 +21,28 @@ function ensureDirExists(dirPath) {
   }
 }
 
+function checkVersion(exePath) {
+  const child = ensureCleanExit(spawnSync(exePath, ['--version'], { encoding: 'utf-8', stdio: 'pipe' }));
+  const match = child.stdout.match(/\bclang-format\s+version\s+([0-9]+(?:\.[0-9]+)*)\b/i);
+  return match ? match[1] : 'unknown';
+}
+
 function checkInPath(exeName) {
   let command = 'where';
   if (os.platform() !== 'win32') {
     command = 'which';
   }
   try {
-    const result = execSync(`${command} ${exeName}`, { encoding: 'utf8', stdio: 'pipe' });
-    const foundPath = result.trim().split(os.EOL)[0];
+    const whichChild = spawnSync(command, [exeName], { encoding: 'utf8', stdio: 'pipe' });
+    ensureCleanExit(whichChild);
+    const foundPath = whichChild.stdout.trim().split(os.EOL)[0];
     if (foundPath) {
-      execSync(`${foundPath} --version`, { encoding: 'utf-8', stdio: 'pipe' });
       return foundPath;
     }
   } catch (e) {
-    return null;
+    console.error(e);
   }
+  console.log(`${exeName} not found in PATH`);
   return null;
 }
 
@@ -46,23 +54,27 @@ function makeSha256Verifier(stream, expectedSha256) {
   const hash = crypto.createHash('sha256');
   stream.on('data', (chunk) => hash.update(chunk));
   return () => new Promise((resolve, reject) => {
-    const actualHash = hash.digest('hex');
+    stream.on('error', reject);
+    stream.on('end', () => {
+      const actualHash = hash.digest('hex');
 
-    if (actualHash.toLowerCase() !== expectedSha256.toLowerCase()) {
-      reject(new Error(
-        `SHA256 mismatch for '${url}': expected ${expectedSha256}, got ${actualHash}. ` +
-        `Fix expected sha or delete the file and try again`,
-      ));
-      return;
-    }
+      if (actualHash.toLowerCase() !== expectedSha256.toLowerCase()) {
+        reject(new Error(
+          `SHA256 mismatch: expected ${expectedSha256}, got ${actualHash}. ` +
+          `Fix expected sha or delete the file and try again`,
+        ));
+        return;
+      }
 
-    resolve();
+      resolve();
+    });
   });
 }
 
 function downloadFile(url, destPath, expectedSha256) {
   return new Promise((resolve, reject) => {
     if (fs.existsSync(destPath)) {
+      console.log(`${destPath} already downloaded, validating...`);
       makeSha256Verifier(fs.createReadStream(destPath), expectedSha256)().then(resolve, reject);
       return;
     }
@@ -76,7 +88,7 @@ function downloadFile(url, destPath, expectedSha256) {
     console.log(`Downloading clang-format from ${url}...`);
     const request = https.get(url, options, (response) => {
       if (response.statusCode === 301 || response.statusCode === 302) {
-        downloadFile(response.headers.location, destPath)
+        downloadFile(response.headers.location, destPath, expectedSha256)
           .then(resolve)
           .catch(reject);
         return;
@@ -133,12 +145,13 @@ function extractArchive(archivePath, destDir) {
 export async function getClangFormatPath() {
   const exeName = os.platform() === 'win32' ? 'clang-format.exe' : 'clang-format';
   
+  const version = '21.1.8';
+  
   const systemPath = checkInPath(exeName);
   if (systemPath) {
+    console.log(`Using version from system path ${checkVersion(systemPath)} instead of downloading ${version}`);
     return systemPath;
   }
-  
-  const version = '21.1.8';
   
   const platform = os.platform();
   let url = '';
@@ -148,7 +161,7 @@ export async function getClangFormatPath() {
   if (platform === 'linux') {
     url = `https://github.com/llvm/llvm-project/releases/download/llvmorg-${version}/LLVM-${version}-Linux-X64.tar.xz`;
     archiveName = `LLVM-${version}-Linux-X64.tar.xz`;
-    archiveSha256 = '';
+    archiveSha256 = 'b3b7f2801d15d50736acea3c73982994d025b01c2f035b91ae3b49d1b575732b';
   } else {
     throw new Error(`Platform ${platform} not supported by this script yet.`);
   }

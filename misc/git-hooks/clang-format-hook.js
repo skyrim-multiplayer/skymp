@@ -12,7 +12,7 @@ const REPO_ROOT = path.resolve(path.join(__dirname, '..', '..'));
 /**
  * Utility: Recursively find all files in a directory.
  */
-const findFiles = (dir, fileList = []) => {
+const findFiles = (dir) => {
   const childResult = spawnSync('git', ['ls-files', dir, '-z'], { encoding: 'utf-8' });
   if (childResult.error) {
     throw error;
