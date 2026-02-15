@@ -151,7 +151,7 @@ jobs:
 
           - name: Prepare
             run:
-              docker run --rm -v "${{ github.workspace }}:/src" -w /src -u skymp \
+              docker run --rm -v "${{ github.workspace }}:/src" -w /src -u skymp localhost/buildimage \
                 chown -R skymp:skymp /src
 
           - name: CMake Configure
@@ -179,12 +179,12 @@ jobs:
 
           - name: Build
             run:
-              docker run --rm -v "${{ github.workspace }}:/src" -w /src -u skymp \
+              docker run --rm -v "${{ github.workspace }}:/src" -w /src -u skymp localhost/buildimage \
                 ./build.sh --build
 
           - name: Prepare dist.tar.gz
             run:
-              docker run --rm -v "${{ github.workspace }}:/src" -w /src/build -u skymp \
+              docker run --rm -v "${{ github.workspace }}:/src" -w /src/build -u skymp localhost/buildimage \
                 tar czvf dist.tar.gz dist
 
           - name: Upload dist.tar.gz
@@ -244,5 +244,5 @@ jobs:
 
           - name: Test
             run:
-              docker run --rm -v "${{ github.workspace }}:/src" -w /src/build -u skymp \
+              docker run --rm -v "${{ github.workspace }}:/src" -w /src/build -u skymp localhost/buildimage \
                 ctest -C ${{env.BUILD_TYPE}} --verbose --output-on-failure
