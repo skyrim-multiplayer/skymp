@@ -162,13 +162,15 @@ const runChecks = (files, { lintOnly = false, clangFormatPath }) => {
  * CLI Entry Point
  */
 (async () => {
-  const clangFormatPath = await getClangFormatPath();
-
   const args = process.argv.slice(2);
   const shouldLint = args.includes("--lint");
   const shouldFix = args.includes("--fix");
   const allFiles = args.includes("--all");
   const shouldAdd = args.includes("--add");
+  const shouldDownload = !args.includes('--no-download');
+  const shouldSearchInPath = !args.includes('--no-path');
+
+  const clangFormatPath = await getClangFormatPath({ shouldDownload, shouldSearchInPath });
 
   if (!shouldLint && !shouldFix) {
     console.error('Either --lint or --fix must be specified');

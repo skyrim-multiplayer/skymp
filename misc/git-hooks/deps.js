@@ -142,26 +142,32 @@ function extractArchive(archivePath, destDir) {
   });
 }
 
-export async function getClangFormatPath() {
+export async function getClangFormatPath({ shouldDownload, shouldSearchInPath }) {
   const exeName = os.platform() === 'win32' ? 'clang-format.exe' : 'clang-format';
   
   const version = '21.1.8';
   
-  const systemPath = checkInPath(exeName);
+  const systemPath = shouldSearchInPath ? checkInPath(exeName) : null;
   if (systemPath) {
     console.log(`Using ${systemPath} from system path (version ${checkVersion(systemPath)}) instead of downloading ${version}`);
     return systemPath;
+  }
+
+  if (!shouldDownload) {
+    throw new Error('clang-format was not found, and shouldDownload is false');
   }
   
   const platform = os.platform();
   let url = '';
   let archiveName = '';
   let archiveSha256 = '';
+  let archivePathToClangFormat = '';
 
   if (platform === 'linux') {
     url = `https://github.com/llvm/llvm-project/releases/download/llvmorg-${version}/LLVM-${version}-Linux-X64.tar.xz`;
     archiveName = `LLVM-${version}-Linux-X64.tar.xz`;
     archiveSha256 = 'b3b7f2801d15d50736acea3c73982994d025b01c2f035b91ae3b49d1b575732b';
+    archivePathToClangFormat = `LLVM-${version}-Linux-X64/bin/clang-format`;
   } else {
     throw new Error(`Platform ${platform} not supported by this script yet.`);
   }
@@ -171,7 +177,7 @@ export async function getClangFormatPath() {
 
   const archivePath = path.join(CACHE_PATH, archiveName);
   const extractDir = path.join(EXTRACTED_PATH, `llvm-${version}`);
-  const expectedExe = path.join(extractDir, 'bin', exeName);
+  const expectedExe = path.join(extractDir, archivePathToClangFormat);
 
   if (fs.existsSync(expectedExe)) {
     console.log(`Using downloaded ${expectedExe}, version ${checkVersion(expectedExe)}`);
