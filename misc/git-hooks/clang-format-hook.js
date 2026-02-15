@@ -7,6 +7,7 @@ import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const REPO_ROOT = path.resolve(path.join(__dirname, '..', '..'));
 
 /**
  * Utility: Recursively find all files in a directory.
@@ -59,8 +60,8 @@ const getChecks = () => [
     checkDeps: (deps) => true,
     // Applies to files that reside in the specified parent directories
     appliesTo: (file) => {
-      const serverDir = "skymp5-server/cpp/messages";
-      const clientDir = "skymp5-client/src/services/messages";
+      const serverDir = `${REPO_ROOT}/skymp5-server/cpp/messages`;
+      const clientDir = `${REPO_ROOT}/skymp5-client/src/services/messages`;
       const validDirs = [serverDir, clientDir];
 
       // Check if the file belongs to one of the valid parent directories
@@ -75,8 +76,8 @@ const getChecks = () => [
         && !file.endsWith(path.sep + "MsgType.h");
     },
     lint: (file) => {
-      const serverDir = "skymp5-server/cpp/messages";
-      const clientDir = "skymp5-client/src/services/messages";
+      const serverDir = `${REPO_ROOT}/skymp5-server/cpp/messages`;
+      const clientDir = `${REPO_ROOT}/skymp5-client/src/services/messages`;
       const ext = path.extname(file);
       const baseName = path.basename(file, ext);
 
@@ -111,7 +112,7 @@ const getChecks = () => [
 const runChecks = (files, { lintOnly = false, clangFormatPath }) => {
   const checks = getChecks();
   const deps = { clangFormatPath };
-  
+
   const filesToCheck = files.filter((file) =>
     checks.some((check) => check.appliesTo(file))
   );
@@ -128,6 +129,7 @@ const runChecks = (files, { lintOnly = false, clangFormatPath }) => {
   checks.forEach((check) => {
     if (!check.checkDeps(deps)) {
       console.warn(`Skipped ${check.name}: failed deps check`);
+      return;
     }
     filesToCheck.forEach((file) => {
       if (!check.appliesTo(file)) {
@@ -163,9 +165,19 @@ const runChecks = (files, { lintOnly = false, clangFormatPath }) => {
   const clangFormatPath = await getClangFormatPath();
 
   const args = process.argv.slice(2);
-  const lintOnly = args.includes("--lint");
+  const shouldLint = args.includes("--lint");
+  const shouldFix = args.includes("--fix");
   const allFiles = args.includes("--all");
   const shouldAdd = args.includes("--add");
+
+  if (!shouldLint && !shouldFix) {
+    console.error('Either --lint or --fix must be specified');
+    process.exit(1);
+  }
+  if (!shouldFix && shouldAdd) {
+    console.error('--add makes no sense without --fix');
+    process.exit(1);
+  }
 
   try {
     let files = [];
@@ -183,10 +195,14 @@ const runChecks = (files, { lintOnly = false, clangFormatPath }) => {
         .filter((file) => fs.existsSync(file)); // Exclude deleted files
     }
 
-    runChecks(files, { lintOnly, clangFormatPath });
+    runChecks(files, { lintOnly: shouldLint, clangFormatPath });
 
     if (files.length === 0) {
       console.log('No files were processed.');
+      process.exit(0);
+    }
+
+    if (!shouldFix) {
       process.exit(0);
     }
 
