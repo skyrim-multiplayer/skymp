@@ -68,9 +68,9 @@ jobs:
 
           - name: Debug - check build tools
             run:
-              docker run --rm -v "${{ github.workspace }}:/src" -w /src -u skymp "$script"
+              docker run --rm -v "${{ github.workspace }}:/src" -w /src -u skymp localhost/buildimage bash -c "$script"
             env:
-              script:
+              script: |
                 print_info_unsafe() {
                   echo .
                   echo .
@@ -150,14 +150,14 @@ jobs:
               target: ${{github.workspace}}/skyrim_data_files/
 
           - name: Prepare
-            run:
-              docker run --rm -v "${{ github.workspace }}:/src" -w /src -u skymp \
+            run: |
+              docker run --rm -v "${{ github.workspace }}:/src" -w /src -u root localhost/buildimage \
                 chown -R skymp:skymp /src
 
           - name: CMake Configure
             id: cmake_configure
-            run:
-              docker run --rm -v "${{ github.workspace }}:/src" -w /src -u skymp \
+            run: |
+              docker run --rm -v "${{ github.workspace }}:/src" -w /src -u skymp localhost/buildimage \
                 ./build.sh --configure \
                 -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
                 -DUNIT_DATA_DIR="/src/skyrim_data_files"
@@ -178,13 +178,13 @@ jobs:
                 path: ${{github.workspace}}/build/compile_commands.json
 
           - name: Build
-            run:
-              docker run --rm -v "${{ github.workspace }}:/src" -w /src -u skymp \
+            run: |
+              docker run --rm -v "${{ github.workspace }}:/src" -w /src -u skymp localhost/buildimage \
                 ./build.sh --build
 
           - name: Prepare dist.tar.gz
-            run:
-              docker run --rm -v "${{ github.workspace }}:/src" -w /src/build -u skymp \
+            run: |
+              docker run --rm -v "${{ github.workspace }}:/src" -w /src/build -u skymp localhost/buildimage \
                 tar czvf dist.tar.gz dist
 
           - name: Upload dist.tar.gz
@@ -243,6 +243,6 @@ jobs:
               path: skyrim-platform/src/platform_se/skyrim_platform/ConstEnumApi.cpp
 
           - name: Test
-            run:
-              docker run --rm -v "${{ github.workspace }}:/src" -w /src/build -u skymp \
+            run: |
+              docker run --rm -v "${{ github.workspace }}:/src" -w /src/build -u skymp localhost/buildimage \
                 ctest -C ${{env.BUILD_TYPE}} --verbose --output-on-failure
