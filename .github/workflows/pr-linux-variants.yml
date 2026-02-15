@@ -70,7 +70,7 @@ jobs:
             run:
               docker run --rm -v "${{ github.workspace }}:/src" -w /src -u skymp "$script"
             env:
-              script:
+              script: |
                 print_info_unsafe() {
                   echo .
                   echo .
