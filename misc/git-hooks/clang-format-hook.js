@@ -1,9 +1,10 @@
 import fs from "fs";
 import path from "path";
 import simpleGit from "simple-git";
-import { execSync, spawnSync } from "child_process";
+import { spawnSync } from "child_process";
 import { getClangFormatPath } from "./deps.js";
 import { fileURLToPath } from "url";
+import { ensureCleanExit } from "./util.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -209,7 +210,7 @@ const runChecks = (files, { lintOnly = false, clangFormatPath }) => {
     }
 
     if (shouldAdd) {
-      files.forEach((file) => execSync(`git add ${file}`));
+      files.forEach((file) => ensureCleanExit(spawnSync('git', ['add', file], { stdio: 'inherit' })));
     } else {
       console.log('Files were processed, but not added. To add next time, use --add. To add this time, run:');
       console.log(`git add ${files.join(' ')}`);

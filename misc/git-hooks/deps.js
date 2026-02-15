@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import https from 'https';
 import crypto from 'crypto';
-import { exec, execSync, spawnSync } from 'child_process';
+import { exec, spawnSync } from 'child_process';
 import os from 'os';
 import { fileURLToPath } from 'url';
 import Stream from 'stream';
@@ -55,7 +55,7 @@ function makeSha256Verifier(stream, expectedSha256) {
   stream.on('data', (chunk) => hash.update(chunk));
   return () => new Promise((resolve, reject) => {
     stream.on('error', reject);
-    stream.on('end', () => {
+    const validate = () => {
       const actualHash = hash.digest('hex');
 
       if (actualHash.toLowerCase() !== expectedSha256.toLowerCase()) {
@@ -67,7 +67,12 @@ function makeSha256Verifier(stream, expectedSha256) {
       }
 
       resolve();
-    });
+    };
+    if (stream.closed) {
+      validate();
+    } else {
+      stream.on('end', validate);
+    }
   });
 }
 
