@@ -149,7 +149,7 @@ export async function getClangFormatPath() {
   
   const systemPath = checkInPath(exeName);
   if (systemPath) {
-    console.log(`Using version from system path ${checkVersion(systemPath)} instead of downloading ${version}`);
+    console.log(`Using ${systemPath} from system path (version ${checkVersion(systemPath)}) instead of downloading ${version}`);
     return systemPath;
   }
   
@@ -174,6 +174,7 @@ export async function getClangFormatPath() {
   const expectedExe = path.join(extractDir, 'bin', exeName);
 
   if (fs.existsSync(expectedExe)) {
+    console.log(`Using downloaded ${expectedExe}, version ${checkVersion(expectedExe)}`);
     return expectedExe;
   }
 
@@ -184,6 +185,7 @@ export async function getClangFormatPath() {
   await extractArchive(archivePath, extractDir);
 
   if (fs.existsSync(expectedExe)) {
+    console.log(`Using downloaded ${expectedExe}, version ${checkVersion(expectedExe)}`);
     return expectedExe;
   }
   
