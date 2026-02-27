@@ -66,6 +66,8 @@ public:
   Napi::Value ClearPacketHistory(const Napi::CallbackInfo& info);
   Napi::Value RequestPacketHistoryPlayback(const Napi::CallbackInfo& info);
 
+  Napi::Value GetPrometheusMetrics(const Napi::CallbackInfo& info);
+
   Napi::Value FindFormsByPropertyValue(const Napi::CallbackInfo& info);
 
   // SkyrimPlatform3 backend implementation
