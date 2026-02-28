@@ -9,6 +9,8 @@ import { BrowserMessageEvent, DxScanCode, Menu, MenuCloseEvent, MenuOpenEvent } 
 const unfocusEventString = `window.dispatchEvent(new CustomEvent('skymp5-client:browserUnfocused', {}))`;
 const focusEventString = `window.dispatchEvent(new CustomEvent('skymp5-client:browserFocused', {}))`;
 
+type TextsVisibility = 'inheritBrowser' | 'off' | 'on';
+
 export class BrowserService extends ClientListener {
   constructor(private sp: Sp, private controller: CombinedController) {
     super();
@@ -24,6 +26,16 @@ export class BrowserService extends ClientListener {
 
   // TODO: keycodes should be configurable
   private onQueryKeyCodeBindings(e: QueryKeyCodeBindings) {
+    if (e.isDown([DxScanCode.N])) {
+      const cur = this.sp.getTextsVisibility();
+      const nxt = ({
+        'inheritBrowser': 'off',
+        'off': 'on',
+        'on': 'inheritBrowser',
+      } as Record<TextsVisibility, TextsVisibility>)[cur];
+      this.sp.Debug.notification(`${cur} -> ${nxt}`);
+      this.sp.setTextsVisibility(nxt);
+    }
     if (e.isDown([DxScanCode.F1])) {
       FormView.isDisplayingNicknames = !FormView.isDisplayingNicknames;
     }
