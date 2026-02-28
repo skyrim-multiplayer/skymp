@@ -8,10 +8,11 @@
 #include <spdlog/logger.h>
 #include <stdexcept>
 #include <thread>
+#include <type_traits>
 
 namespace Viet {
 
-template <typename T, typename FormDescType>
+template <typename T, typename FormDescType, typename ThreadType = std::thread>
 class AsyncSaveStorage : public ISaveStorage<T, FormDescType>
 {
 public:
@@ -21,6 +22,9 @@ public:
     typename ISaveStorage<T, FormDescType>::UpsertCallback;
   using IterateCallback =
     typename ISaveStorage<T, FormDescType>::IterateCallback;
+
+  using ThreadFactory =
+    std::function<std::unique_ptr<ThreadType>(std::function<void()>)>;
 
   class UpsertFailedException : public std::runtime_error
   {
@@ -64,7 +68,8 @@ public:
   AsyncSaveStorage(const std::shared_ptr<IDatabase<T, FormDescType>>& dbImpl,
                    std::shared_ptr<spdlog::logger> logger = nullptr,
                    std::string name = "",
-                   std::optional<uint32_t> sleepTimeMs = std::nullopt)
+                   std::optional<uint32_t> sleepTimeMs = std::nullopt,
+                   ThreadFactory threadFactory = {})
     : pImpl(std::make_shared<Impl>())
   {
     pImpl->name = std::move(name);
@@ -75,8 +80,19 @@ public:
       pImpl->sleepTimeMs = *sleepTimeMs;
     }
 
+    if (!threadFactory) {
+      if constexpr (std::is_same_v<ThreadType, std::thread>) {
+        threadFactory = [](std::function<void()> body) {
+          return std::make_unique<std::thread>(std::move(body));
+        };
+      } else {
+        throw std::runtime_error(
+          "ThreadFactory must be provided for custom thread types");
+      }
+    }
+
     auto p = this->pImpl.get();
-    pImpl->thr = std::make_unique<std::thread>([p] { SaverThreadMain(p); });
+    pImpl->thr = threadFactory([p] { SaverThreadMain(p); });
   }
 
   ~AsyncSaveStorage()
@@ -215,7 +231,7 @@ private:
       std::mutex m;
     } share6;
 
-    std::unique_ptr<std::thread> thr;
+    std::unique_ptr<ThreadType> thr;
     std::atomic<bool> destroyed = false;
     uint32_t numFinishedUpserts = 0;
     uint32_t sleepTimeMs = 100;

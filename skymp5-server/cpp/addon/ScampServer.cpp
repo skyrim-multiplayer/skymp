@@ -7,6 +7,7 @@
 #include "GamemodeApi.h"
 #include "MpChangeForms.h"
 #include "NapiHelper.h"
+#include "NapiWorkerThread.h"
 #include "NetworkingCombined.h"
 #include "PacketHistoryWrapper.h"
 #include "PapyrusUtils.h"
@@ -143,6 +144,9 @@ Napi::Object ScampServer::Init(Napi::Env env, Napi::Object exports)
   exports.Set("ScampServer", func);
 
   exports.Set("writeLogs", Napi::Function::New(env, WriteLogs));
+
+  InitNapiWorkerThread(env, exports);
+
   return exports;
 }
 
@@ -451,8 +455,10 @@ Napi::Value ScampServer::AttachSaveStorage(const Napi::CallbackInfo& info)
 {
   try {
     auto db = DatabaseFactory::Create(serverSettings, logger);
-    auto saveStorage =
-      Viet::SaveStorageFactory::Create<MpChangeForm, FormDesc>(db, logger);
+    auto threadFactory = CreateNapiWorkerThreadFactory(info.Env());
+    auto saveStorage = Viet::SaveStorageFactory::Create<MpChangeForm, FormDesc,
+                                                        NapiWorkerThread>(
+      db, logger, threadFactory);
     partOne->AttachSaveStorage(saveStorage);
   } catch (std::exception& e) {
     throw Napi::Error::New(info.Env(), (std::string)e.what());
