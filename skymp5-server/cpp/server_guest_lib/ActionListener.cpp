@@ -571,7 +571,7 @@ void ActionListener::OnHostAttempt(const RawMessageData& rawMsgData,
         msg.data.health = changeForm.actorValues.healthPercentage;
         msg.data.magicka = changeForm.actorValues.magickaPercentage;
         msg.data.stamina = changeForm.actorValues.staminaPercentage;
-        remote.SendToUser(msg, true); // in fact sends to the hoster
+        remote.GetActorToSendTo().SendToUser(msg, true);
       });
 
     auto& prevHosterForm = partOne.worldState.LookupFormById(prevHoster);
