@@ -1,6 +1,8 @@
 #include "FileDatabase.h"
 #include <filesystem>
 #include <fstream>
+#include <save_storages/AsyncSaveStorage.h>
+#include <unordered_set>
 
 struct FileDatabase::Impl
 {
@@ -67,35 +69,63 @@ std::vector<std::optional<MpChangeForm>>&& FileDatabase::UpsertImpl(
     outNumUpserted = nUpserted;
     return std::move(changeForms);
   } catch (std::exception& e) {
-    throw Viet::UpsertFailedException(std::move(changeForms), e.what());
+    throw Viet::AsyncSaveStorage<
+      MpChangeForm, FormDesc>::UpsertFailedException(std::move(changeForms),
+                                                     e.what());
   }
 }
 
-void FileDatabase::Iterate(const IterateCallback& iterateCallback)
+void FileDatabase::Iterate(const IterateCallback& iterateCallback,
+                           std::optional<std::vector<FormDesc>> filter)
 {
-  auto p = pImpl->changeFormsDirectory;
+  try {
 
-  simdjson::dom::parser parser;
+    auto p = pImpl->changeFormsDirectory;
 
-  if (!std::filesystem::exists(p)) {
-    return;
-  }
+    simdjson::dom::parser parser;
 
-  for (auto& entry : std::filesystem::directory_iterator(p)) {
-    try {
-      if (entry.path().extension() != ".json") {
-        continue;
-      }
-
-      std::ifstream t(entry.path());
-      std::string jsonDump((std::istreambuf_iterator<char>(t)),
-                           std::istreambuf_iterator<char>());
-
-      auto result = parser.parse(jsonDump).value();
-      iterateCallback(MpChangeForm::JsonToChangeForm(result));
-    } catch (std::exception& e) {
-      pImpl->logger->error("Parsing of {} failed with {}",
-                           entry.path().string(), e.what());
+    if (!std::filesystem::exists(p)) {
+      return;
     }
+
+    std::optional<std::unordered_set<std::string>> filterSet;
+    if (filter) {
+      std::unordered_set<std::string>& value = filterSet.emplace();
+      for (const auto& desc : *filter) {
+        value.insert(desc.ToString());
+      }
+    }
+
+    for (auto& entry : std::filesystem::directory_iterator(p)) {
+      try {
+        if (entry.path().extension() != ".json") {
+          continue;
+        }
+
+        std::ifstream t(entry.path());
+        std::string jsonDump((std::istreambuf_iterator<char>(t)),
+                             std::istreambuf_iterator<char>());
+
+        auto result = parser.parse(jsonDump).value();
+        auto changeForm = MpChangeForm::JsonToChangeForm(result);
+
+        if (filterSet) {
+          if (filterSet->find(changeForm.formDesc.ToString()) ==
+              filterSet->end()) {
+            continue;
+          }
+        }
+
+        iterateCallback(changeForm);
+      } catch (std::exception& e) {
+        pImpl->logger->error("Parsing of {} failed with {}",
+                             entry.path().string(), e.what());
+      }
+    }
+
+  } catch (std::exception& e) {
+    throw Viet::AsyncSaveStorage<
+      MpChangeForm, FormDesc>::IterateFailedException(std::move(filter),
+                                                      e.what());
   }
 }

@@ -14,12 +14,16 @@ class ISaveStorage
 public:
   using IterateSyncCallback = std::function<void(const T&)>;
   using UpsertCallback = std::function<void()>;
+  using IterateCallback = std::function<void(const std::vector<T>&)>;
 
   virtual ~ISaveStorage() = default;
 
   virtual void IterateSync(const IterateSyncCallback& cb) = 0;
   virtual void Upsert(std::vector<std::optional<T>>&& changeForms,
                       const UpsertCallback& cb) = 0;
+  virtual void Iterate(
+    const IterateCallback& cb,
+    const std::optional<std::vector<FormDescType>>& filter) = 0;
   virtual uint32_t GetNumFinishedUpserts() const = 0;
   virtual void Tick() = 0;
   virtual bool GetRecycledChangeFormsBuffer(
