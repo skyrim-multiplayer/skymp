@@ -35,7 +35,7 @@ export class AnimDebugService extends ClientListener {
 
     if (this.settings.textOutput?.isActive) {
       this.queue = new AnimQueueCollection(this.sp, this.settings);
-      this.sp.storage[AnimQueueCollection.name] = this.queue;
+      this.sp.storage[AnimQueueCollection.Name] = this.queue;
     }
   }
 
