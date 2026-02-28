@@ -14,11 +14,6 @@
   resolved "https://registry.yarnpkg.com/@kwsites/promise-deferred/-/promise-deferred-1.1.1.tgz#8ace5259254426ccef57f3175bc64ed7095ed919"
   integrity sha512-GaHYm+c0O9MjZRu0ongGBRbinu8gVAMd2UZjji6jVmqKtZluZnptXGWhz1E8j8D2HJ3f/yMxKAUC0b+57wncIw==
 
-"@wasm-fmt/clang-format@^19.1.7":
-  version "19.1.7"
-  resolved "https://registry.yarnpkg.com/@wasm-fmt/clang-format/-/clang-format-19.1.7.tgz#2d2074934c2f4eb4381b4165b13a9b2a341647b9"
-  integrity sha512-MF5MDlffHoB3YYRVabCuy1rhOx8ReKey3BoqFxqVYgHZUeXO+KCC1tfhXtAL+4iYD+EmvUU5ZP3R+QmG57tVbg==
-
 debug@^4.1.1, debug@^4.3.5:
   version "4.4.0"
   resolved "https://registry.yarnpkg.com/debug/-/debug-4.4.0.tgz#2b3f2aea2ffeb776477460267377dc8710faba8a"

@@ -36,8 +36,8 @@ using SimdJsonSupportedType =
     std::declval<T>()));
 
 template <class T>
-concept ArithmeticSimdjsonUnsupported = Arithmetic<T> && !
-std::is_same_v<T, SimdJsonSupportedType<T>>;
+concept ArithmeticSimdjsonUnsupported =
+  Arithmetic<T> && !std::is_same_v<T, SimdJsonSupportedType<T>>;
 
 template <class T>
 concept ArithmeticSimdjsonSupported =
@@ -215,14 +215,12 @@ public:
 
     // Iterate through the variant types and attempt deserialization
     bool success = false;
-    [&]<std::size_t... Is>(std::index_sequence<Is...>)
-    {
+    [&]<std::size_t... Is>(std::index_sequence<Is...>) {
       ((success = success ||
           tryDeserialize(typename std::variant_alternative<
                          Is, std::variant<Types...>>::type{})),
        ...);
-    }
-    (std::make_index_sequence<sizeof...(Types)>{});
+    }(std::make_index_sequence<sizeof...(Types)>{});
 
     if (!success) {
       throw std::runtime_error(

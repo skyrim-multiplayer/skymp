@@ -29,7 +29,8 @@ float ConditionFunctions::WornApparelHasKeywordCount::Execute(
   constexpr uint32_t kBodHands = 0x00000008;
   constexpr uint32_t kBodFeet = 0x00000080;
 
-  constexpr uint32_t kArmorBits = kBodFeet | kBodHair | kBodBody | kBodHands | kBodHead | kBodCirclet;
+  constexpr uint32_t kArmorBits =
+    kBodFeet | kBodHair | kBodBody | kBodHands | kBodHead | kBodCirclet;
 
   for (auto& entry : equipment.inv.entries) {
     if (entry.GetWorn() == Inventory::Worn::None) {
