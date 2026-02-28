@@ -616,30 +616,6 @@ void ActionListener::OnCustomEvent(const RawMessageData& rawMsgData,
 void ActionListener::OnChangeValues(const RawMessageData& rawMsgData,
                                     const ChangeValuesMessage& msg)
 {
-  // TODO: support partial updates
-  if (!msg.data.health.has_value() || !msg.data.magicka.has_value() ||
-      !msg.data.stamina.has_value()) {
-    const std::string healthStr =
-      msg.data.health.has_value() ? std::to_string(*msg.data.health) : "null";
-    const std::string magickaStr = msg.data.magicka.has_value()
-      ? std::to_string(*msg.data.magicka)
-      : "null";
-    const std::string staminaStr = msg.data.stamina.has_value()
-      ? std::to_string(*msg.data.stamina)
-      : "null";
-
-    spdlog::error("ActionListener::OnChangeValues - health, magicka or "
-                  "stamina is null {} {} {}",
-                  healthStr, magickaStr, staminaStr);
-    return;
-  }
-
-  // TODO: refactor our ActorValues struct
-  ActorValues newActorValues;
-  newActorValues.healthPercentage = *msg.data.health;
-  newActorValues.magickaPercentage = *msg.data.magicka;
-  newActorValues.staminaPercentage = *msg.data.stamina;
-
   MpActor* actor = partOne.serverState.ActorByUser(rawMsgData.userId);
   if (!actor) {
     return spdlog::error(
@@ -651,57 +627,52 @@ void ActionListener::OnChangeValues(const RawMessageData& rawMsgData,
     return;
   }
 
-  auto now = std::chrono::steady_clock::now();
-
-  float timeAfterRegeneration = CropPeriodAfterLastRegen(
+  const auto now = std::chrono::steady_clock::now();
+  const float timeAfterRegeneration = CropPeriodAfterLastRegen(
     actor->GetDurationOfAttributesPercentagesUpdate(now).count());
 
-  ActorValues currentActorValues = actor->GetActorValues();
-  const float health = newActorValues.healthPercentage;
-  const float magicka = newActorValues.magickaPercentage;
-  const float stamina = newActorValues.staminaPercentage;
+  const auto& currentValues = actor->GetActorValues();
 
-  const bool healthChanged =
-    !MathUtils::IsNearlyEqual(currentActorValues.healthPercentage, health);
-  const bool magickaChanged =
-    !MathUtils::IsNearlyEqual(currentActorValues.magickaPercentage, magicka);
-  const bool staminaChanged =
-    !MathUtils::IsNearlyEqual(currentActorValues.staminaPercentage, stamina);
+  ChangeValuesMessage outMsg;
+  outMsg.idx = actor->GetIdx();
+  bool sendOutMsg = false;
 
-  if (healthChanged) {
-    currentActorValues.healthPercentage =
-      CropHealthRegeneration(health, timeAfterRegeneration, actor);
-  }
-  if (magickaChanged) {
-    currentActorValues.magickaPercentage =
-      CropMagickaRegeneration(magicka, timeAfterRegeneration, actor);
-  }
-  if (staminaChanged) {
-    // currentActorValues.staminaPercentage =
-    //   CropStaminaRegeneration(stamina, timeAfterRegeneration, actor);
-    currentActorValues.staminaPercentage = stamina;
-  }
-
-  if (!MathUtils::IsNearlyEqual(currentActorValues.healthPercentage,
-                                newActorValues.healthPercentage) ||
-      !MathUtils::IsNearlyEqual(currentActorValues.magickaPercentage,
-                                newActorValues.magickaPercentage) ||
-      !MathUtils::IsNearlyEqual(currentActorValues.staminaPercentage,
-                                newActorValues.staminaPercentage)) {
-
-    std::vector<espm::ActorValue> avFilter;
-    if (healthChanged) {
-      avFilter.push_back(espm::ActorValue::Health);
+  auto process = [&](espm::ActorValue av, std::optional<float> inputVal,
+                     float currentVal, std::optional<float>& outVal) {
+    if (!inputVal.has_value()) {
+      return;
     }
-    if (magickaChanged) {
-      avFilter.push_back(espm::ActorValue::Magicka);
+
+    if (MathUtils::IsNearlyEqual(currentVal, *inputVal)) {
+      return;
     }
-    if (staminaChanged) {
-      avFilter.push_back(espm::ActorValue::Stamina);
+
+    float newVal = *inputVal;
+
+    if (av == espm::ActorValue::Health) {
+      newVal = CropHealthRegeneration(newVal, timeAfterRegeneration, actor);
+    } else if (av == espm::ActorValue::Magicka) {
+      newVal = CropMagickaRegeneration(newVal, timeAfterRegeneration, actor);
     }
-    actor->NetSendChangeValues(currentActorValues, avFilter);
+
+    if (!MathUtils::IsNearlyEqual(newVal, *inputVal)) {
+      outVal = newVal;
+      sendOutMsg = true;
+    }
+
+    actor->SetPercentage(av, newVal);
+  };
+
+  process(espm::ActorValue::Health, msg.data.health,
+          currentValues.healthPercentage, outMsg.data.health);
+  process(espm::ActorValue::Magicka, msg.data.magicka,
+          currentValues.magickaPercentage, outMsg.data.magicka);
+  process(espm::ActorValue::Stamina, msg.data.stamina,
+          currentValues.staminaPercentage, outMsg.data.stamina);
+
+  if (sendOutMsg) {
+    actor->SendToUser(outMsg, true);
   }
-  actor->SetPercentages(currentActorValues);
 }
 
 namespace {
