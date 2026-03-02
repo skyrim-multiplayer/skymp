@@ -191,8 +191,14 @@ const runChecks = (files, { lintOnly = false, clangFormatPath }) => {
     let files = [];
 
     if (allFiles) {
-      console.log("Processing all files in the repository...");
-      files = findFiles(path.resolve(path.join(__dirname, '..', '..')));
+      console.log("Processing all files in the repository (respecting .gitignore)...");
+      const git = simpleGit();
+      const trackedFiles = await git.raw(["ls-files"]);
+      files = trackedFiles
+        .split("\n")
+        .filter((file) => file.trim() !== "")
+        .map((file) => path.resolve(process.cwd(), file))
+        .filter((file) => fs.existsSync(file));
     } else {
       console.log("Processing staged files...");
       const git = simpleGit();

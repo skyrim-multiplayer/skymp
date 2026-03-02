@@ -1,2 +1,2 @@
 #!/bin/sh
-node misc/git-hooks/clang-format-hook.js
+node misc/git-hooks/clang-format-hook.js --fix --add
