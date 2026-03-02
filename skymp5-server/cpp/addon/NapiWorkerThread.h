@@ -85,33 +85,14 @@ inline Napi::Value ExecuteWorkerBody(const Napi::CallbackInfo& info)
   return info.Env().Undefined();
 }
 
-// Call during addon Init to:
-// 1) Register the _executeWorkerBody export (so Workers can call it)
-// 2) Capture the addon .node file path (so Workers can require() it)
+// Call during addon Init to register the _executeWorkerBody export
+// (so Workers can call it). Addon path resolution happens lazily
+// in CreateNapiWorkerThreadFactory, because during Init the eval context
+// does not have 'require' available (we're inside process.dlopen).
 inline void InitNapiWorkerThread(Napi::Env env, Napi::Object exports)
 {
   exports.Set("_executeWorkerBody",
               Napi::Function::New(env, ExecuteWorkerBody));
-
-  // Resolve addon path via JS — the addon is loaded as
-  //   require(process.cwd() + "/scam_native.node")
-  // We find the .node path by looking at require.cache or using
-  // require.resolve with the known convention.
-  auto result = NapiHelper::RunScript(
-    env,
-    "(() => {"
-    "  const path = require('path');"
-    "  const cache = require.cache || {};"
-    "  const keys = Object.keys(cache);"
-    "  for (let i = keys.length - 1; i >= 0; i--) {"
-    "    if (keys[i].endsWith('.node')) return keys[i];"
-    "  }"
-    "  return path.resolve(process.cwd(), 'scam_native.node');"
-    "})()");
-  if (result.IsString()) {
-    NapiWorkerThreadRegistry::Instance().addonPath =
-      result.As<Napi::String>().Utf8Value();
-  }
 }
 
 // Creates a factory function compatible with
@@ -122,10 +103,29 @@ inline void InitNapiWorkerThread(Napi::Env env, Napi::Object exports)
 inline std::function<std::unique_ptr<NapiWorkerThread>(std::function<void()>)>
 CreateNapiWorkerThreadFactory(Napi::Env env)
 {
-  const auto& addonPath = NapiWorkerThreadRegistry::Instance().addonPath;
+  // Resolve addon path lazily via JS. At this point we're inside a normal
+  // N-API callback (e.g. attachSaveStorage), so require() is available.
+  auto& registry = NapiWorkerThreadRegistry::Instance();
+  if (registry.addonPath.empty()) {
+    auto result = NapiHelper::RunScript(
+      env,
+      "(() => {"
+      "  const path = require('path');"
+      "  const cache = require.cache || {};"
+      "  const keys = Object.keys(cache);"
+      "  for (let i = keys.length - 1; i >= 0; i--) {"
+      "    if (keys[i].endsWith('.node')) return keys[i];"
+      "  }"
+      "  return path.resolve(process.cwd(), 'scam_native.node');"
+      "})()");
+    if (result.IsString()) {
+      registry.addonPath = result.As<Napi::String>().Utf8Value();
+    }
+  }
+
+  const auto addonPath = registry.addonPath;
   if (addonPath.empty()) {
-    throw std::runtime_error(
-      "Addon path not initialized. Call InitNapiWorkerThread first.");
+    throw std::runtime_error("Failed to resolve addon (.node) file path");
   }
 
   return [env, addonPath](
