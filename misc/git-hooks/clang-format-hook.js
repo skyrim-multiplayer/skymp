@@ -3,12 +3,18 @@ import path from "path";
 import simpleGit from "simple-git";
 import { spawnSync } from "child_process";
 import { getClangFormatPath } from "./deps.js";
-import { fileURLToPath } from "url";
 import { ensureCleanExit } from "./util.js";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const REPO_ROOT = path.resolve(path.join(__dirname, '..', '..'));
+const getRepoRoot = () => {
+  const result = spawnSync('git', ['rev-parse', '--show-toplevel'], { encoding: 'utf-8' });
+  if (result.error || result.status !== 0) {
+    console.warn('Warning: not a git repository, using cwd as repo root');
+    return process.cwd();
+  }
+  return result.stdout.trim();
+};
+
+const REPO_ROOT = getRepoRoot();
 
 /**
  * Utility: Recursively find all files in a directory.
@@ -198,16 +204,16 @@ const runChecks = (files, { lintOnly = false, clangFormatPath }) => {
 
     if (allFiles) {
       console.log("Processing all files in the repository (respecting .gitignore)...");
-      const git = simpleGit();
+      const git = simpleGit(REPO_ROOT);
       const trackedFiles = await git.raw(["ls-files"]);
       files = trackedFiles
         .split("\n")
         .filter((file) => file.trim() !== "")
-        .map((file) => path.resolve(process.cwd(), file))
+        .map((file) => path.resolve(REPO_ROOT, file))
         .filter((file) => fs.existsSync(file));
     } else {
       console.log("Processing staged files...");
-      const git = simpleGit();
+      const git = simpleGit(REPO_ROOT);
       const changedFiles = await git.diff(["--name-only", "--cached"]);
       files = changedFiles
         .split("\n")
