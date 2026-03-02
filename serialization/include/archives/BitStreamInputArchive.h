@@ -122,12 +122,14 @@ public:
     };
 
     // Visit the type corresponding to the typeIndex
-    [&]<std::size_t... Is>(std::index_sequence<Is...>) {
+    [&]<std::size_t... Is>(std::index_sequence<Is...>)
+    {
       ((typeIndex == Is ? deserializeVisitor(
                             std::integral_constant<std::size_t, Is>{}, value)
                         : void()),
        ...);
-    }(std::make_index_sequence<sizeof...(Types)>{});
+    }
+    (std::make_index_sequence<sizeof...(Types)>{});
 
     return *this;
   }

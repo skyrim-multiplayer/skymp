@@ -31,7 +31,7 @@ struct RefID
   uint8_t byte1 = 0;
   uint8_t byte2 = 0;
 
-  RefID() {};
+  RefID(){};
 
   enum
   {

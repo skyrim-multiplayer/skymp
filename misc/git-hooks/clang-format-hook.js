@@ -51,6 +51,7 @@ const getChecks = () => [
       return true;
     },
     fix: (file, deps) => {
+      const before = fs.readFileSync(file);
       const result = spawnSync(deps.clangFormatPath, ["-i", file], { stdio: "inherit" });
 
       if (result.error || result.status !== 0) {
@@ -58,7 +59,12 @@ const getChecks = () => [
         return false;
       }
 
-      console.log(`[FIXED] ${file}`);
+      const after = fs.readFileSync(file);
+      if (!before.equals(after)) {
+        console.log(`[FIXED] ${file}`);
+      } else {
+        console.log(`[PASS] ${file}`);
+      }
     },
   },
   {
@@ -209,7 +215,13 @@ const runChecks = (files, { lintOnly = false, clangFormatPath }) => {
         .filter((file) => fs.existsSync(file)); // Exclude deleted files
     }
 
+    const startTime = Date.now();
     runChecks(files, { lintOnly: shouldLint, clangFormatPath });
+    const elapsedMs = Date.now() - startTime;
+    const minutes = Math.floor(elapsedMs / 60000);
+    const seconds = ((elapsedMs % 60000) / 1000).toFixed(2);
+    const timeStr = minutes > 0 ? `${minutes} minutes, ${seconds} seconds` : `${seconds} seconds`;
+    console.log(`Completed in ${timeStr}`);
 
     if (files.length === 0) {
       console.log('No files were processed.');
@@ -223,8 +235,7 @@ const runChecks = (files, { lintOnly = false, clangFormatPath }) => {
     if (shouldAdd) {
       files.forEach((file) => ensureCleanExit(spawnSync('git', ['add', file], { stdio: 'inherit' })));
     } else {
-      console.log('Files were processed, but not added. To add next time, use --add. To add this time, run:');
-      console.log(`git add ${files.join(' ')}`);
+      console.log('Files were not staged (use --add to stage automatically).');
     }
   } catch (err) {
     console.error("Error during processing:", err.message);
