@@ -64,7 +64,7 @@ export async function getClangFormatPath({ shouldDownload, shouldSearchInPath })
   if (platform === "linux") {
     url = `https://github.com/llvm/llvm-project/releases/download/llvmorg-${VERSION}/LLVM-${VERSION}-Linux-X64.tar.xz`;
     archiveName = `LLVM-${VERSION}-Linux-X64.tar.xz`;
-    archiveSha256 = "ab607a29b3f09ee67f6e0140c964bf4bc59527f87e57f9c581cd47198c62a306";
+    archiveSha256 = "da79891541d129dc8cd45a4a866af5c3110522a1a84ab9b9a7783b1a963053fb";
     archivePathToClangFormat = `LLVM-${VERSION}-Linux-X64/bin/clang-format`;
   } else {
     console.warn(`Platform ${platform} not supported for clang-format download`);
@@ -86,8 +86,8 @@ export async function getClangFormatPath({ shouldDownload, shouldSearchInPath })
   await downloadFile(url, archivePath, archiveSha256);
 
   ensureDirExists(extractDir);
-  console.log(`Extracting ${archiveName}...`);
-  await extractArchive(archivePath, extractDir);
+  console.log(`Extracting clang-format from ${archiveName} (single binary, not full LLVM)...`);
+  await extractArchive(archivePath, extractDir, [archivePathToClangFormat]);
 
   if (fs.existsSync(expectedExe)) {
     console.log(`Using downloaded ${expectedExe}, version ${checkVersion(expectedExe)}`);

@@ -1,11 +1,9 @@
 import fs from "fs";
 import path from "path";
-import https from "https";
 import crypto from "crypto";
 import { exec, spawnSync } from "child_process";
 import os from "os";
 import { fileURLToPath } from "url";
-import Stream from "stream";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -36,80 +34,77 @@ export function checkInPath(exeName) {
 }
 
 /**
- * @param {Stream.Readable} stream
- * @param {string} expectedSha256
+ * Compute SHA256 of a file and compare to expected hash.
+ * @returns {Promise<void>} Resolves on match, rejects on mismatch.
  */
-function makeSha256Verifier(stream, expectedSha256) {
-  const hash = crypto.createHash("sha256");
-  stream.on("data", (chunk) => hash.update(chunk));
-  return () =>
-    new Promise((resolve, reject) => {
-      stream.on("error", reject);
-      const validate = () => {
-        const actualHash = hash.digest("hex");
-        if (actualHash.toLowerCase() !== expectedSha256.toLowerCase()) {
-          reject(
-            new Error(
-              `SHA256 mismatch: expected ${expectedSha256}, got ${actualHash}. ` +
-                `Fix expected sha or delete the file and try again`
-            )
-          );
-          return;
-        }
-        resolve();
-      };
-      if (stream.closed) {
-        validate();
-      } else {
-        stream.on("end", validate);
-      }
-    });
-}
-
-export function downloadFile(url, destPath, expectedSha256) {
+function verifySha256(filePath, expectedSha256) {
   return new Promise((resolve, reject) => {
-    if (fs.existsSync(destPath)) {
-      console.log(`${destPath} already downloaded, validating...`);
-      makeSha256Verifier(fs.createReadStream(destPath), expectedSha256)().then(resolve, reject);
-      return;
-    }
-
-    const options = {
-      headers: { "User-Agent": "Node.js-Dependency-Downloader" },
-    };
-
-    console.log(`Downloading from ${url}...`);
-    const request = https.get(url, options, (response) => {
-      if (response.statusCode === 301 || response.statusCode === 302) {
-        downloadFile(response.headers.location, destPath, expectedSha256).then(resolve).catch(reject);
-        return;
+    const hash = crypto.createHash("sha256");
+    const stream = fs.createReadStream(filePath);
+    stream.on("data", (chunk) => hash.update(chunk));
+    stream.on("error", reject);
+    stream.on("end", () => {
+      const actual = hash.digest("hex");
+      if (actual.toLowerCase() !== expectedSha256.toLowerCase()) {
+        reject(new Error(`SHA256 mismatch: expected ${expectedSha256}, got ${actual}`));
+      } else {
+        resolve();
       }
-
-      if (response.statusCode !== 200) {
-        reject(new Error(`Failed to download '${url}'. Status: ${response.statusCode}`));
-        return;
-      }
-
-      const file = fs.createWriteStream(destPath);
-      response.pipe(file);
-
-      const sha256Verifier = makeSha256Verifier(response, expectedSha256);
-
-      file.on("finish", () => {
-        file.close(() => {
-          sha256Verifier().then(resolve, reject);
-        });
-      });
-
-      request.on("error", (err) => {
-        fs.unlink(destPath, () => {});
-        reject(err);
-      });
     });
   });
 }
 
-export function extractArchive(archivePath, destDir) {
+/**
+ * Download a file using curl (handles redirects, large files reliably).
+ * Validates SHA256 after download. Deletes corrupted cached files automatically.
+ */
+export async function downloadFile(url, destPath, expectedSha256) {
+  if (fs.existsSync(destPath)) {
+    console.log(`Validating cached ${path.basename(destPath)}...`);
+    try {
+      await verifySha256(destPath, expectedSha256);
+      return; // cache valid
+    } catch (err) {
+      console.warn(`Cached file is corrupted: ${err.message}`);
+      console.warn(`Deleting and re-downloading...`);
+      fs.unlinkSync(destPath);
+    }
+  }
+
+  console.log(`Downloading ${path.basename(destPath)} from ${url}...`);
+
+  await new Promise((resolve, reject) => {
+    exec(
+      `curl -fSL --retry 3 --retry-delay 5 -o '${destPath}' '${url}'`,
+      { maxBuffer: 10 * 1024 * 1024 },
+      (error, stdout, stderr) => {
+        if (error) {
+          // Clean up partial download
+          try { fs.unlinkSync(destPath); } catch {}
+          reject(new Error(`Download failed: ${error.message}\n${stderr}`));
+          return;
+        }
+        resolve();
+      }
+    );
+  });
+
+  // Verify the downloaded file
+  try {
+    await verifySha256(destPath, expectedSha256);
+  } catch (err) {
+    try { fs.unlinkSync(destPath); } catch {}
+    throw err;
+  }
+}
+
+/**
+ * Extract an archive (tar.xz, zip) to a destination directory.
+ * @param {string} archivePath - Path to the archive file.
+ * @param {string} destDir - Directory to extract into.
+ * @param {string[]} [members] - Optional specific members to extract (tar only).
+ */
+export function extractArchive(archivePath, destDir, members = []) {
   return new Promise((resolve, reject) => {
     const platform = os.platform();
     let command;
@@ -118,10 +113,11 @@ export function extractArchive(archivePath, destDir) {
       command = `powershell -command "Expand-Archive -Path '${archivePath}' -DestinationPath '${destDir}' -Force"`;
     } else {
       ensureDirExists(destDir);
-      command = `tar -xf '${archivePath}' -C '${destDir}'`;
+      const memberArgs = members.map((m) => `'${m}'`).join(" ");
+      command = `tar -xf '${archivePath}' -C '${destDir}' ${memberArgs}`;
     }
 
-    exec(command, (error) => {
+    exec(command, { maxBuffer: 10 * 1024 * 1024 }, (error) => {
       if (error) {
         reject(error);
         return;
