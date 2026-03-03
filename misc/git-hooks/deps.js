@@ -34,13 +34,16 @@ function checkInPath(exeName) {
   }
   try {
     const whichChild = spawnSync(command, [exeName], { encoding: 'utf8', stdio: 'pipe' });
-    ensureCleanExit(whichChild);
+    if (whichChild.error || whichChild.status !== 0) {
+      console.log(`${exeName} not found in PATH`);
+      return null;
+    }
     const foundPath = whichChild.stdout.trim().split(os.EOL)[0];
     if (foundPath) {
       return foundPath;
     }
   } catch (e) {
-    console.error(e);
+    // Ignore error silently
   }
   console.log(`${exeName} not found in PATH`);
   return null;
@@ -201,4 +204,60 @@ export async function getClangFormatPath({ shouldDownload, shouldSearchInPath })
   }
   
   throw new Error('Could not find clang-format binary after extraction');
+}
+
+export async function getLinelintPath({ shouldDownload, shouldSearchInPath }) {
+  const exeName = os.platform() === 'win32' ? 'linelint.exe' : 'linelint';
+  
+  const systemPath = shouldSearchInPath ? checkInPath(exeName) : null;
+  if (systemPath) {
+    console.log(`Using ${systemPath} from system path instead of downloading`);
+    return systemPath;
+  }
+
+  if (!shouldDownload) {
+    throw new Error('linelint was not found, and shouldDownload is false');
+  }
+
+  const platform = os.platform();
+  const version = '0.0.6';
+  let url = '';
+  let exeSha256 = '';
+
+  if (platform === 'linux') {
+    url = `https://github.com/fernandrone/linelint/releases/download/${version}/linelint-linux-amd64`;
+    exeSha256 = '16b70fb7b471d6f95cbdc0b4e5dc2b0ac9e84ba9ecdc488f7bdf13df823aca4b';
+  } else if (platform === 'win32') {
+    url = `https://github.com/fernandrone/linelint/releases/download/${version}/linelint-windows-amd64`;
+    exeSha256 = '69793b89716c4a3ed02ff95d922ef95e0224bb987c938e2f8e85af1c79820bf3';
+  } else if (platform === 'darwin') {
+    url = `https://github.com/fernandrone/linelint/releases/download/${version}/linelint-darwin-amd64`;
+    exeSha256 = '2c6264704ea0479666ce2be7140e84c74f6fef8e7e9d9203db9d8bf8ca438e84';
+  } else {
+    throw new Error(`Platform ${platform} not supported for linelint download.`);
+  }
+
+  ensureDirExists(CACHE_PATH);
+  
+  const destPath = path.join(CACHE_PATH, exeName);
+
+  if (fs.existsSync(destPath)) {
+    // Basic verification - this could be improved to check the hash on every run, 
+    // but trusting the cache if it exists is faster
+    return destPath;
+  }
+
+  console.log(`Downloading linelint from ${url}...`);
+  await downloadFile(url, destPath, exeSha256);
+  
+  if (platform !== 'win32') {
+    fs.chmodSync(destPath, 0o755);
+  }
+
+  if (fs.existsSync(destPath)) {
+    console.log(`Using downloaded ${destPath}`);
+    return destPath;
+  }
+
+  throw new Error('Could not find linelint binary after download');
 }

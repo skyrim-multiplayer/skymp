@@ -1,5 +1,0 @@
-1) rename file and where it's mentioned (in hook and in gha). reinstall git hook
-
-2) separate class for each check with base class serving as an interface
-
-3) there should be json settings, not hardcoded set of checks. so in json u can specify checks list to run. and condition say we're in hooks or in gha or in manual run

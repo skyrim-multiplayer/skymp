@@ -1,6 +1,12 @@
 {
   "checks": [
     {
+      "name": "Linelint",
+      "module": "./checks/linelint-check.js",
+      "export": "LinelintCheck",
+      "runIn": ["hook", "gha", "manual"]
+    },
+    {
       "name": "ClangFormat",
       "module": "./checks/clang-format-check.js",
       "export": "ClangFormatCheck",

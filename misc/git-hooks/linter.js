@@ -3,7 +3,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import simpleGit from "simple-git";
 import { spawnSync } from "child_process";
-import { getClangFormatPath } from "./deps.js";
+import { getClangFormatPath, getLinelintPath } from "./deps.js";
 import { ensureCleanExit } from "./util.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -54,8 +54,8 @@ const loadChecks = async (mode) => {
 /**
  * Core: Run checks (lint or fix) on given files.
  */
-const runChecks = (files, checks, { lintOnly = false, clangFormatPath }) => {
-  const deps = { clangFormatPath };
+const runChecks = (files, checks, { lintOnly = false, clangFormatPath, linelintPath }) => {
+  const deps = { clangFormatPath, linelintPath };
 
   const filesToCheck = files.filter((file) =>
     checks.some((check) => check.appliesTo(file))
@@ -154,6 +154,10 @@ const runChecks = (files, checks, { lintOnly = false, clangFormatPath }) => {
       shouldDownload,
       shouldSearchInPath,
     });
+    const linelintPath = await getLinelintPath({
+      shouldDownload,
+      shouldSearchInPath,
+    });
 
     let files = [];
 
@@ -179,7 +183,7 @@ const runChecks = (files, checks, { lintOnly = false, clangFormatPath }) => {
     }
 
     const startTime = Date.now();
-    runChecks(files, checks, { lintOnly: shouldLint, clangFormatPath });
+    runChecks(files, checks, { lintOnly: shouldLint, clangFormatPath, linelintPath });
     const elapsedMs = Date.now() - startTime;
     const minutes = Math.floor(elapsedMs / 60000);
     const seconds = ((elapsedMs % 60000) / 1000).toFixed(2);
