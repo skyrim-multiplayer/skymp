@@ -1,5 +1,5 @@
 import path from "path";
-import fs from "fs";
+import fs from "fs/promises";
 
 /**
  * @typedef {"pass" | "fail" | "fixed" | "error"} CheckStatus
@@ -20,8 +20,8 @@ import fs from "fs";
  *   options.excludePaths - array of path substrings to skip
  *   options.textOnly     - if true, skip binary files (default: false)
  *
- * lint() and fix() must return a CheckResult object:
- *   { status: "pass" | "fail" | "fixed" | "error", output?: string }
+ * All methods that touch files are async.
+ * appliesTo(), lint() and fix() return Promises.
  *
  * Checks must NOT write to stdout/stderr directly.
  */
@@ -56,11 +56,11 @@ export class BaseCheck {
   /**
    * Whether this check applies to the given file.
    * Uses config-driven extensions, excludePaths, and textOnly.
-   * Subclasses can override for extra logic but should call super.appliesTo().
+   * Subclasses can override for extra logic but should await super.appliesTo().
    * @param {string} file - Absolute path to the file.
-   * @returns {boolean}
+   * @returns {Promise<boolean>}
    */
-  appliesTo(file) {
+  async appliesTo(file) {
     // excludePaths check
     for (const p of this.#excludePaths) {
       if (file.includes(p)) return false;
@@ -74,16 +74,18 @@ export class BaseCheck {
 
     // binary file detection
     if (this.#textOnly) {
+      let fh;
       try {
-        const fd = fs.openSync(file, "r");
+        fh = await fs.open(file, "r");
         const buffer = Buffer.alloc(1024);
-        const bytesRead = fs.readSync(fd, buffer, 0, 1024, 0);
-        fs.closeSync(fd);
+        const { bytesRead } = await fh.read(buffer, 0, 1024, 0);
         for (let i = 0; i < bytesRead; i++) {
           if (buffer[i] === 0) return false;
         }
       } catch {
         return false;
+      } finally {
+        if (fh) await fh.close();
       }
     }
 
@@ -94,9 +96,9 @@ export class BaseCheck {
    * Lint (read-only check) a single file.
    * @param {string} file - Absolute path.
    * @param {object} deps - Resolved dependencies.
-   * @returns {CheckResult}
+   * @returns {Promise<CheckResult>}
    */
-  lint(file, deps) {
+  async lint(file, deps) {
     throw new Error("Not implemented: lint");
   }
 
@@ -104,9 +106,9 @@ export class BaseCheck {
    * Fix (in-place modify) a single file.
    * @param {string} file - Absolute path.
    * @param {object} deps - Resolved dependencies.
-   * @returns {CheckResult}
+   * @returns {Promise<CheckResult>}
    */
-  fix(file, deps) {
+  async fix(file, deps) {
     throw new Error("Not implemented: fix");
   }
 }

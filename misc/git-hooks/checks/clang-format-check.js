@@ -1,6 +1,9 @@
-import fs from "fs";
-import { spawnSync } from "child_process";
+import { promises as fs } from "fs";
+import { execFile } from "child_process";
+import { promisify } from "util";
 import { BaseCheck } from "./base-check.js";
+
+const execFileAsync = promisify(execFile);
 
 export class ClangFormatCheck extends BaseCheck {
   constructor(repoRoot, options = {}) {
@@ -15,42 +18,45 @@ export class ClangFormatCheck extends BaseCheck {
     return deps.clangFormatPath !== undefined;
   }
 
-  lint(file, deps) {
-    const result = spawnSync(deps.clangFormatPath, ["--dry-run", "--Werror", file], {
-      stdio: "pipe",
-    });
-
-    if (result.error) {
-      return { status: "error", output: result.error.message };
-    }
-
-    if (result.status !== 0) {
-      const output = (result.stderr || result.stdout || "").toString().trim();
+  async lint(file, deps) {
+    try {
+      await execFileAsync(deps.clangFormatPath, ["--dry-run", "--Werror", file]);
+      return { status: "pass" };
+    } catch (err) {
+      if (err.code === "ENOENT") {
+        return { status: "error", output: err.message };
+      }
+      const output = (err.stderr || err.stdout || "").toString().trim();
       return { status: "fail", output };
     }
-
-    return { status: "pass" };
   }
 
-  fix(file, deps) {
-    const before = fs.readFileSync(file);
-    const result = spawnSync(deps.clangFormatPath, ["-i", file], {
-      stdio: "pipe",
-    });
-
-    if (result.error) {
-      return { status: "error", output: result.error.message };
+  async fix(file, deps) {
+    let before;
+    try {
+      before = await fs.readFile(file);
+    } catch (err) {
+      return { status: "error", output: err.message };
     }
 
-    if (result.status !== 0) {
-      const output = (result.stderr || result.stdout || "").toString().trim();
+    try {
+      await execFileAsync(deps.clangFormatPath, ["-i", file]);
+    } catch (err) {
+      if (err.code === "ENOENT") {
+        return { status: "error", output: err.message };
+      }
+      const output = (err.stderr || err.stdout || "").toString().trim();
       return { status: "error", output };
     }
 
-    const after = fs.readFileSync(file);
-    if (!before.equals(after)) {
-      return { status: "fixed" };
+    try {
+      const after = await fs.readFile(file);
+      if (!before.equals(after)) {
+        return { status: "fixed" };
+      }
+      return { status: "pass" };
+    } catch (err) {
+      return { status: "error", output: err.message };
     }
-    return { status: "pass" };
   }
 }

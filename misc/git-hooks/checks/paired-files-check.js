@@ -1,4 +1,4 @@
-import fs from "fs";
+import { promises as fs } from "fs";
 import path from "path";
 import { BaseCheck } from "./base-check.js";
 
@@ -34,13 +34,13 @@ export class PairedFilesCheck extends BaseCheck {
     return "Paired Files Check";
   }
 
-  appliesTo(file) {
+  async appliesTo(file) {
     const basename = path.basename(file).toLowerCase();
     if (this.#exclude.has(basename)) return false;
     return this.#absDirs.some((d) => file.startsWith(d.abs + path.sep));
   }
 
-  lint(file) {
+  async lint(file) {
     const ext = path.extname(file);
     const baseName = path.basename(file, ext);
 
@@ -49,7 +49,7 @@ export class PairedFilesCheck extends BaseCheck {
 
     let pairFiles;
     try {
-      pairFiles = fs.readdirSync(pairDir.abs);
+      pairFiles = await fs.readdir(pairDir.abs);
     } catch (err) {
       return { status: "error", output: `cannot read pair directory ${pairDir.abs}: ${err.message}` };
     }
@@ -65,7 +65,7 @@ export class PairedFilesCheck extends BaseCheck {
     return { status: "pass" };
   }
 
-  fix(file) {
+  async fix(file) {
     // No auto-fix — just re-run lint so caller sees the status
     return this.lint(file);
   }

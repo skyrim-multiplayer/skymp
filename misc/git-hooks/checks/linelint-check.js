@@ -1,6 +1,9 @@
-import { spawnSync } from "child_process";
+import { execFile } from "child_process";
+import { promisify } from "util";
 import { BaseCheck } from "./base-check.js";
-import fs from "fs";
+import { promises as fs } from "fs";
+
+const execFileAsync = promisify(execFile);
 
 export class LinelintCheck extends BaseCheck {
   constructor(repoRoot, options = {}) {
@@ -15,33 +18,40 @@ export class LinelintCheck extends BaseCheck {
     return deps.linelintPath !== undefined;
   }
 
-  lint(file, deps) {
-    const result = spawnSync(deps.linelintPath, [file], { cwd: this.repoRoot, stdio: "pipe" });
-    if (result.error) {
-      return { status: "error", output: result.error.message };
-    }
-    if (result.status !== 0) {
-      const out = (result.stderr || result.stdout || "").toString().trim();
+  async lint(file, deps) {
+    try {
+      await execFileAsync(deps.linelintPath, [file], { cwd: this.repoRoot });
+      return { status: "pass" };
+    } catch (err) {
+      if (err.code === "ENOENT") {
+        return { status: "error", output: err.message };
+      }
+      const out = (err.stderr || err.stdout || "").toString().trim();
       return { status: "fail", output: out || "linelint failed" };
     }
-    return { status: "pass" };
   }
 
-  fix(file, deps) {
+  async fix(file, deps) {
     let before;
     try {
-      before = fs.readFileSync(file);
+      before = await fs.readFile(file);
     } catch (err) {
       return { status: "error", output: err.message };
     }
 
-    const result = spawnSync(deps.linelintPath, ["-a", file], { cwd: this.repoRoot, stdio: "pipe" });
-    if (result.error) {
-      return { status: "error", output: result.error.message };
+    try {
+      await execFileAsync(deps.linelintPath, ["-a", file], { cwd: this.repoRoot });
+    } catch (err) {
+      if (err.code === "ENOENT") {
+        return { status: "error", output: err.message };
+      }
+      // linelint supposedly returns 0 on success fix, but maybe not? let's ignore non-0 or pass it?
+      // actually if it errors, we just proceed to diffing below anyway, but maybe it failed to run.
+      // we'll see
     }
 
     try {
-      const after = fs.readFileSync(file);
+      const after = await fs.readFile(file);
       if (!before.equals(after)) {
         return { status: "fixed" };
       }

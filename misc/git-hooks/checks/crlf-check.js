@@ -1,4 +1,4 @@
-import fs from "fs";
+import fs from "fs/promises";
 import { BaseCheck } from "./base-check.js";
 
 export class CrlfCheck extends BaseCheck {
@@ -10,9 +10,9 @@ export class CrlfCheck extends BaseCheck {
     return "CRLF";
   }
 
-  lint(file) {
+  async lint(file) {
     try {
-      const content = fs.readFileSync(file);
+      const content = await fs.readFile(file);
       if (content.includes("\r\n")) {
         return { status: "fail", output: "contains CRLF line endings" };
       }
@@ -22,12 +22,12 @@ export class CrlfCheck extends BaseCheck {
     }
   }
 
-  fix(file) {
+  async fix(file) {
     try {
-      const before = fs.readFileSync(file);
+      const before = await fs.readFile(file);
       if (before.includes("\r\n")) {
         const fixed = before.toString("utf-8").replace(/\r\n/g, "\n");
-        fs.writeFileSync(file, Buffer.from(fixed, "utf-8"));
+        await fs.writeFile(file, Buffer.from(fixed, "utf-8"));
         return { status: "fixed" };
       }
       return { status: "pass" };

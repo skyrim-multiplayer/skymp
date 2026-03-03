@@ -1,6 +1,7 @@
 {
   "type": "module",
   "dependencies": {
+    "p-limit": "^7.3.0",
     "simple-git": "^3.27.0"
   }
 }
