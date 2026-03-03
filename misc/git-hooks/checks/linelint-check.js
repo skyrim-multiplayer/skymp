@@ -27,7 +27,7 @@ export class LinelintCheck extends BaseCheck {
     const ext = path.extname(file).toLowerCase();
     if (binExts.includes(ext)) return false;
 
-    // Optional: check if it's text by reading the first 1KB
+    // Check if it's text by reading the first 1KB
     try {
       const fd = fs.openSync(file, 'r');
       const buffer = Buffer.alloc(1024);
@@ -43,31 +43,32 @@ export class LinelintCheck extends BaseCheck {
   }
 
   lint(file, deps) {
-    let fail = false;
+    const messages = [];
+
     // 1. CRLF check
     try {
       const content = fs.readFileSync(file);
       if (content.includes('\r\n')) {
-        console.error(`[FAIL] ${file} contains CRLF line endings`);
-        fail = true;
+        messages.push("contains CRLF line endings");
       }
     } catch (err) {
-      console.error(`[ERROR] ${file}: ${err.message}`);
-      return false;
+      return { status: "error", output: err.message };
     }
 
     // 2. linelint check
-    const result = spawnSync(deps.linelintPath, [file], { cwd: this.repoRoot, stdio: "inherit" });
-    if (result.error || result.status !== 0) {
-      console.error(`[FAIL] linelint failed on ${file}`);
-      fail = true;
+    const result = spawnSync(deps.linelintPath, [file], { cwd: this.repoRoot, stdio: "pipe" });
+    if (result.error) {
+      return { status: "error", output: result.error.message };
+    }
+    if (result.status !== 0) {
+      const out = (result.stderr || result.stdout || "").toString().trim();
+      messages.push(out || "linelint failed");
     }
 
-    if (!fail) {
-      console.log(`[PASS] ${file}`);
+    if (messages.length > 0) {
+      return { status: "fail", output: messages.join("; ") };
     }
-
-    return !fail;
+    return { status: "pass" };
   }
 
   fix(file, deps) {
@@ -75,7 +76,7 @@ export class LinelintCheck extends BaseCheck {
     try {
       before = fs.readFileSync(file);
     } catch (err) {
-      return false;
+      return { status: "error", output: err.message };
     }
 
     // 1. Fix CRLF
@@ -85,22 +86,23 @@ export class LinelintCheck extends BaseCheck {
         fs.writeFileSync(file, Buffer.from(str, 'utf-8'));
       }
     } catch (err) {
-      console.error(`[ERROR] ${file}: ${err.message}`);
-      return false;
+      return { status: "error", output: err.message };
     }
 
     // 2. linelint fix
-    spawnSync(deps.linelintPath, ["-a", file], { cwd: this.repoRoot, stdio: "pipe" });
+    const result = spawnSync(deps.linelintPath, ["-a", file], { cwd: this.repoRoot, stdio: "pipe" });
+    if (result.error) {
+      return { status: "error", output: result.error.message };
+    }
 
     try {
       const after = fs.readFileSync(file);
       if (!before.equals(after)) {
-        console.log(`[FIXED] ${file}`);
-      } else {
-        console.log(`[PASS] ${file}`);
+        return { status: "fixed" };
       }
+      return { status: "pass" };
     } catch (err) {
-      return false;
+      return { status: "error", output: err.message };
     }
   }
 }
