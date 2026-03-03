@@ -1,22 +1,42 @@
 {
+  "modes": {
+    "hook": {
+      "fileSource": {
+        "module": "./file-sources/staged-files-source.js",
+        "export": "StagedFilesSource"
+      }
+    },
+    "gha": {
+      "fileSource": {
+        "module": "./file-sources/diff-base-source.js",
+        "export": "DiffBaseSource"
+      }
+    },
+    "manual": {
+      "fileSource": {
+        "module": "./file-sources/all-files-source.js",
+        "export": "AllFilesSource"
+      }
+    }
+  },
   "checks": [
     {
       "name": "Linelint",
       "module": "./checks/linelint-check.js",
       "export": "LinelintCheck",
-      "runIn": ["hook", "gha", "manual"]
+      "modes": ["hook", "gha", "manual"]
     },
     {
       "name": "ClangFormat",
       "module": "./checks/clang-format-check.js",
       "export": "ClangFormatCheck",
-      "runIn": ["hook", "gha", "manual"]
+      "modes": ["hook", "gha", "manual"]
     },
     {
       "name": "Server/Client Message Pairs",
       "module": "./checks/paired-files-check.js",
       "export": "PairedFilesCheck",
-      "runIn": ["hook", "gha", "manual"],
+      "modes": ["hook", "gha", "manual"],
       "options": {
         "dirs": [
           { "path": "skymp5-server/cpp/messages", "ext": ".h" },

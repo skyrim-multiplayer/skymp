@@ -1,15 +1,12 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import simpleGit from "simple-git";
 import { spawnSync } from "child_process";
 import { getClangFormatPath, getLinelintPath } from "./deps.js";
 import { ensureCleanExit } from "./util.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-const VALID_MODES = ["hook", "gha", "manual"];
 
 const getRepoRoot = () => {
   const result = spawnSync("git", ["rev-parse", "--show-toplevel"], {
@@ -25,30 +22,41 @@ const getRepoRoot = () => {
 const REPO_ROOT = getRepoRoot();
 
 /**
- * Load checks from linter-config.json, filtered by mode.
- * Each entry in the config specifies a module path and export name.
+ * Load config, instantiate file source and checks for the given mode.
  */
-const loadChecks = async (mode) => {
+const loadConfig = async (mode) => {
   const configPath = path.join(__dirname, "linter-config.json");
   const config = JSON.parse(fs.readFileSync(configPath, "utf-8"));
 
+  // --- file source ---
+  const modeConfig = config.modes[mode];
+  if (!modeConfig) {
+    throw new Error(`Unknown mode "${mode}". Available: ${Object.keys(config.modes).join(", ")}`);
+  }
+  const srcEntry = modeConfig.fileSource;
+  const srcMod = await import(srcEntry.module);
+  const SrcClass = srcMod[srcEntry.export];
+  if (!SrcClass) {
+    throw new Error(`Export "${srcEntry.export}" not found in "${srcEntry.module}"`);
+  }
+  const fileSource = new SrcClass(REPO_ROOT, srcEntry.options || {});
+
+  // --- checks ---
   const checks = [];
   for (const entry of config.checks) {
-    if (!entry.runIn.includes(mode)) {
+    if (!entry.modes.includes(mode)) {
       console.log(`Skipping check "${entry.name}": not enabled for mode "${mode}"`);
       continue;
     }
-
     const mod = await import(entry.module);
     const CheckClass = mod[entry.export];
     if (!CheckClass) {
-      throw new Error(
-        `Export "${entry.export}" not found in module "${entry.module}"`
-      );
+      throw new Error(`Export "${entry.export}" not found in "${entry.module}"`);
     }
     checks.push(new CheckClass(REPO_ROOT, entry.options || {}));
   }
-  return checks;
+
+  return { fileSource, checks };
 };
 
 /**
@@ -129,31 +137,25 @@ const runChecks = (files, checks, { lintOnly = false, clangFormatPath, linelintP
  * Flags:
  *   --lint           Run checks in read-only mode (exit 1 on failure)
  *   --fix            Run checks in fix mode (modify files in-place)
- *   --all            Process all tracked files (default: staged only)
- *   --pr-diff <base> Process only files changed vs <base> branch
+ *   --pr-diff <base> Override file source baseRef for DiffBaseSource
  *   --add            Stage fixed files with git add (requires --fix)
- *   --no-download    Do not download clang-format if missing
- *   --no-path        Do not search for clang-format in PATH
- *   --mode <mode>    Execution mode: hook | gha | manual (default: manual)
+ *   --no-download    Do not download tools if missing
+ *   --no-path        Do not search for tools in PATH
+ *   --mode <mode>    Execution mode (key in config.modes, default: manual)
  */
 (async () => {
   const args = process.argv.slice(2);
   const shouldLint = args.includes("--lint");
   const shouldFix = args.includes("--fix");
-  const allFiles = args.includes("--all");
-  const prDiffIndex = args.indexOf("--pr-diff");
-  const prDiffBase = prDiffIndex !== -1 && args[prDiffIndex + 1] ? args[prDiffIndex + 1] : null;
   const shouldAdd = args.includes("--add");
   const shouldDownload = !args.includes("--no-download");
   const shouldSearchInPath = !args.includes("--no-path");
 
+  const prDiffIndex = args.indexOf("--pr-diff");
+  const prDiffBase = prDiffIndex !== -1 && args[prDiffIndex + 1] ? args[prDiffIndex + 1] : null;
+
   const modeIndex = args.indexOf("--mode");
   const mode = modeIndex !== -1 && args[modeIndex + 1] ? args[modeIndex + 1] : "manual";
-
-  if (!VALID_MODES.includes(mode)) {
-    console.error(`Invalid mode "${mode}". Must be one of: ${VALID_MODES.join(", ")}`);
-    process.exit(1);
-  }
 
   if (!shouldLint && !shouldFix) {
     console.error("Either --lint or --fix must be specified");
@@ -165,14 +167,14 @@ const runChecks = (files, checks, { lintOnly = false, clangFormatPath, linelintP
   }
 
   try {
-    const checks = await loadChecks(mode);
+    const { fileSource, checks } = await loadConfig(mode);
 
     if (checks.length === 0) {
       console.log(`No checks enabled for mode "${mode}".`);
       process.exit(0);
     }
 
-    console.log(`Mode: ${mode} | Checks: ${checks.map((c) => c.name).join(", ")}`);
+    console.log(`Mode: ${mode} | Source: ${fileSource.name} | Checks: ${checks.map((c) => c.name).join(", ")}`);
 
     const clangFormatPath = await getClangFormatPath({
       shouldDownload,
@@ -183,37 +185,9 @@ const runChecks = (files, checks, { lintOnly = false, clangFormatPath, linelintP
       shouldSearchInPath,
     });
 
-    let files = [];
-
-    if (prDiffBase) {
-      console.log(`Processing files changed vs ${prDiffBase}...`);
-      const git = simpleGit(REPO_ROOT);
-      const diffOutput = await git.diff(["--name-only", "--diff-filter=ACMR", prDiffBase]);
-      files = diffOutput
-        .split("\n")
-        .filter((file) => file.trim() !== "")
-        .map((file) => path.resolve(REPO_ROOT, file))
-        .filter((file) => fs.existsSync(file));
-    } else if (allFiles) {
-      console.log(
-        "Processing all files in the repository (respecting .gitignore)..."
-      );
-      const git = simpleGit(REPO_ROOT);
-      const trackedFiles = await git.raw(["ls-files"]);
-      files = trackedFiles
-        .split("\n")
-        .filter((file) => file.trim() !== "")
-        .map((file) => path.resolve(REPO_ROOT, file))
-        .filter((file) => fs.existsSync(file));
-    } else {
-      console.log("Processing staged files...");
-      const git = simpleGit(REPO_ROOT);
-      const changedFiles = await git.diff(["--name-only", "--cached"]);
-      files = changedFiles
-        .split("\n")
-        .filter((file) => file.trim() !== "")
-        .filter((file) => fs.existsSync(file)); // Exclude deleted files
-    }
+    const context = { cliOptions: { prDiffBase } };
+    const files = await fileSource.resolve(context);
+    console.log(`${fileSource.name}: ${files.length} file(s)`);
 
     const startTime = Date.now();
     runChecks(files, checks, { lintOnly: shouldLint, clangFormatPath, linelintPath });
