@@ -64,7 +64,7 @@ export async function getClangFormatPath({ shouldDownload, shouldSearchInPath })
   if (platform === "linux") {
     url = `https://github.com/llvm/llvm-project/releases/download/llvmorg-${VERSION}/LLVM-${VERSION}-Linux-X64.tar.xz`;
     archiveName = `LLVM-${VERSION}-Linux-X64.tar.xz`;
-    archiveSha256 = "da79891541d129dc8cd45a4a866af5c3110522a1a84ab9b9a7783b1a963053fb";
+    archiveSha256 = "b3b7f2801d15d50736acea3c73982994d025b01c2f035b91ae3b49d1b575732b";
     archivePathToClangFormat = `LLVM-${VERSION}-Linux-X64/bin/clang-format`;
   } else {
     console.warn(`Platform ${platform} not supported for clang-format download`);

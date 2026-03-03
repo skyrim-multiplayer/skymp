@@ -10,6 +10,5 @@
 #include "StringLike.h"
 
 template <typename T>
-concept NoneOfTheAbove = !
-IntegralConstant<T> && !StringLike<T> && !ContainerLike<T> && !Optional<T> &&
-  !Arithmetic<T> && !Map<T>;
+concept NoneOfTheAbove = !IntegralConstant<T> && !StringLike<T> &&
+  !ContainerLike<T> && !Optional<T> && !Arithmetic<T> && !Map<T>;
