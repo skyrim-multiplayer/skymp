@@ -5,6 +5,7 @@ import { spawnSync } from "child_process";
 import pLimit from "p-limit";
 import { getClangFormatPath, getLinelintPath } from "./deps.js";
 import { ensureCleanExit } from "./util.js";
+import { builtinRegistry } from "./registry.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -23,6 +24,32 @@ const getRepoRoot = () => {
 const REPO_ROOT = getRepoRoot();
 
 /**
+ * Resolve a class from config entry.
+ * If "module" is present → dynamic import (for custom user-provided checks).
+ * Otherwise → look up "export" in the built-in registry.
+ */
+const resolveClass = async (entry) => {
+  const exportName = entry.export;
+  if (entry.module) {
+    const mod = await import(entry.module);
+    const Cls = mod[exportName];
+    if (!Cls) {
+      throw new Error(`Export "${exportName}" not found in "${entry.module}"`);
+    }
+    return Cls;
+  }
+  const Cls = builtinRegistry[exportName];
+  if (!Cls) {
+    throw new Error(
+      `Export "${exportName}" not found in built-in registry. ` +
+      `Available: ${Object.keys(builtinRegistry).join(", ")}. ` +
+      `For custom checks, specify "module" in config.`
+    );
+  }
+  return Cls;
+};
+
+/**
  * Load config, instantiate file source and checks for the given mode.
  */
 const loadConfig = async (mode) => {
@@ -35,11 +62,7 @@ const loadConfig = async (mode) => {
     throw new Error(`Unknown mode "${mode}". Available: ${Object.keys(config.modes).join(", ")}`);
   }
   const srcEntry = modeConfig.fileSource;
-  const srcMod = await import(srcEntry.module);
-  const SrcClass = srcMod[srcEntry.export];
-  if (!SrcClass) {
-    throw new Error(`Export "${srcEntry.export}" not found in "${srcEntry.module}"`);
-  }
+  const SrcClass = await resolveClass(srcEntry);
   const fileSource = new SrcClass(REPO_ROOT, srcEntry.options || {});
 
   // --- checks ---
@@ -49,11 +72,7 @@ const loadConfig = async (mode) => {
       console.log(`Skipping check "${entry.name}": not enabled for mode "${mode}"`);
       continue;
     }
-    const mod = await import(entry.module);
-    const CheckClass = mod[entry.export];
-    if (!CheckClass) {
-      throw new Error(`Export "${entry.export}" not found in "${entry.module}"`);
-    }
+    const CheckClass = await resolveClass(entry);
     checks.push(new CheckClass(REPO_ROOT, entry.options || {}));
   }
 
