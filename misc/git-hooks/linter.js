@@ -46,7 +46,7 @@ const loadChecks = async (mode) => {
         `Export "${entry.export}" not found in module "${entry.module}"`
       );
     }
-    checks.push(new CheckClass(REPO_ROOT));
+    checks.push(new CheckClass(REPO_ROOT, entry.options || {}));
   }
   return checks;
 };

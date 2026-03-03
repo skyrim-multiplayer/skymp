@@ -13,10 +13,26 @@
       "runIn": ["hook", "gha", "manual"]
     },
     {
-      "name": "HeaderTsPair",
-      "module": "./checks/header-ts-pair-check.js",
-      "export": "HeaderTsPairCheck",
-      "runIn": ["hook", "gha", "manual"]
+      "name": "Server/Client Message Pairs",
+      "module": "./checks/paired-files-check.js",
+      "export": "PairedFilesCheck",
+      "runIn": ["hook", "gha", "manual"],
+      "options": {
+        "dirs": [
+          { "path": "skymp5-server/cpp/messages", "ext": ".h" },
+          { "path": "skymp5-client/src/services/messages", "ext": ".ts" }
+        ],
+        "exclude": [
+          "anyMessage.ts",
+          "refrIdMessageBase.ts",
+          "MessageBase.h",
+          "MessageSerializerFactory.cpp",
+          "MessageSerializerFactory.h",
+          "Messages.h",
+          "MinPacketId.h",
+          "MsgType.h"
+        ]
+      }
     }
   ]
 }
