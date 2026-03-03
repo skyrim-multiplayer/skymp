@@ -53,6 +53,7 @@ const loadChecks = async (mode) => {
 
 /**
  * Core: Run checks (lint or fix) on given files.
+ * Checks return { status, output } — caller handles all formatting.
  */
 const runChecks = (files, checks, { lintOnly = false, clangFormatPath, linelintPath }) => {
   const deps = { clangFormatPath, linelintPath };
@@ -81,16 +82,36 @@ const runChecks = (files, checks, { lintOnly = false, clangFormatPath, linelintP
       }
       try {
         const res = lintOnly ? check.lint(file, deps) : check.fix(file, deps);
-        if (res === false) {
-          fail = true;
+        const tag = `[${check.name}]`;
+
+        switch (res.status) {
+          case "pass":
+            console.log(`[PASS] ${tag} ${file}`);
+            break;
+          case "fixed":
+            console.log(`[FIXED] ${tag} ${file}`);
+            break;
+          case "fail":
+            console.error(`[FAIL] ${tag} ${file}`);
+            if (res.output) {
+              console.error(`  ${res.output}`);
+            }
+            fail = true;
+            break;
+          case "error":
+            console.error(`[ERROR] ${tag} ${file}`);
+            if (res.output) {
+              console.error(`  ${res.output}`);
+            }
+            fail = true;
+            break;
+          default:
+            console.error(`[UNKNOWN] ${tag} ${file}: unexpected status "${res.status}"`);
+            fail = true;
         }
       } catch (err) {
-        if (lintOnly) {
-          console.error(`Error in ${check.name}:`, err);
-          process.exit(1);
-        } else {
-          throw err;
-        }
+        console.error(`[ERROR] [${check.name}] ${file}: ${err.message}`);
+        fail = true;
       }
     });
   });
