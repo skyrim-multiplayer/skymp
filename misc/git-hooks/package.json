@@ -1,7 +1,13 @@
 {
   "type": "module",
+  "scripts": {
+    "build": "node esbuild.config.js"
+  },
   "dependencies": {
     "p-limit": "^7.3.0",
     "simple-git": "^3.27.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.27.3"
   }
 }
