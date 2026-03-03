@@ -272,7 +272,6 @@ const runChecks = async (files, checks, { lintOnly = false, verbose = false, cla
  *   --verbose        Show [PASS] lines (hidden by default)
  *   --lint           Run checks in read-only mode (exit 1 on failure)
  *   --fix            Run checks in fix mode (modify files in-place)
- *   --pr-diff <base> Override file source baseRef for DiffBaseSource
  *   --add            Stage fixed files with git add (requires --fix)
  *   --no-download    Do not download tools if missing
  *   --no-path        Do not search for tools in PATH
@@ -286,9 +285,6 @@ const runChecks = async (files, checks, { lintOnly = false, verbose = false, cla
   const verbose = args.includes("--verbose");
   const shouldDownload = !args.includes("--no-download");
   const shouldSearchInPath = !args.includes("--no-path");
-
-  const prDiffIndex = args.indexOf("--pr-diff");
-  const prDiffBase = prDiffIndex !== -1 && args[prDiffIndex + 1] ? args[prDiffIndex + 1] : null;
 
   const modeIndex = args.indexOf("--mode");
   const mode = modeIndex !== -1 && args[modeIndex + 1] ? args[modeIndex + 1] : "manual";
@@ -321,8 +317,7 @@ const runChecks = async (files, checks, { lintOnly = false, verbose = false, cla
       shouldSearchInPath,
     });
 
-    const context = { cliOptions: { prDiffBase } };
-    const files = await fileSource.resolve(context);
+    const files = await fileSource.resolve();
     console.log(`${fileSource.name}: ${files.length} file(s)`);
 
     const startTime = Date.now();

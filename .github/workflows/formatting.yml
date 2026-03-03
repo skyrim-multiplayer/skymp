@@ -13,8 +13,4 @@ jobs:
           - name: Run linters via JS
             run: |
               cd "${{ github.workspace }}/misc/git-hooks" && yarn
-              if [ "${{ github.event_name }}" = "pull_request" ]; then
-                node ./linter.js --lint --pr-diff origin/${{ github.event.pull_request.base.ref }} --no-path --mode gha
-              else
-                node ./linter.js --lint --pr-diff origin/${{ github.event.repository.default_branch }} --no-path --mode gha
-              fi
+              node ./linter.js --lint --no-path --mode gha
