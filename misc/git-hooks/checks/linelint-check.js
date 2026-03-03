@@ -57,7 +57,7 @@ export class LinelintCheck extends BaseCheck {
     }
 
     // 2. linelint check
-    const result = spawnSync(deps.linelintPath, [file], { stdio: "inherit" });
+    const result = spawnSync(deps.linelintPath, [file], { cwd: this.repoRoot, stdio: "inherit" });
     if (result.error || result.status !== 0) {
       console.error(`[FAIL] linelint failed on ${file}`);
       fail = true;
@@ -90,7 +90,7 @@ export class LinelintCheck extends BaseCheck {
     }
 
     // 2. linelint fix
-    spawnSync(deps.linelintPath, ["-a", file], { stdio: "pipe" });
+    spawnSync(deps.linelintPath, ["-a", file], { cwd: this.repoRoot, stdio: "pipe" });
 
     try {
       const after = fs.readFileSync(file);

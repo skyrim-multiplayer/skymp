@@ -3,6 +3,10 @@
  * Subclasses must implement: name, checkDeps, appliesTo, lint, fix.
  */
 export class BaseCheck {
+  constructor(repoRoot) {
+    this.repoRoot = repoRoot;
+  }
+
   /**
    * @returns {string} Human-readable name of the check.
    */
