@@ -21,16 +21,34 @@
   },
   "checks": [
     {
+      "name": "CRLF",
+      "module": "./checks/crlf-check.js",
+      "export": "CrlfCheck",
+      "modes": ["hook", "gha", "manual"],
+      "options": {
+        "textOnly": true,
+        "excludePaths": ["/third_party/", "/skymp5-scripts/", "/overlay_ports/rsm-bsa/", "/overlay_ports/libxml2/"]
+      }
+    },
+    {
       "name": "Linelint",
       "module": "./checks/linelint-check.js",
       "export": "LinelintCheck",
-      "modes": ["hook", "gha", "manual"]
+      "modes": ["hook", "gha", "manual"],
+      "options": {
+        "textOnly": true,
+        "excludePaths": ["/third_party/", "/skymp5-scripts/", "/overlay_ports/rsm-bsa/", "/overlay_ports/libxml2/"]
+      }
     },
     {
       "name": "ClangFormat",
       "module": "./checks/clang-format-check.js",
       "export": "ClangFormatCheck",
-      "modes": ["hook", "gha", "manual"]
+      "modes": ["hook", "gha", "manual"],
+      "options": {
+        "extensions": [".cpp", ".h", ".hpp", ".cxx", ".cc"],
+        "excludePaths": ["/overlay_ports/"]
+      }
     },
     {
       "name": "Server/Client Message Pairs",

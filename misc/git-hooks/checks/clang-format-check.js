@@ -1,17 +1,10 @@
 import fs from "fs";
-import path from "path";
 import { spawnSync } from "child_process";
 import { BaseCheck } from "./base-check.js";
 
 export class ClangFormatCheck extends BaseCheck {
-  #repoRoot;
-
-  /**
-   * @param {string} repoRoot - Absolute path to the repository root.
-   */
-  constructor(repoRoot) {
-    super();
-    this.#repoRoot = repoRoot;
+  constructor(repoRoot, options = {}) {
+    super(repoRoot, options);
   }
 
   get name() {
@@ -20,15 +13,6 @@ export class ClangFormatCheck extends BaseCheck {
 
   checkDeps(deps) {
     return deps.clangFormatPath !== undefined;
-  }
-
-  appliesTo(file) {
-    if (file.startsWith(path.join(this.#repoRoot, "overlay_ports"))) {
-      return false;
-    }
-    return [".cpp", ".h", ".hpp", ".cxx", ".cc"].some((ext) =>
-      file.endsWith(ext)
-    );
   }
 
   lint(file, deps) {

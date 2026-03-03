@@ -25,7 +25,7 @@ const REPO_ROOT = getRepoRoot();
  * Load config, instantiate file source and checks for the given mode.
  */
 const loadConfig = async (mode) => {
-  const configPath = path.join(__dirname, "linter-config.json");
+  const configPath = path.join(REPO_ROOT, "linter-config.json");
   const config = JSON.parse(fs.readFileSync(configPath, "utf-8"));
 
   // --- file source ---

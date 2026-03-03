@@ -13,13 +13,11 @@ import { BaseCheck } from "./base-check.js";
  * but dir[1].ext in dir[1].path, and vice versa.
  */
 export class PairedFilesCheck extends BaseCheck {
-  #repoRoot;
   #absDirs;
   #exclude;
 
   constructor(repoRoot, options = {}) {
-    super();
-    this.#repoRoot = repoRoot;
+    super(repoRoot, options);
 
     const dirs = options.dirs || [];
     if (dirs.length !== 2) {
