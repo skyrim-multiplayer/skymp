@@ -33,34 +33,40 @@ export class ClangFormatCheck extends BaseCheck {
 
   lint(file, deps) {
     const result = spawnSync(deps.clangFormatPath, ["--dry-run", "--Werror", file], {
-      stdio: "inherit",
+      stdio: "pipe",
     });
 
-    if (result.error || result.status !== 0) {
-      console.error(`[FAIL] ${file}`);
-      return false;
+    if (result.error) {
+      return { status: "error", output: result.error.message };
     }
 
-    console.log(`[PASS] ${file}`);
-    return true;
+    if (result.status !== 0) {
+      const output = (result.stderr || result.stdout || "").toString().trim();
+      return { status: "fail", output };
+    }
+
+    return { status: "pass" };
   }
 
   fix(file, deps) {
     const before = fs.readFileSync(file);
     const result = spawnSync(deps.clangFormatPath, ["-i", file], {
-      stdio: "inherit",
+      stdio: "pipe",
     });
 
-    if (result.error || result.status !== 0) {
-      console.error(`[FAIL] ${file}`);
-      return false;
+    if (result.error) {
+      return { status: "error", output: result.error.message };
+    }
+
+    if (result.status !== 0) {
+      const output = (result.stderr || result.stdout || "").toString().trim();
+      return { status: "error", output };
     }
 
     const after = fs.readFileSync(file);
     if (!before.equals(after)) {
-      console.log(`[FIXED] ${file}`);
-    } else {
-      console.log(`[PASS] ${file}`);
+      return { status: "fixed" };
     }
+    return { status: "pass" };
   }
 }

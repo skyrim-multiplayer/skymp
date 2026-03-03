@@ -1,6 +1,21 @@
 /**
+ * @typedef {"pass" | "fail" | "fixed" | "error"} CheckStatus
+ */
+
+/**
+ * @typedef {Object} CheckResult
+ * @property {CheckStatus} status  - Outcome of the check.
+ * @property {string}      [output] - Optional diagnostic text (diff, error message, etc.).
+ */
+
+/**
  * Base class for all linter checks.
  * Subclasses must implement: name, checkDeps, appliesTo, lint, fix.
+ *
+ * lint() and fix() must return a CheckResult object:
+ *   { status: "pass" | "fail" | "fixed" | "error", output?: string }
+ *
+ * Checks must NOT write to stdout/stderr directly.
  */
 export class BaseCheck {
   constructor(repoRoot) {
@@ -36,7 +51,7 @@ export class BaseCheck {
    * Lint (read-only check) a single file.
    * @param {string} file - Absolute path.
    * @param {object} deps - Resolved dependencies.
-   * @returns {boolean} true if passed, false if failed.
+   * @returns {CheckResult}
    */
   lint(file, deps) {
     throw new Error("Not implemented: lint");
@@ -46,7 +61,7 @@ export class BaseCheck {
    * Fix (in-place modify) a single file.
    * @param {string} file - Absolute path.
    * @param {object} deps - Resolved dependencies.
-   * @returns {boolean|void} false if fix failed.
+   * @returns {CheckResult}
    */
   fix(file, deps) {
     throw new Error("Not implemented: fix");
