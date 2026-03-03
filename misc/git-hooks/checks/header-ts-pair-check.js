@@ -56,15 +56,13 @@ export class HeaderTsPairCheck extends BaseCheck {
     );
 
     if (!pairFile) {
-      console.error(`[FAIL] Pair file not found for ${file}: ${pairFile}`);
-      return false;
-    } else {
-      console.log(`[PASS] Pair file found for ${file}: ${pairFile}`);
-      return true;
+      return { status: "fail", output: `pair file not found (expected ${baseName}${pairExt} in ${pairDir})` };
     }
+    return { status: "pass" };
   }
 
   fix() {
     // No auto-fix available for missing pair files
+    return { status: "pass" };
   }
 }
