@@ -109,6 +109,7 @@ const runChecks = (files, checks, { lintOnly = false, clangFormatPath, linelintP
  *   --lint           Run checks in read-only mode (exit 1 on failure)
  *   --fix            Run checks in fix mode (modify files in-place)
  *   --all            Process all tracked files (default: staged only)
+ *   --pr-diff <base> Process only files changed vs <base> branch
  *   --add            Stage fixed files with git add (requires --fix)
  *   --no-download    Do not download clang-format if missing
  *   --no-path        Do not search for clang-format in PATH
@@ -119,6 +120,8 @@ const runChecks = (files, checks, { lintOnly = false, clangFormatPath, linelintP
   const shouldLint = args.includes("--lint");
   const shouldFix = args.includes("--fix");
   const allFiles = args.includes("--all");
+  const prDiffIndex = args.indexOf("--pr-diff");
+  const prDiffBase = prDiffIndex !== -1 && args[prDiffIndex + 1] ? args[prDiffIndex + 1] : null;
   const shouldAdd = args.includes("--add");
   const shouldDownload = !args.includes("--no-download");
   const shouldSearchInPath = !args.includes("--no-path");
@@ -161,7 +164,16 @@ const runChecks = (files, checks, { lintOnly = false, clangFormatPath, linelintP
 
     let files = [];
 
-    if (allFiles) {
+    if (prDiffBase) {
+      console.log(`Processing files changed vs ${prDiffBase}...`);
+      const git = simpleGit(REPO_ROOT);
+      const diffOutput = await git.diff(["--name-only", "--diff-filter=ACMR", prDiffBase]);
+      files = diffOutput
+        .split("\n")
+        .filter((file) => file.trim() !== "")
+        .map((file) => path.resolve(REPO_ROOT, file))
+        .filter((file) => fs.existsSync(file));
+    } else if (allFiles) {
       console.log(
         "Processing all files in the repository (respecting .gitignore)..."
       );
