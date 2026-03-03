@@ -1,2 +1,2 @@
 #!/bin/sh
-node misc/git-hooks/clang-format-hook.js --fix --add
+node misc/git-hooks/linter.js --fix --add --mode hook

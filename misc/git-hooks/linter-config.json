@@ -1,0 +1,16 @@
+{
+  "checks": [
+    {
+      "name": "ClangFormat",
+      "module": "./checks/clang-format-check.js",
+      "export": "ClangFormatCheck",
+      "runIn": ["hook", "gha", "manual"]
+    },
+    {
+      "name": "HeaderTsPair",
+      "module": "./checks/header-ts-pair-check.js",
+      "export": "HeaderTsPairCheck",
+      "runIn": ["hook", "gha", "manual"]
+    }
+  ]
+}
