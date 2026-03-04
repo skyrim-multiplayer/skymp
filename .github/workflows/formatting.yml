@@ -1,5 +1,10 @@
 name: Formatting check
 on: [push, pull_request]
+
+env:
+  LINTER_URL: https://raw.githubusercontent.com/skyrim-multiplayer/linter/main/dist/linter.mjs
+  LINTER_SHA256: 0e9919867241a759a1b5920cf471fa61caa76b69eea2f320832e5b847e5af260
+
 jobs:
     formatting-check:
         name: Formatting Check
@@ -10,7 +15,11 @@ jobs:
             with:
               fetch-depth: 0
 
-          - name: Run linters via JS
+          - name: Download linter
             run: |
-              cd "${{ github.workspace }}/misc/git-hooks" && yarn
-              node ./linter.js --lint --no-path --mode gha
+              mkdir -p .linter
+              curl -fsSL "$LINTER_URL" -o .linter/linter.mjs
+              echo "$LINTER_SHA256  .linter/linter.mjs" | sha256sum -c -
+
+          - name: Run linters
+            run: node .linter/linter.mjs --lint --no-path --mode gha
