@@ -2,8 +2,8 @@ name: Formatting check
 on: [push, pull_request]
 
 env:
-  LINTER_URL: https://raw.githubusercontent.com/skyrim-multiplayer/linter/main/dist/linter.mjs
-  LINTER_SHA256: 0e9919867241a759a1b5920cf471fa61caa76b69eea2f320832e5b847e5af260
+  LINTER_URL: https://raw.githubusercontent.com/skyrim-multiplayer/linter/059b0b636b06fc20f249adc3fa3002c538e6a1f5/dist/linter.mjs
+  LINTER_SHA256: a7f1982085a5c56e3860b9b71a316817a165e495af2ef34d5b9be7f3f22b4458
 
 jobs:
     formatting-check:
