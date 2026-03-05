@@ -1,4 +1,5 @@
 {
+  "toolsDir": ".linter/tools",
   "modes": {
     "hook": {
       "fileSource": {
@@ -20,7 +21,7 @@
     {
       "name": "CRLF",
       "export": "CrlfCheck",
-      "modes": ["hook", "gha", "manual"],
+      "modes": ["gha", "manual"],
       "options": {
         "textOnly": true,
         "excludePaths": ["/third_party/", "/skymp5-scripts/", "/overlay_ports/rsm-bsa/", "/overlay_ports/libxml2/"]

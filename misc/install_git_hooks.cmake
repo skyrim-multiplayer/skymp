@@ -8,8 +8,8 @@ get_filename_component(REPO_ROOT ${REPO_ROOT} REALPATH)
 file(MAKE_DIRECTORY ${REPO_ROOT}/.git/hooks)
 
 # Download the single bundled linter from skyrim-multiplayer/linter
-set(LINTER_URL "https://raw.githubusercontent.com/skyrim-multiplayer/linter/059b0b636b06fc20f249adc3fa3002c538e6a1f5/dist/linter.mjs")
-set(LINTER_SHA256 "a7f1982085a5c56e3860b9b71a316817a165e495af2ef34d5b9be7f3f22b4458")
+set(LINTER_URL "https://raw.githubusercontent.com/skyrim-multiplayer/linter/2d4a9a96989b066c9cf1fb70ae1169eec106d45e/dist/linter.mjs")
+set(LINTER_SHA256 "b3727c7cbf9787f5b7b91bd340b5553d3c1f51cb176dd362d754aa3579667040")
 set(LINTER_DIR "${REPO_ROOT}/.linter")
 set(LINTER_FILE "${LINTER_DIR}/linter.mjs")
 
