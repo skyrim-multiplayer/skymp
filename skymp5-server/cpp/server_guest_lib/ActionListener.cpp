@@ -1113,10 +1113,41 @@ void ActionListener::OnWeaponHit(MpActor* aggressor,
 
   auto& targetActor = *targetActorPtr;
 
-  const auto lastHitTime = aggressor->GetLastHitTime();
-  const std::chrono::duration<float> timePassed = currentHitTime - lastHitTime;
+  const auto lastHitTimeAnyTarget = aggressor->GetLastHitTime(std::nullopt);
+  const std::chrono::duration<float> timePassedAnyTarget =
+    currentHitTime - lastHitTimeAnyTarget;
 
-  if (!CanHit(*aggressor, hitData, timePassed)) {
+  constexpr float kSplashTimeWindow = 0.1f;
+  constexpr size_t kMaxSplashTargets = 4;
+
+  // Splash attack detection. Non-vanilla feature, fixes anticheat-vs-mod issues
+  const bool isSplash = timePassedAnyTarget.count() < kSplashTimeWindow;
+
+  if (isSplash) {
+    spdlog::info("Splash attack detected from aggressor {:x} to target {:x}",
+                 aggressor->GetFormId(), targetActor.GetFormId());
+
+    // Check if THIS specific target was hit recently
+    auto lastHitSpecific = aggressor->GetLastHitTime(targetActor.GetFormId());
+    std::chrono::duration<float> timeSinceSpecific = currentHitTime - lastHitSpecific;
+    
+    // If the specific target was hit faster than the splash window
+    if (timeSinceSpecific.count() < kSplashTimeWindow) {
+      spdlog::warn("Splash attack from {:x} to {:x} ignored, target hit "
+                   "too recently",
+                   aggressor->GetFormId(), targetActor.GetFormId());
+      return; 
+    }
+
+    if (aggressor->CountRecentHits(
+          std::chrono::duration<float>(kSplashTimeWindow)) >=
+        kMaxSplashTargets) {
+      spdlog::warn("Splash attack from {:x} to {:x} ignored, too many "
+                   "targets hit recently",
+                   aggressor->GetFormId(), targetActor.GetFormId());
+      return;
+    }
+  } else if (!CanHit(*aggressor, hitData, timePassedAnyTarget)) {
     WorldState* espmProvider = targetActor.GetParent();
     auto weapDNAM =
       espm::GetData<espm::WEAP>(hitData.source, espmProvider).weapDNAM;
@@ -1126,7 +1157,7 @@ void ActionListener::OnWeaponHit(MpActor* aggressor,
       "OnWeaponHit - Target {0:x} is not available for attack due to fast "
       "attack speed. Weapon: {1:x}. Elapsed time: {2}. Expected attack time: "
       "{3}",
-      hitData.target, hitData.source, timePassed.count(), expectedAttackTime);
+      hitData.target, hitData.source, timePassedAnyTarget.count(), expectedAttackTime);
     return;
   }
 
@@ -1216,7 +1247,7 @@ void ActionListener::OnWeaponHit(MpActor* aggressor,
   targetActor.NetSetPercentages(
     currentActorValues, aggressor,
     std::vector<espm::ActorValue>{ espm::ActorValue::Health });
-  aggressor->SetLastHitTime();
+  aggressor->SetLastHitTime(targetActor.GetFormId(), currentHitTime);
 
   spdlog::debug(
     "OnWeaponHit - Target {0:x} is hit by {1} damage. Percentage was: {3}, "
