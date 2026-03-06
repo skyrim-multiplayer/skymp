@@ -1,32 +1,11 @@
 #pragma once
 #include <functional>
 #include <optional>
-#include <stdexcept>
 #include <vector>
 
 namespace Viet {
 
-template <typename T>
-class UpsertFailedException : public std::runtime_error
-{
-public:
-  UpsertFailedException(std::vector<std::optional<T>>&& affectedForms_,
-                        std::string what)
-    : runtime_error(what)
-    , affectedForms(affectedForms_)
-  {
-  }
-
-  const std::vector<std::optional<T>>& GetAffectedForms() const noexcept
-  {
-    return affectedForms;
-  }
-
-private:
-  const std::vector<std::optional<T>> affectedForms;
-};
-
-template <typename T>
+template <typename T, typename FormDescType>
 class IDatabase
 {
 public:
@@ -45,7 +24,8 @@ public:
     return numUpserted;
   }
 
-  virtual void Iterate(const IterateCallback& iterateCallback) = 0;
+  virtual void Iterate(const IterateCallback& iterateCallback,
+                       std::optional<std::vector<FormDescType>> filter) = 0;
 
   bool GetRecycledChangeFormsBuffer(std::vector<std::optional<T>>& changeForms)
   {
