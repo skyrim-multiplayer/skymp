@@ -7,6 +7,7 @@ import * as http from "http";
 import { Settings } from "./settings";
 import Axios from "axios";
 import { AddressInfo } from "net";
+import { register, getAggregatedMetrics, rpcCallsCounter, rpcDurationHistogram } from "./systems/metricsSystem";
 
 let gScampServer: any = null;
 
@@ -23,9 +24,19 @@ const createApp = (getOriginPort: () => number) => {
     const { rpcClassName } = ctx.params;
     const { payload } = ctx.request.body;
 
+    rpcCallsCounter.inc({ rpcClassName });
+    const end = rpcDurationHistogram.startTimer({ rpcClassName });
+
     if (gScampServer.onHttpRpcRunAttempt) {
       ctx.body = gScampServer.onHttpRpcRunAttempt(rpcClassName, payload);
     }
+
+    end();
+  });
+
+  router.get("/metrics", async (ctx: any) => {
+    ctx.set("Content-Type", register.contentType);
+    ctx.body = await getAggregatedMetrics(gScampServer);
   });
   
   app.use(router.routes()).use(router.allowedMethods());

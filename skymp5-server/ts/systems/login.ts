@@ -1,6 +1,7 @@
 import { System, Log, Content, SystemContext } from "./system";
 import { Settings } from "../settings";
 import * as fetchRetry from "fetch-retry";
+import { loginsCounter, loginErrorsCounter } from "./metricsSystem";
 
 const loginFailedNotInTheDiscordServer = JSON.stringify({ customPacketType: "loginFailedNotInTheDiscordServer" });
 const loginFailedBanned = JSON.stringify({ customPacketType: "loginFailedBanned" });
@@ -215,14 +216,17 @@ export class Login implements System {
         }
 
         this.emit(ctx, "spawnAllowed", userId, profile.id, roles, profile.discordId);
+        loginsCounter.inc();
         this.log("Logged as " + profile.id);
       })()
         .catch((err) => {
+          loginErrorsCounter.inc({ reason: err?.message || "unknown" });
           console.error("Error logging in client:", JSON.stringify(gameData), err)
         });
     } else if (this.offlineMode === true && gameData && typeof gameData.profileId === "number") {
       const profileId = gameData.profileId;
       this.emit(ctx, "spawnAllowed", userId, profileId, [], undefined);
+      loginsCounter.inc();
       this.log(userId + " logged as " + profileId);
     } else {
       this.log("No credentials found in gameData:", gameData);

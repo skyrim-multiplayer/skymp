@@ -31,6 +31,7 @@ import * as os from "os";
 
 import * as manifestGen from "./manifestGen";
 import { createScampServer } from "./scampNative";
+import { MetricsSystem } from "./systems/metricsSystem";
 
 const gamemodeCache = new Map<string, string>();
 
@@ -190,6 +191,7 @@ const main = async () => {
   const log = console.log;
   const systems = new Array<System>();
   systems.push(
+    new MetricsSystem(),
     new MasterClient(log, port, master, maxPlayers, name, masterKey, 5000, offlineMode),
     new Spawn(log),
     new Login(log, maxPlayers, master, port, masterKey, offlineMode),
