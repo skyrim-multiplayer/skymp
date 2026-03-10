@@ -2,6 +2,7 @@ const Koa = require("koa");
 const serve = require("koa-static");
 const proxy = require("koa-proxy");
 const Router = require("koa-router");
+const auth = require("koa-basic-auth");
 import * as koaBody from "koa-body";
 import * as http from "http";
 import { Settings } from "./settings";
@@ -11,9 +12,26 @@ import { register, getAggregatedMetrics, rpcCallsCounter, rpcDurationHistogram }
 
 let gScampServer: any = null;
 
+let metricsAuth: { user: string; password: string } | null = null;
+
 const createApp = (getOriginPort: () => number) => {
   const app = new Koa();
   app.use(koaBody.default({ multipart: true }));
+
+  // Custom 401 handling
+  app.use(async (ctx: any, next: any) => {
+    try {
+      await next();
+    } catch (err: any) {
+      if (401 === err.status) {
+        ctx.status = 401;
+        ctx.set("WWW-Authenticate", "Basic realm=\"metrics\"");
+        ctx.body = "Authentication required";
+      } else {
+        throw err;
+      }
+    }
+  });
 
   const router = new Router();
   router.get(new RegExp("/scripts/.*"), (ctx: any) => ctx.throw(403));
@@ -34,11 +52,19 @@ const createApp = (getOriginPort: () => number) => {
     end();
   });
 
-  router.get("/metrics", async (ctx: any) => {
-    ctx.set("Content-Type", register.contentType);
-    ctx.body = await getAggregatedMetrics(gScampServer);
-  });
-  
+  // Apply auth middleware only to /metrics if configured
+  if (metricsAuth) {
+    router.use("/metrics", auth({ name: metricsAuth.user, pass: metricsAuth.password }));
+    router.get("/metrics", async (ctx: any) => {
+      ctx.set("Content-Type", register.contentType);
+      ctx.body = await getAggregatedMetrics(gScampServer);
+    });
+  } else {
+    router.get("/metrics", async (ctx: any) => {
+      ctx.throw(401, "Metrics endpoint is protected by authentication, but no credentials are configured");
+    });
+  }
+
   app.use(router.routes()).use(router.allowedMethods());
   app.use(serve("data"));
   return app;
@@ -49,6 +75,10 @@ export const setServer = (scampServer: any) => {
 };
 
 export const main = (settings: Settings): void => {
+  const authConfig = settings.allSettings?.metricsAuth as { user?: string; password?: string } | undefined;
+  if (authConfig && authConfig.user && authConfig.password) {
+    metricsAuth = { user: authConfig.user, password: authConfig.password };
+  }
 
   const devServerPort = 1234;
 
