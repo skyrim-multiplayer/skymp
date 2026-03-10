@@ -130,7 +130,8 @@ Napi::Object ScampServer::Init(Napi::Env env, Napi::Object exports)
                      &ScampServer::RequestPacketHistoryPlayback),
       InstanceMethod("findFormsByPropertyValue",
                      &ScampServer::FindFormsByPropertyValue),
-
+      InstanceMethod("getPrometheusMetrics",
+                     &ScampServer::GetPrometheusMetrics),
       InstanceMethod("_sp3ListClasses", &ScampServer::SP3ListClasses),
       InstanceMethod("_sp3GetBaseClass", &ScampServer::SP3GetBaseClass),
       InstanceMethod("_sp3ListStaticFunctions",
@@ -1437,6 +1438,16 @@ Napi::Value ScampServer::FindFormsByPropertyValue(
       ++i;
     }
     return result;
+  } catch (std::exception& e) {
+    throw Napi::Error::New(info.Env(), std::string(e.what()));
+  }
+}
+
+Napi::Value ScampServer::GetPrometheusMetrics(const Napi::CallbackInfo& info)
+{
+  try {
+    // TODO: collect and return native C++ metrics in Prometheus text format
+    return Napi::String::New(info.Env(), "");
   } catch (std::exception& e) {
     throw Napi::Error::New(info.Env(), std::string(e.what()));
   }
