@@ -2,8 +2,8 @@ const Koa = require("koa");
 const serve = require("koa-static");
 const proxy = require("koa-proxy");
 const Router = require("koa-router");
+const auth = require("koa-basic-auth");
 import * as koaBody from "koa-body";
-import * as crypto from "crypto";
 import * as http from "http";
 import { Settings } from "./settings";
 import Axios from "axios";
@@ -17,6 +17,21 @@ let metricsAuth: { user: string; password: string } | null = null;
 const createApp = (getOriginPort: () => number) => {
   const app = new Koa();
   app.use(koaBody.default({ multipart: true }));
+
+  // Custom 401 handling
+  app.use(async (ctx: any, next: any) => {
+    try {
+      await next();
+    } catch (err: any) {
+      if (401 === err.status) {
+        ctx.status = 401;
+        ctx.set("WWW-Authenticate", "Basic realm=\"metrics\"");
+        ctx.body = "Authentication required";
+      } else {
+        throw err;
+      }
+    }
+  });
 
   const router = new Router();
   router.get(new RegExp("/scripts/.*"), (ctx: any) => ctx.throw(403));
@@ -37,31 +52,12 @@ const createApp = (getOriginPort: () => number) => {
     end();
   });
 
+  // Apply auth middleware only to /metrics if configured
+  if (metricsAuth) {
+    router.use("/metrics", auth({ name: metricsAuth.user, pass: metricsAuth.password }));
+  }
+
   router.get("/metrics", async (ctx: any) => {
-    if (metricsAuth) {
-      const auth = ctx.headers.authorization;
-      if (!auth || !auth.startsWith("Basic ")) {
-        ctx.set("WWW-Authenticate", "Basic realm=\"metrics\"");
-        ctx.status = 401;
-        ctx.body = "Authentication required";
-        return;
-      }
-      const decoded = Buffer.from(auth.slice(6), "base64").toString();
-      const colonIndex = decoded.indexOf(":");
-      const user = decoded.substring(0, colonIndex);
-      const pass = decoded.substring(colonIndex + 1);
-      const userBuf = Buffer.from(user);
-      const expectedUserBuf = Buffer.from(metricsAuth.user);
-      const passBuf = Buffer.from(pass);
-      const expectedPassBuf = Buffer.from(metricsAuth.password);
-      const userMatch = userBuf.length === expectedUserBuf.length && crypto.timingSafeEqual(userBuf, expectedUserBuf);
-      const passMatch = passBuf.length === expectedPassBuf.length && crypto.timingSafeEqual(passBuf, expectedPassBuf);
-      if (!passMatch || !userMatch) {
-        ctx.status = 403;
-        ctx.body = "Forbidden (" + JSON.stringify({ userMatch, passMatch, decoded, user, pass, expectedPassBuf, passBuf, userBuf, expectedUserBuf }) + ")";
-        return;
-      }
-    }
     ctx.set("Content-Type", register.contentType);
     ctx.body = await getAggregatedMetrics(gScampServer);
   });
