@@ -54,9 +54,14 @@ const createApp = (getOriginPort: () => number) => {
       const expectedPassHash = Buffer.from(metricsAuth.passwordSha256, "hex");
       const userMatch = userBuf.length === expectedUserBuf.length && crypto.timingSafeEqual(userBuf, expectedUserBuf);
       const passMatch = passHash.length === expectedPassHash.length && crypto.timingSafeEqual(passHash, expectedPassHash);
-      if (!userMatch || !passMatch) {
+      if (!userMatch) {
         ctx.status = 403;
-        ctx.body = "Forbidden";
+        ctx.body = "Forbidden (user)";
+        return;
+      }
+      if (!passMatch) {
+        ctx.status = 403;
+        ctx.body = "Forbidden (password)";
         return;
       }
     }
