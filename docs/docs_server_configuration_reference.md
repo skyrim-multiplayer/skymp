@@ -50,6 +50,31 @@ Specifies the IP address to bind to. Applies to the `uiPort` (http). Binds to `0
 }
 ```
 
+## metricsAuth
+
+Optional HTTP Basic authentication for the `/metrics` endpoint.
+
+If omitted, `/metrics` is available without auth.
+
+`passwordSha256` must contain a lowercase hex SHA-256 hash of the plain-text password.
+
+```json5
+{
+  // ...
+  "metricsAuth": {
+    "user": "prometheus",
+    "passwordSha256": "2bb80d537b1da3e38bd30361aa855686bde0eacd7162fef6a25fe97bf527a25b"
+  },
+  // ...
+}
+```
+
+You can generate this value using:
+
+```bash
+echo -n "secret" | sha256sum
+```
+
 ## port
 
 This port would be used by player clients to connect to your server. At the current version of Skyrim Multiplayer servers use multiple ports and different protocols to manage different sorts of packets. See [Server Ports Usage](docs_server_ports_usage.md) page to learn more.
