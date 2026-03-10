@@ -12,7 +12,7 @@ import { register, getAggregatedMetrics, rpcCallsCounter, rpcDurationHistogram }
 
 let gScampServer: any = null;
 
-let metricsAuth: { user: string; passwordSha256: string } | null = null;
+let metricsAuth: { user: string; password: string } | null = null;
 
 const createApp = (getOriginPort: () => number) => {
   const app = new Koa();
@@ -47,16 +47,18 @@ const createApp = (getOriginPort: () => number) => {
         return;
       }
       const decoded = Buffer.from(auth.slice(6), "base64").toString();
-      const [user, pass] = decoded.split(":");
+      const colonIndex = decoded.indexOf(":");
+      const user = decoded.substring(0, colonIndex);
+      const pass = decoded.substring(colonIndex + 1);
       const userBuf = Buffer.from(user);
       const expectedUserBuf = Buffer.from(metricsAuth.user);
-      const passHash = crypto.createHash("sha256").update(pass).digest();
-      const expectedPassHash = Buffer.from(metricsAuth.passwordSha256, "hex");
+      const passBuf = Buffer.from(pass);
+      const expectedPassBuf = Buffer.from(metricsAuth.password);
       const userMatch = userBuf.length === expectedUserBuf.length && crypto.timingSafeEqual(userBuf, expectedUserBuf);
-      const passMatch = passHash.length === expectedPassHash.length && crypto.timingSafeEqual(passHash, expectedPassHash);
+      const passMatch = passBuf.length === expectedPassBuf.length && crypto.timingSafeEqual(passBuf, expectedPassBuf);
       if (!passMatch || !userMatch) {
         ctx.status = 403;
-        ctx.body = "Forbidden (" + JSON.stringify({ userMatch, passMatch, decoded, user, pass, expectedPassHash, passHash, userBuf, expectedUserBuf }) + ")";
+        ctx.body = "Forbidden (" + JSON.stringify({ userMatch, passMatch, decoded, user, pass, expectedPassBuf, passBuf, userBuf, expectedUserBuf }) + ")";
         return;
       }
     }
@@ -74,9 +76,9 @@ export const setServer = (scampServer: any) => {
 };
 
 export const main = (settings: Settings): void => {
-  const authConfig = settings.allSettings?.metricsAuth as { user?: string; passwordSha256?: string } | undefined;
-  if (authConfig && authConfig.user && authConfig.passwordSha256) {
-    metricsAuth = { user: authConfig.user, passwordSha256: authConfig.passwordSha256 };
+  const authConfig = settings.allSettings?.metricsAuth as { user?: string; password?: string } | undefined;
+  if (authConfig && authConfig.user && authConfig.password) {
+    metricsAuth = { user: authConfig.user, password: authConfig.password };
   }
 
   const devServerPort = 1234;

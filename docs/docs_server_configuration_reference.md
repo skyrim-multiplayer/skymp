@@ -56,23 +56,15 @@ Optional HTTP Basic authentication for the `/metrics` endpoint.
 
 If omitted, `/metrics` is available without auth.
 
-`passwordSha256` must contain a lowercase hex SHA-256 hash of the plain-text password.
-
 ```json5
 {
   // ...
   "metricsAuth": {
     "user": "prometheus",
-    "passwordSha256": "2bb80d537b1da3e38bd30361aa855686bde0eacd7162fef6a25fe97bf527a25b"
+    "password": "secret"
   },
   // ...
 }
-```
-
-You can generate this value using:
-
-```bash
-echo -n "secret" | sha256sum
 ```
 
 ## port
