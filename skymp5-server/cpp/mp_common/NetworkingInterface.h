@@ -59,5 +59,7 @@ public:
   virtual void Tick(OnPacket onPacket, void* state) = 0;
 
   virtual std::string GetIp(UserId userId) const = 0;
+
+  virtual void CloseConnection(UserId userId) = 0;
 };
 }

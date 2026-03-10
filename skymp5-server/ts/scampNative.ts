@@ -43,6 +43,7 @@ export interface ScampServer {
   createBot(): Bot;
   getUserByActor(formId: number): number;
   getUserIp(userId: number): string;
+  kick(userId: number): void;
 
   executeJavaScriptOnChakra(src: string): void;
   clear(): void;
