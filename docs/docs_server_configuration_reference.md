@@ -52,9 +52,9 @@ Specifies the IP address to bind to. Applies to the `uiPort` (http). Binds to `0
 
 ## metricsAuth
 
-Optional HTTP Basic authentication for the `/metrics` endpoint.
+HTTP Basic authentication for the `/metrics` endpoint.
 
-If omitted, `/metrics` is available without auth.
+If omitted, `/metrics` is not available.
 
 ```json5
 {

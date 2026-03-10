@@ -55,13 +55,16 @@ const createApp = (getOriginPort: () => number) => {
   // Apply auth middleware only to /metrics if configured
   if (metricsAuth) {
     router.use("/metrics", auth({ name: metricsAuth.user, pass: metricsAuth.password }));
+    router.get("/metrics", async (ctx: any) => {
+      ctx.set("Content-Type", register.contentType);
+      ctx.body = await getAggregatedMetrics(gScampServer);
+    });
+  } else {
+    router.get("/metrics", async (ctx: any) => {
+      ctx.throw(401, "Metrics endpoint is protected by authentication, but no credentials are configured");
+    });
   }
 
-  router.get("/metrics", async (ctx: any) => {
-    ctx.set("Content-Type", register.contentType);
-    ctx.body = await getAggregatedMetrics(gScampServer);
-  });
-  
   app.use(router.routes()).use(router.allowedMethods());
   app.use(serve("data"));
   return app;
