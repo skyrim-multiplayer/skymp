@@ -3,6 +3,7 @@ const serve = require("koa-static");
 const proxy = require("koa-proxy");
 const Router = require("koa-router");
 import * as koaBody from "koa-body";
+import * as crypto from "crypto";
 import * as http from "http";
 import { Settings } from "./settings";
 import Axios from "axios";
@@ -10,6 +11,8 @@ import { AddressInfo } from "net";
 import { register, getAggregatedMetrics, rpcCallsCounter, rpcDurationHistogram } from "./systems/metricsSystem";
 
 let gScampServer: any = null;
+
+let metricsAuth: { user: string; passwordSha256: string } | null = null;
 
 const createApp = (getOriginPort: () => number) => {
   const app = new Koa();
@@ -35,6 +38,28 @@ const createApp = (getOriginPort: () => number) => {
   });
 
   router.get("/metrics", async (ctx: any) => {
+    if (metricsAuth) {
+      const auth = ctx.headers.authorization;
+      if (!auth || !auth.startsWith("Basic ")) {
+        ctx.set("WWW-Authenticate", "Basic realm=\"metrics\"");
+        ctx.status = 401;
+        ctx.body = "Authentication required";
+        return;
+      }
+      const decoded = Buffer.from(auth.slice(6), "base64").toString();
+      const [user, pass] = decoded.split(":");
+      const userBuf = Buffer.from(user);
+      const expectedUserBuf = Buffer.from(metricsAuth.user);
+      const passHash = crypto.createHash("sha256").update(pass).digest();
+      const expectedPassHash = Buffer.from(metricsAuth.passwordSha256, "hex");
+      const userMatch = userBuf.length === expectedUserBuf.length && crypto.timingSafeEqual(userBuf, expectedUserBuf);
+      const passMatch = passHash.length === expectedPassHash.length && crypto.timingSafeEqual(passHash, expectedPassHash);
+      if (!userMatch || !passMatch) {
+        ctx.status = 403;
+        ctx.body = "Forbidden";
+        return;
+      }
+    }
     ctx.set("Content-Type", register.contentType);
     ctx.body = await getAggregatedMetrics(gScampServer);
   });
@@ -49,6 +74,10 @@ export const setServer = (scampServer: any) => {
 };
 
 export const main = (settings: Settings): void => {
+  const authConfig = settings.allSettings?.metricsAuth as { user?: string; passwordSha256?: string } | undefined;
+  if (authConfig && authConfig.user && authConfig.passwordSha256) {
+    metricsAuth = { user: authConfig.user, passwordSha256: authConfig.passwordSha256 };
+  }
 
   const devServerPort = 1234;
 
