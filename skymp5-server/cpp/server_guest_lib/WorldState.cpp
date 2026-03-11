@@ -16,12 +16,12 @@
 #include <Timer.h>
 #include <algorithm>
 #include <antigo/Context.h>
-#include <database_drivers/IDatabase.h> // UpsertFailedException
 #include <deque>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <iterator>
 #include <optional>
+#include <save_storages/AsyncSaveStorage.h> // UpsertFailedException
 #include <save_storages/ISaveStorage.h>
 #include <unordered_map>
 
@@ -702,7 +702,8 @@ void WorldState::TickSaveStorage(const std::chrono::system_clock::time_point&)
 
   try {
     pImpl->saveStorage->Tick();
-  } catch (Viet::UpsertFailedException<MpChangeForm>& e) {
+  } catch (
+    Viet::AsyncSaveStorage<MpChangeForm, FormDesc>::UpsertFailedException& e) {
     spdlog::error(
       "TickSaveStorage - received UpsertFailedException {}, re-saving",
       e.what());
