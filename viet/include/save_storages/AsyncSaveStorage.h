@@ -6,6 +6,7 @@
 #include <list>
 #include <mutex>
 #include <spdlog/logger.h>
+#include <stdexcept>
 #include <thread>
 
 namespace Viet {
@@ -18,16 +19,61 @@ public:
     typename ISaveStorage<T, FormDescType>::IterateSyncCallback;
   using UpsertCallback =
     typename ISaveStorage<T, FormDescType>::UpsertCallback;
+  using IterateCallback =
+    typename ISaveStorage<T, FormDescType>::IterateCallback;
+
+  class UpsertFailedException : public std::runtime_error
+  {
+  public:
+    UpsertFailedException(std::vector<std::optional<T>>&& affectedForms_,
+                          std::string what)
+      : runtime_error(what)
+      , affectedForms(affectedForms_)
+    {
+    }
+
+    const std::vector<std::optional<T>>& GetAffectedForms() const noexcept
+    {
+      return affectedForms;
+    }
+
+  private:
+    const std::vector<std::optional<T>> affectedForms;
+  };
+
+  class IterateFailedException : public std::runtime_error
+  {
+  public:
+    IterateFailedException(std::optional<std::vector<FormDescType>>&& filter_,
+                           std::string what)
+      : runtime_error(what)
+      , filter(std::move(filter_))
+    {
+    }
+
+    const std::optional<std::vector<FormDescType>>& GetFilter() const noexcept
+    {
+      return filter;
+    }
+
+  private:
+    const std::optional<std::vector<FormDescType>> filter;
+  };
 
   // logger must support multithreaded writing
-  AsyncSaveStorage(const std::shared_ptr<IDatabase<T>>& dbImpl,
+  AsyncSaveStorage(const std::shared_ptr<IDatabase<T, FormDescType>>& dbImpl,
                    std::shared_ptr<spdlog::logger> logger = nullptr,
-                   std::string name = "")
+                   std::string name = "",
+                   std::optional<uint32_t> sleepTimeMs = std::nullopt)
     : pImpl(std::make_shared<Impl>())
   {
     pImpl->name = std::move(name);
     pImpl->logger = logger;
     pImpl->share.dbImpl = dbImpl;
+
+    if (sleepTimeMs.has_value()) {
+      pImpl->sleepTimeMs = *sleepTimeMs;
+    }
 
     auto p = this->pImpl.get();
     pImpl->thr = std::make_unique<std::thread>([p] { SaverThreadMain(p); });
@@ -42,7 +88,7 @@ public:
   void IterateSync(const IterateSyncCallback& cb) override
   {
     std::lock_guard l(pImpl->share.m);
-    pImpl->share.dbImpl->Iterate(cb);
+    pImpl->share.dbImpl->Iterate(cb, std::nullopt);
   }
 
   void Upsert(std::vector<std::optional<T>>&& changeForms,
@@ -50,6 +96,13 @@ public:
   {
     std::lock_guard l(pImpl->share3.m);
     pImpl->share3.upsertTasks.push_back({ std::move(changeForms), cb });
+  }
+
+  void Iterate(const IterateCallback& cb,
+               const std::optional<std::vector<FormDescType>>& filter) override
+  {
+    std::lock_guard l(pImpl->share6.m);
+    pImpl->share6.iterateTasks.push_back({ filter, cb });
   }
 
   uint32_t GetNumFinishedUpserts() const override
@@ -68,6 +121,7 @@ public:
       }
     }
 
+    // TODO: consider protecting against throwing callbacks
     decltype(pImpl->share4.upsertCallbacksToFire) upsertCallbacksToFire;
     {
       std::lock_guard l(pImpl->share4.m);
@@ -76,6 +130,17 @@ public:
     }
     for (auto& cb : upsertCallbacksToFire) {
       pImpl->numFinishedUpserts++;
+      cb();
+    }
+
+    // TODO: consider protecting against throwing callbacks
+    decltype(pImpl->share5.iterateCallbacksToFire) iterateCallbacksToFire;
+    {
+      std::lock_guard l(pImpl->share5.m);
+      iterateCallbacksToFire = std::move(pImpl->share5.iterateCallbacksToFire);
+      pImpl->share5.iterateCallbacksToFire.clear();
+    }
+    for (auto& cb : iterateCallbacksToFire) {
       cb();
     }
   }
@@ -104,12 +169,18 @@ private:
       std::function<void()> callback;
     };
 
+    struct IterateTask
+    {
+      std::optional<std::vector<FormDescType>> filter;
+      IterateCallback callback;
+    };
+
     std::shared_ptr<spdlog::logger> logger;
     std::string name;
 
     struct
     {
-      std::shared_ptr<IDatabase<T>> dbImpl;
+      std::shared_ptr<IDatabase<T, FormDescType>> dbImpl;
       std::mutex m;
     } share;
 
@@ -132,66 +203,127 @@ private:
       std::mutex m;
     } share4;
 
+    struct
+    {
+      std::vector<std::function<void()>> iterateCallbacksToFire;
+      std::mutex m;
+    } share5;
+
+    struct
+    {
+      std::vector<IterateTask> iterateTasks;
+      std::mutex m;
+    } share6;
+
     std::unique_ptr<std::thread> thr;
     std::atomic<bool> destroyed = false;
     uint32_t numFinishedUpserts = 0;
+    uint32_t sleepTimeMs = 100;
   };
 
   std::shared_ptr<Impl> pImpl;
 
+  static void ProcessUpserts(Impl* pImpl)
+  {
+    // TODO: exception in dbImpl->Upsert must not delete tasks that are not yet
+    // processed
+    try {
+      decltype(pImpl->share3.upsertTasks) tasks;
+      {
+        std::lock_guard l(pImpl->share3.m);
+        tasks = std::move(pImpl->share3.upsertTasks);
+        pImpl->share3.upsertTasks.clear();
+      }
+
+      std::vector<std::function<void()>> callbacksToFire;
+      std::vector<std::vector<std::optional<T>>> recycledChangeFormsBuffers;
+
+      {
+        std::lock_guard l(pImpl->share.m);
+        auto start = std::chrono::high_resolution_clock::now();
+        size_t numChangeForms = 0;
+        for (auto& t : tasks) {
+          numChangeForms +=
+            pImpl->share.dbImpl->Upsert(std::move(t.changeForms));
+          t.changeForms.clear();
+          callbacksToFire.push_back(t.callback);
+
+          std::vector<std::optional<T>> tmp;
+          if (pImpl->share.dbImpl->GetRecycledChangeFormsBuffer(tmp)) {
+            recycledChangeFormsBuffers.push_back(std::move(tmp));
+          }
+        }
+        if (numChangeForms > 0 && pImpl->logger) {
+          auto end = std::chrono::high_resolution_clock::now();
+          std::chrono::duration<double, std::milli> elapsed = end - start;
+          pImpl->logger->trace("Saved {} ChangeForms in {} ms", numChangeForms,
+                               elapsed.count());
+        }
+      }
+
+      {
+        std::lock_guard l(pImpl->share4.m);
+        for (auto& cb : callbacksToFire) {
+          pImpl->share4.upsertCallbacksToFire.push_back(cb);
+        }
+        for (auto& buf : recycledChangeFormsBuffers) {
+          pImpl->share4.recycledChangeFormsBuffers.push_back(std::move(buf));
+        }
+      }
+    } catch (...) {
+      std::lock_guard l(pImpl->share2.m);
+      auto exceptionPtr = std::current_exception();
+      pImpl->share2.exceptions.push_back(exceptionPtr);
+    }
+  }
+
+  static void ProcessIterates(Impl* pImpl)
+  {
+    // TODO: exception in dbImpl->Upsert must not delete tasks that are not yet
+    // processed
+    try {
+      decltype(pImpl->share6.iterateTasks) tasks;
+      {
+        std::lock_guard l(pImpl->share6.m);
+        tasks = std::move(pImpl->share6.iterateTasks);
+        pImpl->share6.iterateTasks.clear();
+      }
+
+      std::vector<std::function<void()>> callbacksToFire;
+      {
+        std::lock_guard l(pImpl->share.m);
+        for (auto& t : tasks) {
+          std::vector<T> buffer;
+          pImpl->share.dbImpl->Iterate(
+            [&](const T& changeForm) { buffer.push_back(changeForm); },
+            t.filter);
+          std::function<void()> callback =
+            [cb = t.callback, buf = std::move(buffer)]() { cb(buf); };
+          callbacksToFire.push_back(callback);
+        }
+      }
+
+      {
+        std::lock_guard l2(pImpl->share5.m);
+        for (auto& callback : callbacksToFire) {
+          pImpl->share5.iterateCallbacksToFire.push_back(callback);
+        }
+      }
+
+    } catch (...) {
+      std::lock_guard l(pImpl->share2.m);
+      auto exceptionPtr = std::current_exception();
+      pImpl->share2.exceptions.push_back(exceptionPtr);
+    }
+  }
+
   static void SaverThreadMain(Impl* pImpl)
   {
     while (!pImpl->destroyed) {
-      std::this_thread::sleep_for(std::chrono::milliseconds(100));
-      try {
-
-        decltype(pImpl->share3.upsertTasks) tasks;
-        {
-          std::lock_guard l(pImpl->share3.m);
-          tasks = std::move(pImpl->share3.upsertTasks);
-          pImpl->share3.upsertTasks.clear();
-        }
-
-        std::vector<std::function<void()>> callbacksToFire;
-        std::vector<std::vector<std::optional<T>>> recycledChangeFormsBuffers;
-
-        {
-          std::lock_guard l(pImpl->share.m);
-          auto start = std::chrono::high_resolution_clock::now();
-          size_t numChangeForms = 0;
-          for (auto& t : tasks) {
-            numChangeForms +=
-              pImpl->share.dbImpl->Upsert(std::move(t.changeForms));
-            t.changeForms.clear();
-            callbacksToFire.push_back(t.callback);
-
-            std::vector<std::optional<T>> tmp;
-            if (pImpl->share.dbImpl->GetRecycledChangeFormsBuffer(tmp)) {
-              recycledChangeFormsBuffers.push_back(std::move(tmp));
-            }
-          }
-          if (numChangeForms > 0 && pImpl->logger) {
-            auto end = std::chrono::high_resolution_clock::now();
-            std::chrono::duration<double, std::milli> elapsed = end - start;
-            pImpl->logger->trace("Saved {} ChangeForms in {} ms",
-                                 numChangeForms, elapsed.count());
-          }
-        }
-
-        {
-          std::lock_guard l(pImpl->share4.m);
-          for (auto& cb : callbacksToFire) {
-            pImpl->share4.upsertCallbacksToFire.push_back(cb);
-          }
-          for (auto& buf : recycledChangeFormsBuffers) {
-            pImpl->share4.recycledChangeFormsBuffers.push_back(std::move(buf));
-          }
-        }
-      } catch (...) {
-        std::lock_guard l(pImpl->share2.m);
-        auto exceptionPtr = std::current_exception();
-        pImpl->share2.exceptions.push_back(exceptionPtr);
-      }
+      std::this_thread::sleep_for(
+        std::chrono::milliseconds(pImpl->sleepTimeMs));
+      ProcessUpserts(pImpl);
+      ProcessIterates(pImpl);
     }
   }
 
