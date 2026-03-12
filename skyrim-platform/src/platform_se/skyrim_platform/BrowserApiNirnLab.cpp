@@ -145,7 +145,7 @@ void BrowserApiNirnLab::ApiInit()
       "BrowserApiNirnLab::ApiInit: api must not be null here");
   }
 
-  NL::JS::JSFuncInfo callback{
+  std::vector<NL::JS::JSFuncInfo> callbacks{{
     .objectName = "skyrimPlatform",
     .funcName = "sendMessage",
     .callbackData = {
@@ -166,13 +166,28 @@ void BrowserApiNirnLab::ApiInit()
       .executeInGameThread = true,
       .isEventFunction = false,
     },
-  };
-  auto callbackPtr = &callback;
+  },{
+    .objectName = "window",
+    .funcName = "alert",
+    .callbackData = {
+      .callback = [](const char** a_args, int a_argsCount) {
+        if (a_argsCount > 0) {
+          MessageBoxA(GetActiveWindow(), a_args[0], "alert", MB_OK);
+        }
+      },
+      .executeInGameThread = true,
+      .isEventFunction = false,
+    },
+  }};
+  std::vector<NL::JS::JSFuncInfo*> ptrs;
+  for (auto& cb : callbacks) {
+    ptrs.push_back(&cb);
+  }
 
   constexpr auto kNirnlabBrowserName = "SkyrimPlatform_Default";
 
   const NL::UI::IUIPlatformAPI::BrowserRefHandle browserHandle =
-    api->AddOrGetBrowser(kNirnlabBrowserName, &callbackPtr, 1,
+    api->AddOrGetBrowser(kNirnlabBrowserName, ptrs.data(), ptrs.size(),
                          "file:///Data/Platform/UI/index.html", browser);
   if (browserHandle == NL::UI::IUIPlatformAPI::InvalidBrowserRefHandle) {
     logger::error("browser init failed: InvalidBrowserRefHandle");
