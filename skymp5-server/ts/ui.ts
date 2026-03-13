@@ -41,13 +41,15 @@ const createApp = (getOriginPort: () => number) => {
     const { payload } = ctx.request.body;
 
     rpcCallsCounter.inc({ rpcClassName });
-    const end = rpcDurationHistogram.startTimer({ rpcClassName });
+    const endTimer = rpcDurationHistogram.startTimer({ rpcClassName });
 
-    if (gScampServer.onHttpRpcRunAttempt) {
-      ctx.body = gScampServer.onHttpRpcRunAttempt(rpcClassName, payload);
+    try {
+      if (gScampServer.onHttpRpcRunAttempt) {
+        ctx.body = gScampServer.onHttpRpcRunAttempt(rpcClassName, payload);
+      }
+    } finally {
+      endTimer();
     }
-
-    end();
   });
 
   router.use('/metrics', (ctx: any, next: any) => {

@@ -1446,7 +1446,7 @@ Napi::Value ScampServer::FindFormsByPropertyValue(
 Napi::Value ScampServer::GetPrometheusMetrics(const Napi::CallbackInfo& info)
 {
   try {
-    return Napi::String::New(info.Env(), "hiiii");
+    return Napi::String::New(info.Env(), "# hiiii");
   } catch (std::exception& e) {
     throw Napi::Error::New(info.Env(), std::string(e.what()));
   }
