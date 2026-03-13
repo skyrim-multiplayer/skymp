@@ -18,15 +18,20 @@ const createApp = (getOriginPort: () => number) => {
   const app = new Koa();
   app.use(koaBody.default({ multipart: true }));
 
-  // Custom 401 handling
   app.use(async (ctx: any, next: any) => {
     try {
       await next();
     } catch (err: any) {
       if (401 === err.status) {
+        console.error(err);
+        console.log(err);
+        console.log(JSON.stringify(err));
         ctx.status = 401;
         ctx.set("WWW-Authenticate", "Basic realm=\"metrics\"");
-        ctx.body = "Authentication required";
+        if (err.message) {
+          ctx.body = err.message;
+        }
+        // ctx.body = "Authentication required";
       } else {
         throw err;
       }
@@ -52,7 +57,11 @@ const createApp = (getOriginPort: () => number) => {
     end();
   });
 
-  // Apply auth middleware only to /metrics if configured
+  // router.use('/metrics', async (ctx: any, next: any) => {
+  //   console.log(`Metrics requested by ${ctx.request.ip}`);
+  //   next();
+  // });
+
   if (metricsAuth) {
     router.use("/metrics", auth({ name: metricsAuth.user, pass: metricsAuth.password }));
     router.get("/metrics", async (ctx: any) => {
