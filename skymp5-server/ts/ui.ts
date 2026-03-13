@@ -23,15 +23,8 @@ const createApp = (getOriginPort: () => number) => {
       await next();
     } catch (err: any) {
       if (401 === err.status) {
-        console.error(err);
-        console.log(err);
-        console.log(JSON.stringify(err));
         ctx.status = 401;
         ctx.set("WWW-Authenticate", "Basic realm=\"metrics\"");
-        if (err.message) {
-          ctx.body = err.message;
-        }
-        // ctx.body = "Authentication required";
       } else {
         throw err;
       }
@@ -57,20 +50,23 @@ const createApp = (getOriginPort: () => number) => {
     end();
   });
 
-  // router.use('/metrics', async (ctx: any, next: any) => {
-  //   console.log(`Metrics requested by ${ctx.request.ip}`);
-  //   next();
-  // });
+  router.use('/metrics', (ctx: any, next: any) => {
+    console.log(`Metrics requested by ${ctx.request.ip}`);
+    return next();
+  });
 
   if (metricsAuth) {
-    router.use("/metrics", auth({ name: metricsAuth.user, pass: metricsAuth.password }));
+    if (metricsAuth.password !== "I know what I'm doing, disable metrics auth") {
+      router.use("/metrics", auth({ name: metricsAuth.user, pass: metricsAuth.password }));
+    }
     router.get("/metrics", async (ctx: any) => {
       ctx.set("Content-Type", register.contentType);
       ctx.body = await getAggregatedMetrics(gScampServer);
     });
   } else {
     router.get("/metrics", async (ctx: any) => {
-      ctx.throw(401, "Metrics endpoint is protected by authentication, but no credentials are configured");
+      ctx.throw(401);
+      console.error("Metrics endpoint is protected by authentication, but no credentials are configured");
     });
   }
 
