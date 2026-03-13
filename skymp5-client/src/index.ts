@@ -59,6 +59,7 @@ import { ServerJsVerificationService } from "./services/services/serverJsVerific
 once("update", () => {
   Utility.setINIBool("bAlwaysActive:General", true);
   Game.setGameSettingInt("iDeathDropWeaponChance", 0);
+  Utility.setINIFloat("fAutoVanityModeDelay:Camera", 3600);
 });
 
 const main = () => {
