@@ -39,23 +39,28 @@ export const rpcDurationHistogram = new promClient.Histogram({
   buckets: [0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1],
 });
 
-export const getAggregatedMetrics = async (scampServer?: any): Promise<string> => {
-  const jsMetrics = await register.metrics();
+export const cppMetricsErrorsCounter = new promClient.Counter({
+  name: 'skymp_cpp_metrics_errors_total',
+  help: 'Total number of errors during C++ metrics collection',
+});
 
-  if (!scampServer) {
-    return jsMetrics;
-  }
+export const getAggregatedMetrics = async (scampServer?: any): Promise<string> => {
+  const tsStart = performance.now();
+  let metrics = '# === JS metrics begin ===\n' + await register.metrics() + '\n';
+  const tsJsCollected = performance.now();
 
   try {
-    const cppMetrics: string = scampServer.getPrometheusMetrics();
-    if (!cppMetrics) {
-      return jsMetrics;
-    }
-    return jsMetrics.trimEnd() + "\n" + cppMetrics.trimEnd() + "\n";
+    const cppMetrics: string = scampServer?.getPrometheusMetrics() ?? "";
+    metrics += '# === CPP metrics begin ===\n' + cppMetrics;
   } catch (err) {
     console.error("Failed to collect native metrics:", err);
-    return jsMetrics;
+    cppMetricsErrorsCounter.inc();
   }
+  const tsCppCollected = performance.now();
+
+  console.log('Metrics collection timings:', tsJsCollected - tsStart, tsCppCollected - tsJsCollected);
+
+  return metrics;
 };
 
 export class MetricsSystem implements System {
