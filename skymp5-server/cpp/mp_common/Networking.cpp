@@ -219,7 +219,7 @@ public:
         totalCount++;
         msg << ' ' << userId << ':' << clientPing;
         if (clientPing != -1) {
-          metrics.overallPingSecondsHistogram.Observe(clientPing);
+          metrics.overallPingSecondsHistogram.Observe(clientPing / 1000.);
         }
       }
     }
@@ -285,6 +285,20 @@ private:
           registry,
           "skymp_server_overall_ping_seconds",
           "Overview of all connected clients' ping. Converted to seconds to match Prometheus conventions",
+          {},
+          {
+            0.025,
+            0.050,
+            0.075,
+            0.100,
+            0.125,
+            0.150,
+            0.175,
+            0.200,
+            0.250,
+            0.300,
+            0.400,
+          },
         },
       };
     }
