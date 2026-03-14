@@ -173,6 +173,7 @@ public:
   void Tick(OnPacket onPacket, void* state) override
   {
     while (1) {
+      // count, timing, etc; per guid
       auto packet = peer->Receive();
       if (!packet)
         break;
