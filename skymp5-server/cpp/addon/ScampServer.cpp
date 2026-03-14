@@ -31,6 +31,7 @@
 #include <database_drivers/DatabaseFactory.h>
 #include <memory>
 #include <napi.h>
+#include <prometheus/core.h>
 #include <save_storages/SaveStorageFactory.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <sstream>
@@ -177,6 +178,7 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
   , tickEnv(info.Env())
 {
   try {
+    promRegistry = std::make_shared<prometheus::Registry>();
     partOne = std::make_shared<PartOne>();
     listener = std::make_shared<ScampServerListener>(*this);
     partOne->AddListener(listener);
@@ -342,7 +344,7 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
         static_cast<std::string>(serverSettings["password"])
       : std::string(kNetworkingPasswordPrefix);
     auto realServer = Networking::CreateServer(listenHost.c_str(), listenPort,
-                                               maxPlayers, password.data());
+                                               maxPlayers, password.data(), promRegistry);
 
     static_assert(kMockServerIdx == 1);
     server = Networking::CreateCombinedServer({ realServer, serverMock });
@@ -1446,7 +1448,7 @@ Napi::Value ScampServer::FindFormsByPropertyValue(
 Napi::Value ScampServer::GetPrometheusMetrics(const Napi::CallbackInfo& info)
 {
   try {
-    return Napi::String::New(info.Env(), "# hiiii");
+    return Napi::String::New(info.Env(), promRegistry->serialize());
   } catch (std::exception& e) {
     throw Napi::Error::New(info.Env(), std::string(e.what()));
   }

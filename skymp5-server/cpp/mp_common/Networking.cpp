@@ -1,12 +1,22 @@
 #include "Networking.h"
+
+#include <array>
+#include <chrono>
+#include <memory>
+
+#include <fmt/format.h>
+#include <prometheus/core.h>
+#include <prometheus/summary.h>
+#include <prometheus/histogram.h>
+#include <prometheus/gauge.h>
+#include <slikenet/MessageIdentifiers.h>
+#include <slikenet/types.h>
+#include <spdlog/spdlog.h>
+#include <sstream>
+
 #include "Exceptions.h"
 #include "IdManager.h"
-#include "RakNet.h"
-#include <array>
-#include <fmt/format.h>
-#include <iostream>
-#include <memory>
-#include <sstream>
+#include "NetworkingInterface.h"
 
 namespace {
 class PacketGuard
@@ -131,8 +141,8 @@ public:
   constexpr static int timeoutTimeMs = 60000;
 
   Server(const char* listenAddress, unsigned short port_,
-         unsigned short maxConnections, const char* password_)
-    : password(password_)
+         unsigned short maxConnections_, const char* password_, std::shared_ptr<prometheus::Registry> promRegistry)
+    : maxConnections(maxConnections_), password(password_), metrics{Metrics::Init(promRegistry)}
   {
     if (maxConnections > kMaxPlayers) {
       throw std::runtime_error("Current slots limit is " +
@@ -188,6 +198,34 @@ public:
         throw;
       }
     }
+
+    const auto currentTime = std::chrono::steady_clock::now();
+    if (currentTime - lastPingUpdate > std::chrono::seconds{3}) {
+      lastPingUpdate = currentTime;
+      UpdatePings();
+    }
+  }
+
+  void UpdatePings()
+  {
+    std::stringstream msg;
+    msg << "Client pings:";
+    unsigned short totalCount = 0;
+
+    for (Networking::UserId userId = 0; userId < maxConnections; ++userId) {
+      const auto guid = idManager->find(userId);
+      if (guid != RakNetGUID(-1)) {
+        const auto clientPing = peer->GetLastPing(guid);
+        totalCount++;
+        msg << ' ' << userId << ':' << clientPing;
+        if (clientPing != -1) {
+          metrics.overallPingSecondsHistogram.Observe(clientPing);
+        }
+      }
+    }
+
+    msg << " | " << totalCount << " connected";
+    spdlog::info("{}", std::move(msg).str());
   }
 
   std::string GetIp(Networking::UserId userId) const override
@@ -215,12 +253,45 @@ public:
   }
 
 private:
+  const unsigned short maxConnections;
   const std::string password;
   std::unique_ptr<RakPeerInterface> peer;
   std::unique_ptr<SocketDescriptor> socket;
   std::unique_ptr<IdManager> idManager;
+
+  std::chrono::time_point<std::chrono::steady_clock> lastPingUpdate;
+
+  struct Metrics {
+    std::shared_ptr<prometheus::Registry> registry;
+    prometheus::Summary<double&> packetHandlingSecondsSummary;
+    prometheus::Histogram<double&> overallPingSecondsHistogram;
+    // prometheus::gauge_family_t
+
+    static Metrics Init(std::shared_ptr<prometheus::Registry> registry) {
+      return {
+        .registry = registry,
+        // .packetHandlingSecondsSummary{prometheus::BuildSummary()
+        // .Name("skymp_server_packet_handling_seconds")
+        // .Help("Time server spent handling incoming packets (seconds)")
+        // .Register(*registry)},
+        .packetHandlingSecondsSummary{
+          registry,
+          "skymp_server_packet_handling_seconds",
+          "Time server spent handling incoming packets (seconds)",
+          // TODO: change to microseconds to avoid double?
+        },
+        // .packetHandlingSecondsSummary{registry->Add("skymp_server_packet_handling_seconds", "Time server spent handling incoming packets (seconds)").Add<prometheus::Summary<double>>({})},
+        .overallPingSecondsHistogram{
+          registry,
+          "skymp_server_overall_ping_seconds",
+          "Overview of all connected clients' ping. Converted to seconds to match Prometheus conventions",
+        },
+      };
+    }
+  };
+  Metrics metrics;
 };
-}
+}  // namespace
 
 std::shared_ptr<Networking::IClient> Networking::CreateClient(
   const char* serverIp, unsigned short serverPort, int timeoutMs,
@@ -229,12 +300,13 @@ std::shared_ptr<Networking::IClient> Networking::CreateClient(
   return std::make_shared<Client>(serverIp, serverPort, timeoutMs, password);
 }
 
+// add registry
 std::shared_ptr<Networking::IServer> Networking::CreateServer(
   const char* listenAddress, unsigned short port,
-  unsigned short maxConnections, const char* password)
+  unsigned short maxConnections, const char* password, std::shared_ptr<prometheus::Registry> promRegistry)
 {
   return std::make_shared<Server>(listenAddress, port, maxConnections,
-                                  password);
+                                  password, promRegistry);
 }
 
 void Networking::HandlePacketClientside(Networking::IClient::OnPacket onPacket,
