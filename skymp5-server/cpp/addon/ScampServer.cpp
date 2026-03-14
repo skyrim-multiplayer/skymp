@@ -22,6 +22,7 @@
 #include "papyrus-vm/Utils.h"
 #include "property_bindings/PropertyBindingFactory.h"
 #include "script_storages/ScriptStorageFactory.h"
+#include "services/ServiceBus.h"
 #include <algorithm>
 #include <antigo/Context.h>
 #include <antigo/ExecutionData.h>
@@ -1446,6 +1447,8 @@ Napi::Value ScampServer::FindFormsByPropertyValue(
 Napi::Value ScampServer::GetPrometheusMetrics(const Napi::CallbackInfo& info)
 {
   try {
+    // this->server.Metrics
+    serviceBus.Get<MetricsService>();
     return Napi::String::New(info.Env(), "# hiiii");
   } catch (std::exception& e) {
     throw Napi::Error::New(info.Env(), std::string(e.what()));
