@@ -1,15 +1,17 @@
-#include "Networking.h"
-#include "IdManager.h"
-#include <catch2/catch_all.hpp>
-#include <chrono>
+#include <memory>
 #include <thread>
+
+#include <catch2/catch_all.hpp>
+#include <prometheus/core.h>
+
+#include "Networking.h"
 
 using namespace std::chrono_literals;
 
 TEST_CASE("Handler destroys the client", "[Networking]")
 {
   auto server =
-    Networking::CreateServer("127.0.0.1", 7778, MAX_PLAYERS, "password");
+    Networking::CreateServer("127.0.0.1", 7778, MAX_PLAYERS, "password", std::make_shared<prometheus::Registry>());
   static auto client =
     Networking::CreateClient("127.0.0.1", 7778, 500, "password");
 
@@ -34,7 +36,7 @@ TEST_CASE("Handler destroys the client", "[Networking]")
 TEST_CASE("Connect/disconnect", "[Networking]")
 {
   auto server =
-    Networking::CreateServer("127.0.0.1", 7778, MAX_PLAYERS, "password");
+    Networking::CreateServer("127.0.0.1", 7778, MAX_PLAYERS, "password", std::make_shared<prometheus::Registry>());
   auto client = Networking::CreateClient("127.0.0.1", 7778, 500, "password");
 
   REQUIRE(!client->IsConnected());
@@ -55,11 +57,11 @@ TEST_CASE("Connect/disconnect", "[Networking]")
 TEST_CASE("Ctors", "[Networking]")
 {
   auto server =
-    Networking::CreateServer("127.0.0.1", 7778, MAX_PLAYERS, "password");
+    Networking::CreateServer("127.0.0.1", 7778, MAX_PLAYERS, "password", std::make_shared<prometheus::Registry>());
   auto client = Networking::CreateClient("127.0.0.1", 7778, 4000, "password");
 
   try {
-    Networking::CreateServer("127.0.0.1", 7778, MAX_PLAYERS, "password");
+    Networking::CreateServer("127.0.0.1", 7778, MAX_PLAYERS, "password", std::make_shared<prometheus::Registry>());
     REQUIRE(false);
   } catch (std::exception& e) {
     REQUIRE(e.what() == std::string("Peer startup failed with code 5"));

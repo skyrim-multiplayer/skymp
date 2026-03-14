@@ -1,5 +1,7 @@
 #include "TemplateChainBinding.h"
 
+#include "ScampServer.h"
+
 Napi::Value TemplateChainBinding::Get(Napi::Env env, ScampServer& scampServer,
                                       uint32_t formId)
 {

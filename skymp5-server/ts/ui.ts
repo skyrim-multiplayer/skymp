@@ -14,11 +14,23 @@ let gScampServer: any = null;
 
 let metricsAuth: { user: string; password: string } | null = null;
 
+const metricsAuthParse = (settings: Settings): void => {
+  const authConfig = settings.allSettings?.metricsAuth as { user?: string; password?: string } | undefined;
+  if (!authConfig) {
+    console.log('Metrics auth is not configured, so it will be inaccessible. Set metricsAuth setting to activate');
+    return;
+  }
+  if (!authConfig.user || !authConfig.password) {
+    console.error('metricsAuth setting must contain user and password fields');
+    return;
+  }
+  metricsAuth = { user: authConfig.user, password: authConfig.password };
+}
+
 const createApp = (getOriginPort: () => number) => {
   const app = new Koa();
   app.use(koaBody.default({ multipart: true }));
 
-  // Custom 401 handling
   app.use(async (ctx: any, next: any) => {
     try {
       await next();
@@ -26,7 +38,6 @@ const createApp = (getOriginPort: () => number) => {
       if (401 === err.status) {
         ctx.status = 401;
         ctx.set("WWW-Authenticate", "Basic realm=\"metrics\"");
-        ctx.body = "Authentication required";
       } else {
         throw err;
       }
@@ -43,25 +54,34 @@ const createApp = (getOriginPort: () => number) => {
     const { payload } = ctx.request.body;
 
     rpcCallsCounter.inc({ rpcClassName });
-    const end = rpcDurationHistogram.startTimer({ rpcClassName });
+    const endTimer = rpcDurationHistogram.startTimer({ rpcClassName });
 
-    if (gScampServer.onHttpRpcRunAttempt) {
-      ctx.body = gScampServer.onHttpRpcRunAttempt(rpcClassName, payload);
+    try {
+      if (gScampServer.onHttpRpcRunAttempt) {
+        ctx.body = gScampServer.onHttpRpcRunAttempt(rpcClassName, payload);
+      }
+    } finally {
+      endTimer();
     }
-
-    end();
   });
 
-  // Apply auth middleware only to /metrics if configured
+  router.use('/metrics', (ctx: any, next: any) => {
+    console.log(`Metrics requested by ${ctx.request.ip}`);
+    return next();
+  });
+
   if (metricsAuth) {
-    router.use("/metrics", auth({ name: metricsAuth.user, pass: metricsAuth.password }));
+    if (metricsAuth.password !== "I know what I'm doing, disable metrics auth") {
+      router.use("/metrics", auth({ name: metricsAuth.user, pass: metricsAuth.password }));
+    }
     router.get("/metrics", async (ctx: any) => {
       ctx.set("Content-Type", register.contentType);
       ctx.body = await getAggregatedMetrics(gScampServer);
     });
   } else {
     router.get("/metrics", async (ctx: any) => {
-      ctx.throw(401, "Metrics endpoint is protected by authentication, but no credentials are configured");
+      ctx.throw(401);
+      console.error("Metrics endpoint is protected by authentication, but no credentials are configured");
     });
   }
 
@@ -75,11 +95,7 @@ export const setServer = (scampServer: any) => {
 };
 
 export const main = (settings: Settings): void => {
-  const authConfig = settings.allSettings?.metricsAuth as { user?: string; password?: string } | undefined;
-  if (authConfig && authConfig.user && authConfig.password) {
-    metricsAuth = { user: authConfig.user, password: authConfig.password };
-  }
-
+  metricsAuthParse(settings);
   const devServerPort = 1234;
 
   const uiListenHost = settings.allSettings.uiListenHost as (string | undefined);

@@ -1,5 +1,8 @@
 #include "WorldOrCellDescBinding.h"
 
+#include "ScampServer.h"
+#include "MpObjectReference.h"
+
 Napi::Value WorldOrCellDescBinding::Get(Napi::Env env,
                                         ScampServer& scampServer,
                                         uint32_t formId)

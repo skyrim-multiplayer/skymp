@@ -1,5 +1,6 @@
 #include "IsDisabledBinding.h"
 #include "NapiHelper.h"
+#include "ScampServer.h"
 
 Napi::Value IsDisabledBinding::Get(Napi::Env env, ScampServer& scampServer,
                                    uint32_t formId)

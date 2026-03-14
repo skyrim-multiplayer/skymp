@@ -1,6 +1,7 @@
 #include "PercentagesBinding.h"
 #include "MathUtils.h"
 #include "NapiHelper.h"
+#include "ScampServer.h"
 #include <cmath>
 
 Napi::Value PercentagesBinding::Get(Napi::Env env, ScampServer& scampServer,

@@ -1,5 +1,7 @@
 #include "SpawnDelayBinding.h"
+
 #include "NapiHelper.h"
+#include "ScampServer.h"
 
 Napi::Value SpawnDelayBinding::Get(Napi::Env env, ScampServer& scampServer,
                                    uint32_t formId)

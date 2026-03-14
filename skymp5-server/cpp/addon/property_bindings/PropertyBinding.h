@@ -1,8 +1,10 @@
 #pragma once
-#include "ScampServer.h"
+
 #include <cstdint>
 #include <napi.h>
 #include <string>
+
+class ScampServer;
 
 class PropertyBinding
 {

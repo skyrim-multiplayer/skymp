@@ -1,5 +1,5 @@
 #include "ConsoleCommandsAllowedBinding.h"
-#include "NapiHelper.h"
+#include "ScampServer.h"
 
 Napi::Value ConsoleCommandsAllowedBinding::Get(Napi::Env env,
                                                ScampServer& scampServer,
