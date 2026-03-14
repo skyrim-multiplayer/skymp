@@ -1,4 +1,5 @@
 #include "OnlinePlayersBinding.h"
+#include "ScampServer.h"
 
 #include "Config.h"
 

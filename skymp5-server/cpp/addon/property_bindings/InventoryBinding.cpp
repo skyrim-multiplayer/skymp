@@ -1,5 +1,6 @@
 #include "InventoryBinding.h"
 #include "NapiHelper.h"
+#include "ScampServer.h"
 
 Napi::Value InventoryBinding::Get(Napi::Env env, ScampServer& scampServer,
                                   uint32_t formId)

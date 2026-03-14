@@ -1,5 +1,7 @@
 #include "SpawnPointBinding.h"
 
+#include "ScampServer.h"
+
 Napi::Value SpawnPointBinding::Get(Napi::Env env, ScampServer& scampServer,
                                    uint32_t formId)
 {

@@ -1,4 +1,5 @@
 #include "IsOnlineBinding.h"
+#include "ScampServer.h"
 
 Napi::Value IsOnlineBinding::Get(Napi::Env env, ScampServer& scampServer,
                                  uint32_t formId)

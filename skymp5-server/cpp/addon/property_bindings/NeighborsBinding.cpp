@@ -1,4 +1,5 @@
 #include "NeighborsBinding.h"
+#include "ScampServer.h"
 
 Napi::Value NeighborsBinding::Get(Napi::Env env, ScampServer& scampServer,
                                   uint32_t formId)

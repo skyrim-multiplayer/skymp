@@ -1,4 +1,5 @@
 #include "IdxBinding.h"
+#include "ScampServer.h"
 
 Napi::Value IdxBinding::Get(Napi::Env env, ScampServer& scampServer,
                             uint32_t formId)

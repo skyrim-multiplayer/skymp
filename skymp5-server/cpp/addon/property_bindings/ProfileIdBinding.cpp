@@ -1,6 +1,7 @@
 #include "ProfileIdBinding.h"
 
 #include "NapiHelper.h"
+#include "ScampServer.h"
 
 Napi::Value ProfileIdBinding::Get(Napi::Env env, ScampServer& scampServer,
                                   uint32_t formId)

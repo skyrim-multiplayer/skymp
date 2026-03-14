@@ -1,5 +1,7 @@
 #include "RespawnPercentagesBinding.h"
 #include "NapiHelper.h"
+#include "ScampServer.h"
+#include "MpActor.h"
 #include <cmath>
 
 Napi::Value RespawnPercentagesBinding::Get(Napi::Env env,
