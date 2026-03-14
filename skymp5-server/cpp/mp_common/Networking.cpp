@@ -172,17 +172,11 @@ public:
 
   void Tick(OnPacket onPacket, void* state) override
   {
-    // sampling rate
-    size_t numPacketsThisTick = 0;
     while (1) {
       // count, timing, etc; per guid
-      // packets per tick
       auto packet = peer->Receive();
-      if (!packet) {
+      if (!packet)
         break;
-      }
-      ++numPacketsThisTick;
-
       PacketGuard guard(peer.get(), packet);
       try {
         Networking::HandlePacketServerside(onPacket, state, packet,
@@ -194,7 +188,6 @@ public:
         throw;
       }
     }
-    // report numPackets
   }
 
   std::string GetIp(Networking::UserId userId) const override

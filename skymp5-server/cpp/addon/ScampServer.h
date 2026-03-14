@@ -9,7 +9,6 @@
 #include <napi.h>
 #include <nlohmann/json.hpp>
 #include <spdlog/spdlog.h>
-#include "services/ServiceBus.h"
 
 class ScampServer : public Napi::ObjectWrap<ScampServer>
 {
@@ -105,7 +104,6 @@ private:
   nlohmann::json serverSettings;
   GamemodeApi::State gamemodeApiState;
   Napi::Reference<Napi::Value> parsedServerSettings;
-  ServiceBus serviceBus;
 
   std::shared_ptr<LocalizationProvider> localizationProvider;
 
