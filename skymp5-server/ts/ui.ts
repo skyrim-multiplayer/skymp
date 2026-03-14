@@ -14,6 +14,19 @@ let gScampServer: any = null;
 
 let metricsAuth: { user: string; password: string } | null = null;
 
+const metricsAuthParse = (settings: Settings): void => {
+  const authConfig = settings.allSettings?.metricsAuth as { user?: string; password?: string } | undefined;
+  if (!authConfig) {
+    console.log('Metrics auth is not configured, so it will be inaccessible. Set metricsAuth setting to activate');
+    return;
+  }
+  if (!authConfig.user || !authConfig.password) {
+    console.error('metricsAuth setting must contain user and password fields');
+    return;
+  }
+  metricsAuth = { user: authConfig.user, password: authConfig.password };
+}
+
 const createApp = (getOriginPort: () => number) => {
   const app = new Koa();
   app.use(koaBody.default({ multipart: true }));
@@ -82,11 +95,7 @@ export const setServer = (scampServer: any) => {
 };
 
 export const main = (settings: Settings): void => {
-  const authConfig = settings.allSettings?.metricsAuth as { user?: string; password?: string } | undefined;
-  if (authConfig && authConfig.user && authConfig.password) {
-    metricsAuth = { user: authConfig.user, password: authConfig.password };
-  }
-
+  metricsAuthParse(settings);
   const devServerPort = 1234;
 
   const uiListenHost = settings.allSettings.uiListenHost as (string | undefined);
