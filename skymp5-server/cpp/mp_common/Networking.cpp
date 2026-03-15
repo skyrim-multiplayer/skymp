@@ -8,7 +8,6 @@
 #include <prometheus/core.h>
 #include <prometheus/gauge.h>
 #include <prometheus/histogram.h>
-#include <prometheus/summary.h>
 #include <slikenet/MessageIdentifiers.h>
 #include <slikenet/types.h>
 #include <spdlog/spdlog.h>
