@@ -437,7 +437,6 @@ void PartOne::HandlePacket(void* partOneInstance, Networking::UserId userId,
                            Networking::PacketType packetType,
                            Networking::PacketData data, size_t length)
 {
-  // timer, counter
   auto this_ = reinterpret_cast<PartOne*>(partOneInstance);
 
   constexpr size_t kMaxSafeGuid = 1024;
