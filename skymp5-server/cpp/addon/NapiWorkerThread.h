@@ -11,8 +11,7 @@
 #include <stdexcept>
 #include <string>
 
-// Thread handle compatible with std::thread duck-typing (has join()).
-// Represents a Node.js Worker Thread that runs a C++ body function.
+// Thread handle compatible with std::thread duck-typing (has join())
 class NapiWorkerThread
 {
 public:
@@ -22,8 +21,7 @@ public:
     cv_.wait(lock, [this] { return finished_.load(); });
   }
 
-  // Called by the wrapped body when it completes
-  void MarkFinished()
+  void NotifyThreadFunctionBodyCompleted()
   {
     finished_.store(true);
     cv_.notify_all();
@@ -35,9 +33,6 @@ private:
   std::atomic<bool> finished_{ false };
 };
 
-// Process-wide singleton registry for worker thread bodies.
-// Static data in the .so is shared between the main thread and Worker threads
-// (same process, same shared object loaded once by the OS).
 struct NapiWorkerThreadRegistry
 {
   std::mutex mutex;
@@ -73,9 +68,6 @@ struct NapiWorkerThreadRegistry
   }
 };
 
-// N-API function called from Worker thread's JS to execute the C++ body.
-// The Worker has its own V8 isolate — Napi::Env is available on the stack
-// for any V8 API work (e.g. v8::ValueDeserializer in the future).
 inline Napi::Value ExecuteWorkerBody(const Napi::CallbackInfo& info)
 {
   auto bodyId =
@@ -85,26 +77,16 @@ inline Napi::Value ExecuteWorkerBody(const Napi::CallbackInfo& info)
   return info.Env().Undefined();
 }
 
-// Call during addon Init to register the _executeWorkerBody export
-// (so Workers can call it). Addon path resolution happens lazily
-// in CreateNapiWorkerThreadFactory, because during Init the eval context
-// does not have 'require' available (we're inside process.dlopen).
 inline void InitNapiWorkerThread(Napi::Env env, Napi::Object exports)
 {
   exports.Set("_executeWorkerBody",
               Napi::Function::New(env, ExecuteWorkerBody));
 }
 
-// Creates a factory function compatible with
-// AsyncSaveStorage<T, FD, NapiWorkerThread>::ThreadFactory.
-// Must be called within a valid N-API callback scope (env must be live).
-// The returned factory must also be invoked within the same callback scope
-// (it is — AsyncSaveStorage constructor calls it synchronously).
+// Creates a factory function compatible with AsyncSaveStorage::ThreadFactory
 inline std::function<std::unique_ptr<NapiWorkerThread>(std::function<void()>)>
 CreateNapiWorkerThreadFactory(Napi::Env env)
 {
-  // Resolve addon path lazily via JS. At this point we're inside a normal
-  // N-API callback (e.g. attachSaveStorage), so require() is available.
   auto& registry = NapiWorkerThreadRegistry::Instance();
   if (registry.addonPath.empty()) {
     auto result = NapiHelper::RunScript(
@@ -133,10 +115,9 @@ CreateNapiWorkerThreadFactory(Napi::Env env)
     auto thread = std::make_unique<NapiWorkerThread>();
     auto* threadPtr = thread.get();
 
-    // Wrap body to mark thread as finished when it completes
     auto wrappedBody = [body = std::move(body), threadPtr]() {
       body();
-      threadPtr->MarkFinished();
+      threadPtr->NotifyThreadFunctionBodyCompleted();
     };
 
     uint64_t bodyId =
