@@ -8,7 +8,7 @@ set -e
 
 if [[ "$1" == "--get-image-uri" ]]; then
   # This is the image that we'll use in our CI for testing build for this distro
-  echo 'ubuntu:noble'
+  echo 'ubuntu:questing'
   exit
 fi
 
