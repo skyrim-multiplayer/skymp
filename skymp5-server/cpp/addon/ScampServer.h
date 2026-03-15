@@ -10,8 +10,8 @@
 
 #include <napi.h>
 #include <nlohmann/json.hpp>
-#include <spdlog/spdlog.h>
 #include <prometheus/core.h>
+#include <spdlog/spdlog.h>
 
 class ScampServer : public Napi::ObjectWrap<ScampServer>
 {

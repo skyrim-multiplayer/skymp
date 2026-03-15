@@ -343,8 +343,9 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
       ? std::string(kNetworkingPasswordPrefix) +
         static_cast<std::string>(serverSettings["password"])
       : std::string(kNetworkingPasswordPrefix);
-    auto realServer = Networking::CreateServer(listenHost.c_str(), listenPort,
-                                               maxPlayers, password.data(), promRegistry);
+    auto realServer =
+      Networking::CreateServer(listenHost.c_str(), listenPort, maxPlayers,
+                               password.data(), promRegistry);
 
     static_assert(kMockServerIdx == 1);
     server = Networking::CreateCombinedServer({ realServer, serverMock });

@@ -6,9 +6,9 @@
 
 #include <fmt/format.h>
 #include <prometheus/core.h>
-#include <prometheus/summary.h>
-#include <prometheus/histogram.h>
 #include <prometheus/gauge.h>
+#include <prometheus/histogram.h>
+#include <prometheus/summary.h>
 #include <slikenet/MessageIdentifiers.h>
 #include <slikenet/types.h>
 #include <spdlog/spdlog.h>
@@ -140,8 +140,11 @@ public:
   constexpr static int timeoutTimeMs = 60000;
 
   Server(const char* listenAddress, unsigned short port_,
-         unsigned short maxConnections_, const char* password_, std::shared_ptr<prometheus::Registry> promRegistry)
-    : maxConnections(maxConnections_), password(password_), metrics{Metrics::Init(promRegistry)}
+         unsigned short maxConnections_, const char* password_,
+         std::shared_ptr<prometheus::Registry> promRegistry)
+    : maxConnections(maxConnections_)
+    , password(password_)
+    , metrics{ Metrics::Init(promRegistry) }
   {
     if (maxConnections > kMaxPlayers) {
       throw std::runtime_error("Current slots limit is " +
@@ -212,12 +215,14 @@ public:
       const auto guid = idManager->find(userId);
       int clientPing = -1;
       if (guid != RakNetGUID(-1)) {
-        static_assert(std::is_same_v<decltype(clientPing), decltype(peer->GetLastPing(guid))>);
+        static_assert(std::is_same_v<decltype(clientPing),
+                                     decltype(peer->GetLastPing(guid))>);
         clientPing = peer->GetLastPing(guid);
         connectedCount++;
       }
 
-      auto& slotPing = metrics.pingPerSlotGaugeFamily.Add({{"networking_user_id", std::to_string(userId)}});
+      auto& slotPing = metrics.pingPerSlotGaugeFamily.Add(
+        { { "networking_user_id", std::to_string(userId) } });
       if (clientPing != -1) {
         metrics.overallPingSecondsHistogram.Observe(clientPing / 1000.);
         slotPing.Set(clientPing / 1000.);
@@ -262,15 +267,18 @@ private:
 
   std::chrono::time_point<std::chrono::steady_clock> lastMetricsUpdate;
 
-  struct Metrics {
+  struct Metrics
+  {
     std::shared_ptr<prometheus::Registry> registry;
     prometheus::Gauge<double&> connectedClientsGauge;
     prometheus::Histogram<double&> overallPingSecondsHistogram;
-    prometheus::CustomFamily<prometheus::Gauge<double>>& pingPerSlotGaugeFamily;
+    prometheus::CustomFamily<prometheus::Gauge<double>>&
+      pingPerSlotGaugeFamily;
 
-    static constexpr std::chrono::seconds kUpdatePeriod{3};
+    static constexpr std::chrono::seconds kUpdatePeriod{ 3 };
 
-    static Metrics Init(std::shared_ptr<prometheus::Registry> registry) {
+    static Metrics Init(std::shared_ptr<prometheus::Registry> registry)
+    {
       return {
         .registry = registry,
         .connectedClientsGauge{
@@ -281,7 +289,8 @@ private:
         .overallPingSecondsHistogram{
           registry,
           "skymp_server_overall_ping_seconds",
-          "Overview of all connected clients' ping. Converted to seconds to match Prometheus conventions",
+          "Overview of all connected clients' ping. Converted to seconds to "
+          "match Prometheus conventions",
           {},
           {
             0.025,
@@ -297,18 +306,16 @@ private:
             0.400,
           },
         },
-        .pingPerSlotGaugeFamily{
-          registry->Add<prometheus::Gauge<double>>(
-            "skymp_server_ping_per_slot_seconds",
-            "Last known ping for each server slot. Converted to seconds to match Prometheus conventions"
-          )
-        },
+        .pingPerSlotGaugeFamily{ registry->Add<prometheus::Gauge<double>>(
+          "skymp_server_ping_per_slot_seconds",
+          "Last known ping for each server slot. Converted to seconds to "
+          "match Prometheus conventions") },
       };
     }
   };
   Metrics metrics;
 };
-}  // namespace
+} // namespace
 
 std::shared_ptr<Networking::IClient> Networking::CreateClient(
   const char* serverIp, unsigned short serverPort, int timeoutMs,
@@ -319,7 +326,8 @@ std::shared_ptr<Networking::IClient> Networking::CreateClient(
 
 std::shared_ptr<Networking::IServer> Networking::CreateServer(
   const char* listenAddress, unsigned short port,
-  unsigned short maxConnections, const char* password, std::shared_ptr<prometheus::Registry> promRegistry)
+  unsigned short maxConnections, const char* password,
+  std::shared_ptr<prometheus::Registry> promRegistry)
 {
   return std::make_shared<Server>(listenAddress, port, maxConnections,
                                   password, promRegistry);
