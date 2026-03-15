@@ -14,13 +14,9 @@ public:
             typename ThreadType = std::thread>
   static std::shared_ptr<ISaveStorage<T, FormDescType>> Create(
     std::shared_ptr<IDatabase<T, FormDescType>> db,
-<<<<<<< HEAD
     std::shared_ptr<spdlog::logger> logger,
     typename AsyncSaveStorage<T, FormDescType, ThreadType>::ThreadFactory
       threadFactory = {})
-=======
-    std::shared_ptr<spdlog::logger> logger)
->>>>>>> main
   {
     return std::make_shared<AsyncSaveStorage<T, FormDescType, ThreadType>>(
       db, logger, "", std::nullopt, std::move(threadFactory));
