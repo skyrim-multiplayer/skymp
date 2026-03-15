@@ -38,7 +38,6 @@ struct NapiWorkerThreadRegistry
   std::mutex mutex;
   uint64_t nextId = 1;
   std::map<uint64_t, std::function<void()>> bodies;
-  std::string addonPath;
 
   static NapiWorkerThreadRegistry& Instance()
   {
@@ -85,27 +84,8 @@ inline void InitNapiWorkerThread(Napi::Env env, Napi::Object exports)
 
 // Creates a factory function compatible with AsyncSaveStorage::ThreadFactory
 inline std::function<std::unique_ptr<NapiWorkerThread>(std::function<void()>)>
-CreateNapiWorkerThreadFactory(Napi::Env env)
+CreateNapiWorkerThreadFactory(Napi::Env env, const std::string& addonPath)
 {
-  auto& registry = NapiWorkerThreadRegistry::Instance();
-  if (registry.addonPath.empty()) {
-    auto result = NapiHelper::RunScript(
-      env,
-      "(() => {"
-      "  const path = require('path');"
-      "  const cache = require.cache || {};"
-      "  const keys = Object.keys(cache);"
-      "  for (let i = keys.length - 1; i >= 0; i--) {"
-      "    if (keys[i].endsWith('.node')) return keys[i];"
-      "  }"
-      "  return path.resolve(process.cwd(), 'scam_native.node');"
-      "})()");
-    if (result.IsString()) {
-      registry.addonPath = result.As<Napi::String>().Utf8Value();
-    }
-  }
-
-  const auto addonPath = registry.addonPath;
   if (addonPath.empty()) {
     throw std::runtime_error("Failed to resolve addon (.node) file path");
   }
@@ -128,7 +108,9 @@ CreateNapiWorkerThreadFactory(Napi::Env env)
     std::string jsAddonPath = pathJson.dump(); // produces "escaped/path"
 
     std::string js = "(() => {"
-                     "  const { Worker } = require('worker_threads');"
+                     "  const _require = global.require || "
+                     "global.process.mainModule.constructor._load;"
+                     "  const { Worker } = _require('worker_threads');"
                      "  new Worker("
                      "    `const { workerData } = require('worker_threads');"
                      "     const addon = require(workerData.addonPath);"
