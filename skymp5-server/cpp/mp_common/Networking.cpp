@@ -183,7 +183,6 @@ public:
   void Tick(OnPacket onPacket, void* state) override
   {
     while (1) {
-      // count, timing, etc; per guid
       auto packet = peer->Receive();
       if (!packet)
         break;
@@ -270,7 +269,6 @@ private:
 
   struct Metrics {
     std::shared_ptr<prometheus::Registry> registry;
-    prometheus::Summary<double&> packetHandlingSecondsSummary;
     prometheus::Histogram<double&> overallPingSecondsHistogram;
     prometheus::CustomFamily<prometheus::Gauge<double>>& pingPerSlotGaugeFamily;
 
@@ -279,11 +277,6 @@ private:
     static Metrics Init(std::shared_ptr<prometheus::Registry> registry) {
       return {
         .registry = registry,
-        .packetHandlingSecondsSummary{
-          registry,
-          "skymp_server_packet_handling_seconds",
-          "Time server spent handling incoming packets (seconds)",
-        },
         .overallPingSecondsHistogram{
           registry,
           "skymp_server_overall_ping_seconds",
