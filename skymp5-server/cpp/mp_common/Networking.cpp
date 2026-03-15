@@ -229,6 +229,7 @@ public:
         metrics.pingPerSlotGaugeFamily.Remove(&slotPing);
       }
     }
+    metrics.connectedClientsGauge.Set(totalCount);
 
     msg << " | " << totalCount << " connected";
     spdlog::info("{}", std::move(msg).str());
@@ -269,6 +270,7 @@ private:
 
   struct Metrics {
     std::shared_ptr<prometheus::Registry> registry;
+    prometheus::Gauge<double&> connectedClientsGauge;
     prometheus::Histogram<double&> overallPingSecondsHistogram;
     prometheus::CustomFamily<prometheus::Gauge<double>>& pingPerSlotGaugeFamily;
 
@@ -277,6 +279,11 @@ private:
     static Metrics Init(std::shared_ptr<prometheus::Registry> registry) {
       return {
         .registry = registry,
+        .connectedClientsGauge{
+          registry,
+          "skymp_server_connected_clients_count",
+          "Count of currently conneted clients (as seen by ID manager)",
+        },
         .overallPingSecondsHistogram{
           registry,
           "skymp_server_overall_ping_seconds",
