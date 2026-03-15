@@ -198,13 +198,13 @@ public:
     }
 
     const auto currentTime = std::chrono::steady_clock::now();
-    if (currentTime - lastPingUpdate > std::chrono::seconds{3}) {
-      lastPingUpdate = currentTime;
-      UpdatePings();
+    if (currentTime - lastMetricsUpdate > Metrics::kUpdatePeriod) {
+      lastMetricsUpdate = currentTime;
+      UpdateMetrics();
     }
   }
 
-  void UpdatePings()
+  void UpdateMetrics()
   {
     unsigned short connectedCount = 0;
 
@@ -260,7 +260,7 @@ private:
   std::unique_ptr<SocketDescriptor> socket;
   std::unique_ptr<IdManager> idManager;
 
-  std::chrono::time_point<std::chrono::steady_clock> lastPingUpdate;
+  std::chrono::time_point<std::chrono::steady_clock> lastMetricsUpdate;
 
   struct Metrics {
     std::shared_ptr<prometheus::Registry> registry;
