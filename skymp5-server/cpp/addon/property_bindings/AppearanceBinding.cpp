@@ -1,7 +1,6 @@
 #include "AppearanceBinding.h"
 #include "NapiHelper.h"
 #include "UpdateAppearanceMessage.h"
-#include "ScampServer.h"
 
 Napi::Value AppearanceBinding::Get(Napi::Env env, ScampServer& scampServer,
                                    uint32_t formId)

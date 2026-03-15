@@ -1,5 +1,4 @@
 #include "PosBinding.h"
-#include "ScampServer.h"
 
 Napi::Value PosBinding::Get(Napi::Env env, ScampServer& scampServer,
                             uint32_t formId)

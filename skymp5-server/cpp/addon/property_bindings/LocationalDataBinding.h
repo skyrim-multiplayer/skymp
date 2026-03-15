@@ -1,9 +1,6 @@
 #pragma once
 #include "PropertyBinding.h"
 
-class MpActor;
-class LocationalData;
-
 class LocationalDataBinding : public PropertyBinding
 {
 public:

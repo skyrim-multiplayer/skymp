@@ -1,5 +1,4 @@
 #pragma once
-
 #include "PropertyBinding.h"
 
 class WorldOrCellDescBinding : public PropertyBinding

@@ -1,6 +1,5 @@
 #include "LocationalDataBinding.h"
 #include "NapiHelper.h"
-#include "ScampServer.h"
 
 Napi::Value LocationalDataBinding::Get(Napi::Env env, ScampServer& scampServer,
                                        uint32_t formId)

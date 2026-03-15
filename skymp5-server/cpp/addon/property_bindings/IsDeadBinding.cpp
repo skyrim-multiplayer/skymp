@@ -1,5 +1,4 @@
 #include "IsDeadBinding.h"
-#include "ScampServer.h"
 
 Napi::Value IsDeadBinding::Get(Napi::Env env, ScampServer& scampServer,
                                uint32_t formId)

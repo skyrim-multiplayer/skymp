@@ -1,6 +1,5 @@
 #include "EquipmentBinding.h"
 #include "NapiHelper.h"
-#include "ScampServer.h"
 
 Napi::Value EquipmentBinding::Get(Napi::Env env, ScampServer& scampServer,
                                   uint32_t formId)

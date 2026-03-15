@@ -1,6 +1,5 @@
 #include "CustomPropertyBinding.h"
 #include "NapiHelper.h"
-#include "ScampServer.h"
 
 namespace {
 auto EnsurePropertyExists(const GamemodeApi::State& state,

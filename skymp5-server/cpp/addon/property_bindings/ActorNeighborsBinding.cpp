@@ -1,7 +1,4 @@
 #include "ActorNeighborsBinding.h"
-#include "ScampServer.h"
-#include "MpActor.h"
-#include "MpObjectReference.h"
 
 Napi::Value ActorNeighborsBinding::Get(Napi::Env env, ScampServer& scampServer,
                                        uint32_t formId)
