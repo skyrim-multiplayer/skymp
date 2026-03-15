@@ -12,7 +12,6 @@
 #include <slikenet/MessageIdentifiers.h>
 #include <slikenet/types.h>
 #include <spdlog/spdlog.h>
-#include <sstream>
 
 #include "Exceptions.h"
 #include "IdManager.h"
@@ -207,9 +206,7 @@ public:
 
   void UpdatePings()
   {
-    std::stringstream msg;
-    msg << "Client pings:";
-    unsigned short totalCount = 0;
+    unsigned short connectedCount = 0;
 
     for (Networking::UserId userId = 0; userId < maxConnections; ++userId) {
       const auto guid = idManager->find(userId);
@@ -217,8 +214,7 @@ public:
       if (guid != RakNetGUID(-1)) {
         static_assert(std::is_same_v<decltype(clientPing), decltype(peer->GetLastPing(guid))>);
         clientPing = peer->GetLastPing(guid);
-        totalCount++;
-        msg << ' ' << userId << ':' << clientPing;
+        connectedCount++;
       }
 
       auto& slotPing = metrics.pingPerSlotGaugeFamily.Add({{"networking_user_id", std::to_string(userId)}});
@@ -229,10 +225,8 @@ public:
         metrics.pingPerSlotGaugeFamily.Remove(&slotPing);
       }
     }
-    metrics.connectedClientsGauge.Set(totalCount);
 
-    msg << " | " << totalCount << " connected";
-    spdlog::info("{}", std::move(msg).str());
+    metrics.connectedClientsGauge.Set(connectedCount);
   }
 
   std::string GetIp(Networking::UserId userId) const override
@@ -274,7 +268,7 @@ private:
     prometheus::Histogram<double&> overallPingSecondsHistogram;
     prometheus::CustomFamily<prometheus::Gauge<double>>& pingPerSlotGaugeFamily;
 
-    static constexpr unsigned short kWorstPingEntries = 30;
+    static constexpr std::chrono::seconds kUpdatePeriod{3};
 
     static Metrics Init(std::shared_ptr<prometheus::Registry> registry) {
       return {
