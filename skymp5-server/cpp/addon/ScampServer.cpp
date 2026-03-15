@@ -83,6 +83,7 @@ Napi::Object ScampServer::Init(Napi::Env env, Napi::Object exports)
     env, "ScampServer",
     { InstanceMethod("_setSelf", &ScampServer::_SetSelf),
       InstanceMethod("attachSaveStorage", &ScampServer::AttachSaveStorage),
+      InstanceMethod("prepareForShutdown", &ScampServer::PrepareForShutdown),
       InstanceMethod("tick", &ScampServer::Tick),
       InstanceMethod("on", &ScampServer::On),
       InstanceMethod("createActor", &ScampServer::CreateActor),
@@ -485,9 +486,18 @@ Napi::Value ScampServer::AttachSaveStorage(const Napi::CallbackInfo& info)
     auto saveStorage = Viet::SaveStorageFactory::Create<MpChangeForm, FormDesc,
                                                         NapiWorkerThread>(
       db, logger, threadFactory);
+    this->saveStorage = saveStorage;
     partOne->AttachSaveStorage(saveStorage);
   } catch (std::exception& e) {
     throw Napi::Error::New(info.Env(), (std::string)e.what());
+  }
+  return info.Env().Undefined();
+}
+
+Napi::Value ScampServer::PrepareForShutdown(const Napi::CallbackInfo& info)
+{
+  if (saveStorage) {
+    saveStorage->PrepareForShutdown();
   }
   return info.Env().Undefined();
 }

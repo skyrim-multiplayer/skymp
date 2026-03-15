@@ -25,6 +25,7 @@ public:
 
   // public API methods
   Napi::Value AttachSaveStorage(const Napi::CallbackInfo& info);
+  Napi::Value PrepareForShutdown(const Napi::CallbackInfo& info);
   Napi::Value Tick(const Napi::CallbackInfo& info);
   Napi::Value On(const Napi::CallbackInfo& info);
   Napi::Value CreateActor(const Napi::CallbackInfo& info);
@@ -106,6 +107,7 @@ private:
   Napi::Reference<Napi::Value> parsedServerSettings;
 
   std::shared_ptr<LocalizationProvider> localizationProvider;
+  std::shared_ptr<Viet::ISaveStorage<MpChangeForm, FormDesc>> saveStorage;
 
   static Napi::FunctionReference constructor;
 };

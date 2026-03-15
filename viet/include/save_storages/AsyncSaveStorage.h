@@ -176,6 +176,8 @@ public:
 
   const std::string& GetName() const override { return pImpl->name; }
 
+  void PrepareForShutdown() override { pImpl->destroyed = true; }
+
 private:
   struct Impl
   {

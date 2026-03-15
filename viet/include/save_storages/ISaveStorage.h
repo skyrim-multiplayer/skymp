@@ -30,6 +30,10 @@ public:
     std::vector<std::optional<T>>& changeForms) = 0;
 
   virtual const std::string& GetName() const = 0;
+
+  // Signal background threads to stop. Called before process exit to prevent
+  // deadlocks when Node.js tries to join Worker threads during shutdown.
+  virtual void PrepareForShutdown() {}
 };
 
 namespace ISaveStorageUtils {

@@ -1,6 +1,7 @@
 #pragma once
 #include "NapiHelper.h"
 #include <atomic>
+#include <chrono>
 #include <condition_variable>
 #include <functional>
 #include <map>
@@ -18,7 +19,11 @@ public:
   void join()
   {
     std::unique_lock<std::mutex> lock(mutex_);
-    cv_.wait(lock, [this] { return finished_.load(); });
+    // Use timed wait: when process.exit() kills the Worker thread,
+    // NotifyThreadFunctionBodyCompleted() never fires and an indefinite
+    // wait would hang the process forever during shutdown.
+    cv_.wait_for(lock, std::chrono::seconds(5),
+                 [this] { return finished_.load(); });
   }
 
   void NotifyThreadFunctionBodyCompleted()
@@ -111,7 +116,7 @@ CreateNapiWorkerThreadFactory(Napi::Env env, const std::string& addonPath)
                      "  const _require = global.require || "
                      "global.process.mainModule.constructor._load;"
                      "  const { Worker } = _require('worker_threads');"
-                     "  new Worker("
+                     "  const w = new Worker("
                      "    `const { workerData } = require('worker_threads');"
                      "     const addon = require(workerData.addonPath);"
                      "     addon._executeWorkerBody(workerData.bodyId);`,"
@@ -119,6 +124,7 @@ CreateNapiWorkerThreadFactory(Napi::Env env, const std::string& addonPath)
       std::to_string(bodyId) + ", addonPath: " + jsAddonPath +
       " } }"
       "  );"
+      "  w.unref();"
       "})()";
 
     NapiHelper::RunScript(env, js);
