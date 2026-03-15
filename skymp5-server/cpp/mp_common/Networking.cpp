@@ -202,6 +202,17 @@ public:
     return ip;
   }
 
+  void CloseConnection(Networking::UserId userId) override
+  {
+    const auto guid = idManager->find(userId);
+    if (guid == RakNetGUID(-1)) {
+      throw std::runtime_error("User with id " + std::to_string(userId) +
+                               " doesn't exist");
+    }
+
+    peer->CloseConnection(guid, true);
+  }
+
 private:
   const std::string password;
   std::unique_ptr<RakPeerInterface> peer;

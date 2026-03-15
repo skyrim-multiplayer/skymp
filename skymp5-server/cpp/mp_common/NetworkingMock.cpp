@@ -156,3 +156,11 @@ std::string Networking::MockServer::GetIp(UserId userId) const
 {
   return "";
 }
+
+void Networking::MockServer::CloseConnection(UserId userId)
+{
+  pImpl->packets.push_back(
+    { userId,
+      std::unique_ptr<NetworkingMock::Packet>(new NetworkingMock::Packet(
+        { Networking::PacketType::ServerSideUserDisconnect })) });
+}

@@ -43,10 +43,12 @@ export interface ScampServer {
   createBot(): Bot;
   getUserByActor(formId: number): number;
   getUserIp(userId: number): string;
+  kick(userId: number): void;
 
   executeJavaScriptOnChakra(src: string): void;
   clear(): void;
   writeLogs(logLevel: string, message: string): void;
+  getPrometheusMetrics(): string;
 }
 
 export const createScampServer = (serverSettings: Record<string, unknown>) => {
