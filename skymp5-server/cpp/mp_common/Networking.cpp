@@ -9,7 +9,6 @@
 #include <prometheus/summary.h>
 #include <prometheus/histogram.h>
 #include <prometheus/gauge.h>
-#include <queue>
 #include <slikenet/MessageIdentifiers.h>
 #include <slikenet/types.h>
 #include <spdlog/spdlog.h>
@@ -213,8 +212,6 @@ public:
     msg << "Client pings:";
     unsigned short totalCount = 0;
 
-    // std::priority_queue<std::pair<int, unsigned short>> worstPingUsers;
-
     for (Networking::UserId userId = 0; userId < maxConnections; ++userId) {
       const auto guid = idManager->find(userId);
       int clientPing = -1;
@@ -233,10 +230,6 @@ public:
         metrics.pingPerSlotGaugeFamily.Remove(&slotPing);
       }
     }
-
-    // for (unsigned short i = 0; i < Metrics::kWorstPingEntries; ++i) {
-    //   worstPingUsers.top();
-    // }
 
     msg << " | " << totalCount << " connected";
     spdlog::info("{}", std::move(msg).str());
@@ -279,7 +272,6 @@ private:
     std::shared_ptr<prometheus::Registry> registry;
     prometheus::Summary<double&> packetHandlingSecondsSummary;
     prometheus::Histogram<double&> overallPingSecondsHistogram;
-    // prometheus::custom_family_t<prometheus::Gauge<double&>> pingPerSlotGaugeFamily;
     prometheus::CustomFamily<prometheus::Gauge<double>>& pingPerSlotGaugeFamily;
 
     static constexpr unsigned short kWorstPingEntries = 30;
@@ -291,7 +283,6 @@ private:
           registry,
           "skymp_server_packet_handling_seconds",
           "Time server spent handling incoming packets (seconds)",
-          // TODO: change to microseconds to avoid double?
         },
         .overallPingSecondsHistogram{
           registry,
@@ -313,15 +304,6 @@ private:
           },
         },
         .pingPerSlotGaugeFamily{
-          // registry,
-          // "skymp_server_ping_per_slot_seconds",
-          // "Last known ping for each server slot. Converted to seconds to match Prometheus conventions",
-
-          // prometheus::Builder<prometheus::Gauge<double>>{}
-          //   .Name("skymp_server_ping_per_slot_seconds")
-          //   .Help("Last known ping for each server slot. Converted to seconds to match Prometheus conventions")
-          //   .Register(*registry)
-
           registry->Add<prometheus::Gauge<double>>(
             "skymp_server_ping_per_slot_seconds",
             "Last known ping for each server slot. Converted to seconds to match Prometheus conventions"
@@ -341,7 +323,6 @@ std::shared_ptr<Networking::IClient> Networking::CreateClient(
   return std::make_shared<Client>(serverIp, serverPort, timeoutMs, password);
 }
 
-// add registry
 std::shared_ptr<Networking::IServer> Networking::CreateServer(
   const char* listenAddress, unsigned short port,
   unsigned short maxConnections, const char* password, std::shared_ptr<prometheus::Registry> promRegistry)
