@@ -677,22 +677,6 @@ FormCallbacks PartOne::CreateFormCallbacks()
       SLNet::BitStream stream;
       GetMessageSerializerInstance().Serialize(message, stream);
 
-      bool isOffline = st->UserByActor(actor) == Networking::InvalidUserId;
-
-      // Only send to hoster if actor is offline (no active user)
-      // This fixes December 2023 Update "invisible chat" bug
-      // TODO: make send-to-hoster mechanism explicit, instead of implicitly
-      // redirecting packets
-      if (isOffline) {
-        auto hosterIterator = worldState.hosters.find(actor->GetFormId());
-        if (hosterIterator != worldState.hosters.end()) {
-          auto& hosterActor =
-            worldState.GetFormAt<MpActor>(hosterIterator->second);
-          actor = &hosterActor;
-          // Send messages such as Teleport, ChangeValues to our host
-        }
-      }
-
       auto targetuserId = st->UserByActor(actor);
       if (targetuserId != Networking::InvalidUserId &&
           st->disconnectingUserId != targetuserId) {
@@ -749,7 +733,12 @@ FormCallbacks PartOne::CreateFormCallbacks()
       }
     };
 
-  return { subscribe, unsubscribe, sendToUser, sendToUserDeferred };
+  FormCallbacks::GetUserIdFn getUserId =
+    [this, st](MpActor* actor) -> Networking::UserId {
+    return st->UserByActor(actor);
+  };
+
+  return { subscribe, unsubscribe, sendToUser, sendToUserDeferred, getUserId };
 }
 
 ActionListener& PartOne::GetActionListener()
