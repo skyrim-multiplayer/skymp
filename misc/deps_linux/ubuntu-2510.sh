@@ -8,7 +8,7 @@ set -e
 
 if [[ "$1" == "--get-image-uri" ]]; then
   # This is the image that we'll use in our CI for testing build for this distro
-  echo 'ubuntu:noble'
+  echo 'ubuntu:questing'
   exit
 fi
 
@@ -49,8 +49,8 @@ addpackage() {
 # These are some basic packages that are essential for C++ build config that we're using
 addpackage build-essential
 addpackage cmake
-addpackage clang-15
-addpackage clang-format-15  # you will need it to pass clang-format check
+addpackage clang-20
+addpackage clang-format-20  # you will need it to pass clang-format check
 addpackage ninja-build  # would likely build with the regular make, but I haven't tried
 # gdb is also recommended for debugging but isn't required
 # clangd is recommended if you use VS Code / neovim
