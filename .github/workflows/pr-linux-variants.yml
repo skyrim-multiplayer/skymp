@@ -22,13 +22,11 @@ jobs:
             - ubuntu-vcpkg-deps
 
             # Distros that our contributors are likely to run
-            - ubuntu-2204
             - ubuntu-2404
-            - ubuntu-2410  # latest non-LTS
-            - debian-12
+            - ubuntu-2510  # latest non-LTS
             - archlinux
 
-            # TODO(#2280): add Fedora
+            # TODO(#2280): return Debian, add Fedora
             # TODO(#2280): test gcc build, test build w/o ninja
 
         runs-on: ubuntu-latest
