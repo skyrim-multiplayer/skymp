@@ -15,15 +15,19 @@ fi
 
 export VCPKG_DISABLE_METRICS=1
 
-if which clang++ > /dev/null 2>&1; then
-  export CC=/usr/bin/clang
-  export CPP=/usr/bin/clang-cpp
-  export CXX=/usr/bin/clang++
-else
-  export CC=/usr/bin/clang-15
-  export CPP=/usr/bin/clang-cpp-15
-  export CXX=/usr/bin/clang++-15
-fi
+try_clang() {
+  suffix="$1"
+  if which clang++$suffix > /dev/null 2>&1; then
+    export CC="/usr/bin/clang$suffix"
+    export CPP="/usr/bin/clang-cpp$suffix"
+    export CXX="/usr/bin/clang++$suffix"
+    echo "Using $CXX"
+    return 0
+  fi
+  return 1
+}
+
+try_clang -20 || try_clang -15 || try_clang "" || (eecho "Could not find clang!" && exit 1)
 
 export CMAKE_C_COMPILER="$CC"
 export CMAKE_CXX_COMPILER="$CXX"
