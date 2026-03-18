@@ -25,6 +25,7 @@ public:
     const IterateCallback& cb,
     const std::optional<std::vector<FormDescType>>& filter) = 0;
   virtual uint32_t GetNumFinishedUpserts() const = 0;
+  virtual uint32_t GetNumFinishedIterates() const = 0;
 
   // Calls all callbacks that are ready to be called.
   // Basic exception guarantee: if a callback throws, it'll be deleted.

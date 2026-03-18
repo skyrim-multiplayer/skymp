@@ -146,6 +146,12 @@ public:
   const std::string& GetName() const override { return pImpl->name; }
 
 private:
+  enum class CallbackGarbageMark
+  {
+    None,
+    CanBeGarbageCollected,
+  };
+
   struct TickCallbacksParams
   {
     struct
@@ -219,12 +225,6 @@ private:
     }
   }
 
-  enum class CallbackGarbageMark
-  {
-    None,
-    CanBeGarbageCollected,
-  };
-
   struct Impl
   {
     struct UpsertTask
@@ -270,7 +270,8 @@ private:
 
     struct
     {
-      std::vector<std::function<void()>> iterateCallbacksToFire;
+      std::vector<std::pair<CallbackGarbageMark, std::function<void()>>>
+        iterateCallbacksToFire;
       std::mutex m;
     } share5;
 
@@ -382,7 +383,8 @@ private:
       {
         std::lock_guard l2(pImpl->share5.m);
         for (auto& callback : callbacksToFire) {
-          pImpl->share5.iterateCallbacksToFire.push_back(callback);
+          pImpl->share5.iterateCallbacksToFire.push_back(
+            { CallbackGarbageMark::None, callback });
         }
       }
 
