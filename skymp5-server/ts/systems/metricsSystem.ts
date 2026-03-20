@@ -51,8 +51,6 @@ export const tickDurationSummary = new promClient.Histogram({
   buckets: [0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1],
 });
 
-// const tickCounter = new promClient.Summary
-
 export const getAggregatedMetrics = async (scampServer?: any): Promise<string> => {
   const tsStart = performance.now();
   let metrics = '# === JS metrics begin ===\n' + await register.metrics() + '\n';
@@ -67,7 +65,7 @@ export const getAggregatedMetrics = async (scampServer?: any): Promise<string> =
   }
   const tsCppCollected = performance.now();
 
-  console.log('Metrics collection timings:', tsJsCollected - tsStart, tsCppCollected - tsJsCollected);
+  console.log('Metrics collection timings (ms):', Math.ceil(tsJsCollected - tsStart), Math.ceil(tsCppCollected - tsJsCollected));
 
   return metrics;
 };
