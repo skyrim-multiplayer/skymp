@@ -51,7 +51,7 @@ export const tickDurationHistogram = new promClient.Histogram({
 });
 
 export const tickDurationSummary = new promClient.Summary({
-  name: "skymp_tick_duration_seconds",
+  name: "skymp_tick_duration_summary_seconds",
   help: "Duration of tick handling in seconds",
   percentiles: [0.5, 0.9, 0.95, 0.99, 0.995, 0.999],
 });
