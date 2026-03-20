@@ -44,11 +44,16 @@ export const cppMetricsErrorsCounter = new promClient.Counter({
   help: 'Total number of errors during C++ metrics collection',
 });
 
-export const tickDurationSummary = new promClient.Histogram({
+export const tickDurationHistogram = new promClient.Histogram({
   name: "skymp_tick_duration_seconds",
   help: "Duration of tick handling in seconds",
-  labelNames: ["rpcClassName"] as const,
   buckets: [0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1],
+});
+
+export const tickDurationSummary = new promClient.Summary({
+  name: "skymp_tick_duration_seconds",
+  help: "Duration of tick handling in seconds",
+  percentiles: [0.5, 0.9, 0.95, 0.99, 0.995, 0.999],
 });
 
 export const getAggregatedMetrics = async (scampServer?: any): Promise<string> => {
