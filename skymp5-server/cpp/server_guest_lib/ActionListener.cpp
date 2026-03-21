@@ -234,6 +234,7 @@ void ActionListener::OnUpdateEquipment(const RawMessageData& rawMsgData,
   }
 
   bool isAllowed = true;
+  const auto actorFormId = actor->GetFormId();
   const Equipment& data = msg.data;
   const Inventory& equipmentInv = data.inv;
   uint32_t leftSpell = data.leftSpell.value_or(0);
@@ -242,39 +243,40 @@ void ActionListener::OnUpdateEquipment(const RawMessageData& rawMsgData,
   uint32_t instantSpell = data.instantSpell.value_or(0);
 
   if (leftSpell > 0 && !actor->IsSpellLearned(leftSpell)) {
-    spdlog::debug(
-      "OnUpdateEquipment result false. Spell with id ({}) not learned",
-      leftSpell);
+    spdlog::warn("ActionListener::OnUpdateEquipment {:x} - rejected equipment "
+                 "update: spell {:x} is not learned",
+                 actorFormId, leftSpell);
     isAllowed = false;
   }
 
   if (rightSpell > 0 && !actor->IsSpellLearned(rightSpell)) {
-    spdlog::debug(
-      "OnUpdateEquipment result false. Spell with id ({}) not learned",
-      rightSpell);
+    spdlog::warn("ActionListener::OnUpdateEquipment {:x} - rejected equipment "
+                 "update: spell {:x} is not learned",
+                 actorFormId, rightSpell);
     isAllowed = false;
   }
 
   if (voiceSpell > 0 && !actor->IsSpellLearned(voiceSpell)) {
-    spdlog::debug(
-      "OnUpdateEquipment result false. Spell with id ({}) not learned",
-      voiceSpell);
+    spdlog::warn("ActionListener::OnUpdateEquipment {:x} - rejected equipment "
+                 "update: spell {:x} is not learned",
+                 actorFormId, voiceSpell);
     isAllowed = false;
   }
 
   if (instantSpell > 0 && !actor->IsSpellLearned(instantSpell)) {
-    spdlog::debug(
-      "OnUpdateEquipment result false. Spell with id ({}) not learned",
-      instantSpell);
+    spdlog::warn("ActionListener::OnUpdateEquipment {:x} - rejected equipment "
+                 "update: spell {:x} is not learned",
+                 actorFormId, instantSpell);
     isAllowed = false;
   }
 
   const auto& inventory = actor->GetInventory();
   for (auto& entry : equipmentInv.entries) {
     if (!inventory.HasItem(entry.baseId)) {
-      spdlog::debug("OnUpdateEquipment result false. The inventory does not "
-                    "contain item with id {:x}",
-                    entry.baseId);
+      spdlog::warn(
+        "ActionListener::OnUpdateEquipment {:x} - rejected equipment "
+        "update: inventory does not contain item {:x}",
+        actorFormId, entry.baseId);
       isAllowed = false;
       break;
     }
@@ -283,6 +285,8 @@ void ActionListener::OnUpdateEquipment(const RawMessageData& rawMsgData,
   if (isAllowed) {
     SendToNeighbours(msg.idx, rawMsgData, true);
     actor->SetEquipment(data);
+  } else {
+    actor->SendInventoryUpdate();
   }
 
   UpdateEquipmentAttemptEvent updateEquipmentAttemptEvent(actor, data,
