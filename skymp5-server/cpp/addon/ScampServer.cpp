@@ -7,6 +7,7 @@
 #include "GamemodeApi.h"
 #include "MpChangeForms.h"
 #include "NapiHelper.h"
+#include "NapiWorkerThread.h"
 #include "NetworkingCombined.h"
 #include "PacketHistoryWrapper.h"
 #include "PapyrusUtils.h"
@@ -83,6 +84,7 @@ Napi::Object ScampServer::Init(Napi::Env env, Napi::Object exports)
     env, "ScampServer",
     { InstanceMethod("_setSelf", &ScampServer::_SetSelf),
       InstanceMethod("attachSaveStorage", &ScampServer::AttachSaveStorage),
+      InstanceMethod("prepareForShutdown", &ScampServer::PrepareForShutdown),
       InstanceMethod("tick", &ScampServer::Tick),
       InstanceMethod("on", &ScampServer::On),
       InstanceMethod("createActor", &ScampServer::CreateActor),
@@ -146,6 +148,9 @@ Napi::Object ScampServer::Init(Napi::Env env, Napi::Object exports)
   exports.Set("ScampServer", func);
 
   exports.Set("writeLogs", Napi::Function::New(env, WriteLogs));
+
+  InitNapiWorkerThread(env, exports);
+
   return exports;
 }
 
@@ -456,11 +461,46 @@ Napi::Value ScampServer::AttachSaveStorage(const Napi::CallbackInfo& info)
 {
   try {
     auto db = DatabaseFactory::Create(serverSettings, logger);
-    auto saveStorage =
-      Viet::SaveStorageFactory::Create<MpChangeForm, FormDesc>(db, logger);
+
+    // Resolve the addon (.node) path from self via Module._cache
+    // self holds a reference to the JS ScampServer instance set by _setSelf()
+    auto addonPathResult = NapiHelper::RunScript(
+      info.Env(),
+      "((self) => {"
+      "  const _require = global.require || "
+      "global.process.mainModule.constructor._load;"
+      "  const Module = _require('module');"
+      "  const ctor = self.constructor;"
+      "  const cache = Module._cache || {};"
+      "  for (const key of Object.keys(cache)) {"
+      "    const mod = cache[key];"
+      "    if (mod && mod.exports && mod.exports.ScampServer === ctor) {"
+      "      return key;"
+      "    }"
+      "  }"
+      "  return '';"
+      "})");
+    auto addonPath = addonPathResult.As<Napi::Function>()
+                       .Call({ self.Value() })
+                       .As<Napi::String>()
+                       .Utf8Value();
+
+    auto threadFactory = CreateNapiWorkerThreadFactory(info.Env(), addonPath);
+    auto saveStorage = Viet::SaveStorageFactory::Create<MpChangeForm, FormDesc,
+                                                        NapiWorkerThread>(
+      db, logger, threadFactory);
+    this->saveStorage = saveStorage;
     partOne->AttachSaveStorage(saveStorage);
   } catch (std::exception& e) {
     throw Napi::Error::New(info.Env(), (std::string)e.what());
+  }
+  return info.Env().Undefined();
+}
+
+Napi::Value ScampServer::PrepareForShutdown(const Napi::CallbackInfo& info)
+{
+  if (saveStorage) {
+    saveStorage->PrepareForShutdown();
   }
   return info.Env().Undefined();
 }

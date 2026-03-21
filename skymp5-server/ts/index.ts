@@ -307,6 +307,12 @@ const main = async () => {
     process.exit(-1);
   }
 
+  // Signal the save storage worker thread to stop before Node.js
+  // starts joining Worker threads during process.exit() shutdown.
+  // Without this, process.exit() deadlocks waiting for the Worker
+  // running SaverThreadMain's infinite C++ loop.
+  process.on('exit', () => server.prepareForShutdown());
+
   setupGamemode(server, gamemodePath);
 };
 

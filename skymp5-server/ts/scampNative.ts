@@ -18,6 +18,7 @@ export interface ScampServer {
     handler: (userId: number, content: string) => void
   ): void;
   attachSaveStorage(): void;
+  prepareForShutdown(): void;
   tick(): void;
 
   createActor(
