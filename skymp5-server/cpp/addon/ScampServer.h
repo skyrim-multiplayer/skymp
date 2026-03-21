@@ -1,14 +1,20 @@
 #pragma once
+
 #include "GamemodeApi.h"
 #include "LocalizationProvider.h"
-#include "Networking.h"
 #include "NetworkingMock.h"
 #include "PartOne.h"
 #include "ScampServerListener.h"
+
 #include <memory>
+
 #include <napi.h>
 #include <nlohmann/json.hpp>
 #include <spdlog/spdlog.h>
+
+namespace prometheus {
+class Registry;
+}
 
 class ScampServer : public Napi::ObjectWrap<ScampServer>
 {
@@ -104,6 +110,7 @@ private:
   nlohmann::json serverSettings;
   GamemodeApi::State gamemodeApiState;
   Napi::Reference<Napi::Value> parsedServerSettings;
+  std::shared_ptr<prometheus::Registry> promRegistry;
 
   std::shared_ptr<LocalizationProvider> localizationProvider;
 

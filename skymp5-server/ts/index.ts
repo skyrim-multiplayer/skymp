@@ -31,7 +31,7 @@ import * as os from "os";
 
 import * as manifestGen from "./manifestGen";
 import { createScampServer } from "./scampNative";
-import { MetricsSystem } from "./systems/metricsSystem";
+import { MetricsSystem, tickDurationHistogram, tickDurationSummary } from "./systems/metricsSystem";
 
 const gamemodeCache = new Map<string, string>();
 
@@ -220,11 +220,16 @@ const main = async () => {
 
   (async () => {
     while (1) {
+      const endTimerHistogram = tickDurationHistogram.startTimer();
+      const endTimerSummary = tickDurationSummary.startTimer();
       try {
         server.tick();
         await new Promise((r) => setTimeout(r, 1));
       } catch (e) {
         console.error(`in server.tick:\n${e.stack}`);
+      } finally {
+        endTimerHistogram();
+        endTimerSummary();
       }
     }
   })();

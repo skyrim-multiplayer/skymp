@@ -1,0 +1,13 @@
+{
+  "name": "prometheus-cpp-lite",
+  "version": "2.0",
+  "description": "C++ header-only prometheus client library for quickly and easily adding metric (and profiling) functionality to C++ projects.",
+  "homepage": "https://github.com/biaks/prometheus-cpp-lite",
+  "license": "MIT",
+  "dependencies": [
+    {
+      "name": "vcpkg-cmake",
+      "host": true
+    }
+  ]
+}
