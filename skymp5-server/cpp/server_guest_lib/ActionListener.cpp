@@ -51,7 +51,8 @@ ActionListener::ActionListener(PartOne& partOne_)
   On(partOne.onCustomEventMessage, &ActionListener::OnCustomEvent);
   On(partOne.onChangeValuesMessage, &ActionListener::OnChangeValues);
   On(partOne.onHitMessage, &ActionListener::OnHit);
-  On(partOne.onUpdateAnimVariablesMessage, &ActionListener::OnUpdateAnimVariables);
+  On(partOne.onUpdateAnimVariablesMessage,
+     &ActionListener::OnUpdateAnimVariables);
   On(partOne.onSpellCastMessage, &ActionListener::OnSpellCast);
   On(partOne.onUnknownMessage, &ActionListener::OnUnknown);
 }
@@ -130,11 +131,12 @@ MpActor* ActionListener::SendToNeighbours(uint32_t idx,
                           rawMsgData.unparsedLength, reliable);
 }
 
-void ActionListener::OnCustomPacket(const MessageEvent<CustomPacketMessage>& event)
+void ActionListener::OnCustomPacket(
+  const MessageEvent<CustomPacketMessage>& event)
 {
   const RawMessageData& rawMsgData = event.rawMsgData;
   const CustomPacketMessage& msg = event.message;
-  
+
   simdjson::dom::parser parser;
   auto content = parser.parse(msg.contentJsonDump).value();
   for (auto& listener : partOne.GetListeners()) {
@@ -142,11 +144,12 @@ void ActionListener::OnCustomPacket(const MessageEvent<CustomPacketMessage>& eve
   }
 }
 
-void ActionListener::OnUpdateMovement(const MessageEvent<UpdateMovementMessage>& event)
+void ActionListener::OnUpdateMovement(
+  const MessageEvent<UpdateMovementMessage>& event)
 {
   const RawMessageData& rawMsgData = event.rawMsgData;
   const UpdateMovementMessage& msg = event.message;
-  
+
   auto actor = SendToNeighbours(msg.idx, rawMsgData);
   if (actor) {
     auto& espmFiles = actor->GetParent()->espmFiles;
@@ -201,11 +204,12 @@ void ActionListener::OnUpdateMovement(const MessageEvent<UpdateMovementMessage>&
   }
 }
 
-void ActionListener::OnUpdateAnimation(const MessageEvent<UpdateAnimationMessage>& event)
+void ActionListener::OnUpdateAnimation(
+  const MessageEvent<UpdateAnimationMessage>& event)
 {
   const RawMessageData& rawMsgData = event.rawMsgData;
   const UpdateAnimationMessage& msg = event.message;
-  
+
   MpActor* myActor = partOne.serverState.ActorByUser(rawMsgData.userId);
   if (!myActor) {
     return;
@@ -226,11 +230,12 @@ void ActionListener::OnUpdateAnimation(const MessageEvent<UpdateAnimationMessage
   targetActor->SetLastAnimEvent(msg.data);
 }
 
-void ActionListener::OnUpdateAppearance(const MessageEvent<UpdateAppearanceMessage>& event)
+void ActionListener::OnUpdateAppearance(
+  const MessageEvent<UpdateAppearanceMessage>& event)
 {
   const RawMessageData& rawMsgData = event.rawMsgData;
   const UpdateAppearanceMessage& msg = event.message;
-  
+
   MpActor* actor = partOne.serverState.ActorByUser(rawMsgData.userId);
   if (!actor || !msg.data.has_value()) {
     return;
@@ -249,17 +254,19 @@ void ActionListener::OnUpdateAppearance(const MessageEvent<UpdateAppearanceMessa
   updateAppearanceAttemptEvent.Fire(actor->GetParent());
 }
 
-void ActionListener::OnUpdateEquipment(const MessageEvent<UpdateEquipmentMessage>& event)
+void ActionListener::OnUpdateEquipment(
+  const MessageEvent<UpdateEquipmentMessage>& event)
 {
   const RawMessageData& rawMsgData = event.rawMsgData;
   const UpdateEquipmentMessage& msg = event.message;
-  
+
   MpActor* actor = partOne.serverState.ActorByUser(rawMsgData.userId);
   if (!actor) {
     return;
   }
 
   bool isAllowed = true;
+  const auto actorFormId = actor->GetFormId();
   const Equipment& data = msg.data;
   const Inventory& equipmentInv = data.inv;
   uint32_t leftSpell = data.leftSpell.value_or(0);
@@ -267,48 +274,194 @@ void ActionListener::OnUpdateEquipment(const MessageEvent<UpdateEquipmentMessage
   uint32_t voiceSpell = data.voiceSpell.value_or(0);
   uint32_t instantSpell = data.instantSpell.value_or(0);
 
+  enum class SpellSlotId : size_t
+  {
+    Left = 0,
+    Right,
+    Voice,
+    Instant,
+    kCount
+  };
+
+  std::array<uint32_t, static_cast<size_t>(SpellSlotId::kCount)>
+    spellIdsToRemove = {};
+
   if (leftSpell > 0 && !actor->IsSpellLearned(leftSpell)) {
-    spdlog::debug(
-      "OnUpdateEquipment result false. Spell with id ({}) not learned",
-      leftSpell);
+    spdlog::warn("ActionListener::OnUpdateEquipment {:x} - rejected equipment "
+                 "update: spell {:x} is not learned",
+                 actorFormId, leftSpell);
     isAllowed = false;
+    spellIdsToRemove[static_cast<size_t>(SpellSlotId::Left)] = leftSpell;
   }
 
   if (rightSpell > 0 && !actor->IsSpellLearned(rightSpell)) {
-    spdlog::debug(
-      "OnUpdateEquipment result false. Spell with id ({}) not learned",
-      rightSpell);
+    spdlog::warn("ActionListener::OnUpdateEquipment {:x} - rejected equipment "
+                 "update: spell {:x} is not learned",
+                 actorFormId, rightSpell);
     isAllowed = false;
+    spellIdsToRemove[static_cast<size_t>(SpellSlotId::Right)] = rightSpell;
   }
 
   if (voiceSpell > 0 && !actor->IsSpellLearned(voiceSpell)) {
-    spdlog::debug(
-      "OnUpdateEquipment result false. Spell with id ({}) not learned",
-      voiceSpell);
+    spdlog::warn("ActionListener::OnUpdateEquipment {:x} - rejected equipment "
+                 "update: spell {:x} is not learned",
+                 actorFormId, voiceSpell);
     isAllowed = false;
+    spellIdsToRemove[static_cast<size_t>(SpellSlotId::Voice)] = voiceSpell;
   }
 
   if (instantSpell > 0 && !actor->IsSpellLearned(instantSpell)) {
-    spdlog::debug(
-      "OnUpdateEquipment result false. Spell with id ({}) not learned",
-      instantSpell);
+    spdlog::warn("ActionListener::OnUpdateEquipment {:x} - rejected equipment "
+                 "update: spell {:x} is not learned",
+                 actorFormId, instantSpell);
     isAllowed = false;
+    spellIdsToRemove[static_cast<size_t>(SpellSlotId::Instant)] = instantSpell;
   }
+
+  std::vector<uint32_t> itemIdsToUnequip;
 
   const auto& inventory = actor->GetInventory();
   for (auto& entry : equipmentInv.entries) {
     if (!inventory.HasItem(entry.baseId)) {
-      spdlog::debug("OnUpdateEquipment result false. The inventory does not "
-                    "contain item with id {:x}",
-                    entry.baseId);
+      spdlog::warn(
+        "ActionListener::OnUpdateEquipment {:x} - rejected equipment "
+        "update: inventory does not contain item {:x}",
+        actorFormId, entry.baseId);
       isAllowed = false;
       break;
     }
   }
 
   if (isAllowed) {
+    auto worldState = actor->GetParent();
+    if (worldState) {
+      uint32_t occupiedSlots = 0;
+      // Track which item owns each bit so we can report conflicts
+      std::array<uint32_t, 32> slotOwner = {};
+      for (auto& entry : equipmentInv.entries) {
+        if (entry.GetWorn() == Inventory::Worn::None) {
+          continue;
+        }
+        auto lookupRes =
+          worldState->GetEspm().GetBrowser().LookupById(entry.baseId);
+        if (!lookupRes.rec || lookupRes.rec->GetType() != espm::ARMO::kType) {
+          continue;
+        }
+        auto armoData = espm::GetData<espm::ARMO>(entry.baseId, worldState);
+        uint32_t bodyPartFlags = 0;
+        if (armoData.bod2.present) {
+          bodyPartFlags = armoData.bod2.bodyPartFlags;
+        } else if (armoData.bodt.present) {
+          bodyPartFlags = armoData.bodt.bodyPartFlags;
+        }
+        if (bodyPartFlags == 0) {
+          continue;
+        }
+        uint32_t overlap = occupiedSlots & bodyPartFlags;
+        if (overlap) {
+          // Collect all conflicting item IDs from slotOwner
+          std::unordered_set<uint32_t> conflictingItems;
+          conflictingItems.insert(entry.baseId);
+          for (int bit = 0; bit < 32; ++bit) {
+            if (overlap & (1u << bit)) {
+              conflictingItems.insert(slotOwner[bit]);
+            }
+          }
+          std::string conflictList;
+          for (uint32_t id : conflictingItems) {
+            if (!conflictList.empty()) {
+              conflictList += ", ";
+            }
+            conflictList += fmt::format("{:x}", id);
+          }
+          std::string binaryStr(32, '0');
+          for (int bit = 31; bit >= 0; --bit) {
+            if (overlap & (1u << (31 - bit))) {
+              binaryStr[bit] = '1';
+            }
+          }
+          spdlog::warn(
+            "ActionListener::OnUpdateEquipment {:x} - rejected equipment "
+            "update: items [{}] share armor slot flags {:x} (0b{})",
+            actorFormId, conflictList, overlap, binaryStr);
+          isAllowed = false;
+          for (uint32_t id : conflictingItems) {
+            itemIdsToUnequip.push_back(id);
+          }
+          break;
+        }
+        for (int bit = 0; bit < 32; ++bit) {
+          if (bodyPartFlags & (1u << bit)) {
+            slotOwner[bit] = entry.baseId;
+          }
+        }
+        occupiedSlots |= bodyPartFlags;
+      }
+    }
+  }
+
+  if (isAllowed) {
     SendToNeighbours(msg.idx, rawMsgData, true);
     actor->SetEquipment(data);
+  } else {
+    actor->SendInventoryUpdate();
+
+    for (uint32_t spellId : spellIdsToRemove) {
+      if (spellId == 0) {
+        continue;
+      }
+      SpSnippetObjectArgument spellArg;
+      spellArg.formId = spellId;
+      spellArg.type = "Spell";
+      std::vector<std::optional<
+        std::variant<bool, double, std::string, SpSnippetObjectArgument>>>
+        args;
+      args.push_back(spellArg);
+      SpSnippet("Actor", "RemoveSpell", args, actor->GetFormId())
+        .Execute(actor, SpSnippetMode::kNoReturnResult);
+    }
+
+    // Calculate diff between current (server) equipment and new (rejected)
+    // equipment. Items worn in the new set but not in the current set need
+    // to be unequipped on the client to revert the unauthorized change.
+    {
+      const auto& currentEquip = actor->GetEquipment().inv;
+
+      std::unordered_set<uint32_t> currentWornIds;
+      for (const auto& entry : currentEquip.entries) {
+        if (entry.GetWorn() != Inventory::Worn::None) {
+          currentWornIds.insert(entry.baseId);
+        }
+      }
+
+      for (const auto& entry : equipmentInv.entries) {
+        if (entry.GetWorn() != Inventory::Worn::None &&
+            currentWornIds.find(entry.baseId) == currentWornIds.end()) {
+          spdlog::info(
+            "ActionListener::OnUpdateEquipment {:x} - unequipping item {:x} "
+            "(not in current equipment, unauthorized change)",
+            actorFormId, entry.baseId);
+          itemIdsToUnequip.push_back(entry.baseId);
+        }
+      }
+
+      // TODO: consider doing EquipItem for items worn in current equipment
+      // but not worn in the new equipment (client tried to unequip them)
+    }
+
+    for (uint32_t itemId : itemIdsToUnequip) {
+      SpSnippetObjectArgument itemArg;
+      itemArg.formId = itemId;
+      itemArg.type = "Form";
+      std::vector<std::optional<
+        std::variant<bool, double, std::string, SpSnippetObjectArgument>>>
+        args;
+      args.push_back(itemArg);
+      args.push_back(false);
+      args.push_back(true);
+      SpSnippet("Actor", "UnequipItem", args, actor->GetFormId())
+        .Execute(actor, SpSnippetMode::kNoReturnResult);
+    }
   }
 
   UpdateEquipmentAttemptEvent updateEquipmentAttemptEvent(actor, data,
@@ -320,7 +473,7 @@ void ActionListener::OnActivate(const MessageEvent<ActivateMessage>& event)
 {
   const RawMessageData& rawMsgData = event.rawMsgData;
   const ActivateMessage& msg = event.message;
-  
+
   if (!partOne.HasEspm())
     throw std::runtime_error("No loaded esm or esp files are found");
 
@@ -367,7 +520,7 @@ void ActionListener::OnPutItem(const MessageEvent<PutItemMessage>& event)
 {
   const RawMessageData& rawMsgData = event.rawMsgData;
   const PutItemMessage& msg = event.message;
-  
+
   MpActor* actor = partOne.serverState.ActorByUser(rawMsgData.userId);
   if (!actor) {
     return;
@@ -399,7 +552,7 @@ void ActionListener::OnTakeItem(const MessageEvent<TakeItemMessage>& event)
 {
   const RawMessageData& rawMsgData = event.rawMsgData;
   const TakeItemMessage& msg = event.message;
-  
+
   MpActor* actor = partOne.serverState.ActorByUser(rawMsgData.userId);
   if (!actor) {
     return;
@@ -430,7 +583,7 @@ void ActionListener::OnDropItem(const MessageEvent<DropItemMessage>& event)
 {
   const RawMessageData& rawMsgData = event.rawMsgData;
   const DropItemMessage& msg = event.message;
-  
+
   uint32_t baseId = FormIdCasts::LongToNormal(msg.baseId);
   MpActor* ac = partOne.serverState.ActorByUser(rawMsgData.userId);
   if (!ac) {
@@ -455,11 +608,12 @@ void ActionListener::OnDropItem(const MessageEvent<DropItemMessage>& event)
   ac->DropItem(baseId, entry);
 }
 
-void ActionListener::OnPlayerBowShot(const MessageEvent<PlayerBowShotMessage>& event)
+void ActionListener::OnPlayerBowShot(
+  const MessageEvent<PlayerBowShotMessage>& event)
 {
   const RawMessageData& rawMsgData = event.rawMsgData;
   const PlayerBowShotMessage& msg = event.message;
-  
+
   MpActor* ac = partOne.serverState.ActorByUser(rawMsgData.userId);
   if (!ac) {
     return spdlog::error("Unable to shot from user with id: {}.",
@@ -488,11 +642,12 @@ void ActionListener::OnPlayerBowShot(const MessageEvent<PlayerBowShotMessage>& e
   ac->RemoveItem(msg.ammoId, 1, nullptr);
 }
 
-void ActionListener::OnFinishSpSnippet(const MessageEvent<FinishSpSnippetMessage>& event)
+void ActionListener::OnFinishSpSnippet(
+  const MessageEvent<FinishSpSnippetMessage>& event)
 {
   const RawMessageData& rawMsgData = event.rawMsgData;
   const FinishSpSnippetMessage& msg = event.message;
-  
+
   MpActor* actor = partOne.serverState.ActorByUser(rawMsgData.userId);
   if (!actor) {
     throw std::runtime_error(
@@ -509,7 +664,7 @@ void ActionListener::OnEquip(const MessageEvent<OnEquipMessage>& event)
 {
   const RawMessageData& rawMsgData = event.rawMsgData;
   const OnEquipMessage& msg = event.message;
-  
+
   MpActor* actor = partOne.serverState.ActorByUser(rawMsgData.userId);
   if (!actor) {
     throw std::runtime_error(
@@ -520,11 +675,12 @@ void ActionListener::OnEquip(const MessageEvent<OnEquipMessage>& event)
   std::ignore = actor->OnEquip(msg.baseId);
 }
 
-void ActionListener::OnConsoleCommand(const MessageEvent<ConsoleCommandMessage>& event)
+void ActionListener::OnConsoleCommand(
+  const MessageEvent<ConsoleCommandMessage>& event)
 {
   const RawMessageData& rawMsgData = event.rawMsgData;
   const ConsoleCommandMessage& msg = event.message;
-  
+
   MpActor* me = partOne.serverState.ActorByUser(rawMsgData.userId);
   if (me) {
     std::vector<ConsoleCommands::Argument> consoleArgs;
@@ -544,7 +700,7 @@ void ActionListener::OnHostAttempt(const MessageEvent<HostMessage>& event)
 {
   const RawMessageData& rawMsgData = event.rawMsgData;
   const HostMessage& msg = event.message;
-  
+
   uint32_t remoteId = FormIdCasts::LongToNormal(msg.remoteId);
 
   MpActor* me = partOne.serverState.ActorByUser(rawMsgData.userId);
@@ -629,11 +785,12 @@ void ActionListener::OnHostAttempt(const MessageEvent<HostMessage>& event)
   }
 }
 
-void ActionListener::OnCustomEvent(const MessageEvent<CustomEventMessage>& event)
+void ActionListener::OnCustomEvent(
+  const MessageEvent<CustomEventMessage>& event)
 {
   const RawMessageData& rawMsgData = event.rawMsgData;
   const CustomEventMessage& msg = event.message;
-  
+
   auto ac = partOne.serverState.ActorByUser(rawMsgData.userId);
   if (!ac) {
     return;
@@ -656,34 +813,9 @@ void ActionListener::OnCustomEvent(const MessageEvent<CustomEventMessage>& event
   }
 }
 
-void ActionListener::OnChangeValues(const MessageEvent<ChangeValuesMessage>& event)
+void ActionListener::OnChangeValues(
+  const MessageEvent<ChangeValuesMessage>& event)
 {
-  const RawMessageData& rawMsgData = event.rawMsgData;
-  const ChangeValuesMessage& msg = event.message;
-  // TODO: support partial updates
-  if (!msg.data.health.has_value() || !msg.data.magicka.has_value() ||
-      !msg.data.stamina.has_value()) {
-    const std::string healthStr =
-      msg.data.health.has_value() ? std::to_string(*msg.data.health) : "null";
-    const std::string magickaStr = msg.data.magicka.has_value()
-      ? std::to_string(*msg.data.magicka)
-      : "null";
-    const std::string staminaStr = msg.data.stamina.has_value()
-      ? std::to_string(*msg.data.stamina)
-      : "null";
-
-    spdlog::error("ActionListener::OnChangeValues - health, magicka or "
-                  "stamina is null {} {} {}",
-                  healthStr, magickaStr, staminaStr);
-    return;
-  }
-
-  // TODO: refactor our ActorValues struct
-  ActorValues newActorValues;
-  newActorValues.healthPercentage = *msg.data.health;
-  newActorValues.magickaPercentage = *msg.data.magicka;
-  newActorValues.staminaPercentage = *msg.data.stamina;
-
   MpActor* actor = partOne.serverState.ActorByUser(rawMsgData.userId);
   if (!actor) {
     return spdlog::error(
@@ -695,56 +827,52 @@ void ActionListener::OnChangeValues(const MessageEvent<ChangeValuesMessage>& eve
     return;
   }
 
-  auto now = std::chrono::steady_clock::now();
-
-  float timeAfterRegeneration = CropPeriodAfterLastRegen(
+  const auto now = std::chrono::steady_clock::now();
+  const float timeAfterRegeneration = CropPeriodAfterLastRegen(
     actor->GetDurationOfAttributesPercentagesUpdate(now).count());
 
-  ActorValues currentActorValues = actor->GetActorValues();
-  const float health = newActorValues.healthPercentage;
-  const float magicka = newActorValues.magickaPercentage;
-  const float stamina = newActorValues.staminaPercentage;
+  const auto& currentValues = actor->GetActorValues();
 
-  const bool healthChanged =
-    !MathUtils::IsNearlyEqual(currentActorValues.healthPercentage, health);
-  const bool magickaChanged =
-    !MathUtils::IsNearlyEqual(currentActorValues.magickaPercentage, magicka);
-  const bool staminaChanged =
-    !MathUtils::IsNearlyEqual(currentActorValues.staminaPercentage, stamina);
+  ChangeValuesMessage outMsg;
+  outMsg.idx = actor->GetIdx();
+  bool sendOutMsg = false;
 
-  if (healthChanged) {
-    currentActorValues.healthPercentage =
-      CropHealthRegeneration(health, timeAfterRegeneration, actor);
-  }
-  if (magickaChanged) {
-    currentActorValues.magickaPercentage =
-      CropMagickaRegeneration(magicka, timeAfterRegeneration, actor);
-  }
-  if (staminaChanged) {
-    currentActorValues.staminaPercentage =
-      CropStaminaRegeneration(stamina, timeAfterRegeneration, actor);
-  }
-
-  if (!MathUtils::IsNearlyEqual(currentActorValues.healthPercentage,
-                                newActorValues.healthPercentage) ||
-      !MathUtils::IsNearlyEqual(currentActorValues.magickaPercentage,
-                                newActorValues.magickaPercentage) ||
-      !MathUtils::IsNearlyEqual(currentActorValues.staminaPercentage,
-                                newActorValues.staminaPercentage)) {
-
-    std::vector<espm::ActorValue> avFilter;
-    if (healthChanged) {
-      avFilter.push_back(espm::ActorValue::Health);
+  auto process = [&](espm::ActorValue av, std::optional<float> inputVal,
+                     float currentVal, std::optional<float>& outVal) {
+    if (!inputVal.has_value()) {
+      return;
     }
-    if (magickaChanged) {
-      avFilter.push_back(espm::ActorValue::Magicka);
+
+    if (MathUtils::IsNearlyEqual(currentVal, *inputVal)) {
+      return;
     }
-    if (staminaChanged) {
-      avFilter.push_back(espm::ActorValue::Stamina);
+
+    float newVal = *inputVal;
+
+    if (av == espm::ActorValue::Health) {
+      newVal = CropHealthRegeneration(newVal, timeAfterRegeneration, actor);
+    } else if (av == espm::ActorValue::Magicka) {
+      newVal = CropMagickaRegeneration(newVal, timeAfterRegeneration, actor);
     }
-    actor->NetSendChangeValues(currentActorValues, avFilter);
+
+    if (!MathUtils::IsNearlyEqual(newVal, *inputVal)) {
+      outVal = newVal;
+      sendOutMsg = true;
+    }
+
+    actor->SetPercentage(av, newVal);
+  };
+
+  process(espm::ActorValue::Health, msg.data.health,
+          currentValues.healthPercentage, outMsg.data.health);
+  process(espm::ActorValue::Magicka, msg.data.magicka,
+          currentValues.magickaPercentage, outMsg.data.magicka);
+  process(espm::ActorValue::Stamina, msg.data.stamina,
+          currentValues.staminaPercentage, outMsg.data.stamina);
+
+  if (sendOutMsg) {
+    actor->SendToUser(outMsg, true);
   }
-  actor->SetPercentages(currentActorValues);
 }
 
 namespace {
@@ -930,7 +1058,7 @@ void ActionListener::OnHit(const MessageEvent<HitMessage>& event)
 {
   const RawMessageData& rawMsgData = event.rawMsgData;
   const HitMessage& msg = event.message;
-  
+
   MpActor* myActor = partOne.serverState.ActorByUser(rawMsgData.userId);
 
   if (!myActor) {
@@ -1036,11 +1164,12 @@ void ActionListener::OnHit(const MessageEvent<HitMessage>& event)
                 hitData.source, hitData.aggressor);
 }
 
-void ActionListener::OnUpdateAnimVariables(const MessageEvent<UpdateAnimVariablesMessage>& event)
+void ActionListener::OnUpdateAnimVariables(
+  const MessageEvent<UpdateAnimVariablesMessage>& event)
 {
   const RawMessageData& rawMsgData = event.rawMsgData;
   const UpdateAnimVariablesMessage& msg = event.message;
-  
+
   const MpActor* myActor = partOne.serverState.ActorByUser(rawMsgData.userId);
   if (!myActor) {
     throw std::runtime_error("Unable to change values without Actor attached");
@@ -1053,7 +1182,7 @@ void ActionListener::OnSpellCast(const MessageEvent<SpellCastMessage>& event)
 {
   const RawMessageData& rawMsgData = event.rawMsgData;
   const SpellCastMessage& msg = event.message;
-  
+
   MpActor* myActor = partOne.serverState.ActorByUser(rawMsgData.userId);
 
   if (!myActor) {

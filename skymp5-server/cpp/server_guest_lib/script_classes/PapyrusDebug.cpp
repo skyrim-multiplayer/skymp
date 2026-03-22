@@ -24,7 +24,8 @@ VarValue PapyrusDebug::SendAnimationEvent(
   auto targetActor = GetFormPtr<MpActor>(arguments[0]);
   if (targetActor) {
     auto funcName = "SendAnimationEvent";
-    auto s = SpSnippetFunctionGen::SerializeArguments(arguments, targetActor);
+    auto s = SpSnippetFunctionGen::SerializeArguments(
+      arguments, targetActor->GetParent(), targetActor);
     SpSnippet(GetName(), funcName, s)
       .Execute(targetActor, SpSnippetMode::kNoReturnResult);
   }

@@ -3,12 +3,13 @@
 #include "ConsoleCommands.h"
 #include "CraftService.h"
 #include "HitData.h"
-#include "Messages.h"
 #include "MessageEvent.h"
+#include "Messages.h"
 #include "MpActor.h"
 #include "RawMessageData.h"
 #include "ServiceBase.h"
 #include "SpellCastData.h"
+#include "SweetHidePlayerNamesService.h"
 #include "libespm/Loader.h"
 #include <memory>
 
@@ -40,7 +41,8 @@ public:
   void OnCustomEvent(const MessageEvent<CustomEventMessage>& event);
   void OnChangeValues(const MessageEvent<ChangeValuesMessage>& event);
   void OnHit(const MessageEvent<HitMessage>& event);
-  void OnUpdateAnimVariables(const MessageEvent<UpdateAnimVariablesMessage>& event);
+  void OnUpdateAnimVariables(
+    const MessageEvent<UpdateAnimVariablesMessage>& event);
   void OnSpellCast(const MessageEvent<SpellCastMessage>& event);
   void OnUnknown(const RawMessageData& rawMsgData);
 

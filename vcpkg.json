@@ -18,8 +18,10 @@
     "libzippp",
     "cpptrace",
     "antigo",
+    "prometheus-cpp-lite",
     "slikenet",
     "palsigslot",
+    "libsodium",
     {
       "name": "mongo-cxx-driver",
       "platform": "!emscripten"
@@ -46,6 +48,10 @@
     },
     {
       "name": "cef-prebuilt",
+      "platform": "windows"
+    },
+    {
+      "name": "nirnlab-ui-platform-headers",
       "platform": "windows"
     },
     {

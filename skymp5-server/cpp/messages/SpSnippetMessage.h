@@ -11,7 +11,7 @@ struct SpSnippetObjectArgument
     archive.Serialize("formId", formId).Serialize("type", type);
   }
 
-  uint32_t formId = 0;
+  uint64_t formId = 0;
   std::string type;
 };
 
@@ -36,6 +36,6 @@ struct SpSnippetMessage : public MessageBase<SpSnippetMessage>
   std::vector<std::optional<
     std::variant<bool, double, std::string, SpSnippetObjectArgument>>>
     arguments;
-  uint32_t selfId = 0;
+  uint64_t selfId = 0;
   int64_t snippetIdx = 0;
 };

@@ -111,11 +111,21 @@ endif()
 
 # Path options
 option(UNIT_DATA_DIR "Path to directory with Skyrim.esm and other data files required for testing. CMAKE_SOURCE_DIR would be used to resolve a relative path if passed." OFF)
+option(DOWNLOAD_SKYRIM_DATA "Download Skyrim.esm and other data files required for testing" OFF)
 option(SKYRIM_DIR "Path to Skyrim, would be used for tests if UNIT_DATA_DIR is not specified" OFF)
 option(CPPCOV_PATH "Path to OpenCppCoverage" OFF)
 
+if(DOWNLOAD_SKYRIM_DATA AND NOT UNIT_DATA_DIR)
+  set(UNIT_DATA_DIR "skyrim_data_files")
+endif()
+
 if(UNIT_DATA_DIR AND NOT IS_ABSOLUTE "${UNIT_DATA_DIR}")
   get_filename_component(UNIT_DATA_DIR "${UNIT_DATA_DIR}" ABSOLUTE BASE_DIR ${CMAKE_SOURCE_DIR})
+endif()
+
+if(DOWNLOAD_SKYRIM_DATA)
+  include(${CMAKE_SOURCE_DIR}/cmake/download_skyrim_data.cmake)
+  download_skyrim_data("${UNIT_DATA_DIR}")
 endif()
 
 if(NOT SKYRIM_DIR)

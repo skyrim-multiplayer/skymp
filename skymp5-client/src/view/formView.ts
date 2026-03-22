@@ -96,16 +96,16 @@ export class FormView {
             const refr = ObjectReference.from(Game.getFormEx(this.refrId));
             refr?.getBaseObject()?.setName(model.appearance.name);
             refr?.setDisplayName(model.appearance.name, true);
-            printConsole("Appearance updated, changing name inplace");
+            //printConsole("Appearance updated, changing name inplace");
           } else {
             // Force re-apply appearance on the next getAppearanceBasedBase call
             this.appearanceBasedBaseId = 0;
-            printConsole("Appearance updated");
+            //printConsole("Appearance updated");
           }
         } else {
           // Force re-apply appearance on the next getAppearanceBasedBase call
           this.appearanceBasedBaseId = 0;
-          printConsole("Appearance updated");
+          //printConsole("Appearance updated");
         }
 
         this.appearanceState.appearance = model.appearance || null;

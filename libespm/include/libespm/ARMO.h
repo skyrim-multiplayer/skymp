@@ -17,6 +17,13 @@ public:
     float weight = 0;
     uint32_t enchantmentFormId = 0;
     uint32_t equipSlotId = 0; // only for shields
+
+    struct
+    {
+      bool present = false;
+      uint32_t bodyPartFlags = 0;
+      uint32_t skill = 0;
+    } bodt, bod2;
   };
 
   Data GetData(CompressedFieldsCache& compressedFieldsCache) const;

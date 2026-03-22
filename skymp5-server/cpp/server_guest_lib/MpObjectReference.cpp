@@ -1,9 +1,9 @@
 #include "MpObjectReference.h"
 #include "ChangeFormGuard.h"
 #include "EvaluateTemplate.h"
-#include "GridService.h"
 #include "FormCallbacks.h"
 #include "GetWeightFromRecord.h"
+#include "GridService.h"
 #include "Inventory.h"
 #include "LeveledListUtils.h"
 #include "MathUtils.h"
@@ -12,9 +12,7 @@
 #include "MpChangeForms.h"
 #include "MsgType.h"
 #include "Primitive.h"
-#include "ScopedTask.h"
 #include "ScriptVariablesHolder.h"
-#include "TimeUtils.h"
 #include "UpdatePropertyMessage.h"
 #include "WorldState.h"
 #include "gamemode_events/ActivateEvent.h"
@@ -29,6 +27,8 @@
 #include "papyrus-vm/VirtualMachine.h"
 #include "script_objects/EspmGameObject.h"
 #include "script_storages/IScriptStorage.h"
+#include <ScopedTask.h>
+#include <TimeUtils.h>
 #include <antigo/Context.h>
 #include <antigo/ResolvedContext.h>
 #include <map>
@@ -490,7 +490,7 @@ void MpObjectReference::Activate(MpObjectReference& activationSource,
         defaultProcessingOnly);
     }
 
-    if (!defaultProcessingOnly) {
+    if (!defaultProcessingOnly && !activationBlockedByMpApi) {
       auto arg = activationSource.ToVarValue();
       SendPapyrusEvent("OnActivate", &arg, 1);
     }
@@ -682,7 +682,8 @@ void MpObjectReference::ForceSubscriptionsUpdate()
 
   auto worldOrCell = GetCellOrWorld().ToFormId(worldState->espmFiles);
   auto newGridPos = GetGridPos(GetPos());
-  auto diff = worldState->GetGridService().MoveObjectReference(this, worldOrCell, newGridPos.first, newGridPos.second);
+  auto diff = worldState->GetGridService().MoveObjectReference(
+    this, worldOrCell, newGridPos.first, newGridPos.second);
 
   // Process removed listeners
   for (auto listener : diff.removed) {
@@ -1071,20 +1072,21 @@ void MpObjectReference::SetDisplayName(
 const std::set<MpObjectReference*>& MpObjectReference::GetListeners() const
 {
   static const std::set<MpObjectReference*> kEmptyListeners;
-  
+
   if (!everSubscribedOrListened || IsDisabled()) {
     return kEmptyListeners;
   }
-  
+
   auto worldState = GetParent();
   if (!worldState) {
     return kEmptyListeners;
   }
-  
+
   auto worldOrCell = GetCellOrWorld().ToFormId(worldState->espmFiles);
   auto pos = GetGridPos(GetPos());
-  
-  return worldState->GetNeighborsByPosition(worldOrCell, pos.first, pos.second);
+
+  return worldState->GetNeighborsByPosition(worldOrCell, pos.first,
+                                            pos.second);
 }
 
 const std::vector<MpActor*>& MpObjectReference::GetActorListeners()
@@ -1168,7 +1170,7 @@ void MpObjectReference::ApplyChangeForm(const MpChangeForm& changeForm)
     GetParent()->logger->critical(
       "ApplyChangeForm called after SetProperty\n{}",
       ctx.Resolve().ToString());
-    std::terminate();
+    // std::terminate();
   }
 
   blockSaving = true;
@@ -1327,6 +1329,69 @@ bool MpObjectReference::IsLocationSavingNeeded() const
     std::chrono::system_clock::now() - *last > std::chrono::seconds(30);
 }
 
+void MpObjectReference::GivePickupItemsToActivationSource(
+  MpObjectReference& activationSource, const espm::LookupResult& base)
+{
+  auto& loader = GetParent()->GetEspm();
+  auto& compressedFieldsCache = GetParent()->GetEspmCache();
+  auto t = base.rec->GetType();
+
+  auto mapping = loader.GetBrowser().GetCombMapping(base.fileIdx);
+  uint32_t resultItem = 0;
+  if (espm::utils::Is<espm::TREE>(t)) {
+    auto data =
+      espm::Convert<espm::TREE>(base.rec)->GetData(compressedFieldsCache);
+    resultItem = espm::utils::GetMappedId(data.resultItem, *mapping);
+  }
+
+  if (espm::utils::Is<espm::FLOR>(t)) {
+    auto data =
+      espm::Convert<espm::FLOR>(base.rec)->GetData(compressedFieldsCache);
+    resultItem = espm::utils::GetMappedId(data.resultItem, *mapping);
+  }
+
+  if (espm::utils::Is<espm::LIGH>(t)) {
+    auto res =
+      espm::Convert<espm::LIGH>(base.rec)->GetData(compressedFieldsCache);
+    bool isTorch = res.data.flags & espm::LIGH::Flags::CanBeCarried;
+    if (!isTorch) {
+      return;
+    }
+    resultItem = espm::utils::GetMappedId(base.rec->GetId(), *mapping);
+  }
+
+  if (resultItem == 0) {
+    resultItem = espm::utils::GetMappedId(base.rec->GetId(), *mapping);
+  }
+
+  auto resultItemLookupRes = loader.GetBrowser().LookupById(resultItem);
+  auto leveledItem = espm::Convert<espm::LVLI>(resultItemLookupRes.rec);
+  if (leveledItem) {
+    const auto kCountMult = 1;
+    auto map = LeveledListUtils::EvaluateListRecurse(
+      loader.GetBrowser(), resultItemLookupRes, kCountMult,
+      kPlayerCharacterLevel, chanceNoneOverride.get());
+    for (auto& p : map) {
+      activationSource.AddItem(p.first, p.second);
+    }
+  } else {
+    auto refrRecord = espm::Convert<espm::REFR>(
+      loader.GetBrowser().LookupById(GetFormId()).rec);
+
+    uint32_t countRecord =
+      refrRecord ? refrRecord->GetData(compressedFieldsCache).count : 1;
+
+    uint32_t countChangeForm = ChangeForm().count;
+
+    constexpr uint32_t kCountDefault = 1;
+
+    uint32_t resultingCount =
+      std::max(kCountDefault, std::max(countRecord, countChangeForm));
+
+    activationSource.AddItem(resultItem, resultingCount);
+  }
+}
+
 void MpObjectReference::ProcessActivateNormal(
   MpObjectReference& activationSource)
 {
@@ -1343,14 +1408,12 @@ void MpObjectReference::ProcessActivateNormal(
                          GetFormId(), activationSource.GetFormId());
   }
 
-  // Not sure if this is needed
   if (IsDeleted()) {
     return spdlog::warn("MpObjectReference::ProcessActivate {:x} - deleted "
                         "object, activationSource is {:x}",
                         GetFormId(), activationSource.GetFormId());
   }
 
-  // Not sure if this is needed
   if (IsDisabled()) {
     return spdlog::warn("MpObjectReference::ProcessActivate {:x} - disabled "
                         "object, activationSource is {:x}",
@@ -1362,60 +1425,7 @@ void MpObjectReference::ProcessActivateNormal(
   bool pickable = espm::utils::Is<espm::TREE>(t) ||
     espm::utils::Is<espm::FLOR>(t) || espm::utils::IsItem(t);
   if (pickable && !IsHarvested()) {
-    auto mapping = loader.GetBrowser().GetCombMapping(base.fileIdx);
-    uint32_t resultItem = 0;
-    if (espm::utils::Is<espm::TREE>(t)) {
-      auto data =
-        espm::Convert<espm::TREE>(base.rec)->GetData(compressedFieldsCache);
-      resultItem = espm::utils::GetMappedId(data.resultItem, *mapping);
-    }
-
-    if (espm::utils::Is<espm::FLOR>(t)) {
-      auto data =
-        espm::Convert<espm::FLOR>(base.rec)->GetData(compressedFieldsCache);
-      resultItem = espm::utils::GetMappedId(data.resultItem, *mapping);
-    }
-
-    if (espm::utils::Is<espm::LIGH>(t)) {
-      auto res =
-        espm::Convert<espm::LIGH>(base.rec)->GetData(compressedFieldsCache);
-      bool isTorch = res.data.flags & espm::LIGH::Flags::CanBeCarried;
-      if (!isTorch) {
-        return;
-      }
-      resultItem = espm::utils::GetMappedId(base.rec->GetId(), *mapping);
-    }
-
-    if (resultItem == 0) {
-      resultItem = espm::utils::GetMappedId(base.rec->GetId(), *mapping);
-    }
-
-    auto resultItemLookupRes = loader.GetBrowser().LookupById(resultItem);
-    auto leveledItem = espm::Convert<espm::LVLI>(resultItemLookupRes.rec);
-    if (leveledItem) {
-      const auto kCountMult = 1;
-      auto map = LeveledListUtils::EvaluateListRecurse(
-        loader.GetBrowser(), resultItemLookupRes, kCountMult,
-        kPlayerCharacterLevel, chanceNoneOverride.get());
-      for (auto& p : map) {
-        activationSource.AddItem(p.first, p.second);
-      }
-    } else {
-      auto refrRecord = espm::Convert<espm::REFR>(
-        loader.GetBrowser().LookupById(GetFormId()).rec);
-
-      uint32_t countRecord =
-        refrRecord ? refrRecord->GetData(compressedFieldsCache).count : 1;
-
-      uint32_t countChangeForm = ChangeForm().count;
-
-      constexpr uint32_t kCountDefault = 1;
-
-      uint32_t resultingCount =
-        std::max(kCountDefault, std::max(countRecord, countChangeForm));
-
-      activationSource.AddItem(resultItem, resultingCount);
-    }
+    GivePickupItemsToActivationSource(activationSource, base);
     SetHarvested(true);
     RequestReloot();
 
@@ -1791,8 +1801,6 @@ void MpObjectReference::InitScripts()
     GetParent()->GetPapyrusVm().AddObject(ToGameObject(), scriptInfo);
   }
 }
-
-
 
 void MpObjectReference::SendInventoryUpdate()
 {

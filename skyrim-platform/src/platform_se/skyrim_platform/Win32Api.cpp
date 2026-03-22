@@ -17,6 +17,6 @@ Napi::Value Win32Api::LoadUrl(const Napi::CallbackInfo& info)
 
 Napi::Value Win32Api::ExitProcess(const Napi::CallbackInfo& info)
 {
-  std::exit(0);
+  RE::Main::GetSingleton()->quitGame = true;
   return info.Env().Undefined();
 }

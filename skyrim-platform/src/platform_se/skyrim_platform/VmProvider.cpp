@@ -158,9 +158,8 @@ private:
 };
 
 const std::unique_ptr<FunctionInfo_>& FindFunction(
-  FindFunctionCache& cache,
-                                                  const std::string& className,
-                                                  const std::string& funcName)
+  FindFunctionCache& cache, const std::string& className,
+  const std::string& funcName)
 {
   auto& f = cache.funcByFullName[className][funcName];
   if (!f) {
@@ -208,7 +207,7 @@ VmProvider& VmProvider::GetSingleton()
 }
 
 FunctionInfo_* VmProvider::GetFunctionInfo(const std::string& className,
-                                          const std::string& funcName)
+                                           const std::string& funcName)
 {
   return ::FindFunction(pImpl->findFunctionCache, className, funcName).get();
 }

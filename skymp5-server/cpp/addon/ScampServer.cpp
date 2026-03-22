@@ -3,14 +3,15 @@
 #include "Bot.h"
 #include "ConditionsEvaluator.h"
 #include "FormCallbacks.h"
+#include "FormDesc.h"
 #include "GamemodeApi.h"
+#include "MpChangeForms.h"
 #include "NapiHelper.h"
 #include "NetworkingCombined.h"
 #include "PacketHistoryWrapper.h"
 #include "PapyrusUtils.h"
 #include "ScampServerListener.h"
 #include "condition_functions/ConditionFunctionFactory.h"
-#include "database_drivers/DatabaseFactory.h"
 #include "formulas/DamageMultConditionalFormula.h"
 #include "formulas/DamageMultFormula.h"
 #include "formulas/SweetPieDamageFormula.h"
@@ -20,8 +21,6 @@
 #include "libespm/IterateFields.h"
 #include "papyrus-vm/Utils.h"
 #include "property_bindings/PropertyBindingFactory.h"
-#include "save_storages/SaveStorageFactory.h"
-#include "script_objects/EspmGameObject.h"
 #include "script_storages/ScriptStorageFactory.h"
 #include <algorithm>
 #include <antigo/Context.h>
@@ -29,12 +28,16 @@
 #include <antigo/ResolvedContext.h>
 #include <cassert>
 #include <cctype>
+#include <database_drivers/DatabaseFactory.h>
 #include <memory>
 #include <napi.h>
+#include <prometheus/core.h>
+#include <save_storages/SaveStorageFactory.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <sstream>
 
-enum class CallType {
+enum class CallType
+{
   Method,
   Global
 };
@@ -98,6 +101,7 @@ Napi::Object ScampServer::Init(Napi::Env env, Napi::Object exports)
       InstanceMethod("createBot", &ScampServer::CreateBot),
       InstanceMethod("getUserByActor", &ScampServer::GetUserByActor),
       InstanceMethod("getUserIp", &ScampServer::GetUserIp),
+      InstanceMethod("kick", &ScampServer::Kick),
 
       InstanceMethod("getLocalizedString", &ScampServer::GetLocalizedString),
       InstanceMethod("getServerSettings", &ScampServer::GetServerSettings),
@@ -127,7 +131,8 @@ Napi::Object ScampServer::Init(Napi::Env env, Napi::Object exports)
                      &ScampServer::RequestPacketHistoryPlayback),
       InstanceMethod("findFormsByPropertyValue",
                      &ScampServer::FindFormsByPropertyValue),
-
+      InstanceMethod("getPrometheusMetrics",
+                     &ScampServer::GetPrometheusMetrics),
       InstanceMethod("_sp3ListClasses", &ScampServer::SP3ListClasses),
       InstanceMethod("_sp3GetBaseClass", &ScampServer::SP3GetBaseClass),
       InstanceMethod("_sp3ListStaticFunctions",
@@ -173,6 +178,7 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
   , tickEnv(info.Env())
 {
   try {
+    promRegistry = std::make_shared<prometheus::Registry>();
     partOne = std::make_shared<PartOne>();
     listener = std::make_shared<ScampServerListener>(*this);
     partOne->AddListener(listener);
@@ -337,8 +343,9 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
       ? std::string(kNetworkingPasswordPrefix) +
         static_cast<std::string>(serverSettings["password"])
       : std::string(kNetworkingPasswordPrefix);
-    auto realServer = Networking::CreateServer(listenHost.c_str(), listenPort,
-                                               maxPlayers, password.data());
+    auto realServer =
+      Networking::CreateServer(listenHost.c_str(), listenPort, maxPlayers,
+                               password.data(), promRegistry);
 
     static_assert(kMockServerIdx == 1);
     server = Networking::CreateCombinedServer({ realServer, serverMock });
@@ -407,6 +414,19 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
         (*it).get<std::set<std::string>>());
     }
 
+    if (auto it = serverSettings.find("serverKey");
+        it != serverSettings.end()) {
+      auto serverKey = it.value();
+      partOne->SetPrivateKey(serverKey["alias"].get<std::string>(),
+                             serverKey["private"].get<std::string>());
+    }
+
+    if (auto it = serverSettings.find("enableGamemodeDataUpdatesBroadcast");
+        it != serverSettings.end()) {
+      bool enableBroadcast = it.value().get<bool>();
+      partOne->EnableGamemodeDataUpdatesBroadcast(enableBroadcast);
+    }
+
     auto res =
       NapiHelper::RunScript(Env(),
                             "let require = global.require || "
@@ -436,7 +456,8 @@ Napi::Value ScampServer::AttachSaveStorage(const Napi::CallbackInfo& info)
 {
   try {
     auto db = DatabaseFactory::Create(serverSettings, logger);
-    auto saveStorage = SaveStorageFactory::Create(db, logger);
+    auto saveStorage =
+      Viet::SaveStorageFactory::Create<MpChangeForm, FormDesc>(db, logger);
     partOne->AttachSaveStorage(saveStorage);
   } catch (std::exception& e) {
     throw Napi::Error::New(info.Env(), (std::string)e.what());
@@ -757,6 +778,17 @@ Napi::Value ScampServer::GetUserIp(const Napi::CallbackInfo& info)
   } catch (std::exception& e) {
     throw Napi::Error::New(info.Env(), std::string(e.what()));
   }
+}
+
+Napi::Value ScampServer::Kick(const Napi::CallbackInfo& info)
+{
+  try {
+    auto userId = info[0].As<Napi::Number>().Uint32Value();
+    server->CloseConnection(userId);
+  } catch (std::exception& e) {
+    throw Napi::Error::New(info.Env(), std::string(e.what()));
+  }
+  return info.Env().Undefined();
 }
 
 Napi::Value ScampServer::GetLocalizedString(const Napi::CallbackInfo& info)
@@ -1195,7 +1227,8 @@ Napi::Value ScampServer::GetIdFromDesc(const Napi::CallbackInfo& info)
 
 namespace {
 VarValue CallPapyrusFunctionImpl(const std::shared_ptr<PartOne>& partOne,
-                                 CallType callType, const std::string& className,
+                                 CallType callType,
+                                 const std::string& className,
                                  const std::string& functionName,
                                  const VarValue& self,
                                  std::vector<VarValue>& args)
@@ -1413,6 +1446,15 @@ Napi::Value ScampServer::FindFormsByPropertyValue(
   }
 }
 
+Napi::Value ScampServer::GetPrometheusMetrics(const Napi::CallbackInfo& info)
+{
+  try {
+    return Napi::String::New(info.Env(), promRegistry->serialize());
+  } catch (std::exception& e) {
+    throw Napi::Error::New(info.Env(), std::string(e.what()));
+  }
+}
+
 Napi::Value ScampServer::SP3ListClasses(const Napi::CallbackInfo& info)
 {
   try {
@@ -1529,7 +1571,8 @@ Napi::Value ScampServer::SP3GetFunctionImplementation(
           : PapyrusUtils::GetPapyrusValueFromJsValue(jsThis, false,
                                                      partOne->worldState);
 
-        CallType callType = jsThis.IsUndefined() ? CallType::Global : CallType::Method;
+        CallType callType =
+          jsThis.IsUndefined() ? CallType::Global : CallType::Method;
 
         VarValue res = CallPapyrusFunctionImpl(partOne, callType, className,
                                                functionName, self, args);

@@ -1,10 +1,11 @@
 #pragma once
 #include "AnimationSystem.h"
+#include "FormDesc.h"
 #include "GamemodeApi.h"
 #include "HitData.h"
 #include "MessageEvent.h"
 #include "MpActor.h"
-#include "Networking.h"
+#include "MpChangeForms.h"
 #include "NiPoint3.h"
 #include "PartOneListener.h"
 #include "RawMessageData.h"
@@ -13,35 +14,35 @@
 #include "WorldState.h"
 #include "formulas/IDamageFormula.h"
 #include "libespm/Loader.h"
-#include "save_storages/ISaveStorage.h"
+#include <functional>
 #include <memory>
 #include <nlohmann/json.hpp>
+#include <save_storages/ISaveStorage.h>
 #include <set>
 #include <simdjson.h>
 #include <spdlog/logger.h>
-#include <unordered_map>
 
-#include "sigslot/signal.hpp"
+#include "../messages/ActivateMessage.h"
+#include "../messages/ChangeValuesMessage.h"
+#include "../messages/ConsoleCommandMessage.h"
 #include "../messages/CraftItemMessage.h"
+#include "../messages/CustomEventMessage.h"
 #include "../messages/CustomPacketMessage.h"
-#include "../messages/UpdateMovementMessage.h"
+#include "../messages/DropItemMessage.h"
+#include "../messages/FinishSpSnippetMessage.h"
+#include "../messages/HitMessage.h"
+#include "../messages/HostMessage.h"
+#include "../messages/OnEquipMessage.h"
+#include "../messages/PlayerBowShotMessage.h"
+#include "../messages/PutItemMessage.h"
+#include "../messages/SpellCastMessage.h"
+#include "../messages/TakeItemMessage.h"
+#include "../messages/UpdateAnimVariablesMessage.h"
 #include "../messages/UpdateAnimationMessage.h"
 #include "../messages/UpdateAppearanceMessage.h"
 #include "../messages/UpdateEquipmentMessage.h"
-#include "../messages/ActivateMessage.h"
-#include "../messages/PutItemMessage.h"
-#include "../messages/TakeItemMessage.h"
-#include "../messages/DropItemMessage.h"
-#include "../messages/PlayerBowShotMessage.h"
-#include "../messages/FinishSpSnippetMessage.h"
-#include "../messages/OnEquipMessage.h"
-#include "../messages/ConsoleCommandMessage.h"
-#include "../messages/HostMessage.h"
-#include "../messages/CustomEventMessage.h"
-#include "../messages/ChangeValuesMessage.h"
-#include "../messages/HitMessage.h"
-#include "../messages/UpdateAnimVariablesMessage.h"
-#include "../messages/SpellCastMessage.h"
+#include "../messages/UpdateMovementMessage.h"
+#include "sigslot/signal.hpp"
 
 using ProfileId = int32_t;
 class ActionListener;
@@ -71,22 +72,27 @@ public:
   sigslot::signal<MessageEvent<CraftItemMessage>> onCraftItemMessage;
   sigslot::signal<MessageEvent<CustomPacketMessage>> onCustomPacketMessage;
   sigslot::signal<MessageEvent<UpdateMovementMessage>> onUpdateMovementMessage;
-  sigslot::signal<MessageEvent<UpdateAnimationMessage>> onUpdateAnimationMessage;
-  sigslot::signal<MessageEvent<UpdateAppearanceMessage>> onUpdateAppearanceMessage;
-  sigslot::signal<MessageEvent<UpdateEquipmentMessage>> onUpdateEquipmentMessage;
+  sigslot::signal<MessageEvent<UpdateAnimationMessage>>
+    onUpdateAnimationMessage;
+  sigslot::signal<MessageEvent<UpdateAppearanceMessage>>
+    onUpdateAppearanceMessage;
+  sigslot::signal<MessageEvent<UpdateEquipmentMessage>>
+    onUpdateEquipmentMessage;
   sigslot::signal<MessageEvent<ActivateMessage>> onActivateMessage;
   sigslot::signal<MessageEvent<PutItemMessage>> onPutItemMessage;
   sigslot::signal<MessageEvent<TakeItemMessage>> onTakeItemMessage;
   sigslot::signal<MessageEvent<DropItemMessage>> onDropItemMessage;
   sigslot::signal<MessageEvent<PlayerBowShotMessage>> onPlayerBowShotMessage;
-  sigslot::signal<MessageEvent<FinishSpSnippetMessage>> onFinishSpSnippetMessage;
+  sigslot::signal<MessageEvent<FinishSpSnippetMessage>>
+    onFinishSpSnippetMessage;
   sigslot::signal<MessageEvent<OnEquipMessage>> onOnEquipMessage;
   sigslot::signal<MessageEvent<ConsoleCommandMessage>> onConsoleCommandMessage;
   sigslot::signal<MessageEvent<HostMessage>> onHostMessage;
   sigslot::signal<MessageEvent<CustomEventMessage>> onCustomEventMessage;
   sigslot::signal<MessageEvent<ChangeValuesMessage>> onChangeValuesMessage;
   sigslot::signal<MessageEvent<HitMessage>> onHitMessage;
-  sigslot::signal<MessageEvent<UpdateAnimVariablesMessage>> onUpdateAnimVariablesMessage;
+  sigslot::signal<MessageEvent<UpdateAnimVariablesMessage>>
+    onUpdateAnimVariablesMessage;
   sigslot::signal<MessageEvent<SpellCastMessage>> onSpellCastMessage;
   sigslot::signal<const RawMessageData&> onUnknownMessage;
 };
@@ -121,7 +127,7 @@ public:
 
   // for CraftTest.cpp
   std::shared_ptr<CraftService> GetCraftService() const noexcept;
-  
+
   GridService& GetGridService();
 
   // API
@@ -141,8 +147,14 @@ public:
   const std::set<uint32_t>& GetActorsByProfileId(ProfileId profileId);
   void SetEnabled(uint32_t actorFormId, bool enabled);
 
+  using OnActorStreamIn = std::function<void(const MpActor& emitter,
+                                             const MpObjectReference& listener,
+                                             CreateActorMessage& message)>;
+  void SetOnActorStreamIn(OnActorStreamIn callback);
+
   void AttachEspm(espm::Loader* espm);
-  void AttachSaveStorage(std::shared_ptr<ISaveStorage> saveStorage);
+  void AttachSaveStorage(
+    std::shared_ptr<Viet::ISaveStorage<MpChangeForm, FormDesc>> saveStorage);
   espm::Loader& GetEspm() const;
   bool HasEspm() const;
   void AttachLogger(std::shared_ptr<spdlog::logger> logger);
@@ -166,6 +178,10 @@ public:
 
   void NotifyGamemodeApiStateChanged(
     const GamemodeApi::State& newState) noexcept;
+
+  void SetPrivateKey(const std::string& keyId, const std::string& pkeyPem);
+
+  void EnableGamemodeDataUpdatesBroadcast(bool enable);
 
   void SetPacketHistoryRecording(Networking::UserId userId, bool value);
   PacketHistory GetPacketHistory(Networking::UserId userId);
@@ -195,6 +211,8 @@ private:
 
   void TickPacketHistoryPlaybacks();
   void TickDeferredMessages();
+
+  std::string SignJavaScriptSources(const std::string& src) const;
 
   struct Impl;
   std::shared_ptr<Impl> pImpl;

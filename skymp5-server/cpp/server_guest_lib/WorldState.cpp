@@ -1,22 +1,20 @@
 #include "WorldState.h"
-#include "GridService.h"
 #include "EvaluateTemplate.h"
 #include "FormCallbacks.h"
+#include "GridService.h"
 #include "LeveledListUtils.h"
 #include "LocationalDataUtils.h"
 #include "MpActor.h"
 #include "MpChangeForms.h"
 #include "MpObjectReference.h"
-#include "ScopedTask.h"
-#include "Timer.h"
-#include "database_drivers/IDatabase.h" // UpsertFailedException
 #include "libespm/GroupUtils.h"
 #include "papyrus-vm/Reader.h"
 #include "papyrus-vm/Utils.h"
-#include "save_storages/ISaveStorage.h"
 #include "script_classes/PapyrusClassesFactory.h"
 #include "script_compatibility_policies/PapyrusCompatibilityPolicyFactory.h"
 #include "script_storages/IScriptStorage.h"
+#include <ScopedTask.h>
+#include <Timer.h>
 #include <algorithm>
 #include <antigo/Context.h>
 #include <deque>
@@ -24,6 +22,8 @@
 #include <fmt/ranges.h>
 #include <iterator>
 #include <optional>
+#include <save_storages/AsyncSaveStorage.h> // UpsertFailedException
+#include <save_storages/ISaveStorage.h>
 #include <unordered_map>
 
 namespace {
@@ -42,7 +42,7 @@ struct WorldState::Impl
   std::vector<std::optional<MpChangeForm>> changesByIdx;
   bool changesByIdxEmpty = true;
 
-  std::shared_ptr<ISaveStorage> saveStorage;
+  std::shared_ptr<Viet::ISaveStorage<MpChangeForm, FormDesc>> saveStorage;
   std::shared_ptr<IScriptStorage> scriptStorage;
   bool saveStorageBusy = false;
   std::shared_ptr<VirtualMachine> vm;
@@ -91,7 +91,8 @@ void WorldState::AttachEspm(espm::Loader* espm_,
   espmFiles = espm->GetFileNames();
 }
 
-void WorldState::AttachSaveStorage(std::shared_ptr<ISaveStorage> saveStorage)
+void WorldState::AttachSaveStorage(
+  std::shared_ptr<Viet::ISaveStorage<MpChangeForm, FormDesc>> saveStorage)
 {
   spdlog::info("AttachSaveStorage - db fixes installed");
 
@@ -136,7 +137,7 @@ void WorldState::AddForm(std::unique_ptr<MpForm> form, uint32_t formId,
   auto it = forms.insert({ formId, std::move(form) }).first;
 
   if (optionalChangeFormToApply) {
-    auto refr = dynamic_cast<MpObjectReference*>(it->second.get());
+    auto refr = it->second->AsObjectReference();
     if (!refr) {
       forms.erase(it); // Rollback changes due to exception
       throw std::runtime_error(
@@ -704,7 +705,8 @@ void WorldState::TickSaveStorage(const std::chrono::system_clock::time_point&)
 
   try {
     pImpl->saveStorage->Tick();
-  } catch (UpsertFailedException& e) {
+  } catch (
+    Viet::AsyncSaveStorage<MpChangeForm, FormDesc>::UpsertFailedException& e) {
     spdlog::error(
       "TickSaveStorage - received UpsertFailedException {}, re-saving",
       e.what());
@@ -722,22 +724,21 @@ void WorldState::TickSaveStorage(const std::chrono::system_clock::time_point&)
         continue;
       }
 
-      // TODO: remove reinterpret_cast
-      MpObjectReference* form = reinterpret_cast<MpObjectReference*>(
-        LookupFormByIdx(static_cast<int>(i)));
-      if (!form) {
+      MpForm* form = LookupFormByIdx(static_cast<int>(i));
+      MpObjectReference* refr = form ? form->AsObjectReference() : nullptr;
+      if (!refr) {
         continue;
       }
 
       auto formId = changeForm->formDesc.ToFormId(espmFiles);
 
-      if (form->GetFormId() != formId) {
+      if (refr->GetFormId() != formId) {
         spdlog::error("TickSaveStorage - formIds not matching {:x} <=> {:x}",
-                      form->GetFormId(), formId);
+                      refr->GetFormId(), formId);
         continue;
       }
 
-      RequestSave(*form);
+      RequestSave(*refr);
       numRequested++;
     }
 

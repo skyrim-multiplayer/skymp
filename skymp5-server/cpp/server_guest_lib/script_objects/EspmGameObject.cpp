@@ -125,7 +125,7 @@ const char* EspmGameObject::GetParentNativeScript()
     if (t == "SPGD")
       return "spgd";
     if (t == "RFCT")
-      return "referenceeffect";
+      return "visualeffect";
     if (t == "REGN")
       return "region";
     if (t == "NAVI")

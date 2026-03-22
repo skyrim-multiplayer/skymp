@@ -334,9 +334,6 @@ export class AuthService extends ClientListener {
   };
 
   private refreshWidgets() {
-    if (browserState.failCount) {
-      logError(this, `Auth check fail:`, browserState.comment);
-    }
     this.sp.browser.executeJavaScript(new FunctionInfo(this.browsersideWidgetSetter).getText({ events, browserState, authData: authData }));
     this.authDialogOpen = true;
   };

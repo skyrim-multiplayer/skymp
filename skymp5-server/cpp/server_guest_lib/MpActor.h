@@ -41,6 +41,9 @@ public:
   std::string GetLastAnimEventAsJson() const;
   const Equipment& GetEquipment() const;
   std::array<std::optional<Inventory::Entry>, 2> GetEquippedWeapon() const;
+  std::array<std::optional<Inventory::Entry>, 2> GetEquippedScroll() const;
+  std::array<std::optional<Inventory::Entry>, 2> GetEquippedLight() const;
+  std::array<std::optional<Inventory::Entry>, 2> GetEquippedShield() const;
   uint32_t GetRaceId() const;
   bool IsWeaponDrawn() const;
   espm::ObjectBounds GetBounds() const;
@@ -113,6 +116,7 @@ public:
   void ResolveSnippet(uint32_t snippetIdx, VarValue v);
   void SetPercentages(const ActorValues& actorValues,
                       MpActor* aggressor = nullptr);
+  void SetPercentage(espm::ActorValue av, float percentage);
   void NetSendChangeValues(
     const ActorValues& actorValues,
     const std::optional<std::vector<espm::ActorValue>>& avFilter);
@@ -168,8 +172,8 @@ public:
   void ApplyMagicEffects(std::vector<espm::Effects::Effect>& effects,
                          bool hasSweetpie = false,
                          bool durationOverriden = false);
-  void RemoveMagicEffect(const espm::ActorValue actorValue) noexcept;
-  void RemoveAllMagicEffects() noexcept;
+  void RemoveMagicEffect(const espm::ActorValue actorValue);
+  void RemoveAllMagicEffects();
   void ReapplyMagicEffects();
 
   bool GetConsoleCommandsAllowedFlag() const;

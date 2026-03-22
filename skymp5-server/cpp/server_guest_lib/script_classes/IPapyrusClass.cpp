@@ -9,7 +9,8 @@ VarValue IPapyrusClassBase::ExecuteSpSnippetAndGetPromise(
 {
   if (auto actor =
         policy->GetDefaultActor(script, name, self.GetMetaStackId())) {
-    auto s = SpSnippetFunctionGen::SerializeArguments(arguments, actor);
+    auto s = SpSnippetFunctionGen::SerializeArguments(
+      arguments, actor->GetParent(), actor);
     auto promise =
       SpSnippet(script, name, s,
                 method ? SpSnippetFunctionGen::GetFormId(self) : 0)

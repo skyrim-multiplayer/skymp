@@ -6,11 +6,12 @@
 
 #include "FileDatabase.h"
 #include "MigrationDatabase.h"
-#include "MongoDatabase.h"
 #include "ZipDatabase.h"
+#include <database_drivers/MongoDatabase.h>
 
-std::shared_ptr<IDatabase> DatabaseFactory::Create(
-  nlohmann::json settings, std::shared_ptr<spdlog::logger> logger)
+std::shared_ptr<Viet::IDatabase<MpChangeForm, FormDesc>>
+DatabaseFactory::Create(nlohmann::json settings,
+                        std::shared_ptr<spdlog::logger> logger)
 {
   auto databaseDriver = settings.count("databaseDriver")
     ? settings["databaseDriver"].get<std::string>()

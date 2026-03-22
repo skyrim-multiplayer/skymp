@@ -1,11 +1,14 @@
+#include <cwctype>
+#include <filesystem>
+#include <fstream>
+#include <random>
+#include <string>
+
+#include <spdlog/spdlog.h>
+
 #include <DInputHook.hpp>
 #include <Filesystem.hpp>
 #include <MyChromiumApp.h>
-#include <filesystem>
-#include <fstream>
-
-#include <random>
-#include <string>
 
 // https://stackoverflow.com/questions/440133/how-do-i-create-a-random-alpha-numeric-string-in-c
 namespace {
@@ -27,6 +30,29 @@ std::string random_string(std::string::size_type length)
     s += chrs[pick(rg)];
 
   return s;
+}
+
+std::string PathVerifyNoIncompatibleEntries()
+{
+  std::vector<char> pathBuf;
+  pathBuf.resize(GetEnvironmentVariableA("PATH", nullptr, 0));
+  if (pathBuf.empty()) {
+    return fmt::format(
+      "GetEnvironmentVariableA(PATH) failed: win32 error code {}",
+      GetLastError());
+  }
+  size_t pathLen = GetEnvironmentVariableA("PATH", &pathBuf[0],
+                                           static_cast<DWORD>(pathBuf.size()));
+  std::transform(pathBuf.begin(), pathBuf.end(), pathBuf.begin(),
+                 [](auto c) { return std::tolower(c, std::locale()); });
+  std::string_view pathSv =
+    std::string_view{ pathBuf.begin(), pathBuf.begin() + pathLen };
+
+  bool nirnLabPresent = pathSv.find("nirnlab") != std::string_view::npos;
+  if (nirnLabPresent) {
+    return fmt::format("nirnlab substring present in PATH: {}", pathSv);
+  }
+  return "";
 }
 }
 
@@ -83,6 +109,19 @@ void MyChromiumApp::Initialize(bool initChromium) noexcept
   auto ceftempPath = std::filesystem::temp_directory_path() /
     L"Skyrim Platform" / (L"CEFTemp" + std::to_wstring(hash));
   auto logPath = ceftempPath / L"cef_debug.log";
+  spdlog::info("browser (tilted): cache path is {}", ceftempPath.string());
+  spdlog::info("browser (tilted): debug log path is {}", logPath.string());
+
+  auto showError = [&](std::string msg) {
+    msg += "\nPossible reasons:";
+    msg += "\n1. Installed Skyrim Together. It conflicts with Skyrim Platform";
+    msg += "\n2. Installed Nirnlab UI - move SKSE/Plugins/NirnLabUIPlugin.dll "
+           "somewhere else if it exists";
+    msg += "\nTry checking these logs:";
+    msg += "\n- Documents/My Games/Skyrim.INI/SKSE/skyrim-platform.log";
+    msg += "\n- " + logPath.string();
+    MessageBoxA(0, msg.c_str(), "Error", MB_ICONERROR);
+  };
 
   CefString(&settings.log_file).FromWString(logPath.wstring());
   CefString(&settings.cache_path).FromWString(ceftempPath.wstring());
@@ -96,11 +135,16 @@ void MyChromiumApp::Initialize(bool initChromium) noexcept
     .FromWString(currentPath / "Data" / "Platform" / "Distribution" / "CEF" /
                  "locales");
 
+  if (auto msg = PathVerifyNoIncompatibleEntries(); !msg.empty()) {
+    spdlog::error(msg);
+    showError(
+      "Your PATH environment variable contains incompatible entries\n" + msg);
+    return;
+  }
+
   if (!CefInitialize(args, settings, this, nullptr)) {
-    MessageBoxA(0,
-                "CefInitialize failed (You probably have Skyrim Together "
-                "installed, SP isn't compatible with it)",
-                "Error", MB_ICONERROR);
+    showError("CefInitialize failed");
+    return;
   }
 
   CefBrowserSettings browserSettings{};
@@ -114,10 +158,7 @@ void MyChromiumApp::Initialize(bool initChromium) noexcept
                                      L"file:///Data/Platform/UI/index.html",
                                      browserSettings, nullptr, nullptr)) {
 
-    MessageBoxA(0,
-                "CreateBrowser failed (You probably have Skyrim Together "
-                "installed, SP isn't compatible with it)",
-                "Error", MB_ICONERROR);
+    showError("CreateBrowser failed");
   }
 }
 

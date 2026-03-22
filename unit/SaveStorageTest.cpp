@@ -1,12 +1,14 @@
 #include "TestUtils.hpp"
 
+#include "FormDesc.h"
 #include "MpChangeForms.h"
 #include "database_drivers/FileDatabase.h"
 #include "database_drivers/ZipDatabase.h"
 #include "save_storages/AsyncSaveStorage.h"
 #include <filesystem>
 
-std::shared_ptr<ISaveStorage> MakeSaveStorageFile()
+std::shared_ptr<Viet::ISaveStorage<MpChangeForm, FormDesc>>
+MakeSaveStorageFile()
 {
   auto directory = "unit/data";
 
@@ -14,12 +16,13 @@ std::shared_ptr<ISaveStorage> MakeSaveStorageFile()
     std::filesystem::remove_all(directory);
   }
 
-  return std::make_shared<AsyncSaveStorage>(
+  return std::make_shared<Viet::AsyncSaveStorage<MpChangeForm, FormDesc>>(
     std::make_shared<FileDatabase>(directory, spdlog::default_logger()),
     spdlog::default_logger(), "file");
 }
 
-std::shared_ptr<ISaveStorage> MakeSaveStorageZip()
+std::shared_ptr<Viet::ISaveStorage<MpChangeForm, FormDesc>>
+MakeSaveStorageZip()
 {
   auto archivePath = "world.zip";
 
@@ -27,12 +30,13 @@ std::shared_ptr<ISaveStorage> MakeSaveStorageZip()
     std::filesystem::remove(archivePath);
   }
 
-  return std::make_shared<AsyncSaveStorage>(
+  return std::make_shared<Viet::AsyncSaveStorage<MpChangeForm, FormDesc>>(
     std::make_shared<ZipDatabase>(archivePath, spdlog::default_logger()),
     spdlog::default_logger(), "zip");
 }
 
-std::vector<std::shared_ptr<ISaveStorage>> MakeSaveStorages()
+std::vector<std::shared_ptr<Viet::ISaveStorage<MpChangeForm, FormDesc>>>
+MakeSaveStorages()
 {
   return { MakeSaveStorageFile(), MakeSaveStorageZip() };
 }
@@ -44,7 +48,7 @@ MpChangeForm CreateChangeForm(const char* descStr)
   return res;
 }
 
-void UpsertSync(ISaveStorage& st,
+void UpsertSync(Viet::ISaveStorage<MpChangeForm, FormDesc>& st,
                 std::vector<std::optional<MpChangeForm>> changeForms)
 {
   bool finished = false;
@@ -60,7 +64,8 @@ void UpsertSync(ISaveStorage& st,
   }
 }
 
-void WaitForNextUpsert(ISaveStorage& st, WorldState& wst)
+void WaitForNextUpsert(Viet::ISaveStorage<MpChangeForm, FormDesc>& st,
+                       WorldState& wst)
 {
   uint32_t n = st.GetNumFinishedUpserts();
 
@@ -93,7 +98,7 @@ TEST_CASE("ChangeForm with spaces is saved correctly", "[save]")
 
       UpsertSync(*st, { f1 });
 
-      auto res = ISaveStorageUtils::FindAllSync(*st);
+      auto res = Viet::ISaveStorageUtils::FindAllSync(*st);
       REQUIRE(res.size() == 1);
       REQUIRE(res[{ 1, "" }].appearanceDump == appearance.ToJson());
     }
@@ -131,7 +136,7 @@ TEST_CASE("ChangeForm is saved correctly", "[save]")
       f2.factions.value().push_back(faction);
       UpsertSync(*st, { f1, f2 });
 
-      auto res = ISaveStorageUtils::FindAllSync(*st);
+      auto res = Viet::ISaveStorageUtils::FindAllSync(*st);
       REQUIRE(res.size() == 2);
       REQUIRE(res[{ 1, "" }].position == NiPoint3(1, 2, 3));
       REQUIRE(res[{ 1, "" }].appearanceDump == "{}");
@@ -167,19 +172,19 @@ TEST_CASE("Upsert affects the number of change forms in the database in the "
   for (const auto& st : storagesToTest) {
     SECTION("Testing with " + st->GetName())
     {
-      REQUIRE(ISaveStorageUtils::CountSync(*st) == 0);
+      REQUIRE(Viet::ISaveStorageUtils::CountSync(*st) == 0);
 
       UpsertSync(*st,
                  { CreateChangeForm("0"), CreateChangeForm("1"),
                    CreateChangeForm("2") });
 
-      REQUIRE(ISaveStorageUtils::CountSync(*st) == 3);
+      REQUIRE(Viet::ISaveStorageUtils::CountSync(*st) == 3);
 
       UpsertSync(*st,
                  { CreateChangeForm("0"), CreateChangeForm("1"),
                    CreateChangeForm("2"), CreateChangeForm("3") });
 
-      REQUIRE(ISaveStorageUtils::CountSync(*st) == 4);
+      REQUIRE(Viet::ISaveStorageUtils::CountSync(*st) == 4);
     }
   }
 }
@@ -222,11 +227,11 @@ TEST_CASE("Changes are transferred to SaveStorage", "[save]")
       PartOne p;
       p.AttachSaveStorage(st);
 
-      REQUIRE(ISaveStorageUtils::CountSync(*st) == 0);
+      REQUIRE(Viet::ISaveStorageUtils::CountSync(*st) == 0);
       p.CreateActor(0xffaaaeee, { 1, 1, 1 }, 1, 0x3c);
 
       WaitForNextUpsert(*st, p.worldState);
-      REQUIRE(ISaveStorageUtils::CountSync(*st) == 1);
+      REQUIRE(Viet::ISaveStorageUtils::CountSync(*st) == 1);
     }
   }
 }

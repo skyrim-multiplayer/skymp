@@ -1,12 +1,10 @@
-FROM --platform=linux/amd64 mcr.microsoft.com/devcontainers/javascript-node:22
+FROM --platform=linux/amd64 mcr.microsoft.com/devcontainers/javascript-node:22-bookworm
 
 # Tip for maintainers: Updating Vcpkg Binary Cache
-# 1. remove "clear;" from "export VCPKG_BINARY_SOURCES=..." below
-# 2. Re-build devcontainer
-# 3. Run CMake
-# 4. scp ~/.cache/vcpkg/archives/*/*.zip codespaces-vcpkg-binary-cache@storage.bunnycdn.com:/
+# 1. Run CMake
+# 2. scp ~/.cache/vcpkg/archives/*/*.zip codespaces-vcpkg-binary-cache@storage.bunnycdn.com:/
 
-ENV VCPKG_BINARY_SOURCES="clear;http,https://codespaces-vcpkg-binary-cache.b-cdn.net/{sha}.zip,read"
+ENV VCPKG_BINARY_SOURCES="http,https://codespaces-vcpkg-binary-cache.b-cdn.net/{sha}.zip,read"
 
 RUN \
   curl -fsSL https://dl.yarnpkg.com/debian/pubkey.gpg | gpg --dearmor > /usr/share/keyrings/yarnkey.gpg \
@@ -15,7 +13,7 @@ RUN \
   && echo 'deb [signed-by=/usr/share/keyrings/kitware-archive-keyring.gpg] https://apt.kitware.com/ubuntu/ jammy main' > /etc/apt/sources.list.d/kitware.list \
   && apt-get update \
   && apt-get install -y \
-    cmake=4.1.0-0kitware1ubuntu22.04.1 \
+    cmake \
     clang-15=1:15.0.6-4+b1 \
     clang-format-15=1:15.0.6-4+b1 \
     ninja-build=1.11.1-2~deb12u1 \
@@ -28,5 +26,10 @@ RUN \
     make \
     zip \
     pkg-config \
+    flex \
+    bison \
+    autoconf \
+    automake \
+    libtool \
   && rm -rf /var/lib/apt/lists/* \
   && mv /usr/bin/clang-format-15 /usr/bin/clang-format

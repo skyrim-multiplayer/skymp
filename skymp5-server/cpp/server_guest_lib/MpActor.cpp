@@ -14,7 +14,6 @@
 #include "ServerState.h"
 #include "SpSnippet.h"
 #include "SpSnippetFunctionGen.h"
-#include "TimeUtils.h"
 #include "WorldState.h"
 #include "gamemode_events/DeathEvent.h"
 #include "gamemode_events/DropItemEvent.h"
@@ -25,6 +24,7 @@
 #include "papyrus-vm/Utils.h"
 #include "script_objects/EspmGameObject.h"
 #include <NiPoint3.h>
+#include <TimeUtils.h>
 #include <algorithm>
 #include <atomic>
 #include <chrono>
@@ -607,6 +607,36 @@ void MpActor::ResolveSnippet(uint32_t snippetIdx, VarValue v)
     promise.Resolve(v);
     pImpl->snippetPromises.erase(it);
   }
+}
+
+void MpActor::SetPercentage(espm::ActorValue av, float percentage)
+{
+  if (IsDead() || pImpl->isRespawning) {
+    return;
+  }
+  if (av == espm::ActorValue::Health && percentage <= 0.f) {
+    Kill(nullptr);
+    return;
+  }
+  EditChangeForm([&](MpChangeForm& changeForm) {
+    switch (av) {
+      case espm::ActorValue::Health:
+        changeForm.actorValues.healthPercentage = percentage;
+        break;
+      case espm::ActorValue::Magicka:
+        changeForm.actorValues.magickaPercentage = percentage;
+        break;
+      case espm::ActorValue::Stamina:
+        changeForm.actorValues.staminaPercentage = percentage;
+        break;
+      default:
+        break;
+    }
+  });
+
+  // Updating timestamp. Note: calling this multiple times for different AVs
+  // is fine but might be slightly inefficient if batched.
+  SetLastAttributesPercentagesUpdate(std::chrono::steady_clock::now());
 }
 
 void MpActor::SetPercentages(const ActorValues& actorValues,
@@ -1814,24 +1844,34 @@ void MpActor::ApplyMagicEffects(std::vector<espm::Effects::Effect>& effects,
   }
 }
 
-void MpActor::RemoveMagicEffect(const espm::ActorValue actorValue) noexcept
+void MpActor::RemoveMagicEffect(const espm::ActorValue actorValue)
 {
-  const ActorValues baseActorValues = GetBaseActorValues(
-    GetParent(), GetBaseId(), GetRaceId(), ChangeForm().templateChain);
-  const float baseActorValue = baseActorValues.GetValue(actorValue);
-  SetActorValue(actorValue, baseActorValue);
-  EditChangeForm([actorValue](MpChangeForm& changeForm) {
-    changeForm.activeMagicEffects.Remove(actorValue);
-  });
+  try {
+    const ActorValues baseActorValues = GetBaseActorValues(
+      GetParent(), GetBaseId(), GetRaceId(), ChangeForm().templateChain);
+    const float baseActorValue = baseActorValues.GetValue(actorValue);
+    SetActorValue(actorValue, baseActorValue);
+    EditChangeForm([actorValue](MpChangeForm& changeForm) {
+      changeForm.activeMagicEffects.Remove(actorValue);
+    });
+  } catch (std::exception& e) {
+    spdlog::error("MpActor::RemoveMagicEffect {:x} - {}", GetFormId(),
+                  e.what());
+  }
 }
 
-void MpActor::RemoveAllMagicEffects() noexcept
+void MpActor::RemoveAllMagicEffects()
 {
-  const ActorValues baseActorValues = GetBaseActorValues(
-    GetParent(), GetBaseId(), GetRaceId(), ChangeForm().templateChain);
-  SetActorValues(baseActorValues);
-  EditChangeForm(
-    [](MpChangeForm& changeForm) { changeForm.activeMagicEffects.Clear(); });
+  try {
+    const ActorValues baseActorValues = GetBaseActorValues(
+      GetParent(), GetBaseId(), GetRaceId(), ChangeForm().templateChain);
+    SetActorValues(baseActorValues);
+    EditChangeForm(
+      [](MpChangeForm& changeForm) { changeForm.activeMagicEffects.Clear(); });
+  } catch (std::exception& e) {
+    spdlog::error("MpActor::RemoveAllMagicEffects {:x} - {}", GetFormId(),
+                  e.what());
+  }
 }
 
 void MpActor::ReapplyMagicEffects()
@@ -1852,22 +1892,108 @@ void MpActor::ReapplyMagicEffects()
 std::array<std::optional<Inventory::Entry>, 2> MpActor::GetEquippedWeapon()
   const
 {
-  std::array<std::optional<Inventory::Entry>, 2> wornWeaponEntries;
+  std::array<std::optional<Inventory::Entry>, 2> wornEntries;
   // 0 -> left hand, 1 -> right hand
   auto& espmBrowser = GetParent()->GetEspm().GetBrowser();
   for (const auto& entry : GetEquipment().inv.entries) {
     if (entry.GetWorn() != Inventory::Worn::None) {
       espm::LookupResult res = espmBrowser.LookupById(entry.baseId);
-      auto* weaponRecord = espm::Convert<espm::WEAP>(res.rec);
-      if (weaponRecord) {
+      auto* record = espm::Convert<espm::WEAP>(res.rec);
+      if (record) {
         if (entry.GetWorn() == Inventory::Worn::Left) {
-          wornWeaponEntries[0] = std::move(entry);
+          wornEntries[0] = std::move(entry);
         }
         if (entry.GetWorn() == Inventory::Worn::Right) {
-          wornWeaponEntries[1] = std::move(entry);
+          wornEntries[1] = std::move(entry);
         }
       }
     }
   }
-  return wornWeaponEntries;
+  return wornEntries;
+}
+
+std::array<std::optional<Inventory::Entry>, 2> MpActor::GetEquippedScroll()
+  const
+{
+  std::array<std::optional<Inventory::Entry>, 2> wornEntries;
+  // 0 -> left hand, 1 -> right hand
+  auto& espmBrowser = GetParent()->GetEspm().GetBrowser();
+  for (const auto& entry : GetEquipment().inv.entries) {
+    if (entry.GetWorn() != Inventory::Worn::None) {
+      espm::LookupResult res = espmBrowser.LookupById(entry.baseId);
+      auto* record = espm::Convert<espm::SCRL>(res.rec);
+      if (record) {
+        if (entry.GetWorn() == Inventory::Worn::Left) {
+          wornEntries[0] = std::move(entry);
+        }
+        if (entry.GetWorn() == Inventory::Worn::Right) {
+          wornEntries[1] = std::move(entry);
+        }
+      }
+    }
+  }
+  return wornEntries;
+}
+
+std::array<std::optional<Inventory::Entry>, 2> MpActor::GetEquippedLight()
+  const
+{
+  std::array<std::optional<Inventory::Entry>, 2> wornEntries;
+  // 0 -> left hand, 1 -> right hand
+  auto& espmBrowser = GetParent()->GetEspm().GetBrowser();
+  for (const auto& entry : GetEquipment().inv.entries) {
+    if (entry.GetWorn() != Inventory::Worn::None) {
+      espm::LookupResult res = espmBrowser.LookupById(entry.baseId);
+      auto* record = espm::Convert<espm::LIGH>(res.rec);
+      if (record) {
+        if (entry.GetWorn() == Inventory::Worn::Left) {
+          wornEntries[0] = std::move(entry);
+        }
+        if (entry.GetWorn() == Inventory::Worn::Right) {
+          wornEntries[1] = std::move(entry);
+        }
+      }
+    }
+  }
+  return wornEntries;
+}
+
+std::array<std::optional<Inventory::Entry>, 2> MpActor::GetEquippedShield()
+  const
+{
+  std::array<std::optional<Inventory::Entry>, 2> wornEntries;
+  // 0 -> left hand, 1 -> right hand
+  auto& espmBrowser = GetParent()->GetEspm().GetBrowser();
+  auto& espmCache = GetParent()->GetEspmCache();
+  constexpr uint32_t kBodShield = 0x00000200;
+
+  for (const auto& entry : GetEquipment().inv.entries) {
+    if (entry.GetWorn() != Inventory::Worn::None) {
+      espm::LookupResult res = espmBrowser.LookupById(entry.baseId);
+      auto* record = espm::Convert<espm::ARMO>(res.rec);
+      if (record) {
+        auto data = record->GetData(espmCache);
+        bool isShield = false;
+
+        if (data.bod2.present) {
+          isShield = (data.bod2.bodyPartFlags & kBodShield) != 0;
+        } else if (data.bodt.present) {
+          isShield = (data.bodt.bodyPartFlags & kBodShield) != 0;
+        } else {
+          continue;
+        }
+
+        if (!isShield) {
+          continue;
+        }
+
+        // In Skyrim, in the equipment data, the shield has the worn flag and
+        // not the wornLeft, although it is actually in the left hand.
+        if (entry.GetWorn() == Inventory::Worn::Right) {
+          wornEntries[0] = std::move(entry);
+        }
+      }
+    }
+  }
+  return wornEntries;
 }

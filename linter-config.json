@@ -1,0 +1,70 @@
+{
+  "toolsDir": ".linter/tools",
+  "modes": {
+    "hook": {
+      "fileSource": {
+        "export": "StagedFilesSource"
+      }
+    },
+    "gha": {
+      "fileSource": {
+        "export": "DiffBaseSource"
+      }
+    },
+    "manual": {
+      "fileSource": {
+        "export": "AllFilesSource"
+      }
+    }
+  },
+  "checks": [
+    {
+      "name": "CRLF",
+      "export": "CrlfCheck",
+      "modes": ["gha", "manual"],
+      "options": {
+        "textOnly": true,
+        "excludePaths": ["/third_party/", "/skymp5-scripts/", "/overlay_ports/rsm-bsa/", "/overlay_ports/libxml2/"]
+      }
+    },
+    {
+      "name": "Linelint",
+      "export": "LinelintCheck",
+      "modes": ["hook", "gha", "manual"],
+      "options": {
+        "textOnly": true,
+        "excludePaths": ["/third_party/", "/skymp5-scripts/", "/overlay_ports/rsm-bsa/", "/overlay_ports/libxml2/"]
+      }
+    },
+    {
+      "name": "ClangFormat",
+      "export": "ClangFormatCheck",
+      "modes": ["hook", "gha", "manual"],
+      "options": {
+        "extensions": [".cpp", ".h", ".hpp", ".cxx", ".cc"],
+        "excludePaths": ["/overlay_ports/"]
+      }
+    },
+    {
+      "name": "Server/Client Message Pairs",
+      "export": "PairedFilesCheck",
+      "modes": ["hook", "gha", "manual"],
+      "options": {
+        "dirs": [
+          { "path": "skymp5-server/cpp/messages", "ext": ".h" },
+          { "path": "skymp5-client/src/services/messages", "ext": ".ts" }
+        ],
+        "exclude": [
+          "anyMessage.ts",
+          "refrIdMessageBase.ts",
+          "MessageBase.h",
+          "MessageSerializerFactory.cpp",
+          "MessageSerializerFactory.h",
+          "Messages.h",
+          "MinPacketId.h",
+          "MsgType.h"
+        ]
+      }
+    }
+  ]
+}

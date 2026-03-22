@@ -20,7 +20,8 @@ VarValue PapyrusSound::Play(VarValue self,
       throw std::runtime_error("Play requires at least 1 argument");
     }
     auto funcName = "Play";
-    auto serializedArgs = SpSnippetFunctionGen::SerializeArguments(arguments);
+    auto serializedArgs =
+      SpSnippetFunctionGen::SerializeArguments(arguments, refr->GetParent());
     for (auto listener : refr->GetActorListeners()) {
       SpSnippet(GetName(), funcName, serializedArgs, selfId)
         .Execute(listener, SpSnippetMode::kNoReturnResult);

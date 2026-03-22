@@ -1,7 +1,7 @@
 #include "GameModeEvent.h"
 
-#include "ScopedTask.h"
 #include "WorldState.h"
+#include <ScopedTask.h>
 #include <spdlog/spdlog.h>
 
 bool GameModeEvent::Fire(WorldState* worldState)

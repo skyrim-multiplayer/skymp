@@ -10,6 +10,7 @@ import { GamemodeApiEventSourceCtx } from "../messages_gamemode/gamemodeApiEvent
 // Sligthly different types
 import * as skyrimPlatform from "skyrimPlatform";
 import { logError, logTrace } from "../../logging";
+import { ServerJsVerificationService } from "./serverJsVerificationService";
 
 export class GamemodeEventSourceService extends ClientListener {
     constructor(private sp: Sp, private controller: CombinedController) {
@@ -28,6 +29,16 @@ export class GamemodeEventSourceService extends ClientListener {
     }
 
     private onUpdateGamemodeDataMessage(event: ConnectionMessage<UpdateGamemodeDataMessage>) {
+
+        if (this.sp.settings["skymp5-client"]["disable-gamemode-updates"]) {
+            if (this.sp.storage['GamemodeEventSourceService_sawEventSources'] === true) {
+                logTrace(this, `Gamemode updates are disabled by settings`);
+                return;
+            }
+            logTrace(this, `Gamemode updates are disabled by settings - processing first update only`);
+            this.sp.storage['GamemodeEventSourceService_sawEventSources'] = true;
+        }
+
         if (!Array.isArray(this.sp.storage['eventSourceContexts'])) {
             this.sp.storage['eventSourceContexts'] = [];
         } else {
@@ -51,9 +62,23 @@ export class GamemodeEventSourceService extends ClientListener {
             });
         }
 
+        const serverJsVerificationService = this.controller.lookupListener(ServerJsVerificationService);
+
         eventNames.forEach((eventName) => {
+
+            const result = serverJsVerificationService.verifyServerJs(eventSourcesRecord[eventName]!);
+
+            if (result.src === null) {
+                logError(this, `'eventSources`, eventName, 'Verification failed:', result.error);
+                return;
+            }
+
             try {
-                const fn = new Function('ctx', eventSourcesRecord[eventName]!);
+                const fn = new Function(
+                    'ctx',
+                    result.src,
+                );
+
                 const ctx: GamemodeApiEventSourceCtx = {
                     refr: undefined,
                     value: undefined,

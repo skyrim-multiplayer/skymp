@@ -5,26 +5,27 @@
 #include <spdlog/spdlog.h>
 
 namespace {
-size_t CountChangeForms(std::shared_ptr<IDatabase> database)
+size_t CountChangeForms(
+  std::shared_ptr<Viet::IDatabase<MpChangeForm, FormDesc>> database)
 {
   size_t n = 0;
-  database->Iterate([&](const MpChangeForm&) { ++n; });
+  database->Iterate([&](const MpChangeForm&) { ++n; }, std::nullopt);
   return n;
 }
 }
 
 struct MigrationDatabase::Impl
 {
-  std::shared_ptr<IDatabase> newDatabase;
-  std::shared_ptr<IDatabase> oldDatabase;
+  std::shared_ptr<Viet::IDatabase<MpChangeForm, FormDesc>> newDatabase;
+  std::shared_ptr<Viet::IDatabase<MpChangeForm, FormDesc>> oldDatabase;
   std::function<void()> exit;
   std::function<void()> terminate;
 };
 
-MigrationDatabase::MigrationDatabase(std::shared_ptr<IDatabase> newDatabase,
-                                     std::shared_ptr<IDatabase> oldDatabase,
-                                     std::function<void()> exit,
-                                     std::function<void()> terminate)
+MigrationDatabase::MigrationDatabase(
+  std::shared_ptr<Viet::IDatabase<MpChangeForm, FormDesc>> newDatabase,
+  std::shared_ptr<Viet::IDatabase<MpChangeForm, FormDesc>> oldDatabase,
+  std::function<void()> exit, std::function<void()> terminate)
 {
   pImpl.reset(new Impl{ newDatabase, oldDatabase, exit });
 
@@ -56,23 +57,25 @@ MigrationDatabase::MigrationDatabase(std::shared_ptr<IDatabase> newDatabase,
 
   uint32_t counter = 0;
 
-  oldDatabase->Iterate([&](const MpChangeForm& changeForm) {
-    changeForms.push_back(changeForm);
-    ++counter;
-    if (counter <= 100) {
-      if (counter % 10 == 0) {
-        spdlog::info("MigrationDatabase: prepared {} changeforms", counter);
+  oldDatabase->Iterate(
+    [&](const MpChangeForm& changeForm) {
+      changeForms.push_back(changeForm);
+      ++counter;
+      if (counter <= 100) {
+        if (counter % 10 == 0) {
+          spdlog::info("MigrationDatabase: prepared {} changeforms", counter);
+        }
+      } else if (counter <= 1000) {
+        if (counter % 100 == 0) {
+          spdlog::info("MigrationDatabase: prepared {} changeforms", counter);
+        }
+      } else {
+        if (counter % 1000 == 0) {
+          spdlog::info("MigrationDatabase: prepared {} changeforms", counter);
+        }
       }
-    } else if (counter <= 1000) {
-      if (counter % 100 == 0) {
-        spdlog::info("MigrationDatabase: prepared {} changeforms", counter);
-      }
-    } else {
-      if (counter % 1000 == 0) {
-        spdlog::info("MigrationDatabase: prepared {} changeforms", counter);
-      }
-    }
-  });
+    },
+    std::nullopt);
 
   spdlog::info("MigrationDatabase: upserting {} changeforms into the new "
                "database, this may take time",
@@ -121,7 +124,8 @@ std::vector<std::optional<MpChangeForm>>&& MigrationDatabase::UpsertImpl(
   return std::move(changeForms);
 }
 
-void MigrationDatabase::Iterate(const IterateCallback& iterateCallback)
+void MigrationDatabase::Iterate(const IterateCallback&,
+                                std::optional<std::vector<FormDesc>>)
 {
   spdlog::error("MigrationDatabase::Iterate - should never be reached");
   pImpl->terminate();

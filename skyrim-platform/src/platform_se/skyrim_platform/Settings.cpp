@@ -31,11 +31,14 @@ std::unique_ptr<Settings::File> Settings::GetPlatformSettings()
                   "; Set Cmd stay on top of others windows");
 
     file->SetBool("Debug", "ChromiumEnabled", true,
-                  "; Enables Chromium functionality");
+                  "; DEPRECATED: set Browser.BackendName to off");
 
     file->SetString("Main", "PluginFolders",
                     "Data/Platform/Plugins;Data/Platform/PluginsDev",
                     "; List of plugin folders to load plugins from");
+
+    file->SetString("Browser", "BackendName", "auto",
+                    "; Browser backend name: off/tilted/nirnlab/auto");
 
     file->Save();
   }

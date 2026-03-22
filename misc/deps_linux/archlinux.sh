@@ -63,6 +63,8 @@ addpackage tar
 addpackage curl  # required by vcpkg
 addpackage pkgconf  # required by Catch2 (C++ testing framework)
 addpackage linux-headers  # required by OpenSSL(?)
+addpackage automake
+addpackage libtool
 
 echo Will now run the installation command, please check it and confirm
 set -x  # this will print the list that we're going to install

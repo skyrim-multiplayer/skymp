@@ -22,9 +22,9 @@ if(BUILD_GAMEMODE)
   set(GAMEMODE_REPO_URL "https://${GITHUB_TOKEN}:x-oauth-basic@github.com/${GAMEMODE_REPO_OWNER}/${GAMEMODE_REPO_NAME}.git")
 
   if("$ENV{DEPLOY_BRANCH}" STREQUAL "")
-    set(ENV_INPUT_REPOSITORIES "[{\"owner\": \"Pospelove\", \"repo\": \"skymp5-gamemode\", \"labels\": [], \"token\": \"${GITHUB_TOKEN}\"}]")
+    set(ENV_INPUT_REPOSITORIES "[{\"owner\": \"skyrim-multiplayer\", \"repo\": \"skymp5-gamemode\", \"labels\": [], \"token\": \"${GITHUB_TOKEN}\"}]")
   else()
-    set(ENV_INPUT_REPOSITORIES "[{\"owner\": \"Pospelove\", \"repo\": \"skymp5-gamemode\", \"labels\": [\"merge-to:${DEPLOY_BRANCH}\"], \"token\": \"${GITHUB_TOKEN}\"}]")
+    set(ENV_INPUT_REPOSITORIES "[{\"owner\": \"skyrim-multiplayer\", \"repo\": \"skymp5-gamemode\", \"labels\": [\"merge-to:${DEPLOY_BRANCH}\"], \"token\": \"${GITHUB_TOKEN}\"}]")
   endif()
 
   # Pass variables to the download script with PRS.

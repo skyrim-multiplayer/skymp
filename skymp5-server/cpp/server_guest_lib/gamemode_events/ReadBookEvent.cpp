@@ -98,7 +98,7 @@ void ReadBookEvent::OnFireBlocked(WorldState* worldState)
   }
 
   SpSnippet("Actor", "RemoveSpell",
-            SpSnippetFunctionGen::SerializeArguments(arguments),
+            SpSnippetFunctionGen::SerializeArguments(arguments, worldState),
             actor->GetFormId())
     .Execute(actor, SpSnippetMode::kNoReturnResult);
 }

@@ -1556,6 +1556,7 @@ export declare function createText(xPos: number, yPos: number, text: string, col
 export declare function destroyText(textId: number): void;
 export declare function destroyAllTexts(): void;
 
+export declare function setTextsVisibility(visibility: 'inheritBrowser' | 'off' | 'on'): void;
 export declare function setTextPos(textId: number, xPos: number, yPos: number): void;
 export declare function setTextString(textId: number, text: string): void;
 export declare function setTextColor(textId: number, color: number[]): void;
@@ -1566,6 +1567,7 @@ export declare function setTextDepth(textId: number, depth: number): void;
 export declare function setTextEffect(textId: number, effect: number): void;
 export declare function setTextOrigin(textId: number, origin: number[]): void;
 
+export declare function getTextsVisibility(): 'inheritBrowser' | 'off' | 'on';
 export declare function getTextPos(textId: number): number[];
 export declare function getTextString(textId: number): string;
 export declare function getTextColor(textId: number): number[];

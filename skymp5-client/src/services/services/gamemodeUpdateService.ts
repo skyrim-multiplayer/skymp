@@ -15,6 +15,8 @@ import { GamemodeApiCtx } from "../messages_gamemode/gamemodeApiCtx";
 // Sligthly different types
 import * as skyrimPlatform from "skyrimPlatform";
 import { logError, logTrace } from "../../logging";
+import { SettingsService } from "./settingsService";
+import { ServerJsVerificationService } from "./serverJsVerificationService";
 
 export class GamemodeUpdateService extends ClientListener {
     constructor(private sp: Sp, private controller: CombinedController) {
@@ -106,6 +108,16 @@ export class GamemodeUpdateService extends ClientListener {
     }
 
     private onUpdateGamemodeDataMessage(event: ConnectionMessage<UpdateGamemodeDataMessage>) {
+
+        if (this.sp.settings["skymp5-client"]["disable-gamemode-updates"]) {
+            if (this.sp.storage['GamemodeUpdateService_sawUpdateFunctions'] === true) {
+                logTrace(this, `Gamemode updates are disabled by settings`);
+                return;
+            }
+            logTrace(this, `Gamemode updates are disabled by settings - processing first update only`);
+            this.sp.storage['GamemodeUpdateService_sawUpdateFunctions'] = true;
+        }
+
         this.sp.storage['updateNeighborFunctions'] = undefined;
         this.sp.storage['updateOwnerFunctions'] = undefined;
 
@@ -210,16 +222,27 @@ export class GamemodeUpdateService extends ClientListener {
         storageVar: string,
         functionSources: GamemodeValuePair[],
     ) {
+        const serverJsVerificationService = this.controller.lookupListener(ServerJsVerificationService);
+
         let functionSourcesRecord: Record<string, string | undefined> = {};
         functionSources.forEach(pair => functionSourcesRecord[pair.name] = pair.content);
 
         this.sp.storage[storageVar] = functionSourcesRecord;
 
         for (const propName of Object.keys(functionSourcesRecord)) {
+
+            const result = serverJsVerificationService.verifyServerJs((this.sp.storage[storageVar] as any)[propName]);
+
+            if (result.src === null) {
+                logError(this, storageVar, propName, 'Verification failed:', result.error);
+                delete (this.sp.storage[storageVar] as any)[propName];
+                continue;
+            }
+
             try {
                 (this.sp.storage[storageVar] as any)[propName] = new Function(
                     'ctx',
-                    (this.sp.storage[storageVar] as any)[propName],
+                    result.src,
                 );
                 const emptyFunction = functionSourcesRecord[propName] === '';
                 if (emptyFunction) {
@@ -229,7 +252,7 @@ export class GamemodeUpdateService extends ClientListener {
                     logTrace(this, storageVar, propName, 'Added');
                 }
             } catch (e) {
-                logTrace(this, storageVar, propName, e);
+                logError(this, storageVar, propName, e);
             }
         }
         this.sp.storage[`${storageVar}_keys`] = Object.keys(this.sp.storage[storageVar] as any);

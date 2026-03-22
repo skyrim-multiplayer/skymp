@@ -1,14 +1,20 @@
 #pragma once
+
 #include "GamemodeApi.h"
 #include "LocalizationProvider.h"
-#include "Networking.h"
 #include "NetworkingMock.h"
 #include "PartOne.h"
 #include "ScampServerListener.h"
+
 #include <memory>
+
 #include <napi.h>
 #include <nlohmann/json.hpp>
 #include <spdlog/spdlog.h>
+
+namespace prometheus {
+class Registry;
+}
 
 class ScampServer : public Napi::ObjectWrap<ScampServer>
 {
@@ -42,6 +48,7 @@ public:
   Napi::Value CreateBot(const Napi::CallbackInfo& info);
   Napi::Value GetUserByActor(const Napi::CallbackInfo& info);
   Napi::Value GetUserIp(const Napi::CallbackInfo& info);
+  Napi::Value Kick(const Napi::CallbackInfo& info);
 
   Napi::Value GetLocalizedString(const Napi::CallbackInfo& info);
   Napi::Value GetServerSettings(const Napi::CallbackInfo& info);
@@ -65,6 +72,8 @@ public:
   Napi::Value GetPacketHistory(const Napi::CallbackInfo& info);
   Napi::Value ClearPacketHistory(const Napi::CallbackInfo& info);
   Napi::Value RequestPacketHistoryPlayback(const Napi::CallbackInfo& info);
+
+  Napi::Value GetPrometheusMetrics(const Napi::CallbackInfo& info);
 
   Napi::Value FindFormsByPropertyValue(const Napi::CallbackInfo& info);
 
@@ -101,6 +110,7 @@ private:
   nlohmann::json serverSettings;
   GamemodeApi::State gamemodeApiState;
   Napi::Reference<Napi::Value> parsedServerSettings;
+  std::shared_ptr<prometheus::Registry> promRegistry;
 
   std::shared_ptr<LocalizationProvider> localizationProvider;
 

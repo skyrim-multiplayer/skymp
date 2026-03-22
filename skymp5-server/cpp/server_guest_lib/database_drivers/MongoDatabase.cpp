@@ -1,6 +1,7 @@
 #include "MongoDatabase.h"
 
 #include "JsonUtils.h"
+#include <save_storages/AsyncSaveStorage.h>
 
 #ifndef NO_MONGO
 #  include <bsoncxx/builder/stream/document.hpp>
@@ -15,11 +16,13 @@
 #  include <mongocxx/uri.hpp>
 #endif
 
+#include <atomic>
+#include <map>
 #include <mutex>
-#include <nlohmann/json.hpp>
-#include <openssl/sha.h>
+#include <sodium.h>
 #include <spdlog/spdlog.h>
 #include <thread>
+#include <vector>
 
 struct MongoDatabase::Impl
 {
@@ -30,6 +33,8 @@ struct MongoDatabase::Impl
   const char* const collectionName = "changeForms";
 
   std::shared_ptr<mongocxx::pool> pool;
+
+  std::unique_ptr<JsonSanitizer> jsonSanitizer;
 #endif
 };
 
@@ -46,20 +51,27 @@ std::vector<std::optional<MpChangeForm>>&& MongoDatabase::UpsertImpl(
   return std::move(changeForms);
 }
 
-void MongoDatabase::Iterate(const IterateCallback&)
+void MongoDatabase::Iterate(const IterateCallback&,
+                            std::optional<std::vector<FormDesc>>)
 {
 }
 
 #endif
 
 #ifndef NO_MONGO
-MongoDatabase::MongoDatabase(std::string uri_, std::string name_)
+MongoDatabase::MongoDatabase(const std::string& uri_, const std::string& name_)
 {
   static mongocxx::instance g_instance;
 
-  pImpl.reset(new Impl{ uri_, name_ });
+  // Since MongoDB 5.0, '$' and '.' are OK
+  // Might be de-hardcoded in the future, for DocumentDB or something
+  static const std::vector<char> kBannedCharactersMongo5 = { '\0' };
 
+  pImpl.reset(new Impl{ uri_, name_ });
   pImpl->pool.reset(new mongocxx::pool(mongocxx::uri(pImpl->uri.data())));
+  pImpl->jsonSanitizer.reset(
+    new JsonSanitizer(kBannedCharactersMongo5,
+                      [this](const std::string& str) { return Sha256(str); }));
 }
 
 std::vector<std::optional<MpChangeForm>>&& MongoDatabase::UpsertImpl(
@@ -84,7 +96,7 @@ std::vector<std::optional<MpChangeForm>>&& MongoDatabase::UpsertImpl(
       filter["formDesc"] = changeForm->formDesc.ToString();
 
       auto upd = nlohmann::json::object();
-      upd["$set"] = jChangeForm;
+      upd["$set"] = pImpl->jsonSanitizer->SanitizeJsonRecursive(jChangeForm);
 
       bulk.append(mongocxx::model::update_one(
                     { std::move(bsoncxx::from_json(filter.dump())),
@@ -99,154 +111,196 @@ std::vector<std::optional<MpChangeForm>>&& MongoDatabase::UpsertImpl(
 
     return std::move(changeForms);
   } catch (std::exception& e) {
-    throw UpsertFailedException(std::move(changeForms), e.what());
+    throw Viet::AsyncSaveStorage<
+      MpChangeForm, FormDesc>::UpsertFailedException(std::move(changeForms),
+                                                     e.what());
   }
 }
 
-void MongoDatabase::Iterate(const IterateCallback& iterateCallback)
+void MongoDatabase::Iterate(const IterateCallback& iterateCallback,
+                            std::optional<std::vector<FormDesc>> filter)
 {
-  constexpr int kBatchSize = 1001;
-  mongocxx::options::find findOptions;
-  findOptions.batch_size(kBatchSize);
+  try {
+    constexpr int kBatchSize = 1001;
+    mongocxx::options::find findOptions;
+    findOptions.batch_size(kBatchSize);
 
-  auto totalDocuments = GetDocumentCount();
-
-  int numParts = std::min(totalDocuments, 100);
-
-  std::atomic<int> totalDocumentsProcessed = 0;
-
-  std::string hash;
-  std::vector<std::shared_ptr<std::thread>> threads;
-  std::vector<std::optional<std::string>> threadsErrors;
-  std::vector<uint8_t> threadsSuccess;
-  std::vector<std::string> threadsDocumentsJsonArray;
-
-  threadsDocumentsJsonArray.resize(numParts);
-  threadsErrors.resize(numParts);
-  threadsSuccess.resize(numParts, 0);
-
-  bool allFinished = false;
-  int numAttempts = 0;
-
-  while (!allFinished) {
-    numAttempts++;
-
-    int numThreadsToRun = 0;
-    for (int i = 0; i < numParts; i++) {
-      if (threadsSuccess[i] == 1) {
-        continue;
+    nlohmann::json filterJson = nlohmann::json::object();
+    if (filter) {
+      auto filterArr = nlohmann::json::array();
+      for (const auto& desc : *filter) {
+        filterArr.push_back(desc.ToString());
       }
-      numThreadsToRun++;
-    }
-
-    if (numAttempts > 1) {
-      spdlog::info("Spawning {} threads to load remaining ChangeForms",
-                   numThreadsToRun);
+      filterJson["formDesc"] = { { "$in", std::move(filterArr) } };
+      spdlog::info("Filtering Iterate with {} formDescs", filter->size());
     } else {
-      spdlog::info("Spawning {} threads to load ChangeForms", numThreadsToRun);
+      spdlog::info("No filtering for Iterate");
     }
+    const std::string filterJsonStr = filterJson.dump();
 
-    for (int i = 0; i < numParts; i++) {
-      if (threadsSuccess[i] == 1) {
-        continue;
-      }
+    int totalDocuments = GetDocumentCount(filterJsonStr);
 
-      // space is to be replaced with ] in case of empty array
-      threadsDocumentsJsonArray[i] = "[ ";
+    int numParts = std::min(totalDocuments, 100);
 
-      int partSize = totalDocuments / numParts;
-      auto skip = i * partSize;
-      auto limit = (i == numParts - 1) ? totalDocuments - skip : partSize;
+    std::atomic<int> totalDocumentsProcessed = 0;
 
-      auto f = [i, skip, limit, &totalDocumentsProcessed, &iterateCallback,
-                &threadsSuccess, &threadsErrors, &threadsDocumentsJsonArray,
-                findOptions, this] {
-        try {
-          simdjson::dom::parser p;
+    std::string hash;
+    std::vector<std::shared_ptr<std::thread>> threads;
+    std::vector<std::optional<std::string>> threadsErrors;
+    std::vector<uint8_t> threadsSuccess;
+    std::vector<std::string> threadsDocumentsJsonArray;
 
-          mongocxx::v_noabi::pool::entry poolEntry = pImpl->pool->acquire();
+    threadsDocumentsJsonArray.resize(numParts);
+    threadsErrors.resize(numParts);
+    threadsSuccess.resize(numParts, 0);
 
-          mongocxx::v_noabi::collection collection =
-            poolEntry->database(pImpl->name).collection(pImpl->collectionName);
+    bool allFinished = false;
+    int numAttempts = 0;
 
-          mongocxx::options::find options = findOptions;
-          options.skip(skip);
-          options.limit(limit);
+    while (!allFinished) {
+      numAttempts++;
 
-          auto cursor = collection.find({}, options);
-
-          for (auto& documentView : cursor) {
-            threadsDocumentsJsonArray[i] +=
-              bsoncxx::to_json(documentView) + ",";
-          }
-          threadsErrors[i] = std::nullopt;
-          threadsSuccess[i] = 1;
-        } catch (std::exception& e) {
-          threadsErrors[i] = e.what();
-          threadsSuccess[i] = 0;
+      int numThreadsToRun = 0;
+      for (int i = 0; i < numParts; i++) {
+        if (threadsSuccess[i] == 1) {
+          continue;
         }
-      };
+        numThreadsToRun++;
+      }
 
-      threads.push_back(std::make_shared<std::thread>(f));
+      if (numAttempts > 1) {
+        spdlog::info("Spawning {} threads to load remaining ChangeForms",
+                     numThreadsToRun);
+      } else {
+        spdlog::info("Spawning {} threads to load ChangeForms",
+                     numThreadsToRun);
+      }
+
+      for (int i = 0; i < numParts; i++) {
+        if (threadsSuccess[i] == 1) {
+          continue;
+        }
+
+        // space is to be replaced with ] in case of empty array
+        threadsDocumentsJsonArray[i] = "[ ";
+
+        int partSize = totalDocuments / numParts;
+        auto skip = i * partSize;
+        auto limit = (i == numParts - 1) ? totalDocuments - skip : partSize;
+
+        auto f = [i, skip, limit, &totalDocumentsProcessed, &iterateCallback,
+                  &threadsSuccess, &threadsErrors, &threadsDocumentsJsonArray,
+                  findOptions, filterJsonStr, this] {
+          try {
+            simdjson::dom::parser p;
+
+            mongocxx::v_noabi::pool::entry poolEntry = pImpl->pool->acquire();
+
+            mongocxx::v_noabi::collection collection =
+              poolEntry->database(pImpl->name)
+                .collection(pImpl->collectionName);
+
+            mongocxx::options::find options = findOptions;
+            options.skip(skip);
+            options.limit(limit);
+
+            auto cursor =
+              collection.find(bsoncxx::from_json(filterJsonStr), options);
+
+            for (auto& documentView : cursor) {
+              threadsDocumentsJsonArray[i] +=
+                bsoncxx::to_json(documentView) + ",";
+            }
+            threadsErrors[i] = std::nullopt;
+            threadsSuccess[i] = 1;
+          } catch (std::exception& e) {
+            threadsErrors[i] = e.what();
+            threadsSuccess[i] = 0;
+          }
+        };
+
+        threads.push_back(std::make_shared<std::thread>(f));
+      }
+
+      for (auto& thread : threads) {
+        thread->join();
+      }
+      threads.clear();
+
+      auto errorOrNull = GetCombinedErrorOrNull(threadsErrors);
+
+      if (errorOrNull == std::nullopt) {
+        spdlog::info(
+          "All documents fetched from the database. Num attempts: {}",
+          numAttempts);
+        allFinished = true;
+      } else {
+        spdlog::warn("Error: {}", *errorOrNull);
+        spdlog::info("Retrying failed threads. Num attempts: {}", numAttempts);
+      }
     }
 
-    for (auto& thread : threads) {
-      thread->join();
+    for (int i = 0; i < numParts; i++) {
+      threadsDocumentsJsonArray[i].back() = ']';
+
+      auto documentsJsonArray = threadsDocumentsJsonArray[i];
+
+      simdjson::dom::parser p, p2;
+      auto allDocs = p.parse(documentsJsonArray).value();
+
+      auto documentAsArray = allDocs.get_array();
+
+      for (auto document : documentAsArray) {
+        bool restored = false;
+        nlohmann::json restoredDocument =
+          pImpl->jsonSanitizer->RestoreSanitizedJsonRecursive(document,
+                                                              restored);
+
+        MpChangeFormREFR changeForm;
+
+        if (restored) {
+          std::string restoredDocumentDump = restoredDocument.dump();
+          auto restoredDocumentSimdjson =
+            p2.parse(restoredDocumentDump).value();
+          changeForm =
+            MpChangeForm::JsonToChangeForm(restoredDocumentSimdjson);
+        } else {
+          changeForm = MpChangeForm::JsonToChangeForm(document);
+        }
+
+        iterateCallback(changeForm);
+
+        totalDocumentsProcessed++;
+        hash = Sha256(hash + changeForm.formDesc.ToString());
+      }
     }
-    threads.clear();
 
-    auto errorOrNull = GetCombinedErrorOrNull(threadsErrors);
+    // If it's the same iech time, it means that the order of the changeforms
+    // load is the same. Which is good for testing potential startup bugs.
+    spdlog::info("Hash: {}", hash);
 
-    if (errorOrNull == std::nullopt) {
-      spdlog::info("All documents fetched from the database. Num attempts: {}",
-                   numAttempts);
-      allFinished = true;
+    if (totalDocumentsProcessed.load() == totalDocuments) {
+      spdlog::info("All documents processed: {}", totalDocuments);
     } else {
-      spdlog::warn("Error: {}", *errorOrNull);
-      spdlog::info("Retrying failed threads. Num attempts: {}", numAttempts);
+      throw std::runtime_error(
+        fmt::format("Not all documents processed: {} / {}",
+                    totalDocumentsProcessed.load(), totalDocuments));
     }
-  }
 
-  for (int i = 0; i < numParts; i++) {
-    threadsDocumentsJsonArray[i].back() = ']';
-
-    auto documentsJsonArray = threadsDocumentsJsonArray[i];
-
-    simdjson::dom::parser p;
-    auto allDocs = p.parse(documentsJsonArray).value();
-
-    auto documentAsArray = allDocs.get_array();
-
-    for (auto document : documentAsArray) {
-      auto changeForm = MpChangeForm::JsonToChangeForm(document);
-
-      iterateCallback(changeForm);
-
-      totalDocumentsProcessed++;
-      hash = Sha256(hash + changeForm.formDesc.ToString());
-    }
-  }
-
-  // If it's the same iech time, it means that the order of the changeforms
-  // load is the same. Which is good for testing potential startup bugs.
-  spdlog::info("Hash: {}", hash);
-
-  if (totalDocumentsProcessed.load() == totalDocuments) {
-    spdlog::info("All documents processed: {}", totalDocuments);
-  } else {
-    throw std::runtime_error(
-      fmt::format("Not all documents processed: {} / {}",
-                  totalDocumentsProcessed.load(), totalDocuments));
+  } catch (std::exception& e) {
+    throw Viet::AsyncSaveStorage<
+      MpChangeForm, FormDesc>::IterateFailedException(std::move(filter),
+                                                      e.what());
   }
 }
 
-int MongoDatabase::GetDocumentCount()
+int MongoDatabase::GetDocumentCount(const std::string& filterJson)
 {
   mongocxx::v_noabi::pool::entry poolEntry = pImpl->pool->acquire();
   mongocxx::v_noabi::collection collection =
     poolEntry->database(pImpl->name).collection(pImpl->collectionName);
 
-  return collection.count_documents({});
+  return collection.count_documents(bsoncxx::from_json(filterJson));
 }
 
 std::optional<std::string> MongoDatabase::GetCombinedErrorOrNull(
@@ -298,9 +352,10 @@ std::string MongoDatabase::BytesToHexString(const uint8_t* bytes,
 
 std::string MongoDatabase::Sha256(const std::string& str)
 {
-  uint8_t hash[SHA256_DIGEST_LENGTH];
-  SHA256(reinterpret_cast<const uint8_t*>(str.data()), str.size(), hash);
-  return BytesToHexString(hash, SHA256_DIGEST_LENGTH);
+  unsigned char hash[crypto_hash_sha256_BYTES];
+  crypto_hash_sha256(hash, reinterpret_cast<const unsigned char*>(str.data()),
+                     str.size());
+  return BytesToHexString(hash, crypto_hash_sha256_BYTES);
 }
 
 #endif // #ifndef NO_MONGO
