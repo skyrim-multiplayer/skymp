@@ -242,11 +242,24 @@ void ActionListener::OnUpdateEquipment(const RawMessageData& rawMsgData,
   uint32_t voiceSpell = data.voiceSpell.value_or(0);
   uint32_t instantSpell = data.instantSpell.value_or(0);
 
+  enum class SpellSlotId : size_t
+  {
+    Left = 0,
+    Right,
+    Voice,
+    Instant,
+    kCount
+  };
+
+  std::array<uint32_t, static_cast<size_t>(SpellSlotId::kCount)>
+    spellIdsToRemove = {};
+
   if (leftSpell > 0 && !actor->IsSpellLearned(leftSpell)) {
     spdlog::warn("ActionListener::OnUpdateEquipment {:x} - rejected equipment "
                  "update: spell {:x} is not learned",
                  actorFormId, leftSpell);
     isAllowed = false;
+    spellIdsToRemove[static_cast<size_t>(SpellSlotId::Left)] = leftSpell;
   }
 
   if (rightSpell > 0 && !actor->IsSpellLearned(rightSpell)) {
@@ -254,6 +267,7 @@ void ActionListener::OnUpdateEquipment(const RawMessageData& rawMsgData,
                  "update: spell {:x} is not learned",
                  actorFormId, rightSpell);
     isAllowed = false;
+    spellIdsToRemove[static_cast<size_t>(SpellSlotId::Right)] = rightSpell;
   }
 
   if (voiceSpell > 0 && !actor->IsSpellLearned(voiceSpell)) {
@@ -261,6 +275,7 @@ void ActionListener::OnUpdateEquipment(const RawMessageData& rawMsgData,
                  "update: spell {:x} is not learned",
                  actorFormId, voiceSpell);
     isAllowed = false;
+    spellIdsToRemove[static_cast<size_t>(SpellSlotId::Voice)] = voiceSpell;
   }
 
   if (instantSpell > 0 && !actor->IsSpellLearned(instantSpell)) {
@@ -268,6 +283,7 @@ void ActionListener::OnUpdateEquipment(const RawMessageData& rawMsgData,
                  "update: spell {:x} is not learned",
                  actorFormId, instantSpell);
     isAllowed = false;
+    spellIdsToRemove[static_cast<size_t>(SpellSlotId::Instant)] = instantSpell;
   }
 
   const auto& inventory = actor->GetInventory();
@@ -282,11 +298,101 @@ void ActionListener::OnUpdateEquipment(const RawMessageData& rawMsgData,
     }
   }
 
+  bool sendUnequipAll = false;
+  if (isAllowed) {
+    auto worldState = actor->GetParent();
+    if (worldState) {
+      uint32_t occupiedSlots = 0;
+      // Track which item owns each bit so we can report conflicts
+      std::array<uint32_t, 32> slotOwner = {};
+      for (auto& entry : equipmentInv.entries) {
+        if (entry.GetWorn() == Inventory::Worn::None) {
+          continue;
+        }
+        auto lookupRes =
+          worldState->GetEspm().GetBrowser().LookupById(entry.baseId);
+        if (!lookupRes.rec || lookupRes.rec->GetType() != espm::ARMO::kType) {
+          continue;
+        }
+        auto armoData = espm::GetData<espm::ARMO>(entry.baseId, worldState);
+        uint32_t bodyPartFlags = 0;
+        if (armoData.bod2.present) {
+          bodyPartFlags = armoData.bod2.bodyPartFlags;
+        } else if (armoData.bodt.present) {
+          bodyPartFlags = armoData.bodt.bodyPartFlags;
+        }
+        if (bodyPartFlags == 0) {
+          continue;
+        }
+        uint32_t overlap = occupiedSlots & bodyPartFlags;
+        if (overlap) {
+          // Collect all conflicting item IDs from slotOwner
+          std::unordered_set<uint32_t> conflictingItems;
+          conflictingItems.insert(entry.baseId);
+          for (int bit = 0; bit < 32; ++bit) {
+            if (overlap & (1u << bit)) {
+              conflictingItems.insert(slotOwner[bit]);
+            }
+          }
+          std::string conflictList;
+          for (uint32_t id : conflictingItems) {
+            if (!conflictList.empty()) {
+              conflictList += ", ";
+            }
+            conflictList += fmt::format("{:x}", id);
+          }
+          std::string binaryStr(32, '0');
+          for (int bit = 31; bit >= 0; --bit) {
+            if (overlap & (1u << (31 - bit))) {
+              binaryStr[bit] = '1';
+            }
+          }
+          spdlog::warn(
+            "ActionListener::OnUpdateEquipment {:x} - rejected equipment "
+            "update: items [{}] share armor slot flags {:x} (0b{})",
+            actorFormId, conflictList, overlap, binaryStr);
+          isAllowed = false;
+          sendUnequipAll = true;
+          break;
+        }
+        for (int bit = 0; bit < 32; ++bit) {
+          if (bodyPartFlags & (1u << bit)) {
+            slotOwner[bit] = entry.baseId;
+          }
+        }
+        occupiedSlots |= bodyPartFlags;
+      }
+    }
+  }
+
   if (isAllowed) {
     SendToNeighbours(msg.idx, rawMsgData, true);
     actor->SetEquipment(data);
   } else {
     actor->SendInventoryUpdate();
+
+    for (uint32_t spellId : spellIdsToRemove) {
+      if (spellId == 0) {
+        continue;
+      }
+      SpSnippetObjectArgument spellArg;
+      spellArg.formId = spellId;
+      spellArg.type = "Spell";
+      std::vector<std::optional<
+        std::variant<bool, double, std::string, SpSnippetObjectArgument>>>
+        args;
+      args.push_back(spellArg);
+      SpSnippet("Actor", "RemoveSpell", args, actor->GetFormId())
+        .Execute(actor, SpSnippetMode::kNoReturnResult);
+    }
+
+    if (sendUnequipAll) {
+      std::vector<std::optional<
+        std::variant<bool, double, std::string, SpSnippetObjectArgument>>>
+        args;
+      SpSnippet("Actor", "UnequipAll", args, actor->GetFormId())
+        .Execute(actor, SpSnippetMode::kNoReturnResult);
+    }
   }
 
   UpdateEquipmentAttemptEvent updateEquipmentAttemptEvent(actor, data,
