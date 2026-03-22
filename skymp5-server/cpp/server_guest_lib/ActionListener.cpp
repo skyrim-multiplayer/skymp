@@ -298,6 +298,73 @@ void ActionListener::OnUpdateEquipment(const RawMessageData& rawMsgData,
     }
   }
 
+  bool sendUnequipAll = false;
+  if (isAllowed) {
+    auto worldState = actor->GetParent();
+    if (worldState) {
+      uint32_t occupiedSlots = 0;
+      // Track which item owns each bit so we can report conflicts
+      std::array<uint32_t, 32> slotOwner = {};
+      for (auto& entry : equipmentInv.entries) {
+        if (entry.GetWorn() == Inventory::Worn::None) {
+          continue;
+        }
+        auto lookupRes =
+          worldState->GetEspm().GetBrowser().LookupById(entry.baseId);
+        if (!lookupRes.rec || lookupRes.rec->GetType() != espm::ARMO::kType) {
+          continue;
+        }
+        auto armoData = espm::GetData<espm::ARMO>(entry.baseId, worldState);
+        uint32_t bodyPartFlags = 0;
+        if (armoData.bod2.present) {
+          bodyPartFlags = armoData.bod2.bodyPartFlags;
+        } else if (armoData.bodt.present) {
+          bodyPartFlags = armoData.bodt.bodyPartFlags;
+        }
+        if (bodyPartFlags == 0) {
+          continue;
+        }
+        uint32_t overlap = occupiedSlots & bodyPartFlags;
+        if (overlap) {
+          // Collect all conflicting item IDs from slotOwner
+          std::unordered_set<uint32_t> conflictingItems;
+          conflictingItems.insert(entry.baseId);
+          for (int bit = 0; bit < 32; ++bit) {
+            if (overlap & (1u << bit)) {
+              conflictingItems.insert(slotOwner[bit]);
+            }
+          }
+          std::string conflictList;
+          for (uint32_t id : conflictingItems) {
+            if (!conflictList.empty()) {
+              conflictList += ", ";
+            }
+            conflictList += fmt::format("{:x}", id);
+          }
+          std::string binaryStr(32, '0');
+          for (int bit = 31; bit >= 0; --bit) {
+            if (overlap & (1u << (31 - bit))) {
+              binaryStr[bit] = '1';
+            }
+          }
+          spdlog::warn(
+            "ActionListener::OnUpdateEquipment {:x} - rejected equipment "
+            "update: items [{}] share armor slot flags {:x} (0b{})",
+            actorFormId, conflictList, overlap, binaryStr);
+          isAllowed = false;
+          sendUnequipAll = true;
+          break;
+        }
+        for (int bit = 0; bit < 32; ++bit) {
+          if (bodyPartFlags & (1u << bit)) {
+            slotOwner[bit] = entry.baseId;
+          }
+        }
+        occupiedSlots |= bodyPartFlags;
+      }
+    }
+  }
+
   if (isAllowed) {
     SendToNeighbours(msg.idx, rawMsgData, true);
     actor->SetEquipment(data);
@@ -316,6 +383,14 @@ void ActionListener::OnUpdateEquipment(const RawMessageData& rawMsgData,
         args;
       args.push_back(spellArg);
       SpSnippet("Actor", "RemoveSpell", args, actor->GetFormId())
+        .Execute(actor, SpSnippetMode::kNoReturnResult);
+    }
+
+    if (sendUnequipAll) {
+      std::vector<std::optional<
+        std::variant<bool, double, std::string, SpSnippetObjectArgument>>>
+        args;
+      SpSnippet("Actor", "UnequipAll", args, actor->GetFormId())
         .Execute(actor, SpSnippetMode::kNoReturnResult);
     }
   }
