@@ -242,11 +242,24 @@ void ActionListener::OnUpdateEquipment(const RawMessageData& rawMsgData,
   uint32_t voiceSpell = data.voiceSpell.value_or(0);
   uint32_t instantSpell = data.instantSpell.value_or(0);
 
+  auto removeSpellOnClient = [&](uint32_t spellId) {
+    SpSnippetObjectArgument spellArg;
+    spellArg.formId = spellId;
+    spellArg.type = "Spell";
+    std::vector<std::optional<
+      std::variant<bool, double, std::string, SpSnippetObjectArgument>>>
+      args;
+    args.push_back(spellArg);
+    SpSnippet("Actor", "RemoveSpell", args, actor->GetFormId())
+      .Execute(actor, SpSnippetMode::kNoReturnResult);
+  };
+
   if (leftSpell > 0 && !actor->IsSpellLearned(leftSpell)) {
     spdlog::warn("ActionListener::OnUpdateEquipment {:x} - rejected equipment "
                  "update: spell {:x} is not learned",
                  actorFormId, leftSpell);
     isAllowed = false;
+    removeSpellOnClient(leftSpell);
   }
 
   if (rightSpell > 0 && !actor->IsSpellLearned(rightSpell)) {
@@ -254,6 +267,7 @@ void ActionListener::OnUpdateEquipment(const RawMessageData& rawMsgData,
                  "update: spell {:x} is not learned",
                  actorFormId, rightSpell);
     isAllowed = false;
+    removeSpellOnClient(rightSpell);
   }
 
   if (voiceSpell > 0 && !actor->IsSpellLearned(voiceSpell)) {
@@ -261,6 +275,7 @@ void ActionListener::OnUpdateEquipment(const RawMessageData& rawMsgData,
                  "update: spell {:x} is not learned",
                  actorFormId, voiceSpell);
     isAllowed = false;
+    removeSpellOnClient(voiceSpell);
   }
 
   if (instantSpell > 0 && !actor->IsSpellLearned(instantSpell)) {
@@ -268,6 +283,7 @@ void ActionListener::OnUpdateEquipment(const RawMessageData& rawMsgData,
                  "update: spell {:x} is not learned",
                  actorFormId, instantSpell);
     isAllowed = false;
+    removeSpellOnClient(instantSpell);
   }
 
   const auto& inventory = actor->GetInventory();
