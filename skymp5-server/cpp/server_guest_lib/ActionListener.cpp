@@ -286,6 +286,8 @@ void ActionListener::OnUpdateEquipment(const RawMessageData& rawMsgData,
     spellIdsToRemove[static_cast<size_t>(SpellSlotId::Instant)] = instantSpell;
   }
 
+  std::vector<uint32_t> itemIdsToUnequip;
+
   const auto& inventory = actor->GetInventory();
   for (auto& entry : equipmentInv.entries) {
     if (!inventory.HasItem(entry.baseId)) {
@@ -298,7 +300,6 @@ void ActionListener::OnUpdateEquipment(const RawMessageData& rawMsgData,
     }
   }
 
-  bool sendUnequipAll = false;
   if (isAllowed) {
     auto worldState = actor->GetParent();
     if (worldState) {
@@ -352,7 +353,9 @@ void ActionListener::OnUpdateEquipment(const RawMessageData& rawMsgData,
             "update: items [{}] share armor slot flags {:x} (0b{})",
             actorFormId, conflictList, overlap, binaryStr);
           isAllowed = false;
-          sendUnequipAll = true;
+          for (uint32_t id : conflictingItems) {
+            itemIdsToUnequip.push_back(id);
+          }
           break;
         }
         for (int bit = 0; bit < 32; ++bit) {
@@ -386,11 +389,45 @@ void ActionListener::OnUpdateEquipment(const RawMessageData& rawMsgData,
         .Execute(actor, SpSnippetMode::kNoReturnResult);
     }
 
-    if (sendUnequipAll) {
+    // Calculate diff between current (server) equipment and new (rejected)
+    // equipment. Items worn in the new set but not in the current set need
+    // to be unequipped on the client to revert the unauthorized change.
+    {
+      const auto& currentEquip = actor->GetEquipment().inv;
+
+      std::unordered_set<uint32_t> currentWornIds;
+      for (const auto& entry : currentEquip.entries) {
+        if (entry.GetWorn() != Inventory::Worn::None) {
+          currentWornIds.insert(entry.baseId);
+        }
+      }
+
+      for (const auto& entry : equipmentInv.entries) {
+        if (entry.GetWorn() != Inventory::Worn::None &&
+            currentWornIds.find(entry.baseId) == currentWornIds.end()) {
+          spdlog::info(
+            "ActionListener::OnUpdateEquipment {:x} - unequipping item {:x} "
+            "(not in current equipment, unauthorized change)",
+            actorFormId, entry.baseId);
+          itemIdsToUnequip.push_back(entry.baseId);
+        }
+      }
+
+      // TODO: consider doing EquipItem for items worn in current equipment
+      // but not worn in the new equipment (client tried to unequip them)
+    }
+
+    for (uint32_t itemId : itemIdsToUnequip) {
+      SpSnippetObjectArgument itemArg;
+      itemArg.formId = itemId;
+      itemArg.type = "Form";
       std::vector<std::optional<
         std::variant<bool, double, std::string, SpSnippetObjectArgument>>>
         args;
-      SpSnippet("Actor", "UnequipAll", args, actor->GetFormId())
+      args.push_back(itemArg);
+      args.push_back(false);
+      args.push_back(true);
+      SpSnippet("Actor", "UnequipItem", args, actor->GetFormId())
         .Execute(actor, SpSnippetMode::kNoReturnResult);
     }
   }
