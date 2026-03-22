@@ -816,6 +816,9 @@ void ActionListener::OnCustomEvent(
 void ActionListener::OnChangeValues(
   const MessageEvent<ChangeValuesMessage>& event)
 {
+  const RawMessageData& rawMsgData = event.rawMsgData;
+  const ChangeValuesMessage& msg = event.message;
+
   MpActor* actor = partOne.serverState.ActorByUser(rawMsgData.userId);
   if (!actor) {
     return spdlog::error(
