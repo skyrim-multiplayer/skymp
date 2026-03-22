@@ -92,6 +92,7 @@ struct PartOne::Impl
   std::shared_ptr<ActionListener> actionListener;
   std::shared_ptr<CraftService> craftService;
   std::shared_ptr<GridService> gridService;
+  std::shared_ptr<SweetHidePlayerNamesService> sweetHidePlayerNamesService;
 
   std::shared_ptr<spdlog::logger> logger;
 
@@ -118,6 +119,8 @@ PartOne::PartOne(Networking::ISendTarget* sendTarget)
   pImpl->actionListener = std::make_shared<ActionListener>(*this);
   pImpl->gridService = std::make_shared<GridService>(*this);
   worldState.SetGridService(pImpl->gridService.get());
+  pImpl->sweetHidePlayerNamesService =
+    std::make_shared<SweetHidePlayerNamesService>(*this);
 }
 
 PartOne::PartOne(std::shared_ptr<Listener> listener,
