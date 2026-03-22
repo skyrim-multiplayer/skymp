@@ -107,7 +107,12 @@ public:
 
   uint32_t GetNumFinishedUpserts() const override
   {
-    return pImpl->numFinishedUpserts;
+    return pImpl->tickStore.numFinishedUpserts;
+  }
+
+  uint32_t GetNumFinishedIterates() const override
+  {
+    return pImpl->tickStore.numFinishedIterates;
   }
 
   void Tick() override
@@ -121,28 +126,8 @@ public:
       }
     }
 
-    // TODO: consider protecting against throwing callbacks
-    decltype(pImpl->share4.upsertCallbacksToFire) upsertCallbacksToFire;
-    {
-      std::lock_guard l(pImpl->share4.m);
-      upsertCallbacksToFire = std::move(pImpl->share4.upsertCallbacksToFire);
-      pImpl->share4.upsertCallbacksToFire.clear();
-    }
-    for (auto& cb : upsertCallbacksToFire) {
-      pImpl->numFinishedUpserts++;
-      cb();
-    }
-
-    // TODO: consider protecting against throwing callbacks
-    decltype(pImpl->share5.iterateCallbacksToFire) iterateCallbacksToFire;
-    {
-      std::lock_guard l(pImpl->share5.m);
-      iterateCallbacksToFire = std::move(pImpl->share5.iterateCallbacksToFire);
-      pImpl->share5.iterateCallbacksToFire.clear();
-    }
-    for (auto& cb : iterateCallbacksToFire) {
-      cb();
-    }
+    TickUpsertCallbacks();
+    TickIterateCallbacks();
   }
 
   bool GetRecycledChangeFormsBuffer(
@@ -161,6 +146,85 @@ public:
   const std::string& GetName() const override { return pImpl->name; }
 
 private:
+  enum class CallbackGarbageMark
+  {
+    None,
+    CanBeGarbageCollected,
+  };
+
+  struct TickCallbacksParams
+  {
+    struct
+    {
+      std::vector<std::pair<CallbackGarbageMark, std::function<void()>>>*
+        preparedCallbacksToFire = nullptr;
+      uint32_t* counter = nullptr;
+    } tickStore;
+
+    struct
+    {
+      std::vector<std::pair<CallbackGarbageMark, std::function<void()>>>*
+        callbacksToFire = nullptr;
+      std::mutex* m = nullptr;
+    } share;
+  };
+
+  void TickUpsertCallbacks()
+  {
+    TickCallbacksParams params;
+    params.tickStore.counter = &pImpl->tickStore.numFinishedUpserts;
+    params.tickStore.preparedCallbacksToFire =
+      &pImpl->tickStore.preparedUpsertCallbacksToFire;
+    params.share.callbacksToFire = &pImpl->share4.upsertCallbacksToFire;
+    params.share.m = &pImpl->share4.m;
+    TickCallbacks(params);
+  }
+
+  void TickIterateCallbacks()
+  {
+    TickCallbacksParams params;
+    params.tickStore.counter = &pImpl->tickStore.numFinishedIterates;
+    params.tickStore.preparedCallbacksToFire =
+      &pImpl->tickStore.preparedIterateCallbacksToFire;
+    params.share.callbacksToFire = &pImpl->share5.iterateCallbacksToFire;
+    params.share.m = &pImpl->share5.m;
+    TickCallbacks(params);
+  }
+
+  void TickCallbacks(TickCallbacksParams& params)
+  {
+    std::erase_if(
+      *params.tickStore.preparedCallbacksToFire, [](const auto& pair) {
+        return pair.first == CallbackGarbageMark::CanBeGarbageCollected;
+      });
+
+    {
+      std::lock_guard l(*params.share.m);
+
+      // Reserve space to avoid mid-move allocations
+      params.tickStore.preparedCallbacksToFire->reserve(
+        params.tickStore.preparedCallbacksToFire->size() +
+        params.share.callbacksToFire->size());
+
+      // Move directly into the store
+      std::move(params.share.callbacksToFire->begin(),
+                params.share.callbacksToFire->end(),
+                std::back_inserter(*params.tickStore.preparedCallbacksToFire));
+
+      params.share.callbacksToFire->clear();
+    }
+
+    for (auto& [garbageState, cb] :
+         *params.tickStore.preparedCallbacksToFire) {
+      if (garbageState == CallbackGarbageMark::CanBeGarbageCollected) {
+        continue;
+      }
+      garbageState = CallbackGarbageMark::CanBeGarbageCollected;
+      cb();
+      (*params.tickStore.counter)++;
+    }
+  }
+
   struct Impl
   {
     struct UpsertTask
@@ -198,14 +262,16 @@ private:
 
     struct
     {
-      std::vector<std::function<void()>> upsertCallbacksToFire;
+      std::vector<std::pair<CallbackGarbageMark, std::function<void()>>>
+        upsertCallbacksToFire;
       std::list<std::vector<std::optional<T>>> recycledChangeFormsBuffers;
       std::mutex m;
     } share4;
 
     struct
     {
-      std::vector<std::function<void()>> iterateCallbacksToFire;
+      std::vector<std::pair<CallbackGarbageMark, std::function<void()>>>
+        iterateCallbacksToFire;
       std::mutex m;
     } share5;
 
@@ -215,9 +281,19 @@ private:
       std::mutex m;
     } share6;
 
+    struct
+    {
+      std::vector<std::pair<CallbackGarbageMark, std::function<void()>>>
+        preparedUpsertCallbacksToFire;
+      std::vector<std::pair<CallbackGarbageMark, std::function<void()>>>
+        preparedIterateCallbacksToFire;
+
+      uint32_t numFinishedUpserts = 0;
+      uint32_t numFinishedIterates = 0;
+    } tickStore;
+
     std::unique_ptr<std::thread> thr;
     std::atomic<bool> destroyed = false;
-    uint32_t numFinishedUpserts = 0;
     uint32_t sleepTimeMs = 100;
   };
 
@@ -264,7 +340,8 @@ private:
       {
         std::lock_guard l(pImpl->share4.m);
         for (auto& cb : callbacksToFire) {
-          pImpl->share4.upsertCallbacksToFire.push_back(cb);
+          pImpl->share4.upsertCallbacksToFire.push_back(
+            { CallbackGarbageMark::None, cb });
         }
         for (auto& buf : recycledChangeFormsBuffers) {
           pImpl->share4.recycledChangeFormsBuffers.push_back(std::move(buf));
@@ -306,7 +383,8 @@ private:
       {
         std::lock_guard l2(pImpl->share5.m);
         for (auto& callback : callbacksToFire) {
-          pImpl->share5.iterateCallbacksToFire.push_back(callback);
+          pImpl->share5.iterateCallbacksToFire.push_back(
+            { CallbackGarbageMark::None, callback });
         }
       }
 
