@@ -16,6 +16,16 @@ struct TextToDraw
   DirectX::SpriteEffects effects = DirectX::SpriteEffects_None;
   int layerDepth = 0;
   std::array<double, 2> origin = { 0.f, 0.f };
+
+  // Original screen position set by the user (preserved across attach/detach)
+  double savedX = 0.f;
+  double savedY = 0.f;
+
+  // Reference attachment: when refrFormId != 0, position is driven each frame
+  // by the refr's screen projection.
+  uint32_t refrFormId = 0;
+  std::string refrNodeName;
+  std::array<double, 3> refrOffset = { 0.0, 0.0, 0.0 };
 };
 
 using TextToDrawCallback = std::function<void(const TextToDraw& textToDraw)>;
