@@ -85,6 +85,9 @@ void TextsCollection::SetTextRefr(int& textId, uint32_t& refrFormId)
     text.y = text.savedY;
   }
   text.refrFormId = refrFormId;
+  if (refrFormId != 0) {
+    text.refrDirty = true;
+  }
 }
 void TextsCollection::SetTextRefrNode(int& textId, std::string& nodeName)
 {

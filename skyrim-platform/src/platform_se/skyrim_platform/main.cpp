@@ -47,6 +47,9 @@ void GetTextsToDraw(TextToDrawCallback callback)
   auto text = &TextsCollection::GetSingleton();
 
   for (const auto& a : TextsCollection::GetSingleton().GetCreatedTexts()) {
+    if (a.second.refrDirty) {
+      continue;
+    }
     callback(a.second);
   }
 }

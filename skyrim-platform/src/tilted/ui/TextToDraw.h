@@ -26,6 +26,7 @@ struct TextToDraw
   uint32_t refrFormId = 0;
   std::string refrNodeName;
   std::array<double, 3> refrOffset = { 0.0, 0.0, 0.0 };
+  bool refrDirty = false; // true until OnUpdate computes the screen position
 };
 
 using TextToDrawCallback = std::function<void(const TextToDraw& textToDraw)>;

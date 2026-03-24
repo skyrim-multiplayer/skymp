@@ -3,6 +3,8 @@
 
 namespace TextApi {
 
+void UpdateSingleTextScreenPos(int textId);
+
 Napi::Value TextApi::CreateText(const Napi::CallbackInfo& info)
 {
   std::array<double, 4> argColor;
@@ -337,10 +339,9 @@ Napi::Value TextApi::GetNumCreatedTexts(const Napi::CallbackInfo& info)
 }
 
 namespace {
-float g_screenWidth = 0.f;
-float g_screenHeight = 0.f;
 
-RE::NiAVObject* ResolveNode(RE::TESObjectREFR* obj, const std::string& nodeName)
+RE::NiAVObject* ResolveNode(RE::TESObjectREFR* obj,
+                            const std::string& nodeName)
 {
   if (!obj) {
     return nullptr;
@@ -350,9 +351,21 @@ RE::NiAVObject* ResolveNode(RE::TESObjectREFR* obj, const std::string& nodeName)
 
   // special-case for the player, switch between first/third-person
   if (obj->formID == 0x14) {
-    auto* player = RE::PlayerCharacter::GetSingleton();
-    if (player) {
-      result = player->Get3D();
+    auto* camera = RE::PlayerCamera::GetSingleton();
+    bool firstPerson = camera && camera->IsInFirstPerson();
+    result = obj->Get3D(firstPerson);
+
+    // First-person skeleton may lack nodes that exist on the third-person
+    // skeleton (e.g. head). Fall back to third-person when the lookup fails.
+    if (firstPerson && !nodeName.empty()) {
+      if (result) {
+        RE::BSFixedString bsName(nodeName.c_str());
+        auto* found = result->GetObjectByName(bsName);
+        if (found) {
+          return found;
+        }
+      }
+      result = obj->Get3D(false);
     }
   }
 
@@ -364,13 +377,90 @@ RE::NiAVObject* ResolveNode(RE::TESObjectREFR* obj, const std::string& nodeName)
 
   return result;
 }
+
+RE::NiCamera* GetCurrentNiCamera()
+{
+  auto* camera = RE::PlayerCamera::GetSingleton();
+  if (!camera || !camera->cameraRoot) {
+    return nullptr;
+  }
+  for (uint16_t i = 0; i < camera->cameraRoot->children.size(); ++i) {
+    auto* child = camera->cameraRoot->children[i].get();
+    if (child) {
+      auto* niCamera = netimmerse_cast<RE::NiCamera*>(child);
+      if (niCamera) {
+        return niCamera;
+      }
+    }
+  }
+  return nullptr;
+}
+
+void UpdateTextScreenPos(TextToDraw& text, RE::NiCamera* niCamera,
+                         float screenWidth, float screenHeight)
+{
+  if (text.refrFormId == 0) {
+    return;
+  }
+
+  auto* refr = RE::TESForm::LookupByID<RE::TESObjectREFR>(text.refrFormId);
+  if (!refr) {
+    return;
+  }
+
+  RE::NiPoint3 worldPos = refr->GetPosition();
+  if (!text.refrNodeName.empty()) {
+    RE::NiAVObject* node = ResolveNode(refr, text.refrNodeName);
+    if (node) {
+      worldPos = node->world.translate;
+    }
+  }
+  worldPos.x += static_cast<float>(text.refrOffset[0]);
+  worldPos.y += static_cast<float>(text.refrOffset[1]);
+  worldPos.z += static_cast<float>(text.refrOffset[2]);
+
+  float outX, outY, outZ;
+  RE::NiCamera::WorldPtToScreenPt3(niCamera->worldToCam, niCamera->port,
+                                   worldPos, outX, outY, outZ, 1.f);
+
+  if (outZ <= 0.f) {
+    return;
+  }
+
+  text.x = std::round(outX * screenWidth);
+  text.y = std::round((1.f - outY) * screenHeight);
+  text.refrDirty = false;
+}
+
 } // namespace
+
+void UpdateSingleTextScreenPos(int textId)
+{
+  auto& texts = TextsCollection::GetSingleton().GetCreatedTexts();
+  auto it = texts.find(textId);
+  if (it == texts.end() || it->second.refrFormId == 0) {
+    return;
+  }
+  auto* niCamera = GetCurrentNiCamera();
+  if (!niCamera) {
+    return;
+  }
+  auto* gfxState = RE::BSGraphics::State::GetSingleton();
+  if (!gfxState) {
+    return;
+  }
+  float w = static_cast<float>(gfxState->screenWidth);
+  float h = static_cast<float>(gfxState->screenHeight);
+  if (w == 0.f || h == 0.f) {
+    return;
+  }
+  UpdateTextScreenPos(it->second, niCamera, w, h);
+}
 
 void OnUpdate()
 {
   auto& texts = TextsCollection::GetSingleton().GetCreatedTexts();
 
-  // Find any refr-attached text to know whether we need camera/screen setup
   bool anyAttached = false;
   for (auto& [id, text] : texts) {
     if (text.refrFormId != 0) {
@@ -382,75 +472,23 @@ void OnUpdate()
     return;
   }
 
-  // Resolve camera once
-  auto* camera = RE::PlayerCamera::GetSingleton();
-  if (!camera || !camera->cameraRoot) {
-    return;
-  }
-  RE::NiCamera* niCamera = nullptr;
-  for (uint16_t i = 0; i < camera->cameraRoot->children.size(); ++i) {
-    auto* child = camera->cameraRoot->children[i].get();
-    if (child) {
-      niCamera = netimmerse_cast<RE::NiCamera*>(child);
-      if (niCamera) {
-        break;
-      }
-    }
-  }
+  auto* niCamera = GetCurrentNiCamera();
   if (!niCamera) {
     return;
   }
 
-  // Read screen resolution once
-  if (g_screenWidth == 0.f) {
-    auto* settings = RE::INISettingCollection::GetSingleton();
-    auto* wSetting =
-      settings ? settings->GetSetting("iSize W:Display") : nullptr;
-    auto* hSetting =
-      settings ? settings->GetSetting("iSize H:Display") : nullptr;
-    g_screenWidth =
-      wSetting ? static_cast<float>(wSetting->GetSInt()) : 1920.f;
-    g_screenHeight =
-      hSetting ? static_cast<float>(hSetting->GetSInt()) : 1080.f;
+  auto* gfxState = RE::BSGraphics::State::GetSingleton();
+  if (!gfxState) {
+    return;
+  }
+  float screenWidth = static_cast<float>(gfxState->screenWidth);
+  float screenHeight = static_cast<float>(gfxState->screenHeight);
+  if (screenWidth == 0.f || screenHeight == 0.f) {
+    return;
   }
 
   for (auto& [id, text] : texts) {
-    if (text.refrFormId == 0) {
-      continue;
-    }
-
-    auto* refr = RE::TESForm::LookupByID<RE::TESObjectREFR>(text.refrFormId);
-    if (!refr) {
-      continue;
-    }
-
-    RE::NiPoint3 worldPos;
-    if (text.refrNodeName.empty()) {
-      worldPos = refr->GetPosition();
-    } else {
-      RE::NiAVObject* node = ResolveNode(refr, text.refrNodeName);
-      if (!node) {
-        continue;
-      }
-      worldPos = node->world.translate;
-    }
-    worldPos.x += static_cast<float>(text.refrOffset[0]);
-    worldPos.y += static_cast<float>(text.refrOffset[1]);
-    worldPos.z += static_cast<float>(text.refrOffset[2]);
-
-    float outX, outY, outZ;
-    RE::NiCamera::WorldPtToScreenPt3(niCamera->worldToCam, niCamera->port,
-                                     worldPos, outX, outY, outZ, 1.f);
-
-    // Only update position when the point is in front of the camera
-    if (outZ <= 0.f) {
-      continue;
-    }
-
-    // Match TypeScript: x = round(outX * width), y = round((1 - outY) *
-    // height)
-    text.x = std::round(outX * g_screenWidth);
-    text.y = std::round((1.f - outY) * g_screenHeight);
+    UpdateTextScreenPos(text, niCamera, screenWidth, screenHeight);
   }
 }
 
