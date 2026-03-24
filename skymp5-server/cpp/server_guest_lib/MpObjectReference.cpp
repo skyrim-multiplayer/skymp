@@ -1452,7 +1452,7 @@ void MpObjectReference::ProcessActivateNormal(
     RequestReloot();
 
     if ((espm::utils::Is<espm::TREE>(t) || espm::utils::Is<espm::FLOR>(t)) &&
-        actorActivator && !IsActivationBlocked()) {
+        actorActivator) {
       // SendOpenContainer being used to activate the object
       // TODO: rename SendOpenContainer to SendActivate
       activationSource.SendOpenContainer(GetFormId());
