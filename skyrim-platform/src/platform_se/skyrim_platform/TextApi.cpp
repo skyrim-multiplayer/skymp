@@ -340,26 +340,26 @@ namespace {
 float g_screenWidth = 0.f;
 float g_screenHeight = 0.f;
 
-NiAVObject* ResolveNode(TESObjectREFR* obj, const std::string& nodeName)
+RE::NiAVObject* ResolveNode(RE::TESObjectREFR* obj, const std::string& nodeName)
 {
   if (!obj) {
     return nullptr;
   }
 
-  NiAVObject* result = obj->GetNiNode();
+  RE::NiAVObject* result = obj->Get3D();
 
   // special-case for the player, switch between first/third-person
   if (obj->formID == 0x14) {
-    PlayerCharacter* player = (PlayerCharacter*)obj;
-    if (player->loadedState) {
-      result = player->loadedState->node;
+    auto* player = RE::PlayerCharacter::GetSingleton();
+    if (player) {
+      result = player->Get3D();
     }
   }
 
   // name lookup
   if (!nodeName.empty() && result) {
-    BSFixedString bsName(nodeName.c_str());
-    result = result->GetObjectByName(&bsName.data);
+    RE::BSFixedString bsName(nodeName.c_str());
+    result = result->GetObjectByName(bsName);
   }
 
   return result;
@@ -424,15 +424,15 @@ void OnUpdate()
       continue;
     }
 
-    NiPoint3 worldPos;
+    RE::NiPoint3 worldPos;
     if (text.refrNodeName.empty()) {
       worldPos = refr->GetPosition();
     } else {
-      NiAVObject* node = ResolveNode(refr, text.refrNodeName);
+      RE::NiAVObject* node = ResolveNode(refr, text.refrNodeName);
       if (!node) {
         continue;
       }
-      worldPos = node->m_worldTransform.pos;
+      worldPos = node->world.translate;
     }
     worldPos.x += static_cast<float>(text.refrOffset[0]);
     worldPos.y += static_cast<float>(text.refrOffset[1]);
