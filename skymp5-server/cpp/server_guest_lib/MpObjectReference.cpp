@@ -1451,6 +1451,13 @@ void MpObjectReference::ProcessActivateNormal(
     SetHarvested(true);
     RequestReloot();
 
+    if ((espm::utils::Is<espm::TREE>(t) || espm::utils::Is<espm::FLOR>(t)) &&
+        actorActivator && !IsActivationBlocked()) {
+      // SendOpenContainer being used to activate the object
+      // TODO: rename SendOpenContainer to SendActivate
+      activationSource.SendOpenContainer(GetFormId());
+    }
+
     if (espm::utils::IsItem(t) && !IsEspmForm()) {
       spdlog::info("MpObjectReference::ProcessActivate - Deleting 0xff item");
       Delete();
