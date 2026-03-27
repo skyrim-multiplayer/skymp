@@ -308,33 +308,35 @@ private:
       pImpl->share3.upsertTasks.clear();
     }
 
-    std::vector<std::function<void()>> callbacksToFire;
-    std::vector<std::exception_ptr> exceptionsToFire;
-    std::vector<std::vector<std::optional<T>>> recycledChangeFormsBuffers;
+    struct TaskArtifact
+    {
+      std::function<void()> optionalCallbackToFire;
+      std::exception_ptr optionalExceptionToFire;
+      std::vector<std::optional<T>> optionalRecycledChangeFormsBuffer;
+    };
 
-    const size_t tasksCount = tasks.size();
-    callbacksToFire.reserve(tasksCount);
-    exceptionsToFire.reserve(tasksCount);
-    recycledChangeFormsBuffers.reserve(tasksCount);
+    std::vector<TaskArtifact> taskArtifacts(tasks.size());
 
     {
       std::lock_guard l(pImpl->share.m);
       auto start = std::chrono::high_resolution_clock::now();
       size_t numChangeForms = 0;
 
-      for (auto& t : tasks) {
+      for (size_t i = 0; i < tasks.size(); ++i) {
         try {
+          auto& t = tasks[i];
+          auto& a = taskArtifacts[i];
           numChangeForms +=
             pImpl->share.dbImpl->Upsert(std::move(t.changeForms));
           t.changeForms.clear();
-          callbacksToFire.push_back(t.callback);
+          a.optionalCallbackToFire = std::move(t.callback);
 
           std::vector<std::optional<T>> tmp;
           if (pImpl->share.dbImpl->GetRecycledChangeFormsBuffer(tmp)) {
-            recycledChangeFormsBuffers.push_back(std::move(tmp));
+            a.optionalRecycledChangeFormsBuffer = std::move(tmp);
           }
         } catch (...) {
-          exceptionsToFire.push_back(std::current_exception());
+          a.optionalExceptionToFire = std::current_exception();
         }
       }
 
@@ -348,19 +350,26 @@ private:
 
     {
       std::lock_guard l(pImpl->share4.m);
-      for (auto& cb : callbacksToFire) {
-        pImpl->share4.upsertCallbacksToFire.push_back(
-          { CallbackGarbageMark::None, cb });
-      }
-      for (auto& buf : recycledChangeFormsBuffers) {
-        pImpl->share4.recycledChangeFormsBuffers.push_back(std::move(buf));
+      for (auto& taskArtifact : taskArtifacts) {
+        if (taskArtifact.optionalCallbackToFire) {
+          pImpl->share4.upsertCallbacksToFire.push_back(
+            { CallbackGarbageMark::None,
+              std::move(taskArtifact.optionalCallbackToFire) });
+        }
+        if (taskArtifact.optionalRecycledChangeFormsBuffer.size()) {
+          pImpl->share4.recycledChangeFormsBuffers.push_back(
+            std::move(taskArtifact.optionalRecycledChangeFormsBuffer));
+        }
       }
     }
 
     {
       std::lock_guard l(pImpl->share2.m);
-      for (auto& exceptionPtr : exceptionsToFire) {
-        pImpl->share2.exceptions.push_back(exceptionPtr);
+      for (auto& taskArtifact : taskArtifacts) {
+        if (taskArtifact.optionalExceptionToFire) {
+          pImpl->share2.exceptions.push_back(
+            std::move(taskArtifact.optionalExceptionToFire));
+        }
       }
     }
   }
