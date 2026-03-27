@@ -1,7 +1,6 @@
 #pragma once
 #include "PapyrusTESModPlatform.h"
 #include "SkyrimPlatform.h"
-#include "ThreadPoolWrapper.h"
 
 class TickHandler
 {
@@ -14,18 +13,17 @@ public:
 
   void Update()
   {
-    _threadPool->Push([=] { _taskInterface->AddTask(onTick); });
+    _taskInterface->AddTask(onTick);
   }
 
 private:
   TickHandler()
   {
     _taskInterface = SKSE::GetTaskInterface();
-    _threadPool = std::make_shared<ThreadPoolWrapper>();
   }
 
   const std::function<void()> onTick = [] {
-    SkyrimPlatform::GetSingleton()->PushAndWait([=](Napi::Env env) {
+    SkyrimPlatform::GetSingleton()->RunTask([=](Napi::Env env) {
       SkyrimPlatform::GetSingleton()->JsTick(env, false);
     });
     TESModPlatform::Update();
@@ -33,5 +31,4 @@ private:
   };
 
   const SKSE::TaskInterface* _taskInterface;
-  std::shared_ptr<ThreadPoolWrapper> _threadPool;
 };
