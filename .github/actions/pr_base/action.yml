@@ -254,6 +254,7 @@ runs:
         $cmake_command_full += "$vcpkg_triplet_arg "
         $cmake_command_full += "$vcpkg_root_arg "
         $cmake_command_full += "-DUNIT_DATA_DIR=skyrim_data_files "
+        $cmake_command_full += "-DDOWNLOAD_SKYRIM_DATA=ON "
         $cmake_command_full += "-DBUILD_NODEJS=OFF "
         $cmake_command_full += "-DBUILD_FRONT=${{ inputs.BUILD_SKYMP5_FRONT }} "
         $cmake_command_full += "-DSKYMP5_FRONT_REPO_PAT=${{ inputs.SKYMP5_FRONT_PAT }} "
