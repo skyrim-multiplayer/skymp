@@ -418,5 +418,3 @@ runs:
         path: |
           ${{github.workspace}}/build/**/*.sln
           ${{github.workspace}}/build/**/*.vcxproj
-
-
