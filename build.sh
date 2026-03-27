@@ -27,7 +27,17 @@ try_clang() {
   return 1
 }
 
-try_clang -20 || try_clang -15 || try_clang "" || (eecho "Could not find clang!" && exit 1)
+USE_SYSTEM_COMPILER=0
+if [ "$1" = "--system-compiler" ]; then
+  USE_SYSTEM_COMPILER=1
+  shift
+fi
+
+if [ "$USE_SYSTEM_COMPILER" = "1" ]; then
+  echo "Using system compiler: $(which cc) / $(which c++)"
+else
+  try_clang -20 || try_clang -15 || try_clang "" || (eecho "Could not find clang!" && exit 1)
+fi
 
 export CMAKE_C_COMPILER="$CC"
 export CMAKE_CXX_COMPILER="$CXX"
