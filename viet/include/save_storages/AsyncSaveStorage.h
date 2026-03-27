@@ -323,9 +323,9 @@ private:
       size_t numChangeForms = 0;
 
       for (size_t i = 0; i < tasks.size(); ++i) {
+        auto& t = tasks[i];
+        auto& a = taskArtifacts[i];
         try {
-          auto& t = tasks[i];
-          auto& a = taskArtifacts[i];
           numChangeForms +=
             pImpl->share.dbImpl->Upsert(std::move(t.changeForms));
           t.changeForms.clear();
