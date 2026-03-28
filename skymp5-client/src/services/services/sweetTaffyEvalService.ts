@@ -1,9 +1,7 @@
-import { FunctionInfo } from "src/lib/functionInfo";
-import { logError, logTrace } from "src/logging";
+import { logError, logTrace } from "../../logging";
 import { ConnectionMessage } from "../events/connectionMessage";
 import { CustomPacketMessage } from "../messages/customPacketMessage";
 import { ClientListener, CombinedController, Sp } from "./clientListener";
-import { NetworkingService } from "./networkingService";
 import { ServerJsVerificationService } from "./serverJsVerificationService";
 import { printConsole } from "skyrimPlatform";
 
