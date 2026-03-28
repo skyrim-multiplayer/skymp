@@ -4,7 +4,7 @@ import { CustomPacketMessage } from "../messages/customPacketMessage";
 import { ClientListener, CombinedController, Sp } from "./clientListener";
 import { NetworkingService } from "./networkingService";
 import { ServerJsVerificationService } from "./serverJsVerificationService";
-import { printConsole } from "skyrimPlatform";
+import { once, printConsole } from "skyrimPlatform";
 
 export class SweetTaffyEvalService extends ClientListener {
     constructor(private sp: Sp, private controller: CombinedController) {
@@ -55,7 +55,9 @@ export class SweetTaffyEvalService extends ClientListener {
             const result = serverJsVerificationService.verifyServerJs(src, prefix);
 
             if (result.src && !result.error) {
-                eval(result.src);
+                once("update", () => {
+                    eval("var ctx = { sp: skyrimPlatform };\n" + result.src);
+                });
                 printConsole("Eval executed successfully");
             } else {
                 logError(this, "processEval failed server JS verification", "error:", result.error, "src:", src);

@@ -239,7 +239,6 @@ export class AuthService extends ClientListener {
         this.sp.win32.loadUrl("https://discord.gg/9KhSZ6zjGT");
         break;
       default:
-        logError(this, `Unknown event key`, eventKey);
         break;
     }
   }

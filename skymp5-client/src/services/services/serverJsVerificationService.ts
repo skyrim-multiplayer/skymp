@@ -40,7 +40,7 @@ export class ServerJsVerificationService extends ClientListener {
 
     const key = publicKeys[keyId];
     if (!key) {
-      return { src: null, error: 'unknown key' };
+      return { src: null, error: 'unknown key ' + keyId };
     }
 
     const toVerify = this.toArrayBufferView(src.substring(0, lastLineStart - 1), 'utf8');
