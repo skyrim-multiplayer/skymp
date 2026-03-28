@@ -1,6 +1,7 @@
 #pragma once
 #include "PapyrusTESModPlatform.h"
 #include "SkyrimPlatform.h"
+#include "ThreadPoolWrapper.h"
 
 class TickHandler
 {
@@ -13,7 +14,10 @@ public:
 
   void Update()
   {
-    _taskInterface->AddTask(onTick);
+    // Must be async to avoid infinite loop in SKSE's task drain.
+    // Synchronous AddTask from within a task callback causes SKSE to
+    // immediately re-process the newly added task in the same frame.
+    _threadPool.Push([this] { _taskInterface->AddTask(onTick); });
   }
 
 private:
@@ -31,4 +35,5 @@ private:
   };
 
   const SKSE::TaskInterface* _taskInterface;
+  ThreadPoolWrapper _threadPool{ 1 };
 };
