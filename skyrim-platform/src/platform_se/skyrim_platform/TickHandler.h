@@ -21,10 +21,7 @@ public:
   }
 
 private:
-  TickHandler()
-  {
-    _taskInterface = SKSE::GetTaskInterface(); 
-  }
+  TickHandler() { _taskInterface = SKSE::GetTaskInterface(); }
 
   const std::function<void()> onTick = [] {
     SkyrimPlatform::GetSingleton()->RunTask([=](Napi::Env env) {
