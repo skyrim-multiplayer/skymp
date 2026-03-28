@@ -22,6 +22,9 @@ public:
   void SetTextEffect(int& textId, int& effect);
   void SetTextDepth(int& textId, int& depth);
   void SetTextOrigin(int& textId, std::array<double, 2>& origin);
+  void SetTextRefr(int& textId, uint32_t& refrFormId);
+  void SetTextRefrNode(int& textId, std::string& nodeName);
+  void SetTextRefrOffset(int& textId, std::array<double, 3>& offset);
 
   static TextsCollection& GetSingleton() noexcept;
 
@@ -42,8 +45,12 @@ public:
   const int GetTextEffect(int textId) const;
   const int& GetTextDepth(int textId) const;
   const std::array<double, 2> GetTextOrigin(int textId) const;
+  uint32_t GetTextRefr(int textId) const;
+  const std::string& GetTextRefrNode(int textId) const;
+  const std::array<double, 3>& GetTextRefrOffset(int textId) const;
 
   const std::unordered_map<int, TextToDraw>& GetCreatedTexts() const;
+  std::unordered_map<int, TextToDraw>& GetCreatedTexts();
 
   int GetNumCreatedTexts() const noexcept { return texts.size(); }
 
