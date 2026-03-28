@@ -301,75 +301,99 @@ private:
 
   static void ProcessUpserts(Impl* pImpl)
   {
-    // TODO: exception in dbImpl->Upsert must not delete tasks that are not yet
-    // processed
-    try {
-      decltype(pImpl->share3.upsertTasks) tasks;
-      {
-        std::lock_guard l(pImpl->share3.m);
-        tasks = std::move(pImpl->share3.upsertTasks);
-        pImpl->share3.upsertTasks.clear();
-      }
+    decltype(pImpl->share3.upsertTasks) tasks;
+    {
+      std::lock_guard l(pImpl->share3.m);
+      tasks = std::move(pImpl->share3.upsertTasks);
+      pImpl->share3.upsertTasks.clear();
+    }
 
-      std::vector<std::function<void()>> callbacksToFire;
-      std::vector<std::vector<std::optional<T>>> recycledChangeFormsBuffers;
+    struct TaskArtifact
+    {
+      std::function<void()> optionalCallbackToFire;
+      std::exception_ptr optionalExceptionToFire;
+      std::vector<std::optional<T>> optionalRecycledChangeFormsBuffer;
+    };
 
-      {
-        std::lock_guard l(pImpl->share.m);
-        auto start = std::chrono::high_resolution_clock::now();
-        size_t numChangeForms = 0;
-        for (auto& t : tasks) {
+    std::vector<TaskArtifact> taskArtifacts(tasks.size());
+
+    {
+      std::lock_guard l(pImpl->share.m);
+      auto start = std::chrono::high_resolution_clock::now();
+      size_t numChangeForms = 0;
+
+      for (size_t i = 0; i < tasks.size(); ++i) {
+        auto& t = tasks[i];
+        auto& a = taskArtifacts[i];
+        try {
           numChangeForms +=
             pImpl->share.dbImpl->Upsert(std::move(t.changeForms));
           t.changeForms.clear();
-          callbacksToFire.push_back(t.callback);
+          a.optionalCallbackToFire = std::move(t.callback);
 
           std::vector<std::optional<T>> tmp;
           if (pImpl->share.dbImpl->GetRecycledChangeFormsBuffer(tmp)) {
-            recycledChangeFormsBuffers.push_back(std::move(tmp));
+            a.optionalRecycledChangeFormsBuffer = std::move(tmp);
           }
-        }
-        if (numChangeForms > 0 && pImpl->logger) {
-          auto end = std::chrono::high_resolution_clock::now();
-          std::chrono::duration<double, std::milli> elapsed = end - start;
-          pImpl->logger->trace("Saved {} ChangeForms in {} ms", numChangeForms,
-                               elapsed.count());
+        } catch (...) {
+          a.optionalExceptionToFire = std::current_exception();
         }
       }
 
-      {
-        std::lock_guard l(pImpl->share4.m);
-        for (auto& cb : callbacksToFire) {
+      if (numChangeForms > 0 && pImpl->logger) {
+        auto end = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double, std::milli> elapsed = end - start;
+        pImpl->logger->trace("Saved {} ChangeForms in {} ms", numChangeForms,
+                             elapsed.count());
+      }
+    }
+
+    {
+      std::lock_guard l(pImpl->share4.m);
+      for (auto& taskArtifact : taskArtifacts) {
+        if (taskArtifact.optionalCallbackToFire) {
           pImpl->share4.upsertCallbacksToFire.push_back(
-            { CallbackGarbageMark::None, cb });
+            { CallbackGarbageMark::None,
+              std::move(taskArtifact.optionalCallbackToFire) });
         }
-        for (auto& buf : recycledChangeFormsBuffers) {
-          pImpl->share4.recycledChangeFormsBuffers.push_back(std::move(buf));
+        if (taskArtifact.optionalRecycledChangeFormsBuffer.size()) {
+          pImpl->share4.recycledChangeFormsBuffers.push_back(
+            std::move(taskArtifact.optionalRecycledChangeFormsBuffer));
         }
       }
-    } catch (...) {
+    }
+
+    {
       std::lock_guard l(pImpl->share2.m);
-      auto exceptionPtr = std::current_exception();
-      pImpl->share2.exceptions.push_back(exceptionPtr);
+      for (auto& taskArtifact : taskArtifacts) {
+        if (taskArtifact.optionalExceptionToFire) {
+          pImpl->share2.exceptions.push_back(
+            std::move(taskArtifact.optionalExceptionToFire));
+        }
+      }
     }
   }
 
   static void ProcessIterates(Impl* pImpl)
   {
-    // TODO: exception in dbImpl->Upsert must not delete tasks that are not yet
-    // processed
-    try {
-      decltype(pImpl->share6.iterateTasks) tasks;
-      {
-        std::lock_guard l(pImpl->share6.m);
-        tasks = std::move(pImpl->share6.iterateTasks);
-        pImpl->share6.iterateTasks.clear();
-      }
+    decltype(pImpl->share6.iterateTasks) tasks;
+    {
+      std::lock_guard l(pImpl->share6.m);
+      tasks = std::move(pImpl->share6.iterateTasks);
+      pImpl->share6.iterateTasks.clear();
+    }
 
-      std::vector<std::function<void()>> callbacksToFire;
-      {
-        std::lock_guard l(pImpl->share.m);
-        for (auto& t : tasks) {
+    std::vector<std::function<void()>> callbacksToFire;
+    std::vector<std::exception_ptr> exceptionsToFire;
+
+    const size_t tasksCount = tasks.size();
+    callbacksToFire.reserve(tasksCount);
+    exceptionsToFire.reserve(tasksCount);
+
+    {
+      std::lock_guard l(pImpl->share.m);
+      for (auto& t : tasks) {
+        try {
           std::vector<T> buffer;
           pImpl->share.dbImpl->Iterate(
             [&](const T& changeForm) { buffer.push_back(changeForm); },
@@ -377,21 +401,25 @@ private:
           std::function<void()> callback =
             [cb = t.callback, buf = std::move(buffer)]() { cb(buf); };
           callbacksToFire.push_back(callback);
+        } catch (...) {
+          exceptionsToFire.push_back(std::current_exception());
         }
       }
+    }
 
-      {
-        std::lock_guard l2(pImpl->share5.m);
-        for (auto& callback : callbacksToFire) {
-          pImpl->share5.iterateCallbacksToFire.push_back(
-            { CallbackGarbageMark::None, callback });
-        }
+    if (!callbacksToFire.empty()) {
+      std::lock_guard l2(pImpl->share5.m);
+      for (auto& callback : callbacksToFire) {
+        pImpl->share5.iterateCallbacksToFire.push_back(
+          { CallbackGarbageMark::None, callback });
       }
+    }
 
-    } catch (...) {
+    if (!exceptionsToFire.empty()) {
       std::lock_guard l(pImpl->share2.m);
-      auto exceptionPtr = std::current_exception();
-      pImpl->share2.exceptions.push_back(exceptionPtr);
+      for (auto& exceptionPtr : exceptionsToFire) {
+        pImpl->share2.exceptions.push_back(exceptionPtr);
+      }
     }
   }
 
