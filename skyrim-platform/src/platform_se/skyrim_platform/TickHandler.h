@@ -23,7 +23,7 @@ public:
 private:
   TickHandler()
   {
-    _taskInterface = SKSE::GetTaskInterface();
+    _taskInterface = SKSE::GetTaskInterface(); 
   }
 
   const std::function<void()> onTick = [] {
