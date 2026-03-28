@@ -124,23 +124,41 @@ runs:
           const fsp = fs.promises;
           const path = require('path');
 
-          const targetPath = 'C:\\vcpkg';
-          const sourcePath = path.join(process.env.GITHUB_WORKSPACE, 'vcpkg');
-
-          async function moveWithFallback(sourcePath_, targetPath_) {
+          async function moveWithFallback(sourcePath_, targetPath_, stagePath_) {
             try {
               await fsp.rename(sourcePath_, targetPath_);
             } catch (err) {
               if (err.code === 'EXDEV') {
                 console.log('Falling back to copy and delete due to cross-device link error.');
-                await fsp.cp(sourcePath_, targetPath_, { recursive: true });
-                await fsp.rm(sourcePath_, { recursive: true, force: true });
+
+                try {
+                  await fsp.cp(sourcePath_, targetPath_, { recursive: true });
+                } catch (err) {
+                  if (err.code === 'EISDIR') {
+                    console.log('Falling back to stage-copy + move and delete due to EISDIR error.');
+                    await fsp.mkdir(stagePath_, { recursive: true });
+                    await fsp.cp(sourcePath_, stagePath_, { recursive: true });
+                    await fsp.rename(stagePath_, targetPath_);
+                  } else {
+                    throw err;
+                  }
+                }
+
+                try {
+                  await fsp.rm(sourcePath_, { recursive: true, force: true });
+                } catch (err) {
+                  console.warn(`moveWithFallback failed to remove sourcePath_ (${sourcePath_}) after copy; reason:`, err);
+                }
               }
               else {
                 throw err;
               }
             }
           }
+
+          const targetPath = 'C:/vcpkg';
+          const stagePath = 'C:/vcpkg_stage/vcpkg';
+          const sourcePath = path.join(process.env.GITHUB_WORKSPACE, 'vcpkg');
 
           async function moveVcpkg() {
             try {
@@ -150,7 +168,7 @@ runs:
               }
 
               console.log(`Moving ${sourcePath} to ${targetPath}...`);
-              await moveWithFallback(sourcePath, targetPath);
+              await moveWithFallback(sourcePath, targetPath, stagePath);
               console.log(`Successfully moved vcpkg to ${targetPath}`);
             } catch (err) {
               core.setFailed(`Error moving vcpkg: ${err.message}`);
@@ -293,10 +311,20 @@ runs:
         name: cmake-profiling-output (${{ inputs.DESCRIPTION }})
         path: cmake-profiling-output
 
+    - name: BEFORE BUILD
+      uses: actions/github-script@v6
+      with:
+        script: |
+          console.log("!!! BEFORE BUILD !!!")
     - name: Build
       # Build your program with the given configuration
       run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
       shell: powershell
+    - name: AFTER BUILD
+      uses: actions/github-script@v6
+      with:
+        script: |
+          console.log("!!! AFTER BUILD !!!")
 
     # before running tests, because of dist check test
     - name: Compile metadata into public format
@@ -316,18 +344,7 @@ runs:
             const file = fs.readFileSync('./build-metadata.json');
             const data = JSON.parse(file);
 
-            res.refs_info = data.refs_info.map((refInfo) => {
-              if (refInfo.repoName !== "skymp5-patches") {
-                return refInfo;
-              }
-              else {
-                return { 
-                  refInfoHash: crypto.createHash('sha256').update(refInfo.ref).digest('hex'),
-                  lastCommitSha: refInfo.lastCommitSha,
-                  prNumber: refInfo.prNumber
-                };
-              }
-            });
+            res.data = data;
           }
 
           console.log("Resulting data:");

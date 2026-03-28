@@ -140,6 +140,7 @@ private:
     taskQueue.Update(env);
     nativeCallRequirements.jsThrQ->Update(env);
     jsPromiseTaskQueue.Update(env);
+    TextApi::OnUpdate();
     EventsApi::SendEvent("update", {});
   }
 
