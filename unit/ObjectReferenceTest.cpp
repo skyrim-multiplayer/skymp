@@ -29,6 +29,7 @@ TEST_CASE("Disable makes ref invisible", "[ObjectReference]")
 
   // GetListeners() now returns all grid neighbors including self
   auto listeners = ref.GetListeners();
+  REQUIRE(listeners.size() == 2);
   REQUIRE(listeners.count(&ac) == 1);
   REQUIRE(listeners.count(&ref) == 1);
   ref.Disable();
@@ -41,6 +42,7 @@ TEST_CASE("Disable makes ref invisible", "[ObjectReference]")
 
   ref.Enable();
   listeners = ref.GetListeners();
+  REQUIRE(listeners.size() == 2);
   REQUIRE(listeners.count(&ac) == 1);
   REQUIRE(listeners.count(&ref) == 1);
 }
