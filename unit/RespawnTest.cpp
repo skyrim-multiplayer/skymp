@@ -48,48 +48,33 @@ TEST_CASE("DeathState packed is correct if actor is respawning", "[Respawn]")
   ac.Kill();
   p.Messages().clear();
 
-  spdlog::warn("!!! BEFORE RESPAWN");
-
   ac.Respawn();
 
-  spdlog::warn("!!! AFTER RESPAWN");
+  REQUIRE(p.Messages().size() >= 2);
 
-  nlohmann::json jMessages = nlohmann::json::array();
-  for (auto& msg : p.Messages()) {
-    jMessages.push_back(msg.j);
-  }
+  nlohmann::json message = p.Messages()[0].j;
+  REQUIRE(message["t"] == MsgType::DeathStateContainer);
 
-  nlohmann::json jMessagesExpected = nlohmann::json::array();
+  nlohmann::json updateProperyMsg = message["tIsDead"];
+  nlohmann::json teleportMsg = message["tTeleport"];
+  nlohmann::json changeValuesMsg = message["tChangeValues"];
 
-  REQUIRE(jMessages.dump(2) == jMessagesExpected.dump(2));
+  REQUIRE(updateProperyMsg["t"] == MsgType::UpdateProperty);
+  REQUIRE(updateProperyMsg["propName"] == "isDead");
+  REQUIRE(updateProperyMsg["dataDump"] == "false");
+  REQUIRE(updateProperyMsg["idx"] == ac.GetIdx());
 
-  // REQUIRE(p.Messages().size() == 2);
-
-  // nlohmann::json message = p.Messages()[0].j;
-  // REQUIRE(message["t"] == MsgType::DeathStateContainer);
-
-  // nlohmann::json updateProperyMsg = message["tIsDead"];
-  // nlohmann::json teleportMsg = message["tTeleport"];
-  // nlohmann::json changeValuesMsg = message["tChangeValues"];
-
-  // REQUIRE(updateProperyMsg["t"] == MsgType::UpdateProperty);
-  // REQUIRE(updateProperyMsg["propName"] == "isDead");
-  // REQUIRE(updateProperyMsg["dataDump"] == "false");
-  // REQUIRE(updateProperyMsg["idx"] == ac.GetIdx());
-
-  // REQUIRE(teleportMsg["t"] == MsgType::Teleport);
-  // REQUIRE(changeValuesMsg["t"] == MsgType::ChangeValues);
+  REQUIRE(teleportMsg["t"] == MsgType::Teleport);
+  REQUIRE(changeValuesMsg["t"] == MsgType::ChangeValues);
 
   REQUIRE(ac.IsDead() == false);
   REQUIRE(ac.GetChangeForm().actorValues.healthPercentage == 1.f);
 
   // TODO: should probably not sending to ourselves. see also RespawnEvent.cpp
-  // nlohmann::json message2 = p.Messages()[1].j;
-  // REQUIRE(message2["t"] == MsgType::UpdateProperty);
-
-  // REQUIRE(message2["propName"] == "isDead");
-  // REQUIRE(message2["dataDump"] == "false");
-  // REQUIRE(message2["idx"] == ac.GetIdx());
-  // REQUIRE(message2["refrId"] == ac.GetFormId());
-  // REQUIRE(message2["baseRecordType"] == nlohmann::json{});
+  auto lastMsg = p.Messages().back().j;
+  REQUIRE(lastMsg["t"] == MsgType::UpdateProperty);
+  REQUIRE(lastMsg["propName"] == "isDead");
+  REQUIRE(lastMsg["dataDump"] == "false");
+  REQUIRE(lastMsg["idx"] == ac.GetIdx());
+  REQUIRE(lastMsg["refrId"] == ac.GetFormId());
 }

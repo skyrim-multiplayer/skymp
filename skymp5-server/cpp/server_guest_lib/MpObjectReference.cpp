@@ -682,6 +682,12 @@ void MpObjectReference::ForceSubscriptionsUpdate()
 
   auto worldOrCell = GetCellOrWorld().ToFormId(worldState->espmFiles);
   auto newGridPos = GetGridPos(GetPos());
+
+  // Ensure chunks around the new position are loaded before computing diff.
+  // GetNeighborsByPosition triggers lazy loading of ESM objects into the grid.
+  worldState->GetNeighborsByPosition(worldOrCell, newGridPos.first,
+                                     newGridPos.second);
+
   auto diff = worldState->GetGridService().MoveObjectReference(
     this, worldOrCell, newGridPos.first, newGridPos.second);
 
