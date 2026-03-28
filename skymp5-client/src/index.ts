@@ -55,6 +55,7 @@ import { SettingsService } from "./services/services/settingsService";
 import { SweetCameraEnforcementService } from "./services/services/sweetCameraEnforcementService";
 import { SweetTaffyNicknamesService } from "./services/services/sweetTaffyNicknamesService";
 import { ServerJsVerificationService } from "./services/services/serverJsVerificationService";
+import { SweetTaffyEvalService } from "./services/services/sweetTaffyEvalService";
 
 once("update", () => {
   Utility.setINIBool("bAlwaysActive:General", true);
@@ -93,6 +94,7 @@ const main = () => {
       new SweetTaffyPlayerCombatService(sp, controller),
       new SweetTaffySkillMenuService(sp, controller),
       new SweetCameraEnforcementService(sp, controller),
+      new SweetTaffyEvalService(sp, controller),
       new DisableSkillAdvanceService(sp, controller),
       new DisableFastTravelService(sp, controller),
       new DisableDifficultySelectionService(sp, controller),
@@ -113,7 +115,7 @@ const main = () => {
       new MagicSyncService(sp, controller),
       new ProfilingService(sp, controller),
       new SweetTaffyNicknamesService(sp, controller),
-      new ServerJsVerificationService(sp, controller),
+      new ServerJsVerificationService(sp, controller)
     ];
     SpApiInteractor.setup(listeners);
   } catch (e) {

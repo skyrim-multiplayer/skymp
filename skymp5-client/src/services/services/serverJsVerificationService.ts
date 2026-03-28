@@ -8,7 +8,7 @@ export class ServerJsVerificationService extends ClientListener {
     super();
   }
 
-  public verifyServerJs(src: string): { src: string, error: null } | { src: null, error: string } {
+  public verifyServerJs(src: string, customPrefix?: string): { src: string, error: null } | { src: null, error: string } {
     if (!src) {
       logTrace(this, 'Empty server JS, skipping verification');
       return { src, error: null };
@@ -28,7 +28,7 @@ export class ServerJsVerificationService extends ClientListener {
     }
 
     const lastLineStart = src.lastIndexOf('\n') + 1;
-    const sigPrefix = '// skymp:sig:y:';
+    const sigPrefix = customPrefix || '// skymp:sig:y:';
     if (lastLineStart === 0 || !src.substring(lastLineStart).startsWith(sigPrefix)) {
       return { src: null, error: 'no signature found' };
     }
