@@ -11,19 +11,21 @@ PartOne& GetPartOne();
 
 TEST_CASE("ConsoleCommand packet is parsed", "[ConsoleCommand]")
 {
-  struct TestData {
+  struct TestData
+  {
     RawMessageData rawMsgData;
     std::string commandName;
     std::vector<std::variant<int64_t, std::string>> args;
   } testData;
 
   auto& partOne = GetPartOne();
-  
-  auto connection = partOne.onConsoleCommandMessage.connect([&testData](const MessageEvent<ConsoleCommandMessage>& event) {
-    testData.rawMsgData = event.rawMsgData;
-    testData.commandName = event.message.data.commandName;
-    testData.args = event.message.data.args;
-  });
+
+  auto connection = partOne.onConsoleCommandMessage.connect(
+    [&testData](const MessageEvent<ConsoleCommandMessage>& event) {
+      testData.rawMsgData = event.rawMsgData;
+      testData.commandName = event.message.data.commandName;
+      testData.args = event.message.data.args;
+    });
 
   nlohmann::json j{ { "t", MsgType::ConsoleCommand },
                     { "data",
@@ -61,7 +63,8 @@ TEST_CASE("AddItem doesn't execute for non-privilleged users",
   msg.data.commandName = "additem";
   msg.data.args = { int64_t(0x14), int64_t(0x12eb7), int64_t(0x108) };
   REQUIRE_THROWS_WITH(
-    p.onConsoleCommandMessage(MessageEvent<ConsoleCommandMessage>{msgData, msg}),
+    p.onConsoleCommandMessage(
+      MessageEvent<ConsoleCommandMessage>{ msgData, msg }),
     ContainsSubstring("Not enough permissions to use this command"));
 
   p.DestroyActor(0xff000000);
@@ -86,7 +89,8 @@ TEST_CASE("AddItem executes", "[ConsoleCommand][espm]")
   ConsoleCommandMessage msg;
   msg.data.commandName = "additem";
   msg.data.args = { int64_t(0x14), int64_t(0x12eb7), int64_t(0x108) };
-  p.onConsoleCommandMessage(MessageEvent<ConsoleCommandMessage>{msgData, msg});
+  p.onConsoleCommandMessage(
+    MessageEvent<ConsoleCommandMessage>{ msgData, msg });
 
   p.Tick(); // send deferred messages
 
@@ -129,7 +133,8 @@ TEST_CASE("PlaceAtMe executes", "[ConsoleCommand][espm]")
   ConsoleCommandMessage msg2;
   msg2.data.commandName = "placeatme";
   msg2.data.args = { int64_t(0x14), int64_t(EncGiant01) };
-  p.onConsoleCommandMessage(MessageEvent<ConsoleCommandMessage>{msgData, msg2});
+  p.onConsoleCommandMessage(
+    MessageEvent<ConsoleCommandMessage>{ msgData, msg2 });
 
   auto& refr = p.worldState.GetFormAt<MpActor>(0xff000001);
   REQUIRE(refr.GetBaseId() == EncGiant01);

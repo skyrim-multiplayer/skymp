@@ -43,21 +43,22 @@ public:
 
     if (obj.coords != std::make_pair(x, y)) {
       auto to = std::make_pair(x, y);
-      
+
       // Get neighbors before move
       std::set<T> oldNeighbors;
       if (obj.active) {
-        oldNeighbors = GetNeighboursByPosition(obj.coords.first, obj.coords.second);
+        oldNeighbors =
+          GetNeighboursByPosition(obj.coords.first, obj.coords.second);
       }
-      
+
       // Perform the move
       this->MoveImpl(id, obj.active ? &obj.coords : nullptr, &to);
       obj.active = true;
       obj.coords = { x, y };
-      
+
       // Get neighbors after move
       auto newNeighbors = GetNeighboursByPosition(x, y);
-      
+
       // Calculate diff
       std::set_difference(newNeighbors.begin(), newNeighbors.end(),
                           oldNeighbors.begin(), oldNeighbors.end(),
@@ -66,7 +67,7 @@ public:
                           newNeighbors.begin(), newNeighbors.end(),
                           std::inserter(diff.removed, diff.removed.begin()));
     }
-    
+
     return diff;
   }
 

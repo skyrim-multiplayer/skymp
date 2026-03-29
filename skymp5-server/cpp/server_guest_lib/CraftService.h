@@ -18,7 +18,7 @@ class CraftService : public ServiceBase<CraftService>
 public:
   explicit CraftService(PartOne& partOne_);
 
-  void OnCraftItem(const MessageEvent<CraftItemMessage> &event);
+  void OnCraftItem(const MessageEvent<CraftItemMessage>& event);
 
   // public for CraftTest.cpp
   bool RecipeItemsMatch(const espm::LookupResult& lookupRes,

@@ -12,7 +12,8 @@ PartOne& GetPartOne();
 
 TEST_CASE("CraftItem packet is parsed", "[Craft][espm]")
 {
-  struct TestData {
+  struct TestData
+  {
     RawMessageData rawMsgData;
     Inventory inputObjects;
     uint32_t workbenchId = 0;
@@ -20,13 +21,14 @@ TEST_CASE("CraftItem packet is parsed", "[Craft][espm]")
   } testData;
 
   auto& partOne = GetPartOne();
-  
-  auto connection = partOne.onCraftItemMessage.connect([&testData](const MessageEvent<CraftItemMessage>& event) {
-    testData.rawMsgData = event.rawMsgData;
-    testData.inputObjects = event.message.data.craftInputObjects;
-    testData.workbenchId = event.message.data.workbench;
-    testData.resultObjectId = event.message.data.resultObjectId;
-  });
+
+  auto connection = partOne.onCraftItemMessage.connect(
+    [&testData](const MessageEvent<CraftItemMessage>& event) {
+      testData.rawMsgData = event.rawMsgData;
+      testData.inputObjects = event.message.data.craftInputObjects;
+      testData.workbenchId = event.message.data.workbench;
+      testData.resultObjectId = event.message.data.resultObjectId;
+    });
 
   nlohmann::json j{
     { "t", MsgType::CraftItem },
@@ -79,7 +81,7 @@ TEST_CASE("Player is able to craft item", "[Craft][espm]")
   msg1.data.craftInputObjects = requiredItems;
   msg1.data.workbench = workbenchId;
   msg1.data.resultObjectId = 0x1398a;
-  p.onCraftItemMessage(MessageEvent<CraftItemMessage>{msgData, msg1});
+  p.onCraftItemMessage(MessageEvent<CraftItemMessage>{ msgData, msg1 });
   REQUIRE(ac.GetInventory().GetItemCount(0x1398a) == 1);
 
   // Hearthfires item (nails)
@@ -88,7 +90,7 @@ TEST_CASE("Player is able to craft item", "[Craft][espm]")
   msg2.data.craftInputObjects = requiredItemsForNails;
   msg2.data.workbench = workbenchId;
   msg2.data.resultObjectId = 0x300300f;
-  p.onCraftItemMessage(MessageEvent<CraftItemMessage>{msgData, msg2});
+  p.onCraftItemMessage(MessageEvent<CraftItemMessage>{ msgData, msg2 });
   REQUIRE(ac.GetInventory().GetItemCount(0x300300f) == 10);
 
   REQUIRE(ac.GetInventory().GetItemCount(0x5ace4) == 0);
@@ -138,7 +140,7 @@ TEST_CASE(
   msg3.data.craftInputObjects = requiredItems;
   msg3.data.workbench = workbenchId;
   msg3.data.resultObjectId = wrongResultObject;
-  p.onCraftItemMessage(MessageEvent<CraftItemMessage>{msgData, msg3});
+  p.onCraftItemMessage(MessageEvent<CraftItemMessage>{ msgData, msg3 });
 
   Inventory newInventory = ac.GetInventory();
 

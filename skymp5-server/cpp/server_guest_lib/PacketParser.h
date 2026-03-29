@@ -11,8 +11,7 @@ public:
   PacketParser();
   void TransformPacketIntoAction(Networking::UserId userId,
                                  Networking::PacketData packetData,
-                                 size_t packetLength,
-                                 PartOne& partOne);
+                                 size_t packetLength, PartOne& partOne);
 
 private:
   struct Impl;

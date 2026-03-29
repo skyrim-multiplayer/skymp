@@ -25,12 +25,13 @@ public:
   GridInfo& GetOrCreateGridInfo(uint32_t cellOrWorld);
   const std::set<MpObjectReference*>& GetNeighborsByPosition(
     uint32_t cellOrWorld, int16_t cellX, int16_t cellY);
-  
-  GridDiff<MpObjectReference*> MoveObjectReference(
-    MpObjectReference* objRef, uint32_t cellOrWorld, int16_t x, int16_t y);
-  
+
+  GridDiff<MpObjectReference*> MoveObjectReference(MpObjectReference* objRef,
+                                                   uint32_t cellOrWorld,
+                                                   int16_t x, int16_t y);
+
   void ForgetObjectReference(MpObjectReference* objRef, uint32_t cellOrWorld);
-  
+
   bool IsChunkLoaded(uint32_t cellOrWorld, int16_t x, int16_t y) const;
   void SetChunkLoaded(uint32_t cellOrWorld, int16_t x, int16_t y, bool loaded);
 
