@@ -1,6 +1,7 @@
 #include "JsEngine.h"
 #include <spdlog/spdlog.h>
 #include <stack>
+#include <v8.h>
 
 #include "NodeInstance.h"
 #include "ScopedTask.h"
@@ -47,7 +48,7 @@ struct JsEngine::Impl
   int depth = 0;
   std::optional<Napi::Env> retrievedEnv;
 
-  std::recursive_mutex m;
+  v8::Isolate* isolate = nullptr;
 };
 
 JsEngine* JsEngine::GetSingleton()
@@ -65,7 +66,12 @@ JsEngine::~JsEngine()
 void JsEngine::AcquireEnvAndCall(const std::function<void(Napi::Env)>& f,
                                  const char* comment)
 {
-  std::lock_guard l(pImpl->m);
+  if (!pImpl->isolate) {
+    spdlog::error("JsEngine::AcquireEnvAndCall() - V8 Isolate is nullptr");
+    return;
+  }
+
+  v8::Locker locker(pImpl->isolate);
 
   Viet::ScopedTask<int> task([](int& depth) { depth--; }, pImpl->depth);
   pImpl->depth++;
@@ -139,6 +145,12 @@ void JsEngine::Tick()
     return;
   }
 
+  if (!pImpl->isolate) {
+    spdlog::error("JsEngine::Tick() - V8 Isolate is nullptr");
+    return;
+  }
+
+  v8::Locker locker(pImpl->isolate);
   pImpl->nodeInstance->Tick(pImpl->env);
 }
 
@@ -177,6 +189,19 @@ JsEngine::JsEngine()
   }
 
   spdlog::info("JsEngine::JsEngine() - Environment created");
+
+  pImpl->isolate =
+    static_cast<v8::Isolate*>(pImpl->nodeInstance->GetIsolatePtr(pImpl->env));
+  if (!pImpl->isolate) {
+    spdlog::error("JsEngine::JsEngine() - Failed to get V8 Isolate");
+    pImpl->nodeInstance.reset();
+    return;
+  }
+
+  // Activate v8::Locker mode for this isolate. From this point on, all V8
+  // access must go through v8::Locker. This is required for thread-safe
+  // access to the V8 isolate from multiple threads (e.g. hook callbacks).
+  v8::Locker locker(pImpl->isolate);
 
   spdlog::info(
     "JsEngine::JsEngine() - Copmpiling script V8SCRIPT_INIT_SKYRIM_PLATFORM");

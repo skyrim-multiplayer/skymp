@@ -275,6 +275,11 @@ int NodeInstance::ExecuteScript(void* env, uint16_t scriptId)
   return 0;
 }
 
+void* NodeInstance::GetIsolatePtr(void* env)
+{
+  return static_cast<void*>(pImpl->isolatesMap[env]);
+}
+
 uint64_t NodeInstance::GetError(char* buffer, uint64_t bufferSize)
 {
   constexpr size_t kNullTerminatorLengthInBytes = 1;

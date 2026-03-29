@@ -15,6 +15,7 @@ public:
   int Tick(void* env);
   int CompileScript(void* env, const char* script, uint16_t scriptId);
   int ExecuteScript(void* env, uint16_t scriptId);
+  void* GetIsolatePtr(void* env);
   uint64_t GetError(char* buffer, uint64_t bufferSize);
 
   const char* GetJavaScriptError();
