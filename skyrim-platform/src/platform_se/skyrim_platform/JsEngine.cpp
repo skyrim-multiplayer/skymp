@@ -49,6 +49,8 @@ struct JsEngine::Impl
   std::optional<Napi::Env> retrievedEnv;
 
   v8::Isolate* isolate = nullptr;
+
+  std::recursive_mutex m;
 };
 
 JsEngine* JsEngine::GetSingleton()
@@ -66,6 +68,8 @@ JsEngine::~JsEngine()
 void JsEngine::AcquireEnvAndCall(const std::function<void(Napi::Env)>& f,
                                  const char* comment)
 {
+  std::lock_guard<std::recursive_mutex> lock(pImpl->m);
+
   if (!pImpl->isolate) {
     spdlog::error("JsEngine::AcquireEnvAndCall() - V8 Isolate is nullptr");
     return;
@@ -128,13 +132,20 @@ void JsEngine::ResetContext(Viet::TaskQueue<Napi::Env>&)
 
 size_t JsEngine::GetMemoryUsage() const
 {
-  spdlog::info("JsEngine::GetMemoryUsage()");
-  // TODO
-  return 0;
+  if (!pImpl->isolate) {
+    return 0;
+  }
+
+  v8::Locker locker(pImpl->isolate);
+  v8::HeapStatistics stats;
+  pImpl->isolate->GetHeapStatistics(&stats);
+  return stats.used_heap_size();
 }
 
 void JsEngine::Tick()
 {
+  std::lock_guard<std::recursive_mutex> lock(pImpl->m);
+
   if (!pImpl->nodeInstance) {
     spdlog::error("JsEngine::Tick() - NodeInstance is nullptr");
     return;
