@@ -99,6 +99,11 @@ void TextsCollection::SetTextRefrOffset(int& textId,
   texts.at(textId).refrOffset = offset;
 }
 
+void TextsCollection::SetTextRefrScreenOffset(int& textId, std::array<double, 2>& offset)
+{
+    texts.at(textId).screenOffset = offset;
+}
+
 const std::pair<double, double> TextsCollection::GetTextPos(int textId) const
 {
   std::pair<double, double> positions = {
@@ -155,6 +160,10 @@ const std::array<double, 3>& TextsCollection::GetTextRefrOffset(
   int textId) const
 {
   return texts.at(textId).refrOffset;
+}
+const std::array<double, 2>& TextsCollection::GetTextRefrScreenOffset(int textId) const
+{
+    return texts.at(textId).screenOffset;
 }
 
 const std::unordered_map<int, TextToDraw>& TextsCollection::GetCreatedTexts()
