@@ -1579,7 +1579,7 @@ export declare function getTextOrigin(textId: number): number[];
 export declare function getTextRefr(textId: number): number;
 export declare function getTextRefrNode(textId: number): string;
 export declare function getTextRefrOffset(textId: number): number[];
-export declare function getTextRefrScreenOffset(textId: number, offset: number[]): void;
+export declare function getTextRefrScreenOffset(textId: number): number[];
 
 export declare function getNumCreatedTexts(): number;
 
