@@ -285,7 +285,7 @@ export class SweetCameraEnforcementService extends ClientListener {
             || e.code === DxScanCode.D) {
             if (this.needsExitingAnim) {
 
-                // Проверяем, запрещено ли ручное прерывание  
+                // Checking whether manual interruption is prohibited
                 if (this.currentAnim?.options?.preventManualInterrupt) {
                     return;
                 }
