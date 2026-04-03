@@ -909,6 +909,14 @@ void PartOne::Init()
         listenerUserId != serverState.disconnectingUserId) {
       DestroyActorMessage message;
       message.idx = emitter->GetIdx();
+
+      uint64_t longFormId = emitter->GetFormId();
+      MpActor* emitterAsActor = emitter->AsActor();
+      if (emitterAsActor && longFormId < 0xff000000) {
+        longFormId += 0x100000000;
+      }
+      message.refrId = longFormId;
+
       sendTarget->Send(listenerUserId, message, true);
     }
   };
