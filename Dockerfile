@@ -43,6 +43,7 @@ RUN \
     flex \
     bison \
     autoconf \
+    autoconf-archive \
     automake \
     libtool \
     cmake \
