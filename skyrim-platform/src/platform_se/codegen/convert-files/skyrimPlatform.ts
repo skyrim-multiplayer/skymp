@@ -1569,6 +1569,7 @@ export declare function setTextOrigin(textId: number, origin: number[]): void;
 export declare function setTextRefr(textId: number, refrFormId: number): void; // pass 0 to detach
 export declare function setTextRefrNode(textId: number, nodeName: string): void;
 export declare function setTextRefrOffset(textId: number, offset: number[]): void;
+export declare function setTextRefrScreenOffset(textId: number, offset: number[]): void;
 
 export declare function getTextsVisibility(): 'inheritBrowser' | 'off' | 'on';
 export declare function getTextPos(textId: number): number[];
@@ -1583,6 +1584,7 @@ export declare function getTextOrigin(textId: number): number[];
 export declare function getTextRefr(textId: number): number;
 export declare function getTextRefrNode(textId: number): string;
 export declare function getTextRefrOffset(textId: number): number[];
+export declare function getTextRefrScreenOffset(textId: number): number[];
 
 export declare function getNumCreatedTexts(): number;
 
