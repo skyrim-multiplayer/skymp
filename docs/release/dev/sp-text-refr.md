@@ -15,10 +15,14 @@ setTextRefrNode(textId: number, nodeName: string): void;
 // Apply a world-space offset (x, y, z) on top of the tracked position.
 setTextRefrOffset(textId: number, offset: number[]): void;
 
+// Apply a screen offset (x, y) on top of the tracked position and world-space offset.
+setTextRefrScreenOffset(textId: number, offset: number[]): void;
+
 // Read back the currently set values.
 getTextRefr(textId: number): number;
 getTextRefrNode(textId: number): string;
 getTextRefrOffset(textId: number): number[];
+getTextRefrScreenOffset(textId: number): number[];
 ```
 
 ### Behaviour
