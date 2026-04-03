@@ -325,13 +325,15 @@ TEST_CASE("Activate PurpleMountainFlower in Whiterun", "[PartOne][espm]")
 
   partOne.Tick(); // send deferred inventory update messages
 
-  REQUIRE(partOne.Messages().size() >= 2);
+  REQUIRE(partOne.Messages().size() >= 3);
   REQUIRE(partOne.Messages()[0].j["idx"] == ref.GetIdx());
   REQUIRE(partOne.Messages()[0].j["t"] == MsgType::UpdateProperty);
   REQUIRE(partOne.Messages()[0].j["dataDump"] == "true");
   REQUIRE(partOne.Messages()[0].j["propName"] == "isHarvested");
-  REQUIRE(partOne.Messages()[1].j["t"] == MsgType::SetInventory);
-  REQUIRE(partOne.Messages()[1].j["inventory"].dump() ==
+  REQUIRE(partOne.Messages()[1].j["t"] == MsgType::OpenContainer);
+  REQUIRE(partOne.Messages()[1].j["target"] == ref.GetFormId());
+  REQUIRE(partOne.Messages()[2].j["t"] == MsgType::SetInventory);
+  REQUIRE(partOne.Messages()[2].j["inventory"].dump() ==
           nlohmann::json({ { "entries",
                              { { { "baseId", MountainFlower01Purple },
                                  { "count", 1 } } } } })
