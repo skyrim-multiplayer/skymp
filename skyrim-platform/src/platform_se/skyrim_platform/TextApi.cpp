@@ -213,7 +213,8 @@ Napi::Value TextApi::SetTextRefrScreenOffset(const Napi::CallbackInfo& info)
   std::array<double, 2> argOffset;
   for (int i = 0; i < 2; i++) {
     std::string comment = fmt::format("screenOffset[{}]", i);
-    argOffset[i] = NapiHelper::ExtractDouble(offsetArray.Get(i), comment.data());
+    argOffset[i] =
+      NapiHelper::ExtractDouble(offsetArray.Get(i), comment.data());
   }
 
   TextsCollection::GetSingleton().SetTextRefrScreenOffset(textId, argOffset);
@@ -223,8 +224,9 @@ Napi::Value TextApi::SetTextRefrScreenOffset(const Napi::CallbackInfo& info)
 Napi::Value TextApi::GetTextRefrScreenOffset(const Napi::CallbackInfo& info)
 {
   auto textId = NapiHelper::ExtractInt32(info[0], "textId");
-  const auto& offset = TextsCollection::GetSingleton().GetTextRefrScreenOffset(textId);
-  
+  const auto& offset =
+    TextsCollection::GetSingleton().GetTextRefrScreenOffset(textId);
+
   auto jsArray = Napi::Array::New(info.Env(), 2);
   for (int i = 0; i < 2; i++) {
     jsArray.Set(i, Napi::Number::New(info.Env(), offset[i]));
@@ -573,7 +575,7 @@ void Register(Napi::Env env, Napi::Object& exports)
                 env, NapiHelper::WrapCppExceptions(SetTextRefrOffset)));
   exports.Set("setTextRefrScreenOffset",
               Napi::Function::New(
-                env, NapiHelper::WrapCppExceptions(SetTextRefrScreenOffset)));                
+                env, NapiHelper::WrapCppExceptions(SetTextRefrScreenOffset)));
 
   exports.Set("getTextsVisibility",
               Napi::Function::New(
@@ -618,7 +620,7 @@ void Register(Napi::Env env, Napi::Object& exports)
   exports.Set("getNumCreatedTexts",
               Napi::Function::New(
                 env, NapiHelper::WrapCppExceptions(GetNumCreatedTexts)));
-              
+
   exports.Set("getTextRefrScreenOffset",
               Napi::Function::New(
                 env, NapiHelper::WrapCppExceptions(GetTextRefrScreenOffset)));
