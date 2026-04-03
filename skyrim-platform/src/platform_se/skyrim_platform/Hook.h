@@ -1,16 +1,23 @@
 #pragma once
+#include "HookPattern.h"
+#include "QuickJSHookEngine.h"
+#include <atomic>
+#include <cstdint>
+#include <map>
+#include <memory>
+#include <mutex>
+#include <optional>
+#include <string>
 
-class Handler;
-
-struct HandlerInvocationInfo
+// Represents a single registered hook script with optional filtering
+struct HookScriptEntry
 {
-  std::shared_ptr<Napi::Reference<Napi::Object>> storage, context;
-  bool matchesCondition = false;
-};
+  uint32_t qjsScriptId = 0; // ID in QuickJSHookEngine
+  std::optional<HookPattern> pattern;
+  std::optional<double> minSelfId;
+  std::optional<double> maxSelfId;
 
-struct HookInvocationInfo
-{
-  std::unordered_map<Handler*, HandlerInvocationInfo> handlersInvocationInfo;
+  bool Matches(uint32_t selfId, const std::string& eventName) const;
 };
 
 class Hook
@@ -19,41 +26,41 @@ public:
   Hook(std::string hookName_, std::string eventNameVariableName_,
        std::optional<std::string> succeededVariableName_);
 
-  // javascript thread only
-  uint32_t AddHandler(const std::shared_ptr<Handler>& handler);
-  void RemoveHandler(const uint32_t& id);
+  // Add a hook by providing JavaScript source code.
+  // The source must define enter(ctx) and/or leave(ctx) functions.
+  // Returns a handle ID that can be used to remove the hook.
+  uint32_t AddScript(const std::string& source,
+                     std::optional<double> minSelfId,
+                     std::optional<double> maxSelfId,
+                     std::optional<HookPattern> pattern);
 
-  // Thread-safe, but it isn't too useful actually
+  void RemoveScript(uint32_t id);
+
   std::string GetName() const;
 
-  // Hooks are set on game functions that are being called from multiple
-  // threads. So Enter/Leave methods are thread-safe, but all private methods
-  // are for Chakra thread only
-
+  // Thread-safe entry/exit points called from game hooks
   void Enter(uint32_t selfId, std::string& eventName);
-
   void Leave(bool succeeded);
 
 private:
-  void SendPapyrusEventHandleEnter(uint32_t selfId, std::string& eventName);
-
-  void HandleEnter(HookInvocationInfo& hookInvocationInfo, uint32_t selfId,
-                   std::string& eventName, const Napi::Env& env);
-  void HandleLeave(HookInvocationInfo& hookInvocationInfo, bool succeeded,
-                   Napi::Env env);
-
-  void PrepareContext(HandlerInvocationInfo& handlerInvocationInfo,
-                      const Napi::Env& env);
-
-  void ClearContextStorage(HandlerInvocationInfo& handlerInvocationInfo,
-                           Napi::Env env);
-
   const std::string hookName;
   const std::string eventNameVariableName;
   const std::optional<std::string> succeededVariableName;
 
-  std::map<uint32_t, std::shared_ptr<Handler>> handlers;
+  // QuickJS engine owns all compiled hook scripts for this hook
+  std::unique_ptr<QuickJSHookEngine> qjsEngine;
+
+  std::map<uint32_t, HookScriptEntry> scripts;
   uint32_t nextHandlerId = 0;
 
+  // Prevent add/remove while executing hooks
   std::atomic<int> addRemoveBlocker = 0;
+
+  // Per-thread invocation tracking for nested Enter/Leave pairs
+  static std::mutex g_invocationsMutex;
+  struct InvocationInfo
+  {
+    std::vector<uint32_t> matchedScriptIds;
+  };
+  static std::map<DWORD, std::vector<InvocationInfo>> g_invocations;
 };
