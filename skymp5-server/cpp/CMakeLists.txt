@@ -105,7 +105,6 @@ find_package(ZLIB REQUIRED)
 
 if(NOT EMSCRIPTEN)
   find_package(mongocxx REQUIRED)
-  find_package(mongoc-1.0 CONFIG REQUIRED)
 endif()
 
 find_package(unofficial-sodium CONFIG REQUIRED)
@@ -132,7 +131,7 @@ foreach(target ${VCPKG_DEPENDENT})
   target_link_libraries(${target} PUBLIC ZLIB::ZLIB)
 
   if(TARGET mongo::mongocxx_static)
-    target_link_libraries(${target} PUBLIC mongo::mongocxx_static mongo::bsoncxx_static mongo::mongoc_static mongo::bson_static)
+    target_link_libraries(${target} PUBLIC mongo::mongocxx_static mongo::bsoncxx_static mongoc::static bson::static)
   else()
     target_compile_definitions(${target} PUBLIC NO_MONGO=1)
   endif()
