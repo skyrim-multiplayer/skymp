@@ -67,7 +67,7 @@
       "platform": "windows"
     }
   ],
-  "builtin-baseline": "f4ea42fa5c2b993cf2b75725331616999e2e34d1",
+  "builtin-baseline": "80d025e8299d442c13b29751fc9451711b7c6c8e",
   "features": {
     "skyrim-flatrim": {
       "description": "Build platform for Skyrim Special, or Anniversary Edition.",
