@@ -67,21 +67,7 @@
       "platform": "windows"
     }
   ],
-  "builtin-baseline": "cb2981c4e03d421fa03b9bb5044cd1986180e7e4",
-  "overrides": [
-    {
-      "name": "libbson",
-      "version": "1.30.3"
-    },
-    {
-      "name": "mongo-c-driver",
-      "version": "1.30.3"
-    },
-    {
-      "name": "mongo-cxx-driver",
-      "version": "4.0.0"
-    }
-  ],
+  "builtin-baseline": "f4ea42fa5c2b993cf2b75725331616999e2e34d1",
   "features": {
     "skyrim-flatrim": {
       "description": "Build platform for Skyrim Special, or Anniversary Edition.",
