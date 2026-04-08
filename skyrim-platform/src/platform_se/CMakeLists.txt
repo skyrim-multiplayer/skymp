@@ -118,6 +118,15 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
 
     find_package(CommonLibSSE CONFIG REQUIRED)
 
+    # CommonLibSSE targets Windows 7 (0x0601) which conflicts with cpp-httplib
+    # requiring Windows 10. Override to target Windows 10 minimum.
+    get_target_property(_commonlib_defs CommonLibSSE::CommonLibSSE INTERFACE_COMPILE_DEFINITIONS)
+    if(_commonlib_defs)
+      string(REPLACE "WINVER=0x0601" "WINVER=0x0A00" _commonlib_defs "${_commonlib_defs}")
+      string(REPLACE "_WIN32_WINNT=0x0601" "_WIN32_WINNT=0x0A00" _commonlib_defs "${_commonlib_defs}")
+      set_target_properties(CommonLibSSE::CommonLibSSE PROPERTIES INTERFACE_COMPILE_DEFINITIONS "${_commonlib_defs}")
+    endif()
+
     target_commonlibsse_properties(skyrim_platform_entry
       NAME "SkyrimPlatform"
       AUTHOR "SkyMP Team and Contributors"
