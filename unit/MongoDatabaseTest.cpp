@@ -2,8 +2,8 @@
 #include "TestUtils.hpp"
 #include <catch2/catch_test_macros.hpp>
 #include <nlohmann/json.hpp>
-#include <openssl/sha.h>
 #include <simdjson.h>
+#include <sodium.h>
 
 namespace MongoDatabaseTestUtils {
 std::string BytesToHexString(const uint8_t* bytes, size_t length)
@@ -21,9 +21,10 @@ std::string BytesToHexString(const uint8_t* bytes, size_t length)
 
 std::string Sha256(const std::string& str)
 {
-  uint8_t hash[SHA256_DIGEST_LENGTH];
-  SHA256(reinterpret_cast<const uint8_t*>(str.data()), str.size(), hash);
-  return BytesToHexString(hash, SHA256_DIGEST_LENGTH);
+  unsigned char hash[crypto_hash_sha256_BYTES];
+  crypto_hash_sha256(hash, reinterpret_cast<const unsigned char*>(str.data()),
+                     str.size());
+  return BytesToHexString(hash, crypto_hash_sha256_BYTES);
 }
 }
 

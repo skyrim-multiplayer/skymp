@@ -1,14 +1,18 @@
-#include <Networking.h>
-#include <catch2/catch_all.hpp>
-#include <chrono>
+#include <memory>
 #include <thread>
+
+#include <catch2/catch_all.hpp>
+#include <prometheus/core.h>
+
+#include "Networking.h"
 
 using namespace std::chrono_literals;
 
 TEST_CASE("Data transfer", "[Networking]")
 {
-  static auto server =
-    Networking::CreateServer("127.0.0.1", 7778, MAX_PLAYERS, "password");
+  auto promRegistry = std::make_shared<prometheus::Registry>();
+  static auto server = Networking::CreateServer("127.0.0.1", 7778, MAX_PLAYERS,
+                                                "password", promRegistry);
   static auto client =
     Networking::CreateClient("127.0.0.1", 7778, 4000, "password");
 

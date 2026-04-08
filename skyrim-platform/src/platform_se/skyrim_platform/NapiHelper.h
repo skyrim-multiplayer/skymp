@@ -274,8 +274,7 @@ public:
   }
 
   template <NapiHandler F>
-  static std::function<Napi::Value(const Napi::CallbackInfo& info)>
-  WrapCppExceptions(F originalFunc)
+  static auto WrapCppExceptions(F originalFunc)
   {
     return [originalFunc](const Napi::CallbackInfo& info) {
       try {

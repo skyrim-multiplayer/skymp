@@ -1,21 +1,13 @@
 #include "ZipDatabase.h"
 
-#include "FileUtils.h"
-#include "MappedBuffer.h"
 #include "libzippp/libzippp.h"
+#include <FileUtils.h>
+#include <MappedBuffer.h>
 #include <filesystem>
 #include <fstream>
 #include <nlohmann/json.hpp>
-#include <zlib.h>
-
-namespace {
-inline uint32_t ZlibGetCRC32Checksum(const void* readBuffer, z_size_t length)
-{
-  uLong hash = crc32_z(0L, Z_NULL, 0);
-  hash = crc32_z(hash, static_cast<const Bytef*>(readBuffer), length);
-  return static_cast<uint32_t>(hash);
-}
-}
+#include <save_storages/AsyncSaveStorage.h>
+#include <unordered_set>
 
 struct ZipDatabase::Impl
 {
@@ -74,36 +66,65 @@ std::vector<std::optional<MpChangeForm>>&& ZipDatabase::UpsertImpl(
 
     return std::move(changeForms);
   } catch (std::exception& e) {
-    throw UpsertFailedException(std::move(changeForms), e.what());
+    throw Viet::AsyncSaveStorage<
+      MpChangeForm, FormDesc>::UpsertFailedException(std::move(changeForms),
+                                                     e.what());
   }
 }
 
-void ZipDatabase::Iterate(const IterateCallback& iterateCallback)
+void ZipDatabase::Iterate(const IterateCallback& iterateCallback,
+                          std::optional<std::vector<FormDesc>> filter)
 {
-  auto filePathAbsolute = std::filesystem::absolute(pImpl->filePath).string();
+  try {
 
-  libzippp::ZipArchive archive(filePathAbsolute.data());
+    auto filePathAbsolute =
+      std::filesystem::absolute(pImpl->filePath).string();
 
-  archive.open(libzippp::ZipArchive::ReadOnly);
+    libzippp::ZipArchive archive(filePathAbsolute.data());
 
-  std::vector<libzippp::ZipEntry> entries = archive.getEntries();
-  std::vector<libzippp::ZipEntry>::iterator it;
+    archive.open(libzippp::ZipArchive::ReadOnly);
 
-  simdjson::dom::parser p;
+    std::vector<libzippp::ZipEntry> entries = archive.getEntries();
+    std::vector<libzippp::ZipEntry>::iterator it;
 
-  for (it = entries.begin(); it != entries.end(); ++it) {
-    libzippp::ZipEntry entry = *it;
-    std::string name = entry.getName();
-    int size = entry.getSize();
+    simdjson::dom::parser p;
 
-    std::string textData = entry.readAsText();
-
-    try {
-      auto result = p.parse(textData).value();
-      iterateCallback(MpChangeForm::JsonToChangeForm(result));
-    } catch (std::exception& e) {
-      pImpl->logger->error("Parsing or loading of {} failed with {}", name,
-                           e.what());
+    std::optional<std::unordered_set<std::string>> filterSet;
+    if (filter) {
+      std::unordered_set<std::string>& value = filterSet.emplace();
+      for (const auto& desc : *filter) {
+        value.insert(desc.ToString());
+      }
     }
+
+    for (it = entries.begin(); it != entries.end(); ++it) {
+      libzippp::ZipEntry entry = *it;
+      std::string name = entry.getName();
+      int size = entry.getSize();
+
+      std::string textData = entry.readAsText();
+
+      try {
+        auto result = p.parse(textData).value();
+        auto changeForm = MpChangeForm::JsonToChangeForm(result);
+
+        if (filterSet) {
+          if (filterSet->find(changeForm.formDesc.ToString()) ==
+              filterSet->end()) {
+            continue;
+          }
+        }
+
+        iterateCallback(changeForm);
+      } catch (std::exception& e) {
+        pImpl->logger->error("Parsing or loading of {} failed with {}", name,
+                             e.what());
+      }
+    }
+
+  } catch (std::exception& e) {
+    throw Viet::AsyncSaveStorage<
+      MpChangeForm, FormDesc>::IterateFailedException(std::move(filter),
+                                                      e.what());
   }
 }

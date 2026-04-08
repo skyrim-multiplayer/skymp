@@ -108,6 +108,16 @@ export class GamemodeUpdateService extends ClientListener {
     }
 
     private onUpdateGamemodeDataMessage(event: ConnectionMessage<UpdateGamemodeDataMessage>) {
+
+        if (this.sp.settings["skymp5-client"]["disable-gamemode-updates"]) {
+            if (this.sp.storage['GamemodeUpdateService_sawUpdateFunctions'] === true) {
+                logTrace(this, `Gamemode updates are disabled by settings`);
+                return;
+            }
+            logTrace(this, `Gamemode updates are disabled by settings - processing first update only`);
+            this.sp.storage['GamemodeUpdateService_sawUpdateFunctions'] = true;
+        }
+
         this.sp.storage['updateNeighborFunctions'] = undefined;
         this.sp.storage['updateOwnerFunctions'] = undefined;
 

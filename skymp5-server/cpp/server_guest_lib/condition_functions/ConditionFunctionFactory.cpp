@@ -3,6 +3,7 @@
 #include "GetActorValuePercent.h"
 #include "GetEquipped.h"
 #include "GetEquippedItemType.h"
+#include "GetIsPlayableRace.h"
 #include "GetIsRace.h"
 #include "GetItemCount.h"
 #include "HasSpell.h"
@@ -26,6 +27,8 @@ ConditionFunctionMap ConditionFunctionFactory::CreateConditionFunctions()
     std::make_shared<ConditionFunctions::GetEquipped>());
   res.RegisterConditionFunction(
     std::make_shared<ConditionFunctions::GetIsRace>());
+  res.RegisterConditionFunction(
+    std::make_shared<ConditionFunctions::GetIsPlayableRace>());
   res.RegisterConditionFunction(
     std::make_shared<ConditionFunctions::GetItemCount>());
   res.RegisterConditionFunction(

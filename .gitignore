@@ -1,5 +1,6 @@
 build
 .clang-tidy
+.linter
 node_modules
 .vscode
 .cache
@@ -7,3 +8,4 @@ node_modules
 
 # vim
 .*.swp
+skyrim_data_files/

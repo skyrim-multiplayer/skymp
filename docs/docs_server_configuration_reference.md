@@ -50,6 +50,23 @@ Specifies the IP address to bind to. Applies to the `uiPort` (http). Binds to `0
 }
 ```
 
+## metricsAuth
+
+HTTP Basic authentication for the `/metrics` endpoint.
+
+If omitted, `/metrics` is not available.
+
+```json5
+{
+  // ...
+  "metricsAuth": {
+    "user": "prometheus",
+    "password": "secret"
+  },
+  // ...
+}
+```
+
 ## port
 
 This port would be used by player clients to connect to your server. At the current version of Skyrim Multiplayer servers use multiple ports and different protocols to manage different sorts of packets. See [Server Ports Usage](docs_server_ports_usage.md) page to learn more.
@@ -422,3 +439,17 @@ If "damageMultFormulaSettings" is not present, the server will use some default 
   // ...
 }
 ```
+
+## enableGamemodeDataUpdatesBroadcast
+
+A boolean setting that controls hot-reloading behavior for connected clients.
+
+* `false` (Default): Updates to gamemode scripts are applied to the server state but **not** broadcast to currently connected players. Existing players must re-login to receive the update. This ensures client stability if scripts do not support hot-reloading.
+* `true`: Updates are immediately broadcast to all connected clients. Useful for local development, but may cause desync or client errors if the scripts are not designed to be re-applied at runtime.
+
+```json5
+{
+  // ...
+  "enableGamemodeDataUpdatesBroadcast": false
+  // ...
+}

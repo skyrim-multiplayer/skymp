@@ -18,7 +18,9 @@
     "libzippp",
     "cpptrace",
     "antigo",
+    "prometheus-cpp-lite",
     "slikenet",
+    "libsodium",
     {
       "name": "mongo-cxx-driver",
       "platform": "!emscripten"

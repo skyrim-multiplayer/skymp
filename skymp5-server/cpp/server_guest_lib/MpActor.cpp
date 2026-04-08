@@ -14,7 +14,6 @@
 #include "ServerState.h"
 #include "SpSnippet.h"
 #include "SpSnippetFunctionGen.h"
-#include "TimeUtils.h"
 #include "WorldState.h"
 #include "gamemode_events/DeathEvent.h"
 #include "gamemode_events/DropItemEvent.h"
@@ -25,6 +24,7 @@
 #include "papyrus-vm/Utils.h"
 #include "script_objects/EspmGameObject.h"
 #include <NiPoint3.h>
+#include <TimeUtils.h>
 #include <algorithm>
 #include <atomic>
 #include <chrono>
@@ -608,6 +608,36 @@ void MpActor::ResolveSnippet(uint32_t snippetIdx, VarValue v)
     promise.Resolve(v);
     pImpl->snippetPromises.erase(it);
   }
+}
+
+void MpActor::SetPercentage(espm::ActorValue av, float percentage)
+{
+  if (IsDead() || pImpl->isRespawning) {
+    return;
+  }
+  if (av == espm::ActorValue::Health && percentage <= 0.f) {
+    Kill(nullptr);
+    return;
+  }
+  EditChangeForm([&](MpChangeForm& changeForm) {
+    switch (av) {
+      case espm::ActorValue::Health:
+        changeForm.actorValues.healthPercentage = percentage;
+        break;
+      case espm::ActorValue::Magicka:
+        changeForm.actorValues.magickaPercentage = percentage;
+        break;
+      case espm::ActorValue::Stamina:
+        changeForm.actorValues.staminaPercentage = percentage;
+        break;
+      default:
+        break;
+    }
+  });
+
+  // Updating timestamp. Note: calling this multiple times for different AVs
+  // is fine but might be slightly inefficient if batched.
+  SetLastAttributesPercentagesUpdate(std::chrono::steady_clock::now());
 }
 
 void MpActor::SetPercentages(const ActorValues& actorValues,

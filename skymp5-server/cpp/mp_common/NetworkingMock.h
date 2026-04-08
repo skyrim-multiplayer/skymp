@@ -18,6 +18,8 @@ public:
 
   std::string GetIp(UserId userId) const override;
 
+  void CloseConnection(UserId userId) override;
+
 private:
   struct Impl;
   std::shared_ptr<Impl> pImpl;
