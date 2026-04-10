@@ -70,6 +70,10 @@ addpackage linux-libc-dev  # required by OpenSSL(?)
 addpackage automake
 addpackage libtool
 
+# Required by libsoium:
+addpackage autoconf
+addpackage autoconf-archive
+
 echo Will now run the installation command, please check it and confirm
 set -x  # this will print the list that we're going to install
 sudo apt-get install $APT_ARGS $packages
