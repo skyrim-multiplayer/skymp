@@ -369,15 +369,15 @@ runs:
     - name: Upload client (rename to work around action bug)
       run: |
         mv \
-          "${{ github.workspace }}/build/dist/client/Data/Platform/Plugins/skymp5-client.js" \
-          "${{ github.workspace }}/build/dist/client/Data/Platform/Plugins/${{ inputs.DESCRIPTION }}_skymp5-client.js"
+          '${{ github.workspace }}/build/dist/client/Data/Platform/Plugins/skymp5-client.js' \
+          '${{ github.workspace }}/build/dist/client/Data/Platform/Plugins/${{ inputs.DESCRIPTION }}_skymp5-client.js'
       shell: bash
 
     - name: Upload client
       uses: actions/upload-artifact@v7
       with:
         name: ${{ inputs.DESCRIPTION }}_skymp5-client.js
-        path: ${{github.workspace}}/build/dist/client/Data/Platform/Plugins/skymp5-client.js
+        path: ${{ github.workspace }}/build/dist/client/Data/Platform/Plugins/${{ inputs.DESCRIPTION }}skymp5-client.js
         archive: false
 
     - uses: actions/upload-artifact@v7
