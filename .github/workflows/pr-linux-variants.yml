@@ -162,7 +162,7 @@ jobs:
 
           - name: Upload vcpkg logs
             if: always()
-            uses: actions/upload-artifact@v4
+            uses: actions/upload-artifact@v7
             with:
               name: ${{matrix.base_system}}_vcpkg_logs
               path: |
@@ -170,10 +170,11 @@ jobs:
                 ${{github.workspace}}/vcpkg/buildtrees/**/*.log
 
           - name: Upload compile_commands.json
-            uses: actions/upload-artifact@v4
+            uses: actions/upload-artifact@v7
             with:
                 name: ${{matrix.base_system}}_compile_commands.json
                 path: ${{github.workspace}}/build/compile_commands.json
+                archive: false
 
           - name: Build
             run: |
@@ -186,10 +187,11 @@ jobs:
                 tar czvf dist.tar.gz dist
 
           - name: Upload dist.tar.gz
-            uses: actions/upload-artifact@v4
+            uses: actions/upload-artifact@v7
             with:
               name: ${{matrix.base_system}}_dist.tar.gz
               path: ${{github.workspace}}/build/dist.tar.gz
+              archive: false
 
           - name: SP Types Check
             id: sp_types_check
@@ -235,10 +237,11 @@ jobs:
 
           - name: SP Const Enums Check failed - Upload generated ConstEnumApi.cpp
             if: ${{ failure() && steps.sp_const_enums_check.outcome == 'failure' }}
-            uses: actions/upload-artifact@v4
+            uses: actions/upload-artifact@v7
             with:
               name: ConstEnumApi.cpp
               path: skyrim-platform/src/platform_se/skyrim_platform/ConstEnumApi.cpp
+              archive: false
 
           - name: Test
             run: |

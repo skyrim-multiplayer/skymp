@@ -270,7 +270,7 @@ runs:
 
     - name: Upload vcpkg logs (non-Windows)
       if: ${{ always() && runner.os != 'Windows' }}
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: vcpkg_logs
         path: |
@@ -299,14 +299,14 @@ runs:
 
     - name: Upload vcpkg logs (Windows)
       if: ${{ always() && runner.os == 'Windows' }}
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: vcpkg_logs
         path: |
           ${{github.workspace}}/build/vcpkg-bootstrap.log
           ${{github.workspace}}/vcpkg_logs
 
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v7
       with:
         name: cmake-profiling-output (${{ inputs.DESCRIPTION }})
         path: cmake-profiling-output
@@ -360,22 +360,23 @@ runs:
       run: ctest -C ${{env.BUILD_TYPE}} --verbose # --output-on-failure
       shell: powershell
 
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v7
       with:
         name: ${{ inputs.DIST_ARTIFACT_NAME }}
         path: ${{github.workspace}}/build/dist
 
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v7
       with:
         name: skymp5-client-js (${{ inputs.DESCRIPTION }})
         path: ${{github.workspace}}/build/dist/client/Data/Platform/Plugins/skymp5-client.js
+        archive: false
 
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v7
       with:
         name: ${{ inputs.SERVER_DIST_ARTIFACT_NAME }}
         path: ${{github.workspace}}/build/dist/server
 
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v7
       with:
         name: coverage (${{ inputs.DESCRIPTION }})
         path: ${{github.workspace}}/build/__coverage
@@ -395,14 +396,14 @@ runs:
         echo "SP_NEXUS_ARTIFACT_NAME=$artifactName" | Out-File -Append -FilePath $env:GITHUB_ENV
       shell: powershell
       
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v7
       if: ${{ inputs.SP_NEXUS_ARTIFACT_NAME != 'nope' }}
       with:
         name: ${{ env.SP_NEXUS_ARTIFACT_NAME }}
         # Data folder is skipped for mod managers
         path: ${{github.workspace}}/build/nexus/sp/data/*
 
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v7
       with:
         name: papyrus-vm-nexus (${{ inputs.DESCRIPTION }})
         # Data folder is skipped for mod managers
@@ -413,7 +414,7 @@ runs:
       run: Get-PSDrive
       shell: powershell
 
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v7
       with:
         name: msbuild_files (${{ inputs.DESCRIPTION }})
         path: |
