@@ -113,10 +113,11 @@ jobs:
                             -DGITHUB_TOKEN=${{env.GAMEMODE_GITHUB_TOKEN}}
 
           - name: Upload compile_commands.json
-            uses: actions/upload-artifact@v4
+            uses: actions/upload-artifact@v7
             with:
                 name: compile_commands.json
                 path: ${{github.workspace}}/build/compile_commands.json
+                archive: false
 
           - name: Build
             if: ${{env.DEPLOY_ACTION == 'deploy'}}
