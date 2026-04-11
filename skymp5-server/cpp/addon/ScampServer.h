@@ -8,6 +8,7 @@
 
 #include <map>
 #include <memory>
+#include <optional>
 
 #include <napi.h>
 #include <nlohmann/json.hpp>
@@ -116,6 +117,7 @@ private:
   std::map<std::string, std::shared_ptr<LocalizationProvider>>
     localizationProviders;
   std::string defaultLanguage;
+  std::optional<std::vector<std::string>> cachedAvailableLanguages;
 
   static Napi::FunctionReference constructor;
 };

@@ -816,8 +816,34 @@ Napi::Value ScampServer::GetLocalizedString(const Napi::CallbackInfo& info)
       }
       auto provider = std::make_shared<LocalizationProvider>(
         serverSettings["dataDir"], language);
-      localizationProviders[language] = provider;
-      it = localizationProviders.find(language);
+
+      if (provider->IsEmpty()) {
+        if (!cachedAvailableLanguages) {
+          cachedAvailableLanguages =
+            LocalizationProvider::GetAvailableLanguages(
+              serverSettings["dataDir"]);
+        }
+        std::string availableStr;
+        for (auto& lang : *cachedAvailableLanguages) {
+          if (!availableStr.empty()) {
+            availableStr += ", ";
+          }
+          availableStr += lang;
+        }
+        spdlog::warn(
+          "getLocalizedString: language '{}' has no strings loaded. "
+          "Available languages on disk: [{}]. "
+          "Falling back to default language '{}'.",
+          language, availableStr, defaultLanguage);
+        language = defaultLanguage;
+        it = localizationProviders.find(language);
+        if (it == localizationProviders.end()) {
+          return translatedString;
+        }
+      } else {
+        localizationProviders[language] = provider;
+        it = localizationProviders.find(language);
+      }
     }
 
     auto& localizationProvider = it->second;
