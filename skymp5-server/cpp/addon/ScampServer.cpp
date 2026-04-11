@@ -76,8 +76,10 @@ bool StartsWith(const std::string& str, const char* prefix)
 }
 
 Napi::FunctionReference ScampServer::constructor;
+cv
 
-Napi::Object ScampServer::Init(Napi::Env env, Napi::Object exports)
+  Napi::Object
+  ScampServer::Init(Napi::Env env, Napi::Object exports)
 {
   Napi::Function func = DefineClass(
     env, "ScampServer",
