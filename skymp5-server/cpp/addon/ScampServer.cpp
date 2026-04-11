@@ -337,7 +337,7 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
       defaultLanguage = serverSettings["lang"];
       localizationProviders[defaultLanguage] =
         std::make_shared<LocalizationProvider>(serverSettings["dataDir"],
-                                              defaultLanguage);
+                                               defaultLanguage);
     }
 
     auto espm = new espm::Loader(pluginPaths);
