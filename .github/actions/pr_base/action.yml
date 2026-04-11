@@ -365,10 +365,19 @@ runs:
         name: ${{ inputs.DIST_ARTIFACT_NAME }}
         path: ${{github.workspace}}/build/dist
 
-    - uses: actions/upload-artifact@v7
+    # Workaround for https://github.com/actions/upload-artifact/issues/785 and 769
+    - name: Upload client (rename to work around action bug)
+      run: |
+        mv \
+          '${{ github.workspace }}/build/dist/client/Data/Platform/Plugins/skymp5-client.js' \
+          '${{ github.workspace }}/build/dist/client/Data/Platform/Plugins/${{ inputs.DESCRIPTION }}_skymp5-client.js'
+      shell: bash
+
+    - name: Upload client
+      uses: actions/upload-artifact@v7
       with:
-        name: skymp5-client-js (${{ inputs.DESCRIPTION }})
-        path: ${{github.workspace}}/build/dist/client/Data/Platform/Plugins/skymp5-client.js
+        name: ${{ inputs.DESCRIPTION }}_skymp5-client.js
+        path: ${{ github.workspace }}/build/dist/client/Data/Platform/Plugins/${{ inputs.DESCRIPTION }}_skymp5-client.js
         archive: false
 
     - uses: actions/upload-artifact@v7

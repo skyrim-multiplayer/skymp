@@ -169,11 +169,17 @@ jobs:
                 ${{github.workspace}}/build/vcpkg-*.log
                 ${{github.workspace}}/vcpkg/buildtrees/**/*.log
 
+          # Workaround for https://github.com/actions/upload-artifact/issues/785 and 769
+          - name: Rename compile_commands.json
+            run: |
+              cd '${{ github.workspace }}/build'
+              ln -s compile_commands.json '${{ matrix.base_system }}_compile_commands.json'
+
           - name: Upload compile_commands.json
             uses: actions/upload-artifact@v7
             with:
-                name: ${{matrix.base_system}}_compile_commands.json
-                path: ${{github.workspace}}/build/compile_commands.json
+                name: ${{ matrix.base_system }}_compile_commands.json
+                path: ${{ github.workspace }}/build/${{ matrix.base_system }}_compile_commands.json
                 archive: false
 
           - name: Build
@@ -186,11 +192,17 @@ jobs:
               docker run --rm -v "${{ github.workspace }}:/src" -w /src/build -u skymp localhost/buildimage \
                 tar czvf dist.tar.gz dist
 
+          # Workaround for https://github.com/actions/upload-artifact/issues/785 and 769
+          - name: Rename dist.tar.gz
+            run: |
+              cd '${{ github.workspace }}/build'
+              ln -s dist.tar.gz '${{ matrix.base_system }}_dist.tar.gz'
+
           - name: Upload dist.tar.gz
             uses: actions/upload-artifact@v7
             with:
-              name: ${{matrix.base_system}}_dist.tar.gz
-              path: ${{github.workspace}}/build/dist.tar.gz
+              name: ${{ matrix.base_system }}_dist.tar.gz
+              path: ${{ github.workspace }}/build/${{ matrix.base_system }}_dist.tar.gz
               archive: false
 
           - name: SP Types Check
