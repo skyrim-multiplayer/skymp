@@ -74,6 +74,9 @@ if(BUILD_UNIT_TESTS AND NOT EMSCRIPTEN)
       -DUNIT_WORKING_DIRECTORY=${CMAKE_BINARY_DIR}
       -P ${CMAKE_SOURCE_DIR}/cmake/run_test_unit.cmake
   )
+  set_tests_properties(test_unit PROPERTIES
+    FIXTURES_SETUP unit_passed
+  )
 
   # run with coverage but without dumps
   if(CPPCOV_PATH)
