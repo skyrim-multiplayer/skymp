@@ -11,12 +11,17 @@ const main = async () => {
     events.push(arguments);
   };
 
+  var inv1 = mp.get(actorId, "inventory").entries;
+  var goldEntries1 = inv1.filter((entry) => entry.baseId === 0x0000000f);
+  assert.strictEqual(goldEntries1.length, 1);
+  assert.strictEqual(goldEntries1[0].count, 140);
+
   mp.callPapyrusFunction("method", "ObjectReference", "AddItem", actor, [gold001, 100, false, null]);
 
   var inv = mp.get(actorId, "inventory").entries;
   var goldEntries = inv.filter((entry) => entry.baseId === 0x0000000f);
   assert.strictEqual(goldEntries.length, 1);
-  assert.strictEqual(goldEntries[0].count, 100);
+  assert.strictEqual(goldEntries[0].count, 240);
 
   assert.strictEqual(events.length, 1);
   assert.strictEqual(events[0][0], actorId);

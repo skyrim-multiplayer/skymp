@@ -285,5 +285,6 @@ foreach(TEST_SCRIPT ${INTEGRATION_TESTS})
   set_tests_properties(integration_${TEST_NAME} PROPERTIES
     TIMEOUT 120
     RESOURCE_LOCK server_directory
+    FIXTURES_REQUIRED unit_passed
   )
 endforeach()
