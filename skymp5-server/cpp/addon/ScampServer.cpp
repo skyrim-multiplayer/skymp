@@ -334,8 +334,10 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
 
     if (serverSettings["lang"] != nullptr) {
       logger->info("Run localization provider");
-      localizationProvider = std::make_shared<LocalizationProvider>(
-        serverSettings["dataDir"], serverSettings["lang"]);
+      defaultLanguage = serverSettings["lang"];
+      localizationProviders[defaultLanguage] =
+        std::make_shared<LocalizationProvider>(serverSettings["dataDir"],
+                                              defaultLanguage);
     }
 
     auto espm = new espm::Loader(pluginPaths);
@@ -796,11 +798,30 @@ Napi::Value ScampServer::GetLocalizedString(const Napi::CallbackInfo& info)
   try {
     auto translatedString = info.Env().Undefined();
 
-    if (!localizationProvider) {
+    auto globalRecordId = NapiHelper::ExtractUInt32(info[0], "globalRecordId");
+
+    std::string language = defaultLanguage;
+    if (info.Length() >= 2 && info[1].IsString()) {
+      language = info[1].As<Napi::String>().Utf8Value();
+    }
+
+    if (language.empty()) {
       return translatedString;
     }
 
-    auto globalRecordId = NapiHelper::ExtractUInt32(info[0], "globalRecordId");
+    auto it = localizationProviders.find(language);
+    if (it == localizationProviders.end()) {
+      if (serverSettings["dataDir"].is_null()) {
+        return translatedString;
+      }
+      auto provider = std::make_shared<LocalizationProvider>(
+        serverSettings["dataDir"], language);
+      localizationProviders[language] = provider;
+      it = localizationProviders.find(language);
+    }
+
+    auto& localizationProvider = it->second;
+
     auto lookupRes =
       partOne->GetEspm().GetBrowser().LookupById(globalRecordId);
 
@@ -840,7 +861,7 @@ Napi::Value ScampServer::GetLocalizedString(const Napi::CallbackInfo& info)
 
           translatedString = Napi::String::New(
             info.Env(),
-            this->localizationProvider->Get(fileNameWithoutExt, stringId));
+            localizationProvider->Get(fileNameWithoutExt, stringId));
         }
       },
       cache);
