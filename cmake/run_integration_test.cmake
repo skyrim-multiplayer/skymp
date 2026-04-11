@@ -9,6 +9,28 @@
 # Optional variables:
 #   TEST_DB_DIR  — absolute path to a satellite folder with initial changeForms DB
 
+# 0. Reset server-settings.json from the authoritative merged copy and apply
+#    any test-specific patch, using node to handle JSON properly.
+execute_process(
+  COMMAND node -e "
+    const fs = require('fs');
+    const merged = '${SERVER_DIR}/server-settings-merged.json';
+    const base = fs.existsSync(merged)
+      ? JSON.parse(fs.readFileSync(merged, 'utf8'))
+      : JSON.parse(fs.readFileSync('${SERVER_DIR}/server-settings.json', 'utf8'));
+    const patch = '${TEST_SETTINGS_JSON}' !== ''
+      ? JSON.parse(fs.readFileSync('${TEST_SETTINGS_JSON}', 'utf8'))
+      : {};
+    const result = Object.assign({}, base, patch);
+    fs.writeFileSync('${SERVER_DIR}/server-settings.json', JSON.stringify(result, null, 2));
+  "
+  WORKING_DIRECTORY "${SERVER_DIR}"
+  RESULT_VARIABLE _settings_res
+)
+if(NOT "${_settings_res}" STREQUAL "0")
+  message(FATAL_ERROR "Failed to prepare server-settings.json")
+endif()
+
 # 1. Clean changeForms from previous runs
 set(CHANGE_FORMS_DIR "${SERVER_DIR}/world/changeForms")
 if(EXISTS "${CHANGE_FORMS_DIR}")

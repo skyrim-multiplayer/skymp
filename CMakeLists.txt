@@ -259,12 +259,21 @@ foreach(TEST_SCRIPT ${INTEGRATION_TESTS})
     unset(TEST_DB_DIR)
   endif()
 
+  # Check for test-specific server settings patch (same name as test file with .settings.json)
+  set(TEST_SETTINGS_JSON "${CMAKE_SOURCE_DIR}/misc/tests/${TEST_NAME}.settings.json")
+  if(NOT EXISTS "${TEST_SETTINGS_JSON}")
+    unset(TEST_SETTINGS_JSON)
+  endif()
+
   set(ADD_TEST_ARGS
     -DTEST_SCRIPT=${TEST_SCRIPT}
     -DSERVER_DIR=${CMAKE_BINARY_DIR}/dist/server
   )
   if(TEST_DB_DIR)
     list(APPEND ADD_TEST_ARGS -DTEST_DB_DIR=${TEST_DB_DIR})
+  endif()
+  if(TEST_SETTINGS_JSON)
+    list(APPEND ADD_TEST_ARGS -DTEST_SETTINGS_JSON=${TEST_SETTINGS_JSON})
   endif()
 
   add_test(
