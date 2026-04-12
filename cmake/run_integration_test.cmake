@@ -14,7 +14,7 @@
 execute_process(
   COMMAND node -e "
     const fs = require('fs');
-    const base = JSON.parse(fs.readFileSync('${SERVER_DIR}/server-settings-base.json', 'utf8'));
+    const base = JSON.parse(fs.readFileSync('${SERVER_SETTINGS_BASE_JSON}', 'utf8'));
     const patch = '${TEST_SETTINGS_JSON}' !== ''
       ? JSON.parse(fs.readFileSync('${TEST_SETTINGS_JSON}', 'utf8'))
       : {};
