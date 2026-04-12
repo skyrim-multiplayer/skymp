@@ -28,3 +28,8 @@ else()
 endif()
 
 file(WRITE "${SERVER_SETTINGS_JSON_PATH}" "${SERVER_SETTINGS_JSON}")
+
+# Also write an immutable base copy used by integration tests as a stable
+# reference (never modified at runtime, safe to use as merge base).
+get_filename_component(_settings_dir "${SERVER_SETTINGS_JSON_PATH}" DIRECTORY)
+file(WRITE "${_settings_dir}/server-settings-base.json" "${SERVER_SETTINGS_JSON}")
