@@ -18,7 +18,7 @@ public:
     tintType = 0;
     texture = nullptr;
   };
-  ~TintMask(){};
+  ~TintMask() {};
 
 #ifdef PAPYRUS_CUSTOM_CLASS
   enum

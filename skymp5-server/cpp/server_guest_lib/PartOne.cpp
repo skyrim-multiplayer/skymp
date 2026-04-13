@@ -94,6 +94,8 @@ struct PartOne::Impl
   std::shared_ptr<OpenSSLSigner> sslSigner; // nullptr if no private key set
   std::string sslSignerKeyAlias;            // empty string
   bool enableGamemodeDataUpdatesBroadcast = false;
+
+  PartOne::OnActorStreamIn onActorStreamIn;
 };
 
 PartOne::PartOne(Networking::ISendTarget* sendTarget)
@@ -314,13 +316,19 @@ void PartOne::SetEnabled(uint32_t actorFormId, bool enabled)
   enabled ? ac.Enable() : ac.Disable();
 }
 
+void PartOne::SetOnActorStreamIn(OnActorStreamIn callback)
+{
+  pImpl->onActorStreamIn = callback;
+}
+
 void PartOne::AttachEspm(espm::Loader* espm)
 {
   pImpl->espm = espm;
   worldState.AttachEspm(espm, [this] { return CreateFormCallbacks(); });
 }
 
-void PartOne::AttachSaveStorage(std::shared_ptr<ISaveStorage> saveStorage)
+void PartOne::AttachSaveStorage(
+  std::shared_ptr<Viet::ISaveStorage<MpChangeForm, FormDesc>> saveStorage)
 {
   worldState.AttachSaveStorage(saveStorage);
 
@@ -799,6 +807,9 @@ void PartOne::Init()
       message.appearance = appearance
         ? std::optional<Appearance>(*appearance)
         : std::optional<Appearance>(std::nullopt);
+      if (pImpl->onActorStreamIn) {
+        pImpl->onActorStreamIn(*emitterAsActor, *listener, message);
+      }
     }
 
     if (emitterAsActor) {

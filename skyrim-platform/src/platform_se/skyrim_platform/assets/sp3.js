@@ -120,27 +120,29 @@
     };
 
     // Helper: Generic Function Handler (handles both static and instance)
-    const createWrapperFunction = (impl, isStatic) => {
-      return function (...args) {
-        // For instance methods, bind 'this'. For static, call directly.
-        const resWithoutClass = isStatic ? impl(...args) : impl.bind(this)(...args);
+    const createWrapperFunction = (impl, isStatic, name) => {
+      return {
+        [name]: function (...args) {
+          // For instance methods, bind 'this'. For static, call directly.
+          const resWithoutClass = isStatic ? impl(...args) : impl.bind(this)(...args);
 
-        if (resWithoutClass instanceof Promise) {
-          // Preserve metadata potentially attached to the Promise object itself
-          let tmp = resWithoutClass._sp3ObjectType;
+          if (resWithoutClass instanceof Promise) {
+            // Preserve metadata potentially attached to the Promise object itself
+            let tmp = resWithoutClass._sp3ObjectType;
 
-          return new Promise((resolve, reject) => {
-            resWithoutClass.then((res) => {
-              if (res !== null && typeof res === "object" && tmp) {
-                res._sp3ObjectType = tmp;
-              }
-              resolve(wrapObject(res));
-            }).catch(reject);
-          });
+            return new Promise((resolve, reject) => {
+              resWithoutClass.then((res) => {
+                if (res !== null && typeof res === "object" && tmp) {
+                  res._sp3ObjectType = tmp;
+                }
+                resolve(wrapObject(res));
+              }).catch(reject);
+            });
+          }
+
+          return wrapObject(resWithoutClass);
         }
-
-        return wrapObject(resWithoutClass);
-      };
+      }[name];
     };
 
     api._sp3RegisterWrapObjectFunction(wrapObject);
@@ -180,7 +182,7 @@
       // Register Instance Methods
       methods.concat(methods.map(prettify)).forEach(method => {
         const impl = api._sp3GetFunctionImplementation(sp, className, method);
-        const methodFinal = createWrapperFunction(impl, false);
+        const methodFinal = createWrapperFunction(impl, false, method);
 
         f.prototype[method] = methodFinal;
         f.prototype[getFunctionAliasName(method) || method] = methodFinal;
@@ -192,7 +194,7 @@
         .concat(Array.from(staticOverrides))
         .forEach(staticFunction => {
           const impl = api._sp3GetFunctionImplementation(sp, className, staticFunction);
-          const staticFunctionFinal = createWrapperFunction(impl, true);
+          const staticFunctionFinal = createWrapperFunction(impl, true, staticFunction);
 
           f[staticFunction] = staticFunctionFinal;
           f[getFunctionAliasName(staticFunction) || staticFunction] = staticFunctionFinal;

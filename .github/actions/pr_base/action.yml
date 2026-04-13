@@ -124,23 +124,41 @@ runs:
           const fsp = fs.promises;
           const path = require('path');
 
-          const targetPath = 'C:\\vcpkg';
-          const sourcePath = path.join(process.env.GITHUB_WORKSPACE, 'vcpkg');
-
-          async function moveWithFallback(sourcePath_, targetPath_) {
+          async function moveWithFallback(sourcePath_, targetPath_, stagePath_) {
             try {
               await fsp.rename(sourcePath_, targetPath_);
             } catch (err) {
               if (err.code === 'EXDEV') {
                 console.log('Falling back to copy and delete due to cross-device link error.');
-                await fsp.cp(sourcePath_, targetPath_, { recursive: true });
-                await fsp.rm(sourcePath_, { recursive: true, force: true });
+
+                try {
+                  await fsp.cp(sourcePath_, targetPath_, { recursive: true });
+                } catch (err) {
+                  if (err.code === 'EISDIR') {
+                    console.log('Falling back to stage-copy + move and delete due to EISDIR error.');
+                    await fsp.mkdir(stagePath_, { recursive: true });
+                    await fsp.cp(sourcePath_, stagePath_, { recursive: true });
+                    await fsp.rename(stagePath_, targetPath_);
+                  } else {
+                    throw err;
+                  }
+                }
+
+                try {
+                  await fsp.rm(sourcePath_, { recursive: true, force: true });
+                } catch (err) {
+                  console.warn(`moveWithFallback failed to remove sourcePath_ (${sourcePath_}) after copy; reason:`, err);
+                }
               }
               else {
                 throw err;
               }
             }
           }
+
+          const targetPath = 'C:/vcpkg';
+          const stagePath = 'C:/vcpkg_stage/vcpkg';
+          const sourcePath = path.join(process.env.GITHUB_WORKSPACE, 'vcpkg');
 
           async function moveVcpkg() {
             try {
@@ -150,7 +168,7 @@ runs:
               }
 
               console.log(`Moving ${sourcePath} to ${targetPath}...`);
-              await moveWithFallback(sourcePath, targetPath);
+              await moveWithFallback(sourcePath, targetPath, stagePath);
               console.log(`Successfully moved vcpkg to ${targetPath}`);
             } catch (err) {
               core.setFailed(`Error moving vcpkg: ${err.message}`);
@@ -208,33 +226,6 @@ runs:
             -password "${{ inputs.NUGET_GITHUB_TOKEN }}"
         }
 
-    # Download Skyrim SE data files
-    - uses: suisei-cn/actions-download-file@v1
-      name: Download Skyrim.esm
-      with:
-        url: "https://gitlab.com/pospelov/se-data/-/raw/main/Skyrim.esm"
-        target: ${{github.workspace}}/skyrim_data_files/
-    - uses: suisei-cn/actions-download-file@v1
-      name: Download Update.esm
-      with:
-        url: "https://gitlab.com/pospelov/se-data/-/raw/main/Update.esm"
-        target: ${{github.workspace}}/skyrim_data_files/
-    - uses: suisei-cn/actions-download-file@v1
-      name: Download Dawnguard.esm
-      with:
-        url: "https://gitlab.com/pospelov/se-data/-/raw/main/Dawnguard.esm"
-        target: ${{github.workspace}}/skyrim_data_files/
-    - uses: suisei-cn/actions-download-file@v1
-      name: Download HearthFires.esm
-      with:
-        url: "https://gitlab.com/pospelov/se-data/-/raw/main/HearthFires.esm"
-        target: ${{github.workspace}}/skyrim_data_files/
-    - uses: suisei-cn/actions-download-file@v1
-      name: Download Dragonborn.esm
-      with:
-        url: "https://gitlab.com/pospelov/se-data/-/raw/main/Dragonborn.esm"
-        target: ${{github.workspace}}/skyrim_data_files/
-
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
@@ -263,6 +254,7 @@ runs:
         $cmake_command_full += "$vcpkg_triplet_arg "
         $cmake_command_full += "$vcpkg_root_arg "
         $cmake_command_full += "-DUNIT_DATA_DIR=skyrim_data_files "
+        $cmake_command_full += "-DDOWNLOAD_SKYRIM_DATA=ON "
         $cmake_command_full += "-DBUILD_NODEJS=OFF "
         $cmake_command_full += "-DBUILD_FRONT=${{ inputs.BUILD_SKYMP5_FRONT }} "
         $cmake_command_full += "-DSKYMP5_FRONT_REPO_PAT=${{ inputs.SKYMP5_FRONT_PAT }} "
@@ -278,7 +270,7 @@ runs:
 
     - name: Upload vcpkg logs (non-Windows)
       if: ${{ always() && runner.os != 'Windows' }}
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: vcpkg_logs
         path: |
@@ -307,22 +299,32 @@ runs:
 
     - name: Upload vcpkg logs (Windows)
       if: ${{ always() && runner.os == 'Windows' }}
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: vcpkg_logs
         path: |
           ${{github.workspace}}/build/vcpkg-bootstrap.log
           ${{github.workspace}}/vcpkg_logs
 
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v7
       with:
         name: cmake-profiling-output (${{ inputs.DESCRIPTION }})
         path: cmake-profiling-output
 
+    - name: BEFORE BUILD
+      uses: actions/github-script@v6
+      with:
+        script: |
+          console.log("!!! BEFORE BUILD !!!")
     - name: Build
       # Build your program with the given configuration
       run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
       shell: powershell
+    - name: AFTER BUILD
+      uses: actions/github-script@v6
+      with:
+        script: |
+          console.log("!!! AFTER BUILD !!!")
 
     # before running tests, because of dist check test
     - name: Compile metadata into public format
@@ -342,18 +344,7 @@ runs:
             const file = fs.readFileSync('./build-metadata.json');
             const data = JSON.parse(file);
 
-            res.refs_info = data.refs_info.map((refInfo) => {
-              if (refInfo.repoName !== "skymp5-patches") {
-                return refInfo;
-              }
-              else {
-                return { 
-                  refInfoHash: crypto.createHash('sha256').update(refInfo.ref).digest('hex'),
-                  lastCommitSha: refInfo.lastCommitSha,
-                  prNumber: refInfo.prNumber
-                };
-              }
-            });
+            res.data = data;
           }
 
           console.log("Resulting data:");
@@ -369,22 +360,32 @@ runs:
       run: ctest -C ${{env.BUILD_TYPE}} --verbose # --output-on-failure
       shell: powershell
 
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v7
       with:
         name: ${{ inputs.DIST_ARTIFACT_NAME }}
         path: ${{github.workspace}}/build/dist
 
-    - uses: actions/upload-artifact@v4
-      with:
-        name: skymp5-client-js (${{ inputs.DESCRIPTION }})
-        path: ${{github.workspace}}/build/dist/client/Data/Platform/Plugins/skymp5-client.js
+    # Workaround for https://github.com/actions/upload-artifact/issues/785 and 769
+    - name: Upload client (rename to work around action bug)
+      run: |
+        mv \
+          '${{ github.workspace }}/build/dist/client/Data/Platform/Plugins/skymp5-client.js' \
+          '${{ github.workspace }}/build/dist/client/Data/Platform/Plugins/${{ inputs.DESCRIPTION }}_skymp5-client.js'
+      shell: bash
 
-    - uses: actions/upload-artifact@v4
+    - name: Upload client
+      uses: actions/upload-artifact@v7
+      with:
+        name: ${{ inputs.DESCRIPTION }}_skymp5-client.js
+        path: ${{ github.workspace }}/build/dist/client/Data/Platform/Plugins/${{ inputs.DESCRIPTION }}_skymp5-client.js
+        archive: false
+
+    - uses: actions/upload-artifact@v7
       with:
         name: ${{ inputs.SERVER_DIST_ARTIFACT_NAME }}
         path: ${{github.workspace}}/build/dist/server
 
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v7
       with:
         name: coverage (${{ inputs.DESCRIPTION }})
         path: ${{github.workspace}}/build/__coverage
@@ -404,14 +405,14 @@ runs:
         echo "SP_NEXUS_ARTIFACT_NAME=$artifactName" | Out-File -Append -FilePath $env:GITHUB_ENV
       shell: powershell
       
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v7
       if: ${{ inputs.SP_NEXUS_ARTIFACT_NAME != 'nope' }}
       with:
         name: ${{ env.SP_NEXUS_ARTIFACT_NAME }}
         # Data folder is skipped for mod managers
         path: ${{github.workspace}}/build/nexus/sp/data/*
 
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v7
       with:
         name: papyrus-vm-nexus (${{ inputs.DESCRIPTION }})
         # Data folder is skipped for mod managers
@@ -422,7 +423,7 @@ runs:
       run: Get-PSDrive
       shell: powershell
 
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v7
       with:
         name: msbuild_files (${{ inputs.DESCRIPTION }})
         path: |

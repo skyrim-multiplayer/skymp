@@ -25,6 +25,10 @@ Napi::Value SetTextFont(const Napi::CallbackInfo& info);
 Napi::Value SetTextDepth(const Napi::CallbackInfo& info);
 Napi::Value SetTextEffect(const Napi::CallbackInfo& info);
 Napi::Value SetTextOrigin(const Napi::CallbackInfo& info);
+Napi::Value SetTextRefr(const Napi::CallbackInfo& info);
+Napi::Value SetTextRefrNode(const Napi::CallbackInfo& info);
+Napi::Value SetTextRefrOffset(const Napi::CallbackInfo& info);
+Napi::Value SetTextRefrScreenOffset(const Napi::CallbackInfo& info);
 
 TextsVisibility::Value GetTextsVisibility();
 Napi::Value GetTextsVisibilityJS(const Napi::CallbackInfo& info);
@@ -37,8 +41,14 @@ Napi::Value GetTextFont(const Napi::CallbackInfo& info);
 Napi::Value GetTextDepth(const Napi::CallbackInfo& info);
 Napi::Value GetTextEffect(const Napi::CallbackInfo& info);
 Napi::Value GetTextOrigin(const Napi::CallbackInfo& info);
+Napi::Value GetTextRefr(const Napi::CallbackInfo& info);
+Napi::Value GetTextRefrNode(const Napi::CallbackInfo& info);
+Napi::Value GetTextRefrOffset(const Napi::CallbackInfo& info);
+Napi::Value GetTextRefrScreenOffset(const Napi::CallbackInfo& info);
 
 Napi::Value GetNumCreatedTexts(const Napi::CallbackInfo& info);
+
+void OnUpdate();
 
 namespace TextsVisibility {
 enum Value

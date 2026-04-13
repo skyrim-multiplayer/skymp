@@ -1,0 +1,11 @@
+diff --git a/include/prometheus/core.h b/include/prometheus/core.h
+--- a/include/prometheus/core.h
++++ b/include/prometheus/core.h
+@@ -62,6 +62,7 @@
+ #include <functional>
+ #include <sstream>
+ #include <array>
++#include <charconv>
+ #include <cmath>
+ #include <cstdio>
+ 

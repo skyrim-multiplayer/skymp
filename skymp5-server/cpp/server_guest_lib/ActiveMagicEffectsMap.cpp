@@ -1,8 +1,8 @@
 #include "ActiveMagicEffectsMap.h"
 #include "JsonUtils.h"
 #include "LeveledListUtils.h"
-#include "TimeUtils.h"
 #include "libespm/espm.h"
+#include <TimeUtils.h>
 #include <utility>
 
 std::optional<std::reference_wrapper<const ActiveMagicEffectsMap::Entry>>

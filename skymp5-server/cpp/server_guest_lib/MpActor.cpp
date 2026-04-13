@@ -14,7 +14,6 @@
 #include "ServerState.h"
 #include "SpSnippet.h"
 #include "SpSnippetFunctionGen.h"
-#include "TimeUtils.h"
 #include "WorldState.h"
 #include "gamemode_events/DeathEvent.h"
 #include "gamemode_events/DropItemEvent.h"
@@ -25,6 +24,7 @@
 #include "papyrus-vm/Utils.h"
 #include "script_objects/EspmGameObject.h"
 #include <NiPoint3.h>
+#include <TimeUtils.h>
 #include <algorithm>
 #include <atomic>
 #include <chrono>
@@ -52,8 +52,9 @@ struct MpActor::Impl
   uint32_t respawnTimerIndex = 0;
   bool isRespawning = false;
   bool isBlockActive = false;
-  std::chrono::steady_clock::time_point lastAttributesUpdateTimePoint,
-    lastHitTimePoint;
+  std::chrono::steady_clock::time_point lastAttributesUpdateTimePoint;
+  std::vector<std::pair<uint32_t, std::chrono::steady_clock::time_point>>
+    lastHitTimesLRU;
   using RestorationTimePoints =
     std::unordered_map<espm::ActorValue,
                        std::chrono::steady_clock::time_point>;
@@ -609,6 +610,36 @@ void MpActor::ResolveSnippet(uint32_t snippetIdx, VarValue v)
   }
 }
 
+void MpActor::SetPercentage(espm::ActorValue av, float percentage)
+{
+  if (IsDead() || pImpl->isRespawning) {
+    return;
+  }
+  if (av == espm::ActorValue::Health && percentage <= 0.f) {
+    Kill(nullptr);
+    return;
+  }
+  EditChangeForm([&](MpChangeForm& changeForm) {
+    switch (av) {
+      case espm::ActorValue::Health:
+        changeForm.actorValues.healthPercentage = percentage;
+        break;
+      case espm::ActorValue::Magicka:
+        changeForm.actorValues.magickaPercentage = percentage;
+        break;
+      case espm::ActorValue::Stamina:
+        changeForm.actorValues.staminaPercentage = percentage;
+        break;
+      default:
+        break;
+    }
+  });
+
+  // Updating timestamp. Note: calling this multiple times for different AVs
+  // is fine but might be slightly inefficient if batched.
+  SetLastAttributesPercentagesUpdate(std::chrono::steady_clock::now());
+}
+
 void MpActor::SetPercentages(const ActorValues& actorValues,
                              MpActor* aggressor)
 {
@@ -690,9 +721,22 @@ MpActor::GetLastAttributesPercentagesUpdate()
   return pImpl->lastAttributesUpdateTimePoint;
 }
 
-std::chrono::steady_clock::time_point MpActor::GetLastHitTime()
+std::chrono::steady_clock::time_point MpActor::GetLastHitTime(
+  std::optional<uint32_t> targetId) const
 {
-  return pImpl->lastHitTimePoint;
+  if (!targetId) {
+    if (pImpl->lastHitTimesLRU.empty()) {
+      return std::chrono::steady_clock::time_point();
+    }
+    return pImpl->lastHitTimesLRU.back().second;
+  }
+
+  for (const auto& entry : pImpl->lastHitTimesLRU) {
+    if (entry.first == *targetId) {
+      return entry.second;
+    }
+  }
+  return std::chrono::steady_clock::time_point();
 }
 
 void MpActor::SetLastAttributesPercentagesUpdate(
@@ -701,9 +745,42 @@ void MpActor::SetLastAttributesPercentagesUpdate(
   pImpl->lastAttributesUpdateTimePoint = timePoint;
 }
 
-void MpActor::SetLastHitTime(std::chrono::steady_clock::time_point timePoint)
+void MpActor::SetLastHitTime(uint32_t targetId,
+                             std::chrono::steady_clock::time_point timePoint)
 {
-  pImpl->lastHitTimePoint = timePoint;
+  constexpr size_t kMaxHitMemory = 16;
+
+  auto& hits = pImpl->lastHitTimesLRU;
+
+  auto it = std::find_if(hits.begin(), hits.end(), 
+    [targetId](const auto& entry) { return entry.first == targetId; });
+
+  if (it != hits.end()) {
+    it->second = timePoint;
+    std::rotate(it, it + 1, hits.end());
+    return;
+}
+
+  if (kMaxHitMemory > 0) {
+    if (pImpl->lastHitTimesLRU.size() >= kMaxHitMemory) {
+      pImpl->lastHitTimesLRU.erase(pImpl->lastHitTimesLRU.begin());
+    }
+    pImpl->lastHitTimesLRU.push_back({ targetId, timePoint });
+  }
+}
+
+size_t MpActor::CountRecentHits(std::chrono::duration<float> timeWindow) const
+{
+  size_t count = 0;
+  if (pImpl->lastHitTimesLRU.size() > 0) {
+    const auto now = std::chrono::steady_clock::now();
+    for (const auto& entry : pImpl->lastHitTimesLRU) {
+      if (now - entry.second < timeWindow) {
+        count++;
+      }
+    }
+  }
+  return count;
 }
 
 std::chrono::duration<float> MpActor::GetDurationOfAttributesPercentagesUpdate(
@@ -1967,3 +2044,4 @@ std::array<std::optional<Inventory::Entry>, 2> MpActor::GetEquippedShield()
   }
   return wornEntries;
 }
+

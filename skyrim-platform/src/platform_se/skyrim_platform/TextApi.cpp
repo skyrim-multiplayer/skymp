@@ -3,6 +3,8 @@
 
 namespace TextApi {
 
+void UpdateSingleTextScreenPos(int textId);
+
 Napi::Value TextApi::CreateText(const Napi::CallbackInfo& info)
 {
   std::array<double, 4> argColor;
@@ -169,6 +171,69 @@ Napi::Value TextApi::SetTextOrigin(const Napi::CallbackInfo& info)
   return info.Env().Undefined();
 }
 
+Napi::Value TextApi::SetTextRefr(const Napi::CallbackInfo& info)
+{
+  auto textId = NapiHelper::ExtractInt32(info[0], "textId");
+  auto refrFormId = NapiHelper::ExtractUInt32(info[1], "refrFormId");
+
+  TextsCollection::GetSingleton().SetTextRefr(textId, refrFormId);
+  return info.Env().Undefined();
+}
+
+Napi::Value TextApi::SetTextRefrNode(const Napi::CallbackInfo& info)
+{
+  auto textId = NapiHelper::ExtractInt32(info[0], "textId");
+  auto nodeName = NapiHelper::ExtractString(info[1], "nodeName");
+
+  TextsCollection::GetSingleton().SetTextRefrNode(textId, nodeName);
+  return info.Env().Undefined();
+}
+
+Napi::Value TextApi::SetTextRefrOffset(const Napi::CallbackInfo& info)
+{
+  auto textId = NapiHelper::ExtractInt32(info[0], "textId");
+  auto offsetArray = NapiHelper::ExtractArray(info[1], "offset");
+
+  std::array<double, 3> argOffset;
+  for (int i = 0; i < 3; i++) {
+    std::string comment = fmt::format("offset[{}]", i);
+    argOffset[i] =
+      NapiHelper::ExtractDouble(offsetArray.Get(i), comment.data());
+  }
+
+  TextsCollection::GetSingleton().SetTextRefrOffset(textId, argOffset);
+  return info.Env().Undefined();
+}
+
+Napi::Value TextApi::SetTextRefrScreenOffset(const Napi::CallbackInfo& info)
+{
+  auto textId = NapiHelper::ExtractInt32(info[0], "textId");
+  auto offsetArray = NapiHelper::ExtractArray(info[1], "offset");
+
+  std::array<double, 2> argOffset;
+  for (int i = 0; i < 2; i++) {
+    std::string comment = fmt::format("screenOffset[{}]", i);
+    argOffset[i] =
+      NapiHelper::ExtractDouble(offsetArray.Get(i), comment.data());
+  }
+
+  TextsCollection::GetSingleton().SetTextRefrScreenOffset(textId, argOffset);
+  return info.Env().Undefined();
+}
+
+Napi::Value TextApi::GetTextRefrScreenOffset(const Napi::CallbackInfo& info)
+{
+  auto textId = NapiHelper::ExtractInt32(info[0], "textId");
+  const auto& offset =
+    TextsCollection::GetSingleton().GetTextRefrScreenOffset(textId);
+
+  auto jsArray = Napi::Array::New(info.Env(), 2);
+  for (int i = 0; i < 2; i++) {
+    jsArray.Set(i, Napi::Number::New(info.Env(), offset[i]));
+  }
+  return jsArray;
+}
+
 Napi::Value TextApi::GetTextPos(const Napi::CallbackInfo& info)
 {
   auto& postions = TextsCollection::GetSingleton().GetTextPos(
@@ -269,10 +334,191 @@ Napi::Value TextApi::GetTextOrigin(const Napi::CallbackInfo& info)
   return jsArray;
 }
 
+Napi::Value TextApi::GetTextRefr(const Napi::CallbackInfo& info)
+{
+  auto textId = NapiHelper::ExtractInt32(info[0], "textId");
+  auto refrFormId = TextsCollection::GetSingleton().GetTextRefr(textId);
+  return Napi::Number::New(info.Env(), refrFormId);
+}
+
+Napi::Value TextApi::GetTextRefrNode(const Napi::CallbackInfo& info)
+{
+  auto textId = NapiHelper::ExtractInt32(info[0], "textId");
+  const auto& nodeName =
+    TextsCollection::GetSingleton().GetTextRefrNode(textId);
+  return Napi::String::New(info.Env(), nodeName);
+}
+
+Napi::Value TextApi::GetTextRefrOffset(const Napi::CallbackInfo& info)
+{
+  auto textId = NapiHelper::ExtractInt32(info[0], "textId");
+  const auto& offset =
+    TextsCollection::GetSingleton().GetTextRefrOffset(textId);
+  auto jsArray = Napi::Array::New(info.Env(), 3);
+  for (int i = 0; i < 3; i++) {
+    jsArray.Set(i, Napi::Number::New(info.Env(), offset[i]));
+  }
+  return jsArray;
+}
+
 Napi::Value TextApi::GetNumCreatedTexts(const Napi::CallbackInfo& info)
 {
   return Napi::Number::New(
     info.Env(), TextsCollection::GetSingleton().GetNumCreatedTexts());
+}
+
+namespace {
+
+RE::NiAVObject* ResolveNode(RE::TESObjectREFR* obj,
+                            const std::string& nodeName)
+{
+  if (!obj) {
+    return nullptr;
+  }
+
+  RE::NiAVObject* result = obj->Get3D();
+
+  // special-case for the player, switch between first/third-person
+  if (obj->formID == 0x14) {
+    auto* camera = RE::PlayerCamera::GetSingleton();
+    bool firstPerson = camera && camera->IsInFirstPerson();
+    result = obj->Get3D(firstPerson);
+
+    // First-person skeleton may lack nodes that exist on the third-person
+    // skeleton (e.g. head). Fall back to third-person when the lookup fails.
+    if (firstPerson && !nodeName.empty()) {
+      if (result) {
+        RE::BSFixedString bsName(nodeName.c_str());
+        auto* found = result->GetObjectByName(bsName);
+        if (found) {
+          return found;
+        }
+      }
+      result = obj->Get3D(false);
+    }
+  }
+
+  // name lookup
+  if (!nodeName.empty() && result) {
+    RE::BSFixedString bsName(nodeName.c_str());
+    result = result->GetObjectByName(bsName);
+  }
+
+  return result;
+}
+
+RE::NiCamera* GetCurrentNiCamera()
+{
+  auto* camera = RE::PlayerCamera::GetSingleton();
+  if (!camera || !camera->cameraRoot) {
+    return nullptr;
+  }
+  for (uint16_t i = 0; i < camera->cameraRoot->children.size(); ++i) {
+    auto* child = camera->cameraRoot->children[i].get();
+    if (child) {
+      auto* niCamera = netimmerse_cast<RE::NiCamera*>(child);
+      if (niCamera) {
+        return niCamera;
+      }
+    }
+  }
+  return nullptr;
+}
+
+void UpdateTextScreenPos(TextToDraw& text, RE::NiCamera* niCamera,
+                         float screenWidth, float screenHeight)
+{
+  if (text.refrFormId == 0) {
+    return;
+  }
+
+  auto* refr = RE::TESForm::LookupByID<RE::TESObjectREFR>(text.refrFormId);
+  if (!refr) {
+    return;
+  }
+
+  RE::NiPoint3 worldPos = refr->GetPosition();
+  if (!text.refrNodeName.empty()) {
+    RE::NiAVObject* node = ResolveNode(refr, text.refrNodeName);
+    if (node) {
+      worldPos = node->world.translate;
+    }
+  }
+  worldPos.x += static_cast<float>(text.refrOffset[0]);
+  worldPos.y += static_cast<float>(text.refrOffset[1]);
+  worldPos.z += static_cast<float>(text.refrOffset[2]);
+
+  float outX, outY, outZ;
+  RE::NiCamera::WorldPtToScreenPt3(niCamera->worldToCam, niCamera->port,
+                                   worldPos, outX, outY, outZ, 1.f);
+
+  if (outZ <= 0.f) {
+    return;
+  }
+
+  text.x = std::round(outX * screenWidth) + text.screenOffset[0];
+  text.y = std::round((1.f - outY) * screenHeight) + text.screenOffset[1];
+  text.refrDirty = false;
+}
+
+} // namespace
+
+void UpdateSingleTextScreenPos(int textId)
+{
+  auto& texts = TextsCollection::GetSingleton().GetCreatedTexts();
+  auto it = texts.find(textId);
+  if (it == texts.end() || it->second.refrFormId == 0) {
+    return;
+  }
+  auto* niCamera = GetCurrentNiCamera();
+  if (!niCamera) {
+    return;
+  }
+  auto* gfxState = RE::BSGraphics::State::GetSingleton();
+  if (!gfxState) {
+    return;
+  }
+  float w = static_cast<float>(gfxState->screenWidth);
+  float h = static_cast<float>(gfxState->screenHeight);
+  if (w == 0.f || h == 0.f) {
+    return;
+  }
+  UpdateTextScreenPos(it->second, niCamera, w, h);
+}
+
+void OnUpdate()
+{
+  auto& texts = TextsCollection::GetSingleton().GetCreatedTexts();
+
+  bool anyAttached = false;
+  for (auto& [id, text] : texts) {
+    if (text.refrFormId != 0) {
+      anyAttached = true;
+      break;
+    }
+  }
+  if (!anyAttached) {
+    return;
+  }
+
+  auto* niCamera = GetCurrentNiCamera();
+  if (!niCamera) {
+    return;
+  }
+
+  auto* gfxState = RE::BSGraphics::State::GetSingleton();
+  if (!gfxState) {
+    return;
+  }
+  float screenWidth = static_cast<float>(gfxState->screenWidth);
+  float screenHeight = static_cast<float>(gfxState->screenHeight);
+  if (screenWidth == 0.f || screenHeight == 0.f) {
+    return;
+  }
+
+  for (auto& [id, text] : texts) {
+    UpdateTextScreenPos(text, niCamera, screenWidth, screenHeight);
+  }
 }
 
 void Register(Napi::Env env, Napi::Object& exports)
@@ -318,6 +564,18 @@ void Register(Napi::Env env, Napi::Object& exports)
   exports.Set(
     "setTextOrigin",
     Napi::Function::New(env, NapiHelper::WrapCppExceptions(SetTextOrigin)));
+  exports.Set(
+    "setTextRefr",
+    Napi::Function::New(env, NapiHelper::WrapCppExceptions(SetTextRefr)));
+  exports.Set(
+    "setTextRefrNode",
+    Napi::Function::New(env, NapiHelper::WrapCppExceptions(SetTextRefrNode)));
+  exports.Set("setTextRefrOffset",
+              Napi::Function::New(
+                env, NapiHelper::WrapCppExceptions(SetTextRefrOffset)));
+  exports.Set("setTextRefrScreenOffset",
+              Napi::Function::New(
+                env, NapiHelper::WrapCppExceptions(SetTextRefrScreenOffset)));
 
   exports.Set("getTextsVisibility",
               Napi::Function::New(
@@ -349,10 +607,23 @@ void Register(Napi::Env env, Napi::Object& exports)
   exports.Set(
     "getTextOrigin",
     Napi::Function::New(env, NapiHelper::WrapCppExceptions(GetTextOrigin)));
+  exports.Set(
+    "getTextRefr",
+    Napi::Function::New(env, NapiHelper::WrapCppExceptions(GetTextRefr)));
+  exports.Set(
+    "getTextRefrNode",
+    Napi::Function::New(env, NapiHelper::WrapCppExceptions(GetTextRefrNode)));
+  exports.Set("getTextRefrOffset",
+              Napi::Function::New(
+                env, NapiHelper::WrapCppExceptions(GetTextRefrOffset)));
 
   exports.Set("getNumCreatedTexts",
               Napi::Function::New(
                 env, NapiHelper::WrapCppExceptions(GetNumCreatedTexts)));
+
+  exports.Set("getTextRefrScreenOffset",
+              Napi::Function::New(
+                env, NapiHelper::WrapCppExceptions(GetTextRefrScreenOffset)));
 }
 
 }

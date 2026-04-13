@@ -15,6 +15,8 @@ int TextsCollection::CreateText(double xPos, double yPos, std::wstring str,
                                 std::wstring name = L"Tavern")
 {
   TextToDraw text{ name, xPos, yPos, str, color };
+  text.savedX = xPos;
+  text.savedY = yPos;
 
   textCount++;
   std::pair<int, TextToDraw> arg = { textCount, text };
@@ -36,8 +38,11 @@ void TextsCollection::DestroyAllTexts()
 
 void TextsCollection::SetTextPos(int& textId, double& xPos, double& yPos)
 {
-  texts.at(textId).x = xPos;
-  texts.at(textId).y = yPos;
+  auto& text = texts.at(textId);
+  text.x = xPos;
+  text.y = yPos;
+  text.savedX = xPos;
+  text.savedY = yPos;
 }
 void TextsCollection::SetTextString(int& textId, std::wstring& str)
 {
@@ -70,6 +75,34 @@ void TextsCollection::SetTextDepth(int& textId, int& depth)
 void TextsCollection::SetTextOrigin(int& textId, std::array<double, 2>& origin)
 {
   texts.at(textId).origin = origin;
+}
+void TextsCollection::SetTextRefr(int& textId, uint32_t& refrFormId)
+{
+  auto& text = texts.at(textId);
+  // Detaching: restore the original user-set screen position
+  if (refrFormId == 0 && text.refrFormId != 0) {
+    text.x = text.savedX;
+    text.y = text.savedY;
+  }
+  text.refrFormId = refrFormId;
+  if (refrFormId != 0) {
+    text.refrDirty = true;
+  }
+}
+void TextsCollection::SetTextRefrNode(int& textId, std::string& nodeName)
+{
+  texts.at(textId).refrNodeName = std::move(nodeName);
+}
+void TextsCollection::SetTextRefrOffset(int& textId,
+                                        std::array<double, 3>& offset)
+{
+  texts.at(textId).refrOffset = offset;
+}
+
+void TextsCollection::SetTextRefrScreenOffset(int& textId,
+                                              std::array<double, 2>& offset)
+{
+  texts.at(textId).screenOffset = offset;
 }
 
 const std::pair<double, double> TextsCollection::GetTextPos(int textId) const
@@ -114,8 +147,34 @@ const std::array<double, 2> TextsCollection::GetTextOrigin(int textId) const
   return texts.at(textId).origin;
 }
 
+uint32_t TextsCollection::GetTextRefr(int textId) const
+{
+  return texts.at(textId).refrFormId;
+}
+
+const std::string& TextsCollection::GetTextRefrNode(int textId) const
+{
+  return texts.at(textId).refrNodeName;
+}
+
+const std::array<double, 3>& TextsCollection::GetTextRefrOffset(
+  int textId) const
+{
+  return texts.at(textId).refrOffset;
+}
+const std::array<double, 2>& TextsCollection::GetTextRefrScreenOffset(
+  int textId) const
+{
+  return texts.at(textId).screenOffset;
+}
+
 const std::unordered_map<int, TextToDraw>& TextsCollection::GetCreatedTexts()
   const
+{
+  return texts;
+}
+
+std::unordered_map<int, TextToDraw>& TextsCollection::GetCreatedTexts()
 {
   return texts;
 }

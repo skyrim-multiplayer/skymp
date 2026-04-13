@@ -50,6 +50,23 @@ Specifies the IP address to bind to. Applies to the `uiPort` (http). Binds to `0
 }
 ```
 
+## metricsAuth
+
+HTTP Basic authentication for the `/metrics` endpoint.
+
+If omitted, `/metrics` is not available.
+
+```json5
+{
+  // ...
+  "metricsAuth": {
+    "user": "prometheus",
+    "password": "secret"
+  },
+  // ...
+}
+```
+
 ## port
 
 This port would be used by player clients to connect to your server. At the current version of Skyrim Multiplayer servers use multiple ports and different protocols to manage different sorts of packets. See [Server Ports Usage](docs_server_ports_usage.md) page to learn more.

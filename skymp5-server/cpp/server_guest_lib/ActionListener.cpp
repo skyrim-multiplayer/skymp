@@ -234,6 +234,7 @@ void ActionListener::OnUpdateEquipment(const RawMessageData& rawMsgData,
   }
 
   bool isAllowed = true;
+  const auto actorFormId = actor->GetFormId();
   const Equipment& data = msg.data;
   const Inventory& equipmentInv = data.inv;
   uint32_t leftSpell = data.leftSpell.value_or(0);
@@ -241,48 +242,194 @@ void ActionListener::OnUpdateEquipment(const RawMessageData& rawMsgData,
   uint32_t voiceSpell = data.voiceSpell.value_or(0);
   uint32_t instantSpell = data.instantSpell.value_or(0);
 
+  enum class SpellSlotId : size_t
+  {
+    Left = 0,
+    Right,
+    Voice,
+    Instant,
+    kCount
+  };
+
+  std::array<uint32_t, static_cast<size_t>(SpellSlotId::kCount)>
+    spellIdsToRemove = {};
+
   if (leftSpell > 0 && !actor->IsSpellLearned(leftSpell)) {
-    spdlog::debug(
-      "OnUpdateEquipment result false. Spell with id ({}) not learned",
-      leftSpell);
+    spdlog::warn("ActionListener::OnUpdateEquipment {:x} - rejected equipment "
+                 "update: spell {:x} is not learned",
+                 actorFormId, leftSpell);
     isAllowed = false;
+    spellIdsToRemove[static_cast<size_t>(SpellSlotId::Left)] = leftSpell;
   }
 
   if (rightSpell > 0 && !actor->IsSpellLearned(rightSpell)) {
-    spdlog::debug(
-      "OnUpdateEquipment result false. Spell with id ({}) not learned",
-      rightSpell);
+    spdlog::warn("ActionListener::OnUpdateEquipment {:x} - rejected equipment "
+                 "update: spell {:x} is not learned",
+                 actorFormId, rightSpell);
     isAllowed = false;
+    spellIdsToRemove[static_cast<size_t>(SpellSlotId::Right)] = rightSpell;
   }
 
   if (voiceSpell > 0 && !actor->IsSpellLearned(voiceSpell)) {
-    spdlog::debug(
-      "OnUpdateEquipment result false. Spell with id ({}) not learned",
-      voiceSpell);
+    spdlog::warn("ActionListener::OnUpdateEquipment {:x} - rejected equipment "
+                 "update: spell {:x} is not learned",
+                 actorFormId, voiceSpell);
     isAllowed = false;
+    spellIdsToRemove[static_cast<size_t>(SpellSlotId::Voice)] = voiceSpell;
   }
 
   if (instantSpell > 0 && !actor->IsSpellLearned(instantSpell)) {
-    spdlog::debug(
-      "OnUpdateEquipment result false. Spell with id ({}) not learned",
-      instantSpell);
+    spdlog::warn("ActionListener::OnUpdateEquipment {:x} - rejected equipment "
+                 "update: spell {:x} is not learned",
+                 actorFormId, instantSpell);
     isAllowed = false;
+    spellIdsToRemove[static_cast<size_t>(SpellSlotId::Instant)] = instantSpell;
   }
+
+  std::vector<uint32_t> itemIdsToUnequip;
 
   const auto& inventory = actor->GetInventory();
   for (auto& entry : equipmentInv.entries) {
     if (!inventory.HasItem(entry.baseId)) {
-      spdlog::debug("OnUpdateEquipment result false. The inventory does not "
-                    "contain item with id {:x}",
-                    entry.baseId);
+      spdlog::warn(
+        "ActionListener::OnUpdateEquipment {:x} - rejected equipment "
+        "update: inventory does not contain item {:x}",
+        actorFormId, entry.baseId);
       isAllowed = false;
       break;
     }
   }
 
   if (isAllowed) {
+    auto worldState = actor->GetParent();
+    if (worldState) {
+      uint32_t occupiedSlots = 0;
+      // Track which item owns each bit so we can report conflicts
+      std::array<uint32_t, 32> slotOwner = {};
+      for (auto& entry : equipmentInv.entries) {
+        if (entry.GetWorn() == Inventory::Worn::None) {
+          continue;
+        }
+        auto lookupRes =
+          worldState->GetEspm().GetBrowser().LookupById(entry.baseId);
+        if (!lookupRes.rec || lookupRes.rec->GetType() != espm::ARMO::kType) {
+          continue;
+        }
+        auto armoData = espm::GetData<espm::ARMO>(entry.baseId, worldState);
+        uint32_t bodyPartFlags = 0;
+        if (armoData.bod2.present) {
+          bodyPartFlags = armoData.bod2.bodyPartFlags;
+        } else if (armoData.bodt.present) {
+          bodyPartFlags = armoData.bodt.bodyPartFlags;
+        }
+        if (bodyPartFlags == 0) {
+          continue;
+        }
+        uint32_t overlap = occupiedSlots & bodyPartFlags;
+        if (overlap) {
+          // Collect all conflicting item IDs from slotOwner
+          std::unordered_set<uint32_t> conflictingItems;
+          conflictingItems.insert(entry.baseId);
+          for (int bit = 0; bit < 32; ++bit) {
+            if (overlap & (1u << bit)) {
+              conflictingItems.insert(slotOwner[bit]);
+            }
+          }
+          std::string conflictList;
+          for (uint32_t id : conflictingItems) {
+            if (!conflictList.empty()) {
+              conflictList += ", ";
+            }
+            conflictList += fmt::format("{:x}", id);
+          }
+          std::string binaryStr(32, '0');
+          for (int bit = 31; bit >= 0; --bit) {
+            if (overlap & (1u << (31 - bit))) {
+              binaryStr[bit] = '1';
+            }
+          }
+          spdlog::warn(
+            "ActionListener::OnUpdateEquipment {:x} - rejected equipment "
+            "update: items [{}] share armor slot flags {:x} (0b{})",
+            actorFormId, conflictList, overlap, binaryStr);
+          isAllowed = false;
+          for (uint32_t id : conflictingItems) {
+            itemIdsToUnequip.push_back(id);
+          }
+          break;
+        }
+        for (int bit = 0; bit < 32; ++bit) {
+          if (bodyPartFlags & (1u << bit)) {
+            slotOwner[bit] = entry.baseId;
+          }
+        }
+        occupiedSlots |= bodyPartFlags;
+      }
+    }
+  }
+
+  if (isAllowed) {
     SendToNeighbours(msg.idx, rawMsgData, true);
     actor->SetEquipment(data);
+  } else {
+    actor->SendInventoryUpdate();
+
+    for (uint32_t spellId : spellIdsToRemove) {
+      if (spellId == 0) {
+        continue;
+      }
+      SpSnippetObjectArgument spellArg;
+      spellArg.formId = spellId;
+      spellArg.type = "Spell";
+      std::vector<std::optional<
+        std::variant<bool, double, std::string, SpSnippetObjectArgument>>>
+        args;
+      args.push_back(spellArg);
+      SpSnippet("Actor", "RemoveSpell", args, actor->GetFormId())
+        .Execute(actor, SpSnippetMode::kNoReturnResult);
+    }
+
+    // Calculate diff between current (server) equipment and new (rejected)
+    // equipment. Items worn in the new set but not in the current set need
+    // to be unequipped on the client to revert the unauthorized change.
+    {
+      const auto& currentEquip = actor->GetEquipment().inv;
+
+      std::unordered_set<uint32_t> currentWornIds;
+      for (const auto& entry : currentEquip.entries) {
+        if (entry.GetWorn() != Inventory::Worn::None) {
+          currentWornIds.insert(entry.baseId);
+        }
+      }
+
+      for (const auto& entry : equipmentInv.entries) {
+        if (entry.GetWorn() != Inventory::Worn::None &&
+            currentWornIds.find(entry.baseId) == currentWornIds.end()) {
+          spdlog::info(
+            "ActionListener::OnUpdateEquipment {:x} - unequipping item {:x} "
+            "(not in current equipment, unauthorized change)",
+            actorFormId, entry.baseId);
+          itemIdsToUnequip.push_back(entry.baseId);
+        }
+      }
+
+      // TODO: consider doing EquipItem for items worn in current equipment
+      // but not worn in the new equipment (client tried to unequip them)
+    }
+
+    for (uint32_t itemId : itemIdsToUnequip) {
+      SpSnippetObjectArgument itemArg;
+      itemArg.formId = itemId;
+      itemArg.type = "Form";
+      std::vector<std::optional<
+        std::variant<bool, double, std::string, SpSnippetObjectArgument>>>
+        args;
+      args.push_back(itemArg);
+      args.push_back(false);
+      args.push_back(true);
+      SpSnippet("Actor", "UnequipItem", args, actor->GetFormId())
+        .Execute(actor, SpSnippetMode::kNoReturnResult);
+    }
   }
 
   UpdateEquipmentAttemptEvent updateEquipmentAttemptEvent(actor, data,
@@ -616,30 +763,6 @@ void ActionListener::OnCustomEvent(const RawMessageData& rawMsgData,
 void ActionListener::OnChangeValues(const RawMessageData& rawMsgData,
                                     const ChangeValuesMessage& msg)
 {
-  // TODO: support partial updates
-  if (!msg.data.health.has_value() || !msg.data.magicka.has_value() ||
-      !msg.data.stamina.has_value()) {
-    const std::string healthStr =
-      msg.data.health.has_value() ? std::to_string(*msg.data.health) : "null";
-    const std::string magickaStr = msg.data.magicka.has_value()
-      ? std::to_string(*msg.data.magicka)
-      : "null";
-    const std::string staminaStr = msg.data.stamina.has_value()
-      ? std::to_string(*msg.data.stamina)
-      : "null";
-
-    spdlog::error("ActionListener::OnChangeValues - health, magicka or "
-                  "stamina is null {} {} {}",
-                  healthStr, magickaStr, staminaStr);
-    return;
-  }
-
-  // TODO: refactor our ActorValues struct
-  ActorValues newActorValues;
-  newActorValues.healthPercentage = *msg.data.health;
-  newActorValues.magickaPercentage = *msg.data.magicka;
-  newActorValues.staminaPercentage = *msg.data.stamina;
-
   MpActor* actor = partOne.serverState.ActorByUser(rawMsgData.userId);
   if (!actor) {
     return spdlog::error(
@@ -651,57 +774,52 @@ void ActionListener::OnChangeValues(const RawMessageData& rawMsgData,
     return;
   }
 
-  auto now = std::chrono::steady_clock::now();
-
-  float timeAfterRegeneration = CropPeriodAfterLastRegen(
+  const auto now = std::chrono::steady_clock::now();
+  const float timeAfterRegeneration = CropPeriodAfterLastRegen(
     actor->GetDurationOfAttributesPercentagesUpdate(now).count());
 
-  ActorValues currentActorValues = actor->GetActorValues();
-  const float health = newActorValues.healthPercentage;
-  const float magicka = newActorValues.magickaPercentage;
-  const float stamina = newActorValues.staminaPercentage;
+  const auto& currentValues = actor->GetActorValues();
 
-  const bool healthChanged =
-    !MathUtils::IsNearlyEqual(currentActorValues.healthPercentage, health);
-  const bool magickaChanged =
-    !MathUtils::IsNearlyEqual(currentActorValues.magickaPercentage, magicka);
-  const bool staminaChanged =
-    !MathUtils::IsNearlyEqual(currentActorValues.staminaPercentage, stamina);
+  ChangeValuesMessage outMsg;
+  outMsg.idx = actor->GetIdx();
+  bool sendOutMsg = false;
 
-  if (healthChanged) {
-    currentActorValues.healthPercentage =
-      CropHealthRegeneration(health, timeAfterRegeneration, actor);
-  }
-  if (magickaChanged) {
-    currentActorValues.magickaPercentage =
-      CropMagickaRegeneration(magicka, timeAfterRegeneration, actor);
-  }
-  if (staminaChanged) {
-    // currentActorValues.staminaPercentage =
-    //   CropStaminaRegeneration(stamina, timeAfterRegeneration, actor);
-    currentActorValues.staminaPercentage = stamina;
-  }
-
-  if (!MathUtils::IsNearlyEqual(currentActorValues.healthPercentage,
-                                newActorValues.healthPercentage) ||
-      !MathUtils::IsNearlyEqual(currentActorValues.magickaPercentage,
-                                newActorValues.magickaPercentage) ||
-      !MathUtils::IsNearlyEqual(currentActorValues.staminaPercentage,
-                                newActorValues.staminaPercentage)) {
-
-    std::vector<espm::ActorValue> avFilter;
-    if (healthChanged) {
-      avFilter.push_back(espm::ActorValue::Health);
+  auto process = [&](espm::ActorValue av, std::optional<float> inputVal,
+                     float currentVal, std::optional<float>& outVal) {
+    if (!inputVal.has_value()) {
+      return;
     }
-    if (magickaChanged) {
-      avFilter.push_back(espm::ActorValue::Magicka);
+
+    if (MathUtils::IsNearlyEqual(currentVal, *inputVal)) {
+      return;
     }
-    if (staminaChanged) {
-      avFilter.push_back(espm::ActorValue::Stamina);
+
+    float newVal = *inputVal;
+
+    if (av == espm::ActorValue::Health) {
+      newVal = CropHealthRegeneration(newVal, timeAfterRegeneration, actor);
+    } else if (av == espm::ActorValue::Magicka) {
+      newVal = CropMagickaRegeneration(newVal, timeAfterRegeneration, actor);
     }
-    actor->NetSendChangeValues(currentActorValues, avFilter);
+
+    if (!MathUtils::IsNearlyEqual(newVal, *inputVal)) {
+      outVal = newVal;
+      sendOutMsg = true;
+    }
+
+    actor->SetPercentage(av, newVal);
+  };
+
+  process(espm::ActorValue::Health, msg.data.health,
+          currentValues.healthPercentage, outMsg.data.health);
+  process(espm::ActorValue::Magicka, msg.data.magicka,
+          currentValues.magickaPercentage, outMsg.data.magicka);
+  process(espm::ActorValue::Stamina, msg.data.stamina,
+          currentValues.staminaPercentage, outMsg.data.stamina);
+
+  if (sendOutMsg) {
+    actor->SendToUser(outMsg, true);
   }
-  actor->SetPercentages(currentActorValues);
 }
 
 namespace {
@@ -1142,10 +1260,41 @@ void ActionListener::OnWeaponHit(MpActor* aggressor,
 
   auto& targetActor = *targetActorPtr;
 
-  const auto lastHitTime = aggressor->GetLastHitTime();
-  const std::chrono::duration<float> timePassed = currentHitTime - lastHitTime;
+  const auto lastHitTimeAnyTarget = aggressor->GetLastHitTime(std::nullopt);
+  const std::chrono::duration<float> timePassedAnyTarget =
+    currentHitTime - lastHitTimeAnyTarget;
 
-  if (!CanHit(*aggressor, hitData, timePassed)) {
+  constexpr float kSplashTimeWindow = 0.1f;
+  constexpr size_t kMaxSplashTargets = 4;
+
+  // Splash attack detection. Non-vanilla feature, fixes anticheat-vs-mod issues
+  const bool isSplash = timePassedAnyTarget.count() < kSplashTimeWindow;
+
+  if (isSplash) {
+    spdlog::info("Splash attack detected from aggressor {:x} to target {:x}",
+                 aggressor->GetFormId(), targetActor.GetFormId());
+
+    // Check if THIS specific target was hit recently
+    auto lastHitSpecific = aggressor->GetLastHitTime(targetActor.GetFormId());
+    std::chrono::duration<float> timeSinceSpecific = currentHitTime - lastHitSpecific;
+    
+    // If the specific target was hit faster than the splash window
+    if (timeSinceSpecific.count() < kSplashTimeWindow) {
+      spdlog::warn("Splash attack from {:x} to {:x} ignored, target hit "
+                   "too recently",
+                   aggressor->GetFormId(), targetActor.GetFormId());
+      return; 
+    }
+
+    if (aggressor->CountRecentHits(
+          std::chrono::duration<float>(kSplashTimeWindow)) >=
+        kMaxSplashTargets) {
+      spdlog::warn("Splash attack from {:x} to {:x} ignored, too many "
+                   "targets hit recently",
+                   aggressor->GetFormId(), targetActor.GetFormId());
+      return;
+    }
+  } else if (!CanHit(*aggressor, hitData, timePassedAnyTarget)) {
     WorldState* espmProvider = targetActor.GetParent();
     auto weapDNAM =
       espm::GetData<espm::WEAP>(hitData.source, espmProvider).weapDNAM;
@@ -1155,7 +1304,7 @@ void ActionListener::OnWeaponHit(MpActor* aggressor,
       "OnWeaponHit - Target {0:x} is not available for attack due to fast "
       "attack speed. Weapon: {1:x}. Elapsed time: {2}. Expected attack time: "
       "{3}",
-      hitData.target, hitData.source, timePassed.count(), expectedAttackTime);
+      hitData.target, hitData.source, timePassedAnyTarget.count(), expectedAttackTime);
     return;
   }
 
@@ -1245,7 +1394,7 @@ void ActionListener::OnWeaponHit(MpActor* aggressor,
   targetActor.NetSetPercentages(
     currentActorValues, aggressor,
     std::vector<espm::ActorValue>{ espm::ActorValue::Health });
-  aggressor->SetLastHitTime();
+  aggressor->SetLastHitTime(targetActor.GetFormId(), currentHitTime);
 
   spdlog::debug(
     "OnWeaponHit - Target {0:x} is hit by {1} damage. Percentage was: {3}, "

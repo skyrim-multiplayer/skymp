@@ -230,6 +230,8 @@ private:
   bool IsLocationSavingNeeded() const;
   void ProcessActivateNormal(MpObjectReference& activationSource);
   bool ProcessActivateSecond(MpObjectReference& activationSource);
+  void GivePickupItemsToActivationSource(MpObjectReference& activationSource,
+                                         const espm::LookupResult& base);
   void ActivateChilds();
   bool CheckIfObjectCanStartOccupyThis(MpObjectReference& activationSource,
                                        float occupationReach);

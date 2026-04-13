@@ -143,8 +143,8 @@ void GeoPolygonProc::SetConvex3DFaces()
         Utility::FreeVectorMemory(pointInSamePlaneIndex);
 
       } // k loop
-    }   // j loop
-  }     // i loop
+    } // j loop
+  } // i loop
 
   // set number of faces
   this->_NumberOfFaces = faceVerticeIndex.size();

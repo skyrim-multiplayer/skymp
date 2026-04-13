@@ -1,5 +1,10 @@
 name: Formatting check
 on: [push, pull_request]
+
+env:
+  LINTER_URL: https://raw.githubusercontent.com/skyrim-multiplayer/linter/2d4a9a96989b066c9cf1fb70ae1169eec106d45e/dist/linter.mjs
+  LINTER_SHA256: b3727c7cbf9787f5b7b91bd340b5553d3c1f51cb176dd362d754aa3579667040
+
 jobs:
     formatting-check:
         name: Formatting Check
@@ -7,13 +12,14 @@ jobs:
         steps:
           - name: Checkout
             uses: actions/checkout@v4
-          - name: Ensure files terminated with one LF
-            uses: fernandrone/linelint@0.0.6
-            id: linelint
-          - name: Ensure files use LF line endings instead of CRLF
-            uses: erclu/check-crlf@c77fda0a97ea8944aba5f72796b9e937e7d1611c
-          - name: Run clang-format style check for C/C++ programs.
-            uses: jidicula/clang-format-action@v4.9.0
             with:
-              clang-format-version: '15'
-              exclude-regex: '(.*overlay_ports.*)|(.*skyrim-platform/src/platform_se/skyrim_platform/Concepts.h)|(.*serialization/include/concepts/.*)|(.*third_party.*)'
+              fetch-depth: 0
+
+          - name: Download linter
+            run: |
+              mkdir -p .linter
+              curl -fsSL "$LINTER_URL" -o .linter/linter.mjs
+              echo "$LINTER_SHA256  .linter/linter.mjs" | sha256sum -c -
+
+          - name: Run linters
+            run: node .linter/linter.mjs --lint --no-path --mode gha

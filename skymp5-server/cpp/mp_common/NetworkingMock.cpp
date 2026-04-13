@@ -1,5 +1,6 @@
 #include "NetworkingMock.h"
 #include <algorithm>
+#include <memory>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -129,13 +130,17 @@ Networking::MockServer::CreateClient()
 void Networking::MockServer::Send(UserId targetUserId, PacketData data,
                                   size_t length, bool reliable)
 {
-  if (pImpl->clients.size() <= targetUserId ||
-      pImpl->clients[targetUserId].expired() ||
-      !pImpl->clients[targetUserId].lock())
+  std::shared_ptr<NetworkingMock::MockClient> cl;
+  if (targetUserId < pImpl->clients.size()) {
+    cl = pImpl->clients[targetUserId].lock();
+  }
+
+  if (!cl) {
     throw std::runtime_error("No client with id " +
                              std::to_string(targetUserId) +
                              " found on MockServer");
-  auto cl = pImpl->clients[targetUserId].lock();
+  }
+
   cl->AddPacket(
     std::unique_ptr<NetworkingMock::Packet>(new NetworkingMock::Packet(
       { Networking::PacketType::Message,
@@ -155,4 +160,12 @@ void Networking::MockServer::Tick(OnPacket onPacket, void* state)
 std::string Networking::MockServer::GetIp(UserId userId) const
 {
   return "";
+}
+
+void Networking::MockServer::CloseConnection(UserId userId)
+{
+  pImpl->packets.push_back(
+    { userId,
+      std::unique_ptr<NetworkingMock::Packet>(new NetworkingMock::Packet(
+        { Networking::PacketType::ServerSideUserDisconnect })) });
 }

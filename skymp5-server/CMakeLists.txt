@@ -33,10 +33,22 @@ if(NOT EMSCRIPTEN)
     list(APPEND sources "${CMAKE_SOURCE_DIR}/.clang-format")
   endif()
   add_library(${PROJECT_NAME} SHARED ${sources})
+
   set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "scam_native" PREFIX "" SUFFIX ".node")
   target_link_libraries(${PROJECT_NAME} PRIVATE unofficial::node-addon-api::node-addon-api)
   target_include_directories(${PROJECT_NAME} PRIVATE ${SKYMP5_SERVER_SOURCE_DIR}/cpp/addon)
   target_compile_definitions(${PROJECT_NAME} PRIVATE NAPI_CPP_EXCEPTIONS)
+
+  # Linux: explicitly export `napi_register_module_v1` and hide everything else to avoid collisions with symbols defined in the `node` binary.
+  # macOS: the same thing should be done via -exported_symbols_list in the future.
+  # Windows: probably(?) safe, because symbols aren't exported by default.
+  # TODO: macOS?
+  if(NOT WIN32 AND NOT APPLE)
+    set(version_script_path "${CMAKE_CURRENT_BINARY_DIR}/exports.map")
+    file(WRITE "${version_script_path}" "{ global: napi_register_module_v1; local: *; };\n")
+
+    target_link_options(${PROJECT_NAME} PRIVATE "LINKER:--version-script,${version_script_path}")
+  endif()
 
   if(WIN32)
     find_library(node_api-headers_LIB NAMES node PATHS "${CMAKE_BINARY_DIR}/vcpkg_installed/x64-windows-sp/lib/" NO_DEFAULT_PATH REQUIRED)
@@ -103,7 +115,7 @@ message(STATUS "esm_prefix is '${esm_prefix}'")
 if(TARGET ${PROJECT_NAME})
   add_custom_command(
     TARGET ${PROJECT_NAME} POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -DESM_PREFIX=${esm_prefix} -DSERVER_SETTINGS_JSON_PATH=${CMAKE_BINARY_DIR}/dist/server/server-settings.json -DOFFLINE_MODE=${OFFLINE_MODE} -P ${CMAKE_SOURCE_DIR}/cmake/scripts/generate_server_settings.cmake
+    COMMAND ${CMAKE_COMMAND} -DESM_PREFIX=${esm_prefix} -DSERVER_SETTINGS_JSON_PATH=${CMAKE_BINARY_DIR}/dist/server/server-settings.json -DSERVER_SETTINGS_BASE_JSON_PATH=${CMAKE_BINARY_DIR}/server-settings-base.json -DOFFLINE_MODE=${OFFLINE_MODE} -P ${CMAKE_SOURCE_DIR}/cmake/scripts/generate_server_settings.cmake
   )
 
   add_custom_command(

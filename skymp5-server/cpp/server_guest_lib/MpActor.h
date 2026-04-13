@@ -116,6 +116,7 @@ public:
   void ResolveSnippet(uint32_t snippetIdx, VarValue v);
   void SetPercentages(const ActorValues& actorValues,
                       MpActor* aggressor = nullptr);
+  void SetPercentage(espm::ActorValue av, float percentage);
   void NetSendChangeValues(
     const ActorValues& actorValues,
     const std::optional<std::vector<espm::ActorValue>>& avFilter);
@@ -124,13 +125,15 @@ public:
     const std::optional<std::vector<espm::ActorValue>>& avFilter);
 
   std::chrono::steady_clock::time_point GetLastAttributesPercentagesUpdate();
-  std::chrono::steady_clock::time_point GetLastHitTime();
+  std::chrono::steady_clock::time_point GetLastHitTime(
+    std::optional<uint32_t> targetId) const;
+  size_t CountRecentHits(std::chrono::duration<float> timeWindow) const;
 
   void SetLastAttributesPercentagesUpdate(
     std::chrono::steady_clock::time_point timePoint =
       std::chrono::steady_clock::now());
-  void SetLastHitTime(std::chrono::steady_clock::time_point timePoint =
-                        std::chrono::steady_clock::now());
+  void SetLastHitTime(uint32_t targetId,
+                      std::chrono::steady_clock::time_point timePoint);
 
   std::chrono::duration<float> GetDurationOfAttributesPercentagesUpdate(
     std::chrono::steady_clock::time_point now);
