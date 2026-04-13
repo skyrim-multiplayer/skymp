@@ -1267,8 +1267,7 @@ void ActionListener::OnWeaponHit(MpActor* aggressor,
   constexpr float kSplashTimeWindow = 0.1f;
   constexpr size_t kMaxSplashTargets = 4;
 
-  // Splash attack detection. Non-vanilla feature, fixes anticheat-vs-mod
-  // issues
+  // Splash attack detection. Non-vanilla feature, fixes anticheat-vs-mod issues
   const bool isSplash = timePassedAnyTarget.count() < kSplashTimeWindow;
 
   if (isSplash) {
@@ -1277,19 +1276,19 @@ void ActionListener::OnWeaponHit(MpActor* aggressor,
 
     // Check if THIS specific target was hit recently
     auto lastHitSpecific = aggressor->GetLastHitTime(targetActor.GetFormId());
-    std::chrono::duration<float> timeSinceSpecific =
-      currentHitTime - lastHitSpecific;
-
+    std::chrono::duration<float> timeSinceSpecific = currentHitTime - lastHitSpecific;
+    
     // If the specific target was hit faster than the splash window
     if (timeSinceSpecific.count() < kSplashTimeWindow) {
       spdlog::warn("Splash attack from {:x} to {:x} ignored, target hit "
                    "too recently",
                    aggressor->GetFormId(), targetActor.GetFormId());
-      return;
+      return; 
     }
 
-    if (aggressor->CountRecentHits(std::chrono::duration<float>(
-          kSplashTimeWindow)) >= kMaxSplashTargets) {
+    if (aggressor->CountRecentHits(
+          std::chrono::duration<float>(kSplashTimeWindow)) >=
+        kMaxSplashTargets) {
       spdlog::warn("Splash attack from {:x} to {:x} ignored, too many "
                    "targets hit recently",
                    aggressor->GetFormId(), targetActor.GetFormId());
@@ -1305,8 +1304,7 @@ void ActionListener::OnWeaponHit(MpActor* aggressor,
       "OnWeaponHit - Target {0:x} is not available for attack due to fast "
       "attack speed. Weapon: {1:x}. Elapsed time: {2}. Expected attack time: "
       "{3}",
-      hitData.target, hitData.source, timePassedAnyTarget.count(),
-      expectedAttackTime);
+      hitData.target, hitData.source, timePassedAnyTarget.count(), expectedAttackTime);
     return;
   }
 
