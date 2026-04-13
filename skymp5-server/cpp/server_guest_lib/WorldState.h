@@ -32,10 +32,7 @@
 class MpActor;
 class FormCallbacks;
 class MpChangeForm;
-namespace Viet {
-template <typename T, typename FormDescType>
-class ISaveStorage;
-}
+#include <save_storages/ISaveStorage.h>
 class IScriptStorage;
 class GameModeEvent;
 

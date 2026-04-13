@@ -27,10 +27,9 @@ struct InlineStorage
   template <class Impl>
   struct Holder
   {
-    Impl data{};
+    std::shared_ptr<Impl> ptr = std::make_shared<Impl>();
 
-    Impl* get() noexcept { return &data; }
-    const Impl* get() const noexcept { return &data; }
+    Impl* get() const noexcept { return ptr.get(); }
 
     Holder() = default;
     Holder(const Holder&) = delete;
@@ -176,6 +175,36 @@ public:
   }
 
   operator AnyPromise() { return AnyPromise(*this); }
+
+  // Returns a callable that resolves this promise via a stable shared_ptr to
+  // the internal state. Safe to use even after the promise itself is moved.
+  std::function<void(const T&)> MakeResolver()
+  {
+    auto p = storage_.ptr;
+    return [p](const T& value) {
+      if (p->pending) {
+        p->pending = false;
+        if (p->thenCb) {
+          p->thenCb(value);
+        }
+      }
+    };
+  }
+
+  std::function<void(const char*)> MakeRejector()
+  {
+    auto p = storage_.ptr;
+    return [p](const char* error) {
+      if (p->pending) {
+        p->pending = false;
+        if (p->errorCb) {
+          p->errorCb(error);
+        } else {
+          throw std::runtime_error("Unhandled promise rejection");
+        }
+      }
+    };
+  }
 
 private:
   struct Impl
