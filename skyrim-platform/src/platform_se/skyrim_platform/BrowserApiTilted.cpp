@@ -85,11 +85,6 @@ Napi::Value BrowserApiTilted::LoadUrl(const Napi::CallbackInfo& info)
   return Napi::Boolean::New(info.Env(), GetApp().LoadUrl(str.data()));
 }
 
-Napi::Value BrowserApiTilted::GetToken(const Napi::CallbackInfo& info)
-{
-  return Napi::String::New(info.Env(), MyChromiumApp::GetCurrentSpToken());
-}
-
 Napi::Value BrowserApiTilted::ExecuteJavaScript(const Napi::CallbackInfo& info)
 {
   auto str = NapiHelper::ExtractString(info[0], "src");
