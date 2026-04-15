@@ -24,6 +24,11 @@ This section describes INI settings implemented in the current version of Skyrim
 - ```CmdHeight = 317``` - This parameter controls the height of the console window.
 > The default values are for full hd
 
+#### [Browser]
+
+- ```BackendName = auto``` - Browser backend to use.
+    > ```off``` - disable browser; ```tilted``` - use Tilted UI (legacy); ```nirnlab``` - use NirnLab UI Platform; ```auto``` - automatic selection (currently falls back to tilted)
+
 ### Contributing new settings
 
 This section is for code contributors who is interested in contributing new INI settings.
