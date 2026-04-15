@@ -11,8 +11,6 @@ SkyMP is built on top of the [SkyrimPlatform](docs/docs_skyrim_platform.md) - a 
 
 This repo hosts all sources to ease local setup and contributing. See [CONTRIBUTING](CONTRIBUTING.md) for build instructions.
 
-![image](skymp.jpg)
-
 ### What's Synced
 
 - [x] Player movement and animation sync
