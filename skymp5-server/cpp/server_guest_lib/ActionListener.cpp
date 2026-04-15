@@ -1409,7 +1409,7 @@ void ActionListener::SendPapyrusOnHitEvent(MpActor* aggressor,
 {
   auto& browser = partOne.worldState.GetEspm().GetBrowser();
   std::array<VarValue, 7> args;
-  args[0] = VarValue(aggressor->ToGameObject()); // akAgressor
+  args[0] = VarValue(aggressor->ToGameObject()); // akAggressor
   args[1] = VarValue(std::make_shared<EspmGameObject>(
     browser.LookupById(hitData.source)));    // akSource
   args[2] = VarValue::None();                // akProjectile
