@@ -46,6 +46,16 @@
       }
     },
     {
+      "name": "SP Const Enums",
+      "export": "CodegenCheck",
+      "modes": ["gha", "manual"],
+      "options": {
+        "command": "node skyrim-platform/tools/const_enum_extractor/index.js",
+        "inputFile": "skyrim-platform/src/platform_se/codegen/convert-files/skyrimPlatform.ts",
+        "outputFile": "skyrim-platform/src/platform_se/skyrim_platform/ConstEnumApi.cpp"
+      }
+    },
+    {
       "name": "Server/Client Message Pairs",
       "export": "PairedFilesCheck",
       "modes": ["hook", "gha", "manual"],

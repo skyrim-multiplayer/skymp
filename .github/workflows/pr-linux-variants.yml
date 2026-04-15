@@ -221,39 +221,11 @@ jobs:
               fi
               echo "SP Types in codegen and build dist equal"
 
-          - name: SP Const Enums Check
-            id: sp_const_enums_check
-            run: |
-              cd skyrim-platform/tools/const_enum_extractor
-              sudo yarn install
-              sudo node ./index.js
-              # Checking if ConstEnumApi.cpp has changed
-              cd ../../../
-              git diff --exit-code skyrim-platform/src/platform_se/skyrim_platform/ConstEnumApi.cpp
-              if [ $? -ne 0 ]; then
-                echo "ConstEnumApi.cpp has changed after running const_enum_extractor. Please re-run it locally and commit changes"
-                exit 1
-              fi
-
           - name: SP Types Check failed - Here is what you can do
             if: ${{ failure() && steps.sp_types_check.outcome == 'failure' }}
             run: |
               echo "skyrimPlatform.ts and Definitions.txt do not match."
               echo "You can fix this manually or simply build the project locally and commit the changes."
-
-          - name: SP Const Enums Check failed - Here is what you can do
-            if: ${{ failure() && steps.sp_const_enums_check.outcome == 'failure' }}
-            run: |
-              echo "ConstEnumApi.cpp has changed after running const_enum_extractor. Please re-run it locally and commit changes."
-              echo "In folder skyrim-platform/tools/const_enum_extractor run 'yarn install' and then 'node ./index.js'"
-
-          - name: SP Const Enums Check failed - Upload generated ConstEnumApi.cpp
-            if: ${{ failure() && steps.sp_const_enums_check.outcome == 'failure' }}
-            uses: actions/upload-artifact@v7
-            with:
-              name: ConstEnumApi.cpp
-              path: skyrim-platform/src/platform_se/skyrim_platform/ConstEnumApi.cpp
-              archive: false
 
           - name: Test
             run: |
