@@ -752,14 +752,16 @@ void MpActor::SetLastHitTime(uint32_t targetId,
 
   auto& hits = pImpl->lastHitTimesLRU;
 
-  auto it = std::find_if(hits.begin(), hits.end(), 
-    [targetId](const auto& entry) { return entry.first == targetId; });
+  auto it =
+    std::find_if(hits.begin(), hits.end(), [targetId](const auto& entry) {
+      return entry.first == targetId;
+    });
 
   if (it != hits.end()) {
     it->second = timePoint;
     std::rotate(it, it + 1, hits.end());
     return;
-}
+  }
 
   if (kMaxHitMemory > 0) {
     if (pImpl->lastHitTimesLRU.size() >= kMaxHitMemory) {
@@ -2044,4 +2046,3 @@ std::array<std::optional<Inventory::Entry>, 2> MpActor::GetEquippedShield()
   }
   return wornEntries;
 }
-
