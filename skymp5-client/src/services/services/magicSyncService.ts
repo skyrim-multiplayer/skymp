@@ -116,7 +116,7 @@ export class MagicSyncService extends ClientListener {
         const booleans: ArrayBuffer = animVars.booleans;
         const floats: ArrayBuffer = animVars.floats;
         const integers: ArrayBuffer = animVars.integers;
-        return { 
+        return {
             booleans: Array.from(new Uint8Array(booleans)),
             floats: Array.from(new Uint8Array(floats)),
             integers: Array.from(new Uint8Array(integers)),
@@ -166,9 +166,8 @@ export class MagicSyncService extends ClientListener {
         const leftHandEquipmentType = ac.getEquippedItemType(SlotType.Left);
         const rightHandEquipmentType = ac.getEquippedItemType(SlotType.Right);
 
-        // TODO: Spell => SpellOrScroll, since Spell is now a deprecated name (TODO: Remove in 2.10.0)
-        if (leftHandEquipmentType === EquippedItemType.Spell || leftHandEquipmentType === EquippedItemType.Staff ||
-            rightHandEquipmentType === EquippedItemType.Spell || rightHandEquipmentType === EquippedItemType.Staff) {
+        if (leftHandEquipmentType === 9 || leftHandEquipmentType === EquippedItemType.Staff ||
+            rightHandEquipmentType === 9 || rightHandEquipmentType === EquippedItemType.Staff) {
             return true;
         }
 
