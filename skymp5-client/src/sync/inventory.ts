@@ -119,7 +119,7 @@ const extrasEqual = (a: Entry, b: Entry, ignoreWorn = false) => {
     a.enchantmentId === b.enchantmentId &&
     a.maxCharge === b.maxCharge &&
     !!a.removeEnchantmentOnUnequip === !!b.removeEnchantmentOnUnequip &&
-    a.chargePercent === b.chargePercent &&
+    //a.chargePercent === b.chargePercent &&
     //namesEqual(a, b) &&
     a.soul === b.soul &&
     a.poisonId === b.poisonId &&
