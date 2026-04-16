@@ -6,7 +6,9 @@
 #include "PartOne.h"
 #include "ScampServerListener.h"
 
+#include <map>
 #include <memory>
+#include <optional>
 
 #include <napi.h>
 #include <nlohmann/json.hpp>
@@ -112,7 +114,10 @@ private:
   Napi::Reference<Napi::Value> parsedServerSettings;
   std::shared_ptr<prometheus::Registry> promRegistry;
 
-  std::shared_ptr<LocalizationProvider> localizationProvider;
+  std::map<std::string, std::shared_ptr<LocalizationProvider>>
+    localizationProviders;
+  std::string defaultLanguage;
+  std::optional<std::vector<std::string>> cachedAvailableLanguages;
 
   static Napi::FunctionReference constructor;
 };

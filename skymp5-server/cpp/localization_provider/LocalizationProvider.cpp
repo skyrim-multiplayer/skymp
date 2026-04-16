@@ -127,3 +127,35 @@ const std::string& LocalizationProvider::Get(const std::string& file,
 {
   return localization[file][stringId];
 }
+
+std::vector<std::string> LocalizationProvider::GetAvailableLanguages(
+  const std::string& dataDir)
+{
+  std::filesystem::path stringsPath =
+    std::filesystem::path(dataDir) / "strings";
+
+  if (!std::filesystem::exists(stringsPath)) {
+    return {};
+  }
+
+  std::set<std::string> languages;
+
+  for (const auto& entry : std::filesystem::directory_iterator(stringsPath)) {
+    if (entry.is_directory()) {
+      continue;
+    }
+
+    std::string stem = entry.path().stem().string(); // e.g. "skyrim_russian"
+    size_t lastUnderscore = stem.find_last_of("_");
+    if (lastUnderscore == std::string::npos) {
+      continue;
+    }
+
+    std::string lang = stem.substr(lastUnderscore + 1);
+    if (!lang.empty()) {
+      languages.insert(lang);
+    }
+  }
+
+  return std::vector<std::string>(languages.begin(), languages.end());
+}
