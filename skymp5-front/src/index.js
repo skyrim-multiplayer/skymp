@@ -9,6 +9,7 @@ import { Provider } from 'react-redux';
 import { Widgets } from './utils/Widgets';
 
 import './main.scss';
+import './utils/wsClient';
 
 if (!window.skyrimPlatform) {
   window.skyrimPlatform = {};

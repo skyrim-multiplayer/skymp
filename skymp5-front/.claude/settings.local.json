@@ -1,7 +1,12 @@
 {
   "permissions": {
     "allow": [
-      "Bash(xargs grep:*)"
+      "Bash(xargs grep:*)",
+      "Bash(ls -la \"E:\\\\Github\\\\Frostfall-Server\\\\gamemode\\\\src\\\\commands\\\\\\\\\")",
+      "Bash(npm run:*)",
+      "Read(//e/Github/Frostfall-Server/**)",
+      "Bash(npx tsc:*)",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d.get\\('scripts',{}\\), indent=2\\)\\)\")"
     ]
   }
 }
