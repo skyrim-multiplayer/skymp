@@ -1,0 +1,1573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SKYMP Developer Documentation</title>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --bg2: #161b25;
+      --bg3: #1e2535;
+      --border: #2a3447;
+      --accent: #5b8dfa;
+      --accent2: #a78bfa;
+      --green: #4ade80;
+      --yellow: #fbbf24;
+      --red: #f87171;
+      --text: #e2e8f0;
+      --muted: #8896a8;
+      --code-bg: #0d1117;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* SIDEBAR */
+    #sidebar {
+      width: 280px;
+      min-width: 280px;
+      background: var(--bg2);
+      border-right: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      padding: 24px 0;
+      flex-shrink: 0;
+    }
+    #sidebar .logo {
+      padding: 0 20px 24px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 16px;
+    }
+    #sidebar .logo h1 { font-size: 1.25rem; color: var(--accent); letter-spacing: 1px; }
+    #sidebar .logo span { font-size: 0.75rem; color: var(--muted); }
+    .nav-group { margin-bottom: 8px; }
+    .nav-group-title {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--muted);
+      padding: 8px 20px 4px;
+      font-weight: 700;
+    }
+    .nav-group a {
+      display: block;
+      padding: 7px 20px 7px 28px;
+      color: var(--text);
+      text-decoration: none;
+      font-size: 0.875rem;
+      border-left: 2px solid transparent;
+      transition: all 0.15s;
+    }
+    .nav-group a:hover { background: var(--bg3); color: var(--accent); border-left-color: var(--accent); }
+    .nav-group a.sub { padding-left: 40px; font-size: 0.82rem; color: var(--muted); }
+    .nav-group a.sub:hover { color: var(--accent2); border-left-color: var(--accent2); }
+
+    /* MAIN */
+    #main { flex: 1; overflow-y: auto; }
+    .content { max-width: 960px; margin: 0 auto; padding: 40px 48px; }
+
+    /* SECTIONS */
+    section { margin-bottom: 72px; scroll-margin-top: 24px; }
+    h2 {
+      font-size: 1.75rem;
+      color: var(--accent);
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 12px;
+      margin-bottom: 28px;
+    }
+    h3 { font-size: 1.2rem; color: var(--accent2); margin: 28px 0 12px; }
+    h4 { font-size: 1rem; color: var(--yellow); margin: 20px 0 8px; }
+    p { color: var(--text); line-height: 1.7; margin-bottom: 12px; }
+    ul, ol { padding-left: 24px; margin-bottom: 12px; }
+    li { line-height: 1.7; margin-bottom: 4px; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* HERO */
+    .hero {
+      background: linear-gradient(135deg, #1e2535 0%, #0f1117 100%);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 40px;
+      margin-bottom: 48px;
+      text-align: center;
+    }
+    .hero h1 { font-size: 2.5rem; color: var(--accent); margin-bottom: 12px; }
+    .hero p { font-size: 1.1rem; color: var(--muted); max-width: 600px; margin: 0 auto; }
+    .badge-row { display: flex; gap: 12px; justify-content: center; margin-top: 20px; flex-wrap: wrap; }
+    .badge {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 4px 14px;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+    .badge.accent { border-color: var(--accent); color: var(--accent); }
+    .badge.green { border-color: var(--green); color: var(--green); }
+
+    /* CODE */
+    pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px;
+      overflow-x: auto;
+      margin: 16px 0;
+      font-size: 0.875rem;
+      line-height: 1.6;
+    }
+    code {
+      font-family: 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+      color: #e6edf3;
+    }
+    p code, li code {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-size: 0.85em;
+      color: var(--accent2);
+    }
+
+    /* SYNTAX COLORS (manual) */
+    .kw { color: #ff7b72; }
+    .fn { color: #79c0ff; }
+    .str { color: #a5d6ff; }
+    .cm { color: #8b949e; font-style: italic; }
+    .tp { color: #ffa657; }
+    .nm { color: #e6edf3; }
+    .op { color: #ff7b72; }
+    .nu { color: #79c0ff; }
+
+    /* CARDS */
+    .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; margin: 20px 0; }
+    .card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px;
+      transition: border-color 0.2s;
+    }
+    .card:hover { border-color: var(--accent); }
+    .card h4 { color: var(--accent); margin: 0 0 8px; }
+    .card p { font-size: 0.875rem; color: var(--muted); margin: 0; }
+
+    /* TABLES */
+    table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 0.875rem; }
+    th { background: var(--bg3); color: var(--accent); padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); }
+    td { padding: 10px 14px; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: top; }
+    tr:hover td { background: var(--bg3); }
+
+    /* ALERTS */
+    .alert {
+      border-radius: 8px;
+      padding: 14px 18px;
+      margin: 16px 0;
+      font-size: 0.9rem;
+      border-left: 4px solid;
+    }
+    .alert.info { background: rgba(91,141,250,0.1); border-color: var(--accent); color: var(--text); }
+    .alert.warn { background: rgba(251,191,36,0.1); border-color: var(--yellow); color: var(--text); }
+    .alert.tip { background: rgba(74,222,128,0.1); border-color: var(--green); color: var(--text); }
+
+    /* TABS */
+    .tabs { margin: 20px 0; }
+    .tab-buttons { display: flex; gap: 0; border-bottom: 1px solid var(--border); }
+    .tab-btn {
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: var(--muted);
+      padding: 10px 20px;
+      cursor: pointer;
+      font-size: 0.875rem;
+      transition: all 0.15s;
+      margin-bottom: -1px;
+    }
+    .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .tab-pane { display: none; padding-top: 16px; }
+    .tab-pane.active { display: block; }
+
+    /* METHOD SIGNATURE */
+    .method {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin: 20px 0;
+      overflow: hidden;
+    }
+    .method-header {
+      background: var(--bg3);
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    .method-tag {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+    .tag-server { background: rgba(91,141,250,0.2); color: var(--accent); }
+    .tag-client { background: rgba(167,139,250,0.2); color: var(--accent2); }
+    .tag-event { background: rgba(74,222,128,0.2); color: var(--green); }
+    .method-name { font-family: monospace; font-size: 1rem; color: var(--yellow); }
+    .method-body { padding: 16px 20px; }
+    .method-body p { margin-bottom: 8px; }
+
+    /* STEP */
+    .steps { counter-reset: steps; list-style: none; padding: 0; }
+    .steps li {
+      counter-increment: steps;
+      padding: 12px 16px 12px 52px;
+      position: relative;
+      margin-bottom: 8px;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+    .steps li::before {
+      content: counter(steps);
+      position: absolute;
+      left: 14px;
+      top: 12px;
+      width: 24px; height: 24px;
+      background: var(--accent);
+      color: #fff;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.8rem; font-weight: 700;
+      line-height: 24px;
+      text-align: center;
+    }
+
+    /* SCROLLBAR */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    /* RESPONSIVE */
+    @media (max-width: 768px) {
+      #sidebar { display: none; }
+      .content { padding: 24px 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav id="sidebar">
+  <div class="logo">
+    <h1>SKYMP</h1>
+    <span>Developer Documentation</span>
+  </div>
+
+  <div class="nav-group">
+    <div class="nav-group-title">Overview</div>
+    <a href="#overview">Introduction</a>
+    <a href="#architecture">Architecture</a>
+  </div>
+
+  <div class="nav-group">
+    <div class="nav-group-title">Server Side</div>
+    <a href="#server-setup">Server Setup</a>
+    <a href="#server-config">Configuration Reference</a>
+    <a href="#server-api">Server API (mp object)</a>
+    <a class="sub" href="#mp-makeProperty">mp.makeProperty()</a>
+    <a class="sub" href="#mp-makeEventSource">mp.makeEventSource()</a>
+    <a class="sub" href="#mp-get">mp.get()</a>
+    <a class="sub" href="#mp-set">mp.set()</a>
+    <a class="sub" href="#mp-clear">mp.clear()</a>
+    <a href="#properties">Properties System</a>
+    <a href="#events-system">Events System</a>
+    <a href="#systems">System Interface</a>
+    <a href="#scampserver">ScampServer Interface</a>
+    <a href="#damage">Damage &amp; Hit Handling</a>
+    <a href="#server-plugins">Server Gamemode Setup</a>
+  </div>
+
+  <div class="nav-group">
+    <div class="nav-group-title">Client Side</div>
+    <a href="#client-scripting">Client Scripting</a>
+    <a class="sub" href="#ctx-sp">ctx.sp</a>
+    <a class="sub" href="#ctx-refr">ctx.refr</a>
+    <a class="sub" href="#ctx-value">ctx.value</a>
+    <a class="sub" href="#ctx-state">ctx.state</a>
+    <a class="sub" href="#ctx-get">ctx.get()</a>
+    <a class="sub" href="#ctx-formid">FormId Helpers</a>
+    <a class="sub" href="#ctx-sendEvent">ctx.sendEvent()</a>
+    <a href="#skyrim-platform">Skyrim Platform</a>
+    <a class="sub" href="#sp-events">Events (on/once)</a>
+    <a class="sub" href="#sp-hooks">Hooks</a>
+    <a class="sub" href="#sp-browser">Browser / UI</a>
+    <a class="sub" href="#sp-papyrus">Papyrus Types</a>
+    <a class="sub" href="#sp-methods">Utility Methods</a>
+    <a href="#sp-events-list">Full Events List</a>
+    <a href="#client-plugins">Client Plugin Setup</a>
+  </div>
+
+  <div class="nav-group">
+    <div class="nav-group-title">Guides</div>
+    <a href="#msg-types">Message Types</a>
+    <a href="#cookbook">Cookbook / Recipes</a>
+  </div>
+</nav>
+
+<!-- MAIN CONTENT -->
+<div id="main">
+<div class="content">
+
+  <!-- HERO -->
+  <div class="hero">
+    <h1>SKYMP Docs</h1>
+    <p>Complete developer reference for Skyrim Multiplayer — server gamemodes, client scripting, Skyrim Platform plugins, and more.</p>
+    <div class="badge-row">
+      <span class="badge accent">TypeScript / JavaScript</span>
+      <span class="badge green">C++ Native</span>
+      <span class="badge">Node.js Server</span>
+      <span class="badge">Skyrim Platform Client</span>
+      <span class="badge">RakNet UDP</span>
+    </div>
+  </div>
+
+  <!-- OVERVIEW -->
+  <section id="overview">
+    <h2>Introduction</h2>
+    <p>Skyrim Multiplayer (SKYMP) is an open-source multiplayer framework for Skyrim Special Edition. It runs a headless Node.js server (with native C++ extensions) and a Skyrim Platform-based client mod. Gamemodes are written in TypeScript/JavaScript.</p>
+    <div class="card-grid">
+      <div class="card">
+        <h4>Server</h4>
+        <p>Node.js + C++ native module (<code>scam_native</code>). Hosts the world state, actor synchronization, inventories, and all game logic. Communicates via RakNet UDP.</p>
+      </div>
+      <div class="card">
+        <h4>Client</h4>
+        <p>A Skyrim Platform plugin that runs inside Skyrim SE. Synchronizes movement, animations, properties, and sends/receives packets from the server.</p>
+      </div>
+      <div class="card">
+        <h4>Skyrim Platform</h4>
+        <p>A modding framework for Skyrim SE that exposes the full Papyrus API to JavaScript/TypeScript. Used to build both the SKYMP client and standalone mods.</p>
+      </div>
+      <div class="card">
+        <h4>Gamemodes</h4>
+        <p>Server-side scripts (single <code>gamemode.js</code> file or directory with <code>index.js</code>) that define game rules, spawn logic, events, and custom properties.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ARCHITECTURE -->
+  <section id="architecture">
+    <h2>Architecture</h2>
+    <h3>Directory Layout</h3>
+    <table>
+      <tr><th>Directory</th><th>Purpose</th></tr>
+      <tr><td><code>skymp5-server/</code></td><td>Server Node.js entry, TypeScript systems, C++ native module</td></tr>
+      <tr><td><code>skymp5-client/</code></td><td>Client Skyrim Platform plugin (TypeScript)</td></tr>
+      <tr><td><code>skyrim-platform/</code></td><td>The Skyrim Platform modding framework (C++ + TypeScript API)</td></tr>
+      <tr><td><code>papyrus-vm/</code></td><td>Papyrus script virtual machine (C++)</td></tr>
+      <tr><td><code>libespm/</code></td><td>Elder Scrolls Plugin/Master file parser</td></tr>
+      <tr><td><code>docs/</code></td><td>Official documentation source</td></tr>
+      <tr><td><code>unit/</code></td><td>Unit tests</td></tr>
+    </table>
+
+    <h3>Communication Flow</h3>
+    <pre><code><span class="cm">┌─────────────────────────────────────────────────────────────┐</span>
+<span class="cm">│                  Skyrim SE (Client)                         │</span>
+<span class="cm">│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐  │</span>
+<span class="cm">│  │ Skyrim Engine│◄──►│Skyrim Platform│◄──►│ skymp5-client│  │</span>
+<span class="cm">│  └──────────────┘    └──────────────┘    └──────┬───────┘  │</span>
+<span class="cm">└──────────────────────────────────────────────────┼──────────┘</span>
+                                                   <span class="cm">│ RakNet UDP</span>
+<span class="cm">┌──────────────────────────────────────────────────┼──────────┐</span>
+<span class="cm">│                  Server                          │          │</span>
+<span class="cm">│  ┌──────────────┐    ┌──────────────┐    ┌──────▼───────┐  │</span>
+<span class="cm">│  │  gamemode.js │◄──►│  mp (API)    │◄──►│scam_native   │  │</span>
+<span class="cm">│  └──────────────┘    └──────────────┘    └──────────────┘  │</span>
+<span class="cm">└─────────────────────────────────────────────────────────────┘</span></code></pre>
+  </section>
+
+  <!-- ===================== SERVER SETUP ===================== -->
+  <section id="server-setup">
+    <h2>Server Setup</h2>
+    <h3>Requirements</h3>
+    <ul>
+      <li>Windows 8.1 / Windows Server 2012 or higher (64-bit)</li>
+      <li>Node.js 17.x</li>
+      <li>Visual Studio 2022 build tools (for building from source)</li>
+      <li>CMake 3.19+</li>
+      <li>Skyrim Special Edition game files (ESMs)</li>
+    </ul>
+
+    <h3>Building from Source</h3>
+    <pre><code><span class="cm"># Create build directory and configure</span>
+mkdir build && cd build
+cmake .. -DSKYRIM_DIR=<span class="str">"C:/Path/To/Skyrim Special Edition"</span>
+
+<span class="cm"># Build</span>
+cmake --build . --config Release</code></pre>
+    <p>Output is placed in <code>build/dist/server/</code>. Launch with <code>launch_server.bat</code>.</p>
+
+    <h3>Running the Server</h3>
+    <ol class="steps">
+      <li>Build the project (see above) or download a release build.</li>
+      <li>Copy your Skyrim ESM files into <code>data/</code> (Skyrim.esm, Update.esm, Dawnguard.esm, etc.).</li>
+      <li>Edit <code>server-settings.json</code> with your IP address, server name, and load order.</li>
+      <li>Place your <code>gamemode.js</code> in the server directory.</li>
+      <li>Run <code>launch_server.bat</code>.</li>
+    </ol>
+
+    <div class="alert info">
+      Your server will appear at <strong>https://skymp.io/api/servers</strong> once configured with a public IP.
+    </div>
+  </section>
+
+  <!-- ===================== SERVER CONFIG ===================== -->
+  <section id="server-config">
+    <h2>Server Configuration Reference</h2>
+    <p>All server configuration goes in <code>server-settings.json</code> (standard JSON, no C-style comments).</p>
+
+    <h3>Full Example</h3>
+    <pre><code>{
+  <span class="str">"name"</span>: <span class="str">"My Server"</span>,
+  <span class="str">"port"</span>: <span class="nu">7777</span>,
+  <span class="str">"maxPlayers"</span>: <span class="nu">108</span>,
+  <span class="str">"masterKey"</span>: <span class="str">"my-awesome-server"</span>,
+  <span class="str">"ip"</span>: <span class="str">"127.0.0.1"</span>,
+  <span class="str">"listenHost"</span>: <span class="str">"0.0.0.0"</span>,
+  <span class="str">"uiListenHost"</span>: <span class="str">"0.0.0.0"</span>,
+  <span class="str">"offlineMode"</span>: <span class="kw">false</span>,
+  <span class="str">"dataDir"</span>: <span class="str">"data"</span>,
+  <span class="str">"loadOrder"</span>: [
+    <span class="str">"Skyrim.esm"</span>, <span class="str">"Update.esm"</span>, <span class="str">"Dawnguard.esm"</span>,
+    <span class="str">"HearthFires.esm"</span>, <span class="str">"Dragonborn.esm"</span>
+  ],
+  <span class="str">"archives"</span>: [<span class="str">"Skyrim - Misc.bsa"</span>],
+  <span class="str">"lang"</span>: <span class="str">"english"</span>,
+  <span class="str">"gamemodePath"</span>: <span class="str">"gamemode.js"</span>,
+  <span class="str">"databaseDriver"</span>: <span class="str">"file"</span>,
+  <span class="str">"npcEnabled"</span>: <span class="kw">false</span>,
+  <span class="str">"isPapyrusHotReloadEnabled"</span>: <span class="kw">false</span>,
+  <span class="str">"enableGamemodeDataUpdatesBroadcast"</span>: <span class="kw">false</span>,
+  <span class="str">"enableConsoleCommandsForAll"</span>: <span class="kw">false</span>,
+  <span class="str">"startPoints"</span>: [
+    { <span class="str">"pos"</span>: [<span class="nu">22659</span>, <span class="nu">-8697</span>, <span class="nu">-3594</span>], <span class="str">"worldOrCell"</span>: <span class="str">"0x1a26f"</span>, <span class="str">"angleZ"</span>: <span class="nu">268</span> }
+  ],
+  <span class="str">"reloot"</span>: {
+    <span class="str">"FLOR"</span>: <span class="nu">86400000</span>, <span class="str">"CONT"</span>: <span class="nu">86400000</span>, <span class="str">"WEAP"</span>: <span class="nu">86400000</span>,
+    <span class="str">"ARMO"</span>: <span class="nu">86400000</span>, <span class="str">"BOOK"</span>: <span class="nu">86400000</span>, <span class="str">"AMMO"</span>: <span class="nu">86400000</span>,
+    <span class="str">"INGR"</span>: <span class="nu">86400000</span>, <span class="str">"ALCH"</span>: <span class="nu">86400000</span>, <span class="str">"MISC"</span>: <span class="nu">86400000</span>
+  },
+  <span class="str">"metricsAuth"</span>: { <span class="str">"user"</span>: <span class="str">"prometheus"</span>, <span class="str">"password"</span>: <span class="str">"secret"</span> },
+  <span class="str">"damageMultFormulaSettings"</span>: { <span class="str">"multiplier"</span>: <span class="nu">1.0</span> }
+}</code></pre>
+
+    <h3>Settings Reference</h3>
+    <table>
+      <tr><th>Key</th><th>Type</th><th>Default</th><th>Description</th></tr>
+      <tr><td><code>name</code></td><td>string</td><td>"My Server"</td><td>Display name shown on master server list</td></tr>
+      <tr><td><code>port</code></td><td>number</td><td>7777</td><td>UDP port for player connections (RakNet)</td></tr>
+      <tr><td><code>maxPlayers</code></td><td>number</td><td>108</td><td>Maximum concurrent players</td></tr>
+      <tr><td><code>ip</code></td><td>string</td><td>—</td><td>Public IP address (required for internet play)</td></tr>
+      <tr><td><code>masterKey</code></td><td>string</td><td>—</td><td>Authentication key; client must match</td></tr>
+      <tr><td><code>listenHost</code></td><td>string</td><td>"0.0.0.0"</td><td>IP to bind the RakNet UDP socket to</td></tr>
+      <tr><td><code>uiListenHost</code></td><td>string</td><td>"0.0.0.0"</td><td>IP to bind the HTTP UI port to</td></tr>
+      <tr><td><code>offlineMode</code></td><td>boolean</td><td>false</td><td>Allow any profileId (no master auth)</td></tr>
+      <tr><td><code>dataDir</code></td><td>string</td><td>"data"</td><td>Path to directory with ESM/ESPs and BSAs</td></tr>
+      <tr><td><code>loadOrder</code></td><td>string[]</td><td>—</td><td>List of .esm/.esp files in load order</td></tr>
+      <tr><td><code>archives</code></td><td>string[]</td><td>—</td><td>BSA archives to load (for Papyrus scripts)</td></tr>
+      <tr><td><code>lang</code></td><td>string</td><td>"english"</td><td>Language for string files</td></tr>
+      <tr><td><code>gamemodePath</code></td><td>string</td><td>—</td><td>Path to gamemode JS file or directory</td></tr>
+      <tr><td><code>databaseDriver</code></td><td>string</td><td>"file"</td><td>Storage backend: "file" or "mongodb"</td></tr>
+      <tr><td><code>npcEnabled</code></td><td>boolean</td><td>false</td><td>Enable NPC spawning</td></tr>
+      <tr><td><code>isPapyrusHotReloadEnabled</code></td><td>boolean</td><td>false</td><td>Hot-reload .pex files on change</td></tr>
+      <tr><td><code>enableGamemodeDataUpdatesBroadcast</code></td><td>boolean</td><td>false</td><td>Push gamemode updates to connected clients instantly</td></tr>
+      <tr><td><code>enableConsoleCommandsForAll</code></td><td>boolean</td><td>false</td><td>Allow all players to use console commands</td></tr>
+      <tr><td><code>startPoints</code></td><td>array</td><td>—</td><td>List of spawn points (pos, worldOrCell, angleZ)</td></tr>
+      <tr><td><code>reloot</code></td><td>object</td><td>—</td><td>Milliseconds before object types respawn</td></tr>
+      <tr><td><code>forbiddenReloot</code></td><td>string[]</td><td>—</td><td>Record types that should NEVER reloot</td></tr>
+      <tr><td><code>locale</code></td><td>string</td><td>—</td><td>Localization file name for M.GetText Papyrus function</td></tr>
+      <tr><td><code>metricsAuth</code></td><td>object</td><td>—</td><td>HTTP Basic Auth for /metrics (Prometheus) endpoint</td></tr>
+      <tr><td><code>damageMultFormulaSettings</code></td><td>object</td><td>—</td><td>Multiplier for the damage formula</td></tr>
+      <tr><td><code>npcSettings</code></td><td>object</td><td>{}</td><td>Per-plugin NPC spawn restrictions (interior/exterior)</td></tr>
+    </table>
+
+    <h3>NPC Settings Example</h3>
+    <pre><code><span class="str">"npcSettings"</span>: {
+  <span class="str">"default"</span>: { <span class="str">"spawnInInterior"</span>: <span class="kw">true</span>, <span class="str">"spawnInExterior"</span>: <span class="kw">false</span> },
+  <span class="str">"Skyrim.esm"</span>: { <span class="str">"spawnInInterior"</span>: <span class="kw">true</span>, <span class="str">"spawnInExterior"</span>: <span class="kw">false</span> },
+  <span class="str">"Dawnguard.esm"</span>: { <span class="str">"spawnInInterior"</span>: <span class="kw">false</span>, <span class="str">"spawnInExterior"</span>: <span class="kw">true</span> }
+}</code></pre>
+  </section>
+
+  <!-- ===================== SERVER API ===================== -->
+  <section id="server-api">
+    <h2>Server API — <code>mp</code> Object</h2>
+    <p>All server-side gamemode code accesses the engine through the globally available <code>mp</code> object. It is injected by the runtime and does not need to be imported.</p>
+
+    <!-- makeProperty -->
+    <div class="method" id="mp-makeProperty">
+      <div class="method-header">
+        <span class="method-tag tag-server">SERVER</span>
+        <span class="method-name">mp.makeProperty(propertyName, options)</span>
+      </div>
+      <div class="method-body">
+        <p>Creates a new property attached to every <code>MpActor</code> and <code>MpObjectReference</code>. Values are persisted to the database automatically. The <code>updateOwner</code> and <code>updateNeighbor</code> strings are JavaScript code executed on the client every time the value changes.</p>
+
+        <h4>Signature</h4>
+        <pre><code><span class="kw">interface</span> <span class="tp">MakePropertyOptions</span> {
+  isVisibleByOwner: <span class="tp">boolean</span>;   <span class="cm">// Player sees their own value</span>
+  isVisibleByNeighbors: <span class="tp">boolean</span>; <span class="cm">// Others see this actor's value</span>
+  updateOwner: <span class="tp">string</span>;          <span class="cm">// JS code run on owner's client</span>
+  updateNeighbor: <span class="tp">string</span>;       <span class="cm">// JS code run on neighbor's client</span>
+}
+
+mp.<span class="fn">makeProperty</span>(propertyName: <span class="tp">string</span>, options: <span class="tp">MakePropertyOptions</span>): <span class="tp">void</span>;</code></pre>
+
+        <h4>Example — Sync Player Level</h4>
+        <pre><code>mp.<span class="fn">makeProperty</span>(<span class="str">"playerLevel"</span>, {
+  isVisibleByOwner: <span class="kw">true</span>,
+  isVisibleByNeighbors: <span class="kw">false</span>,
+  updateOwner: <span class="str">"ctx.sp.Game.setPlayerLevel(ctx.value)"</span>,
+  updateNeighbor: <span class="str">""</span>
+});</code></pre>
+
+        <h4>Example — Sync Custom Display Name</h4>
+        <pre><code>mp.<span class="fn">makeProperty</span>(<span class="str">"displayName"</span>, {
+  isVisibleByOwner: <span class="kw">true</span>,
+  isVisibleByNeighbors: <span class="kw">true</span>,
+  updateOwner: <span class="str">""</span>,
+  updateNeighbor: <span class="str">"ctx.sp.printConsole('Neighbor name: ' + ctx.value)"</span>
+});</code></pre>
+      </div>
+    </div>
+
+    <!-- makeEventSource -->
+    <div class="method" id="mp-makeEventSource">
+      <div class="method-header">
+        <span class="method-tag tag-server">SERVER</span>
+        <span class="method-name">mp.makeEventSource(eventName, functionBody)</span>
+      </div>
+      <div class="method-body">
+        <p>Creates a custom event source. The <code>functionBody</code> is client-side JS that calls <code>ctx.sendEvent(data?)</code> to notify the server. Custom event names <strong>must start with an underscore</strong> (<code>_myEvent</code>). The server handler is assigned via <code>mp._myEvent = function(pcFormId) { ... }</code>.</p>
+
+        <h4>Signature</h4>
+        <pre><code>mp.<span class="fn">makeEventSource</span>(eventName: <span class="tp">string</span>, functionBody: <span class="tp">string</span>): <span class="tp">void</span>;</code></pre>
+
+        <h4>Example — Detect Local Death</h4>
+        <pre><code>mp.<span class="fn">makeEventSource</span>(<span class="str">"_onLocalDeath"</span>, <span class="str">`
+  ctx.sp.on("update", () => {
+    const pl = ctx.sp.Game.getPlayer();
+    const isDead = pl.getActorValuePercentage("health") === 0;
+    if (ctx.state.wasDead !== isDead) {
+      if (isDead) ctx.sendEvent();
+      ctx.state.wasDead = isDead;
+    }
+  });
+`</span>);
+
+mp._onLocalDeath = <span class="kw">function</span>(pcFormId) {
+  console.<span class="fn">log</span>(<span class="str">"Player died:"</span>, pcFormId);
+  <span class="cm">// Handle respawn, score deduction, etc.</span>
+};</code></pre>
+
+        <h4>Example — Send Custom Data with Event</h4>
+        <pre><code>mp.<span class="fn">makeEventSource</span>(<span class="str">"_onPlayerJump"</span>, <span class="str">`
+  ctx.sp.on("update", () => {
+    const pl = ctx.sp.Game.getPlayer();
+    const isJumping = pl.isInMidair();
+    if (isJumping && !ctx.state.wasJumping) {
+      ctx.sendEvent({ height: pl.getPositionZ() });
+    }
+    ctx.state.wasJumping = isJumping;
+  });
+`</span>);
+
+mp._onPlayerJump = <span class="kw">function</span>(pcFormId, data) {
+  console.<span class="fn">log</span>(<span class="str">`Player ${pcFormId} jumped from height ${data.height}`</span>);
+};</code></pre>
+      </div>
+    </div>
+
+    <!-- mp.get -->
+    <div class="method" id="mp-get">
+      <div class="method-header">
+        <span class="method-tag tag-server">SERVER</span>
+        <span class="method-name">mp.get(formId, propertyName)</span>
+      </div>
+      <div class="method-body">
+        <p>Returns the current value of a property on an actor or object reference. Returns <code>undefined</code> if no value is set.</p>
+        <pre><code>mp.<span class="fn">get</span>(formId: <span class="tp">number</span>, propertyName: <span class="tp">string</span>): <span class="tp">any</span>;</code></pre>
+        <pre><code><span class="kw">const</span> pos = mp.<span class="fn">get</span>(<span class="nu">0xff000000</span>, <span class="str">"pos"</span>);           <span class="cm">// [x, y, z]</span>
+<span class="kw">const</span> type = mp.<span class="fn">get</span>(<span class="nu">0xff000000</span>, <span class="str">"type"</span>);         <span class="cm">// "MpActor" or "MpObjectReference"</span>
+<span class="kw">const</span> level = mp.<span class="fn">get</span>(<span class="nu">0xff000000</span>, <span class="str">"playerLevel"</span>); <span class="cm">// custom property</span>
+<span class="kw">const</span> online = mp.<span class="fn">get</span>(<span class="nu">0xff000000</span>, <span class="str">"isOnline"</span>);   <span class="cm">// boolean</span></code></pre>
+      </div>
+    </div>
+
+    <!-- mp.set -->
+    <div class="method" id="mp-set">
+      <div class="method-header">
+        <span class="method-tag tag-server">SERVER</span>
+        <span class="method-name">mp.set(formId, propertyName, newValue)</span>
+      </div>
+      <div class="method-body">
+        <p>Sets a property value. This triggers synchronization to clients according to <code>isVisibleByOwner</code> / <code>isVisibleByNeighbors</code> flags. Only <strong>modifiable</strong> built-in properties and custom properties can be set.</p>
+        <pre><code>mp.<span class="fn">set</span>(formId: <span class="tp">number</span>, propertyName: <span class="tp">string</span>, newValue: <span class="tp">any</span>): <span class="tp">void</span>;</code></pre>
+        <pre><code>mp.<span class="fn">set</span>(<span class="nu">0xff000000</span>, <span class="str">"pos"</span>, [<span class="nu">0</span>, <span class="nu">0</span>, <span class="nu">0</span>]);            <span class="cm">// Teleport actor</span>
+mp.<span class="fn">set</span>(<span class="nu">0xff000000</span>, <span class="str">"isDisabled"</span>, <span class="kw">true</span>);         <span class="cm">// Disable object</span>
+mp.<span class="fn">set</span>(<span class="nu">0xff000000</span>, <span class="str">"playerLevel"</span>, <span class="nu">50</span>);          <span class="cm">// Custom property</span>
+mp.<span class="fn">set</span>(<span class="nu">0xff000000</span>, <span class="str">"worldOrCellDesc"</span>, <span class="str">"3c:Skyrim.esm"</span>);</code></pre>
+      </div>
+    </div>
+
+    <!-- mp.clear -->
+    <div class="method" id="mp-clear">
+      <div class="method-header">
+        <span class="method-tag tag-server">SERVER</span>
+        <span class="method-name">mp.clear()</span>
+      </div>
+      <div class="method-body">
+        <p>Clears all registered properties and event sources. Typically called before reloading gamemode code.</p>
+        <pre><code>mp.<span class="fn">clear</span>(): <span class="tp">void</span>;</code></pre>
+        <pre><code>mp.<span class="fn">clear</span>(); <span class="cm">// Reset gamemode state</span></code></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== PROPERTIES ===================== -->
+  <section id="properties">
+    <h2>Properties System</h2>
+    <p>Properties are key-value pairs attached to every game object in the world. They are automatically persisted and synchronized to clients.</p>
+
+    <h3>Built-in Modifiable Properties</h3>
+    <p>These can be written with <code>mp.set()</code>:</p>
+    <table>
+      <tr><th>Property</th><th>Type</th><th>Description</th></tr>
+      <tr><td><code>pos</code></td><td><code>[x, y, z]</code></td><td>World position</td></tr>
+      <tr><td><code>angle</code></td><td><code>[x, y, z]</code></td><td>Rotation angles</td></tr>
+      <tr><td><code>worldOrCellDesc</code></td><td><code>"formId:Plugin.esm"</code></td><td>Current world space or interior cell</td></tr>
+      <tr><td><code>inventory</code></td><td>object</td><td>Actor's inventory contents</td></tr>
+      <tr><td><code>appearance</code></td><td>object</td><td>Actor's visual appearance (race, sex, etc.)</td></tr>
+      <tr><td><code>isOpen</code></td><td>boolean</td><td>Whether a container/door is open</td></tr>
+      <tr><td><code>isDisabled</code></td><td>boolean</td><td>Whether the object is disabled</td></tr>
+    </table>
+
+    <h3>Built-in Readonly Properties</h3>
+    <p>These can only be read with <code>mp.get()</code>:</p>
+    <table>
+      <tr><th>Property</th><th>Type</th><th>Description</th></tr>
+      <tr><td><code>type</code></td><td><code>"MpActor" | "MpObjectReference"</code></td><td>Object type</td></tr>
+      <tr><td><code>baseDesc</code></td><td><code>"formId:Plugin.esm"</code></td><td>Base form descriptor</td></tr>
+      <tr><td><code>formDesc</code></td><td><code>"formId:Plugin.esm"</code></td><td>Instance form descriptor</td></tr>
+      <tr><td><code>equipment</code></td><td>object</td><td>Currently equipped items</td></tr>
+      <tr><td><code>isOnline</code></td><td>boolean</td><td>Whether actor's player is connected</td></tr>
+      <tr><td><code>neighbors</code></td><td><code>number[]</code></td><td>FormIds of nearby synchronized objects</td></tr>
+    </table>
+  </section>
+
+  <!-- ===================== EVENTS SYSTEM ===================== -->
+  <section id="events-system">
+    <h2>Events System</h2>
+    <p>The events system allows handling game situations server-side. Built-in events fire automatically; custom events are declared with <code>mp.makeEventSource()</code>.</p>
+
+    <pre><code><span class="cm">// Step 1: Define the event source (client-side detection code)</span>
+mp.<span class="fn">makeEventSource</span>(<span class="str">"_onSomeEvent"</span>, <span class="str">`
+  ctx.sp.once("update", () => {
+    ctx.sendEvent({ myData: 42 });
+  });
+`</span>);
+
+<span class="cm">// Step 2: Handle it server-side</span>
+mp._onSomeEvent = (pcFormId, data) => {
+  console.<span class="fn">log</span>(<span class="str">"Handled for"</span>, pcFormId, <span class="str">"data:"</span>, data);
+};</code></pre>
+
+    <div class="alert warn">
+      Custom event names MUST start with an underscore: <code>_myEvent</code>. Names without underscores are reserved for built-in events.
+    </div>
+  </section>
+
+  <!-- ===================== SYSTEM INTERFACE ===================== -->
+  <section id="systems">
+    <h2>System Interface</h2>
+    <p>The server is organized into <em>Systems</em> — modular TypeScript classes that implement lifecycle hooks. Each system handles a specific concern (login, metrics, spawn, etc.).</p>
+
+    <pre><code><span class="kw">import</span> { EventEmitter } <span class="kw">from</span> <span class="str">"events"</span>;
+<span class="kw">import</span> { ScampServer } <span class="kw">from</span> <span class="str">"../scampNative"</span>;
+
+<span class="kw">interface</span> <span class="tp">SystemContext</span> {
+  svr: <span class="tp">ScampServer</span>;   <span class="cm">// Native server instance</span>
+  gm: <span class="tp">EventEmitter</span>;   <span class="cm">// Gamemode event emitter</span>
+}
+
+<span class="kw">interface</span> <span class="tp">System</span> {
+  systemName: <span class="tp">string</span>;
+
+  <span class="cm">// Called once when the server starts</span>
+  initAsync?(ctx: <span class="tp">SystemContext</span>): <span class="tp">Promise</span>&lt;<span class="tp">void</span>&gt;;
+
+  <span class="cm">// Called every tick</span>
+  updateAsync?(ctx: <span class="tp">SystemContext</span>): <span class="tp">Promise</span>&lt;<span class="tp">void</span>&gt;;
+
+  <span class="cm">// Called when a player connects</span>
+  connect?(userId: <span class="tp">number</span>, ctx: <span class="tp">SystemContext</span>): <span class="tp">void</span>;
+
+  <span class="cm">// Called when a player disconnects</span>
+  disconnect?(userId: <span class="tp">number</span>, ctx: <span class="tp">SystemContext</span>): <span class="tp">void</span>;
+
+  <span class="cm">// Called when a custom packet is received</span>
+  customPacket?(userId: <span class="tp">number</span>, type: <span class="tp">string</span>, content: <span class="tp">Record</span>&lt;<span class="tp">string</span>, <span class="tp">any</span>&gt;, ctx: <span class="tp">SystemContext</span>): <span class="tp">void</span>;
+}</code></pre>
+
+    <h3>Example Custom System</h3>
+    <pre><code><span class="kw">import</span> { System, SystemContext } <span class="kw">from</span> <span class="str">"./system"</span>;
+
+<span class="kw">export class</span> <span class="tp">MySystem</span> <span class="kw">implements</span> <span class="tp">System</span> {
+  systemName = <span class="str">"MySystem"</span>;
+
+  <span class="kw">async</span> <span class="fn">initAsync</span>(ctx: <span class="tp">SystemContext</span>) {
+    console.<span class="fn">log</span>(<span class="str">"MySystem initialized"</span>);
+  }
+
+  <span class="fn">connect</span>(userId: <span class="tp">number</span>, ctx: <span class="tp">SystemContext</span>) {
+    <span class="kw">const</span> actorId = ctx.svr.<span class="fn">getUserActor</span>(userId);
+    console.<span class="fn">log</span>(<span class="str">`User ${userId} connected, actor: ${actorId}`</span>);
+  }
+
+  <span class="fn">disconnect</span>(userId: <span class="tp">number</span>, ctx: <span class="tp">SystemContext</span>) {
+    console.<span class="fn">log</span>(<span class="str">`User ${userId} disconnected`</span>);
+  }
+
+  <span class="fn">customPacket</span>(userId: <span class="tp">number</span>, type: <span class="tp">string</span>, content: <span class="kw">any</span>, ctx: <span class="tp">SystemContext</span>) {
+    <span class="kw">if</span> (type === <span class="str">"myCustomType"</span>) {
+      console.<span class="fn">log</span>(<span class="str">"Received custom packet:"</span>, content);
+    }
+  }
+}</code></pre>
+
+    <h3>Built-in Systems</h3>
+    <table>
+      <tr><th>System</th><th>Purpose</th></tr>
+      <tr><td><code>MetricsSystem</code></td><td>Prometheus metrics and performance monitoring</td></tr>
+      <tr><td><code>MasterClient</code></td><td>Connection to master server for server listing</td></tr>
+      <tr><td><code>Spawn</code></td><td>Player spawn point selection from <code>startPoints</code></td></tr>
+      <tr><td><code>Login</code></td><td>Player authentication, profile ID validation</td></tr>
+      <tr><td><code>DiscordBanSystem</code></td><td>Discord webhook integration for ban notifications</td></tr>
+      <tr><td><code>MasterApiBalanceSystem</code></td><td>Load balancing via master API</td></tr>
+    </table>
+  </section>
+
+  <!-- ===================== SCAMPSERVER ===================== -->
+  <section id="scampserver">
+    <h2>ScampServer Native Interface</h2>
+    <p>The <code>ScampServer</code> interface wraps the native C++ module (<code>scam_native.node</code>). It is available in systems as <code>ctx.svr</code>.</p>
+
+    <div class="tabs">
+      <div class="tab-buttons">
+        <button class="tab-btn active" onclick="showTab(this,'tab-actor')">Actor Management</button>
+        <button class="tab-btn" onclick="showTab(this,'tab-user')">User / Network</button>
+        <button class="tab-btn" onclick="showTab(this,'tab-events')">Server Events</button>
+        <button class="tab-btn" onclick="showTab(this,'tab-misc')">Misc</button>
+      </div>
+
+      <div id="tab-actor" class="tab-pane active">
+        <pre><code><span class="cm">// Create a new actor at position, returns formId</span>
+ctx.svr.<span class="fn">createActor</span>(formId, [x, y, z], angleZ, cellOrWorldFormId, userProfileId?): <span class="tp">number</span>
+
+<span class="cm">// Destroy an actor</span>
+ctx.svr.<span class="fn">destroyActor</span>(formId): <span class="tp">void</span>
+
+<span class="cm">// Assign an actor to a user</span>
+ctx.svr.<span class="fn">setUserActor</span>(userId, actorFormId): <span class="tp">void</span>
+
+<span class="cm">// Get actor formId for user</span>
+ctx.svr.<span class="fn">getUserActor</span>(userId): <span class="tp">number</span>
+
+<span class="cm">// Get all actor form IDs for a profile</span>
+ctx.svr.<span class="fn">getActorsByProfileId</span>(profileId): <span class="tp">number</span>[]
+
+<span class="cm">// Get user ID by actor formId</span>
+ctx.svr.<span class="fn">getUserByActor</span>(formId): <span class="tp">number</span>
+
+<span class="cm">// Get actor position</span>
+ctx.svr.<span class="fn">getActorPos</span>(actorId): <span class="tp">number</span>[]
+
+<span class="cm">// Get actor cell/world</span>
+ctx.svr.<span class="fn">getActorCellOrWorld</span>(actorId): <span class="tp">number</span>
+
+<span class="cm">// Get actor name</span>
+ctx.svr.<span class="fn">getActorName</span>(actorId): <span class="tp">string</span>
+
+<span class="cm">// Enable or disable an actor</span>
+ctx.svr.<span class="fn">setEnabled</span>(actorId, enabled: <span class="tp">boolean</span>): <span class="tp">void</span>
+
+<span class="cm">// Open/close race menu for actor</span>
+ctx.svr.<span class="fn">setRaceMenuOpen</span>(formId, open: <span class="tp">boolean</span>): <span class="tp">void</span></code></pre>
+      </div>
+
+      <div id="tab-user" class="tab-pane">
+        <pre><code><span class="cm">// Get user GUID string</span>
+ctx.svr.<span class="fn">getUserGuid</span>(userId): <span class="tp">string</span>
+
+<span class="cm">// Check if user is connected</span>
+ctx.svr.<span class="fn">isConnected</span>(userId): <span class="tp">boolean</span>
+
+<span class="cm">// Get user IP address</span>
+ctx.svr.<span class="fn">getUserIp</span>(userId): <span class="tp">string</span>
+
+<span class="cm">// Kick a user from the server</span>
+ctx.svr.<span class="fn">kick</span>(userId): <span class="tp">void</span>
+
+<span class="cm">// Send a raw custom JSON packet to a specific user</span>
+ctx.svr.<span class="fn">sendCustomPacket</span>(userId, jsonContent: <span class="tp">string</span>): <span class="tp">void</span>
+
+<span class="cm">// Execute JavaScript code on client via Chakra</span>
+ctx.svr.<span class="fn">executeJavaScriptOnChakra</span>(src: <span class="tp">string</span>): <span class="tp">void</span></code></pre>
+      </div>
+
+      <div id="tab-events" class="tab-pane">
+        <pre><code><span class="cm">// Listen for player connections</span>
+ctx.svr.<span class="fn">on</span>(<span class="str">"connect"</span>, (userId: <span class="tp">number</span>) => { });
+
+<span class="cm">// Listen for player disconnections</span>
+ctx.svr.<span class="fn">on</span>(<span class="str">"disconnect"</span>, (userId: <span class="tp">number</span>) => { });
+
+<span class="cm">// Listen for custom packets from clients</span>
+ctx.svr.<span class="fn">on</span>(<span class="str">"customPacket"</span>, (userId: <span class="tp">number</span>, content: <span class="tp">string</span>) => {
+  <span class="kw">const</span> data = <span class="tp">JSON</span>.<span class="fn">parse</span>(content);
+  <span class="cm">// handle data.type, data.content ...</span>
+});</code></pre>
+      </div>
+
+      <div id="tab-misc" class="tab-pane">
+        <pre><code><span class="cm">// Tick the server (process one frame)</span>
+ctx.svr.<span class="fn">tick</span>(): <span class="tp">void</span>
+
+<span class="cm">// Attach persistent storage</span>
+ctx.svr.<span class="fn">attachSaveStorage</span>(): <span class="tp">void</span>
+
+<span class="cm">// Reset all server state</span>
+ctx.svr.<span class="fn">clear</span>(): <span class="tp">void</span>
+
+<span class="cm">// Write a log message</span>
+ctx.svr.<span class="fn">writeLogs</span>(logLevel: <span class="tp">string</span>, message: <span class="tp">string</span>): <span class="tp">void</span>
+
+<span class="cm">// Get Prometheus metrics string</span>
+ctx.svr.<span class="fn">getPrometheusMetrics</span>(): <span class="tp">string</span>
+
+<span class="cm">// Create a bot actor</span>
+ctx.svr.<span class="fn">createBot</span>(): <span class="tp">Bot</span></code></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== DAMAGE ===================== -->
+  <section id="damage">
+    <h2>Damage &amp; Hit Handling</h2>
+    <p>When a local hit occurs, the client sends an <code>OnHit</code> packet to the server. The server processes it through the <code>IDamageFormula</code> interface.</p>
+
+    <h3>OnHit Packet Fields</h3>
+    <table>
+      <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+      <tr><td><code>aggressor</code></td><td>uint32</td><td>FormId of the attacking actor</td></tr>
+      <tr><td><code>target</code></td><td>uint32</td><td>FormId of the target actor</td></tr>
+      <tr><td><code>source</code></td><td>uint32</td><td>FormId of the weapon (0 = unarmed)</td></tr>
+      <tr><td><code>projectile</code></td><td>uint32</td><td>FormId of the projectile (if applicable)</td></tr>
+      <tr><td><code>isBashAttack</code></td><td>bool</td><td>Was it a bash attack?</td></tr>
+      <tr><td><code>isHitBlocked</code></td><td>bool</td><td>Was the hit blocked?</td></tr>
+      <tr><td><code>isPowerAttack</code></td><td>bool</td><td>Was it a power attack?</td></tr>
+      <tr><td><code>isSneakAttack</code></td><td>bool</td><td>Was it a sneak attack?</td></tr>
+    </table>
+
+    <h3>Damage Formula</h3>
+    <p>By default <code>TES5DamageFormula</code> is used (vanilla Skyrim formula). Implement <code>IDamageFormula</code> in C++ to override:</p>
+    <pre><code><span class="cm">// Incoming damage calculation:</span>
+incomingDamage = isUnarmed ? raceUnarmedDamage : baseWeaponDamage;
+
+<span class="cm">// Armor reduction:</span>
+armorRating = sum(equippedArmorRatings) + magicArmorRating;
+<span class="cm">// fMaxArmorRating = 80, fArmorScalingFactor = 0.12 (GMST defaults)</span>
+receivedDamage = incomingDamage * <span class="nu">0.01</span> * (<span class="nu">100</span> - min(armorRating * <span class="nu">0.12</span>, <span class="nu">80</span>));</code></pre>
+
+    <h3>Server-side Damage Multiplier</h3>
+    <pre><code><span class="cm">// In server-settings.json:</span>
+<span class="str">"damageMultFormulaSettings"</span>: { <span class="str">"multiplier"</span>: <span class="nu">1.5</span> }</code></pre>
+  </section>
+
+  <!-- ===================== SERVER PLUGIN SETUP ===================== -->
+  <section id="server-plugins">
+    <h2>Server Gamemode Setup</h2>
+    <p>A gamemode is a single JavaScript file (or a directory with <code>index.js</code>) that uses the <code>mp</code> global to define game rules.</p>
+
+    <h3>Minimal Gamemode Example</h3>
+    <pre><code><span class="cm">// gamemode.js</span>
+
+<span class="cm">// Clear previous state (important for hot-reload)</span>
+mp.<span class="fn">clear</span>();
+
+<span class="cm">// Define a custom property synced to owner only</span>
+mp.<span class="fn">makeProperty</span>(<span class="str">"coins"</span>, {
+  isVisibleByOwner: <span class="kw">true</span>,
+  isVisibleByNeighbors: <span class="kw">false</span>,
+  updateOwner: <span class="str">`
+    ctx.sp.printConsole("You have " + ctx.value + " coins");
+  `</span>,
+  updateNeighbor: <span class="str">""</span>
+});
+
+<span class="cm">// Detect player death and respawn them</span>
+mp.<span class="fn">makeEventSource</span>(<span class="str">"_onDeath"</span>, <span class="str">`
+  ctx.sp.on("update", () => {
+    const isDead = ctx.sp.Game.getPlayer().isDead();
+    if (isDead && !ctx.state.wasDead) {
+      ctx.sendEvent();
+    }
+    ctx.state.wasDead = isDead;
+  });
+`</span>);
+
+mp._onDeath = <span class="kw">function</span>(pcFormId) {
+  <span class="cm">// Give 3s delay then respawn</span>
+  <span class="fn">setTimeout</span>(() => {
+    mp.<span class="fn">set</span>(pcFormId, <span class="str">"pos"</span>, [<span class="nu">22659</span>, <span class="nu">-8697</span>, <span class="nu">-3594</span>]);
+  }, <span class="nu">3000</span>);
+};
+
+console.<span class="fn">log</span>(<span class="str">"Gamemode loaded!"</span>);</code></pre>
+
+    <h3>TypeScript Gamemode (Advanced)</h3>
+    <p>For larger gamemodes, use TypeScript with a build step:</p>
+    <ol class="steps">
+      <li>Create a directory: <code>my-gamemode/</code></li>
+      <li>Add <code>package.json</code> with <code>"main": "dist/index.js"</code></li>
+      <li>Write <code>src/index.ts</code> using <code>mp</code> global</li>
+      <li>Compile with <code>tsc</code> or <code>webpack</code> to produce <code>index.js</code></li>
+      <li>Set <code>"gamemodePath": "my-gamemode/"</code> in <code>server-settings.json</code></li>
+    </ol>
+
+    <div class="alert tip">
+      Set <code>"enableGamemodeDataUpdatesBroadcast": true</code> during local development to push gamemode changes to connected clients instantly without requiring reconnection.
+    </div>
+  </section>
+
+  <!-- ===================== CLIENT SCRIPTING ===================== -->
+  <section id="client-scripting">
+    <h2>Client Scripting — <code>ctx</code> Context</h2>
+    <p>Client code runs as strings inside <code>updateOwner</code> and <code>updateNeighbor</code> of <code>mp.makeProperty()</code>, and inside the <code>functionBody</code> of <code>mp.makeEventSource()</code>. There are no standalone client scripts — everything is pushed from the server.</p>
+
+    <div class="alert info">
+      The <code>ctx</code> object is injected by the runtime and available in all client-side code strings.
+    </div>
+
+    <div class="method" id="ctx-sp">
+      <div class="method-header">
+        <span class="method-tag tag-client">CLIENT</span>
+        <span class="method-name">ctx.sp</span>
+      </div>
+      <div class="method-body">
+        <p>Reference to the Skyrim Platform API. Everything available in a normal SP plugin is accessible here.</p>
+        <pre><code><span class="cm">// Print to game console</span>
+ctx.sp.<span class="fn">printConsole</span>(<span class="str">"Hello!"</span>);
+
+<span class="cm">// Get player reference</span>
+<span class="kw">const</span> player = ctx.sp.<span class="tp">Game</span>.<span class="fn">getPlayer</span>();
+
+<span class="cm">// Kill the player locally</span>
+ctx.sp.<span class="tp">Game</span>.<span class="fn">getPlayer</span>().<span class="fn">kill</span>();
+
+<span class="cm">// Set actor value</span>
+ctx.sp.<span class="tp">Game</span>.<span class="fn">getPlayer</span>().<span class="fn">setActorValue</span>(<span class="str">"health"</span>, <span class="nu">100</span>);</code></pre>
+      </div>
+    </div>
+
+    <div class="method" id="ctx-refr">
+      <div class="method-header">
+        <span class="method-tag tag-client">CLIENT</span>
+        <span class="method-name">ctx.refr</span>
+      </div>
+      <div class="method-body">
+        <p>Reference to the current object being updated.</p>
+        <ul>
+          <li>In <code>makeProperty</code>: always <code>undefined</code></li>
+          <li>In <code>updateOwner</code>: same as <code>ctx.sp.Game.getPlayer()</code></li>
+          <li>In <code>updateNeighbor</code>: the neighbor Actor or ObjectReference</li>
+        </ul>
+        <pre><code><span class="kw">const</span> pos = [
+  ctx.refr.<span class="fn">getPositionX</span>(),
+  ctx.refr.<span class="fn">getPositionY</span>(),
+  ctx.refr.<span class="fn">getPositionZ</span>()
+];</code></pre>
+      </div>
+    </div>
+
+    <div class="method" id="ctx-value">
+      <div class="method-header">
+        <span class="method-tag tag-client">CLIENT</span>
+        <span class="method-name">ctx.value</span>
+      </div>
+      <div class="method-body">
+        <p>Current value of the property being processed. Is <code>undefined</code> in <code>makeProperty</code> context, or when there is no value / it's not visible.</p>
+        <pre><code><span class="cm">// Set player level from server-defined value</span>
+ctx.sp.<span class="tp">Game</span>.<span class="fn">setPlayerLevel</span>(ctx.value || <span class="nu">1</span>);</code></pre>
+      </div>
+    </div>
+
+    <div class="method" id="ctx-state">
+      <div class="method-header">
+        <span class="method-tag tag-client">CLIENT</span>
+        <span class="method-name">ctx.state</span>
+      </div>
+      <div class="method-body">
+        <p>A persistent object shared across all property update calls for this actor. Use it to store data between calls (e.g., previous state for change detection). State is shared between all properties.</p>
+        <pre><code><span class="cm">// Store previous health for death detection</span>
+ctx.sp.<span class="kw">on</span>(<span class="str">"update"</span>, () => {
+  <span class="kw">const</span> hp = ctx.sp.<span class="tp">Game</span>.<span class="fn">getPlayer</span>().<span class="fn">getActorValuePercentage</span>(<span class="str">"health"</span>);
+  <span class="kw">if</span> (hp === <span class="nu">0</span> && ctx.state.prevHp !== <span class="nu">0</span>) {
+    ctx.<span class="fn">sendEvent</span>({ type: <span class="str">"death"</span> });
+  }
+  ctx.state.prevHp = hp;
+});</code></pre>
+      </div>
+    </div>
+
+    <div class="method" id="ctx-get">
+      <div class="method-header">
+        <span class="method-tag tag-client">CLIENT</span>
+        <span class="method-name">ctx.get(propertyName)</span>
+      </div>
+      <div class="method-body">
+        <p>Get the value of another custom property on the current actor. Built-in properties may not work correctly with this method.</p>
+        <pre><code><span class="kw">const</span> name = ctx.<span class="fn">get</span>(<span class="str">"displayName"</span>);
+<span class="kw">const</span> coins = ctx.<span class="fn">get</span>(<span class="str">"coins"</span>);</code></pre>
+      </div>
+    </div>
+
+    <div class="method" id="ctx-formid">
+      <div class="method-header">
+        <span class="method-tag tag-client">CLIENT</span>
+        <span class="method-name">ctx.getFormIdInServerFormat() / ctx.getFormIdInClientFormat()</span>
+      </div>
+      <div class="method-body">
+        <p>Convert between server-side and client-side FormIds. Server formIds use a different offset than client formIds.</p>
+        <pre><code><span class="cm">// Client formId → Server formId</span>
+<span class="kw">const</span> serverFormId = ctx.<span class="fn">getFormIdInServerFormat</span>(<span class="nu">0xff00016a</span>);
+
+<span class="cm">// Server formId → Client formId</span>
+<span class="kw">const</span> clientFormId = ctx.<span class="fn">getFormIdInClientFormat</span>(<span class="nu">0xff000000</span>);</code></pre>
+      </div>
+    </div>
+
+    <div class="method" id="ctx-sendEvent">
+      <div class="method-header">
+        <span class="method-tag tag-client">CLIENT</span>
+        <span class="method-name">ctx.sendEvent(data?)</span>
+      </div>
+      <div class="method-body">
+        <p>Sends an event to the server. Only available in <code>makeEventSource</code> context. Optionally pass serializable data.</p>
+        <pre><code><span class="cm">// Send event with no data</span>
+ctx.<span class="fn">sendEvent</span>();
+
+<span class="cm">// Send event with custom payload</span>
+ctx.<span class="fn">sendEvent</span>({ damage: <span class="nu">42</span>, weapon: <span class="str">"sword"</span> });</code></pre>
+      </div>
+    </div>
+
+    <div class="method">
+      <div class="method-header">
+        <span class="method-tag tag-client">CLIENT</span>
+        <span class="method-name">ctx.respawn()</span>
+      </div>
+      <div class="method-body">
+        <p>Immediately respawns <code>ctx.refr</code> on the client side.</p>
+        <pre><code>ctx.<span class="fn">respawn</span>();</code></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== SKYRIM PLATFORM ===================== -->
+  <section id="skyrim-platform">
+    <h2>Skyrim Platform</h2>
+    <p>Skyrim Platform is a modding framework that exposes the Skyrim game engine to JavaScript/TypeScript. It is used both by the SKYMP client and by standalone mod plugins.</p>
+
+    <h3 id="sp-events">Events — <code>on</code> / <code>once</code> / <code>unsubscribe</code></h3>
+    <pre><code><span class="kw">import</span> { on, once, unsubscribe } <span class="kw">from</span> <span class="str">"skyrimPlatform"</span>;
+
+<span class="cm">// Subscribe forever</span>
+<span class="kw">const</span> handle = <span class="fn">on</span>(<span class="str">"equip"</span>, (event) => {
+  printConsole(<span class="str">`Equipped: ${event.baseObj.getName()}`</span>);
+});
+
+<span class="cm">// Subscribe once only</span>
+<span class="fn">once</span>(<span class="str">"update"</span>, () => {
+  printConsole(<span class="str">"First frame after game load"</span>);
+});
+
+<span class="cm">// Unsubscribe later</span>
+<span class="fn">unsubscribe</span>(handle);</code></pre>
+
+    <h3 id="sp-hooks">Hooks</h3>
+    <p>Hooks intercept engine function calls. Currently supported: <code>sendAnimationEvent</code>, <code>sendPapyrusEvent</code>.</p>
+    <pre><code><span class="kw">import</span> { hooks, printConsole } <span class="kw">from</span> <span class="str">"skyrimPlatform"</span>;
+
+<span class="cm">// Hook all animation events on the player</span>
+<span class="kw">const</span> id = hooks.sendAnimationEvent.<span class="fn">add</span>({
+  enter(ctx) {
+    printConsole(<span class="str">"Anim:"</span>, ctx.animEventName);
+  },
+  leave(ctx) {
+    <span class="kw">if</span> (ctx.animationSucceeded) printConsole(<span class="str">"Success!"</span>);
+  }
+}, <span class="cm">/* minSelfId */</span> <span class="nu">0x14</span>, <span class="cm">/* maxSelfId */</span> <span class="nu">0x14</span>, <span class="cm">/* pattern */</span> <span class="str">"*"</span>);
+
+<span class="cm">// Remove hook later</span>
+hooks.sendAnimationEvent.<span class="fn">remove</span>(id);
+
+<span class="cm">// Hook Papyrus events</span>
+hooks.sendPapyrusEvent.<span class="fn">add</span>({
+  enter(ctx) { printConsole(ctx.papyrusEventName); }
+}, <span class="nu">0x14</span>, <span class="nu">0x14</span>, <span class="str">"OnSleepStart"</span>);</code></pre>
+
+    <div class="alert tip">
+      Always specify <code>minSelfId</code>, <code>maxSelfId</code>, and <code>eventPattern</code> to filter hooks at the C++ level and avoid unnecessary JS overhead.
+    </div>
+
+    <h3 id="sp-browser">Browser / In-Game UI</h3>
+    <p>Skyrim Platform embeds a Chromium browser (CEF). Create <code>Data/Platform/UI/index.html</code> to load a custom UI.</p>
+    <pre><code><span class="kw">import</span> { browser, on } <span class="kw">from</span> <span class="str">"skyrimPlatform"</span>;
+
+<span class="cm">// Show/hide the browser overlay</span>
+browser.<span class="fn">setVisible</span>(<span class="kw">true</span>);
+browser.<span class="fn">setFocused</span>(<span class="kw">true</span>); <span class="cm">// Redirects input to browser</span>
+
+<span class="cm">// Load a URL</span>
+browser.<span class="fn">loadUrl</span>(<span class="str">"file:///Data/Platform/UI/index.html"</span>);
+browser.<span class="fn">loadUrl</span>(<span class="str">"https://example.com"</span>);
+browser.<span class="fn">loadUrl</span>(<span class="str">"http://localhost:1234"</span>); <span class="cm">// Dev server</span>
+
+<span class="cm">// Run JS in the browser context</span>
+browser.<span class="fn">executeJavaScript</span>(<span class="str">"document.title = 'Hello'"</span>);
+
+<span class="cm">// Security token</span>
+<span class="kw">const</span> token = browser.<span class="fn">getToken</span>();
+
+<span class="cm">// Receive messages from browser</span>
+<span class="fn">on</span>(<span class="str">"browserMessage"</span>, (event) => {
+  printConsole(<span class="tp">JSON</span>.<span class="fn">stringify</span>(event.arguments));
+});</code></pre>
+
+    <p>In HTML, send messages back to SP:</p>
+    <pre><code><span class="cm">&lt;!-- In your browser HTML --&gt;</span>
+&lt;button onclick="window.skyrimPlatform.sendMessage({ action: 'close' })"&gt;Close&lt;/button&gt;
+
+&lt;script&gt;
+  <span class="cm">// Works anywhere in browser context</span>
+  window.skyrimPlatform.sendMessage(<span class="str">"hello"</span>, <span class="nu">42</span>, { foo: <span class="kw">true</span> });
+&lt;/script&gt;</code></pre>
+
+    <h3 id="sp-papyrus">Papyrus Types</h3>
+    <p>All Skyrim Papyrus types are available. Import what you need:</p>
+    <pre><code><span class="kw">import</span> { Game, Actor, Weapon, Armor, ObjectReference, Form } <span class="kw">from</span> <span class="str">"skyrimPlatform"</span>;
+
+<span class="cm">// Get player actor</span>
+<span class="kw">const</span> player = <span class="tp">Game</span>.<span class="fn">getPlayer</span>(); <span class="cm">// Never null</span>
+
+<span class="cm">// Get a form by ID</span>
+<span class="kw">const</span> form = <span class="tp">Game</span>.<span class="fn">getFormEx</span>(<span class="nu">0xff000001</span>); <span class="cm">// Use getFormEx for IDs > 0x80000000</span>
+
+<span class="cm">// Type casting</span>
+<span class="kw">const</span> weapon = <span class="tp">Weapon</span>.<span class="fn">from</span>(form); <span class="cm">// null if form is not a weapon</span>
+<span class="kw">const</span> actor = <span class="tp">Actor</span>.<span class="fn">from</span>(form);
+
+<span class="cm">// Compare objects by formId</span>
+<span class="kw">if</span> (form1.<span class="fn">getFormID</span>() === form2.<span class="fn">getFormID</span>()) { <span class="cm">/* same object */</span> }
+
+<span class="cm">// Nearest actor search</span>
+<span class="kw">const</span> nearby = <span class="tp">Game</span>.<span class="fn">findClosestActor</span>(x, y, z, radius);
+<span class="kw">if</span> (nearby) { <span class="cm">/* check null */</span> }</code></pre>
+
+    <h3 id="sp-methods">Utility Methods</h3>
+    <table>
+      <tr><th>Method</th><th>Description</th></tr>
+      <tr><td><code>printConsole(...args)</code></td><td>Print to game console (~ key). Adds <code>[Script]</code> prefix.</td></tr>
+      <tr><td><code>writeLogs(pluginName, ...args)</code></td><td>Write to <code>Data/Platform/Plugins/pluginName-logs.txt</code></td></tr>
+      <tr><td><code>settings["plugin"]["key"]</code></td><td>Read from <code>plugin-settings.txt</code> (JSON format)</td></tr>
+      <tr><td><code>storage["key"]</code></td><td>Persist data across hot-reloads (in-memory only)</td></tr>
+      <tr><td><code>callNative(cls, fn, self?, ...args)</code></td><td>Call any native game function by name</td></tr>
+      <tr><td><code>getJsMemoryUsage()</code></td><td>RAM used by JS engine in bytes</td></tr>
+      <tr><td><code>worldPointToScreenPoint(points[])</code></td><td>Convert 3D world coords to screen coords (-1 to 1)</td></tr>
+      <tr><td><code>findConsoleCommand(name)</code></td><td>Get a console command object to override its behavior</td></tr>
+      <tr><td><code>getExtraContainerChanges(refr)</code></td><td>Get dynamic inventory changes of an ObjectReference</td></tr>
+      <tr><td><code>getContainer(refr)</code></td><td>Get all base container items</td></tr>
+    </table>
+
+    <h4>Console Command Override</h4>
+    <pre><code><span class="kw">const</span> cmd = <span class="fn">findConsoleCommand</span>(<span class="str">"GetActorValueInfo"</span>);
+cmd.longName = <span class="str">"myCommand"</span>;
+cmd.numArgs = <span class="nu">1</span>;
+cmd.execute = (refrId: <span class="tp">number</span>, arg: <span class="tp">string</span>) => {
+  <span class="fn">once</span>(<span class="str">"update"</span>, () => <span class="tp">Debug</span>.<span class="fn">messageBox</span>(arg));
+  <span class="kw">return false</span>; <span class="cm">// don't run original</span>
+};</code></pre>
+
+    <h4>Hot Reload</h4>
+    <p>Changes to files in <code>Data/Platform/Plugins/</code> or <code>Data/Platform/PluginsDev/</code> automatically reload all plugins without restarting Skyrim. On reload, event handlers are cleared and variables reset — except <code>storage</code>.</p>
+  </section>
+
+  <!-- ===================== EVENTS LIST ===================== -->
+  <section id="sp-events-list">
+    <h2>Full Skyrim Platform Events List</h2>
+
+    <h3>Core Events</h3>
+    <table>
+      <tr><th>Event</th><th>Description</th><th>Notes</th></tr>
+      <tr><td><code>tick</code></td><td>Called every frame immediately after game starts</td><td>No game API access</td></tr>
+      <tr><td><code>update</code></td><td>Called every frame after game/save is loaded</td><td>~60/sec; use <code>once</code> when possible</td></tr>
+      <tr><td><code>loadGame</code></td><td>Fired when an existing save is loaded</td><td>NOT fired on new game</td></tr>
+      <tr><td><code>newGame</code></td><td>Fired when a new game starts</td><td>—</td></tr>
+      <tr><td><code>saveGame</code></td><td>Fired when saving a game</td><td>—</td></tr>
+      <tr><td><code>postLoadGame</code></td><td>After save loaded</td><td>—</td></tr>
+      <tr><td><code>preLoadGame</code></td><td>Before save loads</td><td>—</td></tr>
+      <tr><td><code>deleteGame</code></td><td>When a save is deleted</td><td>—</td></tr>
+      <tr><td><code>cellFullyLoaded</code></td><td>Cell finished loading</td><td>Fires per cell; can fire multiple times in wilderness</td></tr>
+      <tr><td><code>consoleMessage</code></td><td>Something printed to game console</td><td>Includes <code>printConsole</code> output</td></tr>
+      <tr><td><code>browserMessage</code></td><td>Message from CEF browser via <code>sendMessage</code></td><td>—</td></tr>
+    </table>
+
+    <h3>Actor / Game Events</h3>
+    <table>
+      <tr><th>Event</th><th>Description</th></tr>
+      <tr><td><code>equip</code></td><td>Actor equipped an item (<code>event.actor</code>, <code>event.baseObj</code>)</td></tr>
+      <tr><td><code>unequip</code></td><td>Actor unequipped an item</td></tr>
+      <tr><td><code>effectStart</code></td><td>Magic effect began (<code>event.effect</code>, <code>event.target</code>)</td></tr>
+      <tr><td><code>effectFinish</code></td><td>Magic effect ended</td></tr>
+      <tr><td><code>hit</code></td><td>Actor was hit</td></tr>
+      <tr><td><code>actorKill</code></td><td>Actor was killed</td></tr>
+      <tr><td><code>deathStart</code></td><td>Actor death sequence started</td></tr>
+      <tr><td><code>deathEnd</code></td><td>Actor death sequence ended</td></tr>
+      <tr><td><code>enterBleedout</code></td><td>Actor entered bleedout state</td></tr>
+      <tr><td><code>combatState</code></td><td>Combat state changed</td></tr>
+      <tr><td><code>activate</code></td><td>Object activated</td></tr>
+      <tr><td><code>containerChanged</code></td><td>Container inventory changed</td></tr>
+      <tr><td><code>itemHarvested</code></td><td>Item was harvested</td></tr>
+      <tr><td><code>criticalHit</code></td><td>Critical hit landed</td></tr>
+      <tr><td><code>disarmedEvent</code></td><td>Actor was disarmed</td></tr>
+      <tr><td><code>spellCast</code></td><td>Spell was cast</td></tr>
+      <tr><td><code>spellsLearned</code></td><td>Spell learned</td></tr>
+      <tr><td><code>shoutAttack</code></td><td>Shout was used</td></tr>
+      <tr><td><code>playerBowShot</code></td><td>Player fired a bow</td></tr>
+      <tr><td><code>levelIncrease</code></td><td>Player leveled up</td></tr>
+      <tr><td><code>skillIncrease</code></td><td>Skill increased</td></tr>
+      <tr><td><code>soulsTrapped</code></td><td>Soul trapped</td></tr>
+      <tr><td><code>dragonSoulsGained</code></td><td>Dragon soul absorbed</td></tr>
+      <tr><td><code>bookRead</code></td><td>Book was read</td></tr>
+      <tr><td><code>sell</code></td><td>Item sold</td></tr>
+    </table>
+
+    <h3>Location / World Events</h3>
+    <table>
+      <tr><th>Event</th><th>Description</th></tr>
+      <tr><td><code>locationChanged</code></td><td>Player moved to new location</td></tr>
+      <tr><td><code>locationDiscovery</code></td><td>New location discovered</td></tr>
+      <tr><td><code>cellAttach</code></td><td>Cell was attached</td></tr>
+      <tr><td><code>cellDetach</code></td><td>Cell was detached</td></tr>
+      <tr><td><code>fastTravelEnd</code></td><td>Fast travel completed</td></tr>
+      <tr><td><code>moveAttachDetach</code></td><td>Object moved, attached, or detached</td></tr>
+      <tr><td><code>objectLoaded</code></td><td>Object was loaded</td></tr>
+      <tr><td><code>reset</code></td><td>Object/cell reset</td></tr>
+    </table>
+
+    <h3>Input Events</h3>
+    <table>
+      <tr><th>Event</th><th>Description</th></tr>
+      <tr><td><code>buttonEvent</code></td><td>Controller/keyboard button</td></tr>
+      <tr><td><code>mouseMove</code></td><td>Mouse movement</td></tr>
+      <tr><td><code>thumbstickEvent</code></td><td>Controller thumbstick</td></tr>
+      <tr><td><code>kinectEvent</code></td><td>Kinect input</td></tr>
+      <tr><td><code>deviceConnect</code></td><td>Input device connected</td></tr>
+    </table>
+  </section>
+
+  <!-- ===================== CLIENT PLUGIN SETUP ===================== -->
+  <section id="client-plugins">
+    <h2>Client Plugin Setup (Skyrim Platform)</h2>
+    <p>Skyrim Platform plugins are TypeScript files compiled to a single <code>.js</code> bundle. They run inside Skyrim SE using the ChakraCore JS engine.</p>
+
+    <h3>File Structure</h3>
+    <pre><code>my-plugin/
+  ├── package.json            <span class="cm">← npm config, dependencies</span>
+  ├── tsconfig.json           <span class="cm">← TypeScript settings</span>
+  ├── webpack.config.js       <span class="cm">← Bundler config</span>
+  ├── skyrim.json             <span class="cm">← Path to Skyrim folder</span>
+  ├── src/
+  │   └── index.ts            <span class="cm">← Main plugin entry point</span>
+  └── build/
+      └── my-plugin.js        <span class="cm">← Compiled output (auto-generated)</span></code></pre>
+
+    <h3>Step-by-Step Setup</h3>
+    <ol class="steps">
+      <li>Install <strong>Skyrim Platform</strong> from Nexus Mods (mod ID 54909) using your mod manager.</li>
+      <li>Install <strong>Node.js</strong> (LTS or Current) from nodejs.org.</li>
+      <li>Copy the <code>plugin-example</code> folder from <code>Data/Platform/plugin-example</code> to somewhere outside your Skyrim directory.</li>
+      <li>Open <code>skyrim.json</code> and set the <code>skyrimFolder</code> path:<br>
+        <pre><code>{ <span class="str">"skyrimFolder"</span>: <span class="str">"C:/Program Files (x86)/Steam/steamapps/common/Skyrim Special Edition"</span> }</code></pre>
+      </li>
+      <li>Open <code>package.json</code> and change the <code>"name"</code> field to your plugin name (must be unique).</li>
+      <li>Edit <code>src/index.ts</code> with your plugin code.</li>
+      <li>Run <code>npm run dev</code> — this installs dependencies, compiles, copies to Skyrim, and watches for changes.</li>
+      <li>Launch Skyrim SE. Your plugin is now running and will hot-reload on file changes.</li>
+    </ol>
+
+    <h3>Minimal Plugin (index.ts)</h3>
+    <pre><code><span class="kw">import</span> { Debug, once, printConsole } <span class="kw">from</span> <span class="str">'skyrimPlatform'</span>;
+
+<span class="fn">once</span>(<span class="str">'tick'</span>, () => {
+    <span class="fn">printConsole</span>(<span class="str">'Hello from my plugin! (visible in console on main menu)'</span>);
+});
+
+<span class="fn">once</span>(<span class="str">'update'</span>, () => {
+    <span class="tp">Debug</span>.<span class="fn">messageBox</span>(<span class="str">'Hello! This appears when a game is loaded.'</span>);
+});</code></pre>
+
+    <h3>Plugin with Events</h3>
+    <pre><code><span class="kw">import</span> { on, once, Game, Actor, Weapon, printConsole } <span class="kw">from</span> <span class="str">'skyrimPlatform'</span>;
+
+<span class="kw">export let</span> main = () => {
+
+  <span class="cm">// Track player health</span>
+  <span class="fn">on</span>(<span class="str">'update'</span>, () => {
+    <span class="kw">const</span> hp = <span class="tp">Game</span>.<span class="fn">getPlayer</span>().<span class="fn">getActorValue</span>(<span class="str">'health'</span>);
+    <span class="kw">if</span> (hp &lt; <span class="nu">50</span> && !storage[<span class="str">'warned'</span>]) {
+      <span class="fn">printConsole</span>(<span class="str">'Low HP!'</span>);
+      storage[<span class="str">'warned'</span>] = <span class="kw">true</span>;
+    }
+    <span class="kw">if</span> (hp &gt;= <span class="nu">50</span>) storage[<span class="str">'warned'</span>] = <span class="kw">false</span>;
+  });
+
+  <span class="cm">// React to equip events</span>
+  <span class="fn">on</span>(<span class="str">'equip'</span>, (event) => {
+    <span class="kw">const</span> weapon = <span class="tp">Weapon</span>.<span class="fn">from</span>(event.baseObj);
+    <span class="kw">if</span> (weapon) {
+      <span class="fn">printConsole</span>(<span class="str">`Equipped weapon: ${weapon.getName()}`</span>);
+    }
+  });
+
+  <span class="cm">// Handle game load</span>
+  <span class="fn">on</span>(<span class="str">'loadGame'</span>, () => {
+    <span class="fn">printConsole</span>(<span class="str">'Save game loaded!'</span>);
+  });
+};</code></pre>
+
+    <h3>Plugin with Browser UI</h3>
+    <pre><code><span class="kw">import</span> { browser, on, once } <span class="kw">from</span> <span class="str">'skyrimPlatform'</span>;
+
+<span class="kw">export let</span> main = () => {
+  <span class="fn">once</span>(<span class="str">'update'</span>, () => {
+    browser.<span class="fn">setVisible</span>(<span class="kw">true</span>);
+    browser.<span class="fn">loadUrl</span>(<span class="str">'file:///Data/Platform/UI/my-plugin/index.html'</span>);
+  });
+
+  <span class="fn">on</span>(<span class="str">'browserMessage'</span>, (event) => {
+    <span class="kw">const</span> [msg] = event.arguments;
+    <span class="kw">if</span> (msg === <span class="str">'close'</span>) browser.<span class="fn">setVisible</span>(<span class="kw">false</span>);
+  });
+};</code></pre>
+
+    <h3>Plugin Scripts Reference</h3>
+    <table>
+      <tr><th>Command</th><th>Description</th></tr>
+      <tr><td><code>npm run dev</code></td><td>Install deps, compile, deploy to Skyrim, watch for changes (hot-reload)</td></tr>
+      <tr><td><code>npm run webpack</code></td><td>Build once without deploying</td></tr>
+      <tr><td><code>npm run zip</code></td><td>Build and create a distributable <code>.zip</code> archive</td></tr>
+    </table>
+
+    <h3>Plugin Settings File</h3>
+    <p>Create <code>Data/Platform/Plugins/my-plugin-settings.txt</code> with JSON content to expose config to users:</p>
+    <pre><code>{
+  <span class="str">"my-plugin"</span>: {
+    <span class="str">"enabled"</span>: <span class="kw">true</span>,
+    <span class="str">"volume"</span>: <span class="nu">0.8</span>
+  }
+}</code></pre>
+    <p>Read in plugin code:</p>
+    <pre><code><span class="kw">import</span> { settings } <span class="kw">from</span> <span class="str">'skyrimPlatform'</span>;
+
+<span class="kw">const</span> enabled = settings[<span class="str">"my-plugin"</span>][<span class="str">"enabled"</span>];
+<span class="kw">const</span> volume = settings[<span class="str">"my-plugin"</span>][<span class="str">"volume"</span>];</code></pre>
+
+    <h3>Distributing Your Plugin</h3>
+    <ul>
+      <li>Run <code>npm run zip</code> to create an archive</li>
+      <li>The compiled <code>.js</code> file goes to <code>Data/Platform/Plugins/</code></li>
+      <li>Optional settings file goes to <code>Data/Platform/Plugins/</code></li>
+      <li>Any HTML/CSS for the browser UI goes to <code>Data/Platform/UI/</code></li>
+      <li>Install via mod manager like any other Skyrim mod</li>
+    </ul>
+  </section>
+
+  <!-- ===================== MESSAGE TYPES ===================== -->
+  <section id="msg-types">
+    <h2>Network Message Types</h2>
+    <p>All communication between client and server uses typed packets. These are defined in <code>MsgType</code> (C++) and <code>MsgType</code> enum (TypeScript).</p>
+    <table>
+      <tr><th>Name</th><th>Value</th><th>Direction</th><th>Description</th></tr>
+      <tr><td><code>CustomPacket</code></td><td>1</td><td>Both</td><td>Custom game data packet</td></tr>
+      <tr><td><code>UpdateMovement</code></td><td>2</td><td>C→S</td><td>Player position/rotation update</td></tr>
+      <tr><td><code>UpdateAnimation</code></td><td>3</td><td>C→S</td><td>Animation state update</td></tr>
+      <tr><td><code>UpdateAppearance</code></td><td>4</td><td>C→S</td><td>Character appearance update</td></tr>
+      <tr><td><code>UpdateEquipment</code></td><td>5</td><td>C→S</td><td>Equipped items update</td></tr>
+      <tr><td><code>Activate</code></td><td>6</td><td>C→S</td><td>Object activation</td></tr>
+      <tr><td><code>UpdateProperty</code></td><td>7</td><td>S→C</td><td>Property value sync</td></tr>
+      <tr><td><code>OnHit</code></td><td>17</td><td>C→S</td><td>Hit event with damage data</td></tr>
+      <tr><td><code>Teleport</code></td><td>20</td><td>S→C</td><td>Force teleport actor</td></tr>
+      <tr><td><code>OpenContainer</code></td><td>21</td><td>C→S</td><td>Container opened by player</td></tr>
+      <tr><td><code>SpellCast</code></td><td>23</td><td>C→S</td><td>Spell cast event</td></tr>
+      <tr><td><code>CreateActor</code></td><td>33</td><td>S→C</td><td>Spawn actor on client</td></tr>
+      <tr><td><code>DestroyActor</code></td><td>25</td><td>S→C</td><td>Remove actor from client</td></tr>
+      <tr><td><code>SetRaceMenuOpen</code></td><td>29</td><td>S→C</td><td>Open/close character creator</td></tr>
+      <tr><td><code>SpSnippet</code></td><td>30</td><td>S→C</td><td>Execute SP code on client</td></tr>
+      <tr><td><code>UpdateGamemodeData</code></td><td>32</td><td>S→C</td><td>Send gamemode property/event definitions</td></tr>
+      <tr><td><code>CustomEvent</code></td><td>15</td><td>C→S</td><td>Custom event from makeEventSource</td></tr>
+      <tr><td><code>CraftItem</code></td><td>13</td><td>C→S</td><td>Crafting table use</td></tr>
+      <tr><td><code>DropItem</code></td><td>19</td><td>C→S</td><td>Item dropped from inventory</td></tr>
+      <tr><td><code>DeathStateContainer</code></td><td>18</td><td>C→S</td><td>Player death state</td></tr>
+    </table>
+  </section>
+
+  <!-- ===================== COOKBOOK ===================== -->
+  <section id="cookbook">
+    <h2>Cookbook — Common Recipes</h2>
+
+    <h3>Saving Plugin Variables Between Sessions</h3>
+    <pre><code><span class="kw">import</span> * <span class="kw">as</span> JDB <span class="kw">from</span> <span class="str">"JContainers/JDB"</span>;
+<span class="kw">import</span> { on, once } <span class="kw">from</span> <span class="str">"skyrimPlatform"</span>;
+
+<span class="kw">const</span> KEY = <span class="str">".my-plugin.score"</span>; <span class="cm">// Must start with "."</span>
+<span class="kw">let</span> score = <span class="nu">0</span>;
+
+<span class="fn">on</span>(<span class="str">"loadGame"</span>, () => {
+  score = JDB.<span class="fn">solveFlt</span>(KEY, <span class="nu">0</span>);
+});
+
+<span class="kw">function</span> <span class="fn">addScore</span>(amount: <span class="tp">number</span>) {
+  score += amount;
+  JDB.<span class="fn">solveFltSetter</span>(KEY, score, <span class="kw">true</span>); <span class="cm">// Persist immediately</span>
+}</code></pre>
+
+    <h3>Plugin Initialization Pattern</h3>
+    <pre><code><span class="kw">import</span> { on, once } <span class="kw">from</span> <span class="str">"skyrimPlatform"</span>;
+
+<span class="kw">export function</span> <span class="fn">main</span>() {
+  <span class="kw">let</span> allowInit = storage[<span class="str">"my-plugin-init"</span>] <span class="kw">as boolean</span> | <span class="kw">false</span>;
+
+  <span class="fn">on</span>(<span class="str">"loadGame"</span>, () => {
+    <span class="fn">initPlugin</span>();           <span class="cm">// Always init on load</span>
+    allowInit = <span class="kw">true</span>;
+    storage[<span class="str">"my-plugin-init"</span>] = <span class="kw">true</span>;
+  });
+
+  <span class="fn">once</span>(<span class="str">"update"</span>, () => {
+    <span class="kw">if</span> (!allowInit) <span class="fn">initPlugin</span>(); <span class="cm">// New game or hot-reload</span>
+  });
+
+  <span class="kw">function</span> <span class="fn">initPlugin</span>() {
+    printConsole(<span class="str">"Plugin initialized!"</span>);
+    <span class="cm">// Set defaults, load data, etc.</span>
+  }
+}</code></pre>
+
+    <h3>Server: Give Item to Player</h3>
+    <pre><code><span class="cm">// Server-side: trigger item add on client using updateOwner</span>
+mp.<span class="fn">makeProperty</span>(<span class="str">"pendingItem"</span>, {
+  isVisibleByOwner: <span class="kw">true</span>,
+  isVisibleByNeighbors: <span class="kw">false</span>,
+  updateOwner: <span class="str">`
+    if (ctx.value) {
+      const form = ctx.sp.Game.getFormEx(ctx.value.formId);
+      ctx.sp.Game.getPlayer().addItem(form, ctx.value.count, true);
+    }
+  `</span>,
+  updateNeighbor: <span class="str">""</span>
+});
+
+<span class="cm">// Then trigger it:</span>
+mp.<span class="fn">set</span>(playerFormId, <span class="str">"pendingItem"</span>, { formId: <span class="nu">0xf</span>, count: <span class="nu">100</span> }); <span class="cm">// 100 gold</span>
+<span class="fn">setTimeout</span>(() => mp.<span class="fn">set</span>(playerFormId, <span class="str">"pendingItem"</span>, <span class="kw">null</span>), <span class="nu">500</span>);</code></pre>
+
+    <h3>Server: Detect Player Entering a Zone</h3>
+    <pre><code>mp.<span class="fn">makeEventSource</span>(<span class="str">"_onZoneEnter"</span>, <span class="str">`
+  ctx.sp.on("update", () => {
+    const pl = ctx.sp.Game.getPlayer();
+    const x = pl.getPositionX(), y = pl.getPositionY();
+    const inZone = x > -500 && x < 500 && y > -500 && y < 500;
+    if (inZone !== ctx.state.wasInZone) {
+      if (inZone) ctx.sendEvent({ x, y });
+      ctx.state.wasInZone = inZone;
+    }
+  });
+`</span>);
+
+mp._onZoneEnter = <span class="kw">function</span>(pcFormId, data) {
+  console.<span class="fn">log</span>(<span class="str">`Player ${pcFormId} entered zone at ${data.x}, ${data.y}`</span>);
+};</code></pre>
+
+    <h3>Replace a Console Command</h3>
+    <pre><code><span class="kw">import</span> { findConsoleCommand, once, Debug } <span class="kw">from</span> <span class="str">"skyrimPlatform"</span>;
+
+<span class="fn">once</span>(<span class="str">"tick"</span>, () => {
+  <span class="kw">const</span> cmd = <span class="fn">findConsoleCommand</span>(<span class="str">"GetActorValueInfo"</span>);
+  cmd.longName = <span class="str">"myCmd"</span>;
+  cmd.shortName = <span class="str">""</span>;
+  cmd.execute = (refrId: <span class="tp">number</span>, arg: <span class="tp">string</span>) => {
+    <span class="fn">once</span>(<span class="str">"update"</span>, () => <span class="tp">Debug</span>.<span class="fn">messageBox</span>(<span class="str">`Arg: ${arg}`</span>));
+    <span class="kw">return false</span>;
+  };
+});</code></pre>
+  </section>
+
+</div><!-- /content -->
+</div><!-- /main -->
+
+<script>
+  // Tab switching
+  function showTab(btn, targetId) {
+    const parent = btn.closest('.tabs');
+    parent.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    parent.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(targetId).classList.add('active');
+  }
+
+  // Highlight active nav link on scroll
+  const sections = document.querySelectorAll('section[id]');
+  const navLinks = document.querySelectorAll('#sidebar a[href^="#"]');
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        navLinks.forEach(l => l.classList.remove('active-nav'));
+        const active = document.querySelector(`#sidebar a[href="#${entry.target.id}"]`);
+        if (active) active.classList.add('active-nav');
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+
+  sections.forEach(s => observer.observe(s));
+
+  // Add active nav style
+  const style = document.createElement('style');
+  style.textContent = '.nav-group a.active-nav { background: var(--bg3); color: var(--accent); border-left-color: var(--accent); }';
+  document.head.appendChild(style);
+</script>
+</body>
+</html>
