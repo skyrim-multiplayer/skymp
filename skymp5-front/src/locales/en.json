@@ -20,6 +20,6 @@
     "PASSWORD_VERIFY_PLACEHOLDER": "password again",
     "EMAIL_PLACEHOLDER": "dude33@gmail.com",
     "REGISTER_BUTTON": "register now",
-    "REGISTER_BUTTON_HINT": "нажмите, чтобы создать аккаунт"
+    "REGISTER_BUTTON_HINT": "click to create an account"
   }
 }

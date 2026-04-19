@@ -9,3 +9,4 @@ node_modules
 # vim
 .*.swp
 skyrim_data_files/
+/.claude
