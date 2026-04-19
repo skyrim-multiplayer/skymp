@@ -44,15 +44,6 @@ class App extends React.Component {
     window.addEventListener('mouseup', this.onMouseUp);
 
     window.skyrimPlatform.widgets.addListener(this.handleWidgetUpdate.bind(this));
-
-    // Seed state in case widgets were set before this listener was registered
-    const existingWidgets = window.skyrimPlatform.widgets.get();
-    if (existingWidgets && existingWidgets.length > 0) {
-      this.handleWidgetUpdate(existingWidgets);
-    }
-
-    // Signal to the Skyrim Platform event source that the UI is ready
-    try { window.skyrimPlatform.sendMessage('front-loaded'); } catch (e) {}
   }
 
   handleWidgetUpdate(newWidgets) {
