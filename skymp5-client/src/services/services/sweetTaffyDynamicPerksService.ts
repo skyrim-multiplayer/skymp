@@ -122,36 +122,36 @@ export class SweetTaffyDynamicPerksService extends ClientListener {
   // TODO: move this to config
   private getKeywordPerkMap() {
     return new Map<string, number>([
-      // Стрелец
+      // Archer
       ["SweetPerkBow1", 0x1036F0],
       ["SweetPerkBow2", 0x58F61],
       ["SweetPerkBow3", 0x105F19],
       ["SweetPerkBow4", 0x58F63],
-      // Убийца
+      // Assassin
       ["SweetPerkSneak1", 0x58210],
       ["SweetPerkSneak2", 0x105F23],
       ["SweetPerkSneak3", 0x58208],
       ["SweetPerkSneak4", 0x58211],
-      // Пехотинец
+      // Infantryman
       ["SweetPerkArmorLight1", 0x105F22],
       ["SweetPerkArmorLight2", 0x51B1C],
-      // Зачарователь
+      // Enchanter
       ["SweetPerkEnchant2", 0x108A44],
       ["SweetPerkEnchant1", 0x58F7C],
-      // Латник
+      // Man-at-arms
       ["SweetPerkArmorHeavy1", 0xBCD2B],
       ["SweetPerkArmorHeavy2", 0x58F6D],
-      // Щитоносец
+      // Shield-bearer
       ["SweetPerkBlock1", 0x58F67],
       ["SweetPerkBlock2", 0x106253],
       ["SweetPerkBlock3", 0x58F6A],
       ["SweetPerkBlock4", 0x58F69],
-      // Мечник, клинок, рубака, крушитель, монах, копейщик, стражник (двуручное оружие)
+      // Swordsman, blade, brawler, crusher, monk, spearman, guard (two-handed weapons)
       ["SweetPerk1Hand2Hand1", 0x58F6F],
       ["SweetPerk2Hand2", 0xCB407],
       ["SweetPerk2Hand3", 0x96590],
       ["SweetPerk2Hand4", 0x52D51],
-      // Ассасин, разведчик, шпион, предшественник, рыцарь, разбойник, берсерк, громила (одноручное оружие)
+      // Assassin, scout, spy, forerunner, knight, bandit, berserker, bruiser (one-handed weapons)
       ["SweetPerk1Hand2Hand1", 0x58F6F],
       ["SweetPerk1Hand2", 0xCB406],
       ["SweetPerk1Hand3", 0x106256],
