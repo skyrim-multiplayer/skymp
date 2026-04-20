@@ -1,7 +1,10 @@
 {
   "permissions": {
     "allow": [
-      "Bash(grep -E '\\\\.\\(js|html|css\\)$')"
+      "Bash(grep -E '\\\\.\\(js|html|css\\)$')",
+      "Bash(cmake . -DBUILD_FRONT=OFF)",
+      "Bash(cmake . -DBUILD_FRONT=OFF -DBUILD_GAMEMODE=OFF)",
+      "Bash(cmake --build . --config Release)"
     ]
   }
 }
