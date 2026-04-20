@@ -1,0 +1,2603 @@
+
+---
+events:
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeDetermineSystem.cmake:212 (message)"
+      - "CMakeLists.txt:1 (project)"
+    message: |
+      The system is: Windows - 10.0.26200 - AMD64
+  -
+    kind: "find-v1"
+    backtrace:
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeDetermineCompilerId.cmake:468 (find_file)"
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeDetermineCompilerId.cmake:506 (CMAKE_DETERMINE_COMPILER_ID_WRITE)"
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeDetermineCompilerId.cmake:8 (CMAKE_DETERMINE_COMPILER_ID_BUILD)"
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeDetermineCompilerId.cmake:64 (__determine_compiler_id_test)"
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeDetermineCCompiler.cmake:122 (CMAKE_DETERMINE_COMPILER_ID)"
+      - "CMakeLists.txt:1 (project)"
+    mode: "file"
+    variable: "src_in"
+    description: "Path to a file."
+    settings:
+      SearchFramework: "NEVER"
+      SearchAppBundle: "NEVER"
+      CMAKE_FIND_USE_CMAKE_PATH: true
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "CMakeCCompilerId.c.in"
+    candidate_directories:
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/"
+    found: "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeCCompilerId.c.in"
+    search_context:
+      ENV{PATH}:
+        - "C:\\Program Files\\Eclipse Adoptium\\jdk-21.0.8.9-hotspot\\bin"
+        - "C:\\Program Files\\Eclipse Adoptium\\jdk-11.0.28.6-hotspot\\bin"
+        - "C:\\Program Files\\Eclipse Adoptium\\jdk-17.0.16.8-hotspot\\bin"
+        - "C:\\Program Files\\Common Files\\Oracle\\Java\\javapath"
+        - "C:\\Python313\\Scripts\\"
+        - "C:\\Python313\\"
+        - "C:\\WINDOWS\\system32"
+        - "C:\\WINDOWS"
+        - "C:\\WINDOWS\\System32\\Wbem"
+        - "C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\"
+        - "C:\\WINDOWS\\System32\\OpenSSH\\"
+        - "C:\\Program Files\\dotnet\\"
+        - "C:\\Program Files\\NVIDIA Corporation\\NVIDIA App\\NvDLISR"
+        - "C:\\Program Files (x86)\\NVIDIA Corporation\\PhysX\\Common"
+        - "C:\\Program Files\\nodejs\\"
+        - "C:\\ProgramData\\chocolatey\\bin"
+        - "C:\\Program Files\\Microsoft SQL Server\\150\\Tools\\Binn\\"
+        - "C:\\Program Files\\Microsoft SQL Server\\Client SDK\\ODBC\\170\\Tools\\Binn\\"
+        - "C:\\Program Files (x86)\\PuTTY\\"
+        - "C:\\Program Files\\PuTTY\\"
+        - "C:\\Program Files\\Git\\cmd"
+        - "C:\\Program Files (x86)\\Windows Kits\\10\\Windows Performance Toolkit\\"
+        - "C:\\Program Files\\CMake\\bin"
+        - "C:\\Users\\fante\\AppData\\Local\\Microsoft\\WindowsApps"
+        - "C:\\Users\\fante\\AppData\\Local\\Programs\\Microsoft VS Code\\bin"
+        - "C:\\Users\\fante\\AppData\\Roaming\\npm"
+        - "C:\\Users\\fante\\AppData\\Local\\Microsoft\\WinGet\\Packages\\yt-dlp.yt-dlp_Microsoft.Winget.Source_8wekyb3d8bbwe"
+        - "C:\\Users\\fante\\AppData\\Local\\GitHubDesktop\\bin"
+        - "E:\\IntelliJ IDEA 2025.1.3\\bin"
+        - "E:\\IntelliJ IDEA Community Edition 2025.1.3\\bin"
+        - "C:\\Users\\fante\\AppData\\Local\\Microsoft\\WinGet\\Packages\\GeodeSDK.GeodeCLI_Microsoft.Winget.Source_8wekyb3d8bbwe"
+        - "C:\\Users\\fante\\.dotnet\\tools"
+        - "C:\\Program Files (x86)\\Nmap"
+        - "C:\\Users\\fante\\.lmstudio\\bin"
+        - "C:\\Users\\fante\\AppData\\Local\\Programs\\Ollama"
+        - "C:\\Users\\fante\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Anthropic.ClaudeCode_Microsoft.Winget.Source_8wekyb3d8bbwe"
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeDetermineCompilerId.cmake:17 (message)"
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeDetermineCompilerId.cmake:64 (__determine_compiler_id_test)"
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeDetermineCCompiler.cmake:122 (CMAKE_DETERMINE_COMPILER_ID)"
+      - "CMakeLists.txt:1 (project)"
+    message: |
+      Compiling the C compiler identification source file "CMakeCCompilerId.c" succeeded.
+      Compiler:  
+      Build flags: 
+      Id flags:  
+      
+      The output was:
+      0
+      MSBuild-Version 17.14.40+3e7442088 f├╝r .NET Framework
+      Der Buildvorgang wurde am 20.04.2026 16:55:13 gestartet.
+      
+      Projekt "E:\\Github\\skymp\\skymp5-server\\CMakeFiles\\4.3.1\\CompilerIdC\\CompilerIdC.vcxproj" auf Knoten "1" (Standardziele).
+      PrepareForBuild:
+        Das Verzeichnis "Debug\\" wird erstellt.
+        Die strukturierte Ausgabe ist aktiviert. Die Formatierung der Compilerdiagnose spiegelt die Fehlerhierarchie wider. Weitere Informationen finden Sie unter https://aka.ms/cpp/structured-output.
+        Das Verzeichnis "Debug\\CompilerIdC.tlog\\" wird erstellt.
+      InitializeBuildStatus:
+        "Debug\\CompilerIdC.tlog\\unsuccessfulbuild" wird erstellt, da "AlwaysCreate" angegeben wurde.
+        Aktualisieren des Timestamps von "Debug\\CompilerIdC.tlog\\unsuccessfulbuild".
+      ClCompile:
+        C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\x64\\CL.exe /c /nologo /W0 /WX- /diagnostics:column /Od /D _MBCS /Gm- /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"Debug\\\\" /Fd"Debug\\vc143.pdb" /external:W0 /Gd /TC /FC /errorReport:queue CMakeCCompilerId.c
+        CMakeCCompilerId.c
+      Link:
+        C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\x64\\link.exe /ERRORREPORT:QUEUE /OUT:".\\CompilerIdC.exe" /INCREMENTAL:NO /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /PDB:".\\CompilerIdC.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:".\\CompilerIdC.lib" /MACHINE:X64 Debug\\CMakeCCompilerId.obj
+        CompilerIdC.vcxproj -> E:\\Github\\skymp\\skymp5-server\\CMakeFiles\\4.3.1\\CompilerIdC\\CompilerIdC.exe
+      PostBuildEvent:
+        for %%i in (cl.exe) do @echo CMAKE_C_COMPILER=%%~$PATH:i
+        :VCEnd
+        CMAKE_C_COMPILER=C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.44.35207\\bin\\Hostx64\\x64\\cl.exe
+      FinalizeBuildStatus:
+        Die Datei "Debug\\CompilerIdC.tlog\\unsuccessfulbuild" wird gel├Âscht.
+        Aktualisieren des Timestamps von "Debug\\CompilerIdC.tlog\\CompilerIdC.lastbuildstate".
+      Die Erstellung von Projekt "E:\\Github\\skymp\\skymp5-server\\CMakeFiles\\4.3.1\\CompilerIdC\\CompilerIdC.vcxproj" ist abgeschlossen (Standardziele).
+      
+      Der Buildvorgang wurde erfolgreich ausgef├╝hrt.
+          0 Warnung(en)
+          0 Fehler
+      
+      Verstrichene Zeit 00:00:01.15
+      
+      
+      Compilation of the C compiler identification source "CMakeCCompilerId.c" produced "CompilerIdC.exe"
+      
+      Compilation of the C compiler identification source "CMakeCCompilerId.c" produced "CompilerIdC.vcxproj"
+      
+      The C compiler identification is MSVC, found in:
+        E:/Github/skymp/skymp5-server/CMakeFiles/4.3.1/CompilerIdC/CompilerIdC.exe
+      
+  -
+    kind: "find-v1"
+    backtrace:
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeFindBinUtils.cmake:37 (find_program)"
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeFindBinUtils.cmake:65 (__resolve_tool_path)"
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeFindBinUtils.cmake:103 (__resolve_linker_path)"
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeDetermineCCompiler.cmake:200 (include)"
+      - "CMakeLists.txt:1 (project)"
+    mode: "program"
+    variable: "_CMAKE_TOOL_WITH_PATH"
+    description: "Path to a program."
+    settings:
+      SearchFramework: "NEVER"
+      SearchAppBundle: "NEVER"
+      CMAKE_FIND_USE_CMAKE_PATH: false
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: false
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "link"
+    candidate_directories:
+      - "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.44.35207/bin/Hostx64/x64/"
+      - "C:/Program Files/Eclipse Adoptium/jdk-21.0.8.9-hotspot/bin/"
+      - "C:/Program Files/Eclipse Adoptium/jdk-11.0.28.6-hotspot/bin/"
+      - "C:/Program Files/Eclipse Adoptium/jdk-17.0.16.8-hotspot/bin/"
+      - "C:/Program Files/Common Files/Oracle/Java/javapath/"
+      - "C:/Python313/Scripts/"
+      - "C:/Python313/"
+      - "C:/Windows/System32/"
+      - "C:/Windows/"
+      - "C:/Windows/System32/wbem/"
+      - "C:/Windows/System32/WindowsPowerShell/v1.0/"
+      - "C:/Windows/System32/OpenSSH/"
+      - "C:/Program Files/dotnet/"
+      - "C:/Program Files/NVIDIA Corporation/NVIDIA App/NvDLISR/"
+      - "C:/Program Files (x86)/NVIDIA Corporation/PhysX/Common/"
+      - "C:/Program Files/nodejs/"
+      - "C:/ProgramData/chocolatey/bin/"
+      - "C:/Program Files/Microsoft SQL Server/150/Tools/Binn/"
+      - "C:/Program Files/Microsoft SQL Server/Client SDK/ODBC/170/Tools/Binn/"
+      - "C:/Program Files (x86)/PuTTY/"
+      - "C:/Program Files/PuTTY/"
+      - "C:/Program Files/Git/cmd/"
+      - "C:/Program Files (x86)/Windows Kits/10/Windows Performance Toolkit/"
+      - "C:/Program Files/CMake/bin/"
+      - "C:/Users/fante/AppData/Local/Microsoft/WindowsApps/"
+      - "C:/Users/fante/AppData/Local/Programs/Microsoft VS Code/bin/"
+      - "C:/Users/fante/AppData/Roaming/npm/"
+      - "C:/Users/fante/AppData/Local/Microsoft/WinGet/Packages/yt-dlp.yt-dlp_Microsoft.Winget.Source_8wekyb3d8bbwe/"
+      - "C:/Users/fante/AppData/Local/GitHubDesktop/bin/"
+      - "E:/IntelliJ IDEA 2025.1.3/bin/"
+      - "E:/IntelliJ IDEA Community Edition 2025.1.3/bin/"
+      - "C:/Users/fante/AppData/Local/Microsoft/WinGet/Packages/GeodeSDK.GeodeCLI_Microsoft.Winget.Source_8wekyb3d8bbwe/"
+      - "C:/Users/fante/.dotnet/tools/"
+      - "C:/Program Files (x86)/Nmap/"
+      - "C:/Users/fante/.lmstudio/bin/"
+      - "C:/Users/fante/AppData/Local/Programs/Ollama/"
+      - "C:/Users/fante/AppData/Local/Microsoft/WinGet/Packages/Anthropic.ClaudeCode_Microsoft.Winget.Source_8wekyb3d8bbwe/"
+    searched_directories:
+      - "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.44.35207/bin/Hostx64/x64/link.com"
+    found: "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.44.35207/bin/Hostx64/x64/link.exe"
+    search_context:
+      ENV{PATH}:
+        - "C:\\Program Files\\Eclipse Adoptium\\jdk-21.0.8.9-hotspot\\bin"
+        - "C:\\Program Files\\Eclipse Adoptium\\jdk-11.0.28.6-hotspot\\bin"
+        - "C:\\Program Files\\Eclipse Adoptium\\jdk-17.0.16.8-hotspot\\bin"
+        - "C:\\Program Files\\Common Files\\Oracle\\Java\\javapath"
+        - "C:\\Python313\\Scripts\\"
+        - "C:\\Python313\\"
+        - "C:\\WINDOWS\\system32"
+        - "C:\\WINDOWS"
+        - "C:\\WINDOWS\\System32\\Wbem"
+        - "C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\"
+        - "C:\\WINDOWS\\System32\\OpenSSH\\"
+        - "C:\\Program Files\\dotnet\\"
+        - "C:\\Program Files\\NVIDIA Corporation\\NVIDIA App\\NvDLISR"
+        - "C:\\Program Files (x86)\\NVIDIA Corporation\\PhysX\\Common"
+        - "C:\\Program Files\\nodejs\\"
+        - "C:\\ProgramData\\chocolatey\\bin"
+        - "C:\\Program Files\\Microsoft SQL Server\\150\\Tools\\Binn\\"
+        - "C:\\Program Files\\Microsoft SQL Server\\Client SDK\\ODBC\\170\\Tools\\Binn\\"
+        - "C:\\Program Files (x86)\\PuTTY\\"
+        - "C:\\Program Files\\PuTTY\\"
+        - "C:\\Program Files\\Git\\cmd"
+        - "C:\\Program Files (x86)\\Windows Kits\\10\\Windows Performance Toolkit\\"
+        - "C:\\Program Files\\CMake\\bin"
+        - "C:\\Users\\fante\\AppData\\Local\\Microsoft\\WindowsApps"
+        - "C:\\Users\\fante\\AppData\\Local\\Programs\\Microsoft VS Code\\bin"
+        - "C:\\Users\\fante\\AppData\\Roaming\\npm"
+        - "C:\\Users\\fante\\AppData\\Local\\Microsoft\\WinGet\\Packages\\yt-dlp.yt-dlp_Microsoft.Winget.Source_8wekyb3d8bbwe"
+        - "C:\\Users\\fante\\AppData\\Local\\GitHubDesktop\\bin"
+        - "E:\\IntelliJ IDEA 2025.1.3\\bin"
+        - "E:\\IntelliJ IDEA Community Edition 2025.1.3\\bin"
+        - "C:\\Users\\fante\\AppData\\Local\\Microsoft\\WinGet\\Packages\\GeodeSDK.GeodeCLI_Microsoft.Winget.Source_8wekyb3d8bbwe"
+        - "C:\\Users\\fante\\.dotnet\\tools"
+        - "C:\\Program Files (x86)\\Nmap"
+        - "C:\\Users\\fante\\.lmstudio\\bin"
+        - "C:\\Users\\fante\\AppData\\Local\\Programs\\Ollama"
+        - "C:\\Users\\fante\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Anthropic.ClaudeCode_Microsoft.Winget.Source_8wekyb3d8bbwe"
+  -
+    kind: "find-v1"
+    backtrace:
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeFindBinUtils.cmake:37 (find_program)"
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeFindBinUtils.cmake:65 (__resolve_tool_path)"
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeFindBinUtils.cmake:104 (__resolve_linker_path)"
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeDetermineCCompiler.cmake:200 (include)"
+      - "CMakeLists.txt:1 (project)"
+    mode: "program"
+    variable: "_CMAKE_TOOL_WITH_PATH"
+    description: "Path to a program."
+    settings:
+      SearchFramework: "NEVER"
+      SearchAppBundle: "NEVER"
+      CMAKE_FIND_USE_CMAKE_PATH: false
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: false
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "lld-link"
+    candidate_directories:
+      - "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.44.35207/bin/Hostx64/x64/"
+      - "C:/Program Files/Eclipse Adoptium/jdk-21.0.8.9-hotspot/bin/"
+      - "C:/Program Files/Eclipse Adoptium/jdk-11.0.28.6-hotspot/bin/"
+      - "C:/Program Files/Eclipse Adoptium/jdk-17.0.16.8-hotspot/bin/"
+      - "C:/Program Files/Common Files/Oracle/Java/javapath/"
+      - "C:/Python313/Scripts/"
+      - "C:/Python313/"
+      - "C:/Windows/System32/"
+      - "C:/Windows/"
+      - "C:/Windows/System32/wbem/"
+      - "C:/Windows/System32/WindowsPowerShell/v1.0/"
+      - "C:/Windows/System32/OpenSSH/"
+      - "C:/Program Files/dotnet/"
+      - "C:/Program Files/NVIDIA Corporation/NVIDIA App/NvDLISR/"
+      - "C:/Program Files (x86)/NVIDIA Corporation/PhysX/Common/"
+      - "C:/Program Files/nodejs/"
+      - "C:/ProgramData/chocolatey/bin/"
+      - "C:/Program Files/Microsoft SQL Server/150/Tools/Binn/"
+      - "C:/Program Files/Microsoft SQL Server/Client SDK/ODBC/170/Tools/Binn/"
+      - "C:/Program Files (x86)/PuTTY/"
+      - "C:/Program Files/PuTTY/"
+      - "C:/Program Files/Git/cmd/"
+      - "C:/Program Files (x86)/Windows Kits/10/Windows Performance Toolkit/"
+      - "C:/Program Files/CMake/bin/"
+      - "C:/Users/fante/AppData/Local/Microsoft/WindowsApps/"
+      - "C:/Users/fante/AppData/Local/Programs/Microsoft VS Code/bin/"
+      - "C:/Users/fante/AppData/Roaming/npm/"
+      - "C:/Users/fante/AppData/Local/Microsoft/WinGet/Packages/yt-dlp.yt-dlp_Microsoft.Winget.Source_8wekyb3d8bbwe/"
+      - "C:/Users/fante/AppData/Local/GitHubDesktop/bin/"
+      - "E:/IntelliJ IDEA 2025.1.3/bin/"
+      - "E:/IntelliJ IDEA Community Edition 2025.1.3/bin/"
+      - "C:/Users/fante/AppData/Local/Microsoft/WinGet/Packages/GeodeSDK.GeodeCLI_Microsoft.Winget.Source_8wekyb3d8bbwe/"
+      - "C:/Users/fante/.dotnet/tools/"
+      - "C:/Program Files (x86)/Nmap/"
+      - "C:/Users/fante/.lmstudio/bin/"
+      - "C:/Users/fante/AppData/Local/Programs/Ollama/"
+      - "C:/Users/fante/AppData/Local/Microsoft/WinGet/Packages/Anthropic.ClaudeCode_Microsoft.Winget.Source_8wekyb3d8bbwe/"
+    searched_directories:
+      - "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.44.35207/bin/Hostx64/x64/lld-link.com"
+      - "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.44.35207/bin/Hostx64/x64/lld-link.exe"
+      - "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.44.35207/bin/Hostx64/x64/lld-link"
+      - "C:/Program Files/Eclipse Adoptium/jdk-21.0.8.9-hotspot/bin/lld-link.com"
+      - "C:/Program Files/Eclipse Adoptium/jdk-21.0.8.9-hotspot/bin/lld-link.exe"
+      - "C:/Program Files/Eclipse Adoptium/jdk-21.0.8.9-hotspot/bin/lld-link"
+      - "C:/Program Files/Eclipse Adoptium/jdk-11.0.28.6-hotspot/bin/lld-link.com"
+      - "C:/Program Files/Eclipse Adoptium/jdk-11.0.28.6-hotspot/bin/lld-link.exe"
+      - "C:/Program Files/Eclipse Adoptium/jdk-11.0.28.6-hotspot/bin/lld-link"
+      - "C:/Program Files/Eclipse Adoptium/jdk-17.0.16.8-hotspot/bin/lld-link.com"
+      - "C:/Program Files/Eclipse Adoptium/jdk-17.0.16.8-hotspot/bin/lld-link.exe"
+      - "C:/Program Files/Eclipse Adoptium/jdk-17.0.16.8-hotspot/bin/lld-link"
+      - "C:/Program Files/Common Files/Oracle/Java/javapath/lld-link.com"
+      - "C:/Program Files/Common Files/Oracle/Java/javapath/lld-link.exe"
+      - "C:/Program Files/Common Files/Oracle/Java/javapath/lld-link"
+      - "C:/Python313/Scripts/lld-link.com"
+      - "C:/Python313/Scripts/lld-link.exe"
+      - "C:/Python313/Scripts/lld-link"
+      - "C:/Python313/lld-link.com"
+      - "C:/Python313/lld-link.exe"
+      - "C:/Python313/lld-link"
+      - "C:/Windows/System32/lld-link.com"
+      - "C:/Windows/System32/lld-link.exe"
+      - "C:/Windows/System32/lld-link"
+      - "C:/Windows/lld-link.com"
+      - "C:/Windows/lld-link.exe"
+      - "C:/Windows/lld-link"
+      - "C:/Windows/System32/wbem/lld-link.com"
+      - "C:/Windows/System32/wbem/lld-link.exe"
+      - "C:/Windows/System32/wbem/lld-link"
+      - "C:/Windows/System32/WindowsPowerShell/v1.0/lld-link.com"
+      - "C:/Windows/System32/WindowsPowerShell/v1.0/lld-link.exe"
+      - "C:/Windows/System32/WindowsPowerShell/v1.0/lld-link"
+      - "C:/Windows/System32/OpenSSH/lld-link.com"
+      - "C:/Windows/System32/OpenSSH/lld-link.exe"
+      - "C:/Windows/System32/OpenSSH/lld-link"
+      - "C:/Program Files/dotnet/lld-link.com"
+      - "C:/Program Files/dotnet/lld-link.exe"
+      - "C:/Program Files/dotnet/lld-link"
+      - "C:/Program Files/NVIDIA Corporation/NVIDIA App/NvDLISR/lld-link.com"
+      - "C:/Program Files/NVIDIA Corporation/NVIDIA App/NvDLISR/lld-link.exe"
+      - "C:/Program Files/NVIDIA Corporation/NVIDIA App/NvDLISR/lld-link"
+      - "C:/Program Files (x86)/NVIDIA Corporation/PhysX/Common/lld-link.com"
+      - "C:/Program Files (x86)/NVIDIA Corporation/PhysX/Common/lld-link.exe"
+      - "C:/Program Files (x86)/NVIDIA Corporation/PhysX/Common/lld-link"
+      - "C:/Program Files/nodejs/lld-link.com"
+      - "C:/Program Files/nodejs/lld-link.exe"
+      - "C:/Program Files/nodejs/lld-link"
+      - "C:/ProgramData/chocolatey/bin/lld-link.com"
+      - "C:/ProgramData/chocolatey/bin/lld-link.exe"
+      - "C:/ProgramData/chocolatey/bin/lld-link"
+      - "C:/Program Files/Microsoft SQL Server/150/Tools/Binn/lld-link.com"
+      - "C:/Program Files/Microsoft SQL Server/150/Tools/Binn/lld-link.exe"
+      - "C:/Program Files/Microsoft SQL Server/150/Tools/Binn/lld-link"
+      - "C:/Program Files/Microsoft SQL Server/Client SDK/ODBC/170/Tools/Binn/lld-link.com"
+      - "C:/Program Files/Microsoft SQL Server/Client SDK/ODBC/170/Tools/Binn/lld-link.exe"
+      - "C:/Program Files/Microsoft SQL Server/Client SDK/ODBC/170/Tools/Binn/lld-link"
+      - "C:/Program Files (x86)/PuTTY/lld-link.com"
+      - "C:/Program Files (x86)/PuTTY/lld-link.exe"
+      - "C:/Program Files (x86)/PuTTY/lld-link"
+      - "C:/Program Files/PuTTY/lld-link.com"
+      - "C:/Program Files/PuTTY/lld-link.exe"
+      - "C:/Program Files/PuTTY/lld-link"
+      - "C:/Program Files/Git/cmd/lld-link.com"
+      - "C:/Program Files/Git/cmd/lld-link.exe"
+      - "C:/Program Files/Git/cmd/lld-link"
+      - "C:/Program Files (x86)/Windows Kits/10/Windows Performance Toolkit/lld-link.com"
+      - "C:/Program Files (x86)/Windows Kits/10/Windows Performance Toolkit/lld-link.exe"
+      - "C:/Program Files (x86)/Windows Kits/10/Windows Performance Toolkit/lld-link"
+      - "C:/Program Files/CMake/bin/lld-link.com"
+      - "C:/Program Files/CMake/bin/lld-link.exe"
+      - "C:/Program Files/CMake/bin/lld-link"
+      - "C:/Users/fante/AppData/Local/Microsoft/WindowsApps/lld-link.com"
+      - "C:/Users/fante/AppData/Local/Microsoft/WindowsApps/lld-link.exe"
+      - "C:/Users/fante/AppData/Local/Microsoft/WindowsApps/lld-link"
+      - "C:/Users/fante/AppData/Local/Programs/Microsoft VS Code/bin/lld-link.com"
+      - "C:/Users/fante/AppData/Local/Programs/Microsoft VS Code/bin/lld-link.exe"
+      - "C:/Users/fante/AppData/Local/Programs/Microsoft VS Code/bin/lld-link"
+      - "C:/Users/fante/AppData/Roaming/npm/lld-link.com"
+      - "C:/Users/fante/AppData/Roaming/npm/lld-link.exe"
+      - "C:/Users/fante/AppData/Roaming/npm/lld-link"
+      - "C:/Users/fante/AppData/Local/Microsoft/WinGet/Packages/yt-dlp.yt-dlp_Microsoft.Winget.Source_8wekyb3d8bbwe/lld-link.com"
+      - "C:/Users/fante/AppData/Local/Microsoft/WinGet/Packages/yt-dlp.yt-dlp_Microsoft.Winget.Source_8wekyb3d8bbwe/lld-link.exe"
+      - "C:/Users/fante/AppData/Local/Microsoft/WinGet/Packages/yt-dlp.yt-dlp_Microsoft.Winget.Source_8wekyb3d8bbwe/lld-link"
+      - "C:/Users/fante/AppData/Local/GitHubDesktop/bin/lld-link.com"
+      - "C:/Users/fante/AppData/Local/GitHubDesktop/bin/lld-link.exe"
+      - "C:/Users/fante/AppData/Local/GitHubDesktop/bin/lld-link"
+      - "E:/IntelliJ IDEA 2025.1.3/bin/lld-link.com"
+      - "E:/IntelliJ IDEA 2025.1.3/bin/lld-link.exe"
+      - "E:/IntelliJ IDEA 2025.1.3/bin/lld-link"
+      - "E:/IntelliJ IDEA Community Edition 2025.1.3/bin/lld-link.com"
+      - "E:/IntelliJ IDEA Community Edition 2025.1.3/bin/lld-link.exe"
+      - "E:/IntelliJ IDEA Community Edition 2025.1.3/bin/lld-link"
+      - "C:/Users/fante/AppData/Local/Microsoft/WinGet/Packages/GeodeSDK.GeodeCLI_Microsoft.Winget.Source_8wekyb3d8bbwe/lld-link.com"
+      - "C:/Users/fante/AppData/Local/Microsoft/WinGet/Packages/GeodeSDK.GeodeCLI_Microsoft.Winget.Source_8wekyb3d8bbwe/lld-link.exe"
+      - "C:/Users/fante/AppData/Local/Microsoft/WinGet/Packages/GeodeSDK.GeodeCLI_Microsoft.Winget.Source_8wekyb3d8bbwe/lld-link"
+      - "C:/Users/fante/.dotnet/tools/lld-link.com"
+      - "C:/Users/fante/.dotnet/tools/lld-link.exe"
+      - "C:/Users/fante/.dotnet/tools/lld-link"
+      - "C:/Program Files (x86)/Nmap/lld-link.com"
+      - "C:/Program Files (x86)/Nmap/lld-link.exe"
+      - "C:/Program Files (x86)/Nmap/lld-link"
+      - "C:/Users/fante/.lmstudio/bin/lld-link.com"
+      - "C:/Users/fante/.lmstudio/bin/lld-link.exe"
+      - "C:/Users/fante/.lmstudio/bin/lld-link"
+      - "C:/Users/fante/AppData/Local/Programs/Ollama/lld-link.com"
+      - "C:/Users/fante/AppData/Local/Programs/Ollama/lld-link.exe"
+      - "C:/Users/fante/AppData/Local/Programs/Ollama/lld-link"
+      - "C:/Users/fante/AppData/Local/Microsoft/WinGet/Packages/Anthropic.ClaudeCode_Microsoft.Winget.Source_8wekyb3d8bbwe/lld-link.com"
+      - "C:/Users/fante/AppData/Local/Microsoft/WinGet/Packages/Anthropic.ClaudeCode_Microsoft.Winget.Source_8wekyb3d8bbwe/lld-link.exe"
+      - "C:/Users/fante/AppData/Local/Microsoft/WinGet/Packages/Anthropic.ClaudeCode_Microsoft.Winget.Source_8wekyb3d8bbwe/lld-link"
+    found: false
+    search_context:
+      ENV{PATH}:
+        - "C:\\Program Files\\Eclipse Adoptium\\jdk-21.0.8.9-hotspot\\bin"
+        - "C:\\Program Files\\Eclipse Adoptium\\jdk-11.0.28.6-hotspot\\bin"
+        - "C:\\Program Files\\Eclipse Adoptium\\jdk-17.0.16.8-hotspot\\bin"
+        - "C:\\Program Files\\Common Files\\Oracle\\Java\\javapath"
+        - "C:\\Python313\\Scripts\\"
+        - "C:\\Python313\\"
+        - "C:\\WINDOWS\\system32"
+        - "C:\\WINDOWS"
+        - "C:\\WINDOWS\\System32\\Wbem"
+        - "C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\"
+        - "C:\\WINDOWS\\System32\\OpenSSH\\"
+        - "C:\\Program Files\\dotnet\\"
+        - "C:\\Program Files\\NVIDIA Corporation\\NVIDIA App\\NvDLISR"
+        - "C:\\Program Files (x86)\\NVIDIA Corporation\\PhysX\\Common"
+        - "C:\\Program Files\\nodejs\\"
+        - "C:\\ProgramData\\chocolatey\\bin"
+        - "C:\\Program Files\\Microsoft SQL Server\\150\\Tools\\Binn\\"
+        - "C:\\Program Files\\Microsoft SQL Server\\Client SDK\\ODBC\\170\\Tools\\Binn\\"
+        - "C:\\Program Files (x86)\\PuTTY\\"
+        - "C:\\Program Files\\PuTTY\\"
+        - "C:\\Program Files\\Git\\cmd"
+        - "C:\\Program Files (x86)\\Windows Kits\\10\\Windows Performance Toolkit\\"
+        - "C:\\Program Files\\CMake\\bin"
+        - "C:\\Users\\fante\\AppData\\Local\\Microsoft\\WindowsApps"
+        - "C:\\Users\\fante\\AppData\\Local\\Programs\\Microsoft VS Code\\bin"
+        - "C:\\Users\\fante\\AppData\\Roaming\\npm"
+        - "C:\\Users\\fante\\AppData\\Local\\Microsoft\\WinGet\\Packages\\yt-dlp.yt-dlp_Microsoft.Winget.Source_8wekyb3d8bbwe"
+        - "C:\\Users\\fante\\AppData\\Local\\GitHubDesktop\\bin"
+        - "E:\\IntelliJ IDEA 2025.1.3\\bin"
+        - "E:\\IntelliJ IDEA Community Edition 2025.1.3\\bin"
+        - "C:\\Users\\fante\\AppData\\Local\\Microsoft\\WinGet\\Packages\\GeodeSDK.GeodeCLI_Microsoft.Winget.Source_8wekyb3d8bbwe"
+        - "C:\\Users\\fante\\.dotnet\\tools"
+        - "C:\\Program Files (x86)\\Nmap"
+        - "C:\\Users\\fante\\.lmstudio\\bin"
+        - "C:\\Users\\fante\\AppData\\Local\\Programs\\Ollama"
+        - "C:\\Users\\fante\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Anthropic.ClaudeCode_Microsoft.Winget.Source_8wekyb3d8bbwe"
+  -
+    kind: "find-v1"
+    backtrace:
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeFindBinUtils.cmake:243 (find_program)"
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeDetermineCCompiler.cmake:200 (include)"
+      - "CMakeLists.txt:1 (project)"
+    mode: "program"
+    variable: "CMAKE_LINKER"
+    description: "Path to a program."
+    settings:
+      SearchFramework: "NEVER"
+      SearchAppBundle: "NEVER"
+      CMAKE_FIND_USE_CMAKE_PATH: false
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: false
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "link"
+    candidate_directories:
+      - "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.44.35207/bin/Hostx64/x64/"
+      - "C:/Program Files/Eclipse Adoptium/jdk-21.0.8.9-hotspot/bin/"
+      - "C:/Program Files/Eclipse Adoptium/jdk-11.0.28.6-hotspot/bin/"
+      - "C:/Program Files/Eclipse Adoptium/jdk-17.0.16.8-hotspot/bin/"
+      - "C:/Program Files/Common Files/Oracle/Java/javapath/"
+      - "C:/Python313/Scripts/"
+      - "C:/Python313/"
+      - "C:/Windows/System32/"
+      - "C:/Windows/"
+      - "C:/Windows/System32/wbem/"
+      - "C:/Windows/System32/WindowsPowerShell/v1.0/"
+      - "C:/Windows/System32/OpenSSH/"
+      - "C:/Program Files/dotnet/"
+      - "C:/Program Files/NVIDIA Corporation/NVIDIA App/NvDLISR/"
+      - "C:/Program Files (x86)/NVIDIA Corporation/PhysX/Common/"
+      - "C:/Program Files/nodejs/"
+      - "C:/ProgramData/chocolatey/bin/"
+      - "C:/Program Files/Microsoft SQL Server/150/Tools/Binn/"
+      - "C:/Program Files/Microsoft SQL Server/Client SDK/ODBC/170/Tools/Binn/"
+      - "C:/Program Files (x86)/PuTTY/"
+      - "C:/Program Files/PuTTY/"
+      - "C:/Program Files/Git/cmd/"
+      - "C:/Program Files (x86)/Windows Kits/10/Windows Performance Toolkit/"
+      - "C:/Program Files/CMake/bin/"
+      - "C:/Users/fante/AppData/Local/Microsoft/WindowsApps/"
+      - "C:/Users/fante/AppData/Local/Programs/Microsoft VS Code/bin/"
+      - "C:/Users/fante/AppData/Roaming/npm/"
+      - "C:/Users/fante/AppData/Local/Microsoft/WinGet/Packages/yt-dlp.yt-dlp_Microsoft.Winget.Source_8wekyb3d8bbwe/"
+      - "C:/Users/fante/AppData/Local/GitHubDesktop/bin/"
+      - "E:/IntelliJ IDEA 2025.1.3/bin/"
+      - "E:/IntelliJ IDEA Community Edition 2025.1.3/bin/"
+      - "C:/Users/fante/AppData/Local/Microsoft/WinGet/Packages/GeodeSDK.GeodeCLI_Microsoft.Winget.Source_8wekyb3d8bbwe/"
+      - "C:/Users/fante/.dotnet/tools/"
+      - "C:/Program Files (x86)/Nmap/"
+      - "C:/Users/fante/.lmstudio/bin/"
+      - "C:/Users/fante/AppData/Local/Programs/Ollama/"
+      - "C:/Users/fante/AppData/Local/Microsoft/WinGet/Packages/Anthropic.ClaudeCode_Microsoft.Winget.Source_8wekyb3d8bbwe/"
+    searched_directories:
+      - "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.44.35207/bin/Hostx64/x64/link.com"
+    found: "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.44.35207/bin/Hostx64/x64/link.exe"
+    search_context:
+      ENV{PATH}:
+        - "C:\\Program Files\\Eclipse Adoptium\\jdk-21.0.8.9-hotspot\\bin"
+        - "C:\\Program Files\\Eclipse Adoptium\\jdk-11.0.28.6-hotspot\\bin"
+        - "C:\\Program Files\\Eclipse Adoptium\\jdk-17.0.16.8-hotspot\\bin"
+        - "C:\\Program Files\\Common Files\\Oracle\\Java\\javapath"
+        - "C:\\Python313\\Scripts\\"
+        - "C:\\Python313\\"
+        - "C:\\WINDOWS\\system32"
+        - "C:\\WINDOWS"
+        - "C:\\WINDOWS\\System32\\Wbem"
+        - "C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\"
+        - "C:\\WINDOWS\\System32\\OpenSSH\\"
+        - "C:\\Program Files\\dotnet\\"
+        - "C:\\Program Files\\NVIDIA Corporation\\NVIDIA App\\NvDLISR"
+        - "C:\\Program Files (x86)\\NVIDIA Corporation\\PhysX\\Common"
+        - "C:\\Program Files\\nodejs\\"
+        - "C:\\ProgramData\\chocolatey\\bin"
+        - "C:\\Program Files\\Microsoft SQL Server\\150\\Tools\\Binn\\"
+        - "C:\\Program Files\\Microsoft SQL Server\\Client SDK\\ODBC\\170\\Tools\\Binn\\"
+        - "C:\\Program Files (x86)\\PuTTY\\"
+        - "C:\\Program Files\\PuTTY\\"
+        - "C:\\Program Files\\Git\\cmd"
+        - "C:\\Program Files (x86)\\Windows Kits\\10\\Windows Performance Toolkit\\"
+        - "C:\\Program Files\\CMake\\bin"
+        - "C:\\Users\\fante\\AppData\\Local\\Microsoft\\WindowsApps"
+        - "C:\\Users\\fante\\AppData\\Local\\Programs\\Microsoft VS Code\\bin"
+        - "C:\\Users\\fante\\AppData\\Roaming\\npm"
+        - "C:\\Users\\fante\\AppData\\Local\\Microsoft\\WinGet\\Packages\\yt-dlp.yt-dlp_Microsoft.Winget.Source_8wekyb3d8bbwe"
+        - "C:\\Users\\fante\\AppData\\Local\\GitHubDesktop\\bin"
+        - "E:\\IntelliJ IDEA 2025.1.3\\bin"
+        - "E:\\IntelliJ IDEA Community Edition 2025.1.3\\bin"
+        - "C:\\Users\\fante\\AppData\\Local\\Microsoft\\WinGet\\Packages\\GeodeSDK.GeodeCLI_Microsoft.Winget.Source_8wekyb3d8bbwe"
+        - "C:\\Users\\fante\\.dotnet\\tools"
+        - "C:\\Program Files (x86)\\Nmap"
+        - "C:\\Users\\fante\\.lmstudio\\bin"
+        - "C:\\Users\\fante\\AppData\\Local\\Programs\\Ollama"
+        - "C:\\Users\\fante\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Anthropic.ClaudeCode_Microsoft.Winget.Source_8wekyb3d8bbwe"
+  -
+    kind: "find-v1"
+    backtrace:
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeFindBinUtils.cmake:243 (find_program)"
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeDetermineCCompiler.cmake:200 (include)"
+      - "CMakeLists.txt:1 (project)"
+    mode: "program"
+    variable: "CMAKE_MT"
+    description: "Path to a program."
+    settings:
+      SearchFramework: "NEVER"
+      SearchAppBundle: "NEVER"
+      CMAKE_FIND_USE_CMAKE_PATH: false
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: false
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "mt"
+    candidate_directories:
+      - "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.44.35207/bin/Hostx64/x64/"
+      - "C:/Program Files/Eclipse Adoptium/jdk-21.0.8.9-hotspot/bin/"
+      - "C:/Program Files/Eclipse Adoptium/jdk-11.0.28.6-hotspot/bin/"
+      - "C:/Program Files/Eclipse Adoptium/jdk-17.0.16.8-hotspot/bin/"
+      - "C:/Program Files/Common Files/Oracle/Java/javapath/"
+      - "C:/Python313/Scripts/"
+      - "C:/Python313/"
+      - "C:/Windows/System32/"
+      - "C:/Windows/"
+      - "C:/Windows/System32/wbem/"
+      - "C:/Windows/System32/WindowsPowerShell/v1.0/"
+      - "C:/Windows/System32/OpenSSH/"
+      - "C:/Program Files/dotnet/"
+      - "C:/Program Files/NVIDIA Corporation/NVIDIA App/NvDLISR/"
+      - "C:/Program Files (x86)/NVIDIA Corporation/PhysX/Common/"
+      - "C:/Program Files/nodejs/"
+      - "C:/ProgramData/chocolatey/bin/"
+      - "C:/Program Files/Microsoft SQL Server/150/Tools/Binn/"
+      - "C:/Program Files/Microsoft SQL Server/Client SDK/ODBC/170/Tools/Binn/"
+      - "C:/Program Files (x86)/PuTTY/"
+      - "C:/Program Files/PuTTY/"
+      - "C:/Program Files/Git/cmd/"
+      - "C:/Program Files (x86)/Windows Kits/10/Windows Performance Toolkit/"
+      - "C:/Program Files/CMake/bin/"
+      - "C:/Users/fante/AppData/Local/Microsoft/WindowsApps/"
+      - "C:/Users/fante/AppData/Local/Programs/Microsoft VS Code/bin/"
+      - "C:/Users/fante/AppData/Roaming/npm/"
+      - "C:/Users/fante/AppData/Local/Microsoft/WinGet/Packages/yt-dlp.yt-dlp_Microsoft.Winget.Source_8wekyb3d8bbwe/"
+      - "C:/Users/fante/AppData/Local/GitHubDesktop/bin/"
+      - "E:/IntelliJ IDEA 2025.1.3/bin/"
+      - "E:/IntelliJ IDEA Community Edition 2025.1.3/bin/"
+      - "C:/Users/fante/AppData/Local/Microsoft/WinGet/Packages/GeodeSDK.GeodeCLI_Microsoft.Winget.Source_8wekyb3d8bbwe/"
+      - "C:/Users/fante/.dotnet/tools/"
+      - "C:/Program Files (x86)/Nmap/"
+      - "C:/Users/fante/.lmstudio/bin/"
+      - "C:/Users/fante/AppData/Local/Programs/Ollama/"
+      - "C:/Users/fante/AppData/Local/Microsoft/WinGet/Packages/Anthropic.ClaudeCode_Microsoft.Winget.Source_8wekyb3d8bbwe/"
+    searched_directories:
+      - "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.44.35207/bin/Hostx64/x64/mt.com"
+      - "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.44.35207/bin/Hostx64/x64/mt.exe"
+      - "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.44.35207/bin/Hostx64/x64/mt"
+      - "C:/Program Files/Eclipse Adoptium/jdk-21.0.8.9-hotspot/bin/mt.com"
+      - "C:/Program Files/Eclipse Adoptium/jdk-21.0.8.9-hotspot/bin/mt.exe"
+      - "C:/Program Files/Eclipse Adoptium/jdk-21.0.8.9-hotspot/bin/mt"
+      - "C:/Program Files/Eclipse Adoptium/jdk-11.0.28.6-hotspot/bin/mt.com"
+      - "C:/Program Files/Eclipse Adoptium/jdk-11.0.28.6-hotspot/bin/mt.exe"
+      - "C:/Program Files/Eclipse Adoptium/jdk-11.0.28.6-hotspot/bin/mt"
+      - "C:/Program Files/Eclipse Adoptium/jdk-17.0.16.8-hotspot/bin/mt.com"
+      - "C:/Program Files/Eclipse Adoptium/jdk-17.0.16.8-hotspot/bin/mt.exe"
+      - "C:/Program Files/Eclipse Adoptium/jdk-17.0.16.8-hotspot/bin/mt"
+      - "C:/Program Files/Common Files/Oracle/Java/javapath/mt.com"
+      - "C:/Program Files/Common Files/Oracle/Java/javapath/mt.exe"
+      - "C:/Program Files/Common Files/Oracle/Java/javapath/mt"
+      - "C:/Python313/Scripts/mt.com"
+      - "C:/Python313/Scripts/mt.exe"
+      - "C:/Python313/Scripts/mt"
+      - "C:/Python313/mt.com"
+      - "C:/Python313/mt.exe"
+      - "C:/Python313/mt"
+      - "C:/Windows/System32/mt.com"
+      - "C:/Windows/System32/mt.exe"
+      - "C:/Windows/System32/mt"
+      - "C:/Windows/mt.com"
+      - "C:/Windows/mt.exe"
+      - "C:/Windows/mt"
+      - "C:/Windows/System32/wbem/mt.com"
+      - "C:/Windows/System32/wbem/mt.exe"
+      - "C:/Windows/System32/wbem/mt"
+      - "C:/Windows/System32/WindowsPowerShell/v1.0/mt.com"
+      - "C:/Windows/System32/WindowsPowerShell/v1.0/mt.exe"
+      - "C:/Windows/System32/WindowsPowerShell/v1.0/mt"
+      - "C:/Windows/System32/OpenSSH/mt.com"
+      - "C:/Windows/System32/OpenSSH/mt.exe"
+      - "C:/Windows/System32/OpenSSH/mt"
+      - "C:/Program Files/dotnet/mt.com"
+      - "C:/Program Files/dotnet/mt.exe"
+      - "C:/Program Files/dotnet/mt"
+      - "C:/Program Files/NVIDIA Corporation/NVIDIA App/NvDLISR/mt.com"
+      - "C:/Program Files/NVIDIA Corporation/NVIDIA App/NvDLISR/mt.exe"
+      - "C:/Program Files/NVIDIA Corporation/NVIDIA App/NvDLISR/mt"
+      - "C:/Program Files (x86)/NVIDIA Corporation/PhysX/Common/mt.com"
+      - "C:/Program Files (x86)/NVIDIA Corporation/PhysX/Common/mt.exe"
+      - "C:/Program Files (x86)/NVIDIA Corporation/PhysX/Common/mt"
+      - "C:/Program Files/nodejs/mt.com"
+      - "C:/Program Files/nodejs/mt.exe"
+      - "C:/Program Files/nodejs/mt"
+      - "C:/ProgramData/chocolatey/bin/mt.com"
+      - "C:/ProgramData/chocolatey/bin/mt.exe"
+      - "C:/ProgramData/chocolatey/bin/mt"
+      - "C:/Program Files/Microsoft SQL Server/150/Tools/Binn/mt.com"
+      - "C:/Program Files/Microsoft SQL Server/150/Tools/Binn/mt.exe"
+      - "C:/Program Files/Microsoft SQL Server/150/Tools/Binn/mt"
+      - "C:/Program Files/Microsoft SQL Server/Client SDK/ODBC/170/Tools/Binn/mt.com"
+      - "C:/Program Files/Microsoft SQL Server/Client SDK/ODBC/170/Tools/Binn/mt.exe"
+      - "C:/Program Files/Microsoft SQL Server/Client SDK/ODBC/170/Tools/Binn/mt"
+      - "C:/Program Files (x86)/PuTTY/mt.com"
+      - "C:/Program Files (x86)/PuTTY/mt.exe"
+      - "C:/Program Files (x86)/PuTTY/mt"
+      - "C:/Program Files/PuTTY/mt.com"
+      - "C:/Program Files/PuTTY/mt.exe"
+      - "C:/Program Files/PuTTY/mt"
+      - "C:/Program Files/Git/cmd/mt.com"
+      - "C:/Program Files/Git/cmd/mt.exe"
+      - "C:/Program Files/Git/cmd/mt"
+      - "C:/Program Files (x86)/Windows Kits/10/Windows Performance Toolkit/mt.com"
+      - "C:/Program Files (x86)/Windows Kits/10/Windows Performance Toolkit/mt.exe"
+      - "C:/Program Files (x86)/Windows Kits/10/Windows Performance Toolkit/mt"
+      - "C:/Program Files/CMake/bin/mt.com"
+      - "C:/Program Files/CMake/bin/mt.exe"
+      - "C:/Program Files/CMake/bin/mt"
+      - "C:/Users/fante/AppData/Local/Microsoft/WindowsApps/mt.com"
+      - "C:/Users/fante/AppData/Local/Microsoft/WindowsApps/mt.exe"
+      - "C:/Users/fante/AppData/Local/Microsoft/WindowsApps/mt"
+      - "C:/Users/fante/AppData/Local/Programs/Microsoft VS Code/bin/mt.com"
+      - "C:/Users/fante/AppData/Local/Programs/Microsoft VS Code/bin/mt.exe"
+      - "C:/Users/fante/AppData/Local/Programs/Microsoft VS Code/bin/mt"
+      - "C:/Users/fante/AppData/Roaming/npm/mt.com"
+      - "C:/Users/fante/AppData/Roaming/npm/mt.exe"
+      - "C:/Users/fante/AppData/Roaming/npm/mt"
+      - "C:/Users/fante/AppData/Local/Microsoft/WinGet/Packages/yt-dlp.yt-dlp_Microsoft.Winget.Source_8wekyb3d8bbwe/mt.com"
+      - "C:/Users/fante/AppData/Local/Microsoft/WinGet/Packages/yt-dlp.yt-dlp_Microsoft.Winget.Source_8wekyb3d8bbwe/mt.exe"
+      - "C:/Users/fante/AppData/Local/Microsoft/WinGet/Packages/yt-dlp.yt-dlp_Microsoft.Winget.Source_8wekyb3d8bbwe/mt"
+      - "C:/Users/fante/AppData/Local/GitHubDesktop/bin/mt.com"
+      - "C:/Users/fante/AppData/Local/GitHubDesktop/bin/mt.exe"
+      - "C:/Users/fante/AppData/Local/GitHubDesktop/bin/mt"
+      - "E:/IntelliJ IDEA 2025.1.3/bin/mt.com"
+      - "E:/IntelliJ IDEA 2025.1.3/bin/mt.exe"
+      - "E:/IntelliJ IDEA 2025.1.3/bin/mt"
+      - "E:/IntelliJ IDEA Community Edition 2025.1.3/bin/mt.com"
+      - "E:/IntelliJ IDEA Community Edition 2025.1.3/bin/mt.exe"
+      - "E:/IntelliJ IDEA Community Edition 2025.1.3/bin/mt"
+      - "C:/Users/fante/AppData/Local/Microsoft/WinGet/Packages/GeodeSDK.GeodeCLI_Microsoft.Winget.Source_8wekyb3d8bbwe/mt.com"
+      - "C:/Users/fante/AppData/Local/Microsoft/WinGet/Packages/GeodeSDK.GeodeCLI_Microsoft.Winget.Source_8wekyb3d8bbwe/mt.exe"
+      - "C:/Users/fante/AppData/Local/Microsoft/WinGet/Packages/GeodeSDK.GeodeCLI_Microsoft.Winget.Source_8wekyb3d8bbwe/mt"
+      - "C:/Users/fante/.dotnet/tools/mt.com"
+      - "C:/Users/fante/.dotnet/tools/mt.exe"
+      - "C:/Users/fante/.dotnet/tools/mt"
+      - "C:/Program Files (x86)/Nmap/mt.com"
+      - "C:/Program Files (x86)/Nmap/mt.exe"
+      - "C:/Program Files (x86)/Nmap/mt"
+      - "C:/Users/fante/.lmstudio/bin/mt.com"
+      - "C:/Users/fante/.lmstudio/bin/mt.exe"
+      - "C:/Users/fante/.lmstudio/bin/mt"
+      - "C:/Users/fante/AppData/Local/Programs/Ollama/mt.com"
+      - "C:/Users/fante/AppData/Local/Programs/Ollama/mt.exe"
+      - "C:/Users/fante/AppData/Local/Programs/Ollama/mt"
+      - "C:/Users/fante/AppData/Local/Microsoft/WinGet/Packages/Anthropic.ClaudeCode_Microsoft.Winget.Source_8wekyb3d8bbwe/mt.com"
+      - "C:/Users/fante/AppData/Local/Microsoft/WinGet/Packages/Anthropic.ClaudeCode_Microsoft.Winget.Source_8wekyb3d8bbwe/mt.exe"
+      - "C:/Users/fante/AppData/Local/Microsoft/WinGet/Packages/Anthropic.ClaudeCode_Microsoft.Winget.Source_8wekyb3d8bbwe/mt"
+    found: false
+    search_context:
+      ENV{PATH}:
+        - "C:\\Program Files\\Eclipse Adoptium\\jdk-21.0.8.9-hotspot\\bin"
+        - "C:\\Program Files\\Eclipse Adoptium\\jdk-11.0.28.6-hotspot\\bin"
+        - "C:\\Program Files\\Eclipse Adoptium\\jdk-17.0.16.8-hotspot\\bin"
+        - "C:\\Program Files\\Common Files\\Oracle\\Java\\javapath"
+        - "C:\\Python313\\Scripts\\"
+        - "C:\\Python313\\"
+        - "C:\\WINDOWS\\system32"
+        - "C:\\WINDOWS"
+        - "C:\\WINDOWS\\System32\\Wbem"
+        - "C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\"
+        - "C:\\WINDOWS\\System32\\OpenSSH\\"
+        - "C:\\Program Files\\dotnet\\"
+        - "C:\\Program Files\\NVIDIA Corporation\\NVIDIA App\\NvDLISR"
+        - "C:\\Program Files (x86)\\NVIDIA Corporation\\PhysX\\Common"
+        - "C:\\Program Files\\nodejs\\"
+        - "C:\\ProgramData\\chocolatey\\bin"
+        - "C:\\Program Files\\Microsoft SQL Server\\150\\Tools\\Binn\\"
+        - "C:\\Program Files\\Microsoft SQL Server\\Client SDK\\ODBC\\170\\Tools\\Binn\\"
+        - "C:\\Program Files (x86)\\PuTTY\\"
+        - "C:\\Program Files\\PuTTY\\"
+        - "C:\\Program Files\\Git\\cmd"
+        - "C:\\Program Files (x86)\\Windows Kits\\10\\Windows Performance Toolkit\\"
+        - "C:\\Program Files\\CMake\\bin"
+        - "C:\\Users\\fante\\AppData\\Local\\Microsoft\\WindowsApps"
+        - "C:\\Users\\fante\\AppData\\Local\\Programs\\Microsoft VS Code\\bin"
+        - "C:\\Users\\fante\\AppData\\Roaming\\npm"
+        - "C:\\Users\\fante\\AppData\\Local\\Microsoft\\WinGet\\Packages\\yt-dlp.yt-dlp_Microsoft.Winget.Source_8wekyb3d8bbwe"
+        - "C:\\Users\\fante\\AppData\\Local\\GitHubDesktop\\bin"
+        - "E:\\IntelliJ IDEA 2025.1.3\\bin"
+        - "E:\\IntelliJ IDEA Community Edition 2025.1.3\\bin"
+        - "C:\\Users\\fante\\AppData\\Local\\Microsoft\\WinGet\\Packages\\GeodeSDK.GeodeCLI_Microsoft.Winget.Source_8wekyb3d8bbwe"
+        - "C:\\Users\\fante\\.dotnet\\tools"
+        - "C:\\Program Files (x86)\\Nmap"
+        - "C:\\Users\\fante\\.lmstudio\\bin"
+        - "C:\\Users\\fante\\AppData\\Local\\Programs\\Ollama"
+        - "C:\\Users\\fante\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Anthropic.ClaudeCode_Microsoft.Winget.Source_8wekyb3d8bbwe"
+  -
+    kind: "find-v1"
+    backtrace:
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeFindBinUtils.cmake:243 (find_program)"
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeDetermineCCompiler.cmake:200 (include)"
+      - "CMakeLists.txt:1 (project)"
+    mode: "program"
+    variable: "CMAKE_AR"
+    description: "Path to a program."
+    settings:
+      SearchFramework: "NEVER"
+      SearchAppBundle: "NEVER"
+      CMAKE_FIND_USE_CMAKE_PATH: false
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: false
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "lib"
+    candidate_directories:
+      - "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.44.35207/bin/Hostx64/x64/"
+      - "C:/Program Files/Eclipse Adoptium/jdk-21.0.8.9-hotspot/bin/"
+      - "C:/Program Files/Eclipse Adoptium/jdk-11.0.28.6-hotspot/bin/"
+      - "C:/Program Files/Eclipse Adoptium/jdk-17.0.16.8-hotspot/bin/"
+      - "C:/Program Files/Common Files/Oracle/Java/javapath/"
+      - "C:/Python313/Scripts/"
+      - "C:/Python313/"
+      - "C:/Windows/System32/"
+      - "C:/Windows/"
+      - "C:/Windows/System32/wbem/"
+      - "C:/Windows/System32/WindowsPowerShell/v1.0/"
+      - "C:/Windows/System32/OpenSSH/"
+      - "C:/Program Files/dotnet/"
+      - "C:/Program Files/NVIDIA Corporation/NVIDIA App/NvDLISR/"
+      - "C:/Program Files (x86)/NVIDIA Corporation/PhysX/Common/"
+      - "C:/Program Files/nodejs/"
+      - "C:/ProgramData/chocolatey/bin/"
+      - "C:/Program Files/Microsoft SQL Server/150/Tools/Binn/"
+      - "C:/Program Files/Microsoft SQL Server/Client SDK/ODBC/170/Tools/Binn/"
+      - "C:/Program Files (x86)/PuTTY/"
+      - "C:/Program Files/PuTTY/"
+      - "C:/Program Files/Git/cmd/"
+      - "C:/Program Files (x86)/Windows Kits/10/Windows Performance Toolkit/"
+      - "C:/Program Files/CMake/bin/"
+      - "C:/Users/fante/AppData/Local/Microsoft/WindowsApps/"
+      - "C:/Users/fante/AppData/Local/Programs/Microsoft VS Code/bin/"
+      - "C:/Users/fante/AppData/Roaming/npm/"
+      - "C:/Users/fante/AppData/Local/Microsoft/WinGet/Packages/yt-dlp.yt-dlp_Microsoft.Winget.Source_8wekyb3d8bbwe/"
+      - "C:/Users/fante/AppData/Local/GitHubDesktop/bin/"
+      - "E:/IntelliJ IDEA 2025.1.3/bin/"
+      - "E:/IntelliJ IDEA Community Edition 2025.1.3/bin/"
+      - "C:/Users/fante/AppData/Local/Microsoft/WinGet/Packages/GeodeSDK.GeodeCLI_Microsoft.Winget.Source_8wekyb3d8bbwe/"
+      - "C:/Users/fante/.dotnet/tools/"
+      - "C:/Program Files (x86)/Nmap/"
+      - "C:/Users/fante/.lmstudio/bin/"
+      - "C:/Users/fante/AppData/Local/Programs/Ollama/"
+      - "C:/Users/fante/AppData/Local/Microsoft/WinGet/Packages/Anthropic.ClaudeCode_Microsoft.Winget.Source_8wekyb3d8bbwe/"
+    searched_directories:
+      - "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.44.35207/bin/Hostx64/x64/lib.com"
+    found: "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.44.35207/bin/Hostx64/x64/lib.exe"
+    search_context:
+      ENV{PATH}:
+        - "C:\\Program Files\\Eclipse Adoptium\\jdk-21.0.8.9-hotspot\\bin"
+        - "C:\\Program Files\\Eclipse Adoptium\\jdk-11.0.28.6-hotspot\\bin"
+        - "C:\\Program Files\\Eclipse Adoptium\\jdk-17.0.16.8-hotspot\\bin"
+        - "C:\\Program Files\\Common Files\\Oracle\\Java\\javapath"
+        - "C:\\Python313\\Scripts\\"
+        - "C:\\Python313\\"
+        - "C:\\WINDOWS\\system32"
+        - "C:\\WINDOWS"
+        - "C:\\WINDOWS\\System32\\Wbem"
+        - "C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\"
+        - "C:\\WINDOWS\\System32\\OpenSSH\\"
+        - "C:\\Program Files\\dotnet\\"
+        - "C:\\Program Files\\NVIDIA Corporation\\NVIDIA App\\NvDLISR"
+        - "C:\\Program Files (x86)\\NVIDIA Corporation\\PhysX\\Common"
+        - "C:\\Program Files\\nodejs\\"
+        - "C:\\ProgramData\\chocolatey\\bin"
+        - "C:\\Program Files\\Microsoft SQL Server\\150\\Tools\\Binn\\"
+        - "C:\\Program Files\\Microsoft SQL Server\\Client SDK\\ODBC\\170\\Tools\\Binn\\"
+        - "C:\\Program Files (x86)\\PuTTY\\"
+        - "C:\\Program Files\\PuTTY\\"
+        - "C:\\Program Files\\Git\\cmd"
+        - "C:\\Program Files (x86)\\Windows Kits\\10\\Windows Performance Toolkit\\"
+        - "C:\\Program Files\\CMake\\bin"
+        - "C:\\Users\\fante\\AppData\\Local\\Microsoft\\WindowsApps"
+        - "C:\\Users\\fante\\AppData\\Local\\Programs\\Microsoft VS Code\\bin"
+        - "C:\\Users\\fante\\AppData\\Roaming\\npm"
+        - "C:\\Users\\fante\\AppData\\Local\\Microsoft\\WinGet\\Packages\\yt-dlp.yt-dlp_Microsoft.Winget.Source_8wekyb3d8bbwe"
+        - "C:\\Users\\fante\\AppData\\Local\\GitHubDesktop\\bin"
+        - "E:\\IntelliJ IDEA 2025.1.3\\bin"
+        - "E:\\IntelliJ IDEA Community Edition 2025.1.3\\bin"
+        - "C:\\Users\\fante\\AppData\\Local\\Microsoft\\WinGet\\Packages\\GeodeSDK.GeodeCLI_Microsoft.Winget.Source_8wekyb3d8bbwe"
+        - "C:\\Users\\fante\\.dotnet\\tools"
+        - "C:\\Program Files (x86)\\Nmap"
+        - "C:\\Users\\fante\\.lmstudio\\bin"
+        - "C:\\Users\\fante\\AppData\\Local\\Programs\\Ollama"
+        - "C:\\Users\\fante\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Anthropic.ClaudeCode_Microsoft.Winget.Source_8wekyb3d8bbwe"
+  -
+    kind: "find-v1"
+    backtrace:
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeDetermineCompilerId.cmake:468 (find_file)"
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeDetermineCompilerId.cmake:506 (CMAKE_DETERMINE_COMPILER_ID_WRITE)"
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeDetermineCompilerId.cmake:8 (CMAKE_DETERMINE_COMPILER_ID_BUILD)"
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeDetermineCompilerId.cmake:64 (__determine_compiler_id_test)"
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeDetermineCXXCompiler.cmake:125 (CMAKE_DETERMINE_COMPILER_ID)"
+      - "CMakeLists.txt:1 (project)"
+    mode: "file"
+    variable: "src_in"
+    description: "Path to a file."
+    settings:
+      SearchFramework: "NEVER"
+      SearchAppBundle: "NEVER"
+      CMAKE_FIND_USE_CMAKE_PATH: true
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "CMakeCXXCompilerId.cpp.in"
+    candidate_directories:
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/"
+    found: "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeCXXCompilerId.cpp.in"
+    search_context:
+      ENV{PATH}:
+        - "C:\\Program Files\\Eclipse Adoptium\\jdk-21.0.8.9-hotspot\\bin"
+        - "C:\\Program Files\\Eclipse Adoptium\\jdk-11.0.28.6-hotspot\\bin"
+        - "C:\\Program Files\\Eclipse Adoptium\\jdk-17.0.16.8-hotspot\\bin"
+        - "C:\\Program Files\\Common Files\\Oracle\\Java\\javapath"
+        - "C:\\Python313\\Scripts\\"
+        - "C:\\Python313\\"
+        - "C:\\WINDOWS\\system32"
+        - "C:\\WINDOWS"
+        - "C:\\WINDOWS\\System32\\Wbem"
+        - "C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\"
+        - "C:\\WINDOWS\\System32\\OpenSSH\\"
+        - "C:\\Program Files\\dotnet\\"
+        - "C:\\Program Files\\NVIDIA Corporation\\NVIDIA App\\NvDLISR"
+        - "C:\\Program Files (x86)\\NVIDIA Corporation\\PhysX\\Common"
+        - "C:\\Program Files\\nodejs\\"
+        - "C:\\ProgramData\\chocolatey\\bin"
+        - "C:\\Program Files\\Microsoft SQL Server\\150\\Tools\\Binn\\"
+        - "C:\\Program Files\\Microsoft SQL Server\\Client SDK\\ODBC\\170\\Tools\\Binn\\"
+        - "C:\\Program Files (x86)\\PuTTY\\"
+        - "C:\\Program Files\\PuTTY\\"
+        - "C:\\Program Files\\Git\\cmd"
+        - "C:\\Program Files (x86)\\Windows Kits\\10\\Windows Performance Toolkit\\"
+        - "C:\\Program Files\\CMake\\bin"
+        - "C:\\Users\\fante\\AppData\\Local\\Microsoft\\WindowsApps"
+        - "C:\\Users\\fante\\AppData\\Local\\Programs\\Microsoft VS Code\\bin"
+        - "C:\\Users\\fante\\AppData\\Roaming\\npm"
+        - "C:\\Users\\fante\\AppData\\Local\\Microsoft\\WinGet\\Packages\\yt-dlp.yt-dlp_Microsoft.Winget.Source_8wekyb3d8bbwe"
+        - "C:\\Users\\fante\\AppData\\Local\\GitHubDesktop\\bin"
+        - "E:\\IntelliJ IDEA 2025.1.3\\bin"
+        - "E:\\IntelliJ IDEA Community Edition 2025.1.3\\bin"
+        - "C:\\Users\\fante\\AppData\\Local\\Microsoft\\WinGet\\Packages\\GeodeSDK.GeodeCLI_Microsoft.Winget.Source_8wekyb3d8bbwe"
+        - "C:\\Users\\fante\\.dotnet\\tools"
+        - "C:\\Program Files (x86)\\Nmap"
+        - "C:\\Users\\fante\\.lmstudio\\bin"
+        - "C:\\Users\\fante\\AppData\\Local\\Programs\\Ollama"
+        - "C:\\Users\\fante\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Anthropic.ClaudeCode_Microsoft.Winget.Source_8wekyb3d8bbwe"
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeDetermineCompilerId.cmake:17 (message)"
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeDetermineCompilerId.cmake:64 (__determine_compiler_id_test)"
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeDetermineCXXCompiler.cmake:125 (CMAKE_DETERMINE_COMPILER_ID)"
+      - "CMakeLists.txt:1 (project)"
+    message: |
+      Compiling the CXX compiler identification source file "CMakeCXXCompilerId.cpp" succeeded.
+      Compiler:  
+      Build flags: 
+      Id flags:  
+      
+      The output was:
+      0
+      MSBuild-Version 17.14.40+3e7442088 f├╝r .NET Framework
+      Der Buildvorgang wurde am 20.04.2026 16:55:14 gestartet.
+      
+      Projekt "E:\\Github\\skymp\\skymp5-server\\CMakeFiles\\4.3.1\\CompilerIdCXX\\CompilerIdCXX.vcxproj" auf Knoten "1" (Standardziele).
+      PrepareForBuild:
+        Das Verzeichnis "Debug\\" wird erstellt.
+        Die strukturierte Ausgabe ist aktiviert. Die Formatierung der Compilerdiagnose spiegelt die Fehlerhierarchie wider. Weitere Informationen finden Sie unter https://aka.ms/cpp/structured-output.
+        Das Verzeichnis "Debug\\CompilerIdCXX.tlog\\" wird erstellt.
+      InitializeBuildStatus:
+        "Debug\\CompilerIdCXX.tlog\\unsuccessfulbuild" wird erstellt, da "AlwaysCreate" angegeben wurde.
+        Aktualisieren des Timestamps von "Debug\\CompilerIdCXX.tlog\\unsuccessfulbuild".
+      ClCompile:
+        C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\x64\\CL.exe /c /nologo /W0 /WX- /diagnostics:column /Od /D _MBCS /Gm- /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"Debug\\\\" /Fd"Debug\\vc143.pdb" /external:W0 /Gd /TP /FC /errorReport:queue CMakeCXXCompilerId.cpp
+        CMakeCXXCompilerId.cpp
+      Link:
+        C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\x64\\link.exe /ERRORREPORT:QUEUE /OUT:".\\CompilerIdCXX.exe" /INCREMENTAL:NO /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /PDB:".\\CompilerIdCXX.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:".\\CompilerIdCXX.lib" /MACHINE:X64 Debug\\CMakeCXXCompilerId.obj
+        CompilerIdCXX.vcxproj -> E:\\Github\\skymp\\skymp5-server\\CMakeFiles\\4.3.1\\CompilerIdCXX\\CompilerIdCXX.exe
+      PostBuildEvent:
+        for %%i in (cl.exe) do @echo CMAKE_CXX_COMPILER=%%~$PATH:i
+        :VCEnd
+        CMAKE_CXX_COMPILER=C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.44.35207\\bin\\Hostx64\\x64\\cl.exe
+      FinalizeBuildStatus:
+        Die Datei "Debug\\CompilerIdCXX.tlog\\unsuccessfulbuild" wird gel├Âscht.
+        Aktualisieren des Timestamps von "Debug\\CompilerIdCXX.tlog\\CompilerIdCXX.lastbuildstate".
+      Die Erstellung von Projekt "E:\\Github\\skymp\\skymp5-server\\CMakeFiles\\4.3.1\\CompilerIdCXX\\CompilerIdCXX.vcxproj" ist abgeschlossen (Standardziele).
+      
+      Der Buildvorgang wurde erfolgreich ausgef├╝hrt.
+          0 Warnung(en)
+          0 Fehler
+      
+      Verstrichene Zeit 00:00:00.98
+      
+      
+      Compilation of the CXX compiler identification source "CMakeCXXCompilerId.cpp" produced "CompilerIdCXX.exe"
+      
+      Compilation of the CXX compiler identification source "CMakeCXXCompilerId.cpp" produced "CompilerIdCXX.vcxproj"
+      
+      The CXX compiler identification is MSVC, found in:
+        E:/Github/skymp/skymp5-server/CMakeFiles/4.3.1/CompilerIdCXX/CompilerIdCXX.exe
+      
+  -
+    kind: "find-v1"
+    backtrace:
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeFindBinUtils.cmake:37 (find_program)"
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeFindBinUtils.cmake:65 (__resolve_tool_path)"
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeFindBinUtils.cmake:104 (__resolve_linker_path)"
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeDetermineCXXCompiler.cmake:206 (include)"
+      - "CMakeLists.txt:1 (project)"
+    mode: "program"
+    variable: "_CMAKE_TOOL_WITH_PATH"
+    description: "Path to a program."
+    settings:
+      SearchFramework: "NEVER"
+      SearchAppBundle: "NEVER"
+      CMAKE_FIND_USE_CMAKE_PATH: false
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: false
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "lld-link"
+    candidate_directories:
+      - "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.44.35207/bin/Hostx64/x64/"
+      - "C:/Program Files/Eclipse Adoptium/jdk-21.0.8.9-hotspot/bin/"
+      - "C:/Program Files/Eclipse Adoptium/jdk-11.0.28.6-hotspot/bin/"
+      - "C:/Program Files/Eclipse Adoptium/jdk-17.0.16.8-hotspot/bin/"
+      - "C:/Program Files/Common Files/Oracle/Java/javapath/"
+      - "C:/Python313/Scripts/"
+      - "C:/Python313/"
+      - "C:/Windows/System32/"
+      - "C:/Windows/"
+      - "C:/Windows/System32/wbem/"
+      - "C:/Windows/System32/WindowsPowerShell/v1.0/"
+      - "C:/Windows/System32/OpenSSH/"
+      - "C:/Program Files/dotnet/"
+      - "C:/Program Files/NVIDIA Corporation/NVIDIA App/NvDLISR/"
+      - "C:/Program Files (x86)/NVIDIA Corporation/PhysX/Common/"
+      - "C:/Program Files/nodejs/"
+      - "C:/ProgramData/chocolatey/bin/"
+      - "C:/Program Files/Microsoft SQL Server/150/Tools/Binn/"
+      - "C:/Program Files/Microsoft SQL Server/Client SDK/ODBC/170/Tools/Binn/"
+      - "C:/Program Files (x86)/PuTTY/"
+      - "C:/Program Files/PuTTY/"
+      - "C:/Program Files/Git/cmd/"
+      - "C:/Program Files (x86)/Windows Kits/10/Windows Performance Toolkit/"
+      - "C:/Program Files/CMake/bin/"
+      - "C:/Users/fante/AppData/Local/Microsoft/WindowsApps/"
+      - "C:/Users/fante/AppData/Local/Programs/Microsoft VS Code/bin/"
+      - "C:/Users/fante/AppData/Roaming/npm/"
+      - "C:/Users/fante/AppData/Local/Microsoft/WinGet/Packages/yt-dlp.yt-dlp_Microsoft.Winget.Source_8wekyb3d8bbwe/"
+      - "C:/Users/fante/AppData/Local/GitHubDesktop/bin/"
+      - "E:/IntelliJ IDEA 2025.1.3/bin/"
+      - "E:/IntelliJ IDEA Community Edition 2025.1.3/bin/"
+      - "C:/Users/fante/AppData/Local/Microsoft/WinGet/Packages/GeodeSDK.GeodeCLI_Microsoft.Winget.Source_8wekyb3d8bbwe/"
+      - "C:/Users/fante/.dotnet/tools/"
+      - "C:/Program Files (x86)/Nmap/"
+      - "C:/Users/fante/.lmstudio/bin/"
+      - "C:/Users/fante/AppData/Local/Programs/Ollama/"
+      - "C:/Users/fante/AppData/Local/Microsoft/WinGet/Packages/Anthropic.ClaudeCode_Microsoft.Winget.Source_8wekyb3d8bbwe/"
+    searched_directories:
+      - "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.44.35207/bin/Hostx64/x64/lld-link.com"
+      - "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.44.35207/bin/Hostx64/x64/lld-link.exe"
+      - "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.44.35207/bin/Hostx64/x64/lld-link"
+      - "C:/Program Files/Eclipse Adoptium/jdk-21.0.8.9-hotspot/bin/lld-link.com"
+      - "C:/Program Files/Eclipse Adoptium/jdk-21.0.8.9-hotspot/bin/lld-link.exe"
+      - "C:/Program Files/Eclipse Adoptium/jdk-21.0.8.9-hotspot/bin/lld-link"
+      - "C:/Program Files/Eclipse Adoptium/jdk-11.0.28.6-hotspot/bin/lld-link.com"
+      - "C:/Program Files/Eclipse Adoptium/jdk-11.0.28.6-hotspot/bin/lld-link.exe"
+      - "C:/Program Files/Eclipse Adoptium/jdk-11.0.28.6-hotspot/bin/lld-link"
+      - "C:/Program Files/Eclipse Adoptium/jdk-17.0.16.8-hotspot/bin/lld-link.com"
+      - "C:/Program Files/Eclipse Adoptium/jdk-17.0.16.8-hotspot/bin/lld-link.exe"
+      - "C:/Program Files/Eclipse Adoptium/jdk-17.0.16.8-hotspot/bin/lld-link"
+      - "C:/Program Files/Common Files/Oracle/Java/javapath/lld-link.com"
+      - "C:/Program Files/Common Files/Oracle/Java/javapath/lld-link.exe"
+      - "C:/Program Files/Common Files/Oracle/Java/javapath/lld-link"
+      - "C:/Python313/Scripts/lld-link.com"
+      - "C:/Python313/Scripts/lld-link.exe"
+      - "C:/Python313/Scripts/lld-link"
+      - "C:/Python313/lld-link.com"
+      - "C:/Python313/lld-link.exe"
+      - "C:/Python313/lld-link"
+      - "C:/Windows/System32/lld-link.com"
+      - "C:/Windows/System32/lld-link.exe"
+      - "C:/Windows/System32/lld-link"
+      - "C:/Windows/lld-link.com"
+      - "C:/Windows/lld-link.exe"
+      - "C:/Windows/lld-link"
+      - "C:/Windows/System32/wbem/lld-link.com"
+      - "C:/Windows/System32/wbem/lld-link.exe"
+      - "C:/Windows/System32/wbem/lld-link"
+      - "C:/Windows/System32/WindowsPowerShell/v1.0/lld-link.com"
+      - "C:/Windows/System32/WindowsPowerShell/v1.0/lld-link.exe"
+      - "C:/Windows/System32/WindowsPowerShell/v1.0/lld-link"
+      - "C:/Windows/System32/OpenSSH/lld-link.com"
+      - "C:/Windows/System32/OpenSSH/lld-link.exe"
+      - "C:/Windows/System32/OpenSSH/lld-link"
+      - "C:/Program Files/dotnet/lld-link.com"
+      - "C:/Program Files/dotnet/lld-link.exe"
+      - "C:/Program Files/dotnet/lld-link"
+      - "C:/Program Files/NVIDIA Corporation/NVIDIA App/NvDLISR/lld-link.com"
+      - "C:/Program Files/NVIDIA Corporation/NVIDIA App/NvDLISR/lld-link.exe"
+      - "C:/Program Files/NVIDIA Corporation/NVIDIA App/NvDLISR/lld-link"
+      - "C:/Program Files (x86)/NVIDIA Corporation/PhysX/Common/lld-link.com"
+      - "C:/Program Files (x86)/NVIDIA Corporation/PhysX/Common/lld-link.exe"
+      - "C:/Program Files (x86)/NVIDIA Corporation/PhysX/Common/lld-link"
+      - "C:/Program Files/nodejs/lld-link.com"
+      - "C:/Program Files/nodejs/lld-link.exe"
+      - "C:/Program Files/nodejs/lld-link"
+      - "C:/ProgramData/chocolatey/bin/lld-link.com"
+      - "C:/ProgramData/chocolatey/bin/lld-link.exe"
+      - "C:/ProgramData/chocolatey/bin/lld-link"
+      - "C:/Program Files/Microsoft SQL Server/150/Tools/Binn/lld-link.com"
+      - "C:/Program Files/Microsoft SQL Server/150/Tools/Binn/lld-link.exe"
+      - "C:/Program Files/Microsoft SQL Server/150/Tools/Binn/lld-link"
+      - "C:/Program Files/Microsoft SQL Server/Client SDK/ODBC/170/Tools/Binn/lld-link.com"
+      - "C:/Program Files/Microsoft SQL Server/Client SDK/ODBC/170/Tools/Binn/lld-link.exe"
+      - "C:/Program Files/Microsoft SQL Server/Client SDK/ODBC/170/Tools/Binn/lld-link"
+      - "C:/Program Files (x86)/PuTTY/lld-link.com"
+      - "C:/Program Files (x86)/PuTTY/lld-link.exe"
+      - "C:/Program Files (x86)/PuTTY/lld-link"
+      - "C:/Program Files/PuTTY/lld-link.com"
+      - "C:/Program Files/PuTTY/lld-link.exe"
+      - "C:/Program Files/PuTTY/lld-link"
+      - "C:/Program Files/Git/cmd/lld-link.com"
+      - "C:/Program Files/Git/cmd/lld-link.exe"
+      - "C:/Program Files/Git/cmd/lld-link"
+      - "C:/Program Files (x86)/Windows Kits/10/Windows Performance Toolkit/lld-link.com"
+      - "C:/Program Files (x86)/Windows Kits/10/Windows Performance Toolkit/lld-link.exe"
+      - "C:/Program Files (x86)/Windows Kits/10/Windows Performance Toolkit/lld-link"
+      - "C:/Program Files/CMake/bin/lld-link.com"
+      - "C:/Program Files/CMake/bin/lld-link.exe"
+      - "C:/Program Files/CMake/bin/lld-link"
+      - "C:/Users/fante/AppData/Local/Microsoft/WindowsApps/lld-link.com"
+      - "C:/Users/fante/AppData/Local/Microsoft/WindowsApps/lld-link.exe"
+      - "C:/Users/fante/AppData/Local/Microsoft/WindowsApps/lld-link"
+      - "C:/Users/fante/AppData/Local/Programs/Microsoft VS Code/bin/lld-link.com"
+      - "C:/Users/fante/AppData/Local/Programs/Microsoft VS Code/bin/lld-link.exe"
+      - "C:/Users/fante/AppData/Local/Programs/Microsoft VS Code/bin/lld-link"
+      - "C:/Users/fante/AppData/Roaming/npm/lld-link.com"
+      - "C:/Users/fante/AppData/Roaming/npm/lld-link.exe"
+      - "C:/Users/fante/AppData/Roaming/npm/lld-link"
+      - "C:/Users/fante/AppData/Local/Microsoft/WinGet/Packages/yt-dlp.yt-dlp_Microsoft.Winget.Source_8wekyb3d8bbwe/lld-link.com"
+      - "C:/Users/fante/AppData/Local/Microsoft/WinGet/Packages/yt-dlp.yt-dlp_Microsoft.Winget.Source_8wekyb3d8bbwe/lld-link.exe"
+      - "C:/Users/fante/AppData/Local/Microsoft/WinGet/Packages/yt-dlp.yt-dlp_Microsoft.Winget.Source_8wekyb3d8bbwe/lld-link"
+      - "C:/Users/fante/AppData/Local/GitHubDesktop/bin/lld-link.com"
+      - "C:/Users/fante/AppData/Local/GitHubDesktop/bin/lld-link.exe"
+      - "C:/Users/fante/AppData/Local/GitHubDesktop/bin/lld-link"
+      - "E:/IntelliJ IDEA 2025.1.3/bin/lld-link.com"
+      - "E:/IntelliJ IDEA 2025.1.3/bin/lld-link.exe"
+      - "E:/IntelliJ IDEA 2025.1.3/bin/lld-link"
+      - "E:/IntelliJ IDEA Community Edition 2025.1.3/bin/lld-link.com"
+      - "E:/IntelliJ IDEA Community Edition 2025.1.3/bin/lld-link.exe"
+      - "E:/IntelliJ IDEA Community Edition 2025.1.3/bin/lld-link"
+      - "C:/Users/fante/AppData/Local/Microsoft/WinGet/Packages/GeodeSDK.GeodeCLI_Microsoft.Winget.Source_8wekyb3d8bbwe/lld-link.com"
+      - "C:/Users/fante/AppData/Local/Microsoft/WinGet/Packages/GeodeSDK.GeodeCLI_Microsoft.Winget.Source_8wekyb3d8bbwe/lld-link.exe"
+      - "C:/Users/fante/AppData/Local/Microsoft/WinGet/Packages/GeodeSDK.GeodeCLI_Microsoft.Winget.Source_8wekyb3d8bbwe/lld-link"
+      - "C:/Users/fante/.dotnet/tools/lld-link.com"
+      - "C:/Users/fante/.dotnet/tools/lld-link.exe"
+      - "C:/Users/fante/.dotnet/tools/lld-link"
+      - "C:/Program Files (x86)/Nmap/lld-link.com"
+      - "C:/Program Files (x86)/Nmap/lld-link.exe"
+      - "C:/Program Files (x86)/Nmap/lld-link"
+      - "C:/Users/fante/.lmstudio/bin/lld-link.com"
+      - "C:/Users/fante/.lmstudio/bin/lld-link.exe"
+      - "C:/Users/fante/.lmstudio/bin/lld-link"
+      - "C:/Users/fante/AppData/Local/Programs/Ollama/lld-link.com"
+      - "C:/Users/fante/AppData/Local/Programs/Ollama/lld-link.exe"
+      - "C:/Users/fante/AppData/Local/Programs/Ollama/lld-link"
+      - "C:/Users/fante/AppData/Local/Microsoft/WinGet/Packages/Anthropic.ClaudeCode_Microsoft.Winget.Source_8wekyb3d8bbwe/lld-link.com"
+      - "C:/Users/fante/AppData/Local/Microsoft/WinGet/Packages/Anthropic.ClaudeCode_Microsoft.Winget.Source_8wekyb3d8bbwe/lld-link.exe"
+      - "C:/Users/fante/AppData/Local/Microsoft/WinGet/Packages/Anthropic.ClaudeCode_Microsoft.Winget.Source_8wekyb3d8bbwe/lld-link"
+    found: false
+    search_context:
+      ENV{PATH}:
+        - "C:\\Program Files\\Eclipse Adoptium\\jdk-21.0.8.9-hotspot\\bin"
+        - "C:\\Program Files\\Eclipse Adoptium\\jdk-11.0.28.6-hotspot\\bin"
+        - "C:\\Program Files\\Eclipse Adoptium\\jdk-17.0.16.8-hotspot\\bin"
+        - "C:\\Program Files\\Common Files\\Oracle\\Java\\javapath"
+        - "C:\\Python313\\Scripts\\"
+        - "C:\\Python313\\"
+        - "C:\\WINDOWS\\system32"
+        - "C:\\WINDOWS"
+        - "C:\\WINDOWS\\System32\\Wbem"
+        - "C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\"
+        - "C:\\WINDOWS\\System32\\OpenSSH\\"
+        - "C:\\Program Files\\dotnet\\"
+        - "C:\\Program Files\\NVIDIA Corporation\\NVIDIA App\\NvDLISR"
+        - "C:\\Program Files (x86)\\NVIDIA Corporation\\PhysX\\Common"
+        - "C:\\Program Files\\nodejs\\"
+        - "C:\\ProgramData\\chocolatey\\bin"
+        - "C:\\Program Files\\Microsoft SQL Server\\150\\Tools\\Binn\\"
+        - "C:\\Program Files\\Microsoft SQL Server\\Client SDK\\ODBC\\170\\Tools\\Binn\\"
+        - "C:\\Program Files (x86)\\PuTTY\\"
+        - "C:\\Program Files\\PuTTY\\"
+        - "C:\\Program Files\\Git\\cmd"
+        - "C:\\Program Files (x86)\\Windows Kits\\10\\Windows Performance Toolkit\\"
+        - "C:\\Program Files\\CMake\\bin"
+        - "C:\\Users\\fante\\AppData\\Local\\Microsoft\\WindowsApps"
+        - "C:\\Users\\fante\\AppData\\Local\\Programs\\Microsoft VS Code\\bin"
+        - "C:\\Users\\fante\\AppData\\Roaming\\npm"
+        - "C:\\Users\\fante\\AppData\\Local\\Microsoft\\WinGet\\Packages\\yt-dlp.yt-dlp_Microsoft.Winget.Source_8wekyb3d8bbwe"
+        - "C:\\Users\\fante\\AppData\\Local\\GitHubDesktop\\bin"
+        - "E:\\IntelliJ IDEA 2025.1.3\\bin"
+        - "E:\\IntelliJ IDEA Community Edition 2025.1.3\\bin"
+        - "C:\\Users\\fante\\AppData\\Local\\Microsoft\\WinGet\\Packages\\GeodeSDK.GeodeCLI_Microsoft.Winget.Source_8wekyb3d8bbwe"
+        - "C:\\Users\\fante\\.dotnet\\tools"
+        - "C:\\Program Files (x86)\\Nmap"
+        - "C:\\Users\\fante\\.lmstudio\\bin"
+        - "C:\\Users\\fante\\AppData\\Local\\Programs\\Ollama"
+        - "C:\\Users\\fante\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Anthropic.ClaudeCode_Microsoft.Winget.Source_8wekyb3d8bbwe"
+  -
+    kind: "find-v1"
+    backtrace:
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeDetermineRCCompiler.cmake:40 (find_program)"
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/Platform/Windows-MSVC.cmake:592 (enable_language)"
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/Platform/Windows-MSVC.cmake:565 (__windows_compiler_msvc_enable_rc)"
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/Platform/Windows-MSVC-C.cmake:5 (__windows_compiler_msvc)"
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeCInformation.cmake:48 (include)"
+      - "CMakeLists.txt:1 (project)"
+    mode: "program"
+    variable: "CMAKE_RC_COMPILER"
+    description: "RC compiler"
+    settings:
+      SearchFramework: "NEVER"
+      SearchAppBundle: "NEVER"
+      CMAKE_FIND_USE_CMAKE_PATH: true
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "rc"
+    candidate_directories:
+      - "C:/Program Files/Eclipse Adoptium/jdk-21.0.8.9-hotspot/bin/"
+      - "C:/Program Files/Eclipse Adoptium/jdk-11.0.28.6-hotspot/bin/"
+      - "C:/Program Files/Eclipse Adoptium/jdk-17.0.16.8-hotspot/bin/"
+      - "C:/Program Files/Common Files/Oracle/Java/javapath/"
+      - "C:/Python313/Scripts/"
+      - "C:/Python313/"
+      - "C:/Windows/System32/"
+      - "C:/Windows/"
+      - "C:/Windows/System32/wbem/"
+      - "C:/Windows/System32/WindowsPowerShell/v1.0/"
+      - "C:/Windows/System32/OpenSSH/"
+      - "C:/Program Files/dotnet/"
+      - "C:/Program Files/NVIDIA Corporation/NVIDIA App/NvDLISR/"
+      - "C:/Program Files (x86)/NVIDIA Corporation/PhysX/Common/"
+      - "C:/Program Files/nodejs/"
+      - "C:/ProgramData/chocolatey/bin/"
+      - "C:/Program Files/Microsoft SQL Server/150/Tools/Binn/"
+      - "C:/Program Files/Microsoft SQL Server/Client SDK/ODBC/170/Tools/Binn/"
+      - "C:/Program Files (x86)/PuTTY/"
+      - "C:/Program Files/PuTTY/"
+      - "C:/Program Files/Git/cmd/"
+      - "C:/Program Files (x86)/Windows Kits/10/Windows Performance Toolkit/"
+      - "C:/Program Files/CMake/bin/"
+      - "C:/Users/fante/AppData/Local/Microsoft/WindowsApps/"
+      - "C:/Users/fante/AppData/Local/Programs/Microsoft VS Code/bin/"
+      - "C:/Users/fante/AppData/Roaming/npm/"
+      - "C:/Users/fante/AppData/Local/Microsoft/WinGet/Packages/yt-dlp.yt-dlp_Microsoft.Winget.Source_8wekyb3d8bbwe/"
+      - "C:/Users/fante/AppData/Local/GitHubDesktop/bin/"
+      - "E:/IntelliJ IDEA 2025.1.3/bin/"
+      - "E:/IntelliJ IDEA Community Edition 2025.1.3/bin/"
+      - "C:/Users/fante/AppData/Local/Microsoft/WinGet/Packages/GeodeSDK.GeodeCLI_Microsoft.Winget.Source_8wekyb3d8bbwe/"
+      - "C:/Users/fante/.dotnet/tools/"
+      - "C:/Program Files (x86)/Nmap/"
+      - "C:/Users/fante/.lmstudio/bin/"
+      - "C:/Users/fante/AppData/Local/Programs/Ollama/"
+      - "C:/Users/fante/AppData/Local/Microsoft/WinGet/Packages/Anthropic.ClaudeCode_Microsoft.Winget.Source_8wekyb3d8bbwe/"
+      - "C:/Program Files/bin/"
+      - "C:/Program Files/sbin/"
+      - "C:/Program Files/"
+      - "C:/Program Files (x86)/bin/"
+      - "C:/Program Files (x86)/sbin/"
+      - "C:/Program Files (x86)/"
+      - "C:/Program Files/CMake/bin/"
+      - "C:/Program Files/CMake/sbin/"
+      - "C:/Program Files/CMake/"
+      - "C:/Program Files (x86)/skymp5-server/bin/"
+      - "C:/Program Files (x86)/skymp5-server/sbin/"
+      - "C:/Program Files (x86)/skymp5-server/"
+    searched_directories:
+      - "C:/Program Files/Eclipse Adoptium/jdk-21.0.8.9-hotspot/bin/rc.com"
+      - "C:/Program Files/Eclipse Adoptium/jdk-21.0.8.9-hotspot/bin/rc.exe"
+      - "C:/Program Files/Eclipse Adoptium/jdk-21.0.8.9-hotspot/bin/rc"
+      - "C:/Program Files/Eclipse Adoptium/jdk-11.0.28.6-hotspot/bin/rc.com"
+      - "C:/Program Files/Eclipse Adoptium/jdk-11.0.28.6-hotspot/bin/rc.exe"
+      - "C:/Program Files/Eclipse Adoptium/jdk-11.0.28.6-hotspot/bin/rc"
+      - "C:/Program Files/Eclipse Adoptium/jdk-17.0.16.8-hotspot/bin/rc.com"
+      - "C:/Program Files/Eclipse Adoptium/jdk-17.0.16.8-hotspot/bin/rc.exe"
+      - "C:/Program Files/Eclipse Adoptium/jdk-17.0.16.8-hotspot/bin/rc"
+      - "C:/Program Files/Common Files/Oracle/Java/javapath/rc.com"
+      - "C:/Program Files/Common Files/Oracle/Java/javapath/rc.exe"
+      - "C:/Program Files/Common Files/Oracle/Java/javapath/rc"
+      - "C:/Python313/Scripts/rc.com"
+      - "C:/Python313/Scripts/rc.exe"
+      - "C:/Python313/Scripts/rc"
+      - "C:/Python313/rc.com"
+      - "C:/Python313/rc.exe"
+      - "C:/Python313/rc"
+      - "C:/Windows/System32/rc.com"
+      - "C:/Windows/System32/rc.exe"
+      - "C:/Windows/System32/rc"
+      - "C:/Windows/rc.com"
+      - "C:/Windows/rc.exe"
+      - "C:/Windows/rc"
+      - "C:/Windows/System32/wbem/rc.com"
+      - "C:/Windows/System32/wbem/rc.exe"
+      - "C:/Windows/System32/wbem/rc"
+      - "C:/Windows/System32/WindowsPowerShell/v1.0/rc.com"
+      - "C:/Windows/System32/WindowsPowerShell/v1.0/rc.exe"
+      - "C:/Windows/System32/WindowsPowerShell/v1.0/rc"
+      - "C:/Windows/System32/OpenSSH/rc.com"
+      - "C:/Windows/System32/OpenSSH/rc.exe"
+      - "C:/Windows/System32/OpenSSH/rc"
+      - "C:/Program Files/dotnet/rc.com"
+      - "C:/Program Files/dotnet/rc.exe"
+      - "C:/Program Files/dotnet/rc"
+      - "C:/Program Files/NVIDIA Corporation/NVIDIA App/NvDLISR/rc.com"
+      - "C:/Program Files/NVIDIA Corporation/NVIDIA App/NvDLISR/rc.exe"
+      - "C:/Program Files/NVIDIA Corporation/NVIDIA App/NvDLISR/rc"
+      - "C:/Program Files (x86)/NVIDIA Corporation/PhysX/Common/rc.com"
+      - "C:/Program Files (x86)/NVIDIA Corporation/PhysX/Common/rc.exe"
+      - "C:/Program Files (x86)/NVIDIA Corporation/PhysX/Common/rc"
+      - "C:/Program Files/nodejs/rc.com"
+      - "C:/Program Files/nodejs/rc.exe"
+      - "C:/Program Files/nodejs/rc"
+      - "C:/ProgramData/chocolatey/bin/rc.com"
+      - "C:/ProgramData/chocolatey/bin/rc.exe"
+      - "C:/ProgramData/chocolatey/bin/rc"
+      - "C:/Program Files/Microsoft SQL Server/150/Tools/Binn/rc.com"
+      - "C:/Program Files/Microsoft SQL Server/150/Tools/Binn/rc.exe"
+      - "C:/Program Files/Microsoft SQL Server/150/Tools/Binn/rc"
+      - "C:/Program Files/Microsoft SQL Server/Client SDK/ODBC/170/Tools/Binn/rc.com"
+      - "C:/Program Files/Microsoft SQL Server/Client SDK/ODBC/170/Tools/Binn/rc.exe"
+      - "C:/Program Files/Microsoft SQL Server/Client SDK/ODBC/170/Tools/Binn/rc"
+      - "C:/Program Files (x86)/PuTTY/rc.com"
+      - "C:/Program Files (x86)/PuTTY/rc.exe"
+      - "C:/Program Files (x86)/PuTTY/rc"
+      - "C:/Program Files/PuTTY/rc.com"
+      - "C:/Program Files/PuTTY/rc.exe"
+      - "C:/Program Files/PuTTY/rc"
+      - "C:/Program Files/Git/cmd/rc.com"
+      - "C:/Program Files/Git/cmd/rc.exe"
+      - "C:/Program Files/Git/cmd/rc"
+      - "C:/Program Files (x86)/Windows Kits/10/Windows Performance Toolkit/rc.com"
+      - "C:/Program Files (x86)/Windows Kits/10/Windows Performance Toolkit/rc.exe"
+      - "C:/Program Files (x86)/Windows Kits/10/Windows Performance Toolkit/rc"
+      - "C:/Program Files/CMake/bin/rc.com"
+      - "C:/Program Files/CMake/bin/rc.exe"
+      - "C:/Program Files/CMake/bin/rc"
+      - "C:/Users/fante/AppData/Local/Microsoft/WindowsApps/rc.com"
+      - "C:/Users/fante/AppData/Local/Microsoft/WindowsApps/rc.exe"
+      - "C:/Users/fante/AppData/Local/Microsoft/WindowsApps/rc"
+      - "C:/Users/fante/AppData/Local/Programs/Microsoft VS Code/bin/rc.com"
+      - "C:/Users/fante/AppData/Local/Programs/Microsoft VS Code/bin/rc.exe"
+      - "C:/Users/fante/AppData/Local/Programs/Microsoft VS Code/bin/rc"
+      - "C:/Users/fante/AppData/Roaming/npm/rc.com"
+      - "C:/Users/fante/AppData/Roaming/npm/rc.exe"
+      - "C:/Users/fante/AppData/Roaming/npm/rc"
+      - "C:/Users/fante/AppData/Local/Microsoft/WinGet/Packages/yt-dlp.yt-dlp_Microsoft.Winget.Source_8wekyb3d8bbwe/rc.com"
+      - "C:/Users/fante/AppData/Local/Microsoft/WinGet/Packages/yt-dlp.yt-dlp_Microsoft.Winget.Source_8wekyb3d8bbwe/rc.exe"
+      - "C:/Users/fante/AppData/Local/Microsoft/WinGet/Packages/yt-dlp.yt-dlp_Microsoft.Winget.Source_8wekyb3d8bbwe/rc"
+      - "C:/Users/fante/AppData/Local/GitHubDesktop/bin/rc.com"
+      - "C:/Users/fante/AppData/Local/GitHubDesktop/bin/rc.exe"
+      - "C:/Users/fante/AppData/Local/GitHubDesktop/bin/rc"
+      - "E:/IntelliJ IDEA 2025.1.3/bin/rc.com"
+      - "E:/IntelliJ IDEA 2025.1.3/bin/rc.exe"
+      - "E:/IntelliJ IDEA 2025.1.3/bin/rc"
+      - "E:/IntelliJ IDEA Community Edition 2025.1.3/bin/rc.com"
+      - "E:/IntelliJ IDEA Community Edition 2025.1.3/bin/rc.exe"
+      - "E:/IntelliJ IDEA Community Edition 2025.1.3/bin/rc"
+      - "C:/Users/fante/AppData/Local/Microsoft/WinGet/Packages/GeodeSDK.GeodeCLI_Microsoft.Winget.Source_8wekyb3d8bbwe/rc.com"
+      - "C:/Users/fante/AppData/Local/Microsoft/WinGet/Packages/GeodeSDK.GeodeCLI_Microsoft.Winget.Source_8wekyb3d8bbwe/rc.exe"
+      - "C:/Users/fante/AppData/Local/Microsoft/WinGet/Packages/GeodeSDK.GeodeCLI_Microsoft.Winget.Source_8wekyb3d8bbwe/rc"
+      - "C:/Users/fante/.dotnet/tools/rc.com"
+      - "C:/Users/fante/.dotnet/tools/rc.exe"
+      - "C:/Users/fante/.dotnet/tools/rc"
+      - "C:/Program Files (x86)/Nmap/rc.com"
+      - "C:/Program Files (x86)/Nmap/rc.exe"
+      - "C:/Program Files (x86)/Nmap/rc"
+      - "C:/Users/fante/.lmstudio/bin/rc.com"
+      - "C:/Users/fante/.lmstudio/bin/rc.exe"
+      - "C:/Users/fante/.lmstudio/bin/rc"
+      - "C:/Users/fante/AppData/Local/Programs/Ollama/rc.com"
+      - "C:/Users/fante/AppData/Local/Programs/Ollama/rc.exe"
+      - "C:/Users/fante/AppData/Local/Programs/Ollama/rc"
+      - "C:/Users/fante/AppData/Local/Microsoft/WinGet/Packages/Anthropic.ClaudeCode_Microsoft.Winget.Source_8wekyb3d8bbwe/rc.com"
+      - "C:/Users/fante/AppData/Local/Microsoft/WinGet/Packages/Anthropic.ClaudeCode_Microsoft.Winget.Source_8wekyb3d8bbwe/rc.exe"
+      - "C:/Users/fante/AppData/Local/Microsoft/WinGet/Packages/Anthropic.ClaudeCode_Microsoft.Winget.Source_8wekyb3d8bbwe/rc"
+      - "C:/Program Files/bin/rc.com"
+      - "C:/Program Files/bin/rc.exe"
+      - "C:/Program Files/bin/rc"
+      - "C:/Program Files/sbin/rc.com"
+      - "C:/Program Files/sbin/rc.exe"
+      - "C:/Program Files/sbin/rc"
+      - "C:/Program Files/rc.com"
+      - "C:/Program Files/rc.exe"
+      - "C:/Program Files/rc"
+      - "C:/Program Files (x86)/bin/rc.com"
+      - "C:/Program Files (x86)/bin/rc.exe"
+      - "C:/Program Files (x86)/bin/rc"
+      - "C:/Program Files (x86)/sbin/rc.com"
+      - "C:/Program Files (x86)/sbin/rc.exe"
+      - "C:/Program Files (x86)/sbin/rc"
+      - "C:/Program Files (x86)/rc.com"
+      - "C:/Program Files (x86)/rc.exe"
+      - "C:/Program Files (x86)/rc"
+      - "C:/Program Files/CMake/bin/rc.com"
+      - "C:/Program Files/CMake/bin/rc.exe"
+      - "C:/Program Files/CMake/bin/rc"
+      - "C:/Program Files/CMake/sbin/rc.com"
+      - "C:/Program Files/CMake/sbin/rc.exe"
+      - "C:/Program Files/CMake/sbin/rc"
+      - "C:/Program Files/CMake/rc.com"
+      - "C:/Program Files/CMake/rc.exe"
+      - "C:/Program Files/CMake/rc"
+      - "C:/Program Files (x86)/skymp5-server/bin/rc.com"
+      - "C:/Program Files (x86)/skymp5-server/bin/rc.exe"
+      - "C:/Program Files (x86)/skymp5-server/bin/rc"
+      - "C:/Program Files (x86)/skymp5-server/sbin/rc.com"
+      - "C:/Program Files (x86)/skymp5-server/sbin/rc.exe"
+      - "C:/Program Files (x86)/skymp5-server/sbin/rc"
+      - "C:/Program Files (x86)/skymp5-server/rc.com"
+      - "C:/Program Files (x86)/skymp5-server/rc.exe"
+      - "C:/Program Files (x86)/skymp5-server/rc"
+    found: false
+    search_context:
+      ENV{PATH}:
+        - "C:\\Program Files\\Eclipse Adoptium\\jdk-21.0.8.9-hotspot\\bin"
+        - "C:\\Program Files\\Eclipse Adoptium\\jdk-11.0.28.6-hotspot\\bin"
+        - "C:\\Program Files\\Eclipse Adoptium\\jdk-17.0.16.8-hotspot\\bin"
+        - "C:\\Program Files\\Common Files\\Oracle\\Java\\javapath"
+        - "C:\\Python313\\Scripts\\"
+        - "C:\\Python313\\"
+        - "C:\\WINDOWS\\system32"
+        - "C:\\WINDOWS"
+        - "C:\\WINDOWS\\System32\\Wbem"
+        - "C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\"
+        - "C:\\WINDOWS\\System32\\OpenSSH\\"
+        - "C:\\Program Files\\dotnet\\"
+        - "C:\\Program Files\\NVIDIA Corporation\\NVIDIA App\\NvDLISR"
+        - "C:\\Program Files (x86)\\NVIDIA Corporation\\PhysX\\Common"
+        - "C:\\Program Files\\nodejs\\"
+        - "C:\\ProgramData\\chocolatey\\bin"
+        - "C:\\Program Files\\Microsoft SQL Server\\150\\Tools\\Binn\\"
+        - "C:\\Program Files\\Microsoft SQL Server\\Client SDK\\ODBC\\170\\Tools\\Binn\\"
+        - "C:\\Program Files (x86)\\PuTTY\\"
+        - "C:\\Program Files\\PuTTY\\"
+        - "C:\\Program Files\\Git\\cmd"
+        - "C:\\Program Files (x86)\\Windows Kits\\10\\Windows Performance Toolkit\\"
+        - "C:\\Program Files\\CMake\\bin"
+        - "C:\\Users\\fante\\AppData\\Local\\Microsoft\\WindowsApps"
+        - "C:\\Users\\fante\\AppData\\Local\\Programs\\Microsoft VS Code\\bin"
+        - "C:\\Users\\fante\\AppData\\Roaming\\npm"
+        - "C:\\Users\\fante\\AppData\\Local\\Microsoft\\WinGet\\Packages\\yt-dlp.yt-dlp_Microsoft.Winget.Source_8wekyb3d8bbwe"
+        - "C:\\Users\\fante\\AppData\\Local\\GitHubDesktop\\bin"
+        - "E:\\IntelliJ IDEA 2025.1.3\\bin"
+        - "E:\\IntelliJ IDEA Community Edition 2025.1.3\\bin"
+        - "C:\\Users\\fante\\AppData\\Local\\Microsoft\\WinGet\\Packages\\GeodeSDK.GeodeCLI_Microsoft.Winget.Source_8wekyb3d8bbwe"
+        - "C:\\Users\\fante\\.dotnet\\tools"
+        - "C:\\Program Files (x86)\\Nmap"
+        - "C:\\Users\\fante\\.lmstudio\\bin"
+        - "C:\\Users\\fante\\AppData\\Local\\Programs\\Ollama"
+        - "C:\\Users\\fante\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Anthropic.ClaudeCode_Microsoft.Winget.Source_8wekyb3d8bbwe"
+      CMAKE_INSTALL_PREFIX: "C:/Program Files (x86)/skymp5-server"
+      CMAKE_SYSTEM_PREFIX_PATH:
+        - "C:/Program Files"
+        - "C:/Program Files (x86)"
+        - "C:/Program Files/CMake"
+        - "C:/Program Files (x86)/skymp5-server"
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeDetermineCompilerABI.cmake:83 (try_compile)"
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeTestCCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:1 (project)"
+    checks:
+      - "Detecting C compiler ABI info"
+    directories:
+      source: "E:/Github/skymp/skymp5-server/CMakeFiles/CMakeScratch/TryCompile-6vcx9n"
+      binary: "E:/Github/skymp/skymp5-server/CMakeFiles/CMakeScratch/TryCompile-6vcx9n"
+    cmakeVariables:
+      CMAKE_CXX_STDLIB_MODULES_JSON: ""
+      CMAKE_C_FLAGS: "/DWIN32 /D_WINDOWS /W3"
+      CMAKE_EXE_LINKER_FLAGS: "/machine:x64"
+    buildResult:
+      variable: "CMAKE_C_ABI_COMPILED"
+      cached: true
+      stdout: |
+        Change Dir: 'E:/Github/skymp/skymp5-server/CMakeFiles/CMakeScratch/TryCompile-6vcx9n'
+        
+        Run Build Command(s): "C:/Program Files/Microsoft Visual Studio/2022/Community/MSBuild/Current/Bin/amd64/MSBuild.exe" cmTC_33268.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=17.0 /v:n
+        MSBuild-Version 17.14.40+3e7442088 f├╝r .NET Framework
+        Der Buildvorgang wurde am 20.04.2026 16:55:16 gestartet.
+        
+        Projekt "E:\\Github\\skymp\\skymp5-server\\CMakeFiles\\CMakeScratch\\TryCompile-6vcx9n\\cmTC_33268.vcxproj" auf Knoten "1" (Standardziele).
+        PrepareForBuild:
+          Die strukturierte Ausgabe ist aktiviert. Die Formatierung der Compilerdiagnose spiegelt die Fehlerhierarchie wider. Weitere Informationen finden Sie unter https://aka.ms/cpp/structured-output.
+          Das Verzeichnis "E:\\Github\\skymp\\skymp5-server\\CMakeFiles\\CMakeScratch\\TryCompile-6vcx9n\\Debug\\" wird erstellt.
+          Das Verzeichnis "cmTC_33268.dir\\Debug\\cmTC_33268.tlog\\" wird erstellt.
+        InitializeBuildStatus:
+          "cmTC_33268.dir\\Debug\\cmTC_33268.tlog\\unsuccessfulbuild" wird erstellt, da "AlwaysCreate" angegeben wurde.
+          Aktualisieren des Timestamps von "cmTC_33268.dir\\Debug\\cmTC_33268.tlog\\unsuccessfulbuild".
+        ClCompile:
+          C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\x64\\CL.exe /c /Zi /W3 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D _MBCS /D "CMAKE_INTDIR=\\"Debug\\"" /RTC1 /MDd /Fo"cmTC_33268.dir\\Debug\\\\" /Fd"cmTC_33268.dir\\Debug\\vc143.pdb" /external:W3 /TC /errorReport:queue "C:\\Program Files\\CMake\\share\\cmake-4.3\\Modules\\CMakeCCompilerABI.c"
+          Microsoft (R) C/C++-Optimierungscompiler Version 19.44.35222 f├╝r x64
+          Copyright (C) Microsoft Corporation. Alle Rechte vorbehalten.
+          cl /c /Zi /W3 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D _MBCS /D "CMAKE_INTDIR=\\"Debug\\"" /RTC1 /MDd /Fo"cmTC_33268.dir\\Debug\\\\" /Fd"cmTC_33268.dir\\Debug\\vc143.pdb" /external:W3 /TC /errorReport:queue "C:\\Program Files\\CMake\\share\\cmake-4.3\\Modules\\CMakeCCompilerABI.c"
+          CMakeCCompilerABI.c
+        Link:
+          C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\x64\\link.exe /OUT:"E:\\Github\\skymp\\skymp5-server\\CMakeFiles\\CMakeScratch\\TryCompile-6vcx9n\\Debug\\cmTC_33268.exe" /INCREMENTAL /ILK:"cmTC_33268.dir\\Debug\\cmTC_33268.ilk" /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"E:/Github/skymp/skymp5-server/CMakeFiles/CMakeScratch/TryCompile-6vcx9n/Debug/cmTC_33268.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /IMPLIB:"E:/Github/skymp/skymp5-server/CMakeFiles/CMakeScratch/TryCompile-6vcx9n/Debug/cmTC_33268.lib" /MACHINE:X64  /machine:x64 cmTC_33268.dir\\Debug\\CMakeCCompilerABI.obj
+          cmTC_33268.vcxproj -> E:\\Github\\skymp\\skymp5-server\\CMakeFiles\\CMakeScratch\\TryCompile-6vcx9n\\Debug\\cmTC_33268.exe
+        FinalizeBuildStatus:
+          Die Datei "cmTC_33268.dir\\Debug\\cmTC_33268.tlog\\unsuccessfulbuild" wird gel├Âscht.
+          Aktualisieren des Timestamps von "cmTC_33268.dir\\Debug\\cmTC_33268.tlog\\cmTC_33268.lastbuildstate".
+        Die Erstellung von Projekt "E:\\Github\\skymp\\skymp5-server\\CMakeFiles\\CMakeScratch\\TryCompile-6vcx9n\\cmTC_33268.vcxproj" ist abgeschlossen (Standardziele).
+        
+        Der Buildvorgang wurde erfolgreich ausgef├╝hrt.
+            0 Warnung(en)
+            0 Fehler
+        
+        Verstrichene Zeit 00:00:00.98
+        
+      exitCode: 0
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeDetermineCompilerABI.cmake:253 (message)"
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeTestCCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:1 (project)"
+    message: |
+      Parsed C implicit link information:
+        link line regex: [^( *|.*[/\\])(ld[0-9]*(|\\.[a-rt-z][a-z]*|\\.s[a-np-z][a-z]*|\\.so[a-z]+)|link\\.exe|lld-link(\\.exe)?|CMAKE_LINK_STARTFILE-NOTFOUND|([^/\\]+-)?ld|collect2)[^/\\]*( |$)]
+        linker tool regex: [^[ 	]*(->|"|[0-9]+>[ 	-]*Build:[ 	0-9]+ ms[ 	]*)?[ 	]*(([^"]*[/\\])?(ld[0-9]*(|\\.[a-rt-z][a-z]*|\\.s[a-np-z][a-z]*|\\.so[a-z]+)|link\\.exe|lld-link(\\.exe)?))("|,| |$)]
+        linker tool for 'C': C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.44.35207/bin/HostX64/x64/link.exe
+        implicit libs: []
+        implicit objs: []
+        implicit dirs: []
+        implicit fwks: []
+      
+      
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/Internal/CMakeDetermineLinkerId.cmake:38 (message)"
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeDetermineCompilerABI.cmake:299 (cmake_determine_linker_id)"
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeTestCCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:1 (project)"
+    message: |
+      Running the C compiler's linker: "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.44.35207/bin/HostX64/x64/link.exe" "-v"
+      Microsoft (R) Incremental Linker Version 14.44.35222.0
+      Copyright (C) Microsoft Corporation.  All rights reserved.
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeDetermineCompilerABI.cmake:83 (try_compile)"
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeTestCXXCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:1 (project)"
+    checks:
+      - "Detecting CXX compiler ABI info"
+    directories:
+      source: "E:/Github/skymp/skymp5-server/CMakeFiles/CMakeScratch/TryCompile-dh0561"
+      binary: "E:/Github/skymp/skymp5-server/CMakeFiles/CMakeScratch/TryCompile-dh0561"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: "/DWIN32 /D_WINDOWS /W3 /GR /EHsc"
+      CMAKE_CXX_SCAN_FOR_MODULES: "OFF"
+      CMAKE_CXX_STDLIB_MODULES_JSON: ""
+      CMAKE_EXE_LINKER_FLAGS: "/machine:x64"
+    buildResult:
+      variable: "CMAKE_CXX_ABI_COMPILED"
+      cached: true
+      stdout: |
+        Change Dir: 'E:/Github/skymp/skymp5-server/CMakeFiles/CMakeScratch/TryCompile-dh0561'
+        
+        Run Build Command(s): "C:/Program Files/Microsoft Visual Studio/2022/Community/MSBuild/Current/Bin/amd64/MSBuild.exe" cmTC_5570d.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=17.0 /v:n
+        MSBuild-Version 17.14.40+3e7442088 f├╝r .NET Framework
+        Der Buildvorgang wurde am 20.04.2026 16:55:17 gestartet.
+        
+        Projekt "E:\\Github\\skymp\\skymp5-server\\CMakeFiles\\CMakeScratch\\TryCompile-dh0561\\cmTC_5570d.vcxproj" auf Knoten "1" (Standardziele).
+        PrepareForBuild:
+          Die strukturierte Ausgabe ist aktiviert. Die Formatierung der Compilerdiagnose spiegelt die Fehlerhierarchie wider. Weitere Informationen finden Sie unter https://aka.ms/cpp/structured-output.
+          Das Verzeichnis "E:\\Github\\skymp\\skymp5-server\\CMakeFiles\\CMakeScratch\\TryCompile-dh0561\\Debug\\" wird erstellt.
+          Das Verzeichnis "cmTC_5570d.dir\\Debug\\cmTC_5570d.tlog\\" wird erstellt.
+        InitializeBuildStatus:
+          "cmTC_5570d.dir\\Debug\\cmTC_5570d.tlog\\unsuccessfulbuild" wird erstellt, da "AlwaysCreate" angegeben wurde.
+          Aktualisieren des Timestamps von "cmTC_5570d.dir\\Debug\\cmTC_5570d.tlog\\unsuccessfulbuild".
+        ClCompile:
+          C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\x64\\CL.exe /c /Zi /W3 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D _MBCS /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /GR /Fo"cmTC_5570d.dir\\Debug\\\\" /Fd"cmTC_5570d.dir\\Debug\\vc143.pdb" /external:W3 /TP /errorReport:queue "C:\\Program Files\\CMake\\share\\cmake-4.3\\Modules\\CMakeCXXCompilerABI.cpp"
+          Microsoft (R) C/C++-Optimierungscompiler Version 19.44.35222 f├╝r x64
+          Copyright (C) Microsoft Corporation. Alle Rechte vorbehalten.
+          cl /c /Zi /W3 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D _MBCS /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /GR /Fo"cmTC_5570d.dir\\Debug\\\\" /Fd"cmTC_5570d.dir\\Debug\\vc143.pdb" /external:W3 /TP /errorReport:queue "C:\\Program Files\\CMake\\share\\cmake-4.3\\Modules\\CMakeCXXCompilerABI.cpp"
+          CMakeCXXCompilerABI.cpp
+        Link:
+          C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\x64\\link.exe /OUT:"E:\\Github\\skymp\\skymp5-server\\CMakeFiles\\CMakeScratch\\TryCompile-dh0561\\Debug\\cmTC_5570d.exe" /INCREMENTAL /ILK:"cmTC_5570d.dir\\Debug\\cmTC_5570d.ilk" /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"E:/Github/skymp/skymp5-server/CMakeFiles/CMakeScratch/TryCompile-dh0561/Debug/cmTC_5570d.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /IMPLIB:"E:/Github/skymp/skymp5-server/CMakeFiles/CMakeScratch/TryCompile-dh0561/Debug/cmTC_5570d.lib" /MACHINE:X64  /machine:x64 cmTC_5570d.dir\\Debug\\CMakeCXXCompilerABI.obj
+          cmTC_5570d.vcxproj -> E:\\Github\\skymp\\skymp5-server\\CMakeFiles\\CMakeScratch\\TryCompile-dh0561\\Debug\\cmTC_5570d.exe
+        FinalizeBuildStatus:
+          Die Datei "cmTC_5570d.dir\\Debug\\cmTC_5570d.tlog\\unsuccessfulbuild" wird gel├Âscht.
+          Aktualisieren des Timestamps von "cmTC_5570d.dir\\Debug\\cmTC_5570d.tlog\\cmTC_5570d.lastbuildstate".
+        Die Erstellung von Projekt "E:\\Github\\skymp\\skymp5-server\\CMakeFiles\\CMakeScratch\\TryCompile-dh0561\\cmTC_5570d.vcxproj" ist abgeschlossen (Standardziele).
+        
+        Der Buildvorgang wurde erfolgreich ausgef├╝hrt.
+            0 Warnung(en)
+            0 Fehler
+        
+        Verstrichene Zeit 00:00:00.97
+        
+      exitCode: 0
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeDetermineCompilerABI.cmake:253 (message)"
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeTestCXXCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:1 (project)"
+    message: |
+      Parsed CXX implicit link information:
+        link line regex: [^( *|.*[/\\])(ld[0-9]*(|\\.[a-rt-z][a-z]*|\\.s[a-np-z][a-z]*|\\.so[a-z]+)|link\\.exe|lld-link(\\.exe)?|CMAKE_LINK_STARTFILE-NOTFOUND|([^/\\]+-)?ld|collect2)[^/\\]*( |$)]
+        linker tool regex: [^[ 	]*(->|"|[0-9]+>[ 	-]*Build:[ 	0-9]+ ms[ 	]*)?[ 	]*(([^"]*[/\\])?(ld[0-9]*(|\\.[a-rt-z][a-z]*|\\.s[a-np-z][a-z]*|\\.so[a-z]+)|link\\.exe|lld-link(\\.exe)?))("|,| |$)]
+        linker tool for 'CXX': C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.44.35207/bin/HostX64/x64/link.exe
+        implicit libs: []
+        implicit objs: []
+        implicit dirs: []
+        implicit fwks: []
+      
+      
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/Internal/CMakeDetermineLinkerId.cmake:38 (message)"
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeDetermineCompilerABI.cmake:299 (cmake_determine_linker_id)"
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeTestCXXCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:1 (project)"
+    message: |
+      Running the CXX compiler's linker: "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.44.35207/bin/HostX64/x64/link.exe" "-v"
+      Microsoft (R) Incremental Linker Version 14.44.35222.0
+      Copyright (C) Microsoft Corporation.  All rights reserved.
+  -
+    kind: "find_package-v1"
+    backtrace:
+      - "CMakeLists.txt:9 (find_package)"
+    name: "CMakeRC"
+    configs:
+      -
+        filename: "CMakeRC.cps"
+        kind: "cps"
+      -
+        filename: "cmakerc.cps"
+        kind: "cps"
+      -
+        filename: "CMakeRCConfig.cmake"
+        kind: "cmake"
+      -
+        filename: "cmakerc-config.cmake"
+        kind: "cmake"
+    version_request:
+      exact: false
+    settings:
+      required: "required_explicit"
+      quiet: false
+      global: false
+      policy_scope: true
+      bypass_provider: false
+      names:
+        - "CMakeRC"
+      path_suffixes:
+        - ""
+      paths:
+        CMAKE_FIND_USE_CMAKE_PATH: true
+        CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: true
+        CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+        CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+        CMAKE_FIND_USE_INSTALL_PREFIX: true
+        CMAKE_FIND_USE_PACKAGE_ROOT_PATH: true
+        CMAKE_FIND_USE_CMAKE_PACKAGE_REGISTRY: true
+        CMAKE_FIND_USE_SYSTEM_PACKAGE_REGISTRY: true
+        CMAKE_FIND_ROOT_PATH_MODE: "BOTH"
+    candidates:
+      -
+        path: "E:/Github/skymp/skymp5-server/CMakeFiles/pkgRedirects/CMakeRCConfig.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "E:/Github/skymp/skymp5-server/CMakeFiles/pkgRedirects/cmakerc-config.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "E:/Github/skymp/skymp5-server/CMakeFiles/pkgRedirects/lib/cps/CMakeRC.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "E:/Github/skymp/skymp5-server/CMakeFiles/pkgRedirects/lib/cps/cmakerc.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "E:/Github/skymp/skymp5-server/CMakeFiles/pkgRedirects/share/cps/CMakeRC.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "E:/Github/skymp/skymp5-server/CMakeFiles/pkgRedirects/share/cps/cmakerc.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/Eclipse Adoptium/jdk-21.0.8.9-hotspot/CMakeRCConfig.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/Eclipse Adoptium/jdk-21.0.8.9-hotspot/cmakerc-config.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/Eclipse Adoptium/jdk-21.0.8.9-hotspot/lib/cps/CMakeRC.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/Eclipse Adoptium/jdk-21.0.8.9-hotspot/lib/cps/cmakerc.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/Eclipse Adoptium/jdk-21.0.8.9-hotspot/share/cps/CMakeRC.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/Eclipse Adoptium/jdk-21.0.8.9-hotspot/share/cps/cmakerc.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/Eclipse Adoptium/jdk-11.0.28.6-hotspot/CMakeRCConfig.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/Eclipse Adoptium/jdk-11.0.28.6-hotspot/cmakerc-config.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/Eclipse Adoptium/jdk-11.0.28.6-hotspot/lib/cps/CMakeRC.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/Eclipse Adoptium/jdk-11.0.28.6-hotspot/lib/cps/cmakerc.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/Eclipse Adoptium/jdk-11.0.28.6-hotspot/share/cps/CMakeRC.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/Eclipse Adoptium/jdk-11.0.28.6-hotspot/share/cps/cmakerc.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/Eclipse Adoptium/jdk-17.0.16.8-hotspot/CMakeRCConfig.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/Eclipse Adoptium/jdk-17.0.16.8-hotspot/cmakerc-config.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/Eclipse Adoptium/jdk-17.0.16.8-hotspot/lib/cps/CMakeRC.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/Eclipse Adoptium/jdk-17.0.16.8-hotspot/lib/cps/cmakerc.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/Eclipse Adoptium/jdk-17.0.16.8-hotspot/share/cps/CMakeRC.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/Eclipse Adoptium/jdk-17.0.16.8-hotspot/share/cps/cmakerc.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/Common Files/Oracle/Java/javapath/CMakeRCConfig.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/Common Files/Oracle/Java/javapath/cmakerc-config.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/Common Files/Oracle/Java/javapath/lib/cps/CMakeRC.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/Common Files/Oracle/Java/javapath/lib/cps/cmakerc.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/Common Files/Oracle/Java/javapath/share/cps/CMakeRC.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/Common Files/Oracle/Java/javapath/share/cps/cmakerc.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Python313/Scripts/CMakeRCConfig.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "C:/Python313/Scripts/cmakerc-config.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "C:/Python313/Scripts/lib/cps/CMakeRC.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Python313/Scripts/lib/cps/cmakerc.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Python313/Scripts/share/cps/CMakeRC.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Python313/Scripts/share/cps/cmakerc.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Python313/CMakeRCConfig.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "C:/Python313/cmakerc-config.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "C:/Python313/lib/cps/CMakeRC.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Python313/lib/cps/cmakerc.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Python313/share/cps/CMakeRC.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Python313/share/cps/cmakerc.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Windows/System32/CMakeRCConfig.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "C:/Windows/System32/cmakerc-config.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "C:/Windows/System32/lib/cps/CMakeRC.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Windows/System32/lib/cps/cmakerc.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Windows/System32/share/cps/CMakeRC.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Windows/System32/share/cps/cmakerc.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Windows/CMakeRCConfig.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "C:/Windows/cmakerc-config.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "C:/Windows/lib/cps/CMakeRC.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Windows/lib/cps/cmakerc.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Windows/share/cps/CMakeRC.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Windows/share/cps/cmakerc.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Windows/System32/wbem/CMakeRCConfig.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "C:/Windows/System32/wbem/cmakerc-config.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "C:/Windows/System32/wbem/lib/cps/CMakeRC.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Windows/System32/wbem/lib/cps/cmakerc.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Windows/System32/wbem/share/cps/CMakeRC.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Windows/System32/wbem/share/cps/cmakerc.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Windows/System32/WindowsPowerShell/v1.0/CMakeRCConfig.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "C:/Windows/System32/WindowsPowerShell/v1.0/cmakerc-config.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "C:/Windows/System32/WindowsPowerShell/v1.0/lib/cps/CMakeRC.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Windows/System32/WindowsPowerShell/v1.0/lib/cps/cmakerc.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Windows/System32/WindowsPowerShell/v1.0/share/cps/CMakeRC.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Windows/System32/WindowsPowerShell/v1.0/share/cps/cmakerc.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Windows/System32/OpenSSH/CMakeRCConfig.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "C:/Windows/System32/OpenSSH/cmakerc-config.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "C:/Windows/System32/OpenSSH/lib/cps/CMakeRC.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Windows/System32/OpenSSH/lib/cps/cmakerc.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Windows/System32/OpenSSH/share/cps/CMakeRC.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Windows/System32/OpenSSH/share/cps/cmakerc.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/dotnet/CMakeRCConfig.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/dotnet/cmakerc-config.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/dotnet/lib/cps/CMakeRC.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/dotnet/lib/cps/cmakerc.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/dotnet/share/cps/CMakeRC.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/dotnet/share/cps/cmakerc.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/NVIDIA Corporation/NVIDIA App/NvDLISR/CMakeRCConfig.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/NVIDIA Corporation/NVIDIA App/NvDLISR/cmakerc-config.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/NVIDIA Corporation/NVIDIA App/NvDLISR/lib/cps/CMakeRC.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/NVIDIA Corporation/NVIDIA App/NvDLISR/lib/cps/cmakerc.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/NVIDIA Corporation/NVIDIA App/NvDLISR/share/cps/CMakeRC.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/NVIDIA Corporation/NVIDIA App/NvDLISR/share/cps/cmakerc.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files (x86)/NVIDIA Corporation/PhysX/Common/CMakeRCConfig.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files (x86)/NVIDIA Corporation/PhysX/Common/cmakerc-config.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files (x86)/NVIDIA Corporation/PhysX/Common/lib/cps/CMakeRC.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files (x86)/NVIDIA Corporation/PhysX/Common/lib/cps/cmakerc.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files (x86)/NVIDIA Corporation/PhysX/Common/share/cps/CMakeRC.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files (x86)/NVIDIA Corporation/PhysX/Common/share/cps/cmakerc.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/nodejs/CMakeRCConfig.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/nodejs/cmakerc-config.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/nodejs/lib/cps/CMakeRC.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/nodejs/lib/cps/cmakerc.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/nodejs/share/cps/CMakeRC.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/nodejs/share/cps/cmakerc.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/ProgramData/chocolatey/CMakeRCConfig.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "C:/ProgramData/chocolatey/cmakerc-config.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "C:/ProgramData/chocolatey/lib/cps/CMakeRC.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/ProgramData/chocolatey/lib/cps/cmakerc.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/ProgramData/chocolatey/share/cps/CMakeRC.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/ProgramData/chocolatey/share/cps/cmakerc.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/Microsoft SQL Server/150/Tools/Binn/CMakeRCConfig.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/Microsoft SQL Server/150/Tools/Binn/cmakerc-config.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/Microsoft SQL Server/150/Tools/Binn/lib/cps/CMakeRC.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/Microsoft SQL Server/150/Tools/Binn/lib/cps/cmakerc.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/Microsoft SQL Server/150/Tools/Binn/share/cps/CMakeRC.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/Microsoft SQL Server/150/Tools/Binn/share/cps/cmakerc.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/Microsoft SQL Server/Client SDK/ODBC/170/Tools/Binn/CMakeRCConfig.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/Microsoft SQL Server/Client SDK/ODBC/170/Tools/Binn/cmakerc-config.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/Microsoft SQL Server/Client SDK/ODBC/170/Tools/Binn/lib/cps/CMakeRC.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/Microsoft SQL Server/Client SDK/ODBC/170/Tools/Binn/lib/cps/cmakerc.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/Microsoft SQL Server/Client SDK/ODBC/170/Tools/Binn/share/cps/CMakeRC.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/Microsoft SQL Server/Client SDK/ODBC/170/Tools/Binn/share/cps/cmakerc.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files (x86)/PuTTY/CMakeRCConfig.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files (x86)/PuTTY/cmakerc-config.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files (x86)/PuTTY/lib/cps/CMakeRC.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files (x86)/PuTTY/lib/cps/cmakerc.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files (x86)/PuTTY/share/cps/CMakeRC.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files (x86)/PuTTY/share/cps/cmakerc.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/PuTTY/CMakeRCConfig.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/PuTTY/cmakerc-config.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/PuTTY/lib/cps/CMakeRC.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/PuTTY/lib/cps/cmakerc.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/PuTTY/share/cps/CMakeRC.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/PuTTY/share/cps/cmakerc.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/Git/cmd/CMakeRCConfig.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/Git/cmd/cmakerc-config.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/Git/cmd/lib/cps/CMakeRC.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/Git/cmd/lib/cps/cmakerc.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/Git/cmd/share/cps/CMakeRC.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/Git/cmd/share/cps/cmakerc.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files (x86)/Windows Kits/10/Windows Performance Toolkit/CMakeRCConfig.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files (x86)/Windows Kits/10/Windows Performance Toolkit/cmakerc-config.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files (x86)/Windows Kits/10/Windows Performance Toolkit/lib/cps/CMakeRC.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files (x86)/Windows Kits/10/Windows Performance Toolkit/lib/cps/cmakerc.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files (x86)/Windows Kits/10/Windows Performance Toolkit/share/cps/CMakeRC.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files (x86)/Windows Kits/10/Windows Performance Toolkit/share/cps/cmakerc.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/CMake/CMakeRCConfig.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/CMake/cmakerc-config.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/CMake/lib/cps/CMakeRC.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/CMake/lib/cps/cmakerc.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/CMake/share/cps/CMakeRC.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/CMake/share/cps/cmakerc.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Users/fante/AppData/Local/Microsoft/WindowsApps/CMakeRCConfig.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "C:/Users/fante/AppData/Local/Microsoft/WindowsApps/cmakerc-config.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "C:/Users/fante/AppData/Local/Microsoft/WindowsApps/lib/cps/CMakeRC.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Users/fante/AppData/Local/Microsoft/WindowsApps/lib/cps/cmakerc.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Users/fante/AppData/Local/Microsoft/WindowsApps/share/cps/CMakeRC.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Users/fante/AppData/Local/Microsoft/WindowsApps/share/cps/cmakerc.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Users/fante/AppData/Local/Programs/Microsoft VS Code/CMakeRCConfig.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "C:/Users/fante/AppData/Local/Programs/Microsoft VS Code/cmakerc-config.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "C:/Users/fante/AppData/Local/Programs/Microsoft VS Code/lib/cps/CMakeRC.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Users/fante/AppData/Local/Programs/Microsoft VS Code/lib/cps/cmakerc.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Users/fante/AppData/Local/Programs/Microsoft VS Code/share/cps/CMakeRC.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Users/fante/AppData/Local/Programs/Microsoft VS Code/share/cps/cmakerc.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Users/fante/AppData/Roaming/npm/CMakeRCConfig.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "C:/Users/fante/AppData/Roaming/npm/cmakerc-config.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "C:/Users/fante/AppData/Roaming/npm/lib/cps/CMakeRC.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Users/fante/AppData/Roaming/npm/lib/cps/cmakerc.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Users/fante/AppData/Roaming/npm/share/cps/CMakeRC.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Users/fante/AppData/Roaming/npm/share/cps/cmakerc.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Users/fante/AppData/Local/Microsoft/WinGet/Packages/yt-dlp.yt-dlp_Microsoft.Winget.Source_8wekyb3d8bbwe/CMakeRCConfig.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "C:/Users/fante/AppData/Local/Microsoft/WinGet/Packages/yt-dlp.yt-dlp_Microsoft.Winget.Source_8wekyb3d8bbwe/cmakerc-config.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "C:/Users/fante/AppData/Local/Microsoft/WinGet/Packages/yt-dlp.yt-dlp_Microsoft.Winget.Source_8wekyb3d8bbwe/lib/cps/CMakeRC.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Users/fante/AppData/Local/Microsoft/WinGet/Packages/yt-dlp.yt-dlp_Microsoft.Winget.Source_8wekyb3d8bbwe/lib/cps/cmakerc.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Users/fante/AppData/Local/Microsoft/WinGet/Packages/yt-dlp.yt-dlp_Microsoft.Winget.Source_8wekyb3d8bbwe/share/cps/CMakeRC.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Users/fante/AppData/Local/Microsoft/WinGet/Packages/yt-dlp.yt-dlp_Microsoft.Winget.Source_8wekyb3d8bbwe/share/cps/cmakerc.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Users/fante/AppData/Local/GitHubDesktop/CMakeRCConfig.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "C:/Users/fante/AppData/Local/GitHubDesktop/cmakerc-config.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "C:/Users/fante/AppData/Local/GitHubDesktop/lib/cps/CMakeRC.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Users/fante/AppData/Local/GitHubDesktop/lib/cps/cmakerc.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Users/fante/AppData/Local/GitHubDesktop/share/cps/CMakeRC.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Users/fante/AppData/Local/GitHubDesktop/share/cps/cmakerc.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "E:/IntelliJ IDEA Community Edition 2025.1.3/CMakeRCConfig.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "E:/IntelliJ IDEA Community Edition 2025.1.3/cmakerc-config.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "E:/IntelliJ IDEA Community Edition 2025.1.3/lib/cps/CMakeRC.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "E:/IntelliJ IDEA Community Edition 2025.1.3/lib/cps/cmakerc.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "E:/IntelliJ IDEA Community Edition 2025.1.3/share/cps/CMakeRC.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "E:/IntelliJ IDEA Community Edition 2025.1.3/share/cps/cmakerc.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Users/fante/AppData/Local/Microsoft/WinGet/Packages/GeodeSDK.GeodeCLI_Microsoft.Winget.Source_8wekyb3d8bbwe/CMakeRCConfig.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "C:/Users/fante/AppData/Local/Microsoft/WinGet/Packages/GeodeSDK.GeodeCLI_Microsoft.Winget.Source_8wekyb3d8bbwe/cmakerc-config.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "C:/Users/fante/AppData/Local/Microsoft/WinGet/Packages/GeodeSDK.GeodeCLI_Microsoft.Winget.Source_8wekyb3d8bbwe/lib/cps/CMakeRC.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Users/fante/AppData/Local/Microsoft/WinGet/Packages/GeodeSDK.GeodeCLI_Microsoft.Winget.Source_8wekyb3d8bbwe/lib/cps/cmakerc.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Users/fante/AppData/Local/Microsoft/WinGet/Packages/GeodeSDK.GeodeCLI_Microsoft.Winget.Source_8wekyb3d8bbwe/share/cps/CMakeRC.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Users/fante/AppData/Local/Microsoft/WinGet/Packages/GeodeSDK.GeodeCLI_Microsoft.Winget.Source_8wekyb3d8bbwe/share/cps/cmakerc.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Users/fante/.dotnet/tools/CMakeRCConfig.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "C:/Users/fante/.dotnet/tools/cmakerc-config.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "C:/Users/fante/.dotnet/tools/lib/cps/CMakeRC.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Users/fante/.dotnet/tools/lib/cps/cmakerc.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Users/fante/.dotnet/tools/share/cps/CMakeRC.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Users/fante/.dotnet/tools/share/cps/cmakerc.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files (x86)/Nmap/CMakeRCConfig.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files (x86)/Nmap/cmakerc-config.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files (x86)/Nmap/lib/cps/CMakeRC.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files (x86)/Nmap/lib/cps/cmakerc.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files (x86)/Nmap/share/cps/CMakeRC.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files (x86)/Nmap/share/cps/cmakerc.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Users/fante/.lmstudio/CMakeRCConfig.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "C:/Users/fante/.lmstudio/cmakerc-config.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "C:/Users/fante/.lmstudio/lib/cps/CMakeRC.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Users/fante/.lmstudio/lib/cps/cmakerc.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Users/fante/.lmstudio/share/cps/CMakeRC.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Users/fante/.lmstudio/share/cps/cmakerc.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Users/fante/AppData/Local/Programs/Ollama/CMakeRCConfig.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "C:/Users/fante/AppData/Local/Programs/Ollama/cmakerc-config.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "C:/Users/fante/AppData/Local/Programs/Ollama/lib/cps/CMakeRC.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Users/fante/AppData/Local/Programs/Ollama/lib/cps/cmakerc.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Users/fante/AppData/Local/Programs/Ollama/share/cps/CMakeRC.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Users/fante/AppData/Local/Programs/Ollama/share/cps/cmakerc.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Users/fante/AppData/Local/Microsoft/WinGet/Packages/Anthropic.ClaudeCode_Microsoft.Winget.Source_8wekyb3d8bbwe/CMakeRCConfig.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "C:/Users/fante/AppData/Local/Microsoft/WinGet/Packages/Anthropic.ClaudeCode_Microsoft.Winget.Source_8wekyb3d8bbwe/cmakerc-config.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "C:/Users/fante/AppData/Local/Microsoft/WinGet/Packages/Anthropic.ClaudeCode_Microsoft.Winget.Source_8wekyb3d8bbwe/lib/cps/CMakeRC.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Users/fante/AppData/Local/Microsoft/WinGet/Packages/Anthropic.ClaudeCode_Microsoft.Winget.Source_8wekyb3d8bbwe/lib/cps/cmakerc.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Users/fante/AppData/Local/Microsoft/WinGet/Packages/Anthropic.ClaudeCode_Microsoft.Winget.Source_8wekyb3d8bbwe/share/cps/CMakeRC.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Users/fante/AppData/Local/Microsoft/WinGet/Packages/Anthropic.ClaudeCode_Microsoft.Winget.Source_8wekyb3d8bbwe/share/cps/cmakerc.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/CMakeRCConfig.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/cmakerc-config.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/CMake/CMakeRCConfig.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/CMake/cmakerc-config.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/lib/cps/CMakeRC.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/lib/cps/cmakerc.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/share/cps/CMakeRC.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files/share/cps/cmakerc.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files (x86)/CMakeRCConfig.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files (x86)/cmakerc-config.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files (x86)/lib/cps/CMakeRC.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files (x86)/lib/cps/cmakerc.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files (x86)/share/cps/CMakeRC.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "C:/Program Files (x86)/share/cps/cmakerc.cps"
+        mode: "cps"
+        reason: "no_exist"
+    found: null
+    search_context:
+      ENV{PATH}:
+        - "C:\\Program Files\\Eclipse Adoptium\\jdk-21.0.8.9-hotspot\\bin"
+        - "C:\\Program Files\\Eclipse Adoptium\\jdk-11.0.28.6-hotspot\\bin"
+        - "C:\\Program Files\\Eclipse Adoptium\\jdk-17.0.16.8-hotspot\\bin"
+        - "C:\\Program Files\\Common Files\\Oracle\\Java\\javapath"
+        - "C:\\Python313\\Scripts\\"
+        - "C:\\Python313\\"
+        - "C:\\WINDOWS\\system32"
+        - "C:\\WINDOWS"
+        - "C:\\WINDOWS\\System32\\Wbem"
+        - "C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\"
+        - "C:\\WINDOWS\\System32\\OpenSSH\\"
+        - "C:\\Program Files\\dotnet\\"
+        - "C:\\Program Files\\NVIDIA Corporation\\NVIDIA App\\NvDLISR"
+        - "C:\\Program Files (x86)\\NVIDIA Corporation\\PhysX\\Common"
+        - "C:\\Program Files\\nodejs\\"
+        - "C:\\ProgramData\\chocolatey\\bin"
+        - "C:\\Program Files\\Microsoft SQL Server\\150\\Tools\\Binn\\"
+        - "C:\\Program Files\\Microsoft SQL Server\\Client SDK\\ODBC\\170\\Tools\\Binn\\"
+        - "C:\\Program Files (x86)\\PuTTY\\"
+        - "C:\\Program Files\\PuTTY\\"
+        - "C:\\Program Files\\Git\\cmd"
+        - "C:\\Program Files (x86)\\Windows Kits\\10\\Windows Performance Toolkit\\"
+        - "C:\\Program Files\\CMake\\bin"
+        - "C:\\Users\\fante\\AppData\\Local\\Microsoft\\WindowsApps"
+        - "C:\\Users\\fante\\AppData\\Local\\Programs\\Microsoft VS Code\\bin"
+        - "C:\\Users\\fante\\AppData\\Roaming\\npm"
+        - "C:\\Users\\fante\\AppData\\Local\\Microsoft\\WinGet\\Packages\\yt-dlp.yt-dlp_Microsoft.Winget.Source_8wekyb3d8bbwe"
+        - "C:\\Users\\fante\\AppData\\Local\\GitHubDesktop\\bin"
+        - "E:\\IntelliJ IDEA 2025.1.3\\bin"
+        - "E:\\IntelliJ IDEA Community Edition 2025.1.3\\bin"
+        - "C:\\Users\\fante\\AppData\\Local\\Microsoft\\WinGet\\Packages\\GeodeSDK.GeodeCLI_Microsoft.Winget.Source_8wekyb3d8bbwe"
+        - "C:\\Users\\fante\\.dotnet\\tools"
+        - "C:\\Program Files (x86)\\Nmap"
+        - "C:\\Users\\fante\\.lmstudio\\bin"
+        - "C:\\Users\\fante\\AppData\\Local\\Programs\\Ollama"
+        - "C:\\Users\\fante\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Anthropic.ClaudeCode_Microsoft.Winget.Source_8wekyb3d8bbwe"
+      CMAKE_INSTALL_PREFIX: "C:/Program Files (x86)/skymp5-server"
+      CMAKE_SYSTEM_PREFIX_PATH:
+        - "C:/Program Files"
+        - "C:/Program Files (x86)"
+        - "C:/Program Files/CMake"
+        - "C:/Program Files (x86)/skymp5-server"
+...

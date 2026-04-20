@@ -11,15 +11,15 @@
     "BACK": "go back",
     "PASSWORD_VERIFY_HINT": "confirm your password",
     "GITHUB_HINT": "get a colored nickname and mention in news",
-    "PATREON_HINT": "get a colored nickname and oter bonuses for patrons",
+    "PATREON_HINT": "get a colored nickname and other bonuses for patrons",
     "EMAIL_HINT_REGISTER": "enter your e-mail and password for registration",
     "REMEMBER_PLACEHOLDER": "remember me",
-    "REMEMBER_HINT": "check the box “remember me” for automatic autoriation ",
-    "REGISTER_HINT": "click “register now” to create a new account",
-    "PASSWORD_PLACEHOLDER": "password, you know",
+    "REMEMBER_HINT": "check the box \"remember me\" for automatic authorization",
+    "REGISTER_HINT": "click \"register now\" to create a new account",
+    "PASSWORD_PLACEHOLDER": "your password",
     "PASSWORD_VERIFY_PLACEHOLDER": "password again",
-    "EMAIL_PLACEHOLDER": "dude33@gmail.com",
+    "EMAIL_PLACEHOLDER": "example@gmail.com",
     "REGISTER_BUTTON": "register now",
-    "REGISTER_BUTTON_HINT": "нажмите, чтобы создать аккаунт"
+    "REGISTER_BUTTON_HINT": "click to create an account"
   }
 }
