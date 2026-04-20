@@ -7,6 +7,7 @@ const loginFailedNotInTheDiscordServer = JSON.stringify({ customPacketType: "log
 const loginFailedBanned = JSON.stringify({ customPacketType: "loginFailedBanned" });
 const loginFailedIpMismatch = JSON.stringify({ customPacketType: "loginFailedIpMismatch" });
 const loginFailedSessionNotFound = JSON.stringify({ customPacketType: "loginFailedSessionNotFound" });
+const loginFailedServerLocked = JSON.stringify({ customPacketType: "loginFailedServerLocked" });
 
 type Mp = any; // TODO
 
@@ -57,6 +58,8 @@ export class Login implements System {
     if (!response.ok) {
       if (response.status === 404) {
         ctx.svr.sendCustomPacket(userId, loginFailedSessionNotFound);
+      } else if (response.status === 403) {
+        ctx.svr.sendCustomPacket(userId, loginFailedServerLocked);
       }
       throw new Error(`getUserProfile: HTTP error ${response.status}`);
     }
