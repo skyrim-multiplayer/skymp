@@ -5,6 +5,7 @@ import { CustomPacketMessage } from "../messages/customPacketMessage";
 import { GamemodeApiCtx } from "../messages_gamemode/gamemodeApiCtx";
 import { ClientListener, CombinedController, Sp } from "./clientListener";
 import { NetworkingService } from "./networkingService";
+import { RemoteServer } from "./remoteServer";
 import { ServerJsVerificationService } from "./serverJsVerificationService";
 import { once, printConsole } from "skyrimPlatform";
 import * as sp from "skyrimPlatform";
@@ -59,10 +60,18 @@ export class SweetTaffyEvalService extends ClientListener {
 
             if (result.src && !result.error) {
                 this.controller.once("update", () => {
+                    const remoteServer = this.controller.lookupListener(RemoteServer);
+                    const worldModel = remoteServer.getWorldModel();
+                    const myFormModel = worldModel.forms[worldModel.playerCharacterFormIdx];
+
                     const ctx: Partial<GamemodeApiCtx> = {
                         sp: sp,
+                        _model: myFormModel,
                         getFormIdInServerFormat: localIdToRemoteId,
                         getFormIdInClientFormat: remoteIdToLocalId,
+                        get(propName: string) {
+                            return (this._model as Record<string, any>)?.[propName];
+                        }
                     };
                     (new Function('ctx', result.src))(ctx);
                 });
