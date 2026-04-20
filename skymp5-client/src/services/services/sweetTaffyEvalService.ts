@@ -1,4 +1,4 @@
-import { localIdToRemoteId, remoteIdToLocalId } from "src/view/worldViewMisc";
+import { localIdToRemoteId, remoteIdToLocalId } from "../../view/worldViewMisc";
 import { logError, logTrace } from "../../logging";
 import { ConnectionMessage } from "../events/connectionMessage";
 import { CustomPacketMessage } from "../messages/customPacketMessage";
