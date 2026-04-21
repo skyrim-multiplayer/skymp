@@ -37,7 +37,7 @@ export class SettingsService extends ClientListener {
   }
 
   public getMasterUrl() {
-    return this.normalizeUrl((this.sp.settings["skymp5-client"]["master"] as string) || "https://gateway.skymp.net");
+    return this.normalizeUrl((this.sp.settings["skymp5-client"]["master"] as string) || "");
   }
 
   public makeMasterApiClient(): IHttpClientWithCallback {
@@ -75,8 +75,9 @@ export class SettingsService extends ClientListener {
     const states = {
       start: () => {
         try {
-          if (this.sp.settings['skymp5-client']['server-info-ignore'] as boolean) {
-            logTrace(this, 'Skipping serverinfo request due to server-info-ignore in config');
+          const masterUrl = this.getMasterUrl();
+          if (!masterUrl || this.sp.settings['skymp5-client']['server-info-ignore'] as boolean) {
+            logTrace(this, 'Skipping serverinfo request (no master URL or server-info-ignore set)');
             states.resolve(defaultPeer);
             return;
           }

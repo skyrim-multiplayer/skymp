@@ -105,7 +105,10 @@
   // Called once on load — if skyrimPlatform isn't available yet (dev browser)
   // the original fallback (no-op) still works.
 
+  var _spPatched = false;
+
   function patchSkyrimPlatform() {
+    if (_spPatched) return;
     var sp = window.skyrimPlatform;
     if (!sp || typeof sp.sendMessage !== 'function') return;
 
@@ -117,6 +120,7 @@
       }
       original.apply(sp, arguments);
     };
+    _spPatched = true;
   }
 
   // ── Server-called hook ──────────────────────────────────────────────────────
@@ -126,6 +130,7 @@
   // if it's still connecting, onopen will call authenticate() once it opens.
 
   window.ffWsConnect = function () {
+    patchSkyrimPlatform();
     if (ws && ws.readyState === WebSocket.OPEN) {
       authenticate();
     }
