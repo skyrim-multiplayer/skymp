@@ -10,3 +10,4 @@ node_modules
 .*.swp
 skyrim_data_files/
 /.claude
+/skymp5-client/.claude

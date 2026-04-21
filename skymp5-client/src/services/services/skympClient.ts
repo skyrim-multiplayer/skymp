@@ -92,12 +92,17 @@ export class SkympClient extends ClientListener {
     }
 
     this.controller.lookupListener(SettingsService).getTargetPeer(
-      ({ host, port }: TargetPeer) => {
-        storage.targetIp = host;
-        storage.targetPort = port;
+      (targetPeer: TargetPeer) => {
+        if (targetPeer.denied) {
+          this.controller.emitter.emit("preConnectDenied", { reason: targetPeer.denied });
+          return;
+        }
 
-        printConsole(`Connecting to ${host}:${port}`);
-        this.controller.lookupListener(networking.NetworkingService).connect(host, port);
+        storage.targetIp = targetPeer.host;
+        storage.targetPort = targetPeer.port;
+
+        printConsole(`Connecting to ${targetPeer.host}:${targetPeer.port}`);
+        this.controller.lookupListener(networking.NetworkingService).connect(targetPeer.host, targetPeer.port);
       },
     );
   }

@@ -16,3 +16,4 @@ if errorlevel 1 (
 )
 
 echo Done.
+pause
