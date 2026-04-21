@@ -137,11 +137,14 @@ export class Login implements System {
             {
               method: 'GET',
               headers: {
-                'Authorization': `${discordAuth.botToken}`,
+                'Authorization': discordAuth.botToken.startsWith('Bot ') ? discordAuth.botToken : `Bot ${discordAuth.botToken}`,
               },
               ... this.getFetchOptions('discordAuth1'),
             },
           );
+          if (response.status === 401) {
+            console.error('Discord member check returned 401 — ensure discordAuth.botToken is a valid bot token (with or without "Bot " prefix)');
+          }
           const responseData = response.ok ? await response.json() : null;
           const guidAfterAsyncOp = ctx.svr.isConnected(userId) ? ctx.svr.getUserGuid(userId) : "<disconnected>";
 
@@ -245,7 +248,7 @@ export class Login implements System {
     this.fetchRetry(`https://discord.com/api/channels/${eventLogChannelId}/messages`, {
       method: 'POST',
       headers: {
-        'Authorization': `${botToken}`,
+        'Authorization': botToken.startsWith('Bot ') ? botToken : `Bot ${botToken}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
