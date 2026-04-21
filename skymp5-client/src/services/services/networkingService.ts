@@ -99,12 +99,14 @@ export class NetworkingService extends ClientListener {
         case "message":
           // TODO: in theory can be empty jsonContent and non-empty error
 
-          let msgAny: AnyMessage;
-          
           if (rawContent === null) {
-            msgAny = {} as AnyMessage;
-            logError(this, "null rawContent");
-          } else if ((new Uint8Array(rawContent as unknown as ArrayBuffer)[0]) === 0x7b) {
+            logError(this, "null rawContent in message packet, skipping");
+            break;
+          }
+
+          let msgAny: AnyMessage;
+
+          if ((new Uint8Array(rawContent as unknown as ArrayBuffer)[0]) === 0x7b) {
             // assume json
             msgAny = JSON.parse(this.sp.decodeUtf8(rawContent as unknown as ArrayBuffer));
           } else {
