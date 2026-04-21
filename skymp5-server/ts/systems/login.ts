@@ -230,10 +230,45 @@ export class Login implements System {
           console.error("Error logging in client:", JSON.stringify(gameData), err)
         });
     } else if (this.offlineMode === true && gameData && typeof gameData.profileId === "number") {
-      const profileId = gameData.profileId;
-      this.emit(ctx, "spawnAllowed", userId, profileId, [], undefined);
-      loginsCounter.inc();
-      this.log(userId + " logged as " + profileId);
+      (async () => {
+        const profileId = gameData.profileId;
+
+        const guidBeforeAsyncOp = ctx.svr.getUserGuid(userId);
+        const response = await this.fetchRetry(
+          `${this.settingsObject.master}/api/servers/${this.masterKey}/profiles/${profileId}/check`,
+          this.getFetchOptions('checkProfileAllowed')
+        );
+        const guidAfterAsyncOp = ctx.svr.isConnected(userId) ? ctx.svr.getUserGuid(userId) : "<disconnected>";
+
+        console.log({ guidBeforeAsyncOp, guidAfterAsyncOp, op: "checkProfileAllowed" });
+
+        if (guidBeforeAsyncOp !== guidAfterAsyncOp) {
+          console.error(`User ${userId} changed guid from ${guidBeforeAsyncOp} to ${guidAfterAsyncOp} during async profile check`);
+          throw new Error("Guid mismatch after profile check");
+        }
+
+        if (!response.ok) {
+          const body = await response.json().catch(() => ({}));
+          if (response.status === 404) {
+            ctx.svr.sendCustomPacket(userId, loginFailedSessionNotFound);
+          } else if (response.status === 403) {
+            if (body.error === 'serverLocked') {
+              ctx.svr.sendCustomPacket(userId, loginFailedServerLocked);
+            } else {
+              ctx.svr.sendCustomPacket(userId, loginFailedBanned);
+            }
+          }
+          throw new Error(`checkProfileAllowed: HTTP ${response.status} — ${body.error || 'unknown'}`);
+        }
+
+        this.emit(ctx, "spawnAllowed", userId, profileId, [], undefined);
+        loginsCounter.inc();
+        this.log(userId + " logged as " + profileId);
+      })()
+        .catch((err) => {
+          loginErrorsCounter.inc({ reason: err?.message || "unknown" });
+          console.error("Error checking profile in offline mode:", JSON.stringify(gameData), err);
+        });
     } else {
       this.log("No credentials found in gameData:", gameData);
     }
