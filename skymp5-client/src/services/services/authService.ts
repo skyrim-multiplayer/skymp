@@ -41,7 +41,7 @@ let browserState = {
 let authData: RemoteAuthGameData | null = null;
 
 const translations = {
-  ru: {
+  "ru": {
     loginViaDiscord: 'войдите через discord',
     joinDiscordServer: 'вступите в discord сервер',
     banned: 'вы забанены',
@@ -67,7 +67,7 @@ const translations = {
     join: 'вступить',
     back: 'назад',
   },
-  en: {
+  "en": {
     loginViaDiscord: 'log in via Discord',
     joinDiscordServer: 'join the Discord server',
     banned: 'you are banned',
