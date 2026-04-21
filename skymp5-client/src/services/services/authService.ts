@@ -256,6 +256,7 @@ export class AuthService extends ClientListener {
       return;
     }
 
-    logError(this, 'Not found authentication method');
+    logError(this, 'No authentication method found in storage');
+    this.showLoginFailed('please use the Frostfall Launcher to log in');
   }
 }

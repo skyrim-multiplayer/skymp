@@ -114,7 +114,7 @@ export class SettingsService extends ClientListener {
               return;
             }
           }
-          states.resolve(body);
+          states.resolve({ ...defaultPeer, publicKeys: body.publicKeys });
         } catch (e) {
           states.reject(e);
         }
