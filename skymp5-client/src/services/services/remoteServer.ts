@@ -569,15 +569,6 @@ export class RemoteServer extends ClientListener {
       });
       once('tick', () => {
         once('tick', () => {
-          // Game.getPlayer() returns null in the main menu and non-null while
-          // in-game. If the player is already in-game (e.g. reconnect after
-          // a disconnect), the once('update') handler above will handle
-          // spawning via moveRefrToPosition, so we must not call loadGame here.
-          // Without this guard both paths could fire when tick fires before
-          // the first Papyrus update, causing an unwanted loading screen.
-          if (Game.getPlayer() !== null) {
-            return;
-          }
           if (!spawnTask.running) {
             spawnTask.running = true;
 

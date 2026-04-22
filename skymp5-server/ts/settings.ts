@@ -17,7 +17,7 @@ export class Settings {
   masterKey: string | null = null;
   port = 7777;
   maxPlayers = 100;
-  master: string = "https://api.frostfall.online";
+  master: string = "https://gateway.skymp.net";
   name = 'Yet Another Server';
   gamemodePath = '...';
   loadOrder = new Array<string>();
