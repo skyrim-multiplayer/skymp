@@ -57,6 +57,11 @@ export class Login implements System {
     if (!response.ok) {
       if (response.status === 404) {
         ctx.svr.sendCustomPacket(userId, loginFailedSessionNotFound);
+      } else if (response.status === 403) {
+        // Backend rejected the session: server is locked or user is not whitelisted.
+        // loginFailedBanned is the closest existing packet type — shows an error
+        // and lets the player go back to the login screen.
+        ctx.svr.sendCustomPacket(userId, loginFailedBanned);
       }
       throw new Error(`getUserProfile: HTTP error ${response.status}`);
     }
