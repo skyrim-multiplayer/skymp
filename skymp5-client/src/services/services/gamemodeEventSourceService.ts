@@ -66,6 +66,12 @@ export class GamemodeEventSourceService extends ClientListener {
 
         eventNames.forEach((eventName) => {
 
+            // Skip provably-empty event sources before verification to avoid
+            // noisy "Empty server JS" traces from verifyServerJs.
+            if (eventSourcesRecord[eventName] === '') {
+                return;
+            }
+
             const result = serverJsVerificationService.verifyServerJs(eventSourcesRecord[eventName]!);
 
             if (result.src === null) {

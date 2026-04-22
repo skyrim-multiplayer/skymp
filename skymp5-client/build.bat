@@ -15,5 +15,8 @@ if errorlevel 1 (
     exit /b 1
 )
 
+echo Ensuring PluginsDev exists (prevents SkyrimPlatform hot-reload error)...
+mkdir "..\..\Frostfall-Client\Data\Platform\PluginsDev" 2>nul
+
 echo Done.
 pause

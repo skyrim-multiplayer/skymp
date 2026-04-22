@@ -9,7 +9,6 @@ import { Provider } from 'react-redux';
 import { Widgets } from './utils/Widgets';
 
 import './main.scss';
-import './utils/wsClient';
 
 if (!window.skyrimPlatform) {
   window.skyrimPlatform = {};
@@ -18,6 +17,11 @@ if (!window.skyrimPlatform) {
 
 if (!window.skyrimPlatform.widgets) {
   window.skyrimPlatform.widgets = new Widgets([]);
+}
+
+// Initialize before App renders so Chat.getList() never sees undefined
+if (!Array.isArray(window.chatMessages)) {
+  window.chatMessages = [];
 }
 
 ReactDOM.render(

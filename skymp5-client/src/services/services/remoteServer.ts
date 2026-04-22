@@ -483,12 +483,18 @@ export class RemoteServer extends ClientListener {
     }
 
     if (msg.isMe) {
-      const spawnTask = { running: false };
+      this.spawnSequence++;
+      this.spawnTask.running = false;
+      const mySeq = this.spawnSequence;
       once('update', () => {
-        // Use MoveRefrToPosition to spawn if possible (not in main menu)
-        // In case of connection lost this is essential
-        if (!spawnTask.running) {
-          spawnTask.running = true;
+        // If a newer createActor(isMe) arrived after us, let it handle spawning.
+        if (this.spawnSequence !== mySeq) return;
+        // Use MoveRefrToPosition to spawn if possible (not in main menu).
+        // Only claim the running flag when the player is actually loaded in-game;
+        // if getPlayer() is null here we are still in a transitional state and
+        // should let the controller-tick path call loadGame instead.
+        if (!this.spawnTask.running && this.sp.Game.getPlayer() !== null) {
+          this.spawnTask.running = true;
           logTrace(this, 'Using moveRefrToPosition to spawn player');
           (async () => {
             while (true) {
@@ -567,10 +573,22 @@ export class RemoteServer extends ClientListener {
           }
         }
       });
-      once('tick', () => {
-        once('tick', () => {
-          if (!spawnTask.running) {
-            spawnTask.running = true;
+      // Use controller.once('tick') — NOT the global once('tick') from skyrimPlatform.
+      // The global once('tick') is tied to the Papyrus VM and does not fire in the
+      // main menu.  controller.once('tick') is a JS-level event that fires in all
+      // contexts, so loadGame can be triggered from the main menu.
+      this.controller.once('tick', () => {
+        // If a newer createActor(isMe) arrived, discard this entire spawn path.
+        if (this.spawnSequence !== mySeq) return;
+        this.controller.once('tick', () => {
+          if (this.spawnSequence !== mySeq) return;
+          // If once('update') already ran and claimed spawnTask.running, the game
+          // was already loaded (reconnect) and moveRefrToPosition is handling the
+          // spawn — skip loadGame to avoid a black screen.
+          // If running is still false at this point the game is not loaded yet
+          // (main menu) and we must call loadGame to enter the world.
+          if (!this.spawnTask.running) {
+            this.spawnTask.running = true;
 
             let loadOrder = new Array<string>();
             for (let i = 0; i < this.sp.Game.getModCount(); ++i) {
@@ -990,4 +1008,6 @@ export class RemoteServer extends ClientListener {
   }
 
   private numSetInventory = 0;
+  private spawnTask = { running: false };
+  private spawnSequence = 0;
 }

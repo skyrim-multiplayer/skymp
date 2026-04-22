@@ -231,6 +231,14 @@ export class GamemodeUpdateService extends ClientListener {
 
         for (const propName of Object.keys(functionSourcesRecord)) {
 
+            // Skip empty strings immediately — no verification needed and no
+            // function to register.  This avoids a noisy "Empty server JS"
+            // trace from verifyServerJs for every updateNeighbor: '' entry.
+            if (functionSourcesRecord[propName] === '') {
+                delete (this.sp.storage[storageVar] as any)[propName];
+                continue;
+            }
+
             const result = serverJsVerificationService.verifyServerJs((this.sp.storage[storageVar] as any)[propName]);
 
             if (result.src === null) {
@@ -244,13 +252,7 @@ export class GamemodeUpdateService extends ClientListener {
                     'ctx',
                     result.src,
                 );
-                const emptyFunction = functionSourcesRecord[propName] === '';
-                if (emptyFunction) {
-                    delete (this.sp.storage[storageVar] as any)[propName];
-                    logTrace(this, storageVar, propName, 'Added empty');
-                } else {
-                    logTrace(this, storageVar, propName, 'Added');
-                }
+                logTrace(this, storageVar, propName, 'Added');
             } catch (e) {
                 logError(this, storageVar, propName, e);
             }
