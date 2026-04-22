@@ -1,4 +1,5 @@
 import { HttpClient, HttpHeaders, HttpResponse, printConsole, Utility } from "skyrimPlatform";
+import { AuthService } from "./authService";
 import { ClientListener, CombinedController, Sp } from "./clientListener";
 import { Mod, ServerManifest } from "../messages_http/serverManifest";
 import { TimersService } from "./timersService";
@@ -15,7 +16,6 @@ export interface TargetPeer {
   host: string;
   port: number;
   publicKeys?: Record<string, string | undefined>;
-  denied?: 'sessionInvalid' | 'serverLocked';
 }
 
 export type TargetPeerCallback = (targetPeer: TargetPeer) => void;
@@ -37,7 +37,7 @@ export class SettingsService extends ClientListener {
   }
 
   public getMasterUrl() {
-    return this.normalizeUrl((this.sp.settings["skymp5-client"]["master"] as string) || "");
+    return this.normalizeUrl((this.sp.settings["skymp5-client"]["master"] as string) || "https://gateway.skymp.net");
   }
 
   public makeMasterApiClient(): IHttpClientWithCallback {
@@ -70,14 +70,12 @@ export class SettingsService extends ClientListener {
     };
 
     let resolved = false;
-    const session = (this.sp.settings["skymp5-client"]["gameData"] as any)?.session as string | undefined;
 
     const states = {
       start: () => {
         try {
-          const masterUrl = this.getMasterUrl();
-          if (!masterUrl || this.sp.settings['skymp5-client']['server-info-ignore'] as boolean) {
-            logTrace(this, 'Skipping serverinfo request (no master URL or server-info-ignore set)');
+          if (this.sp.settings['skymp5-client']['server-info-ignore'] as boolean) {
+            logTrace(this, 'Skipping serverinfo request due to server-info-ignore in config');
             states.resolve(defaultPeer);
             return;
           }
@@ -87,12 +85,13 @@ export class SettingsService extends ClientListener {
           );
 
           let headers: HttpHeaders = {};
+          let session = this.controller.lookupListener(AuthService).readAuthDataFromDisk()?.session;
           if (session) {
             headers['X-Session'] = session;
           }
 
           masterApiClient.get(
-            `/api/serverinfo`, { headers },
+            `/api/servers/${masterKey}/serverinfo`, { headers },
             states.handleResponse,
           );
         } catch (e) {
@@ -104,18 +103,7 @@ export class SettingsService extends ClientListener {
           if (res.status !== 200) {
             throw new Error(`status ${res.status}`);
           }
-          const body = JSON.parse(res.body);
-          if (session) {
-            if (!body.sessionValid) {
-              states.resolve({ ...defaultPeer, denied: 'sessionInvalid' });
-              return;
-            }
-            if (!body.allowed) {
-              states.resolve({ ...defaultPeer, denied: 'serverLocked' });
-              return;
-            }
-          }
-          states.resolve({ ...defaultPeer, publicKeys: body.publicKeys });
+          states.resolve(JSON.parse(res.body));
         } catch (e) {
           states.reject(e);
         }
@@ -130,8 +118,6 @@ export class SettingsService extends ClientListener {
         logTrace(this, `Resolved target peer`, targetPeer);
 
         const enrichedTargetPeer = { ...targetPeer };
-        enrichedTargetPeer.host = defaultPeer.host;
-        enrichedTargetPeer.port = defaultPeer.port;
         enrichedTargetPeer.publicKeys = { ...defaultPeer.publicKeys, ...targetPeer.publicKeys };
 
         logTrace(this, `Enriched target peer`, enrichedTargetPeer);
@@ -144,13 +130,8 @@ export class SettingsService extends ClientListener {
         }
         resolved = true;
 
-        if (session) {
-          logTrace(this, `Server info request failed with session present, denying pre-connect; error:`, err);
-          callback({ ...defaultPeer, denied: 'sessionInvalid' });
-        } else {
-          logTrace(this, `Server info request failed, falling back to`, defaultPeer, `; error:`, err);
-          callback(defaultPeer);
-        }
+        logTrace(this, `Server info request failed, falling back to`, defaultPeer, `; error:`, err);
+        callback(defaultPeer);
       },
     };
 
@@ -191,10 +172,6 @@ export class SettingsService extends ClientListener {
     }
     return url;
   };
-
-  public clearTargetPeerCache() {
-    this.targetPeerCache = null;
-  }
 
   private targetPeerCache: TargetPeer | null = null;
 }

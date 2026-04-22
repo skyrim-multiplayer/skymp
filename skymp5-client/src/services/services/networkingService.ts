@@ -51,7 +51,6 @@ export class NetworkingService extends ClientListener {
 
   connect(hostName: string, port: number) {
     this.serverAddress = { hostName, port };
-    this.reconnectAt = 0;
     this.createClientSafe();
   }
 
@@ -60,7 +59,6 @@ export class NetworkingService extends ClientListener {
   }
 
   close() {
-    this.reconnectAt = 0;
     this.sp.mpClientPlugin.destroyClient();
   }
 
@@ -68,17 +66,7 @@ export class NetworkingService extends ClientListener {
     return this.sp.mpClientPlugin.isConnected();
   }
 
-  private scheduleReconnect() {
-    this.reconnectAt = Date.now() + this.reconnectDelayMs;
-  }
-
   private onTick() {
-    if (this.reconnectAt > 0 && Date.now() >= this.reconnectAt) {
-      this.reconnectAt = 0;
-      this.reconnect();
-      return;
-    }
-
     this.sp.mpClientPlugin.tick((packetType, rawContent, error) => {
       switch (packetType) {
         case "connectionAccepted":
@@ -86,27 +74,25 @@ export class NetworkingService extends ClientListener {
           break;
         case "connectionDenied":
           this.controller.emitter.emit("connectionDenied", { error });
-          this.scheduleReconnect();
+          this.reconnect();
           break;
         case "connectionFailed":
           this.controller.emitter.emit("connectionFailed", {});
-          this.scheduleReconnect();
+          this.reconnect();
           break;
         case "disconnect":
           this.controller.emitter.emit("connectionDisconnect", {});
-          this.scheduleReconnect();
+          this.reconnect();
           break;
         case "message":
           // TODO: in theory can be empty jsonContent and non-empty error
 
-          if (rawContent === null) {
-            logError(this, "null rawContent in message packet, skipping");
-            break;
-          }
-
           let msgAny: AnyMessage;
-
-          if ((new Uint8Array(rawContent as unknown as ArrayBuffer)[0]) === 0x7b) {
+          
+          if (rawContent === null) {
+            msgAny = {} as AnyMessage;
+            logError(this, "null rawContent");
+          } else if ((new Uint8Array(rawContent as unknown as ArrayBuffer)[0]) === 0x7b) {
             // assume json
             msgAny = JSON.parse(this.sp.decodeUtf8(rawContent as unknown as ArrayBuffer));
           } else {
@@ -219,9 +205,6 @@ export class NetworkingService extends ClientListener {
       logError(this, "createClientSafe failed");
     }
   }
-
-  private reconnectAt = 0;
-  private readonly reconnectDelayMs = 3000;
 
   private get serverAddress(): { hostName: string, port: number } {
     const res: unknown = this.sp.storage["serverAddress"];

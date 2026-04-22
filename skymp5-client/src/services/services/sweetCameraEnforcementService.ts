@@ -306,7 +306,7 @@ export class SweetCameraEnforcementService extends ClientListener {
                 const intervalMs = this.settings?.exitAnimNotificationIntervalMs;
                 if (!intervalMs || (Date.now() - this.lastNotificationMoment) >= intervalMs) {
                     this.lastNotificationMoment = Date.now();
-                    this.sp.Debug.notification("Press Space to exit animation");
+                    this.sp.Debug.notification("Пробел, чтобы выйти из анимации");
                 }
             }
         }

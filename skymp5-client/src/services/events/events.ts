@@ -87,8 +87,7 @@ type EventTypes = {
     'queryBlockSetInventoryEvent': [QueryBlockSetInventoryEvent],
     'queryKeyCodeBindings': [QueryKeyCodeBindings],
     'nicknameCreate': [NicknameCreateEvent],
-    'nicknameDestroy': [NicknameDestroyEvent],
-    'preConnectDenied': [{ reason: 'sessionInvalid' | 'serverLocked' }]
+    'nicknameDestroy': [NicknameDestroyEvent]
 }
 
 // https://blog.makerx.com.au/a-type-safe-event-emitter-in-node-js/
