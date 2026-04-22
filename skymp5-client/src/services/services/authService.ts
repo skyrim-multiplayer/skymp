@@ -35,6 +35,8 @@ export class AuthService extends ClientListener {
     this.controller.emitter.on("connectionDenied", (e) => this.handleConnectionDenied(e));
     this.controller.emitter.on("customPacketMessage", (e) => this.onCustomPacketMessage(e));
     this.controller.on("browserMessage", (e) => this.onBrowserMessage(e));
+    this.controller.on("tick", () => this.onTick());
+    this.controller.once("update", () => this.onceUpdate());
   }
 
   private onAuthNeeded(e: AuthNeededEvent) {
@@ -83,6 +85,9 @@ export class AuthService extends ClientListener {
       logTrace(this, `Received createActorMessage for self, resetting widgets`);
       this.sp.browser.executeJavaScript('window.skyrimPlatform.widgets.set([]);');
     }
+
+    this.loggingStartMoment = 0;
+    this.authAttemptProgressIndicator = false;
   }
 
   private onCustomPacketMessage(event: ConnectionMessage<CustomPacketMessage>): void {
@@ -209,6 +214,26 @@ export class AuthService extends ClientListener {
     window.skyrimPlatform.widgets.set([widget]);
   }
 
+  private onTick() {
+    const maxLoggingDelay = 15000;
+    if (this.loggingStartMoment && Date.now() - this.loggingStartMoment > maxLoggingDelay) {
+      if (this.playerEverSawActualGameplay) {
+        logTrace(this, 'Max logging delay reached, player saw gameplay — reconnecting');
+        this.loggingStartMoment = 0;
+        this.controller.lookupListener(NetworkingService).reconnect();
+      } else {
+        logTrace(this, 'Max logging delay reached, player never saw gameplay — showing error');
+        this.loggingStartMoment = 0;
+        this.authAttemptProgressIndicator = false;
+        this.showLoginFailed('connection timed out — please try again');
+      }
+    }
+  }
+
+  private onceUpdate() {
+    this.playerEverSawActualGameplay = true;
+  }
+
   private handleConnectionDenied(e: ConnectionDenied) {
     if (e.error.toLowerCase().includes("invalid password")) {
       this.controller.once("tick", () => {
@@ -224,6 +249,8 @@ export class AuthService extends ClientListener {
   }
 
   private handleConnectionAccepted() {
+    this.loggingStartMoment = Date.now();
+
     const authData = this.sp.storage[authGameDataStorageKey] as AuthGameData | undefined;
 
     if (authData?.local) {
@@ -259,4 +286,8 @@ export class AuthService extends ClientListener {
     logError(this, 'No authentication method found in storage');
     this.showLoginFailed('please use the Frostfall Launcher to log in');
   }
+
+  private loggingStartMoment = 0;
+  private authAttemptProgressIndicator = false;
+  private playerEverSawActualGameplay = false;
 }
