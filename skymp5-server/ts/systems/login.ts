@@ -7,7 +7,6 @@ const loginFailedNotInTheDiscordServer = JSON.stringify({ customPacketType: "log
 const loginFailedBanned = JSON.stringify({ customPacketType: "loginFailedBanned" });
 const loginFailedIpMismatch = JSON.stringify({ customPacketType: "loginFailedIpMismatch" });
 const loginFailedSessionNotFound = JSON.stringify({ customPacketType: "loginFailedSessionNotFound" });
-const loginFailedServerLocked = JSON.stringify({ customPacketType: "loginFailedServerLocked" });
 
 type Mp = any; // TODO
 
@@ -58,8 +57,6 @@ export class Login implements System {
     if (!response.ok) {
       if (response.status === 404) {
         ctx.svr.sendCustomPacket(userId, loginFailedSessionNotFound);
-      } else if (response.status === 403) {
-        ctx.svr.sendCustomPacket(userId, loginFailedServerLocked);
       }
       throw new Error(`getUserProfile: HTTP error ${response.status}`);
     }
@@ -137,14 +134,11 @@ export class Login implements System {
             {
               method: 'GET',
               headers: {
-                'Authorization': discordAuth.botToken.startsWith('Bot ') ? discordAuth.botToken : `Bot ${discordAuth.botToken}`,
+                'Authorization': `${discordAuth.botToken}`,
               },
               ... this.getFetchOptions('discordAuth1'),
             },
           );
-          if (response.status === 401) {
-            console.error('Discord member check returned 401 — ensure discordAuth.botToken is a valid bot token (with or without "Bot " prefix)');
-          }
           const responseData = response.ok ? await response.json() : null;
           const guidAfterAsyncOp = ctx.svr.isConnected(userId) ? ctx.svr.getUserGuid(userId) : "<disconnected>";
 
@@ -230,45 +224,10 @@ export class Login implements System {
           console.error("Error logging in client:", JSON.stringify(gameData), err)
         });
     } else if (this.offlineMode === true && gameData && typeof gameData.profileId === "number") {
-      (async () => {
-        const profileId = gameData.profileId;
-
-        const guidBeforeAsyncOp = ctx.svr.getUserGuid(userId);
-        const response = await this.fetchRetry(
-          `${this.settingsObject.master}/api/servers/${this.masterKey}/profiles/${profileId}/check`,
-          this.getFetchOptions('checkProfileAllowed')
-        );
-        const guidAfterAsyncOp = ctx.svr.isConnected(userId) ? ctx.svr.getUserGuid(userId) : "<disconnected>";
-
-        console.log({ guidBeforeAsyncOp, guidAfterAsyncOp, op: "checkProfileAllowed" });
-
-        if (guidBeforeAsyncOp !== guidAfterAsyncOp) {
-          console.error(`User ${userId} changed guid from ${guidBeforeAsyncOp} to ${guidAfterAsyncOp} during async profile check`);
-          throw new Error("Guid mismatch after profile check");
-        }
-
-        if (!response.ok) {
-          const body = await response.json().catch(() => ({}));
-          if (response.status === 404) {
-            ctx.svr.sendCustomPacket(userId, loginFailedSessionNotFound);
-          } else if (response.status === 403) {
-            if (body.error === 'serverLocked') {
-              ctx.svr.sendCustomPacket(userId, loginFailedServerLocked);
-            } else {
-              ctx.svr.sendCustomPacket(userId, loginFailedBanned);
-            }
-          }
-          throw new Error(`checkProfileAllowed: HTTP ${response.status} — ${body.error || 'unknown'}`);
-        }
-
-        this.emit(ctx, "spawnAllowed", userId, profileId, [], undefined);
-        loginsCounter.inc();
-        this.log(userId + " logged as " + profileId);
-      })()
-        .catch((err) => {
-          loginErrorsCounter.inc({ reason: err?.message || "unknown" });
-          console.error("Error checking profile in offline mode:", JSON.stringify(gameData), err);
-        });
+      const profileId = gameData.profileId;
+      this.emit(ctx, "spawnAllowed", userId, profileId, [], undefined);
+      loginsCounter.inc();
+      this.log(userId + " logged as " + profileId);
     } else {
       this.log("No credentials found in gameData:", gameData);
     }
@@ -283,7 +242,7 @@ export class Login implements System {
     this.fetchRetry(`https://discord.com/api/channels/${eventLogChannelId}/messages`, {
       method: 'POST',
       headers: {
-        'Authorization': botToken.startsWith('Bot ') ? botToken : `Bot ${botToken}`,
+        'Authorization': `${botToken}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({

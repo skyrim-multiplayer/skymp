@@ -1,3 +1,4 @@
+import * as crypto from "crypto";
 import { AuthGameData, RemoteAuthGameData, authGameDataStorageKey } from "../../features/authModel";
 import { FunctionInfo } from "../../lib/functionInfo";
 import { ClientListener, CombinedController, Sp } from "./clientListener";
@@ -5,6 +6,7 @@ import { BrowserMessageEvent, Menu, browser } from "skyrimPlatform";
 import { AuthNeededEvent } from "../events/authNeededEvent";
 import { BrowserWindowLoadedEvent } from "../events/browserWindowLoadedEvent";
 import { TimersService } from "./timersService";
+import { MasterApiAuthStatus } from "../messages_http/masterApiAuthStatus";
 import { logTrace, logError } from "../../logging";
 import { ConnectionMessage } from "../events/connectionMessage";
 import { CreateActorMessage } from "../messages/createActorMessage";
@@ -199,24 +201,10 @@ export class AuthService extends ClientListener {
       case events.openDiscordOauth:
         browserState.comment = 'открываем браузер...';
         this.refreshWidgets();
+        this.sp.win32.loadUrl(`${settingsService.getMasterUrl()}/api/users/login-discord?state=${this.discordAuthState}`);
 
-        // Fetch the Discord OAuth URL (and its state) from the backend
-        new this.sp.HttpClient(settingsService.getMasterUrl())
-          .get('/auth/discord/url', undefined,
-            // @ts-ignore
-            (response) => {
-              if (response.status !== 200) {
-                browserState.comment = `ошибка соединения: ${response.status}`;
-                this.refreshWidgets();
-                return;
-              }
-              const { url, state } = JSON.parse(response.body);
-              this.discordAuthState = state;
-              this.sp.win32.loadUrl(url);
-              // Launch checkLoginState polling loop
-              this.checkLoginState();
-            }
-          );
+        // Launch checkLoginState loop
+        this.checkLoginState();
         break;
       case events.authAttempt:
         if (authData === null) {
@@ -255,6 +243,30 @@ export class AuthService extends ClientListener {
     }
   }
 
+  private createPlaySession(token: string, callback: (res: string, err: string) => void) {
+    const settingsService = this.controller.lookupListener(SettingsService);
+    const client = new this.sp.HttpClient(settingsService.getMasterUrl());
+
+    const route = `/api/users/me/play/${settingsService.getServerMasterKey()}`;
+    logTrace(this, `Creating play session ${route}`);
+
+    client.post(route, {
+      body: '{}',
+      contentType: 'application/json',
+      headers: {
+        'authorization': token,
+      },
+      // @ts-ignore
+    }, (res) => {
+      if (res.status != 200) {
+        callback('', 'status code ' + res.status);
+      } else {
+        // TODO: handle JSON.parse failure?
+        callback(JSON.parse(res.body).session, '');
+      }
+    });
+  }
+
   private checkLoginState() {
     if (!this.isListenBrowserMessage) {
       logTrace(this, `checkLoginState: isListenBrowserMessage was false, aborting check`);
@@ -265,38 +277,46 @@ export class AuthService extends ClientListener {
     const timersService = this.controller.lookupListener(TimersService);
 
     // Social engineering protection, don't show the full state
-    const halfDiscordAuthState = this.discordAuthState.slice(0, 8);
+    const halfDiscordAuthState = this.discordAuthState.slice(0, 16);
 
     logTrace(this, `Checking login state`, halfDiscordAuthState, '...');
 
     new this.sp.HttpClient(settingsService.getMasterUrl())
-      .get("/auth/discord/status?state=" + this.discordAuthState, undefined,
+      .get("/api/users/login-discord/status?state=" + this.discordAuthState, undefined,
         // @ts-ignore
         (response) => {
           switch (response.status) {
-            case 200: {
+            case 200:
               const {
-                session,
-                profileId,
-                discordId,
-                username,
-                avatar,
-              } = JSON.parse(response.body);
+                token,
+                masterApiId,
+                discordUsername,
+                discordDiscriminator,
+                discordAvatar,
+              } = JSON.parse(response.body) as MasterApiAuthStatus;
               browserState.failCount = 0;
-              authData = {
-                session,
-                masterApiId: profileId,
-                discordUsername: username || null,
-                discordDiscriminator: null,
-                discordAvatar: avatar || null,
-              };
-              browserState.comment = 'привязан успешно';
-              this.refreshWidgets();
+              this.createPlaySession(token, (playSession, error) => {
+                if (error) {
+                  browserState.failCount = 0;
+                  browserState.comment = (error);
+                  timersService.setTimeout(() => this.checkLoginState(), Math.floor((1.5 + Math.random() * 2) * 1000));
+                  this.refreshWidgets();
+                  return;
+                }
+                authData = {
+                  session: playSession,
+                  masterApiId,
+                  discordUsername,
+                  discordDiscriminator,
+                  discordAvatar,
+                };
+                browserState.comment = 'привязан успешно';
+                this.refreshWidgets();
+              });
               break;
-            }
-            case 401: // Auth not completed yet — keep polling
+            case 401: // Unauthorized
               browserState.failCount = 0;
-              browserState.comment = '';
+              browserState.comment = '';//(`Still waiting...`);
               timersService.setTimeout(() => this.checkLoginState(), Math.floor((1.5 + Math.random() * 2) * 1000));
               break;
             case 403: // Forbidden
@@ -624,7 +644,7 @@ export class AuthService extends ClientListener {
       return this.authNeededFired && this.browserWindowLoadedFired
     }
   };
-  private discordAuthState = '';
+  private discordAuthState = crypto.randomBytes(32).toString('hex');
   private authDialogOpen = false;
 
   private loggingStartMoment = 0;

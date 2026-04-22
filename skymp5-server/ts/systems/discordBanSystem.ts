@@ -77,11 +77,6 @@ export class DiscordBanSystem implements System {
             forms.forEach(formId => {
                 console.log(`Detected Discord ban ${formId.toString(16)}, kicking`);
                 ctx.svr.setEnabled(formId, false);
-                const userId = ctx.svr.getUserByActor(formId);
-                if (userId !== 0 && ctx.svr.isConnected(userId)) {
-                    ctx.svr.sendCustomPacket(userId, JSON.stringify({ customPacketType: 'loginFailedBanned' }));
-                    ctx.svr.kick(userId);
-                }
             });
         });
     }
