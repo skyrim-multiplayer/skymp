@@ -21,6 +21,7 @@
 #include <map>
 #include <memory>
 #include <optional>
+#include <save_storages/ISaveStorage.h>
 #include <spdlog/spdlog.h>
 #include <sstream>
 #include <unordered_map>
@@ -32,10 +33,6 @@
 class MpActor;
 class FormCallbacks;
 class MpChangeForm;
-namespace Viet {
-template <typename T, typename FormDescType>
-class ISaveStorage;
-}
 class IScriptStorage;
 class GameModeEvent;
 
