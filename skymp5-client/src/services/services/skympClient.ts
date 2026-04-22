@@ -1,5 +1,6 @@
 import {
   printConsole,
+  settings,
   storage,
 } from 'skyrimPlatform';
 import * as networking from './networkingService';
@@ -14,13 +15,15 @@ import { AuthAttemptEvent } from '../events/authAttemptEvent';
 import { logTrace } from '../../logging';
 import { SettingsService, TargetPeer } from './settingsService';
 
+printConsole('Hello Multiplayer!');
+printConsole('settings:', settings['skymp5-client']);
+
 export class SkympClient extends ClientListener {
   constructor(private sp: Sp, private controller: CombinedController) {
     super();
 
     this.controller.emitter.on("connectionFailed", (e) => this.onConnectionFailed(e));
     this.controller.emitter.on("connectionDenied", (e) => this.onConnectionDenied(e));
-    this.controller.emitter.on("connectionDisconnect", () => this.onConnectionDisconnect());
 
     this.controller.emitter.on("createActorMessage", (e) => this.onActorCreateMessage(e));
 
@@ -60,11 +63,6 @@ export class SkympClient extends ClientListener {
     }
   }
 
-  private onConnectionDisconnect() {
-    logTrace(this, "Disconnected from server, clearing target peer cache");
-    this.controller.lookupListener(SettingsService).clearTargetPeerCache();
-  }
-
   private onConnectionFailed(e: ConnectionFailed) {
     logTrace(this, "Connection failed");
   }
@@ -82,6 +80,8 @@ export class SkympClient extends ClientListener {
   private ctor() {
     // TODO: refactor into service
     setupHooks();
+
+    this.sp.printConsole('SkympClient ctor');
   }
 
   private establishConnectionConditional() {
@@ -92,17 +92,12 @@ export class SkympClient extends ClientListener {
     }
 
     this.controller.lookupListener(SettingsService).getTargetPeer(
-      (targetPeer: TargetPeer) => {
-        if (targetPeer.denied) {
-          this.controller.emitter.emit("preConnectDenied", { reason: targetPeer.denied });
-          return;
-        }
+      ({ host, port }: TargetPeer) => {
+        storage.targetIp = host;
+        storage.targetPort = port;
 
-        storage.targetIp = targetPeer.host;
-        storage.targetPort = targetPeer.port;
-
-        printConsole(`Connecting to ${targetPeer.host}:${targetPeer.port}`);
-        this.controller.lookupListener(networking.NetworkingService).connect(targetPeer.host, targetPeer.port);
+        printConsole(`Connecting to ${host}:${port}`);
+        this.controller.lookupListener(networking.NetworkingService).connect(host, port);
       },
     );
   }
