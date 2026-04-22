@@ -105,7 +105,7 @@ try {
     strings = translations[lang as keyof typeof translations];
   }
 } catch {
-  // locale file not found or unreadable, default to 'ru'
+  // locale file not found or unreadable, default to 'en'
 }
 
 export class AuthService extends ClientListener {
