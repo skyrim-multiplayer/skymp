@@ -11,12 +11,10 @@ import {
 import { useBuildMonitor } from './hooks/useBuildMonitor.js';
 import { useModsMonitor } from './hooks/useModsMonitor.js';
 import { useRuntimeMonitor } from './hooks/useRuntimeMonitor.js';
-import { useServerMonitor } from './hooks/useServerMonitor.js';
 
 const TABS = [
   { id: 'overview', label: 'Overview', icon: 'home' },
   { id: 'builds', label: 'Builds', icon: 'builds' },
-  { id: 'server', label: 'Server', icon: 'terminal' },
   { id: 'mods', label: 'Mods', icon: 'tag' },
   { id: 'sync', label: 'Sync', icon: 'sync' },
   { id: 'doctor', label: 'Doctor', icon: 'doctor' },
@@ -26,8 +24,6 @@ const TABS = [
 const TAB_SUBTITLES = {
   overview: 'A friendlier dashboard for build status, doctor checks, sync actions, and local configuration.',
   builds: 'Run and manage SkyMP build profiles, monitor queue and status, and inspect results.',
-  server:
-    'Start the local SkyMP server from build/launch_server.bat, tail its logs, and reconnect to the running process after dashboard restarts.',
   mods: 'Inventory the current Data directory, inspect plugin state, and toggle plugin-backed mods through Plugins.txt.',
   sync: 'Review artifact health, compare source and destination state, and run sync actions when needed.',
   doctor: 'Inspect environment issues for local tooling, paths, and runtime assumptions.',
@@ -124,22 +120,6 @@ function runtimeTone(state) {
     return 'info';
   }
   if (state === 'skyrim_root_missing' || state === 'skse_missing') {
-    return 'warn';
-  }
-  if (state === 'unsupported') {
-    return 'neutral';
-  }
-  return 'bad';
-}
-
-function serverTone(state) {
-  if (state === 'ready_to_start') {
-    return 'ok';
-  }
-  if (state === 'running') {
-    return 'info';
-  }
-  if (state === 'launch_script_missing' || state === 'build_dir_missing') {
     return 'warn';
   }
   if (state === 'unsupported') {
@@ -573,33 +553,6 @@ function BuildSummary({ snapshot, profiles }) {
   );
 }
 
-function ServerSummary({ server }) {
-  return (
-    <div className="summary-grid">
-      <StatCard
-        label="Server"
-        value={humanizeLabel(server?.state ?? 'unknown')}
-        tone={serverTone(server?.state)}
-      />
-      <StatCard
-        label="Process"
-        value={server?.processId ?? server?.lastPid ?? 'None'}
-        tone={server?.running ? 'info' : 'neutral'}
-      />
-      <StatCard
-        label="Launcher"
-        value={server?.launchScriptExists ? 'Found' : 'Missing'}
-        tone={server?.launchScriptExists ? 'ok' : 'warn'}
-      />
-      <StatCard
-        label="Log tail"
-        value={server?.logLineCount ?? 0}
-        tone={(server?.logLineCount ?? 0) > 0 ? 'neutral' : 'ok'}
-      />
-    </div>
-  );
-}
-
 function RuntimeSummary({ runtime }) {
   return (
     <div className="summary-grid">
@@ -776,106 +729,6 @@ function RuntimePanel({
               Settings
             </button>
           ) : null}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function ServerPanel({
-  server,
-  error,
-  starting,
-  stopping,
-  refreshing,
-  onStart,
-  onStop,
-  onOpenSettings,
-}) {
-  const statusLabel = starting
-    ? 'Starting'
-    : stopping
-      ? 'Stopping'
-      : humanizeLabel(server?.state ?? 'unknown');
-  const statusTone = starting || stopping ? 'info' : serverTone(server?.state);
-  const detailRows = [
-    { label: 'Build dir', value: formatPath(server?.buildDir) },
-    { label: 'Launch script', value: formatPath(server?.launchScriptPath) },
-    { label: 'Log file', value: formatPath(server?.logPath) },
-    { label: 'Started', value: server?.startedAt ? formatStartedLabel(server.startedAt) : 'Not started' },
-    { label: 'Last checked', value: server?.checkedAt ? formatStartedLabel(server.checkedAt) : 'Unknown' },
-  ];
-
-  return (
-    <section className="panel runtime-panel">
-      <div className="panel__header panel__header--wrap">
-        <div>
-          <h2>Server control</h2>
-          <p>
-            Launch the local SkyMP server through <code>build/launch_server.bat</code>, keep it
-            running independently from the dashboard, and reconnect to its latest logs later.
-          </p>
-        </div>
-        <span className={`pill pill--${statusTone}`}>{statusLabel}</span>
-      </div>
-
-      <div className={`runtime-state-card runtime-state-card--${statusTone}`}>
-        <div className="runtime-state-card__icon">
-          <SymbolIcon name={server?.running ? 'activity' : 'terminal'} />
-        </div>
-        <div className="runtime-state-card__copy">
-          <strong>{statusLabel}</strong>
-          <p>{server?.message || 'Server status is unavailable right now.'}</p>
-        </div>
-      </div>
-
-      {error ? (
-        <div className="runtime-panel__error">
-          <strong>Server API error</strong>
-          <p>{error}</p>
-        </div>
-      ) : null}
-
-      <div className="runtime-panel__details">
-        {detailRows.map((row) => (
-          <div className="key-value" key={row.label}>
-            <span>{row.label}</span>
-            <strong>{row.value}</strong>
-          </div>
-        ))}
-      </div>
-
-      {server?.processId || server?.lastPid ? (
-        <div className="runtime-panel__processes">
-          <span>{server?.processId ? 'Attached PID' : 'Last tracked PID'}</span>
-          <code>{server?.processId ?? server?.lastPid}</code>
-        </div>
-      ) : null}
-
-      <div className="runtime-panel__footer">
-        <span>{refreshing ? 'Refreshing server status...' : formatLastUpdatedLabel(server?.checkedAt)}</span>
-        <div className="button-row runtime-panel__actions">
-          <button
-            type="button"
-            className="primary-button"
-            disabled={starting || stopping || !server?.canStart}
-            onClick={() => void onStart()}
-          >
-            <SymbolIcon name="play" className="button-icon" />
-            <span>{starting ? 'Starting...' : 'Start server'}</span>
-          </button>
-          <button
-            type="button"
-            className="ghost-button"
-            disabled={starting || stopping || !server?.canStop}
-            onClick={() => void onStop()}
-          >
-            <SymbolIcon name="x" className="button-icon" />
-            <span>{stopping ? 'Stopping...' : 'Stop server'}</span>
-          </button>
-          <button type="button" className="ghost-button" onClick={onOpenSettings}>
-            Settings
-          </button>
         </div>
       </div>
     </section>
@@ -1945,67 +1798,6 @@ function BuildLogPanel({ job, compact = false }) {
   );
 }
 
-function ServerLogPanel({ server }) {
-  const logRef = useRef(null);
-  const [stickToBottom, setStickToBottom] = useState(true);
-
-  useEffect(() => {
-    if (!server?.running) {
-      setStickToBottom(true);
-    }
-  }, [server?.running, server?.startedAt]);
-
-  useEffect(() => {
-    if (!server || !stickToBottom) {
-      return;
-    }
-
-    const element = logRef.current;
-    if (!element) {
-      return;
-    }
-
-    window.requestAnimationFrame(() => {
-      element.scrollTop = element.scrollHeight;
-    });
-  }, [server, server?.logLines?.length, stickToBottom]);
-
-  function handleLogScroll() {
-    const element = logRef.current;
-    if (!element) {
-      return;
-    }
-
-    const threshold = 24;
-    const distanceFromBottom = element.scrollHeight - element.scrollTop - element.clientHeight;
-    const nextStickToBottom = distanceFromBottom <= threshold;
-    setStickToBottom((current) => (current === nextStickToBottom ? current : nextStickToBottom));
-  }
-
-  return (
-    <section className="panel">
-      <div className="panel__header panel__header--wrap">
-        <div>
-          <h2>Server logs</h2>
-          <p>Rolling tail of the latest server session captured from launch_server.bat.</p>
-        </div>
-        {server?.logTruncated ? <span className="pill pill--neutral">Tail view</span> : null}
-      </div>
-
-      {server?.logLines?.length ? (
-        <pre ref={logRef} className="build-log-view" onScroll={handleLogScroll}>
-          {server.logLines.join('\n')}
-        </pre>
-      ) : (
-        <EmptyState
-          title="No server logs yet"
-          description="Start the server to begin capturing output here. The latest tail will persist across dashboard restarts."
-        />
-      )}
-    </section>
-  );
-}
-
 export function App() {
   const [activeTab, setActiveTab] = useState('overview');
   const [meta, setMeta] = useState(null);
@@ -2035,8 +1827,6 @@ export function App() {
   const [launchingRuntime, setLaunchingRuntime] = useState(false);
   const [openingRuntimeFolder, setOpeningRuntimeFolder] = useState(false);
   const [stoppingRuntime, setStoppingRuntime] = useState(false);
-  const [startingServer, setStartingServer] = useState(false);
-  const [stoppingServer, setStoppingServer] = useState(false);
 
   const loadMeta = useCallback(async () => {
     const data = await getMeta();
@@ -2156,15 +1946,6 @@ export function App() {
     requestOpenFolder,
     requestStop,
   } = useRuntimeMonitor();
-  const {
-    server,
-    loading: serverLoading,
-    refreshing: serverRefreshing,
-    error: serverError,
-    refreshServer,
-    requestStart: requestStartServer,
-    requestStop: requestStopServer,
-  } = useServerMonitor();
 
   const rows = statusData?.rows ?? [];
   const doctorIssues = doctorData?.issues ?? [];
@@ -2294,7 +2075,7 @@ export function App() {
     );
   }, [buildJobs, buildSnapshot.summary?.lastFinishedJobId]);
   const lastUpdatedAt = useMemo(() => {
-    if (loading || modsLoading || buildLoading || runtimeLoading || serverLoading) {
+    if (loading || modsLoading || buildLoading || runtimeLoading) {
       return null;
     }
     return Date.now();
@@ -2303,7 +2084,6 @@ export function App() {
     modsLoading,
     buildLoading,
     runtimeLoading,
-    serverLoading,
     meta,
     statusData,
     doctorData,
@@ -2312,7 +2092,6 @@ export function App() {
     buildSnapshot,
     profiles,
     runtime?.checkedAt,
-    server?.checkedAt,
   ]);
   const headerSubtitle = TAB_SUBTITLES[activeTab] ?? TAB_SUBTITLES.overview;
 
@@ -2366,7 +2145,6 @@ export function App() {
         refreshMods({ silent: true }),
         refreshBuilds({ silent: true }),
         refreshRuntime({ silent: true }),
-        refreshServer({ silent: true }),
       ]);
     } catch (error) {
       const nextErrors = Object.fromEntries(
@@ -2535,55 +2313,6 @@ export function App() {
     }
   }
 
-  async function handleStartServer() {
-    setStartingServer(true);
-    try {
-      const result = await requestStartServer();
-      setNotice({
-        type: 'success',
-        title: result.action === 'already_running' ? 'Server already running' : 'Server started',
-        message:
-          result.action === 'already_running'
-            ? 'Reattached to the existing server process and resumed log tailing.'
-            : 'The local SkyMP server was started through build/launch_server.bat.',
-      });
-      setActiveTab('server');
-    } catch (error) {
-      setNotice({
-        type: 'error',
-        title: 'Could not start server',
-        message: error.message || 'Server startup failed.',
-      });
-      await refreshServer({ silent: true });
-    } finally {
-      setStartingServer(false);
-    }
-  }
-
-  async function handleStopServer() {
-    setStoppingServer(true);
-    try {
-      const result = await requestStopServer();
-      setNotice({
-        type: 'success',
-        title: result.action === 'not_running' ? 'Server already stopped' : 'Server stop requested',
-        message:
-          result.action === 'not_running'
-            ? 'No tracked server process was running.'
-            : 'Requested shutdown for the tracked server process tree.',
-      });
-    } catch (error) {
-      setNotice({
-        type: 'error',
-        title: 'Could not stop server',
-        message: error.message || 'Server stop failed.',
-      });
-      await refreshServer({ silent: true });
-    } finally {
-      setStoppingServer(false);
-    }
-  }
-
   async function handleToggleMod(mod, enabled) {
     try {
       const response = await toggleMod(mod.id, enabled);
@@ -2625,7 +2354,6 @@ export function App() {
       refreshMods({ silent: true }),
       refreshBuilds({ silent: true }),
       refreshRuntime({ silent: true }),
-      refreshServer({ silent: true }),
     ]);
   }
 
@@ -2680,7 +2408,7 @@ export function App() {
     },
   ];
 
-  if (loading || modsLoading || buildLoading || runtimeLoading || serverLoading) {
+  if (loading || modsLoading || buildLoading || runtimeLoading) {
     return (
       <div className="loading-screen">
         <div className="loading-screen__panel">
@@ -2709,15 +2437,11 @@ export function App() {
             <button
               type="button"
               className="ghost-button"
-                  disabled={refreshing || modsRefreshing || buildRefreshing || serverRefreshing}
+              disabled={refreshing || modsRefreshing || buildRefreshing}
               onClick={() => void handleRefresh()}
             >
               <SymbolIcon name="refresh" className="button-icon" />
-                  <span>
-                    {refreshing || modsRefreshing || buildRefreshing || serverRefreshing
-                      ? 'Refreshing...'
-                      : 'Refresh status'}
-                  </span>
+              <span>{refreshing || modsRefreshing || buildRefreshing ? 'Refreshing...' : 'Refresh status'}</span>
             </button>
             <button
               type="button"
@@ -2793,13 +2517,6 @@ export function App() {
                     <button
                       type="button"
                       className="ghost-button"
-                      onClick={() => setActiveTab('server')}
-                    >
-                      Open Server
-                    </button>
-                    <button
-                      type="button"
-                      className="ghost-button"
                       onClick={() => setActiveTab('mods')}
                     >
                       Open Mods
@@ -2809,7 +2526,6 @@ export function App() {
 
                 <SyncSummary summary={statusSummary} />
                 <BuildSummary snapshot={buildSnapshot} profiles={profiles} />
-                <ServerSummary server={server} />
                 <ModsSummary snapshot={modsSnapshot} />
                 <RuntimeSummary runtime={runtime} />
                 <DoctorSummary issues={doctorIssues} />
@@ -3162,67 +2878,6 @@ export function App() {
               onRun={handleRunBuild}
               onSetCmakeOption={handleSetBuildOption}
             />
-          ) : null}
-
-          {activeTab === 'server' ? (
-            <section className="panel panel--page">
-              <div className="panel__header panel__header--wrap">
-                <div>
-                  <h2>Server runtime</h2>
-                  <p>
-                    Start the local SkyMP server from the generated launch script, stop it when
-                    needed, and tail the latest captured output.
-                  </p>
-                </div>
-                <div className="button-row">
-                  <button
-                    type="button"
-                    className="ghost-button"
-                    disabled={serverRefreshing || startingServer || stoppingServer}
-                    onClick={() => void refreshServer({ silent: true })}
-                  >
-                    <SymbolIcon name="refresh" className="button-icon" />
-                    <span>
-                      {serverRefreshing || startingServer || stoppingServer
-                        ? 'Refreshing...'
-                        : 'Refresh server'}
-                    </span>
-                  </button>
-                  <button
-                    type="button"
-                    className="ghost-button"
-                    onClick={() => setActiveTab('settings')}
-                  >
-                    Settings
-                  </button>
-                </div>
-              </div>
-              <div className="page-column">
-                <ServerSummary server={server} />
-
-                {serverError ? (
-                  <div className="notice notice--error">
-                    <div>
-                      <strong>Server API error</strong>
-                      <p>{serverError}</p>
-                    </div>
-                  </div>
-                ) : null}
-
-                <ServerPanel
-                  server={server}
-                  error=""
-                  starting={startingServer}
-                  stopping={stoppingServer}
-                  refreshing={serverRefreshing}
-                  onStart={handleStartServer}
-                  onStop={handleStopServer}
-                  onOpenSettings={() => setActiveTab('settings')}
-                />
-
-                <ServerLogPanel server={server} />
-              </div>
-            </section>
           ) : null}
 
           {activeTab === 'mods' ? (

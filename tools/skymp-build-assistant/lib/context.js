@@ -2,31 +2,12 @@ import fs from 'fs';
 import path from 'path';
 
 /**
- * Choose NirnLab output dir.
- *
- * Prefer the integrated SkyMP build output when the modern nirnlab-runtime target has
- * already populated build/dist/client. Otherwise fall back to the legacy standalone
- * NirnLab checkout locations (sibling first, then in-repo), which still match
- * sync-dev-runtime.ps1-era layouts.
+ * Choose NirnLab output dir: sibling checkout first, then in-repo (same rules as sync-dev-runtime.ps1).
  */
 export function resolveNirnLabOutputDir(repoRoot, config) {
   if (config?.nirnLabOutputDir) {
     return path.normalize(config.nirnLabOutputDir);
   }
-
-  const integratedBuildOutput = path.join(repoRoot, 'build', 'dist', 'client');
-  const integratedRuntimeDir = path.join(integratedBuildOutput, 'Data', 'NirnLabUIPlatform');
-  const integratedPluginDll = path.join(
-    integratedBuildOutput,
-    'Data',
-    'SKSE',
-    'Plugins',
-    'NirnLabUIPlugin.dll',
-  );
-  if (fs.existsSync(integratedRuntimeDir) || fs.existsSync(integratedPluginDll)) {
-    return integratedBuildOutput;
-  }
-
   const repoParent = path.dirname(repoRoot);
   const nirnLabSiblingRepo = path.join(repoParent, 'NirnLabUIPlatform');
   const nirnLabInRepo = path.join(repoRoot, 'NirnLabUIPlatform');

@@ -39,14 +39,6 @@ export function defaultDashboardStatePath(repoRoot) {
   return path.join(repoRoot, 'tools', 'skymp-build-assistant', '.skymp-dev-dashboard.json');
 }
 
-export function defaultServerStatePath(repoRoot) {
-  return path.join(repoRoot, 'tools', 'skymp-build-assistant', '.skymp-dev-server.json');
-}
-
-export function defaultServerLogPath(repoRoot) {
-  return path.join(repoRoot, 'tools', 'skymp-build-assistant', '.skymp-dev-server.log');
-}
-
 export function dashboardUiRoot() {
   return path.join(packageRoot(), 'ui');
 }

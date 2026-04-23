@@ -120,28 +120,6 @@ export function openRuntimeFolderRequest() {
   });
 }
 
-export function getServerStatus() {
-  return fetchJson('/api/server');
-}
-
-export function startServerRequest() {
-  return fetchJson('/api/server/start', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
-}
-
-export function stopServerRequest() {
-  return fetchJson('/api/server/stop', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
-}
-
 export function getModsSnapshot() {
   return fetchJson('/api/mods');
 }

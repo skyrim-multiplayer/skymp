@@ -15,7 +15,5 @@
 # Override CMake build dir if non-standard (defaults to <repo>/build).
 # buildDir: "C:/projects/skymp/build"
 
-# Override NirnLab runtime output root. By default the assistant prefers
-# <repo>/build/dist/client when the integrated nirnlab-runtime target has populated it,
-# then falls back to sibling ../NirnLabUIPlatform/build/dist/Release or the in-repo checkout.
+# Override NirnLab Stage 2 output root (defaults: sibling ../NirnLabUIPlatform/build/dist/Release or in-repo NirnLabUIPlatform/...).
 # nirnLabOutputDir: "D:/src/NirnLabUIPlatform/build/dist/Release"

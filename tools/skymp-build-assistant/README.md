@@ -26,7 +26,6 @@ The dashboard is now a small frontend app with tabs for:
 
 - `Overview`
 - `Builds`
-- `Server`
 - `Mods`
 - `Sync`
 - `Doctor`
@@ -37,8 +36,6 @@ The `Settings` tab is the primary place to manage local configuration. It reads 
 The `Builds` tab is the Phase 1 control plane. It lists named build profiles, shows prerequisites and disabled reasons, and lets you launch or cancel builds while polling live-ish logs and recent history from the dashboard API.
 
 Phase 2 adds runtime supervision to the dashboard as well: the `Overview` and `Builds` views now expose a compact runtime control panel for launching Skyrim through SKSE, watching running state, and force-stopping the game when needed.
-
-The dashboard now also includes a dedicated `Server` tab that starts the local server through `build/launch_server.bat`, tails a rolling log view from the captured output, and reconnects to the existing tracked process if the dashboard is restarted while that server session is still running.
 
 The dashboard also includes a `Mods` tab that inventories the current Skyrim `Data` directory, shows the resolved `Plugins.txt` state, and lets you enable or disable plugin-backed mods. Non-plugin entries such as loose folder groups, SKSE DLLs, and Skyrim Platform JS plugins are surfaced as inventory-only for now.
 
@@ -55,8 +52,6 @@ The current settings fields are:
 - `nirnLabOutputDir`
 
 If `skyrimRoot` is not configured, the dashboard will still run, but game-target sync entries, runtime launch controls, and the Mods tab inventory will be marked as needing configuration.
-
-`nirnLabOutputDir` is usually not needed for the modern integrated NirnLab flow. The assistant now prefers `<repo>/build/dist/client` when the main `nirnlab-runtime` target has populated it, and only falls back to the older standalone `NirnLabUIPlatform/build/dist/Release` layout when that integrated output is absent.
 
 ## Commands
 
@@ -78,7 +73,7 @@ Run from anywhere; the tool auto-detects the repo by walking upward for `tools/s
 | `skymp-dev build jobs` | Show the active job plus recent build history |
 | `skymp-dev build cancel [jobId]` | Cancel the active or queued build job |
 | `skymp-dev watch` | Debounced re-sync when `build/dist` / platform binaries / gamemode change |
-| `skymp-dev dashboard` | **http://127.0.0.1:8790** - tabbed UI + `/api/meta`, `/api/status`, `/api/doctor`, `/api/config`, `/api/runtime`, `/api/server`, `/api/mods`, `/api/build/*`, `POST /api/sync` |
+| `skymp-dev dashboard` | **http://127.0.0.1:8790** - tabbed UI + `/api/meta`, `/api/status`, `/api/doctor`, `/api/config`, `/api/runtime`, `/api/mods`, `/api/build/*`, `POST /api/sync` |
 | `skymp-dev dashboard-stop` | Stop the running dashboard server, or inspect the dashboard port if state is missing |
 
 ### Examples
@@ -169,17 +164,6 @@ Runtime supervision is intentionally narrow in this phase:
 - Surface lightweight doctor warnings for missing SKSE / Skyrim Platform / SkyMP runtime footprint under the configured game install
 
 This phase does **not** inspect `plugins.txt`, `loadorder.txt`, MO2, or Vortex state yet.
-
-## Server Control
-
-The Server tab is intentionally focused on the local dev launcher:
-
-- Start the server through `build/launch_server.bat`
-- Stop the tracked server process tree from the dashboard
-- Tail a rolling view of the latest captured server logs
-- Reattach to the tracked server process and log file after restarting the dashboard
-
-This does **not** replace remote deployment flows, production service management, or generic arbitrary process supervision.
 
 ## Mods Inventory
 

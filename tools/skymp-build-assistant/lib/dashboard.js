@@ -10,7 +10,6 @@ import { getConfigPayload, saveUserConfig } from './config.js';
 import { runDoctor } from './doctor.js';
 import { getModsSnapshot, reorderMods, toggleMod } from './mods-service.js';
 import { getRuntimeStatus, launchRuntime, openRuntimeFolder, stopRuntime } from './runtime-supervisor.js';
-import { getServerStatus, startServer, stopServer } from './server-supervisor.js';
 import {
   dashboardUiDistDir,
   dashboardUiIndexPath,
@@ -397,46 +396,6 @@ export async function startDashboard({
       res.json(await openRuntimeFolder(buildRuntime()));
     } catch (e) {
       if (e?.code?.startsWith?.('RUNTIME_')) {
-        res.status(400).json({
-          error: e.message,
-          code: e.code,
-          status: e.status ?? null,
-        });
-        return;
-      }
-      res.status(500).json({ error: String(e.message || e) });
-    }
-  });
-
-  app.get('/api/server', (_req, res) => {
-    try {
-      res.json(getServerStatus(buildRuntime()));
-    } catch (e) {
-      res.status(500).json({ error: String(e.message || e) });
-    }
-  });
-
-  app.post('/api/server/start', async (_req, res) => {
-    try {
-      res.json(await startServer(buildRuntime()));
-    } catch (e) {
-      if (e?.code?.startsWith?.('SERVER_')) {
-        res.status(400).json({
-          error: e.message,
-          code: e.code,
-          status: e.status ?? null,
-        });
-        return;
-      }
-      res.status(500).json({ error: String(e.message || e) });
-    }
-  });
-
-  app.post('/api/server/stop', async (_req, res) => {
-    try {
-      res.json(await stopServer(buildRuntime()));
-    } catch (e) {
-      if (e?.code?.startsWith?.('SERVER_')) {
         res.status(400).json({
           error: e.message,
           code: e.code,

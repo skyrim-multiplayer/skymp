@@ -1,5 +1,3 @@
 node_modules/
 ui/dist/
 .skymp-dev-dashboard.json
-.skymp-dev-server.json
-.skymp-dev-server.log
