@@ -1,0 +1,103 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://skymp.io/schemas/skymp-build-manifest.json",
+  "title": "SkyMP Build Assistant manifest",
+  "type": "object",
+  "required": ["version", "artifacts"],
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1
+    },
+    "variables": {
+      "type": "object",
+      "additionalProperties": { "type": "string" },
+      "description": "Optional defaults for ${var} substitution (overridden by config file / env)."
+    },
+    "artifacts": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/artifact" }
+    },
+    "staleRemoval": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/staleRemovalRule" }
+    },
+    "warnings": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/warningRule" }
+    }
+  },
+  "definitions": {
+    "artifact": {
+      "type": "object",
+      "required": ["id", "kind"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string" },
+        "label": { "type": "string" },
+        "kind": {
+          "type": "string",
+          "enum": ["file", "directory"]
+        },
+        "requiresSkyrim": { "type": "boolean", "default": false },
+        "optional": { "type": "boolean", "default": false },
+        "sources": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["path"],
+            "additionalProperties": false,
+            "properties": {
+              "path": { "type": "string" },
+              "label": { "type": "string" }
+            }
+          }
+        },
+        "destinations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["path"],
+            "additionalProperties": false,
+            "properties": {
+              "path": { "type": "string" },
+              "label": { "type": "string" }
+            }
+          }
+        },
+        "producer": { "type": "string" }
+      }
+    },
+    "staleRemovalRule": {
+      "type": "object",
+      "required": ["id", "sourceDirectory", "destinationDirectory", "relativePaths"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string" },
+        "sourceDirectory": { "type": "string" },
+        "destinationDirectory": { "type": "string" },
+        "relativePaths": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "warningRule": {
+      "type": "object",
+      "required": ["id", "path", "message"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string" },
+        "path": { "type": "string" },
+        "message": { "type": "string" },
+        "severity": {
+          "type": "string",
+          "enum": ["info", "warn", "error"],
+          "default": "warn"
+        }
+      }
+    }
+  }
+}

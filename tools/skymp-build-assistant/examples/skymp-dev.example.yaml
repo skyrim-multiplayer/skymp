@@ -1,0 +1,19 @@
+# Copy to repo root as `.skymp-dev.yaml` and adjust paths.
+# Used by tools/skymp-build-assistant (skymp-dev CLI).
+# The dashboard Settings tab can create and update this file for you.
+
+# Path to Skyrim SE root (folder containing SkyrimSE.exe). Optional; can use env SKYRIM_DIR instead.
+# skyrimRoot: "C:/Program Files (x86)/Steam/steamapps/common/Skyrim Special Edition"
+
+# Optional SKSE launcher override. Defaults to <skyrimRoot>/skse64_loader.exe when omitted.
+# skseLoaderPath: "C:/Program Files (x86)/Steam/steamapps/common/Skyrim Special Edition/skse64_loader.exe"
+
+# Optional Plugins.txt override for the Mods tab. Defaults to
+# %LOCALAPPDATA%/Skyrim Special Edition/Plugins.txt on Windows.
+# pluginsTxtPath: "C:/Users/you/AppData/Local/Skyrim Special Edition/Plugins.txt"
+
+# Override CMake build dir if non-standard (defaults to <repo>/build).
+# buildDir: "C:/projects/skymp/build"
+
+# Override NirnLab Stage 2 output root (defaults: sibling ../NirnLabUIPlatform/build/dist/Release or in-repo NirnLabUIPlatform/...).
+# nirnLabOutputDir: "D:/src/NirnLabUIPlatform/build/dist/Release"
