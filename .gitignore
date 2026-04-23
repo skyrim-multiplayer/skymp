@@ -13,3 +13,5 @@ skyrim_data_files/
 /skymp5-client/.claude
 skymp5-server/.claude/settings.local.json
 /Back
+/skymp5-front/.claude
+skymp5-gamemode/signing-private.pem

@@ -6,7 +6,10 @@
       "Bash(npm run:*)",
       "Read(//e/Github/Frostfall-Server/**)",
       "Bash(npx tsc:*)",
-      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d.get\\('scripts',{}\\), indent=2\\)\\)\")"
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d.get\\('scripts',{}\\), indent=2\\)\\)\")",
+      "Bash(grep -E \"\\\\.\\(js|md\\)$\")",
+      "Bash(grep -h \"GetName\\(\\)\" \"E:\\\\Github\\\\skymp\\\\skymp5-server\\\\cpp\\\\server_guest_lib\\\\gamemode_events\"/*.cpp)",
+      "Bash(grep:*)"
     ]
   }
 }
