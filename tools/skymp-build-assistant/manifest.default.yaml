@@ -1,0 +1,214 @@
+# Default artifact manifest for SkyMP Build Assistant.
+# Paths use ${variable} placeholders expanded from user config (.skymp-dev.yaml) and environment.
+#
+# Resolved variables:
+#   repoRoot          - repository root (parent of tools/ when run from repo)
+#   buildDir          - cmake build dir, default ${repoRoot}/build
+#   skyrimRoot        - Skyrim SE root (folder containing SkyrimSE.exe); from config or SKYRIM_DIR
+#   skyrimPlatformDir - ${skyrimRoot}/Data/Platform
+#   skyrimDataDir     - ${skyrimRoot}/Data
+#   nirnLabOutputDir  - NirnLab build output root (contains Data/SKSE/Plugins, Data/NirnLabUIPlatform)
+
+version: 1
+
+variables:
+  buildDir: "${repoRoot}/build"
+  nirnLabOutputSibling: "${repoParent}/NirnLabUIPlatform/build/dist/Release"
+  nirnLabOutputInRepo: "${repoRoot}/NirnLabUIPlatform/build/dist/Release"
+
+artifacts:
+  - id: skymp5-client-js
+    label: skymp5-client plugin
+    producer: skymp5-client (webpack via CMake)
+    kind: file
+    requiresSkyrim: true
+    sources:
+      - path: "${buildDir}/dist/client/Data/Platform/Plugins/skymp5-client.js"
+    destinations:
+      - path: "${skyrimPlatformDir}/Plugins/skymp5-client.js"
+
+  - id: skymp5-client-settings
+    label: skymp5-client settings
+    producer: generate_client_settings.cmake
+    kind: file
+    requiresSkyrim: true
+    optional: true
+    sources:
+      - path: "${buildDir}/dist/client/Data/Platform/Plugins/skymp5-client-settings.txt"
+    destinations:
+      - path: "${skyrimPlatformDir}/Plugins/skymp5-client-settings.txt"
+
+  - id: skymp5-voip-js
+    label: VoIP client plugin
+    producer: skymp5-voip (esbuild)
+    kind: file
+    requiresSkyrim: true
+    optional: true
+    sources:
+      - path: "${buildDir}/dist/client/Data/Platform/Plugins/skymp5-voip.js"
+    destinations:
+      - path: "${skyrimPlatformDir}/Plugins/skymp5-voip.js"
+
+  - id: platform-ui
+    label: Platform UI bundle directory
+    producer: skymp5-front / voip UI (webpack/esbuild)
+    kind: directory
+    requiresSkyrim: true
+    optional: true
+    sources:
+      - path: "${buildDir}/dist/client/Data/Platform/UI"
+    destinations:
+      - path: "${skyrimPlatformDir}/UI"
+
+  - id: interface-assets
+    label: Interface assets
+    producer: client / platform packaging
+    kind: directory
+    requiresSkyrim: true
+    optional: true
+    sources:
+      - path: "${buildDir}/dist/client/Data/Interface"
+    destinations:
+      - path: "${skyrimDataDir}/Interface"
+
+  - id: gamemode-server-copy-a
+    label: gamemode.js (server dist)
+    producer: skymp5-gamemode source
+    kind: file
+    optional: true
+    sources:
+      - path: "${repoRoot}/skymp5-gamemode/gamemode.js"
+    destinations:
+      - path: "${buildDir}/dist/server/gamemode.js"
+
+  - id: gamemode-server-copy-b
+    label: gamemode.js (nested server path)
+    producer: skymp5-gamemode source
+    kind: file
+    optional: true
+    sources:
+      - path: "${repoRoot}/skymp5-gamemode/gamemode.js"
+    destinations:
+      - path: "${buildDir}/dist/server/skymp5-gamemode/gamemode.js"
+
+  - id: skyrim-platform-dll-dist
+    label: SkyrimPlatform.dll -> dist mirror
+    producer: skyrim-platform (MSVC)
+    kind: file
+    optional: true
+    sources:
+      - path: "${buildDir}/skyrim-platform/_platform_se/bin/Release/SkyrimPlatform.dll"
+    destinations:
+      - path: "${buildDir}/dist/client/Data/SKSE/Plugins/SkyrimPlatform.dll"
+
+  - id: skyrim-platform-dll-game
+    label: SkyrimPlatform.dll -> game
+    producer: skyrim-platform (MSVC)
+    kind: file
+    requiresSkyrim: true
+    optional: true
+    sources:
+      - path: "${buildDir}/skyrim-platform/_platform_se/bin/Release/SkyrimPlatform.dll"
+    destinations:
+      - path: "${skyrimDataDir}/SKSE/Plugins/SkyrimPlatform.dll"
+
+  - id: skyrim-platform-impl-dist
+    label: SkyrimPlatformImpl.dll -> dist mirror
+    producer: skyrim-platform (MSVC)
+    kind: file
+    optional: true
+    sources:
+      - path: "${buildDir}/skyrim-platform/_platform_se/bin/Release/SkyrimPlatformImpl.dll"
+    destinations:
+      - path: "${buildDir}/dist/client/Data/Platform/Distribution/RuntimeDependencies/SkyrimPlatformImpl.dll"
+
+  - id: skyrim-platform-impl-game
+    label: SkyrimPlatformImpl.dll -> game
+    producer: skyrim-platform (MSVC)
+    kind: file
+    requiresSkyrim: true
+    optional: true
+    sources:
+      - path: "${buildDir}/skyrim-platform/_platform_se/bin/Release/SkyrimPlatformImpl.dll"
+    destinations:
+      - path: "${skyrimPlatformDir}/Distribution/RuntimeDependencies/SkyrimPlatformImpl.dll"
+
+  - id: skyrim-platform-cef-dist
+    label: SkyrimPlatformCEF.exe.hidden -> dist mirror
+    producer: skyrim-platform (MSVC)
+    kind: file
+    optional: true
+    sources:
+      - path: "${buildDir}/skyrim-platform/_platform_se/bin/Release/SkyrimPlatformCEF.exe.hidden"
+    destinations:
+      - path: "${buildDir}/dist/client/Data/Platform/Distribution/RuntimeDependencies/SkyrimPlatformCEF.exe.hidden"
+
+  - id: skyrim-platform-cef-game
+    label: SkyrimPlatformCEF.exe.hidden -> game
+    producer: skyrim-platform (MSVC)
+    kind: file
+    requiresSkyrim: true
+    optional: true
+    sources:
+      - path: "${buildDir}/skyrim-platform/_platform_se/bin/Release/SkyrimPlatformCEF.exe.hidden"
+    destinations:
+      - path: "${skyrimPlatformDir}/Distribution/RuntimeDependencies/SkyrimPlatformCEF.exe.hidden"
+
+  - id: nirnlab-plugin-dist
+    label: NirnLab UI plugin -> dist mirror
+    producer: NirnLabUIPlatform build
+    kind: file
+    optional: true
+    sources:
+      - path: "${nirnLabOutputDir}/Data/SKSE/Plugins/NirnLabUIPlugin.dll"
+    destinations:
+      - path: "${buildDir}/dist/client/Data/SKSE/Plugins/NirnLabUIPlugin.dll"
+
+  - id: nirnlab-plugin-game
+    label: NirnLab UI plugin -> game
+    producer: NirnLabUIPlatform build
+    kind: file
+    requiresSkyrim: true
+    optional: true
+    sources:
+      - path: "${nirnLabOutputDir}/Data/SKSE/Plugins/NirnLabUIPlugin.dll"
+    destinations:
+      - path: "${skyrimDataDir}/SKSE/Plugins/NirnLabUIPlugin.dll"
+
+  - id: nirnlab-ui-dist
+    label: NirnLab UI runtime -> dist mirror
+    producer: NirnLabUIPlatform build
+    kind: directory
+    optional: true
+    sources:
+      - path: "${nirnLabOutputDir}/Data/NirnLabUIPlatform"
+    destinations:
+      - path: "${buildDir}/dist/client/Data/NirnLabUIPlatform"
+
+  - id: nirnlab-ui-game
+    label: NirnLab UI runtime -> game
+    producer: NirnLabUIPlatform build
+    kind: directory
+    requiresSkyrim: true
+    optional: true
+    sources:
+      - path: "${nirnLabOutputDir}/Data/NirnLabUIPlatform"
+    destinations:
+      - path: "${skyrimDataDir}/NirnLabUIPlatform"
+
+# When these files are absent from the source UI folder, remove them from the destination (VoIP dev HTML/JS).
+staleRemoval:
+  - id: voip-ui-test-assets
+    sourceDirectory: "${buildDir}/dist/client/Data/Platform/UI"
+    destinationDirectory: "${skyrimPlatformDir}/UI"
+    relativePaths:
+      - voip-raw.html
+      - voip-raw.js
+      - voip-test.html
+      - voip-test.js
+
+warnings:
+  - id: pluginsdev-client-override
+    path: "${skyrimPlatformDir}/PluginsDev/skymp5-client.js"
+    message: "A copy in PluginsDev can override the normal client plugin during testing. Remove if stale."
+    severity: warn
