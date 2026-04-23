@@ -1,0 +1,34 @@
+if(NOT DEFINED GAMEMODE_SOURCE_DIR OR "${GAMEMODE_SOURCE_DIR}" STREQUAL "")
+  message(FATAL_ERROR "GAMEMODE_SOURCE_DIR is not set")
+endif()
+
+if(NOT DEFINED GAMEMODE_JS_DEST_DIR OR "${GAMEMODE_JS_DEST_DIR}" STREQUAL "")
+  message(FATAL_ERROR "GAMEMODE_JS_DEST_DIR is not set")
+endif()
+
+file(TO_CMAKE_PATH "${GAMEMODE_SOURCE_DIR}" GAMEMODE_SOURCE_DIR)
+file(TO_CMAKE_PATH "${GAMEMODE_JS_DEST_DIR}" GAMEMODE_JS_DEST_DIR)
+
+set(GAMEMODE_ENTRY_PATH "${GAMEMODE_SOURCE_DIR}/gamemode.js")
+set(GAMEMODE_FOLDER_DEST_DIR "${GAMEMODE_JS_DEST_DIR}/skymp5-gamemode")
+
+if(NOT EXISTS "${GAMEMODE_SOURCE_DIR}")
+  message(FATAL_ERROR "Local gamemode source directory does not exist: ${GAMEMODE_SOURCE_DIR}")
+endif()
+
+if(NOT EXISTS "${GAMEMODE_ENTRY_PATH}")
+  message(FATAL_ERROR "Local gamemode entry file does not exist: ${GAMEMODE_ENTRY_PATH}")
+endif()
+
+message(STATUS "Installing local gamemode sources")
+
+file(REMOVE_RECURSE "${GAMEMODE_FOLDER_DEST_DIR}")
+file(COPY "${GAMEMODE_SOURCE_DIR}" DESTINATION "${GAMEMODE_JS_DEST_DIR}"
+  PATTERN ".git" EXCLUDE
+  PATTERN "node_modules" EXCLUDE
+  PATTERN "dist" EXCLUDE
+  PATTERN "build" EXCLUDE
+)
+file(COPY "${GAMEMODE_ENTRY_PATH}" DESTINATION "${GAMEMODE_JS_DEST_DIR}")
+
+message(STATUS "Installed local gamemode sources")
