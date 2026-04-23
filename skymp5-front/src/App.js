@@ -47,11 +47,10 @@ class App extends React.Component {
   }
 
   handleWidgetUpdate(newWidgets) {
-    if (Array.isArray(newWidgets) && newWidgets.length === 0) {
-      this.setState({ ...this.state, isLoggined: true, widgets: newWidgets });
-    } else {
-      this.setState({ ...this.state, widgets: newWidgets });
-    }
+    this.setState({
+      ...this.state,
+      widgets: newWidgets
+    });
   }
 
   componentWillUnmount() {
