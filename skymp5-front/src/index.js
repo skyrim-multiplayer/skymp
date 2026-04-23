@@ -19,11 +19,6 @@ if (!window.skyrimPlatform.widgets) {
   window.skyrimPlatform.widgets = new Widgets([]);
 }
 
-// Initialize before App renders so Chat.getList() never sees undefined
-if (!Array.isArray(window.chatMessages)) {
-  window.chatMessages = [];
-}
-
 ReactDOM.render(
   <React.StrictMode>
     <Provider store={store}>

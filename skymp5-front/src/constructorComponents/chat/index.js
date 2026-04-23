@@ -22,7 +22,6 @@ const SHOUTREGEXP = /№(.*?)№/gi;
 
 const Chat = (props) => {
   const [input, updateInput] = useState('');
-  const [, forceUpdate] = useState(0);
   const [isInputFocus, changeInputFocus] = useState(false);
   const [hideNonRP, changeNonRPHide] = useState(false);
   const [disableDiceSounds, setDisableDiceSounds] = useState(false);
@@ -104,31 +103,6 @@ const Chat = (props) => {
       }
     }
   }, [send, updateInput, input, isReset.current, shoutReset.current, shoutLength, doesIncludeShout]);
-
-  useEffect(() => {
-    // Ensure the global message array exists before any render or push
-    if (!Array.isArray(window.chatMessages)) {
-      window.chatMessages = [];
-    }
-
-    // Expose the push function so wsClient.js and executeJavaScript callers
-    // can deliver messages and trigger a re-render in one step
-    window._ffChatPush = (msg) => {
-      window.chatMessages.push(msg);
-      // Keep memory bounded
-      while (window.chatMessages.length > 200) window.chatMessages.shift();
-      forceUpdate((n) => n + 1);
-    };
-
-    // Drain messages that arrived before this component mounted
-    if (Array.isArray(window._ffChatPendingMsgs) && window._ffChatPendingMsgs.length > 0) {
-      window._ffChatPendingMsgs.splice(0).forEach((msg) => window._ffChatPush(msg));
-    }
-
-    return () => {
-      window._ffChatPush = null;
-    };
-  }, []);
 
   useEffect(() => {
     window.needToScroll = true;
@@ -217,7 +191,7 @@ const Chat = (props) => {
   };
 
   const getList = () => {
-    return (window.chatMessages || []).map((msg, index) => {
+    return window.chatMessages.map((msg, index) => {
       const result = getMessageSpans(msg);
       return (
         <div
