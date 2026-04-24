@@ -1,11 +1,19 @@
 import type { MethodDeclaration } from "ts-morph";
 
 /**
+ * Which SkyMP package is being patched.
+ * Determines which build tool is invoked after patching:
+ *   - "server" → esbuild (matches skymp5-server build-ts script)
+ *   - "client" → webpack (matches skymp5-client webpack config)
+ */
+export type BuildTarget = "server" | "client";
+
+/**
  * Identifies which class method in which file should be patched.
  * The `file` path is relative to the source root (srcDir).
  */
 export interface SkyPatchTarget {
-  /** Relative path from the src root, e.g. "systems/login.ts" */
+  /** Relative path from the src root, e.g. "systems/login.ts" or "services/authService.ts" */
   file: string;
   /** Class name, e.g. "Login" */
   class: string;
@@ -73,12 +81,17 @@ export interface PatchResult {
 }
 
 export interface RunnerOptions {
-  /** Absolute path to the source root to copy (e.g. skymp5-server/ts) */
+  /**
+   * Which SkyMP package is being patched.
+   * Determines the build tool used after AST patching.
+   */
+  buildTarget: BuildTarget;
+  /** Absolute path to the source root to copy (e.g. skymp5-server/ts or skymp5-client/src) */
   srcDir: string;
   /** Absolute path to directory containing *.patch.ts files */
   patchesDir: string;
   /** Absolute path to write the patched temp copy */
   outDir: string;
-  /** Absolute path for the final esbuild JS output */
+  /** Absolute path for the final bundled JS output */
   buildOutFile: string;
 }

@@ -25,7 +25,21 @@ const { Command } = require("commander") as typeof import("commander");
 
 import * as path from "path";
 import * as fs from "fs";
-import type { PatchResult } from "@skymp5-patcher/core";
+import type { PatchResult, BuildTarget } from "@skymp5-patcher/core";
+
+// Default paths relative to the CLI working directory (skymp5-patcher/).
+const DEFAULTS: Record<BuildTarget, { src: string; tmp: string; out: string }> = {
+  server: {
+    src: "../skymp5-server/ts",
+    tmp: "./tmp/server",
+    out: "../../build/dist/server/dist_back/skymp5-server.js",
+  },
+  client: {
+    src: "../skymp5-client/src",
+    tmp: "./tmp/client",
+    out: "../../build/dist/client/Data/Platform/Plugins/skymp5-client.js",
+  },
+};
 
 const program = new Command();
 
@@ -37,33 +51,47 @@ program
 program
   .command("run")
   .description(
-    "Copy --src to --tmp, apply all *.patch.ts from --patches, then esbuild to --out"
+    "Copy source to a temp dir, apply *.patch.ts patches, then build to the output path.\n" +
+    "Defaults for --src, --tmp, and --out are set automatically based on --target."
   )
-  .requiredOption("--src <path>", "Path to the TypeScript source root (e.g. skymp5-server/ts)")
+  .requiredOption(
+    "--target <server|client>",
+    "Which SkyMP package to patch: 'server' (esbuild) or 'client' (webpack)"
+  )
   .requiredOption(
     "--patches <path>",
     "Path to directory containing *.patch.ts patch files"
   )
-  .option(
-    "--tmp <path>",
-    "Temp directory for the patched source copy",
-    "./tmp/ts"
-  )
-  .option(
-    "--out <path>",
-    "Final esbuild output file path",
-    "../../build/dist/server/dist_back/skymp5-server.js"
-  )
+  .option("--src <path>", "Override the source root to patch")
+  .option("--tmp <path>", "Override the temp directory for the patched copy")
+  .option("--out <path>", "Override the final bundled JS output path")
   .action(
-    async (options: { src: string; patches: string; tmp: string; out: string }) => {
-      const srcDir = path.resolve(options.src);
+    async (options: {
+      target: string;
+      patches: string;
+      src?: string;
+      tmp?: string;
+      out?: string;
+    }) => {
+      // Validate target.
+      if (options.target !== "server" && options.target !== "client") {
+        console.error(
+          `[patcher] ERROR: --target must be "server" or "client", got: "${options.target}"`
+        );
+        process.exit(1);
+      }
+      const buildTarget = options.target as BuildTarget;
+      const defaults = DEFAULTS[buildTarget];
+
+      const srcDir = path.resolve(options.src ?? defaults.src);
       const patchesDir = path.resolve(options.patches);
-      const outDir = path.resolve(options.tmp);
-      const buildOutFile = path.resolve(options.out);
+      const outDir = path.resolve(options.tmp ?? defaults.tmp);
+      const buildOutFile = path.resolve(options.out ?? defaults.out);
 
       // Validate inputs.
       if (!fs.existsSync(srcDir)) {
-        console.error(`[patcher] ERROR: --src path does not exist: ${srcDir}`);
+        console.error(`[patcher] ERROR: source path does not exist: ${srcDir}`);
+        console.error(`  (defaulted from --target ${buildTarget}, override with --src)`);
         process.exit(1);
       }
       if (!fs.existsSync(patchesDir)) {
@@ -71,7 +99,7 @@ program
         process.exit(1);
       }
 
-      console.log("[patcher] Starting patch run");
+      console.log(`[patcher] Starting patch run (target: ${buildTarget})`);
       console.log(`  src:     ${srcDir}`);
       console.log(`  patches: ${patchesDir}`);
       console.log(`  tmp:     ${outDir}`);
@@ -81,7 +109,7 @@ program
       let results: PatchResult[];
 
       try {
-        results = await runner.run({ srcDir, patchesDir, outDir, buildOutFile });
+        results = await runner.run({ buildTarget, srcDir, patchesDir, outDir, buildOutFile });
       } catch (err) {
         console.error(`[patcher] FATAL: ${err}`);
         process.exit(1);

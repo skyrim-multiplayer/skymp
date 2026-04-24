@@ -4,6 +4,7 @@ export type { RawPatchEntry } from "./registry";
 export { PatchRunner } from "./runner";
 export { AstEngine } from "./ast-engine";
 export type {
+  BuildTarget,
   SkyPatchTarget,
   PatchInfo,
   PrefixPatchInfo,

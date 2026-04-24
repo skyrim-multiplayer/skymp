@@ -1,6 +1,10 @@
 # skymp5-patcher
 
-A pre-build TypeScript AST patching framework for SkyMP. Before the server is compiled, this tool copies the source files to a temp directory, applies patches declared via decorators, then runs esbuild on the patched output — producing the same `skymp5-server.js` that the normal build would, but with injected code.
+A pre-build TypeScript AST patching framework for SkyMP. Before a package is compiled, this tool copies its source files to a temp directory, applies patches declared via decorators, then runs the appropriate build tool on the patched output.
+
+Supports two targets:
+- **server** — patches `skymp5-server/ts/`, bundles with esbuild, outputs `skymp5-server.js`
+- **client** — patches `skymp5-client/src/`, bundles with webpack, outputs `skymp5-client.js`
 
 The concept is similar to HarmonyPatch in C#: patch classes declare what to inject and where, without touching the original source files.
 
@@ -11,32 +15,49 @@ The concept is similar to HarmonyPatch in C#: patch classes declare what to inje
 ### Pipeline
 
 ```
-skymp5-server/ts/           (original, never modified)
-        |
-        | fs.cpSync
-        v
-skymp5-patcher/tmp/ts/      (temp copy)
-        |
-        | ts-morph AST patches applied in-place
-        v
-skymp5-patcher/tmp/ts/      (patched copy)
-        |
-        | esbuild (same flags as skymp5-server build-ts)
-        v
+skymp5-server/ts/               (original, never modified)
+       |
+       | fs.cpSync
+       v
+skymp5-patcher/tmp/server/      (temp copy)
+       |
+       | ts-morph AST patches applied in-place
+       v
+skymp5-patcher/tmp/server/      (patched copy)
+       |
+       | esbuild (same flags as skymp5-server build-ts)
+       v
 build/dist/server/dist_back/skymp5-server.js
+
+
+skymp5-client/src/              (original, never modified)
+       |
+       | fs.cpSync
+       v
+skymp5-patcher/tmp/client/      (temp copy)
+       |
+       | ts-morph AST patches applied in-place
+       v
+skymp5-patcher/tmp/client/      (patched copy)
+       |
+       | webpack (same config as skymp5-client webpack.config.js)
+       v
+build/dist/client/Data/Platform/Plugins/skymp5-client.js
 ```
 
 1. The CLI discovers all `*.patch.ts` files in the patches directory.
 2. Each patch file is `require()`'d — this triggers the `@SkyPatch` class decorator, which registers the patch in a global `PatchRegistry`.
 3. `PatchRegistry.resolveAll()` reads each patch class's method bodies from the TypeScript AST using ts-morph (to extract the exact source text of prefix/postfix methods).
 4. `AstEngine` opens the copied source files in a second ts-morph project, finds the target class and method, and rewrites the method body to inject the patch code.
-5. The modified files are saved to disk, then esbuild bundles them into the final output.
+5. The modified files are saved to disk, then the appropriate bundler runs on them.
+
+Patches that target server files are automatically skipped when running in client mode and vice versa — the patch status will show `[SKIPPED]` with "source file not found". This means a single patches directory can contain both server and client patches and each run only applies the relevant ones.
 
 ### Decorator API
 
 Patch classes use three method decorators and one class decorator:
 
-**`@SkyPatch(target)`** — class decorator. Declares which file, class, and method this patch targets.
+**`@SkyPatch(target)`** — class decorator. Declares which file, class, and method this patch targets. The `file` is relative to the source root (`skymp5-server/ts/` for server, `skymp5-client/src/` for client).
 
 **`@Prefix()`** — marks a static method to run before the original. Return `false` to skip the original entirely, `true` to let it run.
 
@@ -87,37 +108,39 @@ skymp5-patcher/
   packages/
     core/               @skymp5-patcher/core
       src/
-        types.ts        interfaces: SkyPatchTarget, PatchInfo, PatchResult, RunnerOptions
+        types.ts        BuildTarget, SkyPatchTarget, PatchInfo, PatchResult, RunnerOptions
         decorators.ts   @SkyPatch, @Prefix, @Postfix, @Transpiler
         registry.ts     PatchRegistry singleton
         ast-engine.ts   AstEngine — ts-morph based method body rewriter
-        runner.ts       PatchRunner — orchestrates copy, patch, build
+        runner.ts       PatchRunner — copy, patch, then esbuild or webpack
         index.ts        public API exports
     cli/                @skymp5-patcher/cli
       src/
         index.ts        CLI entry point (commander)
   examples/
-    log-connect.patch.ts
-  tmp/                  gitignored — patched source copy lives here during a run
+    log-connect.patch.ts    server patch: Login.initAsync
+    log-auth.patch.ts       client patch: AuthService.onAuthNeeded
+  tmp/                  gitignored — patched source copies live here during a run
 ```
 
 ---
 
 ## Writing a patch
 
-Create a file named `something.patch.ts` anywhere in your patches directory.
+Create a file named `something.patch.ts` anywhere in your patches directory. A single patch class targets one specific method. A single file can contain multiple patch classes.
 
 ```typescript
 import "reflect-metadata";
 import { SkyPatch, Prefix, Postfix, Transpiler } from "@skymp5-patcher/core";
 import type { MethodDeclaration } from "ts-morph";
 
+// Server patch — file path relative to skymp5-server/ts/
 @SkyPatch({
-  file: "systems/login.ts",   // relative to the --src root
+  file: "systems/login.ts",
   class: "Login",
   method: "initAsync",
 })
-class MyPatch {
+class MyServerPatch {
 
   // Runs before Login.initAsync.
   // Return false to skip the original method.
@@ -140,12 +163,28 @@ class MyPatch {
     method.getBodyOrThrow().insertStatements(0, '// injected by transpiler');
   }
 }
+
+// Client patch — file path relative to skymp5-client/src/
+@SkyPatch({
+  file: "services/services/authService.ts",
+  class: "AuthService",
+  method: "onAuthNeeded",
+})
+class MyClientPatch {
+  @Prefix()
+  static prefix(__instance: any, e: any): boolean {
+    console.log("auth needed event:", e);
+    return true;
+  }
+}
 ```
 
 Parameter naming convention:
 - `__instance` — always maps to `this` of the target method
 - `__result` — always maps to the return value (postfix only)
 - All other parameters are matched positionally to the original method's parameters
+
+When a patch targets a server file but the run is `--target client` (or vice versa), the patch is silently skipped with `[SKIPPED]` status. You can safely keep all patches in one directory.
 
 ---
 
@@ -154,42 +193,55 @@ Parameter naming convention:
 ```
 skymp5-patcher run [options]
 
-  --src <path>      Source root to patch (e.g. ../skymp5-server/ts)   [required]
-  --patches <path>  Directory containing *.patch.ts files             [required]
-  --tmp <path>      Temp directory for the patched copy      [default: ./tmp/ts]
-  --out <path>      Final JS output path
-                    [default: ../../build/dist/server/dist_back/skymp5-server.js]
+  --target <server|client>  Which package to patch and build        [required]
+  --patches <path>          Directory containing *.patch.ts files   [required]
+  --src <path>              Override the source root to patch
+  --tmp <path>              Override the temp directory for the patched copy
+  --out <path>              Override the final bundled JS output path
 ```
 
-Example:
+Default paths when not overridden:
+
+| | server | client |
+|---|---|---|
+| `--src` | `../skymp5-server/ts` | `../skymp5-client/src` |
+| `--tmp` | `./tmp/server` | `./tmp/client` |
+| `--out` | `../../build/dist/server/dist_back/skymp5-server.js` | `../../build/dist/client/Data/Platform/Plugins/skymp5-client.js` |
+
+Examples:
 
 ```bash
-node packages/cli/dist/index.js run \
-  --src ../skymp5-server/ts \
-  --patches ./examples \
-  --tmp ./tmp/ts \
-  --out ../build/dist/server/dist_back/skymp5-server.js
+# Patch and build the server (uses all defaults)
+node packages/cli/dist/index.js run --target server --patches ./examples
+
+# Patch and build the client (uses all defaults)
+node packages/cli/dist/index.js run --target client --patches ./examples
+
+# Override the output path
+node packages/cli/dist/index.js run --target server --patches ./my-patches --out ./dist/server.js
 ```
 
 Output:
 
 ```
-[patcher] Starting patch run
+[patcher] Starting patch run (target: server)
   src:     .../skymp5-server/ts
   patches: .../examples
-  tmp:     .../tmp/ts
+  tmp:     .../tmp/server
   out:     .../build/dist/server/dist_back/skymp5-server.js
-[patcher] Copying ...
-[patcher] Found 1 patch file(s)
-[patcher] Loading patch: log-connect.patch.ts
-[patcher] Running esbuild → ...
+[patcher:server] Copying ...
+[patcher:server] Found 2 patch file(s)
+[patcher:server] Loading patch: log-connect.patch.ts
+[patcher:server] Loading patch: log-auth.patch.ts
+[patcher:server] Running esbuild → ...
   [APPLIED]  systems/login.ts :: Login.initAsync
-[patcher] Done. 1 applied, 0 skipped, 0 failed.
+  [SKIPPED]  services/services/authService.ts :: AuthService.onAuthNeeded — Source file not found in project: ...
+[patcher] Done. 1 applied, 1 skipped, 0 failed.
 ```
 
 Per-patch status:
 - `[APPLIED]` — patch was found and injected successfully
-- `[SKIPPED]` — target file, class, or method was not found (not a fatal error)
+- `[SKIPPED]` — target file, class, or method was not found (not a fatal error; expected when a client patch runs against --target server or vice versa)
 - `[FAILED]` — unexpected error during patch application (exits with code 1)
 
 ---
@@ -212,4 +264,5 @@ This compiles both `packages/core` and `packages/cli` to their respective `dist/
 - `reflect-metadata` — stores decorator metadata on patch class constructors
 - `ts-node` — executes `.patch.ts` files at runtime without a separate compile step
 - `commander` — CLI argument parsing
-- esbuild is not a direct dependency — the runner uses the copy already installed in `skymp5-server/node_modules`
+- esbuild is not a direct dependency — the runner uses the copy installed in `skymp5-server/node_modules`
+- webpack and ts-loader are not direct dependencies — the runner uses the copies installed in `skymp5-client/node_modules`

@@ -22,24 +22,26 @@ import { AstEngine } from "./ast-engine";
  *   5. Resolve all registered patches via PatchRegistry.resolveAll().
  *   6. Build a ts-morph Project over the copied outDir files.
  *   7. Apply all patches via AstEngine.
- *   8. Run esbuild to compile the patched output to buildOutFile.
+ *   8. Bundle the patched output:
+ *        server → esbuild (same flags as skymp5-server build-ts)
+ *        client → webpack (same config as skymp5-client webpack.config.js)
  */
 export class PatchRunner {
   async run(options: RunnerOptions): Promise<PatchResult[]> {
-    const { srcDir, patchesDir, outDir, buildOutFile } = options;
+    const { buildTarget, srcDir, patchesDir, outDir, buildOutFile } = options;
 
     // Step 1: Copy source tree to temp dir.
-    console.log(`[patcher] Copying ${srcDir} → ${outDir}`);
+    console.log(`[patcher:${buildTarget}] Copying ${srcDir} → ${outDir}`);
     fs.rmSync(outDir, { recursive: true, force: true });
     fs.cpSync(srcDir, outDir, { recursive: true });
 
     // Step 2: Discover patch files.
     const patchFiles = discoverPatchFiles(patchesDir);
     if (patchFiles.length === 0) {
-      console.warn(`[patcher] No *.patch.ts files found in: ${patchesDir}`);
+      console.warn(`[patcher:${buildTarget}] No *.patch.ts files found in: ${patchesDir}`);
       return [];
     }
-    console.log(`[patcher] Found ${patchFiles.length} patch file(s)`);
+    console.log(`[patcher:${buildTarget}] Found ${patchFiles.length} patch file(s)`);
 
     // Step 3: Build ts-morph Project for patch source files (used by resolveAll).
     const patchProject = new Project({
@@ -68,7 +70,7 @@ export class PatchRunner {
     // Step 4: Load patch files — triggers @SkyPatch registration as side effects.
     // ts-node must already be registered by the CLI before this point.
     for (const patchFile of patchFiles) {
-      console.log(`[patcher] Loading patch: ${path.basename(patchFile)}`);
+      console.log(`[patcher:${buildTarget}] Loading patch: ${path.basename(patchFile)}`);
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       require(patchFile);
     }
@@ -78,7 +80,7 @@ export class PatchRunner {
     const resolvedPatches = registry.resolveAll(patchProject, patchSourceFiles);
 
     if (resolvedPatches.length === 0) {
-      console.warn("[patcher] No patches registered after loading patch files.");
+      console.warn(`[patcher:${buildTarget}] No patches registered after loading patch files.`);
       return [];
     }
 
@@ -113,58 +115,194 @@ export class PatchRunner {
       results.push(result);
     }
 
-    // Step 8: Run esbuild — same command as skymp5-server's build-ts script,
-    // but with outDir/index.ts as the entry point.
-    const entryPoint = path.join(outDir, "index.ts");
-    if (!fs.existsSync(entryPoint)) {
-      throw new Error(
-        `esbuild entry point not found: ${entryPoint}. ` +
-        `Ensure the src directory contains index.ts at its root.`
-      );
-    }
-
-    // Ensure the output directory exists.
+    // Step 8: Bundle the patched output using the appropriate build tool.
     fs.mkdirSync(path.dirname(buildOutFile), { recursive: true });
 
-    // Use skymp5-server's installed esbuild via its JS API.
-    // The JS API supports 'nodePaths', which lets us resolve the server's
-    // node_modules even though the entry file lives in our temp directory.
-    // The CLI flag --node-paths does not exist; the JS API is required.
-    const serverDir = path.dirname(srcDir);
-    const serverNodeModules = path.join(serverDir, "node_modules");
-    const esbuildPkg = path.join(serverNodeModules, "esbuild");
-
-    type EsbuildModule = {
-      build: (opts: Record<string, unknown>) => Promise<void>;
-    };
-
-    let esbuild: EsbuildModule;
-    if (fs.existsSync(esbuildPkg)) {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      esbuild = require(esbuildPkg) as EsbuildModule;
+    if (buildTarget === "server") {
+      await buildServer(srcDir, outDir, buildOutFile);
     } else {
-      // Fallback: try the workspace's own esbuild if present.
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      esbuild = require("esbuild") as EsbuildModule;
+      await buildClient(srcDir, outDir, buildOutFile);
     }
-
-    console.log(`[patcher] Running esbuild → ${buildOutFile}`);
-    await esbuild.build({
-      entryPoints: [entryPoint],
-      loader: { ".node": "copy" },
-      bundle: true,
-      platform: "node",
-      target: "node16",
-      keepNames: true,
-      minify: true,
-      sourcemap: true,
-      nodePaths: [serverNodeModules],
-      outfile: buildOutFile,
-    });
 
     return results;
   }
 }
+
+// ── Server build (esbuild) ────────────────────────────────────────────────────
+
+/**
+ * Bundles the patched server source using esbuild.
+ *
+ * Mirrors the skymp5-server build-ts script:
+ *   esbuild ts/index.ts --loader:.node=copy --bundle --platform=node
+ *     --target=node16 --keep-names --minify --sourcemap
+ *     --outfile=../build/dist/server/dist_back/skymp5-server.js
+ *
+ * Uses the esbuild JS API (not CLI) so that nodePaths can be set,
+ * allowing the temp dir entry file to resolve packages from skymp5-server/node_modules.
+ */
+async function buildServer(
+  srcDir: string,
+  outDir: string,
+  buildOutFile: string
+): Promise<void> {
+  const entryPoint = path.join(outDir, "index.ts");
+  if (!fs.existsSync(entryPoint)) {
+    throw new Error(
+      `esbuild entry point not found: ${entryPoint}. ` +
+      `Ensure --src points to a directory that contains index.ts at its root.`
+    );
+  }
+
+  // srcDir = skymp5-server/ts/ → serverDir = skymp5-server/
+  const serverDir = path.dirname(srcDir);
+  const serverNodeModules = path.join(serverDir, "node_modules");
+  const esbuildPkg = path.join(serverNodeModules, "esbuild");
+
+  type EsbuildModule = { build: (opts: Record<string, unknown>) => Promise<void> };
+  let esbuild: EsbuildModule;
+
+  if (fs.existsSync(esbuildPkg)) {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    esbuild = require(esbuildPkg) as EsbuildModule;
+  } else {
+    throw new Error(
+      `esbuild not found at ${esbuildPkg}. ` +
+      `Run npm install inside skymp5-server/ first.`
+    );
+  }
+
+  console.log(`[patcher:server] Running esbuild → ${buildOutFile}`);
+  await esbuild.build({
+    entryPoints: [entryPoint],
+    loader: { ".node": "copy" },
+    bundle: true,
+    platform: "node",
+    target: "node16",
+    keepNames: true,
+    minify: true,
+    sourcemap: true,
+    // nodePaths lets esbuild find skymp5-server's packages even though the
+    // entry file lives in the temp directory.
+    nodePaths: [serverNodeModules],
+    outfile: buildOutFile,
+  });
+}
+
+// ── Client build (webpack) ────────────────────────────────────────────────────
+
+/**
+ * Bundles the patched client source using webpack.
+ *
+ * Mirrors the skymp5-client webpack.config.js configuration:
+ *   - target: "node" (Skyrim Platform plugin environment)
+ *   - mode: "development" with inline-source-map
+ *   - ts-loader for TypeScript compilation
+ *   - skyrimPlatform marked as external (not bundled)
+ *
+ * Uses webpack's JS API so we can override the entry point to the temp dir
+ * while still resolving loaders and packages from skymp5-client/node_modules.
+ */
+async function buildClient(
+  srcDir: string,
+  outDir: string,
+  buildOutFile: string
+): Promise<void> {
+  const entryPoint = path.join(outDir, "index.ts");
+  if (!fs.existsSync(entryPoint)) {
+    throw new Error(
+      `webpack entry point not found: ${entryPoint}. ` +
+      `Ensure --src points to a directory that contains index.ts at its root.`
+    );
+  }
+
+  // srcDir = skymp5-client/src/ → clientDir = skymp5-client/
+  const clientDir = path.dirname(srcDir);
+  const clientNodeModules = path.join(clientDir, "node_modules");
+
+  if (!fs.existsSync(clientNodeModules)) {
+    throw new Error(
+      `skymp5-client node_modules not found at ${clientNodeModules}. ` +
+      `Run npm install inside skymp5-client/ first.`
+    );
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const webpack = require(path.join(clientNodeModules, "webpack")) as (
+    config: Record<string, unknown>,
+    callback: (err: Error | null, stats: { hasErrors(): boolean; toString(): string }) => void
+  ) => void;
+
+  // Resolve ts-loader from skymp5-client's node_modules.
+  const tsLoaderPath = path.join(clientNodeModules, "ts-loader");
+  if (!fs.existsSync(tsLoaderPath)) {
+    throw new Error(
+      `ts-loader not found at ${tsLoaderPath}. ` +
+      `Run npm install inside skymp5-client/ first.`
+    );
+  }
+
+  // Use skymp5-client's tsconfig for ts-loader, but with transpileOnly so that
+  // the tsconfig 'include' list doesn't reject files living in the temp dir.
+  const tsconfigPath = path.join(clientDir, "tsconfig.json");
+
+  console.log(`[patcher:client] Running webpack → ${buildOutFile}`);
+
+  const webpackConfig = {
+    target: "node",
+    mode: "development",
+    devtool: "inline-source-map",
+    entry: { main: entryPoint },
+    output: {
+      path: path.dirname(buildOutFile),
+      filename: path.basename(buildOutFile),
+    },
+    resolve: {
+      extensions: [".ts", ".tsx", ".js", ".jsx"],
+      // Resolve imported modules from skymp5-client's node_modules.
+      modules: [clientNodeModules, "node_modules"],
+    },
+    resolveLoader: {
+      // Resolve loaders (ts-loader etc.) from skymp5-client's node_modules.
+      modules: [clientNodeModules, "node_modules"],
+    },
+    externals: {
+      // skyrimPlatform is injected at runtime by the Skyrim Platform engine.
+      "@skyrim-platform/skyrim-platform": ["skyrimPlatform"],
+      skyrimPlatform: ["skyrimPlatform"],
+    },
+    module: {
+      rules: [
+        {
+          test: /\.tsx?$/,
+          loader: tsLoaderPath,
+          options: {
+            configFile: tsconfigPath,
+            // transpileOnly: skip type-checking so ts-loader doesn't reject
+            // files outside the tsconfig 'include' list (i.e. the temp dir).
+            transpileOnly: true,
+          },
+        },
+      ],
+    },
+  };
+
+  await new Promise<void>((resolve, reject) => {
+    webpack(webpackConfig, (err, stats) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+      if (stats.hasErrors()) {
+        reject(new Error(stats.toString()));
+        return;
+      }
+      resolve();
+    });
+  });
+}
+
+// ── Utility Functions ─────────────────────────────────────────────────────────
 
 /** Finds all *.patch.ts files recursively in a directory. */
 function discoverPatchFiles(dir: string): string[] {
