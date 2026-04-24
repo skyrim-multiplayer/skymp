@@ -61,5 +61,8 @@ else()
   add_custom_target(skymp5-functions-lib ALL
     SOURCES ${GAMEMODE_LOCAL_BUILD_SCRIPT}
     COMMAND ${CMAKE_COMMAND} -E echo "Building skymp5-functions-lib is disabled. To enable it, set BUILD_GAMEMODE to ON."
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${GAMEMODE_JS_DEST_DIR}
+    COMMAND ${CMAKE_COMMAND} -E touch "${GAMEMODE_JS_DEST_DIR}/gamemode.js"
+    VERBATIM
   )
 endif()
