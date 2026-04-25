@@ -9,26 +9,40 @@ endif()
 file(TO_CMAKE_PATH "${GAMEMODE_SOURCE_DIR}" GAMEMODE_SOURCE_DIR)
 file(TO_CMAKE_PATH "${GAMEMODE_JS_DEST_DIR}" GAMEMODE_JS_DEST_DIR)
 
-set(GAMEMODE_ENTRY_PATH "${GAMEMODE_SOURCE_DIR}/gamemode.js")
-set(GAMEMODE_FOLDER_DEST_DIR "${GAMEMODE_JS_DEST_DIR}/skymp5-gamemode")
+set(GAMEMODE_OUTPUT_PATH "${GAMEMODE_JS_DEST_DIR}/gamemode.js")
+set(LEGACY_GAMEMODE_FOLDER "${GAMEMODE_JS_DEST_DIR}/skymp5-gamemode")
 
 if(NOT EXISTS "${GAMEMODE_SOURCE_DIR}")
   message(FATAL_ERROR "Local gamemode source directory does not exist: ${GAMEMODE_SOURCE_DIR}")
 endif()
 
-if(NOT EXISTS "${GAMEMODE_ENTRY_PATH}")
-  message(FATAL_ERROR "Local gamemode entry file does not exist: ${GAMEMODE_ENTRY_PATH}")
+if(NOT EXISTS "${GAMEMODE_SOURCE_DIR}/package.json")
+  message(FATAL_ERROR "Local gamemode package.json does not exist: ${GAMEMODE_SOURCE_DIR}/package.json")
 endif()
 
-message(STATUS "Installing local gamemode sources")
+if(WIN32)
+  set(NPM_EXECUTABLE npm.cmd)
+else()
+  set(NPM_EXECUTABLE npm)
+endif()
 
-file(REMOVE_RECURSE "${GAMEMODE_FOLDER_DEST_DIR}")
-file(COPY "${GAMEMODE_SOURCE_DIR}" DESTINATION "${GAMEMODE_JS_DEST_DIR}"
-  PATTERN ".git" EXCLUDE
-  PATTERN "node_modules" EXCLUDE
-  PATTERN "dist" EXCLUDE
-  PATTERN "build" EXCLUDE
+message(STATUS "Building local gamemode -> ${GAMEMODE_OUTPUT_PATH}")
+
+file(MAKE_DIRECTORY "${GAMEMODE_JS_DEST_DIR}")
+file(REMOVE_RECURSE "${LEGACY_GAMEMODE_FOLDER}")
+
+execute_process(
+  COMMAND ${CMAKE_COMMAND} -E env "GAMEMODE_OUTPUT_DIR=${GAMEMODE_JS_DEST_DIR}" ${NPM_EXECUTABLE} run build
+  WORKING_DIRECTORY "${GAMEMODE_SOURCE_DIR}"
+  RESULT_VARIABLE GAMEMODE_BUILD_RESULT
 )
-file(COPY "${GAMEMODE_ENTRY_PATH}" DESTINATION "${GAMEMODE_JS_DEST_DIR}")
 
-message(STATUS "Installed local gamemode sources")
+if(NOT GAMEMODE_BUILD_RESULT EQUAL 0)
+  message(FATAL_ERROR "Local gamemode build failed with exit code ${GAMEMODE_BUILD_RESULT}")
+endif()
+
+if(NOT EXISTS "${GAMEMODE_OUTPUT_PATH}")
+  message(FATAL_ERROR "Local gamemode build did not produce ${GAMEMODE_OUTPUT_PATH}")
+endif()
+
+message(STATUS "Installed local gamemode.js")

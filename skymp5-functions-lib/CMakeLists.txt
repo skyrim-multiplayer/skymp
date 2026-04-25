@@ -4,7 +4,7 @@ set(GAMEMODE_REPO_OWNER skyrim-multiplayer)
 set(GAMEMODE_REPO_NAME skymp5-gamemode)
 set(GAMEMODE_REPO ${GAMEMODE_REPO_OWNER}/${GAMEMODE_REPO_NAME})
 set(GAMEMODE_BRANCH master)
-set(GAMEMODE_SOURCE_DIR "${CMAKE_SOURCE_DIR}/skymp5-gamemode")
+set(GAMEMODE_SOURCE_DIR "${CMAKE_SOURCE_DIR}/frostfall-gamemode")
 set(GAMEMODE_JS_DEST_DIR "${CMAKE_BINARY_DIR}/dist/server")
 set(GAMEMODE_LOCAL_BUILD_SCRIPT "${CMAKE_CURRENT_LIST_DIR}/build-local.cmake")
 

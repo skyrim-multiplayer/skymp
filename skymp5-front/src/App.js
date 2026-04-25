@@ -26,8 +26,8 @@ class App extends React.Component {
             type,
             data
           });
-        } catch {
-          console.log(type, data);
+        } catch (err) {
+          console.error('[skymp] Failed to send browser message', type, data, err);
         }
       }
     };

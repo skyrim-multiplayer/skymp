@@ -11,7 +11,7 @@ import ChatInput from './input';
 import { replaceIfMoreThan20 } from '../../utils/replaceIfMoreThan20';
 
 import './styles.scss';
-const MAX_LENGTH = 2000; // Max message length
+const MAX_LENGTH = 300; // Must match the server-side chat limit
 const TIME_LIMIT = 1; // Seconds
 const SHOUT_LIMIT = 180; // Seconds
 const MAX_LINES = 10;
@@ -68,7 +68,7 @@ const Chat = (props) => {
 
   const addMessageToHistory = (message) => {
     messagesHistory.current = [message, ...messagesHistory.current];
-    if (messagesHistory.length > MAX_HISTORY_LENGTH) {
+    if (messagesHistory.current.length > MAX_HISTORY_LENGTH) {
       messagesHistory.current = messagesHistory.current.slice(0, MAX_HISTORY_LENGTH);
     }
     currentMessageInHistory.current = -1;
