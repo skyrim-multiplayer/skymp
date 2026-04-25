@@ -9,7 +9,7 @@ try {
 
 const outputDir = process.env.GAMEMODE_OUTPUT_DIR
   ? path.resolve(process.env.GAMEMODE_OUTPUT_DIR)
-  : path.resolve(__dirname, '..')
+  : path.resolve(__dirname, '../build/dist/server')
 
 const outputFile = path.join(outputDir, 'gamemode.js')
 

@@ -1,13 +1,19 @@
 
 // TODO: send event instead of direct dependency on FormView class
 import { FormView } from "../../view/formView";
+import { logError } from "../../logging";
+import { MsgType } from "../../messages";
 import { QueryKeyCodeBindings } from "../events/queryKeyCodeBindings";
+import { CustomPacketMessage } from "../messages/customPacketMessage";
 
 import { ClientListener, CombinedController, Sp } from "./clientListener";
 import { BrowserMessageEvent, DxScanCode, Menu, MenuCloseEvent, MenuOpenEvent } from "skyrimPlatform";
 
 const unfocusEventString = `window.dispatchEvent(new CustomEvent('skymp5-client:browserUnfocused', {}))`;
 const focusEventString = `window.dispatchEvent(new CustomEvent('skymp5-client:browserFocused', {}))`;
+const browserCustomPacketTypes: { [type: string]: true } = {
+  "cef::chat:send": true,
+};
 
 export class BrowserService extends ClientListener {
   constructor(private sp: Sp, private controller: CombinedController) {
@@ -57,10 +63,54 @@ export class BrowserService extends ClientListener {
 
   private onBrowserMessage(e: BrowserMessageEvent) {
     const onFrontLoadedEventKey = "front-loaded";
+    const arg = e.arguments[0];
 
-    if (e.arguments[0] === onFrontLoadedEventKey) {
+    if (arg === onFrontLoadedEventKey) {
       this.controller.emitter.emit("browserWindowLoaded", {});
+      return;
     }
+
+    if (this.tryForwardBrowserCustomPacket(arg)) {
+      return;
+    }
+  }
+
+  private tryForwardBrowserCustomPacket(arg: unknown): boolean {
+    if (!this.isBrowserMessagePayload(arg)) {
+      return false;
+    }
+
+    if (!browserCustomPacketTypes[arg.type]) {
+      return false;
+    }
+
+    try {
+      const message: CustomPacketMessage = {
+        t: MsgType.CustomPacket,
+        contentJsonDump: JSON.stringify({
+          type: arg.type,
+          data: arg.data,
+        }),
+      };
+
+      this.controller.emitter.emit("sendMessage", {
+        message,
+        reliability: "reliable",
+      });
+    } catch (err) {
+      logError(this, "Failed to forward browser custom packet", err);
+    }
+
+    return true;
+  }
+
+  private isBrowserMessagePayload(arg: unknown): arg is { type: string, data: unknown } {
+    if (typeof arg !== "object" || arg === null) {
+      return false;
+    }
+
+    const maybePayload = arg as { type?: unknown };
+    return typeof maybePayload.type === "string";
   }
 
   private onMenuOpen(e: MenuOpenEvent) {

@@ -1,0 +1,11 @@
+{
+  "name": "skymp5-patcher-workspace",
+  "private": true,
+  "workspaces": [
+    "packages/core",
+    "packages/cli"
+  ],
+  "scripts": {
+    "build": "npm run build -w packages/core && npm run build -w packages/cli"
+  }
+}
