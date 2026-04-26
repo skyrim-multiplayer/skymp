@@ -1675,15 +1675,23 @@ bool MpObjectReference::CheckIfObjectCanStartOccupyThis(
     auto t = base.rec->GetType();
     auto actorActivator = activationSource.AsActor();
     if (t == "FURN" && actorActivator) {
+      // CrownfallRP patch: allow re-activation of FURN by the existing
+      // occupant. Vanilla Skymp blocks this (preventing stand-up and
+      // any subsequent activate), which kills sit/sleep/lean/craft RP
+      // mechanics. Restoring the same allow-and-fall-through behavior
+      // as the non-FURN path so the engine drives the natural exit.
       spdlog::info("MpObjectReference::ProcessActivate {:x} - occupant is "
-                   "already this object (activationSource = {:x}). Blocking "
-                   "because it's FURN",
+                   "already this object (activationSource = {:x}). FURN "
+                   "re-activation allowed by CrownfallRP patch",
                    GetFormId(), activationSource.GetFormId());
-      return false;
+      return true;
     } else {
-      spdlog::info("MpObjectReference::ProcessActivate {:x} - occupant is "
-                   "already this object (activationSource = {:x})",
-                   GetFormId(), activationSource.GetFormId());
+      // CrownfallRP patch: demoted info -> trace. Fires on every
+      // re-activation of any non-FURN ref by its current occupant —
+      // pure cosmetic noise.
+      spdlog::trace("MpObjectReference::ProcessActivate {:x} - occupant is "
+                    "already this object (activationSource = {:x})",
+                    GetFormId(), activationSource.GetFormId());
       return true;
     }
   }
@@ -1775,8 +1783,13 @@ void MpObjectReference::InitScripts()
           scriptNames.push_back(script.scriptName);
         }
       } else if (auto wst = GetParent())
-        wst->logger->warn("Script '{}' not found in the script storage",
-                          script.scriptName);
+        // CrownfallRP patch: demoted warn -> trace. Vanilla Skyrim
+        // ships hundreds of Papyrus scripts that aren't compiled into
+        // Skymp's storage (critterSpawn, NirnrootACTIVATORScript,
+        // WeaponRackTriggerSCRIPT etc.); this fires on every cell
+        // load with no actionable signal.
+        wst->logger->trace("Script '{}' not found in the script storage",
+                           script.scriptName);
     }
   }
 
@@ -1789,8 +1802,11 @@ void MpObjectReference::InitScripts()
     auto lookupRes =
       GetParent()->GetEspm().GetBrowser().LookupById(cellOrWorld);
     if (lookupRes.rec && lookupRes.rec->GetType() == "WRLD") {
-      spdlog::info("Skipping non-Sweet scripts for exterior form {:x}",
-                   cellOrWorld);
+      // CrownfallRP patch: demoted info -> trace. Fires on every ref
+      // load in any exterior worldspace; the filter behavior itself
+      // stays unchanged.
+      spdlog::trace("Skipping non-Sweet scripts for exterior form {:x}",
+                    cellOrWorld);
       scriptNames.erase(std::remove_if(scriptNames.begin(), scriptNames.end(),
                                        [](const std::string& val) {
                                          auto kPrefix = "Sweet";
@@ -1811,7 +1827,10 @@ void MpObjectReference::InitScripts()
       !Utils::stricmp(val.data(), "DA06PreRitualSceneTriggerScript") ||
       !Utils::stricmp(val.data(), "CritterSpawn");
 
-    spdlog::info("Skipping script {}", val);
+    // CrownfallRP patch: demoted info -> trace. Was logging EVERY
+    // script the lambda saw, not just the ones being removed — pure
+    // noise.
+    spdlog::trace("Skipping script {}", val);
 
     return isRemoveNeeded;
   };
