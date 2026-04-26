@@ -42,6 +42,9 @@ let authData: RemoteAuthGameData | null = null;
 
 const translations = {
   "ru": {
+    serverLocked: 'сервер закрыт',
+    notWhitelisted: 'вас нет в whitelist',
+    sessionExpired: 'сессия устарела, войдите заново',
     loginViaDiscord: 'войдите через discord',
     joinDiscordServer: 'вступите в discord сервер',
     banned: 'вы забанены',
@@ -71,6 +74,9 @@ const translations = {
     loginViaDiscord: 'log in via Discord',
     joinDiscordServer: 'join the Discord server',
     banned: 'you are banned',
+    serverLocked: 'server is locked',
+    notWhitelisted: 'you are not whitelisted',
+    sessionExpired: 'session expired, log in again',
     whatWasThat: 'what was that?',
     openingBrowser: 'opening browser...',
     loginFirst: 'log in first',
@@ -215,6 +221,38 @@ export class AuthService extends ClientListener {
         browserState.comment = '';
         this.setListenBrowserMessage(true, 'loginFailedBanned received');
         this.loggingStartMoment = 0;
+        this.sp.browser.executeJavaScript(new FunctionInfo(this.loginFailedWidgetSetter).getText({ events, browserState, authData: authData, strings }));
+        break;
+      case 'loginFailedServerLocked':
+        this.authAttemptProgressIndicator = false;
+        this.controller.lookupListener(NetworkingService).close();
+        logTrace(this, 'loginFailedServerLocked received');
+        browserState.loginFailedReason = strings.serverLocked;
+        browserState.comment = '';
+        this.setListenBrowserMessage(true, 'loginFailedServerLocked received');
+        this.loggingStartMoment = 0;
+        this.sp.browser.executeJavaScript(new FunctionInfo(this.loginFailedWidgetSetter).getText({ events, browserState, authData: authData, strings }));
+        break;
+      case 'loginFailedNotWhitelisted':
+        this.authAttemptProgressIndicator = false;
+        this.controller.lookupListener(NetworkingService).close();
+        logTrace(this, 'loginFailedNotWhitelisted received');
+        browserState.loginFailedReason = strings.notWhitelisted;
+        browserState.comment = '';
+        this.setListenBrowserMessage(true, 'loginFailedNotWhitelisted received');
+        this.loggingStartMoment = 0;
+        this.sp.browser.executeJavaScript(new FunctionInfo(this.loginFailedWidgetSetter).getText({ events, browserState, authData: authData, strings }));
+        break;
+      case 'loginFailedSessionNotFound':
+        this.authAttemptProgressIndicator = false;
+        this.controller.lookupListener(NetworkingService).close();
+        logTrace(this, 'loginFailedSessionNotFound received');
+        browserState.loginFailedReason = strings.sessionExpired;
+        browserState.comment = '';
+        this.setListenBrowserMessage(true, 'loginFailedSessionNotFound received');
+        this.loggingStartMoment = 0;
+        authData = null;
+        this.writeAuthDataToDisk(null);
         this.sp.browser.executeJavaScript(new FunctionInfo(this.loginFailedWidgetSetter).getText({ events, browserState, authData: authData, strings }));
         break;
       case 'loginFailedIpMismatch':

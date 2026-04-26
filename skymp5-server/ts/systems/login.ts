@@ -7,6 +7,8 @@ const loginFailedNotInTheDiscordServer = JSON.stringify({ customPacketType: "log
 const loginFailedBanned = JSON.stringify({ customPacketType: "loginFailedBanned" });
 const loginFailedIpMismatch = JSON.stringify({ customPacketType: "loginFailedIpMismatch" });
 const loginFailedSessionNotFound = JSON.stringify({ customPacketType: "loginFailedSessionNotFound" });
+const loginFailedServerLocked = JSON.stringify({ customPacketType: "loginFailedServerLocked" });
+const loginFailedNotWhitelisted = JSON.stringify({ customPacketType: "loginFailedNotWhitelisted" });
 
 type Mp = any; // TODO
 
@@ -14,6 +16,8 @@ interface UserProfile {
   id: number;
   discordId: string | null;
 }
+
+type MasterApiAccessError = "serverLocked" | "notWhitelisted" | "sessionNotFound" | "profileNotFound" | "unknown";
 
 namespace DiscordErrors {
   export const unknownMember = 10007;
@@ -55,14 +59,7 @@ export class Login implements System {
     );
 
     if (!response.ok) {
-      if (response.status === 404) {
-        ctx.svr.sendCustomPacket(userId, loginFailedSessionNotFound);
-      } else if (response.status === 403) {
-        // Backend rejected the session: server is locked or user is not whitelisted.
-        // loginFailedBanned is the closest existing packet type — shows an error
-        // and lets the player go back to the login screen.
-        ctx.svr.sendCustomPacket(userId, loginFailedBanned);
-      }
+      await this.sendMasterApiLoginFailure(ctx, userId, response);
       throw new Error(`getUserProfile: HTTP error ${response.status}`);
     }
 
@@ -73,6 +70,63 @@ export class Login implements System {
     }
 
     return data.user as UserProfile;
+  }
+
+  private async checkProfileAllowed(profileId: number, userId: number, ctx: SystemContext): Promise<void> {
+    if (!this.masterUrl || !this.masterKey) {
+      this.log("Skipping offline profile whitelist check because masterUrl or masterKey is not configured");
+      return;
+    }
+
+    const response = await this.fetchRetry(
+      `${this.masterUrl}/api/servers/${this.masterKey}/profiles/${profileId}/check`,
+      this.getFetchOptions('checkProfileAllowed')
+    );
+
+    if (!response.ok) {
+      await this.sendMasterApiLoginFailure(ctx, userId, response);
+      throw new Error(`checkProfileAllowed: HTTP error ${response.status}`);
+    }
+  }
+
+  private async sendMasterApiLoginFailure(ctx: SystemContext, userId: number, response: Response): Promise<void> {
+    const reason = await this.getMasterApiAccessError(response);
+
+    switch (reason) {
+      case "serverLocked":
+        ctx.svr.sendCustomPacket(userId, loginFailedServerLocked);
+        return;
+      case "notWhitelisted":
+        ctx.svr.sendCustomPacket(userId, loginFailedNotWhitelisted);
+        return;
+      case "sessionNotFound":
+      case "profileNotFound":
+        ctx.svr.sendCustomPacket(userId, loginFailedSessionNotFound);
+        return;
+      default:
+        if (response.status === 404) {
+          ctx.svr.sendCustomPacket(userId, loginFailedSessionNotFound);
+        } else if (response.status === 403) {
+          ctx.svr.sendCustomPacket(userId, loginFailedBanned);
+        }
+    }
+  }
+
+  private async getMasterApiAccessError(response: Response): Promise<MasterApiAccessError> {
+    try {
+      const data = await response.clone().json() as { error?: unknown };
+      if (data.error === "serverLocked" || data.error === "notWhitelisted" ||
+        data.error === "profileNotFound") {
+        return data.error;
+      }
+      if (response.status === 404) {
+        return "sessionNotFound";
+      }
+    } catch (_err) {
+      // Ignore parse errors and fall back to HTTP status based handling.
+    }
+
+    return "unknown";
   }
 
   async initAsync(ctx: SystemContext): Promise<void> {
@@ -230,9 +284,16 @@ export class Login implements System {
         });
     } else if (this.offlineMode === true && gameData && typeof gameData.profileId === "number") {
       const profileId = gameData.profileId;
-      this.emit(ctx, "spawnAllowed", userId, profileId, [], undefined);
-      loginsCounter.inc();
-      this.log(userId + " logged as " + profileId);
+      (async () => {
+        await this.checkProfileAllowed(profileId, userId, ctx);
+        this.emit(ctx, "spawnAllowed", userId, profileId, [], undefined);
+        loginsCounter.inc();
+        this.log(userId + " logged as " + profileId);
+      })()
+        .catch((err) => {
+          loginErrorsCounter.inc({ reason: err?.message || "unknown" });
+          console.error("Error logging in offline client:", JSON.stringify(gameData), err);
+        });
     } else {
       this.log("No credentials found in gameData:", gameData);
     }
