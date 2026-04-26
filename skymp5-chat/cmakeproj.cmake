@@ -1,0 +1,2 @@
+list(APPEND CMAKEPROJ_PROJECTS skymp5-chat)
+set(CMAKEPROJ_PRIORITY_skymp5-chat 3)

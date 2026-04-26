@@ -3,6 +3,7 @@
 
 import { store }    from './core/store'
 import { bus }      from './core/bus'
+import { getUserDisplayName } from './core/mpUtil'
 import { runGlobalProbes } from './tests/probeGlobals'
 import * as chat      from './systems/communication/chat'
 import * as courier   from './systems/communication/courier'
@@ -19,6 +20,7 @@ import * as college   from './systems/education/college'
 import * as skills    from './systems/education/skills'
 import * as training  from './systems/education/training'
 import * as commands  from './commands'
+import * as adminDashboard from './adminDashboard'
 import type { Mp }    from './types'
 
 export function init(mp: Mp): void {
@@ -56,6 +58,7 @@ export function init(mp: Mp): void {
   // ── Command layer ─────────────────────────────────────────────────────────
   const { handle: _handleCommand } = commands.registerAll(mp, store, bus)
   handleCommand = _handleCommand
+  adminDashboard.init(mp, store, bus)
 
   // ── Player lifecycle ──────────────────────────────────────────────────────
   mp.on('connect', (userId) => {
@@ -72,7 +75,7 @@ export function init(mp: Mp): void {
           return;
         }
 
-        const name = mp.get(actorId, 'name') || `User${userId}`;
+        const name = getUserDisplayName(mp, userId, actorId);
 
         // Prevent duplicate registration if the retry fires after they already got registered.
         const existing = store.get(userId);
@@ -124,6 +127,7 @@ export function init(mp: Mp): void {
       if (packet.type !== 'cef::chat:send') return
       const text = String(packet.data || '').trim().slice(0, chat.MAX_MSG_LEN)
       if (!text) return
+      if (text.startsWith('/')) console.log(`[chat] command input from ${userId}: ${text}`)
       if (!chat.handleChatInput(mp, store, userId, text)) {
         handleCommand?.(userId, text)
       }

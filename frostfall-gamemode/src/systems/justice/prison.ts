@@ -2,7 +2,7 @@
 
 import * as worldStore from '../../core/worldStore'
 import * as courier from '../communication/courier'
-import { safeSet } from '../../core/mpUtil'
+import { safeSendCustomPacket, safeSet } from '../../core/mpUtil'
 import type { Mp, Store, Bus, PrisonQueueEntry, Sentence } from '../../types'
 
 // ── State ─────────────────────────────────────────────────────────────────────
@@ -65,7 +65,7 @@ export function sentencePlayer(mp: Mp, store: Store, bus: Bus, playerId: number,
     if (player) {
       const newBounty = Object.assign({}, player.bounty, { [holdId]: 0 })
       store.update(playerId, { bounty: newBounty })
-      mp.sendCustomPacket(player.actorId, 'playerBanished', { holdId })
+      safeSendCustomPacket(mp, player.actorId, 'playerBanished', { holdId })
     }
   }
 

@@ -40,9 +40,43 @@ export function checkPermission(store: Store, playerId: number, level: 'player' 
 }
 
 type CommandHandler = (userId: number, args: string[]) => void
+interface CommandHelp {
+  name: string
+  usage: string
+  description: string
+  permission: 'player' | 'leader' | 'staff'
+}
 
 // reply is assigned inside registerAll once we have the chat module.
 let reply: (mp_: Mp, store_: Store, playerId: number, message: string) => void = () => {}
+
+const CHAT_HELP: CommandHelp[] = [
+  { name: 'me', usage: '/me [action]', description: 'Proximity roleplay action.', permission: 'player' },
+  { name: 'ooc', usage: '/ooc [message]', description: 'Global out-of-character chat.', permission: 'player' },
+  { name: 'w', usage: '/w [name] [message]', description: 'Nearby private whisper.', permission: 'player' },
+  { name: 'f', usage: '/f [message]', description: 'Faction chat.', permission: 'player' },
+]
+
+const COMMAND_HELP: CommandHelp[] = [
+  { name: 'help', usage: '/help (command)', description: 'List commands or show one command.', permission: 'player' },
+  { name: 'lecture', usage: '/lecture start | join [name] | end', description: 'Manage college lectures.', permission: 'player' },
+  { name: 'study', usage: '/study [tomeBaseId]', description: 'Study a tome by base id.', permission: 'player' },
+  { name: 'train', usage: '/train start [skillId] | join [name] | end', description: 'Manage training sessions.', permission: 'player' },
+  { name: 'skill', usage: '/skill (skillId)', description: 'Show skill XP and level.', permission: 'player' },
+  { name: 'pay', usage: '/pay [amount] [playerName]', description: 'Transfer gold to another player.', permission: 'player' },
+  { name: 'property', usage: '/property list | request [id] | approve [id] | deny [id] | revoke [id]', description: 'Housing/property workflow.', permission: 'player' },
+  { name: 'bounty', usage: '/bounty | check [name] | add [name] [hold] [amount] | clear [name] [hold]', description: 'View or manage bounties.', permission: 'player' },
+  { name: 'arrest', usage: '/arrest [name]', description: 'Queue a player for sentencing.', permission: 'leader' },
+  { name: 'sentence', usage: '/sentence [name] fine [amount] | release | banish', description: 'Sentence a queued player.', permission: 'leader' },
+  { name: 'capture', usage: '/capture [name]', description: 'Take a downed player captive.', permission: 'player' },
+  { name: 'release', usage: '/release [name]', description: 'Release a captive player.', permission: 'player' },
+  { name: 'down', usage: '/down [name]', description: 'Force a player down.', permission: 'staff' },
+  { name: 'rise', usage: '/rise [name]', description: 'Raise a downed player.', permission: 'staff' },
+  { name: 'nvfl', usage: '/nvfl clear [name]', description: 'Clear NVFL state.', permission: 'staff' },
+  { name: 'faction', usage: '/faction join|leave|rank|bbb ...', description: 'Manage faction membership and BBB docs.', permission: 'leader' },
+  { name: 'sober', usage: '/sober [name]', description: 'Clear drunk state.', permission: 'staff' },
+  { name: 'feed', usage: '/feed [name] (levels)', description: 'Restore hunger levels.', permission: 'staff' },
+]
 
 // ── Command registration ──────────────────────────────────────────────────────
 
@@ -51,6 +85,24 @@ export function registerAll(mp: Mp, store: Store, bus: Bus): { handle: (userId: 
   reply = (mp_, store_, playerId, message) => chat.sendToPlayer(mp_, store_, playerId, message)
 
   const handlers: Record<string, CommandHandler> = {}
+
+  handlers['help'] = (userId, args) => {
+    const topic = (args[0] ?? '').replace(/^\//, '').toLowerCase()
+    const entries = [...CHAT_HELP, ...COMMAND_HELP]
+
+    if (topic) {
+      const entry = entries.find(item => item.name === topic)
+      if (!entry) return reply(mp, store, userId, `Unknown help topic: /${topic}`)
+      reply(mp, store, userId, `${entry.usage}\n${entry.description}\nPermission: ${entry.permission}`)
+      return
+    }
+
+    const lines = entries.map(entry => `${entry.usage} - ${entry.description}`)
+    reply(mp, store, userId, 'Commands. Use /help [command] for details.')
+    for (let i = 0; i < lines.length; i += 6) {
+      reply(mp, store, userId, lines.slice(i, i + 6).join('\n'))
+    }
+  }
 
   // ── College ──────────────────────────────────────────────────────────────
   handlers['lecture'] = (userId, args) => {

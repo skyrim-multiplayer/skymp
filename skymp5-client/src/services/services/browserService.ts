@@ -70,9 +70,22 @@ export class BrowserService extends ClientListener {
       return;
     }
 
+    if (this.tryForwardBrowserCustomPacketArgs(e.arguments)) {
+      return;
+    }
+
     if (this.tryForwardBrowserCustomPacket(arg)) {
       return;
     }
+  }
+
+  private tryForwardBrowserCustomPacketArgs(args: unknown[]): boolean {
+    const type = args[0];
+    if (typeof type !== "string" || !browserCustomPacketTypes[type]) {
+      return false;
+    }
+
+    return this.forwardBrowserCustomPacket(type, args[1]);
   }
 
   private tryForwardBrowserCustomPacket(arg: unknown): boolean {
@@ -84,12 +97,16 @@ export class BrowserService extends ClientListener {
       return false;
     }
 
+    return this.forwardBrowserCustomPacket(arg.type, arg.data);
+  }
+
+  private forwardBrowserCustomPacket(type: string, data: unknown): boolean {
     try {
       const message: CustomPacketMessage = {
         t: MsgType.CustomPacket,
         contentJsonDump: JSON.stringify({
-          type: arg.type,
-          data: arg.data,
+          type,
+          data,
         }),
       };
 

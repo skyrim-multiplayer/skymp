@@ -2,6 +2,7 @@
 
 import * as worldStore from '../../core/worldStore'
 import * as courier from '../communication/courier'
+import { safeSendCustomPacket } from '../../core/mpUtil'
 import type { Mp, Store, Bus, PropertyDef, PropertyState, PropertyRecord } from '../../types'
 
 // ── Property Registry ─────────────────────────────────────────────────────────
@@ -101,7 +102,7 @@ export function approveProperty(mp: Mp, store: Store, bus: Bus, propertyId: stri
   if (player) {
     const owned = store.get(newOwnerId)!.properties.concat([propertyId])
     store.update(newOwnerId, { properties: owned })
-    mp.sendCustomPacket(player.actorId, 'propertyApproved', { propertyId })
+    safeSendCustomPacket(mp, player.actorId, 'propertyApproved', { propertyId })
   }
   bus.dispatch({ type: 'propertyApproved', propertyId, newOwnerId, approvedBy: approverId })
   return true
@@ -172,5 +173,5 @@ export function onConnect(mp: Mp, store: Store, bus: Bus, userId: number): void 
   const list = player.holdId ? getPropertiesByHold(player.holdId) : []
   // 3-arg sendCustomPacket is an undeclared native extension — guard so a missing
   // implementation doesn't abort the rest of the onConnect chain.
-  try { mp.sendCustomPacket(player.actorId, 'propertyList', { properties: list }) } catch { /* noop */ }
+  safeSendCustomPacket(mp, player.actorId, 'propertyList', { properties: list })
 }

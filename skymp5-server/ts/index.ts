@@ -254,6 +254,7 @@ const main = async () => {
 
   server.on("connect", (userId: number) => {
     log("connect", userId);
+    ui.noteUserConnected(userId);
     for (const system of systems) {
       try {
         if (system.connect) {
@@ -267,6 +268,7 @@ const main = async () => {
 
   server.on("disconnect", (userId: number) => {
     log("disconnect", userId);
+    ui.noteUserDisconnected(userId);
     for (const system of systems) {
       try {
         if (system.disconnect) {

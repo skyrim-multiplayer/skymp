@@ -33,6 +33,7 @@
 //   modifying this file. Channels are matched by prefix before IC fallback.
 
 import { signScript } from '../../core/signHelper'
+import { safeCall, safeSet } from '../../core/mpUtil'
 import type { Mp, Store } from '../../types'
 
 // ── Config ────────────────────────────────────────────────────────────────────
@@ -174,10 +175,10 @@ function replayHistory(mp: Mp, store: Store, userId: number): void {
 
 function deliver(mp: Mp, actorId: number, m: ChatMsg): void {
   if (!actorId) return
-  try {
-    mp.set(actorId, CHAT_MSG_PROP, spansToColorString(m.text))
-  } catch (err: any) {
-    console.error(`[chat] failed to deliver to actor ${actorId}: ${err?.message ?? String(err)}`)
+  const payload = spansToColorString(m.text)
+  safeSet(mp, actorId, CHAT_MSG_PROP, '')
+  if (!safeSet(mp, actorId, CHAT_MSG_PROP, payload)) {
+    console.error(`[chat] failed to deliver to actor ${actorId}`)
   }
 }
 
@@ -198,9 +199,16 @@ function sendProximity(
   m: ChatMsg,
   range: number,
 ): void {
-  const origin = mp.getActorPos(senderActorId)
+  const origin = safeCall(() => mp.getActorPos(senderActorId), null)
   for (const p of store.getAll()) {
-    if (dist3(origin, mp.getActorPos(p.actorId)) <= range) {
+    if (p.actorId === senderActorId) {
+      deliver(mp, p.actorId, m)
+      pushHistory(p.id, m)
+      continue
+    }
+
+    const targetPos = safeCall(() => mp.getActorPos(p.actorId), null)
+    if (dist3(origin, targetPos) <= range) {
       deliver(mp, p.actorId, m)
       pushHistory(p.id, m)
     }
@@ -307,7 +315,10 @@ export function handleChatInput(
       return true
     }
 
-    const d = dist3(mp.getActorPos(player.actorId), mp.getActorPos(target.actorId))
+    const d = dist3(
+      safeCall(() => mp.getActorPos(player.actorId), null),
+      safeCall(() => mp.getActorPos(target.actorId), null),
+    )
     if (d > WHISPER_RANGE) {
       const tooFar = mkMsg('plain',
         sp('[Whisper] ', C.tagWhisper, ['nonrp']),

@@ -1,6 +1,7 @@
 // ── Combat ────────────────────────────────────────────────────────────────────
 
 import type { Mp, Store, Bus } from '../../types'
+import { safeSendCustomPacket } from '../../core/mpUtil'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const LOOT_CAP_GOLD  = 500
@@ -23,8 +24,8 @@ export function downPlayer(mp: Mp, store: Store, bus: Bus, victimId: number, att
   store.update(victimId, { isDown: true, downedAt: Date.now() })
 
   const lootInfo = { lootCapGold: LOOT_CAP_GOLD, lootCapItems: LOOT_CAP_ITEMS }
-  mp.sendCustomPacket(victim.actorId, 'playerDowned', lootInfo)
-  if (attacker) mp.sendCustomPacket(attacker.actorId, 'playerDowned', lootInfo)
+  safeSendCustomPacket(mp, victim.actorId, 'playerDowned', lootInfo)
+  if (attacker) safeSendCustomPacket(mp, attacker.actorId, 'playerDowned', lootInfo)
 
   bus.dispatch({
     type:      'playerDowned',
@@ -41,7 +42,7 @@ export function risePlayer(mp: Mp, store: Store, bus: Bus, playerId: number): vo
   // Preserve downedAt for NVFL — only clear isDown
   store.update(playerId, { isDown: false })
 
-  mp.sendCustomPacket(player.actorId, 'playerRisen', {})
+  safeSendCustomPacket(mp, player.actorId, 'playerRisen', {})
   bus.dispatch({ type: 'playerRisen', playerId })
 }
 

@@ -1,6 +1,6 @@
 // ── Bounty ────────────────────────────────────────────────────────────────────
 
-import { safeGet, safeSet } from '../../core/mpUtil'
+import { safeGet, safeSendCustomPacket, safeSet } from '../../core/mpUtil'
 import type { Mp, Store, Bus } from '../../types'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -34,7 +34,7 @@ export function addBounty(mp: Mp, store: Store, bus: Bus, playerId: number, hold
   const newBounty = Object.assign({}, player.bounty, { [holdId]: newAmount })
   store.update(playerId, { bounty: newBounty })
   _persist(mp, player.actorId, newBounty)
-  if (player.actorId) mp.sendCustomPacket(player.actorId, 'bountyChanged', { holdId, amount: newAmount })
+  if (player.actorId) safeSendCustomPacket(mp, player.actorId, 'bountyChanged', { holdId, amount: newAmount })
   bus.dispatch({ type: 'bountyChanged', playerId, holdId, newAmount, delta: amount })
 }
 
@@ -44,7 +44,7 @@ export function clearBounty(mp: Mp, store: Store, bus: Bus, playerId: number, ho
   const newBounty = Object.assign({}, player.bounty, { [holdId]: 0 })
   store.update(playerId, { bounty: newBounty })
   _persist(mp, player.actorId, newBounty)
-  if (player.actorId) mp.sendCustomPacket(player.actorId, 'bountyChanged', { holdId, amount: 0 })
+  if (player.actorId) safeSendCustomPacket(mp, player.actorId, 'bountyChanged', { holdId, amount: 0 })
   bus.dispatch({ type: 'bountyChanged', playerId, holdId, newAmount: 0, delta: -(player.bounty[holdId] ?? 0) })
 }
 
@@ -61,6 +61,12 @@ function _persist(mp: Mp, actorId: number, bountyMap: Record<string, number>): v
 
 export function init(mp: Mp, store: Store, bus: Bus): void {
   console.log('[bounty] Initializing')
+  mp.makeProperty('ff_bounty', {
+    isVisibleByOwner: true,
+    isVisibleByNeighbors: false,
+    updateOwner: '',
+    updateNeighbor: '',
+  })
   console.log('[bounty] Started')
 }
 

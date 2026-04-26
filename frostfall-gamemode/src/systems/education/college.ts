@@ -1,6 +1,6 @@
 // ── College of Winterhold ─────────────────────────────────────────────────────
 
-import { safeGet, safeSet } from '../../core/mpUtil'
+import { safeGet, safeSendCustomPacket, safeSet } from '../../core/mpUtil'
 import { signScript } from '../../core/signHelper'
 import type { Mp, Store, Bus, LectureSession } from '../../types'
 
@@ -194,5 +194,5 @@ export function onConnect(mp: Mp, store: Store, bus: Bus, userId: number): void 
   if (!player || !player.actorId) return
   const xp   = safeGet<number>(mp, player.actorId, 'ff_study_xp', 0)
   const rank = getCollegeRank(xp)
-  mp.sendCustomPacket(player.actorId, 'collegeSync', { xp, rank })
+  safeSendCustomPacket(mp, player.actorId, 'collegeSync', { xp, rank })
 }

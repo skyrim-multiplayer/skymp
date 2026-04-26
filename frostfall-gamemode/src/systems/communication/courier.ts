@@ -1,6 +1,6 @@
 // ── Courier ───────────────────────────────────────────────────────────────────
 
-import { safeGet, safeSet } from '../../core/mpUtil'
+import { safeGet, safeSendCustomPacket, safeSet } from '../../core/mpUtil'
 import { signScript } from '../../core/signHelper'
 import type { Mp, Store, Bus, Notification } from '../../types'
 
@@ -53,7 +53,7 @@ export function sendNotification(mp: Mp, store: Store, notification: Notificatio
   pruned.push(notification)
   safeSet(mp, recipient.actorId, 'ff_courier', pruned)
 
-  mp.sendCustomPacket(recipient.actorId, 'courierNotification', notification as unknown as Record<string, unknown>)
+  safeSendCustomPacket(mp, recipient.actorId, 'courierNotification', notification as unknown as Record<string, unknown>)
 }
 
 export function markRead(mp: Mp, store: Store, playerId: number, notificationId: number): void {
@@ -97,6 +97,6 @@ export function onConnect(mp: Mp, store: Store, bus: Bus, userId: number): void 
   const notes   = safeGet<Notification[]>(mp, player.actorId, 'ff_courier', [])
   const pending = getUnread(filterExpired(notes))
   for (const n of pending) {
-    mp.sendCustomPacket(player.actorId, 'courierNotification', n as unknown as Record<string, unknown>)
+    safeSendCustomPacket(mp, player.actorId, 'courierNotification', n as unknown as Record<string, unknown>)
   }
 }

@@ -215,6 +215,7 @@ if(PREPARE_NEXUS_ARCHIVES)
   add_dependencies(prepare_nexus_archives skyrim-platform papyrus-vm)
   set(TARGETS_ADDITIONAL
     skymp5-client
+    skymp5-chat-ui
     skymp5-front
     skymp5-functions-lib
     skymp5-scripts
@@ -230,6 +231,7 @@ endif()
 # One or more of these targets help dev_service not to crash during build (watch mode). Not sure which target exactly.
 set(TARGETS_ADDITIONAL
     skymp5-client
+    skymp5-chat-ui
     skymp5-front
     skymp5-functions-lib
     skymp5-scripts

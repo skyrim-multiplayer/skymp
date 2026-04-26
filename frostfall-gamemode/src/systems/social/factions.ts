@@ -1,7 +1,7 @@
 // ── Factions ──────────────────────────────────────────────────────────────────
 
 import * as worldStore from '../../core/worldStore'
-import { safeGet, safeSet } from '../../core/mpUtil'
+import { safeGet, safeSendCustomPacket, safeSet } from '../../core/mpUtil'
 import type { Mp, Store, Bus, FactionMembership, FactionDocument } from '../../types'
 
 // ── Actions ───────────────────────────────────────────────────────────────────
@@ -89,6 +89,12 @@ function _saveMemberships(mp: Mp, actorId: number, memberships: FactionMembershi
 
 export function init(mp: Mp, store: Store, bus: Bus): void {
   console.log('[factions] Initializing')
+  mp.makeProperty('ff_memberships', {
+    isVisibleByOwner: true,
+    isVisibleByNeighbors: false,
+    updateOwner: '',
+    updateNeighbor: '',
+  })
   console.log('[factions] Started')
 }
 
@@ -100,5 +106,5 @@ export function onConnect(mp: Mp, store: Store, bus: Bus, userId: number): void 
   store.update(userId, { factions: factionIds })
   // 3-arg sendCustomPacket is an undeclared native extension — guard so a missing
   // implementation doesn't abort the rest of the onConnect chain.
-  try { mp.sendCustomPacket(player.actorId, 'factionsSync', { memberships }) } catch { /* noop */ }
+  safeSendCustomPacket(mp, player.actorId, 'factionsSync', { memberships })
 }

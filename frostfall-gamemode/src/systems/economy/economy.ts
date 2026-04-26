@@ -36,8 +36,8 @@ export function transferGold(mp: Mp, store: Store, fromId: number, toId: number,
   store.update(toId,   { septims: toGold })
 
   // Sync to inventory gold
-  safeSet(mp, from.actorId, 'inv', _setGoldInInventory(safeGet<Inventory | null>(mp, from.actorId, 'inv', null), fromGold))
-  safeSet(mp, to.actorId,   'inv', _setGoldInInventory(safeGet<Inventory | null>(mp, to.actorId,   'inv', null), toGold))
+  safeSet(mp, from.actorId, 'inventory', _setGoldInInventory(safeGet<Inventory | null>(mp, from.actorId, 'inventory', null), fromGold))
+  safeSet(mp, to.actorId,   'inventory', _setGoldInInventory(safeGet<Inventory | null>(mp, to.actorId,   'inventory', null), toGold))
 
   return true
 }
@@ -62,6 +62,12 @@ function _setGoldInInventory(inv: Inventory | null, amount: number): Inventory {
 
 export function init(mp: Mp, store: Store, bus: Bus): void {
   console.log('[economy] Initializing')
+  mp.makeProperty('ff_stipendHours', {
+    isVisibleByOwner: true,
+    isVisibleByNeighbors: false,
+    updateOwner: '',
+    updateNeighbor: '',
+  })
 
   const scheduleTick = () => {
     setTimeout(() => {
@@ -71,8 +77,8 @@ export function init(mp: Mp, store: Store, bus: Bus): void {
             const newSeptims = player.septims + STIPEND_RATE
             const newHours   = player.stipendPaidHours + 1
             store.update(player.id, { septims: newSeptims, stipendPaidHours: newHours })
-            const inv = safeGet<Inventory | null>(mp, player.actorId, 'inv', null)
-            safeSet(mp, player.actorId, 'inv', _setGoldInInventory(inv, newSeptims))
+            const inv = safeGet<Inventory | null>(mp, player.actorId, 'inventory', null)
+            safeSet(mp, player.actorId, 'inventory', _setGoldInInventory(inv, newSeptims))
             safeSet(mp, player.actorId, 'ff_stipendHours', newHours)
             bus.dispatch({ type: 'stipendTick', playerId: player.id, septims: newSeptims, stipendPaidHours: newHours })
           }
@@ -91,7 +97,7 @@ export function init(mp: Mp, store: Store, bus: Bus): void {
 export function onConnect(mp: Mp, store: Store, bus: Bus, userId: number): void {
   const player = store.get(userId)
   if (!player) return
-  const inv  = safeGet<Inventory | null>(mp, player.actorId, 'inv', null)
+  const inv  = safeGet<Inventory | null>(mp, player.actorId, 'inventory', null)
   const gold = _getGoldFromInventory(inv)
   store.update(userId, { septims: gold })
 

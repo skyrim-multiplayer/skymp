@@ -1,6 +1,6 @@
 // ── Skills ────────────────────────────────────────────────────────────────────
 
-import { safeGet, safeSet } from '../../core/mpUtil'
+import { safeGet, safeSendCustomPacket, safeSet } from '../../core/mpUtil'
 import * as factions from '../social/factions'
 import type { Mp, Store, Bus, StudyBoost } from '../../types'
 
@@ -164,5 +164,5 @@ export function onConnect(mp: Mp, store: Store, bus: Bus, userId: number): void 
   const player = store.get(userId)
   if (!player || !player.actorId) return
   const xpMap = safeGet<Record<string, number>>(mp, player.actorId, 'ff_skill_xp', {})
-  mp.sendCustomPacket(player.actorId, 'skillsSync', { xpMap })
+  safeSendCustomPacket(mp, player.actorId, 'skillsSync', { xpMap })
 }

@@ -1,6 +1,7 @@
 // ── Captivity ─────────────────────────────────────────────────────────────────
 
 import type { Mp, Store, Bus } from '../../types'
+import { safeSendCustomPacket } from '../../core/mpUtil'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const MAX_CAPTIVITY_MS  = 24 * 60 * 60 * 1000  // 24 hours
@@ -30,8 +31,8 @@ export function capturePlayer(mp: Mp, store: Store, bus: Bus, captiveId: number,
   const now = Date.now()
   store.update(captiveId, { isCaptive: true, captiveAt: now })
 
-  mp.sendCustomPacket(captive.actorId, 'playerCaptured', { remainingMs: MAX_CAPTIVITY_MS })
-  if (captor) mp.sendCustomPacket(captor.actorId, 'playerCaptured', { captiveId })
+  safeSendCustomPacket(mp, captive.actorId, 'playerCaptured', { remainingMs: MAX_CAPTIVITY_MS })
+  if (captor) safeSendCustomPacket(mp, captor.actorId, 'playerCaptured', { captiveId })
 
   bus.dispatch({ type: 'playerCaptured', captiveId, captorId })
 }
@@ -41,7 +42,7 @@ export function releasePlayer(mp: Mp, store: Store, bus: Bus, captiveId: number)
   if (!captive) return
 
   store.update(captiveId, { isCaptive: false, captiveAt: null })
-  mp.sendCustomPacket(captive.actorId, 'playerReleased', {})
+  safeSendCustomPacket(mp, captive.actorId, 'playerReleased', {})
   bus.dispatch({ type: 'playerReleased', captiveId })
 }
 

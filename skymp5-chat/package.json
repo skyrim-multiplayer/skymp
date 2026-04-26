@@ -1,17 +1,16 @@
 {
   "name": "skymp5-chat",
   "version": "1.0.0",
-  "description": "Standalone chat module for SkyMP — server logic + client bridge patch",
+  "description": "Minimal SkyMP client UI replacement focused on chat and commands",
   "license": "GPL-3.0",
   "scripts": {
+    "build": "node scripts/build-ui.mjs",
     "check": "tsc --noEmit",
-    "patch:client": "node scripts/patch-client.mjs",
+    "deploy:ui": "node scripts/deploy-ui.mjs",
     "deploy:server": "node scripts/deploy-server.mjs"
   },
   "devDependencies": {
-    "@skymp5-patcher/core": "file:../skymp5-patcher/packages/core",
-    "reflect-metadata": "^0.2.2",
-    "typescript": "^5.4.0",
-    "@types/node": "^20.0.0"
+    "@types/node": "^20.0.0",
+    "typescript": "^5.4.0"
   }
 }

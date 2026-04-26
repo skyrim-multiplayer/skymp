@@ -11,6 +11,15 @@
 
 import type { Mp } from '../types'
 
+export function safeCall<T>(fn: () => T, fallback: T): T {
+  try {
+    const val = fn()
+    return val !== null && val !== undefined ? val : fallback
+  } catch {
+    return fallback
+  }
+}
+
 export function safeGet<T>(mp: Mp, actorId: number, key: string, fallback: T): T {
   if (!actorId) return fallback
   try {
@@ -25,6 +34,32 @@ export function safeSet(mp: Mp, actorId: number, key: string, value: unknown): b
   if (!actorId) return false
   try {
     mp.set(actorId, key, value)
+    return true
+  } catch {
+    return false
+  }
+}
+
+export function safeGetActorName(mp: Mp, actorId: number, fallback: string): string {
+  return safeCall(() => mp.getActorName(actorId), fallback)
+}
+
+export function getUserDisplayName(mp: Mp, userId: number, actorId: number): string {
+  return safeGetActorName(mp, actorId, `User${userId}`)
+}
+
+export function safeSendCustomPacket(
+  mp: Mp,
+  actorOrUserId: number,
+  packetNameOrJson: string,
+  data?: Record<string, unknown>,
+): boolean {
+  try {
+    if (data === undefined) {
+      mp.sendCustomPacket(actorOrUserId, packetNameOrJson)
+    } else {
+      mp.sendCustomPacket(actorOrUserId, packetNameOrJson, data)
+    }
     return true
   } catch {
     return false

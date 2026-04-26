@@ -1,6 +1,7 @@
 // ── Training ──────────────────────────────────────────────────────────────────
 
 import * as skills from './skills'
+import { safeSendCustomPacket } from '../../core/mpUtil'
 import type { Mp, Store, Bus, TrainingSession } from '../../types'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -60,7 +61,7 @@ export function endTraining(mp: Mp, store: Store, bus: Bus, trainerId: number): 
   for (const attendeeId of session.attendees) {
     skills.grantStudyBoost(mp, attendeeId, session.skillId, TRAINING_BOOST_MULTIPLIER, TRAINING_BOOST_ONLINE_MS)
     const attendee = store.get(attendeeId)
-    if (attendee) mp.sendCustomPacket(attendee.actorId, 'trainingBoostGranted', { skillId: session.skillId })
+    if (attendee) safeSendCustomPacket(mp, attendee.actorId, 'trainingBoostGranted', { skillId: session.skillId })
   }
 
   sessions.delete(trainerId)
