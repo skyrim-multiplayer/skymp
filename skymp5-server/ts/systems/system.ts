@@ -10,6 +10,7 @@ export interface SystemContext {
 
 export interface System {
   systemName: string;
+  disposeAsync?: (ctx: SystemContext) => Promise<void>;
   initAsync?: (ctx: SystemContext) => Promise<void>;
   updateAsync?: (ctx: SystemContext) => Promise<void>;
   connect?: (userId: number, ctx: SystemContext) => void;

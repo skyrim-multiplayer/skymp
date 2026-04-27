@@ -71,20 +71,24 @@ export class ConsoleCommandsService extends ClientListener {
                 return false;
             }
 
-            if (args.length !== schema.length && !this.immuneSchema.includes(commandName)) {
+            const normalizedArgs = commandName === "mp"
+                ? this.normalizeMpArgs(args)
+                : [...args];
+
+            if (normalizedArgs.length !== schema.length && !this.immuneSchema.includes(commandName)) {
                 logError(this, `Mismatch found in the schema of`, commandName, `command`);
                 return false;
             }
-            for (let i = 0; i < args.length; ++i) {
+            for (let i = 0; i < normalizedArgs.length; ++i) {
                 switch (schema[i]) {
                     case CmdArgument.ObjectReference:
-                        args[i] = localIdToRemoteId(parseInt(`${args[i]}`));
+                        normalizedArgs[i] = localIdToRemoteId(parseInt(`${normalizedArgs[i]}`));
                         break;
                 }
             }
 
-            for (let i = 0; i < args.length; ++i) {
-                if (typeof args[i] !== "string" && typeof args[i] !== "number") {
+            for (let i = 0; i < normalizedArgs.length; ++i) {
+                if (typeof normalizedArgs[i] !== "string" && typeof normalizedArgs[i] !== "number") {
                     logError(this, `Bad argument type in command`, commandName, `argument index`, i);
                     return false;
                 }
@@ -95,7 +99,7 @@ export class ConsoleCommandsService extends ClientListener {
                     t: MsgType.ConsoleCommand,
                     data: {
                         commandName,
-                        args: args as (string | number)[]
+                        args: normalizedArgs as (string | number)[]
                     }
                 },
                 reliability: "reliable"
@@ -105,6 +109,20 @@ export class ConsoleCommandsService extends ClientListener {
             this.sp.printConsole("sent");
             return false;
         };
+    }
+
+    private normalizeMpArgs(args: unknown[]): unknown[] {
+        if (args.length === 0) {
+            return [0x14];
+        }
+
+        const [firstArg] = args;
+        const normalizedFirstArg = `${firstArg}`.trim();
+        if (normalizedFirstArg !== "" && !Number.isNaN(parseInt(normalizedFirstArg, 10))) {
+            return [...args];
+        }
+
+        return [0x14, ...args];
     }
 
     private readonly schemas: Map<CmdName, CmdArgument[]>;

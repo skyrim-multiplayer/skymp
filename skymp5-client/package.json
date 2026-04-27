@@ -5,6 +5,7 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "webpack",
+    "test:addon-host": "tsc -p tsconfig.tests.json && node dist-tests/skymp5-client/tests/clientAddonHostRuntime.test.js",
     "watch": "webpack -w"
   },
   "devDependencies": {
