@@ -126,6 +126,14 @@ export class Login implements System {
           console.error("discordAuth.guilds array is missing or empty, skipping Discord server integration");
         }
 
+        if ((ctx.svr as any).onLoginAttempt) {
+          const isContinue = (ctx.svr as any).onLoginAttempt(profile.id);
+          if (!isContinue) {
+            ctx.svr.sendCustomPacket(userId, loginFailedBanned);
+            throw new Error("Banned by gamemode");
+          }
+        }
+
         let roles = new Array<string>();
 
         if (discordAuth && discordAuth.botToken && discordAuth.guilds) {
@@ -133,6 +141,14 @@ export class Login implements System {
           let roles = new Array<string>();
           let isBanned = false;
           let shouldHideIp = false;
+
+          const actorId = ctx.svr.getActorsByProfileId(profile.id)[0];
+          const mp = ctx.svr as unknown as Mp;
+          const currentRoles: string[] | null = actorId ? mp.get(actorId, "private.discordRoles") : null;
+
+          if (currentRoles && currentRoles.length > 0) {
+            roles = currentRoles;
+          }
 
           for (const guildConfig of discordAuth.guilds) {
             const response = await this.fetchRetry(
@@ -157,7 +173,15 @@ export class Login implements System {
                 shouldHideIp = true;
               }
             }
+
+            // TODO: enable logging instead of throw
+            // Disabled this check to be able bypassing ratelimit
+            // if (response.status !== 200) {
+            //   throw new Error("Unexpected response status: " +
+            //     JSON.stringify({ status: response.status, data: response.data }));
+            // }
           }
+
 
           if (!isMemberOfAny) {
             ctx.svr.sendCustomPacket(userId, loginFailedNotInTheDiscordServer);
@@ -166,7 +190,17 @@ export class Login implements System {
 
           if (isBanned) {
             ctx.svr.sendCustomPacket(userId, loginFailedBanned);
-            throw new Error("Banned on one of the servers");
+            throw new Error("Banned on one of the Discord servers");
+          }
+
+
+          if (discordAuth && profile.discordId) {
+            if (ip !== ctx.svr.getUserIp(userId)) {
+              // It's a quick and dirty way to check if it's the same user
+              // During async http call the user could free userId and someone else could connect with the same userId
+              ctx.svr.sendCustomPacket(userId, loginFailedIpMismatch);
+              throw new Error("IP mismatch");
+            }
           }
 
           const ipToPrint = shouldHideIp ? "hidden" : ip;
