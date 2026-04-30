@@ -134,11 +134,13 @@ export class Login implements System {
           }
         }
 
-        let roles = new Array<string>();
 
-        if (discordAuth && discordAuth.botToken && discordAuth.guilds) {
-          let isMemberOfAny = false;
-          let roles = new Array<string>();
+        let roles: string[] = new Array<string>();
+
+        let fetchedRoles: string[] = [];
+        let isMemberOfAny = false;
+
+        if (discordAuth && discordAuth.botToken && discordAuth.guilds && profile.discordId) {
           let isBanned = false;
           let shouldHideIp = false;
 
@@ -165,7 +167,8 @@ export class Login implements System {
               isMemberOfAny = true;
 
               const guildRoles: string[] = responseData.roles || [];
-              roles = [...new Set([...roles, ...guildRoles])];
+              fetchedRoles = [...fetchedRoles, ...guildRoles];
+
               if (guildConfig.banRoleId && guildRoles.indexOf(guildConfig.banRoleId) !== -1) {
                 isBanned = true;
               }
@@ -193,14 +196,11 @@ export class Login implements System {
             throw new Error("Banned on one of the Discord servers");
           }
 
-
-          if (discordAuth && profile.discordId) {
-            if (ip !== ctx.svr.getUserIp(userId)) {
-              // It's a quick and dirty way to check if it's the same user
-              // During async http call the user could free userId and someone else could connect with the same userId
-              ctx.svr.sendCustomPacket(userId, loginFailedIpMismatch);
-              throw new Error("IP mismatch");
-            }
+          if (ip !== ctx.svr.getUserIp(userId)) {
+            // It's a quick and dirty way to check if it's the same user
+            // During async http call the user could free userId and someone else could connect with the same userId
+            ctx.svr.sendCustomPacket(userId, loginFailedIpMismatch);
+            throw new Error("IP mismatch");
           }
 
           const ipToPrint = shouldHideIp ? "hidden" : ip;
@@ -218,7 +218,9 @@ export class Login implements System {
           }
         }
 
-        this.emit(ctx, "spawnAllowed", userId, profile.id, roles, profile.discordId);
+        const rolesToAssign = isMemberOfAny ? [...new Set(fetchedRoles)] : roles;
+
+        this.emit(ctx, "spawnAllowed", userId, profile.id, rolesToAssign, profile.discordId);
         loginsCounter.inc();
         this.log("Logged as " + profile.id);
       })()
