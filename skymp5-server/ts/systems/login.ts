@@ -120,99 +120,68 @@ export class Login implements System {
           discordAuth = undefined;
           console.error("discordAuth.botToken is missing, skipping Discord server integration");
         }
-        if (discordAuth && !discordAuth.guildId) {
+
+        if (discordAuth && (!discordAuth.guilds || discordAuth.guilds.length === 0)) {
           discordAuth = undefined;
-          console.error("discordAuth.guildId is missing, skipping Discord server integration");
+          console.error("discordAuth.guilds array is missing or empty, skipping Discord server integration");
         }
 
         let roles = new Array<string>();
 
-        if (discordAuth && profile.discordId) {
-          const guidBeforeAsyncOp = ctx.svr.getUserGuid(userId);
-          const response = await this.fetchRetry(
-            `https://discord.com/api/guilds/${discordAuth.guildId}/members/${profile.discordId}`,
-            {
-              method: 'GET',
-              headers: {
-                'Authorization': `${discordAuth.botToken}`,
+        if (discordAuth && discordAuth.botToken && discordAuth.guilds) {
+          let isMemberOfAny = false;
+          let roles = new Array<string>();
+          let isBanned = false;
+          let shouldHideIp = false;
+
+          for (const guildConfig of discordAuth.guilds) {
+            const response = await this.fetchRetry(
+              `https://discord.com/api/guilds/${guildConfig.guildId}/members/${profile.discordId}`,
+              {
+                method: 'GET',
+                headers: { 'Authorization': `${discordAuth.botToken}` },
+                ...this.getFetchOptions('discordAuth_multi'),
               },
-              ... this.getFetchOptions('discordAuth1'),
-            },
-          );
-          const responseData = response.ok ? await response.json() : null;
-          const guidAfterAsyncOp = ctx.svr.isConnected(userId) ? ctx.svr.getUserGuid(userId) : "<disconnected>";
+            );
 
-          console.log({ guidBeforeAsyncOp, guidAfterAsyncOp, op: "Discord request" });
+            if (response.ok) {
+              const responseData = await response.json();
+              isMemberOfAny = true;
 
-          if (guidBeforeAsyncOp !== guidAfterAsyncOp) {
-            console.error(`User ${userId} changed guid from ${guidBeforeAsyncOp} to ${guidAfterAsyncOp} during async Discord request`);
-            throw new Error("Guid mismatch after Discord request");
-          }
-
-          const mp = ctx.svr as unknown as Mp;
-
-          // TODO: what if more characters
-          const actorId = ctx.svr.getActorsByProfileId(profile.id)[0];
-
-          const receivedRoles: string[] | null = (responseData && Array.isArray(responseData.roles)) ? responseData.roles : null;
-          const currentRoles: string[] | null = actorId ? mp.get(actorId, "private.discordRoles") : null;
-          roles = receivedRoles || currentRoles || [];
-
-          console.log('Discord request:', JSON.stringify({ status: response.status, data: responseData }));
-
-          if (response.status === 404 && responseData?.code === DiscordErrors.unknownMember) {
-            ctx.svr.sendCustomPacket(userId, loginFailedNotInTheDiscordServer);
-            throw new Error("Not in the Discord server");
-          }
-
-          // TODO: enable logging instead of throw
-          // Disabled this check to be able bypassing ratelimit
-          // if (response.status !== 200) {
-          //   throw new Error("Unexpected response status: " +
-          //     JSON.stringify({ status: response.status, data: response.data }));
-          // }
-
-          // TODO: remove this legacy discord-based ban system
-          if (roles.indexOf(discordAuth.banRoleId) !== -1) {
-            ctx.svr.sendCustomPacket(userId, loginFailedBanned);
-            throw new Error("Banned");
-          }
-        }
-
-        if ((ctx.svr as any).onLoginAttempt) {
-          const isContinue = (ctx.svr as any).onLoginAttempt(profile.id);
-          if (!isContinue) {
-            ctx.svr.sendCustomPacket(userId, loginFailedBanned);
-            throw new Error("Banned by gamemode");
-          }
-        }
-
-        if (discordAuth && profile.discordId) {
-          if (ip !== ctx.svr.getUserIp(userId)) {
-            // It's a quick and dirty way to check if it's the same user
-            // During async http call the user could free userId and someone else could connect with the same userId
-            ctx.svr.sendCustomPacket(userId, loginFailedIpMismatch);
-            throw new Error("IP mismatch");
-          }
-        }
-
-        if (discordAuth && discordAuth.eventLogChannelId) {
-          let ipToPrint = ip;
-
-          if (discordAuth && discordAuth.hideIpRoleId) {
-            if (roles.indexOf(discordAuth.hideIpRoleId) !== -1) {
-              ipToPrint = "hidden";
+              const guildRoles: string[] = responseData.roles || [];
+              roles = [...new Set([...roles, ...guildRoles])];
+              if (guildConfig.banRoleId && guildRoles.indexOf(guildConfig.banRoleId) !== -1) {
+                isBanned = true;
+              }
+              if (guildConfig.hideIpRoleId && guildRoles.indexOf(guildConfig.hideIpRoleId) !== -1) {
+                shouldHideIp = true;
+              }
             }
           }
 
-          const actorIds = ctx.svr.getActorsByProfileId(profile.id).map(actorId => actorId.toString(16));
+          if (!isMemberOfAny) {
+            ctx.svr.sendCustomPacket(userId, loginFailedNotInTheDiscordServer);
+            throw new Error("Not in any of the Discord servers");
+          }
 
-          this.postServerLoginToDiscord(discordAuth.eventLogChannelId, discordAuth.botToken, {
-            userId,
-            ipToPrint,
-            actorIds,
-            profile,
-          });
+          if (isBanned) {
+            ctx.svr.sendCustomPacket(userId, loginFailedBanned);
+            throw new Error("Banned on one of the servers");
+          }
+
+          const ipToPrint = shouldHideIp ? "hidden" : ip;
+          const actorIds = ctx.svr.getActorsByProfileId(profile.id).map(id => id.toString(16));
+
+          for (const guildConfig of discordAuth.guilds) {
+            if (guildConfig.eventLogChannelId) {
+              this.postServerLoginToDiscord(guildConfig.eventLogChannelId, discordAuth.botToken, {
+                userId,
+                ipToPrint,
+                actorIds,
+                profile,
+              });
+            }
+          }
         }
 
         this.emit(ctx, "spawnAllowed", userId, profile.id, roles, profile.discordId);
