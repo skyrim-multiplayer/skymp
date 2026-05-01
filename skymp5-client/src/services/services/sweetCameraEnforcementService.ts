@@ -5,6 +5,7 @@ import { CustomPacketMessage } from "../messages/customPacketMessage";
 import { AnimDebugSettings } from "../messages_settings/animDebugSettings";
 import { ClientListener, CombinedController, Sp } from "./clientListener";
 import { ButtonEvent, DxScanCode, Menu } from "skyrimPlatform";
+import * as fs from "fs";
 
 const playerId = 0x14;
 
