@@ -104,7 +104,7 @@ try {
   if (lang in translations) {
     strings = translations[lang as keyof typeof translations];
     const src = `window.setLanguage(${lang})`;
-    this.sp.browser.executeJavaScript(src);
+    browser.executeJavaScript(src);
   }
 } catch {
   // locale file not found or unreadable, default to 'en'
