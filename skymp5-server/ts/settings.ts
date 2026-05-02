@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import * as crypto from "crypto";
+import * as path from "path";
 import { Octokit } from '@octokit/rest';
 import { RequestError as OctokitRequestError } from '@octokit/request-error';
 import { ArgumentParser } from 'argparse';
@@ -35,6 +36,7 @@ export class Settings {
     },
   ];
   discordAuth: DiscordAuthSettings | null = null;
+  settingsPath = path.resolve("server-settings.json");
 
   allSettings: Record<string, unknown> | null = null;
 

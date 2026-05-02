@@ -1,4 +1,5 @@
 build
+dist-tests
 .clang-tidy
 .linter
 node_modules
