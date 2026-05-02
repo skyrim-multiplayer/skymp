@@ -5,12 +5,16 @@ import { RequestError as OctokitRequestError } from '@octokit/request-error';
 import { ArgumentParser } from 'argparse';
 import lodash from 'lodash';
 
-export interface DiscordAuthSettings {
-  botToken: string;
+export interface DiscordGuildConfig {
   guildId: string;
-  banRoleId: string;
+  banRoleId?: string;
   eventLogChannelId?: string;
   hideIpRoleId?: string;
+}
+
+export interface DiscordAuthSettings {
+  botToken: string;
+  guilds: DiscordGuildConfig[];
 }
 
 export class Settings {
