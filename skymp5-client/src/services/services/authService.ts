@@ -103,6 +103,8 @@ try {
   const lang = fs.readFileSync('./Data/Platform/Distribution/locale', 'utf8').trim();
   if (lang in translations) {
     strings = translations[lang as keyof typeof translations];
+    const src = `window.setLanguage(${lang})`;
+    browser.executeJavaScript(src);
   }
 } catch {
   // locale file not found or unreadable, default to 'en'
