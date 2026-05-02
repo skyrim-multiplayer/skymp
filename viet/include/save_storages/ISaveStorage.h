@@ -6,15 +6,22 @@
 #include <string>
 #include <vector>
 
+#include "../Promise.h"
+#include "../Void.h"
+
 namespace Viet {
 
-template <typename T, typename FormDescType>
+template <typename T, typename FormDescType,
+          template <class> class PromiseT = Promise>
 class ISaveStorage
 {
 public:
   using IterateSyncCallback = std::function<void(const T&)>;
   using UpsertCallback = std::function<void()>;
   using IterateCallback = std::function<void(const std::vector<T>&)>;
+
+  using UpsertPromise = PromiseT<Void>;
+  using IteratePromise = PromiseT<std::vector<T>>;
 
   virtual ~ISaveStorage() = default;
 
@@ -36,20 +43,27 @@ public:
     std::vector<std::optional<T>>& changeForms) = 0;
 
   virtual const std::string& GetName() const = 0;
+
+  virtual UpsertPromise UpsertAsync(
+    std::vector<std::optional<T>>&& changeForms) = 0;
+
+  virtual IteratePromise IterateAsync(
+    const std::optional<std::vector<FormDescType>>& filter) = 0;
 };
 
 namespace ISaveStorageUtils {
-template <typename T, typename FormDescType>
-inline uint32_t CountSync(ISaveStorage<T, FormDescType>& storage)
+template <typename T, typename FormDescType, template <class> class PromiseT>
+inline uint32_t CountSync(ISaveStorage<T, FormDescType, PromiseT>& storage)
 {
   uint32_t n = 0;
   storage.IterateSync([&](auto) { ++n; });
   return n;
 }
 
-template <typename T, typename FormDescType>
-inline std::optional<T> FindSync(ISaveStorage<T, FormDescType>& storage,
-                                 const FormDescType& formDesc)
+template <typename T, typename FormDescType, template <class> class PromiseT>
+inline std::optional<T> FindSync(
+  ISaveStorage<T, FormDescType, PromiseT>& storage,
+  const FormDescType& formDesc)
 {
   std::optional<T> res;
   storage.IterateSync([&](const T& changeForm) {
@@ -59,9 +73,9 @@ inline std::optional<T> FindSync(ISaveStorage<T, FormDescType>& storage,
   return res;
 }
 
-template <typename T, typename FormDescType>
+template <typename T, typename FormDescType, template <class> class PromiseT>
 inline std::map<FormDescType, T> FindAllSync(
-  ISaveStorage<T, FormDescType>& storage)
+  ISaveStorage<T, FormDescType, PromiseT>& storage)
 {
   std::map<FormDescType, T> res;
   storage.IterateSync(
