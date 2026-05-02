@@ -6,7 +6,9 @@
 
 namespace {
 size_t CountChangeForms(
-  std::shared_ptr<Viet::IDatabase<MpChangeForm, FormDesc>> database)
+  std::shared_ptr<
+    Viet::IDatabase<MpChangeForm, FormDesc, std::vector<FormDesc>>>
+    database)
 {
   size_t n = 0;
   database->Iterate([&](const MpChangeForm&) { ++n; }, std::nullopt);
@@ -16,15 +18,23 @@ size_t CountChangeForms(
 
 struct MigrationDatabase::Impl
 {
-  std::shared_ptr<Viet::IDatabase<MpChangeForm, FormDesc>> newDatabase;
-  std::shared_ptr<Viet::IDatabase<MpChangeForm, FormDesc>> oldDatabase;
+  std::shared_ptr<
+    Viet::IDatabase<MpChangeForm, FormDesc, std::vector<FormDesc>>>
+    newDatabase;
+  std::shared_ptr<
+    Viet::IDatabase<MpChangeForm, FormDesc, std::vector<FormDesc>>>
+    oldDatabase;
   std::function<void()> exit;
   std::function<void()> terminate;
 };
 
 MigrationDatabase::MigrationDatabase(
-  std::shared_ptr<Viet::IDatabase<MpChangeForm, FormDesc>> newDatabase,
-  std::shared_ptr<Viet::IDatabase<MpChangeForm, FormDesc>> oldDatabase,
+  std::shared_ptr<
+    Viet::IDatabase<MpChangeForm, FormDesc, std::vector<FormDesc>>>
+    newDatabase,
+  std::shared_ptr<
+    Viet::IDatabase<MpChangeForm, FormDesc, std::vector<FormDesc>>>
+    oldDatabase,
   std::function<void()> exit, std::function<void()> terminate)
 {
   pImpl.reset(new Impl{ newDatabase, oldDatabase, exit });

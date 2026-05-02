@@ -8,7 +8,7 @@
 
 namespace Viet {
 
-template <typename T, typename FormDescType>
+template <typename T, typename FormDescType, typename FilterType>
 class ISaveStorage
 {
 public:
@@ -21,9 +21,8 @@ public:
   virtual void IterateSync(const IterateSyncCallback& cb) = 0;
   virtual void Upsert(std::vector<std::optional<T>>&& changeForms,
                       const UpsertCallback& cb) = 0;
-  virtual void Iterate(
-    const IterateCallback& cb,
-    const std::optional<std::vector<FormDescType>>& filter) = 0;
+  virtual void Iterate(const IterateCallback& cb,
+                       const std::optional<FilterType>& filter) = 0;
   virtual uint32_t GetNumFinishedUpserts() const = 0;
   virtual uint32_t GetNumFinishedIterates() const = 0;
 
@@ -39,17 +38,18 @@ public:
 };
 
 namespace ISaveStorageUtils {
-template <typename T, typename FormDescType>
-inline uint32_t CountSync(ISaveStorage<T, FormDescType>& storage)
+template <typename T, typename FormDescType, typename FilterType>
+inline uint32_t CountSync(ISaveStorage<T, FormDescType, FilterType>& storage)
 {
   uint32_t n = 0;
   storage.IterateSync([&](auto) { ++n; });
   return n;
 }
 
-template <typename T, typename FormDescType>
-inline std::optional<T> FindSync(ISaveStorage<T, FormDescType>& storage,
-                                 const FormDescType& formDesc)
+template <typename T, typename FormDescType, typename FilterType>
+inline std::optional<T> FindSync(
+  ISaveStorage<T, FormDescType, FilterType>& storage,
+  const FormDescType& formDesc)
 {
   std::optional<T> res;
   storage.IterateSync([&](const T& changeForm) {
@@ -59,9 +59,9 @@ inline std::optional<T> FindSync(ISaveStorage<T, FormDescType>& storage,
   return res;
 }
 
-template <typename T, typename FormDescType>
+template <typename T, typename FormDescType, typename FilterType>
 inline std::map<FormDescType, T> FindAllSync(
-  ISaveStorage<T, FormDescType>& storage)
+  ISaveStorage<T, FormDescType, FilterType>& storage)
 {
   std::map<FormDescType, T> res;
   storage.IterateSync(
