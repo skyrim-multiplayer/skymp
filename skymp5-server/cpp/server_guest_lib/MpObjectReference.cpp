@@ -320,6 +320,8 @@ bool MpObjectReference::GetAnimationVariableBool(const char* name) const
     variable = AnimationVariableBool::kVariable__skymp_isWeapDrawn;
   } else if (!Utils::stricmp(name, "IsBlocking")) {
     variable = AnimationVariableBool::kVariable_IsBlocking;
+  } else if (!Utils::stricmp(name, "IsSneaking")) {
+    variable = AnimationVariableBool::kVariable_IsSneaking;
   }
 
   if (variable == AnimationVariableBool::kInvalidVariable) {

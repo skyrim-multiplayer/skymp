@@ -162,6 +162,8 @@ void ActionListener::OnUpdateMovement(const RawMessageData& rawMsgData,
       msg.data.isWeapDrawn);
     actor->SetAnimationVariableBool(
       AnimationVariableBool::kVariable_IsBlocking, msg.data.isBlocking);
+    actor->SetAnimationVariableBool(
+      AnimationVariableBool::kVariable_IsSneaking, msg.data.isSneaking);
 
     if (actor->GetBlockCount() == 5) {
       actor->SetIsBlockActive(false);

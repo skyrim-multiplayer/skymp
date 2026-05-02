@@ -69,6 +69,7 @@ enum class AnimationVariableBool
   kVariable_bInJumpState,
   kVariable__skymp_isWeapDrawn,
   kVariable_IsBlocking,
+  kVariable_IsSneaking,
   kNumVariables
 };
 
