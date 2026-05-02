@@ -9,7 +9,7 @@
 #include "ZipDatabase.h"
 #include <database_drivers/MongoDatabase.h>
 
-std::shared_ptr<Viet::IDatabase<MpChangeForm, FormDesc>>
+std::shared_ptr<Viet::IDatabase<MpChangeForm, FormDesc, std::vector<FormDesc>>>
 DatabaseFactory::Create(nlohmann::json settings,
                         std::shared_ptr<spdlog::logger> logger)
 {

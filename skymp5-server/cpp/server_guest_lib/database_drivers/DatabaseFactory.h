@@ -7,6 +7,7 @@
 class DatabaseFactory
 {
 public:
-  static std::shared_ptr<Viet::IDatabase<MpChangeForm, FormDesc>> Create(
-    nlohmann::json settings, std::shared_ptr<spdlog::logger> logger);
+  static std::shared_ptr<
+    Viet::IDatabase<MpChangeForm, FormDesc, std::vector<FormDesc>>>
+  Create(nlohmann::json settings, std::shared_ptr<spdlog::logger> logger);
 };
