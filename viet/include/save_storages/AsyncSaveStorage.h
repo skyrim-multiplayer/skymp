@@ -11,16 +11,21 @@
 
 namespace Viet {
 
-template <typename T, typename FormDescType>
-class AsyncSaveStorage : public ISaveStorage<T, FormDescType>
+template <typename T, typename FormDescType,
+          template <class> class PromiseT = Promise>
+class AsyncSaveStorage : public ISaveStorage<T, FormDescType, PromiseT>
 {
 public:
   using IterateSyncCallback =
-    typename ISaveStorage<T, FormDescType>::IterateSyncCallback;
+    typename ISaveStorage<T, FormDescType, PromiseT>::IterateSyncCallback;
   using UpsertCallback =
-    typename ISaveStorage<T, FormDescType>::UpsertCallback;
+    typename ISaveStorage<T, FormDescType, PromiseT>::UpsertCallback;
   using IterateCallback =
-    typename ISaveStorage<T, FormDescType>::IterateCallback;
+    typename ISaveStorage<T, FormDescType, PromiseT>::IterateCallback;
+  using UpsertPromise =
+    typename ISaveStorage<T, FormDescType, PromiseT>::UpsertPromise;
+  using IteratePromise =
+    typename ISaveStorage<T, FormDescType, PromiseT>::IteratePromise;
 
   class UpsertFailedException : public std::runtime_error
   {
@@ -144,6 +149,26 @@ public:
   }
 
   const std::string& GetName() const override { return pImpl->name; }
+
+  UpsertPromise UpsertAsync(
+    std::vector<std::optional<T>>&& changeForms) override
+  {
+    UpsertPromise pr;
+    auto resolve = pr.MakeResolver();
+    Upsert(std::move(changeForms),
+           [resolve]() mutable { resolve(Viet::Void{}); });
+    return std::move(pr);
+  }
+
+  IteratePromise IterateAsync(
+    const std::optional<std::vector<FormDescType>>& filter) override
+  {
+    IteratePromise pr;
+    auto resolve = pr.MakeResolver();
+    Iterate([resolve](const std::vector<T>& data) mutable { resolve(data); },
+            filter);
+    return std::move(pr);
+  }
 
 private:
   enum class CallbackGarbageMark
