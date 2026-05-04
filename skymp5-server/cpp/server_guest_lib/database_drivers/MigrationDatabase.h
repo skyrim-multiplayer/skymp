@@ -2,12 +2,17 @@
 #include "MpChangeForms.h"
 #include <database_drivers/IDatabase.h>
 
-class MigrationDatabase : public Viet::IDatabase<MpChangeForm, FormDesc>
+class MigrationDatabase
+  : public Viet::IDatabase<MpChangeForm, FormDesc, std::vector<FormDesc>>
 {
 public:
   MigrationDatabase(
-    std::shared_ptr<Viet::IDatabase<MpChangeForm, FormDesc>> newDatabase,
-    std::shared_ptr<Viet::IDatabase<MpChangeForm, FormDesc>> oldDatabase,
+    std::shared_ptr<
+      Viet::IDatabase<MpChangeForm, FormDesc, std::vector<FormDesc>>>
+      newDatabase,
+    std::shared_ptr<
+      Viet::IDatabase<MpChangeForm, FormDesc, std::vector<FormDesc>>>
+      oldDatabase,
     std::function<void()> exit = [] { std::exit(0); },
     std::function<void()> terminate = [] { std::terminate(); });
   void Iterate(const IterateCallback& iterateCallback,

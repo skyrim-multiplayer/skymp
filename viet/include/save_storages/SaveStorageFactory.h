@@ -10,12 +10,13 @@ namespace Viet {
 class SaveStorageFactory
 {
 public:
-  template <typename T, typename FormDescType>
-  static std::shared_ptr<ISaveStorage<T, FormDescType>> Create(
-    std::shared_ptr<IDatabase<T, FormDescType>> db,
+  template <typename T, typename FormDescType, typename FilterType>
+  static std::shared_ptr<ISaveStorage<T, FormDescType, FilterType>> Create(
+    std::shared_ptr<IDatabase<T, FormDescType, FilterType>> db,
     std::shared_ptr<spdlog::logger> logger)
   {
-    return std::make_shared<AsyncSaveStorage<T, FormDescType>>(db, logger);
+    return std::make_shared<AsyncSaveStorage<T, FormDescType, FilterType>>(
+      db, logger);
   }
 };
 
