@@ -5,7 +5,7 @@
 
 namespace Viet {
 
-template <typename T, typename FormDescType>
+template <typename T, typename FormDescType, typename FilterType>
 class IDatabase
 {
 public:
@@ -25,7 +25,7 @@ public:
   }
 
   virtual void Iterate(const IterateCallback& iterateCallback,
-                       std::optional<std::vector<FormDescType>> filter) = 0;
+                       std::optional<FilterType> filter) = 0;
 
   bool GetRecycledChangeFormsBuffer(std::vector<std::optional<T>>& changeForms)
   {

@@ -29,6 +29,7 @@ RUN \
     flex \
     bison \
     autoconf \
+    autoconf-archive \
     automake \
     libtool \
   && rm -rf /var/lib/apt/lists/* \

@@ -42,7 +42,9 @@ struct WorldState::Impl
   std::vector<std::optional<MpChangeForm>> changesByIdx;
   bool changesByIdxEmpty = true;
 
-  std::shared_ptr<Viet::ISaveStorage<MpChangeForm, FormDesc>> saveStorage;
+  std::shared_ptr<
+    Viet::ISaveStorage<MpChangeForm, FormDesc, std::vector<FormDesc>>>
+    saveStorage;
   std::shared_ptr<IScriptStorage> scriptStorage;
   bool saveStorageBusy = false;
   std::shared_ptr<VirtualMachine> vm;
@@ -92,7 +94,9 @@ void WorldState::AttachEspm(espm::Loader* espm_,
 }
 
 void WorldState::AttachSaveStorage(
-  std::shared_ptr<Viet::ISaveStorage<MpChangeForm, FormDesc>> saveStorage)
+  std::shared_ptr<
+    Viet::ISaveStorage<MpChangeForm, FormDesc, std::vector<FormDesc>>>
+    saveStorage)
 {
   spdlog::info("AttachSaveStorage - db fixes installed");
 
@@ -706,7 +710,8 @@ void WorldState::TickSaveStorage(const std::chrono::system_clock::time_point&)
   try {
     pImpl->saveStorage->Tick();
   } catch (
-    Viet::AsyncSaveStorage<MpChangeForm, FormDesc>::UpsertFailedException& e) {
+    Viet::AsyncSaveStorage<MpChangeForm, FormDesc,
+                           std::vector<FormDesc>>::UpsertFailedException& e) {
     spdlog::error(
       "TickSaveStorage - received UpsertFailedException {}, re-saving",
       e.what());

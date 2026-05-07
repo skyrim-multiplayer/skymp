@@ -320,6 +320,8 @@ bool MpObjectReference::GetAnimationVariableBool(const char* name) const
     variable = AnimationVariableBool::kVariable__skymp_isWeapDrawn;
   } else if (!Utils::stricmp(name, "IsBlocking")) {
     variable = AnimationVariableBool::kVariable_IsBlocking;
+  } else if (!Utils::stricmp(name, "IsSneaking")) {
+    variable = AnimationVariableBool::kVariable_IsSneaking;
   }
 
   if (variable == AnimationVariableBool::kInvalidVariable) {
@@ -725,9 +727,9 @@ void MpObjectReference::UpdateHoster(uint32_t newHosterId)
   auto notHostedMsg = CreatePropertyMessage_(this, "isHostedByOther", "false");
   for (auto listener : this->GetActorListeners()) {
     if (newHosterId != 0 && newHosterId != listener->GetFormId()) {
-      listener->SendToUser(hostedMsg, true);
+      listener->GetActorToSendTo().SendToUser(hostedMsg, true);
     } else {
-      listener->SendToUser(notHostedMsg, true);
+      listener->GetActorToSendTo().SendToUser(notHostedMsg, true);
     }
   }
 }
@@ -745,7 +747,7 @@ void MpObjectReference::SetPropertyValueDump(const std::string& propertyName,
     SendMessageToActorListeners(msg, true);
   } else if (isVisibleByOwner) {
     if (auto ac = AsActor()) {
-      ac->SendToUser(msg, true);
+      ac->GetActorToSendTo().SendToUser(msg, true);
     }
   }
   pImpl->setPropertyCalled = true;
@@ -1435,6 +1437,13 @@ void MpObjectReference::ProcessActivateNormal(
     SetHarvested(true);
     RequestReloot();
 
+    if ((espm::utils::Is<espm::TREE>(t) || espm::utils::Is<espm::FLOR>(t)) &&
+        actorActivator) {
+      // SendOpenContainer being used to activate the object
+      // TODO: rename SendOpenContainer to SendActivate
+      activationSource.SendOpenContainer(GetFormId());
+    }
+
     if (espm::utils::IsItem(t) && !IsEspmForm()) {
       spdlog::info("MpObjectReference::ProcessActivate - Deleting 0xff item");
       Delete();
@@ -1473,7 +1482,7 @@ void MpObjectReference::ProcessActivateNormal(
       msg.worldOrCell = teleportWorldOrCell;
 
       if (actorActivator) {
-        actorActivator->SendToUser(msg, true);
+        actorActivator->GetActorToSendTo().SendToUser(msg, true);
       }
 
       activationSource.SetCellOrWorldObsolete(
@@ -1495,7 +1504,7 @@ void MpObjectReference::ProcessActivateNormal(
         this->occupant->RemoveEventSink(this->occupantDisableSink);
       }
       SetOpen(true);
-      actorActivator->SendToUser(
+      actorActivator->GetActorToSendTo().SendToUser(
         CreatePropertyMessage_(this, "inventory",
                                GetInventory().ToJson().dump()),
         true);
@@ -1825,7 +1834,7 @@ void MpObjectReference::SendOpenContainer(uint32_t targetId)
   if (actor) {
     OpenContainerMessage msg;
     msg.target = targetId;
-    actor->SendToUser(msg, true);
+    actor->GetActorToSendTo().SendToUser(msg, true);
   }
 }
 
@@ -1986,7 +1995,7 @@ void MpObjectReference::SendMessageToActorListeners(const IMessageBase& msg,
                                                     bool reliable) const
 {
   for (auto listener : GetActorListeners()) {
-    listener->SendToUser(msg, true);
+    listener->GetActorToSendTo().SendToUser(msg, true);
   }
 }
 

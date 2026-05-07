@@ -1,5 +1,6 @@
 #include "NetworkingMock.h"
 #include <algorithm>
+#include <cstdint>
 #include <memory>
 #include <stdexcept>
 #include <string>

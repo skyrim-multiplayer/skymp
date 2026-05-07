@@ -3,7 +3,8 @@
 #include <database_drivers/IDatabase.h>
 #include <spdlog/spdlog.h>
 
-class FileDatabase : public Viet::IDatabase<MpChangeForm, FormDesc>
+class FileDatabase
+  : public Viet::IDatabase<MpChangeForm, FormDesc, std::vector<FormDesc>>
 {
 public:
   FileDatabase(std::string directory_,

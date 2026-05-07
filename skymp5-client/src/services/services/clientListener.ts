@@ -11,6 +11,14 @@ export interface ClientListenerEvents {
 declare module "skyrimPlatform" {
     function setTextsVisibility(visibility: 'inheritBrowser' | 'off' | 'on'): void;
     function getTextsVisibility(): 'inheritBrowser' | 'off' | 'on';
+    function setTextRefr(textId: number, refrFormId: number): void; // pass 0 to detach
+    function setTextRefrNode(textId: number, nodeName: string): void;
+    function setTextRefrOffset(textId: number, offset: number[]): void;
+    function setTextRefrScreenOffset(textId: number, offset: number[]): void;
+    function getTextRefr(textId: number): number;
+    function getTextRefrNode(textId: number): string;
+    function getTextRefrOffset(textId: number): number[];
+    function getTextRefrScreenOffset(textId: number): number[];
 }
 
 export type Sp = Omit<typeof sp, "on" | "once">;

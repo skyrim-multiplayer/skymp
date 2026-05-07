@@ -247,3 +247,45 @@ if(INSTALL_CLIENT_DIST)
   )
   add_dependencies(install_client_dist skymp5-client skyrim-platform)
 endif()
+
+# Integration tests from misc/tests
+file(GLOB INTEGRATION_TESTS "${CMAKE_SOURCE_DIR}/misc/tests/test_*.js")
+foreach(TEST_SCRIPT ${INTEGRATION_TESTS})
+  get_filename_component(TEST_NAME "${TEST_SCRIPT}" NAME_WE)
+
+  # Check for satellite DB folder (same name as test file without .js)
+  set(TEST_DB_DIR "${CMAKE_SOURCE_DIR}/misc/tests/${TEST_NAME}")
+  if(NOT IS_DIRECTORY "${TEST_DB_DIR}")
+    unset(TEST_DB_DIR)
+  endif()
+
+  # Check for test-specific server settings patch (same name as test file with .settings.json)
+  set(TEST_SETTINGS_JSON "${CMAKE_SOURCE_DIR}/misc/tests/${TEST_NAME}.settings.json")
+  if(NOT EXISTS "${TEST_SETTINGS_JSON}")
+    unset(TEST_SETTINGS_JSON)
+  endif()
+
+  set(ADD_TEST_ARGS
+    -DTEST_SCRIPT=${TEST_SCRIPT}
+    -DSERVER_DIR=${CMAKE_BINARY_DIR}/dist/server
+    -DSERVER_SETTINGS_BASE_JSON=${CMAKE_BINARY_DIR}/server-settings-base.json
+  )
+  if(TEST_DB_DIR)
+    list(APPEND ADD_TEST_ARGS -DTEST_DB_DIR=${TEST_DB_DIR})
+  endif()
+  if(TEST_SETTINGS_JSON)
+    list(APPEND ADD_TEST_ARGS -DTEST_SETTINGS_JSON=${TEST_SETTINGS_JSON})
+  endif()
+
+  add_test(
+    NAME integration_${TEST_NAME}
+    COMMAND ${CMAKE_COMMAND} ${ADD_TEST_ARGS}
+      -P ${CMAKE_SOURCE_DIR}/cmake/run_integration_test.cmake
+  )
+
+  set_tests_properties(integration_${TEST_NAME} PROPERTIES
+    TIMEOUT 120
+    RESOURCE_LOCK server_directory
+    FIXTURES_REQUIRED unit_passed
+  )
+endforeach()

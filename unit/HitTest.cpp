@@ -41,7 +41,7 @@ TEST_CASE("OnHit damages target actor based on damage formula", "[Hit]")
   ac.SetEquipment(eq);
 
   auto past = std::chrono::steady_clock::now() - 10s;
-  ac.SetLastHitTime(past);
+  ac.SetLastHitTime(0xff000000, past);
   p.Messages().clear();
   p.onHitMessage(MessageEvent<HitMessage>{ rawMsgData, hitMsg });
 
@@ -79,7 +79,7 @@ TEST_CASE("OnHit function sends ChangeValues message with coorect percentages",
 
   p.Messages().clear();
   auto past = std::chrono::steady_clock::now() - 4s;
-  ac.SetLastHitTime(past);
+  ac.SetLastHitTime(0xff000000, past);
   p.onHitMessage(MessageEvent<HitMessage>{ rawMsgData, hitMsg });
 
   REQUIRE(p.Messages().size() == 1);
@@ -133,8 +133,8 @@ TEST_CASE("OnHit doesn't damage character if it is out of range", "[Hit]")
   acTarget.SetPercentages(actorValues);
 
   auto past = std::chrono::steady_clock::now() - 2s;
-  acTarget.SetLastHitTime(past);
-  acAggressor.SetLastHitTime(past);
+  acTarget.SetLastHitTime(target, past);
+  acAggressor.SetLastHitTime(target, past);
   p.onHitMessage(MessageEvent<HitMessage>{ rawMsgData, hitMsg });
 
   auto changeForm = acTarget.GetChangeForm();
@@ -214,11 +214,11 @@ TEST_CASE("checking weapon cooldown", "[Hit]")
 
   auto past = std::chrono::steady_clock::now() - 300ms;
 
-  ac.SetLastHitTime(past);
+  ac.SetLastHitTime(0xff000000, past);
   p.Messages().clear();
   p.onHitMessage(MessageEvent<HitMessage>{ msgData, hitMsg });
 
-  auto current = ac.GetLastHitTime();
+  auto current = ac.GetLastHitTime(0xff000000);
   std::chrono::duration<float> duration = current - past;
   float passedTime = duration.count();
   float daggerSpeed = 1.3f;
@@ -227,10 +227,10 @@ TEST_CASE("checking weapon cooldown", "[Hit]")
   REQUIRE(p.Messages().size() == 0);
 
   past = std::chrono::steady_clock::now() - 3s;
-  ac.SetLastHitTime(past);
+  ac.SetLastHitTime(0xff000000, past);
   p.Messages().clear();
   p.onHitMessage(MessageEvent<HitMessage>{ msgData, hitMsg });
-  current = ac.GetLastHitTime();
+  current = ac.GetLastHitTime(0xff000000);
   duration = current - past;
   passedTime = duration.count();
 

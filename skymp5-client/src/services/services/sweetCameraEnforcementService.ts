@@ -5,6 +5,7 @@ import { CustomPacketMessage } from "../messages/customPacketMessage";
 import { AnimDebugSettings } from "../messages_settings/animDebugSettings";
 import { ClientListener, CombinedController, Sp } from "./clientListener";
 import { ButtonEvent, DxScanCode, Menu } from "skyrimPlatform";
+import * as fs from "fs";
 
 const playerId = 0x14;
 
@@ -18,12 +19,36 @@ interface InvokeAnimOptions {
     parentAnimEventName: unknown;
     enablePlayerControlsDelayMs: unknown;
     preferInterruptAnimAsExitAnimTimeMs: unknown;
+    preventManualInterrupt: unknown;
 }
 
 interface ExitAnimOptions {
     playExitAnim: boolean;
     useInterruptAnimAsExitAnim?: boolean;
     enablePlayerControlsDelayMs: unknown;
+}
+
+
+const translations = {
+  "ru": {
+    pressSpace: 'Пробел, чтобы выйти из анимации'
+  },
+  "en": {
+    pressSpace: 'Space to exit animation'
+  },
+} as const;
+
+type TranslationStrings = { [K in keyof typeof translations['ru']]: string };
+
+let strings: TranslationStrings = translations['en'];
+
+try {
+  const lang = fs.readFileSync('./Data/Platform/Distribution/locale', 'utf8').trim();
+  if (lang in translations) {
+    strings = translations[lang as keyof typeof translations];
+  }
+} catch {
+  // locale file not found or unreadable, default to 'en'
 }
 
 // ex AnimDebugService part
@@ -87,6 +112,7 @@ export class SweetCameraEnforcementService extends ClientListener {
         let parentAnimEventName = content["parentAnimEventName"];
         let enablePlayerControlsDelayMs = content["enablePlayerControlsDelayMs"];
         let preferInterruptAnimAsExitAnimTimeMs = content["preferInterruptAnimAsExitAnimTimeMs"];
+        let preventManualInterrupt = content["preventManualInterrupt"];
 
         if (typeof name !== "string") {
             logError(this, "Expected animEventName to be string");
@@ -110,9 +136,10 @@ export class SweetCameraEnforcementService extends ClientListener {
                 ", parentAnimEventName=", parentAnimEventName,
                 ", enablePlayerControlsDelayMs=", enablePlayerControlsDelayMs,
                 ", preferInterruptAnimAsExitAnimTimeMs=", preferInterruptAnimAsExitAnimTimeMs,
+                ", preventManualInterrupt=", preventManualInterrupt
             );
 
-            const result = this.tryInvokeAnim(name, { weaponDrawnAllowed, furnitureAllowed, exitAnimName, interruptAnimName, timeMs, isPlayExitAnimAfterwardsEnabled, parentAnimEventName, enablePlayerControlsDelayMs, preferInterruptAnimAsExitAnimTimeMs });
+            const result = this.tryInvokeAnim(name, { weaponDrawnAllowed, furnitureAllowed, exitAnimName, interruptAnimName, timeMs, isPlayExitAnimAfterwardsEnabled, parentAnimEventName, enablePlayerControlsDelayMs, preferInterruptAnimAsExitAnimTimeMs, preventManualInterrupt });
 
             const message: CustomPacketMessage = {
                 t: MsgType.CustomPacket,
@@ -199,7 +226,7 @@ export class SweetCameraEnforcementService extends ClientListener {
 
     private onSendExitAnimationEventLeave(ctx: { animEventName: string, animationSucceeded: boolean }) {
         if (ctx.animationSucceeded && this.exitAnimEvent && this.optionsCache && ctx.animEventName === this.exitAnimEvent) {
-            
+
             this.currentAnim = null;
             const enablePlayerControlsDelaySeconds = (typeof this.optionsCache.enablePlayerControlsDelayMs === "number"
                 && this.optionsCache.enablePlayerControlsDelayMs > 0
@@ -276,11 +303,17 @@ export class SweetCameraEnforcementService extends ClientListener {
             return;
         }
         if (e.code === DxScanCode.Spacebar
-                || e.code === DxScanCode.W
-                || e.code === DxScanCode.A
-                || e.code === DxScanCode.S
-                || e.code === DxScanCode.D) {
+            || e.code === DxScanCode.W
+            || e.code === DxScanCode.A
+            || e.code === DxScanCode.S
+            || e.code === DxScanCode.D) {
             if (this.needsExitingAnim) {
+
+                // Checking whether manual interruption is prohibited
+                if (this.currentAnim?.options?.preventManualInterrupt) {
+                    return;
+                }
+
                 if (this.currentAnim?.options) {
                     this.exitAnim({ playExitAnim: true, enablePlayerControlsDelayMs: this.currentAnim.options.enablePlayerControlsDelayMs });
                 } else {
@@ -289,10 +322,15 @@ export class SweetCameraEnforcementService extends ClientListener {
             }
         } else {
             if (this.needsExitingAnim) {
+                
+                if (this.currentAnim?.options?.preventManualInterrupt) {
+                    return;
+                }
+
                 const intervalMs = this.settings?.exitAnimNotificationIntervalMs;
                 if (!intervalMs || (Date.now() - this.lastNotificationMoment) >= intervalMs) {
                     this.lastNotificationMoment = Date.now();
-                    this.sp.Debug.notification("Пробел, чтобы выйти из анимации");
+                    this.sp.Debug.notification(strings.pressSpace);
                 }
             }
         }
@@ -337,6 +375,10 @@ export class SweetCameraEnforcementService extends ClientListener {
             this.exitAnimName = options.exitAnimName;
         } else {
             this.exitAnimName = null;
+        }
+
+        if (typeof options.preventManualInterrupt !== "boolean") {
+            options.preventManualInterrupt = false;
         }
 
         if (typeof options.interruptAnimName === "string") {
@@ -412,8 +454,8 @@ export class SweetCameraEnforcementService extends ClientListener {
                 let preferInterruptAnimState: { prefer: boolean } | null = null;
 
                 if (typeof options.preferInterruptAnimAsExitAnimTimeMs === "number"
-                        && options.preferInterruptAnimAsExitAnimTimeMs > 0
-                        && Number.isFinite(options.preferInterruptAnimAsExitAnimTimeMs)) {
+                    && options.preferInterruptAnimAsExitAnimTimeMs > 0
+                    && Number.isFinite(options.preferInterruptAnimAsExitAnimTimeMs)) {
                     const state = { prefer: true };
                     logTrace(this, `Prefer interrupt anim as exit anim for ${options.preferInterruptAnimAsExitAnimTimeMs} ms`);
                     this.sp.Utility.wait(options.preferInterruptAnimAsExitAnimTimeMs / 1000).then(() => {

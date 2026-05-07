@@ -52,8 +52,9 @@ struct MpActor::Impl
   uint32_t respawnTimerIndex = 0;
   bool isRespawning = false;
   bool isBlockActive = false;
-  std::chrono::steady_clock::time_point lastAttributesUpdateTimePoint,
-    lastHitTimePoint;
+  std::chrono::steady_clock::time_point lastAttributesUpdateTimePoint;
+  std::vector<std::pair<uint32_t, std::chrono::steady_clock::time_point>>
+    lastHitTimesLRU;
   using RestorationTimePoints =
     std::unordered_map<espm::ActorValue,
                        std::chrono::steady_clock::time_point>;
@@ -186,7 +187,7 @@ void MpActor::EquipBestWeapon()
   msg.data = newEq;
   msg.idx = GetIdx();
   for (auto listener : GetActorListeners()) {
-    listener->SendToUser(msg, true);
+    listener->GetActorToSendTo().SendToUser(msg, true);
   }
 }
 
@@ -434,6 +435,40 @@ void MpActor::SendToUserDeferred(const IMessageBase& message, bool reliable,
   } else {
     throw std::runtime_error("sendToUserDeferred is nullptr");
   }
+}
+
+Networking::UserId MpActor::GetUserId() const
+{
+  if (callbacks->getUserId) {
+    return callbacks->getUserId(const_cast<MpActor*>(this));
+  } else {
+    throw std::runtime_error("getUserId is nullptr");
+  }
+}
+
+MpActor& MpActor::GetActorToSendTo()
+{
+  // Only send to hoster if actor is offline (no active user)
+  // This fixes December 2023 Update "invisible chat" bug
+  bool isOffline = GetUserId() == Networking::InvalidUserId;
+
+  auto worldState = GetParent();
+
+  if (isOffline && worldState) {
+    auto hosterIterator = worldState->hosters.find(GetFormId());
+    if (hosterIterator != worldState->hosters.end()) {
+      auto& hosterForm =
+        worldState->LookupFormByIdNoLoad(hosterIterator->second);
+      if (hosterForm) {
+        if (auto hosterActor = hosterForm->AsActor()) {
+          // Send messages such as Teleport, ChangeValues to our host
+          return *hosterActor;
+        }
+      }
+    }
+  }
+
+  return *this;
 }
 
 bool MpActor::OnEquip(uint32_t baseId)
@@ -702,7 +737,7 @@ void MpActor::NetSendChangeValues(
   }
 
   if (numUpdatedValues > 0) {
-    SendToUser(message, true);
+    GetActorToSendTo().SendToUser(message, true);
   }
 }
 
@@ -720,9 +755,22 @@ MpActor::GetLastAttributesPercentagesUpdate()
   return pImpl->lastAttributesUpdateTimePoint;
 }
 
-std::chrono::steady_clock::time_point MpActor::GetLastHitTime()
+std::chrono::steady_clock::time_point MpActor::GetLastHitTime(
+  std::optional<uint32_t> targetId) const
 {
-  return pImpl->lastHitTimePoint;
+  if (!targetId) {
+    if (pImpl->lastHitTimesLRU.empty()) {
+      return std::chrono::steady_clock::time_point();
+    }
+    return pImpl->lastHitTimesLRU.back().second;
+  }
+
+  for (const auto& entry : pImpl->lastHitTimesLRU) {
+    if (entry.first == *targetId) {
+      return entry.second;
+    }
+  }
+  return std::chrono::steady_clock::time_point();
 }
 
 void MpActor::SetLastAttributesPercentagesUpdate(
@@ -731,9 +779,44 @@ void MpActor::SetLastAttributesPercentagesUpdate(
   pImpl->lastAttributesUpdateTimePoint = timePoint;
 }
 
-void MpActor::SetLastHitTime(std::chrono::steady_clock::time_point timePoint)
+void MpActor::SetLastHitTime(uint32_t targetId,
+                             std::chrono::steady_clock::time_point timePoint)
 {
-  pImpl->lastHitTimePoint = timePoint;
+  constexpr size_t kMaxHitMemory = 16;
+
+  auto& hits = pImpl->lastHitTimesLRU;
+
+  auto it =
+    std::find_if(hits.begin(), hits.end(), [targetId](const auto& entry) {
+      return entry.first == targetId;
+    });
+
+  if (it != hits.end()) {
+    it->second = timePoint;
+    std::rotate(it, it + 1, hits.end());
+    return;
+  }
+
+  if (kMaxHitMemory > 0) {
+    if (pImpl->lastHitTimesLRU.size() >= kMaxHitMemory) {
+      pImpl->lastHitTimesLRU.erase(pImpl->lastHitTimesLRU.begin());
+    }
+    pImpl->lastHitTimesLRU.push_back({ targetId, timePoint });
+  }
+}
+
+size_t MpActor::CountRecentHits(std::chrono::duration<float> timeWindow) const
+{
+  size_t count = 0;
+  if (pImpl->lastHitTimesLRU.size() > 0) {
+    const auto now = std::chrono::steady_clock::now();
+    for (const auto& entry : pImpl->lastHitTimesLRU) {
+      if (now - entry.second < timeWindow) {
+        count++;
+      }
+    }
+  }
+  return count;
 }
 
 std::chrono::duration<float> MpActor::GetDurationOfAttributesPercentagesUpdate(
@@ -926,7 +1009,7 @@ void MpActor::SendAndSetDeathState(bool isDead, bool shouldTeleport)
   auto position = GetSpawnPoint();
 
   auto respawnMsg = GetDeathStateMsg(position, isDead, shouldTeleport);
-  SendToUser(respawnMsg, true);
+  GetActorToSendTo().SendToUser(respawnMsg, true);
 
   EditChangeForm([&](MpChangeForm& changeForm) {
     changeForm.isDead = isDead;
@@ -1357,7 +1440,7 @@ void MpActor::Teleport(const LocationalData& position)
   std::copy(&position.pos[0], &position.pos[0] + 3, std::begin(msg.pos));
   std::copy(&position.rot[0], &position.rot[0] + 3, std::begin(msg.rot));
   msg.worldOrCell = position.cellOrWorldDesc.ToFormId(GetParent()->espmFiles);
-  SendToUser(msg, true);
+  GetActorToSendTo().SendToUser(msg, true);
 
   SetCellOrWorldObsolete(position.cellOrWorldDesc);
   SetPos(position.pos);

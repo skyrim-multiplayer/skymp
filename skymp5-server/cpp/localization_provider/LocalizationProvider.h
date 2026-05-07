@@ -1,5 +1,6 @@
 #include <filesystem>
 #include <map>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -35,4 +36,8 @@ public:
   LocalizationProvider(const std::string& dataDir,
                        const std::string& language);
   const std::string& Get(const std::string& file, uint32_t stringId);
+  bool IsEmpty() const { return localization.empty(); }
+
+  static std::vector<std::string> GetAvailableLanguages(
+    const std::string& dataDir);
 };

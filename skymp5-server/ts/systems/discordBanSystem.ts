@@ -24,11 +24,8 @@ export class DiscordBanSystem implements System {
         if (!discordAuth.botToken) {
             return console.warn("discordAuth.botToken is missing, skipping Discord ban system");
         }
-        if (!discordAuth.guildId) {
-            return console.warn("discordAuth.guildId is missing, skipping Discord ban system");
-        }
-        if (!discordAuth.banRoleId) {
-            return console.warn("discordAuth.banRoleId is missing, skipping Discord ban system");
+        if (!discordAuth.guilds || discordAuth.guilds.length === 0) {
+            return console.warn("discordAuth.guilds array is empty or missing, skipping Discord ban system");
         }
 
         const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers] });
@@ -48,36 +45,28 @@ export class DiscordBanSystem implements System {
         })
 
         client.on("guildMemberUpdate", (oldMember, newMember) => {
-            // Not sure if it is possible, but better to protect
-            if (!oldMember) {
-                return console.warn(`oldMember was ${oldMember} in guildMemberUpdate`);
-            }
-            if (!newMember) {
-                return console.warn(`newMember was ${newMember} in guildMemberUpdate`);
-            }
+            if (!oldMember || !newMember) return;
+
+            const guildConfig = discordAuth.guilds.find(g => g.guildId === newMember.guild.id);
+
+            if (!guildConfig || !guildConfig.banRoleId) return;
 
             const newRole = newMember.roles.cache
                 .filter(r => !oldMember.roles.cache.has(r.id))
                 .first();
 
-            if (!newRole) {
-                // guildMemberUpdate is also fired on nickname update, role removal, etc
-                return;
+            if (!newRole) return;
+
+            if (newRole.id === guildConfig.banRoleId) {
+                const discordId = newMember.id;
+                const mp = ctx.svr as unknown as Mp;
+                const forms = mp.findFormsByPropertyValue("private.indexed.discordId", discordId) as number[];
+
+                forms.forEach(formId => {
+                    console.log(`Detected Discord ban on guild ${newMember.guild.id}, kicking ${formId.toString(16)}`);
+                    ctx.svr.setEnabled(formId, false);
+                });
             }
-
-            if ([newRole.id].indexOf(discordAuth.banRoleId) === -1) {
-                return console.log("Detected role add, but not a ban");
-            }
-
-            const discordId = newMember.id;
-
-            const mp = ctx.svr as unknown as Mp;
-            const forms = mp.findFormsByPropertyValue("private.indexed.discordId", discordId) as number[];
-
-            forms.forEach(formId => {
-                console.log(`Detected Discord ban ${formId.toString(16)}, kicking`);
-                ctx.svr.setEnabled(formId, false);
-            });
         });
     }
 }
