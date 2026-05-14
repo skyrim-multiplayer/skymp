@@ -29,24 +29,24 @@ GridDiff<MpObjectReference*> GridService::MoveObjectReference(
   auto& gridInfo = GetOrCreateGridInfo(cellOrWorld);
   auto gridDiff = gridInfo.grid->MoveWithDiff(objRef, x, y);
 
-  std::vector<std::string> added;
-  for (auto ptr : gridDiff.added) {
-    std::stringstream ss;
-    ss << std::hex << ptr->GetFormId();
-    added.push_back(ss.str());
-  }
+  // std::vector<std::string> added;
+  // for (auto ptr : gridDiff.added) {
+  //   std::stringstream ss;
+  //   ss << std::hex << ptr->GetFormId();
+  //   added.push_back(ss.str());
+  // }
 
-  std::vector<std::string> removed;
-  for (auto ptr : gridDiff.removed) {
-    std::stringstream ss;
-    ss << std::hex << ptr->GetFormId();
-    removed.push_back(ss.str());
-  }
+  // std::vector<std::string> removed;
+  // for (auto ptr : gridDiff.removed) {
+  //   std::stringstream ss;
+  //   ss << std::hex << ptr->GetFormId();
+  //   removed.push_back(ss.str());
+  // }
 
-  spdlog::warn("!!! GridService::MoveObjectReference objRef={:x} "
-               "cellOrWorld={:x} x={} y={} DIFF_ADDED=[{}] DIFF_REMOVED=[{}]",
-               objRef->GetFormId(), cellOrWorld, x, y, fmt::join(added, ","),
-               fmt::join(removed, ","));
+  // spdlog::warn("!!! GridService::MoveObjectReference objRef={:x} "
+  //              "cellOrWorld={:x} x={} y={} DIFF_ADDED=[{}] DIFF_REMOVED=[{}]",
+  //              objRef->GetFormId(), cellOrWorld, x, y, fmt::join(added, ","),
+  //              fmt::join(removed, ","));
 
   return gridDiff;
 }

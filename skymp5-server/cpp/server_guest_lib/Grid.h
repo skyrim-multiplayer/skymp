@@ -41,7 +41,7 @@ public:
     auto& obj = objects[id];
     GridDiff<T> diff;
 
-    if (obj.coords != std::make_pair(x, y)) {
+    if (!obj.active || obj.coords != std::make_pair(x, y)) {
       auto to = std::make_pair(x, y);
 
       // Get neighbors before move

@@ -46,7 +46,6 @@ ActionListener::ActionListener(PartOne& partOne_)
   On(partOne.onFinishSpSnippetMessage, &ActionListener::OnFinishSpSnippet);
   On(partOne.onOnEquipMessage, &ActionListener::OnEquip);
   On(partOne.onConsoleCommandMessage, &ActionListener::OnConsoleCommand);
-  On(partOne.onCraftItemMessage, &ActionListener::OnCraftItem);
   On(partOne.onHostMessage, &ActionListener::OnHostAttempt);
   On(partOne.onCustomEventMessage, &ActionListener::OnCustomEvent);
   On(partOne.onChangeValuesMessage, &ActionListener::OnChangeValues);
@@ -692,10 +691,6 @@ void ActionListener::OnConsoleCommand(
     }
     ConsoleCommands::Execute(*me, msg.data.commandName, consoleArgs);
   }
-}
-
-void ActionListener::OnCraftItem(const MessageEvent<CraftItemMessage>& event)
-{
 }
 
 void ActionListener::OnHostAttempt(const MessageEvent<HostMessage>& event)

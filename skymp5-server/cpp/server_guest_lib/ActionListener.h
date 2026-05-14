@@ -36,7 +36,6 @@ public:
   void OnFinishSpSnippet(const MessageEvent<FinishSpSnippetMessage>& event);
   void OnEquip(const MessageEvent<OnEquipMessage>& event);
   void OnConsoleCommand(const MessageEvent<ConsoleCommandMessage>& event);
-  void OnCraftItem(const MessageEvent<CraftItemMessage>& event);
   void OnHostAttempt(const MessageEvent<HostMessage>& event);
   void OnCustomEvent(const MessageEvent<CustomEventMessage>& event);
   void OnChangeValues(const MessageEvent<ChangeValuesMessage>& event);

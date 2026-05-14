@@ -134,6 +134,8 @@ PartOne::PartOne(std::shared_ptr<Listener> listener,
   pImpl->actionListener = std::make_shared<ActionListener>(*this);
   pImpl->gridService = std::make_shared<GridService>(*this);
   worldState.SetGridService(pImpl->gridService.get());
+  pImpl->sweetHidePlayerNamesService =
+    std::make_shared<SweetHidePlayerNamesService>(*this);
 }
 
 PartOne::~PartOne()
