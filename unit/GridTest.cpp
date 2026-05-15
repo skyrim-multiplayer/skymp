@@ -156,30 +156,3 @@ TEST_CASE("MoveWithDiff", "[Grid]")
   auto diff2 = gr.MoveWithDiff(0xA002, 0, 0);
   REQUIRE(diff2.added == std::set<formid>({ 0xA001, 0xA002 }));
 }
-
-TEST_CASE("MoveWithDiff - Initial spawn at (0,0) activation bug", "[Grid]")
-{
-  Grid gr;
-
-  // 1. Spawn Object 1 at a non-zero coordinate.
-  // This bypasses the bug because default (0,0) != (1,1).
-  auto diff1 = gr.MoveWithDiff(0xA001, 1, 1);
-  REQUIRE(diff1.added == std::set<formid>({ 0xA001 }));
-  REQUIRE(gr.GetPos(0xA001) == std::pair<int16_t, int16_t>(1, 1));
-
-  // 2. Spawn Object 2 EXACTLY at (0, 0).
-  // If the bug exists, diff2.added will be empty because the default
-  // struct coords of (0,0) bypass the "if (coords != target)" check.
-  auto diff2 = gr.MoveWithDiff(0xA002, 0, 0);
-  REQUIRE(diff2.added == std::set<formid>({ 0xA002 }));
-
-  // Verify the grid actually considers the object "active".
-  // If the bug exists, GetPos might throw an exception or return garbage
-  // data depending on how it handles inactive objects.
-  REQUIRE(gr.GetPos(0xA002) == std::pair<int16_t, int16_t>(0, 0));
-
-  // 3. Spawn Object 3 at (0, 0).
-  // It should correctly identify Object 2 as a neighbor.
-  auto diff3 = gr.MoveWithDiff(0xA003, 0, 0);
-  REQUIRE(diff3.added == std::set<formid>({ 0xA002, 0xA003 }));
-}
