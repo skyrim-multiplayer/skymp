@@ -1,4 +1,13 @@
 #include "PartOne.h"
+#include "ActionListener.h"
+#include "Exceptions.h"
+#include "FormCallbacks.h"
+#include "GridService.h"
+#include "IdManager.h"
+#include "JsonUtils.h"
+#include "MessageSerializerFactory.h"
+#include "MsgType.h"
+#include "PacketParser.h"
 #include <array>
 #include <cassert>
 #include <chrono>
@@ -81,6 +90,9 @@ struct PartOne::Impl
 
   std::shared_ptr<PacketParser> packetParser;
   std::shared_ptr<ActionListener> actionListener;
+  std::shared_ptr<CraftService> craftService;
+  std::shared_ptr<GridService> gridService;
+  std::shared_ptr<SweetHidePlayerNamesService> sweetHidePlayerNamesService;
 
   std::shared_ptr<spdlog::logger> logger;
 
@@ -102,6 +114,13 @@ PartOne::PartOne(Networking::ISendTarget* sendTarget)
 {
   Init();
   SetSendTarget(sendTarget);
+
+  pImpl->craftService = std::make_shared<CraftService>(*this);
+  pImpl->actionListener = std::make_shared<ActionListener>(*this);
+  pImpl->gridService = std::make_shared<GridService>(*this);
+  worldState.SetGridService(pImpl->gridService.get());
+  pImpl->sweetHidePlayerNamesService =
+    std::make_shared<SweetHidePlayerNamesService>(*this);
 }
 
 PartOne::PartOne(std::shared_ptr<Listener> listener,
@@ -110,6 +129,13 @@ PartOne::PartOne(std::shared_ptr<Listener> listener,
   Init();
   AddListener(listener);
   SetSendTarget(sendTarget);
+
+  pImpl->craftService = std::make_shared<CraftService>(*this);
+  pImpl->actionListener = std::make_shared<ActionListener>(*this);
+  pImpl->gridService = std::make_shared<GridService>(*this);
+  worldState.SetGridService(pImpl->gridService.get());
+  pImpl->sweetHidePlayerNamesService =
+    std::make_shared<SweetHidePlayerNamesService>(*this);
 }
 
 PartOne::~PartOne()
@@ -745,7 +771,6 @@ FormCallbacks PartOne::CreateFormCallbacks()
 
 ActionListener& PartOne::GetActionListener()
 {
-  InitActionListener();
   return *pImpl->actionListener;
 }
 
@@ -758,6 +783,16 @@ const std::vector<std::shared_ptr<PartOne::Listener>>& PartOne::GetListeners()
 std::vector<PartOne::Message>& PartOne::Messages()
 {
   return pImpl->fakeSendTarget.messages;
+}
+
+std::shared_ptr<CraftService> PartOne::GetCraftService() const noexcept
+{
+  return pImpl->craftService;
+}
+
+GridService& PartOne::GetGridService()
+{
+  return *pImpl->gridService;
 }
 
 void PartOne::Init()
@@ -935,8 +970,6 @@ void PartOne::HandleMessagePacket(Networking::UserId userId,
     pImpl->packetParser = std::make_shared<PacketParser>();
   }
 
-  InitActionListener();
-
   auto& userInfo = serverState.userInfo[userId];
   if (userInfo && userInfo->isPacketHistoryRecording) {
     if (!userInfo->packetHistoryStartTime) {
@@ -964,15 +997,7 @@ void PartOne::HandleMessagePacket(Networking::UserId userId,
     return;
   }
 
-  pImpl->packetParser->TransformPacketIntoAction(userId, data, length,
-                                                 *pImpl->actionListener);
-}
-
-void PartOne::InitActionListener()
-{
-  if (!pImpl->actionListener) {
-    pImpl->actionListener = std::make_shared<ActionListener>(*this);
-  }
+  pImpl->packetParser->TransformPacketIntoAction(userId, data, length, *this);
 }
 
 void PartOne::TickPacketHistoryPlaybacks()
@@ -996,8 +1021,7 @@ void PartOne::TickPacketHistoryPlaybacks()
         spdlog::error("Packet history buffer is corrupted");
       } else {
         pImpl->packetParser->TransformPacketIntoAction(
-          userId, &packetHistory.buffer[packet.offset], packet.length,
-          *pImpl->actionListener);
+          userId, &packetHistory.buffer[packet.offset], packet.length, *this);
       }
       packetHistory.packets.pop_front();
     }
