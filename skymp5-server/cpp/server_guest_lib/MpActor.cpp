@@ -28,6 +28,7 @@
 #include <algorithm>
 #include <atomic>
 #include <chrono>
+#include <deque>
 #include <functional>
 #include <optional>
 #include <random>
@@ -53,7 +54,7 @@ struct MpActor::Impl
   bool isRespawning = false;
   bool isBlockActive = false;
   std::chrono::steady_clock::time_point lastAttributesUpdateTimePoint;
-  std::vector<std::pair<uint32_t, std::chrono::steady_clock::time_point>>
+  std::deque<std::pair<uint32_t, std::chrono::steady_clock::time_point>>
     lastHitTimesLRU;
   using RestorationTimePoints =
     std::unordered_map<espm::ActorValue,
@@ -73,7 +74,7 @@ struct MpActor::Impl
       std::chrono::steady_clock::time_point{} },
   };
   uint32_t blockActiveCount = 0;
-  std::vector<std::pair<uint32_t, MpObjectReference*>> droppedItemsQueue;
+  std::deque<std::pair<uint32_t, MpObjectReference*>> droppedItemsQueue;
   std::optional<AnimationData> animationData;
 
   // this is a hot fix attempt to make permanent restoration potions work
@@ -799,7 +800,7 @@ void MpActor::SetLastHitTime(uint32_t targetId,
 
   if (kMaxHitMemory > 0) {
     if (pImpl->lastHitTimesLRU.size() >= kMaxHitMemory) {
-      pImpl->lastHitTimesLRU.erase(pImpl->lastHitTimesLRU.begin());
+      pImpl->lastHitTimesLRU.pop_front();
     }
     pImpl->lastHitTimesLRU.push_back({ targetId, timePoint });
   }
@@ -1691,7 +1692,7 @@ void MpActor::DropItem(const uint32_t baseId, const Inventory::Entry& entry)
     } else {
       spdlog::warn("MpActor::DropItem - reference in queue was invalidated");
     }
-    pImpl->droppedItemsQueue.erase(pImpl->droppedItemsQueue.begin());
+    pImpl->droppedItemsQueue.pop_front();
   }
 
   pImpl->droppedItemsQueue.push_back(
