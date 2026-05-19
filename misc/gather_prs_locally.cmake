@@ -71,19 +71,24 @@ if("${GITHUB_TOKEN}" STREQUAL "")
     message(FATAL_ERROR "GITHUB_TOKEN is not set")
 endif()
 
+if ("${LABEL}" STREQUAL "")
+    set(LABEL "merge-to:indev")
+    message(STATUS "LABEL is not set, defaulting to 'merge-to:indev'")
+endif()
+
 # P.S. GITHUB_TOKEN is used for skyrim-multiplayer/skymp as well to increase the rate limit
 set(ENV_INPUT_REPOSITORIES "
 [
     {
         \"owner\": \"skyrim-multiplayer\",
         \"repo\": \"skymp\",
-        \"labels\": [\"merge-to:indev\"],
+        \"labels\": [\"${LABEL}\"],
         \"token\": \"${GITHUB_TOKEN}\"
     },
     {
         \"owner\": \"skyrim-multiplayer\",
         \"repo\": \"skymp5-patches\",
-        \"labels\": [\"merge-to:indev\"],
+        \"labels\": [\"${LABEL}\"],
         \"token\": \"${GITHUB_TOKEN}\"
     }
 ]
