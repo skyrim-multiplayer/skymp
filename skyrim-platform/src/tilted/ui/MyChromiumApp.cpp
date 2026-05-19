@@ -57,12 +57,6 @@ std::string PathVerifyNoIncompatibleEntries()
 }
 
 namespace CEFUtils {
-std::string MyChromiumApp::GetCurrentSpToken()
-{
-  static const auto str = random_string(32);
-  return str;
-}
-
 MyChromiumApp::MyChromiumApp(
   std::unique_ptr<RenderProvider> apRenderProvider,
   std::shared_ptr<ProcessMessageListener> onProcessMessage_,
@@ -231,8 +225,6 @@ void MyChromiumApp::InjectMouseMove(const float aX, const float aY,
     thread_local clock_t g_lastExecute = 0;
     if (clock() - g_lastExecute > CLOCKS_PER_SEC) {
       g_lastExecute = clock();
-      auto script = "window.spBrowserToken = '" + GetCurrentSpToken() + "';";
-
       bool urlChanged = false;
       {
         std::lock_guard l(share2.m);
@@ -247,8 +239,6 @@ void MyChromiumApp::InjectMouseMove(const float aX, const float aY,
             "file:///Data/Platform/UI/index.html");
         }
       }
-      m_pGameClient->GetBrowser()->GetMainFrame()->ExecuteJavaScript(
-        script, "my mind", 0);
     }
 
     CefMouseEvent ev;

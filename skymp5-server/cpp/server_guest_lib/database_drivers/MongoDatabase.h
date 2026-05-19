@@ -6,7 +6,8 @@
 #include <nlohmann/json.hpp>
 #include <simdjson.h>
 
-class MongoDatabase : public Viet::IDatabase<MpChangeForm, FormDesc>
+class MongoDatabase
+  : public Viet::IDatabase<MpChangeForm, FormDesc, std::vector<FormDesc>>
 {
 public:
   MongoDatabase(const std::string& uri_, const std::string& name_);

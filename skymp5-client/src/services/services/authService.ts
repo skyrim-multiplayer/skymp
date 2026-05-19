@@ -1,4 +1,5 @@
 import * as crypto from "crypto";
+import * as fs from "fs";
 import { AuthGameData, RemoteAuthGameData, authGameDataStorageKey } from "../../features/authModel";
 import { FunctionInfo } from "../../lib/functionInfo";
 import { ClientListener, CombinedController, Sp } from "./clientListener";
@@ -38,6 +39,76 @@ let browserState = {
   loginFailedReason: '',
 };
 let authData: RemoteAuthGameData | null = null;
+
+const translations = {
+  "ru": {
+    loginViaDiscord: 'войдите через discord',
+    joinDiscordServer: 'вступите в discord сервер',
+    banned: 'вы забанены',
+    whatWasThat: 'что это было?',
+    openingBrowser: 'открываем браузер...',
+    loginFirst: 'сначала войдите',
+    linkedSuccessfully: 'привязан успешно',
+    connecting: 'подключение',
+    technicalIssues: 'технические шоколадки\nпопробуйте еще раз\nпожалуйста\nили напишите нам в discord',
+    authorization: 'Авторизация',
+    notAuthorized: 'не авторизирован',
+    changeAccount: 'сменить аккаунт',
+    loginViaSkymp: 'войти через skymp',
+    play: 'Играть',
+    loginOrChangeHint: 'Вы можете войти или поменять аккаунт',
+    connectToServer: 'Подключиться к игровому серверу',
+    updateCaption: 'новинка',
+    updateAvailable: 'ура! вышло обновление',
+    downloadAt: 'спешите скачать на',
+    openSkympNet: 'открыть skymp.net',
+    updateDownloadHint: 'Перейти на страницу скачивания обновления',
+    oops: 'упс',
+    join: 'вступить',
+    back: 'назад',
+  },
+  "en": {
+    loginViaDiscord: 'log in via Discord',
+    joinDiscordServer: 'join the Discord server',
+    banned: 'you are banned',
+    whatWasThat: 'what was that?',
+    openingBrowser: 'opening browser...',
+    loginFirst: 'log in first',
+    linkedSuccessfully: 'linked successfully',
+    connecting: 'connecting',
+    technicalIssues: 'technical difficulties\nplease try again\nor contact us on Discord',
+    authorization: 'Authorization',
+    notAuthorized: 'not authorized',
+    changeAccount: 'change account',
+    loginViaSkymp: 'log in via skymp',
+    play: 'Play',
+    loginOrChangeHint: 'You can log in or change your account',
+    connectToServer: 'Connect to game server',
+    updateCaption: 'Update',
+    updateAvailable: 'a new update is available!',
+    downloadAt: 'download it at',
+    openSkympNet: 'open skymp.net',
+    updateDownloadHint: 'Go to the update download page',
+    oops: 'oops',
+    join: 'join',
+    back: 'back',
+  },
+} as const;
+
+type TranslationStrings = { [K in keyof typeof translations['ru']]: string };
+
+let strings: TranslationStrings = translations['en'];
+
+try {
+  const lang = fs.readFileSync('./Data/Platform/Distribution/locale', 'utf8').trim();
+  if (lang in translations) {
+    strings = translations[lang as keyof typeof translations];
+    const src = `window.setLanguage(${lang})`;
+    browser.executeJavaScript(src);
+  }
+} catch {
+  // locale file not found or unreadable, default to 'en'
+}
 
 export class AuthService extends ClientListener {
   constructor(private sp: Sp, private controller: CombinedController) {
@@ -122,41 +193,41 @@ export class AuthService extends ClientListener {
         this.authAttemptProgressIndicator = false;
         this.controller.lookupListener(NetworkingService).close();
         logTrace(this, 'loginFailedNotLoggedViaDiscord received');
-        browserState.loginFailedReason = 'войдите через discord';
+        browserState.loginFailedReason = strings.loginViaDiscord;
         browserState.comment = '';
         this.setListenBrowserMessage(true, 'loginFailedNotLoggedViaDiscord received');
         this.loggingStartMoment = 0;
-        this.sp.browser.executeJavaScript(new FunctionInfo(this.loginFailedWidgetSetter).getText({ events, browserState, authData: authData }));
+        this.sp.browser.executeJavaScript(new FunctionInfo(this.loginFailedWidgetSetter).getText({ events, browserState, authData: authData, strings }));
         break;
       case 'loginFailedNotInTheDiscordServer':
         this.authAttemptProgressIndicator = false;
         this.controller.lookupListener(NetworkingService).close();
         logTrace(this, 'loginFailedNotInTheDiscordServer received');
-        browserState.loginFailedReason = 'вступите в discord сервер';
+        browserState.loginFailedReason = strings.joinDiscordServer;
         browserState.comment = '';
         this.setListenBrowserMessage(true, 'loginFailedNotInTheDiscordServer received');
         this.loggingStartMoment = 0;
-        this.sp.browser.executeJavaScript(new FunctionInfo(this.loginFailedWidgetSetter).getText({ events, browserState, authData: authData }));
+        this.sp.browser.executeJavaScript(new FunctionInfo(this.loginFailedWidgetSetter).getText({ events, browserState, authData: authData, strings }));
         break;
       case 'loginFailedBanned':
         this.authAttemptProgressIndicator = false;
         this.controller.lookupListener(NetworkingService).close();
         logTrace(this, 'loginFailedBanned received');
-        browserState.loginFailedReason = 'вы забанены';
+        browserState.loginFailedReason = strings.banned;
         browserState.comment = '';
         this.setListenBrowserMessage(true, 'loginFailedBanned received');
         this.loggingStartMoment = 0;
-        this.sp.browser.executeJavaScript(new FunctionInfo(this.loginFailedWidgetSetter).getText({ events, browserState, authData: authData }));
+        this.sp.browser.executeJavaScript(new FunctionInfo(this.loginFailedWidgetSetter).getText({ events, browserState, authData: authData, strings }));
         break;
       case 'loginFailedIpMismatch':
         this.authAttemptProgressIndicator = false;
         this.controller.lookupListener(NetworkingService).close();
         logTrace(this, 'loginFailedIpMismatch received');
-        browserState.loginFailedReason = 'что это было?';
+        browserState.loginFailedReason = strings.whatWasThat;
         browserState.comment = '';
         this.setListenBrowserMessage(true, 'loginFailedIpMismatch received');
         this.loggingStartMoment = 0;
-        this.sp.browser.executeJavaScript(new FunctionInfo(this.loginFailedWidgetSetter).getText({ events, browserState, authData: authData }));
+        this.sp.browser.executeJavaScript(new FunctionInfo(this.loginFailedWidgetSetter).getText({ events, browserState, authData: authData, strings }));
         break;
     }
   }
@@ -199,7 +270,7 @@ export class AuthService extends ClientListener {
     const eventKey = e.arguments[0];
     switch (eventKey) {
       case events.openDiscordOauth:
-        browserState.comment = 'открываем браузер...';
+        browserState.comment = strings.openingBrowser;
         this.refreshWidgets();
         this.sp.win32.loadUrl(`${settingsService.getMasterUrl()}/api/users/login-discord?state=${this.discordAuthState}`);
 
@@ -208,7 +279,7 @@ export class AuthService extends ClientListener {
         break;
       case events.authAttempt:
         if (authData === null) {
-          browserState.comment = 'сначала войдите';
+          browserState.comment = strings.loginFirst;
           this.refreshWidgets();
           break;
         }
@@ -233,7 +304,7 @@ export class AuthService extends ClientListener {
         this.sp.win32.loadUrl("https://skymp.net/UpdInstall");
         break;
       case events.backToLogin:
-        this.sp.browser.executeJavaScript(new FunctionInfo(this.browsersideWidgetSetter).getText({ events, browserState, authData: authData }));
+        this.sp.browser.executeJavaScript(new FunctionInfo(this.browsersideWidgetSetter).getText({ events, browserState, authData: authData, strings }));
         break;
       case events.joinDiscord:
         this.sp.win32.loadUrl("https://discord.gg/9KhSZ6zjGT");
@@ -310,7 +381,7 @@ export class AuthService extends ClientListener {
                   discordDiscriminator,
                   discordAvatar,
                 };
-                browserState.comment = 'привязан успешно';
+                browserState.comment = strings.linkedSuccessfully;
                 this.refreshWidgets();
               });
               break;
@@ -333,7 +404,7 @@ export class AuthService extends ClientListener {
   };
 
   private refreshWidgets() {
-    this.sp.browser.executeJavaScript(new FunctionInfo(this.browsersideWidgetSetter).getText({ events, browserState, authData: authData }));
+    this.sp.browser.executeJavaScript(new FunctionInfo(this.browsersideWidgetSetter).getText({ events, browserState, authData: authData, strings }));
     this.authDialogOpen = true;
   };
 
@@ -377,16 +448,16 @@ export class AuthService extends ClientListener {
     const widget = {
       type: "form",
       id: 2,
-      caption: "новинка",
+      caption: strings.updateCaption,
       elements: [
         {
           type: "text",
-          text: "ура! вышло обновление",
+          text: strings.updateAvailable,
           tags: []
         },
         {
           type: "text",
-          text: "спешите скачать на",
+          text: strings.downloadAt,
           tags: []
         },
         {
@@ -396,10 +467,10 @@ export class AuthService extends ClientListener {
         },
         {
           type: "button",
-          text: "открыть skymp.net",
+          text: strings.openSkympNet,
           tags: ["ELEMENT_STYLE_MARGIN_EXTENDED"],
           click: () => window.skyrimPlatform.sendMessage(events.updateRequired),
-          hint: "Перейти на страницу скачивания обновления",
+          hint: strings.updateDownloadHint,
         }
       ]
     }
@@ -421,16 +492,16 @@ export class AuthService extends ClientListener {
     const widget = {
       type: "form",
       id: 2,
-      caption: "упс",
+      caption: strings.oops,
       elements: new Array<any>()
     }
 
     textElements.forEach((element) => widget.elements.push(element));
 
-    if (browserState.loginFailedReason === 'вступите в discord сервер') {
+    if (browserState.loginFailedReason === strings.joinDiscordServer) {
       widget.elements.push({
         type: "button",
-        text: "вступить",
+        text: strings.join,
         tags: ["ELEMENT_STYLE_MARGIN_EXTENDED"],
         click: () => window.skyrimPlatform.sendMessage(events.joinDiscord),
         hint: null
@@ -439,7 +510,7 @@ export class AuthService extends ClientListener {
 
     widget.elements.push({
       type: "button",
-      text: "назад",
+      text: strings.back,
       tags: ["ELEMENT_STYLE_MARGIN_EXTENDED"],
       click: () => window.skyrimPlatform.sendMessage(events.backToLogin),
       hint: undefined
@@ -452,7 +523,7 @@ export class AuthService extends ClientListener {
     const loginWidget = {
       type: "form",
       id: 1,
-      caption: "Авторизация",
+      caption: strings.authorization,
       elements: [
         // {
         //   type: "button",
@@ -483,7 +554,7 @@ export class AuthService extends ClientListener {
               authData.discordUsername
                 ? `${authData.discordUsername}`
                 : `id: ${authData.masterApiId}`
-            ) : "не авторизирован"
+            ) : strings.notAuthorized
           ),
           tags: [/*"ELEMENT_SAME_LINE", "ELEMENT_STYLE_MARGIN_EXTENDED"*/],
         },
@@ -494,17 +565,17 @@ export class AuthService extends ClientListener {
         // },
         {
           type: "button",
-          text: authData ? "сменить аккаунт" : "войти через skymp",
+          text: authData ? strings.changeAccount : strings.loginViaSkymp,
           tags: [/*"ELEMENT_SAME_LINE"*/],
           click: () => window.skyrimPlatform.sendMessage(events.openDiscordOauth),
-          hint: "Вы можете войти или поменять аккаунт",
+          hint: strings.loginOrChangeHint,
         },
         {
           type: "button",
-          text: "Играть",
+          text: strings.play,
           tags: ["BUTTON_STYLE_FRAME", "ELEMENT_STYLE_MARGIN_EXTENDED"],
           click: () => window.skyrimPlatform.sendMessage(events.authAttempt),
-          hint: "Подключиться к игровому серверу",
+          hint: strings.connectToServer,
         },
         {
           type: "text",
@@ -523,7 +594,7 @@ export class AuthService extends ClientListener {
       this.controller.once("tick", () => {
         this.controller.lookupListener(NetworkingService).close();
       });
-      this.sp.browser.executeJavaScript(new FunctionInfo(this.deniedWidgetSetter).getText({ events }));
+      this.sp.browser.executeJavaScript(new FunctionInfo(this.deniedWidgetSetter).getText({ events, strings }));
       this.sp.browser.setVisible(true);
       this.sp.browser.setFocused(true);
       this.controller.once("update", () => {
@@ -597,8 +668,8 @@ export class AuthService extends ClientListener {
         this.authAttemptProgressIndicator = false;
         this.controller.lookupListener(NetworkingService).close();
         browserState.comment = "";
-        browserState.loginFailedReason = 'технические шоколадки\nпопробуйте еще раз\nпожалуйста\nили напишите нам в discord';
-        this.sp.browser.executeJavaScript(new FunctionInfo(this.loginFailedWidgetSetter).getText({ events, browserState, authData: authData }));
+        browserState.loginFailedReason = strings.technicalIssues;
+        this.sp.browser.executeJavaScript(new FunctionInfo(this.loginFailedWidgetSetter).getText({ events, browserState, authData: authData, strings }));
 
         authData = null;
         this.writeAuthDataToDisk(null);
@@ -616,7 +687,7 @@ export class AuthService extends ClientListener {
 
       const dot = slowCounter % 3 === 0 ? '.' : slowCounter % 3 === 1 ? '..' : '...';
 
-      browserState.comment = "подключение" + dot;
+      browserState.comment = strings.connecting + dot;
       this.refreshWidgets();
     }
   }

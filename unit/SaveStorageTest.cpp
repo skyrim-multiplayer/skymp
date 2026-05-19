@@ -7,7 +7,8 @@
 #include "save_storages/AsyncSaveStorage.h"
 #include <filesystem>
 
-std::shared_ptr<Viet::ISaveStorage<MpChangeForm, FormDesc>>
+std::shared_ptr<
+  Viet::ISaveStorage<MpChangeForm, FormDesc, std::vector<FormDesc>>>
 MakeSaveStorageFile()
 {
   auto directory = "unit/data";
@@ -16,12 +17,14 @@ MakeSaveStorageFile()
     std::filesystem::remove_all(directory);
   }
 
-  return std::make_shared<Viet::AsyncSaveStorage<MpChangeForm, FormDesc>>(
+  return std::make_shared<
+    Viet::AsyncSaveStorage<MpChangeForm, FormDesc, std::vector<FormDesc>>>(
     std::make_shared<FileDatabase>(directory, spdlog::default_logger()),
     spdlog::default_logger(), "file");
 }
 
-std::shared_ptr<Viet::ISaveStorage<MpChangeForm, FormDesc>>
+std::shared_ptr<
+  Viet::ISaveStorage<MpChangeForm, FormDesc, std::vector<FormDesc>>>
 MakeSaveStorageZip()
 {
   auto archivePath = "world.zip";
@@ -30,12 +33,14 @@ MakeSaveStorageZip()
     std::filesystem::remove(archivePath);
   }
 
-  return std::make_shared<Viet::AsyncSaveStorage<MpChangeForm, FormDesc>>(
+  return std::make_shared<
+    Viet::AsyncSaveStorage<MpChangeForm, FormDesc, std::vector<FormDesc>>>(
     std::make_shared<ZipDatabase>(archivePath, spdlog::default_logger()),
     spdlog::default_logger(), "zip");
 }
 
-std::vector<std::shared_ptr<Viet::ISaveStorage<MpChangeForm, FormDesc>>>
+std::vector<std::shared_ptr<
+  Viet::ISaveStorage<MpChangeForm, FormDesc, std::vector<FormDesc>>>>
 MakeSaveStorages()
 {
   return { MakeSaveStorageFile(), MakeSaveStorageZip() };
@@ -48,8 +53,9 @@ MpChangeForm CreateChangeForm(const char* descStr)
   return res;
 }
 
-void UpsertSync(Viet::ISaveStorage<MpChangeForm, FormDesc>& st,
-                std::vector<std::optional<MpChangeForm>> changeForms)
+void UpsertSync(
+  Viet::ISaveStorage<MpChangeForm, FormDesc, std::vector<FormDesc>>& st,
+  std::vector<std::optional<MpChangeForm>> changeForms)
 {
   bool finished = false;
   st.Upsert(std::move(changeForms), [&] { finished = true; });
@@ -64,8 +70,9 @@ void UpsertSync(Viet::ISaveStorage<MpChangeForm, FormDesc>& st,
   }
 }
 
-void WaitForNextUpsert(Viet::ISaveStorage<MpChangeForm, FormDesc>& st,
-                       WorldState& wst)
+void WaitForNextUpsert(
+  Viet::ISaveStorage<MpChangeForm, FormDesc, std::vector<FormDesc>>& st,
+  WorldState& wst)
 {
   uint32_t n = st.GetNumFinishedUpserts();
 

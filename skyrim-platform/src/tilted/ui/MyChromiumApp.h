@@ -22,8 +22,6 @@ struct MyChromiumApp : CefApp
     TP_NOCOPYMOVE(RenderProvider);
   };
 
-  static std::string GetCurrentSpToken();
-
   explicit MyChromiumApp(
     std::unique_ptr<RenderProvider> apRenderProvider,
     std::shared_ptr<ProcessMessageListener> onProcessMessage_,

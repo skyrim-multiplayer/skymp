@@ -11,13 +11,6 @@ Backend GetBackend()
   }
 
   auto settings = Settings::GetPlatformSettings();
-  bool chromiumEnabled = settings->GetBool("Debug", "ChromiumEnabled", true);
-  if (!chromiumEnabled) {
-    logger::info("browser backend: Debug.ChromiumEnabled is false, treating "
-                 "as backend = off");
-    g_backend = Backend::kOff;
-    return *g_backend;
-  }
 
   std::string backendName =
     settings->GetString("Browser", "BackendName", "auto");

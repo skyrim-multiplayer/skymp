@@ -64,9 +64,10 @@ void CustomPropertyBinding::Set(Napi::Env env, ScampServer& scampServer,
   auto newValueDump = NapiHelper::Stringify(env, newValue);
 
   if (isPrivate) {
-    refr.SetPropertyValueDump(propertyName, newValueDump, false, false);
     if (isPrivateIndexed) {
       refr.RegisterPrivateIndexedProperty(propertyName, newValueDump);
+    } else {
+      refr.SetPropertyValueDump(propertyName, newValueDump, false, false);
     }
     return;
   }

@@ -11,16 +11,16 @@
 
 namespace Viet {
 
-template <typename T, typename FormDescType>
-class AsyncSaveStorage : public ISaveStorage<T, FormDescType>
+template <typename T, typename FormDescType, typename FilterType>
+class AsyncSaveStorage : public ISaveStorage<T, FormDescType, FilterType>
 {
 public:
   using IterateSyncCallback =
-    typename ISaveStorage<T, FormDescType>::IterateSyncCallback;
+    typename ISaveStorage<T, FormDescType, FilterType>::IterateSyncCallback;
   using UpsertCallback =
-    typename ISaveStorage<T, FormDescType>::UpsertCallback;
+    typename ISaveStorage<T, FormDescType, FilterType>::UpsertCallback;
   using IterateCallback =
-    typename ISaveStorage<T, FormDescType>::IterateCallback;
+    typename ISaveStorage<T, FormDescType, FilterType>::IterateCallback;
 
   class UpsertFailedException : public std::runtime_error
   {
@@ -44,27 +44,27 @@ public:
   class IterateFailedException : public std::runtime_error
   {
   public:
-    IterateFailedException(std::optional<std::vector<FormDescType>>&& filter_,
+    IterateFailedException(std::optional<FilterType>&& filter_,
                            std::string what)
       : runtime_error(what)
       , filter(std::move(filter_))
     {
     }
 
-    const std::optional<std::vector<FormDescType>>& GetFilter() const noexcept
+    const std::optional<FilterType>& GetFilter() const noexcept
     {
       return filter;
     }
 
   private:
-    const std::optional<std::vector<FormDescType>> filter;
+    const std::optional<FilterType> filter;
   };
 
   // logger must support multithreaded writing
-  AsyncSaveStorage(const std::shared_ptr<IDatabase<T, FormDescType>>& dbImpl,
-                   std::shared_ptr<spdlog::logger> logger = nullptr,
-                   std::string name = "",
-                   std::optional<uint32_t> sleepTimeMs = std::nullopt)
+  AsyncSaveStorage(
+    const std::shared_ptr<IDatabase<T, FormDescType, FilterType>>& dbImpl,
+    std::shared_ptr<spdlog::logger> logger = nullptr, std::string name = "",
+    std::optional<uint32_t> sleepTimeMs = std::nullopt)
     : pImpl(std::make_shared<Impl>())
   {
     pImpl->name = std::move(name);
@@ -99,7 +99,7 @@ public:
   }
 
   void Iterate(const IterateCallback& cb,
-               const std::optional<std::vector<FormDescType>>& filter) override
+               const std::optional<FilterType>& filter) override
   {
     std::lock_guard l(pImpl->share6.m);
     pImpl->share6.iterateTasks.push_back({ filter, cb });
@@ -235,7 +235,7 @@ private:
 
     struct IterateTask
     {
-      std::optional<std::vector<FormDescType>> filter;
+      std::optional<FilterType> filter;
       IterateCallback callback;
     };
 
@@ -244,7 +244,7 @@ private:
 
     struct
     {
-      std::shared_ptr<IDatabase<T, FormDescType>> dbImpl;
+      std::shared_ptr<IDatabase<T, FormDescType, FilterType>> dbImpl;
       std::mutex m;
     } share;
 
