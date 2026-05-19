@@ -1,16 +1,16 @@
 diff --git a/include/RE/T/TESObjectREFR.h b/include/RE/T/TESObjectREFR.h
-index d60462ec..924ec91f 100644
+index 4d9debf6..6aa33ce2 100644
 --- a/include/RE/T/TESObjectREFR.h
 +++ b/include/RE/T/TESObjectREFR.h
-@@ -449,6 +449,7 @@ namespace RE
+@@ -456,6 +456,7 @@ namespace RE
  		void                                            MoveTo(TESObjectREFR* a_target);
  		bool                                            MoveToNode(TESObjectREFR* a_target, const BSFixedString& a_nodeName);
  		bool                                            MoveToNode(TESObjectREFR* a_target, NiAVObject* a_node);
 +		void                                            MoveTo_Impl(const ObjectRefHandle& a_targetHandle, TESObjectCELL* a_targetCell, TESWorldSpace* a_selfWorldSpace, const NiPoint3& a_position, const NiPoint3& a_rotation);
+ 		bool                                            NameIncludes(std::string a_word);
+ 		void                                            OpenContainer(std::int32_t a_openType) const;
  		NiPointer<TESObjectREFR>                        PlaceObjectAtMe(TESBoundObject* a_baseToPlace, bool a_forcePersist) const;
- 		void                                            PlayAnimation(stl::zstring a_from, stl::zstring a_to);
- 		void                                            PlayAnimation(NiControllerManager* a_manager, NiControllerSequence* a_toSeq, NiControllerSequence* a_fromSeq);
-@@ -495,7 +496,6 @@ namespace RE
+@@ -504,7 +505,6 @@ namespace RE
  	private:
  		InventoryChanges* ForceInitInventoryChanges();
  		InventoryChanges* MakeInventoryChanges();

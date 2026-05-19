@@ -1,5 +1,5 @@
 diff --git a/include/RE/E/ExtraDataList.h b/include/RE/E/ExtraDataList.h
-index 025136a4..b9f22944 100644
+index dde093b5..8c1ee92f 100644
 --- a/include/RE/E/ExtraDataList.h
 +++ b/include/RE/E/ExtraDataList.h
 @@ -38,7 +38,9 @@ namespace RE
@@ -22,7 +22,7 @@ index 025136a4..b9f22944 100644
  		TES_HEAP_REDEFINE_NEW();
  
  		iterator       begin();
-@@ -194,7 +193,7 @@ namespace RE
+@@ -195,7 +194,7 @@ namespace RE
  		void                  SetInventoryChanges(InventoryChanges* a_changes);
  		void                  SetOwner(TESForm* a_owner);
  
