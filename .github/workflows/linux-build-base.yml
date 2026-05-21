@@ -16,6 +16,10 @@ on:
         required: false
         default: ''
       auto_merge_action_config:
+        type: string
+        description: Auto-merge action config
+        required: true
+        default: ''
     secrets:
       combined_server_token:
         type: string
