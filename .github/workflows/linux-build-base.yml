@@ -22,10 +22,8 @@ on:
         default: ''
     secrets:
       combined_server_token:
-        type: string
         description: Token to check out and gather PRs required for building the server and gaamemode
         required: false
-        default: ${{ github.token }}
 
 env:
     BUILD_TYPE: RelWithDebInfo
@@ -38,7 +36,7 @@ jobs:
             uses: actions/checkout@v6
             with:
               repository: skymp/skymp
-              token: ${{ secrets.combined_server_token }}
+              token: ${{ secrets.combined_server_token }}  # TODO: default?
               submodules: recursive
           # XXX: should it leave checkout to gather?
 
