@@ -38,6 +38,8 @@ jobs:
               repository: skyrim-multiplayer/skymp
               token: ${{ secrets.combined_server_token }}  # TODO: default?
               submodules: recursive
+              fetch-depth: 0
+              persist-credentials: false
           # XXX: should it leave checkout to gather?
 
           - name: Gather PRs
