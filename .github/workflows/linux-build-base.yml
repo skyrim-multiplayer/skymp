@@ -35,7 +35,7 @@ jobs:
           - name: Checkout
             uses: actions/checkout@v6
             with:
-              repository: skymp/skymp
+              repository: skyrim-multiplayer/skymp
               token: ${{ secrets.combined_server_token }}  # TODO: default?
               submodules: recursive
           # XXX: should it leave checkout to gather?
