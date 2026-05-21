@@ -42,7 +42,7 @@ jobs:
 
           - name: Gather PRs
             #if: ${{ env.DEPLOY_ACTION == 'deploy' }}
-            uses: Pospelove/auto-merge-action@main
+            uses: nic11/auto-merge-action@token-stuff
             with:
               #checkout: true
               path: ${{ github.workspace }}
