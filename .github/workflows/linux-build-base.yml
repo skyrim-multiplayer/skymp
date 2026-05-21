@@ -12,7 +12,7 @@ on:
         default: false
       extra_build_args:
         type: string
-        description: Shell-escaped args for `./build.sh --build`. Example: `--target=skymp5-server`
+        description: 'Shell-escaped args for `./build.sh --build`. Example: `--target=skymp5-server`'
         required: false
         default: ''
       auto_merge_action_config:
