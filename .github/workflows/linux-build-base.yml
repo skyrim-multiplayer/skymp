@@ -36,17 +36,15 @@ jobs:
             uses: actions/checkout@v6
             with:
               repository: skyrim-multiplayer/skymp
-              token: ${{ secrets.combined_server_token }}  # TODO: default?
+              token: ${{ secrets.combined_server_token || github.token }}
               submodules: recursive
               fetch-depth: 0
               persist-credentials: false
-          # XXX: should it leave checkout to gather?
 
           - name: Gather PRs
-            #if: ${{ env.DEPLOY_ACTION == 'deploy' }}
-            uses: nic11/auto-merge-action@token-stuff
+            if: ${{ inputs.auto_merge_action_config }}
+            uses: skyrim-multiplayer/auto-merge-action@main
             with:
-              #checkout: true
               path: ${{ github.workspace }}
               repositories: ${{ inputs.auto_merge_action_config }}
               token: ${{ secrets.combined_server_token }}
