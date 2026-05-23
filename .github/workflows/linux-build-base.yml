@@ -252,9 +252,9 @@ jobs:
             id: sp_const_enums_check
             if: ${{ !inputs.skipTests }}
             run: |
-              cd skyrim-platform/tools/const_enum_extractor && \
+              (cd skyrim-platform/tools/const_enum_extractor && \
                 yarn install && \
-                node ./index.js
+                node ./index.js)
 
               # Checking if ConstEnumApi.cpp has changed
               git diff --exit-code skyrim-platform/src/platform_se/skyrim_platform/ConstEnumApi.cpp
