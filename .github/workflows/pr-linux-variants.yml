@@ -29,6 +29,6 @@ jobs:
             # TODO(#2280): return Debian, add Fedora
             # TODO(#2280): test gcc build, test build w/o ninja
 
-        uses: .github/workflows/linux-build-base.yml
+        uses: ./.github/workflows/linux-build-base.yml
         with:
           base_system: ${{ matrix.base_system }}
