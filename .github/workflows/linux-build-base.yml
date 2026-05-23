@@ -43,12 +43,18 @@ jobs:
               persist-credentials: false
 
           - name: Gather PRs
+            id: gather_prs
             if: ${{ inputs.auto_merge_action_config }}
             uses: skyrim-multiplayer/auto-merge-action@main
             with:
               path: ${{ github.workspace }}
               repositories: ${{ inputs.auto_merge_action_config }}
               token: ${{ secrets.combined_server_token }}
+
+          - name: Output commit tuple
+            if: ${{ inputs.auto_merge_action_config }}
+            run: |
+              echo 'Commit tuple: ${{ steps.gather_prs.outputs.commit_tuple }}' | tee -a $GITHUB_STEP_SUMMARY
 
           - name: Debug - print env
             run: env
