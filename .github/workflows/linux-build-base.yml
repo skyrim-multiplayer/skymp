@@ -54,7 +54,7 @@ jobs:
           - name: Output commit tuple
             if: ${{ inputs.auto_merge_action_config }}
             run: |
-              echo 'Commit tuple: ${{ steps.gather_prs.outputs.commit_tuple }}' | tee -a $GITHUB_STEP_SUMMARY
+              echo 'Commit tuple: ${{ steps.gather_prs.outputs['commit-tuple'] }}' | tee -a $GITHUB_STEP_SUMMARY
 
           - name: Debug - print env
             run: env
