@@ -5,6 +5,7 @@ on:
       base_system:
         type: string
         description: Base system name (one of the dependency scripts)
+        required: true
       skip_tests:
         type: boolean
         description: Only build, skip tests and other checks
@@ -18,7 +19,7 @@ on:
       auto_merge_action_config:
         type: string
         description: Auto-merge action config
-        required: true
+        required: false
         default: ''
     secrets:
       combined_server_token:
