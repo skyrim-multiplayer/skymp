@@ -402,10 +402,10 @@ export class Login implements System {
 
         let fetchedRoles: string[] = [];
         let isMemberOfAny = false;
+        let shouldHideIp = false;
 
         if (discordAuth && discordAuth.botToken && discordAuth.guilds && profile.discordId) {
           let isBanned = false;
-          let shouldHideIp = false;
 
           const actorId = ctx.svr.getActorsByProfileId(profile.id)[0];
           const mp = ctx.svr as unknown as Mp;
@@ -465,7 +465,9 @@ export class Login implements System {
             ctx.svr.sendCustomPacket(userId, loginFailedIpMismatch);
             throw new Error('IP mismatch');
           }
+        }
 
+        if (discordAuth && discordAuth.botToken && discordAuth.guilds) {
           const ipToPrint = shouldHideIp ? "hidden" : ip;
           const actorIds = ctx.svr.getActorsByProfileId(profile.id).map(id => id.toString(16));
 
