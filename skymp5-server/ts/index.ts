@@ -42,9 +42,14 @@ function requireTemp(module: string) {
   try {
     tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), appPrefix));
 
-    const contents = fs.readFileSync(module, 'utf8');
-    const tempPath = path.join(tmpDir, Math.random() + '-' + Date.now() + '.js');
+    const tempName = Math.random() + '-' + Date.now() + '.js';
+    const tempPath = path.join(tmpDir, tempPath);
+
+    const contents = fs.readFileSync(module, 'utf8') + `\n\n//# sourceMappingURL=${tempName}.map`;
     fs.writeFileSync(tempPath, contents);
+
+    const mapContents = fs.readFileSync(module + '.map', 'utf8');
+    fs.writeFileSync(tempPath + '.map', mapContents);
 
     require(tempPath);
   } catch (e) {
