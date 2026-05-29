@@ -29,7 +29,7 @@ jobs:
             env:
               GH_TOKEN: ${{ secrets.SKYMP5_INSTALLER_REPOSITORY_DISPATCH_PAT }}
             run: |
-              gh workflow run server-build-deploy-v1-5.yml --repo skyrim-multiplayer/skymp5-installer-v2 \
+              gh workflow run server-build-deploy-1-5.yml --repo skyrim-multiplayer/skymp5-installer-v2 \
                 -f action='${{ inputs.action }}' \
                 -f server_name='${{ inputs.branch }}' \
                 ;
