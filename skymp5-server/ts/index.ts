@@ -48,8 +48,12 @@ function requireTemp(module: string) {
     const contents = fs.readFileSync(module, 'utf8') + `\n\n//# sourceMappingURL=${tempName}.map`;
     fs.writeFileSync(tempPath, contents);
 
-    const mapContents = fs.readFileSync(module + '.map', 'utf8');
-    fs.writeFileSync(tempPath + '.map', mapContents);
+    try {
+      const mapContents = fs.readFileSync(module + '.map', 'utf8');
+      fs.writeFileSync(tempPath + '.map', mapContents);
+    } catch (e) {
+      console.error('could not load source map', e);
+    }
 
     require(tempPath);
   } catch (e) {
