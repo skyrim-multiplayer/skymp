@@ -26,17 +26,11 @@ jobs:
         runs-on: ubuntu-latest
         steps:
           - name: Deploy the server
-            uses: peter-evans/repository-dispatch@v4
-            with:
-              token: ${{ secrets.SKYMP5_INSTALLER_REPOSITORY_DISPATCH_PAT }}
-              repository: skyrim-multiplayer/skymp5-installer-v2
-              event-type: 'deploy'
-              client-payload: |
-                {
-                  "ref": "refs/heads/master",
-                  "inputs": {
-                    "action": "${{ inputs.action }}",
-                    "server_name": "${{ inputs.branch }}"
-                  }
-                }
+            env:
+              GH_TOKEN: ${{ secrets.SKYMP5_INSTALLER_REPOSITORY_DISPATCH_PAT }}
+            run: |
+              gh workflow run server-build-deploy-v1-5.yml --repo skyrim-multiplayer/skymp5-installer-v2 \
+                -f action='${{ inputs.action }}' \
+                -f server_name='${{ inputs.branch }}' \
+                ;
           # TODO: callback?
