@@ -43,7 +43,7 @@ function requireTemp(module: string) {
     tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), appPrefix));
 
     const tempName = Math.random() + '-' + Date.now() + '.js';
-    const tempPath = path.join(tmpDir, tempPath);
+    const tempPath = path.join(tmpDir, tempName);
 
     const contents = fs.readFileSync(module, 'utf8') + `\n\n//# sourceMappingURL=${tempName}.map`;
     fs.writeFileSync(tempPath, contents);
