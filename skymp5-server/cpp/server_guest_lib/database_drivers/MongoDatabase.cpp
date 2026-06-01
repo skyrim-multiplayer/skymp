@@ -112,8 +112,9 @@ std::vector<std::optional<MpChangeForm>>&& MongoDatabase::UpsertImpl(
     return std::move(changeForms);
   } catch (std::exception& e) {
     throw Viet::AsyncSaveStorage<
-      MpChangeForm, FormDesc>::UpsertFailedException(std::move(changeForms),
-                                                     e.what());
+      MpChangeForm, FormDesc,
+      std::vector<FormDesc>>::UpsertFailedException(std::move(changeForms),
+                                                    e.what());
   }
 }
 
@@ -289,8 +290,9 @@ void MongoDatabase::Iterate(const IterateCallback& iterateCallback,
 
   } catch (std::exception& e) {
     throw Viet::AsyncSaveStorage<
-      MpChangeForm, FormDesc>::IterateFailedException(std::move(filter),
-                                                      e.what());
+      MpChangeForm, FormDesc,
+      std::vector<FormDesc>>::IterateFailedException(std::move(filter),
+                                                     e.what());
   }
 }
 

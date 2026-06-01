@@ -4,8 +4,9 @@
 #include "database_drivers/FileDatabase.h"
 #include <catch2/catch_all.hpp>
 
-inline std::shared_ptr<Viet::IDatabase<MpChangeForm, FormDesc>> MakeDatabase(
-  const char* directory)
+inline std::shared_ptr<
+  Viet::IDatabase<MpChangeForm, FormDesc, std::vector<FormDesc>>>
+MakeDatabase(const char* directory)
 {
   if (std::filesystem::exists(directory)) {
     std::filesystem::remove_all(directory);
@@ -24,7 +25,9 @@ inline MpChangeForm CreateChangeForm_(const char* descStr,
 }
 
 inline std::set<MpChangeForm> GetAllChangeForms(
-  std::shared_ptr<Viet::IDatabase<MpChangeForm, FormDesc>> db)
+  std::shared_ptr<
+    Viet::IDatabase<MpChangeForm, FormDesc, std::vector<FormDesc>>>
+    db)
 {
   std::set<MpChangeForm> res;
   db->Iterate([&](const MpChangeForm& changeForm) { res.insert(changeForm); },

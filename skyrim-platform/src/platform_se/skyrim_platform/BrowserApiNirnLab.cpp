@@ -72,11 +72,6 @@ Napi::Value BrowserApiNirnLab::LoadUrl(const Napi::CallbackInfo& info)
   return Napi::Boolean::New(info.Env(), true);
 }
 
-Napi::Value BrowserApiNirnLab::GetToken(const Napi::CallbackInfo& info)
-{
-  return Napi::String::New(info.Env(), "deprecated");
-}
-
 Napi::Value BrowserApiNirnLab::ExecuteJavaScript(
   const Napi::CallbackInfo& info)
 {

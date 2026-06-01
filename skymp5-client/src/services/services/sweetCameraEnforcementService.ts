@@ -5,6 +5,7 @@ import { CustomPacketMessage } from "../messages/customPacketMessage";
 import { AnimDebugSettings } from "../messages_settings/animDebugSettings";
 import { ClientListener, CombinedController, Sp } from "./clientListener";
 import { ButtonEvent, DxScanCode, Menu } from "skyrimPlatform";
+import * as fs from "fs";
 
 const playerId = 0x14;
 
@@ -25,6 +26,29 @@ interface ExitAnimOptions {
     playExitAnim: boolean;
     useInterruptAnimAsExitAnim?: boolean;
     enablePlayerControlsDelayMs: unknown;
+}
+
+
+const translations = {
+  "ru": {
+    pressSpace: 'Пробел, чтобы выйти из анимации'
+  },
+  "en": {
+    pressSpace: 'Space to exit animation'
+  },
+} as const;
+
+type TranslationStrings = { [K in keyof typeof translations['ru']]: string };
+
+let strings: TranslationStrings = translations['en'];
+
+try {
+  const lang = fs.readFileSync('./Data/Platform/Distribution/locale', 'utf8').trim();
+  if (lang in translations) {
+    strings = translations[lang as keyof typeof translations];
+  }
+} catch {
+  // locale file not found or unreadable, default to 'en'
 }
 
 // ex AnimDebugService part
@@ -306,7 +330,7 @@ export class SweetCameraEnforcementService extends ClientListener {
                 const intervalMs = this.settings?.exitAnimNotificationIntervalMs;
                 if (!intervalMs || (Date.now() - this.lastNotificationMoment) >= intervalMs) {
                     this.lastNotificationMoment = Date.now();
-                    this.sp.Debug.notification("Пробел, чтобы выйти из анимации");
+                    this.sp.Debug.notification(strings.pressSpace);
                 }
             }
         }

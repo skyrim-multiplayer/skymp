@@ -162,6 +162,8 @@ void ActionListener::OnUpdateMovement(const RawMessageData& rawMsgData,
       msg.data.isWeapDrawn);
     actor->SetAnimationVariableBool(
       AnimationVariableBool::kVariable_IsBlocking, msg.data.isBlocking);
+    actor->SetAnimationVariableBool(
+      AnimationVariableBool::kVariable_IsSneaking, msg.data.isSneaking);
 
     if (actor->GetBlockCount() == 5) {
       actor->SetIsBlockActive(false);
@@ -718,7 +720,7 @@ void ActionListener::OnHostAttempt(const RawMessageData& rawMsgData,
         msg.data.health = changeForm.actorValues.healthPercentage;
         msg.data.magicka = changeForm.actorValues.magickaPercentage;
         msg.data.stamina = changeForm.actorValues.staminaPercentage;
-        remote.SendToUser(msg, true); // in fact sends to the hoster
+        remote.GetActorToSendTo().SendToUser(msg, true);
       });
 
     auto& prevHosterForm = partOne.worldState.LookupFormById(prevHoster);
