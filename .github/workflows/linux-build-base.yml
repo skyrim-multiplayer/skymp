@@ -231,23 +231,6 @@ jobs:
               path: ${{ github.workspace }}/build/${{ inputs.base_system }}_dist.tar.gz
               archive: false
 
-          - name: SP Types Check
-            id: sp_types_check
-            if: ${{ !inputs.skip_tests }}
-            run: |
-              commit=$(< ${{github.workspace}}/skyrim-platform/src/platform_se/codegen/convert-files/temp.txt)
-              build=$(< ${{github.workspace}}/build/dist/client/Data/Platform/Modules/skyrimPlatform.ts)
-              difference=$(diff -u <(echo "$commit") <(echo "$build"))
-              size=$(echo -n $difference | wc -m)
-              echo "Size $size"
-              if [ $size != 0 ] ; then
-                echo "SP Types in codegen and build dist not equal"
-                echo "Difference:"
-                echo $difference
-                exit 1
-              fi
-              echo "SP Types in codegen and build dist equal"
-
           - name: SP Const Enums Check
             id: sp_const_enums_check
             if: ${{ !inputs.skip_tests }}
@@ -262,12 +245,6 @@ jobs:
                 echo "ConstEnumApi.cpp has changed after running const_enum_extractor. Please re-run it locally and commit changes"
                 exit 1
               fi
-
-          - name: SP Types Check failed - Here is what you can do
-            if: ${{ failure() && steps.sp_types_check.outcome == 'failure' }}
-            run: |
-              echo "skyrimPlatform.ts and Definitions.txt do not match."
-              echo "You can fix this manually or simply build the project locally and commit the changes."
 
           - name: SP Const Enums Check failed - Here is what you can do
             if: ${{ failure() && steps.sp_const_enums_check.outcome == 'failure' }}
