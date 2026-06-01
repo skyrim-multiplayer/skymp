@@ -180,7 +180,6 @@
       "client/Data/Platform/Distribution/RuntimeDependencies/snapshot_blob.bin",
       "client/Data/Platform/Distribution/RuntimeDependencies/v8_context_snapshot.bin",
       "client/Data/Platform/Distribution/RuntimeDependencies/libnode.dll",
-      "client/Data/Platform/Distribution/___systemPolyfill.js",
       "client/Data/Platform/Fonts/DIN-Pro-bold.spritefont",
       "client/Data/Platform/Fonts/Tavern.spritefont",
       "client/Data/Platform/Fonts/Tavern.ttf",
