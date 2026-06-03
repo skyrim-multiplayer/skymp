@@ -25,7 +25,7 @@ jobs:
     deploy:
         runs-on: ubuntu-latest
         steps:
-          - name: Deploy the server
+          - name: Trigger server deploy job
             env:
               GH_TOKEN: ${{ secrets.SKYMP5_INSTALLER_REPOSITORY_DISPATCH_PAT }}
             run: |
@@ -34,4 +34,3 @@ jobs:
                 -f server_name='${{ inputs.branch }}' \
                 -f real_triggering_actor='${{ github.triggering_actor }}' \
                 ;
-          # TODO: callback?
