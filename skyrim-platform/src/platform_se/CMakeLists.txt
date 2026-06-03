@@ -171,25 +171,6 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
     add_dependencies(RestartGame ${DEPENDENCIES_FOR_CUSTOM_TARGETS})
   endif()
   
-  # can't run executables on Emscripten
-  if(NOT EMSCRIPTEN)
-    add_executable(TSConverter ${CMAKE_CURRENT_LIST_DIR}/codegen/TSConverter.cpp)
-    apply_default_settings(TARGETS TSConverter)
-    set_target_properties(TSConverter PROPERTIES CXX_STANDARD 20)
-
-    set(CONVERT_FILES_DIR ${CMAKE_CURRENT_LIST_DIR}/codegen/convert-files/)
-    list(APPEND CODEGEN_ARGS
-      "${CONVERT_FILES_DIR}/FunctionsDump.txt"
-      "${CONVERT_FILES_DIR}/Definitions.txt"
-      "${CMAKE_CURRENT_BINARY_DIR}/_codegen/skyrimPlatform.ts"
-    )
-    add_custom_target(sp_codegen ALL COMMAND $<TARGET_FILE:TSConverter> ${CODEGEN_ARGS})
-    add_dependencies(sp_codegen TSConverter)
-
-    # force "skyrim-platform" custom target to be built strictly after sp_codegen
-    list(APPEND DEPENDENCIES_FOR_CUSTOM_TARGETS sp_codegen)
-  endif()
-
   # this target was originally called pack, now it is called skyrim-platform
   # so we can use add_dependencies(x skyrim-platform) in other projects
   add_custom_target(skyrim-platform ALL
@@ -205,14 +186,6 @@ if(MSVC)
   apply_default_settings(TARGETS
     core_library hooks reverse ui SkyrimPlatformCEF
   )
-endif()
-
-# TSConverter vcpkg deps
-
-if(TARGET TSConverter)
-  find_path(JSON_INCLUDE_DIR NAMES json.hpp PATH_SUFFIXES nlohmann)
-  get_filename_component(JSON_INCLUDE_DIR ${JSON_INCLUDE_DIR} DIRECTORY)
-  target_include_directories(TSConverter PUBLIC ${JSON_INCLUDE_DIR})
 endif()
 
 if(MSVC)

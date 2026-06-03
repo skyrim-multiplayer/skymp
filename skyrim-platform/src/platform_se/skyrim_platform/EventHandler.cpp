@@ -687,7 +687,6 @@ EventResult EventHandler::ProcessEvent(
       auto projectileForm =
         projectileId != 0 ? RE::TESForm::LookupByID(projectileId) : nullptr;
 
-      AddObjProperty(&obj, "agressor", cause, "ObjectReference");
       AddObjProperty(&obj, "aggressor", cause, "ObjectReference");
       AddObjProperty(&obj, "target", target, "ObjectReference");
       AddObjProperty(&obj, "source", sourceForm, "Form");
