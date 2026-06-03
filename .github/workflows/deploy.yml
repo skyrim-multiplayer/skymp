@@ -1,8 +1,6 @@
 name: Deploy
 
-on:    
-    repository_dispatch:
-        types: [deploy]
+on:
     workflow_dispatch:
         inputs:
             action:
@@ -23,137 +21,16 @@ on:
                     - 'indev'
                 default: 'indev'
 
-env:
-    BUILD_TYPE: RelWithDebInfo
-    GAMEMODE_GITHUB_TOKEN: ${{secrets.GAMEMODE_GITHUB_TOKEN}}
-
 jobs:
     deploy:
         runs-on: ubuntu-latest
         steps:
-          - name: Set up workflow_dispatch inputs
-            if: github.event_name == 'workflow_dispatch'
-            run: |
-              echo "DEPLOY_BRANCH=${{ github.event.inputs.branch }}" >> $GITHUB_ENV
-              echo "DEPLOY_ACTION=${{ github.event.inputs.action }}" >> $GITHUB_ENV
-
-          - name: Set up repository_dispatch inputs
-            if: github.event_name == 'repository_dispatch'
-            run: |
-              echo "Received Payload:"
-              echo "${{ github.event.client_payload.inputs.branch }}"
-              echo "${{ github.event.client_payload.inputs.action }}"
-
-              echo "DEPLOY_BRANCH=${{ github.event.client_payload.inputs.branch }}" >> $GITHUB_ENV
-              echo "DEPLOY_ACTION=${{ github.event.client_payload.inputs.action }}" >> $GITHUB_ENV
-              echo "DEPLOY_CANARY_FILE=${{ github.event.client_payload.inputs.canaryFile }}" >> $GITHUB_ENV
-
-          - name: Checkout
-            uses: actions/checkout@v4
-            with:
-                submodules: recursive
-                fetch-depth: 0
-                persist-credentials: false
-        
-          - name: Gather PRs
-            if: ${{env.DEPLOY_ACTION == 'deploy'}}
-            uses: Pospelove/auto-merge-action@main
-            with:
-                path: ${{github.workspace}}
-                repositories: |
-                    [
-                        {
-                            "owner": "skyrim-multiplayer",
-                            "repo": "skymp",
-                            "labels": ["merge-to:${{env.DEPLOY_BRANCH}}"],
-                            "token": "${{secrets.SKYMP5_PATCHES_PAT}}"
-                        },
-                        {
-                            "owner": "skyrim-multiplayer",
-                            "repo": "skymp5-patches",
-                            "labels": ["merge-to:${{env.DEPLOY_BRANCH}}"],
-                            "token": "${{secrets.SKYMP5_PATCHES_PAT}}"
-                        }
-                    ]
-
-          - name: Post a link in Discord
-            if: ${{env.DEPLOY_ACTION == 'deploy'}}
+          - name: Trigger server deploy job
             env:
-                DEPLOY_STATUS_WEBHOOK: ${{secrets.DEPLOY_STATUS_WEBHOOK}}
+              GH_TOKEN: ${{ secrets.SKYMP5_INSTALLER_REPOSITORY_DISPATCH_PAT }}
             run: |
-                link="${{github.server_url}}/${{github.repository}}/actions/runs/${{github.run_id}}"
-                ./misc/deploy/call_webhook.sh "Started build. " \
-                    "You can follow the process at <$link>. " \
-                    "Once build is finished, further progress will be reported here."
-
-          - name: Get image to build upon
-            run: |
-                cat ${{github.workspace}}/misc/github_env_linux >> "$GITHUB_ENV"
-
-          - name: Prepare for build
-            if: ${{env.DEPLOY_ACTION == 'deploy'}}
-            run: |
-                docker run --rm -v "${{ github.workspace }}:/src" \
-                    ${{ env.SKYMP_VCPKG_DEPS_IMAGE }} \
-                    chown -R skymp:skymp /src
-
-          - name: CMake Configure
-            if: ${{env.DEPLOY_ACTION == 'deploy'}}
-            run: |
-                docker run --rm -v "${{ github.workspace }}:/src" -w "/src" \
-                    -u skymp \
-                    -e CI=true \
-                    -e DEPLOY_BRANCH=${{ env.DEPLOY_BRANCH }} \
-                    ${{ env.SKYMP_VCPKG_DEPS_IMAGE }} \
-                        ./build.sh --configure \
-                            -DBUILD_UNIT_TESTS=OFF \
-                            -DBUILD_GAMEMODE=ON \
-                            -DOFFLINE_MODE=OFF \
-                            -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
-                            -DGITHUB_TOKEN=${{env.GAMEMODE_GITHUB_TOKEN}}
-
-          - name: Upload compile_commands.json
-            uses: actions/upload-artifact@v7
-            with:
-                name: compile_commands.json
-                path: ${{github.workspace}}/build/compile_commands.json
-                archive: false
-
-          - name: Build
-            if: ${{env.DEPLOY_ACTION == 'deploy'}}
-            run: |
-                docker run --rm -v "${{ github.workspace }}:/src" -w "/src" \
-                    -u skymp \
-                    -e CI=true \
-                    -e DEPLOY_BRANCH=${{ env.DEPLOY_BRANCH }} \
-                    ${{ env.SKYMP_VCPKG_DEPS_IMAGE }} \
-                        ./build.sh --build
-
-          - name: Deploy
-            env:
-                DEPLOY_STATUS_WEBHOOK: ${{secrets.DEPLOY_STATUS_WEBHOOK}}
-                DEPLOY_SSH_PRIVATE_KEY: ${{secrets.DEPLOY_SSH_PRIVATE_KEY_06_2024}}
-                DEPLOY_SSH_KNOWN_HOSTS: ${{secrets.DEPLOY_SSH_KNOWN_HOSTS_06_2024}}
-                HOST_SWEETPIE: ${{secrets.DEPLOY_TARGET_HOST_12_2025}}
-                USER_SWEETPIE: ${{secrets.DEPLOY_TARGET_USER_12_2025}}
-                HOST_INDEV: ${{secrets.DEPLOY_TARGET_HOST_06_2024}}
-                USER_INDEV: ${{secrets.DEPLOY_TARGET_USER_06_2024}}
-            run: |
-                if [ "$DEPLOY_BRANCH" = "sweetpie" ]; then
-                    export DEPLOY_TARGET_HOST="$HOST_SWEETPIE"
-                    export DEPLOY_TARGET_USER="$USER_SWEETPIE"
-                else
-                    export DEPLOY_TARGET_HOST="$HOST_INDEV"
-                    export DEPLOY_TARGET_USER="$USER_INDEV"
-                fi
-                ./misc/deploy/push_branch_to_server.sh
-
-          - name: Notify failure
-            env:
-                DEPLOY_STATUS_WEBHOOK: ${{secrets.DEPLOY_STATUS_WEBHOOK}}
-            if: '!success()'
-            run: |
-                link="${{github.server_url}}/${{github.repository}}/actions/runs/${{github.run_id}}"
-                ./misc/deploy/call_webhook.sh \
-                    "Build or deploy failed or was cancelled. " \
-                    "Check out the logs at <$link> to find out why."
+              gh workflow run server-build-deploy-1-5.yml --repo skyrim-multiplayer/skymp5-installer-v2 \
+                -f action='${{ inputs.action }}' \
+                -f server_name='${{ inputs.branch }}' \
+                -f real_triggering_actor='${{ github.triggering_actor }}' \
+                ;
