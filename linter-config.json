@@ -56,6 +56,26 @@
       }
     },
     {
+      "name": "SP Types (Definitions)",
+      "export": "CodegenCheck",
+      "modes": ["gha", "manual"],
+      "options": {
+        "command": "bash skyrim-platform/tools/ts_converter/run.sh",
+        "inputFile": "skyrim-platform/src/platform_se/codegen/convert-files/Definitions.txt",
+        "outputFile": "skyrim-platform/src/platform_se/codegen/convert-files/skyrimPlatform.ts"
+      }
+    },
+    {
+      "name": "SP Types (FunctionsDump)",
+      "export": "CodegenCheck",
+      "modes": ["gha", "manual"],
+      "options": {
+        "command": "bash skyrim-platform/tools/ts_converter/run.sh",
+        "inputFile": "skyrim-platform/src/platform_se/codegen/convert-files/FunctionsDump.txt",
+        "outputFile": "skyrim-platform/src/platform_se/codegen/convert-files/skyrimPlatform.ts"
+      }
+    },
+    {
       "name": "Server/Client Message Pairs",
       "export": "PairedFilesCheck",
       "modes": ["hook", "gha", "manual"],

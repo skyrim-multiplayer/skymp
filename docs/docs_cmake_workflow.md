@@ -22,7 +22,7 @@ Only `Visual Studio 16 2019` generator is supported on Windows.
 
 * When you add a new C/C++ target, that requires dependencies from vcpkg, you do not need to link them manually `target_link_libraries`, but simply add such target to the `VCPKG_DEPENDENT` list:
   ```cmake
-  list(APPEND VCPKG_DEPENDENT TSConverter)
+  list(APPEND VCPKG_DEPENDENT skyrim_platform)
   ```
 
 * Usually project's CMakeLists.txt has something like this:

@@ -1428,6 +1428,7 @@ export const enum EquippedItemType {
   Warhammer = 6,
   Bow,
   Staff,
+  Spell = 9, // Deprecated (use SpellOrScroll instead)
   SpellOrScroll = 9,
   Shield,
   Torch,
