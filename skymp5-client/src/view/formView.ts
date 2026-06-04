@@ -510,7 +510,7 @@ export class FormView {
           screenPoint[2] < 1;
         if (isOnScreen != this.isOnScreen) {
           this.isOnScreen = isOnScreen;
-          if (isOnScreen) {
+          if (isOnScreen && actor.is3DLoaded()) {
             actor.queueNiNodeUpdate();
             (Game.getPlayer() as Actor).queueNiNodeUpdate();
           }
