@@ -37,7 +37,13 @@ run_remote() {
   $remote_shell "$remote_server_connstr" "$@"
 }
 
-remote_tmp_dir="/tmp/skymp_deploy_`cat /dev/urandom | tr -cd 'a-f0-9' | head -c 32`"
+tiebreaker=""
+if [ "" != "$GITHUB_RUN_ID" ]; then
+  tiebreaker="$tiebreaker.$GITHUB_RUN_ID-$GITHUB_RUN_NUMBER"
+fi
+tiebreaker="$tiebreaker.$(uuidgen)"
+
+remote_tmp_dir="/tmp/skymp_deploy$tiebreaker"
 remote_branch_dir="skymp-server-$DEPLOY_BRANCH"
 
 run_remote test -e "$remote_branch_dir" \
@@ -56,11 +62,15 @@ if [[ "$DEPLOY_ACTION" == "stop" ]]; then
 elif [[ "$DEPLOY_ACTION" == "deploy" ]]; then
   ./misc/deploy/call_webhook.sh "Starting deploy of $DEPLOY_BRANCH to \`$remote_server_connstr\`"
 
+  run_remote cp -v "$remote_branch_dir/server/scam_native.node" "$remote_branch_dir/scam_native.node.old$tiebreaker"
+
   cp misc/deploy/workaround_temporary/run.sh build/dist/server/
 
   rsync --rsh="$remote_shell" -vazPh --checksum \
       --exclude=server-settings.json \
       build/dist/server/ "$remote_server_connstr:$remote_branch_dir/server/"
+
+  run_remote cp -v "$remote_branch_dir/server/scam_native.node" "$remote_branch_dir/scam_native.node$tiebreaker"
 
   ./misc/deploy/call_webhook.sh "Updated server files, restarting it..."
 elif [[ "$DEPLOY_ACTION" == "restart" ]]; then
