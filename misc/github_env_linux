@@ -1,1 +1,2 @@
 SKYMP_VCPKG_DEPS_IMAGE=skymp/skymp-vcpkg-deps:733f2d5
+SKYMP_LEGACY_DEPLOY_RUNTIME_IMAGE=skymp/skymp-runtime-base:733f2d5
