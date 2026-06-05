@@ -1,6 +1,7 @@
 #pragma once
 #include "MessageBase.h"
 #include "MsgType.h"
+#include <cstdint>
 #include <type_traits>
 
 struct DestroyActorMessage : public MessageBase<DestroyActorMessage>
@@ -11,8 +12,11 @@ struct DestroyActorMessage : public MessageBase<DestroyActorMessage>
   template <class Archive>
   void Serialize(Archive& archive)
   {
-    archive.Serialize("t", kMsgType).Serialize("idx", idx);
+    archive.Serialize("t", kMsgType)
+      .Serialize("idx", idx)
+      .Serialize("refrId", refrId);
   }
 
   uint32_t idx = 0;
+  uint64_t refrId = 0;
 };
