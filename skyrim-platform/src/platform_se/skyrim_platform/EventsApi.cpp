@@ -1,9 +1,9 @@
 #include "EventsApi.h"
 #include "EventManager.h"
 #include "ExceptionPrinter.h"
-#include "Handler.h"
 #include "Hook.h"
 #include "HookPattern.h"
+#include "HooksStorage.h"
 #include "IPC.h"
 #include "InvalidArgumentException.h"
 #include "JsUtils.h"
@@ -112,10 +112,14 @@ namespace {
 Napi::Value CreateHookApi(Napi::Env env, std::shared_ptr<Hook> hookInfo)
 {
   auto hook = Napi::Object::New(env);
+
+  // hooks.sendAnimationEvent.add(sourceCode, [minSelfId], [maxSelfId],
+  // [pattern])
+  // sourceCode: string containing JS with enter(ctx) and/or leave(ctx)
   hook.Set(
     "add",
     Napi::Function::New(env, [hookInfo](const Napi::CallbackInfo& info) {
-      auto handlerObj = NapiHelper::ExtractObject(info[0], "handlerObj");
+      auto source = NapiHelper::ExtractString(info[0], "source");
 
       std::optional<double> minSelfId;
       if (info[1].IsNumber()) {
@@ -133,9 +137,8 @@ Napi::Value CreateHookApi(Napi::Env env, std::shared_ptr<Hook> hookInfo)
         pattern = HookPattern::Parse(s);
       }
 
-      auto handler =
-        std::make_shared<Handler>(handlerObj, minSelfId, maxSelfId, pattern);
-      uint32_t id = hookInfo->AddHandler(handler);
+      uint32_t id =
+        hookInfo->AddScript(source, minSelfId, maxSelfId, std::move(pattern));
 
       return Napi::Number::New(info.Env(), id);
     }));
@@ -144,7 +147,7 @@ Napi::Value CreateHookApi(Napi::Env env, std::shared_ptr<Hook> hookInfo)
     "remove",
     Napi::Function::New(env, [hookInfo](const Napi::CallbackInfo& info) {
       uint32_t toRemove = NapiHelper::ExtractUInt32(info[0], "toRemove");
-      hookInfo->RemoveHandler(toRemove);
+      hookInfo->RemoveScript(toRemove);
       return info.Env().Undefined();
     }));
   return hook;
@@ -158,6 +161,74 @@ Napi::Value EventsApi::GetHooks(Napi::Env env)
     res.Set(hook->GetName(), CreateHookApi(env, hook));
   }
   return res;
+}
+
+Napi::Value EventsApi::GetHooksStorage(Napi::Env env)
+{
+  auto obj = Napi::Object::New(env);
+
+  obj.Set("get", Napi::Function::New(env, [](const Napi::CallbackInfo& info) {
+    auto key = NapiHelper::ExtractString(info[0], "key");
+    auto val = HooksStorage::GetSingleton().Get(key);
+
+    Napi::Env env = info.Env();
+    if (std::holds_alternative<std::monostate>(val)) {
+      return env.Undefined();
+    }
+    if (std::holds_alternative<bool>(val)) {
+      return static_cast<Napi::Value>(
+        Napi::Boolean::New(env, std::get<bool>(val)));
+    }
+    if (std::holds_alternative<double>(val)) {
+      return static_cast<Napi::Value>(
+        Napi::Number::New(env, std::get<double>(val)));
+    }
+    if (std::holds_alternative<std::string>(val)) {
+      return static_cast<Napi::Value>(
+        Napi::String::New(env, std::get<std::string>(val)));
+    }
+    return env.Undefined();
+  }));
+
+  obj.Set("set", Napi::Function::New(env, [](const Napi::CallbackInfo& info) {
+    auto key = NapiHelper::ExtractString(info[0], "key");
+    Napi::Value val = info[1];
+
+    if (val.IsBoolean()) {
+      HooksStorage::GetSingleton().Set(key, val.As<Napi::Boolean>().Value());
+    } else if (val.IsNumber()) {
+      HooksStorage::GetSingleton().Set(key,
+                                       val.As<Napi::Number>().DoubleValue());
+    } else if (val.IsString()) {
+      HooksStorage::GetSingleton().Set(
+        key, val.As<Napi::String>().Utf8Value());
+    } else {
+      HooksStorage::GetSingleton().Set(key, std::monostate{});
+    }
+
+    return info.Env().Undefined();
+  }));
+
+  obj.Set("has", Napi::Function::New(env, [](const Napi::CallbackInfo& info) {
+    auto key = NapiHelper::ExtractString(info[0], "key");
+    return Napi::Boolean::New(info.Env(),
+                              HooksStorage::GetSingleton().Has(key));
+  }));
+
+  obj.Set(
+    "erase", Napi::Function::New(env, [](const Napi::CallbackInfo& info) {
+      auto key = NapiHelper::ExtractString(info[0], "key");
+      HooksStorage::GetSingleton().Erase(key);
+      return info.Env().Undefined();
+    }));
+
+  obj.Set(
+    "clear", Napi::Function::New(env, [](const Napi::CallbackInfo& info) {
+      HooksStorage::GetSingleton().Clear();
+      return info.Env().Undefined();
+    }));
+
+  return obj;
 }
 
 namespace {
