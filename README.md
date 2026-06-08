@@ -1,9 +1,9 @@
 # SkyMP
 
-[![Discord Chat](https://img.shields.io/discord/699653182946803722?label=Discord&logo=Discord)](https://discord.gg/k39uQ9Yudt) 
+[![Discord Chat](https://img.shields.io/discord/699653182946803722?label=Discord&logo=Discord)](https://discord.gg/MsMSfUjtDp) 
 [![PR's Welcome](https://img.shields.io/badge/PRs%20-welcome-brightgreen.svg)](CONTRIBUTING.md)
-[![Players](https://skymp-badges.vercel.app/badges/players_online.svg)](https://discord.gg/k39uQ9Yudt) 
-[![Servers](https://skymp-badges.vercel.app/badges/servers_online.svg)](https://discord.gg/k39uQ9Yudt)
+[![Players](https://skymp-badges.vercel.app/badges/players_online.svg)](https://discord.gg/MsMSfUjtDp) 
+[![Servers](https://skymp-badges.vercel.app/badges/servers_online.svg)](https://discord.gg/MsMSfUjtDp)
 
 SkyMP is an open-source multiplayer mod for Skyrim ⚡
 
