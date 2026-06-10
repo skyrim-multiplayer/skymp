@@ -35,6 +35,12 @@ This guide assumes you have a windows VPS to run your server off of, with an acc
 4) Update your README.md file and push the update to github. 
 This will cause the workflow to trigger. Warning, this COULD take a couple hours, but it will build your server for you.
 
-5) Install NSSM. There's a bat file located in the base directory, just run it and it'll do it for you.
+5) Download the server-dist artifact from the workflow build, then extract it in C:\Users\Administrator\Desktop\SkyMP\builds\dist\server
+Note, this is the default path. You will need to make the builds\dist\server folders. If your username isn't Administrator, or if you're not using windows, correct accordingly.
+
+6) In server-settings.json, tweak the load order to match the path to your current install of Skyrim.
+You can also add in any mods here, or tweak/add any settings from the server settings document. 
+
+7) Install NSSM. There's a bat file located in the base directory, just run it and it'll do it for you.
 NSSM turns your SkyMP server into a service that runs automatically, such as after a crash or server restart. 
 Note: The bat file assumes your path is C:\Users\Administrator\Desktop\SkyMP If this is not the case, please edit the bat file to the correct path.
