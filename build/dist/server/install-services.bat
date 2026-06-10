@@ -2,11 +2,11 @@
 setlocal
 
 :: ======EDIT THESE IF YOUR PATHS DIFFER======
-set "SERVER_DIR=C:\Users\Administrator\Desktop\skyrp\build\dist\server"
+set "SERVER_DIR=C:\Users\Administrator\Desktop\SkyMP\build\dist\server"
 set "NODE_EXE=C:\Program Files\nodejs\node.exe"
 set "LOG_DIR=C:\Users\Administrator\Desktop\logs"
 set "NSSM_DIR=C:\tools\nssm"
-set "BACKEND_DIR=C:\Users\Administrator\Desktop\skyrp\skymp5-backend"
+set "BACKEND_DIR=C:\Users\Administrator\Desktop\SkyMP\skymp5-backend"
 set "BACKEND_ENTRY=server.js"
 
 :: Re-launch elevated if not running as Administrator
