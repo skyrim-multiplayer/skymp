@@ -44,16 +44,16 @@ Once all of this is done, CONGRATS! Now all we have to do is configure the backe
 
 {
   "dataDir": "data",
-  "gamemode": "gamemode.js",
+  "gamemodePath": "gamemode.js",
   
   "loadOrder": [
-    "C:/GOG Games/Skyrim Anniversary Edition/Data/Skyrim.esm",
-    "C:/GOG Games/Skyrim Anniversary Edition/Data/Update.esm",
-    "C:/GOG Games/Skyrim Anniversary Edition/Data/Dawnguard.esm",
-    "C:/GOG Games/Skyrim Anniversary Edition/Data/HearthFires.esm",
-    "C:/GOG Games/Skyrim Anniversary Edition/Data/Dragonborn.esm"
+    "C:/Steam/steamapps/common/Skyrim Special Edition/Data/Skyrim.esm",
+    "C:/Steam/steamapps/common/Skyrim Special Edition/Data/Update.esm",
+    "C:/Steam/steamapps/common/Skyrim Special Edition/Data/Dawnguard.esm",
+    "C:/Steam/steamapps/common/Skyrim Special Edition/Data/HearthFires.esm",
+    "C:/Steam/steamapps/common/Skyrim Special Edition/Data/Dragonborn.esm"
   ],
-  "archives": ["Skyrim - Misc.bsa"],
+  "archives": ["C:/Steam/steamapps/common/Skyrim Special Edition/Data/Skyrim - Misc.bsa"],
   
   "name": "name here",
   "port": 7777,
@@ -68,7 +68,7 @@ Once all of this is done, CONGRATS! Now all we have to do is configure the backe
   "npcSettings": {},
   
   "isPapyrusHotReloadEnabled": true,
-  "enableGamemodeDataUpdatesBroadcast": true,
+  "enableGamemodeDataUpdatesBroadcast": false,
   "enableConsoleCommandsForAll": false,
   
   "metricsAuth": {
@@ -79,8 +79,12 @@ Once all of this is done, CONGRATS! Now all we have to do is configure the backe
   "damageMultFormulaSettings": { "multiplier": 1.0 },
   
   "discordAuth": {
-    "botToken": "insert token here",
-    "guildId": "insert ID here",
-    "banRoleId": "insert ID here"
+    "botToken": "[insert token here]",
+    "guilds": [
+      {
+        "guildId": "[insert server ID here]",
+        "banRoleId": "[insert role ID here]"
+      }
+    ]
   }
 }
