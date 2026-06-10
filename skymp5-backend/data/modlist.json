@@ -1,0 +1,4 @@
+[
+  { "name": "SkyMP Client", "version": "0.8.2", "required": true, "enabled": true, "source": "backend" },
+  { "name": "SkyMP Roleplay", "required": true, "enabled": true, "source": "collection", "collectionSlug": "lciswb", "revisionId": 1 }
+]

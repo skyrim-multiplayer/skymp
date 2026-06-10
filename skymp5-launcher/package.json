@@ -1,0 +1,68 @@
+{
+  "name": "skyrp-launcher",
+  "version": "0.1.1",
+  "description": "Launcher for the Skyrim Roleplay server",
+  "main": "src/main.js",
+  "author": "F02K and Suraru",
+  "license": "AGPL",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "build": "electron-builder",
+    "build:win": "electron-builder --win",
+    "build:linux": "electron-builder --linux",
+    "build:mac": "electron-builder --mac"
+  },
+  "dependencies": {
+    "adm-zip":        "^0.5.10",
+    "classic-level":  "^1.4.1",
+    "dotenv":         "^16.4.5",
+    "electron-store": "^8.2.0"
+  },
+  "devDependencies": {
+    "electron":         "^41.2.0",
+    "electron-builder": "^26.8.1"
+  },
+  "build": {
+    "appId": "com.skyrp.launcher",
+    "productName": "SkyRP Launcher",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "src/**/*",
+      "assets/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "assets/icon.ico"
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "icon": "assets/icon.png"
+    },
+    "mac": {
+      "target": [
+        "dmg"
+      ],
+      "icon": "assets/icon.icns"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "installerIcon": "assets/icon.ico",
+      "uninstallerIcon": "assets/icon.ico"
+    }
+  }
+}

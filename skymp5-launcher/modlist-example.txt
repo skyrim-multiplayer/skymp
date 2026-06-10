@@ -1,0 +1,78 @@
+# Frostfall Launcher — Modlist API Response Format
+#
+# When the backend endpoint is ready, GET /api/modlist should return a JSON
+# array matching the shape below.  The renderer's loadModlist() will swap out
+# the static EXAMPLE_MODLIST constant for this live response.
+#
+# Field reference
+# ───────────────
+#   name      (string,  required) – Display name shown in the launcher panel.
+#   version   (string,  required) – Semver string shown as "v<version>".
+#   required  (boolean, optional) – If true the mod is marked with a REQ badge
+#                                   and cannot be disabled by the player.
+#   enabled   (boolean, required) – Whether the mod is active in the profile.
+#
+# ─────────────────────────────────────────────────────────────────────────────
+
+[
+  {
+    "name":     "SKSE64",
+    "version":  "2.2.6",
+    "required": true,
+    "enabled":  true
+  },
+  {
+    "name":     "SkyMP Client",
+    "version":  "0.8.2",
+    "required": true,
+    "enabled":  true
+  },
+  {
+    "name":     "Address Library for SKSE",
+    "version":  "11.0.0",
+    "required": true,
+    "enabled":  true
+  },
+  {
+    "name":     "SkyUI",
+    "version":  "5.2.1",
+    "required": false,
+    "enabled":  true
+  },
+  {
+    "name":     "Relationship Dialogue Overhaul",
+    "version":  "1.0.4",
+    "required": false,
+    "enabled":  true
+  },
+  {
+    "name":     "Alternate Start – Live Another Life",
+    "version":  "4.1.7",
+    "required": false,
+    "enabled":  true
+  },
+  {
+    "name":     "Unofficial Skyrim Special Edition Patch",
+    "version":  "4.3.0",
+    "required": false,
+    "enabled":  true
+  },
+  {
+    "name":     "Immersive Citizens – AI Overhaul",
+    "version":  "0.4.1",
+    "required": false,
+    "enabled":  true
+  },
+  {
+    "name":     "A Quality World Map",
+    "version":  "9.0.1",
+    "required": false,
+    "enabled":  false
+  },
+  {
+    "name":     "Enhanced Lights and FX",
+    "version":  "3.05",
+    "required": false,
+    "enabled":  false
+  }
+]
