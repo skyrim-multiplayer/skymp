@@ -4,7 +4,7 @@
 // dashboard session tokens instead of launcher session tokens.
 //
 // Required Discord app settings:
-//   Redirects: add DISCORD_DASHBOARD_REDIRECT_URI (e.g. https://api.frostfall.online/auth/dashboard/callback)
+//   Redirects: add DISCORD_DASHBOARD_REDIRECT_URI (e.g. https://api.SkyMP.online/auth/dashboard/callback)
 
 const { Router }              = require('express')
 const https                   = require('https')

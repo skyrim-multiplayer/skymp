@@ -5,7 +5,7 @@
  * Route: POST /webhooks/github
  *
  * GitHub delivers a signed JSON payload whenever a push is made to the
- * Frostfall-Client repository.  This handler:
+ * SkyMP-Client repository.  This handler:
  *   1. Verifies the HMAC-SHA256 signature (X-Hub-Signature-256 header).
  *   2. Responds 200 immediately so GitHub doesn't time out.
  *   3. Runs `git pull` in sources/client/ then rebuilds public/files/root/.
@@ -15,7 +15,7 @@
  *   GITHUB_WEBHOOK_SECRET  (required)
  *     The same secret you enter in the GitHub repo → Settings → Webhooks form.
  *
- * GitHub webhook setup (Frostfall-Client repo)
+ * GitHub webhook setup (SkyMP-Client repo)
  * ─────────────────────────────────────────────
  *   Payload URL : https://<your-server>/webhooks/github
  *   Content type: application/json

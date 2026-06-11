@@ -1,9 +1,9 @@
 'use strict'
 
 /**
- * One-time (and subsequent) setup for the Frostfall-Client source directory.
+ * One-time (and subsequent) setup for the SkyMP-Client source directory.
  *
- *   First run  → git clone  https://github.com/F02K/Frostfall-Client.git  sources/client/
+ *   First run  → git clone  https://github.com/skyrim-multiplayer/skymp.git  sources/client/
  *   Later runs → git pull --ff-only  (fast-forward only, refuse dirty merges)
  *
  * After the clone / pull the merge pipeline runs automatically so that
@@ -17,7 +17,7 @@ const { execFileSync } = require('child_process')
 const path = require('path')
 const fs   = require('fs')
 
-const CLIENT_REPO = 'https://github.com/F02K/Frostfall-Client.git'
+const CLIENT_REPO = 'https://github.com/skyrim-multiplayer/skymp.git'
 const CLIENT_DIR  = path.join(__dirname, '..', 'sources', 'client')
 
 // ── Clone or pull ─────────────────────────────────────────────────────────────
@@ -36,7 +36,7 @@ if (isCloned) {
     process.exit(1)
   }
 } else {
-  console.log('[setup] Cloning Frostfall-Client repo…')
+  console.log('[setup] Cloning SkyMP-Client repo…')
   console.log('[setup]   →', CLIENT_DIR)
   try {
     execFileSync('git', ['clone', CLIENT_REPO, CLIENT_DIR], { stdio: 'inherit' })

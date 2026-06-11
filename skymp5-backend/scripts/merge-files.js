@@ -5,7 +5,7 @@
  * that the launcher downloads, and builds the distributable zip.
  *
  *   sources/client/  →  public/files/root/
- *                    →  public/files/frostfall-client.zip
+ *                    →  public/files/skymp-client.zip
  *                    →  data/files-version.json
  *
  * SKSE is NOT included here — it is managed by the user via the Vortex collection.
@@ -23,7 +23,7 @@ const ROOT = path.join(__dirname, '..')
 
 const CLIENT_SRC   = path.join(ROOT, 'sources', 'client')
 const OUTPUT_DIR   = path.join(ROOT, 'public', 'files', 'root')
-const ZIP_PATH     = path.join(ROOT, 'public', 'files', 'frostfall-client.zip')
+const ZIP_PATH     = path.join(ROOT, 'public', 'files', 'skymp-client.zip')
 const VERSION_FILE = path.join(ROOT, 'data', 'files-version.json')
 
 // ── Version helpers ───────────────────────────────────────────────────────────

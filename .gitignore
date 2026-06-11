@@ -1,10 +1,10 @@
 # ── Source directories ─────────────────────────────────────────────────────────
 # Client repo is cloned here by `npm run setup` — not tracked in this repo.
-sources/client/
+skymp5-backend/sources/client/
 
 # SKSE binaries are large and placed manually — only the README is tracked.
-sources/skse/*.exe
-sources/skse/*.dll
+skymp5-backend/sources/skse/*.exe
+skymp5-backend/sources/skse/*.dll
 
 # ── Generated output ───────────────────────────────────────────────────────────
 # Both files are rebuilt by `npm run merge` — do not track them in git.
@@ -175,8 +175,8 @@ package-lock.json
 
 
 package-lock.json
-sources/skse/Data/Platform/Distribution/RuntimeDependencies/libcef.dll
-sources/skse/Data/Platform/Distribution/RuntimeDependencies/libnode.dll
+skymp5-backend/sources/skse/Data/Platform/Distribution/RuntimeDependencies/libcef.dll
+skymp5-backend/sources/skse/Data/Platform/Distribution/RuntimeDependencies/libnode.dll
 nssm.zip
 /nssm-extracted
 

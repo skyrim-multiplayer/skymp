@@ -16,7 +16,7 @@ const path   = require('path')
 const fs     = require('fs')
 const rateLimit = require('express-rate-limit')
 
-const ZIP_PATH     = path.join(__dirname, '..', 'public', 'files', 'frostfall-client.zip')
+const ZIP_PATH     = path.join(__dirname, '..', 'public', 'files', 'SkyMP-client.zip')
 const VERSION_PATH = path.join(__dirname, '..', 'data', 'files-version.json')
 
 const NOT_BUILT = { error: 'File package not found. Run `npm run merge` on the server first.' }
@@ -51,7 +51,7 @@ router.get('/zip', (req, res) => {
   const stat = fs.statSync(ZIP_PATH)
   res.setHeader('Content-Type', 'application/zip')
   res.setHeader('Content-Length', stat.size)
-  res.setHeader('Content-Disposition', 'attachment; filename="frostfall-client.zip"')
+  res.setHeader('Content-Disposition', 'attachment; filename="SkyMP-client.zip"')
 
   const stream = fs.createReadStream(ZIP_PATH)
   stream.on('error', () => res.destroy())

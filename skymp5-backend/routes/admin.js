@@ -1,6 +1,6 @@
 'use strict'
 // ── Admin proxy ───────────────────────────────────────────────────────────────
-// Validates the bearer token, then forwards requests to the Frostfall-Admin
+// Validates the bearer token, then forwards requests to the SkyMP-Admin
 // service. Keeps the admin service off the public internet — only the backend
 // is exposed; the admin process binds to localhost only.
 
