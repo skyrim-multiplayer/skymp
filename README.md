@@ -27,32 +27,35 @@ Third-party code licenses can be found in [THIRD_PARTY_LICENSES](THIRD_PARTY_LIC
 You will need a domain, website, VPS, and knowledge on how to edit DNS records to create the API and Dashboard.
 This I cannot provide too much documentation on, but any decent provider worth their salt should be able to assist you.
 
-3) Fork this repo into your own directory. I recommend creating an organization through github instead of your personal account. 
+2) Fork this repo into your own directory. I recommend creating an organization through github instead of your personal account. 
 
-4) Go to the actions tab in your new repo, and activate workflows. I recommend for now, disabling all but the one you need.
+3) Go to the actions tab in your new repo, and activate workflows. I recommend for now, disabling all but the one you need.
 For windows users, make sure PR Windows Flatrim is activated, for Linux make sure PR Linux is activated.
 Formatting Check is a useful one to keep on. It'll run linter on your scripts which will find errors for you.
 
-5) Clone your new repo onto your server's desktop. This can be done with the github desktop app if you're unfamiliar with the git command line. 
+4) Clone your new repo onto your server's desktop. This can be done with the github desktop app if you're unfamiliar with the git command line. 
 This guide assumes you have a windows VPS to run your server off of, with an account called "Administrator" and the repo located on the desktop.
 If you don't adjust the .bat lines accordingly.
 
-6) Update your README.md file and push the update to github. 
+5) Update your README.md file and push the update to github. 
 This will cause the workflow to trigger. Warning, this COULD take a couple hours, but it will build your server for you.
 
-7) Download the server-dist artifact from the workflow build, then extract it in C:\Users\Administrator\Desktop\SkyMP\builds\dist\server
+6) Download the server-dist artifact from the workflow build, then extract it in C:\Users\Administrator\Desktop\SkyMP\builds\dist\server
 Note, this is the default path, change as needed. 
 
-8) Follow the instructions inside of \SkyMP\builds\dist\server\README.md
+7) Follow the instructions inside of \SkyMP\builds\dist\server\README.md
 It will guide you almost completely, including a full server-settings.json to fill out. 
 
-9) Follow the instructions inside of \SkyMP\skymp5-backend\README.md
-It will guide you almost completely, along with the .env settings and any changes you need to make
+8) Go to \SkyMP\skymp5-backend\ and run Setup-Backend.vat followed by build-client.bat
+Both of these will do everything for you. I recommend looking at the README.md for the launcher so you can configure it to your liking. 
 
-10) Follow the instructions inside of \SkyMP\skymp5-launcher\README.md
-It will guide you almost completely, along with making a build you can share on your website
+9) Go to \SkyMP\skymp5-launcher\ and run the build-launcher.bat file
+This will give you your .exe to distribute to your players. Simply zip it up, and upload it to any CDN of your choosing (such as discord, or your website).
 
-11) If you need anything further, read the documentation already provided in \SkyMP\docs
+10) Finally, install nginx on your machine with the final script in the root directory.
+This script also will run win to create certs for your API and Dashboard, making it a true server. 
+
+If you need anything further, read the documentation already provided in \SkyMP\docs
 It literally contains everything else.
 
 Have fun and enjoy your server!
