@@ -29,20 +29,23 @@ const VERSION_FILE = path.join(ROOT, 'data', 'files-version.json')
 // ── Version helpers ───────────────────────────────────────────────────────────
 
 /**
- * Short git commit hash of the client source repo.
+ * Short git commit hash identifying the client files version.
+ * Tries the legacy sources/client checkout first, then the skyrp monorepo
+ * this backend lives in (the client is built from skymp5-client there).
  * This changes exactly when new commits are pulled — never on mere restarts.
- * Falls back to 'nogit' if the directory isn't a repo yet.
+ * Falls back to 'nogit' if neither directory is a git repo.
  */
 function clientGitHash() {
-  try {
-    return execFileSync('git', ['-C', CLIENT_SRC, 'rev-parse', '--short', 'HEAD'], {
-      encoding: 'utf8',
-      stdio:    ['ignore', 'pipe', 'ignore'],
-    }).trim()
-  } catch {
-    return 'nogit'
-  }
-}
+  for (const dir of [CLIENT_SRC, path.join(ROOT, '..')]) {
+    try {
+      return execFileSync('git', ['-C', dir, 'rev-parse', '--short', 'HEAD'], {
+        encoding: 'utf8',
+        stdio:    ['ignore', 'pipe', 'ignore'],
+      }).trim()
+    } catch { /* try next */ }
+   }
+  return 'nogit'
+ }
 
 // ── File copy ─────────────────────────────────────────────────────────────────
 
