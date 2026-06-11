@@ -52,6 +52,9 @@ Both of these will do everything for you. I recommend looking at the README.md f
 9) Go to \SkyMP\skymp5-launcher\ and run the build-launcher.bat file
 This will give you your .exe to distribute to your players. Simply zip it up, and upload it to any CDN of your choosing (such as discord, or your website).
 
+10) Finally, install nginx on your machine with the final script in the root directory.
+This script also will run win to create certs for your API and Dashboard, making it a true server. 
+
 If you need anything further, read the documentation already provided in \SkyMP\docs
 It literally contains everything else.
 
