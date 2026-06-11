@@ -61,7 +61,7 @@ app.use(express.json({
 }))
 
 // Static file serving — root/ is installed into Skyrim/ (Data/ sub-dir)
-app.use('/files/root', express.static(path.join(__dirname, 'public', 'files', 'root')))
+app.use('/files/root', express.static(path.join(require('./config').clientFilesDir, 'root')))
 
 // News images — served at /images/<filename>
 app.use('/images', express.static(path.join(__dirname, 'public', 'images')))

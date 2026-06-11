@@ -8,6 +8,11 @@ const path = require('path')
 const SKYMP_PORT = parseInt(process.env.SKYMP_PORT || '7777', 10)
 
 module.exports = {
+  // ── Client files bucket ─────────────────────────────────────────────────────
+  clientFilesDir: process.env.CLIENT_FILES_DIR
+    || path.join(__dirname, '..', 'build', 'client-files'),
+  clientZipName: 'skymp-client.zip',
+
   // ── Game server connection (used for status checks and metrics) ─────────────
   skyrimServerHost: process.env.SKYMP_HOST || '127.0.0.1',
   skyrimServerPort: SKYMP_PORT,

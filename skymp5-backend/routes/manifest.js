@@ -2,8 +2,9 @@ const router = require('express').Router()
 const path   = require('path')
 const fs     = require('fs')
 const crypto = require('crypto')
+const config = require('../config')
 
-const FILES_ROOT = path.join(__dirname, '..', 'public', 'files')
+const FILES_ROOT = config.clientFilesDir
 
 // root/ → installed into {skyrimPath}/   (Data/ sub-dir)
 const BUCKETS = [
@@ -51,7 +52,7 @@ router.get('/', (_req, res) => {
 
   if (manifest.length === 0) {
     return res.status(503).json({
-      error: 'No files found. Run "npm run populate" to copy client files into backend/public/files/.'
+      error: 'No files found. Run "npm run build-client" to build the client files bucket.'
     })
   }
 

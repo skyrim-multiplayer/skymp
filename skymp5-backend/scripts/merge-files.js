@@ -4,9 +4,9 @@
  * Merge pipeline — copies the client source directory into the file bucket
  * that the launcher downloads, and builds the distributable zip.
  *
- *   sources/client/  →  public/files/root/
- *                    →  public/files/skymp-client.zip
- *                    →  data/files-version.json
+ *   build/dist/client (via `npm run populate`)  →  build/client-files/root/
+ *   build/client-files/root/                    →  build/client-files/<zip>
+ *                                               →  data/files-version.json
  *
  * SKSE is NOT included here — it is managed by the user via the Vortex collection.
  *
@@ -18,12 +18,13 @@ const path               = require('path')
 const fs                 = require('fs')
 const { execFileSync }   = require('child_process')
 const archiver           = require('archiver')
+const config     		 = require('../config')
 
 const ROOT = path.join(__dirname, '..')
 
 const CLIENT_SRC   = path.join(ROOT, 'sources', 'client')
-const OUTPUT_DIR   = path.join(ROOT, 'public', 'files', 'root')
-const ZIP_PATH     = path.join(ROOT, 'public', 'files', 'skymp-client.zip')
+const OUTPUT_DIR   = path.join(config.clientFilesDir, 'root')
+const ZIP_PATH     = path.join(config.clientFilesDir, config.clientZipName)
 const VERSION_FILE = path.join(ROOT, 'data', 'files-version.json')
 
 // ── Version helpers ───────────────────────────────────────────────────────────

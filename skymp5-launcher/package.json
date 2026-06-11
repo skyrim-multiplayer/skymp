@@ -27,7 +27,7 @@
     "appId": "com.skyrp.launcher",
     "productName": "SkyRP Launcher",
     "directories": {
-      "output": "dist"
+      "output": "../build/launcher"
     },
     "files": [
       "src/**/*",

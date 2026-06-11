@@ -15,8 +15,9 @@ const router = require('express').Router()
 const path   = require('path')
 const fs     = require('fs')
 const rateLimit = require('express-rate-limit')
+const config = require('../config')
 
-const ZIP_PATH     = path.join(__dirname, '..', 'public', 'files', 'SkyMP-client.zip')
+const ZIP_PATH     = path.join(config.clientFilesDir, config.clientZipName)
 const VERSION_PATH = path.join(__dirname, '..', 'data', 'files-version.json')
 
 const NOT_BUILT = { error: 'File package not found. Run `npm run merge` on the server first.' }

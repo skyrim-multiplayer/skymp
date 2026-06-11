@@ -1,8 +1,8 @@
 /**
  * Copies client files from the skymp build output into the backend's file bucket:
  *
- *   public/files/root/   → installed into {skyrimPath}/ root
- *     Data/              → sub-directory for all Data/ files
+ *   build/client-files/root/   → installed into {skyrimPath}/ root
+ *     Data/          		    → sub-directory for all Data/ files
  *
  * SKSE is managed by Vortex and is NOT deployed here.
  *
@@ -22,7 +22,9 @@ const SKYMP_DATA = process.env.SKYMP_CLIENT_DATA
 
 // ── Destination ───────────────────────────────────────────────────────────────
 
-const ROOT_DEST = path.join(__dirname, '..', 'public', 'files', 'root')
+const config = require('../config')
+
+const ROOT_DEST = path.join(config.clientFilesDir, 'root')
 const DATA_DEST = path.join(ROOT_DEST, 'Data')
 
 fs.mkdirSync(DATA_DEST, { recursive: true })
