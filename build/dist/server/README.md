@@ -37,10 +37,16 @@ Now you have 3 easy to run scripts to manage your server! Yay!
 
 
 Finally, we wanna look at the server-settings.json file. 
-What we start with is pretty barebones, so here's an example below you can fill out yourself
-
 Once all of this is done, CONGRATS! Now all we have to do is configure the backend. 
 
+What we start with is pretty barebones, so here's an example below you can fill out yourself
+The default starting point is whiterun (you can delete it, and it just drops you on a cliff near Riften)
+
+The reloot is what items respawn, its in milliseconds. By default, everything is an hour, but here I've set harvestables to 15min, and containers to 24hr.
+Cont is containers (barrels, chests, etc), flor/tree are harvestables, and everything else is loose items which I put to never respawn. 
+
+There's also settings for database, logging, sweetpie settings, language, etc you can find in the documentation wiki. 
+For now, this should be all you need.
 
 {
   "dataDir": "data",
@@ -77,13 +83,31 @@ Once all of this is done, CONGRATS! Now all we have to do is configure the backe
   },
   
   "damageMultFormulaSettings": { "multiplier": 1.0 },
+
+  "startPoints": [
+    {
+      "pos": [22659, -8697, -3594],
+      "worldOrCell": "0x1a26f",
+      "angleZ": 268
+    }
+  ],
+
+  "reloot": {
+    "FLOR": 900000,
+    "TREE": 900000,
+    "CONT": 86400000
+  },
   
+  "forbiddenReloot": ["MISC", "WEAP", "SLGM", "SCRL", "ALCH", "INGR", "BOOK", "ARMO", "AMMO"]
+    
   "discordAuth": {
     "botToken": "[insert token here]",
     "guilds": [
       {
         "guildId": "[insert server ID here]",
         "banRoleId": "[insert role ID here]"
+        "eventLogChannelId": "[insert channel ID here]",
+        "hideIpRoleId": "[insert admin ID here]"
       }
     ]
   }
