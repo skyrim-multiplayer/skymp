@@ -14,8 +14,11 @@ const path = require('path')
 
 // ── Source paths ──────────────────────────────────────────────────────────────
 
-// skymp build output Data/ directory
-const SKYMP_DATA = 'E:\\Github\\skymp\\build\\dist\\client\\Data'
+// skymp build output Data/ directory.
+// Defaults to this repo's own build output
+// Override with SKYMP_CLIENT_DATA for a custom location.
+const SKYMP_DATA = process.env.SKYMP_CLIENT_DATA
+  || path.join(__dirname, '..', '..', 'build', 'dist', 'client', 'Data')
 
 // ── Destination ───────────────────────────────────────────────────────────────
 

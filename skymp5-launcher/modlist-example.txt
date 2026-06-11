@@ -1,4 +1,4 @@
-# Frostfall Launcher — Modlist API Response Format
+# SkyMP Launcher — Modlist API Response Format
 #
 # When the backend endpoint is ready, GET /api/modlist should return a JSON
 # array matching the shape below.  The renderer's loadModlist() will swap out
