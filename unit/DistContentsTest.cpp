@@ -128,7 +128,10 @@ TEST_CASE("Distribution folder must contain all requested files",
   const std::vector<std::filesystem::path> kDistContentsIgnore = {
     "server/data/Dawnguard.esm",   "server/data/Dragonborn.esm",
     "server/data/HearthFires.esm", "server/data/Skyrim.esm",
-    "server/data/Update.esm",      "server/scam_native.ilk"
+    "server/data/Update.esm",      "server/scam_native.ilk",
+    // Deployment helpers committed into build/dist/server in this repo;
+    // present in CI checkouts but not produced by the build itself.
+    "server/README.md",            "server/install-services.bat"
   };
   for (auto& path : kDistContentsIgnore) {
     expectedPaths.erase(path);
