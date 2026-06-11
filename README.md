@@ -26,6 +26,7 @@ Third-party code licenses can be found in [THIRD_PARTY_LICENSES](THIRD_PARTY_LIC
 1) Set up your server and website.
 You will need a domain, website, VPS, and knowledge on how to edit DNS records to create the API and Dashboard.
 This I cannot provide too much documentation on, but any decent provider worth their salt should be able to assist you.
+Generally, your domain should have A records (for api.website and dashboard.website) pointing to your VPS' IP address.
 
 2) Fork this repo into your own directory. I recommend creating an organization through github instead of your personal account. 
 
@@ -53,9 +54,13 @@ Both of these will do everything for you. I recommend looking at the README.md f
 This will give you your .exe to distribute to your players. Simply zip it up, and upload it to any CDN of your choosing (such as discord, or your website).
 
 10) Finally, install nginx on your machine with the final script in the root directory.
-This script also will run win to create certs for your API and Dashboard, making it a true server. 
+This script also will run win-acme to create certs for your API and Dashboard, making it a true server. 
+Big note, you must edit this bat file, and the two conf files in SkyMP/deploy/nginx
+I tried to leave it pretty simple, just fill out where it asks you to.
 
 If you need anything further, read the documentation already provided in \SkyMP\docs
 It literally contains everything else.
 
-Have fun and enjoy your server!
+If both services are running and your launcher connects, congrats!
+Have fun and enjoy your server! 
+The rest of your journey involves developing it and branching it off from the rest. Good luck!
