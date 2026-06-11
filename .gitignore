@@ -10,7 +10,7 @@ skymp5-backend/sources/skse/*.dll
 # Both files are rebuilt by `npm run merge` — do not track them in git.
 skymp5-backend/public/files/*.zip
 skymp5-backend/data/files-version.json
-skymp5-backend/data
+skymp5-backend/data/
 # Need to exclude backend/data because these files will change with the server running. Make sure they can still be downloaded though.
 # public/files/root/ is rebuilt by the merge pipeline.
 # Uncomment the line below if you prefer to generate it on the server rather
