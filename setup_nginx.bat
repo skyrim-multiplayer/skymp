@@ -2,14 +2,14 @@
 setlocal
 
 :: ============================================================
-::  SkyRP reverse-proxy installer. Double-click from the repo root.
+::  SkyMP reverse-proxy installer. Double-click from the repo root.
 ::    1. Installs nginx to C:\nginx
 ::    2. Installs win-acme (Let's Encrypt client) to C:\tools\win-acme
 ::    3. Starts nginx on port 80 and obtains certificates for
 ::       api. and dashboard.skyrimroleplay.co.uk (auto-renewing)
 ::    4. Switches nginx to the full HTTPS proxy config
 ::       (api -> localhost:4000, dashboard -> localhost:4002)
-::    5. Registers nginx as the SkyrpNginx Windows service
+::    5. Registers nginx as the SkyMPNginx Windows service
 ::  PREREQUISITE: DNS A records for both subdomains must point at
 ::  this machine, and ports 80/443 must be reachable from outside.
 ::  Safe to re-run; existing certificates are kept.
@@ -22,10 +22,10 @@ set "NGINX_VER=1.28.0"
 set "WACS_DIR=C:\tools\win-acme"
 set "WACS_VER=2.2.9.1701"
 set "NSSM_DIR=C:\tools\nssm"
-set "EMAIL=smitty9542@gmail.com"
-set "DOMAINS=api.skyrimroleplay.co.uk,dashboard.skyrimroleplay.co.uk"
-set "CERT_NAME=api.skyrimroleplay.co.uk"
-set "SERVICE=SkyrpNginx"
+set "EMAIL=[YOUR EMAIL HERE]"
+set "DOMAINS=api.[YOUR WEBSITE HERE],dashboard.[YOUR WEBSITE HERE]"
+set "CERT_NAME=api.[YOUR WEBSITE HERE]"
+set "SERVICE=SkyMPNginx"
 
 :: ---- Re-launch elevated if not running as Administrator ----
 net session >nul 2>&1
@@ -36,12 +36,12 @@ if errorlevel 1 (
 )
 
 echo.
-echo === SkyRP nginx + win-acme setup ===
+echo === SkyMP nginx + win-acme setup ===
 echo.
 
 if not exist "%REPO_DIR%\deploy\nginx\nginx-full.conf" (
     echo [ERROR] deploy\nginx configs not found next to this script.
-    echo Run this bat from the root of the skyrp repo.
+    echo Run this bat from the root of the SkyMP repo.
     pause
     exit /b 1
 )
@@ -93,10 +93,10 @@ if not defined NSSM (
 )
 
 :: ---- Firewall ----
-netsh advfirewall firewall delete rule name="SkyRP Web HTTP 80" >nul 2>&1
-netsh advfirewall firewall add  rule name="SkyRP Web HTTP 80" dir=in action=allow protocol=TCP localport=80 >nul
-netsh advfirewall firewall delete rule name="SkyRP Web HTTPS 443" >nul 2>&1
-netsh advfirewall firewall add  rule name="SkyRP Web HTTPS 443" dir=in action=allow protocol=TCP localport=443 >nul
+netsh advfirewall firewall delete rule name="SkyMP Web HTTP 80" >nul 2>&1
+netsh advfirewall firewall add  rule name="SkyMP Web HTTP 80" dir=in action=allow protocol=TCP localport=80 >nul
+netsh advfirewall firewall delete rule name="SkyMP Web HTTPS 443" >nul 2>&1
+netsh advfirewall firewall add  rule name="SkyMP Web HTTPS 443" dir=in action=allow protocol=TCP localport=443 >nul
 
 :: ---- 3. Certificates ----
 if exist "%NGINX_DIR%\certs\%CERT_NAME%-key.pem" (
@@ -119,7 +119,7 @@ timeout /t 3 /nobreak >nul
 
 echo Requesting certificates for %DOMAINS% ...
 echo (Requires the DNS A records to point at this machine.)
-"%WACS_DIR%\wacs.exe" --source manual --host "%DOMAINS%" --validation filesystem --webroot "%NGINX_DIR%\html" --store pemfiles --pemfilespath "%NGINX_DIR%\certs" --accepttermsofservice --emailaddress %EMAIL%
+"%WACS_DIR%\wacs.exe" --source manual --host "%DOMAINS%" --validation filesystem --webroot "%NGINX_DIR%\html" --store pemfiles --pemfilespath "%NGINX_DIR%\certs" --accepttos --emailaddress %EMAIL%
 if not exist "%NGINX_DIR%\certs\%CERT_NAME%-key.pem" (
     echo.
     echo [ERROR] Certificate issuance failed - see win-acme output above.
