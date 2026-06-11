@@ -52,6 +52,10 @@ const playersRoute          = require('./routes/players')
 const app  = express()
 const PORT = process.env.PORT || 4000
 
+// nginx terminates TLS on this machine and proxies over loopback.
+// Without this, req.ip is 127.0.0.1 for every visitor, so per-IP rate limiting (routes/files.js) treats all players as a single client.
+app.set('trust proxy', 'loopback')
+
 app.use(cors())
 
 // Capture the raw request body so the webhook route can verify the

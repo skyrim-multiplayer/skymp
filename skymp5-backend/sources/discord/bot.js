@@ -25,27 +25,41 @@ function ensureRoleLookupConfigured() {
   }
 }
 
+// Short-lived cache so launcher polling doesn't turn into a request spam
+const ROLE_CACHE_TTL_MS = 60 * 1000
+const roleCache = new Map() // discordId -> { roles, expiresAt }
+
 async function getMemberRoles(discordId) {
   if (!discordId) return []
   if (!config.discordBotToken || !config.discordGuildId) return []
+
+  const cached = roleCache.get(discordId)
+  if (cached && cached.expiresAt > Date.now()) return cached.roles
 
   if (ready) {
     try {
       const guild = await client.guilds.fetch(config.discordGuildId)
       const member = await guild.members.fetch({ user: discordId, force: true })
-      return [...member.roles.cache.keys()]
+      const roles = [...member.roles.cache.keys()]
+      roleCache.set(discordId, { roles, expiresAt: Date.now() + ROLE_CACHE_TTL_MS })
+      return roles
     } catch (err) {
-      if (err && err.code === 10007) return []  // genuinely not in server
+      if (err && err.code === 10007) {
+        roleCache.set(discordId, { roles: [], expiresAt: Date.now() + ROLE_CACHE_TTL_MS })
+        return []  // genuinely not in server
+      }
       console.warn('[discord-bot] guild fetch failed, falling back to HTTP:', err.message)
       // Fall through to HTTP fallback below
     }
   }
 
   try {
-    return await fetchMemberRoles(discordId)
+    const roles = await fetchMemberRoles(discordId)
+    roleCache.set(discordId, { roles, expiresAt: Date.now() + ROLE_CACHE_TTL_MS })
+    return roles
   } catch (err) {
     console.error('[discord-bot] HTTP fallback also failed:', err.message)
-    return []
+    return []  // not cached: allows quick recovery once Discord is reachable
   }
 }
 
@@ -140,7 +154,10 @@ function mutateMemberRole(discordId, roleId, method) {
       let data = ''
       res.on('data', c => { data += c })
       res.on('end', () => {
-        if (res.statusCode >= 200 && res.statusCode < 300) return resolve(true)
+        if (res.statusCode >= 200 && res.statusCode < 300) {
+          roleCache.delete(discordId)  // role changed; don't serve stale roles
+          return resolve(true)
+        }
         reject(new Error(`discord role update failed (${res.statusCode}): ${data}`))
       })
     })
