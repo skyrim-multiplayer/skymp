@@ -23,24 +23,36 @@ Third-party code licenses can be found in [THIRD_PARTY_LICENSES](THIRD_PARTY_LIC
 
 ### Instructions for new servers
 
-1) Fork this repo into your own directory. I recommend creating an organization through github instead of your personal account. 
+1) Set up your server and website.
+You will need a domain, website, VPS, and knowledge on how to edit DNS records to create the API and Dashboard.
+This I cannot provide too much documentation on, but any decent provider worth their salt should be able to assist you.
 
-2) Go to the actions tab in your new repo, and activate workflows. I recommend for now, disabling all but the one you need.
+3) Fork this repo into your own directory. I recommend creating an organization through github instead of your personal account. 
+
+4) Go to the actions tab in your new repo, and activate workflows. I recommend for now, disabling all but the one you need.
 For windows users, make sure PR Windows Flatrim is activated, for Linux make sure PR Linux is activated.
 Formatting Check is a useful one to keep on. It'll run linter on your scripts which will find errors for you.
 
-3) Clone your new repo onto your server's desktop. This can be done with the github desktop app if you're unfamiliar with the git command line. 
-This guide assumes you have a windows VPS to run your server off of, with an account called "Administrator." If you don't adjust the .bat lines accordingly.
+5) Clone your new repo onto your server's desktop. This can be done with the github desktop app if you're unfamiliar with the git command line. 
+This guide assumes you have a windows VPS to run your server off of, with an account called "Administrator" and the repo located on the desktop.
+If you don't adjust the .bat lines accordingly.
 
-4) Update your README.md file and push the update to github. 
+6) Update your README.md file and push the update to github. 
 This will cause the workflow to trigger. Warning, this COULD take a couple hours, but it will build your server for you.
 
-5) Download the server-dist artifact from the workflow build, then extract it in C:\Users\Administrator\Desktop\SkyMP\builds\dist\server
-Note, this is the default path. You will need to make the builds\dist\server folders. If your username isn't Administrator, or if you're not using windows, correct accordingly.
+7) Download the server-dist artifact from the workflow build, then extract it in C:\Users\Administrator\Desktop\SkyMP\builds\dist\server
+Note, this is the default path, change as needed. 
 
-6) In server-settings.json, tweak the load order to match the path to your current install of Skyrim.
-You can also add in any mods here, or tweak/add any settings from the server settings document. 
+8) Follow the instructions inside of \SkyMP\builds\dist\server\README.md
+It will guide you almost completely, including a full server-settings.json to fill out. 
 
-7) Install NSSM. There's a bat file located in the base directory, just run it and it'll do it for you.
-NSSM turns your SkyMP server into a service that runs automatically, such as after a crash or server restart. 
-Note: The bat file assumes your path is C:\Users\Administrator\Desktop\SkyMP If this is not the case, please edit the bat file to the correct path.
+9) Follow the instructions inside of \SkyMP\skymp5-backend\README.md
+It will guide you almost completely, along with the .env settings and any changes you need to make
+
+10) Follow the instructions inside of \SkyMP\skymp5-launcher\README.md
+It will guide you almost completely, along with making a build you can share on your website
+
+11) If you need anything further, read the documentation already provided in \SkyMP\docs
+It literally contains everything else.
+
+Have fun and enjoy your server!
