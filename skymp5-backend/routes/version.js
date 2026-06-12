@@ -5,7 +5,7 @@ const router = require('express').Router()
  * Set DOWNLOAD_URL to the installer download link (e.g. a GitHub Releases URL).
  */
 const LATEST_VERSION = '0.3.0'
-const DOWNLOAD_URL   = 'https://cdn1.site-media.eu/images/0/26240069/SkyRPLauncherSetup0.3.0.exe-3Fw9RLl1-jGYq0xPdomnJg.zip'
+const DOWNLOAD_URL   = 'https://www.skyrimroleplay.co.uk/download'
 
 router.get('/', (_req, res) => {
   res.json({
