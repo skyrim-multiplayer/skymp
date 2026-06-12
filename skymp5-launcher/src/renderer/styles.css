@@ -1427,3 +1427,16 @@ html, body {
   opacity: 0.5;
   cursor: default;
 }
+
+
+/* ── Nexus logged-in chip — dark yellow, overrides the discord blurple ──── */
+.nexus-topbar-user,
+#nexus-topbar-slot .discord-topbar-user {
+  background: rgba(160, 120, 20, 0.12);
+  border: 1px solid rgba(180, 134, 24, 0.35);
+}
+
+.nexus-topbar-user .discord-topbar-name,
+#nexus-topbar-slot .discord-topbar-name {
+  color: rgba(196, 152, 40, 0.92);
+}

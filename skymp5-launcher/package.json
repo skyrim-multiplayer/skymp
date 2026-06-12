@@ -1,6 +1,6 @@
 {
   "name": "skyrp-launcher",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "description": "Launcher for the Skyrim Roleplay server",
   "main": "src/main.js",
   "author": "F02K and Suraru",

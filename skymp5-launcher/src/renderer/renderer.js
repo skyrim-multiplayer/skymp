@@ -83,8 +83,15 @@ function updateLockState() {
   } else {
     btnConnect.disabled = false
     btnConnect.title    = ''
-    connectWarning.classList.remove('visible')
-    connectWarning.textContent = ''
+    // Fix instantly disappearing
+    const lockMessages = [
+      'Server is currently locked — you are not on the whitelist.',
+      'You are not on the server whitelist.',
+    ]
+    if (lockMessages.includes(connectWarning.textContent)) {
+      connectWarning.classList.remove('visible')
+      connectWarning.textContent = ''
+    }
   }
 }
 
@@ -216,7 +223,7 @@ function renderTopbarNexus() {
 
   if (nexusUser) {
     const wrap = document.createElement('div')
-    wrap.className = 'discord-topbar-user'
+    wrap.className = 'discord-topbar-user nexus-topbar-user'
 
     const name = document.createElement('span')
     name.className   = 'discord-topbar-name'
@@ -888,10 +895,12 @@ function buildModItem(mod) {
     item.appendChild(link)
   }
 
-  const ver = document.createElement('span')
-  ver.className   = 'mod-version'
-  ver.textContent = `v${mod.version}`
-  item.appendChild(ver)
+  if (mod.version) {
+    const ver = document.createElement('span')
+    ver.className   = 'mod-version'
+    ver.textContent = `v${mod.version}`
+    item.appendChild(ver)
+  }
 
   return item
 }
