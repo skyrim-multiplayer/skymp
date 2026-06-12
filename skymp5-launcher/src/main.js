@@ -15,7 +15,8 @@ const { spawn } = require('child_process')
 const Store  = require('electron-store')
 const AdmZip = require('adm-zip')
 const config = require('./config')
-const vortex = require('./vortex')
+const mo2    = require('./mo2')
+const nexus  = require('./nexus')
 
 const isDev = process.argv.includes('--dev')
 
@@ -33,8 +34,9 @@ if (LOG_FILE) {
   console.log('[dev] logging to', LOG_FILE)
 }
 
-// Route vortex module debug output through the same logger
-vortex.setLogger(log)
+// Route module debug output through the same logger
+mo2.setLogger(log)
+nexus.setLogger(log)
 
 // Only user-specific preferences live in the store.
 const store = new Store({
@@ -45,10 +47,11 @@ const store = new Store({
     cachedServers:     [],   // last-known server list fetched from /api/servers
     filesVersion:      '',   // version tag from last successful file download
     discordUser:       null,
-    vortexPath:        '',
-    vortexEnabled:     false,
-    vortexStagingPath: '',   // empty = use Vortex default (%APPDATA%\Vortex\skyrimse\mods)
-    nexusApiKey:       '',   // user's free Nexus API key — used to resolve file IDs for nxm:// links
+    mo2Enabled:        false,  // launch the game through the managed portable MO2
+    nexusApiKey:       '',     // Nexus API login
+    nexusUser:         null,   // { name, isPremium } from the last validation
+    isolatedGame:      true,  // play from the isolated game copy instead of skyrimPath
+    gameDirPath:       '',     // where the user chose to install the isolated copy
   }
 })
 
@@ -66,6 +69,25 @@ function activeServer() {
   if (servers.length === 0) return null
   const idx = Math.min(store.get('activeServerIndex') || 0, servers.length - 1)
   return servers[idx]
+}
+
+// ── Effective game path ───────────────────────────────────────────────────────
+// Creates an isolated copy, this keeps the base directory clean
+function isolatedGameDir() {
+  const chosen = store.get('gameDirPath')
+  if (chosen) return chosen
+  // Legacy default from before the location prompt existed
+  const local = process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local')
+  return path.join(local, 'SkyRP', 'GameDir')
+}
+
+function isolatedGameReady() {
+  return fs.existsSync(path.join(isolatedGameDir(), 'SkyrimSE.exe'))
+}
+
+function effectiveGamePath() {
+  if (store.get('isolatedGame') && isolatedGameReady()) return isolatedGameDir()
+  return store.get('skyrimPath')
 }
 
 // ── Window ────────────────────────────────────────────────────────────────────
@@ -131,8 +153,7 @@ ipcMain.handle('settings:load', async () => {
   }
 })
 ipcMain.handle('settings:save', (_e, data) => {
-  const allowed = ['skyrimPath', 'activeServerIndex',
-                   'vortexPath', 'vortexEnabled']
+  const allowed = ['skyrimPath', 'activeServerIndex', 'mo2Enabled', 'isolatedGame']
   const clean = {}
   for (const k of allowed) if (k in data) clean[k] = data[k]
   store.set(clean)
@@ -156,8 +177,12 @@ ipcMain.on('open:external', (_e, url) => {
 
 // ── News ──────────────────────────────────────────────────────────────────────
 ipcMain.handle('api:news', async () => {
-  try { return await fetchJSON(`${config.apiUrl}/api/news`) }
-  catch { return null }
+  try {
+    const items = await fetchJSON(`${config.apiUrl}/api/news`)
+    return { ok: true, items: Array.isArray(items) ? items : [] }
+  } catch (err) {
+    return { ok: false, error: err.message }
+  }
 })
 
 // ── Server status ─────────────────────────────────────────────────────────────
@@ -191,7 +216,7 @@ ipcMain.handle('discord:logout', () => {
 
   // Clear auth-data-no-load.js so the SkyMP in-game client reverts to showing
   // its own Discord OAuth dialog (//null is read as null by the SkyMP client).
-  const skyrimPath = store.get('skyrimPath')
+  const skyrimPath = effectiveGamePath()
   if (skyrimPath) {
     const authDataPath = path.join(skyrimPath, 'Data', 'Platform', 'PluginsNoLoad', 'auth-data-no-load.js')
     try { fs.writeFileSync(authDataPath, '//null') } catch { /* file may not exist yet */ }
@@ -246,11 +271,195 @@ ipcMain.handle('discord:login', async () => {
   return { success: false, error: 'Login timed out — please try again.' }
 })
 
-// ── Vortex integration ────────────────────────────────────────────────────────
+// ── MO2 integration ───────────────────────────────────────────────────────────
 
-ipcMain.handle('vortex:detect', () => {
-  const found = vortex.findVortexExe()
-  return { found: !!found, path: found || '' }
+ipcMain.handle('mo2:status', () => mo2.getStatus())
+
+ipcMain.handle('mo2:setup', async () => {
+  try {
+    await mo2.ensureInstalled(msg => send('mo2:progress', msg))
+
+    const skyrimPath = effectiveGamePath()
+    if (!skyrimPath) {
+      return { success: false, error: 'Set the Skyrim path first, then run MO2 setup again.' }
+    }
+
+    let serverInfo = null
+    try { serverInfo = await fetchJSON(`${config.apiUrl}/api/serverinfo`) } catch {}
+
+    mo2.ensureInstance(skyrimPath, serverInfo?.loadOrder)
+    mo2.registerNxmHandler()
+    return { success: true, ...mo2.getStatus() }
+  } catch (err) {
+    return { success: false, error: err.message }
+  }
+})
+
+ipcMain.handle('mo2:open', () => {
+  try { mo2.openUI(); return { success: true } }
+  catch (err) { return { success: false, error: err.message } }
+})
+
+// ── Nexus Mods login ──────────────────────────────────────────────────────────
+
+ipcMain.handle('nexus:getUser', () => store.get('nexusUser') || null)
+
+ipcMain.handle('nexus:login', async (_e, apiKey) => {
+  if (typeof apiKey !== 'string' || apiKey.trim().length < 10) {
+    return { success: false, error: 'Paste your personal API key from the Nexus site.' }
+  }
+  try {
+    const user = await nexus.validateKey(apiKey.trim())
+    store.set('nexusApiKey', apiKey.trim())
+    store.set('nexusUser', user)
+    log(`[nexus] logged in as ${user.name} (premium: ${user.isPremium})`)
+    return { success: true, user }
+  } catch (err) {
+    return { success: false, error: err.message }
+  }
+})
+
+ipcMain.handle('nexus:logout', () => {
+  store.set('nexusApiKey', '')
+  store.set('nexusUser', null)
+  return { success: true }
+})
+
+// One-click SSO (Vortex/Wabbajack-style). Only available once a Nexus
+// application slug has been registered and set in config.js.
+ipcMain.handle('nexus:ssoAvailable', () => !!config.nexusAppSlug)
+
+ipcMain.handle('nexus:ssoLogin', async () => {
+  if (!config.nexusAppSlug) {
+    return { success: false, error: 'One-click login is not configured yet — paste your API key instead.' }
+  }
+  try {
+    const apiKey = await nexus.ssoLogin(config.nexusAppSlug, url => shell.openExternal(url))
+    const user   = await nexus.validateKey(apiKey)
+    store.set('nexusApiKey', apiKey)
+    store.set('nexusUser', user)
+    log(`[nexus] SSO login as ${user.name} (premium: ${user.isPremium})`)
+    return { success: true, user }
+  } catch (err) {
+    return { success: false, error: err.message }
+  }
+})
+
+// ── Isolated game copy ────────────────────────────────────────────────────────
+
+ipcMain.handle('game:isolatedStatus', () => ({
+  enabled: !!store.get('isolatedGame'),
+  ready:   isolatedGameReady(),
+  dir:     isolatedGameDir(),
+}))
+
+// Checks for clean directory
+function findDirtyFiles(src) {
+  const offenders = []
+  const dataDir   = path.join(src, 'Data')
+
+  try {
+    for (const name of fs.readdirSync(dataDir)) {
+      const l = name.toLowerCase()
+      if (l.startsWith('cc')) continue                       // Creation Club — official
+      if (l.endsWith('.esp')) offenders.push(`Data\\${name}`)
+      else if ((l.endsWith('.esm') || l.endsWith('.esl')) && !VANILLA_MASTERS.has(l)) {
+        offenders.push(`Data\\${name}`)
+      }
+    }
+  } catch { /* no Data dir — caught by the SkyrimSE.exe check */ }
+
+  for (const dir of ['SKSE', 'Platform']) {
+    if (fs.existsSync(path.join(dataDir, dir))) offenders.push(`Data\\${dir}\\`)
+  }
+  for (const file of ['d3d11.dll', 'dxgi.dll', 'enbseries.ini']) {
+    if (fs.existsSync(path.join(src, file))) offenders.push(file)
+  }
+
+  return offenders
+}
+
+// move CC content so it doesnt load
+function disableCreationClub(gameDir) {
+  const dataDir     = path.join(gameDir, 'Data')
+  const disabledDir = path.join(gameDir, 'DisabledCC')
+  let moved = 0
+  try {
+    for (const name of fs.readdirSync(dataDir)) {
+      if (!name.toLowerCase().startsWith('cc')) continue
+      fs.mkdirSync(disabledDir, { recursive: true })
+      fs.renameSync(path.join(dataDir, name), path.join(disabledDir, name))
+      moved++
+    }
+  } catch { /* no Data dir */ }
+  if (moved > 0) log(`[isolated] moved ${moved} Creation Club file(s) to DisabledCC\\`)
+  return moved
+}
+
+ipcMain.handle('game:createIsolated', async () => {
+  const src = store.get('skyrimPath')
+  if (!src || !fs.existsSync(path.join(src, 'SkyrimSE.exe'))) {
+    return { success: false, error: 'Set a valid Skyrim path first (SkyrimSE.exe not found).' }
+  }
+
+  // We need a clean install to make a portable skyrim, this checks to make sure its clean
+  const offenders = findDirtyFiles(src)
+  if (offenders.length > 0) {
+    const shown = offenders.slice(0, 6).join(', ') + (offenders.length > 6 ? ', …' : '')
+    return {
+      success: false,
+      dirty:   true,
+      error:   `Your Skyrim install is not clean (found: ${shown}). ` +
+               `Please reinstall or verify Skyrim to a vanilla state, then try again.`,
+    }
+  }
+
+  // popup for skyrim clone
+  const picked = await dialog.showOpenDialog(win, {
+    title:       'Choose where to install the SkyRP game copy (~15 GB)',
+    buttonLabel: 'Install here',
+    properties:  ['openDirectory', 'createDirectory'],
+  })
+  if (picked.canceled || !picked.filePaths[0]) {
+    return { success: false, canceled: true, error: 'Installation cancelled.' }
+  }
+  const dst = path.join(picked.filePaths[0], 'SkyRP Game')
+
+  // Re-use an existing copy at that location.
+  if (fs.existsSync(path.join(dst, 'SkyrimSE.exe'))) {
+    store.set('gameDirPath', dst)
+    store.set('isolatedGame', true)
+    disableCreationClub(dst)
+    return { success: true, existing: true, dir: dst }
+  }
+
+  return new Promise(resolve => {
+    // robocopy: /E all subdirs, /MT multithreaded, minimal logging, one line per copied file so we can show progress.
+    const args = [src, dst, '/E', '/MT:8', '/NJH', '/NJS', '/NDL', '/NC', '/NS', '/NP']
+    const child = spawn('robocopy', args, { windowsHide: true })
+
+    let copied = 0
+    child.stdout.on('data', chunk => {
+      const lines = chunk.toString().split(/\r?\n/).filter(l => l.trim())
+      copied += lines.length
+      if (copied % 25 < lines.length) {
+        send('isolated:progress', `Copying game files… ${copied} files`)
+      }
+    })
+
+    child.on('error', err => resolve({ success: false, error: `robocopy failed: ${err.message}` }))
+    child.on('close', code => {
+      // robocopy exit codes 0–7 mean success (8+ are failures)
+      if (code >= 8) return resolve({ success: false, error: `robocopy exited with code ${code}` })
+
+      disableCreationClub(dst)
+      store.set('gameDirPath', dst)
+      store.set('isolatedGame', true)
+
+      log(`[isolated] game copy complete (${copied} files) at ${dst}`)
+      resolve({ success: true, copied, dir: dst })
+    })
+  })
 })
 
 // ── Metrics ───────────────────────────────────────────────────────────────────
@@ -275,8 +484,46 @@ ipcMain.handle('api:servers', async () => {
 
 // ── Modlist ───────────────────────────────────────────────────────────────────
 ipcMain.handle('api:modlist', async () => {
-  try { return await fetchJSON(`${config.apiUrl}/api/modlist`) }
-  catch { return null }
+  try {
+    const items = await fetchJSON(`${config.apiUrl}/api/modlist`)
+    return { ok: true, items: Array.isArray(items) ? items : [] }
+  } catch (err) {
+    return { ok: false, error: err.message }
+  }
+})
+
+// ── Game process detection ────────────────────────────────────────────────────
+// Used by the renderer to switch the Play button into its "running" state.
+function isProcessRunning(imageName) {
+  return new Promise(resolve => {
+    require('child_process').exec(
+      `tasklist /FI "IMAGENAME eq ${imageName}" /NH`,
+      { timeout: 5000, windowsHide: true },
+      (err, stdout) => resolve(!err && stdout.toLowerCase().includes(imageName.toLowerCase()))
+    )
+  })
+}
+
+// Lightweight update probe for the Play/Update button: compares the server's
+// published client-files version with what was last installed.
+ipcMain.handle('files:updateCheck', async () => {
+  try {
+    const vd = await fetchJSON(`${config.apiUrl}/api/files/version`)
+    const gamePath   = effectiveGamePath()
+    const allPresent = !!gamePath && REQUIRED_FILES.every(f => fs.existsSync(path.join(gamePath, f)))
+    return {
+      ok: true,
+      updateAvailable: vd.version !== store.get('filesVersion') || !allPresent,
+      serverVersion:   vd.version,
+    }
+  } catch {
+    return { ok: false, updateAvailable: false }
+  }
+})
+
+ipcMain.handle('game:isRunning', async () => {
+  if (process.platform !== 'win32') return false
+  return (await isProcessRunning('SkyrimSE.exe')) || (await isProcessRunning('skse64_loader.exe'))
 })
 
 // ── Launcher update check ─────────────────────────────────────────────────────
@@ -302,84 +549,172 @@ const REQUIRED_FILES = [
 ]
 
 ipcMain.handle('launch:skse', async () => {
-  const skyrimPath    = store.get('skyrimPath')
-  const vortexEnabled = store.get('vortexEnabled')
-  const vortexPath    = store.get('vortexPath')
+  const skyrimPath = effectiveGamePath()
+  const mo2Enabled = store.get('mo2Enabled')
 
   if (!skyrimPath) {
     return { success: false, error: 'Skyrim path not configured.' }
   }
 
-  if (vortexEnabled) {
-    if (!vortexPath || !fs.existsSync(vortexPath)) {
-      return { success: false, error: 'Vortex.exe not found — open Settings and re-detect Vortex.' }
-    }
+  if (mo2Enabled && !mo2.isInstalled()) {
+    return { success: false, error: 'MO2 is not set up — open Settings → Mod Manager and run setup.' }
+  }
 
-    // Re-write client settings before launch so server-ip/port/gameData are current.
-    const srv = activeServer()
-    if (srv) {
-      const serverInfo = await fetchJSON(`${config.apiUrl}/api/serverinfo`)
-      const settingsPath = path.join(skyrimPath, 'Data', 'Platform', 'Plugins', 'skymp5-client-settings.txt')
-      writeClientSettings(settingsPath, srv, serverInfo)
-      log('[launch] client settings written')
-    }
+  // Shared pre-launch steps: client settings, load order, file validation.
+  const prep = await prepareForLaunch(skyrimPath, mo2Enabled)
+  if (!prep.success) return prep
 
-    // Step 1: start Vortex minimised so it is running and ready to deploy.
-    // The user manages their own collection/profile inside Vortex.
-    log('[launch] starting Vortex minimised…')
-    spawn(vortexPath, ['--start-minimized'], {
-      detached: true,
-      stdio: 'ignore',
-    }).unref()
-
-    // Step 2: wait 5 seconds for Vortex to finish deploying mods via hardlinks.
-    await new Promise(r => setTimeout(r, 5000))
-    log('[launch] 5 s elapsed — launching SKSE')
-
-    // Step 3: launch the game directly.  Vortex uses hardlinks/symlinks so the mod
-    // files are already in place in the Skyrim directory — Vortex does not need to
-    // be involved at game-start time.
-    const missingFiles = REQUIRED_FILES.filter(f => !fs.existsSync(path.join(skyrimPath, f)))
-    if (missingFiles.length > 0) {
-      const names = missingFiles.map(f => path.basename(f)).join(', ')
-      return { success: false, error: `Files missing after deploy — run "Install Modpack via Vortex" first.\nMissing: ${names}` }
-    }
-
-    try {
+  try {
+    if (mo2Enabled) {
+      // MO2 manages plugins.txt itself via the profile; launch through its VFS.
+      mo2.launchGame()
+    } else {
       const exe = path.join(skyrimPath, 'skse64_loader.exe')
       spawn(exe, [], { detached: true, stdio: 'ignore', cwd: skyrimPath }).unref()
-      return { success: true }
+    }
+    return { success: true, loadOrderFixed: prep.loadOrderFixed }
+  } catch (err) {
+    return { success: false, error: err.message }
+  }
+})
+
+/**
+ * Common pre-launch pipeline:
+ *  1. Re-write skymp5-client-settings.txt so server-ip/port/gameData are current.
+ *  2. Sync plugins.txt with the server's published load order (if available).
+ *     Blocks the launch when required plugins are missing from Data/.
+ *  3. Verify the SkyMP client files exist.
+ */
+async function prepareForLaunch(skyrimPath, viaMO2) {
+  const srv = activeServer()
+  let serverInfo = null
+
+  if (srv) {
+    try { serverInfo = await fetchJSON(`${config.apiUrl}/api/serverinfo`) } catch {}
+    const settingsPath = path.join(skyrimPath, 'Data', 'Platform', 'Plugins', 'skymp5-client-settings.txt')
+    try {
+      writeClientSettings(settingsPath, srv, serverInfo)
+      log('[launch] client settings written')
     } catch (err) {
       return { success: false, error: err.message }
     }
   }
 
-  // ── Non-Vortex path: direct SKSE launch ──────────────────────────────────────
-
-  // Re-write client settings before launch so server-ip/port/gameData are current.
-  const srv = activeServer()
-  if (srv) {
-    const serverInfo = await fetchJSON(`${config.apiUrl}/api/serverinfo`)
-    const settingsPath = path.join(skyrimPath, 'Data', 'Platform', 'Plugins', 'skymp5-client-settings.txt')
-    writeClientSettings(settingsPath, srv, serverInfo)
-    log('[launch] client settings written')
+  // ── Load order sync ──────────────────────────────────────────────────────────
+  let loadOrderFixed = false
+  if (Array.isArray(serverInfo?.loadOrder) && serverInfo.loadOrder.length > 0) {
+    if (viaMO2) {
+      mo2.ensureInstance(skyrimPath, serverInfo.loadOrder)
+      const missing = missingPluginsForMO2(skyrimPath, serverInfo.loadOrder)
+      if (missing.length > 0) {
+        return {
+          success: false,
+          error: `Missing required plugins: ${missing.join(', ')}. ` +
+                 `Run "Install Modpack" in Settings → Mod Manager first.`,
+        }
+      }
+      loadOrderFixed = true
+    } else {
+      const result = fixLoadOrder(skyrimPath, serverInfo.loadOrder)
+      loadOrderFixed = result.changed
+      if (result.missing.length > 0) {
+        return {
+          success: false,
+          error: `Missing required plugins: ${result.missing.join(', ')}. ` +
+                 `Install the server's modlist first (see the Modlist panel).`,
+        }
+      }
+      if (result.changed) log('[launch] plugins.txt updated to match server load order')
+    }
+  } else {
+    log('[launch] server load order unavailable — leaving plugins.txt untouched')
   }
 
-  // Pre-launch validation
+  // ── Required client files ────────────────────────────────────────────────────
   const missingFiles = REQUIRED_FILES.filter(f => !fs.existsSync(path.join(skyrimPath, f)))
   if (missingFiles.length > 0) {
     const names = missingFiles.map(f => path.basename(f)).join(', ')
-    return { success: false, error: `Files missing — Run Install first.\nMissing: ${names}` }
+    const hint  = viaMO2 ? 'run "Install Modpack" in Settings → Mod Manager first' : 'run Install first'
+    return { success: false, error: `Files missing — ${hint}.\nMissing: ${names}` }
   }
 
-  const exe = path.join(skyrimPath, 'skse64_loader.exe')
-  try {
-    spawn(exe, [], { detached: true, stdio: 'ignore', cwd: skyrimPath }).unref()
-    return { success: true }
-  } catch (err) {
-    return { success: false, error: err.message }
+  return { success: true, loadOrderFixed }
+}
+
+const VANILLA_MASTERS = new Set([
+  'skyrim.esm', 'update.esm', 'dawnguard.esm', 'hearthfires.esm', 'dragonborn.esm', '_resourcepack.esl',
+])
+
+function pluginsTxtDirs() {
+  const local = process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local')
+  const variants = [
+    'Skyrim Special Edition',
+    'Skyrim Special Edition GOG',
+    'Skyrim Special Edition EPIC',
+    'Skyrim Special Edition MS',
+  ]
+  const existing = variants.map(v => path.join(local, v)).filter(p => fs.existsSync(p))
+  return existing.length > 0 ? existing : [path.join(local, variants[0])]
+}
+
+// Plugin sync
+function fixLoadOrder(skyrimPath, serverLoadOrder) {
+  const dataDir = path.join(skyrimPath, 'Data')
+
+  const serverPlugins = serverLoadOrder
+    .map(f => path.basename(f))
+    .filter(f => !VANILLA_MASTERS.has(f.toLowerCase()))
+
+  const missing = serverPlugins.filter(f => !fs.existsSync(path.join(dataDir, f)))
+  if (missing.length > 0) return { changed: false, missing }
+
+  const next  = serverPlugins.map(f => `*${f}`).join('\r\n') + '\r\n'
+  let changed = false
+
+  for (const dir of pluginsTxtDirs()) {
+    const pluginsPath = path.join(dir, 'Plugins.txt')
+
+    let current = null
+    try { current = fs.readFileSync(pluginsPath, 'utf8') } catch {}
+
+    if (current !== next) {
+      const dropped = (current || '')
+        .split(/\r?\n/)
+        .filter(l => l.startsWith('*'))
+        .map(l => l.slice(1).trim())
+        .filter(f => f && !serverPlugins.some(p => p.toLowerCase() === f.toLowerCase()) &&
+                     !VANILLA_MASTERS.has(f.toLowerCase()))
+      if (dropped.length > 0) {
+        log(`[launch] disabling client-side plugins (not allowed on this server): ${dropped.join(', ')}`)
+      }
+      fs.mkdirSync(dir, { recursive: true })
+      fs.writeFileSync(pluginsPath, next)
+      changed = true
+      log(`[launch] wrote ${pluginsPath} (exactly ${serverPlugins.length} server plugins)`)
+    }
   }
-})
+
+  return { changed, missing: [] }
+}
+
+function missingPluginsForMO2(skyrimPath, serverLoadOrder) {
+  const dataDir = path.join(skyrimPath, 'Data')
+  const modsDir = mo2.getModsDir()
+
+  let modDirs = []
+  try {
+    modDirs = fs.readdirSync(modsDir, { withFileTypes: true })
+      .filter(e => e.isDirectory())
+      .map(e => path.join(modsDir, e.name))
+  } catch {}
+
+  return serverLoadOrder
+    .map(f => path.basename(f))
+    .filter(f => !VANILLA_MASTERS.has(f.toLowerCase()))
+    .filter(f =>
+      !fs.existsSync(path.join(dataDir, f)) &&
+      !modDirs.some(dir => fs.existsSync(path.join(dir, f))))
+}
 
 // ── Install files ─────────────────────────────────────────────────────────────
 
@@ -392,12 +727,11 @@ ipcMain.on('install:start', (_e, mode) => {
   let fn
   if (mode === 'client') {
     fn = runDirectInstall()
-  } else if (mode === 'vortex') {
-    fn = runVortexInstall()
+  } else if (mode === 'mo2') {
+    fn = runMO2Install()
   } else {
-    // Auto mode (used by the Play button) — delegate based on vortexEnabled setting
-    const vortexEnabled = store.get('vortexEnabled')
-    fn = vortexEnabled ? runVortexInstall() : runDirectInstall()
+    // Auto mode (used by the Play button) — delegate based on mo2Enabled setting
+    fn = store.get('mo2Enabled') ? runMO2Install() : runDirectInstall()
   }
   fn.catch(err => {
     log('[install] Unhandled error:', err.message)
@@ -463,27 +797,11 @@ function extractClientZip(zipPath, destDir, onProgress) {
   return total
 }
 
-// ── Direct install (no Vortex) ────────────────────────────────────────────────
+// ── Client files install core ─────────────────────────────────────────────────
+// Shared by the direct and MO2 installers: version check, download, extract, client settings.
 
-async function runDirectInstall() {
-  const abort = (msg) => {
-    log('[install] ABORT:', msg)
-    send('install:complete', { success: false, error: msg })
-    installing = false
-  }
-
-  const skyrimPath = store.get('skyrimPath')
-  if (!skyrimPath) return abort('Skyrim path not configured.')
-
-  const srv = activeServer()
-  if (!srv) return abort('No server selected — open Settings and choose a server.')
-
+async function installClientFilesCore(skyrimPath, srv, serverInfo) {
   const tempZip = path.join(os.tmpdir(), 'skyrp-client.zip')
-
-  // Fetch serverinfo once so writeClientSettings knows offline vs online mode.
-  let serverInfo = null
-  try { serverInfo = await fetchJSON(`${config.apiUrl}/api/serverinfo`) } catch {}
-
   const clientSettingsPath = path.join(skyrimPath, 'Data', 'Platform', 'Plugins', 'skymp5-client-settings.txt')
 
   try {
@@ -494,15 +812,14 @@ async function runDirectInstall() {
       serverVersion = vd.version
     } catch (err) {
       if (err.statusCode === 404) {
-        return abort('Client files have not been packaged on the server yet. Ask the server admin to run `npm run merge`.')
+        return { success: false, error: 'Client files have not been packaged on the server yet. Ask the server admin to run `npm run build-client`.' }
       }
       // Network error — play on cached files if they exist
       const allPresent = REQUIRED_FILES.every(f => fs.existsSync(path.join(skyrimPath, f)))
-      if (!allPresent) return abort('Backend unreachable and client files are not installed. Check your connection.')
+      if (!allPresent) return { success: false, error: 'Backend unreachable and client files are not installed. Check your connection.' }
       log('[install] Backend unreachable - files already installed, updating settings only')
       writeClientSettings(clientSettingsPath, srv, serverInfo)
-      send('install:complete', { success: true, upToDate: true })
-      return
+      return { success: true, upToDate: true }
     }
 
     const allPresent    = REQUIRED_FILES.every(f => fs.existsSync(path.join(skyrimPath, f)))
@@ -511,8 +828,7 @@ async function runDirectInstall() {
     if (!needsDownload) {
       log('[install] Files up to date, updating settings only')
       writeClientSettings(clientSettingsPath, srv, serverInfo)
-      send('install:complete', { success: true, upToDate: true })
-      return
+      return { success: true, upToDate: true }
     }
 
     // ── 2. Download ──────────────────────────────────────────────────────────
@@ -520,7 +836,6 @@ async function runDirectInstall() {
     await downloadClientZip(tempZip, (received, total) => {
       const mb  = n => (n / 1024 / 1024).toFixed(1)
       const pct = total > 0 ? ` (${Math.round(received / total * 100)}%)` : ''
-      log(`[install] download ${mb(received)}/${mb(total)} MB`)
       send('install:progress', {
         phase: 'download',
         file:  `Downloading update… ${mb(received)} / ${mb(total)} MB${pct}`,
@@ -530,191 +845,166 @@ async function runDirectInstall() {
 
     // ── 3. Extract directly into Skyrim directory ────────────────────────────
     const extracted = extractClientZip(tempZip, skyrimPath, (file, i, total) => {
-      log(`[install] extract [${i}/${total}] ${file}`)
       send('install:progress', { phase: 'extract', file, index: i, total, skipped: false })
     })
     log(`[install] extracted ${extracted} files`)
 
     // ── 4. Write server settings ─────────────────────────────────────────────
     writeClientSettings(clientSettingsPath, srv, serverInfo)
-
     store.set('filesVersion', serverVersion)
 
-    send('install:complete', { success: true })
+    return { success: true }
   } catch (err) {
-    abort(`Install failed: ${err.message}`)
+    return { success: false, error: `Install failed: ${err.message}` }
   } finally {
     try { fs.unlinkSync(tempZip) } catch {}
-    installing = false
   }
 }
 
-// ── Vortex install ────────────────────────────────────────────────────────────
+// ── Direct install (no mod manager) ───────────────────────────────────────────
 
-async function runVortexInstall() {
-  const abort = (msg) => {
-    log('[vortex-install] ABORT:', msg)
+async function runDirectInstall() {
+  const skyrimPath = effectiveGamePath()
+  const srv        = activeServer()
+
+  const fail = (msg) => {
+    log('[install] ABORT:', msg)
     send('install:complete', { success: false, error: msg })
     installing = false
   }
 
-  const skyrimPath = store.get('skyrimPath')
-  if (!skyrimPath) return abort('Skyrim path not configured.')
+  if (!skyrimPath) return fail('Skyrim path not configured.')
+  if (!srv)        return fail('No server selected — open Settings and choose a server.')
 
-  const srv = activeServer()
-  if (!srv) return abort('No server selected — open Settings and choose a server.')
-
-  const tempZip = path.join(os.tmpdir(), 'skyrp-client.zip')
-
-  // Fetch serverinfo once so writeClientSettings knows offline vs online mode.
   let serverInfo = null
   try { serverInfo = await fetchJSON(`${config.apiUrl}/api/serverinfo`) } catch {}
 
-  const clientSettingsPath = path.join(
-    skyrimPath,
-    'Data',
-    'Platform',
-    'Plugins',
-    'skymp5-client-settings.txt'
-  )
+  const core = await installClientFilesCore(skyrimPath, srv, serverInfo)
+  send('install:complete', core.success
+    ? { success: true, upToDate: core.upToDate }
+    : { success: false, error: core.error })
+  installing = false
+}
+
+// ── MO2 install ───────────────────────────────────────────────────────────────
+// Full modpack pipeline: MO2 itself → SkyMP client files → Nexus mods.
+
+async function runMO2Install() {
+  const fail = (msg) => {
+    log('[mo2-install] ABORT:', msg)
+    send('install:complete', { success: false, error: msg })
+    installing = false
+  }
+
+  const skyrimPath = effectiveGamePath()
+  if (!skyrimPath) return fail('Skyrim path not configured.')
+
+  const srv = activeServer()
+  if (!srv) return fail('No server selected — open Settings and choose a server.')
 
   try {
-    // ── 1. Open collection in Vortex ──────────────────────────────────────────
-    try {
-      const modlistData = await fetchJSON(`${config.apiUrl}/api/modlist`)
-      const vortexExe   = store.get('vortexPath')
+    // ── 1. MO2 itself, the portable instance, and the nxm:// handler ─────────
+    await mo2.ensureInstalled(msg =>
+      send('install:progress', { phase: 'download', file: msg, index: 0, total: 0, skipped: false }))
 
-      if (Array.isArray(modlistData)) {
-        const collection = modlistData.find(m => m.source === 'collection')
-        if (collection?.collectionSlug) {
-          // Ensure Vortex is running before opening the NXM link
-          if (vortexExe && fs.existsSync(vortexExe)) {
-            spawn(vortexExe, ['--game', 'skyrimse'], {
-              detached: true,
-              stdio: 'ignore',
-            }).unref()
-            await new Promise(r => setTimeout(r, 1500))
-          }
+    let serverInfo = null
+    try { serverInfo = await fetchJSON(`${config.apiUrl}/api/serverinfo`) } catch {}
+    mo2.ensureInstance(skyrimPath, serverInfo?.loadOrder)
+    mo2.registerNxmHandler()
 
-          if (collection.revisionId) {
-            shell.openExternal(
-              `nxm://skyrimspecialedition/collections/${collection.collectionSlug}/revisions/${collection.revisionId}`
-            )
-            log(`[vortex-install] opened collection ${collection.collectionSlug} rev ${collection.revisionId}`)
-          } else {
-            shell.openExternal(
-              `https://www.nexusmods.com/skyrimspecialedition/collections/${collection.collectionSlug}`
-            )
-            log(`[vortex-install] opened collection page (no revisionId): ${collection.collectionSlug}`)
+    // ── 2. SkyMP client files into the real Data/ ─────────────────────────────
+    const core = await installClientFilesCore(skyrimPath, srv, serverInfo)
+    if (!core.success) return fail(core.error)
+
+    // ── 3. Nexus mods from the server modlist ─────────────────────────────────
+    let modlist = []
+    try { modlist = await fetchJSON(`${config.apiUrl}/api/modlist`) } catch {}
+    if (!Array.isArray(modlist)) modlist = []
+
+    const collections = modlist.filter(m => m.source === 'collection')
+    if (collections.length > 0) {
+      log('[mo2-install] collection entries are Vortex-only — skipped:',
+          collections.map(m => m.name).join(', '))
+    }
+
+    const nexusMods = modlist.filter(m => m.source === 'nexus' && m.enabled && m.nexusId)
+
+    // Enable anything already installed, collect what's missing
+    const missing = []
+    for (const m of nexusMods) {
+      const existing = mo2.findModByNexusId(m.nexusId)
+      if (existing) mo2.enableMod(existing)
+      else missing.push(m)
+    }
+
+    if (missing.length > 0) {
+      const apiKey    = store.get('nexusApiKey')
+      const nexusUser = store.get('nexusUser')
+
+      if (apiKey && nexusUser?.isPremium) {
+        // ── Premium direct downloads via the Nexus API ──────
+        const manual = []  // FOMOD / rar / failed — finish through MO2 or browser
+        for (let i = 0; i < missing.length; i++) {
+          const m  = missing[i]
+          const mb = n => (n / 1024 / 1024).toFixed(1)
+          try {
+            const archiveName = await nexus.downloadMod(apiKey, m, mo2.getDownloadsDir(), (received, total) => {
+              const pct = total > 0 ? ` (${Math.round(received / total * 100)}%)` : ''
+              send('install:progress', {
+                phase: 'mods',
+                file:  `Downloading ${m.name}… ${mb(received)} / ${mb(total)} MB${pct}`,
+                index: i, total: missing.length, skipped: false,
+              })
+            })
+            const result = mo2.installModFromArchive(archiveName, m.nexusId, m.name)
+            if (result.folder) {
+              mo2.enableMod(result.folder)
+              send('install:progress', { phase: 'mods', file: `Installed ${m.name}`, index: i + 1, total: missing.length, skipped: false })
+            } else {
+              manual.push(m)
+            }
+          } catch (err) {
+            log(`[mo2-install] direct download failed for ${m.name}: ${err.message}`)
+            manual.push(m)
           }
-        } else {
-          log('[vortex-install] no collection entry in modlist — skipping collection open')
         }
+
+        if (manual.length > 0) {
+          send('install:progress', {
+            phase: 'mods',
+            file:  `Finish in MO2 (installer/rar): ${manual.map(m => m.name).join(', ')}`,
+            index: missing.length - manual.length, total: missing.length, skipped: false,
+          })
+          mo2.openUI()
+          await mo2.waitForMods(manual, (done, total, message) => {
+            send('install:progress', { phase: 'mods', file: message, index: done, total, skipped: false })
+          })
+        }
+      } else {
+        // for the free nexus accounts
+        for (const m of missing) {
+          shell.openExternal(`https://www.nexusmods.com/skyrimspecialedition/mods/${m.nexusId}?tab=files`)
+          await new Promise(r => setTimeout(r, 800))
+        }
+
+        send('install:progress', {
+          phase: 'mods',
+          file:  `Opened ${missing.length} Nexus page(s) — use "Mod Manager Download" on each` +
+                 (apiKey ? '' : ' (log into Nexus in the launcher for automatic downloads)'),
+          index: 0, total: missing.length, skipped: false,
+        })
+
+        await mo2.waitForMods(missing, (done, total, message) => {
+          send('install:progress', { phase: 'mods', file: message, index: done, total, skipped: false })
+        })
       }
-    } catch {
-      log('[vortex-install] could not fetch modlist, skipping collection sync')
     }
 
-    // ── 2. Backend file handling (UNCHANGED) ──────────────────────────────────
-    let serverVersion = null
-    try {
-      const vd = await fetchJSON(`${config.apiUrl}/api/files/version`)
-      serverVersion = vd.version
-    } catch (err) {
-      if (err.statusCode === 404) {
-        return abort(
-          'Client files have not been packaged on the server yet. Ask the server admin to run `npm run merge`.'
-        )
-      }
-
-      const allPresent = REQUIRED_FILES.every(f =>
-        fs.existsSync(path.join(skyrimPath, f))
-      )
-
-      if (!allPresent)
-        return abort(
-          'Backend unreachable and client files are not installed. Check your connection.'
-        )
-
-      log('[vortex-install] Backend unreachable — files present, updating settings only')
-
-      writeClientSettings(clientSettingsPath, srv, serverInfo)
-
-      send('install:complete', {
-        success: true,
-        upToDate: true,
-        vortex: true,
-      })
-      return
-    }
-
-    const allPresent = REQUIRED_FILES.every(f =>
-      fs.existsSync(path.join(skyrimPath, f))
-    )
-
-    const needsDownload =
-      serverVersion !== store.get('filesVersion') || !allPresent
-
-    if (!needsDownload) {
-      log('[vortex-install] Backend files up to date — updating settings only')
-
-      writeClientSettings(clientSettingsPath, srv, serverInfo)
-
-      send('install:complete', {
-        success: true,
-        upToDate: true,
-        vortex: true,
-      })
-      return
-    }
-
-    // ── 3. Download backend zip ───────────────────────────────────────────────
-    send('install:progress', {
-      phase: 'download',
-      file: 'Connecting to server…',
-      index: 0,
-      total: 0,
-      skipped: false,
-    })
-
-    await downloadClientZip(tempZip, (received, total) => {
-      const mb = n => (n / 1024 / 1024).toFixed(1)
-      const pct = total > 0 ? ` (${Math.round(received / total * 100)}%)` : ''
-
-      send('install:progress', {
-        phase: 'download',
-        file: `Downloading update… ${mb(received)} / ${mb(total)} MB${pct}`,
-        index: received,
-        total,
-        skipped: false,
-      })
-    })
-
-    // ── 4. Extract ───────────────────────────────────────────────────────────
-    const extracted = extractClientZip(tempZip, skyrimPath, (file, i, total) => {
-      log(`[vortex-install] extract [${i}/${total}] ${file}`)
-      send('install:progress', {
-        phase: 'extract',
-        file,
-        index: i,
-        total,
-        skipped: false,
-      })
-    })
-
-    log(`[vortex-install] extracted ${extracted} files`)
-
-    // ── 5. Settings ──────────────────────────────────────────────────────────
-    writeClientSettings(clientSettingsPath, srv, serverInfo)
-    log('[vortex-install] settings written')
-
-    store.set('filesVersion', serverVersion)
-
-    send('install:complete', { success: true, vortex: true })
+    send('install:complete', { success: true, mo2: true, upToDate: core.upToDate })
   } catch (err) {
-    abort(`Install failed: ${err.message}`)
+    fail(`Install failed: ${err.message}`)
+    return
   } finally {
-    try { fs.unlinkSync(tempZip) } catch {}
     installing = false
   }
 }
@@ -789,41 +1079,6 @@ function writeClientSettings(destPath, srv, serverInfo) {
 
   fs.mkdirSync(path.dirname(destPath), { recursive: true })
   fs.writeFileSync(destPath, JSON.stringify(settings, null, 2) + '\n')
-}
-
-/**
- * Fetch the latest main-file ID for a Nexus mod using the Nexus API.
- * Returns the numeric fileId or null on failure.
- */
-function fetchNexusFileId(nexusId, apiKey) {
-  return new Promise(resolve => {
-    const opts = {
-      hostname: 'api.nexusmods.com',
-      path:     `/v1/games/skyrimspecialedition/mods/${nexusId}/files.json?category=main`,
-      headers:  {
-        apikey:           apiKey,
-        'User-Agent':     'SkyRP-Launcher/1.0.0',
-        accept:           'application/json',
-      },
-    }
-    const req = https.get(opts, res => {
-      let data = ''
-      res.on('data', c => { data += c })
-      res.on('end', () => {
-        try {
-          const json  = JSON.parse(data)
-          const files = json.files || []
-          // Pick the newest main file (highest file_id)
-          const main  = files
-            .filter(f => f.category_name === 'MAIN')
-            .sort((a, b) => b.file_id - a.file_id)[0]
-          resolve(main ? main.file_id : null)
-        } catch { resolve(null) }
-      })
-    })
-    req.on('error', () => resolve(null))
-    req.setTimeout(10_000, () => { req.destroy(); resolve(null) })
-  })
 }
 
 function fetchJSON(url, headers = {}) {

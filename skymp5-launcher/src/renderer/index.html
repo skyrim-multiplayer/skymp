@@ -33,6 +33,7 @@
       </nav>
 
       <div class="topbar-right">
+        <div id="nexus-topbar-slot"></div>
         <div id="discord-topbar-slot"></div>
         <button class="btn-gear" id="btn-gear" title="Settings">&#9881;</button>
         <button class="win-btn" id="btn-minimize" title="Minimize">&#8722;</button>
@@ -107,9 +108,11 @@
           <span class="info-value" id="footer-server-name">—</span>
           <select class="footer-server-select" id="footer-server-select" hidden></select>
         </div>
+        <div class="info-divider"></div>
+        <span class="connect-warning" id="connect-warning"></span>
       </div>
       <div class="bottombar-right">
-        <span class="connect-warning" id="connect-warning"></span>
+        <span class="update-pill" id="update-pill" hidden>&#10515; UPDATE AVAILABLE</span>
         <button class="btn-play" id="btn-connect">&#9654; PLAY</button>
       </div>
     </footer>
@@ -127,7 +130,7 @@
       <!-- Tab bar -->
       <div class="modal-tabs">
         <button class="modal-tab active" data-tab="general">General</button>
-        <button class="modal-tab" data-tab="vortex">Vortex</button>
+        <button class="modal-tab" data-tab="mo2">Mod Manager</button>
       </div>
 
       <div class="modal-body">
@@ -144,38 +147,49 @@
             </div>
           </div>
 
+          <div class="settings-group">
+            <label class="setting-label">Isolated Game Copy</label>
+            <div class="vortex-status-row">
+              <span class="vortex-status-dot" id="isolated-status-dot"></span>
+              <span class="vortex-status-text" id="isolated-status-text">Checking…</span>
+            </div>
+            <label class="setting-checkbox-row">
+              <input type="checkbox" id="setting-isolated-game" />
+              <span>Play from a private copy of Skyrim — keeps your vanilla install untouched</span>
+            </label>
+            <button class="btn-detect-vortex" id="btn-create-isolated">Create isolated copy (~15 GB)</button>
+          </div>
+
           <div class="tab-actions">
-            <div class="install-status" id="install-status-client"></div>
             <button class="btn-install" id="btn-install-client">Install / Update Client Files</button>
+            <div class="install-status" id="install-status-client"></div>
           </div>
 
         </div>
 
-        <!-- ── Vortex tab ── -->
-        <div class="tab-panel" id="tab-vortex" hidden>
+        <!-- ── Mod Manager (MO2) tab ── -->
+        <div class="tab-panel" id="tab-mo2" hidden>
 
           <div class="settings-group">
-            <label class="setting-label">Vortex Mod Manager</label>
-            <div class="vortex-status-row" id="vortex-status-row">
-              <span class="vortex-status-dot" id="vortex-status-dot"></span>
-              <span class="vortex-status-text" id="vortex-status-text">Not configured</span>
+            <label class="setting-label">Mod Organizer 2 (portable, managed by the launcher)</label>
+            <div class="vortex-status-row" id="mo2-status-row">
+              <span class="vortex-status-dot" id="mo2-status-dot"></span>
+              <span class="vortex-status-text" id="mo2-status-text">Checking…</span>
             </div>
             <div class="setting-path-row">
-              <input class="setting-input" id="setting-vortex-path" type="text"
-                     placeholder="Path to Vortex.exe" />
-              <button class="btn-browse" id="btn-browse-vortex">Browse…</button>
+              <button class="btn-detect-vortex" id="btn-setup-mo2">Set up MO2</button>
+              <button class="btn-detect-vortex" id="btn-open-mo2">Open MO2</button>
             </div>
-            <button class="btn-detect-vortex" id="btn-detect-vortex">Auto-detect Vortex</button>
           </div>
 
-          <label class="setting-checkbox-row" id="vortex-enable-row">
-            <input type="checkbox" id="setting-vortex-enabled" />
-            <span>Enable Vortex integration — install &amp; deploy via profile</span>
+          <label class="setting-checkbox-row" id="mo2-enable-row">
+            <input type="checkbox" id="setting-mo2-enabled" />
+            <span>Launch the game through MO2 — mods stay out of your Skyrim folder</span>
           </label>
 
           <div class="tab-actions">
-            <div class="install-status" id="install-status-vortex"></div>
-            <button class="btn-install" id="btn-install-vortex">Install Modpack via Vortex</button>
+            <div class="install-status" id="install-status-mo2"></div>
+            <button class="btn-install" id="btn-install-mo2">Install Modpack via MO2</button>
           </div>
 
         </div>
@@ -183,6 +197,37 @@
         <!-- ── Actions (always visible) ── -->
         <div class="modal-actions">
           <button class="btn-save" id="btn-save">Save Settings</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Nexus login modal ────────────────────────── -->
+  <div class="modal-overlay" id="modal-nexus" hidden>
+    <div class="modal-box">
+      <div class="modal-header">
+        <span class="modal-title">Nexus Mods Login</span>
+        <button class="modal-close" id="nexus-modal-close" title="Close">&#10005;</button>
+      </div>
+      <div class="modal-body">
+        <div class="settings-group" id="nexus-sso-group" hidden>
+          <button class="btn-install" id="nexus-sso-login">Login via Nexus Mods website</button>
+          <p class="setting-hint">Opens nexusmods.com in your browser — click Authorise and you're done.</p>
+        </div>
+        <div class="settings-group">
+          <label class="setting-label">Personal API Key</label>
+          <p class="setting-hint">
+            Copy the key from your
+            <a href="#" id="nexus-keys-link">Nexus Mods API keys page</a>
+            and paste it below. Premium accounts get fully automatic mod
+            downloads; free accounts use the browser download buttons.
+          </p>
+          <div class="setting-path-row">
+            <input class="setting-input" id="nexus-key-input" type="password"
+                   placeholder="Paste your API key…" />
+            <button class="btn-browse" id="nexus-key-save">Login</button>
+          </div>
+          <div class="install-status" id="nexus-login-status"></div>
         </div>
       </div>
     </div>

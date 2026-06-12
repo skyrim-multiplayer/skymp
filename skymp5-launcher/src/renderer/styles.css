@@ -408,17 +408,17 @@ html, body {
   text-transform: uppercase;
   padding: 1px 5px;
   border-radius: 3px;
-  background: rgba(218, 130, 42, 0.10);
-  border: 1px solid rgba(218, 130, 42, 0.28);
-  color: rgba(218, 130, 42, 0.75);
+  background: rgba(160, 120, 20, 0.18);
+  border: 1px solid rgba(180, 134, 24, 0.45);
+  color: rgba(196, 152, 40, 0.9);
   text-decoration: none;
   cursor: pointer;
   flex-shrink: 0;
 }
 
 .mod-nexus-link:hover {
-  background: rgba(218, 130, 42, 0.20);
-  color: rgba(218, 130, 42, 1);
+  background: rgba(160, 120, 20, 0.32);
+  color: rgba(160, 120, 20, 1);
 }
 
 .mod-version {
@@ -1331,3 +1331,99 @@ html, body {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(201,162,39,0.18); border-radius: 2px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(201,162,39,0.32); }
+
+/* ── Panel error / empty states (news & modlist) ─────────────────────────── */
+.panel-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 28px 16px;
+  border: 1px dashed rgba(255, 255, 255, 0.18);
+  border-radius: 6px;
+  text-align: center;
+}
+
+.panel-error-text {
+  color: #c9a96a;
+  font-size: 15px;
+  letter-spacing: 0.4px;
+}
+
+.panel-error-retry {
+  padding: 6px 22px;
+  background: transparent;
+  border: 1px solid #c9a96a;
+  border-radius: 4px;
+  color: #c9a96a;
+  font-family: inherit;
+  font-size: 13px;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.panel-error-retry:hover:not(:disabled) {
+  background: rgba(201, 169, 106, 0.15);
+}
+
+.panel-error-retry:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.panel-empty {
+  padding: 28px 16px;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 14px;
+  text-align: center;
+  letter-spacing: 0.4px;
+}
+
+
+/* ── Update pill (bottombar, next to Play) ───────────────────────────────── */
+.update-pill {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 1.2px;
+  color: #e8b33c;
+  border: 1px solid rgba(232, 179, 60, 0.45);
+  border-radius: 4px;
+  padding: 4px 10px;
+  white-space: nowrap;
+}
+
+/* The status/progress text now lives on the left side of the bottom bar */
+.bottombar-info .connect-warning {
+  max-width: 520px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding-right: 0;
+}
+
+/* ── Nexus topbar button — darker yellow ─────────────────────────────────── */
+.btn-nexus-topbar {
+  padding: 5px 13px;
+  background: rgba(160, 120, 20, 0.18);
+  border: 1px solid rgba(180, 134, 24, 0.45);
+  color: rgba(196, 152, 40, 0.9);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.btn-nexus-topbar:hover:not(:disabled) {
+  background: rgba(160, 120, 20, 0.32);
+}
+
+.btn-nexus-topbar:disabled {
+  opacity: 0.5;
+  cursor: default;
+}

@@ -9,4 +9,10 @@
  */
 module.exports = {
   apiUrl: process.env.API_URL || 'https://api.skyrimroleplay.co.uk',
+
+  // Application slug registered with Nexus Mods for the one-click SSO login
+  // (the flow Vortex/MO2/Wabbajack use). Empty = SSO disabled; the launcher
+  // falls back to paste-your-API-key. Request a slug from Nexus support,
+  // then set it here (or via the NEXUS_APP_SLUG env var at build time).
+  nexusAppSlug: process.env.NEXUS_APP_SLUG || '',
 }
