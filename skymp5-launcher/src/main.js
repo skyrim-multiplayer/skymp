@@ -504,6 +504,23 @@ function isProcessRunning(imageName) {
   })
 }
 
+// Lightweight update probe for the Play/Update button: compares the server's
+// published client-files version with what was last installed.
+ipcMain.handle('files:updateCheck', async () => {
+  try {
+    const vd = await fetchJSON(`${config.apiUrl}/api/files/version`)
+    const gamePath   = effectiveGamePath()
+    const allPresent = !!gamePath && REQUIRED_FILES.every(f => fs.existsSync(path.join(gamePath, f)))
+    return {
+      ok: true,
+      updateAvailable: vd.version !== store.get('filesVersion') || !allPresent,
+      serverVersion:   vd.version,
+    }
+  } catch {
+    return { ok: false, updateAvailable: false }
+  }
+})
+
 ipcMain.handle('game:isRunning', async () => {
   if (process.platform !== 'win32') return false
   return (await isProcessRunning('SkyrimSE.exe')) || (await isProcessRunning('skse64_loader.exe'))

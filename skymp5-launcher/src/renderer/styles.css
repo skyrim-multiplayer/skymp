@@ -1379,3 +1379,51 @@ html, body {
   text-align: center;
   letter-spacing: 0.4px;
 }
+
+
+/* ── Update pill (bottombar, next to Play) ───────────────────────────────── */
+.update-pill {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 1.2px;
+  color: #e8b33c;
+  border: 1px solid rgba(232, 179, 60, 0.45);
+  border-radius: 4px;
+  padding: 4px 10px;
+  white-space: nowrap;
+}
+
+/* The status/progress text now lives on the left side of the bottom bar */
+.bottombar-info .connect-warning {
+  max-width: 520px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding-right: 0;
+}
+
+/* ── Nexus topbar button — darker yellow ─────────────────────────────────── */
+.btn-nexus-topbar {
+  padding: 5px 13px;
+  background: rgba(160, 120, 20, 0.18);
+  border: 1px solid rgba(180, 134, 24, 0.45);
+  color: rgba(196, 152, 40, 0.9);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.btn-nexus-topbar:hover:not(:disabled) {
+  background: rgba(160, 120, 20, 0.32);
+}
+
+.btn-nexus-topbar:disabled {
+  opacity: 0.5;
+  cursor: default;
+}

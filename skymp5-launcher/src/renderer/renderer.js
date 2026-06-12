@@ -240,7 +240,7 @@ function renderTopbarNexus() {
     nexusTopbarSlot.appendChild(wrap)
   } else {
     const loginBtn = document.createElement('button')
-    loginBtn.className   = 'btn-discord-topbar'
+    loginBtn.className   = 'btn-nexus-topbar'
     loginBtn.textContent = 'Nexus Login'
     loginBtn.addEventListener('click', () => {
       nexusLoginStatus.textContent = ''
@@ -348,6 +348,7 @@ btnCreateIsolated.addEventListener('click', async () => {
   fieldIsolated.checked = true
   await window.electronAPI.saveSettings({ isolatedGame: true })
   refreshIsolatedStatus()
+  refreshPlayState()
 })
 
 fieldIsolated.addEventListener('change', refreshIsolatedStatus)
@@ -482,24 +483,57 @@ document.getElementById('btn-install-mo2').addEventListener('click', () => {
 const btnConnect     = document.getElementById('btn-connect')
 const connectWarning = document.getElementById('connect-warning')
 
-let gameRunning = false
-let playBusy    = false
+let gameRunning     = false
+let playBusy        = false
+let isoReady        = true   // isolation disabled, or the game copy exists
+let updateAvailable = false  // server has newer client files than installed
 
 const PLAY_LABEL = '\u25BA PLAY'
+const updatePill = document.getElementById('update-pill')
 
 function updatePlayButton() {
+  updatePill.hidden = !(updateAvailable && isoReady && !gameRunning)
+
   if (gameRunning) {
     btnConnect.disabled    = true
     btnConnect.textContent = '\u23F3 GAME RUNNING'
     btnConnect.title       = 'Skyrim is currently running.'
     return
   }
-  if (playBusy) return  // label managed by the play sequence
+  if (playBusy) return  // label managed by the play/update sequence
+
+  if (!isoReady) {
+    btnConnect.disabled    = false
+    btnConnect.textContent = '\u2699 INSTALL'
+    btnConnect.title       = 'Set up your SkyRP game copy in Settings.'
+    return
+  }
+
+  if (updateAvailable) {
+    btnConnect.disabled    = false
+    btnConnect.textContent = '\u2913 UPDATE'
+    btnConnect.title       = 'A client files update is available.'
+    return
+  }
+
   btnConnect.textContent = PLAY_LABEL
   btnConnect.title       = ''
   btnConnect.disabled    = false
   updateLockState()
 }
+
+// Re-evaluate the install/update state (called at startup, after installs,
+// after the game copy is created, and on a slow poll).
+async function refreshPlayState() {
+  const iso = await window.electronAPI.isolatedStatus()
+  isoReady = !iso.enabled || iso.ready
+
+  const uc = await window.electronAPI.filesUpdateCheck()
+  updateAvailable = !!uc.updateAvailable
+
+  updatePlayButton()
+}
+setInterval(refreshPlayState, 60_000)
 
 async function pollGameRunning() {
   const running = await window.electronAPI.gameIsRunning()
@@ -538,6 +572,34 @@ function runInstallForPlay() {
 btnConnect.addEventListener('click', async () => {
   if (gameRunning || playBusy) return
 
+  // No game copy yet: the button reads INSTALL and leads to Settings,
+  // where the isolated-copy setup lives.
+  if (!isoReady) {
+    openModal()
+    return
+  }
+
+  // Update mode: refresh the client files, don't launch.
+  if (updateAvailable) {
+    playBusy            = true
+    btnConnect.disabled = true
+    clearWarning()
+    try {
+      btnConnect.textContent = '\u2913 UPDATING\u2026'
+      const result = await runInstallForPlay()
+      if (!result.success) {
+        showWarning(result.error || 'Update failed.')
+        return
+      }
+      showWarning('Client files updated \u2713')
+      setTimeout(clearWarning, 4000)
+    } finally {
+      playBusy = false
+      await refreshPlayState()
+    }
+    return
+  }
+
   if (discordUser && !serverAllowed) {
     showWarning(serverLocked
       ? 'Server is currently locked — you are not on the allow list.'
@@ -561,25 +623,6 @@ btnConnect.addEventListener('click', async () => {
   clearWarning()
 
   try {
-    // 0. First play with isolation enabled: ask where to install the game
-    //    copy and create it before anything else touches the game dir.
-    const iso = await window.electronAPI.isolatedStatus()
-    if (iso.enabled && !iso.ready) {
-      btnConnect.textContent = '\u2699 SETTING UP GAME\u2026'
-      showWarning('Choose where to install your SkyRP game copy…')
-
-      window.electronAPI.removeIsolatedListeners()
-      window.electronAPI.onIsolatedProgress(msg => showWarning(msg))
-      const setup = await window.electronAPI.createIsolated()
-      window.electronAPI.removeIsolatedListeners()
-
-      if (!setup.success) {
-        showWarning(setup.error || 'Game copy setup failed.')
-        return
-      }
-      refreshIsolatedStatus()
-    }
-
     // 1. Make sure client files are present and current (fast no-op when up to date)
     btnConnect.textContent = '\u2699 CHECKING FILES\u2026'
     const install = await runInstallForPlay()
@@ -602,7 +645,7 @@ btnConnect.addEventListener('click', async () => {
     gameRunning = true  // optimistic; the 10s poll keeps it honest
   } finally {
     playBusy = false
-    updatePlayButton()
+    await refreshPlayState()
   }
 })
 
@@ -981,3 +1024,4 @@ loadNews()
 loadServerInfo()
 loadModlist()
 setInterval(checkServerStatus, 30_000)
+refreshPlayState()

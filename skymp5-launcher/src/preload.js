@@ -35,6 +35,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // SKSE launch
   launchSkse: () => ipcRenderer.invoke('launch:skse'),
 
+  // Client files update check — { ok, updateAvailable }
+  filesUpdateCheck: () => ipcRenderer.invoke('files:updateCheck'),
+
   // Game process state — true while Skyrim / the SKSE loader is running
   gameIsRunning: () => ipcRenderer.invoke('game:isRunning'),
 
