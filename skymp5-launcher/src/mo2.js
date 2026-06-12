@@ -35,7 +35,12 @@ function setLogger(fn) { _log = (...args) => fn('[mo2]', ...args) }
 
 // ── Paths ─────────────────────────────────────────────────────────────────────
 
+let _rootProvider = null
+function setRootProvider(fn) { _rootProvider = fn }
+
 function getRoot() {
+  const custom = _rootProvider ? _rootProvider() : null
+  if (custom) return custom
   const local = process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local')
   return path.join(local, 'SkyRP', 'MO2')
 }
@@ -458,6 +463,7 @@ function getStatus() {
 
 module.exports = {
   setLogger,
+  setRootProvider,
   PROFILE,
   getRoot,
   getDownloadsDir,

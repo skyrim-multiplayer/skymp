@@ -47,13 +47,16 @@ const store = new Store({
     cachedServers:     [],   // last-known server list fetched from /api/servers
     filesVersion:      '',   // version tag from last successful file download
     discordUser:       null,
-    mo2Enabled:        false,  // launch the game through the managed portable MO2
+    mo2Enabled:        true,   // launch the game through the managed portable MO2
     nexusApiKey:       '',     // Nexus API login
     nexusUser:         null,   // { name, isPremium } from the last validation
     isolatedGame:      true,  // play from the isolated game copy instead of skyrimPath
-    gameDirPath:       '',     // where the user chose to install the isolated copy
+    gameDirPath:       '',     // legacy: pre-base-dir location of the game copy
+    baseDirPath:       '',     // SkyRP base dir: MO2 root, with the game at <base>\skyrim
   }
 })
+
+mo2.setRootProvider(() => store.get('baseDirPath') || null)
 
 let win = null
 
@@ -74,9 +77,11 @@ function activeServer() {
 // ── Effective game path ───────────────────────────────────────────────────────
 // Creates an isolated copy, this keeps the base directory clean
 function isolatedGameDir() {
-  const chosen = store.get('gameDirPath')
-  if (chosen) return chosen
-  // Legacy default from before the location prompt existed
+  const base = store.get('baseDirPath')
+  if (base) return path.join(base, 'skyrim')
+  // Legacy layouts from before the base-dir structure
+  const legacy = store.get('gameDirPath')
+  if (legacy) return legacy
   const local = process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local')
   return path.join(local, 'SkyRP', 'GameDir')
 }
@@ -351,6 +356,7 @@ ipcMain.handle('game:isolatedStatus', () => ({
   enabled: !!store.get('isolatedGame'),
   ready:   isolatedGameReady(),
   dir:     isolatedGameDir(),
+  base:    store.get('baseDirPath') || '',
 }))
 
 // Checks for clean directory
@@ -414,25 +420,58 @@ ipcMain.handle('game:createIsolated', async () => {
     }
   }
 
-  // popup for skyrim clone
+  // Ask where to install the modlist.
   const picked = await dialog.showOpenDialog(win, {
-    title:       'Choose where to install the SkyRP game copy (~15 GB)',
+    title:       'Choose where to install SkyRP (~16 GB: MO2 + game copy)',
     buttonLabel: 'Install here',
     properties:  ['openDirectory', 'createDirectory'],
   })
   if (picked.canceled || !picked.filePaths[0]) {
     return { success: false, canceled: true, error: 'Installation cancelled.' }
   }
-  const dst = path.join(picked.filePaths[0], 'SkyRP Game')
 
-  // Re-use an existing copy at that location.
-  if (fs.existsSync(path.join(dst, 'SkyrimSE.exe'))) {
-    store.set('gameDirPath', dst)
-    store.set('isolatedGame', true)
+  let base = picked.filePaths[0]
+  try {
+    const entries = fs.readdirSync(base)
+    if (entries.length > 0 && !fs.existsSync(path.join(base, 'portable.txt'))) {
+      base = path.join(base, 'SkyRP')
+    }
+  } catch { /* unreadable — let later steps surface the real error */ }
+
+  const dst = path.join(base, 'skyrim')
+
+  try {
+    store.set('baseDirPath', base)
+    send('isolated:progress', 'Installing Mod Organizer 2…')
+    await mo2.ensureInstalled(msg => send('isolated:progress', msg))
+
+    // portable copy setup
+    if (!fs.existsSync(path.join(dst, 'SkyrimSE.exe'))) {
+      const copy = await copyGameDir(src, dst)
+      if (!copy.success) return copy
+    } else {
+      log('[isolated] reusing existing game copy at ' + dst)
+    }
     disableCreationClub(dst)
-    return { success: true, existing: true, dir: dst }
-  }
 
+    // configuration
+    let serverInfo = null
+    try { serverInfo = await fetchJSON(`${config.apiUrl}/api/serverinfo`) } catch {}
+    mo2.ensureInstance(dst, serverInfo?.loadOrder)
+    mo2.registerNxmHandler()
+
+    store.set('isolatedGame', true)
+    store.set('mo2Enabled', true)
+
+    log(`[isolated] SkyRP install ready at ${base}`)
+    return { success: true, dir: base }
+  } catch (err) {
+    return { success: false, error: err.message }
+  }
+})
+
+// robocopy the game install; resolves { success, copied } or { success: false, error }
+function copyGameDir(src, dst) {
   return new Promise(resolve => {
     // robocopy: /E all subdirs, /MT multithreaded, minimal logging, one line per copied file so we can show progress.
     const args = [src, dst, '/E', '/MT:8', '/NJH', '/NJS', '/NDL', '/NC', '/NS', '/NP']
@@ -451,16 +490,11 @@ ipcMain.handle('game:createIsolated', async () => {
     child.on('close', code => {
       // robocopy exit codes 0–7 mean success (8+ are failures)
       if (code >= 8) return resolve({ success: false, error: `robocopy exited with code ${code}` })
-
-      disableCreationClub(dst)
-      store.set('gameDirPath', dst)
-      store.set('isolatedGame', true)
-
       log(`[isolated] game copy complete (${copied} files) at ${dst}`)
-      resolve({ success: true, copied, dir: dst })
+      resolve({ success: true, copied })
     })
   })
-})
+}
 
 // ── Metrics ───────────────────────────────────────────────────────────────────
 ipcMain.handle('api:metrics', async () => {
@@ -918,8 +952,9 @@ async function runMO2Install() {
 
     // ── 3. Nexus mods from the server modlist ─────────────────────────────────
     let modlist = []
-    try { modlist = await fetchJSON(`${config.apiUrl}/api/modlist`) } catch {}
-    if (!Array.isArray(modlist)) modlist = []
+    try { modlist = await fetchJSON(`${config.apiUrl}/api/modlist`) }
+    catch (err) { return fail(`Could not fetch the server modlist: ${err.message}`) }
+    if (!Array.isArray(modlist)) return fail('Server modlist has an unexpected format.')
 
     const collections = modlist.filter(m => m.source === 'collection')
     if (collections.length > 0) {
@@ -928,6 +963,14 @@ async function runMO2Install() {
     }
 
     const nexusMods = modlist.filter(m => m.source === 'nexus' && m.enabled && m.nexusId)
+
+    if (nexusMods.length === 0) {
+      send('install:complete', {
+        success: true, mo2: true, upToDate: core.upToDate, modsTotal: 0,
+        warning: 'The server modlist has no Nexus entries yet — generate data/modlist.json on the backend (collection-to-modlist).',
+      })
+      return
+    }
 
     // Enable anything already installed, collect what's missing
     const missing = []
@@ -1000,7 +1043,7 @@ async function runMO2Install() {
       }
     }
 
-    send('install:complete', { success: true, mo2: true, upToDate: core.upToDate })
+    send('install:complete', { success: true, mo2: true, upToDate: core.upToDate, modsTotal: nexusMods.length })
   } catch (err) {
     fail(`Install failed: ${err.message}`)
     return

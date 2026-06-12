@@ -325,13 +325,13 @@ async function refreshIsolatedStatus() {
   const st = await window.electronAPI.isolatedStatus()
   if (!st.ready) {
     isolatedDot.className    = 'vortex-status-dot'
-    isolatedText.textContent = 'No isolated copy yet'
+    isolatedText.textContent = 'Not installed yet — choose a location to set up SkyRP'
   } else if (!fieldIsolated.checked) {
     isolatedDot.className    = 'vortex-status-dot dot-warn'
-    isolatedText.textContent = 'Isolated copy exists — playing from the original install'
+    isolatedText.textContent = 'SkyRP install exists — playing from the original Skyrim'
   } else {
     isolatedDot.className    = 'vortex-status-dot dot-ok'
-    isolatedText.textContent = `Playing from isolated copy (${st.dir})`
+    isolatedText.textContent = `SkyRP installed at ${st.base || st.dir}`
   }
 }
 
@@ -346,7 +346,7 @@ btnCreateIsolated.addEventListener('click', async () => {
   window.electronAPI.removeIsolatedListeners()
 
   btnCreateIsolated.disabled = false
-  btnCreateIsolated.textContent = 'Create isolated copy (~15 GB)'
+  btnCreateIsolated.textContent = 'Choose location & install…'
 
   if (!result.success) {
     isolatedText.textContent = `Error: ${result.error}`
@@ -470,14 +470,18 @@ document.getElementById('btn-install-mo2').addEventListener('click', () => {
     }
   })
 
-  window.electronAPI.onInstallComplete(({ success, error, upToDate }) => {
+  window.electronAPI.onInstallComplete(({ success, error, upToDate, warning, modsTotal }) => {
     if (!success) {
       installStatusMo2.textContent = `Error: ${error}`
       return
     }
-    installStatusMo2.textContent = upToDate
-      ? 'Modpack up to date ✓'
-      : 'Modpack installed ✓'
+    if (warning) {
+      installStatusMo2.textContent = `⚠ ${warning}`
+      refreshMo2Status()
+      return
+    }
+    const files = upToDate ? 'client files up to date' : 'client files installed'
+    installStatusMo2.textContent = `Modpack ready ✓ — ${modsTotal ?? 0} mods, ${files}`
     refreshMo2Status()
   })
 
