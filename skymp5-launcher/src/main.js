@@ -945,6 +945,7 @@ async function runMO2Install() {
     try { serverInfo = await fetchJSON(`${config.apiUrl}/api/serverinfo`) } catch {}
     mo2.ensureInstance(skyrimPath, serverInfo?.loadOrder)
     mo2.registerNxmHandler()
+    mo2.setGameDataDir(path.join(skyrimPath, 'Data'))
 
     // ── 2. SkyMP client files into the real Data/ ─────────────────────────────
     const core = await installClientFilesCore(skyrimPath, srv, serverInfo)
@@ -962,9 +963,49 @@ async function runMO2Install() {
           collections.map(m => m.name).join(', '))
     }
 
+    // ── 3a. URL-sourced resources (SKSE & other non-Nexus files) ─────────────
+    // root: true entries put their exe/dll payload into the game root —
+    // exactly how Wabbajack ships SKSE — with any Data payload as a mod.
+    const urlMods = modlist.filter(m => m.source === 'url' && m.enabled && m.url)
+    for (const m of urlMods) {
+      try {
+        if (m.root && m.checkFile && fs.existsSync(path.join(skyrimPath, m.checkFile))) {
+          log(`[mo2-install] ${m.name} already present (${m.checkFile})`)
+          continue
+        }
+        if (!m.root) {
+          const existing = mo2.findModByName(m.name)
+          if (existing) { mo2.enableMod(existing); continue }
+        }
+
+        let fileName
+        try { fileName = decodeURIComponent(new URL(m.url).pathname.split('/').pop()) } catch {}
+        if (!fileName) fileName = `${m.name.replace(/[^\w.-]/g, '_')}.7z`
+
+        const mb = n => (n / 1024 / 1024).toFixed(1)
+        send('install:progress', { phase: 'mods', file: `Downloading ${m.name}…`, index: 0, total: urlMods.length, skipped: false })
+        await mo2.downloadToDownloads(m.url, fileName, (received, total) => {
+          const pct = total > 0 ? ` (${Math.round(received / total * 100)}%)` : ''
+          send('install:progress', { phase: 'mods', file: `Downloading ${m.name}… ${mb(received)} MB${pct}`, index: 0, total: urlMods.length, skipped: false })
+        })
+
+        send('install:progress', { phase: 'mods', file: `Installing ${m.name}…`, index: 0, total: urlMods.length, skipped: false })
+        if (m.root) {
+          const r = mo2.installRootArchive(fileName, skyrimPath, m.name)
+          if (r.folder) mo2.enableMod(r.folder)
+        } else {
+          const r = mo2.installModFromArchive(fileName, null, m.name)
+          if (r.folder) mo2.enableMod(r.folder)
+        }
+      } catch (err) {
+        return fail(`Failed to install ${m.name}: ${err.message}`)
+      }
+    }
+
+    // ── 3b. Nexus mods ────────────────────────────────────────────────────────
     const nexusMods = modlist.filter(m => m.source === 'nexus' && m.enabled && m.nexusId)
 
-    if (nexusMods.length === 0) {
+    if (nexusMods.length === 0 && urlMods.length === 0) {
       send('install:complete', {
         success: true, mo2: true, upToDate: core.upToDate, modsTotal: 0,
         warning: 'The server modlist has no Nexus entries yet — generate data/modlist.json on the backend (collection-to-modlist).',
@@ -1043,7 +1084,7 @@ async function runMO2Install() {
       }
     }
 
-    send('install:complete', { success: true, mo2: true, upToDate: core.upToDate, modsTotal: nexusMods.length })
+    send('install:complete', { success: true, mo2: true, upToDate: core.upToDate, modsTotal: nexusMods.length + urlMods.length })
   } catch (err) {
     fail(`Install failed: ${err.message}`)
     return

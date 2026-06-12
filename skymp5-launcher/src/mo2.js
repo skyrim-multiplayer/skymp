@@ -24,6 +24,7 @@ const fs   = require('fs')
 const os   = require('os')
 const https = require('https')
 const { spawn, execSync, execFileSync } = require('child_process')
+const fomod = require('./fomod')
 
 const MO2_VERSION = '2.5.2'
 const MO2_URL     = `https://github.com/ModOrganizer2/modorganizer/releases/download/v${MO2_VERSION}/Mod.Organizer-${MO2_VERSION}.7z`
@@ -31,7 +32,10 @@ const PROFILE     = 'SkyRP'
 
 // ── Logger ────────────────────────────────────────────────────────────────────
 let _log = (...args) => console.log('[mo2]', ...args)
-function setLogger(fn) { _log = (...args) => fn('[mo2]', ...args) }
+function setLogger(fn) {
+  _log = (...args) => fn('[mo2]', ...args)
+  fomod.setLogger(fn)
+}
 
 // ── Paths ─────────────────────────────────────────────────────────────────────
 
@@ -330,23 +334,46 @@ function installModFromArchive(archiveName, nexusId, modName) {
     // 7za couldn't read it — likely still being written; retry next tick
     return { folder: null, needsSetup: false }
   }
-  if (entries.some(e => /^fomod[\\/]/i.test(e))) {
-    _log(`${archiveName}: FOMOD installer — needs manual install in MO2`)
-    return { folder: null, needsSetup: true }
-  }
+
+  // Extract to a private staging area first — never straight into mods\.
+  const stagingDir = path.join(getRoot(), '.staging', folderName)
+  try { fs.rmSync(stagingDir, { recursive: true, force: true }) } catch {}
 
   try {
-    extractArchive(archivePath, modDir)
+    extractArchive(archivePath, stagingDir)
+
+    if (fomod.findModuleConfig(stagingDir)) {
+      // FOMOD: run the installer with the author's default selections.
+      _log(`${archiveName}: FOMOD installer — running with default options`)
+      const result = fomod.install(stagingDir, modDir, f => pluginExists(f))
+      _log(`${archiveName}: FOMOD installed ${result.installed} entries, ${result.choices.length} choice(s)`)
+    } else {
+      // Plain archive: find the actual data root (skip wrapper folders,
+      // descend into Data/) so the mod folder root IS the virtual Data root.
+      const dataRoot = findDataRoot(stagingDir)
+      fs.mkdirSync(modDir, { recursive: true })
+      for (const entry of fs.readdirSync(dataRoot)) {
+        fs.renameSync(path.join(dataRoot, entry), path.join(modDir, entry))
+      }
+      if (dataRoot !== stagingDir) {
+        _log(`${archiveName}: data root detected at ${path.relative(stagingDir, dataRoot) || '.'}`)
+      }
+    }
   } catch (err) {
-    _log(`${archiveName}: extraction failed (${err.message})`)
+    _log(`${archiveName}: install failed (${err.message})`)
     try { fs.rmSync(modDir, { recursive: true, force: true }) } catch {}
+    try { fs.rmSync(stagingDir, { recursive: true, force: true }) } catch {}
+    // Unreadable mid-download archives land here too — retry next tick;
+    // genuinely broken ones surface via the wait loop timeout.
     return { folder: null, needsSetup: false }
   }
+
+  try { fs.rmSync(stagingDir, { recursive: true, force: true }) } catch {}
 
   fs.writeFileSync(path.join(modDir, 'meta.ini'), [
     '[General]',
     'gameName=SkyrimSE',
-    `modid=${nexusId}`,
+    `modid=${nexusId ?? 0}`,
     `name=${folderName}`,
     `installationFile=${archiveName}`,
     'repository=Nexus',
@@ -355,6 +382,151 @@ function installModFromArchive(archiveName, nexusId, modName) {
 
   _log(`installed ${folderName} from ${archiveName}`)
   return { folder: folderName, needsSetup: false }
+}
+
+// ── Data-root detection ───────────────────────────────────────────────────────
+
+const DATA_DIR_NAMES = new Set([
+  'textures', 'meshes', 'scripts', 'interface', 'skse', 'sound', 'music',
+  'strings', 'seq', 'grass', 'lodsettings', 'shadersfx', 'video', 'fonts',
+  'platform', 'mcm', 'dialogueviews', 'calientetools', 'source', 'nemesis_engine',
+])
+const PLUGIN_FILE_RE = /\.(esp|esm|esl|bsa|ba2)$/i
+
+function looksLikeDataRoot(dir) {
+  let entries
+  try { entries = fs.readdirSync(dir, { withFileTypes: true }) } catch { return false }
+  return entries.some(e =>
+    (!e.isDirectory() && PLUGIN_FILE_RE.test(e.name)) ||
+    (e.isDirectory() && DATA_DIR_NAMES.has(e.name.toLowerCase())))
+}
+
+/**
+ * Locate the folder inside an extracted archive whose CONTENTS belong at the
+ * mod root (= virtual Data root): descend through single-folder wrappers,
+ * prefer an explicit Data/ folder, stop at anything that looks like game data.
+ */
+function findDataRoot(dir) {
+  let cur = dir
+  for (let depth = 0; depth < 4; depth++) {
+    if (looksLikeDataRoot(cur)) return cur
+
+    let entries
+    try { entries = fs.readdirSync(cur, { withFileTypes: true }) } catch { return cur }
+    const dirs  = entries.filter(e => e.isDirectory())
+    const files = entries.filter(e => !e.isDirectory())
+
+    const dataDir = dirs.find(d => d.name.toLowerCase() === 'data')
+    if (dataDir) return path.join(cur, dataDir.name)
+
+    if (dirs.length === 1 && files.length === 0) {
+      cur = path.join(cur, dirs[0].name)  // wrapper folder — descend
+      continue
+    }
+    return cur
+  }
+  return cur
+}
+
+/** True if a plugin file exists in the game Data dir or any installed mod. */
+let _gameDataDir = null
+function setGameDataDir(dir) { _gameDataDir = dir }
+
+function pluginExists(fileName) {
+  if (_gameDataDir && fs.existsSync(path.join(_gameDataDir, fileName))) return true
+  try {
+    for (const e of fs.readdirSync(getModsDir(), { withFileTypes: true })) {
+      if (e.isDirectory() && fs.existsSync(path.join(getModsDir(), e.name, fileName))) return true
+    }
+  } catch {}
+  return false
+}
+
+/** Find an installed mod folder by its meta.ini display name. */
+function findModByName(modName) {
+  const wanted = String(modName).toLowerCase()
+  try {
+    for (const e of fs.readdirSync(getModsDir(), { withFileTypes: true })) {
+      if (!e.isDirectory()) continue
+      if (e.name.toLowerCase() === wanted) return e.name
+      try {
+        const meta  = fs.readFileSync(path.join(getModsDir(), e.name, 'meta.ini'), 'utf8')
+        const match = meta.match(/^name\s*=\s*(.+)$/im)
+        if (match && match[1].trim().toLowerCase() === wanted) return e.name
+      } catch {}
+    }
+  } catch {}
+  return null
+}
+
+// ── Root-directory installs (SKSE & co.) ─────────────────────────────────────
+
+/**
+ * Install an archive whose binaries belong in the GAME ROOT (e.g. SKSE:
+ * skse64_loader.exe + DLLs next to SkyrimSE.exe, scripts under Data/).
+ * Root-level exe/dll files are copied into gameDir; a Data folder, if
+ * present, becomes a regular MO2 mod so the VFS serves its scripts.
+ *
+ * @returns {{ folder: string|null }}  the created scripts-mod folder, if any
+ */
+function installRootArchive(archiveName, gameDir, modName) {
+  const archivePath = path.join(getDownloadsDir(), archiveName)
+  const stagingDir  = path.join(getRoot(), '.staging', modName.replace(/[<>:"/\\|?*]/g, ''))
+  try { fs.rmSync(stagingDir, { recursive: true, force: true }) } catch {}
+
+  extractArchive(archivePath, stagingDir)
+
+  // Descend through a single wrapper folder (skse64_2_02_06/…)
+  let root = stagingDir
+  for (let i = 0; i < 3; i++) {
+    const entries = fs.readdirSync(root, { withFileTypes: true })
+    const dirs    = entries.filter(e => e.isDirectory())
+    const files   = entries.filter(e => !e.isDirectory())
+    if (files.some(f => /\.(exe|dll)$/i.test(f.name))) break
+    if (dirs.length === 1 && files.length === 0) { root = path.join(root, dirs[0].name); continue }
+    break
+  }
+
+  let copied = 0
+  for (const e of fs.readdirSync(root, { withFileTypes: true })) {
+    if (!e.isDirectory() && /\.(exe|dll)$/i.test(e.name)) {
+      fs.copyFileSync(path.join(root, e.name), path.join(gameDir, e.name))
+      copied++
+    }
+  }
+  _log(`${modName}: copied ${copied} root file(s) into ${gameDir}`)
+
+  let folder = null
+  const dataDir = fs.readdirSync(root, { withFileTypes: true })
+    .find(e => e.isDirectory() && e.name.toLowerCase() === 'data')
+  if (dataDir) {
+    folder = `${modName} (data)`.replace(/[<>:"/\\|?*]/g, '')
+    const modDir = path.join(getModsDir(), folder)
+    fs.mkdirSync(modDir, { recursive: true })
+    const src = path.join(root, dataDir.name)
+    for (const entry of fs.readdirSync(src)) {
+      fs.renameSync(path.join(src, entry), path.join(modDir, entry))
+    }
+    fs.writeFileSync(path.join(modDir, 'meta.ini'), [
+      '[General]', 'gameName=SkyrimSE', 'modid=0', `name=${folder}`,
+      `installationFile=${archiveName}`, 'repository=', '',
+    ].join('\r\n'))
+    _log(`${modName}: Data payload installed as mod "${folder}"`)
+  }
+
+  try { fs.rmSync(stagingDir, { recursive: true, force: true }) } catch {}
+  return { folder }
+}
+
+/** Download any URL into the MO2 downloads folder. Returns the archive name. */
+async function downloadToDownloads(url, fileName, onProgress) {
+  const dest = path.join(getDownloadsDir(), fileName)
+  if (fs.existsSync(dest)) return fileName
+  fs.mkdirSync(getDownloadsDir(), { recursive: true })
+  const temp = dest + '.unfinished'
+  await downloadFile(url, temp, onProgress)
+  fs.renameSync(temp, dest)
+  return fileName
 }
 
 /** Enable a mod in the SkyRP profile (idempotent). */
@@ -477,6 +649,10 @@ module.exports = {
   findDownloadByNexusId,
   installModFromDownload,
   installModFromArchive,
+  installRootArchive,
+  downloadToDownloads,
+  findModByName,
+  setGameDataDir,
   enableMod,
   waitForMods,
   launchGame,

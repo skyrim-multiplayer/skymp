@@ -105,8 +105,22 @@ async function main() {
     }
   }
 
+  // Wabbajack type installer for mo2
+  const external = (rev.externalResources || []).map(r => {
+    const isSkse = /skse/i.test(r.name || '') || /skse/i.test(r.resourceUrl || '')
+    return {
+      name:     r.name || 'External resource',
+      required: true,
+      enabled:  true,
+      source:   'url',
+      url:      r.resourceUrl,
+      ...(isSkse ? { root: true, checkFile: 'skse64_loader.exe' } : {}),
+    }
+  })
+
   const modlist = [
     { name: 'SkyMP Client', required: true, enabled: true, source: 'backend' },
+    ...external,
     ...[...byModId.values()].sort((a, b) => a.name.localeCompare(b.name)),
   ]
 
@@ -114,12 +128,11 @@ async function main() {
   fs.writeFileSync(outPath, JSON.stringify(modlist, null, 2) + '\n')
   console.log(`Wrote ${modlist.length} entries to ${outPath}`)
 
-  const external = rev.externalResources || []
   if (external.length > 0) {
-    console.log('\nExternal (non-Nexus) resources in this collection — the launcher')
-    console.log('cannot auto-install these; ship them via the client files zip or')
-    console.log('document them for players:')
-    for (const r of external) console.log(`  - ${r.name}: ${r.resourceUrl}`)
+    console.log('\nExternal (non-Nexus) resources included as url-sourced entries:')
+    for (const r of external) {
+      console.log(`  - ${r.name}${r.root ? ' (root install: ' + r.checkFile + ')' : ''}: ${r.url}`)
+    }
   }
 }
 
