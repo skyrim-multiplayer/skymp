@@ -41,8 +41,8 @@ If you don't adjust the .bat lines accordingly.
 5) Update your README.md file and push the update to github. 
 This will cause the workflow to trigger. Warning, this COULD take a couple hours, but it will build your server for you.
 
-6) Download the server-dist artifact from the workflow build, then extract it in C:\Users\Administrator\Desktop\SkyMP\builds\dist\server
-Note, this is the default path, change as needed. 
+6) Download the dist artifact from the workflow build, then extract it in C:\Users\Administrator\Desktop\SkyMP\builds\dist\
+Note, this is the default path, change as needed. You should get 3 folders: server, client, papyrus
 
 7) Follow the instructions inside of \SkyMP\builds\dist\server\README.md
 It will guide you almost completely, including a full server-settings.json to fill out. 
@@ -54,13 +54,21 @@ Both of these will do everything for you. I recommend looking at the README.md f
 This will give you your .exe to distribute to your players. Simply zip it up, and upload it to any CDN of your choosing (such as discord, or your website).
 
 10) Finally, install nginx on your machine with the final script in the root directory.
-This script also will run win-acme to create certs for your API and Dashboard, making it a true server. 
-Big note, you must edit this bat file, and the two conf files in SkyMP/deploy/nginx
-I tried to leave it pretty simple, just fill out where it asks you to.
+This script also will run win-acme to create certs for your API and Dashboard, making it a true server.
+win-acme could fail, just follow the instructions on the cmd console, it will walk you through it.
+YOU MUST EDIT THIS BAT FILE, and the two conf files in SkyMP/deploy/nginx
+I tried to leave it pretty simple, just fill out where it asks you to. Use notepad++ and find/replace all instances of [YOUR WEBSITE HERE] with your website.
+
+You should now have 3 services running on your machine. Nginx, SkyMPServer, SkyMPBackend. 
+Your game server is running test mode, if you run launch-server.bat it should succeed. 
+To get your actual server to run, just open your gamemode.js and delete everything in it. 
+From now on, you need to build this yourself or maybe find one premade if anyone is kind enough to share.
+
+WHENEVER YOU UPDATE YOUR FILES, RUN THE BUILD WORKFLOW AGAIN. 
+BACK UP YOUR GAMEMODE.JS AND YOUR SERVER-SETTINGS.JSON!!!!!!
+When you unpack dist, it will overwrite them, and you'll lose all of your work. 
 
 If you need anything further, read the documentation already provided in \SkyMP\docs
 It literally contains everything else.
 
-If both services are running and your launcher connects, congrats!
 Have fun and enjoy your server! 
-The rest of your journey involves developing it and branching it off from the rest. Good luck!
