@@ -149,6 +149,24 @@ async function ensureInstalled(onProgress) {
 const fwd = p => p.replace(/\\/g, '/')
 
 /**
+ * Pick a dark stylesheet bundled with MO2 (preference order, then any *.qss
+ * with "dark" in the name). Returns '' if none found.
+ */
+function pickDarkStyle() {
+  const dir = path.join(getRoot(), 'stylesheets')
+  const preferred = ['Paper Dark.qss', 'paper-dark.qss', 'VS15.qss', 'dark.qss', '1809.qss']
+  try {
+    const files = fs.readdirSync(dir)
+    for (const name of preferred) {
+      if (files.includes(name)) return name
+    }
+    const anyDark = files.find(f => /dark/i.test(f) && f.toLowerCase().endsWith('.qss'))
+    if (anyDark) return anyDark
+  } catch { /* stylesheets dir missing */ }
+  return ''
+}
+
+/**
  * Create or refresh the portable instance config and the SkyRP profile.
  * Safe to call repeatedly; user data (mods, downloads) is never touched.
  *
@@ -161,6 +179,13 @@ function ensureInstance(skyrimPath, loadOrder) {
     fs.mkdirSync(dir, { recursive: true })
   }
 
+  // portable.txt is MO2's portable-instance marker. Without it MO2 ignores
+  // the local ModOrganizer.ini and opens the user's registry-selected
+  // (global) instance instead.
+  fs.writeFileSync(path.join(root, 'portable.txt'), '')
+
+  const style = pickDarkStyle()
+
   // ModOrganizer.ini — rewritten on every call so a moved Skyrim folder heals.
   const ini = [
     '[General]',
@@ -172,6 +197,7 @@ function ensureInstance(skyrimPath, loadOrder) {
     '',
     '[Settings]',
     'check_for_updates=false',
+    ...(style ? [`style=${style}`] : []),
     '',
     '[customExecutables]',
     'size=1',

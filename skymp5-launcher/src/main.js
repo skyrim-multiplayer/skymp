@@ -50,7 +50,8 @@ const store = new Store({
     mo2Enabled:        false,  // launch the game through the managed portable MO2
     nexusApiKey:       '',     // Nexus API login
     nexusUser:         null,   // { name, isPremium } from the last validation
-    isolatedGame:      false,  // play from the isolated game copy instead of skyrimPath
+    isolatedGame:      true,  // play from the isolated game copy instead of skyrimPath
+    gameDirPath:       '',     // where the user chose to install the isolated copy
   }
 })
 
@@ -73,6 +74,9 @@ function activeServer() {
 // ── Effective game path ───────────────────────────────────────────────────────
 // Creates an isolated copy, this keeps the base directory clean
 function isolatedGameDir() {
+  const chosen = store.get('gameDirPath')
+  if (chosen) return chosen
+  // Legacy default from before the location prompt existed
   const local = process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local')
   return path.join(local, 'SkyRP', 'GameDir')
 }
@@ -349,12 +353,85 @@ ipcMain.handle('game:isolatedStatus', () => ({
   dir:     isolatedGameDir(),
 }))
 
+// Checks for clean directory
+function findDirtyFiles(src) {
+  const offenders = []
+  const dataDir   = path.join(src, 'Data')
+
+  try {
+    for (const name of fs.readdirSync(dataDir)) {
+      const l = name.toLowerCase()
+      if (l.startsWith('cc')) continue                       // Creation Club — official
+      if (l.endsWith('.esp')) offenders.push(`Data\\${name}`)
+      else if ((l.endsWith('.esm') || l.endsWith('.esl')) && !VANILLA_MASTERS.has(l)) {
+        offenders.push(`Data\\${name}`)
+      }
+    }
+  } catch { /* no Data dir — caught by the SkyrimSE.exe check */ }
+
+  for (const dir of ['SKSE', 'Platform']) {
+    if (fs.existsSync(path.join(dataDir, dir))) offenders.push(`Data\\${dir}\\`)
+  }
+  for (const file of ['d3d11.dll', 'dxgi.dll', 'enbseries.ini']) {
+    if (fs.existsSync(path.join(src, file))) offenders.push(file)
+  }
+
+  return offenders
+}
+
+// move CC content so it doesnt load
+function disableCreationClub(gameDir) {
+  const dataDir     = path.join(gameDir, 'Data')
+  const disabledDir = path.join(gameDir, 'DisabledCC')
+  let moved = 0
+  try {
+    for (const name of fs.readdirSync(dataDir)) {
+      if (!name.toLowerCase().startsWith('cc')) continue
+      fs.mkdirSync(disabledDir, { recursive: true })
+      fs.renameSync(path.join(dataDir, name), path.join(disabledDir, name))
+      moved++
+    }
+  } catch { /* no Data dir */ }
+  if (moved > 0) log(`[isolated] moved ${moved} Creation Club file(s) to DisabledCC\\`)
+  return moved
+}
+
 ipcMain.handle('game:createIsolated', async () => {
   const src = store.get('skyrimPath')
   if (!src || !fs.existsSync(path.join(src, 'SkyrimSE.exe'))) {
     return { success: false, error: 'Set a valid Skyrim path first (SkyrimSE.exe not found).' }
   }
-  const dst = isolatedGameDir()
+
+  // We need a clean install to make a portable skyrim, this checks to make sure its clean
+  const offenders = findDirtyFiles(src)
+  if (offenders.length > 0) {
+    const shown = offenders.slice(0, 6).join(', ') + (offenders.length > 6 ? ', …' : '')
+    return {
+      success: false,
+      dirty:   true,
+      error:   `Your Skyrim install is not clean (found: ${shown}). ` +
+               `Please reinstall or verify Skyrim to a vanilla state, then try again.`,
+    }
+  }
+
+  // popup for skyrim clone
+  const picked = await dialog.showOpenDialog(win, {
+    title:       'Choose where to install the SkyRP game copy (~15 GB)',
+    buttonLabel: 'Install here',
+    properties:  ['openDirectory', 'createDirectory'],
+  })
+  if (picked.canceled || !picked.filePaths[0]) {
+    return { success: false, canceled: true, error: 'Installation cancelled.' }
+  }
+  const dst = path.join(picked.filePaths[0], 'SkyRP Game')
+
+  // Re-use an existing copy at that location.
+  if (fs.existsSync(path.join(dst, 'SkyrimSE.exe'))) {
+    store.set('gameDirPath', dst)
+    store.set('isolatedGame', true)
+    disableCreationClub(dst)
+    return { success: true, existing: true, dir: dst }
+  }
 
   return new Promise(resolve => {
     // robocopy: /E all subdirs, /MT multithreaded, minimal logging, one line per copied file so we can show progress.
@@ -374,7 +451,12 @@ ipcMain.handle('game:createIsolated', async () => {
     child.on('close', code => {
       // robocopy exit codes 0–7 mean success (8+ are failures)
       if (code >= 8) return resolve({ success: false, error: `robocopy exited with code ${code}` })
-      log(`[isolated] game copy complete (${copied} files)`)
+
+      disableCreationClub(dst)
+      store.set('gameDirPath', dst)
+      store.set('isolatedGame', true)
+
+      log(`[isolated] game copy complete (${copied} files) at ${dst}`)
       resolve({ success: true, copied, dir: dst })
     })
   })

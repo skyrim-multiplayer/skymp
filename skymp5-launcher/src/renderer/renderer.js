@@ -561,6 +561,25 @@ btnConnect.addEventListener('click', async () => {
   clearWarning()
 
   try {
+    // 0. First play with isolation enabled: ask where to install the game
+    //    copy and create it before anything else touches the game dir.
+    const iso = await window.electronAPI.isolatedStatus()
+    if (iso.enabled && !iso.ready) {
+      btnConnect.textContent = '\u2699 SETTING UP GAME\u2026'
+      showWarning('Choose where to install your SkyRP game copy…')
+
+      window.electronAPI.removeIsolatedListeners()
+      window.electronAPI.onIsolatedProgress(msg => showWarning(msg))
+      const setup = await window.electronAPI.createIsolated()
+      window.electronAPI.removeIsolatedListeners()
+
+      if (!setup.success) {
+        showWarning(setup.error || 'Game copy setup failed.')
+        return
+      }
+      refreshIsolatedStatus()
+    }
+
     // 1. Make sure client files are present and current (fast no-op when up to date)
     btnConnect.textContent = '\u2699 CHECKING FILES\u2026'
     const install = await runInstallForPlay()
