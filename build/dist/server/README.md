@@ -22,9 +22,11 @@ If there are any errors, it should also spit out log files onto your desktop (or
 
 
 
-Next we have the restart-server.bat file. 
-You will need to run this whenever you make changes to the server files.
+Next we have the restart-server.bat file. This is located in \SkyMP\deploy\
+You will need to run this whenever you make changes to the server files. 
 If you update the settings, pull the repo to update your files, or install an updated build of the server, run this bat. 
+
+You may also need to grab a new dist if you update certain files, JUST MAKE SURE TO BACKUP YOUR SERVER-SETTINGS.JSON AND YOUR GAMEMODE.JS!!!
 
 I've also added stop-server.bat and start-server.bat
 If you need to kill the server or manually restart it, these two are your buttons.
