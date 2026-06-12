@@ -47,11 +47,10 @@ footerServerSelect.addEventListener('change', () => {
   window.electronAPI.saveSettings({ activeServerIndex: parseInt(footerServerSelect.value, 10) })
 })
 
-// ── Vortex fields ─────────────────────────────────────────────────────────────
-const fieldVortexPath    = document.getElementById('setting-vortex-path')
-const fieldVortexEnabled = document.getElementById('setting-vortex-enabled')
-const vortexStatusDot    = document.getElementById('vortex-status-dot')
-const vortexStatusText   = document.getElementById('vortex-status-text')
+// ── MO2 fields ────────────────────────────────────────────────────────────────
+const fieldMo2Enabled = document.getElementById('setting-mo2-enabled')
+const mo2StatusDot    = document.getElementById('mo2-status-dot')
+const mo2StatusText   = document.getElementById('mo2-status-text')
 
 // ── Discord auth state (kept in module scope for PLAY check) ──────────────────
 let discordUser         = null
@@ -65,6 +64,10 @@ let serverAllowed       = true
 // Re-evaluates Play button state whenever lock/whitelist state changes.
 // Call this after login, logout, and initial serverinfo load.
 function updateLockState() {
+  // While the game runs (or a play sequence is in flight) the button is
+  // managed by updatePlayButton() — don't fight over it here.
+  if (gameRunning || playBusy) return
+
   if (serverLocked && discordUser && !serverAllowed) {
     // Logged in but not on the server lock allow-list
     btnConnect.disabled = true
@@ -116,10 +119,13 @@ async function loadSettings() {
     renderTopbarDiscord()
   }
 
-  // Restore Vortex settings
-  fieldVortexPath.value      = s.vortexPath || ''
-  fieldVortexEnabled.checked = !!s.vortexEnabled
-  updateVortexStatus()
+  // Restore MO2 settings
+  fieldMo2Enabled.checked = !!s.mo2Enabled
+  refreshMo2Status()
+
+  // Restore isolated-game setting
+  fieldIsolated.checked = !!s.isolatedGame
+  refreshIsolatedStatus()
 
   return s
 }
@@ -196,15 +202,165 @@ function renderTopbarDiscord() {
 
 renderTopbarDiscord()
 
+
+// ── Nexus topbar widget ───────────────────────────────────────────────────────
+const nexusTopbarSlot  = document.getElementById('nexus-topbar-slot')
+const modalNexus       = document.getElementById('modal-nexus')
+const nexusKeyInput    = document.getElementById('nexus-key-input')
+const nexusLoginStatus = document.getElementById('nexus-login-status')
+
+let nexusUser = null
+
+function renderTopbarNexus() {
+  nexusTopbarSlot.innerHTML = ''
+
+  if (nexusUser) {
+    const wrap = document.createElement('div')
+    wrap.className = 'discord-topbar-user'
+
+    const name = document.createElement('span')
+    name.className   = 'discord-topbar-name'
+    name.textContent = `Nexus: ${nexusUser.name}${nexusUser.isPremium ? ' \u2605' : ''}`
+    name.title       = nexusUser.isPremium
+      ? 'Nexus Premium — automatic mod downloads enabled'
+      : 'Nexus free account — downloads open in the browser'
+    wrap.appendChild(name)
+
+    const logoutBtn = document.createElement('button')
+    logoutBtn.className   = 'discord-topbar-logout'
+    logoutBtn.title       = 'Logout from Nexus'
+    logoutBtn.textContent = '\u2715'
+    logoutBtn.addEventListener('click', async () => {
+      await window.electronAPI.nexusLogout()
+      nexusUser = null
+      renderTopbarNexus()
+    })
+    wrap.appendChild(logoutBtn)
+
+    nexusTopbarSlot.appendChild(wrap)
+  } else {
+    const loginBtn = document.createElement('button')
+    loginBtn.className   = 'btn-discord-topbar'
+    loginBtn.textContent = 'Nexus Login'
+    loginBtn.addEventListener('click', () => {
+      nexusLoginStatus.textContent = ''
+      nexusKeyInput.value = ''
+      modalNexus.hidden = false
+      nexusKeyInput.focus()
+    })
+    nexusTopbarSlot.appendChild(loginBtn)
+  }
+}
+
+// Show the one-click SSO button only when the app has a registered slug
+window.electronAPI.nexusSsoAvailable().then(available => {
+  document.getElementById('nexus-sso-group').hidden = !available
+})
+
+document.getElementById('nexus-sso-login').addEventListener('click', async () => {
+  const btn = document.getElementById('nexus-sso-login')
+  btn.disabled = true
+  nexusLoginStatus.textContent = 'Waiting for you to authorise in the browser…'
+
+  const result = await window.electronAPI.nexusSsoLogin()
+  btn.disabled = false
+
+  if (!result.success) {
+    nexusLoginStatus.textContent = `Error: ${result.error}`
+    return
+  }
+
+  nexusUser = result.user
+  nexusLoginStatus.textContent = ''
+  modalNexus.hidden = true
+  renderTopbarNexus()
+})
+
+document.getElementById('nexus-modal-close').addEventListener('click', () => { modalNexus.hidden = true })
+modalNexus.addEventListener('click', e => { if (e.target === modalNexus) modalNexus.hidden = true })
+
+document.getElementById('nexus-keys-link').addEventListener('click', e => {
+  e.preventDefault()
+  window.electronAPI.openExternal('https://next.nexusmods.com/settings/api-keys')
+})
+
+document.getElementById('nexus-key-save').addEventListener('click', async () => {
+  const btn = document.getElementById('nexus-key-save')
+  btn.disabled = true
+  nexusLoginStatus.textContent = 'Validating key…'
+
+  const result = await window.electronAPI.nexusLogin(nexusKeyInput.value)
+  btn.disabled = false
+
+  if (!result.success) {
+    nexusLoginStatus.textContent = `Error: ${result.error}`
+    return
+  }
+
+  nexusUser = result.user
+  nexusLoginStatus.textContent = ''
+  modalNexus.hidden = true
+  renderTopbarNexus()
+})
+
+window.electronAPI.nexusGetUser().then(user => {
+  nexusUser = user
+  renderTopbarNexus()
+})
+
+// ── Isolated game copy UI ─────────────────────────────────────────────────────
+const isolatedDot       = document.getElementById('isolated-status-dot')
+const isolatedText      = document.getElementById('isolated-status-text')
+const fieldIsolated     = document.getElementById('setting-isolated-game')
+const btnCreateIsolated = document.getElementById('btn-create-isolated')
+
+async function refreshIsolatedStatus() {
+  const st = await window.electronAPI.isolatedStatus()
+  if (!st.ready) {
+    isolatedDot.className    = 'vortex-status-dot'
+    isolatedText.textContent = 'No isolated copy yet'
+  } else if (!fieldIsolated.checked) {
+    isolatedDot.className    = 'vortex-status-dot dot-warn'
+    isolatedText.textContent = 'Isolated copy exists — playing from the original install'
+  } else {
+    isolatedDot.className    = 'vortex-status-dot dot-ok'
+    isolatedText.textContent = `Playing from isolated copy (${st.dir})`
+  }
+}
+
+btnCreateIsolated.addEventListener('click', async () => {
+  btnCreateIsolated.disabled = true
+  btnCreateIsolated.textContent = 'Copying…'
+
+  window.electronAPI.removeIsolatedListeners()
+  window.electronAPI.onIsolatedProgress(msg => { isolatedText.textContent = msg })
+
+  const result = await window.electronAPI.createIsolated()
+  window.electronAPI.removeIsolatedListeners()
+
+  btnCreateIsolated.disabled = false
+  btnCreateIsolated.textContent = 'Create isolated copy (~15 GB)'
+
+  if (!result.success) {
+    isolatedText.textContent = `Error: ${result.error}`
+    return
+  }
+  fieldIsolated.checked = true
+  await window.electronAPI.saveSettings({ isolatedGame: true })
+  refreshIsolatedStatus()
+})
+
+fieldIsolated.addEventListener('change', refreshIsolatedStatus)
+
 document.getElementById('btn-save').addEventListener('click', async () => {
   const data = {
-    skyrimPath:    fieldSkyrimPath.value.trim(),
-    vortexPath:    fieldVortexPath.value.trim(),
-    vortexEnabled: fieldVortexEnabled.checked,
+    skyrimPath:   fieldSkyrimPath.value.trim(),
+    mo2Enabled:   fieldMo2Enabled.checked,
+    isolatedGame: fieldIsolated.checked,
   }
 
   await window.electronAPI.saveSettings(data)
-  updateVortexStatus()
+  refreshMo2Status()
 
   const btn = document.getElementById('btn-save')
   btn.textContent = 'Saved!'
@@ -217,45 +373,49 @@ document.getElementById('btn-browse').addEventListener('click', async () => {
   if (folder) fieldSkyrimPath.value = folder
 })
 
-// ── Vortex UI ─────────────────────────────────────────────────────────────────
+// ── MO2 UI ────────────────────────────────────────────────────────────────────
 
-function updateVortexStatus() {
-  const hasExe  = fieldVortexPath.value.trim().length > 0
-  const enabled = fieldVortexEnabled.checked
+async function refreshMo2Status() {
+  const status  = await window.electronAPI.mo2Status()
+  const enabled = fieldMo2Enabled.checked
 
-  if (!hasExe) {
-    vortexStatusDot.className    = 'vortex-status-dot'
-    vortexStatusText.textContent = 'Vortex not configured'
+  if (!status.installed) {
+    mo2StatusDot.className    = 'vortex-status-dot'
+    mo2StatusText.textContent = 'MO2 not installed — click "Set up MO2"'
   } else if (!enabled) {
-    vortexStatusDot.className    = 'vortex-status-dot dot-warn'
-    vortexStatusText.textContent = 'Vortex configured — integration disabled'
+    mo2StatusDot.className    = 'vortex-status-dot dot-warn'
+    mo2StatusText.textContent = `MO2 ${status.version} ready (${status.modCount} mods) — launching without it`
   } else {
-    vortexStatusDot.className    = 'vortex-status-dot dot-ok'
-    vortexStatusText.textContent = 'Vortex active'
+    mo2StatusDot.className    = 'vortex-status-dot dot-ok'
+    mo2StatusText.textContent = `MO2 ${status.version} active (${status.modCount} mods)`
   }
 }
 
-document.getElementById('btn-detect-vortex').addEventListener('click', async () => {
-  const btn = document.getElementById('btn-detect-vortex')
+document.getElementById('btn-setup-mo2').addEventListener('click', async () => {
+  const btn = document.getElementById('btn-setup-mo2')
   btn.disabled = true
-  btn.textContent = 'Detecting…'
-  const result = await window.electronAPI.vortexDetect()
-  fieldVortexPath.value = result.found ? result.path : ''
-  updateVortexStatus()
-  btn.disabled = false
-  btn.textContent = 'Auto-detect Vortex'
-})
+  btn.textContent = 'Setting up…'
 
-document.getElementById('btn-browse-vortex').addEventListener('click', async () => {
-  const result = await window.electronAPI.openFolder()
-  if (result) {
-    const exePath = result.endsWith('.exe') ? result : result + '\\Vortex.exe'
-    fieldVortexPath.value = exePath
-    updateVortexStatus()
+  window.electronAPI.removeMo2Listeners()
+  window.electronAPI.onMo2Progress(msg => { mo2StatusText.textContent = msg })
+
+  const result = await window.electronAPI.mo2Setup()
+  if (!result.success) {
+    mo2StatusText.textContent = `Error: ${result.error}`
   }
+
+  window.electronAPI.removeMo2Listeners()
+  btn.disabled = false
+  btn.textContent = 'Set up MO2'
+  if (result.success) refreshMo2Status()
 })
 
-fieldVortexEnabled.addEventListener('change', updateVortexStatus)
+document.getElementById('btn-open-mo2').addEventListener('click', async () => {
+  const result = await window.electronAPI.mo2Open()
+  if (!result.success) mo2StatusText.textContent = `Error: ${result.error}`
+})
+
+fieldMo2Enabled.addEventListener('change', refreshMo2Status)
 
 // ── Install / Update Client Files ────────────────────────────────────────────
 const installStatusClient = document.getElementById('install-status-client')
@@ -284,93 +444,147 @@ document.getElementById('btn-install-client').addEventListener('click', () => {
   window.electronAPI.startInstall('client')
 })
 
-// ── Install Modpack via Vortex ────────────────────────────────────────────────
-const installStatusVortex = document.getElementById('install-status-vortex')
+// ── Install Modpack via MO2 ───────────────────────────────────────────────────
+const installStatusMo2 = document.getElementById('install-status-mo2')
 
-document.getElementById('btn-install-vortex').addEventListener('click', () => {
-  installStatusVortex.textContent = 'Starting Vortex install…'
+document.getElementById('btn-install-mo2').addEventListener('click', () => {
+  installStatusMo2.textContent = 'Starting MO2 install…'
   window.electronAPI.removeInstallListeners()
 
   window.electronAPI.onInstallProgress(({ phase, file, index, total, skipped }) => {
     if (phase === 'download') {
-      installStatusVortex.textContent = file
-    } else if (phase === 'deploy') {
-      installStatusVortex.textContent = `[deploy ${index}/${total}] ${file}`
+      installStatusMo2.textContent = file
+    } else if (phase === 'mods') {
+      installStatusMo2.textContent = total > 0 ? `[mods ${index}/${total}] ${file}` : file
     } else {
       const prefix = skipped ? '[skip]' : `[${index}/${total}]`
-      installStatusVortex.textContent = `${prefix} ${file}`
+      installStatusMo2.textContent = `${prefix} ${file}`
     }
   })
 
-  window.electronAPI.onInstallComplete(({ success, error, skseWarning, upToDate, vortex: usedVortex }) => {
+  window.electronAPI.onInstallComplete(({ success, error, upToDate }) => {
     if (!success) {
-      installStatusVortex.textContent = `Error: ${error}`
+      installStatusMo2.textContent = `Error: ${error}`
       return
     }
-    if (skseWarning) {
-      installStatusVortex.textContent = `Done — ⚠ ${skseWarning}`
-      return
-    }
-
-    const prefix = upToDate
-      ? 'Server files up to date'
-      : (usedVortex ? 'Staged & deployed via Vortex' : 'Install complete')
-
-    const missingNexus = currentModlist.filter(m => m.source === 'nexus' && m.required && m.enabled)
-    if (missingNexus.length > 0) {
-      const names = missingNexus.map(m => m.name).join(', ')
-      installStatusVortex.textContent = `${prefix}. Install these via Vortex: ${names}`
-    } else {
-      installStatusVortex.textContent = `${prefix}! ✓`
-    }
+    installStatusMo2.textContent = upToDate
+      ? 'Modpack up to date ✓'
+      : 'Modpack installed ✓'
+    refreshMo2Status()
   })
 
-  window.electronAPI.startInstall('vortex')
+  window.electronAPI.startInstall('mo2')
 })
 
 // ── PLAY button ───────────────────────────────────────────────────────────────
+// One click does everything: verify/refresh client files, sync the load
+// order, then launch. While the game runs the button reflects that state.
 const btnConnect     = document.getElementById('btn-connect')
 const connectWarning = document.getElementById('connect-warning')
 
+let gameRunning = false
+let playBusy    = false
+
+const PLAY_LABEL = '\u25BA PLAY'
+
+function updatePlayButton() {
+  if (gameRunning) {
+    btnConnect.disabled    = true
+    btnConnect.textContent = '\u23F3 GAME RUNNING'
+    btnConnect.title       = 'Skyrim is currently running.'
+    return
+  }
+  if (playBusy) return  // label managed by the play sequence
+  btnConnect.textContent = PLAY_LABEL
+  btnConnect.title       = ''
+  btnConnect.disabled    = false
+  updateLockState()
+}
+
+async function pollGameRunning() {
+  const running = await window.electronAPI.gameIsRunning()
+  if (running !== gameRunning) {
+    gameRunning = running
+    updatePlayButton()
+  }
+}
+setInterval(pollGameRunning, 10_000)
+pollGameRunning()
+
+function showWarning(text) {
+  connectWarning.textContent = text
+  connectWarning.classList.add('visible')
+}
+
+function clearWarning() {
+  connectWarning.classList.remove('visible')
+  connectWarning.textContent = ''
+}
+
+// Run the installer (auto mode) and resolve with its completion result,
+// mirroring progress onto the Play button / warning strip.
+function runInstallForPlay() {
+  return new Promise(resolve => {
+    window.electronAPI.removeInstallListeners()
+    window.electronAPI.onInstallProgress(({ phase, file }) => {
+      btnConnect.textContent = phase === 'download' ? '\u2913 DOWNLOADING\u2026' : '\u2699 INSTALLING\u2026'
+      showWarning(file)
+    })
+    window.electronAPI.onInstallComplete(result => resolve(result))
+    window.electronAPI.startInstall('auto')
+  })
+}
 
 btnConnect.addEventListener('click', async () => {
+  if (gameRunning || playBusy) return
+
   if (discordUser && !serverAllowed) {
-    connectWarning.textContent = serverLocked
+    showWarning(serverLocked
       ? 'Server is currently locked — you are not on the allow list.'
-      : 'You are not on the server whitelist.'
-    connectWarning.classList.add('visible')
+      : 'You are not on the server whitelist.')
     return
   }
 
   const s = await window.electronAPI.loadSettings()
   if (!s.skyrimPath) {
-    connectWarning.textContent = 'Set Skyrim path in Settings first.'
-    connectWarning.classList.add('visible')
+    showWarning('Set Skyrim path in Settings first.')
     return
   }
 
   if (!discordUser) {
-    connectWarning.textContent = 'Login with Discord first — use the button in the toolbar.'
-    connectWarning.classList.add('visible')
+    showWarning('Login with Discord first — use the button in the toolbar.')
     return
   }
 
-  btnConnect.disabled    = true
-  btnConnect.textContent = 'Deploying…'
-  connectWarning.classList.remove('visible')
+  playBusy            = true
+  btnConnect.disabled = true
+  clearWarning()
 
-  const result = await window.electronAPI.launchSkse()
+  try {
+    // 1. Make sure client files are present and current (fast no-op when up to date)
+    btnConnect.textContent = '\u2699 CHECKING FILES\u2026'
+    const install = await runInstallForPlay()
+    if (!install.success) {
+      showWarning(install.error || 'Install failed.')
+      return
+    }
 
-  if (!result.success) {
-    connectWarning.textContent = result.error
-    connectWarning.classList.add('visible')
-  } else {
-    connectWarning.classList.remove('visible')
-    connectWarning.textContent = ''
+    // 2. Launch — main also re-syncs plugins.txt against the server load order
+    btnConnect.textContent = '\u25BA LAUNCHING\u2026'
+    clearWarning()
+    const result = await window.electronAPI.launchSkse()
+
+    if (!result.success) {
+      showWarning(result.error)
+      return
+    }
+
+    clearWarning()
+    gameRunning = true  // optimistic; the 10s poll keeps it honest
+  } finally {
+    playBusy = false
+    updatePlayButton()
   }
-
-  btnConnect.disabled    = false
-  btnConnect.textContent = '\u25BA PLAY'
 })
 
 // ── Server status ─────────────────────────────────────────────────────────────
@@ -476,15 +690,29 @@ async function checkLauncherUpdate() {
 // ── News ──────────────────────────────────────────────────────────────────────
 const newsGrid = document.getElementById('news-grid')
 
-const FALLBACK_NEWS = [
-  {
-    title: 'The Launcher Has Arrived',
-    body:  'The SkyRP launcher is now available.',
-    date:  'Jun 4, 2026',
-    tag:   'UPDATE',
-    image: null,
-  }
-]
+// Shared error-state card with a retry button — used by news and modlist
+// instead of silently showing fallback content when the backend is unreachable.
+function buildErrorState(message, onRetry) {
+  const box = document.createElement('div')
+  box.className = 'panel-error'
+
+  const text = document.createElement('div')
+  text.className   = 'panel-error-text'
+  text.textContent = message
+  box.appendChild(text)
+
+  const retry = document.createElement('button')
+  retry.className   = 'panel-error-retry'
+  retry.textContent = 'Retry'
+  retry.addEventListener('click', () => {
+    retry.disabled    = true
+    retry.textContent = 'Retrying…'
+    onRetry()
+  })
+  box.appendChild(retry)
+
+  return box
+}
 
 function buildNewsCard(item) {
   const card = document.createElement('div')
@@ -532,25 +760,26 @@ function buildNewsCard(item) {
 }
 
 async function loadNews() {
-  let items = await window.electronAPI.fetchNews()
-  if (!items || !Array.isArray(items) || items.length === 0) {
-    items = FALLBACK_NEWS
-  }
+  const result = await window.electronAPI.fetchNews()
   newsGrid.innerHTML = ''
-  items.forEach(item => newsGrid.appendChild(buildNewsCard(item)))
+
+  if (!result || !result.ok) {
+    newsGrid.appendChild(buildErrorState('Couldn’t reach the server — news unavailable.', loadNews))
+    return
+  }
+
+  if (result.items.length === 0) {
+    const empty = document.createElement('div')
+    empty.className   = 'panel-empty'
+    empty.textContent = 'No news posted yet.'
+    newsGrid.appendChild(empty)
+    return
+  }
+
+  result.items.forEach(item => newsGrid.appendChild(buildNewsCard(item)))
 }
 
 // ── Modlist ───────────────────────────────────────────────────────────────────
-
-const FALLBACK_MODLIST = [
-  { name: 'SKSE64',                                  version: '2.2.6',   required: true,  enabled: true,  source: 'backend' },
-  { name: 'SkyMP Client',                            version: '0.8.2',   required: true,  enabled: true,  source: 'backend' },
-  { name: 'Address Library for SKSE',                version: '11.0.0',  required: true,  enabled: true,  source: 'nexus',   nexusId: 32444 },
-  { name: 'SkyUI',                                   version: '5.2.1',   required: false, enabled: true,  source: 'nexus',   nexusId: 12604 },
-  { name: 'Unofficial Skyrim Special Edition Patch', version: '4.3.0',   required: false, enabled: true,  source: 'nexus',   nexusId: 266   },
-  { name: 'A Quality World Map',                     version: '9.0.1',   required: false, enabled: false, source: 'nexus',   nexusId: 5804  },
-  { name: 'Enhanced Lights and FX',                  version: '3.05',    required: false, enabled: false, source: 'nexus',   nexusId: 2424  },
-]
 
 const NEXUS_BASE = 'https://www.nexusmods.com/skyrimspecialedition/mods'
 
@@ -577,7 +806,7 @@ function buildModItem(mod) {
   }
 
   // Backend mods are installed automatically by the launcher.
-  // Nexus mods need to be installed by the user via Vortex.
+  // Nexus mods are downloaded from Nexus and installed through MO2.
   if (mod.source === 'backend') {
     const badge = document.createElement('span')
     badge.className   = 'mod-badge mod-badge--auto'
@@ -612,9 +841,27 @@ async function loadModlist() {
   const panel = document.getElementById('modlist')
   const count = document.getElementById('modlist-count')
 
-  currentModlist = await window.electronAPI.fetchModlist() ?? FALLBACK_MODLIST
-
+  const result = await window.electronAPI.fetchModlist()
   panel.innerHTML = ''
+
+  if (!result || !result.ok) {
+    currentModlist    = []
+    count.textContent = '—'
+    panel.appendChild(buildErrorState('Couldn’t reach the server — modlist unavailable.', loadModlist))
+    return
+  }
+
+  currentModlist = result.items
+
+  if (currentModlist.length === 0) {
+    count.textContent = '0 mods'
+    const empty = document.createElement('div')
+    empty.className   = 'panel-empty'
+    empty.textContent = 'No mods published yet.'
+    panel.appendChild(empty)
+    return
+  }
+
   currentModlist.forEach(mod => panel.appendChild(buildModItem(mod)))
 
   const enabled = currentModlist.filter(m => m.enabled).length

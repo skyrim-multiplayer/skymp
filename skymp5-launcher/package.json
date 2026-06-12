@@ -14,13 +14,13 @@
     "build:mac": "electron-builder --mac"
   },
   "dependencies": {
-    "adm-zip":        "^0.5.10",
-    "classic-level":  "^1.4.1",
-    "dotenv":         "^16.4.5",
+    "7zip-bin": "^5.2.0",
+    "adm-zip": "^0.5.10",
+    "dotenv": "^16.4.5",
     "electron-store": "^8.2.0"
   },
   "devDependencies": {
-    "electron":         "^41.2.0",
+    "electron": "^41.2.0",
     "electron-builder": "^26.8.1"
   },
   "build": {
@@ -63,6 +63,9 @@
       "allowToChangeInstallationDirectory": true,
       "installerIcon": "assets/icon.ico",
       "uninstallerIcon": "assets/icon.ico"
-    }
+    },
+    "asarUnpack": [
+      "node_modules/7zip-bin/**"
+    ]
   }
 }

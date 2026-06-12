@@ -1331,3 +1331,51 @@ html, body {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(201,162,39,0.18); border-radius: 2px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(201,162,39,0.32); }
+
+/* ── Panel error / empty states (news & modlist) ─────────────────────────── */
+.panel-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 28px 16px;
+  border: 1px dashed rgba(255, 255, 255, 0.18);
+  border-radius: 6px;
+  text-align: center;
+}
+
+.panel-error-text {
+  color: #c9a96a;
+  font-size: 15px;
+  letter-spacing: 0.4px;
+}
+
+.panel-error-retry {
+  padding: 6px 22px;
+  background: transparent;
+  border: 1px solid #c9a96a;
+  border-radius: 4px;
+  color: #c9a96a;
+  font-family: inherit;
+  font-size: 13px;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.panel-error-retry:hover:not(:disabled) {
+  background: rgba(201, 169, 106, 0.15);
+}
+
+.panel-error-retry:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.panel-empty {
+  padding: 28px 16px;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 14px;
+  text-align: center;
+  letter-spacing: 0.4px;
+}

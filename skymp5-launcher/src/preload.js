@@ -35,6 +35,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // SKSE launch
   launchSkse: () => ipcRenderer.invoke('launch:skse'),
 
+  // Game process state — true while Skyrim / the SKSE loader is running
+  gameIsRunning: () => ipcRenderer.invoke('game:isRunning'),
+
   // File install
   startInstall: (mode) => ipcRenderer.send('install:start', mode),
   onInstallProgress: (cb) =>
@@ -46,6 +49,23 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.removeAllListeners('install:complete')
   },
 
-  // Vortex integration
-  vortexDetect: () => ipcRenderer.invoke('vortex:detect'),
+  // Nexus Mods login
+  nexusGetUser: ()    => ipcRenderer.invoke('nexus:getUser'),
+  nexusLogin:   (key) => ipcRenderer.invoke('nexus:login', key),
+  nexusLogout:  ()    => ipcRenderer.invoke('nexus:logout'),
+  nexusSsoAvailable: () => ipcRenderer.invoke('nexus:ssoAvailable'),
+  nexusSsoLogin:     () => ipcRenderer.invoke('nexus:ssoLogin'),
+
+  // Isolated game copy
+  isolatedStatus: () => ipcRenderer.invoke('game:isolatedStatus'),
+  createIsolated: () => ipcRenderer.invoke('game:createIsolated'),
+  onIsolatedProgress: (cb) => ipcRenderer.on('isolated:progress', (_e, msg) => cb(msg)),
+  removeIsolatedListeners: () => ipcRenderer.removeAllListeners('isolated:progress'),
+
+  // MO2 integration
+  mo2Status: () => ipcRenderer.invoke('mo2:status'),
+  mo2Setup:  () => ipcRenderer.invoke('mo2:setup'),
+  mo2Open:   () => ipcRenderer.invoke('mo2:open'),
+  onMo2Progress: (cb) => ipcRenderer.on('mo2:progress', (_e, msg) => cb(msg)),
+  removeMo2Listeners: () => ipcRenderer.removeAllListeners('mo2:progress'),
 })
