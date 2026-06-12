@@ -642,7 +642,7 @@ async function prepareForLaunch(skyrimPath, viaMO2) {
 }
 
 const VANILLA_MASTERS = new Set([
-  'skyrim.esm', 'update.esm', 'dawnguard.esm', 'hearthfires.esm', 'dragonborn.esm', '_ResourcePack.esl',
+  'skyrim.esm', 'update.esm', 'dawnguard.esm', 'hearthfires.esm', 'dragonborn.esm', '_resourcepack.esl',
 ])
 
 function pluginsTxtDirs() {

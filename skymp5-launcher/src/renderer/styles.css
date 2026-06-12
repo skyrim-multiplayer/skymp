@@ -408,17 +408,17 @@ html, body {
   text-transform: uppercase;
   padding: 1px 5px;
   border-radius: 3px;
-  background: rgba(218, 130, 42, 0.10);
-  border: 1px solid rgba(218, 130, 42, 0.28);
-  color: rgba(218, 130, 42, 0.75);
+  background: rgba(160, 120, 20, 0.18);
+  border: 1px solid rgba(180, 134, 24, 0.45);
+  color: rgba(196, 152, 40, 0.9);
   text-decoration: none;
   cursor: pointer;
   flex-shrink: 0;
 }
 
 .mod-nexus-link:hover {
-  background: rgba(218, 130, 42, 0.20);
-  color: rgba(218, 130, 42, 1);
+  background: rgba(160, 120, 20, 0.32);
+  color: rgba(160, 120, 20, 1);
 }
 
 .mod-version {
