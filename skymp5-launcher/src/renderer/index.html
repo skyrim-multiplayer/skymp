@@ -150,35 +150,26 @@
           </div>
 
           <div class="settings-group">
-            <label class="setting-label">Portable Game Copy</label>
+            <label class="setting-label">Game Installation</label>
             <div class="vortex-status-row">
               <span class="vortex-status-dot" id="isolated-status-dot"></span>
               <span class="vortex-status-text" id="isolated-status-text">Checking…</span>
             </div>
-            <label class="setting-checkbox-row">
-              <input type="checkbox" id="setting-isolated-game" />
-              <span>Disable this if you are short on disk space.</span>
-            </label>
-            <button class="btn-detect-vortex" id="btn-create-isolated">Choose location &amp; install… (~16 GB)</button>
+            <button class="btn-detect-vortex" id="btn-create-isolated">Choose location &amp; install… (~15 GB)</button>
           </div>
 
           <div class="settings-group">
-            <label class="setting-label">Mod Organizer 2 (portable, managed by the launcher)</label>
+            <label class="setting-label">Modlist Installation</label>
             <div class="vortex-status-row" id="mo2-status-row">
               <span class="vortex-status-dot" id="mo2-status-dot"></span>
               <span class="vortex-status-text" id="mo2-status-text">Checking…</span>
             </div>
-            <label class="setting-checkbox-row" id="mo2-enable-row">
-              <input type="checkbox" id="setting-mo2-enabled" />
-              <span id="mo2-enable-text">Launch the game through MO2 — mods stay out of your Skyrim folder</span>
-            </label>
+			<div class="tab-actions">
+              <button class="btn-install" id="btn-install-mo2">Install Modpack via MO2</button>
+              <div class="install-status" id="install-status-mo2"></div>
+            </div>
           </div>
-
-          <div class="tab-actions">
-            <div class="install-status" id="install-status-mo2"></div>
-            <button class="btn-install" id="btn-install-mo2">Install Modpack via MO2</button>
-          </div>
-
+		  
         </div>
 
         <!-- ── Settings tab (WIP) ── -->
@@ -199,7 +190,19 @@
           </div>
 
           <div class="settings-group">
+            <label class="setting-label">Portable Skyrim Mode</label>
+            <label class="setting-checkbox-row">
+              <input type="checkbox" id="setting-isolated-game" />
+              <span>Disable this if you are short on disk space.</span>
+            </label>
+          </div>
+
+          <div class="settings-group">
             <label class="setting-label">Mod Organizer 2</label>
+            <label class="setting-checkbox-row" id="mo2-enable-row">
+              <input type="checkbox" id="setting-mo2-enabled" />
+              <span id="mo2-enable-text">Enable MO2 - Disable to use manual installation</span>
+            </label>
             <button class="btn-detect-vortex" id="btn-open-mo2">Open MO2</button>
           </div>
 
