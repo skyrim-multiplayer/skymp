@@ -141,21 +141,21 @@
 
           <div class="settings-group">
             <label class="setting-label">Skyrim Installation Path</label>
-            <p class="setting-hint">Your existing clean Skyrim install — copied once to create the SkyRP game.</p>
             <div class="setting-path-row">
               <input class="setting-input" id="setting-skyrim-path" type="text"
                      placeholder="C:\Program Files (x86)\Steam\steamapps\common\Skyrim Special Edition" />
               <button class="btn-browse" id="btn-browse">Browse…</button>
             </div>
+            <p class="setting-hint">Skyrim Install Location - Needs to be a clean install</p>
           </div>
 
           <div class="settings-group">
             <label class="setting-label">Game Installation</label>
             <div class="vortex-status-row">
+            <button class="btn-detect-vortex" id="btn-create-isolated">Choose Install Location</button>
               <span class="vortex-status-dot" id="isolated-status-dot"></span>
               <span class="vortex-status-text" id="isolated-status-text">Checking…</span>
             </div>
-            <button class="btn-detect-vortex" id="btn-create-isolated">Choose location &amp; install… (~15 GB)</button>
           </div>
 
           <div class="settings-group">
@@ -164,8 +164,8 @@
               <span class="vortex-status-dot" id="mo2-status-dot"></span>
               <span class="vortex-status-text" id="mo2-status-text">Checking…</span>
               <button class="btn-install" id="btn-install-mo2">Install Modpack via MO2</button>
-              <div class="install-status" id="install-status-mo2"></div>
             </div>
+            <div class="install-status" id="install-status-mo2"></div>
           </div>
 		  
         </div>
@@ -182,9 +182,8 @@
 
           <div class="settings-group">
             <label class="setting-label">Client Files</label>
-            <p class="setting-hint">Re-download and reinstall the SkyMP client files.</p>
             <div class="install-status" id="install-status-client"></div>
-            <button class="btn-detect-vortex" id="btn-install-client">Install / Update Client Files</button>
+            <button class="btn-detect-vortex" id="btn-install-client">Reinstall / Update Client Files</button>
           </div>
 
           <div class="settings-group">
@@ -201,7 +200,7 @@
               <input type="checkbox" id="setting-mo2-enabled" />
               <span id="mo2-enable-text">Enable MO2 - Disable to use manual installation</span>
             </label>
-            <button class="btn-detect-vortex" id="btn-open-mo2">Open MO2</button>
+            <button class="btn-detect-vortex" id="btn-open-mo2">Open & Configure MO2</button>
           </div>
 
           <div class="settings-group">
@@ -209,7 +208,7 @@
             <p class="setting-hint">Use these if the Play button isn't working.</p>
             <div class="setting-path-row">
               <button class="btn-detect-vortex" id="btn-launch-mo2">Launch via MO2</button>
-              <button class="btn-detect-vortex" id="btn-launch-direct">Play from SkyRP install</button>
+              <button class="btn-detect-vortex" id="btn-launch-direct">Launch from directory</button>
             </div>
             <div class="install-status" id="trouble-launch-status"></div>
           </div>

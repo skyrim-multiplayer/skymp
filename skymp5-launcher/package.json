@@ -1,10 +1,10 @@
 {
   "name": "skyrp-launcher",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "description": "Launcher for the Skyrim Roleplay server",
   "main": "src/main.js",
   "author": "F02K and Suraru",
-  "license": "AGPL",
+  "license": "MIT",
   "scripts": {
     "start": "electron .",
     "dev": "electron . --dev",
