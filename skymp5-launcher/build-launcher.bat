@@ -27,11 +27,22 @@ if errorlevel 1 (
     exit /b 1
 )
 
+:: Don't let electron-builder auto-pick a code-signing certificate from the
+:: Windows cert store. If that cert is expired/invalid, signing fails and
+:: ABORTS the build right after packaging Electron. With this off the build
+:: completes (unsigned). To actually sign, set CSC_LINK + CSC_KEY_PASSWORD
+:: to your .pfx certificate before running this script.
+if not defined CSC_LINK set "CSC_IDENTITY_AUTO_DISCOVERY=false"
+
 echo Building Windows installer...
-call npm run build:win
+:: Full electron-builder output is captured to build-launcher.log for support.
+call npm run build:win > "%LAUNCHER_DIR%\build-launcher.log" 2>&1
 if errorlevel 1 (
+    echo [ERROR] electron-builder failed. Last 30 log lines:
+    powershell -NoProfile -Command "Get-Content -Tail 30 '%LAUNCHER_DIR%\build-launcher.log'"
+    echo.
+    echo Full log: %LAUNCHER_DIR%\build-launcher.log
     popd
-    echo [ERROR] electron-builder failed - see output above.
     pause
     exit /b 1
 )
