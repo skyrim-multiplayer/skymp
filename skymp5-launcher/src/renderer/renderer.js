@@ -356,6 +356,10 @@ btnCreateIsolated.addEventListener('click', async () => {
   await window.electronAPI.saveSettings({ isolatedGame: true })
   refreshIsolatedStatus()
   refreshPlayState()
+
+  if (confirm('SkyRP game copy is ready. Download and install the modpack now?')) {
+    startModpackInstall()
+  }
 })
 
 fieldIsolated.addEventListener('change', refreshIsolatedStatus)
@@ -383,13 +387,20 @@ document.getElementById('btn-browse').addEventListener('click', async () => {
 
 // ── MO2 UI ────────────────────────────────────────────────────────────────────
 
+const mo2EnableText = document.getElementById('mo2-enable-text')
+
 async function refreshMo2Status() {
   const status  = await window.electronAPI.mo2Status()
   const enabled = fieldMo2Enabled.checked
 
+  // Checkbox caption reflects what disabling MO2 means.
+  mo2EnableText.textContent = enabled
+    ? 'Launch the game through MO2 — mods stay out of your Skyrim folder'
+    : 'You will need to install mods manually.'
+
   if (!status.installed) {
     mo2StatusDot.className    = 'vortex-status-dot'
-    mo2StatusText.textContent = 'MO2 not installed — click "Set up MO2"'
+    mo2StatusText.textContent = 'MO2 not installed yet — run "Install Modpack via MO2" below'
   } else if (!enabled) {
     mo2StatusDot.className    = 'vortex-status-dot dot-warn'
     mo2StatusText.textContent = `MO2 ${status.version} ready (${status.modCount} mods) — launching without it`
@@ -399,31 +410,27 @@ async function refreshMo2Status() {
   }
 }
 
-document.getElementById('btn-setup-mo2').addEventListener('click', async () => {
-  const btn = document.getElementById('btn-setup-mo2')
-  btn.disabled = true
-  btn.textContent = 'Setting up…'
-
-  window.electronAPI.removeMo2Listeners()
-  window.electronAPI.onMo2Progress(msg => { mo2StatusText.textContent = msg })
-
-  const result = await window.electronAPI.mo2Setup()
-  if (!result.success) {
-    mo2StatusText.textContent = `Error: ${result.error}`
-  }
-
-  window.electronAPI.removeMo2Listeners()
-  btn.disabled = false
-  btn.textContent = 'Set up MO2'
-  if (result.success) refreshMo2Status()
-})
-
 document.getElementById('btn-open-mo2').addEventListener('click', async () => {
   const result = await window.electronAPI.mo2Open()
-  if (!result.success) mo2StatusText.textContent = `Error: ${result.error}`
+  if (!result.success) alert(`Could not open MO2: ${result.error}`)
 })
 
 fieldMo2Enabled.addEventListener('change', refreshMo2Status)
+
+// ── Troubleshooting: manual launch buttons ───────────────────────────────────
+const troubleLaunchStatus = document.getElementById('trouble-launch-status')
+
+document.getElementById('btn-launch-mo2').addEventListener('click', async () => {
+  troubleLaunchStatus.textContent = 'Launching via MO2…'
+  const r = await window.electronAPI.launchViaMO2()
+  troubleLaunchStatus.textContent = r.success ? 'Launched via MO2 ✓' : `Error: ${r.error}`
+})
+
+document.getElementById('btn-launch-direct').addEventListener('click', async () => {
+  troubleLaunchStatus.textContent = 'Launching SKSE…'
+  const r = await window.electronAPI.launchDirect()
+  troubleLaunchStatus.textContent = r.success ? 'Launched ✓' : `Error: ${r.error}`
+})
 
 // ── Install / Update Client Files ────────────────────────────────────────────
 const installStatusClient = document.getElementById('install-status-client')
@@ -455,7 +462,7 @@ document.getElementById('btn-install-client').addEventListener('click', () => {
 // ── Install Modpack via MO2 ───────────────────────────────────────────────────
 const installStatusMo2 = document.getElementById('install-status-mo2')
 
-document.getElementById('btn-install-mo2').addEventListener('click', () => {
+function startModpackInstall() {
   installStatusMo2.textContent = 'Starting MO2 install…'
   window.electronAPI.removeInstallListeners()
 
@@ -486,7 +493,8 @@ document.getElementById('btn-install-mo2').addEventListener('click', () => {
   })
 
   window.electronAPI.startInstall('mo2')
-})
+}
+document.getElementById('btn-install-mo2').addEventListener('click', startModpackInstall)
 
 // ── PLAY button ───────────────────────────────────────────────────────────────
 // One click does everything: verify/refresh client files, sync the load

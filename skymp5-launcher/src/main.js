@@ -402,6 +402,13 @@ function disableCreationClub(gameDir) {
   return moved
 }
 
+// True if either path is the same as, or nested inside, the other.
+function pathsOverlap(a, b) {
+  const norm = p => path.resolve(p).replace(/[\\/]+$/, '').toLowerCase() + path.sep
+  const na = norm(a), nb = norm(b)
+  return na.startsWith(nb) || nb.startsWith(na)
+}
+
 ipcMain.handle('game:createIsolated', async () => {
   const src = store.get('skyrimPath')
   if (!src || !fs.existsSync(path.join(src, 'SkyrimSE.exe'))) {
@@ -439,6 +446,15 @@ ipcMain.handle('game:createIsolated', async () => {
   } catch { /* unreadable — let later steps surface the real error */ }
 
   const dst = path.join(base, 'skyrim')
+
+  // Dummy protection for those trying to install it on their base directory
+  if (pathsOverlap(src, dst) || pathsOverlap(src, base)) {
+    return {
+      success: false,
+      error: 'Choose an install location OUTSIDE your Skyrim folder. ' +
+             'Portable install is for compatibility. If you lack the diskspace, turn off portable install.',
+    }
+  }
 
   try {
     store.set('baseDirPath', base)
@@ -603,13 +619,43 @@ ipcMain.handle('launch:skse', async () => {
       // MO2 manages plugins.txt itself via the profile; launch through its VFS.
       mo2.launchGame()
     } else {
+      // Direct launch (manual mod installs): run SKSE in active game dir
       const exe = path.join(skyrimPath, 'skse64_loader.exe')
+      if (!fs.existsSync(exe)) {
+        return { success: false, error: `skse64_loader.exe not found in ${skyrimPath}. Install SKSE there, or enable MO2.` }
+      }
       spawn(exe, [], { detached: true, stdio: 'ignore', cwd: skyrimPath }).unref()
     }
     return { success: true, loadOrderFixed: prep.loadOrderFixed }
   } catch (err) {
     return { success: false, error: err.message }
   }
+})
+
+// Troubleshooting: force a launch path regardless of the mo2Enabled setting.
+ipcMain.handle('launch:viaMO2', async () => {
+  const skyrimPath = effectiveGamePath()
+  if (!skyrimPath) return { success: false, error: 'Skyrim path not configured.' }
+  if (!mo2.isInstalled()) return { success: false, error: 'MO2 is not installed — run Install Modpack first.' }
+  const prep = await prepareForLaunch(skyrimPath, true)
+  if (!prep.success) return prep
+  try { mo2.launchGame(); return { success: true } }
+  catch (err) { return { success: false, error: err.message } }
+})
+
+ipcMain.handle('launch:direct', async () => {
+  const skyrimPath = effectiveGamePath()
+  if (!skyrimPath) return { success: false, error: 'Skyrim path not configured.' }
+  const prep = await prepareForLaunch(skyrimPath, false)
+  if (!prep.success) return prep
+  const exe = path.join(skyrimPath, 'skse64_loader.exe')
+  if (!fs.existsSync(exe)) {
+    return { success: false, error: `skse64_loader.exe not found in ${skyrimPath}. Install SKSE there first.` }
+  }
+  try {
+    spawn(exe, [], { detached: true, stdio: 'ignore', cwd: skyrimPath }).unref()
+    return { success: true }
+  } catch (err) { return { success: false, error: err.message } }
 })
 
 /**
@@ -664,11 +710,20 @@ async function prepareForLaunch(skyrimPath, viaMO2) {
     log('[launch] server load order unavailable — leaving plugins.txt untouched')
   }
 
+  // ── SKSE runtime ─────────────────────────────────────────────────────────────
+  if (!fs.existsSync(path.join(skyrimPath, 'skse64_loader.exe'))) {
+    return {
+      success: false,
+      error: 'SKSE is not installed (skse64_loader.exe missing). ' +
+             'Install the modpack, or place SKSE in your game folder.',
+    }
+  }
+
   // ── Required client files ────────────────────────────────────────────────────
   const missingFiles = REQUIRED_FILES.filter(f => !fs.existsSync(path.join(skyrimPath, f)))
   if (missingFiles.length > 0) {
     const names = missingFiles.map(f => path.basename(f)).join(', ')
-    const hint  = viaMO2 ? 'run "Install Modpack" in Settings → Mod Manager first' : 'run Install first'
+    const hint  = viaMO2 ? 'run "Install Modpack via MO2" first' : 'run Install first'
     return { success: false, error: `Files missing — ${hint}.\nMissing: ${names}` }
   }
 
@@ -1026,8 +1081,8 @@ async function runMO2Install() {
       const nexusUser = store.get('nexusUser')
 
       if (apiKey && nexusUser?.isPremium) {
-        // ── Premium direct downloads via the Nexus API ──────
-        const manual = []  // FOMOD / rar / failed — finish through MO2 or browser
+        // ── Premium: direct download + install every mod, synchronously ──────
+        const failed = []
         for (let i = 0; i < missing.length; i++) {
           const m  = missing[i]
           const mb = n => (n / 1024 / 1024).toFixed(1)
@@ -1040,29 +1095,24 @@ async function runMO2Install() {
                 index: i, total: missing.length, skipped: false,
               })
             })
+            send('install:progress', { phase: 'mods', file: `Installing ${m.name}…`, index: i, total: missing.length, skipped: false })
             const result = mo2.installModFromArchive(archiveName, m.nexusId, m.name)
             if (result.folder) {
               mo2.enableMod(result.folder)
               send('install:progress', { phase: 'mods', file: `Installed ${m.name}`, index: i + 1, total: missing.length, skipped: false })
             } else {
-              manual.push(m)
+              const why = result.error || 'install did not complete'
+              log(`[mo2-install] ${m.name}: ${why}`)
+              failed.push(`${m.name} (${why})`)
             }
           } catch (err) {
-            log(`[mo2-install] direct download failed for ${m.name}: ${err.message}`)
-            manual.push(m)
+            log(`[mo2-install] ${m.name}: ${err.message}`)
+            failed.push(`${m.name} (${err.message})`)
           }
         }
 
-        if (manual.length > 0) {
-          send('install:progress', {
-            phase: 'mods',
-            file:  `Finish in MO2 (installer/rar): ${manual.map(m => m.name).join(', ')}`,
-            index: missing.length - manual.length, total: missing.length, skipped: false,
-          })
-          mo2.openUI()
-          await mo2.waitForMods(manual, (done, total, message) => {
-            send('install:progress', { phase: 'mods', file: message, index: done, total, skipped: false })
-          })
+        if (failed.length > 0) {
+          return fail(`${failed.length} mod(s) failed to install: ${failed.join('; ')}`)
         }
       } else {
         // for the free nexus accounts

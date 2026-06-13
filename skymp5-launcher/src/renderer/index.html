@@ -129,17 +129,19 @@
 
       <!-- Tab bar -->
       <div class="modal-tabs">
-        <button class="modal-tab active" data-tab="general">General</button>
-        <button class="modal-tab" data-tab="mo2">Mod Manager</button>
+        <button class="modal-tab active" data-tab="install">Installation</button>
+        <button class="modal-tab" data-tab="settings">Settings</button>
+        <button class="modal-tab" data-tab="trouble">Troubleshooting</button>
       </div>
 
       <div class="modal-body">
 
-        <!-- ── General tab ── -->
-        <div class="tab-panel" id="tab-general">
+        <!-- ── Installation tab ── -->
+        <div class="tab-panel" id="tab-install">
 
           <div class="settings-group">
             <label class="setting-label">Skyrim Installation Path</label>
+            <p class="setting-hint">Your existing clean Skyrim install — copied once to create the SkyRP game.</p>
             <div class="setting-path-row">
               <input class="setting-input" id="setting-skyrim-path" type="text"
                      placeholder="C:\Program Files (x86)\Steam\steamapps\common\Skyrim Special Edition" />
@@ -148,27 +150,17 @@
           </div>
 
           <div class="settings-group">
-            <label class="setting-label">SkyRP Install (MO2 + portable game copy)</label>
+            <label class="setting-label">Portable Game Copy</label>
             <div class="vortex-status-row">
               <span class="vortex-status-dot" id="isolated-status-dot"></span>
               <span class="vortex-status-text" id="isolated-status-text">Checking…</span>
             </div>
             <label class="setting-checkbox-row">
               <input type="checkbox" id="setting-isolated-game" />
-              <span>Play from the SkyRP install — keeps your vanilla Skyrim untouched (recommended)</span>
+              <span>Disable this if you are short on disk space.</span>
             </label>
             <button class="btn-detect-vortex" id="btn-create-isolated">Choose location &amp; install… (~16 GB)</button>
           </div>
-
-          <div class="tab-actions">
-            <button class="btn-install" id="btn-install-client">Install / Update Client Files</button>
-            <div class="install-status" id="install-status-client"></div>
-          </div>
-
-        </div>
-
-        <!-- ── Mod Manager (MO2) tab ── -->
-        <div class="tab-panel" id="tab-mo2" hidden>
 
           <div class="settings-group">
             <label class="setting-label">Mod Organizer 2 (portable, managed by the launcher)</label>
@@ -176,20 +168,49 @@
               <span class="vortex-status-dot" id="mo2-status-dot"></span>
               <span class="vortex-status-text" id="mo2-status-text">Checking…</span>
             </div>
-            <div class="setting-path-row">
-              <button class="btn-detect-vortex" id="btn-setup-mo2">Set up MO2</button>
-              <button class="btn-detect-vortex" id="btn-open-mo2">Open MO2</button>
-            </div>
+            <label class="setting-checkbox-row" id="mo2-enable-row">
+              <input type="checkbox" id="setting-mo2-enabled" />
+              <span id="mo2-enable-text">Launch the game through MO2 — mods stay out of your Skyrim folder</span>
+            </label>
           </div>
-
-          <label class="setting-checkbox-row" id="mo2-enable-row">
-            <input type="checkbox" id="setting-mo2-enabled" />
-            <span>Launch the game through MO2 — mods stay out of your Skyrim folder</span>
-          </label>
 
           <div class="tab-actions">
             <div class="install-status" id="install-status-mo2"></div>
             <button class="btn-install" id="btn-install-mo2">Install Modpack via MO2</button>
+          </div>
+
+        </div>
+
+        <!-- ── Settings tab (WIP) ── -->
+        <div class="tab-panel" id="tab-settings" hidden>
+          <div class="settings-group">
+            <p class="setting-hint">⚙ Settings — work in progress.</p>
+          </div>
+        </div>
+
+        <!-- ── Troubleshooting tab ── -->
+        <div class="tab-panel" id="tab-trouble" hidden>
+
+          <div class="settings-group">
+            <label class="setting-label">Client Files</label>
+            <p class="setting-hint">Re-download and reinstall the SkyMP client files.</p>
+            <div class="install-status" id="install-status-client"></div>
+            <button class="btn-detect-vortex" id="btn-install-client">Install / Update Client Files</button>
+          </div>
+
+          <div class="settings-group">
+            <label class="setting-label">Mod Organizer 2</label>
+            <button class="btn-detect-vortex" id="btn-open-mo2">Open MO2</button>
+          </div>
+
+          <div class="settings-group">
+            <label class="setting-label">Manual Launch</label>
+            <p class="setting-hint">Use these if the Play button isn't working.</p>
+            <div class="setting-path-row">
+              <button class="btn-detect-vortex" id="btn-launch-mo2">Launch via MO2</button>
+              <button class="btn-detect-vortex" id="btn-launch-direct">Play from SkyRP install</button>
+            </div>
+            <div class="install-status" id="trouble-launch-status"></div>
           </div>
 
         </div>

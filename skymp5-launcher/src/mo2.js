@@ -157,6 +157,17 @@ async function ensureInstalled(onProgress) {
 // Forward slashes everywhere: valid for Windows APIs and avoids INI escaping.
 const fwd = p => p.replace(/\\/g, '/')
 
+// Detect the Skyrim SE store edition
+function detectEdition(gameDir) {
+  try {
+    const names = fs.readdirSync(gameDir)
+    if (names.includes('Galaxy64.dll') || names.some(f => /^goggame-.*\.(info|dll|hashdb)$/i.test(f))) return 'GOG'
+    if (names.includes('EOSSDK-Win64-Shipping.dll')) return 'Epic Games'
+    if (names.includes('steam_api64.dll')) return 'Steam'
+  } catch { /* unreadable */ }
+  return 'Steam'
+}
+
 /**
  * Pick a dark stylesheet bundled with MO2 (preference order, then any *.qss
  * with "dark" in the name). Returns '' if none found.
@@ -199,6 +210,7 @@ function ensureInstance(skyrimPath, loadOrder) {
   const ini = [
     '[General]',
     'gameName=Skyrim Special Edition',
+    `gameEdition=${detectEdition(skyrimPath)}`,
     `gamePath=@ByteArray(${fwd(skyrimPath)})`,
     `selected_profile=@ByteArray(${PROFILE})`,
     `version=${MO2_VERSION}`,
@@ -308,34 +320,37 @@ function findDownloadByNexusId(nexusId) {
 }
 
 /**
- * Extract a downloaded archive into mods\<name>\ and write meta.ini.
- * FOMOD installers and .rar archives are left for the user to install
- * through MO2 itself (returned as { needsSetup: true }).
+ * Install the downloaded archive for a Nexus mod id, if one is present.
+ * Returns the same shape as installModFromArchive: {folder} | {error} | {}.
  */
 function installModFromDownload(nexusId, modName) {
   const archiveName = findDownloadByNexusId(nexusId)
-  if (!archiveName) return { folder: null, needsSetup: false }
+  if (!archiveName) return {}
   return installModFromArchive(archiveName, nexusId, modName)
 }
 
 /**
- * Same as installModFromDownload but with an explicitly named archive in
- * the downloads folder (used by the premium Nexus direct-download path).
+ * Install a named archive from the downloads folder into mods\<name>\.
+ *
+ * Returns one of:
+ *   { folder }   installed (or already present) — the mod folder name
+ *   { error }    the archive is present but installation failed (real error)
+ *   {}           the archive isn't downloaded/readable yet — caller may retry
+ *
+ * FOMOD archives run through the unattended engine; if that throws or yields
+ * nothing, we fall back to copying the data root minus the fomod/ control
+ * folder and flag the mod for the author to verify. We never silently
+ * report a failed install as "still downloading".
  */
 function installModFromArchive(archiveName, nexusId, modName) {
   const archivePath = path.join(getDownloadsDir(), archiveName)
   const folderName  = (modName || archiveName.replace(/(\.\d+)?\.[^.]+$/, '')).replace(/[<>:"/\\|?*]/g, '')
   const modDir      = path.join(getModsDir(), folderName)
 
-  if (fs.existsSync(modDir)) return { folder: folderName, needsSetup: false }
+  if (fs.existsSync(modDir)) return { folder: folderName }
+  if (!fs.existsSync(archivePath)) return {}            // not downloaded yet
+  if (listArchive(archivePath) === null) return {}      // unreadable — still writing
 
-  const entries = listArchive(archivePath)
-  if (entries === null) {
-    // 7za couldn't read it — likely still being written; retry next tick
-    return { folder: null, needsSetup: false }
-  }
-
-  // Extract to a private staging area first — never straight into mods\.
   const stagingDir = path.join(getRoot(), '.staging', folderName)
   try { fs.rmSync(stagingDir, { recursive: true, force: true }) } catch {}
 
@@ -343,13 +358,33 @@ function installModFromArchive(archiveName, nexusId, modName) {
     extractArchive(archivePath, stagingDir)
 
     if (fomod.findModuleConfig(stagingDir)) {
-      // FOMOD: run the installer with the author's default selections.
-      _log(`${archiveName}: FOMOD installer — running with default options`)
-      const result = fomod.install(stagingDir, modDir, f => pluginExists(f))
-      _log(`${archiveName}: FOMOD installed ${result.installed} entries, ${result.choices.length} choice(s)`)
+      let ok = false
+      try {
+        const result = fomod.install(stagingDir, modDir, f => pluginExists(f))
+        if (result.installed > 0) {
+          ok = true
+          _log(`${archiveName}: FOMOD installed ${result.installed} file(s), ${result.choices.length} choice(s)`)
+        } else {
+          _log(`${archiveName}: FOMOD produced no files`)
+        }
+      } catch (ferr) {
+        _log(`${archiveName}: FOMOD engine failed (${ferr.message})`)
+      }
+      if (!ok) {
+        // Fallback: copy the data root, skipping the fomod/ control folder.
+        try { fs.rmSync(modDir, { recursive: true, force: true }) } catch {}
+        const dataRoot = findDataRoot(stagingDir)
+        fs.mkdirSync(modDir, { recursive: true })
+        let n = 0
+        for (const entry of fs.readdirSync(dataRoot)) {
+          if (entry.toLowerCase() === 'fomod') continue
+          fs.renameSync(path.join(dataRoot, entry), path.join(modDir, entry))
+          n++
+        }
+        if (n === 0) throw new Error('FOMOD could not be processed and no files were found to copy')
+        _log(`${archiveName}: FOMOD fallback copied ${n} item(s) — VERIFY this mod in MO2`)
+      }
     } else {
-      // Plain archive: find the actual data root (skip wrapper folders,
-      // descend into Data/) so the mod folder root IS the virtual Data root.
       const dataRoot = findDataRoot(stagingDir)
       fs.mkdirSync(modDir, { recursive: true })
       for (const entry of fs.readdirSync(dataRoot)) {
@@ -360,12 +395,9 @@ function installModFromArchive(archiveName, nexusId, modName) {
       }
     }
   } catch (err) {
-    _log(`${archiveName}: install failed (${err.message})`)
     try { fs.rmSync(modDir, { recursive: true, force: true }) } catch {}
     try { fs.rmSync(stagingDir, { recursive: true, force: true }) } catch {}
-    // Unreadable mid-download archives land here too — retry next tick;
-    // genuinely broken ones surface via the wait loop timeout.
-    return { folder: null, needsSetup: false }
+    return { error: err.message }
   }
 
   try { fs.rmSync(stagingDir, { recursive: true, force: true }) } catch {}
@@ -381,7 +413,7 @@ function installModFromArchive(archiveName, nexusId, modName) {
   ].join('\r\n'))
 
   _log(`installed ${folderName} from ${archiveName}`)
-  return { folder: folderName, needsSetup: false }
+  return { folder: folderName }
 }
 
 // ── Data-root detection ───────────────────────────────────────────────────────
@@ -474,6 +506,9 @@ function installRootArchive(archiveName, gameDir, modName) {
   const stagingDir  = path.join(getRoot(), '.staging', modName.replace(/[<>:"/\\|?*]/g, ''))
   try { fs.rmSync(stagingDir, { recursive: true, force: true }) } catch {}
 
+  if (listArchive(archivePath) === null) {
+    throw new Error(`${modName}: the downloaded file is not a valid archive — the URL may point to a web page, not a direct download.`)
+  }
   extractArchive(archivePath, stagingDir)
 
   // Descend through a single wrapper folder (skse64_2_02_06/…)
@@ -493,6 +528,10 @@ function installRootArchive(archiveName, gameDir, modName) {
       fs.copyFileSync(path.join(root, e.name), path.join(gameDir, e.name))
       copied++
     }
+  }
+  if (copied === 0) {
+    try { fs.rmSync(stagingDir, { recursive: true, force: true }) } catch {}
+    throw new Error(`${modName}: no .exe/.dll found in the archive — is this a valid SKSE-style download?`)
   }
   _log(`${modName}: copied ${copied} root file(s) into ${gameDir}`)
 
@@ -545,55 +584,43 @@ function enableMod(folderName) {
 }
 
 /**
- * Poll until every mod in missingMods is installed in mods\.
- * Mirrors the old Vortex wait loop: waiting → downloaded → installed,
- * with FOMOD/rar mods surfaced as "install through MO2".
+ * Poll until every mod in missingMods is installed in mods\ (used by the
+ * free-account path, where downloads arrive asynchronously via the nxm
+ * handler). A mod only counts as "waiting" while its archive isn't on disk;
+ * an archive that is present but fails to install rejects immediately with
+ * the real error — it is never retried forever as "waiting for download".
  */
-function waitForMods(missingMods, onProgress, signal, intervalMs = 4000, timeoutMs = 300_000) {
+function waitForMods(missingMods, onProgress, signal, intervalMs = 4000, timeoutMs = 900_000) {
   const deadline = Date.now() + timeoutMs
 
   return new Promise((resolve, reject) => {
     function tick() {
       if (signal?.aborted) return reject(new Error('Cancelled'))
-      if (Date.now() > deadline) {
-        return reject(new Error(`Timed out waiting for ${missingMods.length} mod(s) to install.`))
-      }
 
-      const installed  = []
-      const needsSetup = []
-      const waiting    = []
+      const installed = []
+      const waiting   = []
 
       for (const mod of missingMods) {
         const existing = findModByNexusId(mod.nexusId)
-        if (existing) {
-          enableMod(existing)
-          installed.push(mod)
-          continue
-        }
-        const result = installModFromDownload(mod.nexusId, mod.name)
-        if (result.folder) {
-          enableMod(result.folder)
-          installed.push(mod)
-        } else if (result.needsSetup) {
-          needsSetup.push(mod)
-        } else {
-          waiting.push(mod)
-        }
+        if (existing) { enableMod(existing); installed.push(mod); continue }
+
+        const res = installModFromDownload(mod.nexusId, mod.name)
+        if (res.folder)      { enableMod(res.folder); installed.push(mod) }
+        else if (res.error)  return reject(new Error(`${mod.name}: ${res.error}`))
+        else                 waiting.push(mod)
       }
 
       if (onProgress) {
-        let message
-        if (needsSetup.length > 0) {
-          message = `Install through MO2 (installer/rar): ${needsSetup.map(m => m.name).join(', ')}`
-        } else if (waiting.length > 0) {
-          message = `Waiting for download: ${waiting.map(m => m.name).join(', ')}`
-        } else {
-          message = 'All mods installed'
-        }
+        const message = waiting.length > 0
+          ? `Waiting for download: ${waiting.map(m => m.name).join(', ')}`
+          : 'All mods installed'
         onProgress(installed.length, missingMods.length, message)
       }
 
       if (installed.length === missingMods.length) return resolve()
+      if (Date.now() > deadline) {
+        return reject(new Error(`Timed out waiting to download: ${waiting.map(m => m.name).join(', ')}`))
+      }
       setTimeout(tick, intervalMs)
     }
 
