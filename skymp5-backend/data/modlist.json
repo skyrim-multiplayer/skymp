@@ -83,8 +83,8 @@
     "required": true,
     "enabled": true,
     "source": "nexus",
-    "nexusId": 151209
-	"exclude": ["EchoesofTamriel0.esp", "EchoesofTamriel1.esp", "EchoesofTamriel2.esp", "EchoesofTamriel0 - Textures.bsa", "EchoesofTamriel1 - Textures.bsa", "EchoesofTamriel2 - Textures.bsa"]
+    "nexusId": 151209,
+	  "exclude": ["EchoesofTamriel0.esp", "EchoesofTamriel1.esp", "EchoesofTamriel2.esp", "EchoesofTamriel0 - Textures.bsa", "EchoesofTamriel1 - Textures.bsa", "EchoesofTamriel2 - Textures.bsa"]
   },
   {
     "name": "First Person Camera Height Fix",
