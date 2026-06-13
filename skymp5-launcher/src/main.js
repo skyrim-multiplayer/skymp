@@ -1049,7 +1049,7 @@ async function runMO2Install() {
           const r = mo2.installRootArchive(fileName, skyrimPath, m.name)
           if (r.folder) mo2.enableMod(r.folder)
         } else {
-          const r = mo2.installModFromArchive(fileName, null, m.name)
+          const r = mo2.installModFromArchive(fileName, null, m.name, m.exclude)
           if (r.folder) mo2.enableMod(r.folder)
         }
       } catch (err) {
@@ -1096,7 +1096,7 @@ async function runMO2Install() {
               })
             })
             send('install:progress', { phase: 'mods', file: `Installing ${m.name}…`, index: i, total: missing.length, skipped: false })
-            const result = mo2.installModFromArchive(archiveName, m.nexusId, m.name)
+            const result = mo2.installModFromArchive(archiveName, m.nexusId, m.name, m.exclude)
             if (result.folder) {
               mo2.enableMod(result.folder)
               send('install:progress', { phase: 'mods', file: `Installed ${m.name}`, index: i + 1, total: missing.length, skipped: false })

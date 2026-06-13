@@ -323,10 +323,10 @@ function findDownloadByNexusId(nexusId) {
  * Install the downloaded archive for a Nexus mod id, if one is present.
  * Returns the same shape as installModFromArchive: {folder} | {error} | {}.
  */
-function installModFromDownload(nexusId, modName) {
+function installModFromDownload(nexusId, modName, exclude) {
   const archiveName = findDownloadByNexusId(nexusId)
   if (!archiveName) return {}
-  return installModFromArchive(archiveName, nexusId, modName)
+  return installModFromArchive(archiveName, nexusId, modName, exclude)
 }
 
 /**
@@ -337,12 +337,11 @@ function installModFromDownload(nexusId, modName) {
  *   { error }    the archive is present but installation failed (real error)
  *   {}           the archive isn't downloaded/readable yet — caller may retry
  *
- * FOMOD archives run through the unattended engine; if that throws or yields
- * nothing, we fall back to copying the data root minus the fomod/ control
- * folder and flag the mod for the author to verify. We never silently
- * report a failed install as "still downloading".
+ * The archive's Data root is reconstructed by mergeRoot (FOMOD-proof union of
+ * all option folders). An optional `exclude` list of relative paths is removed
+ * afterwards, letting the modpack author hide unwanted plugins/folders.
  */
-function installModFromArchive(archiveName, nexusId, modName) {
+function installModFromArchive(archiveName, nexusId, modName, exclude) {
   const archivePath = path.join(getDownloadsDir(), archiveName)
   const folderName  = (modName || archiveName.replace(/(\.\d+)?\.[^.]+$/, '')).replace(/[<>:"/\\|?*]/g, '')
   const modDir      = path.join(getModsDir(), folderName)
@@ -357,42 +356,17 @@ function installModFromArchive(archiveName, nexusId, modName) {
   try {
     extractArchive(archivePath, stagingDir)
 
+    // Reconstruct the mod's Data root by unioning every option folder. FOMOD
+    // option selection is bypassed: extra plugins won't load (the server load
+    // order controls plugins.txt), and game-version DLL/variant conflicts are
+    // resolved by AE/SE folder matching. This is far more robust than parsing
+    // ModuleConfig.xml per mod.
+    const n = mergeRoot(stagingDir, modDir, 0)
+    if (n === 0) throw new Error('archive contained no installable files')
     if (fomod.findModuleConfig(stagingDir)) {
-      let ok = false
-      try {
-        const result = fomod.install(stagingDir, modDir, f => pluginExists(f))
-        if (result.installed > 0) {
-          ok = true
-          _log(`${archiveName}: FOMOD installed ${result.installed} file(s), ${result.choices.length} choice(s)`)
-        } else {
-          _log(`${archiveName}: FOMOD produced no files`)
-        }
-      } catch (ferr) {
-        _log(`${archiveName}: FOMOD engine failed (${ferr.message})`)
-      }
-      if (!ok) {
-        // Fallback: copy the data root, skipping the fomod/ control folder.
-        try { fs.rmSync(modDir, { recursive: true, force: true }) } catch {}
-        const dataRoot = findDataRoot(stagingDir)
-        fs.mkdirSync(modDir, { recursive: true })
-        let n = 0
-        for (const entry of fs.readdirSync(dataRoot)) {
-          if (entry.toLowerCase() === 'fomod') continue
-          fs.renameSync(path.join(dataRoot, entry), path.join(modDir, entry))
-          n++
-        }
-        if (n === 0) throw new Error('FOMOD could not be processed and no files were found to copy')
-        _log(`${archiveName}: FOMOD fallback copied ${n} item(s) — VERIFY this mod in MO2`)
-      }
-    } else {
-      const dataRoot = findDataRoot(stagingDir)
-      fs.mkdirSync(modDir, { recursive: true })
-      for (const entry of fs.readdirSync(dataRoot)) {
-        fs.renameSync(path.join(dataRoot, entry), path.join(modDir, entry))
-      }
-      if (dataRoot !== stagingDir) {
-        _log(`${archiveName}: data root detected at ${path.relative(stagingDir, dataRoot) || '.'}`)
-      }
+      _log(`${archiveName}: FOMOD reconstructed by merge (${n} file(s), tier=${_gameTier})`)
+    } else if (!looksLikeDataRoot(modDir)) {
+      _log(`${archiveName}: merged ${n} file(s) — no plugins/data dirs detected, VERIFY in MO2`)
     }
   } catch (err) {
     try { fs.rmSync(modDir, { recursive: true, force: true }) } catch {}
@@ -412,8 +386,21 @@ function installModFromArchive(archiveName, nexusId, modName) {
     '',
   ].join('\r\n'))
 
+  applyExclude(modDir, exclude)
+
   _log(`installed ${folderName} from ${archiveName}`)
   return { folder: folderName }
+}
+
+/** Remove author-specified relative paths from a staged mod folder. */
+function applyExclude(modDir, exclude) {
+  if (!Array.isArray(exclude)) return
+  for (const rel of exclude) {
+    const target = path.join(modDir, String(rel).replace(/[\\/]+/g, path.sep))
+    try {
+      if (fs.existsSync(target)) { fs.rmSync(target, { recursive: true, force: true }); _log(`  excluded ${rel}`) }
+    } catch {}
+  }
 }
 
 // ── Data-root detection ───────────────────────────────────────────────────────
@@ -460,9 +447,79 @@ function findDataRoot(dir) {
   return cur
 }
 
+// ── Merge reconstructor (FOMOD-proof data-root union) ─────────────────────────
+
+// Which Skyrim runtime we target, for resolving option-folder DLL conflicts.
+let _gameTier = 'ae'  // SkyRP runs Anniversary Edition; refined by setGameDataDir
+const TIER = {
+  ae: { match: /(\bae\b|anniversary|1[._]6|skse64_?1_?6)/i, other: /(\bse\b|1[._]5|skse64_?1_?5|legendary)/i },
+  se: { match: /(\bse\b|1[._]5|skse64_?1_?5|legendary)/i, other: /(\bae\b|anniversary|1[._]6|skse64_?1_?6)/i },
+}
+
+/** Recursively copy src into dst, overwriting. Returns files copied. */
+function mergeDir(src, dst) {
+  let n = 0
+  let entries
+  try { entries = fs.readdirSync(src, { withFileTypes: true }) } catch { return 0 }
+  fs.mkdirSync(dst, { recursive: true })
+  for (const e of entries) {
+    const s = path.join(src, e.name)
+    const d = path.join(dst, e.name)
+    if (e.isDirectory()) n += mergeDir(s, d)
+    else { fs.copyFileSync(s, d); n++ }   // overwrite — later sources win
+  }
+  return n
+}
+
+/**
+ * Merge a source root into modDir, treating known Data sub-dirs and loose
+ * files as content (copied at their level) and everything else as an option
+ * folder whose contents are unioned in. Tier-matching option folders are
+ * applied LAST so the correct game-version files win conflicts.
+ */
+function mergeRoot(srcRoot, modDir, depth) {
+  if (depth > 8) return 0
+  let entries
+  try { entries = fs.readdirSync(srcRoot, { withFileTypes: true }) } catch { return 0 }
+
+  fs.mkdirSync(modDir, { recursive: true })
+  let n = 0
+  const optionDirs = []
+
+  for (const e of entries) {
+    if (e.name.toLowerCase() === 'fomod') continue       // FOMOD control folder
+    const abs = path.join(srcRoot, e.name)
+    if (!e.isDirectory()) {
+      const d = path.join(modDir, e.name)
+      fs.mkdirSync(path.dirname(d), { recursive: true })
+      fs.copyFileSync(abs, d); n++                        // loose root file
+    } else if (DATA_DIR_NAMES.has(e.name.toLowerCase())) {
+      n += mergeDir(abs, path.join(modDir, e.name))       // real Data sub-dir
+    } else {
+      optionDirs.push({ abs, name: e.name })              // option / wrapper folder
+    }
+  }
+
+  // Apply option folders: wrong-tier first, neutral next, matching-tier last.
+  const t = TIER[_gameTier] || TIER.ae
+  const rank = o => t.match.test(o.name) ? 2 : (t.other.test(o.name) ? 0 : 1)
+  optionDirs.sort((a, b) => rank(a) - rank(b))
+  for (const o of optionDirs) n += mergeRoot(o.abs, modDir, depth + 1)
+
+  return n
+}
+
 /** True if a plugin file exists in the game Data dir or any installed mod. */
 let _gameDataDir = null
-function setGameDataDir(dir) { _gameDataDir = dir }
+function setGameDataDir(dir) {
+  _gameDataDir = dir
+  try {
+    const gameRoot = path.dirname(dir)
+    const rootNames = fs.readdirSync(gameRoot).join(' ').toLowerCase()
+    if (/skse64_1_5/.test(rootNames)) _gameTier = 'se'
+    else if (/skse64_1_6/.test(rootNames)) _gameTier = 'ae'
+  } catch { /* skse not installed yet — keep AE default */ }
+}
 
 function pluginExists(fileName) {
   if (_gameDataDir && fs.existsSync(path.join(_gameDataDir, fileName))) return true
@@ -604,7 +661,7 @@ function waitForMods(missingMods, onProgress, signal, intervalMs = 4000, timeout
         const existing = findModByNexusId(mod.nexusId)
         if (existing) { enableMod(existing); installed.push(mod); continue }
 
-        const res = installModFromDownload(mod.nexusId, mod.name)
+        const res = installModFromDownload(mod.nexusId, mod.name, mod.exclude)
         if (res.folder)      { enableMod(res.folder); installed.push(mod) }
         else if (res.error)  return reject(new Error(`${mod.name}: ${res.error}`))
         else                 waiting.push(mod)
