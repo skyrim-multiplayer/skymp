@@ -113,36 +113,7 @@ function downloadFile(url, destPath, onProgress, redirectsLeft = 5) {
   })
 }
 
-// ── File resolution (version pinning / optional files) ────────────────────────
-
-/** All files for a mod: [{ fileId, fileName, version, category }]. */
-async function listFiles(apiKey, nexusId) {
-  const data = await apiGet(apiKey, `/v1/games/${GAME}/mods/${nexusId}/files.json`)
-  return (data.files || []).map(f => ({
-    fileId:   f.file_id,
-    fileName: f.file_name,
-    version:  f.version || '',
-    category: f.category_name,      // MAIN, OPTIONAL, UPDATE, OLD_VERSION, …
-  }))
-}
-
-/**
- * Choose the main file to install, honouring an explicit `fileId` pin, then a
- * `version` match among MAIN files, then the newest MAIN file.
- */
-function pickMain(files, { fileId, version } = {}) {
-  if (fileId) {
-    const f = files.find(x => x.fileId === Number(fileId))
-    if (f) return f
-  }
-  const mains = files.filter(f => f.category === 'MAIN')
-  if (version) {
-    const v = mains.find(f => f.version === version)
-    if (v) return v
-  }
-  const pool = mains.length ? mains : files
-  return pool.slice().sort((a, b) => b.fileId - a.fileId)[0] || null
-}
+// ── File download ─────────────────────────────────────────────────────────────
 
 /**
  * Download one resolved file entry into downloadsDir. The archive is named
@@ -229,8 +200,6 @@ module.exports = {
   setLogger,
   validateKey,
   getDownloadLink,
-  listFiles,
-  pickMain,
   downloadFileEntry,
   ssoLogin,
 }

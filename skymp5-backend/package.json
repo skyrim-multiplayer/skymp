@@ -9,9 +9,11 @@
     "setup": "node scripts/setup-client.js",
     "merge": "node scripts/merge-files.js",
     "populate": "node scripts/populate-files.js",
-    "build-client": "node scripts/populate-files.js && node scripts/merge-files.js"
+    "build-client": "node scripts/populate-files.js && node scripts/merge-files.js",
+    "compile-manifest": "node scripts/compile-manifest.js"
   },
   "dependencies": {
+    "7zip-bin": "^5.2.0",
     "archiver": "^5.3.2",
     "cors": "^2.8.5",
     "discord.js": "^14.26.3",

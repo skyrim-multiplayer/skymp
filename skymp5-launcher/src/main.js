@@ -956,7 +956,10 @@ async function runDirectInstall() {
 }
 
 // ── MO2 install ───────────────────────────────────────────────────────────────
-// Full modpack pipeline: MO2 itself → SkyMP client files → Nexus mods.
+// Full modpack pipeline: MO2 itself → SkyMP client files → manifest replay.
+// Mods are reproduced from the backend's compiled install manifest (download +
+// verify each archive, extract once, apply per-file directives) so every player
+// gets the reference install's exact, byte-identical layout.
 
 async function runMO2Install() {
   const fail = (msg) => {
@@ -980,178 +983,158 @@ async function runMO2Install() {
     try { serverInfo = await fetchJSON(`${config.apiUrl}/api/serverinfo`) } catch {}
     mo2.ensureInstance(skyrimPath, serverInfo?.loadOrder)
     mo2.registerNxmHandler()
-    mo2.setGameDataDir(path.join(skyrimPath, 'Data'))
 
     // ── 2. SkyMP client files into the real Data/ ─────────────────────────────
     const core = await installClientFilesCore(skyrimPath, srv, serverInfo)
     if (!core.success) return fail(core.error)
 
-    // ── 3. Nexus mods from the server modlist ─────────────────────────────────
-    let modlist = []
-    try { modlist = await fetchJSON(`${config.apiUrl}/api/modlist`) }
-    catch (err) { return fail(`Could not fetch the server modlist: ${err.message}`) }
-    if (!Array.isArray(modlist)) return fail('Server modlist has an unexpected format.')
-
-    const collections = modlist.filter(m => m.source === 'collection')
-    if (collections.length > 0) {
-      log('[mo2-install] collection entries are Vortex-only — skipped:',
-          collections.map(m => m.name).join(', '))
+    // ── 3. Mods from the compiled install manifest ───────────────────────────
+    let manifest
+    try { manifest = await fetchJSON(`${config.apiUrl}/api/install-manifest`) }
+    catch (err) { return fail(`Could not fetch the install manifest: ${err.message}`) }
+    if (!manifest || !Array.isArray(manifest.mods) || !Array.isArray(manifest.archives)) {
+      return fail('Install manifest is missing or malformed — run "npm run compile-manifest" on the backend.')
     }
 
-    // ── 3a. URL-sourced resources (SKSE & other non-Nexus files) ─────────────
-    // root: true entries put their exe/dll payload into the game root —
-    // exactly how Wabbajack ships SKSE — with any Data payload as a mod.
-    const urlMods = modlist.filter(m => m.source === 'url' && m.enabled && m.url)
-    for (const m of urlMods) {
-      try {
-        if (m.root && m.checkFile && fs.existsSync(path.join(skyrimPath, m.checkFile))) {
-          log(`[mo2-install] ${m.name} already present (${m.checkFile})`)
-          continue
-        }
-        if (!m.root) {
-          const existing = mo2.findModByName(m.name)
-          if (existing) { mo2.enableMod(existing); continue }
-        }
-
-        let fileName
-        try { fileName = decodeURIComponent(new URL(m.url).pathname.split('/').pop()) } catch {}
-        if (!fileName) fileName = `${m.name.replace(/[^\w.-]/g, '_')}.7z`
-
-        const mb = n => (n / 1024 / 1024).toFixed(1)
-        send('install:progress', { phase: 'mods', file: `Downloading ${m.name}…`, index: 0, total: urlMods.length, skipped: false })
-        await mo2.downloadToDownloads(m.url, fileName, (received, total) => {
-          const pct = total > 0 ? ` (${Math.round(received / total * 100)}%)` : ''
-          send('install:progress', { phase: 'mods', file: `Downloading ${m.name}… ${mb(received)} MB${pct}`, index: 0, total: urlMods.length, skipped: false })
-        })
-
-        send('install:progress', { phase: 'mods', file: `Installing ${m.name}…`, index: 0, total: urlMods.length, skipped: false })
-        if (m.root) {
-          const r = mo2.installRootArchive(fileName, skyrimPath, m.name)
-          if (r.folder) mo2.enableMod(r.folder)
-        } else {
-          const r = mo2.installModFromArchive(fileName, null, m.name, m.exclude)
-          if (r.folder) mo2.enableMod(r.folder)
-        }
-      } catch (err) {
-        return fail(`Failed to install ${m.name}: ${err.message}`)
-      }
-    }
-
-    // ── 3b. Nexus mods ────────────────────────────────────────────────────────
-    const nexusMods = modlist.filter(m => m.source === 'nexus' && m.enabled && m.nexusId)
-
-    if (nexusMods.length === 0 && urlMods.length === 0) {
+    if (manifest.mods.length === 0) {
       send('install:complete', {
         success: true, mo2: true, upToDate: core.upToDate, modsTotal: 0,
-        warning: 'The server modlist has no Nexus entries yet — generate data/modlist.json on the backend (collection-to-modlist).',
+        warning: 'The install manifest has no mods yet — compile it from the reference MO2 install on the backend.',
       })
       return
     }
 
-    // Resolve each mod's target files (version/fileId pins + optional files)
-    // and compare against the installed signature, so a changed version,
-    // added optional file, or edited exclude list triggers a reinstall.
-    const apiKey    = store.get('nexusApiKey')
-    const nexusUser = store.get('nexusUser')
+    // ── 3a. Acquire every referenced archive, verified by sha256 ─────────────
+    const downloadsDir = mo2.getDownloadsDir()
+    const apiKey  = store.get('nexusApiKey')
+    const premium = !!(apiKey && store.get('nexusUser')?.isPremium)
+    const mb = n => (n / 1024 / 1024).toFixed(1)
 
-    const toInstall   = []   // { mod, target } — premium auto-(re)install
-    const needBrowser = []   // mods to fetch via the Nexus website (free / no key)
+    const archivePaths = {}      // archiveId -> verified local path
+    const needBrowser  = []      // nexus archives we couldn't auto-download
 
-    for (const m of nexusMods) {
-      let target = null
-      if (apiKey) {
-        try {
-          const files = await nexus.listFiles(apiKey, m.nexusId)
-          // Required file set: an explicit fileIds[] (e.g. SSE Engine Fixes
-          // part 1 + part 2), else the single fileId/version pick.
-          let required = []
-          if (Array.isArray(m.fileIds) && m.fileIds.length) {
-            required = m.fileIds.map(id => files.find(f => f.fileId === Number(id))).filter(Boolean)
-          } else {
-            const main = nexus.pickMain(files, m)
-            if (main) required = [main]
-          }
-          if (required.length === 0) throw new Error('no downloadable file found on Nexus (check the fileId/version pin)')
-          const optionals = (m.optionalFiles || [])
-            .map(id => files.find(f => f.fileId === Number(id)))
-            .filter(Boolean)
-          const allFiles = [...required, ...optionals]
-          const sig = allFiles.map(f => f.fileId).sort((a, b) => a - b).join(',') +
-                      '|' + mo2.excludeSig(m.exclude)
-          target = { files: allFiles, sig }
-        } catch (err) {
-          log(`[mo2-install] ${m.name}: could not resolve files (${err.message})`)
-        }
+    const locate = (a) => {
+      const names = []
+      if (a.source.type === 'nexus') { const n = mo2.findDownloadByFileId(a.source.fileId); if (n) names.push(n) }
+      names.push(a.name)
+      for (const name of names) {
+        const p = path.join(downloadsDir, name)
+        if (fs.existsSync(p) && mo2.verifyArchive(p, a.hash)) return p
       }
+      return null
+    }
 
-      const installed = mo2.getInstalledInfo(m.nexusId)
-      if (target) {
-        if (installed && installed.sig === target.sig) {
-          mo2.enableMod(installed.folder)               // up to date
-        } else {
-          toInstall.push({ mod: m, target })            // new or changed
-        }
+    for (const a of manifest.archives) {
+      const existing = locate(a)
+      if (existing) { archivePaths[a.id] = existing; continue }
+
+      if (a.source.type === 'url') {
+        send('install:progress', { phase: 'mods', file: `Downloading ${a.name}…`, index: 0, total: 0, skipped: false })
+        const name = await mo2.downloadToDownloads(a.source.url, a.name, (r, t) => {
+          const pct = t > 0 ? ` (${Math.round(r / t * 100)}%)` : ''
+          send('install:progress', { phase: 'mods', file: `Downloading ${a.name}… ${mb(r)} MB${pct}`, index: 0, total: 0, skipped: false })
+        })
+        const p = path.join(downloadsDir, name)
+        if (!mo2.verifyArchive(p, a.hash)) return fail(`${a.name}: downloaded file failed verification (hash mismatch).`)
+        archivePaths[a.id] = p
+      } else if (a.source.type === 'nexus' && premium) {
+        send('install:progress', { phase: 'mods', file: `Downloading ${a.name}…`, index: 0, total: 0, skipped: false })
+        const name = await nexus.downloadFileEntry(apiKey, a.source.modId, { fileId: a.source.fileId, fileName: a.name }, downloadsDir, (r, t) => {
+          const pct = t > 0 ? ` (${Math.round(r / t * 100)}%)` : ''
+          send('install:progress', { phase: 'mods', file: `Downloading ${a.name}… ${mb(r)} / ${mb(t)} MB${pct}`, index: 0, total: 0, skipped: false })
+        })
+        const p = path.join(downloadsDir, name)
+        if (!mo2.verifyArchive(p, a.hash)) return fail(`${a.name}: downloaded file failed verification (hash mismatch — the version pin may have changed).`)
+        archivePaths[a.id] = p
+      } else if (a.source.type === 'nexus') {
+        needBrowser.push(a)
       } else {
-        if (installed) mo2.enableMod(installed.folder)  // no metadata — keep as-is
-        else needBrowser.push(m)
+        return fail(`${a.name}: no download source. Add a URL in data/manifest-sources.json on the backend.`)
       }
     }
 
-    // ── Premium: download the exact files and (re)install, overwriting ───────
-    if (toInstall.length > 0) {
-      if (!(apiKey && nexusUser?.isPremium)) {
-        // logged in but free — can't auto-download; carry the sig for stamping
-        needBrowser.push(...toInstall.map(t => Object.assign(t.mod, { __sig: t.target.sig })))
-      } else {
-        const failed = []
-        for (let i = 0; i < toInstall.length; i++) {
-          const { mod, target } = toInstall[i]
-          const mb = n => (n / 1024 / 1024).toFixed(1)
-          try {
-            const archives = []
-            for (const f of target.files) {
-              archives.push(await nexus.downloadFileEntry(apiKey, mod.nexusId, f, mo2.getDownloadsDir(), (r, t) => {
-                const pct = t > 0 ? ` (${Math.round(r / t * 100)}%)` : ''
-                send('install:progress', { phase: 'mods', file: `Downloading ${mod.name}… ${mb(r)} / ${mb(t)} MB${pct}`, index: i, total: toInstall.length, skipped: false })
-              }))
-            }
-            send('install:progress', { phase: 'mods', file: `Installing ${mod.name}…`, index: i, total: toInstall.length, skipped: false })
-            const r = mo2.installMod(mod.name, archives, { nexusId: mod.nexusId, exclude: mod.exclude, sig: target.sig })
-            if (r.folder) {
-              mo2.enableMod(r.folder)
-              send('install:progress', { phase: 'mods', file: `Installed ${mod.name}`, index: i + 1, total: toInstall.length, skipped: false })
-            } else {
-              log(`[mo2-install] ${mod.name}: ${r.error}`)
-              failed.push(`${mod.name} (${r.error})`)
-            }
-          } catch (err) {
-            log(`[mo2-install] ${mod.name}: ${err.message}`)
-            failed.push(`${mod.name} (${err.message})`)
-          }
-        }
-        if (failed.length > 0) return fail(`${failed.length} mod(s) failed to install: ${failed.join('; ')}`)
-      }
-    }
-
-    // ── Free / no key: open the Nexus pages and watch for downloads ──────────
+    // ── 3b. Free / no-key path: open Nexus pages and wait for nxm downloads ──
     if (needBrowser.length > 0) {
-      for (const m of needBrowser) {
-        shell.openExternal(`https://www.nexusmods.com/skyrimspecialedition/mods/${m.nexusId}?tab=files`)
+      for (const a of needBrowser) {
+        shell.openExternal(`https://www.nexusmods.com/skyrimspecialedition/mods/${a.source.modId}?tab=files`)
         await new Promise(r => setTimeout(r, 800))
       }
       send('install:progress', {
         phase: 'mods',
-        file:  `Opened ${needBrowser.length} Nexus page(s) — use "Mod Manager Download" on each` +
+        file:  `Opened ${needBrowser.length} Nexus page(s) — click "Mod Manager Download" on each` +
                (apiKey ? '' : ' (log into Nexus in the launcher for automatic downloads)'),
         index: 0, total: needBrowser.length, skipped: false,
       })
-      await mo2.waitForMods(needBrowser, (done, total, message) => {
+      await mo2.waitForDownloads(needBrowser.map(a => ({ fileId: a.source.fileId, name: a.name })), (done, total, message) => {
         send('install:progress', { phase: 'mods', file: message, index: done, total, skipped: false })
       })
-      for (const m of needBrowser) if (m.__sig) mo2.stampSig(m.nexusId, m.__sig)
+      for (const a of needBrowser) {
+        const name = mo2.findDownloadByFileId(a.source.fileId)
+        const p = name && path.join(downloadsDir, name)
+        if (!p || !mo2.verifyArchive(p, a.hash)) return fail(`${a.name}: downloaded file failed verification (wrong version?).`)
+        archivePaths[a.id] = p
+      }
     }
 
-    send('install:complete', { success: true, mo2: true, upToDate: core.upToDate, modsTotal: nexusMods.length + urlMods.length })
+    // ── 3c. Replay the manifest: extract each archive once, apply directives ──
+    // Reference-count archives across mods + root so each extraction is freed
+    // as soon as its last consumer is done (bounds temp disk use).
+    const refCount = new Map()
+    const bump = ids => { for (const id of ids) refCount.set(id, (refCount.get(id) || 0) + 1) }
+    for (const m of manifest.mods) bump(new Set(m.files.filter(f => f.archive).map(f => f.archive)))
+    bump(new Set((manifest.root || []).filter(f => f.archive).map(f => f.archive)))
+
+    mo2.clearCache()
+    const extractedDirs = {}
+    const ensureExtracted = ids => {
+      for (const id of ids) {
+        if (extractedDirs[id]) continue
+        if (!archivePaths[id]) throw new Error(`archive ${id} was never downloaded`)
+        extractedDirs[id] = mo2.extractToCache(archivePaths[id], id)
+      }
+    }
+    const release = ids => {
+      for (const id of ids) {
+        const left = (refCount.get(id) || 0) - 1
+        refCount.set(id, left)
+        if (left <= 0 && extractedDirs[id]) { mo2.clearCache(id); delete extractedDirs[id] }
+      }
+    }
+
+    const failed = []
+    for (let i = 0; i < manifest.mods.length; i++) {
+      const mod = manifest.mods[i]
+      const ids = [...new Set(mod.files.filter(f => f.archive).map(f => f.archive))]
+      send('install:progress', { phase: 'mods', file: `Installing ${mod.name}…`, index: i, total: manifest.mods.length, skipped: false })
+      try {
+        ensureExtracted(ids)
+        const r = mo2.applyMod(mod.name, mod.files, extractedDirs, mod.modId)
+        if (r.error) failed.push(`${mod.name} (${r.error})`)
+      } catch (err) {
+        failed.push(`${mod.name} (${err.message})`)
+      }
+      release(ids)
+    }
+
+    if (manifest.root && manifest.root.length > 0) {
+      const ids = [...new Set(manifest.root.filter(f => f.archive).map(f => f.archive))]
+      try {
+        ensureExtracted(ids)
+        mo2.applyRootFiles(manifest.root, extractedDirs, skyrimPath)
+      } catch (err) {
+        failed.push(`root files (${err.message})`)
+      }
+      release(ids)
+    }
+
+    mo2.clearCache()
+
+    if (failed.length > 0) return fail(`${failed.length} item(s) failed to install: ${failed.join('; ')}`)
+
+    // ── 4. Match MO2 priority to the reference install ───────────────────────
+    mo2.setModlistOrder(manifest.mods.map(m => m.name))
+
+    send('install:complete', { success: true, mo2: true, upToDate: core.upToDate, modsTotal: manifest.mods.length })
   } catch (err) {
     fail(`Install failed: ${err.message}`)
     return
