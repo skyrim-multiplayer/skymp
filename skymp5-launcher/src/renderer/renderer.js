@@ -162,7 +162,7 @@ function renderTopbarDiscord() {
 
     const name = document.createElement('span')
     name.className   = 'discord-topbar-name'
-    name.textContent = discordUser.tag || discordUser.username
+    name.textContent = `Discord: ${discordUser.tag || discordUser.username}`
     wrap.appendChild(name)
 
     const logoutBtn = document.createElement('button')

@@ -95,7 +95,7 @@ async function main() {
     if (!e) {
       e = {
         name: mod.name, version: '', required: false,
-        enabled: true, source: 'nexus', nexusId: mod.modId, _optional: [],
+        enabled: true, source: 'nexus', nexusId: mod.modId, _required: [], _optional: [],
       }
       byModId.set(mod.modId, e)
     }
@@ -103,8 +103,8 @@ async function main() {
       if (mf.file?.fileId) e._optional.push(mf.file.fileId)
     } else {
       e.required = true
-      if (mf.file?.fileId) e.fileId = mf.file.fileId
-      e.version = mf.file?.version || mod.version || e.version
+      if (mf.file?.fileId) e._required.push(mf.file.fileId)
+      if (!e.version) e.version = mf.file?.version || mod.version || ''
     }
   }
 
@@ -118,7 +118,9 @@ async function main() {
   } catch { /* no existing modlist */ }
 
   for (const e of byModId.values()) {
+    if (e._required.length) e.fileIds = [...new Set(e._required)]
     if (e._optional.length) e.optionalFiles = [...new Set(e._optional)]
+    delete e._required
     delete e._optional
     const old = prev[e.nexusId]
     if (old) {

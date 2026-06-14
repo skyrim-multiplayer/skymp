@@ -1082,14 +1082,23 @@ async function runMO2Install() {
       if (apiKey) {
         try {
           const files = await nexus.listFiles(apiKey, m.nexusId)
-          const main  = nexus.pickMain(files, m)
-          if (!main) throw new Error('no downloadable file found on Nexus')
+          // Required file set: an explicit fileIds[] (e.g. SSE Engine Fixes
+          // part 1 + part 2), else the single fileId/version pick.
+          let required = []
+          if (Array.isArray(m.fileIds) && m.fileIds.length) {
+            required = m.fileIds.map(id => files.find(f => f.fileId === Number(id))).filter(Boolean)
+          } else {
+            const main = nexus.pickMain(files, m)
+            if (main) required = [main]
+          }
+          if (required.length === 0) throw new Error('no downloadable file found on Nexus (check the fileId/version pin)')
           const optionals = (m.optionalFiles || [])
             .map(id => files.find(f => f.fileId === Number(id)))
             .filter(Boolean)
-          const sig = [main.fileId, ...optionals.map(o => o.fileId)].sort((a, b) => a - b).join(',') +
+          const allFiles = [...required, ...optionals]
+          const sig = allFiles.map(f => f.fileId).sort((a, b) => a - b).join(',') +
                       '|' + mo2.excludeSig(m.exclude)
-          target = { files: [main, ...optionals], sig }
+          target = { files: allFiles, sig }
         } catch (err) {
           log(`[mo2-install] ${m.name}: could not resolve files (${err.message})`)
         }

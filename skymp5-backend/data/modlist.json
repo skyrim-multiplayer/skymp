@@ -11,7 +11,8 @@
     "required": true,
     "enabled": true,
     "source": "nexus",
-    "nexusId": 32349
+    "nexusId": 32349,
+    "fileId": 368385
   },
   {
     "name": "Address Library for SKSE Plugins",
@@ -19,7 +20,8 @@
     "required": true,
     "enabled": true,
     "source": "nexus",
-    "nexusId": 32444
+    "nexusId": 32444,
+    "fileId": 720756
   },
   {
     "name": "Animation Queue Fix",
@@ -27,7 +29,8 @@
     "required": true,
     "enabled": true,
     "source": "nexus",
-    "nexusId": 82395
+    "nexusId": 82395,
+    "fileId": 348271
   },
   {
     "name": "Base Object Swapper",
@@ -35,7 +38,8 @@
     "required": true,
     "enabled": true,
     "source": "nexus",
-    "nexusId": 60805
+    "nexusId": 60805,
+    "fileId": 647525
   },
   {
     "name": "Better Jumping SE",
@@ -43,7 +47,8 @@
     "required": true,
     "enabled": true,
     "source": "nexus",
-    "nexusId": 18967
+    "nexusId": 18967,
+    "fileId": 317398
   },
   {
     "name": "Cloaks and Capes",
@@ -51,7 +56,8 @@
     "required": true,
     "enabled": true,
     "source": "nexus",
-    "nexusId": 2019
+    "nexusId": 2019,
+    "fileId": 35552
   },
   {
     "name": "Common Clothes (by FranklinZunge for SSE)",
@@ -59,7 +65,8 @@
     "required": true,
     "enabled": true,
     "source": "nexus",
-    "nexusId": 5063
+    "nexusId": 5063,
+    "fileId": 10870
   },
   {
     "name": "Constructible Object Custom Keyword System",
@@ -67,15 +74,17 @@
     "required": true,
     "enabled": true,
     "source": "nexus",
-    "nexusId": 81409
+    "nexusId": 81409,
+    "fileId": 493920
   },
   {
     "name": "Crash Logger SSE AE VR - PDB support",
-    "version": "1.23.2",
+    "version": "1.20.1",
     "required": true,
     "enabled": true,
     "source": "nexus",
-    "nexusId": 59818
+    "nexusId": 59818,
+    "fileId": 720311
   },
   {
     "name": "Echoes of Tamriel - Loading Screens",
@@ -84,7 +93,15 @@
     "enabled": true,
     "source": "nexus",
     "nexusId": 151209,
-	  "exclude": ["EchoesofTamriel0.esp", "EchoesofTamriel1.esp", "EchoesofTamriel2.esp", "EchoesofTamriel0 - Textures.bsa", "EchoesofTamriel1 - Textures.bsa", "EchoesofTamriel2 - Textures.bsa"]
+    "fileId": 698887,
+    "exclude": [
+      "EchoesofTamriel0.esp",
+      "EchoesofTamriel1.esp",
+      "EchoesofTamriel2.esp",
+      "EchoesofTamriel0 - Textures.bsa",
+      "EchoesofTamriel1 - Textures.bsa",
+      "EchoesofTamriel2 - Textures.bsa"
+    ]
   },
   {
     "name": "First Person Camera Height Fix",
@@ -92,7 +109,8 @@
     "required": true,
     "enabled": true,
     "source": "nexus",
-    "nexusId": 28091
+    "nexusId": 28091,
+    "fileId": 103768
   },
   {
     "name": "Inventory Interface Information Injector",
@@ -100,7 +118,8 @@
     "required": true,
     "enabled": true,
     "source": "nexus",
-    "nexusId": 85702
+    "nexusId": 85702,
+    "fileId": 494324
   },
   {
     "name": "JK's Riverwood",
@@ -108,7 +127,8 @@
     "required": true,
     "enabled": true,
     "source": "nexus",
-    "nexusId": 2013
+    "nexusId": 2013,
+    "fileId": 24738
   },
   {
     "name": "JK's Whiterun",
@@ -116,7 +136,8 @@
     "required": true,
     "enabled": true,
     "source": "nexus",
-    "nexusId": 2259
+    "nexusId": 2259,
+    "fileId": 24737
   },
   {
     "name": "JK's Whiterun Outskirts",
@@ -124,15 +145,17 @@
     "required": true,
     "enabled": true,
     "source": "nexus",
-    "nexusId": 78351
+    "nexusId": 78351,
+    "fileId": 652546
   },
   {
     "name": "MCM Helper",
-    "version": "1.6.2",
+    "version": "1.6.1",
     "required": true,
     "enabled": true,
     "source": "nexus",
-    "nexusId": 53000
+    "nexusId": 53000,
+    "fileId": 739516
   },
   {
     "name": "More Craftable Equipment - Unenchanted Clothing and Specialty Gear",
@@ -141,7 +164,17 @@
     "enabled": true,
     "source": "nexus",
     "nexusId": 44666,
-	"exclude": ["MoreCraftableEquipment_AdvCyrus.esp", "MoreCraftableEquipment_Fish.esp", "MoreCraftableEquipment_Hunterborn.esp", "MoreCraftableEquipment_JKsPalaceoftheKings.esp", "MoreCraftableEquipment_JKsRadiantRaiment.esp", "MoreCraftableEquipment_SkyrimUnbound.esp", "MoreCraftableEquipment_USSEP.esp", "MoreCraftableEquipment_WACCF.esp"]
+    "fileId": 363683,
+    "exclude": [
+      "MoreCraftableEquipment_AdvCyrus.esp",
+      "MoreCraftableEquipment_Fish.esp",
+      "MoreCraftableEquipment_Hunterborn.esp",
+      "MoreCraftableEquipment_JKsPalaceoftheKings.esp",
+      "MoreCraftableEquipment_JKsRadiantRaiment.esp",
+      "MoreCraftableEquipment_SkyrimUnbound.esp",
+      "MoreCraftableEquipment_USSEP.esp",
+      "MoreCraftableEquipment_WACCF.esp"
+    ]
   },
   {
     "name": "Native EditorID Fix",
@@ -149,7 +182,8 @@
     "required": true,
     "enabled": true,
     "source": "nexus",
-    "nexusId": 85260
+    "nexusId": 85260,
+    "fileId": 488800
   },
   {
     "name": "New Legion",
@@ -157,15 +191,17 @@
     "required": true,
     "enabled": true,
     "source": "nexus",
-    "nexusId": 30468
+    "nexusId": 30468,
+    "fileId": 113852
   },
   {
     "name": "Nirn Necessities - My patches SE by Xtudo - Non-HDT Optimized Textures Backpack Satchel Scarf Cape Cloak Gaiter",
-    "version": "1.1",
+    "version": "1",
     "required": true,
     "enabled": true,
     "source": "nexus",
-    "nexusId": 133857
+    "nexusId": 133857,
+    "fileId": 561937
   },
   {
     "name": "Nirn Necessities - SMP Accessories",
@@ -173,7 +209,8 @@
     "required": true,
     "enabled": true,
     "source": "nexus",
-    "nexusId": 112481
+    "nexusId": 112481,
+    "fileId": 563435
   },
   {
     "name": "powerofthree's Tweaks",
@@ -181,7 +218,8 @@
     "required": true,
     "enabled": true,
     "source": "nexus",
-    "nexusId": 51073
+    "nexusId": 51073,
+    "fileId": 661201
   },
   {
     "name": "Racial Body Morphs Redux SSE AE - FKDRS - Diverse body types and height by Race and Gender",
@@ -189,7 +227,8 @@
     "required": true,
     "enabled": true,
     "source": "nexus",
-    "nexusId": 65047
+    "nexusId": 65047,
+    "fileId": 277566
   },
   {
     "name": "Sea Salt Deposits",
@@ -197,32 +236,47 @@
     "required": true,
     "enabled": true,
     "source": "nexus",
-    "nexusId": 7300
+    "nexusId": 7300,
+    "fileId": 450355
   },
   {
     "name": "Sentinel - An Equipment Overhaul",
-    "version": "3.1.0",
+    "version": "3.2.0",
     "required": true,
     "enabled": true,
     "source": "nexus",
     "nexusId": 100985,
-	"exclude": ["AE Quest Disable - Alternative Armors.esp", "AE Quest Disable - Dead Man's Dread.esp", "AE Quest Disable - Netch Leather.esp", "Apex_Khajiit.esp", "Kad_MoonMonkRobes.esp", "Sentinel - Alternative Armors.esp", "Sentinel - Backpacks and Bandoliers.esp", "Sentinel - Caravans From Elsweyr.esp", "Sentinel - Memories of Morrowind.esp", "Sentinel - Sailors and Swashbucklers.esp"]
+    "fileId": 600824,
+    "exclude": [
+      "AE Quest Disable - Alternative Armors.esp",
+      "AE Quest Disable - Dead Man's Dread.esp",
+      "AE Quest Disable - Netch Leather.esp",
+      "Apex_Khajiit.esp",
+      "Kad_MoonMonkRobes.esp",
+      "Sentinel - Alternative Armors.esp",
+      "Sentinel - Backpacks and Bandoliers.esp",
+      "Sentinel - Caravans From Elsweyr.esp",
+      "Sentinel - Memories of Morrowind.esp",
+      "Sentinel - Sailors and Swashbucklers.esp"
+    ]
   },
   {
     "name": "Simple Dual Sheath",
-    "version": "1.5.7",
+    "version": "4.80",
     "required": true,
     "enabled": true,
     "source": "nexus",
-    "nexusId": 50049
+    "nexusId": 50049,
+    "fileId": 204058
   },
   {
     "name": "SkyPatcher",
-    "version": "6.4.1",
+    "version": "6.3.3",
     "required": true,
     "enabled": true,
     "source": "nexus",
-    "nexusId": 106659
+    "nexusId": 106659,
+    "fileId": 738371
   },
   {
     "name": "Skyrim Priority SE AE - CPU Performance FPS Optimizer",
@@ -230,7 +284,8 @@
     "required": true,
     "enabled": true,
     "source": "nexus",
-    "nexusId": 50129
+    "nexusId": 50129,
+    "fileId": 355110
   },
   {
     "name": "Skyrim Script Extender (SKSE64)",
@@ -238,31 +293,35 @@
     "required": true,
     "enabled": true,
     "source": "nexus",
-    "nexusId": 30379
+    "nexusId": 30379,
+    "fileId": 462377
   },
   {
     "name": "Skyrim Souls RE - Unpaused Menus",
-    "version": "3.1.2",
+    "version": "2.4.0",
     "required": true,
     "enabled": true,
     "source": "nexus",
-    "nexusId": 27859
+    "nexusId": 27859,
+    "fileId": 474487
   },
   {
     "name": "SkyUI",
-    "version": "6.9",
+    "version": "6.8",
     "required": true,
     "enabled": true,
     "source": "nexus",
-    "nexusId": 12604
+    "nexusId": 12604,
+    "fileId": 739315
   },
   {
     "name": "Sleeves of Skyrim",
-    "version": "1",
+    "version": "1.1",
     "required": true,
     "enabled": true,
     "source": "nexus",
-    "nexusId": 99651
+    "nexusId": 99651,
+    "fileId": 502979
   },
   {
     "name": "SSE Display Tweaks",
@@ -270,14 +329,16 @@
     "required": true,
     "enabled": true,
     "source": "nexus",
-    "nexusId": 34705
+    "nexusId": 34705,
+    "fileId": 454679
   },
   {
     "name": "SSE Engine Fixes (skse64 plugin)",
-    "version": "7.0.20",
+    "version": "7",
     "required": true,
     "enabled": true,
     "source": "nexus",
-    "nexusId": 17230
+    "nexusId": 17230,
+    "fileId": 725261
   }
 ]

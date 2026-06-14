@@ -411,7 +411,7 @@ function applyExclude(modDir, exclude) {
   for (const rel of exclude) {
     const target = path.join(modDir, String(rel).replace(/[\\/]+/g, path.sep))
     try {
-      if (fs.existsSync(target)) { fs.rmSync(target, { recursive: true, force: true }); _log(`  excluded ${rel}`) }
+      if (fs.existsSync(lp(target))) { fs.rmSync(lp(target), { recursive: true, force: true }); _log(`  excluded ${rel}`) }
     } catch {}
   }
 }
@@ -470,16 +470,25 @@ const TIER = {
 }
 
 /** Recursively copy src into dst, overwriting. Returns files copied. */
+// Windows caps fs paths at MAX_PATH (260) unless prefixed with \\?\. Big mods
+// like JK's have mesh paths past that, so plain Node copies fail where MO2
+// itself (which opts into long paths) succeeds. Prefix every fs boundary.
+function lp(p) {
+  if (process.platform !== 'win32') return p
+  const abs = path.resolve(p)
+  return abs.startsWith('\\\\?\\') ? abs : '\\\\?\\' + abs
+}
+
 function mergeDir(src, dst) {
   let n = 0
   let entries
-  try { entries = fs.readdirSync(src, { withFileTypes: true }) } catch { return 0 }
-  fs.mkdirSync(dst, { recursive: true })
+  try { entries = fs.readdirSync(lp(src), { withFileTypes: true }) } catch { return 0 }
+  fs.mkdirSync(lp(dst), { recursive: true })
   for (const e of entries) {
     const s = path.join(src, e.name)
     const d = path.join(dst, e.name)
     if (e.isDirectory()) n += mergeDir(s, d)
-    else { fs.copyFileSync(s, d); n++ }   // overwrite — later sources win
+    else { fs.copyFileSync(lp(s), lp(d)); n++ }   // overwrite — later sources win
   }
   return n
 }
@@ -493,9 +502,9 @@ function mergeDir(src, dst) {
 function mergeRoot(srcRoot, modDir, depth) {
   if (depth > 8) return 0
   let entries
-  try { entries = fs.readdirSync(srcRoot, { withFileTypes: true }) } catch { return 0 }
+  try { entries = fs.readdirSync(lp(srcRoot), { withFileTypes: true }) } catch { return 0 }
 
-  fs.mkdirSync(modDir, { recursive: true })
+  fs.mkdirSync(lp(modDir), { recursive: true })
   let n = 0
   const optionDirs = []
 
@@ -504,8 +513,8 @@ function mergeRoot(srcRoot, modDir, depth) {
     const abs = path.join(srcRoot, e.name)
     if (!e.isDirectory()) {
       const d = path.join(modDir, e.name)
-      fs.mkdirSync(path.dirname(d), { recursive: true })
-      fs.copyFileSync(abs, d); n++                        // loose root file
+      fs.mkdirSync(lp(path.dirname(d)), { recursive: true })
+      fs.copyFileSync(lp(abs), lp(d)); n++                // loose root file
     } else if (DATA_DIR_NAMES.has(e.name.toLowerCase())) {
       n += mergeDir(abs, path.join(modDir, e.name))       // real Data sub-dir
     } else {
@@ -684,39 +693,51 @@ function stampSig(nexusId, sig) {
 function installMod(modName, archiveNames, { nexusId, exclude, sig } = {}) {
   const folderName = String(modName).replace(/[<>:"/\\|?*]/g, '')
   const modDir     = path.join(getModsDir(), folderName)
-  const stagingDir = path.join(getRoot(), '.staging', folderName)
+  // Build in a SHORT temp dir and only swap into place on success — a failed
+  // (re)install must never destroy a working existing/manual install, and the
+  // short build path keeps deep-mesh mods under MAX_PATH while building.
+  const id         = String(_buildCounter++)
+  const buildDir   = path.join(getRoot(), '.b', id)
+  const stagingDir = path.join(getRoot(), '.s', id)
 
-  try { fs.rmSync(modDir, { recursive: true, force: true }) } catch {}
+  try { fs.rmSync(lp(buildDir), { recursive: true, force: true }) } catch {}
   try {
-    fs.mkdirSync(modDir, { recursive: true })
+    fs.mkdirSync(lp(buildDir), { recursive: true })
     let total = 0
     for (const archiveName of archiveNames) {
       const archivePath = path.join(getDownloadsDir(), archiveName)
       if (!fs.existsSync(archivePath) || listArchive(archivePath) === null) {
         throw new Error(`archive not ready: ${archiveName}`)
       }
-      try { fs.rmSync(stagingDir, { recursive: true, force: true }) } catch {}
+      try { fs.rmSync(lp(stagingDir), { recursive: true, force: true }) } catch {}
       extractArchive(archivePath, stagingDir)
-      total += mergeRoot(stagingDir, modDir, 0)
+      const n = mergeRoot(stagingDir, buildDir, 0)
+      _log(`  ${archiveName}: merged ${n} file(s)`)
+      total += n
     }
-    if (total === 0) throw new Error('archives contained no installable files')
+    if (total === 0) throw new Error('archives contained no installable files (check the file/version pin)')
 
-    applyExclude(modDir, exclude)
+    applyExclude(buildDir, exclude)
 
-    fs.writeFileSync(path.join(modDir, 'meta.ini'), [
+    fs.writeFileSync(lp(path.join(buildDir, 'meta.ini')), [
       '[General]', 'gameName=SkyrimSE', `modid=${nexusId ?? 0}`, `name=${folderName}`,
       'repository=Nexus', `skyrpSig=${sig || ''}`, '',
     ].join('\r\n'))
 
+    // Swap: remove the old install only now, then move the new one in.
+    try { fs.rmSync(lp(modDir), { recursive: true, force: true }) } catch {}
+    fs.renameSync(lp(buildDir), lp(modDir))
+
     _log(`installed ${folderName} (${total} file(s) from ${archiveNames.length} archive(s))`)
     return { folder: folderName }
   } catch (err) {
-    try { fs.rmSync(modDir, { recursive: true, force: true }) } catch {}
-    return { error: err.message }
+    try { fs.rmSync(lp(buildDir), { recursive: true, force: true }) } catch {}
+    return { error: err.message }   // existing modDir left intact
   } finally {
-    try { fs.rmSync(stagingDir, { recursive: true, force: true }) } catch {}
+    try { fs.rmSync(lp(stagingDir), { recursive: true, force: true }) } catch {}
   }
 }
+let _buildCounter = 1
 
 /** Enable a mod in the SkyRP profile (idempotent). */
 function enableMod(folderName) {
