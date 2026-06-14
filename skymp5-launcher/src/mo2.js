@@ -24,7 +24,6 @@ const fs   = require('fs')
 const os   = require('os')
 const https = require('https')
 const { spawn, execSync, execFileSync } = require('child_process')
-const fomod = require('./fomod')
 
 const MO2_VERSION = '2.5.2'
 const MO2_URL     = `https://github.com/ModOrganizer2/modorganizer/releases/download/v${MO2_VERSION}/Mod.Organizer-${MO2_VERSION}.7z`
@@ -32,10 +31,7 @@ const PROFILE     = 'SkyRP'
 
 // ── Logger ────────────────────────────────────────────────────────────────────
 let _log = (...args) => console.log('[mo2]', ...args)
-function setLogger(fn) {
-  _log = (...args) => fn('[mo2]', ...args)
-  fomod.setLogger(fn)
-}
+function setLogger(fn) { _log = (...args) => fn('[mo2]', ...args) }
 
 // ── Paths ─────────────────────────────────────────────────────────────────────
 
@@ -120,6 +116,23 @@ function listArchive(archivePath) {
   } catch {
     return null
   }
+}
+
+/** Locate a FOMOD ModuleConfig.xml up to 3 levels deep. Returns abs path or null. */
+function findModuleConfig(dir, depth = 0) {
+  if (depth > 3) return null
+  let entries
+  try { entries = fs.readdirSync(dir, { withFileTypes: true }) } catch { return null }
+  for (const e of entries) {
+    if (!e.isDirectory() && e.name.toLowerCase() === 'moduleconfig.xml') return path.join(dir, e.name)
+  }
+  for (const e of entries) {
+    if (e.isDirectory()) {
+      const found = findModuleConfig(path.join(dir, e.name), depth + 1)
+      if (found) return found
+    }
+  }
+  return null
 }
 
 /**
@@ -363,7 +376,7 @@ function installModFromArchive(archiveName, nexusId, modName, exclude) {
     // ModuleConfig.xml per mod.
     const n = mergeRoot(stagingDir, modDir, 0)
     if (n === 0) throw new Error('archive contained no installable files')
-    if (fomod.findModuleConfig(stagingDir)) {
+    if (findModuleConfig(stagingDir)) {
       _log(`${archiveName}: FOMOD reconstructed by merge (${n} file(s), tier=${_gameTier})`)
     } else if (!looksLikeDataRoot(modDir)) {
       _log(`${archiveName}: merged ${n} file(s) — no plugins/data dirs detected, VERIFY in MO2`)

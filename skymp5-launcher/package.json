@@ -1,6 +1,6 @@
 {
   "name": "skyrp-launcher",
-  "version": "0.4.3",
+  "version": "0.4.4",
   "description": "Launcher for the Skyrim Roleplay server",
   "main": "src/main.js",
   "author": "F02K and Suraru",
@@ -17,8 +17,7 @@
     "7zip-bin": "^5.2.0",
     "adm-zip": "^0.5.10",
     "dotenv": "^16.4.5",
-    "electron-store": "^8.2.0",
-    "fast-xml-parser": "^4.5.0"
+    "electron-store": "^8.2.0"
   },
   "devDependencies": {
     "electron": "41.2.0",
