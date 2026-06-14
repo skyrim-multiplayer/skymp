@@ -1068,70 +1068,98 @@ async function runMO2Install() {
       return
     }
 
-    // Enable anything already installed, collect what's missing
-    const missing = []
+    // Resolve each mod's target files (version/fileId pins + optional files)
+    // and compare against the installed signature, so a changed version,
+    // added optional file, or edited exclude list triggers a reinstall.
+    const apiKey    = store.get('nexusApiKey')
+    const nexusUser = store.get('nexusUser')
+
+    const toInstall   = []   // { mod, target } — premium auto-(re)install
+    const needBrowser = []   // mods to fetch via the Nexus website (free / no key)
+
     for (const m of nexusMods) {
-      const existing = mo2.findModByNexusId(m.nexusId)
-      if (existing) mo2.enableMod(existing)
-      else missing.push(m)
-    }
-
-    if (missing.length > 0) {
-      const apiKey    = store.get('nexusApiKey')
-      const nexusUser = store.get('nexusUser')
-
-      if (apiKey && nexusUser?.isPremium) {
-        // ── Premium: direct download + install every mod, synchronously ──────
-        const failed = []
-        for (let i = 0; i < missing.length; i++) {
-          const m  = missing[i]
-          const mb = n => (n / 1024 / 1024).toFixed(1)
-          try {
-            const archiveName = await nexus.downloadMod(apiKey, m, mo2.getDownloadsDir(), (received, total) => {
-              const pct = total > 0 ? ` (${Math.round(received / total * 100)}%)` : ''
-              send('install:progress', {
-                phase: 'mods',
-                file:  `Downloading ${m.name}… ${mb(received)} / ${mb(total)} MB${pct}`,
-                index: i, total: missing.length, skipped: false,
-              })
-            })
-            send('install:progress', { phase: 'mods', file: `Installing ${m.name}…`, index: i, total: missing.length, skipped: false })
-            const result = mo2.installModFromArchive(archiveName, m.nexusId, m.name, m.exclude)
-            if (result.folder) {
-              mo2.enableMod(result.folder)
-              send('install:progress', { phase: 'mods', file: `Installed ${m.name}`, index: i + 1, total: missing.length, skipped: false })
-            } else {
-              const why = result.error || 'install did not complete'
-              log(`[mo2-install] ${m.name}: ${why}`)
-              failed.push(`${m.name} (${why})`)
-            }
-          } catch (err) {
-            log(`[mo2-install] ${m.name}: ${err.message}`)
-            failed.push(`${m.name} (${err.message})`)
-          }
+      let target = null
+      if (apiKey) {
+        try {
+          const files = await nexus.listFiles(apiKey, m.nexusId)
+          const main  = nexus.pickMain(files, m)
+          if (!main) throw new Error('no downloadable file found on Nexus')
+          const optionals = (m.optionalFiles || [])
+            .map(id => files.find(f => f.fileId === Number(id)))
+            .filter(Boolean)
+          const sig = [main.fileId, ...optionals.map(o => o.fileId)].sort((a, b) => a - b).join(',') +
+                      '|' + mo2.excludeSig(m.exclude)
+          target = { files: [main, ...optionals], sig }
+        } catch (err) {
+          log(`[mo2-install] ${m.name}: could not resolve files (${err.message})`)
         }
+      }
 
-        if (failed.length > 0) {
-          return fail(`${failed.length} mod(s) failed to install: ${failed.join('; ')}`)
+      const installed = mo2.getInstalledInfo(m.nexusId)
+      if (target) {
+        if (installed && installed.sig === target.sig) {
+          mo2.enableMod(installed.folder)               // up to date
+        } else {
+          toInstall.push({ mod: m, target })            // new or changed
         }
       } else {
-        // for the free nexus accounts
-        for (const m of missing) {
-          shell.openExternal(`https://www.nexusmods.com/skyrimspecialedition/mods/${m.nexusId}?tab=files`)
-          await new Promise(r => setTimeout(r, 800))
-        }
-
-        send('install:progress', {
-          phase: 'mods',
-          file:  `Opened ${missing.length} Nexus page(s) — use "Mod Manager Download" on each` +
-                 (apiKey ? '' : ' (log into Nexus in the launcher for automatic downloads)'),
-          index: 0, total: missing.length, skipped: false,
-        })
-
-        await mo2.waitForMods(missing, (done, total, message) => {
-          send('install:progress', { phase: 'mods', file: message, index: done, total, skipped: false })
-        })
+        if (installed) mo2.enableMod(installed.folder)  // no metadata — keep as-is
+        else needBrowser.push(m)
       }
+    }
+
+    // ── Premium: download the exact files and (re)install, overwriting ───────
+    if (toInstall.length > 0) {
+      if (!(apiKey && nexusUser?.isPremium)) {
+        // logged in but free — can't auto-download; carry the sig for stamping
+        needBrowser.push(...toInstall.map(t => Object.assign(t.mod, { __sig: t.target.sig })))
+      } else {
+        const failed = []
+        for (let i = 0; i < toInstall.length; i++) {
+          const { mod, target } = toInstall[i]
+          const mb = n => (n / 1024 / 1024).toFixed(1)
+          try {
+            const archives = []
+            for (const f of target.files) {
+              archives.push(await nexus.downloadFileEntry(apiKey, mod.nexusId, f, mo2.getDownloadsDir(), (r, t) => {
+                const pct = t > 0 ? ` (${Math.round(r / t * 100)}%)` : ''
+                send('install:progress', { phase: 'mods', file: `Downloading ${mod.name}… ${mb(r)} / ${mb(t)} MB${pct}`, index: i, total: toInstall.length, skipped: false })
+              }))
+            }
+            send('install:progress', { phase: 'mods', file: `Installing ${mod.name}…`, index: i, total: toInstall.length, skipped: false })
+            const r = mo2.installMod(mod.name, archives, { nexusId: mod.nexusId, exclude: mod.exclude, sig: target.sig })
+            if (r.folder) {
+              mo2.enableMod(r.folder)
+              send('install:progress', { phase: 'mods', file: `Installed ${mod.name}`, index: i + 1, total: toInstall.length, skipped: false })
+            } else {
+              log(`[mo2-install] ${mod.name}: ${r.error}`)
+              failed.push(`${mod.name} (${r.error})`)
+            }
+          } catch (err) {
+            log(`[mo2-install] ${mod.name}: ${err.message}`)
+            failed.push(`${mod.name} (${err.message})`)
+          }
+        }
+        if (failed.length > 0) return fail(`${failed.length} mod(s) failed to install: ${failed.join('; ')}`)
+      }
+    }
+
+    // ── Free / no key: open the Nexus pages and watch for downloads ──────────
+    if (needBrowser.length > 0) {
+      for (const m of needBrowser) {
+        shell.openExternal(`https://www.nexusmods.com/skyrimspecialedition/mods/${m.nexusId}?tab=files`)
+        await new Promise(r => setTimeout(r, 800))
+      }
+      send('install:progress', {
+        phase: 'mods',
+        file:  `Opened ${needBrowser.length} Nexus page(s) — use "Mod Manager Download" on each` +
+               (apiKey ? '' : ' (log into Nexus in the launcher for automatic downloads)'),
+        index: 0, total: needBrowser.length, skipped: false,
+      })
+      await mo2.waitForMods(needBrowser, (done, total, message) => {
+        send('install:progress', { phase: 'mods', file: message, index: done, total, skipped: false })
+      })
+      for (const m of needBrowser) if (m.__sig) mo2.stampSig(m.nexusId, m.__sig)
     }
 
     send('install:complete', { success: true, mo2: true, upToDate: core.upToDate, modsTotal: nexusMods.length + urlMods.length })

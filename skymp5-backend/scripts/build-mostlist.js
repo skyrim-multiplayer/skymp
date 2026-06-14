@@ -33,6 +33,7 @@ query ($slug: String!, $revision: Int) {
     modFiles {
       optional
       file {
+        fileId
         name
         version
         mod { modId name version summary }
@@ -85,23 +86,47 @@ async function main() {
   if (!rev) throw new Error('Collection revision not found (check slug/revision, and that it is published).')
 
   // One entry per mod — collections list files, and a mod can contribute several.
-  // A mod is "required" if ANY of its files is non-optional.
+  // The non-optional file pins fileId + version
   const byModId = new Map()
   for (const mf of rev.modFiles || []) {
     const mod = mf.file?.mod
     if (!mod?.modId) continue
-    const existing = byModId.get(mod.modId)
-    if (existing) {
-      existing.required = existing.required || !mf.optional
+    let e = byModId.get(mod.modId)
+    if (!e) {
+      e = {
+        name: mod.name, version: '', required: false,
+        enabled: true, source: 'nexus', nexusId: mod.modId, _optional: [],
+      }
+      byModId.set(mod.modId, e)
+    }
+    if (mf.optional) {
+      if (mf.file?.fileId) e._optional.push(mf.file.fileId)
     } else {
-      byModId.set(mod.modId, {
-        name:     mod.name,
-        version:  mod.version || mf.file.version || '',
-        required: !mf.optional,
-        enabled:  true,
-        source:   'nexus',
-        nexusId:  mod.modId,
-      })
+      e.required = true
+      if (mf.file?.fileId) e.fileId = mf.file.fileId
+      e.version = mf.file?.version || mod.version || e.version
+    }
+  }
+
+  // Finalise optionalFiles and save manual changes
+  const outPath = path.join(__dirname, '..', 'data', 'modlist.json')
+  let prev = {}
+  try {
+    for (const o of JSON.parse(fs.readFileSync(outPath, 'utf8'))) {
+      if (o && o.nexusId != null) prev[o.nexusId] = o
+    }
+  } catch { /* no existing modlist */ }
+
+  for (const e of byModId.values()) {
+    if (e._optional.length) e.optionalFiles = [...new Set(e._optional)]
+    delete e._optional
+    const old = prev[e.nexusId]
+    if (old) {
+      if (Array.isArray(old.exclude) && old.exclude.length) e.exclude = old.exclude
+      if (old.enabled === false) e.enabled = false
+      if (Array.isArray(old.optionalFiles)) {
+        e.optionalFiles = [...new Set([...(e.optionalFiles || []), ...old.optionalFiles])]
+      }
     }
   }
 
@@ -124,7 +149,6 @@ async function main() {
     ...[...byModId.values()].sort((a, b) => a.name.localeCompare(b.name)),
   ]
 
-  const outPath = path.join(__dirname, '..', 'data', 'modlist.json')
   fs.writeFileSync(outPath, JSON.stringify(modlist, null, 2) + '\n')
   console.log(`Wrote ${modlist.length} entries to ${outPath}`)
 

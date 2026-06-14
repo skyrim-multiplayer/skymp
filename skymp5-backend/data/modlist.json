@@ -206,7 +206,7 @@
     "enabled": true,
     "source": "nexus",
     "nexusId": 100985,
-	"exclude": ["AE Quest Disable - Alternative Armors.esp", "AE Quest Disable - Dead Man's Dread.esp", "AE Quest Disable - Netch Leather.esp", "Apex_Khajiit.esp", "Kad_MoonMonkRobes.esp", "Sentinel - Alternative Armors.esp", "Sentinel - Backpacks and Bandoliers.esp", "Sentinel - Caravans From Elsweyr.esp", "Sentinel - City Guards.esp", "Sentinel - Memories of Morrowind.esp", "Sentinel - Sailors and Swashbucklers.esp"]
+	"exclude": ["AE Quest Disable - Alternative Armors.esp", "AE Quest Disable - Dead Man's Dread.esp", "AE Quest Disable - Netch Leather.esp", "Apex_Khajiit.esp", "Kad_MoonMonkRobes.esp", "Sentinel - Alternative Armors.esp", "Sentinel - Backpacks and Bandoliers.esp", "Sentinel - Caravans From Elsweyr.esp", "Sentinel - Memories of Morrowind.esp", "Sentinel - Sailors and Swashbucklers.esp"]
   },
   {
     "name": "Simple Dual Sheath",

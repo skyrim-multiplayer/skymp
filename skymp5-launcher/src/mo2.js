@@ -638,6 +638,86 @@ async function downloadToDownloads(url, fileName, onProgress) {
   return fileName
 }
 
+/** Stable signature of an exclude list (order-independent). */
+function excludeSig(exclude) {
+  return JSON.stringify((Array.isArray(exclude) ? exclude : []).map(String).sort())
+}
+
+/**
+ * Read what's installed for a Nexus mod: { folder, sig } or null.
+ * `sig` is the skyrpSig written by installMod (captures file ids + excludes),
+ * so the installer can tell when a mod needs updating vs. is up to date.
+ */
+function getInstalledInfo(nexusId) {
+  const folder = findModByNexusId(nexusId)
+  if (!folder) return null
+  let sig = null
+  try {
+    const meta = fs.readFileSync(path.join(getModsDir(), folder, 'meta.ini'), 'utf8')
+    const m = meta.match(/^skyrpSig\s*=\s*(.*)$/im)
+    sig = m ? m[1].trim() : null
+  } catch {}
+  return { folder, sig }
+}
+
+/** Write/replace skyrpSig in an installed mod's meta.ini (used by the free path). */
+function stampSig(nexusId, sig) {
+  const folder = findModByNexusId(nexusId)
+  if (!folder) return
+  try {
+    const metaPath = path.join(getModsDir(), folder, 'meta.ini')
+    let meta = fs.existsSync(metaPath) ? fs.readFileSync(metaPath, 'utf8') : '[General]\r\n'
+    if (/^skyrpSig\s*=/im.test(meta)) meta = meta.replace(/^skyrpSig\s*=.*$/im, `skyrpSig=${sig}`)
+    else meta = meta.replace(/\[General\]/i, `[General]\r\nskyrpSig=${sig}`)
+    fs.writeFileSync(metaPath, meta)
+  } catch {}
+}
+
+/**
+ * (Re)install a mod from one or more archives, OVERWRITING any existing
+ * install, then stamp meta.ini with `skyrpSig` so future runs can detect
+ * changes. Archives are merged in order (later overlays earlier), so the
+ * main file comes first and optional files after.
+ *
+ * @returns { folder } | { error }
+ */
+function installMod(modName, archiveNames, { nexusId, exclude, sig } = {}) {
+  const folderName = String(modName).replace(/[<>:"/\\|?*]/g, '')
+  const modDir     = path.join(getModsDir(), folderName)
+  const stagingDir = path.join(getRoot(), '.staging', folderName)
+
+  try { fs.rmSync(modDir, { recursive: true, force: true }) } catch {}
+  try {
+    fs.mkdirSync(modDir, { recursive: true })
+    let total = 0
+    for (const archiveName of archiveNames) {
+      const archivePath = path.join(getDownloadsDir(), archiveName)
+      if (!fs.existsSync(archivePath) || listArchive(archivePath) === null) {
+        throw new Error(`archive not ready: ${archiveName}`)
+      }
+      try { fs.rmSync(stagingDir, { recursive: true, force: true }) } catch {}
+      extractArchive(archivePath, stagingDir)
+      total += mergeRoot(stagingDir, modDir, 0)
+    }
+    if (total === 0) throw new Error('archives contained no installable files')
+
+    applyExclude(modDir, exclude)
+
+    fs.writeFileSync(path.join(modDir, 'meta.ini'), [
+      '[General]', 'gameName=SkyrimSE', `modid=${nexusId ?? 0}`, `name=${folderName}`,
+      'repository=Nexus', `skyrpSig=${sig || ''}`, '',
+    ].join('\r\n'))
+
+    _log(`installed ${folderName} (${total} file(s) from ${archiveNames.length} archive(s))`)
+    return { folder: folderName }
+  } catch (err) {
+    try { fs.rmSync(modDir, { recursive: true, force: true }) } catch {}
+    return { error: err.message }
+  } finally {
+    try { fs.rmSync(stagingDir, { recursive: true, force: true }) } catch {}
+  }
+}
+
 /** Enable a mod in the SkyRP profile (idempotent). */
 function enableMod(folderName) {
   const modlistPath = path.join(getProfileDir(), 'modlist.txt')
@@ -746,6 +826,10 @@ module.exports = {
   findDownloadByNexusId,
   installModFromDownload,
   installModFromArchive,
+  installMod,
+  getInstalledInfo,
+  excludeSig,
+  stampSig,
   installRootArchive,
   downloadToDownloads,
   findModByName,

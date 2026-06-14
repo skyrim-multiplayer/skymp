@@ -225,6 +225,14 @@ function renderTopbarNexus() {
     const wrap = document.createElement('div')
     wrap.className = 'discord-topbar-user nexus-topbar-user'
 
+    if (nexusUser.profileUrl) {
+      const img = document.createElement('img')
+      img.className = 'discord-topbar-avatar'
+      img.src = nexusUser.profileUrl
+      img.alt = nexusUser.name
+      wrap.appendChild(img)
+    }
+
     const name = document.createElement('span')
     name.className   = 'discord-topbar-name'
     name.textContent = `Nexus: ${nexusUser.name}${nexusUser.isPremium ? ' \u2605' : ''}`

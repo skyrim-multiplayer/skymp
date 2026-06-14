@@ -159,6 +159,57 @@ async function downloadMod(apiKey, mod, downloadsDir, onProgress) {
   return archiveName
 }
 
+// ── File resolution (version pinning / optional files) ────────────────────────
+
+/** All files for a mod: [{ fileId, fileName, version, category }]. */
+async function listFiles(apiKey, nexusId) {
+  const data = await apiGet(apiKey, `/v1/games/${GAME}/mods/${nexusId}/files.json`)
+  return (data.files || []).map(f => ({
+    fileId:   f.file_id,
+    fileName: f.file_name,
+    version:  f.version || '',
+    category: f.category_name,      // MAIN, OPTIONAL, UPDATE, OLD_VERSION, …
+  }))
+}
+
+/**
+ * Choose the main file to install, honouring an explicit `fileId` pin, then a
+ * `version` match among MAIN files, then the newest MAIN file.
+ */
+function pickMain(files, { fileId, version } = {}) {
+  if (fileId) {
+    const f = files.find(x => x.fileId === Number(fileId))
+    if (f) return f
+  }
+  const mains = files.filter(f => f.category === 'MAIN')
+  if (version) {
+    const v = mains.find(f => f.version === version)
+    if (v) return v
+  }
+  const pool = mains.length ? mains : files
+  return pool.slice().sort((a, b) => b.fileId - a.fileId)[0] || null
+}
+
+/**
+ * Download one resolved file entry into downloadsDir. The archive is named
+ * deterministically (`…-{modId}-{fileId}…`) so re-runs reuse it.
+ * PREMIUM ONLY (uses the download-link API).
+ */
+async function downloadFileEntry(apiKey, nexusId, file, downloadsDir, onProgress) {
+  const url         = await getDownloadLink(apiKey, nexusId, file.fileId)
+  const ext         = path.extname(file.fileName) || '.zip'
+  const base        = path.basename(file.fileName, ext)
+  const archiveName = `${base}-${nexusId}-${file.fileId}${ext}`
+  const destPath    = path.join(downloadsDir, archiveName)
+
+  if (fs.existsSync(destPath)) { _log(`${archiveName} already downloaded`); return archiveName }
+  fs.mkdirSync(downloadsDir, { recursive: true })
+  const tmp = destPath + '.unfinished'
+  await downloadFile(url, tmp, onProgress)
+  fs.renameSync(tmp, destPath)
+  return archiveName
+}
+
 // ── SSO login (one-click, Vortex/Wabbajack-style) ─────────────────────────────
 
 /**
@@ -226,5 +277,8 @@ module.exports = {
   getMainFile,
   getDownloadLink,
   downloadMod,
+  listFiles,
+  pickMain,
+  downloadFileEntry,
   ssoLogin,
 }
