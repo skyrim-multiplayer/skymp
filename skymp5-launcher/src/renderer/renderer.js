@@ -348,7 +348,12 @@ btnCreateIsolated.addEventListener('click', async () => {
   btnCreateIsolated.textContent = 'Copying…'
 
   window.electronAPI.removeIsolatedListeners()
-  window.electronAPI.onIsolatedProgress(msg => { isolatedText.textContent = msg })
+  // Mirror game-copy progress into the modpack install status field too — the
+  // copy can run for minutes and the small status line alone looks frozen.
+  window.electronAPI.onIsolatedProgress(msg => {
+    isolatedText.textContent     = msg
+    installStatusMo2.textContent = msg
+  })
 
   const result = await window.electronAPI.createIsolated()
   window.electronAPI.removeIsolatedListeners()
@@ -418,9 +423,20 @@ async function refreshMo2Status() {
   }
 }
 
-document.getElementById('btn-open-mo2').addEventListener('click', async () => {
+const btnOpenMo2  = document.getElementById('btn-open-mo2')
+const mo2OpenWarn = document.getElementById('mo2-open-warning')
+btnOpenMo2.addEventListener('click', async () => {
+  btnOpenMo2.disabled    = true
+  btnOpenMo2.textContent = 'MO2 is running'
+  if (mo2OpenWarn) mo2OpenWarn.hidden = false
+
   const result = await window.electronAPI.mo2Open()
-  if (!result.success) alert(`Could not open MO2: ${result.error}`)
+  if (!result.success) {
+    alert(`Could not open MO2: ${result.error}`)
+    btnOpenMo2.disabled    = false
+    btnOpenMo2.textContent = 'Open & Configure MO2'
+    if (mo2OpenWarn) mo2OpenWarn.hidden = true
+  }
 })
 
 fieldMo2Enabled.addEventListener('change', refreshMo2Status)

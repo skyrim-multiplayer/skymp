@@ -162,20 +162,29 @@ async function main() {
     console.log(`  indexed ${name} (${entries.length} entries, ${source.type})`)
   }
 
-  // ── 2. Resolve the enabled mod order from the profile ──────────────────────
+  // ── 2. Resolve the enabled mod order + plugin load order from the profile ──
   let order = []
   try {
     order = fs.readFileSync(path.join(PROFILE_DIR, 'modlist.txt'), 'utf8')
       .split(/\r?\n/)
       .filter(l => l.startsWith('+'))
       .map(l => l.slice(1).trim())
-      .filter(n => n && !n.endsWith('_separator'))
+      .filter(Boolean)
   } catch { /* no profile — fall back to every folder below */ }
 
   if (order.length === 0) {
     order = fs.readdirSync(MODS, { withFileTypes: true }).filter(e => e.isDirectory()).map(e => e.name)
     console.warn(`No profiles/${args.profile}/modlist.txt found — using all ${order.length} mod folders (unordered).`)
   }
+
+  // plugins.txt — the esp/esm load order (MO2's "*" prefix marks an enabled plugin).
+  let plugins = []
+  try {
+    plugins = fs.readFileSync(path.join(PROFILE_DIR, 'plugins.txt'), 'utf8')
+      .split(/\r?\n/)
+      .map(l => l.trim())
+      .filter(l => l && !l.startsWith('#'))
+  } catch { /* no plugins.txt — load order then comes from the server at launch */ }
 
   // ── 3. Emit a directive per file in each mod folder ────────────────────────
   const mods = []
@@ -203,18 +212,11 @@ async function main() {
     mods.push({ name: modName, modId: readModId(modDir), files })
   }
 
-  // ── 4. Optional game-root files (SKSE, preloaders) ─────────────────────────
+  // ── 4. Optional game-root files (preloaders, etc.) ─────────────────────────
   const root = []
   if (args.game) {
     const gameRoot = path.resolve(args.game)
-    const rootRels = new Set(sources.rootInclude || [])
-    try {
-      for (const e of fs.readdirSync(gameRoot, { withFileTypes: true })) {
-        if (!e.isDirectory() && /^skse64_.*\.(exe|dll)$/i.test(e.name)) rootRels.add(e.name)
-      }
-    } catch { /* unreadable game root */ }
-
-    for (const rel of rootRels) {
+    for (const rel of new Set(sources.rootInclude || [])) {
       const full = path.join(gameRoot, rel.split('/').join(path.sep))
       if (!fs.existsSync(full)) { console.warn(`rootInclude not found, skipping: ${rel}`); continue }
       root.push(directiveFor(full, rel))
@@ -227,11 +229,13 @@ async function main() {
     .map(({ id, hash, size, name, source }) => ({ id, hash, size, name, source }))
 
   const manifest = {
-    schema:  1,
+    schema:  2,
     builtAt: new Date().toISOString(),
     game:    'skyrimspecialedition',
     archives: usedArchives,
     mods,
+    order,      // full modlist.txt order, separators included
+    plugins,    // plugins.txt load order
     root,
   }
   fs.mkdirSync(DATA_DIR, { recursive: true })
@@ -254,6 +258,8 @@ async function main() {
                       root.filter(f => f.inline != null).length
   console.log(`\narchives:    ${usedArchives.length} referenced (${archives.length} scanned)`)
   console.log(`mods:        ${mods.length}`)
+  console.log(`separators:  ${order.filter(n => n.endsWith('_separator')).length}`)
+  console.log(`plugins:     ${plugins.length}`)
   console.log(`root files:  ${root.length}`)
   console.log(`directives:  ${mods.reduce((n, m) => n + m.files.length, 0) + root.length} (${inlineCount} inline)`)
 

@@ -477,9 +477,9 @@ function copyGameDir(src, dst) {
     child.stdout.on('data', chunk => {
       const lines = chunk.toString().split(/\r?\n/).filter(l => l.trim())
       copied += lines.length
-      if (copied % 25 < lines.length) {
-        send('isolated:progress', `Copying game files… ${copied} files`)
-      }
+      // Update on every chunk — large BSAs copy slowly and infrequent updates
+      // make the launcher look frozen.
+      send('isolated:progress', `Copying game files… ${copied} files (this can take several minutes for ~16 GB)`)
     })
 
     child.on('error', err => resolve({ success: false, error: `robocopy failed: ${err.message}` }))
@@ -688,6 +688,13 @@ async function prepareForLaunch(skyrimPath, viaMO2) {
     }
   } else {
     log('[launch] server load order unavailable — leaving plugins.txt untouched')
+  }
+
+  // ── MO2 lockdown ─────────────────────────────────────────────────────────────
+  // Disables plugins or skse scripts not part of the server files
+  if (viaMO2) {
+    const removed = mo2.enforceModRules()
+    if (removed.length > 0) log(`[launch] disabled unauthorised mods: ${removed.join(', ')}`)
   }
 
   // ── SKSE runtime ─────────────────────────────────────────────────────────────
@@ -1131,8 +1138,28 @@ async function runMO2Install() {
 
     if (failed.length > 0) return fail(`${failed.length} item(s) failed to install: ${failed.join('; ')}`)
 
-    // ── 4. Match MO2 priority to the reference install ───────────────────────
-    mo2.setModlistOrder(manifest.mods.map(m => m.name))
+    // ── 4. SKSE — download the build matching the player's game edition ──────
+    let skseFolder = null
+    try {
+      const skse = mo2.skseSourceFor(skyrimPath)
+      send('install:progress', { phase: 'mods', file: `Downloading SKSE (${skse.edition})…`, index: 0, total: 0, skipped: false })
+      const name = await mo2.downloadToDownloads(skse.url, skse.fileName, (r, t) => {
+        const pct = t > 0 ? ` (${Math.round(r / t * 100)}%)` : ''
+        send('install:progress', { phase: 'mods', file: `Downloading SKSE (${skse.edition})… ${mb(r)} MB${pct}`, index: 0, total: 0, skipped: false })
+      })
+      send('install:progress', { phase: 'mods', file: 'Installing SKSE…', index: 0, total: 0, skipped: false })
+      skseFolder = mo2.installSkse(path.join(downloadsDir, name), skyrimPath).folder
+    } catch (err) {
+      return fail(`SKSE install failed: ${err.message}`)
+    }
+
+    // ── 5. Match MO2 priority + plugin load order to the reference install ────
+    const order = (Array.isArray(manifest.order) && manifest.order.length)
+      ? manifest.order.slice()
+      : manifest.mods.map(m => m.name)
+    if (skseFolder && !order.includes(skseFolder)) order.push(skseFolder)
+    mo2.setModlistOrder(order)
+    mo2.setPlugins(manifest.plugins)
 
     send('install:complete', { success: true, mo2: true, upToDate: core.upToDate, modsTotal: manifest.mods.length })
   } catch (err) {
