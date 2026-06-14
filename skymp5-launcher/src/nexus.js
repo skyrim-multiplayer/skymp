@@ -69,18 +69,6 @@ async function validateKey(apiKey) {
 // ── Mod files ─────────────────────────────────────────────────────────────────
 
 /**
- * Resolve the newest MAIN file of a mod.
- * Returns { fileId, fileName, version } or null.
- */
-async function getMainFile(apiKey, nexusId) {
-  const data  = await apiGet(apiKey, `/v1/games/${GAME}/mods/${nexusId}/files.json?category=main`)
-  const files = (data.files || []).filter(f => f.category_name === 'MAIN')
-  if (files.length === 0) return null
-  const main = files.sort((a, b) => b.file_id - a.file_id)[0]
-  return { fileId: main.file_id, fileName: main.file_name, version: main.version || '' }
-}
-
-/**
  * PREMIUM ONLY: generate a direct download link for a specific file.
  * Returns the first CDN URI.
  */
@@ -123,40 +111,6 @@ function downloadFile(url, destPath, onProgress, redirectsLeft = 5) {
     req.on('error', reject)
     req.setTimeout(120_000, () => { req.destroy(); reject(new Error('Mod download timed out')) })
   })
-}
-
-/**
- * PREMIUM ONLY: download a mod's main file into a downloads directory.
- * The archive is named MO2/Nexus-style (`…-{modId}-…`) so the download
- * watcher can also identify it. Returns the archive filename.
- *
- * @param {string} apiKey
- * @param {{ nexusId: number, name: string }} mod
- * @param {string} downloadsDir
- * @param {(received: number, total: number) => void} [onProgress]
- */
-async function downloadMod(apiKey, mod, downloadsDir, onProgress) {
-  const main = await getMainFile(apiKey, mod.nexusId)
-  if (!main) throw new Error(`No main file found on Nexus for ${mod.name}`)
-
-  const url = await getDownloadLink(apiKey, mod.nexusId, main.fileId)
-
-  const ext         = path.extname(main.fileName) || '.zip'
-  const base        = path.basename(main.fileName, ext)
-  const archiveName = `${base}-${mod.nexusId}-${main.fileId}${ext}`
-  const destPath    = path.join(downloadsDir, archiveName)
-
-  if (fs.existsSync(destPath)) {
-    _log(`${archiveName} already downloaded`)
-    return archiveName
-  }
-
-  _log(`downloading ${mod.name} (${main.fileName})`)
-  fs.mkdirSync(downloadsDir, { recursive: true })
-  const tempPath = destPath + '.unfinished'
-  await downloadFile(url, tempPath, onProgress)
-  fs.renameSync(tempPath, destPath)
-  return archiveName
 }
 
 // ── File resolution (version pinning / optional files) ────────────────────────
@@ -274,9 +228,7 @@ function ssoLogin(appSlug, openUrl, timeoutMs = 5 * 60 * 1000) {
 module.exports = {
   setLogger,
   validateKey,
-  getMainFile,
   getDownloadLink,
-  downloadMod,
   listFiles,
   pickMain,
   downloadFileEntry,

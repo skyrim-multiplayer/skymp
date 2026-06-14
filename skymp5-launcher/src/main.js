@@ -280,26 +280,6 @@ ipcMain.handle('discord:login', async () => {
 
 ipcMain.handle('mo2:status', () => mo2.getStatus())
 
-ipcMain.handle('mo2:setup', async () => {
-  try {
-    await mo2.ensureInstalled(msg => send('mo2:progress', msg))
-
-    const skyrimPath = effectiveGamePath()
-    if (!skyrimPath) {
-      return { success: false, error: 'Set the Skyrim path first, then run MO2 setup again.' }
-    }
-
-    let serverInfo = null
-    try { serverInfo = await fetchJSON(`${config.apiUrl}/api/serverinfo`) } catch {}
-
-    mo2.ensureInstance(skyrimPath, serverInfo?.loadOrder)
-    mo2.registerNxmHandler()
-    return { success: true, ...mo2.getStatus() }
-  } catch (err) {
-    return { success: false, error: err.message }
-  }
-})
-
 ipcMain.handle('mo2:open', () => {
   try { mo2.openUI(); return { success: true } }
   catch (err) { return { success: false, error: err.message } }

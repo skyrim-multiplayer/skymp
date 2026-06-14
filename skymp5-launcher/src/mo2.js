@@ -118,23 +118,6 @@ function listArchive(archivePath) {
   }
 }
 
-/** Locate a FOMOD ModuleConfig.xml up to 3 levels deep. Returns abs path or null. */
-function findModuleConfig(dir, depth = 0) {
-  if (depth > 3) return null
-  let entries
-  try { entries = fs.readdirSync(dir, { withFileTypes: true }) } catch { return null }
-  for (const e of entries) {
-    if (!e.isDirectory() && e.name.toLowerCase() === 'moduleconfig.xml') return path.join(dir, e.name)
-  }
-  for (const e of entries) {
-    if (e.isDirectory()) {
-      const found = findModuleConfig(path.join(dir, e.name), depth + 1)
-      if (found) return found
-    }
-  }
-  return null
-}
-
 /**
  * Download and unpack MO2 itself. Resolves immediately if already installed.
  * onProgress(message) receives human-readable status lines.
@@ -343,66 +326,17 @@ function installModFromDownload(nexusId, modName, exclude) {
 }
 
 /**
- * Install a named archive from the downloads folder into mods\<name>\.
+ * Install a single named archive (URL mods and the free-account path).
+ * Skips if already installed
  *
- * Returns one of:
- *   { folder }   installed (or already present) — the mod folder name
- *   { error }    the archive is present but installation failed (real error)
- *   {}           the archive isn't downloaded/readable yet — caller may retry
- *
- * The archive's Data root is reconstructed by mergeRoot (FOMOD-proof union of
- * all option folders). An optional `exclude` list of relative paths is removed
- * afterwards, letting the modpack author hide unwanted plugins/folders.
+ * Returns { folder } | { error } | {}.
  */
 function installModFromArchive(archiveName, nexusId, modName, exclude) {
-  const archivePath = path.join(getDownloadsDir(), archiveName)
   const folderName  = (modName || archiveName.replace(/(\.\d+)?\.[^.]+$/, '')).replace(/[<>:"/\\|?*]/g, '')
-  const modDir      = path.join(getModsDir(), folderName)
-
-  if (fs.existsSync(modDir)) return { folder: folderName }
-  if (!fs.existsSync(archivePath)) return {}            // not downloaded yet
-  if (listArchive(archivePath) === null) return {}      // unreadable — still writing
-
-  const stagingDir = path.join(getRoot(), '.staging', folderName)
-  try { fs.rmSync(stagingDir, { recursive: true, force: true }) } catch {}
-
-  try {
-    extractArchive(archivePath, stagingDir)
-
-    // Reconstruct the mod's Data root by unioning every option folder. FOMOD
-    // option selection is bypassed: extra plugins won't load (the server load
-    // order controls plugins.txt), and game-version DLL/variant conflicts are
-    // resolved by AE/SE folder matching. This is far more robust than parsing
-    // ModuleConfig.xml per mod.
-    const n = mergeRoot(stagingDir, modDir, 0)
-    if (n === 0) throw new Error('archive contained no installable files')
-    if (findModuleConfig(stagingDir)) {
-      _log(`${archiveName}: FOMOD reconstructed by merge (${n} file(s), tier=${_gameTier})`)
-    } else if (!looksLikeDataRoot(modDir)) {
-      _log(`${archiveName}: merged ${n} file(s) — no plugins/data dirs detected, VERIFY in MO2`)
-    }
-  } catch (err) {
-    try { fs.rmSync(modDir, { recursive: true, force: true }) } catch {}
-    try { fs.rmSync(stagingDir, { recursive: true, force: true }) } catch {}
-    return { error: err.message }
-  }
-
-  try { fs.rmSync(stagingDir, { recursive: true, force: true }) } catch {}
-
-  fs.writeFileSync(path.join(modDir, 'meta.ini'), [
-    '[General]',
-    'gameName=SkyrimSE',
-    `modid=${nexusId ?? 0}`,
-    `name=${folderName}`,
-    `installationFile=${archiveName}`,
-    'repository=Nexus',
-    '',
-  ].join('\r\n'))
-
-  applyExclude(modDir, exclude)
-
-  _log(`installed ${folderName} from ${archiveName}`)
-  return { folder: folderName }
+  const archivePath = path.join(getDownloadsDir(), archiveName)
+  if (fs.existsSync(path.join(getModsDir(), folderName))) return { folder: folderName }
+  if (!fs.existsSync(archivePath) || listArchive(archivePath) === null) return {}
+  return installMod(folderName, [archiveName], { nexusId, exclude })
 }
 
 /** Remove author-specified relative paths from a staged mod folder. */
@@ -431,33 +365,6 @@ function looksLikeDataRoot(dir) {
   return entries.some(e =>
     (!e.isDirectory() && PLUGIN_FILE_RE.test(e.name)) ||
     (e.isDirectory() && DATA_DIR_NAMES.has(e.name.toLowerCase())))
-}
-
-/**
- * Locate the folder inside an extracted archive whose CONTENTS belong at the
- * mod root (= virtual Data root): descend through single-folder wrappers,
- * prefer an explicit Data/ folder, stop at anything that looks like game data.
- */
-function findDataRoot(dir) {
-  let cur = dir
-  for (let depth = 0; depth < 4; depth++) {
-    if (looksLikeDataRoot(cur)) return cur
-
-    let entries
-    try { entries = fs.readdirSync(cur, { withFileTypes: true }) } catch { return cur }
-    const dirs  = entries.filter(e => e.isDirectory())
-    const files = entries.filter(e => !e.isDirectory())
-
-    const dataDir = dirs.find(d => d.name.toLowerCase() === 'data')
-    if (dataDir) return path.join(cur, dataDir.name)
-
-    if (dirs.length === 1 && files.length === 0) {
-      cur = path.join(cur, dirs[0].name)  // wrapper folder — descend
-      continue
-    }
-    return cur
-  }
-  return cur
 }
 
 // ── Merge reconstructor (FOMOD-proof data-root union) ─────────────────────────
@@ -531,26 +438,14 @@ function mergeRoot(srcRoot, modDir, depth) {
   return n
 }
 
-/** True if a plugin file exists in the game Data dir or any installed mod. */
-let _gameDataDir = null
+/** Refine the game tier (AE vs SE) from the installed SKSE runtime so merge
+ *  conflicts pick the right game-version files. `dir` is the game Data folder. */
 function setGameDataDir(dir) {
-  _gameDataDir = dir
   try {
-    const gameRoot = path.dirname(dir)
-    const rootNames = fs.readdirSync(gameRoot).join(' ').toLowerCase()
+    const rootNames = fs.readdirSync(path.dirname(dir)).join(' ').toLowerCase()
     if (/skse64_1_5/.test(rootNames)) _gameTier = 'se'
     else if (/skse64_1_6/.test(rootNames)) _gameTier = 'ae'
   } catch { /* skse not installed yet — keep AE default */ }
-}
-
-function pluginExists(fileName) {
-  if (_gameDataDir && fs.existsSync(path.join(_gameDataDir, fileName))) return true
-  try {
-    for (const e of fs.readdirSync(getModsDir(), { withFileTypes: true })) {
-      if (e.isDirectory() && fs.existsSync(path.join(getModsDir(), e.name, fileName))) return true
-    }
-  } catch {}
-  return false
 }
 
 /** Find an installed mod folder by its meta.ini display name. */
@@ -716,6 +611,7 @@ function installMod(modName, archiveNames, { nexusId, exclude, sig } = {}) {
       total += n
     }
     if (total === 0) throw new Error('archives contained no installable files (check the file/version pin)')
+    if (!looksLikeDataRoot(buildDir)) _log(`  ${folderName}: no plugins/data dirs detected — VERIFY in MO2`)
 
     applyExclude(buildDir, exclude)
 

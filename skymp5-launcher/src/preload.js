@@ -69,8 +69,5 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // MO2 integration
   mo2Status: () => ipcRenderer.invoke('mo2:status'),
-  mo2Setup:  () => ipcRenderer.invoke('mo2:setup'),
   mo2Open:   () => ipcRenderer.invoke('mo2:open'),
-  onMo2Progress: (cb) => ipcRenderer.on('mo2:progress', (_e, msg) => cb(msg)),
-  removeMo2Listeners: () => ipcRenderer.removeAllListeners('mo2:progress'),
 })
