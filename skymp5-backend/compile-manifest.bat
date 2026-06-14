@@ -13,6 +13,20 @@ if not "%~2"=="" set "GAME_ROOT=%~2"
 rem Run from this script's folder so scripts\compile-manifest.js resolves.
 cd /d "%~dp0"
 
+rem Installs 7zip bin just in case its missing
+if not exist "node_modules\7zip-bin" (
+  echo Installing backend dependencies ^(first run^) ...
+  call npm install
+  if errorlevel 1 (
+    echo.
+    echo npm install failed - make sure Node.js and npm are installed and on PATH.
+    echo.
+    pause
+    exit /b 1
+  )
+  echo.
+)
+
 if not exist "%MO2_ROOT%\mods" (
   echo ERROR: "%MO2_ROOT%" does not look like an MO2 install ^(no mods\ folder^).
   echo Edit MO2_ROOT in this file, or pass the path as the first argument.
