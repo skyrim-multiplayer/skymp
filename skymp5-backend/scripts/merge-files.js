@@ -114,10 +114,8 @@ async function mergeSourcesIntoRoot() {
   console.log(`[merge] Zip built: ${(zipSize / 1024 / 1024).toFixed(1)} MB in ${Date.now() - zipStart}ms`)
 
   // ── Write version file ───────────────────────────────────────────────────────
-  // Version is content-based: client git commit hash.
-  //   • Same commit → same version → launcher skips re-download after restart
-  //   • New commit  → new version  → launcher re-downloads automatically
-  const version = clientGitHash()
+  // Set CLIENT_VERSION .env to set version for update signal
+  const version = (process.env.CLIENT_VERSION || '').trim() || clientGitHash()
   fs.mkdirSync(path.dirname(VERSION_FILE), { recursive: true })
   fs.writeFileSync(VERSION_FILE, JSON.stringify({
     version,

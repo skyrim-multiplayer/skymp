@@ -577,6 +577,7 @@ async function refreshPlayState() {
 
   const uc = await window.electronAPI.filesUpdateCheck()
   updateAvailable = !!uc.updateAvailable
+  if (uc.serverVersion) clientVersionEl.textContent = `v${uc.serverVersion}`
 
   updatePlayButton()
 }
@@ -783,6 +784,7 @@ async function loadServerInfo() {
 
 // ── Launcher update check ─────────────────────────────────────────────────────
 const launcherVersionEl = document.getElementById('launcher-version')
+const clientVersionEl   = document.getElementById('client-version')
 
 async function checkLauncherUpdate() {
   const result = await window.electronAPI.checkUpdate()
