@@ -2,6 +2,7 @@ const router = require('express').Router()
 const net    = require('net')
 const http   = require('http')
 const config = require('../config')
+const { getHeartbeat } = require('./servers')
 
 // UDP reachability check for the game port
 // TCP wasnt working lul
@@ -61,9 +62,18 @@ function fetchPlayerCount(host, uiPort) {
 
 router.get('/', async (_req, res) => {
   const { skyrimServerHost: host, skyrimServerPort: gamePort, skympUiPort: uiPort } = config
-  const online  = await udpCheck(host, gamePort)
-  const players = online ? await fetchPlayerCount(host, uiPort) : null
-  res.json({ status: online ? 'online' : 'offline', players })
+  const reachable = await udpCheck(host, gamePort)
+
+  // Player count: prefer the heartbeat the game server pushes every ~5s
+  // (POST /api/servers/:key → { online }); it needs no metrics port or auth.
+  // Fall back to the Prometheus /metrics endpoint only if no heartbeat exists.
+  let players = null
+  if (reachable) {
+    const hb = getHeartbeat()
+    players = (hb && typeof hb.online === 'number') ? hb.online : await fetchPlayerCount(host, uiPort)
+  }
+
+  res.json({ status: reachable ? 'online' : 'offline', players })
 })
 
 module.exports = router

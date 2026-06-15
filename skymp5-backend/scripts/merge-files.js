@@ -1,5 +1,7 @@
 'use strict'
 
+require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') })
+
 /**
  * Merge pipeline — copies the client source directory into the file bucket
  * that the launcher downloads, and builds the distributable zip.

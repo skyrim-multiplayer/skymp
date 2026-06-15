@@ -709,18 +709,17 @@ async function checkServerStatus() {
     badgeStatus.classList.remove('online')
     badgeLabel.textContent = 'OFFLINE'
     badgePlayers.hidden = true
-    footerPlayers.hidden = true
+    footerPlayers.textContent = '—'
   } else {
     badgeStatus.classList.add('online')
     badgeLabel.textContent = 'ONLINE'
     if (data.players != null) {
       badgePlayers.textContent = `${data.players} PLAYERS`
       badgePlayers.hidden = false
-      footerPlayers.textContent = `${data.players} online`
-      footerPlayers.hidden = false
+      footerPlayers.textContent = `${data.players}`
     } else {
       badgePlayers.hidden = true
-      footerPlayers.hidden = true
+      footerPlayers.textContent = '—'
     }
   }
 }
