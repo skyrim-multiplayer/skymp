@@ -46,6 +46,7 @@ copyTree(SKYMP_DATA, DATA_DEST)
 // ── Completeness check ────────────────────────────────────────────────────────
 const REQUIRED = [
   'Platform/UI/index.html',                                   // CEF connect-window page
+  'Platform/UI/build.js',                                     // connect-menu front-end bundle
   'Platform/Plugins/skymp5-client.js',                        // client logic
   'SKSE/Plugins/SkyrimPlatform.dll',                          // JS/CEF host plugin
   'SKSE/Plugins/MpClientPlugin.dll',                          // multiplayer plugin
