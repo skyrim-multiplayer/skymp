@@ -18,8 +18,8 @@ module.exports = {
   skyrimServerPort: SKYMP_PORT,
   skyrimServerAddress: process.env.SERVER_ADDRESS || process.env.SKYMP_HOST || '127.0.0.1',
 
-  // SkyMP HTTP UI port: always 3000 when game port is 7777, else port+1
-  skympUiPort: SKYMP_PORT === 7777 ? 3000 : SKYMP_PORT + 1,
+  // Fix for stats port
+  skympUiPort: parseInt(process.env.SKYMP_UI_PORT, 10) || (SKYMP_PORT === 7777 ? 3000 : SKYMP_PORT + 1),
 
   // ── Server metadata (returned by /api/serverinfo and /api/servers) ──────────
   serverName:       process.env.SERVER_NAME        || 'SkyMP Server',

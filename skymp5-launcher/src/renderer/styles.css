@@ -621,6 +621,29 @@ html, body {
   50%       { opacity: 0.5; }
 }
 
+.info-value-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.info-players {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 1px;
+  color: #8fc07a;
+  white-space: nowrap;
+}
+
+.info-players::before {
+  content: '●';
+  font-size: 8px;
+  margin-right: 4px;
+  vertical-align: middle;
+  color: #8fc07a;
+}
+
 .info-divider {
   width: 1px;
   height: 28px;

@@ -700,6 +700,7 @@ btnConnect.addEventListener('click', async () => {
 const badgeStatus  = document.getElementById('badge-status')
 const badgeLabel   = document.getElementById('badge-label')
 const badgePlayers = document.getElementById('badge-players')
+const footerPlayers = document.getElementById('footer-players')
 
 async function checkServerStatus() {
   const data = await window.electronAPI.fetchStatus()
@@ -707,14 +708,18 @@ async function checkServerStatus() {
     badgeStatus.classList.remove('online')
     badgeLabel.textContent = 'OFFLINE'
     badgePlayers.hidden = true
+    footerPlayers.hidden = true
   } else {
     badgeStatus.classList.add('online')
     badgeLabel.textContent = 'ONLINE'
     if (data.players != null) {
       badgePlayers.textContent = `${data.players} PLAYERS`
       badgePlayers.hidden = false
+      footerPlayers.textContent = `${data.players} online`
+      footerPlayers.hidden = false
     } else {
       badgePlayers.hidden = true
+      footerPlayers.hidden = true
     }
   }
 }
@@ -1036,7 +1041,8 @@ async function loadMetrics() {
   if (!result || !result.ok) {
     const err = document.createElement('div')
     err.className   = 'metric-card metric-card--error'
-    err.textContent = result?.error || 'Server stats unavailable'
+    err.textContent = 'Server statistics are currently unavailable.'
+    if (result?.error) err.title = result.error
     metricsGrid.appendChild(err)
     return
   }

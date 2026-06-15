@@ -655,7 +655,17 @@ ipcMain.handle('launch:direct', async () => {
  *     Blocks the launch when required plugins are missing from Data/.
  *  3. Verify the SkyMP client files exist.
  */
+ 
+// Adds two missing folders to prevent a code 2 crash
+function ensureClientDirs(gamePath) {
+  if (!gamePath) return
+  for (const d of ['PluginsDev', 'PluginsNoLoad']) {
+    try { fs.mkdirSync(path.join(gamePath, 'Data', 'Platform', d), { recursive: true }) } catch {}
+  }
+}
+
 async function prepareForLaunch(skyrimPath, viaMO2) {
+  ensureClientDirs(skyrimPath)
   const srv = activeServer()
   let serverInfo = null
 
@@ -934,6 +944,7 @@ async function installClientFilesCore(skyrimPath, srv, serverInfo) {
       send('install:progress', { phase: 'extract', file, index: i, total, skipped: false })
     })
     log(`[install] extracted ${extracted} files`)
+    ensureClientDirs(skyrimPath)
 
     // ── 4. Write server settings ─────────────────────────────────────────────
     writeClientSettings(clientSettingsPath, srv, serverInfo)
