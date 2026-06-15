@@ -70,4 +70,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // MO2 integration
   mo2Status: () => ipcRenderer.invoke('mo2:status'),
   mo2Open:   () => ipcRenderer.invoke('mo2:open'),
+
+  // Open the portable install (base) folder in the OS file manager
+  openInstallFolder: () => ipcRenderer.invoke('install:openFolder'),
 })

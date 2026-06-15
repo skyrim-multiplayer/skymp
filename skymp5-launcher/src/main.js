@@ -285,6 +285,16 @@ ipcMain.handle('mo2:open', () => {
   catch (err) { return { success: false, error: err.message } }
 })
 
+// Open the portable install (base) folder in the OS file manager.
+ipcMain.handle('install:openFolder', async () => {
+  const dir = store.get('baseDirPath') || mo2.getRoot()
+  if (!dir || !fs.existsSync(dir)) {
+    return { success: false, error: 'No portable install folder yet — set one up first.' }
+  }
+  const err = await shell.openPath(dir)
+  return err ? { success: false, error: err } : { success: true }
+})
+
 // ── Nexus Mods login ──────────────────────────────────────────────────────────
 
 ipcMain.handle('nexus:getUser', () => store.get('nexusUser') || null)
@@ -962,6 +972,36 @@ async function runDirectInstall() {
   installing = false
 }
 
+// SSE Engine Fixes pt 2
+const ENGINE_FIXES = { modId: 17230, fileId: 725261, name: 'SSE Engine Fixes (Part 2)' }
+
+/**
+ * Fetch a specific Nexus file into the downloads folder and return its local
+ * path. Premium accounts download via the API; free accounts get the mod page
+ * opened and we wait for the nxm "Mod Manager Download". Returns null if the
+ * free download never arrives.
+ */
+async function acquireNexusArchive(modId, fileId, displayName, { downloadsDir, apiKey, premium }) {
+  const mb = n => (n / 1024 / 1024).toFixed(1)
+  let name = mo2.findDownloadByFileId(fileId)
+  if (name) return path.join(downloadsDir, name)
+
+  if (premium) {
+    name = await nexus.downloadFileEntry(apiKey, modId, { fileId, fileName: `${displayName}.7z` }, downloadsDir, (r, t) => {
+      const pct = t > 0 ? ` (${Math.round(r / t * 100)}%)` : ''
+      send('install:progress', { phase: 'mods', file: `Downloading ${displayName}… ${mb(r)} MB${pct}`, index: 0, total: 0, skipped: false })
+    })
+    return path.join(downloadsDir, name)
+  }
+
+  shell.openExternal(`https://www.nexusmods.com/skyrimspecialedition/mods/${modId}?tab=files`)
+  send('install:progress', { phase: 'mods', file: `Open ${displayName} and click "Mod Manager Download"`, index: 0, total: 1, skipped: false })
+  await mo2.waitForDownloads([{ fileId, name: displayName }], (d, t, msg) =>
+    send('install:progress', { phase: 'mods', file: msg, index: d, total: t, skipped: false }))
+  name = mo2.findDownloadByFileId(fileId)
+  return name ? path.join(downloadsDir, name) : null
+}
+
 // ── MO2 install ───────────────────────────────────────────────────────────────
 // Full modpack pipeline: MO2 itself → SkyMP client files → manifest replay.
 // Mods are reproduced from the backend's compiled install manifest (download +
@@ -1017,8 +1057,38 @@ async function runMO2Install() {
     const premium = !!(apiKey && store.get('nexusUser')?.isPremium)
     const mb = n => (n / 1024 / 1024).toFixed(1)
 
+    // ── Only (re)install what changed ────────────────────────────────────────
+    const sanitize       = n => String(n).replace(/[<>:"/\\|?*]/g, '')
+    const modFolderPath  = m => path.join(mo2.getModsDir(), sanitize(m.name))
+    const manifestVersion = manifest.builtAt || ''
+    const versionChanged  = (store.get('manifestVersion') || '') !== manifestVersion
+    const rootSetUp       = fs.existsSync(path.join(skyrimPath, 'skse64_loader.exe'))
+    const needsRoot       = versionChanged || !rootSetUp
+    const modsToInstall   = manifest.mods.filter(m => versionChanged || !fs.existsSync(modFolderPath(m)))
+
+    const finishOrder = () => {
+      const order = (Array.isArray(manifest.order) && manifest.order.length)
+        ? manifest.order.slice()
+        : manifest.mods.map(m => m.name)
+      if (fs.existsSync(path.join(mo2.getModsDir(), 'SKSE')) && !order.includes('SKSE')) order.push('SKSE')
+      mo2.setModlistOrder(order)
+      mo2.setPlugins(manifest.plugins)
+      store.set('manifestVersion', manifestVersion)
+    }
+
+    if (modsToInstall.length === 0 && !needsRoot) {
+      finishOrder()
+      send('install:complete', { success: true, mo2: true, upToDate: true, modsTotal: manifest.mods.length })
+      return
+    }
+
     const archivePaths = {}      // archiveId -> verified local path
     const needBrowser  = []      // nexus archives we couldn't auto-download
+
+    // Acquire only the archives the to-install mods (and root files) reference.
+    const neededArchiveIds = new Set()
+    for (const m of modsToInstall) for (const f of m.files) if (f.archive) neededArchiveIds.add(f.archive)
+    if (needsRoot) for (const f of (manifest.root || [])) if (f.archive) neededArchiveIds.add(f.archive)
 
     const locate = (a) => {
       const names = []
@@ -1031,7 +1101,7 @@ async function runMO2Install() {
       return null
     }
 
-    for (const a of manifest.archives) {
+    for (const a of manifest.archives.filter(x => neededArchiveIds.has(x.id))) {
       const existing = locate(a)
       if (existing) { archivePaths[a.id] = existing; continue }
 
@@ -1088,8 +1158,8 @@ async function runMO2Install() {
     // as soon as its last consumer is done (bounds temp disk use).
     const refCount = new Map()
     const bump = ids => { for (const id of ids) refCount.set(id, (refCount.get(id) || 0) + 1) }
-    for (const m of manifest.mods) bump(new Set(m.files.filter(f => f.archive).map(f => f.archive)))
-    bump(new Set((manifest.root || []).filter(f => f.archive).map(f => f.archive)))
+    for (const m of modsToInstall) bump(new Set(m.files.filter(f => f.archive).map(f => f.archive)))
+    if (needsRoot) bump(new Set((manifest.root || []).filter(f => f.archive).map(f => f.archive)))
 
     mo2.clearCache()
     const extractedDirs = {}
@@ -1109,10 +1179,10 @@ async function runMO2Install() {
     }
 
     const failed = []
-    for (let i = 0; i < manifest.mods.length; i++) {
-      const mod = manifest.mods[i]
+    for (let i = 0; i < modsToInstall.length; i++) {
+      const mod = modsToInstall[i]
       const ids = [...new Set(mod.files.filter(f => f.archive).map(f => f.archive))]
-      send('install:progress', { phase: 'mods', file: `Installing ${mod.name}…`, index: i, total: manifest.mods.length, skipped: false })
+      send('install:progress', { phase: 'mods', file: `Installing ${mod.name}…`, index: i, total: modsToInstall.length, skipped: false })
       try {
         ensureExtracted(ids)
         const r = mo2.applyMod(mod.name, mod.files, extractedDirs, mod.modId)
@@ -1123,7 +1193,7 @@ async function runMO2Install() {
       release(ids)
     }
 
-    if (manifest.root && manifest.root.length > 0) {
+    if (needsRoot && manifest.root && manifest.root.length > 0) {
       const ids = [...new Set(manifest.root.filter(f => f.archive).map(f => f.archive))]
       try {
         ensureExtracted(ids)
@@ -1138,28 +1208,36 @@ async function runMO2Install() {
 
     if (failed.length > 0) return fail(`${failed.length} item(s) failed to install: ${failed.join('; ')}`)
 
-    // ── 4. SKSE — download the build matching the player's game edition ──────
-    let skseFolder = null
-    try {
-      const skse = mo2.skseSourceFor(skyrimPath)
-      send('install:progress', { phase: 'mods', file: `Downloading SKSE (${skse.edition})…`, index: 0, total: 0, skipped: false })
-      const name = await mo2.downloadToDownloads(skse.url, skse.fileName, (r, t) => {
-        const pct = t > 0 ? ` (${Math.round(r / t * 100)}%)` : ''
-        send('install:progress', { phase: 'mods', file: `Downloading SKSE (${skse.edition})… ${mb(r)} MB${pct}`, index: 0, total: 0, skipped: false })
-      })
-      send('install:progress', { phase: 'mods', file: 'Installing SKSE…', index: 0, total: 0, skipped: false })
-      skseFolder = mo2.installSkse(path.join(downloadsDir, name), skyrimPath).folder
-    } catch (err) {
-      return fail(`SKSE install failed: ${err.message}`)
+    // ── 4. Game-root components (only on a version change / fresh game copy) ──
+    if (needsRoot) {
+      // SKSE — the build matching the player's game edition (Steam vs GOG).
+      try {
+        const skse = mo2.skseSourceFor(skyrimPath)
+        send('install:progress', { phase: 'mods', file: `Downloading SKSE (${skse.edition})…`, index: 0, total: 0, skipped: false })
+        const name = await mo2.downloadToDownloads(skse.url, skse.fileName, (r, t) => {
+          const pct = t > 0 ? ` (${Math.round(r / t * 100)}%)` : ''
+          send('install:progress', { phase: 'mods', file: `Downloading SKSE (${skse.edition})… ${mb(r)} MB${pct}`, index: 0, total: 0, skipped: false })
+        })
+        send('install:progress', { phase: 'mods', file: 'Installing SKSE…', index: 0, total: 0, skipped: false })
+        mo2.installSkse(path.join(downloadsDir, name), skyrimPath)
+      } catch (err) {
+        return fail(`SKSE install failed: ${err.message}`)
+      }
+
+      // SSE Engine Fixes Part 2 (Preloader + TBB) — extracts to the game root.
+      try {
+        const efPath = await acquireNexusArchive(ENGINE_FIXES.modId, ENGINE_FIXES.fileId, ENGINE_FIXES.name,
+          { downloadsDir, apiKey, premium })
+        if (!efPath) return fail('Engine Fixes (Part 2) was not downloaded — open its Nexus page and use "Mod Manager Download".')
+        send('install:progress', { phase: 'mods', file: 'Installing Engine Fixes…', index: 0, total: 0, skipped: false })
+        mo2.installRootArchive(efPath, skyrimPath)
+      } catch (err) {
+        return fail(`Engine Fixes install failed: ${err.message}`)
+      }
     }
 
-    // ── 5. Match MO2 priority + plugin load order to the reference install ────
-    const order = (Array.isArray(manifest.order) && manifest.order.length)
-      ? manifest.order.slice()
-      : manifest.mods.map(m => m.name)
-    if (skseFolder && !order.includes(skseFolder)) order.push(skseFolder)
-    mo2.setModlistOrder(order)
-    mo2.setPlugins(manifest.plugins)
+    // ── 5. Match MO2 priority + plugin order, record the installed version ────
+    finishOrder()
 
     send('install:complete', { success: true, mo2: true, upToDate: core.upToDate, modsTotal: manifest.mods.length })
   } catch (err) {

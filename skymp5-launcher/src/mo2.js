@@ -516,6 +516,40 @@ function installSkse(archivePath, gameDir) {
   }
 }
 
+/**
+ * Extract an archive and copy its files into the game root, preserving any
+ * subfolders. Used for "extract to your Skyrim folder" components like the
+ * SSE Engine Fixes preloader + TBB libs. A single wrapper folder is descended.
+ */
+function installRootArchive(archivePath, gameDir) {
+  const tmp = path.join(getRoot(), '.root')
+  try { fs.rmSync(lp(tmp), { recursive: true, force: true }) } catch {}
+  extractArchive(archivePath, tmp)
+  try {
+    let rootDir = tmp
+    for (let i = 0; i < 3; i++) {
+      const entries = fs.readdirSync(rootDir, { withFileTypes: true })
+      if (entries.some(e => !e.isDirectory())) break          // real files at this level
+      const dirs = entries.filter(e => e.isDirectory())
+      if (dirs.length === 1) { rootDir = path.join(rootDir, dirs[0].name); continue }
+      break
+    }
+    let copied = 0
+    const copyInto = (src, dst) => {
+      for (const e of fs.readdirSync(src, { withFileTypes: true })) {
+        const s = path.join(src, e.name), d = path.join(dst, e.name)
+        if (e.isDirectory()) { fs.mkdirSync(d, { recursive: true }); copyInto(s, d) }
+        else { fs.copyFileSync(s, d); copied++ }
+      }
+    }
+    copyInto(rootDir, gameDir)
+    _log(`root archive installed (${copied} file(s)) into the game folder`)
+    return { copied }
+  } finally {
+    try { fs.rmSync(lp(tmp), { recursive: true, force: true }) } catch {}
+  }
+}
+
 // ── Launch-time lockdown (anti-desync / anti-cheat) ───────────────────────────
 
 const PLUGIN_RE = /\.(esp|esm|esl)$/i
@@ -654,6 +688,7 @@ module.exports = {
   setPlugins,
   skseSourceFor,
   installSkse,
+  installRootArchive,
   enforceModRules,
   waitForDownloads,
   launchGame,

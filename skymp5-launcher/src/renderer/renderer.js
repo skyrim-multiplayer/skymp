@@ -348,10 +348,9 @@ btnCreateIsolated.addEventListener('click', async () => {
   btnCreateIsolated.textContent = 'Copying…'
 
   window.electronAPI.removeIsolatedListeners()
-  // Mirror game-copy progress into the modpack install status field too — the
-  // copy can run for minutes and the small status line alone looks frozen.
+  // Game-copy steps run in the bottom install-status field; the line next to
+  // this button stays on the not-installed/installed status only.
   window.electronAPI.onIsolatedProgress(msg => {
-    isolatedText.textContent     = msg
     installStatusMo2.textContent = msg
   })
 
@@ -362,7 +361,7 @@ btnCreateIsolated.addEventListener('click', async () => {
   btnCreateIsolated.textContent = 'Choose location & install…'
 
   if (!result.success) {
-    isolatedText.textContent = `Error: ${result.error}`
+    installStatusMo2.textContent = `Error: ${result.error}`
     return
   }
   fieldIsolated.checked = true
@@ -440,6 +439,11 @@ btnOpenMo2.addEventListener('click', async () => {
 })
 
 fieldMo2Enabled.addEventListener('change', refreshMo2Status)
+
+document.getElementById('btn-open-install').addEventListener('click', async () => {
+  const r = await window.electronAPI.openInstallFolder()
+  if (!r.success) alert(`Could not open the install folder: ${r.error}`)
+})
 
 // ── Troubleshooting: manual launch buttons ───────────────────────────────────
 const troubleLaunchStatus = document.getElementById('trouble-launch-status')
