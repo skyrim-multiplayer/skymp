@@ -1,92 +1,62 @@
 /**
- * Copies client files from the skymp build output into the backend's file bucket:
+ * Copies the built client files into the backend's file bucket
  *
- *   build/client-files/root/   → installed into {skyrimPath}/ root
- *     Data/          		    → sub-directory for all Data/ files
+ *   build/dist/client/Data/  →  <clientFilesDir>/root/Data/
  *
- * SKSE is managed by Vortex and is NOT deployed here.
+ * SKSE itself is not included here — the launcher installs it separately.
  *
  * Run from the backend/ directory:  npm run populate
+ *   Override the source with SKYMP_CLIENT_DATA=<path to built Data/>.
  */
 
 const fs   = require('fs')
 const path = require('path')
 
-// ── Source paths ──────────────────────────────────────────────────────────────
-
-// skymp build output Data/ directory.
-// Defaults to this repo's own build output
-// Override with SKYMP_CLIENT_DATA for a custom location.
+// ── Source: the skymp build output Data/ directory ────────────────────────────
 const SKYMP_DATA = process.env.SKYMP_CLIENT_DATA
   || path.join(__dirname, '..', '..', 'build', 'dist', 'client', 'Data')
 
 // ── Destination ───────────────────────────────────────────────────────────────
-
-const config = require('../config')
-
+const config    = require('../config')
 const ROOT_DEST = path.join(config.clientFilesDir, 'root')
 const DATA_DEST = path.join(ROOT_DEST, 'Data')
 
-fs.mkdirSync(DATA_DEST, { recursive: true })
-
-let copied  = 0
-let missing = 0
-
-// ── Helper ────────────────────────────────────────────────────────────────────
-
-function copyEntry(srcAbs, destAbs, label) {
-  const stat = fs.statSync(srcAbs, { throwIfNoEntry: false })
-  if (!stat) {
-    console.warn(`  MISSING  ${label}`)
-    missing++
-    return
-  }
-  if (stat.isDirectory()) {
-    fs.cpSync(srcAbs, destAbs, { recursive: true })
-    console.log(`  Copied   ${label}/`)
-  } else {
-    fs.mkdirSync(path.dirname(destAbs), { recursive: true })
-    fs.copyFileSync(srcAbs, destAbs)
-    console.log(`  Copied   ${label}`)
-  }
-  copied++
+if (!fs.existsSync(SKYMP_DATA)) {
+  console.error(`\nClient build output not found:\n  ${SKYMP_DATA}\n`)
+  console.error('Build the client first, or set SKYMP_CLIENT_DATA to its Data/ folder.\n')
+  process.exit(1)
 }
 
-// ── 1. Data/ files (go to public/files/root/Data/) ───────────────────────────
+// ── Copy the whole Data/ tree ─────────────────────────────────────────────────
+let copied = 0
+function copyTree(src, dest) {
+  fs.mkdirSync(dest, { recursive: true })
+  for (const entry of fs.readdirSync(src, { withFileTypes: true })) {
+    const s = path.join(src, entry.name)
+    const d = path.join(dest, entry.name)
+    if (entry.isDirectory()) copyTree(s, d)
+    else { fs.copyFileSync(s, d); copied++ }
+  }
+}
 
-console.log('\n── Data files ────────────────────────────────')
+console.log(`\nCopying client Data from\n  ${SKYMP_DATA}\nto\n  ${DATA_DEST}`)
+fs.rmSync(DATA_DEST, { recursive: true, force: true })
+copyTree(SKYMP_DATA, DATA_DEST)
 
-const DATA_FILES = [
-  ['Platform\\Plugins\\skymp5-client.js',           'Platform/Plugins/skymp5-client.js'],
-  ['Platform\\Plugins\\skymp5-client-settings.txt', 'Platform/Plugins/skymp5-client-settings.txt'],
-  ['Platform\\Distribution',                         'Platform/Distribution'],
-  ['SKSE\\Plugins\\SkyrimPlatform.dll',              'SKSE/Plugins/SkyrimPlatform.dll'],
-  ['SKSE\\Plugins\\MpClientPlugin.dll',              'SKSE/Plugins/MpClientPlugin.dll'],
+// ── Completeness check ────────────────────────────────────────────────────────
+const REQUIRED = [
+  'Platform/UI/index.html',                                   // CEF connect-window page
+  'Platform/Plugins/skymp5-client.js',                        // client logic
+  'SKSE/Plugins/SkyrimPlatform.dll',                          // JS/CEF host plugin
+  'SKSE/Plugins/MpClientPlugin.dll',                          // multiplayer plugin
+  'Platform/Distribution/RuntimeDependencies/libcef.dll',     // CEF runtime
+  'Platform/Distribution/RuntimeDependencies/SkyrimPlatformCEF.exe.hidden',
 ]
+const missing = REQUIRED.filter(rel => !fs.existsSync(path.join(DATA_DEST, rel.replace(/\//g, path.sep))))
 
-// .pex scripts — flat copy
-const scriptsSrc  = path.join(SKYMP_DATA, 'Scripts')
-const scriptsDest = path.join(DATA_DEST, 'Scripts')
-fs.mkdirSync(scriptsDest, { recursive: true })
-try {
-  const pex = fs.readdirSync(scriptsSrc).filter(f => f.endsWith('.pex'))
-  for (const f of pex) {
-    fs.copyFileSync(path.join(scriptsSrc, f), path.join(scriptsDest, f))
-    console.log(`  Copied   Scripts/${f}`)
-    copied++
-  }
-} catch (e) {
-  console.warn(`  WARNING  Cannot read Scripts/: ${e.message}`)
+console.log(`\nDone. ${copied} file(s) copied.`)
+if (missing.length > 0) {
+  console.warn('\nWARNING — required client files are MISSING from the build output:')
+  for (const m of missing) console.warn(`  - Data/${m}`)
+  console.warn('The in-game client will not activate without them — rebuild the client.\n')
 }
-
-for (const [srcRel, destRel] of DATA_FILES) {
-  copyEntry(
-    path.join(SKYMP_DATA, srcRel),
-    path.join(DATA_DEST, destRel.replace(/\//g, path.sep)),
-    srcRel
-  )
-}
-
-// ── Report ────────────────────────────────────────────────────────────────────
-
-console.log(`\nDone. ${copied} item(s) copied, ${missing} missing.\n`)
