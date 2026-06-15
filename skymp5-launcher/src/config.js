@@ -1,7 +1,7 @@
 /**
  * Launcher configuration — developer-only.
  *
- * apiUrl  – Base URL of the SkyRP backend.
+ * apiUrl  – Base URL of the SkyMP backend.
  *           Overridden by the API_URL environment variable (set in .env for
  *           local dev, or as a real env var in a packaged/CI build).
  *           The available game servers are fetched from GET /api/servers

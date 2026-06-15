@@ -2,8 +2,8 @@
 setlocal
 
 :: ============================================================
-::  Builds the SkyRP Launcher Windows installer.
-::  Output: <repo>\build\launcher\SkyRP Launcher Setup <version>.exe
+::  Builds the SkyMP Launcher Windows installer.
+::  Output: <repo>\build\launcher\SkyMP Launcher Setup <version>.exe
 :: ============================================================
 
 set "LAUNCHER_DIR=%~dp0"

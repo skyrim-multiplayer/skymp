@@ -21,7 +21,7 @@ const nexus  = require('./nexus')
 const isDev = process.argv.includes('--dev')
 
 // ── Dev logger ────────────────────────────────────────────────────────────────
-const LOG_FILE = isDev ? path.join(require('os').tmpdir(), 'skyrp-install.log') : null
+const LOG_FILE = isDev ? path.join(require('os').tmpdir(), 'skymp-install.log') : null
 
 function log(...args) {
   const line = args.join(' ')
@@ -30,7 +30,7 @@ function log(...args) {
 }
 
 if (LOG_FILE) {
-  fs.writeFileSync(LOG_FILE, `=== skyrp install log ${new Date().toISOString()} ===\n`)
+  fs.writeFileSync(LOG_FILE, `=== skymp install log ${new Date().toISOString()} ===\n`)
   console.log('[dev] logging to', LOG_FILE)
 }
 
@@ -52,7 +52,7 @@ const store = new Store({
     nexusUser:         null,   // { name, isPremium } from the last validation
     isolatedGame:      true,  // play from the isolated game copy instead of skyrimPath
     gameDirPath:       '',     // legacy: pre-base-dir location of the game copy
-    baseDirPath:       '',     // SkyRP base dir: MO2 root, with the game at <base>\skyrim
+    baseDirPath:       '',     // SkyMP base dir: MO2 root, with the game at <base>\skyrim
   }
 })
 
@@ -83,7 +83,7 @@ function isolatedGameDir() {
   const legacy = store.get('gameDirPath')
   if (legacy) return legacy
   const local = process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local')
-  return path.join(local, 'SkyRP', 'GameDir')
+  return path.join(local, 'SkyMP', 'GameDir')
 }
 
 function isolatedGameReady() {
@@ -419,7 +419,7 @@ ipcMain.handle('game:createIsolated', async () => {
 
   // Ask where to install the modlist.
   const picked = await dialog.showOpenDialog(win, {
-    title:       'Choose where to install SkyRP (~16 GB: MO2 + game copy)',
+    title:       'Choose where to install SkyMP (~16 GB: MO2 + game copy)',
     buttonLabel: 'Install here',
     properties:  ['openDirectory', 'createDirectory'],
   })
@@ -431,7 +431,7 @@ ipcMain.handle('game:createIsolated', async () => {
   try {
     const entries = fs.readdirSync(base)
     if (entries.length > 0 && !fs.existsSync(path.join(base, 'portable.txt'))) {
-      base = path.join(base, 'SkyRP')
+      base = path.join(base, 'SkyMP')
     }
   } catch { /* unreadable — let later steps surface the real error */ }
 
@@ -469,7 +469,7 @@ ipcMain.handle('game:createIsolated', async () => {
     store.set('isolatedGame', true)
     store.set('mo2Enabled', true)
 
-    log(`[isolated] SkyRP install ready at ${base}`)
+    log(`[isolated] SkyMP install ready at ${base}`)
     return { success: true, dir: base }
   } catch (err) {
     return { success: false, error: err.message }
@@ -897,7 +897,7 @@ function extractClientZip(zipPath, destDir, onProgress) {
 // Shared by the direct and MO2 installers: version check, download, extract, client settings.
 
 async function installClientFilesCore(skyrimPath, srv, serverInfo) {
-  const tempZip = path.join(os.tmpdir(), 'skyrp-client.zip')
+  const tempZip = path.join(os.tmpdir(), 'skymp-client.zip')
   const clientSettingsPath = path.join(skyrimPath, 'Data', 'Platform', 'Plugins', 'skymp5-client-settings.txt')
 
   try {

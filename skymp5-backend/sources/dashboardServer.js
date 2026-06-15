@@ -12,7 +12,7 @@ function start() {
 
   app.get('/dashboard-config.js', (_req, res) => {
     res.type('application/javascript').send(
-      `window.SKYRP_DASHBOARD_CONFIG=${JSON.stringify({
+      `window.SKYMP_DASHBOARD_CONFIG=${JSON.stringify({
         apiBaseUrl: config.dashboardApiBaseUrl,
         dashboardUrl: config.dashboardPublicUrl,
       })};`
@@ -23,7 +23,7 @@ function start() {
   app.get('*', (_req, res) => res.sendFile(path.join(publicDir, 'index.html')))
 
   app.listen(config.dashboardPort, () => {
-    console.log(`SkyRP dashboard running on ${config.dashboardPublicUrl}`)
+    console.log(`SkyMP dashboard running on ${config.dashboardPublicUrl}`)
   })
 }
 

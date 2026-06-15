@@ -2,14 +2,14 @@
 setlocal
 
 :: ============================================================
-::   SkyRP backend one-click installer. Double-click to run.
+::   SkyMP backend one-click installer. Double-click to run.
 :: ============================================================
 
 set "BACKEND_DIR=%~dp0"
 if "%BACKEND_DIR:~-1%"=="\" set "BACKEND_DIR=%BACKEND_DIR:~0,-1%"
 set "LOG_DIR=C:\logs"
 set "NSSM_DIR=C:\tools\nssm"
-set "SERVICE=SkyrpBackend"
+set "SERVICE=SkympBackend"
 
 :: Elevate to admin
 net session >nul 2>&1
@@ -20,7 +20,7 @@ if errorlevel 1 (
 )
 
 echo.
-echo === SkyRP backend setup ===
+echo === SkyMP backend setup ===
 echo Backend folder: %BACKEND_DIR%
 echo.
 
@@ -93,8 +93,8 @@ echo Configuring service: %SERVICE%
 "%NSSM%" stop %SERVICE% >nul 2>&1
 "%NSSM%" remove %SERVICE% confirm >nul 2>&1
 :: also clean up the old service name used by earlier versions of this script
-"%NSSM%" stop SkyRP-Backend >nul 2>&1
-"%NSSM%" remove SkyRP-Backend confirm >nul 2>&1
+"%NSSM%" stop SkyMP-Backend >nul 2>&1
+"%NSSM%" remove SkyMP-Backend confirm >nul 2>&1
 "%NSSM%" install %SERVICE% "%NODE_EXE%" "server.js"
 "%NSSM%" set %SERVICE% AppDirectory "%BACKEND_DIR%"
 "%NSSM%" set %SERVICE% AppStdout "%LOG_DIR%\backend.log"
@@ -105,8 +105,8 @@ echo Configuring service: %SERVICE%
 "%NSSM%" set %SERVICE% AppThrottle 5000
 
 :: Firewall
-netsh advfirewall firewall delete rule name="SkyRP WS Relay TCP 7778" >nul 2>&1
-netsh advfirewall firewall add  rule name="SkyRP WS Relay TCP 7778" dir=in action=allow protocol=TCP localport=7778
+netsh advfirewall firewall delete rule name="SkyMP WS Relay TCP 7778" >nul 2>&1
+netsh advfirewall firewall add  rule name="SkyMP WS Relay TCP 7778" dir=in action=allow protocol=TCP localport=7778
 
 :: Start
 echo Starting %SERVICE%...

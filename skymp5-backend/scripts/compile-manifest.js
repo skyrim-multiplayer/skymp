@@ -22,7 +22,7 @@ const SEVEN   = require('7zip-bin').path7za
 // ── Args ──────────────────────────────────────────────────────────────────────
 
 function parseArgs(argv) {
-  const a = { profile: 'SkyRP' }
+  const a = { profile: 'SkyMP' }
   for (let i = 0; i < argv.length; i++) {
     const k = argv[i]
     if      (k === '--mo2')     a.mo2     = argv[++i]
@@ -35,7 +35,7 @@ function parseArgs(argv) {
 
 const args = parseArgs(process.argv.slice(2))
 if (!args.mo2) {
-  console.error('Usage: node scripts/compile-manifest.js --mo2 <MO2 root> [--game <game root>] [--profile SkyRP]')
+  console.error('Usage: node scripts/compile-manifest.js --mo2 <MO2 root> [--game <game root>] [--profile SkyMP]')
   process.exit(1)
 }
 

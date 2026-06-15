@@ -20,7 +20,7 @@ const fs    = require('fs')
 const path  = require('path')
 
 const GAME       = 'skyrimspecialedition'
-const USER_AGENT = 'SkyRP-Launcher/1.0.0'
+const USER_AGENT = 'SkyMP-Launcher/1.0.0'
 
 // ── Logger ────────────────────────────────────────────────────────────────────
 let _log = (...args) => console.log('[nexus]', ...args)

@@ -2,7 +2,7 @@
 setlocal
 
 :: ============================================================
-::  Starts all SkyRP services: nginx, backend, game server.
+::  Starts all SkyMP services: nginx, backend, game server.
 ::  Shortcut-friendly: elevates itself, shows status, then closes.
 :: ============================================================
 
@@ -15,8 +15,8 @@ if errorlevel 1 (
 set "NSSM=C:\tools\nssm\nssm.exe"
 if not exist "%NSSM%" set "NSSM=nssm"
 
-echo === Starting SkyRP services ===
-for %%S in (SkyrpNginx SkyrpBackend SkyrpGameServer) do (
+echo === Starting SkyMP services ===
+for %%S in (SkympNginx SkympBackend SkympGameServer) do (
     echo.
     echo -- %%S
     "%NSSM%" start %%S 2>&1
@@ -24,7 +24,7 @@ for %%S in (SkyrpNginx SkyrpBackend SkyrpGameServer) do (
 
 echo.
 echo === Status ===
-for %%S in (SkyrpNginx SkyrpBackend SkyrpGameServer) do (
+for %%S in (SkympNginx SkympBackend SkympGameServer) do (
     <nul set /p="%%S: "
     "%NSSM%" status %%S 2>&1
 )

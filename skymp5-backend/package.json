@@ -1,5 +1,5 @@
 {
-  "name": "skyrp-backend",
+  "name": "skymp-backend",
   "version": "1.0.0",
   "description": "Skyrim Roleplay launcher backend API — \u2014 serves news, server status, and client setup files",
   "main": "server.js",

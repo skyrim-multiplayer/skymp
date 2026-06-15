@@ -5,7 +5,7 @@ document.getElementById('btn-close').addEventListener('click',    () => window.e
 
 // ── External nav links ────────────────────────────────────────────────────────
 const EXTERNAL_URLS = {
-  website: 'https://skyrimroleplay.co.uk/',   // e.g. 'https://skyrp.example.com'
+  website: 'https://skyrimroleplay.co.uk/',   // e.g. 'https://skymp.example.com'
   discord: 'https://discord.gg/xKY4Nud2rz',   // e.g. 'https://discord.gg/...'
 }
 
@@ -333,13 +333,13 @@ async function refreshIsolatedStatus() {
   const st = await window.electronAPI.isolatedStatus()
   if (!st.ready) {
     isolatedDot.className    = 'vortex-status-dot'
-    isolatedText.textContent = 'Not installed yet — choose a location to set up SkyRP'
+    isolatedText.textContent = 'Not installed yet — choose a location to set up SkyMP'
   } else if (!fieldIsolated.checked) {
     isolatedDot.className    = 'vortex-status-dot dot-warn'
-    isolatedText.textContent = 'SkyRP install exists — playing from the original Skyrim'
+    isolatedText.textContent = 'SkyMP install exists — playing from the original Skyrim'
   } else {
     isolatedDot.className    = 'vortex-status-dot dot-ok'
-    isolatedText.textContent = `SkyRP installed at ${st.base || st.dir}`
+    isolatedText.textContent = `SkyMP installed at ${st.base || st.dir}`
   }
 }
 
@@ -369,7 +369,7 @@ btnCreateIsolated.addEventListener('click', async () => {
   refreshIsolatedStatus()
   refreshPlayState()
 
-  if (confirm('SkyRP game copy is ready. Download and install the modpack now?')) {
+  if (confirm('SkyMP game copy is ready. Download and install the modpack now?')) {
     startModpackInstall()
   }
 })
@@ -552,7 +552,7 @@ function updatePlayButton() {
   if (!isoReady) {
     btnConnect.disabled    = false
     btnConnect.textContent = '\u2699 INSTALL'
-    btnConnect.title       = 'Set up your SkyRP game copy in Settings.'
+    btnConnect.title       = 'Set up your SkyMP game copy in Settings.'
     return
   }
 

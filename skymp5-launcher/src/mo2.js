@@ -3,13 +3,13 @@
 /**
  * Mod Organizer 2 integration — portable install fully managed by the launcher.
  *
- *   %LOCALAPPDATA%\SkyRP\MO2\
+ *   %LOCALAPPDATA%\SkyMP\MO2\
  *     ModOrganizer.exe          downloaded from the official MO2 release
  *     ModOrganizer.ini          portable instance config (written by us)
  *     nxmhandler.ini            nxm:// → this MO2 instance
  *     downloads\                Nexus "Mod Manager Download" archives land here
  *     mods\<Mod Name>\          installed mods (assembled from the manifest)
- *     profiles\SkyRP\           the single launcher-managed profile
+ *     profiles\SkyMP\           the single launcher-managed profile
  *
  * Mods are installed by replaying a compiled manifest (see the backend's
  * scripts/compile-manifest.js): each archive is downloaded + verified by
@@ -27,7 +27,7 @@ const { spawn, execSync, execFileSync } = require('child_process')
 
 const MO2_VERSION = '2.5.2'
 const MO2_URL     = `https://github.com/ModOrganizer2/modorganizer/releases/download/v${MO2_VERSION}/Mod.Organizer-${MO2_VERSION}.7z`
-const PROFILE     = 'SkyRP'
+const PROFILE     = 'SkyMP'
 
 // SKSE is edition-specific: the Steam and GOG builds ship different loaders and
 // runtime DLLs, so we download the one matching the player's game.
@@ -50,7 +50,7 @@ function getRoot() {
   const custom = _rootProvider ? _rootProvider() : null
   if (custom) return custom
   const local = process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local')
-  return path.join(local, 'SkyRP', 'MO2')
+  return path.join(local, 'SkyMP', 'MO2')
 }
 
 const getExe          = () => path.join(getRoot(), 'ModOrganizer.exe')
@@ -175,7 +175,7 @@ function pickDarkStyle() {
 }
 
 /**
- * Create or refresh the portable instance config and the SkyRP profile.
+ * Create or refresh the portable instance config and the SkyMP profile.
  * Safe to call repeatedly; user data (mods, downloads) is never touched.
  *
  * @param {string}   skyrimPath
@@ -365,7 +365,7 @@ function applyMod(modName, files, extractedDirs, modId) {
 
     fs.writeFileSync(lp(path.join(buildDir, 'meta.ini')), [
       '[General]', 'gameName=SkyrimSE', `modid=${modId || 0}`, `name=${folderName}`,
-      'repository=Nexus', 'skyrpManaged=true', '',
+      'repository=Nexus', 'skympManaged=true', '',
     ].join('\r\n'))
 
     try { fs.rmSync(lp(modDir), { recursive: true, force: true }) } catch {}
@@ -425,7 +425,7 @@ function setModlistOrder(order) {
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true })
       fs.writeFileSync(path.join(dir, 'meta.ini'),
-        ['[General]', 'gameName=SkyrimSE', 'modid=0', `name=${name}`, 'skyrpManaged=true', ''].join('\r\n'))
+        ['[General]', 'gameName=SkyrimSE', 'modid=0', `name=${name}`, 'skympManaged=true', ''].join('\r\n'))
     }
   }
 
@@ -507,7 +507,7 @@ function installSkse(archivePath, gameDir) {
       const src = path.join(rootDir, dataDir.name)
       for (const entry of fs.readdirSync(src)) fs.renameSync(path.join(src, entry), path.join(modDir, entry))
       fs.writeFileSync(path.join(modDir, 'meta.ini'),
-        ['[General]', 'gameName=SkyrimSE', 'modid=0', 'name=SKSE', 'repository=', 'skyrpManaged=true', ''].join('\r\n'))
+        ['[General]', 'gameName=SkyrimSE', 'modid=0', 'name=SKSE', 'repository=', 'skympManaged=true', ''].join('\r\n'))
     }
     _log(`SKSE installed (${copied} root file(s))`)
     return { folder }
@@ -557,7 +557,7 @@ const PLUGIN_RE = /\.(esp|esm|esl)$/i
 /** True if modName's meta.ini marks it as launcher-installed (managed). */
 function isManaged(modName) {
   try {
-    return /^skyrpManaged\s*=\s*true/im.test(fs.readFileSync(path.join(getModsDir(), modName, 'meta.ini'), 'utf8'))
+    return /^skympManaged\s*=\s*true/im.test(fs.readFileSync(path.join(getModsDir(), modName, 'meta.ini'), 'utf8'))
   } catch { return false }
 }
 

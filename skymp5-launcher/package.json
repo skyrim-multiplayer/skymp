@@ -1,7 +1,7 @@
 {
-  "name": "skyrp-launcher",
-  "version": "1.0.0",
-  "description": "Launcher for the Skyrim Roleplay server",
+  "name": "skymp-launcher",
+  "version": "0.1.0",
+  "description": "Launcher for the SkyrimMP server",
   "main": "src/main.js",
   "author": "F02K and Suraru",
   "license": "MIT",
@@ -24,8 +24,8 @@
     "electron-builder": "26.8.1"
   },
   "build": {
-    "appId": "com.skyrp.launcher",
-    "productName": "SkyRP Launcher",
+    "appId": "com.skymp.launcher",
+    "productName": "SkyMP Launcher",
     "directories": {
       "output": "../build/launcher"
     },

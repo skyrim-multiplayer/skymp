@@ -33,7 +33,7 @@ const VERSION_FILE = path.join(ROOT, 'data', 'files-version.json')
 
 /**
  * Short git commit hash identifying the client files version.
- * Tries the legacy sources/client checkout first, then the skyrp monorepo
+ * Tries the legacy sources/client checkout first, then the skymp monorepo
  * this backend lives in (the client is built from skymp5-client there).
  * This changes exactly when new commits are pulled — never on mere restarts.
  * Falls back to 'nogit' if neither directory is a git repo.

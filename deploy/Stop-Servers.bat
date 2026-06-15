@@ -2,7 +2,7 @@
 setlocal
 
 :: ============================================================
-::  Stops all SkyRP services: game server, backend, nginx
+::  Stops all SkyMP services: game server, backend, nginx
 ::  (reverse order of start, so players drop before the API does).
 ::  Shortcut-friendly: elevates itself, shows status, then closes.
 :: ============================================================
@@ -16,8 +16,8 @@ if errorlevel 1 (
 set "NSSM=C:\tools\nssm\nssm.exe"
 if not exist "%NSSM%" set "NSSM=nssm"
 
-echo === Stopping SkyRP services ===
-for %%S in (SkyrpGameServer SkyrpBackend SkyrpNginx) do (
+echo === Stopping SkyMP services ===
+for %%S in (SkympGameServer SkympBackend SkympNginx) do (
     echo.
     echo -- %%S
     "%NSSM%" stop %%S 2>&1
@@ -28,7 +28,7 @@ taskkill /f /im nginx.exe >nul 2>&1
 
 echo.
 echo === Status ===
-for %%S in (SkyrpGameServer SkyrpBackend SkyrpNginx) do (
+for %%S in (SkympGameServer SkympBackend SkympNginx) do (
     <nul set /p="%%S: "
     "%NSSM%" status %%S 2>&1
 )

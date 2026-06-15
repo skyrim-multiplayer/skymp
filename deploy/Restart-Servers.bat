@@ -2,7 +2,7 @@
 setlocal
 
 :: ============================================================
-::  Restarts all SkyRP services: stops game server, backend and
+::  Restarts all SkyMP services: stops game server, backend and
 ::  nginx, then starts them back up in dependency order.
 ::  Shortcut-friendly: elevates itself, shows status, then closes.
 :: ============================================================
@@ -16,8 +16,8 @@ if errorlevel 1 (
 set "NSSM=C:\tools\nssm\nssm.exe"
 if not exist "%NSSM%" set "NSSM=nssm"
 
-echo === Stopping SkyRP services ===
-for %%S in (SkyrpGameServer SkyrpBackend SkyrpNginx) do (
+echo === Stopping SkyMP services ===
+for %%S in (SkympGameServer SkympBackend SkympNginx) do (
     echo -- %%S
     "%NSSM%" stop %%S 2>&1
 )
@@ -28,15 +28,15 @@ echo Waiting 3 seconds...
 timeout /t 3 /nobreak >nul
 
 echo.
-echo === Starting SkyRP services ===
-for %%S in (SkyrpNginx SkyrpBackend SkyrpGameServer) do (
+echo === Starting SkyMP services ===
+for %%S in (SkympNginx SkympBackend SkympGameServer) do (
     echo -- %%S
     "%NSSM%" start %%S 2>&1
 )
 
 echo.
 echo === Status ===
-for %%S in (SkyrpNginx SkyrpBackend SkyrpGameServer) do (
+for %%S in (SkympNginx SkympBackend SkympGameServer) do (
     <nul set /p="%%S: "
     "%NSSM%" status %%S 2>&1
 )
