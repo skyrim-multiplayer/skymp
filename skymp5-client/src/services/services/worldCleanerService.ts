@@ -9,6 +9,8 @@ export class WorldCleanerService extends ClientListener {
     super();
     this.controller.on("update", () => this.onUpdate());
     this.controller.emitter.on("gameLoad", () => this.onGameLoad());
+    this.controller.on("preLoadGame", () => { this.isSaveLoadInProgress = true; });
+    this.controller.on("loadGame", () => { this.isSaveLoadInProgress = false; });
   }
 
   modWcProtection(actorId: number, mod: number): void {
@@ -21,6 +23,7 @@ export class WorldCleanerService extends ClientListener {
   }
 
   private onGameLoad() {
+    this.generation++;
     let player = this.sp.Game.getPlayer();
     if (!player) {
       return;
@@ -35,6 +38,10 @@ export class WorldCleanerService extends ClientListener {
   }
 
   private processOneActor() {
+    if (this.isSaveLoadInProgress) {
+      return;
+    }
+
     const pc = this.sp.Game.getPlayer();
     if (pc === null) {
       return;
@@ -98,7 +105,11 @@ export class WorldCleanerService extends ClientListener {
       }
     }
 
+    const gen = this.generation;
     actor.disable(false).then(() => {
+      if (gen !== this.generation || this.isSaveLoadInProgress) {
+        return;
+      }
       const ac = this.sp.Actor.from(this.sp.Game.getFormEx(actorId));
       if (!ac || this.isActorInDialogue(ac)) {
         return;
@@ -114,4 +125,6 @@ export class WorldCleanerService extends ClientListener {
   private protection = new Map<number, number>();
   private initialPos?: NiPoint3;
   private initialCellOrWorld?: number;
+  private generation = 0;
+  private isSaveLoadInProgress = false;
 }
