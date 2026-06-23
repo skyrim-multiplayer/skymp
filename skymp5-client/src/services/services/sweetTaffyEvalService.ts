@@ -68,6 +68,7 @@ export class SweetTaffyEvalService extends ClientListener {
                         sp: sp,
                         _model: myFormModel,
                         getFormIdInServerFormat: localIdToRemoteId,
+                        getMyFormIdInServerFormat: () => remoteServer.getMyRemoteRefrId(),
                         getFormIdInClientFormat: remoteIdToLocalId,
                         get(propName: string) {
                             return (this._model as Record<string, any>)?.[propName];
