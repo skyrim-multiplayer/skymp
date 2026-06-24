@@ -1,30 +1,85 @@
 #include "Hook.h"
-#include "Handler.h"
-#include "SkyrimPlatform.h"
+#include "ScopedTask.h"
+#include <spdlog/spdlog.h>
+#include <Windows.h>
+
+std::mutex Hook::g_invocationsMutex;
+std::map<DWORD, std::vector<Hook::InvocationInfo>> Hook::g_invocations;
+
+bool HookScriptEntry::Matches(uint32_t selfId,
+                               const std::string& eventName) const
+{
+  if (minSelfId.has_value() && selfId < minSelfId.value()) {
+    return false;
+  }
+  if (maxSelfId.has_value() && selfId > maxSelfId.value()) {
+    return false;
+  }
+  if (pattern.has_value()) {
+    switch (pattern->type) {
+      case HookPatternType::Exact:
+        return eventName == pattern->str;
+      case HookPatternType::StartsWith:
+        return eventName.size() >= pattern->str.size() &&
+          !memcmp(eventName.data(), pattern->str.data(), pattern->str.size());
+      case HookPatternType::EndsWith:
+        return eventName.size() >= pattern->str.size() &&
+          !memcmp(eventName.data() + (eventName.size() - pattern->str.size()),
+                  pattern->str.data(), pattern->str.size());
+    }
+  }
+  return true;
+}
 
 Hook::Hook(std::string hookName_, std::string eventNameVariableName_,
            std::optional<std::string> succeededVariableName_)
-  : hookName(hookName_)
-  , eventNameVariableName(eventNameVariableName_)
-  , succeededVariableName(succeededVariableName_)
+  : hookName(std::move(hookName_))
+  , eventNameVariableName(std::move(eventNameVariableName_))
+  , succeededVariableName(std::move(succeededVariableName_))
 {
 }
 
-uint32_t Hook::AddHandler(const std::shared_ptr<Handler>& handler)
+uint32_t Hook::AddScript(const std::string& source,
+                         std::optional<double> minSelfId,
+                         std::optional<double> maxSelfId,
+                         std::optional<HookPattern> pattern)
 {
   if (addRemoveBlocker) {
     throw std::runtime_error("Trying to add hook inside hook context");
   }
-  handlers.emplace(hCounter, handler);
-  return hCounter++;
+
+  std::string error;
+  uint32_t qjsId = qjsEngine->Compile(source, hookName + "_hook", error);
+
+  if (qjsId == 0) {
+    throw std::runtime_error("Hook script compilation failed: " + error);
+  }
+
+  uint32_t handleId = nextHandlerId++;
+
+  HookScriptEntry entry;
+  entry.qjsScriptId = qjsId;
+  entry.pattern = std::move(pattern);
+  entry.minSelfId = minSelfId;
+  entry.maxSelfId = maxSelfId;
+  scripts[handleId] = std::move(entry);
+
+  return handleId;
 }
 
-void Hook::RemoveHandler(const uint32_t& id)
+void Hook::RemoveScript(uint32_t id)
 {
   if (addRemoveBlocker) {
     throw std::runtime_error("Trying to remove hook inside hook context");
   }
-  handlers.erase(id);
+
+  auto it = scripts.find(id);
+  if (it == scripts.end()) {
+    return;
+  }
+
+  qjsEngine->RemoveScript(it->second.qjsScriptId);
+  scripts.erase(it);
 }
 
 std::string Hook::GetName() const
@@ -35,155 +90,54 @@ std::string Hook::GetName() const
 void Hook::Enter(uint32_t selfId, std::string& eventName)
 {
   addRemoveBlocker++;
-  DWORD owningThread = GetCurrentThreadId();
+  Viet::ScopedTask<Hook> t([](Hook& hook) { hook.addRemoveBlocker--; }, *this);
 
-  if (hookName == "sendPapyrusEvent") {
-    // If there are no handlers, do not do g_taskQueue
-    bool anyMatch = false;
-    for (auto& hp : handlers) {
-      auto* h = hp.second.get();
-      if (h->Matches(selfId, eventName)) {
-        anyMatch = true;
-        break;
-      }
-    }
-    if (!anyMatch) {
-      return;
-    }
+  InvocationInfo invInfo;
 
-    return SkyrimPlatform::GetSingleton()->AddUpdateTask(
-      [this, owningThread, selfId, eventName](Napi::Env env) {
-        std::string s = eventName;
-        HandleEnter(owningThread, selfId, s, env);
-      });
+  // Collect matching scripts and run enter
+  for (auto& [handleId, entry] : scripts) {
+    if (!entry.Matches(selfId, eventName)) {
+      continue;
+    }
+    invInfo.matchedScriptIds.push_back(entry.qjsScriptId);
+
+    auto result = qjsEngine->RunEnter(entry.qjsScriptId, selfId, eventName);
+    if (!result.ok) {
+      spdlog::error("Hook '{}' enter error: {}", hookName, result.error);
+      continue;
+    }
+    eventName = result.eventName;
   }
 
-  auto f = [&](Napi::Env env) {
-    try {
-      if (inProgressThreads.count(owningThread))
-        throw std::runtime_error("'" + hookName + "' is already processing");
-      inProgressThreads.insert(owningThread);
-      HandleEnter(owningThread, selfId, eventName, env);
-    } catch (std::exception& e) {
-      auto err = std::string(e.what()) + " (while performing enter on '" +
-        hookName + "')";
-      SkyrimPlatform::GetSingleton()->AddUpdateTask(
-        [err](Napi::Env) { throw std::runtime_error(err); });
-    }
-  };
-  SkyrimPlatform::GetSingleton()->PushAndWait(f);
-  addRemoveBlocker--;
+  // Push invocation info for Leave to use
+  const DWORD threadId = GetCurrentThreadId();
+  {
+    std::lock_guard l(g_invocationsMutex);
+    g_invocations[threadId].push_back(std::move(invInfo));
+  }
 }
 
 void Hook::Leave(bool succeeded)
 {
   addRemoveBlocker++;
-  DWORD owningThread = GetCurrentThreadId();
+  Viet::ScopedTask<Hook> t([](Hook& hook) { hook.addRemoveBlocker--; }, *this);
 
-  if (hookName == "sendPapyrusEvent") {
-    return;
-  }
-
-  auto f = [&](Napi::Env env) {
-    try {
-      if (!inProgressThreads.count(owningThread))
-        throw std::runtime_error("'" + hookName + "' is not processing");
-      inProgressThreads.erase(owningThread);
-      HandleLeave(owningThread, succeeded, env);
-
-    } catch (std::exception& e) {
-      std::string what = e.what();
-      SkyrimPlatform::GetSingleton()->AddUpdateTask([what](Napi::Env) {
-        throw std::runtime_error(what + " (in SendAnimationEventLeave)");
-      });
+  const DWORD threadId = GetCurrentThreadId();
+  InvocationInfo invInfo;
+  {
+    std::lock_guard l(g_invocationsMutex);
+    auto& stack = g_invocations[threadId];
+    if (stack.empty()) {
+      return;
     }
-  };
-  SkyrimPlatform::GetSingleton()->PushAndWait(f);
-  addRemoveBlocker--;
-}
+    invInfo = std::move(stack.back());
+    stack.pop_back();
+  }
 
-void Hook::HandleEnter(DWORD owningThread, uint32_t selfId,
-                       std::string& eventName, const Napi::Env& env)
-{
-  for (auto& hp : handlers) {
-    Handler* h = hp.second.get();
-    auto& perThread = h->perThread[owningThread];
-
-    perThread.matchesCondition = h->Matches(selfId, eventName);
-    if (!perThread.matchesCondition) {
-      continue;
+  for (uint32_t scriptId : invInfo.matchedScriptIds) {
+    auto result = qjsEngine->RunLeave(scriptId, succeeded);
+    if (!result.ok) {
+      spdlog::error("Hook '{}' leave error: {}", hookName, result.error);
     }
-
-    PrepareContext(perThread, env);
-    ClearContextStorage(perThread, env);
-
-    perThread.context->Value().As<Napi::Object>().Set(
-      "selfId", Napi::Number::New(env, static_cast<double>(selfId)));
-    perThread.context->Value().As<Napi::Object>().Set(
-      eventNameVariableName, Napi::String::New(env, eventName));
-    h->enter.Value().As<Napi::Function>().Call(env.Undefined(),
-                                               { perThread.context->Value() });
-
-    // Retrieve the updated eventName from the context
-    Napi::Value updatedEventName =
-      perThread.context->Value().As<Napi::Object>().Get(eventNameVariableName);
-    eventName = updatedEventName.As<Napi::String>().Utf8Value();
-  }
-}
-
-void Hook::PrepareContext(HandlerInfoPerThread& h, const Napi::Env& env)
-{
-  if (!h.context) {
-    auto object = Napi::Object::New(env);
-    h.context.reset(new Napi::Reference<Napi::Object>(
-      Napi::Persistent<Napi::Object>(object)));
-  }
-
-  Napi::Value standardMap = env.Global().Get("Map");
-
-  if (!h.storage) {
-    Napi::Object mapInstance = standardMap.As<Napi::Function>().New({});
-    h.storage.reset(
-      new Napi::Reference<Napi::Object>(Napi::Persistent(mapInstance)));
-    h.context->Value().As<Napi::Object>().Set("storage", h.storage->Value());
-  }
-}
-
-void Hook::ClearContextStorage(HandlerInfoPerThread& h, Napi::Env env)
-{
-  if (!h.storage) {
-    return;
-  }
-
-  Napi::Object global = env.Global();
-  Napi::Object standardMap = global.Get("Map").As<Napi::Object>();
-  Napi::Function clear = standardMap.Get("prototype")
-                           .As<Napi::Object>()
-                           .Get("clear")
-                           .As<Napi::Function>();
-
-  clear.Call(h.storage->Value(), {});
-}
-
-void Hook::HandleLeave(DWORD owningThread, bool succeeded, Napi::Env env)
-{
-  for (auto& hp : handlers) {
-    Handler* h = hp.second.get();
-    auto& perThread = h->perThread.at(owningThread);
-
-    if (!perThread.matchesCondition) {
-      continue;
-    }
-
-    PrepareContext(perThread, env);
-
-    if (succeededVariableName.has_value()) {
-      perThread.context->Value().As<Napi::Object>().Set(
-        succeededVariableName.value(), Napi::Boolean::New(env, succeeded));
-    }
-
-    h->leave.Value().As<Napi::Function>().Call(env.Undefined(),
-                                               { perThread.context->Value() });
-    h->perThread.erase(owningThread);
   }
 }
