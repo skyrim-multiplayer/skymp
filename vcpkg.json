@@ -20,6 +20,7 @@
     "antigo",
     "prometheus-cpp-lite",
     "slikenet",
+    "palsigslot",
     "libsodium",
     {
       "name": "mongo-cxx-driver",
