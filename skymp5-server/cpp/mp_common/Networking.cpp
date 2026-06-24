@@ -16,7 +16,41 @@
 #include "IdManager.h"
 #include "NetworkingInterface.h"
 
+#ifdef _WIN32
+#  define WIN32_LEAN_AND_MEAN
+#  include <Windows.h>
+#endif
+
 namespace {
+
+// Returns true when the host process is currently tearing down (running
+// DLL_PROCESS_DETACH on loaded DLLs from inside LdrShutdownProcess).
+//
+// We must skip RakPeer::Shutdown() in that state because it ends with a
+// WaitForSingleObjectEx(thread, INFINITE) to join the recv thread, but
+// ExitProcess has already terminated every other thread (with abandoned
+// locks). The join then deadlocks forever and the process hangs holding
+// gigabytes of RAM after the main game window has already disappeared.
+//
+// The OS reclaims sockets/threads regardless when the process exits, so
+// skipping the explicit RakNet shutdown is safe at that point.
+bool IsProcessShutdownInProgress()
+{
+#ifdef _WIN32
+  using FnT = BOOLEAN(NTAPI*)();
+  static FnT pRtlDllShutdownInProgress = []() -> FnT {
+    if (HMODULE ntdll = ::GetModuleHandleW(L"ntdll.dll")) {
+      return reinterpret_cast<FnT>(
+        ::GetProcAddress(ntdll, "RtlDllShutdownInProgress"));
+    }
+    return nullptr;
+  }();
+  return pRtlDllShutdownInProgress && pRtlDllShutdownInProgress();
+#else
+  return false;
+#endif
+}
+
 class PacketGuard
 {
 public:
@@ -82,6 +116,17 @@ public:
   ~Client() override
   {
     packetGuard.reset(); // Depends on peer, so must be reset first
+
+    // If we are inside the OS process-shutdown path (e.g. JS called
+    // process.exit() / V8 fatal -> ExitProcess), RakPeer::Shutdown() will
+    // try to join its already-killed recv thread via
+    // WaitForSingleObjectEx(..., INFINITE) and deadlock there, leaving
+    // SkyrimSE.exe hung indefinitely. Skip it; the kernel cleans up
+    // sockets and threads on process exit anyway.
+    if (IsProcessShutdownInProgress()) {
+      return;
+    }
+
     peer->Shutdown(0);
   }
 
