@@ -3,6 +3,7 @@ import { FormModel, WorldModel } from "./model";
 import { NiPoint3 } from "../sync/movement";
 import { SpApiInteractor } from "../services/spApiInteractor";
 import { GamemodeUpdateService } from "../services/services/gamemodeUpdateService";
+import { once } from "skyrimPlatform";
 
 export class FormViewArray {
   updateForm(form: FormModel, i: number) {
@@ -26,7 +27,22 @@ export class FormViewArray {
 
   resize(newSize: number) {
     if (this.formViews.length > newSize) {
-      this.formViews.slice(newSize).forEach((v) => v && v.destroy());
+      const toDestroy = this.formViews.slice(newSize);
+      // Stagger destruction across frames to avoid flooding the engine's
+      // texture queue with simultaneous delete requests that race with
+      // BSTaskManagerThread's async texture loading.
+      const batchSize = 10;
+      for (let i = 0; i < toDestroy.length; i += batchSize) {
+        const batch = toDestroy.slice(i, i + batchSize);
+        if (i === 0) {
+          batch.forEach((v) => v && v.destroy());
+        } else {
+          const captured = batch;
+          once("update", () => {
+            captured.forEach((v) => v && v.destroy());
+          });
+        }
+      }
     }
     this.formViews.length = newSize;
   }
