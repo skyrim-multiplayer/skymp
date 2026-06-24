@@ -157,10 +157,15 @@ export class Login implements System {
               `https://discord.com/api/guilds/${guildConfig.guildId}/members/${profile.discordId}`,
               {
                 method: 'GET',
-                headers: { 'Authorization': `${discordAuth.botToken}` },
+                headers: { 'Authorization': `Bot ${discordAuth.botToken}` },
                 ...this.getFetchOptions('discordAuth_multi'),
               },
             );
+
+            if (response.status === 401 || response.status === 403) {
+              console.error(`discordAuth: Discord API returned ${response.status} for guild ${guildConfig.guildId} - ` +
+                `check that the bot token is valid and Server Members Intent is enabled`);
+            }
 
             if (response.ok) {
               const responseData = await response.json();
@@ -249,7 +254,7 @@ export class Login implements System {
     this.fetchRetry(`https://discord.com/api/channels/${eventLogChannelId}/messages`, {
       method: 'POST',
       headers: {
-        'Authorization': `${botToken}`,
+        'Authorization': `Bot ${botToken}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({

@@ -1,0 +1,317 @@
+{
+  "requirements": [
+    {
+      "id": "hold:eastmarch:jarl",
+      "scope": "hold",
+      "group": "Eastmarch",
+      "rank": "Jarl",
+      "capacity": 1,
+      "permission": "hold.eastmarch.jarl"
+    },
+    {
+      "id": "hold:eastmarch:steward",
+      "scope": "hold",
+      "group": "Eastmarch",
+      "rank": "Steward",
+      "capacity": 1,
+      "permission": "hold.eastmarch.steward"
+    },
+    {
+      "id": "hold:eastmarch:captain-of-the-guard",
+      "scope": "hold",
+      "group": "Eastmarch",
+      "rank": "Captain of the Guard",
+      "capacity": 1,
+      "permission": "hold.eastmarch.captain-of-the-guard"
+    },
+    {
+      "id": "hold:falkreath:jarl",
+      "scope": "hold",
+      "group": "Falkreath",
+      "rank": "Jarl",
+      "capacity": 1,
+      "permission": "hold.falkreath.jarl"
+    },
+    {
+      "id": "hold:falkreath:steward",
+      "scope": "hold",
+      "group": "Falkreath",
+      "rank": "Steward",
+      "capacity": 1,
+      "permission": "hold.falkreath.steward"
+    },
+    {
+      "id": "hold:falkreath:captain-of-the-guard",
+      "scope": "hold",
+      "group": "Falkreath",
+      "rank": "Captain of the Guard",
+      "capacity": 1,
+      "permission": "hold.falkreath.captain-of-the-guard"
+    },
+    {
+      "id": "hold:haafingar:jarl",
+      "scope": "hold",
+      "group": "Haafingar",
+      "rank": "Jarl",
+      "capacity": 1,
+      "permission": "hold.haafingar.jarl"
+    },
+    {
+      "id": "hold:haafingar:steward",
+      "scope": "hold",
+      "group": "Haafingar",
+      "rank": "Steward",
+      "capacity": 1,
+      "permission": "hold.haafingar.steward"
+    },
+    {
+      "id": "hold:haafingar:captain-of-the-guard",
+      "scope": "hold",
+      "group": "Haafingar",
+      "rank": "Captain of the Guard",
+      "capacity": 1,
+      "permission": "hold.haafingar.captain-of-the-guard"
+    },
+    {
+      "id": "hold:the-pale:jarl",
+      "scope": "hold",
+      "group": "The Pale",
+      "rank": "Jarl",
+      "capacity": 1,
+      "permission": "hold.the-pale.jarl"
+    },
+    {
+      "id": "hold:the-pale:steward",
+      "scope": "hold",
+      "group": "The Pale",
+      "rank": "Steward",
+      "capacity": 1,
+      "permission": "hold.the-pale.steward"
+    },
+    {
+      "id": "hold:the-pale:captain-of-the-guard",
+      "scope": "hold",
+      "group": "The Pale",
+      "rank": "Captain of the Guard",
+      "capacity": 1,
+      "permission": "hold.the-pale.captain-of-the-guard"
+    },
+    {
+      "id": "hold:the-reach:jarl",
+      "scope": "hold",
+      "group": "The Reach",
+      "rank": "Jarl",
+      "capacity": 1,
+      "permission": "hold.the-reach.jarl"
+    },
+    {
+      "id": "hold:the-reach:steward",
+      "scope": "hold",
+      "group": "The Reach",
+      "rank": "Steward",
+      "capacity": 1,
+      "permission": "hold.the-reach.steward"
+    },
+    {
+      "id": "hold:the-reach:captain-of-the-guard",
+      "scope": "hold",
+      "group": "The Reach",
+      "rank": "Captain of the Guard",
+      "capacity": 1,
+      "permission": "hold.the-reach.captain-of-the-guard"
+    },
+    {
+      "id": "hold:the-rift:jarl",
+      "scope": "hold",
+      "group": "The Rift",
+      "rank": "Jarl",
+      "capacity": 1,
+      "permission": "hold.the-rift.jarl"
+    },
+    {
+      "id": "hold:the-rift:steward",
+      "scope": "hold",
+      "group": "The Rift",
+      "rank": "Steward",
+      "capacity": 1,
+      "permission": "hold.the-rift.steward"
+    },
+    {
+      "id": "hold:the-rift:captain-of-the-guard",
+      "scope": "hold",
+      "group": "The Rift",
+      "rank": "Captain of the Guard",
+      "capacity": 1,
+      "permission": "hold.the-rift.captain-of-the-guard"
+    },
+    {
+      "id": "hold:whiterun:jarl",
+      "scope": "hold",
+      "group": "Whiterun",
+      "rank": "Jarl",
+      "capacity": 1,
+      "permission": "hold.whiterun.jarl"
+    },
+    {
+      "id": "hold:whiterun:steward",
+      "scope": "hold",
+      "group": "Whiterun",
+      "rank": "Steward",
+      "capacity": 1,
+      "permission": "hold.whiterun.steward"
+    },
+    {
+      "id": "hold:whiterun:captain-of-the-guard",
+      "scope": "hold",
+      "group": "Whiterun",
+      "rank": "Captain of the Guard",
+      "capacity": 1,
+      "permission": "hold.whiterun.captain-of-the-guard"
+    },
+    {
+      "id": "hold:winterhold:jarl",
+      "scope": "hold",
+      "group": "Winterhold",
+      "rank": "Jarl",
+      "capacity": 1,
+      "permission": "hold.winterhold.jarl"
+    },
+    {
+      "id": "hold:winterhold:steward",
+      "scope": "hold",
+      "group": "Winterhold",
+      "rank": "Steward",
+      "capacity": 1,
+      "permission": "hold.winterhold.steward"
+    },
+    {
+      "id": "hold:winterhold:captain-of-the-guard",
+      "scope": "hold",
+      "group": "Winterhold",
+      "rank": "Captain of the Guard",
+      "capacity": 1,
+      "permission": "hold.winterhold.captain-of-the-guard"
+    },
+    {
+      "id": "hold:hjaalmarch:jarl",
+      "scope": "hold",
+      "group": "Hjaalmarch",
+      "rank": "Jarl",
+      "capacity": 1,
+      "permission": "hold.hjaalmarch.jarl"
+    },
+    {
+      "id": "hold:hjaalmarch:steward",
+      "scope": "hold",
+      "group": "Hjaalmarch",
+      "rank": "Steward",
+      "capacity": 1,
+      "permission": "hold.hjaalmarch.steward"
+    },
+    {
+      "id": "hold:hjaalmarch:captain-of-the-guard",
+      "scope": "hold",
+      "group": "Hjaalmarch",
+      "rank": "Captain of the Guard",
+      "capacity": 1,
+      "permission": "hold.hjaalmarch.captain-of-the-guard"
+    },
+    {
+      "id": "faction:imperial-legion:legate",
+      "scope": "faction",
+      "group": "Imperial Legion",
+      "rank": "Legate",
+      "capacity": 1,
+      "permission": "faction.imperial-legion.legate"
+    },
+    {
+      "id": "faction:imperial-legion:soldier",
+      "scope": "faction",
+      "group": "Imperial Legion",
+      "rank": "Soldier",
+      "capacity": null,
+      "permission": "faction.imperial-legion.soldier"
+    },
+    {
+      "id": "faction:thalmor:emissary",
+      "scope": "faction",
+      "group": "Thalmor",
+      "rank": "Emissary",
+      "capacity": 1,
+      "permission": "faction.thalmor.emissary"
+    },
+    {
+      "id": "faction:thalmor:soldier",
+      "scope": "faction",
+      "group": "Thalmor",
+      "rank": "Soldier",
+      "capacity": null,
+      "permission": "faction.thalmor.soldier"
+    },
+    {
+      "id": "faction:college-of-winterhold:arch-mage",
+      "scope": "faction",
+      "group": "College of Winterhold",
+      "rank": "Arch-Mage",
+      "capacity": 1,
+      "permission": "faction.college-of-winterhold.arch-mage"
+    },
+    {
+      "id": "faction:college-of-winterhold:instructor",
+      "scope": "faction",
+      "group": "College of Winterhold",
+      "rank": "Instructor",
+      "capacity": null,
+      "permission": "faction.college-of-winterhold.instructor"
+    },
+    {
+      "id": "faction:the-companions:harbinger",
+      "scope": "faction",
+      "group": "The Companions",
+      "rank": "Harbinger",
+      "capacity": 1,
+      "permission": "faction.the-companions.harbinger"
+    },
+    {
+      "id": "faction:the-companions:shield-brother-sister",
+      "scope": "faction",
+      "group": "The Companions",
+      "rank": "Shield-Brother/Sister",
+      "capacity": null,
+      "permission": "faction.the-companions.shield-brother-sister"
+    },
+    {
+      "id": "faction:dark-brotherhood:speaker",
+      "scope": "faction",
+      "group": "Dark Brotherhood",
+      "rank": "Speaker",
+      "capacity": 1,
+      "permission": "faction.dark-brotherhood.speaker"
+    },
+    {
+      "id": "faction:dark-brotherhood:murderer",
+      "scope": "faction",
+      "group": "Dark Brotherhood",
+      "rank": "Murderer",
+      "capacity": null,
+      "permission": "faction.dark-brotherhood.murderer"
+    },
+    {
+      "id": "faction:thieves-guild:guild-master",
+      "scope": "faction",
+      "group": "Thieves Guild",
+      "rank": "Guild Master",
+      "capacity": 1,
+      "permission": "faction.thieves-guild.guild-master"
+    },
+    {
+      "id": "faction:thieves-guild:pickpocket",
+      "scope": "faction",
+      "group": "Thieves Guild",
+      "rank": "Pickpocket",
+      "capacity": null,
+      "permission": "faction.thieves-guild.pickpocket"
+    }
+  ],
+  "assignments": []
+}

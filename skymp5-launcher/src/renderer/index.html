@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'self'; img-src 'self' data: https:">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SkyrimRP Launcher</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cinzel+Decorative:wght@700&family=Barlow+Condensed:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <div class="bg"></div>
+
+  <div id="app">
+
+    <!-- ── Top bar ──────────────────────────────────── -->
+    <header class="topbar">
+      <div class="topbar-logo">
+        <div class="logo-emblem">RP</div>
+        <div class="logo-text-block">
+          <span class="logo-name">Skyrim</span>
+          <span class="logo-tagline">Roleplay Server</span>
+        </div>
+      </div>
+
+      <nav class="topbar-nav">
+        <a class="topnav-link" data-href="website">WEBSITE</a>
+        <a class="topnav-link discord" data-href="discord">DISCORD</a>
+        <a class="topnav-link" id="btn-stats">STATS</a>
+      </nav>
+
+      <div class="topbar-right">
+        <div id="nexus-topbar-slot"></div>
+        <div id="discord-topbar-slot"></div>
+        <button class="btn-gear" id="btn-gear" title="Settings">&#9881;</button>
+        <button class="win-btn" id="btn-minimize" title="Minimize">&#8722;</button>
+        <button class="win-btn" id="btn-maximize" title="Maximize">&#9633;</button>
+        <button class="win-btn close" id="btn-close" title="Close">&#10005;</button>
+      </div>
+    </header>
+
+    <!-- ── Main content ─────────────────────────────── -->
+    <main class="main">
+      <div class="main-header">
+        <div class="status-badges">
+          <span class="badge-status" id="badge-status">
+            <span class="badge-dot" id="badge-dot"></span>
+            <span id="badge-label">CHECKING</span>
+          </span>
+          <span class="badge-players" id="badge-players" hidden></span>
+        </div>
+        <a class="read-more" id="btn-read-more">READ MORE &rarr;</a>
+      </div>
+
+      <!-- ── Server info strip ──────────────────────── -->
+      <div class="server-info-strip" id="server-info-strip" hidden>
+        <span class="sinfo-item" id="sinfo-name"></span>
+        <span class="sinfo-sep">|</span>
+        <span class="sinfo-item" id="sinfo-capacity"></span>
+        <span class="sinfo-sep" id="sinfo-mode-sep" hidden>|</span>
+        <span class="sinfo-item sinfo-mode" id="sinfo-mode" hidden></span>
+        <span class="sinfo-sep" id="sinfo-discord-sep" hidden>|</span>
+        <span class="sinfo-item sinfo-discord" id="sinfo-discord" hidden>&#128481; Discord login required</span>
+        <span class="sinfo-sep" id="sinfo-locked-sep" hidden>|</span>
+        <span class="sinfo-item sinfo-locked" id="sinfo-locked" hidden>&#128274; Server locked</span>
+      </div>
+
+      <!-- ── Two-column content layout ─────────────── -->
+      <div class="content-layout">
+
+        <!-- News -->
+        <section class="news-section">
+          <div class="section-header">
+            <h2 class="section-title">LATEST NEWS</h2>
+          </div>
+          <div class="news-grid" id="news-grid">
+            <!-- populated by renderer.js -->
+          </div>
+        </section>
+
+        <!-- Modlist -->
+        <section class="modlist-section">
+          <div class="section-header section-header--modlist">
+            <h2 class="section-title">MODLIST</h2>
+            <span class="modlist-count" id="modlist-count"></span>
+          </div>
+          <div class="modlist-panel" id="modlist">
+            <!-- populated by renderer.js -->
+          </div>
+        </section>
+
+      </div>
+    </main>
+
+    <!-- ── Bottom bar ────────────────────────────────── -->
+    <footer class="bottombar">
+      <div class="bottombar-info">
+        <div class="info-item">
+          <span class="info-label">LAUNCHER</span>
+          <span class="info-value" id="launcher-version">—</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">CLIENT</span>
+          <span class="info-value" id="client-version">—</span>
+        </div>
+        <div class="info-divider"></div>
+        <div class="info-item">
+          <span class="info-label">SERVER</span>
+          <span class="info-value" id="footer-server-name">—</span>
+          <select class="footer-server-select" id="footer-server-select" hidden></select>
+        </div>
+        <div class="info-divider"></div>
+        <div class="info-item">
+          <span class="info-label">PLAYERS</span>
+          <span class="info-value" id="footer-players">—</span>
+        </div>
+        <div class="info-divider"></div>
+        <span class="connect-warning" id="connect-warning"></span>
+      </div>
+      <div class="bottombar-right">
+        <span class="update-pill" id="update-pill" hidden>&#10515; UPDATE AVAILABLE</span>
+        <button class="btn-play" id="btn-connect">&#9654; PLAY</button>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- ── Settings modal ───────────────────────────── -->
+  <div class="modal-overlay" id="modal-settings" hidden>
+    <div class="modal-box">
+      <div class="modal-header">
+        <span class="modal-title">&#9881;&nbsp; Settings</span>
+        <button class="modal-close" id="modal-close" title="Close">&#10005;</button>
+      </div>
+
+      <!-- Tab bar -->
+      <div class="modal-tabs">
+        <button class="modal-tab active" data-tab="install">Installation</button>
+        <button class="modal-tab" data-tab="settings">Settings</button>
+        <button class="modal-tab" data-tab="trouble">Troubleshooting</button>
+      </div>
+
+      <div class="modal-body">
+
+        <!-- ── Installation tab ── -->
+        <div class="tab-panel" id="tab-install">
+
+          <div class="settings-group">
+            <label class="setting-label">Skyrim Installation Path</label>
+            <div class="setting-path-row">
+              <input class="setting-input" id="setting-skyrim-path" type="text"
+                     placeholder="C:\Program Files (x86)\Steam\steamapps\common\Skyrim Special Edition" />
+              <button class="btn-browse" id="btn-browse">Browse…</button>
+            </div>
+            <p class="setting-hint">Skyrim Install Location - Needs to be a clean install</p>
+          </div>
+
+          <div class="settings-group">
+            <label class="setting-label">Game Installation</label>
+            <div class="vortex-status-row">
+            <button class="btn-detect-vortex" id="btn-create-isolated">Choose Install Location</button>
+              <span class="vortex-status-dot" id="isolated-status-dot"></span>
+              <span class="vortex-status-text" id="isolated-status-text">Checking…</span>
+            </div>
+          </div>
+
+          <div class="settings-group">
+            <label class="setting-label">Modlist Installation</label>
+            <div class="vortex-status-row" id="mo2-status-row">
+              <button class="btn-install" id="btn-install-mo2">Install Modpack via MO2</button>
+              <span class="vortex-status-dot" id="mo2-status-dot"></span>
+              <span class="vortex-status-text" id="mo2-status-text">Checking…</span>
+            </div>
+            <div class="install-status" id="install-status-mo2"></div>
+          </div>
+		  
+        </div>
+
+        <!-- ── Settings tab (WIP) ── -->
+        <div class="tab-panel" id="tab-settings" hidden>
+          <div class="settings-group">
+            <p class="setting-hint">⚙ Settings — work in progress.</p>
+          </div>
+        </div>
+
+        <!-- ── Troubleshooting tab ── -->
+        <div class="tab-panel" id="tab-trouble" hidden>
+
+          <div class="settings-group">
+            <label class="setting-label">Client Files</label>
+            <div class="install-status" id="install-status-client"></div>
+            <button class="btn-detect-vortex" id="btn-install-client">Reinstall / Update Client Files</button>
+          </div>
+
+          <div class="settings-group">
+            <label class="setting-label">Portable Skyrim Mode</label>
+            <label class="setting-checkbox-row">
+              <input type="checkbox" id="setting-isolated-game" />
+              <span>Disable this if you are short on disk space.</span>
+            </label>
+            <button class="btn-detect-vortex" id="btn-open-install">Open Portable Install Folder</button>
+          </div>
+
+          <div class="settings-group">
+            <label class="setting-label">Mod Organizer 2</label>
+            <label class="setting-checkbox-row" id="mo2-enable-row">
+              <input type="checkbox" id="setting-mo2-enabled" />
+              <span id="mo2-enable-text">Enable MO2 - Disable to use manual installation</span>
+            </label>
+            <div class="vortex-status-row">
+              <button class="btn-detect-vortex" id="btn-open-mo2">Open & Configure MO2</button>
+              <span class="setting-hint" id="mo2-open-warning" hidden>Warning: MO2 takes a moment to start up.</span>
+            </div>
+          </div>
+
+          <div class="settings-group">
+            <label class="setting-label">Manual Launch</label>
+            <p class="setting-hint">Use these if the Play button isn't working.</p>
+            <div class="setting-path-row">
+              <button class="btn-detect-vortex" id="btn-launch-mo2">Launch via MO2</button>
+              <button class="btn-detect-vortex" id="btn-launch-direct">Launch from directory</button>
+            </div>
+            <div class="install-status" id="trouble-launch-status"></div>
+          </div>
+
+        </div>
+
+        <!-- ── Actions (always visible) ── -->
+        <div class="modal-actions">
+          <button class="btn-save" id="btn-save">Save Settings</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Nexus login modal ────────────────────────── -->
+  <div class="modal-overlay" id="modal-nexus" hidden>
+    <div class="modal-box">
+      <div class="modal-header">
+        <span class="modal-title">Nexus Mods Login</span>
+        <button class="modal-close" id="nexus-modal-close" title="Close">&#10005;</button>
+      </div>
+      <div class="modal-body">
+        <div class="settings-group" id="nexus-sso-group" hidden>
+          <button class="btn-install" id="nexus-sso-login">Login via Nexus Mods website</button>
+          <p class="setting-hint">Opens nexusmods.com in your browser — click Authorise and you're done.</p>
+        </div>
+        <div class="settings-group">
+          <label class="setting-label">Personal API Key</label>
+          <p class="setting-hint">
+            Copy the key from your
+            <a href="#" id="nexus-keys-link">Nexus Mods API keys page</a>
+            and paste it below. Premium accounts get fully automatic mod
+            downloads; free accounts use the browser download buttons.
+          </p>
+          <div class="setting-path-row">
+            <input class="setting-input" id="nexus-key-input" type="password"
+                   placeholder="Paste your API key…" />
+            <button class="btn-browse" id="nexus-key-save">Login</button>
+          </div>
+          <div class="install-status" id="nexus-login-status"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Metrics modal ────────────────────────────── -->
+  <div class="modal-overlay" id="modal-metrics" hidden>
+    <div class="modal-box modal-box--wide">
+      <div class="modal-header">
+        <span class="modal-title">&#128202;&nbsp; Server Stats</span>
+        <button class="modal-close" id="metrics-close" title="Close">&#10005;</button>
+      </div>
+      <div class="modal-body">
+        <div class="metrics-grid" id="metrics-grid">
+          <div class="metrics-loading" id="metrics-loading">Loading…</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>

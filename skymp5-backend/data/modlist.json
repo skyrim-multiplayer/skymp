@@ -1,0 +1,148 @@
+[
+  {
+    "name": "SkyMP Client",
+    "required": true,
+    "enabled": true,
+    "source": "backend"
+  },
+  {
+    "name": "Sea Salt Deposits",
+    "required": true,
+    "enabled": true,
+    "source": "nexus",
+    "nexusId": 7300
+  },
+  {
+    "name": "Skyrim Souls RE - Unpaused Menus",
+    "required": true,
+    "enabled": true,
+    "source": "nexus",
+    "nexusId": 27859
+  },
+  {
+    "name": "MCM Helper",
+    "required": true,
+    "enabled": true,
+    "source": "nexus",
+    "nexusId": 53000
+  },
+  {
+    "name": "Inventory Interface Information Injector",
+    "required": true,
+    "enabled": true,
+    "source": "nexus",
+    "nexusId": 85702
+  },
+  {
+    "name": "Constructible Object Custom Keyword System",
+    "required": true,
+    "enabled": true,
+    "source": "nexus",
+    "nexusId": 81409
+  },
+  {
+    "name": "Echoes of Tamriel - Loading Screens",
+    "required": true,
+    "enabled": true,
+    "source": "nexus",
+    "nexusId": 151209
+  },
+  {
+    "name": "SkyUI",
+    "required": true,
+    "enabled": true,
+    "source": "nexus",
+    "nexusId": 12604
+  },
+  {
+    "name": "Simple Dual Sheath",
+    "required": true,
+    "enabled": true,
+    "source": "nexus",
+    "nexusId": 50049
+  },
+  {
+    "name": "First Person Camera Height Fix",
+    "required": true,
+    "enabled": true,
+    "source": "nexus",
+    "nexusId": 28091
+  },
+  {
+    "name": "Better Jumping SE",
+    "required": true,
+    "enabled": true,
+    "source": "nexus",
+    "nexusId": 18967
+  },
+  {
+    "name": "Animation Queue Fix",
+    "required": true,
+    "enabled": true,
+    "source": "nexus",
+    "nexusId": 82395
+  },
+  {
+    "name": "powerofthree's Tweaks",
+    "required": true,
+    "enabled": true,
+    "source": "nexus",
+    "nexusId": 51073
+  },
+  {
+    "name": "Skyrim Priority SE AE - CPU Performance FPS Optimizer",
+    "required": true,
+    "enabled": true,
+    "source": "nexus",
+    "nexusId": 50129
+  },
+  {
+    "name": "EngineFixes",
+    "required": true,
+    "enabled": true,
+    "source": "nexus",
+    "nexusId": 17230
+  },
+  {
+    "name": "SSE Display Tweaks",
+    "required": true,
+    "enabled": true,
+    "source": "nexus",
+    "nexusId": 34705
+  },
+  {
+    "name": "Native EditorID Fix",
+    "required": true,
+    "enabled": true,
+    "source": "nexus",
+    "nexusId": 85260
+  },
+  {
+    "name": "Crash Logger SSE AE VR - PDB support",
+    "required": true,
+    "enabled": true,
+    "source": "nexus",
+    "nexusId": 59818
+  },
+  {
+    "name": "Base Object Swapper",
+    "required": true,
+    "enabled": true,
+    "source": "nexus",
+    "nexusId": 60805
+  },
+  {
+    "name": "Address Library for SKSE Plugins",
+    "required": true,
+    "enabled": true,
+    "source": "nexus",
+    "nexusId": 32444
+  },
+  {
+    "name": "Actor Limit Fix",
+    "required": true,
+    "enabled": true,
+    "source": "nexus",
+    "nexusId": 32349
+  }
+]

@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SkyMP Management</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">F</div>
+        <div>
+          <strong>SkyMP</strong>
+          <span>Management</span>
+        </div>
+      </div>
+      <nav class="nav" aria-label="Dashboard sections">
+        <button class="nav-button active" data-view="access" type="button">Access</button>
+        <button class="nav-button" data-view="players" type="button">Players</button>
+        <button class="nav-button" data-view="factions" type="button">Factions</button>
+        <button class="nav-button" data-view="permissions" type="button">Permissions</button>
+      </nav>
+      <div class="session-panel">
+        <div id="userName" class="muted">Signed out</div>
+        <button id="loginButton" class="primary" type="button">Discord Login</button>
+        <button id="logoutButton" class="ghost hidden" type="button">Logout</button>
+      </div>
+    </aside>
+
+    <main class="content">
+      <header class="topbar">
+        <div>
+          <h1>Whitelist Control</h1>
+          <p id="statusText">Connect with Discord to manage the realm.</p>
+        </div>
+        <div class="status-pill" id="apiStatus">Offline</div>
+      </header>
+
+      <section id="signedOut" class="empty-state">
+        <h2>Discord access required</h2>
+        <p>Management role access is checked through the backend OAuth flow.</p>
+      </section>
+
+      <section id="accessView" class="view hidden">
+        <div class="split">
+          <section class="panel">
+            <div class="panel-head">
+              <h2>Server Access</h2>
+              <span class="muted">Role-backed join policy</span>
+            </div>
+            <form id="accessForm" class="form">
+              <label class="check-row">
+                <input id="serverLockedInput" type="checkbox">
+                <span>Server locked</span>
+              </label>
+              <label>
+                Locked Allowed Role IDs
+                <textarea id="lockedRoleIdsInput" rows="5" placeholder="One Discord role ID per line"></textarea>
+              </label>
+              <label>
+                Legacy Locked User IDs
+                <textarea id="lockedDiscordIdsInput" rows="4" placeholder="One Discord user ID per line"></textarea>
+              </label>
+              <label>
+                Whitelist Role ID
+                <input id="whitelistRoleIdInput" autocomplete="off">
+              </label>
+              <label>
+                Banned Role ID
+                <input id="bannedRoleIdInput" autocomplete="off">
+              </label>
+              <button class="primary" type="submit">Save Access Policy</button>
+            </form>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <h2>Check Player</h2>
+              <span id="accessCheckResult" class="muted">No check run</span>
+            </div>
+            <form id="accessCheckForm" class="form">
+              <label>
+                Discord ID
+                <input id="accessCheckDiscordId" autocomplete="off" required>
+              </label>
+              <button class="ghost" type="submit">Check Access</button>
+            </form>
+          </section>
+        </div>
+      </section>
+
+      <section id="playersView" class="view hidden">
+        <div class="split">
+          <section class="panel">
+            <div class="panel-head">
+              <h2>Players</h2>
+              <span id="playerCount" class="muted"></span>
+            </div>
+            <div class="toolbar">
+              <label>
+                Search
+                <input id="playerSearchInput" autocomplete="off" placeholder="Name, profile ID, Discord ID">
+              </label>
+              <button id="newPlayerButton" class="ghost" type="button">New Player</button>
+              <button id="playersRefreshButton" class="ghost" type="button">Refresh</button>
+            </div>
+            <div id="playersTable" class="table"></div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <h2>Player Detail</h2>
+              <span id="selectedPlayerLabel" class="muted">No player selected</span>
+            </div>
+            <form id="playerForm" class="form">
+              <label>
+                Discord ID
+                <input id="playerDiscordIdInput" autocomplete="off" required>
+              </label>
+              <label>
+                Username
+                <input id="playerUsernameInput" autocomplete="off">
+              </label>
+              <label>
+                Display Name
+                <input id="playerDisplayNameInput" autocomplete="off">
+              </label>
+              <label>
+                Notes
+                <textarea id="playerNotesInput" rows="4"></textarea>
+              </label>
+              <button class="primary" type="submit">Save Player</button>
+            </form>
+            <div class="actions-row">
+              <button id="whitelistPlayerButton" class="ghost" type="button">Toggle Whitelist</button>
+              <button id="banPlayerButton" class="danger mini" type="button">Toggle Ban</button>
+            </div>
+            <div id="playerAssignmentsTable" class="table compact-table"></div>
+            <form id="playerFactionForm" class="form">
+              <label>
+                Faction Slot
+                <select id="playerRequirementSelect"></select>
+              </label>
+              <label>
+                Notes
+                <input id="playerFactionNotesInput" autocomplete="off">
+              </label>
+              <button class="ghost" type="submit">Assign Faction</button>
+            </form>
+          </section>
+        </div>
+      </section>
+
+      <section id="factionsView" class="view hidden">
+        <div class="stats" id="stats"></div>
+
+        <div class="toolbar">
+          <label>
+            Scope
+            <select id="scopeFilter">
+              <option value="">All</option>
+              <option value="hold">Holds</option>
+              <option value="faction">Factions</option>
+            </select>
+          </label>
+          <label>
+            Group
+            <select id="groupFilter">
+              <option value="">All</option>
+            </select>
+          </label>
+          <button id="refreshButton" class="ghost" type="button">Refresh</button>
+        </div>
+
+        <div class="split">
+          <section class="panel">
+            <div class="panel-head">
+              <h2>Slots</h2>
+              <span id="slotCount" class="muted"></span>
+            </div>
+            <div id="requirementsTable" class="table"></div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <h2>Assign Player</h2>
+              <span id="selectedSlot" class="muted">No slot selected</span>
+            </div>
+            <form id="assignmentForm" class="form">
+              <label>
+                Slot
+                <select id="requirementSelect" required></select>
+              </label>
+              <label>
+                Discord ID
+                <input id="discordIdInput" name="discordId" autocomplete="off" required>
+              </label>
+              <label>
+                Player Name
+                <input id="playerNameInput" name="playerName" autocomplete="off">
+              </label>
+              <label>
+                Notes
+                <textarea id="notesInput" name="notes" rows="4"></textarea>
+              </label>
+              <button class="primary" type="submit">Save Assignment</button>
+            </form>
+          </section>
+        </div>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>Assignments</h2>
+            <span id="assignmentCount" class="muted"></span>
+          </div>
+          <div id="assignmentsTable" class="table"></div>
+        </section>
+      </section>
+
+      <section id="permissionsView" class="view hidden">
+        <div class="split">
+          <section class="panel">
+            <div class="panel-head">
+              <h2>Discord Roles</h2>
+              <span id="roleCount" class="muted"></span>
+            </div>
+            <div id="rolesTable" class="table"></div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <h2>Role Access</h2>
+              <span id="selectedRole" class="muted">New role</span>
+            </div>
+            <form id="roleForm" class="form">
+              <label>
+                Discord Role ID
+                <input id="roleIdInput" name="roleId" autocomplete="off" required>
+              </label>
+              <label>
+                Display Name
+                <input id="roleNameInput" name="name" autocomplete="off" required>
+              </label>
+              <div id="permissionChecks" class="checks"></div>
+              <button class="primary" type="submit">Save Role</button>
+            </form>
+          </section>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+  <script src="/dashboard-config.js"></script>
+  <script src="/app.js"></script>
+</body>
+</html>
