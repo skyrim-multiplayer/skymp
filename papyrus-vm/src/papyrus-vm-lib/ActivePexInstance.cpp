@@ -187,13 +187,13 @@ bool ActivePexInstance::EnsureCallResultIsSynchronous(
   Viet::Promise<VarValue> currentFnPr;
 
   auto ctxCopy = *ctx;
-  callResult.promise->Then([this, ctxCopy, currentFnPr](VarValue v) {
+  callResult.promise->Then([this, ctxCopy, currentFnPr](VarValue v) mutable {
     auto ctxCopy_ = ctxCopy;
     ctxCopy_.line++;
     auto res = ExecuteAll(ctxCopy_, v);
 
     if (res.promise)
-      res.promise->Then(currentFnPr);
+      res.promise->Forward(currentFnPr);
     else
       currentFnPr.Resolve(res);
   });

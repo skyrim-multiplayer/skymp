@@ -201,9 +201,11 @@ VarValue PapyrusUtility::WaitHelper(VarValue& self, const char* funcName,
   auto resultPromise = Viet::Promise<VarValue>();
 
   timerPromise
-    .Then(
-      [resultPromise](Viet::Void) { resultPromise.Resolve(VarValue::None()); })
-    .Catch([resultPromise](const char* e) { resultPromise.Reject(e); });
+    .Then([resultPromise](Viet::Void) mutable {
+      resultPromise.Resolve(VarValue::None());
+    })
+    .Catch(
+      [resultPromise](const char* e) mutable { resultPromise.Reject(e); });
 
   return VarValue(resultPromise);
 }
