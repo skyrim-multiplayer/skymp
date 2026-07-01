@@ -1,6 +1,8 @@
 #pragma once
 #include <BS_thread_pool.hpp>
+#include <chrono>
 #include <cstdint>
+#include <future>
 #include <memory>
 #include <mutex>
 
@@ -24,6 +26,22 @@ public:
   }
 
   void PushAndWait(const std::function<void()>& task) { Push(task).wait(); }
+
+  // Same as PushAndWait, but gives up after 'timeout' and returns false.
+  // Use this from the main game thread so a slow or stuck task on the
+  // pool can't freeze the whole game -- the caller can decide to just
+  // move on when this returns false.
+  //
+  // Note: on timeout the task is NOT cancelled, it stays queued and may
+  // still run later. Any state it captures must therefore stay valid for
+  // the whole lifetime of the pool (typical solution: capture by value
+  // into a shared_ptr).
+  bool PushAndWaitFor(const std::function<void()>& task,
+                      std::chrono::milliseconds timeout)
+  {
+    auto future = Push(task);
+    return future.wait_for(timeout) == std::future_status::ready;
+  }
 
 private:
   std::unique_ptr<BS::light_thread_pool> pool;
