@@ -98,11 +98,15 @@ export class WorldCleanerService extends ClientListener {
       }
     }
 
-    actor.disable(false).then(() => {
+    actor.disable(false).then(() => this.sp.Utility.wait(0.25)).then(() => {
       const ac = this.sp.Actor.from(this.sp.Game.getFormEx(actorId));
       if (!ac || this.isActorInDialogue(ac)) {
         return;
       }
+      // Small wait after disable gives the engine's background job threads a
+      // chance to finish any movement/AI work still queued for this actor
+      // before we free it. Without this, jobs can fire against a deleted
+      // actor and crash the game.
       ac.delete();
     });
   }
