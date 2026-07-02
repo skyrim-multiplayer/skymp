@@ -36,6 +36,18 @@ export class FormView {
   constructor(private remoteRefrId?: number) { }
 
   update(model: FormModel): void {
+    // Pending-delete guard: skip the whole update pass for actors queued
+    // for deletion. Without this, the pre-applyAll portion of update()
+    // can still respawn the actor via placeAtMe, rewrite setDisplayName
+    // in-place, or force appearance/base rebuilds while the delete
+    // countdown is running.
+    if (this.refrId !== 0) {
+      const worldCleanerService = SpApiInteractor.getControllerInstance().lookupListener(WorldCleanerService);
+      if (worldCleanerService.isPendingDelete(this.refrId)) {
+        return;
+      }
+    }
+
     // Other players mutate into PC clones when moving to another location
     if (model.movement) {
       if (!this.lastWorldOrCell)
@@ -338,6 +350,16 @@ export class FormView {
   private isSetNodeScaleApplied = false;
 
   private applyAll(refr: ObjectReference, model: FormModel) {
+    // Pending-delete guard: skip all remote-actor state application if
+    // WorldCleanerService has queued this actor for deletion. Continuing
+    // to push movement / animation / appearance / equipment through here
+    // during the pending window re-arms the queued-job crash the delete
+    // lifecycle is meant to avoid.
+    const worldCleanerService = SpApiInteractor.getControllerInstance().lookupListener(WorldCleanerService);
+    if (worldCleanerService.isPendingDelete(refr.getFormID())) {
+      return;
+    }
+
     let forcedWeapDrawn: boolean | null = null;
 
     if (PlayerCharacterDataHolder.getCrosshairRefId() === this.refrId) {
@@ -646,6 +668,12 @@ export class FormView {
   };
 
   private tryHostIfNeed(ac: Actor, remoteId: number) {
+    // Do not attempt to become host of an actor already queued for delete.
+    const worldCleanerService = SpApiInteractor.getControllerInstance().lookupListener(WorldCleanerService);
+    if (worldCleanerService.isPendingDelete(ac.getFormID())) {
+      return false;
+    }
+
     const last = lastTryHost[remoteId];
     if (!last || Date.now() - last >= 1000) {
       lastTryHost[remoteId] = Date.now();

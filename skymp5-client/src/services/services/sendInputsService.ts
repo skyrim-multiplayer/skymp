@@ -22,6 +22,7 @@ import { UpdateEquipmentMessage } from "../messages/updateEquipmentMessage";
 import { UpdateAppearanceMessage } from "../messages/updateAppearanceMessage";
 import { RemoteServer } from "./remoteServer";
 import { DeathService } from "./deathService";
+import { WorldCleanerService } from "./worldCleanerService";
 import { logTrace } from "../../logging";
 
 const playerFormId = 0x14;
@@ -99,7 +100,19 @@ export class SendInputsService extends ClientListener {
 
         const world = modelSource.getWorldModel();
 
+        const worldCleaner = this.controller.lookupListener(WorldCleanerService);
+
         targets.forEach((target) => {
+            // Pending-delete guard: skip hosted actors that WorldCleanerService
+            // has queued for deletion. 'target' is undefined for the local
+            // player (never pending). For hosted actors we resolve the local
+            // Actor via getInputOwner and check its local FormID.
+            if (typeof target === "number") {
+                const owner = this.getInputOwner(target);
+                if (owner && worldCleaner.isPendingDelete(owner.getFormID())) {
+                    return;
+                }
+            }
             const targetFormModel = target ? this.getForm(target, world) : this.getForm(undefined, world);
             this.sendMovement(target, targetFormModel);
             this.sendAnimation(target);

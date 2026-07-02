@@ -59,6 +59,7 @@ import {
 } from '../../view/worldViewMisc';
 import { TimeService } from './timeService';
 import { logTrace, logError } from '../../logging';
+import { WorldCleanerService } from './worldCleanerService';
 
 import { SpellCastMessage } from '../messages/spellCastMessage';
 import { UpdateAnimVariablesMessage } from '../messages/updateAnimVariablesMessage';
@@ -129,6 +130,15 @@ export class RemoteServer extends ClientListener {
   private onHostStartMessage(event: ConnectionMessage<HostStartMessage>) {
     const msg = event.message;
     const target = msg.target;
+
+    // Pending-delete guard: refuse to become host of an actor already
+    // queued for deletion. Accepting host would put it into the sendInputs
+    // loop and re-arm the queued-job crash the delete lifecycle avoids.
+    const localId = remoteIdToLocalId(target);
+    if (this.controller.lookupListener(WorldCleanerService).isPendingDelete(localId)) {
+      logTrace(this, 'hostStart ignored, actor pending delete', target.toString(16));
+      return;
+    }
 
     let hosted = storage['hosted'];
     if (typeof hosted !== typeof []) {
@@ -253,6 +263,16 @@ export class RemoteServer extends ClientListener {
         'cell/world is',
         msg.worldOrCell.toString(16),
       );
+
+      // Pending-delete guard: do not teleport an actor queued for
+      // deletion — moveRefrToPosition would kick off cell-load /
+      // pathing work that races the final delete.
+      const refrIdEarly = refr?.getFormID();
+      if (refrIdEarly !== undefined && refrIdEarly !== 0x14 &&
+          this.controller.lookupListener(WorldCleanerService).isPendingDelete(refrIdEarly)) {
+        return;
+      }
+
       const ragdollService = this.controller.lookupListener(RagdollService);
 
       const refrId = refr?.getFormID();
@@ -793,6 +813,13 @@ export class RemoteServer extends ClientListener {
           ? Game.getPlayer()!
           : Actor.from(Game.getFormEx(remoteIdToLocalId(form.refrId ?? 0)));
       if (actor) {
+        // Pending-delete guard: skip death-state application AND the
+        // RespawnNeededError disableNoWait+delete fallback on an actor
+        // already in the delete pipeline — the fallback would double-
+        // delete via a path that bypasses WorldCleanerService.
+        if (this.controller.lookupListener(WorldCleanerService).isPendingDelete(actor.getFormID())) {
+          return;
+        }
         try {
           this.controller.emitter.emit("applyDeathStateEvent", {
             actor: actor,
@@ -826,6 +853,13 @@ export class RemoteServer extends ClientListener {
       const refr = id === this.getMyActorIndex() ? Game.getPlayer() : getObjectReference(id);
       const ac = Actor.from(refr);
       if (!ac) {
+        return;
+      }
+
+      // Pending-delete guard: do not mutate actor values on an actor
+      // queued for deletion (would trigger AV recomputation right before
+      // the delete).
+      if (this.controller.lookupListener(WorldCleanerService).isPendingDelete(ac.getFormID())) {
         return;
       }
 
@@ -947,6 +981,12 @@ export class RemoteServer extends ClientListener {
         return;
       }
 
+      // Pending-delete guard: skip cast/interrupt for a caster queued
+      // for deletion.
+      if (this.controller.lookupListener(WorldCleanerService).isPendingDelete(ac.getFormID())) {
+        return;
+      }
+
       const actorAnimationVariables: ActorAnimationVariables = {
         booleans: new Uint8Array(msg.data.actorAnimationVariables.booleans),
         floats: new Uint8Array(msg.data.actorAnimationVariables.floats),
@@ -972,6 +1012,12 @@ export class RemoteServer extends ClientListener {
     once('update', () => {
       const ac = Actor.from(Game.getFormEx(remoteIdToLocalId(msg.data.actorRemoteId)));
       if (!ac) {
+        return;
+      }
+
+      // Pending-delete guard: skip animation-variable application on an
+      // actor queued for deletion.
+      if (this.controller.lookupListener(WorldCleanerService).isPendingDelete(ac.getFormID())) {
         return;
       }
 
