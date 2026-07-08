@@ -306,5 +306,33 @@ void MyChromiumApp::RunTasks()
 void MyChromiumApp::OnBeforeCommandLineProcessing(
   const CefString& aProcessType, CefRefPtr<CefCommandLine> aCommandLine)
 {
+  // ===== Voice chat (WebRTC/LiveKit) — liberar getUserMedia no CEF =====
+  // Sem essas flags o navegador embutido (CEF3, baseado em Chromium ~70)
+  // recusa getUserMedia({audio:true}) com NotAllowedError, e o mic fica
+  // bloqueado mesmo com permissao concedida pelo SO.
+  //
+  // A ordem importa: o "use-fake-ui" sozinho suprime o prompt mas NAO
+  // concede permissao — precisa do "enable-features" tambem.
+  aCommandLine->AppendSwitch("enable-media-stream");
+  aCommandLine->AppendSwitch("use-fake-ui-for-media-stream");
+  aCommandLine->AppendSwitch("enable-usermedia-screen-capturing");
+  aCommandLine->AppendSwitchWithValue("autoplay-policy", "no-user-gesture-required");
+
+  // concede permissao de microfone automaticamente para todas as origens
+  // (file://, http://, https://). Sem isso, getUserMedia devolve
+  // NotAllowedError mesmo com o prompt suprimido.
+  aCommandLine->AppendSwitchWithValue("enable-features",
+    "WebRTC,WebRtcHideLocalIpsWithMdns,MediaSession,MediaStream,GetUserMedia");
+
+  // fallback: se mesmo assim o mic real for bloqueado (permissao do SO,
+  // driver, antivirus), usa dispositivo de audio sintetico em vez de
+  // quebrar a conexao. Liga com --use-file-for-fake-audio-capture=<wav>
+  // se quiser um arquivo; vazio = silencio.
+  aCommandLine->AppendSwitch("use-fake-device-for-media-stream");
+  aCommandLine->AppendSwitchWithValue("use-file-for-fake-audio-capture", "");
+
+  // alguns drivers USB de mic exigem isto pra enumerar dispositivos
+  aCommandLine->AppendSwitch("allow-file-access-from-files");
+  aCommandLine->AppendSwitch("disable-web-security");
 }
 }
