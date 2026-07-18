@@ -1,6 +1,6 @@
 # SkyMP Individual / Entity Contributor Assignment Agreement
 
-Thank you for your interest in contributing to SkyMP ("We" or "Us").
+Thank you for your interest in contributing to SkyMP (the "Project"). This Agreement is entered into with Limited Liability Partnership "POSPELOV SOFT", BIN 230440011026, a legal entity organized under the laws of the Republic of Kazakhstan ("We" or "Us"), which manages the Project.
 
 This contributor agreement ("Agreement") documents the rights granted by contributors to Us. To make this document effective, please sign it electronically through the CLA Assistant bot, which will comment on your first pull request to Us with a signing link. This is a legally binding document, so please read it carefully before agreeing to it. The Agreement may cover more than one software project managed by Us.
 
