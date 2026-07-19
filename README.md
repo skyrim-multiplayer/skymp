@@ -20,3 +20,4 @@ Third-party code licenses can be found in [THIRD_PARTY_LICENSES](THIRD_PARTY_LIC
 ### Development with GitHub Codespaces
 
 [![Create Codespace](https://img.shields.io/badge/Codespace-Launch-blue?logo=github)](https://github.com/codespaces/new?repo=skyrim-multiplayer/skymp&ref=main)
+
