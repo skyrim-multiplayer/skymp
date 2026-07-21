@@ -335,6 +335,8 @@ CallNative::AnySafe CallNative::CallNativeSafe(Arguments& args_)
         throw NullPointerException("nativeActorPtr");
       if (nativeActorPtr->formType.get() != RE::FormType::ActorCharacter)
         throw std::runtime_error("QueueNiNodeUpdate must be called on Actor");
+      if (!nativeActorPtr->GetCurrent3D())
+        return;
       // this is called QueueNiNodeUpdate in skse
       nativeActorPtr->DoReset3D(false);
     });
