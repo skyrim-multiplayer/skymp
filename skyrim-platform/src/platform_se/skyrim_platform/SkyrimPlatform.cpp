@@ -441,6 +441,17 @@ void SkyrimPlatform::PushAndWait(const std::function<void(Napi::Env)>& f)
   });
 }
 
+bool SkyrimPlatform::PushAndWaitFor(
+  const std::function<void(Napi::Env)>& f, std::chrono::milliseconds timeout)
+{
+  return pImpl->pool.PushAndWaitFor(
+    [this, f] {
+      auto engine = pImpl->commonExecutionListener->GetJsEngine();
+      engine->AcquireEnvAndCall(f);
+    },
+    timeout);
+}
+
 void SkyrimPlatform::Push(const std::function<void(Napi::Env)>& f)
 {
   pImpl->pool.Push([this, f] {

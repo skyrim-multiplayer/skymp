@@ -1,16 +1,26 @@
 #include "DirectoryMonitor.h"
 
 namespace {
+// How long to sleep before retrying when the watched directory is missing
+// or the file-system watcher failed. Without this the watch thread burns
+// 100% of a CPU core calling FindFirstChangeNotificationW in a tight loop.
+constexpr DWORD kBackoffOnErrorMs = 1000;
+
 bool WaitForNextUpdate(DWORD* outErrorCode, std::filesystem::path dir)
 {
-  HANDLE hDir;
-  hDir = FindFirstChangeNotificationW(dir.c_str(), TRUE,
-                                      FILE_NOTIFY_CHANGE_LAST_WRITE);
+  HANDLE hDir = FindFirstChangeNotificationW(dir.c_str(), TRUE,
+                                             FILE_NOTIFY_CHANGE_LAST_WRITE);
   if (hDir == INVALID_HANDLE_VALUE) {
     *outErrorCode = GetLastError();
     return false;
   }
+
   WaitForSingleObject(hDir, INFINITE);
+
+  // Always release the notification handle. The old code never closed it,
+  // which slowly leaked handles and could push the watch thread into a
+  // high-CPU loop once the process-wide handle table filled up.
+  FindCloseChangeNotification(hDir);
   return true;
 }
 }
@@ -75,6 +85,10 @@ void DirectoryMonitor::Watch()
         ++pImpl_->numUpdates;
       } else {
         pImpl_->errorCode = err;
+        // Back off before retrying so we don't burn a whole CPU core
+        // hammering FindFirstChangeNotificationW when the folder is
+        // missing or the OS returns an error.
+        Sleep(kBackoffOnErrorMs);
       }
     }
   }).detach();

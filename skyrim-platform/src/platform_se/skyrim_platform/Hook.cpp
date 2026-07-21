@@ -2,6 +2,15 @@
 #include "Handler.h"
 #include "SkyrimPlatform.h"
 
+namespace {
+// How long a game-thread hook is allowed to wait for its JS handler.
+// If a JS handler runs longer than this (or the JS thread is busy),
+// we give up, skip the handler, and let the game keep running instead
+// of freezing. This is the SkyrimPlatform-level guard against hook
+// deadlocks caused by slow / buggy JS code.
+constexpr auto kHookDispatchTimeout = std::chrono::seconds(5);
+}
+
 Hook::Hook(std::string hookName_, std::string eventNameVariableName_,
            std::optional<std::string> succeededVariableName_)
   : hookName(hookName_)
@@ -58,12 +67,17 @@ void Hook::Enter(uint32_t selfId, std::string& eventName)
       });
   }
 
-  auto f = [&](Napi::Env env) {
+  // Copy the event name into a shared string so the queued task can safely
+  // touch it even if we bail out on timeout (the game thread's local
+  // string may be gone by then).
+  auto sharedEventName = std::make_shared<std::string>(eventName);
+
+  auto f = [this, owningThread, selfId, sharedEventName](Napi::Env env) {
     try {
       if (inProgressThreads.count(owningThread))
         throw std::runtime_error("'" + hookName + "' is already processing");
       inProgressThreads.insert(owningThread);
-      HandleEnter(owningThread, selfId, eventName, env);
+      HandleEnter(owningThread, selfId, *sharedEventName, env);
     } catch (std::exception& e) {
       auto err = std::string(e.what()) + " (while performing enter on '" +
         hookName + "')";
@@ -71,7 +85,22 @@ void Hook::Enter(uint32_t selfId, std::string& eventName)
         [err](Napi::Env) { throw std::runtime_error(err); });
     }
   };
-  SkyrimPlatform::GetSingleton()->PushAndWait(f);
+
+  bool ok =
+    SkyrimPlatform::GetSingleton()->PushAndWaitFor(f, kHookDispatchTimeout);
+  if (ok) {
+    // JS handler finished in time -- propagate any renamed event back to
+    // the game so hooks that rewrite event names still work.
+    eventName = *sharedEventName;
+  } else {
+    // JS handler is taking too long. Rather than freeze the game, skip
+    // this hook fire. The queued task may still run later (it's safe --
+    // it only touches the shared string, not game stack memory).
+    spdlog::warn("Hook '{}' handler timed out after {} ms; skipping to keep "
+                 "the game responsive.",
+                 hookName,
+                 static_cast<long long>(kHookDispatchTimeout.count()));
+  }
   addRemoveBlocker--;
 }
 
@@ -84,12 +113,15 @@ void Hook::Leave(bool succeeded)
     return;
   }
 
-  auto f = [&](Napi::Env env) {
+  auto self = this;
+  auto capturedHookName = hookName;
+  auto f = [self, owningThread, succeeded, capturedHookName](Napi::Env env) {
     try {
-      if (!inProgressThreads.count(owningThread))
-        throw std::runtime_error("'" + hookName + "' is not processing");
-      inProgressThreads.erase(owningThread);
-      HandleLeave(owningThread, succeeded, env);
+      if (!self->inProgressThreads.count(owningThread))
+        throw std::runtime_error("'" + capturedHookName +
+                                 "' is not processing");
+      self->inProgressThreads.erase(owningThread);
+      self->HandleLeave(owningThread, succeeded, env);
 
     } catch (std::exception& e) {
       std::string what = e.what();
@@ -98,7 +130,15 @@ void Hook::Leave(bool succeeded)
       });
     }
   };
-  SkyrimPlatform::GetSingleton()->PushAndWait(f);
+
+  bool ok =
+    SkyrimPlatform::GetSingleton()->PushAndWaitFor(f, kHookDispatchTimeout);
+  if (!ok) {
+    spdlog::warn("Hook '{}' leave handler timed out after {} ms; skipping to "
+                 "keep the game responsive.",
+                 hookName,
+                 static_cast<long long>(kHookDispatchTimeout.count()));
+  }
   addRemoveBlocker--;
 }
 
