@@ -5,6 +5,7 @@ import { FormType, HitEvent, storage } from "skyrimPlatform";
 import { ClientListener, CombinedController, Sp } from "./clientListener";
 import { MsgType } from "../../messages";
 import { Hit } from "../messages/hitMessage";
+import { WorldCleanerService } from "./worldCleanerService";
 
 export class HitService extends ClientListener {
     constructor(private sp: Sp, private controller: CombinedController) {
@@ -16,6 +17,16 @@ export class HitService extends ClientListener {
         // TODO: add more logging in case of 'return'
         // TODO: allow non-weapon sources
         const aggressor = e.aggressor.getFormID();
+
+        // Pending-delete guard: skip hit events involving actors already
+        // queued for deletion — both as aggressor and as target. Emitting
+        // OnHit for a pending-delete actor sends a message referencing an
+        // actor the server is about to see disappear.
+        const worldCleaner = this.controller.lookupListener(WorldCleanerService);
+        if (worldCleaner.isPendingDelete(aggressor) || worldCleaner.isPendingDelete(e.target.getFormID())) {
+            return;
+        }
+
         if (aggressor < 0xff000000 && aggressor !== 0x14) return; // all skymp npcs are FF+
 
         if (aggressor >= 0xff000000) {

@@ -8,6 +8,7 @@ import { ClientListener, CombinedController, Sp } from "./clientListener";
 import { remoteIdToLocalId } from '../../view/worldViewMisc';
 import { logError, logTrace } from "../../logging";
 import { WorldView } from "../../view/worldView";
+import { WorldCleanerService } from "./worldCleanerService";
 
 export class SpSnippetService extends ClientListener {
   constructor(private sp: Sp, private controller: CombinedController) {
@@ -170,6 +171,16 @@ export class SpSnippetService extends ClientListener {
 
   private async runMethod(snippet: SpSnippetMessage): Promise<unknown> {
     const selfId = remoteIdToLocalId(snippet.selfId);
+
+    // Pending-delete guard: server snippets can invoke arbitrary Papyrus
+    // methods on any form via selfId. Skipping snippets whose target is
+    // queued for deletion prevents late per-actor calls from racing the
+    // final delete.
+    if (this.controller.lookupListener(WorldCleanerService).isPendingDelete(selfId)) {
+      logTrace(this, 'runMethod skipped, target pending delete', selfId.toString(16), snippet.class, snippet.function);
+      return;
+    }
+
     const self = this.sp.Game.getFormEx(selfId);
     if (!self)
       throw new Error(

@@ -17,6 +17,7 @@ import * as skyrimPlatform from "skyrimPlatform";
 import { logError, logTrace } from "../../logging";
 import { SettingsService } from "./settingsService";
 import { ServerJsVerificationService } from "./serverJsVerificationService";
+import { WorldCleanerService } from "./worldCleanerService";
 
 export class GamemodeUpdateService extends ClientListener {
     constructor(private sp: Sp, private controller: CombinedController) {
@@ -89,6 +90,13 @@ export class GamemodeUpdateService extends ClientListener {
     }
 
     updateNeighbor(refr: ObjectReference, model: FormModel, state: Record<string, unknown>) {
+        // Pending-delete guard: skip user gameplay callbacks for actors
+        // WorldCleanerService has queued for deletion. Prevents server JS
+        // from touching an actor that is between disable and final delete.
+        if (this.controller.lookupListener(WorldCleanerService).isPendingDelete(refr.getFormID())) {
+            return;
+        }
+
         for (const key of this.updateNeighborFunctionsKeys) {
             const v = (model as Record<string, unknown>)[key];
             // According to docs:
