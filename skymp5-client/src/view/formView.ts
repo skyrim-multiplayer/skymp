@@ -318,7 +318,15 @@ export class FormView {
       if (refrId >= 0xff000000) {
         const refr = ObjectReference.from(Game.getFormEx(refrId));
         if (refr) {
-          refr.delete();
+          // Disable first and wait for 3D to unload before deleting.
+          // This prevents a race condition where BSTaskManagerThread still has
+          // queued texture loads for this reference's 3D when delete() frees it.
+          refr.disable(false).then(() => {
+            const r = ObjectReference.from(Game.getFormEx(refrId));
+            if (r) {
+              r.delete();
+            }
+          });
         }
         SpApiInteractor.getControllerInstance().lookupListener(WorldCleanerService).modWcProtection(refrId, -1);
         const ac = Actor.from(refr);

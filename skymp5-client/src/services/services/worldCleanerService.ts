@@ -103,7 +103,15 @@ export class WorldCleanerService extends ClientListener {
       if (!ac || this.isActorInDialogue(ac)) {
         return;
       }
-      ac.delete();
+      // Wait an additional frame after disable completes to let BSTaskManagerThread
+      // finish processing any queued texture loads for this actor's 3D.
+      // Deleting immediately after disable races with the async texture system.
+      this.sp.Utility.wait(0.1).then(() => {
+        const a = this.sp.Actor.from(this.sp.Game.getFormEx(actorId));
+        if (a) {
+          a.delete();
+        }
+      });
     });
   }
 
