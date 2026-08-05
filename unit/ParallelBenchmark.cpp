@@ -111,6 +111,22 @@ MpParallel::ParallelConfig MakeConfig(size_t workers)
   // Throttling would change the amount of work done, making the two
   // configurations incomparable. Keep the workload identical.
   config.adaptiveThrottling = false;
+  // Likewise for the offload-threshold controller. It moves the threshold
+  // during the run, so leaving it on means a row of this table is an average
+  // over whatever settings it happened to pass through -- and the pinned
+  // `minActorsToOffload = 1` above stops meaning anything. The controller has
+  // its own case; here it must hold still so everything else is comparable.
+  config.adaptiveParallelism = false;
+  config.Normalize();
+  return config;
+}
+
+// Same, but with the adaptive threshold controller left on, for the cases that
+// are specifically measuring it.
+MpParallel::ParallelConfig MakeAdaptiveConfig(size_t workers)
+{
+  MpParallel::ParallelConfig config = MakeConfig(workers);
+  config.adaptiveParallelism = true;
   config.Normalize();
   return config;
 }
@@ -400,7 +416,9 @@ struct LoadSegment
 // rather than per-tick averages because segments differ in length and the
 // question is which configuration finishes the whole shift faster.
 double RunLoadProfile(const std::vector<LoadSegment>& profile, int totalPlayers,
-                      bool parallel, const MpParallel::ParallelConfig& config)
+                      bool parallel, const MpParallel::ParallelConfig& config,
+                      uint64_t* outBackoffs = nullptr,
+                      size_t* outFinalThreshold = nullptr)
 {
   PartOne partOne;
   NullSendTarget sendTarget;
@@ -448,6 +466,16 @@ double RunLoadProfile(const std::vector<LoadSegment>& profile, int totalPlayers,
     }
   }
   const auto elapsed = std::chrono::steady_clock::now() - start;
+
+  if (parallel) {
+    const MpParallel::ParallelMetrics& m = partOne.GetParallelMetrics();
+    if (outBackoffs) {
+      *outBackoffs = m.totalAdaptiveBackoffs;
+    }
+    if (outFinalThreshold) {
+      *outFinalThreshold = m.lastAdaptiveThreshold;
+    }
+  }
   return std::chrono::duration<double, std::micro>(elapsed).count();
 }
 
@@ -542,6 +570,43 @@ TEST_CASE("A changing population moves the optimum", "[.][ParallelBench]")
               bestShards);
 
   REQUIRE(best > 0.0);
+}
+
+TEST_CASE("Adaptive threshold controller against a fixed one",
+          "[.][ParallelBench]")
+{
+  // The controller exists to find the offload break-even on hardware nobody
+  // benchmarked. The test of that claim is whether it lands near the fixed
+  // setting that was measured here -- if it is worse than a constant on the
+  // machine the constant was tuned for, it is not tuning, it is noise.
+  constexpr int kTicks = 150;
+  std::printf("\n  us/tick, adaptive threshold vs fixed\n\n");
+  std::printf("  %-8s %10s %10s %10s %8s %9s %8s\n", "players", "inline",
+              "fixed=1", "adaptive", "ratio", "backoffs", "thresh");
+  std::printf("  %s\n", std::string(70, '-').c_str());
+
+  for (int players : { 50, 100, 150, 250, 400 }) {
+    const Sample baseline = RunScenario(players, false, 0, kTicks);
+
+    const double fixed =
+      RunLoadProfile({ { kTicks, players } }, players, true, MakeConfig(0)) /
+      kTicks;
+
+    // Reported so a losing row says *why* it lost: a backoff count above zero
+    // means the controller switched the pool off and spent time in the
+    // degraded path, which is the only way it can lose by much.
+    uint64_t backoffs = 0;
+    size_t threshold = 0;
+    const double adaptive =
+      RunLoadProfile({ { kTicks, players } }, players, true,
+                     MakeAdaptiveConfig(0), &backoffs, &threshold) /
+      kTicks;
+
+    std::printf("  %-8d %10.1f %10.1f %10.1f %7.2fx %9llu %8zu\n", players,
+                baseline.perTickMicros, fixed, adaptive, adaptive / fixed,
+                static_cast<unsigned long long>(backoffs), threshold);
+  }
+  std::printf("\n  (>1.00x means the controller is losing to the constant)\n\n");
 }
 
 TEST_CASE("Cost of a wrong offload threshold, in both directions",

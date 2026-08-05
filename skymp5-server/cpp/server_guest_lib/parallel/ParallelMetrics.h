@@ -37,8 +37,21 @@ struct ParallelMetrics
   // gives the achieved speedup, which is the number worth watching.
   uint64_t lastAggregateTaskMicros = 0;
 
+  // Offload threshold currently in force. Equals config.minActorsToOffload
+  // unless adaptiveParallelism has moved it. Watch this against
+  // lastActorCount: a value that sits above the population means the pool is
+  // switched off, and that state costs more than never enabling the feature,
+  // so it should be rare and brief.
+  size_t lastAdaptiveThreshold = 0;
+
   // --- running totals ---------------------------------------------------
   uint64_t totalTicks = 0;
+
+  // Times the controller decided the pool was not paying for itself. A steady
+  // trickle means it is oscillating around the break-even; a flat zero on a
+  // busy server means it is doing nothing, which is the intended outcome when
+  // the fixed threshold was already right.
+  uint64_t totalAdaptiveBackoffs = 0;
   uint64_t totalOffloadedTicks = 0;
   uint64_t totalInlineTicks = 0;
   uint64_t totalRelayEdgesEmitted = 0;

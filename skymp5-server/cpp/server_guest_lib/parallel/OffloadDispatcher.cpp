@@ -236,22 +236,8 @@ void OffloadDispatcher::ExecuteTick(IOffloadSink& sink)
   RunUnits();
   JoinResults(sink);
 
-  if (config.adaptiveParallelism) {
-    if (lastTickOffloaded) {
-      uint64_t parallelWall = metrics.lastParallelMicros + metrics.lastJoinMicros;
-      // Use the bias to favor offloading due to asymmetric penalty
-      if (parallelWall > metrics.lastAggregateTaskMicros * config.adaptiveBias) {
-        // Offload was slower than sequential would have been. Back off quickly.
-        currentMinActorsToOffload = snapshot.actors.size() + 10;
-      }
-    } else {
-      // Slowly decay the threshold to probe offloading again.
-      if (snapshot.tickIndex % config.adaptiveDecayTicks == 0 &&
-          currentMinActorsToOffload > config.adaptiveThresholdFloor) {
-        currentMinActorsToOffload--;
-      }
-    }
-  }
+  UpdateAdaptiveThreshold();
+  metrics.lastAdaptiveThreshold = currentMinActorsToOffload;
 
   if (pool) {
     const uint64_t failed = pool->GetFailedTaskCount();
@@ -279,6 +265,80 @@ void OffloadDispatcher::ExecuteTick(IOffloadSink& sink)
   }
 
   snapshot.Clear();
+}
+
+void OffloadDispatcher::UpdateAdaptiveThreshold()
+{
+  if (!config.adaptiveParallelism) {
+    return;
+  }
+
+  if (!lastTickOffloaded) {
+    // Nothing was measured this tick, so there is no new evidence. Walk the
+    // threshold back down toward the floor so the pool gets probed again.
+    //
+    // Geometrically, not one actor per interval. Backing off sets the
+    // threshold just above the current population, so a linear walk from 400
+    // would take 370 intervals -- at the default of 10 ticks each, more than
+    // a minute of running degraded. And degraded is not merely "no pool": the
+    // snapshot is still built and the relays still deferred to the join, which
+    // measures *worse* than never enabling the feature (577us against an
+    // inline 482us at 250 players). Recovery has to be fast because the state
+    // it recovers from is the expensive one.
+    // Hold still for a while after a backoff. Without this the threshold
+    // decays straight back through the population it just failed at, spends
+    // adaptiveBackoffTicks gathering the same verdict, and backs off again --
+    // measured at 50 players, that was 15 round trips in 150 ticks. The
+    // cooldown makes a retry an occasional probe rather than a cycle.
+    if (backoffCooldownTicks > 0) {
+      --backoffCooldownTicks;
+      return;
+    }
+    if (snapshot.tickIndex % config.adaptiveDecayTicks != 0) {
+      return;
+    }
+    if (currentMinActorsToOffload > config.adaptiveThresholdFloor) {
+      const size_t step = std::max<size_t>(currentMinActorsToOffload / 8, 1);
+      currentMinActorsToOffload =
+        currentMinActorsToOffload > config.adaptiveThresholdFloor + step
+        ? currentMinActorsToOffload - step
+        : config.adaptiveThresholdFloor;
+    }
+    return;
+  }
+
+  // Did the pool actually beat doing the same work on this thread?
+  //
+  // The comparison is the parallel phase's wall clock against the sum of its
+  // tasks, and nothing else. The join is deliberately excluded: it runs
+  // identically whether or not the work was spread across cores, so counting
+  // it as a cost of parallelism is measuring a constant and blaming the pool
+  // for it. Including it is what made this controller switch the offload off
+  // at 100 players, where the offload was in fact 13% ahead.
+  const uint64_t wall = metrics.lastParallelMicros;
+  const auto work = static_cast<double>(metrics.lastAggregateTaskMicros);
+
+  // A tick too small to time is not evidence either way.
+  if (wall == 0 || work <= 0.0) {
+    return;
+  }
+
+  if (static_cast<double>(wall) * config.adaptiveBias <= work) {
+    consecutiveUnprofitableTicks = 0;
+    return;
+  }
+
+  // One bad sample is noise -- a GC pause, the OS scheduling something else,
+  // a tick that collided with a save. Requiring a run of them is what keeps a
+  // hiccup from parking the server in the degraded path.
+  if (++consecutiveUnprofitableTicks < config.adaptiveBackoffTicks) {
+    return;
+  }
+
+  consecutiveUnprofitableTicks = 0;
+  currentMinActorsToOffload = snapshot.actors.size() + 1;
+  backoffCooldownTicks = config.adaptiveCooldownTicks;
+  ++metrics.totalAdaptiveBackoffs;
 }
 
 size_t OffloadDispatcher::ComputeShardBudget() const

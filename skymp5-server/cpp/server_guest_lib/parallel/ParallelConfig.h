@@ -28,10 +28,30 @@ struct ParallelConfig
 
   // The overhead tolerance factor. E.g. 1.05 means we allow parallel execution
   // to be up to 5% slower than the sequential estimate before bailing out.
+  //
+  // The comparison is the parallel phase's wall clock against the sum of its
+  // own tasks. The join is not part of it: the join runs identically whether
+  // or not the work was spread across cores, so charging it to the pool would
+  // be blaming parallelism for a constant.
   float adaptiveBias = 1.05f;
 
-  // How frequently (in ticks) we slowly decay the threshold to probe offloading again.
+  // How many *consecutive* offloaded ticks must fail to pay for themselves
+  // before the threshold backs off.
+  //
+  // One bad sample is noise -- a GC pause, the OS scheduling something else,
+  // a tick that collided with a save. Acting on a single sample parked the
+  // server in the degraded path for a minute at a time, and the degraded path
+  // measures worse than never enabling the feature.
+  uint32_t adaptiveBackoffTicks = 8;
+
+  // How frequently (in ticks) we decay the threshold to probe offloading again.
   uint32_t adaptiveDecayTicks = 10;
+
+  // Ticks to hold still after a backoff before the threshold starts decaying
+  // again. Without it the threshold walks straight back through the
+  // population it just rejected, re-gathers the same verdict, and backs off
+  // again -- 15 round trips in 150 ticks when measured at 50 players.
+  uint32_t adaptiveCooldownTicks = 300;
 
   // The minimum minActorsToOffload we will ever decay down to.
   size_t adaptiveThresholdFloor = 30;

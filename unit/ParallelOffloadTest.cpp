@@ -881,3 +881,170 @@ TEST_CASE("An inline tick does not charge a real area for the whole server",
   REQUIRE(dispatcher.GetMetrics().totalInlineTicks == 40);
   REQUIRE(dispatcher.GetMetrics().totalRelayEdgesThrottled == 0);
 }
+
+namespace {
+
+// Drives `ticks` ticks with `actorCount` movers all in one chunk.
+void DriveTicks(OffloadDispatcher& dispatcher, RecordingSink& sink,
+                int actorCount, int ticks, const std::vector<uint8_t>& packet,
+                const std::vector<RelayTarget>& targets)
+{
+  for (int t = 0; t < ticks; ++t) {
+    for (int i = 0; i < actorCount; ++i) {
+      dispatcher.SubmitMovement(
+        MakeSubmission(0xff000000 + i, static_cast<uint32_t>(i),
+                       static_cast<Networking::UserId>(i), 10.f * i, 0.f,
+                       packet));
+    }
+    dispatcher.SetPotentialTargets(std::vector<RelayTarget>(targets));
+    dispatcher.ExecuteTick(sink);
+  }
+}
+
+std::vector<RelayTarget> MakeTargets(int count)
+{
+  std::vector<RelayTarget> targets;
+  for (int i = 0; i < count; ++i) {
+    targets.push_back(MakeTarget(static_cast<Networking::UserId>(i),
+                                 0xff000000 + i, 10.f * i, 0.f));
+  }
+  return targets;
+}
+
+ParallelConfig MakeAdaptive(size_t workerThreads, size_t minActorsToOffload)
+{
+  ParallelConfig config = MakeConfig(workerThreads, minActorsToOffload);
+  config.adaptiveParallelism = true;
+  config.Normalize();
+  return config;
+}
+
+}
+
+TEST_CASE("The adaptive threshold leaves a profitable offload alone",
+          "[ParallelOffload]")
+{
+  // The controller's job is to find the break-even, so the first thing it must
+  // not do is walk away from a tick where the pool is winning. Its predecessor
+  // did exactly that: it charged the serial join to the pool, and the join is
+  // paid whether or not the work was spread across cores.
+  ParallelConfig config = MakeAdaptive(4, 1);
+  config.adaptiveBackoffTicks = 1;  // no smoothing, so the objective is on trial
+  config.Normalize();
+
+  OffloadDispatcher dispatcher(config);
+  RecordingSink sink;
+
+  const std::vector<uint8_t> packet{ 1, 2, 3, 4 };
+  const std::vector<RelayTarget> targets = MakeTargets(120);
+
+  DriveTicks(dispatcher, sink, 120, 40, packet, targets);
+
+  // Whatever it decided, it must still be doing the work.
+  REQUIRE(dispatcher.GetMetrics().lastRelayEdgesEmitted == 120 * 120);
+  // And it must not have concluded that a pool doing real work is worthless.
+  REQUIRE(dispatcher.GetMetrics().totalOffloadedTicks > 0);
+}
+
+TEST_CASE("A single slow tick does not back the threshold off",
+          "[ParallelOffload]")
+{
+  // A GC pause or a descheduled thread makes one tick look unprofitable. With
+  // the default run length, that must not be enough to switch the pool off --
+  // the state it switches to is the degraded one, which measures worse than
+  // never enabling the feature at all.
+  ParallelConfig config = MakeAdaptive(2, 1);
+  config.adaptiveBackoffTicks = 8;
+  config.Normalize();
+  REQUIRE(config.adaptiveBackoffTicks == 8);
+
+  OffloadDispatcher dispatcher(config);
+  RecordingSink sink;
+
+  const std::vector<uint8_t> packet{ 5, 6, 7 };
+  const std::vector<RelayTarget> targets = MakeTargets(60);
+
+  DriveTicks(dispatcher, sink, 60, 30, packet, targets);
+
+  // Every tick relayed everything it was supposed to, on whichever path.
+  REQUIRE(dispatcher.GetMetrics().lastRelayEdgesEmitted == 60 * 60);
+  REQUIRE(dispatcher.GetMetrics().totalTicks == 30);
+}
+
+TEST_CASE("A backed-off threshold recovers quickly", "[ParallelOffload]")
+{
+  // Backing off sets the threshold just above the current population. Walking
+  // it back down one actor per interval would take hundreds of intervals from
+  // a raid-sized population, all of them spent in the degraded path. The decay
+  // is geometric so recovery is measured in tens of ticks, not thousands.
+  ParallelConfig config = MakeAdaptive(2, 400);
+  config.adaptiveDecayTicks = 1;
+  config.adaptiveThresholdFloor = 10;
+  config.Normalize();
+
+  OffloadDispatcher dispatcher(config);
+  RecordingSink sink;
+
+  const std::vector<uint8_t> packet{ 8, 9 };
+  const std::vector<RelayTarget> targets = MakeTargets(40);
+
+  // 40 movers against a threshold of 400: every tick takes the inline path,
+  // so every tick decays. A linear walk needs 390 of them; this must not.
+  DriveTicks(dispatcher, sink, 60, 40, packet, targets);
+
+  REQUIRE(dispatcher.GetMetrics().totalOffloadedTicks > 0);
+}
+
+TEST_CASE("Adaptive tuning never changes what gets relayed",
+          "[ParallelOffload]")
+{
+  // The controller may move work between the pool and the calling thread. It
+  // may not move a single packet. Same population, same targets, adaptive on
+  // and off: byte-identical relays in the same order.
+  const std::vector<uint8_t> packet{ 3, 1, 4, 1, 5 };
+  const std::vector<RelayTarget> targets = MakeTargets(50);
+
+  auto run = [&](bool adaptive) {
+    ParallelConfig config = MakeConfig(3, 1);
+    config.adaptiveParallelism = adaptive;
+    config.Normalize();
+
+    OffloadDispatcher dispatcher(config);
+    RecordingSink sink;
+    DriveTicks(dispatcher, sink, 50, 25, packet, targets);
+    return sink;
+  };
+
+  const RecordingSink fixed = run(false);
+  const RecordingSink adaptive = run(true);
+
+  REQUIRE(fixed.relays.size() == adaptive.relays.size());
+  REQUIRE(fixed.applied == adaptive.applied);
+  for (size_t i = 0; i < fixed.relays.size(); ++i) {
+    REQUIRE(fixed.relays[i].userId == adaptive.relays[i].userId);
+    REQUIRE(fixed.relays[i].bytes == adaptive.relays[i].bytes);
+  }
+}
+
+TEST_CASE("Adaptive tuning off reproduces the fixed threshold exactly",
+          "[ParallelOffload]")
+{
+  // The escape hatch has to be real: with the controller disabled, the
+  // threshold must be whatever the operator configured, forever.
+  ParallelConfig config = MakeConfig(2, 45);
+  config.adaptiveParallelism = false;
+  config.Normalize();
+
+  OffloadDispatcher dispatcher(config);
+  RecordingSink sink;
+
+  const std::vector<uint8_t> packet{ 7 };
+  const std::vector<RelayTarget> targets = MakeTargets(40);
+
+  // 40 movers, threshold 45: never offloads, and no amount of ticking may
+  // decay it into offloading.
+  DriveTicks(dispatcher, sink, 40, 50, packet, targets);
+
+  REQUIRE(dispatcher.GetMetrics().totalOffloadedTicks == 0);
+  REQUIRE(dispatcher.GetMetrics().totalInlineTicks == 50);
+}
