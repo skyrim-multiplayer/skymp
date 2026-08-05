@@ -194,6 +194,13 @@ private:
   // tick's measurements.
   void UpdateAdaptiveThreshold();
 
+  // Whether this tick's movement should be taken on at all, decided once on
+  // its first packet. False makes every SubmitMovement decline, which sends
+  // ActionListener down the original inline path -- a genuinely different
+  // thing from running the tick without the pool, which still pays for the
+  // snapshot and the deferred join.
+  [[nodiscard]] bool ShouldAcceptThisTick() const;
+
   ParallelConfig config;
   std::unique_ptr<ThreadPool> pool;
 
@@ -245,7 +252,16 @@ private:
   // Whether the pool has already been told this tick's batch is coming. The
   // hint is worth sending once, on the first submission, which is as early as
   // the fact is known.
-  bool poolPrimed = false;
+  // Whether this tick's accept/decline decision has been taken yet, and what
+  // it was. Taken once on the first submission and held for the whole tick, so
+  // a tick never splits its relays between the deferred and the inline
+  // ordering.
+  bool tickDecisionMade = false;
+  bool acceptingThisTick = true;
+
+  // Actors accepted on the last tick that accepted any. Used to estimate this
+  // tick's work before any of this tick's packets have arrived.
+  size_t lastAcceptedActorCount = 0;
 
   // How many tasks the previous tick pooled, used as the size hint for the
   // prime. Starts at 0 so the very first tick primes nothing and simply pays

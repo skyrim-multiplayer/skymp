@@ -85,7 +85,8 @@ void OffloadDispatcher::DiscardPending() noexcept
   snapshot.Clear();
   clusters.clear();
   workUnits.clear();
-  poolPrimed = false;
+  tickDecisionMade = false;
+  acceptingThisTick = true;
   for (ClusterOutput& output : unitOutputs) {
     output.Reset();
   }
@@ -111,20 +112,28 @@ bool OffloadDispatcher::SubmitMovement(const MovementSubmission& submission)
     return false;
   }
 
-  // First packet of the tick: tell the workers a batch is coming. The rest of
-  // ingest then runs while they wake, so by the time ExecuteTick publishes the
-  // batch they are already spinning on it. That wakeup used to sit on the
-  // critical path and was most of what made the offload lose below a few
-  // hundred players.
-  //
-  // The size of the batch is not known yet -- the packets are still arriving
-  // -- so the previous tick's is the estimate. Population moves slowly
-  // relative to a tick, and being wrong only costs a spin or a wakeup.
-  if (!poolPrimed) {
-    poolPrimed = true;
-    if (pool) {
+  // Decided once, on the first packet of the tick, and held for the whole
+  // tick so a single tick never splits its relays across both orderings.
+  if (!tickDecisionMade) {
+    tickDecisionMade = true;
+    acceptingThisTick = ShouldAcceptThisTick();
+
+    // First packet of the tick: tell the workers a batch is coming. The rest
+    // of ingest then runs while they wake, so by the time ExecuteTick
+    // publishes the batch they are already spinning on it. That wakeup used to
+    // sit on the critical path and was most of what made the offload lose
+    // below a few hundred players.
+    //
+    // The size of the batch is not known yet -- the packets are still arriving
+    // -- so the previous tick's is the estimate. Population moves slowly
+    // relative to a tick, and being wrong only costs a spin or a wakeup.
+    if (acceptingThisTick && pool) {
       pool->Prime(lastPooledUnitEstimate);
     }
+  }
+
+  if (!acceptingThisTick) {
+    return false;
   }
 
   ActorSnapshot actor;
@@ -224,7 +233,8 @@ void OffloadDispatcher::ExecuteTick(IOffloadSink& sink)
   metrics.ResetTick();
   metrics.lastTickIndex = snapshot.tickIndex;
   ++metrics.totalTicks;
-  poolPrimed = false;
+  tickDecisionMade = false;
+  acceptingThisTick = true;
 
   if (snapshot.Empty()) {
     snapshot.Clear();
@@ -232,6 +242,8 @@ void OffloadDispatcher::ExecuteTick(IOffloadSink& sink)
   }
 
   metrics.lastActorCount = snapshot.actors.size();
+  // Only ticks that accepted tell us anything about what a tick costs.
+  lastAcceptedActorCount = snapshot.actors.size();
 
   RunUnits();
   JoinResults(sink);
@@ -265,6 +277,49 @@ void OffloadDispatcher::ExecuteTick(IOffloadSink& sink)
   }
 
   snapshot.Clear();
+}
+
+bool OffloadDispatcher::ShouldAcceptThisTick() const
+{
+  // Declining is not the same as "run the tick without the pool", and the
+  // difference is the whole point of this function.
+  //
+  // Skipping only the pool still flattens every packet into the snapshot and
+  // still defers relays to the join, so the server pays for the split without
+  // getting the parallelism. Measured, that is *worse* than never enabling the
+  // feature: 577us against an inline 482us at 250 players. Declining instead
+  // makes ActionListener take the original relay-then-validate path verbatim,
+  // which is the real floor.
+  //
+  // On a scattered population -- which is what a live server looks like most
+  // of the time, as opposed to the packed crowd the offload exists for -- this
+  // is worth about 10% of the tick at 300 players, and no amount of tuning the
+  // pool could have recovered it.
+  if (!config.enabled) {
+    return false;
+  }
+
+  // Declining also gives up interest management, which only exists on the
+  // offloaded path. That sounds like it should make this decision a trade-off,
+  // and it turns out not to be much of one: the work estimate is low exactly
+  // when the population is scattered, and a scattered population is precisely
+  // where interest management has least to do -- it sheds relays to *distant*
+  // recipients, and a player alone in the woods has no distant recipients to
+  // shed. The two line up rather than fight.
+  //
+  // An operator who wants interest management unconditionally can set
+  // minOffloadWorkMicros to 0, which never declines.
+
+  // No measurement yet: accept. The asymmetry is well established -- engaging
+  // when we should not costs a few percent, failing to engage on a real crowd
+  // costs more than half the tick.
+  if (microsPerActorEma <= 0.0 || lastAcceptedActorCount == 0) {
+    return true;
+  }
+
+  const double estimatedWork =
+    microsPerActorEma * static_cast<double>(lastAcceptedActorCount);
+  return estimatedWork >= static_cast<double>(config.minOffloadWorkMicros);
 }
 
 void OffloadDispatcher::UpdateAdaptiveThreshold()
@@ -428,8 +483,27 @@ void OffloadDispatcher::RunUnits()
 {
   const uint64_t parallelStart = NowMicros();
 
-  const bool offload = pool && pool->GetWorkerCount() > 0 &&
+  // Two gates, and the second is the one that usually decides.
+  //
+  // Head count is only a floor. What settles whether the pool pays is how much
+  // parallel work there is, which depends on how densely the population is
+  // packed rather than on how large it is -- the relay term is quadratic in
+  // how many players can see each other. The work estimate is the same one the
+  // shard budget uses, so a scattered population produces a small number here
+  // and a crowd a large one, with no extra measurement.
+  //
+  // Before the first measurement the estimate is unavailable, and the
+  // asymmetry says which way to guess: engaging when we should not costs a few
+  // percent, while failing to engage on a real crowd costs more than half the
+  // tick. So an unwarmed estimate offloads.
+  const bool enoughActors =
     snapshot.actors.size() >= currentMinActorsToOffload;
+  const bool enoughWork = microsPerActorEma <= 0.0 ||
+    microsPerActorEma * static_cast<double>(snapshot.actors.size()) >=
+      static_cast<double>(config.minOffloadWorkMicros);
+
+  const bool offload =
+    pool && pool->GetWorkerCount() > 0 && enoughActors && enoughWork;
   lastTickOffloaded = offload;
 
   if (offload) {

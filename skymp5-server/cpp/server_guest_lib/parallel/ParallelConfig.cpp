@@ -284,6 +284,8 @@ ParallelConfig ParallelConfig::FromServerSettings(
     j, "adaptiveBackoffTicks", config.adaptiveBackoffTicks);
   config.adaptiveCooldownTicks = ReadNumber<uint32_t>(
     j, "adaptiveCooldownTicks", config.adaptiveCooldownTicks);
+  config.minOffloadWorkMicros = ReadNumber<uint64_t>(
+    j, "minOffloadWorkMicros", config.minOffloadWorkMicros);
   config.adaptiveThresholdFloor =
     ReadNumber<size_t>(j, "adaptiveThresholdFloor", config.adaptiveThresholdFloor);
   config.adaptiveThrottling =

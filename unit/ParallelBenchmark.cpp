@@ -117,6 +117,14 @@ MpParallel::ParallelConfig MakeConfig(size_t workers)
   // `minActorsToOffload = 1` above stops meaning anything. The controller has
   // its own case; here it must hold still so everything else is comparable.
   config.adaptiveParallelism = false;
+  // And the work gate, for the same reason. These cases exist to measure what
+  // the offloaded path costs at each population, including the populations
+  // where it is a bad idea -- that is the whole point of the speedup column.
+  // With the gate at its default the dispatcher would correctly decline the
+  // small ones and the table would report the inline path against itself.
+  // `Work gate against a packed crowd` sets it explicitly and is what measures
+  // the gate.
+  config.minOffloadWorkMicros = 0;
   config.Normalize();
   return config;
 }
@@ -607,6 +615,37 @@ TEST_CASE("Adaptive threshold controller against a fixed one",
                 static_cast<unsigned long long>(backoffs), threshold);
   }
   std::printf("\n  (>1.00x means the controller is losing to the constant)\n\n");
+}
+
+TEST_CASE("Work gate against a packed crowd", "[.][ParallelBench]")
+{
+  // The other half of the evidence for minOffloadWorkMicros. Its companion is
+  // `Where the work gate should sit` in ParallelSimulation.cpp, which measures
+  // a scattered population; this one measures the crowd the offload exists
+  // for. A gate tuned only against the scattered case would switch the pool
+  // off here, which is the one place it is clearly worth having.
+  constexpr int kTicks = 150;
+  std::printf("\n  packed crowd: us/tick by minOffloadWorkMicros\n\n");
+  std::printf("  %-8s %9s", "players", "inline");
+  for (uint64_t g : { 1ull, 50ull, 100ull, 150ull, 250ull, 500ull }) {
+    std::printf(" %8llu", static_cast<unsigned long long>(g));
+  }
+  std::printf("\n  %s\n", std::string(66, '-').c_str());
+
+  for (int players : { 100, 150, 250, 400 }) {
+    const Sample baseline = RunScenario(players, false, 0, kTicks);
+    std::printf("  %-8d %9.1f", players, baseline.perTickMicros);
+    for (uint64_t gate : { 1ull, 50ull, 100ull, 150ull, 250ull, 500ull }) {
+      MpParallel::ParallelConfig config = MakeConfig(0);
+      config.minOffloadWorkMicros = gate;
+      config.Normalize();
+      const double total =
+        RunLoadProfile({ { kTicks, players } }, players, true, config);
+      std::printf(" %8.1f", total / kTicks);
+    }
+    std::printf("\n");
+  }
+  std::printf("\n  (1 is effectively no gate)\n\n");
 }
 
 TEST_CASE("Cost of a wrong offload threshold, in both directions",

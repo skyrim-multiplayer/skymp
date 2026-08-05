@@ -87,6 +87,13 @@ ParallelConfig MakeConfig(size_t workerThreads, size_t minActorsToOffload)
   // fan-out. Interest management gets its own dedicated cases below.
   config.adaptiveThrottling = false;
   config.interestManagement = false;
+  // These cases exercise the dispatcher's machinery -- partitioning,
+  // sharding, the join order -- on populations of a few dozen actors. That is
+  // well below where taking the work on pays for itself, so with the default
+  // policy the dispatcher would correctly decline all of it and the machinery
+  // under test would never run. 0 disables the gate; the policy itself is
+  // covered by its own cases.
+  config.minOffloadWorkMicros = 0;
   config.Normalize();
   return config;
 }
@@ -1047,4 +1054,76 @@ TEST_CASE("Adaptive tuning off reproduces the fixed threshold exactly",
 
   REQUIRE(dispatcher.GetMetrics().totalOffloadedTicks == 0);
   REQUIRE(dispatcher.GetMetrics().totalInlineTicks == 50);
+}
+
+TEST_CASE("A scattered population is declined, not merely un-pooled",
+          "[ParallelOffload]")
+{
+  // The distinction this asserts is the whole reason ShouldAcceptThisTick
+  // exists. Skipping only the thread pool still flattens every packet into the
+  // snapshot and still defers relays to the join, so the server pays for the
+  // split and gets nothing back -- measured at 250 players, 577us against an
+  // inline 482us. Declining instead hands the update back to ActionListener,
+  // which runs the original path.
+  //
+  // Observable difference: a declined tick submits nothing, so the dispatcher
+  // has no pending work and emits no relays of its own.
+  ParallelConfig config = MakeConfig(2, 1);
+  // Far above anything this population can estimate, so the gate must decline.
+  config.minOffloadWorkMicros = 100000;
+  config.Normalize();
+
+  OffloadDispatcher dispatcher(config);
+  RecordingSink sink;
+
+  const std::vector<uint8_t> packet{ 1, 2, 3 };
+  const std::vector<RelayTarget> targets = MakeTargets(30);
+
+  // First tick has no measurement yet, so it is accepted -- the asymmetry says
+  // guess toward engaging. That tick supplies the estimate the gate then uses.
+  DriveTicks(dispatcher, sink, 30, 1, packet, targets);
+  REQUIRE(dispatcher.GetMetrics().lastActorCount == 30);
+
+  // Subsequent ticks must be declined outright.
+  for (int tick = 0; tick < 5; ++tick) {
+    for (int i = 0; i < 30; ++i) {
+      const bool accepted = dispatcher.SubmitMovement(
+        MakeSubmission(0xff000000 + i, static_cast<uint32_t>(i),
+                       static_cast<Networking::UserId>(i), 10.f * i, 0.f,
+                       packet));
+      REQUIRE_FALSE(accepted);
+    }
+    REQUIRE(dispatcher.GetPendingCount() == 0);
+    dispatcher.SetPotentialTargets(std::vector<RelayTarget>(targets));
+    dispatcher.ExecuteTick(sink);
+  }
+}
+
+TEST_CASE("A work gate of zero never declines", "[ParallelOffload]")
+{
+  // The documented escape hatch for an operator who wants the offloaded path
+  // unconditionally -- typically because they want interest management, which
+  // only exists there.
+  ParallelConfig config = MakeConfig(2, 1);
+  config.minOffloadWorkMicros = 0;
+  config.Normalize();
+
+  OffloadDispatcher dispatcher(config);
+  RecordingSink sink;
+
+  const std::vector<uint8_t> packet{ 4, 5 };
+  const std::vector<RelayTarget> targets = MakeTargets(20);
+
+  for (int tick = 0; tick < 20; ++tick) {
+    for (int i = 0; i < 20; ++i) {
+      REQUIRE(dispatcher.SubmitMovement(
+        MakeSubmission(0xff000000 + i, static_cast<uint32_t>(i),
+                       static_cast<Networking::UserId>(i), 10.f * i, 0.f,
+                       packet)));
+    }
+    dispatcher.SetPotentialTargets(std::vector<RelayTarget>(targets));
+    dispatcher.ExecuteTick(sink);
+  }
+
+  REQUIRE(dispatcher.GetMetrics().lastRelayEdgesEmitted == 20 * 20);
 }

@@ -89,7 +89,35 @@ struct ParallelConfig
   //
   // Re-run `./unit/unit "[ParallelBench]"` on the target hardware before
   // changing it.
+  //
+  // NOTE this is a floor, not the main gate. Head count turns out to be the
+  // wrong quantity -- see minOffloadWorkMicros immediately below.
   size_t minActorsToOffload = 100;
+
+  // Least estimated parallel work, in microseconds, that justifies engaging
+  // the pool. This is the gate that actually decides.
+  //
+  // Head count does not decide whether the offload pays; *density* does. The
+  // relay term is quadratic in how many players can see each other, not in how
+  // many are logged in, so the same 300 players cost wildly different amounts
+  // depending on whether they are stood in one market square or spread over a
+  // province. Measured by unit/ParallelSimulation.cpp, 300 players:
+  //
+  //     packed into one chunk    ~90000 relays/tick   offload wins 1.9x
+  //     spread realistically     ~15000 relays/tick   offload loses by 9%
+  //
+  // Gating on actors alone therefore cannot be right for both, and the
+  // previous default of 100 -- calibrated entirely on the packed case --
+  // engaged the pool on spread populations where it cost 74% at 100 players.
+  //
+  // The estimate is the same one the shard budget already uses: measured
+  // per-actor cost from recent ticks times this tick's actor count. It falls
+  // out low for a scattered population and high for a crowd, which is exactly
+  // the distinction that matters.
+  //
+  // 250us is a little above the point where the offload's fixed costs -- the
+  // snapshot flatten and the deferred join -- stop being repaid.
+  uint64_t minOffloadWorkMicros = 250;
 
   // Clusters smaller than this are merged into the inline residual batch
   // rather than being scheduled as their own task.
