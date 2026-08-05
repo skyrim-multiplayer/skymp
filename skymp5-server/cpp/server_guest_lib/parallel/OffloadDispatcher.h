@@ -263,6 +263,16 @@ private:
   // tick's work before any of this tick's packets have arrived.
   size_t lastAcceptedActorCount = 0;
 
+  // Submissions offered this tick and last tick, counted whether or not they
+  // were taken on. This is what lets a shut gate notice a population growing
+  // underneath it -- acceptances alone would freeze the moment it shuts.
+  size_t attemptCountThisTick = 0;
+  size_t lastAttemptCount = 0;
+
+  // Ticks since the last one that accepted work. Drives the probe that stops
+  // the gate latching shut on stale evidence.
+  uint32_t ticksSinceAccept = 0;
+
   // How many tasks the previous tick pooled, used as the size hint for the
   // prime. Starts at 0 so the very first tick primes nothing and simply pays
   // the wakeup.

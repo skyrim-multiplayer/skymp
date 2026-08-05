@@ -228,12 +228,25 @@ struct SimResult
   uint64_t packetsDelivered = 0;
 };
 
+// One stretch of a session: hold this many of the clients active for this
+// long. Everyone stays connected throughout -- an inactive client is one
+// whose player is not moving, which is the common case on a real server.
+struct LoadPhase
+{
+  double seconds = 0.0;
+  int activeClients = 0;
+};
+
 // Builds a mixed population and runs it against the real server for
 // `simSeconds` of simulated time at `tickHz`.
+//
+// When `phases` is non-empty it overrides simSeconds and drives a population
+// that changes over time.
 SimResult RunSimulation(int players, double simSeconds, float tickHz,
                         bool parallel,
                         const MpParallel::ParallelConfig& config,
-                        uint32_t seed, bool verbose = false)
+                        uint32_t seed, bool verbose = false,
+                        const std::vector<LoadPhase>& phases = {})
 {
   std::mt19937 rng(seed);
 
@@ -343,7 +356,19 @@ SimResult RunSimulation(int players, double simSeconds, float tickHz,
   }
 
   const float tickMs = 1000.f / tickHz;
-  const int totalTicks = static_cast<int>(simSeconds * tickHz);
+
+  // Flatten the phase list into a per-tick "how many are moving" schedule.
+  std::vector<int> activeByTick;
+  if (phases.empty()) {
+    activeByTick.assign(static_cast<size_t>(simSeconds * tickHz), players);
+  } else {
+    for (const LoadPhase& phase : phases) {
+      const auto n = static_cast<size_t>(phase.seconds * tickHz);
+      activeByTick.insert(activeByTick.end(), n,
+                          std::min(phase.activeClients, players));
+    }
+  }
+  const int totalTicks = static_cast<int>(activeByTick.size());
 
   std::priority_queue<InFlightPacket> inFlight;
   std::normal_distribution<float> jitterDist(0.f, 1.f);
@@ -367,9 +392,21 @@ SimResult RunSimulation(int players, double simSeconds, float tickHz,
       result.packetsDropped = 0;
     }
 
-    // Clients emit on their own schedule, not the server's.
+    // Clients emit on their own schedule, not the server's. During warm-up
+    // the first phase's level is used, so the run starts settled.
+    const int activeNow =
+      activeByTick[static_cast<size_t>(std::max(tick, 0))];
+
     for (size_t ci = 0; ci < clients.size(); ++ci) {
       Client& c = clients[ci];
+      if (static_cast<int>(ci) >= activeNow) {
+        // Not moving this phase. Keep its send clock rolling so it does not
+        // burst a backlog the moment it becomes active again.
+        while (c.nextSendMs <= nowMs + tickMs) {
+          c.nextSendMs += c.sendIntervalMs;
+        }
+        continue;
+      }
       while (c.nextSendMs <= nowMs + tickMs) {
         const float t = c.nextSendMs;
         c.nextSendMs += c.sendIntervalMs;
@@ -451,7 +488,8 @@ SimResult RunSimulation(int players, double simSeconds, float tickHz,
 }
 
 MpParallel::ParallelConfig SimConfig(bool adaptive,
-                                     uint64_t minOffloadWorkMicros = 0)
+                                     uint64_t minOffloadWorkMicros = 0,
+                                     int probeTicks = -1)
 {
   MpParallel::ParallelConfig config;
   config.enabled = true;
@@ -464,6 +502,10 @@ MpParallel::ParallelConfig SimConfig(bool adaptive,
   // 0 keeps the shipped default; anything else is the sweep pinning it.
   if (minOffloadWorkMicros > 0) {
     config.minOffloadWorkMicros = minOffloadWorkMicros;
+  }
+  // -1 keeps the shipped default; 0 disables probing entirely.
+  if (probeTicks >= 0) {
+    config.adaptiveProbeIntervalTicks = static_cast<uint32_t>(probeTicks);
   }
   config.Normalize();
   return config;
@@ -503,6 +545,150 @@ TEST_CASE("Simulated mixed population: what the world actually looks like",
   // Clients sending at their own frame rates over jittery links must produce a
   // per-tick count that actually varies.
   REQUIRE(r.maxActorsInATick > static_cast<size_t>(r.meanActorsPerTick));
+}
+
+TEST_CASE("A raid forming while the server is on the inline path",
+          "[.][ParallelSim]")
+{
+  // The scenario the decline gate is most likely to get wrong.
+  //
+  // While declining, no work is submitted, so nothing measures how expensive a
+  // tick would have been. If the estimate that drives the decision is built
+  // only from ticks that were accepted, it freezes the moment the server
+  // starts declining -- and then a population that grows underneath it can
+  // never reopen the gate. The server would sit on the inline path through the
+  // whole raid, which is exactly when the offload is worth having.
+  //
+  // Quiet, then a raid forms and holds, then it disperses -- three times over,
+  // because a single 13-second cycle swung by 15% run to run, which is wider
+  // than the effect being measured. Three cycles and a median over seeds
+  // brings it inside a couple of percent.
+  std::vector<LoadPhase> raid;
+  for (int cycle = 0; cycle < 3; ++cycle) {
+    raid.push_back({ 3.0, 60 });
+    raid.push_back({ 1.0, 200 });
+    raid.push_back({ 5.0, 500 });
+    raid.push_back({ 1.0, 200 });
+    raid.push_back({ 3.0, 60 });
+  }
+
+  const std::vector<uint32_t> seeds = { 20260805, 991, 4242 };
+
+  // Configurations are interleaved *within* a seed, and the comparison is a
+  // ratio taken inside that seed, because the absolute numbers drift.
+  //
+  // This machine is a workstation, not a quiet bench: with a game and a chat
+  // client running, the inline baseline for this case measured anywhere from
+  // 429us to 542us between invocations. Running all seeds of one configuration
+  // and then all seeds of the next puts the two in different halves of that
+  // drift and silently attributes it to the change. Comparing configurations
+  // measured seconds apart under the same conditions does not.
+  std::vector<double> inlineMeans, gatedMeans, alwaysMeans;
+  std::vector<double> inlineP99, gatedP99, alwaysP99;
+  std::vector<double> gatedOverAlways, gatedOverInline;
+
+  for (uint32_t seed : seeds) {
+    const SimResult inl = RunSimulation(500, 0.0, 60.f, false,
+                                        SimConfig(false), seed, false, raid);
+    const SimResult gated = RunSimulation(500, 0.0, 60.f, true,
+                                          SimConfig(false), seed, false, raid);
+    // No gate at all: always takes the work on. The comparison that says
+    // whether the gate is costing us the raid.
+    const SimResult always = RunSimulation(500, 0.0, 60.f, true,
+                                           SimConfig(false, 1), seed, false,
+                                           raid);
+
+    inlineMeans.push_back(inl.meanTickMicros);
+    gatedMeans.push_back(gated.meanTickMicros);
+    alwaysMeans.push_back(always.meanTickMicros);
+    inlineP99.push_back(inl.p99);
+    gatedP99.push_back(gated.p99);
+    alwaysP99.push_back(always.p99);
+    gatedOverAlways.push_back(gated.meanTickMicros / always.meanTickMicros);
+    gatedOverInline.push_back(gated.meanTickMicros / inl.meanTickMicros);
+  }
+
+  auto median = [](std::vector<double> v) {
+    std::sort(v.begin(), v.end());
+    return v[v.size() / 2];
+  };
+
+  std::printf("\n  raid cycle x3: 60 -> 500 -> 60 movers, median of %zu seeds\n\n",
+              seeds.size());
+  std::printf("  %-24s %10s %10s\n", "configuration", "mean us", "p99 us");
+  std::printf("  %s\n", std::string(48, '-').c_str());
+  std::printf("  %-24s %10.1f %10.1f\n", "inline", median(inlineMeans),
+              median(inlineP99));
+  std::printf("  %-24s %10.1f %10.1f\n", "gated (default)", median(gatedMeans),
+              median(gatedP99));
+  std::printf("  %-24s %10.1f %10.1f\n", "never declines", median(alwaysMeans),
+              median(alwaysP99));
+  std::printf("\n  within-seed ratios: gated/never-declines %.2fx, "
+              "gated/inline %.2fx\n\n",
+              median(gatedOverAlways), median(gatedOverInline));
+
+  // The gate must not turn a raid into a worse tick than never having gated.
+  // If it latches shut when the population grows, this is where it shows: the
+  // server spends the whole crowded phase on the inline path, and the ratio
+  // was 1.07 before the attempt count and the probe were added.
+  REQUIRE(median(gatedOverAlways) <= 1.05);
+}
+
+TEST_CASE("What the staleness probe costs", "[.][ParallelSim]")
+{
+  // The probe is the price of not latching: while the gate is shut it accepts
+  // one tick per interval to re-measure, and on a population the gate is right
+  // to be declining, that tick is pure loss. This is what that insurance
+  // premium actually costs, so it can be traded against how long the gate is
+  // allowed to be wrong when a raid forms.
+  //
+  // Expect roughly (cost of an accepted tick - cost of a declined one) divided
+  // by the interval: at 100 players that is about (119 - 69) / 60, near 1%.
+  // A number far above that would mean the probe is firing more often than it
+  // should.
+  constexpr double kSeconds = 6.0;
+  constexpr float kTickHz = 60.f;
+  const std::vector<uint32_t> seeds = { 20260805, 991, 4242 };
+
+  std::printf("\n  mean us/tick by adaptiveProbeIntervalTicks\n\n");
+  std::printf("  %-8s %9s %9s", "players", "inline", "no probe");
+  for (int p : { 240, 60, 20 }) {
+    std::printf(" %8d", p);
+  }
+  std::printf("\n  %s\n", std::string(58, '-').c_str());
+
+  auto median = [&](bool parallel, int probe) {
+    std::vector<double> means;
+    for (uint32_t seed : seeds) {
+      means.push_back(RunSimulation(200, kSeconds, kTickHz, parallel,
+                                    SimConfig(false, 0, probe), seed)
+                        .meanTickMicros);
+    }
+    std::sort(means.begin(), means.end());
+    return means[means.size() / 2];
+  };
+
+  for (int players : { 100, 200 }) {
+    auto medianFor = [&](bool parallel, int probe) {
+      std::vector<double> means;
+      for (uint32_t seed : seeds) {
+        means.push_back(RunSimulation(players, kSeconds, kTickHz, parallel,
+                                      SimConfig(false, 0, probe), seed)
+                          .meanTickMicros);
+      }
+      std::sort(means.begin(), means.end());
+      return means[means.size() / 2];
+    };
+
+    std::printf("  %-8d %9.1f %9.1f", players, medianFor(false, -1),
+                medianFor(true, 0));
+    for (int p : { 240, 60, 20 }) {
+      std::printf(" %8.1f", medianFor(true, p));
+    }
+    std::printf("\n");
+  }
+  (void)median;
+  std::printf("\n  (no probe = the gate can latch; see the raid case)\n\n");
 }
 
 TEST_CASE("Where the work gate should sit, spread population",
@@ -556,16 +742,41 @@ TEST_CASE("Controller against a mixed population, by size",
               "mean us", "p99 us", "movers", "backoff", "thresh");
   std::printf("  %s\n", std::string(66, '-').c_str());
 
+  // Median over seeds. A single 6-second run of this swung by 25% between
+  // invocations -- far wider than the differences being reported -- so a
+  // single-seed table here would be a coin toss dressed up as a measurement.
+  const std::vector<uint32_t> seeds = { 20260805, 991, 4242 };
+
+  auto median = [](std::vector<double> v) {
+    std::sort(v.begin(), v.end());
+    return v[v.size() / 2];
+  };
+
   for (int players : { 100, 200, 300, 500 }) {
-    const SimResult inl =
-      RunSimulation(players, kSeconds, kTickHz, false, SimConfig(false),
-                    20260805);
-    const SimResult fixed =
-      RunSimulation(players, kSeconds, kTickHz, true, SimConfig(false),
-                    20260805);
-    const SimResult adaptive =
-      RunSimulation(players, kSeconds, kTickHz, true, SimConfig(true),
-                    20260805);
+    // Interleaved within each seed so machine drift cancels; see the note in
+    // the raid case.
+    std::vector<SimResult> inls, fixeds, adaptives;
+    std::vector<double> adaptiveOverInline;
+    for (uint32_t seed : seeds) {
+      inls.push_back(
+        RunSimulation(players, kSeconds, kTickHz, false, SimConfig(false), seed));
+      fixeds.push_back(
+        RunSimulation(players, kSeconds, kTickHz, true, SimConfig(false), seed));
+      adaptives.push_back(
+        RunSimulation(players, kSeconds, kTickHz, true, SimConfig(true), seed));
+      adaptiveOverInline.push_back(adaptives.back().meanTickMicros /
+                                   inls.back().meanTickMicros);
+    }
+    auto pick = [&](std::vector<SimResult>& v) {
+      std::sort(v.begin(), v.end(),
+                [](const SimResult& a, const SimResult& b) {
+                  return a.meanTickMicros < b.meanTickMicros;
+                });
+      return v[v.size() / 2];
+    };
+    const SimResult inl = pick(inls);
+    const SimResult fixed = pick(fixeds);
+    const SimResult adaptive = pick(adaptives);
 
     std::printf("  %-7d %-9s %9.1f %9.1f %9.1f %8s %7s\n", players, "inline",
                 inl.meanTickMicros, inl.p99, inl.meanActorsPerTick, "-", "-");
@@ -578,8 +789,26 @@ TEST_CASE("Controller against a mixed population, by size",
                 static_cast<unsigned long long>(adaptive.backoffs),
                 adaptive.finalThreshold);
 
-    // Whatever it decides, it must not be worse than never having engaged.
-    REQUIRE(adaptive.meanTickMicros > 0.0);
+    // The gate must not make things worse than never having engaged at all.
+    // Judged on the within-seed ratio, and generously: what this guards
+    // against is the gate being *systematically* wrong -- before it existed
+    // the offload cost 74% at 100 players -- not a few percent of workstation
+    // noise.
+    //
+    // The bound is 1.25 rather than something tighter because of a real
+    // effect, not just noise. On a machine with other work on it -- this one
+    // was measured with a game and a chat client running, at 59% CPU -- the
+    // offloaded path degrades harder than the inline one, because it wants
+    // several cores where inline wants one. At 300 players that showed up as
+    // 1.20x here while the same case measured 1.01x on a quiet machine.
+    //
+    // Worse, the gate currently leans the wrong way into it: the work estimate
+    // is in absolute microseconds, so a contended (or simply slower) machine
+    // makes the same population look like *more* work and opens the gate
+    // wider, exactly when the pool has fewer cores to give. Fixing that means
+    // gating on achieved parallel speedup rather than on absolute work, which
+    // is a separate change and wants a quiet machine to calibrate on.
+    REQUIRE(median(adaptiveOverInline) <= 1.25);
   }
   std::printf("\n");
 }

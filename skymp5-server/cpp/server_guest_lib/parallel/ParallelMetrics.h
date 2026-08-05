@@ -44,6 +44,10 @@ struct ParallelMetrics
   // so it should be rare and brief.
   size_t lastAdaptiveThreshold = 0;
 
+  // Submissions offered last tick, accepted or not. Against lastActorCount
+  // this shows whether the gate is declining and by how much.
+  size_t lastAttemptCount = 0;
+
   // --- running totals ---------------------------------------------------
   uint64_t totalTicks = 0;
 
@@ -52,6 +56,11 @@ struct ParallelMetrics
   // busy server means it is doing nothing, which is the intended outcome when
   // the fixed threshold was already right.
   uint64_t totalAdaptiveBackoffs = 0;
+
+  // Ticks whose movement was declined outright, sending ActionListener down
+  // the original inline path. Expected to be most of them on a quiet server
+  // and near none during a crowd.
+  uint64_t totalDeclinedTicks = 0;
   uint64_t totalOffloadedTicks = 0;
   uint64_t totalInlineTicks = 0;
   uint64_t totalRelayEdgesEmitted = 0;

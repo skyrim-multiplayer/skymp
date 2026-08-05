@@ -132,6 +132,11 @@ bool OffloadDispatcher::SubmitMovement(const MovementSubmission& submission)
     }
   }
 
+  // Counted whether or not it is taken on: a declined tick still reveals how
+  // many players are trying to move, which is what lets the gate notice a
+  // growing population without having to accept work to find out.
+  ++attemptCountThisTick;
+
   if (!acceptingThisTick) {
     return false;
   }
@@ -236,11 +241,25 @@ void OffloadDispatcher::ExecuteTick(IOffloadSink& sink)
   tickDecisionMade = false;
   acceptingThisTick = true;
 
+  // Rolled over before the early return below, because a tick that declined
+  // everything leaves the snapshot empty and that is precisely the tick whose
+  // attempt count the gate needs.
+  lastAttemptCount = attemptCountThisTick;
+  attemptCountThisTick = 0;
+  metrics.lastAttemptCount = lastAttemptCount;
+
   if (snapshot.Empty()) {
+    // A tick with nothing in it is not evidence the gate is right, so the
+    // probe clock keeps running.
+    if (lastAttemptCount > 0) {
+      ++ticksSinceAccept;
+    }
+    ++metrics.totalDeclinedTicks;
     snapshot.Clear();
     return;
   }
 
+  ticksSinceAccept = 0;
   metrics.lastActorCount = snapshot.actors.size();
   // Only ticks that accepted tell us anything about what a tick costs.
   lastAcceptedActorCount = snapshot.actors.size();
@@ -313,12 +332,31 @@ bool OffloadDispatcher::ShouldAcceptThisTick() const
   // No measurement yet: accept. The asymmetry is well established -- engaging
   // when we should not costs a few percent, failing to engage on a real crowd
   // costs more than half the tick.
-  if (microsPerActorEma <= 0.0 || lastAcceptedActorCount == 0) {
+  if (microsPerActorEma <= 0.0) {
+    return true;
+  }
+
+  // The gate has been shut long enough that its evidence is stale. Take one
+  // tick on to refresh it. Everything the decision rests on is measured only
+  // on accepted ticks, so without this the gate cannot notice the world
+  // changing under it.
+  if (config.adaptiveProbeIntervalTicks > 0 &&
+      ticksSinceAccept >= config.adaptiveProbeIntervalTicks) {
+    return true;
+  }
+
+  // Attempts, not acceptances. A declined tick still tells us how many players
+  // tried to move, and that is the half of the estimate which tracks a raid
+  // forming. The other half -- what an actor costs, which rises as a crowd
+  // packs together -- only the probe above can refresh.
+  const size_t actors =
+    lastAttemptCount > 0 ? lastAttemptCount : lastAcceptedActorCount;
+  if (actors == 0) {
     return true;
   }
 
   const double estimatedWork =
-    microsPerActorEma * static_cast<double>(lastAcceptedActorCount);
+    microsPerActorEma * static_cast<double>(actors);
   return estimatedWork >= static_cast<double>(config.minOffloadWorkMicros);
 }
 

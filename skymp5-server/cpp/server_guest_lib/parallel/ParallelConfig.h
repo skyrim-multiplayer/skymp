@@ -115,9 +115,45 @@ struct ParallelConfig
   // out low for a scattered population and high for a crowd, which is exactly
   // the distinction that matters.
   //
-  // 250us is a little above the point where the offload's fixed costs -- the
-  // snapshot flatten and the deferred join -- stop being repaid.
-  uint64_t minOffloadWorkMicros = 250;
+  // Swept against both workloads: `Where the work gate should sit` in
+  // ParallelSimulation.cpp and `Work gate against a packed crowd` in
+  // ParallelBenchmark.cpp. 100 is the value that is right for both; a figure
+  // fitted to either alone is wrong for the other.
+  //
+  // 0 never declines, for an operator who wants the offloaded path
+  // unconditionally -- typically for interest management, which only exists
+  // there.
+  uint64_t minOffloadWorkMicros = 100;
+
+  // How long the gate may stay shut before it accepts one tick to find out
+  // whether the world has changed under it.
+  //
+  // Without this the gate latches. A declined tick submits nothing, so nothing
+  // measures what a tick would have cost, so the estimate that drives the
+  // decision freezes at whatever the last accepted tick saw -- and a raid
+  // forming underneath a shut gate could never reopen it. Measured on the
+  // 60->500->60 raid cycle before this existed: 335us mean against 315us for
+  // never declining at all, so the gate was costing more than it saved
+  // precisely when the offload was worth most.
+  //
+  // 240 ticks, four seconds at 60Hz. Measured cost of the probe itself, mean
+  // us/tick on a spread population, by `What the staleness probe costs`:
+  //
+  //     players   inline   no probe    240     60     20
+  //     100         87.1       84.9   85.5   88.1   87.9
+  //     200        220.8      217.5  215.4  224.0  236.9
+  //
+  // A probe every 60 ticks costs 3-4%; every 240 is inside the noise. The
+  // reason a long interval is safe is that the probe is not what notices a
+  // raid: the estimate has two terms, and the *attempt count* half is measured
+  // on declined ticks too, so more players arriving reopens the gate on the
+  // very next tick with no probe involved. The probe only refreshes the other
+  // half -- what one actor costs, which rises as a crowd packs together -- and
+  // that moves at walking pace. Four seconds of lag on it is not observable.
+  //
+  // 0 disables probing, which lets the gate latch on stale evidence. Only
+  // sensible for a server whose density never changes.
+  uint32_t adaptiveProbeIntervalTicks = 240;
 
   // Clusters smaller than this are merged into the inline residual batch
   // rather than being scheduled as their own task.
