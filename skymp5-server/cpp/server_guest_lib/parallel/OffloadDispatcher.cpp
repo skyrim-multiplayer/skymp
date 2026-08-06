@@ -112,30 +112,10 @@ bool OffloadDispatcher::SubmitMovement(const MovementSubmission& submission)
     return false;
   }
 
-  // Decided once, on the first packet of the tick, and held for the whole
-  // tick so a single tick never splits its relays across both orderings.
-  if (!tickDecisionMade) {
-    tickDecisionMade = true;
-    acceptingThisTick = ShouldAcceptThisTick();
-
-    // First packet of the tick: tell the workers a batch is coming. The rest
-    // of ingest then runs while they wake, so by the time ExecuteTick
-    // publishes the batch they are already spinning on it. That wakeup used to
-    // sit on the critical path and was most of what made the offload lose
-    // below a few hundred players.
-    //
-    // The size of the batch is not known yet -- the packets are still arriving
-    // -- so the previous tick's is the estimate. Population moves slowly
-    // relative to a tick, and being wrong only costs a spin or a wakeup.
-    if (acceptingThisTick && pool) {
-      pool->Prime(lastPooledUnitEstimate);
-    }
-  }
-
-  // Counted whether or not it is taken on: a declined tick still reveals how
-  // many players are trying to move, which is what lets the gate notice a
-  // growing population without having to accept work to find out.
-  ++attemptCountThisTick;
+  // Normally already decided, because the caller asked WillAcceptThisTick
+  // before building the submission. Decided here too so a direct caller -- the
+  // dispatcher's own tests -- still behaves.
+  EnsureTickDecision();
 
   if (!acceptingThisTick) {
     return false;
@@ -296,6 +276,43 @@ void OffloadDispatcher::ExecuteTick(IOffloadSink& sink)
   }
 
   snapshot.Clear();
+}
+
+void OffloadDispatcher::EnsureTickDecision()
+{
+  if (tickDecisionMade) {
+    return;
+  }
+  tickDecisionMade = true;
+  acceptingThisTick = ShouldAcceptThisTick();
+
+  // First packet of the tick: tell the workers a batch is coming. The rest of
+  // ingest then runs while they wake, so by the time ExecuteTick publishes the
+  // batch they are already spinning on it. That wakeup used to sit on the
+  // critical path and was most of what made the offload lose below a few
+  // hundred players.
+  //
+  // The size of the batch is not known yet -- the packets are still arriving
+  // -- so the previous tick's is the estimate. Population moves slowly
+  // relative to a tick, and being wrong only costs a spin or a wakeup.
+  if (acceptingThisTick && pool) {
+    pool->Prime(lastPooledUnitEstimate);
+  }
+}
+
+bool OffloadDispatcher::WillAcceptThisTick()
+{
+  if (!config.enabled) {
+    return false;
+  }
+  EnsureTickDecision();
+
+  // Counted whether or not the tick is taken on: a declined tick still reveals
+  // how many players are trying to move, which is what lets the gate notice a
+  // growing population without having to accept work to find out.
+  ++attemptCountThisTick;
+
+  return acceptingThisTick;
 }
 
 bool OffloadDispatcher::ShouldAcceptThisTick() const

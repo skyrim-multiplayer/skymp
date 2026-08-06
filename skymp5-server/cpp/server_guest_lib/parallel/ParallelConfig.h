@@ -148,14 +148,36 @@ struct ParallelConfig
   // plenty of work with contended cores gives a low one. Decline on a low
   // ratio is the right answer in all three.
   //
-  // 1.5 sits in the measured gap. On a quiet machine, packed populations:
+  // 2.5, and it is a compromise rather than a clean separation. Quiet machine:
   //
-  //     players    25     50    100    150    400
-  //     speedup  0.75   0.93   1.66   3.51   7.79
-  //     offload  loses  loses  wins   wins   wins
+  //     packed  players    25     50    100    150    400
+  //             speedup  0.75   0.93   1.66   3.51   7.79
+  //             offload  loses  loses  wins   wins   wins
+  //
+  //     spread  players   100    200    300    500
+  //             speedup     -      -   2.20   2.69
+  //             offload     -      -  loses   wins
+  //
+  // No threshold gets every row right. Packed 100 wins at 1.66 while spread
+  // 300 loses at 2.20, so any value low enough to take the first must take the
+  // second. They are not distinguishable by work per actor either -- both
+  // measure 0.53us. What differs is the overhead: a packed crowd is one
+  // cluster and one work unit, a scattered population is thirty, and the
+  // per-mover overhead measures 0.18us against 0.43us.
+  //
+  // 2.5 therefore buys the spread cases at the cost of the packed ones just
+  // above break-even: spread 300 stops losing 13%, packed 100 stops winning
+  // 3.5%. Scattered is what a live server looks like most of the time, and the
+  // loss avoided is the larger number, so the trade is taken deliberately.
+  //
+  // Doing better than a compromise needs the decision to stop being a
+  // threshold at all: measure what a tick costs on each path and compare them
+  // directly, alternating so the population is held constant across the
+  // comparison. That needs a tick-cost measurement the dispatcher does not
+  // currently get, which is the next piece of work rather than a tuning change.
   //
   // 0 disables the test.
-  float minOffloadSpeedup = 1.5f;
+  float minOffloadSpeedup = 2.5f;
 
   // How long the gate may stay shut before it accepts one tick to find out
   // whether the world has changed under it.

@@ -226,6 +226,16 @@ struct SimResult
   size_t finalThreshold = 0;
   uint64_t packetsDropped = 0;
   uint64_t packetsDelivered = 0;
+
+  // What the gate is deciding on, and what it decided.
+  double achievedSpeedup = 0.0;
+  double declinedFraction = 0.0;
+
+  // The two halves of the profitability question: how much work the parallel
+  // phase had, and what it cost in wall clock. Savings is the difference.
+  uint64_t taskMicros = 0;
+  uint64_t parallelMicros = 0;
+  uint64_t joinMicros = 0;
 };
 
 // One stretch of a session: hold this many of the clients active for this
@@ -483,6 +493,14 @@ SimResult RunSimulation(int players, double simSeconds, float tickHz,
     result.backoffs = m.totalAdaptiveBackoffs;
     result.finalThreshold = m.lastAdaptiveThreshold;
     result.clusters = m.lastClusterCount;
+    result.achievedSpeedup = m.lastAchievedSpeedup;
+    result.taskMicros = m.lastAggregateTaskMicros;
+    result.parallelMicros = m.lastParallelMicros;
+    result.joinMicros = m.lastJoinMicros;
+    result.declinedFraction = m.totalTicks > 0
+      ? static_cast<double>(m.totalDeclinedTicks) /
+          static_cast<double>(m.totalTicks)
+      : 0.0;
   }
   return result;
 }
@@ -528,9 +546,14 @@ TEST_CASE("Simulated mixed population: what the world actually looks like",
   constexpr double kSeconds = 6.0;
   constexpr float kTickHz = 60.f;
 
+  // Gates off. This case describes the *workload* -- how many clusters a
+  // realistic population forms, how much the per-tick mover count moves -- and
+  // with the shipped gates the dispatcher would rightly decline nearly every
+  // tick of it, leaving nothing to describe. What the gate decides about this
+  // workload is the next case's business.
   const SimResult r =
-    RunSimulation(300, kSeconds, kTickHz, true, SimConfig(false), 20260805,
-                  /*verbose=*/true);
+    RunSimulation(300, kSeconds, kTickHz, true, SimConfig(false, 1, -1, 0.f),
+                  20260805, /*verbose=*/true);
 
   std::printf("\n  %g simulated seconds at %.0f Hz\n", kSeconds, kTickHz);
   std::printf("    movers per tick   mean %.1f, peak %zu\n",
@@ -745,9 +768,10 @@ TEST_CASE("Controller against a mixed population, by size",
   constexpr float kTickHz = 60.f;
 
   std::printf("\n  mixed population, adaptive vs fixed threshold\n\n");
-  std::printf("  %-7s %-9s %9s %9s %9s %8s %7s\n", "players", "mode",
-              "mean us", "p99 us", "movers", "backoff", "thresh");
-  std::printf("  %s\n", std::string(66, '-').c_str());
+  std::printf("  %-7s %-9s %8s %8s %7s %7s %8s %6s %7s\n", "players", "mode",
+              "mean us", "p99 us", "movers", "speedup", "declined", "work",
+              "us/act");
+  std::printf("  %s\n", std::string(80, '-').c_str());
 
   // Median over seeds. A single 6-second run of this swung by 25% between
   // invocations -- far wider than the differences being reported -- so a
@@ -785,16 +809,27 @@ TEST_CASE("Controller against a mixed population, by size",
     const SimResult fixed = pick(fixeds);
     const SimResult adaptive = pick(adaptives);
 
-    std::printf("  %-7d %-9s %9.1f %9.1f %9.1f %8s %7s\n", players, "inline",
-                inl.meanTickMicros, inl.p99, inl.meanActorsPerTick, "-", "-");
-    std::printf("  %-7s %-9s %9.1f %9.1f %9.1f %8s %7s\n", "", "fixed",
-                fixed.meanTickMicros, fixed.p99, fixed.meanActorsPerTick, "-",
-                "-");
-    std::printf("  %-7s %-9s %9.1f %9.1f %9.1f %8llu %7zu\n", "", "adaptive",
-                adaptive.meanTickMicros, adaptive.p99,
-                adaptive.meanActorsPerTick,
-                static_cast<unsigned long long>(adaptive.backoffs),
-                adaptive.finalThreshold);
+    // `work` and `us/act` are here because achieved speedup on its own turned
+    // out not to separate the two workloads -- see the note on the assertion
+    // below -- and these are the quantities the replacement test will need.
+    auto row = [](const char* label, const SimResult& r, bool gated) {
+      const double perActor = r.meanActorsPerTick > 0.0
+        ? static_cast<double>(r.taskMicros) / r.meanActorsPerTick
+        : 0.0;
+      std::printf("  %-7s %-9s %8.1f %8.1f %7.1f", "", label,
+                  r.meanTickMicros, r.p99, r.meanActorsPerTick);
+      if (gated) {
+        std::printf(" %7.2f %7.0f%% %6llu %7.2f\n", r.achievedSpeedup,
+                    r.declinedFraction * 100.0,
+                    static_cast<unsigned long long>(r.taskMicros), perActor);
+      } else {
+        std::printf(" %7s %8s %6s %7s\n", "-", "-", "-", "-");
+      }
+    };
+    std::printf("  %-7d\n", players);
+    row("inline", inl, false);
+    row("fixed", fixed, true);
+    row("adaptive", adaptive, true);
 
     // The gate must not make things worse than never having engaged at all.
     // Judged on the within-seed ratio, and generously: what this guards

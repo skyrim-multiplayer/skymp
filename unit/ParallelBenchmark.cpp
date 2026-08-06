@@ -618,6 +618,41 @@ TEST_CASE("Adaptive threshold controller against a fixed one",
   std::printf("\n  (>1.00x means the controller is losing to the constant)\n\n");
 }
 
+TEST_CASE("Shipped defaults against a packed crowd", "[.][ParallelBench]")
+{
+  // Every other case in this file pins the gates off, because they exist to
+  // measure the offloaded path itself. That left nothing measuring the
+  // configuration an operator actually gets, on the workload the feature
+  // exists for.
+  //
+  // It matters because the gate is a compromise: minOffloadSpeedup is set to
+  // take the scattered populations a live server spends most of its time at,
+  // and the price is paid by packed crowds that sit just above break-even.
+  // This is where that price shows up, so it is a number rather than a claim.
+  constexpr int kTicks = 150;
+  std::printf("\n  shipped defaults, all players in one chunk\n\n");
+  std::printf("  %-8s %10s %10s %9s\n", "players", "inline", "defaults",
+              "ratio");
+  std::printf("  %s\n", std::string(42, '-').c_str());
+
+  for (int players : { 50, 100, 150, 250, 400 }) {
+    const Sample baseline = RunScenario(players, false, 0, kTicks);
+
+    // Deliberately *not* MakeConfig: the point is the shipped values.
+    MpParallel::ParallelConfig config;
+    config.enabled = true;
+    config.Normalize();
+
+    const double defaults =
+      RunLoadProfile({ { kTicks, players } }, players, true, config) / kTicks;
+
+    std::printf("  %-8d %10.1f %10.1f %8.2fx\n", players,
+                baseline.perTickMicros, defaults,
+                defaults / baseline.perTickMicros);
+  }
+  std::printf("\n  (below 1.00x means the shipped configuration is winning)\n\n");
+}
+
 TEST_CASE("Work gate against a packed crowd", "[.][ParallelBench]")
 {
   // The other half of the evidence for minOffloadWorkMicros. Its companion is

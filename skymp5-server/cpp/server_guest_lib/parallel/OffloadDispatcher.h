@@ -109,6 +109,19 @@ public:
 
   [[nodiscard]] bool IsEnabled() const noexcept { return config.enabled; }
 
+  // Whether this tick's movement is being taken on, asked *before* the caller
+  // goes to the trouble of building a submission.
+  //
+  // Flattening an update is not free -- a dozen floats, the animation flags,
+  // and a cell form id to resolve -- and on a scattered population the gate
+  // declines almost every tick, so building one only to have it handed back is
+  // pure waste. Measured at 100 and 200 spread players, where 99% of ticks
+  // were declined, that waste was 3-4% of the tick.
+  //
+  // Counts the attempt, so it must be called exactly once per movement packet.
+  // The decision itself is taken on the first call of a tick and held.
+  bool WillAcceptThisTick();
+
   // Returns false when the update was not taken on, in which case the caller
   // must fall back to handling it inline. That happens when the framework is
   // disabled and on any malformed submission, so a rejection is always safe.
@@ -200,6 +213,10 @@ private:
   // thing from running the tick without the pool, which still pays for the
   // snapshot and the deferred join.
   [[nodiscard]] bool ShouldAcceptThisTick() const;
+
+  // Takes this tick's accept/decline decision if it has not been taken yet,
+  // and primes the pool when the answer is yes.
+  void EnsureTickDecision();
 
   ParallelConfig config;
   std::unique_ptr<ThreadPool> pool;
