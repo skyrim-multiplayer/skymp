@@ -94,6 +94,11 @@ ParallelConfig MakeConfig(size_t workerThreads, size_t minActorsToOffload)
   // under test would never run. 0 disables the gate; the policy itself is
   // covered by its own cases.
   config.minOffloadWorkMicros = 0;
+  // And the speedup gate, for the same reason. A few dozen actors across two
+  // worker threads will not reach 1.5x, so with the shipped policy the
+  // dispatcher would rightly decline every one of these and the machinery
+  // under test would never run.
+  config.minOffloadSpeedup = 0.f;
   config.Normalize();
   return config;
 }
@@ -1126,4 +1131,103 @@ TEST_CASE("A work gate of zero never declines", "[ParallelOffload]")
   }
 
   REQUIRE(dispatcher.GetMetrics().lastRelayEdgesEmitted == 20 * 20);
+}
+
+TEST_CASE("The speedup gate declines when the pool is not paying off",
+          "[ParallelOffload]")
+{
+  // Deterministic stand-in for the condition this gate exists to catch: a
+  // machine where the pool cannot achieve much, either because there is too
+  // little work or because the cores are busy with something else. Rather
+  // than try to manufacture contention, the threshold is set past anything
+  // achievable, which puts the gate in exactly the state a contended host
+  // would.
+  ParallelConfig config = MakeConfig(2, 1);
+  config.minOffloadWorkMicros = 0;
+  config.minOffloadSpeedup = 1000.f;
+  // Keep the probe out of it; its own behaviour is covered separately.
+  config.adaptiveProbeIntervalTicks = 0;
+  config.Normalize();
+
+  OffloadDispatcher dispatcher(config);
+  RecordingSink sink;
+
+  const std::vector<uint8_t> packet{ 1, 2, 3 };
+  const std::vector<RelayTarget> targets = MakeTargets(40);
+
+  // Warm up: the first ticks have no speedup measurement yet and are accepted,
+  // which is what supplies one.
+  DriveTicks(dispatcher, sink, 40, 6, packet, targets);
+
+  // From here the measured speedup cannot possibly clear the bar, so movement
+  // must be handed back to the inline path rather than merely un-pooled.
+  bool sawDecline = false;
+  for (int tick = 0; tick < 10; ++tick) {
+    const bool accepted = dispatcher.SubmitMovement(
+      MakeSubmission(0xff000000, 0, 0, 0.f, 0.f, packet));
+    if (!accepted) {
+      sawDecline = true;
+      REQUIRE(dispatcher.GetPendingCount() == 0);
+    }
+    dispatcher.SetPotentialTargets(std::vector<RelayTarget>(targets));
+    dispatcher.ExecuteTick(sink);
+  }
+  REQUIRE(sawDecline);
+}
+
+TEST_CASE("A speedup gate of zero never declines", "[ParallelOffload]")
+{
+  // The documented way to switch the test off, for an operator who has
+  // measured their own hardware and disagrees with it.
+  ParallelConfig config = MakeConfig(2, 1);
+  config.minOffloadWorkMicros = 0;
+  config.minOffloadSpeedup = 0.f;
+  config.Normalize();
+
+  OffloadDispatcher dispatcher(config);
+  RecordingSink sink;
+
+  const std::vector<uint8_t> packet{ 7, 7 };
+  const std::vector<RelayTarget> targets = MakeTargets(25);
+
+  for (int tick = 0; tick < 25; ++tick) {
+    for (int i = 0; i < 25; ++i) {
+      REQUIRE(dispatcher.SubmitMovement(
+        MakeSubmission(0xff000000 + i, static_cast<uint32_t>(i),
+                       static_cast<Networking::UserId>(i), 10.f * i, 0.f,
+                       packet)));
+    }
+    dispatcher.SetPotentialTargets(std::vector<RelayTarget>(targets));
+    dispatcher.ExecuteTick(sink);
+  }
+  REQUIRE(dispatcher.GetMetrics().lastRelayEdgesEmitted == 25 * 25);
+}
+
+TEST_CASE("Speedup is measured only from ticks that used the pool",
+          "[ParallelOffload]")
+{
+  // A tick that ran everything on the calling thread has a speedup of 1 by
+  // construction. Folding those samples in would drag the estimate under the
+  // threshold and hold it there, so the gate would conclude the pool does not
+  // work from evidence gathered without it -- a latch dressed up as a
+  // measurement.
+  ParallelConfig config = MakeConfig(2, 10000);  // never engages the pool
+  config.minOffloadWorkMicros = 0;
+  config.minOffloadSpeedup = 1.5f;
+  config.Normalize();
+
+  OffloadDispatcher dispatcher(config);
+  RecordingSink sink;
+
+  const std::vector<uint8_t> packet{ 2, 4 };
+  const std::vector<RelayTarget> targets = MakeTargets(30);
+
+  DriveTicks(dispatcher, sink, 30, 30, packet, targets);
+
+  // Every tick ran on the calling thread, so no speedup sample was ever
+  // legitimately taken and the gate must not have formed a verdict from them.
+  REQUIRE(dispatcher.GetMetrics().totalOffloadedTicks == 0);
+  REQUIRE(dispatcher.GetMetrics().lastAchievedSpeedup == 0.0);
+  // And the work is still being done, on the inline path.
+  REQUIRE(dispatcher.GetMetrics().lastRelayEdgesEmitted == 30 * 30);
 }

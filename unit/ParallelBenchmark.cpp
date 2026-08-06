@@ -125,6 +125,7 @@ MpParallel::ParallelConfig MakeConfig(size_t workers)
   // `Work gate against a packed crowd` sets it explicitly and is what measures
   // the gate.
   config.minOffloadWorkMicros = 0;
+  config.minOffloadSpeedup = 0.f;
   config.Normalize();
   return config;
 }

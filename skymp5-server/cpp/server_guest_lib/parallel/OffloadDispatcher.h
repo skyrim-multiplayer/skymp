@@ -273,6 +273,12 @@ private:
   // the gate latching shut on stale evidence.
   uint32_t ticksSinceAccept = 0;
 
+  // Smoothed ratio of summed task time to the parallel phase's wall clock,
+  // sampled only on ticks that actually used the pool. This is the gate's real
+  // test: a ratio, so it does not drift with how fast the host is, and it
+  // falls when the host is busy rather than rising the way absolute work does.
+  double achievedSpeedupEma = 0.0;
+
   // How many tasks the previous tick pooled, used as the size hint for the
   // prime. Starts at 0 so the very first tick primes nothing and simply pays
   // the wakeup.

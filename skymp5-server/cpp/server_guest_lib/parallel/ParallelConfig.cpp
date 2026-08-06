@@ -243,6 +243,8 @@ void ParallelConfig::Normalize()
   // A bias below 1.0 would permanently disable offloading.
   adaptiveBias = std::max(adaptiveBias, 1.0f);
   adaptiveThresholdFloor = std::max<size_t>(adaptiveThresholdFloor, 1);
+  // Negative would accept everything; the disable value is exactly 0.
+  minOffloadSpeedup = std::max(minOffloadSpeedup, 0.f);
 
   if (targetTickBudgetMicros == 0) {
     targetTickBudgetMicros = 8000;
@@ -288,6 +290,8 @@ ParallelConfig ParallelConfig::FromServerSettings(
     j, "minOffloadWorkMicros", config.minOffloadWorkMicros);
   config.adaptiveProbeIntervalTicks = ReadNumber<uint32_t>(
     j, "adaptiveProbeIntervalTicks", config.adaptiveProbeIntervalTicks);
+  config.minOffloadSpeedup =
+    ReadNumber<float>(j, "minOffloadSpeedup", config.minOffloadSpeedup);
   config.adaptiveThresholdFloor =
     ReadNumber<size_t>(j, "adaptiveThresholdFloor", config.adaptiveThresholdFloor);
   config.adaptiveThrottling =

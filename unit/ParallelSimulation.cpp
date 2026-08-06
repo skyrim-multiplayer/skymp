@@ -489,7 +489,8 @@ SimResult RunSimulation(int players, double simSeconds, float tickHz,
 
 MpParallel::ParallelConfig SimConfig(bool adaptive,
                                      uint64_t minOffloadWorkMicros = 0,
-                                     int probeTicks = -1)
+                                     int probeTicks = -1,
+                                     float minSpeedup = -1.f)
 {
   MpParallel::ParallelConfig config;
   config.enabled = true;
@@ -506,6 +507,10 @@ MpParallel::ParallelConfig SimConfig(bool adaptive,
   // -1 keeps the shipped default; 0 disables probing entirely.
   if (probeTicks >= 0) {
     config.adaptiveProbeIntervalTicks = static_cast<uint32_t>(probeTicks);
+  }
+  // Negative keeps the shipped default; 0 disables the speedup gate.
+  if (minSpeedup >= 0.f) {
+    config.minOffloadSpeedup = minSpeedup;
   }
   config.Normalize();
   return config;
@@ -595,7 +600,7 @@ TEST_CASE("A raid forming while the server is on the inline path",
     // No gate at all: always takes the work on. The comparison that says
     // whether the gate is costing us the raid.
     const SimResult always = RunSimulation(500, 0.0, 60.f, true,
-                                           SimConfig(false, 1), seed, false,
+                                           SimConfig(false, 1, -1, 0.f), seed, false,
                                            raid);
 
     inlineMeans.push_back(inl.meanTickMicros);
@@ -718,7 +723,9 @@ TEST_CASE("Where the work gate should sit, spread population",
       // 0 means "no work gate at all", i.e. the old head-count-only behaviour.
       const SimResult r =
         RunSimulation(players, kSeconds, kTickHz, true,
-                      SimConfig(false, gate == 0 ? 1 : gate), 20260805);
+                      SimConfig(false, gate == 0 ? 1 : gate, -1,
+                                gate == 0 ? 0.f : -1.f),
+                      20260805);
       std::printf(" %8.1f", r.meanTickMicros);
     }
     std::printf("\n");

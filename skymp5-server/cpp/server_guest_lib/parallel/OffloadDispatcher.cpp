@@ -348,16 +348,36 @@ bool OffloadDispatcher::ShouldAcceptThisTick() const
   // Attempts, not acceptances. A declined tick still tells us how many players
   // tried to move, and that is the half of the estimate which tracks a raid
   // forming. The other half -- what an actor costs, which rises as a crowd
-  // packs together -- only the probe above can refresh.
+  // packs together -- only a probe can refresh.
   const size_t actors =
     lastAttemptCount > 0 ? lastAttemptCount : lastAcceptedActorCount;
   if (actors == 0) {
     return true;
   }
 
+  // A materially bigger population than the one the last verdict was formed
+  // on. Do not wait out the probe interval for that -- the routine probe is
+  // sized for density creeping up, and this is the fast case it would miss.
+  if (lastAcceptedActorCount > 0 &&
+      actors >= lastAcceptedActorCount + lastAcceptedActorCount / 2) {
+    return true;
+  }
+
   const double estimatedWork =
     microsPerActorEma * static_cast<double>(actors);
-  return estimatedWork >= static_cast<double>(config.minOffloadWorkMicros);
+  if (estimatedWork < static_cast<double>(config.minOffloadWorkMicros)) {
+    return false;
+  }
+
+  // The test that actually decides. Unlike the microsecond floor above, this
+  // is a ratio of two measurements taken on the same machine under the same
+  // conditions, so it neither drifts with how fast the host is nor inverts
+  // when the host is busy.
+  if (config.minOffloadSpeedup > 0.f && achievedSpeedupEma > 0.0) {
+    return achievedSpeedupEma >=
+      static_cast<double>(config.minOffloadSpeedup);
+  }
+  return true;
 }
 
 void OffloadDispatcher::UpdateAdaptiveThreshold()
@@ -749,6 +769,22 @@ void OffloadDispatcher::JoinResults(IOffloadSink& sink)
       loadBalancer.Observe(clusters[clusterIndex].representative,
                            clusterMicros[clusterIndex], snapshot.tickIndex);
     }
+  }
+
+  // Achieved speedup, and only from ticks that actually used the pool. On a
+  // tick that ran everything on the calling thread the ratio is 1 by
+  // construction, and feeding that in would drag the estimate below the gate's
+  // threshold and keep it there -- the gate would conclude the pool does not
+  // work from evidence gathered without it.
+  if (lastTickOffloaded && metrics.lastParallelMicros > 0 &&
+      metrics.lastAggregateTaskMicros > 0) {
+    const double sample =
+      static_cast<double>(metrics.lastAggregateTaskMicros) /
+      static_cast<double>(metrics.lastParallelMicros);
+    achievedSpeedupEma = achievedSpeedupEma <= 0.0
+      ? sample
+      : kCostEmaAlpha * sample + (1.0 - kCostEmaAlpha) * achievedSpeedupEma;
+    metrics.lastAchievedSpeedup = achievedSpeedupEma;
   }
 
   // Per-actor cost drives next tick's shard budget. Measured rather than

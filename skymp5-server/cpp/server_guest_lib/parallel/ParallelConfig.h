@@ -123,7 +123,39 @@ struct ParallelConfig
   // 0 never declines, for an operator who wants the offloaded path
   // unconditionally -- typically for interest management, which only exists
   // there.
+  //
+  // This is a floor, not the main gate. It is in absolute microseconds, which
+  // makes it machine-dependent in the wrong direction -- see
+  // minOffloadSpeedup, which is the dimensionless test that actually decides.
   uint64_t minOffloadWorkMicros = 100;
+
+  // Least parallel speedup the pool must be achieving for the offloaded path
+  // to be worth taking.
+  //
+  // This replaces absolute work as the real gate, because absolute work leans
+  // the wrong way. Both the work and the overhead it has to repay scale with
+  // how fast the machine is, so a microsecond threshold calibrated on one host
+  // is wrong on a slower one -- and worse, on a *contended* host the same
+  // population looks like MORE work and opens the gate wider, exactly when
+  // there are fewest spare cores to give it. Measured on a workstation that
+  // picked up a game mid-session, 300 spread players went from 1.01x against
+  // inline to 1.20x, with the gate happily accepting throughout.
+  //
+  // Achieved speedup is a ratio of two measurements taken on the same machine
+  // in the same conditions, so it is immune to both. It also collapses three
+  // separate questions into one: too little work leaves the barrier dominant
+  // and the ratio near 1; plenty of work with free cores gives a high ratio;
+  // plenty of work with contended cores gives a low one. Decline on a low
+  // ratio is the right answer in all three.
+  //
+  // 1.5 sits in the measured gap. On a quiet machine, packed populations:
+  //
+  //     players    25     50    100    150    400
+  //     speedup  0.75   0.93   1.66   3.51   7.79
+  //     offload  loses  loses  wins   wins   wins
+  //
+  // 0 disables the test.
+  float minOffloadSpeedup = 1.5f;
 
   // How long the gate may stay shut before it accepts one tick to find out
   // whether the world has changed under it.

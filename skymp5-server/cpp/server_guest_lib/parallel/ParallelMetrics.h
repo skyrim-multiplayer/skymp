@@ -48,6 +48,11 @@ struct ParallelMetrics
   // this shows whether the gate is declining and by how much.
   size_t lastAttemptCount = 0;
 
+  // Smoothed parallel speedup the gate is deciding on. Below
+  // minOffloadSpeedup the pool is not repaying what the offloaded path costs,
+  // and movement is handed back to the inline path.
+  double lastAchievedSpeedup = 0.0;
+
   // --- running totals ---------------------------------------------------
   uint64_t totalTicks = 0;
 
