@@ -107,19 +107,36 @@ uint32_t InterestPolicy::SkipFactor(float sqrDistance,
     return interest;
   }
 
-  // Inside the near band nothing is ever held back by pressure: those are the
+  // Inside the near band nothing is held back by pressure: those are the
   // players actually fighting or talking to each other, and they are what
   // "smooth" means to a user.
-  if (sqrDistance <= sqrThrottle) {
+  //
+  // The band shrinks as pressure rises, and it has to. Held fixed at
+  // throttleDistanceUnits -- 4096, one whole chunk -- the exemption covered
+  // every pair in a crowd that had packed into a single chunk, which is the
+  // only situation the throttle exists for. Measured on 300 players walking
+  // into one square, the mechanism suppressed exactly zero edges at every
+  // budget tried, from 8000us down to 250us; dropping the radius to 400 units
+  // took it from 0 to 21,000. It was not that the server was never judged
+  // under pressure, it was that nobody was ever far enough away to act on.
+  //
+  // Halving the radius per pressure level keeps the guarantee where it counts
+  // -- at the highest level the exemption is still 512 units, well inside a
+  // fight -- while letting the throttle reach a dense crowd at all.
+  const uint32_t shift = std::min<uint32_t>(pressureLevel, 3);
+  const float bandScale = 1.f / static_cast<float>(1u << (2u * shift));
+  const float nearBand = sqrThrottle * bandScale;
+
+  if (sqrDistance <= nearBand) {
     return interest;
   }
 
-  // One extra step per doubling of the threshold distance.
+  // One extra step per doubling of the (scaled) threshold distance.
   uint32_t distanceBand = 1;
-  if (sqrDistance > sqrThrottle4) {
+  if (sqrDistance > sqrThrottle4 * bandScale) {
     distanceBand = 2;
   }
-  if (sqrDistance > sqrThrottle16) {
+  if (sqrDistance > sqrThrottle16 * bandScale) {
     distanceBand = 3;
   }
 

@@ -414,9 +414,30 @@ TEST_CASE("Throttling only fires under pressure and spares close players",
   SECTION("Under pressure, nearby players are still never throttled")
   {
     REQUIRE(InterestManager::ComputeSkipFactor(0.f, 3, config) == 1);
-    // Exactly at the threshold distance.
-    REQUIRE(InterestManager::ComputeSkipFactor(4096.f * 4096.f, 3, config) ==
+
+    // At pressure 1 the exemption is half the configured radius, so someone
+    // just inside 2048 is still spared.
+    REQUIRE(InterestManager::ComputeSkipFactor(2000.f * 2000.f, 1, config) ==
             1);
+
+    // At the highest pressure it has shrunk to an eighth -- 512 units, which
+    // is still inside a fight.
+    REQUIRE(InterestManager::ComputeSkipFactor(500.f * 500.f, 3, config) == 1);
+  }
+
+  SECTION("The exemption shrinks as pressure rises")
+  {
+    // This is the fix for a mechanism that was dead on arrival. Held fixed at
+    // the configured radius -- 4096, one whole chunk -- the exemption covered
+    // every pair in a crowd that had packed into a single chunk, which is the
+    // only situation the throttle exists for. Measured on 300 players walking
+    // into one square, it suppressed exactly zero edges at every budget tried.
+    //
+    // So a player 4096 units away is spared at low pressure and spaced out at
+    // high pressure, rather than being spared unconditionally.
+    const float sqrAtRadius = 4000.f * 4000.f;
+    REQUIRE(InterestManager::ComputeSkipFactor(sqrAtRadius, 0, config) == 1);
+    REQUIRE(InterestManager::ComputeSkipFactor(sqrAtRadius, 3, config) > 1);
   }
 
   SECTION("Distant players are spaced out, more so the further they are")

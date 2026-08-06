@@ -294,8 +294,21 @@ struct ParallelConfig
   // share of the tick budget, instead of letting the whole server stall.
   bool adaptiveThrottling = true;
 
-  // Per-tick wall-clock target for the parallel phase, in microseconds.
-  uint64_t targetTickBudgetMicros = 8000;
+  // Work budget for one area per tick, in microseconds. An area whose smoothed
+  // cost exceeds its share of this is judged under pressure, and relays to the
+  // players furthest from it start being spaced out.
+  //
+  // Was 8000. The server loop is `tick(); sleep(1)`, so a tick is a
+  // millisecond of work and change -- a budget of eight of them meant the
+  // throttle only reacted once the server was already catastrophically late,
+  // which is far too late to be called graceful degradation. Measured on 300
+  // players walking into one square, it suppressed zero edges at 8000us and
+  // 22,000 at 1000us.
+  //
+  // 2000 fires when a single area's work is twice what the whole tick has to
+  // give, which is genuinely over budget without being so twitchy that an
+  // ordinary crowd trips it.
+  uint64_t targetTickBudgetMicros = 2000;
 
   // Squared distance beyond which a relay becomes eligible for throttling.
   // Default is one exterior cell (4096 units).

@@ -247,6 +247,10 @@ struct SimResult
   double trialDecline = 0.0;
   bool trialVerdictAccept = true;
   uint64_t trials = 0;
+
+  // Relay edges the rate policy suppressed. Zero means neither interest
+  // management nor the pressure throttle did anything at all.
+  uint64_t throttledPerTick = 0;
 };
 
 // One stretch of a session: hold this many of the clients active for this
@@ -539,6 +543,9 @@ SimResult RunSimulation(int players, double simSeconds, float tickHz,
     result.trialDecline = m.lastTrialDeclineMicrosPerMover;
     result.trialVerdictAccept = m.lastTrialAccepted;
     result.trials = m.totalTrials;
+    result.throttledPerTick = m.totalTicks > 0
+      ? m.totalRelayEdgesThrottled / m.totalTicks
+      : 0;
     result.parallelMicros = m.lastParallelMicros;
     result.joinMicros = m.lastJoinMicros;
     result.declinedFraction = m.totalTicks > 0
@@ -553,7 +560,10 @@ MpParallel::ParallelConfig SimConfig(bool adaptive,
                                      uint64_t minOffloadWorkMicros = 0,
                                      int probeTicks = -1,
                                      float minSpeedup = -1.f,
-                                     int trialIntervalTicks = -1)
+                                     int trialIntervalTicks = -1,
+                                     bool throttling = false,
+                                     uint64_t tickBudgetMicros = 0,
+                                     float throttleDistance = 0.f)
 {
   MpParallel::ParallelConfig config;
   config.enabled = true;
@@ -580,6 +590,13 @@ MpParallel::ParallelConfig SimConfig(bool adaptive,
   // the mechanism would go unmeasured. Cases that care pass a shorter one.
   if (trialIntervalTicks >= 0) {
     config.abTrialIntervalTicks = static_cast<uint32_t>(trialIntervalTicks);
+  }
+  config.adaptiveThrottling = throttling;
+  if (tickBudgetMicros > 0) {
+    config.targetTickBudgetMicros = tickBudgetMicros;
+  }
+  if (throttleDistance > 0.f) {
+    config.throttleDistanceUnits = throttleDistance;
   }
   config.Normalize();
   return config;
@@ -1003,4 +1020,84 @@ TEST_CASE("A crowd gathering without the head count changing",
   REQUIRE(probing.meanTickMicros <= blind.meanTickMicros * 1.10);
   // And the whole point: noticing the crowd must beat never engaging.
   REQUIRE(probing.meanTickMicros <= inl.meanTickMicros * 1.10);
+}
+
+TEST_CASE("Does the pressure throttle ever engage?", "[.][ParallelSim]")
+{
+  // adaptiveThrottling is the one mechanism that exists today to defend the
+  // tick when a crowd forms, and every benchmark and simulation in this repo
+  // had it switched off -- including this file. So it has never been measured
+  // end to end, only its policy function unit-tested in isolation.
+  //
+  // The scenario is the one that hurts: 300 players walking into a single
+  // square, where p99 reaches several milliseconds against a tick budget of
+  // about one. If the throttle is going to earn its keep anywhere, here is
+  // where.
+  //
+  // `throttled` is the number the case turns on. It counts relay edges the
+  // rate policy suppressed, so a zero means the mechanism did not fire at all,
+  // whatever the timings happen to say.
+  constexpr float kTickHz = 60.f;
+  const std::vector<LoadPhase> gathering = {
+    { 3.0, 300, 0.f }, { 3.0, 300, 1.f }, { 6.0, 300, 1.f }, { 3.0, 300, 0.f },
+  };
+
+  std::printf("\n  300 movers walking into one square\n\n");
+  std::printf("  %-34s %9s %9s %10s\n", "configuration", "mean us", "p99 us",
+              "throttled");
+  std::printf("  %s\n", std::string(66, '-').c_str());
+
+  auto run = [&](const char* label, bool throttling, uint64_t budget,
+                 float throttleDistance = 0.f) {
+    // Gates off: this case is about the rate policy, not about which path the
+    // work takes, and letting the gate decline half the ticks would hide it.
+    MpParallel::ParallelConfig config =
+      SimConfig(false, 1, -1, 0.f, -1, throttling, budget, throttleDistance);
+    config.interestManagement = true;
+    config.Normalize();
+
+    const SimResult r = RunSimulation(300, 0.0, kTickHz, true, config,
+                                      20260805, false, gathering);
+    std::printf("  %-34s %9.1f %9.1f %10llu\n", label, r.meanTickMicros, r.p99,
+                static_cast<unsigned long long>(r.throttledPerTick));
+    return r;
+  };
+
+  const SimResult off = run("interest mgmt only", false, 0);
+  const SimResult shipped = run("+ throttle, shipped budget 2000us", true, 0);
+  const SimResult tight = run("+ throttle, budget 1000us", true, 1000);
+  const SimResult tighter = run("+ throttle, budget 250us", true, 250);
+  // The diagnosis. throttleDistanceUnits exempts anyone closer than it from
+  // pressure throttling, and it defaults to 4096 -- one whole chunk. A crowd
+  // packed into one chunk is, by definition, almost entirely inside that
+  // exemption, so the throttle cannot reach the only situation it exists for.
+  const SimResult reach =
+    run("+ throttle, budget 250us, reach 400u", true, 250, 400.f);
+  std::printf("\n");
+
+  // Interest management alone must be doing something, or the baseline is
+  // wrong rather than the throttle.
+  REQUIRE(off.throttledPerTick > 0);
+
+  // The regression this case was written to catch. Two separate defaults
+  // conspired to make the throttle dead code:
+  //
+  //   * throttleDistanceUnits exempted anyone within 4096 units -- a whole
+  //     chunk -- from pressure throttling, so a crowd packed into one chunk
+  //     was entirely inside the exemption.
+  //   * targetTickBudgetMicros was 8000, eight times what a tick has to give,
+  //     so no area was ever judged under pressure in the first place.
+  //
+  // Either alone was enough to suppress zero edges at every setting tried.
+  // With both fixed -- the exemption now halves per pressure level, and the
+  // budget is 2000 -- the mechanism engages on a crowd, which is the only
+  // place it was ever meant to.
+  REQUIRE(shipped.throttledPerTick > off.throttledPerTick);
+  REQUIRE(tight.throttledPerTick > off.throttledPerTick);
+  REQUIRE(tighter.throttledPerTick > off.throttledPerTick);
+  REQUIRE(reach.throttledPerTick > off.throttledPerTick);
+
+  // Reducing the rate must never silence anyone: the relay count stays well
+  // above zero however hard the throttle is pushed.
+  REQUIRE(reach.relaysPerTick > 0);
 }
