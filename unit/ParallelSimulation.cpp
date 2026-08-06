@@ -151,6 +151,11 @@ struct Client
   const char* localeName = "";
 };
 
+// Where a gathered population converges. Arbitrary, but fixed, so the same
+// seed produces the same crowd.
+constexpr float kGatherX = 1500.f;
+constexpr float kGatherY = 1500.f;
+
 struct InFlightPacket
 {
   float arrivalMs = 0.f;
@@ -251,6 +256,18 @@ struct LoadPhase
 {
   double seconds = 0.0;
   int activeClients = 0;
+
+  // How far the population has migrated toward a single gathering point, from
+  // 0 (everyone at home, scattered across the province) to 1 (everyone in one
+  // square).
+  //
+  // This is the axis the rest of the harness was missing. Varying how many
+  // players are moving changes the head count, which the gate tracks on every
+  // tick from attempts alone. Varying *where they are* changes density, which
+  // nothing observes unless the dispatcher takes a tick on and measures it --
+  // and that is the whole reason adaptiveProbeIntervalTicks exists. Without
+  // this, that setting had no test.
+  float gather = 0.f;
 };
 
 // Builds a mixed population and runs it against the real server for
@@ -373,15 +390,26 @@ SimResult RunSimulation(int players, double simSeconds, float tickHz,
 
   const float tickMs = 1000.f / tickHz;
 
-  // Flatten the phase list into a per-tick "how many are moving" schedule.
+  // Flatten the phase list into per-tick schedules of "how many are moving"
+  // and "how gathered they are".
   std::vector<int> activeByTick;
+  std::vector<float> gatherByTick;
   if (phases.empty()) {
     activeByTick.assign(static_cast<size_t>(simSeconds * tickHz), players);
+    gatherByTick.assign(activeByTick.size(), 0.f);
   } else {
-    for (const LoadPhase& phase : phases) {
+    for (size_t p = 0; p < phases.size(); ++p) {
+      const LoadPhase& phase = phases[p];
       const auto n = static_cast<size_t>(phase.seconds * tickHz);
-      activeByTick.insert(activeByTick.end(), n,
-                          std::min(phase.activeClients, players));
+      const float from = p == 0 ? phase.gather : phases[p - 1].gather;
+      for (size_t i = 0; i < n; ++i) {
+        activeByTick.push_back(std::min(phase.activeClients, players));
+        // Ramp across the phase rather than teleporting the population, so
+        // the partition changes at something like walking pace.
+        const float t = n > 1 ? static_cast<float>(i) / static_cast<float>(n - 1)
+                              : 1.f;
+        gatherByTick.push_back(from + (phase.gather - from) * t);
+      }
     }
   }
   const int totalTicks = static_cast<int>(activeByTick.size());
@@ -410,8 +438,9 @@ SimResult RunSimulation(int players, double simSeconds, float tickHz,
 
     // Clients emit on their own schedule, not the server's. During warm-up
     // the first phase's level is used, so the run starts settled.
-    const int activeNow =
-      activeByTick[static_cast<size_t>(std::max(tick, 0))];
+    const size_t schedIndex = static_cast<size_t>(std::max(tick, 0));
+    const int activeNow = activeByTick[schedIndex];
+    const float gatherNow = gatherByTick[schedIndex];
 
     for (size_t ci = 0; ci < clients.size(); ++ci) {
       Client& c = clients[ci];
@@ -438,11 +467,16 @@ SimResult RunSimulation(int players, double simSeconds, float tickHz,
           std::max(0.f, c.oneWayMs + jitterDist(rng) * c.jitterMs);
 
         c.wanderPhase += 0.05f;
+        // Interpolate toward the gathering point. At gather = 1 the whole
+        // population is inside one chunk, which is the packed case the offload
+        // exists for, reached without changing how many players are moving.
+        const float gx = c.homeX + (kGatherX - c.homeX) * gatherNow;
+        const float gy = c.homeY + (kGatherY - c.homeY) * gatherNow;
         InFlightPacket p;
         p.arrivalMs = t + delay;
         p.clientIndex = ci;
-        p.x = c.homeX + std::cos(c.wanderPhase) * c.wanderRadius;
-        p.y = c.homeY + std::sin(c.wanderPhase) * c.wanderRadius;
+        p.x = gx + std::cos(c.wanderPhase) * c.wanderRadius;
+        p.y = gy + std::sin(c.wanderPhase) * c.wanderRadius;
         inFlight.push(p);
       }
     }
@@ -496,8 +530,8 @@ SimResult RunSimulation(int players, double simSeconds, float tickHz,
 
   if (parallel) {
     const MpParallel::ParallelMetrics& m = partOne.GetParallelMetrics();
-    result.backoffs = m.totalAdaptiveBackoffs;
-    result.finalThreshold = m.lastAdaptiveThreshold;
+    result.backoffs = m.totalTrials;
+    result.finalThreshold = m.lastAttemptCount;
     result.clusters = m.lastClusterCount;
     result.achievedSpeedup = m.lastAchievedSpeedup;
     result.taskMicros = m.lastAggregateTaskMicros;
@@ -912,4 +946,61 @@ TEST_CASE("What the paired trial concludes", "[.][ParallelSim]")
     REQUIRE(r.trialDecline > 0.0);
   }
   std::printf("\n");
+}
+
+TEST_CASE("A crowd gathering without the head count changing",
+          "[.][ParallelSim]")
+{
+  // The case adaptiveProbeIntervalTicks exists for, and until now had no test.
+  //
+  // The number of players moving is constant throughout. What changes is where
+  // they are: a province-wide scatter walks in to a single square and back out
+  // again. That is invisible to the attempt count -- the same 300 updates
+  // arrive every tick either way -- so the only way the dispatcher can notice
+  // is by taking a tick on and measuring it, which is exactly what the probe
+  // and the trial do.
+  //
+  // If they did not, a server would sit on the inline path through a city
+  // gathering, which is the single worst time to be there.
+  constexpr float kTickHz = 60.f;
+  const std::vector<LoadPhase> gathering = {
+    { 4.0, 300, 0.f },   // scattered
+    { 3.0, 300, 1.f },   // walking in
+    { 6.0, 300, 1.f },   // packed
+    { 3.0, 300, 0.f },   // dispersing
+    { 4.0, 300, 0.f },   // scattered again
+  };
+
+  std::printf("\n  300 movers throughout; only their spread changes\n\n");
+  std::printf("  %-22s %10s %10s %9s\n", "configuration", "mean us", "p99 us",
+              "declined");
+  std::printf("  %s\n", std::string(56, '-').c_str());
+
+  auto run = [&](bool parallel, int probeTicks, const char* label) {
+    const SimResult r =
+      RunSimulation(300, 0.0, kTickHz, parallel,
+                    SimConfig(true, 0, probeTicks, -1.f, 300), 20260805, false,
+                    gathering);
+    std::printf("  %-22s %10.1f %10.1f %8.0f%%\n", label, r.meanTickMicros,
+                r.p99, r.declinedFraction * 100.0);
+    return r;
+  };
+
+  const SimResult inl =
+    RunSimulation(300, 0.0, kTickHz, false, SimConfig(false), 20260805, false,
+                  gathering);
+  std::printf("  %-22s %10.1f %10.1f %9s\n", "inline", inl.meanTickMicros,
+              inl.p99, "-");
+
+  const SimResult probing = run(true, -1, "probe on (default)");
+  const SimResult blind = run(true, 0, "probe off");
+
+  std::printf("\n");
+
+  // With the probe off the dispatcher cannot see the crowd form, so it holds
+  // whatever verdict the scattered phase produced. With it on it should do at
+  // least as well.
+  REQUIRE(probing.meanTickMicros <= blind.meanTickMicros * 1.10);
+  // And the whole point: noticing the crowd must beat never engaging.
+  REQUIRE(probing.meanTickMicros <= inl.meanTickMicros * 1.10);
 }

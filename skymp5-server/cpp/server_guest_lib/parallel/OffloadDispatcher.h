@@ -232,10 +232,6 @@ private:
   // to a single unit and skips the barrier entirely.
   [[nodiscard]] size_t ComputeShardBudget() const;
 
-  // Moves currentMinActorsToOffload toward wherever the pool is actually
-  // paying for itself. Called once per tick, after the join, so it sees this
-  // tick's measurements.
-  void UpdateAdaptiveThreshold();
 
   // Whether this tick's movement should be taken on at all, decided once on
   // its first packet. False makes every SubmitMovement decline, which sends
@@ -369,20 +365,6 @@ private:
   // the wakeup.
   size_t lastPooledUnitEstimate = 0;
 
-  // Adaptive threshold for the number of actors required to offload to the pool.
-  // Initially matches config.minActorsToOffload, but can be scaled dynamically
-  // if adaptiveParallelism is enabled.
-  size_t currentMinActorsToOffload = 0;
-
-  // Consecutive offloaded ticks on which the pool did not pay for itself.
-  // Reset by any profitable tick, so only a sustained run backs the threshold
-  // off -- a single slow tick is noise, not evidence.
-  uint32_t consecutiveUnprofitableTicks = 0;
-
-  // Ticks left before the threshold may start decaying again. Set by a
-  // backoff so the controller does not immediately walk back into the
-  // population it just rejected.
-  uint32_t backoffCooldownTicks = 0;
 };
 
 }

@@ -479,10 +479,10 @@ double RunLoadProfile(const std::vector<LoadSegment>& profile, int totalPlayers,
   if (parallel) {
     const MpParallel::ParallelMetrics& m = partOne.GetParallelMetrics();
     if (outBackoffs) {
-      *outBackoffs = m.totalAdaptiveBackoffs;
+      *outBackoffs = m.totalTrials;
     }
     if (outFinalThreshold) {
-      *outFinalThreshold = m.lastAdaptiveThreshold;
+      *outFinalThreshold = m.lastAttemptCount;
     }
   }
   return std::chrono::duration<double, std::micro>(elapsed).count();

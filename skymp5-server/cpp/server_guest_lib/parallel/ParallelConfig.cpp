@@ -235,14 +235,6 @@ void ParallelConfig::Normalize()
   // the whole frame, which is the failure mode this is meant to avoid.
   workerSpinMicros = std::min<uint32_t>(workerSpinMicros, 5000);
 
-  // Prevent division-by-zero in the adaptive decay modulo check.
-  adaptiveDecayTicks = std::max<uint32_t>(adaptiveDecayTicks, 1);
-  // Zero would make every noisy tick a backoff, which is the behaviour this
-  // setting exists to prevent.
-  adaptiveBackoffTicks = std::max<uint32_t>(adaptiveBackoffTicks, 1);
-  // A bias below 1.0 would permanently disable offloading.
-  adaptiveBias = std::max(adaptiveBias, 1.0f);
-  adaptiveThresholdFloor = std::max<size_t>(adaptiveThresholdFloor, 1);
   // Negative would accept everything; the disable value is exactly 0.
   minOffloadSpeedup = std::max(minOffloadSpeedup, 0.f);
   abTrialBlockTicks = std::max<uint32_t>(abTrialBlockTicks, 1);
@@ -281,14 +273,6 @@ ParallelConfig ParallelConfig::FromServerSettings(
   config.enabled = ReadBool(j, "enabled", config.enabled);
   config.adaptiveParallelism =
     ReadBool(j, "adaptiveParallelism", config.adaptiveParallelism);
-  config.adaptiveBias =
-    ReadNumber<float>(j, "adaptiveBias", config.adaptiveBias);
-  config.adaptiveDecayTicks =
-    ReadNumber<uint32_t>(j, "adaptiveDecayTicks", config.adaptiveDecayTicks);
-  config.adaptiveBackoffTicks = ReadNumber<uint32_t>(
-    j, "adaptiveBackoffTicks", config.adaptiveBackoffTicks);
-  config.adaptiveCooldownTicks = ReadNumber<uint32_t>(
-    j, "adaptiveCooldownTicks", config.adaptiveCooldownTicks);
   config.minOffloadWorkMicros = ReadNumber<uint64_t>(
     j, "minOffloadWorkMicros", config.minOffloadWorkMicros);
   config.adaptiveProbeIntervalTicks = ReadNumber<uint32_t>(
@@ -301,8 +285,6 @@ ParallelConfig ParallelConfig::FromServerSettings(
     ReadNumber<uint32_t>(j, "abTrialBlockTicks", config.abTrialBlockTicks);
   config.abTrialBlocks =
     ReadNumber<uint32_t>(j, "abTrialBlocks", config.abTrialBlocks);
-  config.adaptiveThresholdFloor =
-    ReadNumber<size_t>(j, "adaptiveThresholdFloor", config.adaptiveThresholdFloor);
   config.adaptiveThrottling =
     ReadBool(j, "adaptiveThrottling", config.adaptiveThrottling);
   config.interestManagement =
