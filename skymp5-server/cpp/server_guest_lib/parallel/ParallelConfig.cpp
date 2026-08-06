@@ -245,6 +245,9 @@ void ParallelConfig::Normalize()
   adaptiveThresholdFloor = std::max<size_t>(adaptiveThresholdFloor, 1);
   // Negative would accept everything; the disable value is exactly 0.
   minOffloadSpeedup = std::max(minOffloadSpeedup, 0.f);
+  abTrialBlockTicks = std::max<uint32_t>(abTrialBlockTicks, 1);
+  // At least one block per arm, or a "trial" would only ever measure one path.
+  abTrialBlocks = std::max<uint32_t>(abTrialBlocks, 2);
 
   if (targetTickBudgetMicros == 0) {
     targetTickBudgetMicros = 8000;
@@ -292,6 +295,12 @@ ParallelConfig ParallelConfig::FromServerSettings(
     j, "adaptiveProbeIntervalTicks", config.adaptiveProbeIntervalTicks);
   config.minOffloadSpeedup =
     ReadNumber<float>(j, "minOffloadSpeedup", config.minOffloadSpeedup);
+  config.abTrialIntervalTicks = ReadNumber<uint32_t>(
+    j, "abTrialIntervalTicks", config.abTrialIntervalTicks);
+  config.abTrialBlockTicks =
+    ReadNumber<uint32_t>(j, "abTrialBlockTicks", config.abTrialBlockTicks);
+  config.abTrialBlocks =
+    ReadNumber<uint32_t>(j, "abTrialBlocks", config.abTrialBlocks);
   config.adaptiveThresholdFloor =
     ReadNumber<size_t>(j, "adaptiveThresholdFloor", config.adaptiveThresholdFloor);
   config.adaptiveThrottling =

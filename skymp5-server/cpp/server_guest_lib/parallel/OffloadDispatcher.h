@@ -122,6 +122,36 @@ public:
   // The decision itself is taken on the first call of a tick and held.
   bool WillAcceptThisTick();
 
+  // Whether the caller should time its movement handling this tick and report
+  // it through AddIngestMicros.
+  //
+  // False on the overwhelming majority of ticks. The paired trial needs to
+  // know what a whole tick costs, and neither path keeps all of its cost in
+  // one place -- an accepted tick flattens during ingest and relays in the
+  // join, a declined one relays during ingest and does nothing in the join --
+  // so the ingest half has to be timed by the code that runs it. Doing that
+  // unconditionally would mean two clock reads per movement packet, which at
+  // 400 packets a tick is a few percent of the tick spent measuring. Gating it
+  // on a trial makes it free the rest of the time.
+  [[nodiscard]] bool IsMeasuringThisTick() const noexcept
+  {
+    return measuringThisTick;
+  }
+
+  // Reports time spent handling one movement update during ingest, on
+  // whichever path it took. Only called when IsMeasuringThisTick.
+  //
+  // Nanoseconds, not microseconds. Handling a single update takes well under a
+  // microsecond, so accumulating a microsecond-truncated value summed to
+  // almost exactly zero -- and only on the declined arm, whose whole cost is
+  // here, while the accepted arm's cost is measured once per tick in the join
+  // and escaped the truncation. The trial duly concluded that declining was
+  // twenty-five times cheaper than accepting.
+  void AddIngestNanos(uint64_t nanos) noexcept
+  {
+    ingestNanosThisTick += nanos;
+  }
+
   // Returns false when the update was not taken on, in which case the caller
   // must fall back to handling it inline. That happens when the framework is
   // disabled and on any malformed submission, so a rejection is always safe.
@@ -218,6 +248,14 @@ private:
   // and primes the pool when the answer is yes.
   void EnsureTickDecision();
 
+  // Whether this tick is a trial tick, and which arm it belongs to. Called
+  // while taking the tick decision.
+  [[nodiscard]] bool TrialWantsAccept() const noexcept;
+
+  // Folds this tick's measurement into the trial and, when the last block is
+  // done, settles the verdict. Called once per tick after the join.
+  void UpdateTrial();
+
   ParallelConfig config;
   std::unique_ptr<ThreadPool> pool;
 
@@ -291,10 +329,40 @@ private:
   uint32_t ticksSinceAccept = 0;
 
   // Smoothed ratio of summed task time to the parallel phase's wall clock,
-  // sampled only on ticks that actually used the pool. This is the gate's real
-  // test: a ratio, so it does not drift with how fast the host is, and it
-  // falls when the host is busy rather than rising the way absolute work does.
+  // sampled only on ticks that actually used the pool. Reported for
+  // diagnostics; the accept/decline decision is made by the paired trial
+  // below, which measures the thing being decided instead of a proxy for it.
   double achievedSpeedupEma = 0.0;
+
+  // --- paired A/B trial --------------------------------------------------
+  //
+  // The decision procedure. Rather than compare a statistic against a
+  // threshold, run both paths in short alternating blocks and keep whichever
+  // measured cheaper per mover.
+
+  // Where the trial is up to. Ticks counted only while movement is arriving,
+  // so an idle server neither trials nor ages its verdict.
+  uint32_t ticksSinceTrial = 0;
+  uint32_t trialTicksDone = 0;
+  bool trialInProgress = false;
+
+  // Whether this tick is measured, and what it accumulated.
+  bool measuringThisTick = false;
+  uint64_t ingestNanosThisTick = 0;
+
+  // Per-mover cost summed over each arm of the current trial, and how many
+  // ticks contributed to each.
+  double trialAcceptCostPerMover = 0.0;
+  double trialDeclineCostPerMover = 0.0;
+  uint32_t trialAcceptTicks = 0;
+  uint32_t trialDeclineTicks = 0;
+
+  // The standing verdict. True until a trial says otherwise, because the
+  // asymmetry favours engaging: the cost of taking work on that did not need
+  // it is a few percent, and the cost of missing a real crowd is half the
+  // tick.
+  bool abVerdictAccept = true;
+  bool abHasVerdict = false;
 
   // How many tasks the previous tick pooled, used as the size hint for the
   // prime. Starts at 0 so the very first tick primes nothing and simply pays

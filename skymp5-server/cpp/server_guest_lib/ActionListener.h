@@ -116,6 +116,20 @@ public:
                               bool isSneaking, bool isStanding, uint32_t idx);
 
 private:
+  // The body of OnUpdateMovement, split out so the caller can time it.
+  //
+  // The paired trial in OffloadDispatcher needs to know what an update costs
+  // on whichever path it takes, and neither path keeps all of its cost in one
+  // place: an accepted update is flattened here and relayed in the join, a
+  // declined one is relayed here and the join does nothing. Timing the whole
+  // of this is what makes the two comparable.
+  //
+  // `accepting` is the dispatcher's answer for this tick, asked once before
+  // any of the flattening work is done.
+  void HandleMovementUpdate(MpActor& actor, const RawMessageData& rawMsgData,
+                            const UpdateMovementMessage& msg,
+                            bool teleportFlag, bool accepting);
+
   // Flattens one movement update plus its recipients and hands it to the
   // dispatcher. Returns false when the update must be handled inline
   // instead, which the caller is always free to do.

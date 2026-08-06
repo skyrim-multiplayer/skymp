@@ -236,6 +236,12 @@ struct SimResult
   uint64_t taskMicros = 0;
   uint64_t parallelMicros = 0;
   uint64_t joinMicros = 0;
+
+  // What the last paired trial measured for each path, and which it kept.
+  double trialAccept = 0.0;
+  double trialDecline = 0.0;
+  bool trialVerdictAccept = true;
+  uint64_t trials = 0;
 };
 
 // One stretch of a session: hold this many of the clients active for this
@@ -495,6 +501,10 @@ SimResult RunSimulation(int players, double simSeconds, float tickHz,
     result.clusters = m.lastClusterCount;
     result.achievedSpeedup = m.lastAchievedSpeedup;
     result.taskMicros = m.lastAggregateTaskMicros;
+    result.trialAccept = m.lastTrialAcceptMicrosPerMover;
+    result.trialDecline = m.lastTrialDeclineMicrosPerMover;
+    result.trialVerdictAccept = m.lastTrialAccepted;
+    result.trials = m.totalTrials;
     result.parallelMicros = m.lastParallelMicros;
     result.joinMicros = m.lastJoinMicros;
     result.declinedFraction = m.totalTicks > 0
@@ -508,7 +518,8 @@ SimResult RunSimulation(int players, double simSeconds, float tickHz,
 MpParallel::ParallelConfig SimConfig(bool adaptive,
                                      uint64_t minOffloadWorkMicros = 0,
                                      int probeTicks = -1,
-                                     float minSpeedup = -1.f)
+                                     float minSpeedup = -1.f,
+                                     int trialIntervalTicks = -1)
 {
   MpParallel::ParallelConfig config;
   config.enabled = true;
@@ -529,6 +540,12 @@ MpParallel::ParallelConfig SimConfig(bool adaptive,
   // Negative keeps the shipped default; 0 disables the speedup gate.
   if (minSpeedup >= 0.f) {
     config.minOffloadSpeedup = minSpeedup;
+  }
+  // The shipped trial interval is 1800 ticks -- thirty seconds -- which is
+  // longer than most cases here run for, so the trial would never complete and
+  // the mechanism would go unmeasured. Cases that care pass a shorter one.
+  if (trialIntervalTicks >= 0) {
+    config.abTrialIntervalTicks = static_cast<uint32_t>(trialIntervalTicks);
   }
   config.Normalize();
   return config;
@@ -793,6 +810,12 @@ TEST_CASE("Controller against a mixed population, by size",
         RunSimulation(players, kSeconds, kTickHz, false, SimConfig(false), seed));
       fixeds.push_back(
         RunSimulation(players, kSeconds, kTickHz, true, SimConfig(false), seed));
+      // Shipped defaults, trial cadence included. Six seconds is 360 ticks and
+      // the trial interval is 1800, so no trial completes here and this row
+      // shows the fallback -- which is what a server looks like for its first
+      // half minute. Forcing a short interval instead would make half these
+      // ticks trial ticks and measure the harness rather than the server.
+      // `What the paired trial concludes` is what exercises the mechanism.
       adaptives.push_back(
         RunSimulation(players, kSeconds, kTickHz, true, SimConfig(true), seed));
       adaptiveOverInline.push_back(adaptives.back().meanTickMicros /
@@ -851,6 +874,42 @@ TEST_CASE("Controller against a mixed population, by size",
     // gating on achieved parallel speedup rather than on absolute work, which
     // is a separate change and wants a quiet machine to calibrate on.
     REQUIRE(median(adaptiveOverInline) <= 1.25);
+  }
+  std::printf("\n");
+}
+
+TEST_CASE("What the paired trial concludes", "[.][ParallelSim]")
+{
+  // The mechanism on its own, separated from how often it runs.
+  //
+  // The aggregate timings in the case above cannot show this: to observe a
+  // verdict's effect you need many coasting ticks, and to produce a verdict you
+  // need trials, so any run short enough to inspect is dominated by trialling.
+  // What matters is whether the trial reaches the *right* conclusion, and that
+  // is these two numbers and the choice between them.
+  //
+  // Correct answers, from the aggregate tables: decline at 100, 200 and 300
+  // spread players, accept at 500.
+  constexpr double kSeconds = 12.0;
+  constexpr float kTickHz = 60.f;
+
+  std::printf("\n  paired trial: measured cost per mover on each path\n\n");
+  std::printf("  %-8s %10s %10s %10s %8s\n", "players", "accept us",
+              "decline us", "verdict", "trials");
+  std::printf("  %s\n", std::string(52, '-').c_str());
+
+  for (int players : { 100, 200, 300, 500 }) {
+    const SimResult r =
+      RunSimulation(players, kSeconds, kTickHz, true,
+                    SimConfig(true, 0, -1, -1.f, 120), 20260805);
+    std::printf("  %-8d %10.3f %10.3f %10s %8llu\n", players, r.trialAccept,
+                r.trialDecline, r.trialVerdictAccept ? "accept" : "decline",
+                static_cast<unsigned long long>(r.trials));
+
+    // A trial must actually have run, or the rest of the row means nothing.
+    REQUIRE(r.trials > 0);
+    REQUIRE(r.trialAccept > 0.0);
+    REQUIRE(r.trialDecline > 0.0);
   }
   std::printf("\n");
 }

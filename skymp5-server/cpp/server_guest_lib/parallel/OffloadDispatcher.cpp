@@ -218,8 +218,14 @@ void OffloadDispatcher::ExecuteTick(IOffloadSink& sink)
   metrics.ResetTick();
   metrics.lastTickIndex = snapshot.tickIndex;
   ++metrics.totalTicks;
+
+  // Only the "has a decision been taken" flag is cleared here. The decision
+  // itself has to survive into UpdateTrial below, which runs at the end of
+  // this tick and needs to know which arm the tick belonged to. Resetting it
+  // here made every trial tick look like an accept, so the decline arm never
+  // gathered a sample and no trial ever reached a verdict. EnsureTickDecision
+  // always assigns it before anything reads it as a decision.
   tickDecisionMade = false;
-  acceptingThisTick = true;
 
   // Rolled over before the early return below, because a tick that declined
   // everything leaves the snapshot empty and that is precisely the tick whose
@@ -235,6 +241,11 @@ void OffloadDispatcher::ExecuteTick(IOffloadSink& sink)
       ++ticksSinceAccept;
     }
     ++metrics.totalDeclinedTicks;
+    // A declined tick is one arm of the trial, so it has to be folded in
+    // before the early return -- otherwise only accepted ticks would ever be
+    // measured and the comparison would have nothing to compare against.
+    UpdateTrial();
+    metrics.lastAttemptCount = lastAttemptCount;
     snapshot.Clear();
     return;
   }
@@ -248,6 +259,7 @@ void OffloadDispatcher::ExecuteTick(IOffloadSink& sink)
   JoinResults(sink);
 
   UpdateAdaptiveThreshold();
+  UpdateTrial();
   metrics.lastAdaptiveThreshold = currentMinActorsToOffload;
 
   if (pool) {
@@ -278,13 +290,33 @@ void OffloadDispatcher::ExecuteTick(IOffloadSink& sink)
   snapshot.Clear();
 }
 
+bool OffloadDispatcher::TrialWantsAccept() const noexcept
+{
+  // Blocks of abTrialBlockTicks, alternating. Block 0 accepts, block 1
+  // declines, and so on, so the two arms are interleaved through the same
+  // stretch of wall clock and see the same population.
+  const uint32_t block = trialTicksDone / std::max<uint32_t>(
+                                            config.abTrialBlockTicks, 1);
+  return (block % 2) == 0;
+}
+
 void OffloadDispatcher::EnsureTickDecision()
 {
   if (tickDecisionMade) {
     return;
   }
   tickDecisionMade = true;
-  acceptingThisTick = ShouldAcceptThisTick();
+
+  if (trialInProgress) {
+    // Mid-trial: the arm decides, not the policy. Measuring is on so both
+    // halves of the tick's cost are captured.
+    acceptingThisTick = TrialWantsAccept();
+    measuringThisTick = true;
+  } else {
+    acceptingThisTick = ShouldAcceptThisTick();
+    measuringThisTick = false;
+  }
+  ingestNanosThisTick = 0;
 
   // First packet of the tick: tell the workers a batch is coming. The rest of
   // ingest then runs while they wake, so by the time ExecuteTick publishes the
@@ -386,15 +418,96 @@ bool OffloadDispatcher::ShouldAcceptThisTick() const
     return false;
   }
 
-  // The test that actually decides. Unlike the microsecond floor above, this
-  // is a ratio of two measurements taken on the same machine under the same
-  // conditions, so it neither drifts with how fast the host is nor inverts
-  // when the host is busy.
+  // The verdict from the last paired trial, which measured both paths against
+  // this population rather than inferring from a proxy. Everything above is a
+  // cheap early-out for cases too small to be worth trialling.
+  if (config.adaptiveParallelism && abHasVerdict) {
+    return abVerdictAccept;
+  }
+
+  // No trial has completed yet. Fall back to the speedup proxy, which is what
+  // decided before the trial existed and is still a reasonable first guess.
   if (config.minOffloadSpeedup > 0.f && achievedSpeedupEma > 0.0) {
     return achievedSpeedupEma >=
       static_cast<double>(config.minOffloadSpeedup);
   }
   return true;
+}
+
+void OffloadDispatcher::UpdateTrial()
+{
+  if (!config.adaptiveParallelism) {
+    return;
+  }
+
+  // An idle tick is not evidence about either path, and counting it would let
+  // a quiet night age out a verdict that is still perfectly good.
+  if (lastAttemptCount == 0) {
+    return;
+  }
+
+  const uint32_t blockTicks = std::max<uint32_t>(config.abTrialBlockTicks, 1);
+  const uint32_t trialLength =
+    blockTicks * std::max<uint32_t>(config.abTrialBlocks, 2);
+
+  if (!trialInProgress) {
+    if (++ticksSinceTrial < config.abTrialIntervalTicks && abHasVerdict) {
+      return;
+    }
+    // Start one.
+    ticksSinceTrial = 0;
+    trialInProgress = true;
+    trialTicksDone = 0;
+    trialAcceptCostPerMover = 0.0;
+    trialDeclineCostPerMover = 0.0;
+    trialAcceptTicks = 0;
+    trialDeclineTicks = 0;
+    return;
+  }
+
+  // Mid-trial. What this tick cost, end to end, per mover.
+  //
+  // Both halves are needed and they live in different places on the two paths:
+  // an accepted tick flattens updates during ingest and does its relays in the
+  // join, while a declined one does everything during ingest. Adding the
+  // dispatcher's own phases to the ingest time the caller reported is what
+  // makes the two comparable.
+  const double tickMicros = static_cast<double>(ingestNanosThisTick) / 1000.0 +
+    static_cast<double>(metrics.lastParallelMicros + metrics.lastJoinMicros);
+  const double cost = tickMicros / static_cast<double>(lastAttemptCount);
+
+  if (acceptingThisTick) {
+    trialAcceptCostPerMover += cost;
+    ++trialAcceptTicks;
+  } else {
+    trialDeclineCostPerMover += cost;
+    ++trialDeclineTicks;
+  }
+
+  if (++trialTicksDone < trialLength) {
+    return;
+  }
+
+  trialInProgress = false;
+  measuringThisTick = false;
+
+  if (trialAcceptTicks == 0 || trialDeclineTicks == 0) {
+    return;
+  }
+
+  const double accept = trialAcceptCostPerMover / trialAcceptTicks;
+  const double decline = trialDeclineCostPerMover / trialDeclineTicks;
+
+  // Ties, and near-ties, go to accepting. The asymmetry has been measured
+  // repeatedly: taking work on that did not need it costs a few percent, and
+  // missing a real crowd costs half the tick.
+  abVerdictAccept = accept <= decline * 1.02;
+  abHasVerdict = true;
+
+  metrics.lastTrialAcceptMicrosPerMover = accept;
+  metrics.lastTrialDeclineMicrosPerMover = decline;
+  metrics.lastTrialAccepted = abVerdictAccept;
+  ++metrics.totalTrials;
 }
 
 void OffloadDispatcher::UpdateAdaptiveThreshold()

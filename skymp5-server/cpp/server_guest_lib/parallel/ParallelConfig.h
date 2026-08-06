@@ -21,10 +21,45 @@ struct ParallelConfig
 {
   bool enabled = false;
 
-  // Dynamically tune minActorsToOffload during runtime based on actual 
-  // execution metrics. Defaults to true as the penalty for configuring
-  // minActorsToOffload too high is heavily asymmetric.
+  // Decide whether to take movement on by *measuring both paths*, rather than
+  // by comparing a statistic against a threshold.
+  //
+  // Every threshold tried here was wrong somewhere, and the last one was
+  // provably wrong: packed 100 players wins at an achieved speedup of 1.66
+  // while a scattered 300 loses at 2.20, so no cut-off takes the first without
+  // taking the second. They are not separable by work per actor either -- both
+  // measure 0.53us. The quantity that decides is the difference between what a
+  // tick costs on each path, and nothing short of running both measures it.
+  //
+  // So periodically the dispatcher runs a trial: short alternating blocks of
+  // accepted and declined ticks, timed end to end and normalised per mover.
+  // Alternating is what makes it a fair comparison -- the population, the
+  // spread and the machine's mood are all held constant across the pair in a
+  // way that measuring one path today and the other tomorrow cannot manage.
+  // Then it coasts on the verdict until the next trial.
   bool adaptiveParallelism = true;
+
+  // How often to re-run the trial, in ticks. 1800 is thirty seconds at 60Hz.
+  //
+  // The verdict only goes stale when the *shape* of the population changes --
+  // a crowd forming, a city emptying -- which is slow. Between trials the
+  // dispatcher coasts, so the measurement costs nothing.
+  uint32_t abTrialIntervalTicks = 1800;
+
+  // Ticks per block, and blocks per trial. A trial is
+  // abTrialBlockTicks * abTrialBlocks ticks long, half on each path.
+  //
+  // Blocks rather than strict tick-by-tick alternation because the accepted
+  // path has warm-up inside it -- the shard budget is an EMA and the workers
+  // have to be primed -- so a single accepted tick between declined ones would
+  // measure that warm-up rather than the steady state. Four is enough to get
+  // past it and short enough that the population cannot move much.
+  //
+  // At the defaults a trial is 48 ticks out of 1800, half of them on whichever
+  // path turns out to be worse, so the whole mechanism costs well under half a
+  // percent even when the paths differ by 15%.
+  uint32_t abTrialBlockTicks = 4;
+  uint32_t abTrialBlocks = 12;
 
   // The overhead tolerance factor. E.g. 1.05 means we allow parallel execution
   // to be up to 5% slower than the sequential estimate before bailing out.

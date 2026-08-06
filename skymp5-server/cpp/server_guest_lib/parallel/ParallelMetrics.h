@@ -53,6 +53,14 @@ struct ParallelMetrics
   // and movement is handed back to the inline path.
   double lastAchievedSpeedup = 0.0;
 
+  // What the last paired trial measured, in microseconds per mover, for each
+  // path -- and which one it kept. These two numbers are the whole decision,
+  // so an operator wondering why the offload is or is not engaging should look
+  // here first.
+  double lastTrialAcceptMicrosPerMover = 0.0;
+  double lastTrialDeclineMicrosPerMover = 0.0;
+  bool lastTrialAccepted = true;
+
   // --- running totals ---------------------------------------------------
   uint64_t totalTicks = 0;
 
@@ -66,6 +74,10 @@ struct ParallelMetrics
   // the original inline path. Expected to be most of them on a quiet server
   // and near none during a crowd.
   uint64_t totalDeclinedTicks = 0;
+
+  // Paired trials completed. One every abTrialIntervalTicks while movement is
+  // arriving; a flat zero on a busy server means the trial is not running.
+  uint64_t totalTrials = 0;
   uint64_t totalOffloadedTicks = 0;
   uint64_t totalInlineTicks = 0;
   uint64_t totalRelayEdgesEmitted = 0;

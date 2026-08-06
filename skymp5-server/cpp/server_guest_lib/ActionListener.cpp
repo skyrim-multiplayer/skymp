@@ -13,6 +13,7 @@
 #include "Overloaded.h"
 #include "WorldState.h"
 #include "parallel/OffloadDispatcher.h"
+#include <chrono>
 #include "gamemode_events/CustomEvent.h"
 #include "gamemode_events/EatItemEvent.h"
 #include "gamemode_events/UpdateAppearanceAttemptEvent.h"
@@ -253,15 +254,47 @@ void ActionListener::OnUpdateMovement(const RawMessageData& rawMsgData,
   actor->SetTeleportFlag(false);
 
   if (offloadEnabled) {
+    MpParallel::OffloadDispatcher& dispatcher = partOne.GetOffloadDispatcher();
+
     // Ask before building anything. Flattening an update costs a dozen floats,
     // the animation flags and a cell form id to resolve, and on a scattered
     // population the dispatcher declines nearly every tick -- so building a
     // submission only to have it handed straight back was measurable: 3-4% of
     // the tick at 100 and 200 spread players, where 99% of ticks were
     // declined.
-    const bool accepting =
-      partOne.GetOffloadDispatcher().WillAcceptThisTick();
+    const bool accepting = dispatcher.WillAcceptThisTick();
 
+    // During a paired trial the dispatcher needs to know what this update cost
+    // on whichever path it takes, because neither path keeps all of its cost
+    // in one place: accepted work is flattened here and relayed in the join,
+    // declined work is relayed here and the join does nothing. Off on nearly
+    // every tick, so the two clock reads are not on the normal path.
+    if (dispatcher.IsMeasuringThisTick()) {
+      const auto started = std::chrono::steady_clock::now();
+      HandleMovementUpdate(*actor, rawMsgData, msg, teleportFlag, accepting);
+      dispatcher.AddIngestNanos(
+        static_cast<uint64_t>(
+          std::chrono::duration_cast<std::chrono::nanoseconds>(
+            std::chrono::steady_clock::now() - started)
+            .count()));
+      return;
+    }
+
+    HandleMovementUpdate(*actor, rawMsgData, msg, teleportFlag, accepting);
+    return;
+  }
+
+  HandleMovementUpdate(*actor, rawMsgData, msg, teleportFlag, false);
+}
+
+void ActionListener::HandleMovementUpdate(MpActor& actorRef,
+                                          const RawMessageData& rawMsgData,
+                                          const UpdateMovementMessage& msg,
+                                          bool teleportFlag, bool accepting)
+{
+  MpActor* actor = &actorRef;
+
+  if (partOne.GetOffloadDispatcher().IsEnabled()) {
     if (accepting &&
         TrySubmitMovementForOffload(*actor, rawMsgData, msg, teleportFlag)) {
       return;
