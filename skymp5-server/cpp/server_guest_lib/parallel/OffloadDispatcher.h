@@ -215,8 +215,8 @@ private:
 
   // allowSharding is false on the inline path, where splitting a cluster
   // would only add per-unit bookkeeping to work that runs serially anyway.
-  void BuildWorkUnits(bool allowSharding);
-  void RunUnits();
+  void BuildWorkUnits(bool allowSharding = true);
+  void RunUnits(IOffloadSink& sink);
   void JoinResults(IOffloadSink& sink);
   void ResetPool();
   [[nodiscard]] size_t ComputeShardCount(size_t clusterSize,

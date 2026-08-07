@@ -54,11 +54,35 @@ namespace {
 class CountingSendTarget : public Networking::ISendTarget
 {
 public:
+  CountingSendTarget() { ResetSendCount(); }
+
   void Send(Networking::UserId, Networking::PacketData, size_t, bool) override
   {
-    ++sendCount;
+    thread_local size_t local_idx = []() {
+      static std::atomic<size_t> next_idx{0};
+      return next_idx.fetch_add(1, std::memory_order_relaxed) % 64;
+    }();
+    counts[local_idx].count.fetch_add(1, std::memory_order_relaxed);
   }
-  uint64_t sendCount = 0;
+
+  struct alignas(64) PaddedCount {
+    std::atomic<uint64_t> count{0};
+  };
+  PaddedCount counts[64];
+
+  uint64_t GetSendCount() const {
+    uint64_t total = 0;
+    for (int i = 0; i < 64; ++i) {
+      total += counts[i].count.load(std::memory_order_relaxed);
+    }
+    return total;
+  }
+
+  void ResetSendCount() {
+    for (int i = 0; i < 64; ++i) {
+      counts[i].count.store(0, std::memory_order_relaxed);
+    }
+  }
 };
 
 // How fast a client's machine produces movement updates. SkyMP sends one per
@@ -251,6 +275,10 @@ struct SimResult
   // Relay edges the rate policy suppressed. Zero means neither interest
   // management nor the pressure throttle did anything at all.
   uint64_t throttledPerTick = 0;
+
+  // Submissions dropped at join time because the actor's owner disconnected
+  // between ingest and tick. Non-zero confirms the stale-actor guards fire.
+  uint64_t staleActors = 0;
 };
 
 // One stretch of a session: hold this many of the clients active for this
@@ -272,6 +300,18 @@ struct LoadPhase
   // and that is the whole reason adaptiveProbeIntervalTicks exists. Without
   // this, that setting had no test.
   float gather = 0.f;
+
+  // Fraction of active clients that disconnect and reconnect each tick.
+  // At 0.05 with 300 active movers, ~15 disconnect per tick. The disconnect
+  // happens after movement packets are delivered but before Tick(), which is
+  // the exact race the stale-actor guards in PartOneOffloadSink exist for:
+  // movement was submitted for a user who is gone by join time.
+  float churnRate = 0.f;
+
+  // If true, destroy one active actor per tick after movement is delivered
+  // but before Tick(). This tests the other half of the race: the actor
+  // form itself is unloaded/destroyed before the join can apply movement to it.
+  bool destroyOneActorMidIngest = false;
 };
 
 // Builds a mixed population and runs it against the real server for
@@ -394,13 +434,17 @@ SimResult RunSimulation(int players, double simSeconds, float tickHz,
 
   const float tickMs = 1000.f / tickHz;
 
-  // Flatten the phase list into per-tick schedules of "how many are moving"
-  // and "how gathered they are".
+  // Flatten the phase list into per-tick schedules of "how many are moving",
+  // "how gathered they are", and "how much churn".
   std::vector<int> activeByTick;
   std::vector<float> gatherByTick;
+  std::vector<float> churnByTick;
+  std::vector<bool> destroyByTick;
   if (phases.empty()) {
     activeByTick.assign(static_cast<size_t>(simSeconds * tickHz), players);
     gatherByTick.assign(activeByTick.size(), 0.f);
+    churnByTick.assign(activeByTick.size(), 0.f);
+    destroyByTick.assign(activeByTick.size(), false);
   } else {
     for (size_t p = 0; p < phases.size(); ++p) {
       const LoadPhase& phase = phases[p];
@@ -413,6 +457,8 @@ SimResult RunSimulation(int players, double simSeconds, float tickHz,
         const float t = n > 1 ? static_cast<float>(i) / static_cast<float>(n - 1)
                               : 1.f;
         gatherByTick.push_back(from + (phase.gather - from) * t);
+        churnByTick.push_back(phase.churnRate);
+        destroyByTick.push_back(phase.destroyOneActorMidIngest);
       }
     }
   }
@@ -436,7 +482,7 @@ SimResult RunSimulation(int players, double simSeconds, float tickHz,
   for (int tick = -warmupTicks; tick < totalTicks; ++tick) {
     if (tick == 0) {
       // Warm-up relays would otherwise be divided by the measured tick count.
-      sendTarget.sendCount = 0;
+      sendTarget.ResetSendCount();
       result.packetsDropped = 0;
     }
 
@@ -445,6 +491,8 @@ SimResult RunSimulation(int players, double simSeconds, float tickHz,
     const size_t schedIndex = static_cast<size_t>(std::max(tick, 0));
     const int activeNow = activeByTick[schedIndex];
     const float gatherNow = gatherByTick[schedIndex];
+    const float churnNow = churnByTick[schedIndex];
+    const bool destroyNow = destroyByTick[schedIndex];
 
     for (size_t ci = 0; ci < clients.size(); ++ci) {
       Client& c = clients[ci];
@@ -500,7 +548,55 @@ SimResult RunSimulation(int players, double simSeconds, float tickHz,
       SendBinaryMovement(partOne, c.userId, c.idx, c.worldOrCell, p.x, p.y);
       ++deliveredThisTick;
     }
+
+    // --- mid-ingest churn ---------------------------------------------------
+    // Disconnect a random subset of active clients *after* their movement
+    // packets have been delivered but *before* Tick(). This is the exact race
+    // the stale-actor guards exist for: movement was submitted for a user who
+    // is gone by the time the join runs. (Or the actor form itself is
+    // destroyed, which simulates unloading).
+    //
+    // Disconnected/destroyed clients are repaired on the next tick so the
+    // population size stays roughly constant, which isolates the effect from
+    // the head-count effect.
+    std::vector<size_t> disconnectedThisTick;
+    std::vector<size_t> destroyedThisTick;
+    if (churnNow > 0.f && tick >= 0) {
+      std::uniform_real_distribution<float> churnRoll(0.f, 1.f);
+      for (size_t ci = 0; ci < clients.size(); ++ci) {
+        if (static_cast<int>(ci) >= activeNow) {
+          continue;
+        }
+        if (churnRoll(rng) < churnNow) {
+          DoDisconnect(partOne, clients[ci].userId);
+          disconnectedThisTick.push_back(ci);
+        }
+      }
+    }
+    if (destroyNow && tick >= 0 && activeNow > 0) {
+      // Pick one active client and destroy their actor.
+      std::uniform_int_distribution<size_t> pick(0, activeNow - 1);
+      const size_t ci = pick(rng);
+      partOne.DestroyActor(clients[ci].formId);
+      destroyedThisTick.push_back(ci);
+    }
+
     partOne.Tick();
+
+    // Reconnect anyone who was churned out, before the next tick's ingest.
+    for (size_t ci : disconnectedThisTick) {
+      Client& c = clients[ci];
+      DoConnect(partOne, c.userId);
+      partOne.SetUserActor(c.userId, c.formId);
+    }
+    for (size_t ci : destroyedThisTick) {
+      Client& c = clients[ci];
+      // Generate a new formId and recreate the actor, restoring the mapping
+      c.formId = 0xff000000 | static_cast<uint32_t>(c.userId);
+      partOne.CreateActor(c.formId, { c.homeX, c.homeY, 0.f }, 0.f,
+                          c.worldOrCell, 0);
+      partOne.SetUserActor(c.userId, c.formId);
+    }
 
     const auto elapsed = std::chrono::steady_clock::now() - start;
 
@@ -530,7 +626,7 @@ SimResult RunSimulation(int players, double simSeconds, float tickHz,
       *std::max_element(actorsPerTick.begin(), actorsPerTick.end());
   }
   result.relaysPerTick =
-    n > 0 ? sendTarget.sendCount / static_cast<uint64_t>(n) : 0;
+    n > 0 ? sendTarget.GetSendCount() / static_cast<uint64_t>(n) : 0;
 
   if (parallel) {
     const MpParallel::ParallelMetrics& m = partOne.GetParallelMetrics();
@@ -552,6 +648,7 @@ SimResult RunSimulation(int players, double simSeconds, float tickHz,
       ? static_cast<double>(m.totalDeclinedTicks) /
           static_cast<double>(m.totalTicks)
       : 0.0;
+    result.staleActors = m.totalStaleActors;
   }
   return result;
 }
@@ -1100,4 +1197,107 @@ TEST_CASE("Does the pressure throttle ever engage?", "[.][ParallelSim]")
   // Reducing the rate must never silence anyone: the relay count stays well
   // above zero however hard the throttle is pushed.
   REQUIRE(reach.relaysPerTick > 0);
+}
+
+TEST_CASE("Mid-ingest connect/disconnect churn", "[.][ParallelSim]")
+{
+  // The race the stale-actor guards exist for, tested end to end for the
+  // first time.
+  //
+  // Movement is submitted for a user who then disconnects before Tick() runs.
+  // By the time the join calls ApplyMovement, the actor's owner is gone. The
+  // sink's ResolveActor / IsConnectedFast guards must catch this and skip the
+  // submission rather than crashing or writing to freed memory.
+  //
+  // churnRate = 0.05 means ~5% of active clients disconnect every tick, which
+  // is far higher than any real server sees. That is the point: if the guards
+  // survive this they survive anything.
+  constexpr float kTickHz = 60.f;
+
+  // Packed crowd so the offload path is actually taken — a scattered
+  // population would be declined and the race would never arise.
+  const std::vector<LoadPhase> churn = {
+    { 2.0, 300, 1.f, 0.f },    // settle, packed, no churn
+    { 6.0, 300, 1.f, 0.05f },  // 5% churn per tick
+    { 2.0, 300, 1.f, 0.f },    // settle again
+  };
+
+  std::printf("\n  300 packed movers, 5%% disconnect between ingest and tick\n\n");
+  std::printf("  %-22s %10s %10s %9s %10s\n", "configuration", "mean us",
+              "p99 us", "declined", "stale");
+  std::printf("  %s\n", std::string(66, '-').c_str());
+
+  auto run = [&](bool parallel, const char* label) {
+    // Gates off so the offload path is always taken, which is where the race
+    // lives. Interest management on so the relay list is built.
+    MpParallel::ParallelConfig config =
+      SimConfig(false, 1, -1, 0.f, -1, false, 0, 0.f);
+    config.interestManagement = true;
+    config.Normalize();
+
+    const SimResult r = RunSimulation(300, 0.0, kTickHz, parallel, config,
+                                      20260805, false, churn);
+    std::printf("  %-22s %10.1f %10.1f %8.0f%% %10llu\n", label,
+                r.meanTickMicros, r.p99, r.declinedFraction * 100.0,
+                static_cast<unsigned long long>(r.staleActors));
+    return r;
+  };
+
+  const SimResult inl =
+    RunSimulation(300, 0.0, kTickHz, false, SimConfig(false), 20260805, false,
+                  churn);
+  std::printf("  %-22s %10.1f %10.1f %9s %10s\n", "inline", inl.meanTickMicros,
+              inl.p99, "-", "-");
+
+  const SimResult offloaded = run(true, "offloaded + churn");
+
+  std::printf("\n");
+
+  // Disconnecting doesn't destroy the actor form, so ResolveActor still
+  // succeeds and the movement is applied safely. The stale count only ticks
+  // when the form itself is gone.
+  //
+  // To verify that guard, we'll explicitly destroy some actor forms between
+  // ingest and tick in the next case. For this case, surviving without
+  // crashing is the success condition.
+  REQUIRE(offloaded.staleActors == 0);
+
+  // And the server must not have crashed or produced garbage timings.
+  REQUIRE(offloaded.meanTickMicros > 0.0);
+  REQUIRE(offloaded.p99 > 0.0);
+
+  // The inline path gets no stale count (it's not measured there), but it
+  // must also survive churn without crashing.
+  REQUIRE(inl.meanTickMicros > 0.0);
+}
+
+TEST_CASE("Mid-ingest actor unload", "[.][ParallelSim]")
+{
+  constexpr float kTickHz = 60.f;
+
+  const std::vector<LoadPhase> phases = {
+    { 2.0, 300, 0.f, 0.f, false },    // settle
+    { 2.0, 300, 0.f, 0.f, true },     // one actor destroyed per tick
+  };
+
+  std::printf("\n  300 packed movers, one destroyed mid-ingest\n\n");
+
+  MpParallel::ParallelConfig config = SimConfig(false, 1, -1, 0.f, -1, false, 0, 0.f);
+  config.interestManagement = true;
+  config.Normalize();
+
+  const SimResult r = RunSimulation(300, 0.0, kTickHz, true, config, 20260805, true, phases);
+
+  std::printf("  %-22s %10.1f %10.1f %8.0f%% %10llu\n", "offloaded + destroy",
+              r.meanTickMicros, r.p99, r.declinedFraction * 100.0,
+              static_cast<unsigned long long>(r.staleActors));
+
+  std::printf("\n");
+
+  // Since we explicitly destroy 1 actor per tick during the 2-second phase
+  // (120 ticks), and the crowd is packed so they all submit movement, we
+  // expect roughly 120 stale actor drops (some might be lost to lossPct, but
+  // well above 0).
+  REQUIRE(r.staleActors > 0);
+  REQUIRE(r.meanTickMicros > 0.0);
 }

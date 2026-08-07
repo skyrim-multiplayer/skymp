@@ -8,9 +8,9 @@
 #include <chrono>
 #include <cmath>
 #include <cstdio>
-#include <numeric>
 #include <slikenet/BitStream.h>
 #include <vector>
+#include <atomic>
 
 // Measures what the parallel area offload actually buys, instead of arguing
 // about it. Hidden behind the "[.]" tag so ctest never picks it up; run it
@@ -33,13 +33,35 @@ namespace {
 class NullSendTarget : public Networking::ISendTarget
 {
 public:
+  NullSendTarget() { ResetSendCount(); }
+
   void Send(Networking::UserId, Networking::PacketData, size_t, bool) override
   {
-    // Deliberately does nothing: we are measuring server-side relay cost, not
-    // the network stack. Both configurations pay the same zero here.
-    ++sendCount;
+    thread_local size_t local_idx = []() {
+      static std::atomic<size_t> next_idx{0};
+      return next_idx.fetch_add(1, std::memory_order_relaxed) % 64;
+    }();
+    counts[local_idx].count.fetch_add(1, std::memory_order_relaxed);
   }
-  uint64_t sendCount = 0;
+
+  struct alignas(64) PaddedCount {
+    std::atomic<uint64_t> count{0};
+  };
+  PaddedCount counts[64];
+
+  uint64_t GetSendCount() const {
+    uint64_t total = 0;
+    for (int i = 0; i < 64; ++i) {
+      total += counts[i].count.load(std::memory_order_relaxed);
+    }
+    return total;
+  }
+
+  void ResetSendCount() {
+    for (int i = 0; i < 64; ++i) {
+      counts[i].count.store(0, std::memory_order_relaxed);
+    }
+  }
 };
 
 struct Sample
@@ -204,7 +226,7 @@ Sample RunScenario(int players, bool parallel, size_t workers, int ticks,
     oneTick();
   }
 
-  sendTarget.sendCount = 0;
+  sendTarget.ResetSendCount();
 
   // The phase counters are per-tick and get overwritten, so they are summed
   // as we go. Reading a handful of uint64s per tick is nothing against a tick
@@ -225,12 +247,13 @@ Sample RunScenario(int players, bool parallel, size_t workers, int ticks,
       taskSum += m.lastAggregateTaskMicros;
     }
   }
+
   const auto elapsed = std::chrono::steady_clock::now() - start;
 
   Sample sample;
   sample.perTickMicros =
     std::chrono::duration<double, std::micro>(elapsed).count() / ticks;
-  sample.relays = sendTarget.sendCount / static_cast<uint64_t>(ticks);
+  sample.relays = sendTarget.GetSendCount() / static_cast<uint64_t>(ticks);
 
   if (parallel) {
     const MpParallel::ParallelMetrics& m = partOne.GetParallelMetrics();

@@ -253,7 +253,7 @@ void OffloadDispatcher::ExecuteTick(IOffloadSink& sink)
   // Only ticks that accepted tell us anything about what a tick costs.
   lastAcceptedActorCount = snapshot.actors.size();
 
-  RunUnits();
+  RunUnits(sink);
   JoinResults(sink);
 
   UpdateTrial();
@@ -589,7 +589,7 @@ void OffloadDispatcher::BuildWorkUnits(bool allowSharding)
   }
 }
 
-void OffloadDispatcher::RunUnits()
+void OffloadDispatcher::RunUnits(IOffloadSink& sink)
 {
   const uint64_t parallelStart = NowMicros();
 
@@ -680,16 +680,20 @@ void OffloadDispatcher::RunUnits()
         snapshot, clusters[unit.clusterIndex].actorIndices.data() + unit.begin,
         unit.count, pressureByCluster[unit.clusterIndex], policy,
         unitOutputs[unitIndex]);
+      const ClusterOutput& output = unitOutputs[unitIndex];
+      if (!output.sends.empty()) {
+        sink.SendRelayBatch(output.sends.data(), output.sends.size(),
+                            snapshot.rawPacketBytes.data(),
+                            snapshot.rawPacketBytes.size());
+      }
       unitOutputs[unitIndex].elapsedMicros = NowMicros() - taskStart;
     }
     // lastAggregateTaskMicros is accumulated by JoinResults, which walks the
     // same outputs; adding it here too would double count.
     metrics.lastParallelMicros = NowMicros() - parallelStart;
-    return;
-  }
-
-  // Longest cluster first so the biggest pieces enter the queue before the
-  // scraps. The pool hands tasks out dynamically from there.
+  } else {
+    // Longest cluster first so the biggest pieces enter the queue before the
+    // scraps. The pool hands tasks out dynamically from there.
   loadBalancer.BuildSchedule(clusters, schedule);
 
   clusterRank.assign(clusters.size(), 0);
@@ -729,13 +733,19 @@ void OffloadDispatcher::RunUnits()
       continue;
     }
 
-    tasks.emplace_back([this, unitIndex](size_t) {
+    tasks.emplace_back([this, unitIndex, &sink](size_t) {
       const WorkUnit& u = workUnits[unitIndex];
       const uint64_t taskStart = NowMicros();
       InterestManager::ProcessRange(
         snapshot, clusters[u.clusterIndex].actorIndices.data() + u.begin,
         u.count, pressureByCluster[u.clusterIndex], policy,
         unitOutputs[unitIndex]);
+      const ClusterOutput& output = unitOutputs[unitIndex];
+      if (!output.sends.empty()) {
+        sink.SendRelayBatch(output.sends.data(), output.sends.size(),
+                            snapshot.rawPacketBytes.data(),
+                            snapshot.rawPacketBytes.size());
+      }
       unitOutputs[unitIndex].elapsedMicros = NowMicros() - taskStart;
     });
   }
@@ -754,10 +764,17 @@ void OffloadDispatcher::RunUnits()
       snapshot, clusters[unit.clusterIndex].actorIndices.data() + unit.begin,
       unit.count, pressureByCluster[unit.clusterIndex], policy,
       unitOutputs[unitIndex]);
+    const ClusterOutput& output = unitOutputs[unitIndex];
+    if (!output.sends.empty()) {
+      sink.SendRelayBatch(output.sends.data(), output.sends.size(),
+                          snapshot.rawPacketBytes.data(),
+                          snapshot.rawPacketBytes.size());
+    }
     unitOutputs[unitIndex].elapsedMicros = NowMicros() - taskStart;
   }
 
   metrics.lastParallelMicros = NowMicros() - parallelStart;
+  } // end else
 }
 
 void OffloadDispatcher::JoinResults(IOffloadSink& sink)
@@ -773,12 +790,6 @@ void OffloadDispatcher::JoinResults(IOffloadSink& sink)
   for (size_t unitIndex = 0; unitIndex < workUnits.size(); ++unitIndex) {
     const WorkUnit& unit = workUnits[unitIndex];
     ClusterOutput& output = unitOutputs[unitIndex];
-
-    if (!output.sends.empty()) {
-      sink.SendRelayBatch(output.sends.data(), output.sends.size(),
-                          snapshot.rawPacketBytes.data(),
-                          snapshot.rawPacketBytes.size());
-    }
 
     for (const MovementVerdict& verdict : output.verdicts) {
       if (verdict.actorIndex >= snapshot.actors.size()) {

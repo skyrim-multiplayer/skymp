@@ -50,6 +50,8 @@ void PartOneSendTargetWrapper::Send(Networking::UserId targetUserId,
 class FakeSendTarget : public Networking::ISendTarget
 {
 public:
+  std::mutex mtx;
+
   void Send(Networking::UserId targetUserId, Networking::PacketData data,
             size_t length, bool reliable) override
   {
@@ -66,6 +68,7 @@ public:
       j = nlohmann::json::parse(s);
     }
 
+    std::lock_guard<std::mutex> lock(mtx);
     messages.push_back(PartOne::Message{ j, message, targetUserId, reliable });
   }
 
@@ -203,7 +206,18 @@ void PartOne::Tick()
       pImpl->offloadDispatcher->CommitPotentialTargets();
     }
     pImpl->offloadSink->BeginJoin();
+    const uint64_t staleBefore = pImpl->offloadSink->GetStaleActorCount();
     pImpl->offloadDispatcher->ExecuteTick(*pImpl->offloadSink);
+
+    // The sink's stale count is a running total; the metric needs both the
+    // per-tick snapshot and the cumulative.
+    {
+      const uint64_t staleAfter = pImpl->offloadSink->GetStaleActorCount();
+      auto& metrics = const_cast<MpParallel::ParallelMetrics&>(
+        pImpl->offloadDispatcher->GetMetrics());
+      metrics.lastStaleActors = staleAfter - staleBefore;
+      metrics.totalStaleActors = staleAfter;
+    }
   }
 
   TickDeferredMessages();
