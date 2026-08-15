@@ -1,0 +1,52 @@
+name: Get Settings Pins
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch, meaning server instance'
+        required: true
+        type: choice
+        options:
+          - 'sweetpie'
+          - 'indev'
+          - 'staging'
+        default: 'indev'
+
+jobs:
+  get_settings_pins:
+    runs-on: ubuntu-latest
+    steps:
+      # The report itself is written into the dispatched run's summary, in the
+      # installer repo -- the settings live in an R2 bucket only that repo has
+      # credentials for. This job just points at it.
+      - name: Trigger settings pins report
+        env:
+          GH_TOKEN: ${{ secrets.SKYMP5_INSTALLER_REPOSITORY_DISPATCH_PAT }}
+          SERVER_NAME: ${{ inputs.branch }}
+          ACTOR: ${{ github.triggering_actor }}
+        run: |
+          body="$(jq -n \
+            --arg server "$SERVER_NAME" \
+            --arg actor "$ACTOR" \
+            '{
+              ref: "master",
+              return_run_details: true,
+              inputs: {
+                action: "get_settings_pins",
+                server_name: $server,
+                real_triggering_actor: $actor
+              }
+            }')"
+
+          resp="$(gh api --method POST \
+            repos/skyrim-multiplayer/skymp5-installer-v2/actions/workflows/server-settings-1-0.yml/dispatches \
+            --input - <<< "$body")"
+
+          run_url="$(jq -r '.html_url // ""' <<< "$resp")"
+          if [[ -z "$run_url" ]]; then
+            run_url="https://github.com/skyrim-multiplayer/skymp5-installer-v2/actions/workflows/server-settings-1-0.yml"
+          fi
+
+          echo "Settings pins for **$SERVER_NAME** are reported in $run_url" \
+            | tee -a "$GITHUB_STEP_SUMMARY"

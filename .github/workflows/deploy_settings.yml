@@ -1,0 +1,57 @@
+name: Deploy Settings
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch, meaning server instance'
+        required: true
+        type: choice
+        options:
+          - 'sweetpie'
+          - 'indev'
+          - 'staging'
+        default: 'indev'
+      restart:
+        description: 'Restart the server, which is what makes the new settings take effect'
+        required: false
+        type: boolean
+        default: true
+
+jobs:
+  deploy_settings:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger settings deploy job
+        env:
+          GH_TOKEN: ${{ secrets.SKYMP5_INSTALLER_REPOSITORY_DISPATCH_PAT }}
+          SERVER_NAME: ${{ inputs.branch }}
+          RESTART: ${{ inputs.restart }}
+          ACTOR: ${{ github.triggering_actor }}
+        run: |
+          body="$(jq -n \
+            --arg server "$SERVER_NAME" \
+            --arg restart "$RESTART" \
+            --arg actor "$ACTOR" \
+            '{
+              ref: "master",
+              return_run_details: true,
+              inputs: {
+                action: "deploy_settings",
+                server_name: $server,
+                restart: $restart,
+                real_triggering_actor: $actor
+              }
+            }')"
+
+          resp="$(gh api --method POST \
+            repos/skyrim-multiplayer/skymp5-installer-v2/actions/workflows/server-settings-1-0.yml/dispatches \
+            --input - <<< "$body")"
+
+          run_url="$(jq -r '.html_url // ""' <<< "$resp")"
+          if [[ -z "$run_url" ]]; then
+            run_url="https://github.com/skyrim-multiplayer/skymp5-installer-v2/actions/workflows/server-settings-1-0.yml"
+          fi
+
+          echo "Deploying settings to **$SERVER_NAME** (restart=$RESTART): $run_url" \
+            | tee -a "$GITHUB_STEP_SUMMARY"
