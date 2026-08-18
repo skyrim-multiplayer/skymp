@@ -16,6 +16,7 @@
 #include "GMST.h"
 #include "INGR.h"
 #include "KYWD.h"
+#include "LCTN.h"
 #include "LIGH.h"
 #include "LVLI.h"
 #include "LVLN.h"
