@@ -43,8 +43,7 @@ LCTN::Data LCTN::GetData(
   RecordHeaderAccess::IterateFields(
     this,
     [&](const char* type, uint32_t dataSize, const char* data) {
-      if (!std::memcmp(type, "ACPR", 4) ||
-          !std::memcmp(type, "LCPR", 4)) {
+      if (!std::memcmp(type, "ACPR", 4) || !std::memcmp(type, "LCPR", 4)) {
         AppendArray(result.populationRefs, dataSize, data);
       } else if (!std::memcmp(type, "RCPR", 4)) {
         AppendArray(result.actorRefs, dataSize, data);
