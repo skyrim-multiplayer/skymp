@@ -115,8 +115,14 @@ public:
     uint32_t linkedRefKeywordId = 0;
     uint32_t linkedRefId = 0;
     uint32_t ownerFaction = 0;
+
+    // FULL: in-game name of the map marker.
     lstring mapMarkerName = 0;
+
+    // FNAM: map marker flags; visible, can travel to, or show all hidden.
     MapMarkerFlags mapMarkerFlags = MapMarkerFlags::None;
+
+    // TNAM: icon type for the map marker.
     MapMarkerType mapMarkerType = MapMarkerType::None;
   };
 

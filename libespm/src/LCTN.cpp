@@ -22,14 +22,14 @@ void AppendEncounterRef(std::vector<LCTN::EncounterRef>& out,
   }
 
   LCTN::EncounterRef encounterRef;
-  encounterRef.cellOrWorldId = *reinterpret_cast<const formId*>(data);
+  encounterRef.worldId = *reinterpret_cast<const formId*>(data);
 
   const auto pairsSize = dataSize - sizeof(formId);
   const auto pairsCount = pairsSize / sizeof(LCTN::CellGrid);
   const auto pairs =
     reinterpret_cast<const LCTN::CellGrid*>(data + sizeof(formId));
-  encounterRef.coordinates.insert(encounterRef.coordinates.end(), pairs,
-                                  pairs + pairsCount);
+  encounterRef.cellGrids.insert(encounterRef.cellGrids.end(), pairs,
+                                pairs + pairsCount);
 
   out.push_back(encounterRef);
 }
@@ -43,13 +43,11 @@ LCTN::Data LCTN::GetData(
   RecordHeaderAccess::IterateFields(
     this,
     [&](const char* type, uint32_t dataSize, const char* data) {
-      if (!std::memcmp(type, "EDID", 4)) {
-        result.editorId = data;
-      } else if (!std::memcmp(type, "ACPR", 4) ||
-                 !std::memcmp(type, "LCPR", 4)) {
+      if (!std::memcmp(type, "ACPR", 4) ||
+          !std::memcmp(type, "LCPR", 4)) {
         AppendArray(result.populationRefs, dataSize, data);
       } else if (!std::memcmp(type, "RCPR", 4)) {
-        AppendArray(result.referencePersistentRefs, dataSize, data);
+        AppendArray(result.actorRefs, dataSize, data);
       } else if (!std::memcmp(type, "ACUN", 4) ||
                  !std::memcmp(type, "LCUN", 4)) {
         AppendArray(result.uniqueRefs, dataSize, data);
@@ -64,7 +62,7 @@ LCTN::Data LCTN::GetData(
         AppendArray(result.enablePoints, dataSize, data);
       } else if (!std::memcmp(type, "ACID", 4) ||
                  !std::memcmp(type, "LCID", 4)) {
-        AppendArray(result.markerRefs, dataSize, data);
+        AppendArray(result.unknownRefs, dataSize, data);
       } else if (!std::memcmp(type, "FULL", 4)) {
         result.fullNameTableID = *reinterpret_cast<const lstring*>(data);
       } else if (!std::memcmp(type, "KSIZ", 4)) {
