@@ -88,6 +88,15 @@ void WorldState::AttachEspm(espm::Loader* espm_,
   formCallbacksFactory = formCallbacksFactory_;
   espmCache.reset(new espm::CompressedFieldsCache);
   espmFiles = espm->GetFileNames();
+
+  // Reuse the combiner's full/light slot assignment (single source of truth)
+  // so FormDesc encodes the same form ids the game runtime does.
+  std::vector<espm::PluginSlot> slots;
+  slots.reserve(espmFiles.size());
+  for (size_t i = 0; i < espmFiles.size(); ++i) {
+    slots.push_back(espm->GetBrowser().GetPluginSlot(i));
+  }
+  espmFiles.SetSlots(std::move(slots));
 }
 
 void WorldState::AttachSaveStorage(
@@ -892,12 +901,14 @@ std::shared_ptr<std::vector<uint32_t>> WorldState::GetAllForms(
     // so we don't need de-duplicate in runtime
     std::unordered_set<uint32_t> formIds;
     for (const auto& p : forms) {
-      if ((p.first >> 24) == modIndex) {
+      // Match by file index, not high byte: all light plugins share 0xFE
+      if (GetFileIdx(p.first) == modIndex) {
         formIds.insert(p.first);
       }
     }
     for (const auto& p : pImpl->changeFormsForDeferredLoad) {
-      if ((p.first >> 24) == modIndex) {
+      // Match by file index, not high byte: all light plugins share 0xFE
+      if (GetFileIdx(p.first) == modIndex) {
         formIds.insert(p.first);
       }
     }
@@ -1160,7 +1171,9 @@ bool WorldState::IsNpcAllowed(uint32_t refrId) const noexcept
 
 uint32_t WorldState::GetFileIdx(uint32_t formId) const noexcept
 {
-  return formId >> 24;
+  // Every light plugin shares the 0xFE high byte, so resolve by slot instead
+  const int idx = espmFiles.FileIndexOf(formId);
+  return idx < 0 ? (formId >> 24) : static_cast<uint32_t>(idx);
 }
 
 void WorldState::SetNpcSettings(

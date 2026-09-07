@@ -36,6 +36,9 @@ public:
   const IdMapping* GetCombMapping(size_t fileIndex) const noexcept;
   const IdMapping* GetRawMapping(size_t fileIndex) const noexcept;
 
+  // The plugin's slot in the combined form-id space (full index or light slot)
+  PluginSlot GetPluginSlot(size_t fileIndex) const noexcept;
+
   // CompressedFieldsCache is not logically related to Combiner, this method is
   // added for usability
   espm::CompressedFieldsCache& GetCache() const noexcept;
@@ -50,6 +53,7 @@ private:
     Browser* br = nullptr;
     std::string fileName;
     std::unique_ptr<espm::IdMapping> toComb, toRaw;
+    PluginSlot slot;
   };
 
   struct Impl

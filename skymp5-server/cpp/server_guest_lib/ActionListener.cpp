@@ -1050,7 +1050,7 @@ void ActionListener::OnHit(const RawMessageData& rawMsgData,
   const FormDesc& targetCellOrWorld = targetRef->GetCellOrWorld();
 
   if (aggressorCellOrWorld != targetCellOrWorld) {
-    const std::vector<std::string>& files = partOne.worldState.espmFiles;
+    const EspmFileTable& files = partOne.worldState.espmFiles;
     spdlog::error(
       "ActionListener::OnHit - aggressor and targetRef are in different cells "
       "or world. Aggressor: {:x}, targetRef: {:x}, cellOrWorld of aggressor: "

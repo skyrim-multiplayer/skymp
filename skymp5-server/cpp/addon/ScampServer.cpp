@@ -1250,8 +1250,8 @@ Napi::Value ScampServer::GetDescFromId(const Napi::CallbackInfo& info)
 {
   try {
     auto formId = NapiHelper::ExtractUInt32(info[0], "formId");
-    auto espmFileNames = partOne->GetEspm().GetFileNames();
-    auto formDesc = FormDesc::FromFormId(formId, espmFileNames);
+    // Must be worldState.espmFiles: it is the only table carrying plugin slots
+    auto formDesc = FormDesc::FromFormId(formId, partOne->worldState.espmFiles);
 
     return Napi::String::New(info.Env(), formDesc.ToString());
   } catch (std::exception& e) {
@@ -1264,9 +1264,9 @@ Napi::Value ScampServer::GetIdFromDesc(const Napi::CallbackInfo& info)
   try {
     auto formDescStr = NapiHelper::ExtractString(info[0], "formDesc");
     auto formDesc = FormDesc::FromString(formDescStr);
-    auto espmFileNames = partOne->GetEspm().GetFileNames();
 
-    return Napi::Number::New(info.Env(), formDesc.ToFormId(espmFileNames));
+    return Napi::Number::New(
+      info.Env(), formDesc.ToFormId(partOne->worldState.espmFiles));
   } catch (std::exception& e) {
     throw Napi::Error::New(info.Env(), std::string(e.what()));
   }

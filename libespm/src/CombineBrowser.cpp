@@ -138,6 +138,14 @@ const IdMapping* CombineBrowser::GetCombMapping(
   return pImpl->sources[fileIndex].toComb.get();
 }
 
+PluginSlot CombineBrowser::GetPluginSlot(size_t fileIndex) const noexcept
+{
+  if (fileIndex >= pImpl->numSources) {
+    return PluginSlot{};
+  }
+  return pImpl->sources[fileIndex].slot;
+}
+
 const IdMapping* CombineBrowser::GetRawMapping(size_t fileIndex) const noexcept
 {
   if (fileIndex >= pImpl->numSources) {

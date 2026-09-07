@@ -68,9 +68,7 @@ uint32_t GetCorrectHashcode(const std::string& fileName)
 
 uint32_t GetMappedId(uint32_t id, const IdMapping& mapping) noexcept
 {
-  const uint32_t shortId = id % 0x01000000;
-  const uint8_t index = id / 0x01000000;
-  return shortId + (mapping[index] * 0x01000000);
+  return mapping.Map(id);
 }
 
 std::wstring ReadWstring(const uint8_t* ptr)

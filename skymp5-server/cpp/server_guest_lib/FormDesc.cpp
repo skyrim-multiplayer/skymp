@@ -43,7 +43,7 @@ FormDesc FormDesc::FromString(const std::string& str, char delimiter)
   return res;
 }
 
-uint32_t FormDesc::ToFormId(const std::vector<std::string>& files) const
+uint32_t FormDesc::ToFormId(const EspmFileTable& files) const
 {
   // Workaround legacy tests throwing exceptions (drop support for PartOne
   // instances without espm to remove this)
@@ -68,13 +68,20 @@ uint32_t FormDesc::ToFormId(const std::vector<std::string>& files) const
       throw std::runtime_error(file + " not found in loaded files");
     }
 
-    realFormId = fileIdx * 0x01000000 + shortFormId;
+    // Light (ESL) plugins live in the 0xFE space with a 12-bit local id
+    const espm::PluginSlot slot = files.SlotAt(fileIdx);
+    if (slot.light && shortFormId > slot.LocalMask()) {
+      // Truncating would silently resolve to an unrelated record
+      throw std::runtime_error(
+        file + " is a light plugin but form id " + std::to_string(shortFormId) +
+        " does not fit its 12-bit local id space");
+    }
+    realFormId = slot.Base() | (shortFormId & slot.LocalMask());
   }
   return realFormId;
 }
 
-FormDesc FormDesc::FromFormId(uint32_t formId,
-                              const std::vector<std::string>& files)
+FormDesc FormDesc::FromFormId(uint32_t formId, const EspmFileTable& files)
 {
   // Workaround legacy tests throwing exceptions (drop support for PartOne
   // instances without espm to remove this)
@@ -83,17 +90,20 @@ FormDesc FormDesc::FromFormId(uint32_t formId,
   }
 
   FormDesc res;
-  if (formId < 0xff000000) {
-    int fileIdx = formId / 0x01000000;
-    if (fileIdx >= static_cast<int>(files.size())) {
-      throw std::runtime_error("FromFormId failed due to invalid file index " +
-                               std::to_string(fileIdx));
-    }
-    res.file = files[fileIdx];
-    res.shortFormId = formId % 0x01000000;
-  } else {
+  if (formId >= 0xff000000) {
     res.shortFormId = formId - 0xff000000;
+    return res;
   }
+
+  // Light plugins share the 0xFE high byte, so resolve them by slot. This must
+  // run before the byte-index path below, which would read 254 as a file index.
+  const int fileIdx = files.FileIndexOf(formId);
+  if (fileIdx < 0) {
+    throw std::runtime_error("FromFormId failed due to invalid file index " +
+                             std::to_string(formId >> 24));
+  }
+  res.file = files[fileIdx];
+  res.shortFormId = formId & files.SlotAt(fileIdx).LocalMask();
   return res;
 }
 
