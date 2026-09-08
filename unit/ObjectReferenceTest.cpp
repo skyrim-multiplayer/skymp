@@ -27,7 +27,11 @@ TEST_CASE("Disable makes ref invisible", "[ObjectReference]")
 
   auto& ac = p.worldState.GetFormAt<MpActor>(0xff000001);
 
-  REQUIRE(ref.GetListeners() == std::set<MpObjectReference*>{ &ac });
+  // GetListeners() now returns all grid neighbors including self
+  auto listeners = ref.GetListeners();
+  REQUIRE(listeners.size() == 2);
+  REQUIRE(listeners.count(&ac) == 1);
+  REQUIRE(listeners.count(&ref) == 1);
   ref.Disable();
   REQUIRE(ref.GetListeners() == std::set<MpObjectReference*>{});
 
@@ -37,5 +41,8 @@ TEST_CASE("Disable makes ref invisible", "[ObjectReference]")
   ref.SetPos(ref.GetPos() - NiPoint3{ 10000, 10000, 10000 });
 
   ref.Enable();
-  REQUIRE(ref.GetListeners() == std::set<MpObjectReference*>{ &ac });
+  listeners = ref.GetListeners();
+  REQUIRE(listeners.size() == 2);
+  REQUIRE(listeners.count(&ac) == 1);
+  REQUIRE(listeners.count(&ref) == 1);
 }
