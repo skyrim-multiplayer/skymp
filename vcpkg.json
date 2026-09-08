@@ -21,6 +21,7 @@
     "prometheus-cpp-lite",
     "slikenet",
     "libsodium",
+    "quickjs-ng",
     {
       "name": "mongo-cxx-driver",
       "platform": "!emscripten"

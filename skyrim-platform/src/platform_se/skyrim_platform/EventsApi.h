@@ -21,6 +21,7 @@ void SendPapyrusEventEnter(uint32_t selfId,
 void SendPapyrusEventLeave() noexcept;
 
 Napi::Value GetHooks(Napi::Env env);
+Napi::Value GetHooksStorage(Napi::Env env);
 
 inline void Register(Napi::Env env, Napi::Object& exports)
 {
@@ -29,6 +30,7 @@ inline void Register(Napi::Env env, Napi::Object& exports)
   exports.Set("once",
               Napi::Function::New(env, NapiHelper::WrapCppExceptions(Once)));
   exports.Set("hooks", GetHooks(env));
+  exports.Set("hooksStorage", GetHooksStorage(env));
   exports.Set(
     "sendIpcMessage",
     Napi::Function::New(env, NapiHelper::WrapCppExceptions(SendIpcMessage)));
