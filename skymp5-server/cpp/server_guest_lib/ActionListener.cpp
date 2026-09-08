@@ -12,6 +12,7 @@
 #include "MsgType.h"
 #include "Overloaded.h"
 #include "WorldState.h"
+#include "parallel/OffloadDispatcher.h"
 #include "gamemode_events/CustomEvent.h"
 #include "gamemode_events/EatItemEvent.h"
 #include "gamemode_events/UpdateAppearanceAttemptEvent.h"
@@ -36,10 +37,8 @@ uint32_t LongToNormal(uint64_t longFormId)
 }
 }
 
-MpActor* ActionListener::SendToNeighbours(uint32_t idx,
-                                          Networking::UserId userId,
-                                          Networking::PacketData data,
-                                          size_t length, bool reliable)
+MpActor* ActionListener::ResolveRelayTarget(uint32_t idx,
+                                            Networking::UserId userId)
 {
   MpActor* myActor = partOne.serverState.ActorByUser(userId);
   // The old behavior is doing nothing in that case. This is covered by tests
@@ -85,13 +84,32 @@ MpActor* ActionListener::SendToNeighbours(uint32_t idx,
     }
   }
 
-  for (auto listener : actor->GetActorListeners()) {
+  return actor;
+}
+
+void ActionListener::RelayToNeighbours(MpActor& actor,
+                                       Networking::PacketData data,
+                                       size_t length, bool reliable)
+{
+  for (auto listener : actor.GetActorListeners()) {
     auto targetuserId = partOne.serverState.UserByActor(listener);
     if (targetuserId != Networking::InvalidUserId) {
       partOne.GetSendTarget().Send(targetuserId, data, length, reliable);
     }
   }
+}
 
+MpActor* ActionListener::SendToNeighbours(uint32_t idx,
+                                          Networking::UserId userId,
+                                          Networking::PacketData data,
+                                          size_t length, bool reliable)
+{
+  MpActor* actor = ResolveRelayTarget(idx, userId);
+  if (!actor) {
+    return nullptr;
+  }
+
+  RelayToNeighbours(*actor, data, length, reliable);
   return actor;
 }
 
@@ -113,74 +131,166 @@ void ActionListener::OnCustomPacket(const RawMessageData& rawMsgData,
   }
 }
 
+void ActionListener::ApplyValidatedMovement(MpActor& actor,
+                                            const NiPoint3& pos,
+                                            const NiPoint3& rot,
+                                            bool isInJumpState,
+                                            bool isWeapDrawn, bool isBlocking,
+                                            bool isSneaking, bool isStanding,
+                                            uint32_t idx)
+{
+  if (!isBlocking) {
+    actor.IncreaseBlockCount();
+  } else {
+    actor.ResetBlockCount();
+  }
+
+  actor.SetPos(pos, SetPosMode::CalledByUpdateMovement);
+  actor.SetAngle(rot, SetAngleMode::CalledByUpdateMovement);
+  actor.SetAnimationVariableBool(
+    AnimationVariableBool::kVariable_bInJumpState, isInJumpState);
+  actor.SetAnimationVariableBool(
+    AnimationVariableBool::kVariable__skymp_isWeapDrawn, isWeapDrawn);
+  actor.SetAnimationVariableBool(AnimationVariableBool::kVariable_IsBlocking,
+                                 isBlocking);
+  actor.SetAnimationVariableBool(AnimationVariableBool::kVariable_IsSneaking,
+                                 isSneaking);
+
+  if (actor.GetBlockCount() == 5) {
+    actor.SetIsBlockActive(false);
+    actor.ResetBlockCount();
+  }
+
+  if (!isStanding) {
+    actor.SetLastAnimEvent(std::nullopt);
+  }
+
+  if (partOne.worldState.lastMovUpdateByIdx.size() <= idx) {
+    auto newSize = static_cast<size_t>(idx) + 1;
+    partOne.worldState.lastMovUpdateByIdx.resize(newSize);
+  }
+  partOne.worldState.lastMovUpdateByIdx[idx] =
+    std::chrono::system_clock::now();
+}
+
+bool ActionListener::TrySubmitMovementForOffload(
+  MpActor& actor, const RawMessageData& rawMsgData,
+  const UpdateMovementMessage& msg, bool teleportFlag)
+{
+  auto& worldState = partOne.worldState;
+
+  MpParallel::MovementSubmission submission;
+
+  // The offloaded validator compares world/cell form ids numerically instead
+  // of building a FormDesc. FormDesc::FromFormId and ToFormId round-trip, so
+  // the comparison is equivalent, with one deliberate difference: a client
+  // that sends a form id for a plugin that is not loaded gets its update
+  // rejected here rather than throwing out of the packet handler.
+  try {
+    submission.currentWorldOrCell =
+      actor.GetCellOrWorld().ToFormId(worldState.espmFiles);
+  } catch (const std::exception&) {
+    return false;
+  }
+
+  submission.formId = actor.GetFormId();
+  submission.idx = msg.idx;
+
+  // Encodes MovementValidation's `isMe`: only the player whose own actor this
+  // is gets pulled back, hosted NPCs do not.
+  submission.ownerUserId =
+    partOne.serverState.ActorByUser(rawMsgData.userId) == &actor
+    ? rawMsgData.userId
+    : Networking::InvalidUserId;
+
+  const NiPoint3& currentPos = actor.GetPos();
+  const NiPoint3& currentRot = actor.GetAngle();
+  submission.currentPos[0] = currentPos.x;
+  submission.currentPos[1] = currentPos.y;
+  submission.currentPos[2] = currentPos.z;
+  submission.currentRot[0] = currentRot.x;
+  submission.currentRot[1] = currentRot.y;
+  submission.currentRot[2] = currentRot.z;
+
+  submission.proposedPos[0] = msg.data.pos[0];
+  submission.proposedPos[1] = msg.data.pos[1];
+  submission.proposedPos[2] = msg.data.pos[2];
+  submission.proposedRot[0] = msg.data.rot[0];
+  submission.proposedRot[1] = msg.data.rot[1];
+  submission.proposedRot[2] = msg.data.rot[2];
+  submission.proposedWorldOrCell = msg.data.worldOrCell;
+
+  submission.teleportFlag = teleportFlag;
+  submission.isInJumpState = msg.data.isInJumpState;
+  submission.isWeapDrawn = msg.data.isWeapDrawn;
+  submission.isBlocking = msg.data.isBlocking;
+  submission.isSneaking = msg.data.isSneaking;
+  submission.isStanding = msg.data.runMode == "Standing";
+
+  submission.packetData =
+    reinterpret_cast<const uint8_t*>(rawMsgData.unparsed);
+  submission.packetLength = rawMsgData.unparsedLength;
+
+  return partOne.GetOffloadDispatcher().SubmitMovement(submission);
+}
+
 void ActionListener::OnUpdateMovement(const RawMessageData& rawMsgData,
                                       const UpdateMovementMessage& msg)
 {
-  auto actor = SendToNeighbours(msg.idx, rawMsgData);
-  if (actor) {
-    bool teleportFlag = actor->GetTeleportFlag();
-    actor->SetTeleportFlag(false);
+  const bool offloadEnabled = partOne.GetOffloadDispatcher().IsEnabled();
 
-    static const NiPoint3 kInfinityPos = {
-      std::numeric_limits<float>::infinity(),
-      std::numeric_limits<float>::infinity(),
-      std::numeric_limits<float>::infinity()
-    };
+  // When offloading, the relay is deferred to the join phase, so only the
+  // ownership checks run during ingest. Otherwise this is the original
+  // relay-then-validate order.
+  MpActor* actor = offloadEnabled
+    ? ResolveRelayTarget(msg.idx, rawMsgData.userId)
+    : SendToNeighbours(msg.idx, rawMsgData);
+  if (!actor) {
+    return;
+  }
 
-    auto& espmFiles = actor->GetParent()->espmFiles;
+  // Read once per update no matter which path handles it: the flag is
+  // one-shot and consuming it twice would lose a teleport correction.
+  const bool teleportFlag = actor->GetTeleportFlag();
+  actor->SetTeleportFlag(false);
 
-    const auto& currentPos = actor->GetPos();
-    const auto& currentRot = actor->GetAngle();
-    const auto& currentCellOrWorld = actor->GetCellOrWorld();
-
-    if (!MovementValidation::Validate(
-          partOne, currentPos, currentRot, currentCellOrWorld,
-          teleportFlag
-            ? kInfinityPos
-            : NiPoint3{ msg.data.pos[0], msg.data.pos[1], msg.data.pos[2] },
-          FormDesc::FromFormId(msg.data.worldOrCell, espmFiles),
-          rawMsgData.userId, actor, espmFiles)) {
+  if (offloadEnabled) {
+    if (TrySubmitMovementForOffload(*actor, rawMsgData, msg, teleportFlag)) {
       return;
     }
-
-    if (!msg.data.isBlocking) {
-      actor->IncreaseBlockCount();
-    } else {
-      actor->ResetBlockCount();
-    }
-
-    actor->SetPos(
-      NiPoint3{ msg.data.pos[0], msg.data.pos[1], msg.data.pos[2] },
-      SetPosMode::CalledByUpdateMovement);
-    actor->SetAngle(
-      NiPoint3{ msg.data.rot[0], msg.data.rot[1], msg.data.rot[2] },
-      SetAngleMode::CalledByUpdateMovement);
-    actor->SetAnimationVariableBool(
-      AnimationVariableBool::kVariable_bInJumpState, msg.data.isInJumpState);
-    actor->SetAnimationVariableBool(
-      AnimationVariableBool::kVariable__skymp_isWeapDrawn,
-      msg.data.isWeapDrawn);
-    actor->SetAnimationVariableBool(
-      AnimationVariableBool::kVariable_IsBlocking, msg.data.isBlocking);
-    actor->SetAnimationVariableBool(
-      AnimationVariableBool::kVariable_IsSneaking, msg.data.isSneaking);
-
-    if (actor->GetBlockCount() == 5) {
-      actor->SetIsBlockActive(false);
-      actor->ResetBlockCount();
-    }
-
-    if (msg.data.runMode != "Standing") {
-      actor->SetLastAnimEvent(std::nullopt);
-    }
-
-    if (partOne.worldState.lastMovUpdateByIdx.size() <= msg.idx) {
-      auto newSize = static_cast<size_t>(msg.idx) + 1;
-      partOne.worldState.lastMovUpdateByIdx.resize(newSize);
-    }
-    partOne.worldState.lastMovUpdateByIdx[msg.idx] =
-      std::chrono::system_clock::now();
+    // The dispatcher declined, so nothing has been relayed yet. Fall back to
+    // the inline path, starting with the relay it would have done.
+    RelayToNeighbours(*actor, rawMsgData.unparsed, rawMsgData.unparsedLength,
+                      false);
   }
+
+  static const NiPoint3 kInfinityPos = {
+    std::numeric_limits<float>::infinity(),
+    std::numeric_limits<float>::infinity(),
+    std::numeric_limits<float>::infinity()
+  };
+
+  auto& espmFiles = actor->GetParent()->espmFiles;
+
+  const auto& currentPos = actor->GetPos();
+  const auto& currentRot = actor->GetAngle();
+  const auto& currentCellOrWorld = actor->GetCellOrWorld();
+
+  if (!MovementValidation::Validate(
+        partOne, currentPos, currentRot, currentCellOrWorld,
+        teleportFlag
+          ? kInfinityPos
+          : NiPoint3{ msg.data.pos[0], msg.data.pos[1], msg.data.pos[2] },
+        FormDesc::FromFormId(msg.data.worldOrCell, espmFiles),
+        rawMsgData.userId, actor, espmFiles)) {
+    return;
+  }
+
+  ApplyValidatedMovement(
+    *actor, NiPoint3{ msg.data.pos[0], msg.data.pos[1], msg.data.pos[2] },
+    NiPoint3{ msg.data.rot[0], msg.data.rot[1], msg.data.rot[2] },
+    msg.data.isInJumpState, msg.data.isWeapDrawn, msg.data.isBlocking,
+    msg.data.isSneaking, msg.data.runMode == "Standing", msg.idx);
 }
 
 void ActionListener::OnUpdateAnimation(const RawMessageData& rawMsgData,

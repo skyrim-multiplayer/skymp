@@ -20,6 +20,7 @@
 #include "gamemode_events/DeathEvent.h"
 #include "libespm/IterateFields.h"
 #include "papyrus-vm/Utils.h"
+#include "parallel/ParallelConfig.h"
 #include "property_bindings/PropertyBindingFactory.h"
 #include "script_storages/ScriptStorageFactory.h"
 #include <algorithm>
@@ -297,6 +298,11 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
                       "setting, should be true or false");
       }
     }
+
+    // Multi-core area offload. Disabled unless server-settings.json asks for
+    // it, so an existing deployment sees no change until it opts in.
+    partOne->ConfigureParallelism(
+      MpParallel::ParallelConfig::FromServerSettings(serverSettings));
 
     partOne->worldState.isPapyrusHotReloadEnabled =
       serverSettings.count("isPapyrusHotReloadEnabled") != 0 &&

@@ -8,7 +8,6 @@
 #include <simdjson.h>
 #include <slikenet/BitStream.h>
 #include <spdlog/spdlog.h>
-#include <stdexcept>
 
 namespace {
 void Serialize(const IMessageBase& message, SLNet::BitStream& outputStream)
@@ -28,9 +27,21 @@ void Serialize(const simdjson::dom::element& inputJson,
   Serialize(message, outputStream);
 }
 
+// Reused across calls instead of being constructed per message.
+//
+// simdjson::dom::parser owns its scratch buffers, so constructing one per
+// packet means a fresh allocation on every message, and the JSON path used to
+// do that once per candidate deserializer. thread_local keeps it safe if
+// deserialization ever moves off the main thread.
+simdjson::dom::parser& ScratchParser()
+{
+  thread_local simdjson::dom::parser parser;
+  return parser;
+}
+
 template <class Message>
 std::optional<DeserializeResult> Deserialize(
-  const uint8_t* rawMessageJsonOrBinary, size_t length)
+  const uint8_t* rawMessageJsonOrBinary, size_t length, const simdjson::dom::element* parsedJson)
 {
   if (length >= 2 && rawMessageJsonOrBinary[1] == Message::kMsgType.value) {
     // byte 0 is packet id => skipping here
@@ -55,40 +66,15 @@ std::optional<DeserializeResult> Deserialize(
     return result;
   }
 
-  std::string str(reinterpret_cast<const char*>(rawMessageJsonOrBinary + 1),
-                  length - 1);
-  simdjson::dom::parser sjParser;
-  auto parseResult = sjParser.parse(str);
-  if (auto err = parseResult.error()) {
-    throw std::runtime_error(
-      fmt::format("failed to parse message, simdjson error: {}",
-                  simdjson::error_message(err)));
-  }
-  auto parsedJson = parseResult.value_unsafe();
-
-  auto msgTypeResult = parsedJson.at_key("t").get_uint64();
-  if (msgTypeResult.error() == simdjson::NO_SUCH_FIELD) {
-    // Messages produced by the server use string "type" instead of integer "t"
-    // We will refactor them out at some point
-    return std::nullopt;
-  }
-  if (auto err = msgTypeResult.error()) {
-    throw std::runtime_error(
-      fmt::format("failed to get message type, simdjson error: {}",
-                  simdjson::error_message(err)));
-  }
-  auto msgType = msgTypeResult.value_unsafe();
-
-  if (msgType != Message::kMsgType) {
-    // In case of JSON we keep searching in deserializers array
+  if (!parsedJson) {
     return std::nullopt;
   }
 
   Message message;
-  message.ReadJson(parsedJson);
+  message.ReadJson(*parsedJson);
 
   DeserializeResult result;
-  result.msgType = static_cast<MsgType>(msgType);
+  result.msgType = static_cast<MsgType>(Message::kMsgType.value);
   result.message = std::make_unique<Message>(std::move(message));
   result.format = DeserializeInputFormat::Json;
   return result;
@@ -128,33 +114,46 @@ MessageSerializer::MessageSerializer(
 void MessageSerializer::Serialize(const char* jsonContent,
                                   SLNet::BitStream& outputStream)
 {
-  // TODO(#2257): perf: think if JsValue should be used directly
+  const auto len = strlen(jsonContent);
 
-  simdjson::dom::parser sjParser;
-  // TODO(#2257): logging and write raw instead of throwing exception
-  auto parsedJson = sjParser.parse(jsonContent, strlen(jsonContent));
+  auto parsedJson = ScratchParser().parse(jsonContent, len);
+  if (parsedJson.error()) {
+    spdlog::warn("MessageSerializer::Serialize - JSON parse failed, writing "
+                 "raw ({} bytes)",
+                 len);
+    outputStream.Write(static_cast<uint8_t>(Networking::MinPacketId));
+    outputStream.Write(jsonContent, len);
+    return;
+  }
 
-  // TODO(#2257): logging and write raw instead of throwing exception
   auto tResult = parsedJson.get_object().at_key("t").get_uint64();
   if (auto err = tResult.error()) {
-    throw std::runtime_error(
-      fmt::format("failed to read 't' of a message, simdjson error: {}",
-                  simdjson::error_message(err)));
+    spdlog::warn(
+      "MessageSerializer::Serialize - failed to read 't', simdjson "
+      "error: {}, writing raw",
+      simdjson::error_message(err));
+    outputStream.Write(static_cast<uint8_t>(Networking::MinPacketId));
+    outputStream.Write(jsonContent, len);
+    return;
   }
 
   auto index = static_cast<size_t>(tResult.value_unsafe());
   if (index >= serializerFns.size()) {
-    // TODO(#2257): logging
+    spdlog::warn("MessageSerializer::Serialize - type index {} out of range "
+                 "(max {}), writing raw",
+                 index, serializerFns.size());
     outputStream.Write(static_cast<uint8_t>(Networking::MinPacketId));
-    outputStream.Write(jsonContent, strlen(jsonContent));
+    outputStream.Write(jsonContent, len);
     return;
   }
 
   auto serializerFn = serializerFns[index];
   if (!serializerFn) {
-    // TODO(#2257): logging
+    spdlog::warn("MessageSerializer::Serialize - no serializer registered for "
+                 "type index {}, writing raw",
+                 index);
     outputStream.Write(static_cast<uint8_t>(Networking::MinPacketId));
-    outputStream.Write(jsonContent, strlen(jsonContent));
+    outputStream.Write(jsonContent, len);
     return;
   }
 
@@ -177,23 +176,51 @@ std::optional<DeserializeResult> MessageSerializer::Deserialize(
 
   auto headerByte = rawMessageJsonOrBinary[1];
   if (headerByte == '{') {
-    std::string s(reinterpret_cast<const char*>(rawMessageJsonOrBinary) + 1,
-                  length - 1);
-    spdlog::trace(
-      "MessageSerializer::Deserialize - Encountered JSON message {}", s);
-    // TODO(#2257): try to pass JSON in advance, avoid parsing each time
-    for (auto fn : deserializerFns) {
-      if (fn) {
-        auto result = fn(rawMessageJsonOrBinary, length);
-        if (result) {
-          spdlog::trace("MessageSerializer::Deserialize - Deserialized");
-          return result;
-        }
-      }
+    if (spdlog::should_log(spdlog::level::trace)) {
+      // Only materialize the message text when trace is actually enabled;
+      // this used to allocate a copy of every JSON packet unconditionally.
+      spdlog::trace(
+        "MessageSerializer::Deserialize - Encountered JSON message {}",
+        std::string(reinterpret_cast<const char*>(rawMessageJsonOrBinary) + 1,
+                    length - 1));
     }
-    spdlog::trace("MessageSerializer::Deserialize - Failed to deserialize, "
-                  "falling back to PacketParser.cpp");
-    return std::nullopt;
+
+    // Read the message type once and dispatch straight to its deserializer.
+    // Walking the whole table meant every candidate ahead of the real type
+    // re-parsed the entire document before rejecting it (addresses the
+    // long-standing TODO(#2257) that used to live here).
+    thread_local std::string peek;
+    peek.assign(reinterpret_cast<const char*>(rawMessageJsonOrBinary) + 1,
+                length - 1);
+
+    auto peekResult = ScratchParser().parse(peek);
+    if (peekResult.error()) {
+      spdlog::trace("MessageSerializer::Deserialize - JSON parse failed");
+      return std::nullopt;
+    }
+
+    auto typeResult = peekResult.value_unsafe().at_key("t").get_uint64();
+    if (typeResult.error()) {
+      // Server-produced messages use a string "type" field instead of "t";
+      // those are handled further down the pipeline.
+      return std::nullopt;
+    }
+
+    const auto index = static_cast<size_t>(typeResult.value_unsafe());
+    if (index >= deserializerFns.size() || !deserializerFns[index]) {
+      spdlog::trace("MessageSerializer::Deserialize - no deserializer for "
+                    "JSON message type {}",
+                    index);
+      return std::nullopt;
+    }
+
+    // Materialize into a named local rather than taking the address of an
+    // rvalue-qualified accessor's result. dom::element is a lightweight handle
+    // into the parser's tape, so this copy is free and removes any doubt about
+    // what the pointer outlives.
+    const simdjson::dom::element parsedElement = peekResult.value_unsafe();
+    return deserializerFns[index](rawMessageJsonOrBinary, length,
+                                  &parsedElement);
   }
 
   if (headerByte >= deserializerFns.size()) {
@@ -211,11 +238,11 @@ std::optional<DeserializeResult> MessageSerializer::Deserialize(
       static_cast<int>(headerByte),
       fmt::join(std::vector<uint8_t>(rawMessageJsonOrBinary,
                                      rawMessageJsonOrBinary + length),
-                ", "));
+                ""));
     return std::nullopt;
   }
 
-  auto result = deserializerFn(rawMessageJsonOrBinary, length);
+  auto result = deserializerFn(rawMessageJsonOrBinary, length, nullptr);
   if (result == std::nullopt) {
     spdlog::warn(
       "MessageSerializer::Deserialize - deserializerFn returned "
