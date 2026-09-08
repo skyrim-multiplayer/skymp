@@ -2,22 +2,67 @@
 #include <functional>
 #include <memory>
 #include <stdexcept>
+#include <type_traits>
 #include <vector>
 
 #include "Void.h"
 
 namespace Viet {
 
+// ===== Storage Policies =====
+
+struct SharedStorage
+{
+  template <class Impl>
+  struct Holder
+  {
+    std::shared_ptr<Impl> ptr = std::make_shared<Impl>();
+
+    Impl* get() const noexcept { return ptr.get(); }
+  };
+};
+
+struct InlineStorage
+{
+  template <class Impl>
+  struct Holder
+  {
+    Impl data{};
+
+    Impl* get() noexcept { return &data; }
+    const Impl* get() const noexcept { return &data; }
+
+    Holder() = default;
+    Holder(const Holder&) = delete;
+    Holder& operator=(const Holder&) = delete;
+    Holder(Holder&&) = default;
+    Holder& operator=(Holder&&) = default;
+  };
+};
+
+// ===== Forward declarations =====
+
+template <class T, class ThenCb, class ErrorCb, class Storage>
+class BasicPromise;
+
+template <class T>
+using Promise = BasicPromise<T, std::function<void(const T&)>,
+                             std::function<void(const char*)>, SharedStorage>;
+
+// ===== AnyPromise =====
+
 class AnyPromise
 {
 public:
   using ErrorCallback = std::function<void(const char*)>;
 
-  template <class Promise>
-  AnyPromise(const Promise& promise)
+  template <class PromiseType>
+  AnyPromise(PromiseType promise)
   {
-    this->catchFn = [promise](ErrorCallback cb) { promise.Catch(cb); };
-    this->rejectFn = [promise](const char* str) { promise.Reject(str); };
+    this->catchFn = [promise](ErrorCallback cb) mutable { promise.Catch(cb); };
+    this->rejectFn = [promise](const char* str) mutable {
+      promise.Reject(str);
+    };
   }
 
   void Reject(const char* error);
@@ -28,50 +73,65 @@ private:
   std::function<void(const char*)> rejectFn;
 };
 
-template <class T>
-class Promise
+// ===== BasicPromise =====
+
+template <class T, class ThenCb = std::function<void(const T&)>,
+          class ErrorCb = std::function<void(const char*)>,
+          class Storage = SharedStorage>
+class BasicPromise
 {
 public:
   using Type = T;
+  using ThenCallback = ThenCb;
+  using ErrorCallback = ErrorCb;
+  using StoragePolicy = Storage;
 
-  using ThenCallback = std::function<void(const T&)>;
-  using ErrorCallback = std::function<void(const char*)>;
-
-  const Promise<T>& Then(const ThenCallback& cb_) const noexcept
+  BasicPromise& Then(ThenCallback cb) noexcept
   {
-    pImpl->thenCb = cb_;
+    impl()->thenCb = std::move(cb);
     return *this;
   }
 
-  const Promise<T>& Catch(const ErrorCallback& cb_) const noexcept
+  BasicPromise& Catch(ErrorCallback cb) noexcept
   {
-    pImpl->errorCb = cb_;
+    impl()->errorCb = std::move(cb);
     return *this;
   }
 
-  void Then(Promise<T> promise) const noexcept
+  template <class OtherPromise>
+  void Forward(OtherPromise promise) noexcept
   {
-    this->Then([=](const T& v) { promise.Resolve(v); });
-    this->Catch([=](const char* err) { promise.Reject(err); });
+    this->Then([promise](const T& v) mutable { promise.Resolve(v); });
+    this->Catch([promise](const char* err) mutable { promise.Reject(err); });
   }
 
-  void Resolve(const T& value) const
+  void Resolve(const T& value)
   {
-    if (pImpl->pending) {
-      pImpl->pending = false;
-      pImpl->thenCb(value);
+    if (impl()->pending) {
+      impl()->pending = false;
+      if (impl()->thenCb) {
+        impl()->thenCb(value);
+      }
     }
   }
 
-  void Reject(const char* error) const
+  void Reject(const char* error)
   {
-    if (pImpl->pending) {
-      pImpl->pending = false;
-      pImpl->errorCb(error);
+    if (impl()->pending) {
+      impl()->pending = false;
+      if (impl()->errorCb) {
+        impl()->errorCb(error);
+      } else {
+        throw std::runtime_error("Unhandled promise rejection");
+      }
     }
   }
 
-  static Promise<std::vector<T>> All(const std::vector<Promise<T>>& promises)
+  // All and Race are only available for SharedStorage (copyable promises)
+  template <class S = Storage>
+  static auto All(const std::vector<Promise<T>>& promises)
+    -> std::enable_if_t<std::is_same_v<S, SharedStorage>,
+                        Promise<std::vector<T>>>
   {
     Promise<std::vector<T>> res;
 
@@ -84,27 +144,32 @@ public:
     pr->returnValues.resize(promises.size());
 
     for (size_t p = 0; p < promises.size(); ++p) {
-      promises[p]
-        .Then([pr, p, res](const T& val) {
+      // Copy promises[p] to allow mutation in lambdas
+      auto promiseCopy = promises[p];
+      promiseCopy
+        .Then([pr, p, res](const T& val) mutable {
           pr->returnValues[p] = val;
           pr->numDone++;
           if (pr->numDone == pr->returnValues.size()) {
             res.Resolve(pr->returnValues);
           }
         })
-        .Catch([res](const char* err) { res.Reject(err); });
+        .Catch([res](const char* err) mutable { res.Reject(err); });
     }
 
     return res;
   }
 
-  static Promise<T> Any(const std::vector<Promise<T>>& promises)
+  template <class S = Storage>
+  static auto Race(const std::vector<Promise<T>>& promises)
+    -> std::enable_if_t<std::is_same_v<S, SharedStorage>, Promise<T>>
   {
     Promise<T> res;
 
     for (const auto& promise : promises) {
-      promise.Then([res](const T& val) { res.Resolve(val); })
-        .Catch([res](const char* err) { res.Reject(err); });
+      auto promiseCopy = promise;
+      promiseCopy.Then([res](const T& val) mutable { res.Resolve(val); })
+        .Catch([res](const char* err) mutable { res.Reject(err); });
     }
 
     return res;
@@ -115,13 +180,21 @@ public:
 private:
   struct Impl
   {
-    ThenCallback thenCb = [](const auto&) {};
-    ErrorCallback errorCb = [](const auto&) {
-      throw std::runtime_error("Unhandled promise rejection");
-    };
+    ThenCallback thenCb{};
+    ErrorCallback errorCb{};
     bool pending = true;
   };
 
-  std::shared_ptr<Impl> pImpl = std::make_shared<Impl>();
+  typename Storage::template Holder<Impl> storage_;
+
+  Impl* impl() noexcept { return storage_.get(); }
+  const Impl* impl() const noexcept { return storage_.get(); }
 };
+
+// ===== Aliases =====
+
+template <class T, class ThenCb = std::function<void(const T&)>,
+          class ErrorCb = std::function<void(const char*)>>
+using MoveOnlyPromise = BasicPromise<T, ThenCb, ErrorCb, InlineStorage>;
+
 }
