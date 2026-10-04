@@ -6,8 +6,8 @@
 namespace {
 MpClientPlugin::State& GetState()
 {
-  static MpClientPlugin::State g_state;
-  return g_state;
+  static auto* g_state = new MpClientPlugin::State;
+  return *g_state;
 }
 
 MessageSerializer& GetMessageSerializer()
