@@ -77,7 +77,7 @@ void DirectoryMonitor::Watch()
         ++pImpl_->numUpdates;
       } else {
         pImpl_->errorCode = err;
-        return;
+        Sleep(1000);
       }
     }
   }).detach();
