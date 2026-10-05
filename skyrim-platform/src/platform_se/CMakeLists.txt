@@ -227,10 +227,9 @@ if(MSVC)
 
   find_package(robin_hood REQUIRED)
 
-  find_path(SIMPLEINI_INCLUDE_DIRS "ConvertUTF.c")
-  target_include_directories(skyrim_platform PRIVATE ${SIMPLEINI_INCLUDE_DIRS})
+  find_package(SimpleIni CONFIG REQUIRED)
 
-  target_link_libraries(skyrim_platform	PRIVATE CommonLibSSE::CommonLibSSE robin_hood::robin_hood)
+  target_link_libraries(skyrim_platform	PRIVATE CommonLibSSE::CommonLibSSE robin_hood::robin_hood SimpleIni::SimpleIni)
 
   find_package(directxtk CONFIG REQUIRED)
   find_package(directxmath CONFIG REQUIRED)
