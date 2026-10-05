@@ -118,7 +118,6 @@ private:
         // Do not break here. monitor->Updated has to be called for all
         // monitors. See method implementation
       }
-      monitor->ThrowOnceIfHasError();
     }
 
     const bool startupLoad = tickId == 1;
@@ -128,6 +127,10 @@ private:
       for (auto& fileDir : fileDirs) {
         LoadFiles(env, GetPathsToLoad(fileDir));
       }
+    }
+
+    for (auto& monitor : monitors) {
+      monitor->ThrowOnceIfHasError();
     }
 
     HttpClientApi::GetHttpClient().ExecuteQueuedCallbacks(env);

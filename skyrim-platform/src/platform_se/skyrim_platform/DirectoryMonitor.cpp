@@ -11,6 +11,7 @@ bool WaitForNextUpdate(DWORD* outErrorCode, std::filesystem::path dir)
     return false;
   }
   WaitForSingleObject(hDir, INFINITE);
+  FindCloseChangeNotification(hDir);
   return true;
 }
 }
@@ -42,7 +43,8 @@ void DirectoryMonitor::ThrowOnceIfHasError()
 {
   if (pImpl->errorCode && !pImpl->thrown) {
     pImpl->thrown = true;
-    if (pImpl->errorCode == 3) {
+    if (pImpl->errorCode == ERROR_FILE_NOT_FOUND ||
+        pImpl->errorCode == ERROR_PATH_NOT_FOUND) {
       throw std::runtime_error(
         fmt::format("Dir {} not found (it's ok, SkyrimPlatform still works)",
                     pImpl->dir.string()));
@@ -75,6 +77,7 @@ void DirectoryMonitor::Watch()
         ++pImpl_->numUpdates;
       } else {
         pImpl_->errorCode = err;
+        Sleep(1000);
       }
     }
   }).detach();
