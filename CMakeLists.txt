@@ -77,8 +77,8 @@ enable_testing()
 
 # Check the Visual Studio version
 if(MSVC)
-  if(NOT CMAKE_GENERATOR MATCHES "Visual Studio 17 2022")
-    message(FATAL_ERROR "This project requires \"Visual Studio 17 2022\". But the generator was \"${CMAKE_GENERATOR}\"")
+  if(NOT CMAKE_GENERATOR MATCHES "^Visual Studio (17 2022|18 2026)$")
+    message(FATAL_ERROR "This project requires \"Visual Studio 17 2022\" or \"Visual Studio 18 2026\". But the generator was \"${CMAKE_GENERATOR}\"")
   endif()
 endif()
 
