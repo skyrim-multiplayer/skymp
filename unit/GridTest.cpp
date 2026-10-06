@@ -138,3 +138,21 @@ TEST_CASE("GetNeighbours5 + Forget", "[Grid]")
   REQUIRE(gr.GetNeighbours(0xA002) == std::set<formid>({}));
   REQUIRE(gr.GetPos(0xA002) == std::pair<int16_t, int16_t>(101, 9));
 }
+
+TEST_CASE("MoveWithDiff", "[Grid]")
+{
+  Grid gr;
+
+  // When first moved, create an object and self-add
+  auto diff0 = gr.MoveWithDiff(0xA001, 0, 0);
+  REQUIRE(diff0.added == std::set<formid>({ 0xA001 }));
+
+  // Nothing changed
+  auto diff1 = gr.MoveWithDiff(0xA001, 0, 0);
+  REQUIRE(diff1.added == std::set<formid>({}));
+
+  // 0xA002: create an object and self-add
+  // 0xA001: already exists
+  auto diff2 = gr.MoveWithDiff(0xA002, 0, 0);
+  REQUIRE(diff2.added == std::set<formid>({ 0xA001, 0xA002 }));
+}

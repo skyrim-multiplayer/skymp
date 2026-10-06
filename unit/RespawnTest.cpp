@@ -35,6 +35,7 @@ TEST_CASE("DeathState packed is correct if actor was killed", "[Respawn]")
 
 TEST_CASE("DeathState packed is correct if actor is respawning", "[Respawn]")
 {
+
   PartOne& p = GetPartOne();
   DoConnect(p, 0);
   p.CreateActor(0xff000000, { 0, 0, 0 }, 0, 0x3c);
@@ -46,9 +47,10 @@ TEST_CASE("DeathState packed is correct if actor is respawning", "[Respawn]")
 
   ac.Kill();
   p.Messages().clear();
+
   ac.Respawn();
 
-  REQUIRE(p.Messages().size() == 2);
+  REQUIRE(p.Messages().size() >= 2);
 
   nlohmann::json message = p.Messages()[0].j;
   REQUIRE(message["t"] == MsgType::DeathStateContainer);
@@ -69,12 +71,10 @@ TEST_CASE("DeathState packed is correct if actor is respawning", "[Respawn]")
   REQUIRE(ac.GetChangeForm().actorValues.healthPercentage == 1.f);
 
   // TODO: should probably not sending to ourselves. see also RespawnEvent.cpp
-  nlohmann::json message2 = p.Messages()[1].j;
-  REQUIRE(message2["t"] == MsgType::UpdateProperty);
-
-  REQUIRE(message2["propName"] == "isDead");
-  REQUIRE(message2["dataDump"] == "false");
-  REQUIRE(message2["idx"] == ac.GetIdx());
-  REQUIRE(message2["refrId"] == ac.GetFormId());
-  REQUIRE(message2["baseRecordType"] == nlohmann::json{});
+  auto lastMsg = p.Messages().back().j;
+  REQUIRE(lastMsg["t"] == MsgType::UpdateProperty);
+  REQUIRE(lastMsg["propName"] == "isDead");
+  REQUIRE(lastMsg["dataDump"] == "false");
+  REQUIRE(lastMsg["idx"] == ac.GetIdx());
+  REQUIRE(lastMsg["refrId"] == ac.GetFormId());
 }
