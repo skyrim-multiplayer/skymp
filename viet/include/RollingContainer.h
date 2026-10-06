@@ -4,9 +4,46 @@
 #include <vector>
 
 namespace Viet {
-template <class T, size_t MaxLogicalIndex = 0x1FFFFFFFFFFFFF>
+
+enum class BoundsChecks
+{
+  Disabled,
+  Enabled
+};
+
+struct DefaultTerminator
+{
+  [[noreturn]] static void Terminate() { std::terminate(); }
+};
+
+// The default MaxLogicalIndex is astronomically large (2^53 - 1). At this
+// scale, you'd need mass planetary storage to overflow the container, making
+// runtime bounds checks pure overhead. Disabling them is safe and saves CPU
+// cycles.
+//
+// However, if you shrink MaxLogicalIndex (e.g., for testing or constrained
+// use), overflow becomes realistic. In that case, we enforce
+// BoundsChecks::Enabled via static_assert to catch misuse at compile time.
+//
+// Define ROLLING_CONTAINER_DISABLE_STATIC_ASSERT before including this header
+// to bypass the safety check. This is for testing purposes ONLY. If you're
+// tempted to use this in production, reconsider your life choices.
+inline constexpr size_t kDefaultMaxLogicalIndex = 0x1FFFFFFFFFFFFF;
+
+template <class T, size_t MaxLogicalIndex = kDefaultMaxLogicalIndex,
+          BoundsChecks Checks = BoundsChecks::Disabled,
+          class Terminator = DefaultTerminator>
 class RollingContainer
 {
+#ifndef ROLLING_CONTAINER_DISABLE_STATIC_ASSERT
+  static_assert(MaxLogicalIndex == kDefaultMaxLogicalIndex ||
+                  Checks == BoundsChecks::Enabled,
+                "BoundsChecks must be Enabled when using a custom (smaller) "
+                "MaxLogicalIndex. Disabling checks is only safe with the "
+                "default MaxLogicalIndex, which is large enough that overflow "
+                "is practically impossible.");
+#endif
+
 public:
   static constexpr size_t SequenceModulus = MaxLogicalIndex + 1;
 
@@ -20,8 +57,12 @@ public:
     size_t offset =
       (logicalIndex + SequenceModulus - activeWindowStart) % SequenceModulus;
 
-    // NO CHECKS to save CPU cycles.
-    // We assume 'offset' is within [0, memoryWindow.size())
+    if constexpr (Checks == BoundsChecks::Enabled) {
+      if (offset >= memoryWindow.size()) {
+        Terminator::Terminate();
+      }
+    }
+
     return memoryWindow[offset];
   }
 
@@ -29,6 +70,13 @@ public:
   {
     size_t offset =
       (logicalIndex + SequenceModulus - activeWindowStart) % SequenceModulus;
+
+    if constexpr (Checks == BoundsChecks::Enabled) {
+      if (offset >= memoryWindow.size()) {
+        Terminator::Terminate();
+      }
+    }
+
     return memoryWindow[offset];
   }
 
@@ -41,10 +89,11 @@ public:
 
   size_t InsertBack(const T& value)
   {
-    // SAFETY CHECK OMITTED FOR PERFORMANCE
-    // Theoretical Panic: if (memoryWindow.size() > MaxLogicalIndex)
-    // std::terminate(); Reason: If vector grows larger than the logical ring,
-    // the head overwrites the tail.
+    if constexpr (Checks == BoundsChecks::Enabled) {
+      if (memoryWindow.size() >= SequenceModulus) {
+        Terminator::Terminate();
+      }
+    }
 
     memoryWindow.push_back(value);
     return memoryWindow.size() - 1;
