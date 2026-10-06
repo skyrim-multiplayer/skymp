@@ -17,6 +17,10 @@
 #include "MessageSerializerFactory.h"
 #include "OpenSSLSigner.h"
 #include "PacketParser.h"
+#include "PartOneOffloadSink.h"
+#include "parallel/AreaKey.h"
+#include "parallel/CellFormIdCache.h"
+#include "parallel/OffloadDispatcher.h"
 
 PartOneSendTargetWrapper::PartOneSendTargetWrapper(
   Networking::ISendTarget& underlyingSendTarget_)
@@ -46,6 +50,8 @@ void PartOneSendTargetWrapper::Send(Networking::UserId targetUserId,
 class FakeSendTarget : public Networking::ISendTarget
 {
 public:
+  std::mutex mtx;
+
   void Send(Networking::UserId targetUserId, Networking::PacketData data,
             size_t length, bool reliable) override
   {
@@ -62,6 +68,7 @@ public:
       j = nlohmann::json::parse(s);
     }
 
+    std::lock_guard<std::mutex> lock(mtx);
     messages.push_back(PartOne::Message{ j, message, targetUserId, reliable });
   }
 
@@ -96,6 +103,12 @@ struct PartOne::Impl
   bool enableGamemodeDataUpdatesBroadcast = false;
 
   PartOne::OnActorStreamIn onActorStreamIn;
+
+  // Always present, but does nothing until ConfigureParallelism turns it on.
+  std::unique_ptr<MpParallel::OffloadDispatcher> offloadDispatcher;
+  std::unique_ptr<PartOneOffloadSink> offloadSink;
+
+  MpParallel::CellFormIdCache cellFormIdCache;
 };
 
 PartOne::PartOne(Networking::ISendTarget* sendTarget)
@@ -114,6 +127,12 @@ PartOne::PartOne(std::shared_ptr<Listener> listener,
 
 PartOne::~PartOne()
 {
+  // Drop anything submitted but not yet joined before the actors it refers to
+  // go away, and stop the workers while the world is still intact.
+  if (pImpl && pImpl->offloadDispatcher) {
+    pImpl->offloadDispatcher->DiscardPending();
+  }
+
   // worldState may depend on serverState (actorsMap), we should reset it first
   worldState.Clear();
   serverState = {};
@@ -146,8 +165,84 @@ bool PartOne::IsConnected(Networking::UserId userId) const
 void PartOne::Tick()
 {
   TickPacketHistoryPlaybacks();
+
+  // Runs before worldState.Tick so that movement submitted during this
+  // tick's packet pump lands before timers get a chance to act on positions,
+  // which is the order the inline path produced.
+  if (pImpl->offloadDispatcher && pImpl->offloadSink) {
+    if (pImpl->offloadDispatcher->IsEnabled()) {
+      // Filled in place: the dispatcher owns the buffer across ticks, so
+      // rebuilding the list every tick does not go near the allocator.
+      std::vector<MpParallel::RelayTarget>& potentialTargets =
+        pImpl->offloadDispatcher->BeginPotentialTargets();
+
+      if (pImpl->offloadDispatcher->GetPendingCount() > 0) {
+        for (size_t i = 0, n = serverState.maxConnectedId; i <= n; ++i) {
+          Networking::UserId userId = static_cast<Networking::UserId>(i);
+          if (auto actor = serverState.ActorByUser(userId)) {
+            if (actor->IsDisabled()) {
+              continue;
+            }
+            MpParallel::RelayTarget target;
+            target.userId = userId;
+            target.listenerFormId = actor->GetFormId();
+            const auto& pos = actor->GetPos();
+            target.pos[0] = pos.x;
+            target.pos[1] = pos.y;
+            target.pos[2] = pos.z;
+
+            try {
+              target.worldOrCell = ResolveCellOrWorldFormId(
+                actor->GetCellOrWorld());
+            } catch (const std::exception&) {
+              continue;
+            }
+            target.chunkX = MpParallel::ToChunkCoord(pos.x);
+            target.chunkY = MpParallel::ToChunkCoord(pos.y);
+            potentialTargets.push_back(target);
+          }
+        }
+      }
+      pImpl->offloadDispatcher->CommitPotentialTargets();
+    }
+    pImpl->offloadSink->BeginJoin();
+    const uint64_t staleBefore = pImpl->offloadSink->GetStaleActorCount();
+    pImpl->offloadDispatcher->ExecuteTick(*pImpl->offloadSink);
+
+    // The sink's stale count is a running total; the metric needs both the
+    // per-tick snapshot and the cumulative.
+    {
+      const uint64_t staleAfter = pImpl->offloadSink->GetStaleActorCount();
+      auto& metrics = const_cast<MpParallel::ParallelMetrics&>(
+        pImpl->offloadDispatcher->GetMetrics());
+      metrics.lastStaleActors = staleAfter - staleBefore;
+      metrics.totalStaleActors = staleAfter;
+    }
+  }
+
   TickDeferredMessages();
   worldState.Tick();
+}
+
+MpParallel::OffloadDispatcher& PartOne::GetOffloadDispatcher()
+{
+  return *pImpl->offloadDispatcher;
+}
+
+uint32_t PartOne::ResolveCellOrWorldFormId(const FormDesc& cellOrWorld)
+{
+  return pImpl->cellFormIdCache.Resolve(cellOrWorld, worldState.espmFiles);
+}
+
+void PartOne::ConfigureParallelism(const MpParallel::ParallelConfig& config)
+{
+  pImpl->offloadDispatcher->Reconfigure(config);
+  GetLogger().info("{}", pImpl->offloadDispatcher->GetConfig().Describe());
+}
+
+const MpParallel::ParallelMetrics& PartOne::GetParallelMetrics() const
+{
+  return pImpl->offloadDispatcher->GetMetrics();
 }
 
 uint32_t PartOne::CreateActor(uint32_t formId, const NiPoint3& pos,
@@ -755,6 +850,13 @@ void PartOne::Init()
 {
   pImpl.reset(new Impl);
   pImpl->logger.reset(new spdlog::logger{ "empty logger" });
+
+  // Constructed disabled, so no threads exist until a server config asks for
+  // them. Tests and embedders that never call ConfigureParallelism keep the
+  // original single-threaded behaviour byte for byte.
+  pImpl->offloadDispatcher =
+    std::make_unique<MpParallel::OffloadDispatcher>(MpParallel::ParallelConfig{});
+  pImpl->offloadSink = std::make_unique<PartOneOffloadSink>(*this);
 
   pImpl->onSubscribe = [this](PartOneSendTargetWrapper* sendTarget,
                               MpObjectReference* emitter,

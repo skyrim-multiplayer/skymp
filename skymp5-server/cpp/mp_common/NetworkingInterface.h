@@ -1,9 +1,7 @@
 #pragma once
 #include "MinPacketId.h"
 #include <cstddef>
-#include <cstdio>
 #include <string>
-#include <vector>
 
 namespace Networking {
 
@@ -46,6 +44,14 @@ public:
 
   virtual void Send(UserId targetUserId, PacketData data, size_t length,
                     bool reliable) = 0;
+
+  virtual void SendList(UserId targetUserId, const PacketData* dataArray,
+                        const size_t* lengths, size_t count, bool reliable)
+  {
+    for (size_t i = 0; i < count; ++i) {
+      Send(targetUserId, dataArray[i], lengths[i], reliable);
+    }
+  }
 };
 
 class IServer : public ISendTarget
