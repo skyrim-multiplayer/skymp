@@ -14,18 +14,17 @@ public:
 
   void Update()
   {
-    _threadPool->Push([=] { _taskInterface->AddTask(onTick); });
+    // Must be async to avoid infinite loop in SKSE's task drain.
+    // Synchronous AddTask from within a task callback causes SKSE to
+    // immediately re-process the newly added task in the same frame.
+    _threadPool.Push([this] { _taskInterface->AddTask(onTick); });
   }
 
 private:
-  TickHandler()
-  {
-    _taskInterface = SKSE::GetTaskInterface();
-    _threadPool = std::make_shared<ThreadPoolWrapper>();
-  }
+  TickHandler() { _taskInterface = SKSE::GetTaskInterface(); }
 
   const std::function<void()> onTick = [] {
-    SkyrimPlatform::GetSingleton()->PushAndWait([=](Napi::Env env) {
+    SkyrimPlatform::GetSingleton()->RunTask([=](Napi::Env env) {
       SkyrimPlatform::GetSingleton()->JsTick(env, false);
     });
     TESModPlatform::Update();
@@ -33,5 +32,5 @@ private:
   };
 
   const SKSE::TaskInterface* _taskInterface;
-  std::shared_ptr<ThreadPoolWrapper> _threadPool;
+  ThreadPoolWrapper _threadPool{ 1 };
 };
