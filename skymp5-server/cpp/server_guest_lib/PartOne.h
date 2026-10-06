@@ -24,6 +24,12 @@ using ProfileId = int32_t;
 class ActionListener;
 class MessageSerializer;
 
+namespace MpParallel {
+class OffloadDispatcher;
+struct ParallelConfig;
+struct ParallelMetrics;
+}
+
 class PartOneSendTargetWrapper : public Networking::ISendTarget
 {
 public:
@@ -133,6 +139,15 @@ public:
                     MpObjectReference& remote);
 
   static MessageSerializer& GetMessageSerializerInstance();
+
+  // --- multi-core area offload ------------------------------------------
+  //
+  // Off by default. When enabled, per-area movement relay work is spread
+  // across worker threads and applied during Tick instead of inline during
+  // packet ingest. See docs/docs_parallel_area_offload.md.
+  MpParallel::OffloadDispatcher& GetOffloadDispatcher();
+  void ConfigureParallelism(const MpParallel::ParallelConfig& config);
+  const MpParallel::ParallelMetrics& GetParallelMetrics() const;
 
 private:
   void Init();

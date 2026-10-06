@@ -453,3 +453,25 @@ A boolean setting that controls hot-reloading behavior for connected clients.
   "enableGamemodeDataUpdatesBroadcast": false
   // ...
 }
+```
+
+## parallelism
+
+Spreads per-area multiplayer work across multiple CPU cores instead of running
+it all on the single Node thread. Disabled unless `enabled` is set to `true`,
+in which case the server behaves exactly as it did before.
+
+See [Multi-Core Area Offload](docs_parallel_area_offload.md) for the full
+option list, how clusters are formed, and what to watch in the metrics.
+
+```json5
+{
+  // ...
+  "parallelism": {
+    "enabled": true,
+    "workerThreads": 0, // 0 auto-detects: cores minus two
+    "minActorsToOffload": 24,
+    "adaptiveThrottling": true
+  }
+  // ...
+}

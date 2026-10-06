@@ -50,7 +50,7 @@ private:
   typedef void (*SerializeFn)(const simdjson::dom::element& inputJson,
                               SLNet::BitStream& outputStream);
   typedef std::optional<DeserializeResult> (*DeserializeFn)(
-    const uint8_t* rawMessageJsonOrBinary, size_t length);
+    const uint8_t* rawMessageJsonOrBinary, size_t length, const simdjson::dom::element* parsedJson);
 
   MessageSerializer(std::vector<SerializeFn> serializerFns,
                     std::vector<DeserializeFn> deserializerFns);
