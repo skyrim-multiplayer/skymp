@@ -18,7 +18,7 @@ You can find instructions on setting up the project locally below. To get a loca
 
 These tools required regardless of your system:
 
-* 64-bit [NodeJS](https://nodejs.org/en/download/) 17.x *(may also work for older versions)*
+* 64-bit [NodeJS](https://nodejs.org/en/download/) 18 or higher *(recommended: 22)*
 * [Yarn](https://yarnpkg.com/getting-started/install): `npm install --global yarn`
 * [CMake 3.19](https://cmake.org/download/) or higher
 
