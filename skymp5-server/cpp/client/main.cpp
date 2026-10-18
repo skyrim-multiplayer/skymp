@@ -6,8 +6,9 @@
 namespace {
 MpClientPlugin::State& GetState()
 {
-  static MpClientPlugin::State g_state;
-  return g_state;
+  // not using RAII here to prevent SkyrimSE.exe hanging in RakPeer dtor
+  static auto* g_state = new MpClientPlugin::State;
+  return *g_state;
 }
 
 MessageSerializer& GetMessageSerializer()

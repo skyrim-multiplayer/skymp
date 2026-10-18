@@ -38,6 +38,12 @@ REFR::Data REFR::GetData(
         }
       } else if (!std::memcmp(type, "XOWN", 4)) {
         result.ownerFaction = *reinterpret_cast<const uint32_t*>(data);
+      } else if (!std::memcmp(type, "FULL", 4)) {
+        result.mapMarkerName = *reinterpret_cast<const lstring*>(data);
+      } else if (!std::memcmp(type, "FNAM", 4)) {
+        result.mapMarkerFlags = *reinterpret_cast<const MapMarkerFlags*>(data);
+      } else if (!std::memcmp(type, "TNAM", 4)) {
+        result.mapMarkerType = *reinterpret_cast<const MapMarkerType*>(data);
       }
     },
     compressedFieldsCache);

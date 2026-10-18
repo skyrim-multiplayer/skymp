@@ -118,7 +118,6 @@ private:
         // Do not break here. monitor->Updated has to be called for all
         // monitors. See method implementation
       }
-      monitor->ThrowOnceIfHasError();
     }
 
     const bool startupLoad = tickId == 1;
@@ -128,6 +127,10 @@ private:
       for (auto& fileDir : fileDirs) {
         LoadFiles(env, GetPathsToLoad(fileDir));
       }
+    }
+
+    for (auto& monitor : monitors) {
+      monitor->ThrowOnceIfHasError();
     }
 
     HttpClientApi::GetHttpClient().ExecuteQueuedCallbacks(env);
@@ -314,11 +317,6 @@ private:
     }
     env.Global().Set("log", consoleApi.Get("printConsole"));
 
-    engine->RunScript(env,
-                      Viet::ReadFileIntoString(
-                        std::filesystem::path("Data/Platform/Distribution") /
-                        "___systemPolyfill.js"),
-                      "___systemPolyfill.js");
     engine->RunScript(
       env, "skyrimPlatform = addNativeExports('skyrimPlatform', {})", "");
     engine->RunScript(env, scriptSrc, path.filename().string()).ToString();
@@ -343,9 +341,9 @@ private:
     std::vector<std::filesystem::path> paths;
     if (std::filesystem::exists(directory)) {
       for (auto& it : std::filesystem::directory_iterator(directory)) {
-        std::filesystem::path p =
-          it.is_directory() ? it.path() / "index.js" : it;
-        paths.push_back(p);
+        if (!it.is_directory()) {
+          paths.push_back(it.path());
+        }
       }
     }
     return paths;

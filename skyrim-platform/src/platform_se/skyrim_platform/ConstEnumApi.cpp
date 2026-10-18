@@ -1141,7 +1141,6 @@ void ConstEnumApi::Register(Napi::Env env, Napi::Object& exports)
   EquippedItemType.Set(_u_(6), "Warhammer");
   EquippedItemType.Set(_u_(7), "Bow");
   EquippedItemType.Set(_u_(8), "Staff");
-  EquippedItemType.Set(_u_(9), "Spell");
   EquippedItemType.Set(_u_(9), "SpellOrScroll");
   EquippedItemType.Set(_u_(10), "Shield");
   EquippedItemType.Set(_u_(11), "Torch");
@@ -1156,7 +1155,6 @@ void ConstEnumApi::Register(Napi::Env env, Napi::Object& exports)
   EquippedItemType.Set("Warhammer", _n_(env, 6));
   EquippedItemType.Set("Bow", _n_(env, 7));
   EquippedItemType.Set("Staff", _n_(env, 8));
-  EquippedItemType.Set("Spell", _n_(env, 9));
   EquippedItemType.Set("SpellOrScroll", _n_(env, 9));
   EquippedItemType.Set("Shield", _n_(env, 10));
   EquippedItemType.Set("Torch", _n_(env, 11));

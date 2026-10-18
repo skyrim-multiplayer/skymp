@@ -71,6 +71,7 @@ export interface Browser {
   setFocused(focused: boolean): void
   isFocused(): boolean
   loadUrl(url: string): void
+  getToken(): string
   executeJavaScript(src: string): void
 }
 export declare let browser: Browser
@@ -1424,7 +1425,6 @@ export const enum EquippedItemType {
   Warhammer = 6,
   Bow,
   Staff,
-  Spell = 9, // Deprecated (use SpellOrScroll instead)
   SpellOrScroll = 9,
   Shield,
   Torch,

@@ -42,6 +42,9 @@ export class GamemodeUpdateService extends ClientListener {
       getFormIdInServerFormat: (clientsideFormId: number) => {
         return localIdToRemoteId(clientsideFormId);
       },
+      getMyFormIdInServerFormat: () => {
+        return this.controller.lookupListener(RemoteServer).getMyRemoteRefrId();
+      },
       getFormIdInClientFormat: (serversideFormId: number) => {
         return remoteIdToLocalId(serversideFormId);
       },
@@ -66,6 +69,9 @@ export class GamemodeUpdateService extends ClientListener {
       i: -1,
       getFormIdInServerFormat: (clientsideFormId: number) => {
         return localIdToRemoteId(clientsideFormId);
+      },
+      getMyFormIdInServerFormat: () => {
+        return this.controller.lookupListener(RemoteServer).getMyRemoteRefrId();
       },
       getFormIdInClientFormat: (serversideFormId: number) => {
         return remoteIdToLocalId(serversideFormId);

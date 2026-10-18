@@ -85,6 +85,16 @@ const frontendMetricsPayload = {
   let lastMessageRequestBody = null;
   let lastWarnRequestBody = null;
   const adminRequestUrls = [];
+  const browserErrors = [];
+  const adminSockets = new Set();
+  let adminSocketConnections = 0;
+
+  page.on('pageerror', (error) => browserErrors.push(error.message));
+  await page.routeWebSocket('**/ws/admin-updates', (socket) => {
+    adminSocketConnections += 1;
+    adminSockets.add(socket);
+    socket.onClose(() => adminSockets.delete(socket));
+  });
 
   try {
     const ensureServerListVisible = async () => {
@@ -389,6 +399,12 @@ const frontendMetricsPayload = {
     const title = await page.title();
     assert.equal(typeof title, 'string');
 
+    // DOMContentLoaded can fire before the bundle has mounted React.
+    await page.locator('#root > *').first().waitFor({
+      state: 'attached',
+      timeout: 30000,
+    });
+
     const devBannerControls = page.locator(
       '[data-testid="dev-banner-health-controls"]',
     );
@@ -449,12 +465,7 @@ const frontendMetricsPayload = {
     }
 
     const serverListVisible = await ensureServerListVisible();
-    if (!serverListVisible) {
-      console.log(
-        '[SKIP] Server list overlay was not visible in this run; skipping launcher/admin smoke assertions',
-      );
-      return;
-    }
+    assert.equal(serverListVisible, true, 'Launcher server list must be visible');
 
     await page
       .locator('.server-list')
@@ -499,14 +510,7 @@ const frontendMetricsPayload = {
       { userId: 1, expiresAt: Date.now() + 15 * 60 * 1000, remainingSec: 900 },
     ];
 
-    await page.evaluate(() => {
-      window.dispatchEvent(new Event('showAdminDashboard'));
-    });
-    await page
-      .locator('.admin-dashboard')
-      .waitFor({ state: 'visible', timeout: 5000 });
-
-    await page.waitForResponse(
+    const initialPlayersResponse = page.waitForResponse(
       (response) => {
         return (
           response.url().includes('/api/admin/players') &&
@@ -515,6 +519,13 @@ const frontendMetricsPayload = {
       },
       { timeout: 10000 },
     );
+    await page.evaluate(() => {
+      window.dispatchEvent(new Event('showAdminDashboard'));
+    });
+    await page
+      .locator('.admin-dashboard')
+      .waitFor({ state: 'visible', timeout: 5000 });
+    await initialPlayersResponse;
 
     const loadingIndicator = page.locator('.admin-dashboard__loading');
     if ((await loadingIndicator.count()) > 0) {
@@ -528,7 +539,22 @@ const frontendMetricsPayload = {
       .locator('[data-testid="admin-player-row-1"]')
       .waitFor({ state: 'visible', timeout: 10000 });
 
+    const connectionsBeforeEdit = adminSocketConnections;
     await page.locator('[data-testid="admin-reason-input"]').fill('Spam');
+    for (const socket of adminSockets) {
+      socket.send(JSON.stringify({
+        type: 'status',
+        ts: Date.now(),
+        data: { online: 7 },
+      }));
+    }
+    await page.waitForFunction(() =>
+      Array.from(document.querySelectorAll('.admin-dashboard__sidebar-pill'))
+        .some((element) => element.textContent === '7/100'),
+    );
+    assert.equal(adminSocketConnections, connectionsBeforeEdit,
+      'Editing state must keep existing WebSocket connections');
+    console.log('[OK] Admin WebSocket keeps its connection and uses the latest state');
     await page
       .locator('[data-testid="admin-mute-duration-select"]')
       .selectOption('15');
@@ -612,57 +638,38 @@ const frontendMetricsPayload = {
     assert.equal(metricsResult.names.includes('first-contentful-paint'), true);
 
     // --- Respawn tab smoke ---
-    await page
-      .locator('[data-testid="admin-tab-respawn"]')
-      .evaluate((element) => element.click());
-    await page.waitForResponse(
+    const respawnResponse = page.waitForResponse(
       (response) => response.url().includes('/api/admin/respawn-status'),
       { timeout: 10000 },
     );
+    await page
+      .locator('[data-testid="admin-tab-respawn"]')
+      .evaluate((element) => element.click());
+    await respawnResponse;
 
-    const respawnPanelVisible =
-      (await page.locator('[data-testid="admin-panel-respawn"]').count()) > 0;
-    if (respawnPanelVisible) {
-      await page
-        .locator('[data-testid="admin-panel-respawn"]')
-        .waitFor({ state: 'visible', timeout: 8000 });
-      const downedRow = page.locator('[data-testid="admin-downed-row-7"]');
-      if ((await downedRow.count()) > 0) {
-        await downedRow.waitFor({ state: 'visible', timeout: 5000 });
-        const reviveBtn = page.locator('[data-testid="admin-revive-btn-7"]');
-        assert.equal((await reviveBtn.count()) > 0, true);
-      } else {
-        console.log(
-          '[WARN] Downed row for userId=7 not found in respawn panel; panel rendered without list',
-        );
-      }
-    } else {
-      console.log(
-        '[WARN] Respawn panel not rendered; respawn tab assertions skipped',
-      );
-    }
+    await page.locator('#admin-panel-respawn')
+      .waitFor({ state: 'visible', timeout: 8000 });
+    await page.locator('[data-testid="admin-downed-row-7"]')
+      .waitFor({ state: 'visible', timeout: 5000 });
+    assert.equal(await page.locator('[data-testid="admin-revive-btn-7"]').isVisible(), true);
 
     // --- Events tab smoke ---
-    await page
-      .locator('[data-testid="admin-tab-events"]')
-      .evaluate((element) => element.click());
-    await page.waitForResponse(
+    const eventsResponse = page.waitForResponse(
       (response) => response.url().includes('/api/admin/events'),
       { timeout: 10000 },
     );
+    await page
+      .locator('[data-testid="admin-tab-events"]')
+      .evaluate((element) => element.click());
+    await eventsResponse;
 
-    await page.waitForTimeout(500);
+    await page.locator('[data-testid="admin-event-entry-downed-0"]')
+      .waitFor({ state: 'visible', timeout: 5000 });
 
     // --- Warn action E2E flow (Exit-Criterion: Admin moderation workflows) ---
     await page
       .locator('[data-testid="admin-tab-players"]')
       .evaluate((element) => element.click());
-    await page.waitForResponse(
-      (response) =>
-        response.url().includes('/api/admin/players') &&
-        response.request().method() === 'GET',
-      { timeout: 10000 },
-    );
     await page
       .locator('[data-testid="admin-player-row-1"]')
       .waitFor({ state: 'visible', timeout: 10000 });
@@ -722,12 +729,6 @@ const frontendMetricsPayload = {
     await page
       .locator('[data-testid="admin-tab-players"]')
       .evaluate((element) => element.click());
-    await page.waitForResponse(
-      (response) =>
-        response.url().includes('/api/admin/players') &&
-        response.request().method() === 'GET',
-      { timeout: 10000 },
-    );
 
     // Wait for the player row to be visible and check for history button
     const playerRow = page.locator('[data-testid="admin-player-row-1"]');
@@ -737,16 +738,18 @@ const frontendMetricsPayload = {
       const historyBtn = page.locator('[data-testid="admin-history-btn-1"]');
       if ((await historyBtn.count()) > 0) {
         await historyBtn.waitFor({ state: 'visible', timeout: 5000 });
-        await historyBtn.evaluate((element) => element.click());
-        await page.waitForResponse(
+        const historyResponse = page.waitForResponse(
           (response) => response.url().includes('/api/admin/history'),
           { timeout: 10000 },
         );
+        await historyBtn.evaluate((element) => element.click());
+        await historyResponse;
         // Check that we're now in the topbar history section
         // The topbar should show and the history search should be pre-filled
-        const topbarPanel = page.locator('.admin-topbar');
-        const topbarVisible = (await topbarPanel.count()) > 0;
-        assert.equal(topbarVisible, true, 'Topbar should be visible after clicking history button');
+        const historyPanel = page.locator('.admin-dashboard__tx-history');
+        await historyPanel.waitFor({ state: 'visible', timeout: 5000 });
+        assert.equal(await historyPanel.locator('input').first().inputValue(), '1',
+          'History search must contain the selected player ID');
         console.log('[OK] Cross-panel history search flow works correctly');
       } else {
         console.log(
@@ -757,6 +760,7 @@ const frontendMetricsPayload = {
       console.log('[WARN] Player row not found; cross-panel search test skipped');
     }
 
+    assert.deepEqual(browserErrors, [], 'Browser must not report uncaught errors');
     console.log(`[OK] E2E launcher/admin metrics flow passed for ${targetUrl}`);
   } finally {
     if (adminRequestUrls.length === 0) {

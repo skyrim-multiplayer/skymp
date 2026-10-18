@@ -91,7 +91,7 @@ jobs:
     - name: Replace image tags in files
       run: |
         SHORT_SHA='${{ steps.short_sha.outputs.short_sha }}'
-        sed -i "s|skymp/skymp-runtime-base:[^ ]*|skymp/skymp-runtime-base:${SHORT_SHA}|g" misc/deploy/remote/branchctl.sh
+        sed -i "s|skymp/skymp-runtime-base:[^ ]*|skymp/skymp-runtime-base:${SHORT_SHA}|g" misc/github_env_linux
         sed -i "s|skymp/skymp-vcpkg-deps:[^ ]*|skymp/skymp-vcpkg-deps:${SHORT_SHA}|g" misc/github_env_linux
 
     - name: Create Pull Request

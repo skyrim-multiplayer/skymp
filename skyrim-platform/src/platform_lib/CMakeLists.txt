@@ -5,7 +5,6 @@ if(MSVC)
     add_library(platform_lib STATIC ${sources})
     target_link_libraries(platform_lib PUBLIC viet)
     target_include_directories(platform_lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-    target_include_directories(platform_lib PUBLIC "${CMAKE_SOURCE_DIR}/1js")
     target_include_directories(platform_lib PUBLIC "${SKYRIM_PLATFORM_SOURCE_DIR}/src/third_party")
 
     find_package(unofficial-node-addon-api REQUIRED)

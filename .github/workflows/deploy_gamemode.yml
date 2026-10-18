@@ -1,4 +1,3 @@
-
 name: Deploy Gamemode
 
 on:
@@ -13,102 +12,18 @@ on:
           - 'indev'
         default: 'indev'
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 jobs:
   deploy_gamemode:
     runs-on: ubuntu-latest
-    env:
-      DEPLOY_BRANCH: ${{ inputs.branch || 'indev' }}
     steps:
-      - name: Show resolved deploy inputs
-        run: |
-          echo "DEPLOY_BRANCH=$DEPLOY_BRANCH"
-
-      - uses: actions/checkout@v6
-        with:
-          repository: skyrim-multiplayer/skymp5-gamemode
-          token: ${{ secrets.SKYMP5_GAMEMODE_PAT }}
-          fetch-depth: 0
-          persist-credentials: false
-
-      - uses: actions/checkout@v6
-        with:
-          path: "skymp"
-          fetch-depth: 0
-          sparse-checkout: |
-            misc
-
-      - name: Post a link in Discord
+      - name: Trigger gamemode deploy job
         env:
-          DEPLOY_STATUS_WEBHOOK: ${{secrets.DEPLOY_STATUS_WEBHOOK}}
+          INSTALLER_REPOSITORY: ${{ vars.INSTALLER_REPOSITORY }}
+          GH_TOKEN: ${{ secrets.SKYMP5_INSTALLER_REPOSITORY_DISPATCH_PAT }}
         run: |
-          link="${{github.server_url}}/${{github.repository}}/actions/runs/${{github.run_id}}"
-          ./skymp/misc/deploy/call_webhook.sh "Started gamemode deploy. " \
-            "You can follow the process at <$link>. " \
-            "Once build is finished, further progress will be reported here."
-
-      - name: Gather PRs
-        uses: Pospelove/auto-merge-action@main
-        with:
-          path: ${{github.workspace}}
-          repositories: |
-            [
-              {
-                "owner": "skyrim-multiplayer",
-                "repo": "skymp5-gamemode",
-                "labels": ["merge-to:${{env.DEPLOY_BRANCH}}"],
-                "token": "${{ secrets.SKYMP5_GAMEMODE_PAT }}"
-              }
-            ]
-          generate-build-metadata: true
-
-      - run: yarn
-      - run: yarn build
-      - name: Rsync gamemode.js to the remote server
-        run: |
-          # cheatsheet: https://stackoverflow.com/a/44606194
-          # ? without : accepts empty string
-          # Ensuring all required variables are set:
-          echo "${DEPLOY_SSH_PRIVATE_KEY:?}" > /dev/null
-          echo "${DEPLOY_SSH_KNOWN_HOSTS:?}" > /dev/null
-
-          touch ssh_id
-          touch ssh_known_hosts
-          chmod 600 ssh_id
-          chmod 600 ssh_known_hosts
-          echo "$DEPLOY_SSH_PRIVATE_KEY" > ssh_id
-          echo "$DEPLOY_SSH_KNOWN_HOSTS" > ssh_known_hosts
-
-          if [ "$DEPLOY_BRANCH" = "sweetpie" ]; then
-              export DEPLOY_TARGET_HOST="$HOST_SWEETPIE"
-              export DEPLOY_TARGET_USER="$USER_SWEETPIE"
-          else
-              export DEPLOY_TARGET_HOST="$HOST_INDEV"
-              export DEPLOY_TARGET_USER="$USER_INDEV"
-          fi
-
-          remote_server_connstr="$DEPLOY_TARGET_USER@$DEPLOY_TARGET_HOST"
-          remote_dir="~/skymp-server-$DEPLOY_BRANCH/server/"
-
-          remote_shell="ssh -i ssh_id -o UserKnownHostsFile=ssh_known_hosts"
-          rsync --rsh="$remote_shell" -vazPh --checksum \
-            ./build/gamemode.js "$remote_server_connstr:$remote_dir/"
-        env:
-          DEPLOY_SSH_PRIVATE_KEY: ${{secrets.DEPLOY_SSH_PRIVATE_KEY_06_2024}}
-          DEPLOY_SSH_KNOWN_HOSTS: ${{secrets.DEPLOY_SSH_KNOWN_HOSTS_06_2024}}
-          HOST_SWEETPIE: ${{secrets.DEPLOY_TARGET_HOST_12_2025}}
-          USER_SWEETPIE: ${{secrets.DEPLOY_TARGET_USER_12_2025}}
-          HOST_INDEV: ${{secrets.DEPLOY_TARGET_HOST_06_2024}}
-          USER_INDEV: ${{secrets.DEPLOY_TARGET_USER_06_2024}}
-
-      - name: Notify failure
-        env:
-          DEPLOY_STATUS_WEBHOOK: ${{secrets.DEPLOY_STATUS_WEBHOOK}}
-        if: '!success()'
-        run: |
-          link="${{github.server_url}}/${{github.repository}}/actions/runs/${{github.run_id}}"
-          ./skymp/misc/deploy/call_webhook.sh \
-            "Gamemode build or deploy failed or was cancelled. " \
-            "Check out the logs at <$link> to find out why."
+          : "${INSTALLER_REPOSITORY:?Set the INSTALLER_REPOSITORY repository variable (owner/repo)}"
+          gh workflow run server-build-deploy-1-5.yml --repo "$INSTALLER_REPOSITORY" \
+            -f action='deploy_gamemode' \
+            -f server_name='${{ inputs.branch }}' \
+            -f real_triggering_actor='${{ github.triggering_actor }}' \
+            ;

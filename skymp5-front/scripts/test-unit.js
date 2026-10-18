@@ -77,6 +77,7 @@ const {
 const {
   AppErrorBoundary,
 } = require('../src/components/AppErrorBoundary/AppErrorBoundary.tsx');
+const AdminDashboard = require('../src/features/adminDashboard').default;
 
 const run = (name, fn) => {
   try {
@@ -89,6 +90,10 @@ const run = (name, fn) => {
 };
 
 const render = (component) => renderToStaticMarkup(component);
+
+run('AdminDashboard initializes while hidden without crashing the app', () => {
+  assert.equal(render(React.createElement(AdminDashboard)), '');
+});
 
 run('pingClass maps ping buckets', () => {
   assert.equal(pingClass(null), 'server-list__ping--unknown');

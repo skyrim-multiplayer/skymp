@@ -1430,7 +1430,6 @@ export const enum EquippedItemType {
   Warhammer = 6,
   Bow,
   Staff,
-  Spell = 9, // Deprecated (use SpellOrScroll instead)
   SpellOrScroll = 9,
   Shield,
   Torch,
@@ -1916,7 +1915,6 @@ export declare class Actor extends ObjectReference {
   addPerk(akPerk: Perk | null): void
   addShout(akShout: Shout | null): boolean
   addSpell(akSpell: Spell | null, abVerbose: boolean): boolean
-  addToFaction(akFaction: Faction | null, aiStartingRank?: number): void
   allowBleedoutDialogue(abCanTalk: boolean): void
   allowPCDialogue(abTalk: boolean): void
   attachAshPile(akAshPileBase: Form | null): void
@@ -2121,6 +2119,7 @@ export declare class Actor extends ObjectReference {
   updateWeight(neckDelta: number): void
   willIntimidateSucceed(): boolean
   wornHasKeyword(akKeyword: Keyword | null): boolean
+  addToFaction(akFaction: Faction | null, aiStartingRank?: number): void
 }
 
 // Based on ActorBase.pex

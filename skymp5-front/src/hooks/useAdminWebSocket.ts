@@ -44,6 +44,11 @@ export const useAdminWebSocket = (
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const reconnectDelayRef = useRef<number>(DEFAULT_RECONNECT_DELAY);
   const closedByUserRef = useRef<boolean>(false);
+  const onMessageRef = useRef(onMessage);
+
+  useEffect(() => {
+    onMessageRef.current = onMessage;
+  }, [onMessage]);
 
   const connect = useCallback(() => {
     if (!enabled || closedByUserRef.current) return;
@@ -55,9 +60,10 @@ export const useAdminWebSocket = (
       const wsUrl = `${protocol}//${window.location.host}/ws/admin-updates`;
 
       const ws = new WebSocket(wsUrl);
+      wsRef.current = ws;
 
       ws.onopen = () => {
-        wsRef.current = ws;
+        if (wsRef.current !== ws) return;
         reconnectDelayRef.current = DEFAULT_RECONNECT_DELAY;
         setState((prev) => ({
           ...prev,
@@ -68,6 +74,7 @@ export const useAdminWebSocket = (
       };
 
       ws.onmessage = (event) => {
+        if (wsRef.current !== ws) return;
         try {
           const message = JSON.parse(event.data) as AdminWebSocketMessage;
           setState((prev) => ({
@@ -75,13 +82,14 @@ export const useAdminWebSocket = (
             messageCount: prev.messageCount + 1,
             lastMessageTs: Date.now(),
           }));
-          onMessage(message);
+          onMessageRef.current(message);
         } catch (error) {
           console.error('[AdminWebSocket] Error parsing message:', error);
         }
       };
 
       ws.onerror = () => {
+        if (wsRef.current !== ws) return;
         setState((prev) => ({
           ...prev,
           connected: false,
@@ -90,6 +98,7 @@ export const useAdminWebSocket = (
       };
 
       ws.onclose = () => {
+        if (wsRef.current !== ws) return;
         wsRef.current = null;
         setState((prev) => ({
           ...prev,
@@ -116,7 +125,7 @@ export const useAdminWebSocket = (
         reconnecting: false,
       }));
     }
-  }, [enabled, onMessage]);
+  }, [enabled]);
 
   const disconnect = useCallback(() => {
     closedByUserRef.current = true;
@@ -124,8 +133,9 @@ export const useAdminWebSocket = (
       clearTimeout(reconnectTimeoutRef.current);
     }
     if (wsRef.current) {
-      wsRef.current.close();
+      const ws = wsRef.current;
       wsRef.current = null;
+      ws.close();
     }
     setState({
       connected: false,

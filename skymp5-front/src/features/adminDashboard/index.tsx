@@ -53,6 +53,7 @@ type ServerLogLevel = 'info' | 'error';
 
 interface AdminStatus {
   name: string;
+  master?: string;
   online: number;
   maxPlayers: number;
   port: number;
@@ -824,8 +825,6 @@ const AdminDashboard = () => {
   >('masterActions');
   const [topbarWhitelistSearch, setTopbarWhitelistSearch] = useState('');
 
-  const moderationReasonInvalid = !isValidModerationReason(moderationReason);
-  const warnReasonInvalid = !isValidModerationReason(warnReason);
   const [topbarPlayersSearch, setTopbarPlayersSearch] = useState('');
   const [cfgEditorTab, setCfgEditorTab] = useState<CfgEditorTab>('general');
   const [cfgEditorSaving, setCfgEditorSaving] = useState(false);
@@ -869,6 +868,8 @@ const AdminDashboard = () => {
   >(null);
   const [muteDurationMinutes, setMuteDurationMinutes] = useState(10);
   const [moderationReason, setModerationReason] = useState('');
+  const moderationReasonInvalid = !isValidModerationReason(moderationReason);
+  const warnReasonInvalid = !isValidModerationReason(warnReason);
   const [nowTs, setNowTs] = useState(() => Date.now());
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const consoleEndRef = useRef<HTMLDivElement>(null);
@@ -1832,6 +1833,10 @@ const AdminDashboard = () => {
             typeof payload?.canManageRespawn === 'boolean'
               ? payload.canManageRespawn
               : DEFAULT_CAPABILITIES.canManageRespawn,
+          canWarn:
+            typeof payload?.canWarn === 'boolean'
+              ? payload.canWarn
+              : DEFAULT_CAPABILITIES.canWarn,
         },
       });
     } catch {
@@ -2795,7 +2800,10 @@ const AdminDashboard = () => {
         if (
           prev.length > 0 &&
           prev[0].ts === data.entry.ts &&
-          prev[0].title === data.entry.title
+          prev[0].type === data.entry.type &&
+          prev[0].userId === data.entry.userId &&
+          prev[0].actorName === data.entry.actorName &&
+          prev[0].details === data.entry.details
         ) {
           return prev;
         }
