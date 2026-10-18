@@ -32,11 +32,12 @@ Der ursprüngliche `main` und `backup-sync-20261018123519` bleiben erhalten.
 | Generierte API | Der neue JavaScript-Generator behält die zusätzlichen Fork-Deklarationen für `Browser.getToken`, `ObjectReference.addItem` und `Actor.addToFaction` bei. `markerFormId` und `showMapMarker` bleiben ebenfalls erhalten. Der von Upstream entfernte Enum-Alias `EquippedItemType.Spell` wird durch `SpellOrScroll` ersetzt. |
 | Server-Abhängigkeiten | Die Upstream-Anforderungen für axios, ws und esbuild wurden übernommen und das npm-Lockfile aktualisiert. Das zusätzliche OpenTelemetry-Shim des Forks bleibt aktiv. |
 | Client-Einstellungen | Die neue CMake-Option `GENERATE_CLIENT_SETTINGS` wurde mit der vorhandenen Fork-Erzeugung zusammengeführt. `OFF` verhindert das Erzeugen und Überschreiben von Einstellungen, die bereits ein Installer eingerichtet hat. |
-| Deployments | Die neuen Upstream-Workflows verwenden die Repository-Variable `INSTALLER_REPOSITORY` statt eines fest eingebauten Upstream-Ziels. Settings-Workflows ermitteln den Standardbranch des Ziel-Repositories. |
+| Deployments | Die neuen Upstream-Workflows verwenden die Repository-Variable `INSTALLER_REPOSITORY` statt eines fest eingebauten Upstream-Ziels. Settings-Workflows ermitteln den Standardbranch des Ziel-Repositories. Der bisherige `repository_dispatch`-Eingang `deploy` bleibt für `deploy` und `restart` erhalten. |
 | Fork-Workflows | Installer-Dispatch und SSH-Logabruf bleiben erhalten. Das für den Logabruf benötigte Shell-Skript wurde ebenfalls beibehalten. Docker-Tag-Updates verweisen auf die weiterhin vorhandene Umgebungsdatei. |
 | Oberfläche | Ein bereits vorhandener Startfehler im Admin-Dashboard wurde behoben: Die Validierung von Moderationsgründen erfolgt nach der Initialisierung der zugehörigen Zustandsvariablen. Ein Regressionstest deckt den Start des unsichtbaren Dashboards ab. |
 | Admin-Daten | Der Berechtigungs-Snapshot berücksichtigt `canWarn`, der Status-Typ enthält die Master-Adresse und der Ereignisvergleich verwendet die tatsächlich vorhandenen Felder statt eines nicht existierenden `title`. |
 | Admin-WebSocket | Veränderte React-Callbacks lösen keine neuen Verbindungen mehr aus. Eine Ref übergibt Nachrichten an den aktuellen Handler. Auch noch nicht geöffnete Verbindungen werden beim Schließen aufgeräumt; späte Ereignisse alter Verbindungen werden ignoriert. |
+| Serverpaket | Neben `build.js` werden alle erzeugten Frontend-Assets in `dist/server/ui` übernommen, damit Bilder, Schriften und Sounds auch in frischen Paketen vorhanden sind. |
 | Browser-Test | Der Smoke-Test wartet auf das Mounten von React und scheitert bei fehlender Serverliste, statt alle Launcher-/Admin-Prüfungen mit erfolgreichem Exit zu überspringen. Er prüft außerdem stabile WebSocket-Verbindungen bei UI-Updates und die Verarbeitung des aktualisierten Serverstatus. |
 
 ## Konfiguration für GitHub-Deployments
@@ -50,6 +51,12 @@ Die übernommenen Deployments erwarten dort `server-build-deploy-1-5.yml` bzw.
 `server-settings-1-0.yml`. Der bestehende Installer-Dispatch verwendet weiterhin
 das Ereignis `on-skymp-push`. Ohne passendes Installer-Repository sind diese
 optionalen Deployment-Aktionen nicht ausführbar; lokale Builds benötigen es nicht.
+
+Upstream ersetzt die bisherigen SSH-Deployments durch Installer-Workflows und
+entfernt die Deploy-Auswahl `stop`. Alte Aufrufer mit `action: stop` oder dem
+Schutzparameter `canaryFile` müssen angepasst werden; der neue Workflow weist
+solche Aufträge ausdrücklich zurück, statt einen bisherigen Schutzparameter
+stillschweigend zu ignorieren. Der SSH-Logabruf des Forks bleibt verfügbar.
 
 ## Lokale Prüfungen
 

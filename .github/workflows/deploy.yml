@@ -1,6 +1,8 @@
 name: Deploy
 
 on:
+    repository_dispatch:
+        types: [deploy]
     workflow_dispatch:
         inputs:
             action:
@@ -23,6 +25,10 @@ on:
 jobs:
     deploy:
         runs-on: ubuntu-latest
+        env:
+            DEPLOY_BRANCH: ${{ github.event_name == 'workflow_dispatch' && inputs.branch || github.event.client_payload.inputs.branch }}
+            DEPLOY_ACTION: ${{ github.event_name == 'workflow_dispatch' && inputs.action || github.event.client_payload.inputs.action }}
+            DEPLOY_CANARY_FILE: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.inputs.canaryFile || '' }}
         steps:
           - name: Trigger server deploy job
             env:
@@ -30,8 +36,17 @@ jobs:
               GH_TOKEN: ${{ secrets.SKYMP5_INSTALLER_REPOSITORY_DISPATCH_PAT }}
             run: |
               : "${INSTALLER_REPOSITORY:?Set the INSTALLER_REPOSITORY repository variable (owner/repo)}"
+              : "${DEPLOY_BRANCH:?Deploy branch is required}"
+              case "$DEPLOY_ACTION" in
+                deploy|restart) ;;
+                *) echo '::error::The installer deploy workflow supports deploy and restart.'; exit 1 ;;
+              esac
+              if [ -n "$DEPLOY_CANARY_FILE" ]; then
+                echo '::error::The legacy canaryFile guard is not supported by the installer workflow. Update the caller before deploying.'
+                exit 1
+              fi
               gh workflow run server-build-deploy-1-5.yml --repo "$INSTALLER_REPOSITORY" \
-                -f action='${{ inputs.action }}' \
-                -f server_name='${{ inputs.branch }}' \
+                -f "action=$DEPLOY_ACTION" \
+                -f "server_name=$DEPLOY_BRANCH" \
                 -f real_triggering_actor='${{ github.triggering_actor }}' \
                 ;
