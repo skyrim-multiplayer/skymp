@@ -2353,10 +2353,13 @@ EventResult EventHandler::ProcessEvent(
     event->mapMarkerData->flags.any(RE::MapMarkerData::Flag::kShowAllHidden);
 
   uint32_t markerFormId = 0;
-  RE::TES::GetSingleton()->ForEachReference([&](RE::TESObjectREFR& refr) {
-    auto* extra = refr.extraList.GetByType<RE::ExtraMapMarker>();
+  RE::TES::GetSingleton()->ForEachReference([&](RE::TESObjectREFR* refr) {
+    if (!refr) {
+      return RE::BSContainer::ForEachResult::kContinue;
+    }
+    auto* extra = refr->extraList.GetByType<RE::ExtraMapMarker>();
     if (extra && extra->mapData == event->mapMarkerData) {
-      markerFormId = refr.GetFormID();
+      markerFormId = refr->GetFormID();
       return RE::BSContainer::ForEachResult::kStop;
     }
     return RE::BSContainer::ForEachResult::kContinue;

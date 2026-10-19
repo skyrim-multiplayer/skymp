@@ -3,6 +3,7 @@
 ## Verglichene Stände
 
 Die Remote-Referenzen von `origin` und `upstream` wurden vor dem Vergleich frisch abgerufen.
+Ein erneuter Abruf am 19. Oktober 2026 bestätigte dieselben Remote-Stände.
 
 | Stand | Commit |
 | --- | --- |
@@ -30,6 +31,8 @@ Der ursprüngliche `main` und `backup-sync-20261018123519` bleiben erhalten.
 | SkyrimPlatform | Upstream entfernt die alte System-Polyfill-Laufzeit und SkyrimPlatform-Plugins aus mehreren Dateien auf dem Client. Der eigene Client wird bereits als einzelne Webpack-Datei gebaut. Externe ältere Client-Plugins müssen ebenfalls gebündelt werden. Der serverseitige Plugin-Manager bleibt erhalten. Die alte Polyfill-Datei gehört nicht mehr in neue Distributionen. |
 | Engine-Korrekturen | Upstream behebt das Plugin-Laden bei fehlenden Plugin-Ordnern und einen möglichen Hänger beim Beenden des Clients. Dazu kommen LCTN-/CELL-Datenzugriff und das Laden von ACTI-/FURN-Objekten. Die Auswirkungen auf eine konkrete Spielwelt müssen im Spiel geprüft werden. |
 | Generierte API | Der neue JavaScript-Generator behält die zusätzlichen Fork-Deklarationen für `Browser.getToken`, `ObjectReference.addItem` und `Actor.addToFaction` bei. `markerFormId` und `showMapMarker` bleiben ebenfalls erhalten. Der von Upstream entfernte Enum-Alias `EquippedItemType.Spell` wird durch `SpellOrScroll` ersetzt. |
+| Bestehende Build-Ordner | Der Client-Paketierer verwendet die aktuelle generierte API im Quellbaum. Zurückgebliebene `_codegen/skyrimPlatform.ts`-Dateien des entfernten nativen Generators überschreiben weder die neue API noch deren Kopie im Paket. |
+| Kartenmarker | Der native Callback für `TES::ForEachReference` verwendet den von CommonLibSSE erwarteten `TESObjectREFR*` und überspringt leere Zeiger. Die zusätzliche `markerFormId` im `locationDiscovery`-Ereignis bleibt erhalten. |
 | Server-Abhängigkeiten | Die Upstream-Anforderungen für axios, ws und esbuild wurden übernommen und das npm-Lockfile aktualisiert. Das zusätzliche OpenTelemetry-Shim des Forks bleibt aktiv. |
 | Client-Einstellungen | Die neue CMake-Option `GENERATE_CLIENT_SETTINGS` wurde mit der vorhandenen Fork-Erzeugung zusammengeführt. `OFF` verhindert das Erzeugen und Überschreiben von Einstellungen, die bereits ein Installer eingerichtet hat. |
 | Deployments | Die neuen Upstream-Workflows verwenden die Repository-Variable `INSTALLER_REPOSITORY` statt eines fest eingebauten Upstream-Ziels. Settings-Workflows ermitteln den Standardbranch des Ziel-Repositories. Der bisherige `repository_dispatch`-Eingang `deploy` bleibt für `deploy` und `restart` erhalten. |
@@ -38,7 +41,9 @@ Der ursprüngliche `main` und `backup-sync-20261018123519` bleiben erhalten.
 | Admin-Daten | Der Berechtigungs-Snapshot berücksichtigt `canWarn`, der Status-Typ enthält die Master-Adresse und der Ereignisvergleich verwendet die tatsächlich vorhandenen Felder statt eines nicht existierenden `title`. |
 | Admin-WebSocket | Veränderte React-Callbacks lösen keine neuen Verbindungen mehr aus. Eine Ref übergibt Nachrichten an den aktuellen Handler. Auch noch nicht geöffnete Verbindungen werden beim Schließen aufgeräumt; späte Ereignisse alter Verbindungen werden ignoriert. |
 | Serverpaket | Neben `build.js` werden alle erzeugten Frontend-Assets in `dist/server/ui` übernommen, damit Bilder, Schriften und Sounds auch in frischen Paketen vorhanden sind. |
+| Windows-Build | CMake berücksichtigt zusätzlich übergebene `VCPKG_INSTALL_OPTIONS`. Damit lassen sich temporäre Abhängigkeits-Builds und Werkzeugdownloads auf NTFS auslagern; die bisherigen Cleanup-Vorgaben bleiben wirksam. |
 | Browser-Test | Der Smoke-Test wartet auf das Mounten von React und scheitert bei fehlender Serverliste, statt alle Launcher-/Admin-Prüfungen mit erfolgreichem Exit zu überspringen. Er prüft außerdem stabile WebSocket-Verbindungen bei UI-Updates und die Verarbeitung des aktualisierten Serverstatus. |
+| C++-Testdaten | Bewegungsnachrichten enthalten das im Fork erforderliche `isMounted`. NPC-Tests aktivieren ihre expliziten Spawn-Regeln mit `overriden`, entsprechend dem vorhandenen Konfigurationsmodell des Forks. |
 
 ## Konfiguration für GitHub-Deployments
 
@@ -58,6 +63,28 @@ Schutzparameter `canaryFile` müssen angepasst werden; der neue Workflow weist
 solche Aufträge ausdrücklich zurück, statt einen bisherigen Schutzparameter
 stillschweigend zu ignorieren. Der SSH-Logabruf des Forks bleibt verfügbar.
 
+## Windows-Arbeitsverzeichnisse
+
+Das lokale Laufwerk `D:` verwendet exFAT, `C:` verwendet NTFS. Beim nativen
+Build scheiterte CMake 4.4.2 mehrfach am Wiederherstellen von Zeitstempeln beim
+Entpacken von Werkzeug-ZIPs. Meson brach anschließend wegen eines frisch
+geschriebenen, in die Zukunft gerundeten Zeitstempels ab. Ein separater
+Dateischreibtest bestätigte die Rundung auf dem Repository-Laufwerk.
+
+Die temporären vcpkg-Verzeichnisse werden deshalb auf NTFS gelegt. Der
+Quellcode, bereits installierte Abhängigkeiten und die Distribution bleiben
+im bisherigen Repository. In PowerShell aus `build/` konfigurieren:
+
+```powershell
+$nativeWorkRoot=(Join-Path $env:TEMP 'skymp-native-vcpkg-20261018').Replace('\','/')
+cmake .. "-DVCPKG_INSTALL_OPTIONS:STRING=--x-buildtrees-root=$nativeWorkRoot/buildtrees;--x-packages-root=$nativeWorkRoot/packages;--downloads-root=$nativeWorkRoot/downloads" -DGENERATE_CLIENT_SETTINGS:BOOL=OFF
+```
+
+Die letzte Option erhält die vorhandenen Client-Einstellungen. Für Tests
+mit den echten Skyrim-Masterdateien zusätzlich `-DUNIT_DATA_DIR:PATH=...`
+mit dem vorhandenen Data-Verzeichnis übergeben. Diese Tests lesen die
+Masterdateien; sie verwenden nicht die gespeicherte Serverwelt.
+
 ## Lokale Prüfungen
 
 Erfolgreich geprüft:
@@ -69,8 +96,29 @@ Erfolgreich geprüft:
 - Playwright-Ablauf am frisch gebauten Frontend mit simulierten HTTP-/WebSocket-Antworten: Launcher, Favoriten/Verbindung, Admin-Moderation, Warnungen, Respawn, Ereignisse, Spielerhistorie und stabile WebSocket-Updates. Keine unbehandelten Browserfehler.
 - Deterministische Codegenerierung mit Erhalt der fünf geprüften Fork-API-Deklarationen.
 - Workflow-YAML und Bash-Syntax von 43 Linux-Schritten.
+- Vollständiger nativer Windows-Release-Build einschließlich SkyrimPlatform, Server-Modul und C++-Testprogramm mit Visual Studio 2026.
+- Alle 71 Frontend-Dateien im tatsächlich erzeugten Serverpaket stimmen per SHA-256 mit dem frischen Frontend-Build überein.
+- Native Server-Integrationstests `test_removeallitems`, `test_onactivate` und `test_factions` in einer separaten temporären Distribution mit Kopien der fünf Skyrim-Masterdateien.
+- HTTP-Test mit echtem Server und nativem Modul: authentifizierter Admin-Status, HTTP 401 ohne Anmeldung, bytegenaue Auslieferung von `/build.js` und sauberes Beenden des Test-Gamemodes. Ein Test-Preload unterbindet ausschließlich den Probezugriff auf den bereits vorhandenen lokalen UI-Entwicklungsserver an Port 1234.
 
-Der native Windows-Build und die C++-Tests werden nach ihrem Abschluss ergänzt.
+- Vollständiger C++-Unit-Lauf über `ctest -C Release -R '^test_unit$' --output-on-failure`: alle 265 Testfälle mit 476.763 Assertions erfolgreich, 46,38 Sekunden. Vorher wurden der Bewegungs-Test sowie alle zehn NPC-/Template-/Aktivierungstests einzeln bzw. als Gruppe erfolgreich wiederholt. Die Speicher-Testgruppe bestand auch mit dem Zufallswert des ersten fehlgeschlagenen Laufs.
+
+Die ESPM-Tests verwendeten die fünf vorhandenen Skyrim-Masterdateien. Prüfungen,
+die ausdrücklich die CI-Umgebung bzw. feste Installations-Hashes voraussetzen,
+werden vom Testprogramm lokal übersprungen. Ein echter Spieltest mit verbundenem
+Skyrim-Client ist weiterhin offen.
+
+Vorhandene Server- und Client-Einstellungen wurden gesichert und erhalten.
+Der lokale CMake-Cache verwendet die vorhandene Master-Adresse und den
+vorhandenen Offline-Modus; `GENERATE_CLIENT_SETTINGS=OFF` schützt die
+Client-Einstellungen. Die bestehende Serverwelt wurde für die Integrationstests
+nicht verwendet. Testprotokolle und das isolierte PowerShell-Testskript liegen
+unter `build/fork-sync-*` und sind lokale, nicht versionierte Prüfartefakte.
+
+Die Integration ist auf `sync/upstream-20261018` lokal vorbereitet. Es wurde
+nichts zu GitHub gepusht; `main` und `origin/main` stehen weiterhin auf dem
+ursprünglichen Fork-Commit. Der Integrationsbranch enthält diesen Commit und
+den aktuellen Upstream-Commit vollständig als Vorfahren.
 
 Die nativen Integrationstests setzen `server-settings.json` und `gamemode.js`
 zurück und löschen `world/changeForms` in ihrer Server-Distribution. Sie dürfen

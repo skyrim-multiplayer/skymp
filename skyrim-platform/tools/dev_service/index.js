@@ -277,27 +277,16 @@ const watchCallback = (_eventType, fileName) => {
       // On Linux, we would not have this directory created yet
       createDirectory(path.join(distDir, 'Data/Platform/Modules'));
 
-      // Fallback to spDotTsPath2 if codegen/tsconverter is not available (Emscripten build)
-      const spDotTsPath1 = path.join(bin, `_codegen/skyrimPlatform.ts`);
-      const spDotTsPath2 = path.join(
+      // The native TS converter was removed. Old build directories can still
+      // contain its output, so always package the current generated source.
+      const spDotTsPath = path.join(
         sourceDir,
         'src/platform_se/codegen/convert-files/skyrimPlatform.ts',
       );
-      let spDotTsPath;
-      if (fs.existsSync(spDotTsPath1)) {
-        spDotTsPath = spDotTsPath1;
-      } else if (fs.existsSync(spDotTsPath2)) {
-        spDotTsPath = spDotTsPath2;
-      } else {
-        throw new Error(
-          `Cannot find skyrimPlatform.ts in ${spDotTsPath1} or ${spDotTsPath2}`,
-        );
+      if (!fs.existsSync(spDotTsPath)) {
+        throw new Error(`Cannot find skyrimPlatform.ts in ${spDotTsPath}`);
       }
       cp(spDotTsPath, path.join(distDir, 'Data/Platform/Modules'));
-      cp(
-        spDotTsPath,
-        path.join(sourceDir, 'src/platform_se/codegen/convert-files'),
-      );
 
       if (!process.env.DEV_SERVICE_NO_GAME) {
         if (config.SkyrimSEFolder === 'OFF' || config.SkyrimSEFolder === '') {

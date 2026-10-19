@@ -58,7 +58,7 @@ TEST_CASE("Whiterun cow is disallowed to be loaded because of overriden npc "
   PartOne& partOne = GetPartOne();
   partOne.worldState.npcEnabled = true;
   std::unordered_map<std::string, WorldState::NpcSettingsEntry> settings = {
-    { "DragonBorn.esm", { true, true } }
+    { "DragonBorn.esm", { true, true, true } }
   };
   partOne.worldState.SetNpcSettings(std::move(settings));
 
@@ -74,7 +74,7 @@ TEST_CASE(
   partOne.worldState.npcEnabled = true;
   bool spawnInInterior = true, spawnInExterior = false;
   std::unordered_map<std::string, WorldState::NpcSettingsEntry> settings = {
-    { "Skyrim.esm", { spawnInInterior, spawnInExterior } }
+    { "Skyrim.esm", { spawnInInterior, spawnInExterior, true } }
   };
   partOne.worldState.SetNpcSettings(std::move(settings));
 
@@ -90,7 +90,7 @@ TEST_CASE("Whiterun cow is successfully loaded, because only exterior npc "
   partOne.worldState.npcEnabled = true;
   bool spawnInInterior = false, spawnInExterior = true;
   std::unordered_map<std::string, WorldState::NpcSettingsEntry> settings = {
-    { "Skyrim.esm", { spawnInInterior, spawnInExterior } }
+    { "Skyrim.esm", { spawnInInterior, spawnInExterior, true } }
   };
   partOne.worldState.SetNpcSettings(std::move(settings));
 
